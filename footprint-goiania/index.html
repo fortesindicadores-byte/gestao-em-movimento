@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609081400">
+<meta name="build" content="202609081600">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Footprint Goiânia · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -256,21 +256,21 @@ table.dre thead th{text-align:left;}
 .twrap{overflow-x:hidden;}
 .twrap table.dre{width:100%;table-layout:fixed;}
 table.dre td,table.dre th{white-space:normal;overflow-wrap:anywhere;}
-table.dre col.c-placa{width:9.6%;} table.dre col.c-modelo{width:8.4%;} table.dre col.c-ad{width:7%;}
+table.dre col.c-placa{width:96px;} table.dre col.c-modelo{width:86px;} table.dre col.c-ad{width:62px;}
 /* duas linhas de cabeçalho: grupo (Checklist, Benner…) em cima, check embaixo */
-table.dre thead tr.grp th{top:0;text-align:center;font-size:8.5px;color:var(--txt3);letter-spacing:.6px;
-  padding:8px 4px 3px;border-bottom:0;background:var(--cabec);}
-table.dre thead tr.grp th.fixo{text-align:left;padding-left:12px;}
-table.dre thead tr.chk th{top:26px;text-align:center;font-size:8.5px;letter-spacing:0;text-transform:none;padding:3px 2px 9px;line-height:1.25;}
-table.dre thead tr.chk th.fixo{text-align:left;padding-left:12px;text-transform:uppercase;letter-spacing:.3px;}
+table.dre thead tr.grp th{top:0;height:34px;text-align:center;vertical-align:middle;font-size:10px;
+  color:var(--txt3);letter-spacing:.5px;padding:9px 4px 8px;border-bottom:0;background:var(--cabec);}
+table.dre thead tr.grp th.fixo{text-align:left;padding-left:10px;}
+table.dre thead tr.chk th{top:39px;text-align:center;font-size:10px;letter-spacing:0;text-transform:none;padding:3px 2px 9px;line-height:1.2;}
+table.dre thead tr.chk th.fixo{text-align:left;padding-left:10px;padding-right:2px;font-size:9px;text-transform:uppercase;letter-spacing:0;}
 table.dre thead tr.grp th,table.dre thead tr.chk th{white-space:normal;overflow-wrap:normal;hyphens:manual;}
 table.dre thead th.sep,table.dre td.sep{border-left:1px solid var(--card-brd);}
 /* as linhas dividem a altura do card: 14 placas preenchem a tela sem sobra */
 .twrap table.dre{height:100%;}
 table.dre tbody td{padding:6px 4px;}
 table.dre td.chk{text-align:center;}
-table.dre td.placa{color:var(--txt);font-weight:700;white-space:nowrap;padding-left:12px;overflow:hidden;text-overflow:ellipsis;}
-table.dre td.modelo{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10.5px;}
+table.dre td.placa{color:var(--txt);font-weight:700;white-space:nowrap;padding-left:10px;padding-right:2px;overflow:hidden;text-overflow:ellipsis;}
+table.dre td.modelo{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10.5px;padding-left:2px;padding-right:2px;}
 /* célula de check: um select sem moldura, colorido pelo valor */
 .st{appearance:none;-webkit-appearance:none;background:transparent;border:1px solid transparent;border-radius:6px;
   padding:4px 2px;width:100%;max-width:64px;font-family:inherit;font-size:11px;font-weight:800;text-align:center;
@@ -283,7 +283,8 @@ table.dre td.modelo{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;fo
 .st:disabled{cursor:default;}
 .st option{background:var(--pop);color:var(--txt);font-weight:600;}
 /* aderência por placa, nas faixas de cor do modelo do Renan */
-.ad{display:inline-block;min-width:48px;text-align:center;padding:4px 6px;border-radius:6px;font-weight:800;font-size:11px;color:#1B1B1E;}
+.ad{display:inline-block;min-width:44px;text-align:center;padding:4px 6px;border-radius:6px;font-weight:800;font-size:11px;color:#1B1B1E;}
+table.dre td.ader{padding-left:2px;}
 .ad.a4{background:#63BE7B;} .ad.a3{background:#B8D98A;} .ad.a2{background:#F2E27A;} .ad.a1{background:#F8696B;}
 .gate{max-width:560px;margin:60px auto;text-align:center;border-radius:14px;padding:36px 32px;
   background:var(--brilho), var(--side);border:1px solid var(--card-brd);box-shadow:var(--luz-card);}
@@ -454,7 +455,7 @@ function render(){
   PLACAS.forEach(p=>{
     const ad=aderencia(p.placa);
     CHECKS.forEach(c=>{ const s=(DADOS[K(p.placa,c.id)]||{}).status||''; if(s==='NA')return; somaDen++; if(s==='OK')somaOk++; if(!s)pend++; });
-    h+=`<tr><td class="placa">${esc(p.placa)}</td><td class="modelo">${esc(p.modelo)}</td><td data-sort="${ad==null?'':Math.round(ad*100)}">${ad==null?'<span class="mut">—</span>':`<span class="ad ${faixa(ad)}">${Math.round(ad*100)}%</span>`}</td>`;
+    h+=`<tr><td class="placa">${esc(p.placa)}</td><td class="modelo">${esc(p.modelo)}</td><td class="ader" data-sort="${ad==null?'':Math.round(ad*100)}">${ad==null?'<span class="mut">—</span>':`<span class="ad ${faixa(ad)}">${Math.round(ad*100)}%</span>`}</td>`;
     CHECKS.forEach((c,i)=>{
       const d=DADOS[K(p.placa,c.id)]||{}, s=d.status||'';
       const tit=d.updated_at?`${d.updated_nome||'—'} · ${fmtDT(new Date(d.updated_at))}`:'Ainda não preenchido';
@@ -469,6 +470,11 @@ function render(){
   });
   h+='</tbody></table>';
   document.getElementById('t-chk').innerHTML=h;
+  // o sticky da 2ª linha tem de começar exatamente onde a 1ª acaba (a altura
+  // muda com a fonte do sistema; medir evita as duas se sobreporem ao rolar)
+  const g1=document.querySelector('#t-chk thead tr.grp th');
+  if(g1){ const hh=Math.round(g1.getBoundingClientRect().height);
+    document.querySelectorAll('#t-chk thead tr.chk th').forEach(th=>th.style.top=hh+'px'); }
   const geral=somaDen?Math.round(somaOk/somaDen*100):0;
   set('sub-tab',`${PLACAS.length} placas · ${CHECKS.length} checks · aderência geral ${geral}% · ${pend} célula(s) em branco`);
   document.querySelectorAll('#t-chk select.st').forEach(sel=>sel.addEventListener('change',onChange));
@@ -591,6 +597,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609081400"></script>
+<script src="../assets/build-check.js?v=202609081600"></script>
 </body>
 </html>
