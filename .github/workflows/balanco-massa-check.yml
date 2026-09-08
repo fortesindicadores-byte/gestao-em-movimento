@@ -1,0 +1,18 @@
+name: Balanco Massa Check (auditoria)
+
+# Reproduz a recomposição do km remunerado das empurradas pelo Balanço de
+# Massa (Valor ÷ R$/km dos variáveis) e imprime o antes × depois por unidade
+# e vigência. Não grava nada. Abas públicas: sem segredo.
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        run: node scripts/balanco-massa-check.mjs
