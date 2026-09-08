@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609042300">
+<meta name="build" content="202609081000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -421,6 +421,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
               <div>Δ YTD<b id="d-ytd-abs">—</b></div>
               <div>Δ YTD %<b id="d-ytd-pct">—</b></div>
               <div>Impacto YTD<b id="d-ytd-imp">—</b></div>
+              <div title="Viagens sem CTE cobradas depois (aba Balanço de Massa), convertidas em km pelo R$/km dos variáveis e somadas ao km remunerado das empurradas">Balanço de massa<b id="d-bm">—</b></div>
             </div>
           </div>
         </div>
@@ -616,6 +617,49 @@ const PACOTES_MAP = {
   'Recapagens e Outros Serviços':'Pneus','Pneus Novos':'Pneus'
 };
 const PACOTES_RSKM = new Set(['Combustíveis','Manutenções','Pneus']);
+/* BALANÇO DE MASSA (Renan, 08/09/2026): a aba "Balanço de Massa" da Base
+   Dispersão de km traz, por unidade EMPURRADA e vigência, o VALOR em R$ de
+   viagens que não emitiram CTE e foram cobradas depois. Esse valor volta ao km
+   remunerado: km recomposto = Valor ÷ R$/km dos VARIÁVEIS, com o R$/km
+   variável = Σ remunerado das contas abaixo (aba Frota) ÷ km remunerado
+   ORIGINAL da chave. O km recomposto é rateado pelas linhas da chave na
+   proporção do km remunerado de cada uma. O R$/km do IMPACTO continua sendo
+   calculado sobre o km original (senão a taxa mudaria junto com o km). */
+const BM_TAB = 'Balanço de Massa';
+const CONTAS_VAR = new Set(['Combustíveis','Manutenção de Veículos e Equip.','Manutenção de Carrocerias','Pneus Novos','Recapagens e Outros Serviços']);
+const BM_CIDADE = {'CUIABA':'CBA','PIRAI':'PIR','MACACU':'MCC','CACHOEIRAS DE MACACU':'MCC','CAMPO GRANDE':'CGR','RIO DE JANEIRO':'CGR',
+  'PELOTAS':'PLT','FLORIANOPOLIS':'FLP','GUARULHOS':'GRL','NOVA FRIBURGO':'NFR','RONDONOPOLIS':'RON','BALNEARIO CAMBORIU':'BLC','CAMBORIU':'BLC'};
+const _nkBM = s => String(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
+// "CUIABA EMPURRADA" → {uni:'CBA', proj:'EMPURRADA'}
+function bmChave(unidade){
+  const partes = _nkBM(unidade).split(' '); const proj = partes.pop(); const cid = partes.join(' ');
+  const cod = BM_CIDADE[cid] || BM_CIDADE[partes[partes.length-1]] || null;
+  return cod ? {uni:cod, proj} : null;
+}
+const MESES_BM = {jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+function bmVig(cell){                        // Date, 'MM/AAAA' ou 'jan./2026' → 'MM/AAAA'
+  const v = parseVigCell(cell); if (/^\d{2}\/\d{4}$/.test(v)) return v;
+  const m = v.toLowerCase().match(/^([a-zç]{3})[a-zç]*\.?\s*\/\s*(\d{2,4})$/);
+  if (m && MESES_BM[m[1]]) { let y = +m[2]; if (y < 100) y += 2000; return String(MESES_BM[m[1]]).padStart(2,'0') + '/' + y; }
+  return '';
+}
+async function fetchBalanco(){
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(BM_TAB)}&t=${Date.now()}`;
+  const json = JSON.parse((await (await fetch(url)).text()).match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+  const cols = (json.table.cols||[]).map(c => String((c && (c.label||c.id)) || '').trim().toLowerCase());
+  const idx = (...t) => cols.findIndex(c => t.some(x => c.includes(x)));
+  const K = { uni:idx('unidade'), vig:idx('vig'), val:idx('valor') };
+  if (Object.values(K).some(i => i < 0)) { console.warn('Aba Balanço de Massa: coluna não encontrada', K, cols); return {}; }
+  const out = {};
+  (json.table.rows||[]).forEach(row => {
+    const g = i => (row.c && row.c[i] && row.c[i].v != null) ? row.c[i].v : null;
+    const vig = bmVig(row.c && row.c[K.vig]); const ch = bmChave(g(K.uni)); const valor = parseFloat(g(K.val)) || 0;
+    if (!vig || !ch || !valor) return;
+    const k = chaveRs(vig, ch.uni, ch.proj);
+    out[k] = (out[k] || 0) + valor;
+  });
+  return out;
+}
 const _semInativo = s => String(s||'').replace(/\s*\(INATIVO\)\s*/ig,'').trim();
 const chaveRs = (vig, uni, proj) => vig+'|'+_semInativo(uni).toUpperCase()+'|'+_semInativo(proj).toUpperCase();
 
@@ -628,7 +672,7 @@ async function fetchCustoRem() {
   const K = { vig:idx('vigência','vigencia'), nv3:idx('nível 3','nivel 3','nv3'),
               cta:idx('conta'), rem:idx('remunerado') };
   if (Object.values(K).some(i => i < 0)) { console.warn('Aba Frota: coluna não encontrada', K, cols); return {}; }
-  const out = {};
+  const out = {}, varOut = {};
   (json.table.rows||[]).forEach(row => {
     const g = i => (row.c && row.c[i] && row.c[i].v != null) ? row.c[i].v : null;
     const vig = parseVigCell(row.c && row.c[K.vig]); if (!vig) return;
@@ -636,19 +680,23 @@ async function fetchCustoRem() {
     const proj = i >= 0 ? nv3.slice(0,i) : nv3, uni = i >= 0 ? nv3.slice(i+1) : nv3;
     const bruta = String(g(K.cta) || '').trim();
     const cta = CONTAS_ALIAS[bruta] || bruta;
-    if (!PACOTES_RSKM.has(PACOTES_MAP[cta])) return;
     const k = chaveRs(vig, uni, proj);
     // custo na DRE vem NEGATIVO: o custo de verdade é -valor
-    out[k] = (out[k] || 0) - (parseFloat(g(K.rem)) || 0);
+    const v = -(parseFloat(g(K.rem)) || 0);
+    if (CONTAS_VAR.has(cta)) varOut[k] = (varOut[k] || 0) + v;      // R$/km dos variáveis (balanço de massa)
+    if (!PACOTES_RSKM.has(PACOTES_MAP[cta])) return;
+    out[k] = (out[k] || 0) + v;
   });
+  out._var = varOut;
   return out;
 }
 
 async function fetchData() {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}&t=${Date.now()}`;
-  const [text, custoRem] = await Promise.all([
+  const [text, custoRem, balanco] = await Promise.all([
     fetch(url).then(r => r.text()),
-    fetchCustoRem().catch(e => { console.warn('Custo (aba Frota) indisponível:', e); return {}; })
+    fetchCustoRem().catch(e => { console.warn('Custo (aba Frota) indisponível:', e); return {}; }),
+    fetchBalanco().catch(e => { console.warn('Balanço de Massa indisponível:', e); return {}; })
   ]);
   const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
   ALL = (json.table.rows || [])
@@ -657,8 +705,23 @@ async function fetchData() {
 
   // IMPACTO = Δ km × R$/km remunerado da chave. O km remunerado da chave é a
   // soma das linhas do painel, o mesmo denominador que o /rs-por-km/ usa.
+  // (km ORIGINAL, antes do balanço de massa — a taxa não muda com a recomposição)
   const kmPorChave = {};
   ALL.forEach(r => { const k = chaveRs(r.vig, r.und, r.proj); kmPorChave[k] = (kmPorChave[k]||0) + r.rem; });
+
+  // BALANÇO DE MASSA → km remunerado recomposto, rateado pelas linhas da chave
+  const varRem = custoRem._var || {}; let bmKm = 0, bmValor = 0, bmSem = [];
+  ALL.forEach(r => { r.rem0 = r.rem; r.recomp = 0; r.bmValor = 0; });
+  Object.entries(balanco).forEach(([k, valor]) => {
+    const km0 = kmPorChave[k] || 0, rv = varRem[k] || 0;
+    if (!(km0 > 0) || !(rv > 0)) { bmSem.push(k); return; }
+    const taxa = rv / km0, kmRec = valor / taxa;
+    ALL.forEach(r => { if (chaveRs(r.vig, r.und, r.proj) !== k) return;
+      const parte = r.rem0 / km0; r.recomp += kmRec * parte; r.bmValor += valor * parte; r.bmTaxa = taxa; r.rem = r.rem0 + r.recomp; });
+    bmKm += kmRec; bmValor += valor;
+  });
+  if (bmKm) console.info(`Balanço de massa: R$ ${Math.round(bmValor).toLocaleString('pt-BR')} → +${Math.round(bmKm).toLocaleString('pt-BR')} km remunerados em ${Object.keys(balanco).length} chave(s)`);
+  if (bmSem.length) console.warn('Balanço de massa sem km ou sem custo variável na chave (não recomposto):', bmSem);
   let semTaxa = 0;
   ALL.forEach(r => {
     const k = chaveRs(r.vig, r.und, r.proj);
@@ -887,7 +950,7 @@ function render() {
   const F = getFiltered();
 
   if(!F.length) {
-    ['hero-val','hero-kmfrota','hero-kmviagem','d-rem-abs','d-rem-pct','d-imp','d-ytd-abs','d-ytd-pct','d-ytd-imp'].forEach(id => set(id, '—'));
+    ['hero-val','hero-kmfrota','hero-kmviagem','d-rem-abs','d-rem-pct','d-imp','d-ytd-abs','d-ytd-pct','d-ytd-imp','d-bm'].forEach(id => set(id, '—'));
     const body = document.getElementById('tbl-body');
     if(body) body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text2);padding:24px 8px;">Sem dados para os filtros selecionados</td></tr>`;
     const foot = document.getElementById('tbl-foot');
@@ -913,6 +976,8 @@ function render() {
   const ytdImp      = YTDrows.reduce((s, r) => s + r.imp, 0);
 
   set('hero-val', fmt(totReal));
+  const totRec = F.reduce((s, r) => s + (r.recomp || 0), 0), totBm = F.reduce((s, r) => s + (r.bmValor || 0), 0);
+  set('d-bm', totRec ? `+${fmt(totRec)} km · R$ ${fmt(totBm)}` : '—');
   set('hero-kmfrota', avgKmFrota ? fmt(avgKmFrota) : '—');
   set('hero-kmviagem', avgKmViagem ? fmt(avgKmViagem) : '—');
 
@@ -1323,7 +1388,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_km_v3';  // v3: Impacto passou a sair do R$/km dos pacotes
+const CACHE_KEY='bi_cache_km_v4';  // v4: km remunerado com o balanço de massa
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {

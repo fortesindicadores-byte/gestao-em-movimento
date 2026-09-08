@@ -36,6 +36,7 @@ const ALVOS = [
   { id: DRE, sheet: 'EBITDA' },
   // Dispersão de km
   { id: DISP, sheet: 'Dispersão de km' },
+  { id: DISP, sheet: 'Balanço de Massa' },
   // Consumo
   { id: KML, sheet: 'Km/L' },
   { id: KML, sheet: 'R$/L' },
