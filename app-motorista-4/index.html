@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DriverPro">
-<meta name="build" content="202609080100">
+<meta name="build" content="202609081700">
 <title>DriverPro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -383,8 +383,13 @@ var ICO = {
    nota de volta na medida sem trazer coluna nova do banco. */
 var REGUA = { idle:25, acel:3 };
 var n1 = function(v){ return (Math.round(v * 10) / 10).toLocaleString('pt-BR'); };
+var nomeCheio = function(p){ return p.nome + (p.faixa ? ' (' + p.faixa + ')' : ''); };
 var PILARES = [
-  { k:'rpm',  nome:'Uso da faixa verde (até 1.700 RPM)',
+  /* o nome do card fica CURTO de propósito: em tela de 360px "Uso da faixa
+     verde (até 1.700 RPM)" pedia 208px e só cabiam 183, e o nome era cortado
+     com reticências (Renan, 08/09/2026). A faixa aparece inteira na Nota e nas
+     Regras, onde o rótulo pode ocupar a largura do card. */
+  { k:'rpm',  nome:'Uso da faixa verde', faixa:'até 1.700 RPM',
     mede: function(n){ return Math.round(n) + '% do tempo rodando na faixa verde'; },
     curto: function(n){ return Math.round(n) + '% na faixa verde'; },
     regra:'A nota é a porcentagem do tempo em movimento com o motor na faixa verde: 100% na faixa = nota 100; 63% = nota 63.',
@@ -468,7 +473,7 @@ function pinta(){
   $('faixaTxt').textContent = nota == null ? 'Sem nota ainda' : nota >= 85 ? 'Elite' : nota >= 70 ? 'Bom' : 'Precisa melhorar';
   $('pilares').innerHTML = PILARES.map(function(p){
     var n = atual ? atual[p.k] : null;
-    return '<div class="pilar"><div class="cab"><b>' + p.nome + '</b><div class="nota">' + (n != null ? Math.round(n) : '—') + '</div></div>'
+    return '<div class="pilar"><div class="cab"><b>' + nomeCheio(p) + '</b><div class="nota">' + (n != null ? Math.round(n) : '—') + '</div></div>'
       + '<div class="med">' + (n != null ? p.mede(n) + ' · ' : '') + 'vale ' + R.pesos[p.k] + ' de ' + (R.pesos.rpm + R.pesos.idle + R.pesos.acel) + ' pontos da nota</div>'
       + '<div class="dica"><b>Como a nota é feita:</b> ' + p.regra + '</div>'
       + '<div class="dica">' + p.dica + '</div></div>';
@@ -487,7 +492,7 @@ function pinta(){
   if (R.top_n > 0) cond.push('ficou entre os ' + R.top_n);
   $('rg3').textContent = (cond.length ? 'Se ' + cond.join(' e ') + '. ' : '') + 'Os ' + R.podio.length + ' melhores da unidade ainda levam ' + R.podio.map(function(v){ return 'R$ ' + v; }).join(', ') + '.';
   $('regua').innerHTML = PILARES.map(function(p, i){
-    return '<div class="passo"><div class="n">' + (i+1) + '</div><div class="t"><b>' + p.nome + '</b><span>Vale ' + R.pesos[p.k] + ' pontos. ' + p.regra + ' Nota 100 não tira nada do saldo; nota 0 tira a parte inteira deste pilar.</span></div></div>';
+    return '<div class="passo"><div class="n">' + (i+1) + '</div><div class="t"><b>' + nomeCheio(p) + '</b><span>Vale ' + R.pesos[p.k] + ' pontos. ' + p.regra + ' Nota 100 não tira nada do saldo; nota 0 tira a parte inteira deste pilar.</span></div></div>';
   }).join('');
 }
 
