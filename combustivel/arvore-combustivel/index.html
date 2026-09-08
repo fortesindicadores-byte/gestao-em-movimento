@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609081000">
+<meta name="build" content="202609081200">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="../../assets/pdf-export.js"></script>
@@ -407,10 +407,10 @@ const STATIC = {
       <!-- Col 3 / Row 5: Recomposição pelo Balanço de Massa (Renan, 08/09/2026) — o km
            remunerado acima JÁ inclui este km; a caixa mostra quanto voltou ao remunerado -->
       <div id="pos-recomp">
-        <div class="kpi-card recomp-card" id="card-recomp" title="Viagens sem CTE cobradas depois (aba Balanço de Massa), convertidas em km pelo R$/km dos variáveis (Manutenção de Veículos, Manutenção de Carrocerias, Pneus Novos, Recapagens e Combustíveis) e já somadas ao Km Rodado remunerado">
+        <div class="kpi-card recomp-card" id="card-recomp" title="Viagens sem CTE cobradas depois (aba Balanço de Massa), convertidas em km pelo R$/km remunerado (todas as contas de Combustíveis, Manutenções e Pneus) e já somadas ao Km Rodado remunerado">
           <div class="card-label">Recomposição · Balanço de Massa</div>
           <table class="kpi-table">
-            <thead><tr><th>Valor R$</th><th>R$/km var.</th><th>Km no Rem</th></tr></thead>
+            <thead><tr><th>Valor R$</th><th>R$/km rem.</th><th>Km no Rem</th></tr></thead>
             <tbody><tr>
               <td id="v-bmValor">—</td><td id="v-bmTaxa">—</td><td id="v-bmKm">—</td>
             </tr></tbody>
@@ -866,12 +866,15 @@ const cmpVigBR = (a,b) => { const [ma,ya]=String(a).split('/'), [mb,yb]=String(b
 const COMB = new Set(['COMBUSTIVEIS VEICULOS E EQUIPAMENTOS','COMBUSTIVEIS']);
 /* BALANÇO DE MASSA (Renan, 08/09/2026): viagens das EMPURRADAS sem CTE, cobradas
    depois. O VALOR (aba "Balanço de Massa" da Base Dispersão de km) volta ao km
-   remunerado: km = Valor ÷ R$/km dos VARIÁVEIS (Σ remunerado das contas abaixo
-   na aba Frota ÷ km remunerado original da chave vigência|projeto|unidade).
-   Mesma conta do /painel-km/. */
-const VAR_CTAS = new Set(['COMBUSTIVEIS VEICULOS E EQUIPAMENTOS','COMBUSTIVEIS',
+   remunerado: km = Valor ÷ R$/km REMUNERADO da chave (Σ remunerado de TODAS as
+   contas dos pacotes Combustíveis + Manutenções + Pneus na aba Frota ÷ km
+   remunerado original da chave vigência|projeto|unidade) — o mesmo R$/km do
+   /painel-km/ (Renan, 08/09/2026: "pode pegar de todas as contas"). */
+const VAR_CTAS = new Set(['COMBUSTIVEIS VEICULOS E EQUIPAMENTOS','COMBUSTIVEIS','FLUIDOS (ARLA)','ARLA',
   'MANUTENCAO DE VEICULOS E EQUIPAMENTOS','MANUTENCAO DE VEICULOS E EQUIP.','MANUTENCAO DE VEICULOS',
-  'MANUTENCAO DE CARROCERIAS','PNEUS E CAMARAS','PNEUS NOVOS','CONSERTOS E RECAPAGENS DE PNEUS','RECAPAGENS E OUTROS SERVICOS','RECAPAGENS']);
+  'MANUTENCAO DE CARROCERIAS','CONTRATOS DE MANUTENCAO FABRICANTE','MATERIAIS E FERRAMENTAS DE OFICINA',
+  'PERSONALIZACAO/PADRONIZACAO DE VEICULOS','PERSONALIZACAO E PADRONIZACAO DE VEICULOS','PERSONALIZACAO/PADRONIZACAO','LAVACAO DE VEICULOS',
+  'PNEUS E CAMARAS','PNEUS NOVOS','CONSERTOS E RECAPAGENS DE PNEUS','RECAPAGENS E OUTROS SERVICOS','RECAPAGENS']);
 const BM_CIDADE = {'CUIABA':'CBA','PIRAI':'PIR','MACACU':'MCC','CACHOEIRAS DE MACACU':'MCC','CAMPO GRANDE':'CGR','RIO DE JANEIRO':'CGR',
   'PELOTAS':'PLT','FLORIANOPOLIS':'FLP','GUARULHOS':'GRL','NOVA FRIBURGO':'NFR','RONDONOPOLIS':'RON','BALNEARIO CAMBORIU':'BLC','CAMBORIU':'BLC'};
 let S_BM=[];                     // [{vig:'MM/YYYY', n3:'EMPURRADA - PIR', valor}]
@@ -884,7 +887,7 @@ function parseBalanco(cols,rows){
     out.push({vig:vigBR(d), n3:proj+' - '+cod, valor}); });
   return out;
 }
-// Σ km remunerado e Σ remunerado dos variáveis de UMA chave (vig + n3)
+// Σ km remunerado e Σ remunerado das contas dos 3 pacotes de UMA chave (vig + n3)
 function kmRemChave(vig,n3){ let km=0; for(const r of S_DP){ const d=kParseVig(r[DP.vig]); if(!d||vigBR(d)!==vig)continue; if(_nk(r[DP.proj])!==_nk(n3))continue; km+=+r[DP.kmRem]||0; } return km; }
 function varRemChave(vig,n3){ let v=0; for(const r of S_FR){ if(!VAR_CTAS.has(_nk(r[FR.cta])))continue; const d=kParseVig(r[FR.vig]); if(!d||vigBR(d)!==vig)continue; if(_nk(r[FR.n3])!==_nk(n3))continue; v+=Math.abs(+r[FR.rem]||0); } return v; }
 // recomposição do recorte f: {km, valor, taxa}

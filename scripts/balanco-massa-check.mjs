@@ -40,12 +40,8 @@ const NK = s => String(s || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/
 const num = c => { const n = parseFloat(c && c.v); return isFinite(n) ? n : 0; };
 const br = (v, d = 0) => (+v || 0).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
 
-// contas dos VARIÁVEIS (nomes como vêm na Frota, já normalizados)
-const VAR = new Set(['COMBUSTIVEIS VEICULOS E EQUIPAMENTOS', 'COMBUSTIVEIS',
-  'MANUTENCAO DE VEICULOS E EQUIPAMENTOS', 'MANUTENCAO DE VEICULOS E EQUIP.', 'MANUTENCAO DE VEICULOS',
-  'MANUTENCAO DE CARROCERIAS', 'PNEUS E CAMARAS', 'PNEUS NOVOS',
-  'CONSERTOS E RECAPAGENS DE PNEUS', 'RECAPAGENS E OUTROS SERVICOS', 'RECAPAGENS']);
-// pacotes do IMPACTO do /painel-km/ (Combustíveis + Manutenções + Pneus), como lá
+// TAXA = R$/km remunerado de TODAS as contas dos pacotes Combustíveis + Manutenções + Pneus
+// (o mesmo R$/km do /painel-km/; Renan, 08/09/2026: "pode pegar de todas as contas")
 const ALIAS = { 'COMBUSTIVEIS VEICULOS E EQUIPAMENTOS': 'COMBUSTIVEIS', 'FLUIDOS (ARLA)': 'ARLA',
   'PERSONALIZACAO/PADRONIZACAO DE VEICULOS': 'PERSONALIZACAO/PADRONIZACAO', 'PERSONALIZACAO E PADRONIZACAO DE VEICULOS': 'PERSONALIZACAO/PADRONIZACAO',
   'MANUTENCAO DE VEICULOS E EQUIPAMENTOS': 'MANUTENCAO DE VEICULOS E EQUIP.', 'CONSERTOS E RECAPAGENS DE PNEUS': 'RECAPAGENS E OUTROS SERVICOS', 'PNEUS E CAMARAS': 'PNEUS NOVOS' };
@@ -73,11 +69,10 @@ disp.rows.forEach(r => { const vig = vigDe(r[0]); const n3 = String((r[14] && r[
 // Frota: por nome de coluna
 const fi = (...t) => frota.cols.findIndex(c => t.some(x => c.toLowerCase().includes(x)));
 const K = { vig: fi('vigência', 'vigencia'), n3: fi('nível 3', 'nivel 3'), cta: fi('conta'), rem: fi('remunerado') };
-const remVar = {}, remPac = {};
+const remPac = {};
 frota.rows.forEach(r => { const vig = vigDe(r[K.vig]); const n3 = String((r[K.n3] && r[K.n3].v) || ''); if (!vig || !n3.includes('-')) return;
   const i = n3.indexOf('-'); const proj = NK(n3.slice(0, i)), cod = NK(n3.slice(i + 1)); const k = `${vig}|${proj}|${cod}`;
   const cta = NK(r[K.cta] && r[K.cta].v); const v = -num(r[K.rem]);   // custo na DRE vem negativo
-  if (VAR.has(cta)) remVar[k] = (remVar[k] || 0) + v;
   if (PAC[ALIAS[cta] || cta]) remPac[k] = (remPac[k] || 0) + v; });
 
 // Balanço de Massa: Unidade | Vigência | Valor (por nome de coluna)
@@ -89,8 +84,8 @@ bm.rows.forEach(r => { const vig = vigDe(r[B.vig]); const valor = num(r[B.val]);
   if (!vig || !uni) return;
   const kb = chaveBM(uni); if (!kb) { console.log(`  ⚠ unidade sem código: "${uni}"`); return; }
   const [proj, cod] = kb.split('|'); const k = `${vig}|${proj}|${cod}`;
-  const k0 = km0[k] || 0, real = kmReal[k] || 0, rv = remVar[k] || 0, rp = remPac[k] || 0;
-  const taxaVar = k0 > 0 && rv > 0 ? rv / k0 : 0, taxaImp = k0 > 0 && rp > 0 ? rp / k0 : 0;
+  const k0 = km0[k] || 0, real = kmReal[k] || 0, rv = remPac[k] || 0;
+  const taxaVar = k0 > 0 && rv > 0 ? rv / k0 : 0, taxaImp = taxaVar;
   const kmRec = taxaVar > 0 ? valor / taxaVar : 0;
   linhas.push({ uni, vig, proj, cod, valor, km0: k0, real, remVar: rv, taxaVar, kmRec, km1: k0 + kmRec, taxaImp,
     dAntes: real - k0, dDepois: real - (k0 + kmRec), impAntes: (real - k0) * taxaImp, impDepois: (real - k0 - kmRec) * taxaImp,
@@ -100,10 +95,10 @@ const ym = v => v.slice(3) + v.slice(0, 2);
 const ord = (a, b) => a.uni.localeCompare(b.uni) || ym(a.vig).localeCompare(ym(b.vig));
 linhas.sort(ord);
 console.log('\n── ANTES × DEPOIS por unidade e vigência (só linhas com Valor) ──');
-console.log('unidade            vig      valor R$   R$/km var  km rem antes  km recomp  km rem depois   km real   Δ antes   Δ depois  imp antes  imp depois');
+console.log('unidade            vig      valor R$   R$/km rem  km rem antes  km recomp  km rem depois   km real   Δ antes   Δ depois  imp antes  imp depois');
 linhas.filter(l => l.valor).forEach(l => console.log(
   `${l.uni.padEnd(18)} ${l.vig}  ${br(l.valor).padStart(10)}  ${br(l.taxaVar, 4).padStart(9)}  ${br(l.km0).padStart(12)}  ${br(l.kmRec).padStart(9)}  ${br(l.km1).padStart(13)}  ${br(l.real).padStart(8)}  ${br(l.dAntes).padStart(8)}  ${br(l.dDepois).padStart(9)}  ${br(l.impAntes).padStart(9)}  ${br(l.impDepois).padStart(10)}`
-  + (l.semKm ? '  ⚠ sem km na Dispersão' : '') + (l.semCusto ? '  ⚠ sem custo variável na Frota' : '')));
+  + (l.semKm ? '  ⚠ sem km na Dispersão' : '') + (l.semCusto ? '  ⚠ sem custo remunerado na Frota' : '')));
 
 console.log('\n── TOTAL por unidade ──');
 const porUni = {};
