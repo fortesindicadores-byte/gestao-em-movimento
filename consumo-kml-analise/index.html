@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202608311500">
+<meta name="build" content="202609080600">
 <title>Km/L — Análise do Impacto (storytelling)</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -389,7 +389,10 @@ const KML_TAB = 'Km/L';
 const BASE_REMMOD_TAB = 'Base Remunerado Modelo';
 // Base R$/L (preço REMUNERADO por projeto/vigência) — usada para valorizar o Impacto
 // de eficiência no preço remunerado (isola o efeito eficiência do efeito preço).
-const GV_RSL_ID = '1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM';
+// R$/L (preço remunerado por projeto/vigência) vem do workbook CONSUMO (KML_ID).
+// A aba R$/L da Base Dispersão de km era só um IMPORTRANGE desta e foi excluída
+// pelo Renan em 08/09/2026 — NUNCA voltar a ler de lá.
+const GV_RSL_ID = KML_ID;
 let REMLK = null;   // { L1: proj|ym|combustível -> {s,n}, L2: proj|ym -> {s,n} }
 const _nkK=s=>String(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
 const _nfK=s=>{let x=String(s||'');const i=x.indexOf(':');if(i>=0)x=x.slice(i+1);return _nkK(x);};
