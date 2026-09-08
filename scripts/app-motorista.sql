@@ -793,3 +793,72 @@ grant execute on function public.ce_app_grupo(text)    to anon, authenticated;
 grant execute on function public.ce_app_criterios()    to anon, authenticated;
 grant execute on function public.ce_app_unidade_cfg_set(uuid, text, text, int, int, int) to anon, authenticated;
 notify pgrst, 'reload schema';
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 15) ACESSOS DO DRIVERPRO (Renan, 07/09/2026: "uma visão de acessos no BI,
+--     gerencial como o painel de Acessos do portal, e um ranking por motorista")
+--     ce_app_log guarda um evento por linha: 'senha' (criou o PIN), 'login'
+--     (toda sessão nova de motorista) e 'abertura' (o app chama ce_app_ping ao
+--     abrir). Admin não conta. O painel lê com o login do hub.
+-- ═══════════════════════════════════════════════════════════════════════════
+create table if not exists public.ce_app_log (
+  id      bigserial primary key,
+  chave   text not null,
+  evento  text not null,                    -- 'senha' · 'login' · 'abertura'
+  quando  timestamptz not null default now()
+);
+create index if not exists ce_app_log_quando_idx on public.ce_app_log (quando);
+create index if not exists ce_app_log_chave_idx  on public.ce_app_log (chave);
+alter table public.ce_app_log enable row level security;
+drop policy if exists ce_app_log_sel on public.ce_app_log;
+create policy ce_app_log_sel on public.ce_app_log for select to authenticated using (true);
+
+-- login: toda sessão nova de motorista (admin_cpf preenchido = admin, não conta)
+create or replace function public.ce_app_log_sessao() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.chave is not null then insert into ce_app_log (chave, evento, quando) values (new.chave, 'login', new.criado_em); end if;
+  return new;
+end $$;
+drop trigger if exists ce_app_log_sessao_tg on public.ce_app_sessao;
+create trigger ce_app_log_sessao_tg after insert on public.ce_app_sessao
+  for each row execute function public.ce_app_log_sessao();
+
+-- senha criada
+create or replace function public.ce_app_log_senha() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into ce_app_log (chave, evento, quando) values (new.chave, 'senha', new.criado_em);
+  return new;
+end $$;
+drop trigger if exists ce_app_log_senha_tg on public.ce_app_acesso;
+create trigger ce_app_log_senha_tg after insert on public.ce_app_acesso
+  for each row execute function public.ce_app_log_senha();
+
+-- abertura: o app chama ao abrir; admin olhando outro motorista não conta
+create or replace function public.ce_app_ping(p_token uuid)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare s record;
+begin
+  select * into s from ce_app_sessao where token = p_token and expira_em > now();
+  if s is null or s.chave is null then return jsonb_build_object('ok', false); end if;
+  insert into ce_app_log (chave, evento) values (s.chave, 'abertura');
+  return jsonb_build_object('ok', true);
+end $$;
+revoke all on function public.ce_app_ping(uuid) from public;
+grant execute on function public.ce_app_ping(uuid) to anon, authenticated;
+
+-- histórico do que já existe (reexecutável, não duplica)
+insert into ce_app_log (chave, evento, quando)
+  select a.chave, 'senha', a.criado_em from ce_app_acesso a
+  where not exists (select 1 from ce_app_log l where l.chave = a.chave and l.evento = 'senha');
+insert into ce_app_log (chave, evento, quando)
+  select s.chave, 'login', s.criado_em from ce_app_sessao s
+  where s.chave is not null
+    and not exists (select 1 from ce_app_log l where l.chave = s.chave and l.evento = 'login' and l.quando = s.criado_em);
+insert into ce_app_log (chave, evento, quando)
+  select a.chave, 'login', a.ultimo_acesso from ce_app_acesso a
+  where a.ultimo_acesso is not null
+    and not exists (select 1 from ce_app_log l where l.chave = a.chave and l.evento = 'login'
+                    and abs(extract(epoch from (l.quando - a.ultimo_acesso))) < 60);
+notify pgrst, 'reload schema';

@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DriverPro">
-<meta name="build" content="202609072300">
+<meta name="build" content="202609080100">
 <title>DriverPro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -589,6 +589,8 @@ function carrega(token, chave){
   rpc('ce_app_dados', chave ? { p_token: token, p_chave: chave } : { p_token: token }).then(function(r){
     if (!r.ok) { if (r.admin) return escolheMotorista(); sair(); return erroLogin(r.erro || 'Entre de novo.'); }
     D = r; abre();
+    // registra a abertura (visão Acessos do painel); admin olhando outro motorista não conta
+    rpc('ce_app_ping', { p_token: token }).catch(function(){});
   }).catch(function(e){ erroLogin('Sem conexão com o servidor. Tente de novo.'); console.warn(e); });
 }
 /* ── autocadastro: CPF novo → escolhe a unidade e o próprio nome ── */

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609071300">
+<meta name="build" content="202609080100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -286,6 +286,24 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
    perto dos dados (renderConsChart) e a diferença entre os meses aparece. */
 #vw-consumo .gr2{grid-template-columns:1fr;max-height:56vh;margin-top:12px;}
 .cons-kpis{grid-template-columns:repeat(5,1fr);margin-top:14px;flex:0 0 auto;}
+/* Acessos do DriverPro (Renan, 07/09/2026) — mesmo desenho do painel Acessos
+   do portal: hero, 3 cards, gráfico por mês (2 colunas) e calendário (1). */
+#vw-acessos,#vw-acessrank{display:none;flex-direction:column;} #vw-acessos.on,#vw-acessrank.on{display:flex;}
+.res-cols{flex:0 0 auto;height:min(47vh,440px);min-height:230px;margin-top:12px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.res-graf{grid-column:span 2;min-width:0;}
+.res-cal{min-width:0;overflow:hidden;padding:12px 14px;display:flex;flex-direction:column;}
+.cal-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:6px;}
+.cal-h{font-size:9px;font-weight:700;color:var(--txt3);text-align:center;letter-spacing:.5px;}
+.cal-c{border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;line-height:1;overflow:hidden;}
+.cal-d{font-size:9px;font-weight:600;color:rgba(255,255,255,.72);}
+.cal-n{font-size:12.5px;font-weight:800;color:#fff;}
+.cal-c.esc .cal-n{color:#2A1405;} .cal-c.esc .cal-d{color:rgba(0,0,0,.55);}
+.cal-c.vaz{background:repeating-linear-gradient(45deg,transparent,transparent 3px,var(--hover) 3px,var(--hover) 6px);}
+body.claro .cal-c.vaz{background:repeating-linear-gradient(45deg,rgba(15,23,42,.06),rgba(15,23,42,.06) 3px,rgba(15,23,42,.13) 3px,rgba(15,23,42,.13) 6px);}
+.cal-c.vaz .cal-d{color:var(--txt3);}
+.cal-c.hoje{outline:2px solid var(--txt);outline-offset:-2px;}
+@media(max-width:860px){ .res-cols{display:block;height:auto;max-height:none;} .res-graf{height:260px;margin-bottom:12px;} .res-cal{height:300px;width:100%;} }
 .cons-kpis .kv{font-size:22px;}
 /* Renan, 07/09/2026: "aumente 8 px o Km/L e 3 px os de baixo; o gráfico tão alto não fica legal" */
 #vw-consumo .hval{font-size:clamp(34px,calc(3.6vh + 8px),48px);}
@@ -453,6 +471,14 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
     <button class="s-item" data-vw="consrank">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg>
       Ranking Km/L
+    </button>
+    <button class="s-item" data-vw="acessos">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M11 18h2"/></svg>
+      Acessos
+    </button>
+    <button class="s-item" data-vw="acessrank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+      Ranking de Acessos
     </button>
 
     <div class="s-sec">Atalhos</div>
@@ -653,6 +679,48 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
         </div>
       </section>
 
+      <!-- ══ 6 · ACESSOS DO DRIVERPRO (Renan, 07/09/2026: "uma visão de acessos,
+           gerencial como o painel de Acessos do portal"). Lê ce_app_log:
+           'login' (sessão nova) e 'abertura' (o app avisa ao abrir); 'senha'
+           conta quem já criou o PIN. Admin e o motorista de teste ficam fora. ══ -->
+      <section class="vw" id="vw-acessos">
+        <div class="fin-hero">
+          <div>
+            <div class="hlbl">Total de acessos</div>
+            <div class="hval" id="ac-tot">—</div>
+            <div class="hdel">
+              <div>Logins<b id="ac-login">—</b></div>
+              <div>Aberturas do app<b id="ac-abert">—</b></div>
+              <div>Motoristas<b id="ac-mot">—</b></div>
+              <div>Média/dia<b id="ac-med">—</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="kpis ce-kpis" id="ac-kpis"></div>
+        <div class="res-cols">
+          <div class="card gcard res-graf">
+            <div class="gtit">Acessos por mês</div>
+            <div class="gsub">Últimos 12 meses · respeita os filtros</div>
+            <div class="gcv"><canvas id="chartAcMes"></canvas></div>
+          </div>
+          <div class="card res-cal">
+            <div class="gtit">Acessos por dia</div>
+            <div class="gsub" id="ac-cal-sub">—</div>
+            <div class="cal-grid" id="ac-cal"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ 7 · RANKING DE ACESSOS — por motorista ══ -->
+      <section class="vw" id="vw-acessrank">
+        <div class="rank-sec">
+          <div class="twrap"><table class="dre" id="ac-table">
+            <thead><tr><th style="width:34px;">#</th><th>Motorista</th><th>Unidade</th><th>Senha criada em</th><th>Último acesso</th><th class="num">Últimos 7 dias</th><th class="num">Dias com acesso</th><th class="num">Acessos</th></tr></thead>
+            <tbody id="ac-tbody"></tbody>
+          </table></div>
+        </div>
+      </section>
+
     </div>
   </main>
 </div>
@@ -801,6 +869,27 @@ async function fetchAtivos(){
     row.data.forEach(r => { const pl = placaNorm(r[K.pla]);
       if (pl) ATIVOS[pl] = { modelo: String(r[K.mod] || '').trim(), marca: String(r[K.mar] || '').trim(), proj: String(r[K.proj] || '').trim() }; });
   } catch (e) { console.warn('ativos:', e.message); }
+}
+
+/* ── Acessos do DriverPro (ce_app_log) ── */
+let LOG = [], MOT = {};                     // MOT: chave → {nome, cod}
+const diaKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+async function fetchAcessos(){
+  LOG = []; MOT = {};
+  try {
+    await sbClient().auth.getSession();
+    const { data: ms } = await sbClient().from('ce_motoristas').select('chave,nome,unidade');
+    (ms || []).forEach(m => { MOT[m.chave] = { nome: m.nome || m.chave, cod: deParaGeo(m.unidade).cod }; });
+    const PASSO = 1000, out = [];
+    for (let de = 0; ; de += PASSO) {
+      const { data, error } = await sbClient().from('ce_app_log').select('chave,evento,quando')
+        .order('quando', { ascending: true }).range(de, de + PASSO - 1);
+      if (error) { console.warn('ce_app_log:', error.message); break; }
+      out.push(...(data || [])); if (!data || data.length < PASSO) break;
+    }
+    // admin não gera linha; o motorista de teste do DriverPro Check e o Sem Login ficam fora
+    LOG = out.filter(r => !/^(teste:|semlogin:)/.test(r.chave)).map(r => { const dt = new Date(r.quando); return { chave: r.chave, evento: r.evento, dt, dia: diaKey(dt) }; });
+  } catch (e) { console.warn('acessos:', e.message); }
 }
 
 /* ── Estado ── */
@@ -1033,6 +1122,7 @@ function atualizar(){
   renderRanking(data);
   renderCarteira(data);
   renderConsumo(data);
+  renderAcessos();
   renderChart();
 }
 
@@ -1318,6 +1408,95 @@ function renderConsChart(){
   });
 }
 
+/* ── Acessos: filtros do topo (vigência = mês do acesso; elegível não se aplica) ── */
+function acessosFiltrados(semVig){
+  const sv = semVig ? [] : selVigKeys().map(v => v.slice(0, 7).replace('/', '-'));
+  const su = getMsValues('ms-uni'), sm = getMsValues('ms-mot');
+  return LOG.filter(r => { const m = MOT[r.chave] || {};
+    if (sv.length && !sv.includes(r.dia.slice(0, 7))) return false;
+    if (su.length && !su.includes(m.cod || '—')) return false;
+    if (sm.length && !sm.includes(m.nome || r.chave)) return false;
+    return true; });
+}
+const MES_ABR = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+const fmtDH = d => d ? d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—';
+let chartAcMes = null;
+function renderAcessos(){
+  const todos = acessosFiltrados(false), rows = todos.filter(r => r.evento !== 'senha');
+  const hoje = new Date(), hojeK = diaKey(hoje), d7K = diaKey(new Date(hoje.getTime() - 6 * 864e5));
+  const logins = rows.filter(r => r.evento === 'login').length;
+  const dias = new Set(rows.map(r => r.dia)).size;
+  set('ac-tot', rows.length.toLocaleString('pt-BR'));
+  set('ac-login', logins.toLocaleString('pt-BR'));
+  set('ac-abert', (rows.length - logins).toLocaleString('pt-BR'));
+  set('ac-mot', String(new Set(rows.map(r => r.chave)).size));
+  set('ac-med', dias ? (rows.length / dias).toFixed(1).replace('.', ',') : '—');
+  const comSenha = new Set(acessosFiltrados(true).filter(r => r.evento === 'senha').map(r => r.chave)).size;
+  const nHoje = rows.filter(r => r.dia === hojeK), n7 = rows.filter(r => r.dia >= d7K);
+  const box = $('ac-kpis');
+  if (box) box.innerHTML = [
+    ['Motoristas com senha', String(comSenha), `de ${new Set(RAW.map(r => r.unit)).size} com nota no painel`],
+    ['Acessos hoje', String(nHoje.length), `${new Set(nHoje.map(r => r.chave)).size} motorista(s)`],
+    ['Últimos 7 dias', String(n7.length), `${(n7.length / 7).toFixed(1).replace('.', ',')} por dia · ${new Set(n7.map(r => r.chave)).size} motorista(s)`],
+  ].map(([l, v, m]) => `<div class="kpi"><div class="kl">${l}</div><div class="kv">${v}</div><div class="km">${m}</div></div>`).join('');
+
+  // ranking por motorista
+  const senhaDe = {}; acessosFiltrados(true).forEach(r => { if (r.evento === 'senha' && (!senhaDe[r.chave] || r.dt < senhaDe[r.chave])) senhaDe[r.chave] = r.dt; });
+  const por = {};
+  rows.forEach(r => { const a = por[r.chave] || (por[r.chave] = { chave: r.chave, tot: 0, d7: 0, dias: new Set(), last: null });
+    a.tot++; if (r.dia >= d7K) a.d7++; a.dias.add(r.dia); if (!a.last || r.dt > a.last) a.last = r.dt; });
+  const lista = Object.values(por).sort((a, b) => b.tot - a.tot || (b.last - a.last));
+  $('ac-tbody').innerHTML = lista.map((a, i) => { const m = MOT[a.chave] || {}; return `<tr>
+      <td class="rank-num">${i + 1}</td>
+      <td class="conta">${m.nome || a.chave}</td>
+      <td>${m.cod || '—'}</td>
+      <td>${senhaDe[a.chave] ? senhaDe[a.chave].toLocaleDateString('pt-BR') : '—'}</td>
+      <td>${fmtDH(a.last)}</td>
+      <td class="num">${a.d7}</td>
+      <td class="num">${a.dias.size}</td>
+      <td class="num"><b>${a.tot}</b></td>
+    </tr>`; }).join('') || `<tr><td colspan="8">${LOG.length ? 'Sem acessos no recorte.' : 'Sem registro de acessos ainda.'}</td></tr>`;
+
+  // gráfico por mês (12 últimos) e calendário do mês
+  const cv = $('chartAcMes'); if (!cv || !cv.offsetParent) return;
+  const isLight = document.body.classList.contains('claro');
+  const tick = { color: isLight ? '#4A5568' : '#B2BCD2', font: { family: 'Montserrat', size: 10 } };
+  const tooltip = isLight
+    ? { backgroundColor: '#FFFFFF', titleColor: '#D95E08', bodyColor: '#161D2B', borderColor: 'rgba(15,23,42,.15)', borderWidth: 1, titleFont: { family: 'Montserrat' }, bodyFont: { family: 'Montserrat' } }
+    : { backgroundColor: '#26262B', titleColor: '#F97316', bodyColor: '#EEF2FA', borderColor: 'rgba(255,255,255,.12)', borderWidth: 1, titleFont: { family: 'Montserrat' }, bodyFont: { family: 'Montserrat' } };
+  const mLabels = [], mData = [];
+  for (let i = 11; i >= 0; i--) { const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    mLabels.push(MES_ABR[d.getMonth()] + '/' + String(d.getFullYear()).slice(2));
+    mData.push(rows.filter(r => r.dia.slice(0, 7) === k).length); }
+  if (chartAcMes) chartAcMes.destroy();
+  chartAcMes = new Chart(cv.getContext('2d'), { type: 'bar',
+    data: { labels: mLabels, datasets: [{ data: mData, backgroundColor: '#F97316', borderWidth: 0, borderRadius: 0, barPercentage: .92, categoryPercentage: .94,
+      datalabels: { display: c => mData[c.dataIndex] > 0, color: isLight ? '#161D2B' : '#EEF2FA', font: { family: 'Montserrat', size: 10, weight: '800' }, formatter: v => v.toLocaleString('pt-BR'), anchor: 'end', align: 'end', offset: 1 } }] },
+    options: { responsive: true, maintainAspectRatio: false, animation: false, layout: { padding: { top: 18 } },
+      plugins: { legend: { display: false }, tooltip, datalabels: { display: false } },
+      scales: { x: { ticks: { ...tick, autoSkip: true, maxRotation: 0 }, grid: { display: false }, border: { display: false } },
+                y: { beginAtZero: true, suggestedMax: Math.ceil(Math.max(1, ...mData) * 1.12), ticks: { ...tick, precision: 0, maxTicksLimit: 4 }, grid: { display: false }, border: { display: false } } } } });
+
+  const sv = selVigKeys();
+  const [calY, calM] = sv.length === 1 ? [+sv[0].slice(0, 4), +sv[0].slice(5, 7) - 1] : [hoje.getFullYear(), hoje.getMonth()];
+  const kMes = calY + '-' + String(calM + 1).padStart(2, '0');
+  const porDia = new Map(); rows.forEach(r => { if (r.dia.slice(0, 7) !== kMes) return; const d = +r.dia.slice(8, 10); porDia.set(d, (porDia.get(d) || 0) + 1); });
+  const maxDia = Math.max(1, ...porDia.values());
+  const prim = new Date(calY, calM, 1).getDay(), nDias = new Date(calY, calM + 1, 0).getDate(), semanas = Math.ceil((prim + nDias) / 7);
+  const ehMesHoje = calY === hoje.getFullYear() && calM === hoje.getMonth();
+  const calor = n => { const t = n / maxDia; const a = t >= .85 ? 1 : t >= .6 ? .78 : t >= .35 ? .55 : t >= .15 ? .34 : .2;
+    return 'color-mix(in srgb, var(--laranja) ' + Math.round(a * 100) + '%, transparent)'; };
+  const cels = [...Array(prim)].map(() => '<div></div>').concat([...Array(nDias)].map((_, k) => {
+    const d = k + 1, n = porDia.get(d) || 0, forte = n && n / maxDia >= .6, hj = ehMesHoje && d === hoje.getDate();
+    return `<div class="cal-c${n ? '' : ' vaz'}${forte ? ' esc' : ''}${hj ? ' hoje' : ''}"${n ? ` style="background:${calor(n)}" title="${d}: ${n} acesso(s)"` : ` title="${d}: sem acesso"`}>
+      <span class="cal-d">${d}</span>${n ? `<span class="cal-n">${n}</span>` : ''}</div>`; })).join('');
+  const gc = $('ac-cal');
+  if (gc) { gc.style.gridTemplateRows = '12px repeat(' + semanas + ',1fr)';
+    gc.innerHTML = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'].map(d => `<div class="cal-h">${d}</div>`).join('') + cels; }
+  set('ac-cal-sub', new Date(calY, calM, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) + ' · pico de ' + maxDia.toLocaleString('pt-BR') + ' num dia');
+}
+
 /* ── Regras de Pontuação ── */
 function renderPesos(){
   // o DEFLATOR não divide peso com os pilares — os 100% são só de quem soma
@@ -1450,7 +1629,7 @@ function semRpmFora(linhas){
 }
 let SUB_BASE = '';        // "N motorista(s) · coleta dd/mm/aaaa"
 async function recarregar(){
-  await Promise.all([fetchCriterios(), fetchAtivos()]);
+  await Promise.all([fetchCriterios(), fetchAtivos(), fetchAcessos()]);
   set('titSub','Carregando…');
   try{
     let linhas=[];
@@ -1470,7 +1649,7 @@ async function recarregar(){
 }
 
 /* ── navegação entre as visões ── */
-const TIT={resumo:'Resumo Gerencial', ranking:'Ranking Geral', carteira:'Carteira em R$', consumo:'Km/L Gerencial', consrank:'Ranking Km/L'};
+const TIT={resumo:'Resumo Gerencial', ranking:'Ranking Geral', carteira:'Carteira em R$', consumo:'Km/L Gerencial', consrank:'Ranking Km/L', acessos:'Acessos', acessrank:'Ranking de Acessos'};
 function setVw(v){
   VW=v;
   document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===v));
@@ -1478,6 +1657,7 @@ function setVw(v){
   set('tit', TIT[v]||'');
   if(v==='resumo') setTimeout(renderChart,30);     // o canvas precisa estar visível
   if(v==='consumo') setTimeout(renderConsChart,30);
+  if(v==='acessos') setTimeout(renderAcessos,30);
   // o .twrap do ranking só tem altura depois de a seção ficar visível
   if(v==='ranking') requestAnimationFrame(ajustaAlturaLinhas);
 }
@@ -1508,7 +1688,7 @@ function trocaMini(){
   const l=document.querySelector('.side').classList.toggle('mini');
   localStorage.setItem('ce_mini', l?'1':'0');
   const b=$('btMini'); if(b) b.title=l?'Expandir menu':'Recolher menu';
-  setTimeout(()=>{ renderChart(); renderConsChart(); },260);
+  setTimeout(()=>{ renderChart(); renderConsChart(); renderAcessos(); },260);
 }
 if(localStorage.getItem('ce_mini')==='1'){ document.querySelector('.side').classList.add('mini'); $('btMini').title='Expandir menu'; }
 
@@ -1519,7 +1699,7 @@ function aplicaTema(t){
   document.body.classList.toggle('claro', t==='light');
   localStorage.setItem('bi_theme', t);
   const b=$('btTema'); if(b) b.innerHTML = t==='light'?_LUA:_SOL;
-  if(RAW.length){ renderChart(); renderConsChart(); }
+  if(RAW.length){ renderChart(); renderConsChart(); renderAcessos(); }
 }
 function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark':'light'); }
 aplicaTema(localStorage.getItem('bi_theme')||'dark');
