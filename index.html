@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609081400">
+<meta name="build" content="202609081900">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -176,15 +176,19 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
 /* cor do card = a mesma lógica dos cards do Planner (Renan, 24/08/2026): o
    fundo é `--card`, um degrau acima do miolo, e não `--side` (o tom do menu),
    com que o card quase sumia no escuro — #1C1C1D sobre um fundo #1A1A1C. */
-.hcard{display:flex;flex-direction:column;gap:6px;padding:12px 13px 13px;border-radius:7px;cursor:pointer;
+/* sombra e raio do FCA (Renan, 08/09/2026: "acho o FCA mais bonito"): lá o
+   cartão leva UMA sombra curta e suave (--sombra: 0 2px 10px rgba(0,0,0,.30))
+   e canto de 10px. A sombra dupla e espalhada que estava aqui escurecia o vão
+   entre os cards e achatava a grade inteira. */
+.hcard{display:flex;flex-direction:column;gap:6px;padding:13px 14px 14px;border-radius:10px;cursor:pointer;
   background:var(--brilho), var(--card);border:1px solid var(--card-brd);
-  box-shadow:var(--luz-card), 0 8px 20px rgba(0,0,0,.40), 0 2px 5px rgba(0,0,0,.28);
+  box-shadow:var(--luz-card), 0 2px 10px rgba(0,0,0,.30);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   text-decoration:none;color:inherit;transition:border-color .18s,transform .18s,box-shadow .18s;}
-body.claro .hcard{box-shadow:var(--luz-card), 0 8px 20px rgba(15,23,42,.13), 0 2px 5px rgba(15,23,42,.09);}
-.hcard:hover{border-color:color-mix(in srgb,var(--laranja) 42%,transparent);transform:translateY(-3px);
-  box-shadow:var(--luz-card), 0 16px 34px rgba(0,0,0,.50), 0 3px 8px rgba(0,0,0,.32);}
-body.claro .hcard:hover{box-shadow:var(--luz-card), 0 16px 34px rgba(15,23,42,.20), 0 3px 8px rgba(15,23,42,.12);}
+body.claro .hcard{box-shadow:var(--luz-card), 0 2px 8px rgba(15,23,42,.10);}
+.hcard:hover{border-color:color-mix(in srgb,var(--laranja) 55%,transparent);transform:translateY(-2px);
+  box-shadow:var(--luz-card), 0 6px 18px rgba(0,0,0,.38);}
+body.claro .hcard:hover{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.14);}
 .hcard-top{display:flex;align-items:center;gap:9px;}
 .hcard .ic{width:28px;height:28px;flex:0 0 28px;border-radius:7px;display:flex;align-items:center;justify-content:center;
   background:color-mix(in srgb,var(--laranja) 13%,transparent);
@@ -1343,6 +1347,6 @@ init();
 </script>
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202608311300"></script>
+<script src="assets/build-check.js?v=202609081900"></script>
 </body>
 </html>
