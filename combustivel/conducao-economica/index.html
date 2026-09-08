@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609080500">
+<meta name="build" content="202609082000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1159,15 +1159,26 @@ function renderHero(data){
 
 /* agrega por motorista (média nas vigências filtradas) */
 function getRankingData(data){
+  let semRpm=0;
   const byUnit={};
   data.forEach(r=>{ (byUnit[r.unit]=byUnit[r.unit]||{unit:r.unit,rows:[]}).rows.push(r); });
-  return Object.values(byUnit).map(({unit,rows})=>{
+  const ord = Object.values(byUnit).map(({unit,rows})=>{
     const avg=f=>{ const vals=rows.map(r=>r[f]).filter(v=>v!=null); return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null; };
     const soma=f=>rows.reduce((a,r)=>a+(+r[f]||0),0);
     const o={unit, pont:avg('pont'), km:soma('km'), viagens:soma('viagens'), velx:soma('velx')};
     FIELD_ORDER.forEach(k=>o[k]=avg(k));
     return o;
-  }).sort((a,b)=>(b.pont||0)-(a.pont||0));
+  /* SEM FAIXA VERDE NÃO ENTRA NO RANKING (Renan, 08/09/2026). A nota
+     redistribui o peso dos pilares ausentes, então quem foi medido só em
+     motor ocioso e aceleração é comparado numa régua de 50 pontos em vez de
+     100 — e sobe para o topo com nota inflada (em set/2026 os dois primeiros
+     tinham 23 e 78 km rodados e faixa verde vazia). A faixa verde sozinha
+     vale 50 dos 100 pontos: sem ela não há nota comparável. As outras visões
+     continuam mostrando o motorista; quem some é só o ranking. */
+  }).filter(o => { if(o.rpm != null) return true; semRpm++; return false; })
+    .sort((a,b)=>(b.pont||0)-(a.pont||0));
+  if(semRpm) console.info(`ranking: ${semRpm} motorista(s) fora — sem faixa verde no recorte.`);
+  return ord;
 }
 
 function buildRankHead(){
@@ -1732,6 +1743,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202609042300"></script>
+<script src="../../assets/build-check.js?v=202609082000"></script>
 </body>
 </html>
