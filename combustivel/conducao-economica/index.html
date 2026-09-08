@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609080100">
+<meta name="build" content="202609080200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -289,7 +289,9 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 /* Acessos do DriverPro (Renan, 07/09/2026) — mesmo desenho do painel Acessos
    do portal: hero, 3 cards, gráfico por mês (2 colunas) e calendário (1). */
 #vw-acessos,#vw-acessrank{display:none;flex-direction:column;} #vw-acessos.on,#vw-acessrank.on{display:flex;}
-.res-cols{flex:0 0 auto;height:min(47vh,440px);min-height:230px;margin-top:12px;
+/* a fileira de baixo OCUPA A SOBRA da visão (regra da sobra dividida), em vez
+   da altura fixa do /acessos/ — numa tela alta sobrava um vão embaixo */
+.res-cols{flex:1 1 auto;min-height:230px;margin-top:12px;
   display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .res-graf{grid-column:span 2;min-width:0;}
 .res-cal{min-width:0;overflow:hidden;padding:12px 14px;display:flex;flex-direction:column;}
