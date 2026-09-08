@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609081000">
+<meta name="build" content="202609081200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -421,7 +421,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
               <div>Δ YTD<b id="d-ytd-abs">—</b></div>
               <div>Δ YTD %<b id="d-ytd-pct">—</b></div>
               <div>Impacto YTD<b id="d-ytd-imp">—</b></div>
-              <div title="Viagens sem CTE cobradas depois (aba Balanço de Massa), convertidas em km pelo R$/km dos variáveis e somadas ao km remunerado das empurradas">Balanço de massa<b id="d-bm">—</b></div>
+              <div title="Viagens sem CTE cobradas depois (aba Balanço de Massa), convertidas em km pelo R$/km remunerado (todas as contas de Combustíveis, Manutenções e Pneus) e somadas ao km remunerado das empurradas">Balanço de massa<b id="d-bm">—</b></div>
             </div>
           </div>
         </div>
@@ -620,13 +620,13 @@ const PACOTES_RSKM = new Set(['Combustíveis','Manutenções','Pneus']);
 /* BALANÇO DE MASSA (Renan, 08/09/2026): a aba "Balanço de Massa" da Base
    Dispersão de km traz, por unidade EMPURRADA e vigência, o VALOR em R$ de
    viagens que não emitiram CTE e foram cobradas depois. Esse valor volta ao km
-   remunerado: km recomposto = Valor ÷ R$/km dos VARIÁVEIS, com o R$/km
-   variável = Σ remunerado das contas abaixo (aba Frota) ÷ km remunerado
-   ORIGINAL da chave. O km recomposto é rateado pelas linhas da chave na
+   remunerado: km recomposto = Valor ÷ R$/km REMUNERADO da chave — o MESMO
+   R$/km do painel (todas as contas dos pacotes Combustíveis + Manutenções +
+   Pneus, aba Frota; Renan, 08/09/2026: "pode pegar de todas as contas") ÷ km
+   remunerado ORIGINAL da chave. O km recomposto é rateado pelas linhas da chave na
    proporção do km remunerado de cada uma. O R$/km do IMPACTO continua sendo
    calculado sobre o km original (senão a taxa mudaria junto com o km). */
 const BM_TAB = 'Balanço de Massa';
-const CONTAS_VAR = new Set(['Combustíveis','Manutenção de Veículos e Equip.','Manutenção de Carrocerias','Pneus Novos','Recapagens e Outros Serviços']);
 const BM_CIDADE = {'CUIABA':'CBA','PIRAI':'PIR','MACACU':'MCC','CACHOEIRAS DE MACACU':'MCC','CAMPO GRANDE':'CGR','RIO DE JANEIRO':'CGR',
   'PELOTAS':'PLT','FLORIANOPOLIS':'FLP','GUARULHOS':'GRL','NOVA FRIBURGO':'NFR','RONDONOPOLIS':'RON','BALNEARIO CAMBORIU':'BLC','CAMBORIU':'BLC'};
 const _nkBM = s => String(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
@@ -672,7 +672,7 @@ async function fetchCustoRem() {
   const K = { vig:idx('vigência','vigencia'), nv3:idx('nível 3','nivel 3','nv3'),
               cta:idx('conta'), rem:idx('remunerado') };
   if (Object.values(K).some(i => i < 0)) { console.warn('Aba Frota: coluna não encontrada', K, cols); return {}; }
-  const out = {}, varOut = {};
+  const out = {};
   (json.table.rows||[]).forEach(row => {
     const g = i => (row.c && row.c[i] && row.c[i].v != null) ? row.c[i].v : null;
     const vig = parseVigCell(row.c && row.c[K.vig]); if (!vig) return;
@@ -683,11 +683,9 @@ async function fetchCustoRem() {
     const k = chaveRs(vig, uni, proj);
     // custo na DRE vem NEGATIVO: o custo de verdade é -valor
     const v = -(parseFloat(g(K.rem)) || 0);
-    if (CONTAS_VAR.has(cta)) varOut[k] = (varOut[k] || 0) + v;      // R$/km dos variáveis (balanço de massa)
     if (!PACOTES_RSKM.has(PACOTES_MAP[cta])) return;
     out[k] = (out[k] || 0) + v;
   });
-  out._var = varOut;
   return out;
 }
 
@@ -710,10 +708,11 @@ async function fetchData() {
   ALL.forEach(r => { const k = chaveRs(r.vig, r.und, r.proj); kmPorChave[k] = (kmPorChave[k]||0) + r.rem; });
 
   // BALANÇO DE MASSA → km remunerado recomposto, rateado pelas linhas da chave
-  const varRem = custoRem._var || {}; let bmKm = 0, bmValor = 0, bmSem = [];
+  // (taxa = R$/km remunerado da chave, todas as contas — o mesmo do impacto)
+  let bmKm = 0, bmValor = 0, bmSem = [];
   ALL.forEach(r => { r.rem0 = r.rem; r.recomp = 0; r.bmValor = 0; });
   Object.entries(balanco).forEach(([k, valor]) => {
-    const km0 = kmPorChave[k] || 0, rv = varRem[k] || 0;
+    const km0 = kmPorChave[k] || 0, rv = custoRem[k] || 0;
     if (!(km0 > 0) || !(rv > 0)) { bmSem.push(k); return; }
     const taxa = rv / km0, kmRec = valor / taxa;
     ALL.forEach(r => { if (chaveRs(r.vig, r.und, r.proj) !== k) return;
@@ -721,7 +720,7 @@ async function fetchData() {
     bmKm += kmRec; bmValor += valor;
   });
   if (bmKm) console.info(`Balanço de massa: R$ ${Math.round(bmValor).toLocaleString('pt-BR')} → +${Math.round(bmKm).toLocaleString('pt-BR')} km remunerados em ${Object.keys(balanco).length} chave(s)`);
-  if (bmSem.length) console.warn('Balanço de massa sem km ou sem custo variável na chave (não recomposto):', bmSem);
+  if (bmSem.length) console.warn('Balanço de massa sem km ou sem custo remunerado na chave (não recomposto):', bmSem);
   let semTaxa = 0;
   ALL.forEach(r => {
     const k = chaveRs(r.vig, r.und, r.proj);
@@ -1388,7 +1387,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_km_v4';  // v4: km remunerado com o balanço de massa
+const CACHE_KEY='bi_cache_km_v5';  // v4: km remunerado com o balanço de massa
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
