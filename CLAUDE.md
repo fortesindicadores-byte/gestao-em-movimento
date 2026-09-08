@@ -942,6 +942,17 @@ Quando o portal mudar de novo, rodar o workflow em **modo `mapa`**: ele não exp
 
 Em paralelo: perguntar ao Ginfo se existe API/export oficial (trocaria o RPA por consulta estável).
 
+## Footprint Goiânia — check da entrada da operação (Renan, 08/09/2026)
+
+Visão **temporária** no cluster **Administração** (`/footprint-goiania/`, só admin) para conferir o footprint da operação de Goiânia enquanto ela entra: **uma linha por placa, uma coluna por check**, célula **OK · NOK · N/A**. Nasceu de um modelo em planilha que o Renan mandou — a tela reproduz aquele desenho, nada mais.
+
+- **14 placas** das planilhas que ele anexou (`AS_Caminhão`: 12 · `ARMAZEM_Empilhadeiras`: 2 — a máquina de limpeza ficou de fora, como no modelo). Placas e checks moram no **HTML**, não no banco: é conferência de entrada, não cadastro.
+- **16 checks em 8 grupos**, nesta ordem: **Checklist** (Físico · Vamos) · **Benner** (Preventivas · Nº de Fogo · ANTT · CRLV · Crono · Alvará Sanitário · Laudo Plataforma) · **Ginfo** (Transf. Titularidade) · **Veltec** (idem) · **Frota Legal** (idem) · **Tag Pedágio** (Tag Instalada) · **Pró-Frotas** (Cadastro) · **Freightech** (Validar Cadastro · Transf. Titularidade).
+- **Aderência por placa = OK ÷ (OK + NOK)**: **N/A sai da conta** e **célula em branco conta como NOK** (a placa começa em 0% e sobe conforme preenchem). Faixas de cor do modelo: ≥75% verde · ≥40% verde-claro · ≥15% amarelo · abaixo, vermelho.
+- **`footprint_check`** (`scripts/footprint-goiania.sql`): PK `(placa, chave)`, `status` com CHECK em OK/NOK/NA, `updated_by`/`updated_nome`/`updated_at` (a dica da célula mostra quem marcou e quando). Leitura para logados, escrita só `fca_is_admin()`. Sem linha = não preenchido; escolher "—" **apaga** a linha.
+- Auditoria: workflow **Footprint Check** (`scripts/footprint-check.mjs`) — tabela, escrita da service key, CHECK do status, RLS do anon e o preenchimento até aqui.
+- Tabela com `table-layout:fixed` e as 16 colunas dividindo a sobra: **sem barra horizontal** em desktop (validado em 1366×768 e 1600×900); os rótulos longos quebram por hífen macio (`&shy;`). No celular a tabela rola de lado.
+
 ## Disponibilidade no Supabase — substitui o Apps Script (14/08/2026)
 
 Decisão do Renan (14/08/2026): tirar a Disponibilidade/Indisponibilidade do Apps Script do "Consolidado Geral" e rodar tudo no banco, com as unidades preenchendo num app do portal (estilo FCA) e auditoria de quem atualiza. **Sem fluxo de validação de admin.** Diagnóstico que motivou: o Apps Script encadeava 4 funções num trigger; `atualizarDisponibilidade` reescrevia a aba inteira (~316k linhas) todo dia e estourava o tempo, deixando a Disponibilidade 1 dia atrás da Indisponibilidade (e com janela destrutiva entre clearContent e setValues).
