@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609081600">
+<meta name="build" content="202609081800">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Footprint Goiânia · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -256,14 +256,15 @@ table.dre thead th{text-align:left;}
 .twrap{overflow-x:hidden;}
 .twrap table.dre{width:100%;table-layout:fixed;}
 table.dre td,table.dre th{white-space:normal;overflow-wrap:anywhere;}
-table.dre col.c-placa{width:96px;} table.dre col.c-modelo{width:86px;} table.dre col.c-ad{width:62px;}
+table.dre col.c-placa{width:94px;} table.dre col.c-modelo{width:84px;} table.dre col.c-ad{width:78px;}
 /* duas linhas de cabeçalho: grupo (Checklist, Benner…) em cima, check embaixo */
 table.dre thead tr.grp th{top:0;height:34px;text-align:center;vertical-align:middle;font-size:10px;
   color:var(--txt3);letter-spacing:.5px;padding:9px 4px 8px;border-bottom:0;background:var(--cabec);}
 table.dre thead tr.grp th.fixo{text-align:left;padding-left:10px;}
 table.dre thead tr.chk th{top:39px;text-align:center;font-size:10px;letter-spacing:0;text-transform:none;padding:3px 2px 9px;line-height:1.2;}
 table.dre thead tr.chk th.fixo{text-align:left;padding-left:10px;padding-right:2px;font-size:9px;text-transform:uppercase;letter-spacing:0;}
-table.dre thead tr.grp th,table.dre thead tr.chk th{white-space:normal;overflow-wrap:normal;hyphens:manual;}
+table.dre thead tr.grp th{white-space:normal;overflow-wrap:normal;hyphens:manual;}
+table.dre thead tr.chk th{white-space:pre-line;overflow-wrap:normal;hyphens:manual;}
 table.dre thead th.sep,table.dre td.sep{border-left:1px solid var(--card-brd);}
 /* as linhas dividem a altura do card: 14 placas preenchem a tela sem sobra */
 .twrap table.dre{height:100%;}
@@ -410,22 +411,22 @@ const PLACAS=[
 ];
 // Checks, na ordem e nos grupos do modelo do Renan
 const CHECKS=[
-  {id:'chk_fisico',  grp:'Checklist',   lbl:'Checklist Físico'},
-  {id:'chk_vamos',   grp:'Checklist',   lbl:'Checklist Vamos'},
+  {id:'chk_fisico',  grp:'Checklist',   lbl:'Check­list\nFísico'},
+  {id:'chk_vamos',   grp:'Checklist',   lbl:'Check­list\nVamos'},
   {id:'ben_prev',    grp:'Benner',      lbl:'Preventi­vas'},
-  {id:'ben_fogo',    grp:'Benner',      lbl:'Nº de Fogo'},
+  {id:'ben_fogo',    grp:'Benner',      lbl:'Nº de\nFogo'},
   {id:'ben_antt',    grp:'Benner',      lbl:'ANTT'},
   {id:'ben_crlv',    grp:'Benner',      lbl:'CRLV'},
   {id:'ben_crono',   grp:'Benner',      lbl:'Crono'},
-  {id:'ben_alvara',  grp:'Benner',      lbl:'Alvará Sani­tário'},
-  {id:'ben_laudo',   grp:'Benner',      lbl:'Laudo Plata­forma'},
-  {id:'ginfo_tit',   grp:'Ginfo',       lbl:'Transf. Titulari­dade'},
-  {id:'veltec_tit',  grp:'Veltec',      lbl:'Transf. Titulari­dade'},
-  {id:'flegal_tit',  grp:'Frota Legal', lbl:'Transf. Titulari­dade'},
-  {id:'tag_inst',    grp:'Tag Pedá­gio', lbl:'Tag Instalada'},
+  {id:'ben_alvara',  grp:'Benner',      lbl:'Alvará\nSani­tário'},
+  {id:'ben_laudo',   grp:'Benner',      lbl:'Laudo\nPlata­forma'},
+  {id:'ginfo_tit',   grp:'Ginfo',       lbl:'Transf.\nTitulari­dade'},
+  {id:'veltec_tit',  grp:'Veltec',      lbl:'Transf.\nTitulari­dade'},
+  {id:'flegal_tit',  grp:'Frota Legal', lbl:'Transf.\nTitulari­dade'},
+  {id:'tag_inst',    grp:'Tag Pedá­gio', lbl:'Tag\nInsta­lada'},
   {id:'profrotas',   grp:'Pró­-Frotas',  lbl:'Cadastro'},
-  {id:'ft_valid',    grp:'Freightech',  lbl:'Validar Cadas­tro'},
-  {id:'ft_tit',      grp:'Freightech',  lbl:'Transf. Titulari­dade'}
+  {id:'ft_valid',    grp:'Freightech',  lbl:'Validar\nCadas­tro'},
+  {id:'ft_tit',      grp:'Freightech',  lbl:'Transf.\nTitulari­dade'}
 ];
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
@@ -597,6 +598,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609081600"></script>
+<script src="../assets/build-check.js?v=202609081800"></script>
 </body>
 </html>
