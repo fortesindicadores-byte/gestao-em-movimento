@@ -1,0 +1,20 @@
+name: Footprint Check (auditoria)
+
+# Confere a tabela footprint_check (a que o /footprint-goiania/ grava):
+# existe, aceita escrita da service key, recusa anon (RLS) e quantas
+# células já foram preenchidas. A linha de teste sai no fim.
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/footprint-check.mjs
