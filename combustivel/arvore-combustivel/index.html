@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202608192100">
+<meta name="build" content="202609081000">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="../../assets/pdf-export.js"></script>
@@ -149,6 +149,7 @@ body.light-mode .impact-label{color:#F1F5F9!important;}
 #pos-rsl    { grid-column:5; grid-row:1; }
 #pos-kml    { grid-column:5; grid-row:2; }
 #pos-decomp { grid-column:5; grid-row:5; }
+#pos-recomp { grid-column:3; grid-row:5; }   /* Balanço de Massa: desce do Km Rodado (Rem) */
 #pos-preco  { grid-column:7; grid-row:1/3; align-self:center; }
 #pos-volume { grid-column:7; grid-row:4; }
 
@@ -166,6 +167,7 @@ table td:first-child,table th:first-child{text-align:left;}
 .cr-t { background:#f8fafc !important; color:#FF0000 !important; font-weight:700; }
 .cg-t { background:#f8fafc !important; color:#008000 !important; font-weight:700; }
 .decomp-card .kpi-table td { background:#fef3c7; color:#78350f; font-weight:600; }
+.recomp-card .kpi-table td { background:#ecfdf5; color:#065f46; font-weight:600; }
 
 /* ── Impact box ── */
 .impact-box { border:2px solid var(--orange); background:#0d1f35; border-radius:10px; padding:16px 18px; text-align:center; box-shadow:0 0 20px rgba(249,115,22,.15); }
@@ -233,7 +235,7 @@ table td:first-child,table th:first-child{text-align:left;}
     row-gap:0;gap:10px;width:100%;
   }
   /* Reseta posicionamento de grid dos nós e respeita a ordem lógica da árvore */
-  #pos-custo,#pos-rskm,#pos-kmrod,#pos-rsl,#pos-kml,#pos-decomp,#pos-preco,#pos-volume{
+  #pos-custo,#pos-rskm,#pos-kmrod,#pos-rsl,#pos-kml,#pos-decomp,#pos-preco,#pos-volume,#pos-recomp{
     grid-column:auto;grid-row:auto;align-self:auto;width:100%;
   }
   #pos-custo {order:1;}
@@ -241,6 +243,7 @@ table td:first-child,table th:first-child{text-align:left;}
   #pos-rsl   {order:3;}
   #pos-kml   {order:4;}
   #pos-kmrod {order:5;}
+  #pos-recomp{order:6;}   /* logo depois do Km Rodado, antes da Decomposição */
   #pos-decomp{order:6;}
   #pos-preco {order:7;}
   #pos-volume{order:8;}
@@ -401,6 +404,20 @@ const STATIC = {
         </div>
       </div>
 
+      <!-- Col 3 / Row 5: Recomposição pelo Balanço de Massa (Renan, 08/09/2026) — o km
+           remunerado acima JÁ inclui este km; a caixa mostra quanto voltou ao remunerado -->
+      <div id="pos-recomp">
+        <div class="kpi-card recomp-card" id="card-recomp" title="Viagens sem CTE cobradas depois (aba Balanço de Massa), convertidas em km pelo R$/km dos variáveis (Manutenção de Veículos, Manutenção de Carrocerias, Pneus Novos, Recapagens e Combustíveis) e já somadas ao Km Rodado remunerado">
+          <div class="card-label">Recomposição · Balanço de Massa</div>
+          <table class="kpi-table">
+            <thead><tr><th>Valor R$</th><th>R$/km var.</th><th>Km no Rem</th></tr></thead>
+            <tbody><tr>
+              <td id="v-bmValor">—</td><td id="v-bmTaxa">—</td><td id="v-bmKm">—</td>
+            </tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Col 5 / Row 1: R$/Litro -->
       <div id="pos-rsl">
         <div class="kpi-card" id="card-rsl">
@@ -512,6 +529,7 @@ function calcular(f){
     rsKmRem, rsKmReal,
     custoRem, custoReal,
     kmRem, kmReal, dKmRod,
+    bmKm:k.bmKm, bmValor:k.bmValor, bmTaxa:k.bmTaxa,
     impPreco, impVolume,
     viagem1: k.viagem1, recs: k.recs, noturnas: k.noturnas, mapas: k.mapas
   };
@@ -584,6 +602,10 @@ function renderKPIs(d) {
   set('v-kmDelta', fmt(d.dKmRod));
   set('v-kmPct',   (d.dKmRod < 0 ? '-' : '') + pct(d.dKmRod, d.kmRem));
   color(q('v-kmDelta'), d.dKmRod < 0); colorText(q('v-kmPct'), d.dKmRod < 0);
+  // ── Recomposição · Balanço de Massa ──
+  set('v-bmValor', d.bmValor ? fmt(d.bmValor) : '—');
+  set('v-bmTaxa',  d.bmTaxa  ? f2(d.bmTaxa)   : '—');
+  set('v-bmKm',    d.bmKm    ? '+'+fmtInt(d.bmKm) : '—');
 
   // ── Impactos ──
   const fmtImp = v => Math.round(Math.abs(+v)).toLocaleString('pt-BR');
@@ -842,6 +864,32 @@ const cmpVigBR = (a,b) => { const [ma,ya]=String(a).split('/'), [mb,yb]=String(b
 // Custo Combustível = SÓ a conta Combustíveis (conta é conta). Sem Arla, Estorno de
 // ICMS nem ICMS Crédito Presumido — assim bate com a linha "Combustíveis" da DRE.
 const COMB = new Set(['COMBUSTIVEIS VEICULOS E EQUIPAMENTOS','COMBUSTIVEIS']);
+/* BALANÇO DE MASSA (Renan, 08/09/2026): viagens das EMPURRADAS sem CTE, cobradas
+   depois. O VALOR (aba "Balanço de Massa" da Base Dispersão de km) volta ao km
+   remunerado: km = Valor ÷ R$/km dos VARIÁVEIS (Σ remunerado das contas abaixo
+   na aba Frota ÷ km remunerado original da chave vigência|projeto|unidade).
+   Mesma conta do /painel-km/. */
+const VAR_CTAS = new Set(['COMBUSTIVEIS VEICULOS E EQUIPAMENTOS','COMBUSTIVEIS',
+  'MANUTENCAO DE VEICULOS E EQUIPAMENTOS','MANUTENCAO DE VEICULOS E EQUIP.','MANUTENCAO DE VEICULOS',
+  'MANUTENCAO DE CARROCERIAS','PNEUS E CAMARAS','PNEUS NOVOS','CONSERTOS E RECAPAGENS DE PNEUS','RECAPAGENS E OUTROS SERVICOS','RECAPAGENS']);
+const BM_CIDADE = {'CUIABA':'CBA','PIRAI':'PIR','MACACU':'MCC','CACHOEIRAS DE MACACU':'MCC','CAMPO GRANDE':'CGR','RIO DE JANEIRO':'CGR',
+  'PELOTAS':'PLT','FLORIANOPOLIS':'FLP','GUARULHOS':'GRL','NOVA FRIBURGO':'NFR','RONDONOPOLIS':'RON','BALNEARIO CAMBORIU':'BLC','CAMBORIU':'BLC'};
+let S_BM=[];                     // [{vig:'MM/YYYY', n3:'EMPURRADA - PIR', valor}]
+function parseBalanco(cols,rows){
+  const fi=_fiFactory(cols); const cU=fi('unidade'), cV=fi('vig'), cVal=fi('valor'); const out=[];
+  if(cU<0||cV<0||cVal<0){ console.warn('Balanço de Massa: coluna não encontrada', cols); return out; }
+  rows.forEach(r=>{ const d=kParseVig(r[cV]); const valor=+r[cVal]||0; if(!d||!valor)return;
+    const partes=_nk(r[cU]).split(' '); const proj=partes.pop(); const cid=partes.join(' ');
+    const cod=BM_CIDADE[cid]||BM_CIDADE[partes[partes.length-1]]; if(!cod){ console.warn('Balanço de Massa: unidade sem código', r[cU]); return; }
+    out.push({vig:vigBR(d), n3:proj+' - '+cod, valor}); });
+  return out;
+}
+// Σ km remunerado e Σ remunerado dos variáveis de UMA chave (vig + n3)
+function kmRemChave(vig,n3){ let km=0; for(const r of S_DP){ const d=kParseVig(r[DP.vig]); if(!d||vigBR(d)!==vig)continue; if(_nk(r[DP.proj])!==_nk(n3))continue; km+=+r[DP.kmRem]||0; } return km; }
+function varRemChave(vig,n3){ let v=0; for(const r of S_FR){ if(!VAR_CTAS.has(_nk(r[FR.cta])))continue; const d=kParseVig(r[FR.vig]); if(!d||vigBR(d)!==vig)continue; if(_nk(r[FR.n3])!==_nk(n3))continue; v+=Math.abs(+r[FR.rem]||0); } return v; }
+// recomposição do recorte f: {km, valor, taxa}
+function bmAgg(f){ let km=0,valor=0; for(const b of S_BM){ if(!_match(f,b.vig,b.n3))continue; const km0=kmRemChave(b.vig,b.n3), rv=varRemChave(b.vig,b.n3);
+    if(!(km0>0)||!(rv>0))continue; km+=b.valor/(rv/km0); valor+=b.valor; } return {km, valor, taxa: km>0?valor/km:0}; }
 
 // Passa uma linha pelos filtros atuais (vigStr='MM/YYYY', n3='PROJETO - CODE')
 function _match(f, vigStr, n3){
@@ -883,7 +931,8 @@ function custoAgg(f){ let rem=0,real=0; if(!FR)return{rem,real};
 function kmAgg(f){ let rem=0,real=0,vT=0,vR=0,vN=0,vM=0; if(!DP)return{rem,real,viagem1:0,recs:0,noturnas:0,mapas:0};
   for(const r of S_DP){ const d=kParseVig(r[DP.vig]); if(!d)continue; if(!_match(f,vigBR(d),String(r[DP.proj]||'')))continue;
     rem+=+r[DP.kmRem]||0; real+=+r[DP.kmReal]||0; vT+=+r[DP.vgTot]||0; vR+=+r[DP.vgRec]||0; vN+=+r[DP.vgNot]||0; vM+=+r[DP.vgMap]||0; }
-  return{rem,real,viagem1:vT-vR-vN-vM,recs:vR,noturnas:vN,mapas:vM}; }
+  const bm=bmAgg(f); rem+=bm.km;   // o remunerado JÁ inclui o balanço de massa
+  return{rem,real,viagem1:vT-vR-vN-vM,recs:vR,noturnas:vN,mapas:vM,bmKm:bm.km,bmValor:bm.valor,bmTaxa:bm.taxa}; }
 function kmlAgg(f){ // Eficiência: rem médio = média burra por projeto ponderada por km do projeto; real = Σkm/Σlitros
   let sumKm=0,sumLit=0; const proj={}; if(!KM)return{rem:null,real:null};
   for(const r of S_KM){ const d=kParseVig(r[KM.vig]); if(!d)continue; const n3=String(r[KM.proj]||''); if(!_match(f,vigBR(d),n3))continue;
@@ -900,16 +949,18 @@ function rslAgg(f){ // R$/L: real = ΣTotalR$/ΣLitros; rem = Σ(preço×litros)
 
 // Carrega as 4 abas-fonte e monta as opções de filtro (union project-unit-vigência)
 async function fetchAll(){
-  const [fr,dp,km,rs]=await Promise.all([
+  const [fr,dp,km,rs,bm]=await Promise.all([
     gvFetchSheet(VF_ID,'Frota'),
     gvFetchSheet(GV_ID,'Dispersão de km'),
     gvFetchSheet(KML_ID,KML_TAB),
     gvFetchSheet(KML_ID,'R$/L'),   // MESMO workbook do painel Preço R$/L — a aba "R$/L" do workbook GV_ID (Base Dispersão de km) é uma cópia velha/incompleta (não tem GRL, por ex.)
+    gvFetchSheet(GV_ID,'Balanço de Massa').catch(e=>{ console.warn('Balanço de Massa indisponível:', e); return {cols:[],rows:[]}; }),
   ]);
   FR=detFrota(fr.cols); S_FR=fr.rows;
   DP=detDisp(dp.cols);  S_DP=dp.rows;
   KM=detKmlSrc(km.cols);S_KM=km.rows;
   buildRemLookup(rs.cols,rs.rows);
+  S_BM=parseBalanco(bm.cols,bm.rows);
 
   // allRows = união {vigencia:'MM/YYYY', nivel3:'PROJETO - CODE'} p/ cascata e opções de filtro.
   // Só entram meses COM dado real — a Frota tem meses orçados futuros (rem/real=0) que, se listados,
@@ -1014,6 +1065,9 @@ function drawConnectors() {
   const kmlL   =pt('card-kml','l'),   kmlR  =pt('card-kml','r');
   const preco  =pt('box-preco','l'),  volume=pt('box-volume','l');
   const decomp =pt('card-decomp','l');
+  const kmrodEl=document.getElementById('card-kmrod').getBoundingClientRect(), recEl=document.getElementById('card-recomp').getBoundingClientRect();
+  // do meio da célula "Rem" (1/4 da largura) do Km Rodado para o topo da Recomposição
+  const rx=kmrodEl.left-wr.left+kmrodEl.width*0.125, ry1=kmrodEl.bottom-wr.top, ry2=recEl.top-wr.top;
 
   // Seta pequena cinza (mesmo estilo KM Rodado → Decomposição)
   function arrowSmall(x1,y1,x2,y2) {
@@ -1033,7 +1087,8 @@ function drawConnectors() {
     bk(rskmR.x,rskmR.y,rslL.x,rslL.y,kmlL.x,kmlL.y) +
     bkToOne(rslR.x,rslR.y,kmlR.x,kmlR.y,preco.x,preco.y) +
     arrowSmall(kmrodR.x,kmrodR.y,volume.x,volume.y) +
-    arrowSmall(kmrodR.x,kmrodR.y,decomp.x,decomp.y);
+    arrowSmall(kmrodR.x,kmrodR.y,decomp.x,decomp.y) +
+    ln(rx,ry1,rx,ry2-7,C)+`<polygon points="${f(rx-3)},${f(ry2-7)} ${f(rx)},${f(ry2)} ${f(rx+3)},${f(ry2-7)}" fill="${C}"/>`;
 }
 
 // ── Helpers ──
