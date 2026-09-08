@@ -833,7 +833,7 @@ Objetivo: montar a Árvore (`/combustivel/arvore-combustivel/`) puxando dados **
 
 **Custo Combustível (DRE / Visão Financeira):** workbook `1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8`, aba **`Frota`** (colunas `orc`=0, `rem`=1, `real`=2, `kmRem`=5, `kmReal`=6, `vig`=9, `uni`=10, `nv3`=11, `cta`=12). Custo Combustível = soma de `rem`/`real` das contas que caem no pacote **"Combustíveis"** (ver `PACOTES_MAP` no `visao-financeira/index.html`: Combustíveis Veículos e Equipamentos, Estorno de ICMS não Aproveitado, Fluídos (Arla), Arla, ICMS Crédito Presumido).
 
-Situação atual do código: a Árvore lê a aba `Árvore Comb.` (`GV_ID=1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM`) para quase tudo, e já lê a aba `Km/L` (`KML_ID=1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A`) só para o card KM/L bater com o painel Eficiência.
+**Situação em 08/09/2026: a aba `Árvore Comb.` NÃO é mais lida por ninguém** — a Árvore monta tudo das abas-fonte (Frota da Visão Financeira, `Dispersão de km` do `GV_ID`, `Km/L` e `R$/L` do `KML_ID`); a constante legada saiu do painel e a aba saiu dos `ALVOS` do gviz-robot. O Renan pode excluí-la. Do workbook Base Dispersão de km só a aba `Dispersão de km` continua em uso (10 painéis).
 
 **Como implementar com segurança:** os números precisam continuar batendo com a `Árvore Comb.` atual. Antes de trocar a fonte, inspecionar as abas reais (`Dispersão de km`, `R$/L`, `Frota`) via GitHub Actions (o sandbox não alcança docs.google), reproduzir os totais atuais e só então trocar.
 
