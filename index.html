@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609091700">
+<meta name="build" content="202609091800">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -137,18 +137,21 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
 #hub-screen{flex-direction:row;}
 .hmio .top{padding:0;flex-wrap:nowrap;}
 .hmio .top-dir{gap:9px;}
-.hside{width:214px;flex:0 0 214px;display:flex;flex-direction:column;gap:2px;padding:16px 12px 12px;
+/* 264px: a MESMA largura da lateral do Gerenciar Acessos (.adm-side) — com
+   214px a barra ficava estreita ao lado do miolo largo e a marca quebrava
+   em duas linhas (Renan, 09/09/2026: "por que ficou tão estreita?"). */
+.hside{width:264px;flex:0 0 264px;display:flex;flex-direction:column;gap:2px;padding:16px 12px 12px;
   background:var(--side);border-right:1px solid var(--linha);min-height:0;}
 .hside .s-top{display:flex;align-items:center;gap:10px;padding:2px 6px 12px;min-width:0;}
-.hside .s-top h1{font-size:12.5px;font-weight:700;color:var(--txt);line-height:1.2;letter-spacing:0;}
+.hside .s-top h1{font-size:13.5px;font-weight:700;color:var(--txt);line-height:1.2;letter-spacing:0;}
 .hside .s-top p{font-size:9.5px;color:var(--txt4);font-weight:600;margin-top:2px;}
 .mk-mini{width:28px;height:28px;flex:0 0 28px;border-radius:9px;display:flex;align-items:center;justify-content:center;
   background:var(--brilho), color-mix(in srgb,var(--laranja) 16%,transparent);
   border:1px solid color-mix(in srgb,var(--laranja) 30%,transparent);box-shadow:var(--luz-card);}
 .mk-mini svg{width:15px;height:15px;stroke:var(--laranja);fill:none;}
 .s-sec{font-size:9px;font-weight:700;color:var(--txt4);text-transform:uppercase;letter-spacing:1.2px;padding:12px 8px 6px;}
-.s-item{display:flex;align-items:center;gap:9px;width:100%;padding:8px 9px;border:0;border-radius:8px;cursor:pointer;
-  background:transparent;color:var(--txt2);font-family:inherit;font-size:12px;font-weight:500;text-align:left;}
+.s-item{display:flex;align-items:center;gap:10px;width:100%;padding:9px 11px;border:0;border-radius:8px;cursor:pointer;
+  background:transparent;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;text-align:left;}
 .s-item:hover{background:var(--hover);color:var(--txt);}
 .s-item.active{background:var(--hover);color:var(--txt);font-weight:600;}
 .s-ic{width:15px;height:15px;flex:0 0 15px;display:flex;}
@@ -1464,6 +1467,6 @@ init();
 </script>
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202609091700"></script>
+<script src="assets/build-check.js?v=202609091800"></script>
 </body>
 </html>
