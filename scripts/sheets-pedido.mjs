@@ -35,42 +35,57 @@ if (r0.status === 404) {
   process.exit(0);
 }
 
-const pend = await api('sh_pedido?status=eq.pendente&select=id,pedido_nome,so&order=id.asc');
+// Pega o que está pendente e também o que ficou preso em "rodando": se a
+// rodada anterior morreu no meio (runner cancelado, erro nosso), o pedido
+// ficaria travado para sempre e o botão do hub nunca mais liberaria.
+const PRESO_MIN = 25;
+const preso = new Date(Date.now() - PRESO_MIN * 60000).toISOString();
+const pend = await api('sh_pedido?select=id,pedido_nome,so,status'
+  + `&or=(status.eq.pendente,and(status.eq.rodando,iniciado_em.lt.${preso}))&order=id.asc`);
 if (!pend || !pend.length) { console.log('Nenhum pedido pendente.'); process.exit(0); }
 
 const ids = pend.map(p => p.id);
 // vários pedidos na fila viram UMA carga: o robô já recarrega só o que mudou
 const so = pend.every(p => (p.so || '') === (pend[0].so || '')) ? (pend[0].so || '') : '';
-const filtro = `id=in.(${ids.join(',')})`;
-console.log(`${ids.length} pedido(s): ${ids.join(', ')}${so ? ` · só "${so}"` : ' · todas as bases'}`);
+const abandonados = pend.filter(p => p.status === 'rodando').length;
+console.log(`${ids.length} pedido(s): ${ids.join(', ')}${so ? ` · só "${so}"` : ' · todas as bases'}`
+  + (abandonados ? ` · ${abandonados} retomado(s) de uma rodada que não terminou` : ''));
 
-const patch = (corpo) => api(filtro, {
+// o "?" e o nome da tabela ficam AQUI: mandar só o filtro faz o PostgREST
+// procurar uma tabela chamada "id=in.(1)" e devolver 404 (bug real, 09/09/2026)
+const patch = (corpo) => api(`sh_pedido?id=in.(${ids.join(',')})`, {
   method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(corpo),
 });
+const fecha = (status, resultado) => patch({ status, resultado: String(resultado).slice(0, 900),
+  terminado_em: new Date().toISOString() });
 
 await patch({ status: 'rodando', iniciado_em: new Date().toISOString(), run_url: RUN_URL });
 
-// roda o robô de sempre e guarda o log para devolver ao hub
-const saida = await new Promise(ok => {
-  const p = spawn(process.execPath, ['scripts/sheets-robot.mjs'], {
-    env: { ...process.env, SHEETS_MODO: 'run', SHEETS_SO: so },
+let saida;
+try {
+  // roda o robô de sempre e guarda o log para devolver ao hub
+  saida = await new Promise(ok => {
+    const p = spawn(process.execPath, ['scripts/sheets-robot.mjs'], {
+      env: { ...process.env, SHEETS_MODO: 'run', SHEETS_SO: so },
+    });
+    let txt = '';
+    const junta = d => { txt += d; process.stdout.write(d); };
+    p.stdout.on('data', junta);
+    p.stderr.on('data', junta);
+    p.on('close', cod => ok({ cod, txt }));
   });
-  let txt = '';
-  const junta = d => { txt += d; process.stdout.write(d); };
-  p.stdout.on('data', junta);
-  p.stderr.on('data', junta);
-  p.on('close', cod => ok({ cod, txt }));
-});
+} catch (e) {
+  // o pedido NUNCA fica preso: qualquer erro daqui volta como "erro" na linha
+  await fecha('erro', e.message).catch(() => {});
+  throw e;
+}
 
 // o hub mostra o rodapé do log: "N carregada(s) · … · X linha(s) gravada(s)"
 const linhas = saida.txt.trim().split('\n').filter(Boolean);
-const resumo = linhas.slice(-3).join('\n').slice(0, 900);
+const resumo = linhas.slice(-3).join('\n');
 
-await patch({
-  status: saida.cod === 0 ? 'ok' : 'erro',
-  terminado_em: new Date().toISOString(),
-  resultado: resumo || (saida.cod === 0 ? 'sem saída' : `o robô saiu com código ${saida.cod}`),
-});
+await fecha(saida.cod === 0 ? 'ok' : 'erro',
+  resumo || (saida.cod === 0 ? 'sem saída' : `o robô saiu com código ${saida.cod}`));
 
 console.log(`\npedido(s) ${ids.join(', ')} → ${saida.cod === 0 ? 'ok' : 'erro'}`);
 process.exit(saida.cod === 0 ? 0 : 1);

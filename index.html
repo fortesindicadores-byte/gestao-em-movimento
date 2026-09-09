@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609090400">
+<meta name="build" content="202609091300">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -966,13 +966,19 @@ async function olhaPedido(){
   const bt = document.getElementById('bases-run');
   if (!p) { setBsSt(''); if (bt) bt.disabled = false; return false; }
   const quem = p.pedido_nome ? ` · ${p.pedido_nome}` : '';
+  const min = t => t ? (Date.now() - new Date(t)) / 60000 : 0;
   if (p.status === 'pendente') {
-    setBsSt(`Pedido ${_bsIdade(p.pedido_em)}${quem} — na fila.`);
-    if (bt) bt.disabled = true; return true;
+    // a varredura do GitHub costuma atrasar; passado um tempo o botão volta
+    const demorou = min(p.pedido_em) > 12;
+    setBsSt(`Pedido ${_bsIdade(p.pedido_em)}${quem} — na fila.`
+      + (demorou ? '\nA varredura do GitHub está demorando. Dá para pedir de novo.' : ''));
+    if (bt) bt.disabled = !demorou; return true;
   }
   if (p.status === 'rodando') {
-    setBsSt(`Carregando, começou ${_bsIdade(p.iniciado_em)}${quem}.`);
-    if (bt) bt.disabled = true; return true;
+    const travou = min(p.iniciado_em) > 25;
+    setBsSt(`Carregando, começou ${_bsIdade(p.iniciado_em)}${quem}.`
+      + (travou ? '\nEssa rodada não terminou — a próxima varredura retoma sozinha.' : ''));
+    if (bt) bt.disabled = !travou; return true;
   }
   setBsSt(`Carga manual ${_bsIdade(p.terminado_em)}${quem}\n${p.resultado || ''}`);
   if (bt) bt.disabled = false;
@@ -1486,6 +1492,6 @@ init();
 </script>
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202609090400"></script>
+<script src="assets/build-check.js?v=202609091300"></script>
 </body>
 </html>
