@@ -55,9 +55,18 @@ const api = async (caminho, init = {}) => {
   if (!r.ok) throw new Error(`HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
   return r.status === 204 ? null : r.json().catch(() => null);
 };
-const gravaBase = async reg => api('sh_base?on_conflict=slug', {
+// O upsert do PostgREST monta a linha ANTES de resolver o conflito, então o
+// NOT NULL de sheet_id é checado mesmo quando a linha já existe: mandar só
+// {slug, carregado_em} devolvia 23502 e derrubava TODA hora em que nada mudou
+// (bug real, 09/09/2026 — 34 falhas de 34). Por isso a identidade da base vai
+// junto em toda gravação; o resto vem em `extra`.
+const identDe = b => ({
+  slug: b.slug, nome: b.nome, sheet_id: b.id, aba: b.sheet || null, gid: b.gid || null,
+  tq: b.tq || null, headers: b.headers || null, gviz_chave: chaveDe(b),
+});
+const gravaBase = async (b, extra) => api('sh_base?on_conflict=slug', {
   method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-  body: JSON.stringify([reg]),
+  body: JSON.stringify([{ ...identDe(b), ...extra }]),
 });
 
 let carregadas = 0, iguais = 0, falhas = 0, recusadas = 0, linhasTot = 0;
@@ -77,7 +86,7 @@ for (const b of alvos) {
       antes = q && q[0];
     }
     if (antes && antes.hash === hash && MODO !== 'tudo') {
-      await gravaBase({ slug: b.slug, carregado_em: new Date().toISOString(), erro: null });
+      await gravaBase(b, { carregado_em: new Date().toISOString(), erro: null });
       iguais++;
       console.log(`=   ${b.slug.padEnd(24)} sem mudança (${rows.length} linhas)`);
       continue;
@@ -86,7 +95,7 @@ for (const b of alvos) {
     if (antes && antes.linhas > 20 && rows.length < antes.linhas * (1 - QUEDA_MAX)) {
       const aviso = `carga recusada: a aba veio com ${rows.length} linha(s) contra `
         + `${antes.linhas} da carga anterior — provável filtro aplicado na aba`;
-      if (!SECO) await gravaBase({ slug: b.slug, erro: aviso, carregado_em: new Date().toISOString() });
+      if (!SECO) await gravaBase(b, { erro: aviso, carregado_em: new Date().toISOString() });
       recusadas++;
       console.log(`!   ${b.slug.padEnd(24)} ${aviso}`);
       continue;
@@ -123,9 +132,7 @@ for (const b of alvos) {
     }
     await api(`${t}?linha=gt.${linhas.length}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
 
-    await gravaBase({
-      slug: b.slug, nome: b.nome, sheet_id: b.id, aba: b.sheet || null, gid: b.gid || null,
-      tq: b.tq || null, headers: b.headers || null, gviz_chave: chaveDe(b),
+    await gravaBase(b, {
       colunas: mapa.map(c => ({ i: c.i, label: c.label, col: c.col, tipo: c.tipo })),
       linhas: linhas.length, hash, carregado_em: new Date().toISOString(), erro: null,
     });
@@ -136,7 +143,7 @@ for (const b of alvos) {
     falhas++;
     const msg = e.message.slice(0, 300);
     console.log(`FALHOU ${b.slug.padEnd(24)} ${msg}`);
-    if (!SECO) { try { await gravaBase({ slug: b.slug, erro: msg, carregado_em: new Date().toISOString() }); } catch (_) {} }
+    if (!SECO) { try { await gravaBase(b, { erro: msg, carregado_em: new Date().toISOString() }); } catch (_) {} }
   }
 }
 
