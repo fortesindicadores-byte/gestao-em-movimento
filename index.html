@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092100">
+<meta name="build" content="202609092300">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -933,7 +933,7 @@ async function pedeCarga(){
     const nome = currentUser?.user_metadata?.name || currentUser?.email?.split('@')[0] || null;
     const { error } = await sb.from('sh_pedido').insert({ pedido_nome: nome, pedido_por: currentUser?.id });
     if (error) throw error;
-    setBsSt('Pedido registrado — a carga começa na próxima varredura (a cada 5 min).');
+    setBsSt('Pedido registrado — a carga começa na próxima varredura (a cada 5 min;\nna pior das hipóteses, na carga da hora cheia).');
     vigiaPedido();
   } catch (e) {
     bt.disabled = false;
@@ -1477,6 +1477,6 @@ init();
 </script>
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202609092100"></script>
+<script src="assets/build-check.js?v=202609092300"></script>
 </body>
 </html>
