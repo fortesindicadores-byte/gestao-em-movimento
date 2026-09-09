@@ -1,0 +1,30 @@
+name: Sheets DDL (gera o SQL das tabelas)
+
+# Lê o cabeçalho real de cada aba manual e imprime o SQL das tabelas
+# (public.sh_<slug>). Não executa nada: o SQL sai no log para colar no
+# SQL Editor do Supabase. Reexecutável — rodar de novo depois de uma coluna
+# nova na aba gera o "add column if not exists" dela.
+on:
+  workflow_dispatch:
+    inputs:
+      so:
+        description: 'Só os slugs que começam com (vazio = todos)'
+        required: false
+        default: ''
+
+jobs:
+  ddl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Gerar SQL
+        env:
+          SHEETS_SO: ${{ inputs.so }}
+        run: node scripts/sheets-ddl.mjs | tee bases-manuais.sql
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bases-manuais-sql
+          path: bases-manuais.sql

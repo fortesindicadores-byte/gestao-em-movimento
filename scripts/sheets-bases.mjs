@@ -50,14 +50,18 @@ export const BASES = [
   // ── Auditorias / FCA / Metas ──
   { slug: 'dpo',              id: WB.TERM, sheet: 'DPO',              nome: 'DPO' },
   { slug: 'demarco',          id: WB.TERM, sheet: 'Demarco',          nome: 'Demarco' },
-  { slug: 'fca_total',        id: WB.TERM, sheet: 'FCA Total', headers: '1', nome: 'FCA Total' },
-  { slug: 'fca_base',         id: WB.TERM, gid: '216663799',          nome: 'FCA (base do /fca/)' },
+  { slug: 'fca_total',        id: WB.TERM, sheet: 'FCA Total', headers: '1', nome: 'FCA Total',
+    // o /fca/ e o fca-migracao pedem a MESMA aba pelo gid — resposta byte a
+    // byte igual (414 linhas, 26 colunas, 225.221 bytes, conferido 09/09/2026).
+    // Uma tabela só; o apelido existe para o snapshot cru continuar casando.
+    apelidos: [{ gid: '216663799' }] },
   { slug: 'metas',            id: WB.TERM, gid: '199351909',          nome: 'Metas (painel-metas)' },
 
   // ── Gerot / RPM ──
-  { slug: 'gerot',            id: WB.RPM,  gid: '0',                  nome: 'Gerot' },
   { slug: 'rpm_depara',       id: WB.RPM,  sheet: 'De-Para', headers: '0', nome: 'RPM · De-Para' },
-  { slug: 'rpm_base',         id: WB.RPM,  sheet: 'Base RPM', headers: '1', nome: 'Base RPM' },
+  { slug: 'rpm_base',         id: WB.RPM,  sheet: 'Base RPM', headers: '1', nome: 'Base RPM',
+    // gid 0 é a MESMA aba (6.551 linhas, 13 colunas, 1.522.526 bytes)
+    apelidos: [{ gid: '0' }] },
   { slug: 'rpm_ics',          id: WB.RPM,  sheet: 'Consolidado ICs',  nome: 'Consolidado ICs' },
 
   // ── Termômetro / MPR (mês + acumulado, por tier) ──
@@ -117,4 +121,99 @@ export async function baixa(a) {
   const m = txt.match(/setResponse\(([\s\S]*)\)/);
   if (!m) throw new Error('corpo gviz não reconhecido');
   return { json: JSON.parse(m[1]), bytes: txt.length };
+}
+
+// ── nome da coluna no banco ───────────────────────────────────────────────
+// O rótulo da aba vira um identificador do Postgres. Os símbolos que a gente
+// usa muito viram palavra ("Δ"→d, "R$"→rs, "%"→pct) em vez de sumirem, senão
+// "Δ (km)" e "(km)" colidiriam. Coluna sem rótulo (cabeçalho que não está na
+// primeira linha) vira col_<i>, que é como os painéis já a leem: pelo índice.
+const SIMB = [[/Δ/g, 'd '], [/R\$/g, 'rs '], [/%/g, ' pct '], [/º|°/g, ''], [/ª/g, '']];
+export function colSlug(label, i) {
+  let s = String(label || '').trim();
+  if (!s) return `col_${i}`;
+  for (const [re, sub] of SIMB) s = s.replace(re, sub);
+  s = s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+       .toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  if (!s) return `col_${i}`;
+  if (/^[0-9]/.test(s)) s = 'c_' + s;
+  return s.slice(0, 55);
+}
+// as colunas de controle da tabela — uma coluna da aba que caia num desses
+// nomes ganha _orig (a aba do DRE tem "VIGÊNCIA", que viraria `vigencia` e
+// brigaria com a vigência normalizada que o robô grava)
+export const RESERVADAS = new Set(['linha', 'vigencia', 'atualizado_em']);
+// devolve [{i, label, col, tipo, sql}] com nomes ÚNICOS (colisão ganha _<i>)
+export function mapaColunas(cols) {
+  const vistos = new Set();
+  return cols.map((c, i) => {
+    const label = String((c && c.label) || '').trim();
+    let col = colSlug(label, i);
+    if (RESERVADAS.has(col)) col = col + '_orig';
+    if (vistos.has(col)) col = `${col}_${i}`.slice(0, 63);
+    vistos.add(col);
+    const tipo = (c && c.type) || 'string';
+    return { i, label, col, tipo, sql: SQL_TIPO[tipo] || 'text' };
+  });
+}
+export const SQL_TIPO = { number: 'numeric', date: 'date', datetime: 'timestamptz',
+  timeofday: 'text', boolean: 'boolean', string: 'text' };
+
+// ── valor da célula ───────────────────────────────────────────────────────
+// O gviz manda data como o TEXTO "Date(2026,0,15)" (mês começa em zero) e
+// hora como [h,m,s,ms]. Sem converter, a data entraria como string e o
+// Postgres recusaria a coluna date.
+const dRe = /^Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+))?\)$/;
+const p2 = n => String(n).padStart(2, '0');
+export function valorDe(cel, tipo) {
+  const v = cel && cel.v;
+  if (v == null || v === '') return null;
+  if (tipo === 'date' || tipo === 'datetime') {
+    const m = typeof v === 'string' && v.match(dRe);
+    if (!m) return null;
+    const [, y, mo, d, h, mi, s] = m;
+    const dia = `${y}-${p2(+mo + 1)}-${p2(+d)}`;
+    return tipo === 'date' ? dia : `${dia}T${p2(h || 0)}:${p2(mi || 0)}:${p2(s || 0)}Z`;
+  }
+  if (tipo === 'timeofday') return Array.isArray(v) ? v.slice(0, 3).map(p2).join(':') : String(v);
+  if (tipo === 'number') return typeof v === 'number' ? v : (isFinite(+v) ? +v : null);
+  if (tipo === 'boolean') return typeof v === 'boolean' ? v : /^(true|verdadeiro|sim)$/i.test(String(v));
+  return String(v);
+}
+
+// ── vigência normalizada (MM/YYYY) ────────────────────────────────────────
+// Cada aba escreve a vigência do seu jeito: data de verdade, "jan/26",
+// "01/2026", ou um par Mês+Ano em colunas separadas. A coluna `vigencia` da
+// tabela guarda sempre MM/YYYY, que é o que os painéis filtram.
+const MESES = { jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6, jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12 };
+export function achaVigencia(mapa) {
+  const acha = re => mapa.find(c => re.test(c.label));
+  const v = acha(/vig[eê]nci|compet[eê]nci/i);
+  if (v) return { tipo: 'coluna', vig: v };
+  const mes = mapa.find(c => /^m[eê]s$/i.test(c.label.trim()));
+  const ano = mapa.find(c => /^ano$/i.test(c.label.trim()));
+  if (mes && ano) return { tipo: 'mes_ano', mes, ano };
+  return null;
+}
+export function vigenciaDe(fonte, valores) {
+  if (!fonte) return null;
+  if (fonte.tipo === 'mes_ano') {
+    const m = MESES[String(valores[fonte.mes.col] || '').slice(0, 3).toLowerCase()];
+    const a = +valores[fonte.ano.col];
+    return m && a ? `${p2(m)}/${a}` : null;
+  }
+  const raw = valores[fonte.vig.col];
+  if (raw == null || raw === '') return null;
+  const s = String(raw);
+  let m = s.match(/^(\d{4})-(\d{2})-\d{2}/);            // date já convertida
+  if (m) return `${m[2]}/${m[1]}`;
+  m = s.match(/^(\d{1,2})[\/-](\d{4})$/);               // 01/2026
+  if (m) return `${p2(+m[1])}/${m[2]}`;
+  m = s.match(/^([a-zç]{3})[a-zç]*[\/-](\d{2,4})$/i);   // jan/26
+  if (m && MESES[m[1].toLowerCase()]) {
+    const a = +m[2]; return `${p2(MESES[m[1].toLowerCase()])}/${a < 100 ? 2000 + a : a}`;
+  }
+  m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/); // 15/01/2026
+  if (m) return `${p2(+m[2])}/${m[3]}`;
+  return null;
 }

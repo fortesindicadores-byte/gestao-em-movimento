@@ -1,0 +1,35 @@
+name: Sheets Robot (bases manuais → Supabase)
+
+# Copia as abas manuais do Google Sheets para tabelas do Supabase
+# (public.sh_<slug>). Só grava a aba que MUDOU — compara o md5 da resposta
+# do gviz com o da carga anterior.
+#
+# De hora em hora: é o "sempre que a base for atualizada, vai para o banco".
+on:
+  schedule:
+    - cron: '25 * * * *'      # :25 de cada hora (o gviz-robot roda no :00)
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: 'run (só o que mudou) · tudo (recarrega todas) · seco (não grava)'
+        required: false
+        default: 'run'
+      so:
+        description: 'Rodar só os slugs que começam com (vazio = todos)'
+        required: false
+        default: ''
+
+jobs:
+  carga:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Carregar
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          SHEETS_MODO: ${{ inputs.modo || 'run' }}
+          SHEETS_SO: ${{ inputs.so }}
+        run: node scripts/sheets-robot.mjs
