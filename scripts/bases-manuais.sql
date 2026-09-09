@@ -1029,5 +1029,30 @@ drop policy if exists sh_mtdir_ind5_perdas_sel on public.sh_mtdir_ind5_perdas;
 create policy sh_mtdir_ind5_perdas_sel on public.sh_mtdir_ind5_perdas for select to authenticated using (true);
 create index if not exists sh_mtdir_ind5_perdas_vig_idx on public.sh_mtdir_ind5_perdas (vigencia);
 
+-- ── Farol Semanal · Custos · 251 linha(s) · 12 coluna(s)
+--    1xOv7OJzErGV3vNCMOY_5O6px7vFvC990CW-1vGul5sY|s=Custos|g=|q=|h=1
+create table if not exists public.sh_farol_custos (
+  linha         integer primary key,   -- posição da linha na aba
+  vigencia      text,                  -- MM/YYYY normalizada
+  atualizado_em timestamptz not null default now()
+);
+alter table public.sh_farol_custos
+  add column if not exists d_orc                                  numeric,   -- Δ ORÇ.
+  add column if not exists d_fct                                  text,   -- Δ FCT
+  add column if not exists vigencia_orig                          date,   -- Vigência
+  add column if not exists estrutura                              numeric,   -- ESTRUTURA
+  add column if not exists unidade                                text,   -- UNIDADE
+  add column if not exists nivel_3                                text,   -- NÍVEL 3
+  add column if not exists conta_gerencial                        text,   -- CONTA GERENCIAL
+  add column if not exists mes                                    text,   -- MÊS
+  add column if not exists ano                                    numeric,   -- ANO
+  add column if not exists orcado                                 numeric,   -- ORÇADO
+  add column if not exists remunerado                             numeric,   -- REMUNERADO
+  add column if not exists realizado                              numeric;   -- REALIZADO
+alter table public.sh_farol_custos enable row level security;
+drop policy if exists sh_farol_custos_sel on public.sh_farol_custos;
+create policy sh_farol_custos_sel on public.sh_farol_custos for select to authenticated using (true);
+create index if not exists sh_farol_custos_vig_idx on public.sh_farol_custos (vigencia);
+
 -- ---------- Conferência -------------------------------------------------
 -- select slug, linhas, carregado_em, erro from public.sh_base order by slug;
