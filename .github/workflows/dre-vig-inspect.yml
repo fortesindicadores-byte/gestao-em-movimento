@@ -13,4 +13,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
-      - run: node scripts/dre-vig-inspect.mjs
+      - env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/dre-vig-inspect.mjs
