@@ -756,21 +756,13 @@ A busca do topo filtra os cards e esconde cluster vazio; no modo lista ela **abr
 
 **A migração é DIRETO NO PAINEL OFICIAL** (Renan, 16/08/2026) — acabou a etapa do clone `<painel>-novo/`. O método continua o mesmo (casca extraída por script, lógica de dados colada inteira, só a apresentação trocada), e o git é a rede de segurança: o painel antigo está no histórico e volta com um `git show <commit>^:<pasta>/index.html`.
 
-## Padrão de gráfico de barra — `assets/grafico-barra.js` (Renan, 09/09/2026)
+## Gráfico de barra: o padrão universal foi REVERTIDO (09/09/2026)
 
-Ele pôs lado a lado o Painel KM e a Visão Financeira e perguntou qual era mais bonito: ficou com o **desenho do KM** e pediu *"um padrão universal para gráficos de barra nos nossos painéis"*. O padrão mora num arquivo só, incluído **depois do Chart.js e antes do script do painel** (`<script src="../assets/grafico-barra.js?v=…"></script>`), e está nos 37 painéis que têm barra.
+O Renan comparou o Painel KM com a Visão Financeira, escolheu o desenho do KM e pediu um padrão universal. Foi feito como `assets/grafico-barra.js` (arquivo único, incluído depois do Chart.js nos 37 painéis com barra) e **revertido no mesmo dia**: *"volte uma versão antes, ficou tudo bugado"*.
 
-- **Forma**: barra sem borda, topo arredondado em 4px (`borderSkipped:false`, então só o topo), espessura com teto de 54px.
-- **Barra ROTULADA e sem linha por cima ⇒ o eixo de valor SOME** (grade, marcas e a borda do eixo). O número já está na barra; o eixo é ruído. É o que o KM faz.
-- **Barra com linha de comparação** (remunerado, orçado, meta) ⇒ **o eixo de valor FICA**, porque é ele que dá a régua da linha, e a linha vira **tracejada** (`[6,4]`) se o painel não tiver definido o traço.
-- **Nunca grade no eixo das categorias.**
-- **Folga de 12% acima do pico** (`grace:'12%'`) quando o painel não fixou `max`/`suggestedMax` — senão o gráfico parece alto e vazio.
-- **Respiro para o rótulo**: 18px no topo (34px à direita, na barra horizontal), senão o número acima da barra sai cortado na moldura do card.
-- **COR NÃO ENTRA AQUI.** Verde favorável, vermelho desfavorável, tinta fraca no contexto e cor cheia no recorte em foco continuam sendo lógica de cada painel.
+**Não refazer no mesmo formato.** Um arquivo global que envelopa o construtor do Chart mexe em 37 painéis de uma vez e não dá para conferir tela a tela — foi exatamente o que deu errado. Se o padrão voltar, que seja **painel por painel, com o Renan olhando cada tela**, começando por um só.
 
-**POR QUE ENVELOPA O CONSTRUTOR E NÃO É UM PLUGIN** (bug real, 09/09/2026, duas tentativas perdidas): no `beforeInit` o Chart.js **já mesclou os defaults dele dentro do config**, e `scales.y.grid.display` chega valendo `true` mesmo quando o painel não pediu nada — não há como separar escolha do painel de default, e a regra vira atropelo. Envelopando o construtor (`window.Chart = ChartPadrao`, com `prototype` e `setPrototypeOf` preservando `register`/`defaults`/`getChart` e o `instanceof`) o arquivo enxerga o **config cru** e só preenche o que está em branco. Mexer no `chart.options` não vale de nada e ainda **estoura a pilha** se for copiado com `Object.assign`, porque ele é um resolvedor com proxies.
-
-**Como conferir sem depender de rede:** `npm i chart.js@4.4.0 chartjs-plugin-datalabels@2.2.0` numa pasta temporária e uma página com os quatro casos (rotulada, com linha, horizontal, empilhada) — foi assim que o padrão foi validado.
+O que ficou aprendido e continua valendo (caso alguém tente de novo): um **plugin do Chart.js não serve** para "preencher só o que o painel não declarou", porque no `beforeInit` o Chart.js já mesclou os defaults dele no config e `scales.y.grid.display` chega `true` mesmo sem ninguém pedir; e mexer no `chart.options` (um resolvedor com proxies) não vale nada e **estoura a pilha** se for copiado com `Object.assign`.
 
 ## Exportações no layout novo (Excel · PNG · PDF) — 16/08/2026
 
