@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092000">
+<meta name="build" content="202609092100">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -534,6 +534,10 @@ body.claro .farol-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rg
     </div>
     <div class="s-sec">Clusters</div>
     <div id="hnav"></div>
+    <div class="s-sec">Atalhos</div>
+    <button class="s-item" onclick="focaBusca()" title="Buscar em todos os clusters">
+      <span class="s-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>Buscar painel
+    </button>
     <div class="s-user">
       <span class="av" id="hub-avatar">—</span>
       <div><b id="hub-username">—</b><i id="hub-papel">Portal</i></div>
@@ -682,6 +686,12 @@ function renderBoard(isAdmin){
   document.getElementById('cluSub').textContent = _sub(c) + ' neste cluster.';
   document.getElementById('board').innerHTML = c.cards.map(cardHtml).join('');
   if (_isAdmin && typeof loadAdminBadge === 'function') loadAdminBadge();
+}
+// o atalho da lateral leva ao campo do topo — a busca é uma só, e ela varre
+// todos os clusters
+function focaBusca(){
+  const i = document.getElementById('busca-painel');
+  if (i) { i.focus(); i.select(); }
 }
 function setClu(nome){
   CLU = nome;
@@ -1467,6 +1477,6 @@ init();
 </script>
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202609092000"></script>
+<script src="assets/build-check.js?v=202609092100"></script>
 </body>
 </html>
