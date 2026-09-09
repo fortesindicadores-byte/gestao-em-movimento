@@ -49,16 +49,17 @@ async function conta(tab, iVig, iOrc, iRem, iReal) {
     + ` · última vigência presente: ${chaves[chaves.length - 1]}`);
 }
 
-// Frota: vig=9, orc=0, rem=1, real=2 (índices do painel)
-await conta('Frota', 9, 0, 1, 2);
-// Receita Líquida e EBITDA: os índices vêm do cabeçalho
-for (const tab of ['Receita Líquida', 'EBITDA']) {
+// As três abas: os índices vêm do CABEÇALHO, como o painel faz (mapTab).
+// Índice fixo não serve — a Frota tem um arranjo de colunas diferente das
+// outras duas e a leitura sai vazia sem avisar (foi o que aconteceu aqui).
+for (const tab of ['Frota', 'Receita Líquida', 'EBITDA']) {
   const t = await aba(tab);
   const h = (t.cols || []).map(c => String((c && c.label) || '').toLowerCase());
   const acha = (...p) => h.findIndex(x => p.some(y => x.includes(y)));
   const iVig = acha('vigência', 'vigencia'), iOrc = acha('orçado', 'orcado'),
         iRem = acha('remunerado'), iReal = acha('realizado');
-  console.log(`\n(${tab}: colunas vig=${iVig} orc=${iOrc} rem=${iRem} real=${iReal})`);
+  console.log(`\n(${tab}: colunas ${h.map((x, i) => i + ':' + (x || '—')).join(' | ')})`);
+  console.log(`(${tab}: vig=${iVig} orc=${iOrc} rem=${iRem} real=${iReal})`);
   if (iVig < 0) { console.log('  sem coluna de vigência — pulando'); continue; }
   await conta(tab, iVig, iOrc, iRem, iReal);
 }
