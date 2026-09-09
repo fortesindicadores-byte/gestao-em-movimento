@@ -38,3 +38,12 @@ jobs:
           SHEETS_MODO: ${{ inputs.modo || 'run' }}
           SHEETS_SO: ${{ inputs.so }}
         run: node scripts/sheets-robot.mjs
+      # REDE DE SEGURANÇA DO BOTÃO DO HUB (09/09/2026): o "Sheets Pedido" varre
+      # de 5 em 5 min, mas o GitHub segura cron curto e ele não engatou nas
+      # primeiras horas. A carga da hora cheia, essa dispara sempre — então ela
+      # também atende o pedido que estiver na fila. Sem pedido, sai em segundos.
+      - name: Atender pedido do botão, se houver
+        if: always()
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/sheets-pedido.mjs
