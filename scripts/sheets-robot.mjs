@@ -38,6 +38,18 @@ const QUEDA_MAX = 0.4;            // encolher mais que isto = aba filtrada
 const alvos = SO ? BASES.filter(b => b.slug.startsWith(SO)) : BASES;
 console.log(`Robô das bases manuais · modo ${MODO} · ${alvos.length} base(s)\n`);
 
+// Enquanto o SQL não for rodado não há onde gravar. Isso NÃO é falha do robô:
+// sair com erro pintaria de vermelho toda hora cheia até alguém rodar o SQL,
+// e aí um vermelho de verdade passaria despercebido no meio.
+if (!SECO) {
+  const r = await fetch(`${SUPA}/rest/v1/sh_base?select=slug&limit=1`, { headers: H });
+  if (r.status === 404) {
+    console.log('As tabelas ainda não existem. Rode scripts/bases-manuais.sql no SQL'
+      + ' Editor do Supabase (uma vez) e este robô passa a carregar sozinho a cada hora.');
+    process.exit(0);
+  }
+}
+
 const api = async (caminho, init = {}) => {
   const r = await fetch(`${SUPA}/rest/v1/${caminho}`, { ...init, headers: { ...H, ...(init.headers || {}) } });
   if (!r.ok) throw new Error(`HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
