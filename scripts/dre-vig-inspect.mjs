@@ -63,3 +63,33 @@ for (const tab of ['Frota', 'Receita Líquida', 'EBITDA']) {
   if (iVig < 0) { console.log('  sem coluna de vigência — pulando'); continue; }
   await conta(tab, iVig, iOrc, iRem, iReal);
 }
+
+// ── por que a aba EBITDA não entra em agosto? ────────────────────────────────
+// O painel só soma a linha cuja CONTA contém "ebitda" (aggEbitda). Se o rótulo
+// mudar no mês, a vigência inteira é descartada e o card mostra zero.
+{
+  const t = await aba('EBITDA');
+  const h = (t.cols || []).map(c => String((c && c.label) || '').toLowerCase());
+  const acha = (...p) => h.findIndex(x => p.some(y => x.includes(y)));
+  const iVig = acha('vigência', 'vigencia'), iCta = acha('conta gerencial', 'conta'),
+        iReal = acha('realizado'), iRem = acha('remunerado'), iNv3 = acha('nível 3', 'nivel 3', 'nivel3');
+  console.log(`\n══ EBITDA por conta (vig=${iVig} conta=${iCta} nv3=${iNv3} rem=${iRem} real=${iReal})`);
+  const porVig = {};
+  (t.rows || []).forEach(r => {
+    const c = r.c || [];
+    const k = vigDe(c[iVig] && c[iVig].v); if (!k) return;
+    const cta = String((c[iCta] && c[iCta].v) || '(vazio)').trim();
+    const bate = cta.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes('ebitda');
+    const o = (porVig[k] = porVig[k] || {});
+    const e = (o[cta] = o[cta] || { n: 0, real: 0, rem: 0, bate });
+    e.n++; e.real += n(c[iReal] && c[iReal].v); e.rem += n(c[iRem] && c[iRem].v);
+  });
+  ['06/2026', '07/2026', '08/2026'].forEach(k => {
+    const o = porVig[k]; if (!o) { console.log(`\n${k}: sem linhas`); return; }
+    console.log(`\n${k}:`);
+    Object.entries(o).sort((a, b) => Math.abs(b[1].real) - Math.abs(a[1].real)).slice(0, 8)
+      .forEach(([cta, e]) => console.log(`  ${e.bate ? '✔' : ' '} "${cta}" · ${e.n} linha(s) · rem ${mi(e.rem)} · real ${mi(e.real)}`));
+    const somaBate = Object.values(o).filter(e => e.bate).reduce((s, e) => s + e.real, 0);
+    console.log(`  → o painel somaria: ${mi(somaBate)}`);
+  });
+}
