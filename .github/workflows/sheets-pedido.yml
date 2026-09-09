@@ -1,0 +1,28 @@
+name: Sheets Pedido (botão do hub)
+
+# Atende o botão "Atualizar agora" do hub (Administração → Bases do Sheets).
+# A página é pública e não pode guardar token do GitHub, então ela grava um
+# pedido em public.sh_pedido e esta varredura pega o pedido, roda a carga e
+# devolve o resultado na linha do pedido.
+#
+# Sem pedido pendente o job sai em segundos.
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+# a carga escreve nas mesmas tabelas do robô de hora em hora: uma de cada vez
+concurrency:
+  group: sheets-carga
+  cancel-in-progress: false
+
+jobs:
+  pedido:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Atender pedidos
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/sheets-pedido.mjs

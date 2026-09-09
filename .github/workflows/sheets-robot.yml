@@ -19,6 +19,11 @@ on:
         required: false
         default: ''
 
+# a carga do botão do hub (Sheets Pedido) escreve nas mesmas tabelas: uma de cada vez
+concurrency:
+  group: sheets-carga
+  cancel-in-progress: false
+
 jobs:
   carga:
     runs-on: ubuntu-latest
