@@ -32,7 +32,7 @@ export const WB = {
   MTDIR: '1lZixK13JKO4zKUJZ5CwdqcPyPLKQDVGxa1o2v1t_tN8',   // Painel de Metas do Diretor
 };
 
-const t2 = (slug, sheet) => ({ slug, id: WB.TERM2, sheet });
+const t2 = (slug, sheet) => ({ slug, id: WB.TERM2, sheet, nome: 'Termômetro · ' + sheet });
 
 export const BASES = [
   // ── DRE (Visão Financeira, Painel KM, Árvore, R$/km, Carta…) ──
@@ -156,7 +156,7 @@ export function mapaColunas(cols) {
     return { i, label, col, tipo, sql: SQL_TIPO[tipo] || 'text' };
   });
 }
-export const SQL_TIPO = { number: 'numeric', date: 'date', datetime: 'timestamptz',
+export const SQL_TIPO = { number: 'numeric', date: 'date', datetime: 'timestamp',
   timeofday: 'text', boolean: 'boolean', string: 'text' };
 
 // ── valor da célula ───────────────────────────────────────────────────────
@@ -173,7 +173,7 @@ export function valorDe(cel, tipo) {
     if (!m) return null;
     const [, y, mo, d, h, mi, s] = m;
     const dia = `${y}-${p2(+mo + 1)}-${p2(+d)}`;
-    return tipo === 'date' ? dia : `${dia}T${p2(h || 0)}:${p2(mi || 0)}:${p2(s || 0)}Z`;
+    return tipo === 'date' ? dia : `${dia}T${p2(h || 0)}:${p2(mi || 0)}:${p2(s || 0)}`;
   }
   if (tipo === 'timeofday') return Array.isArray(v) ? v.slice(0, 3).map(p2).join(':') : String(v);
   if (tipo === 'number') return typeof v === 'number' ? v : (isFinite(+v) ? +v : null);
@@ -187,12 +187,20 @@ export function valorDe(cel, tipo) {
 // tabela guarda sempre MM/YYYY, que é o que os painéis filtram.
 const MESES = { jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6, jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12 };
 export function achaVigencia(mapa) {
-  const acha = re => mapa.find(c => re.test(c.label));
-  const v = acha(/vig[eê]nci|compet[eê]nci/i);
-  if (v) return { tipo: 'coluna', vig: v };
+  // EXATA primeiro: a aba de Perdas Operacionais tem "Vigência LY" ANTES de
+  // "Vigência", e pegar a primeira que casasse jogava tudo para o ano passado.
+  const exata = mapa.find(c => /^(vig[eê]ncia|compet[eê]ncia)$/i.test(c.label.trim()));
+  if (exata) return { tipo: 'coluna', vig: exata };
+  const parcial = mapa.find(c => /vig[eê]nci|compet[eê]nci/i.test(c.label));
+  if (parcial) return { tipo: 'coluna', vig: parcial };
   const mes = mapa.find(c => /^m[eê]s$/i.test(c.label.trim()));
   const ano = mapa.find(c => /^ano$/i.test(c.label.trim()));
   if (mes && ano) return { tipo: 'mes_ano', mes, ano };
+  // sem coluna de vigência declarada, a 1ª data serve: é o que dá índice por
+  // mês nas abas grandes (Manutenção pela DATA, Seara CTEs pela emissão,
+  // Pneus pelo Período). A coluna original continua intacta ao lado.
+  const data = mapa.find(c => c.tipo === 'date' || c.tipo === 'datetime');
+  if (data) return { tipo: 'coluna', vig: data, derivada: true };
   return null;
 }
 export function vigenciaDe(fonte, valores) {
@@ -205,7 +213,7 @@ export function vigenciaDe(fonte, valores) {
   const raw = valores[fonte.vig.col];
   if (raw == null || raw === '') return null;
   const s = String(raw);
-  let m = s.match(/^(\d{4})-(\d{2})-\d{2}/);            // date já convertida
+  let m = s.match(/^(\d{4})-(\d{2})-\d{2}/);            // date/datetime já convertida
   if (m) return `${m[2]}/${m[1]}`;
   m = s.match(/^(\d{1,2})[\/-](\d{4})$/);               // 01/2026
   if (m) return `${p2(+m[1])}/${m[2]}`;
