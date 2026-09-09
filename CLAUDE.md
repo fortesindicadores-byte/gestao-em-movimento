@@ -867,6 +867,27 @@ O CSS controla o **modo escuro**: `--gem-foto` (a imagem) + `--gem-scrim` (o esc
 
 **PRÓXIMO PASSO — SHEETS PARA O SUPABASE (Renan, 07/09/2026: "vamos fazer amanhã algo para jogar tudo para o Supabase"):** o filtro na aba `Km/L` voltou a esconder o dado (586 linhas, só jan./2026, confirmado pelo KmL Aba Inspect) e derrubou o remunerado da Condução Econômica, o Eficiência Km/L e a meta de combustível do Gerot. Decisão (Renan, 07/09/2026, à noite: "amanhã quero guardar tudo no Supabase, de todos os painéis"): parar de ler abas por gviz em TODOS os painéis e ter o robô gravando cada aba numa tabela do Supabase (linhas tipadas, não o texto cru do `gviz_snapshot`), com os painéis lendo de lá. Roteiro: (1) inventariar as abas que cada painel lê (a lista `ALVOS` do `scripts/gviz-robot.mjs` já cobre ~30, mais as que os painéis pedem com `tq`); (2) uma tabela por aba, colunas pelo cabeçalho, chave por linha, `vigencia` normalizada; (3) o robô do Sheets grava por vigência e só regrava o que mudou; (4) trocar o `fetch`/JSONP dos painéis por `sbClient().from(tabela)` um painel por vez, conferindo os totais contra o gviz antes de trocar; (5) o snapshot cru vira fallback e depois sai. Começar pela `Km/L` do workbook Consumo. O remunerado da Condução Econômica (linha pontilhada + condicionais, código no histórico do PR #1044) volta quando essa base existir. O filtro da aba foi removido em 07/09/2026 à noite (3.680 linhas, jan→jul), mas a regra é não depender mais disso.
 
+## Bases manuais no Supabase — a migração do Sheets (Renan, 09/09/2026)
+
+Pedido dele de madrugada: *"conseguimos fazer isso essa madrugada enquanto eu durmo, você buscar as informações das bases de dados que a gente utiliza hoje que são manuais, todas, e criar um esquema que sempre que essas bases manuais sejam atualizadas os dados vão para o banco no Supabase"*. É o passo que estava previsto na seção do snapshot do gviz, agora com linhas TIPADAS em vez do texto cru.
+
+**A lista canônica é `scripts/sheets-bases.mjs`** — 33 bases (as 30 do `gviz-robot` + as 6 do Painel de Metas do Diretor, menos duas duplicatas). Cada uma tem um **slug estável**, que é o nome da tabela: `sh_<slug>`. Os parâmetros (`sheet`/`gid`/`tq`/`headers`) são os mesmos que os painéis mandam, **byte a byte**, senão a chave do `gviz-cache` não casa.
+
+- **Duas abas eram a mesma coisa** (conferido byte a byte em 09/09/2026): `gid 0` do workbook da RPM É a `Base RPM` (6.551 linhas, 1.522.526 bytes) e o `gid 216663799` do workbook do termômetro É a `FCA Total` (414 linhas, 225.221 bytes). Viraram `apelidos` da base principal — uma tabela só.
+- **`scripts/bases-manuais.sql`** é GERADO (`sheets-ddl.mjs`), nunca escrito à mão: o tipo de cada coluna vem do que o próprio Sheets declara. 34 tabelas, 572 colunas, 27 índices de vigência. **Reexecutável**: a tabela nasce só com as colunas de controle e todo dado entra por `add column if not exists` — coluna nova na aba é só regerar e colar.
+- **`sheets-robot.mjs`** (workflow de hora em hora, :25) grava as linhas e **só quando o md5 da aba mudou**. Upsert por `linha` e depois apaga o excedente — a tabela nunca fica vazia no meio da carga, que é quando alguém abriria o painel e o veria zerado.
+- **O porteiro contra aba filtrada:** aba filtrada no Sheets faz o gviz devolver só as linhas visíveis, **sem erro nenhum** (foi o que zerou o Km/L duas vezes). O robô **recusa** carga que encolha mais de 40% em relação à anterior, guarda o motivo em `sh_base.erro` e mantém o que já estava lá.
+- **`sheets-check.mjs`** (workflow diário 08:10 BRT) confere base a base: planilha × `sh_base` × tabela, mais carga velha e erro registrado.
+
+**Três armadilhas achadas na construção, todas já corrigidas:**
+1. **A vírgula não pode vir depois do comentário.** `add column x numeric   -- rótulo,` faz o `--` comentar a vírgula e o `alter table` inteiro vira erro de sintaxe. A vírgula vem antes do `--`.
+2. **`datetime` é `timestamp` SEM fuso.** MTTR e MTBF chegam como hora sobre a data-base do Sheets (1899-12-30); em `timestamptz` o Postgres converteria o fuso e a duração mudaria sozinha na leitura. Conferido: `mttr::time` devolve `04:30:00`.
+3. **Vigência: busca exata antes da parcial.** A aba de Perdas Operacionais tem `Vigência LY` ANTES de `Vigência`, e a busca parcial jogava o ano inteiro para 2025. Aba sem coluna de vigência usa a primeira data (Manutenção pela `DATA`, Seara CTEs pela emissão, Pneus pelo `Período`).
+
+**Como foi validado:** as 33 abas leram sem falha (**129.458 linhas, 33 MB**), a carga em modo seco montou **122.493 linhas** com as conversões conferidas, e o SQL rodou **duas vezes num Postgres 16 de verdade** (zero erro, idempotente), com as linhas do teste seco entrando por `jsonb_populate_record`, que é o caminho do PostgREST.
+
+**O que falta:** trocar o `fetch` do gviz pelos `sh_*` painel a painel, conferindo os totais contra o gviz antes de cada troca (é o passo 4 do roteiro). Enquanto isso, os painéis seguem no gviz + snapshot cru — nada mudou para o usuário.
+
 ## Snapshot do gviz (abertura rápida de TODOS os painéis) — 19/08/2026
 
 Renan aprovou ("pode fazer todos"): a abertura dos painéis não espera mais o gviz do Google (1–4s/aba). Três peças:
