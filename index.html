@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609091300">
+<meta name="build" content="202609091500">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -173,22 +173,18 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
 .board.lista .hcard .dsc{-webkit-line-clamp:3;}
 @media(max-width:900px){ .board.lista .clu-cards{grid-template-columns:1fr;} }
 
-/* cor do card = a mesma lógica dos cards do Planner (Renan, 24/08/2026): o
-   fundo é `--card`, um degrau acima do miolo, e não `--side` (o tom do menu),
-   com que o card quase sumia no escuro — #1C1C1D sobre um fundo #1A1A1C. */
-/* sombra e raio do FCA (Renan, 08/09/2026: "acho o FCA mais bonito"): lá o
-   cartão leva UMA sombra curta e suave (--sombra: 0 2px 10px rgba(0,0,0,.30))
-   e canto de 10px. A sombra dupla e espalhada que estava aqui escurecia o vão
-   entre os cards e achatava a grade inteira. */
-.hcard{display:flex;flex-direction:column;gap:6px;padding:13px 14px 14px;border-radius:10px;cursor:pointer;
-  background:var(--brilho), var(--card);border:1px solid var(--card-brd);
-  box-shadow:var(--luz-card), 0 2px 10px rgba(0,0,0,.30);
+/* O CARD É O MESMO DO HUB DE UNIDADES DA GESTÃO À VISTA (Renan, 09/09/2026:
+   "ficaria legal com a visão do hub de gestão à vista, tanto na clara quanto
+   na escura"). Lá (.uhub-card) o cartão é fundo `--side`, borda `--card-brd`,
+   canto de 12px e SÓ o filete de luz — nenhuma sombra caída. Era a sombra que
+   escurecia o vão e deixava a grade pesada. Hover = borda laranja e sobe 2px,
+   sem trocar sombra nenhuma. Vale igual nos dois temas: o que separa o card do
+   miolo é a borda, não a sombra — por isso não volta o `--card` nem o brilho. */
+.hcard{display:flex;flex-direction:column;gap:6px;padding:13px 14px 14px;border-radius:12px;cursor:pointer;
+  background:var(--side);border:1px solid var(--card-brd);box-shadow:var(--luz-card);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  text-decoration:none;color:inherit;transition:border-color .18s,transform .18s,box-shadow .18s;}
-body.claro .hcard{box-shadow:var(--luz-card), 0 2px 8px rgba(15,23,42,.10);}
-.hcard:hover{border-color:color-mix(in srgb,var(--laranja) 55%,transparent);transform:translateY(-2px);
-  box-shadow:var(--luz-card), 0 6px 18px rgba(0,0,0,.38);}
-body.claro .hcard:hover{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.14);}
+  text-decoration:none;color:inherit;transition:border-color .15s,transform .1s;}
+.hcard:hover{border-color:var(--laranja);transform:translateY(-2px);}
 .hcard-top{display:flex;align-items:center;gap:9px;}
 .hcard .ic{width:28px;height:28px;flex:0 0 28px;border-radius:7px;display:flex;align-items:center;justify-content:center;
   background:color-mix(in srgb,var(--laranja) 13%,transparent);
@@ -1492,6 +1488,6 @@ init();
 </script>
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202609091300"></script>
+<script src="assets/build-check.js?v=202609091500"></script>
 </body>
 </html>
