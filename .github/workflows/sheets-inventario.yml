@@ -1,0 +1,25 @@
+name: Sheets Inventario (auditoria)
+
+# Lê todas as abas manuais (scripts/sheets-bases.mjs) e imprime linhas,
+# colunas, tipo e amostra de cada uma. É o levantamento que gera o SQL das
+# tabelas do Supabase. Não grava nada — abas públicas, sem segredo.
+on:
+  workflow_dispatch:
+    inputs:
+      so:
+        description: 'Rodar só os slugs que começam com (vazio = todos)'
+        required: false
+        default: ''
+
+jobs:
+  inventario:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Inventariar
+        env:
+          SHEETS_SO: ${{ inputs.so }}
+        run: node scripts/sheets-inventario.mjs
