@@ -30,6 +30,7 @@ export const WB = {
   MANUT: '1S7L6G3L8bboirAExGPRCITYkWsGoVpjUoXc-aVXdW6k',   // Manutenção
   TEND:  '1EFmp2qlevQG5OEgGJePrI_O8wKuQo3IDmbJIReN2Fl0',   // Tendência/Comparativos
   MTDIR: '1lZixK13JKO4zKUJZ5CwdqcPyPLKQDVGxa1o2v1t_tN8',   // Painel de Metas do Diretor
+  FAROL: '1xOv7OJzErGV3vNCMOY_5O6px7vFvC990CW-1vGul5sY',   // Farol Semanal
 };
 
 const t2 = (slug, sheet) => ({ slug, id: WB.TERM2, sheet, nome: 'Termômetro · ' + sheet });
@@ -91,6 +92,14 @@ export const BASES = [
   { slug: 'mtdir_ind3_sucessores',id: WB.MTDIR, gid: '1358349252', nome: 'Metas Diretor · Gente/Sucessores' },
   { slug: 'mtdir_ind4_ssmaq',     id: WB.MTDIR, gid: '1177655149', nome: 'Metas Diretor · SSMAQ' },
   { slug: 'mtdir_ind5_perdas',    id: WB.MTDIR, gid: '523073816',  nome: 'Metas Diretor · Perdas Operacionais' },
+
+  // ── Farol Semanal ──
+  // Das SETE abas que o Farol lê, seis já vêm do robô do Ginfo (ginfo_snapshot)
+  // e a planilha é só reserva. A `Custos` é a ÚNICA sem robô: é colada à mão do
+  // DRE e lida direto do Sheets. Entra aqui para o conteúdo de hoje ficar no
+  // banco; o Renan vai trocar a origem por um endpoint depois (é a aba que o
+  // robô do Qlik ia substituir, parqueado desde 03/08 por falta de rede).
+  { slug: 'farol_custos',     id: WB.FAROL, sheet: 'Custos', headers: '1', nome: 'Farol Semanal · Custos' },
 ];
 
 // a MESMA chave do gviz-cache.js e do gviz-robot.mjs — tem de bater byte a byte
