@@ -227,6 +227,31 @@ async function farolLoad(opts){
     const i={dias:idxDe(c,'Dias em Aberto'),os:idxDe(c,'N° OS','Nº OS','No OS'),fil:idxDe(c,'Filial'),ori:idxDe(c,'Origem'),tip:idxDe(c,'Tipo'),cri:idxDe(c,'Criticidade'),seg:idxDe(c,'Segmento'),forn:idxDe(c,'Fornecedor'),mec:idxDe(c,'Mecânico','Mecanico'),pla:idxDe(c,'Placa'),obs:idxDe(c,'Observação','Observacao')};
     DATA.os=T.os.rows.map(r=>({dias:num(r[i.dias]),os:String(r[i.os]||'').trim(),cod:codDe(r[i.fil]),fil:String(r[i.fil]||'').trim(),ori:String(r[i.ori]||'').trim(),tipo:String(r[i.tip]||'').trim(),crit:String(r[i.cri]||'').trim(),seg:_seg(r[i.seg]),forn:String(r[i.forn]||'').trim(),mec:String(r[i.mec]||'').trim(),placa:String(r[i.pla]||'').trim(),obs:String(r[i.obs]||'').trim()})).filter(r=>r.os);
   }
+  // ── BLITZ DE SEGURANÇA (Ginfo → SEGURANÇA → BLITZ DE SEGURANÇA) ──
+  // "Aderência mensal por placa": uma linha por placa com as CINCO contagens
+  // de status (as mesmas da Conformidade). O export não traz filial nenhuma,
+  // então a unidade vem do join com a base 'ativos' pela placa — igual às
+  // Preventivas. Aderência da placa = (Dentro Prazo + No Prazo) ÷ soma das
+  // cinco; conferida contra a tela (0/0/1/0/1 → 50%, 0/1/1/1/2 → 60%).
+  // Como são contagens, somar placas dá a aderência da unidade sem média de
+  // médias — o leitor poola, não tira média das linhas.
+  if(G['blitz-seguranca']){
+    const at={};(G['ativos']?G['ativos'].data:[]).forEach(o=>{const p=_n(o['Placa']);if(p)at[p]={fil:o['Filial'],proj:o['Projeto']};});
+    // "50,00%" (texto) e 0,5 (número) significam a mesma coisa no xlsx do PBI
+    const pcv=v=>{if(v==null||v==='')return null;
+      if(typeof v==='string'&&v.includes('%'))return num(v);
+      const n=num(v);return n==null?null:(n<=1?n*100:n);};
+    DATA.blitz=G['blitz-seguranca'].data.map(o=>{
+      const placa=String(o['Placa']||'').trim(), j=at[_n(placa)]||{};
+      return {placa,cod:refineCod(codDe(j.fil),j.proj),fil:String(j.fil||'').trim(),proj:String(j.proj||'').trim(),
+        ad:pcv(o['Aderência']),
+        nunca:num(o['Nunca Realizado'])||0, nao:num(o['Não Realizado'])||0,
+        fora:num(o['Realizado Fora Prazo'])||0, dentro:num(o['Realizado Dentro Prazo'])||0,
+        prazo:num(o['No Prazo'])||0, tempo:String(o['Tempo Médio']||'').trim()};
+    }).filter(r=>r.placa);
+    const gb=G['blitz-seguranca'];
+    DATA.fonte.blitz={src:'ginfo',att:gb.updated_at?new Date(gb.updated_at):null};
+  }
   await loadDisp();
   // A carga de pneus (snapshot do Prolog + Km/L) é a mais pesada da abertura.
   // Quem passa {semPneus:true} (Gestão à Vista) busca sob demanda, ao abrir a
