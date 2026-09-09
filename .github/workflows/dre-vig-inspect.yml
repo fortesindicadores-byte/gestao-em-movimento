@@ -1,0 +1,16 @@
+name: DRE Vig Inspect (o que a planilha tem por vigência)
+
+# Diz, por vigência, quantas linhas e quanto tem de orçado, remunerado e
+# realizado nas abas Frota, Receita Líquida e EBITDA. Só leitura.
+on:
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: node scripts/dre-vig-inspect.mjs
