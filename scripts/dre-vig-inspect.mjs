@@ -93,3 +93,27 @@ for (const tab of ['Frota', 'Receita Líquida', 'EBITDA']) {
     console.log(`  → o painel somaria: ${mi(somaBate)}`);
   });
 }
+
+// ── o que o SNAPSHOT está servindo (é dele que o painel lê nos 15s iniciais)
+// Sem a service key este bloco é pulado — o resto do inspect não depende dele.
+{
+  const KEY = process.env.GEM_SUPABASE_SERVICE_KEY;
+  if (!KEY) console.log('\n(sem GEM_SUPABASE_SERVICE_KEY — pulando o snapshot)');
+  else {
+    const SUPA = 'https://lozwipoeacpvplgkrxkq.supabase.co';
+    console.log('\n══ gviz_snapshot (o que o painel lê na abertura)');
+    for (const tab of ['Frota', 'EBITDA']) {
+      const key = `${SHEET}|s=${tab}|g=|q=|h=`;
+      const r = await fetch(`${SUPA}/rest/v1/gviz_snapshot?key=eq.${encodeURIComponent(key)}&select=body,updated_at`,
+        { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY } });
+      const j = r.ok ? await r.json() : null;
+      if (!j || !j.length) { console.log(`  ${tab}: sem snapshot gravado`); continue; }
+      const body = j[0].body || '';
+      const min = Math.round((Date.now() - new Date(j[0].updated_em || j[0].updated_at)) / 60000);
+      // "Date(2026,7," é agosto (mês base zero) no texto cru do gviz
+      const temAgo = body.includes('Date(2026,7,');
+      console.log(`  ${tab}: ${(body.length / 1024).toFixed(0)}KB · gravado há ${min} min`
+        + ` · tem agosto: ${temAgo ? 'SIM' : 'NÃO'}`);
+    }
+  }
+}
