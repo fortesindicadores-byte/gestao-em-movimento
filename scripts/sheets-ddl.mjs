@@ -13,7 +13,21 @@
 //
 // Roda no GitHub Actions (o sandbox não alcança o docs.google).
 // ============================================================
+import { readFileSync } from 'node:fs';
 import { BASES, baixa, chaveDe, mapaColunas, achaVigencia } from './sheets-bases.mjs';
+
+// SHEETS_INV=<arquivo.json> usa o levantamento já salvo (saída do
+// sheets-inventario) em vez de reler as abas — serve para gerar o SQL fora do
+// Actions, onde não há como alcançar o docs.google.
+const INV = process.env.SHEETS_INV
+  ? Object.fromEntries(JSON.parse(readFileSync(process.env.SHEETS_INV, 'utf8')).map(x => [x.slug, x]))
+  : null;
+const leAba = async b => {
+  if (!INV) return baixa(b);
+  const x = INV[b.slug];
+  if (!x) throw new Error('slug fora do inventário: ' + b.slug);
+  return { json: { table: { cols: x.cols.map(c => ({ label: c.label, type: c.tipo })), rows: new Array(x.linhas) } } };
+};
 
 const SO = process.env.SHEETS_SO || '';
 const alvos = SO ? BASES.filter(b => b.slug.startsWith(SO)) : BASES;
@@ -55,7 +69,7 @@ w('');
 let nCols = 0, falhas = 0;
 for (const b of alvos) {
   try {
-    const { json } = await baixa(b);
+    const { json } = await leAba(b);
     const mapa = mapaColunas(json.table.cols || []);
     const linhas = (json.table.rows || []).length;
     const vig = achaVigencia(mapa);
@@ -71,8 +85,11 @@ for (const b of alvos) {
     w('  atualizado_em timestamptz not null default now()');
     w(');');
     w(`alter table ${t}`);
-    w(mapa.map(c => `  add column if not exists ${c.col.padEnd(38)} ${c.sql}`
-      + (c.label ? `   -- ${c.label}` : `   -- (coluna ${c.i}, sem rótulo na aba)`)).join(',\n') + ';');
+    // a vírgula vem ANTES do comentário: com "-- rótulo," o -- comenta a
+    // vírgula junto e o alter table inteiro vira erro de sintaxe
+    w(mapa.map((c, k) => `  add column if not exists ${c.col.padEnd(38)} ${c.sql}`
+      + (k === mapa.length - 1 ? ';' : ',')
+      + (c.label ? `   -- ${c.label}` : `   -- (coluna ${c.i}, sem rótulo na aba)`)).join('\n'));
     w(`alter table ${t} enable row level security;`);
     w(`drop policy if exists sh_${b.slug}_sel on ${t};`);
     w(`create policy sh_${b.slug}_sel on ${t} for select to authenticated using (true);`);

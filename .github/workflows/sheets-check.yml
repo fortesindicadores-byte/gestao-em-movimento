@@ -1,0 +1,28 @@
+name: Sheets Check (auditoria da carga)
+
+# Confere, base a base: quantas linhas a planilha tem, quantas o sh_base diz
+# ter carregado e quantas estão de fato na tabela. Aponta carga velha, carga
+# recusada por aba filtrada e tabela que ainda não existe.
+on:
+  schedule:
+    - cron: '10 11 * * *'      # 08:10 BRT, depois da carga da madrugada
+  workflow_dispatch:
+    inputs:
+      sem_planilha:
+        description: 'Só o banco, sem reler as planilhas (mais rápido)'
+        required: false
+        default: '0'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          SHEETS_SEM_PLANILHA: ${{ inputs.sem_planilha }}
+        run: node scripts/sheets-check.mjs
