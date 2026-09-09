@@ -132,6 +132,17 @@ const ABAS = [
       const ref = ateTerceiroDiaUtil(h) ? new Date(h.getFullYear(), h.getMonth() - 1, 1) : h;
       return [{ campo: 'Mês', valor: MES_FULL[ref.getMonth()] }];
     } },
+  // SEGURANÇA → BLITZ DE SEGURANÇA → tabela "ADERÊNCIA MENSAL POR PLACA"
+  // (Placa | Aderência | Nunca Realizado | Não Realizado | Realizado Fora
+  // Prazo | Realizado Dentro Prazo | No Prazo | Tempo Médio). Achada pela
+  // coluna "Nunca Realizado", que a tabela por Regional do topo da página não
+  // tem — mirar por "Placa" ou "Aderência" pegaria a de cima.
+  // O export NÃO traz filial: a unidade sai do join com a base 'ativos' pela
+  // placa, exatamente como nas Preventivas.
+  // Fica OPCIONAL enquanto a coleta não se prova estável: falha dela não
+  // derruba as outras sete abas do run diário.
+  { chave: 'blitz-seguranca', menu: ['SEGURANÇA', 'BLITZ DE SEGURANÇA'],
+    header: 'Nunca Realizado', opcional: true },
 ];
 
 const ART = 'ginfo-artifacts';
