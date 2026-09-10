@@ -7,11 +7,11 @@ on:
   workflow_dispatch:
     inputs:
       modo:
-        description: "login = testa acesso · mapa = reconhece o portal novo · run = exporta e grava"
+        description: "login = testa acesso · mapa = reconhece o portal novo · tabelas = lista as tabelas e filtros de UMA aba · run = exporta e grava"
         required: true
         default: "login"
         type: choice
-        options: [login, mapa, run]
+        options: [login, mapa, tabelas, run]
       aba:
         description: "conferência: rodar só esta chave (ex.: checklist-031120)"
         required: false

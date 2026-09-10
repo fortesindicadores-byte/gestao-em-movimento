@@ -660,6 +660,58 @@ async function mapa(page) {
   }
 }
 
+/* MODO TABELAS (10/09/2026): abre UMA aba de ABAS (GINFO_ABA) e diz o que a
+   página tem — cada tabela visível com as suas COLUNAS, e os slicers/filtros
+   que dá para ver. Não exporta nem grava nada.
+
+   Nasceu da pergunta do Renan sobre a Blitz de Segurança: "dá para filtrar o
+   mês? tem a data limite da próxima blitz?". A tabela que o robô já exporta
+   não tem nem uma coisa nem outra — mas pode haver OUTRA tabela na mesma
+   página que tenha, e chutar isso é o que faz o robô exportar o visual errado
+   sem dar erro. Aqui a página responde. */
+async function tabelas(page) {
+  const aba = ABAS.find(a => a.chave === SO_ABA);
+  if (!aba) { console.error(`GINFO_ABA="${SO_ABA}" não existe em ABAS`); process.exit(1); }
+  log('modo tabelas ·', aba.chave, '· menu:', (aba.menu || []).join(' → '));
+  await page.goto('https://bi.ginfo.app.br/bi/inicio', { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await page.waitForTimeout(8000);
+  await clicarMenu(page, aba.menu[0], aba.menu[1]);
+  if (aba.drill) { await drillThrough(page, aba.drill.card, aba.drill.item); }
+  await page.waitForTimeout(8000);
+  await shot(page, '20-tabelas-' + aba.chave);
+
+  let n = 0;
+  for (const fr of framesDaAba(page, aba)) {
+    const grids = fr.locator('[role="grid"], [role="table"]');
+    const q = await grids.count().catch(() => 0);
+    for (let i = 0; i < q; i++) {
+      const g = grids.nth(i);
+      const box = await g.boundingBox().catch(() => null);
+      if (!box || box.width < 60 || box.height < 40) continue;      // oculto/decorativo
+      const hs = g.locator('[role="columnheader"]');
+      const nh = await hs.count().catch(() => 0);
+      const cols = [];
+      for (let k = 0; k < nh; k++) cols.push((await hs.nth(k).innerText().catch(() => '')).trim().replace(/\s+/g, ' '));
+      n++;
+      log(`tabela ${n} · y=${Math.round(box.y)} x=${Math.round(box.x)}`
+        + ` ${Math.round(box.width)}×${Math.round(box.height)} · ${nh} coluna(s)`);
+      log(`   ${JSON.stringify(cols.filter(Boolean))}`);
+    }
+  }
+  if (!n) log('nenhuma tabela visível — veja o screenshot nos artifacts');
+
+  // os slicers dizem por quais campos a página deixa filtrar (o mês, no caso)
+  const sl = [];
+  for (const fr of framesDaAba(page, aba)) {
+    try {
+      const s = fr.locator('.slicer-dropdown-menu, .slicerContainer, [class*="slicer"]').filter({ visible: true });
+      const q = Math.min(await s.count(), 30);
+      for (let i = 0; i < q; i++) sl.push((await s.nth(i).innerText().catch(() => '')).trim().replace(/\s+/g, ' ').slice(0, 60));
+    } catch (e) {}
+  }
+  log('filtros/slicers visíveis:', JSON.stringify([...new Set(sl.filter(Boolean))]));
+}
+
 /* resumo de conferência: quantas linhas e como se distribuem. Só colunas que
    não identificam pessoa nem veículo — o log do Actions é público. */
 function resumo(chave, linhas) {
@@ -686,6 +738,7 @@ async function main() {
     await login(page);
     if (MODE === 'login') { log('modo login: só o teste de acesso. Veja os screenshots nos artifacts.'); return; }
     if (MODE === 'mapa')  { await mapa(page); return; }
+    if (MODE === 'tabelas') { await tabelas(page); return; }
     if (!ABAS.length) { log('nenhuma aba configurada ainda em ABAS — mapeie as abas no scripts/ginfo-robot.mjs.'); return; }
     let erros = 0;
     const alvos = SO_ABA ? ABAS.filter(a => a.chave === SO_ABA) : ABAS;
