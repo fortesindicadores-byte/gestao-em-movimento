@@ -1094,6 +1094,29 @@ Automatiza a planilha **Frota de Elite** (`1DXmjzj2KRrTdQxmvXRclGxhBeDMwoIoLvORq
 
 **Fila do Actions:** em horário de pico o job pode ficar 15 min na fila sem runner e ser cancelado (`runner_id: 0`, sem log). Não é erro do robô nem cota (o repo é público) — é só redisparar.
 
+## Robôs falhando em silêncio — a varredura de 10/09/2026
+
+O Renan viu "Atualizado 10/09 08:52" no topo do Gestão à Vista e perguntou se
+era a hora em que o robô leu o Ginfo. **Não era** — aquilo é o carregamento da
+tela. A pergunta destampou **cinco robôs quebrados**, cada um por um motivo
+diferente, e **nenhum tinha avisado ninguém** (o `vars.MAIL_TO` continua vazio,
+o mesmo buraco de 27/08).
+
+| Robô | Causa raiz | Situação |
+|---|---|---|
+| Conf Detalhe | **rótulo cortado no menu** — a lateral mostra `1.2 - ADERÊNCIA CONFORMID…` e a busca por substring procurava um texto MAIOR do que o que está no DOM | corrigido (prefixo com match único); voltou a gravar 933 (ago) + 898 (set) linhas |
+| Ginfo · empilhadeira | abria o **dropdown errado** do campo Mês (itens `["1ª QZ Stress Test"]`) e concluía que `Ago-26` não existia | corrigido: tenta todos os candidatos e fica com o que tem o valor |
+| Ginfo · OS em Aberto | card `NÃO EXECUTADAS` não encontrado p/ o drill | **NÃO é renome**: o modo `tabelas` listou os cards e ele está lá. É intermitência de renderização |
+| Elite Robot | **não passou do login** (`continuamos na tela de login`) e as 13 coletas caíram em cascata | momentâneo: rodada de 10/09 passou verde sem tocar em nada |
+| CE Coletor | `ValueError: Invalid isoformat string: ''` — o workflow passa sempre o input `dia`, vazio no agendamento | corrigido (argumento em branco = ausente) |
+
+**O CE Coletor era DUPLICADO e foi desagendado (10/09/2026).** `etl/conducao-economica/coletor.py` é o protótipo em Python; quem alimenta o painel é o `scripts/conducao-robot.mjs`, que roda verde todo dia e escreve **na mesma tabela** (`ce_scores_mensais`). Com os dois no automático, o dia em que o protótipo ganhasse credencial passaria por cima do mensal do outro, com conta diferente e sem aviso. Ele também não coletava nada — `GEOTAB_PASSWORD` vazio, `0 leituras diárias`. O `schedule` está comentado no `ce-coletor.yml`; o disparo manual continua.
+
+**Lições que valem para o próximo:**
+1. **"Atualizado" no topo do painel não é idade do dado.** Agora diz **"Tela carregada"**, e a hora da COLETA fica no subtítulo de cada indicador. A conformidade mostrava 07/09 no rodapé enquanto o topo dizia 10/09 — ninguém olha o rodapé.
+2. **O modo `tabelas` não lista todos os slicers.** Ele mostrou só Empresa/Regional/Filial na Blitz e eu afirmei que não havia filtro de mês; o print do Renan mostrou Ano e Mês. Slicer que não aparece **não prova ausência**.
+3. **Sucesso parcial fecha o job em vermelho.** O Conf Detalhe de 10/09 gravou tudo e ainda assim é `failure`, porque 2 de 13 filiais não responderam. Ler só o status engana nos dois sentidos.
+
 ## Robô Qlik (DRE → Custos) — EM ESPERA (03/08/2026)
 
 **Status: PARQUEADO — decisão do Renan 03/08/2026.** O robô está 100% codificado (receita dos 5 passos abaixo), mas o Qlik Sense da Conlog **não é acessível pela internet**: `bi.conlogsa.com.br` público serve só o **GLPI** (chamados) — `/sense` dá 404 e a porta 4244 não responde de fora (split DNS: o Renan acessa pela rede interna/VPN). O GitHub Actions não alcança. Opções mapeadas: (1) TI publicar o Qlik externamente · (2) self-hosted runner na rede da Conlog · (3) script agendado no PC do Renan · (4) **ler direto do BANCO DE DADOS fonte do DRE — caminho que o Renan quer explorar no futuro**. Até lá: **aba Custos segue manual**. NÃO religar sem resolver a rede.

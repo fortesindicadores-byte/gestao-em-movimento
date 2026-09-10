@@ -1,12 +1,24 @@
 name: Condução Econômica · coletor
 
 # Estreia do modelo híbrido: puxa a telemetria diária e grava no Supabase.
-# Só roda de fato quando os segredos (tokens/acessos) estiverem configurados;
-# sem eles, o coletor faz "dry-run" (não escreve nada) e o job passa.
+#
+# AGENDAMENTO DESLIGADO (10/09/2026). Este é o PROTÓTIPO em Python; quem
+# alimenta o painel hoje é o `scripts/conducao-robot.mjs` (workflow "Conducao
+# Robot"), que roda verde todos os dias e escreve NA MESMA tabela
+# (`ce_scores_mensais`). Rodando os dois no automático, o dia em que este aqui
+# ganhasse credencial ele passaria por cima do mensal do outro, com uma conta
+# diferente e sem ninguém perceber.
+#
+# Além disso ele não coletava nada: o secret GEOTAB_PASSWORD está vazio, então
+# o run terminava com "0 leituras diárias". O que ele fazia era pintar o
+# Actions de vermelho todo dia e esconder falha de verdade no meio.
+#
+# O disparo manual continua aqui. Para religar o automático, basta devolver o
+# bloco `schedule` abaixo.
 
 on:
-  schedule:
-    - cron: "30 6 * * *"      # todo dia ~03:30 BRT (06:30 UTC)
+  # schedule:
+  #   - cron: "30 6 * * *"    # todo dia ~03:30 BRT (06:30 UTC) — ver nota acima
   workflow_dispatch:          # permite rodar manualmente (com um dia opcional)
     inputs:
       dia:
