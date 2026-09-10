@@ -228,27 +228,44 @@ async function farolLoad(opts){
     DATA.os=T.os.rows.map(r=>({dias:num(r[i.dias]),os:String(r[i.os]||'').trim(),cod:codDe(r[i.fil]),fil:String(r[i.fil]||'').trim(),ori:String(r[i.ori]||'').trim(),tipo:String(r[i.tip]||'').trim(),crit:String(r[i.cri]||'').trim(),seg:_seg(r[i.seg]),forn:String(r[i.forn]||'').trim(),mec:String(r[i.mec]||'').trim(),placa:String(r[i.pla]||'').trim(),obs:String(r[i.obs]||'').trim()})).filter(r=>r.os);
   }
   // ── BLITZ DE SEGURANÇA (Ginfo → SEGURANÇA → BLITZ DE SEGURANÇA) ──
-  // "Aderência mensal por placa": uma linha por placa com as CINCO contagens
-  // de status (as mesmas da Conformidade). O export não traz filial nenhuma,
-  // então a unidade vem do join com a base 'ativos' pela placa — igual às
-  // Preventivas. Aderência da placa = (Dentro Prazo + No Prazo) ÷ soma das
-  // cinco; conferida contra a tela (0/0/1/0/1 → 50%, 0/1/1/1/2 → 60%).
-  // Como são contagens, somar placas dá a aderência da unidade sem média de
-  // médias — o leitor poola, não tira média das linhas.
+  /* Uma linha por CHECK, do drill "Detalhes Aderência" do card ADERÊNCIA OK,
+     já filtrado no mês corrente (Renan, 10/09/2026). Colunas usadas: Filial ·
+     Placa · Tipo · Status · Última Blitz · Limite Proxima Blitz · Tempo Medio.
+
+     A primeira versão lia a tabela da página principal, que só tem as cinco
+     contagens por placa — sem filial, sem data. Esta traz as duas coisas que
+     faltavam: a unidade vem na própria linha (não precisa mais do join com a
+     base de ativos) e o VENCIMENTO da próxima blitz, que é o que ordena a
+     tela. Datas chegam como serial de xlsx.
+
+     O leitor agrupa por placa e conta os status — a aderência continua sendo
+     (Realizado Dentro Prazo + No Prazo) ÷ total, a mesma régua da tela. */
   if(G['blitz-seguranca']){
-    const at={};(G['ativos']?G['ativos'].data:[]).forEach(o=>{const p=_n(o['Placa']);if(p)at[p]={fil:o['Filial'],proj:o['Projeto']};});
-    // "50,00%" (texto) e 0,5 (número) significam a mesma coisa no xlsx do PBI
-    const pcv=v=>{if(v==null||v==='')return null;
-      if(typeof v==='string'&&v.includes('%'))return num(v);
-      const n=num(v);return n==null?null:(n<=1?n*100:n);};
-    DATA.blitz=G['blitz-seguranca'].data.map(o=>{
-      const placa=String(o['Placa']||'').trim(), j=at[_n(placa)]||{};
-      return {placa,cod:refineCod(codDe(j.fil),j.proj),fil:String(j.fil||'').trim(),proj:String(j.proj||'').trim(),
-        ad:pcv(o['Aderência']),
-        nunca:num(o['Nunca Realizado'])||0, nao:num(o['Não Realizado'])||0,
-        fora:num(o['Realizado Fora Prazo'])||0, dentro:num(o['Realizado Dentro Prazo'])||0,
-        prazo:num(o['No Prazo'])||0, tempo:String(o['Tempo Médio']||'').trim()};
-    }).filter(r=>r.placa);
+    const B={};
+    G['blitz-seguranca'].data.forEach(o=>{
+      const placa=String(o['Placa']||'').trim(); if(!placa) return;
+      const fil=String(o['Filial']||'').trim(), tipo=String(o['Tipo']||'').trim();
+      const k=_n(placa);
+      const a=B[k]||(B[k]={placa,fil,tipo,cod:refineCod(codDe(fil),tipo),
+        nunca:0,nao:0,fora:0,dentro:0,prazo:0,tot:0,lim:null,ult:null,tempo:''});
+      const st=_n(o['Status']);
+      if(st==='NUNCA REALIZADO')            a.nunca++;
+      else if(st==='NAO REALIZADO')         a.nao++;
+      else if(st==='REALIZADO FORA PRAZO')  a.fora++;
+      else if(st==='REALIZADO DENTRO PRAZO')a.dentro++;
+      else if(st==='NO PRAZO')              a.prazo++;
+      else return;                       // status novo: não inventa contagem
+      a.tot++;
+      // a data limite é a mesma nas linhas da placa; fica a MAIS DISTANTE,
+      // que é a que vale depois da última blitz feita
+      const lm=parseFlex(o['Limite Proxima Blitz']); if(lm&&(!a.lim||lm>a.lim)) a.lim=lm;
+      const ub=parseFlex(o['Última Blitz']);         if(ub&&(!a.ult||ub>a.ult)) a.ult=ub;
+      if(!a.tempo) a.tempo=String(o['Tempo Medio']||o['Tempo Médio']||'').trim();
+    });
+    const hoje=new Date(); hoje.setHours(0,0,0,0);
+    DATA.blitz=Object.values(B).map(a=>({...a,
+      ad:a.tot?(a.dentro+a.prazo)/a.tot*100:null,
+      dias:a.lim?Math.round((a.lim-hoje)/864e5):null}));
     const gb=G['blitz-seguranca'];
     DATA.fonte.blitz={src:'ginfo',att:gb.updated_at?new Date(gb.updated_at):null};
   }

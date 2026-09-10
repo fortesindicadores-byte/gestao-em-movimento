@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609101530">
+<meta name="build" content="202609101615">
 <title>Gestão à Vista</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -521,7 +521,7 @@ body.prehub .s-uni{display:none;}   /* já está nas unidades — a seta de volt
 
 <div class="dica" id="dica"></div>
 
-<script src="../farol-frota/farol-core.js?v=202609092345"></script>
+<script src="../farol-frota/farol-core.js?v=202609101615"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════════
    Gestão à Vista — o Farol no layout padrão do portal (Renan, 21/08/2026).
@@ -580,7 +580,7 @@ const VIEWS=[
   // do mês seguinte. O mês fechado fica na Carta de Custos.
   {id:'contrato',g:'i', ic:ICO.contrato, t:'Contrato', s:()=>'Ranking de placas do mês em formação'+(CTR_VIGCOB?' · entra na fatura de '+vigLbl(CTR_VIGCOB):''), r:(el,cod)=>renderContrato(el,cod)},
   // só aparece depois que o robô coletar a primeira vez (a tela nasceria vazia)
-  {id:'blitz',  g:'i', ic:ICO.blitz,  t:'Blitz de Segurança', s:()=>'Aderência mensal por placa vs meta 100%'+fx('blitz'), r:(el,cod)=>renderBlitz(el,cod), temDado:()=>(DATA.blitz||[]).length>0},
+  {id:'blitz',  g:'i', ic:ICO.blitz,  t:'Blitz de Segurança', s:()=>'Placas por dias para vencer · mês corrente'+fx('blitz'), r:(el,cod)=>renderBlitz(el,cod), temDado:()=>(DATA.blitz||[]).length>0},
   {id:'fca',    g:'i', ic:ICO.fca,    t:'FCA', s:()=>'Aderência ao prazo, à conclusão e total'+(FCAR?' · '+FCAR.length+' ação(ões)':''), r:(el,cod)=>renderFCAv(el,cod)},
   {id:'pneus-afer',g:'i', ic:ICO.pneu, t:'Pneus · Aferições', s:'Placas aferidas no período', r:(el,cod)=>renderPneusAfer(el,cod)},
   {id:'pneus-mm',  g:'i', ic:ICO.pneu, t:'Pneus · Milimetragem', s:'Sulco médio e pneus abaixo do ponto de troca', r:(el,cod)=>renderPneusMM(el,cod)},
@@ -851,15 +851,22 @@ function renderContrato(el,cod){
   el.innerHTML=h;
 }
 
-/* ══════════ BLITZ DE SEGURANÇA — Ginfo, aderência mensal POR PLACA ══════════
-   As cinco contagens são as mesmas da Conformidade, então a conta é a mesma:
-   (Realizado Dentro Prazo + No Prazo) ÷ soma das cinco. Por serem CONTAGENS,
-   a unidade sai do POOL das placas — nunca da média das aderências. O export
-   do Ginfo não traz filial: a unidade de cada placa vem do join com a base
-   'ativos' (farol-core), igual às Preventivas.                              */
+/* ══════════ BLITZ DE SEGURANÇA — Ginfo, mês corrente, POR PLACA ══════════
+   A coleta vem do drill "Detalhes Aderência", uma linha por check, já com o
+   filtro de Ano e Mês (Renan, 10/09/2026). Cada placa traz as contagens de
+   status e, o que interessa aqui, o LIMITE DA PRÓXIMA BLITZ.
+
+   Gestão à Vista é o agora, então a ordem é por DIAS PARA VENCER, do mais
+   vencido para o mais folgado — não pela aderência. Vencida é NOK.
+
+   Aderência = (Realizado Dentro Prazo + No Prazo) ÷ total, a mesma régua da
+   tela do Ginfo e da Conformidade. Como são contagens, a unidade sai do POOL
+   das placas, nunca da média das aderências.                                */
 const blzOk=r=>r.dentro+r.prazo;
-const blzTot=r=>r.nunca+r.nao+r.fora+r.dentro+r.prazo;
+const blzTot=r=>r.tot!=null?r.tot:(r.nunca+r.nao+r.fora+r.dentro+r.prazo);
 function blzPct(rows){const o=sumA(rows.map(blzOk)),t=sumA(rows.map(blzTot));return t?o/t*100:null;}
+// o status da placa é o prazo: vencida = NOK. Sem data não dá para dizer.
+const blzNok=r=>r.dias==null?null:r.dias<0;
 function renderBlitz(el,cod){
   const rs=byCod(DATA.blitz,cod);
   if(!rs.length){el.innerHTML='<div class="loading">Sem blitz coletada para o recorte.</div>';return;}
@@ -868,15 +875,13 @@ function renderBlitz(el,cod){
   const p=blzPct(rs);
   const n=v=>v.toLocaleString('pt-BR');
   const card=(lb,v,c)=>`<div class="ch-min"><span>${lb}</span><b class="${c||''}">${n(v)}</b></div>`;
-  // cabeçalho alinhado com o conteúdo: texto à esquerda, número à direita
-  // (o th() genérico só acerta os rótulos que ele conhece)
-  const thb=arr=>'<thead><tr>'+arr.map(([h,nm])=>`<th${nm?' class="num"':''}>${h}</th>`).join('')+'</tr></thead>';
-  const CONT=[['Nunca Realizado',1],['Não Realizado',1],['Realizado Fora Prazo',1],['Realizado Dentro Prazo',1],['No Prazo',1]];
-  // sem placa casada na base de ativos não dá para dizer a unidade — avisa em
-  // vez de somar tudo numa unidade errada
-  const semUni=rs.filter(r=>!r.cod).length;
+  const venc=rs.filter(r=>blzNok(r)===true).length;
+  const semData=rs.filter(r=>r.dias==null).length;
+  const h7=rs.filter(r=>r.dias!=null&&r.dias>=0&&r.dias<=7).length;
   let h=`<div class="mini-hero"><div class="mh-label">ADERÊNCIA</div><div class="mh-val ${clsPctMeta(p,100,90)}">${pct1(p)}</div>`+
-    `<div class="mh-meta">Meta: 100% · <b>${n(rs.length)}</b> placa(s) · <b>${n(blzTot(tot))}</b> blitz no período</div></div>`+
+    `<div class="mh-meta">Meta: 100% · <b>${n(rs.length)}</b> placa(s) · <b>${n(sumA(rs.map(blzTot)))}</b> blitz no mês`+
+    (venc?` · <b class="cr">${n(venc)} vencida(s)</b>`:'')+
+    (h7?` · <b class="cy">${n(h7)} vence(m) em até 7 dias</b>`:'')+`</div></div>`+
     `<div class="custos-hero">`+
       card('Nunca Realizado',tot.nunca,tot.nunca?'cr':'mut')+
       card('Não Realizado',tot.nao,tot.nao?'cr':'mut')+
@@ -886,31 +891,44 @@ function renderBlitz(el,cod){
     `</div>`;
   if(!cod){
     const porU={};rs.forEach(r=>{const k=r.cod||'—';(porU[k]=porU[k]||[]).push(r);});
-    const lin=Object.entries(porU).map(([k,a])=>({k,a,p:blzPct(a)})).sort((x,y)=>(x.p??999)-(y.p??999));
-    h+=`<div class="blk-t" style="margin-top:14px">Por unidade — da pior para a melhor</div>`+
-      wrapT('<table>'+thb([['Unidade',0],['Placas',1],['Aderência',1]].concat(CONT))+'<tbody>'+
-      lin.map(o=>{const s={nunca:0,nao:0,fora:0,dentro:0,prazo:0};o.a.forEach(r=>Object.keys(s).forEach(k=>s[k]+=r[k]));
-        return `<tr><td><b>${escF(o.k)}</b></td><td class="num">${n(o.a.length)}</td>`+
-          `<td class="num ${clsPctMeta(o.p,100,90)}">${pct1(o.p)}</td>`+
-          `<td class="num ${s.nunca?'cr':'mut'}">${n(s.nunca)}</td><td class="num ${s.nao?'cr':'mut'}">${n(s.nao)}</td>`+
-          `<td class="num ${s.fora?'cy':'mut'}">${n(s.fora)}</td><td class="num cg">${n(s.dentro)}</td>`+
-          `<td class="num cg">${n(s.prazo)}</td></tr>`;}).join('')+'</tbody></table>');
+    const lin=Object.entries(porU).map(([k,a])=>({k,a,p:blzPct(a),
+      venc:a.filter(x=>blzNok(x)===true).length})).sort((x,y)=>(y.venc-x.venc)||((x.p??999)-(y.p??999)));
+    h+=`<div class="blk-t" style="margin-top:14px">Por unidade — mais vencidas primeiro</div>`+
+      wrapT('<table><thead><tr><th>Unidade</th><th class="num">Placas</th><th class="num">Vencidas</th>'+
+      '<th class="num">Aderência</th><th class="num">Blitz no mês</th></tr></thead><tbody>'+
+      lin.map(o=>`<tr><td><b>${escF(o.k)}</b></td><td class="num">${n(o.a.length)}</td>`+
+        `<td class="num ${o.venc?'cr':'mut'}">${n(o.venc)}</td>`+
+        `<td class="num ${clsPctMeta(o.p,100,90)}">${pct1(o.p)}</td>`+
+        `<td class="num">${n(sumA(o.a.map(blzTot)))}</td></tr>`).join('')+'</tbody></table>');
   }
-  const ord=rs.slice().sort((a,b)=>{const pa=blzTot(a)?blzOk(a)/blzTot(a):9,pb=blzTot(b)?blzOk(b)/blzTot(b):9;return pa-pb;});
-  h+=`<div class="blk-t" style="margin-top:14px">Placas — da pior aderência para a melhor`+
+  /* A CÉLULA DE PRAZO É "25d · OK" (Renan, 10/09/2026): o número de dias e o
+     status colado nele, verde quando está no prazo e vermelho quando venceu.
+     Placa vencida mostra os dias em atraso, não um negativo. */
+  const cel=r=>{
+    if(r.dias==null) return '<span class="mut">—</span>';
+    const nok=r.dias<0;
+    const t=nok?`${n(-r.dias)}d atrás · NOK`:`${n(r.dias)}d · OK`;
+    return `<b class="${nok?'cr':(r.dias<=7?'cy':'cg')}">${t}</b>`;
+  };
+  const ord=rs.slice().sort((a,b)=>(a.dias==null?1:0)-(b.dias==null?1:0)||((a.dias??0)-(b.dias??0)));
+  h+=`<div class="blk-t" style="margin-top:14px">Placas — da mais vencida para a mais folgada`+
     `<span class="mut" style="font-weight:600;text-transform:none;letter-spacing:0"> — ${n(ord.length)} placas</span></div>`+
-    wrapT('<table>'+thb((cod?[]:[['Unidade',0]]).concat([['Placa',0],['Projeto',0],['Aderência',1]],CONT,[['Tempo Médio',1]]))+
-    '<tbody>'+ord.map(r=>{
-      const pr=blzTot(r)?blzOk(r)/blzTot(r)*100:null;
+    wrapT('<table><thead><tr>'+(cod?'':'<th>Unidade</th>')+
+    '<th>Placa</th><th>Tipo</th><th class="num">Prazo</th><th>Limite</th><th>Última blitz</th>'+
+    '<th class="num">Aderência</th><th class="num">Blitz no mês</th><th class="num">Fora do prazo</th>'+
+    '<th class="num">Tempo médio</th></tr></thead><tbody>'+ord.map(r=>{
       return '<tr>'+(cod?'':`<td>${escF(r.cod||'—')}</td>`)+
-        `<td><b>${escF(r.placa)}</b></td><td>${escF(r.proj||'—')}</td>`+
-        `<td class="num ${clsPctMeta(pr,100,90)}">${pct1(pr)}</td>`+
-        `<td class="num ${r.nunca?'cr':'mut'}">${n(r.nunca)}</td><td class="num ${r.nao?'cr':'mut'}">${n(r.nao)}</td>`+
-        `<td class="num ${r.fora?'cy':'mut'}">${n(r.fora)}</td><td class="num cg">${n(r.dentro)}</td>`+
-        `<td class="num cg">${n(r.prazo)}</td><td class="num mut">${escF(r.tempo||'—')}</td></tr>`;
+        `<td><b>${escF(r.placa)}</b></td><td>${escF(r.tipo||'—')}</td>`+
+        `<td class="num">${cel(r)}</td><td class="${r.lim?'':'mut'}">${fmtD(r.lim)}</td>`+
+        `<td class="${r.ult?'':'mut'}">${fmtD(r.ult)}</td>`+
+        `<td class="num ${clsPctMeta(r.ad,100,90)}">${pct1(r.ad)}</td>`+
+        `<td class="num">${n(blzTot(r))}</td>`+
+        `<td class="num ${(r.fora+r.nunca+r.nao)?'cr':'mut'}">${n(r.fora+r.nunca+r.nao)}</td>`+
+        `<td class="num mut">${escF(r.tempo||'—')}</td></tr>`;
     }).join('')+'</tbody></table>')+
-    `<div class="tbl-sub" style="margin:10px 0 0">Aderência = (Realizado Dentro Prazo + No Prazo) ÷ total das cinco contagens — a mesma régua da Conformidade.`+
-    (semUni?` <b class="cy">${n(semUni)} placa(s) sem unidade</b>: a placa não está na base de ativos do Ginfo.`:'')+`</div>`;
+    `<div class="tbl-sub" style="margin:10px 0 0">Prazo = dias até o <b>Limite Próxima Blitz</b> do Ginfo; vencida conta como NOK. `+
+    `Aderência = (Realizado Dentro Prazo + No Prazo) ÷ total das cinco contagens — a mesma régua da Conformidade.`+
+    (semData?` <b class="cy">${n(semData)} placa(s) sem data limite</b> ficam no fim da lista.`:'')+`</div>`;
   el.innerHTML=h;
 }
 
@@ -1292,6 +1310,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:t=>aplicaTema(t==='light'?'light':'dark')
 });
 </script>
-<script src="../assets/build-check.js?v=202609101530"></script>
+<script src="../assets/build-check.js?v=202609101615"></script>
 </body>
 </html>
