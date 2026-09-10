@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DriverPro">
-<meta name="build" content="202609101400">
+<meta name="build" content="202609101500">
 <title>DriverPro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -74,6 +74,10 @@ svg{display:block;}
 .barra i{display:block;height:100%;border-radius:6px;background:var(--acc);transition:width .4s;}
 .meta .pe{display:flex;justify-content:space-between;font-size:10.5px;color:var(--txt2);font-weight:400;}
 .meta .pe b{display:inline;font-size:10.5px;font-weight:500;color:var(--txt2);}
+/* o pódio soma no número de cima, mas não na barra: a meta é da carteira */
+.meta .pe.pod{margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,.10);}
+body.claro .meta .pe.pod{border-top-color:rgba(20,24,32,.10);}
+.meta .pe.pod b{color:var(--verde);font-weight:600;}
 
 /* ── lista: cards separados com ícone quadrado ── */
 .sec{font-size:10.5px;color:var(--txt2);font-weight:400;margin:4px 0 10px;display:flex;}
@@ -263,6 +267,7 @@ body.claro .nav button.on{color:#fff;}
         <b>Meta do mês</b>
         <div class="barra"><i id="barraSaldo" style="width:90%"></i></div>
         <div class="pe"><span id="metaTxt"><b>R$ 180,80</b> / R$ 200,00</span><span id="metaPct">90%</span></div>
+        <div class="pe pod" id="metaPodio" style="display:none"></div>
       </div>
 
       <div class="sec">Onde o dinheiro foi<a onclick="irPara('nota')">Ver a nota</a></div>
@@ -425,8 +430,14 @@ function pinta(){
   var R = D.regras, vig = mesDe(D.vigente), atual = null;
   D.meses.forEach(function(x){ if (x.competencia === D.vigente) atual = x; });
   var nota = atual ? +atual.nota : null, eleg = atual ? !!atual.elegivel : false;
-  var saldo = atual ? R.saldo_inicial * nota / 100 : R.saldo_inicial;
-  var pct = Math.round(saldo / R.saldo_inicial * 100);
+  // A CARTEIRA é o que a barra mede (R$ 200 menos o que os pilares tiraram).
+  // O PÓDIO é prêmio por cima e entra só no número grande (Renan, 10/09/2026:
+  // "o total precisa aparecer em cima, mas deve ter a meta da carteira e
+  // embaixo o +300"). Somar o pódio na barra a estouraria: 455 de 200 = 227%.
+  var carteira = atual ? R.saldo_inicial * nota / 100 : R.saldo_inicial;
+  var premio = atual && eleg ? (+atual.podio || 0) : 0;
+  var saldo = carteira + premio;
+  var pct = Math.round(carteira / R.saldo_inicial * 100);
 
   $('ola').textContent = 'Olá, ' + D.nome.split(' ')[0] + '!';
   $('sub').textContent = vig.nome.charAt(0).toUpperCase() + vig.nome.slice(1) + ', ' + vig.ano;
@@ -437,8 +448,14 @@ function pinta(){
   $('rotSaldo').textContent = !atual ? 'Saldo de partida' : eleg ? 'Saldo atual' : 'Você teria';
   $('saldo').innerHTML = fmtVal(saldo);
   $('barraSaldo').style.width = pct + '%';
-  $('metaTxt').innerHTML = '<b>' + brl(saldo) + '</b> / ' + brl(R.saldo_inicial);
+  $('metaTxt').innerHTML = '<b>' + brl(carteira) + '</b> / ' + brl(R.saldo_inicial);
   $('metaPct').textContent = pct + '%';
+  var mp = $('metaPodio');
+  if (premio) {
+    mp.style.display = '';
+    mp.innerHTML = '<span>Prêmio do pódio' + (D.posicao ? ' · ' + D.posicao + 'º lugar' : '') + '</span>'
+      + '<span><b>+ ' + brl(premio) + '</b></span>';
+  } else mp.style.display = 'none';
   var av = $('avisoEleg');
   if (!atual) { av.style.display = ''; av.innerHTML = 'O mês ainda não tem dados de condução. O saldo começa cheio e vai sendo apurado conforme você roda.'; }
   else if (eleg) av.style.display = 'none';
@@ -527,7 +544,9 @@ function renderGanhos(){
   $('anoTit').textContent = H.length ? 'Você ganhou em ' + ANO_SEL : ANO_SEL + ' ainda não fechou nenhum mês';
   $('ganhoAno').innerHTML = fmtVal(tot);
   var atual = null; D.meses.forEach(function(x){ if (x.competencia === D.vigente) atual = x; });
-  var saldoVig = atual && atual.elegivel ? +atual.carteira : 0;
+  // mês fechado conta carteira + pódio; o em andamento tem de contar igual,
+  // senão o prêmio do mês corrente não aparece como dinheiro em lugar nenhum
+  var saldoVig = atual && atual.elegivel ? (+atual.carteira || 0) + (+atual.podio || 0) : 0;
   var top = linha(ICO.cal, vig.rot, 'em andamento<i>prévia</i>', brl(saldoVig), '', '', ' vig');
   var fech = H.map(function(x){
     var v = (+x.carteira || 0) + (+x.podio || 0), m = mesDe(x.competencia);
