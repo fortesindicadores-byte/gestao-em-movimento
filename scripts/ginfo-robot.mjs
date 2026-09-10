@@ -145,8 +145,13 @@ const ABAS = [
   // eles a tabela vem com o ANO INTEIRO — 555 blitz para 44 placas em Balneário
   // era o acumulado, não o mês. Gestão à Vista é o agora, então a coleta fixa
   // o mês corrente; slicer que não aplica ABORTA, como nas outras abas.
+  // A DATA LIMITE ESTÁ NO DRILL (Renan, 10/09/2026: "no relatório tem data
+  // limite" · "gere a blitz daqui"): botão direito no card ADERÊNCIA OK →
+  // Drill-through → "Detalhes Aderência". A tabela da página principal
+  // (Placa + as cinco contagens) não tem vencimento nenhum.
   { chave: 'blitz-seguranca', menu: ['SEGURANÇA', 'BLITZ DE SEGURANÇA'],
-    header: 'Nunca Realizado', opcional: true,
+    drill: { card: 'ADERÊNCIA OK', item: 'Detalhes Aderência' },
+    opcional: true,
     slicers: () => {
       const h = new Date();
       return [{ campo: 'Ano', valor: String(h.getFullYear()) },
