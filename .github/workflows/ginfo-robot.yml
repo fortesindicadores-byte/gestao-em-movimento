@@ -31,7 +31,13 @@ on:
     - cron: '0 10 * * *'
 
 concurrency:
-  group: ginfo-robot
+  # UMA CONTA SÓ NO GINFO: elite-robot, ginfo-robot e conf-detalhe entram no
+  # portal com o MESMO usuário, e o portal não aguenta duas sessões — a
+  # segunda derruba a primeira, o iframe do Power BI passa a renderizar sem
+  # slicer nenhum e a coleta aborta sem gravar. Os crons de 10:00, 10:30 e
+  # 11:00 UTC pareciam separados, mas o Elite passa de 45 min e alcançava o
+  # conf-detalhe todo dia. Grupo compartilhado: o segundo espera, não briga.
+  group: ginfo-conta
   cancel-in-progress: false
 
 jobs:
