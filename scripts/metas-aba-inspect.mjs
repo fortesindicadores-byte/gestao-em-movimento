@@ -88,6 +88,33 @@ const alvo = ALVO || (() => {                          // default: o mês seguin
   return m === 12 ? `${a + 1}-01` : `${a}-${String(m + 1).padStart(2, '0')}`;
 })();
 
+// ── as FONTES de onde saem os números ──
+// A aba diz que o mês existe; quem preenche são estas. Painel "automático" só
+// vale se cada uma tiver o mês — senão o indicador aparece vazio ou zerado, que
+// é pior do que não aparecer.
+const FONTES = [
+  { nome: 'Dispersão de km (Base Dispersão)', id: '1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM', aba: 'Dispersão de km', col: 0 },
+  { nome: 'DPO (Termômetro)',                 id: WB, aba: 'DPO', col: null },
+  { nome: 'FCA Total (Termômetro)',           id: WB, gid: '216663799', col: 1 },
+  { nome: 'DRE · Frota',                      id: '1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8', aba: 'Frota', col: 9 },
+];
+console.log('\n── as fontes que preenchem os números ──');
+for (const f of FONTES) {
+  const q = f.gid ? `gid=${f.gid}` : `sheet=${encodeURIComponent(f.aba)}`;
+  try {
+    const t = await (await fetch(`https://docs.google.com/spreadsheets/d/${f.id}/gviz/tq?${q}&tqx=out:json`)).text();
+    const jj = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
+    if (jj.status !== 'ok') { console.log(`   ✘ ${f.nome.padEnd(34)} gviz recusou (${jj.status})`); continue; }
+    const rr = jj.table.rows || [];
+    if (f.col == null) { console.log(`   · ${f.nome.padEnd(34)} ${rr.length} linha(s) · sem coluna de data (é foto do semestre)`); continue; }
+    const ds = rr.map(r => parseD((r.c || [])[f.col] && (r.c[f.col].v))).filter(Boolean).sort((a, b) => a - b);
+    const ult = ds[ds.length - 1];
+    const temAlvo = ds.some(d => vigStr(d) === alvo);
+    console.log(`   ${temAlvo ? '✔' : '✘'} ${f.nome.padEnd(34)} ${rr.length} linha(s) · vai até `
+      + (ult ? vigStr(ult) : '—') + (temAlvo ? '' : `   ⚠ sem ${alvo}`));
+  } catch (e) { console.log(`   ✘ ${f.nome.padEnd(34)} ${String(e.message || e).slice(0, 60)}`); }
+}
+
 console.log(`\núltimo mês preenchido: ${ultima} · alvo: ${alvo}`);
 if (porVig.has(alvo)) {
   console.log(`✔ ${alvo} já tem ${porVig.get(alvo).length} indicador(es) — nada a colar.`);
