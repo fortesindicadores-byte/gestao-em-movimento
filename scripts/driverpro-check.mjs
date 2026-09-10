@@ -35,11 +35,21 @@ if (!r.j.token) { r = await rpc('ce_app_login', { p_cpf: CPF, p_pin: PIN }); con
 ok(!!r.j.token, 'login devolve token');
 if (r.j.token) {
   const d = await rpc('ce_app_dados', { p_token: r.j.token }), j = d.j;
-  console.log('dados →', d.status, JSON.stringify({ ok: j.ok, erro: j.erro, unidade: j.unidade, vigente: j.vigente, posicao: j.posicao, ranking: (j.ranking || []).length, meses: (j.meses || []).length }));
+  console.log('dados →', d.status, JSON.stringify({ ok: j.ok, erro: j.erro, unidade: j.unidade, vigente: j.vigente,
+    posicao: j.posicao, posicao_geral: j.posicao_geral, ranking: (j.ranking || []).length, meses: (j.meses || []).length }));
   ok(j.ok === true, 'ce_app_dados responde');
+  // o ranking passou a numerar só quem disputa (10/09/2026): a posição contando
+  // todo mundo vem junto, e é ela que o app mostra como recado. Se estes campos
+  // sumirem, o banco está com a função antiga e o app fica sem o número geral.
+  ok('posicao_geral' in j, 'ce_app_dados devolve posicao_geral (função nova no banco)');
+  const rk = j.ranking || [];
+  ok(!rk.length || 'pos_geral' in rk[0], 'cada linha do ranking traz pos_geral e disputa');
+  const disp = rk.filter(x => x.disputa !== false).length;
+  console.log('ranking: ' + rk.length + ' linha(s) · ' + disp + ' na disputa · ' + (rk.length - disp) + ' fora');
   console.log('regras:', JSON.stringify(j.regras));
   (j.meses || []).forEach(m => console.log('  ', m.competencia, 'nota', m.nota, 'km', m.km, 'dias', m.dias, 'viagens', m.viagens,
-    'pos', m.posicao, 'eleg', m.elegivel, 'carteira', m.carteira, 'podio', m.podio, 'rpm/idle/acel', m.rpm, m.idle, m.acel, m.motivo || ''));
+    'pos', m.posicao, 'pos_uni', m.posicao_unidade, 'geral', m.posicao_unidade_geral,
+    'eleg', m.elegivel, 'carteira', m.carteira, 'podio', m.podio, 'rpm/idle/acel', m.rpm, m.idle, m.acel, m.motivo || ''));
   console.log('ranking (pos · nota · eu):', (j.ranking || []).map(x => x.pos + '·' + x.pontuacao + (x.eu ? '·EU' : '')).join('  '));
   const s = await rpc('ce_app_sair', { p_token: r.j.token }); ok(s.status === 204 || s.status === 200, 'sair');
   const d2 = await rpc('ce_app_dados', { p_token: r.j.token }); ok(d2.j.ok === false, 'token morre depois do sair');
