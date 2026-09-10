@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609101710">
+<meta name="build" content="202609101745">
 <title>Gestão à Vista</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -862,15 +862,23 @@ function renderPlacas(el,cod){
   const comNok=rs.length-semNok;
   const media=avgA(rs.map(r=>r.ad));
   const card=(lb,v,c)=>`<div class="ch-min"><span>${lb}</span><b class="${c||''}">${v}</b></div>`;
-  /* "25d · OK" verde · "35d atrás · NOK" vermelho · amarelo até 7 dias.
+  /* "25d · OK" verde · "35d · NOK" vermelho · amarelo até 7 dias — o formato
+     que o Renan escreveu, com o número de dias e nada mais. Vencida NÃO leva
+     "atrás" (ele cobrou em 10/09/2026): quem diz que é atraso é o NOK e a cor.
      Coluna sem dado é "—" apagado: N/A, fora da conta da aderência. */
   const cel=c=>{
     if(!c||c.ok==null) return '<span class="mut">—</span>';
     const cls=!c.ok?'cr':(c.dias!=null&&c.dias<=7?'cy':'cg');
     if(c.dias==null) return `<b class="${cls}">${c.ok?'OK':'NOK'}</b>`;
-    const d=c.dias<0?`${n(-c.dias)}d atrás`:`${n(c.dias)}d`;
-    return `<b class="${cls}">${d} · ${c.ok?'OK':'NOK'}</b>`;
+    return `<b class="${cls}">${n(Math.abs(c.dias))}d · ${c.ok?'OK':'NOK'}</b>`;
   };
+  /* ADERÊNCIA COM FUNDO PINTADO (Renan, 10/09/2026) — mesma pílula do total do
+     FCA: fundo na cor da faixa e, no vermelho, texto branco para ler. */
+  const css=getComputedStyle(document.body);
+  const band=v=>v==null?css.getPropertyValue('--txt4').trim()
+    :v>=99.95?css.getPropertyValue('--verde').trim()
+    :v>=90?css.getPropertyValue('--ambar').trim():css.getPropertyValue('--vermelho').trim();
+  const adCel=v=>`<span class="pctcell" style="background:${band(v)}${v!=null&&v<90?';color:#fff':''}">${pct1(v)}</span>`;
   let h=`<div class="mini-hero"><div class="mh-label">ADERÊNCIA MÉDIA DA PLACA</div>`+
     `<div class="mh-val ${clsPctMeta(media,100,90)}">${pct1(media)}</div>`+
     `<div class="mh-meta"><b>${n(rs.length)}</b> placa(s) · <b class="cg">${n(semNok)}</b> sem nenhum NOK`+
@@ -893,7 +901,7 @@ function renderPlacas(el,cod){
     ord.map(r=>'<tr>'+(cod?'':`<td>${escF(r.cod||'—')}</td>`)+
       `<td><b>${escF(r.placa)}</b></td><td>${escF(r.proj||'—')}</td>`+
       PL_COLS.map(c=>`<td class="num">${cel(r.cel[c.k])}</td>`).join('')+
-      `<td class="num ${clsPctMeta(r.ad,100,90)}">${pct1(r.ad)}</td></tr>`).join('')+
+      `<td class="num">${adCel(r.ad)}</td></tr>`).join('')+
     '</tbody></table>')+
     `<div class="tbl-sub" style="margin:10px 0 0">Aderência da placa = OK ÷ (OK + NOK); indicador sem dado para a placa é <b>—</b> e fica FORA da conta. `+
     `Preventivas, Alinhamento, Conformidade, Pneus e Blitz mostram os dias até vencer; CIFV e Stress Test são apuração do mês, então só OK ou NOK. `+
@@ -1042,13 +1050,12 @@ function renderBlitz(el,cod){
         `<td class="num">${n(sumA(o.a.map(blzTot)))}</td></tr>`).join('')+'</tbody></table>');
   }
   /* A CÉLULA DE PRAZO É "25d · OK" (Renan, 10/09/2026): o número de dias e o
-     status colado nele, verde quando está no prazo e vermelho quando venceu.
-     Placa vencida mostra os dias em atraso, não um negativo. */
+     status colado nele, verde no prazo e vermelho quando venceu. SEM "atrás" e
+     sem negativo — quem diz que é atraso é o NOK e a cor. */
   const cel=r=>{
     if(r.dias==null) return '<span class="mut">—</span>';
     const nok=r.dias<0;
-    const t=nok?`${n(-r.dias)}d atrás · NOK`:`${n(r.dias)}d · OK`;
-    return `<b class="${nok?'cr':(r.dias<=7?'cy':'cg')}">${t}</b>`;
+    return `<b class="${nok?'cr':(r.dias<=7?'cy':'cg')}">${n(Math.abs(r.dias))}d · ${nok?'NOK':'OK'}</b>`;
   };
   const ord=rs.slice().sort((a,b)=>(a.dias==null?1:0)-(b.dias==null?1:0)||((a.dias??0)-(b.dias??0)));
   h+=`<div class="blk-t" style="margin-top:14px">Placas — da mais vencida para a mais folgada`+
@@ -1450,6 +1457,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:t=>aplicaTema(t==='light'?'light':'dark')
 });
 </script>
-<script src="../assets/build-check.js?v=202609101710"></script>
+<script src="../assets/build-check.js?v=202609101745"></script>
 </body>
 </html>
