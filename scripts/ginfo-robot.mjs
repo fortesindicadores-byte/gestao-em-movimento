@@ -141,8 +141,17 @@ const ABAS = [
   // placa, exatamente como nas Preventivas.
   // Fica OPCIONAL enquanto a coleta não se prova estável: falha dela não
   // derruba as outras sete abas do run diário.
+  // A PÁGINA TEM ANO E MÊS (Renan, 10/09/2026: "existe mês e ano..."). Sem
+  // eles a tabela vem com o ANO INTEIRO — 555 blitz para 44 placas em Balneário
+  // era o acumulado, não o mês. Gestão à Vista é o agora, então a coleta fixa
+  // o mês corrente; slicer que não aplica ABORTA, como nas outras abas.
   { chave: 'blitz-seguranca', menu: ['SEGURANÇA', 'BLITZ DE SEGURANÇA'],
-    header: 'Nunca Realizado', opcional: true },
+    header: 'Nunca Realizado', opcional: true,
+    slicers: () => {
+      const h = new Date();
+      return [{ campo: 'Ano', valor: String(h.getFullYear()) },
+              { campo: 'Mês', valor: MES_FULL[h.getMonth()] }];
+    } },
 ];
 
 const ART = 'ginfo-artifacts';

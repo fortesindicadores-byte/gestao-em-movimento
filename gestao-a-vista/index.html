@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609101430">
+<meta name="build" content="202609101530">
 <title>Gestão à Vista</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -578,7 +578,7 @@ const VIEWS=[
   {id:'conf',   g:'i', ic:ICO.conf,   t:'Conformidade', s:()=>'Aderência do mês — atualizada até hoje'+(CONF_VIG?' · vigência '+vigLbl(CONF_VIG):''), r:(el,cod)=>renderConf(el,cod)},
   // Gestão à Vista é o AGORA: o mês de km que está correndo, que vira a fatura
   // do mês seguinte. O mês fechado fica na Carta de Custos.
-  {id:'contrato',g:'i', ic:ICO.contrato, t:'Contrato', s:()=>'Ranking de placas do mês em formação'+(CTR_VIGCOB?' · entra na fatura de '+vigLbl(CTR_VIGCOB):''), r:(el,cod)=>renderContrato(el,cod), temDado:()=>!!(CTR&&CTR.length)},
+  {id:'contrato',g:'i', ic:ICO.contrato, t:'Contrato', s:()=>'Ranking de placas do mês em formação'+(CTR_VIGCOB?' · entra na fatura de '+vigLbl(CTR_VIGCOB):''), r:(el,cod)=>renderContrato(el,cod)},
   // só aparece depois que o robô coletar a primeira vez (a tela nasceria vazia)
   {id:'blitz',  g:'i', ic:ICO.blitz,  t:'Blitz de Segurança', s:()=>'Aderência mensal por placa vs meta 100%'+fx('blitz'), r:(el,cod)=>renderBlitz(el,cod), temDado:()=>(DATA.blitz||[]).length>0},
   {id:'fca',    g:'i', ic:ICO.fca,    t:'FCA', s:()=>'Aderência ao prazo, à conclusão e total'+(FCAR?' · '+FCAR.length+' ação(ões)':''), r:(el,cod)=>renderFCAv(el,cod)},
@@ -773,20 +773,20 @@ function confPlacas(cod){
    VARIÁVEL E FIXO NÃO SE MISTURAM (regra que veio da Carta): o fixo paga o
    mesmo rode ou não rode, então somar os dois faria o km parecer explicar um
    valor que não depende dele.                                              */
-let CTR=null, CTR_OK=false, CTR_VIGKM='', CTR_VIGCOB='', CT_TIPO='variavel';
+let CTR=null, CTR_OK=false, CTR_VIGKM='', CTR_VIGCOB='', CTR_ERRO='', CT_TIPO='variavel';
 const ctVigKm=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;};
 async function loadContrato(){
   try{
-    CTR_VIGKM=ctVigKm();
+    CTR_VIGKM=ctVigKm(); CTR_ERRO='';
     const cols='vig_cobranca,vig_km,placa,placa_origem,unidade,projeto,tipo,taxa_km,km_vig,'
       +'valor_fixo,origem_km,custo_vig,abastecimentos,ultimo_abast,previa,modelo';
-    let data=null;
+    let data=null, erros=[];
     for(const t of ['custo_vigencia_mv','custo_vigencia']){
       const r=await SB.from(t).select(cols).eq('vig_km',CTR_VIGKM).limit(2000);
       if(!r.error){ data=r.data||[]; break; }
-      console.warn(t,r.error.message);
+      console.warn(t,r.error.message); erros.push(`${t}: ${r.error.message}`);
     }
-    if(!data){ CTR=null; return; }
+    if(!data){ CTR=null; CTR_ERRO=erros.join(' · '); return; }
     CTR=data.filter(r=>r.unidade&&UNIDADES[r.unidade]).map(r=>({
       cod:r.unidade, placa:String(r.placa_origem||r.placa||'').trim(), proj:String(r.projeto||'').trim(),
       modelo:String(r.modelo||'').trim(), tipo:String(r.tipo||'').trim(),
@@ -794,13 +794,23 @@ async function loadContrato(){
       abast:num(r.abastecimentos), ult:parseFlex(r.ultimo_abast), custo:num(r.custo_vig)||0,
     })).filter(r=>r.placa);
     CTR_VIGCOB=(data[0]&&data[0].vig_cobranca)||'';
-  }catch(e){ console.error('contrato',e); CTR=null; }
+  }catch(e){ console.error('contrato',e); CTR=null; CTR_ERRO=String(e&&e.message||e); }
   finally{ CTR_OK=true; }
 }
 function setCtTipo(t){ CT_TIPO=t; PINTADA['contrato']=false; pinta('contrato'); }
 function renderContrato(el,cod){
+  /* A VISÃO APARECE SEMPRE, mesmo sem dado (10/09/2026). Com `temDado` ela
+     sumia do menu quando a leitura falhava — e sumir sem dizer nada é pior do
+     que aparecer vazia: quem abre o painel não tem como saber se o contrato
+     não existe, se o ERP não recebeu carga ou se o banco recusou a leitura. */
+  if(!CTR_OK){ el.innerHTML='<div class="loading">Carregando o contrato…</div>'; return; }
+  if(CTR_ERRO){
+    el.innerHTML=`<div class="loading">Não consegui ler o contrato no banco.<br>`
+      +`<span class="mut" style="font-size:11px">${escF(CTR_ERRO)}</span></div>`; return; }
   if(!CTR||!CTR.length){
-    el.innerHTML='<div class="loading">Sem contrato apurado para o mês corrente.</div>';return;}
+    el.innerHTML=`<div class="loading">Sem contrato apurado para ${vigLbl(CTR_VIGKM)}.<br>`
+      +`<span class="mut" style="font-size:11px">O km vem do ERP; enquanto o mês não recebe carga, não há o que ranquear.</span></div>`;
+    return;}
   const fixo=CT_TIPO==='fixo';
   const chips=`<div class="chips" style="margin-bottom:10px">`
     +`<button class="chip${fixo?'':' on'}" onclick="setCtTipo('variavel')">Variável</button>`
@@ -1282,6 +1292,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:t=>aplicaTema(t==='light'?'light':'dark')
 });
 </script>
-<script src="../assets/build-check.js?v=202609101430"></script>
+<script src="../assets/build-check.js?v=202609101530"></script>
 </body>
 </html>
