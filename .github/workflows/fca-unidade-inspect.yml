@@ -1,0 +1,25 @@
+name: FCA Unidade Inspect (auditoria)
+
+# Quantos fatos cada unidade tem, por vigência e por origem — separa
+# "a tela quebrou" de "não foi gerado". Só leitura, sem nome de pessoa.
+on:
+  workflow_dispatch:
+    inputs:
+      unidade:
+        description: 'Unidade para detalhar (ex.: BLC). Vazio = só o quadro geral.'
+        required: false
+        default: ''
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Inspecionar
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          FCA_UNI: ${{ github.event.inputs.unidade }}
+        run: node scripts/fca-unidade-inspect.mjs

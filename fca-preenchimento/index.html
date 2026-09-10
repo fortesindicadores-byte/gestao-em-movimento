@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609011100">
+<meta name="build" content="202609101700">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2053,7 +2053,26 @@ _buildMs(document.getElementById('ms-prazo'),()=>PRZ_OPTS);
 document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrap'))document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open'));});
 
 // ── Início: exige login (hub), carrega perfil (unidade/admin) e os fatos ──
-// Pré-visualização: Supabase ainda não configurado/sem login → CGR + localStorage, pra poder olhar.
+//
+// AVISO EM VEZ DE UNIDADE INVENTADA (Renan, 10/09/2026: "FCA do Marcio de BLC
+// está aparecendo assim" — Kanban vazio e a marca dizendo "FCA · CGR ·
+// preview"). Sem sessão do hub, o painel caía sozinho na pré-visualização, que
+// carimba CGR e grava no localStorage: o gestor de BLC via a unidade ERRADA,
+// zerada, e qualquer coisa que digitasse ficava só no navegador dele. A tela
+// tem de dizer o que aconteceu; a pré-visualização continua existindo, mas só
+// quando pedida de propósito (?preview=1).
+function telaAviso(html){
+  document.querySelectorAll('.hfilter').forEach(e=>e.style.display='none');
+  document.querySelectorAll('.s-sec, .s-item[data-v]').forEach(e=>e.style.display='none');
+  ['uniBadge','uniSel','adminBtn','saveBtn','savedMsg','backUnits','viewBtn','flatBtn']
+    .forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  marcaUnidade('');
+  const t=document.getElementById('tituloVista'); if(t) t.textContent='FCA';
+  const intro=document.querySelector('.intro'); if(intro) intro.textContent='';
+  document.getElementById('list').innerHTML='<div class="empty">'+html+'</div>';
+}
+const LINK_HUB='<a href="../" style="color:var(--laranja);text-decoration:underline">entrar no portal</a>';
+
 function enterPreview(){
   PREVIEW=true; REAL_ADMIN=true; ADMIN=true;
   UNIDADE_COD='CGR'; applyDepara('CGR');
@@ -2064,11 +2083,26 @@ function enterPreview(){
 async function initApp(){
   try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }
   catch(e){ document.getElementById('list').innerHTML='<div class="empty">Erro ao iniciar (Supabase).</div>'; return; }
+  const params0=new URLSearchParams(location.search);
+  if(params0.get('preview')==='1'){ enterPreview(); return; }   // pré-visualização só quando pedida
   const {data:{session}}=await sb.auth.getSession();
-  if(!session){ enterPreview(); return; }                 // sem login -> pré-visualização (não trava)
+  if(!session){                                            // sem login: dizer, não fingir uma unidade
+    telaAviso('Você não está logado no portal, então o FCA não sabe qual é a sua unidade.<br><br>'
+      +'Faça o login e volte: '+LINK_HUB+'.');
+    return;
+  }
   SESSION=session;
   const {data:prof,error:profErr}=await sb.from('fca_profiles').select('*').eq('user_id',session.user.id).maybeSingle();
-  if(profErr){ enterPreview(); return; }                   // tabela ainda não existe -> pré-visualização
+  if(profErr){                                             // falha de leitura: mostrar o motivo
+    telaAviso('Não consegui ler o seu perfil de acesso:<br><br>'+esc(profErr.message||profErr)
+      +'<br><br>Se isso continuar, avise o administrador.');
+    return;
+  }
+  if(!prof){                                               // logado, mas sem cadastro no FCA
+    telaAviso('Seu usuário está logado, mas ainda não tem cadastro no FCA.<br><br>'
+      +'Peça ao administrador para liberar a sua unidade no Gerenciar Acessos.');
+    return;
+  }
   PROFILE=prof||{}; REAL_ADMIN=!!PROFILE.is_admin; ADMIN=REAL_ADMIN;
   // unidades que o usuário pode acessar: admin = todas; gestor = a(s) sua(s)
   // (fca_profiles.unidade aceita lista separada por vírgula, ex.: 'CBA T1,MCC T1')
@@ -2144,6 +2178,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609011100"></script>
+<script src="../assets/build-check.js?v=202609101700"></script>
 </body>
 </html>
