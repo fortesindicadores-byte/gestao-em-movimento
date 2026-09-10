@@ -61,19 +61,28 @@ const fecha = (status, resultado) => patch({ status, resultado: String(resultado
 
 await patch({ status: 'rodando', iniciado_em: new Date().toISOString(), run_url: RUN_URL });
 
-let saida;
+const roda = (script, env) => new Promise(ok => {
+  const p = spawn(process.execPath, [script], { env: { ...process.env, ...env } });
+  let txt = '';
+  const junta = d => { txt += d; process.stdout.write(d); };
+  p.stdout.on('data', junta);
+  p.stderr.on('data', junta);
+  p.on('close', cod => ok({ cod, txt }));
+});
+const rodape = (s, n = 3) => s.txt.trim().split('\n').filter(Boolean).slice(-n).join('\n');
+
+let saida, foto;
 try {
-  // roda o robô de sempre e guarda o log para devolver ao hub
-  saida = await new Promise(ok => {
-    const p = spawn(process.execPath, ['scripts/sheets-robot.mjs'], {
-      env: { ...process.env, SHEETS_MODO: 'run', SHEETS_SO: so },
-    });
-    let txt = '';
-    const junta = d => { txt += d; process.stdout.write(d); };
-    p.stdout.on('data', junta);
-    p.stderr.on('data', junta);
-    p.on('close', cod => ok({ cod, txt }));
-  });
+  // 1) as tabelas tipadas sh_* — que é o que a janelinha do hub lista
+  saida = await roda('scripts/sheets-robot.mjs', { SHEETS_MODO: 'run', SHEETS_SO: so });
+
+  // 2) o snapshot do gviz — é DELE que os painéis leem nos primeiros 15s
+  //    (Renan, 10/09/2026: colou agosto na aba Km/L, apertou o botão e o painel
+  //    continuou em julho, porque a foto do gviz era das 09h36 e ninguém a
+  //    tinha refeito). Sem este passo o botão atualiza uma base que painel
+  //    nenhum lê ainda.
+  console.log('\n── snapshot do gviz (o que os painéis leem) ──');
+  foto = await roda('scripts/gviz-robot.mjs', {});
 } catch (e) {
   // o pedido NUNCA fica preso: qualquer erro daqui volta como "erro" na linha
   await fecha('erro', e.message).catch(() => {});
@@ -81,11 +90,12 @@ try {
 }
 
 // o hub mostra o rodapé do log: "N carregada(s) · … · X linha(s) gravada(s)"
-const linhas = saida.txt.trim().split('\n').filter(Boolean);
-const resumo = linhas.slice(-3).join('\n');
+const resumo = [rodape(saida), foto ? 'Painéis: ' + rodape(foto, 1) : '']
+  .filter(Boolean).join('\n');
+const cod = saida.cod || (foto ? foto.cod : 0);
 
-await fecha(saida.cod === 0 ? 'ok' : 'erro',
-  resumo || (saida.cod === 0 ? 'sem saída' : `o robô saiu com código ${saida.cod}`));
+await fecha(cod === 0 ? 'ok' : 'erro',
+  resumo || (cod === 0 ? 'sem saída' : `o robô saiu com código ${cod}`));
 
-console.log(`\npedido(s) ${ids.join(', ')} → ${saida.cod === 0 ? 'ok' : 'erro'}`);
-process.exit(saida.cod === 0 ? 0 : 1);
+console.log(`\npedido(s) ${ids.join(', ')} → ${cod === 0 ? 'ok' : 'erro'}`);
+process.exit(cod === 0 ? 0 : 1);
