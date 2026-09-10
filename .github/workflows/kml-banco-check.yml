@@ -1,0 +1,26 @@
+name: KmL Banco Check (conferência)
+
+# Antes de trocar a leitura do painel Eficiência Km/L da aba do Sheets para a
+# tabela sh_consumo_km_litro, compara os dois lados: linhas, vigências, Σkm,
+# Σlitros e km/L por vigência e por unidade. Não grava nada.
+on:
+  workflow_dispatch:
+    inputs:
+      tolerancia:
+        description: 'Tolerância em % por número comparado (padrão 0.5)'
+        required: false
+        default: '0.5'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Comparar banco × planilha
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          KML_TOL: ${{ github.event.inputs.tolerancia }}
+        run: node scripts/kml-banco-check.mjs
