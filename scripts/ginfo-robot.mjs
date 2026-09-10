@@ -333,25 +333,45 @@ async function acharAlvo(page, aba) {
 
 // aplica um slicer dropdown do Power BI: abre o dropdown do campo e clica no item.
 // No PBI, clicar num item de slicer de caixinhas SUBSTITUI a seleção (não soma).
+/* O DROPDOWN MAIS PRÓXIMO DO RÓTULO NEM SEMPRE É O CERTO (bug real, 09/2026).
+   No Stress Test de Empilhadeira o robô abria um dropdown cujos itens eram
+   ["1ª QZ Stress Test"] e concluía que "Ago-26" não existia — o slicer de Mês
+   era outro, ao lado. Falhou todo dia desde 04/09 por isso.
+   Agora ele tenta TODOS os candidatos do campo, um a um, e fica com o que
+   abrir uma lista que realmente tem o valor pedido. É a mesma ideia que o
+   elite-robot já usava (candidatosSlicer). */
+async function candidatosSlicer(page, campo) {
+  const out = [];
+  for (const fr of page.frames()) {
+    try {
+      const perto = fr.locator(`.slicer-dropdown-menu:below(:text("${campo}"))`);
+      const n = Math.min(await perto.count(), 4);
+      for (let i = 0; i < n; i++) out.push(perto.nth(i));
+      const alt = fr.locator(`[aria-label="${campo}"]`);
+      const m = Math.min(await alt.count(), 3);
+      for (let i = 0; i < m; i++) out.push(alt.nth(i));
+    } catch (e) {}
+  }
+  return out;
+}
 async function aplicarSlicer(page, campo, valor) {
-  const hit = await emFrames(page, async fr => {
-    const dd = fr.locator(`.slicer-dropdown-menu:below(:text("${campo}"))`).first();
-    if (await dd.count()) return { fr, dd };
-    const alt = fr.locator(`[aria-label="${campo}"]`).first();
-    if (await alt.count()) return { fr, dd: alt };
-    return null;
-  });
-  if (!hit) { log(`slicer "${campo}" não encontrado`); return false; }
-  await hit.dd.click({ timeout: 10000 });
-  await page.waitForTimeout(2500);   // lista do dropdown pode levar um instante a mais p/ renderizar
+  const cands = await candidatosSlicer(page, campo);
+  if (!cands.length) { log(`slicer "${campo}" não encontrado`); return false; }
   const buscarItem = () => emFrames(page, async fr => {
     const i = fr.locator(`.slicerItemContainer:has-text("${valor}"), [role="option"]:has-text("${valor}"), .slicerText:text-is("${valor}"), span:text-is("${valor}")`).first();
     return (await i.count()) ? i : null;
   });
-  let item = await buscarItem();
-  for (let t = 0; t < 2 && !item; t++) {   // retry — lista pode ainda estar montando
-    await page.waitForTimeout(1500);
+  let item = null;
+  for (let c = 0; c < cands.length && !item; c++) {
+    try { await cands[c].click({ timeout: 10000 }); } catch (e) { continue; }
+    await page.waitForTimeout(2500);   // lista do dropdown pode levar um instante a mais p/ renderizar
     item = await buscarItem();
+    for (let t = 0; t < 2 && !item; t++) { await page.waitForTimeout(1500); item = await buscarItem(); }
+    if (!item) {                       // dropdown errado: fecha e tenta o próximo
+      if (c + 1 < cands.length) log(`slicer "${campo}": o candidato ${c + 1} não tem "${valor}" — tentando o próximo`);
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(800);
+    }
   }
   if (!item) {
     // diagnóstico: quais itens o dropdown realmente tem (fica no log do Actions)
@@ -363,7 +383,7 @@ async function aplicarSlicer(page, campo, valor) {
         for (let i = 0; i < n; i++) textos.push((await its.nth(i).innerText().catch(() => '')).trim().replace(/\s+/g, ' '));
       } catch (e) {}
     }
-    log(`item "${valor}" do slicer "${campo}" não encontrado — itens disponíveis:`, JSON.stringify(textos.filter(Boolean)));
+    log(`item "${valor}" do slicer "${campo}" não encontrado em ${cands.length} candidato(s) — itens disponíveis:`, JSON.stringify(textos.filter(Boolean)));
     await page.keyboard.press('Escape');
     return false;
   }
@@ -731,6 +751,30 @@ async function tabelas(page) {
     } catch (e) {}
   }
   log('filtros/slicers visíveis:', JSON.stringify([...new Set(sl.filter(Boolean))]));
+
+  /* OS RÓTULOS DOS CARDS (10/09/2026): o drill-through mira num card pelo texto
+     EXATO e em caixa alta ("NÃO EXECUTADAS"). Se o painel renomear o card, o
+     robô só diz "não encontrado" e não há como adivinhar o nome novo sem ver a
+     tela. Esta lista é o print em texto. */
+  const cards = [];
+  for (const fr of framesDaAba(page, aba)) {
+    try {
+      const t = await fr.evaluate(() => {
+        const out = [];
+        document.querySelectorAll('visual-container, [class*="visualContainer"]').forEach(v => {
+          const r = v.getBoundingClientRect();
+          if (r.width < 40 || r.height < 30) return;
+          if (v.querySelector('[role="grid"], [role="table"]')) return;   // tabela não é card
+          const txt = (v.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+          if (txt) out.push(txt);
+        });
+        return out;
+      });
+      cards.push(...t);
+    } catch (e) {}
+  }
+  log(`cards da página (${cards.length}):`);
+  [...new Set(cards)].slice(0, 30).forEach(c => log(`   "${c}"`));
 }
 
 /* resumo de conferência: quantas linhas e como se distribuem. Só colunas que
