@@ -1,5 +1,7 @@
 # Gestão em Movimento — Guia para o Claude
 
+> **`PADROES.md` é o estado atual do portal, organizado por assunto** (casca, filtros, gráficos, tabelas, fontes, banco, robôs, acessos, publicação), gerado por varredura do código em 10/09/2026. Este arquivo continua sendo o diário de decisões e dos porquês. Em dúvida sobre "como é hoje", ler o `PADROES.md` primeiro; o inventário dos painéis sai de `node scripts/padroes-inventario.mjs`.
+
 ## Visão geral
 
 Repositório central de todos os painéis de BI da empresa (Fortes Indicadores), em substituição ao Looker Studio.
