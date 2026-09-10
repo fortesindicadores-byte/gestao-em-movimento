@@ -666,10 +666,22 @@ returns jsonb language sql stable security definer set search_path = public, ext
 $$;
 
 -- dados: ranking e pódio do GRUPO; cota e km mínimo da UNIDADE do motorista
+--
+-- O RANKING É ENTRE QUEM DISPUTA (Renan, 10/09/2026: "William está em 26º, mas
+-- dentre os elegíveis está em primeiro"). A cota "os 15 melhores" sempre quis
+-- dizer os 15 melhores DE QUEM COMPETE — quem não bateu o km mínimo (ou as
+-- viagens, os dias, a nota) não ocupa vaga. Antes o row_number corria sobre
+-- TODO MUNDO com nota no mês, então 25 motoristas de pouco km empurravam para
+-- fora quem tinha rodado: o William ficava em 26º e não recebia, sendo o melhor
+-- entre os que rodaram os 1.000 km. Cada um é medido pelos mínimos da PRÓPRIA
+-- unidade (Lata 500 km, Empurrada 1.000 km), por isso o ce_app_km_min por linha.
+-- A posição contando todo mundo continua indo no JSON (pos_geral) — o app a
+-- mostra como recado embaixo da posição que vale.
 create or replace function public.ce_app_dados(p_token uuid, p_chave text default null)
 returns jsonb language plpgsql security definer set search_path = public, extensions as $$
 declare s record; m record; R record; v_vig date := date_trunc('month', now())::date;
-        v_chave text; v_meses jsonb; v_rank jsonb; v_pos int; v_top int; v_km int; v_grupo text;
+        v_chave text; v_meses jsonb; v_rank jsonb; v_pos int; v_pos_ger int;
+        v_top int; v_km int; v_grupo text;
 begin
   select * into s from ce_app_sessao where token = p_token and expira_em > now();
   if s is null then return jsonb_build_object('ok', false, 'erro', 'Sessão expirada. Entre de novo.'); end if;
@@ -685,52 +697,56 @@ begin
   v_km  := coalesce(ce_app_km_min(m.unidade), R.km_min);
   v_grupo := ce_app_grupo(m.unidade);
 
-  -- ranking do mês vigente: todo o GRUPO
-  with u as (
-    select x.chave, x.motorista, x.pontuacao,
-           row_number() over (order by x.pontuacao desc nulls last, x.km desc nulls last) as pos
-    from ce_scores_mensais x
-    where x.competencia = v_vig and ce_app_grupo(x.unidade) = v_grupo
-      and x.pontuacao is not null and x.chave not like 'semlogin:%'
-  )
-  select coalesce(jsonb_agg(jsonb_build_object('pos', pos, 'nome', ce_app_abrevia(motorista),
-                   'pontuacao', round(pontuacao::numeric, 1), 'eu', chave = v_chave) order by pos), '[]'::jsonb),
-         max(pos) filter (where chave = v_chave)
-    into v_rank, v_pos from u;
-
-  -- histórico: posição no GRUPO (pódio) e posição na UNIDADE (cota)
-  with h as (
+  -- disputa = bate os mínimos da PRÓPRIA unidade; só quem disputa é numerado
+  with base as (
     select x.*,
-           row_number() over (partition by x.competencia
-                              order by x.pontuacao desc nulls last, x.km desc nulls last) as pos,
-           row_number() over (partition by x.competencia, x.unidade
-                              order by x.pontuacao desc nulls last, x.km desc nulls last) as pos_uni
+           (coalesce(x.km,0)        >= coalesce(ce_app_km_min(x.unidade), R.km_min)
+            and coalesce(x.viagens,0)   >= R.viagens_min
+            and coalesce(x.dias,0)      >= R.dias_min
+            and coalesce(x.pontuacao,0) >= R.score_min) as disputa
     from ce_scores_mensais x
     where x.competencia <= v_vig and ce_app_grupo(x.unidade) = v_grupo
       and x.pontuacao is not null and x.chave not like 'semlogin:%'
+  ), h as (
+    select b.*,
+           -- partição pelo próprio "disputa": a numeração de quem compete começa em 1
+           case when b.disputa then row_number() over (partition by b.competencia, b.disputa
+                  order by b.pontuacao desc nulls last, b.km desc nulls last) end as pos,
+           case when b.disputa then row_number() over (partition by b.competencia, b.unidade, b.disputa
+                  order by b.pontuacao desc nulls last, b.km desc nulls last) end as pos_uni,
+           row_number() over (partition by b.competencia
+                  order by b.pontuacao desc nulls last, b.km desc nulls last) as pos_ger,
+           row_number() over (partition by b.competencia, b.unidade
+                  order by b.pontuacao desc nulls last, b.km desc nulls last) as pos_uni_ger
+    from base b
   ), meu as (
-    select h.*,
-      (coalesce(h.km,0)      >= v_km)          and (coalesce(h.viagens,0) >= R.viagens_min)
-      and (coalesce(h.dias,0) >= R.dias_min)   and (coalesce(h.pontuacao,0) >= R.score_min)
-      and (v_top = 0 or h.pos_uni <= v_top) as elegivel
-    from h where h.chave = v_chave
+    select h.*, h.disputa and (v_top = 0 or h.pos_uni <= v_top) as elegivel from h where h.chave = v_chave
   )
-  select coalesce(jsonb_agg(jsonb_build_object(
-      'competencia', to_char(competencia, 'YYYY-MM'),
-      'nota', round(pontuacao::numeric, 1), 'km', round(coalesce(km,0)::numeric), 'dias', dias, 'viagens', viagens,
-      'posicao', pos, 'posicao_unidade', pos_uni, 'elegivel', elegivel,
-      'carteira', case when elegivel then round(R.saldo_inicial * pontuacao / 100, 2) else 0 end,
-      'podio',    case when elegivel and pos <= coalesce(array_length(R.podio,1),0) then R.podio[pos] else 0 end,
-      'rpm', round(rpm_pontos::numeric,1), 'idle', round(idle_pontos::numeric,1), 'acel', round(acel_pontos::numeric,1),
-      'vel', round(vel_pontos::numeric,1),
-      'motivo', case when elegivel then null
-                     when coalesce(km,0) < v_km then 'não bateu os ' || v_km || ' km'
-                     when coalesce(viagens,0) < R.viagens_min then 'não bateu as ' || R.viagens_min || ' viagens'
-                     when coalesce(dias,0) < R.dias_min then 'menos de ' || R.dias_min || ' dias medidos'
-                     when coalesce(pontuacao,0) < R.score_min then 'nota abaixo de ' || R.score_min
-                     else 'fora dos ' || v_top || ' primeiros' end
-    ) order by competencia desc), '[]'::jsonb)
-    into v_meses from meu;
+  select
+    (select coalesce(jsonb_agg(jsonb_build_object('pos', pos, 'pos_geral', pos_ger, 'disputa', disputa,
+              'nome', ce_app_abrevia(motorista), 'pontuacao', round(pontuacao::numeric, 1),
+              'eu', chave = v_chave) order by pos nulls last, pos_ger), '[]'::jsonb)
+       from h where competencia = v_vig),
+    (select pos     from h where competencia = v_vig and chave = v_chave),
+    (select pos_ger from h where competencia = v_vig and chave = v_chave),
+    (select coalesce(jsonb_agg(jsonb_build_object(
+        'competencia', to_char(competencia, 'YYYY-MM'),
+        'nota', round(pontuacao::numeric, 1), 'km', round(coalesce(km,0)::numeric), 'dias', dias, 'viagens', viagens,
+        'posicao', pos, 'posicao_unidade', pos_uni,
+        'posicao_geral', pos_ger, 'posicao_unidade_geral', pos_uni_ger, 'disputa', disputa,
+        'elegivel', elegivel,
+        'carteira', case when elegivel then round(R.saldo_inicial * pontuacao / 100, 2) else 0 end,
+        'podio',    case when elegivel and pos <= coalesce(array_length(R.podio,1),0) then R.podio[pos] else 0 end,
+        'rpm', round(rpm_pontos::numeric,1), 'idle', round(idle_pontos::numeric,1), 'acel', round(acel_pontos::numeric,1),
+        'vel', round(vel_pontos::numeric,1),
+        'motivo', case when elegivel then null
+                       when coalesce(km,0) < v_km then 'não bateu os ' || v_km || ' km'
+                       when coalesce(viagens,0) < R.viagens_min then 'não bateu as ' || R.viagens_min || ' viagens'
+                       when coalesce(dias,0) < R.dias_min then 'menos de ' || R.dias_min || ' dias medidos'
+                       when coalesce(pontuacao,0) < R.score_min then 'nota abaixo de ' || R.score_min
+                       else 'fora dos ' || v_top || ' primeiros' end
+      ) order by competencia desc), '[]'::jsonb) from meu)
+  into v_rank, v_pos, v_pos_ger, v_meses;
 
   return jsonb_build_object(
     'ok', true, 'admin', s.admin_cpf is not null,
@@ -740,6 +756,7 @@ begin
        'dias_min', R.dias_min, 'score_min', R.score_min, 'top_n', v_top, 'podio', to_jsonb(R.podio),
        'pesos', jsonb_build_object('rpm', R.peso_rpm, 'idle', R.peso_idle, 'acel', R.peso_acel)),
     'posicao', v_pos,
+    'posicao_geral', v_pos_ger,
     'ranking', v_rank,
     'meses', v_meses
   );

@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DriverPro">
-<meta name="build" content="202609081700">
+<meta name="build" content="202609101400">
 <title>DriverPro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -347,24 +347,24 @@ function rpc(fn, args){
 }
 
 /* ── dados de exemplo (?demo=1): o mesmo formato que ce_app_dados devolve ── */
-var DEMO_DADOS = { ok:true, nome:'Marcio Andre', unidade:'EMP PIRAI', vigente:'2026-09', posicao:7,
+var DEMO_DADOS = { ok:true, nome:'Marcio Andre', unidade:'EMP PIRAI', vigente:'2026-09', posicao:7, posicao_geral:12,
   regras:{ saldo_inicial:200, km_min:1000, viagens_min:0, dias_min:0, score_min:0, top_n:15, podio:[300,150,100], pesos:{rpm:50,idle:30,acel:20} },
   ranking:[['Marcio A.',90.5],['Anderson M.',89.3],['Wanderson P.',88.4],['Mario Sergio D.',86.4],['Breno E.',86.4],['Lucas C.',85.8],['Willian A.',84.1],
     ['Luiz Carlos S.',83.8],['Thiago A.',83.7],['Paulo Roberto A.',83.6],['Wandiney T.',83.6],['Carlos Roberto C.',83.4],['Dalisvan S.',83.4],['Luiz Carlos B.',83.3],['Natanael S.',83.3]]
-    .map(function(r,i){ return { pos:i+1, nome:r[0], pontuacao:r[1], eu:i===6 }; }),
+    .map(function(r,i){ return { pos:i+1, pos_geral:i+1+(i<6?3:5), disputa:true, nome:r[0], pontuacao:r[1], eu:i===6 }; }),
   meses:[
-    { competencia:'2026-09', nota:89.5, km:1240, posicao:7, elegivel:true, carteira:179.00, podio:0, rpm:85, idle:90, acel:100, motivo:null },
-    { competencia:'2026-08', nota:90.3, km:2210, posicao:1, elegivel:true, carteira:180.60, podio:300, rpm:86, idle:91, acel:100, motivo:null },
-    { competencia:'2026-07', nota:88.0, km:2050, posicao:1, elegivel:true, carteira:176.00, podio:300, rpm:84, idle:88, acel:98, motivo:null },
-    { competencia:'2026-06', nota:83.5, km:1980, posicao:5, elegivel:true, carteira:167.00, podio:0, rpm:78, idle:85, acel:95, motivo:null },
-    { competencia:'2026-05', nota:87.8, km:2100, posicao:2, elegivel:true, carteira:175.60, podio:150, rpm:83, idle:89, acel:98, motivo:null },
-    { competencia:'2026-04', nota:85.0, km:1900, posicao:3, elegivel:true, carteira:170.00, podio:100, rpm:80, idle:86, acel:96, motivo:null },
-    { competencia:'2026-03', nota:70.5, km:640,  posicao:12, elegivel:false, carteira:0.00, podio:0, rpm:60, idle:75, acel:90, motivo:'não bateu os 1000 km' },
-    { competencia:'2026-02', nota:82.2, km:1800, posicao:6, elegivel:true, carteira:164.40, podio:0, rpm:76, idle:84, acel:95, motivo:null },
-    { competencia:'2026-01', nota:79.4, km:1750, posicao:8, elegivel:true, carteira:158.80, podio:0, rpm:72, idle:82, acel:94, motivo:null },
-    { competencia:'2025-12', nota:83.5, km:1900, posicao:3, elegivel:true, carteira:167.00, podio:100, rpm:78, idle:85, acel:95, motivo:null },
-    { competencia:'2025-11', nota:80.5, km:1700, posicao:9, elegivel:true, carteira:161.00, podio:0, rpm:74, idle:83, acel:93, motivo:null },
-    { competencia:'2025-10', nota:76.4, km:1500, posicao:11, elegivel:true, carteira:152.80, podio:0, rpm:68, idle:80, acel:92, motivo:null },
+    { competencia:'2026-09', nota:89.5, km:1240, posicao:7, posicao_unidade:7, posicao_unidade_geral:12, disputa:true, elegivel:true, carteira:179.00, podio:0, rpm:85, idle:90, acel:100, motivo:null },
+    { competencia:'2026-08', nota:90.3, km:2210, posicao:1, posicao_unidade:1, posicao_unidade_geral:6, disputa:true, elegivel:true, carteira:180.60, podio:300, rpm:86, idle:91, acel:100, motivo:null },
+    { competencia:'2026-07', nota:88.0, km:2050, posicao:1, posicao_unidade:1, posicao_unidade_geral:6, disputa:true, elegivel:true, carteira:176.00, podio:300, rpm:84, idle:88, acel:98, motivo:null },
+    { competencia:'2026-06', nota:83.5, km:1980, posicao:5, posicao_unidade:5, posicao_unidade_geral:10, disputa:true, elegivel:true, carteira:167.00, podio:0, rpm:78, idle:85, acel:95, motivo:null },
+    { competencia:'2026-05', nota:87.8, km:2100, posicao:2, posicao_unidade:2, posicao_unidade_geral:7, disputa:true, elegivel:true, carteira:175.60, podio:150, rpm:83, idle:89, acel:98, motivo:null },
+    { competencia:'2026-04', nota:85.0, km:1900, posicao:3, posicao_unidade:3, posicao_unidade_geral:8, disputa:true, elegivel:true, carteira:170.00, podio:100, rpm:80, idle:86, acel:96, motivo:null },
+    { competencia:'2026-03', nota:70.5, km:640,  posicao:null, posicao_unidade:null, posicao_unidade_geral:17, disputa:false, elegivel:false, carteira:0.00, podio:0, rpm:60, idle:75, acel:90, motivo:'não bateu os 1000 km' },
+    { competencia:'2026-02', nota:82.2, km:1800, posicao:6, posicao_unidade:6, posicao_unidade_geral:11, disputa:true, elegivel:true, carteira:164.40, podio:0, rpm:76, idle:84, acel:95, motivo:null },
+    { competencia:'2026-01', nota:79.4, km:1750, posicao:8, posicao_unidade:8, posicao_unidade_geral:13, disputa:true, elegivel:true, carteira:158.80, podio:0, rpm:72, idle:82, acel:94, motivo:null },
+    { competencia:'2025-12', nota:83.5, km:1900, posicao:3, posicao_unidade:3, posicao_unidade_geral:8, disputa:true, elegivel:true, carteira:167.00, podio:100, rpm:78, idle:85, acel:95, motivo:null },
+    { competencia:'2025-11', nota:80.5, km:1700, posicao:9, posicao_unidade:9, posicao_unidade_geral:14, disputa:true, elegivel:true, carteira:161.00, podio:0, rpm:74, idle:83, acel:93, motivo:null },
+    { competencia:'2025-10', nota:76.4, km:1500, posicao:11, posicao_unidade:11, posicao_unidade_geral:16, disputa:true, elegivel:true, carteira:152.80, podio:0, rpm:68, idle:80, acel:92, motivo:null },
   ] };
 
 var I = function(d){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>'; };
@@ -454,16 +454,30 @@ function pinta(){
   }).join('');
 
   // ── pódio + elegibilidade ──
+  // A posição que vale é entre QUEM DISPUTA — quem bateu o km mínimo e os
+  // demais critérios (Renan, 10/09/2026). A posição contando todo mundo vira
+  // o recado embaixo do número. Quem não disputa não tem posição na disputa:
+  // aí o número é o geral e a linha diz que ele está fora.
   var pos = D.posicao, podio = atual ? +atual.podio : 0, km = atual ? +atual.km : 0;
-  var posU = (atual && atual.posicao_unidade != null) ? +atual.posicao_unidade : pos;   // cota é da unidade; pódio é do grupo
+  var posGer  = D.posicao_geral != null ? +D.posicao_geral : null;                        // grupo, todo mundo
+  var posU    = (atual && atual.posicao_unidade != null) ? +atual.posicao_unidade : null;  // cota é da unidade
+  var posUGer = (atual && atual.posicao_unidade_geral != null) ? +atual.posicao_unidade_geral : null;
   var okKm = R.km_min <= 0 || km >= R.km_min, okPos = R.top_n <= 0 || (posU != null && posU <= R.top_n);
   var podTxt = R.podio.map(function(v, i){ return (i+1) + 'º R$ ' + v; }).join(' · ');
+  var posPod = pos != null ? pos : posGer;                       // sem disputa, mostra a geral
+  var posCota = posU != null ? posU : posUGer;
   $('extras').innerHTML =
-      linha(ICO.trof, 'Prêmio do pódio', podTxt, podio ? '+ ' + brl(podio) : (pos ? pos + 'º lugar' : '—'), podio ? 'pos' : '',
-            podio ? pos + 'º lugar' : 'o pódio é até o ' + R.podio.length + 'º', podio ? ' eu' : '')
+      linha(ICO.trof, 'Prêmio do pódio', podTxt, podio ? '+ ' + brl(podio) : (posPod ? posPod + 'º lugar' : '—'), podio ? 'pos' : '',
+            podio ? pos + 'º lugar' : (pos != null ? 'o pódio é até o ' + R.podio.length + 'º' : 'contando todo mundo · você ainda não disputa'),
+            podio ? ' eu' : '')
     + (R.km_min > 0 ? linha(ICO.km, 'Rodar ' + R.km_min.toLocaleString('pt-BR') + ' km', okKm ? 'você já rodou' : 'faltam ' + Math.max(0, R.km_min - km).toLocaleString('pt-BR') + ' km',
             km.toLocaleString('pt-BR') + ' km', okKm ? 'pos' : 'neg') : '')
-    + (R.top_n > 0 ? linha(ICO.trof, 'Ficar entre os ' + R.top_n, okPos ? 'da sua unidade' : 'precisa subir ' + (posU - R.top_n), posU ? posU + 'º' : '—', okPos ? 'pos' : 'neg') : '');
+    + (R.top_n > 0 ? linha(ICO.trof, 'Ficar entre os ' + R.top_n,
+            posU == null ? 'entre quem disputa você ainda não entra' : okPos ? 'de quem disputa na sua unidade' : 'precisa subir ' + (posU - R.top_n),
+            posCota != null ? posCota + 'º' : '—',
+            okPos && posU != null ? 'pos' : 'neg',
+            posU == null ? (posUGer != null ? 'contando todo mundo' : '')
+                         : (posUGer != null && posUGer !== posU ? posUGer + 'º contando todo mundo' : '')) : '');
 
   // ── ganhos, nota, ranking, regras ──
   renderGanhos();
@@ -480,7 +494,11 @@ function pinta(){
   }).join('');
   $('ranking').innerHTML = (D.ranking || []).map(function(r){
     var ini = r.nome.split(' ').map(function(p){return p[0];}).join('').slice(0,2).toUpperCase();
-    return linha('<b style="font-size:11px">' + ini + '</b>', r.eu ? 'Você' : r.nome, r.pos + 'º lugar' + (r.pos <= R.podio.length ? ' · + R$ ' + R.podio[r.pos-1] : ''),
+    // quem não disputa vem depois dos que disputam, com a posição contando todo mundo
+    var sub = r.pos != null
+      ? r.pos + 'º lugar' + (r.pos <= R.podio.length ? ' · + R$ ' + R.podio[r.pos-1] : '')
+      : (r.pos_geral != null ? r.pos_geral + 'º contando todo mundo · fora da disputa' : 'fora da disputa');
+    return linha('<b style="font-size:11px">' + ini + '</b>', r.eu ? 'Você' : r.nome, sub,
       (+r.pontuacao).toFixed(1).replace('.', ','), '', 'nota', r.eu ? ' eu' : '');
   }).join('') || '<div class="li"><div class="tx"><span>Ainda sem ranking neste mês.</span></div></div>';
   $('rg1').textContent = 'Todo mês você ganha ' + brl(R.saldo_inicial);
