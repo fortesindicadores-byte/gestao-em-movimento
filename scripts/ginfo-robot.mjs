@@ -151,6 +151,7 @@ const ABAS = [
   // (Placa + as cinco contagens) não tem vencimento nenhum.
   { chave: 'blitz-seguranca', menu: ['SEGURANÇA', 'BLITZ DE SEGURANÇA'],
     drill: { card: 'ADERÊNCIA OK', item: 'Detalhes Aderência' },
+    slicersAntes: true,          // Ano e Mês ficam na página principal
     opcional: true,
     slicers: () => {
       const h = new Date();
@@ -480,10 +481,13 @@ async function exportarVisual(page, aba) {
   log('navegando pelo menu:', aba.menu.join(' → '));
   await clicarMenu(page, aba.menu[0], aba.menu[1]);
   await shot(page, '10-' + aba.chave);
-  if (aba.drill) { await drillThrough(page, aba.drill.card, aba.drill.item); await shot(page, '10b-' + aba.chave); }
-
-  // filtros/slicers da aba (ex.: Mês anterior + Quinzena Segunda até o dia 10)
-  if (typeof aba.slicers === 'function') {
+  /* ONDE MORA O SLICER DECIDE A ORDEM (bug real, 10/09/2026). O padrão é
+     drill primeiro e slicer depois, porque no checklist-031120 o Mês está na
+     página de DETALHE. Na Blitz é o contrário: Ano e Mês ficam na página
+     PRINCIPAL e o drill herda o filtro — aplicar depois procurava um slicer
+     que não existe ali e abortava a coleta. `slicersAntes: true` inverte. */
+  const filtros = async () => {
+    if (typeof aba.slicers !== 'function') return;
     for (let s of aba.slicers()) {
       if (MES_FORCA && /^m[eê]s$/i.test(s.campo)) {
         log(`mês forçado por GINFO_MES: "${s.valor}" → "${MES_FORCA}"`);
@@ -495,7 +499,10 @@ async function exportarVisual(page, aba) {
       // aborta em vez de exportar/gravar um snapshot incompleto por cima do bom.
       if (!ok) throw new Error(`slicer "${s.campo}"="${s.valor}" não aplicado em ${aba.chave} — abortando p/ não gravar dado incompleto`);
     }
-  }
+  };
+  if (aba.slicersAntes) await filtros();
+  if (aba.drill) { await drillThrough(page, aba.drill.card, aba.drill.item); await shot(page, '10b-' + aba.chave); }
+  if (!aba.slicersAntes) await filtros();
 
   const alvo = await acharAlvo(page, aba);
   if (!alvo) { await shot(page, '98-sem-visual-' + aba.chave); throw new Error(`visual ${aba.visual ? `"${aba.visual}"` : '(tabela)'} não encontrado em ${aba.chave}`); }
