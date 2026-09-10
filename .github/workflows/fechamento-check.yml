@@ -1,0 +1,26 @@
+name: Fechamento Check (o que falta no mês)
+
+# Responde "falta alguma atualização manual?" para uma vigência: bases do
+# Sheets, indicadores, FCA, telemetria, contrato do ERP e idade da coleta do
+# Ginfo. Só leitura.
+on:
+  workflow_dispatch:
+    inputs:
+      vigencia:
+        description: 'Vigência AAAA-MM. Vazio = o mês anterior.'
+        required: false
+        default: ''
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir o fechamento
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          FECHA_VIG: ${{ github.event.inputs.vigencia }}
+        run: node scripts/fechamento-check.mjs
