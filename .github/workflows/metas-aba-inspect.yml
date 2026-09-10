@@ -1,0 +1,24 @@
+name: Metas Aba Inspect (o que falta no Painel de Metas)
+
+# Dump da aba fonte do painel-metas: quantos indicadores cada vigência tem e o
+# bloco do último mês pronto para colar no mês seguinte. Só leitura.
+on:
+  workflow_dispatch:
+    inputs:
+      vigencia:
+        description: 'Mês alvo AAAA-MM (vazio = o seguinte ao último preenchido)'
+        required: false
+        default: ''
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Inspecionar a aba
+        env:
+          METAS_VIG: ${{ github.event.inputs.vigencia }}
+        run: node scripts/metas-aba-inspect.mjs
