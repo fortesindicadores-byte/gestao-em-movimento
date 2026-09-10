@@ -172,8 +172,14 @@ def coleta_dia(dia: dt.date) -> list[dict]:
 
 
 def main() -> int:
-    # por padrão coleta ONTEM; aceita ISO date como argumento (backfill de 1 dia)
-    dia = dt.date.fromisoformat(sys.argv[1]) if len(sys.argv) > 1 else (
+    # por padrão coleta ONTEM; aceita ISO date como argumento (backfill de 1 dia).
+    # ARGUMENTO VAZIO CONTA COMO AUSENTE (bug real, 09/2026): o workflow passa
+    # sempre "${{ inputs.dia }}", que no agendamento vem como string vazia — e
+    # date.fromisoformat("") estourava ValueError, derrubando TODA rodada
+    # automática desde que o input foi criado. Só o disparo manual com data
+    # funcionava, que é por isso que passou despercebido.
+    arg = sys.argv[1].strip() if len(sys.argv) > 1 else ""
+    dia = dt.date.fromisoformat(arg) if arg else (
         dt.date.today() - dt.timedelta(days=1)
     )
     print(f"Condução Econômica — coletando {dia:%Y-%m-%d}")
