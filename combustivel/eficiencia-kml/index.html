@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609101530">
+<meta name="build" content="202609101610">
 <title>Km/L — Eficiência de Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../../assets/pdf-export.js"></script>
 <script src="../../assets/excel-export.js"></script>
 <style>
@@ -465,6 +466,8 @@ function parseVig(v) {
   if(v instanceof Date) return new Date(v.getFullYear(),v.getMonth(),1);
   if(typeof v==='string'){
     const g=v.match(/^Date\((\d+),(\d+)/); if(g) return new Date(+g[1],+g[2],1);
+    // 'AAAA-MM-DD' e o ISO que sai do cache quando a vigência é um Date
+    const iso=v.match(/^(\d{4})-(\d{2})/); if(iso) return new Date(+iso[1],+iso[2]-1,1);
     const m1=v.match(/^([a-záéíóúâêôãõç]+)\.?\/(\d{4})$/i); if(m1){const mo=MMAP[m1[1].toLowerCase().slice(0,3)];if(mo!==undefined)return new Date(+m1[2],mo,1);}
     const m2=v.match(/^(\d{1,2})\/(\d{4})$/); if(m2) return new Date(+m2[2],+m2[1]-1,1);
   }
@@ -486,7 +489,7 @@ const pctInt  = v => v==null||!isFinite(v)?'—':(+v>=0?'+':'')+Math.round(+v)+'
 const set     = (id,val) => { const e=document.getElementById(id);if(e)e.textContent=val; };
 const colI    = (el,bad) => { if(el)el.style.color=bad?'var(--red)':'var(--green)'; };
 
-let lidoEm=null;
+let lidoEm=null, fonte='';
 let allRows=[], vigs=[], chKml=null, chProj=null, lastF=null, tableDim='uni', remMode='medio';
 let _vigM1Done=false, _lastAnoKey='';
 let veiSort={col:'imp',asc:true}, veiCache=[];
@@ -595,6 +598,57 @@ function toggleMs(id){
 }
 function getMsValues(id){const wrap=document.getElementById(id);if(!wrap)return[];return wrap._sel?[...wrap._sel]:[];}
 document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrap'))document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open'));});
+
+// ── FONTE: BANCO (passo 4 do roteiro do Supabase — Renan, 10/09/2026) ──
+// A aba Km/L já é carregada em sh_consumo_km_litro pelo robô do Sheets. Ler de
+// lá tira do caminho o gviz, a foto do snapshot e a aba filtrada, que já
+// zeraram este painel duas vezes. A leitura devolve exatamente a mesma forma
+// que o fetchSheet entregava ({cols, rows}), com os RÓTULOS da aba — então
+// detectCols e todo o resto do painel continuam sem saber a diferença.
+// Conferido antes de trocar (workflow KmL Banco Check, 10/09/2026): 4.165
+// linhas, 11.077.805 km, 2,52 km/L idênticos nos dois lados, por vigência e
+// por unidade. A planilha continua como reserva.
+const SB_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
+const SB_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+let _sb=null;
+const sbCli=()=>{ if(!_sb&&window.supabase)_sb=window.supabase.createClient(SB_URL,SB_KEY); return _sb; };
+
+// rótulo da aba → coluna da tabela, NA ORDEM das colunas da aba
+const MAPA_KML=[
+  ['Vigência','vigencia_orig'],['R$/km Rem','rs_km_rem'],['R$/km Real','rs_km_real'],['Δ R$/km','d_rs_km'],
+  ['KM/l Rem Médio','km_l_rem_medio'],['Km/l Rem Modelo','km_l_rem_modelo'],['Km/L Real','km_l_real'],['Δ Km/l','d_km_l'],
+  ['R$/L Rem','rs_l_rem'],['R$/L/Real','rs_l_real'],['Δ R$/L','d_rs_l'],['Ativo','ativo'],
+  ['Operação','operacao'],['Empresa','empresa'],['Projeto','projeto'],['Unidade','unidade'],['Placa','placa'],
+  ['Mês Inicio OS','mes_inicio_os'],['Ano Inicio OS','ano_inicio_os'],['Modelo','modelo'],
+  ['Tipo Combustivel','tipo_combustivel'],['Tipo Veiculo','tipo_veiculo'],
+  ['KM Rodado / Horas trabalhadas','km_rodado_horas_trabalhadas'],['QTD Total de Litros','qtd_total_de_litros'],
+  ['Valor Médio Litro','valor_medio_litro'],['TOTAS R$','totas_rs'],
+];
+// 'AAAA-MM-DD' vira Date no fuso LOCAL: new Date('2026-01-01') é meia-noite em
+// UTC, que no Brasil cai no dia 31/12 e jogaria a vigência para o mês anterior
+function _vigDoBanco(l){
+  const s=l.vigencia_orig?String(l.vigencia_orig):'';
+  const m=s.match(/^(\d{4})-(\d{2})/);
+  if(m)return new Date(+m[1],+m[2]-1,1);
+  return l.vigencia||null;                       // reserva: o texto MM/AAAA
+}
+async function fetchBanco(){
+  const sb=sbCli(); if(!sb)throw new Error('supabase-js não carregou');
+  const linhas=[];
+  for(let de=0;;de+=1000){                       // o PostgREST corta em 1000
+    const {data,error}=await sb.from('sh_consumo_km_litro').select('*')
+      .order('linha',{ascending:true}).range(de,de+999);
+    if(error)throw new Error(error.message);
+    linhas.push(...(data||[]));
+    if(!data||data.length<1000)break;
+    if(de>60000)break;                           // trava de segurança
+  }
+  if(!linhas.length)throw new Error('tabela vazia');
+  return {
+    cols: MAPA_KML.map(p=>p[0]),
+    rows: linhas.map(l=>MAPA_KML.map(([rot,col])=>col==='vigencia_orig'?_vigDoBanco(l):(l[col]!=null?l[col]:null))),
+  };
+}
 
 // ── FETCH (JSONP — sem CORS) ──
 function fetchSheet(id,tab){
@@ -1257,6 +1311,7 @@ function atualizar(){
   // 14:20" aparecia por cima de um dado de horas atrás (Renan, 10/09/2026).
   set('status-badge', lidoEm
     ? `Dados de ${lidoEm.toLocaleDateString('pt-BR')} ${lidoEm.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`
+      + (fonte?` · ${fonte}`:'')
     : 'Carregando…');
 }
 
@@ -1269,15 +1324,20 @@ const CACHE_KEY='bi_cache_kml', BASE_KEY='bi_cache_kml_base';
 // refresh sem o mês novo aparecer (Renan, 10/09/2026).
 async function buscaDados(){
   set('status-badge','Atualizando…');
-  const [kml,base,rsl]=await Promise.all([
-    fetchSheet(KML_ID,KML_TAB),
+  // banco primeiro; a planilha é a reserva enquanto a migração não fecha
+  let kml=null;
+  try{ kml=await fetchBanco(); fonte='banco'; }
+  catch(e){ console.warn('sh_consumo_km_litro:',e.message,'— caindo para a planilha'); fonte='planilha'; }
+  const [kmlSheet,base,rsl]=await Promise.all([
+    kml?Promise.resolve(null):fetchSheet(KML_ID,KML_TAB),
     fetchBaseRemMod().catch(e=>{console.error('Base Remunerado Modelo:',e);return null;}),
     fetchSheet(GV_RSL_ID,'R$/L').catch(e=>{console.error('R$/L (preço rem):',e);return null;})
   ]);
+  if(!kml)kml=kmlSheet;
   detectCols(kml.cols);allRows=kml.rows;canonicalizeModels(allRows);
   if(rsl&&rsl.rows)buildRemLookup(rsl.cols,rsl.rows);
   lidoEm=new Date();
-  try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({cols:kml.cols,rows:kml.rows,em:lidoEm.getTime()}));}catch(e){}
+  try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({cols:kml.cols,rows:kml.rows,em:lidoEm.getTime(),fonte}));}catch(e){}
   if(base instanceof Map){baseRemRaw=base;try{sessionStorage.setItem(BASE_KEY,JSON.stringify([...base]));}catch(e){}}
   buildRemModIndex();computeDivergencias();
   populateFilters(allRows);atualizar();
@@ -1295,7 +1355,7 @@ async function init(){
     const cached=sessionStorage.getItem(CACHE_KEY);
     if(cached){
       const obj=JSON.parse(cached);detectCols(obj.cols);allRows=obj.rows;canonicalizeModels(allRows);
-      lidoEm=obj.em?new Date(obj.em):null;
+      lidoEm=obj.em?new Date(obj.em):null;fonte=obj.fonte||'';
       try{const bc=sessionStorage.getItem(BASE_KEY);if(bc)baseRemRaw=new Map(JSON.parse(bc));}catch(e){}
       buildRemModIndex();computeDivergencias();populateFilters(allRows);atualizar();
     }
@@ -1323,6 +1383,6 @@ function applyTheme(t){document.body.classList.toggle('light-mode',t==='light');
 <script src="../../assets/mobile.js?v=202608220020"></script>
 <script src="../../assets/ctrlk.js"></script>
 <script src="../../assets/sortable-table.js?v=202609042200"></script>
-<script src="../../assets/build-check.js?v=202609101530"></script>
+<script src="../../assets/build-check.js?v=202609101610"></script>
 </body>
 </html>
