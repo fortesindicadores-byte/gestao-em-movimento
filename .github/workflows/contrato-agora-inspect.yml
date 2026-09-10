@@ -1,0 +1,26 @@
+name: Contrato Agora Inspect (conferência)
+
+# O que a visão Contrato do Gestão à Vista vai mostrar: o mês de km que está
+# correndo (fatura do mês seguinte), por unidade e as 10 placas mais caras.
+# Não grava nada.
+on:
+  workflow_dispatch:
+    inputs:
+      vig_km:
+        description: 'Mês de km a conferir (AAAA-MM). Vazio = o mês corrente.'
+        required: false
+        default: ''
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          CT_VIG_KM: ${{ github.event.inputs.vig_km }}
+        run: node scripts/contrato-agora-inspect.mjs
