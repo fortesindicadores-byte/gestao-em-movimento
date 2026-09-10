@@ -39,6 +39,16 @@ async function conta(tabela, filtro) {
 const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
 const falta = [];
 
+// base sem o mês pode ser DUAS coisas muito diferentes: parou em julho, ou
+// escreve a vigência noutro formato (o termômetro usa MM_Q, meta usa o ano).
+// Sem olhar o que ela TEM, as duas viram "falta" e a lista mente.
+async function ultimasVigs(tabela, n = 4) {
+  const r = await fetch(`${SB}/rest/v1/${tabela}?select=vigencia&order=vigencia.desc&limit=400`, { headers: H });
+  if (!r.ok) return [];
+  const v = [...new Set((await r.json()).map(x => x.vigencia).filter(Boolean))];
+  return v.slice(0, n);
+}
+
 // ── 1) bases manuais do Sheets ──────────────────────────────────────────────
 const rb = await fetch(`${SB}/rest/v1/sh_base?select=slug,nome,linhas,carregado_em,erro&order=slug`, { headers: H });
 const bases = rb.ok ? await rb.json() : [];
@@ -51,9 +61,15 @@ for (const b of bases) {
   const temCol = t.n > 0 || (await conta('sh_' + b.slug, 'vigencia=not.is.null')).n > 0;
   if (!temCol) continue;                       // aba sem vigência: não dá para cobrar mês
   comVig++;
-  const ok = t.n > 0; if (ok) temMes++; else falta.push(`Sheets · ${b.nome || b.slug}`);
-  console.log(`   ${ok ? '✔' : '✘'} ${(b.nome || b.slug).slice(0, 34).padEnd(36)}`
+  const ok = t.n > 0; if (ok) temMes++;
+  const tem = ok ? [] : await ultimasVigs('sh_' + b.slug);
+  // formato diferente do MM/AAAA não é atraso — é outra régua de vigência
+  const outroFmt = !ok && tem.length && !tem.some(v => /^\d{2}\/\d{4}$/.test(String(v)));
+  if (!ok && !outroFmt) falta.push(`Sheets · ${b.nome || b.slug}` + (tem.length ? ` (parou em ${tem[0]})` : ''));
+  console.log(`   ${ok ? '✔' : outroFmt ? '·' : '✘'} ${(b.nome || b.slug).slice(0, 34).padEnd(36)}`
     + `${String(t.n).padStart(6)} linha(s) de ${String(tot.n).padStart(6)}`
+    + (tem.length ? `   tem: ${tem.join(', ')}` : '')
+    + (outroFmt ? '  (outro formato de vigência — não dá para cobrar o mês)' : '')
     + (b.erro ? `   ⚠ ${b.erro.slice(0, 50)}` : ''));
 }
 console.log(`   → ${temMes} de ${comVig} bases com vigência já têm ${MMMAA}\n`);
@@ -66,6 +82,7 @@ const prev = rePrev.ok ? await rePrev.json() : [];
 const mes = eli.filter(x => x.escopo === 'mes').map(x => x.indicador);
 console.log('── INDICADORES (elite_snapshot) ──');
 console.log(`   ${mes.length ? '✔' : '✘'} ${mes.length} indicador(es) no mês · ${eli.filter(x => x.escopo === 'ano').length} no acumulado do ano`);
+if (mes.length) console.log(`   já coletado: ${mes.sort().join(', ')}`);
 const sumiu = prev.map(x => x.indicador).filter(i => !mes.includes(i));
 if (sumiu.length) { console.log(`   ⚠ tinha no mês anterior e não tem em ${MMMAA}: ${sumiu.join(', ')}`); falta.push(`Indicadores · ${sumiu.join(', ')}`); }
 if (!mes.length) falta.push('Indicadores · nenhum coletado');
