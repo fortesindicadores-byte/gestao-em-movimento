@@ -1085,7 +1085,17 @@ async function coletar(page, ind, vigencia, escopo) {
     return;
   }
 
-  const urlAba = ind.url || 'https://bi.ginfo.app.br/bi/inicio';
+  // SEMPRE PELO MENU (10/09/2026). Desde o portal novo (20/08) o deep-link
+  // `/bi/<guid>?autoAuth=…` não abre relatório nenhum: o app Vue recarrega numa
+  // casca vazia e o Power BI rende sem slicer. O robô do Farol já anda só pelo
+  // menu desde 27/08; aqui o `ind.url` continuava sendo tentado primeiro e o
+  // menu só entrava se a página voltasse para /bi/inicio — o que não acontecia.
+  // Resultado: os SETE indicadores com deep-link (disponibilidade, preventivas,
+  // checklist-t2, stress-test-frota, stress-test-empilhadeira, civf,
+  // sla-manutencao) falhavam com "slicers visíveis: []" em toda rodada de
+  // agosto, e os quatro sem deep-link passavam. O campo `url` fica só como
+  // registro do reportId; ninguém navega por ele.
+  const urlAba = 'https://bi.ginfo.app.br/bi/inicio';
   log(`— ${ind.chave} · ${vigencia} · ${escopo}`);
   await irPara(page, urlAba);
   if (/\/login/i.test(page.url())) {
@@ -1093,7 +1103,7 @@ async function coletar(page, ind, vigencia, escopo) {
     await login(page);
     await irPara(page, urlAba);
   }
-  if (ind.menu && (!ind.url || /\/bi\/inicio/.test(page.url()))) {
+  if (ind.menu) {
     if (!(await menuMontado(page)) && !(await garantirPortal(page)))
       throw new Error('portal abriu sem o menu lateral — sessão não recuperada');
     log('navegando pelo menu:', ind.menu.join(' → '));
