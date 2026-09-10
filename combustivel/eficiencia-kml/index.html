@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609101530">
 <title>Km/L — Eficiência de Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -184,7 +184,7 @@ body.light-mode table.dre thead tr.cols th{background:#F0F0F0;}
   <div class="header-right">
     <a href="../" class="back-btn" title="Voltar ao Combustível"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></a>
     <button class="theme-btn" id="themeBtn" title="Modo claro/escuro"></button>
-    <button class="refresh-btn" onclick="atualizar()" title="Atualizar dados">
+    <button class="refresh-btn" onclick="recarregar()" title="Buscar os dados de novo">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
         <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
@@ -486,6 +486,7 @@ const pctInt  = v => v==null||!isFinite(v)?'—':(+v>=0?'+':'')+Math.round(+v)+'
 const set     = (id,val) => { const e=document.getElementById(id);if(e)e.textContent=val; };
 const colI    = (el,bad) => { if(el)el.style.color=bad?'var(--red)':'var(--green)'; };
 
+let lidoEm=null;
 let allRows=[], vigs=[], chKml=null, chProj=null, lastF=null, tableDim='uni', remMode='medio';
 let _vigM1Done=false, _lastAnoKey='';
 let veiSort={col:'imp',asc:true}, veiCache=[];
@@ -1068,10 +1069,21 @@ function renderCharts(f){
     }};
   }
 
-  // Escala Y dinâmica: padding maior embaixo p/ dar corpo às barras, mantendo a linha visível
+  // Escala Y dinâmica. O piso acompanha o VALOR, não só a amplitude (Renan,
+  // 10/09/2026: "em vez de começar em 2,07 poderia começar em 1,7"): com os
+  // meses colados o intervalo fica minúsculo e o eixo espremia tudo, fazendo
+  // uma diferença de 0,06 km/L parecer um abismo. O limite ainda é arredondado
+  // para um passo redondo, para o rótulo não sair 1,66.
   const _kvals=[...dReal,...dRem].filter(v=>v!=null&&isFinite(v));
   let yKmlMin,yKmlMax;
-  if(_kvals.length){const lo=Math.min(..._kvals),hi=Math.max(..._kvals),rng=(hi-lo)||hi*0.1||1;yKmlMin=Math.max(0,lo-rng*0.45);yKmlMax=hi+rng*0.18;}
+  if(_kvals.length){
+    const lo=Math.min(..._kvals),hi=Math.max(..._kvals),rng=(hi-lo)||hi*0.1||1;
+    const piso=Math.max(0,Math.min(lo-rng*0.45,lo*0.82)),teto=Math.max(hi+rng*0.18,hi*1.04);
+    const passo=hi>=20?1:hi>=5?0.5:0.1;
+    yKmlMin=Math.max(0,Math.round(piso/passo)*passo);
+    yKmlMax=Math.ceil(teto/passo)*passo;
+    if(yKmlMin>=lo)yKmlMin=Math.max(0,lo-rng*0.45);   // nunca cortar a barra
+  }
   const scKml={x:{grid,ticks:tick},y:{beginAtZero:false,min:yKmlMin,max:yKmlMax,grid,ticks:{...tickY,callback:v=>kml(v)}}};
   const opts={responsive:true,maintainAspectRatio:false,layout:{padding:{top:28}},plugins:{legend:{display:false},tooltip},scales:scKml};
 
@@ -1240,36 +1252,56 @@ function atualizar(){
   set('sub-kml',vigLbl);
   set('sub-vei',`${vigLbl} — ordenado por impacto`);
 
-  const now=new Date();
-  set('status-badge',`Atualizado ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
+  // O selo é a idade do DADO, não a hora do desenho. Trocar de filtro chama
+  // esta função e antes ela carimbava a hora corrente, então "Atualizado
+  // 14:20" aparecia por cima de um dado de horas atrás (Renan, 10/09/2026).
+  set('status-badge', lidoEm
+    ? `Dados de ${lidoEm.toLocaleDateString('pt-BR')} ${lidoEm.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`
+    : 'Carregando…');
 }
 
 // ── INIT ──
+const CACHE_KEY='bi_cache_kml', BASE_KEY='bi_cache_kml_base';
+
+// BUSCA de verdade. O botão de atualizar chamava `atualizar()`, que só
+// redesenha o que já está na memória — nunca ia buscar nada, e ainda
+// carimbava a hora. Era por isso que dava para ficar minutos apertando
+// refresh sem o mês novo aparecer (Renan, 10/09/2026).
+async function buscaDados(){
+  set('status-badge','Atualizando…');
+  const [kml,base,rsl]=await Promise.all([
+    fetchSheet(KML_ID,KML_TAB),
+    fetchBaseRemMod().catch(e=>{console.error('Base Remunerado Modelo:',e);return null;}),
+    fetchSheet(GV_RSL_ID,'R$/L').catch(e=>{console.error('R$/L (preço rem):',e);return null;})
+  ]);
+  detectCols(kml.cols);allRows=kml.rows;canonicalizeModels(allRows);
+  if(rsl&&rsl.rows)buildRemLookup(rsl.cols,rsl.rows);
+  lidoEm=new Date();
+  try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({cols:kml.cols,rows:kml.rows,em:lidoEm.getTime()}));}catch(e){}
+  if(base instanceof Map){baseRemRaw=base;try{sessionStorage.setItem(BASE_KEY,JSON.stringify([...base]));}catch(e){}}
+  buildRemModIndex();computeDivergencias();
+  populateFilters(allRows);atualizar();
+}
+
+// falha de leitura NUNCA fica muda: com dado velho na tela, o selo diz isso
+async function recarregar(){
+  try{ await buscaDados(); }
+  catch(e){ console.error(e);
+    set('status-badge', allRows.length ? 'Falhou ao atualizar — dado da leitura anterior' : 'Erro ao carregar dados'); }
+}
+
 async function init(){
-  const CACHE_KEY='bi_cache_kml', BASE_KEY='bi_cache_kml_base';
-  let hasCached=false;
   try{
     const cached=sessionStorage.getItem(CACHE_KEY);
     if(cached){
       const obj=JSON.parse(cached);detectCols(obj.cols);allRows=obj.rows;canonicalizeModels(allRows);
+      lidoEm=obj.em?new Date(obj.em):null;
       try{const bc=sessionStorage.getItem(BASE_KEY);if(bc)baseRemRaw=new Map(JSON.parse(bc));}catch(e){}
-      buildRemModIndex();computeDivergencias();populateFilters(allRows);atualizar();set('status-badge','Atualizando…');hasCached=true;
+      buildRemModIndex();computeDivergencias();populateFilters(allRows);atualizar();
     }
   }catch(e){sessionStorage.removeItem(CACHE_KEY);}
-  try{
-    const [kml,base,rsl]=await Promise.all([
-      fetchSheet(KML_ID,KML_TAB),
-      fetchBaseRemMod().catch(e=>{console.error('Base Remunerado Modelo:',e);return null;}),
-      fetchSheet(GV_RSL_ID,'R$/L').catch(e=>{console.error('R$/L (preço rem):',e);return null;})
-    ]);
-    detectCols(kml.cols);allRows=kml.rows;canonicalizeModels(allRows);
-    if(rsl&&rsl.rows)buildRemLookup(rsl.cols,rsl.rows);
-    sessionStorage.setItem(CACHE_KEY,JSON.stringify({cols:kml.cols,rows:kml.rows}));
-    if(base instanceof Map){baseRemRaw=base;try{sessionStorage.setItem(BASE_KEY,JSON.stringify([...base]));}catch(e){}}
-    buildRemModIndex();computeDivergencias();
-    populateFilters(allRows);atualizar();
-    setInterval(atualizar,30*60*1000);
-  }catch(e){console.error(e);if(!hasCached)set('status-badge','Erro ao carregar dados');}
+  await recarregar();
+  setInterval(recarregar,30*60*1000);
 }
 function initAccessLog(){
   let name=localStorage.getItem('bi_user_name');
@@ -1291,6 +1323,6 @@ function applyTheme(t){document.body.classList.toggle('light-mode',t==='light');
 <script src="../../assets/mobile.js?v=202608220020"></script>
 <script src="../../assets/ctrlk.js"></script>
 <script src="../../assets/sortable-table.js?v=202609042200"></script>
-<script src="../../assets/build-check.js?v=202609092400"></script>
+<script src="../../assets/build-check.js?v=202609101530"></script>
 </body>
 </html>
