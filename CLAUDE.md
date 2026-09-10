@@ -900,7 +900,14 @@ Pedido dele de madrugada: *"conseguimos fazer isso essa madrugada enquanto eu du
 
 **Como foi validado:** as 33 abas leram sem falha (**129.458 linhas, 33 MB**), a carga em modo seco montou **122.493 linhas** com as conversões conferidas, e o SQL rodou **duas vezes num Postgres 16 de verdade** (zero erro, idempotente), com as linhas do teste seco entrando por `jsonb_populate_record`, que é o caminho do PostgREST.
 
-**O que falta:** trocar o `fetch` do gviz pelos `sh_*` painel a painel, conferindo os totais contra o gviz antes de cada troca (é o passo 4 do roteiro). Enquanto isso, os painéis seguem no gviz + snapshot cru — nada mudou para o usuário.
+**PASSO 4 COMEÇOU — o 1º painel lendo do banco é o Eficiência Km/L (Renan, 10/09/2026: "vamos começar pelo combustível para ler do banco").** O painel lê `sh_consumo_km_litro` e **cai para a planilha** se a leitura falhar; o selo do topo diz de onde veio (`Dados de 10/09 16:10 · banco`). O adaptador devolve `{cols, rows}` com os **RÓTULOS da aba**, na ordem da aba, então `detectCols` e todo o resto do painel não sabem a diferença — trocar a fonte não mexeu em uma linha de cálculo.
+
+- **Conferir ANTES de trocar** é o workflow **KmL Banco Check** (`scripts/kml-banco-check.mjs`): lê os dois lados e compara linhas, Σkm, Σlitros e km/L **por vigência e por unidade**. Em 10/09/2026 bateu casa a casa — 4.165 linhas, 11.077.805 km, 4.403.947 L, 2,52 km/L, agosto com 485/485. Fazer o mesmo em cada painel que for migrado.
+- **Duas armadilhas do adaptador**, as duas já resolvidas: (1) `vigencia_orig` chega `'AAAA-MM-DD'` e `new Date('2026-08-01')` é meia-noite **UTC**, que no Brasil cai em 31/07 e joga a vigência para o mês anterior — a data é montada por partes (`new Date(+a,+m-1,1)`); (2) o cache de sessão passa por `JSON.stringify`, que transforma o `Date` em ISO, e o `parseVig` não conhecia esse formato: **na segunda carga da página TODA linha viraria vigência nula e sumiria**. O `parseVig` ganhou o ramo ISO. Os quatro formatos foram testados (`date` do banco, ISO do cache, `Date` vivo, texto `MM/AAAA`) e caem todos no mesmo mês.
+- **Anon não dá erro, dá lista vazia:** com RLS `to authenticated` e sem sessão do hub, o PostgREST devolve `[]` em vez de 401. Por isso o adaptador trata **tabela vazia como falha** e cai para a planilha — senão o painel abriria zerado para quem não estivesse logado.
+- O mapeamento coluna→índice é conferido sem browser: um script roda o `MAPA_KML` e o `detectCols` **do próprio arquivo** em `node:vm` e confere os 13 índices que a tela usa.
+
+**O que falta:** os demais painéis, um por vez, com o mesmo comparador antes de cada troca. No próprio Km/L, as abas `R$/L` e `Base Remunerado Modelo` continuam no gviz — a segunda nem tem tabela `sh_*`.
 
 ## Snapshot do gviz (abertura rápida de TODOS os painéis) — 19/08/2026
 
