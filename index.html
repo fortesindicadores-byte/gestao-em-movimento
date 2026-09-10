@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092300">
+<meta name="build" content="202609101340">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -914,7 +914,8 @@ async function carregaBases(){
     const ruins = b.filter(x => x.erro).length;
     sub.textContent = `${b.length} base(s) · ${linhas.toLocaleString('pt-BR')} linha(s) · última carga `
       + `${_bsIdade(ult)}${ruins ? ` · ${ruins} com aviso` : ''}. `
-      + 'O robô roda sozinho de hora em hora, no minuto 25, e só regrava a aba que mudou.';
+      + 'O robô roda sozinho de hora em hora, no minuto 25, e só regrava a aba que mudou. '
+      + 'O botão refaz também a foto do gviz, que é de onde os painéis leem.';
     lst.innerHTML = b.length ? b.map(x =>
         `<div class="bs-l${x.erro ? ' err' : ''}"><b>${x.nome || x.slug}</b>`
         + `<i>${(x.linhas || 0).toLocaleString('pt-BR')} l.</i><i>${_bsIdade(x.carregado_em)}</i></div>`
@@ -1477,6 +1478,6 @@ init();
 </script>
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202609092300"></script>
+<script src="assets/build-check.js?v=202609101340"></script>
 </body>
 </html>
