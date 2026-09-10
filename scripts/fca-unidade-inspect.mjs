@@ -16,10 +16,11 @@ if (!KEY) { console.error('GEM_SUPABASE_SERVICE_KEY ausente'); process.exit(1); 
 const H = { apikey: KEY, Authorization: 'Bearer ' + KEY };
 const FOCO = (process.env.FCA_UNI || '').toUpperCase().trim();
 
-async function tudo(tabela, cols) {
+// a chave de ordenação muda por tabela: fca tem id, fca_profiles tem user_id
+async function tudo(tabela, cols, ord = 'id') {
   const out = [];
   for (let de = 0; ; de += 1000) {
-    const r = await fetch(`${SB}/rest/v1/${tabela}?select=${cols}&order=id.asc&offset=${de}&limit=1000`, { headers: H });
+    const r = await fetch(`${SB}/rest/v1/${tabela}?select=${cols}&order=${ord}.asc&offset=${de}&limit=1000`, { headers: H });
     if (!r.ok) throw new Error(`${tabela} → ${r.status} ${(await r.text()).slice(0, 200)}`);
     const p = await r.json(); out.push(...p);
     if (p.length < 1000) break;
@@ -85,7 +86,7 @@ if (FOCO) {
 }
 
 // ── quem pode abrir cada unidade (sem nome nem e-mail) ──
-const perfis = await tudo('fca_profiles', 'user_id,unidade,is_admin');
+const perfis = await tudo('fca_profiles', 'user_id,unidade,is_admin', 'user_id');
 const porUni = {};
 perfis.forEach(p => String(p.unidade || '').toUpperCase().split(',').map(s => s.trim()).filter(Boolean)
   .forEach(u => { porUni[u] = (porUni[u] || 0) + 1; }));
