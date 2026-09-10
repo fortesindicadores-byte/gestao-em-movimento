@@ -364,6 +364,24 @@ async function clicarMenuUma(page, secao, item) {
   // EMPILHADEIRA depois de passar pelo FROTA). Rola até ele.
   let itemLoc = page.getByText(item, { exact: secao === item });
   for (let t = 0; t < 6 && !(await itemLoc.count()); t++) await page.waitForTimeout(2500);
+  /* RÓTULO CORTADO NA LATERAL (bug real, 08→10/09/2026). O item mais longo do
+     menu aparece truncado — "1.2 - ADERÊNCIA CONFORMID…" — e, se o corte está
+     no DOM e não só no CSS, procurar o texto INTEIRO não acha nada: a busca é
+     por substring, e o que está na tela é MENOR que o que se procura. O robô
+     falhou dois dias seguidos por isso, sempre no mesmo item, que por acaso é
+     o único comprido o bastante para cortar.
+     Saída: tentar prefixos cada vez menores e aceitar só o que der UM match —
+     prefixo ambíguo (as duas telas "1.3 - ADERÊNCIA FROTA - …") é descartado,
+     senão o robô abriria o relatório errado sem dar erro. */
+  if (!(await itemLoc.count()) && secao !== item) {
+    for (const n of [24, 20, 16, 12]) {
+      if (n >= item.length) continue;
+      const pref = item.slice(0, n).trim();
+      const cand = page.getByText(pref, { exact: false });
+      const q = await cand.count();
+      if (q === 1) { log(`item "${item}" veio cortado na lateral — casei por "${pref}"`); itemLoc = cand; break; }
+    }
+  }
   // CIVF → CIVF: seção e item têm o MESMO texto. O primeiro match é o cabeçalho
   // da seção — clicar nele recolhe o menu de novo (a página nunca abria).
   if (secao === item && (await itemLoc.count()) > 1) itemLoc = itemLoc.nth(1);
