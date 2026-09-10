@@ -27,11 +27,20 @@ async function tudo(tabela, cols) {
   return out;
 }
 
-const fatos = await tudo('fca_fatos', 'id,vigencia,unidade,projeto,origem,fato');
-console.log(`fca_fatos: ${fatos.length} linha(s)\n`);
+const fatos = await tudo('fca', 'id,vigencia,unidade,projeto,origem,fato');
+console.log(`fca: ${fatos.length} linha(s)\n`);
 
 // ── quadro unidade × vigência ──
-const vigs = [...new Set(fatos.map(f => f.vigencia).filter(Boolean))].sort();
+// a vigência é TEXTO ('mai/26'), então ordenar por string põe ago antes de mai
+const MES = { jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6, jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12 };
+const ordVig = v => {
+  const m = String(v || '').toLowerCase().match(/^([a-zç]{3})\/(\d{2,4})$/);
+  if (!m) return String(v);
+  const ano = m[2].length === 2 ? '20' + m[2] : m[2];
+  return `${ano}-${String(MES[m[1]] || 0).padStart(2, '0')}`;
+};
+const vigs = [...new Set(fatos.map(f => f.vigencia).filter(Boolean))]
+  .sort((a, b) => ordVig(a) < ordVig(b) ? -1 : ordVig(a) > ordVig(b) ? 1 : 0);
 const unis = [...new Set(fatos.map(f => (f.unidade || '(sem unidade)')))].sort();
 const cel = {};
 fatos.forEach(f => { const k = (f.unidade || '(sem unidade)') + '|' + f.vigencia; cel[k] = (cel[k] || 0) + 1; });
@@ -67,7 +76,7 @@ if (FOCO) {
     a.n++; a.org[f.origem || '—'] = (a.org[f.origem || '—'] || 0) + 1;
     a.proj[f.projeto || '—'] = (a.proj[f.projeto || '—'] || 0) + 1;
   });
-  Object.keys(porVig).sort().forEach(v => {
+  Object.keys(porVig).sort((a,b)=>ordVig(a)<ordVig(b)?-1:ordVig(a)>ordVig(b)?1:0).forEach(v => {
     const a = porVig[v];
     console.log(`   ${v}: ${a.n} fato(s) · origem ${Object.entries(a.org).map(([k, q]) => k + '=' + q).join(' · ')}`
       + ` · projeto ${Object.entries(a.proj).map(([k, q]) => k + '=' + q).join(' · ')}`);
