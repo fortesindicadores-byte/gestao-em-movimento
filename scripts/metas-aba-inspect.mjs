@@ -64,6 +64,24 @@ vigs.forEach(v => {
   console.log(`  ${v}      ${String(n).padStart(3)}`);
 });
 
+// ── peso e meta mudam de mês para mês? ──
+// É o que decide se repetir a estrutura do último mês é seguro. Meta que varia
+// não pode ser herdada; meta que o painel recalcula da origem não vem daqui.
+console.log('\n── peso e meta por vigência ──');
+const nomes = [...new Set(linhas.map(c => txt(c[1])).filter(Boolean))];
+nomes.forEach(nome => {
+  const serie = vigs.map(v => {
+    const c = (porVig.get(v) || []).find(x => txt(x[1]) === nome);
+    return c ? `${txt(c[2])}/${txt(c[6]) || '—'}` : '·';
+  });
+  const distintos = [...new Set(serie.filter(s => s !== '·'))];
+  const tipo = classify(nome);
+  console.log(nome.slice(0, 40).padEnd(42) + serie.map(s => s.padStart(11)).join('')
+    + (distintos.length > 1 ? '   ⚠ VARIA' : '   constante')
+    + (tipo === 'custo' ? ' · meta vem do DRE do mês, a aba não manda' : ''));
+});
+console.log('(peso/meta em cada mês; ⚠ VARIA = não dá para herdar do mês anterior)');
+
 const ultima = vigs[vigs.length - 1];
 const alvo = ALVO || (() => {                          // default: o mês seguinte ao último
   const [a, m] = ultima.split('-').map(Number);
