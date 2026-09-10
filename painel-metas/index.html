@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609102030">
 <title>Painel de Metas</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -166,6 +166,30 @@ function bandLowerRatio(ratio){return ratio==null?0:ratio<=100?1:ratio<=101?.75:
 function classify(name){const n=String(name||'').toLowerCase();if(/ranking/.test(n))return'rank';if(/dispers/.test(n))return'disp';if(/dpo|vpo|sustent/.test(n))return'dpo';if(/consolida|fca/.test(n))return'fca';if(/custo/.test(n))return'custo';return'other';}
 
 function parseD(v){if(!v)return null;const m=String(v).match(/^Date\((\d+),(\d+),(\d+)/);if(m)return new Date(+m[1],+m[2],+m[3]);return null;}
+// ── A aba dá só a ESTRUTURA e ela se repete igual todo mês ──
+// Os cinco indicadores são calculados a partir do painel de origem, mas o mês
+// só existe na tela se alguém colar as cinco linhas na aba. O painel ficava
+// para trás esperando um cadastro que é sempre o mesmo (mesmo peso, mesma
+// meta, mesma regra). Agora o último mês preenchido se repete até o último mês
+// FECHADO; assim que alguém colar o mês de verdade, essas linhas somem, porque
+// só entram onde a aba não tem nada.
+let VIG_HERDADAS=[];
+function herdaMeses(rows){
+  VIG_HERDADAS=[];
+  const val=(rows||[]).filter(r=>r&&r[1]&&r[0]&&parseD(r[0]));
+  if(!val.length)return rows;
+  let ult=null;val.forEach(r=>{const d=parseD(r[0]);if(!ult||d>ult)ult=d;});
+  const hoje=new Date(),fim=new Date(hoje.getFullYear(),hoje.getMonth()-1,1);  // mês anterior ao atual
+  if(vigKeyN(ult)>=vigKeyN(fim))return rows;
+  const modelo=val.filter(r=>vigKeyN(parseD(r[0]))===vigKeyN(ult));
+  const extra=[];
+  for(let d=new Date(ult.getFullYear(),ult.getMonth()+1,1);vigKeyN(d)<=vigKeyN(fim);d=new Date(d.getFullYear(),d.getMonth()+1,1)){
+    VIG_HERDADAS.push(vigLbl(d));
+    const tag=`Date(${d.getFullYear()},${d.getMonth()},1)`;
+    modelo.forEach(r=>{const c=r.slice();c[0]=tag;c[7]=null;c[8]=null;c[9]=null;extra.push(c);});
+  }
+  return rows.concat(extra);
+}
 function _mesNum(m){if(m==null)return null;if(typeof m==='number'&&m>=1&&m<=12)return m;const s=String(m).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').slice(0,3);const i=MESES.indexOf(s);if(i>=0)return i+1;const n=parseInt(m);return n>=1&&n<=12?n:null;}
 function vigKeyN(d){return d?d.getFullYear()*100+d.getMonth():0;}
 function vigLbl(d){return d?MESES[d.getMonth()]+'/'+String(d.getFullYear()).slice(2):'';}
@@ -352,7 +376,7 @@ async function carregar(){
     ]);
     const rankMap=compRankingElite(eliteRecords), dispMap=compDisp(kmRows), dpo=compDPO(dpoRows), fcaRecs=compFCArecs(fcaRows), custoMap=compCusto(frotaTab,receitaTab);
 
-    ALL=mRows.filter(r=>r[1]&&r[0]&&parseD(r[0])).map(r=>{
+    ALL=herdaMeses(mRows).filter(r=>r[1]&&r[0]&&parseD(r[0])).map(r=>{
       const vigD=parseD(r[0]);const k=vigKeyN(vigD);const mIdx=vigD.getMonth(),yr=vigD.getFullYear();
       const indicador=String(r[1]||'').trim(), peso=r[2]!=null?+r[2]:0, meta=r[6]!=null?+r[6]:null;
       const o={vigD,vig:vigLbl(vigD),indicador,peso,desc:String(r[3]||''),regra:String(r[4]||''),un:String(r[5]||'').trim(),meta,
@@ -388,7 +412,10 @@ async function carregar(){
     const vw=document.getElementById('ms-vig');if(vigItems.length)vw._sel=new Set([vigItems[vigItems.length-1]]); // auto último mês
     buildMsFilter('ms-vig',vigItems);
     atualizar();
-    const now=new Date();document.getElementById('status').textContent=`${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+    const now=new Date();
+    // mês herdado não é mês cadastrado: quem lê tem de saber de onde veio a estrutura
+    const herd=VIG_HERDADAS.length?` · ${VIG_HERDADAS.join(', ')} com a estrutura do último mês da aba`:'';
+    document.getElementById('status').textContent=`${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${herd}`;
   }catch(e){console.error(e);document.getElementById('status').textContent='Erro ao carregar';}
 }
 
@@ -414,6 +441,6 @@ carregar();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609102030"></script>
 </body>
 </html>
