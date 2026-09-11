@@ -772,7 +772,7 @@ KM realizado da `Combustível`; KM remunerado da `Base CTEs` col J **contado uma
 
 ### 17.9 Combustível
 
-Árvore monta tudo das fontes (Frota do DRE, Dispersão, Km/L e R$/L do Consumo); aba `Árvore Comb.` não é lida. **Balanço de Massa** recompõe km remunerado das empurradas (Valor ÷ R$/km remunerado dos 3 pacotes ÷ km original; rateado proporcional) só no Painel KM e na Árvore. Eficiência Km/L lê do banco (12.4). VAN não tem preço remunerado.
+Árvore monta tudo das fontes (Frota do DRE, Dispersão, Km/L e R$/L do Consumo); aba `Árvore Comb.` não é lida. **Balanço de Massa** recompõe km remunerado das empurradas (coluna **`Valor 85%`** ÷ R$/km remunerado dos 3 pacotes ÷ km original; rateado proporcional — desde 10/09/2026 é a D, não mais a `Valor` crua) só no Painel KM e na Árvore. Eficiência Km/L lê do banco (12.4). VAN não tem preço remunerado.
 
 ### 17.10 Painel de Metas
 
