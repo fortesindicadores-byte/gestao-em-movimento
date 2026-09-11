@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609101700">
+<meta name="build" content="202609111230">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -629,6 +629,25 @@ body.light-mode table.rel thead th{background:var(--cabec)!important;}
 body.light-mode .fato-block,body.light-mode .uhub-card{
   background:var(--card)!important;border:1px solid var(--card-brd)!important;
   box-shadow:var(--sombra)!important;color:var(--txt);}
+/* ── Tela de unidades: cards grandes, todos do mesmo tamanho, ocupando a tela ──
+   A grade divide a altura disponível (grid-auto-rows:1fr), então o card cresce
+   até onde a tela deixa em vez de ficar uma fileirinha no alto. O teto no card
+   é para quem tem UMA unidade só não abrir um cartaz de tela inteira. */
+.board .main.unidades{display:flex;flex-direction:column;overflow:hidden;}
+.board .main.unidades #list{flex:1;min-height:0;display:flex;}
+.board .main.unidades .uhub-grid{flex:1;min-height:0;gap:16px;
+  grid-template-columns:repeat(auto-fit,minmax(clamp(190px,15vw,290px),1fr));
+  grid-auto-rows:1fr;}
+.board .main.unidades .uhub-card{justify-content:center;max-height:300px;padding:22px 24px;}
+.board .main.unidades .uhub-cod{font-size:27px;}
+.board .main.unidades .uhub-name{font-size:12px;}
+.board .main.unidades .uhub-go{font-size:12px;margin-top:10px;}
+@media(max-width:860px){
+  .board .main.unidades{overflow:auto;}
+  .board .main.unidades #list{display:block;}
+  .board .main.unidades .uhub-grid{grid-auto-rows:auto;}
+  .board .main.unidades .uhub-card{min-height:120px;max-height:none;}
+}
 .uni-badge{font-size:10px;color:var(--txt2);background:var(--hover);border:1px solid var(--card-brd);
   border-radius:5px;padding:3px 9px;white-space:nowrap;}
 
@@ -2159,6 +2178,8 @@ function renderSubHub(allowed){
   ['uniBadge','uniSel','adminBtn','saveBtn','savedMsg','backUnits','viewBtn','flatBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
   const intro=document.querySelector('.intro'); if(intro)intro.textContent='Selecione a unidade para preencher o FCA do mês.';
   const list=document.getElementById('list');
+  // a classe é o que faz a grade dividir a altura da tela (ver CSS .main.unidades)
+  const mainEl=document.querySelector('.board .main'); if(mainEl) mainEl.classList.add('unidades');
   if(!REAL_ADMIN && !allowed.length){ list.innerHTML='<div class="empty">Seu usuário ainda não tem unidade liberada. Fale com o administrador.</div>'; return; }
   const adminCard = REAL_ADMIN ? `<a class="uhub-card admin" href="../fca-consolidado/"><div class="uhub-cod">★ Admin</div><div class="uhub-name">Todas as unidades — editar qualquer ação</div><div class="uhub-go">Abrir →</div></a>` : '';
   const cards = allowed.map(c=>`<a class="uhub-card" href="?u=${encodeURIComponent(c)}"><div class="uhub-cod">${esc(c)}</div><div class="uhub-name">${DEPARA[c]?esc(DEPARA[c].dre+(DEPARA[c].tier?' · '+DEPARA[c].tier:'')):''}</div><div class="uhub-go">Abrir FCA →</div></a>`).join('');
@@ -2178,6 +2199,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609101700"></script>
+<script src="../assets/build-check.js?v=202609111230"></script>
 </body>
 </html>
