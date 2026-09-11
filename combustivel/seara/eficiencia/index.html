@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609110200">
 <title>Km/L Seara — Eficiência de Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -319,13 +319,18 @@ body.light-mode table.dre thead tr.cols th{background:#F0F0F0;}
 <script>
 // ── Fontes: workbook Seara (Anhanguera) ──
 // Km/L Real  = ΣKm/ΣLitros (aba Combustível)
-// Km/L Rem   = KmPorLitro (Base Remunerado, col P) ponderado por nº de viagens (Base CTEs)
+// Km/L Rem   = KmPorLitro (Base Remunerado, col P) ponderado pelos KM RODADOS da placa (aba Combustível)
+//              = Σkm ÷ Σ(km ÷ KmPorLitro) — os litros que a placa DEVERIA ter gasto no remunerado
 // R$/L Real  = ΣTotalR$/ΣLitros (aba Combustível)
+//
+// A Base CTEs NÃO é lida aqui (Renan, 11/09/2026): ela só servia de peso (nº de
+// viagens) e chega dois meses depois da Combustível — em ago/2026 zerou o
+// remunerado inteiro, com a coluna KmPorLitro preenchida na Base Remunerado.
 const SEARA_ID = '1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE';
-const GID_REM  = 0, GID_CTES = 1672208132, GID_COMB = 1982300845;
+const GID_REM  = 0, GID_COMB = 1982300845;
 
 // Linhas sintéticas (arrays) posicionadas nestes índices — reaproveita toda a máquina do painel.
-const CL = {vig:0, rem:1, remM:2, real:3, rsLReal:4, ativo:5, proj:6, uni:7, placa:8, modelo:9, tipoVei:10, kmRod:11, litros:12, viagens:13};
+const CL = {vig:0, rem:1, remM:2, real:3, rsLReal:4, ativo:5, proj:6, uni:7, placa:8, modelo:9, tipoVei:10, kmRod:11, litros:12};
 function detectCols(){ /* colunas fixas nas linhas sintéticas */ }
 
 const getProj = r => r[CL.proj] ? String(r[CL.proj]).trim() : '';
@@ -510,18 +515,11 @@ async function fetchData(){
   // reestruturada. O `select sum(Z)` que ficou aqui derrubava o Promise.all
   // inteiro ("Erro ao carregar dados"), e o resultado dele nem era usado: o km
   // desta tela vem da aba Combustível. Query removida.
-  const [comb,rawVg,brem]=await Promise.all([
+  const [comb,brem]=await Promise.all([
     gvz(SEARA_ID,{gid:GID_COMB}),
-    gvz(SEARA_ID,{gid:GID_CTES,tq:'select B, C, D, E'}),
     gvz(SEARA_ID,{gid:GID_REM}),
   ]);
   const vyk=(y,m)=>y+'-'+String(m).padStart(2,'0');
-  // Data da CTE: col D no layout enxuto, col E no largo — detecta pelo que parseia
-  let _nD=0,_nE=0; rawVg.rows.slice(0,80).forEach(r=>{ if(parseVig(r[2]))_nD++; if(parseVig(r[3]))_nE++; });
-  const iDt=_nE>_nD?3:2;
-  // Km rem (não usado aqui, mas mantido p/ paridade) — viagens distintas por placa|vig
-  const seen=new Set(), viag={};
-  rawVg.rows.forEach(r=>{ const b=r[0], p=_placaKey(r[1]), d=parseVig(r[iDt]); if(b==null||!p||!d)return; if(seen.has(b))return; seen.add(b); const k=p+'|'+vyk(d.getFullYear(),d.getMonth()+1); viag[k]=(viag[k]||0)+1; });
   // Benchmark remunerado por placa|vig — colunas achadas pelo NOME do cabeçalho
   // (fallback: índices do layout largo, KmPorLitro=15/P e PrecoDiesel=17/R)
   const _bl=brem.cols.map(c=>String(c||'').toLowerCase().replace(/\s/g,''));
@@ -530,12 +528,10 @@ async function fetchData(){
   const bench={};
   brem.rows.forEach(r=>{ const p=_placaKey(r[iPlacaB]), d=parseVig(r[iVigB]); if(!p||!d)return; bench[p+'|'+vyk(d.getFullYear(),d.getMonth()+1)]={kmL:+r[iKmLB]||0,preco:+r[iPrecoB]||0}; });
   // REMUNERADO DO MÊS SEM BASE AINDA = MÊS ANTERIOR (Renan, 14/08/2026): a aba
-  // Combustível já tem julho, mas Base Remunerado/Base CTEs vão até junho.
-  // Enquanto o mês não existir nelas, o benchmark (e o peso de viagens) vem do
-  // mês anterior da MESMA placa. Quando julho for colado lá, o dado direto vence.
+  // Combustível chega antes da Base Remunerado. Enquanto o mês não existir nela,
+  // o benchmark vem do mês anterior da MESMA placa. Quando for colado, o direto vence.
   const _mesAnt=k=>{const [p,ym]=k.split('|');const [y,m]=ym.split('-').map(Number);const d=new Date(y,m-2,1);return p+'|'+vyk(d.getFullYear(),d.getMonth()+1);};
   const benchFor=k=>{const b=bench[k];if(b&&(b.kmL>0||b.preco>0))return b;return bench[_mesAnt(k)]||{kmL:0,preco:0};};
-  const viagFor=k=>viag[k]||viag[_mesAnt(k)]||0;
   // raiz = aba Combustível (real por placa|mês)
   const MES3=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   const rows=[];
@@ -558,7 +554,6 @@ async function fetchData(){
     row[CL.tipoVei]=String(r[9]||'').trim();
     row[CL.kmRod]=km;
     row[CL.litros]=lit;
-    row[CL.viagens]=viagFor(k);
     rows.push(row);
   });
   return rows;
@@ -616,16 +611,17 @@ function getYtdVigs(f){
 function aggRows(rows){
   // Seara:
   //  Km/L Real = ΣKm / ΣLitros                          (ponderado por litros)
-  //  Km/L Rem  = Σ(KmPorLitro × viagens) / Σviagens     (ponderado por nº de viagens da placa)
+  //  Km/L Rem  = Σkm / Σ(km ÷ KmPorLitro)                (ponderado pelos km rodados da placa:
+  //              km rodado ÷ litros que o remunerado previa para esse km; só placas com benchmark)
   //  R$/L      = ΣTotalR$ / ΣLitros                      (base p/ valorizar litros economizados)
-  let sumKm=0,sumLitros=0,sumRemV=0,sumV=0,sumRsLxLit=0;
+  let sumKm=0,sumLitros=0,sumKmRem=0,sumLitRem=0,sumRsLxLit=0;
   rows.forEach(r=>{
-    const km=+(r[CL.kmRod]||0),lit=+(r[CL.litros]||0),rem=+(r[CL.rem]||0),rsL=+(r[CL.rsLReal]||0),vg=+(r[CL.viagens]||0);
+    const km=+(r[CL.kmRod]||0),lit=+(r[CL.litros]||0),rem=+(r[CL.rem]||0),rsL=+(r[CL.rsLReal]||0);
     sumKm+=km;sumLitros+=lit;
-    if(rem>0&&vg>0){sumRemV+=rem*vg;sumV+=vg;}
+    if(rem>0&&km>0){sumKmRem+=km;sumLitRem+=km/rem;}
     if(rsL>0&&lit>0){sumRsLxLit+=rsL*lit;}
   });
-  const remAvg=sumV>0?sumRemV/sumV:null;
+  const remAvg=sumLitRem>0?sumKmRem/sumLitRem:null;
   const realWt=sumLitros>0?sumKm/sumLitros:null;
   const rsLAvg=sumLitros>0?sumRsLxLit/sumLitros:null;
   return{remAvg,realWt,sumKm,sumLitros,rsLAvg};
@@ -919,6 +915,6 @@ function applyTheme(t){document.body.classList.toggle('light-mode',t==='light');
 <script src="../../../assets/mobile.js?v=202608220020"></script>
 <script src="../../../assets/ctrlk.js"></script>
 <script src="../../../assets/sortable-table.js?v=202609042200"></script>
-<script src="../../../assets/build-check.js?v=202609092400"></script>
+<script src="../../../assets/build-check.js?v=202609110200"></script>
 </body>
 </html>
