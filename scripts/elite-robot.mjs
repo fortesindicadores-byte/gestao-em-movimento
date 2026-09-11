@@ -481,15 +481,26 @@ async function aplicarSlicer(page, campo, valores) {
     log(`slicer "${campo}" não encontrado — slicers visíveis:`, JSON.stringify(await rotulosDeSlicer(page)));
     return false;
   }
-  // tenta cada candidato até um abrir COM ITENS (o mais próximo do rótulo nem
-  // sempre é o certo — na Conformidade abria um dropdown vazio)
-  let hit = null;
+  // tenta cada candidato até um abrir COM O VALOR pedido (o mais próximo do
+  // rótulo nem sempre é o certo — na Conformidade abria um dropdown vazio, e no
+  // Stress Test Empilhadeira abria o de Período, cheio de itens "2026 agosto"
+  // e "1ª QZ Stress Test", sem nenhum "Ago-26"; parar no primeiro com itens
+  // era o que derrubava a coleta, 10/09/2026 — mesma correção do robô do
+  // Farol). Se nenhum tiver o valor, fica com o primeiro que abriu com itens,
+  // para a mensagem de "não encontrado" listar o que a tela tem.
+  let hit = null, comItens = null;
+  const alvo = String(vals[0]);
   for (const c of cands) {
     try { await c.dd.click({ timeout: 8000 }); } catch (e) { continue; }
     await page.waitForTimeout(2500);
-    if ((await itensDoSlicer(page)).length) { hit = c; break; }
+    const itens = await itensDoSlicer(page);
+    if (itens.length && itens.some(t => String(t).includes(alvo))) { hit = c; break; }
+    if (itens.length && !comItens) comItens = c;
     await page.keyboard.press('Escape');
     await page.waitForTimeout(800);
+  }
+  if (!hit && comItens) {
+    try { await comItens.dd.click({ timeout: 8000 }); await page.waitForTimeout(2500); hit = comItens; } catch (e) {}
   }
   if (!hit) { log(`dropdown "${campo}" não abriu com itens (${cands.length} candidato(s))`); return false; }
   for (let i = 0; i < vals.length; i++) {
