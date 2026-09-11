@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609110110">
+<meta name="build" content="202609110135">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -509,9 +509,9 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
           <div class="twrap"><table class="dre" id="tbl-placas">
             <thead><tr>
               <th>Unidade</th><th>Projeto</th><th>Placa</th><th class="num">Rem</th><th class="num">Real</th>
-              <th class="num">Δ</th><th class="num sep-imp">R$/km</th><th class="num">Impacto (R$)</th>
+              <th class="num">Δ</th><th class="num">Δ %</th><th class="num sep-imp">R$/km</th><th class="num">Impacto (R$)</th>
             </tr></thead>
-            <tbody id="tbl-placas-body"><tr><td class="loading" colspan="8">Carregando…</td></tr></tbody>
+            <tbody id="tbl-placas-body"><tr><td class="loading" colspan="9">Carregando…</td></tr></tbody>
             <tfoot id="tbl-placas-foot"></tfoot>
           </table></div>
         </div>
@@ -667,7 +667,12 @@ async function fetchBalanco(){
   const json = JSON.parse((await (await fetch(url)).text()).match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
   const cols = (json.table.cols||[]).map(c => String((c && (c.label||c.id)) || '').trim().toLowerCase());
   const idx = (...t) => cols.findIndex(c => t.some(x => c.includes(x)));
-  const K = { uni:idx('unidade'), vig:idx('vig'), val:idx('valor') };
+  // VALOR 85% (Renan, 10/09/2026: "considera a coluna D para calcular o km rem
+  // a devolver, não mais a C") — a coluna "Valor 85%" é a que vira km; a "Valor"
+  // crua só entra se a de 85% não existir na aba (e avisa no console).
+  const i85 = cols.findIndex(c => c.includes('valor') && c.includes('85'));
+  const K = { uni:idx('unidade'), vig:idx('vig'), val: i85 >= 0 ? i85 : idx('valor') };
+  if (i85 < 0) console.warn('Aba Balanço de Massa: coluna "Valor 85%" não encontrada — usando "Valor"', cols);
   if (Object.values(K).some(i => i < 0)) { console.warn('Aba Balanço de Massa: coluna não encontrada', K, cols); return {}; }
   const out = {};
   (json.table.rows||[]).forEach(row => {
@@ -739,7 +744,7 @@ function renderPlacas(){
   const P = getPlacasFiltered(); const sign = v => v >= 0 ? '+' : '';
   const brl = v => (v < 0 ? '-' : '') + 'R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   if (!P.length) {
-    body.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text2);padding:24px 8px;">${PLACAS.length ? 'Sem dados para os filtros selecionados' : 'Sem placas — a aba Abertura começa em ' + vigLabel(AB_INICIO)}</td></tr>`;
+    body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text2);padding:24px 8px;">${PLACAS.length ? 'Sem dados para os filtros selecionados' : 'Sem placas — a aba Abertura começa em ' + vigLabel(AB_INICIO)}</td></tr>`;
     foot.innerHTML = ''; return;
   }
   P.sort((a, b) => b.delta - a.delta);
@@ -748,6 +753,7 @@ function renderPlacas(){
     <td class="num">${fmt(r.rem)}</td>
     <td class="num">${fmt(r.real)}</td>
     <td class="num ${r.delta>0?'cr':'cg'}">${sign(r.delta)}${fmt(r.delta)}</td>
+    <td class="num ${r.delta>0?'cr':'cg'}">${r.rem ? pctInt(r.delta / r.rem * 100) : '—'}</td>
     <td class="num sep-imp">${r.rsKm ? brl(r.rsKm) : '—'}</td>
     <td class="num ${r.imp>0?'cr':'cg'}">${sign(r.imp)}${fmt(r.imp)}</td>
   </tr>`).join('');
@@ -758,6 +764,7 @@ function renderPlacas(){
     <td class="num">${fmt(tRem)}</td>
     <td class="num">${fmt(tReal)}</td>
     <td class="num ${tDelta>0?'cr':'cg'}">${sign(tDelta)}${fmt(tDelta)}</td>
+    <td class="num ${tDelta>0?'cr':'cg'}">${tRem ? pctInt(tDelta / tRem * 100) : '—'}</td>
     <td class="num sep-imp"></td>
     <td class="num ${tImp>0?'cr':'cg'}">${sign(tImp)}${fmt(tImp)}</td>
   </tr>`;
@@ -1491,7 +1498,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_km_v5';  // v4: km remunerado com o balanço de massa
+const CACHE_KEY='bi_cache_km_v6';  // v6: balanço de massa pela coluna Valor 85% · v5: placas
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
@@ -1627,6 +1634,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609110110"></script>
+<script src="../assets/build-check.js?v=202609110135"></script>
 </body>
 </html>

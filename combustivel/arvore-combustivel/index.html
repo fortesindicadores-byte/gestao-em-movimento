@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609081200">
+<meta name="build" content="202609110125">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="../../assets/pdf-export.js"></script>
@@ -879,7 +879,11 @@ const BM_CIDADE = {'CUIABA':'CBA','PIRAI':'PIR','MACACU':'MCC','CACHOEIRAS DE MA
   'PELOTAS':'PLT','FLORIANOPOLIS':'FLP','GUARULHOS':'GRL','NOVA FRIBURGO':'NFR','RONDONOPOLIS':'RON','BALNEARIO CAMBORIU':'BLC','CAMBORIU':'BLC'};
 let S_BM=[];                     // [{vig:'MM/YYYY', n3:'EMPURRADA - PIR', valor}]
 function parseBalanco(cols,rows){
-  const fi=_fiFactory(cols); const cU=fi('unidade'), cV=fi('vig'), cVal=fi('valor'); const out=[];
+  // VALOR 85% (Renan, 10/09/2026): a coluna "Valor 85%" é a que vira km; a "Valor" crua só se a de 85% não existir
+  const fi=_fiFactory(cols); const cU=fi('unidade'), cV=fi('vig'); const out=[];
+  const c85=cols.findIndex(c=>{ const lc=String(c||'').toLowerCase(); return lc.includes('valor')&&lc.includes('85'); });
+  const cVal=c85>=0?c85:fi('valor');
+  if(c85<0) console.warn('Balanço de Massa: coluna "Valor 85%" não encontrada — usando "Valor"', cols);
   if(cU<0||cV<0||cVal<0){ console.warn('Balanço de Massa: coluna não encontrada', cols); return out; }
   rows.forEach(r=>{ const d=kParseVig(r[cV]); const valor=+r[cVal]||0; if(!d||!valor)return;
     const partes=_nk(r[cU]).split(' '); const proj=partes.pop(); const cid=partes.join(' ');
@@ -1137,6 +1141,6 @@ function applyTheme(t){document.body.classList.toggle('light-mode',t==='light');
 <script src="../../assets/mobile.js?v=202608220020"></script>
 <script src="../../assets/ctrlk.js"></script>
 <script src="../../assets/sortable-table.js?v=202609042200"></script>
-<script src="../../assets/build-check.js?v=202608192100"></script>
+<script src="../../assets/build-check.js?v=202609110125"></script>
 </body>
 </html>

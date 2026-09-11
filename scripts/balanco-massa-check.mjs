@@ -77,7 +77,10 @@ frota.rows.forEach(r => { const vig = vigDe(r[K.vig]); const n3 = String((r[K.n3
 
 // Balanço de Massa: Unidade | Vigência | Valor (por nome de coluna)
 const bi = (...t) => bm.cols.findIndex(c => t.some(x => c.toLowerCase().includes(x)));
-const B = { uni: bi('unidade'), vig: bi('vig'), val: bi('valor') };
+// VALOR 85% (Renan, 10/09/2026): a coluna "Valor 85%" é a que vira km — a "Valor" crua só se a de 85% não existir
+const b85 = bm.cols.findIndex(c => /valor/i.test(c) && /85/.test(c));
+const B = { uni: bi('unidade'), vig: bi('vig'), val: b85 >= 0 ? b85 : bi('valor') };
+console.log(b85 >= 0 ? `Balanço de Massa · usando a coluna "${bm.cols[b85]}"` : '⚠ Balanço de Massa: coluna "Valor 85%" não encontrada — usando "Valor"');
 console.log('Balanço de Massa · índices:', JSON.stringify(B));
 const linhas = [];
 bm.rows.forEach(r => { const vig = vigDe(r[B.vig]); const valor = num(r[B.val]); const uni = String((r[B.uni] && r[B.uni].v) || '');
