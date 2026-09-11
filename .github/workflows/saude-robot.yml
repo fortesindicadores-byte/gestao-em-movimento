@@ -1,0 +1,46 @@
+name: Saude Robot (ecossistema → Supabase)
+
+# Alimenta o painel /saude/ (cluster Administração): execuções dos workflows
+# (API do Actions), idade das bases no banco e inventário dos painéis.
+# O painel é HTML público e não pode guardar token do GitHub — por isso a
+# coleta vive aqui e a tela só lê as tabelas saude_*.
+#
+# Roda 4× por dia: 12:40 UTC (09:40 BRT) logo depois da janela de cargas da
+# manhã, e mais três vezes para pegar o que roda de hora em hora.
+on:
+  schedule:
+    - cron: '40 0,6,12,18 * * *'
+  workflow_dispatch:
+    inputs:
+      dias:
+        description: 'Janela de execuções a reler (dias). Use 30 na primeira carga.'
+        required: false
+        default: '3'
+      seco:
+        description: 'Modo seco: só imprime, não grava (1 = sim)'
+        required: false
+        default: '0'
+
+permissions:
+  contents: read
+  actions: read          # necessário para ler as execuções dos workflows
+
+concurrency:
+  group: saude-robot
+  cancel-in-progress: false
+
+jobs:
+  coleta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Coletar saúde do ecossistema
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SAUDE_DIAS: ${{ github.event.inputs.dias || '3' }}
+          SAUDE_SECO: ${{ github.event.inputs.seco || '0' }}
+        run: node scripts/saude-robot.mjs
