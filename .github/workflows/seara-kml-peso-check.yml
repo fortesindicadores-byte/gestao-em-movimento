@@ -1,0 +1,16 @@
+name: Seara KmL Peso Check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Km/L remunerado da Seara — peso por viagens (CTEs) × peso por km (Combustível), mês a mês
+        run: node scripts/seara-kml-peso-check.mjs

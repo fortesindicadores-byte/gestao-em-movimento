@@ -768,7 +768,7 @@ PWA (`manifest.json`, `sw.js` `driverpro-v18`, Inter, tokens próprios `--bg:#0F
 
 ### 17.8 Seara (workbook único, 3 abas)
 
-KM realizado da `Combustível`; KM remunerado da `Base CTEs` col J **contado uma vez por `CD_VIAGEM_TRANSPORTE`** (sem dedup infla 23×); R$/km da `Base Remunerado` col O (variável; N tem fixo, T é só diesel). Placa canonizada para Mercosul só para cruzar. Mês sem CTE usa o anterior por placa (aviso no card). Layout largo restaurado em 14/08 (`KmPorLitro`, `PrecoDiesel` como benchmark).
+KM realizado da `Combustível`; KM remunerado da `Base CTEs` col J **contado uma vez por `CD_VIAGEM_TRANSPORTE`** (sem dedup infla 23×); R$/km da `Base Remunerado` col O (variável; N tem fixo, T é só diesel). Placa canonizada para Mercosul só para cruzar. Mês sem CTE usa o anterior por placa (aviso no card). Layout largo restaurado em 14/08 (`KmPorLitro`, `PrecoDiesel` como benchmark). **Km/L remunerado = `KmPorLitro` (col P) ponderado pelo km rodado da `Combustível`** (`Σkm ÷ Σ(km ÷ KmPorLitro)`), nunca por viagens da Base CTEs, que chega dois meses depois e zerava o mês (11/09/2026). O Km/L · Seara lê só `Combustível` + `Base Remunerado`; conferência: **Seara KmL Peso Check**.
 
 ### 17.9 Combustível
 

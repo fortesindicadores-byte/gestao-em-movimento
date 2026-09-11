@@ -33,6 +33,45 @@ for name in wb.sheetnames:
     smp = next(ws.iter_rows(min_row=2, max_row=2, values_only=True), ())
     vivos = sum(1 for v in smp if v is not None)
     print(f"  (linha 2: {vivos} células preenchidas)\\n")
+
+# ── Base Remunerado por vigência: as colunas que o Km/L · Seara e o R$/L · Seara
+# leem para o REMUNERADO (KmPorLitro, PrecoDiesel) e a do R$/km (ReaisPorKm).
+# Conta, mês a mês, quantas linhas têm cada uma preenchida (> 0). Serve para
+# distinguir "a aba não tem o mês" de "tem o mês, mas a coluna veio vazia".
+import datetime, collections
+ws = wb[wb.sheetnames[0]]
+hdr = [str(v or '').lower().replace(' ','') for v in next(ws.iter_rows(min_row=1, max_row=1, values_only=True), ())]
+def idx(alvo, default):
+    for i, h in enumerate(hdr):
+        if alvo in h: return i
+    return default
+iv, ip, ikl, ipd, irk = idx('vigencia',0), idx('placa',3), idx('kmporlitro',15), idx('precodiesel',17), idx('reaisporkm',14)
+print(f"=== Base Remunerado ({wb.sheetnames[0]}) por vigência · colunas {A1(iv)} vig · {A1(ip)} placa · {A1(ikl)} KmPorLitro · {A1(ipd)} PrecoDiesel · {A1(irk)} ReaisPorKm ===")
+def vig_de(v):
+    if isinstance(v, (datetime.datetime, datetime.date)): return f"{v.month:02d}/{v.year}"
+    s = str(v or '')
+    import re
+    m = re.match(r'^(\\d{1,2})/(\\d{1,2})/(\\d{4})', s)
+    if m: return f"{int(m.group(2)):02d}/{m.group(3)}"
+    m = re.match(r'^(\\d{4})-(\\d{2})', s)
+    if m: return f"{m.group(2)}/{m.group(1)}"
+    return s[:7] if s else ''
+def num(v):
+    try: return float(v)
+    except: return 0.0
+por = collections.OrderedDict()
+for r in ws.iter_rows(min_row=2, values_only=True):
+    if r is None or len(r) <= max(iv, ip): continue
+    vig = vig_de(r[iv]); placa = str(r[ip] or '').strip()
+    if not vig or not placa: continue
+    o = por.setdefault(vig, {'linhas':0,'placas':set(),'kml':0,'preco':0,'rskm':0})
+    o['linhas'] += 1; o['placas'].add(placa)
+    if len(r) > ikl and num(r[ikl]) > 0: o['kml'] += 1
+    if len(r) > ipd and num(r[ipd]) > 0: o['preco'] += 1
+    if len(r) > irk and num(r[irk]) > 0: o['rskm'] += 1
+print(f"  {'vigência':>8} | linhas | placas | KmPorLitro>0 | PrecoDiesel>0 | ReaisPorKm>0")
+for vig, o in sorted(por.items(), key=lambda kv: kv[0][3:]+kv[0][:2]):
+    print(f"  {vig:>8} | {o['linhas']:6} | {len(o['placas']):6} | {o['kml']:12} | {o['preco']:13} | {o['rskm']:12}")
 `;
 writeFileSync('/tmp/abas.py', py);
 execSync('python3 /tmp/abas.py', {stdio:'inherit'});
