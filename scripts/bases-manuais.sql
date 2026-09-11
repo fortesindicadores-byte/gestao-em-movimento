@@ -140,7 +140,7 @@ alter table public.sh_balanco_massa
   add column if not exists unidade                                text,   -- Unidade
   add column if not exists vigencia_orig                          date,   -- Vigência
   add column if not exists valor                                  numeric,   -- Valor
-  add column if not exists col_3                                  text;   -- (coluna 3, sem rótulo na aba)
+  add column if not exists valor_85_pct                           numeric;   -- Valor 85%
 alter table public.sh_balanco_massa enable row level security;
 drop policy if exists sh_balanco_massa_sel on public.sh_balanco_massa;
 create policy sh_balanco_massa_sel on public.sh_balanco_massa for select to authenticated using (true);
