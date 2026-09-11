@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609110110">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -292,7 +292,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 #tbl-km th,#tbl-km td{overflow:hidden;text-overflow:ellipsis;}
 #tbl-km th{font-size:8.5px;padding:8px 6px;}
 #tbl-km td{padding:8px 6px;font-size:11px;}
-#tbl-km .sep-imp{border-left:1px solid var(--card-brd);}
+#tbl-km .sep-imp,#tbl-placas .sep-imp{border-left:1px solid var(--card-brd);}
 #tbl-km tfoot tr.total td{font-weight:800;color:var(--txt);background:var(--cabec);
   border-top:1px solid var(--card-brd);position:sticky;bottom:0;}
 .km-tbl-toggle{display:none;}
@@ -363,6 +363,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
     <button class="s-item on" data-vw="resumo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Resumo Gerencial</button>
     <button class="s-item" data-vw="eficiencia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><polyline points="21 4 21 9 16 9"/></svg> Eficiência e Projetos</button>
     <button class="s-item" data-vw="dispersao"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg> Dispersão</button>
+    <button class="s-item" data-vw="placas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 12h2M11 12h2M16 12h2"/></svg> Placas</button>
 
     <div class="s-sec">Atalhos</div>
     <div id="pdf-slot"></div>
@@ -494,6 +495,24 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
             </tr></thead>
             <tbody id="tbl-body"><tr><td class="loading" colspan="9">Carregando…</td></tr></tbody>
             <tfoot id="tbl-foot"></tfoot>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- ══ 5 · PLACAS (aba Abertura, de ago/2026 em diante — Renan, 10/09/2026) ══ -->
+      <section class="vw" id="vw-placas">
+        <div class="card tsec">
+          <div class="thead-row">
+            <div><div class="ttit">Dispersão por Placa</div>
+              <div class="tsub" id="placas-sub">Aba Abertura · ranqueado pelo Δ KM · positivo = realizou mais que o remunerado</div></div>
+          </div>
+          <div class="twrap"><table class="dre" id="tbl-placas">
+            <thead><tr>
+              <th>Unidade</th><th>Projeto</th><th>Placa</th><th class="num">Rem</th><th class="num">Real</th>
+              <th class="num">Δ</th><th class="num sep-imp">R$/km</th><th class="num">Impacto (R$)</th>
+            </tr></thead>
+            <tbody id="tbl-placas-body"><tr><td class="loading" colspan="8">Carregando…</td></tr></tbody>
+            <tfoot id="tbl-placas-foot"></tfoot>
           </table></div>
         </div>
       </section>
@@ -663,6 +682,87 @@ async function fetchBalanco(){
 const _semInativo = s => String(s||'').replace(/\s*\(INATIVO\)\s*/ig,'').trim();
 const chaveRs = (vig, uni, proj) => vig+'|'+_semInativo(uni).toUpperCase()+'|'+_semInativo(proj).toUpperCase();
 
+/* PLACAS (Renan, 10/09/2026: "use essa base Abertura para criar uma visão
+   Placas no painel km, começa de agosto para frente"). A aba "Abertura" da
+   Base Dispersão de km traz UMA LINHA POR PLACA: UNIDADE · MÊS · PROJETO ·
+   Placa · Remunerado · Real · ▲ · R$/km · Impacto BRL. R$/km e Impacto são
+   OS DA ABA (texto "R$ 2,70" / "-R$ 281,46"), não a taxa dos pacotes que o
+   painel calcula por chave — a aba já traz o valor pronto, então a visão mostra
+   o que está lá. A unidade vem em três grafias ("CDD CUIABÁ", "Cuiába - MT",
+   "Piraí -RJ") e vira o mesmo código dos filtros (CBA, PIR…) por BM_CIDADE. */
+const AB_TAB = 'Abertura', AB_INICIO = '08/2026';
+let PLACAS = [];
+// "CDD CUIABÁ" · "Cuiába - MT" · "Piraí -RJ" · "MACACU" → 'CBA' / 'PIR' / 'MCC'
+function abUnidade(unidade){
+  const n = _nkBM(unidade).replace(/^CDD\s+/, '').replace(/\s*-\s*[A-Z]{2}$/, '').trim();
+  return BM_CIDADE[n] || BM_CIDADE[n.split(' ').pop()] || n;
+}
+// PROJETO da aba → rótulo da coluna PROJ. da Dispersão de km (o que os filtros
+// do painel usam): AS → AUTO SERVIÇO · VAN → ROTA (VAN). ROTA e EMPURRADA já
+// batem. UDC não existe na Dispersão de km — fica como está na aba.
+const AB_PROJ = { 'AS': 'AUTO SERVIÇO', 'VAN': 'ROTA (VAN)' };
+const abProjeto = p => { const n = _nkBM(p); return AB_PROJ[n] || n; };
+// "R$ 1.694,29" / "-R$ 281,46" / número → número
+const parseBRL = v => { if (typeof v === 'number') return v;
+  const t = String(v ?? '').replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.'); return parseFloat(t) || 0; };
+async function fetchAbertura(){
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(AB_TAB)}&t=${Date.now()}`;
+  const json = JSON.parse((await (await fetch(url)).text()).match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+  const cols = (json.table.cols||[]).map(c => String((c && (c.label||c.id)) || '').trim().toLowerCase());
+  const idx = (...t) => cols.findIndex(c => t.some(x => c === x || c.includes(x)));
+  const K = { uni:idx('unidade'), vig:idx('mês','mes'), proj:idx('projeto'), placa:idx('placa'),
+              rem:idx('remunerado'), real:idx('real'), rskm:idx('r$/km'), imp:idx('impacto') };
+  if (Object.values(K).some(i => i < 0)) { console.warn('Aba Abertura: coluna não encontrada', K, cols); return []; }
+  const out = [];
+  (json.table.rows||[]).forEach(row => {
+    const g = i => (row.c && row.c[i] && row.c[i].v != null) ? row.c[i].v : null;
+    const vig = bmVig(row.c && row.c[K.vig]); const placa = String(g(K.placa) || '').trim();
+    if (!vig || !placa || vigToDate(vig) < vigToDate(AB_INICIO)) return;
+    const rem = parseFloat(g(K.rem)) || 0, real = parseFloat(g(K.real)) || 0;
+    out.push({ vig, ano: vig.split('/')[1], und: abUnidade(g(K.uni)), undOrig: String(g(K.uni) || '').trim(),
+      proj: abProjeto(g(K.proj)), placa, rem, real, delta: real - rem, rsKm: parseBRL(g(K.rskm)), imp: parseBRL(g(K.imp)) });
+  });
+  return out;
+}
+// mesmos filtros do painel (ano · vigência · unidade · projeto), casando por código
+function getPlacasFiltered(){
+  const anos = getSel('ms-ano'), vigs = getSel('ms-vig'), unds = getSel('ms-und').map(_nkBM), projs = getSel('ms-proj').map(_nkBM);
+  return PLACAS.filter(r =>
+    (!anos.length  || anos.includes(r.ano)) &&
+    (!vigs.length  || vigs.includes(r.vig)) &&
+    (!unds.length  || unds.includes(_nkBM(r.und))) &&
+    (!projs.length || projs.includes(_nkBM(r.proj))));
+}
+function renderPlacas(){
+  const body = document.getElementById('tbl-placas-body'), foot = document.getElementById('tbl-placas-foot');
+  if (!body || !foot) return;
+  const P = getPlacasFiltered(); const sign = v => v >= 0 ? '+' : '';
+  const brl = v => (v < 0 ? '-' : '') + 'R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  if (!P.length) {
+    body.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text2);padding:24px 8px;">${PLACAS.length ? 'Sem dados para os filtros selecionados' : 'Sem placas — a aba Abertura começa em ' + vigLabel(AB_INICIO)}</td></tr>`;
+    foot.innerHTML = ''; return;
+  }
+  P.sort((a, b) => b.delta - a.delta);
+  body.innerHTML = P.map(r => `<tr>
+    <td title="${r.undOrig}">${r.und}</td><td>${r.proj}</td><td>${r.placa}</td>
+    <td class="num">${fmt(r.rem)}</td>
+    <td class="num">${fmt(r.real)}</td>
+    <td class="num ${r.delta>0?'cr':'cg'}">${sign(r.delta)}${fmt(r.delta)}</td>
+    <td class="num sep-imp">${r.rsKm ? brl(r.rsKm) : '—'}</td>
+    <td class="num ${r.imp>0?'cr':'cg'}">${sign(r.imp)}${fmt(r.imp)}</td>
+  </tr>`).join('');
+  const tRem = P.reduce((s, r) => s + r.rem, 0), tReal = P.reduce((s, r) => s + r.real, 0), tImp = P.reduce((s, r) => s + r.imp, 0);
+  const tDelta = tReal - tRem;
+  foot.innerHTML = `<tr class="total">
+    <td class="conta">TOTAL PLACAS</td><td></td><td>${P.length}</td>
+    <td class="num">${fmt(tRem)}</td>
+    <td class="num">${fmt(tReal)}</td>
+    <td class="num ${tDelta>0?'cr':'cg'}">${sign(tDelta)}${fmt(tDelta)}</td>
+    <td class="num sep-imp"></td>
+    <td class="num ${tImp>0?'cr':'cg'}">${sign(tImp)}${fmt(tImp)}</td>
+  </tr>`;
+}
+
 async function fetchCustoRem() {
   const url = `https://docs.google.com/spreadsheets/d/${COST_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(COST_TAB)}&t=${Date.now()}`;
   const json = JSON.parse((await (await fetch(url)).text()).match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
@@ -691,11 +791,13 @@ async function fetchCustoRem() {
 
 async function fetchData() {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}&t=${Date.now()}`;
-  const [text, custoRem, balanco] = await Promise.all([
+  const [text, custoRem, balanco, abertura] = await Promise.all([
     fetch(url).then(r => r.text()),
     fetchCustoRem().catch(e => { console.warn('Custo (aba Frota) indisponível:', e); return {}; }),
-    fetchBalanco().catch(e => { console.warn('Balanço de Massa indisponível:', e); return {}; })
+    fetchBalanco().catch(e => { console.warn('Balanço de Massa indisponível:', e); return {}; }),
+    fetchAbertura().catch(e => { console.warn('Abertura (placas) indisponível:', e); return []; })
   ]);
+  PLACAS = abertura;
   const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
   ALL = (json.table.rows || [])
     .map(parseRow)
@@ -731,7 +833,7 @@ async function fetchData() {
     r.imp  = (r.real - r.rem) * taxa;
   });
   if (semTaxa) console.warn(`Impacto: ${semTaxa} linha(s) sem R$/km (vigência sem custo fechado no DRE, ou projeto sem custo próprio) — impacto zerado nelas.`);
-  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(),rows:ALL})); }catch(e){}
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(),rows:ALL,placas:PLACAS})); }catch(e){}
   const savedVig = getSel('ms-vig');
   populateFilters();
   if (savedVig.length > 0) {
@@ -954,6 +1056,7 @@ function render() {
     if(body) body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text2);padding:24px 8px;">Sem dados para os filtros selecionados</td></tr>`;
     const foot = document.getElementById('tbl-foot');
     if(foot) foot.innerHTML = '';
+    renderPlacas();
     renderCharts([]);
     return;
   }
@@ -995,6 +1098,7 @@ function render() {
   if(dYtdImpEl) { dYtdImpEl.textContent = (ytdImp >= 0 ? '+' : '') + fmt(ytdImp);      dYtdImpEl.className = ytdImp > 0 ? 'cr' : 'cg'; }
 
   renderTable(F, YTDrows);
+  renderPlacas();
   renderCharts(F);
 }
 
@@ -1409,7 +1513,7 @@ function initData(){
   try{
     const c=JSON.parse(localStorage.getItem(CACHE_KEY));
     if(c&&c.rows&&c.rows.length){
-      ALL=c.rows;
+      ALL=c.rows; PLACAS=Array.isArray(c.placas)?c.placas:[];
       populateFilters();
       render();
       const d=new Date(c.t);
@@ -1457,7 +1561,7 @@ render=function(){
 };
 
 /* ── navegação entre as visões ────────────────────────────────────────────── */
-const TIT={resumo:'Resumo Gerencial',eficiencia:'Eficiência e Projetos',dispersao:'Dispersão de KM'};
+const TIT={resumo:'Resumo Gerencial',eficiencia:'Eficiência e Projetos',dispersao:'Dispersão de KM',placas:'Placas'};
 let VW='resumo';
 function setVw(v){
   VW=v;
@@ -1523,6 +1627,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609110110"></script>
 </body>
 </html>

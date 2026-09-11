@@ -37,6 +37,7 @@ const ALVOS = [
   // Dispersão de km
   { id: DISP, sheet: 'Dispersão de km' },
   { id: DISP, sheet: 'Balanço de Massa' },
+  { id: DISP, sheet: 'Abertura' },              // Painel KM · visão Placas (ago/2026 em diante)
   // Consumo
   { id: KML, sheet: 'Km/L' },
   { id: KML, sheet: 'R$/L' },
