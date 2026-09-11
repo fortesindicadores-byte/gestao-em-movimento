@@ -160,7 +160,7 @@ Legenda: **Casca** padrão = `.app`+`.side`/`.board` (layout novo) · antiga = `
 
 | Cluster | Card → pasta | Restrição |
 |---|---|---|
-| Administração | Gerenciar Acessos (tela interna) · Acessos `acessos/` · Conferência de Locação `conferencia-locacao/` · Footprint Goiânia `footprint-goiania/` · Bases do Sheets (janela interna) | cluster só admin |
+| Administração | Gerenciar Acessos (tela interna) · Acessos `acessos/` · Conferência de Locação `conferencia-locacao/` · Footprint Goiânia `footprint-goiania/` · Bases do Sheets (janela interna) · Saúde do Ecossistema `saude/` | cluster só admin |
 | Planejamento Estratégico | Estratégia e Governança `governanca/` · Papéis e Responsabilidades `papeis-responsabilidades/` | |
 | Visão Geral | Scorecard `scorecard/` · Diagnóstico `diagnostico/` · Resumo Executivo `resumo-executivo/` · Ativos `ativos/` · Gestão à Vista `gestao-a-vista/` | |
 | Financeiro | Visão Financeira `visao-financeira/` · Painel KM `painel-km/` · R$/KM `rs-por-km/` · Árvore de Custo da Frota `arvore-frota/` · Carta de Custos `carta-custos/` | |

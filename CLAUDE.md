@@ -972,6 +972,21 @@ Quando o portal mudar de novo, rodar o workflow em **modo `mapa`**: ele não exp
   - **Leitor:** `DATA.blitz` no `farol-core.js` agrupa por placa (contagens por Status, `Limite Proxima Blitz` mais distante, `Última Blitz`, `dias` até o limite) — a unidade vem da coluna **Filial** da própria linha, não precisa mais do join com `ativos`. A visão **Blitz de Segurança** do Gestão à Vista (`renderBlitz`) ordena **por dias para vencer**, do mais vencido para o mais folgado, com a célula `15d · OK` (verde) / `35d atrás · NOK` (vermelho) / amarelo até 7 dias — formato pedido pelo Renan em 10/09/2026. Aderência = (Realizado Dentro Prazo + No Prazo) ÷ total, a mesma régua da Conformidade, poolando as placas.
   - A aba é **`opcional:true`** — falha dela não derruba as outras sete do run diário.
 
+## Saúde do Ecossistema — o painel que vigia os robôs (Renan, 11/09/2026)
+
+Pedido dele: *"mais um painel no cluster administrador… uma visão geral dos painéis, robôs, etc., mais focado em automatizações. Taxa de falha geral, por robô, por painel. Como está a saúde do ecossistema"*. Nasceu da varredura de 10/09, em que **cinco robôs estavam quebrados e nenhum avisou ninguém**.
+
+**`/saude/`** (casca padrão, só admin, cluster Administração) com quatro visões: **Resumo Gerencial** (taxa de sucesso da janela, execuções por dia em barras empilhadas, onde estão as falhas), **Robôs**, **Bases de Dados** e **Painéis**. Janela de 7/15/30/90 dias (`.dimb`, chave `saude_jan`) e filtros de Tipo e Estado.
+
+- **O painel NÃO chama o GitHub** — o HTML é público e não pode guardar token. Quem coleta é `scripts/saude-robot.mjs` (workflow **Saude Robot**, cron `40 0,6,12,18 * * *`, `permissions: actions: read`), que lê a API do Actions, o estado das bases no próprio banco e varre os `index.html`. Tabelas: `saude_wf` · `saude_dia` · `saude_base` · `saude_painel` · `saude_coleta` (`scripts/saude-supabase.sql`).
+- **Agregado por DIA, não execução a execução**: o Sheets Pedido roda a cada 5 minutos (288 linhas/dia) e o PostgREST devolve no máximo 1.000 linhas por leitura. `saude_dia` tem uma linha por workflow × dia (em BRT).
+- **Atraso é medido contra o CRON declarado**, não contra um prazo fixo: `limiteCron()` separa "a cada poucos minutos" (1h de folga), "de hora em hora" (3h), "a cada N horas" (9h), diário (30h) e semanal (8d). Um robô que só roda sob demanda nunca aparece como atrasado.
+- **Idade esperada por fonte de dado** (`LIM_BASE`): Sheets 6h · Ginfo 30h · Frota de Elite 45 dias · tabelas de aplicativo são informativas (não têm ritmo próprio). Acima do limite = "Atrasada"; 4× o limite = "Parada".
+- **Carga × auditoria é LISTA EXPLÍCITA** no robô (`CARGA`), não heurística: "usa a service key" erra, porque auditorias como o Carta RLS Check também usam só para ler.
+- **A coluna "Avisa" da tabela de robôs é a lacuna que o painel existe para mostrar**: na 1ª coleta, **9 dos 12 robôs de carga agendados não têm aviso de falha** (só elite, ginfo e profrotas chamam o `avisa-falha.sh`) — e o `vars.MAIL_TO` continua vazio desde 27/08, então nem esses três tocam o alarme.
+- Primeira coleta (7 dias, 11/09/2026): **481 execuções · 432 ok · 41 falhas · 89,8% de sucesso**, 0 robôs falhando no momento, 99 bases monitoradas (6 com mais de 48h, 3 com erro registrado), 73 painéis (23 na casca padrão).
+- Validação sem browser: 29 regras de estado rodadas em `node:vm` (atraso por cron, idade por fonte, falhas seguidas, agregação) e a varredura local conferida contra o inventário manual dos 74 workflows.
+
 ## Contrato de Manutenção no Gestão à Vista (Renan, 10/09/2026)
 
 Visão **Contrato**: ranking de placas do **mês de km que está correndo**, que é a fatura do mês SEGUINTE (`vig_cobranca = vig_km + 1`, regra do Renan em 05/09: *"o de setembro que estamos rodando é que vai compor outubro"*). Gestão à Vista é o agora, então **não tem seletor de mês** — o mês fechado fica na Carta de Custos.
