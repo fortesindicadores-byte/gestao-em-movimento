@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609102150">
 <title>Frota de Elite · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -436,8 +436,8 @@ body.light-mode .podio-slot.primeiro .pedestal{box-shadow:0 -4px 24px rgba(196,1
 
   <!-- LEGENDA (entre o hero e os cards) -->
   <div class="color-legend legend-top">
-    <span class="cl-item"><i class="cl-dot cl-green"></i>≥ 98 — Meta batida</span>
-    <span class="cl-item"><i class="cl-dot cl-yellow"></i>85 a 97,9 — Atenção</span>
+    <span class="cl-item"><i class="cl-dot cl-green"></i>≥ 95 — Meta batida</span>
+    <span class="cl-item"><i class="cl-dot cl-yellow"></i>85 a 94,9 — Atenção</span>
     <span class="cl-item"><i class="cl-dot cl-red"></i>&lt; 85 — Crítico</span>
     <span class="cl-note">Vale para os indicadores (%) e para a pontuação final.</span>
   </div>
@@ -869,7 +869,7 @@ function renderResumo(data) {
 /* ── Cards dos 11 indicadores (pontuação média · padrão scorecard) ── */
 function renderIndCards(data) {
   const box = document.getElementById('ind-cards'); if(!box) return;
-  const dot = v => v==null ? '#64748B' : v>=98 ? '#3BB33B' : v>=85 ? '#FACC15' : '#FF6666';
+  const dot = v => v==null ? '#64748B' : v>=95 ? '#3BB33B' : v>=85 ? '#FACC15' : '#FF6666';
   box.innerHTML = FIELD_ORDER.map(f => {
     const v = getFieldAvg(data, f);
     return `<div class="kpi-card ind-card">
@@ -956,14 +956,14 @@ function toggleIndCols() {
 
 function indClass(v) {
   if (v==null) return 'ind-dash';
-  if (v>=98) return 'ind-green';
+  if (v>=95) return 'ind-green';
   if (v>=85) return 'ind-yellow';
   return 'ind-red';
 }
 
 function scorePill(v) {
   if (v==null) return '<span class="ind-dash">—</span>';
-  const cls = v>=98 ? 'score-green' : v>=85 ? 'score-yellow' : 'score-red';
+  const cls = v>=95 ? 'score-green' : v>=85 ? 'score-yellow' : 'score-red';
   return `<span class="score-pill ${cls}">${v.toFixed(1)}</span>`;
 }
 
@@ -1093,7 +1093,7 @@ function renderChart() {
     const selected = !filtroAtivo || (vig && selVig.includes(vig));
     const alpha = selected ? '.85' : '.18';
     if (val == null) return `rgba(100,100,100,${alpha})`;
-    if (val >= 98)   return `rgba(59,179,59,${alpha})`;
+    if (val >= 95)   return `rgba(59,179,59,${alpha})`;
     if (val >= 85)   return `rgba(250,204,21,${alpha})`;
     return `rgba(255,102,102,${alpha})`;
   });
@@ -1102,7 +1102,7 @@ function renderChart() {
     const selected = !filtroAtivo || (vig && selVig.includes(vig));
     const op = selected ? '1' : '.25';
     if (val == null) return `rgba(100,100,100,${op})`;
-    if (val >= 98)   return `rgba(59,179,59,${op})`;
+    if (val >= 95)   return `rgba(59,179,59,${op})`;
     if (val >= 85)   return `rgba(250,204,21,${op})`;
     return `rgba(255,102,102,${op})`;
   });
@@ -1116,7 +1116,7 @@ function renderChart() {
 
   // Meta lines: mesmo valor para todos os 12 meses
   const meta85 = Array(12).fill(85);
-  const meta98 = Array(12).fill(98);
+  const meta98 = Array(12).fill(95);
 
   const ctx = document.getElementById('chartTemporal').getContext('2d');
   if (chartTemporal) chartTemporal.destroy();
@@ -1161,7 +1161,7 @@ function renderChart() {
           datalabels: {display: false},
         },
         {
-          label: 'Meta 98%',
+          label: 'Meta 95%',
           data: meta98,
           type: 'line',
           borderColor: metaClr,
@@ -1216,8 +1216,8 @@ function renderIndChart(data) {
   const labels = items.map(o => o.label);
   const vals   = items.map(o => o.v);
   // cores condicionais padrão do painel (mesma regra do gráfico temporal)
-  const face   = v => v >= 98 ? 'rgba(59,179,59,.85)'  : v >= 85 ? 'rgba(250,204,21,.85)' : 'rgba(255,102,102,.85)';
-  const edge   = v => v >= 98 ? 'rgba(59,179,59,1)'    : v >= 85 ? 'rgba(250,204,21,1)'   : 'rgba(255,102,102,1)';
+  const face   = v => v >= 95 ? 'rgba(59,179,59,.85)'  : v >= 85 ? 'rgba(250,204,21,.85)' : 'rgba(255,102,102,.85)';
+  const edge   = v => v >= 95 ? 'rgba(59,179,59,1)'    : v >= 85 ? 'rgba(250,204,21,1)'   : 'rgba(255,102,102,1)';
 
   // Escala Y adaptável — MESMA regra do gráfico temporal (não começa do 0)
   const minV = vals.length ? Math.min(...vals) : 0;
@@ -1248,7 +1248,7 @@ function renderIndChart(data) {
           },
         },
         { label:'Meta 85%', data: labels.map(()=>85), type:'line', borderColor:metaClr, borderWidth:2, borderDash:[5,3], tension:0, fill:false, pointRadius:0, order:1, datalabels:{display:false} },
-        { label:'Meta 98%', data: labels.map(()=>98), type:'line', borderColor:metaClr, borderWidth:2, borderDash:[5,3], tension:0, fill:false, pointRadius:0, order:2, datalabels:{display:false} },
+        { label:'Meta 95%', data: labels.map(()=>95), type:'line', borderColor:metaClr, borderWidth:2, borderDash:[5,3], tension:0, fill:false, pointRadius:0, order:2, datalabels:{display:false} },
       ],
     },
     options: {
@@ -1397,6 +1397,6 @@ document.addEventListener('DOMContentLoaded',()=>{ initAccessLog(); cortinaInit(
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609102150"></script>
 </body>
 </html>
