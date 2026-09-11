@@ -170,7 +170,8 @@ const APPS = [
   { t: 'ce_diario', r: 'Condução Econômica (diário)', d: ['dia'], wf: 'conducao-robot.yml' },
   { t: 'ce_app_log', r: 'DriverPro — acessos', d: ['criado_em', 'created_at'], wf: null },
   { t: 'hodometro_leitura', r: 'Hodômetro (Pró-Frotas)', d: ['created_at'], wf: 'profrotas-robot.yml' },
-  { t: 'abastecimentos', r: 'Abastecimentos (ERP)', d: ['created_at', 'data'], wf: 'abastecimentos-robot.yml' },
+  { t: 'erp_abastecimentos', r: 'Abastecimentos (ERP)', d: ['created_at', 'data'], wf: 'abastecimentos-robot.yml' },
+  { t: 'contratos_placa', r: 'Contratos por placa (ERP)', d: ['created_at'], wf: 'abastecimentos-robot.yml' },
   { t: 'locacao_benner', r: 'Locação (Benner)', d: ['updated_at', 'created_at'], wf: null },
   { t: 'access_log', r: 'Acessos ao portal', d: ['created_at'], wf: null },
 ];
@@ -178,7 +179,15 @@ const APPS = [
 async function conta(tabela) {
   const r = await fetch(`${SUPA}/rest/v1/${tabela}?select=*&limit=1`,
     { headers: { ...H, Prefer: 'count=exact', Range: '0-0' } });
-  if (!r.ok) return { erro: `HTTP ${r.status}` };
+  // "HTTP 404" sozinho não diz nada a quem olha a tela: com a service key um 404
+  // do PostgREST é SEMPRE "essa tabela não existe" — ou o nome está errado aqui,
+  // ou o SQL dela nunca foi rodado. O motivo vai junto, em português.
+  if (!r.ok) {
+    const corpo = await r.text().catch(() => '');
+    const msg = (() => { try { return JSON.parse(corpo).message || ''; } catch { return ''; } })();
+    if (r.status === 404) return { erro: `Tabela ${tabela} não existe no banco` };
+    return { erro: `HTTP ${r.status}${msg ? ' · ' + msg.slice(0, 160) : ''}` };
+  }
   const n = +String(r.headers.get('content-range') || '').split('/')[1];
   return { n: isFinite(n) ? n : null };
 }
@@ -442,7 +451,9 @@ console.log(`na janela: ${br(tot.runs)} execuções · ${br(tot.ok)} ok · ${br(
 
 const bases = await coletaBases();
 const velhas = bases.filter(b => b.atualizado_em && (Date.now() - new Date(b.atualizado_em)) > 48 * 3600e3);
-console.log(`bases monitoradas: ${bases.length} · com mais de 48h: ${velhas.length} · com erro registrado: ${bases.filter(b => b.erro).length}`);
+const comErro = bases.filter(b => b.erro);
+console.log(`bases monitoradas: ${bases.length} · com mais de 48h: ${velhas.length} · com erro registrado: ${comErro.length}`);
+comErro.forEach(b => console.log(`  ✗ ${b.rotulo}: ${String(b.erro).replace(/\s+/g, ' ').slice(0, 200)}`));
 
 const paineis = inventarioPaineis();
 const ac = await acessos30().catch(() => ({}));
