@@ -1,0 +1,37 @@
+name: Aba Inspect (fotografa uma aba do Sheets)
+
+# Genérico: cabeçalhos, tipos, primeiras linhas e valores distintos de uma aba
+# qualquer, pelo gviz. Só leitura. Serve para desenhar leitor sem chutar.
+on:
+  workflow_dispatch:
+    inputs:
+      sheet_id:
+        description: 'ID do workbook'
+        required: true
+      aba:
+        description: 'Nome da aba ou gid'
+        required: true
+      distintos:
+        description: 'Colunas para listar valores distintos, separadas por vírgula'
+        required: false
+        default: ''
+      linhas:
+        description: 'Quantas primeiras linhas mostrar'
+        required: false
+        default: '8'
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Fotografar a aba
+        env:
+          SHEET_ID: ${{ github.event.inputs.sheet_id }}
+          ABA: ${{ github.event.inputs.aba }}
+          DISTINTOS: ${{ github.event.inputs.distintos }}
+          LINHAS: ${{ github.event.inputs.linhas }}
+        run: node scripts/aba-inspect.mjs
