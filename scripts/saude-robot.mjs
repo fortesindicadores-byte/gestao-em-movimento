@@ -117,16 +117,42 @@ const classe = r => {                         // como esta execução terminou
   return 'outros';
 };
 
-async function baixaRuns(dias) {
-  const desde = new Date(Date.now() - dias * 86400e3).toISOString().slice(0, 10);
+// A API do Actions entrega no MÁXIMO 1.000 execuções por consulta, por mais
+// páginas que se peça — e sem erro nenhum: a página 11 volta vazia. Com ~70
+// execuções por dia, uma janela de 30 dias estoura o teto e os dias mais
+// antigos sumiriam calados, fazendo a taxa de falha valer só as duas últimas
+// semanas. Por isso a leitura é POR FATIA DE DATA: a fatia que bate no teto é
+// partida ao meio e relida, até caber.
+const dataISO = d => new Date(d).toISOString().slice(0, 10);
+
+async function fatia(ini, fim) {                       // [ini, fim], datas YYYY-MM-DD
   const runs = [];
-  for (let page = 1; page <= 60; page++) {
+  for (let page = 1; page <= 10; page++) {
     const j = await gh(`/repos/${OWNER}/${REPO}/actions/runs`
-      + `?per_page=100&page=${page}&created=${encodeURIComponent('>=' + desde)}`);
+      + `?per_page=100&page=${page}&created=${encodeURIComponent(ini + '..' + fim)}`);
     const lote = j.workflow_runs || [];
     runs.push(...lote);
-    if (lote.length < 100) break;
+    if (lote.length < 100) return { runs, cheio: false };
   }
+  return { runs, cheio: true };                        // bateu no teto de 1.000
+}
+
+async function baixaIntervalo(ini, fim) {
+  const { runs, cheio } = await fatia(ini, fim);
+  const umDia = dataISO(ini) === dataISO(fim);
+  if (!cheio || umDia) return runs;                    // coube (ou não dá para partir mais)
+  const meio = dataISO(new Date((new Date(ini).getTime() + new Date(fim).getTime()) / 2));
+  const esq = await baixaIntervalo(ini, meio);
+  const dir = await baixaIntervalo(dataISO(new Date(new Date(meio).getTime() + 86400e3)), fim);
+  return [...esq, ...dir];
+}
+
+async function baixaRuns(dias) {
+  const desde = dataISO(Date.now() - dias * 86400e3);
+  const ate = dataISO(Date.now() + 86400e3);           // hoje inteiro, em qualquer fuso
+  const brutas = await baixaIntervalo(desde, ate);
+  const vistas = new Set(), runs = [];                 // fatias vizinhas podem repetir
+  for (const r of brutas) if (!vistas.has(r.id)) { vistas.add(r.id); runs.push(r); }
   return runs;
 }
 
@@ -342,7 +368,10 @@ wfApi.forEach(w => { porPath[w.path] = w; });
 console.log(`workflows no Actions:    ${wfApi.length}`);
 
 const runs = await baixaRuns(DIAS);
-console.log(`execuções lidas:         ${br(runs.length)}\n`);
+const diasVistos = uniq(runs.map(r => diaBR(r.run_started_at || r.created_at))).sort();
+console.log(`execuções lidas:         ${br(runs.length)}`);
+console.log(`cobertura:               ${diasVistos[0] || '—'} → ${diasVistos[diasVistos.length - 1] || '—'}`
+  + ` (${diasVistos.length} dia(s) com execução)\n`);
 
 // ── agregação por workflow e por dia ──
 const dias = {}, porWf = {};
