@@ -116,9 +116,14 @@ const INDICADORES = [
   //    aqui coletadas POR VIGÊNCIA (aderência = desconto 0 → 1, senão 0; o leitor calcula)
   // Quinzena: o que vale na Frota é SEMPRE a 2ª (Renan, 05/08). A tela abre em
   // "Primeira" — o export saía com a quinzena errada ("descricao é Primeira").
+  // STRESS TEST FECHA NO DIA 15 (Renan, 10/09/2026: "tem que ler até dia 15
+  // ainda para estar ok"): as justificativas e os descontos do mês anterior
+  // continuam sendo avaliados até lá. O robô normalmente pula chave já gravada;
+  // com `ateDia15` ele RECOLETA o mês anterior em toda rodada até o dia 15,
+  // sobrescrevendo, para o valor final ser o que vale — não o da primeira leitura.
   { chave: 'stress-test-frota', menu: ['STRESS TEST', 'STRESS TEST FROTA'],
     url: 'https://bi.ginfo.app.br/bi/ce4f37f8-1c4c-499f-a80c-3a3ce80594cb?autoAuth=true&ctid=c16300de-7070-4b58-80c8-af99af1e1f65',
-    periodo: { tipo: 'dropdown' },
+    periodo: { tipo: 'dropdown' }, ateDia15: true,
     slicersFixos: [{ campo: 'Quinzena', valor: 'Segunda' }] },
   // Empilhadeira (Renan, 05/08): usar a tela como ela vem, sem mexer em filtro
   // nenhum além do Mês. NÃO tem filtro de quinzena (as duas são colunas e o
@@ -130,7 +135,7 @@ const INDICADORES = [
   // da soma dos meses no leitor, em vez de forçar a UI.
   { chave: 'stress-test-empilhadeira', menu: ['STRESS TEST', 'STRESS TEST EMPILHADEIRA'],
     url: 'https://bi.ginfo.app.br/bi/d1cead3d-e28a-487b-a1bd-8b72cdd6da55?autoAuth=true&ctid=c16300de-7070-4b58-80c8-af99af1e1f65',
-    periodo: { tipo: 'dropdown', semAno: true }, semAcumulado: true,
+    periodo: { tipo: 'dropdown', semAno: true }, semAcumulado: true, ateDia15: true,
     tabela: { header: 'Chassis' } },
   { chave: 'civf', menu: ['CIVF', 'CIVF'],
     url: 'https://bi.ginfo.app.br/bi/5bd5e3ac-7ebc-4c7b-963e-1c3d20ba4acd?autoAuth=true&ctid=c16300de-7070-4b58-80c8-af99af1e1f65',
@@ -1496,7 +1501,14 @@ async function main() {
             log(`— ${ind.chave}: acumulado do ano sai da soma dos meses no leitor (a tela não acumula)`);
             continue;
           }
-          if (JA.has(`${ind.chave}|${vig}|${esc}`)) { log(`— ${ind.chave} ${vig} (${esc}): já gravado, pulando`); continue; }
+          // indicador que fecha no dia 15 (stress test): o mês anterior é recoletado
+          // e sobrescrito em toda rodada até lá, mesmo já estando gravado
+          const vigAnt = `${dois(hoje.getMonth() === 0 ? 12 : hoje.getMonth())}/${hoje.getMonth() === 0 ? hoje.getFullYear() - 1 : hoje.getFullYear()}`;
+          const recoleta = ind.ateDia15 && hoje.getDate() <= 15 && vig === vigAnt;
+          if (JA.has(`${ind.chave}|${vig}|${esc}`)) {
+            if (!recoleta) { log(`— ${ind.chave} ${vig} (${esc}): já gravado, pulando`); continue; }
+            log(`— ${ind.chave} ${vig} (${esc}): já gravado, mas fecha no dia 15 — recoletando`);
+          }
           for (let tent = 1; tent <= 3; tent++) {
             try {
               if (/\/login/i.test(page.url())) { log('sessão caiu — refazendo o login'); await login(page); }
