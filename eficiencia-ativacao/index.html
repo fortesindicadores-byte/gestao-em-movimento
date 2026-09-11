@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609110215">
 <title>Ativação de Frota · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -576,16 +576,18 @@ function syncBadge(wrap) {
 
 function _buildMs(wrap, renderFn, getAllItemsFn, onChange){
   if(!(wrap._sel instanceof Set)) wrap._sel=new Set();
-  const sel=wrap._sel;
+  // BUG REAL (Renan, 10/09/2026: 'quando filtro ano e desflago meses, continuam'):
+  // o listener guardava o Set do PRIMEIRO build; repopulateVig/refresh trocam
+  // wrap._sel por um Set novo e os cliques iam para o Set morto. Lê na hora.
   const list=wrap.querySelector('.ms-list');
   const srch=wrap.querySelector('.ms-search input');
-  const renderList=(q)=>{ renderFn(list,sel, q!==undefined?q:(srch.value||'')); syncBadge(wrap); };
+  const renderList=(q)=>{ renderFn(list,wrap._sel, q!==undefined?q:(srch.value||'')); syncBadge(wrap); };
   wrap._render=renderList;          // p/ atualização em cascata (re-render sem religar listeners)
   wrap._onChange=onChange;
   if(!wrap._wired){                 // listeners apenas 1x por filtro
     wrap._wired=true;
     list.addEventListener('change',e=>{
-      const box=e.target;
+      const sel=wrap._sel; const box=e.target;
       if(box.classList.contains('ms-all')){
         sel.clear();
       } else if(sel.size===0){
@@ -601,14 +603,14 @@ function _buildMs(wrap, renderFn, getAllItemsFn, onChange){
           if(all.length>0&&all.every(v=>sel.has(v))) sel.clear();
         }
       }
-      renderList(srch.value); if(wrap._onChange) wrap._onChange();
+      wrap._render(srch.value); if(wrap._onChange) wrap._onChange();
     });
     list.addEventListener('click',e=>{
       const only=e.target.closest('.ms-only');
       if(!only) return;
       e.preventDefault(); e.stopPropagation();
-      sel.clear(); sel.add(only.dataset.v);
-      renderList(srch.value); if(wrap._onChange) wrap._onChange();
+      const sel=wrap._sel; sel.clear(); sel.add(only.dataset.v);
+      wrap._render(srch.value); if(wrap._onChange) wrap._onChange();
     });
     srch.addEventListener('input',()=>renderList(srch.value));
     srch.addEventListener('click',e=>e.stopPropagation());
@@ -1351,6 +1353,6 @@ document.addEventListener('DOMContentLoaded', () => {
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609110215"></script>
 </body>
 </html>

@@ -1,0 +1,30 @@
+name: KM Mix Check (Δ km × impacto por chave)
+
+# Reproduz a conta do Painel KM por chave projeto|unidade numa janela de
+# vigências e mostra por que o Δ km total e o impacto total podem ter sinais
+# diferentes (R$/km diferente por chave). Só leitura.
+on:
+  workflow_dispatch:
+    inputs:
+      de:
+        description: 'Vigência inicial (MM/AAAA)'
+        required: false
+        default: '01/2026'
+      ate:
+        description: 'Vigência final (MM/AAAA)'
+        required: false
+        default: '12/2026'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          DE: ${{ github.event.inputs.de }}
+          ATE: ${{ github.event.inputs.ate }}
+        run: node scripts/km-mix-check.mjs
