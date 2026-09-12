@@ -15,7 +15,7 @@
    `activate` apaga as antigas. Sem isso o celular serviria a versão velha para
    sempre — é o erro clássico de PWA.
    ============================================================ */
-const CACHE = 'conducao-v8';
+const CACHE = 'conducao-v9';
 const ESSENCIAIS = ['./', './index.html', './manifest.json',
                     './img/icone-192.png', './img/icone-512.png'];
 
@@ -31,8 +31,16 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  // "Rede primeiro" SÓ é de verdade com cache:'no-store'. Sem isso o fetch passa
+  // pelo cache HTTP do navegador, e o GitHub Pages manda max-age nas páginas —
+  // o motorista podia ficar minutos vendo a versão velha DEPOIS do deploy, com
+  // o service worker achando que tinha ido à rede.
+  const u = new URL(e.request.url);
+  const doc = e.request.mode === 'navigate' || u.pathname.endsWith('/') || /\.(html|json)$/.test(u.pathname);
+  const pedido = (doc && e.request.url.startsWith(self.location.origin))
+    ? new Request(e.request.url, { cache: 'no-store', credentials: 'same-origin' }) : e.request;
   e.respondWith(
-    fetch(e.request)
+    fetch(pedido)
       .then(r => {
         // só guarda resposta boa e do próprio app; API de terceiro não entra
         if (r.ok && e.request.url.startsWith(self.location.origin)) {

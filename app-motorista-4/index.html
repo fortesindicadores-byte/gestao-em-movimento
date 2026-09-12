@@ -580,7 +580,21 @@ $('btTema').addEventListener('click', function(){ aplicaTema(document.body.class
 
 /* ── PWA: registra o service worker e oferece "Adicionar à tela de início" ── */
 var INSTALL = null;
-if ('serviceWorker' in navigator) window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(e){ console.warn('sw:', e.message); }); });
+if ('serviceWorker' in navigator) window.addEventListener('load', function(){
+  // Blindagem contra versão velha (11/09/2026). Três coisas, e as três importam:
+  // updateViaCache:'none' — sem isso o PRÓPRIO sw.js passa pelo cache HTTP e a
+  // versão nova pode nem ser descoberta; reg.update() ao abrir e ao voltar para
+  // a tela; e recarregar sozinho quando o SW novo assume, para o motorista não
+  // precisar fechar o app duas vezes para ver a correção.
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function(reg){
+    reg.update();
+    document.addEventListener('visibilitychange', function(){ if (!document.hidden) reg.update(); });
+  }).catch(function(e){ console.warn('sw:', e.message); });
+  var recarregou = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if (recarregou) return; recarregou = true; location.reload();
+  });
+});
 /* O botão aparece em TODAS as telas (login, seleção do admin e menu do app) e
    some quando o app já está instalado (aberto em standalone). No Android/Chrome
    e no Chrome de computador o navegador entrega o prompt (beforeinstallprompt);
