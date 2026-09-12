@@ -88,8 +88,13 @@ body.claro .meta .pe.pod{border-top-color:rgba(20,24,32,.10);}
 .li .tx{flex:1;min-width:0;}
 .li .tx b{display:block;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .li .tx span{display:block;font-size:10.5px;color:var(--txt2);font-weight:400;margin-top:2px;}
-.li .vl{flex:0 0 auto;font-size:11.5px;font-weight:600;text-align:right;}
-.li .vl small{display:block;font-size:10px;color:var(--txt3);font-weight:400;margin-top:2px;}
+/* A coluna da direita PODE encolher e tem teto de largura: era flex:0 0 auto,
+   então um recado comprido embaixo do valor ("contando todo mundo · você ainda
+   não disputa") virava a largura da coluna, e o nome da linha ficava em "Prê…"
+   com o subtítulo quebrado em quatro linhas. O nome vem primeiro. */
+.li .vl{flex:0 1 auto;min-width:0;max-width:44%;font-size:11.5px;font-weight:600;text-align:right;}
+.li .vl small{display:block;font-size:10px;color:var(--txt3);font-weight:400;margin-top:2px;
+  white-space:normal;line-height:1.35;}
 .pos{color:var(--verde);} .neg{color:var(--vermelho);}
 .li.eu .ic{border-color:var(--acc);color:var(--acc);}
 
