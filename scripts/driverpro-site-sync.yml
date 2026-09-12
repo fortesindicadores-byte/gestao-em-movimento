@@ -4,7 +4,7 @@
 # Por quê: o GitHub Pages aceita UM domínio por repositório. O portal fica no
 # github.io; o app ganha um subdomínio próprio (driverpro.<domínio>) servido do
 # repositório `driverpro`, que espelha a pasta app-motorista-4/ deste portal a
-# cada 15 min. A fonte continua sendo este repositório — ninguém edita lá.
+# cada 5 min. A fonte continua sendo este repositório — ninguém edita lá.
 #
 # Passos (uma vez):
 #   1. Criar o repositório público `driverpro` na conta fortesindicadores-byte.
@@ -19,7 +19,7 @@ name: DriverPro Site Sync
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 permissions:
