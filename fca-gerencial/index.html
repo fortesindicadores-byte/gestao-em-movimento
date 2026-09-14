@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609141800">
 <title>FCA Gerencial</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -78,6 +78,10 @@ body{background:radial-gradient(ellipse at 10% 25%,rgba(249,115,22,.06) 0%,trans
 .tbl-section{background:rgba(20,27,38,.55);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:14px 18px 16px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 2px 12px rgba(0,0,0,.25);}
 .tbl-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 .tbl-head h2{font-size:15px;font-weight:800;}
+.tbl-sub{font-size:10px;color:var(--text2);margin:-6px 0 14px;}
+.tbl-sub b{color:var(--text);font-weight:800;}
+#sec-pre{margin-top:16px;}
+td.vazio{color:var(--text3);}
 .dim-toggle{display:flex;border:1px solid #2a3a50;border-radius:4px;overflow:hidden;}
 .dim-btn{background:transparent;color:var(--text2);border:none;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;padding:5px 14px;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;}
 .dim-btn.active{background:var(--orange);color:#000;}
@@ -151,6 +155,10 @@ body.light-mode table.dre tbody td{border-bottom-color:rgba(0,0,0,.035);}
   table.dre tbody td:nth-child(2){display:none;}
   .tbl-expanded table.dre thead th:nth-child(2),
   .tbl-expanded table.dre tbody td:nth-child(2){display:table-cell;}
+  /* o Preenchimento tem 4 colunas e a 2ª é RPM — nada a esconder aqui */
+  #tbl-pre table.dre thead th:nth-child(2),
+  #tbl-pre table.dre tbody td:nth-child(2){display:table-cell;}
+  #tbl-pre{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .tbl-expanded table.dre{font-size:11px;}
   .tbl-expanded table.dre thead th{font-size:9px;padding:6px 4px;}
   .tbl-expanded table.dre tbody td{padding:7px 4px;}
@@ -222,6 +230,12 @@ body.light-mode table.dre tbody td{border-bottom-color:rgba(0,0,0,.035);}
     </div>
     <button class="tbl-mob-toggle" id="tbl-mob-toggle" onclick="toggleTblCols()">+ Ver detalhes</button>
     <div id="tbl"><div class="loading">Carregando…</div></div>
+  </div>
+
+  <div class="tbl-section" id="sec-pre">
+    <div class="tbl-head"><h2>Preenchimento do FCA</h2></div>
+    <div class="tbl-sub" id="pre-sub">Cada FCA vale 100 quando tem causa <b>e</b> ação preenchidas; senão, 0.</div>
+    <div id="tbl-pre"><div class="loading">Carregando…</div></div>
   </div>
 </main>
 
@@ -341,6 +355,7 @@ function atualizar(){
   temporal('ch-prazo',{get c(){return chPrazo;},set c(v){chPrazo=v;}},m=>m.pPrazo);
   temporal('ch-concl',{get c(){return chConcl;},set c(v){chConcl=v;}},m=>m.pConcl);
   renderTable(f);
+  renderPreench();
 }
 function renderTable(rows){
   const keys=[...new Set(rows.map(o=>o[tableDim]).filter(Boolean))];
@@ -353,6 +368,51 @@ function renderTable(rows){
   document.getElementById('tbl').innerHTML=items.length?html:'<div class="loading">Sem dados</div>';
 }
 function sortBy(c){tblSort=c;renderTable(ALL.filter(o=>passa(o)));}
+
+// ── Preenchimento: 0 ou 100 por FCA ────────────────────────────────────────
+// A régua é binária, como o Renan pediu: o FCA só conta quando a unidade
+// escreveu a CAUSA e a AÇÃO. Um dos dois em branco = 0. A aderência da unidade
+// é a média desses 0/100 — ou seja, o % dos FCAs dela que estão preenchidos.
+function preOK(o){return !!(String(o.causa||'').trim()&&String(o.acao||'').trim());}
+function preStat(rows){const n=rows.length;if(!n)return{n:0,ok:0,p:null};const ok=rows.filter(preOK).length;return{n,ok,p:ok/n*100};}
+let preSort='ader',preAsc=true;   // pior primeiro, como no resto do portal
+function sortPre(c){if(preSort===c)preAsc=!preAsc;else{preSort=c;preAsc=(c==='k');}renderPreench();}
+function renderPreench(){
+  const el=document.getElementById('tbl-pre');if(!el)return;
+  // O filtro de Origem é IGNORADO aqui de propósito: a tabela já separa RPM e
+  // Custos em colunas, e respeitá-lo esvaziaria uma delas sem explicação.
+  const rows=ALL.filter(o=>passa(o,'origem'));
+  const itens=[...new Set(rows.map(o=>o.unidade).filter(Boolean))].map(k=>{
+    const r=rows.filter(o=>o.unidade===k);
+    return{k,rpm:preStat(r.filter(o=>o.origem==='RPM')),cus:preStat(r.filter(o=>o.origem==='Custos')),ader:preStat(r)};
+  });
+  const nome=(a,b)=>String(a.k).localeCompare(String(b.k),'pt');
+  itens.sort((a,b)=>{
+    if(preSort==='k')return nome(a,b)*(preAsc?1:-1);
+    const av=a[preSort].p,bv=b[preSort].p;
+    // unidade sem FCA daquela origem não tem nota: vai para o fim, nunca como 0
+    if(av==null&&bv==null)return nome(a,b);
+    if(av==null)return 1; if(bv==null)return -1;
+    return (av-bv)*(preAsc?1:-1)||nome(a,b);
+  });
+  const dica=s=>`${s.ok} de ${s.n} ${s.n===1?'FCA':'FCAs'} com causa e ação`;
+  const cel=s=>s.n?`<td style="color:${band(s.p)};font-weight:800" title="${dica(s)}">${pct(s.p)}</td>`
+                  :'<td class="vazio" title="Nenhum FCA desta origem no recorte">—</td>';
+  const chip=s=>s.n?`<td title="${dica(s)}"><span class="pctcell" style="background:${band(s.p)}">${pct(s.p)}</span></td>`
+                   :'<td class="vazio">—</td>';
+  const sub=document.getElementById('pre-sub');
+  if(sub)sub.innerHTML='Cada FCA vale 100 quando tem causa <b>e</b> ação preenchidas; senão, 0.'
+    +(itens.length?` · ${itens.length} ${itens.length===1?'unidade':'unidades'} no recorte`:'');
+  el.innerHTML=itens.length
+    ?`<table class="dre"><thead><tr>
+        <th onclick="sortPre('k')">Unidade</th>
+        <th onclick="sortPre('rpm')">RPM</th>
+        <th onclick="sortPre('cus')">Custos</th>
+        <th onclick="sortPre('ader')">Aderência</th>
+      </tr></thead><tbody>${itens.map(it=>
+        `<tr><td>${it.k}</td>${cel(it.rpm)}${cel(it.cus)}${chip(it.ader)}</tr>`).join('')}</tbody></table>`
+    :'<div class="loading">Sem dados</div>';
+}
 function setDim(d){tableDim=d;document.querySelectorAll('.dim-btn').forEach(b=>b.classList.toggle('active',b.dataset.dim===d));document.getElementById('tbl-title').textContent='Aderência por '+(d==='unidade'?'Unidade':'Projeto');renderTable(ALL.filter(o=>passa(o)));}
 
 // mobile-only: expandir colunas secundárias da tabela (aditivo, não afeta desktop)
@@ -372,7 +432,7 @@ async function carregar(){
     const {data,error}=await sb.from('fca').select('*');
     if(error)throw error;
     const normU=u=>String(u||'').trim().replace(/\s*\([^)]*\)\s*$/,'').trim();
-    ALL=(data||[]).filter(r=>!isDriverCombust(r.fato)).map(r=>{const vigD=vigToDate(r.vigencia),prazoD=dateOnly(r.prazo);const o={origem:String(r.origem||'').trim(),vigD,vig:r.vigencia||vigLbl(vigD),unidade:normU(r.unidade),projeto:projLabel(r.projeto),prazoD,status:String(r.status||'').trim()};o.concl=categConcl(o.status);o.sprazo=statusPrazo(o);return o;});
+    ALL=(data||[]).filter(r=>!isDriverCombust(r.fato)).map(r=>{const vigD=vigToDate(r.vigencia),prazoD=dateOnly(r.prazo);const o={origem:String(r.origem||'').trim(),vigD,vig:r.vigencia||vigLbl(vigD),unidade:normU(r.unidade),projeto:projLabel(r.projeto),prazoD,status:String(r.status||'').trim(),causa:r.causa,acao:r.acao};o.concl=categConcl(o.status);o.sprazo=statusPrazo(o);return o;});
     // 12 meses a partir do 1º mês com dados (preenche conforme entram dados)
     const vm=new Map();ALL.forEach(o=>{if(o.vigD)vm.set(vigKeyN(o.vigD),o.vigD);});
     PRESENT=[...vm.values()].sort((a,b)=>vigKeyN(a)-vigKeyN(b));
@@ -405,6 +465,6 @@ carregar();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609141800"></script>
 </body>
 </html>
