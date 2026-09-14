@@ -49,6 +49,27 @@ insert into public.ce_app_regras (id) values (1) on conflict (id) do nothing;
 comment on table public.ce_app_regras is
   'Parâmetros do programa lidos pelo app. Ajustar aqui, sem mexer em código.';
 
+-- ---------- 2b) RAMPA DA CARTEIRA (Renan, 14/09/2026) ----------------------
+-- A carteira era saldo × nota/100: uma rampa que começa no ZERO, então cada
+-- ponto de nota valia R$ 2 e a diferença entre dirigir bem e dirigir mal quase
+-- não aparecia no bolso — nota 55 levava R$ 135 dos R$ 200 (Renan: "deveriam
+-- ter mais amplitude"). Agora a rampa começa no PISO: abaixo dele não paga, e
+-- os R$ 200 se espalham pelos pontos que sobram. Piso 60 = R$ 5 por ponto.
+-- É um número só, no banco, para mudar a régua sem tocar em código.
+alter table public.ce_app_regras
+  add column if not exists piso_nota numeric not null default 60;
+comment on column public.ce_app_regras.piso_nota is
+  'Nota a partir da qual a carteira começa a pagar. 0 = rampa do zero (regra antiga).';
+
+create or replace function public.ce_app_carteira(p_nota numeric, p_saldo numeric, p_piso numeric)
+returns numeric language sql immutable as $$
+  select round(least(coalesce(p_saldo,0),
+                     greatest(0, coalesce(p_nota,0) - coalesce(p_piso,0))
+                     * coalesce(p_saldo,0) / nullif(100 - coalesce(p_piso,0), 0)), 2)
+$$;
+comment on function public.ce_app_carteira(numeric,numeric,numeric) is
+  'Carteira do mês: rampa linear do piso até 100, limitada ao saldo.';
+
 -- ---------- 3) acesso e sessão ---------------------------------------------
 create table if not exists public.ce_app_acesso (
   chave          text primary key references public.ce_motoristas (chave) on delete cascade,
@@ -138,8 +159,9 @@ returns void language sql security definer set search_path = public, extensions 
 -- ---------- 7) tudo que o app mostra ---------------------------------------
 -- Conta igual ao modo `carteira` do robô (scripts/conducao-robot.mjs):
 --   nota = média ponderada de rpm/idle/acel (peso dos ausentes redistribuído)
---   saldo = saldo_inicial × nota/100
---   perda do pilar = saldo_inicial × peso_i/Σpesos × (1 − nota_i/100)
+--   saldo = rampa do piso até 100 (ce_app_carteira): (nota − piso)/(100 − piso) × saldo
+--   perda do pilar = peso_i/Σpesos × (100 − nota_i) × saldo/(100 − piso), rateada
+--                    proporcionalmente quando a soma passa do saldo (nota ≤ piso)
 -- Elegível = bate km_min, viagens_min, dias_min, score_min e está no top_n
 -- da unidade (ranking pela pontuação gravada em ce_scores_mensais).
 create or replace function public.ce_app_dados(p_token uuid)
@@ -184,7 +206,7 @@ begin
       'competencia', to_char(competencia, 'YYYY-MM'),
       'nota', round(pontuacao::numeric, 1), 'km', round(coalesce(km,0)::numeric), 'dias', dias, 'viagens', viagens,
       'posicao', pos, 'elegivel', elegivel,
-      'carteira', case when elegivel then round(R.saldo_inicial * pontuacao / 100, 2) else 0 end,
+      'carteira', case when elegivel then ce_app_carteira(pontuacao, R.saldo_inicial, R.piso_nota) else 0 end,
       'podio',    case when elegivel and pos <= coalesce(array_length(R.podio,1),0) then R.podio[pos] else 0 end,
       'rpm', round(rpm_pontos::numeric,1), 'idle', round(idle_pontos::numeric,1), 'acel', round(acel_pontos::numeric,1),
       'vel', round(vel_pontos::numeric,1),
@@ -205,6 +227,7 @@ begin
     'vigente', to_char(v_vig, 'YYYY-MM'),
     'regras', jsonb_build_object('saldo_inicial', R.saldo_inicial, 'km_min', R.km_min, 'viagens_min', R.viagens_min,
        'dias_min', R.dias_min, 'score_min', R.score_min, 'top_n', R.top_n, 'podio', to_jsonb(R.podio),
+       'piso_nota', R.piso_nota,
        'pesos', jsonb_build_object('rpm', R.peso_rpm, 'idle', R.peso_idle, 'acel', R.peso_acel)),
     'posicao', v_pos,
     'ranking', v_rank,
@@ -344,7 +367,7 @@ begin
       'competencia', to_char(competencia, 'YYYY-MM'),
       'nota', round(pontuacao::numeric, 1), 'km', round(coalesce(km,0)::numeric), 'dias', dias, 'viagens', viagens,
       'posicao', pos, 'elegivel', elegivel,
-      'carteira', case when elegivel then round(R.saldo_inicial * pontuacao / 100, 2) else 0 end,
+      'carteira', case when elegivel then ce_app_carteira(pontuacao, R.saldo_inicial, R.piso_nota) else 0 end,
       'podio',    case when elegivel and pos <= coalesce(array_length(R.podio,1),0) then R.podio[pos] else 0 end,
       'rpm', round(rpm_pontos::numeric,1), 'idle', round(idle_pontos::numeric,1), 'acel', round(acel_pontos::numeric,1),
       'vel', round(vel_pontos::numeric,1),
@@ -363,6 +386,7 @@ begin
     'vigente', to_char(v_vig, 'YYYY-MM'),
     'regras', jsonb_build_object('saldo_inicial', R.saldo_inicial, 'km_min', R.km_min, 'viagens_min', R.viagens_min,
        'dias_min', R.dias_min, 'score_min', R.score_min, 'top_n', R.top_n, 'podio', to_jsonb(R.podio),
+       'piso_nota', R.piso_nota,
        'pesos', jsonb_build_object('rpm', R.peso_rpm, 'idle', R.peso_idle, 'acel', R.peso_acel)),
     'posicao', v_pos,
     'ranking', v_rank,
@@ -659,7 +683,8 @@ create or replace function public.ce_app_criterios()
 returns jsonb language sql stable security definer set search_path = public, extensions as $$
   select jsonb_build_object(
     'regras', (select jsonb_build_object('saldo_inicial', saldo_inicial, 'km_min', km_min, 'top_n', top_n,
-                 'top_pct', top_pct, 'top_min', top_min, 'podio', to_jsonb(podio), 'unidades', to_jsonb(unidades))
+                 'top_pct', top_pct, 'top_min', top_min, 'podio', to_jsonb(podio), 'unidades', to_jsonb(unidades),
+                 'piso_nota', piso_nota)
                from ce_app_regras where id = 1),
     'unidades', coalesce((select jsonb_agg(jsonb_build_object('unidade', unidade, 'grupo', grupo, 'top_n', top_n,
                  'km_min', km_min, 'qlp', qlp) order by unidade) from ce_app_unidade_cfg), '[]'::jsonb))
@@ -735,7 +760,7 @@ begin
         'posicao', pos, 'posicao_unidade', pos_uni,
         'posicao_geral', pos_ger, 'posicao_unidade_geral', pos_uni_ger, 'disputa', disputa,
         'elegivel', elegivel,
-        'carteira', case when elegivel then round(R.saldo_inicial * pontuacao / 100, 2) else 0 end,
+        'carteira', case when elegivel then ce_app_carteira(pontuacao, R.saldo_inicial, R.piso_nota) else 0 end,
         'podio',    case when elegivel and pos <= coalesce(array_length(R.podio,1),0) then R.podio[pos] else 0 end,
         'rpm', round(rpm_pontos::numeric,1), 'idle', round(idle_pontos::numeric,1), 'acel', round(acel_pontos::numeric,1),
         'vel', round(vel_pontos::numeric,1),
@@ -754,6 +779,7 @@ begin
     'vigente', to_char(v_vig, 'YYYY-MM'),
     'regras', jsonb_build_object('saldo_inicial', R.saldo_inicial, 'km_min', v_km, 'viagens_min', R.viagens_min,
        'dias_min', R.dias_min, 'score_min', R.score_min, 'top_n', v_top, 'podio', to_jsonb(R.podio),
+       'piso_nota', R.piso_nota,
        'pesos', jsonb_build_object('rpm', R.peso_rpm, 'idle', R.peso_idle, 'acel', R.peso_acel)),
     'posicao', v_pos,
     'posicao_geral', v_pos_ger,
