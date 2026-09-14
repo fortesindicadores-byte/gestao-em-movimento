@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DriverPro">
-<meta name="build" content="202609101500">
+<meta name="build" content="202609141400">
 <title>DriverPro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -421,11 +421,33 @@ function linha(ico, nome, sub, valor, cls, small, extra){
 }
 function fmtVal(v){ var t = (+v || 0).toFixed(2).replace('.', ','); return '<small>R$</small>' + t.replace(/\B(?=(\d{3})+(?!\d),)/g, '.'); }
 function mesDe(comp){ var y = +comp.slice(0,4), mo = +comp.slice(5,7) - 1; return { ano:y, mes:mo, nome:MESES_N[mo], rot:MESES_N[mo].slice(0,3) + '/' + y }; }
-/* perdas por pilar, na mesma conta do robô: saldo × peso_i/Σ × (1 − nota_i/100) */
+/* A CARTEIRA É UMA RAMPA QUE COMEÇA NO PISO (Renan, 14/09/2026) — antes começava
+   no zero, e cada ponto de nota valia R$ 2: nota 55 levava R$ 135 dos R$ 200 e
+   a diferença entre dirigir bem e dirigir mal quase não aparecia. Com piso 60,
+   cada ponto vale R$ 5 e abaixo de 60 não paga. O piso vem do banco
+   (ce_app_regras.piso_nota), não é constante aqui. */
+function pisoDe(R){ var v = +(R && R.piso_nota); return isFinite(v) && v > 0 && v < 100 ? v : 0; }
+function carteiraDe(nota, R){
+  var piso = pisoDe(R), n = Math.min(100, Math.max(0, +nota || 0));
+  return Math.min(R.saldo_inicial, Math.max(0, n - piso) * R.saldo_inicial / (100 - piso));
+}
+/* Perdas por pilar. Com a rampa começando no piso, cada ponto que falta custa
+   saldo/(100−piso), não saldo/100 — e a soma pode passar do saldo quando a nota
+   fica abaixo do piso (nota 50 com piso 60 "perderia" R$ 250 de R$ 200). Nesse
+   caso as perdas são rateadas proporcionalmente, para os três cards somarem
+   exatamente o que saiu da carteira e nunca mais que ela. */
 function perdas(mes, R){
-  var P = R.pesos, den = 0, out = {};
+  var P = R.pesos, den = 0, out = {}, soma = 0, piso = pisoDe(R);
+  var porPonto = R.saldo_inicial / (100 - piso);
   PILARES.forEach(function(p){ if (mes && mes[p.k] != null) den += P[p.k]; });
-  PILARES.forEach(function(p){ out[p.k] = (mes && mes[p.k] != null && den) ? R.saldo_inicial * (P[p.k] / den) * (1 - Math.min(100, Math.max(0, mes[p.k])) / 100) : null; });
+  PILARES.forEach(function(p){
+    if (!(mes && mes[p.k] != null && den)) { out[p.k] = null; return; }
+    var n = Math.min(100, Math.max(0, mes[p.k]));
+    out[p.k] = (P[p.k] / den) * (100 - n) * porPonto;
+    soma += out[p.k];
+  });
+  var teto = R.saldo_inicial;
+  if (soma > teto && soma > 0) PILARES.forEach(function(p){ if (out[p.k] != null) out[p.k] *= teto / soma; });
   return out;
 }
 
@@ -437,7 +459,7 @@ function pinta(){
   // O PÓDIO é prêmio por cima e entra só no número grande (Renan, 10/09/2026:
   // "o total precisa aparecer em cima, mas deve ter a meta da carteira e
   // embaixo o +300"). Somar o pódio na barra a estouraria: 455 de 200 = 227%.
-  var carteira = atual ? R.saldo_inicial * nota / 100 : R.saldo_inicial;
+  var carteira = atual ? carteiraDe(nota, R) : R.saldo_inicial;
   var premio = atual && eleg ? (+atual.podio || 0) : 0;
   var saldo = carteira + premio;
   var pct = Math.round(carteira / R.saldo_inicial * 100);

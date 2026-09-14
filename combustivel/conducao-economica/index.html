@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609141400">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -626,7 +626,7 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
 
       <!-- ══ 3 · CARTEIRA EM R$ (Renan, 07/09/2026: "uma visão que dê para
            olhar o ranking em grana dos motoristas") — a MESMA conta do app:
-           carteira = saldo × nota ÷ 100 para quem é elegível na regra da
+           carteira = rampa do piso até 100 × saldo, para quem é elegível na regra da
            própria unidade (km mínimo + cota, ce_app_criterios), pódio para
            os 3 primeiros do GRUPO. Várias vigências somam. ══ -->
       <section class="vw" id="vw-carteira">
@@ -1277,6 +1277,7 @@ addEventListener('resize', ()=>requestAnimationFrame(ajustaAlturaLinhas));
 const brl = v => 'R$ ' + (+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 function carteiraDe(data){
   const saldo = +(CRIT.regras.saldo_inicial ?? 200), podio = CRIT.regras.podio || [300,150,100];
+  const _p = +CRIT.regras.piso_nota, PISO = (isFinite(_p) && _p > 0 && _p < 100) ? _p : 0;
   const porVig = {};
   data.forEach(r=>{ (porVig[r.vig] = porVig[r.vig] || []).push(r); });
   const acc = {};
@@ -1293,7 +1294,8 @@ function carteiraDe(data){
     Object.values(porGrp).forEach(l=>l.sort((x,y)=>y.pont-x.pont || y.km-x.km).forEach((a,i)=>a.posGrp=i+1));
     lista.forEach(a=>{
       const eleg = a.km >= a.crit.km_min && (a.crit.top_n <= 0 || a.posUni <= a.crit.top_n);
-      const cart = eleg ? saldo * a.pont / 100 : 0;
+      // mesma rampa do app: começa no piso (ce_app_regras.piso_nota), não no zero
+      const cart = eleg ? Math.min(saldo, Math.max(0, Math.min(100, a.pont) - PISO) * saldo / (100 - PISO)) : 0;
       const pod  = eleg && a.posGrp <= podio.length ? +podio[a.posGrp-1] : 0;
       const t = acc[a.unit] || (acc[a.unit] = { unit:a.unit, uni:a.uni, km:0, pts:[], meses:0, eleg:0, cart:0, pod:0 });
       t.km += a.km; t.pts.push(a.pont); t.meses++; if(eleg) t.eleg++; t.cart += cart; t.pod += pod;
@@ -1309,7 +1311,7 @@ function renderCarteira(data){
   const box=$('cart-kpis');
   if(box) box.innerHTML = [
     ['Custo do programa', brl(tot.cart+tot.pod), `${nv} mês(es) no recorte`],
-    ['Carteiras pagas', brl(tot.cart), 'saldo × nota ÷ 100 dos elegíveis'],
+    ['Carteiras pagas', brl(tot.cart), 'rampa a partir da nota '+PISO+', dos elegíveis'],
     ['Pódios', brl(tot.pod), (CRIT.regras.podio||[300,150,100]).map(v=>'R$ '+v).join(' · ')],
     ['Motoristas elegíveis', String(tot.eleg), `de ${rows.length} com nota (motorista-mês)`],
     ['Maior ganho', rows.length ? brl(rows[0].total) : '—', rows.length ? rows[0].unit : ''],
@@ -1743,6 +1745,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202609092400"></script>
+<script src="../../assets/build-check.js?v=202609141400"></script>
 </body>
 </html>
