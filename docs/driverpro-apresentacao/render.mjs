@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 const [,, inp, out] = process.argv;
-const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+const b = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium' });
 const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
 p.on('pageerror', e => console.log('PAGEERROR', e.message));
 await p.goto('file://' + inp, { waitUntil: 'networkidle' });

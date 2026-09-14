@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DriverPro">
-<meta name="build" content="202609141400">
+<meta name="build" content="202609141530">
 <title>DriverPro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -78,6 +78,13 @@ svg{display:block;}
 .meta .pe.pod{margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,.10);}
 body.claro .meta .pe.pod{border-top-color:rgba(20,24,32,.10);}
 .meta .pe.pod b{color:var(--verde);font-weight:600;}
+/* A RÉGUA FICA NA CARA DO MOTORISTA (Renan, 14/09/2026: "o fato de cada ponto
+   valer R$ 5 deve estar claro para o motorista"). Sem isso ele vê o dinheiro
+   cair e não sabe converter esforço em real. */
+.meta .regua{margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,.10);
+  font-size:11px;color:var(--txt2);line-height:1.45;}
+.meta .regua b{display:inline;font-size:11px;font-weight:700;color:var(--txt);}
+body.claro .meta .regua{border-top-color:rgba(20,24,32,.10);}
 
 /* ── lista: cards separados com ícone quadrado ── */
 .sec{font-size:10.5px;color:var(--txt2);font-weight:400;margin:4px 0 10px;display:flex;}
@@ -271,6 +278,7 @@ body.claro .nav button.on{color:#fff;}
         <div class="barra"><i id="barraSaldo" style="width:90%"></i></div>
         <div class="pe"><span id="metaTxt"><b>R$ 180,80</b> / R$ 200,00</span><span id="metaPct">90%</span></div>
         <div class="pe pod" id="metaPodio" style="display:none"></div>
+        <div class="regua" id="metaRegua"></div>
       </div>
 
       <div class="sec">Onde o dinheiro foi<a onclick="irPara('nota')">Ver a nota</a></div>
@@ -313,7 +321,7 @@ body.claro .nav button.on{color:#fff;}
       <div class="sec" style="margin-top:20px">Como funciona o&nbsp;<span id="nomeApp2"></span></div>
       <div>
         <div class="passo"><div class="n">1</div><div class="t"><b id="rg1">Todo mês você ganha R$ 200</b><span>O dinheiro já entra na sua conta no dia 1º. Ele é seu — o que você faz durante o mês decide quanto fica.</span></div></div>
-        <div class="passo"><div class="n">2</div><div class="t"><b>Dirigindo mal, o saldo cai</b><span>Cada coisa que a gente mede tem um peso. Quanto pior o resultado, mais o saldo desce. Você vê a queda todo dia, aqui.</span></div></div>
+        <div class="passo"><div class="n">2</div><div class="t"><b id="rg2">Cada ponto da sua nota vale dinheiro</b><span id="rg2s">Cada coisa que a gente mede tem um peso. Quanto pior o resultado, mais o saldo desce. Você vê a queda todo dia, aqui.</span></div></div>
         <div class="passo"><div class="n">3</div><div class="t"><b>No fim do mês você recebe o que sobrou</b><span id="rg3">Se rodou 1.000 km e ficou entre os 15. Os três melhores da unidade ainda levam R$ 300, R$ 150 e R$ 100.</span></div></div>
       </div>
       <div class="sec">Como a nota é feita</div>
@@ -475,6 +483,14 @@ function pinta(){
   $('barraSaldo').style.width = pct + '%';
   $('metaTxt').innerHTML = '<b>' + brl(carteira) + '</b> / ' + brl(R.saldo_inicial);
   $('metaPct').textContent = pct + '%';
+  // a régua em reais, dita em uma linha: quanto vale um ponto e de onde começa
+  var rg = $('metaRegua');
+  if (rg) {
+    var piso = pisoDe(R), porPonto = R.saldo_inicial / (100 - piso);
+    rg.innerHTML = 'Cada ponto da sua nota vale <b>' + brl(porPonto) + '</b>.'
+      + (piso ? ' A carteira começa a contar a partir da nota <b>' + Math.round(piso) + '</b> — abaixo disso ela fica zerada.'
+              : '');
+  }
   var mp = $('metaPodio');
   if (premio) {
     mp.style.display = '';
@@ -544,6 +560,16 @@ function pinta(){
       (+r.pontuacao).toFixed(1).replace('.', ','), '', 'nota', r.eu ? ' eu' : '');
   }).join('') || '<div class="li"><div class="tx"><span>Ainda sem ranking neste mês.</span></div></div>';
   $('rg1').textContent = 'Todo mês você ganha ' + brl(R.saldo_inicial);
+  // a régua dita em reais, não em porcentagem — é assim que o motorista pensa
+  (function(){
+    var piso = pisoDe(R), porPonto = R.saldo_inicial / (100 - piso);
+    var e2 = $('rg2'), s2 = $('rg2s');
+    if (e2) e2.textContent = 'Cada ponto da sua nota vale ' + brl(porPonto);
+    if (s2) s2.textContent = 'Um ponto a menos na nota é ' + brl(porPonto) + ' a menos na carteira.'
+      + (piso ? ' A conta começa na nota ' + Math.round(piso) + ': abaixo disso a carteira fica zerada, e da nota '
+                + Math.round(piso) + ' até 100 você vai juntando até os ' + brl(R.saldo_inicial) + '.' : '')
+      + ' Você vê a queda todo dia, aqui.';
+  })();
   var cond = [];
   if (R.km_min > 0) cond.push('rodou ' + R.km_min.toLocaleString('pt-BR') + ' km');
   if (R.viagens_min > 0) cond.push('fez ' + R.viagens_min + ' viagens');
