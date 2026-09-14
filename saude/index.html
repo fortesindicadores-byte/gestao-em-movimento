@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609110320">
+<meta name="build" content="202609141030">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Saúde do Ecossistema · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -499,9 +499,19 @@ const br=n=>(+n||0).toLocaleString('pt-BR');
 const fmtPct=v=>v==null?'—':(v.toFixed(1).replace('.',',')+'%');
 const d2=n=>String(n).padStart(2,'0');
 function fmtDT(d){ d=new Date(d); return isNaN(d)?'—':`${d2(d.getDate())}/${d2(d.getMonth()+1)} ${d2(d.getHours())}:${d2(d.getMinutes())}`; }
-function horas(iso){ if(!iso) return null; const h=(Date.now()-new Date(iso))/3600e3; return isFinite(h)?h:null; }
-function idadeTxt(iso){
-  const h=horas(iso); if(h==null) return '—';
+/* A IDADE É MEDIDA CONTRA A COLETA, NÃO CONTRA O RELÓGIO (Renan, 14/09/2026).
+   Tudo nesta tela é a FOTO que o robô tirou; medir contra "agora" somava à idade
+   de cada base o tempo entre a coleta e o momento em que alguém abriu a página.
+   Numa coleta das 02:24 aberta às 08:44, toda base ganhava seis horas que não
+   existiam — e com a régua de 6h do Sheets isso pintou 66 de 100 como atrasadas
+   sem nenhuma estar. O relógio só volta a valer para a idade da PRÓPRIA coleta. */
+let AGORA_FOTO=null;                       // preenchido quando a coleta chega
+const relogioDaFoto=()=>AGORA_FOTO||Date.now();
+function horas(iso,contraORelogio){ if(!iso) return null;
+  const base=contraORelogio?Date.now():relogioDaFoto();
+  const h=(base-new Date(iso))/3600e3; return isFinite(h)?h:null; }
+function idadeTxt(iso,contraORelogio){
+  const h=horas(iso,contraORelogio); if(h==null) return '—';
   if(h<1) return Math.max(1,Math.round(h*60))+' min';
   if(h<48) return Math.round(h)+' h';
   return Math.round(h/24)+' d';
@@ -626,17 +636,19 @@ async function carregar(){
     sb.from('saude_coleta').select('*').maybeSingle(),
   ]);
   WF=wf; DIA=dia; BASE=base; PAINEL=painel; COLETA=(col&&col.data)||null;
+  // a partir daqui toda idade é contada a partir do instante da coleta
+  AGORA_FOTO=COLETA&&COLETA.coletado_em?+new Date(COLETA.coletado_em):null;
 }
 
 /* ── avisos do topo ── */
 function renderAviso(){
   const slot=document.getElementById('aviso-slot'); if(!slot) return;
-  const h=COLETA?horas(COLETA.coletado_em):null;
+  const h=COLETA?horas(COLETA.coletado_em,true):null;
   let html='';
   if(!WF.length){
     html=`<div class="aviso err"><b>Sem coleta ainda.</b> Rode o workflow <code>Saude Robot</code> no Actions (use <code>dias = 30</code> na primeira vez) para preencher as tabelas.</div>`;
   }else if(h!=null&&h>12){
-    html=`<div class="aviso"><b>A coleta está com ${idadeTxt(COLETA.coletado_em)}.</b> O robô roda 4× por dia; se ficou para trás, o próprio <code>Saude Robot</code> pode ter falhado.</div>`;
+    html=`<div class="aviso"><b>A coleta está com ${idadeTxt(COLETA.coletado_em,true)}.</b> O robô roda 4× por dia; se ficou para trás, o próprio <code>Saude Robot</code> pode ter falhado.</div>`;
   }
   slot.innerHTML=html;
 }
@@ -796,9 +808,9 @@ function renderBases(){
       <td class="nome corte" title="${esc(b.chave)}">${esc(b.rotulo||b.chave)}</td>
       <td class="corte">${esc(b.grupo||'—')}</td>
       <td class="num mono">${b.linhas==null?'—':br(b.linhas)}</td>
-      <td class="mono">${b.atualizado_em?fmtDT(b.atualizado_em):'—'}</td>
+      <td class="mono">${b.atualizado_em?fmtDT(b.atualizado_em):'—'}${b.erro?'<span class="lin2">tentativa, não carga</span>':''}</td>
       <td class="num mono">${idadeTxt(b.atualizado_em)}</td>
-      <td><span class="dot ${e.c}"></span>${esc(e.t)}${b.erro?`<span class="lin2">${esc(String(b.erro).slice(0,70))}</span>`:''}</td>
+      <td><span class="dot ${e.c}"></span>${esc(e.t)}${b.erro?`<span class="lin2">registrado ${b.atualizado_em?fmtDT(b.atualizado_em):'—'} · ${esc(String(b.erro).slice(0,70))}</span>`:''}</td>
       <td class="corte mut">${esc(b.wf||'—')}</td>
     </tr>`;
   }).join('');
@@ -967,6 +979,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609110320"></script>
+<script src="../assets/build-check.js?v=202609141030"></script>
 </body>
 </html>
