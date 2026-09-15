@@ -83,7 +83,10 @@ console.log('\n── 5. aderência por placa (a conta aberta) ──');
 {
   const fs = await import('node:fs');
   const vm = await import('node:vm');
-  const html = fs.readFileSync(new URL('../footprint-goiania/index.html', import.meta.url), 'utf8');
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');   // o `URL` global aqui é a do Supabase
+  const raiz = path.dirname(fileURLToPath(import.meta.url));
+  const html = fs.readFileSync(path.join(raiz, '..', 'footprint-goiania', 'index.html'), 'utf8');
   const trecho = (de, ate) => {
     const i = html.indexOf(de), f = html.indexOf(ate, i);
     if (i < 0 || f < 0) throw new Error('não achei ' + de + ' no index.html');
