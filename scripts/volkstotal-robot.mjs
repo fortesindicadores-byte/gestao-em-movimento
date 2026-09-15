@@ -286,8 +286,13 @@ try {
           + ` · ${brl(r.linhas.reduce((s, l) => s + l.valor, 0))}`
           + (r.total != null ? ` · total da nota ${brl(r.total)}${r.confere ? '' : ' ⚠ NÃO BATE'}` : ''));
       } catch (e) {
-        falhou.push(`${rot}: ${e.message.split('\n')[0].slice(0, 120)}`);
-        log(`  [${feitas}] ${rot}: ✘ ${e.message.split('\n')[0].slice(0, 120)}`);
+        /* A MENSAGEM INTEIRA NAS PRIMEIRAS FALHAS (15/09/2026): o corte em 120
+           caracteres decapitou justamente o cabeçalho que a mensagem carregava
+           para explicar o erro. Nas primeiras vai inteira; das seguintes vai o
+           resumo, senão 390 buscas ruins viram um log ilegível. */
+        const msg = e.message.split('\n')[0];
+        falhou.push(`${rot}: ${msg.slice(0, 200)}`);
+        log(`  [${feitas}] ${rot}: ✘ ${falhou.length <= 3 ? msg : msg.slice(0, 160)}`);
         /* FOTO DA FALHA (15/09/2026): sem ela sobra deduzir do texto do erro o
            que estava na tela — foi o que aconteceu com o "Timeout" do Gerar
            Relatório, que não dizia que o botão achado era o invisível. Só das
@@ -484,12 +489,16 @@ async function consulta(pg, contrato, vig) {
     await dl.saveAs(arq);
     passo('ler o xlsx');
 
-    const brutas = await xlsx(arq);
+    const { cab, linhas: brutas } = await xlsx(arq);
     fs.unlinkSync(arq);                     // o dado vai para o banco, não para o artifact
+    /* O CABEÇALHO REAL APARECE NO LOG, UMA VEZ (15/09/2026): a 1ª leitura
+       falhou com "colunas não encontradas" e a mensagem — que carregava o
+       cabeçalho — foi CORTADA em 120 caracteres pelo meu próprio resumo da
+       falha. Sobrou o erro sem a informação que explicava o erro. */
+    if (!_cabLogado) { _cabLogado = true; log(`   colunas do relatório: ${cab.join(' | ')}`); }
     if (!brutas.length) return { semDado: true, linhas: [] };
 
     const c0 = brutas[0];
-    if (DEBUG) log(`      colunas do relatório: ${Object.keys(c0).join(' | ')}`);
     const K = {
       chassi: acha(c0, 'chassi'), placa: acha(c0, 'placa'),
       kmAnt: acha(c0, 'km anterior', 'quilometragem anterior'),
@@ -506,7 +515,21 @@ async function consulta(pg, contrato, vig) {
         + ` — o que veio foi: ${Object.keys(c0).join(' | ')}`);
     }
 
-    const linhas = brutas.map(b => ({
+    /* A LINHA DE TOTAL DO RODAPÉ NÃO É UM VEÍCULO (pego no teste do parser,
+       15/09/2026). O relatório fecha com "Total" na 1ª coluna e a soma nas
+       colunas de km e valor. Como "Total" cai no campo Chassi, um filtro de
+       "tem chassi ou placa" a mantinha — e ela entraria no banco como um
+       veículo cujo valor é a soma de todos os outros, DOBRANDO o mês. É o
+       mesmo fantasma do "Filtros aplicados" do robô do Ginfo, que chegou a
+       fazer o Farol contar uma saída onde não havia nenhuma.
+
+       A régua é a FORMA da chave: chassi tem 8+ caracteres alfanuméricos
+       (o real tem 17), placa tem o formato de placa. "Total" não passa em
+       nenhum dos dois. O que sobrar de fora é contado e aparece no log —
+       descarte silencioso esconderia mudança de layout. */
+    const ehChassi = s => /^[A-Z0-9]{8,20}$/.test(s);
+    const ehPlaca  = s => /^[A-Z]{3}\d[A-Z0-9]\d{2}$/.test(s);
+    const cand = brutas.map(b => ({
       contrato, vigencia: vig,
       chassi: String(b[K.chassi] || '').trim().toUpperCase(),
       placa:  String(b[K.placa]  || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, ''),
@@ -514,7 +537,13 @@ async function consulta(pg, contrato, vig) {
       km_atual:    num(b[K.kmAtu]), data_atual:    dataISO(b[K.dtAtu]),
       faixa: String(b[K.faixa] == null ? '' : b[K.faixa]).trim(),
       km_rodado: num(b[K.kmRod]), valor: num(b[K.valor]),
-    })).filter(l => l.chassi || l.placa);
+    }));
+    const linhas = cand.filter(l => ehChassi(l.chassi) || ehPlaca(l.placa));
+    const fora = cand.filter(l => !linhas.includes(l) && (l.chassi || l.placa || l.valor));
+    if (fora.length) {
+      log(`      ${fora.length} linha(s) descartada(s) por não ter chassi nem placa`
+        + ` (rodapé/total): ${fora.slice(0, 3).map(l => `"${l.chassi || l.placa}" ${brl(l.valor)}`).join(' · ')}`);
+    }
 
     /* O VALOR TOTAL DA NOTA É A CONFERÊNCIA (o Renan mostrou os dois na tela):
        a soma das linhas tem de bater com o total. No caso que ele mostrou a
@@ -528,13 +557,28 @@ async function consulta(pg, contrato, vig) {
   } catch (e) { erro(e); }
 }
 
+/* O CABEÇALHO NÃO É A 1ª LINHA (bug real, 15/09/2026). `sheet_to_json` sem
+   `header` usa a primeira linha da planilha como nome das colunas — e o
+   relatório do portal abre com linhas de título, então as "colunas" viravam o
+   texto do título e NENHUMA era encontrada. Achar a linha que tem "Chassi" ou
+   "Placa" resolve os dois lados: pula o que vem antes e não depende de quantas
+   linhas de enfeite o portal resolver pôr amanhã. */
+let _cabLogado = false;
 async function xlsx(arq) {
   const XLSX = (await import('xlsx')).default;
   const wb = XLSX.readFile(arq);
   const ws = wb.Sheets[wb.SheetNames[0]];
-  return XLSX.utils.sheet_to_json(ws, { defval: null })
-    // linha de rodapé/título sem chassi nem placa cai fora no filtro de cima
-    .filter(l => Object.values(l).some(v => v != null && String(v).trim() !== ''));
+  const m = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+  const iCab = m.findIndex(l => (l || []).some(c => /chassi|placa/i.test(String(c == null ? '' : c))));
+  if (iCab < 0) {
+    // sem cabeçalho reconhecível: devolve as primeiras linhas como diagnóstico
+    return { cab: (m.slice(0, 3).flat() || []).map(x => String(x == null ? '' : x)).filter(Boolean), linhas: [] };
+  }
+  const cab = (m[iCab] || []).map((c, i) => String(c == null ? '' : c).trim() || `col${i}`);
+  const linhas = m.slice(iCab + 1)
+    .filter(l => (l || []).some(c => c != null && String(c).trim() !== ''))
+    .map(l => Object.fromEntries(cab.map((k, i) => [k, l[i] == null ? null : l[i]])));
+  return { cab, linhas };
 }
 
 // ════════════════════════════════════════════════════════════════════════
