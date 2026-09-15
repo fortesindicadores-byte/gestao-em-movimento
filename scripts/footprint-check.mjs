@@ -74,6 +74,58 @@ if (linhas.length) {
   console.log(`  última marcação: ${ult.placa} · ${ult.chave} · ${ult.status} · ${ult.updated_nome || '—'} · ${ult.updated_at}`);
 }
 
+// ── 5. de onde vem a aderência de cada placa ────────────────────────────────
+// Roda a função aderencia() DO PRÓPRIO index.html contra o que está no banco e
+// abre a conta: quantos OK, NOK, em branco e N/A entraram em cada linha. É por
+// aqui que se enxerga se o N/A está ou não no denominador, sem depender do olho
+// no print.
+console.log('\n── 5. aderência por placa (a conta aberta) ──');
+{
+  const fs = await import('node:fs');
+  const vm = await import('node:vm');
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');   // o `URL` global aqui é a do Supabase
+  const raiz = path.dirname(fileURLToPath(import.meta.url));
+  const html = fs.readFileSync(path.join(raiz, '..', 'footprint-goiania', 'index.html'), 'utf8');
+  const trecho = (de, ate) => {
+    const i = html.indexOf(de), f = html.indexOf(ate, i);
+    if (i < 0 || f < 0) throw new Error('não achei ' + de + ' no index.html');
+    return html.slice(i, f);
+  };
+  const ctx = { DADOS: {}, console };
+  vm.createContext(ctx);
+  vm.runInContext(
+    trecho('const PLACAS=[', 'const esc=') +
+    'const K=(p,c)=>p+"|"+c;' +
+    trecho('function aderencia(placa)', 'const faixa='), ctx);
+  // `const` dentro do vm NÃO vira propriedade do contexto — é preciso pedir os
+  // valores por uma expressão (a mesma armadilha do `let`, já conhecida aqui).
+  const { PLACAS, CHECKS, aderencia } = vm.runInContext('({PLACAS,CHECKS,aderencia})', ctx);
+
+  linhas.forEach(r => { ctx.DADOS[r.placa + '|' + r.chave] = { status: r.status }; });
+
+  let gOk = 0, gDen = 0;
+  const larg = Math.max(...PLACAS.map(p => p.placa.length));
+  PLACAS.forEach(p => {
+    const st = c => (ctx.DADOS[p.placa + '|' + c.id] || {}).status || '';
+    const n = s => CHECKS.filter(c => st(c) === s).length;
+    const ok = n('OK'), nok = n('NOK'), na = n('NA'), br = n('');
+    const den = ok + nok + br;                       // o que a função põe no denominador
+    gOk += ok; gDen += den;
+    const ad = aderencia(p.placa);
+    const conferido = den ? Math.abs(ad - ok / den) < 1e-9 : ad === null;
+    console.log(`  ${p.placa.padEnd(larg)}  ${String(Math.round((ad || 0) * 100)).padStart(3)}%` +
+      `   OK ${String(ok).padStart(2)} · NOK ${String(nok).padStart(2)} · em branco ${String(br).padStart(2)}` +
+      `   →  ${ok}/${den}     (N/A ${String(na).padStart(2)} fora da conta)` +
+      (conferido ? '' : '   ✘ a função não bate com a decomposição'));
+    if (!conferido) falhas++;
+  });
+  console.log(`  ${''.padEnd(larg)}  ${String(Math.round(gOk / gDen * 100)).padStart(3)}%   geral (${gOk}/${gDen})`);
+  const semNA = CHECKS.length * PLACAS.length - gDen;
+  console.log(`\n  ${semNA} célula(s) marcadas N/A ficaram FORA do denominador` +
+    ` — se estivessem dentro, o geral cairia para ${Math.round(gOk / (gDen + semNA) * 100)}%.`);
+}
+
 // limpeza: a placa de teste nunca fica no banco
 await req(SERVICE, `footprint_check?placa=eq.${encodeURIComponent(TESTE)}`, { method: 'DELETE', prefer: 'return=minimal' });
 const sobrou = await req(SERVICE, `footprint_check?select=placa&placa=eq.${encodeURIComponent(TESTE)}`);
