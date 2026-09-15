@@ -8,14 +8,27 @@
 //
 // MODOS (env VT_MODE):
 //   sonda  (padrão) — só olha: alcança o portal? o login passa? o que tem no
-//                     DOM (nomes dos campos, lista de contratos, botões)?
-//                     NÃO coleta e NÃO grava nada.
-//   run             — coleta de verdade (escrito depois que a sonda mostrar
-//                     o DOM real; adivinhar seletor de ASP.NET é desperdício).
+//                     DOM (campos, lista de contratos, botões)? Não coleta.
+//   teste           — coleta de verdade e IMPRIME o resumo, sem gravar.
+//   gravar          — coleta e sobe para `vw_contrato_km`.
 //
-// POR QUE A SONDA VEM PRIMEIRO: o robô do Qlik foi 100% codificado e só
-// então descobrimos que o servidor não era acessível de fora. Aqui a
-// primeira pergunta é essa, e ela custa 30 segundos.
+// RECORTE (env, todos opcionais): VT_CONTRATO (lista separada por vírgula) ·
+// VT_VIG (AAAA-MM, lista) · VT_ANO. Sem nada: todos os contratos do seletor,
+// de janeiro ao mês corrente.
+//
+// POR QUE A SONDA VEIO PRIMEIRO: o robô do Qlik foi 100% codificado e só
+// então descobrimos que o servidor não era acessível de fora. Aqui essa era a
+// primeira pergunta, e custou 30 segundos — o portal responde (HTTP 302 em
+// 577 ms) e o login passa.
+//
+// O QUE A SONDA ACHOU, e que teria custado rodadas de tentativa:
+//  · o login IGNORA a ReturnUrl e cai em Index.aspx — e a home TAMBÉM tem o
+//    seletor de contratos, então a primeira sonda fotografou a página errada
+//    sem dar erro nenhum. A navegação para a consulta é explícita;
+//  · marcar o checkbox do contrato ESCREVE o código em txtContrato — é por
+//    esse campo que se confere se o clique pegou, não pela marca do checkbox;
+//  · os avisos são SweetAlert2 (.swal2-popup), inclusive o "sem dados";
+//  · o "44º contrato" que aparecia era o swal2-checkbox do próprio modal.
 //
 // Segredos: VOLKSTOTAL_USER · VOLKSTOTAL_PASS (Secrets do Actions, nunca no
 // código — o repositório é público). O log NUNCA imprime a senha.
@@ -30,9 +43,83 @@ const USER  = process.env.VOLKSTOTAL_USER || '';
 const PASS  = process.env.VOLKSTOTAL_PASS || '';
 const SHOTS = 'volkstotal-shots';
 
+const SB_URL = 'https://lozwipoeacpvplgkrxkq.supabase.co';
+const SB_KEY = process.env.GEM_SUPABASE_SERVICE_KEY || '';
+
 const hora = () => new Date().toLocaleTimeString('pt-BR', { hour12: false });
 const log  = (...a) => console.log(hora(), ...a);
 fs.mkdirSync(SHOTS, { recursive: true });
+
+const brl   = v => 'R$ ' + (+v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const numBR = v => Math.round(+v || 0).toLocaleString('pt-BR');
+const LISTA = s => { const l = String(s || '').split(/[,\s;]+/).map(x => x.trim().toUpperCase()).filter(Boolean);
+                     return l.length ? l : null; };
+
+/* AS VIGÊNCIAS VÃO ATÉ O MÊS CORRENTE, NÃO ATÉ DEZEMBRO (Renan, 15/09/2026:
+   "quero gerar ano todo"). Pedir mês que ainda não aconteceu só gasta uma
+   busca para receber o modal de "sem dados" — 43 contratos × 3 meses futuros
+   seriam 129 buscas à toa, ~20 minutos. */
+function vigsDoAno() {
+  const hoje = new Date();
+  const ano = +(process.env.VT_ANO || hoje.getFullYear());
+  const ate = ano < hoje.getFullYear() ? 12 : hoje.getMonth() + 1;
+  return Array.from({ length: ate }, (_, i) => `${ano}-${String(i + 1).padStart(2, '0')}`);
+}
+// o portal quer MMAAAA digitado; a máscara põe a barra sozinha
+const paraMMAAAA = vig => vig.slice(5, 7) + vig.slice(0, 4);
+
+/* "R$ 1.234,56" / "1.234,56" / "1234.56" / "12.000" → número. O portal é
+   pt-BR, mas o xlsx pode entregar a célula já numérica.
+
+   O PONTO DE MILHAR É A ARMADILHA (pego no teste dos helpers, 15/09/2026):
+   "o último separador é o decimal" transforma **12.000 km em 12 km** — e o km
+   é justamente o que multiplica a taxa, então o valor do contrato viria 1.000
+   vezes menor sem erro nenhum na tela. A regra tem de olhar o conjunto:
+    · os dois separadores presentes → o ÚLTIMO é o decimal, o outro é milhar;
+    · um só, repetido            → todos são milhar (1.234.567);
+    · um só, seguido de 3 dígitos → milhar, porque a base é pt-BR (12.000);
+    · o resto                    → decimal (0,7542 · 1234.56). */
+function num(v) {
+  if (typeof v === 'number') return isFinite(v) ? v : 0;
+  let s = String(v == null ? '' : v).replace(/[R$\s ]/g, '');
+  if (!s) return 0;
+  const neg = /^\(.*\)$/.test(s) || s.startsWith('-');
+  s = s.replace(/[()\-]/g, '');
+  const pts = (s.match(/\./g) || []).length, vgs = (s.match(/,/g) || []).length;
+  const ult = Math.max(s.lastIndexOf(','), s.lastIndexOf('.'));
+  if (ult >= 0) {
+    const casas = s.length - ult - 1;
+    const misto = pts > 0 && vgs > 0;
+    const soUm  = (pts + vgs) === 1;
+    const milhar = !misto && (!soUm || casas === 3);
+    s = milhar ? s.replace(/[.,]/g, '')
+               : s.slice(0, ult).replace(/[.,]/g, '') + '.' + s.slice(ult + 1);
+  }
+  const n = parseFloat(s);
+  return isFinite(n) ? (neg ? -n : n) : 0;
+}
+// data da planilha: serial do Excel, Date, ou dd/mm/aaaa
+function dataISO(v) {
+  if (v == null || v === '') return null;
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  if (typeof v === 'number' && v > 20000 && v < 80000) {
+    return new Date(Date.UTC(1899, 11, 30) + v * 86400000).toISOString().slice(0, 10);
+  }
+  const m = String(v).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  const d = new Date(v);
+  return isFinite(d) ? d.toISOString().slice(0, 10) : null;
+}
+// acha a coluna pelo RÓTULO, não pela posição: o portal pode inserir coluna
+const acha = (obj, ...pedacos) => {
+  const ks = Object.keys(obj);
+  for (const p of pedacos) {
+    const k = ks.find(x => x.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .includes(p.toLowerCase()));
+    if (k) return k;
+  }
+  return null;
+};
 
 // ── 1. o portal responde de fora? ────────────────────────────────────────
 // Antes de subir browser: se o domínio não abre daqui, o resto não importa.
@@ -162,68 +249,75 @@ try {
     log(`  [${rot}] clicáveis: ` + [...new Set(clic.map(c => `${c.t}${c.id ? '#' + c.id : ''}`))].join(' · '));
     return cods;
   };
-  const cods = await dump('consulta');
+  const cods = (await dump('consulta')).filter(c => !/^swal2/.test(c));
 
-  // ── 4. uma busca de verdade ────────────────────────────────────────────
-  /* Uma consulta não muda nada no portal, e é ela que responde o que sobrou:
-     como se preenche o Mês/Ano (é campo com máscara), o que acontece quando o
-     contrato não tem dado no mês (o Renan disse que aparece um modal com OK),
-     quais são as colunas do resultado e se o "Gerar Relatório" só existe quando
-     veio linha. Sem isso eu estaria escrevendo a coleta no escuro. */
-  const ALVO_CT  = process.env.VT_CONTRATO || cods[0];
-  const ALVO_MES = process.env.VT_MESANO   || '092026';
-  log('');
-  log(`── 4. busca de teste: contrato ${ALVO_CT} · ${ALVO_MES} ──`);
-  const box = pg.locator(`#check-${ALVO_CT}`).or(pg.locator(`#check-mob-${ALVO_CT}`));
-  const vis = box.filter({ visible: true }).first();
-  await (await vis.count() ? vis : box.first()).check({ force: true });
-  log('  contrato marcado');
-
-  // o campo do mês tem MÁSCARA: fill() escreve de uma vez e a máscara não roda.
-  // Digitar caractere a caractere é o que o Renan descreveu ("092026 já
-  // preenche a barra") e o que a máscara espera.
-  const cMes = pg.locator('input[type=text]:visible').filter({ hasNot: pg.locator('[readonly]') });
-  const nMes = await cMes.count();
-  log(`  ${nMes} campo(s) de texto visível(is) — o do mês é o que aceita a máscara`);
-  if (nMes) {
-    const alvo = cMes.first();
-    await alvo.click();
-    await alvo.pressSequentially(ALVO_MES, { delay: 60 });
-    log(`  mês digitado → campo ficou "${await alvo.inputValue()}"`);
+  if (MODE === 'sonda') {
+    log('');
+    log(`Sonda concluída: ${cods.length} contrato(s) no seletor.`);
+    await br.close();
+    process.exit(0);
   }
-  await shot('05-preenchido');
 
-  const btPesq = pg.locator('input[type=submit],input[type=button],button,a')
-    .filter({ hasText: /pesquis/i }).or(pg.locator('input[value*="Pesquis" i]'));
-  if (await btPesq.count()) {
-    await btPesq.first().click();
-    await pg.waitForLoadState('networkidle', { timeout: 60000 }).catch(() => {});
-    log('  Pesquisar clicado');
-  } else {
-    log('  ⚠ não achei o botão Pesquisar');
-  }
-  await pg.waitForTimeout(2500);
-  await shot('06-resultado');
-
-  // modal de "sem dados"? é o caso que o robô tem de saber pular
-  const modal = await pg.$$eval('.modal,.ui-dialog,[role=dialog],.swal2-popup', els =>
-    els.filter(e => e.offsetParent).map(e => e.innerText.replace(/\s+/g, ' ').trim().slice(0, 200)));
-  if (modal.length) log(`  MODAL na tela: ${modal.join(' | ')}`);
-  else log('  sem modal — a busca deve ter trazido linhas');
-
-  // as tabelas da página, com as colunas de cada uma
-  const tabs = await pg.$$eval('table', els => els.filter(e => e.offsetParent).map(t => ({
-    id: t.id,
-    cab: [...t.querySelectorAll('thead th, tr:first-child th, tr:first-child td')]
-      .map(e => e.innerText.replace(/\s+/g, ' ').trim()).filter(Boolean),
-    linhas: t.querySelectorAll('tbody tr').length || Math.max(0, t.rows.length - 1),
-  })));
-  log(`  ${tabs.length} tabela(s) visível(is):`);
-  tabs.forEach(t => log(`    ${t.id ? '#' + t.id + ' ' : ''}${t.linhas} linha(s) · ${t.cab.join(' | ')}`));
-
-  await dump('depois da busca');
+  // ── 4. a coleta ────────────────────────────────────────────────────────
+  const alvoCt  = LISTA(process.env.VT_CONTRATO) || cods;
+  const alvoVig = LISTA(process.env.VT_VIG) || vigsDoAno();
+  const faltam  = alvoCt.filter(c => !cods.includes(c));
+  if (faltam.length) log(`  ⚠ fora do seletor desta conta, serão pulados: ${faltam.join(' · ')}`);
+  const paresCt = alvoCt.filter(c => cods.includes(c));
   log('');
-  log('Sonda concluída. Com o DOM acima eu escrevo a coleta sem adivinhar seletor.');
+  log(`── 4. coleta: ${paresCt.length} contrato(s) × ${alvoVig.length} vigência(s)`
+    + ` = ${paresCt.length * alvoVig.length} busca(s) ──`);
+  log(`   vigências: ${alvoVig.join(' · ')}`);
+
+  const linhas = [];
+  const semDado = [];
+  const falhou = [];
+  let feitas = 0;
+  for (const ct of paresCt) {
+    for (const vig of alvoVig) {
+      feitas++;
+      const rot = `${ct} ${vig}`;
+      try {
+        const r = await consulta(pg, ct, vig);
+        if (r.semDado) { semDado.push(rot); continue; }
+        linhas.push(...r.linhas);
+        log(`  [${feitas}/${paresCt.length * alvoVig.length}] ${rot}: ${r.linhas.length} linha(s)`
+          + ` · ${brl(r.linhas.reduce((s, l) => s + l.valor, 0))}`
+          + (r.total != null ? ` · total da nota ${brl(r.total)}${r.confere ? '' : ' ⚠ NÃO BATE'}` : ''));
+      } catch (e) {
+        falhou.push(`${rot}: ${e.message.split('\n')[0].slice(0, 120)}`);
+        log(`  [${feitas}] ${rot}: ✘ ${e.message.split('\n')[0].slice(0, 120)}`);
+        // uma falha não derruba o resto: volta para a tela limpa e segue
+        await pg.goto(ALVO, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {});
+      }
+    }
+  }
+
+  log('');
+  log(`COLETADO: ${linhas.length} linha(s) · ${brl(linhas.reduce((s, l) => s + l.valor, 0))}`);
+  log(`   ${semDado.length} par(es) sem dado (contrato não cobre o mês)`);
+  if (falhou.length) {
+    log(`   ${falhou.length} falha(s):`);
+    falhou.slice(0, 20).forEach(f => log(`      ${f}`));
+  }
+  const porVig = new Map();
+  linhas.forEach(l => {
+    const t = porVig.get(l.vigencia) || { n: 0, v: 0, km: 0, ct: new Set() };
+    t.n++; t.v += l.valor; t.km += l.km_rodado; t.ct.add(l.contrato); porVig.set(l.vigencia, t);
+  });
+  log('   por vigência:');
+  [...porVig.entries()].sort().forEach(([v, t]) => log(`      ${v}  ${String(t.n).padStart(4)} linha(s)`
+    + ` · ${t.ct.size} contrato(s) · ${numBR(t.km).padStart(11)} km · ${brl(t.v).padStart(16)}`));
+
+  if (MODE !== 'gravar') {
+    log('');
+    log('modo teste — nada foi gravado. Rode com modo=gravar para subir.');
+    await br.close();
+    process.exit(0);
+  }
+  await grava(linhas);
+  log('');
+  log('Coleta concluída.');
 } catch (e) {
   log(`  ✘ falhou: ${e.message}`);
   await shot('99-erro');
@@ -231,3 +325,162 @@ try {
   process.exit(1);
 }
 await br.close();
+
+// ════════════════════════════════════════════════════════════════════════
+// UMA CONSULTA: contrato + mês → linhas do relatório
+// ════════════════════════════════════════════════════════════════════════
+/* O caminho é o que o Renan mostrou passo a passo: marcar o contrato, digitar
+   o Mês/Ano, Pesquisar; se o contrato não cobre o mês, um modal avisa e o
+   robô vai para o próximo; se cobre, "Gerar Relatório" baixa o xlsx. */
+async function consulta(pg, contrato, vig) {
+  // TELA LIMPA A CADA BUSCA: o portal guarda o que já estava marcado, e sem
+  // zerar o segundo contrato viria somado ao primeiro — dado trocado sem erro
+  // nenhum, que é a pior espécie.
+  await pg.goto(ALVO, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await pg.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+
+  // marcar o checkbox ESCREVE o código em txtContrato (visto na sonda). É por
+  // esse campo que se confere se o clique pegou, e não pela marca do checkbox.
+  const box = pg.locator(`#check-${contrato}, #check-mob-${contrato}`);
+  const n = await box.count();
+  if (!n) throw new Error(`contrato ${contrato} não está no seletor`);
+  for (let i = 0; i < n; i++) {
+    await box.nth(i).check({ force: true }).catch(() => {});
+    if ((await pg.locator('#ctl00_cphMainContent_txtContrato').inputValue()).includes(contrato)) break;
+  }
+  const noCampo = await pg.locator('#ctl00_cphMainContent_txtContrato').inputValue();
+  if (!noCampo.includes(contrato)) throw new Error(`o contrato não entrou no campo (ficou "${noCampo}")`);
+
+  /* O CAMPO DO MÊS TEM MÁSCARA e fill() a ignora: ele escreve o valor de uma
+     vez, sem disparar o keypress que a máscara escuta — o campo fica com o
+     texto cru ou vazio e a busca sai no mês errado. Digitar caractere a
+     caractere é o que o Renan descreveu ("092026 já preenche a barra"). */
+  const cMes = pg.locator('#ctl00_cphMainContent_txtMesAno');
+  await cMes.click();
+  await cMes.fill('');
+  await cMes.pressSequentially(paraMMAAAA(vig), { delay: 50 });
+  const mes = await cMes.inputValue();
+  const esperado = `${vig.slice(5, 7)}/${vig.slice(0, 4)}`;
+  if (!mes.replace(/\s/g, '').includes(esperado)) {
+    throw new Error(`o mês não aplicou: queria ${esperado}, o campo ficou "${mes}"`);
+  }
+
+  await pg.locator('#ctl00_cphMainContent_btnPesquisar').click();
+  await pg.waitForLoadState('networkidle', { timeout: 60000 }).catch(() => {});
+  await pg.waitForTimeout(1200);
+
+  // O MODAL É O "SEM DADOS" — é SweetAlert2 (.swal2-popup), o mesmo que
+  // reclamou do Mês/Ano em branco na sonda. Fechar no OK e seguir.
+  const pop = pg.locator('.swal2-popup:visible');
+  if (await pop.count()) {
+    const txt = (await pop.first().innerText()).replace(/\s+/g, ' ').trim();
+    await pg.locator('.swal2-confirm:visible').first().click().catch(() => {});
+    await pg.waitForTimeout(400);
+    // um modal que NÃO seja "sem registros" é problema de verdade e precisa
+    // aparecer no log, não ser engolido como se fosse mês vazio
+    if (!/n[ãa]o.*(encontr|localiz|registro|resultado)|sem\s+(registro|dado|resultado)/i.test(txt)) {
+      throw new Error(`modal inesperado: ${txt.slice(0, 160)}`);
+    }
+    return { semDado: true, linhas: [] };
+  }
+
+  const btRel = pg.locator('input[value*="Relat" i], button, a').filter({ hasText: /gerar\s*relat/i })
+    .or(pg.locator('input[value*="Gerar Relat" i]'));
+  if (!(await btRel.count())) return { semDado: true, linhas: [] };   // sem botão = sem resultado
+
+  const [dl] = await Promise.all([
+    pg.waitForEvent('download', { timeout: 60000 }),
+    btRel.first().click(),
+  ]);
+  // o portal manda sempre o mesmo nome ("ConsultaValorNotaFiscal"), por isso
+  // o arquivo é salvo com contrato e mês — senão vira um monte de (1), (2)…
+  const arq = `${SHOTS}/${contrato}_${vig}${(dl.suggestedFilename().match(/\.[a-z]+$/i) || ['.xlsx'])[0]}`;
+  await dl.saveAs(arq);
+
+  const brutas = await xlsx(arq);
+  fs.unlinkSync(arq);                       // o dado vai para o banco, não para o artifact
+  if (!brutas.length) return { semDado: true, linhas: [] };
+
+  const c0 = brutas[0];
+  const K = {
+    chassi: acha(c0, 'chassi'), placa: acha(c0, 'placa'),
+    kmAnt: acha(c0, 'km anterior', 'quilometragem anterior'),
+    dtAnt: acha(c0, 'data anterior'),
+    kmAtu: acha(c0, 'km atual', 'quilometragem atual'),
+    dtAtu: acha(c0, 'data atual'),
+    faixa: acha(c0, 'faixa'),
+    kmRod: acha(c0, 'km rodado', 'quilometragem rodada'),
+    valor: acha(c0, 'valor km', 'valor'),
+  };
+  const faltando = Object.entries(K).filter(([, v]) => !v).map(([k]) => k);
+  if (faltando.length) {
+    throw new Error(`colunas não encontradas no relatório (${faltando.join(', ')})`
+      + ` — o que veio foi: ${Object.keys(c0).join(' | ')}`);
+  }
+
+  const linhas = brutas.map(b => ({
+    contrato, vigencia: vig,
+    chassi: String(b[K.chassi] || '').trim().toUpperCase(),
+    placa:  String(b[K.placa]  || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, ''),
+    km_anterior: num(b[K.kmAnt]), data_anterior: dataISO(b[K.dtAnt]),
+    km_atual:    num(b[K.kmAtu]), data_atual:    dataISO(b[K.dtAtu]),
+    faixa: String(b[K.faixa] == null ? '' : b[K.faixa]).trim(),
+    km_rodado: num(b[K.kmRod]), valor: num(b[K.valor]),
+  })).filter(l => l.chassi || l.placa);
+
+  /* O VALOR TOTAL DA NOTA É A CONFERÊNCIA (o Renan mostrou os dois na tela):
+     a soma das linhas tem de bater com o total. No caso que ele mostrou a
+     soma deu R$ 6.060,01 contra R$ 6.060,00 de total — um centavo de
+     arredondamento, então a folga é de um centavo POR LINHA, não fixa. */
+  const totTxt = await pg.locator('#ctl00_cphMainContent_lblTotalNota2').inputValue().catch(() => '');
+  const total = totTxt && num(totTxt) ? num(totTxt) : null;
+  const soma = linhas.reduce((s, l) => s + l.valor, 0);
+  const confere = total == null || Math.abs(soma - total) <= Math.max(0.01 * linhas.length, 0.01);
+  return { semDado: false, linhas, total, confere };
+}
+
+async function xlsx(arq) {
+  const XLSX = (await import('xlsx')).default;
+  const wb = XLSX.readFile(arq);
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(ws, { defval: null })
+    // linha de rodapé/título sem chassi nem placa cai fora no filtro de cima
+    .filter(l => Object.values(l).some(v => v != null && String(v).trim() !== ''));
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// GRAVAÇÃO
+// ════════════════════════════════════════════════════════════════════════
+/* SÓ A FOTO CRUA, POR ENQUANTO. O destino é substituir a planilha "Contratos
+   Man." como fonte da Carta — mas trocar a fonte antes de comparar é o erro
+   que a migração do Km/L ensinou a não cometer (lá o comparador rodou antes e
+   pegou o que a planilha escondia). Então: o robô grava o que o portal diz, e
+   a troca da fonte vem depois de o comparador mostrar que bate. */
+async function grava(linhas) {
+  if (!SB_KEY) { console.error('GEM_SUPABASE_SERVICE_KEY ausente'); process.exit(1); }
+  /* LEITURA VAZIA NÃO APAGA NADA (a mesma trava do contratos-robot, que já
+     salvou 733 lançamentos): se o portal mudar e a coleta render zero, o robô
+     aborta antes de encostar no banco. */
+  if (!linhas.length) {
+    console.error('\n⚠ NADA A GRAVAR: nenhuma linha coletada. Abortando sem tocar no banco.');
+    process.exit(1);
+  }
+  const H = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
+  const agora = new Date().toISOString();
+  const corpo = linhas.map(l => ({ ...l, coletado_em: agora }));
+  let n = 0;
+  for (let i = 0; i < corpo.length; i += 500) {
+    const lote = corpo.slice(i, i + 500);
+    const r = await fetch(`${SB_URL}/rest/v1/vw_contrato_km?on_conflict=contrato,vigencia,chassi`, {
+      method: 'POST', headers: { ...H, Prefer: 'resolution=merge-duplicates' }, body: JSON.stringify(lote),
+    });
+    if (!r.ok) {
+      const t = await r.text();
+      if (r.status === 404) console.error('\nA tabela vw_contrato_km ainda não existe.'
+        + ' Rode scripts/volkstotal-supabase.sql no SQL Editor e tente de novo.');
+      throw new Error(`vw_contrato_km: ${r.status} ${t.slice(0, 300)}`);
+    }
+    n += lote.length;
+  }
+  log(`gravado: ${n} linha(s) em vw_contrato_km.`);
+}
