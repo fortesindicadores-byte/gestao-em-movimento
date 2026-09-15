@@ -67,7 +67,7 @@ function placaKey(p) {
   return s.slice(0, 4) + 'ABCDEFGHIJ'[D2L.indexOf(s[4])] + s.slice(5);
 }
 
-async function daPlanilha() {
+async function daPlanilha(contratosVW) {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET}/gviz/tq`
     + `?gid=${GID}&tqx=out:json&headers=0&tq=${encodeURIComponent('select *')}`;
   const j = parse(await (await fetch(url)).text());
@@ -93,11 +93,17 @@ async function daPlanilha() {
     if (n > melhor) { melhor = n; colPlaca = c; }
   }
   if (colPlaca < 0) throw new Error('não achei a coluna de placa na planilha');
-  const ehContrato = v => /^[A-Z]{1,2}\s?\d{3,6}\s?[A-Z]{0,2}$/.test(String(v || '').toUpperCase().trim());
+  /* A COLUNA DE CONTRATO É ACHADA PELA LISTA REAL, NÃO POR "FORMA" (Renan,
+     15/09/2026: "o comparador comparou apenas placas volks?"). A regra
+     anterior era um regex de "cara de nº de contrato" (`A1783K`) que NÃO
+     reconhece os que começam com dígito (`620079`, `62A358`) — metade dos 43.
+     Acertava 97 de 198 linhas, e com a coluna meio errada não dava para
+     separar o que é contrato VW do que não é. Casar contra o conjunto que o
+     próprio portal devolveu é exato e não depende de formato. */
   let colCt = -1, melhorC = 0;
   for (let c = 0; c < idCols; c++) {
     if (c === colPlaca) continue;
-    const n = amostra.reduce((a, r) => a + (ehContrato(txtOf(r[c])) ? 1 : 0), 0);
+    const n = amostra.reduce((a, r) => a + (contratosVW.has(txtOf(r[c]).trim().toUpperCase()) ? 1 : 0), 0);
     if (n > melhorC) { melhorC = n; colCt = c; }
   }
 
@@ -108,13 +114,16 @@ async function daPlanilha() {
       if (!placa) continue;
       const valor = numOf(r[b.valor]), desloc = numOf(r[b.desloc]);
       if (!(valor > 0) && !(desloc > 0)) continue;
-      out.push({ vig: b.vig, placa, contrato: colCt >= 0 ? txtOf(r[colCt]).trim().toUpperCase() : '',
-                 km: desloc, valor });
+      const contrato = colCt >= 0 ? txtOf(r[colCt]).trim().toUpperCase() : '';
+      out.push({ vig: b.vig, placa, contrato, vw: contratosVW.has(contrato), km: desloc, valor });
     }
   }
+  const nVW = out.filter(l => l.vw).length;
   console.log(`planilha: ${out.length} linha(s) · ${blocos.length} bloco(s) de mês`
     + ` · placa na coluna ${String.fromCharCode(65 + colPlaca)} (${melhor}/${amostra.length})`
-    + (colCt >= 0 ? ` · contrato na ${String.fromCharCode(65 + colCt)} (${melhorC}/${amostra.length})` : ''));
+    + (colCt >= 0 ? ` · contrato na ${String.fromCharCode(65 + colCt)}` : ' · SEM coluna de contrato'));
+  console.log(`          ${nVW} linha(s) de contrato VW · ${out.length - nVW} de outros contratos`
+    + ' (fixos, outros fornecedores) — só as primeiras entram na comparação');
   return out;
 }
 
@@ -141,30 +150,45 @@ async function doPortal() {
 }
 
 // ── comparação ────────────────────────────────────────────────────────────
-const [plan, port] = await Promise.all([daPlanilha(), doPortal()]);
+/* A COMPARAÇÃO É SÓ DOS CONTRATOS DA VW (Renan, 15/09/2026: "o comparador
+   comparou apenas placas volks?"). Não era: o portal só tem os 43 contratos
+   da VW e a planilha tem TODOS os veículos em contrato de manutenção. Com os
+   dois lados inteiros, o balde "só na planilha" misturava três coisas
+   diferentes — contrato fixo (que o portal não entrega), placa de outro
+   fornecedor (que ele nunca teria) e placa de contrato VW que ele deixou de
+   trazer, que é a única que seria problema. A lista dos 43 vem do próprio
+   portal, então o recorte é exato. O resto da planilha continua no log, como
+   contagem, para ninguém achar que sumiu. */
+const port = await doPortal();
 if (!port.length) {
   console.log('\n⚠ vw_contrato_km está VAZIA — rode o Volkstotal Robot em modo "gravar" antes.');
   process.exit(0);
 }
+const CONTRATOS_VW = new Set(port.map(l => l.contrato).filter(Boolean));
+console.log(`          ${CONTRATOS_VW.size} contrato(s) da VW no portal`);
+const planTudo = await daPlanilha(CONTRATOS_VW);
+const plan = planTudo.filter(l => l.vw);
+const fora = planTudo.filter(l => !l.vw);
 
 const soma = (arr, vig) => arr.filter(l => l.vig === vig)
   .reduce((a, l) => ({ n: a.n + 1, km: a.km + l.km, v: a.v + l.valor, placas: a.placas.add(l.placa) }),
           { n: 0, km: 0, v: 0, placas: new Set() });
 
-const vigs = [...new Set([...plan, ...port].map(l => l.vig))]
+const vigs = [...new Set([...planTudo, ...port].map(l => l.vig))]
   .filter(v => !SO_VIG.length || SO_VIG.includes(v)).sort();
 
-console.log('\n══ POR VIGÊNCIA ═══════════════════════════════════════════════════');
+console.log('\n══ POR VIGÊNCIA · só os contratos da VW ═══════════════════════════');
 console.log('vigência   placas P/p        km portal      km planilha   Δkm'
-  + '        valor portal    valor planilha   Δvalor');
+  + '        valor portal    valor planilha   Δvalor   | fora da VW');
 let difVal = 0, difKm = 0;
 const detalhe = [];
 for (const v of vigs) {
-  const P = soma(port, v), L = soma(plan, v);
+  const P = soma(port, v), L = soma(plan, v), F = soma(fora, v);
   difVal += P.v - L.v; difKm += P.km - L.km;
   console.log(`${v}   ${String(P.placas.size).padStart(3)}/${String(L.placas.size).padEnd(4)}`
     + `${numBR(P.km).padStart(14)}${numBR(L.km).padStart(16)}${pct(P.km, L.km).padStart(9)}`
-    + `${brl(P.v).padStart(18)}${brl(L.v).padStart(18)}${pct(P.v, L.v).padStart(9)}`);
+    + `${brl(P.v).padStart(18)}${brl(L.v).padStart(18)}${pct(P.v, L.v).padStart(9)}`
+    + `   | ${String(F.placas.size).padStart(3)} placa(s) ${brl(F.v).padStart(16)}`);
 
   // QUAIS placas explicam a diferença — o total sozinho não diz se é uma
   // placa grande fora ou dez pequenas divergindo
@@ -181,8 +205,12 @@ for (const v of vigs) {
   });
   detalhe.push({ v, soPortal, soPlan, diverge });
 }
-console.log('─'.repeat(110));
-console.log(`TOTAL: Δkm ${numBR(difKm)} · Δvalor ${brl(difVal)}`);
+console.log('─'.repeat(130));
+console.log(`TOTAL (contratos VW): Δkm ${numBR(difKm)} · Δvalor ${brl(difVal)}`);
+console.log(`FORA DA VW na planilha: ${fora.length} linha(s) · `
+  + `${new Set(fora.map(l => l.placa)).size} placa(s) · `
+  + `${brl(fora.reduce((s, l) => s + l.valor, 0))} — contrato fixo e outros fornecedores,`
+  + ' que o portal não entrega e continuam vindo da planilha.');
 
 console.log('\n══ ONDE ESTÁ A DIFERENÇA ══════════════════════════════════════════');
 for (const d of detalhe) {
@@ -206,6 +234,9 @@ for (const d of detalhe) {
 }
 
 console.log('\n══ COMO LER ═══════════════════════════════════════════════════════');
-console.log('· "só na PLANILHA" pode ser contrato FIXO: o portal só entrega o que é por km.');
+console.log('· Os dois lados aqui são SÓ os contratos da VW. O resto da planilha');
+console.log('  (fixo e outros fornecedores) está na coluna "fora da VW" e não entra na conta.');
+console.log('· "só na PLANILHA" agora é placa de contrato VW que o portal NÃO trouxe —');
+console.log('  este sim é caso para olhar, não é mais o fixo se disfarçando de diferença.');
 console.log('· "só no PORTAL" é placa que a unidade não lançou — o robô a traz sozinho.');
 console.log('· valor diferente é o caso que importa conferir antes de trocar a fonte.');
