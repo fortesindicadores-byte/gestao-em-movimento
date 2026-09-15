@@ -661,13 +661,16 @@ async function grava(linhas, parcial = false) {
   }
   const H = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
   const agora = new Date().toISOString();
-  /* DUAS LINHAS COM A MESMA CHAVE NO MESMO LOTE O POSTGRES RECUSA (bug real,
-     15/09/2026): "ON CONFLICT DO UPDATE command cannot affect row a second
-     time" — e a coleta inteira, 28 minutos, foi junto. Enquanto a chave certa
-     não está decidida (o diagnóstico acima mostra se é a Faixa que separa as
-     linhas), o lote é desduplicado por contrato+vigência+chassi+faixa, que é o
-     que o relatório parece usar. O que ainda colidir depois disso é contado e
-     aparece no log em vez de derrubar a gravação. */
+  /* A FAIXA FAZ PARTE DA CHAVE (Renan, 15/09/2026: "Importante ver isso,
+     quando ultrapassa. Até ter um controle que indique que avançou de faixa").
+     O mesmo chassi aparece mais de uma vez no mesmo contrato e mês quando o km
+     atravessa a faixa do contrato: são duas cobranças, cada uma com o seu
+     preço. Não é duplicata, e colapsar destruiria justamente o que interessa
+     enxergar. O Postgres recusa duas linhas com a mesma chave NO MESMO LOTE
+     ("ON CONFLICT DO UPDATE command cannot affect row a second time") — e foi
+     isso que levou a 1ª coleta do ano inteira, 28 minutos, embora os dados
+     estivessem certos. Com a faixa na chave, as duas linhas convivem; o que
+     ainda colidir é contado e aparece no log em vez de derrubar a gravação. */
   const vistas = new Map();
   linhas.forEach(l => vistas.set(`${l.contrato}|${l.vigencia}|${l.chassi}|${l.faixa}`, l));
   const perdidas = linhas.length - vistas.size;
@@ -676,7 +679,7 @@ async function grava(linhas, parcial = false) {
   let n = 0;
   for (let i = 0; i < corpo.length; i += 500) {
     const lote = corpo.slice(i, i + 500);
-    const r = await fetch(`${SB_URL}/rest/v1/vw_contrato_km?on_conflict=contrato,vigencia,chassi`, {
+    const r = await fetch(`${SB_URL}/rest/v1/vw_contrato_km?on_conflict=contrato,vigencia,chassi,faixa`, {
       method: 'POST', headers: { ...H, Prefer: 'resolution=merge-duplicates' }, body: JSON.stringify(lote),
     });
     if (!r.ok) {
