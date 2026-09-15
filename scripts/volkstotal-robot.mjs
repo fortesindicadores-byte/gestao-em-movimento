@@ -288,6 +288,11 @@ try {
       } catch (e) {
         falhou.push(`${rot}: ${e.message.split('\n')[0].slice(0, 120)}`);
         log(`  [${feitas}] ${rot}: ✘ ${e.message.split('\n')[0].slice(0, 120)}`);
+        /* FOTO DA FALHA (15/09/2026): sem ela sobra deduzir do texto do erro o
+           que estava na tela — foi o que aconteceu com o "Timeout" do Gerar
+           Relatório, que não dizia que o botão achado era o invisível. Só das
+           10 primeiras: 390 buscas com erro encheriam o artifact. */
+        if (falhou.length <= 10) await shot(`erro-${rot.replace(/[^\w-]/g, '_')}`).catch(() => {});
         // uma falha não derruba o resto: volta para a tela limpa e segue
         await pg.goto(ALVO, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {});
       }
@@ -428,14 +433,25 @@ async function consulta(pg, contrato, vig) {
        com chamada periódica vai até o teto sempre. O que decide é: apareceu o
        modal de "sem dados" OU apareceu o "Gerar Relatório". Esperar pelos DOIS
        ao mesmo tempo termina assim que um deles vier. */
-    const btRel = pg.locator('input[value*="Relat" i]')
-      .or(pg.locator('button, a').filter({ hasText: /gerar\s*relat/i }));
+    /* O BOTÃO TEM DE SER O VISÍVEL (bug real, 15/09/2026): sem o `:visible`,
+       `input[value*="Relat"]` casava também com um elemento escondido, o
+       `.first()` escolhia esse, e o clique ficava 30 s esperando um elemento
+       que nunca fica clicável. O log dizia "Timeout" sem dizer que o botão
+       era o errado. */
+    const btRel = pg.locator('input[value*="Relat" i]:visible')
+      .or(pg.locator('button:visible, a:visible').filter({ hasText: /gerar\s*relat/i }));
     await pg.locator('#ctl00_cphMainContent_btnPesquisar').click();
     await Promise.race([
       pg.locator('.swal2-popup').first().waitFor({ state: 'visible', timeout: 45000 }),
       btRel.first().waitFor({ state: 'visible', timeout: 45000 }),
     ]).catch(() => {});                       // nenhum dos dois = trata como sem dado
     passo('ler o resultado');
+    if (DEBUG) {
+      const viz = await pg.$$eval('input[type=submit],input[type=button],button,a', els =>
+        els.filter(e => e.offsetParent).map(e => (e.value || e.innerText || '').trim())
+          .filter(t => t && t.length < 40));
+      log(`      depois da busca, clicáveis visíveis: ${[...new Set(viz)].join(' · ')}`);
+    }
 
     // O MODAL É O "SEM DADOS" — é SweetAlert2 (.swal2-popup), o mesmo que
     // reclamou do Mês/Ano em branco na sonda. Fechar no OK e seguir.
