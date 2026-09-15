@@ -1188,6 +1188,25 @@ Substitui o que é digitado à mão na planilha **"Contratos Man."**: por contra
 
 **Erro meu que vale lembrar:** `let` declarado no rodapé do arquivo fica na **zona morta** enquanto o `await` de topo de módulo executa (`function` é içada, `let` não). A leitura morria com *"Cannot access '_cabLogado' before initialization"*, um erro sem relação com o portal. `node --check` não pega TDZ — a conferência virou posicional no teste.
 
+### A FAIXA é a ultrapassagem, e cada contrato tem preço próprio nela
+
+O mesmo chassi aparece duas vezes no mesmo contrato e mês quando o km atravessa a faixa: são duas cobranças com preços diferentes. Por isso a faixa está na **chave primária** de `vw_contrato_km` e no `on_conflict` — colapsar destruiria o que interessa ver. Validado em agosto: 11 chaves duplicadas, **todas** separadas pela faixa, nenhuma repetindo. Exemplo: `V1673W|2026-08|9536B8TDXTR014470` → faixa 1 com 798 km (R$ 340,59) e faixa 2 com 2.057 km (R$ 597,76), somando os 2.855 km do mês.
+
+**Ultrapassar NÃO é bom nem ruim por si — depende do contrato** (`vw_contrato_faixa_preco`, `scripts/volkstotal-faixa.sql`): no **V1673W** o km excedente é 29% mais BARATO (R$ 0,2844 contra R$ 0,3980); no **H6764M** é 26% mais CARO (R$ 0,4660 contra R$ 0,3709). São os únicos dois contratos com mais de uma faixa. `vw_contrato_faixa` responde quem foi cobrado em duas faixas no mês (`avancou_no_mes`) e quem subiu em relação ao mês anterior (`mudou_de_faixa`).
+
+### O que a comparação com a planilha apurou (15/09/2026)
+
+**Março e junho batem centavo a centavo** (R$ 422.096,79 e R$ 347.608,55 nos dois lados) — a leitura do portal reproduz a planilha quando ela está bem preenchida. O que sobra de diferença é sempre **falha de preenchimento da planilha**, nunca do portal:
+- **maio**: 42 placas com a linha criada e **valor zero** — R$ 46.995,79 não lançados;
+- **julho e agosto**: a **faixa 2 não é lançada**. O Δ de cada placa é exatamente o valor da segunda faixa (`UGE6A30`: portal R$ 938,35 = planilha R$ 340,59 + R$ 597,76). São R$ 1.746,56 e R$ 5.799,39;
+- **erros de digitação de placa**: `RYM0B07` × `RYM0B87` (jun) e `GAM8I76` × `GAM8B76` — um caractere, dinheiro no veículo errado.
+
+**Duas armadilhas do comparador, as duas já corrigidas e as duas do mesmo tipo — comparar coisas que não são comparáveis:**
+1. **O portal só tem os 43 contratos da VW; a planilha tem TODOS os veículos em contrato.** Comparando os dois lados inteiros, o balde "só na planilha" misturava contrato fixo, outro fornecedor e placa VW faltando — 99 placas e R$ 201 mil em agosto, sem saber quanto de cada. Recortando só a VW, cai para 8 placas. A coluna de contrato da planilha é achada **casando com a lista real dos 43** (um regex de "cara de nº de contrato" não reconhece os que começam com dígito, `620079`, `62A358` — metade da lista).
+2. **O portal nem sempre preenche a Placa** — em alguns meses vem só o chassi, e o cruzamento por placa fazia a MESMA linha aparecer dos dois lados como exclusiva de cada um (portal `953557TPXNR050136` R$ 774,00 ↔ planilha `RHU8F38` R$ 774,00). O de-para sai do próprio portal, que preenche a placa desse chassi em outros meses.
+
+**JANEIRO/2026 É UM BURACO NO PORTAL, e não sei por quê.** Cheguei a dizer que era "janela de 8 meses" e que "o robô precisa rodar todo mês senão o portal esquece" — **as duas coisas são falsas**, e eu as apresentei como constatação. O contrato `620079` tem 2025 inteiro no portal (ago R$ 9.908,17 · set R$ 9.555,57 · out R$ 10.134,85 · nov R$ 12.417,97 · dez R$ 11.362,50), **não tem janeiro**, e tem fevereiro (R$ 17.336,26). Ou seja: não é janela de tempo nem início de contrato. Fevereiro veio maior que os vizinhos (20.836 km contra 13.500 em dez), o que é *compatível* com a nota de janeiro ter saído junto na virada do ano — mas isso é leitura de um contrato só, não conclusão. **Como o histórico de 2025 existe, dá para coletar para trás** (`VT_ANO=2025`).
+
 ## Robô Qlik (DRE → Custos) — EM ESPERA (03/08/2026)
 
 **Status: PARQUEADO — decisão do Renan 03/08/2026.** O robô está 100% codificado (receita dos 5 passos abaixo), mas o Qlik Sense da Conlog **não é acessível pela internet**: `bi.conlogsa.com.br` público serve só o **GLPI** (chamados) — `/sense` dá 404 e a porta 4244 não responde de fora (split DNS: o Renan acessa pela rede interna/VPN). O GitHub Actions não alcança. Opções mapeadas: (1) TI publicar o Qlik externamente · (2) self-hosted runner na rede da Conlog · (3) script agendado no PC do Renan · (4) **ler direto do BANCO DE DADOS fonte do DRE — caminho que o Renan quer explorar no futuro**. Até lá: **aba Custos segue manual**. NÃO religar sem resolver a rede.
