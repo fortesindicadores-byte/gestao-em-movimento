@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609011100">
+<meta name="build" content="202609151300">
 <title>FCA · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -830,6 +830,10 @@ table.cons{min-width:1560px!important;}
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h11M4 12h7M4 17h15"/></svg>
       Ranking
     </button>
+    <button class="s-item" data-v="preench" title="Ranking de preenchimento — causa e ação">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      Preenchimento
+    </button>
     <button class="s-item on" data-v="kanban" title="Kanban">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 4h5v16H4zM10 4h5v11h-5zM16 4h4v7h-4z"/></svg>
       Kanban
@@ -1134,10 +1138,19 @@ function render(){
   if(!_ROWS.length){c.innerHTML='<div class="tbl-section"><div class="empty">Nenhuma ação cadastrada ainda. Assim que as unidades preencherem o FCA, os registros aparecem aqui.</div></div>';return;}
   const fu=getMsValues('ms-uni'),fv=getMsValues('ms-vig'),fo=getMsValues('ms-org'),fs=getMsValues('ms-st'),fp=getMsValues('ms-proj'),fc=getMsValues('ms-causa'),fa=getMsValues('ms-acao'),ff=getMsValues('ms-fato'),fct=getMsValues('ms-conta'),fpz=getMsValues('ms-prazo'),fr=respFiltro();
   const fillState=v=>String(v||'').trim()?'Preenchida':'Em branco';
-  const vis=_ROWS.filter(r=>(!fu.length||fu.includes(r.unidade))&&(!fv.length||fv.includes(r.vigencia))&&(!fo.length||fo.includes(r.origem))&&(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fp.length||fp.includes(projLabel(r.projeto)))&&(!fc.length||fc.includes(fillState(r.causa)))&&(!fa.length||fa.includes(fillState(r.acao)))&&(!ff.length||ff.includes(r.fato))&&(!fct.length||contasDe(r).some(c=>fct.includes(c)))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.responsavel,fr));
+  // um filtro só, com as exceções passadas por fora — antes a mesma expressão
+  // estava escrita duas vezes e qualquer filtro novo tinha de entrar nas duas
+  const filtra=(pula={})=>_ROWS.filter(r=>(!fu.length||fu.includes(r.unidade))&&(pula.vig||!fv.length||fv.includes(r.vigencia))&&(pula.origem||!fo.length||fo.includes(r.origem))&&(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fp.length||fp.includes(projLabel(r.projeto)))&&(!fc.length||fc.includes(fillState(r.causa)))&&(!fa.length||fa.includes(fillState(r.acao)))&&(!ff.length||ff.includes(r.fato))&&(!fct.length||contasDe(r).some(c=>fct.includes(c)))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.responsavel,fr));
+  const vis=filtra();
   vis.sort((a,b)=>String(a.unidade||'').localeCompare(String(b.unidade||''))||(vigNum(b.vigencia)-vigNum(a.vigencia))||String(a.projeto||'').localeCompare(String(b.projeto||''))||String(a.fato||'').localeCompare(String(b.fato||'')));  // unidade A→Z, vigência recente, projeto, fato
   let body;
-  if(!vis.length){body='<div class="tbl-section"><div class="empty">Nenhuma ação para os filtros selecionados.</div></div>';}
+  // o preenchimento IGNORA o filtro de Origem de propósito: a tabela já separa
+  // RPM e Custos em colunas, e respeitá-lo esvaziaria uma delas sem explicação.
+  // Por isso é resolvido ANTES do vazio de `vis`, que carrega esse filtro.
+  const visPre=VIEW==='preench'?filtra({origem:true}):null;
+  if(VIEW==='preench'){body=visPre.length?preenchHTML(visPre)
+    :'<div class="tbl-section"><div class="empty">Nenhuma ação para os filtros selecionados.</div></div>';}
+  else if(!vis.length){body='<div class="tbl-section"><div class="empty">Nenhuma ação para os filtros selecionados.</div></div>';}
   else if(VIEW==='kanban'){body=kanbanHTML(vis);}
   else if(VIEW==='gantt'){body=ganttHTML(vis);}
   else if(VIEW==='resumo'){body=AderenciaView.html({dims:DIMS_ADER,tabela:false});}
@@ -1150,7 +1163,7 @@ function render(){
   c.innerHTML=body;
   if(VIEW==='resumo'||VIEW==='ranking'){
     // idem: a série mensal enxerga todas as vigências, e o filtro só acende as escolhidas
-    const visSemVig=_ROWS.filter(r=>(!fu.length||fu.includes(r.unidade))&&(!fo.length||fo.includes(r.origem))&&(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fp.length||fp.includes(projLabel(r.projeto)))&&(!fc.length||fc.includes(fillState(r.causa)))&&(!fa.length||fa.includes(fillState(r.acao)))&&(!ff.length||ff.includes(r.fato))&&(!fct.length||contasDe(r).some(c=>fct.includes(c)))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.responsavel,fr));
+    const visSemVig=filtra({vig:true});
     pintaResumoAdmin(vis,visSemVig,fv);
   }
 }
@@ -1181,6 +1194,53 @@ function pintaResumoAdmin(vis,visSemVig,vigsSel){
     aoTrocarDim:d=>{ DIM_ADER=d; render(); },
   });
 }
+/* ── Preenchimento: 0 ou 100 por FCA ──
+   A régua é binária: o FCA só conta quando a unidade escreveu a CAUSA e a
+   AÇÃO. Um dos dois em branco = 0. A nota da unidade é a média desses 0/100,
+   ou seja o percentual dos FCAs dela que estão de fato preenchidos.
+   A coluna Aderência POOLA as duas origens em vez de tirar a média delas:
+   quem tem 20 FCAs de Custos e 2 de RPM não pode ter as duas metades
+   pesando igual. */
+const preOK=o=>!!(String(o.causa||'').trim()&&String(o.acao||'').trim());
+function preStat(rows){const n=rows.length;if(!n)return{n:0,ok:0,p:null};const ok=rows.filter(preOK).length;return{n,ok,p:ok/n*100};}
+let PRE_SORT='ader', PRE_ASC=true;   // pior primeiro, como no resto do portal
+function sortPre(c){ if(PRE_SORT===c) PRE_ASC=!PRE_ASC; else { PRE_SORT=c; PRE_ASC=(c==='k'); } render(); }
+function preenchHTML(rows){
+  const band=AderenciaView.band, pct=AderenciaView.pct;
+  const itens=[...new Set(rows.map(r=>r.unidade).filter(Boolean))].map(k=>{
+    const r=rows.filter(o=>o.unidade===k);
+    return {k, rpm:preStat(r.filter(o=>o.origem==='RPM')), cus:preStat(r.filter(o=>o.origem==='Custos')), ader:preStat(r)};
+  });
+  const nome=(a,b)=>String(a.k).localeCompare(String(b.k),'pt');
+  itens.sort((a,b)=>{
+    if(PRE_SORT==='k') return nome(a,b)*(PRE_ASC?1:-1);
+    const av=a[PRE_SORT].p, bv=b[PRE_SORT].p;
+    // unidade sem FCA daquela origem não tem nota: vai para o fim, nunca como 0
+    if(av==null&&bv==null) return nome(a,b);
+    if(av==null) return 1; if(bv==null) return -1;
+    return (av-bv)*(PRE_ASC?1:-1)||nome(a,b);
+  });
+  const dica=s=>`${s.ok} de ${s.n} ${s.n===1?'FCA':'FCAs'} com causa e ação`;
+  const cel=s=>s.n?`<td class="num" style="color:${band(s.p)};font-weight:800" title="${dica(s)}">${pct(s.p)}</td>`
+                  :'<td class="num" style="color:var(--txt3)" title="Nenhum FCA desta origem no recorte">—</td>';
+  const chip=s=>s.n?`<td class="num" title="${dica(s)}"><span class="adv-pct" style="background:${band(s.p)}${s.p<70?';color:#fff':''}">${pct(s.p)}</span></td>`
+                   :'<td class="num" style="color:var(--txt3)">—</td>';
+  const seta=c=>PRE_SORT===c?(PRE_ASC?' ↑':' ↓'):'';
+  return `<div class="adv-tsec">
+    <div class="adv-thead"><div>
+      <div class="adv-ttit">Preenchimento do FCA</div>
+      <div class="adv-tsub">Cada FCA vale 100 quando tem causa <b>e</b> ação preenchidas; senão, 0 · ${itens.length} ${itens.length===1?'unidade':'unidades'} no recorte</div>
+    </div></div>
+    <div class="adv-twrap"><table class="adv-table"><thead><tr>
+      <th style="cursor:pointer" onclick="sortPre('k')">Unidade${seta('k')}</th>
+      <th class="num" style="cursor:pointer" onclick="sortPre('rpm')">RPM${seta('rpm')}</th>
+      <th class="num" style="cursor:pointer" onclick="sortPre('cus')">Custos${seta('cus')}</th>
+      <th class="num" style="cursor:pointer" onclick="sortPre('ader')">Aderência${seta('ader')}</th>
+    </tr></thead><tbody>${itens.map(it=>
+      `<tr><td class="nome">${esc(it.k)}</td>${cel(it.rpm)}${cel(it.cus)}${chip(it.ader)}</tr>`).join('')}</tbody></table></div>
+  </div>`;
+}
+
 // ── Tabela: mesmo desenho do Planner e do FCA da unidade ──
 // Só leitura; a linha abre o modal, que é onde se edita, adiciona causa/ação e exclui.
 function chipStatusRel(st){
@@ -1371,7 +1431,7 @@ function updViewBtns(){const b=document.getElementById('viewBtn');if(b)b.textCon
 function toggleView(){VIEW=VIEW==='kanban'?'tabela':'kanban';updViewBtns();render();}
 function showGantt(){VIEW=VIEW==='gantt'?'kanban':'gantt';updViewBtns();render();}
 // ── menu lateral: troca de visão e recolher ──
-const TIT={resumo:'Resumo Gerencial',ranking:'Ranking',kanban:'Kanban',tabela:'Tabela',gantt:'Gantt'};
+const TIT={resumo:'Resumo Gerencial',ranking:'Ranking',preench:'Preenchimento',kanban:'Kanban',tabela:'Tabela',gantt:'Gantt'};
 function vaiPara(v){
   VIEW=v; updViewBtns();
   const t=document.getElementById('tituloVista'); if(t) t.textContent=TIT[v]||'';
@@ -1609,6 +1669,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609011100"></script>
+<script src="../assets/build-check.js?v=202609151300"></script>
 </body>
 </html>
