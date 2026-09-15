@@ -237,10 +237,25 @@ if (colPlaca < 0 && colUni < 0) {
 }
 const COL_PLACA = colPlaca >= 0 ? colPlaca : 2;
 const COL_UNI   = colUni   >= 0 ? colUni   : 1;
-const COL_CONTR = [0, 1, 2].find(c => c !== COL_PLACA && c !== COL_UNI) ?? 0;
+/* O CONTRATO TAMBÉM É DESCOBERTO (15/09/2026). Era "a coluna que sobra entre
+   A, B e C" — o que funcionava por acaso e se calaria na próxima reorganização,
+   exatamente como já aconteceu com a placa. O número do contrato tem forma
+   própria (A1783K, B7007A: uma ou duas letras, 3 a 6 dígitos, até duas letras),
+   que a placa não tem (ABC1D23 começa com três letras). A coluna que mais casa
+   com essa forma é a do contrato; sem nenhuma, cai na regra antiga. */
+const ehContrato = v => /^[A-Z]{1,2}\s?\d{3,6}\s?[A-Z]{0,2}$/.test(String(v || '').toUpperCase().trim());
+let colContr = -1, melhorC = 0;
+for (let c = 0; c < idCols; c++) {
+  if (c === COL_PLACA || c === COL_UNI) continue;
+  const n = pontua(c, ehContrato);
+  if (n > melhorC) { melhorC = n; colContr = c; }
+}
+const COL_CONTR = colContr >= 0 ? colContr
+  : ([0, 1, 2].find(c => c !== COL_PLACA && c !== COL_UNI) ?? 0);
 console.log(`colunas de identificação: placa=${String.fromCharCode(65 + COL_PLACA)}`
   + ` (${melhorP}/${amostra.length} casam com a frota) · unidade=${String.fromCharCode(65 + COL_UNI)}`
-  + ` (${melhorU}/${amostra.length} no de-para) · contrato=${String.fromCharCode(65 + COL_CONTR)}`);
+  + ` (${melhorU}/${amostra.length} no de-para) · contrato=${String.fromCharCode(65 + COL_CONTR)}`
+  + (colContr >= 0 ? ` (${melhorC}/${amostra.length} com forma de nº de contrato)` : ' (por eliminação)'));
 
 const dados = rows.slice(2).filter(r => txtOf(r[COL_PLACA]).trim());
 console.log(`planilha: ${dados.length} veículo(s) · ${blocos.length} bloco(s) de mês`);
@@ -380,6 +395,8 @@ for (const r of dados) {
   if (!tipo) { semTaxa.push(placa); continue; }
   contratos.push({
     placa, placa_origem: placaOrig,
+    // o nº do contrato acompanha a placa na Carta (visão Placas Contrato)
+    contrato: txtOf(r[COL_CONTR]).trim() || null,
     unidade: uni.unidade, projeto: uni.projeto, tipo,
     taxa_km: tipo === 'variavel' ? +taxa.toFixed(6) : null,
     valor_fixo: tipo === 'fixo' ? fixo : null,
@@ -547,7 +564,7 @@ if (contratos.length) {
      explicar as placas sem km — para ele viajar até o PostgREST e derrubar a
      gravação inteira com PGRST204. Lista explícita não tem esse buraco: campo
      auxiliar novo simplesmente não entra. */
-  const COLS = ['placa','placa_origem','unidade','projeto','tipo','taxa_km',
+  const COLS = ['placa','placa_origem','contrato','unidade','projeto','tipo','taxa_km',
                 'valor_fixo','ultimo_km_informado','vig_referencia'];
   const payload = contratos.map(c => Object.fromEntries(
     COLS.filter(k => c[k] !== undefined).map(k => [k, c[k]])));
@@ -567,11 +584,24 @@ if (contratos.length) {
      criada no banco, o cron das 08h vira vermelho todo dia por um detalhe que
      não afeta a tela. Então: tenta com tudo; se o Postgrest reclamar da
      coluna (PGRST204), REPETE sem ela, avisando qual SQL falta. Só um erro de
-     verdade (tabela ausente, permissão) é que aborta. */
-  const enviaLote = async (lote, semPlacaOrigem) => {
+     verdade (tabela ausente, permissão) é que aborta.
+
+     A regra virou GERAL em 15/09/2026, quando entrou a coluna `contrato`: a
+     versão anterior sabia pular só a `placa_origem`, então cada coluna nova
+     precisava do seu próprio ramo — e enquanto o SQL não fosse rodado, o robô
+     quebrava. Agora qualquer coluna de OPCIONAIS que o banco ainda não tenha é
+     descartada, com o alter correspondente impresso no log. */
+  const OPCIONAIS = {
+    placa_origem: ['alter table public.contratos_placa   add column if not exists placa_origem text;',
+                   'alter table public.erp_abastecimentos add column if not exists placa_origem text;'],
+    contrato:     ['-- scripts/contrato-numero.sql (a coluna + a view + a materializada)',
+                   'alter table public.contratos_placa add column if not exists contrato text;'],
+  };
+  const faltando = new Set();
+  const enviaLote = async lote => {
     const corpo = lote.map(c => {
       const l = { ...c, atualizado_em: new Date().toISOString() };
-      if (semPlacaOrigem) delete l.placa_origem;
+      faltando.forEach(k => delete l[k]);
       return l;
     });
     return fetch(`${SB_URL}/rest/v1/contratos_placa?on_conflict=placa`, {
@@ -579,28 +609,29 @@ if (contratos.length) {
       body: JSON.stringify(corpo),
     });
   };
-  let semPO = false, gravadosCt = 0;
+  let gravadosCt = 0;
   for (let i = 0; i < payload.length; i += 500) {
     const lote = payload.slice(i, i + 500);
-    let res = await enviaLote(lote, semPO);
-    if (!res.ok && !semPO) {
+    let res = await enviaLote(lote);
+    while (!res.ok) {
       const t = await res.text();
-      if (/placa_origem/.test(t)) {
-        console.log('\n⚠ contratos_placa ainda não tem a coluna placa_origem —'
-          + ' gravando sem ela. Para ativar, rode no SQL Editor:');
-        console.log('    alter table public.contratos_placa   add column if not exists placa_origem text;');
-        console.log('    alter table public.erp_abastecimentos add column if not exists placa_origem text;');
-        semPO = true;
-        res = await enviaLote(lote, true);
-      } else {
+      // o PostgREST nomeia a coluna que não existe; só reagimos às opcionais
+      const alvo = Object.keys(OPCIONAIS).find(k => !faltando.has(k) && t.includes(k));
+      if (!alvo) {
         if (res.status === 404) console.error('\nA tabela contratos_placa ainda não existe.'
           + ' Rode scripts/erp-abastecimentos.sql no SQL Editor e tente de novo.');
         throw new Error(`contratos_placa: ${res.status} ${t.slice(0, 300)}`);
       }
+      console.log(`\n⚠ contratos_placa ainda não tem a coluna ${alvo} — gravando sem ela.`
+        + ' Para ativar, rode no SQL Editor:');
+      OPCIONAIS[alvo].forEach(s => console.log('    ' + s));
+      faltando.add(alvo);
+      res = await enviaLote(lote);
     }
-    if (!res.ok) throw new Error(`contratos_placa: ${res.status} ${(await res.text()).slice(0, 300)}`);
     gravadosCt += lote.length;
   }
+  const comNum = payload.filter(c => c.contrato).length;
   console.log(`gravado: ${gravadosCt} contrato(s) em contratos_placa`
-    + (semPO ? ' (sem placa_origem).' : '.'));
+    + (faltando.size ? ` (sem ${[...faltando].join(', ')}).` : '.')
+    + (faltando.has('contrato') ? '' : ` ${comNum} com nº de contrato.`));
 }
