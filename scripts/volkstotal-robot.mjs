@@ -42,6 +42,7 @@ const MODE  = (process.env.VT_MODE || 'sonda').toLowerCase();
 const USER  = process.env.VOLKSTOTAL_USER || '';
 const PASS  = process.env.VOLKSTOTAL_PASS || '';
 const SHOTS = 'volkstotal-shots';
+const DEBUG = process.env.VT_DEBUG === '1';
 
 const SB_URL = 'https://lozwipoeacpvplgkrxkq.supabase.co';
 const SB_KEY = process.env.GEM_SUPABASE_SERVICE_KEY || '';
@@ -333,110 +334,182 @@ await br.close();
    o Mês/Ano, Pesquisar; se o contrato não cobre o mês, um modal avisa e o
    robô vai para o próximo; se cobre, "Gerar Relatório" baixa o xlsx. */
 async function consulta(pg, contrato, vig) {
-  // TELA LIMPA A CADA BUSCA: o portal guarda o que já estava marcado, e sem
-  // zerar o segundo contrato viria somado ao primeiro — dado trocado sem erro
-  // nenhum, que é a pior espécie.
-  await pg.goto(ALVO, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  await pg.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
-
-  // marcar o checkbox ESCREVE o código em txtContrato (visto na sonda). É por
-  // esse campo que se confere se o clique pegou, e não pela marca do checkbox.
-  const box = pg.locator(`#check-${contrato}, #check-mob-${contrato}`);
-  const n = await box.count();
-  if (!n) throw new Error(`contrato ${contrato} não está no seletor`);
-  for (let i = 0; i < n; i++) {
-    await box.nth(i).check({ force: true }).catch(() => {});
-    if ((await pg.locator('#ctl00_cphMainContent_txtContrato').inputValue()).includes(contrato)) break;
-  }
-  const noCampo = await pg.locator('#ctl00_cphMainContent_txtContrato').inputValue();
-  if (!noCampo.includes(contrato)) throw new Error(`o contrato não entrou no campo (ficou "${noCampo}")`);
-
-  /* O CAMPO DO MÊS TEM MÁSCARA e fill() a ignora: ele escreve o valor de uma
-     vez, sem disparar o keypress que a máscara escuta — o campo fica com o
-     texto cru ou vazio e a busca sai no mês errado. Digitar caractere a
-     caractere é o que o Renan descreveu ("092026 já preenche a barra"). */
-  const cMes = pg.locator('#ctl00_cphMainContent_txtMesAno');
-  await cMes.click();
-  await cMes.fill('');
-  await cMes.pressSequentially(paraMMAAAA(vig), { delay: 50 });
-  const mes = await cMes.inputValue();
-  const esperado = `${vig.slice(5, 7)}/${vig.slice(0, 4)}`;
-  if (!mes.replace(/\s/g, '').includes(esperado)) {
-    throw new Error(`o mês não aplicou: queria ${esperado}, o campo ficou "${mes}"`);
-  }
-
-  await pg.locator('#ctl00_cphMainContent_btnPesquisar').click();
-  await pg.waitForLoadState('networkidle', { timeout: 60000 }).catch(() => {});
-  await pg.waitForTimeout(1200);
-
-  // O MODAL É O "SEM DADOS" — é SweetAlert2 (.swal2-popup), o mesmo que
-  // reclamou do Mês/Ano em branco na sonda. Fechar no OK e seguir.
-  const pop = pg.locator('.swal2-popup:visible');
-  if (await pop.count()) {
-    const txt = (await pop.first().innerText()).replace(/\s+/g, ' ').trim();
-    await pg.locator('.swal2-confirm:visible').first().click().catch(() => {});
-    await pg.waitForTimeout(400);
-    // um modal que NÃO seja "sem registros" é problema de verdade e precisa
-    // aparecer no log, não ser engolido como se fosse mês vazio
-    if (!/n[ãa]o.*(encontr|localiz|registro|resultado)|sem\s+(registro|dado|resultado)/i.test(txt)) {
-      throw new Error(`modal inesperado: ${txt.slice(0, 160)}`);
-    }
-    return { semDado: true, linhas: [] };
-  }
-
-  const btRel = pg.locator('input[value*="Relat" i], button, a').filter({ hasText: /gerar\s*relat/i })
-    .or(pg.locator('input[value*="Gerar Relat" i]'));
-  if (!(await btRel.count())) return { semDado: true, linhas: [] };   // sem botão = sem resultado
-
-  const [dl] = await Promise.all([
-    pg.waitForEvent('download', { timeout: 60000 }),
-    btRel.first().click(),
-  ]);
-  // o portal manda sempre o mesmo nome ("ConsultaValorNotaFiscal"), por isso
-  // o arquivo é salvo com contrato e mês — senão vira um monte de (1), (2)…
-  const arq = `${SHOTS}/${contrato}_${vig}${(dl.suggestedFilename().match(/\.[a-z]+$/i) || ['.xlsx'])[0]}`;
-  await dl.saveAs(arq);
-
-  const brutas = await xlsx(arq);
-  fs.unlinkSync(arq);                       // o dado vai para o banco, não para o artifact
-  if (!brutas.length) return { semDado: true, linhas: [] };
-
-  const c0 = brutas[0];
-  const K = {
-    chassi: acha(c0, 'chassi'), placa: acha(c0, 'placa'),
-    kmAnt: acha(c0, 'km anterior', 'quilometragem anterior'),
-    dtAnt: acha(c0, 'data anterior'),
-    kmAtu: acha(c0, 'km atual', 'quilometragem atual'),
-    dtAtu: acha(c0, 'data atual'),
-    faixa: acha(c0, 'faixa'),
-    kmRod: acha(c0, 'km rodado', 'quilometragem rodada'),
-    valor: acha(c0, 'valor km', 'valor'),
+  /* CADA ETAPA TEM NOME (15/09/2026): a 1ª rodada da coleta ficou sete minutos
+     numa única busca e o log não dizia onde — uma espera estourando o tempo
+     limite em silêncio parece igual a um portal lento. Agora o erro diz a
+     etapa, e com VT_DEBUG=1 cada passo aparece com o tempo que levou. */
+  let etapa = 'abrir a consulta';
+  const t0 = Date.now();
+  let tp = t0;
+  const passo = nome => {
+    if (DEBUG) log(`      · ${etapa} (${((Date.now() - tp) / 1000).toFixed(1)}s)`);
+    tp = Date.now(); etapa = nome;
   };
-  const faltando = Object.entries(K).filter(([, v]) => !v).map(([k]) => k);
-  if (faltando.length) {
-    throw new Error(`colunas não encontradas no relatório (${faltando.join(', ')})`
-      + ` — o que veio foi: ${Object.keys(c0).join(' | ')}`);
-  }
+  const erro = e => { const m = e && e.message ? e.message.split('\n')[0] : String(e);
+                      throw new Error(`[${etapa}] ${m.slice(0, 160)}`); };
 
-  const linhas = brutas.map(b => ({
-    contrato, vigencia: vig,
-    chassi: String(b[K.chassi] || '').trim().toUpperCase(),
-    placa:  String(b[K.placa]  || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, ''),
-    km_anterior: num(b[K.kmAnt]), data_anterior: dataISO(b[K.dtAnt]),
-    km_atual:    num(b[K.kmAtu]), data_atual:    dataISO(b[K.dtAtu]),
-    faixa: String(b[K.faixa] == null ? '' : b[K.faixa]).trim(),
-    km_rodado: num(b[K.kmRod]), valor: num(b[K.valor]),
-  })).filter(l => l.chassi || l.placa);
+  try {
+    // TELA LIMPA A CADA BUSCA: o portal guarda o que já estava marcado, e sem
+    // zerar o segundo contrato viria somado ao primeiro — dado trocado sem erro
+    // nenhum, que é a pior espécie.
+    await pg.goto(ALVO, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    /* 'networkidle' NÃO SERVE NUM PORTAL COM POLLING: se alguma chamada repete
+       sozinha, a rede nunca fica ociosa e a espera vai até o teto — 30 s aqui,
+       60 s depois da busca, por consulta. O que interessa é o campo estar de
+       pé, e isso o próprio locator espera. */
+    await pg.locator('#ctl00_cphMainContent_txtMesAno').waitFor({ state: 'visible', timeout: 30000 });
+    passo('marcar o contrato');
 
-  /* O VALOR TOTAL DA NOTA É A CONFERÊNCIA (o Renan mostrou os dois na tela):
-     a soma das linhas tem de bater com o total. No caso que ele mostrou a
-     soma deu R$ 6.060,01 contra R$ 6.060,00 de total — um centavo de
-     arredondamento, então a folga é de um centavo POR LINHA, não fixa. */
-  const totTxt = await pg.locator('#ctl00_cphMainContent_lblTotalNota2').inputValue().catch(() => '');
-  const total = totTxt && num(totTxt) ? num(totTxt) : null;
-  const soma = linhas.reduce((s, l) => s + l.valor, 0);
-  const confere = total == null || Math.abs(soma - total) <= Math.max(0.01 * linhas.length, 0.01);
-  return { semDado: false, linhas, total, confere };
+    /* MARCAR O CONTRATO É POR EVENTO, NÃO POR CLIQUE (bug real, 15/09/2026).
+       Os checkboxes moram num dropdown fechado, então `check({force:true})`
+       marca o elemento mas o clique real não chega nele e o handler do site —
+       que é quem escreve o código em txtContrato — não roda. O sintoma foi
+       silencioso: a tela abre com um contrato JÁ na sessão (txtContrato vinha
+       com A1783K num carregamento novo), então o campo nunca ficava vazio; o
+       robô teria consultado o contrato errado achando que marcou o certo.
+       Disparar click/change no próprio elemento roda o handler com o dropdown
+       fechado. */
+    const campoCt = pg.locator('#ctl00_cphMainContent_txtContrato');
+    const antes = await campoCt.inputValue().catch(() => '');
+    const marcou = await pg.evaluate(cod => {
+      const todos = [...document.querySelectorAll('input[type=checkbox][id^="check-"]')];
+      const meus = todos.filter(e => e.id.replace(/^check-(mob-)?/, '') === cod);
+      if (!meus.length) return { achou: false };
+      // DESMARCAR O QUE ESTAVA: o portal guarda a seleção, e um contrato
+      // esquecido marcado somaria a nota de dois contratos numa consulta só
+      todos.filter(e => e.checked && !meus.includes(e)).forEach(e => {
+        e.checked = false;
+        e.dispatchEvent(new Event('click',  { bubbles: true }));
+        e.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      meus.forEach(e => {
+        if (!e.checked) {
+          e.checked = true;
+          e.dispatchEvent(new Event('click',  { bubbles: true }));
+          e.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+      return { achou: true };
+    }, contrato);
+    if (!marcou.achou) throw new Error(`contrato ${contrato} não está no seletor`);
+    await pg.waitForTimeout(300);
+
+    /* A CONFERÊNCIA É POR IGUALDADE, NÃO POR "CONTÉM": com dois contratos
+       marcados o campo traria os dois e um `includes` passaria, consultando a
+       soma de dois contratos como se fosse um. Se o handler não escreveu,
+       escrever o valor direto é o plano B — o campo vai no post da busca. */
+    let noCampo = (await campoCt.inputValue().catch(() => '')).trim();
+    if (noCampo.toUpperCase() !== contrato) {
+      if (DEBUG) log(`      campo do contrato veio "${noCampo}" (antes "${antes}") — escrevendo direto`);
+      await campoCt.fill(contrato);
+      noCampo = (await campoCt.inputValue().catch(() => '')).trim();
+    }
+    if (noCampo.toUpperCase() !== contrato) {
+      throw new Error(`o contrato não entrou no campo (ficou "${noCampo}")`);
+    }
+    passo('digitar o mês');
+
+    /* O CAMPO DO MÊS TEM MÁSCARA e fill() a ignora: ele escreve o valor de uma
+       vez, sem disparar o keypress que a máscara escuta — o campo fica com o
+       texto cru ou vazio e a busca sai no mês errado. Digitar caractere a
+       caractere é o que o Renan descreveu ("092026 já preenche a barra"). */
+    const cMes = pg.locator('#ctl00_cphMainContent_txtMesAno');
+    await cMes.click();
+    await cMes.fill('');
+    await cMes.pressSequentially(paraMMAAAA(vig), { delay: 50 });
+    const mes = await cMes.inputValue();
+    const esperado = `${vig.slice(5, 7)}/${vig.slice(0, 4)}`;
+    if (!mes.replace(/\s/g, '').includes(esperado)) {
+      throw new Error(`o mês não aplicou: queria ${esperado}, o campo ficou "${mes}"`);
+    }
+    passo('pesquisar');
+
+    /* O RESULTADO CHEGA POR POSTBACK, e esperar por 'networkidle' num portal
+       com chamada periódica vai até o teto sempre. O que decide é: apareceu o
+       modal de "sem dados" OU apareceu o "Gerar Relatório". Esperar pelos DOIS
+       ao mesmo tempo termina assim que um deles vier. */
+    const btRel = pg.locator('input[value*="Relat" i]')
+      .or(pg.locator('button, a').filter({ hasText: /gerar\s*relat/i }));
+    await pg.locator('#ctl00_cphMainContent_btnPesquisar').click();
+    await Promise.race([
+      pg.locator('.swal2-popup').first().waitFor({ state: 'visible', timeout: 45000 }),
+      btRel.first().waitFor({ state: 'visible', timeout: 45000 }),
+    ]).catch(() => {});                       // nenhum dos dois = trata como sem dado
+    passo('ler o resultado');
+
+    // O MODAL É O "SEM DADOS" — é SweetAlert2 (.swal2-popup), o mesmo que
+    // reclamou do Mês/Ano em branco na sonda. Fechar no OK e seguir.
+    const pop = pg.locator('.swal2-popup:visible');
+    if (await pop.count()) {
+      const txt = (await pop.first().innerText()).replace(/\s+/g, ' ').trim();
+      await pg.locator('.swal2-confirm:visible').first().click().catch(() => {});
+      await pg.waitForTimeout(300);
+      // um modal que NÃO seja "sem registros" é problema de verdade e precisa
+      // aparecer no log, não ser engolido como se fosse mês vazio
+      if (!/n[ãa]o.*(encontr|localiz|registro|resultado|dado)|sem\s+(registro|dado|resultado)/i.test(txt)) {
+        throw new Error(`modal inesperado: ${txt.slice(0, 160)}`);
+      }
+      return { semDado: true, linhas: [] };
+    }
+    if (!(await btRel.count())) return { semDado: true, linhas: [] };   // sem botão = sem resultado
+
+    // o Valor Total é lido ANTES do download: depois do clique a tela pode
+    // recarregar e o campo voltar a "R$ 0,00"
+    const totTxt = await pg.locator('#ctl00_cphMainContent_lblTotalNota2').inputValue().catch(() => '');
+    passo('gerar e baixar o relatório');
+
+    const [dl] = await Promise.all([
+      pg.waitForEvent('download', { timeout: 60000 }),
+      btRel.first().click(),
+    ]);
+    // o portal manda sempre o mesmo nome ("ConsultaValorNotaFiscal"), por isso
+    // o arquivo é salvo com contrato e mês — senão vira um monte de (1), (2)…
+    const arq = `${SHOTS}/${contrato}_${vig}${(dl.suggestedFilename().match(/\.[a-z]+$/i) || ['.xlsx'])[0]}`;
+    await dl.saveAs(arq);
+    passo('ler o xlsx');
+
+    const brutas = await xlsx(arq);
+    fs.unlinkSync(arq);                     // o dado vai para o banco, não para o artifact
+    if (!brutas.length) return { semDado: true, linhas: [] };
+
+    const c0 = brutas[0];
+    if (DEBUG) log(`      colunas do relatório: ${Object.keys(c0).join(' | ')}`);
+    const K = {
+      chassi: acha(c0, 'chassi'), placa: acha(c0, 'placa'),
+      kmAnt: acha(c0, 'km anterior', 'quilometragem anterior'),
+      dtAnt: acha(c0, 'data anterior'),
+      kmAtu: acha(c0, 'km atual', 'quilometragem atual'),
+      dtAtu: acha(c0, 'data atual'),
+      faixa: acha(c0, 'faixa'),
+      kmRod: acha(c0, 'km rodado', 'quilometragem rodada'),
+      valor: acha(c0, 'valor km', 'valor'),
+    };
+    const faltando = Object.entries(K).filter(([, v]) => !v).map(([k]) => k);
+    if (faltando.length) {
+      throw new Error(`colunas não encontradas no relatório (${faltando.join(', ')})`
+        + ` — o que veio foi: ${Object.keys(c0).join(' | ')}`);
+    }
+
+    const linhas = brutas.map(b => ({
+      contrato, vigencia: vig,
+      chassi: String(b[K.chassi] || '').trim().toUpperCase(),
+      placa:  String(b[K.placa]  || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, ''),
+      km_anterior: num(b[K.kmAnt]), data_anterior: dataISO(b[K.dtAnt]),
+      km_atual:    num(b[K.kmAtu]), data_atual:    dataISO(b[K.dtAtu]),
+      faixa: String(b[K.faixa] == null ? '' : b[K.faixa]).trim(),
+      km_rodado: num(b[K.kmRod]), valor: num(b[K.valor]),
+    })).filter(l => l.chassi || l.placa);
+
+    /* O VALOR TOTAL DA NOTA É A CONFERÊNCIA (o Renan mostrou os dois na tela):
+       a soma das linhas tem de bater com o total. No caso que ele mostrou a
+       soma deu R$ 6.060,01 contra R$ 6.060,00 de total — um centavo de
+       arredondamento, então a folga é de um centavo POR LINHA, não fixa. */
+    const total = totTxt && num(totTxt) ? num(totTxt) : null;
+    const soma = linhas.reduce((s, l) => s + l.valor, 0);
+    const confere = total == null || Math.abs(soma - total) <= Math.max(0.01 * linhas.length, 0.01);
+    passo('fim');
+    return { semDado: false, linhas, total, confere };
+  } catch (e) { erro(e); }
 }
 
 async function xlsx(arq) {
