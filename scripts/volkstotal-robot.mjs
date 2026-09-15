@@ -120,28 +120,108 @@ try {
   }
   log('  ✔ login OK');
 
-  // ── 3. o que a tela de consulta oferece ────────────────────────────────
+  // ── 3. a tela de consulta ──────────────────────────────────────────────
+  /* O LOGIN IGNORA A ReturnUrl (achado na 1ª sonda, 15/09/2026): depois do
+     btnLogin o portal cai em Index.aspx, não no destino que a ReturnUrl
+     carregava. A 1ª sonda fotografou a home achando que era a consulta — e a
+     home TAMBÉM tem o seletor de contratos, então nada parecia errado. Por isso
+     a navegação para a consulta é explícita e a URL é conferida. */
   log('');
   log('── 3. a tela de consulta ──');
-  const inputs = await pg.$$eval('input,select,textarea', els => els.map(e => ({
-    tag: e.tagName.toLowerCase(), id: e.id, name: e.name, type: e.type || '',
-    val: (e.value || '').slice(0, 30),
-  })).filter(c => c.id || c.name));
-  log(`  ${inputs.length} campo(s) na página:`);
-  inputs.slice(0, 40).forEach(c => log(`    ${c.tag}/${c.type} id=${c.id || '—'} val="${c.val}"`));
-
-  const botoes = await pg.$$eval('input[type=submit],input[type=button],button,a.btn', els =>
-    els.map(e => (e.value || e.innerText || '').trim()).filter(Boolean));
-  log(`  botões: ${[...new Set(botoes)].join(' · ')}`);
-
-  // o seletor de contratos do topo — é dele que sai a lista a percorrer
-  const contratos = await pg.$$eval('input[type=checkbox]', els => els.map(e => {
-    const lbl = e.closest('label') || e.parentElement;
-    return ((lbl && lbl.innerText) || e.value || '').trim();
-  }).filter(Boolean));
-  log(`  ${contratos.length} contrato(s) no seletor` + (contratos.length ? ': ' + contratos.join(' · ') : ''));
-
+  await pg.goto(ALVO, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await pg.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+  log(`  url: ${pg.url()}`);
+  if (!/ConsultaValorNotaFiscal/i.test(pg.url())) {
+    log('  ✘ não é a tela de consulta — a sessão não seguiu para cá');
+    await shot('04-nao-e-consulta');
+    await br.close();
+    process.exit(1);
+  }
   await shot('04-consulta');
+
+  const dump = async rot => {
+    // os campos que interessam são os que NÃO são a lista de contratos
+    const campos = await pg.$$eval('input,select,textarea', els => els.map(e => ({
+      tag: e.tagName.toLowerCase(), id: e.id, name: e.name, type: e.type || '',
+      ph: e.placeholder || '', val: (e.value || '').slice(0, 30),
+      vis: !!(e.offsetParent || e.type === 'hidden'),
+    })));
+    const chk = campos.filter(c => c.type === 'checkbox');
+    const resto = campos.filter(c => c.type !== 'checkbox' && c.type !== 'hidden' && (c.id || c.name));
+    log(`  [${rot}] ${resto.length} campo(s) fora da lista de contratos:`);
+    resto.forEach(c => log(`    ${c.tag}/${c.type} id=${c.id || '—'} name=${c.name || '—'}`
+      + ` ph="${c.ph}" val="${c.val}"${c.vis ? '' : ' (oculto)'}`));
+    // o código do contrato sai do id; desktop e mobile repetem o mesmo código
+    const cods = [...new Set(chk.map(c => (c.id || '').replace(/^check-(mob-)?/, '')).filter(Boolean))];
+    log(`  [${rot}] ${chk.length} checkbox(es) → ${cods.length} contrato(s): ${cods.join(' · ')}`);
+    const clic = await pg.$$eval('input[type=submit],input[type=button],input[type=image],button,a', els =>
+      els.map(e => ({ t: (e.value || e.innerText || e.title || e.alt || '').trim().replace(/\s+/g, ' '),
+                      id: e.id, tag: e.tagName.toLowerCase(),
+                      vis: !!e.offsetParent }))
+        .filter(c => c.t && c.t.length < 60 && c.vis));
+    log(`  [${rot}] clicáveis: ` + [...new Set(clic.map(c => `${c.t}${c.id ? '#' + c.id : ''}`))].join(' · '));
+    return cods;
+  };
+  const cods = await dump('consulta');
+
+  // ── 4. uma busca de verdade ────────────────────────────────────────────
+  /* Uma consulta não muda nada no portal, e é ela que responde o que sobrou:
+     como se preenche o Mês/Ano (é campo com máscara), o que acontece quando o
+     contrato não tem dado no mês (o Renan disse que aparece um modal com OK),
+     quais são as colunas do resultado e se o "Gerar Relatório" só existe quando
+     veio linha. Sem isso eu estaria escrevendo a coleta no escuro. */
+  const ALVO_CT  = process.env.VT_CONTRATO || cods[0];
+  const ALVO_MES = process.env.VT_MESANO   || '092026';
+  log('');
+  log(`── 4. busca de teste: contrato ${ALVO_CT} · ${ALVO_MES} ──`);
+  const box = pg.locator(`#check-${ALVO_CT}`).or(pg.locator(`#check-mob-${ALVO_CT}`));
+  const vis = box.filter({ visible: true }).first();
+  await (await vis.count() ? vis : box.first()).check({ force: true });
+  log('  contrato marcado');
+
+  // o campo do mês tem MÁSCARA: fill() escreve de uma vez e a máscara não roda.
+  // Digitar caractere a caractere é o que o Renan descreveu ("092026 já
+  // preenche a barra") e o que a máscara espera.
+  const cMes = pg.locator('input[type=text]:visible').filter({ hasNot: pg.locator('[readonly]') });
+  const nMes = await cMes.count();
+  log(`  ${nMes} campo(s) de texto visível(is) — o do mês é o que aceita a máscara`);
+  if (nMes) {
+    const alvo = cMes.first();
+    await alvo.click();
+    await alvo.pressSequentially(ALVO_MES, { delay: 60 });
+    log(`  mês digitado → campo ficou "${await alvo.inputValue()}"`);
+  }
+  await shot('05-preenchido');
+
+  const btPesq = pg.locator('input[type=submit],input[type=button],button,a')
+    .filter({ hasText: /pesquis/i }).or(pg.locator('input[value*="Pesquis" i]'));
+  if (await btPesq.count()) {
+    await btPesq.first().click();
+    await pg.waitForLoadState('networkidle', { timeout: 60000 }).catch(() => {});
+    log('  Pesquisar clicado');
+  } else {
+    log('  ⚠ não achei o botão Pesquisar');
+  }
+  await pg.waitForTimeout(2500);
+  await shot('06-resultado');
+
+  // modal de "sem dados"? é o caso que o robô tem de saber pular
+  const modal = await pg.$$eval('.modal,.ui-dialog,[role=dialog],.swal2-popup', els =>
+    els.filter(e => e.offsetParent).map(e => e.innerText.replace(/\s+/g, ' ').trim().slice(0, 200)));
+  if (modal.length) log(`  MODAL na tela: ${modal.join(' | ')}`);
+  else log('  sem modal — a busca deve ter trazido linhas');
+
+  // as tabelas da página, com as colunas de cada uma
+  const tabs = await pg.$$eval('table', els => els.filter(e => e.offsetParent).map(t => ({
+    id: t.id,
+    cab: [...t.querySelectorAll('thead th, tr:first-child th, tr:first-child td')]
+      .map(e => e.innerText.replace(/\s+/g, ' ').trim()).filter(Boolean),
+    linhas: t.querySelectorAll('tbody tr').length || Math.max(0, t.rows.length - 1),
+  })));
+  log(`  ${tabs.length} tabela(s) visível(is):`);
+  tabs.forEach(t => log(`    ${t.id ? '#' + t.id + ' ' : ''}${t.linhas} linha(s) · ${t.cab.join(' | ')}`));
+
+  await dump('depois da busca');
   log('');
   log('Sonda concluída. Com o DOM acima eu escrevo a coleta sem adivinhar seletor.');
 } catch (e) {
