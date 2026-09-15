@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="202609151500">
+<meta name="build" content="202609151700">
 <title>Conferência de Locação · Gestão em Movimento</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1429,13 +1429,16 @@ async function mesclaFaturamento(){
    deixa resíduo do anterior). */
 async function mesclaFT(){
   const arqs=Object.values(ARQ).filter(a=>a.tipo==='ft'&&!a.erro);
-  const meses=[...new Set(arqs.filter(a=>a.mes&&a.ano).map(a=>a.ano*100+a.mes))];
-  if(meses.length!==1){
-    flash(meses.length>1 ? 'Os arquivos do Freightech são de meses diferentes — suba um mês por vez'
-                         : 'Arquivo do Freightech sem MM_AAAA no nome — não sei de que mês é', true);
+  // Vários meses na mesma leva é NORMAL e necessário: a etapa mensal de um mês
+  // é paga pela remuneração do mês anterior. O mês FECHADO é o mais recente da
+  // leva; os anteriores entram só para alimentar a etapa mensal.
+  const meses=[...new Set(arqs.filter(a=>a.mes&&a.ano).map(a=>a.ano*100+a.mes))].sort((a,b)=>a-b);
+  if(!meses.length){
+    flash('Arquivo do Freightech sem MM_AAAA no nome — não sei de que mês é', true);
     return;
   }
-  const ano=Math.floor(meses[0]/100), mes=meses[0]%100, vig=vigTxt({mes,ano});
+  const alvo=meses[meses.length-1];
+  const ano=Math.floor(alvo/100), mes=alvo%100, vig=vigTxt({mes,ano});
   const b=BASE.get(vig);
   if(!b||!b.linhas||!b.linhas.length){
     flash('O mês '+vigRot(vig)+' ainda não existe: importe a prévia antes do Freightech', true);
@@ -1484,8 +1487,10 @@ async function mesclaFT(){
   flash('Freightech de '+vigRot(vig)+' gravado: '+comFT+' ativo(s) com remuneração'
         +(novas?' · '+novas+' sem prévia':'')
         // a etapa mensal é paga pelo mês anterior: se ele não veio nos arquivos,
-        // esses ativos ficam sem remuneração e ninguém entende por quê
-        +(semMensal?' · ⚠ '+semMensal+' da etapa mensal sem FT de '+vigRot(vigTxt(ant)):''));
+        // esses ativos ficam sem remuneração e ninguém entende por quê — então o
+        // aviso já diz o que fazer, senão vira um número solto na tela
+        +(semMensal?' · ⚠ '+semMensal+' da etapa mensal sem FT de '+vigRot(vigTxt(ant))
+                    +' — suba junto os arquivos de '+String(ant.mes).padStart(2,'0')+'_'+ant.ano:''));
 }
 
 async function guardaMes(vig,linhas){
@@ -1925,6 +1930,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609151500"></script>
+<script src="../assets/build-check.js?v=202609151700"></script>
 </body>
 </html>
