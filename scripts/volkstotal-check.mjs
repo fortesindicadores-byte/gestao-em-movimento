@@ -144,9 +144,41 @@ async function doPortal() {
     if (p.length < passo) break;
   }
   console.log(`portal:   ${out.length} linha(s) em vw_contrato_km`);
-  return out.map(l => ({ vig: l.vigencia, placa: placaKey(l.placa || l.chassi),
-                         contrato: String(l.contrato || '').toUpperCase(),
-                         km: +l.km_rodado || 0, valor: +l.valor || 0 }));
+
+  /* O RELATÓRIO NEM SEMPRE PREENCHE A PLACA (achado em 15/09/2026): em alguns
+     meses a coluna "Placa do Veículo" vem vazia e sobra só o chassi. Como o
+     cruzamento com a planilha é POR PLACA, a mesma linha aparecia dos dois
+     lados como se fosse exclusiva de cada um — em agosto eram 8 placas e
+     R$ 1.942,95 de diferença que não existia (portal 953557TPXNR050136
+     R$ 774,00 ↔ planilha RHU8F38 R$ 774,00, o mesmo dinheiro duas vezes).
+
+     Não precisa de de-para externo: o PRÓPRIO portal preenche a placa desse
+     chassi em outros meses. O mapa chassi→placa é montado com as linhas que
+     têm as duas, e as linhas sem placa passam a usá-lo. O que não achar par
+     continua pelo chassi, e o log diz quantas foram resolvidas e quantas
+     sobraram — resolver em silêncio esconderia um chassi que nunca aparece
+     com placa nenhuma. */
+  const dePara = new Map();
+  out.forEach(l => {
+    const p = placaKey(l.placa), c = String(l.chassi || '').trim().toUpperCase();
+    if (p && c && !dePara.has(c)) dePara.set(c, p);
+  });
+  let resolvidas = 0, semPlaca = 0;
+  const linhas = out.map(l => {
+    let placa = placaKey(l.placa);
+    if (!placa) {
+      const c = String(l.chassi || '').trim().toUpperCase();
+      if (dePara.has(c)) { placa = dePara.get(c); resolvidas++; }
+      else { placa = c; semPlaca++; }
+    }
+    return { vig: l.vigencia, placa, contrato: String(l.contrato || '').toUpperCase(),
+             km: +l.km_rodado || 0, valor: +l.valor || 0 };
+  });
+  if (resolvidas || semPlaca) {
+    console.log(`          ${dePara.size} chassi(s) com placa conhecida · ${resolvidas} linha(s)`
+      + ` sem placa resolvidas pelo chassi · ${semPlaca} sem par (ficam pelo chassi)`);
+  }
+  return linhas;
 }
 
 // ── comparação ────────────────────────────────────────────────────────────
