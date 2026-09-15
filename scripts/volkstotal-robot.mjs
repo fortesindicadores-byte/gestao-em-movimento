@@ -281,8 +281,9 @@ try {
   const linhas = [];
   const semDado = [];
   const falhou = [];
-  let feitas = 0;
+  let feitas = 0, gravadasAte = 0;
   for (const ct of paresCt) {
+    const antesDoCt = linhas.length;
     for (const vig of alvoVig) {
       feitas++;
       const rot = `${ct} ${vig}`;
@@ -310,6 +311,19 @@ try {
         await pg.goto(ALVO, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {});
       }
     }
+    /* GRAVA A CADA CONTRATO (15/09/2026). A 1ª coleta do ano rodou 28 minutos,
+       trouxe as 1.977 linhas certas, e PERDEU TUDO numa falha da gravação
+       final. Salvar ao fim de cada contrato custa uma chamada a mais e faz o
+       trabalho já feito sobreviver a qualquer tropeço do que vem depois — o
+       upsert por chave torna a repetição inofensiva. */
+    if (MODE === 'gravar' && linhas.length > antesDoCt) {
+      try {
+        await grava(linhas.slice(antesDoCt), true);
+        gravadasAte = linhas.length;
+      } catch (e) {
+        log(`  ⚠ não gravou o contrato ${ct}: ${e.message.split('\n')[0].slice(0, 200)}`);
+      }
+    }
   }
 
   log('');
@@ -328,15 +342,49 @@ try {
   [...porVig.entries()].sort().forEach(([v, t]) => log(`      ${v}  ${String(t.n).padStart(4)} linha(s)`
     + ` · ${t.ct.size} contrato(s) · ${numBR(t.km).padStart(11)} km · ${brl(t.v).padStart(16)}`));
 
+  /* O MESMO CHASSI APARECE MAIS DE UMA VEZ NO MESMO CONTRATO+MÊS (achado na
+     1ª coleta do ano, 15/09/2026): o Postgres recusou o upsert com "ON
+     CONFLICT DO UPDATE command cannot affect row a second time" — duas linhas
+     do MESMO lote disputando a mesma chave. A tabela assumia um veículo por
+     mês, e o relatório tem coluna Faixa: a hipótese é que o km que atravessa
+     faixas gera uma linha por faixa, com preço diferente em cada.
+
+     O diagnóstico imprime as duplicatas INTEIRAS em vez de eu escolher uma
+     chave no escuro — somar as linhas ou ficar com uma delas seria inventar
+     regra de cobrança. */
+  const porChave = new Map();
+  linhas.forEach(l => {
+    const k = `${l.contrato}|${l.vigencia}|${l.chassi}`;
+    (porChave.get(k) || porChave.set(k, []).get(k)).push(l);
+  });
+  const dups = [...porChave.entries()].filter(([, v]) => v.length > 1);
+  if (dups.length) {
+    const comFaixa = dups.filter(([, v]) => new Set(v.map(l => l.faixa)).size === v.length).length;
+    log('');
+    log(`   ⚠ ${dups.length} chave(s) contrato+vigência+chassi com MAIS DE UMA linha`);
+    log(`     ${comFaixa} delas têm uma FAIXA diferente em cada linha`
+      + ` (é a coluna Faixa que as separa) · ${dups.length - comFaixa} repetem a faixa`);
+    log('     as 3 primeiras, linha a linha:');
+    dups.slice(0, 3).forEach(([k, v]) => {
+      log(`        ${k}`);
+      v.forEach(l => log(`           faixa "${l.faixa}" · km ${numBR(l.km_anterior)} → ${numBR(l.km_atual)}`
+        + ` · rodado ${numBR(l.km_rodado)} · ${brl(l.valor)}`
+        + ` · ${l.data_anterior || '—'} → ${l.data_atual || '—'}`));
+    });
+  } else {
+    log('   nenhuma chave repetida: um chassi por contrato e mês.');
+  }
+
   if (MODE !== 'gravar') {
     log('');
     log('modo teste — nada foi gravado. Rode com modo=gravar para subir.');
     await br.close();
     process.exit(0);
   }
-  await grava(linhas);
+  // o que sobrou (o último contrato falhou ao gravar, ou nada foi gravado ainda)
+  if (linhas.length > gravadasAte) await grava(linhas.slice(gravadasAte));
   log('');
-  log('Coleta concluída.');
+  log(`Coleta concluída. ${linhas.length} linha(s) no banco.`);
 } catch (e) {
   log(`  ✘ falhou: ${e.message}`);
   await shot('99-erro');
@@ -473,9 +521,13 @@ async function consulta(pg, contrato, vig) {
       const txt = (await pop.first().innerText()).replace(/\s+/g, ' ').trim();
       await pg.locator('.swal2-confirm:visible').first().click().catch(() => {});
       await pg.waitForTimeout(300);
-      // um modal que NÃO seja "sem registros" é problema de verdade e precisa
-      // aparecer no log, não ser engolido como se fosse mês vazio
-      if (!/n[ãa]o.*(encontr|localiz|registro|resultado|dado)|sem\s+(registro|dado|resultado)/i.test(txt)) {
+      /* A FRASE DO PORTAL É "Nenhum registro encontrado" (achado na 1ª coleta
+         do ano, 15/09/2026) — não tem "não" nem "sem", que era o que meu
+         filtro procurava. Resultado: o modal legítimo de mês sem contrato
+         entrava como FALHA, e a contagem de falhas ficou cheia de pares que
+         só não têm dado. Um modal que de fato não seja o de vazio continua
+         virando erro, para não ser engolido como se fosse mês sem dado. */
+      if (!/nenhum\s+(registro|resultado|dado)|n[ãa]o.*(encontr|localiz|registro|resultado|dado)|sem\s+(registro|dado|resultado)/i.test(txt)) {
         throw new Error(`modal inesperado: ${txt.slice(0, 160)}`);
       }
       return { semDado: true, linhas: [] };
@@ -596,18 +648,31 @@ async function xlsx(arq) {
    que a migração do Km/L ensinou a não cometer (lá o comparador rodou antes e
    pegou o que a planilha escondia). Então: o robô grava o que o portal diz, e
    a troca da fonte vem depois de o comparador mostrar que bate. */
-async function grava(linhas) {
+async function grava(linhas, parcial = false) {
   if (!SB_KEY) { console.error('GEM_SUPABASE_SERVICE_KEY ausente'); process.exit(1); }
   /* LEITURA VAZIA NÃO APAGA NADA (a mesma trava do contratos-robot, que já
      salvou 733 lançamentos): se o portal mudar e a coleta render zero, o robô
-     aborta antes de encostar no banco. */
+     aborta antes de encostar no banco. Numa gravação PARCIAL isso não vale —
+     contrato sem linha nenhuma é normal, e não é motivo para derrubar o run. */
   if (!linhas.length) {
+    if (parcial) return;
     console.error('\n⚠ NADA A GRAVAR: nenhuma linha coletada. Abortando sem tocar no banco.');
     process.exit(1);
   }
   const H = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
   const agora = new Date().toISOString();
-  const corpo = linhas.map(l => ({ ...l, coletado_em: agora }));
+  /* DUAS LINHAS COM A MESMA CHAVE NO MESMO LOTE O POSTGRES RECUSA (bug real,
+     15/09/2026): "ON CONFLICT DO UPDATE command cannot affect row a second
+     time" — e a coleta inteira, 28 minutos, foi junto. Enquanto a chave certa
+     não está decidida (o diagnóstico acima mostra se é a Faixa que separa as
+     linhas), o lote é desduplicado por contrato+vigência+chassi+faixa, que é o
+     que o relatório parece usar. O que ainda colidir depois disso é contado e
+     aparece no log em vez de derrubar a gravação. */
+  const vistas = new Map();
+  linhas.forEach(l => vistas.set(`${l.contrato}|${l.vigencia}|${l.chassi}|${l.faixa}`, l));
+  const perdidas = linhas.length - vistas.size;
+  if (perdidas) log(`   ⚠ ${perdidas} linha(s) com chave repetida (mesma faixa) — ficou a última de cada`);
+  const corpo = [...vistas.values()].map(l => ({ ...l, coletado_em: agora }));
   let n = 0;
   for (let i = 0; i < corpo.length; i += 500) {
     const lote = corpo.slice(i, i + 500);
