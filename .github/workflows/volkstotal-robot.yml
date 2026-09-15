@@ -1,0 +1,41 @@
+name: Volkstotal Robot (VW -> Supabase)
+
+# Contrato de manutenção por km, do portal Volks|Total da VW Caminhões e Ônibus.
+# 1ª fase: rodar no modo "sonda" — ela responde se o Actions alcança o portal,
+# se o login passa e como é o DOM da tela de consulta. Não coleta nem grava.
+# A coleta ("run") é escrita depois, com o DOM real que a sonda imprimir.
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "sonda = alcança? login passa? como é o DOM · run = coleta e grava"
+        required: true
+        default: "sonda"
+        type: choice
+        options: [sonda, run]
+
+jobs:
+  robo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Instalar Playwright
+        run: npm i -D playwright@1.47.2 && npx playwright install --with-deps chromium
+      - name: Rodar
+        env:
+          VT_MODE: ${{ github.event.inputs.modo || 'sonda' }}
+          VOLKSTOTAL_USER: ${{ secrets.VOLKSTOTAL_USER }}
+          VOLKSTOTAL_PASS: ${{ secrets.VOLKSTOTAL_PASS }}
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/volkstotal-robot.mjs
+      - name: Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: volkstotal-shots
+          path: volkstotal-shots/
+          if-no-files-found: ignore
+          retention-days: 7
