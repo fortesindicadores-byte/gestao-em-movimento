@@ -1,0 +1,28 @@
+name: Volkstotal Check (portal x planilha)
+
+# Compara, vigência a vigência, o que o robô buscou no portal da VW
+# (vw_contrato_km) com o que a planilha "Contratos Man." está subindo hoje:
+# placas, km e valor, mais as placas que explicam cada diferença.
+#
+# É a conferência que vem ANTES de a Carta de Custos trocar de fonte
+# (Renan, 15/09/2026). Não escreve nada.
+on:
+  workflow_dispatch:
+    inputs:
+      vig:
+        description: "Só estas vigências AAAA-MM, separadas por vírgula (vazio = todas)"
+        required: false
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Comparar
+        env:
+          VT_VIG: ${{ github.event.inputs.vig }}
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/volkstotal-check.mjs
