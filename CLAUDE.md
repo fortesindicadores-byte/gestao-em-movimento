@@ -1163,6 +1163,31 @@ o mesmo buraco de 27/08).
 2. **O modo `tabelas` não lista todos os slicers.** Ele mostrou só Empresa/Regional/Filial na Blitz e eu afirmei que não havia filtro de mês; o print do Renan mostrou Ano e Mês. Slicer que não aparece **não prova ausência**.
 3. **Sucesso parcial fecha o job em vermelho.** O Conf Detalhe de 10/09 gravou tudo e ainda assim é `failure`, porque 2 de 13 filiais não responderam. Ler só o status engana nos dois sentidos.
 
+## Robô Volks|Total (VW → contrato de manutenção por km) — 15/09/2026
+
+Substitui o que é digitado à mão na planilha **"Contratos Man."**: por contrato e por mês, uma linha por chassi com km anterior, km atual, km rodado e o valor cobrado. Peças: `scripts/volkstotal-robot.mjs` (Playwright) · workflow **Volkstotal Robot** (`sonda` · `teste` · `gravar`, com recorte por contrato/vigência/ano) · `scripts/volkstotal-supabase.sql` → tabela **`vw_contrato_km`** (PK `contrato, vigencia, chassi`) · Secrets `VOLKSTOTAL_USER` / `VOLKSTOTAL_PASS`.
+
+**O portal é alcançável pelo Actions** (HTTP 302 em 577 ms) — ao contrário do Qlik, que ficou parqueado por isso. **43 contratos** no seletor (o log mostra 86 checkboxes porque o portal repete a lista na versão mobile, e um 44º que é o `swal2-checkbox` do próprio modal).
+
+**O caminho:** `Login.aspx` → **Acesso Clientes** → `LoginCliente.aspx` (`txtUsuario` · `txtSenha` · `btnLogin`) → navegar para `ConsultaValorNotaFiscal.aspx` → marcar o contrato → digitar o Mês/Ano → `btnPesquisar` → **Gerar Relatório** → xlsx.
+
+**As sete armadilhas, cada uma custou uma rodada:**
+1. **O login IGNORA a `ReturnUrl`** e cai em `Index.aspx`. E a home **também** tem o seletor de contratos — a 1ª sonda fotografou a página errada e o dump saiu plausível, com os 43 contratos. A navegação para a consulta é explícita e a URL é conferida.
+2. **A tela abre com um contrato JÁ na sessão** (`txtContrato` vem preenchido num carregamento novo). Conferir "o campo não está vazio" não prova nada: o robô teria consultado o contrato errado achando que marcou o certo, e a nota de um entraria no nome do outro. A conferência é **por igualdade**, nunca por "contém" — com dois marcados o campo traz os dois e um `includes` passaria, somando dois contratos numa consulta só.
+3. **Os checkboxes moram num dropdown FECHADO.** `check({force:true})` marca o elemento mas o clique real não chega nele, e o handler do site — que é quem escreve o código em `txtContrato` — não roda. O evento é disparado no próprio elemento (`click` + `change`), o que funciona com o dropdown fechado; e o robô desmarca o que estava antes de marcar o seu.
+4. **`networkidle` não serve aqui:** o portal tem chamada periódica, a rede nunca fica ociosa e a espera ia até o teto — 90 s desperdiçados **por consulta**, quase 12 h nas 390 buscas. O que decide é o que aparecer primeiro: o modal de "sem dados" ou o "Gerar Relatório".
+5. **O botão tem de ser o `:visible`.** Sem isso `input[value*="Relat"]` casa também com um elemento escondido, o `.first()` escolhe esse, e o clique fica 30 s esperando algo que nunca fica clicável.
+6. **O cabeçalho do relatório NÃO é a 1ª linha** — o xlsx abre com títulos, e `sheet_to_json` sem `header` usa a 1ª linha como nome das colunas, então **nenhuma** é encontrada. O parser acha a linha que tem "Chassi"/"Placa". E as colunas úteis estão espalhadas entre **40 colunas** (`col0 | Chassi | col2 … col10 | Km Anterior | … | col20 | Km Atual`), com mescladas no meio: ler por posição jamais funcionaria.
+7. **A linha "Total" do rodapé NÃO é um veículo.** "Total" cai no campo Chassi, e um filtro de "tem chassi ou placa" a manteria — entrando no banco como um veículo cujo valor é a soma de todos, **dobrando o mês**. Mesmo fantasma do "Filtros aplicados" do Ginfo. A régua é a **forma da chave** (chassi de 8+ alfanuméricos, placa com formato de placa) e o descartado aparece no log.
+
+**O campo do Mês/Ano tem máscara:** `fill()` escreve de uma vez sem disparar o keypress que a máscara escuta. Digitar caractere a caractere (`092026`, a barra entra sozinha) é o que funciona, e o robô confere se o campo ficou `MM/AAAA` antes de pesquisar.
+
+**O Valor Total da nota é a conferência:** a soma das linhas tem de bater, com folga de **um centavo por linha** (não fixa). Validado em B7007A/09-2026: 5 linhas, 8.035 km, R$ 6.060,01 contra o total de R$ 6.060,00 — igual ao que o Renan tinha na tela.
+
+**Grava a FOTO CRUA, não a Carta** (Renan, 15/09/2026: *"antes de mudar algo na carta de custos, vamos comparar vigência a vigência o que subiu e o que o robô buscou de km e valores. Depois eu dou ok para subir"*). O comparador é o workflow **Volkstotal Check** (`scripts/volkstotal-check.mjs`): por vigência, placas/Σkm/Σvalor no portal × na planilha, mais as placas só de um lado e as que divergem em valor. A planilha é lida com o **mesmo código do `contratos-robot`** — ler de outro jeito mediria a diferença entre duas leituras, não entre duas fontes.
+
+**Erro meu que vale lembrar:** `let` declarado no rodapé do arquivo fica na **zona morta** enquanto o `await` de topo de módulo executa (`function` é içada, `let` não). A leitura morria com *"Cannot access '_cabLogado' before initialization"*, um erro sem relação com o portal. `node --check` não pega TDZ — a conferência virou posicional no teste.
+
 ## Robô Qlik (DRE → Custos) — EM ESPERA (03/08/2026)
 
 **Status: PARQUEADO — decisão do Renan 03/08/2026.** O robô está 100% codificado (receita dos 5 passos abaixo), mas o Qlik Sense da Conlog **não é acessível pela internet**: `bi.conlogsa.com.br` público serve só o **GLPI** (chamados) — `/sense` dá 404 e a porta 4244 não responde de fora (split DNS: o Renan acessa pela rede interna/VPN). O GitHub Actions não alcança. Opções mapeadas: (1) TI publicar o Qlik externamente · (2) self-hosted runner na rede da Conlog · (3) script agendado no PC do Renan · (4) **ler direto do BANCO DE DADOS fonte do DRE — caminho que o Renan quer explorar no futuro**. Até lá: **aba Custos segue manual**. NÃO religar sem resolver a rede.
