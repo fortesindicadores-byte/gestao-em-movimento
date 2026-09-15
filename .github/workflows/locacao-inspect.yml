@@ -1,0 +1,22 @@
+name: Locacao Inspect (auditoria)
+
+# Mostra o que está gravado em locacao_conferencia: por mês, quantos ativos
+# têm prévia, remuneração do Freightech e faturamento da Vamos, as somas de
+# cada um e quais arquivos entraram. Serve para saber se um mês "não puxou"
+# porque o arquivo não entrou, porque entrou e não casou, ou porque o dado
+# ainda não existe.
+on:
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Inspecionar
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/locacao-inspect.mjs
