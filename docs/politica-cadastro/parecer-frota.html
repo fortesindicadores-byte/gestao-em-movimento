@@ -19,19 +19,17 @@
 .disc{margin-top:22px;background:#0F1A20;border-radius:16px;padding:20px 24px;}
 .disc .tit{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#FF7A5C;margin-bottom:7px;}
 .disc p{color:#F4F5F7;font-size:16px;line-height:1.5;}
-.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:24px;}
-.mini .c{background:var(--pale);border-radius:16px;padding:20px 22px;}
-.mini h3{font-size:19px;margin-bottom:12px;}
-.mini .par{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14.5px;}
-.mini .par:last-of-type{border-bottom:0;}
-.mini .par b{font-weight:700;}
-.mini .par span{font-weight:700;font-variant-numeric:tabular-nums;}
-.mini .nao{margin-top:12px;font-size:14px;line-height:1.45;color:var(--acc);font-weight:600;}
-.pt{background:var(--pale);border-radius:16px;padding:22px 24px;}
-.pt .diz{font-size:14.5px;color:var(--ink2);line-height:1.5;}
-.pt .diz i{font-style:normal;font-weight:700;color:var(--ink);}
-.pt .nao{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:15px;line-height:1.5;color:var(--ink);}
-.pt .nao b{color:var(--acc);}
+.dois{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:24px;}
+.dois .c{background:var(--pale);border-radius:16px;padding:24px 26px;}
+.dois h3{font-size:22px;margin-bottom:6px;}
+.dois .manda{font-size:14.5px;color:var(--ink2);margin-bottom:14px;line-height:1.5;}
+.dois .manda b{color:var(--ink);}
+.dois .par{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:15.5px;}
+.dois .par:last-of-type{border-bottom:0;}
+.dois .par b{font-weight:700;}
+.dois .par span{font-weight:700;font-variant-numeric:tabular-nums;}
+.dois .nao{margin-top:14px;padding-top:13px;border-top:2px solid var(--acc);font-size:15px;line-height:1.5;color:var(--ink);}
+.dois .nao b{color:var(--acc);}
 </style></head>
 <body>
 
@@ -51,11 +49,11 @@
   <div class="box" style="margin-top:30px;background:#0F1A20">
     <p style="color:#F4F5F7;font-size:17px;line-height:1.55">Se dois produtos com imposto diferente dividem o mesmo item, <b>um dos dois paga errado sempre</b>. Pagando a menos, é autuação. Pagando a mais, é dinheiro jogado fora. E ninguém percebe, porque o erro está no cadastro, não na compra.</p>
   </div>
-  <p style="margin-top:26px;font-size:16px;max-width:980px">A política acerta o princípio — cadastro não pode inflar. Mas quatro dos exemplos que ela usa para ensinar são justamente casos em que juntar está proibido por lei.</p>
+  <p style="margin-top:26px;font-size:16px;max-width:980px">A política acerta o princípio — cadastro não pode inflar. Mas os exemplos que ela usa para ensinar são justamente casos em que juntar está proibido por lei.</p>
   <div class="foot"><span>Política de Cadastro de Itens · parecer da Frota</span><span>2</span></div>
 </section>
 
-<!-- 3 · EXEMPLO 1 · ÓLEO -->
+<!-- 3 · ÓLEO -->
 <section class="slide">
   <div class="kicker">Exemplo 1 · o mais caro</div>
   <h2>Óleo lubrificante</h2>
@@ -79,94 +77,69 @@
   <div class="foot"><span>Política de Cadastro de Itens · parecer da Frota</span><span>3</span></div>
 </section>
 
-<!-- 4 · OS OUTROS TRÊS -->
+<!-- 4 · FILTRO E PARAFUSO -->
 <section class="slide">
-  <div class="kicker">Os outros três exemplos</div>
-  <h2>Mesma coisa em filtro, pneu e parafuso</h2>
-  <div class="mini">
+  <div class="kicker">Exemplos 2 e 3</div>
+  <h2>Mesma coisa em filtro e parafuso</h2>
+  <div class="dois">
     <div class="c">
       <h3>Filtro</h3>
-      <div class="par"><b>De motor</b><span>5,2%</span></div>
+      <p class="manda">A política manda cadastrar <b>"Filtro de óleo"</b> — também exemplo literal da Seção 6.</p>
+      <div class="par"><b>De óleo do motor</b><span>5,2%</span></div>
       <div class="par"><b>De transmissão</b><span class="acc">0%</span></div>
       <div class="par"><b>De Arla 32</b><span class="acc">0%</span></div>
-      <div class="nao">A política manda cadastrar "Filtro de óleo". Num item só, parte das compras paga 5,2% sem dever.</div>
-    </div>
-    <div class="c">
-      <h3>Pneu</h3>
-      <div class="par"><b>Novo</b><span>1,3%</span></div>
-      <div class="par"><b>Recapado</b><span class="acc">0%</span></div>
-      <div class="nao">A política libera separar pneu por <b>marca e modelo</b>. O que muda o imposto não é a marca: é novo ou recapado.</div>
+      <div class="par"><b>De ar da cabine</b><span class="acc">0%</span></div>
+      <p class="nao"><b>Não concordo.</b> São quatro filtros com imposto diferente. Num item só, três deles pagam 5,2% sem dever — em toda compra, todo mês.</p>
     </div>
     <div class="c">
       <h3>Parafuso</h3>
+      <p class="manda">A política manda cadastrar <b>"Parafuso de aço"</b> — o terceiro exemplo literal da Seção 6.</p>
       <div class="par"><b>De aço</b><span>6,5%</span></div>
+      <div class="par"><b>De alumínio</b><span>6,5%</span></div>
+      <div class="par"><b>De latão</b><span>6,5%</span></div>
       <div class="par"><b>De nylon</b><span class="acc">9,75%</span></div>
-      <div class="nao">O exemplo literal da política é "Parafuso de aço". Comprando de nylon nesse item, o imposto sai errado.</div>
+      <p class="nao"><b>Não concordo.</b> O de nylon paga 3,25 pontos a mais e tem código próprio. Comprado dentro do item "parafuso de aço", sai classificado errado.</p>
     </div>
   </div>
   <div class="disc">
-    <div class="tit">O ponto comum</div>
-    <p>A Seção 6 diz que <b>"diferença exclusiva de material não justifica criar item"</b>. É exatamente o material que muda o imposto nos quatro casos. <b>A política proíbe o que a lei fiscal exige.</b></p>
+    <div class="tit">O que amarra os três</div>
+    <p>A Seção 6 diz, com essas palavras, que <b>"diferença exclusiva de material não justifica criar item"</b>. É exatamente o material que muda o imposto nos três casos. <b>A política proíbe o que a lei fiscal exige.</b></p>
   </div>
   <div class="foot"><span>Política de Cadastro de Itens · parecer da Frota</span><span>4</span></div>
 </section>
 
-<!-- 5 · O PEDIDO PRINCIPAL -->
+<!-- 5 · O PEDIDO -->
 <section class="slide dark">
-  <div class="kicker">O que peço · ponto 1 de 4</div>
+  <div class="kicker">O que peço</div>
   <h1 style="font-size:40px;max-width:1020px">Mudou o imposto,<br>separa o item.<br>Sem pedir autorização.</h1>
   <p style="margin-top:30px;font-size:17px;max-width:980px">Hoje, quem pede para separar óleo mineral de sintético é <b style="color:#F4F5F7">rejeitado pela Seção 6</b> — ou tem de provar "necessidade de gestão" pela Seção 7, que é o rito do cadastro analítico. Não é necessidade de gestão: é obrigação fiscal. Não pode passar por análise de conveniência.</p>
   <div class="box" style="margin-top:32px;background:rgba(255,255,255,.06)">
-    <p style="color:#B9C0CA;font-size:15px;line-height:1.55"><b style="color:#F4F5F7">Texto para a v1.3:</b> <i>"Produtos com classificação fiscal (NCM) distinta constituem itens distintos, ainda que tenham o mesmo nome genérico. A separação por NCM é requisito fiscal e não se confunde com cadastro analítico, não se aplicando a ela o ônus de justificativa da Seção 7."</i></p>
+    <p style="color:#B9C0CA;font-size:15px;line-height:1.55"><b style="color:#F4F5F7">Texto para a v1.3:</b> <i>"Produtos com classificação fiscal (NCM) distinta constituem itens distintos, ainda que tenham o mesmo nome genérico. A separação por NCM é requisito fiscal e não se confunde com cadastro analítico, não se aplicando a ela o ônus de justificativa da Seção 7. Compete à área Fiscal manter a relação de NCM por família de item."</i></p>
   </div>
   <div class="foot"><span>Política de Cadastro de Itens · parecer da Frota</span><span>5</span></div>
 </section>
 
-<!-- 6 · OS OUTROS TRÊS PONTOS -->
+<!-- 6 · PONTOS DE ATENÇÃO -->
 <section class="slide">
-  <div class="kicker">Os outros três pontos</div>
-  <h2>O que a política diz, e onde não concordo</h2>
-  <div class="grid g3" style="margin-top:26px;gap:18px">
-    <div class="pt">
-      <h3>Detalhe da compra</h3>
-      <p class="diz"><i>A política diz:</i> o detalhe vai na requisição, não no cadastro.</p>
-      <p class="nao"><b>Não concordo em parte.</b> Texto de requisição ninguém soma. Se eu quiser saber quanto gastei em correia de 2 metros, não tem como perguntar. Falta a terceira opção: <b>campos ao lado do item</b> — medida, marca, aplicação. Um item só, e dá para filtrar.</p>
-    </div>
-    <div class="pt">
-      <h3>Serviços</h3>
-      <p class="diz"><i>A política diz:</i> vale para materiais <i>e serviços</i>.</p>
-      <p class="nao"><b>Não tem uma linha sobre serviço.</b> Todas as regras e exemplos são de produto. Compramos mecânica, funilaria, alinhamento, guincho e lavagem. Se tudo virar "serviço de manutenção", perco a análise de custo que faço hoje.</p>
-    </div>
-    <div class="pt">
-      <h3>Veículo</h3>
-      <p class="diz"><i>A política diz:</i> não crie item por causa do veículo; escreva o veículo na requisição.</p>
-      <p class="nao"><b>Concordo com a ideia, não com a forma.</b> Meu custo é apurado por placa. "Pro caminhão do João" num campo de observação não vira número. Precisa ser <b>campo de placa</b>, obrigatório, ligado ao cadastro de ativos.</p>
-    </div>
+  <div class="kicker">Fora do imposto</div>
+  <h2>Pontos de atenção</h2>
+  <div class="grid g4" style="margin-top:26px;gap:16px">
+    <div class="box"><div class="lbl">Serviços</div><p style="margin-top:6px">A política diz que vale para serviços e <b>não traz uma linha sobre eles</b>. Mandamos recapar pneu, alinhar, funilar, lavar. Tudo isso é serviço.</p></div>
+    <div class="box"><div class="lbl">Veículo</div><p style="margin-top:6px">Concordo que a placa vá na requisição. Mas tem de ser <b>campo</b>: "pro caminhão do João" numa observação não vira custo por placa.</p></div>
+    <div class="box"><div class="lbl">Detalhe da compra</div><p style="margin-top:6px">Texto de requisição ninguém soma. Se a medida virar <b>campo ao lado do item</b>, é um cadastro só e dá para filtrar.</p></div>
+    <div class="box"><div class="lbl">Unificação</div><p style="margin-top:6px">Ao juntar dois itens, guardar o <b>de-para</b>. Sem isso a série histórica de custo quebra sem ninguém ver.</p></div>
+    <div class="box"><div class="lbl">Unidade de medida</div><p style="margin-top:6px">LT, L e LITRO viram três cadastros do mesmo óleo, e o preço unitário sai errado na comparação de fornecedor.</p></div>
+    <div class="box"><div class="lbl">Prazo</div><p style="margin-top:6px">72h para cadastrar com o veículo parado são <b>3 dias de indisponibilidade</b>, que é indicador de contrato. Urgência em 4h.</p></div>
+    <div class="box"><div class="lbl">Busca</div><p style="margin-top:6px">"Não encontrei" só vale se der para achar. Quem busca "filtro Racor" não acha "filtro separador de água".</p></div>
+    <div class="box"><div class="lbl">Dono</div><p style="margin-top:6px">"Área responsável" nunca é nomeada e a rejeição não tem recurso. Rejeição sem recurso vira planilha paralela.</p></div>
   </div>
   <div class="foot"><span>Política de Cadastro de Itens · parecer da Frota</span><span>6</span></div>
 </section>
 
-<!-- 7 · OS OITO AJUSTES -->
-<section class="slide">
-  <div class="kicker">Mais oito, menores</div>
-  <h2>Não travam a aprovação</h2>
-  <div class="grid g4" style="margin-top:26px;gap:16px">
-    <div class="box"><div class="lbl">Pneu</div><p style="margin-top:6px">Para custo por km faltam <b>medida</b> e <b>vida</b>. Recapado dura e custa outra coisa.</p></div>
-    <div class="box"><div class="lbl">Prazo</div><p style="margin-top:6px">72h para cadastrar com o veículo parado são 3 dias de indisponibilidade. Urgência em 4h.</p></div>
-    <div class="box"><div class="lbl">Unificação</div><p style="margin-top:6px">Ao juntar dois itens, guardar o <b>de-para</b>. Sem isso a série histórica de custo quebra.</p></div>
-    <div class="box"><div class="lbl">Unidade</div><p style="margin-top:6px">LT, L e LITRO viram três cadastros do mesmo óleo e o preço unitário sai errado.</p></div>
-    <div class="box"><div class="lbl">Busca</div><p style="margin-top:6px">"Não encontrei" só vale se der para achar. Quem busca "filtro Racor" não acha "filtro separador de água".</p></div>
-    <div class="box"><div class="lbl">Régua</div><p style="margin-top:6px">"Valor a estocar" e "giro" sem número não são critério — viram discussão caso a caso.</p></div>
-    <div class="box"><div class="lbl">Dono</div><p style="margin-top:6px">"Área responsável" nunca é nomeada, e a rejeição não tem recurso. Vira planilha paralela.</p></div>
-    <div class="box"><div class="lbl">Frota</div><p style="margin-top:6px">Em item de veículo, quem apura o custo entra sempre — não "quando pertinente".</p></div>
-  </div>
-  <div class="foot"><span>Política de Cadastro de Itens · parecer da Frota</span><span>7</span></div>
-</section>
-
-<!-- 8 · FECHAMENTO -->
+<!-- 7 · FECHAMENTO -->
 <section class="slide dark">
   <div class="kicker">Conclusão</div>
-  <h1 style="font-size:40px;max-width:1000px">Aprovar com quatro inclusões.<br>A lista de peças já está pronta.</h1>
+  <h1 style="font-size:40px;max-width:1000px">Aprovar com a regra do imposto.<br>A lista de peças já está pronta.</h1>
   <div class="grid g4" style="margin-top:36px;gap:16px">
     <div class="box"><div class="lbl">Lista enxuta</div><div class="num" style="color:#F4F5F7">2.512</div><p>peças, cada uma com o imposto certo</p></div>
     <div class="box"><div class="lbl">Nível intermediário</div><div class="num" style="color:#F4F5F7">2.579</div><p>com material e sistema</p></div>
@@ -174,8 +147,8 @@
     <div class="box"><div class="lbl">Códigos fiscais</div><div class="num" style="color:#F4F5F7">400+</div><p>conferidos contra a tabela oficial</p></div>
   </div>
   <p style="margin-top:28px;font-size:16px;max-width:1020px">A chave é a mesma nos três níveis: começamos no que a operação aguenta manter e subimos depois, sem recadastrar nada. Cada peça traz o grau de confiança da classificação, para o Fiscal revisar o duvidoso em vez de varrer tudo.</p>
-  <p style="margin-top:16px;font-size:15px;max-width:1020px"><b style="color:#F4F5F7">Uma decisão para a Controladoria:</b> as portas dos baús da Ambev. O relatório externo classificou como porta de construção civil (imposto 0%); porta de carroceria é 3,25%. Alcança 33 códigos. Prefiro decidir agora a descobrir numa fiscalização.</p>
-  <div class="foot"><span>Política de Cadastro de Itens · parecer da Frota</span><span>8</span></div>
+  <p style="margin-top:16px;font-size:15px;max-width:1020px"><b style="color:#F4F5F7">Uma decisão de imposto para a Controladoria:</b> as portas dos baús da Ambev. O relatório externo classificou como porta de construção civil (0%); porta de carroceria é 3,25%. Alcança 33 códigos. Prefiro decidir agora a descobrir numa fiscalização.</p>
+  <div class="foot"><span>Política de Cadastro de Itens · parecer da Frota</span><span>7</span></div>
 </section>
 
 </body></html>
