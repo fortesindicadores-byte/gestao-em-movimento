@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609151930">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -533,6 +533,12 @@ body.claro input[type=date]{color-scheme:light;}
           Projeto<span class="ms-cnt"></span></button>
           <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
         </div>
+        <!-- só aparece quando o banco já tem o nº do contrato (buildContratoFilter) -->
+        <div class="ms-wrap" id="ms-contrato" style="display:none"><button class="ms-btn" onclick="toggleMs('ms-contrato')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8M8 17h5"/></svg>
+          Contrato<span class="ms-cnt"></span></button>
+          <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
+        </div>
         <div class="ms-wrap" id="ms-grupo"><button class="ms-btn" onclick="toggleMs('ms-grupo')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 16V8l-9-5-9 5v8l9 5z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg>
           Grupo<span class="ms-cnt"></span></button>
@@ -695,6 +701,10 @@ const selUni=new Set(), selVig=new Set(), selProj=new Set(), selAno=new Set();
    do lançamento. Recortam NO CLIENTE — as opções nascem do que já foi lido
    para o filtro de unidade/vigência, então não há nova consulta ao banco. */
 const selGrupo=new Set(), selForn=new Set(), selConta=new Set(), selData=new Set();
+/* CONTRATO (Renan, 15/09/2026): recorta a visão Placas Contrato. As opções
+   saem do próprio contrato lido (contratos_placa → custo_vigencia), não de um
+   cadastro à parte — contrato que não tem placa no recorte não aparece. */
+const selContrato=new Set();
 const passaExtras=r=>(!selGrupo.size||selGrupo.has(r.grupo||'—'))
   && (!selForn.size||selForn.has(r.fornecedor||'—'))
   && (!selConta.size||selConta.has(r.conta||'—'))
@@ -1275,6 +1285,7 @@ function renderCharts(rows){
      sendo formado, e o fixo já entra inteiro desde o dia 1º.
    ══════════════════════════════════════════════════════════════ */
 let CONTR=[], CONTR_OK=false;   // CONTR_OK: a leitura já respondeu (mesmo vazia)
+let CONTR_NUM=false;            // o banco já tem a coluna `contrato`?
 // o PostgREST corta a resposta em 1.000 linhas e ignora um limit maior —
 // são ~360 placas × 9 vigências, então sem paginar a tabela vem pela metade
 async function pgAll(tabela,select,ordem,ajuste){
@@ -1297,17 +1308,33 @@ async function loadContratos(){
      rodando é que vai compor outubro". O km rodado num mês vira fatura no mês
      seguinte, então a vigência da tela é a cobrança e o `vig_km` fica ao lado
      só para dizer de qual mês veio o km. Eu tinha trocado isso por engano. */
-  const cols='vig_cobranca,vig_km,placa,placa_origem,unidade,projeto,tipo,taxa_km,km_vig,'
+  const base='vig_cobranca,vig_km,placa,placa_origem,unidade,projeto,tipo,taxa_km,km_vig,'
     +'valor_fixo,km_hodometro,divergencia_pct,origem_km,custo_vig,abastecimentos,ultimo_abast,previa,modelo';
+  /* A COLUNA `contrato` É NOVA (15/09/2026) e pode não estar no banco ainda —
+     ela entra por scripts/contrato-numero.sql. Pedir uma coluna que não existe
+     faz o PostgREST devolver 400 e a Carta ficaria SEM CONTRATO NENHUM na tela,
+     não só sem o número. Por isso tenta com ela e, se o banco reclamar dela,
+     repete sem — o resto da visão continua igual. */
+  let cols=base+',contrato';
   const ordem=[['vig_cobranca',false],['custo_vig',false]];
   /* A MATERIALIZADA PRIMEIRO (05/09/2026): a view recalcula o rateio dos 57 mil
      abastecimentos a cada pedido — é o que deixava o painel lento. Se a
      `custo_vigencia_mv` existir no banco, lê dela (pronta, instantânea);
      se ainda não existir, cai na view e funciona como antes, só mais devagar. */
-  try{ CONTR=await pgAll('custo_vigencia_mv',cols,ordem); }
-  catch(e){ console.warn('custo_vigencia_mv indisponível, usando a view:',e.message);
-    try{ CONTR=await pgAll('custo_vigencia',cols,ordem); }
-    catch(e2){ console.warn('custo_vigencia:',e2.message); CONTR=[]; } }
+  const leTudo=async()=>{
+    try{ return await pgAll('custo_vigencia_mv',cols,ordem); }
+    catch(e){ console.warn('custo_vigencia_mv indisponível, usando a view:',e.message);
+      return await pgAll('custo_vigencia',cols,ordem); }
+  };
+  try{ CONTR=await leTudo(); CONTR_NUM=true; }
+  catch(e){
+    if(/contrato/.test(e.message||'')){
+      console.warn('a coluna `contrato` ainda não existe no banco (rode scripts/contrato-numero.sql) — seguindo sem ela');
+      cols=base; CONTR_NUM=false;
+      try{ CONTR=await leTudo(); }
+      catch(e2){ console.warn('custo_vigencia:',e2.message); CONTR=[]; }
+    }else{ console.warn('custo_vigencia:',e.message); CONTR=[]; }
+  }
   const perm=new Set(ALLOWED);
   CONTR=CONTR.filter(r=>!r.unidade||perm.has(r.unidade));
   /* MÊS QUE A PLANILHA TEM, VALE A PLANILHA — sem conta (Renan, 05/09/2026:
@@ -1350,14 +1377,31 @@ async function loadContratos(){
   const antes=VIG_OPTS.length;
   VIG_OPTS=[...new Set(VIG_OPTS.concat(novas))].sort();
   if(VIG_OPTS.length!==antes){ buildAnoFilter(); buildVigFilter(); }
+  buildContratoFilter();
   renderAcomp(); renderPlacas(); renderConsol();
 }
 // o recorte das duas visões novas é o do filtro do topo
 const contrDoFiltro=()=>{
   const u=new Set(curUnits()), v=new Set(curVigs()), p=curProjs();
   return CONTR.filter(r=>u.has(r.unidade) && v.has(r.vig_cobranca)
-    && (!p || !r.projeto || p.includes(String(r.projeto).toUpperCase())));
+    && (!p || !r.projeto || p.includes(String(r.projeto).toUpperCase()))
+    && (!selContrato.size || selContrato.has(r.contrato||'—')));
 };
+/* O FILTRO DE CONTRATO SÓ EXISTE SE HOUVER NÚMERO (15/09/2026): enquanto o
+   scripts/contrato-numero.sql não for rodado, toda placa fica com contrato
+   nulo e o filtro seria um botão com uma opção só, chamada "—". Nesse caso ele
+   some do topo em vez de enganar. */
+const contratosOpts=()=>[...new Set(CONTR.map(r=>r.contrato||'—'))].sort((a,b)=>
+  a==='—'?1:b==='—'?-1:a.localeCompare(b,'pt-BR'));
+function buildContratoFilter(){
+  const wrap=$('ms-contrato'); if(!wrap) return;
+  const ops=contratosOpts();
+  const vale=CONTR_NUM && ops.some(o=>o!=='—');
+  wrap.style.display=vale?'':'none';
+  if(!vale){ selContrato.clear(); return; }
+  [...selContrato].forEach(v=>{ if(!ops.includes(v)) selContrato.delete(v); });
+  buildMs('ms-contrato', ()=>ops, v=>v, selContrato, ()=>{ renderPlacas(); renderConsol(); }, 'Todos');
+}
 
 /* TOGGLE VARIÁVEL / FIXO (Renan, 04/09/2026): abre a visão por tipo de
    contrato, começando no variável — é nele que o km explica o custo. O fixo
@@ -1408,8 +1452,12 @@ function renderPlacas(){
       ? `<div class="kpi"><div class="kl">Valor fixo médio</div><div class="kv">${fmt(nPl?tot/nPl:0)}</div><div class="km">por placa no mês</div></div>`
       : `<div class="kpi"><div class="kl">R$/km médio</div><div class="kv">${km?(tot/km).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</div><div class="km">custo ÷ km</div></div>`)+
     `<div class="kpi"><div class="kl">Custo</div><div class="kv">${fmt(tot)}</div><div class="km">${previa?'<b style="color:var(--ambar)">com prévia</b>':'vigência fechada'}</div></div>`;
+  // o nº do contrato fica ao lado da placa (Renan, 15/09/2026); a coluna some
+  // enquanto o banco não tiver o número, para não virar uma fileira de "—"
+  const temNum=CONTR_NUM && rows.some(r=>r.contrato);
   let h='<thead><tr>'
-    +(multiVig?'<th>Vigência</th>':'')+'<th>Placa</th><th>Modelo</th>'
+    +(multiVig?'<th>Vigência</th>':'')+'<th>Placa</th>'
+    +(temNum?'<th>Contrato</th>':'')+'<th>Modelo</th>'
     +(multiUni?'<th>Unidade</th>':'')+'<th>Projeto</th>'
     +(fixo?'<th class="num">Valor fixo</th>':'<th class="num">R$/km</th>')+'<th class="num">Abast.</th><th>Últ. abast.</th>'
     +'<th class="num">Custo Médio</th><th class="num">Km do mês</th><th class="num">Custo</th></tr></thead><tbody>';
@@ -1418,6 +1466,7 @@ function renderPlacas(){
     const hs=hist.get(r.placa);
     h+='<tr>'+(multiVig?`<td>${esc(vigLabel(r.vig_cobranca))}</td>`:'')
       +`<td class="conta">${esc(r.placa_origem||r.placa)}</td>`
+      +(temNum?`<td>${esc(r.contrato||'—')}</td>`:'')
       +`<td>${esc(r.modelo||'—')}</td>`
       +(multiUni?`<td>${esc(UNIT_BASE(r.unidade)||'—')}</td>`:'')
       +`<td>${esc(r.projeto||'—')}</td>`
@@ -1434,7 +1483,7 @@ function renderPlacas(){
   // Custo Médio, Km, Custo): o rodapé precisa de 6 células vazias entre o
   // "Total" e os dois números, mais uma para cada coluna condicional
   h+=`</tbody><tfoot><tr class="total"><td class="conta">Total</td>`
-   +vaz(6+(multiVig?1:0)+(multiUni?1:0))
+   +vaz(6+(multiVig?1:0)+(multiUni?1:0)+(temNum?1:0))
    +`<td class="num forte">${numBR(km)}</td><td class="num forte">${fmt(tot)}</td></tr></tfoot>`;
   $('tbl-placas').innerHTML=h;
 }
@@ -1458,8 +1507,11 @@ function renderConsol(){
         || comDado.sort().pop()
         || String(new Date().getFullYear());
   const meses=Array.from({length:12},(_,i)=>ano+'-'+String(i+1).padStart(2,'0'));
+  // o filtro de contrato do topo vale aqui também: as duas visões olham o
+  // mesmo contrato, e um filtro que agisse só numa delas mentiria na outra
   const base=CONTR.filter(r=>uSel.has(r.unidade)
-    && (!pSel || !r.projeto || pSel.includes(String(r.projeto).toUpperCase())));
+    && (!pSel || !r.projeto || pSel.includes(String(r.projeto).toUpperCase()))
+    && (!selContrato.size || selContrato.has(r.contrato||'—')));
   const noFiltro=r=>vSel.has(r.vig_cobranca);
 
   if(!CONTR_OK){
@@ -1609,6 +1661,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609151930"></script>
 </body>
 </html>
