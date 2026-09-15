@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609151500">
 <title>Conferência de Locação · Gestão em Movimento</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -675,6 +675,13 @@ async function recebeArquivos(lista){
     // houvesse prévia na mesma leva. O faturamento chega depois da prévia no
     // fluxo real, então ele agora é MESCLADO no mês que já está no banco.
     await mesclaFaturamento();
+  }else if(Object.values(ARQ).some(a=>a.tipo==='ft'&&!a.erro)){
+    // Freightech SOZINHO (15/09/2026): mesmo buraco do faturamento, terceira
+    // variação. A analista subiu os seis arquivos do FT de 09/2026, os seis
+    // cartões ficaram verdes com as linhas contadas e NADA foi gravado — o mês
+    // continuou sem remuneração. O FT chega depois da prévia no fluxo real,
+    // então ele também é MESCLADO no mês que já está no banco.
+    await mesclaFT();
   }
   // todo FT que passa por aqui alimenta o mapa persistente de modelos
   try{ await salvaModelos(coletaModelosFT()); }catch(e){ console.error(e); }
@@ -1414,6 +1421,73 @@ async function mesclaFaturamento(){
         +(novas?' · '+novas+' sem prévia':''));
 }
 
+/* Mescla a remuneração do Freightech no mês JÁ gravado, sem prévia na leva.
+   A regra de qual vigência do FT vale é a mesma do analisa(): a etapa MENSAL
+   é paga pela remuneração do mês ANTERIOR e a PROVISÃO pela do próprio mês.
+   As linhas gravadas mantêm prévia e faturado — só o `ft` é recalculado, e
+   some o que não veio nos arquivos novos (reimportar um FT corrigido não
+   deixa resíduo do anterior). */
+async function mesclaFT(){
+  const arqs=Object.values(ARQ).filter(a=>a.tipo==='ft'&&!a.erro);
+  const meses=[...new Set(arqs.filter(a=>a.mes&&a.ano).map(a=>a.ano*100+a.mes))];
+  if(meses.length!==1){
+    flash(meses.length>1 ? 'Os arquivos do Freightech são de meses diferentes — suba um mês por vez'
+                         : 'Arquivo do Freightech sem MM_AAAA no nome — não sei de que mês é', true);
+    return;
+  }
+  const ano=Math.floor(meses[0]/100), mes=meses[0]%100, vig=vigTxt({mes,ano});
+  const b=BASE.get(vig);
+  if(!b||!b.linhas||!b.linhas.length){
+    flash('O mês '+vigRot(vig)+' ainda não existe: importe a prévia antes do Freightech', true);
+    return;
+  }
+  const ft=linhasFT();
+  if(!ft.length){ flash('Freightech: nenhuma linha com Empresa locadora = Vamos nos arquivos', true); return; }
+  const ant = mes===1?{mes:12,ano:ano-1}:{mes:mes-1,ano};
+  const ftMes={ mensal: ftDoMes(ft,ant.mes,ant.ano), provisao: ftDoMes(ft,mes,ano) };
+
+  const linhas=b.linhas.map(l=>({...l, ft:null, ftBruto:null, vigsFT:0}));
+  const idx=new Map(linhas.map((l,i)=>[l.etapa+'|'+l.k,i]));
+  let novas=0;
+  ['mensal','provisao'].forEach(e=>ftMes[e].forEach((v,k)=>{
+    const r=v.ref||{};
+    const i=idx.get(e+'|'+k);
+    if(i!=null){
+      const l=linhas[i];
+      l.ft=v.valor*FATOR_FT; l.ftBruto=v.valor; l.vigsFT=v.vigs;
+      // unidade e projeto do ativo só existem no FT: a linha gravada sem
+      // remuneração ficou com '—' e agora ganha o de verdade
+      if(r.uniFT) l.uni=String(r.uniFT).trim();
+      if(r.proj)  l.proj=r.proj;
+      if(!l.modelo&&r.modelo) l.modelo=String(r.modelo).trim();
+      return;
+    }
+    // remunerado que não estava no mês: entra como linha nova, sem prévia
+    linhas.push({etapa:e, k, placa:r.placa||'', chassi:r.chassi||'', semPrevia:true,
+      modelo:String(r.modelo||'').trim(), div:r.seg||'', status:'',
+      uni:r.uniFT?String(r.uniFT).trim():'—', proj:r.proj||'—',
+      ft:v.valor*FATOR_FT, ftBruto:v.valor, vigsFT:v.vigs,
+      prev:null, fat:null, linhasFat:0, descFat:null, vig});
+    novas++;
+  }));
+  linhas.forEach(l=>{
+    l.dPF=(l.prev||0)-(l.ft||0);
+    l.dFP=(l.fat||0)-(l.prev||0);
+    l.motivos=motivosDe(l);
+  });
+  LINHAS=linhas;
+  BASE.set(vig,{...b, linhas, arquivos:[...new Set([...(b.arquivos||[]), ...arqs.map(a=>a.nome)])],
+                updated_at:new Date().toISOString(), salvo:false});
+  await salvaMes(vig);
+  const comFT=linhas.filter(l=>l.ft!=null).length;
+  const semMensal=linhas.filter(l=>l.etapa==='mensal'&&l.ft==null&&l.prev!=null).length;
+  flash('Freightech de '+vigRot(vig)+' gravado: '+comFT+' ativo(s) com remuneração'
+        +(novas?' · '+novas+' sem prévia':'')
+        // a etapa mensal é paga pelo mês anterior: se ele não veio nos arquivos,
+        // esses ativos ficam sem remuneração e ninguém entende por quê
+        +(semMensal?' · ⚠ '+semMensal+' da etapa mensal sem FT de '+vigRot(vigTxt(ant)):''));
+}
+
 async function guardaMes(vig,linhas){
   BASE.set(vig,{linhas, arquivos:Object.values(ARQ).map(a=>a.nome),
                 updated_at:new Date().toISOString(), salvo:false});
@@ -1851,6 +1925,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609151500"></script>
 </body>
 </html>
