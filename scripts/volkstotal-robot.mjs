@@ -43,6 +43,14 @@ const USER  = process.env.VOLKSTOTAL_USER || '';
 const PASS  = process.env.VOLKSTOTAL_PASS || '';
 const SHOTS = 'volkstotal-shots';
 const DEBUG = process.env.VT_DEBUG === '1';
+/* O `let` MORA AQUI EM CIMA, não junto da função que o usa (bug real,
+   15/09/2026). A coleta roda num `await` de topo de módulo; `function` é
+   içada, mas `let` declarado DEPOIS desse bloco continua na zona morta
+   enquanto ele executa — e a leitura do xlsx morria com "Cannot access
+   '_cabLogado' before initialization", um erro que não tem nada a ver com o
+   portal nem com o arquivo. É o mesmo parentesco do `const` que não vira
+   propriedade de contexto no node:vm, já anotado no CLAUDE.md. */
+let _cabLogado = false;
 
 const SB_URL = 'https://lozwipoeacpvplgkrxkq.supabase.co';
 const SB_KEY = process.env.GEM_SUPABASE_SERVICE_KEY || '';
@@ -563,7 +571,6 @@ async function consulta(pg, contrato, vig) {
    texto do título e NENHUMA era encontrada. Achar a linha que tem "Chassi" ou
    "Placa" resolve os dois lados: pula o que vem antes e não depende de quantas
    linhas de enfeite o portal resolver pôr amanhã. */
-let _cabLogado = false;
 async function xlsx(arq) {
   const XLSX = (await import('xlsx')).default;
   const wb = XLSX.readFile(arq);
