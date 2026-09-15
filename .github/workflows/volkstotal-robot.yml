@@ -1,36 +1,58 @@
 name: Volkstotal Robot (VW -> Supabase)
 
 # Contrato de manutenção por km, do portal Volks|Total da VW Caminhões e Ônibus.
-# 1ª fase: rodar no modo "sonda" — ela responde se o Actions alcança o portal,
-# se o login passa e como é o DOM da tela de consulta. Não coleta nem grava.
-# A coleta ("run") é escrita depois, com o DOM real que a sonda imprimir.
+# Substitui o que hoje é digitado à mão na planilha "Contratos Man.".
+#
+#  sonda  — alcança? login passa? como é o DOM. Não coleta.
+#  teste  — coleta de verdade e imprime o resumo, SEM gravar.
+#  gravar — coleta e sobe para vw_contrato_km.
+#
+# Sem recorte são 43 contratos × meses do ano = ~390 buscas, ~6 s cada.
 on:
   workflow_dispatch:
     inputs:
       modo:
-        description: "sonda = alcança? login passa? como é o DOM · run = coleta e grava"
+        description: "sonda · teste (coleta e não grava) · gravar"
         required: true
-        default: "sonda"
+        default: "teste"
         type: choice
-        options: [sonda, run]
+        options: [sonda, teste, gravar]
+      contrato:
+        description: "Só estes contratos, separados por vírgula (vazio = todos)"
+        required: false
+      vig:
+        description: "Só estas vigências AAAA-MM, separadas por vírgula (vazio = o ano)"
+        required: false
+      ano:
+        description: "Ano a coletar (vazio = o atual, de janeiro ao mês corrente)"
+        required: false
 
 jobs:
   robo:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # ~390 buscas com navegação e download; sobra folga para o portal lento
+    timeout-minutes: 120
+    # o robô grava por upsert; duas rodadas ao mesmo tempo escreveriam nas
+    # mesmas chaves e uma sobrescreveria a outra no meio da carga
+    concurrency: volkstotal
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
-      - name: Instalar Playwright
-        run: npm i -D playwright@1.47.2 && npx playwright install --with-deps chromium
+      - name: Instalar Playwright e xlsx
+        run: npm i -D playwright@1.47.2 xlsx && npx playwright install --with-deps chromium
       - name: Rodar
         env:
-          VT_MODE: ${{ github.event.inputs.modo || 'sonda' }}
+          VT_MODE: ${{ github.event.inputs.modo || 'teste' }}
+          VT_CONTRATO: ${{ github.event.inputs.contrato }}
+          VT_VIG: ${{ github.event.inputs.vig }}
+          VT_ANO: ${{ github.event.inputs.ano }}
           VOLKSTOTAL_USER: ${{ secrets.VOLKSTOTAL_USER }}
           VOLKSTOTAL_PASS: ${{ secrets.VOLKSTOTAL_PASS }}
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
         run: node scripts/volkstotal-robot.mjs
+      # os xlsx baixados são apagados assim que são lidos (o dado vai para o
+      # banco); o que sobe aqui são só as telas, para depurar mudança no portal
       - name: Screenshots
         if: always()
         uses: actions/upload-artifact@v4
