@@ -1002,6 +1002,18 @@ Visão **Contrato**: ranking de placas do **mês de km que está correndo**, que
 - **A visão aparece SEMPRE** (não tem `temDado`): sumir do menu quando a leitura falha esconde a diferença entre "não há contrato", "o ERP não recebeu carga do mês" e "o banco recusou a leitura". A tela diz qual dos três é, com a mensagem do erro.
 - Conferência: workflow **Contrato Agora Inspect** (`scripts/contrato-agora-inspect.mjs`). Em 10/09/2026: 360 linhas, todas prévia, km de 2026-09 → fatura de 2026-10 — variável 265 placas / 68.188 km / R$ 43.265 · fixo 95 placas / 129.059 km / R$ 199.635 (Piraí sozinha, R$ 113 mil no fixo).
 
+## Conferência de Locação — a importação só grava o que ela sabe rotear
+
+`/conferencia-locacao/` (admin) confere o que a Vamos fatura contra o que o Freightech remunera. Os arquivos entram por arrastar e o **tipo sai do NOME** (`Prévia - Mensal - MM_AAAA`, `Faturamento Vamos - MM_AAAA`, `WH/Empurrada/AS/Rota/Van/Lata - MM_AAAA`, `Benner`). O mês fica em `locacao_conferencia`, uma linha por vigência (`AAAA-MM`), com as linhas inteiras em JSON.
+
+**O MESMO BUG APARECEU TRÊS VEZES: leva que o `recebeArquivos` não sabe rotear é lida e NÃO é gravada** — os cartões ficam verdes com as linhas contadas, nenhuma mensagem aparece e o banco não muda. Aconteceu com o **faturamento sozinho** (31/08/2026) e com o **Freightech sozinho** (15/09/2026, a analista subiu os seis arquivos de 09/2026 e o mês continuou com zero remuneração). O roteamento hoje cobre os quatro casos: prévia (recalcula tudo), faturamento (`mesclaFaturamento`), FT (`mesclaFT`) e Benner (grava direto). **Ao criar um tipo novo de arquivo, criar junto o ramo que grava** — senão o quarto caso repete a história.
+
+**A regra de vigência do FT não é óbvia:** a prévia **Mensal** é paga pela remuneração do mês **ANTERIOR** e a **Provisão** pela do próprio mês (`ftDoMes` sobre `PERIODO.ant` e `PERIODO`). Um arquivo do FT de 09/2026 precisa trazer as vigências de agosto também, senão a etapa mensal fica sem remuneração — o `mesclaFT` conta quantos ficaram e diz de qual mês falta.
+
+**F5 não grava nada.** Deploy novo troca o código; os dados só mudam quando alguém solta os arquivos de novo. Para conferir qual build está na tela: `document.querySelector('meta[name=build]').content + ' · mesclaFT: ' + typeof mesclaFT` no console.
+
+Auditoria: workflow **Locacao Inspect** (`scripts/locacao-inspect.mjs`) — por mês, quantos ativos têm prévia, FT e faturado, as somas e **quais arquivos entraram**. É o que separa "o arquivo não entrou" de "entrou e não casou" de "o dado ainda não existe" (o faturamento do mês corrente não existe mesmo: a Vamos fatura depois de fechar).
+
 **Farol lê do SUPABASE (02/08/2026) — Sheets é só FALLBACK:** `farolLoad()` busca `ginfo_snapshot` e converte cada base com um adaptador (`GADAPT`) que renomeia as colunas do export p/ os nomes que os leitores já usavam e recalcula as colunas de fórmula da planilha (regras confirmadas pelo Renan): **Preventivas** Aderência = Status "Vencido"→0 senão 1, Projeto = join com base `ativos` pela placa · **CIFV** Aderência = Desconto Total≠0→0 senão 1 · **Stress Test (V e E)** aderência = desconto 0→1 senão 0 (`stressVPct` mudou de COM SAÍDA p/ sem-desconto) · **OS** Dias em Aberto = hoje−Data (mín 0). Se uma base faltar/vier vazia → cai p/ a aba do Sheets. Datas de xlsx = serial do Excel → `parseFlex()`. Cada seção do Farol mostra na legenda a **"última exportação do Ginfo"** (updated_at da chave; `DATA.fonte` + `fx()` no renderFarol) ou "planilha (fallback)".
 
 **Colunas reais dos exports (log do robô, 02/08/2026):**
