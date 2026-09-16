@@ -85,9 +85,11 @@ const porVig = new Map();
 CV.forEach(r => {
   const a = porVig.get(r.vig_cobranca) || {
     placas: 0, portal: 0, faixa2: 0, antigo: 0, novo: 0, mudaram: 0, delta: 0, previa: false,
+    naPlan: 0,
   };
   a.placas++;
   a.previa = a.previa || !!r.previa;
+  if (cobre.has(r.unidade + '|' + r.vig_cobranca)) a.naPlan++;
   const vA = custoAntigo(r), vN = custoNovo(r);
   a.antigo += vA; a.novo += vN;
   if (r.valor_vw != null && r.vig_cobranca >= VW_INI) {
@@ -98,15 +100,21 @@ CV.forEach(r => {
   porVig.set(r.vig_cobranca, a);
 });
 
-console.log('══ 1) O DINHEIRO — regra antiga (planilha) × regra nova (portal da VW)\n');
-console.log('vigência  placas  c/portal  2 faixas        antigo            novo'
+console.log('══ 1) O DINHEIRO — regra antiga × regra nova (portal da VW)\n');
+console.log('A coluna BASE ANTIGA é o que o Δ está medindo. Onde a planilha NÃO cobre o');
+console.log('mês, a régua antiga era o CÁLCULO (km × taxa) — aí o Δ não é "dinheiro que');
+console.log('faltava na planilha", é a estimativa sendo trocada pela nota de verdade.\n');
+console.log('vigência  placas  c/portal  2 faixas  base antiga        antigo            novo'
   + '           Δ (portal − planilha)  placas que mudaram');
 let dTot = 0;
 [...porVig.keys()].sort().forEach(v => {
   const a = porVig.get(v);
   dTot += a.delta;
+  const base = a.naPlan === 0 ? 'cálculo'
+    : a.naPlan === a.placas ? 'planilha'
+    : `misto ${a.naPlan}/${a.placas}`;
   console.log(`${v}  ${String(a.placas).padStart(5)}  ${String(a.portal).padStart(7)}`
-    + `  ${String(a.faixa2).padStart(7)}  ${brl(a.antigo).padStart(15)}  ${brl(a.novo).padStart(15)}`
+    + `  ${String(a.faixa2).padStart(7)}  ${base.padEnd(12)}${brl(a.antigo).padStart(15)}  ${brl(a.novo).padStart(15)}`
     + `  ${((a.delta >= 0 ? '+' : '') + brl(a.delta)).padStart(20)}`
     + `  ${String(a.mudaram).padStart(5)}${a.previa ? '   (prévia)' : ''}`);
 });
