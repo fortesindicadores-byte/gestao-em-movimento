@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609161005">
 <title>R$/KM — Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -312,7 +312,21 @@ const KM_TAB   = 'Dispersão de km';
 // Seara = unidade ANG no DRE, mas o km NÃO está na Dispersão — vem da base própria da Seara.
 // Considerar Seara apenas de abr/2026 em diante (quando entra o remunerado).
 const SEARA_ID='1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE';
-const SEARA_GID_COMB=1982300845, SEARA_GID_CTES=1672208132;
+const SEARA_GID_COMB=1982300845;
+// KM REMUNERADO = aba `Remunerado` (Renan, 16/09/2026). Antes vinha de
+// `sum(Z)` na Base CTEs — coluna que NÃO EXISTE MAIS desde a reestruturação
+// da aba, então esta leitura estava quebrada e o km remunerado da Seara vinha
+// ZERADO aqui, sem erro na tela. A aba nova traz o número pronto por mês.
+const SEARA_ABA_REM='Remunerado';
+// vigência da aba `Remunerado` → 'AAAA-MM'. Ela vem como TEXTO "MM/AAAA", mas
+// se um dia a coluna virar data de verdade o gviz manda "Date(a,m,d)" — os dois
+// caem aqui, senão a linha some sem erro nenhum.
+const _vkRemAba = v => { const s=String(v==null?'':v);
+  let m=s.match(/^Date\((\d+),(\d+)/);  if(m) return `${m[1]}-${String(+m[2]+1).padStart(2,'0')}`;
+  m=s.match(/^(\d{1,2})\/(\d{4})$/);    if(m) return `${m[2]}-${m[1].padStart(2,'0')}`;
+  m=s.match(/^(\d{4})-(\d{2})/);         if(m) return `${m[1]}-${m[2]}`;
+  return ''; };
+
 const SEARA_UNI='ANG', SEARA_PROJ='DISTRIBUIÇÃO URBANA', SEARA_MIN_VK='2026-04';
 // Layout da aba Frota: orçado=8, remunerado=9, realizado=10, vigência=0, nível3=4, conta=5
 const C = {orc:8,rem:9,real:10,vig:0,nv3:4,cta:5};
@@ -452,9 +466,11 @@ async function fetchSheet(id,tab){
   return json.table.rows.map(r=>r.c.map(c=>c&&c.v!=null?c.v:null));
 }
 // gviz por gid (base da Seara) — mesma leitura do painel seara-km
-async function gvizGid(id,gid,tq){
+async function gvizAba(id,aba,tq){ return _gvizSeara(id,'sheet='+encodeURIComponent(aba),tq); }
+async function gvizGid(id,gid,tq){ return _gvizSeara(id,'gid='+gid,tq); }
+async function _gvizSeara(id,alvo,tq){
   const q=tq?'&tq='+encodeURIComponent(tq):'';
-  const url=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?gid=${gid}${q}&headers=1&tqx=out:json`;
+  const url=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?${alvo}${q}&headers=1&tqx=out:json`;
   const raw=await (await fetch(url)).text();
   const json=JSON.parse(raw.replace(/^[\s\S]*?setResponse\(/,'').replace(/\);?\s*$/,''));
   const cols=(json.table.cols||[]).map(c=>String((c&&(c.label||c.id))||'').trim());
@@ -462,16 +478,16 @@ async function gvizGid(id,gid,tq){
   if(cols.every(c=>!c||/^[A-Z]{1,3}$/.test(c))&&rows.length)rows=rows.slice(1);
   return rows;
 }
-// km da Seara (unidade ANG): rem = Σ(coluna Z) da Base CTEs · real = Σ km rodado da aba Combustível
+// km da Seara (unidade ANG): rem = Σ km da aba Remunerado · real = Σ km rodado da aba Combustível
 // → linhas de km {vk,yr,uni:'ANG',proj:'DISTRIBUIÇÃO URBANA',kmRem,kmReal}, só de abr/2026 em diante
 async function fetchSearaKm(){
   try{
     const [ctes,comb]=await Promise.all([
-      gvizGid(SEARA_ID,SEARA_GID_CTES,'select year(D), month(D), sum(Z) group by year(D), month(D)'),
+      gvizAba(SEARA_ID,SEARA_ABA_REM,'select A, sum(D) group by A'),
       gvizGid(SEARA_ID,SEARA_GID_COMB)
     ]);
     const rem={},real={};
-    ctes.forEach(r=>{const yr=r[0],mo=r[1];if(yr==null||mo==null)return;const vk=`${yr}-${String(+mo+1).padStart(2,'0')}`;rem[vk]=(rem[vk]||0)+(+r[2]||0);});
+    ctes.forEach(r=>{const vk=_vkRemAba(r[0]);if(!vk)return;rem[vk]=(rem[vk]||0)+(+r[1]||0);});
     const M3=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
     comb.forEach(r=>{const mi=M3.indexOf(String(r[5]||'').toLowerCase().slice(0,3));const yr=r[6],v=+r[10]||0;if(mi<0||yr==null||v<=0)return;const vk=`${yr}-${String(mi+1).padStart(2,'0')}`;real[vk]=(real[vk]||0)+v;});
     const out=[];
@@ -968,6 +984,6 @@ function applyTheme(t){document.body.classList.toggle('light-mode',t==='light');
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609161005"></script>
 </body>
 </html>

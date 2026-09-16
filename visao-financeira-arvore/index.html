@@ -2050,6 +2050,19 @@ const arvMoney = v => { const a=Math.abs(+v); return (+v<0?'-':'')+(a>=1e6?(a/1e
 /* ── fonte extra: KM + Frota Ativa (Dispersão de km) e Seara ── */
 let ARV_DP=null, ARV_S_DP=[], ARV_SEARA={}, arvCarregando=null;
 const ARV_SEARA_ID='1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE', ARV_GID_CTES=1672208132, ARV_GID_COMB=1982300845;
+// KM REMUNERADO = aba `Remunerado` (Renan, 16/09/2026). Vinha de `sum(Z)` na
+// Base CTEs, coluna que NÃO EXISTE MAIS — estava quebrado e o km remunerado da
+// Seara vinha zerado. A Base CTEs fica só para a contagem de viagens.
+const ARV_ABA_REM='Remunerado';
+// vigência da aba `Remunerado` → 'AAAA-MM'. Ela vem como TEXTO "MM/AAAA", mas
+// se um dia a coluna virar data de verdade o gviz manda "Date(a,m,d)" — os dois
+// caem aqui, senão a linha some sem erro nenhum.
+const _vkRemAbaArv = v => { const s=String(v==null?'':v);
+  let m=s.match(/^Date\((\d+),(\d+)/);  if(m) return `${m[1]}-${String(+m[2]+1).padStart(2,'0')}`;
+  m=s.match(/^(\d{1,2})\/(\d{4})$/);    if(m) return `${m[2]}-${m[1].padStart(2,'0')}`;
+  m=s.match(/^(\d{4})-(\d{2})/);         if(m) return `${m[1]}-${m[2]}`;
+  return ''; };
+
 const ARV_SEARA_PROJ=_ank('DISTRIBUIÇÃO URBANA'), ARV_SEARA_ATIVA=50;
 function arvDetDisp(cols){
   const fi=(...t)=>{ for(let i=0;i<cols.length;i++){ const lc=String(cols[i]||'').toLowerCase(); if(t.some(x=>lc.includes(x))) return i; } return -1; };
@@ -2070,11 +2083,11 @@ async function arvCarregaFontes(){
       const vg=v=>ARV_SEARA[v]=ARV_SEARA[v]||{kmRem:0,kmReal:0,frotaReal:0};
       const [dist,kmRem,kmReal]=await Promise.all([
         gvizFetch(ARV_SEARA_ID,{gid:ARV_GID_CTES,tq:'select B, year(D), month(D), count(A) group by B, year(D), month(D)'}),
-        gvizFetch(ARV_SEARA_ID,{gid:ARV_GID_CTES,tq:'select year(D), month(D), sum(Z) group by year(D), month(D)'}),
+        gvizFetch(ARV_SEARA_ID,{tab:ARV_ABA_REM,tq:'select A, sum(D) group by A'}),
         gvizFetch(ARV_SEARA_ID,{gid:ARV_GID_COMB,tq:'select F, G, sum(K) group by F, G'}),
       ]);
       dist.rows.forEach(r=>{ const y=+r[1], m=(+r[2])+1; if(y) vg(String(m).padStart(2,'0')+'/'+y).frotaReal++; });
-      kmRem.rows.forEach(r=>{ const y=+r[0], m=(+r[1])+1; if(y) vg(String(m).padStart(2,'0')+'/'+y).kmRem=+r[2]||0; });
+      kmRem.rows.forEach(r=>{ const vk=_vkRemAbaArv(r[0]); if(vk) vg(vk.slice(5)+'/'+vk.slice(0,4)).kmRem=+r[1]||0; });
       kmReal.rows.forEach(r=>{ const mi=M3.indexOf(String(r[0]||'').toLowerCase().slice(0,3)), y=+r[1];
         if(mi>=0&&y) vg(String(mi+1).padStart(2,'0')+'/'+y).kmReal=+r[2]||0; });
     }catch(e){ console.warn('Seara indisponível:',e.message); ARV_SEARA={}; }
