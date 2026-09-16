@@ -55,7 +55,8 @@ if (!CV) { console.error('custo_vigencia não respondeu'); process.exit(1); }
 
 const PLAN = await todas('carta_custos', 'unidade,vigencia,equipamento,valor',
   '&origem=eq.contratos-planilha');
-const PORTAL = await todas('vw_contrato_placa_mes', 'vigencia,placa,contrato,faixas,valor,km_atual');
+const PORTAL = await todas('vw_contrato_placa_mes',
+  'vigencia,placa,contrato,faixas,valor,km_atual,km_rodado');
 const REG = await todas('contratos_placa', 'placa,contrato,tipo,ultimo_km_informado');
 
 console.log(`fonte: ${fonte} · ${CV.length} linha(s) · planilha ${PLAN.length} lançamento(s)`
@@ -237,4 +238,48 @@ if (pior && pior[1].delta < 0) {
   const zeroPort = caiu.filter(x => x.b === 0).length;
   console.log(`\nem ${v}: ${caiu.length} placas com nota da VW · ${zeroPlan} com ZERO na planilha`
     + ` · ${zeroPort} com ZERO no portal`);
+}
+
+// ── 6) A NOTA DO ÚLTIMO MÊS ESTÁ COMPLETA? ────────────────────────────────
+// As datas sozinhas não decidem: o ciclo de leitura da VW termina no meio do
+// mês em TODOS os meses (fev fecha em 14/02, ago em 15/08), então "leitura de
+// 11/09" não prova nada por si. Quem decide é o KM: se o mês novo cobra uma
+// FRAÇÃO do que a mesma placa rodou no mês anterior, a nota ainda está sendo
+// formada. Se cobra o mesmo, está completa — e aí quem está errada é a
+// planilha, como em todos os outros meses.
+const vigsP = [...new Set(PORTAL.map(p => p.vigencia))].sort();
+const vUlt = vigsP[vigsP.length - 1], vAnt = vigsP[vigsP.length - 2];
+if (vUlt && vAnt) {
+  const kmDe = v => new Map(PORTAL.filter(p => p.vigencia === v).map(p => [p.placa, +p.km_rodado || 0]));
+  const A = kmDe(vAnt), B = kmDe(vUlt);
+  const par = [...B.keys()].filter(p => A.has(p) && A.get(p) > 0)
+    .map(p => ({ placa: p, ant: A.get(p), ult: B.get(p), r: B.get(p) / A.get(p) }));
+  par.sort((x, y) => x.r - y.r);
+  const med = par.length ? par[Math.floor(par.length / 2)].r : 0;
+  const somaA = par.reduce((s, x) => s + x.ant, 0), somaB = par.reduce((s, x) => s + x.ult, 0);
+  console.log(`\n══ 6) A NOTA DE ${vUlt} ESTÁ COMPLETA? (km por placa × ${vAnt})\n`);
+  console.log(`${par.length} placas nas duas vigências`);
+  console.log(`  Σ km ${vAnt}: ${n(somaA)}   Σ km ${vUlt}: ${n(somaB)}`
+    + `   → ${(somaB / somaA * 100).toFixed(1)}% do mês anterior`);
+  console.log(`  razão MEDIANA por placa: ${(med * 100).toFixed(1)}%`);
+  console.log(`  placas abaixo de 50% do próprio mês anterior: `
+    + `${par.filter(x => x.r < 0.5).length} de ${par.length}`);
+  console.log(`  placas abaixo de 10% .....................: `
+    + `${par.filter(x => x.r < 0.1).length}`);
+  console.log(`  placas acima de 90% ......................: `
+    + `${par.filter(x => x.r >= 0.9).length}`);
+  console.log('\nLEITURA: mediana perto de 100% = nota fechada, a planilha é que diverge.');
+  console.log('Mediana bem abaixo = a nota ainda está sendo formada e NÃO pode entrar na');
+  console.log('Carta como mês fechado.');
+  // e o mesmo teste um mês antes, como controle: se ago/jul também der baixo,
+  // a razão não serve de régua e o sinal não é de mês incompleto
+  const vAnt2 = vigsP[vigsP.length - 3];
+  if (vAnt2) {
+    const C = kmDe(vAnt2);
+    const par2 = [...A.keys()].filter(p => C.has(p) && C.get(p) > 0)
+      .map(p => A.get(p) / C.get(p)).sort((a, b) => a - b);
+    const med2 = par2.length ? par2[Math.floor(par2.length / 2)] : 0;
+    console.log(`\nCONTROLE — a mesma razão um mês antes (${vAnt} × ${vAnt2}): `
+      + `mediana ${(med2 * 100).toFixed(1)}% em ${par2.length} placas`);
+  }
 }
