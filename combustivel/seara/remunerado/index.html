@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="build" content="202609161100">
+<title>Remuneração · Seara · BI Frota</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --fundo:#202022; --app:rgba(30,40,60,.34); --side:rgba(30,30,30,.50);
+  --card-brd:rgba(255,255,255,.07); --luz-card:inset 0 1px 0 rgba(255,255,255,.08);
+  --txt:#EEF2FA; --txt2:#B2BCD2; --txt3:#676F83;
+  --linha:rgba(255,255,255,.06); --hover:rgba(255,255,255,.06); --cabec:#2B2B30;
+  --laranja:#F97316; --verde:#3BB33B; --vermelho:#FF5252; --ambar:#F4A100;
+}
+body.claro{
+  --fundo:#E1E2E5; --app:rgba(255,255,255,.34); --side:rgba(255,255,255,.50);
+  --card-brd:rgba(15,23,42,.10); --luz-card:inset 0 1px 0 rgba(255,255,255,1);
+  --txt:#161D2B; --txt2:#4A5568; --txt3:#737D91;
+  --linha:rgba(15,23,42,.10); --hover:rgba(15,23,42,.05); --cabec:#DCDFE6;
+  --verde:#00B300; --vermelho:#FF0000; --ambar:#E9A400;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--fundo);color:var(--txt);font-family:'Montserrat',sans-serif;font-size:13px;min-height:100vh;}
+.app{max-width:1180px;margin:0 auto;padding:26px 24px 60px;}
+.topo{display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap;}
+.voltar{display:inline-flex;align-items:center;gap:6px;background:var(--side);border:1px solid var(--card-brd);
+  border-radius:8px;padding:7px 12px;font-size:10.5px;font-weight:800;color:var(--txt2);text-decoration:none;
+  text-transform:uppercase;letter-spacing:.6px;}
+.voltar:hover{background:var(--hover);color:var(--txt);}
+h1{font-size:20px;font-weight:800;}
+.sub{font-size:11.5px;color:var(--txt3);margin:2px 0 22px;line-height:1.6;}
+.card{background:var(--side);border:1px solid var(--card-brd);border-radius:13px;box-shadow:var(--luz-card);
+  padding:18px 20px;margin-bottom:14px;}
+.ctit{font-size:13px;font-weight:800;margin-bottom:3px;}
+.csub{font-size:11px;color:var(--txt3);margin-bottom:14px;line-height:1.6;}
+.drop{border:1.6px dashed var(--card-brd);border-radius:13px;background:var(--side);padding:30px 22px;
+  text-align:center;cursor:pointer;transition:border-color .18s,background .18s;}
+.drop:hover,.drop.sobre{border-color:var(--laranja);background:var(--hover);}
+.drop b{display:block;font-size:14px;font-weight:800;margin-bottom:5px;}
+.drop span{font-size:11.5px;color:var(--txt3);line-height:1.75;}
+.drop code{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--laranja);}
+.res{margin-top:14px;display:flex;flex-direction:column;gap:9px;}
+.item{border:1px solid var(--card-brd);border-left-width:3px;border-radius:9px;padding:11px 14px;background:var(--side);}
+.item.ok{border-left-color:var(--verde);}
+.item.erro{border-left-color:var(--vermelho);}
+.item.aviso{border-left-color:var(--ambar);}
+.item b{font-size:12px;font-weight:800;display:block;margin-bottom:3px;}
+.item span{font-size:11px;color:var(--txt2);line-height:1.6;}
+.item .mot{color:var(--vermelho);font-weight:700;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--cabec);color:var(--txt);font-size:10px;font-weight:800;padding:9px 11px;
+  text-transform:uppercase;letter-spacing:.5px;text-align:left;white-space:nowrap;position:sticky;top:0;}
+thead th.num{text-align:right;}
+td{padding:9px 11px;border-bottom:1px solid var(--linha);color:var(--txt);white-space:nowrap;}
+td.num{text-align:right;}
+tbody tr:hover{background:var(--hover);}
+.vazio{padding:26px;text-align:center;color:var(--txt3);font-size:11.5px;}
+.bt{background:rgba(249,115,22,.14);border:1px solid rgba(249,115,22,.3);border-radius:8px;padding:8px 15px;
+  font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:800;color:var(--laranja);cursor:pointer;
+  text-transform:uppercase;letter-spacing:.6px;}
+.bt:hover{background:rgba(249,115,22,.28);}
+.aviso-topo{border:1px solid rgba(244,161,0,.35);background:rgba(244,161,0,.1);border-radius:10px;
+  padding:11px 14px;font-size:11.5px;color:var(--txt2);line-height:1.65;margin-bottom:14px;}
+@media(max-width:700px){ .app{padding:18px 14px 40px;} table{font-size:11px;} td,thead th{padding:7px 8px;} }
+</style>
+</head>
+<body>
+<script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../../");}catch(e){}</script>
+
+<div class="app">
+  <div class="topo">
+    <a href="../" class="voltar">← Seara</a>
+    <h1>Remuneração por placa</h1>
+  </div>
+  <p class="sub">Sobe as planilhas <b>VariavelDeFrete_PorPlaca</b> para o banco. É daqui que sai o
+    <b>km remunerado</b> da Seara — o km realizado continua vindo do abastecimento do ERP.</p>
+
+  <div id="gate"></div>
+
+  <div id="miolo" style="display:none">
+    <div class="card">
+      <div class="ctit">Subir planilhas</div>
+      <div class="csub">A unidade e a vigência saem do <b>nome do arquivo</b>. Subir o mesmo mês de novo
+        corrige as linhas em vez de duplicar.</div>
+      <div class="drop" id="drop">
+        <b>Arraste os arquivos aqui</b>
+        <span>ou clique para escolher · aceita vários de uma vez<br>
+          <code>VariavelDeFrete_PorPlaca_ANHANGUERA_08-2026.xlsx</code></span>
+      </div>
+      <input type="file" id="fileInput" multiple accept=".xlsx,.xlsm,.xls" style="display:none">
+      <div class="res" id="res"></div>
+    </div>
+
+    <div class="card" style="padding-bottom:6px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div class="ctit">O que já está no banco</div>
+          <div class="csub">Uma linha por unidade e mês.</div>
+        </div>
+        <button class="bt" onclick="carregaResumo()">Atualizar</button>
+      </div>
+      <div id="tab"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   IMPORTAÇÃO DA REMUNERAÇÃO DA SEARA (Renan, 16/09/2026)
+
+   A LIÇÃO DA CONFERÊNCIA DE LOCAÇÃO MANDA AQUI: lá o mesmo bug apareceu TRÊS
+   vezes — arquivo que a tela não sabia rotear era LIDO, o cartão ficava verde
+   com as linhas contadas, nenhuma mensagem aparecia e o banco não mudava.
+   Por isso, nesta tela:
+
+     · todo arquivo termina num cartão com o MOTIVO, e o cartão só fica verde
+       depois que o banco confirmou a gravação (`gravadas`, não `lidas`);
+     · nome que não casa com o padrão é ERRO VISÍVEL, não silêncio;
+     · a tabela de baixo relê o banco depois de cada carga — é a prova de que
+       o que apareceu no cartão chegou lá.
+   ══════════════════════════════════════════════════════════════ */
+const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
+const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+let sb=null, EMAIL='', ADMIN=false;
+
+const $=i=>document.getElementById(i);
+const n0=v=>Math.round(+v||0).toLocaleString('pt-BR');
+const brl=v=>'R$ '+(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* placa antiga LLLNNNN → Mercosul LLLNLNN (5º caractere, dígito → letra).
+   É só para CRUZAR com as outras bases — na tela aparece a placa de origem. */
+const _MERC='ABCDEFGHIJ';
+function placaKey(s){
+  const p=String(s==null?'':s).toUpperCase().replace(/[^A-Z0-9]/g,'');
+  return /^[A-Z]{3}[0-9]{4}$/.test(p) ? p.slice(0,4)+_MERC[+p[4]]+p.slice(5) : p;
+}
+/* de-para do nome do arquivo → código do portal. Nome que não estiver aqui
+   entra como veio (em caixa alta) e a tela avisa — inventar um código seria
+   gravar a unidade errada em silêncio. */
+const UNI={ 'ANHANGUERA':'ANG', 'ANG':'ANG' };
+
+/* O NOME DO ARQUIVO É O ROTEADOR. `VariavelDeFrete_PorPlaca_<UNIDADE>_MM-AAAA`,
+   aceitando `-` ou `_` entre mês e ano, e com ou sem extensão. */
+function leNome(nome){
+  const base=String(nome||'').replace(/\.(xlsx|xlsm|xls)$/i,'');
+  const m=base.match(/variavel\s*de\s*frete[_\s-]*por\s*placa[_\s-]+(.+?)[_\s-]+(\d{1,2})[-_.](\d{4})$/i);
+  if(!m) return null;
+  const mes=String(+m[2]).padStart(2,'0');
+  if(+m[2]<1||+m[2]>12) return null;
+  const cru=m[1].trim().toUpperCase().replace(/[_\s]+/g,' ');
+  return { uniCru:cru, unidade:UNI[cru]||cru, vigencia:`${m[3]}-${mes}`, conhecida:!!UNI[cru] };
+}
+
+const norm=s=>String(s==null?'':s).toLowerCase().normalize('NFD')
+  .replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+/* A COLUNA É ACHADA PELO RÓTULO, NUNCA PELA POSIÇÃO — a mesma planilha já
+   apareceu com e sem a coluna de Vigência na frente, o que empurra tudo um
+   lugar para a direita. Ler por índice quebraria calado. */
+function acha(hdr,...alvos){
+  const h=hdr.map(norm);
+  for(const a of alvos){ const i=h.indexOf(norm(a)); if(i>=0) return i; }
+  for(const a of alvos){ const i=h.findIndex(x=>x.includes(norm(a))); if(i>=0) return i; }
+  return -1;
+}
+const num=v=>{
+  if(typeof v==='number') return isFinite(v)?v:0;
+  const s=String(v==null?'':v).replace(/[^\d,.-]/g,'');
+  if(!s) return 0;
+  const u=Math.max(s.lastIndexOf(','),s.lastIndexOf('.'));
+  const casas=u<0?0:s.length-u-1;
+  const lim=(u<0||casas===3)?s.replace(/[.,]/g,'')
+           :s.slice(0,u).replace(/[.,]/g,'')+'.'+s.slice(u+1);
+  const x=parseFloat(lim); return isFinite(x)?x:0;
+};
+
+// ── lê um xlsx e devolve as linhas prontas para o banco ───────────────────
+function lePlanilha(buf, meta, arquivo){
+  const wb=XLSX.read(buf,{type:'array'});
+  // a aba certa é a "Variavel de Frete"; se o nome mudar, vale a 1ª
+  const aba=wb.SheetNames.find(n=>norm(n).includes('variaveldefrete')) || wb.SheetNames[0];
+  const g=XLSX.utils.sheet_to_json(wb.Sheets[aba],{header:1,defval:null,blankrows:false,raw:true});
+  if(!g.length) throw new Error(`a aba "${aba}" está vazia`);
+  /* O CABEÇALHO NEM SEMPRE É A 1ª LINHA — o mesmo tropeço do relatório da VW,
+     onde o arquivo abre com títulos. Acha-se a linha que tem "Placa". */
+  const iCab=g.findIndex(l=>(l||[]).some(c=>/^\s*placa\s*$/i.test(String(c==null?'':c))));
+  if(iCab<0) throw new Error(`não achei a linha de cabeçalho (nenhuma coluna "Placa") na aba "${aba}"`);
+  const hdr=(g[iCab]||[]).map(v=>String(v==null?'':v).trim());
+
+  const C={ placa:acha(hdr,'placa'), km:acha(hdr,'km'), cte:acha(hdr,'ct-e','cte'),
+            diesel:acha(hdr,'diesel'), arla:acha(hdr,'arla'), manutencao:acha(hdr,'manutencao'),
+            lubrificante:acha(hdr,'lubrificante'), pneu:acha(hdr,'pneu'),
+            recapagem:acha(hdr,'recapagem'), lavagem:acha(hdr,'lavagem'), total:acha(hdr,'total'),
+            vig:acha(hdr,'vigencia') };
+  if(C.placa<0) throw new Error('a aba não tem coluna "Placa"');
+  if(C.km<0)    throw new Error('a aba não tem coluna "KM" — é ela que vira o km remunerado');
+
+  const linhas=[], vistas=new Set(); let descartadas=0;
+  for(let i=iCab+1;i<g.length;i++){
+    const l=g[i]||[];
+    const praw=String(l[C.placa]==null?'':l[C.placa]).trim();
+    /* A LINHA "TOTAL" DO RODAPÉ NÃO É UMA PLACA. No relatório da VW ela entrou
+       como um veículo cujo valor era a soma de todos e dobrou o mês — aqui a
+       régua é a FORMA da placa, não "tem alguma coisa escrita". */
+    const pk=placaKey(praw);
+    if(!/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(pk)){ if(praw) descartadas++; continue; }
+    if(vistas.has(pk)) continue;      // o upsert recusa a mesma chave duas vezes na MESMA carga
+    vistas.add(pk);
+    const v={ unidade:meta.unidade, vigencia:meta.vigencia, placa:pk, placa_origem:praw,
+              arquivo, updated_by:EMAIL };
+    ['cte','km','diesel','arla','manutencao','lubrificante','pneu','recapagem','lavagem','total']
+      .forEach(k=>{ v[k]=C[k]>=0?num(l[C[k]]):null; });
+    linhas.push(v);
+  }
+  return { linhas, aba, descartadas, hdr };
+}
+
+// ── o RAMO QUE GRAVA — nasce junto com o tipo, não depois ─────────────────
+async function grava(linhas){
+  const passo=500; let n=0;
+  for(let i=0;i<linhas.length;i+=passo){
+    const { error, data } = await sb.from('seara_remunerado')
+      .upsert(linhas.slice(i,i+passo), { onConflict:'unidade,vigencia,placa' })
+      .select('placa');
+    if(error) throw new Error(error.message);
+    n += (data||[]).length;
+  }
+  return n;
+}
+
+function cartao(classe, titulo, texto, motivo){
+  const d=document.createElement('div');
+  d.className='item '+classe;
+  d.innerHTML=`<b>${esc(titulo)}</b><span>${texto}${motivo?`<br><span class="mot">${esc(motivo)}</span>`:''}</span>`;
+  $('res').appendChild(d);
+}
+
+async function recebeArquivos(lista){
+  if(!lista||!lista.length) return;
+  $('res').innerHTML='';
+  if(typeof XLSX==='undefined'){ cartao('erro','Leitor de planilha ainda carregando','Tente de novo em um instante.'); return; }
+  if(!ADMIN){ cartao('erro','Sem permissão para gravar','Seu acesso não é de administrador — o banco recusaria a escrita.'); return; }
+
+  let algumOk=false;
+  for(const f of lista){
+    const meta=leNome(f.name);
+    /* NOME QUE NÃO CASA É ERRO VISÍVEL. Este é exatamente o ponto em que a
+       Conferência de Locação ficava verde sem gravar nada. */
+    if(!meta){
+      cartao('erro', f.name, 'Não reconheci o nome do arquivo, então <b>nada foi gravado</b>.',
+        'O nome precisa terminar com a unidade e o mês/ano — ex.: VariavelDeFrete_PorPlaca_ANHANGUERA_08-2026.xlsx');
+      continue;
+    }
+    try{
+      const buf=await f.arrayBuffer();
+      const { linhas, aba, descartadas }=lePlanilha(buf, meta, f.name);
+      if(!linhas.length){
+        cartao('erro', f.name, `Aba <b>${esc(aba)}</b> lida, mas <b>nenhuma placa válida</b> — nada foi gravado.`,
+          descartadas?`${descartadas} linha(s) descartada(s) por não terem cara de placa.`:'');
+        continue;
+      }
+      const gravadas=await grava(linhas);
+      const km=linhas.reduce((s,r)=>s+(+r.km||0),0);
+      const tot=linhas.reduce((s,r)=>s+(+r.total||0),0);
+      algumOk=true;
+      cartao(meta.conhecida?'ok':'aviso', f.name,
+        `<b>${gravadas}</b> placa(s) gravada(s) · unidade <b>${esc(meta.unidade)}</b> · vigência <b>${esc(meta.vigencia)}</b>`
+        +`<br>km remunerado <b>${n0(km)}</b> · variável <b>${brl(tot)}</b>`
+        +(descartadas?` · ${descartadas} linha(s) sem cara de placa descartada(s)`:''),
+        meta.conhecida?'':`A unidade "${meta.uniCru}" não está no de-para — gravei com esse nome mesmo. Confira se é o código certo.`);
+    }catch(e){
+      cartao('erro', f.name, 'Falhou e <b>nada foi gravado</b> deste arquivo.', e.message||String(e));
+    }
+  }
+  if(algumOk) carregaResumo();
+}
+
+// ── o que já está no banco ────────────────────────────────────────────────
+async function carregaResumo(){
+  $('tab').innerHTML='<div class="vazio">Lendo…</div>';
+  /* O POSTGREST DEVOLVE NO MÁXIMO 1.000 LINHAS POR LEITURA, sem erro nenhum —
+     com ~45 placas/mês isso estoura no 2º ano e a tabela passaria a mostrar
+     menos placas e menos km do que tem no banco, parecendo dado faltando. */
+  const data=[]; const passo=1000;
+  for(let i=0;;i+=passo){
+    const { data:p, error } = await sb.from('seara_remunerado')
+      .select('unidade,vigencia,placa,km,total,updated_at')
+      .order('vigencia',{ascending:false}).order('placa').range(i,i+passo-1);
+    if(error){ $('tab').innerHTML=`<div class="vazio">Não consegui ler: ${esc(error.message)}</div>`; return; }
+    data.push(...(p||[]));
+    if(!p||p.length<passo) break;
+  }
+  if(!data.length){ $('tab').innerHTML='<div class="vazio">Nada no banco ainda — suba a primeira planilha acima.</div>'; return; }
+  const m=new Map();
+  data.forEach(r=>{
+    const k=r.unidade+'|'+r.vigencia;
+    const a=m.get(k)||{unidade:r.unidade,vigencia:r.vigencia,placas:0,km:0,total:0,quando:''};
+    a.placas++; a.km+=+r.km||0; a.total+=+r.total||0;
+    if(r.updated_at>a.quando) a.quando=r.updated_at;
+    m.set(k,a);
+  });
+  const linhas=[...m.values()].sort((a,b)=>(b.vigencia+b.unidade).localeCompare(a.vigencia+a.unidade));
+  const dt=s=>{ const d=new Date(s); return isNaN(d)?'—':d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
+  $('tab').innerHTML='<div style="overflow:auto;max-height:52vh"><table><thead><tr>'
+    +'<th>Unidade</th><th>Vigência</th><th class="num">Placas</th><th class="num">Km remunerado</th>'
+    +'<th class="num">Custo variável</th><th>Última carga</th></tr></thead><tbody>'
+    + linhas.map(r=>`<tr><td>${esc(r.unidade)}</td><td>${esc(r.vigencia)}</td>`
+        +`<td class="num">${r.placas}</td><td class="num">${n0(r.km)}</td>`
+        +`<td class="num">${brl(r.total)}</td><td>${esc(dt(r.quando))}</td></tr>`).join('')
+    +'</tbody></table></div>';
+}
+
+// ── entrada ───────────────────────────────────────────────────────────────
+(async function(){
+  try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }
+  catch(e){ $('gate').innerHTML='<div class="card">Não consegui iniciar a conexão com o portal.</div>'; return; }
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ $('gate').innerHTML='<div class="card">Entre pelo portal para usar esta tela. <a href="../../../" style="color:var(--laranja)">Ir para o hub</a></div>'; return; }
+  EMAIL=session.user.email||'';
+  try{
+    // a chave do perfil é `user_id` — é assim em todos os outros painéis
+    const { data } = await sb.from('fca_profiles').select('is_admin').eq('user_id',session.user.id).maybeSingle();
+    ADMIN=!!(data&&data.is_admin);
+  }catch(e){ ADMIN=false; }
+  $('gate').innerHTML = ADMIN ? '' :
+    '<div class="aviso-topo">Você consegue <b>ver</b> o que está carregado, mas a gravação é só para administradores — é o banco que decide, não a tela.</div>';
+  $('miolo').style.display='';
+
+  const drop=$('drop'), inp=$('fileInput');
+  drop.addEventListener('click',()=>inp.click());
+  inp.addEventListener('change',e=>{ recebeArquivos([...e.target.files]); inp.value=''; });
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('sobre');}));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('sobre');}));
+  drop.addEventListener('drop',e=>recebeArquivos([...e.dataTransfer.files]));
+  ['dragover','drop'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
+
+  // mesma chave e mesmos valores dos outros painéis ('light' / 'dark')
+  try{ document.body.classList.toggle('claro',(localStorage.getItem('bi_theme')||'dark')==='light'); }catch(e){}
+  carregaResumo();
+})();
+</script>
+<script src="../../../assets/mobile.js"></script>
+<script src="../../../assets/build-check.js?v=202609161100"></script>
+</body>
+</html>
