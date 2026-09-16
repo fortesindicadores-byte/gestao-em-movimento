@@ -45,7 +45,7 @@ const CARGA = new Set([
   'conformidade-termometro.yml', 'contratos-robot.yml', 'disp-migracao.yml', 'elite-robot.yml',
   'ginfo-robot.yml', 'gviz-robot.yml', 'locacao-modelos-backfill.yml', 'pneus-loader.yml',
   'pneus-unifica-migra.yml', 'profrotas-robot.yml', 'qlik-robot.yml', 'ramos-build.yml',
-  'saude-robot.yml', 'sheets-pedido.yml', 'sheets-robot.yml',
+  'saude-robot.yml', 'sheets-pedido.yml', 'sheets-robot.yml', 'volkstotal-robot.yml',
 ]);
 
 // ─────────────────────────────────────────────────────────────

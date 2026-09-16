@@ -8,7 +8,27 @@ name: Volkstotal Robot (VW -> Supabase)
 #  gravar — coleta e sobe para vw_contrato_km.
 #
 # Sem recorte são 43 contratos × meses do ano = ~390 buscas, ~6 s cada.
+#
+# TODO DIA, SOZINHO (Renan, 16/09/2026: "rodar todo dia melhor"): o agendamento
+# coleta o MÊS CORRENTE e o ANTERIOR, e grava. Dois motivos para os dois meses:
+#
+#  · a nota de um mês só fecha no MEIO do mês seguinte (medido em 16/09: o
+#    ciclo de leitura da VW termina em 14/02, 24/03, 15/08, 11/09…), então o
+#    mês corrente passa dias incompleto e a rodada do dia seguinte o completa
+#    sozinha — o upsert por chave reescreve a linha, não duplica;
+#  · linha que a VW lança atrasada num mês já fechado entra na rodada seguinte
+#    em vez de ficar de fora para sempre.
+#
+# Mês que o portal ainda não emitiu não gera linha nenhuma, e a Carta cai
+# sozinha no cálculo por km — que é o que o Renan pediu ("se não achar nada
+# mantém o cálculo pelo km"). Não é preciso nada no painel para isso: a
+# precedência dele já é portal → planilha → cálculo.
 on:
+  schedule:
+    # 09:00 UTC = 06:00 BRT. O agendador do GitHub atrasa (ver a nota do Ginfo
+    # no CLAUDE.md), e aqui isso não importa: o alvo é uma nota mensal, não um
+    # relatório que alguém abre às 6h.
+    - cron: '0 9 * * *'
   workflow_dispatch:
     inputs:
       modo:
@@ -41,16 +61,50 @@ jobs:
         with: { node-version: '22' }
       - name: Instalar Playwright e xlsx
         run: npm i -D playwright@1.47.2 xlsx && npx playwright install --with-deps chromium
+      # O MÊS É CALCULADO EM BRT, não em UTC: rodando 09:00 UTC do dia 1º, o
+      # UTC já virou mas o Brasil ainda está no dia 1º — e no último dia do mês
+      # o inverso faria a rodada pular para o mês seguinte antes da hora.
+      - name: Vigências da rodada diária (mês corrente + o anterior)
+        if: github.event_name == 'schedule'
+        run: |
+          export TZ=America/Sao_Paulo
+          hoje=$(date +%Y-%m)
+          ant=$(date -d "$(date +%Y-%m-01) -1 month" +%Y-%m)
+          echo "VIG_AUTO=$ant,$hoje" >> "$GITHUB_ENV"
+          echo "rodada diária: $ant e $hoje"
       - name: Rodar
         env:
-          VT_MODE: ${{ github.event.inputs.modo || 'teste' }}
+          # A ARMADILHA DO GINFO, que aqui seria a mesma: no `schedule` NÃO
+          # existe `inputs`, então o `|| 'teste'` valeria e o robô rodaria todo
+          # dia SEM GRAVAR, com o log verde e zero linha no banco. O agendado
+          # grava; o disparo manual continua obedecendo o que foi escolhido.
+          VT_MODE: ${{ github.event.inputs.modo || (github.event_name == 'schedule' && 'gravar' || 'teste') }}
           VT_CONTRATO: ${{ github.event.inputs.contrato }}
-          VT_VIG: ${{ github.event.inputs.vig }}
+          # `env.VIG_AUTO` vem do passo acima; sem ele o env do passo mandaria
+          # string vazia por cima e o robô coletaria o ANO INTEIRO todo dia
+          VT_VIG: ${{ github.event.inputs.vig || env.VIG_AUTO }}
           VT_ANO: ${{ github.event.inputs.ano }}
           VOLKSTOTAL_USER: ${{ secrets.VOLKSTOTAL_USER }}
           VOLKSTOTAL_PASS: ${{ secrets.VOLKSTOTAL_PASS }}
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
-        run: node scripts/volkstotal-robot.mjs
+        # o echo existe para a 1ª linha do log dizer o que a rodada agendada
+        # resolveu — é o que denuncia na hora um `modo` que voltou a ser
+        # "teste" sem ninguém perceber
+        run: |
+          echo "modo=$VT_MODE · vigências=${VT_VIG:-(o ano inteiro)} · contratos=${VT_CONTRATO:-(todos)}"
+          node scripts/volkstotal-robot.mjs
+      # Sem isto, robô que quebra fica quebrado em silêncio — foi o que deixou
+      # o Ginfo 7 dias sem coletar. (O `vars.MAIL_TO` continua vazio no repo:
+      # enquanto não for preenchido, o alarme não toca em NENHUM robô.)
+      - name: Avisar por e-mail se falhar
+        if: failure()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          MAIL_FROM:      ${{ vars.MAIL_FROM }}
+          MAIL_TO:        ${{ vars.MAIL_TO }}
+          WORKFLOW:       ${{ github.workflow }}
+          RUN_URL:        ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash scripts/avisa-falha.sh
       # os xlsx baixados são apagados assim que são lidos (o dado vai para o
       # banco); o que sobe aqui são só as telas, para depurar mudança no portal
       - name: Screenshots
