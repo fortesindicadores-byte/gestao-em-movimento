@@ -119,8 +119,10 @@ let dTot = 0;
     + `  ${String(a.mudaram).padStart(5)}${a.previa ? '   (prévia)' : ''}`);
 });
 console.log(`\nΔ acumulado no ano: ${(dTot >= 0 ? '+' : '') + brl(dTot)}`);
-console.log('Δ positivo = o portal cobra MAIS do que a planilha lançava (dinheiro que');
-console.log('não estava na Carta). Δ negativo = a planilha lançava a mais.\n');
+console.log('Δ positivo = a nota da VW é MAIOR que a base antiga; negativo = menor.');
+console.log('O sinal só ganha sentido junto da BASE ANTIGA: contra a PLANILHA ele mede');
+console.log('lançamento errado; contra o CÁLCULO mede o erro da estimativa, que não é');
+console.log('dinheiro perdido nem recuperado — é a régua trocada.\n');
 
 // ── 2) de onde vem o hodômetro do contrato ────────────────────────────────
 const regDe = new Map(REG.map(r => [r.placa, r]));
@@ -228,8 +230,12 @@ const pior = [...porVig.entries()].filter(([v]) => v >= VW_INI)
   .sort((a, b) => a[1].delta - b[1].delta)[0];
 if (pior && pior[1].delta < 0) {
   const [v] = pior;
-  console.log(`\n── as 15 placas que mais CAÍRAM em ${v} (planilha → portal)\n`);
-  console.log('placa      contrato   planilha          portal            Δ        km portal');
+  // o rótulo da coluna SEGUE a base do mês — chamar de "planilha" um mês que
+  // saía do cálculo foi o que me fez ler setembro errado na 1ª rodada
+  const aP = porVig.get(v);
+  const baseNome = aP.naPlan === 0 ? 'cálculo' : aP.naPlan === aP.placas ? 'planilha' : 'base ant.';
+  console.log(`\n── as 15 placas que mais CAÍRAM em ${v} (${baseNome} → portal)\n`);
+  console.log(`placa      contrato   ${baseNome.padEnd(13)}   portal            Δ        km portal`);
   CV.filter(r => r.vig_cobranca === v && r.valor_vw != null)
     .map(r => ({ r, a: custoAntigo(r), b: +r.valor_vw || 0 }))
     .filter(x => x.b - x.a < -0.01)

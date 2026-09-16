@@ -1218,6 +1218,28 @@ Com a comparação feita, o Renan liberou: *"E pode subir já o contrato do site
 - **`vw_contrato_placa_mes`** soma as faixas do mês (a nota é uma só) e guarda `faixas` para dizer quem atravessou. Ela também **acha a placa pelo chassi** quando o portal manda a linha sem placa, com o de-para tirado do próprio portal — senão a linha ficava órfã e a placa aparecia sem contrato.
 - **A leitura do painel desce em DEGRAUS** (tudo → só `contrato` → mínimo): pedir coluna que não existe faz o PostgREST devolver 400, e a Carta ficaria sem contrato NENHUM na tela, não só sem a coluna. Cada degrau liga ou desliga o que a tela mostra (`CONTR_NUM`/`CONTR_VW`).
 - Conferido num Postgres 16 de verdade (o script roda duas vezes, `refresh concurrently` continua valendo) e no Chromium com o painel real em três cenários de banco — 27 checagens, incluindo o rodapé da tabela batendo com o cabeçalho em cada combinação de coluna condicional.
+#### O que a troca mudou de verdade (medido em 16/09/2026, depois do SQL rodado)
+
+**Δ do ano: +R$ 142.824,64** — mas o número sozinho mente, e eu quase o apresentei errado duas vezes. **O sinal só tem sentido junto da BASE que ele está substituindo**, e são duas bases diferentes:
+
+| vigência | base antiga | Δ | placas que mudaram | o que isso é |
+|---|---|---|---|---|
+| 2026-02 | **cálculo** | +108.481,73 | 203 de 204 | estimativa → nota real |
+| 2026-03 | planilha | **0,00** | 0 | bate centavo a centavo |
+| 2026-04 | planilha | +13.979,89 | 7 | correções pontuais |
+| 2026-05 | planilha | +37.635,82 | 43 | as placas lançadas com valor ZERO |
+| 2026-06 | planilha | **0,00** | 2 | bate centavo a centavo |
+| 2026-07 | planilha | +9.074,47 | 12 | a 2ª faixa não lançada |
+| 2026-08 | planilha | +11.817,31 | 18 | idem |
+| 2026-09 | **cálculo** | −38.164,58 | 234 de 257 | estimativa → nota real |
+| 2026-10 | cálculo | 0 | 0 | prévia, o portal ainda não emitiu |
+
+- **A Carta só tem lançamento de planilha de MAR a AGO.** Fevereiro e setembro saíam do **cálculo** (km do ERP × taxa), então ali o Δ **não é dinheiro que faltava** — é a régua trocada. Nos seis meses em que a planilha cobre, o Δ é +R$ 72.507,49 e **dois deles batem centavo a centavo**, que é a melhor prova de que a leitura do portal reproduz a planilha quando ela está bem preenchida.
+- **"203 de 204 placas mudaram" é a assinatura de base = cálculo**, não de erro: uma estimativa nunca bate uma nota ao centavo. Onde a base é a planilha, mudam 2 a 43.
+- **SETEMBRO NÃO ESTÁ PARCIAL — e a data não prova isso** (erro meu, pego no meio do caminho): vi a última leitura em 11/09 com a coleta em 15/09 e quase concluí que a nota estava em formação. **O ciclo de leitura da VW termina no meio do mês em TODOS os meses** (fev fecha em 14/02, mar em 24/03, ago em 15/08), então a data não separa nada. Quem separa é o **km**: setembro cobrou **mediana de 98,8% do km que a MESMA placa rodou em agosto** (Σ 94%, 147 de 254 placas acima de 90%), com o mês anterior como controle em 106,4%. Nota fechada. Como o ciclo fecha no meio do mês, **coletar o portal a partir do dia ~15 já traz o mês completo**.
+- **10 placas cobradas com ~1 km em setembro** (CUK9G80 R$ 0,29, EEP2380 R$ 0,74, RYM0A67 R$ 1,37) contra milhares de reais na estimativa. São a cauda, não a história — mas valem uma olhada da unidade.
+- **`hodo_contrato` na prévia: 260 placas pela nota da VW, 9 pelo Km Informado, 91 sem nenhum** (as de contrato fixo, que não estão no portal da VW). Abastecimento preenchido em 352 de 360.
+- **O mesmo hodômetro em 6 placas do V1673W (12.253) NÃO é bug do de-para**: a planilha tem 12.252 para as seis e o portal 12.253 para as seis — **os dois lados concordam**, então é como a VW reporta esse grupo, não erro de leitura nosso. O que significa é pergunta para a VW.
 - **Auditoria: workflow `Carta Hodometro Check`** (`scripts/carta-hodo-check.mjs`), que roda DEPOIS do SQL e responde o que a tela não responde: (1) quanto o dinheiro mudou mês a mês, **repetindo a precedência do painel** — se os dois não baterem, um deles está errado; (2) se o `hodo_contrato` veio da nota da VW ou do `ultimo_km_informado` (uma coluna que parece cheia mas é metade plano B conta outra história); (3) **por que duas placas aparecem com o mesmo hodômetro** — pode ser o plano B repetindo, o portal mandando igual ou o de-para de chassi juntando o que não devia, e só a terceira seria bug. O ranking de descolamento traz **o mês de cada leitura ao lado**: na vigência em prévia os dois hodômetros são de datas diferentes por construção, então o sinal de uma linha isolada não quer dizer nada — o que vale é o descolamento grande.
 
 ## Robô Qlik (DRE → Custos) — EM ESPERA (03/08/2026)
