@@ -1242,6 +1242,27 @@ Com a comparação feita, o Renan liberou: *"E pode subir já o contrato do site
 - **O mesmo hodômetro em 6 placas do V1673W (12.253) NÃO é bug do de-para**: a planilha tem 12.252 para as seis e o portal 12.253 para as seis — **os dois lados concordam**, então é como a VW reporta esse grupo, não erro de leitura nosso. O que significa é pergunta para a VW.
 - **Auditoria: workflow `Carta Hodometro Check`** (`scripts/carta-hodo-check.mjs`), que roda DEPOIS do SQL e responde o que a tela não responde: (1) quanto o dinheiro mudou mês a mês, **repetindo a precedência do painel** — se os dois não baterem, um deles está errado; (2) se o `hodo_contrato` veio da nota da VW ou do `ultimo_km_informado` (uma coluna que parece cheia mas é metade plano B conta outra história); (3) **por que duas placas aparecem com o mesmo hodômetro** — pode ser o plano B repetindo, o portal mandando igual ou o de-para de chassi juntando o que não devia, e só a terceira seria bug. O ranking de descolamento traz **o mês de cada leitura ao lado**: na vigência em prévia os dois hodômetros são de datas diferentes por construção, então o sinal de uma linha isolada não quer dizer nada — o que vale é o descolamento grande.
 
+### Roda TODO DIA sozinho (Renan, 16/09/2026: "rodar todo dia melhor")
+
+Cron `0 9 * * *` (06:00 BRT) no `volkstotal-robot.yml`, coletando **o mês corrente E o anterior**, em modo `gravar`.
+
+- **Dois meses, não um:** a nota de um mês só fecha **no meio do mês seguinte** (o ciclo de leitura da VW termina em 14/02, 24/03, 15/08, 11/09…), então o mês corrente passa dias incompleto e a rodada do dia seguinte o completa sozinha pelo upsert. O mês anterior entra junto para a linha lançada em atraso não ficar de fora para sempre.
+- **Mês que o portal não emitiu não gera linha**, e a Carta cai sozinha no cálculo por km — a precedência dela já é portal → planilha → cálculo, então o *"se não achar nada mantém o cálculo pelo km"* não precisou de código novo.
+- **A ARMADILHA É A MESMA DO GINFO:** no `schedule` **não existe `inputs`**, então o `|| 'teste'` valeria e o robô rodaria todo dia **sem gravar**, log verde e zero linha. O agendado força `gravar` e a 1ª linha do log imprime modo + vigências resolvidas — é o que denuncia a regressão na hora.
+- **O mês é calculado em BRT:** às 09:00 UTC do dia 1º o UTC já virou e o Brasil não (`01/10 00:30 UTC` = `30/09` aqui). A conta ancora no dia 01 antes de subtrair o mês, senão o dia 31 vira "31 de fevereiro". Testada na virada do ano e no dia 31.
+- Ganhou o aviso de falha (`avisa-falha.sh`) e entrou na lista `CARGA` do Saude Robot — sem isso o painel de saúde classificaria como auditoria um robô que grava em produção.
+- **Backfill de 2025 e de jan/2026** disparado em 16/09/2026 (`ano=2025` e `vig=2026-01`, os dois em `gravar`).
+
+## Seara — VariavelDeFrete por placa: o km REMUNERADO vem de planilha mensal (Renan, 16/09/2026)
+
+Pedido: *"Tenho essas planilhas… Quero poder imputar elas que nem na locação Vamos para trazer o km remunerado por placa da Seara. Por enquanto vou criar uma aba nova lá na Seara. Depois usamos o input delas para remunerado, e o km rodado do powershell para o realizado. Vamos fazer a parte 1"*.
+
+- **Os arquivos:** `VariavelDeFrete_PorPlaca_<UNIDADE>_MM-AAAA.xlsx`, **um por mês** (ele mostrou 01→08/2026 de ANHANGUERA), aba **`Variavel de Frete`**. Colunas: `Placa · CT-e · KM · Diesel · Arla · Manutenção · Lubrificante · Pneu · Recapagem · Lavagem · Total`.
+- **É o mesmo conteúdo do `ReaisPorKm` da Base Remunerado da Seara** (coluna O = diesel + arla + manutenção + pneu + recapagem + lubrificante + lavagem), agora **por placa e por mês**, com o **KM remunerado** na própria linha. O `Total` é a soma dos sete.
+- **Parte 1 (esta):** tela de importação por ARRASTAR, nos moldes da `/conferencia-locacao/` — o tipo e a vigência saem do **NOME do arquivo**. **Parte 2 (depois):** o remunerado passa a sair daí e o realizado do km rodado do PowerShell.
+- **A LIÇÃO DA LOCAÇÃO VALE EM DOBRO AQUI:** lá o mesmo bug apareceu **três vezes** — arquivo que o `recebeArquivos` não sabe rotear é lido, os cartões ficam verdes com as linhas contadas, nenhuma mensagem aparece e **o banco não muda**. Ao criar o tipo novo, **criar junto o ramo que grava**.
+- Status em 16/09/2026: aguardando o Renan mandar os arquivos para o parser ser conferido contra o real, não contra a reconstrução do print.
+
 ## Robô Qlik (DRE → Custos) — EM ESPERA (03/08/2026)
 
 **Status: PARQUEADO — decisão do Renan 03/08/2026.** O robô está 100% codificado (receita dos 5 passos abaixo), mas o Qlik Sense da Conlog **não é acessível pela internet**: `bi.conlogsa.com.br` público serve só o **GLPI** (chamados) — `/sense` dá 404 e a porta 4244 não responde de fora (split DNS: o Renan acessa pela rede interna/VPN). O GitHub Actions não alcança. Opções mapeadas: (1) TI publicar o Qlik externamente · (2) self-hosted runner na rede da Conlog · (3) script agendado no PC do Renan · (4) **ler direto do BANCO DE DADOS fonte do DRE — caminho que o Renan quer explorar no futuro**. Até lá: **aba Custos segue manual**. NÃO religar sem resolver a rede.
