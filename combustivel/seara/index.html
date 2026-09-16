@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202608192100">
+<meta name="build" content="202609161240">
 <title>Combustível Seara · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -50,6 +50,7 @@ body{background:radial-gradient(ellipse at 15% 20%,rgba(249,115,22,.07) 0%,trans
 }
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../");}catch(e){}</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../../assets/gviz-cache.js?v=202609050530"></script>
 </head>
 <body>
@@ -105,6 +106,16 @@ body{background:radial-gradient(ellipse at 15% 20%,rgba(249,115,22,.07) 0%,trans
         <a class="card-link" href="preco-litro/">Abrir <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
       </div>
 
+      <div class="dash-card active" id="card-rem" style="display:none">
+        <div class="card-top">
+          <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+          <span class="badge on">Admin</span>
+        </div>
+        <div class="card-title">Remuneração por placa</div>
+        <div class="card-desc">Sobe as planilhas <b>VariavelDeFrete_PorPlaca</b> para o banco — é delas que sai o km remunerado da Seara.</div>
+        <a class="card-link" href="remunerado/">Abrir <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      </div>
+
     </div>
   </div>
 </main>
@@ -120,9 +131,25 @@ function syncLine(){
 }
 window.addEventListener('resize',syncLine);
 setTimeout(syncLine,100);
+
+// Card "Remuneração por placa" só para admin — é tela de carga, não de consulta
+// (mesmo gate do hub de Combustível)
+(async function(){
+  try{
+    const SB_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
+    const SB_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+    if(!window.supabase) return;
+    const sb=supabase.createClient(SB_URL,SB_KEY);
+    const { data:{ session } }=await sb.auth.getSession();
+    if(!session) return;
+    let isAdmin=false;
+    try{ const { data:prof }=await sb.from('fca_profiles').select('is_admin').eq('user_id',session.user.id).maybeSingle(); isAdmin=!!(prof&&prof.is_admin); }catch(e){}
+    if(isAdmin){ const c=document.getElementById('card-rem'); if(c){ c.style.display=''; syncLine(); } }
+  }catch(e){}
+})();
 </script>
 <script src="../../assets/mobile.js?v=202608220020"></script>
 <script src="../../assets/ctrlk.js"></script>
-<script src="../../assets/build-check.js?v=202608192100"></script>
+<script src="../../assets/build-check.js?v=202609161240"></script>
 </body>
 </html>
