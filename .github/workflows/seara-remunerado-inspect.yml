@@ -1,0 +1,22 @@
+name: Seara Remunerado Inspect
+
+# A aba `Remunerado` nova (colada das planilhas VariavelDeFrete_PorPlaca) × o km
+# remunerado que os cinco painéis da Seara leem hoje da Base CTEs.
+#
+# É a conferência que vem ANTES de trocar a fonte — a mesma disciplina do
+# KmL Banco Check. Não escreve nada.
+on:
+  workflow_dispatch:
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Instalar xlsx
+        run: npm i -D xlsx
+      - name: Conferir
+        run: node scripts/seara-remunerado-inspect.mjs
