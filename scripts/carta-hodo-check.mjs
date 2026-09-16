@@ -180,3 +180,61 @@ doMes.filter(r => r.hodo_abast != null && r.hodo_contrato != null)
   });
 console.log('\nDiferença NEGATIVA = a VW fechou a nota num hodômetro À FRENTE do que a bomba');
 console.log('viu. POSITIVA = o veículo já rodou além do que foi cobrado.');
+
+// ── 5) QUE PERÍODO CADA NOTA COBRE ────────────────────────────────────────
+// A pergunta que o Δ de setembro levantou: a nota do mês está FECHADA ou
+// ainda está sendo formada? Se estiver parcial, trocar a fonte põe um valor
+// incompleto na Carta como se fosse fechado — e o painel ainda marca
+// `previa = false`. As datas da própria nota respondem: `data_anterior` e
+// `data_atual` são as leituras de hodômetro entre as quais a VW cobrou.
+const KM = await todas('vw_contrato_km',
+  'contrato,vigencia,chassi,placa,faixa,km_anterior,km_atual,data_anterior,data_atual,valor');
+console.log('\n══ 5) QUE PERÍODO CADA NOTA DA VW COBRE\n');
+console.log('Se a leitura final de um mês for do meio do mês, a nota ainda está sendo');
+console.log('formada e o valor NÃO é comparável com um mês fechado da planilha.\n');
+console.log('vigência  linhas  data_anterior (min→max)     data_atual (min→max)        sem data');
+const porV = new Map();
+KM.forEach(r => {
+  const a = porV.get(r.vigencia) || { n: 0, a0: null, a1: null, b0: null, b1: null, sem: 0 };
+  a.n++;
+  const push = (k0, k1, d) => {
+    if (!d) return null;
+    if (!a[k0] || d < a[k0]) a[k0] = d;
+    if (!a[k1] || d > a[k1]) a[k1] = d;
+    return d;
+  };
+  push('a0', 'a1', r.data_anterior);
+  if (!push('b0', 'b1', r.data_atual)) a.sem++;
+  porV.set(r.vigencia, a);
+});
+const br = d => d ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(2, 4) : '—';
+[...porV.keys()].sort().forEach(v => {
+  const a = porV.get(v);
+  console.log(`${v}  ${String(a.n).padStart(5)}  ${(br(a.a0) + ' → ' + br(a.a1)).padEnd(26)}`
+    + `${(br(a.b0) + ' → ' + br(a.b1)).padEnd(27)} ${a.sem}`);
+});
+
+// e, no mês de maior Δ negativo, as placas que mais caíram
+const pior = [...porVig.entries()].filter(([v]) => v >= VW_INI)
+  .sort((a, b) => a[1].delta - b[1].delta)[0];
+if (pior && pior[1].delta < 0) {
+  const [v] = pior;
+  console.log(`\n── as 15 placas que mais CAÍRAM em ${v} (planilha → portal)\n`);
+  console.log('placa      contrato   planilha          portal            Δ        km portal');
+  CV.filter(r => r.vig_cobranca === v && r.valor_vw != null)
+    .map(r => ({ r, a: custoAntigo(r), b: +r.valor_vw || 0 }))
+    .filter(x => x.b - x.a < -0.01)
+    .sort((x, y) => (x.b - x.a) - (y.b - y.a))
+    .slice(0, 15)
+    .forEach(({ r, a, b }) => {
+      console.log(`${String(r.placa_origem || r.placa).padEnd(10)} ${String(r.contrato || '—').padEnd(9)}`
+        + ` ${brl(a).padStart(15)} ${brl(b).padStart(15)} ${((b - a >= 0 ? '+' : '') + brl(b - a)).padStart(14)}`
+        + `  ${n(r.km_vw).padStart(8)}`);
+    });
+  const caiu = CV.filter(r => r.vig_cobranca === v && r.valor_vw != null)
+    .map(r => ({ a: custoAntigo(r), b: +r.valor_vw || 0 }));
+  const zeroPlan = caiu.filter(x => x.a === 0).length;
+  const zeroPort = caiu.filter(x => x.b === 0).length;
+  console.log(`\nem ${v}: ${caiu.length} placas com nota da VW · ${zeroPlan} com ZERO na planilha`
+    + ` · ${zeroPort} com ZERO no portal`);
+}
