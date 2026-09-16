@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609110215">
+<meta name="build" content="202609161005">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Seara · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
    PAINEL KM · SEARA — km realizado vs remunerado da Anhanguera,
    no layout padrão do portal (mesma casca do Painel KM migrado).
    A lógica de dados é a do painel antigo: workbook único da Seara
-   (Combustível = realizado · Base CTEs = remunerado por viagem ·
+   (Combustível = realizado · aba Remunerado = km remunerado por placa ·
    Base Remunerado = R$/km da placa, a régua do Impacto).
    ============================================================ */
 :root{
@@ -497,7 +497,18 @@ function setStatus(v){ _carga=v; const e=document.getElementById('titSub'); if(e
 
 const SEARA_ID = '1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE';
 const GID_COMB = 1982300845;   // Combustível (realizado por placa/mês)
-const GID_CTES = 1672208132;   // Base CTEs (remunerado, 1x por viagem)
+/* KM REMUNERADO = aba `Remunerado` (Renan, 16/09/2026: "Km remunerado agora
+   está aqui" · "troque o que tem hoje por esse"). Ela é colada das planilhas
+   VariavelDeFrete_PorPlaca e traz o km remunerado PRONTO por placa e mês —
+   acabou a deduplicação por viagem da Base CTEs.
+
+   A troca foi conferida antes (workflow Seara Remunerado Inspect, 16/09/2026):
+   jan→jun bate CASA A CASA com o que a Base CTEs entregava (Δ 0,0% nas seis
+   vigências, 0 de 361 chaves divergindo), e jul e ago — que a Base CTEs ainda
+   não tinha — passam a ter 87.057 e 88.070 km em vez do remunerado emprestado
+   do mês anterior. A aba é lida pelo NOME, não por gid: ela é nova e um gid
+   decorado quebraria se alguém recriasse a aba. */
+const ABA_REM = 'Remunerado';  // A vigência · B placa · D km remunerado
 const GID_REM  = 0;            // Base Remunerado (R$/km da placa — régua do Impacto)
 
 let ALL = [];
@@ -552,9 +563,12 @@ function vigLabelShort(vig) {
 }
 
 // gviz por gid (com fallback: se não detectar cabeçalho, descarta a 1ª linha)
-function gvizRows(gid, tq) {
+function gvizRows(gid, tq) { return _gviz('gid=' + gid, tq); }
+// a mesma leitura, mas pela ABA (o gviz aceita `sheet=<nome>` no lugar do gid)
+function gvizAba(nome, tq) { return _gviz('sheet=' + encodeURIComponent(nome), tq); }
+function _gviz(alvo, tq) {
   const q = tq ? '&tq=' + encodeURIComponent(tq) : '';
-  const url = `https://docs.google.com/spreadsheets/d/${SEARA_ID}/gviz/tq?gid=${gid}${q}&headers=1&tqx=out:json&t=${Date.now()}`;
+  const url = `https://docs.google.com/spreadsheets/d/${SEARA_ID}/gviz/tq?${alvo}${q}&headers=1&tqx=out:json&t=${Date.now()}`;
   return fetch(url).then(r => r.text()).then(text => {
     const json = JSON.parse(text.replace(/^[\s\S]*?setResponse\(/, '').replace(/\);?\s*$/, ''));
     const cols = (json.table.cols || []).map(c => String((c && (c.label || c.id)) || '').trim());
@@ -578,6 +592,10 @@ function _vigDeData(v){
   const s = String(v == null ? '' : v);
   let m = s.match(/Date\((\d+),(\d+)/);
   if (m) return String(+m[2] + 1).padStart(2,'0') + '/' + m[1];
+  // a aba `Remunerado` traz a vigência como TEXTO "MM/AAAA" — sem este ramo o
+  // `new Date('07/2026')` dá inválido e TODA linha dela viraria vigência vazia
+  m = s.match(/^(\d{1,2})\/(\d{4})$/);
+  if (m) return m[1].padStart(2,'0') + '/' + m[2];
   m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (m) return m[2].padStart(2,'0') + '/' + m[3];
   const d = new Date(s);
@@ -586,11 +604,11 @@ function _vigDeData(v){
 
 async function fetchData() {
   // Combustível (realizado): E=4 placa, F=5 mês(texto), G=6 ano, H=7 modelo, J=9 tipo veíc., K=10 km rodado
-  // Base CTEs (remunerado): B=viagem, C=placa, D=data, J=km da viagem
+  // aba Remunerado (remunerado): A=vigência, B=placa, D=km remunerado
   // Base Remunerado: A=0 vigência, D=3 placa, O=14 ReaisPorKm
-  const [comb, ctes, brem] = await Promise.all([
+  const [comb, remLinhas, brem] = await Promise.all([
     gvizRows(GID_COMB),
-    gvizRows(GID_CTES, 'select B, C, D, J'),
+    gvizAba(ABA_REM, 'select A, B, D'),
     gvizRows(GID_REM)
   ]);
 
@@ -619,28 +637,23 @@ async function fetchData() {
     return (melhor || h[0]).o;
   }
 
-  // KM REMUNERADO por placa|vig — coluna J (QT_QUILOMETROS_VIAGEM), contada UMA
-  // VEZ POR VIAGEM. A mesma viagem gera vários CTEs (normal, complementar,
-  // descarga, pernoite…) e todos repetem o km da viagem: somar linha a linha
-  // multiplicava o km. A chave é o CD_VIAGEM_TRANSPORTE (col B).
-  const remMap = {}, vistas = new Set(), mesesCTE = new Set();
-  ctes.forEach(r => {
-    const viagem = r[0];
-    if (viagem == null || viagem === '') return;
-    const vk = String(viagem);
-    if (vistas.has(vk)) return;
-    vistas.add(vk);
-    const placa = _placaKey(r[1]), vig = _vigDeData(r[2]), km = +r[3] || 0;
+  // KM REMUNERADO por placa|vig — uma linha por placa e mês na aba `Remunerado`,
+  // já pronto. Não há mais o que deduplicar: a Base CTEs repetia o km em cada
+  // CTE da mesma viagem (normal, complementar, descarga, pernoite…) e obrigava
+  // a contar uma vez por CD_VIAGEM_TRANSPORTE; aqui o número já vem somado.
+  const remMap = {}, mesesRem = new Set();
+  remLinhas.forEach(r => {
+    const vig = _vigDeData(r[0]), placa = _placaKey(r[1]), km = +r[2] || 0;
     if (!placa || !vig) return;
-    mesesCTE.add(vig);
+    mesesRem.add(vig);
     const k = placa + '|' + vig;
     remMap[k] = (remMap[k] || 0) + km;
   });
   // REMUNERADO do mês ainda NÃO COLADO cai no mês anterior (Renan, 20/08/2026):
-  // o Combustível chega primeiro e a Base CTEs depois — enquanto a vigência não
-  // tiver NENHUM CTE, cada placa usa o remunerado da última vigência anterior
-  // dela. Quando o Planejamento enviar e a aba for colada, o valor real
-  // substitui sozinho (a vigência passa a existir em mesesCTE).
+  // o Combustível chega primeiro e o remunerado depois — enquanto a vigência
+  // não existir na aba, cada placa usa o remunerado da última vigência anterior
+  // dela. Quando a aba for colada, o valor real substitui sozinho (a vigência
+  // passa a existir em mesesRem). A rede continua valendo com a fonte nova.
   const remHist = {};
   Object.entries(remMap).forEach(([k, km]) => {
     const [placa, vig] = k.split('|');
@@ -648,7 +661,7 @@ async function fetchData() {
   });
   Object.values(remHist).forEach(a => a.sort((x, y) => x.ord.localeCompare(y.ord)));
   function remDe(placa, vig) {
-    if (mesesCTE.has(vig)) return remMap[placa + '|' + vig] || 0;   // mês colado: vale o que está
+    if (mesesRem.has(vig)) return remMap[placa + '|' + vig] || 0;   // mês colado: vale o que está
     const h = remHist[placa];
     if (!h || !h.length) return 0;
     const alvo = vig.slice(-4) + vig.slice(0, 2);
@@ -677,7 +690,7 @@ async function fetchData() {
       rem,
       real:  real,
       imp:   (real - rem) * rsKm,
-      remFb: !mesesCTE.has(vig) && rem > 0          // remunerado veio do mês anterior
+      remFb: !mesesRem.has(vig) && rem > 0          // remunerado veio do mês anterior
     });
   });
   if (_semRsKm) console.warn(`Impacto: ${_semRsKm} placa(s)/vigência(s) sem linha na Base Remunerado — usada a tabela anterior da própria placa.`);
@@ -1299,10 +1312,10 @@ render=function(){
   const vigs=[...new Set(F.map(r=>r.vig).filter(Boolean))].sort(sortVig);
   set('k-placas', placas.length||'—');
   set('k-placas-m', [...new Set(F.map(r=>r.proj).filter(Boolean))].length+' modelo(s)');
-  // remunerado emprestado do mês anterior (Base CTEs da vigência ainda não colada)
+  // remunerado emprestado do mês anterior (a aba Remunerado ainda não tem a vigência)
   const fbVigs=[...new Set(F.filter(r=>r.remFb).map(r=>r.vig))].sort(sortVig);
   set('k-rem-m', fbVigs.length
-    ? '⚠ '+fbVigs.map(vigLabelShort).join(', ')+' sem Base CTEs — usando o mês anterior'
+    ? '⚠ '+fbVigs.map(vigLabelShort).join(', ')+' sem a aba Remunerado — usando o mês anterior'
     : 'total do período filtrado');
   set('k-tipos', tipos.length||'—');
   set('k-vigs', vigs.length||'—');
@@ -1378,6 +1391,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609110215"></script>
+<script src="../assets/build-check.js?v=202609161005"></script>
 </body>
 </html>

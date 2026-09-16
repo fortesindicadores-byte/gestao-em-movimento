@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609110200">
+<meta name="build" content="202609161005">
 <title>Árvore de Combustível Seara · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="../../../assets/pdf-export.js"></script>
@@ -717,7 +717,7 @@ function onFilterChange(){
 // ═══════════════════════════════════════════════
 // FETCH — workbook Seara + Frota (custo ANG), via gviz/tq (fetch)
 //  · Custo Combustível → aba Frota (Visão Financeira), pacote Combustíveis, unidade ANG
-//  · KM Rodado         → workbook Seara: rem = Base CTEs (col J, uma vez por viagem); real = aba Combustível
+//  · KM Rodado         → workbook Seara: rem = aba Remunerado (col D); real = aba Combustível
 //  · R$/Litro          → real = ΣTotalR$/ΣLitros (Combustível); rem = Σ(PrecoDiesel×Litros)/ΣLitros (Base Remunerado)
 //  · Km/L              → real = ΣKmReal/ΣLitros; rem = ΣKmReal/Σ(KmReal÷KmPorLitro) (Base Remunerado ponderado p/ km rodado da Combustível;
 //                        a Base CTEs NÃO entra aqui — chega 2 meses depois e zerava o remunerado, Renan 11/09/2026)
@@ -725,7 +725,15 @@ function onFilterChange(){
 // ═══════════════════════════════════════════════
 const VF_ID    = '1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8'; // Frota (Visão Financeira) — Custo Combustível ANG
 const SEARA_ID = '1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE'; // workbook Seara
-const GID_REM  = 0, GID_CTES = 1672208132, GID_COMB = 1982300845;
+const GID_REM  = 0, GID_COMB = 1982300845;
+/* KM REMUNERADO = aba `Remunerado` (Renan, 16/09/2026: "troque o que tem hoje
+   por esse"). Vem pronto por placa e mês, colado das planilhas
+   VariavelDeFrete_PorPlaca — acabou a deduplicação por viagem da Base CTEs.
+   Conferido antes da troca (Seara Remunerado Inspect): jan→jun bate casa a
+   casa (0 de 361 chaves divergindo) e jul/ago, que a Base CTEs não tinha,
+   passam a existir. Lida pelo NOME: a aba é nova e gid decorado quebraria se
+   alguém a recriasse. */
+const ABA_REM = 'Remunerado';   // A vigência · B placa · D km remunerado
 
 // Contas do pacote "Combustíveis" (mesmo critério da Visão Financeira)
 // Custo Combustível = SÓ a conta Combustíveis (conta é conta). Sem Arla, Estorno de
@@ -802,22 +810,19 @@ async function fetchAll(){
   const [fr, comb, rawVg, brem] = await Promise.all([
     gvz(VF_ID,{tab:'Frota'}),
     gvz(SEARA_ID,{gid:GID_COMB}),
-    gvz(SEARA_ID,{gid:GID_CTES, tq:'select B, C, D, E, J'}),
+    gvz(SEARA_ID,{tab:ABA_REM, tq:'select A, B, D'}),
     gvz(SEARA_ID,{gid:GID_REM}),
   ]);
   FR_ROWS = fr.rows;
 
-  // KM remunerado sai da Base CTEs: coluna J (QT_QUILOMETROS_VIAGEM), contada
-  // UMA VEZ por CD_VIAGEM_TRANSPORTE (col B) — a mesma viagem gera vários CTEs
-  // repetindo o km; somar linha a linha infla ~23×.
-  // Data da CTE: col D no layout enxuto, col E no largo — detecta pelo que parseia.
-  let _nD=0,_nE=0; rawVg.rows.slice(0,80).forEach(r=>{ if(kParseVig(r[2]))_nD++; if(kParseVig(r[3]))_nE++; });
-  const iDt=_nE>_nD?3:2;
-  const seenVg=new Set(), remKm={};
+  // KM remunerado: uma linha por placa e mês na aba `Remunerado`, já somado.
+  // Nada a deduplicar — a Base CTEs repetia o km em cada CTE da mesma viagem e
+  // obrigava a contar uma vez por CD_VIAGEM_TRANSPORTE. A vigência dela é o
+  // texto "MM/AAAA", que o kParseVig já entende.
+  const remKm={};
   rawVg.rows.forEach(r=>{
-    const b=r[0], p=_placaKey(r[1]), d=kParseVig(r[iDt]), km=+r[4]||0;
-    if(b==null||!p||!d) return;
-    if(seenVg.has(b)) return; seenVg.add(b);
+    const p=_placaKey(r[1]), d=kParseVig(r[0]), km=+r[2]||0;
+    if(!p||!d) return;
     const k=p+'|'+_vigYM(d.getFullYear(),d.getMonth()+1);
     remKm[k]=(remKm[k]||0)+km;
   });
@@ -992,6 +997,6 @@ function applyTheme(t){document.body.classList.toggle('light-mode',t==='light');
 <script src="../../../assets/mobile.js?v=202608220020"></script>
 <script src="../../../assets/ctrlk.js"></script>
 <script src="../../../assets/sortable-table.js?v=202609042200"></script>
-<script src="../../../assets/build-check.js?v=202609110200"></script>
+<script src="../../../assets/build-check.js?v=202609161005"></script>
 </body>
 </html>

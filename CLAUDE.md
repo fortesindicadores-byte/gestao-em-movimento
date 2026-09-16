@@ -1300,6 +1300,21 @@ Workbook `1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE`, abas no rodapé: **Base
 
 **Achado em aberto (12/08/2026):** em **06/2026** o preço do diesel troca de lugar entre as duas bases — o da Base Remunerado cai de ~2,00 para 1,665 e o da CTE sobe de ~1,70 para 2,010, cada um indo exatamente para o nível do outro. Não afeta o painel (usa a coluna O), mas tem cara de preenchimento invertido no mês. Pendente de conferência do Renan.
 
+### O KM REMUNERADO SAIU DA BASE CTEs — agora é a aba `Remunerado` (Renan, 16/09/2026)
+
+*"Km remunerado agora está aqui"* + *"troque o que tem hoje por esse"*. A aba **`Remunerado`** do workbook da Seara é colada das planilhas `VariavelDeFrete_PorPlaca` e traz o km **pronto por placa e mês**: `A vigência (texto MM/AAAA) · B placa · C CT-e · D KM · E→K os sete custos · L total`.
+
+- **Conferido ANTES de trocar** (workflow **Seara Remunerado Inspect**, `scripts/seara-remunerado-inspect.mjs`): 361 linhas, jan→ago/2026, 43–48 placas/mês, todas em Mercosul. **jan→jun bate CASA A CASA** com o que a Base CTEs entregava — Δ **0,0%** nas seis vigências e **0 de 361 chaves** divergindo. **Jul e ago**, que a Base CTEs ainda não tinha, passam a ter 87.057 e 88.070 km em vez do remunerado emprestado do mês anterior.
+- **Acabou a deduplicação por viagem.** A Base CTEs repetia o km em cada CTE da mesma viagem (o inspect mediu: 11.411.372 km linha a linha × 465.811 km por viagem, ~24×) e obrigava a contar uma vez por `CD_VIAGEM_TRANSPORTE`. A aba nova já vem somada.
+- **Trocaram cinco painéis:** `seara-km` · `combustivel/seara/arvore` · `arvore-frota` · `rs-por-km` · `visao-financeira-arvore`. Os **três últimos estavam QUEBRADOS** mandando `select sum(Z)` para a Base CTEs — coluna que não existe mais —, então o km remunerado da Seara vinha **zerado neles, sem erro na tela**. A troca conserta isso de brinde.
+- **A aba é lida pelo NOME (`sheet=Remunerado`), não por gid:** ela é nova e um gid decorado quebraria se alguém a recriasse.
+- **A vigência é TEXTO "MM/AAAA"** — o `_vigDeData` do `seara-km` não conhecia esse formato e `new Date('07/2026')` dá inválido, o que faria **toda linha da aba virar vigência vazia e sumir**. O ramo novo entrou antes da troca.
+- **A Base CTEs continua em uso para a CONTAGEM DE VIAGENS** (`frotaReal` no `arvore-frota` e na `visao-financeira-arvore`): a coluna `CT-e` da aba nova conta CTEs, não viagens — a mesma viagem gera vários.
+- **A rede do "mês anterior" continua valendo**, só mudou a fonte: vigência que ainda não existe na aba faz cada placa usar o remunerado da última vigência anterior dela, com o aviso no card (`mesesRem`/`remFb`).
+- Validação: **`scripts/seara-troca-check.mjs`** roda os cinco painéis no Chromium com o gviz dublado (fetch **e** JSONP) e confere que o número da aba é o que chega na tela — no `seara-km` saiu exatamente `2028 · 2010 · 2129 · 2724`, Σ 8.891, com `remFb` falso em todas. **Duas armadilhas do próprio teste:** o painel **redireciona para o hub** sem `sessionStorage.gem_hub` (sem isso nada roda e o teste passa vazio), e o `ChartDataLabels` vem de CDN — com o stub vazio o painel morre antes do `fetchData`.
+
+**ACHADO À PARTE, ANTERIOR À TROCA:** na **`visao-financeira-arvore`** a função **`gvizFetch` NÃO EXISTE** — é chamada em 4 lugares e não está definida no arquivo nem nos assets. O `arvCarregaFontes()` lança `ReferenceError` na primeira linha, o `catch` engole, e **a visão Árvore dela nunca carregou a Seara**. Não é regressão desta troca (o `sum(Z)` de antes nem chegava a ser enviado) e **não foi consertada por conta própria** — está reportada para o Renan decidir.
+
 ## Automação do Combustível — contextualização em andamento (13/08/2026)
 
 O Renan quer automatizar o combustível **em partes**, ele contextualizando aba a aba (mesmo método do robô Ginfo). **Nada implementado — aguardar ele mandar fazer.**
