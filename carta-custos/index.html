@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609171130">
+<meta name="build" content="202609171520">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1508,6 +1508,43 @@ function renderPlacas(){
      Contrato fixo não tem faixa, e a coluna some quando nenhuma placa do
      recorte tem rótulo — para não virar uma fileira de "—". */
   const temFaixa=CONTR_FX && !fixo && rows.some(r=>r.faixa_vw);
+  /* ▲ / ▼ AO LADO DA FAIXA (Renan, 17/09/2026: "se foi ▲ (verde) ou ▼
+     (vermelho) a troca de faixa"). A seta compara a faixa DESTE mês com a da
+     ÚLTIMA vez em que a VW cobrou a mesma placa — não com o mês de calendário
+     anterior: mês sem nota criaria uma seta do nada, e o mês em prévia faria
+     todo mundo "descer" no dia 1º.
+
+     A comparação sai daqui, do CONTR inteiro, e não de uma coluna nova no
+     banco: o painel já carrega TODAS as vigências, então a conta é local e não
+     precisa de SQL para o Renan rodar.
+
+     O QUE A COR SIGNIFICA: subiu de faixa = rodou mais que o usual, que é como
+     ele descreveu a leitura. NÃO é uma cor de custo — no H6764M o km da faixa
+     2 é 26% mais CARO e no V1673W é 29% mais BARATO, então "verde" aqui quer
+     dizer rodou mais, nunca "gastou menos". */
+  const fxNum=s=>{                       // '1' → 1 · '1 → 2' → 2 (a faixa mais alta do mês)
+    const ns=String(s||'').match(/\d+/g);
+    return ns && ns.length ? Math.max(...ns.map(Number)) : null;
+  };
+  const fxAnt=new Map();                 // placa|vigência → faixa da última cobrança anterior
+  if(temFaixa){
+    const porPlaca=new Map();
+    CONTR.filter(r=>r.faixa_vw).forEach(r=>{
+      if(!porPlaca.has(r.placa)) porPlaca.set(r.placa,[]);
+      porPlaca.get(r.placa).push(r);
+    });
+    porPlaca.forEach((lista,placa)=>{
+      lista.sort((a,b)=>String(a.vig_cobranca).localeCompare(String(b.vig_cobranca)));
+      lista.forEach((r,i)=>{ if(i) fxAnt.set(placa+'|'+r.vig_cobranca, fxNum(lista[i-1].faixa_vw)); });
+    });
+  }
+  const setaFx=r=>{
+    const ago=fxNum(r.faixa_vw), antes=fxAnt.get(r.placa+'|'+r.vig_cobranca);
+    if(ago==null || antes==null || ago===antes) return '';
+    const sobe=ago>antes;
+    return ` <b class="${sobe?'cg':'cr'}" title="${sobe?'Subiu':'Desceu'} de faixa ${antes} para ${ago}`
+      + ` desde a última cobrança desta placa">${sobe?'▲':'▼'}</b>`;
+  };
   let h='<thead><tr>'
     +(multiVig?'<th>Vigência</th>':'')+'<th>Placa</th>'
     +(temNum?'<th>Contrato</th>':'')+'<th>Modelo</th>'
@@ -1531,7 +1568,7 @@ function renderPlacas(){
         : `<td class="num">${r.taxa_km!=null?(+r.taxa_km).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):D}</td>`)
       // o `esc` vale só para o valor: `D` é o <span> do travessão e, escapado,
       // apareceria como markup no lugar do traço
-      +(temFaixa?`<td>${r.faixa_vw?esc(r.faixa_vw):D}</td>`:'')
+      +(temFaixa?`<td>${r.faixa_vw?esc(r.faixa_vw)+setaFx(r):D}</td>`:'')
       +`<td class="num">${r.abastecimentos||D}</td><td>${esc(dataBR(r.ultimo_abast))}</td>`
       +(temHodo?`<td class="num">${r.hodo_contrato==null?D:numBR(r.hodo_contrato)}</td>`
                +`<td class="num">${r.hodo_abast==null?D:numBR(r.hodo_abast)}</td>`:'')
@@ -1723,6 +1760,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202609171130"></script>
+<script src="../assets/build-check.js?v=202609171520"></script>
 </body>
 </html>
