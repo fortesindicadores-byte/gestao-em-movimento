@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609151640">
+<meta name="build" content="202609171130">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1287,6 +1287,7 @@ function renderCharts(rows){
 let CONTR=[], CONTR_OK=false;   // CONTR_OK: a leitura já respondeu (mesmo vazia)
 let CONTR_NUM=false;            // o banco já tem a coluna `contrato`?
 let CONTR_VW=false;             // …e as do portal da VW + os dois hodômetros?
+let CONTR_FX=false;             // …e o rótulo da faixa do contrato?
 // o PostgREST corta a resposta em 1.000 linhas e ignora um limit maior —
 // são ~360 placas × 9 vigências, então sem paginar a tabela vem pela metade
 async function pgAll(tabela,select,ordem,ajuste){
@@ -1328,7 +1329,8 @@ async function loadContratos(){
      devolver 400, e a Carta ficaria SEM CONTRATO NENHUM na tela, não só sem a
      coluna. Por isso a leitura desce em degraus: tudo, só o número do
      contrato, e o mínimo — cada degrau liga ou desliga o que a tela mostra. */
-  const DEGRAUS=[['contrato','hodo_abast','hodo_contrato','km_vw','valor_vw','faixas_vw'],
+  const DEGRAUS=[['contrato','hodo_abast','hodo_contrato','km_vw','valor_vw','faixas_vw','faixa_vw'],
+                 ['contrato','hodo_abast','hodo_contrato','km_vw','valor_vw','faixas_vw'],
                  ['contrato'],
                  []];
   for(const extra of DEGRAUS){
@@ -1336,6 +1338,7 @@ async function loadContratos(){
       CONTR=await leTudo(base+extra.map(c=>','+c).join(''));
       CONTR_NUM=extra.includes('contrato');
       CONTR_VW =extra.includes('hodo_abast');
+      CONTR_FX =extra.includes('faixa_vw');
       break;
     }catch(e){
       CONTR=[];
@@ -1496,11 +1499,22 @@ function renderPlacas(){
      último do mês que passou"). Vazio no dia 1º não quer dizer "não rodou",
      quer dizer "ainda não mediram". */
   const temHodo=CONTR_VW && rows.some(r=>r.hodo_contrato!=null||r.hodo_abast!=null);
+  /* A FAIXA DO CONTRATO (Renan, 17/09/2026: "Deixe só a faixa, sem sinalizar
+     km. Se rodar mais que o usual foi de faixa 1 para 2 e vice versa").
+     SEM km de corte: a nota da VW diz em QUAL faixa o veículo está, não onde
+     ela começa — mostrar um limite exigiria derivá-lo, e seria um número que a
+     fonte não afirma. A placa que atravessa no mês vem como `1 → 2`, que são as
+     duas linhas da nota (uma por faixa, com preços diferentes) num rótulo só.
+     Contrato fixo não tem faixa, e a coluna some quando nenhuma placa do
+     recorte tem rótulo — para não virar uma fileira de "—". */
+  const temFaixa=CONTR_FX && !fixo && rows.some(r=>r.faixa_vw);
   let h='<thead><tr>'
     +(multiVig?'<th>Vigência</th>':'')+'<th>Placa</th>'
     +(temNum?'<th>Contrato</th>':'')+'<th>Modelo</th>'
     +(multiUni?'<th>Unidade</th>':'')+'<th>Projeto</th>'
-    +(fixo?'<th class="num">Valor fixo</th>':'<th class="num">R$/km</th>')+'<th class="num">Abast.</th><th>Últ. abast.</th>'
+    +(fixo?'<th class="num">Valor fixo</th>':'<th class="num">R$/km</th>')
+    +(temFaixa?'<th>Faixa</th>':'')
+    +'<th class="num">Abast.</th><th>Últ. abast.</th>'
     +(temHodo?'<th class="num">Últ. hodômetro</th><th class="num">Hodôm. abast.</th>':'')
     +'<th class="num">Custo Médio</th><th class="num">Km do mês</th><th class="num">Custo</th></tr></thead><tbody>';
   // ORDEM INICIAL PELO KM: o assunto da visão é quanto cada placa rodou
@@ -1515,6 +1529,9 @@ function renderPlacas(){
       +(fixo
         ? `<td class="num">${r.valor_fixo!=null?fmt(r.valor_fixo):D}</td>`
         : `<td class="num">${r.taxa_km!=null?(+r.taxa_km).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):D}</td>`)
+      // o `esc` vale só para o valor: `D` é o <span> do travessão e, escapado,
+      // apareceria como markup no lugar do traço
+      +(temFaixa?`<td>${r.faixa_vw?esc(r.faixa_vw):D}</td>`:'')
       +`<td class="num">${r.abastecimentos||D}</td><td>${esc(dataBR(r.ultimo_abast))}</td>`
       +(temHodo?`<td class="num">${r.hodo_contrato==null?D:numBR(r.hodo_contrato)}</td>`
                +`<td class="num">${r.hodo_abast==null?D:numBR(r.hodo_abast)}</td>`:'')
@@ -1528,7 +1545,7 @@ function renderPlacas(){
   // "Total" e os dois números, mais uma para cada coluna condicional — e os
   // dois hodômetros entram juntos, por isso valem 2
   h+=`</tbody><tfoot><tr class="total"><td class="conta">Total</td>`
-   +vaz(6+(multiVig?1:0)+(multiUni?1:0)+(temNum?1:0)+(temHodo?2:0))
+   +vaz(6+(multiVig?1:0)+(multiUni?1:0)+(temNum?1:0)+(temHodo?2:0)+(temFaixa?1:0))
    +`<td class="num forte">${numBR(km)}</td><td class="num forte">${fmt(tot)}</td></tr></tfoot>`;
   $('tbl-placas').innerHTML=h;
 }
@@ -1706,6 +1723,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202609151640"></script>
+<script src="../assets/build-check.js?v=202609171130"></script>
 </body>
 </html>

@@ -1192,7 +1192,7 @@ Substitui o que é digitado à mão na planilha **"Contratos Man."**: por contra
 
 O mesmo chassi aparece duas vezes no mesmo contrato e mês quando o km atravessa a faixa: são duas cobranças com preços diferentes. Por isso a faixa está na **chave primária** de `vw_contrato_km` e no `on_conflict` — colapsar destruiria o que interessa ver. Validado em agosto: 11 chaves duplicadas, **todas** separadas pela faixa, nenhuma repetindo. Exemplo: `V1673W|2026-08|9536B8TDXTR014470` → faixa 1 com 798 km (R$ 340,59) e faixa 2 com 2.057 km (R$ 597,76), somando os 2.855 km do mês.
 
-**Ultrapassar NÃO é bom nem ruim por si — depende do contrato** (`vw_contrato_faixa_preco`, `scripts/volkstotal-faixa.sql`): no **V1673W** o km excedente é 29% mais BARATO (R$ 0,2844 contra R$ 0,3980); no **H6764M** é 26% mais CARO (R$ 0,4660 contra R$ 0,3709). São os únicos dois contratos com mais de uma faixa. `vw_contrato_faixa` responde quem foi cobrado em duas faixas no mês (`avancou_no_mes`) e quem subiu em relação ao mês anterior (`mudou_de_faixa`).
+**Ultrapassar NÃO é bom nem ruim por si — depende do contrato** (medido em 15/09/2026 com `valor ÷ km_rodado` de cada linha de faixa; **não existe view para isso** — eu cheguei a citar aqui uma `vw_contrato_faixa_preco` que nunca foi criada): no **V1673W** o km excedente é 29% mais BARATO (R$ 0,2844 contra R$ 0,3980); no **H6764M** é 26% mais CARO (R$ 0,4660 contra R$ 0,3709). São os únicos dois contratos com mais de uma faixa. `vw_contrato_faixa` responde quem foi cobrado em duas faixas no mês (`avancou_no_mes`) e quem subiu em relação ao mês anterior (`mudou_de_faixa`).
 
 ### O que a comparação com a planilha apurou (15/09/2026)
 
@@ -1243,6 +1243,16 @@ Com a comparação feita, o Renan liberou: *"E pode subir já o contrato do site
 - **`hodo_contrato` na prévia: 260 placas pela nota da VW, 9 pelo Km Informado, 91 sem nenhum** (as de contrato fixo, que não estão no portal da VW). Abastecimento preenchido em 352 de 360.
 - **O mesmo hodômetro em 6 placas do V1673W (12.253) NÃO é bug do de-para**: a planilha tem 12.252 para as seis e o portal 12.253 para as seis — **os dois lados concordam**, então é como a VW reporta esse grupo, não erro de leitura nosso. O que significa é pergunta para a VW.
 - **Auditoria: workflow `Carta Hodometro Check`** (`scripts/carta-hodo-check.mjs`), que roda DEPOIS do SQL e responde o que a tela não responde: (1) quanto o dinheiro mudou mês a mês, **repetindo a precedência do painel** — se os dois não baterem, um deles está errado; (2) se o `hodo_contrato` veio da nota da VW ou do `ultimo_km_informado` (uma coluna que parece cheia mas é metade plano B conta outra história); (3) **por que duas placas aparecem com o mesmo hodômetro** — pode ser o plano B repetindo, o portal mandando igual ou o de-para de chassi juntando o que não devia, e só a terceira seria bug. O ranking de descolamento traz **o mês de cada leitura ao lado**: na vigência em prévia os dois hodômetros são de datas diferentes por construção, então o sinal de uma linha isolada não quer dizer nada — o que vale é o descolamento grande.
+
+### A coluna FAIXA na tabela (Renan, 17/09/2026)
+
+*"Deixe só a faixa, sem sinalizar km. Se rodar mais que o usual foi de faixa 1 para 2 e vice versa"*. UMA coluna em Placas Contrato, logo depois do R$/km — que é a taxa que a faixa decide. `scripts/contrato-faixa-coluna.sql` leva o rótulo da `vw_contrato_km` até a `custo_vigencia` (+ mv recriada).
+
+- **SEM km de corte, por decisão dele e porque a fonte não afirma esse número.** A nota da VW diz em QUAL faixa o veículo está, não onde ela começa. Eu tinha uma hipótese (o `km_atual` da linha de faixa 1 seria o ponto de virada) e ela **não foi medida nem usada** — mostrar um limite derivado seria apresentar como fato uma conta minha. A direção se lê do próprio par, que é o que ele descreveu.
+- **`1 → 2` é a placa que ATRAVESSOU no mês:** ela vem em duas linhas na nota, uma por faixa, com preços diferentes — por isso a faixa está na chave de `vw_contrato_km`. As duas viram um rótulo só; uma faixa só vira `1`; sem rótulo vira travessão.
+- **A coluna some** quando o banco ainda não tem `faixa_vw` (degrau novo na leitura em degraus), no contrato **fixo** (não está no portal da VW) e quando nenhuma placa do recorte tem rótulo — para não virar uma fileira de "—".
+- **O teste existe para pegar o rodapé desalinhado:** coluna condicional nova sem a célula vazia correspondente desloca os totais uma casa, e no olho isso passa. 14 checagens em 3 cenários no Chromium com o painel real, conferindo que o total do km cai sob "Km do mês" em cada combinação. Ele pegou um defeito de verdade: o travessão vazio estava sendo **escapado** e aparecia como `<span class="dash">` na tela — `esc()` vale para o valor, não para o `D`.
+- SQL conferido num Postgres 16 de verdade (roda 3×, idempotente) com uma placa atravessando em agosto, uma fixa na faixa 1 e uma sem rótulo.
 
 ### Roda TODO DIA sozinho (Renan, 16/09/2026: "rodar todo dia melhor")
 
