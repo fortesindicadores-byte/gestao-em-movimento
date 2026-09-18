@@ -184,8 +184,14 @@ export const RESERVADAS = new Set(['linha', 'vigencia', 'atualizado_em']);
 export function mapaColunas(cols) {
   const vistos = new Set();
   return cols.map((c, i) => {
-    const label = String((c && c.label) || '').trim();
-    let col = colSlug(label, i);
+    // O RÓTULO VAI CRU, sem trim: a aba Custos do Farol tem uma coluna chamada
+    // "Δ FCT " (com espaço no fim) — o mesmo fenômeno do "Parada? " e do
+    // "Desconto " dos exports do Ginfo. Aparar aqui fazia o gviz-cache devolver
+    // um rótulo diferente do que o Google devolve, e painel que casa a coluna
+    // pelo nome exato não a acharia. O trim continua valendo para o NOME DA
+    // COLUNA no Postgres, que não pode ter espaço nas pontas.
+    const label = String((c && c.label) || '');
+    let col = colSlug(label.trim(), i);
     if (RESERVADAS.has(col)) col = col + '_orig';
     if (vistos.has(col)) col = `${col}_${i}`.slice(0, 63);
     vistos.add(col);
