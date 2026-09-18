@@ -1,0 +1,6 @@
+# O Playwright NÃO é dependência do projeto: ele existe só no sandbox das
+# sessões (/tmp/claude-0/node_modules) e é linkado aqui para os testes de
+# Chromium acharem o módulo. O resto do node_modules é versionado de propósito
+# (as dependências do xlsx, que os scripts de planilha usam).
+node_modules/playwright
+node_modules/playwright-core
