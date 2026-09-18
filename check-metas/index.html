@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609182050">
+<meta name="build" content="202609181930">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -310,9 +310,8 @@ table.rot tr.sep td{background:var(--cabec);color:var(--laranja);font-weight:800
 /* palco: onde as capas são desenhadas e de onde o iframe é medido.
    FICA FORA DA TELA, não com display:none — um iframe escondido não
    layouta e o painel dentro dele renderiza gráfico de 0px. */
-#palco{position:fixed;left:-20000px;top:0;width:1600px;height:900px;z-index:-1;
-  overflow:hidden;background:#fff;}
-#palco iframe{width:1600px;height:900px;border:0;display:block;}
+#palco{position:fixed;left:-20000px;top:0;width:1600px;z-index:-1;background:#fff;}
+#palco iframe{width:1760px;height:866px;border:0;display:block;}
 #capa-cv{display:block;}
 
 .prev{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
@@ -469,7 +468,7 @@ const espera=ms=>new Promise(r=>setTimeout(r,ms));
 /* Tempos do motor. Ficam numa constante para o teste poder encurtá-los
    (window.CM_TEMPOS antes do load) — 30 slides × 3s de espera fariam o
    teste levar minutos e ninguém o rodaria. Em produção valem os padrões. */
-const T=Object.assign({passo:400,quieto:3,min:2500,teto:70000,pos:1500,tema:250},(window.CM_TEMPOS||{}));
+const T=Object.assign({passo:400,quieto:3,min:2500,teto:70000,pos:1500,tema:250,abre:420},(window.CM_TEMPOS||{}));
 const vigKeyDe=lbl=>{ const m=String(lbl||'').match(/^([a-zç]{3})\/(\d{2,4})$/i); if(!m) return '';
   const i=MESES.indexOf(m[1].toLowerCase()); if(i<0) return '';
   const a=m[2].length===2?'20'+m[2]:m[2]; return a+'-'+String(i+1).padStart(2,'0'); };
@@ -597,14 +596,19 @@ function montaRoteiro(avisa){
     desviosDe(g.pac).forEach(d=>{
       const nome=g.pac+' – '+d.uni+(prefProj(d.proj)?' · '+prefProj(d.proj):'');
       const fcaPrep=`__cm.vw('tabela'); __cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-proj',${JSON.stringify([d.proj])}); __cm.sel('ms-fato',${JSON.stringify([g.pac])}); run();`;
+      const sub=vX+' · desvio de R$ '+d.brl.toLocaleString('pt-BR');
+      /* na Árvore o filtro de projeto lista só o PREFIXO do nível 3
+         ('ROTA'), não o nível 3 inteiro ('ROTA - CGR') como no FCA */
+      const arvPrep=`__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); onFilterChange();`;
       if(!g.arvore){
-        R.push(P(nome,'FCA · '+vX+' · desvio de R$ '+d.brl.toLocaleString('pt-BR'),'../fca-consolidado/',fcaPrep));
+        R.push(P(nome,'FCA · '+sub,'../fca-consolidado/',fcaPrep));
       }else{
-        R.push(P(nome,'FCA · '+vX+' · desvio de R$ '+d.brl.toLocaleString('pt-BR'),'../fca-consolidado/',fcaPrep));
-        /* na Árvore o filtro de projeto lista só o PREFIXO do nível 3
-           ('ROTA'), não o nível 3 inteiro ('ROTA - CGR') como no FCA */
-        R.push(P(nome,'Árvore de Combustível · '+vX,'../combustivel/arvore-combustivel/',
-          `__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); onFilterChange();`));
+        /* UM SLIDE com os dois, empilhados (Renan, 18/09/2026: "Árvore e
+           FCA juntos… devem ser juntos") — é o que o PPT dele já fazia */
+        R.push({t:'p',tit:nome,sub:'Árvore e FCA · '+sub,url:'../combustivel/arvore-combustivel/',caps:[
+          {rot:'Árvore de Combustível', prep:arvPrep},
+          {rot:'FCA', url:'../fca-consolidado/', prep:fcaPrep}
+        ]});
       }
     });
   });
@@ -612,15 +616,14 @@ function montaRoteiro(avisa){
   R.push({t:'sec',txt:'Resultados'});
   R.push(P('Auditorias',ano,'../auditorias/',``));
   R.push(P('Ranking Unidades','Frota de Elite · '+vX,'../programa-reconhecimento/',
-    `onlyOpt('vig','${VIG}'); var _c=document.querySelector('.ind-col'); if(_c&&getComputedStyle(_c).display==='none') toggleIndCols();`,
+    `__cm.elite(${JSON.stringify([V])}); var _c=document.querySelector('.ind-col'); if(_c&&getComputedStyle(_c).display==='none') toggleIndCols();`,
     {alvo:"document.querySelector('#ranking-table').closest('.tbl-section')"}));
-  R.push(P('Pódio',vX,'../programa-reconhecimento/',`onlyOpt('vig','${VIG}');`,
+  R.push(P('Pódio',vX,'../programa-reconhecimento/',`__cm.elite(${JSON.stringify([V])});`,
     {alvo:"document.querySelector('#podio-section')"}));
   R.push(P('Pódio','Acum '+ano,'../programa-reconhecimento/',
-    `selVig=${JSON.stringify(ACUM.map(a=>a.split('|')[1]))}; updateMsBtn('vig'); renderAll();`,
-    {alvo:"document.querySelector('#podio-section')"}));
+    `__cm.elite(${JSON.stringify(ACUM)});`,{alvo:"document.querySelector('#podio-section')"}));
   R.push(P('Evolução','Frota de Elite · '+ano,'../programa-reconhecimento/',
-    `toggleAll('vig');`,{alvo:"document.querySelector('#chartTemporal').closest('.chart-card')"}));
+    `__cm.elite([]);`,{alvo:"document.querySelector('#chartTemporal').closest('.chart-card')"}));
   R.push(P('Painel de Metas','Gerente de Frota · '+vX,'../painel-metas/',
     `__cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`));
 
@@ -794,7 +797,13 @@ const CM_HELPER=`window.__cm={
     w.classList.add('ativo');
     if(typeof w._render==='function'){ try{ w._render(''); }catch(e){} }
   },
-  vw:function(v){ if(typeof setVw==='function'){ setVw(v); } else { this.faltou.push('painel sem setVw'); } },
+  vw:function(v){
+    /* NEM TODO PAINEL TROCA DE VISÃO PELO setVw: o fca-consolidado usa
+       vaiPara() e abre no KANBAN. Sem isto o FCA saía em cartões. */
+    var f=['setVw','vaiPara','setView','irPara'];
+    for(var i=0;i<f.length;i++) if(typeof window[f[i]]==='function'){ window[f[i]](v); return; }
+    this.faltou.push('o painel não tem como trocar de visão');
+  },
   ate:function(id,texto,acao){
     var f=window[acao]; if(typeof f!=='function'){ this.faltou.push('sem '+acao); return; }
     for(var i=0;i<4;i++){
@@ -804,7 +813,116 @@ const CM_HELPER=`window.__cm={
     }
     this.faltou.push(acao+' não chegou em '+texto);
   },
-  gate:function(){ return !!document.querySelector('.gate'); }
+  gate:function(){ return !!document.querySelector('.gate'); },
+  /* "Traga apenas as tabelas distribuídas" (Renan, 18/09/2026): quando o
+     alvo é um card de tabela, o que vai para o slide é a TABELA, não o
+     card — que tem a altura da tela inteira e deixava a tabela de sete
+     linhas minúscula num mar de branco, com a moldura do card em volta.
+     O título do card não faz falta: ele já é o título do slide. */
+  tabela:function(el){
+    if(!el) return el;
+    var t=el.tagName==='TABLE'?el:el.querySelector('table');
+    if(!t) return el;
+    var alt=el.getBoundingClientRect().height, ta=t.getBoundingClientRect().height;
+    /* só troca quando o card é bem maior que a tabela (o resto é vazio) */
+    return (alt>ta*1.25 || el.querySelector('.twrap,.tab-wrap,.rot-wrap')) ? t : el;
+  },
+  /* O FROTA DE ELITE NÃO USA OS FILTROS ms-*: a vigência dele é a variável
+     selVig e a lista mora em #ms-vig-list. E o formato NAO e 2026-08 —
+     chuta-lo deixou o podio com "2026-08/undefined · Sem dados para o
+     periodo" e o ranking vazio. Aqui o valor sai da propria lista. */
+  elite:function(alvos){
+    var l=document.getElementById('ms-vig-list');
+    if(!l){ this.faltou.push('não achei a lista de vigências do Frota de Elite'); return; }
+    var self=this;
+    var os=[].slice.call(l.querySelectorAll('.ms-opt input')).map(function(i){
+      var lb=i.parentNode.querySelector('label');
+      return {v:i.value, t:(lb?lb.textContent:'').replace(/\s+/g,' ').trim()};
+    }).filter(function(o){ return o.v; });
+    var achou=[];
+    (alvos||[]).forEach(function(a){
+      var cs=String(a).split('|').map(function(x){return self.norm(x);}), o=null;
+      for(var i=0;i<cs.length&&!o;i++){ var c=cs[i];
+        o=os.filter(function(x){return self.norm(x.v)===c;})[0]
+        ||os.filter(function(x){return self.norm(x.t)===c;})[0]
+        ||os.filter(function(x){return self.norm(x.t).indexOf(c)===0;})[0];
+      }
+      if(o) achou.push(o.v); else self.faltou.push('Frota de Elite: não achei "'+String(a).split('|')[0]+'"');
+    });
+    if(alvos&&alvos.length&&!achou.length) return;
+    if(typeof setSelArr==='function') setSelArr('vig',achou);
+    if(typeof updateMsBtn==='function') try{ updateMsBtn('vig'); }catch(e){}
+    if(typeof renderAll==='function') renderAll();
+  },
+  /* NÃO É PRINT: a tabela sai do painel como DADOS e é redesenhada no
+     slide (Renan, 18/09/2026: "crie do zero para encaixar em um pdf e
+     ppt, não use prints"). Os NÚMEROS continuam sendo os do painel —
+     nada é recalculado aqui —, só a apresentação é feita para a página.
+     A cor vem computada de cada célula, então verde/vermelho seguem a
+     regra do painel sem eu repetir regra nenhuma. */
+  extrai:function(el){
+    var t=(el&&el.tagName==='TABLE')?el:(el&&el.querySelector?el.querySelector('table'):null);
+    if(!t) return null;
+    var cs=function(n){ return window.getComputedStyle(n); };
+    function cel(c){
+      var st=cs(c);
+      return { t:(c.innerText||'').replace(/\s+/g,' ').trim(),
+               cor:st.color, neg:(parseInt(st.fontWeight,10)||400)>=700,
+               dir:st.textAlign==='right'||c.classList.contains('num'),
+               span:+(c.getAttribute('colspan')||1) };
+    }
+    var vis=function(n){ return cs(n).display!=='none'; };
+    var cab=[].slice.call(t.querySelectorAll('thead tr')).filter(vis)
+      .map(function(tr){ return [].slice.call(tr.children).filter(vis).map(cel); });
+    var lin=[].slice.call(t.querySelectorAll('tbody tr')).filter(vis).map(function(tr){
+      return { cels:[].slice.call(tr.children).filter(vis).map(cel),
+               total:/total|ebitda|ref-row/i.test(tr.className) };
+    }).filter(function(l){ return l.cels.length && l.cels.some(function(c){ return c.t; }); });
+    if(!cab.length||!lin.length) return null;
+    return { tipo:'tabela', cab:cab[cab.length-1].map(function(c){ return c.t; }),
+             dir:cab[cab.length-1].map(function(c){ return c.dir; }),
+             linhas:lin.map(function(l){
+               return { total:l.total, cels:l.cels.map(function(c){
+                 return { t:c.t, cor:c.cor, neg:c.neg||l.total, dir:c.dir }; }) };
+             }) };
+  },
+  /* topo cortado = contêiner rolado. Zera tudo antes da foto. */
+  topo:function(el){
+    for(var n=el; n && n!==document.documentElement; n=n.parentElement){ n.scrollTop=0; n.scrollLeft=0; }
+    [].slice.call(el.querySelectorAll('*')).forEach(function(n){ n.scrollTop=0; n.scrollLeft=0; });
+    try{ window.scrollTo(0,0); }catch(e){}
+  },
+  /* A TABELA ROLA DENTRO DO CARD: o painel tem altura de tela e o miolo
+     rola. O html2canvas fotografa só o que está visível, então o slide
+     saía com meia tabela e sem aviso nenhum. Aqui o que corta é solto
+     (ancestrais e descendentes), e depois devolvido ao que era. */
+  abre:function(el){
+    var mud=[], w=window;
+    function guarda(n,p){ mud.push({n:n,st:n.getAttribute('style')}); for(var k in p) n.style[k]=p[k]; }
+    for(var n=el; n && n!==document.documentElement; n=n.parentElement){
+      var cs=w.getComputedStyle(n);
+      if(cs.overflow!=='visible'||cs.overflowY!=='visible'||cs.maxHeight!=='none'||cs.position==='fixed'){
+        guarda(n,{overflow:'visible',overflowY:'visible',overflowX:'visible',
+                  maxHeight:'none',height:'auto',minHeight:'0'});
+        if(cs.position==='fixed'){ n.style.position='static'; n.style.inset='auto'; }
+      }
+    }
+    [].slice.call(el.querySelectorAll('*')).forEach(function(n){
+      if(n.scrollHeight>n.clientHeight+2||n.scrollWidth>n.clientWidth+2){
+        var c=w.getComputedStyle(n);
+        if(c.overflow!=='visible'||c.overflowY!=='visible'||c.overflowX!=='visible')
+          guarda(n,{overflow:'visible',maxHeight:'none',height:'auto'});
+      }
+    });
+    window.__cmMud=mud;
+    return el.scrollHeight;
+  },
+  fecha:function(){
+    (window.__cmMud||[]).forEach(function(m){
+      if(m.st===null) m.n.removeAttribute('style'); else m.n.setAttribute('style',m.st);
+    });
+    window.__cmMud=null;
+  }
 };`;
 
 function garanteH2C(win){
@@ -828,17 +946,31 @@ async function esperaPronto(win,doc,teto){
     if(doc.querySelector('.gate')) return 'gate';
     const n=(doc.body?doc.body.innerText.length:0)+doc.querySelectorAll('canvas,table tr').length*7;
     if(n===ant){ quieto++; } else { quieto=0; ant=n; }
-    const sub=doc.getElementById('titSub');
-    const carregando=sub&&/carregando/i.test(sub.textContent||'');
+    /* "Carregando…" EM QUALQUER LUGAR do corpo, não só no subtítulo: o
+       Painel de Metas deixa o aviso no meio da tabela e o motor achava
+       que a tela estava pronta — o slide saiu com os cards vazios. */
+    const txt=doc.body?doc.body.innerText:'';
+    const carregando=/carregando/i.test(txt);
     if(quieto>=T.quieto && n>120 && !carregando && Date.now()-t0>T.min) return 'ok';
   }
   return 'demorou';
 }
 
+const escuro=c=>{ const m=String(c||'').match(/(\d+)[,\s]+(\d+)[,\s]+(\d+)/);
+  return m ? (+m[1]+ +m[2]+ +m[3])/3 < 110 : false; };
 async function tiraFoto(win,el){
   const prep=win.H2CPrep||null;
   const h2c=win.html2canvas;
-  const bg=prep?prep.fundoDe(win.document.body):'#FFFFFF';
+  /* o fundo vem do ALVO, não do body: no layout ANTIGO o tema claro pinta
+     o `.main`, e o body FICA ESCURO — pegando o do body, a borda da foto
+     saía preta em volta de um card branco. */
+  /* o fundo vem do ALVO, não do body: no layout ANTIGO o tema claro pinta
+     o `.main` e o body FICA ESCURO — pegando o do body, a foto saía com
+     borda preta em volta de um card branco. E, no claro, fundo escuro é
+     sinal de que a herança se perdeu: vale o branco. */
+  const claro=win.document.body.classList.contains('claro')||win.document.body.classList.contains('light-mode');
+  let bg=prep?prep.fundoDe(el):'#FFFFFF';
+  if(claro && escuro(bg)) bg='#FFFFFF';
   const nodes=prep?prep.preparar(el,true):null;
   const o={scale:2,backgroundColor:bg,useCORS:true,logging:false};
   if(prep) o.onclone=prep.onclone;
@@ -850,46 +982,109 @@ async function tiraFoto(win,el){
 
 async function capturaSlide(s){
   const msgs=[], fotos=[];
-  const ifr=document.createElement('iframe');
-  $('palco').appendChild(ifr);
-  try{
+  /* UM IFRAME POR URL: a Árvore e o FCA do mesmo recorte são DOIS painéis
+     e vão no MESMO slide (Renan, 18/09/2026: "Árvore e FCA juntos... devem
+     ser juntos"), que é como o PPT dele já faz — duas imagens empilhadas. */
+  const tam=tamIframe(s.caps.length, s.caps.some(c=>c.rot));
+  let ifr=null, win=null, doc=null, urlAtual=null;
+  const fecha=()=>{ if(ifr){ ifr.remove(); ifr=null; win=null; doc=null; } };
+  const abre=async url=>{
+    fecha();
+    ifr=document.createElement('iframe');
+    ifr.style.width=tam.w+'px'; ifr.style.height=tam.h+'px';
+    $('palco').style.width=Math.max(1600,tam.w)+'px';
+    $('palco').appendChild(ifr);
     await new Promise((res,rej)=>{
       const to=setTimeout(()=>rej(new Error('o painel não abriu em 60s')),60000);
       ifr.onload=()=>{clearTimeout(to);res();};
       ifr.onerror=()=>{clearTimeout(to);rej(new Error('o painel não abriu'));};
-      ifr.src=s.url;
+      ifr.src=url;
     });
-    const win=ifr.contentWindow, doc=ifr.contentDocument;
+    win=ifr.contentWindow; doc=ifr.contentDocument;
     if(!doc) throw new Error('iframe sem documento (origem diferente?)');
     const estado=await esperaPronto(win,doc);
     if(estado==='gate') throw new Error('o painel recusou: '+((doc.querySelector('.gate h2')||{}).textContent||'sem acesso'));
     if(estado==='demorou') msgs.push('o painel ainda estava mudando quando a foto foi tirada');
     await garanteH2C(win);
     win.eval(CM_HELPER);
-    try{ if(typeof win.aplicaTema==='function') win.aplicaTema('light');
-         else if(typeof win.applyTheme==='function') win.applyTheme('light');
-         else doc.body.classList.add('claro'); }catch(e){}
+    claro(win,doc);
     await espera(T.tema);
+  };
+  try{
     for(const c of s.caps){
+      const url=c.url||s.url;
+      if(url!==urlAtual){ await abre(url); urlAtual=url; }
       if(c.prep){
         const f=win.eval('(function(){__cm.faltou=[];try{'+c.prep+'}catch(e){__cm.faltou.push("erro: "+e.message);}return __cm.faltou;})()');
         (f||[]).forEach(m=>msgs.push(m));
       }
       await espera(c.esp||T.pos);
+      claro(win,doc);                     /* o painel reaplica o tema dele ao terminar de carregar */
       const el=win.eval('(function(){try{return '+(c.alvo||ALVO_PADRAO)+';}catch(e){return null;}})()')||doc.body;
-      if(!el||!el.offsetHeight) { msgs.push('alvo vazio — usei a página inteira'); }
-      const foto=await tiraFoto(win,(el&&el.offsetHeight)?el:doc.body);
-      fotos.push({rot:c.rot,...foto});
+      if(!el||!el.offsetHeight) msgs.push('alvo vazio — usei a página inteira');
+      let alvo=(el&&el.offsetHeight)?el:doc.body;
+      let abriu=false;
+      try{
+        win.__cm.topo(alvo);
+        alvo=win.__cm.tabela(alvo);
+        const h=win.__cm.abre(alvo);
+        const hh=Math.max(tam.h,Math.ceil(h)+40);
+        if(hh>tam.h){
+          /* cresce nos DOIS eixos: só na altura, a foto vira um retrato e
+             as faixas brancas nas laterais voltam */
+          const ww=Math.min(IFR_MAX,Math.round(hh*tam.r));
+          ifr.style.height=hh+'px'; ifr.style.width=ww+'px';
+          $('palco').style.width=Math.max(1600,ww)+'px';
+        }
+        abriu=true;
+        await espera(T.abre||420);
+      }catch(e){ msgs.push('não consegui abrir o conteúdo: '+(e&&e.message||e)); }
+      try{
+        let dados=null;
+        if(c.foto!==true){ try{ dados=win.__cm.extrai(alvo); }catch(e){} }
+        if(dados){ fotos.push({rot:c.rot,tabela:dados}); }
+        else { const foto=await tiraFoto(win,alvo); fotos.push({rot:c.rot,...foto}); }
+      } finally {
+        if(abriu){ try{ win.__cm.fecha(); }catch(e){}
+          ifr.style.height=tam.h+'px'; ifr.style.width=tam.w+'px'; await espera(120); }
+      }
     }
-  } finally { ifr.remove(); }
+  } finally { fecha(); }
   return {fotos,msgs};
+}
+
+/* O TEMA CLARO TEM DE ESTAR NO localStorage ANTES DO PAINEL ABRIR.
+   Chamar a função do painel não basta: o Frota de Elite (e outros)
+   reaplica `bi_theme` quando termina de carregar os dados, e o slide
+   voltava escuro. Como a origem é a mesma, o localStorage é o do portal
+   — por isso `gerar()` guarda o valor do Renan e devolve no fim. */
+function claro(win,doc){
+  ['aplicaTema','applyTheme','setTema'].forEach(f=>{
+    try{ if(typeof win[f]==='function') win[f]('light'); }catch(e){}
+  });
+  try{ doc.body.classList.add('claro','light-mode'); }catch(e){}
 }
 
 /* ══════════════════════════════════════════════════════════════
    4 · MONTAGEM — PDF (jsPDF) e PPT (PptxGenJS), no MESMO desenho
    16:9 de 13,333 × 7,5 pol, a mesma medida do PPT que ele monta.
    ══════════════════════════════════════════════════════════════ */
-const LAY={W:13.3333,H:7.5,mx:.30,titY:.30,subY:.66,y0:.95,y1:7.22,gap:.16,rotH:.24};
+const LAY={W:13.3333,H:7.5,mx:.28,titY:.30,subY:.66,y0:.92,y1:7.28,gap:.16,rotH:.24};
+/* A FOTO TEM DE NASCER NA PROPORÇÃO DA CAIXA DO SLIDE.
+   Eu fotografava a 1600×900 (16:9 = 1,78) e encaixava numa caixa de
+   12,77 × 6,36 pol (2,01) — o lado curto mandava, e o slide saía com o
+   painel espremido no meio e duas faixas brancas enormes nas laterais,
+   com o título desalinhado da imagem. Medindo a caixa ANTES e dando ao
+   iframe essa mesma proporção, a imagem preenche a página inteira e
+   começa exatamente onde o título começa. */
+const IFR_W=1760, IFR_MAX=3000;
+function razaoCaixa(n,temRot){ const c=caixas(n||1,!!temRot)[0]; return c.w/c.h; }
+function tamIframe(n,temRot){
+  const r=razaoCaixa(n,temRot);
+  let w=IFR_W, h=Math.round(w/r);
+  if(h<430){ h=430; w=Math.min(IFR_MAX,Math.round(h*r)); }   /* 2 fotos: não espremer o painel */
+  return {w,h,r};
+}
 function caixas(n,temRot){
   const h=(LAY.y1-LAY.y0-(n-1)*LAY.gap)/n, out=[];
   for(let i=0;i<n;i++){
@@ -903,6 +1098,85 @@ function encaixa(cx,iw,ih){
   return {x:cx.x+(cx.w-w)/2,y:cx.y+(cx.h-h)/2,w,h};
 }
 
+/* ── a tabela desenhada: mesma medida no PDF e no PPT ───────────── */
+const rgb=c=>{ const m=String(c||'').match(/(\d+)[,\s]+(\d+)[,\s]+(\d+)/); return m?[+m[1],+m[2],+m[3]]:[26,26,26]; };
+const hex=c=>rgb(c).map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase();
+/* texto quase preto continua preto: o cinza do painel some no papel */
+const corTxt=c=>{ const v=rgb(c); return (v[0]+v[1]+v[2])/3>150&&Math.abs(v[0]-v[1])<12&&Math.abs(v[1]-v[2])<12?[90,90,90]:v; };
+
+function planoTabela(T,cx){
+  const nc=T.cab.length, n=T.linhas.length;
+  /* a 1ª coluna é o nome e precisa de espaço; as de número dividem o resto */
+  const pesos=T.cab.map((_,i)=>i===0?2.8:1);
+  const som=pesos.reduce((a,b)=>a+b,0);
+  const ws=pesos.map(p=>p/som*cx.w);
+  /* "bem distribuída": as linhas ocupam a altura da caixa, com teto para
+     não virar uma tabela de cinco linhas gigantes */
+  const hCab=Math.min(.32,Math.max(.22,cx.h/(n+3)));
+  let hLin=Math.min(.42,Math.max(.17,(cx.h-hCab)/Math.max(n,1)));
+  const fs=Math.max(7,Math.min(13,Math.round(hLin*72*.44)));
+  const alt=hCab+hLin*n;
+  return {ws,hCab,hLin,fs,alt,nc,n};
+}
+
+function tabelaPDF(pdf,T,cx){
+  const p=planoTabela(T,cx);
+  const y0=cx.y+Math.max(0,(cx.h-p.alt)/2);
+  /* cabeçalho */
+  pdf.setFillColor(238,240,243); pdf.rect(cx.x,y0,cx.w,p.hCab,'F');
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(Math.max(6.5,p.fs-1.5)); pdf.setTextColor(80,86,96);
+  let x=cx.x;
+  T.cab.forEach((t,i)=>{
+    const dir=T.dir[i];
+    const txt=corta(pdf,String(t).toUpperCase(),p.ws[i]-.14);
+    pdf.text(txt, dir?x+p.ws[i]-.07:x+.07, y0+p.hCab*.68, {align:dir?'right':'left'});
+    x+=p.ws[i];
+  });
+  /* linhas */
+  let y=y0+p.hCab;
+  T.linhas.forEach((l,li)=>{
+    if(l.total){ pdf.setFillColor(238,240,243); pdf.rect(cx.x,y,cx.w,p.hLin,'F'); }
+    else if(li%2===1){ pdf.setFillColor(249,250,251); pdf.rect(cx.x,y,cx.w,p.hLin,'F'); }
+    let cx2=cx.x;
+    l.cels.forEach((c,i)=>{
+      if(i>=p.nc) return;
+      const col=corTxt(c.cor);
+      pdf.setTextColor(col[0],col[1],col[2]);
+      pdf.setFont('helvetica',c.neg?'bold':'normal'); pdf.setFontSize(p.fs);
+      const txt=corta(pdf,c.t,p.ws[i]-.14);
+      pdf.text(txt, c.dir?cx2+p.ws[i]-.07:cx2+.07, y+p.hLin*.68, {align:c.dir?'right':'left'});
+      cx2+=p.ws[i];
+    });
+    pdf.setDrawColor(230,232,236); pdf.setLineWidth(.005);
+    pdf.line(cx.x,y+p.hLin,cx.x+cx.w,y+p.hLin);
+    y+=p.hLin;
+  });
+}
+function corta(pdf,t,max){
+  t=String(t==null?'':t);
+  if(pdf.getTextWidth(t)<=max) return t;
+  while(t.length>1 && pdf.getTextWidth(t+'…')>max) t=t.slice(0,-1);
+  return t+'…';
+}
+
+function tabelaPPT(pptx,sl,T,cx){
+  const p=planoTabela(T,cx);
+  const cabec=T.cab.slice(0,p.nc).map((t,i)=>({text:String(t).toUpperCase(),options:{
+    bold:true,color:'505A60',fontSize:Math.max(6,p.fs-2),align:T.dir[i]?'right':'left',
+    fill:{color:'EEF0F3'},valign:'middle'}}));
+  const linhas=T.linhas.map((l,li)=>l.cels.slice(0,p.nc).map(c=>{
+    const o={text:c.t,options:{color:hex(corTxt(c.cor).join(',')),bold:!!c.neg,fontSize:p.fs,
+      align:c.dir?'right':'left',valign:'middle'}};
+    if(l.total) o.options.fill={color:'EEF0F3'};
+    else if(li%2===1) o.options.fill={color:'F9FAFB'};
+    return o;
+  }));
+  sl.addTable([cabec,...linhas],{
+    x:cx.x, y:cx.y+Math.max(0,(cx.h-p.alt)/2), w:cx.w, colW:p.ws,
+    rowH:p.hLin, fontFace:'Montserrat', border:{type:'solid',pt:.4,color:'E6E8EC'},
+    valign:'middle', autoPage:false });
+}
+
 async function montaPDF(slides){
   const {jsPDF}=window.jspdf;
   const pdf=new jsPDF({orientation:'landscape',unit:'in',format:[LAY.W,LAY.H]});
@@ -910,17 +1184,17 @@ async function montaPDF(slides){
     if(i) pdf.addPage([LAY.W,LAY.H],'landscape');
     if(s.cheia){ pdf.addImage(s.cheia,'PNG',0,0,LAY.W,LAY.H); return; }
     pdf.setFillColor(255,255,255); pdf.rect(0,0,LAY.W,LAY.H,'F');
-    pdf.setTextColor(26,26,26); pdf.setFont('helvetica','bold'); pdf.setFontSize(20);
+    pdf.setTextColor(20,22,28); pdf.setFont('helvetica','bold'); pdf.setFontSize(20);
     pdf.text(s.tit,LAY.mx,LAY.titY+.14);
-    if(s.sub){ pdf.setFont('helvetica','normal'); pdf.setFontSize(11); pdf.setTextColor(110,110,110);
+    if(s.sub){ pdf.setFont('helvetica','normal'); pdf.setFontSize(10.5); pdf.setTextColor(120,124,132);
       pdf.text(s.sub,LAY.mx,LAY.subY+.10); }
     const cxs=caixas(s.fotos.length,s.fotos.some(f=>f.rot));
     s.fotos.forEach((f,j)=>{
       const cx=cxs[j];
-      if(f.rot){ pdf.setFont('helvetica','bold'); pdf.setFontSize(10); pdf.setTextColor(249,115,22);
+      if(f.rot){ pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5); pdf.setTextColor(249,115,22);
         pdf.text(f.rot,LAY.mx,cx.rotY); }
-      const p=encaixa(cx,f.w,f.h);
-      pdf.addImage(f.png,'PNG',p.x,p.y,p.w,p.h);
+      if(f.tabela) tabelaPDF(pdf,f.tabela,cx);
+      else { const q=encaixa(cx,f.w,f.h); pdf.addImage(f.png,'PNG',q.x,q.y,q.w,q.h); }
     });
     pdf.setFillColor(249,115,22); pdf.rect(0,LAY.H-.045,LAY.W,.045,'F');
   });
@@ -937,16 +1211,16 @@ async function montaPPT(slides){
     if(s.cheia){ sl.addImage({data:s.cheia,x:0,y:0,w:LAY.W,h:LAY.H}); return; }
     sl.background={color:'FFFFFF'};
     sl.addText(s.tit,{x:LAY.mx,y:LAY.titY-.13,w:LAY.W-2*LAY.mx,h:.42,fontSize:20,bold:true,
-      fontFace:'Montserrat',color:'1A1A1A',align:'left',valign:'middle'});
-    if(s.sub) sl.addText(s.sub,{x:LAY.mx,y:LAY.subY-.10,w:LAY.W-2*LAY.mx,h:.26,fontSize:11,
-      fontFace:'Montserrat',color:'6E6E6E',align:'left',valign:'middle'});
+      fontFace:'Montserrat',color:'14161C',align:'left',valign:'middle'});
+    if(s.sub) sl.addText(s.sub,{x:LAY.mx,y:LAY.subY-.10,w:LAY.W-2*LAY.mx,h:.26,fontSize:10.5,
+      fontFace:'Montserrat',color:'787C84',align:'left',valign:'middle'});
     const cxs=caixas(s.fotos.length,s.fotos.some(f=>f.rot));
     s.fotos.forEach((f,j)=>{
       const cx=cxs[j];
-      if(f.rot) sl.addText(f.rot,{x:LAY.mx,y:cx.rotY-.17,w:4,h:.22,fontSize:10,bold:true,
+      if(f.rot) sl.addText(f.rot,{x:LAY.mx,y:cx.rotY-.17,w:4,h:.22,fontSize:9.5,bold:true,
         fontFace:'Montserrat',color:'F97316',valign:'middle'});
-      const p=encaixa(cx,f.w,f.h);
-      sl.addImage({data:f.png,x:p.x,y:p.y,w:p.w,h:p.h});
+      if(f.tabela) tabelaPPT(pptx,sl,f.tabela,cx);
+      else { const q=encaixa(cx,f.w,f.h); sl.addImage({data:f.png,x:q.x,y:q.y,w:q.w,h:q.h}); }
     });
     sl.addShape(pptx.ShapeType.rect,{x:0,y:LAY.H-.045,w:LAY.W,h:.045,fill:{color:'F97316'}});
   });
@@ -965,6 +1239,8 @@ async function gerar(fmt){
   const ov=$('ger-ov'); ov.classList.add('on'); $('ov-fim').style.display='none'; $('ov-log').innerHTML='';
   set('ov-tit',fmt==='pdf'?'Gerando o PDF…':'Gerando o PPT…');
   const t0=Date.now(); const saida=[]; let falhas=0, atencao=0;
+  const temaDoRenan=localStorage.getItem('bi_theme');
+  try{ localStorage.setItem('bi_theme','light'); }catch(e){}
   try{
     await carregaFoto();
     try{ await document.fonts.load('800 104px Montserrat'); }catch(e){}
@@ -1000,6 +1276,8 @@ async function gerar(fmt){
     set('ov-tit','Não deu');
     ovLog(String(e&&e.message||e),true);
   }finally{
+    try{ if(temaDoRenan==null) localStorage.removeItem('bi_theme');
+         else localStorage.setItem('bi_theme',temaDoRenan); }catch(e){}
     GERANDO=false; $('ov-fim').style.display='flex';
     set('ov-t',Math.round((Date.now()-t0)/1000)+'s');
     pintaRoteiro();
@@ -1104,6 +1382,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609182050"></script>
+<script src="../assets/build-check.js?v=202609181930"></script>
 </body>
 </html>
