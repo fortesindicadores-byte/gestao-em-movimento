@@ -85,7 +85,18 @@ try {
   if (!temHash) console.log('coluna hash ausente (rodar o ALTER TABLE) — gravando sempre');
 } catch (e) { console.log('não deu para checar a coluna hash: ' + e.message); }
 
-let ok = 0, iguais = 0, falhas = 0;
+// ABA FILTRADA NO SHEETS: o gviz devolve SÓ as linhas visíveis, sem erro
+// nenhum. Zerou o Km/L duas vezes, a Árvore de Combustível uma, e em
+// 18/09/2026 derrubou a Visão Financeira para uma unidade só (811 de 17.810
+// linhas na aba Frota). O estrago que DURA é a foto: ela vira "a verdade" e o
+// shim a serve por até 12h. Então o robô RECUSA a foto que encolher demais e
+// mantém a anterior — a mesma guarda que o sheets-robot já faz nas tabelas
+// tipadas, agora do lado que os 38 painéis realmente leem.
+// A régua é o TAMANHO da resposta, não o nº de linhas: o `bytes` da foto
+// anterior já está gravado, então comparar não custa baixar o corpo de MBs.
+const QUEDA_MAX = 0.4;
+
+let ok = 0, iguais = 0, falhas = 0, recusadas = 0;
 for (const alvo of ALVOS) {
   const key = chaveDe(alvo);
   try {
@@ -99,11 +110,18 @@ for (const alvo of ALVOS) {
     if (body == null) throw new Error('resposta gviz inválida');
     const hash = createHash('md5').update(body).digest('hex');
 
+    // A foto anterior, só nos metadados — o corpo de MBs NÃO é baixado.
+    let ant = null;
+    try {
+      const q = await fetch(`${SUPA}/rest/v1/gviz_snapshot?key=eq.${encodeURIComponent(key)}`
+        + `&select=${temHash ? 'hash,' : ''}bytes`, { headers: HDRS });
+      ant = q.ok ? (await q.json())[0] || null : null;
+    } catch (e) { /* sem foto anterior não há com o que comparar */ }
+
     // Conteúdo igual ao gravado? Só renova o updated_at (gravação minúscula:
     // não reescreve o corpo de MBs — poupa o Disk IO Budget do Supabase).
     if (temHash) {
-      const q = await fetch(`${SUPA}/rest/v1/gviz_snapshot?key=eq.${encodeURIComponent(key)}&select=hash`, { headers: HDRS });
-      const row = q.ok ? (await q.json())[0] : null;
+      const row = ant;
       if (row && row.hash === hash) {
         const tk = await fetch(`${SUPA}/rest/v1/gviz_snapshot?key=eq.${encodeURIComponent(key)}`, {
           method: 'PATCH',
@@ -115,6 +133,18 @@ for (const alvo of ALVOS) {
         console.log(`=   ${key}  sem mudança (${(body.length / 1024).toFixed(0)}KB poupados)`);
         continue;
       }
+    }
+
+    // encolheu demais? a aba está filtrada — fica a foto anterior
+    if (ant && ant.bytes > 0 && body.length < ant.bytes * (1 - QUEDA_MAX)) {
+      recusadas++;
+      const msg = `${key}  veio com ${(body.length / 1024).toFixed(0)}KB contra `
+        + `${(ant.bytes / 1024).toFixed(0)}KB da foto anterior `
+        + `(-${Math.round((1 - body.length / ant.bytes) * 100)}%) — a aba parece FILTRADA no Sheets. `
+        + `Foto anterior MANTIDA.`;
+      console.log(`RECUSADA  ${msg}`);
+      console.log(`::error::gviz-robot: ${msg}`);
+      continue;
     }
 
     const reg = { key, body, bytes: body.length, updated_at: new Date().toISOString() };
@@ -132,5 +162,12 @@ for (const alvo of ALVOS) {
     console.log(`FALHOU  ${key}  ${e.message}`);
   }
 }
-console.log(`\n${ok} ok (${iguais} sem mudança) · ${falhas} falha(s) de ${ALVOS.length} alvos`);
+console.log(`\n${ok} ok (${iguais} sem mudança) · ${recusadas} recusada(s) · ${falhas} falha(s) de ${ALVOS.length} alvos`);
+if (recusadas) {
+  console.log('\nAba filtrada no Sheets esconde dado do painel. A foto boa foi mantida,');
+  console.log('mas quem abrir depois dos 15s iniciais (ou clicar em "Atualizar dados")');
+  console.log('vai DIRETO ao Google e enxerga o filtro ao vivo. Tirar o filtro na aba');
+  console.log('e redisparar este robô.');
+}
 if (ok === 0) process.exit(1);   // nada gravado = erro de verdade; falha parcial não derruba (o shim cai p/ o Google)
+if (recusadas) process.exit(1);  // recusa é alarme: o job fica vermelho para alguém olhar
