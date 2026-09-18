@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609181930">
+<meta name="build" content="202609182050">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -475,6 +475,16 @@ const vigKeyDe=lbl=>{ const m=String(lbl||'').match(/^([a-zç]{3})\/(\d{2,4})$/i
   const a=m[2].length===2?'20'+m[2]:m[2]; return a+'-'+String(i+1).padStart(2,'0'); };
 const vigLbl=k=>k?MESES[+k.slice(5,7)-1]+'/'+k.slice(2,4):'';
 const vigExt=k=>k?MESES[+k.slice(5,7)-1]+'/'+k.slice(0,4):'';
+/* CADA PAINEL ESCREVE A VIGÊNCIA DE UM JEITO — e a lista tem de trazer TODOS,
+   senão o filtro não casa e o slide sai com o que o painel escolheu sozinho:
+     visao-financeira e rs-por-km  → valor 2026-08, rótulo AGO/26
+     scorecard, resumo-exec,
+     painel-metas, fca-consolidado → ago/26
+     painel-km e seara-km          → valor 08/2026, rótulo ago/2026
+     arvore-combustivel            → 08/2026 nos dois
+   Foi exatamente isso que apareceu na 1ª geração do Renan (18/09/2026):
+   três avisos de `ms-vig: não achei "ago/26"`, os três de Dispersão de Km. */
+const grafias=k=>!k?'':[k, vigLbl(k), vigLbl(k).toUpperCase(), vigExt(k), k.slice(5,7)+'/'+k.slice(0,4)].join('|');
 
 /* ── filtros (mesma mecânica dos outros painéis do padrão) ── */
 const getSel=id=>{const w=$(id); return w&&w._sel&&w._sel.size?[...w._sel]:[];};
@@ -543,8 +553,8 @@ function desviosDe(pac){
 function montaRoteiro(avisa){
   if(!VIG){ ROTEIRO=[]; pintaRoteiro(); return; }
   const ano=VIG.slice(0,4), mi=+VIG.slice(5,7);
-  const vl=vigLbl(VIG), vX=vigExt(VIG), V=vl+'|'+VIG+'|'+vl.toUpperCase();
-  const ACUM=[]; for(let m=1;m<=mi;m++){ const k=ano+'-'+String(m).padStart(2,'0'); ACUM.push(vigLbl(k)+'|'+k); }
+  const vl=vigLbl(VIG), vX=vigExt(VIG), V=grafias(VIG);
+  const ACUM=[]; for(let m=1;m<=mi;m++) ACUM.push(grafias(ano+'-'+String(m).padStart(2,'0')));
   const R=[];
 
   R.push({t:'capa',tit:'CHECK DE METAS',sub:'ATIVOS / FROTA / TI',rod:'Fechamento '+vX});
@@ -591,8 +601,10 @@ function montaRoteiro(avisa){
         R.push(P(nome,'FCA · '+vX+' · desvio de R$ '+d.brl.toLocaleString('pt-BR'),'../fca-consolidado/',fcaPrep));
       }else{
         R.push(P(nome,'FCA · '+vX+' · desvio de R$ '+d.brl.toLocaleString('pt-BR'),'../fca-consolidado/',fcaPrep));
+        /* na Árvore o filtro de projeto lista só o PREFIXO do nível 3
+           ('ROTA'), não o nível 3 inteiro ('ROTA - CGR') como no FCA */
         R.push(P(nome,'Árvore de Combustível · '+vX,'../combustivel/arvore-combustivel/',
-          `__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([d.proj])}); onFilterChange();`));
+          `__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); onFilterChange();`));
       }
     });
   });
@@ -969,7 +981,7 @@ async function gerar(fmt){
         const r=await capturaSlide(s);
         saida.push({tit:s.tit,sub:s.sub,fotos:r.fotos});
         ESTADO[i]={ok:1,msgs:r.msgs};
-        if(r.msgs.length){ atencao++; ovLog('⚠ '+s.tit+': '+r.msgs.join(' · ')); }
+        if(r.msgs.length){ atencao++; ovLog('⚠ '+s.tit+(s.sub?' ('+s.sub+')':'')+': '+r.msgs.join(' · ')); }
       }catch(e){
         falhas++; ESTADO[i]={err:1,msgs:[String(e&&e.message||e)]};
         ovLog('✗ '+s.tit+': '+(e&&e.message||e),true);
@@ -1092,6 +1104,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609181930"></script>
+<script src="../assets/build-check.js?v=202609182050"></script>
 </body>
 </html>

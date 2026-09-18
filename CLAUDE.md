@@ -1395,6 +1395,21 @@ o painel mostra.
   virando falha (e o PDF saindo com os slides que deram certo, não com um em
   branco), as capas e o PPT. **O que o teste NÃO cobre são os dados** — isso só
   o deck de verdade mostra.
+**A 1ª GERAÇÃO REAL ACHOU DOIS DEFEITOS — e os dois eram do tipo que o alarme existe para pegar (18/09/2026).** O Renan gerou o deck de ago/2026 (54 slides) e apareceram três avisos `⚠ Dispersão de Km: ms-vig: não achei "ago/26"`. A causa não era o dado: **cada painel escreve a vigência de um jeito**, e a minha lista de grafias só tinha três.
+
+| painel | valor (`data-v`) | rótulo visível |
+|---|---|---|
+| visao-financeira · rs-por-km | `2026-08` | `AGO/26` |
+| scorecard · resumo-executivo · painel-metas · fca-consolidado | `ago/26` | `ago/26` |
+| **painel-km · seara-km** | `08/2026` | **`ago/2026`** (ano com 4 dígitos) |
+| **arvore-combustivel** | `08/2026` | `08/2026` |
+
+O helper `grafias(k)` passou a gerar as **cinco** formas (`2026-08 \| ago/26 \| AGO/26 \| ago/2026 \| 08/2026`). **O slide provavelmente saía certo por acaso** — sem casar, o `__cm.sel` não marca nada e o painel fica com o padrão dele, que costuma ser o último mês com dado —, e é exatamente por isso que o aviso importa: "saiu certo por acaso" e "saiu certo" não podem parecer a mesma coisa.
+
+**O segundo defeito nem tinha chegado na tela ainda:** o filtro de projeto da **Árvore de Combustível lista só o PREFIXO do nível 3** (`ROTA`), enquanto o `fca-consolidado` usa o nível 3 inteiro (`ROTA - CGR`) — que é o que a tabela `fca` guarda. Os slides de Árvore vêm depois dos de Pneus no roteiro, então o Renan parou de gerar antes de chegar lá. Os dois painéis levam o recorte no formato de cada um.
+
+**O teste agora fala os quatro dialetos.** Antes o dublê usava um formato só, então validava um mundo que não é o do portal — e por isso passou com 55 ok enquanto o defeito existia. Com os dialetos reais e o `ms-nv3` listando prefixos, são **59 checagens**.
+
 - **Duas armadilhas foram do TESTE, não do motor** (as duas fingiam defeito):
   `[].slice.call(Set)` devolve `[]` (Set não é array-like), o que fez parecer que
   filtro nenhum era aplicado; e medir o escurecedor da capa comparando dois
