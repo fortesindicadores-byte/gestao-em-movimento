@@ -1,0 +1,192 @@
+{
+ "gerado_em": "2026-09-18T13:56:51.011Z",
+ "porPainel": {
+  "_template": [
+   "SEU_SHEET_ID_AQUI|s=Nome da Aba|g=|q=|h="
+  ],
+  "arvore-frota": [
+   "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Frota|g=|q=|h=",
+   "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Receita Líquida|g=|q=|h=",
+   "1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Dispersão de km|g=|q=|h=",
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1672208132|q=select B, year(D), month(D), count(A) group by B, year(D), month(D)|h=",
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=Remunerado|g=|q=select A, sum(D) group by A|h=",
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1982300845|q=select F, G, sum(K) group by F, G|h="
+  ],
+  "auditorias": [
+   "1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=Demarco|g=|q=|h=",
+   "1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=DPO|g=|q=|h="
+  ],
+  "carta-custos": [],
+  "carta-custos-teste": [],
+  "combustivel/arvore-combustivel": [
+   "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Frota|g=|q=|h=",
+   "1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Dispersão de km|g=|q=|h=",
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Km/L|g=|q=|h=",
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=R$/L|g=|q=|h=",
+   "1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Balanço de Massa|g=|q=|h="
+  ],
+  "combustivel/co2": [
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Km/L|g=|q=|h="
+  ],
+  "combustivel/eficiencia-kml": [
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Km/L|g=|q=|h=",
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Base Remunerado Modelo|g=|q=|h=",
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=R$/L|g=|q=|h="
+  ],
+  "combustivel/preco-litro": [
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Km/L|g=|q=|h=",
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=R$/L|g=|q=|h="
+  ],
+  "combustivel/seara/arvore": [
+   "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Frota|g=|q=|h=1",
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1982300845|q=|h=1",
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=Remunerado|g=|q=select A, B, D|h=1",
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=0|q=|h=1"
+  ],
+  "combustivel/seara/eficiencia": [
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1982300845|q=|h=1",
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=0|q=|h=1"
+  ],
+  "combustivel/seara/preco-litro": [
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1982300845|q=|h=1",
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=0|q=|h=1"
+  ],
+  "comparativo-equipamento": [
+   "1EFmp2qlevQG5OEgGJePrI_O8wKuQo3IDmbJIReN2Fl0|s=Base|g=|q=|h="
+  ],
+  "comparativo-km": [
+   "1EFmp2qlevQG5OEgGJePrI_O8wKuQo3IDmbJIReN2Fl0|s=Base|g=|q=|h="
+  ],
+  "comparativo-optas": [
+   "1EFmp2qlevQG5OEgGJePrI_O8wKuQo3IDmbJIReN2Fl0|s=Base|g=|q=|h="
+  ],
+  "consumo-kml-analise": [
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Km/L|g=|q=|h=",
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Base Remunerado Modelo|g=|q=|h=",
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=R$/L|g=|q=|h="
+  ],
+  "diagnostico": [
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Km/L|g=|q=|h=",
+   "1DXmjzj2KRrTdQxmvXRclGxhBeDMwoIoLvORqbh3GG6M|s=Pneus|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T1|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T2|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T1|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T2|g=|q=|h=",
+   "1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=DPO|g=|q=|h=",
+   "1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=|g=216663799|q=|h="
+  ],
+  "disponibilidade": [],
+  "disponibilidade-migracao": [],
+  "eficiencia-ativacao": [],
+  "fca-migracao": [],
+  "fca-preenchimento": [],
+  "forecast": [],
+  "manutencao": [
+   "1S7L6G3L8bboirAExGPRCITYkWsGoVpjUoXc-aVXdW6k|s=|g=0|q=|h=1"
+  ],
+  "mpr": [
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T1|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T2|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T1|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T2|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T1 - Acum|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T2 - Acum|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T1 - Acum|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T2 - Acum|g=|q=|h="
+  ],
+  "painel-km": [
+   "1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Dispersão de km|g=|q=|h=",
+   "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Frota|g=|q=|h=",
+   "1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Balanço de Massa|g=|q=|h=",
+   "1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Abertura|g=|q=|h="
+  ],
+  "painel-metas": [
+   "1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=|g=199351909|q=|h=",
+   "1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Dispersão de km|g=|q=|h=",
+   "1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=DPO|g=|q=|h=",
+   "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Frota|g=|q=|h=",
+   "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Receita Líquida|g=|q=|h=",
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Km/L|g=|q=|h=",
+   "1DXmjzj2KRrTdQxmvXRclGxhBeDMwoIoLvORqbh3GG6M|s=Pneus|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T1|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T2|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T1|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T2|g=|q=|h=",
+   "1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=|g=216663799|q=|h="
+  ],
+  "painel-metas-diretor": [
+   "1lZixK13JKO4zKUJZ5CwdqcPyPLKQDVGxa1o2v1t_tN8|s=|g=0|q=|h=",
+   "1lZixK13JKO4zKUJZ5CwdqcPyPLKQDVGxa1o2v1t_tN8|s=|g=410676465|q=|h=",
+   "1lZixK13JKO4zKUJZ5CwdqcPyPLKQDVGxa1o2v1t_tN8|s=|g=1055877945|q=|h=",
+   "1lZixK13JKO4zKUJZ5CwdqcPyPLKQDVGxa1o2v1t_tN8|s=|g=1358349252|q=|h=",
+   "1lZixK13JKO4zKUJZ5CwdqcPyPLKQDVGxa1o2v1t_tN8|s=|g=1177655149|q=|h=",
+   "1lZixK13JKO4zKUJZ5CwdqcPyPLKQDVGxa1o2v1t_tN8|s=|g=523073816|q=|h="
+  ],
+  "resumo-executivo": [
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Km/L|g=|q=|h=",
+   "1DXmjzj2KRrTdQxmvXRclGxhBeDMwoIoLvORqbh3GG6M|s=Pneus|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T1|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T2|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T1|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T2|g=|q=|h=",
+   "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Frota|g=|q=|h=",
+   "1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Dispersão de km|g=|q=|h=",
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=R$/L|g=|q=|h=",
+   "1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=DPO|g=|q=|h=",
+   "1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=|g=216663799|q=|h=",
+   "1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=Demarco|g=|q=|h="
+  ],
+  "rs-por-km": [],
+  "scorecard": [
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Km/L|g=|q=|h=",
+   "1DXmjzj2KRrTdQxmvXRclGxhBeDMwoIoLvORqbh3GG6M|s=Pneus|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T1|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T2|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T1|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T2|g=|q=|h=",
+   "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Frota|g=|q=|h=",
+   "1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Dispersão de km|g=|q=|h=",
+   "1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=DPO|g=|q=|h=",
+   "1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=|g=216663799|q=|h=",
+   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=R$/L|g=|q=|h="
+  ],
+  "seara-km": [
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1982300845|q=|h=1",
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=Remunerado|g=|q=select A, B, D|h=1",
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=0|q=|h=1"
+  ],
+  "tendencia-frota": [
+   "1EFmp2qlevQG5OEgGJePrI_O8wKuQo3IDmbJIReN2Fl0|s=Base|g=|q=|h="
+  ],
+  "termometro": [
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T1|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T2|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T1|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T2|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T1 - Acum|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Transportes T2 - Acum|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T1 - Acum|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=WH T2 - Acum|g=|q=|h=",
+   "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Regras|g=|q=|h=0"
+  ],
+  "visao-financeira": [],
+  "visao-financeira-arvore": [
+   "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Frota|g=|q=|h=",
+   "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Receita Líquida|g=|q=|h=",
+   "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=EBITDA|g=|q=|h="
+  ],
+  "visao-financeira-cheia": [],
+  "ytg": []
+ },
+ "semBase": [
+  "SEU_SHEET_ID_AQUI|s=Nome da Aba|g=|q=|h=",
+  "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1672208132|q=select B, year(D), month(D), count(A) group by B, year(D), month(D)|h=",
+  "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=Remunerado|g=|q=select A, sum(D) group by A|h=",
+  "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1982300845|q=select F, G, sum(K) group by F, G|h=",
+  "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Base Remunerado Modelo|g=|q=|h=",
+  "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Frota|g=|q=|h=1",
+  "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=Remunerado|g=|q=select A, B, D|h=1",
+  "1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Abertura|g=|q=|h=",
+  "10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Regras|g=|q=|h=0"
+ ]
+}

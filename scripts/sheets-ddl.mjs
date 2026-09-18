@@ -30,7 +30,8 @@ const leAba = async b => {
 };
 
 const SO = process.env.SHEETS_SO || '';
-const alvos = SO ? BASES.filter(b => b.slug.startsWith(SO)) : BASES;
+// SO aceita vários prefixos separados por vírgula: 'seara_rem,term_regras'
+const alvos = SO ? BASES.filter(b => SO.split(',').some(p => p.trim() && b.slug.startsWith(p.trim()))) : BASES;
 
 const L = [];
 const w = s => L.push(s);

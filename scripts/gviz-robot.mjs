@@ -34,10 +34,13 @@ const ALVOS = [
   // DRE
   { id: DRE, sheet: 'Frota' },
   { id: DRE, sheet: 'EBITDA' },
+  { id: DRE, sheet: 'Receita Líquida' },
+  { id: DRE, sheet: 'Frota', headers: '1' },     // a Árvore da Seara pede a Frota com headers=1
   // Dispersão de km
   { id: DISP, sheet: 'Dispersão de km' },
   { id: DISP, sheet: 'Balanço de Massa' },
   { id: DISP, sheet: 'Abertura' },              // Painel KM · visão Placas (ago/2026 em diante)
+  { id: KML, sheet: 'Base Remunerado Modelo' },   // Eficiência Km/L e Consumo Km/L Análise
   // Consumo
   { id: KML, sheet: 'Km/L' },
   { id: KML, sheet: 'R$/L' },
@@ -47,6 +50,9 @@ const ALVOS = [
   { id: TERM, sheet: 'FCA Total', headers: '1' },
   { id: TERM, gid: '216663799' },
   { id: TERM, gid: '199351909' },
+  { id: TERM, sheet: 'Disponibilidade' },        // painel /disponibilidade/ (antigo) e a migração
+  { id: TERM, sheet: 'Indisponibilidade' },
+  { id: TERM, sheet: 'Ativos' },
   // Gerot / RPM
   { id: RPM, gid: '0' },
   { id: RPM, sheet: 'De-Para', headers: '0' },
@@ -55,10 +61,18 @@ const ALVOS = [
   // Termômetro / MPR (mês + acumulado por tier)
   ...['Transportes T1', 'Transportes T2', 'WH T1', 'WH T2']
     .flatMap(t => [{ id: TERM2, sheet: t }, { id: TERM2, sheet: t + ' - Acum' }]),
+  { id: TERM2, sheet: 'Regras', headers: '0' },   // termômetro · regras de pontuação
   // Seara (mesmos parâmetros que o painel pede)
   { id: SEARA, gid: '0', headers: '1' },
   { id: SEARA, gid: '1672208132', headers: '1', tq: 'select B, C, D, J' },
   { id: SEARA, gid: '1982300845', headers: '1' },
+  // consultas agregadas dos painéis (levantadas pelo gviz-inventario.mjs) — cada
+  // uma é uma chave própria, com os MESMOS parâmetros que o painel manda
+  { id: SEARA, sheet: 'Remunerado', headers: '1', tq: 'select A, B, D' },
+  { id: SEARA, sheet: 'Remunerado', tq: 'select A, sum(D) group by A' },
+  { id: SEARA, sheet: 'Remunerado', headers: '1', tq: 'select A, sum(D) group by A' },
+  { id: SEARA, gid: '1672208132', tq: 'select B, year(D), month(D), count(A) group by B, year(D), month(D)' },
+  { id: SEARA, gid: '1982300845', tq: 'select F, G, sum(K) group by F, G' },
   // Frota de Elite / Manutenção / Tendência
   { id: ELITE, sheet: 'Pneus' },
   { id: MANUT, gid: '0', headers: '1' },
