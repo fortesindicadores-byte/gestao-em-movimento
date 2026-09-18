@@ -29,6 +29,8 @@ const SEARA = '1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE';  // Seara (3 abas)
 const ELITE = '1DXmjzj2KRrTdQxmvXRclGxhBeDMwoIoLvORqbh3GG6M';  // Frota de Elite (aba Pneus)
 const MANUT = '1S7L6G3L8bboirAExGPRCITYkWsGoVpjUoXc-aVXdW6k';  // Manutenção
 const TEND  = '1EFmp2qlevQG5OEgGJePrI_O8wKuQo3IDmbJIReN2Fl0';  // Tendência/Comparativos (aba Base)
+const MTDIR = '1lZixK13JKO4zKUJZ5CwdqcPyPLKQDVGxa1o2v1t_tN8';  // Painel de Metas do Diretor
+const FAROL = '1xOv7OJzErGV3vNCMOY_5O6px7vFvC990CW-1vGul5sY';  // Farol Semanal (aba Custos)
 
 const ALVOS = [
   // DRE
@@ -77,6 +79,16 @@ const ALVOS = [
   { id: ELITE, sheet: 'Pneus' },
   { id: MANUT, gid: '0', headers: '1' },
   { id: TEND, sheet: 'Base' },
+  // Painel de Metas do Diretor e a aba Custos do Farol: tinham tabela no banco
+  // mas NÃO tinham foto, então o Sheets Gviz Check não tinha com que comparar
+  // — e é a foto que prova que a reconstrução do banco bate com o gviz.
+  { id: MTDIR, gid: '0' },
+  { id: MTDIR, gid: '410676465' },
+  { id: MTDIR, gid: '1055877945' },
+  { id: MTDIR, gid: '1358349252' },
+  { id: MTDIR, gid: '1177655149' },
+  { id: MTDIR, gid: '523073816' },
+  { id: FAROL, sheet: 'Custos', headers: '1' },
 ];
 
 const chaveDe = a => `${a.id}|s=${a.sheet || ''}|g=${a.gid || ''}|q=${a.tq || ''}|h=${a.headers || ''}`;
