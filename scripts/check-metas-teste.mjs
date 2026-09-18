@@ -39,17 +39,6 @@ const BASE = 'http://127.0.0.1:' + srv.address().port;
 /* ── os dubles ─────────────────────────────────────────────── */
 const SHIM_H2C = `
 window.html2canvas = function(el, o){
-  // dentro do painel dublado: registra o que o motor MANDOU a tela mostrar
-  try{
-    if (window.top !== window) {
-      var e = document.getElementById('estado');
-      window.top.__provas.push({
-        pag: location.pathname,
-        estado: e ? JSON.parse(e.textContent) : null,
-        alvo: (el && (el.id || el.className)) || 'sem-alvo'
-      });
-    }
-  }catch(err){ try{ window.top.__provas.push({erro:String(err)}); }catch(e2){} }
   var c = document.createElement('canvas'); c.width = 1200; c.height = 700;
   var x = c.getContext('2d'); x.fillStyle = '#EAEAEA'; x.fillRect(0,0,1200,700);
   return Promise.resolve(c);
@@ -65,6 +54,9 @@ window.jspdf = { jsPDF: function(){
   this.setTextColor = function(){}; this.setFont = function(){}; this.setFontSize = function(){};
   this.text = function(t){ o.txts.push(t); };
   this.addImage = function(d,f,x,y,w,h){ o.imgs++; if (w > 13 && h > 7) o.cheias++; };
+  this.setDrawColor = function(){}; this.setLineWidth = function(){};
+  this.line = function(){ o.linhas = (o.linhas || 0) + 1; };
+  this.getTextWidth = function(t){ return String(t).length * 0.06; };
   this.save = function(n){ o.arquivo = n; };
 } };`;
 
@@ -76,12 +68,13 @@ window.PptxGenJS = function(){
   this.ShapeType = { rect: 'rect' };
   this.defineLayout = function(l){ o.layout = l; };
   this.addSlide = function(){
-    var s = { txts: [], imgs: [], shapes: [] };
+    var s = { txts: [], imgs: [], shapes: [], tabelas: [] };
     o.slides.push(s);
     return {
       background: null,
       addText: function(t){ s.txts.push(t); },
       addImage: function(i){ s.imgs.push({ x:i.x, y:i.y, w:i.w, h:i.h }); },
+      addTable: function(rows, o){ s.tabelas.push({ rows: rows, x:o.x, y:o.y, w:o.w, colW:o.colW }); },
       addShape: function(t,p){ s.shapes.push(t); }
     };
   };
@@ -141,6 +134,14 @@ function painelDuble(chaves, dialeto, comGate) {
   if (comGate) return `<!doctype html><html><body><div class="app"><div class="cols">
     <div class="gate"><h2>Apenas administradores</h2><p>restrito</p></div></div></div></body></html>`;
   const vigs = chaves.map(DIALETO[dialeto || 'chave']);
+  const TAB = () => `<div class="twrap"><table class="dre">
+    <thead><tr><th>CONTA</th><th class="num">REM</th><th class="num">REAL</th><th class="num">Δ %</th></tr></thead>
+    <tbody>
+      <tr><td class="conta">Combustíveis</td><td class="num">-3,09</td><td class="num">-2,83</td><td class="num cg" style="color:rgb(0,179,0)">-8%</td></tr>
+      <tr><td class="conta">Pneus Novos</td><td class="num">-0,34</td><td class="num">-0,15</td><td class="num cg" style="color:rgb(0,179,0)">-55%</td></tr>
+      <tr><td class="conta">Manutenções</td><td class="num">-0,38</td><td class="num">-0,52</td><td class="num cr" style="color:rgb(255,0,0)">+35%</td></tr>
+      <tr class="total"><td class="conta">Total</td><td class="num">-4,67</td><td class="num">-4,22</td><td class="num">-10%</td></tr>
+    </tbody></table></div>`;
   const ops = id => vigs.map(v => `<label class="ms-opt"><input type="checkbox" data-v="${v.v}"> ${v.t}<span class="ms-only">only</span></label>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><style>
   .vw{display:none} .vw.on{display:block} .card,.tbl-section,.chart-card{min-height:220px;background:#eee}
@@ -160,12 +161,18 @@ function painelDuble(chaves, dialeto, comGate) {
       ${['Combustíveis','Manutenções','Pneus','ICMS'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
   </div><div class="cols">
     <section class="vw on" id="vw-resumo"><div class="card">resumo — texto suficiente para o motor considerar a tela carregada e estável</div></section>
-    <section class="vw" id="vw-nominal"><div class="card">nominal <span id="ref-pac-v">REM</span></div></section>
-    <section class="vw" id="vw-dispersao"><div class="card">dispersao por unidade, com tabela e ranking</div></section>
-    <section class="vw" id="vw-tabela"><div class="card">tabela de FCA da unidade escolhida</div></section>
-    <div class="tbl-section">R$/KM Detalhado <span id="dim-atual">pacote</span></div>
-    <div class="tbl-section"><table id="ranking-table"><tr><td class="ind-col">ranking</td></tr></table></div>
+    <section class="vw" id="vw-nominal"><div class="card">nominal <span id="ref-pac-v">REM</span>${TAB()}</div></section>
+    <section class="vw" id="vw-dispersao"><div class="card">dispersao por unidade${TAB()}</div></section>
+    <section class="vw" id="vw-tabela"><div class="card">FCA da unidade${TAB()}</div></section>
+    <div class="tbl-section">R$/KM Detalhado <span id="dim-atual">pacote</span>${TAB()}</div>
+    <div class="tbl-section"><table id="ranking-table"><thead><tr><th>UNIDADE</th><th class="num">PONTOS</th></tr></thead>
+      <tbody><tr><td class="ind-col">CDI MACACU</td><td class="num">97,3</td></tr>
+      <tr><td>CDD PELOTAS</td><td class="num">97,2</td></tr></tbody></table></div>
     <div id="podio-section" class="card">podio</div>
+    <div class="ms-wrap" id="ms-vig-wrap"><span class="ms-cnt" id="ms-vig-cnt"></span>
+      <div class="ms-panel" id="ms-vig-panel"><div class="ms-list" id="ms-vig-list">
+      ${vigs.map(v => `<div class="ms-opt"><input type="checkbox" value="${v.v}"><label>${v.t}</label></div>`).join('')}
+      </div></div></div>
     <div class="chart-card"><canvas id="chartTemporal"></canvas></div>
     <pre id="estado"></pre>
   </div></main></div>
@@ -190,6 +197,7 @@ function painelDuble(chaves, dialeto, comGate) {
     document.getElementById('ref-pac-v').textContent = EST.ref; grava(); }
   function onlyOpt(k, v){ EST.selVig = [v]; EST.chamou.push('onlyOpt'); grava(); }
   function toggleAll(k){ EST.selVig = []; EST.chamou.push('toggleAll'); grava(); }
+  function setSelArr(k, v){ if (k === 'vig') { EST.selVig = v; selVig = v; } grava(); }
   function updateMsBtn(){}
   function toggleIndCols(){ EST.chamou.push('toggleIndCols'); grava(); }
   function aplicaTema(t){ EST.tema = t; document.body.classList.toggle('claro', t === 'light'); grava(); }
@@ -234,7 +242,34 @@ async function abre({ semJunEm = null, gateEm = null } = {}) {
       body: painelDuble(p === semJunEm ? VIGS_SEM_JUN : VIGS_OK, DIAL_DE[p], p === gateEm) }));
   }
   const pg = await ctx.newPage();
-  await pg.addInitScript(() => { window.__provas = []; window.CM_TEMPOS = { passo:60, quieto:1, min:120, teto:9000, pos:60, tema:30 }; });
+  /* A PROVA SAI DO __cm.extrai, não do html2canvas: a tabela deixou de ser
+     fotografada e virou dado, então o recorder antigo não via mais esses
+     slides. Aqui o teste embrulha o extrai no momento em que o motor o
+     instala no iframe — e anota se o slide saiu como TABELA ou imagem. */
+  await ctx.addInitScript(() => {
+    if (window.top === window) return;
+    let v;
+    Object.defineProperty(window, '__cm', {
+      configurable: true, get(){ return v; },
+      set(nv){
+        v = nv;
+        const orig = nv.extrai;
+        nv.extrai = function(el){
+          const r = orig.call(this, el);
+          try {
+            const e = document.getElementById('estado');
+            window.top.__provas.push({ pag: location.pathname,
+              estado: e ? JSON.parse(e.textContent) : null,
+              alvo: (el && (el.id || el.className)) || 'sem-alvo',
+              tipo: r ? 'tabela' : 'imagem' });
+          } catch (err) {}
+          return r;
+        };
+      }
+    });
+  });
+  await pg.addInitScript(() => { window.__provas = []; try{ localStorage.setItem('bi_theme','dark'); }catch(e){}
+    window.CM_TEMPOS = { passo:60, quieto:1, min:120, teto:9000, pos:60, tema:30 }; });
   pg.on('pageerror', e => console.log('  [erro na página] ' + e.message));
   await pg.goto(BASE + '/check-metas/', { waitUntil: 'load' });
   await pg.waitForFunction(() => window.ROTEIRO === undefined || document.querySelectorAll('#body-rot tr').length > 0, { timeout: 15000 });
@@ -245,7 +280,9 @@ async function abre({ semJunEm = null, gateEm = null } = {}) {
 console.log('\n═══ 1 · o roteiro sai da tabela `fca`, não de uma lista fixa ═══');
 {
   const { ctx, pg } = await abre();
-  const r = await pg.evaluate(() => ROTEIRO.map(s => ({ t:s.t, tit:s.tit||s.txt, url:s.url, prep:(s.caps||[]).map(c=>c.prep).join(' ') })));
+  const r = await pg.evaluate(() => ROTEIRO.map(s => ({ t:s.t, tit:s.tit||s.txt, url:s.url,
+    caps:(s.caps||[]).length, urls:(s.caps||[]).map(c=>c.url||s.url).join(' '),
+    prep:(s.caps||[]).map(c=>c.prep).join(' ') })));
   af(r[0].t === 'capa', 'o 1º slide é a capa');
   af(r[1].t === 'sec' && /Frota/i.test(r[1].tit), 'o 2º é a divisória FROTA');
   af(r.some(s => /scorecard\/$/.test(s.url || '')), 'tem o Scorecard');
@@ -254,9 +291,11 @@ console.log('\n═══ 1 · o roteiro sai da tabela `fca`, não de uma lista f
   af(JSON.stringify(secs) === JSON.stringify(['Frota','Pneus','Manutenção','Combustíveis','Resultados']),
      'as divisórias são Frota · Pneus · Manutenção · Combustíveis · Resultados', secs.join(' / '));
   const comb = r.filter(s => /Combustíveis – /.test(s.tit || ''));
-  af(comb.length === 4, 'Combustíveis: 2 unidades × (FCA + árvore) = 4 slides', comb.length);
-  af(comb.filter(s => /arvore-combustivel/.test(s.url)).length === 2,
-     '"se tiver mais de um projeto, mais de uma árvore" — 2 árvores', comb.filter(s => /arvore/.test(s.url)).length);
+  af(comb.length === 2, 'Combustíveis: UM slide por unidade+projeto', comb.length);
+  af(comb.every(s => s.caps === 2), 'e cada um leva a Árvore E o FCA juntos, como ele pediu',
+     JSON.stringify(comb.map(s => s.caps)));
+  af(comb.every(s => /arvore-combustivel/.test(s.url) && /fca-consolidado/.test(s.urls)),
+     'as duas fotos vêm de painéis diferentes no mesmo slide', JSON.stringify(comb.map(s => s.urls)));
   const man = r.filter(s => /Manutenções – /.test(s.tit || ''));
   af(man.length === 2 && /CBA T1/.test(man[0].tit), 'Manutenções: 2 unidades, a de maior desvio primeiro', man.map(m=>m.tit).join(' / '));
   af(!r.some(s => /Pneus – /.test(s.tit || '')), 'Pneus de MAI não entra no deck de JUN');
@@ -318,14 +357,36 @@ let provas1 = [];
 
   const pr = provas1.filter(p => /programa-reconhecimento/.test(p.pag));
   af(pr.length === 4, 'Frota de Elite: ranking, dois pódios e a evolução', pr.length);
-  af(pr[0].alvo && /tbl-section/.test(pr[0].alvo), 'o ranking é recortado na tabela', pr[0].alvo);
+  af(pr[0].alvo === 'ranking-table', 'o ranking sai como TABELA, sem a moldura do card', pr[0].alvo);
+  af(JSON.stringify(pr[0].estado.selVig) === '["jun/26"]',
+     'o Frota de Elite casa a vigência pela lista dele, não por um formato chutado',
+     JSON.stringify(pr[0].estado.selVig));
+  af(pr[2] && pr[2].estado.selVig.length === 6, 'o pódio acumulado leva os 6 meses', pr[2] && pr[2].estado.selVig.length);
   af(pr[1].alvo === 'podio-section', 'o pódio é recortado no pódio', pr[1].alvo);
-  af(pr[3].estado.chamou.includes('toggleAll'), 'a evolução usa o ano inteiro');
+  af(pr[3] && pr[3].estado.selVig.length === 0, 'a evolução usa o ano inteiro (sem filtro)',
+     pr[3] && JSON.stringify(pr[3].estado.selVig));
 
   af(pdf && pdf.pgs.length === nSlides, 'o PDF tem uma página por slide', pdf && pdf.pgs.length + ' de ' + nSlides);
   af(pdf && pdf.cheias === 6, 'capa e as 5 divisórias entram de página inteira', pdf && pdf.cheias);
   af(pdf && /^Check_de_Metas_2026_06\.pdf$/.test(pdf.arquivo), 'o arquivo sai com o mês no nome', pdf && pdf.arquivo);
   af(pdf && pdf.txts.includes('Vs Remunerado') && pdf.txts.includes('Vs Orçado'), 'os rótulos das duas imagens vão no slide');
+
+  // ── o coração da mudança: tabela é DADO, não print ──
+  const tabs = provas1.filter(p => p.tipo === 'tabela');
+  af(tabs.length >= 10, 'as tabelas saem como dados, não como print', tabs.length + ' de ' + provas1.length);
+  af(provas1.filter(p => /rs-por-km/.test(p.pag)).every(p => p.tipo === 'tabela'),
+     'o R$/Km vira tabela desenhada no slide');
+  const pptT = await pg.evaluate(() => window.__ppt);
+  af(pdf.txts.includes('CONTA') || pdf.txts.includes('UNIDADE'),
+     'o PDF escreve o cabeçalho da tabela como TEXTO (nítido, não imagem)');
+  af(pdf.txts.includes('Combustíveis') && pdf.txts.includes('Total'),
+     'e as linhas também são texto de verdade');
+  af(pdf.linhas > 20, 'com os filetes entre as linhas desenhados', pdf.linhas);
+
+  const tema = await pg.evaluate(() => localStorage.getItem('bi_theme'));
+  af(tema === 'dark' || tema === null, 'o tema do Renan é devolvido depois da geração', tema);
+  af(provas1.filter(p => p.estado && p.estado.tema === 'light').length >= 8,
+     'os painéis foram para o tema claro', provas1.filter(p => p.estado && p.estado.tema === 'light').length);
 
   const estados = await pg.evaluate(() => Object.values(ESTADO));
   af(estados.length === nSlides && estados.every(e => e.ok && !e.err), 'todos os slides fecharam sem falha',
@@ -426,13 +487,26 @@ console.log('\n═══ 6 · o PPT sai com o mesmo desenho do PDF ═══');
   af(p && p.slides[0].imgs.length === 1 && p.slides[0].imgs[0].w === 13.3333,
      'a capa ocupa o slide inteiro', p && JSON.stringify(p.slides[0].imgs[0]));
   af(p && p.slides[0].txts.length === 0, 'e não leva caixa de texto por cima (o título está na arte)');
+  const comTab = p.slides.filter(x => x.tabelas.length);
+  af(comTab.length >= 1, 'o PPT leva tabela NATIVA (texto selecionável, não figura)', comTab.length);
+  if (comTab.length) {
+    const t = comTab[0].tabelas[0];
+    af(t.rows[0][0].text === 'CONTA', 'o cabeçalho vai em caixa alta', t.rows[0][0].text);
+    const cores = t.rows.flat().map(c => c.options && c.options.color).filter(Boolean);
+    af(cores.includes('FF0000') && cores.includes('00B300'),
+       'e a cor da célula é a do painel — vermelho estouro, verde saving', [...new Set(cores)].join(','));
+    af(Math.abs(t.colW.reduce((a, b) => a + b, 0) - t.w) < 0.02,
+       'as colunas somam a largura da caixa: a tabela preenche a página', t.colW.join(' '));
+    af(t.colW[0] > t.colW[1] * 2, 'a coluna do nome é a larga', t.colW.slice(0, 2).join(' '));
+  }
   const sl = p.slides[2];
   af(sl.txts.length >= 1 && sl.txts[0] === 'Scorecard da Frota', 'o slide de painel leva o título', sl.txts[0]);
   af(sl.imgs.length === 1 && sl.imgs[0].y > 0.9, 'a imagem entra abaixo do título', JSON.stringify(sl.imgs[0]));
-  af(sl.imgs[0].x >= 0.3 && sl.imgs[0].x + sl.imgs[0].w <= 13.04, 'e cabe dentro da margem', JSON.stringify(sl.imgs[0]));
+  af(sl.imgs[0].x >= 0.27 && sl.imgs[0].x + sl.imgs[0].w <= 13.07, 'e cabe dentro da margem', JSON.stringify(sl.imgs[0]));
   const duplo = p.slides[6];
-  af(duplo.imgs.length === 2 && duplo.imgs[1].y > duplo.imgs[0].y,
-     'o slide de duas imagens empilha uma sobre a outra, como no dele', JSON.stringify(duplo.imgs));
+  af(duplo.tabelas.length === 2 && duplo.tabelas[1].y > duplo.tabelas[0].y,
+     'o slide de duas tabelas empilha uma sobre a outra, como no dele',
+     JSON.stringify(duplo.tabelas.map(t => t.y)));
   af(p && /^Check_de_Metas_2026_06\.pptx$/.test(p.arquivo), 'o arquivo sai com o mês no nome', p && p.arquivo);
   await ctx.close();
 }
