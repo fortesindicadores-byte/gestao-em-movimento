@@ -1307,3 +1307,12 @@ alter table public.sh_seara_comb_vig
 alter table public.sh_seara_comb_vig enable row level security;
 drop policy if exists sh_seara_comb_vig_sel on public.sh_seara_comb_vig;
 create policy sh_seara_comb_vig_sel on public.sh_seara_comb_vig for select to authenticated using (true);
+
+-- ── 18/09/2026: a aba WH T2 - Acum GANHOU 3 COLUNAS (26 → 29) ──────────────
+-- Sem estas colunas a carga morre com PGRST204 e a tabela CONGELA no conteúdo
+-- antigo — servia Total Pontos 71 onde a planilha já diz 73. Gerado pelo
+-- Sheets DDL (so=term_wh_t2_acum); as três não têm rótulo na aba.
+alter table public.sh_term_wh_t2_acum
+  add column if not exists col_26   numeric,
+  add column if not exists col_27   numeric,
+  add column if not exists col_28   numeric;
