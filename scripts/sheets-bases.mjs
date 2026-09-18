@@ -37,7 +37,10 @@ const t2 = (slug, sheet) => ({ slug, id: WB.TERM2, sheet, nome: 'Termômetro · 
 
 export const BASES = [
   // ── DRE (Visão Financeira, Painel KM, Árvore, R$/km, Carta…) ──
-  { slug: 'dre_frota',        id: WB.DRE,  sheet: 'Frota',            nome: 'DRE · Frota' },
+  { slug: 'dre_frota',        id: WB.DRE,  sheet: 'Frota',            nome: 'DRE · Frota',
+    // a Árvore da Seara pede a MESMA aba com headers=1 — o cabeçalho está na
+    // 1ª linha, então a resposta é a mesma (o Sheets Gviz Check confere isso)
+    apelidos: [{ sheet: 'Frota', headers: '1' }] },
   { slug: 'dre_ebitda',       id: WB.DRE,  sheet: 'EBITDA',           nome: 'DRE · EBITDA' },
   // A Visão Financeira lê TRÊS abas do DRE. As duas de cima já estavam aqui e
   // a Receita Líquida não — sem ela o painel não sai do gviz, e migrar só duas
@@ -47,10 +50,17 @@ export const BASES = [
   // ── Base Dispersão de km ──
   { slug: 'dispersao_km',     id: WB.DISP, sheet: 'Dispersão de km',  nome: 'Dispersão de km' },
   { slug: 'balanco_massa',    id: WB.DISP, sheet: 'Balanço de Massa', nome: 'Balanço de Massa' },
+  { slug: 'dispersao_abertura', id: WB.DISP, sheet: 'Abertura',       nome: 'Dispersão · Abertura (Painel KM · Placas)' },
 
   // ── Consumo ──
   { slug: 'consumo_km_litro', id: WB.KML,  sheet: 'Km/L',             nome: 'Consumo · Km/L' },
   { slug: 'consumo_rs_litro', id: WB.KML,  sheet: 'R$/L',             nome: 'Consumo · R$/L' },
+  { slug: 'consumo_rem_modelo', id: WB.KML, sheet: 'Base Remunerado Modelo', nome: 'Consumo · Base Remunerado Modelo' },
+
+  // ── Disponibilidade (painel antigo, lê as abas do Consolidado) ──
+  { slug: 'disp_disponibilidade',   id: WB.TERM, sheet: 'Disponibilidade',   nome: 'Disponibilidade (aba)' },
+  { slug: 'disp_indisponibilidade', id: WB.TERM, sheet: 'Indisponibilidade', nome: 'Indisponibilidade (aba)' },
+  { slug: 'disp_ativos',            id: WB.TERM, sheet: 'Ativos',            nome: 'Ativos (aba do Consolidado)' },
 
   // ── Auditorias / FCA / Metas ──
   { slug: 'dpo',              id: WB.TERM, sheet: 'DPO',              nome: 'DPO' },
@@ -78,11 +88,25 @@ export const BASES = [
   t2('term_wh_t1_acum',          'WH T1 - Acum'),
   t2('term_wh_t2',               'WH T2'),
   t2('term_wh_t2_acum',          'WH T2 - Acum'),
+  { slug: 'term_regras',      id: WB.TERM2, sheet: 'Regras', headers: '0', nome: 'Termômetro · Regras' },
 
   // ── Seara (os parâmetros são os que o painel manda) ──
   { slug: 'seara_remunerado',  id: WB.SEARA, gid: '0', headers: '1',  nome: 'Seara · Base Remunerado' },
   { slug: 'seara_ctes',        id: WB.SEARA, gid: '1672208132', headers: '1', tq: 'select B, C, D, J', nome: 'Seara · Base CTEs' },
   { slug: 'seara_combustivel', id: WB.SEARA, gid: '1982300845', headers: '1', nome: 'Seara · Combustível' },
+  // As consultas AGREGADAS (tq com sum/count/group by) são calculadas pelo
+  // Google — para sair do Sheets, cada uma vira a sua própria tabela, com o
+  // resultado já somado, nos MESMOS parâmetros que o painel manda (é o
+  // desenho da seara_ctes). Levantadas pelo scripts/gviz-inventario.mjs.
+  { slug: 'seara_rem_placa',     id: WB.SEARA, sheet: 'Remunerado', headers: '1', tq: 'select A, B, D',
+    nome: 'Seara · Remunerado (vigência, placa, km) — seara-km e Árvore Seara' },
+  { slug: 'seara_rem_vig',       id: WB.SEARA, sheet: 'Remunerado', tq: 'select A, sum(D) group by A',
+    nome: 'Seara · Remunerado Σkm por vigência — arvore-frota',
+    apelidos: [{ sheet: 'Remunerado', tq: 'select A, sum(D) group by A', headers: '1' }] },  // rs-por-km pede com headers=1
+  { slug: 'seara_ctes_viagens',  id: WB.SEARA, gid: '1672208132', tq: 'select B, year(D), month(D), count(A) group by B, year(D), month(D)',
+    nome: 'Seara · CTEs por placa e mês — arvore-frota' },
+  { slug: 'seara_comb_vig',      id: WB.SEARA, gid: '1982300845', tq: 'select F, G, sum(K) group by F, G',
+    nome: 'Seara · Combustível Σkm por mês/ano — arvore-frota' },
 
   // ── Frota de Elite / Manutenção / Tendência ──
   { slug: 'elite_pneus',      id: WB.ELITE, sheet: 'Pneus',           nome: 'Frota de Elite · Pneus' },

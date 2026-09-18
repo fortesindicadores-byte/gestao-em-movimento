@@ -35,7 +35,8 @@ const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'applic
 const LOTE = 500;                 // linhas por requisição
 const QUEDA_MAX = 0.4;            // encolher mais que isto = aba filtrada
 
-const alvos = SO ? BASES.filter(b => b.slug.startsWith(SO)) : BASES;
+// SO aceita vários prefixos separados por vírgula: 'seara_rem,term_regras'
+const alvos = SO ? BASES.filter(b => SO.split(',').some(p => p.trim() && b.slug.startsWith(p.trim()))) : BASES;
 console.log(`Robô das bases manuais · modo ${MODO} · ${alvos.length} base(s)\n`);
 
 // Enquanto o SQL não for rodado não há onde gravar. Isso NÃO é falha do robô:
