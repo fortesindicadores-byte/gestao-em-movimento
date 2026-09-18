@@ -76,6 +76,30 @@ drop policy if exists sh_dre_ebitda_sel on public.sh_dre_ebitda;
 create policy sh_dre_ebitda_sel on public.sh_dre_ebitda for select to authenticated using (true);
 create index if not exists sh_dre_ebitda_vig_idx on public.sh_dre_ebitda (vigencia);
 
+-- ── DRE · Receita Líquida · 16290 linha(s) · 11 coluna(s)
+--    1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Receita Líquida|g=|q=|h=
+create table if not exists public.sh_dre_receita (
+  linha         integer primary key,   -- posição da linha na aba
+  vigencia      text,                  -- MM/YYYY normalizada
+  atualizado_em timestamptz not null default now()
+);
+alter table public.sh_dre_receita
+  add column if not exists vigencia_orig                          date,   -- VIGÊNCIA
+  add column if not exists d_orc_brl                              numeric,   -- Δ ORÇ (BRL)
+  add column if not exists d_rem_brl                              numeric,   -- Δ REM (BRL)
+  add column if not exists unidade                                text,   -- Unidade
+  add column if not exists nivel_3                                text,   -- NÍVEL 3
+  add column if not exists conta_gerencial                        text,   -- CONTA GERENCIAL
+  add column if not exists mes                                    text,   -- MÊS
+  add column if not exists ano                                    numeric,   -- ANO
+  add column if not exists orcado                                 numeric,   -- ORÇADO
+  add column if not exists remunerado                             numeric,   -- REMUNERADO
+  add column if not exists realizado                              numeric;   -- REALIZADO
+alter table public.sh_dre_receita enable row level security;
+drop policy if exists sh_dre_receita_sel on public.sh_dre_receita;
+create policy sh_dre_receita_sel on public.sh_dre_receita for select to authenticated using (true);
+create index if not exists sh_dre_receita_vig_idx on public.sh_dre_receita (vigencia);
+
 -- ── Dispersão de km · 972 linha(s) · 40 coluna(s)
 --    1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Dispersão de km|g=|q=|h=
 create table if not exists public.sh_dispersao_km (
