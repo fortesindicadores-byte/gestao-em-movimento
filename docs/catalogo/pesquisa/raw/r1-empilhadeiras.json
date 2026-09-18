@@ -1,0 +1,590 @@
+[
+  {
+    "modelo": "CPD38",
+    "marca": "HELI",
+    "tipo": "EMPILHADEIRA ELETRICA",
+    "anos": [2022],
+    "n_ativos": 15,
+    "propulsao": "eletrica",
+    "motor": {
+      "fabricante_codigo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Motor de tracao CA (AC) da propria HELI. O codigo/potencia muda por variante (CPD38-GB2Li-M, CPD38-GB3Li, CPD38 chumbo-acido). Consultar a plaqueta do equipamento e o manual HELI da serie correspondente (helibrasil.com)."},
+      "combustivel": {"valor": "eletrico (bateria)", "status": "confirmado", "fonte": "https://helieurope.eu/en/catalogue/forklift-trucks/electric-forklift-trucks/h4-1-5-3-8t/ ; https://en.heli.com.cn/Products_detail/108.html", "nota": "CPD = contrabalancada eletrica; 38 = 3.800 kg."}
+    },
+    "oleo_motor": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Empilhadeira eletrica — nao possui motor a combustao."},
+    "oleo_hidraulico": {
+      "tipo_iso_vg": {"valor": "L-HM 32 / L-HV 32 (oleo hidraulico antidesgaste)", "status": "inferido", "fonte": "Manual de operacao e servico HELI serie G / CPD25 (https://www.manualslib.com/manual/2811787/Heli-G-Series.html)", "nota": "Inferido do manual da serie G/CPD25 da propria HELI, que recomenda L-HM32 e L-HV32. NAO confirmado especificamente para o CPD38. Em clima quente a HELI costuma liberar VG46 — confirmar no manual do equipamento antes de comprar."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Consultar tabela de lubrificantes do manual de operacao HELI do CPD38 (equivalencia DIN 51524 HLP / ISO 11158 HM)."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao publicado nas fichas tecnicas comerciais. Consultar a tabela de capacidades do manual de servico HELI do CPD38 ou o concessionario (Heli Brasil)."}
+    },
+    "oleo_transmissao": {
+      "tipo": {"valor": "Oleo de engrenagem GL-5 SAE 80W/90 (redutor do eixo de tracao)", "status": "inferido", "fonte": "Manual de operacao e servico HELI CPD25 / serie G (https://www.scribd.com/document/808625573/CPD-25-operation-service-manual-English)", "nota": "Inferido do manual do CPD25 (mesma familia eletrica HELI), que especifica 80W/90 GL-5 para -25 a +49 C. NAO confirmado para o CPD38."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Consultar tabela de capacidades do manual HELI do CPD38."}
+    },
+    "bateria": {
+      "tensao": {"valor": "80 V", "status": "confirmado", "fonte": "https://www.dahlgaard.de/en/product/Heli-CPD38-GB2LI-electric-forklift-3800-kg/ ; https://jialift.com.au/product/heli-g3-series-three-wheel-lithium-battery-forklift-cpd38-gb3l/ ; https://richmchn.en.made-in-china.com/product/lGipSRmoHqcv/", "nota": "Todas as variantes localizadas do CPD38 sao 80 V (chumbo-acido e litio). Corroborado em 3 fontes independentes."},
+      "capacidade_ah": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ha pelo menos 4 configuracoes de fabrica: 80V/250Ah e 80V/202Ah (chumbo-acido), 80V/346Ah (CPD38-GB3Li) e 80V/560Ah (CPD38-GB2LiM). Impossivel definir sem ler a plaqueta da bateria / numero de serie do equipamento."},
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "CRITICO PARA COMPRA: se for chumbo-acido tracionaria consome agua destilada e exige sala de carga; se for litio (series G2/G3, muito comuns em 2022) NAO leva agua destilada e o carregador e outro. Definir por inspecao fisica da bateria."},
+      "n_celulas": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Se a bateria for chumbo-acido tracionaria de 80 V, serao 40 celulas de 2 V (calculo, nao leitura de catalogo). Se for litio o conceito de celula 2V nao se aplica."}
+    },
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Sem motor a combustao."},
+      "ar_motor": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Sem motor a combustao."},
+      "hidraulico": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Existe filtro de sucção/retorno no tanque hidraulico. Numero de peca so no catalogo de pecas HELI do CPD38."},
+      "glp": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Sem GLP."}
+    },
+    "vela": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Sem motor a combustao."},
+    "arrefecimento": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Sem motor a combustao. Ha refrigeracao do controlador/motor, mas por ar."},
+    "pneu": {
+      "dianteiro": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao confirmado para o CPD38. Na familia CPD35 aparece 28x9-15 macico dianteiro (https://www.ritchiespecs.com/model/heli-cpqd35-forklift), mas NAO se pode transportar isso para o CPD38 sem catalogo. Medir o pneu instalado."},
+      "traseiro": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medir o pneu instalado / consultar catalogo de pecas HELI."},
+      "tipo": {"valor": "macico (solid) provavel em operacao de armazem", "status": "inferido", "fonte": "https://jialift.com.au/product/heli-g3-series-three-wheel-lithium-battery-forklift-cpd38-gb3l/", "nota": "A ficha do CPD38-GB3Li lista 'solid tyres'. Confirmar na frota — HELI oferece pneumatico e macico."}
+    },
+    "garfos_corrente_roletes": {
+      "garfos": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Variantes do CPD38 aparecem com garfo de 1.070 mm em uma ficha de revenda; medir os garfos instalados (comprimento x largura x espessura)."},
+      "corrente_passo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Consultar catalogo de pecas HELI (tipicamente corrente de folha tipo Leaf Chain BL/LH). Medir o passo na torre."},
+      "roletes": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo de pecas HELI do CPD38."}
+    },
+    "intervalos_horas": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": "https://www.manualslib.com/manual/2811787/Heli-G-Series.html",
+      "nota": "O manual da serie G da HELI organiza a manutencao em verificacoes diarias, mensais e periodicas; os intervalos em horas nao puderam ser extraidos. Consultar o plano de manutencao do manual do CPD38."
+    },
+    "observacoes": "15 ativos, o maior grupo da frota. O BLOQUEIO DE COMPRA aqui e o tipo de bateria (chumbo-acido x litio): muda agua destilada, carregador e plano de manutencao inteiro. Recomendo uma inspecao de 15 minutos lendo a plaqueta da bateria e o numero de serie da empilhadeira antes de qualquer cotacao. Nenhuma pagina de fabricante pode ser aberta desta sessao (bloqueio de egress) — todos os valores vieram de extracao por busca."
+  },
+  {
+    "modelo": "CPD25",
+    "marca": "HELI",
+    "tipo": "EMPILHADEIRA ELETRICA",
+    "anos": [2022],
+    "n_ativos": 13,
+    "propulsao": "eletrica",
+    "motor": {
+      "fabricante_codigo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Motor de tracao CA (AC) HELI. Potencia varia por variante (CPD25 G2 chumbo-acido, CPD25-GB2Li-M litio, CPD25 LI do Brasil)."},
+      "combustivel": {"valor": "eletrico (bateria)", "status": "confirmado", "fonte": "https://helibrasil.com/produtos/cpd25-li ; https://www.lectura-specs.com/en/model/forklifts/electric-forklifts-heli/cpd25-11795282", "nota": "CPD25 = contrabalancada eletrica 2.500 kg."}
+    },
+    "oleo_motor": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Empilhadeira eletrica — nao possui motor a combustao."},
+    "oleo_hidraulico": {
+      "tipo_iso_vg": {"valor": "L-HM 32 / L-HV 32", "status": "inferido", "fonte": "Manual de operacao e servico HELI CPD25 / serie G (https://www.manualslib.com/manual/2811777/Heli-Cpd15.html ; https://www.scribd.com/document/808625573/CPD-25-operation-service-manual-English)", "nota": "O manual HELI da familia recomenda L-HM32 e L-HV32. Extraido por busca, nao lido na fonte — confirmar a tabela no manual antes de padronizar o oleo."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Equivalencia ISO 11158 HM / DIN 51524-2 HLP a confirmar no manual."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao publicado. Manual de servico HELI CPD25 (tabela de capacidades) ou concessionario Heli Brasil."}
+    },
+    "oleo_transmissao": {
+      "tipo": {"valor": "GL-5 SAE 80W/90 (redutor do eixo de tracao)", "status": "inferido", "fonte": "https://www.scribd.com/document/808625573/CPD-25-operation-service-manual-English", "nota": "O manual do CPD25 especifica 80W/90 GL-5 para faixa -25 a +49 C. Valor extraido por busca."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Consultar tabela de capacidades do manual HELI CPD25."}
+    },
+    "bateria": {
+      "tensao": {"valor": "48 V (versao chumbo-acido) — 80 V na versao litio CPD25-GB2Li-M", "status": "inferido", "fonte": "https://www.forkliftbatteryparts.com/quality-48975364-heli-cpd25-5pzs600-48v600ah-heli-2-5-ton-forklift-brand-batteries ; https://www.paleciaki.info/en/electric-forklift-heli-cpd25-gb2li-m-li-ion-51.html", "nota": "Depende da variante. A versao chumbo-acido padrao e 48 V; a versao litio GB2Li-M e 80 V/272 Ah (24,16 kWh). Ler a plaqueta."},
+      "capacidade_ah": {"valor": "600 Ah padrao / 700 Ah opcional (chumbo-acido 48 V)", "status": "inferido", "fonte": "https://www.forkliftbatteryparts.com/buy-heli-cpd25-battery.html ; https://www.lectura-specs.com/en/model/forklifts/electric-forklifts-heli/cpd25-11795282", "nota": "Bateria citada como 5PzS600 / 48V 600Ah original HELI. Se a frota for litio, a capacidade e 272 Ah @ 80 V. Confirmar por ativo."},
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "CRITICO: chumbo-acido tracionaria (PzS, consome agua destilada) x litio (nao consome). A Heli Brasil vende o CPD25 tambem como 'CPD25 LI' (litio). Definir por inspecao."},
+      "n_celulas": {"valor": "24 celulas de 2 V, se chumbo-acido 48 V", "status": "inferido", "fonte": "Calculo 48 V / 2 V por celula", "nota": "Deducao aritmetica da tensao nominal de celula de chumbo-acido tracionaria (2 V), NAO leitura de catalogo. Nao se aplica a bateria de litio."}
+    },
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Sem motor a combustao."},
+      "ar_motor": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Sem motor a combustao."},
+      "hidraulico": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Filtro de sucção/retorno do tanque hidraulico — numero de peca no catalogo HELI do CPD25."},
+      "glp": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Sem GLP."}
+    },
+    "vela": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Sem motor a combustao."},
+    "arrefecimento": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Sem motor a combustao."},
+    "pneu": {
+      "dianteiro": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao confirmado. Medir o pneu instalado; conferir no catalogo de pecas HELI do CPD25."},
+      "traseiro": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medir o pneu instalado."},
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "HELI oferece macico e pneumatico no CPD25. Em armazem de bebidas o usual e macico/superelastico, mas isso e expectativa, nao dado."}
+    },
+    "garfos_corrente_roletes": {
+      "garfos": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medir (comprimento x largura x espessura) e conferir a classe do engate."},
+      "corrente_passo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo de pecas HELI CPD25."},
+      "roletes": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo de pecas HELI CPD25."}
+    },
+    "intervalos_horas": {"valor": null, "status": "nao_encontrado", "fonte": "https://www.manualslib.com/manual/2811787/Heli-G-Series.html", "nota": "Manual HELI organiza por diario / mensal / periodico; horas nao extraidas."},
+    "observacoes": "13 ativos. Mesmo problema do CPD38: a variante (chumbo-acido 48V/600Ah x litio 80V/272Ah) decide agua destilada, carregador e plano de manutencao. A Heli Brasil tem uma pagina especifica do 'CPD25 LI', o que reforca que litio e uma opcao real em 2022. Inspecionar a plaqueta antes de comprar."
+  },
+  {
+    "modelo": "50MX",
+    "marca": "YALE",
+    "tipo": "EMPILHADEIRA GLP",
+    "anos": [2020, 2021, 2022],
+    "n_ativos": 12,
+    "propulsao": "glp",
+    "motor": {
+      "fabricante_codigo": {"valor": "PSI 2.4L (Power Solutions International), 4 cilindros", "status": "confirmado", "fonte": "https://www.fairchildequipment.com/used-equipment/4-wheel-forklifts/2018-yale-glp050mx/ ; https://machinemaxxusa.com/resources/forklift-specifications/yale-forklift-specifications/glp050vx/ ; https://www.oemoffhighway.com/engines/press-release/21064940/", "nota": "A serie MX da Yale usa o PSI 2.4L como motor GLP. Corroborado em 3 fontes. A PSI e o fornecedor do 'GM 2.4L' usado pela Yale depois de 2010."},
+      "combustivel": {"valor": "GLP (LP Gas) — versoes dual fuel existem", "status": "confirmado", "fonte": "https://www.yale.com/globalassets/coms/yale/north-america/documents/trucks/ic-pneumatic/gp040-060mx-spec-sheet.pdf", "nota": "Codigo Yale: G=combustao, L=LP Gas, P=pneu pneumatico."}
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao confirmado para o PSI 2.4L. NAO usar por analogia a especificacao do Mazda FE (10W-30) que aparece em manuais Yale antigos — e outro motor. Consultar 'PSI 2.0 & 2.4L Service Manual' (doc. 7610002, psiengines.com/manuals)."},
+      "norma_api": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Consultar o manual de servico PSI 2.0/2.4L."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao confirmado. Faixas genericas de '2.4L' na internet (4,5 a 5,5 qt) sao chute — nao usar. Consultar manual PSI."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Mineral x sintetico nao definido na documentacao acessivel."}
+    },
+    "oleo_hidraulico": {
+      "tipo_iso_vg": {"valor": "ISO VG 46", "status": "inferido", "fonte": "Documento Yale 'Capacities and Specifications' (https://www.scribd.com/doc/94128777/Capacities-and-Specifications)", "nota": "O documento de capacidades da Yale indica oleo hidraulico ISO VG-46 para uso a 15 C ou mais — compativel com Brasil. Extraido por busca; conferir a tabela do manual do MX."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "A Yale tem especificacao propria de fluido hidraulico; conferir no manual de manutencao periodica do MX."},
+      "volume_litros": {"valor": "~42 L (11,1 gal) em drenagem e reabastecimento", "status": "inferido", "fonte": "https://www.yale.com/globalassets/coms/yale/north-america/documents/trucks/ic-pneumatic/gp040-060mx-spec-sheet.pdf", "nota": "Valor atribuido a ficha tecnica GP040-060MX por extracao de busca; NAO foi possivel abrir o PDF para conferir. Tratar como ordem de grandeza ate validar."}
+    },
+    "oleo_transmissao": {
+      "tipo": {"valor": "ATF Dexron III (transmissao Powershift eletronica)", "status": "inferido", "fonte": "https://www.scribd.com/doc/94128777/Capacities-and-Specifications ; https://www.liftstoday.com/listings/for-sale/yale/glp050mx/forklifts/1036", "nota": "A transmissao do MX e 'Electronically Controlled Powershift'; os documentos Yale indicam Dexron II/III (SAE J-1703). Confirmar a revisao correta (Dexron III/VI) no manual do MX."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Documento Yale generico cita 5,0 L de transmissao, mas para outra familia de modelo — nao transportar. Consultar manual do MX."},
+      "diferencial_eixo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Yale generico cita SAE 80W-90 / 85W-140; volume so no manual do MX."}
+    },
+    "bateria": {
+      "tensao": {"valor": "12 V (bateria de partida)", "status": "inferido", "fonte": "Padrao de empilhadeiras a combustao Yale classe 5", "nota": "Inferido do padrao da categoria, nao de catalogo especifico do MX."},
+      "capacidade_ah": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ler a bateria instalada (Ah e CCA) ou o catalogo de pecas Yale do MX."},
+      "tipo": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Nao ha bateria tracionaria — equipamento a combustao."},
+      "n_celulas": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Nao se aplica."}
+    },
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Numero de peca Yale/PSI nao localizado. Buscar no catalogo de pecas Yale do GLP050MX pelo numero de serie."},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo de pecas Yale do GLP050MX."},
+      "hidraulico": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ha filtro de retorno no tanque hidraulico; numero de peca no catalogo Yale."},
+      "glp": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Filtro/regulador de GLP: inspecao do regulador e do lock-off faz parte do plano de 500 h. Numero de peca no catalogo Yale."}
+    },
+    "vela": {
+      "quantidade": {"valor": "4 (motor de 4 cilindros)", "status": "inferido", "fonte": "Motor PSI 2.4L de 4 cilindros", "nota": "Deducao direta do numero de cilindros."},
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "ATENCAO: a especificacao 'ND W9EXR-U, folga 0,81 mm' que aparece em manuais Yale e dos motores MAZDA FE/F2, NAO do PSI 2.4L. E a AC Delco 41-993 (folga 0,060 pol) que aparece na web e de motor GM V8, tambem sem relacao. Consultar o manual de servico PSI 2.0/2.4L para vela e folga corretas."}
+    },
+    "arrefecimento": {
+      "tipo": {"valor": "50% agua + 50% etilenoglicol, anticongelante SEM boro", "status": "inferido", "fonte": "Manual de servico Yale (GM 2.4L) — https://www.scribd.com/document/737176656/Diagrama-y-Esquemas-GLP050MX", "nota": "A instrucao 'sem boro' e da Yale para o 2.4L e importante na compra: aditivo com boro ataca a junta/cabecote nesses motores. Extraido por busca — confirmar no manual."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Uma extracao citou ~5,75 gal (~21,8 L) de sistema de arrefecimento, mas sem atribuicao clara ao MX — nao usar. Consultar manual."}
+    },
+    "pneu": {
+      "dianteiro": {"valor": "7.00 x 12 (12 lonas)", "status": "inferido", "fonte": "https://www.machinio.com/models/yale/glp050 ; https://www.forklifttrader.com/P/1543/2017YALEGLP050MXSOLIDPNEUMATICTIRE5000LBFORKLIFT", "nota": "Medida tipica da familia 5.000 lb pneu pneumatico. Confirmar medindo o pneu instalado — a Yale oferece variantes."},
+      "traseiro": {"valor": "6.00 x 9", "status": "inferido", "fonte": "https://www.machinio.com/models/yale/glp050", "nota": "Mesma ressalva do dianteiro."},
+      "tipo": {"valor": "pneumatico ou macico/superelastico (solid pneumatic) — as duas versoes existem neste modelo", "status": "inferido", "fonte": "https://www.forklifttrader.com/P/1543/2017YALEGLP050MXSOLIDPNEUMATICTIRE5000LBFORKLIFT", "nota": "Anuncios do GLP050MX aparecem como 'solid pneumatic' e como 'pneumatic'. Em armazem de bebidas o macico e o usual, mas E PRECISO OLHAR o pneu de cada ativo — a medida e a mesma, o tipo nao."}
+    },
+    "garfos_corrente_roletes": {
+      "garfos": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medir. Classe de engate tipicamente Class II/III nesta capacidade — nao confirmado."},
+      "corrente_passo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo de pecas Yale do GLP050MX."},
+      "roletes": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo de pecas Yale do GLP050MX."}
+    },
+    "intervalos_horas": {
+      "valor": {"plano_generico": "250 h / 500 h / 1.000 h / 2.000 h", "500h": "trocar filtro de combustivel; inspecionar regulador e lock-off de GLP; trocar filtro hidraulico; inspecionar velas", "oleo_motor_e_filtro": "250 a 500 h (ou anual)"},
+      "status": "inferido",
+      "fonte": "https://www.powermachinery.com/forklift-service-intervals-maintenance-schedule/ ; https://www.scribd.com/document/746386393/Yale-Forklift-Periodic-Maintenance",
+      "nota": "Estrutura generica de intervalos Yale (250/500/1000/2000 h) extraida por busca. NAO e o plano oficial deste modelo — o plano correto esta nos documentos Yale 'Periodic Maintenance' (YRM) do MX, por numero de serie."
+    },
+    "observacoes": "12 ativos. Nomenclatura: '50MX' e a forma curta de GLP050MX (Yale: G=combustao, L=LP Gas, P=pneu pneumatico, 050=5.000 lb, MX=serie) — ver item 'GLP-050MX', que e o MESMO equipamento. O maior risco de compra aqui e o oleo do motor e a vela: o PSI 2.4L NAO usa a especificacao dos motores Mazda que circula em manuais Yale antigos. Baixar o 'PSI 2.0 & 2.4L Service Manual' (7610002) resolve oleo, vela, folga e plano do motor de uma vez."
+  },
+  {
+    "modelo": "8FG25",
+    "marca": "TOYOTA",
+    "tipo": "EMPILHADEIRA GLP",
+    "anos": [2022],
+    "n_ativos": 8,
+    "propulsao": "glp",
+    "motor": {
+      "fabricante_codigo": {"valor": "Toyota 4Y (4Y-ECS), 4 cilindros OHV, 2.237 cm3 (2,2 L)", "status": "confirmado", "fonte": "https://www.allmachines.com/forklifts/toyota-8fg25 ; https://www.toyotamaterialhandling-international.com/storage/2E513240D9A48D974BA8C7CB4BAEE6C0E76FE860A83598E3CF20C787A83035DC/a7366d3532ce402dad32a5ead4f7f4ec/pdf/media/ef1e0a48ae23473cac63742a11cf4c71/Catalog-8FG_8FD10-35_E_2404.pdf", "nota": "Corroborado no catalogo internacional 8FG/8FD 1.0-3.5 t e em fichas de especificacao. Potencia ~38 kW (51 SAE HP) a 2.570 rpm."},
+      "combustivel": {"valor": "GLP (tambem ha versao gasolina/dual)", "status": "confirmado", "fonte": "https://www.allmachines.com/forklifts/toyota-8fg25", "nota": "Tanque de combustivel liquido de 60 L citado nas fichas (versao gasolina/liquido). Em GLP o padrao brasileiro e botijao P20/P45 — conferir o tipo instalado."}
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "SAE 10W-30", "status": "inferido", "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260 ; https://www.kroon-oil.com/en/product-recommendation/construction-mining-and-materials-handling-equipment/toyota/forklift-trucks-lpg-petrol/02-8fgf25/13602/", "nota": "Dado do 02-8FGF25 com o MESMO motor 4Y. Conferir a tabela do manual do 8FG25 (clima brasileiro pode indicar 15W-40)."},
+      "norma_api": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "As fontes dizem apenas 'API SAE 10W30' sem a classe (SL/SN/SP). Consultar o manual de operacao Toyota do 8FG25."},
+      "volume_litros": {"valor": "4,0 L", "status": "inferido", "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260", "nota": "Capacidade do 4Y no 02-8FGF25. Mesma familia de motor; confirmar no manual do 8FG25 (pode variar com o carter)."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Mineral x semissintetico nao especificado nas fontes."}
+    },
+    "oleo_hidraulico": {
+      "tipo_iso_vg": {"valor": "ISO VG 32 (padrao Toyota); VG 46 aceito em clima quente", "status": "inferido", "fonte": "https://intellaparts.com/blog/toyota-forklift-fluid-specs/ ; https://www.toyotaforklift.com/resource-library/blog/parts-and-service/guide-to-changing-hydraulic-fluid-for-forklifts", "nota": "Regra geral Toyota, nao ficha do 8FG25. Para armazem no Brasil a escolha VG32 x VG46 deve sair do manual do equipamento."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "A Toyota tem fluido hidraulico proprio; conferir a especificacao no manual."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao localizado para o 8FG25. Consultar o manual de operacao Toyota (tabela de capacidades) ou o concessionario."}
+    },
+    "oleo_transmissao": {
+      "tipo": {"valor": "ATF Dexron II/III (conversor de torque)", "status": "inferido", "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260", "nota": "Do 02-8FGF25 (mesmo motor/familia)."},
+      "volume_litros": {"valor": "6,0 L (conversor 1 estagio) / 10,0 L (2 estagios)", "status": "inferido", "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260", "nota": "Sao DUAS configuracoes; e preciso saber qual conversor o ativo tem antes de comprar. Do 02-8FGF25."},
+      "diferencial_eixo": {"valor": "API GL-4 SAE 85W-90, 6,1 a 6,4 L", "status": "inferido", "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260", "nota": "Do 02-8FGF25. Confirmar no manual do 8FG25."}
+    },
+    "bateria": {
+      "tensao": {"valor": "12 V (bateria de partida)", "status": "inferido", "fonte": "Padrao da categoria (empilhadeira a combustao)", "nota": "Nao confirmado em catalogo do 8FG25."},
+      "capacidade_ah": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ler a bateria instalada ou o catalogo de pecas Toyota."},
+      "tipo": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Equipamento a combustao — sem bateria tracionaria."},
+      "n_celulas": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Nao se aplica."}
+    },
+    "filtros": {
+      "oleo": {"valor": "Elemento rosqueado, rosca 3/4-16 UNF, aprox. 92 mm x 65 mm (padrao 4Y)", "status": "inferido", "fonte": "https://intellaparts.com/c/toyota-8fgcu25-oil-filters/8fgcu25-oil-filter.html", "nota": "Dimensional do filtro compativel com motores 4Y (referencia de aftermarket, ex. 020-0585059). O numero OEM Toyota do 8FG25 deve sair do catalogo de pecas por numero de serie."},
+      "ar_motor": {"valor": "Conjunto com elemento externo + elemento interno", "status": "inferido", "fonte": "https://www.ebay.com/itm/326423606099", "nota": "Kits de filtro para 8FGU25/8FGCU25 com motor 4Y trazem elemento externo e interno. Numeros OEM no catalogo Toyota."},
+      "hidraulico": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo de pecas Toyota do 8FG25."},
+      "glp": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Filtro/regulador (vaporizador) de GLP — numero de peca no catalogo Toyota."}
+    },
+    "vela": {
+      "quantidade": {"valor": "4 (motor 4Y, 4 cilindros)", "status": "inferido", "fonte": "Motor 4Y de 4 cilindros", "nota": "Deducao direta do numero de cilindros."},
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao localizada a referencia NGK/Denso nem a folga do 4Y. A loja oficial Toyota Forklift tem a peca 'PLUG-SPARK' (https://shop.toyotaforklift.com/en/categories/forklift-parts-accessories/engine-motors/spark-plugs/plug-spark/p/9001A98004), mas a aplicacao por modelo nao foi confirmada. Consultar catalogo Toyota por numero de serie."}
+    },
+    "arrefecimento": {
+      "tipo": {"valor": "Toyota Long Life Coolant, mistura 30-50%", "status": "inferido", "fonte": "https://intellaparts.com/blog/toyota-forklift-fluid-specs/", "nota": "Regra geral Toyota para empilhadeiras; nao ficha do 8FG25."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Uma extracao citou '4 litros' na pagina Kroon do 02-8FGF25, mas o valor e implausivel para o sistema de arrefecimento do 4Y e pode ser confusao com o oleo do motor. NAO usar — consultar manual."}
+    },
+    "pneu": {
+      "dianteiro": {"valor": "7.00-12 (12PR)", "status": "inferido", "fonte": "https://www.sunbeltrentals.com/content/dam/sunbeltrentals/en/media/dynamic-documentation/oem-branded/5,000-lb-dual-fuel-14'-17'-industrial-forklift-(gas-propane)-(0550220)/Toyota%208FGU25%20Spec%20Sheet.pdf ; https://heavy-spec.com/forklift/11991-toyota-8fgu25.html", "nota": "Medida confirmada para o 8FGU25 (versao equivalente de 2,5 t, pneu pneumatico). O 8FG25 internacional normalmente usa a mesma medida — conferir medindo o pneu."},
+      "traseiro": {"valor": "6.00-9 (10PR)", "status": "inferido", "fonte": "https://www.sunbeltrentals.com/content/dam/sunbeltrentals/en/media/dynamic-documentation/oem-branded/5,000-lb-dual-fuel-14'-17'-industrial-forklift-(gas-propane)-(0550220)/Toyota%208FGU25%20Spec%20Sheet.pdf", "nota": "Mesma ressalva do dianteiro."},
+      "tipo": {"valor": "pneumatico (ha versao com macico/superelastico na mesma medida)", "status": "inferido", "fonte": "https://heavy-spec.com/forklift/11991-toyota-8fgu25.html", "nota": "O 8FG25 e da linha 'pneumatic tire'. Em armazem e comum trocar por superelastico na mesma medida — conferir por ativo."}
+    },
+    "garfos_corrente_roletes": {
+      "garfos": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medir (comprimento x largura x espessura) e classe do engate."},
+      "corrente_passo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo de pecas Toyota do 8FG25."},
+      "roletes": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo de pecas Toyota do 8FG25."}
+    },
+    "intervalos_horas": {"valor": {"plano_generico": "250 h / 500 h / 1.000 h / 2.000 h", "fluido_hidraulico": "~1.000 h (regra geral do setor)"}, "status": "inferido", "fonte": "https://www.powermachinery.com/forklift-service-intervals-maintenance-schedule/ ; https://www.toyotaforklift.com/resource-library/blog/parts-and-service/guide-to-changing-hydraulic-fluid-for-forklifts", "nota": "Estrutura generica. O plano oficial Toyota do 8FG25 (tabela de inspecao periodica do manual de operacao) nao foi acessado."},
+    "observacoes": "8 ativos. A identidade do motor (4Y) esta solida e destrava o oleo, o filtro e boa parte do catalogo. O que falta e volume de tanque hidraulico, arrefecimento e vela — tudo resolvido com o manual de operacao Toyota do 8FG25 ou o catalogo por numero de serie. Atencao ao conversor de torque: 1 estagio (6 L) x 2 estagios (10 L) muda a compra de ATF."
+  },
+  {
+    "modelo": "8FG35",
+    "marca": "TOYOTA",
+    "tipo": "EMPILHADEIRA GLP",
+    "anos": [],
+    "n_ativos": 3,
+    "propulsao": "glp",
+    "motor": {
+      "fabricante_codigo": {"valor": "Toyota 4Y, 4 cilindros, 2,2 L", "status": "confirmado", "fonte": "https://www.toyotamaterialhandling-international.com/storage/2E513240D9A48D974BA8C7CB4BAEE6C0E76FE860A83598E3CF20C787A83035DC/a7366d3532ce402dad32a5ead4f7f4ec/pdf/media/ef1e0a48ae23473cac63742a11cf4c71/Catalog-8FG_8FD10-35_E_2404.pdf ; https://www.constructionequipmentguide.com/charts/forklifts/toyota/8fgc35u/30699357", "nota": "No catalogo 8FG/8FD 1.0-3.5 t os modelos 8FG30/8FG35 usam o 4Y a gasolina/GLP (o 8FD35 diesel usa 1DZ-II). Potencia 40-43 kW."},
+      "combustivel": {"valor": "GLP", "status": "confirmado", "fonte": "Cadastro da frota + catalogo Toyota 8FG (o sufixo FG e gasolina/GLP)", "nota": "Confirmar se o ativo e GLP puro ou dual fuel."}
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "SAE 10W-30", "status": "inferido", "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260", "nota": "Mesmo motor 4Y do 8FG25/8FGF25. Confirmar no manual do 8FG35."},
+      "norma_api": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Classe API nao especificada nas fontes. Manual Toyota."},
+      "volume_litros": {"valor": "4,0 L", "status": "inferido", "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260", "nota": "Capacidade do 4Y em outro modelo da familia. Confirmar no manual do 8FG35 — o carter pode diferir."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao especificado."}
+    },
+    "oleo_hidraulico": {
+      "tipo_iso_vg": {"valor": "ISO VG 32 (padrao Toyota); VG 46 em clima quente", "status": "inferido", "fonte": "https://intellaparts.com/blog/toyota-forklift-fluid-specs/", "nota": "Regra geral Toyota, nao ficha do 8FG35."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Manual Toyota do 8FG35."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao localizado. O tanque do 3,5 t e maior que o do 2,5 t — NAO reaproveitar o numero do 8FG25."}
+    },
+    "oleo_transmissao": {
+      "tipo": {"valor": "ATF Dexron II/III", "status": "inferido", "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260", "nota": "Por analogia com a familia 8FG. Confirmar."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao localizado para o 8FG35; e diferente do 8FG25. Manual Toyota."},
+      "diferencial_eixo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Modelo de 3,5 t tem eixo maior; uma fonte cita 8,2 L de GL-4/GL-5 80W-90 para o 02-8FGF30, o que sugere ordem de grandeza maior que o 2,5 t, mas nao e o 8FG35. Manual Toyota."}
+    },
+    "bateria": {
+      "tensao": {"valor": "12 V (bateria de partida)", "status": "inferido", "fonte": "Padrao da categoria", "nota": "Nao confirmado em catalogo."},
+      "capacidade_ah": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ler a bateria instalada."},
+      "tipo": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Equipamento a combustao."},
+      "n_celulas": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Nao se aplica."}
+    },
+    "filtros": {
+      "oleo": {"valor": "Mesmo padrao dimensional dos motores 4Y (rosca 3/4-16 UNF)", "status": "inferido", "fonte": "https://intellaparts.com/c/toyota-8fgcu25-oil-filters/8fgcu25-oil-filter.html", "nota": "Por ser o mesmo motor 4Y. Confirmar o numero OEM no catalogo do 8FG35."},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "O elemento de ar costuma diferir do 2,5 t (caixa maior). Catalogo Toyota."},
+      "hidraulico": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Toyota do 8FG35."},
+      "glp": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Toyota do 8FG35."}
+    },
+    "vela": {
+      "quantidade": {"valor": "4 (motor 4Y, 4 cilindros)", "status": "inferido", "fonte": "Motor 4Y de 4 cilindros", "nota": "Deducao direta."},
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao localizada referencia nem folga. Catalogo Toyota por numero de serie."}
+    },
+    "arrefecimento": {
+      "tipo": {"valor": "Toyota Long Life Coolant 30-50%", "status": "inferido", "fonte": "https://intellaparts.com/blog/toyota-forklift-fluid-specs/", "nota": "Regra geral Toyota."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Manual Toyota do 8FG35."}
+    },
+    "pneu": {
+      "dianteiro": {"valor": "250-15 (18PR)", "status": "inferido", "fonte": "https://machinemaxxusa.com/resources/forklift-specifications/toyota-forklift-specifications/8fg35u/ ; https://www.ritchiespecs.com/model/toyota-8fg35u-forklift", "nota": "Medida do 8FG35U (equivalente de 3,5 t). Conferir medindo — o 8FG35 internacional pode variar."},
+      "traseiro": {"valor": "7.00-12 (12PR)", "status": "inferido", "fonte": "https://machinemaxxusa.com/resources/forklift-specifications/toyota-forklift-specifications/8fg35u/", "nota": "Mesma ressalva."},
+      "tipo": {"valor": "pneumatico", "status": "inferido", "fonte": "https://www.ritchiespecs.com/model/toyota-8fg35u-forklift", "nota": "Linha pneumatica. Verificar se a frota usa superelastico na mesma medida."}
+    },
+    "garfos_corrente_roletes": {
+      "garfos": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medir."},
+      "corrente_passo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Toyota."},
+      "roletes": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Toyota."}
+    },
+    "intervalos_horas": {"valor": {"plano_generico": "250 h / 500 h / 1.000 h / 2.000 h"}, "status": "inferido", "fonte": "https://www.powermachinery.com/forklift-service-intervals-maintenance-schedule/", "nota": "Estrutura generica do setor, nao o plano oficial Toyota do 8FG35."},
+    "observacoes": "3 ativos, ano nao informado no cadastro. Motor 4Y confirmado, entao consumiveis de motor acompanham o 8FG25 — MAS volumes de hidraulico, transmissao, diferencial e as medidas de pneu sao de um equipamento de 3,5 t e NAO devem ser copiados do 8FG25. Confirmar tambem se o ativo e 8FG35 internacional ou 8FG35U (norte-americano), porque muda catalogo de pecas."
+  },
+  {
+    "modelo": "GLP-050MX",
+    "marca": "YALE",
+    "tipo": "EMPILHADEIRA GLP",
+    "anos": [],
+    "n_ativos": 2,
+    "propulsao": "glp",
+    "duplicata_de": "50MX",
+    "motor": {
+      "fabricante_codigo": {"valor": "PSI 2.4L, 4 cilindros", "status": "confirmado", "fonte": "https://www.fairchildequipment.com/used-equipment/4-wheel-forklifts/2018-yale-glp050mx/ ; https://www.oemoffhighway.com/engines/press-release/21064940/", "nota": "Mesmo equipamento do item '50MX'."},
+      "combustivel": {"valor": "GLP (LP Gas)", "status": "confirmado", "fonte": "https://www.yale.com/globalassets/coms/yale/north-america/documents/trucks/ic-pneumatic/gp040-060mx-spec-sheet.pdf", "nota": "Codigo Yale GLP = LP Gas, pneu pneumatico."}
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50MX' — consultar manual de servico PSI 2.0/2.4L."},
+      "norma_api": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50MX'."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50MX'."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50MX'."}
+    },
+    "oleo_hidraulico": {
+      "tipo_iso_vg": {"valor": "ISO VG 46", "status": "inferido", "fonte": "https://www.scribd.com/doc/94128777/Capacities-and-Specifications", "nota": "Ver item '50MX'."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50MX'."},
+      "volume_litros": {"valor": "~42 L (11,1 gal) em drenagem e reabastecimento", "status": "inferido", "fonte": "https://www.yale.com/globalassets/coms/yale/north-america/documents/trucks/ic-pneumatic/gp040-060mx-spec-sheet.pdf", "nota": "Ver item '50MX' — nao verificado no PDF original."}
+    },
+    "oleo_transmissao": {
+      "tipo": {"valor": "ATF Dexron III (Powershift eletronico)", "status": "inferido", "fonte": "https://www.scribd.com/doc/94128777/Capacities-and-Specifications", "nota": "Ver item '50MX'."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50MX'."},
+      "diferencial_eixo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50MX'."}
+    },
+    "bateria": {
+      "tensao": {"valor": "12 V (bateria de partida)", "status": "inferido", "fonte": "Padrao da categoria", "nota": "Ver item '50MX'."},
+      "capacidade_ah": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ler a bateria instalada."},
+      "tipo": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Equipamento a combustao."},
+      "n_celulas": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Nao se aplica."}
+    },
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."},
+      "hidraulico": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."},
+      "glp": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."}
+    },
+    "vela": {
+      "quantidade": {"valor": "4 (motor de 4 cilindros)", "status": "inferido", "fonte": "Motor PSI 2.4L de 4 cilindros", "nota": "Deducao direta."},
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50MX' — nao usar a especificacao dos motores Mazda."}
+    },
+    "arrefecimento": {
+      "tipo": {"valor": "50% agua + 50% etilenoglicol SEM boro", "status": "inferido", "fonte": "https://www.scribd.com/document/737176656/Diagrama-y-Esquemas-GLP050MX", "nota": "Ver item '50MX'."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50MX'."}
+    },
+    "pneu": {
+      "dianteiro": {"valor": "7.00 x 12 (12 lonas)", "status": "inferido", "fonte": "https://www.machinio.com/models/yale/glp050", "nota": "Ver item '50MX'."},
+      "traseiro": {"valor": "6.00 x 9", "status": "inferido", "fonte": "https://www.machinio.com/models/yale/glp050", "nota": "Ver item '50MX'."},
+      "tipo": {"valor": "pneumatico ou macico/superelastico", "status": "inferido", "fonte": "https://www.forklifttrader.com/P/1543/2017YALEGLP050MXSOLIDPNEUMATICTIRE5000LBFORKLIFT", "nota": "Ver item '50MX'."}
+    },
+    "garfos_corrente_roletes": {
+      "garfos": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medir."},
+      "corrente_passo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale."},
+      "roletes": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale."}
+    },
+    "intervalos_horas": {"valor": {"plano_generico": "250 h / 500 h / 1.000 h / 2.000 h"}, "status": "inferido", "fonte": "https://www.powermachinery.com/forklift-service-intervals-maintenance-schedule/", "nota": "Ver item '50MX'."},
+    "observacoes": "DUPLICATA CONFIRMADA: GLP-050MX e o MESMO equipamento que '50MX'. A nomenclatura Yale e G(combustao) + L(LP Gas) + P(pneu pneumatico) + 050 (5.000 lb = 2.268 kg) + MX (serie); '50MX' e a forma abreviada usada no cadastro. Somados, sao 14 ativos desta configuracao, nao 12 + 2 diferentes. Recomendo unificar o cadastro."
+  },
+  {
+    "modelo": "50VX",
+    "marca": "YALE",
+    "tipo": "EMPILHADEIRA GLP",
+    "anos": [2014],
+    "n_ativos": 1,
+    "propulsao": "glp",
+    "motor": {
+      "fabricante_codigo": {"valor": "GM 2.4L (equipamentos fabricados apos jan/2010); nas revisoes mais novas da serie VX as opcoes sao PSI 2.4L ou Kubota 2.5L", "status": "inferido", "fonte": "https://machinemaxxusa.com/resources/forklift-specifications/yale-forklift-specifications/glp050vx/ ; https://www.slideshare.net/slideshow/yale-b875-glp050vx-lift-truck-service-repair-manual/90163816", "nota": "Para um equipamento 2014 a leitura das fontes aponta GM 2.4L (o mesmo bloco que a Yale passou a chamar PSI 2.4L). CONFIRMAR lendo a plaqueta do motor — a serie VX teve varias motorizacoes (Mazda FE/F2 nos mais antigos, GM/PSI 2.4L, Kubota 2.5L)."},
+      "combustivel": {"valor": "GLP (LP Gas), ha versao dual fuel", "status": "confirmado", "fonte": "https://machinemaxxusa.com/resources/forklift-specifications/yale-forklift-specifications/glp050vx/", "nota": "Codigo GLP = LP Gas."}
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Depende do motor real. Se Mazda FE: SAE 10W-30 (doc. Yale de capacidades). Se GM/PSI 2.4L: consultar manual PSI 2.0/2.4L. IDENTIFICAR O MOTOR PRIMEIRO."},
+      "norma_api": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Idem."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "O doc. Yale 'Capacities and Specifications' da 4,3 L para o motor MAZDA FE — NAO aplicar sem confirmar que o motor e Mazda. Para GM/PSI 2.4L nao foi localizado."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao especificado."}
+    },
+    "oleo_hidraulico": {
+      "tipo_iso_vg": {"valor": "ISO VG 46 (acima de 15 C)", "status": "inferido", "fonte": "https://www.scribd.com/doc/94128777/Capacities-and-Specifications", "nota": "Recomendacao Yale para clima quente. Conferir no manual do GLP050VX."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Manual Yale do VX."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao localizado para o VX. NAO copiar o numero do MX. Manual Yale / concessionario."}
+    },
+    "oleo_transmissao": {
+      "tipo": {"valor": "ATF Dexron II/III (SAE J-1703)", "status": "inferido", "fonte": "https://www.scribd.com/doc/94128777/Capacities-and-Specifications", "nota": "Do documento Yale de capacidades (familia GP/GLP). Confirmar no manual do VX."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "O documento Yale cita 5,0 L, mas sem amarracao clara ao GLP050VX. Confirmar."},
+      "diferencial_eixo": {"valor": "SAE 80W-90 ou 85W-140", "status": "inferido", "fonte": "https://www.scribd.com/doc/94128777/Capacities-and-Specifications", "nota": "Tipo generico Yale. O volume de 8,3 L que aparece no documento e dos modelos GP/GLP/GDP15-20AK — NAO transportar para o 050VX."}
+    },
+    "bateria": {
+      "tensao": {"valor": "12 V (bateria de partida)", "status": "inferido", "fonte": "Padrao da categoria", "nota": "Nao confirmado em catalogo."},
+      "capacidade_ah": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ler a bateria instalada."},
+      "tipo": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Equipamento a combustao."},
+      "n_celulas": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Nao se aplica."}
+    },
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale do GLP050VX por numero de serie (a serie VX tem varios sufixos de chassi: B875, C875...)."},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."},
+      "hidraulico": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."},
+      "glp": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."}
+    },
+    "vela": {
+      "quantidade": {"valor": "4 (motor de 4 cilindros)", "status": "inferido", "fonte": "Todas as motorizacoes candidatas (Mazda FE/F2, GM 2.4, Kubota 2.5) sao de 4 cilindros", "nota": "Deducao direta."},
+      "tipo": {"valor": "ND W9EXR-U, folga 0,81 mm — SOMENTE se o motor for Mazda FE ou F2", "status": "inferido", "fonte": "Manual de servico Yale GLP050VX (https://www.slideshare.net/slideshow/yale-b875-glp050vx-lift-truck-service-repair-manual/90163816)", "nota": "ATENCAO: essa especificacao vale para os motores Mazda FE/F2. Se o equipamento 2014 tiver o GM/PSI 2.4L, a vela e OUTRA e nao foi localizada. Identificar o motor antes de comprar vela."}
+    },
+    "arrefecimento": {
+      "tipo": {"valor": "50% agua + 50% etilenoglicol sem boro (para o motor GM 2.4L)", "status": "inferido", "fonte": "Manual de servico Yale (https://www.scribd.com/document/737176656/Diagrama-y-Esquemas-GLP050MX)", "nota": "Regra Yale para o 2.4L. Confirmar no manual do VX."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao localizado com atribuicao confiavel."}
+    },
+    "pneu": {
+      "dianteiro": {"valor": "7.00 x 12", "status": "inferido", "fonte": "https://www.ritchiespecs.com/model/yale-glp-50-vx-forklift ; https://machinemaxxusa.com/resources/forklift-specifications/yale-forklift-specifications/glp050vx/", "nota": "Medida tipica da familia 5.000 lb pneumatica. Medir o pneu instalado."},
+      "traseiro": {"valor": "6.00 x 9", "status": "inferido", "fonte": "https://www.ritchiespecs.com/model/yale-glp-50-vx-forklift", "nota": "Mesma ressalva."},
+      "tipo": {"valor": "pneumatico (linha 'pneumatic tire'); versao macica existe", "status": "inferido", "fonte": "https://machinemaxxusa.com/resources/forklift-specifications/yale-forklift-specifications/glp050vx/", "nota": "Conferir no ativo."}
+    },
+    "garfos_corrente_roletes": {
+      "garfos": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medir."},
+      "corrente_passo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale."},
+      "roletes": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale."}
+    },
+    "intervalos_horas": {"valor": {"plano_generico": "250 h / 500 h / 1.000 h / 2.000 h"}, "status": "inferido", "fonte": "https://www.powermachinery.com/forklift-service-intervals-maintenance-schedule/", "nota": "O plano oficial esta nos documentos Yale 'Periodic Maintenance' (YRM 1150 / 1207 / 1687 sao citados para a serie VX) — obter pelo concessionario com o numero de serie."},
+    "observacoes": "1 ativo de 2014, o mais antigo da frota e o de maior incerteza de motorizacao. NAO comprar oleo nem vela para ele por analogia com os MX: a serie VX atravessou tres familias de motor. Uma foto da plaqueta do motor resolve o item inteiro."
+  },
+  {
+    "modelo": "75VX",
+    "marca": "YALE",
+    "tipo": "EMPILHADEIRA GLP",
+    "anos": [2022],
+    "n_ativos": 1,
+    "propulsao": "glp",
+    "motor": {
+      "fabricante_codigo": {"valor": null, "status": "nao_encontrado", "fonte": "https://machinemaxxusa.com/resources/forklift-specifications/yale-forklift-specifications/glp070vx/ ; https://machinemaxxusa.com/resources/forklift-specifications/yale-forklift-specifications/glp080vx/", "nota": "IDENTIFICACAO DO MODELO NAO CONFIRMADA. A Yale nao publica um 'GLP075VX' nas fontes consultadas: o catalogo tem GLP070VX (7.000 lb) e GLP080VX (8.000 lb). E a diferenca de motor entre eles e enorme — o 070VX usa PSI 2.4L / Kubota 2.5L / Kubota 2.4 T4F, e o 080VX usa PSI 4.3L ou Kubota 3.8L. Comprar consumivel sem definir isso e errar filtro, oleo e vela."},
+      "combustivel": {"valor": "GLP (LP Gas)", "status": "confirmado", "fonte": "Cadastro da frota + nomenclatura Yale (GLP = LP Gas)", "nota": "Unico campo seguro deste equipamento."}
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Depende do motor (PSI 2.4L x PSI 4.3L x Kubota). Definir o modelo pela plaqueta primeiro."},
+      "norma_api": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Idem."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Idem — pode variar de ~4,5 L (2.4L) a bem mais (4.3L V6)."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Idem."}
+    },
+    "oleo_hidraulico": {
+      "tipo_iso_vg": {"valor": "ISO VG 46 (acima de 15 C)", "status": "inferido", "fonte": "https://www.scribd.com/doc/94128777/Capacities-and-Specifications", "nota": "Recomendacao generica Yale para clima quente — o tipo e o campo menos sensivel a duvida do modelo. Confirmar volume no manual."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Manual Yale do modelo correto."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao localizado; depende do modelo real."}
+    },
+    "oleo_transmissao": {
+      "tipo": {"valor": "ATF Dexron II/III", "status": "inferido", "fonte": "https://www.scribd.com/doc/94128777/Capacities-and-Specifications", "nota": "Generico Yale."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Depende do modelo real."},
+      "diferencial_eixo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Depende do modelo real."}
+    },
+    "bateria": {
+      "tensao": {"valor": "12 V (bateria de partida)", "status": "inferido", "fonte": "Padrao da categoria", "nota": "Nao confirmado."},
+      "capacidade_ah": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ler a bateria instalada."},
+      "tipo": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Equipamento a combustao."},
+      "n_celulas": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Nao se aplica."}
+    },
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Definir o modelo/motor antes. Catalogo Yale por numero de serie."},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."},
+      "hidraulico": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."},
+      "glp": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."}
+    },
+    "vela": {
+      "quantidade": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "4 se o motor for PSI 2.4L/Kubota; 6 se for o PSI 4.3L (V6). Nao ha como definir sem identificar o equipamento — e exatamente o tipo de erro de compra que o catalogo quer evitar."},
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Idem."}
+    },
+    "arrefecimento": {
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "A regra Yale de anticongelante sem boro vale para os motores 2.4L; nao confirmado para os demais."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Depende do modelo real."}
+    },
+    "pneu": {
+      "dianteiro": {"valor": null, "status": "nao_encontrado", "fonte": "https://machinemaxxusa.com/resources/forklift-specifications/yale-forklift-specifications/glp080vx/", "nota": "Se for GLP080VX: 250 x 15 (20 lonas) dianteiro. Se for GLP070VX, nao confirmado. Medir o pneu instalado."},
+      "traseiro": {"valor": null, "status": "nao_encontrado", "fonte": "https://machinemaxxusa.com/resources/forklift-specifications/yale-forklift-specifications/glp080vx/", "nota": "Se for GLP080VX: 7.00 x 12 (14 lonas). Medir o pneu instalado."},
+      "tipo": {"valor": "pneumatico", "status": "inferido", "fonte": "Nomenclatura Yale (P = pneumatic tire)", "nota": "Conferir no ativo."}
+    },
+    "garfos_corrente_roletes": {
+      "garfos": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medir."},
+      "corrente_passo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale."},
+      "roletes": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale."}
+    },
+    "intervalos_horas": {"valor": {"plano_generico": "250 h / 500 h / 1.000 h / 2.000 h"}, "status": "inferido", "fonte": "https://www.powermachinery.com/forklift-service-intervals-maintenance-schedule/", "nota": "Generico."},
+    "observacoes": "PENDENCIA DE CADASTRO, nao de pesquisa: '75VX' nao corresponde a um modelo Yale publicado. O catalogo VX pneumatico vai 060 / 070 / 080 / 090. Pode ser (a) GLP070VX cadastrado errado, (b) GLP080VX, ou (c) a designacao metrica europeia (GLP 7.0/8.0 VX). Ate a plaqueta ser lida, NAO comprar nada especifico de motor para este ativo — a diferenca entre PSI 2.4L (4 cil) e PSI 4.3L (V6) muda oleo, filtro e ate a QUANTIDADE de velas."
+  },
+  {
+    "modelo": "GLP-050VX",
+    "marca": "YALE",
+    "tipo": "EMPILHADEIRA GLP",
+    "anos": [],
+    "n_ativos": 1,
+    "propulsao": "glp",
+    "duplicata_de": "50VX",
+    "motor": {
+      "fabricante_codigo": {"valor": "GM 2.4L / PSI 2.4L / Kubota 2.5L conforme o ano de fabricacao", "status": "inferido", "fonte": "https://machinemaxxusa.com/resources/forklift-specifications/yale-forklift-specifications/glp050vx/", "nota": "Mesma incerteza do item '50VX'. Identificar pela plaqueta."},
+      "combustivel": {"valor": "GLP (LP Gas)", "status": "confirmado", "fonte": "Nomenclatura Yale (GLP = LP Gas)", "nota": "—"}
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50VX'."},
+      "norma_api": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50VX'."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50VX'."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50VX'."}
+    },
+    "oleo_hidraulico": {
+      "tipo_iso_vg": {"valor": "ISO VG 46 (acima de 15 C)", "status": "inferido", "fonte": "https://www.scribd.com/doc/94128777/Capacities-and-Specifications", "nota": "Ver item '50VX'."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50VX'."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50VX'."}
+    },
+    "oleo_transmissao": {
+      "tipo": {"valor": "ATF Dexron II/III", "status": "inferido", "fonte": "https://www.scribd.com/doc/94128777/Capacities-and-Specifications", "nota": "Ver item '50VX'."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50VX'."},
+      "diferencial_eixo": {"valor": "SAE 80W-90 ou 85W-140", "status": "inferido", "fonte": "https://www.scribd.com/doc/94128777/Capacities-and-Specifications", "nota": "Tipo generico Yale; volume nao confirmado."}
+    },
+    "bateria": {
+      "tensao": {"valor": "12 V (bateria de partida)", "status": "inferido", "fonte": "Padrao da categoria", "nota": "—"},
+      "capacidade_ah": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ler a bateria instalada."},
+      "tipo": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Equipamento a combustao."},
+      "n_celulas": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Nao se aplica."}
+    },
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."},
+      "hidraulico": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."},
+      "glp": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale por numero de serie."}
+    },
+    "vela": {
+      "quantidade": {"valor": "4 (motor de 4 cilindros)", "status": "inferido", "fonte": "Todas as motorizacoes candidatas sao 4 cilindros", "nota": "Deducao direta."},
+      "tipo": {"valor": "ND W9EXR-U, folga 0,81 mm — SOMENTE se o motor for Mazda FE/F2", "status": "inferido", "fonte": "https://www.slideshare.net/slideshow/yale-b875-glp050vx-lift-truck-service-repair-manual/90163816", "nota": "Ver ressalva do item '50VX'."}
+    },
+    "arrefecimento": {
+      "tipo": {"valor": "50% agua + 50% etilenoglicol sem boro (motor 2.4L)", "status": "inferido", "fonte": "https://www.scribd.com/document/737176656/Diagrama-y-Esquemas-GLP050MX", "nota": "Ver item '50VX'."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item '50VX'."}
+    },
+    "pneu": {
+      "dianteiro": {"valor": "7.00 x 12", "status": "inferido", "fonte": "https://www.ritchiespecs.com/model/yale-glp-50-vx-forklift", "nota": "Ver item '50VX'."},
+      "traseiro": {"valor": "6.00 x 9", "status": "inferido", "fonte": "https://www.ritchiespecs.com/model/yale-glp-50-vx-forklift", "nota": "Ver item '50VX'."},
+      "tipo": {"valor": "pneumatico", "status": "inferido", "fonte": "Nomenclatura Yale (P = pneumatic tire)", "nota": "Conferir no ativo."}
+    },
+    "garfos_corrente_roletes": {
+      "garfos": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medir."},
+      "corrente_passo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale."},
+      "roletes": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Catalogo Yale."}
+    },
+    "intervalos_horas": {"valor": {"plano_generico": "250 h / 500 h / 1.000 h / 2.000 h"}, "status": "inferido", "fonte": "https://www.powermachinery.com/forklift-service-intervals-maintenance-schedule/", "nota": "Generico."},
+    "observacoes": "DUPLICATA CONFIRMADA: GLP-050VX e o MESMO modelo que '50VX' (G+L+P+050+VX = combustao, LP Gas, pneu pneumatico, 5.000 lb, serie VX). Sao 2 ativos da mesma configuracao no total. ATENCAO: mesmo sendo o mesmo MODELO, os dois podem ter MOTORES diferentes se forem de anos diferentes (o '50VX' e 2014 e este nao tem ano no cadastro) — a unificacao vale para o modelo, nao para a lista de consumiveis de motor."
+  },
+  {
+    "modelo": "GP2.5A",
+    "marca": "YALE",
+    "tipo": "EMPILHADEIRA GLP",
+    "anos": [],
+    "n_ativos": 1,
+    "propulsao": "glp",
+    "motor": {
+      "fabricante_codigo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "MODELO NAO IDENTIFICADO. A designacao 'GP2.5A' nao aparece nos catalogos Yale Brasil consultados. As linhas metricas de 2,5 t da Yale Brasil sao GP2.5N (serie N), GP25UX (serie UX), GLP25VX (serie VX) e a serie MX 2.000/2.500/3.000 kg (https://www.yale.com/globalassets/coms/yale/brazil/documents/catalogo-tecnico-mx-digital-portuguese-brazilian.pdf). Precisa da plaqueta / numero de serie."},
+      "combustivel": {"valor": "GLP", "status": "confirmado", "fonte": "Cadastro da frota", "nota": "Unica informacao segura sobre este ativo."}
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sem identificar o modelo/motor nao ha como especificar."},
+      "norma_api": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Idem."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Idem."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Idem."}
+    },
+    "oleo_hidraulico": {
+      "tipo_iso_vg": {"valor": "ISO VG 46 (recomendacao Yale acima de 15 C)", "status": "inferido", "fonte": "https://www.scribd.com/doc/94128777/Capacities-and-Specifications", "nota": "Unico campo em que a recomendacao generica Yale ja ajuda. Volume e norma exigem o manual."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Manual Yale do modelo correto."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Idem."}
+    },
+    "oleo_transmissao": {
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sem identificar o modelo."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Idem."},
+      "diferencial_eixo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Idem."}
+    },
+    "bateria": {
+      "tensao": {"valor": "12 V (bateria de partida)", "status": "inferido", "fonte": "Padrao da categoria (empilhadeira a combustao)", "nota": "Nao confirmado."},
+      "capacidade_ah": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ler a bateria instalada."},
+      "tipo": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Equipamento a combustao."},
+      "n_celulas": {"valor": null, "status": "nao_aplica", "fonte": null, "nota": "Nao se aplica."}
+    },
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sem identificar o modelo."},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sem identificar o modelo."},
+      "hidraulico": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sem identificar o modelo."},
+      "glp": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sem identificar o modelo."}
+    },
+    "vela": {
+      "quantidade": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sem identificar o motor."},
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sem identificar o motor."}
+    },
+    "arrefecimento": {
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sem identificar o motor."},
+      "volume_litros": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sem identificar o motor."}
+    },
+    "pneu": {
+      "dianteiro": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medir o pneu instalado — e o caminho mais rapido para este ativo."},
+      "traseiro": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medir o pneu instalado."},
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Olhar o pneu instalado."}
+    },
+    "garfos_corrente_roletes": {
+      "garfos": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medir."},
+      "corrente_passo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sem identificar o modelo."},
+      "roletes": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sem identificar o modelo."}
+    },
+    "intervalos_horas": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sem identificar o modelo."},
+    "observacoes": "O ativo com MENOS informacao da frota. 'GP2.5A' nao bate com nenhuma serie Yale publicada (N, UX, VX, MX). Pode ser um cadastro abreviado/errado, um modelo antigo de Yale Brasil ou uma designacao interna. Acao: foto da plaqueta com modelo e numero de serie; com isso o concessionario Yale devolve o catalogo de pecas inteiro. Enquanto isso, nao ha nada seguro a comprar para ele alem do oleo hidraulico generico."
+  }
+]

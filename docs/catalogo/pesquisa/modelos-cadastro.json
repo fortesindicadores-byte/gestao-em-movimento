@@ -1,0 +1,974 @@
+{
+ "mot": [
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "n": 66,
+   "tipos": [
+    "TRUCK"
+   ],
+   "anos": [
+    2022,
+    2023,
+    2025
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 13.180",
+   "n": 57,
+   "tipos": [
+    "TRUCK",
+    "VUC"
+   ],
+   "anos": [
+    2018,
+    2019,
+    2020,
+    2021,
+    2022
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 17.190",
+   "n": 50,
+   "tipos": [
+    "TOCO"
+   ],
+   "anos": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2024
+   ]
+  },
+  {
+   "modelo": "MERCEDES BENZ | ATEGO 2426",
+   "n": 42,
+   "tipos": [
+    "BI-TRUCK",
+    "TRUCK"
+   ],
+   "anos": [
+    2015,
+    2018,
+    2020,
+    2021,
+    2022,
+    2023
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 23.230",
+   "n": 42,
+   "tipos": [
+    "TRUCK",
+    "TOCO"
+   ],
+   "anos": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+   ]
+  },
+  {
+   "modelo": "MERCEDES BENZ | ACTROS 2548S",
+   "n": 32,
+   "tipos": [
+    "CAVALO MECANICO"
+   ],
+   "anos": [
+    2025
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
+   "n": 29,
+   "tipos": [
+    "TRUCK"
+   ],
+   "anos": [
+    2019,
+    2021,
+    2023
+   ]
+  },
+  {
+   "modelo": "MERCEDES BENZ | ATEGO 1719",
+   "n": 25,
+   "tipos": [
+    "TOCO"
+   ],
+   "anos": [
+    2018,
+    2020,
+    2021,
+    2022
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
+   "n": 21,
+   "tipos": [
+    "TRUCK"
+   ],
+   "anos": [
+    2025
+   ]
+  },
+  {
+   "modelo": "MERCEDES BENZ | ACTROS 2651",
+   "n": 17,
+   "tipos": [
+    "CAVALO MECANICO"
+   ],
+   "anos": [
+    2025
+   ]
+  },
+  {
+   "modelo": "MERCEDES BENZ | ATEGO 3026",
+   "n": 16,
+   "tipos": [
+    "TRUCK",
+    "BI-TRUCK"
+   ],
+   "anos": [
+    2017,
+    2018
+   ]
+  },
+  {
+   "modelo": "RENAULT | MASTER FURGÃO L1H1",
+   "n": 16,
+   "tipos": [
+    "VAN"
+   ],
+   "anos": [
+    2021,
+    2022,
+    2023
+   ]
+  },
+  {
+   "modelo": "HELI | CPD38",
+   "n": 15,
+   "tipos": [
+    "EMPILHADEIRA ELETRICA"
+   ],
+   "anos": [
+    2022,
+    null
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.320",
+   "n": 15,
+   "tipos": [
+    "BI-TRUCK"
+   ],
+   "anos": [
+    2023,
+    2025
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.280",
+   "n": 14,
+   "tipos": [
+    "BI-TRUCK",
+    "TRUCK"
+   ],
+   "anos": [
+    2019,
+    2020,
+    2022
+   ]
+  },
+  {
+   "modelo": "MERCEDES BENZ | ACCELO 1316",
+   "n": 13,
+   "tipos": [
+    "TRUCK",
+    "VUC"
+   ],
+   "anos": [
+    2017,
+    2021,
+    2022
+   ]
+  },
+  {
+   "modelo": "HELI | CPD25",
+   "n": 13,
+   "tipos": [
+    "EMPILHADEIRA ELETRICA"
+   ],
+   "anos": [
+    2022
+   ]
+  },
+  {
+   "modelo": "YALE | 50MX",
+   "n": 12,
+   "tipos": [
+    "EMPILHADEIRA GLP"
+   ],
+   "anos": [
+    2020,
+    2022
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW DELIVERY 14",
+   "n": 8,
+   "tipos": [
+    "VUC ELÉTRICO"
+   ],
+   "anos": [
+    2021
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 28.460",
+   "n": 8,
+   "tipos": [
+    "CAVALO MECANICO"
+   ],
+   "anos": [
+    2022
+   ]
+  },
+  {
+   "modelo": "TOYOTA | 8FG25",
+   "n": 8,
+   "tipos": [
+    "EMPILHADEIRA GLP"
+   ],
+   "anos": [
+    2022,
+    null
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 11.180",
+   "n": 8,
+   "tipos": [
+    "VUC"
+   ],
+   "anos": [
+    2022
+   ]
+  },
+  {
+   "modelo": "IVECO | DAILY 30-130VAN",
+   "n": 7,
+   "tipos": [
+    "VAN"
+   ],
+   "anos": [
+    2021,
+    2022
+   ]
+  },
+  {
+   "modelo": "RENAULT | MASTER FUR L1",
+   "n": 7,
+   "tipos": [
+    "VAN"
+   ],
+   "anos": [
+    2021,
+    2022
+   ]
+  },
+  {
+   "modelo": "MERCEDES BENZ | ACTROS 2546 LS",
+   "n": 7,
+   "tipos": [
+    "CAVALO MECANICO"
+   ],
+   "anos": [
+    2025
+   ]
+  },
+  {
+   "modelo": "MERCEDES BENZ | ATEGO 2425",
+   "n": 6,
+   "tipos": [
+    "TRUCK"
+   ],
+   "anos": [
+    2018
+   ]
+  },
+  {
+   "modelo": "MERCEDES BENZ | ACCELO 1317",
+   "n": 6,
+   "tipos": [
+    "VUC"
+   ],
+   "anos": [
+    2025
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | CONSTELLATION 19330",
+   "n": 5,
+   "tipos": [
+    "CAVALO MECANICO",
+    "TOCO"
+   ],
+   "anos": [
+    2019
+   ]
+  },
+  {
+   "modelo": "VOLVO | FH 460",
+   "n": 4,
+   "tipos": [
+    "CAVALO MECANICO",
+    "TRUCK"
+   ],
+   "anos": [
+    2022
+   ]
+  },
+  {
+   "modelo": "MERCEDES BENZ | ACTROS 2546",
+   "n": 3,
+   "tipos": [
+    "CAVALO MECANICO"
+   ],
+   "anos": [
+    2019,
+    2025
+   ]
+  },
+  {
+   "modelo": "NILFISK | CS 7010",
+   "n": 3,
+   "tipos": [
+    "MAQUINA LIMPEZA"
+   ],
+   "anos": [
+    2022,
+    null
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 18.310",
+   "n": 3,
+   "tipos": [
+    "TOCO"
+   ],
+   "anos": [
+    2025
+   ]
+  },
+  {
+   "modelo": "TOYOTA | 8FG35",
+   "n": 3,
+   "tipos": [
+    "EMPILHADEIRA GLP"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "NILFISK | SC600",
+   "n": 2,
+   "tipos": [
+    "MAQUINA LIMPEZA",
+    "VARREDEIRA ELÉTRICA"
+   ],
+   "anos": [
+    2022,
+    null
+   ]
+  },
+  {
+   "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+   "n": 2,
+   "tipos": [
+    "VAN"
+   ],
+   "anos": [
+    2023
+   ]
+  },
+  {
+   "modelo": "YALE | GLP-050MX",
+   "n": 2,
+   "tipos": [
+    "EMPILHADEIRA GLP"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "BOSH | BOSH",
+   "n": 2,
+   "tipos": [
+    "SOPRADOR"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "YALE | 50VX",
+   "n": 1,
+   "tipos": [
+    "EMPILHADEIRA GLP"
+   ],
+   "anos": [
+    2014
+   ]
+  },
+  {
+   "modelo": "MERCEDES BENZ | ATRON 1719",
+   "n": 1,
+   "tipos": [
+    "TRUCK"
+   ],
+   "anos": [
+    2014
+   ]
+  },
+  {
+   "modelo": "IVECO | TECTOR 310E2",
+   "n": 1,
+   "tipos": [
+    "BI-TRUCK"
+   ],
+   "anos": [
+    2020
+   ]
+  },
+  {
+   "modelo": "SCANIA | R 540",
+   "n": 1,
+   "tipos": [
+    "TRUCK"
+   ],
+   "anos": [
+    2021
+   ]
+  },
+  {
+   "modelo": "MERCEDES BENZ | SPRINTER",
+   "n": 1,
+   "tipos": [
+    "VAN"
+   ],
+   "anos": [
+    2021
+   ]
+  },
+  {
+   "modelo": "YALE | 75VX",
+   "n": 1,
+   "tipos": [
+    "EMPILHADEIRA GLP"
+   ],
+   "anos": [
+    2022
+   ]
+  },
+  {
+   "modelo": "NILFISK | VIPER AS7690T US 30",
+   "n": 1,
+   "tipos": [
+    "MAQUINA LIMPEZA"
+   ],
+   "anos": [
+    2023
+   ]
+  },
+  {
+   "modelo": "NILFISK | SW 750B",
+   "n": 1,
+   "tipos": [
+    "VARREDEIRA ELÉTRICA"
+   ],
+   "anos": [
+    2023
+   ]
+  },
+  {
+   "modelo": "TENNANT | M20",
+   "n": 1,
+   "tipos": [
+    "MAQUINA LIMPEZA"
+   ],
+   "anos": [
+    2024
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | MAN TGX 29.480",
+   "n": 1,
+   "tipos": [
+    "CAVALO MECANICO"
+   ],
+   "anos": [
+    2025
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | SAVEIRO RB",
+   "n": 1,
+   "tipos": [
+    "FROTA LEVE"
+   ],
+   "anos": [
+    2025
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | DELIVERY 18.210",
+   "n": 1,
+   "tipos": [
+    "TOCO"
+   ],
+   "anos": [
+    2025
+   ]
+  },
+  {
+   "modelo": "YALE | GLP-050VX",
+   "n": 1,
+   "tipos": [
+    "EMPILHADEIRA GLP"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "YALE | GP2.5A",
+   "n": 1,
+   "tipos": [
+    "EMPILHADEIRA GLP"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "ALFA | A650",
+   "n": 1,
+   "tipos": [
+    "MAQUINA LIMPEZA"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "VONDER | STV150N",
+   "n": 1,
+   "tipos": [
+    "SOPRADOR"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "MAKITA | SOPRADOR TÉRMICO 1600W HG5030K",
+   "n": 1,
+   "tipos": [
+    "SOPRADOR"
+   ],
+   "anos": [
+    null
+   ]
+  }
+ ],
+ "nao": [
+  {
+   "modelo": "FACCHINI | SR/FACCHINI SRF LO",
+   "n": 46,
+   "tipos": [
+    "SEMI-REBOQUE"
+   ],
+   "anos": [
+    2019,
+    2020
+   ]
+  },
+  {
+   "modelo": "TOLEDO | TM2500",
+   "n": 32,
+   "tipos": [
+    "PALETEIRA MANUAL"
+   ],
+   "anos": [
+    2022,
+    null
+   ]
+  },
+  {
+   "modelo": "BYG | EVOLUTION 2.6 685X1150 MM RDN 0.76MM",
+   "n": 24,
+   "tipos": [
+    "PALETEIRA MANUAL"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "ALLDEALS | ALLDEALS",
+   "n": 22,
+   "tipos": [
+    "PALETEIRA MANUAL",
+    "EQUIPAMENTO DE ELEVACAO",
+    "PALETEIRA ELETRICA"
+   ],
+   "anos": [
+    2014,
+    2019,
+    null
+   ]
+  },
+  {
+   "modelo": "TOLEDO | PL 3000",
+   "n": 20,
+   "tipos": [
+    "PALETEIRA COM BALANCA",
+    "PALETEIRA MANUAL"
+   ],
+   "anos": [
+    2017,
+    2023,
+    null
+   ]
+  },
+  {
+   "modelo": "BYG | BYG",
+   "n": 20,
+   "tipos": [
+    "PALETEIRA MANUAL"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "DIGITRON | ULP 2000",
+   "n": 16,
+   "tipos": [
+    "PALETEIRA MANUAL",
+    "PALETEIRA ELETRICA"
+   ],
+   "anos": [
+    2022,
+    null
+   ]
+  },
+  {
+   "modelo": "FACCHINI | SR/FACCHINI SRF QRLO",
+   "n": 16,
+   "tipos": [
+    "SEMI-REBOQUE"
+   ],
+   "anos": [
+    2025
+   ]
+  },
+  {
+   "modelo": "RANDON | RANDOM SR FG",
+   "n": 14,
+   "tipos": [
+    "SEMI-REBOQUE"
+   ],
+   "anos": [
+    2019,
+    2020
+   ]
+  },
+  {
+   "modelo": "DISKTRANS | TM2220",
+   "n": 13,
+   "tipos": [
+    "PALETEIRA MANUAL"
+   ],
+   "anos": [
+    2018,
+    null
+   ]
+  },
+  {
+   "modelo": "NEXT | SR/EQUIP NEXT 4E CF",
+   "n": 13,
+   "tipos": [
+    "SEMI-REBOQUE"
+   ],
+   "anos": [
+    2022
+   ]
+  },
+  {
+   "modelo": "BYG | BYG L2.6",
+   "n": 13,
+   "tipos": [
+    "PALETEIRA MANUAL"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "PALETRANS | TM 2220",
+   "n": 12,
+   "tipos": [
+    "PALETEIRA MANUAL"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "FERPLUS | PALETEIRA MANUAL TRANSPOTECH 1150X685MM BOMBA PRATA",
+   "n": 10,
+   "tipos": [
+    "PALETEIRA MANUAL"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "RODOFORT | RODOFORT / SRFG 2E",
+   "n": 7,
+   "tipos": [
+    "SEMI-REBOQUE"
+   ],
+   "anos": [
+    2022
+   ]
+  },
+  {
+   "modelo": "BOVENAU | MACACO PNEUMATICO",
+   "n": 6,
+   "tipos": [
+    "EQUIPAMENTO DE ELEVACAO"
+   ],
+   "anos": [
+    2024
+   ]
+  },
+  {
+   "modelo": "TRUCKVAN | SR/TRUCKVAN CF 2E ROLETADO",
+   "n": 5,
+   "tipos": [
+    "SEMI-REBOQUE"
+   ],
+   "anos": [
+    2019
+   ]
+  },
+  {
+   "modelo": "TOLEDO | MP20 BR",
+   "n": 5,
+   "tipos": [
+    "PALETEIRA COM BALANCA",
+    "PALETEIRA ELETRICA"
+   ],
+   "anos": [
+    2020
+   ]
+  },
+  {
+   "modelo": "TRUCKVAN | SR/TRUCKVAN CFE 3ED",
+   "n": 5,
+   "tipos": [
+    "SEMI-REBOQUE"
+   ],
+   "anos": [
+    2021,
+    2022
+   ]
+  },
+  {
+   "modelo": "FORTECH | CAVALETE",
+   "n": 5,
+   "tipos": [
+    "EQUIPAMENTO DE ELEVACAO"
+   ],
+   "anos": [
+    2024
+   ]
+  },
+  {
+   "modelo": "VOLKSWAGEN | —",
+   "n": 5,
+   "tipos": [
+    "EQUIPAMENTO DE ELEVACAO"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "NEXT | SR/EQUIP NEXT 3E CF",
+   "n": 4,
+   "tipos": [
+    "SEMI-REBOQUE"
+   ],
+   "anos": [
+    2019,
+    2022,
+    2023
+   ]
+  },
+  {
+   "modelo": "MHD | MACACO HIDRAULICO",
+   "n": 4,
+   "tipos": [
+    "EQUIPAMENTO DE ELEVACAO"
+   ],
+   "anos": [
+    2024,
+    null
+   ]
+  },
+  {
+   "modelo": "RODOFORT | SRFG 3ED",
+   "n": 3,
+   "tipos": [
+    "SEMI-REBOQUE"
+   ],
+   "anos": [
+    2019,
+    2023
+   ]
+  },
+  {
+   "modelo": "TRUCKVAN | SR/EQUIP NEXT 3E CF",
+   "n": 2,
+   "tipos": [
+    "SEMI-REBOQUE"
+   ],
+   "anos": [
+    2023
+   ]
+  },
+  {
+   "modelo": "ALMAQUINAS | ALMAQUINAS",
+   "n": 2,
+   "tipos": [
+    "PALETEIRA MANUAL"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "RANDON | SR FG LO 3ED",
+   "n": 1,
+   "tipos": [
+    "SEMI-REBOQUE"
+   ],
+   "anos": [
+    2019
+   ]
+  },
+  {
+   "modelo": "RANDON | SR/RANDON SRFG LO",
+   "n": 1,
+   "tipos": [
+    "SEMI-REBOQUE"
+   ],
+   "anos": [
+    2020
+   ]
+  },
+  {
+   "modelo": "RIBEIRO | TALHA HIDRAULICA",
+   "n": 1,
+   "tipos": [
+    "EQUIPAMENTO DE ELEVACAO"
+   ],
+   "anos": [
+    2024
+   ]
+  },
+  {
+   "modelo": "MACON | CARRINHO DE CAIXA HIDRAULICO",
+   "n": 1,
+   "tipos": [
+    "EQUIPAMENTO DE ELEVACAO"
+   ],
+   "anos": [
+    2024
+   ]
+  },
+  {
+   "modelo": "MCM | MACACO HIDROPNEUMATICO",
+   "n": 1,
+   "tipos": [
+    "EQUIPAMENTO DE ELEVACAO"
+   ],
+   "anos": [
+    2024
+   ]
+  },
+  {
+   "modelo": "RANDON | RANDONSP SRFG SI 3E",
+   "n": 1,
+   "tipos": [
+    "SEMI-REBOQUE"
+   ],
+   "anos": [
+    2025
+   ]
+  },
+  {
+   "modelo": "BOVENAU | CAVALETE - BOVENAU",
+   "n": 1,
+   "tipos": [
+    "EQUIPAMENTO DE ELEVACAO"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "BYG | PALETEIRA MANUAL BYG",
+   "n": 1,
+   "tipos": [
+    "EQUIPAMENTO DE ELEVACAO"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "MACACO | MACACO",
+   "n": 1,
+   "tipos": [
+    "EQUIPAMENTO DE ELEVACAO"
+   ],
+   "anos": [
+    null
+   ]
+  },
+  {
+   "modelo": "JUNGHEINRICH | EVT 216 GNE 115 1070 DZ",
+   "n": 1,
+   "tipos": [
+    "PALETEIRA ELETRICA"
+   ],
+   "anos": [
+    null
+   ]
+  }
+ ]
+}

@@ -1,0 +1,812 @@
+[
+  {
+    "modelo": "VW CONSTELLATION 26.260",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "TRUCK",
+    "anos": [2022, 2025],
+    "qtd_ativos": 66,
+    "motor": {
+      "valor": "MAN D08 (D0836 LF18) - 6 cilindros em linha, 6.870 cm3, 260 cv, 950 Nm",
+      "status": "confirmado",
+      "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation26.260-euro?id=2&productid=208 ; https://www.scribd.com/document/688378814/44 ; https://www.aptacaminhoes.com.br/wp-content/uploads/2022/04/Constellation-26.260.pdf",
+      "nota": "ATENCAO: a frota tem 2022 (Euro 5, EGR) e 2023-2025 (Euro 6 / PROCONVE P8, SCR). Mecanicamente o motor e o mesmo D08 6 cil, mas o pos-tratamento muda e isso muda a lista de consumiveis (ARLA e filtro de ureia). Separar por ano de fabricacao antes de comprar."
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "15W-40 (uso geral) ou 10W-40 sintetico",
+        "status": "inferido",
+        "fonte": "Familia MAN D08; recomendacao de lubrificantes para Constellation com motor MAN (ex.: https://produto.mercadolivre.com.br/MLB-2626083784-oleo-sintetico-10w40-vw-caminho-constellation-c-motor-man-_JM)",
+        "nota": "NAO CONFIRMADO no manual VWCO. A viscosidade correta depende da versao (Euro 5 EGR x Euro 6 SCR). Consultar o Manual do Proprietario / Plano de Manutencao VW Constellation."
+      },
+      "norma": {
+        "valor": "MAN M 3477 / MAN M 3575 (baixo SAPS, ACEA E6) - versoes Euro 6 podem exigir MAN M 3677/M 3777",
+        "status": "inferido",
+        "fonte": "https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados ; MAN Maintenance and service product recommendation: https://public.man.eu/media/service/asp/media/en/auftritte/service_dokumente_/wartungs__und_betriebsstoffvorschrift/bezugsbremskraefte_2/Maintenance_and_service_product_recommendation.pdf",
+        "nota": "M 3477 = Euro II a Euro V, ACEA E6, baixo SAPS. Para as unidades Euro 6 (2023+) confirmar a norma exata na tabela MAN vigente. NAO comprar so por 'API CK-4': motor MAN pede aprovacao MAN."
+      },
+      "volume_l": {
+        "valor": "~26 L de enchimento / ~27 L com filtro (valor do D0836 no MAN TGM europeu)",
+        "status": "inferido",
+        "fonte": "https://www.truckstar.com.ua/fullmengen_man_tgm_en.html (tabela de capacidades MAN TGM, motor D0836)",
+        "nota": "RISCO: ha fontes brasileiras de baixa qualidade citando 18,5 L para o D08 do Constellation 24.280, o que conflita com os ~26 L do catalogo MAN. NAO usar este numero para compra sem conferir no manual do veiculo ou com a concessionaria VWCO - a diferenca e de quase 8 L por troca."
+      },
+      "base": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Mineral/semissintetico/sintetico nao confirmado. Consultar manual do proprietario."
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "Cambio Eaton FSO-6406A manual 6 marchas com overdrive (opcional manual 9 marchas). Oleo Eaton SAE 40 mineral (oleo verde Eaton)",
+        "status": "inferido",
+        "fonte": "Cambio: https://www.scribd.com/document/688378814/44 ; Oleo: https://www.eaton.com/content/dam/eaton/markets/vehicles/mais-eaton/etv-0049-21a-folder-oleos-210x210mm-web-nov2021.pdf ; https://www.6canecos.com.br/files/gear/OleoEaton.pdf",
+        "nota": "Eaton Brasil especifica o proprio oleo SAE 40 para caixas da linha media/pesada. Confirmar o modelo exato da caixa na plaqueta do cambio antes de comprar."
+      },
+      "norma": {
+        "valor": "Especificacao Eaton (oleo Eaton SAE 40); alguns modelos aceitam API GL-4 SAE 50",
+        "status": "inferido",
+        "fonte": "https://www.6canecos.com.br/files/gear/OleoEaton.pdf",
+        "nota": "Nao usar GL-5 em caixa Eaton sem confirmacao - aditivo EP ataca sincronizadores de latao."
+      },
+      "volume_l": {
+        "valor": "9,0 L (FS-6406 / FSO-6406)",
+        "status": "inferido",
+        "fonte": "https://www.6canecos.com.br/files/gear/OleoEaton.pdf",
+        "nota": "Valor obtido por busca no catalogo Eaton; o PDF nao pode ser aberto nesta sessao (egress bloqueado). Conferir."
+      },
+      "automatizado": {
+        "valor": "Manual (nao automatizado) na configuracao padrao",
+        "status": "confirmado",
+        "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation26.260-euro?id=2&productid=208"
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Eixo traseiro Meritor - oleo mineral multiviscoso 85W-140",
+        "status": "inferido",
+        "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
+        "nota": "Marca do eixo do 26.260 nao confirmada documentalmente (Meritor e o padrao na linha Constellation)."
+      },
+      "norma": {"valor": "API GL-5", "status": "confirmado", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Capacidade do carter do eixo nao encontrada. Consultar manual do eixo Meritor pelo numero de serie da carcaca ou a concessionaria."}
+    },
+    "fluido_freio": {
+      "valor": "Freios a ar (sistema pneumatico duplo, cames em S, ABS). NAO usa fluido DOT no freio de servico",
+      "status": "confirmado",
+      "fonte": "https://www.scribd.com/document/688378814/44 ; https://www.aptacaminhoes.com.br/wp-content/uploads/2022/04/Constellation-26.260.pdf",
+      "nota": "Consumivel do sistema: elemento do secador de ar (ver campo filtros.secador_ar) e drenagem dos reservatorios."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Aditivo permanente a base de etilenoglicol, isento de nitrito/amina/fosfato, especificacao MAN 324 Typ SNF (ou Typ NF)",
+        "status": "inferido",
+        "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/ ; https://www.ravenol.de/en/properties/empfehlung/man-324-snf",
+        "nota": "Norma da familia de motores MAN. Nao confirmado no manual VWCO brasileiro. MAN 324 SNF nao pode ser misturado com Typ NF/Typ N."
+      },
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Capacidade do sistema de arrefecimento nao encontrada. Consultar manual do proprietario."}
+    },
+    "arla": {
+      "valor": "DEPENDE DO ANO: 2022 = Euro 5 com EGR, NAO usa ARLA 32. 2023-2025 = Euro 6 / PROCONVE P8 com SCR, USA ARLA 32 (tanque de 60 L de plastico na linha Euro 6)",
+      "status": "confirmado",
+      "fonte": "Euro 5 EGR sem Arla: https://ocarreteiro.com.br/motores/caminhoes-e-onibus-volkswagen-com-motor-man-d08-atinge-mais-de-100-mil-unidades/ ; Euro 6 SCR P8: https://www.vwco.com.br/caminhoes/Constellation/Constellation26.260-euro?id=2&productid=208 ; tanque 60 L: https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf",
+      "nota": "Este e o campo mais critico da frota: 66 ativos divididos entre duas tecnologias de emissao. O tanque de 60 L e o valor publicado para a familia Constellation Euro 6 (18.210/18.320/30.320); confirmar na ficha do 26.260 Euro 6."
+    },
+    "filtros": {
+      "oleo": {
+        "valor": "Filtro de oleo lubrificante do motor MAN D08 (ex.: VW original 07W115436, aplicado em Constellation 17.280/24.280/26.280)",
+        "status": "inferido",
+        "fonte": "https://eletropeldistribuidora.com.br/produto/filtro-oleo-p-constellation-17280-24280-26280-07w115436/ ; https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202",
+        "nota": "Codigo levantado em varejo, nao no catalogo oficial. Conferir aplicacao por chassi no catalogo VWCO/Mann/Tecfil."
+      },
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Codigo do filtro de combustivel (linha) nao confirmado. Consultar catalogo de aplicacao por chassi."},
+      "separador_agua": {
+        "valor": "Filtro separador de agua tipo Racor (ex.: RES-2003W); cabecote VW 2R0201582B na linha Constellation; conversao Tecfil PSD981 citada",
+        "status": "inferido",
+        "fonte": "https://turbodieselrse.com.br/product/res-2003w-filtro-comb-separador-agua/ ; https://www.selfcar.com.br/produto/caminhoes_e_onibus/filtros/filtros_de_combustivel/cabecote_filtro_racor_combustivel_volkswagen_constellation_17230_17260_17280_24260_24280_26260_2r0201582b/2R0201582B",
+        "nota": "A versao Euro 6 (2023+) tem codigo de separador diferente da Euro 5 - ha referencia especifica 'Constellation 210/260/320 MAN Euro 6 23/' em https://www.rfautopecas.com.br/017034/filtro-combustivel-separador-agua-vw-constellation-210260320-man-euro-6-23-"
+      },
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Codigo nao levantado."},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Codigo nao levantado."},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Elemento do secador de ar (Wabco/Knorr) nao identificado. Consultar por chassi."}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Tipo/quantidade de correia (poly-V) nao encontrado."},
+    "bateria": {
+      "valor": "2 x (12 V - 100 Ah) de serie; opcionais 2 x (12 V - 135 Ah) ou 2 x (12 V - 170 Ah). Sistema 24 V",
+      "status": "inferido",
+      "fonte": "Ficha tecnica da familia Constellation Euro 6: https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf ; https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf",
+      "nota": "Valor publicado para 18.210/18.320/30.320 Euro 6. CCA nao informado nas fichas."
+    },
+    "pneu": {
+      "valor": "275/80 R22.5 ou 295/80 R22.5 (mesma medida em todas as posicoes)",
+      "status": "confirmado",
+      "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf ; https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf",
+      "nota": "Sao duas medidas homologadas para a familia Constellation - conferir a medida efetiva de cada ativo (etiqueta/CRLV)."
+    },
+    "intervalos": {
+      "oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": "https://pt.scribd.com/document/718026962/Manual-VW-PM-Constellation-31-320", "nota": "O Plano de Manutencao VW define os intervalos por GRUPO DE APLICACAO (rodoviario, misto, severo). A operacao Ambev e urbana/severa. Pedir a tabela do grupo de aplicacao a concessionaria."},
+      "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "observacoes": "Modelo com maior volume da frota (66). O ponto de atencao e a quebra por ano: 2022 = Euro 5/EGR (sem ARLA), 2023-2025 = Euro 6/P8 SCR (com ARLA, tanque 60 L). Tanque de combustivel: 150 L citado na ficha Euro 5; a linha Euro 6 publica 275 L ou 2 x 275 L. Cambio Eaton FSO-6406A 6 marchas OD (opcional 9 marchas)."
+  },
+  {
+    "modelo": "VW 13.180 (Delivery 13.180)",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "TRUCK/VUC",
+    "anos": [2018, 2022],
+    "qtd_ativos": 57,
+    "motor": {
+      "valor": "Cummins ISF 3.8 - 4 cilindros, 3,8 L, 175 cv, 600 Nm",
+      "status": "confirmado",
+      "fonte": "https://vwco.com.br/caminhoes/Delivery/Delivery%2013.180?id=1&productid=21 ; https://blogdocaminhoneiro.com/2024/06/ficha-tecnica-volkswagen-13-180-delivery-6x2/"
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "15W-40 (recomendacao primaria Cummins para temperatura ambiente acima de -15 C); 10W-30 alternativo", "status": "confirmado", "fonte": "https://www.sbmar.com/wp-content/uploads/2018/04/Cummins-Oil-Specification-Requirements-From-QSOL-Oct-2017.pdf ; https://www.cummins.com/sites/default/files/Brazil/motores_ISF.pdf"},
+      "norma": {"valor": "Cummins CES 20086 (API CK-4) ou CES 20081 (API CJ-4) - motor com pos-tratamento SCR e diesel S10", "status": "confirmado", "fonte": "https://www.sbmar.com/wp-content/uploads/2018/04/Cummins-Oil-Specification-Requirements-From-QSOL-Oct-2017.pdf ; https://semitruckoil.com/engines/cummins/", "nota": "CES 20081 (CJ-4) exige combustivel com enxofre <=15 ppm - no Brasil, diesel S10."},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "So foi encontrada faixa generica para a familia QSF3.8 (7 a 10 L), larga demais para compra. Consultar manual do proprietario VW Delivery ou manual de operacao Cummins ISF3.8."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": "Cambio Eaton manual de 6 marchas - oleo Eaton SAE 40 mineral", "status": "inferido", "fonte": "Cambio: https://vwco.com.br/caminhoes/Delivery/Delivery%2013.180?id=1&productid=21 ; Oleo: https://www.eaton.com/content/dam/eaton/markets/vehicles/mais-eaton/etv-0049-21a-folder-oleos-210x210mm-web-nov2021.pdf", "nota": "Modelo exato da caixa (FS-4205 / FS-5206 etc.) nao confirmado - ler a plaqueta do cambio."},
+      "norma": {"valor": "Especificacao Eaton", "status": "inferido", "fonte": "https://www.6canecos.com.br/files/gear/OleoEaton.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "automatizado": {"valor": "Manual", "status": "confirmado", "fonte": "https://blogdocaminhoneiro.com/2024/06/ficha-tecnica-volkswagen-13-180-delivery-6x2/"}
+    },
+    "oleo_diferencial": {
+      "tipo": {"valor": "85W-140 mineral", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf", "nota": "Marca/modelo do eixo do Delivery 13.180 nao confirmada."},
+      "norma": {"valor": "API GL-5", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "fluido_freio": {"valor": "Freios pneumaticos com ABS (tambor). Nao usa fluido DOT no freio de servico", "status": "confirmado", "fonte": "https://blogdocaminhoneiro.com/2024/06/ficha-tecnica-volkswagen-13-180-delivery-6x2/"},
+    "arrefecimento": {
+      "tipo": {"valor": "Aditivo compativel com motor Cummins (linha ES Compleat / especificacao Cummins CES 14603)", "status": "inferido", "fonte": "Familia de motor Cummins - https://www.cummins.com/sites/default/files/Brazil/motores_ISF.pdf", "nota": "Especificacao NAO confirmada documentalmente nesta pesquisa. Confirmar no manual Cummins ISF3.8."},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "arla": {"valor": "SIM - Euro 5 com SCR (ARLA 32)", "status": "confirmado", "fonte": "https://vwco.com.br/caminhoes/Delivery/Delivery%2013.180?id=1&productid=21 ; https://omecanico.com.br/man-latin-america-inicia-exportacao-de-veiculos-euro-5-para-argentina/", "nota": "Os Cummins ISF/ISL da linha VWCO usam SCR (ao contrario dos MAN D08 4/6 cil Euro 5, que usam EGR)."},
+    "filtros": {
+      "oleo": {"valor": "Tecfil PSL283 (aplicacao Delivery 9.170/11.180/13.180 Cummins ISF)", "status": "inferido", "fonte": "https://www.dungapecas.com.br/kit-filtros-vw-delivery-express-9-170-11-180-cummins-isf ; https://www.brasfilautopecas.com/MLB-3783530567-kit-filtros-vw-delivery-13180-motor-cummins-ano-2017-a-2023-_JM", "nota": "Codigo de kit de varejo. Conferir no catalogo Tecfil por chassi."},
+      "combustivel": {"valor": "Tecfil PEC7177", "status": "inferido", "fonte": "https://www.dungapecas.com.br/kit-filtros-vw-delivery-express-9-170-11-180-cummins-isf"},
+      "separador_agua": {"valor": "Presente no kit de revisao (codigo nao confirmado)", "status": "nao_encontrado", "fonte": "https://produto.mercadolivre.com.br/MLB-3899038043-kit-revisao-vw-delivery-91701118013180-cummins-isf-_JM", "nota": "O kit lista 1 filtro separador de agua mas nao publica o codigo."},
+      "ar_motor": {"valor": "Tecfil PSC706", "status": "inferido", "fonte": "https://www.dungapecas.com.br/kit-filtros-vw-delivery-express-9-170-11-180-cummins-isf"},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Alguns kits mencionam filtro de cabine sem publicar codigo."},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": "2 x (12 V - 100 Ah) [valor publicado para o Delivery 11.180, mesma familia]", "status": "inferido", "fonte": "https://financasefuturo.com.br/volkswagen-delivery-11-180-2025-ficha-tecnica-consumo-preco-e-avaliacao-completa/", "nota": "Nao confirmado na ficha do 13.180."},
+    "pneu": {"valor": "215/75 R17.5", "status": "confirmado", "fonte": "https://vwco.com.br/caminhoes/Delivery/Delivery%2013.180?id=1&productid=21 ; https://blogdocaminhoneiro.com/2024/06/ficha-tecnica-volkswagen-13-180-delivery-6x2/"},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao foi possivel confirmar. Fontes genericas citam 7.000-10.000 km para ISF, o que nao corresponde necessariamente ao plano VWCO. Consultar o Plano de Manutencao VW Delivery."}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "PBT 13,2 t. Segundo maior volume da frota (57). Compartilha praticamente toda a lista de consumiveis com o VW 11.180 (mesmo motor Cummins ISF 3.8) - vale um unico kit de revisao para os dois."
+  },
+  {
+    "modelo": "VW 17.190 (Constellation 17.190)",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "TOCO",
+    "anos": [2019, 2024],
+    "qtd_ativos": 50,
+    "motor": {
+      "valor": "MAN D08 (D0834 - 'D08 34 190') - 4 cilindros, 4.580 cm3, 186 cv (137 kW) @ 2.500 rpm, 700 Nm @ 1.100-1.600 rpm",
+      "status": "confirmado",
+      "fonte": "https://man-static-hml.s3.amazonaws.com/ba9f6063-a8da-42fa-b900-53e7f61895df.pdf ; https://www.scribd.com/document/589720325/ba9f6063-a8da-42fa-b900-53e7f61895df ; https://www.comafeautopecas.com.br/linha-motor/motores/motor-compacto-man-d0834-vw-13-190-17-190-17-230-23-230"
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "15W-40 ou 10W-40", "status": "inferido", "fonte": "Familia MAN D08 (mesma do 26.260)", "nota": "Nao confirmado no manual."},
+      "norma": {"valor": "MAN M 3477 / MAN M 3575", "status": "inferido", "fonte": "https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados", "nota": "Aprovacao MAN e obrigatoria; nao comprar so por API."},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Capacidade do carter do D0834 (4 cil) NAO encontrada em nenhuma fonte tecnica. Nao extrapolar do D0836 (6 cil) - sao carteres diferentes. Consultar manual do proprietario ou concessionaria."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": "Cambio Eaton FS-5406A, manual por cabo, 6 marchas sincronizadas + 1 re. Oleo Eaton SAE 40 mineral", "status": "confirmado", "fonte": "Cambio: https://man-static-hml.s3.amazonaws.com/ba9f6063-a8da-42fa-b900-53e7f61895df.pdf ; Oleo (inferido): https://www.eaton.com/content/dam/eaton/markets/vehicles/mais-eaton/etv-0049-21a-folder-oleos-210x210mm-web-nov2021.pdf"},
+      "norma": {"valor": "Especificacao Eaton", "status": "inferido", "fonte": "https://www.6canecos.com.br/files/gear/OleoEaton.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Capacidade da FS-5406 nao encontrada (a tabela consultada trouxe so FS/FSO-6406 = 9,0 L)."},
+      "automatizado": {"valor": "Manual. Existe versao V-Tronic (automatizada) no 17.190 - conferir por ativo", "status": "confirmado", "fonte": "https://www.scribd.com/document/445808788/ficha-tecnica-constellation-17-190-AZ-v-tronic"}
+    },
+    "oleo_diferencial": {
+      "tipo": {"valor": "Eixo traseiro Meritor - 85W-140 mineral. Relacoes de reducao homologadas: 4,10/5,72:1 - 4,56/6,36:1 - 4,88/6,80:1 - 4,88:1", "status": "confirmado", "fonte": "https://man-static-hml.s3.amazonaws.com/ba9f6063-a8da-42fa-b900-53e7f61895df.pdf ; oleo: https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "norma": {"valor": "API GL-5", "status": "confirmado", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "fluido_freio": {"valor": "Freios a ar com ABS. Nao usa fluido DOT no freio de servico", "status": "confirmado", "fonte": "https://frotas.localiza.com/blog/vw-constellation-17-190-mt"},
+    "arrefecimento": {"tipo": {"valor": "MAN 324 Typ SNF (ou Typ NF)", "status": "inferido", "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/"}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "arla": {"valor": "NAO - Euro 5 com EGR, dispensa ARLA 32 (nao tem tanque de ARLA)", "status": "confirmado", "fonte": "https://man-static-hml.s3.amazonaws.com/ba9f6063-a8da-42fa-b900-53e7f61895df.pdf ; https://ocarreteiro.com.br/motores/caminhoes-e-onibus-volkswagen-com-motor-man-d08-atinge-mais-de-100-mil-unidades/", "nota": "A ficha diz explicitamente 'sistema de emissoes EGR, sem necessidade de tanque adicional de ARLA 32'. ATENCAO aos ativos 2023/2024: se forem Euro 6, a situacao inverte - conferir o ano-modelo."},
+    "filtros": {
+      "oleo": {"valor": "Filtro de oleo motor MAN D08 4/6 cil", "status": "inferido", "fonte": "https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202", "nota": "Sem codigo confirmado para a variante 4 cilindros."},
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": "Separador de agua tipo Racor da linha Constellation (cabecote 2R0201582B em 17.230/17.260/17.280/24.260/24.280/26.260)", "status": "inferido", "fonte": "https://www.selfcar.com.br/produto/caminhoes_e_onibus/filtros/filtros_de_combustivel/cabecote_filtro_racor_combustivel_volkswagen_constellation_17230_17260_17280_24260_24280_26260_2r0201582b/2R0201582B"},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao publicado nas fontes consultadas. A familia Constellation usa 2 x 12 V em serie (24 V); a capacidade em Ah precisa ser conferida."},
+    "pneu": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao confirmado. A busca sugeriu 275/80 R22.5 ou 10.00 R20 sem fonte firme - NAO comprar por esta pesquisa. Conferir na etiqueta do veiculo / CRLV."},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "Terceiro maior volume (50). Motor D0834 4 cil - MESMO motor do 23.230 (a versao 230 cv), entao os dois modelos compartilham a maior parte dos consumiveis de motor. Faixa de anos 2019-2024 atravessa a virada Euro 5 -> Euro 6: conferir ano-modelo dos ativos 2023/2024 antes de assumir 'sem ARLA'."
+  },
+  {
+    "modelo": "VW 23.230",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "TRUCK/TOCO",
+    "anos": [2019, 2023],
+    "qtd_ativos": 42,
+    "motor": {
+      "valor": "MAN D08 (D0834 - 'D08 34 230') - 4 cilindros, 4,6 L (4.580 cm3), 225-230 cv",
+      "status": "confirmado",
+      "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf ; https://www.vwco.com.br/caminhoes/Constellation/Constellation%2023.230?id=2&productid=32 ; https://www.comafeautopecas.com.br/linha-motor/motores/motor-compacto-man-d0834-vw-13-190-17-190-17-230-23-230"
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "15W-40 ou 10W-40", "status": "inferido", "fonte": "Familia MAN D08", "nota": "Nao confirmado no manual."},
+      "norma": {"valor": "MAN M 3477 / MAN M 3575", "status": "inferido", "fonte": "https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Mesma lacuna do 17.190 (carter do D0834 4 cil). Consultar manual."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": "Cambio Eaton FS-6406A, manual, 6 marchas sincronizadas + 1 re. Oleo Eaton SAE 40 mineral", "status": "confirmado", "fonte": "Cambio: https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf ; Oleo (inferido): https://www.6canecos.com.br/files/gear/OleoEaton.pdf"},
+      "norma": {"valor": "Especificacao Eaton", "status": "inferido", "fonte": "https://www.6canecos.com.br/files/gear/OleoEaton.pdf"},
+      "volume_l": {"valor": "9,0 L (FS-6406)", "status": "inferido", "fonte": "https://www.6canecos.com.br/files/gear/OleoEaton.pdf", "nota": "Valor obtido via busca no catalogo Eaton; conferir."},
+      "automatizado": {"valor": "Manual", "status": "confirmado", "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf"}
+    },
+    "oleo_diferencial": {
+      "tipo": {"valor": "Eixo traseiro Meritor - 85W-140 mineral", "status": "confirmado", "fonte": "Eixo: https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf ; Oleo: https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "norma": {"valor": "API GL-5", "status": "confirmado", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "fluido_freio": {"valor": "Freios a ar com ABS e EBD nas rodas dianteiras e traseiras. Nao usa fluido DOT", "status": "confirmado", "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf"},
+    "arrefecimento": {"tipo": {"valor": "MAN 324 Typ SNF (ou Typ NF)", "status": "inferido", "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/"}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "arla": {"valor": "NAO - Euro 5 com EGR, dispensa ARLA 32", "status": "confirmado", "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation%2023.230?id=2&productid=32 ; https://ocarreteiro.com.br/motores/caminhoes-e-onibus-volkswagen-com-motor-man-d08-atinge-mais-de-100-mil-unidades/", "nota": "O D08 Euro 5 4 cil 190/230 cv e 6 cil 260/280 cv usa EGR. Conferir ativos 2023 (possivel Euro 6)."},
+    "filtros": {
+      "oleo": {"valor": "Filtro de oleo motor MAN D08 4/6 cil", "status": "inferido", "fonte": "https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202"},
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": "Separador tipo Racor da linha Constellation", "status": "inferido", "fonte": "https://turbodieselrse.com.br/product/res-2003w-filtro-comb-separador-agua/"},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "pneu": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao confirmado nas fontes consultadas."},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "MESMO motor do 17.190 (D0834 4 cil), na versao 230 cv. Trate 17.190 + 23.230 + '23.230 CONSTELLATION' como um unico grupo de consumiveis de motor: 121 ativos somados."
+  },
+  {
+    "modelo": "23.230 CONSTELLATION",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "TRUCK",
+    "anos": [2019, 2023],
+    "qtd_ativos": 29,
+    "motor": {
+      "valor": "MAN D08 (D0834) - 4 cilindros, 4,6 L, 225-230 cv. MESMO VEICULO do item 'VW 23.230' (duplicidade de cadastro)",
+      "status": "confirmado",
+      "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf ; https://www.vwco.com.br/caminhoes/Constellation/Constellation%2023.230?id=2&productid=32",
+      "nota": "'VW 23.230' e '23.230 CONSTELLATION' sao a MESMA maquina escrita de dois jeitos no cadastro da frota. Somados sao 71 ativos. Recomendo padronizar o cadastro."
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "15W-40 ou 10W-40", "status": "inferido", "fonte": "Familia MAN D08 - ver item VW 23.230"},
+      "norma": {"valor": "MAN M 3477 / MAN M 3575", "status": "inferido", "fonte": "https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": "Eaton FS-6406A manual 6 marchas - oleo Eaton SAE 40", "status": "confirmado", "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf"},
+      "norma": {"valor": "Especificacao Eaton", "status": "inferido", "fonte": "https://www.6canecos.com.br/files/gear/OleoEaton.pdf"},
+      "volume_l": {"valor": "9,0 L", "status": "inferido", "fonte": "https://www.6canecos.com.br/files/gear/OleoEaton.pdf"},
+      "automatizado": {"valor": "Manual", "status": "confirmado", "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf"}
+    },
+    "oleo_diferencial": {
+      "tipo": {"valor": "Meritor - 85W-140", "status": "confirmado", "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf"},
+      "norma": {"valor": "API GL-5", "status": "confirmado", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "fluido_freio": {"valor": "Freios a ar com ABS/EBD - sem fluido DOT", "status": "confirmado", "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf"},
+    "arrefecimento": {"tipo": {"valor": "MAN 324 Typ SNF (ou Typ NF)", "status": "inferido", "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/"}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "arla": {"valor": "NAO - Euro 5 com EGR", "status": "confirmado", "fonte": "https://ocarreteiro.com.br/motores/caminhoes-e-onibus-volkswagen-com-motor-man-d08-atinge-mais-de-100-mil-unidades/"},
+    "filtros": {
+      "oleo": {"valor": "Filtro de oleo motor MAN D08 4/6 cil", "status": "inferido", "fonte": "https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202"},
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": "Separador tipo Racor da linha Constellation", "status": "inferido", "fonte": "https://turbodieselrse.com.br/product/res-2003w-filtro-comb-separador-agua/"},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "pneu": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "Cadastro duplicado do VW 23.230 - ver aquele item. Nao comprar como se fossem dois modelos diferentes."
+  },
+  {
+    "modelo": "VW/26.260 CRM 6X2 4P",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "TRUCK",
+    "anos": [2025, 2025],
+    "qtd_ativos": 21,
+    "motor": {
+      "valor": "MAN D08 6 cilindros, 260 cv, 950 Nm - Constellation 26.260 6x2 Euro 6 / PROCONVE P8",
+      "status": "confirmado",
+      "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation26.260-euro?id=2&productid=208",
+      "nota": "'CRM' e '4P' sao codigo de configuracao/carroceria do cadastro (Denatran/nota fiscal) e NAO foi possivel decifrar. Mecanicamente e o Constellation 26.260 6x2 2025 (Euro 6). Codigo FIPE relacionado: 515193-7 '26-260 Constellation 6x2 2p (diesel)(E6) 2025' - https://www.tabelafipebrasil.com/caminhoes/VOLKSWAGEN/26-260-CONSTELLATION-6X2-2P--DIESEL--E6-/2025"
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "15W-40 ou 10W-40", "status": "inferido", "fonte": "Familia MAN D08 - ver item VW CONSTELLATION 26.260"},
+      "norma": {"valor": "Aprovacao MAN (M 3477/M 3575; possivel M 3677/M 3777 na versao Euro 6)", "status": "inferido", "fonte": "https://public.man.eu/media/service/asp/media/en/auftritte/service_dokumente_/wartungs__und_betriebsstoffvorschrift/bezugsbremskraefte_2/Maintenance_and_service_product_recommendation.pdf", "nota": "Sendo Euro 6 com SCR, a norma pode ser mais restritiva que a dos Euro 5. Confirmar na concessionaria."},
+      "volume_l": {"valor": "~26 L (referencia D0836 europeu)", "status": "inferido", "fonte": "https://www.truckstar.com.ua/fullmengen_man_tgm_en.html", "nota": "Mesma ressalva do 26.260: conflito de fontes. Nao usar para compra sem conferir."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": "Cambio de 6 marchas com overdrive (opcional manual 9 marchas) - oleo Eaton SAE 40", "status": "inferido", "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation26.260-euro?id=2&productid=208"},
+      "norma": {"valor": "Especificacao Eaton", "status": "inferido", "fonte": "https://www.6canecos.com.br/files/gear/OleoEaton.pdf"},
+      "volume_l": {"valor": "9,0 L se for FSO-6406", "status": "inferido", "fonte": "https://www.6canecos.com.br/files/gear/OleoEaton.pdf"},
+      "automatizado": {"valor": "Manual", "status": "confirmado", "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation26.260-euro?id=2&productid=208"}
+    },
+    "oleo_diferencial": {
+      "tipo": {"valor": "85W-140 mineral (eixo Meritor)", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "norma": {"valor": "API GL-5", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "fluido_freio": {"valor": "Freios a ar com ABS - sem fluido DOT", "status": "inferido", "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation26.260-euro?id=2&productid=208"},
+    "arrefecimento": {"tipo": {"valor": "MAN 324 Typ SNF (ou Typ NF)", "status": "inferido", "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/"}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "arla": {"valor": "SIM - Euro 6 / PROCONVE P8 com SCR. Tanque de ARLA 32 de 60 L (plastico) na familia Constellation Euro 6", "status": "confirmado", "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation26.260-euro?id=2&productid=208 ; https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf"},
+    "filtros": {
+      "oleo": {"valor": "Filtro de oleo motor MAN D08", "status": "inferido", "fonte": "https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202"},
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": "Separador de agua especifico da linha Euro 6 (referencia de varejo: 'VW Constellation 210/260/320 MAN Euro 6 23/')", "status": "inferido", "fonte": "https://www.rfautopecas.com.br/017034/filtro-combustivel-separador-agua-vw-constellation-210260320-man-euro-6-23-", "nota": "NAO usar o codigo da versao Euro 5."},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": "2 x (12 V - 100 Ah); opcionais 2 x 135 Ah ou 2 x 170 Ah", "status": "inferido", "fonte": "https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf"},
+    "pneu": {"valor": "275/80 R22.5 ou 295/80 R22.5", "status": "inferido", "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf", "nota": "Medida homologada da familia Constellation Euro 6; conferir a medida efetiva no ativo."},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "E o mesmo caminhao do item 'VW CONSTELLATION 26.260', na versao 2025 Euro 6. Somando os dois cadastros sao 87 ativos - maior grupo da frota."
+  },
+  {
+    "modelo": "VW 30.320 (Constellation 30.320 8x2)",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "BI-TRUCK",
+    "anos": [2023, 2025],
+    "qtd_ativos": 15,
+    "motor": {
+      "valor": "MAN D08 - 6 cilindros, 320 cv, 1.200 Nm",
+      "status": "confirmado",
+      "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation30.320-euro?id=2&productid=210 ; https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf"
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "15W-40 ou 10W-40", "status": "inferido", "fonte": "Familia MAN D08"},
+      "norma": {"valor": "Aprovacao MAN (M 3477/M 3575; possivel norma mais recente na versao Euro 6)", "status": "inferido", "fonte": "https://public.man.eu/media/service/asp/media/en/auftritte/service_dokumente_/wartungs__und_betriebsstoffvorschrift/bezugsbremskraefte_2/Maintenance_and_service_product_recommendation.pdf"},
+      "volume_l": {"valor": "~26 L (referencia D0836 europeu)", "status": "inferido", "fonte": "https://www.truckstar.com.ua/fullmengen_man_tgm_en.html", "nota": "Conferir - ver ressalva do 26.260."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": "Manual 9 marchas OU automatizado V-Tronic 12 marchas (duas opcoes homologadas) - conferir por ativo", "status": "confirmado", "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation30.320-euro?id=2&productid=210"},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "O oleo do V-Tronic (automatizado Eaton) NAO e necessariamente o mesmo do manual. Conferir a plaqueta do cambio antes de comprar."},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "automatizado": {"valor": "Opcional (V-Tronic 12 marchas)", "status": "confirmado", "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation30.320-euro?id=2&productid=210"}
+    },
+    "oleo_diferencial": {
+      "tipo": {"valor": "85W-140 mineral", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "norma": {"valor": "API GL-5", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "fluido_freio": {"valor": "Freios a ar com ABS - sem fluido DOT", "status": "inferido", "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf"},
+    "arrefecimento": {"tipo": {"valor": "MAN 324 Typ SNF (ou Typ NF)", "status": "inferido", "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/"}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "arla": {"valor": "SIM - Euro 6 / PROCONVE P8 com SCR. Tanque ARLA 32 de 60 L (plastico)", "status": "confirmado", "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation30.320-euro?id=2&productid=210 ; https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf"},
+    "filtros": {
+      "oleo": {"valor": "Filtro de oleo motor MAN D08", "status": "inferido", "fonte": "https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202"},
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": "Separador de agua da linha Constellation MAN Euro 6", "status": "inferido", "fonte": "https://www.rfautopecas.com.br/017034/filtro-combustivel-separador-agua-vw-constellation-210260320-man-euro-6-23-", "nota": "A referencia de varejo cita explicitamente '210/260/320 MAN Euro 6', que cobre este modelo."},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": "2 x (12 V - 100 Ah); opcionais 2 x (12 V - 135 Ah) ou 2 x (12 V - 170 Ah)", "status": "confirmado", "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf ; https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_30.320_8x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf", "nota": "CCA nao publicado na ficha."},
+    "pneu": {"valor": "275/80 R22.5 ou 295/80 R22.5", "status": "confirmado", "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf"},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "Bi-truck 8x2 Euro 6. Duas opcoes de cambio (manual 9 x V-Tronic 12) - o oleo de cambio precisa ser definido por ativo, nao por modelo."
+  },
+  {
+    "modelo": "VW 30.280 (Constellation 30.280 8x2)",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "BI-TRUCK/TRUCK",
+    "anos": [2019, 2022],
+    "qtd_ativos": 14,
+    "motor": {
+      "valor": "MAN D08 (D0836) - 6 cilindros, 6,9 L, 277 cv, 1.050 Nm",
+      "status": "confirmado",
+      "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation30.280?id=2&productid=45 ; https://ocarreteiro.com.br/empresas/volkswagen-amplia-oferta-de-semipesados-8x2-com-constellation-30-280/"
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "15W-40 ou 10W-40", "status": "inferido", "fonte": "Familia MAN D08"},
+      "norma": {"valor": "MAN M 3477 / MAN M 3575", "status": "inferido", "fonte": "https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados"},
+      "volume_l": {"valor": "~26 L (referencia D0836 europeu)", "status": "inferido", "fonte": "https://www.truckstar.com.ua/fullmengen_man_tgm_en.html", "nota": "Conferir - ha fonte brasileira de baixa qualidade citando 18,5 L."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": "Manual; opcional V-Tronic Eaton automatizado de 10 marchas - oleo Eaton SAE 40", "status": "confirmado", "fonte": "https://ocarreteiro.com.br/empresas/volkswagen-amplia-oferta-de-semipesados-8x2-com-constellation-30-280/"},
+      "norma": {"valor": "Especificacao Eaton", "status": "inferido", "fonte": "https://www.6canecos.com.br/files/gear/OleoEaton.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "automatizado": {"valor": "Opcional (V-Tronic 10 marchas)", "status": "confirmado", "fonte": "https://ocarreteiro.com.br/empresas/volkswagen-amplia-oferta-de-semipesados-8x2-com-constellation-30-280/"}
+    },
+    "oleo_diferencial": {
+      "tipo": {"valor": "85W-140 mineral", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "norma": {"valor": "API GL-5", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "fluido_freio": {"valor": "Freios a ar com ABS - sem fluido DOT", "status": "inferido", "fonte": "Padrao da linha Constellation - https://www.vwco.com.br/caminhoes/Constellation/Constellation30.280?id=2&productid=45"},
+    "arrefecimento": {"tipo": {"valor": "MAN 324 Typ SNF (ou Typ NF)", "status": "inferido", "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/"}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "arla": {"valor": "NAO - Euro 5 com EGR (D08 6 cil 280 cv Euro 5 e EGR, dispensa ARLA 32)", "status": "inferido", "fonte": "https://ocarreteiro.com.br/motores/caminhoes-e-onibus-volkswagen-com-motor-man-d08-atinge-mais-de-100-mil-unidades/ ; https://brasilcaminhoneiro.com.br/vw-24-280-dispensa-arla-32-atende-euro-5-e-mantem-as-caracteristicas-essenciais-de-um-campeao-de-vendas/", "nota": "A fonte confirma que o D08 Euro 5 (4 cil 190/230 e 6 cil 260/280) usa EGR. Nao ha ficha do 30.280 confirmando diretamente - CONFERIR se o veiculo tem tanque de ARLA antes de decidir."},
+    "filtros": {
+      "oleo": {"valor": "Filtro de oleo motor MAN D08 (ex.: 07W115436 aplicado em 17.280/24.280/26.280)", "status": "inferido", "fonte": "https://eletropeldistribuidora.com.br/produto/filtro-oleo-p-constellation-17280-24280-26280-07w115436/"},
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": "Separador tipo Racor da linha Constellation MAN", "status": "inferido", "fonte": "https://www.pitstop.com.br/filtro-racor-separador-dagua-vw-constellation-man-1165712/p"},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "pneu": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "Mesmo motor de base do 26.260 Euro 5 (D0836 6 cil) em outra calibracao (277 cv). Se o 26.260 2022 e o 30.280 forem os dois Euro 5 EGR, compartilham oleo e filtro de motor."
+  },
+  {
+    "modelo": "VW DELIVERY 14 (e-Delivery 14)",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "VUC ELETRICO",
+    "anos": [2021, 2021],
+    "qtd_ativos": 8,
+    "motor": {
+      "valor": "ELETRICO - motor eletrico de 300 kW (408 cv), 2.150 Nm de torque desde a partida. 6x2 com suspensao pneumatica, PBT 14,3 t",
+      "status": "confirmado",
+      "fonte": "https://www.vwco.com.br/caminhoes/e-Delivery/e-Delivery%2014?id=27&productid=185 ; https://autobahncaminhoes.com.br/wp-content/uploads/2022/03/e3a118e4-66ee-4787-bf6c-650434c9157c.pdf ; https://www.prnewswire.com/news-releases/100-caminhoes-eletricos-em-2021-ambev-e-vw-caminhoes-fecham-parceria-para-entrega-dos-primeiros-e-delivery-888033158.html",
+      "nota": "CONFIRMADO: e o e-Delivery 100% ELETRICO, nao o Delivery a diesel. Casa com o historico: a Ambev fechou em 2021 a compra dos primeiros 100 e-Delivery para SP e RJ. NAO tem motor a combustao, nao tem oleo de motor, nao tem filtro de combustivel, nao tem ARLA."
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "NAO SE APLICA - veiculo eletrico a bateria", "status": "confirmado", "fonte": "https://www.vwco.com.br/caminhoes/e-Delivery/e-Delivery%2014?id=27&productid=185"},
+      "norma": {"valor": "NAO SE APLICA", "status": "confirmado", "fonte": "https://www.vwco.com.br/caminhoes/e-Delivery/e-Delivery%2014?id=27&productid=185"},
+      "volume_l": {"valor": "NAO SE APLICA", "status": "confirmado", "fonte": "https://www.vwco.com.br/caminhoes/e-Delivery/e-Delivery%2014?id=27&productid=185"},
+      "base": {"valor": "NAO SE APLICA", "status": "confirmado", "fonte": "https://www.vwco.com.br/caminhoes/e-Delivery/e-Delivery%2014?id=27&productid=185"}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "O e-Delivery usa transmissao/reducao propria do conjunto eletrico. Fluido e capacidade nao publicados. Consultar a rede VWCO (manutencao de EV e restrita a oficina autorizada)."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "automatizado": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_diferencial": {
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Eixo traseiro rigido com bolsa pneumatica; lubrificante nao publicado."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "fluido_freio": {"valor": "Freio a ar com came em 'S', duplo e independente, com ABS + EBD + HSA + ATC. Nao usa fluido DOT no freio de servico", "status": "confirmado", "fonte": "https://autobahncaminhoes.com.br/wp-content/uploads/2022/03/e3a118e4-66ee-4787-bf6c-650434c9157c.pdf"},
+    "arrefecimento": {
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "O e-Delivery tem sistema de arrefecimento do pacote de baterias e da eletronica de potencia, com fluido proprio. Especificacao NAO publicada - consultar a rede VWCO."},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "arla": {"valor": "NAO SE APLICA - veiculo 100% eletrico, zero emissao no escapamento", "status": "confirmado", "fonte": "https://www.vwco.com.br/caminhoes/e-Delivery/e-Delivery%2014?id=27&productid=185"},
+    "filtros": {
+      "oleo": {"valor": "NAO SE APLICA", "status": "confirmado", "fonte": "Veiculo eletrico"},
+      "combustivel": {"valor": "NAO SE APLICA", "status": "confirmado", "fonte": "Veiculo eletrico"},
+      "separador_agua": {"valor": "NAO SE APLICA", "status": "confirmado", "fonte": "Veiculo eletrico"},
+      "ar_motor": {"valor": "NAO SE APLICA", "status": "confirmado", "fonte": "Veiculo eletrico"},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Existe filtro de ar da cabine (ar condicionado) - codigo nao levantado."},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Tem sistema pneumatico de freio, logo tem secador de ar. Codigo nao levantado."}
+    },
+    "correia": {"valor": "Provavelmente nao se aplica (sem motor a combustao)", "status": "inferido", "fonte": "Veiculo eletrico"},
+    "bateria": {
+      "valor": "Pacote de tracao: ions de litio niquel-manganes-cobalto (NMC), 240 kWh, autonomia estimada ~200 km. Recarga completa em 3 h; recarga rapida de 15 min repoe ~30%",
+      "status": "confirmado",
+      "fonte": "https://carroeletrico.com.br/blog/e-delivery-caminhao-eletrico-da-volkswagen/ ; https://www.prnewswire.com/news-releases/100-caminhoes-eletricos-em-2021-ambev-e-vw-caminhoes-fecham-parceria-para-entrega-dos-primeiros-e-delivery-888033158.html",
+      "nota": "Bateria auxiliar de 12/24 V (para eletronica e partida dos perifericos) NAO levantada."
+    },
+    "pneu": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Medida nao publicada nas fontes acessadas. Conferir na etiqueta do veiculo."},
+    "intervalos": {"oleo_motor": {"valor": "NAO SE APLICA", "status": "confirmado", "fonte": "Veiculo eletrico"}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "RESPOSTA A DUVIDA DO PEDIDO: e o e-Delivery 100% ELETRICO, confirmado. Nao entra em nenhum plano de troca de oleo de motor, filtro de combustivel ou ARLA - se estiver nos mesmos indicadores dos diesel, esta poluindo a media de custo/km e de km/L. A manutencao dele e outra: eixo, freio pneumatico (secador de ar), pneus, arrefecimento de bateria e revisao do pacote eletrico na rede autorizada."
+  },
+  {
+    "modelo": "VW 28.460 (Meteor 28.460)",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "CAVALO MECANICO",
+    "anos": [2022, 2022],
+    "qtd_ativos": 8,
+    "motor": {
+      "valor": "MAN D26 - 6 cilindros em linha, 12,4 L, turbodiesel, 460 cv @ 1.800 rpm, 2.300 Nm entre 950 e 1.400 rpm",
+      "status": "confirmado",
+      "fonte": "https://www.vwco.com.br/caminhoes/Meteor/Meteor28.460?id=21&productid=152 ; https://motormagazine.com.ar/lanzamiento-volkswagen-meteor-28-460-6x2/ ; https://www.agrofy.com.br/media/catalog/product/v/w/vw_28.460_1.pdf",
+      "nota": "Motor COMPLETAMENTE diferente do resto da frota (D26 12,4 L x D08 4,6/6,9 L). Oleo, filtro e capacidades proprios."
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "15W-40 ou 10W-40", "status": "inferido", "fonte": "Familia MAN D26", "nota": "Nao confirmado. Consultar manual do Meteor."},
+      "norma": {"valor": "Aprovacao MAN (M 3477 / M 3575 para Euro V; conferir a norma exata do D26 brasileiro)", "status": "inferido", "fonte": "https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados", "nota": "A norma MAN M 3275 e para Euro I/II (D20/D26 antigos) e NAO serve para este motor."},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Capacidade do carter do D26 nao encontrada. Consultar manual do proprietario VW Meteor ou a concessionaria."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": "ZF TraXon automatizada 12+2 marchas (opcional 16+2). Exige fluido especifico ZF (lista TE-ML da ZF) - NAO usar oleo Eaton", "status": "confirmado", "fonte": "Cambio: https://motormagazine.com.ar/lanzamiento-volkswagen-meteor-28-460-6x2/ ; https://www.vwco.com.br/caminhoes/Meteor/Meteor28.460?id=21&productid=152", "nota": "O fluido correto sai da lista ZF TE-ML aplicavel a TraXon - NAO foi possivel confirmar qual nesta pesquisa."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Consultar a lista ZF TE-ML vigente para TraXon (normalmente TE-ML 02 para transmissoes automatizadas). Conferir com a ZF/concessionaria."},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "automatizado": {"valor": "SIM - automatizada ZF TraXon, com eco-roll, sensor de inclinacao, modo manobra e kick down", "status": "confirmado", "fonte": "https://motormagazine.com.ar/lanzamiento-volkswagen-meteor-28-460-6x2/"}
+    },
+    "oleo_diferencial": {
+      "tipo": {"valor": "85W-140 mineral (a confirmar - cavalo mecanico pode usar eixo com especificacao propria)", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "norma": {"valor": "API GL-5", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "fluido_freio": {"valor": "Freios a ar com ABS - sem fluido DOT", "status": "inferido", "fonte": "https://www.agrofy.com.br/media/catalog/product/v/w/vw_28.460_1.pdf"},
+    "arrefecimento": {"tipo": {"valor": "MAN 324 Typ SNF (ou Typ NF)", "status": "inferido", "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/"}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "arla": {"valor": "SIM - Euro 5 com SCR (AdBlue / ARLA 32)", "status": "confirmado", "fonte": "https://motormagazine.com.ar/lanzamiento-volkswagen-meteor-28-460-6x2/", "nota": "Capacidade do tanque de ARLA nao confirmada."},
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Filtro do D26 NAO e o mesmo do D08. Nao reaproveitar codigo."},
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "pneu": {"valor": "295/80 R22.5", "status": "confirmado", "fonte": "https://www.agrofy.com.br/media/catalog/product/v/w/vw_28.460_1.pdf", "nota": "A ficha tecnica informa que as dimensoes consideram pneus 295/80R22.5."},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "Unico grupo com motor MAN D26 e cambio ZF TraXon alem do MAN TGX 29.480. So 8 ativos, mas com lista de pecas propria - nao da para tratar junto com o Constellation."
+  },
+  {
+    "modelo": "VW 11.180 (Delivery 11.180)",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "VUC",
+    "anos": [2022, 2022],
+    "qtd_ativos": 8,
+    "motor": {
+      "valor": "Cummins ISF 3.8 - 4 cilindros, 3,8 L, 177 cv @ 2.600 rpm, 600 Nm entre 1.100 e 1.700 rpm",
+      "status": "confirmado",
+      "fonte": "https://financasefuturo.com.br/volkswagen-delivery-11-180-2025-ficha-tecnica-consumo-preco-e-avaliacao-completa/ ; https://www.wbreitkopf.com.br/wp-content/uploads/2023/08/2c8ac862-04fd-45bc-9762-f75c239cf5d0.pdf",
+      "nota": "MESMO motor do VW 13.180 - agrupar os dois para compra de oleo e filtro (65 ativos somados)."
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "15W-40 (recomendacao primaria Cummins); 10W-30 alternativo", "status": "confirmado", "fonte": "https://www.sbmar.com/wp-content/uploads/2018/04/Cummins-Oil-Specification-Requirements-From-QSOL-Oct-2017.pdf"},
+      "norma": {"valor": "Cummins CES 20086 (API CK-4) ou CES 20081 (API CJ-4)", "status": "confirmado", "fonte": "https://www.sbmar.com/wp-content/uploads/2018/04/Cummins-Oil-Specification-Requirements-From-QSOL-Oct-2017.pdf ; https://semitruckoil.com/engines/cummins/"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao encontrado valor confiavel. Consultar manual VW Delivery / manual Cummins ISF3.8."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": "Manual de 6 marchas OU automatizado V-Tronic - oleo Eaton SAE 40 (se caixa Eaton)", "status": "confirmado", "fonte": "Cambio: https://financasefuturo.com.br/volkswagen-delivery-11-180-2025-ficha-tecnica-consumo-preco-e-avaliacao-completa/ ; Oleo (inferido): https://www.6canecos.com.br/files/gear/OleoEaton.pdf"},
+      "norma": {"valor": "Especificacao Eaton", "status": "inferido", "fonte": "https://www.6canecos.com.br/files/gear/OleoEaton.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "automatizado": {"valor": "Opcional (V-Tronic)", "status": "confirmado", "fonte": "https://financasefuturo.com.br/volkswagen-delivery-11-180-2025-ficha-tecnica-consumo-preco-e-avaliacao-completa/"}
+    },
+    "oleo_diferencial": {
+      "tipo": {"valor": "85W-140 mineral", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "norma": {"valor": "API GL-5", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "fluido_freio": {"valor": "Freios pneumaticos ABS + EBD, com assistente de partida em rampa e controle de estabilidade. Nao usa fluido DOT", "status": "confirmado", "fonte": "https://financasefuturo.com.br/volkswagen-delivery-11-180-2025-ficha-tecnica-consumo-preco-e-avaliacao-completa/"},
+    "arrefecimento": {"tipo": {"valor": "Aditivo compativel Cummins (linha ES Compleat / CES 14603)", "status": "inferido", "fonte": "Familia de motor Cummins", "nota": "NAO confirmado nesta pesquisa."}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "arla": {"valor": "SIM - Cummins ISF 3.8 com SCR", "status": "confirmado", "fonte": "https://omecanico.com.br/man-latin-america-inicia-exportacao-de-veiculos-euro-5-para-argentina/ ; https://financasefuturo.com.br/volkswagen-delivery-11-180-2025-ficha-tecnica-consumo-preco-e-avaliacao-completa/", "nota": "Capacidade do tanque de ARLA nao confirmada."},
+    "filtros": {
+      "oleo": {"valor": "Tecfil PSL283", "status": "inferido", "fonte": "https://www.dungapecas.com.br/kit-filtros-vw-delivery-express-9-170-11-180-cummins-isf"},
+      "combustivel": {"valor": "Tecfil PEC7177", "status": "inferido", "fonte": "https://www.dungapecas.com.br/kit-filtros-vw-delivery-express-9-170-11-180-cummins-isf"},
+      "separador_agua": {"valor": "Incluso no kit (codigo nao publicado)", "status": "nao_encontrado", "fonte": "https://www.brasfilautopecas.com/MLB-3783567757-kit-filtros-vw-delivery-11180-motor-cummins-ano-2017-a-2023-_JM"},
+      "ar_motor": {"valor": "Tecfil PSC706", "status": "inferido", "fonte": "https://www.dungapecas.com.br/kit-filtros-vw-delivery-express-9-170-11-180-cummins-isf"},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": "2 x (12 V - 100 Ah)", "status": "confirmado", "fonte": "https://financasefuturo.com.br/volkswagen-delivery-11-180-2025-ficha-tecnica-consumo-preco-e-avaliacao-completa/", "nota": "CCA nao publicado."},
+    "pneu": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao confirmado. O 13.180 da mesma familia usa 215/75 R17.5 - conferir no ativo antes de comprar."},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "PBT 10,7 t, carga util ate 7,3 t. Consumo medio informado 4,2-4,8 km/L. Compartilha motor e kit de filtros com o VW 13.180."
+  },
+  {
+    "modelo": "CONSTELLATION 19330 (Constellation 19.330)",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "CAVALO/TOCO",
+    "anos": [2019, 2019],
+    "qtd_ativos": 5,
+    "motor": {
+      "valor": "Cummins ISL 330 - 6 cilindros, 334 cv, 1.450 Nm",
+      "status": "confirmado",
+      "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation%2019.330%20?id=2&productid=47 ; https://blogdocaminhoneiro.com/2017/03/volkswagen-constellation-19-330-tractor-v-tronic/",
+      "nota": "ATENCAO: apesar do nome 'Constellation', NAO usa motor MAN D08 - usa Cummins ISL (8,9 L). Oleo e filtros seguem a linha Cummins, nao a MAN."
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "15W-40 (recomendacao primaria Cummins)", "status": "inferido", "fonte": "https://www.sbmar.com/wp-content/uploads/2018/04/Cummins-Oil-Specification-Requirements-From-QSOL-Oct-2017.pdf", "nota": "Por familia Cummins, nao pelo manual do 19.330."},
+      "norma": {"valor": "Cummins CES 20086 (API CK-4) ou CES 20081 (API CJ-4)", "status": "inferido", "fonte": "https://www.sbmar.com/wp-content/uploads/2018/04/Cummins-Oil-Specification-Requirements-From-QSOL-Oct-2017.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Capacidade do carter do ISL 8,9 L nao levantada. Consultar manual Cummins ISL."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": "Manual ou automatizado V-Tronic, 16 marchas", "status": "confirmado", "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation%2019.330%20?id=2&productid=47"},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Caixa de 16 marchas pode ser ZF (nao Eaton) - conferir a plaqueta antes de comprar oleo."},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "automatizado": {"valor": "Opcional (V-Tronic 16 marchas)", "status": "confirmado", "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation%2019.330%20?id=2&productid=47"}
+    },
+    "oleo_diferencial": {
+      "tipo": {"valor": "85W-140 mineral", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "norma": {"valor": "API GL-5", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "fluido_freio": {"valor": "Freios a ar com ABS - sem fluido DOT", "status": "inferido", "fonte": "Padrao da linha Constellation"},
+    "arrefecimento": {"tipo": {"valor": "Aditivo compativel Cummins (ES Compleat / CES 14603) - NAO usar a especificacao MAN 324 deste caminhao", "status": "inferido", "fonte": "Familia de motor Cummins", "nota": "Ponto de atencao: e o unico 'Constellation' da frota que nao e MAN."}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "arla": {"valor": "SIM - Cummins ISL com SCR", "status": "inferido", "fonte": "https://omecanico.com.br/man-latin-america-inicia-exportacao-de-veiculos-euro-5-para-argentina/", "nota": "A fonte confirma que a linha VWCO com motores Cummins ISF e ISL usa SCR. Conferir se o veiculo tem tanque de ARLA."},
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Filtro da linha Cummins ISL - NAO e o mesmo do ISF 3.8 nem do MAN D08."},
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "pneu": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "Cavalo 4x2 para ate 45 t de PBTC. Modelo mais incompleto desta pesquisa junto com o 18.310: so o motor esta firme. Recomendo puxar o manual pelo chassi na concessionaria - sao so 5 ativos, mas com lista de pecas unica na frota (Cummins ISL)."
+  },
+  {
+    "modelo": "VW 18.310",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "TOCO",
+    "anos": [2025, 2025],
+    "qtd_ativos": 3,
+    "motor": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "CADASTRO SUSPEITO. Nao existe 'VW 18.310' na linha VWCO de 2025 - a linha Euro 6 tem Constellation 18.210 (D08 4 cil, 210 cv, 750 Nm) e Constellation 18.320 (D08 6 cil, 320 cv, 1.200 Nm). O unico '18.310' que existe e o VW Titan 18-310 dos anos 2000, com Cummins 6CTAA 8.3 L de 303 cv - incompativel com ano 2025. HIPOTESE MAIS PROVAVEL: erro de digitacao de 18.210 ou 18.320. Conferir o chassi/CRLV dos 3 ativos antes de qualquer compra."
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {"tipo": {"valor": null, "status": "nao_encontrado", "fonte": null}, "norma": {"valor": null, "status": "nao_encontrado", "fonte": null}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}, "automatizado": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "oleo_diferencial": {"tipo": {"valor": null, "status": "nao_encontrado", "fonte": null}, "norma": {"valor": null, "status": "nao_encontrado", "fonte": null}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "fluido_freio": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "arrefecimento": {"tipo": {"valor": null, "status": "nao_encontrado", "fonte": null}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "arla": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Se for mesmo um 2025 da linha VWCO, e Euro 6/P8 com SCR e USA ARLA 32. Mas o modelo precisa ser identificado primeiro."},
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "pneu": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "MODELO NAO IDENTIFICADO. Acao necessaria: ler o chassi/CRLV dos 3 ativos. Referencias para comparar: Constellation 18.210 (https://www.vwco.com.br/caminhoes/Constellation/18.210?id=2&productid=205) e Constellation 18.320 (https://www.vwco.com.br/caminhoes/Constellation/18.320?id=2&productid=207)."
+  },
+  {
+    "modelo": "MAN TGX 29.480",
+    "marca": "VOLKSWAGEN (MAN)",
+    "tipo_frota": "CAVALO MECANICO",
+    "anos": [2025, 2025],
+    "qtd_ativos": 1,
+    "motor": {
+      "valor": "MAN D26 (D2676) - 6 cilindros, 12,4 L, 480 cv, 2.400 Nm entre 1.000 e 1.500 rpm; common rail 1.800 bar, turbo com wastegate",
+      "status": "confirmado",
+      "fonte": "https://blogdocaminhoneiro.com/2017/03/man-tgx-29-480/ ; https://mecanicaonline.com.br/2015/04/man-tgx-29-480-chega-ao-mercado-brasileiro-como-o-mais-potente-da-man-latin-america/ ; https://transportemundial.com.br/caminhoes/man-tgx-29-480/",
+      "nota": "As fontes descrevem o TGX 29.480 lancado no Brasil em 2015 (Euro 5). O ativo e de 2025 - CONFERIR se e veiculo usado reemplacado ou uma versao Euro 6 mais nova, porque isso muda o pos-tratamento e a norma do oleo."
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "15W-40 ou 10W-40", "status": "inferido", "fonte": "Familia MAN D26"},
+      "norma": {"valor": "Aprovacao MAN (M 3477 / M 3575 para Euro V)", "status": "inferido", "fonte": "https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados", "nota": "Se o ativo for Euro 6, a norma e outra (M 3677/M 3777). Confirmar na concessionaria MAN."},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao levantada. Consultar a tabela de capacidades MAN TGX."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": "ZF AS 2630 OD (MAN TipMatic), automatizada de 16 marchas - fluido ZF conforme lista TE-ML", "status": "confirmado", "fonte": "https://blogdocaminhoneiro.com/2017/03/man-tgx-29-480/", "nota": "Fluido especifico ZF - NAO usar oleo de caixa Eaton."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Consultar a lista ZF TE-ML vigente para AS-Tronic/TipMatic."},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "automatizado": {"valor": "SIM - MAN TipMatic (ZF AS 2630 OD), 16 marchas", "status": "confirmado", "fonte": "https://blogdocaminhoneiro.com/2017/03/man-tgx-29-480/"}
+    },
+    "oleo_diferencial": {"tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Eixo MAN (hipoide). Especificacao e capacidade nao levantadas."}, "norma": {"valor": null, "status": "nao_encontrado", "fonte": null}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "fluido_freio": {"valor": "Freios a ar com ABS/EBS - sem fluido DOT", "status": "inferido", "fonte": "Categoria cavalo mecanico pesado"},
+    "arrefecimento": {"tipo": {"valor": "MAN 324 Typ SNF (ou Typ NF)", "status": "inferido", "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/"}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "arla": {"valor": "SIM - motor com tecnologia SCR", "status": "confirmado", "fonte": "https://blogdocaminhoneiro.com/2017/03/man-tgx-29-480/", "nota": "Capacidade do tanque de ARLA nao confirmada."},
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "pneu": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "1 ativo unico na frota, cabine e mecanica MAN (nao VWCO). Pecas pela rede MAN. Nao vale montar estoque - comprar sob demanda."
+  },
+  {
+    "modelo": "DELIVERY 18.210 (provavelmente Constellation 18.210 4x2)",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "TOCO",
+    "anos": [2025, 2025],
+    "qtd_ativos": 1,
+    "motor": {
+      "valor": "MAN D08 - 4 cilindros, 210 cv, 750 Nm (Constellation 18.210 4x2, Euro 6 / PROCONVE P8)",
+      "status": "inferido",
+      "fonte": "https://www.vwco.com.br/caminhoes/Constellation/18.210?id=2&productid=205 ; https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf",
+      "nota": "NAO EXISTE 'Delivery 18.210' na linha VWCO - o 18.210 e da linha CONSTELLATION. O cadastro da frota provavelmente esta com o nome da familia errado. Conferir o chassi antes de comprar."
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "15W-40 ou 10W-40", "status": "inferido", "fonte": "Familia MAN D08"},
+      "norma": {"valor": "Aprovacao MAN", "status": "inferido", "fonte": "https://public.man.eu/media/service/asp/media/en/auftritte/service_dokumente_/wartungs__und_betriebsstoffvorschrift/bezugsbremskraefte_2/Maintenance_and_service_product_recommendation.pdf"},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Carter do D08 4 cil nao levantado."},
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": "Opcao de transmissao AUTOMATICA de 8 marchas (fluido especifico de automatico, nao oleo de caixa manual)", "status": "inferido", "fonte": "https://www.vwco.com.br/caminhoes/Constellation/18.210?id=2&productid=205", "nota": "Se o ativo tiver a automatica de 8 marchas (provavelmente Allison), o fluido e ATF de especificacao Allison TES - COMPLETAMENTE diferente do oleo Eaton SAE 40 do resto da frota. Conferir a plaqueta."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "automatizado": {"valor": "Opcao automatica de 8 marchas", "status": "inferido", "fonte": "https://www.vwco.com.br/caminhoes/Constellation/18.210?id=2&productid=205"}
+    },
+    "oleo_diferencial": {"tipo": {"valor": "85W-140 mineral", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"}, "norma": {"valor": "API GL-5", "status": "inferido", "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf"}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "fluido_freio": {"valor": "Freios a ar com ABS - sem fluido DOT", "status": "inferido", "fonte": "https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf"},
+    "arrefecimento": {"tipo": {"valor": "MAN 324 Typ SNF (ou Typ NF)", "status": "inferido", "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/"}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "arla": {"valor": "SIM - Euro 6 / PROCONVE P8 com SCR. Tanque ARLA 32 de 60 L (plastico)", "status": "confirmado", "fonte": "https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf"},
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": "Separador da linha Constellation MAN Euro 6 (referencia de varejo cobre '210/260/320 MAN Euro 6')", "status": "inferido", "fonte": "https://www.rfautopecas.com.br/017034/filtro-combustivel-separador-agua-vw-constellation-210260320-man-euro-6-23-"},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": "2 x (12 V - 100 Ah); opcionais 2 x 135 Ah ou 2 x 170 Ah", "status": "confirmado", "fonte": "https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf"},
+    "pneu": {"valor": "275/80 R22.5 ou 295/80 R22.5", "status": "confirmado", "fonte": "https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf"},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "Tanque de combustivel 275 L ou 2 x 275 L (plastico) na familia. 1 ativo. Nome do cadastro esta errado ('Delivery' no lugar de 'Constellation') - vale corrigir para nao errar a compra."
+  },
+  {
+    "modelo": "SAVEIRO RB (Saveiro Robust 1.6 MSI)",
+    "marca": "VOLKSWAGEN",
+    "tipo_frota": "FROTA LEVE",
+    "anos": [2025, 2025],
+    "qtd_ativos": 1,
+    "motor": {
+      "valor": "1.6 MSI flex, familia EA211, 4 cilindros - 101 cv (gasolina) / 104 cv (etanol); 15,4 kgfm (gasolina) / 16,8 kgfm (etanol)",
+      "status": "confirmado",
+      "fonte": "https://www.icarros.com.br/volkswagen/saveiro/ficha-tecnica/29550 ; https://jkcarros.com.br/ficha-tecnica-volkswagen-saveiro-robust-cs-2026/"
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "CONFLITO DE FONTES: sites citam '5W-40 atendendo a norma VW 508 88', mas a VW 508 88 e uma norma de 0W-20 - as duas coisas nao andam juntas. Nao da para decidir por busca. Consultar o manual do proprietario do ativo (a norma mudou entre geracoes do 1.6 MSI: VW 502 00 5W-40 nas mais antigas, VW 508 88 0W-20 nas novas). Usar 5W-40 num motor que pede 0W-20 (ou o contrario) tem impacto real."
+      },
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver nota acima. Candidatas: VW 502 00 ou VW 508 88. Decidir pelo manual, nao por catalogo de loja."},
+      "volume_l": {"valor": "~4,5 L", "status": "inferido", "fonte": "https://www.manualdooleo.com.br/tabela-oleo/volkswagen/saveiro", "nota": "Valor de tabela generica da Saveiro (varia por motorizacao e ano). Conferir."},
+      "base": {"valor": "Sintetico", "status": "inferido", "fonte": "https://www.manualdooleo.com.br/tabela-oleo/volkswagen/saveiro"}
+    },
+    "oleo_cambio": {
+      "tipo": {"valor": "Cambio manual de 5 marchas", "status": "confirmado", "fonte": "https://jkcarros.com.br/ficha-tecnica-volkswagen-saveiro-robust-cs-2026/", "nota": "Fluido do cambio manual VW (normalmente especificacao VW G 052 xxx) nao levantado."},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "automatizado": {"valor": "Nao - manual 5 marchas", "status": "confirmado", "fonte": "https://jkcarros.com.br/ficha-tecnica-volkswagen-saveiro-robust-cs-2026/"}
+    },
+    "oleo_diferencial": {"tipo": {"valor": "NAO SE APLICA - tracao dianteira, diferencial integrado a caixa de cambio (usa o mesmo fluido do cambio)", "status": "inferido", "fonte": "Arquitetura transversal FWD da plataforma VW"}, "norma": {"valor": null, "status": "nao_encontrado", "fonte": null}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "fluido_freio": {"valor": "Fluido de freio hidraulico DOT 4 (padrao VW para a linha leve)", "status": "inferido", "fonte": "Padrao da linha de passeio VW", "nota": "NAO confirmado no manual do ativo. Unico veiculo da frota com freio hidraulico - todos os outros sao pneumaticos."},
+    "arrefecimento": {"tipo": {"valor": "Aditivo VW da linha G12/G13 (especificacao VW TL 774)", "status": "inferido", "fonte": "Padrao da linha VW", "nota": "NAO confirmado. Nao misturar com o MAN 324 dos caminhoes."}, "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "arla": {"valor": "NAO - motor a gasolina/etanol (flex), nao usa ARLA 32", "status": "confirmado", "fonte": "https://www.icarros.com.br/volkswagen/saveiro/ficha-tecnica/29550"},
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": "NAO SE APLICA - veiculo flex, nao diesel", "status": "confirmado", "fonte": "https://www.icarros.com.br/volkswagen/saveiro/ficha-tecnica/29550"},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": "NAO SE APLICA - sem sistema pneumatico", "status": "confirmado", "fonte": "Veiculo leve com freio hidraulico"}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "O EA211 usa correia dentada banhada a oleo em algumas versoes e corrente em outras - ponto de manutencao caro se errado. Confirmar no manual."},
+    "bateria": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sistema 12 V, bateria unica. Ah/CCA nao levantados."},
+    "pneu": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nao confirmado. Conferir na etiqueta da coluna da porta."},
+    "intervalos": {"oleo_motor": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Plano de revisao VW linha leve - consultar o manual/concessionaria."}, "filtros": {"valor": null, "status": "nao_encontrado", "fonte": null}},
+    "observacoes": "Tanque de combustivel 55 L. Consumo informado 11,5 km/L cidade e 12,9 km/L estrada (gasolina). Unico veiculo leve/flex da lista - nao entra em nenhum padrao dos caminhoes (freio hidraulico, sem ARLA, sem sistema pneumatico, oleo de passeio)."
+  }
+]

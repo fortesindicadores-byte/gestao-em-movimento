@@ -1,0 +1,595 @@
+[
+  {
+    "modelo": "MASTER FURGÃO L1H1",
+    "marca": "RENAULT",
+    "anos": [2021, 2023],
+    "tipo": "VAN",
+    "ativos": 16,
+    "motor": {
+      "valor": "Renault M9T 2.3 dCi 16V turbodiesel, 4 cilindros, 2.298 cm³ — 130 cv (linha 2021/2022) e 136 cv (linha 2022/2023, motor M9T Gen 4 revisado); torque 31,7 kgfm",
+      "status": "confirmado",
+      "fonte": "https://www.fastoleo.com.br/filtros/filtro-de-ar/filtro-de-ar-tecfil-arl5140-renault-master-2-3 (catálogo de aplicação Tecfil cita literalmente 'Motor M9T' p/ Master 2.3 16V 130CV 2013-2021 e 2022 em diante); https://www.mobiauto.com.br/catalogo/carros/renault/master/2022/furgao-l1h1",
+      "nota": "A cilindrada exata (2.298 cm³) NÃO foi lida em fonte Renault — está marcada junto por ser dado consolidado da família M9T. Se a compra depender da cilindrada, confirmar no CRLV."
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "SAE 5W-30",
+        "status": "confirmado",
+        "fonte": "https://peca.renault.com.br/oleo-motrio-5w30-dieselx-8660089614-renault-master___CP656 (óleo de rede Renault p/ Master); https://www.fastoleo.com.br/compre-por-marca/renault/master/kit-oleo-5w30-c3-para-renault-master-2-3-136cv-2021-ate-2023"
+      },
+      "norma": {
+        "valor": "Renault RN0720 (low SAPS). Kits de mercado também declaram ACEA C3/C4.",
+        "status": "confirmado",
+        "fonte": "https://www.fastoleo.com.br/compre-por-marca/renault/master/kit-oleo-5w30-c3-para-renault-master-2-3-136cv-2021-ate-2023; https://www.maucor.com.br/produto/kit/elf_tecfil_kit_troca_de_oleo_+_filtro_renault_master_2.3_2022_2023_2024_master2022.html (kit com óleo ELF homologado RENAULT RN0720)",
+        "nota": "PONTO CRÍTICO DE COMPRA: RN0720 é obrigatório por causa do filtro de partículas (DPF) e do turbo. Óleo 5W-30 'C3 genérico' sem a homologação RN0720 impressa na embalagem NÃO atende. RN0710 é a norma do motor SEM DPF e não substitui a RN0720."
+      },
+      "volume_l": {
+        "valor": "entre 8,0 e 8,9 L (com filtro) — fontes divergem",
+        "status": "inferido",
+        "fonte": "Catálogos de aplicação de óleo p/ Master III 2.3 dCi indicam 8,0 L (https://oil4motor.com/en/vans-oil/RENAULT/Master-2.3-DCI-125-(M9T-672-676---92kW)-(Diesel)-(2011-)/2489); tabelas de óleo brasileiras citam 8,9 L; kits de oficina no Brasil vêm com 8 L (ELF/Mobil) e a loja oficial Renault vende kit de 9 L (https://www.loja.iesarenault.com.br/MLB-1757686245-kit-9-litros-de-oleo-original-renault-master-23-16v-_JM)",
+        "nota": "NÃO comprar por este número sem conferir o manual do proprietário da linha específica. Comprar 9 L cobre todos os cenários; abastecer sempre pela vareta."
+      },
+      "base": {
+        "valor": "Sintético",
+        "status": "confirmado",
+        "fonte": "https://peca.renault.com.br/oleo-motrio-5w30-dieselx-8660089614-renault-master___CP656"
+      }
+    },
+    "oleo_cambio": {
+      "tipo_cambio": {
+        "valor": "Manual de 6 marchas (família PK6), tração dianteira — câmbio e diferencial são uma peça só (transeixo/transaxle)",
+        "status": "confirmado",
+        "fonte": "https://www.mobiauto.com.br/catalogo/carros/renault/master/2022/furgao-l1h1 (caixa manual de seis marchas); https://www.kroon-oil.com/en/product-recommendation/light-commercial-vehicles-7-5t/renault-eu/master-iii-x62/master-iii-2-3-dci-145-fwd-dpf-x62/39393/ (a ficha de aplicação trata a unidade como 'transmission (transaxle)')"
+      },
+      "tipo": {
+        "valor": "Óleo de transmissão manual SAE 75W-80",
+        "status": "confirmado",
+        "fonte": "https://www.autodoc.co.uk/car-parts/gearbox-oil-and-transmission-oil-11915/renault/master/master-iii-box-fv/33279-2-3-dci-125-fwd-fv0c-fv0d-fv0g-fv0h-fv0j-fv0k"
+      },
+      "norma": {
+        "valor": "ELF Tranself NFJ 75W-80 (especificação Renault para a caixa PK6); catálogos citam também API GL-4/GL-5 75W-80",
+        "status": "inferido",
+        "fonte": "Catálogos de aplicação (AUTODOC / Kroon-Oil) apontam Tranself NFJ 75W-80 para Master 2.3 dCi. Deduzido da família de caixa PK6 do Master III — não foi lido no manual Renault.",
+        "nota": "Confirmar no manual: alguns 75W-80 GL-5 atacam sincronizadores de caixas que pedem GL-4. Comprar pelo nome da especificação Renault (Tranself NFJ), não só pela viscosidade."
+      },
+      "volume_l": {
+        "valor": "≈2,7 L",
+        "status": "inferido",
+        "fonte": "Catálogo de aplicação p/ Master III (PK6) — https://www.kroon-oil.com/en/product-recommendation/light-commercial-vehicles-7-5t/renault-eu/master-iii-x62/master-iii-2-3-dci-125-fwd-x62/39391/",
+        "nota": "Valor de catálogo europeu do Master III, não do manual brasileiro."
+      }
+    },
+    "oleo_diferencial": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "NÃO EXISTE item separado: o Master L1H1 é de tração dianteira e o diferencial é interno à caixa PK6 — quem lubrifica o diferencial é o óleo de câmbio acima. Não comprar óleo de diferencial para este veículo."
+    },
+    "fluido_freio": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Precisa ser lido no manual do proprietário Master (seção 'Características técnicas / capacidades') ou na tampa do reservatório. O padrão Renault para a linha é DOT 4, mas NÃO foi confirmado em fonte para este veículo. Confirmar também o intervalo (a Renault costuma pedir troca a cada 2 anos independentemente da km)."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Renault Glaceol RX (Type D) — norma Renault 41-01-001/S tipo D, cor amarela",
+        "status": "confirmado",
+        "fonte": "https://www.francemoteursutilitaires.com/2026/04/18/liquide-refroidissement-master-3-type-preconise-par-renault-et-erreurs-a-eviter/ (cita a norma Renault 41-01-001/S tipo D para o M9T do Master 3)",
+        "nota": "Fonte técnica especializada, não o manual Renault Brasil. Não misturar com aditivo orgânico genérico."
+      },
+      "volume_l": {
+        "valor": "≈11 L",
+        "status": "inferido",
+        "fonte": "Catálogo de aplicação p/ Master III 2.3 dCi (Kroon-Oil / oil4motor)",
+        "nota": "Valor europeu do Master III. Conferir no manual brasileiro."
+      }
+    },
+    "arla": {
+      "valor": "DEPENDE DO ANO — 2021 e 2022: NÃO usa ARLA 32 (pós-tratamento só por EGR + DPF, PROCONVE L6 ≈ Euro 5). 2023 (Master reestilizado, M9T Gen 4): USA ARLA 32 com sistema SCR, PROCONVE L7 ≈ Euro 6.",
+      "status": "confirmado",
+      "fonte": "https://www.autossegredos.com.br/segredos/novo-renault-master-2023-reestilizado-ja-e-produzido/ (o Master 2023 'terá tanque de Arla 32'); https://revistacarro.com.br/renault-master-2023-traz-novo-visual-e-motor-atualizado/; https://omecanico.com.br/renault-master-atende-as-exigencias-do-proconve-l6/ (Master L6 usa EGR, 'não há necessidade de usar Arla 32'); https://loja.rpoint.com.br/arla-32-econox-galao-20-litros-renault-master-2-3-dci-2023-acrarla",
+      "nota": "ACHADO IMPORTANTE PARA A FROTA: os 16 ativos vão de 2021 a 2023, ou seja há DUAS configurações de pós-tratamento dentro do mesmo modelo. As unidades 2023 consomem ARLA e têm sensor/tanque de ureia; as 2021-2022 não. Separar por ano-modelo antes de programar consumo de ARLA ou manutenção de SCR."
+    },
+    "filtros": {
+      "oleo": {
+        "valor": "Tecfil PEL678",
+        "status": "confirmado",
+        "fonte": "Catálogo de aplicação Tecfil (Master 2.3 16V 130CV Turbo Diesel motor M9T 2022 em diante e 2.3 DCI 130CV motor M9T 2013-2021) — https://www.fastoleo.com.br/compre-por-marca/renault/master/kit-troca-de-oleo-renault-master-2-3-16v-turbo-diesel-2022-em-diante"
+      },
+      "combustivel": {
+        "valor": "Tecfil PC947 (OEM Renault 164009963R)",
+        "status": "confirmado",
+        "fonte": "https://www.fastoleo.com.br/filtros/filtro-de-combustivel/filtro-de-combustivel-tecfil-pc947-renault-master-2-3-2-5 (aplicação: Master 2.3 16V 130 cv 2013 em diante e 2.3 dCi 136 cv 2022 em diante); OEM 164009963R citado em https://www.ebay.de/p/2265682646"
+      },
+      "separador_agua": {
+        "valor": "Função integrada ao próprio filtro de combustível (PC947, com dreno) — não há elemento separado",
+        "status": "inferido",
+        "fonte": "Deduzido de o catálogo listar apenas um filtro de combustível para a aplicação, com dreno; nenhum item 'separador de água' aparece nos kits de revisão do Master.",
+        "nota": "Confirmar visualmente no veículo se existe copo/dreno independente."
+      },
+      "ar_motor": {
+        "valor": "Tecfil ARL5140",
+        "status": "confirmado",
+        "fonte": "https://www.fastoleo.com.br/filtros/filtro-de-ar/filtro-de-ar-tecfil-arl5140-renault-master-2-3"
+      },
+      "ar_cabine": {
+        "valor": "Tecfil ACP837 (kit KITACP837); OEM Renault 7701209837",
+        "status": "confirmado",
+        "fonte": "https://www.ivemix.com.br/filtro-ar-condicionado-cabine-renault-nova-master-2-3-16v-dci-eletronica-2014-a-2021-7701209837/sku235"
+      },
+      "secador_ar": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "NÃO SE APLICA: o Master tem freio hidráulico, não pneumático — não existe secador de ar."
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Não foi possível confirmar se o M9T usa correia dentada ou corrente de comando, nem o intervalo de troca. Consultar o manual do proprietário Master 2021+ ou o catálogo Gates/Contitech pela aplicação 'Renault Master 2.3 dCi M9T'. É um item caro para errar — não estimar."
+    },
+    "bateria": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Tensão (12V) é certa por ser veículo leve, mas Ah e CCA NÃO foram confirmados. Consultar a etiqueta da bateria original ou o catálogo Moura/Heliar pela aplicação Master 2.3 dCi 2021-2023."
+    },
+    "pneu": {
+      "valor": "225/65 R16C — mesma medida nos quatro cantos e no estepe (carga, 8 lonas; índices típicos 112/110 R ou T)",
+      "status": "confirmado",
+      "fonte": "https://jantes-e-pneus.com/tire/iso-metric-225-65-R-16/renault/master/2001-2010/; https://www.pantapneus.com.br/pneus-por-aro/pneus-aro-16/pneu-22565r16-8-lonas-triangle-tr652-112110r; https://www.zeppelinpneus.com.br/pneu-para-renault-master",
+      "nota": "Confirmado por catálogos de aplicação de pneu, não pela ficha técnica Renault (renault.com.br está bloqueado para acesso automatizado). O sufixo 'C' (comercial/reforçado) é obrigatório — pneu de passeio 225/65 R16 comum não tem índice de carga para o Master carregado."
+    },
+    "intervalos": {
+      "valor": "Revisão a cada 20.000 km ou 12 meses (o que ocorrer primeiro), com tolerância de 1.000 km / 30 dias para manter a garantia. Na revisão de 20.000 km trocam-se óleo + filtro de óleo + filtro de ar + filtro de combustível + filtro de cabine.",
+      "status": "confirmado",
+      "fonte": "https://www.suaoficinaonline.com.br/conteudo/plano-revisao-renault-nova-master/; https://www.primeiravan.com.br/blog/renault-master-manutencao-guia-revisoes",
+      "nota": "RECOMENDAÇÃO PARA USO SEVERO (que é o caso de operação Ambev — rodagem urbana, carga, muitas partidas): as fontes recomendam encurtar o óleo para 10.000 km ou 6 meses. Decisão de engenharia da frota, não obrigação de fábrica."
+    },
+    "observacoes": "ITENS 1 E 2 SÃO O MESMO VEÍCULO (resposta direta à pergunta): 'MASTER FUR L1' é a descrição abreviada de 'MASTER FURGÃO L1H1'. No código de carroceria Renault, L = comprimento (L1 = entre-eixos curto) e H = altura de teto (H1 = teto baixo); o furgão L1 vendido no Brasil no período 2021-2022 é oferecido como L1H1. Do ponto de vista de MANUTENÇÃO E COMPRA DE PEÇA são idênticos: mesmo motor M9T 2.3, mesmos quatro filtros (PEL678 / PC947 / ARL5140 / ACP837), mesmo óleo RN0720 5W-30, mesma medida de pneu 225/65 R16C, mesmo plano de 20.000 km. Recomendo tratar os 23 ativos (16 + 7) como um único item de catálogo. [status desta conclusão: inferido — deduzido da nomenclatura Renault e da coincidência total de anos e tipo; NÃO foi lido um documento Renault dizendo que as duas descrições são a mesma versão. Se houver chassi disponível, a confirmação definitiva sai da consulta de VIN.] || ATENÇÃO À QUEBRA DE ANO-MODELO: a frota vai de 2021 a 2023 e o Master mudou de geração de pós-tratamento em 2023 (ganhou ARLA 32/SCR e passou a 136 cv). Filtros e óleo seguem os mesmos, mas ARLA e itens de SCR só existem nos 2023."
+  },
+  {
+    "modelo": "MASTER FUR L1",
+    "marca": "RENAULT",
+    "anos": [2021, 2022],
+    "tipo": "VAN",
+    "ativos": 7,
+    "motor": {
+      "valor": "Idêntico ao item 1 — Renault M9T 2.3 dCi 16V, 130 cv (2021/2022)",
+      "status": "inferido",
+      "fonte": "Mesma família/descrição do item 1; ver justificativa em 'observacoes'."
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": "SAE 5W-30", "status": "inferido", "fonte": "Mesmo veículo do item 1"},
+      "norma": {"valor": "Renault RN0720 (low SAPS)", "status": "inferido", "fonte": "Mesmo veículo do item 1", "nota": "PONTO CRÍTICO: exigir RN0720 impresso na embalagem."},
+      "volume_l": {"valor": "entre 8,0 e 8,9 L (com filtro)", "status": "inferido", "fonte": "Mesmo veículo do item 1", "nota": "Fontes divergem; comprar 9 L cobre o pior caso e abastecer pela vareta."},
+      "base": {"valor": "Sintético", "status": "inferido", "fonte": "Mesmo veículo do item 1"}
+    },
+    "oleo_cambio": {
+      "tipo_cambio": {"valor": "Manual 6 marchas PK6, tração dianteira (transeixo)", "status": "inferido", "fonte": "Mesmo veículo do item 1"},
+      "tipo": {"valor": "SAE 75W-80", "status": "inferido", "fonte": "Mesmo veículo do item 1"},
+      "norma": {"valor": "ELF Tranself NFJ 75W-80", "status": "inferido", "fonte": "Mesmo veículo do item 1"},
+      "volume_l": {"valor": "≈2,7 L", "status": "inferido", "fonte": "Mesmo veículo do item 1"}
+    },
+    "oleo_diferencial": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "NÃO SE APLICA — diferencial integrado à caixa (tração dianteira)."},
+    "fluido_freio": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item 1: consultar manual/tampa do reservatório."},
+    "arrefecimento": {
+      "tipo": {"valor": "Renault Glaceol RX (Type D), norma Renault 41-01-001/S tipo D", "status": "inferido", "fonte": "Mesmo veículo do item 1"},
+      "volume_l": {"valor": "≈11 L", "status": "inferido", "fonte": "Mesmo veículo do item 1"}
+    },
+    "arla": {
+      "valor": "NÃO usa ARLA 32 — pós-tratamento por EGR + DPF (PROCONVE L6 ≈ Euro 5). A faixa de anos deste item (2021-2022) é anterior à adoção do SCR no Master, que ocorreu na linha 2023.",
+      "status": "confirmado",
+      "fonte": "https://omecanico.com.br/renault-master-atende-as-exigencias-do-proconve-l6/; https://www.autossegredos.com.br/segredos/novo-renault-master-2023-reestilizado-ja-e-produzido/"
+    },
+    "filtros": {
+      "oleo": {"valor": "Tecfil PEL678", "status": "inferido", "fonte": "Mesma aplicação do item 1 (Master 2.3 M9T 2013-2021)"},
+      "combustivel": {"valor": "Tecfil PC947 (OEM 164009963R)", "status": "inferido", "fonte": "Mesma aplicação do item 1"},
+      "separador_agua": {"valor": "Integrado ao filtro de combustível", "status": "inferido", "fonte": "Mesma aplicação do item 1"},
+      "ar_motor": {"valor": "Tecfil ARL5140", "status": "inferido", "fonte": "Mesma aplicação do item 1"},
+      "ar_cabine": {"valor": "Tecfil ACP837 / OEM 7701209837", "status": "inferido", "fonte": "Mesma aplicação do item 1"},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "NÃO SE APLICA — freio hidráulico."}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item 1 — correia/corrente de comando do M9T não confirmada."},
+    "bateria": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Ver item 1."},
+    "pneu": {"valor": "225/65 R16C", "status": "inferido", "fonte": "Mesma aplicação do item 1"},
+    "intervalos": {"valor": "20.000 km ou 12 meses (tolerância 1.000 km / 30 dias)", "status": "inferido", "fonte": "Mesmo plano do item 1"},
+    "observacoes": "ESTE ITEM É O MESMO VEÍCULO DO ITEM 1 — ver a justificativa completa em 'observacoes' do item 1. Todos os campos aqui estão marcados 'inferido' justamente porque foram herdados do item 1, não pesquisados de forma independente. Sugestão de cadastro: fundir os dois itens num só (23 ativos) para não manter dois catálogos de peça iguais, que é como se compra errado."
+  },
+  {
+    "modelo": "DAILY 30-130VAN",
+    "marca": "IVECO",
+    "anos": [2021, 2022],
+    "tipo": "VAN",
+    "ativos": 7,
+    "motor": {
+      "valor": "FPT F1A 2.3 16V turbodiesel, 4 cilindros — 130 cv a 3.600 rpm, torque 32,6 kgfm entre 1.800 e 2.500 rpm; injeção common rail, comando por correia dentada, EGR",
+      "status": "confirmado",
+      "fonte": "https://www.autossegredos.com.br/caminhoes-2/iveco-caminhoes-2/novo-iveco-daily-city-30-130-chega-ao-mercado-por-r-146-900/; https://www.fichacompleta.com.br/carros/iveco/daily-furgao-30-130-2-3-2021; catálogo Wega separa explicitamente 'Daily 30-130 2.3 F1A' de 'Daily 3.0 F1C'",
+      "nota": "CORREÇÃO DE PREMISSA: o 30-130 brasileiro NÃO é o 3.0 F1C — é o 2.3 F1A. Confundir os dois leva a comprar o kit de filtros errado (o F1C 3.0 usa outro conjunto)."
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "SAE 5W-30",
+        "status": "confirmado",
+        "fonte": "https://blogdacarboni.com.br/2020/05/20/chegou-o-novo-oleo-de-motor-urania-para-uso-na-linha-iveco-daily-2020/; https://www.lojaivecodeva.com.br/MLB-2867615600-kit-7l-oleo-petronas-motor-daily-5w30-original-iveco-_JM"
+      },
+      "norma": {
+        "valor": "IVECO 18-1811 SC1 (produto de referência: PETRONAS Urania DAILY LS 5W-30, low SAPS, co-desenvolvido com IVECO/FPT). Fontes brasileiras também exigem API CK-4 para manter a garantia.",
+        "status": "confirmado",
+        "fonte": "https://www.pli-petronas.com/en-gb/iveco-urania/products/petronas-urania-daily-ls-5w-30 (site do fabricante do óleo: 'IVECO 18-1811 SC1 C.T.R.', recomendado p/ Daily Euro 5/V com filtro de partículas); https://blog.caminhoesecarretas.com.br/2026/05/iveco-daily-35s14-ficha-tecnica/",
+        "nota": "PONTO CRÍTICO / CORREÇÃO DA PREMISSA DO PEDIDO: a norma do Daily 2.3 Euro 5 é 18-1811 Classe SC1, NÃO a 18-1804. A 18-1804 é a família de especificação usada em outros motores/linhas Iveco e não é equivalente — a SC1 é low SAPS por causa do pós-tratamento. Comprar pela classe impressa na embalagem."
+      },
+      "volume_l": {
+        "valor": "≈7,0 L (com filtro)",
+        "status": "inferido",
+        "fonte": "Kit de óleo original vendido pela rede Iveco vem com 7 L (https://www.lojaivecodeva.com.br/MLB-2867615600-kit-7l-oleo-petronas-motor-daily-5w30-original-iveco-_JM) e tabelas de óleo indicam 7,0 L para o Daily",
+        "nota": "Deduzido do volume do kit de revisão, não do manual. Conferir pela vareta."
+      },
+      "base": {"valor": "Sintético", "status": "confirmado", "fonte": "https://www.pli-petronas.com/en-gb/iveco-urania/products/petronas-urania-daily-ls-5w-30"}
+    },
+    "oleo_cambio": {
+      "tipo_cambio": {
+        "valor": "Manual ZF 6S 480, 6 marchas à frente + 1 ré, com 2 marchas overdrive",
+        "status": "confirmado",
+        "fonte": "https://viacircular.com.br/chassis/iveco/daily-30-130/; https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0079-20%20LAMINA_TECNICA_DAILY_FURGAO_30-130_PO_bx.pdf (lâmina técnica oficial, localizada mas não legível pelo proxy)"
+      },
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "norma": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Precisa ser lido no manual Iveco Daily ou na lista ZF TE-ML da caixa 6S 480 (a ZF publica a classe TE-ML aplicável em cada caixa). A linha de referência Iveco é a PETRONAS Tutela, mas o produto exato não foi confirmado."
+      },
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Eixo traseiro de redução simples; óleo de engrenagem SAE 80W-90 API GL-5 — produto de referência PETRONAS Tutela W90 M-DA",
+        "status": "inferido",
+        "fonte": "https://blog.caminhoesecarretas.com.br/2026/05/iveco-daily-35s14-ficha-tecnica/ (recomendação para eixo traseiro do Daily); configuração do eixo em https://viacircular.com.br/chassis/iveco/daily-30-130/",
+        "nota": "A recomendação foi lida para o Daily 35S14, não especificamente para o 30-130. Mesma família de eixo, mas confirmar."
+      },
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "fluido_freio": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "O Daily 30-130 (3,5 t) tem freio HIDRÁULICO a disco nas quatro rodas, não pneumático — logo usa fluido DOT, mas a classe exata (DOT 4 / DOT 4 LV) não foi confirmada. Ler a tampa do reservatório ou o manual."
+    },
+    "arrefecimento": {
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "A linha de referência Iveco/FPT é o PETRONAS Paraflu UP (OAT), mas não foi confirmado para esta aplicação. Consultar o manual."},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "arla": {
+      "valor": "NÃO usa ARLA 32. O pós-tratamento é por EGR (recirculação de gases). Emissão Euro 5 (as fichas classificam a versão como '(Die)(E5)').",
+      "status": "confirmado",
+      "fonte": "https://www.autossegredos.com.br/caminhoes-2/iveco-caminhoes-2/novo-iveco-daily-city-30-130-chega-ao-mercado-por-r-146-900/ ('o novo motor turbodiesel tem baixas emissões sem a necessidade de ARLA 32'); https://blog.checkcarro.com.br/iveco-daily-furgao-30-130-2-3-12m%C2%B3-diee5/",
+      "nota": "Consequência prática: estes 7 ativos NÃO entram no consumo de ARLA da frota. Se aparecerem com consumo de ARLA lançado, é erro de apontamento."
+    },
+    "filtros": {
+      "oleo": {
+        "valor": "Wega WO331",
+        "status": "confirmado",
+        "fonte": "Catálogo Wega / kit de aplicação 'Daily 30.130 Diesel 2.3 2020 em diante' — http://flypecas.commercesuite.com.br/iveco/daily/kit-filtros/filtros-ar-oleo-combustivel-daily-30-130-2-3-2020-em-diante"
+      },
+      "combustivel": {
+        "valor": "Wega FCD0806 (filtro de combustível com dreno)",
+        "status": "confirmado",
+        "fonte": "http://flypecas.commercesuite.com.br/iveco/daily/kit-filtros/filtros-ar-oleo-combustivel-daily-30-130-2-3-2020-em-diante"
+      },
+      "separador_agua": {
+        "valor": "Função de dreno integrada ao FCD0806 ('FCD' = filtro de combustível com dreno)",
+        "status": "inferido",
+        "fonte": "Deduzido da nomenclatura Wega FCD e de o kit do 30-130 2.3 trazer apenas três filtros (ar, óleo, combustível)",
+        "nota": "Confirmar no veículo se há copo separador independente."
+      },
+      "ar_motor": {
+        "valor": "Wega FAP7002",
+        "status": "confirmado",
+        "fonte": "http://flypecas.commercesuite.com.br/iveco/daily/kit-filtros/filtros-ar-oleo-combustivel-daily-30-130-2-3-2020-em-diante; https://www.gb.com.br/orcamento-online/filtro-ar-daily-30-130-2-3-fpt-130cv-20-daily-35-150-3-0-20/"
+      },
+      "ar_cabine": {
+        "valor": "Wega AKX1382F",
+        "status": "confirmado",
+        "fonte": "https://www.msam.com.br/produto/wega-filtros-akx1382f-filtro-cabine-iveco-daily-30-130-2-3-fpt-130cv-2020-daily-35-150-3-0-fp-190232 (aplicação literal: 'Daily 30 130 2.3 FPT 130cv 2020...')"
+      },
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "NÃO SE APLICA — freio hidráulico, sem sistema pneumático."}
+    },
+    "correia": {
+      "valor": "Comando de válvulas acionado por CORREIA DENTADA (não corrente) — família de motores do Daily descrita com 'duplo comando de válvulas no cabeçote acionado por correia dentada'",
+      "status": "confirmado",
+      "fonte": "https://www.autossegredos.com.br/caminhoes-2/iveco-caminhoes-2/novo-iveco-daily-city-30-130-chega-ao-mercado-por-r-146-900/",
+      "nota": "O CÓDIGO da correia e o INTERVALO de troca não foram encontrados — e num motor com correia dentada o intervalo é item de segurança (arrebentou, quebra o motor). Levantar no manual Iveco ou no catálogo Gates/Contitech pela aplicação 'Iveco Daily 2.3 F1A'. É a pendência mais urgente deste veículo."
+    },
+    "bateria": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Outras versões do Daily (35S14) aparecem com 12V 110Ah nas fichas técnicas oficiais, mas NÃO foi confirmado para o 30-130. Ler a etiqueta da bateria original ou a lâmina técnica oficial (https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0079-20 LAMINA_TECNICA_DAILY_FURGAO_30-130_PO_bx.pdf)."
+    },
+    "pneu": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "NÃO CONFIRMADO e há mais de um candidato circulando: 195/75 R16C aparece como medida compatível com Daily furgão em catálogos de pneu, enquanto outras versões Daily (35S14 e afins) usam 225/75 R16 ou 225/65 R16. Comprar errado aqui é caro e afeta a calibragem/carga. A medida oficial está na lâmina técnica DAILY 30-130 FURGÃO da Iveco Brasil (URL acima) — bloqueada para leitura automatizada; abrir manualmente ou medir o pneu montado."
+    },
+    "intervalos": {
+      "valor": "Revisão a cada 30.000 km ou 12 meses, o que ocorrer primeiro. Em operação severa (muitas partidas a frio, ambiente com poeira excessiva) a própria Iveco recomenda reduzir para 20.000 km.",
+      "status": "confirmado",
+      "fonte": "https://blog.caminhoesecarretas.com.br/2026/05/iveco-daily-35s14-ficha-tecnica/",
+      "nota": "A recomendação foi lida para a linha Daily (artigo do 35S14). Operação de distribuição urbana Ambev se enquadra no cenário severo — considerar 20.000 km."
+    },
+    "observacoes": "Tanque de combustível de 65 L (https://www.autossegredos.com.br/caminhoes-2/iveco-caminhoes-2/novo-iveco-daily-city-30-130-chega-ao-mercado-por-r-146-900/). Referências cruzadas OEM que aparecem junto ao kit de filtros do 30-130 2.3 (relação peça↔código NÃO verificada individualmente, usar só como pista de busca): 5801317097, 5802050393, 5801982827, 500058318, 500086372, 2995655, e equivalentes de mercado C40002, PU7017Z, PEC3048, OC613, W9009, PSL655. || DUAS PENDÊNCIAS QUE VALEM UMA CONSULTA À CONCESSIONÁRIA: (a) intervalo e código da correia dentada; (b) medida oficial do pneu."
+  },
+  {
+    "modelo": "FH 460",
+    "marca": "VOLVO",
+    "anos": [2022, 2022],
+    "tipo": "CAVALO MECANICO/TRUCK",
+    "ativos": 4,
+    "motor": {
+      "valor": "Volvo D13C — 6 cilindros em linha, 12,8 L, turbo de geometria variável, injeção common rail; 460 cv a 1.800 rpm e torque máximo de 225 kgfm (2.200 Nm) entre 1.000 e 1.400 rpm. Emissão Euro 5 / PROCONVE P7.",
+      "status": "confirmado",
+      "fonte": "https://blogdocaminhoneiro.com/2024/05/ficha-tecnica-volvo-fh-460-6x2/; https://www.olhonocarro.com.br/catalogo/resultado-ficha-tecnica/VOLVO_FH-460_2022_6x2%202p%20(diesel)(E5)_dcc819dfa7841b/ (a ficha do ano 2022 é classificada como '(E5)')",
+      "nota": "PONTO DE ATENÇÃO FORTE: NÃO é o D13K. A Volvo lançou a linha Euro 6 (D13K) em outubro/2022 e começou a PRODUZIR em fevereiro/2023 — um caminhão de ano-modelo 2022 é D13C Euro 5. Isso muda óleo, filtros e pós-tratamento. Confirmar pelo chassi antes de comprar: se por acaso alguma das 4 unidades for 2022/2023 de fabricação tardia, pode ser D13K. Fonte da data de corte: https://blogdocaminhoneiro.com/2022/10/volvo-lanca-nova-linha-de-caminhoes-euro-6-ainda-mais-seguros-e-economicos/"
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "SAE 15W-40 (há também aplicação de 10W-30 sintético nas linhas VDS-4.5)",
+        "status": "inferido",
+        "fonte": "Catálogos de lubrificante Volvo (https://loja.tracbel.com.br/p/9858895/oleo-de-motor-vds-45-10w-30-20l-volvo-ce-54559610-unitario) e artigos técnicos sobre o D13",
+        "nota": "A viscosidade correta depende da tabela de temperatura do manual. Não foi lida a tabela oficial."
+      },
+      "norma": {
+        "valor": "Volvo VDS-4 (mínimo para o D13C Euro 5). O VDS-4.5 é a evolução e atende/substitui o VDS-4.",
+        "status": "confirmado",
+        "fonte": "https://blog.caminhoesecarretas.com.br/2026/08/volvo-fh-460-ficha-tecnica/; https://www.q8oils.com/automotive/volvo-specifications-explained/",
+        "nota": "PONTO CRÍTICO DE COMPRA: exigir 'VDS-4' ou 'VDS-4.5' impresso na embalagem. VDS-3 é geração anterior e NÃO atende o D13C — é o erro clássico, porque VDS-3 ainda é vendido (ex.: https://loja.tracbel.com.br/p/4546146/oleo-de-motor-vds-3-15w-40-4l-volvo-ce-55268400-unitario)."
+      },
+      "volume_l": {
+        "valor": "≈36 L",
+        "status": "inferido",
+        "fonte": "Valor citado de forma convergente em fontes técnicas sobre o motor Volvo D13 (blog.caminhoesecarretas.com.br e material técnico de manutenção do D13)",
+        "nota": "Não lido em documento Volvo. O cárter do D13 varia com a configuração de chassi — conferir no manual do veículo antes de comprar tambor fechado."
+      },
+      "base": {"valor": "Sintético (linhas VDS-4.5)", "status": "inferido", "fonte": "https://blog.caminhoesecarretas.com.br/2026/08/volvo-fh-460-ficha-tecnica/"}
+    },
+    "oleo_cambio": {
+      "tipo_cambio": {
+        "valor": "Volvo I-Shift automatizado, 12 marchas (família AT2612)",
+        "status": "inferido",
+        "fonte": "https://www.volgenpower.com/product/volvo-i-shift-at2612d-at2612e-at2612f-automated-transmission-genuine-oem-for-volvo-fh-fm-vnl-trucks/",
+        "nota": "A caixa exata (AT2612D/E/F, com ou sem retarder) muda o óleo e o volume — confirmar na plaqueta da caixa."
+      },
+      "tipo": {"valor": "Óleo de transmissão sintético SAE 75W-80", "status": "inferido", "fonte": "https://www.q8oils.com/automotive/volvo-specifications-explained/"},
+      "norma": {
+        "valor": "Volvo 97307 (UHPGO 75W-80, para caixas com retarder/intarder integrado). Sem retarder, a especificação aplicável pode ser 97305 ou 97318 (drenagem ultra-longa).",
+        "status": "inferido",
+        "fonte": "https://www.q8oils.com/automotive/volvo-specifications-explained/",
+        "nota": "PONTO CRÍTICO: as três especificações (97305 / 97307 / 97318) não são intercambiáveis para efeito de intervalo de troca e garantia. Escolher pela plaqueta da caixa, não pelo modelo do caminhão."
+      },
+      "volume_l": {
+        "valor": "≈16 L (I-Shift AT2612F)",
+        "status": "inferido",
+        "fonte": "https://www.volgenpower.com/product/volvo-i-shift-at2612d-at2612e-at2612f-automated-transmission-genuine-oem-for-volvo-fh-fm-vnl-trucks/",
+        "nota": "Valor de uma variante específica; confirmar a variante do veículo."
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {"valor": "Óleo hipoide sintético SAE 75W-90", "status": "inferido", "fonte": "https://www.q8oils.com/automotive/volvo-specifications-explained/"},
+      "norma": {
+        "valor": "Volvo 97312 (hipoide totalmente sintético, aplicável a todos os eixos Volvo, permite drenagem estendida). Alternativas do catálogo: 97317 (75W-80) e 97321 (80W-90 / 85W-140 minerais).",
+        "status": "inferido",
+        "fonte": "https://www.q8oils.com/automotive/volvo-specifications-explained/",
+        "nota": "Confirmar qual especificação o eixo do veículo pede — usar 97321 onde se pede 97312 encurta o intervalo de troca."
+      },
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "fluido_freio": {
+      "valor": "NÃO USA fluido DOT — o freio é 100% PNEUMÁTICO (ar comprimido), com ABS e ASR. O item consumível equivalente é o secador de ar e a drenagem dos reservatórios.",
+      "status": "inferido",
+      "fonte": "Deduzido da categoria (cavalo mecânico pesado) e das fichas técnicas do FH, que descrevem sistema de freio a ar com ABS — https://blogdocaminhoneiro.com/2024/05/ficha-tecnica-volvo-fh-460-6x2/",
+      "nota": "Verificar se a embreagem é hidráulica (alguns FH usam fluido na embreagem); nesse caso há um reservatório pequeno com fluido próprio."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Volvo VCS (Volvo Coolant Standard) — aditivo orgânico (OAT), cor AMARELA. Nunca misturar com o verde (Volvo Penta) nem com outro aditivo.",
+        "status": "confirmado",
+        "fonte": "https://www.volvoce.com/brasil/pt-br/parts/maintenance-parts/coolants/; https://loja.multidiesel.com.br/volvo-penta/aditivo-radiador/liquido-de-arrefecimento-22567314-volvo-penta-original-vcs-amarelo-ready-mixed-20-litros",
+        "nota": "PONTO CRÍTICO: misturar VCS amarelo com aditivo verde/convencional gela o pacote de aditivos e gera borra — é uma das causas mais comuns de problema de arrefecimento em Volvo."
+      },
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Depende da configuração de radiador/intercooler do chassi. Consultar o manual do veículo."}
+    },
+    "arla": {
+      "valor": "SIM — usa ARLA 32 com sistema SCR (catalisador SCR + catalisador de oxidação) para atender Euro 5 / PROCONVE P7. Consumo de ARLA em torno de 5% do consumo de diesel.",
+      "status": "confirmado",
+      "fonte": "https://blogdocaminhoneiro.com/2024/05/ficha-tecnica-volvo-fh-460-6x2/; https://www.volvogroup.com/br/news-and-media/news/2024/nov/volvo-fh-completa-30-anos-de-brasil-como-o-caminhao-mais-vendido.html (o D13C Euro 5 é descrito com sistema SCR e Arla 32)"
+    },
+    "filtros": {
+      "oleo": {
+        "valor": "Kit Volvo 85145767 (FH/FM/FMX D13C): 2× filtro de óleo principal + 1× filtro de óleo by-pass. Equivalentes MANN citados: W11102/4 (×2) e WP11102 (by-pass). Códigos OEM que circulam para os mesmos itens: 21707133 (principal) e 21707132 (by-pass).",
+        "status": "inferido",
+        "fonte": "https://volscanparts.com.br/produto/kit-filtros-motor-volvo-fh-fm-d13c-2015-diante-85145767/; https://caminhoes.tracbel.com.br/p/6577353/kit-filtros-lubrificantes-volvo-85145767-unitario; https://www.camiopar.com.br/kit-filtros-motor-volvo-d13-mann-filter-85145767",
+        "nota": "ATENÇÃO: as lojas divergem — algumas anunciam o MESMO kit 85145767 para 'FH12 500 D13A' e outras para 'FH/FM D13C 2015 em diante', com números de peça diferentes por dentro. Antes de comprar, validar o kit pelo CHASSI no sistema da concessionária Volvo. Não comprar pelo modelo/potência."
+      },
+      "combustivel": {
+        "valor": "Equivalente MANN WDK11102/25; códigos OEM que aparecem nas listagens: 21380488 e 22480372 (conforme a variante do kit)",
+        "status": "inferido",
+        "fonte": "https://volscanparts.com.br/produto/kit-filtros-motor-volvo-fh-fm-d13c-2015-diante-85145767/",
+        "nota": "Mesma ressalva do filtro de óleo: validar por chassi."
+      },
+      "separador_agua": {
+        "valor": "Elemento separador PARKER RC-885J; códigos OEM citados nas listagens: 21380475 e 21925732",
+        "status": "inferido",
+        "fonte": "https://volscanparts.com.br/produto/kit-filtros-motor-volvo-fh-fm-d13c-2015-diante-85145767/",
+        "nota": "Validar por chassi."
+      },
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Não integra o kit 85145767. Levantar no catálogo Volvo/MANN pelo chassi — o elemento de ar do FH varia com a caixa de ar do chassi."},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "EXISTE e é item de manutenção periódica (freio pneumático). O cartucho do secador precisa ser levantado por chassi; é um dos itens que mais causa parada quando é esquecido."}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Não confirmado. O D13 usa engrenagens para o comando de válvulas e correia poli-V para os acessórios; o código da correia de acessórios deve sair do catálogo por chassi."},
+    "bateria": {
+      "tensao": {"valor": "Sistema 24V, com 2 baterias de 12V ligadas em série", "status": "confirmado", "fonte": "https://blogdocaminhoneiro.com/2024/05/ficha-tecnica-volvo-fh-460-6x2/; https://espacobaterias.com.br/qual-bateria-usar-no-volvo-fh-guia-essencial-para-seu-caminhao/"},
+      "capacidade": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "As fontes divergem entre 2×225 Ah, 2×210 Ah (AGM) e a faixa 150–180 Ah, porque depende do pacote do chassi (cabine leito, geladeira, ar estacionário). Ler a etiqueta da bateria original de um dos 4 veículos — é a forma barata e definitiva."
+      },
+      "cca": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "pneu": {
+      "valor": "295/80 R22.5 — mesma medida nos eixos dianteiro e traseiro",
+      "status": "confirmado",
+      "fonte": "https://blogdocaminhoneiro.com/2024/05/ficha-tecnica-volvo-fh-460-6x2/",
+      "nota": "Confirmado na ficha do FH-460 6x2. Se algum dos 4 ativos for 4x2 ou tiver eixo direcional com medida diferente, conferir — a ficha por configuração (4x2 / 6x2 / 6x4) está em volvotrucks.com.br."
+    },
+    "intervalos": {
+      "valor": "Troca de óleo de motor a cada 60.000 km em condições normais de operação",
+      "status": "confirmado",
+      "fonte": "https://blog.caminhoesecarretas.com.br/2026/08/volvo-fh-460-ficha-tecnica/",
+      "nota": "É o intervalo de catálogo. Na prática o intervalo real da Volvo é calculado por perfil de operação (o próprio caminhão sugere via telemetria/VAS). Os intervalos de câmbio e diferencial NÃO foram encontrados."
+    },
+    "observacoes": "Tanque de combustível citado em 500 L (310+190) na ficha do 6x2, com variações de 405 a 490 L conforme configuração. || O QUE MAIS PESA AQUI: (1) confirmar D13C/Euro 5 por chassi antes de qualquer compra de filtro ou óleo — a virada para D13K/Euro 6 foi em fev/2023 e a nomenclatura comercial '460' não mudou; (2) o kit de filtros 85145767 aparece anunciado para motores diferentes, então validar por chassi na concessionária; (3) levantar o cartucho do secador de ar, que é item pneumático obrigatório e não aparece em nenhum kit de motor."
+  },
+  {
+    "modelo": "TECTOR 310E2",
+    "marca": "IVECO",
+    "anos": [2020, 2020],
+    "tipo": "BI-TRUCK",
+    "ativos": 1,
+    "motor": {
+      "valor": "Provavelmente FPT/Iveco NEF N67 — 6 cilindros em linha, 6,7 L, 300 cv e 1.050 Nm (configuração do Tector 310E30 8x2). NÃO CONFIRMADO para esta unidade.",
+      "status": "inferido",
+      "fonte": "https://www.tabelafipebrasil.com/caminhoes/IVECO/TECTOR-310E30-8X2-2P--DIESEL--E5- (a versão bi-truck 8x2 que a FIPE lista na faixa '310E' é a 310E30, diesel E5); https://www.blogiveco.com.br/tector-8x2/ ('o novo motor seis cilindros tem 6,7 litros, 1050 Nm e 300 cavalos'); https://ar.motor1.com/news/484778/1045/",
+      "nota": "PROBLEMA DE IDENTIFICAÇÃO — LER ANTES DE COMPRAR QUALQUER PEÇA: a descrição 'TECTOR 310E2' está truncada e não corresponde a nenhuma versão fechada. O padrão Iveco é <PBT em quintais>E<potência>: 310E30 = 31 t / 300 cv. '310E2...' apontaria para uma versão de 2xx cv (ex.: 310E25), que usaria o motor menor N60 de 5,9 L — conjunto de filtros, volume de óleo e peças DIFERENTES do N67. Com 1 ativo só, o caminho certo e barato é ler a plaqueta do motor / consultar o chassi na Iveco antes de cadastrar qualquer peça. Todo o resto desta ficha depende dessa definição."
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Depende da definição do motor (N60 x N67) e da tabela de temperatura do manual."},
+      "norma": {
+        "valor": "Para Tector Euro 5 com SCR (sem filtro de partículas), a família aplicável é a IVECO 18-1804 Classe T2 / óleo E7 15W-40 (linha de referência PETRONAS Urania). As classes low SAPS (TLS E6/E9) valem para Euro V COM DPF.",
+        "status": "inferido",
+        "fonte": "https://www.q8oils.com/automotive/iveco-engine-oil-specifications-light-duty-and-heavy-duty/ (explica que 'Classe T2 E7' é o padrão de óleo convencional para caminhões Euro V sem DPF e que TLS E6/E9 cobrem os com DPF)",
+        "nota": "A premissa do pedido (18-1804) parece CERTA para este caminhão — ao contrário do Daily, que é 18-1811 SC1. Mas isso foi deduzido da regra geral da Q8Oils, não lido no manual do Tector. Confirmar a classe exata (T2 / T3 / TLS) no manual antes de comprar."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Encontrei 17,2 L como 'capacidade do sistema de óleo com filtros' em folha de dados do N67 em versão INDUSTRIAL/MARÍTIMA (https://www.maesco.com/products/mar_prop/N67MNTM28.pdf) — NÃO usar esse número para o caminhão: o cárter da versão rodoviária é outro. Precisa do manual Iveco Tector."
+      },
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Nem o modelo de caixa foi confirmado para esta versão. Levantar por chassi."},
+    "oleo_diferencial": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Bi-truck 8x2: há eixo motriz + eixo auxiliar. Levantar por chassi."},
+    "fluido_freio": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Caminhão de 31 t: freio PNEUMÁTICO, sem fluido DOT. Confirmar e levantar o cartucho do secador de ar."},
+    "arrefecimento": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Linha de referência Iveco é o PETRONAS Paraflu UP, não confirmado."},
+    "arla": {
+      "valor": "SIM — Tector Euro 5 usa ARLA 32 com sistema SCR (a FIPE classifica a versão 310E30 como '(DIESEL)(E5)').",
+      "status": "inferido",
+      "fonte": "https://www.tabelafipebrasil.com/caminhoes/IVECO/TECTOR-310E30-8X2-2P--DIESEL--E5- ; https://latinafy.com/products/iveco-tank-cap-arla-32-with-original-key-500057912/ (tampa de tanque de ARLA 32 original Iveco com aplicação na linha Euro 5, incluindo Tector pós-2012)",
+      "nota": "Alta confiança pela escolha tecnológica da Iveco nos médios/semipesados Euro 5 (SCR), mas a confirmação formal deveria vir do manual ou da ficha do veículo. Diferente do Daily 30-130, que é EGR e NÃO usa ARLA."
+    },
+    "filtros": {
+      "oleo": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Sistema 24V é esperado num caminhão desta classe, mas não foi confirmado."},
+    "pneu": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Bi-truck 8x2 tem configuração de pneus diferente de cavalo mecânico. Levantar na ficha oficial (https://www.iveco.com/brasil/collections/technical_sheets/Documents/Produtos/Tector.pdf) ou medindo os pneus montados."},
+    "intervalos": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "observacoes": "ESTE É O MODELO MENOS RESOLVIDO DOS SEIS, e por um motivo honesto: a descrição 'TECTOR 310E2' está truncada e não fecha com nenhuma versão catalogada. A única versão '310E' bi-truck 8x2 que aparece em base pública brasileira (FIPE) é a 310E30, com motor N67 6,7 L / 300 cv. Como um '310E25' usaria o N60 de 5,9 L, com filtros e volumes diferentes, preencher esta ficha por semelhança seria exatamente o tipo de chute que faz comprar peça errada. || CAMINHO RECOMENDADO (barato, é 1 ativo só): ler a plaqueta do motor e o número do chassi, e pedir à concessionária Iveco o plano de manutenção do chassi. Com o motor definido, o resto do catálogo (Wega/Tecfil/Mann) sai em minutos. || O que JÁ dá para assumir com segurança: é Euro 5 com SCR/ARLA 32, tem freio pneumático (logo, secador de ar entra no plano) e não usa fluido DOT."
+  },
+  {
+    "modelo": "R 540",
+    "marca": "SCANIA",
+    "anos": [2021, 2021],
+    "tipo": "TRUCK",
+    "ativos": 1,
+    "motor": {
+      "valor": "Scania DC13 — 6 cilindros em linha, ~12,7/13 L, 540 cv a 1.800 rpm, torque máximo 2.700 Nm. Emissão Euro 5 (a ficha do ano 2021 é classificada '(DIESEL)(E5)').",
+      "status": "confirmado",
+      "fonte": "https://www.olhonocarro.com.br/catalogo/resultado-ficha-tecnica/SCANIA_R-540_2021_A%206x4%202p%20(diesel)(E5)_dcc81cdca88c1e/; https://blogdocaminhoneiro.com/2024/06/ficha-tecnica-scania-r-540-a-6x4-plus/; https://www.scania.com/content/dam/group/press-and-media/press-releases/press-kits/2019/scania-adds-a-540-hp-version-to-its-13-litre-engine-range.pdf",
+      "nota": "O SUFIXO exato do motor (por exemplo DC13 155 ou DC13 172) não ficou confirmado — fontes citam 'DC13 172 540'. Peça de motor deve ser comprada pelo número do motor gravado no bloco, não por '540 cv'."
+    },
+    "oleo_motor": {
+      "viscosidade": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "A linha Scania Oil tem LDF 10W-40 e E7 15W-40; qual das duas vale depende do plano de manutenção contratado. Não confirmado."},
+      "norma": {
+        "valor": "Família Scania LDF — a linha Scania Oil no Brasil oferece LDF-5, LDF-4, LDF-3 e E-7; o LDF-3 10W-40 é descrito como desenvolvido para motores Scania Euro 2, 3, 4 e 5.",
+        "status": "inferido",
+        "fonte": "https://solucoesscania.com.br/servicos/scania-oil/; https://www.scania.com/br/pt/home/services/repair-and-maintenance/scania-oil.html",
+        "nota": "PONTO CRÍTICO E AINDA EM ABERTO: as normas LDF-3 / LDF-4 / LDF-5 NÃO são equivalentes entre si em intervalo de troca — a LDF superior permite intervalo maior. Qual delas o veículo pede está no plano de manutenção Scania do chassi. Usar óleo de norma inferior à exigida encurta o intervalo e pode afetar garantia; usar óleo E7 onde se pede LDF derruba o intervalo estendido. NÃO comprar sem essa definição — é a pendência nº 1 deste caminhão. Catálogo oficial: https://www.scania.com/content/dam/scanianoe/market/br/pdfs/Folder_Scania_Oil_2016_7.pdf"
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Os manuais do DC13 em versão INDUSTRIAL indicam faixas muito amplas (da ordem de 28–43 L conforme o cárter) — inútil para compra. Precisa do manual do caminhão / plano de manutenção do chassi. Ver https://til.scania.com/groups/opm_pub/documents/opm/xzaw/mda2/~edisp/opm_0000667_16~1.pdf"
+      },
+      "base": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_cambio": {
+      "tipo_cambio": {
+        "valor": "Scania Opticruise automatizado — a ficha do R 540 6x4 traz GRS905R: 12 marchas + 2 reduzidas + 2 à ré, com retarder integrado",
+        "status": "inferido",
+        "fonte": "https://www.scania.com/content/dam/scanianoe/market/au/products-and-services/trucks/specification-documents/Spec-Sheet-R540(6x4)_SCA0762.pdf",
+        "nota": "A ficha é do mercado AUSTRALIANO — a caixa do veículo brasileiro pode ser outra (GRS905 / GRSO925 / G33CM). Confirmar na plaqueta da caixa. O 'R' de GRS905R indica retarder, o que muda o óleo."
+      },
+      "tipo": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "norma": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "A Scania usa especificações próprias (família STO) para caixa e eixo. Levantar no folder Scania Oil / plano de manutenção do chassi."},
+      "volume_l": {"valor": null, "status": "nao_encontrado", "fonte": null}
+    },
+    "oleo_diferencial": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "Levantar no folder Scania Oil pelo modelo de eixo gravado na plaqueta."},
+    "fluido_freio": {
+      "valor": "NÃO USA fluido DOT — freio PNEUMÁTICO com ABS e ASR",
+      "status": "inferido",
+      "fonte": "https://blogdocaminhoneiro.com/2024/06/ficha-tecnica-scania-r-540-a-6x4-plus/ (descreve sistemas de freio ABS e ASR); deduzido da categoria do veículo",
+      "nota": "O consumível equivalente é o cartucho do secador de ar — não levantado."
+    },
+    "arrefecimento": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "A Scania tem aditivo próprio na linha Scania Oil. Não confirmado tipo nem volume."},
+    "arla": {
+      "valor": "SIM — Euro 5 com SCR e ARLA 32. A ficha do R 540 6x4 indica tanque de aditivo SCR de 73 L.",
+      "status": "inferido",
+      "fonte": "https://www.scania.com/content/dam/scanianoe/market/au/products-and-services/trucks/specification-documents/Spec-Sheet-R540(6x4)_SCA0762.pdf; classificação E5 em https://www.olhonocarro.com.br/catalogo/resultado-ficha-tecnica/SCANIA_R-540_2021_A%206x4%202p%20(diesel)(E5)_dcc81cdca88c1e/",
+      "nota": "O USO de ARLA/SCR é praticamente certo (Euro 5 Scania é SCR). Já o VOLUME do tanque (73 L) vem de ficha de outro mercado — tratar como referência, não como dado da unidade."
+    },
+    "filtros": {
+      "oleo": {
+        "valor": "Scania 2022275 (filtro de óleo lubrificante para Scania série 5, motores DC9/DC13/OC9/OC13). Equivalente MANN citado no mercado: HU1077/2x.",
+        "status": "confirmado",
+        "fonte": "https://cewwal.com/2022275-filtro-oleo-lubrificante-scania/; https://www.tagaautopartes.com.br/produtos/filtro-oleo-lubrificante-108471-2022275-VA43554-143; https://www.dinascania.com.br/scania/filtro-do-oleo-hu10772x-compativel-scania",
+        "nota": "Aplicação ampla (toda a série 5 com DC13). Confirmar por chassi se o motor usa também filtro by-pass/centrífugo separado."
+      },
+      "combustivel": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "separador_agua": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_motor": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "ar_cabine": {"valor": null, "status": "nao_encontrado", "fonte": null},
+      "secador_ar": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "EXISTE (freio pneumático) e precisa entrar no plano. Levantar por chassi."}
+    },
+    "correia": {"valor": null, "status": "nao_encontrado", "fonte": null},
+    "bateria": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Sistema 24V (2×12V em série) é o padrão da categoria, mas NÃO foi confirmado para este veículo, e a capacidade em Ah não foi encontrada. Ler a etiqueta da bateria original."
+    },
+    "pneu": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Não confirmado, e a configuração do veículo está ambígua (ver observações): as fichas públicas que encontrei são do R 540 A 6x4 (cavalo mecânico), enquanto a frota classifica esta unidade como TRUCK. Medida e quantidade de pneus mudam com a configuração. Medir o pneu montado é o caminho mais rápido."
+    },
+    "intervalos": {"valor": null, "status": "nao_encontrado", "fonte": null, "nota": "A Scania trabalha com plano de manutenção flexível calculado por perfil de operação (o intervalo não é um número fixo de catálogo). Pedir o plano do chassi à concessionária."},
+    "observacoes": "AMBIGUIDADE DE CONFIGURAÇÃO: a frota classifica como 'TRUCK', mas as fichas públicas do R 540 de 2021 que consegui são do 'R-540 A 6x4' (cavalo mecânico / prime mover). Existe também um R 540 BI-TRUCK lançado no Brasil em 2021 (https://blogdocaminhoneiro.com/2021/09/scania-r-540-bitruck-o-mais-potente-da-america-latina/). Enquanto a configuração real não for definida, pneus, eixos e óleos de eixo ficam em aberto. || Referências de ficha (outro mercado, usar só como pista): tanque 800 L (2×400), tanque de ARLA 73 L, caixa GRS905R. || PENDÊNCIA Nº 1: definir a norma de óleo (LDF-3 x LDF-4 x LDF-5), porque ela governa o intervalo de troca e é o campo com maior risco financeiro deste veículo."
+  }
+]

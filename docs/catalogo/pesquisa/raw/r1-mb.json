@@ -1,0 +1,2561 @@
+[
+  {
+    "modelo": "ATEGO 2426",
+    "marca": "MERCEDES BENZ",
+    "tipo": "BI-TRUCK/TRUCK",
+    "anos": [
+      2015,
+      2023
+    ],
+    "ativos": 42,
+    "motor": {
+      "valor": "OM 926 LA — 6 cilindros em linha, turbo + intercooler, common rail; 7.2 L (7.201 cm3); 256 cv (188 kW) @ 2.200 rpm; 1.000 Nm (102 kgfm) entre 1.200 e 1.600 rpm",
+      "status": "confirmado",
+      "fonte": "https://transportemundial.com.br/atego-teste-2426/ ; https://atego-mercedesbenz.com.br/modelo/2426",
+      "nota": "Na linha 2023 (BlueTec 6) a MB renomeou o 2426 para 2429 e subiu o OM 926 LA para 260 cv — uma unidade 2023 pode ser Euro 6. CONFERIR PELO CHASSI."
+    },
+    "cilindrada": {
+      "valor": "7.2 L (7.201 cm3)",
+      "status": "confirmado",
+      "fonte": "https://transportemundial.com.br/atego-teste-2426/"
+    },
+    "potencia": {
+      "valor": "256 cv @ 2.200 rpm / 1.000 Nm (102 kgfm) @ 1.200–1.600 rpm",
+      "status": "confirmado",
+      "fonte": "https://transportemundial.com.br/atego-teste-2426/"
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "15W-40 (mineral/semissintetico) ou 10W-40; 15W-40 costuma corresponder a MB 228.3 e 10W-40 a 228.5/228.51",
+        "status": "inferido",
+        "fonte": "https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/",
+        "nota": "Confirmar no manual do veiculo qual viscosidade a MB libera para a faixa de temperatura da operacao."
+      },
+      "norma": {
+        "valor": "MB-Approval 228.3 ou 228.5 (228.5 = long-drain). NAO usar apenas \"API CI-4/CK-4\" como criterio — a folha MB e o que vale.",
+        "status": "inferido",
+        "fonte": "https://www.scribd.com/document/419931877/Spec-223-2-pdf ; https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/",
+        "nota": "Regra da folha MB 223.2 (uso de óleos de motor): motor Euro VI COM filtro de particulado (DPF) exige óleo low-SAPS folha MB 228.51; motor Euro V sem DPF aceita MB 228.3/228.5. Usar 228.3/228.5 num motor com DPF entope o filtro — este é o erro clássico da marca. Deduzido da familia de motor (BlueTec 5 / Proconve P7 = SCR sem DPF)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": "https://blog.caminhoesecarretas.com.br/2026/05/atego-2426-ficha-tecnica/ ; https://pt.scribd.com/doc/44395342/tabela-lubrificacao-mercedesbenz",
+        "nota": "Fontes divergem: um blog cita ~18 L e uma tabela de lubrificacao cita 29,3 L para o OM 926 LA (provavelmente aplicacao de onibus). Nao ha base para escolher. Consultar o manual de operacao do veiculo ou a tabela de lubrificacao MB pelo numero do motor."
+      },
+      "base": {
+        "valor": "Mineral ou semissintetico para 228.3; semissintetico/sintetico para 228.5",
+        "status": "inferido",
+        "fonte": "https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/"
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "Duas configuracoes na frota possivel: cambio MANUAL MB G 85-6 (6 marchas) OU automatico ALLISON serie 3000 (6 marchas + re). Identificar por veiculo.",
+        "status": "confirmado",
+        "fonte": "https://blog.caminhoesecarretas.com.br/2026/05/atego-2426-ficha-tecnica/ ; https://ocarreteiro.com.br/caminhoes/atego-2426/"
+      },
+      "norma": {
+        "valor": "Se ALLISON: fluido Allison TES-295 ou TES-668 (NAO e folha MB). Se MANUAL MB G 85-6: oleo de engrenagem folha MB 235.x conforme MB 231.2.",
+        "status": "inferido",
+        "fonte": "https://transmission-fluid.com/allison-transmission-fluid-capacity-chart/ ; https://bevo.mercedes-benz.com/bevolisten/231.2_en.html",
+        "nota": "ATENCAO DE COMPRA: colocar oleo MB 235.x num Allison, ou TES-295 num cambio MB, e erro grave. O tipo depende do cambio, nao do modelo do caminhao."
+      },
+      "volume_l": {
+        "valor": "Allison serie 3000: ~13–16 L em troca com dreno e reabastecimento; ~26–28 L a seco. Cambio manual G 85-6: nao encontrado.",
+        "status": "inferido",
+        "fonte": "https://transmission-fluid.com/allison-transmission-fluid-capacity-chart/"
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Oleo de engrenagem hipoide para eixo traseiro MB (familia HL)",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/235.0_en.html"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Volume do eixo traseiro nao encontrado. Consultar a tabela de lubrificacao MB pelo codigo do eixo (HL 5 / HL 6)."
+      }
+    },
+    "fluido_freio": {
+      "valor": "Sistema de freio PNEUMATICO (a ar, S-came ou disco) — nao usa fluido hidraulico DOT. O que se troca e o filtro secador de ar e o oleo do compressor (que e o proprio oleo do motor).",
+      "status": "inferido",
+      "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+      "nota": "Confirmado explicitamente para o Atego 1719 (\"freios a ar S-CAME\"); estendido por familia aos demais caminhoes da lista."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Aditivo anticorrosivo/anticongelante folha MB 325.0 (concentrado) ou MB 326.x (pre-misturado 50/50); mistura 40–50% de concentrado em agua conforme MB 310.1",
+        "status": "inferido",
+        "fonte": "https://operatingfluids.mercedes-benz.com/sheet/325.0/en ; https://www.portalmercedes.com/t19206-liquido-correto-de-arrefecimento-proporcao-da-mistura-na-troca-completar-nivel-geral",
+        "nota": "Folha confirmada na base oficial BeVo. O VOLUME do sistema por modelo nao foi encontrado."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Capacidade do sistema de arrefecimento do Atego 2426 nao encontrada."
+      }
+    },
+    "arla": {
+      "valor": "SIM — usa ARLA 32 com sistema SCR. BlueTec 5 = Proconve P7 (equivalente Euro V). Tanque de ARLA 35 L.",
+      "status": "confirmado",
+      "fonte": "https://transportemundial.com.br/atego-teste-2426/ ; https://ocarreteiro.com.br/caminhoes/atego-2426/",
+      "nota": "Unidade ano 2023 pode ja ser BlueTec 6 / Proconve P8 (Euro VI) — nesse caso o OLEO MUDA para 228.51."
+    },
+    "filtros": {
+      "oleo": {
+        "valor": "Tecfil PEL2002 (linha OM 906/OM 926 — Atego, Atron, Axor)",
+        "status": "inferido",
+        "fonte": "https://www.buscarpecasonline.com.br/MLB-2147131265-filtro-oleo-mb-om906-1620-om926-atego-atron-axor-pel2002-_JM",
+        "nota": "Duas listagens do mesmo kit atribuem PEL2002 ora ao oleo ora ao combustivel; no padrao Tecfil \"PEL\" = lubrificante. Conferir no catalogo Tecfil antes de comprar em volume."
+      },
+      "combustivel": {
+        "valor": "Tecfil PEC3022 (no kit ARS9841/5 para Atego 2426 OM 926)",
+        "status": "inferido",
+        "fonte": "https://www.mercadolivre.com.br/kit-filtros-mb-atego-2428-1726-2426-2430-om-926-ars98415/up/MLBU1423508840"
+      },
+      "separador_agua": {
+        "valor": "Filtro Racor / separador de agua — Wega FCD0803 (Atego 1726/2426, Axor, Actros, Atron); Mann WK1060/4 aparece no mesmo kit",
+        "status": "inferido",
+        "fonte": "https://www.selfcar.com.br/produto/caminhoes-e-onibus/filtros/filtros-do-separador-de-agua/filtro-separador-de-agua-mercedes-atego-1726-2426-axor-1933-2036-actros-atron-wega-fcd0803/FCD0803"
+      },
+      "ar_motor": {
+        "valor": "Tecfil ARS9841",
+        "status": "inferido",
+        "fonte": "https://www.mercadolivre.com.br/kit-filtros-mb-atego-2428-1726-2426-2430-om-926-ars98415/up/MLBU1423508840"
+      },
+      "ar_cabine": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Filtro de ar da cabine (filtro de ar-condicionado) do Atego 2426 nao localizado com codigo."
+      },
+      "secador_ar": {
+        "valor": "Filtro secador de ar APU: Wabco 4329011002 / Tecfil DSF0204 (equiv. FDE0204); versoes recentes Wabco 4329012232 / MB A0004295795 / A0008302583",
+        "status": "inferido",
+        "fonte": "https://www.camiopar.com.br/filtro-secador-ar-apu-wabco-4329011002-rosca-m39-mb-vw ; https://www.redehds.com/1599/filtro-secador-mercedes-benz-axor-2007-20-atego-actros",
+        "nota": "Codigos vindos de catalogo de distribuidor, nao do catalogo do fabricante — conferir a rosca (M39) e o ano antes de comprar."
+      },
+      "arla": {
+        "valor": "Tecfil PEA180 (filtro do sistema ARLA 32 — Accelo/Atego/Axor, inclui 1726/1729/1730/3026/3030)",
+        "status": "inferido",
+        "fonte": "https://www.magazineluiza.com.br/filtro-sistema-arla-32-mercedes-accelo-815-1016-1316-atego-1419-1719-1726-1729-1730-3026-3030-axor-1933-2036-2544-tecfil-pea180/p/ff8bf7a4bd/au/otau/"
+      },
+      "hidraulico_direcao": {
+        "valor": "Tecfil PH346 (no mesmo kit)",
+        "status": "inferido",
+        "fonte": "https://www.mercadolivre.com.br/kit-filtros-mb-atego-2428-1726-2426-2430-om-926-ars98415/up/MLBU1423508840"
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Modelo/medida da correia (poly-V) do OM 926 LA nao encontrada."
+    },
+    "bateria": {
+      "valor": "2 baterias de 12V ligadas em serie (sistema 24V), 150–180 Ah, CCA minimo ~900 A",
+      "status": "inferido",
+      "fonte": "https://espacobaterias.com.br/qual-bateria-usar-no-mercedes-benz-atego-1719-2426-2428-guia-essencial-para-seu-caminhao/",
+      "nota": "Fonte e um guia de revendedor de baterias, nao a ficha da MB. Conferir a Ah original na etiqueta da bateria do veiculo."
+    },
+    "pneu": {
+      "valor": "275/80R22.5 — dianteiro e traseiro (mesma medida nas duas posicoes)",
+      "status": "confirmado",
+      "fonte": "https://www.olhonocarro.com.br/catalogo/resultado-ficha-tecnica/MERCEDES-BENZ_Atego_2020_2426%206x2%202p%20(diesel)%20(E5)_dcc916dca8811b/"
+    },
+    "intervalos": {
+      "oleo_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Fontes divergem (30.000 km num blog, 40.000 km noutro agregador) e nenhuma e da MB. Consultar o plano de manutencao MB do chassi."
+      },
+      "oleo_cambio": {
+        "valor": "Oleo de cambio: 90.000 km ou 48 meses (o que ocorrer primeiro), conforme plano de manutencao MB. No Allison, a pratica de mercado citada e ~50.000 km para fluido + filtro.",
+        "status": "inferido",
+        "fonte": "https://www.mecasul.com.br/servicos/planos-de-manutencao ; https://blog.caminhoesecarretas.com.br/2026/05/atego-2426-ficha-tecnica/"
+      },
+      "filtros": {
+        "valor": "Filtros de oleo e combustivel trocados junto com o oleo do motor; filtro de ar e ARLA em intervalo proprio (a MB informa +33% de vida no filtro de ar e +11% no filtro de ARLA nos motores BlueTec 6)",
+        "status": "inferido",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+        "nota": "Intervalo em km nao localizado por modelo."
+      }
+    },
+    "observacoes": "MAIOR GRUPO DA FROTA (42 ativos) e o que mais atravessa a virada de norma: unidades 2015–2022 sao BlueTec 5 (Euro V, oleo 228.3/228.5) e a unidade 2023, se ja for BlueTec 6, exige oleo 228.51 low-SAPS. Separar por ano/chassi antes de padronizar a compra de oleo. Existem versoes com cambio manual G 85-6 e com Allison 3000 — o oleo de cambio e completamente diferente entre elas."
+  },
+  {
+    "modelo": "ATEGO 1719",
+    "marca": "MERCEDES BENZ",
+    "tipo": "TOCO",
+    "anos": [
+      2018,
+      2022
+    ],
+    "ativos": 25,
+    "motor": {
+      "valor": "OM 924 LA — 4 cilindros em linha, turbo + intercooler; 4.801 cm3; 185 cv @ 2.200 rpm; 700 Nm entre 1.200 e 1.600 rpm",
+      "status": "confirmado",
+      "fonte": "https://consultadeplaca.net/blog/ficha-tecnica-mercedes-benz-atego-1719 ; https://atego-mercedesbenz.com.br/modelo/1719"
+    },
+    "cilindrada": {
+      "valor": "4.8 L (4.801 cm3)",
+      "status": "confirmado",
+      "fonte": "https://consultadeplaca.net/blog/ficha-tecnica-mercedes-benz-atego-1719"
+    },
+    "potencia": {
+      "valor": "185 cv @ 2.200 rpm / 700 Nm @ 1.200–1.600 rpm",
+      "status": "confirmado",
+      "fonte": "https://atego-mercedesbenz.com.br/modelo/1719"
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "15W-40",
+        "status": "inferido",
+        "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+        "nota": "Agregador de manutencao, nao fonte MB."
+      },
+      "norma": {
+        "valor": "MB-Approval 228.3 ou 228.5 (228.5 = long-drain). NAO usar apenas \"API CI-4/CK-4\" como criterio — a folha MB e o que vale.",
+        "status": "inferido",
+        "fonte": "https://www.scribd.com/document/419931877/Spec-223-2-pdf ; https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/",
+        "nota": "Regra da folha MB 223.2 (uso de óleos de motor): motor Euro VI COM filtro de particulado (DPF) exige óleo low-SAPS folha MB 228.51; motor Euro V sem DPF aceita MB 228.3/228.5. Usar 228.3/228.5 num motor com DPF entope o filtro — este é o erro clássico da marca. Deduzido da familia de motor (BlueTec 5 / Proconve P7 = SCR sem DPF)."
+      },
+      "volume_l": {
+        "valor": "~15,8 a 16 L",
+        "status": "inferido",
+        "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719 ; http://www.casadooleorp.com.br/media/pdf/tabela-lubrificantes-diesel.pdf",
+        "nota": "Duas fontes independentes convergem (15,8 L numa tabela de lubrificantes e 16 L num agregador) — mas nenhuma e a MB. Vale para Accelo 1016 / Atego 1419 / Atego 1719 com OM 924 LA Euro 5."
+      },
+      "base": {
+        "valor": "Mineral (a fonte cita 15W-40 mineral CK-4)",
+        "status": "inferido",
+        "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+        "nota": "API CK-4 NAO substitui a folha MB — exigir MB-Approval 228.3/228.5 na embalagem."
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "Manual de 6 marchas (familia MB G 85-6); opcional automatizado PowerShift 3 de 8 marchas",
+        "status": "confirmado",
+        "fonte": "https://m.mercedes-benz-trucks.com.br/resources/files/documentos/caminhoes/atego/dados-tecnicos/2020/atego-1719-4x2-plataforma.pdf"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Volume do cambio nao encontrado."
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Oleo de engrenagem hipoide, eixo traseiro MB (familia HL)",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/235.0_en.html"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "fluido_freio": {
+      "valor": "Sistema de freio PNEUMATICO (a ar, S-came ou disco) — nao usa fluido hidraulico DOT. O que se troca e o filtro secador de ar e o oleo do compressor (que e o proprio oleo do motor).",
+      "status": "inferido",
+      "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+      "nota": "Confirmado explicitamente para o Atego 1719 (\"freios a ar S-CAME\"); estendido por familia aos demais caminhoes da lista."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Aditivo anticorrosivo/anticongelante folha MB 325.0 (concentrado) ou MB 326.x (pre-misturado 50/50); mistura 40–50% de concentrado em agua conforme MB 310.1",
+        "status": "inferido",
+        "fonte": "https://operatingfluids.mercedes-benz.com/sheet/325.0/en ; https://www.portalmercedes.com/t19206-liquido-correto-de-arrefecimento-proporcao-da-mistura-na-troca-completar-nivel-geral",
+        "nota": "Folha confirmada na base oficial BeVo. O VOLUME do sistema por modelo nao foi encontrado."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "arla": {
+      "valor": "SIM — ARLA 32 com sistema SCR, BlueTec 5 / Proconve P7 (Euro V)",
+      "status": "confirmado",
+      "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719 ; https://www.olhonocarro.com.br/catalogo/resultado-ficha-tecnica/MERCEDES-BENZ_ATRON_2014_1719%202P%20(DIESEL)(E5)_dcc916dda0861b/"
+    },
+    "filtros": {
+      "oleo": {
+        "valor": "Kit Wega WKP-724 (filtro de oleo + 2 de combustivel) — Accelo 815/1016/1313/1316 e Atego 1419/1719 OM 924 LA, anos 17–24. Kit genuino MB: A0001809009",
+        "status": "inferido",
+        "fonte": "https://www.karhub.com.br/p/kit-filtro-oleo-2x-comb-mb-accelo-815-1016-1313-1316-atego-1419-1719-om924la-17-24-wega-wkp-724-18901109 ; https://originalonline.com.br/products/kit-de-filtros-do-atego-1719-a0001809009-original"
+      },
+      "combustivel": {
+        "valor": "Incluido no kit Wega WKP-724 / kit genuino MB A0001809009",
+        "status": "inferido",
+        "fonte": "https://www.karhub.com.br/p/kit-filtro-oleo-2x-comb-mb-accelo-815-1016-1313-1316-atego-1419-1719-om924la-17-24-wega-wkp-724-18901109"
+      },
+      "separador_agua": {
+        "valor": "Filtro Racor (separador de agua) — linha OM 924 LA a partir de 2016/2017",
+        "status": "inferido",
+        "fonte": "https://www.brasfilautopecas.com/MLB-2806699909-filtro-racor-mercedes-accelo-1316-om-924-la-2016diante-_JM",
+        "nota": "Codigo especifico do 1719 nao confirmado."
+      },
+      "ar_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Codigo do filtro de ar do Atego 1719 nao localizado (o ARS9838 citado e do Accelo 1016/1316)."
+      },
+      "ar_cabine": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao localizado."
+      },
+      "secador_ar": {
+        "valor": "Filtro secador de ar APU: Wabco 4329011002 / Tecfil DSF0204 (equiv. FDE0204); versoes recentes Wabco 4329012232 / MB A0004295795 / A0008302583",
+        "status": "inferido",
+        "fonte": "https://www.camiopar.com.br/filtro-secador-ar-apu-wabco-4329011002-rosca-m39-mb-vw ; https://www.redehds.com/1599/filtro-secador-mercedes-benz-axor-2007-20-atego-actros",
+        "nota": "Codigos vindos de catalogo de distribuidor, nao do catalogo do fabricante — conferir a rosca (M39) e o ano antes de comprar."
+      },
+      "arla": {
+        "valor": "Tecfil PEA180 (cobre Atego 1419/1719)",
+        "status": "inferido",
+        "fonte": "https://www.magazineluiza.com.br/filtro-sistema-arla-32-mercedes-accelo-815-1016-1316-atego-1419-1719-1726-1729-1730-3026-3030-axor-1933-2036-2544-tecfil-pea180/p/ff8bf7a4bd/au/otau/"
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada."
+    },
+    "bateria": {
+      "valor": "2 baterias de 12V ligadas em serie (sistema 24V), 150–180 Ah, CCA minimo ~900 A",
+      "status": "inferido",
+      "fonte": "https://espacobaterias.com.br/qual-bateria-usar-no-mercedes-benz-atego-1719-2426-2428-guia-essencial-para-seu-caminhao/",
+      "nota": "Fonte e um guia de revendedor de baterias, nao a ficha da MB. Conferir a Ah original na etiqueta da bateria do veiculo."
+    },
+    "pneu": {
+      "valor": "275/80R22.5 (medida padrao da familia Atego semipesado, mesma do Atron 1719 e do Atego 2426)",
+      "status": "inferido",
+      "fonte": "https://www.olhonocarro.com.br/catalogo/resultado-ficha-tecnica/MERCEDES-BENZ_ATRON_2014_1719%202P%20(DIESEL)(E5)_dcc916dda0861b/",
+      "nota": "Deduzido por modelo equivalente (Atron 1719, mesmo motor e mesma classe). Confirmar na etiqueta do veiculo — ha versoes com 215/75R17.5 em aplicacao urbana."
+    },
+    "intervalos": {
+      "oleo_motor": {
+        "valor": "40.000 km",
+        "status": "inferido",
+        "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+        "nota": "Agregador, nao MB. Conferir no plano de manutencao do chassi."
+      },
+      "oleo_cambio": {
+        "valor": "90.000 km ou 48 meses (plano de manutencao MB)",
+        "status": "inferido",
+        "fonte": "https://www.mecasul.com.br/servicos/planos-de-manutencao"
+      },
+      "filtros": {
+        "valor": "Filtros de oleo e combustivel trocados junto com o oleo do motor; filtro de ar e ARLA em intervalo proprio (a MB informa +33% de vida no filtro de ar e +11% no filtro de ARLA nos motores BlueTec 6)",
+        "status": "inferido",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+        "nota": "Intervalo em km nao localizado por modelo."
+      }
+    },
+    "observacoes": "Todos os anos da frota (2018–2022) sao BlueTec 5 / Euro V — grupo homogeneo, o mais facil de padronizar. Compartilha motor OM 924 LA e boa parte dos filtros com o Accelo 1316 e com o Atron 1719, o que permite item unico de estoque para os 39 ativos somados."
+  },
+  {
+    "modelo": "ACTROS 2548S",
+    "marca": "MERCEDES BENZ",
+    "tipo": "CAVALO MECANICO",
+    "anos": [
+      2025,
+      2025
+    ],
+    "ativos": 32,
+    "motor": {
+      "valor": "OM 460 LA — 6 cilindros em linha, 12,8 L (nominal 13 L); 476 cv; 2.300 Nm. ATENCAO: o Actros brasileiro usa OM 460, NAO o OM 470/471 europeu.",
+      "status": "confirmado",
+      "fonte": "https://www.mercedes-benz-trucks.com.br/caminhoes/actros/2548-s-6x2 ; https://www.vitoriadiesel.com.br/pdf/ACTROS%202548%20LS%206X2%20BLUETEC%206.pdf"
+    },
+    "cilindrada": {
+      "valor": "12,8 L (13 L nominal)",
+      "status": "confirmado",
+      "fonte": "https://www.vitoriadiesel.com.br/pdf/ACTROS%202548%20LS%206X2%20BLUETEC%206.pdf"
+    },
+    "potencia": {
+      "valor": "476 cv / 2.300 Nm",
+      "status": "confirmado",
+      "fonte": "https://www.mercedes-benz-trucks.com.br/caminhoes/actros/2548-s-6x2"
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "10W-40 ou 5W-30, sempre em produto com MB-Approval 228.51",
+        "status": "inferido",
+        "fonte": "https://www.midlandstruckvan.com/trucks/parts/genuine-oil-and-chemical-products",
+        "nota": "A viscosidade sozinha nao basta: o criterio de compra e a folha 228.51 impressa na embalagem."
+      },
+      "norma": {
+        "valor": "MB-Approval 228.51 (low SAPS) — OBRIGATORIO",
+        "status": "inferido",
+        "fonte": "https://www.scribd.com/document/419931877/Spec-223-2-pdf ; https://bevo.mercedes-benz.com/bevolisten/228.51_en.html ; https://operatingfluids.mercedes-benz.com/sheet/228.51/en",
+        "nota": "Regra da folha MB 223.2 (uso de óleos de motor): motor Euro VI COM filtro de particulado (DPF) exige óleo low-SAPS folha MB 228.51; motor Euro V sem DPF aceita MB 228.3/228.5. Usar 228.3/228.5 num motor com DPF entope o filtro — este é o erro clássico da marca. A folha 228.51 e descrita pela MB como \"Low SPAsh multigrade service engine oils\", exigida em motores com DPF."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": "https://www.vanderhaags.com/detailview.php?manufacturer=mercedes&model=mbe4000&inventorytype=engine-oil-pan&partnumber=A4600140202&wcf=parentmodel",
+        "nota": "Capacidade do carter do OM 460 LA nao encontrada em fonte confiavel. O unico numero achado (42 qt / ~40 L) refere-se ao CARTER do MBE4000 norte-americano, que e outra calibracao e nao serve como volume de troca. Consultar o manual de operacao ou a tabela de lubrificacao MB."
+      },
+      "base": {
+        "valor": "Sintetico ou semissintetico com MB-Approval 228.51",
+        "status": "inferido",
+        "fonte": "https://www.midlandstruckvan.com/trucks/parts/genuine-oil-and-chemical-products"
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "Transmissao AUTOMATIZADA de 12 marchas (PowerShift)",
+        "status": "confirmado",
+        "fonte": "https://www.vitoriadiesel.com.br/pdf/ACTROS%202548%20LS%206X2%20BLUETEC%206.pdf",
+        "nota": "O codigo do cambio (familia G 211-12 / G 281-12) nao foi confirmado para a versao brasileira."
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Eixo traseiro MB 440 NFD; relacoes i = 2,84 ou i = 2,73",
+        "status": "confirmado",
+        "fonte": "https://www.vitoriadiesel.com.br/pdf/ACTROS%202548%20LS%206X2%20BLUETEC%206.pdf"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado — consultar MB 231.2 pelo codigo 440 NFD."
+      }
+    },
+    "fluido_freio": {
+      "valor": "Sistema de freio PNEUMATICO (a ar, S-came ou disco) — nao usa fluido hidraulico DOT. O que se troca e o filtro secador de ar e o oleo do compressor (que e o proprio oleo do motor).",
+      "status": "inferido",
+      "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+      "nota": "Confirmado explicitamente para o Atego 1719 (\"freios a ar S-CAME\"); estendido por familia aos demais caminhoes da lista."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Aditivo anticorrosivo/anticongelante folha MB 325.0 (concentrado) ou MB 326.x (pre-misturado 50/50); mistura 40–50% de concentrado em agua conforme MB 310.1",
+        "status": "inferido",
+        "fonte": "https://operatingfluids.mercedes-benz.com/sheet/325.0/en ; https://www.portalmercedes.com/t19206-liquido-correto-de-arrefecimento-proporcao-da-mistura-na-troca-completar-nivel-geral",
+        "nota": "Folha confirmada na base oficial BeVo. O VOLUME do sistema por modelo nao foi encontrado."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "arla": {
+      "valor": "SIM — ARLA 32 com SCR. BlueTec 6 / Proconve P8 (Euro VI), COM filtro de particulado. Tanque de ARLA: 90 L.",
+      "status": "confirmado",
+      "fonte": "https://www.vitoriadiesel.com.br/pdf/ACTROS%202548%20LS%206X2%20BLUETEC%206.pdf"
+    },
+    "filtros": {
+      "oleo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Codigo do filtro de oleo do OM 460 LA nao levantado (orcamento de buscas esgotado)."
+      },
+      "combustivel": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "separador_agua": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "ar_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "ar_cabine": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "secador_ar": {
+        "valor": "Filtro secador de ar APU: Wabco 4329011002 / Tecfil DSF0204 (equiv. FDE0204); versoes recentes Wabco 4329012232 / MB A0004295795 / A0008302583",
+        "status": "inferido",
+        "fonte": "https://www.camiopar.com.br/filtro-secador-ar-apu-wabco-4329011002-rosca-m39-mb-vw ; https://www.redehds.com/1599/filtro-secador-mercedes-benz-axor-2007-20-atego-actros",
+        "nota": "Codigos vindos de catalogo de distribuidor, nao do catalogo do fabricante — conferir a rosca (M39) e o ano antes de comprar."
+      },
+      "arla": {
+        "valor": "Tecfil PEA179 aparece em catalogo cobrindo Accelo/Actros/Atego/Atron/Axor",
+        "status": "inferido",
+        "fonte": "https://www.selfcar.com.br/produto/caminhoes-e-onibus/filtros/filtros-arla-secador-apu/filtro-sistema-arla-32-mercedes-accelo-actros-atego-atron-axor-tecfil-pea1791/PEA179/1",
+        "nota": "Aplicacao generica de catalogo de loja — confirmar para o Actros Euro 6 antes de comprar."
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada."
+    },
+    "bateria": {
+      "valor": "Sistema 24V com 2 baterias de 12V, 230 Ah",
+      "status": "confirmado",
+      "fonte": "https://www.vitoriadiesel.com.br/pdf/ACTROS%202548%20LS%206X2%20BLUETEC%206.pdf"
+    },
+    "pneu": {
+      "valor": "295/80R22.5",
+      "status": "confirmado",
+      "fonte": "https://www.vitoriadiesel.com.br/pdf/ACTROS%202548%20LS%206X2%20BLUETEC%206.pdf"
+    },
+    "tanques": {
+      "valor": "Combustivel (535 + 410) L ou 535 L; ARLA 32: 90 L",
+      "status": "confirmado",
+      "fonte": "https://www.vitoriadiesel.com.br/pdf/ACTROS%202548%20LS%206X2%20BLUETEC%206.pdf"
+    },
+    "intervalos": {
+      "oleo_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+        "nota": "Intervalo em km nao encontrado. A MB informa que o BlueTec 6 MANTEM o intervalo do Euro V e reduz 10–15% o consumo de oleo, mas nao publica o numero nessa fonte."
+      },
+      "oleo_cambio": {
+        "valor": "90.000 km ou 48 meses (plano de manutencao MB)",
+        "status": "inferido",
+        "fonte": "https://www.mecasul.com.br/servicos/planos-de-manutencao"
+      },
+      "filtros": {
+        "valor": "Filtros de oleo e combustivel trocados junto com o oleo do motor; filtro de ar e ARLA em intervalo proprio (a MB informa +33% de vida no filtro de ar e +11% no filtro de ARLA nos motores BlueTec 6)",
+        "status": "inferido",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+        "nota": "Intervalo em km nao localizado por modelo."
+      }
+    },
+    "observacoes": "SEGUNDO MAIOR GRUPO (32 ativos) e todo Euro VI: aqui o oleo 228.51 low-SAPS e obrigatorio, sem excecao — usar 228.3/228.5 entope o DPF. Ficha tecnica bem coberta (pneu, eixo, tanques, baterias confirmados); o que falta e o lado de fluidos/filtros, que exige o manual de operacao ou o catalogo de pecas MB."
+  },
+  {
+    "modelo": "ACTROS 2651",
+    "marca": "MERCEDES BENZ",
+    "tipo": "CAVALO MECANICO",
+    "anos": [
+      2025,
+      2025
+    ],
+    "ativos": 17,
+    "motor": {
+      "valor": "OM 460 LA — 6 cilindros em linha, 12,8 L (13 L nominal); 510 cv @ 1.800 rpm; 2.400 Nm @ 1.100 rpm",
+      "status": "confirmado",
+      "fonte": "https://blogdocaminhoneiro.com/2024/05/ficha-tecnica-mercedes-benz-actros-2651-ls-6x4/ ; https://cargapesada.com.br/conheca-o-trem-de-forca-do-novo-caminhao/"
+    },
+    "cilindrada": {
+      "valor": "12,8 L (13 L nominal)",
+      "status": "confirmado",
+      "fonte": "https://cargapesada.com.br/conheca-o-trem-de-forca-do-novo-caminhao/"
+    },
+    "potencia": {
+      "valor": "510 cv @ 1.800 rpm / 2.400 Nm @ 1.100 rpm",
+      "status": "confirmado",
+      "fonte": "https://cargapesada.com.br/conheca-o-trem-de-forca-do-novo-caminhao/"
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "10W-40 ou 5W-30, sempre em produto com MB-Approval 228.51",
+        "status": "inferido",
+        "fonte": "https://www.midlandstruckvan.com/trucks/parts/genuine-oil-and-chemical-products",
+        "nota": "A viscosidade sozinha nao basta: o criterio de compra e a folha 228.51 impressa na embalagem."
+      },
+      "norma": {
+        "valor": "MB-Approval 228.51 (low SAPS) — OBRIGATORIO",
+        "status": "inferido",
+        "fonte": "https://www.scribd.com/document/419931877/Spec-223-2-pdf ; https://bevo.mercedes-benz.com/bevolisten/228.51_en.html ; https://operatingfluids.mercedes-benz.com/sheet/228.51/en",
+        "nota": "Regra da folha MB 223.2 (uso de óleos de motor): motor Euro VI COM filtro de particulado (DPF) exige óleo low-SAPS folha MB 228.51; motor Euro V sem DPF aceita MB 228.3/228.5. Usar 228.3/228.5 num motor com DPF entope o filtro — este é o erro clássico da marca. A folha 228.51 e descrita pela MB como \"Low SPAsh multigrade service engine oils\", exigida em motores com DPF."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado (mesma lacuna do OM 460 LA do 2548)."
+      },
+      "base": {
+        "valor": "Sintetico/semissintetico com MB-Approval 228.51",
+        "status": "inferido",
+        "fonte": "https://www.midlandstruckvan.com/trucks/parts/genuine-oil-and-chemical-products"
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "Transmissao automatizada de 12 marchas",
+        "status": "confirmado",
+        "fonte": "https://blogdocaminhoneiro.com/2024/05/ficha-tecnica-mercedes-benz-actros-2651-ls-6x4/"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Eixo traseiro MB (6x4, tandem)",
+        "status": "inferido",
+        "fonte": "https://blogdocaminhoneiro.com/2024/05/ficha-tecnica-mercedes-benz-actros-2651-ls-6x4/",
+        "nota": "Codigo do eixo do 6x4 nao confirmado; o 2548 6x2 usa MB 440 NFD."
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "fluido_freio": {
+      "valor": "Sistema de freio PNEUMATICO (a ar, S-came ou disco) — nao usa fluido hidraulico DOT. O que se troca e o filtro secador de ar e o oleo do compressor (que e o proprio oleo do motor).",
+      "status": "inferido",
+      "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+      "nota": "Confirmado explicitamente para o Atego 1719 (\"freios a ar S-CAME\"); estendido por familia aos demais caminhoes da lista."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Aditivo anticorrosivo/anticongelante folha MB 325.0 (concentrado) ou MB 326.x (pre-misturado 50/50); mistura 40–50% de concentrado em agua conforme MB 310.1",
+        "status": "inferido",
+        "fonte": "https://operatingfluids.mercedes-benz.com/sheet/325.0/en ; https://www.portalmercedes.com/t19206-liquido-correto-de-arrefecimento-proporcao-da-mistura-na-troca-completar-nivel-geral",
+        "nota": "Folha confirmada na base oficial BeVo. O VOLUME do sistema por modelo nao foi encontrado."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "arla": {
+      "valor": "SIM — ARLA 32 com SCR. Unidade 2025 = BlueTec 6 / Proconve P8 (Euro VI) com DPF. Tanque de ARLA provavelmente 90 L (igual ao 2548 da mesma geracao).",
+      "status": "inferido",
+      "fonte": "https://www.vitoriadiesel.com.br/pdf/ACTROS%202651%20LS%206X4%20BLUETEC%206.pdf",
+      "nota": "ATENCAO: fichas de 2019–2023 descrevem o 2651 como BlueTec 5 (Euro V). Como a frota tem apenas unidades 2025, vale a regra Euro VI — mas confirmar no chassi antes de definir o oleo."
+    },
+    "filtros": {
+      "oleo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "combustivel": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "separador_agua": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "ar_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "ar_cabine": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "secador_ar": {
+        "valor": "Filtro secador de ar APU: Wabco 4329011002 / Tecfil DSF0204 (equiv. FDE0204); versoes recentes Wabco 4329012232 / MB A0004295795 / A0008302583",
+        "status": "inferido",
+        "fonte": "https://www.camiopar.com.br/filtro-secador-ar-apu-wabco-4329011002-rosca-m39-mb-vw ; https://www.redehds.com/1599/filtro-secador-mercedes-benz-axor-2007-20-atego-actros",
+        "nota": "Codigos vindos de catalogo de distribuidor, nao do catalogo do fabricante — conferir a rosca (M39) e o ano antes de comprar."
+      },
+      "arla": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada."
+    },
+    "bateria": {
+      "valor": "Sistema 24V com 2 baterias de 12V, 230 Ah",
+      "status": "inferido",
+      "fonte": "https://www.vitoriadiesel.com.br/pdf/ACTROS%202548%20LS%206X2%20BLUETEC%206.pdf",
+      "nota": "Deduzido do Actros 2548 BlueTec 6 da mesma geracao/plataforma."
+    },
+    "pneu": {
+      "valor": "295/80R22.5",
+      "status": "confirmado",
+      "fonte": "https://blogdocaminhoneiro.com/2024/05/ficha-tecnica-mercedes-benz-actros-2651-ls-6x4/"
+    },
+    "tanques": {
+      "valor": "Combustivel 535 + 480 L",
+      "status": "confirmado",
+      "fonte": "https://blogdocaminhoneiro.com/2024/05/ficha-tecnica-mercedes-benz-actros-2651-ls-6x4/"
+    },
+    "intervalos": {
+      "oleo_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      },
+      "oleo_cambio": {
+        "valor": "90.000 km ou 48 meses (plano de manutencao MB)",
+        "status": "inferido",
+        "fonte": "https://www.mecasul.com.br/servicos/planos-de-manutencao"
+      },
+      "filtros": {
+        "valor": "Filtros de oleo e combustivel trocados junto com o oleo do motor; filtro de ar e ARLA em intervalo proprio (a MB informa +33% de vida no filtro de ar e +11% no filtro de ARLA nos motores BlueTec 6)",
+        "status": "inferido",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+        "nota": "Intervalo em km nao localizado por modelo."
+      }
+    },
+    "observacoes": "Mesmo motor (OM 460 LA) e mesma plataforma do 2548 — 49 ativos somados compartilham oleo, filtros e pneu 295/80R22.5. Diferenca: 6x4 tandem e 510 cv. Tratar 2548 + 2651 + 2546 como UM grupo de compra de fluidos (todos Euro VI, folha 228.51), com a ressalva do 2546 que atravessa a virada de norma."
+  },
+  {
+    "modelo": "ATEGO 3026",
+    "marca": "MERCEDES BENZ",
+    "tipo": "TRUCK/BI-TRUCK",
+    "anos": [
+      2017,
+      2018
+    ],
+    "ativos": 16,
+    "motor": {
+      "valor": "OM 926 LA BlueTec 5 — 6 cilindros em linha, 7,2 L; 256 cv @ 2.200 rpm; 1.000 Nm (102 kgfm) @ 1.200–1.600 rpm",
+      "status": "confirmado",
+      "fonte": "https://atego-mercedesbenz.com.br/modelo/3026 ; https://www.scribd.com/document/558209619/ATEGO-3026-FICHA-TECNICA"
+    },
+    "cilindrada": {
+      "valor": "7,2 L",
+      "status": "confirmado",
+      "fonte": "https://atego-mercedesbenz.com.br/modelo/3026"
+    },
+    "potencia": {
+      "valor": "256 cv @ 2.200 rpm / 1.000 Nm",
+      "status": "confirmado",
+      "fonte": "https://atego-mercedesbenz.com.br/modelo/3026"
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "15W-40 (mineral/semissintetico) ou 10W-40; 15W-40 costuma corresponder a MB 228.3 e 10W-40 a 228.5/228.51",
+        "status": "inferido",
+        "fonte": "https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/",
+        "nota": "Confirmar no manual do veiculo qual viscosidade a MB libera para a faixa de temperatura da operacao."
+      },
+      "norma": {
+        "valor": "MB-Approval 228.3 ou 228.5 (228.5 = long-drain). NAO usar apenas \"API CI-4/CK-4\" como criterio — a folha MB e o que vale.",
+        "status": "inferido",
+        "fonte": "https://www.scribd.com/document/419931877/Spec-223-2-pdf ; https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/",
+        "nota": "Regra da folha MB 223.2 (uso de óleos de motor): motor Euro VI COM filtro de particulado (DPF) exige óleo low-SAPS folha MB 228.51; motor Euro V sem DPF aceita MB 228.3/228.5. Usar 228.3/228.5 num motor com DPF entope o filtro — este é o erro clássico da marca. Deduzido da familia de motor (BlueTec 5 / Proconve P7 = SCR sem DPF)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Mesma lacuna do Atego 2426 (mesmo motor OM 926 LA): fontes divergem entre ~18 L e 29,3 L."
+      },
+      "base": {
+        "valor": "Mineral/semissintetico conforme a folha escolhida (228.3 ou 228.5)",
+        "status": "inferido",
+        "fonte": "https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/"
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "Cambio manual MB G 85-6 (6 marchas); ha versao com eixo traseiro de DUAS VELOCIDADES",
+        "status": "confirmado",
+        "fonte": "https://www.scribd.com/document/558209619/ATEGO-3026-FICHA-TECNICA ; https://atego-mercedesbenz.com.br/modelo/3026"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Eixo traseiro MB HL 5 (versoes com duas velocidades)",
+        "status": "confirmado",
+        "fonte": "https://www.scribd.com/document/558209619/ATEGO-3026-FICHA-TECNICA"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado. ATENCAO: eixo de duas velocidades tem sistema proprio de acionamento — conferir se leva oleo especifico."
+      }
+    },
+    "fluido_freio": {
+      "valor": "Sistema de freio PNEUMATICO (a ar, S-came ou disco) — nao usa fluido hidraulico DOT. O que se troca e o filtro secador de ar e o oleo do compressor (que e o proprio oleo do motor).",
+      "status": "inferido",
+      "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+      "nota": "Confirmado explicitamente para o Atego 1719 (\"freios a ar S-CAME\"); estendido por familia aos demais caminhoes da lista."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Aditivo anticorrosivo/anticongelante folha MB 325.0 (concentrado) ou MB 326.x (pre-misturado 50/50); mistura 40–50% de concentrado em agua conforme MB 310.1",
+        "status": "inferido",
+        "fonte": "https://operatingfluids.mercedes-benz.com/sheet/325.0/en ; https://www.portalmercedes.com/t19206-liquido-correto-de-arrefecimento-proporcao-da-mistura-na-troca-completar-nivel-geral",
+        "nota": "Folha confirmada na base oficial BeVo. O VOLUME do sistema por modelo nao foi encontrado."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "arla": {
+      "valor": "SIM — ARLA 32 com SCR, BlueTec 5 / Proconve P7 (Euro V). Tanque de ARLA 35 L.",
+      "status": "confirmado",
+      "fonte": "https://www.scribd.com/document/558209619/ATEGO-3026-FICHA-TECNICA"
+    },
+    "filtros": {
+      "oleo": {
+        "valor": "Tecfil PEL2002 (linha OM 906/OM 926) — mesmo do Atego 2426",
+        "status": "inferido",
+        "fonte": "https://www.buscarpecasonline.com.br/MLB-2147131265-filtro-oleo-mb-om906-1620-om926-atego-atron-axor-pel2002-_JM",
+        "nota": "Deduzido por identidade de motor com o Atego 2426."
+      },
+      "combustivel": {
+        "valor": "Tecfil PEC3022 (kit OM 926) — mesmo do Atego 2426",
+        "status": "inferido",
+        "fonte": "https://www.mercadolivre.com.br/kit-filtros-mb-atego-2428-1726-2426-2430-om-926-ars98415/up/MLBU1423508840",
+        "nota": "Deduzido por identidade de motor."
+      },
+      "separador_agua": {
+        "valor": "Wega FCD0803 (linha Atego/Axor/Actros/Atron)",
+        "status": "inferido",
+        "fonte": "https://www.selfcar.com.br/produto/caminhoes-e-onibus/filtros/filtros-do-separador-de-agua/filtro-separador-de-agua-mercedes-atego-1726-2426-axor-1933-2036-actros-atron-wega-fcd0803/FCD0803"
+      },
+      "ar_motor": {
+        "valor": "Tecfil ARS9841 (kit OM 926)",
+        "status": "inferido",
+        "fonte": "https://www.mercadolivre.com.br/kit-filtros-mb-atego-2428-1726-2426-2430-om-926-ars98415/up/MLBU1423508840",
+        "nota": "Deduzido por identidade de motor com o Atego 2426."
+      },
+      "ar_cabine": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao localizado."
+      },
+      "secador_ar": {
+        "valor": "Filtro secador de ar APU: Wabco 4329011002 / Tecfil DSF0204 (equiv. FDE0204); versoes recentes Wabco 4329012232 / MB A0004295795 / A0008302583",
+        "status": "inferido",
+        "fonte": "https://www.camiopar.com.br/filtro-secador-ar-apu-wabco-4329011002-rosca-m39-mb-vw ; https://www.redehds.com/1599/filtro-secador-mercedes-benz-axor-2007-20-atego-actros",
+        "nota": "Codigos vindos de catalogo de distribuidor, nao do catalogo do fabricante — conferir a rosca (M39) e o ano antes de comprar."
+      },
+      "arla": {
+        "valor": "Tecfil PEA180 — catalogo cita explicitamente Atego 3026",
+        "status": "confirmado",
+        "fonte": "https://www.magazineluiza.com.br/filtro-sistema-arla-32-mercedes-accelo-815-1016-1316-atego-1419-1719-1726-1729-1730-3026-3030-axor-1933-2036-2544-tecfil-pea180/p/ff8bf7a4bd/au/otau/"
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada."
+    },
+    "bateria": {
+      "valor": "2 baterias de 12V ligadas em serie (sistema 24V), 150–180 Ah, CCA minimo ~900 A",
+      "status": "inferido",
+      "fonte": "https://espacobaterias.com.br/qual-bateria-usar-no-mercedes-benz-atego-1719-2426-2428-guia-essencial-para-seu-caminhao/",
+      "nota": "Fonte e um guia de revendedor de baterias, nao a ficha da MB. Conferir a Ah original na etiqueta da bateria do veiculo."
+    },
+    "pneu": {
+      "valor": "275/80R22.5 (dianteiro e traseiro)",
+      "status": "confirmado",
+      "fonte": "https://www.scribd.com/document/558209619/ATEGO-3026-FICHA-TECNICA"
+    },
+    "tanques": {
+      "valor": "Combustivel 210 L ou 315 L (algumas configuracoes 2x315 L); ARLA 32: 35 L",
+      "status": "confirmado",
+      "fonte": "https://www.scribd.com/document/558209619/ATEGO-3026-FICHA-TECNICA"
+    },
+    "intervalos": {
+      "oleo_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      },
+      "oleo_cambio": {
+        "valor": "90.000 km ou 48 meses (plano de manutencao MB)",
+        "status": "inferido",
+        "fonte": "https://www.mecasul.com.br/servicos/planos-de-manutencao"
+      },
+      "filtros": {
+        "valor": "Filtros de oleo e combustivel trocados junto com o oleo do motor; filtro de ar e ARLA em intervalo proprio (a MB informa +33% de vida no filtro de ar e +11% no filtro de ARLA nos motores BlueTec 6)",
+        "status": "inferido",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+        "nota": "Intervalo em km nao localizado por modelo."
+      }
+    },
+    "observacoes": "Motor identico ao do Atego 2426 (OM 926 LA 7,2 L / 256 cv) e mesmo pneu 275/80R22.5 — compartilha filtros e oleo com os 42 ativos do 2426, formando um grupo de 58 se o 2426 for tratado por ano. Todos Euro V (2017–2018), sem ambiguidade de norma."
+  },
+  {
+    "modelo": "ACCELO 1316",
+    "marca": "MERCEDES BENZ",
+    "tipo": "TRUCK/VUC",
+    "anos": [
+      2017,
+      2022
+    ],
+    "ativos": 13,
+    "motor": {
+      "valor": "OM 924 LA BlueTec 5 — 4 cilindros em linha, 4,8 L; 156 cv @ 2.200 rpm; 610 Nm (62 kgfm) @ 1.200 rpm",
+      "status": "confirmado",
+      "fonte": "https://truckinfomb.com.br/api/v1/arquivo/672f4e3a-2e13-42e6-ad89-a6c10db21690 ; https://ocarreteiro.com.br/caminhoes/accelo-1316/"
+    },
+    "cilindrada": {
+      "valor": "4,8 L",
+      "status": "confirmado",
+      "fonte": "https://ocarreteiro.com.br/caminhoes/accelo-1316/"
+    },
+    "potencia": {
+      "valor": "156 cv @ 2.200 rpm / 610 Nm (62 kgfm) @ 1.200 rpm",
+      "status": "confirmado",
+      "fonte": "https://ocarreteiro.com.br/caminhoes/accelo-1316/"
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "15W-40",
+        "status": "inferido",
+        "fonte": "http://www.casadooleorp.com.br/media/pdf/tabela-lubrificantes-diesel.pdf",
+        "nota": "Deduzido por identidade de motor com o Atego 1719 (OM 924 LA Euro 5)."
+      },
+      "norma": {
+        "valor": "MB-Approval 228.3 ou 228.5 (228.5 = long-drain). NAO usar apenas \"API CI-4/CK-4\" como criterio — a folha MB e o que vale.",
+        "status": "inferido",
+        "fonte": "https://www.scribd.com/document/419931877/Spec-223-2-pdf ; https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/",
+        "nota": "Regra da folha MB 223.2 (uso de óleos de motor): motor Euro VI COM filtro de particulado (DPF) exige óleo low-SAPS folha MB 228.51; motor Euro V sem DPF aceita MB 228.3/228.5. Usar 228.3/228.5 num motor com DPF entope o filtro — este é o erro clássico da marca. Deduzido da familia de motor (BlueTec 5 / Proconve P7 = SCR sem DPF)."
+      },
+      "volume_l": {
+        "valor": "~15,8 L",
+        "status": "inferido",
+        "fonte": "http://www.casadooleorp.com.br/media/pdf/tabela-lubrificantes-diesel.pdf",
+        "nota": "Tabela de lubrificantes cita o valor para Accelo 1016 / Atego 1419 / Atego 1719 com OM 924 LA Euro 5. Estendido ao Accelo 1316 (mesmo motor). Confirmar no manual."
+      },
+      "base": {
+        "valor": "Mineral/semissintetico com MB-Approval 228.3/228.5",
+        "status": "inferido",
+        "fonte": "https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/"
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "Cambio manual de 6 marchas",
+        "status": "confirmado",
+        "fonte": "https://truckinfomb.com.br/api/v1/arquivo/672f4e3a-2e13-42e6-ad89-a6c10db21690"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Eixo traseiro MB (classe leve/media)",
+        "status": "inferido",
+        "fonte": "https://ocarreteiro.com.br/caminhoes/accelo-1316/"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "fluido_freio": {
+      "valor": "Sistema de freio PNEUMATICO (a ar, S-came ou disco) — nao usa fluido hidraulico DOT. O que se troca e o filtro secador de ar e o oleo do compressor (que e o proprio oleo do motor).",
+      "status": "inferido",
+      "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+      "nota": "Confirmado explicitamente para o Atego 1719 (\"freios a ar S-CAME\"); estendido por familia aos demais caminhoes da lista."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Aditivo anticorrosivo/anticongelante folha MB 325.0 (concentrado) ou MB 326.x (pre-misturado 50/50); mistura 40–50% de concentrado em agua conforme MB 310.1",
+        "status": "inferido",
+        "fonte": "https://operatingfluids.mercedes-benz.com/sheet/325.0/en ; https://www.portalmercedes.com/t19206-liquido-correto-de-arrefecimento-proporcao-da-mistura-na-troca-completar-nivel-geral",
+        "nota": "Folha confirmada na base oficial BeVo. O VOLUME do sistema por modelo nao foi encontrado."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "arla": {
+      "valor": "SIM — ARLA 32 com SCR, BlueTec 5 / Proconve P7 (Euro V)",
+      "status": "confirmado",
+      "fonte": "https://www.magazineluiza.com.br/filtro-sistema-arla-32-mercedes-accelo-815-1016-1316-atego-1419-1719-1726-1729-1730-3026-3030-axor-1933-2036-2544-tecfil-pea180/p/ff8bf7a4bd/au/otau/"
+    },
+    "filtros": {
+      "oleo": {
+        "valor": "Kit Wega WKP-724 (oleo + 2 de combustivel), cobre Accelo 1316 OM 924 LA anos 17–24",
+        "status": "inferido",
+        "fonte": "https://www.karhub.com.br/p/kit-filtro-oleo-2x-comb-mb-accelo-815-1016-1313-1316-atego-1419-1719-om924la-17-24-wega-wkp-724-18901109"
+      },
+      "combustivel": {
+        "valor": "Genuino MB A0000901551 (Accelo 1016/1017/1316/1317)",
+        "status": "confirmado",
+        "fonte": "https://originalonline.com.br/products/filtro-combustivel-accelo-1017-1317-1016-1316-a0000901551-original"
+      },
+      "separador_agua": {
+        "valor": "Filtro Racor — Accelo 1316 OM 924 LA 2016 em diante",
+        "status": "confirmado",
+        "fonte": "https://www.brasfilautopecas.com/MLB-2806699909-filtro-racor-mercedes-accelo-1316-om-924-la-2016diante-_JM",
+        "nota": "Aplicacao confirmada; codigo do fabricante do filtro nao transcrito na fonte."
+      },
+      "ar_motor": {
+        "valor": "Tecfil ARS9838 (OM 924 — Accelo 1016, 1316 E5, 915C)",
+        "status": "confirmado",
+        "fonte": "https://www.buscarpecasonline.com.br/MLB-2144253358-filtro-ar-mb-om924-accelo-1016-1316-e5-915c-tecfil-ars9838-_JM"
+      },
+      "ar_cabine": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao localizado."
+      },
+      "secador_ar": {
+        "valor": "Filtro secador de ar APU: Wabco 4329011002 / Tecfil DSF0204 (equiv. FDE0204); versoes recentes Wabco 4329012232 / MB A0004295795 / A0008302583",
+        "status": "inferido",
+        "fonte": "https://www.camiopar.com.br/filtro-secador-ar-apu-wabco-4329011002-rosca-m39-mb-vw ; https://www.redehds.com/1599/filtro-secador-mercedes-benz-axor-2007-20-atego-actros",
+        "nota": "Codigos vindos de catalogo de distribuidor, nao do catalogo do fabricante — conferir a rosca (M39) e o ano antes de comprar."
+      },
+      "arla": {
+        "valor": "Tecfil PEA180 — catalogo cita explicitamente Accelo 1316",
+        "status": "confirmado",
+        "fonte": "https://www.magazineluiza.com.br/filtro-sistema-arla-32-mercedes-accelo-815-1016-1316-atego-1419-1719-1726-1729-1730-3026-3030-axor-1933-2036-2544-tecfil-pea180/p/ff8bf7a4bd/au/otau/"
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada."
+    },
+    "bateria": {
+      "valor": "2 baterias de 12V ligadas em serie (sistema 24V), 150–180 Ah, CCA minimo ~900 A",
+      "status": "inferido",
+      "fonte": "https://espacobaterias.com.br/qual-bateria-usar-no-mercedes-benz-accelo-815-1016-guia-essencial-para-seu-caminhao/",
+      "nota": "Fonte e um guia de revendedor de baterias, nao a ficha da MB. Conferir a Ah original na etiqueta da bateria do veiculo."
+    },
+    "pneu": {
+      "valor": "215/75R17.5",
+      "status": "confirmado",
+      "fonte": "https://truckinfomb.com.br/api/v1/arquivo/672f4e3a-2e13-42e6-ad89-a6c10db21690"
+    },
+    "tanques": {
+      "valor": "Combustivel 150 L",
+      "status": "confirmado",
+      "fonte": "https://truckinfomb.com.br/api/v1/arquivo/672f4e3a-2e13-42e6-ad89-a6c10db21690"
+    },
+    "intervalos": {
+      "oleo_motor": {
+        "valor": "40.000 km (por identidade de motor com o Atego 1719 OM 924 LA)",
+        "status": "inferido",
+        "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719"
+      },
+      "oleo_cambio": {
+        "valor": "90.000 km ou 48 meses (plano de manutencao MB)",
+        "status": "inferido",
+        "fonte": "https://www.mecasul.com.br/servicos/planos-de-manutencao"
+      },
+      "filtros": {
+        "valor": "Filtros de oleo e combustivel trocados junto com o oleo do motor; filtro de ar e ARLA em intervalo proprio (a MB informa +33% de vida no filtro de ar e +11% no filtro de ARLA nos motores BlueTec 6)",
+        "status": "inferido",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+        "nota": "Intervalo em km nao localizado por modelo."
+      }
+    },
+    "observacoes": "MODELO MAIS BEM COBERTO DE FILTROS desta pesquisa (ar, combustivel, separador e ARLA com codigo). Mesmo motor do Atego 1719 e do Atron 1719 (OM 924 LA), mas PNEU DIFERENTE (215/75R17.5 contra 275/80R22.5) — nao confundir no estoque. Todos Euro V."
+  },
+  {
+    "modelo": "ACTROS 2546 LS",
+    "marca": "MERCEDES BENZ",
+    "tipo": "CAVALO MECANICO",
+    "anos": [
+      2025,
+      2025
+    ],
+    "ativos": 7,
+    "motor": {
+      "valor": "OM 460 LA — 6 cilindros em linha, 12,8 L (13 L nominal), ~456/460 cv",
+      "status": "inferido",
+      "fonte": "https://www.mercedes-benz.com.br/resources/files/documentos/caminhoes/actros/dados-tecnicos/2019/Actros%202546%206x2%20Estradeiro%20-%20V1_19_site.pdf ; https://wmotos.icarros.com.br/mercedes-benz/actros/2013/ficha-tecnica",
+      "nota": "CUIDADO COM A GERACAO: o Actros 2546 ANTERIOR a 2019 usava OM 501 LA (V6, 12,0 L, 456 cv) — motor totalmente diferente. Como a frota tem unidade 2025, e o OM 460 LA do Novo Actros. Confirmar pelo chassi antes de comprar peca de motor."
+    },
+    "cilindrada": {
+      "valor": "12,8 L",
+      "status": "inferido",
+      "fonte": "https://stacaminhoes.com.br/veiculos-novos/novo-actros/",
+      "nota": "Por familia do Novo Actros brasileiro."
+    },
+    "potencia": {
+      "valor": "~456 a 460 cv",
+      "status": "inferido",
+      "fonte": "https://wmotos.icarros.com.br/mercedes-benz/actros/2013/ficha-tecnica",
+      "nota": "Fontes citam 456 cv (geracao OM 501) e 460 cv (13 L). Confirmar na ficha do ano 2025."
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "10W-40 ou 5W-30, sempre em produto com MB-Approval 228.51",
+        "status": "inferido",
+        "fonte": "https://www.midlandstruckvan.com/trucks/parts/genuine-oil-and-chemical-products",
+        "nota": "A viscosidade sozinha nao basta: o criterio de compra e a folha 228.51 impressa na embalagem."
+      },
+      "norma": {
+        "valor": "MB-Approval 228.51 (low SAPS) — OBRIGATORIO",
+        "status": "inferido",
+        "fonte": "https://www.scribd.com/document/419931877/Spec-223-2-pdf ; https://bevo.mercedes-benz.com/bevolisten/228.51_en.html ; https://operatingfluids.mercedes-benz.com/sheet/228.51/en",
+        "nota": "Regra da folha MB 223.2 (uso de óleos de motor): motor Euro VI COM filtro de particulado (DPF) exige óleo low-SAPS folha MB 228.51; motor Euro V sem DPF aceita MB 228.3/228.5. Usar 228.3/228.5 num motor com DPF entope o filtro — este é o erro clássico da marca. A folha 228.51 e descrita pela MB como \"Low SPAsh multigrade service engine oils\", exigida em motores com DPF."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      },
+      "base": {
+        "valor": "Sintetico/semissintetico com MB-Approval 228.51",
+        "status": "inferido",
+        "fonte": "https://www.midlandstruckvan.com/trucks/parts/genuine-oil-and-chemical-products"
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "Transmissao automatizada de 12 marchas",
+        "status": "confirmado",
+        "fonte": "https://www.promath.com.br/wp-content/uploads/2016/08/Actros_2546_LS_multiuso.pdf"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Eixo traseiro MB 6x2 (familia 440 NFD no Novo Actros)",
+        "status": "inferido",
+        "fonte": "https://www.vitoriadiesel.com.br/pdf/ACTROS%202548%20LS%206X2%20BLUETEC%206.pdf",
+        "nota": "Deduzido do Actros 2548 LS 6x2 da mesma geracao."
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "fluido_freio": {
+      "valor": "Sistema de freio PNEUMATICO (a ar, S-came ou disco) — nao usa fluido hidraulico DOT. O que se troca e o filtro secador de ar e o oleo do compressor (que e o proprio oleo do motor).",
+      "status": "inferido",
+      "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+      "nota": "Confirmado explicitamente para o Atego 1719 (\"freios a ar S-CAME\"); estendido por familia aos demais caminhoes da lista."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Aditivo anticorrosivo/anticongelante folha MB 325.0 (concentrado) ou MB 326.x (pre-misturado 50/50); mistura 40–50% de concentrado em agua conforme MB 310.1",
+        "status": "inferido",
+        "fonte": "https://operatingfluids.mercedes-benz.com/sheet/325.0/en ; https://www.portalmercedes.com/t19206-liquido-correto-de-arrefecimento-proporcao-da-mistura-na-troca-completar-nivel-geral",
+        "nota": "Folha confirmada na base oficial BeVo. O VOLUME do sistema por modelo nao foi encontrado."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "arla": {
+      "valor": "SIM — ARLA 32 com SCR. Unidade 2025 = BlueTec 6 / Proconve P8 (Euro VI) com DPF.",
+      "status": "inferido",
+      "fonte": "https://stacaminhoes.com.br/veiculos-novos/novo-actros/",
+      "nota": "Deduzido do ano: Proconve P8 e obrigatorio para caminhoes novos desde 01/2023."
+    },
+    "filtros": {
+      "oleo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "combustivel": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "separador_agua": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "ar_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "ar_cabine": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "secador_ar": {
+        "valor": "Filtro secador de ar APU: Wabco 4329011002 / Tecfil DSF0204 (equiv. FDE0204); versoes recentes Wabco 4329012232 / MB A0004295795 / A0008302583",
+        "status": "inferido",
+        "fonte": "https://www.camiopar.com.br/filtro-secador-ar-apu-wabco-4329011002-rosca-m39-mb-vw ; https://www.redehds.com/1599/filtro-secador-mercedes-benz-axor-2007-20-atego-actros",
+        "nota": "Codigos vindos de catalogo de distribuidor, nao do catalogo do fabricante — conferir a rosca (M39) e o ano antes de comprar."
+      },
+      "arla": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada."
+    },
+    "bateria": {
+      "valor": "Sistema 24V com 2 baterias de 12V, 230 Ah",
+      "status": "inferido",
+      "fonte": "https://www.vitoriadiesel.com.br/pdf/ACTROS%202548%20LS%206X2%20BLUETEC%206.pdf",
+      "nota": "Deduzido do Actros 2548 LS 6x2 BlueTec 6."
+    },
+    "pneu": {
+      "valor": "295/80R22.5",
+      "status": "confirmado",
+      "fonte": "https://www.promath.com.br/wp-content/uploads/2016/08/Actros_2546_LS_multiuso.pdf"
+    },
+    "tanques": {
+      "valor": "Combustivel 535 + 480 L",
+      "status": "inferido",
+      "fonte": "https://wmotos.icarros.com.br/mercedes-benz/actros/2013/ficha-tecnica",
+      "nota": "Valor de ficha de geracao anterior — confirmar no ano 2025."
+    },
+    "intervalos": {
+      "oleo_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      },
+      "oleo_cambio": {
+        "valor": "90.000 km ou 48 meses (plano de manutencao MB)",
+        "status": "inferido",
+        "fonte": "https://www.mecasul.com.br/servicos/planos-de-manutencao"
+      },
+      "filtros": {
+        "valor": "Filtros de oleo e combustivel trocados junto com o oleo do motor; filtro de ar e ARLA em intervalo proprio (a MB informa +33% de vida no filtro de ar e +11% no filtro de ARLA nos motores BlueTec 6)",
+        "status": "inferido",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+        "nota": "Intervalo em km nao localizado por modelo."
+      }
+    },
+    "observacoes": "O \"LS\" indica suspensao traseira PNEUMATICA (o 2548 sem LS tem suspensao metalica) — muda bolsa de ar e valvula niveladora, nao muda fluido. Agrupar com 2548 e 2651 para oleo 228.51 e pneu 295/80R22.5."
+  },
+  {
+    "modelo": "ATEGO 2425",
+    "marca": "MERCEDES BENZ",
+    "tipo": "TRUCK",
+    "anos": [
+      2018,
+      2018
+    ],
+    "ativos": 6,
+    "motor": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": "https://www.scribd.com/document/715788708/Atego-2425-6x2 ; https://www.caminhoes-e-carretas.com/2010/01/mercedes-benz-atego-2425-6x2.html",
+      "nota": "AMBIGUIDADE REAL, NAO RESOLVIDA. O \"Atego 2425\" documentado usa OM 906 LA (6 cilindros, 6.374 cm3, 254 cv @ 2.200 rpm, 92 mkgf entre 1.200–1.600 rpm), MAS essa e a geracao Euro III, vendida ate ~2011. Um veiculo de 2018 tem de ser Euro V, e na linha Euro V a MB vendia o 2426 (OM 926 LA), nao o 2425. Duas hipoteses: (a) cadastro com nome errado e o veiculo e na verdade um 2426 OM 926 LA; (b) e um 2425 OM 906 LA mais antigo com ano de cadastro/reemplacamento 2018. CONSULTAR O CHASSI/DECODIFICACAO VIN ANTES DE COMPRAR QUALQUER PECA DE MOTOR."
+    },
+    "cilindrada": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Depende da hipotese: 6.374 cm3 (OM 906 LA) ou 7.201 cm3 (OM 926 LA)."
+    },
+    "potencia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Depende da hipotese: 254 cv (OM 906 LA) ou 256 cv (OM 926 LA)."
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "15W-40 (mineral/semissintetico) ou 10W-40; 15W-40 costuma corresponder a MB 228.3 e 10W-40 a 228.5/228.51",
+        "status": "inferido",
+        "fonte": "https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/",
+        "nota": "Confirmar no manual do veiculo qual viscosidade a MB libera para a faixa de temperatura da operacao."
+      },
+      "norma": {
+        "valor": "MB-Approval 228.3 / 228.5 nas duas hipoteses (nem o OM 906 LA Euro III nem o OM 926 LA Euro V tem DPF)",
+        "status": "inferido",
+        "fonte": "https://www.scribd.com/document/419931877/Spec-223-2-pdf",
+        "nota": "Este e o unico campo que NAO depende de resolver a ambiguidade do motor: as duas hipoteses caem na mesma folha de oleo."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado, e depende de qual motor for."
+      },
+      "base": {
+        "valor": "Mineral/semissintetico",
+        "status": "inferido",
+        "fonte": "https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/"
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "Cambio MB G 85 de 6 marchas",
+        "status": "confirmado",
+        "fonte": "https://www.scribd.com/document/715788708/Atego-2425-6x2"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Eixo traseiro MB (familia HL)",
+        "status": "inferido",
+        "fonte": "https://www.scribd.com/document/715788708/Atego-2425-6x2"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "fluido_freio": {
+      "valor": "Sistema de freio PNEUMATICO (a ar, S-came ou disco) — nao usa fluido hidraulico DOT. O que se troca e o filtro secador de ar e o oleo do compressor (que e o proprio oleo do motor).",
+      "status": "inferido",
+      "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+      "nota": "Confirmado explicitamente para o Atego 1719 (\"freios a ar S-CAME\"); estendido por familia aos demais caminhoes da lista."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Aditivo anticorrosivo/anticongelante folha MB 325.0 (concentrado) ou MB 326.x (pre-misturado 50/50); mistura 40–50% de concentrado em agua conforme MB 310.1",
+        "status": "inferido",
+        "fonte": "https://operatingfluids.mercedes-benz.com/sheet/325.0/en ; https://www.portalmercedes.com/t19206-liquido-correto-de-arrefecimento-proporcao-da-mistura-na-troca-completar-nivel-geral",
+        "nota": "Folha confirmada na base oficial BeVo. O VOLUME do sistema por modelo nao foi encontrado."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "arla": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Depende da geracao: se for OM 906 LA Euro III, NAO usa ARLA; se for Euro V (2018), usa ARLA 32 com SCR. Resolver junto com a identificacao do motor."
+    },
+    "filtros": {
+      "oleo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Depende do motor (OM 906 e OM 926 compartilham varios filtros da linha Tecfil PEL2002, mas confirmar)."
+      },
+      "combustivel": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "separador_agua": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "ar_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "ar_cabine": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao localizado."
+      },
+      "secador_ar": {
+        "valor": "Filtro secador de ar APU: Wabco 4329011002 / Tecfil DSF0204 (equiv. FDE0204); versoes recentes Wabco 4329012232 / MB A0004295795 / A0008302583",
+        "status": "inferido",
+        "fonte": "https://www.camiopar.com.br/filtro-secador-ar-apu-wabco-4329011002-rosca-m39-mb-vw ; https://www.redehds.com/1599/filtro-secador-mercedes-benz-axor-2007-20-atego-actros",
+        "nota": "Codigos vindos de catalogo de distribuidor, nao do catalogo do fabricante — conferir a rosca (M39) e o ano antes de comprar."
+      },
+      "arla": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Depende de ter ou nao SCR."
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada."
+    },
+    "bateria": {
+      "valor": "2 baterias de 12V ligadas em serie (sistema 24V), 150–180 Ah, CCA minimo ~900 A",
+      "status": "inferido",
+      "fonte": "https://espacobaterias.com.br/qual-bateria-usar-no-mercedes-benz-atego-1719-2426-2428-guia-essencial-para-seu-caminhao/",
+      "nota": "Fonte e um guia de revendedor de baterias, nao a ficha da MB. Conferir a Ah original na etiqueta da bateria do veiculo."
+    },
+    "pneu": {
+      "valor": "275/80R22.5",
+      "status": "confirmado",
+      "fonte": "https://www.scribd.com/document/715788708/Atego-2425-6x2"
+    },
+    "intervalos": {
+      "oleo_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      },
+      "oleo_cambio": {
+        "valor": "90.000 km ou 48 meses (plano de manutencao MB)",
+        "status": "inferido",
+        "fonte": "https://www.mecasul.com.br/servicos/planos-de-manutencao"
+      },
+      "filtros": {
+        "valor": "Filtros de oleo e combustivel trocados junto com o oleo do motor; filtro de ar e ARLA em intervalo proprio (a MB informa +33% de vida no filtro de ar e +11% no filtro de ARLA nos motores BlueTec 6)",
+        "status": "inferido",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+        "nota": "Intervalo em km nao localizado por modelo."
+      }
+    },
+    "observacoes": "MODELO MAIS INCERTO DA LISTA. A ficha documentada (OM 906 LA 6,4 L) nao casa com o ano 2018 da frota. Nao comprar peca de motor por este catalogo — decodificar o VIN dos 6 ativos primeiro. Pneu e cambio sao os unicos campos seguros."
+  },
+  {
+    "modelo": "ACCELO 1317",
+    "marca": "MERCEDES BENZ",
+    "tipo": "VUC",
+    "anos": [
+      2025,
+      2025
+    ],
+    "ativos": 6,
+    "motor": {
+      "valor": "OM 924 LA BlueTec 6 — 4 cilindros em linha, 4,8 L; 163 cv; 610 Nm (62,2 kgfm). NAO tem EGR (a MB fez o Euro 6 do Accelo sem recirculacao de gases).",
+      "status": "confirmado",
+      "fonte": "https://truckinfomb.com.br/api/v1/arquivo/e5c82712-fc6a-42b7-a7cd-be244f76504a ; https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+      "nota": "MESMO CODIGO DE MOTOR do Accelo 1316 (OM 924 LA), mas calibracao Euro VI — o OLEO E OUTRO. Nao herdar o oleo do 1316."
+    },
+    "cilindrada": {
+      "valor": "4,8 L",
+      "status": "confirmado",
+      "fonte": "https://truckinfomb.com.br/api/v1/arquivo/e5c82712-fc6a-42b7-a7cd-be244f76504a"
+    },
+    "potencia": {
+      "valor": "163 cv / 610 Nm (62,2 kgfm)",
+      "status": "confirmado",
+      "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/"
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "10W-40 ou 5W-30, sempre em produto com MB-Approval 228.51",
+        "status": "inferido",
+        "fonte": "https://www.midlandstruckvan.com/trucks/parts/genuine-oil-and-chemical-products",
+        "nota": "A viscosidade sozinha nao basta: o criterio de compra e a folha 228.51 impressa na embalagem."
+      },
+      "norma": {
+        "valor": "MB-Approval 228.51 (low SAPS) — OBRIGATORIO",
+        "status": "inferido",
+        "fonte": "https://www.scribd.com/document/419931877/Spec-223-2-pdf ; https://bevo.mercedes-benz.com/bevolisten/228.51_en.html ; https://operatingfluids.mercedes-benz.com/sheet/228.51/en",
+        "nota": "Regra da folha MB 223.2 (uso de óleos de motor): motor Euro VI COM filtro de particulado (DPF) exige óleo low-SAPS folha MB 228.51; motor Euro V sem DPF aceita MB 228.3/228.5. Usar 228.3/228.5 num motor com DPF entope o filtro — este é o erro clássico da marca. A folha 228.51 e descrita pela MB como \"Low SPAsh multigrade service engine oils\", exigida em motores com DPF."
+      },
+      "volume_l": {
+        "valor": "~15,8 a 16 L (por identidade de bloco com o OM 924 LA Euro 5)",
+        "status": "inferido",
+        "fonte": "http://www.casadooleorp.com.br/media/pdf/tabela-lubrificantes-diesel.pdf",
+        "nota": "O volume provavelmente nao muda com a calibracao, mas a folha do oleo MUDA (228.51). Confirmar no manual do BlueTec 6."
+      },
+      "base": {
+        "valor": "Sintetico/semissintetico low-SAPS com MB-Approval 228.51",
+        "status": "inferido",
+        "fonte": "https://www.midlandstruckvan.com/trucks/parts/genuine-oil-and-chemical-products"
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "Cambio MB G70 — versoes manual (6 marchas, acionamento por cabo) e automatizada",
+        "status": "confirmado",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/ ; https://truckinfomb.com.br/api/v1/arquivo/e5c82712-fc6a-42b7-a7cd-be244f76504a"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Eixo traseiro MB (classe leve/media)",
+        "status": "inferido",
+        "fonte": "https://truckinfomb.com.br/api/v1/arquivo/e5c82712-fc6a-42b7-a7cd-be244f76504a"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "fluido_freio": {
+      "valor": "Sistema de freio pneumatico com ABS, ASR, ESC, EBD, ESS e Hill Holder",
+      "status": "inferido",
+      "fonte": "https://pt.scribd.com/document/875147396/Accelo-1317-6x2-Bluetec-6"
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Aditivo anticorrosivo/anticongelante folha MB 325.0 (concentrado) ou MB 326.x (pre-misturado 50/50); mistura 40–50% de concentrado em agua conforme MB 310.1",
+        "status": "inferido",
+        "fonte": "https://operatingfluids.mercedes-benz.com/sheet/325.0/en ; https://www.portalmercedes.com/t19206-liquido-correto-de-arrefecimento-proporcao-da-mistura-na-troca-completar-nivel-geral",
+        "nota": "Folha confirmada na base oficial BeVo. O VOLUME do sistema por modelo nao foi encontrado."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "arla": {
+      "valor": "SIM — ARLA 32 com SCR. BlueTec 6 / Proconve P8 (Euro VI), COM filtro de particulado.",
+      "status": "confirmado",
+      "fonte": "https://pt.scribd.com/document/875147396/Accelo-1317-6x2-Bluetec-6 ; https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/"
+    },
+    "filtros": {
+      "oleo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Codigo especifico do 1317 nao localizado."
+      },
+      "combustivel": {
+        "valor": "Genuino MB A0000901551 (Accelo 1016/1017/1316/1317)",
+        "status": "confirmado",
+        "fonte": "https://originalonline.com.br/products/filtro-diesel-accelo-1317-1017-1316-1016-a0000901551-original"
+      },
+      "separador_agua": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao localizado para a versao Euro 6."
+      },
+      "ar_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao localizado. A MB informa que no BlueTec 6 o filtro de ar dura 33% mais que no Euro 5 — o intervalo muda mesmo que o codigo nao mude."
+      },
+      "ar_cabine": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao localizado."
+      },
+      "secador_ar": {
+        "valor": "Filtro secador de ar APU: Wabco 4329011002 / Tecfil DSF0204 (equiv. FDE0204); versoes recentes Wabco 4329012232 / MB A0004295795 / A0008302583",
+        "status": "inferido",
+        "fonte": "https://www.camiopar.com.br/filtro-secador-ar-apu-wabco-4329011002-rosca-m39-mb-vw ; https://www.redehds.com/1599/filtro-secador-mercedes-benz-axor-2007-20-atego-actros",
+        "nota": "Codigos vindos de catalogo de distribuidor, nao do catalogo do fabricante — conferir a rosca (M39) e o ano antes de comprar."
+      },
+      "arla": {
+        "valor": "Familia Tecfil PEA180/PEA179 cobre a linha Accelo",
+        "status": "inferido",
+        "fonte": "https://www.magazineluiza.com.br/filtro-sistema-arla-32-mercedes-accelo-815-1016-1316-atego-1419-1719-1726-1729-1730-3026-3030-axor-1933-2036-2544-tecfil-pea180/p/ff8bf7a4bd/au/otau/",
+        "nota": "Confirmar a aplicacao para a versao BlueTec 6."
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada."
+    },
+    "bateria": {
+      "valor": "2 baterias de 12V ligadas em serie (sistema 24V), 150–180 Ah, CCA minimo ~900 A",
+      "status": "inferido",
+      "fonte": "https://espacobaterias.com.br/qual-bateria-usar-no-mercedes-benz-accelo-815-1016-guia-essencial-para-seu-caminhao/",
+      "nota": "Fonte e um guia de revendedor de baterias, nao a ficha da MB. Conferir a Ah original na etiqueta da bateria do veiculo."
+    },
+    "pneu": {
+      "valor": "215/75R17.5",
+      "status": "inferido",
+      "fonte": "https://truckinfomb.com.br/api/v1/arquivo/672f4e3a-2e13-42e6-ad89-a6c10db21690",
+      "nota": "Deduzido do Accelo 1316 6x2 (mesma classe de PBT e mesma familia). A ficha do 1317 nao trouxe a medida."
+    },
+    "tanques": {
+      "valor": "Combustivel 150 L",
+      "status": "confirmado",
+      "fonte": "https://truckinfomb.com.br/api/v1/arquivo/e5c82712-fc6a-42b7-a7cd-be244f76504a"
+    },
+    "intervalos": {
+      "oleo_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+        "nota": "Nao encontrado. A MB afirma que o BlueTec 6 mantem o intervalo do Euro 5 e reduz 10–15% o consumo de oleo."
+      },
+      "oleo_cambio": {
+        "valor": "90.000 km ou 48 meses (plano de manutencao MB)",
+        "status": "inferido",
+        "fonte": "https://www.mecasul.com.br/servicos/planos-de-manutencao"
+      },
+      "filtros": {
+        "valor": "Filtros de oleo e combustivel trocados junto com o oleo do motor; filtro de ar e ARLA em intervalo proprio (a MB informa +33% de vida no filtro de ar e +11% no filtro de ARLA nos motores BlueTec 6)",
+        "status": "inferido",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+        "nota": "Intervalo em km nao localizado por modelo."
+      }
+    },
+    "observacoes": "ARMADILHA DE COMPRA: mesmo codigo de motor do Accelo 1316 (OM 924 LA) mas Euro VI com DPF — exige oleo 228.51 low-SAPS, enquanto o 1316 usa 228.3/228.5. Almoxarifado que tratar \"Accelo = um oleo so\" vai entupir o DPF dos 6 ativos novos. Filtro de combustivel, porem, e o MESMO (A0000901551)."
+  },
+  {
+    "modelo": "ACTROS 2546",
+    "marca": "MERCEDES BENZ",
+    "tipo": "CAVALO MECANICO",
+    "anos": [
+      2019,
+      2025
+    ],
+    "ativos": 3,
+    "motor": {
+      "valor": "OM 460 LA — 6 cilindros em linha, 12,8 L, ~456/460 cv (Novo Actros brasileiro)",
+      "status": "inferido",
+      "fonte": "https://www.mercedes-benz.com.br/resources/files/documentos/caminhoes/actros/dados-tecnicos/2019/Actros%202546%206x2%20Estradeiro%20-%20V1_19_site.pdf ; https://stacaminhoes.com.br/veiculos-novos/novo-actros/",
+      "nota": "Confirmar pelo chassi: unidades anteriores a 2019 usavam OM 501 LA (V6 12,0 L)."
+    },
+    "cilindrada": {
+      "valor": "12,8 L",
+      "status": "inferido",
+      "fonte": "https://stacaminhoes.com.br/veiculos-novos/novo-actros/"
+    },
+    "potencia": {
+      "valor": "~456 a 460 cv",
+      "status": "inferido",
+      "fonte": "https://wmotos.icarros.com.br/mercedes-benz/actros/2013/ficha-tecnica"
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "DEPENDE DO ANO: unidades 2019–2022 (BlueTec 5) → 15W-40/10W-40; unidades 2023–2025 (BlueTec 6) → 10W-40 ou 5W-30 low-SAPS",
+        "status": "inferido",
+        "fonte": "https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/"
+      },
+      "norma": {
+        "valor": "DUAS FOLHAS NA MESMA LINHA DE MODELO: 2019–2022 (Euro V, sem DPF) → MB 228.3/228.5; 2023–2025 (Euro VI, com DPF) → MB 228.51 OBRIGATORIO.",
+        "status": "inferido",
+        "fonte": "https://www.scribd.com/document/419931877/Spec-223-2-pdf ; https://bevo.mercedes-benz.com/bevolisten/228.51_en.html",
+        "nota": "O Proconve P8 (Euro VI) passou a valer para caminhoes novos em 01/2023. Com apenas 3 ativos cobrindo 2019 a 2025, e quase certo que a frota tem os DOIS casos. Separar por ano antes de comprar."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      },
+      "base": {
+        "valor": "Conforme a folha do ano do veiculo",
+        "status": "inferido",
+        "fonte": "https://www.midlandstruckvan.com/trucks/parts/genuine-oil-and-chemical-products"
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "Transmissao automatizada de 12 marchas",
+        "status": "confirmado",
+        "fonte": "https://www.scribd.com/document/632689173/Novo-Actros-2546-6x2-Estradeiro-Rodoviario-site-pdf"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Eixo traseiro MB 6x2 (familia 440 NFD no Novo Actros)",
+        "status": "inferido",
+        "fonte": "https://www.vitoriadiesel.com.br/pdf/ACTROS%202548%20LS%206X2%20BLUETEC%206.pdf"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "fluido_freio": {
+      "valor": "Sistema de freio PNEUMATICO (a ar, S-came ou disco) — nao usa fluido hidraulico DOT. O que se troca e o filtro secador de ar e o oleo do compressor (que e o proprio oleo do motor).",
+      "status": "inferido",
+      "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+      "nota": "Confirmado explicitamente para o Atego 1719 (\"freios a ar S-CAME\"); estendido por familia aos demais caminhoes da lista."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Aditivo anticorrosivo/anticongelante folha MB 325.0 (concentrado) ou MB 326.x (pre-misturado 50/50); mistura 40–50% de concentrado em agua conforme MB 310.1",
+        "status": "inferido",
+        "fonte": "https://operatingfluids.mercedes-benz.com/sheet/325.0/en ; https://www.portalmercedes.com/t19206-liquido-correto-de-arrefecimento-proporcao-da-mistura-na-troca-completar-nivel-geral",
+        "nota": "Folha confirmada na base oficial BeVo. O VOLUME do sistema por modelo nao foi encontrado."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "arla": {
+      "valor": "SIM — ARLA 32 com SCR nos dois casos. A diferenca e o DPF: BlueTec 5 (ate 2022) nao tem; BlueTec 6 (2023+) tem.",
+      "status": "inferido",
+      "fonte": "https://stacaminhoes.com.br/veiculos-novos/novo-actros/"
+    },
+    "filtros": {
+      "oleo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "combustivel": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "separador_agua": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "ar_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "ar_cabine": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "secador_ar": {
+        "valor": "Filtro secador de ar APU: Wabco 4329011002 / Tecfil DSF0204 (equiv. FDE0204); versoes recentes Wabco 4329012232 / MB A0004295795 / A0008302583",
+        "status": "inferido",
+        "fonte": "https://www.camiopar.com.br/filtro-secador-ar-apu-wabco-4329011002-rosca-m39-mb-vw ; https://www.redehds.com/1599/filtro-secador-mercedes-benz-axor-2007-20-atego-actros",
+        "nota": "Codigos vindos de catalogo de distribuidor, nao do catalogo do fabricante — conferir a rosca (M39) e o ano antes de comprar."
+      },
+      "arla": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada."
+    },
+    "bateria": {
+      "valor": "Sistema 24V com 2 baterias de 12V, 230 Ah",
+      "status": "inferido",
+      "fonte": "https://www.vitoriadiesel.com.br/pdf/ACTROS%202548%20LS%206X2%20BLUETEC%206.pdf",
+      "nota": "Deduzido do Actros 2548 da mesma plataforma."
+    },
+    "pneu": {
+      "valor": "295/80R22.5",
+      "status": "inferido",
+      "fonte": "https://www.promath.com.br/wp-content/uploads/2016/08/Actros_2546_LS_multiuso.pdf",
+      "nota": "Por identidade com o 2546 LS e o 2548."
+    },
+    "intervalos": {
+      "oleo_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      },
+      "oleo_cambio": {
+        "valor": "90.000 km ou 48 meses (plano de manutencao MB)",
+        "status": "inferido",
+        "fonte": "https://www.mecasul.com.br/servicos/planos-de-manutencao"
+      },
+      "filtros": {
+        "valor": "Filtros de oleo e combustivel trocados junto com o oleo do motor; filtro de ar e ARLA em intervalo proprio (a MB informa +33% de vida no filtro de ar e +11% no filtro de ARLA nos motores BlueTec 6)",
+        "status": "inferido",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+        "nota": "Intervalo em km nao localizado por modelo."
+      }
+    },
+    "observacoes": "SO 3 ATIVOS MAS A FAIXA DE ANO MAIS PERIGOSA (2019–2025): atravessa a virada Euro V → Euro VI, e o oleo do motor muda de folha no meio. Conferir ano a ano. Fora isso, compartilha pneu, eixo e cambio com os outros Actros."
+  },
+  {
+    "modelo": "ATRON 1719",
+    "marca": "MERCEDES BENZ",
+    "tipo": "TRUCK",
+    "anos": [
+      2014,
+      2014
+    ],
+    "ativos": 1,
+    "motor": {
+      "valor": "OM 924 LA (eletronico) — 4 cilindros, 4,8 L; 185 cv @ 2.200 rpm; 700 Nm entre 1.200 e 1.600 rpm",
+      "status": "confirmado",
+      "fonte": "https://omecanico.com.br/mercedes-benz-lanca-caminhao-semipesado-atron-1719/ ; https://www.olhonocarro.com.br/catalogo/resultado-ficha-tecnica/MERCEDES-BENZ_ATRON_2014_1719%202P%20(DIESEL)(E5)_dcc916dda0861b/"
+    },
+    "cilindrada": {
+      "valor": "4,8 L (4.801 cm3)",
+      "status": "inferido",
+      "fonte": "https://consultadeplaca.net/blog/ficha-tecnica-mercedes-benz-atego-1719",
+      "nota": "Por identidade de motor com o Atego 1719."
+    },
+    "potencia": {
+      "valor": "185 cv @ 2.200 rpm / 700 Nm @ 1.200–1.600 rpm",
+      "status": "confirmado",
+      "fonte": "https://omecanico.com.br/mercedes-benz-lanca-caminhao-semipesado-atron-1719/"
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "15W-40",
+        "status": "inferido",
+        "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+        "nota": "Por identidade de motor com o Atego 1719."
+      },
+      "norma": {
+        "valor": "MB-Approval 228.3 ou 228.5 (228.5 = long-drain). NAO usar apenas \"API CI-4/CK-4\" como criterio — a folha MB e o que vale.",
+        "status": "inferido",
+        "fonte": "https://www.scribd.com/document/419931877/Spec-223-2-pdf ; https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/",
+        "nota": "Regra da folha MB 223.2 (uso de óleos de motor): motor Euro VI COM filtro de particulado (DPF) exige óleo low-SAPS folha MB 228.51; motor Euro V sem DPF aceita MB 228.3/228.5. Usar 228.3/228.5 num motor com DPF entope o filtro — este é o erro clássico da marca. Deduzido da familia de motor (BlueTec 5 / Proconve P7 = SCR sem DPF)."
+      },
+      "volume_l": {
+        "valor": "~15,8 a 16 L",
+        "status": "inferido",
+        "fonte": "http://www.casadooleorp.com.br/media/pdf/tabela-lubrificantes-diesel.pdf",
+        "nota": "Por identidade de motor (OM 924 LA Euro 5) com Accelo 1016 / Atego 1419 / Atego 1719."
+      },
+      "base": {
+        "valor": "Mineral/semissintetico com MB-Approval 228.3/228.5",
+        "status": "inferido",
+        "fonte": "https://www.midlandslubricants.co.uk/heavy-plant-and-commercial/truck-hgv-engine-oil-transmission-oil-gear-fluid/mercedes-benz-trucks-engine-10w40-transmission-75w90-75w80-differential-75w90/"
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "Cambio MB G-85 de 6 marchas",
+        "status": "confirmado",
+        "fonte": "https://omecanico.com.br/mercedes-benz-lanca-caminhao-semipesado-atron-1719/"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Eixo traseiro MB HL-5 de DUAS VELOCIDADES",
+        "status": "confirmado",
+        "fonte": "https://omecanico.com.br/mercedes-benz-lanca-caminhao-semipesado-atron-1719/"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado. Eixo de duas velocidades pode ter requisito proprio — conferir na tabela MB 231.2 pelo codigo HL-5."
+      }
+    },
+    "fluido_freio": {
+      "valor": "Sistema de freio PNEUMATICO (a ar, S-came ou disco) — nao usa fluido hidraulico DOT. O que se troca e o filtro secador de ar e o oleo do compressor (que e o proprio oleo do motor).",
+      "status": "inferido",
+      "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719",
+      "nota": "Confirmado explicitamente para o Atego 1719 (\"freios a ar S-CAME\"); estendido por familia aos demais caminhoes da lista."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Aditivo anticorrosivo/anticongelante folha MB 325.0 (concentrado) ou MB 326.x (pre-misturado 50/50); mistura 40–50% de concentrado em agua conforme MB 310.1",
+        "status": "inferido",
+        "fonte": "https://operatingfluids.mercedes-benz.com/sheet/325.0/en ; https://www.portalmercedes.com/t19206-liquido-correto-de-arrefecimento-proporcao-da-mistura-na-troca-completar-nivel-geral",
+        "nota": "Folha confirmada na base oficial BeVo. O VOLUME do sistema por modelo nao foi encontrado."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "arla": {
+      "valor": "SIM — Euro V (E5 no cadastro oficial de ficha tecnica), ARLA 32 com SCR",
+      "status": "confirmado",
+      "fonte": "https://www.olhonocarro.com.br/catalogo/resultado-ficha-tecnica/MERCEDES-BENZ_ATRON_2014_1719%202P%20(DIESEL)(E5)_dcc916dda0861b/"
+    },
+    "filtros": {
+      "oleo": {
+        "valor": "Linha OM 924 LA — kit Wega WKP-724 / genuino MB da familia 1719",
+        "status": "inferido",
+        "fonte": "https://www.karhub.com.br/p/kit-filtro-oleo-2x-comb-mb-accelo-815-1016-1313-1316-atego-1419-1719-om924la-17-24-wega-wkp-724-18901109",
+        "nota": "O kit citado cobre anos 17–24; para um veiculo 2014 confirmar a aplicacao no catalogo antes de comprar."
+      },
+      "combustivel": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao localizado para o ano 2014."
+      },
+      "separador_agua": {
+        "valor": "Wega FCD0803 (catalogo cita linha Atron)",
+        "status": "inferido",
+        "fonte": "https://www.selfcar.com.br/produto/caminhoes-e-onibus/filtros/filtros-do-separador-de-agua/filtro-separador-de-agua-mercedes-atego-1726-2426-axor-1933-2036-actros-atron-wega-fcd0803/FCD0803"
+      },
+      "ar_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao localizado."
+      },
+      "ar_cabine": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao localizado."
+      },
+      "secador_ar": {
+        "valor": "Filtro secador de ar APU: Wabco 4329011002 / Tecfil DSF0204 (equiv. FDE0204); versoes recentes Wabco 4329012232 / MB A0004295795 / A0008302583",
+        "status": "inferido",
+        "fonte": "https://www.camiopar.com.br/filtro-secador-ar-apu-wabco-4329011002-rosca-m39-mb-vw ; https://www.redehds.com/1599/filtro-secador-mercedes-benz-axor-2007-20-atego-actros",
+        "nota": "Codigos vindos de catalogo de distribuidor, nao do catalogo do fabricante — conferir a rosca (M39) e o ano antes de comprar."
+      },
+      "arla": {
+        "valor": "Familia Tecfil PEA180/FAU9991 cobre a linha Atron",
+        "status": "inferido",
+        "fonte": "https://www.selfcar.com.br/produto/caminhoes-e-onibus/filtros/filtros-arla--secador-apu/filtro-sistema-arla-mercedes-of1724-accelo-815-101-atron-1319-1635--tecfil--fau9991/FAU9991"
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada."
+    },
+    "bateria": {
+      "valor": "2 baterias de 12V ligadas em serie (sistema 24V), 150–180 Ah, CCA minimo ~900 A",
+      "status": "inferido",
+      "fonte": "https://espacobaterias.com.br/qual-bateria-usar-no-mercedes-benz-atego-1719-2426-2428-guia-essencial-para-seu-caminhao/",
+      "nota": "Fonte e um guia de revendedor de baterias, nao a ficha da MB. Conferir a Ah original na etiqueta da bateria do veiculo."
+    },
+    "pneu": {
+      "valor": "275/80R22.5 (dianteiro e traseiro)",
+      "status": "confirmado",
+      "fonte": "https://www.olhonocarro.com.br/catalogo/resultado-ficha-tecnica/MERCEDES-BENZ_ATRON_2014_1719%202P%20(DIESEL)(E5)_dcc916dda0861b/"
+    },
+    "intervalos": {
+      "oleo_motor": {
+        "valor": "40.000 km (por identidade de motor com o Atego 1719)",
+        "status": "inferido",
+        "fonte": "https://oficinavision.com.br/caminhoes/mercedes-benz/atego-1719"
+      },
+      "oleo_cambio": {
+        "valor": "90.000 km ou 48 meses (plano de manutencao MB)",
+        "status": "inferido",
+        "fonte": "https://www.mecasul.com.br/servicos/planos-de-manutencao"
+      },
+      "filtros": {
+        "valor": "Filtros de oleo e combustivel trocados junto com o oleo do motor; filtro de ar e ARLA em intervalo proprio (a MB informa +33% de vida no filtro de ar e +11% no filtro de ARLA nos motores BlueTec 6)",
+        "status": "inferido",
+        "fonte": "https://www.autossegredos.com.br/caminhoes-2/mercedes-benz-caminhoes/mercedes-benz-accelo-e-atego-ganha-motores-bluetec-6/",
+        "nota": "Intervalo em km nao localizado por modelo."
+      }
+    },
+    "observacoes": "ATIVO UNICO e o mais antigo da frota (2014). Do ponto de vista de consumo e um Atego 1719: mesmo motor OM 924 LA, mesmo pneu 275/80R22.5, mesmo cambio G-85 — nao precisa de item de estoque proprio. A unica peculiaridade e o eixo HL-5 de duas velocidades."
+  },
+  {
+    "modelo": "SPRINTER",
+    "marca": "MERCEDES BENZ",
+    "tipo": "VAN",
+    "anos": [
+      2021,
+      2021
+    ],
+    "ativos": 1,
+    "versao": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": "https://www.webmotors.com.br/mercedes-benz/sprinter/2021",
+      "nota": "NAO IDENTIFICADA — e o que este item mais precisa. Na linha brasileira 2021 existiam 314 CDI (143 cv / 33,7 kgfm) e 416/516 CDI (163 cv / 36,4 kgfm), em carrocerias Furgao, Furgao Longo, Furgao Longo Teto Alto, Furgao Extra Longo Teto Alto, Chassi e Van de passageiros. As versoes 311/415 sao da geracao ANTERIOR (ate 2019). Resolver pelo CRLV/chassi antes de comprar qualquer peca."
+    },
+    "motor": {
+      "valor": "OM 651 — 4 cilindros, 2,1 L (comercializado como \"2.2 CDI\"); 143 cv (314 CDI) ou 163 cv (416/516 CDI); 33,7 ou 36,4 kgfm; tracao traseira",
+      "status": "confirmado",
+      "fonte": "https://www.webmotors.com.br/mercedes-benz/sprinter/2021 ; https://fasapecas.com.br/motor-compacto-mercedes-benz-sprinter-415-515-om651.html"
+    },
+    "cilindrada": {
+      "valor": "2,1 L (2.143 cm3), anunciado como 2.2 CDI",
+      "status": "confirmado",
+      "fonte": "https://www.webmotors.com.br/mercedes-benz/sprinter/2021"
+    },
+    "potencia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Depende da versao: 143 cv (314 CDI) ou 163 cv (416/516 CDI)."
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "5W-30 sintetico",
+        "status": "confirmado",
+        "fonte": "https://www.blauparts.com/mercedes-sprinter-oil-change-kit-2500-om651.html ; https://loja.monteleone.com.br/lubrificantes/oleo-motor-sprinter-5w30-sintetico-mb-229-51-genuino-mercedes-benz-10-litros"
+      },
+      "norma": {
+        "valor": "MB-Approval 229.51 ou 229.52 — ATENCAO: a Sprinter usa a familia 229.x (veiculos leves), NAO a 228.x dos caminhoes. Nao abastecer com o oleo do Atego/Actros.",
+        "status": "confirmado",
+        "fonte": "https://www.blauparts.com/mercedes-sprinter-oil-change-kit-2500-om651.html ; https://www.lubrificantes3e.com.br/MLB-2033100871-oleo-sprinter-415-515-311-313-5w30-sintetico-mb22951-11-lts-_JM",
+        "nota": "Este e o erro de folha MB mais provavel numa frota mista de caminhao e van."
+      },
+      "volume_l": {
+        "valor": "~11 a 12 L (tamanho dos kits de troca vendidos para OM 651)",
+        "status": "inferido",
+        "fonte": "https://loja.monteleone.com.br/lubrificantes/oleo-motor-sprinter-5w30-sintetico-mb-229-51-genuino-mercedes-benz-10-litros ; https://www.lubrificantes3e.com.br/MLB-2033100871-oleo-sprinter-415-515-311-313-5w30-sintetico-mb22951-11-lts-_JM",
+        "nota": "E o volume VENDIDO no kit, nao a capacidade declarada do carter — pode haver sobra. Confirmar no manual."
+      },
+      "base": {
+        "valor": "Sintetico",
+        "status": "confirmado",
+        "fonte": "https://www.blauparts.com/mercedes-sprinter-oil-change-kit-2500-om651.html"
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "Cambio manual de 6 marchas (linha brasileira 2021)",
+        "status": "confirmado",
+        "fonte": "https://www.webmotors.com.br/mercedes-benz/sprinter/2021"
+      },
+      "norma": {
+        "valor": "Oleo de cambio manual da familia MB 235.x (veiculos leves) — a folha exata sai da tabela MB 231.1/231.2 pelo codigo do cambio",
+        "status": "inferido",
+        "fonte": "https://www.benzworld.org/attachments/mb-231-1-specified-gear-oils-cars-cross-country-vehicles-overview-mercedes-benz-speci-pdf.2644830/"
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Diferencial traseiro (tracao traseira) — oleo hipoide",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/235.0_en.html"
+      },
+      "norma": {
+        "valor": "Oleo de engrenagem MB — folha da familia 235.x (cambio: 235.1/.4/.5/.10/.11; eixo/hipoide: 235.0/.6/.8/.20). A folha exata sai da tabela MB 231.2 pelo modelo de cambio/eixo.",
+        "status": "inferido",
+        "fonte": "https://bevo.mercedes-benz.com/bevolisten/231.2_en.html ; https://bevo.mercedes-benz.com/bevolisten/235.0_en.html ; https://bevo.mercedes-benz.com/bevoonlinebak/235.20_en.html",
+        "nota": "A familia de folhas foi confirmada na BeVo, mas a folha ESPECIFICA do cambio/eixo deste modelo nao foi localizada — consultar MB 231.2 com o codigo do agregado (ex.: G 85-6, HL 5, MB 440 NFD)."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "fluido_freio": {
+      "valor": "Freio hidraulico a disco com ABS/EBD — fluido DOT 4 conforme folha MB 331.0",
+      "status": "inferido",
+      "fonte": "https://www.webmotors.com.br/mercedes-benz/sprinter/2021",
+      "nota": "A carroceria de freio hidraulico esta confirmada (ABS+EBD); a folha 331.0 e deducao pela pratica MB para veiculos leves — CONFIRMAR NO MANUAL."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": "Aditivo MB 325.x / 326.x",
+        "status": "inferido",
+        "fonte": "https://operatingfluids.mercedes-benz.com/sheet/325.0/en",
+        "nota": "Familia confirmada na BeVo; a folha exata do OM 651 na Sprinter nao foi verificada."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "arla": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "NAO CONFIRMADO se a Sprinter brasileira 2021 usa ARLA 32. A geracao VS30 no Brasil e Proconve P7 (Euro V) e ha versoes com e sem SCR conforme mercado. Verificar se o veiculo tem bocal azul de ARLA — e a checagem de 10 segundos que resolve."
+    },
+    "filtros": {
+      "oleo": {
+        "valor": "Mann HU7010Z (aplicacao OM 651)",
+        "status": "confirmado",
+        "fonte": "https://www.blauparts.com/mercedes-sprinter-oil-change-kit-2500-om651.html"
+      },
+      "combustivel": {
+        "valor": "Incluido nos kits de revisao OM 651 (Sprinter 311/313/314/415/416/515/516 ate 2022); genuino MB no kit A... da linha Sprinter",
+        "status": "inferido",
+        "fonte": "https://www.cdpecas.com.br/troca-de-oleo/kit-troca-de-oleo-sprinter-ate-2022 ; https://pecas.idavoli.com.br/pecas-genuino-mercedes-benz/kit-de-revisao-sprinter-311-313-413-415-416-515-motor-om651-2012-ate-2019-genuino-mercedes-benz-9867",
+        "nota": "Codigo individual nao transcrito pelas fontes."
+      },
+      "separador_agua": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao localizado. A Sprinter diesel costuma ter separador integrado ao filtro de combustivel."
+      },
+      "ar_motor": {
+        "valor": "Incluido no kit de revisao OM 651",
+        "status": "inferido",
+        "fonte": "https://www.cdpecas.com.br/troca-de-oleo/kit-troca-de-oleo-sprinter-ate-2022"
+      },
+      "ar_cabine": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao localizado com codigo."
+      },
+      "secador_ar": {
+        "valor": "NAO SE APLICA — freio hidraulico, sem sistema de ar comprimido.",
+        "status": "inferido",
+        "fonte": "https://www.webmotors.com.br/mercedes-benz/sprinter/2021"
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada."
+    },
+    "bateria": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada. Sistema 12V (veiculo leve), ao contrario dos caminhoes 24V — nao usar bateria de caminhao."
+    },
+    "pneu": {
+      "valor": "235/65 R16C (medida usual do Sprinter Furgao 415/416)",
+      "status": "inferido",
+      "fonte": "https://m.mercedes-benz.com.br/resources/files/documentos/sprinter/furgao/dados-tecnicos/B09916754%20Folheto%20t%C3%A9cnico%20Sprinter%20Furg%C3%A3o.pdf",
+      "nota": "Deduzido pela familia; a medida MUDA entre Furgao, Furgao Longo Teto Alto e Chassi, e entre rodado simples e duplo. Conferir na etiqueta da porta."
+    },
+    "intervalos": {
+      "oleo_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      },
+      "oleo_cambio": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      },
+      "filtros": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "observacoes": "UNICO VEICULO LEVE MERCEDES DA LISTA e o de maior risco de troca de fluido: usa folha MB 229.51/229.52 (5W-30 sintetico) e freio HIDRAULICO DOT, enquanto todo o resto da frota MB usa folha 228.x e freio pneumatico. Antes de qualquer compra, identificar a VERSAO (314 x 416/516) e a carroceria pelo CRLV — pneu, bateria e ate o filtro mudam com ela."
+  },
+  {
+    "modelo": "IVECO/DAILY 30-130",
+    "marca": "IVECO",
+    "marca_cadastrada": "MERCEDES BENZ (CADASTRO INCORRETO)",
+    "tipo": "VAN",
+    "anos": [
+      2023,
+      2023
+    ],
+    "ativos": 2,
+    "motor": {
+      "valor": "FPT F1A (F1A WG) — 4 cilindros em linha, 2.300 cm3, 16 valvulas, turbo + intercooler, common rail; 130 cv @ 3.600 rpm; 320 Nm @ 1.800–2.500 rpm",
+      "status": "confirmado",
+      "fonte": "https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0079-20%20LAMINA_TECNICA_DAILY_FURGAO_30-130_PO_bx.pdf",
+      "nota": "NAO E MERCEDES — nenhuma folha MB se aplica a este veiculo. O padrao de fluido e IVECO/FPT, com nomenclatura propria (URANIA / TUTELA / ACEA)."
+    },
+    "cilindrada": {
+      "valor": "2,3 L (2.300 cm3)",
+      "status": "confirmado",
+      "fonte": "https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0079-20%20LAMINA_TECNICA_DAILY_FURGAO_30-130_PO_bx.pdf"
+    },
+    "potencia": {
+      "valor": "130 cv @ 3.600 rpm / 320 Nm @ 1.800–2.500 rpm",
+      "status": "confirmado",
+      "fonte": "https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0079-20%20LAMINA_TECNICA_DAILY_FURGAO_30-130_PO_bx.pdf"
+    },
+    "oleo_motor": {
+      "viscosidade": {
+        "valor": "5W-30",
+        "status": "inferido",
+        "fonte": "https://www.q8oils.com/automotive/iveco-engine-oil-specifications-light-duty-and-heavy-duty/ ; https://cararac.com/engine_oil/iveco/daily.html",
+        "nota": "Recomendacao geral da linha Daily; confirmar a viscosidade do ano/motor no manual Iveco."
+      },
+      "norma": {
+        "valor": "Oleo LOW SAPS tipo URANIA DAILY LS, especificacao ACEA C2 (padrao Iveco 18-1811 para Daily com DPF). NAO existe folha MB aqui.",
+        "status": "inferido",
+        "fonte": "https://www.q8oils.com/automotive/iveco-engine-oil-specifications-light-duty-and-heavy-duty/ ; https://www.opieoils.co.uk/c-3688-iveco.aspx",
+        "nota": "Confirmar o numero da especificacao Iveco (18-18xx) no manual do veiculo antes de comprar — foi a informacao que mais faltou nesta pesquisa."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": "https://engineoilcapacity.com/iveco-daily-gearbox-motor-and-oil-pan-volume/",
+        "nota": "Fontes citam 6,3 L e 7,6 L para variantes diferentes de Daily — nao ha base para escolher a do 30-130 2023. Consultar o manual Iveco."
+      },
+      "base": {
+        "valor": "Sintetico low-SAPS",
+        "status": "inferido",
+        "fonte": "https://www.opieoils.co.uk/c-3688-iveco.aspx"
+      }
+    },
+    "oleo_cambio": {
+      "tipo": {
+        "valor": "ZF 6S 480 OD — manual, 6 marchas a frente + 1 re, acionamento mecanico",
+        "status": "confirmado",
+        "fonte": "https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0079-20%20LAMINA_TECNICA_DAILY_FURGAO_30-130_PO_bx.pdf"
+      },
+      "norma": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Especificacao do oleo do ZF 6S 480 nao levantada. Consultar a lista ZF TE-ML (usualmente TE-ML 02 para cambios manuais ZF) — NAO usar folha MB."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "oleo_diferencial": {
+      "tipo": {
+        "valor": "Diferencial traseiro (tracao traseira)",
+        "status": "inferido",
+        "fonte": "https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0079-20%20LAMINA_TECNICA_DAILY_FURGAO_30-130_PO_bx.pdf"
+      },
+      "norma": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantada — padrao Iveco/TUTELA."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "fluido_freio": {
+      "valor": "Freio HIDRAULICO a disco nas 4 rodas — fluido DOT 4",
+      "status": "inferido",
+      "fonte": "https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0079-20%20LAMINA_TECNICA_DAILY_FURGAO_30-130_PO_bx.pdf",
+      "nota": "O freio a disco nas 4 rodas esta confirmado na ficha Iveco; o DOT 4 e deducao pela classe do veiculo — confirmar no reservatorio/manual."
+    },
+    "arrefecimento": {
+      "tipo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Especificacao do liquido de arrefecimento Iveco (linha PARAFLU/TUTELA) nao levantada."
+      },
+      "volume_l": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "arla": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "NAO CONFIRMADO. O Daily brasileiro 2023 e Proconve P7 (Euro V) e ha versoes com e sem SCR. Verificar a presenca do bocal de ARLA no veiculo."
+    },
+    "filtros": {
+      "oleo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "combustivel": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "separador_agua": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "ar_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "ar_cabine": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao levantado."
+      },
+      "secador_ar": {
+        "valor": "NAO SE APLICA — freio hidraulico, sem sistema de ar comprimido.",
+        "status": "inferido",
+        "fonte": "https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0079-20%20LAMINA_TECNICA_DAILY_FURGAO_30-130_PO_bx.pdf"
+      }
+    },
+    "correia": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada."
+    },
+    "bateria": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Nao encontrada. Sistema 12V."
+    },
+    "pneu": {
+      "valor": null,
+      "status": "nao_encontrado",
+      "fonte": null,
+      "nota": "Medida dos pneus do Daily 30-130 2023 nao localizada (a ficha Iveco brasileira tem o dado, mas o PDF esta bloqueado pelo proxy desta sessao)."
+    },
+    "velocidade_max": {
+      "valor": "130 km/h (limitada)",
+      "status": "confirmado",
+      "fonte": "https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0079-20%20LAMINA_TECNICA_DAILY_FURGAO_30-130_PO_bx.pdf"
+    },
+    "intervalos": {
+      "oleo_motor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      },
+      "oleo_cambio": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      },
+      "filtros": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao encontrado."
+      }
+    },
+    "observacoes": "CADASTRO ERRADO NA FROTA: esta registrado como MERCEDES BENZ mas e um IVECO Daily. Corrigir o cadastro e a primeira acao — enquanto estiver como Mercedes, qualquer regra de compra por marca (oleo folha MB, filtro linha MB, revisao em concessionaria MB) vai errar nestes 2 ativos. Nenhuma folha MB se aplica: o padrao e ACEA/Iveco. Foi o modelo com menos dados obtidos, junto com o Atego 2425."
+  }
+]
