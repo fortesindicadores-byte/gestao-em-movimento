@@ -1,0 +1,26 @@
+name: Placa Abast Check
+
+# Uma placa aparece com km atual "—" nas Preventivas: onde ela abastece?
+# Lê hodometro_leitura (Pró-Frotas), erp_abastecimentos (ERP) e ativos_manual
+# (cadastro, com a "irmã a um caractere"). Não grava nada.
+on:
+  workflow_dispatch:
+    inputs:
+      placas:
+        description: "placas a procurar (CSV)"
+        required: true
+        default: "FQT4F96"
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          PLACAS: ${{ github.event.inputs.placas }}
+        run: node scripts/placa-abast-check.mjs
