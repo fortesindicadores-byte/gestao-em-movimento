@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609181330">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Visão Financeira · DRE Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -875,7 +875,75 @@ function ebIdx(header, ...names){
   for(const n of names){ const nn=_normEb(n); const i=nc.findIndex(c=>c.includes(nn)); if(i>=0) return i; }
   return -1;
 }
+/* ── FONTE: BANCO (passo 4 do roteiro do Supabase — Renan, 18/09/2026) ──
+   "Mas cara, jogamos tudo pro banco. Isso foi falado diversas vezes." E o dado
+   estava lá mesmo: as três abas do DRE já são carregadas de hora em hora pelo
+   robô do Sheets. Quem não tinha sido trocado era o painel — ele continuava
+   lendo o gviz, e por isso um FILTRO na aba Frota derrubou a tela para uma
+   unidade só em 18/09/2026.
+   Ler do banco tira do caminho o gviz, a foto do snapshot e a aba filtrada.
+   A leitura devolve exatamente a mesma forma que o fetchTab entregava
+   ({header, rows}) com os RÓTULOS da aba, então ebIdx/mapTab/tabToRows e todo
+   o resto do painel continuam sem saber a diferença.
+   Conferido antes de trocar pelo workflow DRE Banco Check. A planilha fica
+   como reserva: falhou a leitura do banco, cai para o gviz como antes. */
+const SB_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
+const SB_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+let _sbVF=null;
+const sbVF=()=>{ if(!_sbVF&&window.supabase)_sbVF=window.supabase.createClient(SB_URL,SB_KEY); return _sbVF; };
+const TAB_BANCO={ [TAB_FROTA]:'sh_dre_frota', [EBITDA_TAB]:'sh_dre_ebitda', [TAB_RECEITA]:'sh_dre_receita' };
+// rótulo da aba → coluna da tabela, NA ORDEM das colunas da aba (as três abas
+// do DRE têm o mesmo cabeçalho)
+const MAPA_DRE=[
+  ['VIGÊNCIA','vigencia_orig'],['Δ ORÇ (BRL)','d_orc_brl'],['Δ REM (BRL)','d_rem_brl'],
+  ['Unidade','unidade'],['NÍVEL 3','nivel_3'],['CONTA GERENCIAL','conta_gerencial'],
+  ['MÊS','mes'],['ANO','ano'],['ORÇADO','orcado'],['REMUNERADO','remunerado'],['REALIZADO','realizado'],
+];
+/* A vigência volta no MESMO formato que o gviz entrega — a string
+   "Date(2026,7,1)" —, e não como Date nem como 'AAAA-MM-DD'. Dois motivos, os
+   dois já custaram caro no Km/L: (1) new Date('2026-08-01') é meia-noite em
+   UTC, que no Brasil cai em 31/07 e joga a vigência para o mês anterior;
+   (2) as linhas do EBITDA vão CRUAS para o localStorage (bi_cache_vf_v8), e o
+   JSON.stringify transforma Date em ISO — formato que o parseVig não conhece,
+   então na SEGUNDA carga da página toda linha do EBITDA perderia a vigência.
+   Sendo a mesma string do gviz, o parseVig já sabe lê-la e o cache não a
+   estraga. */
+function _vigGviz(v){
+  const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m?`Date(${+m[1]},${+m[2]-1},${+m[3]})`:null;
+}
+let FONTE_TAB={};                                   // aba → 'banco' | 'planilha'
+async function fetchTabBanco(tab){
+  const tabela=TAB_BANCO[tab]; if(!tabela) throw new Error('aba sem tabela no banco');
+  const sb=sbVF(); if(!sb) throw new Error('supabase-js não carregou');
+  const linhas=[];
+  for(let de=0;;de+=1000){                          // o PostgREST corta em 1000
+    const {data,error}=await sb.from(tabela).select('*').order('linha',{ascending:true}).range(de,de+999);
+    if(error) throw new Error(error.message);
+    linhas.push(...(data||[]));
+    if(!data||data.length<1000) break;
+    if(de>80000) break;                             // trava de segurança
+  }
+  // anon SEM sessão do hub recebe [] em vez de 401 (RLS to authenticated):
+  // tabela vazia tem de contar como falha, senão o painel abriria zerado
+  if(!linhas.length) throw new Error('tabela vazia');
+  return {
+    header: MAPA_DRE.map(p=>p[0]),
+    rows: linhas.map(l=>MAPA_DRE.map(([rot,col])=>col==='vigencia_orig'?_vigGviz(l.vigencia_orig):(l[col]!=null?l[col]:null))),
+  };
+}
 async function fetchTab(tab){
+  try{
+    const r=await fetchTabBanco(tab);
+    FONTE_TAB[tab]='banco';
+    return r;
+  }catch(e){
+    console.warn(`DRE · ${tab}: banco indisponível (${e.message}) — caindo para a planilha`);
+    FONTE_TAB[tab]='planilha';
+    return fetchTabGviz(tab);
+  }
+}
+async function fetchTabGviz(tab){
   const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tab)}`;
   const raw=await (await fetch(url)).text();
   const json=JSON.parse(raw.replace(/^[\s\S]*?\(/,'').replace(/\);?\s*$/,''));
@@ -1440,7 +1508,11 @@ function atualizar(){
   renderYTG();
   renderFCT();
   const now=new Date();
-  set('titSub', `${vigLbl} · atualizado ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
+  // o selo diz DE ONDE o dado veio: com a queda para a planilha acontecendo em
+  // silêncio, "banco" e "planilha" pareceriam a mesma tela
+  const fontes=[...new Set(Object.values(FONTE_TAB))];
+  const selo=fontes.length?` · ${fontes.length>1?'banco + planilha':fontes[0]}`:'';
+  set('titSub', `${vigLbl} · atualizado ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${selo}`);
 }
 
 
@@ -2077,13 +2149,16 @@ async function recarregar(){
   set('titSub','Carregando…');
   try{
     const {rows, eb}=await fetchData();
-    try{ localStorage.setItem(CACHE_KEY,JSON.stringify({t:Date.now(),rows,eb})); }catch(e){}
+    // a FONTE vai junto no cache: sem isso, a carga que vem do localStorage
+    // (até 1h) deixaria o selo mudo e "banco" e "planilha" voltariam a parecer
+    // a mesma tela — que é exatamente o que o selo existe para separar
+    try{ localStorage.setItem(CACHE_KEY,JSON.stringify({t:Date.now(),rows,eb,fonte:FONTE_TAB})); }catch(e){}
     useRows(rows, eb);
   }catch(e){ console.error(e); set('titSub','Erro ao carregar os dados'); }
 }
 async function init(){
   const c=loadCache();
-  if(c){ useRows(c.rows,c.eb); if(Date.now()-c.t>=CACHE_TTL) await recarregar(); }
+  if(c){ if(c.fonte) FONTE_TAB=c.fonte; useRows(c.rows,c.eb); if(Date.now()-c.t>=CACHE_TTL) await recarregar(); }
   else await recarregar();
   setInterval(recarregar,CACHE_TTL);
 }
@@ -2108,6 +2183,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609181330"></script>
 </body>
 </html>
