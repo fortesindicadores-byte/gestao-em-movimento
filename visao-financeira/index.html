@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609181330">
+<meta name="build" content="202609181350">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Visão Financeira · DRE Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2131,7 +2131,12 @@ function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark
 aplicaTema(localStorage.getItem('vfa_tema')||'dark');
 
 /* ── início ── */
-const CACHE_KEY='bi_cache_vf_v8';        // mesmo cache do painel original
+/* v9 porque a FONTE mudou (gviz → banco). O init() usa este cache por até 1h
+   SEM refazer a leitura: sem virar a chave, quem tinha a foto da aba FILTRADA
+   no localStorage continuaria vendo a tela errada por uma hora depois do
+   deploy — foi exatamente o que aconteceu com o Renan em 18/09/2026. Chave
+   nova = cache velho ignorado, leitura do banco na hora. */
+const CACHE_KEY='bi_cache_vf_v9';
 const CACHE_TTL=60*60*1000;
 function loadCache(){
   try{ const c=JSON.parse(localStorage.getItem(CACHE_KEY)); if(c&&c.rows&&c.t) return c; }
@@ -2183,6 +2188,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609181330"></script>
+<script src="../assets/build-check.js?v=202609181350"></script>
 </body>
 </html>
