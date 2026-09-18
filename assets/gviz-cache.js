@@ -162,15 +162,17 @@
   }
 
   // ── 1) banco ───────────────────────────────────────────────
-  // Base que o Sheets Gviz Check ainda NÃO provou idêntica ao gviz fica de
-  // fora: melhor continuar lendo a planilha do que servir número errado com
-  // cara de certo. A lista sai quando o check fechar, uma por uma.
-  //   term_wh_t2_acum — a aba devolveu 29 colunas ao gviz e 26 à carga no
-  //   MESMO minuto (Total Pontos 73 × 71). Sem `headers` na chamada, o gviz
-  //   decide sozinho o cabeçalho e apara coluna vazia do fim, então a forma da
-  //   resposta pode mudar de um pedido para o outro. O Gviz Instavel Check
-  //   mede isso lendo a mesma aba três vezes.
-  var NAO_VERIFICADAS = { term_wh_t2_acum: 1 };
+  // ⚠️ BASE COM ERRO DE CARGA NÃO É SERVIDA. É o próprio banco que avisa:
+  // `sh_base.erro` começando com 'FALHOU:' quer dizer que a última carga nem
+  // aconteceu e a tabela pode estar VELHA em relação à aba. Foi o caso real do
+  // term_wh_t2_acum: a aba passou de 26 para 29 colunas, a carga morreu com
+  // PGRST204 (a tabela só tinha até col_25), a tabela congelou e o banco servia
+  // Total Pontos 71 onde a planilha já dizia 73 — número errado com cara de
+  // certo, que é pior do que ler o Sheets.
+  // 'RECUSADA:' é diferente e CONTINUA sendo servida: ali a carga foi barrada
+  // de propósito (aba filtrada no Sheets) e a tabela guarda o último bom, que é
+  // exatamente o que queremos mostrar em vez do dado filtrado do Google.
+  function confiavel(b) { return !(b.erro && /^FALHOU/.test(b.erro)); }
   var basesP = null;
   function bases() {
     if (!basesP) {
@@ -179,7 +181,8 @@
         .then(function (rows) {
           var m = {};
           (rows || []).forEach(function (b) {
-            if (b.gviz_chave && b.colunas && b.linhas > 0 && !NAO_VERIFICADAS[b.slug]) m[b.gviz_chave] = b;
+            if (b.gviz_chave && b.colunas && b.linhas > 0 && confiavel(b)) m[b.gviz_chave] = b;
+            else if (b.gviz_chave && b.erro) { try { console.warn('gviz-cache: base', b.slug, 'fora do banco —', b.erro.slice(0, 120)); } catch (_) {} }
           });
           return m;
         })
