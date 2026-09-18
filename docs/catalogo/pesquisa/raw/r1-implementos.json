@@ -1,0 +1,1340 @@
+[
+  {
+    "modelo": "SR/FACCHINI SRF LO",
+    "marca": "FACCHINI",
+    "categoria": "semirreboque",
+    "anos": [2019, 2020],
+    "ativos": 46,
+    "campos": {
+      "tipo_implemento": {
+        "valor": "Semirreboque furgao LONADO (sider) - 'SRF' = Semi-Reboque Furgao, 'LO' = Lonado. Anuncios de leilao descrevem SRF LO como 'SEMIRREBOQUE SIDER FACCHINI SRF LO'.",
+        "status": "confirmado",
+        "fonte": "https://www.superbid.net/oferta/semirreboque-sider-facchini-srf-lo-2003-2004-placa-final-3-sp-ref-9-2723418 ; https://www.facchini.com.br/produto/semirreboque-furgao-lonado",
+        "nota": "Decodificacao da sigla e corroborada por multiplos lotes de leilao que trazem SRF LO = sider. Variante 'LOED' = Lonado Eixo Distanciado."
+      },
+      "suspensao": {
+        "valor": "Pneumatica (opcao de catalogo Facchini para a linha de semirreboques). Componentes de reposicao na loja Facchini: MOLA PNEUMATICA 1T15M9 M (0308501722), MOLA PNEUMATICA DE CONVOLUCAO 095.0257 (0308501711), SUSPENSOR PNEUMATICO (0367023201), BUCHA DA SUSPENSAO (0308190702), CONJUNTO APOIO FEIXE MOLA (0368059101).",
+        "status": "inferido",
+        "fonte": "https://pecas.facchini.com.br/suspensao.html ; https://pecas.facchini.com.br/mola-pneumtica-1t15m9-m-0308501722.html ; https://www.facchini.com.br/clic?arquivo=sem_cs-br.pdf&area=produtos",
+        "nota": "NAO confirmado para esta placa/lote especifico. Facchini oferece mecanica (feixe de molas/balancim) E pneumatica no mesmo modelo - a configuracao real precisa ser lida na plaqueta do implemento ou no Certificado de Registro. CONFERIR ANTES DE COMPRAR mola pneumatica."
+      },
+      "numero_eixos": {
+        "valor": 3,
+        "status": "inferido",
+        "fonte": "https://www.superbid.net/oferta/semirreboque-sider-facchini-srf-lo-2003-2004-placa-final-3-sp-ref-9-2723418",
+        "nota": "Lotes de leilao de SRF LO aparecem com 3 eixos e 13 pneus (12 + estepe). Confirmar por unidade: existem versoes 2 e 3 eixos."
+      },
+      "eixo": {
+        "valor": "Eixo tubular Ø 152 mm, capacidade 11 t por eixo (especificacao de catalogo Facchini para semirreboque).",
+        "status": "confirmado",
+        "fonte": "https://www.facchini.com.br/clic?arquivo=sem_cs-br.pdf&area=produtos",
+        "nota": "Marca do eixo nao declarada no catalogo. Fornecedores usuais no Brasil: Suspensys, Master, Randon."
+      },
+      "marca_eixo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Consultar a plaqueta do eixo (gravada na viga) ou o Manual do Proprietario que acompanha o implemento. Facchini nao publica a marca do eixo no catalogo."
+      },
+      "freio": {
+        "valor": "Freio a ar, com ABS, duas linhas (servico e emergencia), tambor 16 1/2\" x 8\" (S-came / tambor - NAO e freio a disco).",
+        "status": "confirmado",
+        "fonte": "https://www.facchini.com.br/clic?arquivo=sem_cs-br.pdf&area=produtos"
+      },
+      "lonas_sapatas": {
+        "valor": "Lona de freio 16 1/2\" x 8\" (419,0 mm x 203,2 mm). Conjunto por eixo: 8 pecas (4 longas + 4 curtas), 128 rebites. Facchini vende: LONA DE FREIO 8\" QPLUS DC/333 DNA 78 marca DUROLINE (cod. 0308791020) e CJ SAPATA DE FREIO 16.1/2x8 QPLUS (cod. 0365044105). Alternativas de mercado: Fras-le, Cobreq, Thermoid.",
+        "status": "confirmado",
+        "fonte": "https://pecas.facchini.com.br/lona-de-freio-8-qplus-ca33-0308791020.html ; https://pecas.facchini.com.br/cj-sapata-de-freio-161-2x8-qplus-0365044105.html ; https://www.fras-le.com/pt/produtos/lona-de-freio-ve%C3%ADculos-pesados/"
+      },
+      "tambor": {
+        "valor": "TAMBOR DE FREIO DISCO 16.1/2\" x 8\" - 10 furos, cod. Facchini 0365088602. (Existe tambem TAMBOR 15\" x 7\" para terceiro eixo, cod. 0365051202, usado em configuracoes com eixo auxiliar menor.)",
+        "status": "confirmado",
+        "fonte": "https://pecas.facchini.com.br/tambor-de-freio-disco-161-2x8-10-furos-0365088602.html ; https://pecas.facchini.com.br/tambor-de-freio-disco-15x7-terceiro-eixo-0365051202.html",
+        "nota": "Conferir se a roda e disco (10 furos) ou raiada - a Facchini vende as duas familias (ha tambem TAMBOR RAIADO MULTI-FUROS 5/6)."
+      },
+      "catraca": {
+        "valor": "Catraca (ajustador de folga) de reposicao Facchini cod. 0313545902.",
+        "status": "confirmado",
+        "fonte": "https://pecas.facchini.com.br/catraca-0313545902.html",
+        "nota": "O catalogo nao diz se e catraca MANUAL ou AUTOMATICA. Confirmar antes da compra - a peca nao e intercambiavel."
+      },
+      "cuica": {
+        "valor": "Cuica de mola (spring brake) 30x30 - padrao de mercado para eixos de reboque/semirreboque no Brasil. Existe tambem a variante 24x30 (30 servico / 24 estacionamento).",
+        "status": "inferido",
+        "fonte": "https://www.dinascania.com.br/carreta/cuica-de-freio-30x30-spring-brake-para-reboque-e-semirreboque ; https://www.vadenoriginal.com/pt/blog/camara-de-freio-cuica-caminhao-pesado-guia",
+        "nota": "Nao consta no catalogo Facchini consultado. Medir/ler a marcacao na cuica instalada (T30/30, T24/30) antes de comprar - o comprimento da haste tambem varia (haste curta/longa)."
+      },
+      "rolamento_cubo": {
+        "valor": "Rolamento de roletes conicos - Facchini cod. 0308820510 e 0308820518 (dois codigos distintos, compativeis com eixo Ø152 mm; provavelmente interno e externo).",
+        "status": "confirmado",
+        "fonte": "https://pecas.facchini.com.br/rolamento-de-roletes-cnicos-0308820510.html ; https://pecas.facchini.com.br/rolamento-de-roletes-cnicos-0308820518.html",
+        "nota": "A referencia ISO (ex.: 32218/32219/32213) nao aparece na descricao do site. Em semirreboque nacional equivalente (Next, eixo tubular 11 t) a referencia citada e 32.218 (furo 90 mm). CONFERIR a referencia gravada no rolamento retirado."
+      },
+      "retentor_cubo": {
+        "valor": "RETENTOR DO CUBO - Facchini cod. 0308910605. Ha tambem RETENTOR DO FREIO cod. 0308970540 (veda o eixo S no suporte).",
+        "status": "confirmado",
+        "fonte": "https://pecas.facchini.com.br/retentor-do-cubo-0308910605.html ; https://pecas.facchini.com.br/retentor-do-freio-0308970540.html"
+      },
+      "graxa": {
+        "valor": "Graxa a base de sabao de litio com aditivo EP (extrema pressao), ponto de gota ~198 C - equivalente NLGI 2 EP. Quantidade recomendada: 1,50 kg por cubo de roda (recomendacao Suspensys). Excesso de graxa superaquece o cubo e aumenta a pressao interna.",
+        "status": "inferido",
+        "fonte": "http://www.valin.com.br/suspensys/graxa-suspensys/graxa-suspensys.php",
+        "nota": "Recomendacao do fabricante de eixo/suspensao (Suspensys), nao da Facchini. Aplicavel se o eixo for Suspensys. Grau NLGI 2 e a pratica de mercado para cubo de roda - o grau exato nao foi declarado na fonte."
+      },
+      "intervalo_graxa_cubo": {
+        "valor": "Trocar a graxa dos rolamentos do cubo a cada troca de lonas de freio, a cada 40.000 km, ou sempre que o cubo for aberto - substituindo tambem a arruela-trava e o retentor.",
+        "status": "inferido",
+        "fonte": "http://www.valin.com.br/suspensys/graxa-suspensys/graxa-suspensys.php",
+        "nota": "Regra do fabricante de eixo (Suspensys). Validar contra o Manual do Proprietario Facchini do implemento."
+      },
+      "pneu": {
+        "valor": "295/80 R 22,5",
+        "status": "confirmado",
+        "fonte": "https://www.facchini.com.br/clic?arquivo=sem_cs-br.pdf&area=produtos",
+        "nota": "Medida do catalogo Facchini de semirreboque. ATENCAO: operacao de bebidas frequentemente usa sider de piso rebaixado com pneu menor (ex.: 275/80 R22,5 ou 215/75 R17,5). CONFERIR a medida instalada na frota antes de comprar."
+      },
+      "roda": {
+        "valor": "Roda 8,25\" x 22,5\" (para pneu 295/80 R22,5). Tambor de 10 furos indica roda de DISCO.",
+        "status": "confirmado",
+        "fonte": "https://www.facchini.com.br/clic?arquivo=sem_cs-br.pdf&area=produtos ; https://pecas.facchini.com.br/tambor-de-freio-disco-161-2x8-10-furos-0365088602.html"
+      },
+      "posicoes_pneu": {
+        "valor": "12 posicoes em 3 eixos (4 pneus por eixo) + 1 estepe = 13 pneus",
+        "status": "inferido",
+        "fonte": "https://www.superbid.net/oferta/semirreboque-sider-facchini-srf-lo-2003-2004-placa-final-3-sp-ref-9-2723418",
+        "nota": "Depende do numero real de eixos da unidade. 2 eixos = 8 posicoes."
+      },
+      "sistema_eletrico": {
+        "valor": "24 V (padrao CONTRAN para implementos rodoviarios), iluminacao/lanternas em LED 24 V, chicote de 7 polos. Normas aplicaveis: NBR 7332, DIN 72551, ISO 1185 (7 vias iluminacao), ISO 7638 (ABS/EBS).",
+        "status": "inferido",
+        "fonte": "https://www.innovalite.com.br/produto/chicote-eletrico-espiral-7-vias-abs-ebs/ ; https://famit.com.br/conexoes-eletricas-para-reboques/",
+        "nota": "Padrao de mercado brasileiro, nao extraido do catalogo Facchini deste modelo. Como o implemento tem ABS, ha DUAS tomadas: 7 polos ISO 1185 (iluminacao) + ISO 7638 (ABS/EBS)."
+      },
+      "plugue": {
+        "valor": "Tomada de acoplamento de 7 polos (macho no cavalo / femea na carreta), chicote espiralado em poliamida 6, 7 vias com cores distintas (preto, amarelo, vermelho, verde, azul, cinza, branco). Comprimento usual 4,5 a 5,5 m.",
+        "status": "inferido",
+        "fonte": "https://www.innovalite.com.br/produto/conector-de-engate-7-vias-plug-macho/ ; https://www.ninjapecas.com.br/MLB-2741550095-kit-chicote-eletrico-tomada-7-polos-cavalo-carreta-55mt-_JM"
+      },
+      "pino_rei": {
+        "valor": "Pino rei FLANGEADO 2\" conforme NBR NM ISO 337/2001 (especificacao de catalogo Facchini).",
+        "status": "confirmado",
+        "fonte": "https://www.facchini.com.br/clic?arquivo=sem_cs-br.pdf&area=produtos",
+        "nota": "A loja Facchini tambem vende PINO REI 3.1/2\" - 12 FUROS COM FLANGE (cod. 0321008203), usado em implementos de maior PBTC. Para sider de bebidas o usual e 2\". CONFERIR o diametro antes de comprar - 2\" e 3,5\" nao sao intercambiaveis."
+      },
+      "patolas_pe_apoio": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Catalogo Facchini nao publica a marca/modelo do pe de apoio. Consultar a plaqueta do conjunto (fabricantes usuais no Brasil: JOST, SAF-Holland, Master) ou pedir o codigo pela loja pecas.facchini.com.br informando o chassi."
+      },
+      "valvulas_pneumaticas": {
+        "valor": "VALVULA DE BLOQUEIO - Facchini cod. 0308750470. Sistema de duas linhas (servico e emergencia) com ABS.",
+        "status": "confirmado",
+        "fonte": "https://pecas.facchini.com.br/valvula-de-bloqueio-0308750470.html ; https://www.facchini.com.br/clic?arquivo=sem_cs-br.pdf&area=produtos",
+        "nota": "Nao foi possivel levantar a lista completa (valvula relay/emergencia, valvula de nivelamento da suspensao a ar, valvula reguladora). Marcas usuais: Wabco, Knorr-Bremse, Randon/Master."
+      },
+      "mangueiras_engates": {
+        "valor": "MANGUEIRA DE FREIO 3/8\" x 900 mm - Facchini cod. 0308730302.",
+        "status": "confirmado",
+        "fonte": "https://pecas.facchini.com.br/mangueira-de-freio-0308730302.html",
+        "nota": "Mangueiras espiraladas de acoplamento (vermelha/emergencia e amarela/servico) entre cavalo e carreta nao constam com codigo - item de mercado."
+      },
+      "carroceria": {
+        "valor": "Sider (furgao lonado): lona lateral corredica com catracas de tracionamento (a loja Facchini vende CATRACA ESQ. PARA TRACIONAMENTO DE LONA), portas traseiras, assoalho. Catalogos Facchini de furgao citam revestimento interno em compensado naval, trilhos longitudinais, assoalho em compensado naval e porta lateral.",
+        "status": "inferido",
+        "fonte": "https://pecas.facchini.com.br/catraca-esq-para-tracionamento-de-lona.html ; https://www.facchini.com.br/produto/semirreboque-furgao-lonado",
+        "nota": "A descricao de revestimento/assoalho veio de catalogo de furgao carga seca, nao especificamente do SRF LO."
+      },
+      "intervalos_manutencao": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "A Facchini nao publica o plano de manutencao periodica na web aberta. Solicitar o 'Manual do Proprietario / Plano de Manutencao Periodica' Facchini (vem com o implemento) ou a rede autorizada. Referencia comparavel publicada: Randon - https://randon.com.br/pt/downloads"
+      }
+    },
+    "observacoes": "Maior frota do parque (46 ativos). Todas as especificacoes vieram de catalogo GENERICO de semirreboque Facchini, nao de uma ficha do SRF LO - a Facchini nao publica ficha por codigo de modelo. O que muda de unidade para unidade e exatamente o que mais pesa na compra: numero de eixos, tipo de suspensao (mecanica x pneumatica) e medida do pneu. Recomendo abrir um chamado na loja pecas.facchini.com.br informando o CHASSI de uma unidade de cada lote - a loja devolve a arvore de pecas exata.",
+    "possivel_duplicata_de": null
+  },
+  {
+    "modelo": "SR/FACCHINI SRF QRLO",
+    "marca": "FACCHINI",
+    "categoria": "semirreboque",
+    "anos": [2025],
+    "ativos": 16,
+    "campos": {
+      "tipo_implemento": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "A sigla 'QRLO' nao retornou NENHUM resultado na web (nem em leiloes, nem na Facchini). O sufixo 'LO' = Lonado (sider) e consistente com as demais siglas Facchini (CF, CS, LO, LOED, CFED, CT, 2CB/4CB); o prefixo 'QR' nao foi identificado. Consultar o Certificado de Registro do veiculo ou a Facchini com o chassi."
+      },
+      "suspensao": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Modelo 2025 - sem ficha publica. Ver plaqueta do implemento."
+      },
+      "numero_eixos": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao identificado. Ver CRLV (campo carroceria/eixos)."
+      },
+      "eixo": {
+        "valor": "Eixo tubular Ø 152 mm, 11 t por eixo (padrao de catalogo Facchini).",
+        "status": "inferido",
+        "fonte": "https://www.facchini.com.br/clic?arquivo=sem_cs-br.pdf&area=produtos",
+        "nota": "Inferido do catalogo generico de semirreboque Facchini; nao confirmado para QRLO."
+      },
+      "freio": {
+        "valor": "Freio a ar com ABS, duas linhas, tambor 16 1/2\" x 8\".",
+        "status": "inferido",
+        "fonte": "https://www.facchini.com.br/clic?arquivo=sem_cs-br.pdf&area=produtos",
+        "nota": "Padrao da linha Facchini. Unidade 2025 pode ter freio a DISCO (opcao crescente no mercado) - CONFERIR visualmente antes de comprar lona/tambor."
+      },
+      "lonas_sapatas": {
+        "valor": "Se for tambor 16 1/2\"x8\": lona 419,0 x 203,2 mm, 8 pecas/eixo (4 longas + 4 curtas), 128 rebites - Facchini cod. 0308791020 (Duroline QPlus).",
+        "status": "inferido",
+        "fonte": "https://pecas.facchini.com.br/lona-de-freio-8-qplus-ca33-0308791020.html",
+        "nota": "Depende de confirmar que o freio e a tambor."
+      },
+      "tambor": {
+        "valor": "16 1/2\" x 8\" - 10 furos, cod. Facchini 0365088602",
+        "status": "inferido",
+        "fonte": "https://pecas.facchini.com.br/tambor-de-freio-disco-161-2x8-10-furos-0365088602.html"
+      },
+      "catraca": {
+        "valor": "Catraca Facchini cod. 0313545902",
+        "status": "inferido",
+        "fonte": "https://pecas.facchini.com.br/catraca-0313545902.html"
+      },
+      "cuica": {
+        "valor": "Spring brake 30x30 (padrao de mercado para semirreboque)",
+        "status": "inferido",
+        "fonte": "https://www.dinascania.com.br/carreta/cuica-de-freio-30x30-spring-brake-para-reboque-e-semirreboque"
+      },
+      "rolamento_cubo": {
+        "valor": "Rolamento de roletes conicos Facchini 0308820510 / 0308820518",
+        "status": "inferido",
+        "fonte": "https://pecas.facchini.com.br/rolamento-de-roletes-cnicos-0308820510.html"
+      },
+      "retentor_cubo": {
+        "valor": "Facchini cod. 0308910605",
+        "status": "inferido",
+        "fonte": "https://pecas.facchini.com.br/retentor-do-cubo-0308910605.html"
+      },
+      "graxa": {
+        "valor": "Sabao de litio EP (~NLGI 2 EP), 1,50 kg por cubo",
+        "status": "inferido",
+        "fonte": "http://www.valin.com.br/suspensys/graxa-suspensys/graxa-suspensys.php"
+      },
+      "pneu": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Sem ficha do modelo. Ler a medida no flanco do pneu instalado."
+      },
+      "sistema_eletrico": {
+        "valor": "24 V, 7 polos ISO 1185 + ISO 7638 (ABS/EBS), lanternas LED 24 V",
+        "status": "inferido",
+        "fonte": "https://famit.com.br/conexoes-eletricas-para-reboques/"
+      },
+      "pino_rei": {
+        "valor": "2\" flangeado NBR NM ISO 337/2001 (padrao Facchini)",
+        "status": "inferido",
+        "fonte": "https://www.facchini.com.br/clic?arquivo=sem_cs-br.pdf&area=produtos"
+      },
+      "patolas_pe_apoio": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Ver plaqueta do conjunto de apoio (JOST / SAF-Holland / Master)."
+      },
+      "valvulas_pneumaticas": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Sem informacao. Unidade 2025 provavelmente com EBS - identificar a marca do modulo (Wabco/Knorr) na etiqueta."
+      },
+      "carroceria": {
+        "valor": "Lonado (sider) - lona lateral corredica + catracas de tracionamento",
+        "status": "inferido",
+        "fonte": "https://pecas.facchini.com.br/catraca-esq-para-tracionamento-de-lona.html",
+        "nota": "Baseado apenas no sufixo 'LO' da sigla."
+      },
+      "intervalos_manutencao": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Unidades 2025 - ainda em garantia. Pedir a Facchini o plano de revisoes de garantia, que e o que define a periodicidade nos 2 primeiros anos."
+      }
+    },
+    "observacoes": "MODELO NAO IDENTIFICADO PUBLICAMENTE. 'QRLO' nao existe em nenhuma fonte indexada. Por serem 16 unidades NOVAS (2025), muito provavelmente ainda em garantia, o caminho certo e pedir a Facchini a lista de pecas pelo chassi e o plano de revisoes - nao montar catalogo por inferencia.",
+    "possivel_duplicata_de": "Possivelmente a mesma familia do SR/FACCHINI SRF LO (sufixo LO = lonado/sider), em versao mais nova. NAO confirmado."
+  },
+  {
+    "modelo": "RANDOM SR FG (Randon Semirreboque Furgao)",
+    "marca": "RANDON",
+    "categoria": "semirreboque",
+    "anos": [2019, 2020],
+    "ativos": 14,
+    "campos": {
+      "tipo_implemento": {
+        "valor": "Semirreboque FURGAO (bau fechado) - linha Randon 'Furgao Carga Geral'. 'SR FG' = Semi-Reboque FurGao. Grafia 'RANDOM' no cadastro e erro de digitacao: o fabricante e RANDON.",
+        "status": "inferido",
+        "fonte": "https://www.randon.com.br/pt/produtos/linha-pesada/furgao/furgao-carga-geral",
+        "nota": "Decodificacao da sigla; a Randon nao publica um de-para de codigos de modelo."
+      },
+      "suspensao": {
+        "valor": "Randon oferece suspensao mecanica (balancim/feixe de molas) e pneumatica na linha furgao; o catalogo destaca 'eixo e chassi de bitola larga' e 'opcoes de eixos adequados a cada aplicacao'.",
+        "status": "inferido",
+        "fonte": "https://www.randon.com.br/pt/produtos/linha-pesada/furgao/furgao-carga-geral",
+        "nota": "A ficha tecnica publica nao fixa o tipo. Suspensao tandem tradicional exige lubrificacao do pino do balancim - item de plano de manutencao."
+      },
+      "numero_eixos": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Randon fornece furgao em 2 e 3 eixos. Ver CRLV / plaqueta."
+      },
+      "eixo": {
+        "valor": "Eixo Randon/Suspensys (empresas do mesmo grupo). Catalogo cita 'eixo de bitola larga' e opcoes por aplicacao.",
+        "status": "inferido",
+        "fonte": "https://www.randon.com.br/pt/produtos/linha-pesada/furgao/furgao-carga-geral ; https://www.suspensys.com/pt/catalogo/eixo/",
+        "nota": "Capacidade por eixo (usualmente 11 t) nao confirmada na fonte."
+      },
+      "marca_eixo": {
+        "valor": "Suspensys (fornecedor cativo do grupo Randon)",
+        "status": "inferido",
+        "fonte": "https://www.suspensys.com/pt/pe%C3%A7as-de-reposi%C3%A7%C3%A3o",
+        "nota": "Inferencia forte pela estrutura societaria (Suspensys e empresa Randon), mas nao declarada no catalogo do produto."
+      },
+      "freio": {
+        "valor": "Freio a ar, tambor. Tambores Randon em ferro fundido, montados junto com cubo e roda, friccionados contra a lona.",
+        "status": "confirmado",
+        "fonte": "https://www.randon.com.br/pt/produtos/linha-pesada/furgao/furgao-carga-geral",
+        "nota": "A medida do tambor nao foi confirmada. Padrao de mercado no segmento: 16 1/2\" x 8\"."
+      },
+      "lonas_sapatas": {
+        "valor": "Lona para tambor 419,0 x 203,2 mm (se 16 1/2\"x8\"), jogo de 8 pecas por eixo, 128 rebites. Fras-le atende aplicacao carreta Randon.",
+        "status": "inferido",
+        "fonte": "https://www.fras-le.com/pt/produtos/lona-de-freio-ve%C3%ADculos-pesados/ ; https://www.carrefour.com.br/lona-freio-carreta-fachini-randon-rossetti-traseira-frasle-mp930419353/p",
+        "nota": "Depende de confirmar a medida do tambor da frota."
+      },
+      "tambor": {
+        "valor": "Ferro fundido, uniao parafusada (montado com cubo e roda). Medida nao confirmada.",
+        "status": "confirmado",
+        "fonte": "https://www.randon.com.br/pt/produtos/linha-pesada/furgao/furgao-carga-geral",
+        "nota": "Material e forma de montagem confirmados; a MEDIDA (16 1/2\"x8\") e que ficou sem confirmacao."
+      },
+      "catraca": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Consultar catalogo de reposicao Randon (randon.com.br/pt/downloads) ou Suspensys."
+      },
+      "cuica": {
+        "valor": "Spring brake 30x30 (padrao de mercado para semirreboque)",
+        "status": "inferido",
+        "fonte": "https://www.dinascania.com.br/carreta/cuica-de-freio-30x30-spring-brake-para-reboque-e-semirreboque"
+      },
+      "rolamento_cubo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Buscar no catalogo de reposicao Suspensys (https://www.suspensys.com/pt/pe%C3%A7as-de-reposi%C3%A7%C3%A3o) pelo modelo do eixo gravado na viga."
+      },
+      "retentor_cubo": {
+        "valor": "A Suspensys fornece conjuntos cubo+tambor com retentor de graxa; recomenda substituir o retentor E a arruela-trava sempre que o cubo for aberto.",
+        "status": "inferido",
+        "fonte": "http://www.valin.com.br/suspensys/graxa-suspensys/graxa-suspensys.php"
+      },
+      "graxa": {
+        "valor": "Graxa Suspensys - sabao de litio com EP, ponto de gota ~198 C (equivalente NLGI 2 EP). 1,50 kg por cubo de roda.",
+        "status": "confirmado",
+        "fonte": "http://www.valin.com.br/suspensys/graxa-suspensys/graxa-suspensys.php",
+        "nota": "Fonte e distribuidor Suspensys reproduzindo a recomendacao do fabricante. Grau NLGI nao literal na fonte - 'NLGI 2' e a classificacao correspondente de mercado."
+      },
+      "intervalo_graxa_cubo": {
+        "valor": "A cada troca de lonas de freio, a cada 40.000 km, ou sempre que o cubo for aberto (trocando arruela-trava e retentor).",
+        "status": "confirmado",
+        "fonte": "http://www.valin.com.br/suspensys/graxa-suspensys/graxa-suspensys.php"
+      },
+      "pneu": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao confirmado para o furgao Randon. Padrao do segmento: 295/80 R22,5 em roda 8,25\"x22,5\". Ler o flanco do pneu."
+      },
+      "sistema_eletrico": {
+        "valor": "24 V, tomada 7 polos + ISO 7638 quando ha ABS/EBS",
+        "status": "inferido",
+        "fonte": "https://famit.com.br/conexoes-eletricas-para-reboques/"
+      },
+      "pino_rei": {
+        "valor": "Pino rei Randon disponivel em 2\" e 1,5\"; testado e aprovado para PBTC acima de 74 t; guia de acoplamento ampliada; pino de seguranca que funciona como indicador visual da condicao de travamento.",
+        "status": "confirmado",
+        "fonte": "https://www.randon.com.br/pt/produtos/linha-pesada/furgao/furgao-carga-geral",
+        "nota": "Para furgao de carga geral o usual e 2\". CONFERIR qual das duas bitolas esta instalada."
+      },
+      "patolas_pe_apoio": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Ver plaqueta do conjunto (JOST/SAF-Holland/Master) ou catalogo de reposicao Randon."
+      },
+      "valvulas_pneumaticas": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Consultar catalogo de reposicao Randon."
+      },
+      "carroceria": {
+        "valor": "Furgao (bau fechado). Linha nova usa sistema CLINCH, que une as chapas laterais do revestimento sem furos e sem rebites - mais resistente e contribui para a estanqueidade do bau. Maior capacidade volumetrica e tara 600 kg menor.",
+        "status": "confirmado",
+        "fonte": "https://www.randon.com.br/pt/produtos/linha-pesada/furgao/furgao-carga-geral",
+        "nota": "O sistema Clinch e da geracao 'New R' - confirmar se as unidades 2019/2020 ja saem com ele (lancamento de linha furgao/sider Randon foi em 2020)."
+      },
+      "intervalos_manutencao": {
+        "valor": "A Randon publica manuais e guia de operacao e manutencao por produto (inclusive 'manual-furgao-carga-geral.pdf' e 'manual-sider.pdf'), com Plano de Manutencao Periodica. Itens destacados: verificacao diaria do equipamento, torque de parafusos, alinhamento de eixos, lubrificacao regular da suspensao (o balancim tandem exige lubrificacao do pino), avaliacao de buchas/pinos/balancim.",
+        "status": "confirmado",
+        "fonte": "https://www.randon.com.br/media/2857/manual-furg%C3%A3o-carga-geral.pdf ; https://randon.com.br/pt/downloads",
+        "nota": "Os VALORES do plano (km/horas de cada item) estao dentro do PDF, que nao foi possivel abrir neste ambiente. Baixar o manual pelo link acima."
+      }
+    },
+    "observacoes": "Unico dos cinco semirreboques com MANUAL DE MANUTENCAO PUBLICO e baixavel (randon.com.br/pt/downloads). Recomendo baixar 'manual-furgao-carga-geral.pdf' e usa-lo como base do plano preventivo de TODA a categoria - os demais fabricantes nao publicam nada equivalente.",
+    "possivel_duplicata_de": null
+  },
+  {
+    "modelo": "SR/EQUIP NEXT 4E CF",
+    "marca": "NEXT",
+    "categoria": "semirreboque",
+    "anos": [2022],
+    "ativos": 13,
+    "campos": {
+      "tipo_implemento": {
+        "valor": "Semirreboque de 4 EIXOS ('4E'); 'CF' provavelmente = Carga Fechada (furgao/bau), por analogia com a sigla Facchini SRF CF que os leiloes descrevem como 'SEMIRREBOQUE BAU'.",
+        "status": "inferido",
+        "fonte": "https://www.superbid.net/oferta/semirreboque-bau-facchini-sr-srf-cf-2019-2020-placa-final-7-pe-ref-48465-4566953 ; https://www.nextimplementos.com.br/semirreboque-carga-seca",
+        "nota": "A leitura de '4E' = 4 eixos e segura. 'CF' e inferencia por analogia com outro fabricante - CONFIRMAR no CRLV."
+      },
+      "suspensao": {
+        "valor": "Suspensao de BALANCIM (mecanica): apoios de mola com revestimentos substituiveis, suportes de balancim em aco estampado, bracos tensores com buchas de borracha molecular, balancins em aco estampado, pinos e buchas de 2\" em aco 1045 temperado, LUBRIFICACAO SOB PRESSAO, feixe de molas semi-elipticas. Ha opcao de SUSPENSOR PNEUMATICO de eixo conforme necessidade do cliente.",
+        "status": "confirmado",
+        "fonte": "https://www.nextimplementos.com.br/semirreboque-carga-seca",
+        "nota": "Especificacao da linha 'Semirreboque Carga Seca' da Next. Se a unidade for furgao (CF), a base de chassi/suspensao e a mesma familia. Consequencia de manutencao: suspensao mecanica com pinos/buchas lubrificaveis - exige engraxamento periodico dos pinos de balancim (ao contrario da pneumatica)."
+      },
+      "numero_eixos": {
+        "valor": 4,
+        "status": "confirmado",
+        "fonte": "Codigo do proprio modelo ('4E') no cadastro do veiculo",
+        "nota": "Confirmado pela nomenclatura; conferir no CRLV se o 4o eixo e distanciado/auxiliar."
+      },
+      "eixo": {
+        "valor": "Eixo tubular (viga tubular), capacidade 11 t por eixo.",
+        "status": "confirmado",
+        "fonte": "https://www.nextimplementos.com.br/semirreboque-carga-seca"
+      },
+      "marca_eixo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Next nao declara a marca. Ler a gravacao na viga do eixo."
+      },
+      "freio": {
+        "valor": "Freio a AR, tambor 16 1/2\" x 8\", duas linhas (servico e emergencia).",
+        "status": "confirmado",
+        "fonte": "https://www.nextimplementos.com.br/semirreboque-carga-seca",
+        "nota": "A pagina nao cita ABS explicitamente, mas ABS e obrigatorio por resolucao do CONTRAN em semirreboques novos desde 2014."
+      },
+      "lonas_sapatas": {
+        "valor": "Lona para tambor 16 1/2\" x 8\" = 419,0 x 203,2 mm, jogo de 8 pecas por eixo (4 longas + 4 curtas), 128 rebites.",
+        "status": "inferido",
+        "fonte": "https://www.fras-le.com/pt/produtos/lona-de-freio-ve%C3%ADculos-pesados/",
+        "nota": "Dimensao derivada da medida do tambor confirmada pela Next. Fornecedores: Fras-le, Duroline, Cobreq."
+      },
+      "tambor": {
+        "valor": "16 1/2\" x 8\"",
+        "status": "confirmado",
+        "fonte": "https://www.nextimplementos.com.br/semirreboque-carga-seca"
+      },
+      "catraca": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao publicado. Consultar a Next ou o fabricante do eixo."
+      },
+      "cuica": {
+        "valor": "Spring brake 30x30 (padrao de mercado para semirreboque). Com 4 eixos, atencao: nem todos os eixos recebem cuica de mola - parte pode ter cuica simples de servico.",
+        "status": "inferido",
+        "fonte": "https://www.dinascania.com.br/carreta/cuica-de-freio-30x30-spring-brake-para-reboque-e-semirreboque",
+        "nota": "CONFERIR eixo a eixo antes de comprar - a mistura de cuica simples e de mola no mesmo implemento e comum."
+      },
+      "rolamento_cubo": {
+        "valor": "Cubos lisos em aco fundido com rolamentos interno e externo de 90 mm, referencia 32.218 (32218).",
+        "status": "confirmado",
+        "fonte": "https://www.nextimplementos.com.br/semirreboque-carga-seca",
+        "nota": "ATENCAO: a pagina indica a MESMA referencia para interno e externo, o que e incomum (o usual e interno maior que o externo, ex. 32219/32213). CONFERIR a gravacao do rolamento retirado antes de comprar em quantidade."
+      },
+      "retentor_cubo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao publicado. Dimensionar pelo retentor retirado (diametro do eixo/cubo)."
+      },
+      "graxa": {
+        "valor": "Sabao de litio EP (~NLGI 2 EP), ~1,50 kg por cubo. ALEM DISSO: suspensao de balancim com lubrificacao sob pressao exige engraxamento dos pinos de balancim (graxeiras) - item que a suspensao pneumatica nao tem.",
+        "status": "inferido",
+        "fonte": "http://www.valin.com.br/suspensys/graxa-suspensys/graxa-suspensys.php ; https://www.nextimplementos.com.br/semirreboque-carga-seca",
+        "nota": "A existencia da lubrificacao sob pressao e CONFIRMADA pela Next; o tipo e a quantidade de graxa sao inferidos."
+      },
+      "pneu": {
+        "valor": "295/80 R 22,5",
+        "status": "confirmado",
+        "fonte": "https://www.nextimplementos.com.br/semirreboque-carga-seca"
+      },
+      "roda": {
+        "valor": "Roda 8,25\" x 22,5\" (fornecido SEM pneus de fabrica)",
+        "status": "confirmado",
+        "fonte": "https://www.nextimplementos.com.br/semirreboque-carga-seca"
+      },
+      "posicoes_pneu": {
+        "valor": "16 posicoes (4 eixos x 4 pneus)",
+        "status": "inferido",
+        "fonte": "Derivado do numero de eixos (4E) com rodagem dupla",
+        "nota": "Vale se todos os 4 eixos forem de rodagem dupla."
+      },
+      "sistema_eletrico": {
+        "valor": "24 V, 7 polos + ISO 7638 (ABS)",
+        "status": "inferido",
+        "fonte": "https://famit.com.br/conexoes-eletricas-para-reboques/"
+      },
+      "pino_rei": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao publicado pela Next. Medir (2\" ou 3,5\")."
+      },
+      "patolas_pe_apoio": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao publicado."
+      },
+      "valvulas_pneumaticas": {
+        "valor": "Sistema de duas linhas (servico e emergencia). Se houver suspensor pneumatico de eixo, ha valvula de comando do suspensor.",
+        "status": "inferido",
+        "fonte": "https://www.nextimplementos.com.br/semirreboque-carga-seca"
+      },
+      "carroceria": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Depende de confirmar o que e 'CF'. Se furgao: portas traseiras, assoalho, revestimento."
+      },
+      "intervalos_manutencao": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Next nao publica plano de manutencao. Usar o manual Randon de produto equivalente como referencia e validar com a Next."
+      }
+    },
+    "observacoes": "Melhor ficha tecnica publica entre os cinco semirreboques - a pagina da Next detalha suspensao, eixo, freio, cubo, rolamento e roda. PONTO CRITICO DE MANUTENCAO: e o unico do parque com suspensao MECANICA de balancim confirmada, com pinos e buchas de 2\" e lubrificacao sob pressao - ou seja, tem rotina de engraxamento e desgaste de pinos/buchas/balancim que os de suspensao pneumatica nao tem.",
+    "possivel_duplicata_de": null
+  },
+  {
+    "modelo": "RODOFORT / SRFG 2E",
+    "marca": "RODOFORT",
+    "categoria": "semirreboque",
+    "anos": [2022],
+    "ativos": 7,
+    "campos": {
+      "tipo_implemento": {
+        "valor": "Semirreboque FURGAO de 2 EIXOS. 'SRFG' = Semi-Reboque FurGao, '2E' = 2 eixos. Fabricante: Rodofort (Grupo Rodofort/Guerra), unidades em Caxias do Sul-RS e Sumare-SP. Ha lote de leilao com a designacao 'SR/RODOFORTSA SRFG SI 2E'.",
+        "status": "inferido",
+        "fonte": "https://www.leffaleiloes.com.br/venda-direta/bem_id/3934 ; https://www.transportabrasil.com.br/2023/10/rodofort-guerra-apresenta-novo-semirreboque-frigorifico/",
+        "nota": "Decodificacao da sigla. O sufixo 'SI' que aparece em alguns cadastros pode indicar variante (Sider?) - conferir no CRLV."
+      },
+      "suspensao": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "A Rodofort nao publica ficha tecnica do furgao na web aberta. Consultar o fabricante (Rodofort/Guerra) informando o chassi, ou ler a plaqueta."
+      },
+      "numero_eixos": {
+        "valor": 2,
+        "status": "confirmado",
+        "fonte": "Codigo do proprio modelo ('2E') no cadastro do veiculo"
+      },
+      "eixo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Sem ficha publica. Padrao do segmento: eixo tubular 11 t."
+      },
+      "marca_eixo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Ler gravacao na viga do eixo."
+      },
+      "freio": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Padrao do segmento: ar, tambor 16 1/2\"x8\", duas linhas, ABS. NAO confirmado para a Rodofort."
+      },
+      "lonas_sapatas": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Medir o tambor instalado antes de especificar a lona."
+      },
+      "tambor": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      },
+      "catraca": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      },
+      "cuica": {
+        "valor": "Spring brake 30x30 (padrao de mercado)",
+        "status": "inferido",
+        "fonte": "https://www.dinascania.com.br/carreta/cuica-de-freio-30x30-spring-brake-para-reboque-e-semirreboque"
+      },
+      "rolamento_cubo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      },
+      "retentor_cubo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      },
+      "graxa": {
+        "valor": "Sabao de litio EP (~NLGI 2 EP), ~1,50 kg por cubo",
+        "status": "inferido",
+        "fonte": "http://www.valin.com.br/suspensys/graxa-suspensys/graxa-suspensys.php"
+      },
+      "pneu": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Ler o flanco do pneu instalado."
+      },
+      "posicoes_pneu": {
+        "valor": "8 posicoes (2 eixos x 4 pneus) + estepe",
+        "status": "inferido",
+        "fonte": "Derivado de 2 eixos com rodagem dupla"
+      },
+      "sistema_eletrico": {
+        "valor": "24 V, 7 polos + ISO 7638 (ABS)",
+        "status": "inferido",
+        "fonte": "https://famit.com.br/conexoes-eletricas-para-reboques/"
+      },
+      "pino_rei": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      },
+      "patolas_pe_apoio": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      },
+      "valvulas_pneumaticas": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      },
+      "carroceria": {
+        "valor": "Furgao (bau fechado)",
+        "status": "inferido",
+        "fonte": "https://www.leffaleiloes.com.br/venda-direta/bem_id/3934",
+        "nota": "Pela sigla FG."
+      },
+      "intervalos_manutencao": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      }
+    },
+    "observacoes": "Fabricante com a MENOR presenca tecnica publica dos cinco. Praticamente nada confirmavel alem do numero de eixos. Com apenas 7 ativos, o caminho mais barato e abrir o cubo/freio de UMA unidade, anotar as referencias reais (rolamento, retentor, lona, tambor, cuica) e usar isso como ficha de compra do lote.",
+    "possivel_duplicata_de": null
+  },
+  {
+    "modelo": "TRUCKVAN / BOVENAU / demais semirreboques da categoria",
+    "marca": "TRUCKVAN / OUTROS",
+    "categoria": "semirreboque",
+    "anos": [],
+    "ativos": null,
+    "campos": {
+      "truckvan_perfil": {
+        "valor": "Truckvan, fundada em 1992, e o maior fabricante brasileiro de unidades moveis e atua no segmento pesado, incluindo carreta para transporte de BEBIDAS, furgao, carga seca, Inloader, linha granel, piso movel, sider, bitrem e rodotrem.",
+        "status": "confirmado",
+        "fonte": "https://www.truckvan.com.br/implementos-rodoviarios ; https://truckvan.com.br/solucoes/implementos-rodoviarios/produtos"
+      },
+      "truckvan_suspensao": {
+        "valor": "No sider Truckvan citado: suspensao PNEUMATICA no primeiro eixo e MECANICA nos demais (3 eixos no total).",
+        "status": "inferido",
+        "fonte": "https://www.truckvan.com.br/implementos-rodoviarios",
+        "nota": "Configuracao de um modelo especifico, nao necessariamente o da frota. Consequencia pratica: o implemento tem os DOIS tipos de manutencao ao mesmo tempo (bolsa de ar/valvula de nivelamento no 1o eixo + pinos, buchas e feixe de molas nos demais)."
+      },
+      "truckvan_carroceria": {
+        "valor": "Semirreboque furgao Truckvan: revestimento externo em aluminio corrugado, duas portas traseiras com duas folhas de aluminio e quatro varoes externos.",
+        "status": "confirmado",
+        "fonte": "https://www.truckvan.com.br/implementos-rodoviarios"
+      },
+      "bovenau_como_semirreboque": {
+        "valor": "NAO SE APLICA - a BOVENAU nao e fabricante de semirreboque. A Bovenau (bovenau.com.br) fabrica MACACOS E EQUIPAMENTOS HIDRAULICOS (macacos tipo garrafa, hidropneumaticos, jacares, cavaletes, prensas, saca-polias). O item 'BOVENAU | MACACO PNEUMATICO' do parque e produto dela; um 'semirreboque Bovenau' e provavelmente erro de cadastro.",
+        "status": "confirmado",
+        "fonte": "https://www.bovenau.com.br/macacos-hidraulicos-mtp/ ; https://www.bovenau.com.br/macacos-hidraulicos-mt/",
+        "nota": "ACHADO DE CADASTRO: verificar se existe ativo classificado como semirreboque com marca BOVENAU - se existir, o cadastro esta errado."
+      },
+      "especificacoes_comuns": {
+        "valor": "Valores de catalogo que se repetem entre Facchini, Randon e Next para semirreboque de carga geral no Brasil: eixo tubular Ø152 mm / 11 t; freio a ar 2 linhas com tambor 16 1/2\" x 8\"; roda 8,25\"x22,5\" para pneu 295/80 R22,5; pino rei 2\" flangeado (NBR NM ISO 337/2001); sistema eletrico 24 V com tomada de 7 polos.",
+        "status": "inferido",
+        "fonte": "https://www.facchini.com.br/clic?arquivo=sem_cs-br.pdf&area=produtos ; https://www.nextimplementos.com.br/semirreboque-carga-seca ; https://www.randon.com.br/pt/produtos/linha-pesada/furgao/furgao-carga-geral",
+        "nota": "Serve como 'default de compra' quando a ficha do modelo nao existe - MAS deve ser conferido fisicamente antes de fechar pedido."
+      }
+    },
+    "observacoes": "Entrada de categoria, nao de modelo. Achado relevante: BOVENAU nao fabrica implemento rodoviario - e fabricante de macacos hidraulicos, o que indica erro de cadastro se houver semirreboque com essa marca.",
+    "possivel_duplicata_de": null
+  },
+  {
+    "modelo": "TM2500",
+    "marca": "TOLEDO (cadastro) / PALETRANS (fabricante real)",
+    "categoria": "paleteira",
+    "anos": [2022],
+    "ativos": 32,
+    "campos": {
+      "fabricante_real": {
+        "valor": "PALETRANS. 'TM2500' e a designacao de modelo da linha TM da Paletrans (Cravinhos-SP), que publica o 'MANUAL DE USO E PECAS - TM2500'. A Toledo do Brasil nao fabrica transpaleteira - ela fabrica a BALANCA (PL-3000) que e montada sobre carrinho Paletrans ou BYG. Cadastro provavelmente errado, ou a unidade e uma paleteira Paletrans com balanca Toledo.",
+        "status": "confirmado",
+        "fonte": "https://www.paletrans.com.br/storage/produtos/arquivos/MANUAL%20DE%20USO%20E%20PE%C3%87AS%20-%20TM2500%20-%2012_2021.pdf ; https://www.toledobrasil.com/produto/balanca-pl-3000-com-carrinho-paletrans"
+      },
+      "capacidade": {
+        "valor": "2.500 kg",
+        "status": "confirmado",
+        "fonte": "https://www.paletrans.com.br/storage/produtos/arquivos/MANUAL%20DE%20USO%20E%20PE%C3%87AS%20-%20TM2500%20-%2012_2021.pdf ; https://transpalet.com.br/transpalete-manual-tm2500-capacidade-2500kgs-rodas-simples-nylon"
+      },
+      "garfos": {
+        "valor": "Comprimento util 1.150 mm; largura externa 680 mm (opcao 525 mm). Altura dos garfos abaixados 75 mm; elevados 190 mm; elevacao maxima 200 mm.",
+        "status": "confirmado",
+        "fonte": "https://www.oceanob2b.com/paleteira-manual-hidraulica-2500kg-680mmx1150mm-tm2500-sn-paletrans-p1018899 ; https://www.paletrans.com.br/storage/produtos/arquivos/MANUAL%20DE%20USO%20E%20PE%C3%87AS%20-%20TM2500%20-%2012_2021.pdf",
+        "nota": "Existem as duas larguras no catalogo (680 e 525 mm). Para palete PBR (1,00 x 1,20 m) o usual e 680 mm. CONFERIR a largura da frota - garfo e peca de reposicao cara e nao intercambiavel."
+      },
+      "dimensoes_gerais": {
+        "valor": "Altura total 1.225 mm; comprimento total 1.533 mm; curso total 115 mm; corredor operacional 1.790 mm; peso 63 kg.",
+        "status": "confirmado",
+        "fonte": "https://www.oceanob2b.com/paleteira-manual-hidraulica-2500kg-680mmx1150mm-tm2500-sn-paletrans-p1018899"
+      },
+      "oleo_hidraulico": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "O tipo e o VOLUME nao aparecem na web aberta para a linha TM. O que se apurou: a Paletrans entrega o equipamento de fabrica com oleo adequado para operacao de +5 C a +40 C, e recomenda verificar o nivel mensalmente. Baixar o 'MANUAL DE USO E PECAS - TM2500 - 12/2021' (https://www.paletrans.com.br/storage/produtos/arquivos/MANUAL%20DE%20USO%20E%20PE%C3%87AS%20-%20TM2500%20-%2012_2021.pdf) e ler a secao de oleo hidraulico. REFERENCIA EQUIVALENTE (usar so como ordem de grandeza): BYG L2.6 usa ISO VG 32 (Mobil DTE 24 / Shell Tellus 32 / Esso Nuto H32) e 0,340 L."
+      },
+      "rodas": {
+        "valor": "Roda direcional Ø180 x 50 mm, com rolamento. Rodas de carga: simples ou TANDEM (dupla/trucada), em NYLON ou POLIURETANO (quatro combinacoes de catalogo: SN, TN, SP, TP).",
+        "status": "confirmado",
+        "fonte": "https://www.oceanob2b.com/paleteira-manual-hidraulica-2500kg-680mmx1150mm-tm2500-sn-paletrans-p1018899 ; https://transpalet.com.br/transpalete-manual-tm2500-capacidade-2500kgs-rodas-tandem-nylon",
+        "nota": "A MEDIDA da roda de carga nao foi encontrada. Sufixos do codigo: S=simples, T=tandem, N=nylon, P=poliuretano. Para piso de CD com bebida, poliuretano e mais silencioso e poupa o piso; nylon rola mais leve e aguenta mais carga."
+      },
+      "roda_carga_medida": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Medir a roda instalada (diametro x largura) ou consultar o manual de pecas. Em equipamento equivalente de 2.500 kg a medida tipica e Ø82 x 70 mm (dupla) - NAO usar esse numero sem medir."
+      },
+      "rolamento": {
+        "valor": "Roda direcional com rolamento (declarado no catalogo). Referencias nao publicadas.",
+        "status": "inferido",
+        "fonte": "https://www.oceanob2b.com/paleteira-manual-hidraulica-2500kg-680mmx1150mm-tm2500-sn-paletrans-p1018899",
+        "nota": "Levantar as referencias no manual de pecas ou medindo o rolamento retirado."
+      },
+      "kit_reparo_bomba": {
+        "valor": "Existe 'Kit Reparo Paleteira Manual Paletrans' original no mercado de reposicao; ha tambem kit generico para bomba de paleteira manual 2,5 e 3,0 t. Conteudo tipico: raspadores, gaxetas de poliuretano, aneis o-ring de varias medidas e retentores; kits completos chegam a 23 pecas (gaxetas do atuador/injetor, o-rings, pinos de desativacao, molas de valvula, esferas de aco e parafusos de regulagem).",
+        "status": "confirmado",
+        "fonte": "https://www.pecasdepaleteiras.com.br/MLB-1799166292-kit-reparo-paleteira-manual-paletrans-promoco-original-_JM ; https://loja.empilhadeirascatarinense.com.br/kit-reparo-bomba-de-paleteira-manual-253-t ; https://www.retentive.com.br/kits.php?kitLinha=33",
+        "nota": "Funcao do kit: impedir o vazamento de oleo hidraulico na bomba, causado por gaxetas e retentores danificados pelo uso continuo ou por ambiente agressivo - exatamente o caso de CD de bebidas (piso molhado/acucarado)."
+      },
+      "bomba_completa": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "A Paletrans vende bomba completa como item do manual de pecas (a estrutura do manual tem capitulos de chassi, alavanca e BOMBA HIDRAULICA), mas o codigo nao e publico. Pedir pelo manual de pecas ou a rede Paletrans."
+      },
+      "eixos_garfos_timao": {
+        "valor": "O manual de uso e pecas da linha TM tem capitulos de substituicao de pecas: chassi, alavanca (timao) e bomba hidraulica, com lista de pecas.",
+        "status": "confirmado",
+        "fonte": "https://www.paletrans.com.br/storage/produtos/arquivos/MANUAL%20DE%20USO%20E%20PE%C3%87AS%20-%20TM%202220-3020.pdf",
+        "nota": "Codigos individuais nao extraidos - estao no PDF."
+      },
+      "intervalos_manutencao": {
+        "valor": "Lubrificar todos os pontos de graxa, partes articuladas e rolamentos. Ambientes de trabalho agressivos exigem manutencao mais frequente. Verificacao do nivel de oleo hidraulico: mensal. (Referencia de mercado para manuais de transpaleteira manual: verificar o oleo a cada 6 meses e substituir integralmente a cada 12 meses.)",
+        "status": "inferido",
+        "fonte": "https://www.paletrans.com.br/storage/produtos/arquivos/MANUAL%20DE%20USO%20E%20PE%C3%87AS%20-%20TM%202220-3020.pdf ; https://www2.bremenimportadora.com.br/storage/1026/MANUAL-BREMEN---PALETEIRAS.pdf",
+        "nota": "A parte de lubrificacao e da propria Paletrans; a periodicidade de 6/12 meses vem de manual de outro fabricante (Bremen) - validar no manual Paletrans."
+      }
+    },
+    "observacoes": "MAIOR FROTA DE PALETEIRA (32 ativos). ACHADO DE CADASTRO: TM2500 e modelo PALETRANS, nao Toledo. Vale acertar o cadastro, senao a busca por peca/assistencia vai sempre bater na porta errada. O manual oficial (uso E pecas) e publico e gratuito - baixar e anexar ao catalogo de compras.",
+    "possivel_duplicata_de": "Mesma familia (linha TM da Paletrans) dos itens 'DISKTRANS TM2220' e 'PALETRANS TM 2220'. Tambem e o carrinho usado sob a balanca TOLEDO PL-3000."
+  },
+  {
+    "modelo": "EVOLUTION 2.6 685X1150 MM RDN 0.76MM",
+    "marca": "BYG",
+    "categoria": "paleteira",
+    "anos": [],
+    "ativos": 24,
+    "campos": {
+      "identificacao": {
+        "valor": "Transpaleteira manual BYG EVOLUTION L 2.6 (tambem vendida como 'BYG L 2.6'), na configuracao de garfo 685 x 1150 mm com RODAGEM DUPLA DE NYLON. A leitura provavel do cadastro: 'RDN' = Rodagem Dupla Nylon e '0.76MM' = roda de carga dupla de 76 mm de largura (a medida de catalogo da roda dupla BYG e Ø85 x 76 mm).",
+        "status": "inferido",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf ; https://www.innovatranspalet.com.br/produtos/transpaleteira-manual-byg-evolution-l-2-6-b-rodagem-dupla-ref-bygc262dnnm/",
+        "nota": "A decodificacao de 'RDN 0.76MM' e inferencia, mas casa exatamente com a tabela do fabricante (685 mm e a largura externa de garfo de catalogo; 76 mm e a largura da roda de carga dupla)."
+      },
+      "capacidade": {
+        "valor": "2.600 kg",
+        "status": "confirmado",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf"
+      },
+      "garfos": {
+        "valor": "Largura externa 520 | 685 mm; largura interna 210 | 375 mm; comprimento util 950 | 1.150 mm. A unidade do parque e a versao 685 x 1.150 mm. Altura dos garfos abaixados 85 (+5 -0) mm; elevados 200 mm.",
+        "status": "confirmado",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf"
+      },
+      "dimensoes_gerais": {
+        "valor": "Comprimento total 1.300 | 1.500 mm; altura total 1.160 mm; largura minima do corredor 1.550 | 1.750 mm; raio de giro 1.170 | 1.370 mm; centro de carga 600 mm; peso 70 | 76 kg.",
+        "status": "confirmado",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf",
+        "nota": "Os pares de valores correspondem as versoes curta (520x950) e longa (685x1150) - para a frota vale o SEGUNDO valor de cada par."
+      },
+      "oleo_hidraulico": {
+        "valor": "ISO VG 32 - oleos recomendados pelo fabricante: ATLANTIC AW 32, MOBIL DTE 24, ESSO NUTO H32, SHELL TELLUS 32, GULF Hydraulic Oil C, TEXACO RANDO HD 32. QUANTIDADE: 0,340 litro. Nivel correto: o oleo deve ficar na altura do parafuso de controle de vazao com os garfos ABAIXADOS.",
+        "status": "confirmado",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf",
+        "nota": "DADO MAIS SOLIDO DE TODA A CATEGORIA - e o unico volume de oleo declarado por fabricante que foi possivel confirmar. A mesma faixa de oleos vale para operacao continua ate -25 C."
+      },
+      "rodas": {
+        "valor": "Roda direcional Ø173 x 57 mm. Roda de carga DUPLA Ø85 x 76 mm; roda de carga SIMPLES Ø85 x 98 mm. Materiais de catalogo: NYLON, NYLON/PU, FERRO ou FERRO/PU.",
+        "status": "confirmado",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf",
+        "nota": "A frota e RDN = rodagem dupla de nylon -> roda de carga Ø85 x 76 mm em nylon."
+      },
+      "rolamento": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Referencias nao publicadas na ficha. Estao na lista de pecas do manual BYG (https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf) ou medindo o rolamento retirado."
+      },
+      "kit_reparo_bomba": {
+        "valor": "Existe 'Kit De Pecas Paleteira Byg Evolution 2.6 Manual Hidraulico' no mercado de reposicao, especifico para este modelo.",
+        "status": "confirmado",
+        "fonte": "https://www.pecasdepaleteiras.com.br/MLB-1817444477-kit-de-pecas-paleteira-byg-evolution-26-manual-hidraulico-_JM"
+      },
+      "bomba_completa": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Codigo nao publico. Consultar a BYG ou o manual de pecas."
+      },
+      "acabamento_chassi": {
+        "valor": "Opcoes de catalogo: ACO CARBONO GALVANIZADO ou INOX.",
+        "status": "confirmado",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf",
+        "nota": "Relevante em CD de bebidas (piso umido/acucarado): galvanizado ou inox muda muito a vida util do chassi. Conferir qual versao a frota tem."
+      },
+      "intervalos_manutencao": {
+        "valor": "O manual BYG tem secao de 'dicas para prolongar a vida util', oleos hidraulicos, manutencao e solucao de pequenos problemas. Na revisao do sistema hidraulico deve-se observar maxima limpeza, e as pecas desmontadas devem ser cuidadosamente limpas e inspecionadas.",
+        "status": "confirmado",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf",
+        "nota": "A periodicidade em horas/meses nao foi extraida - esta no PDF."
+      }
+    },
+    "observacoes": "Melhor documentada de todas as paleteiras: manual publico com quantidade e marcas de oleo. Somando os tres cadastros BYG (24 + 20 + 13 = 57 ativos) esta e a MAIOR familia de paleteiras do parque, acima da Paletrans TM2500.",
+    "possivel_duplicata_de": "Mesmo equipamento dos cadastros 'BYG | BYG' (20 ativos) e 'BYG | BYG L2.6' (13 ativos) - as tres linhas descrevem a transpaleteira BYG L 2.6 / Evolution L 2.6."
+  },
+  {
+    "modelo": "BYG (generico) e BYG L2.6",
+    "marca": "BYG",
+    "categoria": "paleteira",
+    "anos": [],
+    "ativos": 33,
+    "campos": {
+      "identificacao": {
+        "valor": "Dois cadastros ('BYG | BYG' com 20 ativos e 'BYG | BYG L2.6' com 13) que descrevem a transpaleteira manual BYG L 2.6 / Evolution L 2.6 - o mesmo equipamento do cadastro 'EVOLUTION 2.6 685X1150'. O cadastro 'BYG | BYG' esta sem modelo preenchido.",
+        "status": "inferido",
+        "fonte": "https://byg.com.br/produto/transpaleteira-manual-byg-l-2-6/ ; https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf",
+        "nota": "O cadastro 'BYG | BYG' pode esconder OUTROS modelos BYG (a BYG tambem fabrica L 1500, L 2000, L 3.5, LT 2000, linha SMART). CONFERIR fisicamente a plaqueta antes de assumir que sao todos L 2.6."
+      },
+      "capacidade": {
+        "valor": "2.600 kg (se L 2.6). Outros modelos BYG existentes: L1500 (1.500 kg), L2000 (2.000 kg), L3.5 (3.500 kg), LT2000.",
+        "status": "inferido",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf ; https://byg.com.br/wp-content/uploads/2022/10/L-2000-BR-04-2019.pdf ; https://byg.com.br/wp-content/uploads/2022/11/L-3.5-2019.pdf"
+      },
+      "garfos": {
+        "valor": "Se L 2.6: 520 ou 685 mm de largura externa x 950 ou 1.150 mm de comprimento util; abaixados 85 mm, elevados 200 mm.",
+        "status": "inferido",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf"
+      },
+      "oleo_hidraulico": {
+        "valor": "ISO VG 32 (Atlantic AW 32 / Mobil DTE 24 / Esso Nuto H32 / Shell Tellus 32 / Gulf Hydraulic Oil C / Texaco Rando HD 32), 0,340 L, nivel na altura do parafuso de controle de vazao com garfos abaixados.",
+        "status": "confirmado",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf",
+        "nota": "Confirmado para o modelo L 2.6. Se houver outros modelos BYG nesses cadastros, o volume muda - cada manual BYG traz o seu."
+      },
+      "rodas": {
+        "valor": "Se L 2.6: direcional Ø173 x 57 mm; carga dupla Ø85 x 76 mm; carga simples Ø85 x 98 mm; nylon, nylon/PU, ferro ou ferro/PU.",
+        "status": "inferido",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf"
+      },
+      "rolamento": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      },
+      "kit_reparo_bomba": {
+        "valor": "Kit de pecas/reparo BYG Evolution 2.6 disponivel no mercado de reposicao.",
+        "status": "confirmado",
+        "fonte": "https://www.pecasdepaleteiras.com.br/MLB-1817444477-kit-de-pecas-paleteira-byg-evolution-26-manual-hidraulico-_JM"
+      },
+      "intervalos_manutencao": {
+        "valor": "Conforme manual BYG L 2.6 (limpeza maxima na revisao do sistema hidraulico; lubrificacao; verificacao de vazamentos).",
+        "status": "inferido",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf"
+      }
+    },
+    "observacoes": "PENDENCIA DE CADASTRO: 20 ativos estao lancados so como 'BYG | BYG', sem modelo. Como a BYG tem pelo menos 6 modelos de transpaleteira manual com capacidades de 1.500 a 3.500 kg, comprar peca por esse cadastro e chute. Levantar a plaqueta (modelo + numero de serie) desses 20 ativos e o item de maior retorno desta pesquisa inteira.",
+    "possivel_duplicata_de": "BYG | EVOLUTION 2.6 685X1150 MM RDN 0.76MM (24 ativos) - mesma familia L 2.6."
+  },
+  {
+    "modelo": "ALLDEALS (sem modelo)",
+    "marca": "ALLDEALS",
+    "categoria": "paleteira",
+    "anos": [],
+    "ativos": 15,
+    "campos": {
+      "identificacao": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "'ALLDEALS' nao retorna NENHUM fabricante de transpaleteira em busca aberta. Tudo indica ser importador/revendedor (ou o nome do fornecedor da compra, lancado como marca), nao fabricante. Sem modelo no cadastro, nao ha o que especificar. ACAO: fotografar a plaqueta/etiqueta de uma unidade (marca, modelo, capacidade, nº de serie)."
+      },
+      "capacidade": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Ler a capacidade estampada no chassi (obrigatoria por norma)."
+      },
+      "garfos": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Medir. As duas medidas de mercado no Brasil sao 1.150 x 685 mm e 1.150 x 550/525 mm."
+      },
+      "oleo_hidraulico": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Sem fabricante identificado nao ha especificacao. Faixa praticada no segmento: ISO VG 32 (ate ISO VG 46 em ambiente quente), 0,25 a 0,40 L. NAO comprar por esse intervalo sem medir o reservatorio."
+      },
+      "rodas": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Medir diametro x largura da roda de carga e da direcional, e identificar o material (nylon x poliuretano)."
+      },
+      "kit_reparo_bomba": {
+        "valor": "Paleteiras importadas genericas costumam aceitar kits de reparo universais de 2,5/3,0 t (raspadores, gaxetas de poliuretano, o-rings e retentores).",
+        "status": "inferido",
+        "fonte": "https://loja.empilhadeirascatarinense.com.br/kit-reparo-bomba-de-paleteira-manual-253-t ; https://www.retentive.com.br/kits.php?kitLinha=33",
+        "nota": "Inferencia de mercado. O correto e levar a bomba a um retificador de vedacoes (ex.: Retentive) e mandar fazer o kit por amostra - servico que essas empresas oferecem ('pecas sob desenho ou amostra')."
+      },
+      "intervalos_manutencao": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      }
+    },
+    "observacoes": "15 ativos sem nenhuma informacao tecnica possivel de levantar remotamente. Junto com os 20 'BYG | BYG', formam o bolso cego do cadastro (35 paleteiras sem modelo identificavel).",
+    "possivel_duplicata_de": null
+  },
+  {
+    "modelo": "ULP 2000",
+    "marca": "DIGITRON",
+    "categoria": "paleteira_balanca",
+    "anos": [2022],
+    "ativos": 15,
+    "campos": {
+      "categoria_correta": {
+        "valor": "ATENCAO - NAO E PALETEIRA MANUAL SIMPLES: a Digitron ULP-2000 e uma PALETEIRA COM BALANCA (2.000 kg, com Inmetro). Deve ser tratada na mesma categoria da Toledo PL-3000, com plano de manutencao que inclui aferição/calibracao e a parte eletronica.",
+        "status": "confirmado",
+        "fonte": "https://www.magazineluiza.com.br/paleteira-com-balanca-2-000kg-com-inmetro-ulp-2000-digitron/p/khddgkddec/cp/bala/ ; https://www.equipacenter.com.br/paleteira-com-balanca-2000kg-com-inmetro-digitron-ulp2000.html"
+      },
+      "capacidade": {
+        "valor": "2.000 kg. Carga maxima no eixo condutor 810 kg; carga maxima no eixo de carga 1.300 kg.",
+        "status": "confirmado",
+        "fonte": "https://www.equipacenter.com.br/paleteira-com-balanca-2000kg-com-inmetro-digitron-ulp2000.html"
+      },
+      "garfos": {
+        "valor": "Comprimento util 1.150 mm; largura de cada garfo 180 mm. Altura dos garfos abaixados 85 mm; elevados 195 mm.",
+        "status": "confirmado",
+        "fonte": "https://www.equipacenter.com.br/paleteira-com-balanca-2000kg-com-inmetro-digitron-ulp2000.html"
+      },
+      "elevacao": {
+        "valor": "195 mm, sistema hidraulico manual",
+        "status": "confirmado",
+        "fonte": "https://www.equipacenter.com.br/paleteira-com-balanca-2000kg-com-inmetro-digitron-ulp2000.html"
+      },
+      "dimensoes_gerais": {
+        "valor": "Comprimento 1.550 mm x largura 700 mm x altura 1.210 mm; peso 110 kg.",
+        "status": "confirmado",
+        "fonte": "https://www.equipacenter.com.br/paleteira-com-balanca-2000kg-com-inmetro-digitron-ulp2000.html",
+        "nota": "Peso de 110 kg (contra 63-76 kg das paleteiras comuns) por causa da estrutura da balanca."
+      },
+      "oleo_hidraulico": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao publicado pela Digitron. Consultar o manual do equipamento ou a assistencia Digitron. Ordem de grandeza do segmento: ISO VG 32, 0,25-0,40 L."
+      },
+      "rodas": {
+        "valor": "Rodas de carga em POLIURETANO (PU) Ø75 mm; roda direcional em POLIURETANO Ø170 mm.",
+        "status": "confirmado",
+        "fonte": "https://www.equipacenter.com.br/paleteira-com-balanca-2000kg-com-inmetro-digitron-ulp2000.html"
+      },
+      "rolamento": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      },
+      "celula_de_carga": {
+        "valor": "4 celulas de carga BLINDADAS.",
+        "status": "confirmado",
+        "fonte": "https://www.equipacenter.com.br/paleteira-com-balanca-2000kg-com-inmetro-digitron-ulp2000.html",
+        "nota": "Grau de protecao (IP) nao declarado. Item de reposicao critico: em CD de bebidas a celula morre por umidade e por impacto de garfo."
+      },
+      "indicador_peso": {
+        "valor": "Display numerico de 6 digitos em LED. Precisao/divisao de pesagem 500 g; carga minima 10 kg.",
+        "status": "confirmado",
+        "fonte": "https://www.equipacenter.com.br/paleteira-com-balanca-2000kg-com-inmetro-digitron-ulp2000.html"
+      },
+      "bateria_indicador": {
+        "valor": "Bateria INTERNA RECARREGAVEL de 6 V, com carregador bivolt 110/220 V. Autonomia: 50 h de uso ou 100 h em stand-by.",
+        "status": "confirmado",
+        "fonte": "https://www.equipacenter.com.br/paleteira-com-balanca-2000kg-com-inmetro-digitron-ulp2000.html",
+        "nota": "Bateria 6 V selada (tipo chumbo-acido) e item de consumo - prever reposicao no catalogo."
+      },
+      "cabo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Cabo de celula/indicador nao consta no catalogo. Item de reposicao frequente (rompe na articulacao do garfo)."
+      },
+      "certificacao": {
+        "valor": "Aprovada pelo INMETRO (portaria de aprovacao de modelo). Garantia de 12 meses.",
+        "status": "confirmado",
+        "fonte": "https://www.magazineluiza.com.br/paleteira-com-balanca-2-000kg-com-inmetro-ulp-2000-digitron/p/khddgkddec/cp/bala/",
+        "nota": "Por ter Inmetro, se o peso for usado em transacao comercial a balanca precisa de VERIFICACAO PERIODICA anual pelo IPEM - isso e obrigacao legal, nao manutencao opcional."
+      },
+      "intervalos_manutencao": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Alem da manutencao mecanica/hidraulica, prever: calibracao/aferição periodica e verificacao anual do IPEM."
+      }
+    },
+    "observacoes": "ITEM MAL CATEGORIZADO NA LISTA DE ORIGEM: veio como 'paleteira manual', mas e paleteira COM BALANCA. Somando com a Toledo PL-3000 (16), sao 31 paleteiras com sistema de pesagem no parque - o que muda o plano de manutencao (celula, indicador, bateria, cabo e calibracao).",
+    "possivel_duplicata_de": null
+  },
+  {
+    "modelo": "TM2220 (cadastro DISKTRANS) e TM 2220 (cadastro PALETRANS)",
+    "marca": "PALETRANS (fabricante) / DISKTRANS (revenda)",
+    "categoria": "paleteira",
+    "anos": [],
+    "ativos": 25,
+    "campos": {
+      "identificacao": {
+        "valor": "MESMO EQUIPAMENTO nos dois cadastros: transpaleteira manual PALETRANS TM2220. A Paletrans publica 'MANUAL DE USO E PECAS - TM 2220-3020'. 'DISKTRANS' e revendedor/distribuidor, nao fabricante.",
+        "status": "confirmado",
+        "fonte": "https://www.paletrans.com.br/storage/produtos/arquivos/MANUAL%20DE%20USO%20E%20PE%C3%87AS%20-%20TM%202220-3020.pdf ; https://www.nei.com.br/transpalete-manual-tm2220-ic-paletrans/pg/GJR4oa7l6"
+      },
+      "capacidade": {
+        "valor": "2.200 kg",
+        "status": "confirmado",
+        "fonte": "https://www.paletrans.com.br/storage/produtos/arquivos/MANUAL%20DE%20USO%20E%20PE%C3%87AS%20-%20TM%202220-3020.pdf ; https://www.deitec.com.br/produtos/detalhe/paleteira-hidraulica-manual-tm-2220"
+      },
+      "garfos": {
+        "valor": "Comprimento util 1.150 mm; largura externa 680 mm. Variantes de catalogo: largura externa 530 mm e comprimento util 1.000 ou 1.150 mm. Altura dos garfos abaixados 85 mm; elevados 200 mm.",
+        "status": "confirmado",
+        "fonte": "https://www.rrmaquinas.com.br/paleteira-transpalete-tm2220-122n-680x1150-rs-ny-paletrans.html ; https://www.cofermeta.com.br/movimentacao-e-carga/movimentacao/carros-transpaletes/carro-hidraulico-paleteira-para-2200-kgs-530-com-roda-simples-de-nylon-tm2220-paletrans",
+        "nota": "Existem as duas larguras (680 e 530 mm) na frota em potencial - CONFERIR."
+      },
+      "dimensoes_gerais": {
+        "valor": "Altura total 1.215 mm; peso 68 kg.",
+        "status": "confirmado",
+        "fonte": "https://www.deitec.com.br/produtos/detalhe/paleteira-hidraulica-manual-tm-2220"
+      },
+      "oleo_hidraulico": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao publicado. Baixar 'MANUAL DE USO E PECAS - TM 2220-3020' (https://www.paletrans.com.br/storage/produtos/arquivos/MANUAL%20DE%20USO%20E%20PE%C3%87AS%20-%20TM%202220-3020.pdf). Ordem de grandeza (BYG L2.6, equipamento equivalente): ISO VG 32, 0,340 L."
+      },
+      "rodas": {
+        "valor": "Nylon ou poliuretano, em rodagem SIMPLES ou TANDEM (dupla/trucada). Existe versao com chassi INOX (TM 2220 IC).",
+        "status": "confirmado",
+        "fonte": "https://www.cofermeta.com.br/movimentacao-e-carga/movimentacao/carros-transpaletes/carro-hidraulico-paleteira-para-2200-kgs-530-com-roda-simples-de-poliuretano-tm2220-paletrans ; https://www.lojacoparts.com.br/paleteira-manual-com-chassi-de-inox-2.200kg-com-roda-tandemdupla-em-nylon-tm-2220-ic-tn",
+        "nota": "Versao IC (inox) e relevante em area umida de CD de bebidas."
+      },
+      "roda_medidas": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Medidas de roda de carga e direcional nao publicadas para a TM2220. Medir ou consultar o manual de pecas. (Na TM2500, a direcional e Ø180 x 50 mm com rolamento.)"
+      },
+      "rolamento": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      },
+      "kit_reparo_bomba": {
+        "valor": "Kit reparo Paletrans original disponivel no mercado de reposicao; kits genericos de 2,5/3,0 t tambem atendem a linha.",
+        "status": "inferido",
+        "fonte": "https://www.pecasdepaleteiras.com.br/MLB-1799166292-kit-reparo-paleteira-manual-paletrans-promoco-original-_JM",
+        "nota": "O anuncio nao especifica modelo - confirmar compatibilidade com TM2220 antes de comprar em lote."
+      },
+      "bomba_completa": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "O manual da linha TM tem capitulo proprio de BOMBA HIDRAULICA com lista de pecas - os codigos estao no PDF."
+      },
+      "eixos_garfos_timao": {
+        "valor": "Manual da linha TM cobre substituicao de pecas de chassi, alavanca (timao) e bomba hidraulica.",
+        "status": "confirmado",
+        "fonte": "https://www.paletrans.com.br/storage/produtos/arquivos/MANUAL%20DE%20USO%20E%20PE%C3%87AS%20-%20TM%202220-3020.pdf"
+      },
+      "intervalos_manutencao": {
+        "valor": "Lubrificar todos os pontos de graxa, partes articuladas e rolamentos; ambientes agressivos exigem manutencao mais frequente.",
+        "status": "confirmado",
+        "fonte": "https://www.paletrans.com.br/storage/produtos/arquivos/MANUAL%20DE%20USO%20E%20PE%C3%87AS%20-%20TM%202220-3020.pdf",
+        "nota": "Periodicidade numerica nao extraida - esta no PDF."
+      }
+    },
+    "observacoes": "DUPLICATA CONFIRMADA: DISKTRANS TM2220 (13) e PALETRANS TM 2220 (12) sao o MESMO equipamento = 25 ativos de Paletrans TM2220. Unificar o cadastro sob PALETRANS reduz um item do catalogo e dobra o poder de compra de peca.",
+    "possivel_duplicata_de": "Mesma linha TM da Paletrans do cadastro 'TOLEDO | TM2500' (que tambem e Paletrans). Diferem so na capacidade (2.200 x 2.500 kg) - muitas pecas de chassi/bomba sao comuns a linha."
+  },
+  {
+    "modelo": "PALETEIRA MANUAL TRANSPOTECH 1150X685MM",
+    "marca": "FERPLUS",
+    "categoria": "paleteira",
+    "anos": [],
+    "ativos": 10,
+    "campos": {
+      "identificacao": {
+        "valor": "FERPLUS e distribuidora de ferramentas (ferplus.com.br) que comercializa transpaleteiras manuais; 'TRANSPOTECH' e a marca do produto vendido por ela. Nao foi localizada ficha tecnica do modelo exato 1150 x 685 mm.",
+        "status": "inferido",
+        "fonte": "https://www.ferplus.com.br/transpaleteira-manual-5-tons-685x1220-roda-nylon ; https://ferplus.com.br/transpaleteira-manual-3-tons-685x1220-roda-nylon",
+        "nota": "Os modelos Ferplus encontrados sao 685x1220 mm (3 t e 5 t) e 550x1150 mm (3 t) - NENHUM e 685x1150. A ficha do 1150x685 nao foi localizada."
+      },
+      "capacidade": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Ler a capacidade estampada no chassi. Modelos Ferplus proximos sao de 3.000 e 5.000 kg, mas a medida de garfo nao bate."
+      },
+      "garfos": {
+        "valor": "1.150 x 685 mm (do proprio cadastro). Em modelo Ferplus de 3 t, a distancia fixa ENTRE garfos e 385 mm e a elevacao maxima 200 mm; dimensoes gerais 1.603 x 685 x 1.224 mm.",
+        "status": "inferido",
+        "fonte": "https://ferplus.com.br/transpaleteira-manual-3-tons-685x1220-roda-nylon",
+        "nota": "Os numeros de 'entre garfos' e elevacao vem de um modelo Ferplus DIFERENTE (685x1220). Servem de referencia, nao de especificacao."
+      },
+      "construcao": {
+        "valor": "Chassi em aco carbono ASTM A36, rodas de nylon (construcao padrao da linha Ferplus).",
+        "status": "inferido",
+        "fonte": "https://ferplus.com.br/transpaleteira-manual-3-tons-685x1220-roda-nylon"
+      },
+      "oleo_hidraulico": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao publicado. Faixa do segmento: ISO VG 32, 0,25-0,40 L. Medir/consultar o fornecedor."
+      },
+      "rodas": {
+        "valor": "Nylon (rodagem dupla nos modelos da linha).",
+        "status": "inferido",
+        "fonte": "https://ferplus.com.br/transpaleteira-manual-3-tons-685x1220-roda-nylon",
+        "nota": "Medidas de roda nao publicadas."
+      },
+      "rolamento": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      },
+      "kit_reparo_bomba": {
+        "valor": "Kits universais de reparo de bomba para paleteira manual (raspadores, gaxetas de PU, o-rings, retentores) tendem a atender. Fabricantes de vedacao fazem kit por amostra.",
+        "status": "inferido",
+        "fonte": "https://www.retentive.com.br/kits.php?kitLinha=33 ; https://loja.empilhadeirascatarinense.com.br/kit-reparo-bomba-de-paleteira-manual-253-t"
+      },
+      "intervalos_manutencao": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null
+      }
+    },
+    "observacoes": "Marca de distribuidor, nao de fabricante - documentacao tecnica praticamente inexistente. A medida do cadastro (1150x685) nao bate com nenhum modelo Ferplus publicado, o que sugere cadastro impreciso ou produto descontinuado. Com 10 ativos, tratar como 'paleteira generica 685 mm' e padronizar peca por amostra.",
+    "possivel_duplicata_de": null
+  },
+  {
+    "modelo": "PL 3000",
+    "marca": "TOLEDO",
+    "categoria": "paleteira_balanca",
+    "anos": [2017],
+    "ativos": 16,
+    "campos": {
+      "identificacao": {
+        "valor": "ATENCAO - EQUIPAMENTO DE DUAS ORIGENS: a PL-3000 e a BALANCA TRANSPALETEIRA da Toledo do Brasil, fornecida montada SOBRE UM CARRINHO DE OUTRO FABRICANTE. A Toledo vende oficialmente duas versoes: 'Balanca PL-3000 com carrinho PALETRANS' e 'Balanca PL-3000 com carrinho BYG'. Consequencia direta: a peca MECANICA/HIDRAULICA (bomba, rodas, garfos, timao, oleo) e da Paletrans ou da BYG; a peca de PESAGEM (celula, indicador, cabo, bateria) e da Toledo.",
+        "status": "confirmado",
+        "fonte": "https://www.toledobrasil.com/produto/balanca-pl-3000-com-carrinho-paletrans ; https://www.toledobrasil.com/produto/balanca-pl-3000-com-carrinho-byg",
+        "nota": "IDENTIFICAR qual carrinho cada uma das 16 unidades tem - e o que define onde comprar a peca hidraulica."
+      },
+      "capacidade_pesagem": {
+        "valor": "Capacidades de catalogo: 1.000 kg x 500 g e 2.000 kg x 1 kg.",
+        "status": "confirmado",
+        "fonte": "https://www.toledobrasil.com/produto/balanca-pl-3000-com-carrinho-paletrans ; https://www.digimaqautomacao.com.br/automacao/balanca-toledo-pl3000-paletrans-1000kg-x-500g-ti400p",
+        "nota": "CONFERIR qual das duas a frota tem - a divisao (500 g x 1 kg) muda a portaria Inmetro aplicavel."
+      },
+      "celula_de_carga": {
+        "valor": "Celulas de carga fabricadas em aco especial, com grau de protecao IP-68 (protecao total contra penetracao de po e imersao em agua).",
+        "status": "confirmado",
+        "fonte": "https://www.toledobrasil.com/produto/balanca-pl-3000-com-carrinho-paletrans",
+        "nota": "Quantidade de celulas nao declarada (equipamento equivalente Digitron ULP-2000 usa 4). IP-68 e ponto forte para CD de bebidas com piso lavado."
+      },
+      "indicador_peso": {
+        "valor": "Tres opcoes de indicacao eletronica: modelos 9096H e 9098CT para uso geral, e IND226x para AREA CLASSIFICADA (atmosfera explosiva).",
+        "status": "confirmado",
+        "fonte": "https://www.toledobrasil.com/produto/balanca-pl-3000-com-carrinho-paletrans",
+        "nota": "Ha manual do usuario do indicador 9096H Transpaleteira publicado pela Toledo (rev. 22-01-21, versao 7.31) - baixar para a rotina de calibracao e diagnostico."
+      },
+      "bateria_indicador": {
+        "valor": "Ha recarregador EXTERNO de bateria disponivel para os indicadores 9096H e 9098CT.",
+        "status": "confirmado",
+        "fonte": "https://www.toledobrasil.com/produto/balanca-pl-3000-com-carrinho-paletrans",
+        "nota": "A especificacao da bateria (tensao/capacidade) nao e publicada. Consta no manual do indicador 9096H. Item de consumo - prever no catalogo."
+      },
+      "cabo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Cabo celula-indicador nao consta no catalogo. E item de falha frequente (passa pela articulacao do garfo). Pedir codigo a assistencia Toledo."
+      },
+      "construcao": {
+        "valor": "Aco carbono pintado de azul. Atende paletes padrao Brasil - PBR (1,00 x 1,20 m) e europeu (0,80 x 1,20 m).",
+        "status": "confirmado",
+        "fonte": "https://www.toledobrasil.com/produto/balanca-pl-3000-com-carrinho-paletrans"
+      },
+      "capacidade_mecanica": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "A capacidade MECANICA do carrinho (Paletrans ou BYG) e distinta da capacidade de PESAGEM. Ler na plaqueta do carrinho."
+      },
+      "oleo_hidraulico": {
+        "valor": "Depende do carrinho: se BYG L2.6 -> ISO VG 32, 0,340 L (Mobil DTE 24 / Shell Tellus 32 / Esso Nuto H32). Se carrinho Paletrans linha TM -> ver manual Paletrans (volume nao publicado).",
+        "status": "inferido",
+        "fonte": "https://byg.com.br/wp-content/uploads/2022/11/L-2.6-2019.pdf ; https://www.toledobrasil.com/produto/balanca-pl-3000-com-carrinho-byg",
+        "nota": "A Toledo NAO especifica oleo - quem especifica e o fabricante do carrinho."
+      },
+      "rodas": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Depende do carrinho. Se BYG L2.6: direcional Ø173x57, carga dupla Ø85x76 / simples Ø85x98. Se Paletrans TM2500: direcional Ø180x50."
+      },
+      "kit_reparo_bomba": {
+        "valor": "Do fabricante do carrinho (kit Paletrans original ou kit BYG Evolution 2.6).",
+        "status": "inferido",
+        "fonte": "https://www.pecasdepaleteiras.com.br/MLB-1799166292-kit-reparo-paleteira-manual-paletrans-promoco-original-_JM ; https://www.pecasdepaleteiras.com.br/MLB-1817444477-kit-de-pecas-paleteira-byg-evolution-26-manual-hidraulico-_JM"
+      },
+      "existe_versao_ex": {
+        "valor": "Existe a variante PL3000EX (Balanca Transpaleteira) para areas classificadas, com indicador IND226x.",
+        "status": "confirmado",
+        "fonte": "https://www.toledobrasil.com/produto/balanca-transpaleteira-pl3000ex/",
+        "nota": "Confirmar se alguma unidade da frota e EX - a manutencao de equipamento EX tem regra propria e nao pode ser feita por oficina comum."
+      },
+      "intervalos_manutencao": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Prever DUAS rotinas distintas: (1) mecanica/hidraulica, pelo manual do carrinho; (2) metrologica - calibracao/aferição e, se usada em transacao comercial, VERIFICACAO PERIODICA anual do IPEM. Existe 'Manual de Cuidados' da PL-3000 com carrinho Paletrans publicado."
+      }
+    },
+    "observacoes": "Unidades de 2017 - as mais antigas do parque de paleteiras. O ponto que mais afeta a compra: a PL-3000 e balanca Toledo sobre carrinho de terceiro (Paletrans ou BYG), entao o catalogo de pecas precisa de DUAS colunas de fornecedor por ativo. Alem disso, junto com a Digitron ULP-2000 formam 31 equipamentos com obrigacao metrologica.",
+    "possivel_duplicata_de": "O carrinho pode ser o mesmo equipamento dos cadastros PALETRANS/DISKTRANS TM ou BYG L2.6 - o que reforca a hipotese de que o cadastro 'TOLEDO | TM2500' seja uma PL-3000 sobre carrinho Paletrans TM2500."
+  },
+  {
+    "modelo": "MACACO PNEUMATICO",
+    "marca": "BOVENAU",
+    "categoria": "elevacao",
+    "anos": [2024],
+    "ativos": 6,
+    "campos": {
+      "identificacao": {
+        "valor": "Bovenau (bovenau.com.br) fabrica macacos e equipamentos hidraulicos. O que o cadastro chama de 'macaco pneumatico' corresponde a linha HIDROPNEUMATICA tipo garrafa - linha MTP (e a linha MT hidraulica pura). Modelos de catalogo: MTP-30 (30 t, cod. 30500), macaco garrafa 50 t pneumatico (cod. 50801RP), macaco moleiro hidropneumatico 30 t (cod. 30800 / MTPM-30M).",
+        "status": "confirmado",
+        "fonte": "https://www.bovenau.com.br/macacos-hidraulicos-mtp/ ; https://www.fg.com.br/macaco-hidraulico-pneumatico-30-toneladas-mtp-30---bovenau/p ; https://www.ferramentaskennedy.com.br/macaco-garrafa-50-toneladas-pneumatico-50801rp-bovenau/p",
+        "nota": "O MODELO EXATO das 6 unidades nao esta no cadastro. Ler a plaqueta (MTP-xx) antes de comprar qualquer peca."
+      },
+      "capacidade": {
+        "valor": "Nao identificada para as unidades do parque. Catalogo Bovenau: linha geral de 0,5 a 50 t; linha hidropneumatica MT/MTP de 4 t ate 100 t, incluindo modelos baixos e especificos para retirada de feixe de molas de caminhao.",
+        "status": "nao_encontrado",
+        "fonte": "https://www.bovenau.com.br/macacos-hidraulicos-mt/ ; https://www.bovenau.com.br/macacos-hidraulicos-mtp/",
+        "nota": "A capacidade e o primeiro campo a levantar - define o modelo e todo o resto. Esta estampada no corpo do macaco."
+      },
+      "dimensoes_exemplo_mtp30": {
+        "valor": "MTP-30 (30 t): altura de construcao 250 mm; base 213 x 149 mm; curso hidraulico de elevacao 150 mm; curso do parafuso (extensao) 100 mm; altura total 500 mm; comprimento da alavanca 350 mm; peso 17,7 kg.",
+        "status": "confirmado",
+        "fonte": "https://martineliferramentas.com.br/macaco-tipo-garrafa-mtp-30-hidro-pneumatico-30-toneladas-bovenau-30500",
+        "nota": "Vale SOMENTE se a unidade for MTP-30. Serve de referencia do formato dos dados a levantar."
+      },
+      "engate_ar_pressao": {
+        "valor": "Pressao de ar comprimido necessaria para atingir a capacidade nominal (modelo 30 t): 100 psi = 7 bar.",
+        "status": "confirmado",
+        "fonte": "https://www.bovenau.com.br/macacos-hidraulicos-mtp/",
+        "nota": "IMPLICACAO PRATICA: se a linha de ar da oficina entregar menos que 7 bar no ponto de uso, o macaco NAO levanta a carga nominal - e o diagnostico de 'macaco fraco' mais comum. Medir a pressao no engate antes de condenar o equipamento. O tipo de engate rapido nao foi encontrado."
+      },
+      "tipo_engate": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Padrao do engate rapido (ex.: 1/4\" NPT) nao publicado. Verificar no equipamento."
+      },
+      "oleo_hidraulico": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "A Bovenau nao publica o tipo/volume de oleo na web aberta. Solicitar o manual do modelo a Bovenau (fabricante nacional, Joinville-SC). ATENCAO: macaco hidraulico usa OLEO PARA MACACO/hidraulico especifico - NAO usar fluido de freio nem oleo de motor, erro comum que destroi as vedacoes."
+      },
+      "kit_reparo": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Nao localizado kit de reparo publicado por modelo. A Bovenau tem rede de assistencia; vedacoes tambem podem ser feitas por amostra em retificador de vedacoes."
+      },
+      "intervalos_manutencao": {
+        "valor": null,
+        "status": "nao_encontrado",
+        "fonte": null,
+        "nota": "Levantar no manual do modelo. Equipamento de elevacao de carga: prever inspecao periodica e teste de carga conforme politica interna de seguranca (NR-11/NR-12 aplicaveis ao uso)."
+      }
+    },
+    "observacoes": "Apenas 6 ativos, mas e o unico item da lista com risco DIRETO de seguranca (elevacao de carga). O cadastro esta generico demais ('MACACO PNEUMATICO') - sem o modelo (MTP-xx) e a capacidade nao ha catalogo de pecas possivel. Prioridade: levantar plaqueta e pedir o manual a Bovenau.",
+    "possivel_duplicata_de": null
+  }
+]

@@ -1,0 +1,423 @@
+{
+  "tipi_versao": "Decreto nº 11.158/2022 (TIPI), com as alterações posteriores — a mais recente localizada é o ADE RFB nº 1, de 30/01/2026 (DOU 02/02/2026, efeitos a partir de 01/02/2026), que adequou a TIPI às alterações da NCM internalizadas pela Resolução Gecex nº 812, de 28/10/2025, mantendo as alíquotas de IPI já vigentes. Consulta realizada em 17/09/2026.",
+
+  "limitacao_pesquisa": {
+    "resumo": "NENHUM item deste arquivo atinge o status 'confirmado' na definição do pedido (achar na TIPI vigente / fonte oficial, com URL). O teto atingido foi 'provavel'.",
+    "motivo_1_egresso_bloqueado": "A política de rede da sessão recusou (HTTP 403 no CONNECT) TODOS os domínios necessários: www.gov.br (tabela TIPI oficial), www.planalto.gov.br (Decreto 11.158/2022 e anexo), normas.receita.fazenda.gov.br (Soluções de Consulta COSIT), portalunico.siscomex.gov.br, legisweb, econeteditora, cosmos.bluesoft, ncm.fazcomex, buscadorncm, vriconsulting, sitecontabil e demais. Nenhuma página pôde ser aberta e lida diretamente.",
+    "motivo_2_busca_esgotada": "O orçamento de WebSearch da sessão foi consumido (200 de 200 chamadas) no meio do levantamento, encerrando a pesquisa nas famílias 1, 2 e 12 (porta de baú). As famílias 3 a 11 e 13 não chegaram a ser pesquisadas.",
+    "consequencia": "Todo dado abaixo veio de RESUMOS de busca sobre bases secundárias de consulta NCM (Cosmos/Bluesoft, fazcomex, logcomex, buscadorncm, qualncm, systax, tributodevido), sem leitura da TIPI oficial. Onde a pesquisa não alcançou, NÃO foi arbitrado código nem alíquota: o campo 'ncm' vem literalmente como 'a_confirmar'.",
+    "como_ler_hipotese_estrutural": "Onde aparece 'hipotese_estrutural', trata-se de raciocínio sobre a ARQUITETURA da NCM (que é organizada por matéria-prima e por função), NÃO de código pesquisado. Serve para orientar a conferência, NUNCA para cadastrar. Não lançar nada em sistema a partir desse campo.",
+    "proximo_passo_recomendado": "Reexecutar esta pesquisa com acesso liberado a gov.br (tipi.pdf), planalto.gov.br e normas.receita.fazenda.gov.br, ou conferir os códigos contra as NF-e de compra já recebidas dos fornecedores (a NCM do fornecedor é a evidência mais barata e imediata disponível dentro de casa)."
+  },
+
+  "principio_geral": "A NCM é estruturada primeiro por MATÉRIA (o capítulo) e depois por FUNÇÃO/forma (posição, subposição, item, subitem). Disso decorrem duas regras práticas para o cadastro: (1) mudou a matéria-prima base (aço, latão, alumínio, plástico, borracha), quase sempre mudou de capítulo e portanto de NCM — item separado; (2) mesma matéria e mesma função costumam cair no MESMO subitem mesmo variando marca, medida, cor ou aplicação — item único. A aplicação do produto (motor, câmbio, diferencial) só separa quando a própria nomenclatura cita a aplicação no texto do código.",
+
+  "familias": [
+    {
+      "familia": "Óleo lubrificante",
+      "ncms": [
+        {
+          "ncm": "2710.19.31",
+          "descricao_tipi": "Óleos de petróleo ou de minerais betuminosos (exceto óleos brutos) e preparações não especificadas nem compreendidas noutras posições, que contenham, como constituintes de base, 70% ou mais, em peso, de óleos de petróleo ou de minerais betuminosos — Outros — Óleos lubrificantes — Sem aditivos",
+          "ipi": "a_confirmar (fontes secundárias indicam ausência de alíquota / não tributado na TIPI para os óleos lubrificantes de 2710.19.3, coerente com o tratamento dos derivados de petróleo, mas o valor NÃO foi lido na TIPI oficial)",
+          "status": "provavel",
+          "fonte": "https://ncm.logcomex.com/27101931-oleos-lubrificantes-sem-aditivos/ ; https://cosmos.bluesoft.com.br/ncms/27101931-sem-aditivos",
+          "observacao": "Descrição confirmada como 'Sem aditivos'. Pouco relevante na frota: óleo de motor acabado praticamente sempre tem pacote de aditivos, caindo no 2710.19.32."
+        },
+        {
+          "ncm": "2710.19.32",
+          "descricao_tipi": "Idem 2710.19.31 — Óleos lubrificantes — Com aditivos",
+          "ipi": "a_confirmar (idem acima — indicações secundárias de não tributado/sem alíquota na TIPI)",
+          "status": "provavel",
+          "fonte": "https://ncm.logcomex.com/27101932-oleos-lubrificantes-com-aditivos/ ; https://cosmos.bluesoft.com.br/ncms/27101932-com-aditivos ; https://ncm.fazcomex.com.br/27101932-com-aditivos/",
+          "observacao": "É o código do óleo mineral e semissintético de motor. Evidência colateral encontrada na base Cosmos: produto 'IPIRANGA AT FLUIDO HIDRAULICO' cadastrado nesta mesma NCM — indício de que óleo hidráulico de base mineral acompanha o óleo de motor no mesmo subitem."
+        },
+        {
+          "ncm": "3403.19.00",
+          "descricao_tipi": "Preparações lubrificantes (incluindo os óleos de corte, as preparações antiaderentes de porcas e parafusos, as preparações antiferrugem ou anticorrosão e as preparações para desmoldagem, à base de lubrificantes) ... EXCETO as que contenham, como constituintes de base, 70% ou mais, em peso, de óleos de petróleo ou de minerais betuminosos — Que contenham óleos de petróleo ou de minerais betuminosos — Outras",
+          "ipi": "9,75% (provavel)",
+          "status": "provavel",
+          "fonte": "https://ncm.fazcomex.com.br/34031900-outras/ ; https://www.systax.com.br/classificacaofiscal/ncm/3403-preparacoes-lubrificantes-incluindo-oleos-corte-preparacoes-antiaderentes-porcas-parafusos-preparacoes-antiferrugem-anticorrosao-preparacoes-desmoldagem-base-lubrificantes-preparacoes-tipo-utilizado-lubrificar-amaciar-materias-texteis-untar-couros-peles-pelo-outras-materias-exceto-que-contenham-como-constituintes-base-70-mais-peso-oleos-petroleo-minerais-betuminosos"
+        },
+        {
+          "ncm": "3403.99.00",
+          "descricao_tipi": "Preparações lubrificantes ... — Outras (que NÃO contenham óleos de petróleo ou de minerais betuminosos) — Outras",
+          "ipi": "9,75% (provavel)",
+          "status": "provavel",
+          "fonte": "https://buscadorncm.com.br/ncm/34039900",
+          "observacao": "Alíquota de 9,75% apareceu no próprio título do resultado de busca da base buscadorncm."
+        }
+      ],
+      "regra_separacao": "OBRIGA SEPARAR — e a premissa da empresa está certa no efeito, mas ERRADA no critério. A linha divisória da NCM NÃO é o rótulo comercial 'mineral / semissintético / sintético': é um TESTE DE COMPOSIÇÃO que está escrito no texto das duas posições (ambos os textos foram confirmados na pesquisa). A posição 2710 exige 70% ou mais, em peso, de óleos de petróleo ou de minerais betuminosos como constituintes de base; a posição 3403 é justamente a dos lubrificantes que NÃO atingem esses 70%. Consequência prática, e é aqui que mora a armadilha: boa parte do que o mercado brasileiro vende como 'sintético' é base Grupo III (mineral hidrocraqueado), ou seja, DERIVADA DE PETRÓLEO — esse produto continua em 2710.19.32, e não migra para 3403. Só o verdadeiramente sintético (base PAO, éster) cai em 3403. Se a alíquota do 3403 (9,75%) e a do 2710 (indicada como não tributada) se confirmarem, a diferença é grande e a separação é inegociável. REGRA DE CADASTRO: separar por NCM/composição, tomando como verdade a NCM que o FORNECEDOR informa na NF-e e na ficha técnica — nunca a palavra 'sintético' da embalagem. NÃO OBRIGA SEPARAR: a APLICAÇÃO. Motor, câmbio/transmissão, hidráulico e diferencial, quando de base mineral com aditivos, compartilham o mesmo subitem 2710.19.32 — o texto do código não menciona aplicação. Do ponto de vista estritamente fiscal cabe um item só; se a empresa quiser separar por aplicação, que separe por razão OPERACIONAL (risco de abastecer o componente errado), assumindo que é escolha de gestão, não exigência fiscal. Separar 2710.19.31 (sem aditivos) de 2710.19.32 (com aditivos) só faz sentido se houver compra real de óleo sem aditivos, o que é raro em frota.",
+      "itens_sugeridos": [
+        "Óleo lubrificante mineral/semissintético para motor (base petróleo >= 70% — NCM 2710.19.32)",
+        "Óleo lubrificante sintético para motor (base não-petróleo — NCM 3403)",
+        "Óleo lubrificante mineral para câmbio/transmissão (NCM 2710.19.32)",
+        "Óleo lubrificante mineral para sistema hidráulico (NCM 2710.19.32)",
+        "Óleo lubrificante mineral para diferencial (NCM 2710.19.32)",
+        "Óleo lubrificante sintético para câmbio/transmissão (NCM 3403)"
+      ],
+      "confianca": "media",
+      "nota_confianca": "Descrições das duas posições confirmadas e consistentes entre fontes; a alíquota de 9,75% do 3403 apareceu em duas bases independentes; a ausência de alíquota no 2710.19.3x veio de indicação mais fraca (comentário de usuário em base de consulta) e PRECISA ser conferida na TIPI antes de virar regra de cadastro."
+    },
+
+    {
+      "familia": "Filtros",
+      "ncms": [
+        {
+          "ncm": "8421.23.00",
+          "descricao_tipi": "Aparelhos para filtrar ou depurar líquidos — Para filtrar carburantes ou óleos lubrificantes nos motores de ignição por centelha (faísca) ou por compressão",
+          "ipi": "a_confirmar",
+          "status": "provavel",
+          "fonte": "https://ncm.logcomex.com/84212300-aparelhos-para-filtrar-oleos-minerais-nos-motores-de-ignicao-por-centelha-ou-por-compressao/ ; https://tributodevido.com.br/portal/classificacao-fiscal-de-filtros-de-combustivel/",
+          "observacao": "ACHADO IMPORTANTE: este código tem Ex-tarifários na TIPI vigente. Os Ex 01 e Ex 02 alcançam especificamente FILTROS DE ÓLEO LUBRIFICANTE NÃO DESCARTÁVEIS com especificação técnica determinada; o filtro de combustível não se enquadra neles e segue a alíquota plena do código. Contexto obtido de Solução de Consulta COSIT (ref. SC COSIT nº 98.306/2020 e anexo em normas.receita.fazenda.gov.br). Os valores da alíquota plena e dos Ex NÃO foram obtidos."
+        },
+        {
+          "ncm": "8421.31.00",
+          "descricao_tipi": "Aparelhos para filtrar ou depurar gases — Filtros de entrada de ar para motores de ignição por centelha (faísca) ou por compressão",
+          "ipi": "a_confirmar",
+          "status": "provavel",
+          "fonte": "https://ncm.fazcomex.com.br/84213100-filtros-de-entrada-de-ar-para-motores-de-ignicao-por-centelha-faisca-ou-por-compressao/ ; https://cosmos.bluesoft.com.br/ncms/84213100-filtros-de-entrada-de-ar-para-motores-de-ignicao-por-centelha-faisca-ou-por-compressao"
+        },
+        {
+          "ncm": "a_confirmar",
+          "descricao_tipi": "Filtro de ar da CABINE (ar-condicionado / habitáculo)",
+          "ipi": "a_confirmar",
+          "status": "a_confirmar",
+          "fonte": "",
+          "hipotese_estrutural": "NÃO é 8421.31.00: o texto daquele código é restrito a filtro de ENTRADA DE AR PARA MOTORES. O filtro de cabine filtra gás/ar sem ser admissão de motor, o que o empurra para outro subitem de 8421.39 (outros aparelhos para filtrar ou depurar gases). Código exato não pesquisado — conferir."
+        },
+        {
+          "ncm": "a_confirmar",
+          "descricao_tipi": "Filtro separador de água (racor), filtro de transmissão, filtro hidráulico, filtro de Arla, secador de ar",
+          "ipi": "a_confirmar",
+          "status": "a_confirmar",
+          "fonte": "",
+          "hipotese_estrutural": "Todos dependem de duas perguntas da nomenclatura: filtra LÍQUIDO (8421.2x) ou GÁS (8421.3x)? E é 'para motores de ignição por centelha ou compressão' (texto do 8421.23/8421.31) ou para outro sistema? Filtro de transmissão e hidráulico não servem ao motor, o que os afasta do 8421.23. Secador de ar trabalha sobre ar comprimido, não sobre admissão de motor. Nenhum foi pesquisado — não cadastrar por dedução."
+        }
+      ],
+      "regra_separacao": "OBRIGA SEPARAR, no mínimo, três blocos já identificados: (a) filtro de óleo do motor + filtro de combustível ficam no MESMO código 8421.23.00; (b) filtro de ar do motor fica em 8421.31.00, código distinto — logo, item separado do bloco (a), obrigatoriamente; (c) filtro de ar da cabine NÃO acompanha o filtro de ar do motor, porque o texto do 8421.31.00 é expressamente de entrada de ar PARA MOTORES. ATENÇÃO AO CASO (a): embora óleo de motor e combustível dividam o mesmo subitem, a TIPI traz Ex 01 e Ex 02 nesse código alcançando só filtros de óleo lubrificante NÃO DESCARTÁVEIS — se esses Ex tiverem alíquota diferente da plena, a separação entre filtro de óleo (não descartável) e filtro de combustível volta a ser obrigatória, não por NCM diferente, mas por Ex-tarifário diferente dentro da mesma NCM. Isso precisa ser verificado antes de unificar os dois num item só; enquanto não se verificar, o seguro é manter separados. NÃO OBRIGA SEPARAR: marca, modelo de aplicação, medida do elemento e se é de rosca ou cartucho — nada disso está no texto dos códigos.",
+      "itens_sugeridos": [
+        "Filtro de óleo do motor (NCM 8421.23.00 — conferir enquadramento em Ex-tarifário)",
+        "Filtro de combustível (NCM 8421.23.00 — alíquota plena)",
+        "Filtro separador de água / racor (NCM a confirmar)",
+        "Filtro de ar do motor (NCM 8421.31.00)",
+        "Filtro de ar da cabine (NCM a confirmar — não usar 8421.31.00)",
+        "Filtro de transmissão (NCM a confirmar)",
+        "Filtro hidráulico (NCM a confirmar)",
+        "Filtro de Arla (NCM a confirmar)",
+        "Secador de ar (NCM a confirmar)"
+      ],
+      "confianca": "media",
+      "nota_confianca": "Textos de 8421.23.00 e 8421.31.00 confirmados em múltiplas bases, e a existência dos Ex 01/Ex 02 veio com respaldo de Solução de Consulta COSIT. As alíquotas não foram obtidas e cinco dos nove filtros não chegaram a ser pesquisados."
+    },
+
+    {
+      "familia": "Fixadores",
+      "ncms": [
+        {
+          "ncm": "a_confirmar",
+          "descricao_tipi": "Parafusos, porcas, arruelas, rebites e abraçadeiras — de aço, aço inox, latão, alumínio e plástico/nylon",
+          "ipi": "a_confirmar",
+          "status": "a_confirmar",
+          "fonte": "",
+          "hipotese_estrutural": "Família NÃO pesquisada (orçamento de busca esgotado). Estruturalmente, a NCM separa fixadores primeiro pela MATÉRIA — aço em um capítulo, cobre/latão em outro, alumínio em outro, plástico em outro — e, dentro do aço, separa ainda por TIPO de artefato (parafuso, porca, arruela e rebite são subposições distintas, e artigos roscados e não roscados formam grupos distintos). Nenhum código foi verificado."
+        }
+      ],
+      "regra_separacao": "PROVÁVEL OBRIGAÇÃO DE SEPARAR em dois eixos, ambos a confirmar: (1) POR MATÉRIA — aço, latão, alumínio e nylon/plástico são capítulos diferentes da NCM, então parafuso de aço, de latão, de alumínio e de nylon tendem a ser quatro itens distintos; o mesmo vale para abraçadeira metálica × abraçadeira de nylon, que sequer dividem capítulo. (2) POR TIPO DE ARTEFATO dentro do aço — parafuso, porca, arruela e rebite ocupam subposições próprias, o que tende a exigir item separado para cada um. PONTO CONTRAINTUITIVO QUE MERECE CONFERÊNCIA PRIORITÁRIA: aço inoxidável É aço. Ele não muda de capítulo em relação ao aço carbono, e a nomenclatura de fixadores tende a não desdobrar por grau/liga do aço. Se isso se confirmar, parafuso de aço carbono e parafuso de aço inox podem conviver no MESMO item de cadastro sem erro fiscal — o oposto da intuição de quem trata inox como 'outro material'. Vale conferir antes de multiplicar o cadastro à toa, porque inox costuma ser justamente onde mais se criam itens duplicados. NÃO OBRIGA SEPARAR, em qualquer hipótese: bitola, comprimento, passo de rosca, acabamento (zincado, bicromatizado) e marca.",
+      "itens_sugeridos": [
+        "Parafuso de aço (NCM a confirmar — verificar se abrange o inox)",
+        "Parafuso de aço inox (só criar se a conferência mostrar NCM distinta do aço carbono)",
+        "Parafuso de latão (NCM a confirmar)",
+        "Parafuso de alumínio (NCM a confirmar)",
+        "Parafuso de nylon/plástico (NCM a confirmar)",
+        "Porca de aço (NCM a confirmar)",
+        "Arruela de aço (NCM a confirmar)",
+        "Rebite de aço (NCM a confirmar)",
+        "Abraçadeira metálica (NCM a confirmar)",
+        "Abraçadeira de nylon (NCM a confirmar)"
+      ],
+      "confianca": "baixa",
+      "nota_confianca": "Nenhum código desta família foi pesquisado. As sugestões de item servem só de esqueleto para a conferência."
+    },
+
+    {
+      "familia": "Pneus",
+      "ncms": [
+        {
+          "ncm": "a_confirmar",
+          "descricao_tipi": "Pneumáticos novos de borracha; pneumáticos maciços ou ocos (superelásticos); câmaras de ar; protetores",
+          "ipi": "a_confirmar",
+          "status": "a_confirmar",
+          "fonte": "",
+          "hipotese_estrutural": "Família NÃO pesquisada. Estruturalmente a NCM trata em posições DIFERENTES o pneumático novo, o pneumático maciço/superelástico (que é o da empilhadeira) e a câmara de ar — são produtos distintos já no nível da posição, não apenas do subitem. Dentro dos pneumáticos novos há ainda desdobramento pelo tipo de veículo/uso (ônibus e caminhão, máquinas, automóveis). Protetor não foi identificado. Nenhum código verificado."
+        }
+      ],
+      "regra_separacao": "PROVÁVEL OBRIGAÇÃO DE SEPARAR: pneu rodoviário de carga, pneu maciço/superelástico de empilhadeira e câmara de ar são, com alta probabilidade estrutural, posições diferentes da NCM — três itens distintos no mínimo. Dentro do pneu novo, o desdobramento por destinação (carga rodoviária × máquinas) também tende a gerar subitens distintos, o que separaria pneu de caminhão de pneu de empilhadeira pneumática. Protetor de câmara precisa ser classificado à parte, código não levantado. RECAPAGEM NÃO PERTENCE A ESTA FAMÍLIA DE MERCADORIA — ver família 'Serviços', e atenção ao fato de que recapagem pode ser serviço OU industrialização conforme de quem é o pneu. NÃO OBRIGA SEPARAR: medida, marca, desenho da banda, índice de carga e velocidade.",
+      "itens_sugeridos": [
+        "Pneu novo rodoviário de carga (NCM a confirmar)",
+        "Pneu maciço/superelástico para empilhadeira (NCM a confirmar)",
+        "Câmara de ar (NCM a confirmar)",
+        "Protetor de câmara (NCM a confirmar)"
+      ],
+      "confianca": "baixa",
+      "nota_confianca": "Nenhum código desta família foi pesquisado."
+    },
+
+    {
+      "familia": "Baterias",
+      "ncms": [
+        {
+          "ncm": "a_confirmar",
+          "descricao_tipi": "Acumuladores elétricos de chumbo-ácido de partida; acumuladores de chumbo tracionários; acumuladores de íons de lítio",
+          "ipi": "a_confirmar",
+          "status": "a_confirmar",
+          "fonte": "",
+          "hipotese_estrutural": "Família NÃO pesquisada. Estruturalmente, a nomenclatura de acumuladores elétricos separa por QUÍMICA (chumbo × lítio × outras) e, dentro do chumbo, distingue o acumulador do tipo utilizado para ARRANQUE/PARTIDA de motores de pistão dos demais acumuladores de chumbo — que é exatamente onde cai a bateria tracionária de empilhadeira. Nenhum código verificado."
+        }
+      ],
+      "regra_separacao": "PROVÁVEL OBRIGAÇÃO DE SEPARAR os três: bateria de partida chumbo-ácido, bateria tracionária de empilhadeira (também de chumbo, mas não é de arranque) e bateria de lítio ocupam subposições distintas com alta probabilidade — a própria nomenclatura distingue o acumulador de partida dos demais de chumbo, e o lítio tem subposição própria. Portanto três itens de cadastro. NÃO OBRIGA SEPARAR: amperagem, polaridade, marca, se é selada ou com manutenção.",
+      "itens_sugeridos": [
+        "Bateria chumbo-ácido de partida (NCM a confirmar)",
+        "Bateria tracionária de chumbo para empilhadeira (NCM a confirmar)",
+        "Bateria de lítio (NCM a confirmar)"
+      ],
+      "confianca": "baixa",
+      "nota_confianca": "Nenhum código desta família foi pesquisado."
+    },
+
+    {
+      "familia": "Fluidos",
+      "ncms": [
+        {
+          "ncm": "a_confirmar",
+          "descricao_tipi": "ARLA 32 (solução aquosa de ureia), fluido de freio, aditivo de radiador, graxa, aditivo de combustível",
+          "ipi": "a_confirmar",
+          "status": "a_confirmar",
+          "fonte": "",
+          "hipotese_estrutural": "Família NÃO pesquisada. São cinco QUÍMICAS diferentes, e a NCM classifica produto químico pela sua natureza: ureia em solução, líquido para transmissão hidráulica de freio, preparação anticongelante, preparação lubrificante e aditivo para combustível são coisas distintas em posições distintas. Nenhum código verificado. Cuidado especial com a GRAXA: ela pode acompanhar os óleos lubrificantes (posição 2710) ou as preparações lubrificantes (posição 3403) conforme o mesmo teste dos 70% de base petróleo descrito na família 1 — ou seja, graxa também pode exigir desdobramento por composição."
+        }
+      ],
+      "regra_separacao": "PROVÁVEL OBRIGAÇÃO DE SEPARAR todos os cinco entre si — são produtos químicos de naturezas diferentes, e não variações do mesmo produto; a chance de compartilharem subitem é muito baixa. O ponto que mais merece atenção é a GRAXA, que pode ainda se desdobrar internamente pelo mesmo critério de base (petróleo >= 70% ou não) que separa os óleos lubrificantes. NÃO OBRIGA SEPARAR: embalagem (galão, balde, tambor, bombona), volume e marca. ARLA 32 em particular merece confirmação dedicada, porque é produto de posição química (ureia) e não de posição automotiva — cadastrá-lo junto de aditivos automotivos seria erro.",
+      "itens_sugeridos": [
+        "ARLA 32 (NCM a confirmar)",
+        "Fluido de freio (NCM a confirmar)",
+        "Aditivo de radiador (NCM a confirmar)",
+        "Graxa lubrificante (NCM a confirmar — verificar desdobramento por base)",
+        "Aditivo de combustível (NCM a confirmar)"
+      ],
+      "confianca": "baixa",
+      "nota_confianca": "Nenhum código desta família foi pesquisado."
+    },
+
+    {
+      "familia": "Correias e mangueiras",
+      "ncms": [
+        {
+          "ncm": "a_confirmar",
+          "descricao_tipi": "Correias de transmissão de borracha vulcanizada; tubos e mangueiras de borracha vulcanizada; mangueiras/tubos flexíveis de metal",
+          "ipi": "a_confirmar",
+          "status": "a_confirmar",
+          "fonte": "",
+          "hipotese_estrutural": "Família NÃO pesquisada. Estruturalmente: correia de transmissão e tubo/mangueira de borracha são posições DIFERENTES dentro do capítulo da borracha (função diferente), e mangueira metálica sai da borracha e vai para o capítulo dos metais — capítulo diferente. Nenhum código verificado."
+        }
+      ],
+      "regra_separacao": "PROVÁVEL OBRIGAÇÃO DE SEPARAR os três: correia de borracha, mangueira de borracha e mangueira metálica. A separação entre as duas primeiras é por FUNÇÃO (transmitir movimento × conduzir fluido), e a da terceira é por MATÉRIA (borracha × metal), que é o critério mais forte de todos. NÃO OBRIGA SEPARAR: perfil da correia, comprimento, diâmetro da mangueira, pressão de trabalho e marca. Observação: mangueira de borracha COM acessórios/conexões montadas pode ter tratamento próprio na nomenclatura — conferir junto.",
+      "itens_sugeridos": [
+        "Correia de transmissão de borracha (NCM a confirmar)",
+        "Mangueira de borracha (NCM a confirmar)",
+        "Mangueira metálica flexível (NCM a confirmar)"
+      ],
+      "confianca": "baixa",
+      "nota_confianca": "Nenhum código desta família foi pesquisado."
+    },
+
+    {
+      "familia": "Material elétrico",
+      "ncms": [
+        {
+          "ncm": "a_confirmar",
+          "descricao_tipi": "Lâmpadas; jogos de fios/chicotes elétricos para veículos; fusíveis; relés; alternadores; motores de partida",
+          "ipi": "a_confirmar",
+          "status": "a_confirmar",
+          "fonte": "",
+          "hipotese_estrutural": "Família NÃO pesquisada. Estruturalmente são posições diferentes do capítulo elétrico, por função: fonte de luz, condutor elétrico, dispositivo de proteção/comando e máquina elétrica rotativa são grupos distintos. Alternador e motor de partida, embora sejam ambos equipamentos elétricos de motor, tendem a ficar em subposições diferentes entre si (gerar × dar partida). Nenhum código verificado. Cuidado com LÂMPADA: a nomenclatura distingue tecnologias (incandescente × LED), o que pode obrigar a separar lâmpada comum de lâmpada LED."
+        }
+      ],
+      "regra_separacao": "PROVÁVEL OBRIGAÇÃO DE SEPARAR por função: lâmpada, chicote/cabo, fusível, relé, alternador e motor de partida tendem a ser todos itens distintos — a chance de dois deles dividirem subitem é baixa, com a possível exceção de fusível e relé, que às vezes convivem na mesma posição de aparelhos de proteção/comando mas em subposições separadas. Dois pontos a conferir com prioridade: (1) lâmpada incandescente × LED podem ser códigos diferentes, e é uma separação fácil de esquecer; (2) alternador × motor de partida, apesar de virem do mesmo fornecedor e do mesmo sistema, provavelmente não compartilham código. NÃO OBRIGA SEPARAR: voltagem, potência, número de vias do chicote, amperagem do fusível e marca.",
+      "itens_sugeridos": [
+        "Lâmpada incandescente (NCM a confirmar)",
+        "Lâmpada LED (NCM a confirmar — provavelmente distinta da incandescente)",
+        "Chicote/cabo elétrico para veículo (NCM a confirmar)",
+        "Fusível (NCM a confirmar)",
+        "Relé (NCM a confirmar)",
+        "Alternador (NCM a confirmar)",
+        "Motor de partida (NCM a confirmar)"
+      ],
+      "confianca": "baixa",
+      "nota_confianca": "Nenhum código desta família foi pesquisado."
+    },
+
+    {
+      "familia": "Freio",
+      "ncms": [
+        {
+          "ncm": "a_confirmar",
+          "descricao_tipi": "Guarnições de fricção não montadas (lonas e pastilhas); freios e servo-freios e suas partes (discos, tambores, cuícas)",
+          "ipi": "a_confirmar",
+          "status": "a_confirmar",
+          "fonte": "",
+          "hipotese_estrutural": "Família NÃO pesquisada, mas esta é a família com a fronteira classificatória mais conhecida e mais errada na prática. A NCM tem uma posição específica para GUARNIÇÕES DE FRICÇÃO NÃO MONTADAS — que é onde tendem a cair lona e pastilha de freio vendidas avulsas — e ela fica num capítulo DIFERENTE (o de obras de pedra/amianto/materiais de fricção), enquanto freios montados e suas partes metálicas (disco, tambor, cuíca) ficam no capítulo dos veículos, entre as partes e acessórios. Nenhum código verificado."
+        }
+      ],
+      "regra_separacao": "PROVÁVEL OBRIGAÇÃO DE SEPARAR em dois blocos que não se misturam: (a) MATERIAL DE FRICÇÃO NÃO MONTADO — lona e pastilha — que tende a ficar fora do capítulo de autopeças, no capítulo dos materiais de fricção; e (b) PARTES METÁLICAS DO FREIO — disco, tambor e cuíca — no capítulo de partes de veículos. Misturar pastilha com disco no mesmo item de cadastro é o erro clássico desta família, porque intuitivamente 'são tudo freio', mas fiscalmente são capítulos diferentes. Dentro de (b), disco, tambor e cuíca podem ou não dividir subitem — a conferir. ATENÇÃO: a pastilha MONTADA em suporte pode mudar de tratamento em relação à guarnição avulsa; conferir junto. NÃO OBRIGA SEPARAR: medida, aplicação por eixo, marca e composição da fórmula de atrito.",
+      "itens_sugeridos": [
+        "Pastilha de freio (NCM a confirmar — provável capítulo de materiais de fricção)",
+        "Lona de freio (NCM a confirmar — provável capítulo de materiais de fricção)",
+        "Disco de freio (NCM a confirmar — provável capítulo de partes de veículos)",
+        "Tambor de freio (NCM a confirmar — provável capítulo de partes de veículos)",
+        "Cuíca de freio (NCM a confirmar — provável capítulo de partes de veículos)"
+      ],
+      "confianca": "baixa",
+      "nota_confianca": "Nenhum código desta família foi pesquisado, mas a fronteira 'fricção não montada × parte metálica montada' é estrutural e merece ser o primeiro ponto conferido."
+    },
+
+    {
+      "familia": "Rolamentos e retentores",
+      "ncms": [
+        {
+          "ncm": "a_confirmar",
+          "descricao_tipi": "Rolamentos de esferas, de roletes ou de agulhas; juntas, gaxetas e semelhantes de borracha vulcanizada (retentores)",
+          "ipi": "a_confirmar",
+          "status": "a_confirmar",
+          "fonte": "",
+          "hipotese_estrutural": "Família NÃO pesquisada. Estruturalmente, rolamento tem posição PRÓPRIA no capítulo de máquinas e é desdobrado por TIPO de elemento rolante (esferas, roletes cônicos, agulhas) em subposições distintas. Retentor é peça de vedação de borracha e fica no capítulo da borracha — capítulo totalmente diferente. Nenhum código verificado."
+        }
+      ],
+      "regra_separacao": "OBRIGAÇÃO DE SEPARAR rolamento de retentor é praticamente certa no plano estrutural — são capítulos diferentes (máquina × borracha), apesar de serem comprados juntos e aplicados no mesmo cubo. É outro caso em que o hábito da oficina ('kit de cubo') puxa para um item só e a NCM não permite. Dentro dos rolamentos, o desdobramento por tipo de elemento rolante (esferas × roletes × agulhas) tende a gerar subitens distintos, o que provavelmente obriga itens separados também aí — a conferir. NÃO OBRIGA SEPARAR: medida, marca, se é blindado ou aberto.",
+      "itens_sugeridos": [
+        "Rolamento de esferas (NCM a confirmar)",
+        "Rolamento de roletes (NCM a confirmar)",
+        "Rolamento de agulhas (NCM a confirmar)",
+        "Retentor de borracha (NCM a confirmar)"
+      ],
+      "confianca": "baixa",
+      "nota_confianca": "Nenhum código desta família foi pesquisado."
+    },
+
+    {
+      "familia": "Tintas e químicos de oficina",
+      "ncms": [
+        {
+          "ncm": "a_confirmar",
+          "descricao_tipi": "Tintas e vernizes; agentes orgânicos de superfície e preparações tensoativas (desengraxante, detergente); silicones; colas e adesivos preparados",
+          "ipi": "a_confirmar",
+          "status": "a_confirmar",
+          "fonte": "",
+          "hipotese_estrutural": "Família NÃO pesquisada. São quatro naturezas químicas distintas, em posições distintas do capítulo químico. Cuidado com dois pontos: TINTA se desdobra conforme o meio (dispersa em meio aquoso × não aquoso), o que pode obrigar separação dentro da própria tinta; e SILICONE pode cair como polímero (matéria-prima) ou como massa de vedação preparada, conforme a forma de apresentação — são códigos diferentes para o que a oficina chama do mesmo nome. Nenhum código verificado."
+        }
+      ],
+      "regra_separacao": "PROVÁVEL OBRIGAÇÃO DE SEPARAR tinta, desengraxante/detergente, silicone e cola entre si — naturezas químicas distintas. Além disso, há dois desdobramentos internos prováveis que costumam passar batido: (1) dentro de TINTA, o meio de dispersão (aquoso × não aquoso) pode mudar o código; (2) SILICONE de vedação apresentado como massa/mastique não é o mesmo código de silicone polímero — e é comum a oficina cadastrar os dois como 'silicone'. Desengraxante e detergente podem compartilhar posição de tensoativos mas se separarem por subitem conforme sejam para uso doméstico ou industrial — a conferir. NÃO OBRIGA SEPARAR: cor, volume da embalagem e marca.",
+      "itens_sugeridos": [
+        "Tinta (NCM a confirmar — verificar desdobramento por meio aquoso/não aquoso)",
+        "Desengraxante (NCM a confirmar)",
+        "Detergente (NCM a confirmar)",
+        "Silicone de vedação (NCM a confirmar)",
+        "Cola/adesivo (NCM a confirmar)"
+      ],
+      "confianca": "baixa",
+      "nota_confianca": "Nenhum código desta família foi pesquisado."
+    },
+
+    {
+      "familia": "Peças de carroceria/baú",
+      "ncms": [
+        {
+          "ncm": "8708.29.93",
+          "descricao_tipi": "Partes e acessórios dos veículos automóveis das posições 87.01 a 87.05 — Outras partes e acessórios de carroçarias (incluindo as de cabinas) — Outras — Portas",
+          "ipi": "3,25%",
+          "status": "provavel",
+          "fonte": "https://cosmos.bluesoft.com.br/ncms/87082993-portas ; https://ncm.fazcomex.com.br/87082993-portas/ ; https://ncm.logcomex.com/87082993-portas-para-veiculos-automoveis/ ; https://buscadorncm.com.br/ncm/87082993 ; https://www.qualncm.com.br/ncm/87082993/portas.html",
+          "observacao": "Cinco bases independentes de consulta NCM convergiram no mesmo subitem e na mesma alíquota. Fontes também indicam II 18% e CEST 01.075.00 (Convênio ICMS 142/2018)."
+        },
+        {
+          "ncm": "8708.29.13",
+          "descricao_tipi": "Partes e acessórios de carroçarias (incluindo as de cabinas) — Portas (grupo de subitens distinto do 8708.29.9x, conforme o veículo a que se destinam)",
+          "ipi": "3,25%",
+          "status": "provavel",
+          "fonte": "https://cosmos.bluesoft.com.br/ncms/87082913-portas",
+          "observacao": "Existe mais de um subitem 'Portas' dentro de 8708.29, variando conforme o tipo de veículo. A distinção exata entre 8708.29.13 e 8708.29.93 NÃO foi esclarecida na pesquisa — porém AMBOS apuraram 3,25% de IPI, de modo que a conclusão sobre a alíquota não depende de resolver essa dúvida."
+        },
+        {
+          "ncm": "7610.10.00",
+          "descricao_tipi": "Construções e suas partes, de alumínio — Portas e janelas, e seus caixilhos, alizares e soleiras",
+          "ipi": "a_confirmar (não obtida; a tese externa de 0% não pôde ser verificada)",
+          "status": "provavel",
+          "fonte": "https://ncm.logcomex.com/76101000-portas-e-janelas-e-seus-caixilhos-alizares-e-soleiras-de-aluminio/ ; https://cosmos.bluesoft.com.br/ncms/76101000-portas-e-janelas-e-seus-caixilhos-alizares-e-soleiras",
+          "observacao": "Descrição confirmada: é o código de esquadria de ALUMÍNIO PARA CONSTRUÇÃO (edificações). Foi este o código usado pelo relatório externo. Ver análise em 'porta_bau'."
+        },
+        {
+          "ncm": "a_confirmar",
+          "descricao_tipi": "Chapa de alumínio, perfil de alumínio, assoalho",
+          "ipi": "a_confirmar",
+          "status": "a_confirmar",
+          "fonte": "",
+          "hipotese_estrutural": "Não pesquisados. Chapa e perfil de alumínio comprados como MATÉRIA-PRIMA (barra, perfil, chapa, em estado bruto de laminação/extrusão) permanecem no capítulo do alumínio, em posições próprias de semimanufaturados — e portanto NÃO seguem a NCM da porta acabada. Assoalho depende da matéria (madeira/compensado × alumínio), o que muda o capítulo."
+        }
+      ],
+      "regra_separacao": "OBRIGA SEPARAR em dois blocos que a oficina tende a confundir: (a) PEÇA ACABADA DE CARROÇARIA — porta de baú, que é parte de veículo e vai para o capítulo 87 a 3,25%; e (b) MATÉRIA-PRIMA METÁLICA — chapa e perfil de alumínio comprados a metro/quilo para fabricar ou reparar, que permanecem no capítulo do alumínio como semimanufaturados, com código e alíquota próprios. É exatamente a confusão entre (a) e (b) que explica o erro do relatório externo. Assoalho separa por MATÉRIA (madeira/compensado × alumínio), capítulos diferentes. NÃO OBRIGA SEPARAR: dimensão da porta, lado (direito/esquerdo), se é de baú seco ou frigorífico, acabamento e marca do implementador.",
+      "itens_sugeridos": [
+        "Porta de baú/carroceria (NCM 8708.29.93 — IPI 3,25%)",
+        "Chapa de alumínio (matéria-prima — NCM a confirmar, capítulo do alumínio)",
+        "Perfil de alumínio (matéria-prima — NCM a confirmar, capítulo do alumínio)",
+        "Assoalho de madeira/compensado para baú (NCM a confirmar)",
+        "Assoalho de alumínio para baú (NCM a confirmar)"
+      ],
+      "confianca": "alta",
+      "nota_confianca": "Alta especificamente para a porta de baú (convergência de cinco bases + fundamento jurídico independente). Baixa para chapa, perfil e assoalho, que não foram pesquisados."
+    },
+
+    {
+      "familia": "Serviços",
+      "ncms": [
+        {
+          "ncm": "NÃO SE APLICA",
+          "descricao_tipi": "Serviço não é produto industrializado: não tem NCM, não consta da TIPI e não sofre IPI. O tributo próprio é o ISS municipal, e o enquadramento se faz pela lista anexa à Lei Complementar nº 116/2003, não pela NCM.",
+          "ipi": "não incide",
+          "status": "confirmado",
+          "fonte": "Decorre da própria natureza do IPI/TIPI (incidência sobre produtos industrializados) — não depende de pesquisa de código.",
+          "observacao": "Este é o único ponto do arquivo marcado como confirmado, porque é definicional e não depende de leitura de tabela."
+        },
+        {
+          "ncm": "a_confirmar",
+          "descricao_tipi": "Itens da lista da LC 116/2003 aplicáveis: recapagem/recauchutagem de pneus; lubrificação, revisão, conserto e manutenção de veículos; restauração, pintura, lavagem e beneficiamento de objetos",
+          "ipi": "não incide",
+          "status": "a_confirmar",
+          "fonte": "",
+          "hipotese_estrutural": "Os números de item da lista da LC 116/2003 NÃO foram pesquisados nesta sessão e por isso não são afirmados aqui. O que se pode afirmar com segurança é a ESTRUTURA: a lista tem um item específico para recauchutagem/regeneração de pneus, um item de manutenção e conservação de veículos e máquinas, e um item de restauração/pintura/lavagem/beneficiamento de objetos — é entre esses três que os serviços da frota se distribuem. Confirmar os números antes de parametrizar."
+        }
+      ],
+      "regra_separacao": "SERVIÇO NÃO ENTRA NO MESMO CADASTRO DE MERCADORIA e não recebe NCM — deve ser cadastrado como serviço, com o item da lista da LC 116/2003 e o código de serviço do município (a codificação municipal varia, e é ela que vai na NFS-e). Para fins federais existe a NBS (Nomenclatura Brasileira de Serviços), que é a nomenclatura de serviços equivalente à NCM, mas ela NÃO substitui o item da LC 116 para o ISS. DOIS PONTOS DE ATENÇÃO QUE MUDAM TRIBUTO: (1) RECAPAGEM tem natureza dupla — quando feita sobre pneu do PRÓPRIO CLIENTE (a transportadora manda seu pneu e recebe o mesmo pneu de volta), é serviço, com ISS; quando o recapador recapeia pneu PRÓPRIO e vende o pneu recapado, é industrialização/circulação de mercadoria, com IPI e ICMS e NCM própria de pneu recauchutado. O cadastro precisa comportar as duas hipóteses, porque a nota que chega é de natureza diferente em cada caso. (2) O item de manutenção de veículos da LC 116 traz ressalva expressa de que as PEÇAS E PARTES EMPREGADAS ficam sujeitas ao ICMS — ou seja, numa mesma nota de oficina convivem serviço (ISS) e mercadoria (ICMS, com NCM). O cadastro não pode tratar a peça aplicada num serviço como se fosse serviço. NÃO OBRIGA SEPARAR: prestador, valor e periodicidade.",
+      "itens_sugeridos": [
+        "Serviço — Recapagem de pneu (LC 116 a confirmar; atenção à natureza dupla serviço × industrialização)",
+        "Serviço — Alinhamento (LC 116 a confirmar)",
+        "Serviço — Balanceamento (LC 116 a confirmar)",
+        "Serviço — Manutenção de veículo (LC 116 a confirmar)",
+        "Serviço — Funilaria (LC 116 a confirmar)",
+        "Serviço — Pintura (LC 116 a confirmar)",
+        "Serviço — Lavagem (LC 116 a confirmar)"
+      ],
+      "confianca": "media",
+      "nota_confianca": "Alta quanto ao princípio (serviço não tem NCM nem IPI, e peça aplicada em serviço é mercadoria); baixa quanto aos números de item da LC 116, que não foram pesquisados e não estão afirmados."
+    }
+  ],
+
+  "porta_bau": {
+    "analise": "A área de Frota está CERTA e o relatório externo está ERRADO. O relatório classificou a porta do baú em 7610.10.00 — cuja descrição, confirmada na pesquisa, é 'Construções e suas partes, de alumínio — Portas e janelas, e seus caixilhos, alizares e soleiras'. Essa posição é de ESQUADRIA DE EDIFICAÇÃO: porta e janela de prédio, com seus caixilhos, alizares e soleiras. O que denuncia o erro é justamente a companhia em que a palavra 'porta' aparece ali — caixilho, alizar e soleira são vocabulário de obra civil, não de implemento rodoviário. O relatório parece ter classificado pela MATÉRIA-PRIMA (é de alumínio, logo capítulo do alumínio) e pela PALAVRA ('porta'), que é o erro clássico de classificação: a NCM não classifica por material quando o produto já é uma parte identificável de outro bem, e não classifica por homonímia. A porta de baú é peça fabricada sob medida para a carroçaria de um caminhão, sem uso fora dele — é parte de veículo, e parte de veículo tem endereço próprio na nomenclatura. A pesquisa localizou o subitem específico 'Portas' dentro de 'Outras partes e acessórios de carroçarias (incluindo as de cabinas)', na posição 87.08 (partes e acessórios dos veículos automóveis das posições 87.01 a 87.05), com IPI de 3,25% — exatamente o percentual que a Frota sustenta. Cinco bases independentes de consulta NCM (Cosmos/Bluesoft, fazcomex, logcomex, buscadorncm e qualncm) convergiram no mesmo subitem e na mesma alíquota. Registre-se ainda que existe mais de um subitem 'Portas' dentro de 8708.29 (foram vistos 8708.29.13 e 8708.29.93), variando conforme o veículo a que se destinam; a pesquisa não esclareceu a fronteira exata entre eles, MAS os dois apuram 3,25%, de modo que a conclusão sobre a alíquota não depende de resolver essa dúvida — o que depende dela é apenas a escolha do dígito final, que deve ser confirmada com o fabricante do implemento e com a TIPI antes do cadastro definitivo.",
+    "ncm_recomendada": "8708.29.93 (subitem 'Portas', dentro de 'Outras partes e acessórios de carroçarias, incluindo as de cabinas'), IPI 3,25% — confirmar o dígito final entre 8708.29.13 e 8708.29.93 conforme o veículo/implemento, lembrando que ambos apuram a mesma alíquota.",
+    "fundamento": "Quatro pilares, e os dois primeiros bastam: (1) RGI 1 — a classificação se determina pelos textos das posições e pelas Notas de Seção e de Capítulo. O texto de 76.10 é de CONSTRUÇÕES e suas partes; um baú de caminhão não é construção, é carroçaria de veículo. (2) NOTA 1 DA SEÇÃO XV — a Seção XV (metais comuns e suas obras, onde está o capítulo 76 do alumínio) NÃO compreende os artefatos da Seção XVII (material de transporte: veículos e suas partes). Este é o argumento decisivo e é o que fulmina a tese do relatório externo: ainda que a porta seja inteiramente de alumínio, se ela é parte de veículo, ela está expressamente EXCLUÍDA do capítulo do alumínio por nota legal — e nota de seção tem força normativa na classificação, não é interpretação. (3) NOTA 3 DA SEÇÃO XVII — as partes classificáveis em 87.08 devem ser de uso exclusivo ou principal com os veículos das posições 87.01 a 87.05; a porta de baú, fabricada para a carroçaria de um caminhão específico, atende ao requisito. (4) NOTA 2 DA SEÇÃO XVII — a Seção XVII exclui as chamadas 'partes de uso geral' (parafusos, molas, correntes e afins, definidas na Nota 2 da Seção XV); porta NÃO é parte de uso geral, então a exclusão não a alcança e ela permanece em 87.08. RESSALVAS QUE PODEM MUDAR A RESPOSTA, e que devem ser verificadas caso a caso: (a) se o que se compra não for a porta acabada, mas CHAPA ou PERFIL de alumínio a metro/quilo para fabricar ou reparar a porta na oficina, aí sim o material permanece no capítulo do alumínio como semimanufaturado — e é bem possível que seja isso que o relatório externo tenha visto na nota do fornecedor; (b) se o 'baú' for contêiner/caixa móvel destacável, e não carroçaria fixada ao chassi, a classificação migra para a posição própria de contêineres, e a resposta muda.",
+    "status": "provavel",
+    "recomendacao_pratica": "Adotar 3,25% (capítulo 87), não 0%. Reforço barato e imediato, que dispensa acesso à TIPI: conferir a NCM que o próprio implementador/fornecedor da porta informa na NF-e de compra — se ele emite em 8708.29.xx, a tese do relatório externo cai sozinha. Se houver necessidade de blindagem formal, o caminho é a Solução de Consulta de classificação fiscal junto à RFB, que vincula.",
+    "alerta_risco": "A direção do erro importa: o relatório externo aponta para alíquota MENOR (0%) do que a devida (3,25%). Erro que recolhe imposto a MENOR é o que gera autuação com multa e juros. Portanto, na dúvida remanescente sobre o dígito final do subitem, a decisão prudente é manter 3,25% — que é o percentual apurado nos dois subitens candidatos — e não adotar o 0% sugerido."
+  }
+}

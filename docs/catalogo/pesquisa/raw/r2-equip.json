@@ -1,0 +1,3107 @@
+[
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria de tração",
+  "especificacao": "48 V · 600 Ah (padrão) ou 700 Ah (opcional) — chumbo-ácido (a versão 48 V da série G é chumbo-ácido; as versões de lítio Heli são 80 V)",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.scribd.com/document/845219245/Electric-Forklift-CPD20-CPD25-CPD30-CPD35-G ; https://www.manualslib.com/manual/2811787/Heli-G-Series.html ; https://helibrasil.com/modelos/empilhadeiras-eletricas/empilhadeiras-contrabalancadas",
+  "nota": "Ficha da série G (cópia no Scribd) e manual de operação/serviço série G (ManualsLib) trazem 48V/600Ah padrão e 700Ah opcional para CPD20–CPD35. Bate com o cadastro (48 V/600 Ah). Tipo chumbo-ácido inferido pela tensão (Heli lítio = 80 V). Dimensões da caixa da bateria e nº de elementos (24 × 2 V) não apareceram — conferir na plaqueta da bateria."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria de tração — dimensões (C×L×A) e peso",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://www.manualslib.com/manual/2811787/Heli-G-Series.html",
+  "nota": "Não apareceu em nenhum trecho. Está na tabela de especificações do manual série G (ManualsLib) ou na plaqueta da bateria. Peso mínimo da bateria é dado de segurança (contrapeso) — pedir à Heli Brasil."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Água desmineralizada (reposição dos elementos)",
+  "especificacao": "Água desmineralizada/destilada — reposição após a carga, nível acima das placas",
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": "semanal (conferência de nível)",
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.leadingforkliftparts.com/info/daily-maintenance-of-heli-lift-truck-49024763.html",
+  "nota": "Aplicável porque a bateria 48 V é chumbo-ácido. Volume por reposição não é dado de catálogo. Página de manutenção diária Heli (distribuidor) cita o nível do eletrólito na rotina."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Carregador de bateria",
+  "especificacao": "48 V — corrente (A) não encontrada",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.manualslib.com/manual/2811787/Heli-G-Series.html",
+  "nota": "Tensão segue a bateria. Corrente/modelo do carregador vendido no Brasil não apareceu; pedir a Heli Brasil (para a CPD38 o lançamento cita 80 V/200 A, ver linha da CPD38)."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Escova do motor de tração",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_aplica",
+  "fonte": "https://www.manualslib.com/manual/2811787/Heli-G-Series.html",
+  "nota": "Série G usa motores CA (sem escovas) — dado da 1ª rodada (inferido). Se a plaqueta do motor indicar CC, o item volta a existir."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Hidráulico",
+  "item": "Óleo hidráulico",
+  "especificacao": "L-HM 32 (antidesgaste); L-HV 32 em clima frio — VG 46 aceito pela Heli em clima quente, confirmar no manual",
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.manualslib.com/manual/2811787/Heli-G-Series.html ; https://www.scribd.com/document/595633269/Heli-heftruck-all-kind-of-oil-capacity-list",
+  "nota": "Tipo já estava na 1ª rodada. VOLUME NÃO ENCONTRADO: existe uma lista de capacidades de óleo Heli no Scribd (heftruck oil capacity list) — abrir e procurar CPD25 série G; ou tabela de lubrificantes do manual série G."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Hidráulico",
+  "item": "Filtro hidráulico (sucção e retorno)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://www.leadingforkliftparts.com/info/heli-forklift-technical-maintenane-repair-49025156.html",
+  "nota": "Sem código nos trechos. O manual série G traz o diagrama; distribuidor Heli Brasil tem o part number. Intervalo de troca provável na revisão de 600 h (tabela Heli 100/300/600/1200 h — inferido)."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Transmissão",
+  "item": "Óleo do redutor (eixo de tração)",
+  "especificacao": "Óleo de engrenagem GL-5 SAE 80W-90",
+  "quantidade": "1,75",
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.leadingforkliftparts.com/info/heli-forklift-technical-maintenane-repair-49025156.html ; https://www.manualslib.com/manual/2811787/Heli-G-Series.html",
+  "nota": "O volume 1,75 L (0,46 gal) de \"heavy duty gear oil 80W-90 GL-5\" aparece na tabela de lubrificantes Heli citada pelo distribuidor, sem dizer o modelo. Tratar como referência de família; confirmar no manual série G (tabela \"Fuel and lubricants\")."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Freios",
+  "item": "Fluido de freio",
+  "especificacao": "Fluido de freio (DOT 3 provável) — manuais Heli listam \"brake fluid\" na tabela de lubrificantes",
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.manualslib.com/manual/2811787/Heli-G-Series.html",
+  "nota": "Série G (chumbo-ácido) usa freio hidráulico convencional (o manual do CPD25 tem capítulos Axle/Brake). A norma exata (DOT 3/4) não apareceu no trecho. ATENÇÃO: a série G3 de lítio usa freio multidisco banhado a óleo, sem fluido DOT — não confundir."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Freios",
+  "item": "Lona/pastilha de freio",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://www.manualslib.com/manual/2811787/Heli-G-Series.html",
+  "nota": "Sem código. Procurar no catálogo de peças Heli (leadingforkliftparts.com/download tem catálogos) ou distribuidor."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Rodas/Pneus",
+  "item": "Pneu dianteiro",
+  "especificacao": "Superelástico 23x9-10 (ou pneumático 7.00-12 12PR na versão pneumática)",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.heliforklifts.co.nz/application/files/2916/5781/1939/Electric_Lithium_Ion_Forklift_CPD_25-CPD_30-CPD_35_G3.pdf ; https://www.scribd.com/document/845219245/Electric-Forklift-CPD20-CPD25-CPD30-CPD35-G",
+  "nota": "CONFLITO: a ficha da série G (chumbo-ácido) lista 7.00-12-12PR; a ficha G3 (lítio, NZ) lista superelástico 23x9-10 para CPD25. As duas medidas são equivalentes de 2,5 t — o cadastro diz \"superelástico\", então 23x9-10 é a mais provável, mas MEDIR NO FLANCO do pneu antes de comprar."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Rodas/Pneus",
+  "item": "Pneu traseiro",
+  "especificacao": "18x7-8 (14PR na versão pneumática; superelástico na mesma medida)",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.scribd.com/document/845219245/Electric-Forklift-CPD20-CPD25-CPD30-CPD35-G",
+  "nota": "Medida 18x7-8 vem da ficha da série G. Confirmar no flanco."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elevação (torre)",
+  "item": "Corrente de elevação (passo)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://www.manualslib.com/manual/2811787/Heli-G-Series.html",
+  "nota": "Não encontrado. Passo (BL/LH) está gravado na placa lateral da corrente — medir 10 passos e dividir. Manual série G tem o critério de alongamento (troca a 2–3%)."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elevação (torre)",
+  "item": "Roletes da torre",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código. Catálogo de peças Heli por número de série."
+ },
+ {
+  "modelo": "HELI | CPD25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Intervalo de manutenção",
+  "especificacao": "Lubrificação/revisão a 100 · 300 · 600 · 1.200 h (tabela Heli)",
+  "quantidade": null,
+  "unidade": "h",
+  "intervalo": "100/300/600/1200 h",
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.leadingforkliftparts.com/info/heli-forklift-technical-maintenane-repair-49025156.html",
+  "nota": "Intervalos citados por distribuidor de peças Heli para a linha em geral; confirmar no manual série G."
+ },
+ {
+  "modelo": "HELI | CPD38",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria de tração",
+  "especificacao": "80 V · 404 Ah · íon-lítio (livre de manutenção) — autonomia 8 h, recarga completa 1,5 h, garantia 6 anos",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "confirmado",
+  "fonte": "https://www.tecnologistica.com.br/noticias/lancamento-de-produtos/20433/heli-brasil-lanca-empilhadeira-eletrica-para-o-setor-de-bebidas/ ; https://logweb.com.br/intralogistica-empilhadeira-eletrica-heli-brasil-logistica-do-futuro/ ; https://www.dahlgaard.de/en/product/Heli-CPD38-GB2LI-electric-forklift-3800-kg/",
+  "nota": "Lançamento da CPD38 pela Heli Brasil (setor de bebidas) noticiado por Tecnologística e Logweb, citando o fabricante: 80 V / 404 Ah. Distribuidor europeu (Dahlgaard) confirma 80 V lítio com capacidades de 150 a 480 Ah conforme pedido — conferir na plaqueta se a frota veio com 404 Ah."
+ },
+ {
+  "modelo": "HELI | CPD38",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Água desmineralizada",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_aplica",
+  "fonte": "https://www.tecnologistica.com.br/noticias/lancamento-de-produtos/20433/heli-brasil-lanca-empilhadeira-eletrica-para-o-setor-de-bebidas/",
+  "nota": "Bateria de lítio, sem eletrólito líquido."
+ },
+ {
+  "modelo": "HELI | CPD38",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Carregador de bateria",
+  "especificacao": "80 V · 200 A (carga de oportunidade)",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "confirmado",
+  "fonte": "https://www.tecnologistica.com.br/noticias/lancamento-de-produtos/20433/heli-brasil-lanca-empilhadeira-eletrica-para-o-setor-de-bebidas/ ; https://www.dahlgaard.de/en/produkt/heli-elektrostapler-3500-kg-cpd35-gb2li/",
+  "nota": "Tecnologística cita carregador 80 V/200 A no lançamento brasileiro; Dahlgaard cita o mesmo 200 A como padrão da CPD35-GB2LI (mesma família G2 lítio)."
+ },
+ {
+  "modelo": "HELI | CPD38",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Escova do motor de tração",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_aplica",
+  "fonte": "https://www.dahlgaard.de/en/produkt/heli-elektrostapler-3500-kg-cpd35-gb2li/",
+  "nota": "Família G2 lítio: motores CA (tração 16,6 kW / elevação 25,5 kW citados para a CPD35-GB2LI). Sem escovas."
+ },
+ {
+  "modelo": "HELI | CPD38",
+  "anos": [
+   2022
+  ],
+  "sistema": "Hidráulico",
+  "item": "Óleo hidráulico",
+  "especificacao": "L-HM 32 (antidesgaste) — volume não encontrado",
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.manualslib.com/manual/3566724/Heli-G3-Series.html ; https://www.scribd.com/document/595633269/Heli-heftruck-all-kind-of-oil-capacity-list",
+  "nota": "Tipo herdado da 1ª rodada (manuais Heli). Volume: procurar na lista de capacidades Heli (Scribd) ou no manual G3/G2."
+ },
+ {
+  "modelo": "HELI | CPD38",
+  "anos": [
+   2022
+  ],
+  "sistema": "Hidráulico",
+  "item": "Filtro hidráulico (sucção e retorno)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código nos trechos. Distribuidor Heli Brasil."
+ },
+ {
+  "modelo": "HELI | CPD38",
+  "anos": [
+   2022
+  ],
+  "sistema": "Transmissão",
+  "item": "Óleo do redutor (eixo de tração)",
+  "especificacao": "Óleo de engrenagem GL-5 80W-90 — eixo duplo bipartido (um redutor por roda) na família lítio",
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.heliforklifts.co.nz/application/files/2916/5781/1939/Electric_Lithium_Ion_Forklift_CPD_25-CPD_30-CPD_35_G3.pdf ; https://www.leadingforkliftparts.com/info/heli-forklift-technical-maintenane-repair-49025156.html",
+  "nota": "A ficha G3 descreve \"split type dual drive axle\" com redução na roda e freio úmido. Volume por redutor não encontrado."
+ },
+ {
+  "modelo": "HELI | CPD38",
+  "anos": [
+   2022
+  ],
+  "sistema": "Freios",
+  "item": "Freio de serviço/estacionamento",
+  "especificacao": "Multidisco ÚMIDO (banhado a óleo) — sem lona seca e sem fluido DOT; consumo 1,94 cc por frenagem unilateral",
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.heliforklifts.co.nz/application/files/2916/5781/1939/Electric_Lithium_Ion_Forklift_CPD_25-CPD_30-CPD_35_G3.pdf",
+  "nota": "Dado da ficha G3 (CPD25–35 lítio). A CPD38-GB2LI é família G2 — mesma arquitetura de eixo com freio úmido é provável, confirmar no manual. Implica: sem pastilha/lona, e o \"fluido de freio\" é o óleo do eixo."
+ },
+ {
+  "modelo": "HELI | CPD38",
+  "anos": [
+   2022
+  ],
+  "sistema": "Rodas/Pneus",
+  "item": "Pneu dianteiro",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://www.heliforklifts.co.nz/application/files/2916/5781/1939/Electric_Lithium_Ion_Forklift_CPD_25-CPD_30-CPD_35_G3.pdf",
+  "nota": "Não apareceu para 3,8 t. Referência de família: CPD30/35 G3 usam superelástico 23x10-12. Medir no flanco."
+ },
+ {
+  "modelo": "HELI | CPD38",
+  "anos": [
+   2022
+  ],
+  "sistema": "Rodas/Pneus",
+  "item": "Pneu traseiro",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado. Medir no flanco."
+ },
+ {
+  "modelo": "HELI | CPD38",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elevação (torre)",
+  "item": "Corrente de elevação (passo)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado — medir na corrente (10 passos) e consultar o manual para o limite de alongamento."
+ },
+ {
+  "modelo": "HELI | CPD38",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elevação (torre)",
+  "item": "Roletes da torre",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código."
+ },
+ {
+  "modelo": "HELI | CPD38",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Intervalo de manutenção",
+  "especificacao": "100 · 300 · 600 · 1.200 h (tabela Heli)",
+  "quantidade": null,
+  "unidade": "h",
+  "intervalo": "100/300/600/1200 h",
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.leadingforkliftparts.com/info/heli-forklift-technical-maintenane-repair-49025156.html",
+  "nota": "Mesma tabela genérica Heli; bateria de lítio dispensa a rotina de água."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Óleo de motor",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://psiengines.com/wp-content/uploads/2024/06/2.0L-2.4L-Service-Manual-7610002-16.pdf ; https://psiengines.com/manuals/",
+  "nota": "Viscosidade/norma/volume NÃO confirmados para o PSI 2.4 L. O manual de serviço PSI 2.0/2.4 L (7610002-16, PDF no site da PSI) é a fonte — o trecho da busca não trouxe a tabela. NÃO usar a recomendação Kroon-Oil de \"GLP 050\" (é o modelo 1982–84, motor diferente)."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Filtro de óleo",
+  "especificacao": "Filtro rosqueado do PSI 2.4 L (base Mitsubishi 4G64 — o parts book chama o motor de \"MMC 2.4L\")",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": "Yale YT901301815-E (pista, listado p/ GLP050 / GLC050VX) · tela de sucção PSI 4111645",
+  "status": "inferido",
+  "fonte": "https://avrogse.com/wp-content/uploads/2024/04/PSI-2.4L-Engine-Parts-Manual.pdf ; https://www.ebay.com/itm/404499186913 ; https://www.ebay.com/itm/277313591430",
+  "nota": "Código YT901301815 aparece em listagem de varejo para GLP050 (não diz MX). O parts book PSI 2.4L (avrogse) tem o nº do filtro — abrir antes de comprar."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Admissão de ar",
+  "item": "Filtro de ar",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código nos trechos. Fonte: catálogo de peças Yale MX (dealer) ou intellaparts/finditparts por modelo GLP050MX."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Vela de ignição",
+  "especificacao": null,
+  "quantidade": "4",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://avrogse.com/wp-content/uploads/2024/04/PSI-2.4L-Engine-Parts-Manual.pdf",
+  "nota": "Vela do PSI 2.4 L (motor base Mitsubishi 4G64 \"MMC 2.4L\") — código NÃO encontrado. CORREÇÃO da 1ª rodada: ND W9EXR-U é do Mazda FE (GLP050VX antiga), não serve. O parts book PSI 2.4L (avrogse.com) lista a vela; conferir lá. Folga também no manual de serviço PSI."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Cabo de vela",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://avrogse.com/wp-content/uploads/2024/04/PSI-2.4L-Engine-Parts-Manual.pdf",
+  "nota": "Sem código. Parts book PSI 2.4L."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Correia",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://avrogse.com/wp-content/uploads/2024/04/PSI-2.4L-Engine-Parts-Manual.pdf",
+  "nota": "Sem código nos trechos. Parts book PSI 2.4L (correia serpentina do acessório)."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Arrefecimento",
+  "item": "Líquido de arrefecimento — norma e volume",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://www.yale.com/globalassets/coms/yale/north-america/documents/trucks/ic-pneumatic/gp040-060mx-spec-sheet.pdf",
+  "nota": "1ª rodada: 50/50 etilenoglicol sem boro (inferido). Volume do sistema não apareceu — manual de operação Yale MX (capacidades)."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Hidráulico",
+  "item": "Óleo hidráulico",
+  "especificacao": "ISO VG 46 (Yale acima de 15 °C) · ~42 L (11,1 gal) — dado da 1ª rodada",
+  "quantidade": "42",
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://intellaparts.com/blog/hyster-forklift-fluid-specs/",
+  "nota": "Sem novidade nesta rodada; a lâmina MX (yale.com) confirma capacidade do reservatório."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Hidráulico",
+  "item": "Filtro hidráulico (sucção/retorno)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código. Catálogo Yale MX."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Transmissão",
+  "item": "Óleo da transmissão (conversor)",
+  "especificacao": "ATF Dexron III (powershift eletrônico) — volume não encontrado",
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://intellaparts.com/blog/hyster-forklift-fluid-specs/",
+  "nota": "Tipo da 1ª rodada. Volume só no manual de operação Yale MX."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Eixo/Diferencial",
+  "item": "Óleo do diferencial",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://intellaparts.com/blog/hyster-forklift-fluid-specs/",
+  "nota": "Não encontrado (Yale VX usa 80W-90/85W-140; MX não confirmado)."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria 12 V (partida)",
+  "especificacao": "12 V — capacidade (Ah) não encontrada",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.yale.com/globalassets/coms/yale/north-america/documents/trucks/ic-pneumatic/gp040-060mx-spec-sheet.pdf",
+  "nota": "Conferir na bateria instalada (caixa/Ah) — a lâmina MX não traz Ah."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Rodas/Pneus",
+  "item": "Pneu dianteiro",
+  "especificacao": "7.00-12 (12 lonas) — pneumático (linha \"pneumatic tire\")",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.rbauction.com/pdp/2018-yale-glp050mx-4800-lb-pneumatic-tire-forklift/14147329 ; https://www.lectura-specs.com/en/model/forklifts/lpg-forklifts-yale/gp050mx-11720390 ; https://www.yale.com/globalassets/coms/yale/north-america/documents/trucks/ic-pneumatic/gp040-060mx-spec-sheet.pdf",
+  "nota": "Leilão RB e Lectura confirmam \"pneumatic tire\" para GLP050MX; medida 7.00-12 é da 1ª rodada (inferida). A lâmina MX (yale.com) tem a tabela de pneus — confirmar e checar se a frota usa superelástico na mesma medida."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Rodas/Pneus",
+  "item": "Pneu traseiro",
+  "especificacao": "6.00-9 — pneumático",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.yale.com/globalassets/coms/yale/north-america/documents/trucks/ic-pneumatic/gp040-060mx-spec-sheet.pdf",
+  "nota": "Idem: confirmar na lâmina MX e no flanco."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Freios",
+  "item": "Lona/pastilha de freio",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código. Catálogo Yale MX."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Freios",
+  "item": "Fluido de freio",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado (provável DOT 3 — não confirmado)."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Elevação (torre)",
+  "item": "Corrente de elevação (passo)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado — medir na corrente."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Elevação (torre)",
+  "item": "Roletes da torre",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Combustível/GLP",
+  "item": "Cilindro GLP",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado nos trechos. No Brasil o padrão de empilhadeira é P20 (20 kg) — NÃO confirmado para esta frota; ver o cilindro instalado."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Combustível/GLP",
+  "item": "Regulador/vaporizador GLP",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://avrogse.com/wp-content/uploads/2024/04/PSI-2.4L-Engine-Parts-Manual.pdf",
+  "nota": "PSI usa sistema de combustível próprio (não é Impco genérico) — código no parts book PSI 2.4L."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Combustível/GLP",
+  "item": "Filtro GLP (lock-off)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://avrogse.com/wp-content/uploads/2024/04/PSI-2.4L-Engine-Parts-Manual.pdf",
+  "nota": "Sem código. Parts book PSI 2.4L."
+ },
+ {
+  "modelo": "YALE | 50MX",
+  "anos": [
+   2020,
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Intervalo de manutenção",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Tabela de 250/500/1000 h não apareceu nos trechos; manual de operação Yale MX. 1ª rodada tinha só inferência."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Óleo de motor",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://psiengines.com/wp-content/uploads/2024/06/2.0L-2.4L-Service-Manual-7610002-16.pdf ; https://psiengines.com/manuals/",
+  "nota": "Viscosidade/norma/volume NÃO confirmados para o PSI 2.4 L. O manual de serviço PSI 2.0/2.4 L (7610002-16, PDF no site da PSI) é a fonte — o trecho da busca não trouxe a tabela. NÃO usar a recomendação Kroon-Oil de \"GLP 050\" (é o modelo 1982–84, motor diferente)."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Filtro de óleo",
+  "especificacao": "Filtro rosqueado do PSI 2.4 L (base Mitsubishi 4G64 — o parts book chama o motor de \"MMC 2.4L\")",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": "Yale YT901301815-E (pista, listado p/ GLP050 / GLC050VX) · tela de sucção PSI 4111645",
+  "status": "inferido",
+  "fonte": "https://avrogse.com/wp-content/uploads/2024/04/PSI-2.4L-Engine-Parts-Manual.pdf ; https://www.ebay.com/itm/404499186913 ; https://www.ebay.com/itm/277313591430",
+  "nota": "Código YT901301815 aparece em listagem de varejo para GLP050 (não diz MX). O parts book PSI 2.4L (avrogse) tem o nº do filtro — abrir antes de comprar."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Admissão de ar",
+  "item": "Filtro de ar",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código nos trechos. Fonte: catálogo de peças Yale MX (dealer) ou intellaparts/finditparts por modelo GLP050MX."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Vela de ignição",
+  "especificacao": null,
+  "quantidade": "4",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://avrogse.com/wp-content/uploads/2024/04/PSI-2.4L-Engine-Parts-Manual.pdf",
+  "nota": "Vela do PSI 2.4 L (motor base Mitsubishi 4G64 \"MMC 2.4L\") — código NÃO encontrado. CORREÇÃO da 1ª rodada: ND W9EXR-U é do Mazda FE (GLP050VX antiga), não serve. O parts book PSI 2.4L (avrogse.com) lista a vela; conferir lá. Folga também no manual de serviço PSI."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Cabo de vela",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://avrogse.com/wp-content/uploads/2024/04/PSI-2.4L-Engine-Parts-Manual.pdf",
+  "nota": "Sem código. Parts book PSI 2.4L."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Correia",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://avrogse.com/wp-content/uploads/2024/04/PSI-2.4L-Engine-Parts-Manual.pdf",
+  "nota": "Sem código nos trechos. Parts book PSI 2.4L (correia serpentina do acessório)."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Arrefecimento",
+  "item": "Líquido de arrefecimento — norma e volume",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://www.yale.com/globalassets/coms/yale/north-america/documents/trucks/ic-pneumatic/gp040-060mx-spec-sheet.pdf",
+  "nota": "1ª rodada: 50/50 etilenoglicol sem boro (inferido). Volume do sistema não apareceu — manual de operação Yale MX (capacidades)."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Hidráulico",
+  "item": "Óleo hidráulico",
+  "especificacao": "ISO VG 46 (Yale acima de 15 °C) · ~42 L (11,1 gal) — dado da 1ª rodada",
+  "quantidade": "42",
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://intellaparts.com/blog/hyster-forklift-fluid-specs/",
+  "nota": "Sem novidade nesta rodada; a lâmina MX (yale.com) confirma capacidade do reservatório."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Hidráulico",
+  "item": "Filtro hidráulico (sucção/retorno)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código. Catálogo Yale MX."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Transmissão",
+  "item": "Óleo da transmissão (conversor)",
+  "especificacao": "ATF Dexron III (powershift eletrônico) — volume não encontrado",
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://intellaparts.com/blog/hyster-forklift-fluid-specs/",
+  "nota": "Tipo da 1ª rodada. Volume só no manual de operação Yale MX."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Eixo/Diferencial",
+  "item": "Óleo do diferencial",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://intellaparts.com/blog/hyster-forklift-fluid-specs/",
+  "nota": "Não encontrado (Yale VX usa 80W-90/85W-140; MX não confirmado)."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria 12 V (partida)",
+  "especificacao": "12 V — capacidade (Ah) não encontrada",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.yale.com/globalassets/coms/yale/north-america/documents/trucks/ic-pneumatic/gp040-060mx-spec-sheet.pdf",
+  "nota": "Conferir na bateria instalada (caixa/Ah) — a lâmina MX não traz Ah."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Rodas/Pneus",
+  "item": "Pneu dianteiro",
+  "especificacao": "7.00-12 (12 lonas) — pneumático (linha \"pneumatic tire\")",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.rbauction.com/pdp/2018-yale-glp050mx-4800-lb-pneumatic-tire-forklift/14147329 ; https://www.lectura-specs.com/en/model/forklifts/lpg-forklifts-yale/gp050mx-11720390 ; https://www.yale.com/globalassets/coms/yale/north-america/documents/trucks/ic-pneumatic/gp040-060mx-spec-sheet.pdf",
+  "nota": "Leilão RB e Lectura confirmam \"pneumatic tire\" para GLP050MX; medida 7.00-12 é da 1ª rodada (inferida). A lâmina MX (yale.com) tem a tabela de pneus — confirmar e checar se a frota usa superelástico na mesma medida."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Rodas/Pneus",
+  "item": "Pneu traseiro",
+  "especificacao": "6.00-9 — pneumático",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.yale.com/globalassets/coms/yale/north-america/documents/trucks/ic-pneumatic/gp040-060mx-spec-sheet.pdf",
+  "nota": "Idem: confirmar na lâmina MX e no flanco."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Freios",
+  "item": "Lona/pastilha de freio",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código. Catálogo Yale MX."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Freios",
+  "item": "Fluido de freio",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado (provável DOT 3 — não confirmado)."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Elevação (torre)",
+  "item": "Corrente de elevação (passo)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado — medir na corrente."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Elevação (torre)",
+  "item": "Roletes da torre",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Combustível/GLP",
+  "item": "Cilindro GLP",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado nos trechos. No Brasil o padrão de empilhadeira é P20 (20 kg) — NÃO confirmado para esta frota; ver o cilindro instalado."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Combustível/GLP",
+  "item": "Regulador/vaporizador GLP",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://avrogse.com/wp-content/uploads/2024/04/PSI-2.4L-Engine-Parts-Manual.pdf",
+  "nota": "PSI usa sistema de combustível próprio (não é Impco genérico) — código no parts book PSI 2.4L."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Combustível/GLP",
+  "item": "Filtro GLP (lock-off)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://avrogse.com/wp-content/uploads/2024/04/PSI-2.4L-Engine-Parts-Manual.pdf",
+  "nota": "Sem código. Parts book PSI 2.4L."
+ },
+ {
+  "modelo": "YALE | GLP-050MX",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Intervalo de manutenção",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Tabela de 250/500/1000 h não apareceu nos trechos; manual de operação Yale MX. 1ª rodada tinha só inferência."
+ },
+ {
+  "modelo": "YALE | 75VX",
+  "anos": [
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Identificação do modelo",
+  "especificacao": "Yale GP075VX — 3.500 kg a 600 mm de centro de carga (o GP070VX é 3.500 kg a 500 mm), fabricada no Brasil para o setor de bebidas",
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": "GP075VX",
+  "status": "confirmado",
+  "fonte": "https://www.tecnologistica.com.br/noticias/mercado/13617/yale-comercializa-mais-de-70-empilhadeiras-para-industria-de-bebidas",
+  "nota": "Resolve o \"modelo inexistente\" da 1ª rodada: a Tecnologística (venda de 70 empilhadeiras para bebidas) descreve GP070VX e GP075VX como modelos Yale Brasil de 3,5 t. Motor, fluidos e pneus da GP075VX não apareceram nos trechos — pedir a lâmina técnica Yale Brasil (yale.com/brazil)."
+ },
+ {
+  "modelo": "YALE | 75VX",
+  "anos": [
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Óleo de motor",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Motor da GP075VX não identificado (a linha VX 3,5 t usa motores de 2,4 a 4,3 L conforme o ano). Lâmina Yale Brasil."
+ },
+ {
+  "modelo": "YALE | 75VX",
+  "anos": [
+   2022
+  ],
+  "sistema": "Rodas/Pneus",
+  "item": "Pneu dianteiro/traseiro",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado. Para 3,5 t o usual é 250-15 diant. / 7.00-12 tras. — NÃO confirmado; medir no flanco."
+ },
+ {
+  "modelo": "YALE | GP2.5A",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Identificação do modelo",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://www.yale.com/globalassets/coms/yale/brazil/documents/ice-pneumatic/gp2.0-3.5n_ficha-t%C3%A9cnica.pdf ; https://www.agrofy.com.br/empilhadeira-a-combust-o-yale-gp25ux-2-5-ton.html",
+  "nota": "Não identificado — não existe \"GP2.5A\" nos catálogos Yale encontrados. Candidatos: GP2.5N (Série N GLP/diesel 2,0–3,5 t, ficha técnica Yale Brasil) ou GP25UX (linha UX 2,5 t). Conferir a plaqueta (modelo + nº de série) antes de qualquer compra."
+ },
+ {
+  "modelo": "YALE | 50VX",
+  "anos": [
+   2014
+  ],
+  "sistema": "Motor",
+  "item": "Vela de ignição",
+  "especificacao": "Depende do motor: ND W9EXR-U (folga 0,81 mm) só se for Mazda FE 2.0; motores GM/PSI 2.4 usam outra vela",
+  "quantidade": "4",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://intellaparts.com/blog/hyster-forklift-fluid-specs/",
+  "nota": "Sem novidade nesta rodada. Ano 2014 na VX pode ser GM 2.4 L — conferir a plaqueta do motor antes de comprar vela."
+ },
+ {
+  "modelo": "YALE | GLP-050VX",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Vela de ignição",
+  "especificacao": "Depende do motor: ND W9EXR-U (folga 0,81 mm) só se for Mazda FE 2.0; motores GM/PSI 2.4 usam outra vela",
+  "quantidade": "4",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://intellaparts.com/blog/hyster-forklift-fluid-specs/",
+  "nota": "Sem novidade nesta rodada. Ano 2014 na VX pode ser GM 2.4 L — conferir a plaqueta do motor antes de comprar vela."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Óleo de motor",
+  "especificacao": "SAE 10W-30 API (manual 8FGF25) · 4,0 L",
+  "quantidade": "4,0",
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260 ; https://produto.mercadolivre.com.br/MLB-2773708428-filtro-de-oleo-motor-oleo-toyota-8fg25-empilhadeira-kit-_JM",
+  "nota": "Fórum Forkliftaction transcreve capacidades do manual do 8FGF25: motor 4Y = 4 L de 10W-30. CONFLITO: kit de revisão vendido no Brasil (Mercado Livre) usa 20W-50 — varejo, não é norma Toyota. Ficar no 10W-30 salvo manual Toyota Brasil."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Vela de ignição",
+  "especificacao": "NGK BPR2ES (motor Toyota 4Y) · OEM Toyota 9001A-98004 / 90919-01954-71 (Denso)",
+  "quantidade": "4",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": "NGK BPR2ES · Toyota 9001A-98004",
+  "status": "confirmado",
+  "fonte": "https://www.ngkntk.com/part-finder/working-equipment/spark-plugs/toyota/7fgcu-s20-4y-bpr2es/ ; https://shop.toyotaforklift.com/en/categories/forklift-parts-accessories/engine-motors/spark-plugs/p/9001a98004 ; https://www.ebay.com/itm/326433114112",
+  "nota": "Part finder oficial NGK lista BPR2ES para Toyota 7FGCU com motor 4Y; a loja oficial Toyota Forklift vende 9001A-98004 como vela do 4Y (usada em 3FG a 8FG). O 8FG25/35 brasileiro usa o mesmo 4Y — conferir folga no manual. Substitui a W9EXR-U (Mazda) citada na 1ª rodada para a Yale."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Cabo de vela / tampa e rotor do distribuidor",
+  "especificacao": "Kit de ignição p/ 4Y (tampa, rotor, cabos, 4 velas) — 5FG a 8FG",
+  "quantidade": "1",
+  "unidade": "kit",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.amazon.com/BCXFORK-Distributor-Ignition-Toyota-Forklift/dp/B0BWM78WLQ",
+  "nota": "Somente listagem de varejo (Amazon) para família 4Y; código Toyota não apareceu."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Combustível/GLP",
+  "item": "Filtro de combustível (linha gasolina do 4Y)",
+  "especificacao": "Toyota 23300-78150-71 (motor 4Y/1FZ, 7FG/8FG)",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": "23300-78150-71",
+  "status": "inferido",
+  "fonte": "https://www.fridayparts.com/fuel-filter-23300-78150-71-for-toyota-engine-4y-1fz-forklift-7fg-8fg-02-7fg35-02-8fgf25-30-8fg10-32-8fg15-5fg50-7fg40-8fgcsu20-8fgcu25",
+  "nota": "Varejo (fridayparts). É o filtro da linha de gasolina — na versão só GLP, o que existe é o filtro do lock-off/regulador (linha abaixo)."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Combustível/GLP",
+  "item": "Regulador/vaporizador GLP e filtro GLP",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://multimanuais.com/loja/empilhadeiras/toyota-9/manual-de-servico-toyota-8fg-10-15-18-20-25-30-empilhadeira/",
+  "nota": "Toyota 8FG usa regulador Aisan; código não apareceu nos trechos. Manual de serviço 8FG (multimanuais, PT) ou loja oficial Toyota Empilhadeiras."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Combustível/GLP",
+  "item": "Cilindro GLP",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado. Ver o cilindro instalado (P20 é o usual no Brasil — não confirmado)."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Hidráulico",
+  "item": "Filtro hidráulico (sucção)",
+  "especificacao": "Toyota 67502-23320-71 (8FG25)",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": "67502-23320-71",
+  "status": "inferido",
+  "fonte": "https://www.lbmaq.com.br/empilhadeiras/filtros/filtro-hidraulico-toyota-8fg25 ; https://www.netmak.com.br/filtro-hidraulico-de-succao-empilhadeira-toyota",
+  "nota": "Dois varejistas brasileiros (LBMAQ, Netmak) — sem catálogo oficial. Conferir na loja oficial Toyota Empilhadeiras."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Hidráulico",
+  "item": "Óleo hidráulico",
+  "especificacao": "ISO VG 32 (padrão Toyota; VG 46 em clima quente) — volume não encontrado",
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://intellaparts.com/blog/toyota-forklift-fluid-specs/",
+  "nota": "Sem novidade. Volume no manual do operador (BME tem o manual do operador Toyota em PT)."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Transmissão",
+  "item": "Óleo do conversor de torque",
+  "especificacao": "ATF Dexron II · 6 L (conversor 1 estágio) / 10 L (2 estágios)",
+  "quantidade": "6 ou 10",
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260",
+  "nota": "CONFLITO 6 × 10 L mantido: o próprio manual traz dois valores conforme o tipo de conversor. O 8FG25 padrão é 1 velocidade → 6 L é o mais provável; confirmar drenando."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Eixo/Diferencial",
+  "item": "Óleo do diferencial",
+  "especificacao": "API GL-4 SAE 85W-90 · 6,1–6,4 L",
+  "quantidade": "6,1–6,4",
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260",
+  "nota": "Manual do 8FGF25 via fórum; 8FG35 pode diferir (eixo maior) — confirmar."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Arrefecimento",
+  "item": "Líquido de arrefecimento — volume",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Toyota LLC 30–50 % (1ª rodada). Volume não apareceu; manual do operador."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Filtro de óleo — código",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado (1ª rodada: rosca 3/4-16). Loja oficial Toyota Empilhadeiras (lojapecas.toyotaempilhadeiras.com.br)."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Admissão de ar",
+  "item": "Filtro de ar — código",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado. Loja oficial Toyota Empilhadeiras / intellaparts 8FGCU25."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Correia",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código nos trechos."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria 12 V (partida)",
+  "especificacao": "12 V — Ah não encontrado",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": null,
+  "nota": "Conferir na bateria instalada."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Freios",
+  "item": "Lona de freio / fluido",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://multimanuais.com/loja/empilhadeiras/toyota-9/manual-de-servico-toyota-8fg-10-15-18-20-25-30-empilhadeira/",
+  "nota": "Sem código. Manual de serviço 8FG (PT) — fluido provável DOT 3, não confirmado."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Elevação (torre)",
+  "item": "Corrente de elevação (passo) / roletes",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado — medir na corrente; roletes por nº de série na loja oficial."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Intervalo de manutenção",
+  "especificacao": "Kits de revisão vendidos no Brasil são de 300 h (varejo); tabela Toyota (250/500/1000 h) não apareceu",
+  "quantidade": null,
+  "unidade": "h",
+  "intervalo": "300 h (varejo) — confirmar",
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://produto.mercadolivre.com.br/MLB-2773708428-filtro-de-oleo-motor-oleo-toyota-8fg25-empilhadeira-kit-_JM",
+  "nota": "Manual do operador Toyota (BME) tem a tabela oficial."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Óleo de motor",
+  "especificacao": "SAE 10W-30 API (manual 8FGF25) · 4,0 L",
+  "quantidade": "4,0",
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260 ; https://produto.mercadolivre.com.br/MLB-2773708428-filtro-de-oleo-motor-oleo-toyota-8fg25-empilhadeira-kit-_JM",
+  "nota": "Fórum Forkliftaction transcreve capacidades do manual do 8FGF25: motor 4Y = 4 L de 10W-30. CONFLITO: kit de revisão vendido no Brasil (Mercado Livre) usa 20W-50 — varejo, não é norma Toyota. Ficar no 10W-30 salvo manual Toyota Brasil."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Vela de ignição",
+  "especificacao": "NGK BPR2ES (motor Toyota 4Y) · OEM Toyota 9001A-98004 / 90919-01954-71 (Denso)",
+  "quantidade": "4",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": "NGK BPR2ES · Toyota 9001A-98004",
+  "status": "confirmado",
+  "fonte": "https://www.ngkntk.com/part-finder/working-equipment/spark-plugs/toyota/7fgcu-s20-4y-bpr2es/ ; https://shop.toyotaforklift.com/en/categories/forklift-parts-accessories/engine-motors/spark-plugs/p/9001a98004 ; https://www.ebay.com/itm/326433114112",
+  "nota": "Part finder oficial NGK lista BPR2ES para Toyota 7FGCU com motor 4Y; a loja oficial Toyota Forklift vende 9001A-98004 como vela do 4Y (usada em 3FG a 8FG). O 8FG25/35 brasileiro usa o mesmo 4Y — conferir folga no manual. Substitui a W9EXR-U (Mazda) citada na 1ª rodada para a Yale."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Cabo de vela / tampa e rotor do distribuidor",
+  "especificacao": "Kit de ignição p/ 4Y (tampa, rotor, cabos, 4 velas) — 5FG a 8FG",
+  "quantidade": "1",
+  "unidade": "kit",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.amazon.com/BCXFORK-Distributor-Ignition-Toyota-Forklift/dp/B0BWM78WLQ",
+  "nota": "Somente listagem de varejo (Amazon) para família 4Y; código Toyota não apareceu."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Combustível/GLP",
+  "item": "Filtro de combustível (linha gasolina do 4Y)",
+  "especificacao": "Toyota 23300-78150-71 (motor 4Y/1FZ, 7FG/8FG)",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": "23300-78150-71",
+  "status": "inferido",
+  "fonte": "https://www.fridayparts.com/fuel-filter-23300-78150-71-for-toyota-engine-4y-1fz-forklift-7fg-8fg-02-7fg35-02-8fgf25-30-8fg10-32-8fg15-5fg50-7fg40-8fgcsu20-8fgcu25",
+  "nota": "Varejo (fridayparts). É o filtro da linha de gasolina — na versão só GLP, o que existe é o filtro do lock-off/regulador (linha abaixo)."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Combustível/GLP",
+  "item": "Regulador/vaporizador GLP e filtro GLP",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://multimanuais.com/loja/empilhadeiras/toyota-9/manual-de-servico-toyota-8fg-10-15-18-20-25-30-empilhadeira/",
+  "nota": "Toyota 8FG usa regulador Aisan; código não apareceu nos trechos. Manual de serviço 8FG (multimanuais, PT) ou loja oficial Toyota Empilhadeiras."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Combustível/GLP",
+  "item": "Cilindro GLP",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado. Ver o cilindro instalado (P20 é o usual no Brasil — não confirmado)."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Hidráulico",
+  "item": "Filtro hidráulico (sucção)",
+  "especificacao": "Toyota 67502-23320-71 (8FG25)",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": "67502-23320-71",
+  "status": "inferido",
+  "fonte": "https://www.lbmaq.com.br/empilhadeiras/filtros/filtro-hidraulico-toyota-8fg25 ; https://www.netmak.com.br/filtro-hidraulico-de-succao-empilhadeira-toyota",
+  "nota": "Dois varejistas brasileiros (LBMAQ, Netmak) — sem catálogo oficial. Conferir na loja oficial Toyota Empilhadeiras."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Hidráulico",
+  "item": "Óleo hidráulico",
+  "especificacao": "ISO VG 32 (padrão Toyota; VG 46 em clima quente) — volume não encontrado",
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://intellaparts.com/blog/toyota-forklift-fluid-specs/",
+  "nota": "Sem novidade. Volume no manual do operador (BME tem o manual do operador Toyota em PT)."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Transmissão",
+  "item": "Óleo do conversor de torque",
+  "especificacao": "ATF Dexron II · 6 L (conversor 1 estágio) / 10 L (2 estágios)",
+  "quantidade": "6 ou 10",
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260",
+  "nota": "CONFLITO 6 × 10 L mantido: o próprio manual traz dois valores conforme o tipo de conversor. O 8FG25 padrão é 1 velocidade → 6 L é o mais provável; confirmar drenando."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Eixo/Diferencial",
+  "item": "Óleo do diferencial",
+  "especificacao": "API GL-4 SAE 85W-90 · 6,1–6,4 L",
+  "quantidade": "6,1–6,4",
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.forkliftaction.com/forum/oil-refill-capacities-toyota-8fgf25.aspx?q=97260",
+  "nota": "Manual do 8FGF25 via fórum; 8FG35 pode diferir (eixo maior) — confirmar."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Arrefecimento",
+  "item": "Líquido de arrefecimento — volume",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Toyota LLC 30–50 % (1ª rodada). Volume não apareceu; manual do operador."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Filtro de óleo — código",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado (1ª rodada: rosca 3/4-16). Loja oficial Toyota Empilhadeiras (lojapecas.toyotaempilhadeiras.com.br)."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Admissão de ar",
+  "item": "Filtro de ar — código",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado. Loja oficial Toyota Empilhadeiras / intellaparts 8FGCU25."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Correia",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código nos trechos."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria 12 V (partida)",
+  "especificacao": "12 V — Ah não encontrado",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": null,
+  "nota": "Conferir na bateria instalada."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Freios",
+  "item": "Lona de freio / fluido",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://multimanuais.com/loja/empilhadeiras/toyota-9/manual-de-servico-toyota-8fg-10-15-18-20-25-30-empilhadeira/",
+  "nota": "Sem código. Manual de serviço 8FG (PT) — fluido provável DOT 3, não confirmado."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Elevação (torre)",
+  "item": "Corrente de elevação (passo) / roletes",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado — medir na corrente; roletes por nº de série na loja oficial."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Intervalo de manutenção",
+  "especificacao": "Kits de revisão vendidos no Brasil são de 300 h (varejo); tabela Toyota (250/500/1000 h) não apareceu",
+  "quantidade": null,
+  "unidade": "h",
+  "intervalo": "300 h (varejo) — confirmar",
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://produto.mercadolivre.com.br/MLB-2773708428-filtro-de-oleo-motor-oleo-toyota-8fg25-empilhadeira-kit-_JM",
+  "nota": "Manual do operador Toyota (BME) tem a tabela oficial."
+ },
+ {
+  "modelo": "TOYOTA | 8FG25",
+  "anos": [
+   2022
+  ],
+  "sistema": "Rodas/Pneus",
+  "item": "Pneu dianteiro / traseiro",
+  "especificacao": "7.00-12 (12PR) diant. · 6.00-9 (10PR) tras. — pneumático (há versão superelástica na mesma medida)",
+  "quantidade": "2 + 2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://ergui.com.br/alugue/empilhadeira-a-combustao/toyota-8fg25-8fg35/",
+  "nota": "Sem novidade nesta rodada; medir no flanco."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Rodas/Pneus",
+  "item": "Pneu dianteiro",
+  "especificacao": "28x9-15 (= 8.15-15) — a loja oficial Toyota Empilhadeiras vende \"pneu pneumático 28x9-15/7.00 TR900\"",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.lojapecas.toyotaempilhadeiras.com.br/pneu-pneumatico-28x9-15-7-00-tr900-6562/p ; https://ergui.com.br/alugue/empilhadeira-a-combustao/toyota-8fg25-8fg35/",
+  "nota": "CONFLITO com a 1ª rodada (250-15): 28x9-15 é a medida usual de 3,0–3,5 t e é a que a loja oficial Toyota lista; 250-15 aparece em 3,5–4,0 t. A loja não diz o modelo — MEDIR NO FLANCO."
+ },
+ {
+  "modelo": "TOYOTA | 8FG35",
+  "anos": null,
+  "sistema": "Rodas/Pneus",
+  "item": "Pneu traseiro",
+  "especificacao": "7.00-12 (12PR)",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://ergui.com.br/alugue/empilhadeira-a-combustao/toyota-8fg25-8fg35/",
+  "nota": "1ª rodada; medir no flanco."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2021,
+   2023
+  ],
+  "sistema": "Motor",
+  "item": "Óleo de motor — volume do cárter",
+  "especificacao": "SAE 5W-30 RN0720 (1ª rodada) · volume 8,6 L (troca com filtro, Autodoc) — outras fontes 8,0 L; 1ª rodada 8,0–8,9 L",
+  "quantidade": "8,6",
+  "unidade": "L",
+  "intervalo": "20.000 km / 12 meses",
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.autodoc.co.uk/car-parts/engine-oil-12094/renault/master/master-iii-box-fv/121779-2-3-dci-130-fwd-fv0m-fv0y-fv0j-fv02-fv03 ; https://oil4motor.com/en/vans-oil/RENAULT/Master-2.3-DCI-125-(M9T-672-676---92kW)-(Diesel)-(2011-)/2489 ; https://cdn.group.renault.com/ren/br/renault-new-cars/editorial/manuais-propietario21/Master-Manual-do-Proprietario_compressed.pdf ; https://cdn.group.renault.com/ren/br/renault-new-cars/editorial/2023/manuais/agosto/manual-proprietario-master-2023.pdf",
+  "nota": "Conflito NÃO resolvido: 8,0 / 8,6 / 8,9 L conforme a fonte (varia por versão do M9T). O manual do proprietário Master Brasil 2021 e 2023 (PDFs no cdn.group.renault.com) tem a capacidade exata — abrir a seção \"Capacidades\"."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2021,
+   2023
+  ],
+  "sistema": "Arrefecimento",
+  "item": "Líquido de arrefecimento",
+  "especificacao": "Renault Glaceol RX Type D (norma 41-01-001/S) · ~10 L (francemoteursutilitaires) / 11 L (Autodoc)",
+  "quantidade": "10–11",
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.francemoteursutilitaires.com/2026/04/18/liquide-refroidissement-master-3-type-preconise-par-renault-et-erreurs-a-eviter/ ; https://www.autodoc.co.uk/car-parts/engine-oil-12094/renault/master/master-iii-box-fv/121779-2-3-dci-130-fwd-fv0m-fv0y-fv0j-fv02-fv03 ; https://cdn.group.renault.com/ren/br/renault-new-cars/editorial/manuais-propietario21/Master-Manual-do-Proprietario_compressed.pdf",
+  "nota": "Duas fontes independentes, 10 × 11 L. Volume exato no manual do proprietário."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2021,
+   2023
+  ],
+  "sistema": "Transmissão",
+  "item": "Óleo do câmbio manual (PF6)",
+  "especificacao": "SAE 75W-80 — ELF/Total Tranself NFP 75W-80 (o site francês cita NFP; 1ª rodada citava NFJ) · ~2,2–2,8 L (PK6, conforme versão) / ≈2,7 L (1ª rodada)",
+  "quantidade": "2,2–2,8",
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.francemoteursutilitaires.com/2026/04/13/huile-boite-de-vitesse-pk6-renault-master-3-quel-type-et-quelle-capacite-choisir/ ; https://carrorac.com/oleo-transmissao/renault/master.html",
+  "nota": "Fontes descrevem a caixa como PK6 (Europa); no Brasil a Master 2.3 usa a PF6 (mesma família). NFP × NFJ: os dois são 75W-80 Renault — usar o que o manual do proprietário indicar."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2021,
+   2023
+  ],
+  "sistema": "Freios",
+  "item": "Pastilha de freio dianteira",
+  "especificacao": "OEM Renault 410604386R (Master 2.3 16V, 2014–2022, com sensor) · equivalentes SYL S2341, Bosch BPN980",
+  "quantidade": "1",
+  "unidade": "jogo",
+  "intervalo": null,
+  "codigo_ref": "410604386R · SYL 2341",
+  "status": "inferido",
+  "fonte": "https://www.ivemix.com.br/pastilha-freio-dianteiro-renault-nova-master-2-3-16v-dci-eletronica-2014-a-2021-410604386r/sku439 ; https://www.autopecascomp.com.br/pastilha-de-freio-dianteira-renault-master-2013-a-2022-syl-s2341/p ; https://www.freiomax.com.br/kit-pastilha-de-freio-traseira-dianteira-nova-master-2-3-2014-2015-2016-2017-2018-2019-2020-2021 ; https://peca.renault.com.br/pastilhas-de-freio/pastilha-freio-dianteira-x-440603321r-renault-master___cp277",
+  "nota": "A loja oficial Renault (peca.renault.com.br) anuncia a dianteira como 440603321R — divergência de código OEM (44060… costuma ser traseira). Conferir pelo chassi na loja Renault antes de comprar."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2021,
+   2023
+  ],
+  "sistema": "Freios",
+  "item": "Pastilha de freio traseira",
+  "especificacao": "SYL S2342 · Bosch BPN979 (Master 2.3, 2013–2024)",
+  "quantidade": "1",
+  "unidade": "jogo",
+  "intervalo": null,
+  "codigo_ref": "SYL 2342",
+  "status": "inferido",
+  "fonte": "https://www.autopecasmarques.com.br/pastilha-freio-traseiro-syl-renault-master-2-3-2013-a-2024/p/000171 ; https://www.freiomax.com.br/kit-pastilha-de-freio-traseira-dianteira-nova-master-2-3-2014-2015-2016-2017-2018-2019-2020-2021",
+  "nota": "Só varejo; OEM não apareceu."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2021,
+   2023
+  ],
+  "sistema": "Freios",
+  "item": "Disco de freio dianteiro/traseiro",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://peca.renault.com.br/pastilhas-de-freio/pastilha-freio-dianteira-x-440603321r-renault-master___cp277",
+  "nota": "Sem medida nem código nos trechos. Loja Renault (peca.renault.com.br) pelo chassi."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2021,
+   2023
+  ],
+  "sistema": "Cabine",
+  "item": "Palheta do limpador",
+  "especificacao": "26\" (650 mm) nos dois lados · OEM Renault 7701051903",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": "7701051903",
+  "status": "confirmado",
+  "fonte": "https://peca.renault.com.br/palheta-limpador-parabrisax-7701051903-renault-master___CP1103 ; https://www.cgmpecas.com/MLB-3364866977-par-palhetas-limpador-parabrisa-renault-master-2014-a-2022-_JM",
+  "nota": "Loja oficial Renault (código) + varejo (medida 26\"/26\"). Verificar se 2023 mantém o mesmo braço."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2021,
+   2023
+  ],
+  "sistema": "Cabine",
+  "item": "Lâmpada do farol",
+  "especificacao": "H7 (baixo)",
+  "quantidade": null,
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": null,
+  "nota": "Só menção genérica nos trechos; confirmar no manual do proprietário (tabela de lâmpadas)."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2021,
+   2023
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria 12 V (Ah)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://carrorac.com/bateria/renault/master.html",
+  "nota": "Não encontrado (a página carrorac de baterias não trouxe o valor no trecho). Ler a bateria instalada ou o manual."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2021,
+   2023
+  ],
+  "sistema": "Motor",
+  "item": "Correia de acessórios",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código nos trechos. Loja Renault pelo chassi / catálogo Gates."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2021,
+   2023
+  ],
+  "sistema": "Motor",
+  "item": "Filtro de combustível/óleo/ar — sem novidade",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Já confirmados na 1ª rodada (Tecfil PEL678 / PC947 / ARL5140 / ACP837)."
+ },
+ {
+  "modelo": "RENAULT | MASTER FUR L1",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Óleo de motor — volume do cárter",
+  "especificacao": "SAE 5W-30 RN0720 (1ª rodada) · volume 8,6 L (troca com filtro, Autodoc) — outras fontes 8,0 L; 1ª rodada 8,0–8,9 L",
+  "quantidade": "8,6",
+  "unidade": "L",
+  "intervalo": "20.000 km / 12 meses",
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.autodoc.co.uk/car-parts/engine-oil-12094/renault/master/master-iii-box-fv/121779-2-3-dci-130-fwd-fv0m-fv0y-fv0j-fv02-fv03 ; https://oil4motor.com/en/vans-oil/RENAULT/Master-2.3-DCI-125-(M9T-672-676---92kW)-(Diesel)-(2011-)/2489 ; https://cdn.group.renault.com/ren/br/renault-new-cars/editorial/manuais-propietario21/Master-Manual-do-Proprietario_compressed.pdf ; https://cdn.group.renault.com/ren/br/renault-new-cars/editorial/2023/manuais/agosto/manual-proprietario-master-2023.pdf",
+  "nota": "Conflito NÃO resolvido: 8,0 / 8,6 / 8,9 L conforme a fonte (varia por versão do M9T). O manual do proprietário Master Brasil 2021 e 2023 (PDFs no cdn.group.renault.com) tem a capacidade exata — abrir a seção \"Capacidades\"."
+ },
+ {
+  "modelo": "RENAULT | MASTER FUR L1",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Arrefecimento",
+  "item": "Líquido de arrefecimento",
+  "especificacao": "Renault Glaceol RX Type D (norma 41-01-001/S) · ~10 L (francemoteursutilitaires) / 11 L (Autodoc)",
+  "quantidade": "10–11",
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.francemoteursutilitaires.com/2026/04/18/liquide-refroidissement-master-3-type-preconise-par-renault-et-erreurs-a-eviter/ ; https://www.autodoc.co.uk/car-parts/engine-oil-12094/renault/master/master-iii-box-fv/121779-2-3-dci-130-fwd-fv0m-fv0y-fv0j-fv02-fv03 ; https://cdn.group.renault.com/ren/br/renault-new-cars/editorial/manuais-propietario21/Master-Manual-do-Proprietario_compressed.pdf",
+  "nota": "Duas fontes independentes, 10 × 11 L. Volume exato no manual do proprietário."
+ },
+ {
+  "modelo": "RENAULT | MASTER FUR L1",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Transmissão",
+  "item": "Óleo do câmbio manual (PF6)",
+  "especificacao": "SAE 75W-80 — ELF/Total Tranself NFP 75W-80 (o site francês cita NFP; 1ª rodada citava NFJ) · ~2,2–2,8 L (PK6, conforme versão) / ≈2,7 L (1ª rodada)",
+  "quantidade": "2,2–2,8",
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.francemoteursutilitaires.com/2026/04/13/huile-boite-de-vitesse-pk6-renault-master-3-quel-type-et-quelle-capacite-choisir/ ; https://carrorac.com/oleo-transmissao/renault/master.html",
+  "nota": "Fontes descrevem a caixa como PK6 (Europa); no Brasil a Master 2.3 usa a PF6 (mesma família). NFP × NFJ: os dois são 75W-80 Renault — usar o que o manual do proprietário indicar."
+ },
+ {
+  "modelo": "RENAULT | MASTER FUR L1",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Freios",
+  "item": "Pastilha de freio dianteira",
+  "especificacao": "OEM Renault 410604386R (Master 2.3 16V, 2014–2022, com sensor) · equivalentes SYL S2341, Bosch BPN980",
+  "quantidade": "1",
+  "unidade": "jogo",
+  "intervalo": null,
+  "codigo_ref": "410604386R · SYL 2341",
+  "status": "inferido",
+  "fonte": "https://www.ivemix.com.br/pastilha-freio-dianteiro-renault-nova-master-2-3-16v-dci-eletronica-2014-a-2021-410604386r/sku439 ; https://www.autopecascomp.com.br/pastilha-de-freio-dianteira-renault-master-2013-a-2022-syl-s2341/p ; https://www.freiomax.com.br/kit-pastilha-de-freio-traseira-dianteira-nova-master-2-3-2014-2015-2016-2017-2018-2019-2020-2021 ; https://peca.renault.com.br/pastilhas-de-freio/pastilha-freio-dianteira-x-440603321r-renault-master___cp277",
+  "nota": "A loja oficial Renault (peca.renault.com.br) anuncia a dianteira como 440603321R — divergência de código OEM (44060… costuma ser traseira). Conferir pelo chassi na loja Renault antes de comprar."
+ },
+ {
+  "modelo": "RENAULT | MASTER FUR L1",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Freios",
+  "item": "Pastilha de freio traseira",
+  "especificacao": "SYL S2342 · Bosch BPN979 (Master 2.3, 2013–2024)",
+  "quantidade": "1",
+  "unidade": "jogo",
+  "intervalo": null,
+  "codigo_ref": "SYL 2342",
+  "status": "inferido",
+  "fonte": "https://www.autopecasmarques.com.br/pastilha-freio-traseiro-syl-renault-master-2-3-2013-a-2024/p/000171 ; https://www.freiomax.com.br/kit-pastilha-de-freio-traseira-dianteira-nova-master-2-3-2014-2015-2016-2017-2018-2019-2020-2021",
+  "nota": "Só varejo; OEM não apareceu."
+ },
+ {
+  "modelo": "RENAULT | MASTER FUR L1",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Freios",
+  "item": "Disco de freio dianteiro/traseiro",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://peca.renault.com.br/pastilhas-de-freio/pastilha-freio-dianteira-x-440603321r-renault-master___cp277",
+  "nota": "Sem medida nem código nos trechos. Loja Renault (peca.renault.com.br) pelo chassi."
+ },
+ {
+  "modelo": "RENAULT | MASTER FUR L1",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Cabine",
+  "item": "Palheta do limpador",
+  "especificacao": "26\" (650 mm) nos dois lados · OEM Renault 7701051903",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": "7701051903",
+  "status": "confirmado",
+  "fonte": "https://peca.renault.com.br/palheta-limpador-parabrisax-7701051903-renault-master___CP1103 ; https://www.cgmpecas.com/MLB-3364866977-par-palhetas-limpador-parabrisa-renault-master-2014-a-2022-_JM",
+  "nota": "Loja oficial Renault (código) + varejo (medida 26\"/26\"). Verificar se 2023 mantém o mesmo braço."
+ },
+ {
+  "modelo": "RENAULT | MASTER FUR L1",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Cabine",
+  "item": "Lâmpada do farol",
+  "especificacao": "H7 (baixo)",
+  "quantidade": null,
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": null,
+  "nota": "Só menção genérica nos trechos; confirmar no manual do proprietário (tabela de lâmpadas)."
+ },
+ {
+  "modelo": "RENAULT | MASTER FUR L1",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria 12 V (Ah)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://carrorac.com/bateria/renault/master.html",
+  "nota": "Não encontrado (a página carrorac de baterias não trouxe o valor no trecho). Ler a bateria instalada ou o manual."
+ },
+ {
+  "modelo": "RENAULT | MASTER FUR L1",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Correia de acessórios",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Sem código nos trechos. Loja Renault pelo chassi / catálogo Gates."
+ },
+ {
+  "modelo": "RENAULT | MASTER FUR L1",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Filtro de combustível/óleo/ar — sem novidade",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Já confirmados na 1ª rodada (Tecfil PEL678 / PC947 / ARL5140 / ACP837)."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2023
+  ],
+  "sistema": "Pós-tratamento",
+  "item": "Tanque de Arla 32 (SCR, linha 2023)",
+  "especificacao": "Reservatório de Arla 32 — OEM Renault 172A22038R (Master 2.3 16V 2023–2025). Capacidade em litros NÃO encontrada",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": "172A22038R",
+  "status": "inferido",
+  "fonte": "https://loja.navesa.com.br/tanque-de-arla-32-renault-para-renault-master-2-3-16v-2023-ate-2025-cod-172a22038r?_pid=v2bbc ; https://www.autossegredos.com.br/segredos/novo-renault-master-2023-reestilizado-ja-e-produzido/ ; https://cdn.group.renault.com/ren/br/renault-new-cars/editorial/2023/manuais/agosto/manual-proprietario-master-2023.pdf",
+  "nota": "Autos Segredos confirma que a linha 2023 ganhou tanque de Arla; concessionária Navesa vende o tanque com o código. Volume do tanque e filtro de ureia: manual do proprietário 2023."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2023
+  ],
+  "sistema": "Pós-tratamento",
+  "item": "Arla 32 — consumo",
+  "especificacao": "≈5 L de Arla a cada 100 L de diesel (regra geral SCR)",
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://lubraquim.com.br/lubrarla32/",
+  "nota": "Regra genérica de fornecedor de Arla, não específica da Master."
+ },
+ {
+  "modelo": "RENAULT | MASTER FURGÃO L1H1",
+  "anos": [
+   2023
+  ],
+  "sistema": "Pós-tratamento",
+  "item": "Filtro de ureia (SCR)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado para a Master 2023 (o único resultado era filtro Iveco Stralis). Loja Renault pelo chassi."
+ },
+ {
+  "modelo": "IVECO | DAILY 30-130VAN",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Óleo de motor — volume",
+  "especificacao": "SAE 5W-30 IVECO 18-1811 SC1 (1ª rodada) · 7,0 L (manualdooleo — \"varia por motorização/ano\")",
+  "quantidade": "7,0",
+  "unidade": "L",
+  "intervalo": "30.000 km / 12 meses",
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.manualdooleo.com.br/tabela-oleo/iveco/daily ; https://iveco.com.br/manuais/assets/files/daily/manutencao/Manual_Uso_Manutencao_DAILY_E6_Ed01_PN_5803345473.pdf",
+  "nota": "Volume só de fonte secundária. O Manual de Uso e Manutenção Daily (Euro 6 Ed.01 PN 5803345473 em iveco.com.br/manuais; Ed.4 e Ed.5 em iveco.com/Brasil) tem a tabela de capacidades."
+ },
+ {
+  "modelo": "IVECO | DAILY 30-130VAN",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Transmissão",
+  "item": "Óleo do câmbio manual (6 marchas)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://www.auto-doc.pt/pecas-sobresselentes/oleo-de-caixa-de-velocidades-e-oleo-de-diferencial-11915/iveco/daily/daily-vi-caixa-combi/144160-30-130 ; https://iveco.com.br/manuais/assets/files/daily/manutencao/Manual_Uso_Manutencao_DAILY_E6_Ed01_PN_5803345473.pdf",
+  "nota": "Norma/viscosidade e volume NÃO encontrados (Autodoc só dá \"5–10 L\" genérico e intervalo de 7 anos). Manual de Uso e Manutenção Daily → \"Reabastecimentos\" (Tutela é a linha de referência IVECO)."
+ },
+ {
+  "modelo": "IVECO | DAILY 30-130VAN",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Eixo/Diferencial",
+  "item": "Óleo do diferencial (eixo traseiro)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://iveco.com.br/manuais/assets/files/daily/manutencao/Manual_Uso_Manutencao_DAILY_E6_Ed01_PN_5803345473.pdf",
+  "nota": "Não encontrado. Mesma seção do manual IVECO."
+ },
+ {
+  "modelo": "IVECO | DAILY 30-130VAN",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Arrefecimento",
+  "item": "Líquido de arrefecimento — norma e volume",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://iveco.com.br/manuais/assets/files/daily/manutencao/Manual_Uso_Manutencao_DAILY_E6_Ed01_PN_5803345473.pdf",
+  "nota": "Não encontrado. Manual IVECO (Paraflu é a referência da linha)."
+ },
+ {
+  "modelo": "IVECO | DAILY 30-130VAN",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Rodas/Pneus",
+  "item": "Pneus",
+  "especificacao": "Equipamento original Continental VanContact AP em 195/75 R16C, 205/75 R16C ou 225/75 R16C conforme a versão — a medida do 30-130 Furgão não veio no trecho",
+  "quantidade": "4 + estepe",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.conti.com.br/about-us/why-continental/original-equipment/pneu-original-iveco/pneu-original-iveco-daily/ ; https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0079-20 LAMINA_TECNICA_DAILY_FURGAO_30-130_PO_bx.pdf",
+  "nota": "Continental (OE oficial) confirma as três medidas da família Daily. Lâmina técnica INL-0079-20 do 30-130 Furgão (iveco.com/Brasil) diz qual é — abrir; ou ler no flanco."
+ },
+ {
+  "modelo": "IVECO | DAILY 30-130VAN",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Freios",
+  "item": "Pastilha de freio dianteira",
+  "especificacao": "OEM IVECO 42555881 / 42561355 (com sensor; Daily 30S13/35S14/…/35-150) · Fras-le PD/189",
+  "quantidade": "1",
+  "unidade": "jogo",
+  "intervalo": null,
+  "codigo_ref": "42555881 · 42561355 · Fras-le PD/189",
+  "status": "inferido",
+  "fonte": "https://www.becap.com.br/freios/pastilha-de-freio-dianteiro/jogo-pastilha-freio-dianteira-com-sensor-daily-30s1335s1445s1445s1655c16351504515055170-42555881 ; https://www.ivemix.com.br/pastilha-freio-dianteiro-ou-traseiro-daily-3510-1997-a-2007/traseira-daily-35s14-2008-a-2018/daily-my-35-150-apos-2019-1906401/sku397",
+  "nota": "Varejo especializado IVECO (Becap, Ivemix). Listagem inclui 30S13, que é a geração anterior — confirmar aplicação no 30-130 pelo chassi."
+ },
+ {
+  "modelo": "IVECO | DAILY 30-130VAN",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Freios",
+  "item": "Pastilha de freio traseira",
+  "especificacao": "OEM IVECO 42576680 (com sensor, Nova Daily / Daily MY)",
+  "quantidade": "1",
+  "unidade": "jogo",
+  "intervalo": null,
+  "codigo_ref": "42576680",
+  "status": "inferido",
+  "fonte": "https://www.vpereck.com.br/freio/pastilha-de-freio-traseiro-com-sensor-para-iveco-nova-dailydaily-my-42576680",
+  "nota": "Varejo (VPereck). Confirmar pelo chassi."
+ },
+ {
+  "modelo": "IVECO | DAILY 30-130VAN",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Freios",
+  "item": "Discos de freio",
+  "especificacao": "Freio a disco nas 4 rodas — ventilado na dianteira, sólido na traseira (lâmina Daily 35-150; mesma família)",
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0054-20%20Lamina%20Tecnica%20Daily%2035-150_PO_bx.pdf",
+  "nota": "Diâmetro e código não apareceram. Lâmina do 30-130 / catálogo Fremax."
+ },
+ {
+  "modelo": "IVECO | DAILY 30-130VAN",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Cabine",
+  "item": "Palheta do limpador",
+  "especificacao": "Vetor PVT24R listada para Iveco Daily (compartilha com Master e Volvo VM)",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": "Vetor PVT24R",
+  "status": "inferido",
+  "fonte": "https://pinkpecas.com.br/produtos/palheta-do-limpador-de-parabrisa-renault-master-volvo-vm-iveco-daily-vetor-pvt24r/",
+  "nota": "Só varejo; medida em polegadas não veio no trecho (o \"24\" do código sugere 24\")."
+ },
+ {
+  "modelo": "IVECO | DAILY 30-130VAN",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria 12 V (Ah)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado. Ler na bateria instalada ou lâmina técnica."
+ },
+ {
+  "modelo": "IVECO | DAILY 30-130VAN",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Cabine",
+  "item": "Lâmpadas",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://iveco.com.br/manuais/assets/files/daily/manutencao/Manual_Uso_Manutencao_DAILY_E6_Ed01_PN_5803345473.pdf",
+  "nota": "Não encontrado. Manual IVECO (tabela de lâmpadas)."
+ },
+ {
+  "modelo": "IVECO | DAILY 30-130VAN",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Motor",
+  "item": "Correia de acessórios — código",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado (1ª rodada só confirmou comando por correia dentada)."
+ },
+ {
+  "modelo": "IVECO | DAILY 30-130VAN",
+  "anos": [
+   2021,
+   2022
+  ],
+  "sistema": "Pós-tratamento",
+  "item": "Arla 32",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_aplica",
+  "fonte": null,
+  "nota": "Daily 30-130 Euro 5 com EGR — sem Arla (1ª rodada, confirmado)."
+ },
+ {
+  "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+  "anos": [
+   2023
+  ],
+  "sistema": "Motor",
+  "item": "Óleo de motor — volume",
+  "especificacao": "SAE 5W-30 IVECO 18-1811 SC1 (1ª rodada) · 7,0 L (manualdooleo — \"varia por motorização/ano\")",
+  "quantidade": "7,0",
+  "unidade": "L",
+  "intervalo": "30.000 km / 12 meses",
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.manualdooleo.com.br/tabela-oleo/iveco/daily ; https://iveco.com.br/manuais/assets/files/daily/manutencao/Manual_Uso_Manutencao_DAILY_E6_Ed01_PN_5803345473.pdf",
+  "nota": "Volume só de fonte secundária. O Manual de Uso e Manutenção Daily (Euro 6 Ed.01 PN 5803345473 em iveco.com.br/manuais; Ed.4 e Ed.5 em iveco.com/Brasil) tem a tabela de capacidades."
+ },
+ {
+  "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+  "anos": [
+   2023
+  ],
+  "sistema": "Transmissão",
+  "item": "Óleo do câmbio manual (6 marchas)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://www.auto-doc.pt/pecas-sobresselentes/oleo-de-caixa-de-velocidades-e-oleo-de-diferencial-11915/iveco/daily/daily-vi-caixa-combi/144160-30-130 ; https://iveco.com.br/manuais/assets/files/daily/manutencao/Manual_Uso_Manutencao_DAILY_E6_Ed01_PN_5803345473.pdf",
+  "nota": "Norma/viscosidade e volume NÃO encontrados (Autodoc só dá \"5–10 L\" genérico e intervalo de 7 anos). Manual de Uso e Manutenção Daily → \"Reabastecimentos\" (Tutela é a linha de referência IVECO)."
+ },
+ {
+  "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+  "anos": [
+   2023
+  ],
+  "sistema": "Eixo/Diferencial",
+  "item": "Óleo do diferencial (eixo traseiro)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://iveco.com.br/manuais/assets/files/daily/manutencao/Manual_Uso_Manutencao_DAILY_E6_Ed01_PN_5803345473.pdf",
+  "nota": "Não encontrado. Mesma seção do manual IVECO."
+ },
+ {
+  "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+  "anos": [
+   2023
+  ],
+  "sistema": "Arrefecimento",
+  "item": "Líquido de arrefecimento — norma e volume",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://iveco.com.br/manuais/assets/files/daily/manutencao/Manual_Uso_Manutencao_DAILY_E6_Ed01_PN_5803345473.pdf",
+  "nota": "Não encontrado. Manual IVECO (Paraflu é a referência da linha)."
+ },
+ {
+  "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+  "anos": [
+   2023
+  ],
+  "sistema": "Rodas/Pneus",
+  "item": "Pneus",
+  "especificacao": "Equipamento original Continental VanContact AP em 195/75 R16C, 205/75 R16C ou 225/75 R16C conforme a versão — a medida do 30-130 Furgão não veio no trecho",
+  "quantidade": "4 + estepe",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.conti.com.br/about-us/why-continental/original-equipment/pneu-original-iveco/pneu-original-iveco-daily/ ; https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0079-20 LAMINA_TECNICA_DAILY_FURGAO_30-130_PO_bx.pdf",
+  "nota": "Continental (OE oficial) confirma as três medidas da família Daily. Lâmina técnica INL-0079-20 do 30-130 Furgão (iveco.com/Brasil) diz qual é — abrir; ou ler no flanco."
+ },
+ {
+  "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+  "anos": [
+   2023
+  ],
+  "sistema": "Freios",
+  "item": "Pastilha de freio dianteira",
+  "especificacao": "OEM IVECO 42555881 / 42561355 (com sensor; Daily 30S13/35S14/…/35-150) · Fras-le PD/189",
+  "quantidade": "1",
+  "unidade": "jogo",
+  "intervalo": null,
+  "codigo_ref": "42555881 · 42561355 · Fras-le PD/189",
+  "status": "inferido",
+  "fonte": "https://www.becap.com.br/freios/pastilha-de-freio-dianteiro/jogo-pastilha-freio-dianteira-com-sensor-daily-30s1335s1445s1445s1655c16351504515055170-42555881 ; https://www.ivemix.com.br/pastilha-freio-dianteiro-ou-traseiro-daily-3510-1997-a-2007/traseira-daily-35s14-2008-a-2018/daily-my-35-150-apos-2019-1906401/sku397",
+  "nota": "Varejo especializado IVECO (Becap, Ivemix). Listagem inclui 30S13, que é a geração anterior — confirmar aplicação no 30-130 pelo chassi."
+ },
+ {
+  "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+  "anos": [
+   2023
+  ],
+  "sistema": "Freios",
+  "item": "Pastilha de freio traseira",
+  "especificacao": "OEM IVECO 42576680 (com sensor, Nova Daily / Daily MY)",
+  "quantidade": "1",
+  "unidade": "jogo",
+  "intervalo": null,
+  "codigo_ref": "42576680",
+  "status": "inferido",
+  "fonte": "https://www.vpereck.com.br/freio/pastilha-de-freio-traseiro-com-sensor-para-iveco-nova-dailydaily-my-42576680",
+  "nota": "Varejo (VPereck). Confirmar pelo chassi."
+ },
+ {
+  "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+  "anos": [
+   2023
+  ],
+  "sistema": "Freios",
+  "item": "Discos de freio",
+  "especificacao": "Freio a disco nas 4 rodas — ventilado na dianteira, sólido na traseira (lâmina Daily 35-150; mesma família)",
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.iveco.com/Brasil/collections/technical_sheets/Documents/INL-0054-20%20Lamina%20Tecnica%20Daily%2035-150_PO_bx.pdf",
+  "nota": "Diâmetro e código não apareceram. Lâmina do 30-130 / catálogo Fremax."
+ },
+ {
+  "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+  "anos": [
+   2023
+  ],
+  "sistema": "Cabine",
+  "item": "Palheta do limpador",
+  "especificacao": "Vetor PVT24R listada para Iveco Daily (compartilha com Master e Volvo VM)",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": "Vetor PVT24R",
+  "status": "inferido",
+  "fonte": "https://pinkpecas.com.br/produtos/palheta-do-limpador-de-parabrisa-renault-master-volvo-vm-iveco-daily-vetor-pvt24r/",
+  "nota": "Só varejo; medida em polegadas não veio no trecho (o \"24\" do código sugere 24\")."
+ },
+ {
+  "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+  "anos": [
+   2023
+  ],
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria 12 V (Ah)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado. Ler na bateria instalada ou lâmina técnica."
+ },
+ {
+  "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+  "anos": [
+   2023
+  ],
+  "sistema": "Cabine",
+  "item": "Lâmpadas",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://iveco.com.br/manuais/assets/files/daily/manutencao/Manual_Uso_Manutencao_DAILY_E6_Ed01_PN_5803345473.pdf",
+  "nota": "Não encontrado. Manual IVECO (tabela de lâmpadas)."
+ },
+ {
+  "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+  "anos": [
+   2023
+  ],
+  "sistema": "Motor",
+  "item": "Correia de acessórios — código",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não encontrado (1ª rodada só confirmou comando por correia dentada)."
+ },
+ {
+  "modelo": "MERCEDES BENZ | IVECO/DAILY 30-130",
+  "anos": [
+   2023
+  ],
+  "sistema": "Pós-tratamento",
+  "item": "Arla 32",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_aplica",
+  "fonte": null,
+  "nota": "Daily 30-130 Euro 5 com EGR — sem Arla (1ª rodada, confirmado)."
+ },
+ {
+  "modelo": "NILFISK | CS 7010",
+  "anos": null,
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria de tração / fonte de energia",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://nilfisk.com.br/lavadoras-de-pisos/lavadora-de-pisos-combinada-cs7010-glp/ ; https://www.nilfisk.com/en-us/professional/products/floor-cleaning/combination-machines/cs7010-48b+56511783/ ; https://www.nilfisk.com/en-us/professional/products/floor-cleaning/combination-machines/cs7010-48lp+56511770/",
+  "nota": "DEPENDE DA VERSÃO: CS7010 existe em híbrida GLP (vendida no Brasil como \"CS7010 GLP\"), híbrida diesel e ePower a bateria 48 V (CS7010 48B). Ah não encontrado. Nilfisk Brasil anuncia a CS7010 GLP; o site global lista 48B (bateria 48 V), 48LP (GLP) e 48D (diesel). Conferir na plaqueta qual é a das 3 unidades — muda tudo (bateria de tração × motor a combustão, óleo, filtros)."
+ },
+ {
+  "modelo": "NILFISK | CS 7010",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Escovas laterais de varrição",
+  "especificacao": "Duas escovas laterais de série (varrem toda a largura do rodo)",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "confirmado",
+  "fonte": "https://www.nilfisk.com/en-us/professional/products/floor-cleaning/combination-machines/cs7010-48b+56511783/ ; https://nilfisk.com.br/lavadoras-de-pisos/lavadora-de-pisos-combinada-cs7010-glp/",
+  "nota": "Diâmetro/código não apareceram — diagrama de peças CS7010 (usaclean)."
+ },
+ {
+  "modelo": "NILFISK | CS 7010",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Escova/rolo principal — medida e código",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://shop.usaclean.com/parts-and-supplies/nilfisk-advance/cs7010/",
+  "nota": "Não encontrado. Diagrama de peças CS7010 (shop.usaclean.com)."
+ },
+ {
+  "modelo": "NILFISK | CS 7010",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Lâmina do rodo (borracha) — medida e código",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://shop.usaclean.com/parts-and-supplies/nilfisk-advance/cs7010/",
+  "nota": "Não encontrado (rodo \"breakaway\", retrátil). Diagrama de peças CS7010."
+ },
+ {
+  "modelo": "NILFISK | CS 7010",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Caçamba de detritos",
+  "especificacao": "285 L, descarga alta",
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "confirmado",
+  "fonte": "https://www.nilfisk.com/en-us/professional/products/floor-cleaning/combination-machines/cs7010-48b+56511783/ ; https://nilfisk.com.br/lavadoras-de-pisos/lavadora-de-pisos-combinada-cs7010-glp/",
+  "nota": "Dado de catálogo Nilfisk (útil para dimensionar sacos/filtro do painel)."
+ },
+ {
+  "modelo": "NILFISK | CS 7010",
+  "anos": null,
+  "sistema": "Admissão de ar",
+  "item": "Filtro do painel de poeira (DustGuard) / filtro do motor de aspiração",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://shop.usaclean.com/parts-and-supplies/nilfisk-advance/cs7010/",
+  "nota": "Sem código. Diagrama de peças."
+ },
+ {
+  "modelo": "NILFISK | CS 7010",
+  "anos": null,
+  "sistema": "Elétrica/Bateria",
+  "item": "Carregador / fusíveis / correias",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://www.nilfisk.com/en-us/professional/products/floor-cleaning/combination-machines/cs7010-48b+56511783/",
+  "nota": "Não encontrado. Manual CS7010 no site Nilfisk."
+ },
+ {
+  "modelo": "NILFISK | SC600",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Identificação do modelo",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://shop.usaclean.com/parts-and-supplies/nilfisk-advance/sc6000/ ; https://shop.usaclean.com/parts-and-supplies/nilfisk-advance/liberty-sc60/",
+  "nota": "Nenhum resultado para \"SC600\": os modelos Nilfisk encontrados são SC500, SC530, SC6000 (ride-on 36 V) e Liberty SC60. Provável erro de cadastro. Ler a plaqueta (modelo + part number 56xxxxxx). Se for SC6000, a bateria é 36 V e há lista de peças (usaclean); se for SC500, é 24 V."
+ },
+ {
+  "modelo": "NILFISK | SC600",
+  "anos": null,
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria de tração (V × Ah)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Depende do modelo real — ver linha de identificação."
+ },
+ {
+  "modelo": "NILFISK | SC600",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Escova/disco e lâmina do rodo",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Depende do modelo real."
+ },
+ {
+  "modelo": "NILFISK | VIPER AS7690T US 30",
+  "anos": null,
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria de tração",
+  "especificacao": "2 × 12 V 215 Ah úmidas (padrão) — versões com 312 Ah AGM (AS7690T-312) e TPPL; sistema 24 V",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "confirmado",
+  "fonte": "https://www.nilfisk.com/en-us/products/floor-cleaning/scrubbers/walk-behind-scrubbers/large/as7690t-with-312-ah-agm-batts-as7690t-312/p_AS7690T-312/ ; https://www.nilfisk.com/global/professional/products/floor-cleaning/scrubber-dryers/walk-behind-scrubber-and-dryers/large/as7690t-with-tppl-batteries+AS7690T-TPPL/ ; https://www.cleanfreak.com/products/viper-as7690t-walk-behind-30-inch-automatic-floor-scrubber ; https://www.sweepscrub.com/products/viper-as7690t-30-disc-floor-walk-behind-floor-scrubber-new",
+  "nota": "Nilfisk oficial (AS7690T-312 e AS7690T-TPPL) + dois revendedores: 2 baterias de 215 Ah WET de série. Conferir na máquina se veio WET (precisa água) ou AGM/TPPL (selada)."
+ },
+ {
+  "modelo": "NILFISK | VIPER AS7690T US 30",
+  "anos": null,
+  "sistema": "Elétrica/Bateria",
+  "item": "Água desmineralizada",
+  "especificacao": "Só se a bateria for WET (chumbo-ácido ventilada); AGM/TPPL não usa",
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.cleanfreak.com/products/viper-as7690t-walk-behind-30-inch-automatic-floor-scrubber",
+  "nota": "Ver tipo de bateria instalada."
+ },
+ {
+  "modelo": "NILFISK | VIPER AS7690T US 30",
+  "anos": null,
+  "sistema": "Elétrica/Bateria",
+  "item": "Carregador",
+  "especificacao": "Carregador de bordo 25 A",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "confirmado",
+  "fonte": "https://www.cleanfreak.com/products/viper-as7690t-walk-behind-30-inch-automatic-floor-scrubber ; https://www.sweepscrub.com/products/viper-as7690t-30-disc-floor-walk-behind-floor-scrubber-new",
+  "nota": "Dois revendedores citam o mesmo 25 A de bordo."
+ },
+ {
+  "modelo": "NILFISK | VIPER AS7690T US 30",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Escova / disco (pad driver)",
+  "especificacao": "2 × 15\" (38 cm) — faixa de 30\" (76 cm); motores 2/3 HP, 200 rpm",
+  "quantidade": "2",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "confirmado",
+  "fonte": "https://www.cleanfreak.com/products/viper-as7690t-walk-behind-30-inch-automatic-floor-scrubber ; https://www.sweepscrub.com/products/viper-as7690t-30-disc-floor-walk-behind-floor-scrubber-new ; https://www.nilfisk.com/global/professional/products/floor-cleaning/scrubber-dryers/walk-behind-scrubber-and-dryers/large/as7690t-with-tppl-batteries+AS7690T-TPPL/",
+  "nota": "Discos/pads de 15\" (usar pad de 15\" ou escova 15\"). Código Nilfisk/Viper no diagrama usaclean."
+ },
+ {
+  "modelo": "NILFISK | VIPER AS7690T US 30",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Rodo — largura",
+  "especificacao": "37\" (95 cm), lâmina removível sem ferramenta",
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "confirmado",
+  "fonte": "https://www.cleanfreak.com/products/viper-as7690t-walk-behind-30-inch-automatic-floor-scrubber ; https://www.nilfisk.com/global/professional/products/floor-cleaning/scrubber-dryers/walk-behind-scrubber-and-dryers/large/as7690t-with-tppl-batteries+AS7690T-TPPL/",
+  "nota": "Código da borracha não apareceu — diagrama de peças AS7690T (usaclean)."
+ },
+ {
+  "modelo": "NILFISK | VIPER AS7690T US 30",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Lâmina do rodo — código",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://shop.usaclean.com/parts-and-supplies/viper/as7690t/",
+  "nota": "Diagrama de peças AS7690T."
+ },
+ {
+  "modelo": "NILFISK | VIPER AS7690T US 30",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Tanques",
+  "especificacao": "Solução 85 L · recuperação 90 L",
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "confirmado",
+  "fonte": "https://www.cleanfreak.com/products/viper-as7690t-walk-behind-30-inch-automatic-floor-scrubber",
+  "nota": "Útil para dosagem de detergente."
+ },
+ {
+  "modelo": "NILFISK | VIPER AS7690T US 30",
+  "anos": null,
+  "sistema": "Admissão de ar",
+  "item": "Filtro do motor de aspiração / fusíveis",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "https://shop.usaclean.com/parts-and-supplies/viper/as7690t/",
+  "nota": "Sem código. Diagrama de peças."
+ },
+ {
+  "modelo": "NILFISK | SW 750B",
+  "anos": null,
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria de tração (V × Ah)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "NÃO PESQUISADO — a cota de buscas da sessão acabou antes deste modelo. Fonte: nilfisk.com.br (varredeira SW750) e diagrama usaclean SW750."
+ },
+ {
+  "modelo": "NILFISK | SW 750B",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Escova principal / lateral — medida e código",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não pesquisado (cota)."
+ },
+ {
+  "modelo": "NILFISK | SW 750B",
+  "anos": null,
+  "sistema": "Admissão de ar",
+  "item": "Filtro do painel de poeira",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não pesquisado (cota)."
+ },
+ {
+  "modelo": "TENNANT | M20",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Fonte de energia",
+  "especificacao": "Motor a combustão — versões GLP (LP) e diesel; não é máquina a bateria de tração",
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "inferido",
+  "fonte": "https://www.tennantco.com/en_us/1/machines/sweeper-scrubbers/product.m20.ride-on-sweeper-scrubber.2000086.html ; https://www.tennantco.com/content/dam/tennant/tennantco/products/machines/scrubber-sweepers%20riders/M20/m20-brochure-en-noam.pdf",
+  "nota": "Trechos citam modelos LP; o M20 é varredeira-lavadora integrada a combustão (a bateria é só 12 V de partida). Conferir na plaqueta GLP × diesel — muda óleo/filtros. Manual de serviço M20/M30 (S/N 008000-) disponível em PDF (cloudfront)."
+ },
+ {
+  "modelo": "TENNANT | M20",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Escova principal (cilíndrica)",
+  "especificacao": "Escovas cilíndricas — faixa de 40\" (1.020 mm), 480 rpm, pressão até 177 kg",
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "confirmado",
+  "fonte": "https://www.tennantco.com/en_us/1/machines/sweeper-scrubbers/product.m20.ride-on-sweeper-scrubber.2000086.html ; https://www.tennantco.com/content/dam/tennant/tennantco/products/machines/scrubber-sweepers%20riders/M20/m20-brochure-en-noam.pdf",
+  "nota": "Comprimento/código da escova não apareceram — manual de peças Tennant M20."
+ },
+ {
+  "modelo": "TENNANT | M20",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Escova lateral",
+  "especificacao": "Lateral de lavagem (faixa 54\"/1.370 mm) ou de varrição (56\"/1.420 mm)",
+  "quantidade": "1",
+  "unidade": "un",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "confirmado",
+  "fonte": "https://www.tennantco.com/en_us/1/machines/sweeper-scrubbers/product.m20.ride-on-sweeper-scrubber.2000086.html",
+  "nota": "Código não encontrado."
+ },
+ {
+  "modelo": "TENNANT | M20",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Rodo",
+  "especificacao": "Dura-Track parabólico, acesso sem ferramenta",
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "confirmado",
+  "fonte": "https://www.tennantco.com/en_us/1/machines/sweeper-scrubbers/product.m20.ride-on-sweeper-scrubber.2000086.html",
+  "nota": "Medida/código da borracha: manual de peças."
+ },
+ {
+  "modelo": "TENNANT | M20",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Tanques",
+  "especificacao": "Solução 212 L · recuperação 276 L (+61 L câmara de desumidificação)",
+  "quantidade": null,
+  "unidade": "L",
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "confirmado",
+  "fonte": "https://www.tennantco.com/en_us/1/machines/sweeper-scrubbers/product.m20.ride-on-sweeper-scrubber.2000086.html",
+  "nota": null
+ },
+ {
+  "modelo": "TENNANT | M20",
+  "anos": null,
+  "sistema": "Hidráulico",
+  "item": "Óleo hidráulico (sistema MaxPro² de acionamento das escovas)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "http://d2z4qs2e3spnc1.cloudfront.net/product_file/file/2753/tennant-m20-rider-floor-sweeper-scrubber-service-manual-sn-008000-up.pdf",
+  "nota": "Tipo/volume não apareceram — manual de serviço M20/M30."
+ },
+ {
+  "modelo": "TENNANT | M20",
+  "anos": null,
+  "sistema": "Admissão de ar",
+  "item": "Filtro do painel de poeira / filtro de ar do motor",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "http://d2z4qs2e3spnc1.cloudfront.net/product_file/file/2753/tennant-m20-rider-floor-sweeper-scrubber-service-manual-sn-008000-up.pdf",
+  "nota": "Não encontrado — manual de peças."
+ },
+ {
+  "modelo": "TENNANT | M20",
+  "anos": null,
+  "sistema": "Motor",
+  "item": "Óleo de motor / filtros / vela (se GLP)",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": "http://d2z4qs2e3spnc1.cloudfront.net/product_file/file/2753/tennant-m20-rider-floor-sweeper-scrubber-service-manual-sn-008000-up.pdf",
+  "nota": "Não encontrado — depende da versão (GLP × diesel); manual de serviço."
+ },
+ {
+  "modelo": "ALFA | A650",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Identificação do modelo",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "NÃO PESQUISADO — cota de buscas esgotada antes deste modelo. \"Alfa\" é marca brasileira de lavadoras; conferir plaqueta (modelo/tensão) e o site do fabricante."
+ },
+ {
+  "modelo": "ALFA | A650",
+  "anos": null,
+  "sistema": "Elétrica/Bateria",
+  "item": "Bateria de tração",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não pesquisado (cota)."
+ },
+ {
+  "modelo": "ALFA | A650",
+  "anos": null,
+  "sistema": "Limpeza (escovas/rodos)",
+  "item": "Escova/disco e lâmina do rodo",
+  "especificacao": null,
+  "quantidade": null,
+  "unidade": null,
+  "intervalo": null,
+  "codigo_ref": null,
+  "status": "nao_encontrado",
+  "fonte": null,
+  "nota": "Não pesquisado (cota)."
+ }
+]

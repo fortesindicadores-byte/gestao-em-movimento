@@ -1,0 +1,43 @@
+name: Catalogo Carga
+
+# docs/catalogo/*.json → cat_item · cat_modelo · cat_aplicacao · cat_sinonimo.
+# Roda sob demanda e a cada push que mexa em docs/catalogo/ (o JSON no
+# repositório é a fonte; o banco é a cópia que o painel lê primeiro).
+on:
+  workflow_dispatch:
+    inputs:
+      dry:
+        description: "só contar, não gravar"
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches: [main]
+    paths: ['docs/catalogo/**']
+
+concurrency:
+  group: catalogo-carga
+  cancel-in-progress: false
+
+jobs:
+  carga:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Carregar
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          CATALOGO_DRY: ${{ github.event.inputs.dry == 'true' && '1' || '' }}
+        run: node scripts/catalogo-carga.mjs
+      - name: Avisar por e-mail se falhar
+        if: failure()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          MAIL_FROM:      ${{ vars.MAIL_FROM }}
+          MAIL_TO:        ${{ vars.MAIL_TO }}
+          WORKFLOW:       ${{ github.workflow }}
+          RUN_URL:        ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash scripts/avisa-falha.sh
