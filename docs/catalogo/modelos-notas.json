@@ -4,7 +4,7 @@
  "VOLKSWAGEN | VW/26.260 CRM 6X2 4P": "É o Constellation 26.260 6x2 2025 (Euro 6/P8, SCR com Arla) — com os 66 do outro cadastro são 87 ativos, o maior grupo da frota.",
  "VOLKSWAGEN | VW CONSTELLATION 26.260": "2022 é Euro 5 (EGR, SEM Arla); 2023 e 2025 são P8/Euro 6 (SCR, COM Arla) — mesmo modelo, consumível diferente por ano.",
  "VOLKSWAGEN | DELIVERY 18.210": "Cadastrado como Delivery, mas o 18.210 é Constellation (D08 4 cil., SCR com Arla).",
- "VOLKSWAGEN | VW 18.310": "Modelo não existe na linha VWCO atual (há 18.210 e 18.320; o único 18.310 é o Titan dos anos 2000). Provável erro de cadastro — ler o chassi.",
+ "VOLKSWAGEN | VW 18.310": "Modelo não existe na linha VWCO de 2025 — é o 18.320 (D0836, 320 cv). Provável erro de cadastro; ler o chassi.",
  "VOLKSWAGEN | VW DELIVERY 14": "e-Delivery 14, ELÉTRICO — sem óleo de motor, sem combustível, sem Arla. Não entra nos indicadores de km/L.",
  "VOLKSWAGEN | CONSTELLATION 19330": "Apesar do nome Constellation, o motor é Cummins ISL 8,9 L (não MAN D08) — óleo e filtros seguem a linha Cummins.",
  "VOLKSWAGEN | MAN TGX 29.480": "Ano 2025 não bate com o TGX lançado em 2015 — conferir se é Euro 5 usado ou Euro 6.",
@@ -35,5 +35,7 @@
  "BOVENAU | MACACO PNEUMATICO": "Sem modelo (MTP-xx) nem capacidade no cadastro. A linha hidropneumática exige 7 bar / 100 psi no engate.",
  "NILFISK | SC600": "'SC600' não existe nos catálogos Nilfisk (SC500 24 V, SC6000 36 V, Liberty SC60) — erro de cadastro.",
  "NILFISK | CS 7010": "Três versões (GLP híbrida, diesel, 48 V) — a plaqueta decide tudo.",
- "TENNANT | M20": "É a varredeira/lavadora a combustão (GLP/diesel), não a de bateria."
+ "TENNANT | M20": "É a varredeira/lavadora a combustão (GLP/diesel), não a de bateria.",
+ "VOLKSWAGEN | VW 17.190": "Filtro de óleo mudou em 2018: pós-2018 é VW 07W115436C (Mann HU 8171 · Tecfil PEL2016); o 07W115436A (PEL1998) é até 2017 — não misturar.",
+ "VOLKSWAGEN | VW 28.460": "Meteor: D26 + ZF TraXon (fluido ZF TE-ML 02, NÃO óleo Eaton); bateria 2×170 Ah; filtros e cárter em aberto — pedir o kit de revisão à concessionária."
 }

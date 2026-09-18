@@ -1,5 +1,5 @@
 {
- "gerado_em": "2026-09-18T08:24:29.529Z",
+ "gerado_em": "2026-09-18T08:32:44.870Z",
  "linhas": [
   {
    "modelo": "ALFA | A650",
@@ -17709,16 +17709,35 @@
    ],
    "sistema": "Admissão de ar",
    "item": "Filtro de ar do motor",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Elemento primário — VW 2R0129620",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann C 21470 · Tecfil ARS5673 · Fleetguard AF27978 · Fram CA9369",
+   "status": "inferido",
+   "fonte": "https://filtroni.com/products/xa9470-filtroni-filtro-de-aire-camiones-volkswagen-robust-constellation-reemplaza-2s2129620-p621513-af27978-c21470-lx2533-ca9369-wa10529-a5031-ars5673 ; https://www.carbenco.com.br/autopecas/motor/filtro-de-ar-volks-constellation-13190-15190-17190-17230-23230",
+   "nota": "Confirmar no catálogo Mann online.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
+   "anos": [
+    2019,
+    2023
+   ],
+   "sistema": "Admissão de ar",
+   "item": "Filtro de ar do motor (secundário)",
+   "especificacao": "Elemento de segurança — Euro V 17-190/17-230/23-230",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Wega WAP-102/S · Mann CF 12430 · Tecfil ASR673",
+   "status": "inferido",
+   "fonte": "https://www.twtcomponentes.com.br/filtro-ar-secundario-scania-volvo-man-iveco-wap272-s",
+   "nota": "Distribuidor.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
@@ -17728,16 +17747,16 @@
    ],
    "sistema": "Arrefecimento",
    "item": "Líquido de arrefecimento",
-   "especificacao": "MAN 324 Typ SNF (ou Typ NF)",
+   "especificacao": "Aditivo MAN 324 NF/SNF, 40% aditivo + 60% água",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.lojafuturacaminhoes.com.br/aditivo-para-radiadores-man-original-volkswagen ; https://www.aptacaminhoes.com.br/2025/10/02/qual-o-aditivo-recomendado-pela-volkswagen/",
+   "nota": "Volume não encontrado. | [rodada 1, inferido] MAN 324 Typ SNF (ou Typ NF) — https://weglubricants.com/en/specifications/man-324-type-snf-en/",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
@@ -17747,16 +17766,35 @@
    ],
    "sistema": "Cabine",
    "item": "Filtro de cabine",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Par (2 un.) — VW/MAN 2R2819429 (Valeo)",
+   "quantidade": "2",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann CU 22018 · Tecfil ACP429/9 · Wega AKX4006 · Mahle LA652/S",
+   "status": "inferido",
+   "fonte": "https://www.sorasa.com.br/filtro-ar-condicionado-volkswagen-24250-19320-25370.html ; https://www.rochapecas.com.br/filtro-ar-cond-const-par-wega-2r2819429x/p",
+   "nota": "Mesma cabine.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
+   "anos": [
+    2019,
+    2023
+   ],
+   "sistema": "Cabine",
+   "item": "Palheta",
+   "especificacao": "Par 24\" (600 mm), gancho",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Dyna D324",
+   "status": "inferido",
+   "fonte": "https://www.unifreiospecas.com.br/palheta/palheta-limpador-parabrisa-vw-constellation",
+   "nota": "Varejo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
@@ -17784,17 +17822,36 @@
     2023
    ],
    "sistema": "Combustível",
-   "item": "Filtro separador de água",
-   "especificacao": "Separador tipo Racor da linha Constellation",
-   "quantidade": null,
-   "unidade": null,
+   "item": "Filtro de combustível (secundário)",
+   "especificacao": "Conjunto MAN D08 Euro 5 01/2018+ — VW 07W127401G (refil 173 mm)",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "Tecfil PEC3014 (verificar cobertura pós-2018)",
    "status": "inferido",
-   "fonte": "https://turbodieselrse.com.br/product/res-2003w-filtro-comb-separador-agua/",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.msam.com.br/produto/man-latin-america-07w127401g-conjunto-filtro-diesel-combustivel-vw-constellation-motor-man-d08-e-187063 ; https://hipervarejo.com.br/filtro-combustivel-volkswagen-15-190-man-d08-34-190-2012-a-2019-tecfil-pec3014/p",
+   "nota": "Cross-ref do refil G não achado.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
+   "anos": [
+    2019,
+    2023
+   ],
+   "sistema": "Combustível",
+   "item": "Filtro separador de água",
+   "especificacao": "Elemento Racor — VW 2R0127177J",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Mann WK 10 002/1x · Tecfil PSD470",
+   "status": "inferido",
+   "fonte": "https://www.superdiesel.com.br/filtro-separador-agua-2r0127177j ; https://www.multitruckonline.com.br/motor/filtro-de-combustivel/filtro-combustivel-racor-ccopo-14uns-wk10002",
+   "nota": "Varejo; confirmar no catálogo Mann. | [rodada 1, inferido] Separador tipo Racor da linha Constellation — https://turbodieselrse.com.br/product/res-2003w-filtro-comb-separador-agua/",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
@@ -17805,13 +17862,13 @@
    "sistema": "Eixo/Diferencial",
    "item": "Óleo de diferencial",
    "especificacao": "Meritor - 85W-140 · API GL-5",
-   "quantidade": null,
-   "unidade": null,
+   "quantidade": "7",
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "confirmado",
    "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf ; https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
-   "nota": "volume/quantidade: não encontrado",
+   "nota": "volume/quantidade: não encontrado | [rodada 2, inferido] Eixo Meritor MS-23-245 (ficha) — SAE 85W-140 API GL-5 — https://www.scribd.com/document/336832468/Constellation-23230 ; https://meritorbrasil.com.br/materiais/eixo-diferencial/Manual-Troca-Oleo-Diferencial.pdf",
    "rodada": 1,
    "arquivo": "r1-vw.json"
   },
@@ -17823,6 +17880,44 @@
    ],
    "sistema": "Elétrica",
    "item": "Bateria",
+   "especificacao": "2 × 12 V (ficha); 100 Ah inferido",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf",
+   "nota": "Ah não na ficha.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
+   "anos": [
+    2019,
+    2023
+   ],
+   "sistema": "Elétrica",
+   "item": "Lâmpada de farol",
+   "especificacao": "H4 24 V 70 W — cabine 2006–2021",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://www.viapecas.com.br/farol-principal-nino-h4-f-207-lado-esquerdo-para-constellation-2006-2021/p/2183",
+   "nota": "2022+ conferir.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
+   "anos": [
+    2019,
+    2023
+   ],
+   "sistema": "Embreagem",
+   "item": "Fluido de embreagem",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
@@ -17830,9 +17925,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Ver manual/reservatório.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
@@ -17842,16 +17937,16 @@
    ],
    "sistema": "Freios",
    "item": "Cartucho do secador de ar",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Cartucho Wabco — VW 2R0616787A",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Wabco 4324102227 (a confirmar)",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/filtro-secador-de-ar-constellation-original-vw",
+   "nota": "Cross-ref não confirmado.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
@@ -17899,16 +17994,16 @@
    ],
    "sistema": "Motor",
    "item": "Correia",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Poly-V 8PK1275 — VW 07W903137",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Gates 8PK1275",
+   "status": "confirmado",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/correia-alternador-constellation-8pk1275-man-original-vw ; https://www.dfautopecas.com.br/geral/correia-motor-vw-13190-15190-17280-24280-motor-mann-d08",
+   "nota": "Correia do A/C à parte.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
@@ -17918,16 +18013,16 @@
    ],
    "sistema": "Motor",
    "item": "Filtro de óleo",
-   "especificacao": "Filtro de oleo motor MAN D08 4/6 cil",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Elemento MAN D08 pós-2018 (2 bicos) — VW 07W115436C",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "inferido",
-   "fonte": "https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann HU 8171 · Tecfil PEL2016 · Wega WOE-694 · Fleetguard LF17807",
+   "status": "confirmado",
+   "fonte": "https://www.camiopar.com.br/elemento-filtrante-oleo-motor-man-d08-mann-filter-hu8171 ; https://www.rochapecas.com.br/filtro-lub-refil-motor-man-4-6cil-18-or-07w115436c/p",
+   "nota": "Não confundir com 07W115436A (até 2017). | [rodada 1, inferido] Filtro de oleo motor MAN D08 4/6 cil — https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
@@ -17937,16 +18032,16 @@
    ],
    "sistema": "Motor",
    "item": "Óleo de motor",
-   "especificacao": "15W-40 ou 10W-40 · MAN M 3477 / MAN M 3575",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "SAE 15W-40 MAN M 3477 ou 10W-40 MAN M 3575 (norma da 1ª rodada) — MAN D0834 EGR",
+   "quantidade": "19",
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "Familia MAN D08 - ver item VW 23.230 ; https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://atrialub.com.br/wp-content/uploads/2022/05/tabela_lub_caminhao.pdf",
+   "nota": "Mesma máquina do VW 23.230 — Atria: 19 L no 17.230 E Constellation (D0834). Intervalo: plano VWCO por grupo. | [rodada 1, inferido] 15W-40 ou 10W-40 · MAN M 3477 / MAN M 3575 — Familia MAN D08 - ver item VW 23.230 ; https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
@@ -17973,18 +18068,37 @@
     2019,
     2023
    ],
-   "sistema": "Rodas/Pneus",
-   "item": "Pneu",
+   "sistema": "Pós-tratamento",
+   "item": "Filtro de ureia",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
    "intervalo": null,
    "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "status": "nao_aplica",
+   "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation%2023.230?id=2&productid=32",
+   "nota": "EGR.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
+   "anos": [
+    2019,
+    2023
+   ],
+   "sistema": "Rodas/Pneus",
+   "item": "Pneu",
+   "especificacao": "275/80 R22.5",
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "confirmado",
+   "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf",
+   "nota": "Ficha VWCO.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | 23.230 CONSTELLATION",
@@ -17994,16 +18108,16 @@
    ],
    "sistema": "Transmissão",
    "item": "Óleo de câmbio",
-   "especificacao": "Eaton FS-6406A manual 6 marchas - oleo Eaton SAE 40 · Especificacao Eaton · acionamento: Manual",
-   "quantidade": "9,0 L",
+   "especificacao": "Câmbio manual Eaton 6 marchas (ficha; FSO-6406A inferido) — Eaton SYN 50",
+   "quantidade": "9,2",
    "unidade": "L",
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "Eaton SYN 50",
    "status": "inferido",
-   "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf ; https://www.6canecos.com.br/files/gear/OleoEaton.pdf",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf ; https://www.eaton.com/content/dam/eaton/products/transmissions/vehicle-transmissions/eaton-fs(o)-6406-8406-9406-transmission-brochure-en-us.pdf",
+   "nota": "Conferir plaqueta do câmbio. | [rodada 1, inferido] Eaton FS-6406A manual 6 marchas - oleo Eaton SAE 40 · Especificacao Eaton · acionamento: Manual — https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf ; https://www.6canecos.com.br/files/gear/OleoEaton.pdf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | CONSTELLATION 19330",
@@ -18438,9 +18552,28 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Pista: D0834 Euro 5 usa 2R0129620 (Mann C 21470) — verificar se o P8 manteve.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | DELIVERY 18.210",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Admissão de ar",
+   "item": "Filtro de ar do motor (secundário)",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Idem.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | DELIVERY 18.210",
@@ -18450,16 +18583,16 @@
    ],
    "sistema": "Arrefecimento",
    "item": "Líquido de arrefecimento",
-   "especificacao": "MAN 324 Typ SNF (ou Typ NF)",
+   "especificacao": "Aditivo MAN 324 NF/SNF, 40/60",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.lojafuturacaminhoes.com.br/aditivo-para-radiadores-man-original-volkswagen",
+   "nota": "Volume não encontrado. | [rodada 1, inferido] MAN 324 Typ SNF (ou Typ NF) — https://weglubricants.com/en/specifications/man-324-type-snf-en/",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | DELIVERY 18.210",
@@ -18469,16 +18602,35 @@
    ],
    "sistema": "Cabine",
    "item": "Filtro de cabine",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Par (2 un.) — VW/MAN 2R2819429 (Valeo)",
+   "quantidade": "2",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann CU 22018 · Tecfil ACP429/9 · Wega AKX4006",
+   "status": "inferido",
+   "fonte": "https://www.sorasa.com.br/filtro-ar-condicionado-volkswagen-24250-19320-25370.html",
+   "nota": "Cabine Constellation.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | DELIVERY 18.210",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Cabine",
+   "item": "Palheta",
+   "especificacao": "Par 24\" (600 mm), gancho",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Dyna D324",
+   "status": "inferido",
+   "fonte": "https://www.unifreiospecas.com.br/palheta/palheta-limpador-parabrisa-vw-constellation",
+   "nota": "Varejo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | DELIVERY 18.210",
@@ -18506,17 +18658,36 @@
     2025
    ],
    "sistema": "Combustível",
-   "item": "Filtro separador de água",
-   "especificacao": "Separador da linha Constellation MAN Euro 6 (referencia de varejo cobre '210/260/320 MAN Euro 6')",
+   "item": "Filtro de combustível (secundário)",
+   "especificacao": null,
    "quantidade": null,
    "unidade": null,
    "intervalo": null,
    "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Concessionária.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | DELIVERY 18.210",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Combustível",
+   "item": "Filtro separador de água",
+   "especificacao": "Separador Parker Racor p/ Constellation MAN Euro 6 2023+ (lista inclui 18210)",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Parker Racor RES2003W",
    "status": "inferido",
-   "fonte": "https://www.rfautopecas.com.br/017034/filtro-combustivel-separador-agua-vw-constellation-210260320-man-euro-6-23-",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.magazineluiza.com.br/filtro-de-combustivel-constellation-14210-17210-18210-18260-26260-26320-27260-31320-euro-6-apos-2023-parker-res2003w-racor/p/akj34k94kb/au/fitr/",
+   "nota": "Varejo. | [rodada 1, inferido] Separador da linha Constellation MAN Euro 6 (referencia de varejo cobre '210/260/320 MAN Euro 6') — https://www.rfautopecas.com.br/017034/filtro-combustivel-separador-agua-vw-constellation-210260320-man-euro-6-23-",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | DELIVERY 18.210",
@@ -18546,13 +18717,13 @@
    "sistema": "Elétrica",
    "item": "Bateria",
    "especificacao": "2 x (12 V - 100 Ah); opcionais 2 x 135 Ah ou 2 x 170 Ah",
-   "quantidade": null,
-   "unidade": null,
+   "quantidade": "2",
+   "unidade": "un",
    "intervalo": null,
    "codigo_ref": null,
    "status": "confirmado",
    "fonte": "https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf",
-   "nota": null,
+   "nota": "[rodada 2, inferido] 2 × 12 V – 100 Ah (padrão família Constellation Euro 6) — https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_26.260_6x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf",
    "rodada": 1,
    "arquivo": "r1-vw.json"
   },
@@ -18562,8 +18733,8 @@
     2025,
     2025
    ],
-   "sistema": "Freios",
-   "item": "Cartucho do secador de ar",
+   "sistema": "Elétrica",
+   "item": "Lâmpada de farol",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
@@ -18571,9 +18742,47 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Frente nova.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | DELIVERY 18.210",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Embreagem",
+   "item": "Fluido de embreagem",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Ver manual (se ZF 8AP automático: não aplica).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | DELIVERY 18.210",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Freios",
+   "item": "Cartucho do secador de ar",
+   "especificacao": "Cartucho Wabco — VW 2R0616787A (família Constellation)",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Wabco 4324102227 (a confirmar)",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/filtro-secador-de-ar-constellation-original-vw",
+   "nota": "Não confirmado p/ 2025.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | DELIVERY 18.210",
@@ -18621,16 +18830,16 @@
    ],
    "sistema": "Motor",
    "item": "Correia",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Poly-V 8PK1275 — VW 07W903137 (família D08; P8 a confirmar)",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Gates 8PK1275",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/correia-alternador-constellation-8pk1275-man-original-vw",
+   "nota": "Sem lista 2023+.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | DELIVERY 18.210",
@@ -18640,16 +18849,16 @@
    ],
    "sistema": "Motor",
    "item": "Filtro de óleo",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Elemento MAN D08 — provavelmente VW 07W115436C",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann HU 8171 · Tecfil PEL2016 (a confirmar p/ P8)",
+   "status": "inferido",
+   "fonte": "https://www.camiopar.com.br/elemento-filtrante-oleo-motor-man-d08-mann-filter-hu8171",
+   "nota": "Sem lista 2023+.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | DELIVERY 18.210",
@@ -18659,16 +18868,16 @@
    ],
    "sistema": "Motor",
    "item": "Óleo de motor",
-   "especificacao": "15W-40 ou 10W-40 · Aprovacao MAN",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Óleo low-SAPS Euro 6 — aprovação MAN M 3677 (ou M 3777); MAN D08 4 cil (D0834) 210 cv / 750 Nm SCR — é o Constellation 18.210 4x2",
+   "quantidade": "16,5 a 19",
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "Familia MAN D08 ; https://public.man.eu/media/service/asp/media/en/auftritte/service_dokumente_/wartungs__und_betriebsstoffvorschrift/bezugsbremskraefte_2/Maintenance_and_service_product_recommendation.pdf",
-   "nota": "volume/quantidade: não encontrado | Carter do D08 4 cil nao levantado.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.vwco.com.br/caminhoes/Constellation/18.210?id=2&productid=205 ; https://www.autodoc.parts/engine-oil/man-m-3677 ; https://atrialub.com.br/wp-content/uploads/2022/05/tabela_lub_caminhao.pdf",
+   "nota": "Volume da família D0834 (Atria: 16,5 L Worker / 19 L Constellation); norma Euro 6 não confirmada pela VWCO. | [rodada 1, inferido] 15W-40 ou 10W-40 · Aprovacao MAN — Familia MAN D08 ; https://public.man.eu/media/service/asp/media/en/auftritte/service_dokumente_/wartungs__und_betriebsstoffvorschrift/bezugsbremskraefte_2/Maintenance_and_service_product_recommendation.pdf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | DELIVERY 18.210",
@@ -18685,9 +18894,28 @@
    "codigo_ref": null,
    "status": "confirmado",
    "fonte": "https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf",
-   "nota": null,
+   "nota": "[rodada 2, inferido] Arla 32 (ISO 22241) — SCR P8 — https://www.vwco.com.br/caminhoes/Constellation/18.210?id=2&productid=205",
    "rodada": 1,
    "arquivo": "r1-vw.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | DELIVERY 18.210",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Pós-tratamento",
+   "item": "Filtro de ureia",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Concessionária.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | DELIVERY 18.210",
@@ -18716,16 +18944,16 @@
    ],
    "sistema": "Transmissão",
    "item": "Óleo de câmbio",
-   "especificacao": "Opcao de transmissao AUTOMATICA de 8 marchas (fluido especifico de automatico, nao oleo de caixa manual) · acionamento: Opcao automatica de 8 marchas",
+   "especificacao": "Manual Eaton FS 5406-A 6 marchas (padrão) ou automático ZF 8AP 900T 8 marchas (opc.) — Eaton: óleo Eaton SYN 50 (inferido da família FS); ZF 8AP: lista ZF própria",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "Eaton SYN 50 (se FS 5406-A)",
    "status": "inferido",
-   "fonte": "https://www.vwco.com.br/caminhoes/Constellation/18.210?id=2&productid=205",
-   "nota": "volume/quantidade: não encontrado | Se o ativo tiver a automatica de 8 marchas (provavelmente Allison), o fluido e ATF de especificacao Allison TES - COMPLETAMENTE diferente do oleo Eaton SAE 40 do resto da frota. Conferir a plaqueta.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://blogdocaminhoneiro.com/2024/06/ficha-tecnica-volkswagen-18-210-constellation-4x2/ ; https://www.eaton.com/content/dam/eaton/markets/vehicles/mais-eaton/etv-0049-21a-folder-oleos-210x210mm-web-nov2021.pdf",
+   "nota": "Modelos dos câmbios da ficha; volumes não achados (o folheto Eaton FS(O)-6406 não cobre o 5406). Identificar na plaqueta. | [rodada 1, inferido] Opcao de transmissao AUTOMATICA de 8 marchas (fluido especifico de automatico, nao oleo de caixa manual) · acionamento: Opcao automatica de 8 marchas — https://www.vwco.com.br/caminhoes/Constellation/18.210?id=2&productid=205",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | MAN TGX 29.480",
@@ -18742,9 +18970,28 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Carcaça.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | MAN TGX 29.480",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Admissão de ar",
+   "item": "Filtro de ar do motor (secundário)",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Idem.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | MAN TGX 29.480",
@@ -18754,16 +19001,16 @@
    ],
    "sistema": "Arrefecimento",
    "item": "Líquido de arrefecimento",
-   "especificacao": "MAN 324 Typ SNF (ou Typ NF)",
+   "especificacao": "Aditivo MAN 324 NF/SNF (motor MAN)",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.aptacaminhoes.com.br/2025/10/02/qual-o-aditivo-recomendado-pela-volkswagen/",
+   "nota": "Volume não encontrado. | [rodada 1, inferido] MAN 324 Typ SNF (ou Typ NF) — https://weglubricants.com/en/specifications/man-324-type-snf-en/",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | MAN TGX 29.480",
@@ -18780,9 +19027,28 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Cabine TGX.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | MAN TGX 29.480",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Cabine",
+   "item": "Palheta",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Medir.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | MAN TGX 29.480",
@@ -18810,6 +19076,25 @@
     2025
    ],
    "sistema": "Combustível",
+   "item": "Filtro de combustível (secundário)",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Pista: 07W127401G lista 'MAN TGX D2676 Euro 5' — só vale se a unidade for Euro 5.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | MAN TGX 29.480",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Combustível",
    "item": "Filtro separador de água",
    "especificacao": null,
    "quantidade": null,
@@ -18818,9 +19103,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Idem.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | MAN TGX 29.480",
@@ -18837,9 +19122,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": "volume/quantidade: não encontrado | Eixo MAN (hipoide). Especificacao e capacidade nao levantadas.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Eixos MAN hipoides (6x4) — norma MAN de óleo de eixo; plaqueta.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | MAN TGX 29.480",
@@ -18856,9 +19141,47 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Meteor (mesma plataforma D26) usa 2 × 170 Ah — pista, não confirmado p/ TGX.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | MAN TGX 29.480",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Elétrica",
+   "item": "Lâmpada de farol",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Cabine TGX.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | MAN TGX 29.480",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Embreagem",
+   "item": "Fluido de embreagem",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_aplica",
+   "fonte": "https://ocarreteiro.com.br/caminhoes/man-tgx-29-480/",
+   "nota": "Câmbio automatizado TipMatic (sem pedal).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | MAN TGX 29.480",
@@ -18875,9 +19198,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Plataforma MAN TG.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | MAN TGX 29.480",
@@ -18932,9 +19255,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "D26.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | MAN TGX 29.480",
@@ -18951,9 +19274,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Concessionária MAN; catálogo Mann (D26).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | MAN TGX 29.480",
@@ -18963,16 +19286,16 @@
    ],
    "sistema": "Motor",
    "item": "Óleo de motor",
-   "especificacao": "15W-40 ou 10W-40 · Aprovacao MAN (M 3477 / M 3575 para Euro V)",
+   "especificacao": "MAN D26 (D2676) 12,4 L, 480 cv / 2.400 Nm — norma MAN (Euro 5: M 3477/M 3575; se Euro 6: M 3677/M 3777)",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "Familia MAN D26 ; https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados",
-   "nota": "volume/quantidade: não encontrado | Se o ativo for Euro 6, a norma e outra (M 3677/M 3777). Confirmar na concessionaria MAN. | Nao levantada. Consultar a tabela de capacidades MAN TGX.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://ocarreteiro.com.br/caminhoes/man-tgx-29-480/ ; https://blogdocaminhoneiro.com/2017/03/man-tgx-29-480/",
+   "nota": "Só achei o TGX 29.480 de 2015–2017 (Euro 5); a unidade 2025 pode ser a geração nova — confirmar norma de emissão/Arla no veículo. Volume não encontrado. | [rodada 1, inferido] 15W-40 ou 10W-40 · Aprovacao MAN (M 3477 / M 3575 para Euro V) — Familia MAN D26 ; https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | MAN TGX 29.480",
@@ -18999,6 +19322,25 @@
     2025,
     2025
    ],
+   "sistema": "Pós-tratamento",
+   "item": "Filtro de ureia",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Depende da norma (Euro 5 EGR × Euro 6 SCR) — conferir tanque de Arla.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | MAN TGX 29.480",
+   "anos": [
+    2025,
+    2025
+   ],
    "sistema": "Rodas/Pneus",
    "item": "Pneu",
    "especificacao": null,
@@ -19008,9 +19350,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Plaqueta (6x4 pesado, provável 295/80 R22.5).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | MAN TGX 29.480",
@@ -19024,10 +19366,10 @@
    "quantidade": null,
    "unidade": null,
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "ZF TE-ML 02",
    "status": "confirmado",
    "fonte": "https://blogdocaminhoneiro.com/2017/03/man-tgx-29-480/",
-   "nota": "volume/quantidade: não encontrado | Fluido especifico ZF - NAO usar oleo de caixa Eaton. | Consultar a lista ZF TE-ML vigente para AS-Tronic/TipMatic.",
+   "nota": "volume/quantidade: não encontrado | Fluido especifico ZF - NAO usar oleo de caixa Eaton. | Consultar a lista ZF TE-ML vigente para AS-Tronic/TipMatic. | [rodada 2, inferido] Automatizado MAN TipMatic 16 marchas (ZF; geração 2015–2017) — óleo ZF TE-ML 02 — https://ocarreteiro.com.br/caminhoes/man-tgx-29-480/ ; https://aftermarket.zf.com/lubricants/pt/te-ml_02-pt.pdf",
    "rodada": 1,
    "arquivo": "r1-vw.json"
   },
@@ -20331,16 +20673,35 @@
    ],
    "sistema": "Admissão de ar",
    "item": "Filtro de ar do motor",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Elemento primário — VW 2R0129620",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann C 21470 · Tecfil ARS5673 · Fleetguard AF27978 · Fram CA9369 · Mahle LX2533",
+   "status": "inferido",
+   "fonte": "https://filtroni.com/products/xa9470-filtroni-filtro-de-aire-camiones-volkswagen-robust-constellation-reemplaza-2s2129620-p621513-af27978-c21470-lx2533-ca9369-wa10529-a5031-ars5673 ; https://www.carbenco.com.br/autopecas/motor/filtro-de-ar-volks-constellation-13190-15190-17190-17230-23230",
+   "nota": "Catálogo Mann online tem a página do 17.190 MAN D08 34 190: https://catalog.mann-filter.com/BR/por/vehicle/MANN-FILTER%20Katalog%20Brazil/Autom%C3%B3veis/Linha%20Pesada/VW%20(VOLKSWAGEN)/Serie%2017/17.190%20MAN%20D08%2034%20190%20(T00000000388633) — confirmar lá.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 17.190",
+   "anos": [
+    2019,
+    2024
+   ],
+   "sistema": "Admissão de ar",
+   "item": "Filtro de ar do motor (secundário)",
+   "especificacao": "Elemento de segurança — Constellation Euro V 17-190 / 17-230 / 23-230",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Wega WAP-102/S · Mann CF 12430 · Tecfil ASR673",
+   "status": "inferido",
+   "fonte": "https://www.twtcomponentes.com.br/filtro-ar-secundario-scania-volvo-man-iveco-wap272-s ; https://www.twtcomponentes.com.br/filtros-lubrificantes/conjunto-filtro-volks-constellation-24-250-todos",
+   "nota": "Fonte de distribuidor; confirmar no catálogo Mann.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 17.190",
@@ -20350,16 +20711,16 @@
    ],
    "sistema": "Arrefecimento",
    "item": "Líquido de arrefecimento",
-   "especificacao": "MAN 324 Typ SNF (ou Typ NF)",
+   "especificacao": "Aditivo etilenoglicol norma MAN 324 NF/SNF (aditivo MAN original VW), mistura 40% aditivo + 60% água desmineralizada",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "Aditivo para radiadores MAN original VW (Futura)",
    "status": "inferido",
-   "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.lojafuturacaminhoes.com.br/aditivo-para-radiadores-man-original-volkswagen ; https://www.aptacaminhoes.com.br/2025/10/02/qual-o-aditivo-recomendado-pela-volkswagen/",
+   "nota": "Volume do sistema NÃO encontrado — manual do proprietário (tabela de capacidades) ou concessionária. | [rodada 1, inferido] MAN 324 Typ SNF (ou Typ NF) — https://weglubricants.com/en/specifications/man-324-type-snf-en/",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 17.190",
@@ -20369,16 +20730,35 @@
    ],
    "sistema": "Cabine",
    "item": "Filtro de cabine",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Par de elementos (2 un.) do ar-condicionado — VW/MAN 2R2819429 (Valeo)",
+   "quantidade": "2",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann CU 22018 · Tecfil ACP429/9 · Wega AKX4006 · Fram CF10864 · Mahle LA652/S",
+   "status": "inferido",
+   "fonte": "https://www.sorasa.com.br/filtro-ar-condicionado-volkswagen-24250-19320-25370.html ; https://www.rochapecas.com.br/filtro-ar-cond-const-par-wega-2r2819429x/p ; https://www.loja.aptacaminhoes.com.br/latarias-e-cabina/filtro-de-ar-da-cabine",
+   "nota": "Listas de aplicação citam 17.280…31.370 e 'Constellation todos'; mesma cabine — inferido para o 17.190.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 17.190",
+   "anos": [
+    2019,
+    2024
+   ],
+   "sistema": "Cabine",
+   "item": "Palheta",
+   "especificacao": "Par de palhetas 24\" (600 mm), encaixe gancho",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Dyna D324 · Bosch Aerofit AF24",
+   "status": "inferido",
+   "fonte": "https://www.unifreiospecas.com.br/palheta/palheta-limpador-parabrisa-vw-constellation ; https://www.rovalepaes.com.br/diversos/palheta-limpador-324-jg-palheta-limpador-vw-constellation-06-600mm-volvo-vm-1723-2003-daily",
+   "nota": "Só varejo; medir a palheta atual.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 17.190",
@@ -20406,17 +20786,36 @@
     2024
    ],
    "sistema": "Combustível",
-   "item": "Filtro separador de água",
-   "especificacao": "Separador de agua tipo Racor da linha Constellation (cabecote 2R0201582B em 17.230/17.260/17.280/24.260/24.280/26.260)",
-   "quantidade": null,
-   "unidade": null,
+   "item": "Filtro de combustível (secundário)",
+   "especificacao": "Conjunto/elemento MAN D08 Euro 5 a partir de 01/2018 — VW 07W127401G (refil de papel, 173 mm)",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "Tecfil PEC3014 (aplicação 15.190 D0834 2012–2019 — verificar se cobre o refil pós-2018)",
    "status": "inferido",
-   "fonte": "https://www.selfcar.com.br/produto/caminhoes_e_onibus/filtros/filtros_de_combustivel/cabecote_filtro_racor_combustivel_volkswagen_constellation_17230_17260_17280_24260_24280_26260_2r0201582b/2R0201582B",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.msam.com.br/produto/man-latin-america-07w127401g-conjunto-filtro-diesel-combustivel-vw-constellation-motor-man-d08-e-187063 ; https://lojabelcarcaminhoes.com.br/filtro-combustivel-original-motor-man-d08-07w127401g-1-1-51991-p2718 ; https://hipervarejo.com.br/filtro-combustivel-volkswagen-15-190-man-d08-34-190-2012-a-2019-tecfil-pec3014/p",
+   "nota": "07W127401A = até 12/2017; 07W127401G = 01/2018+ (13.190…23.230 e 17.280…31.280). Cross-ref Mann/Fleetguard do refil G não encontrado — conferir no catálogo Mann/Tecfil pela altura 173 mm.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 17.190",
+   "anos": [
+    2019,
+    2024
+   ],
+   "sistema": "Combustível",
+   "item": "Filtro separador de água",
+   "especificacao": "Elemento Racor (copo) — VW 2R0127177J",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Mann WK 10 002/1x · Tecfil PSD470",
+   "status": "inferido",
+   "fonte": "https://www.superdiesel.com.br/filtro-separador-agua-2r0127177j ; https://www.4eatacadista.com.br/filtro-combustivel-racor-caminhao-volkswagen-constellation--2r0127177j-12744 ; https://www.multitruckonline.com.br/motor/filtro-de-combustivel/filtro-combustivel-racor-ccopo-14uns-wk10002",
+   "nota": "Só fontes de varejo; confirmar no catálogo Mann pesada 2022/23 (https://www.mann-filter.com/content/dam/website/mann-filter/mann-filter-com/br-pt/documents/cat%C3%A1logo/catalogo_mann_filter_PESADA_2022_2023_web.pdf). | [rodada 1, inferido] Separador de agua tipo Racor da linha Constellation (cabecote 2R0201582B em 17.230/17.260/17.280/24.260/24.280/26.260) — https://www.selfcar.com.br/produto/caminhoes_e_onibus/filtros/filtros_de_combustivel/cabecote_filtro_racor_combustivel_volkswagen_constellation_17230_17260_17280_24260_24280_26260_2r0201582b/2R0201582B",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 17.190",
@@ -20433,7 +20832,7 @@
    "codigo_ref": null,
    "status": "confirmado",
    "fonte": "https://man-static-hml.s3.amazonaws.com/ba9f6063-a8da-42fa-b900-53e7f61895df.pdf ; oleo: https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf ; https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
-   "nota": "volume/quantidade: não encontrado",
+   "nota": "volume/quantidade: não encontrado | [rodada 2, inferido] Eixo traseiro Meritor (modelo não identificado no 17.190) — óleo SAE 85W-140 API GL-5 (linha Meritor) — https://man-static-hml.s3.amazonaws.com/ba9f6063-a8da-42fa-b900-53e7f61895df.pdf ; https://meritorbrasil.com.br/materiais/eixo-diferencial/Manual-Troca-Oleo-Diferencial.pdf",
    "rodada": 1,
    "arquivo": "r1-vw.json"
   },
@@ -20445,6 +20844,44 @@
    ],
    "sistema": "Elétrica",
    "item": "Bateria",
+   "especificacao": "2 × 12 V — 100 Ah (padrão da família Constellation; ficha do 17.190 não traz o Ah)",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf ; https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_26.260_6x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf",
+   "nota": "Conferir na ficha do 17.190 ou na etiqueta da bateria.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 17.190",
+   "anos": [
+    2019,
+    2024
+   ],
+   "sistema": "Elétrica",
+   "item": "Lâmpada de farol",
+   "especificacao": "H4 24 V 70 W (farol único alto/baixo) — cabine 2006–2021",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://www.viapecas.com.br/farol-principal-nino-h4-f-207-lado-esquerdo-para-constellation-2006-2021/p/2183",
+   "nota": "Para unidades 2022+ (nova frente) não encontrado — conferir na lâmpada instalada.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 17.190",
+   "anos": [
+    2019,
+    2024
+   ],
+   "sistema": "Embreagem",
+   "item": "Fluido de embreagem",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
@@ -20452,9 +20889,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": "Nao publicado nas fontes consultadas. A familia Constellation usa 2 x 12 V em serie (24 V); a capacidade em Ah precisa ser conferida.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Acionamento hidráulico; fluido (DOT 4?) não confirmado para o Constellation. Ver manual de instruções (Scribd) ou reservatório.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 17.190",
@@ -20464,16 +20901,16 @@
    ],
    "sistema": "Freios",
    "item": "Cartucho do secador de ar",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Cartucho do secador de ar Wabco — VW 2R0616787A",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Wabco 432 410 020 2 / 4324102227 (rosca M39x1,5 — equivalência a confirmar)",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/filtro-secador-de-ar-constellation-original-vw ; https://produto.mercadolivre.com.br/MLB-1912430568-filtro-secador-marca-wabco-do-constellation-2r0616787a-vw-_JM",
+   "nota": "Original VW confirmado em concessionária; cross-ref Wabco genérico não confirmado para o 2R0616787A.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 17.190",
@@ -20521,16 +20958,16 @@
    ],
    "sistema": "Motor",
    "item": "Correia",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Correia Poly-V 8PK1275 (alternador/bomba d'água) — VW 07W903137, MAN D08 4 e 6 cil",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Gates 8PK1275 (Pitstop lista 8PK1270)",
+   "status": "confirmado",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/correia-alternador-constellation-8pk1275-man-original-vw ; https://www.dfautopecas.com.br/geral/correia-motor-vw-13190-15190-17280-24280-motor-mann-d08 ; https://www.fortepecasdiesel.com.br/10-correias/correia-motor-vwman-d08-07w903137",
+   "nota": "Há correia separada do compressor do A/C ('correia do motor com ar', Futura: https://www.lojafuturacaminhoes.com.br/correia-do-motor-com-ar-vw-constellation) — medida não achada.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 17.190",
@@ -20540,16 +20977,16 @@
    ],
    "sistema": "Motor",
    "item": "Filtro de óleo",
-   "especificacao": "Filtro de oleo motor MAN D08 4/6 cil",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Elemento (refil) MAN D08 4/6 cil, versão pós-2018 com 2 bicos — VW 07W115436C (MAN 61.05504-0131)",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "inferido",
-   "fonte": "https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202",
-   "nota": "Sem codigo confirmado para a variante 4 cilindros.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann HU 8171 · Tecfil PEL2016 · Wega WOE-694 · Fleetguard LF17807 · Hengst E427H D28",
+   "status": "confirmado",
+   "fonte": "https://www.camiopar.com.br/elemento-filtrante-oleo-motor-man-d08-mann-filter-hu8171 ; https://www.rochapecas.com.br/filtro-lub-refil-motor-man-4-6cil-18-or-07w115436c/p ; https://www.dfautopecas.com.br/geral/filtro-lubrificante-vw-man-1319015190171901723023230",
+   "nota": "Duas versões do original: 07W115436A (até 2017, Tecfil PEL1998) e 07W115436C (a partir de 2018, 2 bicos). Frota 2019+ usa a C — não misturar. | [rodada 1, inferido] Filtro de oleo motor MAN D08 4/6 cil — https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 17.190",
@@ -20559,16 +20996,16 @@
    ],
    "sistema": "Motor",
    "item": "Óleo de motor",
-   "especificacao": "15W-40 ou 10W-40 · MAN M 3477 / MAN M 3575",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "SAE 15W-40 MAN M 3477 ou 10W-40 MAN M 3575 (norma da 1ª rodada, inferida) — motor MAN D0834 EGR",
+   "quantidade": "16,5 a 19",
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "Familia MAN D08 (mesma do 26.260) ; https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados",
-   "nota": "volume/quantidade: não encontrado | Nao confirmado no manual. | Aprovacao MAN e obrigatoria; nao comprar so por API. | Capacidade do carter do D0834 (4 cil) NAO encontrada em nenhuma fonte tecnica. Nao extrapolar do D0836 (6 cil) - sao carteres diferentes. Consultar manual do proprietario ou concessionaria.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://atrialub.com.br/wp-content/uploads/2022/05/tabela_lub_caminhao.pdf ; https://www.vwco.com.br/servicos/PlanosdeManutencaoCustomizados?id=14",
+   "nota": "Tabela Atria: 17.190 E Worker (D0834) = 16,5 L; 17.230 E Constellation (D0834) = 19 L — cárter difere entre Worker e Constellation. Conferir na vareta/manual do 17.190 Constellation 2019+. Intervalo por grupo de aplicação: só o plano VWCO (URL) ou o manual de manutenção (Scribd: https://www.scribd.com/document/894247949/Instrucoes-de-Operacao-14-210-a-26-320-Vw-Constellation) — não achado em texto. | [rodada 1, inferido] 15W-40 ou 10W-40 · MAN M 3477 / MAN M 3575 — Familia MAN D08 (mesma do 26.260) ; https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 17.190",
@@ -20595,18 +21032,37 @@
     2019,
     2024
    ],
-   "sistema": "Rodas/Pneus",
-   "item": "Pneu",
+   "sistema": "Pós-tratamento",
+   "item": "Filtro de ureia",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
    "intervalo": null,
    "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": "Nao confirmado. A busca sugeriu 275/80 R22.5 ou 10.00 R20 sem fonte firme - NAO comprar por esta pesquisa. Conferir na etiqueta do veiculo / CRLV.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "status": "nao_aplica",
+   "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation%2017.190?id=2&productid=35",
+   "nota": "Motor EGR, sem SCR (1ª rodada).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 17.190",
+   "anos": [
+    2019,
+    2024
+   ],
+   "sistema": "Rodas/Pneus",
+   "item": "Pneu",
+   "especificacao": "275/80 R22.5 (padrão da família 17/23 t; ficha do 23.230)",
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf",
+   "nota": "Conferir na plaqueta de pressão/ficha do 17.190.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 17.190",
@@ -20616,16 +21072,16 @@
    ],
    "sistema": "Transmissão",
    "item": "Óleo de câmbio",
-   "especificacao": "Cambio Eaton FS-5406A, manual por cabo, 6 marchas sincronizadas + 1 re. Oleo Eaton SAE 40 mineral · Especificacao Eaton · acionamento: Manual. Existe versao V-Tronic (automatizada) no 17.190 - conferir por ativo",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Câmbio manual 6 marchas Eaton FSO-6406A (inferido; ficha só diz '6 marchas', opção V-Tronic automatizada) — óleo Eaton SYN 50 (sintético SAE 50)",
+   "quantidade": "9,2",
+   "unidade": "L",
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "Eaton SYN 50 (19,5 pints no FSO-6406A)",
    "status": "inferido",
-   "fonte": "Cambio: https://man-static-hml.s3.amazonaws.com/ba9f6063-a8da-42fa-b900-53e7f61895df.pdf ; Oleo (inferido): https://www.eaton.com/content/dam/eaton/markets/vehicles/mais-eaton/etv-0049-21a-folder-oleos-210x210mm-web-nov2021.pdf ; https://www.6canecos.com.br/files/gear/OleoEaton.pdf ; https://www.scribd.com/document/445808788/ficha-tecnica-constellation-17-190-AZ-v-tronic",
-   "nota": "volume/quantidade: não encontrado | Capacidade da FS-5406 nao encontrada (a tabela consultada trouxe so FS/FSO-6406 = 9,0 L).",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.eaton.com/content/dam/eaton/products/transmissions/vehicle-transmissions/eaton-fs(o)-6406-8406-9406-transmission-brochure-en-us.pdf ; https://man-static-hml.s3.amazonaws.com/ba9f6063-a8da-42fa-b900-53e7f61895df.pdf",
+   "nota": "Volume/óleo confirmados pela Eaton PARA o FSO-6406; o modelo do câmbio no 17.190 é inferido (é o mesmo do 26.260 Euro 6). Se for V-Tronic, conferir o modelo na plaqueta. | [rodada 1, inferido] Cambio Eaton FS-5406A, manual por cabo, 6 marchas sincronizadas + 1 re. Oleo Eaton SAE 40 mineral · Especificacao Eaton · acionamento: Manual. Existe versao V-Tronic (automatizada) no 17.190 - conferir por ativo — Cambio: https://man-static-hml.s3.amazonaws.com/ba9f6063-a8da-42fa-b900-53e7f61895df.pdf ; Oleo (inferido): https://www.eaton.com/content/dam/eaton/markets/vehicles/mais-eaton/etv-0049-21a-folder-oleos-210x210mm-web-nov2021.pdf ; https://www.6canecos.com.br/files/gear/OleoEaton.pdf ; https://www.scribd.com/document/445808788/ficha-tecnica-constellation-17-190-AZ-v-tronic",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 18.310",
@@ -20642,9 +21098,28 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Carcaça.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 18.310",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Admissão de ar",
+   "item": "Filtro de ar do motor (secundário)",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Idem.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 18.310",
@@ -20654,16 +21129,16 @@
    ],
    "sistema": "Arrefecimento",
    "item": "Líquido de arrefecimento",
-   "especificacao": null,
+   "especificacao": "Aditivo MAN 324 NF/SNF, 40/60",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/aditivo-para-radiadores-man-original-volkswagen",
+   "nota": "Volume não encontrado.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 18.310",
@@ -20673,16 +21148,35 @@
    ],
    "sistema": "Cabine",
    "item": "Filtro de cabine",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Par (2 un.) — VW/MAN 2R2819429 (Valeo)",
+   "quantidade": "2",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann CU 22018 · Tecfil ACP429/9 · Wega AKX4006",
+   "status": "inferido",
+   "fonte": "https://www.sorasa.com.br/filtro-ar-condicionado-volkswagen-24250-19320-25370.html",
+   "nota": "Cabine Constellation.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 18.310",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Cabine",
+   "item": "Palheta",
+   "especificacao": "Par 24\" (600 mm), gancho",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Dyna D324",
+   "status": "inferido",
+   "fonte": "https://www.unifreiospecas.com.br/palheta/palheta-limpador-parabrisa-vw-constellation",
+   "nota": "Varejo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 18.310",
@@ -20710,7 +21204,7 @@
     2025
    ],
    "sistema": "Combustível",
-   "item": "Filtro separador de água",
+   "item": "Filtro de combustível (secundário)",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
@@ -20718,9 +21212,28 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Concessionária.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 18.310",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Combustível",
+   "item": "Filtro separador de água",
+   "especificacao": "Separador Parker Racor p/ Constellation MAN Euro 6 2023+ (lista inclui 18.260/26.320)",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Parker Racor RES2003W",
+   "status": "inferido",
+   "fonte": "https://www.magazineluiza.com.br/filtro-de-combustivel-constellation-14210-17210-18210-18260-26260-26320-27260-31320-euro-6-apos-2023-parker-res2003w-racor/p/akj34k94kb/au/fitr/",
+   "nota": "Varejo; 18.320 não nominal.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 18.310",
@@ -20737,9 +21250,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Plaqueta do eixo + tabela Meritor (https://meritorbrasil.com.br/materiais/eixo-diferencial/Manual-Troca-Oleo-Diferencial.pdf).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 18.310",
@@ -20749,6 +21262,25 @@
    ],
    "sistema": "Elétrica",
    "item": "Bateria",
+   "especificacao": "2 × 12 V – 100 Ah (padrão família Constellation Euro 6)",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf",
+   "nota": "Ficha 18.320 (cloudfront) não lida.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 18.310",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Elétrica",
+   "item": "Lâmpada de farol",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
@@ -20756,9 +21288,28 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Frente nova.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 18.310",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Embreagem",
+   "item": "Fluido de embreagem",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Ver manual.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 18.310",
@@ -20768,16 +21319,16 @@
    ],
    "sistema": "Freios",
    "item": "Cartucho do secador de ar",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Cartucho Wabco — VW 2R0616787A (família Constellation)",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Wabco 4324102227 (a confirmar)",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/filtro-secador-de-ar-constellation-original-vw",
+   "nota": "Não confirmado p/ 2025.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 18.310",
@@ -20825,16 +21376,16 @@
    ],
    "sistema": "Motor",
    "item": "Correia",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Poly-V 8PK1275 — VW 07W903137 (família D08; P8 a confirmar)",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Gates 8PK1275",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/correia-alternador-constellation-8pk1275-man-original-vw",
+   "nota": "Sem lista 2023+.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 18.310",
@@ -20844,16 +21395,16 @@
    ],
    "sistema": "Motor",
    "item": "Filtro de óleo",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Elemento MAN D08 — provavelmente VW 07W115436C",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann HU 8171 · Tecfil PEL2016 (a confirmar p/ P8)",
+   "status": "inferido",
+   "fonte": "https://www.camiopar.com.br/elemento-filtrante-oleo-motor-man-d08-mann-filter-hu8171",
+   "nota": "Sem lista 2023+.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 18.310",
@@ -20863,16 +21414,16 @@
    ],
    "sistema": "Motor",
    "item": "Óleo de motor",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "CADASTRO PROVÁVEL ERRADO: não existe 18.310 em 2025; o modelo atual é o Constellation 18.320 4x2 (MAN D08 6 cil D0836 320 cv / 1.200 Nm, Euro 6 SCR). Óleo low-SAPS MAN M 3677 (ou M 3777)",
+   "quantidade": "27,5",
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "status": "inferido",
+   "fonte": "https://www.vwco.com.br/caminhoes/Constellation/18.320?id=2&productid=207 ; https://d1qeqf1yyyqyq8.cloudfront.net/1da0ab10-a52b-4aa7-8d11-19c31853a091.pdf ; https://atrialub.com.br/wp-content/uploads/2022/05/tabela_lub_caminhao.pdf",
+   "nota": "Conferir o modelo no CRLV/plaqueta. Volume da família D0836 (conflito 27,5/28 × 18,5 L).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 18.310",
@@ -20882,6 +21433,25 @@
    ],
    "sistema": "Pós-tratamento",
    "item": "Arla 32",
+   "especificacao": "Arla 32 (ISO 22241) — SCR P8",
+   "quantidade": null,
+   "unidade": "L",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://www.vwco.com.br/caminhoes/Constellation/18.320?id=2&productid=207",
+   "nota": "Tanque não achado.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 18.310",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Pós-tratamento",
+   "item": "Filtro de ureia",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
@@ -20889,9 +21459,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": "Se for mesmo um 2025 da linha VWCO, e Euro 6/P8 com SCR e USA ARLA 32. Mas o modelo precisa ser identificado primeiro.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Concessionária.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 18.310",
@@ -20908,9 +21478,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Ficha 18.320 ou plaqueta.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 18.310",
@@ -20920,16 +21490,16 @@
    ],
    "sistema": "Transmissão",
    "item": "Óleo de câmbio",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "18.320: manual 9 marchas (ZF 9S 1110 TD provável) ou V-Tronic 12 (ZF TraXon) — óleo ZF TE-ML 02 (ZF Ecofluid M)",
+   "quantidade": "8,8 (9S 1110 TD)",
+   "unidade": "L",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "ZF Ecofluid M / TE-ML 02",
+   "status": "inferido",
+   "fonte": "https://www.vwco.com.br/caminhoes/Constellation/18.320?id=2&productid=207 ; https://aftermarket.zf.com/lubricants/pt/te-ml_02-pt.pdf ; https://www.kroon-oil.com/en/product-recommendation/trucks-and-buses-7-5t/zf/ecolite-transmissions/9-s-1110-to-td/44971/",
+   "nota": "Plaqueta; volume do TraXon não achado.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 23.230",
@@ -20939,16 +21509,35 @@
    ],
    "sistema": "Admissão de ar",
    "item": "Filtro de ar do motor",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Elemento primário — VW 2R0129620",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann C 21470 · Tecfil ARS5673 · Fleetguard AF27978 · Fram CA9369",
+   "status": "inferido",
+   "fonte": "https://filtroni.com/products/xa9470-filtroni-filtro-de-aire-camiones-volkswagen-robust-constellation-reemplaza-2s2129620-p621513-af27978-c21470-lx2533-ca9369-wa10529-a5031-ars5673 ; https://www.carbenco.com.br/autopecas/motor/filtro-de-ar-volks-constellation-13190-15190-17190-17230-23230",
+   "nota": "Confirmar no catálogo Mann online.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 23.230",
+   "anos": [
+    2019,
+    2023
+   ],
+   "sistema": "Admissão de ar",
+   "item": "Filtro de ar do motor (secundário)",
+   "especificacao": "Elemento de segurança — Euro V 17-190/17-230/23-230",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Wega WAP-102/S · Mann CF 12430 · Tecfil ASR673",
+   "status": "inferido",
+   "fonte": "https://www.twtcomponentes.com.br/filtro-ar-secundario-scania-volvo-man-iveco-wap272-s",
+   "nota": "Distribuidor; confirmar no catálogo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 23.230",
@@ -20958,16 +21547,16 @@
    ],
    "sistema": "Arrefecimento",
    "item": "Líquido de arrefecimento",
-   "especificacao": "MAN 324 Typ SNF (ou Typ NF)",
+   "especificacao": "Aditivo MAN 324 NF/SNF (aditivo MAN original VW), 40% aditivo + 60% água",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.lojafuturacaminhoes.com.br/aditivo-para-radiadores-man-original-volkswagen ; https://www.aptacaminhoes.com.br/2025/10/02/qual-o-aditivo-recomendado-pela-volkswagen/",
+   "nota": "Volume não encontrado — manual do proprietário. | [rodada 1, inferido] MAN 324 Typ SNF (ou Typ NF) — https://weglubricants.com/en/specifications/man-324-type-snf-en/",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 23.230",
@@ -20977,16 +21566,35 @@
    ],
    "sistema": "Cabine",
    "item": "Filtro de cabine",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Par (2 un.) — VW/MAN 2R2819429 (Valeo)",
+   "quantidade": "2",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann CU 22018 · Tecfil ACP429/9 · Wega AKX4006 · Mahle LA652/S",
+   "status": "inferido",
+   "fonte": "https://www.sorasa.com.br/filtro-ar-condicionado-volkswagen-24250-19320-25370.html ; https://www.rochapecas.com.br/filtro-ar-cond-const-par-wega-2r2819429x/p",
+   "nota": "Mesma cabine Constellation.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 23.230",
+   "anos": [
+    2019,
+    2023
+   ],
+   "sistema": "Cabine",
+   "item": "Palheta",
+   "especificacao": "Par 24\" (600 mm), gancho",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Dyna D324",
+   "status": "inferido",
+   "fonte": "https://www.unifreiospecas.com.br/palheta/palheta-limpador-parabrisa-vw-constellation",
+   "nota": "Varejo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 23.230",
@@ -21014,17 +21622,36 @@
     2023
    ],
    "sistema": "Combustível",
-   "item": "Filtro separador de água",
-   "especificacao": "Separador tipo Racor da linha Constellation",
-   "quantidade": null,
-   "unidade": null,
+   "item": "Filtro de combustível (secundário)",
+   "especificacao": "Conjunto MAN D08 Euro 5 01/2018+ — VW 07W127401G (refil 173 mm)",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "Tecfil PEC3014 (verificar cobertura pós-2018)",
    "status": "inferido",
-   "fonte": "https://turbodieselrse.com.br/product/res-2003w-filtro-comb-separador-agua/",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.msam.com.br/produto/man-latin-america-07w127401g-conjunto-filtro-diesel-combustivel-vw-constellation-motor-man-d08-e-187063 ; https://hipervarejo.com.br/filtro-combustivel-volkswagen-15-190-man-d08-34-190-2012-a-2019-tecfil-pec3014/p",
+   "nota": "Cross-ref do refil G não achado.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 23.230",
+   "anos": [
+    2019,
+    2023
+   ],
+   "sistema": "Combustível",
+   "item": "Filtro separador de água",
+   "especificacao": "Elemento Racor — VW 2R0127177J",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Mann WK 10 002/1x · Tecfil PSD470",
+   "status": "inferido",
+   "fonte": "https://www.superdiesel.com.br/filtro-separador-agua-2r0127177j ; https://www.multitruckonline.com.br/motor/filtro-de-combustivel/filtro-combustivel-racor-ccopo-14uns-wk10002",
+   "nota": "Varejo; confirmar no catálogo Mann. | [rodada 1, inferido] Separador tipo Racor da linha Constellation — https://turbodieselrse.com.br/product/res-2003w-filtro-comb-separador-agua/",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 23.230",
@@ -21035,13 +21662,13 @@
    "sistema": "Eixo/Diferencial",
    "item": "Óleo de diferencial",
    "especificacao": "Eixo traseiro Meritor - 85W-140 mineral · API GL-5",
-   "quantidade": null,
-   "unidade": null,
+   "quantidade": "7",
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "confirmado",
    "fonte": "Eixo: https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf ; Oleo: https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf ; https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
-   "nota": "volume/quantidade: não encontrado",
+   "nota": "volume/quantidade: não encontrado | [rodada 2, inferido] Eixo traseiro Meritor MS-23-245 (ficha) — óleo SAE 85W-140 API GL-5 (Meritor) — https://www.scribd.com/document/336832468/Constellation-23230 ; https://meritorbrasil.com.br/materiais/eixo-diferencial/Manual-Troca-Oleo-Diferencial.pdf ; https://www.scherer-sa.com.br/produto/103738/oleo-lubrificante-mineral-diferencial-meritor-113-124-145-155-160-165-168-180-185-220-225-230-235-240-245-sae-85w140-api-gl5-caixa-24x1lt",
    "rodada": 1,
    "arquivo": "r1-vw.json"
   },
@@ -21053,6 +21680,44 @@
    ],
    "sistema": "Elétrica",
    "item": "Bateria",
+   "especificacao": "2 × 12 V (ficha); 100 Ah inferido pela família",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf",
+   "nota": "Ah não aparece na ficha.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 23.230",
+   "anos": [
+    2019,
+    2023
+   ],
+   "sistema": "Elétrica",
+   "item": "Lâmpada de farol",
+   "especificacao": "H4 24 V 70 W — cabine 2006–2021",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://www.viapecas.com.br/farol-principal-nino-h4-f-207-lado-esquerdo-para-constellation-2006-2021/p/2183",
+   "nota": "2022+ conferir.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 23.230",
+   "anos": [
+    2019,
+    2023
+   ],
+   "sistema": "Embreagem",
+   "item": "Fluido de embreagem",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
@@ -21060,9 +21725,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Ver manual/reservatório.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 23.230",
@@ -21072,16 +21737,16 @@
    ],
    "sistema": "Freios",
    "item": "Cartucho do secador de ar",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Cartucho Wabco — VW 2R0616787A",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Wabco 4324102227 (a confirmar)",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/filtro-secador-de-ar-constellation-original-vw ; https://produto.mercadolivre.com.br/MLB-1912430568-filtro-secador-marca-wabco-do-constellation-2r0616787a-vw-_JM",
+   "nota": "Cross-ref não confirmado.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 23.230",
@@ -21129,16 +21794,16 @@
    ],
    "sistema": "Motor",
    "item": "Correia",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Poly-V 8PK1275 — VW 07W903137 (MAN D08 4/6 cil)",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Gates 8PK1275",
+   "status": "confirmado",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/correia-alternador-constellation-8pk1275-man-original-vw ; https://www.dfautopecas.com.br/geral/correia-motor-vw-13190-15190-17280-24280-motor-mann-d08",
+   "nota": "Correia do compressor A/C à parte, medida não achada.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 23.230",
@@ -21148,16 +21813,16 @@
    ],
    "sistema": "Motor",
    "item": "Filtro de óleo",
-   "especificacao": "Filtro de oleo motor MAN D08 4/6 cil",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Elemento MAN D08 pós-2018 (2 bicos) — VW 07W115436C",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "inferido",
-   "fonte": "https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann HU 8171 · Tecfil PEL2016 · Wega WOE-694 · Fleetguard LF17807",
+   "status": "confirmado",
+   "fonte": "https://www.camiopar.com.br/elemento-filtrante-oleo-motor-man-d08-mann-filter-hu8171 ; https://www.rochapecas.com.br/filtro-lub-refil-motor-man-4-6cil-18-or-07w115436c/p",
+   "nota": "Não confundir com 07W115436A (até 2017, Tecfil PEL1998). | [rodada 1, inferido] Filtro de oleo motor MAN D08 4/6 cil — https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 23.230",
@@ -21167,16 +21832,16 @@
    ],
    "sistema": "Motor",
    "item": "Óleo de motor",
-   "especificacao": "15W-40 ou 10W-40 · MAN M 3477 / MAN M 3575",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "SAE 15W-40 MAN M 3477 ou 10W-40 MAN M 3575 (norma da 1ª rodada) — MAN D0834 EGR",
+   "quantidade": "19",
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "Familia MAN D08 ; https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados",
-   "nota": "volume/quantidade: não encontrado | Nao confirmado no manual. | Mesma lacuna do 17.190 (carter do D0834 4 cil). Consultar manual.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://atrialub.com.br/wp-content/uploads/2022/05/tabela_lub_caminhao.pdf",
+   "nota": "Atria lista 19 L para o 17.230 E Constellation (mesmo D0834 230 cv); 23.230 não aparece nominalmente. Intervalo: plano VWCO por grupo (https://www.vwco.com.br/servicos/PlanosdeManutencaoCustomizados?id=14). | [rodada 1, inferido] 15W-40 ou 10W-40 · MAN M 3477 / MAN M 3575 — Familia MAN D08 ; https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 23.230",
@@ -21203,18 +21868,37 @@
     2019,
     2023
    ],
-   "sistema": "Rodas/Pneus",
-   "item": "Pneu",
+   "sistema": "Pós-tratamento",
+   "item": "Filtro de ureia",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
    "intervalo": null,
    "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": "Nao confirmado nas fontes consultadas.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "status": "nao_aplica",
+   "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation%2023.230?id=2&productid=32",
+   "nota": "EGR, sem SCR.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 23.230",
+   "anos": [
+    2019,
+    2023
+   ],
+   "sistema": "Rodas/Pneus",
+   "item": "Pneu",
+   "especificacao": "275/80 R22.5",
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "confirmado",
+   "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf",
+   "nota": "Ficha VWCO.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 23.230",
@@ -21224,16 +21908,16 @@
    ],
    "sistema": "Transmissão",
    "item": "Óleo de câmbio",
-   "especificacao": "Cambio Eaton FS-6406A, manual, 6 marchas sincronizadas + 1 re. Oleo Eaton SAE 40 mineral · Especificacao Eaton · acionamento: Manual",
-   "quantidade": "9,0 L (FS-6406)",
+   "especificacao": "Câmbio manual Eaton 6 marchas (ficha; modelo FSO-6406A inferido) — óleo Eaton SYN 50",
+   "quantidade": "9,2",
    "unidade": "L",
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "Eaton SYN 50",
    "status": "inferido",
-   "fonte": "Cambio: https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf ; Oleo (inferido): https://www.6canecos.com.br/files/gear/OleoEaton.pdf ; https://www.6canecos.com.br/files/gear/OleoEaton.pdf ; https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf",
-   "nota": "Valor obtido via busca no catalogo Eaton; conferir.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf ; https://www.eaton.com/content/dam/eaton/products/transmissions/vehicle-transmissions/eaton-fs(o)-6406-8406-9406-transmission-brochure-en-us.pdf",
+   "nota": "Ficha confirma Eaton 6 marchas; número do modelo e o volume (9,2 L do FSO-6406) inferidos — conferir plaqueta. | [rodada 1, inferido] Cambio Eaton FS-6406A, manual, 6 marchas sincronizadas + 1 re. Oleo Eaton SAE 40 mineral · Especificacao Eaton · acionamento: Manual — Cambio: https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf ; Oleo (inferido): https://www.6canecos.com.br/files/gear/OleoEaton.pdf ; https://www.6canecos.com.br/files/gear/OleoEaton.pdf ; https://movelcaminhoes.com.br/wp-content/uploads/2017/11/Constellation-23230.pdf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 28.460",
@@ -21250,9 +21934,28 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Concessionária/carcaça.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 28.460",
+   "anos": [
+    2022,
+    2022
+   ],
+   "sistema": "Admissão de ar",
+   "item": "Filtro de ar do motor (secundário)",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Idem.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 28.460",
@@ -21262,16 +21965,16 @@
    ],
    "sistema": "Arrefecimento",
    "item": "Líquido de arrefecimento",
-   "especificacao": "MAN 324 Typ SNF (ou Typ NF)",
+   "especificacao": "Aditivo MAN 324 NF/SNF (motor MAN)",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.aptacaminhoes.com.br/2025/10/02/qual-o-aditivo-recomendado-pela-volkswagen/",
+   "nota": "Volume não encontrado. | [rodada 1, inferido] MAN 324 Typ SNF (ou Typ NF) — https://weglubricants.com/en/specifications/man-324-type-snf-en/",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 28.460",
@@ -21288,9 +21991,28 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Cabine é a do MAN TGX — não usa o 2R2819429 do Constellation; conferir.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 28.460",
+   "anos": [
+    2022,
+    2022
+   ],
+   "sistema": "Cabine",
+   "item": "Palheta",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Cabine TGX — medir.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 28.460",
@@ -21318,6 +22040,25 @@
     2022
    ],
    "sistema": "Combustível",
+   "item": "Filtro de combustível (secundário)",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Pista: 07W127401G lista 'MAN TGX D2676 Euro 5' (mesmo D26) — verificar se serve no Meteor.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 28.460",
+   "anos": [
+    2022,
+    2022
+   ],
+   "sistema": "Combustível",
    "item": "Filtro separador de água",
    "especificacao": null,
    "quantidade": null,
@@ -21326,9 +22067,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Idem kit revisão Meteor.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 28.460",
@@ -21338,16 +22079,16 @@
    ],
    "sistema": "Eixo/Diferencial",
    "item": "Óleo de diferencial",
-   "especificacao": "85W-140 mineral (a confirmar - cavalo mecanico pode usar eixo com especificacao propria) · API GL-5",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Eixo traseiro MAN ou Meritor (ficha) — ficha lista 'MAN 14,5 + (2 × 0,7) / Meritor 15,5 + (2 × 0,7)', lido como litros (carcaça + cubos); óleo SAE 85W-140 GL-5 (Meritor) ou norma MAN (eixo MAN)",
+   "quantidade": "14,5 + 2×0,7 (MAN) ou 15,5 + 2×0,7 (Meritor)",
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://d1qeqf1yyyqyq8.cloudfront.net/3399c059-1506-4d6d-a9b5-7377ff177caa.pdf ; https://www.agrofy.com.br/media/catalog/product/v/w/vw_28.460_1.pdf",
+   "nota": "Interpretação dos números da ficha como capacidade de óleo — confirmar na ficha completa/plaqueta qual eixo veio. | [rodada 1, inferido] 85W-140 mineral (a confirmar - cavalo mecanico pode usar eixo com especificacao propria) · API GL-5 — https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 28.460",
@@ -21357,6 +22098,25 @@
    ],
    "sistema": "Elétrica",
    "item": "Bateria",
+   "especificacao": "2 × 12 V – 170 Ah",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "confirmado",
+   "fonte": "https://d1qeqf1yyyqyq8.cloudfront.net/3399c059-1506-4d6d-a9b5-7377ff177caa.pdf",
+   "nota": "Ficha VWCO.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 28.460",
+   "anos": [
+    2022,
+    2022
+   ],
+   "sistema": "Elétrica",
+   "item": "Lâmpada de farol",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
@@ -21364,9 +22124,28 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Cabine TGX.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 28.460",
+   "anos": [
+    2022,
+    2022
+   ],
+   "sistema": "Embreagem",
+   "item": "Fluido de embreagem",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_aplica",
+   "fonte": "https://www.vwco.com.br/caminhoes/Meteor/Meteor28.460?id=21&productid=152",
+   "nota": "Câmbio automatizado TraXon (embreagem atuada pelo sistema, sem pedal).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 28.460",
@@ -21383,9 +22162,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Plataforma MAN TG — conferir cartucho Wabco/Knorr no veículo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 28.460",
@@ -21440,9 +22219,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "D26 — não pesquisado (orçamento).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 28.460",
@@ -21459,9 +22238,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": "Filtro do D26 NAO e o mesmo do D08. Nao reaproveitar codigo.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Kit revisão Meteor Euro V (Futura) — pedir os códigos à concessionária; depois catálogo Mann (linha HU do D26).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 28.460",
@@ -21478,7 +22257,7 @@
    "codigo_ref": null,
    "status": "inferido",
    "fonte": "Familia MAN D26 ; https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados",
-   "nota": "volume/quantidade: não encontrado | Nao confirmado. Consultar manual do Meteor. | A norma MAN M 3275 e para Euro I/II (D20/D26 antigos) e NAO serve para este motor. | Capacidade do carter do D26 nao encontrada. Consultar manual do proprietario VW Meteor ou a concessionaria.",
+   "nota": "volume/quantidade: não encontrado | Nao confirmado. Consultar manual do Meteor. | A norma MAN M 3275 e para Euro I/II (D20/D26 antigos) e NAO serve para este motor. | Capacidade do carter do D26 nao encontrada. Consultar manual do proprietario VW Meteor ou a concessionaria. | [rodada 2, nao_encontrado] Norma MAN (M 3477 15W-40 / M 3575 10W-40, 1ª rodada) — MAN D26 12,4 L 460 cv Euro 5",
    "rodada": 1,
    "arquivo": "r1-vw.json"
   },
@@ -21507,6 +22286,25 @@
     2022,
     2022
    ],
+   "sistema": "Pós-tratamento",
+   "item": "Filtro de ureia",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Não confirmado se o Meteor 28.460 Euro 5 é EGR (sem Arla) ou SCR — conferir tanque de Arla no veículo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 28.460",
+   "anos": [
+    2022,
+    2022
+   ],
    "sistema": "Rodas/Pneus",
    "item": "Pneu",
    "especificacao": "295/80 R22.5",
@@ -21516,9 +22314,9 @@
    "codigo_ref": null,
    "status": "confirmado",
    "fonte": "https://www.agrofy.com.br/media/catalog/product/v/w/vw_28.460_1.pdf",
-   "nota": "A ficha tecnica informa que as dimensoes consideram pneus 295/80R22.5.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Ficha VWCO (tanques 390 + 390 L alumínio).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 28.460",
@@ -21532,10 +22330,10 @@
    "quantidade": null,
    "unidade": null,
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "ZF Ecofluid M / TE-ML 02",
    "status": "confirmado",
    "fonte": "Cambio: https://motormagazine.com.ar/lanzamiento-volkswagen-meteor-28-460-6x2/ ; https://www.vwco.com.br/caminhoes/Meteor/Meteor28.460?id=21&productid=152 ; https://motormagazine.com.ar/lanzamiento-volkswagen-meteor-28-460-6x2/",
-   "nota": "volume/quantidade: não encontrado | O fluido correto sai da lista ZF TE-ML aplicavel a TraXon - NAO foi possivel confirmar qual nesta pesquisa. | Consultar a lista ZF TE-ML vigente para TraXon (normalmente TE-ML 02 para transmissoes automatizadas). Conferir com a ZF/concessionaria.",
+   "nota": "volume/quantidade: não encontrado | O fluido correto sai da lista ZF TE-ML aplicavel a TraXon - NAO foi possivel confirmar qual nesta pesquisa. | Consultar a lista ZF TE-ML vigente para TraXon (normalmente TE-ML 02 para transmissoes automatizadas). Conferir com a ZF/concessionaria. | [rodada 2, inferido] Câmbio automatizado ZF TraXon 12 marchas (opc. 16) — óleo ZF lista TE-ML 02 (ZF Ecofluid M) — https://www.vwco.com.br/caminhoes/Meteor/Meteor28.460?id=21&productid=152 ; https://omecanico.com.br/transmissoes-zf-traxon-equipam-novos-caminhoes-vw/ ; https://aftermarket.zf.com/lubricants/pt/te-ml_02-pt.pdf",
    "rodada": 1,
    "arquivo": "r1-vw.json"
   },
@@ -21554,9 +22352,28 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Pista: 'filtro de ar motor Mann p/ VW 24.280 MT MAN D08 2012+' (https://cpfabbri.com.br/produto/filtro-de-ar-motor-mann-para-vw-24-280-mt-man-d08-2012/) sem código visível; VW 2S0129620C. Conferir na carcaça.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.280",
+   "anos": [
+    2019,
+    2022
+   ],
+   "sistema": "Admissão de ar",
+   "item": "Filtro de ar do motor (secundário)",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Pista Tecfil ASR839 / Mann CF 1552 / Wega WAP103/S — verificar no catálogo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.280",
@@ -21566,16 +22383,16 @@
    ],
    "sistema": "Arrefecimento",
    "item": "Líquido de arrefecimento",
-   "especificacao": "MAN 324 Typ SNF (ou Typ NF)",
+   "especificacao": "Aditivo MAN 324 NF/SNF, 40/60",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.lojafuturacaminhoes.com.br/aditivo-para-radiadores-man-original-volkswagen ; https://www.aptacaminhoes.com.br/2025/10/02/qual-o-aditivo-recomendado-pela-volkswagen/",
+   "nota": "Volume não encontrado. | [rodada 1, inferido] MAN 324 Typ SNF (ou Typ NF) — https://weglubricants.com/en/specifications/man-324-type-snf-en/",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.280",
@@ -21585,16 +22402,35 @@
    ],
    "sistema": "Cabine",
    "item": "Filtro de cabine",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Par (2 un.) — VW/MAN 2R2819429 (Valeo); lista inclui 24.280/26.280",
+   "quantidade": "2",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann CU 22018 · Tecfil ACP429/9 · Wega AKX4006 · Mahle LA652/S",
+   "status": "inferido",
+   "fonte": "https://www.sorasa.com.br/filtro-ar-condicionado-volkswagen-24250-19320-25370.html ; https://www.rochapecas.com.br/filtro-ar-cond-const-par-wega-2r2819429x/p",
+   "nota": "Varejo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.280",
+   "anos": [
+    2019,
+    2022
+   ],
+   "sistema": "Cabine",
+   "item": "Palheta",
+   "especificacao": "Par 24\" (600 mm), gancho",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Dyna D324",
+   "status": "inferido",
+   "fonte": "https://www.unifreiospecas.com.br/palheta/palheta-limpador-parabrisa-vw-constellation",
+   "nota": "Varejo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.280",
@@ -21622,17 +22458,36 @@
     2022
    ],
    "sistema": "Combustível",
-   "item": "Filtro separador de água",
-   "especificacao": "Separador tipo Racor da linha Constellation MAN",
-   "quantidade": null,
-   "unidade": null,
+   "item": "Filtro de combustível (secundário)",
+   "especificacao": "Conjunto MAN D08 Euro 5 01/2018+ — VW 07W127401G (refil 173 mm)",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://www.pitstop.com.br/filtro-racor-separador-dagua-vw-constellation-man-1165712/p",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.msam.com.br/produto/man-latin-america-07w127401g-conjunto-filtro-diesel-combustivel-vw-constellation-motor-man-d08-e-187063",
+   "nota": "Cross-ref do refil não achado.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.280",
+   "anos": [
+    2019,
+    2022
+   ],
+   "sistema": "Combustível",
+   "item": "Filtro separador de água",
+   "especificacao": "Elemento Racor — VW 2R0127177J (lista Futura: 24280E etc.)",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Mann WK 10 002/1x · Tecfil PSD470",
+   "status": "inferido",
+   "fonte": "https://www.superdiesel.com.br/filtro-separador-agua-2r0127177j ; https://www.lojafuturacaminhoes.com.br/filtro-racor-constellation-original-volkswagen-2r0127177j",
+   "nota": "Cross-ref varejo. | [rodada 1, inferido] Separador tipo Racor da linha Constellation MAN — https://www.pitstop.com.br/filtro-racor-separador-dagua-vw-constellation-man-1165712/p",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.280",
@@ -21642,16 +22497,16 @@
    ],
    "sistema": "Eixo/Diferencial",
    "item": "Óleo de diferencial",
-   "especificacao": "85W-140 mineral · API GL-5",
+   "especificacao": "Eixo Meritor (modelo não achado; 30.320 8x2 usa MS 23.165) — SAE 85W-140 API GL-5",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf ; https://meritorbrasil.com.br/materiais/eixo-diferencial/Manual-Troca-Oleo-Diferencial.pdf",
+   "nota": "Plaqueta do eixo + tabela Meritor. | [rodada 1, inferido] 85W-140 mineral · API GL-5 — https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.280",
@@ -21661,6 +22516,44 @@
    ],
    "sistema": "Elétrica",
    "item": "Bateria",
+   "especificacao": "2 × 12 V – 100 Ah (inferido do 30.320 8x2)",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf",
+   "nota": "Ficha do 30.280 não trazia bateria; conferir etiqueta.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.280",
+   "anos": [
+    2019,
+    2022
+   ],
+   "sistema": "Elétrica",
+   "item": "Lâmpada de farol",
+   "especificacao": "H4 24 V 70 W — cabine 2006–2021",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://www.viapecas.com.br/farol-principal-nino-h4-f-207-lado-esquerdo-para-constellation-2006-2021/p/2183",
+   "nota": "Unidades 2022 conferir.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.280",
+   "anos": [
+    2019,
+    2022
+   ],
+   "sistema": "Embreagem",
+   "item": "Fluido de embreagem",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
@@ -21668,9 +22561,9 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Ver manual.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.280",
@@ -21680,16 +22573,16 @@
    ],
    "sistema": "Freios",
    "item": "Cartucho do secador de ar",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Cartucho Wabco — VW 2R0616787A",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Wabco 4324102227 (a confirmar)",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/filtro-secador-de-ar-constellation-original-vw",
+   "nota": "Cross-ref não confirmado.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.280",
@@ -21737,16 +22630,16 @@
    ],
    "sistema": "Motor",
    "item": "Correia",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Poly-V 8PK1275 — VW 07W903137 (D08 6 cil, 24.280/26.280)",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Gates 8PK1275",
+   "status": "confirmado",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/correia-alternador-constellation-8pk1275-man-original-vw ; https://www.dfautopecas.com.br/geral/correia-motor-vw-13190-15190-17280-24280-motor-mann-d08",
+   "nota": "Correia A/C à parte.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.280",
@@ -21756,16 +22649,16 @@
    ],
    "sistema": "Motor",
    "item": "Filtro de óleo",
-   "especificacao": "Filtro de oleo motor MAN D08 (ex.: 07W115436 aplicado em 17.280/24.280/26.280)",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Elemento MAN D08 pós-2018 (2 bicos) — VW 07W115436C",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "inferido",
-   "fonte": "https://eletropeldistribuidora.com.br/produto/filtro-oleo-p-constellation-17280-24280-26280-07w115436/",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann HU 8171 · Tecfil PEL2016 · Wega WOE-694 · Fleetguard LF17807",
+   "status": "confirmado",
+   "fonte": "https://www.camiopar.com.br/elemento-filtrante-oleo-motor-man-d08-mann-filter-hu8171 ; https://www.rochapecas.com.br/filtro-lub-refil-motor-man-4-6cil-18-or-07w115436c/p",
+   "nota": "Lista cita 24.280/26.280/31.280 (mesmo D0836 280). | [rodada 1, inferido] Filtro de oleo motor MAN D08 (ex.: 07W115436 aplicado em 17.280/24.280/26.280) — https://eletropeldistribuidora.com.br/produto/filtro-oleo-p-constellation-17280-24280-26280-07w115436/",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.280",
@@ -21775,16 +22668,16 @@
    ],
    "sistema": "Motor",
    "item": "Óleo de motor",
-   "especificacao": "15W-40 ou 10W-40 · MAN M 3477 / MAN M 3575",
-   "quantidade": "~26 L (referencia D0836 europeu)",
+   "especificacao": "SAE 15W-40 MAN M 3477 ou 10W-40 MAN M 3575 (norma da 1ª rodada) — MAN D0836 277 cv EGR, sem Arla",
+   "quantidade": "27,5",
    "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "Familia MAN D08 ; https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados ; https://www.truckstar.com.ua/fullmengen_man_tgm_en.html",
-   "nota": "Conferir - ha fonte brasileira de baixa qualidade citando 18,5 L.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://atrialub.com.br/wp-content/uploads/2022/05/tabela_lub_caminhao.pdf ; https://www.mercadoveiculos.com/info/quantos-litros-oleo-motor-man-24-280 ; https://blog.mercadoveiculos.com/quantos-litros-oleo-no-motor-man-24-280/",
+   "nota": "Mesmo D0836 280 cv do 24.280: 28 L c/ filtro / 26 L sem (mercadoveiculos) × 18,5 L (blog, 'manual VW') × 27,5 L (Atria, 26.260). Vareta. | [rodada 1, inferido] 15W-40 ou 10W-40 · MAN M 3477 / MAN M 3575 — Familia MAN D08 ; https://www.petromos.com/aprovacoes-fabricantes-oleo-de-motor-pesados ; https://www.truckstar.com.ua/fullmengen_man_tgm_en.html",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.280",
@@ -21811,18 +22704,37 @@
     2019,
     2022
    ],
-   "sistema": "Rodas/Pneus",
-   "item": "Pneu",
+   "sistema": "Pós-tratamento",
+   "item": "Filtro de ureia",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
    "intervalo": null,
    "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "status": "nao_aplica",
+   "fonte": "https://ocarreteiro.com.br/empresas/volkswagen-amplia-oferta-de-semipesados-8x2-com-constellation-30-280/",
+   "nota": "'Dispensa o uso de Arla 32' (O Carreteiro).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.280",
+   "anos": [
+    2019,
+    2022
+   ],
+   "sistema": "Rodas/Pneus",
+   "item": "Pneu",
+   "especificacao": "275/80 R22.5 ou 295/80 R22.5 (inferido do 30.320 8x2)",
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf",
+   "nota": "Conferir plaqueta.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.280",
@@ -21832,16 +22744,16 @@
    ],
    "sistema": "Transmissão",
    "item": "Óleo de câmbio",
-   "especificacao": "Manual; opcional V-Tronic Eaton automatizado de 10 marchas - oleo Eaton SAE 40 · Especificacao Eaton · acionamento: Opcional (V-Tronic 10 marchas)",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Câmbio manual ZF 9S 1110 TD, 9 marchas (padrão; opcional Eaton V-Tronic 10 automatizado) — óleo ZF lista TE-ML 02 (ZF Ecofluid M)",
+   "quantidade": "8,8",
+   "unidade": "L",
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "ZF Ecofluid M / TE-ML 02",
    "status": "inferido",
-   "fonte": "https://ocarreteiro.com.br/empresas/volkswagen-amplia-oferta-de-semipesados-8x2-com-constellation-30-280/ ; https://www.6canecos.com.br/files/gear/OleoEaton.pdf",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://ocarreteiro.com.br/empresas/volkswagen-amplia-oferta-de-semipesados-8x2-com-constellation-30-280/ ; https://www.automotivebusiness.com.br/noticias/vw-lanca-constellation-30-280-modelo-8x2-com-277-cavalos ; https://aftermarket.zf.com/lubricants/pt/te-ml_02-pt.pdf ; https://www.kroon-oil.com/en/product-recommendation/trucks-and-buses-7-5t/zf/ecolite-transmissions/9-s-1110-to-td/44971/",
+   "nota": "Modelo do câmbio confirmado por 2 fontes de imprensa; volume 8,8 L vem da Kroon-Oil (não da ZF) — conferir na TE-ML 02/plaqueta. Se V-Tronic Eaton: óleo Eaton, volume a confirmar. | [rodada 1, inferido] Manual; opcional V-Tronic Eaton automatizado de 10 marchas - oleo Eaton SAE 40 · Especificacao Eaton · acionamento: Opcional (V-Tronic 10 marchas) — https://ocarreteiro.com.br/empresas/volkswagen-amplia-oferta-de-semipesados-8x2-com-constellation-30-280/ ; https://www.6canecos.com.br/files/gear/OleoEaton.pdf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.320",
@@ -21858,9 +22770,28 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Código na carcaça; catálogo Mann pesada.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.320",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Admissão de ar",
+   "item": "Filtro de ar do motor (secundário)",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Idem.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.320",
@@ -21870,16 +22801,16 @@
    ],
    "sistema": "Arrefecimento",
    "item": "Líquido de arrefecimento",
-   "especificacao": "MAN 324 Typ SNF (ou Typ NF)",
+   "especificacao": "Aditivo MAN 324 NF/SNF, 40/60",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.lojafuturacaminhoes.com.br/aditivo-para-radiadores-man-original-volkswagen",
+   "nota": "Volume não encontrado. | [rodada 1, inferido] MAN 324 Typ SNF (ou Typ NF) — https://weglubricants.com/en/specifications/man-324-type-snf-en/",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.320",
@@ -21889,16 +22820,35 @@
    ],
    "sistema": "Cabine",
    "item": "Filtro de cabine",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Par (2 un.) — VW/MAN 2R2819429 (Valeo)",
+   "quantidade": "2",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann CU 22018 · Tecfil ACP429/9 · Wega AKX4006",
+   "status": "inferido",
+   "fonte": "https://www.sorasa.com.br/filtro-ar-condicionado-volkswagen-24250-19320-25370.html",
+   "nota": "Varejo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.320",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Cabine",
+   "item": "Palheta",
+   "especificacao": "Par 24\" (600 mm), gancho",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Dyna D324",
+   "status": "inferido",
+   "fonte": "https://www.unifreiospecas.com.br/palheta/palheta-limpador-parabrisa-vw-constellation",
+   "nota": "Varejo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.320",
@@ -21926,17 +22876,36 @@
     2025
    ],
    "sistema": "Combustível",
-   "item": "Filtro separador de água",
-   "especificacao": "Separador de agua da linha Constellation MAN Euro 6",
+   "item": "Filtro de combustível (secundário)",
+   "especificacao": null,
    "quantidade": null,
    "unidade": null,
    "intervalo": null,
    "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Concessionária.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.320",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Combustível",
+   "item": "Filtro separador de água",
+   "especificacao": "Separador Parker Racor p/ Constellation MAN Euro 6 2023+ (lista inclui 26.320/31.320)",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Parker Racor RES2003W",
    "status": "inferido",
-   "fonte": "https://www.rfautopecas.com.br/017034/filtro-combustivel-separador-agua-vw-constellation-210260320-man-euro-6-23-",
-   "nota": "A referencia de varejo cita explicitamente '210/260/320 MAN Euro 6', que cobre este modelo.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.magazineluiza.com.br/filtro-de-combustivel-constellation-14210-17210-18210-18260-26260-26320-27260-31320-euro-6-apos-2023-parker-res2003w-racor/p/akj34k94kb/au/fitr/ ; https://www.rfautopecas.com.br/017034/filtro-combustivel-separador-agua-vw-constellation-210260320-man-euro-6-23-",
+   "nota": "30.320 não nominal; mesmo motor do 26.320/31.320. | [rodada 1, inferido] Separador de agua da linha Constellation MAN Euro 6 — https://www.rfautopecas.com.br/017034/filtro-combustivel-separador-agua-vw-constellation-210260320-man-euro-6-23-",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.320",
@@ -21946,16 +22915,16 @@
    ],
    "sistema": "Eixo/Diferencial",
    "item": "Óleo de diferencial",
-   "especificacao": "85W-140 mineral · API GL-5",
+   "especificacao": "Eixo traseiro Meritor MS 23.165 (simples), relações 3,42 ou 3,73 — SAE 85W-140 API GL-5 (Meritor)",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf ; https://meritorbrasil.com.br/materiais/eixo-diferencial/Manual-Troca-Oleo-Diferencial.pdf",
+   "nota": "Modelo confirmado na ficha; volume do MS-165 não achado (tabela Meritor Brasil). | [rodada 1, inferido] 85W-140 mineral · API GL-5 — https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.320",
@@ -21965,16 +22934,54 @@
    ],
    "sistema": "Elétrica",
    "item": "Bateria",
-   "especificacao": "2 x (12 V - 100 Ah); opcionais 2 x (12 V - 135 Ah) ou 2 x (12 V - 170 Ah)",
+   "especificacao": "2 × 12 V – 100 Ah (padrão); opc. 2 × 135 Ah ou 2 × 170 Ah",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "confirmado",
+   "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf",
+   "nota": "Ficha VWCO. | [rodada 1, confirmado] 2 x (12 V - 100 Ah); opcionais 2 x (12 V - 135 Ah) ou 2 x (12 V - 170 Ah) — https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf ; https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_30.320_8x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.320",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Elétrica",
+   "item": "Lâmpada de farol",
+   "especificacao": null,
    "quantidade": null,
    "unidade": null,
    "intervalo": null,
    "codigo_ref": null,
-   "status": "confirmado",
-   "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf ; https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_30.320_8x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf",
-   "nota": "CCA nao publicado na ficha.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Frente nova.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.320",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Embreagem",
+   "item": "Fluido de embreagem",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Ver manual.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.320",
@@ -21984,16 +22991,16 @@
    ],
    "sistema": "Freios",
    "item": "Cartucho do secador de ar",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Cartucho Wabco — VW 2R0616787A (família Constellation)",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Wabco 4324102227 (a confirmar)",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/filtro-secador-de-ar-constellation-original-vw",
+   "nota": "Não confirmado p/ 2023+.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.320",
@@ -22041,16 +23048,16 @@
    ],
    "sistema": "Motor",
    "item": "Correia",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Poly-V 8PK1275 — VW 07W903137 (família D08; P8 a confirmar)",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Gates 8PK1275",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/correia-alternador-constellation-8pk1275-man-original-vw",
+   "nota": "Sem lista 2023+.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.320",
@@ -22060,16 +23067,16 @@
    ],
    "sistema": "Motor",
    "item": "Filtro de óleo",
-   "especificacao": "Filtro de oleo motor MAN D08",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Elemento MAN D08 — provavelmente VW 07W115436C",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "Mann HU 8171 · Tecfil PEL2016 (a confirmar p/ P8)",
    "status": "inferido",
-   "fonte": "https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.camiopar.com.br/elemento-filtrante-oleo-motor-man-d08-mann-filter-hu8171",
+   "nota": "Sem lista 2023+. | [rodada 1, inferido] Filtro de oleo motor MAN D08 — https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.320",
@@ -22079,16 +23086,16 @@
    ],
    "sistema": "Motor",
    "item": "Óleo de motor",
-   "especificacao": "15W-40 ou 10W-40 · Aprovacao MAN (M 3477/M 3575; possivel norma mais recente na versao Euro 6)",
-   "quantidade": "~26 L (referencia D0836 europeu)",
+   "especificacao": "Óleo low-SAPS Euro 6 — aprovação MAN M 3677 (ou M 3777), tipicamente 10W-40; MAN D0836 320 cv SCR",
+   "quantidade": "27,5",
    "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "Familia MAN D08 ; https://public.man.eu/media/service/asp/media/en/auftritte/service_dokumente_/wartungs__und_betriebsstoffvorschrift/bezugsbremskraefte_2/Maintenance_and_service_product_recommendation.pdf ; https://www.truckstar.com.ua/fullmengen_man_tgm_en.html",
-   "nota": "Conferir - ver ressalva do 26.260.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.autodoc.parts/engine-oil/man-m-3677 ; https://atrialub.com.br/wp-content/uploads/2022/05/tabela_lub_caminhao.pdf ; https://www.vwco.com.br/caminhoes/Constellation/Constellation30.320-euro?id=2&productid=210",
+   "nota": "Norma e volume inferidos da família D0836 (conflito 27,5/28 vs 18,5 L); manual P8 e vareta. | [rodada 1, inferido] 15W-40 ou 10W-40 · Aprovacao MAN (M 3477/M 3575; possivel norma mais recente na versao Euro 6) — Familia MAN D08 ; https://public.man.eu/media/service/asp/media/en/auftritte/service_dokumente_/wartungs__und_betriebsstoffvorschrift/bezugsbremskraefte_2/Maintenance_and_service_product_recommendation.pdf ; https://www.truckstar.com.ua/fullmengen_man_tgm_en.html",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.320",
@@ -22105,9 +23112,28 @@
    "codigo_ref": null,
    "status": "confirmado",
    "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation30.320-euro?id=2&productid=210 ; https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf",
-   "nota": null,
+   "nota": "[rodada 2, inferido] Arla 32 (ISO 22241) — SCR P8 — https://www.vwco.com.br/caminhoes/Constellation/Constellation30.320-euro?id=2&productid=210",
    "rodada": 1,
    "arquivo": "r1-vw.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW 30.320",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Pós-tratamento",
+   "item": "Filtro de ureia",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Concessionária.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.320",
@@ -22124,9 +23150,9 @@
    "codigo_ref": null,
    "status": "confirmado",
    "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Ficha; conferir qual medida veio.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW 30.320",
@@ -22137,13 +23163,13 @@
    "sistema": "Transmissão",
    "item": "Óleo de câmbio",
    "especificacao": "Manual 9 marchas OU automatizado V-Tronic 12 marchas (duas opcoes homologadas) - conferir por ativo · acionamento: Opcional (V-Tronic 12 marchas)",
-   "quantidade": null,
-   "unidade": null,
+   "quantidade": "8,8 (9S 1110 TD)",
+   "unidade": "L",
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "ZF Ecofluid M / TE-ML 02",
    "status": "confirmado",
    "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation30.320-euro?id=2&productid=210",
-   "nota": "volume/quantidade: não encontrado | O oleo do V-Tronic (automatizado Eaton) NAO e necessariamente o mesmo do manual. Conferir a plaqueta do cambio antes de comprar.",
+   "nota": "volume/quantidade: não encontrado | O oleo do V-Tronic (automatizado Eaton) NAO e necessariamente o mesmo do manual. Conferir a plaqueta do cambio antes de comprar. | [rodada 2, inferido] Manual 9 marchas (ZF 9S 1110 TD provável) ou V-Tronic 12 marchas (ZF TraXon) — óleo ZF lista TE-ML 02 (ZF Ecofluid M) — https://www.vwco.com.br/caminhoes/Constellation/Constellation30.320-euro?id=2&productid=210 ; https://aftermarket.zf.com/lubricants/pt/te-ml_02-pt.pdf ; https://www.kroon-oil.com/en/product-recommendation/trucks-and-buses-7-5t/zf/ecolite-transmissions/9-s-1110-to-td/44971/ ; https://omecanico.com.br/transmissoes-zf-traxon-equipam-novos-caminhoes-vw/",
    "rodada": 1,
    "arquivo": "r1-vw.json"
   },
@@ -22162,9 +23188,28 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": "Codigo nao levantado.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Elemento do D0836 (carcaça maior) não identificado. Pista: VW 2S0129620C ('elemento filtro de ar Constellation', ML) e Mann catálogo pesada. Conferir código na carcaça.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
+    2025
+   ],
+   "sistema": "Admissão de ar",
+   "item": "Filtro de ar do motor (secundário)",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Existe 'elemento secundário Constellation Euro VI' (https://www.santaemiliacaminhoespecas.com.br/MLB-5380636770-elemento-filtro-ar-secundario-constellation-euro-vi-_JM) sem código; pista Tecfil ASR839 / Mann CF 1552 (equivalência a 2S0129620C na Showlub) — verificar.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
@@ -22174,16 +23219,16 @@
    ],
    "sistema": "Arrefecimento",
    "item": "Líquido de arrefecimento",
-   "especificacao": "Aditivo permanente a base de etilenoglicol, isento de nitrito/amina/fosfato, especificacao MAN 324 Typ SNF (ou Typ NF)",
+   "especificacao": "Aditivo MAN 324 NF/SNF, 40% aditivo + 60% água",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/ ; https://www.ravenol.de/en/properties/empfehlung/man-324-snf",
-   "nota": "volume/quantidade: não encontrado | Norma da familia de motores MAN. Nao confirmado no manual VWCO brasileiro. MAN 324 SNF nao pode ser misturado com Typ NF/Typ N. | Capacidade do sistema de arrefecimento nao encontrada. Consultar manual do proprietario.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.lojafuturacaminhoes.com.br/aditivo-para-radiadores-man-original-volkswagen ; https://www.aptacaminhoes.com.br/2025/10/02/qual-o-aditivo-recomendado-pela-volkswagen/",
+   "nota": "Volume não encontrado. | [rodada 1, inferido] Aditivo permanente a base de etilenoglicol, isento de nitrito/amina/fosfato, especificacao MAN 324 Typ SNF (ou Typ NF) — https://weglubricants.com/en/specifications/man-324-type-snf-en/ ; https://www.ravenol.de/en/properties/empfehlung/man-324-snf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
@@ -22193,16 +23238,35 @@
    ],
    "sistema": "Cabine",
    "item": "Filtro de cabine",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Par (2 un.) — VW/MAN 2R2819429 (Valeo); lista de aplicação inclui Worker 26.260",
+   "quantidade": "2",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": "Codigo nao levantado.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann CU 22018 · Tecfil ACP429/9 · Wega AKX4006 · Mahle LA652/S",
+   "status": "inferido",
+   "fonte": "https://www.sorasa.com.br/filtro-ar-condicionado-volkswagen-24250-19320-25370.html ; https://www.rochapecas.com.br/filtro-ar-cond-const-par-wega-2r2819429x/p",
+   "nota": "Varejo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
+    2025
+   ],
+   "sistema": "Cabine",
+   "item": "Palheta",
+   "especificacao": "Par 24\" (600 mm), gancho",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Dyna D324",
+   "status": "inferido",
+   "fonte": "https://www.unifreiospecas.com.br/palheta/palheta-limpador-parabrisa-vw-constellation",
+   "nota": "Varejo; medir.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
@@ -22227,6 +23291,44 @@
    "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
    "anos": [
     2022,
+    2022
+   ],
+   "sistema": "Combustível",
+   "item": "Filtro de combustível (secundário)",
+   "especificacao": "Conjunto MAN D08 Euro 5 01/2018+ — VW 07W127401G (refil 173 mm)",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://www.msam.com.br/produto/man-latin-america-07w127401g-conjunto-filtro-diesel-combustivel-vw-constellation-motor-man-d08-e-187063",
+   "nota": "Cross-ref do refil não achado; conferir catálogo Mann/Tecfil.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Combustível",
+   "item": "Filtro de combustível (secundário)",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Filtro principal do D08 P8 (2023+) não encontrado — concessionária/catálogo Mann pesada.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
     2025
    ],
    "sistema": "Combustível",
@@ -22246,20 +23348,58 @@
    "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
    "anos": [
     2022,
+    2022
+   ],
+   "sistema": "Combustível",
+   "item": "Filtro separador de água",
+   "especificacao": "Elemento Racor — VW 2R0127177J",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Mann WK 10 002/1x · Tecfil PSD470",
+   "status": "inferido",
+   "fonte": "https://www.superdiesel.com.br/filtro-separador-agua-2r0127177j ; https://www.lojafuturacaminhoes.com.br/filtro-racor-constellation-original-volkswagen-2r0127177j",
+   "nota": "Futura (concessionária) lista o 2R0127177J p/ 26260/31260/31320; cross-ref é de varejo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Combustível",
+   "item": "Filtro separador de água",
+   "especificacao": "Elemento separador Parker Racor p/ Constellation MAN Euro 6 (2023+: 14.210/17.210/18.210/18.260/26.260/26.320/27.260/31.320)",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Parker Racor RES2003W",
+   "status": "inferido",
+   "fonte": "https://www.magazineluiza.com.br/filtro-de-combustivel-constellation-14210-17210-18210-18260-26260-26320-27260-31320-euro-6-apos-2023-parker-res2003w-racor/p/akj34k94kb/au/fitr/ ; https://www.rfautopecas.com.br/017034/filtro-combustivel-separador-agua-vw-constellation-210260320-man-euro-6-23-",
+   "nota": "Duas listagens de varejo coerentes; código original VW não achado.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
     2025
    ],
    "sistema": "Eixo/Diferencial",
    "item": "Óleo de diferencial",
-   "especificacao": "Eixo traseiro Meritor - oleo mineral multiviscoso 85W-140 · API GL-5",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Eixo traseiro Meritor MS 23.245 (ficha Euro 6, relação 4,88/6,65) — SAE 85W-140 API GL-5",
+   "quantidade": "7",
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
-   "nota": "volume/quantidade: não encontrado | Marca do eixo do 26.260 nao confirmada documentalmente (Meritor e o padrao na linha Constellation). | Capacidade do carter do eixo nao encontrada. Consultar manual do eixo Meritor pelo numero de serie da carcaca ou a concessionaria.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_26.260_6x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf ; https://meritorbrasil.com.br/materiais/eixo-diferencial/Manual-Troca-Oleo-Diferencial.pdf",
+   "nota": "Modelo confirmado só na ficha Euro 6; volume da família MS-245/248 (Meritor). 2022 assumido igual. | [rodada 1, inferido] Eixo traseiro Meritor - oleo mineral multiviscoso 85W-140 · API GL-5 — https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
@@ -22283,11 +23423,49 @@
   {
    "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
    "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Elétrica",
+   "item": "Bateria",
+   "especificacao": "2 × 12 V – 100 Ah (padrão); opcionais 2 × 135 Ah ou 2 × 170 Ah",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "confirmado",
+   "fonte": "https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_26.260_6x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf",
+   "nota": "Ficha VWCO Euro 6.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
+    2022
+   ],
+   "sistema": "Elétrica",
+   "item": "Bateria",
+   "especificacao": "2 × 12 V – 100 Ah (inferido do Euro 6)",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://www.aptacaminhoes.com.br/wp-content/uploads/2022/04/Constellation-26.260.pdf",
+   "nota": "Conferir etiqueta.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
     2022,
     2025
    ],
-   "sistema": "Freios",
-   "item": "Cartucho do secador de ar",
+   "sistema": "Elétrica",
+   "item": "Lâmpada de farol",
    "especificacao": null,
    "quantidade": null,
    "unidade": null,
@@ -22295,9 +23473,47 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": "Elemento do secador de ar (Wabco/Knorr) nao identificado. Consultar por chassi.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Cabine 2006–2021 usa H4 24V 70W; a frente nova (2022+) não foi encontrada — conferir na lâmpada.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
+    2025
+   ],
+   "sistema": "Embreagem",
+   "item": "Fluido de embreagem",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Ver manual/reservatório.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
+    2025
+   ],
+   "sistema": "Freios",
+   "item": "Cartucho do secador de ar",
+   "especificacao": "Cartucho Wabco — VW 2R0616787A",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Wabco 4324102227 (a confirmar)",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/filtro-secador-de-ar-constellation-original-vw",
+   "nota": "Cross-ref não confirmado.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
@@ -22360,6 +23576,44 @@
    "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
    "anos": [
     2022,
+    2022
+   ],
+   "sistema": "Motor",
+   "item": "Correia",
+   "especificacao": "Poly-V 8PK1275 — VW 07W903137 (D08 6 cil)",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Gates 8PK1275",
+   "status": "confirmado",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/correia-alternador-constellation-8pk1275-man-original-vw ; https://www.pecaagora.com/p/356338/correia-micro-v-8pk1275-vw-advantech-13190-15190-17190-17280-24280-ano-2013-motor-man-d08-4-e-6-cil-07w903137-8pk1275",
+   "nota": "Correia do A/C à parte.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Motor",
+   "item": "Correia",
+   "especificacao": "Poly-V 8PK1275 — VW 07W903137 (família D08; P8 a confirmar)",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Gates 8PK1275",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/correia-alternador-constellation-8pk1275-man-original-vw",
+   "nota": "Nenhuma lista cita 2023+.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
     2025
    ],
    "sistema": "Motor",
@@ -22374,6 +23628,44 @@
    "nota": "Codigo levantado em varejo, nao no catalogo oficial. Conferir aplicacao por chassi no catalogo VWCO/Mann/Tecfil.",
    "rodada": 1,
    "arquivo": "r1-vw.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
+    2022
+   ],
+   "sistema": "Motor",
+   "item": "Filtro de óleo",
+   "especificacao": "Elemento MAN D08 pós-2018 (2 bicos) — VW 07W115436C",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Mann HU 8171 · Tecfil PEL2016 · Wega WOE-694 · Fleetguard LF17807",
+   "status": "confirmado",
+   "fonte": "https://www.camiopar.com.br/elemento-filtrante-oleo-motor-man-d08-mann-filter-hu8171 ; https://www.rochapecas.com.br/filtro-lub-refil-motor-man-4-6cil-18-or-07w115436c/p",
+   "nota": "Aplicação lista D08 6 cil 2011+ (17.280…31.280); 26.260 D0836 mesma família.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Motor",
+   "item": "Filtro de óleo",
+   "especificacao": "Elemento MAN D08 — provavelmente VW 07W115436C (mesma família D0836)",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Mann HU 8171 · Tecfil PEL2016 (a confirmar p/ P8)",
+   "status": "inferido",
+   "fonte": "https://www.camiopar.com.br/elemento-filtrante-oleo-motor-man-d08-mann-filter-hu8171",
+   "nota": "Nenhuma lista de aplicação encontrada citando explicitamente Euro 6/2023+. Conferir no catálogo Mann/Tecfil ou concessionária.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
@@ -22398,6 +23690,44 @@
    "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
    "anos": [
     2022,
+    2022
+   ],
+   "sistema": "Motor",
+   "item": "Óleo de motor",
+   "especificacao": "SAE 15W-40 MAN M 3477 ou 10W-40 MAN M 3575 (norma da 1ª rodada) — MAN D0836 EGR (Euro 5)",
+   "quantidade": "27,5",
+   "unidade": "L",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://atrialub.com.br/wp-content/uploads/2022/05/tabela_lub_caminhao.pdf ; https://www.mercadoveiculos.com/info/quantos-litros-oleo-motor-man-24-280 ; https://blog.mercadoveiculos.com/quantos-litros-oleo-no-motor-man-24-280/",
+   "nota": "CONFLITO: Atria = 27,5 L (26.260 D0836); mercadoveiculos = 28 L c/ filtro / 26 L sem (24.280 D0836); blog mercadoveiculos = 18,5 L 'segundo manual VW' (24.280). 27,5–28 L é coerente entre duas fontes; 18,5 L parece cárter reduzido ou erro. Resolver na vareta na 1ª troca.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Motor",
+   "item": "Óleo de motor",
+   "especificacao": "Óleo low-SAPS p/ Euro 6 — aprovação MAN M 3677 (ou M 3777), tipicamente 10W-40; motor MAN D0836LF18 SCR (P8)",
+   "quantidade": "27,5",
+   "unidade": "L",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://www.autodoc.parts/engine-oil/man-m-3677 ; https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_26.260_6x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf ; https://atrialub.com.br/wp-content/uploads/2022/05/tabela_lub_caminhao.pdf",
+   "nota": "Norma Euro 6 NÃO confirmada pela VWCO (M 3677 é a aprovação MAN p/ Euro V/VI low-SAPS, intervalo máx. 60.000 km). Volume copiado da família D0836 (ver conflito na linha 2022). Conferir no manual P8.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
     2025
    ],
    "sistema": "Pós-tratamento",
@@ -22412,6 +23742,82 @@
    "nota": "Este e o campo mais critico da frota: 66 ativos divididos entre duas tecnologias de emissao. O tanque de 60 L e o valor publicado para a familia Constellation Euro 6 (18.210/18.320/30.320); confirmar na ficha do 26.260 Euro 6.",
    "rodada": 1,
    "arquivo": "r1-vw.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
+    2022
+   ],
+   "sistema": "Pós-tratamento",
+   "item": "Arla 32",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_aplica",
+   "fonte": "https://www.aptacaminhoes.com.br/wp-content/uploads/2022/04/Constellation-26.260.pdf",
+   "nota": "Sem SCR.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Pós-tratamento",
+   "item": "Arla 32",
+   "especificacao": "Arla 32 (ureia 32,5%, norma ISO 22241) — SCR PROCONVE P8",
+   "quantidade": null,
+   "unidade": "L",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation26.260-euro?id=2&productid=208",
+   "nota": "Ficha confirma SCR; capacidade do tanque de Arla não achada.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
+    2022
+   ],
+   "sistema": "Pós-tratamento",
+   "item": "Filtro de ureia",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_aplica",
+   "fonte": "https://www.aptacaminhoes.com.br/wp-content/uploads/2022/04/Constellation-26.260.pdf",
+   "nota": "2022 = EGR sem SCR (1ª rodada).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Pós-tratamento",
+   "item": "Filtro de ureia",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Filtro do módulo dosador de Arla do D08 P8 não encontrado — concessionária (código VW) e depois catálogo Mann (linha U…).",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
@@ -22435,6 +23841,44 @@
   {
    "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
    "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Rodas/Pneus",
+   "item": "Pneu",
+   "especificacao": "295/80 R22.5",
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "confirmado",
+   "fonte": "https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_26.260_6x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf",
+   "nota": "Ficha Euro 6.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
+    2022
+   ],
+   "sistema": "Rodas/Pneus",
+   "item": "Pneu",
+   "especificacao": "295/80 R22.5 (inferido do Euro 6)",
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "inferido",
+   "fonte": "https://www.aptacaminhoes.com.br/wp-content/uploads/2022/04/Constellation-26.260.pdf",
+   "nota": "Conferir.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
     2022,
     2025
    ],
@@ -22450,6 +23894,44 @@
    "nota": "Eaton Brasil especifica o proprio oleo SAE 40 para caixas da linha media/pesada. Confirmar o modelo exato da caixa na plaqueta do cambio antes de comprar. | Nao usar GL-5 em caixa Eaton sem confirmacao - aditivo EP ataca sincronizadores de latao. | Valor obtido por busca no catalogo Eaton; o PDF nao pode ser aberto nesta sessao (egress bloqueado). Conferir.",
    "rodada": 1,
    "arquivo": "r1-vw.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2022,
+    2022
+   ],
+   "sistema": "Transmissão",
+   "item": "Óleo de câmbio",
+   "especificacao": "Câmbio manual Eaton FSO-6406A 6 marchas (inferido do Euro 6) — Eaton SYN 50",
+   "quantidade": "9,2",
+   "unidade": "L",
+   "intervalo": null,
+   "codigo_ref": "Eaton SYN 50",
+   "status": "inferido",
+   "fonte": "https://www.aptacaminhoes.com.br/wp-content/uploads/2022/04/Constellation-26.260.pdf ; https://www.eaton.com/content/dam/eaton/products/transmissions/vehicle-transmissions/eaton-fs(o)-6406-8406-9406-transmission-brochure-en-us.pdf",
+   "nota": "Conferir plaqueta.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW CONSTELLATION 26.260",
+   "anos": [
+    2023,
+    2025
+   ],
+   "sistema": "Transmissão",
+   "item": "Óleo de câmbio",
+   "especificacao": "Câmbio manual Eaton FSO 6406-A, 6 marchas + 1 ré, acionamento por cabo (ficha; opcional 9 marchas) — óleo Eaton SYN 50",
+   "quantidade": "9,2",
+   "unidade": "L",
+   "intervalo": null,
+   "codigo_ref": "Eaton SYN 50 (19,5 pints)",
+   "status": "confirmado",
+   "fonte": "https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_26.260_6x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf ; https://www.eaton.com/content/dam/eaton/products/transmissions/vehicle-transmissions/eaton-fs(o)-6406-8406-9406-transmission-brochure-en-us.pdf",
+   "nota": "Se for a opção 9 marchas (ZF 9S 1110 TD provável): ZF TE-ML 02, ~8,8 L.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW DELIVERY 14",
@@ -22884,9 +24366,28 @@
    "codigo_ref": null,
    "status": "nao_encontrado",
    "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "nota": "Ver código na carcaça; catálogo Mann pesada.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Admissão de ar",
+   "item": "Filtro de ar do motor (secundário)",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Elemento 'Constellation Euro VI' existe no varejo sem código.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
@@ -22896,16 +24397,16 @@
    ],
    "sistema": "Arrefecimento",
    "item": "Líquido de arrefecimento",
-   "especificacao": "MAN 324 Typ SNF (ou Typ NF)",
+   "especificacao": "Aditivo MAN 324 NF/SNF, 40/60",
    "quantidade": null,
-   "unidade": null,
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://weglubricants.com/en/specifications/man-324-type-snf-en/",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.lojafuturacaminhoes.com.br/aditivo-para-radiadores-man-original-volkswagen",
+   "nota": "Volume não encontrado. | [rodada 1, inferido] MAN 324 Typ SNF (ou Typ NF) — https://weglubricants.com/en/specifications/man-324-type-snf-en/",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
@@ -22915,16 +24416,35 @@
    ],
    "sistema": "Cabine",
    "item": "Filtro de cabine",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Par (2 un.) — VW/MAN 2R2819429 (Valeo)",
+   "quantidade": "2",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Mann CU 22018 · Tecfil ACP429/9 · Wega AKX4006",
+   "status": "inferido",
+   "fonte": "https://www.sorasa.com.br/filtro-ar-condicionado-volkswagen-24250-19320-25370.html",
+   "nota": "Varejo; mesma cabine.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Cabine",
+   "item": "Palheta",
+   "especificacao": "Par 24\" (600 mm), gancho",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Dyna D324",
+   "status": "inferido",
+   "fonte": "https://www.unifreiospecas.com.br/palheta/palheta-limpador-parabrisa-vw-constellation",
+   "nota": "Varejo.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
@@ -22952,17 +24472,36 @@
     2025
    ],
    "sistema": "Combustível",
-   "item": "Filtro separador de água",
-   "especificacao": "Separador de agua especifico da linha Euro 6 (referencia de varejo: 'VW Constellation 210/260/320 MAN Euro 6 23/')",
+   "item": "Filtro de combustível (secundário)",
+   "especificacao": null,
    "quantidade": null,
    "unidade": null,
    "intervalo": null,
    "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Filtro principal D08 P8 — concessionária.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Combustível",
+   "item": "Filtro separador de água",
+   "especificacao": "Separador Parker Racor p/ Constellation MAN Euro 6 2023+",
+   "quantidade": "1",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": "Parker Racor RES2003W",
    "status": "inferido",
-   "fonte": "https://www.rfautopecas.com.br/017034/filtro-combustivel-separador-agua-vw-constellation-210260320-man-euro-6-23-",
-   "nota": "NAO usar o codigo da versao Euro 5.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.magazineluiza.com.br/filtro-de-combustivel-constellation-14210-17210-18210-18260-26260-26320-27260-31320-euro-6-apos-2023-parker-res2003w-racor/p/akj34k94kb/au/fitr/ ; https://www.rfautopecas.com.br/017034/filtro-combustivel-separador-agua-vw-constellation-210260320-man-euro-6-23-",
+   "nota": "Varejo. | [rodada 1, inferido] Separador de agua especifico da linha Euro 6 (referencia de varejo: 'VW Constellation 210/260/320 MAN Euro 6 23/') — https://www.rfautopecas.com.br/017034/filtro-combustivel-separador-agua-vw-constellation-210260320-man-euro-6-23-",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
@@ -22972,16 +24511,16 @@
    ],
    "sistema": "Eixo/Diferencial",
    "item": "Óleo de diferencial",
-   "especificacao": "85W-140 mineral (eixo Meritor) · API GL-5",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Meritor MS 23.245 — SAE 85W-140 API GL-5",
+   "quantidade": "7",
+   "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
-   "nota": "volume/quantidade: não encontrado",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_26.260_6x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf ; https://meritorbrasil.com.br/materiais/eixo-diferencial/Manual-Troca-Oleo-Diferencial.pdf",
+   "nota": "Volume da família MS-245/248. | [rodada 1, inferido] 85W-140 mineral (eixo Meritor) · API GL-5 — https://meritorbrasil.com.br/materiais/oleos-lubrificantes/Troca-Oleo-Meritor.pdf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
@@ -22991,16 +24530,54 @@
    ],
    "sistema": "Elétrica",
    "item": "Bateria",
-   "especificacao": "2 x (12 V - 100 Ah); opcionais 2 x 135 Ah ou 2 x 170 Ah",
+   "especificacao": "2 × 12 V – 100 Ah (opc. 135/170 Ah)",
+   "quantidade": "2",
+   "unidade": "un",
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "confirmado",
+   "fonte": "https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_26.260_6x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf",
+   "nota": "Ficha Euro 6. | [rodada 1, inferido] 2 x (12 V - 100 Ah); opcionais 2 x 135 Ah ou 2 x 170 Ah — https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Elétrica",
+   "item": "Lâmpada de farol",
+   "especificacao": null,
    "quantidade": null,
    "unidade": null,
    "intervalo": null,
    "codigo_ref": null,
-   "status": "inferido",
-   "fonte": "https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Frente nova 2022+ não achada.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Embreagem",
+   "item": "Fluido de embreagem",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Ver manual.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
@@ -23010,16 +24587,16 @@
    ],
    "sistema": "Freios",
    "item": "Cartucho do secador de ar",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Cartucho Wabco — VW 2R0616787A",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Wabco 4324102227 (a confirmar)",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/filtro-secador-de-ar-constellation-original-vw",
+   "nota": "Cross-ref não confirmado.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
@@ -23067,16 +24644,16 @@
    ],
    "sistema": "Motor",
    "item": "Correia",
-   "especificacao": null,
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Poly-V 8PK1275 — VW 07W903137 (família D08; P8 a confirmar)",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "nao_encontrado",
-   "fonte": null,
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Gates 8PK1275",
+   "status": "inferido",
+   "fonte": "https://www.lojafuturacaminhoes.com.br/correia-alternador-constellation-8pk1275-man-original-vw",
+   "nota": "Sem lista 2023+.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
@@ -23086,16 +24663,16 @@
    ],
    "sistema": "Motor",
    "item": "Filtro de óleo",
-   "especificacao": "Filtro de oleo motor MAN D08",
-   "quantidade": null,
-   "unidade": null,
+   "especificacao": "Elemento MAN D08 — provavelmente VW 07W115436C",
+   "quantidade": "1",
+   "unidade": "un",
    "intervalo": null,
-   "codigo_ref": null,
+   "codigo_ref": "Mann HU 8171 · Tecfil PEL2016 (a confirmar p/ P8)",
    "status": "inferido",
-   "fonte": "https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.camiopar.com.br/elemento-filtrante-oleo-motor-man-d08-mann-filter-hu8171",
+   "nota": "Sem lista citando 2023+. | [rodada 1, inferido] Filtro de oleo motor MAN D08 — https://www.volparts.com.br/filtro-oleo-lubrificante-vw-constellation-motor-man-d08-4-6-cil-26202",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
@@ -23105,16 +24682,16 @@
    ],
    "sistema": "Motor",
    "item": "Óleo de motor",
-   "especificacao": "15W-40 ou 10W-40 · Aprovacao MAN (M 3477/M 3575; possivel M 3677/M 3777 na versao Euro 6)",
-   "quantidade": "~26 L (referencia D0836 europeu)",
+   "especificacao": "Óleo low-SAPS Euro 6 — aprovação MAN M 3677 (ou M 3777), tipicamente 10W-40; MAN D0836LF18 SCR",
+   "quantidade": "27,5",
    "unidade": "L",
    "intervalo": null,
    "codigo_ref": null,
    "status": "inferido",
-   "fonte": "Familia MAN D08 - ver item VW CONSTELLATION 26.260 ; https://public.man.eu/media/service/asp/media/en/auftritte/service_dokumente_/wartungs__und_betriebsstoffvorschrift/bezugsbremskraefte_2/Maintenance_and_service_product_recommendation.pdf ; https://www.truckstar.com.ua/fullmengen_man_tgm_en.html",
-   "nota": "Sendo Euro 6 com SCR, a norma pode ser mais restritiva que a dos Euro 5. Confirmar na concessionaria. | Mesma ressalva do 26.260: conflito de fontes. Nao usar para compra sem conferir.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "fonte": "https://www.autodoc.parts/engine-oil/man-m-3677 ; https://atrialub.com.br/wp-content/uploads/2022/05/tabela_lub_caminhao.pdf",
+   "nota": "Mesma máquina do 26.260 2023+. Norma Euro 6 não confirmada pela VWCO; volume da família D0836 (conflito 27,5/28 vs 18,5 L). | [rodada 1, inferido] 15W-40 ou 10W-40 · Aprovacao MAN (M 3477/M 3575; possivel M 3677/M 3777 na versao Euro 6) — Familia MAN D08 - ver item VW CONSTELLATION 26.260 ; https://public.man.eu/media/service/asp/media/en/auftritte/service_dokumente_/wartungs__und_betriebsstoffvorschrift/bezugsbremskraefte_2/Maintenance_and_service_product_recommendation.pdf ; https://www.truckstar.com.ua/fullmengen_man_tgm_en.html",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
@@ -23131,9 +24708,28 @@
    "codigo_ref": null,
    "status": "confirmado",
    "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation26.260-euro?id=2&productid=208 ; https://www.camionesybusesvolkswagen.cl/wp-content/uploads/2025/10/Constellation-18.210.pdf",
-   "nota": null,
+   "nota": "[rodada 2, inferido] Arla 32 (ISO 22241) — SCR P8 — https://www.vwco.com.br/caminhoes/Constellation/Constellation26.260-euro?id=2&productid=208",
    "rodada": 1,
    "arquivo": "r1-vw.json"
+  },
+  {
+   "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
+   "anos": [
+    2025,
+    2025
+   ],
+   "sistema": "Pós-tratamento",
+   "item": "Filtro de ureia",
+   "especificacao": null,
+   "quantidade": null,
+   "unidade": null,
+   "intervalo": null,
+   "codigo_ref": null,
+   "status": "nao_encontrado",
+   "fonte": null,
+   "nota": "Concessionária → catálogo Mann linha U.",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
@@ -23143,16 +24739,16 @@
    ],
    "sistema": "Rodas/Pneus",
    "item": "Pneu",
-   "especificacao": "275/80 R22.5 ou 295/80 R22.5",
+   "especificacao": "295/80 R22.5",
    "quantidade": null,
    "unidade": null,
    "intervalo": null,
    "codigo_ref": null,
-   "status": "inferido",
-   "fonte": "https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf",
-   "nota": "Medida homologada da familia Constellation Euro 6; conferir a medida efetiva no ativo.",
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "status": "confirmado",
+   "fonte": "https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_26.260_6x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf",
+   "nota": "Ficha Euro 6. | [rodada 1, inferido] 275/80 R22.5 ou 295/80 R22.5 — https://cotave.com.br/storage/609/43a42fe2-8ed7-42d3-9f4a-23e5157cbef0-7.pdf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLKSWAGEN | VW/26.260 CRM 6X2 4P",
@@ -23162,16 +24758,16 @@
    ],
    "sistema": "Transmissão",
    "item": "Óleo de câmbio",
-   "especificacao": "Cambio de 6 marchas com overdrive (opcional manual 9 marchas) - oleo Eaton SAE 40 · Especificacao Eaton · acionamento: Manual",
-   "quantidade": "9,0 L se for FSO-6406",
+   "especificacao": "Eaton FSO 6406-A 6 marchas (ficha 26.260 Euro 6; opcional 9 marchas) — Eaton SYN 50",
+   "quantidade": "9,2",
    "unidade": "L",
    "intervalo": null,
-   "codigo_ref": null,
-   "status": "inferido",
-   "fonte": "https://www.vwco.com.br/caminhoes/Constellation/Constellation26.260-euro?id=2&productid=208 ; https://www.6canecos.com.br/files/gear/OleoEaton.pdf",
-   "nota": null,
-   "rodada": 1,
-   "arquivo": "r1-vw.json"
+   "codigo_ref": "Eaton SYN 50",
+   "status": "confirmado",
+   "fonte": "https://www.divisacaminhoes.com.br/docs/caminhao/VW_Constellation_26.260_6x2_-_Especifica%C3%A7%C3%B5es_T%C3%A9cnicas.pdf ; https://www.eaton.com/content/dam/eaton/products/transmissions/vehicle-transmissions/eaton-fs(o)-6406-8406-9406-transmission-brochure-en-us.pdf",
+   "nota": "Se 9 marchas: ZF TE-ML 02 ~8,8 L. | [rodada 1, inferido] Cambio de 6 marchas com overdrive (opcional manual 9 marchas) - oleo Eaton SAE 40 · Especificacao Eaton · acionamento: Manual — https://www.vwco.com.br/caminhoes/Constellation/Constellation26.260-euro?id=2&productid=208 ; https://www.6canecos.com.br/files/gear/OleoEaton.pdf",
+   "rodada": 2,
+   "arquivo": "r2-man.json"
   },
   {
    "modelo": "VOLVO | FH 460",
