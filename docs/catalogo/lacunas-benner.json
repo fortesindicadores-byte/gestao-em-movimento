@@ -1,0 +1,65 @@
+{
+ "gerado_em": "2026-09-18",
+ "regra": "item do Benner coberto = existe item na lista nova com 2+ tokens em comum, ou 1 token raro (<=12 itens)",
+ "total_benner": 5531,
+ "cobertos": 5521,
+ "fora": 10,
+ "uso_coberto": 61763,
+ "uso_fora": 9,
+ "fora_com_uso": [
+  {
+   "cod": "44217",
+   "desc": "SHELL TELLUS S2 M 32",
+   "familiaBenner": "LUBRIFICANTES E ADITIVOS",
+   "uso12m": 2,
+   "estoque": 1,
+   "motivo": "nenhum token existe na lista (cabeça: shell)",
+   "osN": 1
+  },
+  {
+   "cod": "1005",
+   "desc": "BARRICA D'AGUA 25 LTS",
+   "familiaBenner": "PEÇAS E ACESSÓRIOS",
+   "uso12m": 2,
+   "estoque": 2,
+   "motivo": "o tipo \"barrica\" não existe na lista nova",
+   "osN": 1
+  },
+  {
+   "cod": "2077",
+   "desc": "KIT VED. CIL. ELEV.",
+   "familiaBenner": "PEÇAS E ACESSÓRIOS",
+   "uso12m": 2,
+   "estoque": 0,
+   "motivo": "nenhum token existe na lista (cabeça: elev)",
+   "osN": 1
+  },
+  {
+   "cod": "844",
+   "desc": "ADAPTADORES HIDRÁULICOS",
+   "familiaBenner": "PEÇAS E ACESSÓRIOS",
+   "uso12m": 1,
+   "estoque": 0,
+   "motivo": "o tipo \"adaptadore\" não existe na lista nova",
+   "osN": 1
+  },
+  {
+   "cod": "48387",
+   "desc": "CONDENSADO ORIGINAL VW - REF.23M820423",
+   "familiaBenner": "PEÇAS E ACESSÓRIOS",
+   "uso12m": 1,
+   "estoque": 0,
+   "motivo": "nenhum token existe na lista (cabeça: condensado)",
+   "osN": 1
+  },
+  {
+   "cod": "45069",
+   "desc": "SEGUNDA MOLA MESTRE VW-17190",
+   "familiaBenner": "PEÇAS E ACESSÓRIOS",
+   "uso12m": 1,
+   "estoque": 0,
+   "motivo": "o tipo \"segunda\" não existe na lista nova",
+   "osN": 1
+  }
+ ]
+}
