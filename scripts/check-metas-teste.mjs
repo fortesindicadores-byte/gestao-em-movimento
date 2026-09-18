@@ -117,11 +117,31 @@ window.supabase = { createClient: function(){
     from: consulta };
 } };`;
 
+/* CADA PAINEL ESCREVE A VIGÊNCIA DE UM JEITO — o dublê reproduz os quatro
+   dialetos que existem de verdade no portal, senão o teste valida um mundo
+   que não é o do Renan. Foi a 1ª geração real que mostrou isso: três avisos
+   de "ms-vig: não achei" nos painéis de km. */
+const DIALETO = {
+  chave: k => ({ v: k, t: rotCurto(k).toUpperCase() }),          // visao-financeira, rs-por-km
+  curto: k => ({ v: rotCurto(k), t: rotCurto(k) }),              // scorecard, resumo-exec, painel-metas, fca
+  longo: k => ({ v: mmAaaa(k), t: rotLongo(k) }),                // painel-km, seara-km
+  mm:    k => ({ v: mmAaaa(k), t: mmAaaa(k) }),                  // arvore-combustivel
+};
+const MES3 = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const rotCurto = k => MES3[+k.slice(5, 7) - 1] + '/' + k.slice(2, 4);
+const rotLongo = k => MES3[+k.slice(5, 7) - 1] + '/' + k.slice(0, 4);
+const mmAaaa   = k => k.slice(5, 7) + '/' + k.slice(0, 4);
+const DIAL_DE = { 'visao-financeira':'chave', 'rs-por-km':'chave',
+  'scorecard':'curto', 'resumo-executivo':'curto', 'painel-metas':'curto', 'fca-consolidado':'curto',
+  'painel-km':'longo', 'seara-km':'longo', 'combustivel/arvore-combustivel':'mm', 'auditorias':'curto',
+  'programa-reconhecimento':'curto' };
+
 /* painel dublado: a MESMA mecânica do padrão (setVw, ms-*, atualizar) */
-function painelDuble(vigs, comGate) {
+function painelDuble(chaves, dialeto, comGate) {
   if (comGate) return `<!doctype html><html><body><div class="app"><div class="cols">
     <div class="gate"><h2>Apenas administradores</h2><p>restrito</p></div></div></div></body></html>`;
-  const ops = id => vigs.map(v => `<label class="ms-opt"><input type="checkbox" data-v="${v.k}"> ${v.t}<span class="ms-only">only</span></label>`).join('');
+  const vigs = chaves.map(DIALETO[dialeto || 'chave']);
+  const ops = id => vigs.map(v => `<label class="ms-opt"><input type="checkbox" data-v="${v.v}"> ${v.t}<span class="ms-only">only</span></label>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><style>
   .vw{display:none} .vw.on{display:block} .card,.tbl-section,.chart-card{min-height:220px;background:#eee}
   body{margin:0;min-height:700px}</style></head><body>
@@ -133,7 +153,7 @@ function painelDuble(vigs, comGate) {
     <div class="ms-wrap" id="ms-proj"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
       ${['AS - CGR','ROTA - CGR','EMPURRADA - CBA','ROTA - GRL'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-nv3"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
-      ${['AS - CGR','ROTA - CGR','EMPURRADA - CBA','ROTA - GRL'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
+      ${['AS','ROTA','EMPURRADA'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-fato"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
       ${['Combustíveis','Manutenções','Pneus'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-pac"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
@@ -179,10 +199,8 @@ function painelDuble(vigs, comGate) {
 }
 
 /* ── o teste ───────────────────────────────────────────────── */
-const VIGS_OK = [{ k:'2026-06', t:'JUN/26' }, { k:'2026-05', t:'MAI/26' },
-                 { k:'2026-04', t:'ABR/26' }, { k:'2026-03', t:'MAR/26' },
-                 { k:'2026-02', t:'FEV/26' }, { k:'2026-01', t:'JAN/26' }];
-const VIGS_SEM_JUN = VIGS_OK.filter(v => v.k !== '2026-06');
+const VIGS_OK = ['2026-06','2026-05','2026-04','2026-03','2026-02','2026-01'];
+const VIGS_SEM_JUN = VIGS_OK.filter(k => k !== '2026-06');
 
 let ok = 0, ruim = 0;
 const af = (cond, txt, det) => {
@@ -213,7 +231,7 @@ async function abre({ semJunEm = null, gateEm = null } = {}) {
                    'seara-km','fca-consolidado','combustivel/arvore-combustivel','auditorias',
                    'programa-reconhecimento','painel-metas']) {
     await ctx.route(BASE + '/' + p + '/', r => r.fulfill({ status: 200, contentType: 'text/html;charset=utf-8',
-      body: painelDuble(p === semJunEm ? VIGS_SEM_JUN : VIGS_OK, p === gateEm) }));
+      body: painelDuble(p === semJunEm ? VIGS_SEM_JUN : VIGS_OK, DIAL_DE[p], p === gateEm) }));
   }
   const pg = await ctx.newPage();
   await pg.addInitScript(() => { window.__provas = []; window.CM_TEMPOS = { passo:60, quieto:1, min:120, teto:9000, pos:60, tema:30 }; });
@@ -259,7 +277,13 @@ let provas1 = [];
 
   const sc = provas1.find(p => /\/scorecard\//.test(p.pag));
   af(sc && sc.estado.vw === 'resumo', 'Scorecard: visão "resumo"', sc && sc.estado.vw);
-  af(sc && JSON.stringify(sc.estado.filtros['ms-vig']) === '["2026-06"]', 'Scorecard: ms-vig = 2026-06', sc && JSON.stringify(sc.estado.filtros['ms-vig']));
+  af(sc && JSON.stringify(sc.estado.filtros['ms-vig']) === '["jun/26"]', 'Scorecard: ms-vig no dialeto dele (jun/26)', sc && JSON.stringify(sc.estado.filtros['ms-vig']));
+  // cada painel escreve a vigência de um jeito: o mês tem de casar em TODOS
+  const km = provas1.find(p => /painel-km/.test(p.pag));
+  af(km && JSON.stringify(km.estado.filtros['ms-vig']) === '["06/2026"]',
+     'Painel KM: casa pelo rótulo longo (jun/2026) e marca o valor 06/2026', km && JSON.stringify(km.estado.filtros['ms-vig']));
+  const sk = provas1.find(p => /seara-km/.test(p.pag));
+  af(sk && JSON.stringify(sk.estado.filtros['ms-vig']) === '["06/2026"]', 'Seara KM: idem', sk && JSON.stringify(sk.estado.filtros['ms-vig']));
   af(sc && sc.estado.tema === 'light', 'o painel foi para o tema claro (o deck é claro)', sc && sc.estado.tema);
 
   const vf = provas1.filter(p => /visao-financeira/.test(p.pag));
@@ -280,11 +304,17 @@ let provas1 = [];
   af(fca.every(p => p.estado.chamou.includes('run')), 'o FCA foi redesenhado (run)');
   const fc = fca.find(p => p.estado.filtros['ms-fato'][0] === 'Combustíveis');
   af(fc && fc.estado.filtros['ms-uni'][0] === 'CGR' && /CGR/.test(fc.estado.filtros['ms-proj'][0]),
-     'o FCA de Combustíveis vem com unidade E projeto', fc && JSON.stringify([fc.estado.filtros['ms-uni'], fc.estado.filtros['ms-proj']]));
+     'o FCA de Combustíveis vem com unidade E o nível 3 INTEIRO (ao contrário da Árvore)',
+     fc && JSON.stringify([fc.estado.filtros['ms-uni'], fc.estado.filtros['ms-proj']]));
 
   const arv = provas1.filter(p => /arvore-combustivel/.test(p.pag));
   af(arv.length === 2 && arv.every(p => p.estado.chamou.includes('onFilterChange')), 'as 2 árvores foram redesenhadas');
   af(arv[0].estado.filtros['ms-nv3'].length === 1, 'a árvore vem recortada no projeto', JSON.stringify(arv[0].estado.filtros['ms-nv3']));
+  af(JSON.stringify(arv.map(p => p.estado.filtros['ms-nv3'][0]).sort()) === '["AS","ROTA"]',
+     'a Árvore leva o PREFIXO do nível 3 (AS/ROTA), que é o que o filtro dela lista',
+     JSON.stringify(arv.map(p => p.estado.filtros['ms-nv3'])));
+  af(arv.every(p => p.estado.filtros['ms-vig'].length === 1),
+     'e a vigência casa também no dialeto MM/AAAA da Árvore', JSON.stringify(arv.map(p => p.estado.filtros['ms-vig'])));
 
   const pr = provas1.filter(p => /programa-reconhecimento/.test(p.pag));
   af(pr.length === 4, 'Frota de Elite: ranking, dois pódios e a evolução', pr.length);
