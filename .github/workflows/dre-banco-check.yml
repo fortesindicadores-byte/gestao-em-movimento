@@ -1,0 +1,21 @@
+name: DRE Banco Check
+
+# A Visão Financeira pode sair do gviz? Compara as três abas do DRE
+# (Frota · EBITDA · Receita Líquida) com as tabelas sh_dre_* — linhas e
+# somas de orçado/remunerado/realizado, no total, por vigência e por unidade.
+# Conferir ANTES de trocar a fonte do painel. Não grava nada.
+on:
+  workflow_dispatch:
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/dre-banco-check.mjs
