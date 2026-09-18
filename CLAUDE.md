@@ -1321,6 +1321,86 @@ Cron `0 9 * * *` (06:00 BRT) no `volkstotal-robot.yml`, coletando **o mês corre
 - Ganhou o aviso de falha (`avisa-falha.sh`) e entrou na lista `CARGA` do Saude Robot — sem isso o painel de saúde classificaria como auditoria um robô que grava em produção.
 - **Backfill de 2025 e de jan/2026** disparado em 16/09/2026 (`ano=2025` e `vig=2026-01`, os dois em `gravar`).
 
+## Check de Metas — o deck da diretoria sai do portal (Renan, 18/09/2026)
+
+Pedido dele: *"Vou te mandar como base o ppt que sempre gero para apresentação
+da diretoria. Queria um botão de gerar PDF e Gerar PPT no administração para eu
+gerar pronto. É tudo informação do painel."* Mandou o `2026_06 - Check de
+Metas.pptx` (37 slides) e o roteiro: *"Começa trazendo Scorecard e resumo
+executivo. Depois visão financeira acumulado ano e mês (sempre mês anterior pois
+estamos falando de fechamento). Aí vai trazendo abertura de custos, km e R$/km,
+dispersão etc. Quero nos custos a gente foque em pacotes, e se desviaram os
+fcas… Aí divide nos pacotes pneus, manutenções e combustíveis trazendo unidades
+que mais desviaram. Unidades que desviaram vem o FCA delas após isso. Em
+combustíveis vem árvore e FCA. Se tiver mais de um prijeto, mais de uma
+árvore."* E depois: *"pode fazer umas capas legais usando o tema Conlog"*.
+
+**`/check-metas/`** (casca padrão, cluster Administração, só admin), com **Gerar
+PDF** e **Gerar PPT** na lateral. Cada slide é um **print de um painel do
+portal** — nada é remontado na tela nova, então o número do slide é o número que
+o painel mostra.
+
+- **NENHUM DOS 11 PAINÉIS FOI TOCADO.** O motor abre cada um num **iframe de
+  mesma origem**, aplica a visão e os filtros daquele slide e fotografa. O
+  contrato já existia e é o mesmo de todo painel do padrão: `setVw(v)` para a
+  visão e, no filtro, `wrap._sel` + `wrap._render('')` + o redesenho do painel
+  (`atualizar` na Visão Financeira, `run` no fca-consolidado, `onFilterChange` na
+  Árvore). **Nenhum painel lê parâmetro de URL** — procurei `URLSearchParams` e
+  `location.search` nos onze e não há —, então o iframe é o caminho.
+- **`let` e `const` de topo NÃO ficam no `window`.** `win.allRows` é `undefined`
+  mesmo com a variável declarada no topo do script do painel; quem enxerga as
+  ligações léxicas globais é o `win.eval(...)` (eval indireto, roda no escopo
+  global daquela janela). Por isso o `prep` de cada slide é uma **string
+  avaliada dentro do iframe**, não uma função do lado de fora.
+- **Filtro que não casa é ALARME, nunca um slide bonito e errado.** O
+  `__cm.sel(id, alvos)` casa por **rótulo visível** ou por `data-v` (aceita
+  alternativas separadas por `|`: `'jun/26|2026-06|JUN/26'`, porque cada painel
+  escreve a vigência de um jeito) e, quando não acha, **não marca nada** e
+  devolve o que faltou — o slide fica "atenção" em vermelho no Roteiro, com a
+  mensagem. Slide com o filtro de outro mês é justamente o defeito que passa no
+  olho de quem confere.
+- **O painel está pronto quando o DOM PARA DE MUDAR.** São 11 painéis, cada um
+  com o seu jeito de dizer "carreguei"; medir estabilidade (texto + nº de
+  canvas/linhas, 3 leituras iguais) serve para todos. Painel que responde com
+  `.gate` (login/admin) vira **falha com o motivo**, não slide em branco.
+- **A captura usa o `H2CPrep` do próprio painel** (`assets/excel-export.js`) —
+  o mesmo preparo do PNG e do PDF, que achata as camadas translúcidas e converte
+  o `color-mix()`. Sem ele o vidro do layout sai com a cor errada. O
+  `html2canvas` é injetado no iframe quando o painel ainda não o carregou.
+- **As unidades dos slides de pacote NÃO são lista fixa: saem da tabela `fca`**
+  (`origem='Custos'`), que é onde o fca-preenchimento grava o pacote que
+  estourou vs remunerado. Para cada pacote (Pneus · Manutenções · Combustíveis)
+  entram as unidades com desvio, **da maior para a menor** (o R$ sai do
+  `fato_desvio`), até 8. Em Combustíveis cada linha é unidade **+ projeto**, e
+  gera **dois** slides — o FCA e a Árvore daquele recorte —, que é o *"se tiver
+  mais de um projeto, mais de uma árvore"*.
+- **Fechamento = mês anterior**, sempre. Se ele ainda não tem FCA de custos, cai
+  no mês mais recente que tem e **o subtítulo diz isso** em vez de fingir.
+- **Capa e divisórias no tema Conlog**, desenhadas em **canvas** (não
+  html2canvas): o caminhão de neon do `assets/img/fundo-conlog.jpg` com brilho
+  levantado — a foto é uma estrada à noite e, sem isso, o neon some atrás do
+  escurecedor —, escurecedor com **platô à esquerda** (o título fica sobre o baú,
+  onde o logo da CONLOG está aceso) abrindo à direita para a cabine aparecer,
+  filete laranja no rodapé. Divisória com a palavra no `#F6B26B`, o mesmo laranja
+  das divisórias do PPT dele.
+- **PDF e PPT saem do MESMO desenho**: 16:9 de 13,333 × 7,5 pol, a medida do PPT
+  dele; capa e divisórias de página inteira; slide de painel com título +
+  subtítulo e a imagem encaixada. **Duas imagens ficam EMPILHADAS**, como no
+  arquivo dele (medido no XML: y 1.191.394 e 4.063.251 EMU), com o rótulo em
+  laranja acima de cada uma ("Vs Remunerado" / "Vs Orçado").
+- **Validação** (`scripts/check-metas-teste.mjs`, Chromium): **55 checagens em 6
+  cenários**, com os 11 painéis **dublados** (o sandbox não alcança o Supabase) —
+  o roteiro montado a partir da `fca`, cada slide saindo na visão e no filtro que
+  o roteiro pediu, o filtro que não casa virando alarme, o painel que recusa
+  virando falha (e o PDF saindo com os slides que deram certo, não com um em
+  branco), as capas e o PPT. **O que o teste NÃO cobre são os dados** — isso só
+  o deck de verdade mostra.
+- **Duas armadilhas foram do TESTE, não do motor** (as duas fingiam defeito):
+  `[].slice.call(Set)` devolve `[]` (Set não é array-like), o que fez parecer que
+  filtro nenhum era aplicado; e medir o escurecedor da capa comparando dois
+  pedaços da imagem mede **o conteúdo da foto**, não o degradê — a régua virou o
+  desvio-padrão da luminância, que é o que denuncia capa chapada.
+
 ## Catálogo de aplicação — o que pedir para cada modelo e placa (Renan, 17–18/09/2026)
 
 Pedido: *"gere um catálogo… guia na hora de pedir… VW 17.190 2021, precisa saber qual óleo… a pesquisa pode criar um agente, robô, o que for, mas precisa ser ULTRA completa"* · *"quero que todas as placas e modelos vinculem a suas peças e itens"* · *"um painel novo chamado catálogo, já na visão nova… o usuário filtra uma peça, placa ou modelo de ativo e traz sugestões de como ele fará a observação da compra no nosso ERP. Pense que ele vai ter só um item genérico (óleo sintético), e precisa saber qual pedir"* · *"pode ter ano também no filtro"*. O `catalogo-pecas/` antigo (por TIPO, 4–16 itens por modelo, sem placa) fica como estava; o novo é **`/catalogo/`**, card **Catálogo** no cluster Operacional.
