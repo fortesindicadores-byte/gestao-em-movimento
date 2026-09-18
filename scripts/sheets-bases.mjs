@@ -39,6 +39,10 @@ export const BASES = [
   // ── DRE (Visão Financeira, Painel KM, Árvore, R$/km, Carta…) ──
   { slug: 'dre_frota',        id: WB.DRE,  sheet: 'Frota',            nome: 'DRE · Frota' },
   { slug: 'dre_ebitda',       id: WB.DRE,  sheet: 'EBITDA',           nome: 'DRE · EBITDA' },
+  // A Visão Financeira lê TRÊS abas do DRE. As duas de cima já estavam aqui e
+  // a Receita Líquida não — sem ela o painel não sai do gviz, e migrar só duas
+  // deixaria a terceira como a porta aberta de sempre (aba filtrada).
+  { slug: 'dre_receita',      id: WB.DRE,  sheet: 'Receita Líquida',   nome: 'DRE · Receita Líquida' },
 
   // ── Base Dispersão de km ──
   { slug: 'dispersao_km',     id: WB.DISP, sheet: 'Dispersão de km',  nome: 'Dispersão de km' },
