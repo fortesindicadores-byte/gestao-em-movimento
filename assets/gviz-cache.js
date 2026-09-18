@@ -162,6 +162,15 @@
   }
 
   // ── 1) banco ───────────────────────────────────────────────
+  // Base que o Sheets Gviz Check ainda NÃO provou idêntica ao gviz fica de
+  // fora: melhor continuar lendo a planilha do que servir número errado com
+  // cara de certo. A lista sai quando o check fechar, uma por uma.
+  //   term_wh_t2_acum — a aba devolveu 29 colunas ao gviz e 26 à carga no
+  //   MESMO minuto (Total Pontos 73 × 71). Sem `headers` na chamada, o gviz
+  //   decide sozinho o cabeçalho e apara coluna vazia do fim, então a forma da
+  //   resposta pode mudar de um pedido para o outro. O Gviz Instavel Check
+  //   mede isso lendo a mesma aba três vezes.
+  var NAO_VERIFICADAS = { term_wh_t2_acum: 1 };
   var basesP = null;
   function bases() {
     if (!basesP) {
@@ -169,7 +178,9 @@
         .then(function (r) { return r.ok ? r.json() : []; })
         .then(function (rows) {
           var m = {};
-          (rows || []).forEach(function (b) { if (b.gviz_chave && b.colunas && b.linhas > 0) m[b.gviz_chave] = b; });
+          (rows || []).forEach(function (b) {
+            if (b.gviz_chave && b.colunas && b.linhas > 0 && !NAO_VERIFICADAS[b.slug]) m[b.gviz_chave] = b;
+          });
           return m;
         })
         .catch(function () { return {}; });
