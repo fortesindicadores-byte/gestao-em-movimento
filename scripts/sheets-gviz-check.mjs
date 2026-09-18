@@ -108,14 +108,36 @@ for (const b of BASES) {
 }
 
 // ── o que continuaria indo ao Google ──────────────────────────────────────
+// Foto sem tabela NÃO é problema por si: a `Árvore Comb.` tem foto e painel
+// nenhum a pede (a Árvore monta tudo das abas-fonte desde 08/09/2026). O que
+// importa é chave que ALGUM PAINEL pede e não tem tabela — essa lista sai do
+// docs/gviz-inventario.json, que o scripts/gviz-inventario.mjs gera abrindo os
+// painéis no Chromium. Sem o arquivo, cai para a lista de fotos.
 console.log('\n━━ cobertura');
 const chavesBase = new Set(BASES.flatMap(b => [chaveDe(b), ...(b.apelidos || []).map(a => chaveDe({ ...b, sheet: a.sheet, gid: a.gid, tq: a.tq, headers: a.headers }))]));
-const orfas = [...snapKeys].filter(k => !chavesBase.has(k));
-console.log(`   bases: ${BASES.length} · fotos no gviz_snapshot: ${snapKeys.size} · fotos SEM tabela: ${orfas.length}`);
-orfas.forEach(k => console.log(`      → ${k}   (painel que ainda vai ao Google)`));
+let pedidas = null;
+try {
+  const inv = JSON.parse(fs.readFileSync(new URL('../docs/gviz-inventario.json', import.meta.url), 'utf8'));
+  pedidas = new Map();
+  for (const [p, ks] of Object.entries(inv.porPainel || {})) {
+    for (const k of ks) { if (k.startsWith('!') || k.startsWith('SEU_SHEET_ID')) continue; if (!pedidas.has(k)) pedidas.set(k, []); pedidas.get(k).push(p); }
+  }
+} catch (e) { console.log('   (sem docs/gviz-inventario.json — medindo só pelas fotos)'); }
+
+const fotoOrfa = [...snapKeys].filter(k => !chavesBase.has(k));
+console.log(`   bases: ${BASES.length} · fotos no gviz_snapshot: ${snapKeys.size} · fotos sem tabela: ${fotoOrfa.length}`);
+fotoOrfa.forEach(k => console.log(`      · ${k}  (foto sobrando — painel nenhum pede)`));
+
+let semTab = [];
+if (pedidas) {
+  semTab = [...pedidas.keys()].filter(k => !chavesBase.has(k));
+  console.log(`   chaves que os painéis pedem: ${pedidas.size} · SEM tabela: ${semTab.length}`);
+  semTab.forEach(k => console.log(`      → ${k}\n         ← ${pedidas.get(k).join(', ')}   (iria ao Google)`));
+}
 
 console.log(`\n${ok} idêntica(s) · ${ruins} divergente(s) · ${semTabela} sem carga`);
-console.log(ruins || orfas.length
+const falhou = ruins || semTab.length;
+console.log(falhou
   ? '✗ ainda há aba que o gviz-cache não reproduz do banco — corrigir antes de publicar.'
-  : '✓ o banco reproduz o gviz em todas as bases: os painéis podem parar de ler o Google.');
-process.exit(ruins || orfas.length ? 1 : 0);
+  : '✓ o banco reproduz o gviz em todas as bases que os painéis pedem.');
+process.exit(falhou ? 1 : 0);

@@ -75,6 +75,24 @@ const abaSem = semFicha.map(m => {
   };
 });
 
+// ── 3b) O CATÁLOGO: item genérico × marca/modelo × faixa de ano → especificação ──
+// (Renan, 18/09/2026: "pode ter uma peça com um nome genérico apenas um nome,
+// porém para cada modelo e ano tem uma especificação diferente")
+const ST = { confirmado: 'Confirmado', inferido: 'Inferido', nao_encontrado: 'Não encontrado', nao_aplica: 'Não se aplica' };
+const abaCat = apl.slice().sort((a, b) => (a.item || '').localeCompare(b.item || '') || (a.modelo || '').localeCompare(b.modelo || '') || (a.ano_de || 0) - (b.ano_de || 0)).map(l => ({
+  'Item (nome genérico)': l.item, 'Sistema': l.sistema, 'Marca | Modelo': l.modelo,
+  'Ano de': l.ano_de || '', 'Ano até': l.ano_ate || '',
+  'Especificação (o que pedir)': l.especificacao || '', 'Qtd': l.quantidade || '', 'Un': l.unidade || '',
+  'Intervalo de troca': l.intervalo || '', 'Código de referência': l.codigo_ref || '',
+  'Status': ST[l.status] || l.status, 'Fonte': l.fonte || '', 'Nota': l.nota || '',
+}));
+// visão por item: em quantos modelos ele tem ficha e com que confiança
+const porItem = new Map();
+apl.forEach(l => { const a = porItem.get(l.item) || { sis: l.sistema, mods: new Set(), conf: 0, inf: 0, nao: 0 }; a.mods.add(l.modelo); a[{ confirmado: 'conf', inferido: 'inf', nao_encontrado: 'nao' }[l.status] || 'nao']++; porItem.set(l.item, a); });
+const abaItem = [...porItem.entries()].sort((a, b) => b[1].mods.size - a[1].mods.size).map(([item, a]) => ({
+  'Item (nome genérico)': item, 'Sistema': a.sis, 'Modelos com ficha': a.mods.size, 'Confirmadas': a.conf, 'Inferidas': a.inf, 'Não encontradas': a.nao,
+}));
+
 // ── 4) cobertura por modelo ────────────────────────────────────────────────
 const porModelo = new Map();
 apl.forEach(l => {
@@ -102,6 +120,8 @@ const add = (nome, dados, larguras) => {
   ws['!freeze'] = { xSplit: 0, ySplit: 1 };
   XLSX.utils.book_append_sheet(wb, ws, nome);
 };
+add('Catálogo (item×modelo×ano)', abaCat, [34, 22, 38, 7, 7, 70, 5, 5, 22, 30, 15, 40, 60]);
+add('Itens do catálogo', abaItem, [34, 22, 16, 12, 10, 16]);
 add('Lista de Peças', abaLista, [6, 34, 60, 24, 13, 12, 90]);
 add('Alertas NCM', abaAlertas, [6, 34, 60, 24, 13, 12, 110]);
 add('Modelos sem ficha', abaSem, [38, 8, 34, 78, 26, 70, 70]);
@@ -109,6 +129,7 @@ add('Cobertura por modelo', abaCob, [38, 8, 30, 22, 8, 12, 11, 16, 14, 13, 70]);
 XLSX.writeFile(wb, OUT);
 
 console.log(`${OUT}`);
+console.log(`  Catálogo ............. ${abaCat.length} fichas · ${abaItem.length} itens genéricos`);
 console.log(`  Lista de Peças ....... ${abaLista.length}`);
 console.log(`  Alertas NCM .......... ${abaAlertas.length}`);
 console.log(`  Modelos sem ficha .... ${abaSem.length} (${abaSem.reduce((s, m) => s + m.Ativos, 0)} ativos)`);

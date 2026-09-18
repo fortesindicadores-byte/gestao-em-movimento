@@ -1080,3 +1080,230 @@ create index if not exists sh_farol_custos_vig_idx on public.sh_farol_custos (vi
 
 -- ---------- Conferência -------------------------------------------------
 -- select slug, linhas, carregado_em, erro from public.sh_base order by slug;
+
+-- ============================================================
+-- BASES NOVAS — 18/09/2026, corte do Google Sheets
+-- Gerado por scripts/sheets-ddl.mjs (Sheets DDL, run 6). São as 10 abas que
+-- os painéis pediam ao gviz e não tinham tabela — levantadas pelo
+-- scripts/gviz-inventario.mjs. Reexecutável, como o resto do arquivo.
+-- ============================================================
+
+-- ── Dispersão · Abertura (Painel KM · Placas) · 586 linha(s) · 26 coluna(s)
+--    1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Abertura|g=|q=|h=
+create table if not exists public.sh_dispersao_abertura (
+  linha         integer primary key,   -- posição da linha na aba
+  vigencia      text,                  -- MM/YYYY normalizada
+  atualizado_em timestamptz not null default now()
+);
+alter table public.sh_dispersao_abertura
+  add column if not exists unidade                                text,   -- UNIDADE
+  add column if not exists mes                                    date,   -- MÊS
+  add column if not exists projeto                                text,   -- PROJETO
+  add column if not exists placa                                  text,   -- Placa
+  add column if not exists remunerado                             numeric,   -- Remunerado
+  add column if not exists real                                   numeric,   -- Real
+  add column if not exists col_6                                  numeric,   -- ▲
+  add column if not exists rs_km                                  text,   -- R$/km
+  add column if not exists impacto_brl                            text,   -- Impacto BRL
+  add column if not exists col_9                                  text,
+  add column if not exists col_10                                 text,
+  add column if not exists col_11                                 text,
+  add column if not exists col_12                                 text,
+  add column if not exists col_13                                 text,
+  add column if not exists col_14                                 text,
+  add column if not exists col_15                                 text,
+  add column if not exists col_16                                 text,
+  add column if not exists col_17                                 text,
+  add column if not exists col_18                                 text,
+  add column if not exists col_19                                 text,
+  add column if not exists col_20                                 text,
+  add column if not exists col_21                                 text,
+  add column if not exists col_22                                 text,
+  add column if not exists col_23                                 text,
+  add column if not exists col_24                                 text,
+  add column if not exists col_25                                 text;
+alter table public.sh_dispersao_abertura enable row level security;
+drop policy if exists sh_dispersao_abertura_sel on public.sh_dispersao_abertura;
+create policy sh_dispersao_abertura_sel on public.sh_dispersao_abertura for select to authenticated using (true);
+create index if not exists sh_dispersao_abertura_vig_idx on public.sh_dispersao_abertura (vigencia);
+
+-- ── Consumo · Base Remunerado Modelo · 8464 linha(s) · 11 coluna(s)
+--    1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Base Remunerado Modelo|g=|q=|h=
+create table if not exists public.sh_consumo_rem_modelo (
+  linha         integer primary key,
+  vigencia      text,
+  atualizado_em timestamptz not null default now()
+);
+alter table public.sh_consumo_rem_modelo
+  add column if not exists projeto_c_van                          text,   -- Projeto c/ Van
+  add column if not exists unidade_benner                         text,   -- Unidade Benner
+  add column if not exists concat                                 text,   -- Concat
+  add column if not exists vigencia_data                          text,   -- Vigência Data
+  add column if not exists vigencia_data_4                        date,   -- Vigência Data
+  add column if not exists modelo                                 text,   -- Modelo
+  add column if not exists vigencia_orig                          text,   -- Vigencia
+  add column if not exists unidade_cnpj                           text,   -- Unidade - CNPJ
+  add column if not exists unidade_nome                           text,   -- Unidade - Nome
+  add column if not exists placa                                  text,   -- Placa
+  add column if not exists media_modelo                           numeric;   -- Média Modelo
+alter table public.sh_consumo_rem_modelo enable row level security;
+drop policy if exists sh_consumo_rem_modelo_sel on public.sh_consumo_rem_modelo;
+create policy sh_consumo_rem_modelo_sel on public.sh_consumo_rem_modelo for select to authenticated using (true);
+create index if not exists sh_consumo_rem_modelo_vig_idx on public.sh_consumo_rem_modelo (vigencia);
+
+-- ── Disponibilidade (aba) · 19559 linha(s) · 6 coluna(s)
+--    1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=Disponibilidade|g=|q=|h=
+create table if not exists public.sh_disp_disponibilidade (
+  linha         integer primary key,
+  vigencia      text,
+  atualizado_em timestamptz not null default now()
+);
+alter table public.sh_disp_disponibilidade
+  add column if not exists data                                   date,   -- Data
+  add column if not exists unidade                                text,   -- Unidade
+  add column if not exists projeto                                text,   -- Projeto
+  add column if not exists tipo_de_veiculo                        text,   -- Tipo de Veiculo
+  add column if not exists ativos                                 numeric,   -- Ativos
+  add column if not exists indisponiveis                          numeric;   -- Indisponíveis
+alter table public.sh_disp_disponibilidade enable row level security;
+drop policy if exists sh_disp_disponibilidade_sel on public.sh_disp_disponibilidade;
+create policy sh_disp_disponibilidade_sel on public.sh_disp_disponibilidade for select to authenticated using (true);
+create index if not exists sh_disp_disponibilidade_vig_idx on public.sh_disp_disponibilidade (vigencia);
+
+-- ── Indisponibilidade (aba) · 13569 linha(s) · 17 coluna(s)
+--    1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=Indisponibilidade|g=|q=|h=
+create table if not exists public.sh_disp_indisponibilidade (
+  linha         integer primary key,
+  vigencia      text,
+  atualizado_em timestamptz not null default now()
+);
+alter table public.sh_disp_indisponibilidade
+  add column if not exists tipo_de_veiculo                        text,   -- Tipo de Veículo
+  add column if not exists placa_mercosul                         text,   -- Placa Mercosul
+  add column if not exists modelo                                 text,   -- Modelo
+  add column if not exists data                                   date,   -- Data
+  add column if not exists unidade                                text,   -- Unidade
+  add column if not exists projeto                                text,   -- Projeto
+  add column if not exists data_parada                            date,   -- Data Parada
+  add column if not exists placa                                  text,   -- Placa
+  add column if not exists modelo_de_veiculo                      text,   -- Modelo de Veiculo
+  add column if not exists grupo                                  text,   -- Grupo
+  add column if not exists descricao_do_problema                  text,   -- Descrição do Problema
+  add column if not exists local_manutencao                       text,   -- Local Manutenção
+  add column if not exists rc_oc                                  numeric,   -- RC/OC
+  add column if not exists dias_parado                            numeric,   -- Dias Parado
+  add column if not exists status                                 text,   -- Status
+  add column if not exists previsao_retorno                       date,   -- Previsão Retorno
+  add column if not exists observacao                             text;   -- Observação
+alter table public.sh_disp_indisponibilidade enable row level security;
+drop policy if exists sh_disp_indisponibilidade_sel on public.sh_disp_indisponibilidade;
+create policy sh_disp_indisponibilidade_sel on public.sh_disp_indisponibilidade for select to authenticated using (true);
+create index if not exists sh_disp_indisponibilidade_vig_idx on public.sh_disp_indisponibilidade (vigencia);
+
+-- ── Ativos (aba do Consolidado) · 1054 linha(s) · 9 coluna(s)
+--    1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=Ativos|g=|q=|h=
+create table if not exists public.sh_disp_ativos (
+  linha         integer primary key,
+  vigencia      text,
+  atualizado_em timestamptz not null default now()
+);
+alter table public.sh_disp_ativos
+  add column if not exists placa_mercosul                         text,   -- Placa Mercosul
+  add column if not exists filial                                 text,   -- Filial
+  add column if not exists projeto                                text,   -- Projeto
+  add column if not exists placa                                  text,   -- Placa
+  add column if not exists marca                                  text,   -- Marca
+  add column if not exists modelo                                 text,   -- Modelo
+  add column if not exists tipo_veiculo                           text,   -- Tipo Veículo
+  add column if not exists estado                                 text,   -- Estado
+  add column if not exists ano_fabricacao                         numeric;   -- Ano Fabricação
+alter table public.sh_disp_ativos enable row level security;
+drop policy if exists sh_disp_ativos_sel on public.sh_disp_ativos;
+create policy sh_disp_ativos_sel on public.sh_disp_ativos for select to authenticated using (true);
+
+-- ── Termômetro · Regras · 16 linha(s) · 13 coluna(s)  (headers=0: aba sem rótulo)
+--    10LRn3jrXEemqFiFAMbO8_bOLk98xrWTVXVUNDeQqLac|s=Regras|g=|q=|h=0
+create table if not exists public.sh_term_regras (
+  linha         integer primary key,
+  vigencia      text,
+  atualizado_em timestamptz not null default now()
+);
+alter table public.sh_term_regras
+  add column if not exists col_0                                  text,
+  add column if not exists col_1                                  text,
+  add column if not exists col_2                                  text,
+  add column if not exists col_3                                  text,
+  add column if not exists col_4                                  text,
+  add column if not exists col_5                                  text,
+  add column if not exists col_6                                  text,
+  add column if not exists col_7                                  text,
+  add column if not exists col_8                                  text,
+  add column if not exists col_9                                  text,
+  add column if not exists col_10                                 text,
+  add column if not exists col_11                                 text,
+  add column if not exists col_12                                 text;
+alter table public.sh_term_regras enable row level security;
+drop policy if exists sh_term_regras_sel on public.sh_term_regras;
+create policy sh_term_regras_sel on public.sh_term_regras for select to authenticated using (true);
+
+-- ── Seara · Remunerado (vigência, placa, km) — seara-km e Árvore Seara · 361 linha(s)
+--    1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=Remunerado|g=|q=select A, B, D|h=1
+create table if not exists public.sh_seara_rem_placa (
+  linha         integer primary key,
+  vigencia      text,
+  atualizado_em timestamptz not null default now()
+);
+alter table public.sh_seara_rem_placa
+  add column if not exists vigencia_orig                          date,   -- Vigência
+  add column if not exists placa                                  text,   -- Placa
+  add column if not exists km                                     numeric;   -- KM
+alter table public.sh_seara_rem_placa enable row level security;
+drop policy if exists sh_seara_rem_placa_sel on public.sh_seara_rem_placa;
+create policy sh_seara_rem_placa_sel on public.sh_seara_rem_placa for select to authenticated using (true);
+create index if not exists sh_seara_rem_placa_vig_idx on public.sh_seara_rem_placa (vigencia);
+
+-- ── Seara · Remunerado Σkm por vigência — arvore-frota · 8 linha(s)
+--    1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=Remunerado|g=|q=select A, sum(D) group by A|h=
+create table if not exists public.sh_seara_rem_vig (
+  linha         integer primary key,
+  vigencia      text,
+  atualizado_em timestamptz not null default now()
+);
+alter table public.sh_seara_rem_vig
+  add column if not exists vigencia_orig                          date,   -- Vigência
+  add column if not exists sum_km                                 numeric;   -- sum KM
+alter table public.sh_seara_rem_vig enable row level security;
+drop policy if exists sh_seara_rem_vig_sel on public.sh_seara_rem_vig;
+create policy sh_seara_rem_vig_sel on public.sh_seara_rem_vig for select to authenticated using (true);
+create index if not exists sh_seara_rem_vig_vig_idx on public.sh_seara_rem_vig (vigencia);
+
+-- ── Seara · CTEs por placa e mês — arvore-frota · 3457 linha(s)
+--    1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1672208132|q=select B, year(D), month(D), count(A) group by B, year(D), month(D)|h=
+create table if not exists public.sh_seara_ctes_viagens (
+  linha         integer primary key,
+  vigencia      text,
+  atualizado_em timestamptz not null default now()
+);
+alter table public.sh_seara_ctes_viagens
+  add column if not exists cd_viagem_transporte                   numeric,   -- CD_VIAGEM_TRANSPORTE
+  add column if not exists year_dt_emissao_viagem                 numeric,   -- year(DT_EMISSAO_VIAGEM)
+  add column if not exists month_dt_emissao_viagem                numeric,   -- month(DT_EMISSAO_VIAGEM)
+  add column if not exists count_cd_conhecimento                  numeric;   -- count CD_CONHECIMENTO
+alter table public.sh_seara_ctes_viagens enable row level security;
+drop policy if exists sh_seara_ctes_viagens_sel on public.sh_seara_ctes_viagens;
+create policy sh_seara_ctes_viagens_sel on public.sh_seara_ctes_viagens for select to authenticated using (true);
+
+-- ── Seara · Combustível Σkm por mês/ano — arvore-frota · 8 linha(s)
+--    1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1982300845|q=select F, G, sum(K) group by F, G|h=
+create table if not exists public.sh_seara_comb_vig (
+  linha         integer primary key,
+  vigencia      text,
+  atualizado_em timestamptz not null default now()
+);
+alter table public.sh_seara_comb_vig
+  add column if not exists mes_inicio_os                          text,   -- Mês Inicio OS
+  add column if not exists ano_inicio_os                          numeric,   -- Ano Inicio OS
+  add column if not exists sum_km_rodado_horas_trabalhadas        numeric;   -- sum KM Rodado / Horas trabalhadas
+alter table public.sh_seara_comb_vig enable row level security;
+drop policy if exists sh_seara_comb_vig_sel on public.sh_seara_comb_vig;
+create policy sh_seara_comb_vig_sel on public.sh_seara_comb_vig for select to authenticated using (true);

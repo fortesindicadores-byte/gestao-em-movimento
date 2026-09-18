@@ -1,0 +1,30 @@
+name: Gviz Instavel Check
+
+# A mesma aba devolve o mesmo conteúdo em leituras consecutivas? Aba montada
+# por fórmula pode recalcular entre um pedido e o seguinte — e aí nenhum
+# comparador fecha. Não grava nada.
+on:
+  workflow_dispatch:
+    inputs:
+      so:
+        description: 'Prefixo dos slugs (vazio = term_)'
+        required: false
+        default: ''
+      vezes:
+        description: 'Quantas leituras seguidas (mín. 2)'
+        required: false
+        default: '3'
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          GVIZ_SO: ${{ inputs.so }}
+          GVIZ_VEZES: ${{ inputs.vezes }}
+        run: node scripts/gviz-instavel-check.mjs
