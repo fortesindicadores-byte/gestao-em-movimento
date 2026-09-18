@@ -94,7 +94,10 @@ for (const b of alvos) {
     }
     // ── porteiro: aba filtrada no Sheets devolve menos linhas, calada ──
     if (antes && antes.linhas > 20 && rows.length < antes.linhas * (1 - QUEDA_MAX)) {
-      const aviso = `carga recusada: a aba veio com ${rows.length} linha(s) contra `
+      // O PREFIXO IMPORTA: 'RECUSADA:' diz que a tabela guarda o último bom de
+      // propósito (e o gviz-cache pode servi-la), enquanto 'FALHOU:' diz que a
+      // carga nem aconteceu e o conteúdo pode estar VELHO em relação à aba.
+      const aviso = `RECUSADA: a aba veio com ${rows.length} linha(s) contra `
         + `${antes.linhas} da carga anterior — provável filtro aplicado na aba`;
       if (!SECO) await gravaBase(b, { erro: aviso, carregado_em: new Date().toISOString() });
       recusadas++;
@@ -144,7 +147,16 @@ for (const b of alvos) {
     falhas++;
     const msg = e.message.slice(0, 300);
     console.log(`FALHOU ${b.slug.padEnd(24)} ${msg}`);
-    if (!SECO) { try { await gravaBase(b, { erro: msg, carregado_em: new Date().toISOString() }); } catch (_) {} }
+    // PGRST204 = a aba ganhou coluna que a tabela não tem. A carga não
+    // acontece e a tabela CONGELA no conteúdo antigo — foi o caso do
+    // term_wh_t2_acum (aba de 26 → 29 colunas, tabela até col_25), que serviria
+    // Total Pontos 71 onde a planilha já dizia 73. Regerar o SQL pelo Sheets
+    // DDL e rodar resolve; até lá o prefixo FALHOU tira a base do gviz-cache.
+    const dica = /PGRST204|schema cache/.test(msg)
+      ? ' → a aba tem coluna que a tabela não tem: rodar o Sheets DDL desta base e colar o SQL'
+      : '';
+    if (dica) console.log(`   ${dica.trim()}`);
+    if (!SECO) { try { await gravaBase(b, { erro: 'FALHOU: ' + msg + dica, carregado_em: new Date().toISOString() }); } catch (_) {} }
   }
 }
 
