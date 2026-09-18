@@ -71,12 +71,24 @@
   if (!fetchOrig) return;
   window.GvizCache = { hits: 0, misses: 0, banco: 0, snapshot: 0, google: 0, fontes: {} };
 
-  // Duas abas são pedidas por DOIS endereços (gid e nome) e têm UMA tabela —
-  // ver `apelidos` em scripts/sheets-bases.mjs. A chave do apelido aponta para
-  // a chave principal, que é a que está em sh_base.gviz_chave.
+  // A MESMA aba é pedida por endereços diferentes (por gid e por nome, ou com
+  // headers=1 e sem) e tem UMA tabela — é o `apelidos` do
+  // scripts/sheets-bases.mjs. A chave do apelido aponta para a principal, que
+  // é a que está em sh_base.gviz_chave.
+  // ⚠️ Esta lista TEM de espelhar os apelidos do sheets-bases.mjs: apelido que
+  // falta aqui faz o painel não achar a tabela e ir ao Google em silêncio (foi
+  // o que aconteceu com a Árvore da Seara e o rs-por-km). O
+  // scripts/gviz-banco-teste.mjs reprova quando as duas listas divergem.
+  var RPM = '1xGl1Xrk2sPS9zWghEuecFMNBHwmeLiZ02U-QpO8cDPY';
   var APELIDOS = {
-    '1xGl1Xrk2sPS9zWghEuecFMNBHwmeLiZ02U-QpO8cDPY|s=|g=0|q=|h=': '1xGl1Xrk2sPS9zWghEuecFMNBHwmeLiZ02U-QpO8cDPY|s=Base RPM|g=|q=|h=1',
-    '1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=|g=216663799|q=|h=': '1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=FCA Total|g=|q=|h=1'
+    // Base RPM: o Gerot pede pelo nome, o fca-preenchimento pelo gid 0
+    '1xGl1Xrk2sPS9zWghEuecFMNBHwmeLiZ02U-QpO8cDPY|s=|g=0|q=|h=': RPM + '|s=Base RPM|g=|q=|h=1',
+    // FCA Total: o /fca/ pede pelo nome, o fca-migracao pelo gid
+    '1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=|g=216663799|q=|h=': '1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o|s=FCA Total|g=|q=|h=1',
+    // DRE Frota: a Árvore da Seara pede com headers=1 (o cabeçalho é a 1ª linha)
+    '1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Frota|g=|q=|h=1': '1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Frota|g=|q=|h=',
+    // Seara Remunerado Σkm por vigência: o rs-por-km pede com headers=1
+    '1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=Remunerado|g=|q=select A, sum(D) group by A|h=1': '1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=Remunerado|g=|q=select A, sum(D) group by A|h='
   };
 
   // chave normalizada — TEM de bater com a do scripts/sheets-bases.mjs
@@ -91,6 +103,44 @@
              '|q=' + (p.get('tq') || '') + '|h=' + (p.get('headers') || '');
     } catch (e) { return null; }
   }
+
+  // ── /export?format=csv — o OUTRO caminho para a mesma planilha ────────────
+  // Scorecard, Diagnóstico e Resumo Executivo leem a Base RPM como CSV, e não
+  // pelo gviz ("porque o gviz trunca abas grandes"). Isso não é /gviz/tq, então
+  // passava batido pelo shim e ia ao Google — achado pelo gviz-banco-teste.
+  // A chave equivalente é a do gid, e a resposta tem de ser CSV de verdade:
+  // linha 1 com os rótulos, uma linha por registro.
+  function chaveCsv(url) {
+    try {
+      var u = new URL(url, location.href);
+      if (u.hostname !== 'docs.google.com') return null;
+      var m = u.pathname.match(/^\/spreadsheets\/d\/([^/]+)\/export$/);
+      if (!m) return null;
+      if ((u.searchParams.get('format') || '') !== 'csv') return null;
+      return m[1] + '|s=' + (u.searchParams.get('sheet') || '') + '|g=' + (u.searchParams.get('gid') || '') + '|q=|h=';
+    } catch (e) { return null; }
+  }
+  function csvCampo(v) {
+    if (v == null) return '';
+    var s = String(v);
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function csvDe(colunas, linhas) {
+    var cols = colunas.slice().sort(function (a, b) { return a.i - b.i; });
+    var out = [cols.map(function (c) { return csvCampo(c.label || ''); }).join(',')];
+    linhas.forEach(function (l) {
+      out.push(cols.map(function (c) {
+        var v = l[c.col];
+        if (v == null || v === '') return '';
+        // data fica em AAAA-MM-DD: é um dos formatos que os leitores da Base
+        // RPM já entendem (rpmVigYMD), junto de Date(...) e jan/2026
+        if (c.tipo === 'date') return String(v).slice(0, 10);
+        return csvCampo(v);
+      }).join(','));
+    });
+    return out.join('\n');
+  }
+  window.GvizRebuild.csvDe = csvDe;
 
   // As sh_* têm leitura para `authenticated`: manda o JWT do login do hub
   // (supabase-js guarda a sessão no localStorage desta mesma origem). Sem
@@ -126,21 +176,20 @@
     }
     return basesP;
   }
-  function buscaBanco(key) {
-    return bases().then(function (m) {
-      var b = m[APELIDOS[key] || key];
-      if (!b) return null;
-      var pags = Math.ceil(b.linhas / PAG), ps = [];
-      for (var i = 0; i < pags; i++) {
-        ps.push(rest('sh_' + b.slug + '?select=*&order=linha.asc', { Range: (i * PAG) + '-' + (i * PAG + PAG - 1) })
-          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }));
-      }
-      return Promise.all(ps).then(function (pp) {
-        var linhas = [].concat.apply([], pp);
-        if (!linhas.length) return null;
-        return payload(b.colunas, linhas);
-      });
-    }).catch(function (e) { try { console.warn('gviz-cache: banco falhou p/', key, e && e.message); } catch (_) {} return null; });
+  // as linhas de sh_<slug>, em ordem, paginadas de PAG em PAG (o PostgREST
+  // devolve no máximo 1.000 por leitura e há aba com 57 mil linhas)
+  function linhasDa(b) {
+    var pags = Math.ceil(b.linhas / PAG), ps = [];
+    for (var i = 0; i < pags; i++) {
+      ps.push(rest('sh_' + b.slug + '?select=*&order=linha.asc', { Range: (i * PAG) + '-' + (i * PAG + PAG - 1) })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }));
+    }
+    return Promise.all(ps).then(function (pp) {
+      var linhas = [].concat.apply([], pp);
+      // tabela vazia conta como FALHA: anon sem sessão do hub recebe [] em vez
+      // de 401, e sem isso o painel abriria zerado em vez de cair para o gviz
+      return linhas.length ? linhas : null;
+    });
   }
 
   // ── 2) snapshot cru (reserva) ──────────────────────────────
@@ -168,14 +217,45 @@
     return JSON.parse(body.slice(a + 1, b));
   }
 
-  // devolve {obj, corpo} ou null; anota a fonte
-  function resolve(key) {
-    return buscaBanco(key).then(function (obj) {
-      if (obj) { window.GvizCache.hits++; window.GvizCache.banco++; window.GvizCache.fontes[key] = 'banco'; return { obj: obj, corpo: corpo(obj) }; }
+  // do payload gviz de volta para CSV — serve a reserva do snapshot no caminho
+  // /export?format=csv, para ele também não precisar do Google
+  function csvDoGviz(obj) {
+    var t = obj && obj.table; if (!t) return null;
+    var out = [(t.cols || []).map(function (c) { return csvCampo((c && c.label) || ''); }).join(',')];
+    (t.rows || []).forEach(function (r) {
+      out.push((r.c || []).map(function (c) {
+        var v = c && c.v; if (v == null || v === '') return '';
+        var m = String(v).match(/^Date\((\d+),(\d+),(\d+)/);
+        if (m) return m[1] + '-' + ('0' + (+m[2] + 1)).slice(-2) + '-' + ('0' + (+m[3])).slice(-2);
+        return csvCampo(c.f != null ? c.f : v);
+      }).join(','));
+    });
+    return out.join('\n');
+  }
+
+  // devolve {obj, corpo} ou null; anota a fonte. csv=true responde texto CSV.
+  function resolve(key, csv) {
+    return bases().then(function (m) {
+      var b = m[APELIDOS[key] || key];
+      if (!b) return null;
+      return linhasDa(b).then(function (linhas) {
+        if (!linhas) return null;
+        if (csv) return { corpo: csvDe(b.colunas, linhas) };
+        var obj = payload(b.colunas, linhas);
+        return { obj: obj, corpo: corpo(obj) };
+      });
+    }).catch(function (e) {
+      try { console.warn('gviz-cache: banco falhou p/', key, e && e.message); } catch (_) {}
+      return null;
+    }).then(function (r) {
+      if (r) { window.GvizCache.hits++; window.GvizCache.banco++; window.GvizCache.fontes[key] = 'banco'; return r; }
       return buscaSnapshot(key).then(function (body) {
         if (body != null) {
           var o = null; try { o = parseGviz(body); } catch (e) { o = null; }
-          if (o) { window.GvizCache.hits++; window.GvizCache.snapshot++; window.GvizCache.fontes[key] = 'snapshot'; return { obj: o, corpo: body }; }
+          if (o) {
+            window.GvizCache.hits++; window.GvizCache.snapshot++; window.GvizCache.fontes[key] = 'snapshot';
+            return csv ? { corpo: csvDoGviz(o) } : { obj: o, corpo: body };
+          }
         }
         window.GvizCache.misses++; window.GvizCache.google++; window.GvizCache.fontes[key] = 'google';
         try { console.warn('gviz-cache: SEM TABELA NO BANCO — indo ao Google Sheets:', key); } catch (_) {}
@@ -188,12 +268,21 @@
   window.fetch = function (input, init) {
     try {
       var url = (typeof input === 'string') ? input : (input && input.url);
-      var key = url ? chaveDe(url) : null;
-      if (key) {
-        return resolve(key).then(function (r) {
-          if (r) return new Response(r.corpo, { status: 200, headers: { 'Content-Type': 'text/plain' } });
-          return fetchOrig(input, init);
-        });
+      if (url) {
+        var key = chaveDe(url);
+        if (key) {
+          return resolve(key, false).then(function (r) {
+            if (r) return new Response(r.corpo, { status: 200, headers: { 'Content-Type': 'text/plain' } });
+            return fetchOrig(input, init);
+          });
+        }
+        var kcsv = chaveCsv(url);
+        if (kcsv) {
+          return resolve(kcsv, true).then(function (r) {
+            if (r && r.corpo != null) return new Response(r.corpo, { status: 200, headers: { 'Content-Type': 'text/csv' } });
+            return fetchOrig(input, init);
+          });
+        }
       }
     } catch (e) { /* segue o fluxo normal */ }
     return fetchOrig(input, init);
@@ -208,7 +297,7 @@
         var fnm = (node.src.match(/responseHandler:([A-Za-z0-9_$]+)/) || [])[1];
         if (key && fnm) {
           var el = this;
-          resolve(key).then(function (r) {
+          resolve(key, false).then(function (r) {
             if (r && typeof window[fnm] === 'function') { window[fnm](r.obj); return; }
             appendOrig.call(el, node);      // sem banco nem snapshot: JSONP normal
           });
