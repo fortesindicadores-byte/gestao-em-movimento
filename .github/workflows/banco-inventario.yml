@@ -1,0 +1,21 @@
+name: Banco Inventario (auditoria)
+
+# Foto do banco inteiro: todas as tabelas e views que o PostgREST expõe, com a
+# contagem de linhas de cada uma. Serve para responder "rodei um SQL errado,
+# perdi alguma coisa?" com medição em vez de promessa — objeto que sumisse não
+# apareceria na lista.
+on:
+  workflow_dispatch:
+
+jobs:
+  inventario:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Inventariar
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/banco-inventario.mjs
