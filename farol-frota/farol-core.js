@@ -344,18 +344,102 @@ const DISP2CT={
   'CDD NOVA FRIBURGO':['NFR',''],'CDD CAMBORIU':['BLC','']
 };
 const dispCls=p=>p==null?'mut':p>=DISP_SONHO?'cg':p>=DISP_META?'cy':'cr';
-// carrega Disponibilidade (última vigência) — 1 linha por (cod,tier)
+
+// ════════════════════════════════════════════════════════════════════
+//  DISPONIBILIDADE — a fonte é o BANCO; a planilha é RESERVA
+//
+//  O app das unidades (/disponibilidade-preenchimento/, tabela
+//  `indisponibilidade`) entrou em 14/08/2026 e é onde elas lançam. Estas
+//  funções liam as abas do Consolidado Geral (Apps Script) até 19/09/2026,
+//  quando o coordenador do GRL apontou placas na tela que não estavam
+//  lançadas e a falta de placas que estavam. Não era cruzamento de dado:
+//  eram DUAS BASES — a tela mostrava uma e a unidade escrevia na outra.
+//
+//  Medido no dia (workflow Disp Fonte Check): 59 placas na planilha × 61
+//  eventos abertos no banco, com SEIS em comum. As 12 unidades lançam no
+//  app. A planilha também "mercosuliza" o identificador das empilhadeiras
+//  (EMP0857 → EMP0I57, trocando o 5º caractere dígito→letra como se fosse
+//  placa), então nem o mesmo veículo casava entre os dois lados.
+//
+//  Ordem: banco → planilha. Tabela vazia conta como FALHA (anon sem sessão
+//  do hub recebe [] em vez de 401, e aí o painel abriria zerado).
+// ════════════════════════════════════════════════════════════════════
 async function loadDisp(){
+  DATA.fonte=DATA.fonte||{};
+  try{ if(await loadDispBanco()) return; }
+  catch(e){ console.error('disponibilidade · banco',e); }
+  console.warn('Disponibilidade: o banco não respondeu — caindo para a planilha do Apps Script.');
+  await loadDispSheet();
+}
+
+// 'CBA T1 WH' → 'T1 WH' (o código já vem com o tier; a tela quebra por ele)
+const tierDe=cod=>{const i=String(cod||'').indexOf(' ');return i<0?'':cod.slice(i+1);};
+
+async function loadDispBanco(){
+  let sb;try{sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);}catch(e){return false;}
+  // 1) EVENTOS ABERTOS — é o que a unidade lança e o que a tela lista
+  const {data:ev,error:e1}=await sb.from('indisponibilidade')
+    .select('unidade,unidade_nome,projeto,placa,modelo,grupo,descricao_problema,local_manutencao,status,data_parada,previsao_retorno,updated_at')
+    .is('data_retorno',null).limit(2000);
+  if(e1){console.error('indisponibilidade',e1);return false;}
+  if(!Array.isArray(ev))return false;
+  // 2) ATIVOS — o denominador do hero, da foto diária (pg_cron cruza o robô
+  //    Ginfo com os eventos abertos). Só os ATIVOS saem da foto; os
+  //    indisponíveis são contados dos eventos de AGORA, senão o hero e a
+  //    tabela logo abaixo dele mostrariam números diferentes.
+  const {data:snap,error:e2}=await sb.from('disp_snapshot')
+    .select('data,unidade,ativos').order('data',{ascending:false}).limit(800);
+  if(e2){console.error('disp_snapshot',e2);return false;}
+  const dias=[...new Set((snap||[]).map(r=>r.data))].sort().reverse();
+  const d0=dias[0];
+  const at={};
+  (snap||[]).filter(r=>r.data===d0).forEach(r=>{at[r.unidade]=(at[r.unidade]||0)+(r.ativos||0);});
+  // sem foto de ativos não há como dizer o percentual: é falha, não zero
+  if(!d0||!Object.keys(at).length)return false;
+
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const dD=s=>{if(!s)return null;const p=String(s).split('-');return p.length>=3?new Date(+p[0],+p[1]-1,+p[2]):null;};
+  DATA.dispInd=ev.map(r=>{
+    const par=dD(r.data_parada),pv=dD(r.previsao_retorno);
+    return {dt:0,cod:r.unidade,tier:tierDe(r.unidade),
+      placa:String(r.placa||'').trim(),
+      proj:String(r.projeto||'').trim(),grupo:String(r.grupo||'').trim(),
+      desc:String(r.descricao_problema||'').trim(),
+      dPar:par?fmtD(par):'—',prev:pv?fmtD(pv):'—',
+      st:String(r.status||'').trim(),
+      dias:par?Math.max(0,Math.round((hoje-par)/864e5)):null};
+  }).filter(r=>r.cod&&r.placa);
+
+  const ind={};DATA.dispInd.forEach(r=>{ind[r.cod]=(ind[r.cod]||0)+1;});
+  DATA.disp=[...new Set([...Object.keys(at),...Object.keys(ind)])].map(cod=>{
+    const a=at[cod]||0,i=ind[cod]||0;
+    return {cod,tier:tierDe(cod),ativos:a,indisp:i,pct:a>0?(a-i)/a*100:null};
+  });
+  const ult=ev.map(r=>r.updated_at).filter(Boolean).sort().pop();
+  DATA.fonte.disp={src:'app',att:ult?new Date(ult):null,foto:d0};
+  DATA.dispVig=d0?+String(d0).slice(0,4)*100+ +String(d0).slice(5,7):0;
+  return true;
+}
+
+// RESERVA — as abas do Consolidado Geral (Apps Script). Era a fonte até
+// 19/09/2026 e fica como rede: se o banco não responder, a tela mostra o
+// que a planilha tem, DIZENDO que é a planilha.
+async function loadDispSheet(){
   let T;try{T=await gvizAny(DISP_SHEET_ID,'Disponibilidade');}catch(e){DATA.disp=null;return;}
   const c=T.cols;
   const i={dt:idxDe(c,'Data'),uni:idxDe(c,'Unidade'),proj:idxDe(c,'Projeto'),tipo:idxDe(c,'Tipo Veículo','Tipo'),at:idxDe(c,'Ativos'),ind:idxDe(c,'Indisponíveis','Indisponiveis','Indisp')};
-  const vigDe=v=>{const s=String(v||'');const m=s.match(/Date\((\d+),(\d+),(\d+)/);if(m)return +m[1]*100+(+m[2]+1);const p=s.split('/');return p.length>=3?+p[2]*100+ +p[1]:0;};
+  // a aba tem UMA LINHA POR DIA: a chave é o dia inteiro, não o mês. Com a
+  // chave mensal, o "último recorte" pegava todos os dias de setembro e o
+  // hero somava a frota 19 vezes (13.702 ativos para ~975 que existem). O
+  // percentual saía plausível porque numerador e denominador inflavam junto.
+  const vigDe=v=>{const s=String(v||'');const m=s.match(/Date\((\d+),(\d+),(\d+)/);if(m)return +m[1]*1e4+(+m[2]+1)*100+ +m[3];const p=s.split('/');return p.length>=3?+p[2]*1e4+ +p[1]*100+ +p[0]:0;};
   let rs=T.rows.map(r=>{const ct=DISP2CT[_n(r[i.uni])]||[codDe(r[i.uni]),''];return {vig:vigDe(r[i.dt]),cod:ct[0],tier:ct[1],ativos:num(r[i.at])||0,indisp:num(r[i.ind])||0};}).filter(r=>r.cod);
   const mx=Math.max(...rs.map(r=>r.vig));
   rs=rs.filter(r=>r.vig===mx);
   const g={};rs.forEach(r=>{const k=r.cod+'|'+r.tier;(g[k]=g[k]||{cod:r.cod,tier:r.tier,ativos:0,indisp:0}).ativos+=r.ativos;g[k].indisp+=r.indisp;});
   DATA.disp=Object.values(g).map(o=>({...o,pct:o.ativos>0?(o.ativos-o.indisp)/o.ativos*100:null}));
-  DATA.dispVig=mx;
+  DATA.dispVig=Math.floor(mx/100);
+  DATA.fonte.disp={src:'sheet',dia:mx};
   await loadInd();
 }
 // mapeia unidade da aba Indisponibilidade → [cod, tier] (mesma lógica do painel Disponibilidade)
@@ -947,7 +1031,23 @@ function renderDisp(el,cod,soPlacas){
   }else if(DATA.dispInd){
     h+=`<div class="tbl-sub" style="margin-top:12px">Nenhuma placa indisponível no recorte. ✓</div>`;
   }
+  // DE QUAL BASE isso saiu. Ficou sem legenda por 36 dias e foi assim que a
+  // tela pôde mostrar a planilha do Apps Script enquanto as unidades lançavam
+  // no app, sem nada na tela denunciando a diferença.
+  h+=dispFonteTxt();
   el.innerHTML=h;
+}
+// legenda da fonte (usada na visão Disponibilidade e no Ranking)
+function dispFonteTxt(){
+  const f=(DATA.fonte||{}).disp;
+  if(!f)return '';
+  if(f.src==='app'){
+    const q=f.att?` · último lançamento ${f.att.toLocaleDateString('pt-BR')} ${f.att.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`:'';
+    const fo=f.foto?` · ativos da foto de ${String(f.foto).slice(8,10)}/${String(f.foto).slice(5,7)}`:'';
+    return `<div class="tbl-sub" style="margin-top:10px">Fonte: <b>app de Indisponibilidade</b> — eventos abertos agora${q}${fo}.</div>`;
+  }
+  const d=f.dia?` (${String(f.dia%100).padStart(2,'0')}/${String(Math.floor(f.dia/100)%100).padStart(2,'0')}/${Math.floor(f.dia/1e4)})`:'';
+  return `<div class="tbl-sub" style="margin-top:10px"><b class="cy">Fonte: planilha do Apps Script${d}</b> — o banco não respondeu, então esta é a base antiga. As unidades lançam no app; confira lá antes de cobrar a placa.</div>`;
 }
 // ── PNEUS (foto Prolog — 3 blocos: Aferições · Milimetragem · Calibragem, como no painel /pneus/) ──
 const COR_ST={Bloquear:'#FF6666',Recapar:'#F97316',Regular:'#EAB308',Bom:'#3BB33B'};

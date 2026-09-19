@@ -1117,7 +1117,26 @@ Decisão do Renan (14/08/2026): tirar a Disponibilidade/Indisponibilidade do App
 
 **Decisões do Renan na construção (14/08/2026):** SEM Kanban (não é plano de ação) — app no shell do Planner com lateral (resumo + unidades + atalhos, menu recolhível) e miolo em LISTA · SEM check-in manual ("preencheu, confirmou" — auditoria = updated_by/updated_at dos eventos; `disp_checkins` existe mas está sem uso) · retorno SEMPRE por campo de data (mini-modal, entre a parada e hoje) · datalist de placa só com a placa · **FRETEIRO fora** de tudo · **ANG/Anhanguera não existe no Ginfo**: tabela `ativos_manual` (RLS por unidade) com 51 veículos do xlsx (Filial SEARA·ROTA, `scripts/ativos-manual.sql`), botão "+ Veículo" no template Ginfo SÓ na ANG, foto diária soma Ginfo+manuais (manual prioriza por placa) · visão **Resumo** = o painel de disponibilidade dentro do app (view `disp_resumo` dia×unidade; hero, % por dia, % por unidade, tabela hoje vs média 30d) — o Renan ainda vai detalhar o formato final espelhando o `/disponibilidade/` antigo.
 
-**Pendências:** painel `/disponibilidade/` ainda lê o Sheets via gviz → aposentar quando o Resumo do app for validado · painel de aderência (quem atualiza/quem não, via updated_at dos eventos) · desligar o trigger do Apps Script SÓ depois de comparar os números por 1–2 semanas · detalhar a visão Resumo com o Renan.
+**Pendências:** painel `/disponibilidade/` ainda lê o Sheets via gviz → aposentar quando o Resumo do app for validado · painel de aderência (quem atualiza/quem não, via updated_at dos eventos) · detalhar a visão Resumo com o Renan.
+
+### O GESTÃO À VISTA FICOU 36 DIAS LENDO A PLANILHA ENQUANTO AS UNIDADES LANÇAVAM NO APP (19/09/2026)
+
+O coordenador da Frota do GRL escreveu sobre a tabela **Placas Indisponíveis**: *"Aqui tem coisa errada. RUR5G13, CUG0645, FVI8A72, GJJ1G62, RUR5G08 não estão lançadas na indisponibilidade e falta placas que realmente estão lançadas. Não devem estar cruzando informações."* Renan: *"Estamos com a disponibilidade nova a quanto tempo?"* — **36 dias** (app em 14/08, isto em 19/09).
+
+**Não era cruzamento de informação: eram DUAS BASES.** O `farol-core.js` (`loadDisp`/`loadInd`) lia as abas `Disponibilidade` e `Indisponibilidade` do Consolidado Geral (Apps Script) enquanto as unidades lançavam na tabela `indisponibilidade`. A tela mostrava uma e a unidade escrevia na outra, e **nada na tela dizia qual das duas era** — é por isso que passou um mês.
+
+**Medido antes de trocar** (workflow **Disp Fonte Check**, `scripts/disp-fonte-check.mjs`, que roda o **mesmo** de-para do farol-core — comparar com outro de-para mediria a diferença entre dois de-paras): **59 placas na planilha × 61 eventos abertos no banco, SEIS em comum.** As **12 unidades** lançam no app (PIR 97 eventos, CBA T1 42, ANG 37, GRL 32…). As cinco placas que ele citou estão todas do lado "só na planilha"; as que faltavam (`CIS7492`, `DEU6I16`, `RUR5G11`, `RUR5G14`) estão no banco. Ele estava certo em cada palavra.
+
+**Três armadilhas que só apareceram na medição:**
+- **A planilha "mercosuliza" o que não é placa.** O identificador das empilhadeiras vira placa Mercosul pela regra do 5º caractere dígito→letra: `EMP0857`→`EMP0I57`, `EMP1593`→`EMP1F93`. O MESMO veículo não casava entre os dois lados.
+- **ANG nunca apareceu nesta visão.** A planilha manda `ANHANGUERA`, que não está no de-para do farol-core, então `codDe` devolve null e a linha era **descartada em silêncio** — 13 placas paradas invisíveis. No banco a unidade já vem como código (`ANG`) e aparece.
+- **O hero somava a frota uma vez por dia do mês.** O `vigDe` da aba devolvia `ano*100+mês` e a aba tem **uma linha por dia**, então o "último recorte" pegava os 19 dias de setembro: **13.702 ativos e 564 indisponíveis** para uma frota de ~975. O percentual saía plausível porque numerador e denominador inflavam junto — foi assim que ninguém viu. A chave passou a ser o dia.
+
+**Como ficou:** ordem **banco → planilha**. `DATA.dispInd` são os **eventos abertos** (`data_retorno is null`); os **ativos** do hero saem da foto diária do `disp_snapshot` (o pg_cron cruza o robô Ginfo com os eventos) e os **indisponíveis são contados dos eventos de agora** — senão o hero e a tabela logo abaixo dele mostram números diferentes, que é o mesmo defeito por outro caminho. **Tabela vazia conta como FALHA** (anon sem sessão do hub recebe `[]`, não 401). E a tela **diz de qual base está falando**, com a legenda da planilha em âmbar avisando que é a base antiga.
+
+**Validação** (`scripts/disp-fonte-teste.mjs`, Chromium com o `farol-core.js` de verdade): **27 checagens em 5 cenários** — banco respondendo · banco vazio · banco recusando · só a foto de ativos falhando · os dois lados fora. Roda **os dois lados**, como o teste do Frota de Elite: é a reserva que decide se o painel abre zerado. **Duas armadilhas foram do TESTE:** o dublê do gviz sem `status:'ok'` faz o `gvizAny` rejeitar (6 falhas que pareciam da troca), e `window.DATA` é `undefined` porque `const DATA={}` no topo do farol-core é ligação léxica — quem a enxerga é um script no mesmo escopo global.
+
+**O que NÃO foi feito:** o painel `/disponibilidade/` antigo continua no gviz (é outra página, `aposentar` já era pendência) e o trigger do Apps Script segue ligado — desligá-lo é decisão do Renan, e agora ele alimenta só a reserva.
 
 ## Robô Frota de Elite (Ginfo → Supabase, por vigência) — em construção (05/08/2026)
 
