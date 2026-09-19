@@ -600,11 +600,11 @@ function montaRoteiro(avisa){
       {alvo:"document.querySelector('#vw-nominal .card')"}));
     desviosDe(g.pac).forEach(d=>{
       const nome=g.pac+' – '+d.uni+(prefProj(d.proj)?' · '+prefProj(d.proj):'');
-      const fcaPrep=`__cm.vw('tabela'); __cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-proj',${JSON.stringify([d.proj])}); __cm.sel('ms-fato',${JSON.stringify([g.pac])}); run();`;
+      const fcaPrep=`__cm.vw('tabela'); __cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-proj',${JSON.stringify([d.proj+'|'+(prefProj(d.proj)||d.proj)])}); __cm.sel('ms-fato',${JSON.stringify([g.pac])}); __cm.redesenha('render');`;
       const sub=vX+' · desvio de R$ '+d.brl.toLocaleString('pt-BR');
       /* na Árvore o filtro de projeto lista só o PREFIXO do nível 3
          ('ROTA'), não o nível 3 inteiro ('ROTA - CGR') como no FCA */
-      const arvPrep=`__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); onFilterChange();`;
+      const arvPrep=`__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); __cm.redesenha('onFilterChange');`;
       if(!g.arvore){
         R.push(P(nome,'FCA · '+sub,'../fca-consolidado/',fcaPrep));
       }else{
@@ -742,7 +742,7 @@ function desenhaCapa(s,W,H){
   ctx.fillStyle='#8B94A6'; ctx.font=`600 ${Math.round(21*k)}px Montserrat, sans-serif`;
   ctx.fillText(s.rod,x,H*.40+272*k);
   ctx.fillStyle=LARANJA; ctx.fillRect(0,H-9*k,W,9*k);
-  return cv.toDataURL('image/png');
+  return cv.toDataURL('image/jpeg',0.93);
 }
 function desenhaSecao(s,W,H){
   const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
@@ -756,7 +756,7 @@ function desenhaSecao(s,W,H){
   ctx.fillStyle='#8B94A6'; ctx.font=`600 ${Math.round(18*k)}px Montserrat, sans-serif`;
   txtEsp(ctx,'CHECK DE METAS · '+vigExt(VIG).toUpperCase(),x,H*.5+82*k,3*k);
   ctx.fillStyle=LARANJA; ctx.fillRect(0,H-9*k,W,9*k);
-  return cv.toDataURL('image/png');
+  return cv.toDataURL('image/jpeg',0.93);
 }
 async function pintaCapas(){
   await carregaFoto();
@@ -824,6 +824,24 @@ const CM_HELPER=`window.__cm={
     this.faltou.push(acao+' não chegou em '+texto);
   },
   gate:function(){ return !!document.querySelector('.gate'); },
+  /* REDESENHAR NÃO PODE DEPENDER DO NOME (bug real, 19/09/2026): o roteiro
+     chamava run() no fca-consolidado, que redesenha com render() — o prep
+     morria com "run is not defined" e o slide vinha com o recorte errado,
+     sem nada na tela dizendo isso. Aqui tenta os nomes conhecidos, na ordem,
+     e só reclama se NENHUM existir. */
+  redesenha:function(pref){
+    /* A PREFERIDA VEM DO ROTEIRO: painel que tem duas (a Árvore tem
+       onFilterChange E atualizar) precisa da certa, senão o slide sai com o
+       recorte antigo. A lista é só a rede para quando ela não existir. */
+    var f=['run','render','atualizar','onFilterChange','aplica','desenha','renderAll','pinta'];
+    if(pref) f=[pref].concat(f.filter(function(x){return x!==pref;}));
+    for(var i=0;i<f.length;i++){
+      if(typeof window[f[i]]==='function'){ try{ window[f[i]](); return f[i]; }catch(e){
+        this.faltou.push('o redesenho ('+f[i]+') deu erro: '+e.message); return f[i]; } }
+    }
+    this.faltou.push('o painel não tem função de redesenho conhecida');
+    return null;
+  },
   /* "Traga apenas as tabelas distribuídas" (Renan, 18/09/2026): quando o
      alvo é um card de tabela, o que vai para o slide é a TABELA, não o
      card — que tem a altura da tela inteira e deixava a tabela de sete
@@ -1081,7 +1099,7 @@ async function tiraFoto(win,el){
   if(prep) o.onclone=prep.onclone;
   try{
     const c=await h2c(el,o);
-    return {png:c.toDataURL('image/png'),w:c.width,h:c.height};
+    return {png:c.toDataURL('image/jpeg',0.93),w:c.width,h:c.height};
   } finally { if(prep&&prep.limpar) prep.limpar(nodes); }
 }
 
@@ -1242,7 +1260,7 @@ async function montaPDF(slides){
     for(const png of pgs){
       if(!primeira) pdf.addPage([LAY_W,LAY_H],'landscape');
       primeira=false;
-      pdf.addImage(png,'PNG',0,0,LAY_W,LAY_H);
+      pdf.addImage(png,'JPEG',0,0,LAY_W,LAY_H);
     }
   }
   pdf.save(nomeArq('pdf'));

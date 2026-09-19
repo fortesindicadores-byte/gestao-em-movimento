@@ -417,6 +417,17 @@ let provas1 = [];
      'o FCA de Combustíveis vem com unidade E o nível 3 INTEIRO (ao contrário da Árvore)',
      fc && JSON.stringify([fc.estado.filtros['ms-uni'], fc.estado.filtros['ms-proj']]));
 
+  /* O REDESENHO NÃO PODE DEPENDER DO NOME (bug real na 1ª geração, 19/09):
+     o roteiro chamava run() no fca-consolidado, que redesenha com render() —
+     o prep morria com "run is not defined" e o slide saía com o recorte
+     antigo, sem nada dizendo isso. O painel dublado não tem run NEM render,
+     então este caso só passa se a rede funcionar. */
+  af(fca.every(p => (p.estado.chamou || []).length > 0),
+     'o FCA é redesenhado mesmo sem a função que o roteiro pediu',
+     JSON.stringify(fca.map(p => p.estado.chamou)));
+  af(!(provas1.some(p => (p.faltou || []).some(m => /não tem função de redesenho/.test(m)))),
+     'e nenhum painel ficou sem redesenho');
+
   const arv = provas1.filter(p => /arvore-combustivel/.test(p.pag));
   af(arv.length === 2 && arv.every(p => p.estado.chamou.includes('onFilterChange')), 'as 2 árvores foram redesenhadas');
   af(arv[0].estado.filtros['ms-nv3'].length === 1, 'a árvore vem recortada no projeto', JSON.stringify(arv[0].estado.filtros['ms-nv3']));
@@ -586,11 +597,13 @@ console.log('\n═══ 5 · capa e divisórias no tema Conlog ═══');
       so += l; so2 += l * l; n++;
     }
     const med = so / n, dp = Math.sqrt(so2 / n - med * med);
-    return { url: url.slice(0, 21), foto: !!foto,
+    return { url: url.slice(0, 22), foto: !!foto,
              rodape: px(800, 896), esq: px(40, 450),
              media: med, desvio: dp };
   });
-  af(c.url === 'data:image/png;base64', 'a capa sai como PNG');
+  /* JPEG, não PNG: 46 slides em PNG estouravam o limite de string do
+     navegador na hora de montar o arquivo ("Invalid string length"). */
+  af(c.url === 'data:image/jpeg;base64', 'a capa sai como JPEG de qualidade alta', c.url);
   af(c.foto, 'a foto do caminhão CONLOG foi carregada');
   af(Math.abs(c.rodape[0] - 249) < 6 && Math.abs(c.rodape[1] - 115) < 6, 'a faixa do rodapé é o laranja do portal', c.rodape.join(','));
   af(c.esq[0] < 60 && c.esq[1] < 60, 'o lado do texto está escurecido para o título ler', c.esq.join(','));

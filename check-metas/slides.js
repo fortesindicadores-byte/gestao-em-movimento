@@ -396,13 +396,23 @@ function slPodio(tit, sub, tres){
   return [el];
 }
 
-/* ── captura: o slide vira imagem ──────────────────────────────────────── */
+/* ── captura: o slide vira imagem ──────────────────────────────────────────
+   JPEG, NÃO PNG — e isto não é preferência (bug real, 19/09/2026): o deck de
+   ago/2026 tem 46 slides e a geração morria em "Invalid string length" no
+   "Montando o arquivo…". PNG de 3200×1800 dá ~5 MB em base64; 46 deles são
+   ~230 MB de texto, e o jsPDF concatena tudo numa string só — passa do teto
+   que o V8 aceita para uma string e o arquivo inteiro se perde no fim, depois
+   de 5 minutos de trabalho. JPEG de qualidade alta corta isso ~8× e, em 240
+   dpi, o texto continua limpo na tela e no papel.
+   Fundo OPACO de propósito: JPEG não tem transparência, e sem isto o que
+   estivesse transparente viraria preto. */
 async function slFoto(el){
+  const escuro = /escuro/.test(el.className);
   const cv = await window.html2canvas(el, {
-    scale: SL.esc, backgroundColor: null, logging: false,
+    scale: SL.esc, backgroundColor: escuro ? '#141416' : TK.fundo, logging: false,
     width: SL.W, height: SL.H, windowWidth: SL.W, windowHeight: SL.H,
   });
-  return cv.toDataURL('image/png');
+  return cv.toDataURL('image/jpeg', 0.93);
 }
 
 function slLimpa(){
