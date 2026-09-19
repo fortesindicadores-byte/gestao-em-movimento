@@ -1146,6 +1146,20 @@ O coordenador da Frota do GRL escreveu sobre a tabela **Placas Indisponíveis**:
 - **As abas `Disponibilidade`/`Indisponibilidade` FICAM nos `ALVOS` do gviz-robot e no `sheets-bases.mjs`**, porque são a reserva do Gestão à Vista quando o banco não responde. Tirá-las faria a reserva ir ao Google, mais lenta e pelo caminho que o corte de 18/09 fechou.
 - **Congelar não acende alarme falso no painel de Saúde**, e o motivo é o `carregado_em`: o `sheets-robot` o atualiza **mesmo quando o md5 é igual** (e o `gviz-robot` faz PATCH no `updated_at`), então as duas abas seguem "Em dia" — o que congelou é o conteúdo, não a leitura. O outro lado disso é que **o painel de Saúde também não vai avisar** que a planilha parou; quem denuncia é a data na legenda âmbar do Gestão à Vista, e só quando a reserva entrar em cena.
 
+### O ALARME DE BASE PARADA JÁ EXISTIA E MEDIA A COISA ERRADA (19/09/2026)
+
+Renan, ao ler o parágrafo acima: *"É meio lógico isso. Já havíamos criado"*. Ele está certo nas duas partes, e eu tinha escrito como se faltasse a peça: **o detector existe desde o 1º dia** — `velhas > 48h` no `saude-robot.mjs` e `estadoBase()` com `Atrasada`/`Parada` no painel. O que ele mede é que estava errado.
+
+**`atualizado_em` é a idade da LEITURA, não a do DADO.** Nas bases do Sheets ele é o `carregado_em`, que o `sheets-robot` reescreve **mesmo quando o md5 é igual** (o ramo `sem mudança` grava `carregado_em: now()`); nas fotos do gviz é o `updated_at`, que o `gviz-robot` PATCHa quando o hash não mudou. Medido na coleta: **75 das 99 bases** (45 `sh_*` + ~30 fotos + o Ginfo) ficariam **"Em dia" para sempre**, congeladas ou não. É o mesmo engano do "Atualizado" no topo do Gestão à Vista que ele pegou em 10/09 — e não valia só para as duas abas da Disponibilidade: qualquer aba que alguém pare de atualizar, ou cujo IMPORTRANGE quebre, passaria em branco.
+
+- **A régua virou a IMPRESSÃO do conteúdo.** A base carrega `impressao` (o `hash` que o `sh_base` e o `gviz_snapshot` já guardam; `bytes` quando não há hash) e o robô compara com a que **ele mesmo** gravou na coleta anterior: igual preserva o `mudou_em`, diferente carimba agora. `elite` e `app` não entram nisso — ali o `atualizado_em` já é a data do próprio dado.
+- **O Ginfo não tem coluna de hash**, e pedir o `data` a cada coleta baixaria MBs só para saber se mudou. Entrou a view **`ginfo_impressao`** (`md5(data::text)` + `jsonb_array_length`), calculada no Postgres, com `security_invoker = on` — sem isso a view rodaria com os direitos do owner e furaria a RLS da tabela.
+- **1ª coleta deixa `mudou_em` NULO de propósito** e a tela diz **"Aguardando 2ª coleta"** em cinza. Chutar "mudou agora" faria toda base congelada **nascer "Em dia"**, que é exatamente o defeito que a mudança existe para tirar.
+- **A tabela ganhou "Dado novo em" ao lado de "Lida em"** — sem as duas datas a tela se contradiz: base marcada "Parada" com "Última carga: hoje 12:00" parece bug da tela. A "Idade" agora é a do dado.
+- **SQL**: `scripts/saude-conteudo.sql` (as duas colunas em `saude_base` + a view), colado no chat.
+- **Validação** (`scripts/saude-estado-teste.mjs`, `node:vm` rodando o `estadoBase` **do próprio painel** — extrair as regras para o teste mediria a minha cópia): **14 checagens**, e a que importa roda **os dois lados** — a aba lida há 30 min com conteúdo de 5 dias dá `Parada` pela régua nova e `Em dia` pela antiga.
+- **O que NÃO mudou:** os limites por fonte (Sheets 6h · Ginfo 30h · Elite 45 dias) e o aviso por e-mail, que segue sem tocar porque o `vars.MAIL_TO` continua vazio desde 27/08. **O painel enxerga; o e-mail ainda não sai.**
+
 ## Robô Frota de Elite (Ginfo → Supabase, por vigência) — em construção (05/08/2026)
 
 Automatiza a planilha **Frota de Elite** (`1DXmjzj2KRrTdQxmvXRclGxhBeDMwoIoLvORqbh3GG6M`, hoje preenchida à mão a partir do Ginfo). Mesmo desenho do robô do Farol, com **duas diferenças**: coleta **mês a mês** e também o **acumulado do ano** (jan → mês de referência, ponderado pelo BI — não é média das médias).

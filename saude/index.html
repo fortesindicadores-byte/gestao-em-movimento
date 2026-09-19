@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609141030">
+<meta name="build" content="202609191620">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Saúde do Ecossistema · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -545,9 +545,19 @@ function estadoWf(w){
 }
 /* idade esperada de cada base, por fonte (o resto é informativo) */
 const LIM_BASE={sh:6,gviz:6,ginfo:30,elite:45*24,app:null};
+/* O QUE VALE É A IDADE DO DADO, NÃO DA LEITURA (19/09/2026).
+   `atualizado_em` das bases do Sheets é o carregado_em, reescrito de hora em
+   hora mesmo quando nada muda (e o do gviz é um PATCH no updated_at) — medir
+   por ele deixa base congelada eternamente "Em dia". O robô grava `mudou_em`
+   comparando a impressão do conteúdo entre coletas; onde ele existe, é ele que
+   manda. `mudou_em` nulo = 1ª coleta, ainda sem referência: aí não dá para
+   afirmar nada, e dizer "Em dia" seria justamente o engano. */
+const idadeDoDado=b=>b.mudou_em!=null?horas(b.mudou_em):horas(b.atualizado_em);
 function estadoBase(b){
   if(b.erro) return {c:'r',t:'Erro na carga'};
-  const lim=LIM_BASE[b.fonte], h=horas(b.atualizado_em);
+  const lim=LIM_BASE[b.fonte];
+  if(b.mudou_em==null&&b.impressao!=null) return {c:'c',t:'Aguardando 2ª coleta'};
+  const h=idadeDoDado(b);
   if(h==null) return {c:'c',t:'Sem data'};
   if(lim==null) return {c:'v',t:'—'};
   if(h>lim*4) return {c:'r',t:'Parada'};
@@ -809,17 +819,20 @@ function renderBases(){
       <td class="corte">${esc(b.grupo||'—')}</td>
       <td class="num mono">${b.linhas==null?'—':br(b.linhas)}</td>
       <td class="mono">${b.atualizado_em?fmtDT(b.atualizado_em):'—'}${b.erro?'<span class="lin2">tentativa, não carga</span>':''}</td>
-      <td class="num mono">${idadeTxt(b.atualizado_em)}</td>
+      <td class="mono">${b.mudou_em?fmtDT(b.mudou_em):(b.impressao!=null?'<span class="mut">aguardando</span>':'<span class="mut">—</span>')}</td>
+      <td class="num mono">${idadeTxt(b.mudou_em!=null?b.mudou_em:b.atualizado_em)}</td>
       <td><span class="dot ${e.c}"></span>${esc(e.t)}${b.erro?`<span class="lin2">registrado ${b.atualizado_em?fmtDT(b.atualizado_em):'—'} · ${esc(String(b.erro).slice(0,70))}</span>`:''}</td>
       <td class="corte mut">${esc(b.wf||'—')}</td>
     </tr>`;
   }).join('');
   document.getElementById('t-bases').innerHTML=`<table class="dre">
-    <colgroup><col style="width:26%"><col style="width:16%"><col style="width:9%"><col style="width:12%"><col style="width:8%"><col style="width:15%"><col style="width:14%"></colgroup>
-    <thead><tr><th>Base</th><th>Grupo</th><th class="num">Linhas</th><th>Última carga</th><th class="num">Idade</th><th>Estado</th><th>Alimentada por</th></tr></thead>
-    <tbody>${linhas||'<tr><td colspan="7" class="mut" style="text-align:center;padding:24px">Nada coletado ainda</td></tr>'}</tbody></table>`;
+    <colgroup><col style="width:23%"><col style="width:14%"><col style="width:8%"><col style="width:12%"><col style="width:12%"><col style="width:7%"><col style="width:13%"><col style="width:11%"></colgroup>
+    <thead><tr><th>Base</th><th>Grupo</th><th class="num">Linhas</th><th>Lida em</th><th>Dado novo em</th><th class="num">Idade</th><th>Estado</th><th>Alimentada por</th></tr></thead>
+    <tbody>${linhas||'<tr><td colspan="8" class="mut" style="text-align:center;padding:24px">Nada coletado ainda</td></tr>'}</tbody></table>`;
   const ruins=lista.filter(b=>['a','r'].includes(estadoBase(b).c)).length;
-  set('sub-bases',`${lista.length} bases monitoradas · ${ruins} fora do prazo esperado`);
+  const paradas=lista.filter(b=>estadoBase(b).t==='Parada').length;
+  set('sub-bases',`${lista.length} bases monitoradas · ${ruins} fora do prazo esperado`
+    +`${paradas?` · ${paradas} sem dado novo há muito tempo`:''}`);
 }
 
 /* ── tabela: painéis ── */
@@ -831,8 +844,11 @@ function idadeDoPainel(p){
   fontes.forEach(f=>{
     const alvo=f.startsWith('sb:')?('app:'+f.slice(3)):f;
     const b=BASE.find(x=>x.chave===alvo);
-    if(!b||!b.atualizado_em) return;
-    if(pior==null||new Date(b.atualizado_em)<new Date(pior)) pior=b.atualizado_em;
+    // a idade que interessa ao painel é a do DADO que ele mostra, não a da
+    // leitura do robô (mesma regra do estadoBase)
+    const em=b&&(b.mudou_em!=null?b.mudou_em:b.atualizado_em);
+    if(!em) return;
+    if(pior==null||new Date(em)<new Date(pior)) pior=em;
   });
   return pior;
 }
@@ -979,6 +995,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609141030"></script>
+<script src="../assets/build-check.js?v=202609191620"></script>
 </body>
 </html>
