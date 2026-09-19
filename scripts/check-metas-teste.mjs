@@ -37,12 +37,65 @@ await new Promise(r => srv.listen(0, '127.0.0.1', r));
 const BASE = 'http://127.0.0.1:' + srv.address().port;
 
 /* ── os dubles ─────────────────────────────────────────────── */
+/* O DUBLÊ DO html2canvas É O POSTO DE OBSERVAÇÃO do slide: ele recebe o
+   elemento montado, então é aqui que se mede o que o Renan reprovou —
+   fundo, fonte, listra, texto truncado, Δ virando aspas. Medir o PNG não
+   serviria: a prova é o que está no slide, não a compressão dele. */
 const SHIM_H2C = `
+window.__slInsp = [];
 window.html2canvas = function(el, o){
+  try{
+    var cs = getComputedStyle(el), li = el.querySelector('.sl-listra');
+    var rEl = el.getBoundingClientRect(), rLi = li ? li.getBoundingClientRect() : null;
+    var tab = el.querySelector('table.sl-t');
+    var cels = tab ? [].slice.call(tab.querySelectorAll('th,td')).map(function(c){ return c.textContent; }) : [];
+    window.__slInsp.push({
+      cls: el.className,
+      fundo: cs.backgroundColor,
+      fonte: cs.fontFamily,
+      w: el.offsetWidth, h: el.offsetHeight,
+      tit: (el.querySelector('.sl-tit')||{}).textContent || '',
+      sub: (el.querySelector('.sl-sub')||{}).textContent || '',
+      rot: [].slice.call(el.querySelectorAll('.sl-rot')).map(function(r){ return r.textContent; }),
+      listra: rLi ? { dir: Math.round(rEl.right - rLi.right), topo: Math.round(rLi.top - rEl.top),
+                      larg: +(rLi.width / rEl.width).toFixed(2), alt: Math.round(rLi.height),
+                      cor: getComputedStyle(li).backgroundColor } : null,
+      nLin: tab ? tab.querySelectorAll('tbody tr').length : 0,
+      nCab: tab ? tab.querySelectorAll('th').length : 0,
+      cabs: tab ? [].slice.call(tab.querySelectorAll('th')).map(function(c){ return c.textContent; }) : [],
+      cels: cels,
+      cortado: cels.some(function(t){ return /…|\.\.\.$/.test(t); }),
+      transborda: tab ? (tab.scrollWidth > el.offsetWidth + 2) : false,
+      nKpi: el.querySelectorAll('.sl-kpi').length,
+      nCanvas: el.querySelectorAll('canvas').length,
+      nPod: el.querySelectorAll('.sl-pod .p').length,
+      img: !!el.querySelector('.sl-mio img'),
+    });
+  }catch(e){ window.__slInsp.push({erro: e.message}); }
   var c = document.createElement('canvas'); c.width = 1200; c.height = 700;
   var x = c.getContext('2d'); x.fillStyle = '#EAEAEA'; x.fillRect(0,0,1200,700);
   return Promise.resolve(c);
 };`;
+
+/* Chart.js dublado: guarda o config e responde getChart(canvas). Serve aos
+   DOIS lados — no painel é dele que o __cm.graf tira os dados; na página é
+   por ele que se prova que o gráfico do slide foi desenhado com esses dados
+   e com animation:false (a animação era o que deixava o gráfico em branco). */
+const SHIM_CHART = `
+window.__charts = [];
+(function(){
+  var reg = new Map();
+  function Chart(ctx, cfg){
+    this.config = cfg; this.data = cfg.data; this.options = cfg.options || {};
+    var cv = (ctx && ctx.canvas) ? ctx.canvas : ctx;
+    if (cv) reg.set(cv, this);
+    window.__charts.push(cfg);
+    this.destroy = function(){}; this.update = function(){}; this.resize = function(){};
+  }
+  Chart.getChart = function(cv){ return reg.get(cv) || null; };
+  Chart.register = function(){}; Chart.defaults = { font:{} };
+  window.Chart = Chart;
+})();`;
 
 const SHIM_JSPDF = `
 window.__pdf = null;
@@ -130,6 +183,17 @@ const DIAL_DE = { 'visao-financeira':'chave', 'rs-por-km':'chave',
   'programa-reconhecimento':'curto' };
 
 /* painel dublado: a MESMA mecânica do padrão (setVw, ms-*, atualizar) */
+const CHART_NO_PAINEL = `
+  (function(){
+    var cv = document.getElementById('g1');
+    if (!cv || !window.Chart) return;
+    new window.Chart(cv.getContext('2d'), { type:'bar',
+      data:{ labels:['jan/26','fev/26','mar/26'],
+             datasets:[{ label:'Δ Rem %', data:[12.5, 8.3, 30.7],
+                         backgroundColor:'#F97316' }] },
+      options:{} });
+  })();`;
+
 function painelDuble(chaves, dialeto, comGate) {
   if (comGate) return `<!doctype html><html><body><div class="app"><div class="cols">
     <div class="gate"><h2>Apenas administradores</h2><p>restrito</p></div></div></div></body></html>`;
@@ -162,12 +226,15 @@ function painelDuble(chaves, dialeto, comGate) {
   </div><div class="cols">
     <section class="vw on" id="vw-resumo"><div class="card">resumo — texto suficiente para o motor considerar a tela carregada e estável</div></section>
     <section class="vw" id="vw-nominal"><div class="card">nominal <span id="ref-pac-v">REM</span>${TAB()}</div></section>
-    <section class="vw" id="vw-dispersao"><div class="card">dispersao por unidade${TAB()}</div></section>
+    <section class="vw" id="vw-dispersao"><div class="card">dispersao por unidade${TAB()}
+      <div class="gcard"><div class="gt">Dispersão de KM %</div><div class="gs">por vigência</div>
+        <canvas id="g1" width="600" height="280"></canvas></div></div></section>
     <section class="vw" id="vw-tabela"><div class="card">FCA da unidade${TAB()}</div></section>
     <div class="tbl-section">R$/KM Detalhado <span id="dim-atual">pacote</span>${TAB()}</div>
     <div class="tbl-section"><table id="ranking-table"><thead><tr><th>UNIDADE</th><th class="num">PONTOS</th></tr></thead>
       <tbody><tr><td class="ind-col">CDI MACACU</td><td class="num">97,3</td></tr>
-      <tr><td>CDD PELOTAS</td><td class="num">97,2</td></tr></tbody></table></div>
+      <tr><td>CDD PELOTAS</td><td class="num">97,2</td></tr>
+      <tr><td>CDD GUARULHOS</td><td class="num">95,0</td></tr></tbody></table></div>
     <div id="podio-section" class="card">podio</div>
     <div class="ms-wrap" id="ms-vig-wrap"><span class="ms-cnt" id="ms-vig-cnt"></span>
       <div class="ms-panel" id="ms-vig-panel"><div class="ms-list" id="ms-vig-list">
@@ -176,7 +243,9 @@ function painelDuble(chaves, dialeto, comGate) {
     <div class="chart-card"><canvas id="chartTemporal"></canvas></div>
     <pre id="estado"></pre>
   </div></main></div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script>
+  ${CHART_NO_PAINEL}
   var EST = { vw:'resumo', filtros:{}, dim:null, ref:'REM', chamou:[], selVig:[] };
   function grava(){ document.getElementById('estado').textContent = JSON.stringify(EST); }
   function setVw(v){ EST.vw = v;
@@ -227,7 +296,9 @@ async function abre({ semJunEm = null, gateEm = null } = {}) {
   await ctx.route('**/sw.js', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
   await ctx.route('**/cdn.jsdelivr.net/**', r => {
     const u = r.request().url();
-    const body = u.includes('html2canvas') ? SHIM_H2C
+    const body = u.includes('datalabels') ? 'window.ChartDataLabels={id:"datalabels"};'
+      : u.includes('chart') ? SHIM_CHART
+      : u.includes('html2canvas') ? SHIM_H2C
       : u.includes('jspdf') ? SHIM_JSPDF
       : u.includes('pptxgen') ? SHIM_PPTX
       : u.includes('supabase') ? SHIM_SB
@@ -362,26 +433,93 @@ let provas1 = [];
      'o Frota de Elite casa a vigência pela lista dele, não por um formato chutado',
      JSON.stringify(pr[0].estado.selVig));
   af(pr[2] && pr[2].estado.selVig.length === 6, 'o pódio acumulado leva os 6 meses', pr[2] && pr[2].estado.selVig.length);
-  af(pr[1].alvo === 'podio-section', 'o pódio é recortado no pódio', pr[1].alvo);
+  /* O PÓDIO É MONTADO, NÃO FOTOGRAFADO (Renan, 19/09/2026): ele saía como
+     tarja escura estreita boiando no slide branco, com os degraus cortados.
+     Agora o slide lê o RANKING — o mesmo dado — e desenha os três degraus
+     em página escura inteira. */
+  af(pr[1].alvo === 'ranking-table', 'o pódio sai do ranking, que é o mesmo dado', pr[1].alvo);
+  const pods = (await pg.evaluate(() => window.__slInsp || [])).filter(x => x.nPod);
+  af(pods.length >= 1, 'o pódio é desenhado com os três degraus', pods.length);
+  af(pods.every(x => /escuro/.test(x.cls)), 'em slide escuro inteiro, não uma tarja no branco',
+     pods[0] && pods[0].cls);
+  af(pods.every(x => x.nPod === 3), 'com os três lugares', pods[0] && pods[0].nPod);
   af(pr[3] && pr[3].estado.selVig.length === 0, 'a evolução usa o ano inteiro (sem filtro)',
      pr[3] && JSON.stringify(pr[3].estado.selVig));
 
-  af(pdf && pdf.pgs.length === nSlides, 'o PDF tem uma página por slide', pdf && pdf.pgs.length + ' de ' + nSlides);
-  af(pdf && pdf.cheias === 6, 'capa e as 5 divisórias entram de página inteira', pdf && pdf.cheias);
+  const ovlog = await pg.evaluate(() => (document.getElementById('ov-log')||{}).innerText || '');
+  af(pdf && pdf.pgs.length === nSlides, 'o PDF tem uma página por slide',
+     (pdf && pdf.pgs.length + ' de ' + nSlides) + (pdf && pdf.pgs.length !== nSlides ? ' · log=' + ovlog.slice(-300) : ''));
+  /* AGORA TODA página é arte de página inteira — capa, divisória e slide de
+     painel. Antes só a capa e as divisórias eram, e o resto era texto do
+     jsPDF por cima de branco; foi dele que vieram os defeitos de 19/09. */
+  af(pdf && pdf.cheias === pdf.pgs.length,
+     'toda página é arte de página inteira, encostada na borda',
+     pdf && pdf.cheias + ' de ' + pdf.pgs.length);
+  af(pdf && pdf.txts.length === 0,
+     'e nada é escrito por cima pelo gerador de PDF', pdf && JSON.stringify(pdf.txts));
   af(pdf && /^Check_de_Metas_2026_06\.pdf$/.test(pdf.arquivo), 'o arquivo sai com o mês no nome', pdf && pdf.arquivo);
-  af(pdf && pdf.txts.includes('Vs Remunerado') && pdf.txts.includes('Vs Orçado'), 'os rótulos das duas imagens vão no slide');
+  const rots = (await pg.evaluate(() => window.__slInsp || [])).flatMap(x => x.rot || []);
+  af(rots.includes('Vs Remunerado') && rots.includes('Vs Orçado'),
+     'os rótulos dos dois blocos vão DENTRO da arte do slide', JSON.stringify(rots.slice(0, 6)));
 
   // ── o coração da mudança: tabela é DADO, não print ──
   const tabs = provas1.filter(p => p.tipo === 'tabela');
   af(tabs.length >= 10, 'as tabelas saem como dados, não como print', tabs.length + ' de ' + provas1.length);
   af(provas1.filter(p => /rs-por-km/.test(p.pag)).every(p => p.tipo === 'tabela'),
      'o R$/Km vira tabela desenhada no slide');
+  /* ══ O SLIDE É DESENHADO NO PADRÃO (Renan, 19/09/2026) ══
+     Estas provas substituem as do desenho antigo (texto nativo no jsPDF).
+     Foi ele que gerou o Δ virando aspas, o acento comido e a coluna
+     truncada — agora o slide é uma página HTML com os tokens do portal. */
+  const ins = (await pg.evaluate(() => window.__slInsp || [])).filter(x => !x.erro);
+  const pain = ins.filter(x => x.nLin || x.nKpi || x.nCanvas || x.img);
+  af(pain.length >= 10, 'todo slide de conteúdo passa pelo desenho do padrão', pain.length);
+  af(pain.every(x => x.w === 1600 && x.h === 900), 'o slide é 1600×900 (16:9 exato)',
+     JSON.stringify(pain.map(x => x.w + 'x' + x.h).filter((v,i,a) => a.indexOf(v) === i)));
+  af(pain.every(x => /Montserrat/i.test(x.fonte)), 'Montserrat em tudo',
+     (pain.find(x => !/Montserrat/i.test(x.fonte)) || {}).fonte);
+
+  /* o fundo tem de ser o cinza do portal, nunca branco — era a emenda que
+     aparecia como borda entre a imagem e o slide */
+  const claros = pain.filter(x => !/escuro/.test(x.cls));
+  af(claros.length && claros.every(x => x.fundo === 'rgb(225, 226, 229)'),
+     'o fundo do slide é o cinza do portal, não branco',
+     (claros.find(x => x.fundo !== 'rgb(225, 226, 229)') || {}).fundo);
+
+  /* a listra laranja do PPT dele: topo, encostada à direita, metade da largura */
+  const li = pain.map(x => x.listra).filter(Boolean);
+  af(li.length === pain.length, 'todo slide leva a listra', li.length + ' de ' + pain.length);
+  af(li.every(l => l.dir === 0 && l.topo === 0), 'encostada no canto superior direito',
+     JSON.stringify(li[0]));
+  af(li.every(l => l.larg >= .45 && l.larg <= .55), 'ocupando ~metade da largura', li[0] && li[0].larg);
+  af(li.every(l => /249, 115, 22/.test(l.cor)), 'no laranja do portal', li[0] && li[0].cor);
+
+  /* o que ele reprovou, célula a célula */
+  const comTab = ins.filter(x => x.nLin > 0);
+  af(comTab.length >= 8, 'as tabelas foram desenhadas no slide', comTab.length);
+  const ofensoras = comTab.flatMap(x => x.cels).filter(t => /…|\.\.\.$/.test(t));
+  af(!ofensoras.length, 'nenhum texto sai truncado com reticências',
+     JSON.stringify(ofensoras.slice(0, 5)));
+  af(comTab.every(x => !x.transborda), 'e nenhuma coluna vaza para fora da tabela');
+  const todasCels = comTab.flatMap(x => x.cels);
+  af(todasCels.some(t => /Δ/.test(t)), 'o Δ continua Δ — não virou aspas',
+     todasCels.filter(t => /"/.test(t)).slice(0,3).join(' | '));
+  af(todasCels.includes('Combustíveis'), 'e o acento não come letra ("Combu tívei")',
+     todasCels.filter(t => /Combu/.test(t)).join(' | '));
+
+  /* o gráfico: desenhado com os dados do painel e SEM animação — era a
+     animação que deixava o canvas em branco na hora da foto */
+  const chs = await pg.evaluate(() => (window.__charts || []).filter(c => c && c.options && c.options.animation === false));
+  const diag = await pg.evaluate(() => ({ nCh:(window.__charts||[]).length,
+    temChart: typeof window.Chart, canv: (window.__slInsp||[]).map(x=>x.nCanvas).join(',') }));
+  af(chs.length >= 1, 'o gráfico do slide é desenhado com animação desligada',
+     chs.length + ' · diag=' + JSON.stringify(diag));
+  af(chs.some(c => (c.data.labels || []).join() === 'jan/26,fev/26,mar/26'),
+     'com os rótulos que vieram do painel');
+  af(chs.some(c => (c.data.datasets[0].data || []).join() === '12.5,8.3,30.7'),
+     'e com os números do painel, não recalculados');
+
   const pptT = await pg.evaluate(() => window.__ppt);
-  af(pdf.txts.includes('CONTA') || pdf.txts.includes('UNIDADE'),
-     'o PDF escreve o cabeçalho da tabela como TEXTO (nítido, não imagem)');
-  af(pdf.txts.includes('Combustíveis') && pdf.txts.includes('Total'),
-     'e as linhas também são texto de verdade');
-  af(pdf.linhas > 20, 'com os filetes entre as linhas desenhados', pdf.linhas);
 
   const tema = await pg.evaluate(() => localStorage.getItem('bi_theme'));
   af(tema === 'dark' || tema === null, 'o tema do Renan é devolvido depois da geração', tema);
@@ -488,7 +626,7 @@ console.log('\n═══ 6 · o PPT sai com o mesmo desenho do PDF ═══');
      'a capa ocupa o slide inteiro', p && JSON.stringify(p.slides[0].imgs[0]));
   af(p && p.slides[0].txts.length === 0, 'e não leva caixa de texto por cima (o título está na arte)');
   const comTab = p.slides.filter(x => x.tabelas.length);
-  af(comTab.length >= 1, 'o PPT leva tabela NATIVA (texto selecionável, não figura)', comTab.length);
+  af(comTab.length === 0, 'o PPT não monta mais tabela por fora — o slide já vem pronto', comTab.length);
   if (comTab.length) {
     const t = comTab[0].tabelas[0];
     af(t.rows[0][0].text === 'CONTA', 'o cabeçalho vai em caixa alta', t.rows[0][0].text);
@@ -500,13 +638,19 @@ console.log('\n═══ 6 · o PPT sai com o mesmo desenho do PDF ═══');
     af(t.colW[0] > t.colW[1] * 2, 'a coluna do nome é a larga', t.colW.slice(0, 2).join(' '));
   }
   const sl = p.slides[2];
-  af(sl.txts.length >= 1 && sl.txts[0] === 'Scorecard da Frota', 'o slide de painel leva o título', sl.txts[0]);
-  af(sl.imgs.length === 1 && sl.imgs[0].y > 0.9, 'a imagem entra abaixo do título', JSON.stringify(sl.imgs[0]));
-  af(sl.imgs[0].x >= 0.27 && sl.imgs[0].x + sl.imgs[0].w <= 13.07, 'e cabe dentro da margem', JSON.stringify(sl.imgs[0]));
-  const duplo = p.slides[6];
-  af(duplo.tabelas.length === 2 && duplo.tabelas[1].y > duplo.tabelas[0].y,
-     'o slide de duas tabelas empilha uma sobre a outra, como no dele',
-     JSON.stringify(duplo.tabelas.map(t => t.y)));
+  /* o título agora está DENTRO da arte do slide, como na capa — por isso o
+     PPT não leva mais caixa de texto por cima da imagem */
+  af(sl.txts.length === 0, 'o slide de painel não leva texto solto por cima', JSON.stringify(sl.txts));
+  af(sl.imgs.length === 1 && sl.imgs[0].x === 0 && sl.imgs[0].y === 0,
+     'o slide é a arte inteira, encostada no canto', JSON.stringify(sl.imgs[0]));
+  af(sl.imgs[0].w === 13.3333 && sl.imgs[0].h === 7.5, 'ocupando a página toda',
+     JSON.stringify(sl.imgs[0]));
+  /* Árvore + FCA no MESMO slide (Renan, 18/09): os dois blocos são
+     empilhados DENTRO da arte, com o rótulo laranja de cada um. */
+  const ins2 = (await pg.evaluate(() => window.__slInsp || [])).filter(x => !x.erro);
+  const dois = ins2.filter(x => (x.rot || []).length === 2);
+  af(dois.length >= 1, 'o slide de Árvore + FCA empilha os dois, como no dele',
+     JSON.stringify(ins2.map(x => (x.rot || []).length)));
   af(p && /^Check_de_Metas_2026_06\.pptx$/.test(p.arquivo), 'o arquivo sai com o mês no nome', p && p.arquivo);
   await ctx.close();
 }
