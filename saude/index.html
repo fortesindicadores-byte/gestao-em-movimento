@@ -556,7 +556,11 @@ const idadeDoDado=b=>b.mudou_em!=null?horas(b.mudou_em):horas(b.atualizado_em);
 function estadoBase(b){
   if(b.erro) return {c:'r',t:'Erro na carga'};
   const lim=LIM_BASE[b.fonte];
-  if(b.mudou_em==null&&b.impressao!=null) return {c:'c',t:'Aguardando 2ª coleta'};
+  /* tem impressão mas ainda não tem data: linha gravada por um robô anterior a
+     esta regra. Cair no atualizado_em aqui traria de volta o defeito inteiro
+     (idade da leitura ⇒ "Em dia" eterno), então a linha fica em cinza até a
+     próxima coleta — que com o robô de hoje já grava a data. */
+  if(b.mudou_em==null&&b.impressao!=null) return {c:'c',t:'Aguardando coleta'};
   const h=idadeDoDado(b);
   if(h==null) return {c:'c',t:'Sem data'};
   if(lim==null) return {c:'v',t:'—'};
@@ -819,8 +823,8 @@ function renderBases(){
       <td class="corte">${esc(b.grupo||'—')}</td>
       <td class="num mono">${b.linhas==null?'—':br(b.linhas)}</td>
       <td class="mono">${b.atualizado_em?fmtDT(b.atualizado_em):'—'}${b.erro?'<span class="lin2">tentativa, não carga</span>':''}</td>
-      <td class="mono">${b.mudou_em?fmtDT(b.mudou_em):(b.impressao!=null?'<span class="mut">aguardando</span>':'<span class="mut">—</span>')}</td>
-      <td class="num mono">${idadeTxt(b.mudou_em!=null?b.mudou_em:b.atualizado_em)}</td>
+      <td class="mono">${b.mudou_em?(b.mudou_piso?'<span class="mut">desde </span>':'')+fmtDT(b.mudou_em):'<span class="mut">—</span>'}</td>
+      <td class="num mono">${b.mudou_piso?'≥ ':''}${idadeTxt(b.mudou_em!=null?b.mudou_em:b.atualizado_em)}</td>
       <td><span class="dot ${e.c}"></span>${esc(e.t)}${b.erro?`<span class="lin2">registrado ${b.atualizado_em?fmtDT(b.atualizado_em):'—'} · ${esc(String(b.erro).slice(0,70))}</span>`:''}</td>
       <td class="corte mut">${esc(b.wf||'—')}</td>
     </tr>`;

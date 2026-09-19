@@ -77,12 +77,23 @@ console.log('\n═══ dado novo chegando: nada muda para pior ═══');
      'Frota de Elite: 30 dias é normal (limite 45)');
 }
 
-console.log('\n═══ a 1ª coleta não pode fingir que está tudo bem ═══');
+console.log('\n═══ a 1ª observação é um PISO que envelhece — não um cinza eterno ═══');
 {
-  const semRef = { fonte:'sh', atualizado_em: atras(0.2), mudou_em: null, impressao:'a' };
-  af(est(semRef).t === 'Aguardando 2ª coleta',
-     'base com impressão mas sem referência ainda diz isso, em vez de "Em dia"', est(semRef).t);
-  af(est(semRef).c === 'c', 'e fica em cinza, nem verde nem vermelho', est(semRef).c);
+  // Na 1ª vez que vemos a base, mudou_em = agora com mudou_piso = true. Não
+  // sabemos desde quando está assim, mas sabemos que está assim desde agora.
+  const vista = { fonte:'sh', atualizado_em: atras(0.2), mudou_em: atras(0.2), mudou_piso:true, impressao:'a' };
+  af(est(vista).t === 'Em dia', 'recém-observada começa em dia', est(vista).t);
+  // …e, como a impressão não muda numa base congelada, essa data fica parada e ELA ENVELHECE
+  const velha = { fonte:'sh', atualizado_em: atras(0.2), mudou_em: atras(30), mudou_piso:true, impressao:'a' };
+  af(est(velha).t === 'Parada',
+     'a mesma base 30h depois vira Parada — o piso alarma sozinho', est(velha).t);
+
+  // O DESENHO ANTERIOR (mudou_em nulo) prendia a base congelada em cinza PARA
+  // SEMPRE: a impressão nunca muda, então o nulo seria preservado em toda
+  // coleta. Este é o lado errado, e ele não pode voltar.
+  const presoEmCinza = { fonte:'sh', atualizado_em: atras(0.2), mudou_em: null, impressao:'a' };
+  af(est(presoEmCinza).t === "Aguardando coleta",
+     'linha de robô antigo fica em cinza, nunca "Em dia" pela leitura', est(presoEmCinza).t);
 }
 
 console.log('\n═══ quem já media o conteúdo continua como estava ═══');
