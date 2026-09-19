@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609102150">
+<meta name="build" content="202609191300">
 <title>Frota de Elite · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -615,7 +615,11 @@ let chartIndicadores = null;
 let activeInd = 'media_geral';
 
 /* ── Fetch ── */
-const CACHE_KEY='bi_cache_reconhecimento_v16';  // v15 = empurradas sem conformidade em jan/fev/mar
+/* v17 = a lista de vigências passou a ser refeita na hidratação (19/09/2026).
+   Subir a chave é o que tem efeito IMEDIATO: sem isso, quem já tem o cache de
+   antes de agosto continuaria com a lista velha até ele vencer. v15 = empurradas
+   sem conformidade em jan/fev/mar · v16 = fusão do Macacu. */
+const CACHE_KEY='bi_cache_reconhecimento_v17';
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function fetchData() {
@@ -637,8 +641,22 @@ function initData(){
       renderAll();
       const d=new Date(c.t);
       set('status-badge',`Atualizado ${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} (cache)`);
-      // o acumulado precisa do elite_snapshot em memória — hidrata e re-renderiza
-      GerotBase.load({fundir:true}).then(recs=>{ RAW=buildEliteRows(recs); renderAll(); }).catch(()=>{});
+      // o acumulado precisa do elite_snapshot em memória — hidrata e re-renderiza.
+      // O populateFilters TEM de vir junto (bug real, 19/09/2026: "por que não
+      // aparece agosto no Frota de Elite? antes aparecia"): quem monta a LISTA
+      // de vigências é ele, então sem esta chamada a tela redesenhava com o mês
+      // novo nos números e o seletor ficava congelado no que o cache tinha —
+      // agosto entrou no banco em 10–15/09 e quem já tinha cache nunca o via.
+      // A seleção do usuário sobrevive: `selVig` não é tocado aqui, e o
+      // updateMsBtn remarca os checkboxes a partir dele.
+      GerotBase.load({fundir:true})
+        .then(recs=>{ RAW=buildEliteRows(recs); populateFilters(); renderAll(); })
+        .catch(e=>{
+          // engolir era o que fazia a falha não ter sintoma nenhum: a tela
+          // ficava com o cache velho parecendo atual
+          console.error('Frota de Elite — hidratação falhou', e);
+          set('status-badge','Mostrando dados do cache — falha ao atualizar');
+        });
       return;
     }
   }catch(e){ localStorage.removeItem(CACHE_KEY); }
@@ -1397,6 +1415,6 @@ document.addEventListener('DOMContentLoaded',()=>{ initAccessLog(); cortinaInit(
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609102150"></script>
+<script src="../assets/build-check.js?v=202609191300"></script>
 </body>
 </html>

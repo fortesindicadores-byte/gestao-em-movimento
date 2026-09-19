@@ -1192,6 +1192,51 @@ Automatiza a planilha **Frota de Elite** (`1DXmjzj2KRrTdQxmvXRclGxhBeDMwoIoLvORq
 
 **Fila do Actions:** em horário de pico o job pode ficar 15 min na fila sem runner e ser cancelado (`runner_id: 0`, sem log). Não é erro do robô nem cota (o repo é público) — é só redisparar.
 
+## "Por que não aparece agosto no Frota de Elite?" — a lista ficou no cache (19/09/2026)
+
+Pergunta dele, e o instinto errado seria caçar o robô. **Medido antes de
+mexer:** o `elite_snapshot` TEM agosto (13 indicadores com `08/2026`, civf 444
+linhas, stress-test-frota 603, gravados entre 01 e 15/09 — Elite Vigencias
+Inspect) e o LEITOR entrega agosto (Scorecard ICs Check rodando o próprio
+`assets/gerot-base.js` contra o banco: `vigências dos ICs: 2026-01 … 2026-08`,
+com as 13 unidades pontuadas). Banco certo, leitor certo — o buraco era a tela.
+
+O `initData()` do `/programa-reconhecimento/` pinta do cache e hidrata em
+background:
+
+```js
+GerotBase.load({fundir:true}).then(recs=>{ RAW=buildEliteRows(recs); renderAll(); })
+```
+
+**`renderAll` redesenha os NÚMEROS; quem monta a LISTA de vigências é o
+`populateFilters`** — que não era chamado. Então o cache gravado antes de agosto
+entrar no banco deixava o seletor **congelado em julho para sempre**, enquanto os
+números por trás já eram os de agosto. "Antes aparecia" é literal: enquanto o
+último mês era julho, cache e banco concordavam.
+
+- **O `.catch(()=>{})` mudo** garantia que qualquer falha da hidratação não
+  tivesse sintoma nenhum — a tela ficava com o cache velho parecendo atual.
+  Agora loga e escreve no badge.
+- **A chave do cache subiu para `v17`**: é o que tem efeito IMEDIATO. Sem isso,
+  quem já tem o cache velho continuaria com a lista antiga até ele vencer.
+- **A seleção do usuário sobrevive** a refazer a lista: `populateFilters` só
+  reconstrói o HTML, o `selVig` não é tocado e o `updateMsBtn` remarca os
+  checkboxes a partir dele — conferido no teste.
+- **Validação** (`scripts/elite-vigencia-teste.mjs`, Chromium): **9 checagens
+  rodando os DOIS LADOS** — com a correção e sem ela. O lado "antes" reproduz o
+  defeito (agosto fora do seletor mesmo com o dado em memória); o lado "depois"
+  mostra agosto entrando sozinho, sem F5. Um teste que só roda o lado consertado
+  não prova que ele conserta coisa alguma.
+- **Duas armadilhas foram do TESTE**, as duas fazendo a correção parecer inútil:
+  o dublê do `GerotBase` no `addInitScript` era **sobrescrito** pelo
+  `assets/gerot-base.js` que o painel carrega depois (o certo é rotear o próprio
+  arquivo), e o `buildEliteRows` **descarta unidade fora do `NOMES`** — com
+  `fundir:true` é `MACACU`, não `CDI MACACU`, então o RAW saía vazio.
+
+**Vale para qualquer painel com cache + hidratação:** redesenhar sem repovoar os
+filtros deixa a tela mostrando um recorte que não existe mais. Hoje este é o
+único (`grep` por `GerotBase.load(.*).then` acha só ele).
+
 ## Robôs falhando em silêncio — a varredura de 10/09/2026
 
 O Renan viu "Atualizado 10/09 08:52" no topo do Gestão à Vista e perguntou se
