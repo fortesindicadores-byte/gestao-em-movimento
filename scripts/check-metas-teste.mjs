@@ -70,6 +70,26 @@ window.html2canvas = function(el, o){
       nCanvas: el.querySelectorAll('canvas').length,
       nPod: el.querySelectorAll('.sl-pod .p').length,
       img: !!el.querySelector('.sl-mio img'),
+      /* ZEBRA: o Renan reprovou "tabela com cor sim cor não". A prova é o fundo
+         computado das linhas pares — se ele diferir do das ímpares, a zebra
+         voltou. Olhar o CSS não serve: o que conta é o que o slide pinta. */
+      zebra: (function(){
+        if(!tab) return null;
+        var trs = [].slice.call(tab.querySelectorAll('tbody tr')).filter(function(r){ return !r.classList.contains('tot'); });
+        if (trs.length < 2) return null;
+        var f = function(tr){ var td = tr.querySelector('td'); return td ? getComputedStyle(td).backgroundColor : ''; };
+        return f(trs[0]) !== f(trs[1]);
+      })(),
+      /* CHIPS: a cor do nível da Auditoria e a pílula do ranking */
+      chips: tab ? [].slice.call(tab.querySelectorAll('.sl-chip')).map(function(s){
+        var c = getComputedStyle(s);
+        return { t: s.textContent, bg: c.backgroundColor, cor: c.color, bloco: c.display === 'block' };
+      }) : [],
+      /* o boneco do pódio */
+      avatares: [].slice.call(el.querySelectorAll('.sl-pod img.av')).map(function(i){ return i.getAttribute('src'); }),
+      fsTit: tab ? null : parseFloat(getComputedStyle(el.querySelector('.sl-tit')||el).fontSize),
+      fsTab: tab ? parseFloat(getComputedStyle(tab).fontSize) : null,
+      vazio: !!el.querySelector('.sl-vazio'),
     });
   }catch(e){ window.__slInsp.push({erro: e.message}); }
   var c = document.createElement('canvas'); c.width = 1200; c.height = 700;
@@ -93,7 +113,11 @@ window.__charts = [];
     this.destroy = function(){}; this.update = function(){}; this.resize = function(){};
   }
   Chart.getChart = function(cv){ return reg.get(cv) || null; };
-  Chart.register = function(){}; Chart.defaults = { font:{} };
+  /* quem registra o plugin de rótulo é o slides.js; o teste anota para provar
+     que ele foi registrado UMA vez (registrar por gráfico desenhava duas) */
+  window.__registrados = [];
+  Chart.register = function(p){ window.__registrados.push(p && p.id || String(p)); };
+  Chart.defaults = { font:{} };
   window.Chart = Chart;
 })();`;
 
@@ -194,6 +218,10 @@ const CHART_NO_PAINEL = `
       options:{} });
   })();`;
 
+/* PNG 1×1 de verdade (data URI): o pódio tem de carregar uma imagem que
+   DECODIFIQUE, senão o teste não prova nada sobre o boneco. */
+const PX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGP6zwAAAgUBAScLLXcAAAAASUVORK5CYII=';
+
 function painelDuble(chaves, dialeto, comGate) {
   if (comGate) return `<!doctype html><html><body><div class="app"><div class="cols">
     <div class="gate"><h2>Apenas administradores</h2><p>restrito</p></div></div></div></body></html>`;
@@ -209,7 +237,13 @@ function painelDuble(chaves, dialeto, comGate) {
   const ops = id => vigs.map(v => `<label class="ms-opt"><input type="checkbox" data-v="${v.v}"> ${v.t}<span class="ms-only">only</span></label>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><style>
   .vw{display:none} .vw.on{display:block} .card,.tbl-section,.chart-card{min-height:220px;background:#eee}
-  body{margin:0;min-height:700px}</style></head><body>
+  body{margin:0;min-height:700px}
+  /* a cor do nível da Auditoria é um span de BLOCO preenchendo a célula —
+     sem esta regra o teste mediria o CSS do dublê, não o do painel */
+  .niv{display:block;border-radius:7px;padding:10px 6px;font-weight:700}
+  .uni-card{display:block;background:rgba(0,0,0,.05)}
+  .score-pill{display:inline-block;padding:3px 10px;border-radius:12px;font-weight:800}
+  </style></head><body>
   <div class="app"><div class="side"></div><main class="board"><div class="top">
     <div class="tit-sub" id="titSub">pronto</div>
     <div class="ms-wrap" id="ms-vig"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">${ops('ms-vig')}</div></div></div>
@@ -231,11 +265,45 @@ function painelDuble(chaves, dialeto, comGate) {
         <canvas id="g1" width="600" height="280"></canvas></div></div></section>
     <section class="vw" id="vw-tabela"><div class="card">FCA da unidade${TAB()}</div></section>
     <div class="tbl-section">R$/KM Detalhado <span id="dim-atual">pacote</span>${TAB()}</div>
-    <div class="tbl-section"><table id="ranking-table"><thead><tr><th>UNIDADE</th><th class="num">PONTOS</th></tr></thead>
-      <tbody><tr><td class="ind-col">CDI MACACU</td><td class="num">97,3</td></tr>
-      <tr><td>CDD PELOTAS</td><td class="num">97,2</td></tr>
-      <tr><td>CDD GUARULHOS</td><td class="num">95,0</td></tr></tbody></table></div>
-    <div id="podio-section" class="card">podio</div>
+    <!-- RANKING como no painel: a cor mora num <span> DENTRO do td
+         (.score-pill com fundo, .ind-green só com cor) -->
+    <div class="tbl-section"><table id="ranking-table"><thead><tr><th>UNIDADE</th><th class="num">DISP.</th><th class="num">PONTOS</th></tr></thead>
+      <tbody><tr class="rank-1"><td class="ind-col">CDI MACACU</td>
+        <td class="num"><span class="ind-green" style="color:rgb(0,179,0)">98%</span></td>
+        <td class="num"><span class="score-pill score-green" style="background:rgb(59,179,59);color:rgb(17,17,17)">97,3</span></td></tr>
+      <tr class="rank-2"><td>CDD PELOTAS</td>
+        <td class="num"><span class="ind-yellow" style="color:rgb(180,83,9)">88%</span></td>
+        <td class="num"><span class="score-pill score-yellow" style="background:rgb(244,161,0);color:rgb(17,17,17)">97,2</span></td></tr>
+      <tr class="rank-3"><td>CDD GUARULHOS</td>
+        <td class="num"><span class="ind-red" style="color:rgb(255,0,0)">71%</span></td>
+        <td class="num"><span class="score-pill score-red" style="background:rgb(255,102,102);color:rgb(17,17,17)">95,0</span></td></tr></tbody></table></div>
+    <!-- PÓDIO com o boneco, como o programa-reconhecimento desenha -->
+    <div id="podio-section" class="card"><div id="podio-wrap">
+      ${['segundo','primeiro','terceiro'].map((cl,i)=>{
+        const d=[{n:'Ritcher',u:'CDD PELOTAS',p:'97.2 pts'},{n:'Erick',u:'MACACU',p:'97.3 pts'},{n:'José',u:'CDD GUARULHOS',p:'95.0 pts'}][i];
+        return `<div class="podio-slot ${cl}"><div class="avatar-wrap">`
+          + `<img class="avatar-img" src="${PX}" alt=""></div>`
+          + `<div class="pedestal"><div class="pedestal-place">x</div>`
+          + `<div class="pedestal-name">${d.n}</div><div class="pedestal-unit">${d.u}</div>`
+          + `<div class="pedestal-score">${d.p}</div></div></div>`;
+      }).join('')}
+    </div></div>
+    <!-- AUDITORIAS: duas tabelas, cor do nível num <span class="niv"> -->
+    ${['demarco','dpo'].map(w=>`<div class="tbl-section"><div id="tbl-${w}"><table>
+      <thead><tr><th class="uni">UNIDADE</th><th>1H26</th><th>2H26</th></tr></thead><tbody>
+      ${[['CDD RIO','Nível 2','#3BB33B','#fff','Nível 4','#EA4335','#fff'],
+         ['CDD CUIABA','Nível 3','#F4C20D','#0C1017','Nível 1','#1565C0','#fff']]
+        .map(r=>`<tr><td class="uni"><span class="uni-card">${r[0]}</span></td>`
+          +`<td><span class="niv" style="background:${r[2]};color:${r[3]}">${r[1]}</span></td>`
+          +`<td><span class="niv" style="background:${r[5]};color:${r[6]}">${r[4]}</span></td></tr>`).join('')}
+      </tbody></table></div></div>`).join('')}
+    <!-- PAINEL DE METAS: a tabela mora num #tbl -->
+    <div class="tbl-section"><div id="tbl"><table>
+      <thead><tr class="cols"><th class="lft">INDICADOR</th><th>PESO</th><th>META</th><th>REAL</th><th>ATING.</th></tr></thead>
+      <tbody>${['Disponibilidade','Preventivas','Pneus','Checklist','Conformidade','Stress Test','CIVF','SLA']
+        .map((n,i)=>`<tr><td class="lft ind">${n}</td><td>10</td><td>95</td><td>${90+i}</td>`
+          +`<td style="color:rgb(0,179,0);font-weight:700">${95+i}%</td></tr>`).join('')}
+      </tbody></table></div></div>
     <div class="ms-wrap" id="ms-vig-wrap"><span class="ms-cnt" id="ms-vig-cnt"></span>
       <div class="ms-panel" id="ms-vig-panel"><div class="ms-list" id="ms-vig-list">
       ${vigs.map(v => `<div class="ms-opt"><input type="checkbox" value="${v.v}"><label>${v.t}</label></div>`).join('')}
@@ -518,6 +586,67 @@ let provas1 = [];
   af(todasCels.includes('Combustíveis'), 'e o acento não come letra ("Combu tívei")',
      todasCels.filter(t => /Combu/.test(t)).join(' | '));
 
+  /* ══ O QUE ELE REPROVOU NA 1ª GERAÇÃO REAL (19/09/2026) ══ */
+
+  /* 0 · UMA LINHA POR SLIDE (bug real achado em 19/09/2026 ao medir isto): o
+     paginador comparava `wrap.scrollHeight` com uma altura estimada, e como o
+     wrap é flex:1 o scrollHeight nunca fica abaixo do clientHeight — dava
+     verdadeiro já na 1ª linha. O R$/Km de 4 linhas virava QUATRO slides de uma
+     linha, e o deck inflava sem ninguém ver o motivo. */
+  const cont = ins.filter(x => /continuação/.test(x.sub || ''));
+  af(!cont.length, 'tabela de 4 linhas cabe num slide — nada de uma linha por página',
+     JSON.stringify(cont.map(x => x.tit + ' | ' + x.nLin + ' linha(s)')));
+  af(comTab.every(x => x.nLin >= 2), 'e todo slide de tabela traz mais de uma linha',
+     JSON.stringify(comTab.map(x => x.tit + '=' + x.nLin)));
+
+  /* 1 · "tabela com cor sim cor não" — a tabela do portal não tem zebra */
+  af(comTab.every(x => x.zebra === false || x.zebra === null),
+     'nenhuma tabela sai com linha zebrada',
+     JSON.stringify(comTab.filter(x => x.zebra).map(x => x.tit)));
+
+  /* 2 · "auditorias sem as cores dos níveis" e "ranking do Frota de Elite
+     totalmente sem cor" — a cor mora num <span> dentro do <td>, e ler o td
+     devolvia a herdada. Estas duas provas falham no código antigo. */
+  const aud = ins.filter(x => /Auditorias/.test(x.tit));
+  af(aud.length === 2, 'as DUAS tabelas de auditoria viram slide (Demarco e DPO/VPO)', aud.length);
+  const chAud = aud.flatMap(x => x.chips);
+  af(chAud.length >= 4, 'a cor do nível chega ao slide como chip', chAud.length);
+  af(chAud.some(c => c.bg === 'rgb(59, 179, 59)') && chAud.some(c => c.bg === 'rgb(234, 67, 53)'),
+     'com o fundo que o painel escolheu para cada nível',
+     JSON.stringify(chAud.map(c => c.t + '=' + c.bg)));
+  af(chAud.every(c => c.bloco), 'preenchendo a célula, como o .niv do painel',
+     JSON.stringify(chAud.map(c => c.bloco)));
+  const rk = ins.filter(x => x.nLin && x.cels.includes('CDI MACACU'));
+  af(rk.length >= 1, 'o ranking do Frota de Elite saiu como tabela', rk.length);
+  const chRk = rk.flatMap(x => x.chips);
+  af(chRk.some(c => /97,3/.test(c.t) && c.bg === 'rgb(59, 179, 59)'),
+     'a pílula de pontuação mantém o verde do painel', JSON.stringify(chRk.map(c => c.t + '=' + c.bg)));
+  const celsRk = rk.flatMap(x => x.chips.map(c => c.cor));
+  af(rk.some(x => x.chips.some(c => c.bg === 'rgb(244, 161, 0)')),
+     'e o âmbar e o vermelho vêm junto, não tudo cinza');
+
+  /* 3 · "pódios sem os bonecos" — a prova do rótulo de dados vem mais abaixo,
+     junto do resto do gráfico */
+  af(pods.every(x => (x.avatares || []).length === 3),
+     'o pódio leva o boneco de cada um dos três', JSON.stringify(pods.map(x => (x.avatares||[]).length)));
+  af(pods.every(x => (x.avatares || []).every(s => /^data:image|avatares\//.test(s || ''))),
+     'e a imagem é a do painel, não arte nova', JSON.stringify((pods[0]||{}).avatares || []));
+
+  /* 4 · "painel de metas não aparece" */
+  const pm = provas1.filter(p => /painel-metas/.test(p.pag));
+  af(pm.length === 1 && pm[0].tipo === 'tabela',
+     'o Painel de Metas sai como TABELA, não como gráfico com a tabela espremida',
+     pm.length + '/' + (pm[0] && pm[0].tipo));
+  const pmSl = ins.filter(x => x.cels.includes('Disponibilidade') && x.cels.includes('Conformidade'));
+  af(pmSl.length >= 1, 'e o slide dele existe no deck, com os indicadores', pmSl.length);
+  af(pmSl.every(x => !x.vazio), 'não como página de aviso');
+  af(!ins.some(x => x.vazio), 'nenhum slide saiu como "o painel não entregou dado"',
+     JSON.stringify(ins.filter(x => x.vazio).map(x => x.tit)));
+
+  /* 5 · "pode diminuir as fontes, 1 a 2px" */
+  af(comTab.every(x => x.fsTab <= 15), 'a tabela do slide não passa de 15px',
+     JSON.stringify(comTab.map(x => x.fsTab).filter((v,i,a)=>a.indexOf(v)===i)));
+
   /* o gráfico: desenhado com os dados do painel e SEM animação — era a
      animação que deixava o canvas em branco na hora da foto */
   const chs = await pg.evaluate(() => (window.__charts || []).filter(c => c && c.options && c.options.animation === false));
@@ -529,6 +658,29 @@ let provas1 = [];
      'com os rótulos que vieram do painel');
   af(chs.some(c => (c.data.datasets[0].data || []).join() === '12.5,8.3,30.7'),
      'e com os números do painel, não recalculados');
+
+  /* RÓTULO DE DADOS NO TOPO DA BARRA (Renan, 19/09/2026: "rótulos de dados dos
+     gráficos de barras") — é o padrão do portal e faltava no deck. */
+  af(chs.every(c => c.options.plugins && c.options.plugins.datalabels),
+     'todo gráfico do slide leva rótulo de dados');
+  const fmt = await pg.evaluate(() => {
+    const g = (window.__charts || []).find(c => c.options && c.options.plugins && c.options.plugins.datalabels);
+    const d = g && g.options.plugins.datalabels;
+    const ctx = { dataset: {} };
+    return d ? { rot: d.formatter(30.7, ctx), grande: d.formatter(3210987, ctx),
+                 mostra: d.display(ctx), clamp: d.clamp, ancora: d.anchor,
+                 linha: d.display({ dataset: { type: 'line' } }) } : null;
+  });
+  af(fmt && fmt.mostra === true, 'o rótulo é mostrado nas barras', fmt && fmt.mostra);
+  af(fmt && fmt.linha === false, 'e NÃO nos pontos da linha, que viraria sopa de números', fmt && fmt.linha);
+  af(fmt && fmt.ancora === 'end' && fmt.clamp === true,
+     'no topo da barra e preso dentro da área (barra no teto não perde o rótulo)', JSON.stringify(fmt));
+  af(fmt && fmt.rot === '30,7', 'o número vem em pt-BR, sem perder a casa decimal', fmt && fmt.rot);
+  af(fmt && fmt.grande === '3,2 mi', 'e o valor grande vem abreviado como no portal', fmt && fmt.grande);
+  const reg = await pg.evaluate(() => window.__registrados || []);
+  af(reg.filter(r => r === 'datalabels').length === 1,
+     'o plugin de rótulo é registrado UMA vez (registrar por gráfico desenhava duas)',
+     JSON.stringify(reg));
 
   const pptT = await pg.evaluate(() => window.__ppt);
 

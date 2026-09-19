@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609192100">
+<meta name="build" content="202609192340">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -619,7 +619,15 @@ function montaRoteiro(avisa){
   });
 
   R.push({t:'sec',txt:'Resultados'});
-  R.push(P('Auditorias',ano,'../auditorias/',``));
+  /* AUDITORIAS SÃO DUAS TABELAS (Demarco e DPO/VPO), lado a lado no painel, e
+     o extrai lê só a PRIMEIRA — a outra sumia sem aviso. Aqui cada uma é um
+     slide, porque são ~13 unidades cada e empilhá-las numa página só obrigaria
+     a fonte a descer abaixo do legível. Apontando a tabela (e não o .main) o
+     slide vai pelo paginador e a cor do nível vem do chip de cada célula. */
+  R.push(P('Auditorias','Demarco · '+ano,'../auditorias/',``,
+    {alvo:"document.querySelector('#tbl-demarco table')"}));
+  R.push(P('Auditorias','DPO/VPO · '+ano,'../auditorias/',``,
+    {alvo:"document.querySelector('#tbl-dpo table')"}));
   R.push(P('Ranking Unidades','Frota de Elite · '+vX,'../programa-reconhecimento/',
     `__cm.elite(${JSON.stringify([V])}); var _c=document.querySelector('.ind-col'); if(_c&&getComputedStyle(_c).display==='none') toggleIndCols();`,
     {alvo:"document.querySelector('#ranking-table').closest('.tbl-section')"}));
@@ -634,8 +642,15 @@ function montaRoteiro(avisa){
     `__cm.elite(${JSON.stringify(ACUM)});`,{alvo:"document.querySelector('#ranking-table')",podio:true}));
   R.push(P('Evolução','Frota de Elite · '+ano,'../programa-reconhecimento/',
     `__cm.elite([]);`,{alvo:"document.querySelector('#chartTemporal').closest('.chart-card')"}));
+  /* PAINEL DE METAS: aponta a TABELA, não o .main (Renan, 19/09/2026: "painel
+     de metas não aparece"). O painel tem dois gráficos, então o alvo cheio
+     fazia o slide virar "gráfico + tabela": o gráfico levava flex:1 e a tabela
+     de 11 indicadores com Descrição e Regra em prosa ficava espremida no que
+     sobrava — que é praticamente nada. Pela tabela o slide vai pelo paginador
+     e o que não cabe vira o slide seguinte, inteiro. */
   R.push(P('Painel de Metas','Gerente de Frota · '+vX,'../painel-metas/',
-    `__cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`));
+    `__cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`,
+    {alvo:"document.querySelector('#tbl table')"}));
 
   ROTEIRO=R; ESTADO={};
   pintaRoteiro();
@@ -898,15 +913,44 @@ const CM_HELPER=`window.__cm={
     var t=(el&&el.tagName==='TABLE')?el:(el&&el.querySelector?el.querySelector('table'):null);
     if(!t) return null;
     var cs=function(n){ return window.getComputedStyle(n); };
+    /* QUEM PINTA A CÉLULA NÃO É O <td> (bug real, 19/09/2026: "auditorias sem
+       as cores dos níveis, ranking do Frota de Elite totalmente sem cor").
+       A Auditoria põe <span class="niv" style="background:…;color:…"> dentro
+       do td e o ranking põe <span class="score-pill"> / <span class="ind-green">.
+       Lendo o estilo do td vinha a cor HERDADA — cinza —, e TODA a cor dos dois
+       painéis se perdia no deck. Aqui desço enquanto houver um único filho que
+       carregue o texto inteiro: é ele que tem a cor e o fundo. */
+    function pintor(n){
+      var txt=(n.innerText||'').trim();
+      var fs=[].slice.call(n.children).filter(function(k){ return cs(k).display!=='none'; });
+      if(fs.length===1 && (fs[0].innerText||'').trim()===txt) return pintor(fs[0]);
+      return n;
+    }
+    var alfa=function(c){
+      var m=String(c||'').match(/rgba?\\(([^)]+)\\)/);
+      if(!m) return /^#|^[a-z]{3,}$/i.test(String(c||''))&&c!=='transparent'?1:0;
+      var p=m[1].split(',');
+      return p.length>3?parseFloat(p[3]):1;
+    };
     function cel(c){
-      var st=cs(c);
+      var p=pintor(c), st=cs(p);
+      /* o FUNDO só conta quando existe um elemento pintando DENTRO do td: o
+         fundo do próprio td é o do card/tabela, e carregá-lo faria toda célula
+         virar um retângulo cinza no slide. Alpha baixo é textura (o .uni-card
+         da Auditoria é 5%), não cor de dado. */
+      var bg=null, bloco=false;
+      if(p!==c){
+        var f=st.backgroundColor;
+        if(alfa(f)>=0.5){ bg=f; bloco=/^(block|flex|grid)$/.test(st.display); }
+      }
       /* PRESERVA A QUEBRA DE LINHA: o Fato do FCA é "Pneus" + o desvio +
          as Contas, uma por linha (o fca-preenchimento grava \\n de propósito).
          Achatar tudo num parágrafo é o que fazia o slide dele ficar ilegível. */
       return { t:(c.innerText||'').replace(/[ \\t]+/g,' ').replace(/\\n{2,}/g,'\\n')
                  .split('\\n').map(function(x){return x.trim();}).filter(function(x,i,a){
                    return x||(i>0&&i<a.length-1); }).join('\\n').trim(),
-               cor:st.color, neg:(parseInt(st.fontWeight,10)||400)>=700,
+               cor:st.color, bg:bg, bloco:bloco,
+               neg:(parseInt(st.fontWeight,10)||400)>=700,
                dir:st.textAlign==='right'||c.classList.contains('num'),
                span:+(c.getAttribute('colspan')||1) };
     }
@@ -922,8 +966,38 @@ const CM_HELPER=`window.__cm={
              dir:cab[cab.length-1].map(function(c){ return c.dir; }),
              linhas:lin.map(function(l){
                return { total:l.total, cels:l.cels.map(function(c){
-                 return { t:c.t, cor:c.cor, neg:c.neg||l.total, dir:c.dir }; }) };
+                 return { t:c.t, cor:c.cor, bg:c.bg, bloco:c.bloco,
+                          neg:c.neg||l.total, dir:c.dir }; }) };
              }) };
+  },
+  /* ── O PÓDIO SAI DO PÓDIO, não do ranking ──
+     Renan, 19/09/2026: "pódios sem os bonecos". Eu montava os três degraus
+     das três primeiras LINHAS da tabela de ranking, que não tem avatar
+     nenhum. O painel já desenha o pódio com o boneco de cada gestor; aqui leio
+     aquele desenho — nome, unidade, pontos e a URL da imagem, absolutizada
+     porque o slide é montado em /check-metas/ e o src é relativo ao painel.
+     Devolve na ordem 1º, 2º, 3º; quem monta o slide é que sabe a ordem visual. */
+  podio:function(){
+    var slots=[].slice.call(document.querySelectorAll('.podio-slot'));
+    if(!slots.length) return null;
+    var ordem={primeiro:0,segundo:1,terceiro:2};
+    var out=[];
+    slots.forEach(function(s){
+      var i=null;
+      for(var k in ordem) if(s.classList.contains(k)) i=ordem[k];
+      if(i==null) return;
+      var im=s.querySelector('img.avatar-img');
+      var tx=function(sel){ var e=s.querySelector(sel); return e?(e.textContent||'').trim():''; };
+      /* NÃO exijo naturalWidth: a imagem pode ainda não estar decodificada no
+         instante da leitura e o pódio sairia sem boneco por corrida. Quem
+         espera a decodificação é o slImgsProntas, na hora da foto; o painel já
+         apaga a <img> que não carregou (onerror → display:none). */
+      out[i]={ nome:tx('.pedestal-name'), unidade:tx('.pedestal-unit'),
+               pontos:tx('.pedestal-score'),
+               avatar:(im && im.style.display!=='none')?im.src:'' };
+    });
+    out=out.filter(Boolean);
+    return out.length?out:null;
   },
   /* ── CARDS DE KPI, sem depender das classes de cada painel ──
      Cada painel nomeia o card de um jeito (.kpi, .kpi-card, .ch-min…), e
@@ -1104,7 +1178,7 @@ async function tiraFoto(win,el){
 }
 
 async function capturaSlide(s){
-  const msgs=[], fotos=[];
+  const msgs=[], fotos=[]; let podioDados=null;
   /* UM IFRAME POR URL: a Árvore e o FCA do mesmo recorte são DOIS painéis
      e vão no MESMO slide (Renan, 18/09/2026: "Árvore e FCA juntos... devem
      ser juntos"), que é como o PPT dele já faz — duas imagens empilhadas. */
@@ -1144,6 +1218,12 @@ async function capturaSlide(s){
       }
       await espera(c.esp||T.pos);
       claro(win,doc);                     /* o painel reaplica o tema dele ao terminar de carregar */
+      /* o pódio é lido do PÓDIO do painel (com o boneco), não das três
+         primeiras linhas do ranking — que não têm avatar nenhum */
+      if(s.podio && !podioDados){
+        try{ podioDados=win.eval('(function(){try{return __cm.podio();}catch(e){return null;}})()'); }catch(e){}
+        if(!podioDados) msgs.push('não achei o pódio do painel — montei do ranking, sem os bonecos');
+      }
       const el=win.eval('(function(){try{return '+(c.alvo||ALVO_PADRAO)+';}catch(e){return null;}})()')||doc.body;
       if(!el||!el.offsetHeight) msgs.push('alvo vazio — usei a página inteira');
       let alvo=(el&&el.offsetHeight)?el:doc.body;
@@ -1190,7 +1270,7 @@ async function capturaSlide(s){
       }
     }
   } finally { fecha(); }
-  return {fotos,msgs};
+  return {fotos,msgs,podioDados};
 }
 
 /* O TEMA CLARO TEM DE ESTAR NO localStorage ANTES DO PAINEL ABRIR.
@@ -1235,9 +1315,11 @@ async function paginasDo(s){
   const SP=window.SlidePadrao;
   if(s.cheia) return [s.cheia];                       /* capa / divisória */
   const blocos=(s.fotos||[]).map(f=>({rot:f.rot,tabela:f.tabela,kpis:f.kpis,graf:f.graf,png:f.foto?f.png:null}));
-  /* pódio: os três primeiros do ranking viram os três degraus */
+  /* pódio: o do PAINEL (com boneco); sem ele, os três primeiros do ranking */
   let els;
-  if(s.podio && blocos[0] && blocos[0].tabela){
+  if(s.podio && (s.podioDados||[]).length){
+    els=SP.slPodio(s.tit,s.sub,s.podioDados.slice(0,3));
+  } else if(s.podio && blocos[0] && blocos[0].tabela){
     const L=blocos[0].tabela.linhas.filter(l=>!l.total).slice(0,3).map(l=>{
       const c=l.cels||[];
       return { nome:(c[0]&&c[0].t)||'', unidade:(c[1]&&c[1].t&&isNaN(parseFloat(c[1].t)))?c[1].t:'',
@@ -1245,6 +1327,16 @@ async function paginasDo(s){
     });
     els=L.length?SP.slPodio(s.tit,s.sub,L):SP.slMonta(s.tit,s.sub,blocos);
   } else els=SP.slMonta(s.tit,s.sub,blocos);
+  /* SLIDE QUE NÃO SAI TEM DE APARECER COMO NÃO SAINDO. Sem isto o slMonta
+     devolvia lista vazia e a página simplesmente não existia no arquivo — foi
+     assim que o Painel de Metas "não apareceu", sem uma linha no log. */
+  if(!els.length){
+    const {el,mio}=SP.slNovo(s.tit,s.sub);
+    const v=document.createElement('div'); v.className='sl-vazio';
+    v.textContent='o painel não entregou dado para este recorte';
+    mio.appendChild(v); els=[el];
+    ovLog('⚠ '+s.tit+(s.sub?' ('+s.sub+')':'')+': saiu sem conteúdo');
+  }
   const out=[];
   for(const el of els){ out.push(await SP.slFoto(el)); }
   SP.slLimpa();
@@ -1309,7 +1401,7 @@ async function gerar(fmt){
       if(s.t==='sec'){ saida.push({cheia:desenhaSecao(s,2400,1350)}); ESTADO[i]={ok:1,msgs:[]}; pintaRoteiro(); continue; }
       try{
         const r=await capturaSlide(s);
-        saida.push({tit:s.tit,sub:s.sub,podio:s.podio,fotos:r.fotos});
+        saida.push({tit:s.tit,sub:s.sub,podio:s.podio,podioDados:r.podioDados,fotos:r.fotos});
         ESTADO[i]={ok:1,msgs:r.msgs};
         if(r.msgs.length){ atencao++; ovLog('⚠ '+s.tit+(s.sub?' ('+s.sub+')':'')+': '+r.msgs.join(' · ')); }
       }catch(e){
@@ -1320,7 +1412,7 @@ async function gerar(fmt){
     }
     $('ov-barra').style.width='100%';
     set('ov-qual','Montando o arquivo…');
-    const comFoto=saida.filter(s=>s.cheia||(s.fotos&&s.fotos.length));
+    const comFoto=saida.filter(s=>s.cheia||(s.fotos&&s.fotos.length)||(s.podioDados&&s.podioDados.length));
     if(!comFoto.length) throw new Error('nenhum slide saiu — nada a salvar');
     if(fmt==='pdf') await montaPDF(comFoto); else await montaPPT(comFoto);
     set('ov-tit','Pronto');
@@ -1436,7 +1528,7 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202609192100"></script>
-<script src="../assets/build-check.js?v=202609192100"></script>
+<script src="slides.js?v=202609192340"></script>
+<script src="../assets/build-check.js?v=202609192340"></script>
 </body>
 </html>
