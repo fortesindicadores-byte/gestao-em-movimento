@@ -61,36 +61,36 @@ const SL_CSS = `
 .sl-listra{position:absolute;top:0;right:0;width:50%;height:18px;
   background:${TK.laranja};}
 
-.sl-cab{flex:0 0 auto;padding:52px 64px 0;}
-.sl-tit{font-size:40px;font-weight:800;letter-spacing:-.5px;line-height:1.1;color:${TK.txt};}
-.sl-sub{font-size:17px;font-weight:500;color:${TK.txt3};margin-top:8px;}
-.sl-mio{flex:1;min-height:0;padding:26px 64px 52px;display:flex;flex-direction:column;gap:18px;}
-.sl-rot{flex:0 0 auto;font-size:15px;font-weight:800;color:${TK.laranja};
+.sl-cab{flex:0 0 auto;padding:50px 64px 0;}
+.sl-tit{font-size:38px;font-weight:800;letter-spacing:-.5px;line-height:1.1;color:${TK.txt};}
+.sl-sub{font-size:15px;font-weight:500;color:${TK.txt3};margin-top:8px;}
+.sl-mio{flex:1;min-height:0;padding:24px 64px 50px;display:flex;flex-direction:column;gap:16px;}
+.sl-rot{flex:0 0 auto;font-size:13px;font-weight:800;color:${TK.laranja};
   text-transform:uppercase;letter-spacing:1.2px;}
 
 /* ── cards de KPI (a fileira do Scorecard) ── */
 .sl-kpis{flex:0 0 auto;display:grid;gap:14px;}
 .sl-kpi{background:${TK.card};border:1px solid ${TK.cardBrd};border-radius:12px;
   padding:18px 20px;display:flex;flex-direction:column;justify-content:center;gap:4px;}
-.sl-kpi .r{font-size:12px;font-weight:700;color:${TK.txt3};text-transform:uppercase;letter-spacing:.8px;
+.sl-kpi .r{font-size:11px;font-weight:700;color:${TK.txt3};text-transform:uppercase;letter-spacing:.8px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sl-kpi .v{font-size:34px;font-weight:800;line-height:1.05;}
-.sl-kpi .m{font-size:12px;font-weight:500;color:${TK.txt3};}
+.sl-kpi .v{font-size:32px;font-weight:800;line-height:1.05;}
+.sl-kpi .m{font-size:11px;font-weight:500;color:${TK.txt3};}
 
 /* ── hero (o número grande sem card) ── */
 .sl-hero{flex:0 0 auto;display:flex;align-items:flex-end;gap:32px;
   padding-bottom:16px;border-bottom:1px solid ${TK.linha};}
-.sl-hero .r{font-size:13px;font-weight:700;color:${TK.txt3};text-transform:uppercase;letter-spacing:1px;}
-.sl-hero .v{font-size:64px;font-weight:800;line-height:1;}
+.sl-hero .r{font-size:12px;font-weight:700;color:${TK.txt3};text-transform:uppercase;letter-spacing:1px;}
+.sl-hero .v{font-size:60px;font-weight:800;line-height:1;}
 .sl-hero .d{display:flex;gap:26px;padding-bottom:10px;}
-.sl-hero .d div{font-size:12px;color:${TK.txt3};font-weight:600;text-transform:uppercase;letter-spacing:.6px;}
-.sl-hero .d b{display:block;font-size:19px;font-weight:800;margin-top:3px;}
+.sl-hero .d div{font-size:11px;color:${TK.txt3};font-weight:600;text-transform:uppercase;letter-spacing:.6px;}
+.sl-hero .d b{display:block;font-size:18px;font-weight:800;margin-top:3px;}
 
 /* ── card que embrulha gráfico ── */
 .sl-card{background:${TK.card};border:1px solid ${TK.cardBrd};border-radius:14px;
-  padding:20px 22px;display:flex;flex-direction:column;min-height:0;}
-.sl-card .ct{font-size:17px;font-weight:800;color:${TK.txt};}
-.sl-card .cs{font-size:12px;color:${TK.txt3};margin-top:2px;}
+  padding:18px 20px;display:flex;flex-direction:column;min-height:0;}
+.sl-card .ct{font-size:15px;font-weight:800;color:${TK.txt};}
+.sl-card .cs{font-size:11px;color:${TK.txt3};margin-top:2px;}
 .sl-cv{flex:1;min-height:0;position:relative;margin-top:12px;}
 
 /* ── TABELA: o table.dre do portal ──
@@ -105,7 +105,22 @@ table.sl-t td{padding:11px 14px;border-bottom:1px solid ${TK.linha};color:${TK.t
   vertical-align:top;word-break:break-word;}
 table.sl-t td.n{text-align:right;white-space:nowrap;}
 table.sl-t tr.tot td{background:${TK.cabec};font-weight:800;border-bottom:none;}
-table.sl-t tr:nth-child(even):not(.tot) td{background:rgba(255,255,255,.45);}
+/* SEM ZEBRA (Renan, 19/09/2026: "tabela com cor sim cor não"). A tabela do
+   portal não tem linha alternada: o que separa as linhas é o filete de
+   --linha, e o realce é o hover — que num slide não existe. Eu havia posto o
+   nth-child par achando que ajudava a ler; é invenção, e invenção sai. */
+
+/* ── CHIP: quando é o PAINEL que pinta a célula ──
+   Renan, 19/09/2026: "auditorias sem as cores dos níveis, ranking do Frota de
+   Elite totalmente sem cor". As duas telas pintam um <span> DENTRO do <td>
+   (.niv da Auditoria, .score-pill/.ind-green do ranking) e eu lia a cor do
+   <td>, que é a herdada — então TODA cor se perdia. Agora a cor sai do
+   elemento que realmente pinta, e quando ele tem fundo o chip vem junto. */
+table.sl-t td .sl-chip{display:inline-block;padding:3px 11px;border-radius:12px;
+  font-weight:800;text-align:center;min-width:44px;}
+table.sl-t td .sl-chip.bloco{display:block;padding:9px 6px;border-radius:7px;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+table.sl-t td.chip{padding:3px 4px;}
 
 /* ── FCA: o texto INTEIRO, como a visão Tabela do painel ──
    Renan, 19/09: o slide vinha com "- 18 k Rec…", "Michel Oli…", "Em anda…".
@@ -122,17 +137,27 @@ table.sl-t td .fato-d{color:${TK.txt2};display:block;}
 .sl.escuro{background:#141416;color:#EEF2FA;}
 .sl.escuro .sl-tit{color:#FFF;}
 .sl.escuro .sl-sub{color:#9AA3B2;}
-.sl-pod{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:26px;padding-bottom:26px;}
+/* O BONECO É PARTE DO PÓDIO (Renan, 19/09/2026: "pódios sem os bonecos").
+   O painel desenha o avatar do gestor acima do degrau — é o que faz o slide
+   ser o pódio dele e não uma tabela de três linhas. A imagem vem do próprio
+   painel (a URL do <img class="avatar-img">), então não há arte nova aqui. */
+.sl-pod{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:22px;padding-bottom:18px;}
+.sl-pod .s{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;}
+.sl-pod .av{display:block;object-fit:contain;object-position:bottom center;
+  margin-bottom:-2px;filter:drop-shadow(0 14px 34px rgba(0,0,0,.85));}
+.sl-pod .s1 .av{width:196px;height:236px;}
+.sl-pod .s2 .av,.sl-pod .s3 .av{width:164px;height:196px;}
 .sl-pod .p{background:#1E1E22;border:1px solid rgba(255,255,255,.08);border-radius:16px;
-  width:300px;padding:26px 22px;text-align:center;display:flex;flex-direction:column;gap:8px;}
-.sl-pod .p .lug{font-size:13px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:#8C93A3;}
-.sl-pod .p .nm{font-size:30px;font-weight:800;color:#FFF;}
-.sl-pod .p .un{font-size:13px;font-weight:600;letter-spacing:1px;color:#8C93A3;text-transform:uppercase;}
-.sl-pod .p .pt{font-size:26px;font-weight:800;}
-.sl-pod .p1{height:330px;border-top:3px solid #E8B923;}
-.sl-pod .p1 .pt{color:#E8B923;}
-.sl-pod .p2{height:280px;border-top:3px solid #B9BDC6;}
-.sl-pod .p3{height:250px;border-top:3px solid #C08457;}
+  width:296px;padding:22px 20px;text-align:center;display:flex;flex-direction:column;
+  justify-content:center;gap:6px;}
+.sl-pod .p .lug{font-size:12px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:#8C93A3;}
+.sl-pod .p .nm{font-size:28px;font-weight:800;color:#FFF;line-height:1.1;}
+.sl-pod .p .un{font-size:12px;font-weight:600;letter-spacing:1px;color:#8C93A3;text-transform:uppercase;}
+.sl-pod .p .pt{font-size:24px;font-weight:800;}
+.sl-pod .s1 .p{height:236px;border-top:3px solid #E8B923;}
+.sl-pod .s1 .p .pt{color:#E8B923;}
+.sl-pod .s2 .p{height:194px;border-top:3px solid #B9BDC6;}
+.sl-pod .s3 .p{height:168px;border-top:3px solid #C08457;}
 
 .sl-vazio{flex:1;display:flex;align-items:center;justify-content:center;
   font-size:18px;font-weight:600;color:${TK.txt3};}
@@ -233,11 +258,15 @@ function slTabela(tit, sub, dados, opt){
     [...t.querySelectorAll('th')].forEach((th,i)=>{ th.textContent = cab[i]; });
 
     const tb = t.querySelector('tbody');
-    const cabeH = 150 + (rot ? 34 : 0);      // moldura + título + rótulo
-    const disp = SL.H - cabeH - 52;
 
-    /* a fonte desce por degraus até a tabela caber; só então pagina */
-    let fs = opt.fs || 17, entraram = 0;
+    /* A RÉGUA É A ALTURA DO WRAP, NÃO UMA CONTA DE CABEÇA (bug real,
+       19/09/2026). Eu comparava `wrap.scrollHeight` com uma altura estimada
+       (900 − 150 − 52). Mas o `.sl-tw` é `flex:1`, então o scrollHeight dele
+       NUNCA é menor que o clientHeight — a comparação dava verdadeira já na
+       PRIMEIRA linha e a tabela saía a UMA LINHA POR SLIDE. Foi isso que
+       inflou o deck de ago/2026 (o R$/Km sozinho virou quatro páginas de uma
+       linha). O que cabe ou não é a altura da TABELA contra a caixa. */
+    let fs = opt.fs || 15, entraram = 0;
     for (;;) {
       t.style.fontSize = fs + 'px';
       tb.innerHTML = ''; entraram = 0;
@@ -250,10 +279,10 @@ function slTabela(tit, sub, dados, opt){
           slCelula(td, c);
         });
         tb.appendChild(tr);
-        if (wrap.scrollHeight > disp && entraram > 0) { tb.removeChild(tr); break; }
+        if (t.offsetHeight > wrap.clientHeight + 2 && entraram > 0) { tb.removeChild(tr); break; }
         entraram++;
       }
-      if (entraram === corpo.length || fs <= 12) break;
+      if (entraram === corpo.length || fs <= 10) break;
       fs -= 1;
     }
     paginas.push(el);
@@ -273,10 +302,35 @@ function slTabela(tit, sub, dados, opt){
 function slCelula(td, c){
   const med = slMedalha(c.t);
   if (med) { td.textContent = med[0]; td.style.color = med[1]; td.style.fontWeight = '800'; return; }
+
+  /* O PAINEL PINTOU A CÉLULA: vira chip, com o par fundo+texto que ELE
+     escolheu. Reinterpretar a cor aqui é o que o slCor faz com texto comum
+     (cinza herdado → token do slide); sobre um fundo de nível de auditoria
+     isso quebraria o contraste que a tela já resolveu. */
+  if (c.bg) {
+    const s = document.createElement('span');
+    s.className = 'sl-chip' + (c.bloco ? ' bloco' : '');
+    s.textContent = c.t;
+    s.style.background = c.bg;
+    s.style.color = c.cor || slContraste(c.bg);
+    td.className += ' chip';
+    td.style.textAlign = 'center';
+    td.appendChild(s);
+    return;
+  }
+
   td.textContent = c.t;
   if (/\n/.test(c.t)) td.style.whiteSpace = 'pre-line';
   td.style.color = slCor(c.cor);
   if (c.neg) td.style.fontWeight = '700';
+}
+
+/* preto ou branco sobre o fundo dado — só usado quando o painel não declarou
+   cor de texto no elemento que pinta */
+function slContraste(bg){
+  const m = String(bg||'').match(/(\d+)[,\s]+(\d+)[,\s]+(\d+)/);
+  if (!m) return TK.txt;
+  return (0.299*+m[1] + 0.587*+m[2] + 0.114*+m[3]) > 150 ? '#0C1017' : '#FFFFFF';
 }
 
 function slKpis(mio, kpis, porLinha){
@@ -329,8 +383,9 @@ function slGrafico(mio, g){
   const cv = card.querySelector('canvas');
   const Chart = window.Chart;
   if (!Chart) { card.querySelector('.sl-cv').innerHTML = '<div class="sl-vazio">gráfico indisponível</div>'; return card; }
+  slRegistraRotulos();
 
-  const fonte = { family:'Montserrat', size:13 };
+  const fonte = { family:'Montserrat', size:12 };
   new Chart(cv.getContext('2d'), {
     type: g.tipo || 'bar',
     data: {
@@ -349,12 +404,17 @@ function slGrafico(mio, g){
         legend:{ display:(g.datasets||[]).length>1, position:'top', align:'end',
           labels:{ color:TK.txt2, font:fonte, boxWidth:14, usePointStyle:true } },
         tooltip:{ enabled:false },
-        datalabels: window.ChartDataLabels ? {
-          anchor:'end', align:'end', offset:2,
-          color:TK.txt2, font:{ family:'Montserrat', size:12, weight:'700' },
-          formatter:(v,c)=> (g.rotulo ? g.rotulo(v,c) : (v==null?'':v)),
-          display:(c)=> g.semRotulo ? false : c.dataset.type !== 'line',
-        } : undefined,
+        /* RÓTULO DE DADOS NO TOPO DA BARRA — é o padrão do portal ("sem grade,
+           barras coladas, rótulo de dados no topo") e faltava no deck
+           (Renan, 19/09/2026). O número passa pelo slNum: cru, o valor vinha
+           "1234567.8912" e ocupava mais que a barra. clamp segura o rótulo
+           dentro da área quando a barra bate no teto. */
+        datalabels: {
+          anchor:'end', align:'end', offset:3, clamp:true, clip:false,
+          color:TK.txt2, font:{ family:'Montserrat', size:11, weight:'700' },
+          formatter:(v,c)=> (g.rotulo ? g.rotulo(v,c) : slNum(v)),
+          display:(c)=> g.semRotulo ? false : (c.dataset.type !== 'line' && c.dataset.type !== 'pie'),
+        },
       },
       scales:{
         x:{ grid:{ display:false }, border:{ color:TK.linha },
@@ -362,14 +422,40 @@ function slGrafico(mio, g){
         y:{ grid:{ color:TK.grade, drawBorder:false },
             border:{ display:false },
             ticks:{ color:TK.txt3, font:fonte,
-                    callback:(v)=> g.eixoY ? g.eixoY(v) : v },
+                    callback:(v)=> g.eixoY ? g.eixoY(v) : slNum(v) },
             beginAtZero: g.zero !== false,
             suggestedMax: g.max },
       },
     },
-    plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
   });
   return card;
+}
+
+/* O PLUGIN PRECISA SER REGISTRADO — e UMA vez só.
+   Antes eu o passava no `plugins:[]` de cada gráfico. Registrar no Chart é o
+   caminho documentado e vale para todos; e registrar aqui, em vez de no topo
+   do arquivo, é porque o slides.js carrega antes de o Chart.js estar pronto em
+   alguma ordem de <script> — a checagem no uso não depende da ordem. */
+let _rotReg = false;
+function slRegistraRotulos(){
+  if (_rotReg || !window.Chart || !window.ChartDataLabels) return;
+  try { window.Chart.register(window.ChartDataLabels); } catch(e){}
+  _rotReg = true;
+}
+
+/* número no vocabulário do portal (o numFmt do padrão), mas guardando a casa
+   decimal quando o valor é pequeno: km/L 2,52 arredondado para "3" viraria
+   outro indicador. */
+function slNum(v){
+  if (v == null || v === '' || isNaN(v)) return '';
+  const n = +v, a = Math.abs(n), s = n < 0 ? '-' : '';
+  const br = (x,d)=> x.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+  if (a >= 1e9) return s + br(a/1e9,1) + ' bi';
+  if (a >= 1e6) return s + br(a/1e6,1) + ' mi';
+  if (a >= 1e4) return s + br(Math.round(a/1e3),0) + 'k';
+  if (a >= 100) return s + br(Math.round(a),0);
+  if (a >= 10)  return s + br(Math.round(a*10)/10,1);
+  return s + br(Math.round(a*100)/100, a === Math.round(a) ? 0 : 2);
 }
 
 /* ── PÓDIO ─────────────────────────────────────────────────────────────────
@@ -381,19 +467,44 @@ function slGrafico(mio, g){
 function slPodio(tit, sub, tres){
   const { el, mio } = slNovo(tit, sub, true);
   const d = document.createElement('div'); d.className = 'sl-pod';
-  const ordem = [tres[1], tres[0], tres[2]];      // 2º no meio-esquerda, 1º ao centro
-  const cls = ['p2','p1','p3'], lug = ['2º LUGAR','1º LUGAR','3º LUGAR'];
+  const ordem = [tres[1], tres[0], tres[2]];      // 2º à esquerda, 1º ao centro
+  const cls = ['s2','s1','s3'], lug = ['2º LUGAR','1º LUGAR','3º LUGAR'];
   ordem.forEach((p,i) => {
     if (!p) return;
-    const c = document.createElement('div'); c.className = 'p ' + cls[i];
+    const s = document.createElement('div'); s.className = 's ' + cls[i];
+    /* o boneco vem do painel; sem avatar, o degrau só fica mais baixo — nada
+       de silhueta inventada no lugar */
+    if (p.avatar) {
+      const im = document.createElement('img');
+      im.className = 'av'; im.src = p.avatar; im.alt = '';
+      s.appendChild(im);
+    }
+    const c = document.createElement('div'); c.className = 'p';
     c.innerHTML = `<div class="lug">${lug[i]}</div><div class="nm"></div><div class="un"></div><div class="pt"></div>`;
     c.querySelector('.nm').textContent = p.nome || '';
     c.querySelector('.un').textContent = p.unidade || '';
     c.querySelector('.pt').textContent = p.pontos || '';
-    d.appendChild(c);
+    s.appendChild(c);
+    d.appendChild(s);
   });
   mio.appendChild(d);
   return [el];
+}
+
+/* ── ESPERA A IMAGEM ANTES DE FOTOGRAFAR ───────────────────────────────────
+   O html2canvas desenha o que estiver decodificado NO MOMENTO da chamada. Um
+   <img> recém-criado quase nunca está, então o pódio sairia sem boneco por
+   corrida — o mesmo tipo de armadilha da animação do Chart.js. */
+async function slImgsProntas(el){
+  const ims = [...el.querySelectorAll('img')];
+  await Promise.all(ims.map(im => im.complete && im.naturalWidth
+    ? Promise.resolve()
+    : new Promise(res => {
+        const fim = () => res();
+        im.addEventListener('load', fim, { once:true });
+        im.addEventListener('error', () => { im.style.display='none'; res(); }, { once:true });
+        setTimeout(fim, 4000);           // imagem que não vem não trava o deck
+      })));
 }
 
 /* ── captura: o slide vira imagem ──────────────────────────────────────────
@@ -408,6 +519,7 @@ function slPodio(tit, sub, tres){
    estivesse transparente viraria preto. */
 async function slFoto(el){
   const escuro = /escuro/.test(el.className);
+  await slImgsProntas(el);
   const cv = await window.html2canvas(el, {
     scale: SL.esc, backgroundColor: escuro ? '#141416' : TK.fundo, logging: false,
     width: SL.W, height: SL.H, windowWidth: SL.W, windowHeight: SL.H,
@@ -420,7 +532,8 @@ function slLimpa(){
   if (p) p.innerHTML = '';
 }
 
-window.SlidePadrao = { SL, TK, slNovo, slTabela, slKpis, slHero, slGrafico, slPodio, slFoto, slLimpa, slCor, slPalco };
+window.SlidePadrao = { SL, TK, slNovo, slTabela, slKpis, slHero, slGrafico, slPodio,
+  slFoto, slLimpa, slCor, slPalco, slNum, slContraste };
 
 /* ── MONTADOR: de conteúdo colhido para páginas de slide ───────────────────
    Um slide pode ter um bloco (a tabela de pacotes) ou dois empilhados (a
@@ -453,8 +566,9 @@ function slMonta(tit, sub, blocos){
       wrap.style.flex = b.length > 1 ? '1' : '1';
       mio.appendChild(wrap);
       const t = document.createElement('table'); t.className='sl-t';
-      t.style.fontSize = (b.length > 1 ? 13 : 16) + 'px';
+      t.style.fontSize = (b.length > 1 ? 12 : 14) + 'px';
       wrap.appendChild(t);
+      x._t = t; x._wrap = wrap;
       const cab = x.tabela.cab||[], dir = x.tabela.dir||[];
       t.innerHTML = '<thead><tr>' + cab.map((c,i)=>`<th class="${dir[i]?'n':''}"></th>`).join('') + '</tr></thead><tbody></tbody>';
       [...t.querySelectorAll('th')].forEach((th,i)=>{ th.textContent = cab[i]; });
@@ -481,6 +595,25 @@ function slMonta(tit, sub, blocos){
       img.src = x.png; img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;display:block;';
       box.appendChild(img); mio.appendChild(box);
     }
+  });
+
+  /* NÃO CORTAR EM SILÊNCIO. No slide de dois blocos (Árvore + FCA) e no de
+     gráfico + tabela a paginação não entra, e uma tabela alta era simplesmente
+     estourada para fora da página — o slide saía com meia tabela e nada
+     dizendo. Aqui a fonte desce até caber; abaixo do piso, o slide avisa. */
+  b.forEach(x => {
+    if (!x._t) return;
+    let fs = parseFloat(x._t.style.fontSize) || 12;
+    while (fs > 9 && x._wrap.scrollHeight > x._wrap.clientHeight + 2) {
+      fs -= 0.5; x._t.style.fontSize = fs + 'px';
+    }
+    if (x._wrap.scrollHeight > x._wrap.clientHeight + 2) {
+      const av = document.createElement('div');
+      av.style.cssText = `flex:0 0 auto;font-size:11px;font-weight:700;color:${TK.vermelho};padding-top:4px;`;
+      av.textContent = 'a tabela não caiu inteira neste slide';
+      x._wrap.parentNode.appendChild(av);
+    }
+    delete x._t; delete x._wrap;
   });
   return [el];
 }
