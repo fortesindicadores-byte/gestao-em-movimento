@@ -241,25 +241,46 @@ async function leCols(tabela, colsComExtra, colsBase) {
    defeito que este trecho existe para tirar. O painel mostra "aguardando".
    ════════════════════════════════════════════════════════════════════ */
 async function dataDaMudanca(bases) {
-  let antes = {};
+  let antes = {}, temPiso = true;
   try {
-    const r = await fetch(`${SUPA}/rest/v1/saude_base?select=chave,impressao,mudou_em`, { headers: H });
+    let r = await fetch(`${SUPA}/rest/v1/saude_base?select=chave,impressao,mudou_em,mudou_piso`, { headers: H });
+    if (!r.ok) {                       // banco ainda sem a coluna do piso
+      temPiso = false;
+      r = await fetch(`${SUPA}/rest/v1/saude_base?select=chave,impressao,mudou_em`, { headers: H });
+      if (r.ok) console.warn('saude_base sem a coluna mudou_piso — rode o complemento do SQL');
+    }
     if (r.ok) (await r.json() || []).forEach(x => { antes[x.chave] = x; });
-    else { console.warn('saude_base sem as colunas impressao/mudou_em — rode o SQL (scripts/saude-conteudo.sql)'); return; }
+    else { console.warn('saude_base sem as colunas impressao/mudou_em — rode scripts/saude-conteudo.sql'); return; }
   } catch (e) { console.warn('saude_base anterior:', e.message); return; }
 
   let novas = 0, mudaram = 0, iguais = 0, semImp = 0;
   bases.forEach(b => {
     if (b.impressao == null) {                 // elite e app: o atualizado_em JÁ é do conteúdo
-      b.mudou_em = b.atualizado_em || null; semImp++; return;
+      b.mudou_em = b.atualizado_em || null; b.mudou_piso = false; semImp++; return;
     }
     const a = antes[b.chave];
-    if (!a || a.impressao == null) { b.mudou_em = null; novas++; return; }
-    if (a.impressao === b.impressao) { b.mudou_em = a.mudou_em || null; iguais++; }
-    else { b.mudou_em = AGORA; mudaram++; }
+    if (!a || a.impressao == null) {
+      /* PRIMEIRA vez que vemos esta base (ou 1ª coleta depois deste código).
+         Não sabemos desde quando o conteúdo está assim — mas sabemos que está
+         assim DESDE AGORA, e isso já é um piso que envelhece sozinho.
+         Deixar nulo, como eu tinha feito, prendia a base congelada em
+         "Aguardando 2ª coleta" (cinza) PARA SEMPRE: a impressão nunca muda,
+         então o ramo de baixo preservaria o nulo em toda coleta seguinte —
+         justamente as bases que o alarme existe para pegar nunca alarmariam. */
+      b.mudou_em = AGORA; b.mudou_piso = true; novas++; return;
+    }
+    if (a.impressao === b.impressao) {
+      b.mudou_em = a.mudou_em || AGORA;
+      b.mudou_piso = a.mudou_piso !== false;   // continua sendo piso se já era
+      iguais++;
+    } else {
+      b.mudou_em = AGORA; b.mudou_piso = false; mudaram++;   // agora é data EXATA
+    }
   });
-  console.log(`impressão: ${mudaram} com dado novo · ${iguais} sem mudança · ${novas} sem referência ainda`
+  console.log(`impressão: ${mudaram} com dado novo · ${iguais} sem mudança · ${novas} vistas pela 1ª vez`
     + ` · ${semImp} medidas pelo próprio dado`);
+  // sem a coluna no banco, o campo não pode ir no upsert (PGRST204 derrubaria a carga)
+  if (!temPiso) bases.forEach(b => { delete b.mudou_piso; });
 }
 
 
