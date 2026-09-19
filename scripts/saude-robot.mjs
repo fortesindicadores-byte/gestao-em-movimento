@@ -204,39 +204,118 @@ async function ultimaData(tabela, colunas) {
   return null;
 }
 
+/* Tenta a leitura COM as colunas extras e, se o PostgREST recusar (400 porque a
+   coluna não existe naquele banco), repete sem elas. O `hash` do sh_base e do
+   gviz_snapshot existe hoje, mas os dois robôs de carga já tratam a ausência —
+   aqui é a mesma cortesia. */
+async function leCols(tabela, colsComExtra, colsBase) {
+  for (const sel of [colsComExtra, colsBase]) {
+    try {
+      const r = await fetch(`${SUPA}/rest/v1/${tabela}?select=${sel}`, { headers: H });
+      if (!r.ok) { if (sel === colsComExtra) continue; throw new Error(`HTTP ${r.status}`); }
+      const j = await r.json();
+      if (Array.isArray(j)) return { rows: j, completo: sel === colsComExtra };
+    } catch (e) { if (sel === colsBase) throw e; }
+  }
+  return { rows: [], completo: false };
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   IDADE DO CONTEÚDO, NÃO DA LEITURA (19/09/2026)
+   O detector de base parada existia desde o 1º dia, e media a coisa errada:
+   `atualizado_em` das bases do Sheets é o `carregado_em`, que o sheets-robot
+   reescreve MESMO quando o md5 é igual, e o do gviz é o `updated_at`, que o
+   gviz-robot dá PATCH quando o hash não mudou. Ou seja: 75 das 99 bases
+   ficariam "Em dia" para sempre mesmo congeladas — é o mesmo engano do
+   "Atualizado" no topo do Gestão à Vista, que o Renan pegou em 10/09.
+   Apareceu ao desligar o Apps Script: as abas da Disponibilidade param de
+   mudar e nada na tela diria isso.
+
+   Aqui a base carrega uma IMPRESSÃO (hash, ou bytes quando não há hash) e
+   comparamos com a que a coleta anterior gravou: igual preserva o `mudou_em`,
+   diferente carimba agora.
+
+   Primeira vez que uma base aparece (ou a 1ª coleta depois deste código),
+   `mudou_em` fica NULO de propósito: não sabemos desde quando ela está assim,
+   e chutar "mudou agora" faria toda base congelada nascer "Em dia" — o
+   defeito que este trecho existe para tirar. O painel mostra "aguardando".
+   ════════════════════════════════════════════════════════════════════ */
+async function dataDaMudanca(bases) {
+  let antes = {};
+  try {
+    const r = await fetch(`${SUPA}/rest/v1/saude_base?select=chave,impressao,mudou_em`, { headers: H });
+    if (r.ok) (await r.json() || []).forEach(x => { antes[x.chave] = x; });
+    else { console.warn('saude_base sem as colunas impressao/mudou_em — rode o SQL (scripts/saude-conteudo.sql)'); return; }
+  } catch (e) { console.warn('saude_base anterior:', e.message); return; }
+
+  let novas = 0, mudaram = 0, iguais = 0, semImp = 0;
+  bases.forEach(b => {
+    if (b.impressao == null) {                 // elite e app: o atualizado_em JÁ é do conteúdo
+      b.mudou_em = b.atualizado_em || null; semImp++; return;
+    }
+    const a = antes[b.chave];
+    if (!a || a.impressao == null) { b.mudou_em = null; novas++; return; }
+    if (a.impressao === b.impressao) { b.mudou_em = a.mudou_em || null; iguais++; }
+    else { b.mudou_em = AGORA; mudaram++; }
+  });
+  console.log(`impressão: ${mudaram} com dado novo · ${iguais} sem mudança · ${novas} sem referência ainda`
+    + ` · ${semImp} medidas pelo próprio dado`);
+}
+
+
 async function coletaBases() {
   const out = [];
   // 3.1 bases manuais do Sheets (tabelas tipadas sh_*)
   try {
-    const j = await (await fetch(`${SUPA}/rest/v1/sh_base?select=slug,nome,linhas,carregado_em,erro`, { headers: H })).json();
-    (Array.isArray(j) ? j : []).forEach(b => out.push({
+    const { rows, completo } = await leCols('sh_base',
+      'slug,nome,linhas,carregado_em,erro,hash', 'slug,nome,linhas,carregado_em,erro');
+    if (!completo) console.warn('sh_base sem coluna hash — a idade do conteúdo não sai daqui');
+    rows.forEach(b => out.push({
       chave: 'sh:' + b.slug, rotulo: b.nome || b.slug, grupo: 'Sheets · tabela', fonte: 'sh',
       linhas: b.linhas ?? null, atualizado_em: b.carregado_em || null, erro: b.erro || null,
+      impressao: b.hash || null,
       wf: 'sheets-robot.yml', visto_em: AGORA,
     }));
   } catch (e) { console.warn('sh_base:', e.message); }
 
   // 3.2 foto crua do gviz (é o que a maioria dos painéis ainda lê)
   try {
-    const j = await (await fetch(`${SUPA}/rest/v1/gviz_snapshot?select=key,bytes,updated_at`, { headers: H })).json();
-    (Array.isArray(j) ? j : []).forEach(b => {
+    const { rows, completo } = await leCols('gviz_snapshot',
+      'key,bytes,updated_at,hash', 'key,bytes,updated_at');
+    if (!completo) console.warn('gviz_snapshot sem coluna hash — a idade do conteúdo não sai daqui');
+    rows.forEach(b => {
       const k = String(b.key || '');
       const aba = (k.match(/\|s=([^|]*)/) || [, ''])[1] || (k.match(/\|g=([^|]*)/) || [, ''])[1] || k.slice(0, 12);
       out.push({
         chave: 'gviz:' + k.slice(0, 120), rotulo: aba || '(sem aba)', grupo: 'Sheets · foto gviz', fonte: 'gviz',
-        linhas: null, atualizado_em: b.updated_at || null, erro: null, wf: 'gviz-robot.yml', visto_em: AGORA,
+        linhas: null, atualizado_em: b.updated_at || null, erro: null,
+        // sem hash no banco, o tamanho em bytes já separa "mudou" de "foi relida"
+        impressao: b.hash || (b.bytes != null ? 'b' + b.bytes : null),
+        wf: 'gviz-robot.yml', visto_em: AGORA,
       });
     });
   } catch (e) { console.warn('gviz_snapshot:', e.message); }
 
   // 3.3 exports do Ginfo (Power BI)
+  // A impressão vem da view `ginfo_impressao` (md5 do jsonb, calculado no
+  // Postgres): pedir a coluna `data` aqui baixaria MBs a cada coleta.
+  let ginfoImp = {};
+  try {
+    const r = await fetch(`${SUPA}/rest/v1/ginfo_impressao?select=chave,hash,linhas`, { headers: H });
+    if (r.ok) (await r.json() || []).forEach(x => { ginfoImp[x.chave] = x; });
+    else console.warn('ginfo_impressao ausente — rode o SQL; a idade do Ginfo segue sendo a da leitura');
+  } catch (e) { console.warn('ginfo_impressao:', e.message); }
   try {
     const j = await (await fetch(`${SUPA}/rest/v1/ginfo_snapshot?select=chave,updated_at`, { headers: H })).json();
     (Array.isArray(j) ? j : []).forEach(b => out.push({
       chave: 'ginfo:' + b.chave, rotulo: b.chave, grupo: 'Ginfo · Power BI', fonte: 'ginfo',
-      linhas: null, atualizado_em: b.updated_at || null, erro: null, wf: 'ginfo-robot.yml', visto_em: AGORA,
+      linhas: (ginfoImp[b.chave] || {}).linhas ?? null,
+      atualizado_em: b.updated_at || null, erro: null,
+      impressao: (ginfoImp[b.chave] || {}).hash || null,
+      wf: 'ginfo-robot.yml', visto_em: AGORA,
     }));
   } catch (e) { console.warn('ginfo_snapshot:', e.message); }
+
 
   // 3.4 Frota de Elite / Gerot — uma linha por indicador (a mais recente)
   try {
@@ -450,9 +529,13 @@ console.log(`na janela: ${br(tot.runs)} execuções · ${br(tot.ok)} ok · ${br(
   + ` · taxa de sucesso ${tot.runs ? (tot.ok / tot.runs * 100).toFixed(1) : '—'}%\n`);
 
 const bases = await coletaBases();
+await dataDaMudanca(bases);
 const velhas = bases.filter(b => b.atualizado_em && (Date.now() - new Date(b.atualizado_em)) > 48 * 3600e3);
+const congeladas = bases.filter(b => b.mudou_em && (Date.now() - new Date(b.mudou_em)) > 48 * 3600e3);
 const comErro = bases.filter(b => b.erro);
-console.log(`bases monitoradas: ${bases.length} · com mais de 48h: ${velhas.length} · com erro registrado: ${comErro.length}`);
+console.log(`bases monitoradas: ${bases.length} · lidas há mais de 48h: ${velhas.length}`
+  + ` · SEM DADO NOVO há mais de 48h: ${congeladas.length} · com erro registrado: ${comErro.length}`);
+congeladas.slice(0, 12).forEach(b => console.log(`  ⏸ ${b.rotulo}: última mudança ${String(b.mudou_em).slice(0, 16).replace('T', ' ')}`));
 comErro.forEach(b => console.log(`  ✗ ${b.rotulo}: ${String(b.erro).replace(/\s+/g, ' ').slice(0, 200)}`));
 
 const paineis = inventarioPaineis();
