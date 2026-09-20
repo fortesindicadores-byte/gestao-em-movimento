@@ -76,22 +76,34 @@ const SL_CSS = `
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sl-kpi .v{font-size:32px;font-weight:800;line-height:1.05;}
 .sl-kpi .m{font-size:11px;font-weight:500;color:${TK.txt3};}
+/* grade DENSA: quando o painel põe 8+ por linha (o Scorecard mostra os 20
+   indicadores em 10 colunas), o card encolhe junto — senão os cards tomam a
+   altura que no painel é do gráfico. */
+.sl-kpis.denso{gap:7px;}
+.sl-kpis.denso .sl-kpi{padding:9px 9px 8px;border-radius:9px;gap:1px;}
+.sl-kpis.denso .r{font-size:8.5px;letter-spacing:.4px;white-space:normal;line-height:1.25;}
+.sl-kpis.denso .v{font-size:20px;}
+.sl-kpis.denso .m{font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* ── hero (o número grande sem card) ── */
-.sl-hero{flex:0 0 auto;display:flex;align-items:flex-end;gap:32px;
-  padding-bottom:16px;border-bottom:1px solid ${TK.linha};}
-.sl-hero .r{font-size:12px;font-weight:700;color:${TK.txt3};text-transform:uppercase;letter-spacing:1px;}
-.sl-hero .v{font-size:60px;font-weight:800;line-height:1;}
-.sl-hero .d{display:flex;gap:22px;padding-bottom:10px;flex-wrap:wrap;}
-.sl-hero .d div{font-size:11px;color:${TK.txt3};font-weight:600;text-transform:uppercase;letter-spacing:.6px;}
-.sl-hero .d b{display:block;font-size:18px;font-weight:800;margin-top:3px;}
+/* ── hero (o número grande sem card) ──
+   PROPORÇÃO DO PAINEL (Renan, 19/09/2026: "olha a diferença das proporções").
+   No painel o hero é uma COLUNA — rótulo, valor, e os deltas na linha DE
+   BAIXO. Eu punha os deltas ao LADO do valor e o valor em 60px: o bloco comia
+   a largura toda, empurrava o EBITDA para o meio e roubava altura do gráfico,
+   que no painel fica com metade da tela. */
+.sl-hero{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;}
+.sl-hero .r{font-size:11px;font-weight:700;color:${TK.txt3};text-transform:uppercase;letter-spacing:1px;}
+.sl-hero .v{font-size:42px;font-weight:800;line-height:1.05;margin-top:2px;}
+.sl-hero .v .mg{font-size:.52em;font-weight:700;color:${TK.txt3};margin-left:6px;}
+.sl-hero .d{display:flex;gap:18px;flex-wrap:wrap;margin-top:5px;}
+.sl-hero .d div{font-size:10px;color:${TK.txt3};font-weight:600;text-transform:uppercase;letter-spacing:.6px;}
+.sl-hero .d b{display:block;font-size:14px;font-weight:800;margin-top:2px;}
 /* o 2º hero (o EBITDA da Visão Financeira) vai à direita, como no painel */
-.sl-hero.dir{margin-left:auto;text-align:right;}
+.sl-hero.dir{margin-left:auto;align-items:flex-end;text-align:right;}
 .sl-hero.dir .d{justify-content:flex-end;}
-.sl-heros{flex:0 0 auto;display:flex;align-items:flex-end;gap:32px;
-  padding-bottom:14px;border-bottom:1px solid ${TK.linha};}
-.sl-heros .sl-hero{border-bottom:none;padding-bottom:0;}
-.sl-hero .s{font-size:11px;color:${TK.txt3};font-weight:600;margin-top:4px;}
+.sl-heros{flex:0 0 auto;display:flex;align-items:flex-start;gap:32px;
+  padding-bottom:12px;border-bottom:1px solid ${TK.linha};}
+.sl-hero .s{font-size:10.5px;color:${TK.txt3};font-weight:600;margin-top:4px;}
 
 /* ── legenda: a .gleg do painel, não as bolinhas do Chart.js ──
    Renan, 19/09/2026: "legendas nem gráfico está no padrão". O portal desenha a
@@ -311,6 +323,8 @@ function slTabela(tit, sub, dados, opt){
     [...t.querySelectorAll('th')].forEach((th,i)=>{ th.textContent = cab[i]; });
 
     const tb = t.querySelector('tbody');
+    const agr = slRepetido(cab, opt.agrupa);
+    let ant = [];
 
     /* A RÉGUA É A ALTURA DO WRAP, NÃO UMA CONTA DE CABEÇA (bug real,
        19/09/2026). Eu comparava `wrap.scrollHeight` com uma altura estimada
@@ -322,7 +336,7 @@ function slTabela(tit, sub, dados, opt){
     let fs = opt.fs || 14, entraram = 0;
     for (;;) {
       t.style.fontSize = fs + 'px';
-      tb.innerHTML = ''; entraram = 0;
+      tb.innerHTML = ''; entraram = 0; ant = [];
       for (const l of corpo) {
         const tr = document.createElement('tr');
         if (l.total) tr.className = 'tot';
@@ -330,10 +344,12 @@ function slTabela(tit, sub, dados, opt){
           `<td class="${c.dir||(dados.dir&&dados.dir[i])?'n ':''}${curta[i]?'curto':''}"></td>`).join('');
         [...tr.children].forEach((td,i)=>{
           const c = l.cels[i]; if (!c) return;
+          if (agr[i] && !l.total && ant[i] === c.t) { td.textContent = ''; return; }
+          if (agr[i]) ant[i] = c.t;
           slCelula(td, c);
         });
         tb.appendChild(tr);
-        if (t.offsetHeight > wrap.clientHeight + 2 && entraram > 0) { tb.removeChild(tr); break; }
+        if (t.offsetHeight > wrap.clientHeight + 2 && entraram > 0) { tb.removeChild(tr); ant = []; break; }
         entraram++;
       }
       if (entraram === corpo.length || fs <= 10) break;
@@ -407,7 +423,15 @@ function slHero(pai, h, dir){
   const d = document.createElement('div'); d.className = 'sl-hero' + (dir ? ' dir' : '');
   d.innerHTML = `<div><div class="r"></div><div class="v"></div>${h.sub?'<div class="s"></div>':''}</div><div class="d"></div>`;
   d.querySelector('.r').textContent = h.rotulo || '';
-  const v = d.querySelector('.v'); v.textContent = h.valor || '—'; v.style.color = slCor(h.cor);
+  const v = d.querySelector('.v');
+  /* o "(19,7%)" do EBITDA é um sufixo menor e apagado no painel; no mesmo
+     corpo do número ele competia com o valor */
+  const m = String(h.valor || '—').match(/^(.*?)\s*(\([^)]*\))\s*$/);
+  if (m) { v.textContent = m[1];
+    const sp = document.createElement('span'); sp.className = 'mg'; sp.textContent = m[2];
+    v.appendChild(sp); }
+  else v.textContent = h.valor || '—';
+  v.style.color = slCor(h.cor);
   if (h.sub) d.querySelector('.s').textContent = h.sub;
   const ds = d.querySelector('.d');
   (h.deltas||[]).forEach(x => {
@@ -444,6 +468,20 @@ function slGrafs(mio, gs){
   return g;
 }
 
+/* FATO IGUAL NÃO SE REPETE LINHA A LINHA (Renan, 19/09/2026, duas vezes:
+   "esse FCA repetiu 3 vezes" · "FCA PIR repetindo 3 vezes de novo").
+   Os três registros são do MESMO pacote com causas e ações diferentes, então a
+   coluna Fato traz o mesmo bloco — pacote, desvio e a lista de Contas — três
+   vezes, e a página inteira parece o mesmo FCA copiado. Aqui o Fato aparece
+   UMA vez por grupo e as repetições ficam em branco; nada é removido, e o que
+   muda de linha para linha (Causa, Ação, Prazo) fica óbvio.
+   Recomeça a cada página: quem vê a continuação precisa saber de que Fato é. */
+function slRepetido(cab, agrupa){
+  const nrm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim();
+  const alvo = (agrupa||[]).map(nrm);
+  return (cab||[]).map(c => alvo.includes(nrm(c)));
+}
+
 /* COLUNA DO RECORTE SAI DA TABELA: Unidade, Projeto e Vigência do FCA são
    iguais em toda linha e já estão no título do slide. Só remove quando o
    cabeçalho casa E sobra coluna — nunca esvazia a tabela. */
@@ -475,9 +513,20 @@ function slGrafico(mio, g){
 
   /* A LEGENDA DO PAINEL, em HTML, acima do canvas — a do Chart.js (bolinhas
      no canto, dentro de uma caixa) não existe em lugar nenhum do portal. */
-  if ((g.legenda||[]).length) {
+  /* SEM .gleg MAS COM LEGENDA NATIVA LIGADA (o Frota de Elite é assim), a
+     legenda é montada dos próprios datasets — no desenho do portal, não nas
+     bolinhas do Chart.js. Sem isto o slide saía sem legenda alguma. */
+  let leg = g.legenda;
+  if (!(leg||[]).length && g.legNativa)
+    leg = (g.datasets||[]).filter(d => d.label).map(d => ({
+      t: d.label,
+      cor: (typeof d.backgroundColor === 'string' ? d.backgroundColor : null)
+        || (typeof d.borderColor === 'string' ? d.borderColor : null) || TK.txt3,
+      sq: d.tipo !== 'line',
+    }));
+  if ((leg||[]).length) {
     const lg = document.createElement('div'); lg.className = 'sl-gleg';
-    g.legenda.forEach(x => {
+    leg.forEach(x => {
       const s = document.createElement('span');
       s.style.color = x.cor || TK.txt3;
       const i = document.createElement('i'); if (x.sq) i.className = 'sq';
@@ -502,7 +551,7 @@ function slGrafico(mio, g){
   const eY = g.eixoY || null;
   const mapaY = {};
   if (eY) (eY.ticks||[]).forEach(t => { mapaY[t.v] = t.l; });
-  const temRot = (g.datasets||[]).some(d => (d.rotulos||[]).some(r => r !== undefined));
+
   new Chart(cv.getContext('2d'), {
     type: g.tipo || 'bar',
     data: {
@@ -535,19 +584,21 @@ function slGrafico(mio, g){
         datalabels: {
           anchor:'end', align:'end', offset:3, clamp:true, clip:false,
           color:TK.txt, font:{ family:'Montserrat', size:13, weight:'700' },
+          /* O PAINEL MANDA EM DUAS COISAS SEPARADAS: se o rótulo aparece
+             (`mostra`) e, quando ele mesmo escreve o texto, qual é
+             (`rotulos`, só quando o painel tem formatter). Juntar as duas foi
+             o que deixou a Evolução SEM rótulo nenhum: lá o painel só liga o
+             plugin (`datalabels:{}`) e desliga nas linhas de meta, sem dizer o
+             texto — então quem formata é o portal. */
           formatter:(v,c)=>{
             const d = (g.datasets||[])[c.datasetIndex];
-            const r = d && d.rotulos ? d.rotulos[c.dataIndex] : undefined;
-            if (r === null) return '';
-            if (r !== undefined) return r;
+            if (g.rotDef && d && d.rotulos) return d.rotulos[c.dataIndex] || '';
             return slNum(v);
           },
           display:(c)=>{
             const d = (g.datasets||[])[c.datasetIndex];
-            const r = d && d.rotulos ? d.rotulos[c.dataIndex] : undefined;
-            if (r === null) return false;
-            if (r !== undefined) return true;
-            if (temRot) return false;     // o painel decide; este não tem rótulo
+            if (d && d.mostra && d.mostra[c.dataIndex] === false) return false;
+            if (g.rotDef) return true;
             return c.dataset.type !== 'line' && c.dataset.type !== 'pie';
           },
         },
@@ -695,7 +746,7 @@ function slMonta(tit, sub, blocos){
   /* bloco único e tabela pura: deixa o paginador trabalhar */
   if (b.length === 1 && b[0].tabela && !(b[0].grafs||[]).length
       && !(b[0].kpis||[]).length && !(b[0].heros||[]).length)
-    return slTabela(tit, sub, b[0].tabela, { rotulo: b[0].rot });
+    return slTabela(tit, sub, b[0].tabela, { rotulo: b[0].rot, agrupa: b[0].agrupa });
 
   const { el, mio } = slNovo(tit, sub);
   b.forEach((x, i) => {
@@ -704,8 +755,14 @@ function slMonta(tit, sub, blocos){
     /* hero + cards: o Scorecard e os painéis de KPI */
     if (x.heros && x.heros.length) slHeros(mio, x.heros);
     if (x.kpis && x.kpis.length) {
-      const k = x.kpis.slice(0, 20);
-      slKpis(mio, k, k.length <= 6 ? k.length : (k.length <= 12 ? Math.ceil(k.length/2) : Math.ceil(k.length/3)));
+      /* A DENSIDADE É A DO PAINEL (x.kcols). O Scorecard põe os 20
+         indicadores em 10 colunas compactas; a minha regra fazia 7 por linha,
+         gordos, e o gráfico ficava com o resto. */
+      const k = x.kpis.slice(0, 24);
+      const cols = x.kcols && x.kcols > 1 ? Math.min(x.kcols, 10)
+        : (k.length <= 6 ? k.length : (k.length <= 12 ? Math.ceil(k.length/2) : Math.ceil(k.length/3)));
+      const g = slKpis(mio, k, cols);
+      if (cols >= 8) g.classList.add('denso');
     }
     if (x.grafs && x.grafs.length) slGrafs(mio, x.grafs);
 
@@ -727,6 +784,7 @@ function slMonta(tit, sub, blocos){
         + '</tr></thead><tbody></tbody>';
       [...t.querySelectorAll('th')].forEach((th,i)=>{ th.textContent = cab[i]; });
       const tb = t.querySelector('tbody');
+      const agr = slRepetido(cab, x.agrupa); let ant = [];
       lin.forEach(l => {
         const tr = document.createElement('tr');
         if (l.total) tr.className = 'tot';
@@ -734,21 +792,33 @@ function slMonta(tit, sub, blocos){
           `<td class="${c.dir||dir[i]?'n ':''}${curta[i]?'curto':''}"></td>`).join('');
         [...tr.children].forEach((td,j)=>{
           const c = l.cels[j]; if (!c) return;
+          if (agr[j] && !l.total && ant[j] === c.t) { td.textContent = ''; return; }
+          if (agr[j]) ant[j] = c.t;
           slCelula(td, c);
         });
         tb.appendChild(tr);
       });
     }
 
-    /* último recurso: a visão que ainda não sei ler como dado entra como
-       imagem, mas DENTRO da moldura do padrão — nunca solta na página */
+    /* A FOTO NÃO VAI DENTRO DE UM CARD (Renan, 19/09/2026: "por que essa porra
+       branca no fundo?" · "por que não distribui mais").
+       Eu embrulhava a imagem num `.sl-card` claro com borda e 14px de padding:
+       o painel já vem com o fundo dele, então o card virava um slab branco por
+       baixo, e o padding + a moldura ainda encolhiam a imagem no meio da
+       página. A foto agora vai colada, do tamanho que o slide dá, sobre o
+       MESMO cinza do slide — o que sobra de proporção vira margem, não um
+       retângulo branco. */
     if (x.png) {
       const box = document.createElement('div');
-      box.style.cssText = 'flex:1;min-height:0;display:flex;align-items:center;justify-content:center;'
-        + `background:${TK.card};border:1px solid ${TK.cardBrd};border-radius:14px;padding:14px;overflow:hidden;`;
+      box.style.cssText = 'flex:1;min-height:0;display:flex;align-items:center;'
+        + 'justify-content:center;background:transparent;overflow:hidden;';
       const img = document.createElement('img');
-      img.src = x.png; img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;display:block;';
+      img.src = x.png; img.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;';
       box.appendChild(img); mio.appendChild(box);
+      /* slide que é SÓ a foto usa a página inteira: o respiro de 64px do miolo
+         existe para texto, e aqui só faz a imagem encolher */
+      if (b.length === 1 && !x.tabela && !(x.grafs||[]).length && !(x.kpis||[]).length && !(x.heros||[]).length)
+        mio.style.padding = '18px 28px 30px';
     }
   });
 

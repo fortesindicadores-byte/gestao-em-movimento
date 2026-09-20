@@ -16,6 +16,7 @@
 // ============================================================
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
+import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 
@@ -85,6 +86,24 @@ window.html2canvas = function(el, o){
         var c = getComputedStyle(s);
         return { t: s.textContent, bg: c.backgroundColor, cor: c.color, bloco: c.display === 'block' };
       }) : [],
+      /* a foto NÃO pode ir dentro de um card branco (era o "porra branca no
+         fundo") e tem de ocupar a página */
+      foto: (function(){
+        var im = el.querySelector('.sl-mio > div > img'); if (!im || im.closest('.sl-pod')) return null;
+        var bx = im.parentNode, c = getComputedStyle(bx), r = im.getBoundingClientRect();
+        return { fundo: c.backgroundColor, borda: c.borderTopWidth,
+                 larg: Math.round(r.width), alt: Math.round(r.height) };
+      })(),
+      densa: !!el.querySelector('.sl-kpis.denso'),
+      /* MEDIR as colunas, não ler o CSS: o computed de grid-template-columns
+         volta "repeat(10, 1fr)" sem resolver e a conta dava UMA coluna. */
+      cols: (function(){
+        var ks = [].slice.call(el.querySelectorAll('.sl-kpis > .sl-kpi'));
+        if (ks.length < 2) return 0;
+        var t = ks[0].offsetTop, n = 0;
+        for (var i = 0; i < ks.length && ks[i].offsetTop === t; i++) n++;
+        return n;
+      })(),
       /* o boneco do pódio */
       avatares: [].slice.call(el.querySelectorAll('.sl-pod img.sl-av')).map(function(i){ return i.getAttribute('src'); }),
       brasao: !!el.querySelector('.sl-pod-bras'),
@@ -244,6 +263,14 @@ const CHART_NO_PAINEL = `
     if (cv3) new window.Chart(cv3.getContext('2d'), { type:'bar',
       data:{ labels:['A','B','C'], datasets:[{ label:'Pontos', data:[30.7, 3210987, 1] }] },
       options:{} });
+    var cv4 = document.getElementById('g4');
+    if (cv4) new window.Chart(cv4.getContext('2d'), { type:'bar',
+      data:{ labels:['jan','fev','mar'],
+             datasets:[{ label:'Média Geral', data:[84.6, 86.3, 91.3], backgroundColor:'#F4A100' },
+                       { label:'Meta 85%', type:'line', data:[85,85,85], borderColor:'#333',
+                         datalabels:{display:false} }] },
+      options:{ plugins:{ legend:{}, datalabels:{} },
+                scales:{ y:{ min:70, max:110, __suf:'%' } } } });
     var cv2 = document.getElementById('g2');
     if (cv2) new window.Chart(cv2.getContext('2d'), { type:'bar',
       data:{ labels:['jan/26','fev/26','mar/26'],
@@ -325,7 +352,16 @@ function painelDuble(chaves, dialeto, comGate) {
       ${['Combustíveis','Manutenções','Pneus','ICMS'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
   </div><div class="cols">
     <section class="vw on" id="vw-resumo"><div class="card">resumo — texto suficiente para o motor considerar a tela carregada e estável</div>
-      ${HERO()}</section>
+      ${HERO()}
+      <div class="kpis k10" style="display:grid;grid-template-columns:repeat(10,1fr);gap:7px">
+        ${Array.from({length:20},(_,i)=>`<div class="kpi"><div class="kl">Indicador ${i+1}</div>`
+          +`<div class="kv">${90+i%9}%</div><div class="km">peso ${11-i%9}</div></div>`).join('')}
+      </div>
+      <div class="gcard"><div class="gt">Pontuação Mensal</div>
+        <canvas id="g3" width="600" height="240"></canvas></div>
+      <!-- o caso da Evolução: plugin ligado sem formatter e legenda NATIVA -->
+      <div class="chart-card"><div class="gt">Evolução Temporal</div>
+        <canvas id="g4" width="600" height="240"></canvas></div></section>
     <section class="vw" id="vw-nominal"><div class="card">nominal <span id="ref-pac-v">REM</span>${TAB()}</div></section>
     <section class="vw" id="vw-dispersao">${HERO()}<div class="card">dispersao por unidade${TAB()}
       <div class="gcard"><div class="gt">Dispersão de KM %</div><div class="gs">por vigência</div>
@@ -369,8 +405,7 @@ function painelDuble(chaves, dialeto, comGate) {
           +`<td><span class="niv" style="background:${r[2]};color:${r[3]}">${r[1]}</span></td>`
           +`<td><span class="niv" style="background:${r[5]};color:${r[6]}">${r[4]}</span></td></tr>`).join('')}
       </tbody></table></div></div>`).join('')}
-    <div class="gcard"><div class="gt">Pontuação Mensal</div>
-      <canvas id="g3" width="600" height="240"></canvas></div>
+
     <!-- PAINEL DE METAS: a tabela mora num #tbl -->
     <div class="tbl-section"><div id="tbl"><table>
       <thead><tr class="cols"><th class="lft">INDICADOR</th><th>PESO</th><th>META</th><th>REAL</th><th>ATING.</th></tr></thead>
@@ -426,6 +461,26 @@ const af = (cond, txt, det) => {
   if (cond) { ok++; console.log('  ok   ' + txt); }
   else { ruim++; console.log('  FALHA ' + txt + (det != null ? '  → ' + det : '')); }
 };
+
+/* ── a armadilha que já me pegou TRÊS vezes ────────────────────────────────
+   O CM_HELPER e o SL_CSS são template literals, e uma crase dentro de um
+   COMENTÁRIO fecha a literal — o arquivo vira JS inválido e o painel morre com
+   "Unexpected identifier". Não dá para ver lendo: o comentário parece inocente.
+   Conferir aqui custa nada e avisa antes de o Renan gerar o deck. */
+console.log('\n═══ 0 · crase dentro das template literals (a armadilha recorrente) ═══');
+{
+  const html = readFileSync(new URL('../check-metas/index.html', import.meta.url), 'utf8');
+  const js   = readFileSync(new URL('../check-metas/slides.js',  import.meta.url), 'utf8');
+  const entre = (t, ini, fim) => { const i = t.indexOf(ini); if (i < 0) return '';
+    const j = t.indexOf(fim, i + ini.length); return j < 0 ? '' : t.slice(i + ini.length, j); };
+  const helper = entre(html, 'const CM_HELPER=`', '\n};`;');
+  const css    = entre(js,   'const SL_CSS = `', '\n`;\n');
+  af(helper.length > 500 && !helper.includes('`'),
+     'o CM_HELPER não tem crase dentro (ela fecharia a literal)',
+     helper.length + ' chars · ' + (helper.match(/.{0,40}`.{0,40}/s) || [''])[0]);
+  af(css.length > 500 && !css.includes('`'),
+     'o SL_CSS também não', css.length + ' chars · ' + (css.match(/.{0,40}`.{0,40}/s) || [''])[0]);
+}
 
 const nav = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium' });
 
@@ -491,6 +546,13 @@ async function abre({ semJunEm = null, gateEm = null } = {}) {
           } catch (err) {}
           return r;
         };
+        const kc = nv.kcols, kp0 = nv.kpis;
+        nv.kpis = function(el){ const r = kp0.call(this, el);
+          try { const p = window.top.__provas; if (p.length) p[p.length-1].nKpi = (r||[]).length; } catch(e){}
+          return r; };
+        nv.kcols = function(el){ const r = kc.call(this, el);
+          try { const p = window.top.__provas; if (p.length) p[p.length-1].kcols = r; } catch(e){}
+          return r; };
         const gs = nv.grafs, hs = nv.heros;
         nv.grafs = function(el){ const r = gs.call(this, el);
           try { const p = window.top.__provas; if (p.length) p[p.length-1].nGraf = (r||[]).length; } catch(e){}
@@ -718,6 +780,12 @@ let provas1 = [];
   af(slFca.every(x => x.chips.some(c => /andamento/i.test(c.t))),
      'e o status continua sendo a pílula colorida do painel',
      JSON.stringify((slFca[0]||{chips:[]}).chips.map(c=>c.t)));
+  /* O FATO APARECE UMA VEZ POR GRUPO (Renan, 19/09/2026, duas vezes: "FCA PIR
+     repetindo 3 vezes de novo"). São três registros do mesmo pacote, então a
+     coluna Fato trazia o mesmo bloco três vezes e a página parecia o mesmo FCA
+     copiado. Nada é removido: o que muda (Causa, Ação, Prazo) é que aparece. */
+  const fatos = (slFca[0] || {cels:[]}).cels.filter(t => /Manutenções/.test(t));
+  af(fatos.length === 1, 'o Fato repetido aparece UMA vez, não em cada linha', fatos.length);
 
   /* 1 · "tabela com cor sim cor não" — a tabela do portal não tem zebra */
   af(comTab.every(x => x.zebra === false || x.zebra === null),
@@ -768,6 +836,27 @@ let provas1 = [];
   af(pmSl.every(x => !x.vazio), 'não como página de aviso');
   af(!ins.some(x => x.vazio), 'nenhum slide saiu como "o painel não entregou dado"',
      JSON.stringify(ins.filter(x => x.vazio).map(x => x.tit)));
+
+  /* A FOTO SEM O CARD BRANCO (Renan: "por que essa porra branca no fundo?" ·
+     "por que não distribui mais"). O painel já vem com o fundo dele; o card
+     claro por baixo virava um slab e o padding ainda encolhia a imagem. */
+  const comFoto2 = ins.filter(x => x.foto);
+  af(comFoto2.length >= 1, 'o slide de foto existe (a Árvore)', comFoto2.length);
+  af(comFoto2.every(x => /rgba\(0, 0, 0, 0\)|transparent/.test(x.foto.fundo)),
+     'a foto vai direto sobre o slide, sem card branco atrás',
+     JSON.stringify(comFoto2.map(x => x.foto.fundo)));
+  af(comFoto2.every(x => x.foto.borda === '0px'), 'e sem moldura',
+     JSON.stringify(comFoto2.map(x => x.foto.borda)));
+  af(comFoto2.every(x => x.foto.larg > 1400), 'usando a largura da página',
+     JSON.stringify(comFoto2.map(x => x.foto.larg)));
+
+  /* A DENSIDADE DOS KPIs É A DO PAINEL: o Scorecard põe 20 em 10 colunas */
+  const kdensa = ins.filter(x => x.cols >= 8);
+  af(kdensa.length >= 1, 'a fileira de 20 indicadores sai na densidade do painel',
+     JSON.stringify(ins.map(x => x.cols).filter(n => n)));
+  af(kdensa.every(x => x.cols === 10), 'em 10 colunas, como o painel',
+     JSON.stringify(kdensa.map(x => x.cols)));
+  af(kdensa.every(x => x.densa), 'e com o card compacto, para o gráfico ficar com a altura dele');
 
   /* 5 · "pode diminuir as fontes, 1 a 2px" */
   af(comTab.every(x => x.fsTab <= 15), 'a tabela do slide não passa de 15px',
@@ -830,6 +919,25 @@ let provas1 = [];
   af(rotP && rotP.yTick === '70%', 'o rótulo do eixo vem pronto do painel, com o %', rotP && rotP.yTick);
   af(fmt && fmt.rot === '30,7', 'gráfico sem rótulo no painel cai no pt-BR do portal', fmt && fmt.rot);
   af(fmt && fmt.grande === '3,2 mi', 'e o valor grande vem abreviado como no portal', fmt && fmt.grande);
+
+  /* O CASO DA EVOLUÇÃO (Renan, 19/09/2026: "Evolução sem rótulos de dados").
+     Lá o painel só LIGA o plugin (`datalabels:{}`) e o desliga nas linhas de
+     meta, sem dizer o texto. Eu tratava "o painel não escreveu o texto" como
+     "o painel não quer rótulo", e o gráfico saía limpo. Agora são duas coisas
+     separadas: quem aparece é o painel que diz, o texto é do portal quando ele
+     não escreve. */
+  const evo = await pg.evaluate(() => {
+    const g = (window.__charts || []).find(c => c.options && c.options.plugins
+      && c.options.plugins.datalabels && (c.data.labels || []).join() === 'jan,fev,mar');
+    const d = g && g.options.plugins.datalabels;
+    if (!d) return null;
+    return { barra: d.display({ dataset:{}, datasetIndex:0, dataIndex:0 }),
+             txt: d.formatter(84.6, { dataset:{}, datasetIndex:0, dataIndex:0 }),
+             meta: d.display({ dataset:{type:'line'}, datasetIndex:1, dataIndex:0 }) };
+  });
+  af(evo && evo.barra === true, 'a barra da Evolução volta a ter rótulo', evo && evo.barra);
+  af(evo && evo.txt === '84,6', 'com o número no formato do portal, porque o painel não escreve o texto', evo && evo.txt);
+  af(evo && evo.meta === false, 'e a linha de meta segue sem rótulo, como o painel manda', evo && evo.meta);
 
   /* LEGENDA NO PADRÃO: a .gleg do painel, não as bolinhas do Chart.js */
   const legs = ins.flatMap(x => x.gleg || []);
