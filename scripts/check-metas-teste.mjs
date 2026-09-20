@@ -669,12 +669,16 @@ console.log('\n═══ 1 · o roteiro sai da tabela `fca`, não de uma lista f
     urls:(s.caps||[]).map(c=>c.url||s.url).join(' '),
     prep:(s.caps||[]).map(c=>c.prep).join(' ') })));
   af(r[0].t === 'capa', 'o 1º slide é a capa');
-  af(r[1].t === 'sec' && /Frota/i.test(r[1].tit), 'o 2º é a divisória FROTA');
+  af(r[1].t === 'p' && /scorecard\/$/.test(r[1].url || ''), 'o 2º é o Scorecard — sem a divisória FROTA (a "2ª capa" saiu, 20/09/2026)', r[1].tit);
   af(r.some(s => /scorecard\/$/.test(s.url || '')), 'tem o Scorecard');
   af(r.some(s => /resumo-executivo/.test(s.url || '')), 'tem o Resumo Executivo');
   const secs = r.filter(s => s.t === 'sec').map(s => s.tit);
-  af(JSON.stringify(secs) === JSON.stringify(['Frota','Pneus','Manutenção','Combustíveis','Resultados']),
-     'as divisórias são Frota · Pneus · Manutenção · Combustíveis · Resultados', secs.join(' / '));
+  /* sem a divisória "Frota" depois da capa (Renan, 20/09/2026: "a segunda
+     capa nem precisa") — a capa já diz FROTA */
+  af(JSON.stringify(secs) === JSON.stringify(['Pneus','Manutenção','Combustíveis','Resultados']),
+     'as divisórias são Pneus · Manutenção · Combustíveis · Resultados (sem a 2ª capa "Frota")', secs.join(' / '));
+  const capa = r.find(s => s.t === 'capa');
+  af(capa && /^FROTA$/.test(capa.sub || ''), 'a capa diz só FROTA', capa && capa.sub);
   /* ÁRVORE E FCA EM SLIDES SEPARADOS (Renan, 19/09/2026: "se precisar separar
      para caber, faça, mas quero as árvores"). Empilhados no mesmo slide, a
      árvore — que é um desenho com conectores — ficava com meia página e
@@ -1265,13 +1269,13 @@ let provas1 = [];
 console.log('\n═══ 3 · filtro que não existe vira alarme, não um slide errado ═══');
 {
   const { ctx, pg } = await abre({ semJunEm: 'scorecard' });
-  await pg.evaluate(() => { ROTEIRO = ROTEIRO.slice(0, 4); });   // capa, divisória, scorecard, resumo-exec
+  await pg.evaluate(() => { ROTEIRO = ROTEIRO.slice(0, 3); });   // capa, scorecard, resumo-exec
   await pg.evaluate(() => gerar('pdf'));
   await pg.waitForFunction(() => !window.GERANDO, { timeout: 60000 });
-  const est = await pg.evaluate(() => ESTADO[2]);
+  const est = await pg.evaluate(() => ESTADO[1]);
   af(est && est.msgs && est.msgs.some(m => /ms-vig/.test(m) && /não achei/.test(m)),
      'o slide do Scorecard é marcado: o filtro não casou', JSON.stringify(est));
-  const sel = await pg.evaluate(() => selo(2));
+  const sel = await pg.evaluate(() => selo(1));
   af(/pill esp/.test(sel), 'e aparece como "atenção" no roteiro', sel);
   const p = (await pg.evaluate(() => window.__provas)).find(x => /scorecard/.test(x.pag));
   af(p && (!p.estado.filtros['ms-vig'] || p.estado.filtros['ms-vig'].length === 0),
@@ -1283,14 +1287,14 @@ console.log('\n═══ 3 · filtro que não existe vira alarme, não um slide 
 console.log('\n═══ 4 · painel que recusa o acesso não vira slide em branco ═══');
 {
   const { ctx, pg } = await abre({ gateEm: 'scorecard' });
-  await pg.evaluate(() => { ROTEIRO = ROTEIRO.slice(0, 3); });
+  await pg.evaluate(() => { ROTEIRO = ROTEIRO.slice(0, 2); });   // capa, scorecard
   await pg.evaluate(() => gerar('pdf'));
   await pg.waitForFunction(() => !window.GERANDO, { timeout: 60000 });
-  const est = await pg.evaluate(() => ESTADO[2]);
+  const est = await pg.evaluate(() => ESTADO[1]);
   af(est && est.err, 'o slide é marcado como falha', JSON.stringify(est));
   af(est && /recusou/.test(est.msgs[0]), 'e a mensagem diz que o painel recusou', est && est.msgs[0]);
   const pdf = await pg.evaluate(() => window.__pdf);
-  af(pdf && pdf.pgs.length === 2, 'o PDF sai com os 2 slides que deram certo, não com 3', pdf && pdf.pgs.length);
+  af(pdf && pdf.pgs.length === 1, 'o PDF sai com o slide que deu certo (a capa), não com 2', pdf && pdf.pgs.length);
   await ctx.close();
 }
 
