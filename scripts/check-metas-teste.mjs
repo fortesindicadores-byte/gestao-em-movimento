@@ -45,6 +45,16 @@ const BASE = 'http://127.0.0.1:' + srv.address().port;
 const SHIM_H2C = `
 window.__slInsp = [];
 window.html2canvas = function(el, o){
+  /* no PAINEL (iframe) a chamada é a foto: anota o fundo pedido e roda o
+     onclone no próprio documento, para ver o que ele faz com o alvo */
+  if (window.top !== window) {
+    try {
+      if (o && typeof o.onclone === 'function') o.onclone(document);
+      (window.top.__fotos = window.top.__fotos || []).push({
+        alvo: el.id || el.className, bg: o && o.backgroundColor,
+        alvoBg: el.style.backgroundColor, temMarca: el.hasAttribute('data-cm-alvo') });
+    } catch (e) {}
+  }
   try{
     var cs = getComputedStyle(el), li = el.querySelector('.sl-listra');
     var rEl = el.getBoundingClientRect(), rLi = li ? li.getBoundingClientRect() : null;
@@ -114,6 +124,9 @@ window.html2canvas = function(el, o){
       /* slide que é SÓ a tabela: só nele a sobra de altura vira respiro */
       soTab: !!(el.querySelector('.sl-tw') && !el.querySelector('.sl-card')
                 && !el.querySelector('.sl-kpis') && el.querySelectorAll('.sl-tw').length === 1),
+      mioPad: (function(){ var m = el.querySelector('.sl-mio'); return m ? getComputedStyle(m).paddingLeft : null; })(),
+      fotoEsc: (function(){ var im = el.querySelector('.sl-mio > div > img'); return im && !im.closest('.sl-pod') ? im.style.width : null; })(),
+      numFs: (function(){ var td = tab && tab.querySelector('td.sl-n'); return td ? getComputedStyle(td).fontSize : null; })(),
       hero: (function(){
         var h = el.querySelector('.sl-hero'); if (!h) return null;
         var v = h.querySelector('.v'), d = h.querySelector('.d');
@@ -292,8 +305,10 @@ const CHART_NO_PAINEL = `
     var cv = document.getElementById('g1');
     if (cv) new window.Chart(cv.getContext('2d'), { type:'bar',
       data:{ labels:['jan/26','fev/26','mar/26'],
-             datasets:[{ label:'Δ Rem %', data:[12.5, 8.3, 30.7], backgroundColor:'#F97316' },
-                       { label:'Meta 5%', type:'line', data:[5,5,5], borderColor:'#333' }] },
+             datasets:[{ label:'Δ Rem %', data:[12.5, 8.3, 30.7], backgroundColor:'#F9731633',
+                         borderColor:'#F97316', borderWidth:1, borderRadius:0, barPercentage:.97 },
+                       { label:'Meta 5%', type:'line', data:[5,5,5], borderColor:'#333',
+                         pointRadius:[0,0,6], tension:0 }] },
       options:{ plugins:{ legend:{display:false}, datalabels:{
                   display:function(c){ return c.datasetIndex === 0; },
                   formatter:function(v){ return (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; } } },
@@ -383,7 +398,7 @@ function painelDuble(chaves, dialeto, comGate) {
     <div class="tit-sub" id="titSub">pronto</div>
     <div class="ms-wrap" id="ms-vig"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">${ops('ms-vig')}</div></div></div>
     <div class="ms-wrap" id="ms-uni"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
-      ${['CGR','CBA T1','GRL','PIR'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
+      ${['CGR','CBA T1','GRL','PIR','FLP'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-proj"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
       ${['AS - CGR','ROTA - CGR','EMPURRADA - CBA','ROTA - GRL'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-nv3"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
@@ -483,6 +498,20 @@ function painelDuble(chaves, dialeto, comGate) {
   function setDim(d){ EST.dim = d; document.getElementById('dim-atual').textContent = d; grava(); }
   function togglePacRef(){ EST.ref = EST.ref === 'REM' ? 'ORÇ' : 'REM';
     document.getElementById('ref-pac-v').textContent = EST.ref; grava(); }
+  /* como no fca-consolidado: a lista de PROJETOS é recalculada pela unidade
+     selecionada. Sem isto o teste não veria a seleção presa entre unidades. */
+  (function(){
+    var w = document.getElementById('ms-proj');
+    var MAP = { 'CGR':['AS - CGR','ROTA - CGR'], 'CBA T1':['EMPURRADA - CBA'], 'GRL':['ROTA - GRL'],
+                'PIR':['EMPURRADA - PIR'], 'FLP':['ROTA - FLP'] };
+    w._render = function(){
+      var u = document.getElementById('ms-uni'), us = u._sel ? Array.from(u._sel) : [];
+      var ps = us.length ? us.flatMap(function(x){ return MAP[x] || []; }) : Object.values(MAP).flat();
+      var sel = w._sel || new Set();
+      w.querySelector('.ms-list').innerHTML = ps.map(function(p){
+        return '<label class="ms-opt"><input type="checkbox" data-v="' + p + '"' + (sel.has(p) ? ' checked' : '') + '> ' + p + '</label>'; }).join('');
+    };
+  })();
   function onlyOpt(k, v){ EST.selVig = [v]; EST.chamou.push('onlyOpt'); grava(); }
   function toggleAll(k){ EST.selVig = []; EST.chamou.push('toggleAll'); grava(); }
   function setSelArr(k, v){ if (k === 'vig') { EST.selVig = v; selVig = v; } grava(); }
@@ -920,7 +949,7 @@ let provas1 = [];
      JSON.stringify(comFoto2.map(x => x.foto.fundo)));
   af(comFoto2.every(x => x.foto.borda === '0px'), 'e sem moldura',
      JSON.stringify(comFoto2.map(x => x.foto.borda)));
-  af(comFoto2.every(x => x.foto.larg > 1400), 'usando a largura da página',
+  af(comFoto2.every(x => x.foto.larg >= 1380), 'usando a largura da página',
      JSON.stringify(comFoto2.map(x => x.foto.larg)));
 
   /* TABELA SÓ DE COLUNAS CURTAS TEM DE DISTRIBUIR (Renan, 20/09/2026: "aqui
@@ -984,6 +1013,53 @@ let provas1 = [];
      que as linhas dos DOIS recortes entraram na mesma tabela */
   af(junto.every(x => x.nLin >= 6), 'e as linhas dos recortes na mesma tabela',
      JSON.stringify(junto.map(x => x.nLin)));
+
+  /* SELEÇÃO PRESA ENTRE UNIDADES (bug real, 20/09/2026: o FCA do PIR saiu
+     vazio no slide agrupado). O iframe é reutilizado e a lista de projetos do
+     fca-consolidado depende da unidade; para o PIR eu procurava EMPURRADA na
+     lista do CGR, não achava, e a seleção ROTA do CGR ficava presa. */
+  const fcaCaps = provas1.filter(p => /fca-consolidado/.test(p.pag) && p.estado);
+  const pir = fcaCaps.find(p => (p.estado.filtros['ms-uni']||[])[0] === 'PIR');
+  af(pir && JSON.stringify(pir.estado.filtros['ms-proj']) === '["EMPURRADA - PIR"]',
+     'o PIR entra com o SEU projeto, não com o da unidade anterior',
+     pir && JSON.stringify(pir.estado.filtros['ms-proj']));
+  af(fcaCaps.every(p => { const u=(p.estado.filtros['ms-uni']||[])[0], pr=(p.estado.filtros['ms-proj']||[])[0];
+       return u && pr && pr.endsWith(u.split(' ')[0]); }),
+     'e toda unidade vem com o projeto dela',
+     JSON.stringify(fcaCaps.map(p => (p.estado.filtros['ms-uni']||[])[0] + '→' + (p.estado.filtros['ms-proj']||[])[0])));
+  af(!provas1.some(p => (p.faltou||[]).some(m => /ms-proj/.test(m))),
+     'e nenhum filtro de projeto ficou sem casar');
+
+  /* FOTO ALINHADA COM O TÍTULO (o "descentralizado" do Resumo Executivo) */
+  const fotos = ins.filter(x => x.foto);
+  af(fotos.length >= 1 && fotos.every(x => x.mioPad === '64px'),
+     'o slide de foto usa o mesmo respiro dos outros — imagem alinhada com o título',
+     JSON.stringify(fotos.map(x => x.tit + '=' + x.mioPad)));
+  /* a árvore "achatadinha de leve": 94%, sem distorcer */
+  const arvF = fotos.filter(x => /Combustíveis – /.test(x.tit));
+  af(arvF.length >= 1 && arvF.every(x => x.fotoEsc === '94%'), 'a árvore sai a 94%',
+     JSON.stringify(arvF.map(x => x.fotoEsc)));
+  af(fotos.filter(x => !/Combustíveis – /.test(x.tit)).every(x => x.fotoEsc !== '94%'),
+     'e só ela — o resto das fotos fica no tamanho cheio',
+     JSON.stringify(fotos.map(x => x.tit + '=' + x.fotoEsc)));
+
+  /* CLASSE "n" COLIDIA com o .n do check-metas (font-size:11px;color:--txt3):
+     toda célula numérica saía em 11px cinza, fosse qual fosse a tabela. */
+  const numT = comTab.filter(x => x.numFs);
+  af(numT.length >= 3, 'há tabelas com célula numérica', numT.length);
+  af(numT.every(x => parseFloat(x.numFs) === x.fsTab),
+     'a célula numérica tem a fonte da tabela, não os 11px da lateral do check-metas',
+     JSON.stringify(numT.map(x => x.tit + '=' + x.numFs + '/' + x.fsTab)));
+
+  /* O QUADRADO BRANCO ATRÁS DA FOTO: o alvo (o .main do layout antigo, que no
+     claro é #F0F0F0) pintava o próprio fundo. Agora a captura usa o cinza do
+     slide e o alvo fica transparente no clone. */
+  const fts = await pg.evaluate(() => window.__fotos || []);
+  af(fts.length >= 1, 'houve captura de foto no painel', fts.length);
+  af(fts.every(f => f.bg === '#E1E2E5'), 'o fundo da captura é o cinza do slide, não branco',
+     JSON.stringify(fts.map(f => f.bg)));
+  af(fts.every(f => f.alvoBg === 'transparent'), 'e o alvo não pinta o próprio fundo',
+     JSON.stringify(fts.map(f => f.alvo + '=' + f.alvoBg)));
 
   /* A DENSIDADE DOS KPIs É A DO PAINEL: o Scorecard põe 20 em 10 colunas */
   const kdensa = ins.filter(x => x.cols >= 8);
@@ -1084,6 +1160,17 @@ let provas1 = [];
      'a legenda do slide é a .gleg do painel', JSON.stringify(legs.slice(0, 4)));
   af(chs.every(c => c.options.plugins.legend && c.options.plugins.legend.display === false),
      'e a legenda nativa do Chart.js fica desligada');
+
+  /* A APARÊNCIA DO DATASET É A DO PAINEL, INTEIRA (Renan: "não preciso nem
+     falar"): borda, raio, largura da barra, pontos da linha. */
+  const g1s = chs.find(c => (c.data.labels||[]).join() === 'jan/26,fev/26,mar/26' && c.data.datasets.length === 2);
+  const d0 = g1s && g1s.data.datasets[0], d1 = g1s && g1s.data.datasets[1];
+  af(d0 && d0.borderWidth === 1 && d0.borderRadius === 0 && d0.barPercentage === .97,
+     'a barra leva borda, raio e largura do painel', JSON.stringify(d0 && [d0.borderWidth, d0.borderRadius, d0.barPercentage]));
+  af(d0 && d0.backgroundColor === '#F9731633', 'com o alfa da cor preservado', d0 && d0.backgroundColor);
+  af(d1 && JSON.stringify(d1.pointRadius) === '[0,0,6]' && d1.tension === 0,
+     'e a linha leva os pontos e a tensão do painel — nada de default meu', JSON.stringify(d1 && [d1.pointRadius, d1.tension]));
+
 
   /* TODOS os gráficos, não só o primeiro */
   const disp = provas1.filter(p => /painel-km/.test(p.pag) && p.nGraf != null);

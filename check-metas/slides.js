@@ -69,12 +69,12 @@ const SL_CSS = `
   text-transform:uppercase;letter-spacing:1.2px;}
 
 /* ── cards de KPI (a fileira do Scorecard) ── */
-.sl-kpis{flex:0 0 auto;display:grid;gap:12px;}
+.sl-kpis{flex:0 0 auto;display:grid;gap:14px;}
 .sl-kpi{background:${TK.card};border:1px solid ${TK.cardBrd};border-radius:12px;
-  padding:13px 16px;display:flex;flex-direction:column;justify-content:center;gap:2px;}
+  padding:18px 20px;display:flex;flex-direction:column;justify-content:center;gap:4px;}
 .sl-kpi .r{font-size:11px;font-weight:700;color:${TK.txt3};text-transform:uppercase;letter-spacing:.8px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sl-kpi .v{font-size:28px;font-weight:800;line-height:1.05;}
+.sl-kpi .v{font-size:32px;font-weight:800;line-height:1.05;}
 .sl-kpi .m{font-size:11px;font-weight:500;color:${TK.txt3};}
 /* grade DENSA: quando o painel põe 8+ por linha (o Scorecard mostra os 20
    indicadores em 10 colunas), o card encolhe junto — senão os cards tomam a
@@ -139,10 +139,10 @@ table.sl-t{width:100%;border-collapse:collapse;table-layout:auto;}
 table.sl-t th{background:${TK.cabec};color:${TK.txt2};font-weight:800;font-size:.86em;
   text-transform:uppercase;letter-spacing:.5px;text-align:left;white-space:nowrap;
   padding:11px 12px;border-bottom:1px solid ${TK.linha};}
-table.sl-t th.n{text-align:right;}
+table.sl-t th.sl-n{text-align:right;}
 table.sl-t td{padding:10px 12px;border-bottom:1px solid ${TK.linha};color:${TK.txt};
   vertical-align:top;overflow-wrap:anywhere;}
-table.sl-t td.n{text-align:right;white-space:nowrap;}
+table.sl-t td.sl-n{text-align:right;white-space:nowrap;}
 table.sl-t td.curto,table.sl-t th.curto{white-space:nowrap;overflow-wrap:normal;width:1%;}
 /* NOWRAP SEM ENCOLHER: quando TODA coluna é curta (tabela só de números, como
    a abertura por unidade), pôr width:1% em todas deixa a tabela sem ninguém
@@ -357,7 +357,7 @@ function slTabela(tit, sub, dados, opt){
     const wrap = document.createElement('div'); wrap.className = 'sl-tw'; mio.appendChild(wrap);
     const t = document.createElement('table'); t.className = 'sl-t'; wrap.appendChild(t);
     t.innerHTML = '<thead><tr>'
-      + cab.map((c,i)=>`<th class="${dados.dir&&dados.dir[i]?'n ':''}${curta[i]?kls:''}"></th>`).join('')
+      + cab.map((c,i)=>`<th class="${dados.dir&&dados.dir[i]?'sl-n ':''}${curta[i]?kls:''}"></th>`).join('')
       + '</tr></thead><tbody></tbody>';
     [...t.querySelectorAll('th')].forEach((th,i)=>{ th.textContent = cab[i]; });
 
@@ -380,7 +380,7 @@ function slTabela(tit, sub, dados, opt){
         const tr = document.createElement('tr');
         if (l.total) tr.className = 'tot';
         tr.innerHTML = l.cels.map((c,i)=>
-          `<td class="${c.dir||(dados.dir&&dados.dir[i])?'n ':''}${curta[i]?kls:''}"></td>`).join('');
+          `<td class="${c.dir||(dados.dir&&dados.dir[i])?'sl-n ':''}${curta[i]?kls:''}"></td>`).join('');
         [...tr.children].forEach((td,i)=>{
           const c = l.cels[i]; if (!c) return;
           if (agr[i] && !l.total && ant[i] === c.t) { td.textContent = ''; return; }
@@ -521,7 +521,7 @@ function slGrafs(mio, gs){
   const n = Math.min(gs.length, 3);
   g.style.gridTemplateColumns = `repeat(${n},minmax(0,1fr))`;
   mio.appendChild(g);
-  gs.slice(0, 3).forEach(x => { x.apertado = (x.labels||[]).length > 8; slGrafico(g, x); });
+  gs.slice(0, 3).forEach(x => slGrafico(g, x));
   return g;
 }
 
@@ -613,11 +613,10 @@ function slGrafico(mio, g){
     type: g.tipo || 'bar',
     data: {
       labels: g.labels || [],
-      datasets: (g.datasets||[]).map(d => Object.assign({
-        borderWidth: d.tipo === 'line' ? 3 : 0,
-        borderRadius: d.tipo === 'line' ? 0 : 4,
-        tension: .3, pointRadius: 3,
-      }, d, { type: d.tipo || undefined })),
+      /* sem default meu: o que o painel definiu (borda, raio, largura da
+         barra, pontos, tensão) vem no próprio dataset; o que ele não definiu
+         fica no default do Chart.js — o mesmo que o painel usa */
+      datasets: (g.datasets||[]).map(d => Object.assign({}, d, { type: d.tipo || undefined })),
     },
     options: {
       responsive:true, maintainAspectRatio:false,
@@ -640,10 +639,7 @@ function slGrafico(mio, g){
            pediu. */
         datalabels: {
           anchor:'end', align:'end', offset:3, clamp:true, clip:false,
-          /* APERTADO = dois gráficos na mesma página com 12 meses: em 13px os
-             rótulos encostam uns nos outros ("-487.57k-731.40k-143.37k"
-             colados). O tamanho cai com o espaço, não com o meu gosto. */
-          color:TK.txt, font:{ family:'Montserrat', size:g.apertado?10:13, weight:'700' },
+          color:TK.txt, font:{ family:'Montserrat', size:13, weight:'700' },
           /* O PAINEL MANDA EM DUAS COISAS SEPARADAS: se o rótulo aparece
              (`mostra`) e, quando ele mesmo escreve o texto, qual é
              (`rotulos`, só quando o painel tem formatter). Juntar as duas foi
@@ -867,7 +863,7 @@ function slMonta(tit, sub, blocos){
       });
       const kls = curta.filter(c => !c).length >= 2 ? 'curto' : 'nq';
       t.innerHTML = '<thead><tr>'
-        + cab.map((c,i)=>`<th class="${dir[i]?'n ':''}${curta[i]?kls:''}"></th>`).join('')
+        + cab.map((c,i)=>`<th class="${dir[i]?'sl-n ':''}${curta[i]?kls:''}"></th>`).join('')
         + '</tr></thead><tbody></tbody>';
       [...t.querySelectorAll('th')].forEach((th,i)=>{ th.textContent = cab[i]; });
       const tb = t.querySelector('tbody');
@@ -876,7 +872,7 @@ function slMonta(tit, sub, blocos){
         const tr = document.createElement('tr');
         if (l.total) tr.className = 'tot';
         tr.innerHTML = l.cels.map((c,i)=>
-          `<td class="${c.dir||dir[i]?'n ':''}${curta[i]?kls:''}"></td>`).join('');
+          `<td class="${c.dir||dir[i]?'sl-n ':''}${curta[i]?kls:''}"></td>`).join('');
         [...tr.children].forEach((td,j)=>{
           const c = l.cels[j]; if (!c) return;
           if (agr[j] && !l.total && ant[j] === c.t) { td.textContent = ''; return; }
@@ -903,10 +899,11 @@ function slMonta(tit, sub, blocos){
       const img = document.createElement('img');
       img.src = x.png; img.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;';
       box.appendChild(img); mio.appendChild(box);
-      /* slide que é SÓ a foto usa a página inteira: o respiro de 64px do miolo
-         existe para texto, e aqui só faz a imagem encolher */
-      if (b.length === 1 && !x.tabela && !(x.grafs||[]).length && !(x.kpis||[]).length && !(x.heros||[]).length)
-        mio.style.padding = '18px 28px 30px';
+      /* ALINHADA COM O TÍTULO. Eu reduzia o respiro do miolo para 28px no
+         slide de foto e a imagem começava 36px à esquerda do título — o
+         "descentralizado" do Resumo Executivo (Renan, 20/09/2026). O miolo
+         fica nos 64px de todo slide. */
+      if (x.escala) { img.style.width = (x.escala*100) + '%'; img.style.height = (x.escala*100) + '%'; }
     }
   });
 
