@@ -127,16 +127,17 @@ window.html2canvas = function(el, o){
       soTab: !!(el.querySelector('.sl-tw') && !el.querySelector('.sl-card')
                 && !el.querySelector('.sl-kpis') && el.querySelectorAll('.sl-tw').length === 1),
       mioPad: (function(){ var m = el.querySelector('.sl-mio'); return m ? getComputedStyle(m).paddingLeft : null; })(),
-      fotoEsc: (function(){ var im = el.querySelector('.sl-mio > div > img'); return im && !im.closest('.sl-pod') ? im.style.width : null; })(),
+      fotoEsc: (function(){ var im = el.querySelector('.sl-mio > div > img'); if (!im || im.closest('.sl-pod')) return null;
+        var bx = im.parentNode; return { w: parseFloat(im.style.width), h: parseFloat(im.style.height), bw: bx.clientWidth, bh: bx.clientHeight }; })(),
       numFs: (function(){ var td = tab && tab.querySelector('td.sl-n'); return td ? getComputedStyle(td).fontSize : null; })(),
       hero: (function(){
         var h = el.querySelector('.sl-hero'); if (!h) return null;
         var v = h.querySelector('.v'), d = h.querySelector('.d');
         return { fundo: getComputedStyle(h).backgroundColor,
                  alt: Math.round(h.getBoundingClientRect().height),
-                 /* deltas AO LADO do valor = mesma faixa vertical */
-                 aoLado: !!(v && d && Math.abs(v.getBoundingClientRect().top
-                                              - d.getBoundingClientRect().top) < 60) };
+                 /* deltas AO LADO = começam antes de o valor terminar; EMBAIXO =
+                    começam depois da base do valor */
+                 aoLado: !!(v && d && d.getBoundingClientRect().top < v.getBoundingClientRect().bottom - 4) };
       })(),
       densa: !!el.querySelector('.sl-kpis.denso'),
       /* MEDIR as colunas, não ler o CSS: o computed de grid-template-columns
@@ -973,7 +974,7 @@ let provas1 = [];
      JSON.stringify(comFoto2.map(x => x.foto.fundo)));
   af(comFoto2.every(x => x.foto.borda === '0px'), 'e sem moldura',
      JSON.stringify(comFoto2.map(x => x.foto.borda)));
-  af(comFoto2.every(x => x.foto.larg >= 1380), 'usando a largura da página',
+  af(comFoto2.every(x => x.foto.larg >= 1100), 'usando a página (limitada pela altura, na proporção certa)',
      JSON.stringify(comFoto2.map(x => x.foto.larg)));
 
   /* TABELA SÓ DE COLUNAS CURTAS TEM DE DISTRIBUIR (Renan, 20/09/2026: "aqui
@@ -1021,9 +1022,12 @@ let provas1 = [];
   af(her.every(x => /rgba\(0, 0, 0, 0\)|transparent/.test(x.hero.fundo)),
      'sem faixa clara atrás — o hero é solto sobre a página',
      JSON.stringify(her.map(x => x.hero.fundo)));
-  af(her.every(x => x.hero.aoLado), 'com os deltas na mesma linha do valor',
+  /* A REFERÊNCIA É A IMAGEM 2 DELE (20/09/2026: "quero tudo EXATAMENTE igual"):
+     os deltas na linha DE BAIXO do valor — eu tinha invertido e revertido a
+     versão certa. É o CSS daquele build, copiado, não reescrito. */
+  af(her.every(x => !x.hero.aoLado), 'com os deltas embaixo do valor, como na imagem 2',
      JSON.stringify(her.map(x => x.tit + '=' + x.hero.aoLado)));
-  af(her.every(x => x.hero.alt <= 110), 'e baixo, para o gráfico ficar com a altura dele',
+  af(her.every(x => x.hero.alt <= 120), 'e sem virar uma faixa alta',
      JSON.stringify(her.map(x => x.hero.alt)));
 
   /* FCAs AGRUPADOS = UMA TABELA, UM CABEÇALHO (Renan: "coluna unidade, igual
@@ -1058,13 +1062,22 @@ let provas1 = [];
   af(fotos.length >= 1 && fotos.every(x => x.mioPad === '64px'),
      'o slide de foto usa o mesmo respiro dos outros — imagem alinhada com o título',
      JSON.stringify(fotos.map(x => x.tit + '=' + x.mioPad)));
-  /* a árvore "achatadinha de leve": 94%, sem distorcer */
+  /* A FOTO NÃO ESTICA (Renan, 20/09/2026: "ainda estão esticando
+     verticalmente os dados"): o html2canvas ignora object-fit, então a
+     imagem tem de nascer em px na proporção da captura (o dublê devolve
+     1200×700). */
+  const razao = 1200 / 700;
+  af(fotos.every(x => x.fotoEsc && Math.abs(x.fotoEsc.w / x.fotoEsc.h - razao) < 0.03),
+     'a imagem da foto guarda a proporção da captura — nada esticado',
+     JSON.stringify(fotos.map(x => x.tit + '=' + (x.fotoEsc && (x.fotoEsc.w / x.fotoEsc.h).toFixed(2)))));
+  /* e a árvore "achatadinha de leve": 94% da caixa */
   const arvF = fotos.filter(x => /Combustíveis – /.test(x.tit));
-  af(arvF.length >= 1 && arvF.every(x => x.fotoEsc === '94%'), 'a árvore sai a 94%',
-     JSON.stringify(arvF.map(x => x.fotoEsc)));
-  af(fotos.filter(x => !/Combustíveis – /.test(x.tit)).every(x => x.fotoEsc !== '94%'),
-     'e só ela — o resto das fotos fica no tamanho cheio',
-     JSON.stringify(fotos.map(x => x.tit + '=' + x.fotoEsc)));
+  af(arvF.length >= 1 && arvF.every(x => x.fotoEsc.w <= x.fotoEsc.bw * 0.94 + 1
+       && (x.fotoEsc.w >= x.fotoEsc.bw * 0.93 || x.fotoEsc.h >= x.fotoEsc.bh * 0.93)),
+     'a árvore sai a 94% da caixa', JSON.stringify(arvF.map(x => x.fotoEsc)));
+  af(fotos.filter(x => !/Combustíveis – /.test(x.tit)).every(x =>
+       x.fotoEsc.w >= x.fotoEsc.bw * 0.99 || x.fotoEsc.h >= x.fotoEsc.bh * 0.99),
+     'e só ela — o resto das fotos usa a caixa toda', JSON.stringify(fotos.map(x => x.tit + '=' + JSON.stringify(x.fotoEsc))));
 
   /* CLASSE "n" COLIDIA com o .n do check-metas (font-size:11px;color:--txt3):
      toda célula numérica saía em 11px cinza, fosse qual fosse a tabela. */
