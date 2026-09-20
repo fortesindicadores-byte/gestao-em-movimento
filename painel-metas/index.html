@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609102130">
+<meta name="build" content="202609201830">
 <title>Painel de Metas</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -273,8 +273,26 @@ function compCusto(frota,receita){
 }
 // Dispersão = Δ% acumulado (YTD no ano) dos projetos ROTA + Auto Serviço · Painel KM
 function compDisp(rows){const mo={};rows.forEach(r=>{const d=parseD(r[0]);if(!d)return;const proj=String(r[14]||'').split('-')[0].trim().toUpperCase();if(!(proj==='ROTA'||proj==='AUTO SERVIÇO'||proj==='AUTO SERVICO'))return;const k=vigKeyN(d);const rem=r[31]!=null?+r[31]:0,real=r[32]!=null?+r[32]:0;const o=mo[k]=mo[k]||{rem:0,real:0};o.rem+=rem;o.real+=real;});const out={},acc={};Object.keys(mo).map(Number).sort((a,b)=>a-b).forEach(k=>{const y=Math.floor(k/100);acc[y]=acc[y]||{rem:0,real:0};acc[y].rem+=mo[k].rem;acc[y].real+=mo[k].real;out[k]=acc[y].rem?((acc[y].real-acc[y].rem)/acc[y].rem*100):null;});return out;}
-// DPO/VPO = último semestre (H) com dados; conta unidades abaixo de Nível 3 → 0=100% / 1=50% / 2+=0% (vale p/ todos os meses)
-function compDPO(rows){const hdr=rows[0]||[];let li=-1;for(let i=hdr.length-1;i>=1;i--){if(rows.slice(1).some(r=>/Nível/i.test(String(r[i]||'')))){li=i;break;}}if(li<0)return{frac:0,below:null,sem:null};let below=0;rows.slice(1).forEach(r=>{const m=String(r[li]||'').match(/Nível\s*(\d+)/i);if(m&&+m[1]<3)below++;});return{frac:below===0?1:below===1?.5:0,below,sem:String(hdr[li]||'')};}
+// DPO/VPO = auditoria por SEMESTRE (colunas 1H25 · 2H25 · 1H26 · 2H26 da aba DPO). Conta unidades abaixo de
+// Nível 3 → 0=100% / 1=50% / 2+=0%. Cada mês vale a coluna do SEU semestre (jan–jun → 1H, jul–dez → 2H), e o
+// semestre passa a valer assim que tiver a 1ª unidade auditada — unidade ainda em branco não conta (Renan,
+// 20/09/2026: "no momento que uma unidade foi auditada no H2, vale só o H2 para acumulado ano e meses vigentes").
+// Mês cujo semestre ainda não tem auditoria usa o último semestre anterior com dado. O acumulado do ano é o valor
+// do semestre corrente, não a média dos meses (ver renderTable).
+// Cabeçalho fora do padrão "nHaa" → cai na regra antiga (última coluna com dado vale para todos os meses).
+function compDPO(rows){
+  const hdr=rows[0]||[], corpo=rows.slice(1);
+  const conta=i=>{let below=0,aud=0;corpo.forEach(r=>{const m=String(r[i]||'').match(/Nível\s*(\d+)/i);if(!m)return;aud++;if(+m[1]<3)below++;});return{aud,below,frac:below===0?1:below===1?.5:0};};
+  const cols=[];
+  hdr.forEach((h,i)=>{if(i<1)return;const m=String(h||'').match(/^\s*([12])\s*H\s*(\d{2}|\d{4})\s*$/i);if(!m)return;const c=conta(i);if(!c.aud)return;const yy=m[2].length===2?2000+ +m[2]:+m[2];cols.push({key:yy*10+ +m[1],sem:String(h).trim(),...c});});
+  cols.sort((a,b)=>a.key-b.key);
+  if(!cols.length){                              // regra antiga: última coluna com "Nível" vale para todos os meses
+    let li=-1;for(let i=hdr.length-1;i>=1;i--){if(corpo.some(r=>/Nível/i.test(String(r[i]||'')))){li=i;break;}}
+    const c=li<0?{frac:0,below:null,aud:0}:conta(li);const fixo={...c,sem:li<0?null:String(hdr[li]||'')};
+    return{cols:[],de:()=>fixo};
+  }
+  return{cols,de:(yr,mIdx)=>{const k=yr*10+(mIdx<6?1:2);let best=null;cols.forEach(c=>{if(c.key<=k)best=c;});return best||{frac:0,below:null,aud:0,sem:null};}};
+}
 // FCA: registros (vigKeyN, status C/A/N). Score por status: Concluída=100, Em andamento=50, Não iniciada=0.
 // ── O FCA MORA NO BANCO, NÃO NA PLANILHA (10/09/2026) ──
 // A aba "FCA Total" do Termômetro parou em dez/25, que é quando o FCA passou
@@ -379,11 +397,17 @@ function renderTable(){
   indOrder.forEach(base=>{
     const ind=base.indicador;
     const per=ALL.filter(x=>x.indicador===ind&&perKeys.has(vigKeyN(x.vigD)));
-    const pMeta=avgNN(per.map(o=>o.meta)),pReal=avgNN(per.map(o=>o.real)),pAtg=avgNN(per.map(o=>o.atg));
-    const pPts=per.length?per.reduce((s,o)=>s+(o.pontos||0),0)/per.length:null;
+    // DPO/VPO NÃO é média de meses: vale o semestre corrente (o mês mais recente da janela) — no período e no YTD.
+    // Senão jan–jun no 1H com 100% e jul+ no 2H com 50% dariam um "acumulado" de 75% que não existe em auditoria nenhuma.
+    const ehDpo=classify(ind)==='dpo';
+    const ultimo=a=>a.length?a.reduce((m,o)=>vigKeyN(o.vigD)>vigKeyN(m.vigD)?o:m):null;
+    const pUlt=ehDpo?ultimo(per):null;
+    const pMeta=avgNN(per.map(o=>o.meta)),pReal=pUlt?pUlt.real:avgNN(per.map(o=>o.real)),pAtg=pUlt?pUlt.atg:avgNN(per.map(o=>o.atg));
+    const pPts=pUlt?(pUlt.pontos||0):(per.length?per.reduce((s,o)=>s+(o.pontos||0),0)/per.length:null);
     const yr=ALL.filter(x=>x.indicador===ind&&ytd.some(d=>vigKeyN(d)===vigKeyN(x.vigD)));
-    const atgY=avgNN(yr.map(o=>o.atg));
-    const ptsY=yr.length?yr.reduce((s,o)=>s+(o.pontos||0),0)/yr.length:null;
+    const yUlt=ehDpo?ultimo(yr):null;
+    const atgY=yUlt?yUlt.atg:avgNN(yr.map(o=>o.atg));
+    const ptsY=yUlt?(yUlt.pontos||0):(yr.length?yr.reduce((s,o)=>s+(o.pontos||0),0)/yr.length:null);
     html+=`<tr><td class="lft ind">${ind}</td><td class="sec-col">${n1(base.peso)}</td><td class="lft desc sec-col">${(base.desc||'').replace(/\n/g,'<br>')}</td><td class="lft regra sec-col">${(base.regra||'').replace(/\n/g,'<br>')}</td><td class="un sec-col">${base.un||''}</td>`;
     if(per.length){html+=`<td class="sec-col">${n1(pMeta)}</td><td>${n1(pReal)}</td><td style="color:${atgColor(pPts,base.peso)};font-weight:700">${pctI(pAtg)}</td><td><span class="pts">${n1(pPts)}</span></td>`;}else{html+='<td class="sec-col">-</td><td>-</td><td>-</td><td>-</td>';}
     html+=`<td class="sep-l sec-col" style="color:${atgColor(ptsY,base.peso)};font-weight:700">${pctI(atgY)}</td><td class="sec-col"><span class="pts">${n1(ptsY)}</span></td>`;
@@ -419,10 +443,12 @@ async function carregar(){
         o.real=dispMap[k]!=null?dispMap[k]:null;
         o.atg=(o.real!=null&&o.real!==0)?meta/o.real*100:null;
         o.pontos=o.real!=null?bandLowerRatio(meta?o.real/meta*100:null)*peso:0;
-      }else if(tipo==='dpo'){          // pilar sustentável · vale p/ todos os meses
-        o.real=dpo.frac*100;
+      }else if(tipo==='dpo'){          // pilar sustentável · vale a coluna do semestre do mês (1H / 2H)
+        const dp=dpo.de(yr,mIdx);
+        o.real=dp.frac*100;
         o.atg=meta?o.real/meta*100:o.real;
-        o.pontos=dpo.frac*peso;
+        o.pontos=dp.frac*peso;
+        o.dpoSem=dp.sem;
       }else if(tipo==='fca'){          // maior = melhor · conta só até M-1
         o.real=fcaAderM2(fcaRecs,yr,mIdx);
         o.atg=(o.real!=null&&meta)?o.real/meta*100:null;
@@ -471,6 +497,6 @@ carregar();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609102130"></script>
+<script src="../assets/build-check.js?v=202609201830"></script>
 </body>
 </html>
