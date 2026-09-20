@@ -69,12 +69,12 @@ const SL_CSS = `
   text-transform:uppercase;letter-spacing:1.2px;}
 
 /* ── cards de KPI (a fileira do Scorecard) ── */
-.sl-kpis{flex:0 0 auto;display:grid;gap:12px;}
+.sl-kpis{flex:0 0 auto;display:grid;gap:14px;}
 .sl-kpi{background:${TK.card};border:1px solid ${TK.cardBrd};border-radius:12px;
-  padding:13px 16px;display:flex;flex-direction:column;justify-content:center;gap:2px;}
+  padding:18px 20px;display:flex;flex-direction:column;justify-content:center;gap:4px;}
 .sl-kpi .r{font-size:11px;font-weight:700;color:${TK.txt3};text-transform:uppercase;letter-spacing:.8px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sl-kpi .v{font-size:28px;font-weight:800;line-height:1.05;}
+.sl-kpi .v{font-size:32px;font-weight:800;line-height:1.05;}
 .sl-kpi .m{font-size:11px;font-weight:500;color:${TK.txt3};}
 /* grade DENSA: quando o painel põe 8+ por linha (o Scorecard mostra os 20
    indicadores em 10 colunas), o card encolhe junto — senão os cards tomam a
@@ -521,7 +521,7 @@ function slGrafs(mio, gs){
   const n = Math.min(gs.length, 3);
   g.style.gridTemplateColumns = `repeat(${n},minmax(0,1fr))`;
   mio.appendChild(g);
-  gs.slice(0, 3).forEach(x => { x.apertado = (x.labels||[]).length > 8; slGrafico(g, x); });
+  gs.slice(0, 3).forEach(x => slGrafico(g, x));
   return g;
 }
 
@@ -640,10 +640,7 @@ function slGrafico(mio, g){
            pediu. */
         datalabels: {
           anchor:'end', align:'end', offset:3, clamp:true, clip:false,
-          /* APERTADO = dois gráficos na mesma página com 12 meses: em 13px os
-             rótulos encostam uns nos outros ("-487.57k-731.40k-143.37k"
-             colados). O tamanho cai com o espaço, não com o meu gosto. */
-          color:TK.txt, font:{ family:'Montserrat', size:g.apertado?10:13, weight:'700' },
+          color:TK.txt, font:{ family:'Montserrat', size:13, weight:'700' },
           /* O PAINEL MANDA EM DUAS COISAS SEPARADAS: se o rótulo aparece
              (`mostra`) e, quando ele mesmo escreve o texto, qual é
              (`rotulos`, só quando o painel tem formatter). Juntar as duas foi
