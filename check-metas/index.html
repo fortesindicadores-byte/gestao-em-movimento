@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609192340">
+<meta name="build" content="202609200210">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -539,7 +539,14 @@ const ALVO_PADRAO="(document.querySelector('.vw.on')||document.querySelector('.c
 
 function P(tit,sub,url,prep,opt){ opt=opt||{};
   return {t:'p',tit,sub,url,podio:opt.podio,
-          caps:[{prep,alvo:opt.alvo,esp:opt.esp,rot:opt.rot}]}; }
+          caps:[{prep,alvo:opt.alvo,esp:opt.esp,rot:opt.rot,foto:opt.foto,semCols:opt.semCols,semTab:opt.semTab}]}; }
+/* UNIDADE, PROJETO e VIGÊNCIA do FCA já estão no TÍTULO do slide
+   ("Manutenções – PIR · EMPURRADA" / "FCA · ago/2026") e são iguais em toda
+   linha — foi isso que deixou o slide com cara de FCA repetido três vezes
+   (Renan, 19/09/2026: "esse FCA repetiu 3 vezes, não entendi"; o que repete de
+   verdade é o Fato, porque as três linhas são do mesmo pacote com causas
+   diferentes). Tirando as três, sobra largura e o cabeçalho para de cortar. */
+const FCA_SEM=['UNIDADE','PROJETO','VIGÊNCIA'];
 function P2(tit,sub,url,a,b){ return {t:'p',tit,sub,url,caps:[a,b]}; }
 
 const brlDesvio=s=>{ const m=String(s||'').match(/R\$\s*([\d.]+)/); return m?+m[1].replace(/\./g,''):0; };
@@ -606,14 +613,18 @@ function montaRoteiro(avisa){
          ('ROTA'), não o nível 3 inteiro ('ROTA - CGR') como no FCA */
       const arvPrep=`__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); __cm.redesenha('onFilterChange');`;
       if(!g.arvore){
-        R.push(P(nome,'FCA · '+sub,'../fca-consolidado/',fcaPrep));
+        R.push(P(nome,'FCA · '+sub,'../fca-consolidado/',fcaPrep,{semCols:FCA_SEM}));
       }else{
-        /* UM SLIDE com os dois, empilhados (Renan, 18/09/2026: "Árvore e
-           FCA juntos… devem ser juntos") — é o que o PPT dele já fazia */
-        R.push({t:'p',tit:nome,sub:'Árvore e FCA · '+sub,url:'../combustivel/arvore-combustivel/',caps:[
-          {rot:'Árvore de Combustível', prep:arvPrep},
-          {rot:'FCA', url:'../fca-consolidado/', prep:fcaPrep}
-        ]});
+        /* A ÁRVORE É UM DESENHO, NÃO TABELA NEM CARD (Renan, 19/09/2026:
+           "árvores do combustível muito fora do padrão... se precisar separar
+           para caber, faça, mas quero as árvores"). São caixas ligadas por
+           conectores em SVG; o meu leitor genérico lia aquilo como uma fileira
+           de cards de KPI e uma tabelinha solta. Aqui ela entra como FOTO do
+           `.tree-wrap`, dentro da moldura do padrão — e em slide PRÓPRIO, com o
+           FCA logo depois, porque os dois juntos não cabem sem espremer. */
+        R.push(P(nome,'Árvore de Combustível · '+sub,'../combustivel/arvore-combustivel/',
+          arvPrep,{foto:true,alvo:"document.querySelector('.tree-wrap')"}));
+        R.push(P(nome,'FCA · '+sub,'../fca-consolidado/',fcaPrep,{semCols:FCA_SEM}));
       }
     });
   });
@@ -648,8 +659,15 @@ function montaRoteiro(avisa){
      de 11 indicadores com Descrição e Regra em prosa ficava espremida no que
      sobrava — que é praticamente nada. Pela tabela o slide vai pelo paginador
      e o que não cabe vira o slide seguinte, inteiro. */
-  R.push(P('Painel de Metas','Gerente de Frota · '+vX,'../painel-metas/',
-    `__cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`,
+  /* PAINEL DE METAS EM DOIS SLIDES (Renan, 19/09/2026: "se coubesse tudo até
+     mais legal"). Tudo numa página só obrigaria a tabela de 5 indicadores com
+     Descrição e Regra em prosa a dividir espaço com o hero e dois gráficos —
+     que foi como ela sumiu na 1ª geração. Assim nada é espremido e nada falta,
+     e o total continua sendo o do hero do painel, não uma soma minha. */
+  const pmPrep=`__cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`;
+  R.push(P('Painel de Metas','Gerente de Frota · '+vX,'../painel-metas/',pmPrep,
+    {semTab:true, alvo:"document.querySelector('.main')||document.body"}));
+  R.push(P('Painel de Metas','Indicadores · '+vX,'../painel-metas/',pmPrep,
     {alvo:"document.querySelector('#tbl table')"}));
 
   ROTEIRO=R; ESTADO={};
@@ -997,7 +1015,20 @@ const CM_HELPER=`window.__cm={
                avatar:(im && im.style.display!=='none')?im.src:'' };
     });
     out=out.filter(Boolean);
-    return out.length?out:null;
+    if(!out.length) return null;
+    /* O BRASÃO é a marca-d'água que o painel põe atrás do pódio
+       (.podio-section::after). Sem ele o slide fica com o fundo escuro e nada
+       mais — "poderia usar toda a temática" (Renan, 19/09/2026). */
+    var bras='';
+    for(var n=slots[0]; n && n!==document.body && !bras; n=n.parentElement){
+      ['::after','::before',null].forEach(function(ps){
+        if(bras) return;
+        var b=window.getComputedStyle(n,ps).backgroundImage;
+        var m=b&&b.match(/url\\(["']?([^"')]+)["']?\\)/);
+        if(m) bras=m[1];
+      });
+    }
+    return { tres:out, brasao:bras };
   },
   /* ── CARDS DE KPI, sem depender das classes de cada painel ──
      Cada painel nomeia o card de um jeito (.kpi, .kpi-card, .ch-min…), e
@@ -1026,37 +1057,111 @@ const CM_HELPER=`window.__cm={
     });
     return out;
   },
-  /* ── GRÁFICO: os DADOS do Chart.js, não o pixel ──
+  /* ── HERO: o número principal, que no padrão fica FORA de card ──
+     Renan, 19/09/2026: "faltou realizado". O hero é ".fin-hero > div" com
+     .hlbl/.hval/.hdel (layout novo) ou ".hero" com .hero-label/.hero-value
+     (layout antigo) — nenhum dos dois tem classe de card, então o leitor de
+     KPI não os enxergava e o número que se lê primeiro ficava de fora.
+     São VÁRIOS quando o painel tem: a Visão Financeira traz Receita Líquida
+     e EBITDA lado a lado. */
+  heros:function(raiz){
+    var cs=function(n){ return window.getComputedStyle(n); };
+    var r=raiz||document, out=[];
+    var caixas=[].slice.call(r.querySelectorAll('.fin-hero > div'));
+    if(!caixas.length) caixas=[].slice.call(r.querySelectorAll('.hero'));
+    caixas.forEach(function(h){
+      if(cs(h).display==='none') return;
+      var lbl=h.querySelector('.hlbl,.hero-label');
+      var val=h.querySelector('.hval,.hero-value');
+      if(!val) return;
+      var t=(val.innerText||'').replace(/\\s+/g,' ').trim();
+      if(!t||t==='—') return;
+      var del=[].slice.call(h.querySelectorAll('.hdel > div')).map(function(d){
+        var b=d.querySelector('b'); if(!b) return null;
+        var v=(b.innerText||'').trim();
+        var rot=(d.innerText||'').replace(v,'').replace(/\\s+/g,' ').trim();
+        if(!v||v==='—') return null;
+        return {rotulo:rot, valor:v, cor:cs(b).color};
+      }).filter(Boolean);
+      var sub=h.querySelector('.hero-sub');
+      out.push({ rotulo:lbl?(lbl.innerText||'').trim():'', valor:t, cor:cs(val).color,
+                 sub:sub?(sub.innerText||'').replace(/\\s+/g,' ').trim():'', deltas:del });
+    });
+    return out;
+  },
+  /* ── GRÁFICOS: os DADOS do Chart.js, não o pixel ──
      Renan, 19/09: "Dispersão de km seara não saiu" — o canvas saía em branco
      porque a foto acontecia no meio da animação. Levando os dados, o gráfico
-     é redesenhado no slide com animation:false e não existe corrida. */
-  graf:function(raiz){
-    var C=window.Chart; if(!C||!C.getChart) return null;
-    var cvs=[].slice.call((raiz||document).querySelectorAll('canvas'))
-      .filter(function(c){ return c.offsetHeight>40; });
-    for(var i=0;i<cvs.length;i++){
-      var ch=null; try{ ch=C.getChart(cvs[i]); }catch(e){}
-      if(!ch||!ch.data||!ch.data.datasets||!ch.data.datasets.length) continue;
+     é redesenhado no slide com animation:false e não existe corrida.
+     São TODOS (era só o primeiro): a Dispersão tem Dispersão de KM % e
+     Impacto financeiro, o Scorecard Financeiro tem Custo Nominal e AV Custo —
+     e o segundo sumia do deck sem aviso. */
+  grafs:function(raiz){
+    var C=window.Chart; if(!C||!C.getChart) return [];
+    var cs=function(n){ return window.getComputedStyle(n); };
+    var out=[];
+    [].slice.call((raiz||document).querySelectorAll('canvas')).forEach(function(cv){
+      if(cv.offsetHeight<40) return;
+      var ch=null; try{ ch=C.getChart(cv); }catch(e){}
+      if(!ch||!ch.data||!ch.data.datasets) return;
       var ds=ch.data.datasets.filter(function(d){ return (d.data||[]).length; });
-      if(!ds.length) continue;
-      var card=cvs[i].closest('.gcard,.chart-card,.card,.ch-card')||cvs[i].parentNode;
+      if(!ds.length) return;
+      var card=cv.closest('.gcard,.chart-card,.card,.ch-card')||cv.parentNode;
       var tt=card?card.querySelector('.gt,.ct,.chart-title,.card-title,.tbl-title,b'):null;
       var ss=card?card.querySelector('.gs,.cs,.chart-sub,.tbl-sub'):null;
-      return {
-        titulo:tt?(tt.textContent||'').trim():'',
-        sub:ss?(ss.textContent||'').trim():'',
+      /* A LEGENDA É A DO PAINEL (.gleg), não a do Chart.js: o padrão desenha
+         quadradinho para barra e tracinho tracejado para linha, em HTML, com
+         "legend:{display:false}" no gráfico. As bolinhas no canto eram a
+         legenda nativa, que o portal não usa em lugar nenhum. */
+      var gl=card?card.querySelector('.gleg'):null;
+      var leg=gl?[].slice.call(gl.querySelectorAll('span')).map(function(s){
+        var i=s.querySelector('i');
+        return { t:(s.innerText||'').replace(/\\s+/g,' ').trim(),
+                 cor:i?cs(i).color:cs(s).color, sq:!!(i&&i.classList.contains('sq')) };
+      }).filter(function(x){ return x.t; }):null;
+      /* A JANELA DO EIXO É A DO PAINEL. Eu forçava beginAtZero e a Evolução,
+         que vai de 70% a 110%, virava 0 a 100 — as barras viraram torres e a
+         diferença entre 84,6 e 91,3 sumiu. Os rótulos do eixo vêm prontos,
+         então o "%" e o "mi" vêm junto sem eu adivinhar a unidade. */
+      var eixo=function(k){
+        var s=ch.scales&&ch.scales[k]; if(!s) return null;
+        return { min:s.min, max:s.max,
+                 oculto:!!(s.options&&s.options.display===false),
+                 grade:!!(s.options&&s.options.grid&&s.options.grid.display!==false),
+                 ticks:(s.ticks||[]).map(function(t){ return {v:t.value,l:String(t.label==null?'':t.label)}; }) };
+      };
+      /* O RÓTULO DE DADOS VEM DO FORMATTER DO PAINEL — ele é que sabe se é
+         "+17.7%", "334.55k" ou "5.00 mi", e se aparece em toda barra ou só no
+         mês corrente. Reformatar aqui foi o que tirou o sinal e o sufixo.
+         undefined = o painel não diz; null = o painel esconde. */
+      var dl=(ch.options&&ch.options.plugins&&ch.options.plugins.datalabels)||null;
+      var rotulo=function(d,i,v){
+        if(!dl) return undefined;
+        var ctx={chart:ch,dataset:d,dataIndex:i,datasetIndex:ch.data.datasets.indexOf(d),active:false};
+        try{
+          if(dl.display===false) return null;
+          if(typeof dl.display==='function' && !dl.display(ctx)) return null;
+        }catch(e){ return undefined; }
+        try{ if(typeof dl.formatter==='function'){ var t=dl.formatter(v,ctx); return t==null?null:String(t); } }catch(e){}
+        return undefined;
+      };
+      out.push({
+        titulo:tt?(tt.innerText||'').trim():'',
+        sub:ss?(ss.innerText||'').replace(/\\s+/g,' ').trim():'',
         tipo:ch.config.type||'bar',
         labels:(ch.data.labels||[]).map(function(l){ return String(l); }),
+        legenda:leg, eixoY:eixo('y'), eixoX:eixo('x'),
         datasets:ds.map(function(d){
           var cor=function(v){ return (typeof v==='string')?v:(Array.isArray(v)?v.map(function(x){return typeof x==='string'?x:null;}):null); };
-          return { label:d.label||'', data:(d.data||[]).map(function(v){
-                     return (v&&typeof v==='object')?(v.y!=null?v.y:v.v):v; }),
+          var vals=(d.data||[]).map(function(v){ return (v&&typeof v==='object')?(v.y!=null?v.y:v.v):v; });
+          return { label:d.label||'', data:vals,
+                   rotulos:vals.map(function(v,i){ return rotulo(d,i,v); }),
                    backgroundColor:cor(d.backgroundColor), borderColor:cor(d.borderColor),
                    borderDash:d.borderDash||undefined, tipo:d.type||null };
         })
-      };
-    }
-    return null;
+      });
+    });
+    return out;
   },
 
   /* topo cortado = contêiner rolado. Zera tudo antes da foto. */
@@ -1224,6 +1329,7 @@ async function capturaSlide(s){
         try{ podioDados=win.eval('(function(){try{return __cm.podio();}catch(e){return null;}})()'); }catch(e){}
         if(!podioDados) msgs.push('não achei o pódio do painel — montei do ranking, sem os bonecos');
       }
+      if(s.podio && podioDados && !podioDados.brasao) msgs.push('o pódio saiu sem o brasão do Frota de Elite');
       const el=win.eval('(function(){try{return '+(c.alvo||ALVO_PADRAO)+';}catch(e){return null;}})()')||doc.body;
       if(!el||!el.offsetHeight) msgs.push('alvo vazio — usei a página inteira');
       let alvo=(el&&el.offsetHeight)?el:doc.body;
@@ -1235,7 +1341,10 @@ async function capturaSlide(s){
            tabela, e procurá-los no alvo reduzido nunca acha nada — foi o que
            deixou o gráfico de fora do slide. */
         alvoCheio=alvo;
-        alvo=win.__cm.tabela(alvo);
+        /* `semTab` é o slide que quer o HERO e os GRÁFICOS, não a tabela: sem
+           isto o tabela() reduziria o alvo ao <table> e o slide viria com a
+           tabela que já vai no slide seguinte, sem o hero. */
+        if(!c.semTab) alvo=win.__cm.tabela(alvo);
         const h=win.__cm.abre(alvo);
         const hh=Math.max(tam.h,Math.ceil(h)+40);
         if(hh>tam.h){
@@ -1256,13 +1365,15 @@ async function capturaSlide(s){
         let c1=null;
         if(c.foto!==true){
           try{
-            const tab=win.__cm.extrai(alvo);
+            const tab=c.semTab?null:win.__cm.extrai(alvo);
             const kp =win.__cm.kpis(alvoCheio);
-            const gr =win.__cm.graf(alvoCheio);
-            if(tab||gr||(kp&&kp.length)) c1={tipo:'dados',tabela:tab,kpis:kp,graf:gr};
+            const gs =win.__cm.grafs(alvoCheio);
+            const hs =win.__cm.heros(alvoCheio);
+            if(tab||(gs&&gs.length)||(kp&&kp.length)||(hs&&hs.length))
+              c1={tipo:'dados',tabela:tab,kpis:kp,grafs:gs,heros:hs};
           }catch(e){ msgs.push('não consegui ler os dados: '+(e&&e.message||e)); }
         }
-        if(c1) fotos.push({rot:c.rot,...c1});
+        if(c1) fotos.push({rot:c.rot,semCols:c.semCols,...c1});
         else { const foto=await tiraFoto(win,alvo); fotos.push({rot:c.rot,foto:true,...foto}); }
       } finally {
         if(abriu){ try{ win.__cm.fecha(); }catch(e){}
@@ -1314,11 +1425,13 @@ const LAY_W=13.3333, LAY_H=7.5;
 async function paginasDo(s){
   const SP=window.SlidePadrao;
   if(s.cheia) return [s.cheia];                       /* capa / divisória */
-  const blocos=(s.fotos||[]).map(f=>({rot:f.rot,tabela:f.tabela,kpis:f.kpis,graf:f.graf,png:f.foto?f.png:null}));
+  const blocos=(s.fotos||[]).map(f=>({rot:f.rot,tabela:f.tabela,kpis:f.kpis,grafs:f.grafs,
+    heros:f.heros,semCols:f.semCols,png:f.foto?f.png:null}));
   /* pódio: o do PAINEL (com boneco); sem ele, os três primeiros do ranking */
   let els;
-  if(s.podio && (s.podioDados||[]).length){
-    els=SP.slPodio(s.tit,s.sub,s.podioDados.slice(0,3));
+  const pd=s.podioDados;
+  if(s.podio && pd && (pd.tres||[]).length){
+    els=SP.slPodio(s.tit,s.sub,pd.tres.slice(0,3),pd.brasao);
   } else if(s.podio && blocos[0] && blocos[0].tabela){
     const L=blocos[0].tabela.linhas.filter(l=>!l.total).slice(0,3).map(l=>{
       const c=l.cels||[];
@@ -1412,7 +1525,8 @@ async function gerar(fmt){
     }
     $('ov-barra').style.width='100%';
     set('ov-qual','Montando o arquivo…');
-    const comFoto=saida.filter(s=>s.cheia||(s.fotos&&s.fotos.length)||(s.podioDados&&s.podioDados.length));
+    const comFoto=saida.filter(s=>s.cheia||(s.fotos&&s.fotos.length)
+      ||(s.podioDados&&(s.podioDados.tres||[]).length));
     if(!comFoto.length) throw new Error('nenhum slide saiu — nada a salvar');
     if(fmt==='pdf') await montaPDF(comFoto); else await montaPPT(comFoto);
     set('ov-tit','Pronto');
@@ -1528,7 +1642,7 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202609192340"></script>
-<script src="../assets/build-check.js?v=202609192340"></script>
+<script src="slides.js?v=202609200210"></script>
+<script src="../assets/build-check.js?v=202609200210"></script>
 </body>
 </html>
