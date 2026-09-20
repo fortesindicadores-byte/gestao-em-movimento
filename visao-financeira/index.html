@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609201700">
+<meta name="build" content="202609202115">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Visão Financeira · DRE Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1260,7 +1260,9 @@ function renderCharts(f){
   const isLight=document.body.classList.contains('claro');
   const remC=isLight?'#161D2B':'#EEF2FA';
   const orcC=isLight?'#1B6FC4':'#2E90E8';
-  const verde=isLight?'#00B300':'#3BB33B', vermelho=isLight?'#FF0000':'#FF5252';
+  // as MESMAS cores do Painel KM nos dois temas (Renan, 20/09/2026: "verde e vermelho...
+  // ainda não estão no padrão") — lá é #3BB33B / #FF6666 fixo, sem trocar no claro
+  const verde='#3BB33B', vermelho='#FF6666';
   const mkR =d=>d.map((v,i)=>v!=null?(hlIdxs.includes(i)?6:3):0);
   const mkBg=(d,c)=>d.map(v=>v!=null?c:'transparent');
   const mkBw=d=>d.map((v,i)=>v!=null?(hlIdxs.includes(i)?2:0):0);
@@ -1272,8 +1274,9 @@ function renderCharts(f){
       return (red?vermelho:verde)+a; });
     const bc=data.map((v,i)=>{ if(v==null) return 'transparent';
       const o=ref&&ref[i]!=null?ref[i]:null; return (o==null||v>o)?vermelho:verde; });
-    return {type:'bar',label,data,backgroundColor:bg,borderColor:bc,borderWidth:1,borderRadius:3,
-      barPercentage:.97,categoryPercentage:.94,order:2};
+    // sem barPercentage/categoryPercentage: o Painel KM usa o espaçamento padrão do Chart.js
+    // (Renan, 20/09/2026: "distanciamento entre as barras") — colada era o desenho antigo
+    return {type:'bar',label,data,backgroundColor:bg,borderColor:bc,borderWidth:1,borderRadius:3,order:2};
   }
   const dsLin=(data,label,c)=>({type:'line',label,data,borderColor:c,borderWidth:2.5,tension:.3,fill:false,
     borderDash:[5,3],pointRadius:mkR(data),pointBackgroundColor:mkBg(data,c),pointBorderColor:mkBg(data,c),
@@ -2197,6 +2200,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609201700"></script>
+<script src="../assets/build-check.js?v=202609202115"></script>
 </body>
 </html>
