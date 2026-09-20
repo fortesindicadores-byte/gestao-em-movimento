@@ -1,0 +1,25 @@
+name: DPO Aba Inspect (semestre a semestre no Painel de Metas)
+
+# Dump da aba DPO do Termômetro e o que o compDPO do próprio painel-metas faz
+# com ela: qual semestre vale em cada mês, auditadas, abaixo de Nível 3 e o %.
+# Só leitura.
+on:
+  workflow_dispatch:
+    inputs:
+      ano:
+        description: 'Ano a simular mês a mês (vazio = ano corrente)'
+        required: false
+        default: ''
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Inspecionar a aba DPO
+        env:
+          DPO_ANO: ${{ github.event.inputs.ano }}
+        run: node scripts/dpo-aba-inspect.mjs
