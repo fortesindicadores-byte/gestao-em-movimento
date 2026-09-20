@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609202030">
+<meta name="build" content="202609202300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -613,8 +613,9 @@ function montaRoteiro(avisa){
   const ACUM=[]; for(let m=1;m<=mi;m++) ACUM.push(grafias(ano+'-'+String(m).padStart(2,'0')));
   const R=[];
 
-  R.push({t:'capa',tit:'CHECK DE METAS',sub:'ATIVOS / FROTA / TI',rod:'Fechamento '+vX});
-  R.push({t:'sec',txt:'Frota'});
+  R.push({t:'capa',tit:'CHECK DE METAS',sub:'FROTA',rod:'Fechamento '+vX});
+  /* SEM a divisória "Frota" depois da capa (Renan, 20/09/2026: "a segunda capa
+     nem precisa"): a capa já diz FROTA. As outras divisórias ficam. */
 
   R.push(P('Scorecard da Frota',vX,'../scorecard/',
     `__cm.vw('resumo'); __cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`));
@@ -858,8 +859,8 @@ async function pintaCapas(){
   await carregaFoto();
   try{ await document.fonts.load('800 104px Montserrat'); await document.fonts.load('600 33px Montserrat'); }catch(e){}
   const alvo=$('prev-capas'); if(!alvo) return;
-  const itens=[{t:'capa',tit:'CHECK DE METAS',sub:'ATIVOS / FROTA / TI',rod:'Fechamento '+vigExt(VIG)}]
-    .concat(['Frota','Pneus','Manutenção','Combustíveis','Resultados'].map(t=>({t:'sec',txt:t})));
+  const itens=[{t:'capa',tit:'CHECK DE METAS',sub:'FROTA',rod:'Fechamento '+vigExt(VIG)}]
+    .concat(['Pneus','Manutenção','Combustíveis','Resultados'].map(t=>({t:'sec',txt:t})));
   alvo.innerHTML=itens.map(s=>{
     const png=s.t==='capa'?desenhaCapa(s,1600,900):desenhaSecao(s,1600,900);
     return `<figure><img src="${png}"><figcaption>${esc(s.t==='capa'?'Capa':'Divisória · '+s.txt)}</figcaption></figure>`;
@@ -1248,17 +1249,19 @@ const CM_HELPER=`window.__cm={
       var ds=ch.data.datasets.filter(function(d){ return (d.data||[]).length; });
       if(!ds.length) return;
       var card=cv.closest('.gcard,.chart-card,.card,.ch-card')||cv.parentNode;
-      var tt=card?card.querySelector('.gt,.ct,.chart-title,.card-title,.tbl-title,b'):null;
-      var ss=card?card.querySelector('.gs,.cs,.chart-sub,.tbl-sub'):null;
+      /* .gtit/.gsub/.chart-leg são as classes do painel-km e do seara-km — sem
+         elas o slide da Dispersão saía com o card sem título nem legenda */
+      var tt=card?card.querySelector('.gt,.gtit,.ct,.chart-title,.card-title,.tbl-title,b'):null;
+      var ss=card?card.querySelector('.gs,.gsub,.cs,.chart-sub,.tbl-sub'):null;
       /* A LEGENDA É A DO PAINEL (.gleg), não a do Chart.js: o padrão desenha
          quadradinho para barra e tracinho tracejado para linha, em HTML, com
          "legend:{display:false}" no gráfico. As bolinhas no canto eram a
          legenda nativa, que o portal não usa em lugar nenhum. */
-      var gl=card?card.querySelector('.gleg'):null;
+      var gl=card?card.querySelector('.gleg,.chart-leg'):null;
       var leg=gl?[].slice.call(gl.querySelectorAll('span')).map(function(s){
         var i=s.querySelector('i');
         return { t:(s.innerText||'').replace(/\\s+/g,' ').trim(),
-                 cor:i?cs(i).color:cs(s).color, sq:!!(i&&i.classList.contains('sq')) };
+                 cor:i?cs(i).color:cs(s).color, sq:!!(i&&/(^|\\s|-)sq(\\s|$)/.test(i.className)) };
       }).filter(function(x){ return x.t; }):null;
       /* A JANELA DO EIXO É A DO PAINEL. Eu forçava beginAtZero e a Evolução,
          que vai de 70% a 110%, virava 0 a 100 — as barras viraram torres e a
@@ -1275,7 +1278,16 @@ const CM_HELPER=`window.__cm={
          "+17.7%", "334.55k" ou "5.00 mi", e se aparece em toda barra ou só no
          mês corrente. Reformatar aqui foi o que tirou o sinal e o sufixo.
          undefined = o painel não diz; null = o painel esconde. */
-      var dl=(ch.options&&ch.options.plugins&&ch.options.plugins.datalabels)||null;
+      /* O options DO CHART É UM PROXY QUE EXECUTA FUNÇÃO AO LER (bug real,
+         20/09/2026: o Scorecard Financeiro saiu com os dois gráficos EM
+         BRANCO). Ler ch.options.plugins.datalabels chave a chave chama o
+         formatter da Visão Financeira com o CONTEXTO no lugar do valor, e o
+         fmt dela lança "Cannot convert object to primitive value" — o extrator
+         morre e o slide fica sem gráfico. Só apareceu quando ela ganhou o
+         datalabels do padrão KM. O config CRU (ch.config.options) não passa
+         pelo resolvedor. */
+      var raw=(ch.config&&ch.config.options)||{};
+      var dl=(raw.plugins&&raw.plugins.datalabels)||null;
       /* O AJUSTE DE CADA DATASET SOBREPÕE O DO GRÁFICO — é assim que o plugin
          funciona, e é onde o Frota de Elite põe o formatter: o gráfico tem
          "datalabels:{}" VAZIO e a BARRA carrega
@@ -1283,8 +1295,8 @@ const CM_HELPER=`window.__cm={
          nunca achava o texto, e a Evolução saía sem rótulo nenhum. */
       var dlDe=function(d){
         var o={}, k;
-        for(k in (dl||{})) o[k]=dl[k];
-        for(k in (d.datalabels||{})) o[k]=d.datalabels[k];
+        try{ for(k in (dl||{})) o[k]=dl[k]; }catch(e){}
+        try{ for(k in (d.datalabels||{})) o[k]=d.datalabels[k]; }catch(e){}
         return o;
       };
       var mostra=function(d,i,v){
@@ -1317,8 +1329,7 @@ const CM_HELPER=`window.__cm={
         /* legenda NATIVA ligada e sem .gleg: o painel mostra legenda, e o slide
            precisa mostrar também — o Frota de Elite é assim e o slide saiu sem
            nenhuma. O desenho continua o do portal (quadradinho/tracinho). */
-        legNativa:!!(ch.options&&ch.options.plugins&&ch.options.plugins.legend
-                     &&ch.options.plugins.legend.display!==false),
+        legNativa:!(raw.plugins&&raw.plugins.legend&&raw.plugins.legend.display===false),
         datasets:ds.map(function(d){
           var cor=function(v){ return (typeof v==='string')?v:(Array.isArray(v)?v.map(function(x){return typeof x==='string'?x:null;}):null); };
           var vals=(d.data||[]).map(function(v){ return (v&&typeof v==='object')?(v.y!=null?v.y:v.v):v; });
@@ -1863,7 +1874,7 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202609202030"></script>
-<script src="../assets/build-check.js?v=202609202030"></script>
+<script src="slides.js?v=202609202300"></script>
+<script src="../assets/build-check.js?v=202609202300"></script>
 </body>
 </html>
