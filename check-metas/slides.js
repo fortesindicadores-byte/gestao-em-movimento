@@ -145,6 +145,12 @@ table.sl-t td{padding:10px 12px;border-bottom:1px solid ${TK.linha};color:${TK.t
   vertical-align:top;overflow-wrap:anywhere;}
 table.sl-t td.n{text-align:right;white-space:nowrap;}
 table.sl-t td.curto,table.sl-t th.curto{white-space:nowrap;overflow-wrap:normal;width:1%;}
+/* NOWRAP SEM ENCOLHER: quando TODA coluna é curta (tabela só de números, como
+   a abertura por unidade), pôr width:1% em todas deixa a tabela sem ninguém
+   para absorver a sobra — e ela foi inteira para a primeira coluna, com um
+   vão enorme entre UNIDADE e REM (Renan, 20/09/2026: "aqui dá para distribuir
+   um pouco melhor"). Aí vale só o nowrap, e o browser reparte o resto. */
+table.sl-t td.nq,table.sl-t th.nq{white-space:nowrap;overflow-wrap:normal;}
 table.sl-t tr.tot td{background:${TK.cabec};font-weight:800;border-bottom:none;}
 /* SEM ZEBRA (Renan, 19/09/2026: "tabela com cor sim cor não"). A tabela do
    portal não tem linha alternada: o que separa as linhas é o filete de
@@ -289,6 +295,35 @@ function slMedalha(t){
   return null;
 }
 
+/* A SOBRA DE LARGURA É REPARTIDA POR IGUAL, NÃO PROPORCIONALMENTE
+   (Renan, 20/09/2026: "todas as tabelas assim, sem distribuir").
+   O table-layout auto dá a folga a quem já é largo, então a coluna de rótulo
+   ficava com ~62% da tabela e os números se amontoavam na ponta direita, com
+   um vão no meio. Aqui eu meço a largura INTRÍNSECA de cada coluna e devolvo a
+   sobra em partes iguais — ninguém aperta e ninguém engorda. */
+function slLarguras(t, wrap){
+  const ths = [...t.querySelectorAll('thead th')];
+  if (ths.length < 2) return;
+  /* o wrap é FLEX: com align-items:stretch a tabela ocupa a largura toda mesmo
+     com width:auto, e a medida saía igual à esticada — folga zero, nada
+     mudava. align-self:flex-start solta o eixo cruzado. */
+  const largAnt = t.style.width, selfAnt = t.style.alignSelf;
+  t.style.width = 'auto'; t.style.alignSelf = 'flex-start';
+  const nat = ths.map(th => th.getBoundingClientRect().width);
+  t.style.width = largAnt || '100%'; t.style.alignSelf = selfAnt;
+  const somaNat = nat.reduce((a,b)=>a+b,0);
+  const disp = wrap.clientWidth;
+  const folga = disp - somaNat;
+  if (folga <= 10) return;
+  const parte = folga / nat.length;
+  t.style.tableLayout = 'fixed';
+  const velho = t.querySelector('colgroup'); if (velho) velho.remove();
+  const cg = document.createElement('colgroup');
+  nat.forEach(w => { const c = document.createElement('col');
+    c.style.width = ((w + parte) / disp * 100).toFixed(3) + '%'; cg.appendChild(c); });
+  t.insertBefore(cg, t.firstChild);
+}
+
 /* ── TABELA ────────────────────────────────────────────────────────────────
    Recebe o que o __cm.extrai devolveu e devolve UMA OU MAIS páginas, porque
    tabela que não cabe vira slide seguinte — nunca linha cortada em silêncio.
@@ -307,6 +342,11 @@ function slTabela(tit, sub, dados, opt){
     const maior = Math.max(...linhas.map(l => (l.cels[i] ? String(l.cels[i].t).length : 0)), 0);
     return maior > 0 && maior <= 14 && !/\n/.test(linhas.map(l => (l.cels[i]||{}).t || '').join(''));
   });
+  /* ENCOLHER SÓ QUANDO HÁ DUAS OU MAIS COLUNAS LARGAS (o FCA, com Fato, Causa
+     e Ação). Com UMA só — a abertura por conta, a abertura por unidade — toda
+     a sobra ia para ela e abria um vão enorme entre o rótulo e o primeiro
+     número. Aí o browser reparte, que é o que o painel faz. */
+  const kls = curta.filter(c => !c).length >= 2 ? 'curto' : 'nq';
 
   const paginas = [];
   let corpo = linhas.slice(), pag = 0;
@@ -318,7 +358,7 @@ function slTabela(tit, sub, dados, opt){
     const wrap = document.createElement('div'); wrap.className = 'sl-tw'; mio.appendChild(wrap);
     const t = document.createElement('table'); t.className = 'sl-t'; wrap.appendChild(t);
     t.innerHTML = '<thead><tr>'
-      + cab.map((c,i)=>`<th class="${dados.dir&&dados.dir[i]?'n ':''}${curta[i]?'curto':''}"></th>`).join('')
+      + cab.map((c,i)=>`<th class="${dados.dir&&dados.dir[i]?'n ':''}${curta[i]?kls:''}"></th>`).join('')
       + '</tr></thead><tbody></tbody>';
     [...t.querySelectorAll('th')].forEach((th,i)=>{ th.textContent = cab[i]; });
 
@@ -341,7 +381,7 @@ function slTabela(tit, sub, dados, opt){
         const tr = document.createElement('tr');
         if (l.total) tr.className = 'tot';
         tr.innerHTML = l.cels.map((c,i)=>
-          `<td class="${c.dir||(dados.dir&&dados.dir[i])?'n ':''}${curta[i]?'curto':''}"></td>`).join('');
+          `<td class="${c.dir||(dados.dir&&dados.dir[i])?'n ':''}${curta[i]?kls:''}"></td>`).join('');
         [...tr.children].forEach((td,i)=>{
           const c = l.cels[i]; if (!c) return;
           if (agr[i] && !l.total && ant[i] === c.t) { td.textContent = ''; return; }
@@ -354,6 +394,27 @@ function slTabela(tit, sub, dados, opt){
       }
       if (entraram === corpo.length || fs <= 10) break;
       fs -= 1;
+    }
+    slLarguras(t, wrap);
+
+    /* SOBRA DE ALTURA VIRA RESPIRO, NÃO VAZIO (Renan, 20/09/2026: "dá para
+       distribuir um pouco melhor" · "Manutenção também dá para distribuir").
+       Uma abertura de 12 unidades ocupava o terço de cima do slide e deixava
+       dois terços em branco. Se coube com folga, a folga é repartida entre as
+       linhas — a tabela continua a mesma, só respira. */
+    const sobra = wrap.clientHeight - t.offsetHeight;
+    if (sobra > 40) {
+      const n = tb.children.length + 1;
+      /* o teto é generoso de propósito: uma tabela de duas ou três linhas numa
+         página inteira precisa de MUITO respiro por linha, senão fica a faixa
+         de cima com dois terços de branco embaixo */
+      const extra = Math.min(90, Math.floor(sobra / n / 2));
+      if (extra > 0) {
+        t.querySelectorAll('td').forEach(td => {
+          td.style.paddingTop = td.style.paddingBottom = (10 + extra) + 'px'; });
+        t.querySelectorAll('th').forEach(th => {
+          th.style.paddingTop = th.style.paddingBottom = (11 + extra) + 'px'; });
+      }
     }
     paginas.push(el);
     corpo = corpo.slice(entraram);
@@ -393,6 +454,15 @@ function slCelula(td, c){
   if (/\n/.test(c.t)) td.style.whiteSpace = 'pre-line';
   td.style.color = slCor(c.cor);
   if (c.neg) td.style.fontWeight = '700';
+}
+
+/* o texto que o painel escreveu para aquele ponto: string, '' (vazio de
+   propósito) ou false (não deu para saber — aí quem formata é o portal) */
+function slRot(g, c){
+  const d = (g.datasets||[])[c.datasetIndex];
+  if (!d || !d.rotulos) return false;
+  const t = d.rotulos[c.dataIndex];
+  return t === undefined || t === null ? false : t;
 }
 
 /* preto ou branco sobre o fundo dado — só usado quando o painel não declarou
@@ -591,14 +661,16 @@ function slGrafico(mio, g){
              plugin (`datalabels:{}`) e desliga nas linhas de meta, sem dizer o
              texto — então quem formata é o portal. */
           formatter:(v,c)=>{
-            const d = (g.datasets||[])[c.datasetIndex];
-            if (g.rotDef && d && d.rotulos) return d.rotulos[c.dataIndex] || '';
-            return slNum(v);
+            const t = slRot(g, c);
+            return t === false ? slNum(v) : t;
           },
           display:(c)=>{
             const d = (g.datasets||[])[c.datasetIndex];
             if (d && d.mostra && d.mostra[c.dataIndex] === false) return false;
-            if (g.rotDef) return true;
+            const t = slRot(g, c);
+            if (t === '') return false;            // o painel escreveu vazio
+            if (t !== false) return true;          // o painel escreveu o texto
+            if (g.rotDef) return true;             // o painel rotula, só não sei o texto
             return c.dataset.type !== 'line' && c.dataset.type !== 'pie';
           },
         },
@@ -779,8 +851,9 @@ function slMonta(tit, sub, blocos){
         const maior = Math.max(...lin.map(l => (l.cels[i] ? String(l.cels[i].t).length : 0)), 0);
         return maior > 0 && maior <= 14;
       });
+      const kls = curta.filter(c => !c).length >= 2 ? 'curto' : 'nq';
       t.innerHTML = '<thead><tr>'
-        + cab.map((c,i)=>`<th class="${dir[i]?'n ':''}${curta[i]?'curto':''}"></th>`).join('')
+        + cab.map((c,i)=>`<th class="${dir[i]?'n ':''}${curta[i]?kls:''}"></th>`).join('')
         + '</tr></thead><tbody></tbody>';
       [...t.querySelectorAll('th')].forEach((th,i)=>{ th.textContent = cab[i]; });
       const tb = t.querySelector('tbody');
@@ -789,7 +862,7 @@ function slMonta(tit, sub, blocos){
         const tr = document.createElement('tr');
         if (l.total) tr.className = 'tot';
         tr.innerHTML = l.cels.map((c,i)=>
-          `<td class="${c.dir||dir[i]?'n ':''}${curta[i]?'curto':''}"></td>`).join('');
+          `<td class="${c.dir||dir[i]?'n ':''}${curta[i]?kls:''}"></td>`).join('');
         [...tr.children].forEach((td,j)=>{
           const c = l.cels[j]; if (!c) return;
           if (agr[j] && !l.total && ant[j] === c.t) { td.textContent = ''; return; }
@@ -798,6 +871,7 @@ function slMonta(tit, sub, blocos){
         });
         tb.appendChild(tr);
       });
+      slLarguras(t, wrap);
     }
 
     /* A FOTO NÃO VAI DENTRO DE UM CARD (Renan, 19/09/2026: "por que essa porra
