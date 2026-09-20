@@ -362,8 +362,6 @@ function slTabela(tit, sub, dados, opt){
     [...t.querySelectorAll('th')].forEach((th,i)=>{ th.textContent = cab[i]; });
 
     const tb = t.querySelector('tbody');
-    const agr = slRepetido(cab, opt.agrupa);
-    let ant = [];
 
     /* A RÉGUA É A ALTURA DO WRAP, NÃO UMA CONTA DE CABEÇA (bug real,
        19/09/2026). Eu comparava `wrap.scrollHeight` com uma altura estimada
@@ -375,7 +373,7 @@ function slTabela(tit, sub, dados, opt){
     let fs = opt.fs || 14, entraram = 0;
     for (;;) {
       t.style.fontSize = fs + 'px';
-      tb.innerHTML = ''; entraram = 0; ant = [];
+      tb.innerHTML = ''; entraram = 0;
       for (const l of corpo) {
         const tr = document.createElement('tr');
         if (l.total) tr.className = 'tot';
@@ -383,12 +381,10 @@ function slTabela(tit, sub, dados, opt){
           `<td class="${c.dir||(dados.dir&&dados.dir[i])?'sl-n ':''}${curta[i]?kls:''}"></td>`).join('');
         [...tr.children].forEach((td,i)=>{
           const c = l.cels[i]; if (!c) return;
-          if (agr[i] && !l.total && ant[i] === c.t) { td.textContent = ''; return; }
-          if (agr[i]) ant[i] = c.t;
           slCelula(td, c);
         });
         tb.appendChild(tr);
-        if (t.offsetHeight > wrap.clientHeight + 2 && entraram > 0) { tb.removeChild(tr); ant = []; break; }
+        if (t.offsetHeight > wrap.clientHeight + 2 && entraram > 0) { tb.removeChild(tr); break; }
         entraram++;
       }
       if (entraram === corpo.length || fs <= 10) break;
@@ -436,6 +432,20 @@ function slCelula(td, c){
     return;
   }
 
+  /* TRECHOS COM A COR DE CADA UM: o Fato do FCA traz ▲ vermelho e ▼ verde
+     (Renan, 20/09/2026: "os ▲ e ▼ podem vir pintados"). Uma cor só por
+     célula apagava isso. */
+  if (c.trechos && c.trechos.length) {
+    td.style.whiteSpace = 'pre-line';
+    c.trechos.forEach(x => {
+      if (x.t === '\n') { td.appendChild(document.createTextNode('\n')); return; }
+      const sp = document.createElement('span');
+      sp.textContent = x.t; sp.style.color = slCor(x.cor);
+      td.appendChild(sp);
+    });
+    if (c.neg) td.style.fontWeight = '700';
+    return;
+  }
   td.textContent = c.t;
   if (/\n/.test(c.t)) td.style.whiteSpace = 'pre-line';
   td.style.color = slCor(c.cor);
@@ -523,20 +533,6 @@ function slGrafs(mio, gs){
   mio.appendChild(g);
   gs.slice(0, 3).forEach(x => slGrafico(g, x));
   return g;
-}
-
-/* FATO IGUAL NÃO SE REPETE LINHA A LINHA (Renan, 19/09/2026, duas vezes:
-   "esse FCA repetiu 3 vezes" · "FCA PIR repetindo 3 vezes de novo").
-   Os três registros são do MESMO pacote com causas e ações diferentes, então a
-   coluna Fato traz o mesmo bloco — pacote, desvio e a lista de Contas — três
-   vezes, e a página inteira parece o mesmo FCA copiado. Aqui o Fato aparece
-   UMA vez por grupo e as repetições ficam em branco; nada é removido, e o que
-   muda de linha para linha (Causa, Ação, Prazo) fica óbvio.
-   Recomeça a cada página: quem vê a continuação precisa saber de que Fato é. */
-function slRepetido(cab, agrupa){
-  const nrm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim();
-  const alvo = (agrupa||[]).map(nrm);
-  return (cab||[]).map(c => alvo.includes(nrm(c)));
 }
 
 /* COLUNA DO RECORTE SAI DA TABELA: Unidade, Projeto e Vigência do FCA são
@@ -818,17 +814,17 @@ function slMonta(tit, sub, blocos){
     if (b.every(x => JSON.stringify(x.tabela.cab) === cab0)) {
       const juntas = { ...b[0].tabela,
         linhas: b.flatMap(x => x.tabela.linhas.filter(l => !l.total)) };
-      const pg = slTabela(tit, sub, juntas, { agrupa: b[0].agrupa });
+      const pg = slTabela(tit, sub, juntas, {});
       if (pg.length === 1) return pg;
       pg.forEach(el => el.remove());          // não coube: volta uma por unidade
-      return b.flatMap(x => slTabela(tit, x.rot || sub, x.tabela, { agrupa: x.agrupa }));
+      return b.flatMap(x => slTabela(tit, x.rot || sub, x.tabela, {}));
     }
   }
 
   /* bloco único e tabela pura: deixa o paginador trabalhar */
   if (b.length === 1 && b[0].tabela && !(b[0].grafs||[]).length
       && !(b[0].kpis||[]).length && !(b[0].heros||[]).length)
-    return slTabela(tit, sub, b[0].tabela, { rotulo: b[0].rot, agrupa: b[0].agrupa });
+    return slTabela(tit, sub, b[0].tabela, { rotulo: b[0].rot });
 
   const { el, mio } = slNovo(tit, sub);
   b.forEach((x, i) => {
@@ -867,7 +863,6 @@ function slMonta(tit, sub, blocos){
         + '</tr></thead><tbody></tbody>';
       [...t.querySelectorAll('th')].forEach((th,i)=>{ th.textContent = cab[i]; });
       const tb = t.querySelector('tbody');
-      const agr = slRepetido(cab, x.agrupa); let ant = [];
       lin.forEach(l => {
         const tr = document.createElement('tr');
         if (l.total) tr.className = 'tot';
@@ -875,8 +870,6 @@ function slMonta(tit, sub, blocos){
           `<td class="${c.dir||dir[i]?'sl-n ':''}${curta[i]?kls:''}"></td>`).join('');
         [...tr.children].forEach((td,j)=>{
           const c = l.cels[j]; if (!c) return;
-          if (agr[j] && !l.total && ant[j] === c.t) { td.textContent = ''; return; }
-          if (agr[j]) ant[j] = c.t;
           slCelula(td, c);
         });
         tb.appendChild(tr);

@@ -92,6 +92,8 @@ window.html2canvas = function(el, o){
         return f(trs[0]) !== f(trs[1]);
       })(),
       /* CHIPS: a cor do nível da Auditoria e a pílula do ranking */
+      setas: tab ? [].slice.call(tab.querySelectorAll('td span')).filter(function(s){ return /[▲▼]/.test(s.textContent); })
+        .map(function(s){ return s.textContent.trim() + '=' + getComputedStyle(s).color; }) : [],
       chips: tab ? [].slice.call(tab.querySelectorAll('.sl-chip')).map(function(s){
         var c = getComputedStyle(s);
         return { t: s.textContent, bg: c.backgroundColor, cor: c.color, bloco: c.display === 'block' };
@@ -372,7 +374,7 @@ function painelDuble(chaves, dialeto, comGate) {
        ['Solicita ajuste no R$/KM','30/09/2026'],
        ['Finaliza manutenção dos carros de vendas','30/10/2026']]
       .map(a=>`<tr><td>PIR</td><td>EMPURRADA</td><td>AGO/26</td>
-        <td>Manutenções\n▲ R$ 54.034 · ▲ 27%\nContas:\n- Manutenção de Carrocerias: ▲ 55K | ▲ 117%</td>
+        <td>Manutenções<br><span style="color:rgb(255,0,0)">▲</span> R$ 54.034 · <span style="color:rgb(255,0,0)">▲</span> 27%<br>Contas:<br>- Manutenção de Carrocerias: <span style="color:rgb(255,0,0)">▲</span> 55K | <span style="color:rgb(255,0,0)">▲</span> 117%<br>- Lavação: <span style="color:rgb(0,179,0)">▼</span> 2,2K | <span style="color:rgb(0,179,0)">▼</span> 100% (saving)</td>
         <td>Frota de carreta desgastada devido ao tempo de uso</td><td>${a[0]}</td>
         <td>JEAN</td><td>${a[1]}</td>
         <td><span style="background:rgb(244,161,0);color:rgb(12,16,23);display:inline-block;padding:3px 10px;border-radius:12px">Em andamento</span></td>
@@ -403,6 +405,8 @@ function painelDuble(chaves, dialeto, comGate) {
       ${['AS - CGR','ROTA - CGR','EMPURRADA - CBA','ROTA - GRL'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-nv3"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
       ${['AS','ROTA','EMPURRADA'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
+    <div class="ms-wrap" id="ms-org"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
+      ${['Custos','RPM'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-fato"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
       ${['Combustíveis','Manutenções','Pneus'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-pac"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
@@ -485,7 +489,7 @@ function painelDuble(chaves, dialeto, comGate) {
   function setVw(v){ EST.vw = v;
     document.querySelectorAll('.vw').forEach(function(s){ s.classList.toggle('on', s.id === 'vw-' + v); }); grava(); }
   function leFiltros(){
-    ['ms-vig','ms-uni','ms-proj','ms-nv3','ms-fato','ms-pac'].forEach(function(id){
+    ['ms-vig','ms-uni','ms-proj','ms-nv3','ms-fato','ms-pac','ms-org'].forEach(function(id){
       var w = document.getElementById(id); if (!w) return;
       EST.filtros[id] = w._sel ? Array.from(w._sel) : [];
     });
@@ -551,6 +555,13 @@ console.log('\n═══ 0 · crase dentro das template literals (a armadilha re
      helper.length + ' chars · ' + (helper.match(/.{0,40}`.{0,40}/s) || [''])[0]);
   af(css.length > 500 && !css.includes('`'),
      'o SL_CSS também não', css.length + ' chars · ' + (css.match(/.{0,40}`.{0,40}/s) || [''])[0]);
+  /* E O HELPER TEM DE SER JS VÁLIDO DEPOIS DE PASSAR PELA TEMPLATE LITERAL
+     (bug real, 20/09/2026): um "\n" com barra simples dentro de uma regex do
+     helper vira uma quebra de linha de verdade e TODO slide morre com
+     "Invalid regular expression: missing /". Lendo o arquivo não dá para ver. */
+  let helperOk = true, helperErr = '';
+  try { new Function(eval('`' + helper + '\n};`')); } catch (e) { helperOk = false; helperErr = e.message; }
+  af(helperOk, 'o CM_HELPER é JS válido depois de virar string (as barras das regex estão dobradas)', helperErr);
 }
 
 const nav = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium' });
@@ -865,6 +876,7 @@ let provas1 = [];
      causas diferentes — o que repetia de verdade eram Unidade, Projeto e
      Vigência, que já estão no título do slide, e o Fato. Tirando as três, o
      cabeçalho para de cortar em "PROJET"/"RESPONS" e a data para de quebrar. */
+  const fcaCaps = provas1.filter(p => /fca-consolidado/.test(p.pag) && p.estado);
   const slFca = ins.filter(x => (x.cabs || []).includes('CAUSA'));
   af(slFca.length >= 1, 'o slide de FCA saiu com a tabela do painel', slFca.length);
   /* NADA SAI DA TABELA DO FCA (Renan, 20/09/2026: "coluna unidade, igual o
@@ -886,8 +898,20 @@ let provas1 = [];
      repetindo 3 vezes de novo"). São três registros do mesmo pacote, então a
      coluna Fato trazia o mesmo bloco três vezes e a página parecia o mesmo FCA
      copiado. Nada é removido: o que muda (Causa, Ação, Prazo) é que aparece. */
+  /* O FATO VAI EM TODA LINHA, como no painel (Renan, 20/09/2026: "uma delas
+     veio sem o fato"). O agrupamento que apagava o repetido era invenção
+     minha e saiu. */
   const fatos = (slFca[0] || {cels:[]}).cels.filter(t => /Manutenções/.test(t));
-  af(fatos.length === 1, 'o Fato repetido aparece UMA vez, não em cada linha', fatos.length);
+  af(fatos.length >= 3, 'o Fato aparece em cada linha, como no painel', fatos.length);
+  /* AS SETAS PINTADAS (Renan: "os ▲ e ▼ podem vir pintados de vermelho e
+     verde") — a cor de cada trecho, não uma cor por célula */
+  const setas = slFca.flatMap(x => x.setas || []);
+  af(setas.some(t => t === '▲=rgb(255, 0, 0)'), 'o ▲ do Fato sai vermelho', JSON.stringify(setas.slice(0,4)));
+  af(setas.some(t => t === '▼=rgb(0, 179, 0)'), 'e o ▼ sai verde', JSON.stringify(setas.filter(t=>/▼/.test(t)).slice(0,2)));
+  /* ORIGEM = CUSTOS (Renan: "Pneus GRL você trouxe da origem RPM") */
+  af(fcaCaps.every(p => JSON.stringify(p.estado.filtros['ms-org']) === '["Custos"]'),
+     'todo FCA do deck vem com Origem = Custos, nunca o indicador da RPM',
+     JSON.stringify(fcaCaps.map(p => p.estado.filtros['ms-org'])));
 
   /* 1 · "tabela com cor sim cor não" — a tabela do portal não tem zebra */
   af(comTab.every(x => x.zebra === false || x.zebra === null),
@@ -1018,7 +1042,6 @@ let provas1 = [];
      vazio no slide agrupado). O iframe é reutilizado e a lista de projetos do
      fca-consolidado depende da unidade; para o PIR eu procurava EMPURRADA na
      lista do CGR, não achava, e a seleção ROTA do CGR ficava presa. */
-  const fcaCaps = provas1.filter(p => /fca-consolidado/.test(p.pag) && p.estado);
   const pir = fcaCaps.find(p => (p.estado.filtros['ms-uni']||[])[0] === 'PIR');
   af(pir && JSON.stringify(pir.estado.filtros['ms-proj']) === '["EMPURRADA - PIR"]',
      'o PIR entra com o SEU projeto, não com o da unidade anterior',

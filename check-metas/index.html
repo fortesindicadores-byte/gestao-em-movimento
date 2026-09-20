@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609201310">
+<meta name="build" content="202609201420">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -651,7 +651,9 @@ function montaRoteiro(avisa){
       `__cm.vw('nominal'); __cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-pac',${JSON.stringify([g.pac])}); setPacoteDim('uni'); __cm.ate('ref-pac-v','REM','togglePacRef'); atualizar();`,
       {alvo:"document.querySelector('#vw-nominal .card')"}));
     const dsv=desviosDe(g.pac);
-    const fcaDe=d=>`__cm.vw('tabela'); __cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-proj',${JSON.stringify([d.proj+'|'+(prefProj(d.proj)||d.proj)])}); __cm.sel('ms-fato',${JSON.stringify([g.pac])}); __cm.redesenha('render');`;
+    /* ORIGEM = CUSTOS (Renan, 20/09/2026): sem fixar a origem, o "Pneus" do
+       indicador da RPM (Meta/Real/Ating) entrava junto com o do pacote. */
+    const fcaDe=d=>`__cm.vw('tabela'); __cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-org',['Custos']); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-proj',${JSON.stringify([d.proj+'|'+(prefProj(d.proj)||d.proj)])}); __cm.sel('ms-fato',${JSON.stringify([g.pac])}); __cm.redesenha('render');`;
     const nomeDe=d=>d.uni+(prefProj(d.proj)?' · '+prefProj(d.proj):'');
     const subDe=d=>vX+' · desvio de R$ '+d.brl.toLocaleString('pt-BR');
 
@@ -666,20 +668,18 @@ function montaRoteiro(avisa){
       R.push(P(g.pac+' – '+nomeDe(d),'Árvore de Combustível · '+subDe(d),
         '../combustivel/arvore-combustivel/',arvPrep,
         {foto:true,escala:.94,alvo:"document.querySelector('.tree-wrap')||document.querySelector('.tree')"}));
-      if(d.feito) R.push(P(g.pac+' – '+nomeDe(d),'FCA · '+subDe(d),'../fca-consolidado/',
-        fcaDe(d),{semCols:FCA_SEM,agrupa:['FATO']}));
+      if(d.feito) R.push(P(g.pac+' – '+nomeDe(d),'FCA · '+subDe(d),'../fca-consolidado/',fcaDe(d)));
     });
     /* NOS OUTROS PACOTES os FCAs curtos dividem a página. Um FCA de uma linha
        sozinho num slide deixa dois terços em branco. */
     else agrupaFca(dsv.filter(d=>d.feito)).forEach(gr=>{
       if(gr.length===1){
         const d=gr[0];
-        R.push(P(g.pac+' – '+nomeDe(d),'FCA · '+subDe(d),'../fca-consolidado/',
-          fcaDe(d),{semCols:FCA_SEM,agrupa:['FATO']}));
+        R.push(P(g.pac+' – '+nomeDe(d),'FCA · '+subDe(d),'../fca-consolidado/',fcaDe(d)));
         return;
       }
       R.push({t:'p',tit:g.pac,sub:'FCA · '+vX,url:'../fca-consolidado/',
-        caps:gr.map(d=>({prep:fcaDe(d),juntar:true,agrupa:['FATO'],
+        caps:gr.map(d=>({prep:fcaDe(d),juntar:true,
           rot:nomeDe(d)+' — desvio de R$ '+d.brl.toLocaleString('pt-BR')}))});
     });
   });
@@ -1023,8 +1023,41 @@ const CM_HELPER=`window.__cm={
       var p=m[1].split(',');
       return p.length>3?parseFloat(p[3]):1;
     };
+    /* AS SETAS ▲/▼ VÊM COM A COR DELAS (Renan, 20/09/2026). Uma célula do
+       Fato tem texto comum e trechos pintados (o tri() do fca pinta ▲ de
+       vermelho e ▼ de verde). Eu levava UMA cor por célula; aqui vai a cor de
+       cada trecho de texto, com as quebras de linha no lugar. Só entra quando
+       há mais de uma cor — senão o caminho de sempre. */
+    function trechos(c){
+      var out=[], cores={};
+      var walk=function(n){
+        if(n.nodeType===3){ var tx=n.nodeValue; if(!tx||!tx.trim()&&!/\\n/.test(tx)){ if(tx&&/\\s/.test(tx)) out.push({t:' '}); return; }
+          var col=cs(n.parentNode).color; cores[col]=1; out.push({t:tx.replace(/\\s+/g,' '),cor:col}); return; }
+        if(n.nodeType!==1) return;
+        var d=cs(n); if(d.display==='none') return;
+        if(n.tagName==='BR'){ out.push({t:'\\n'}); return; }
+        var bloco=/block|list-item|table|flex|grid/.test(d.display);
+        if(bloco&&out.length) out.push({t:'\\n'});
+        for(var k=0;k<n.childNodes.length;k++) walk(n.childNodes[k]);
+        if(bloco) out.push({t:'\\n'});
+      };
+      walk(c);
+      if(Object.keys(cores).length<2) return null;
+      /* normaliza: junta espaços, colapsa quebras repetidas, tira as das pontas */
+      var r=[], last=null;
+      out.forEach(function(x){
+        if(x.t==='\\n'){ if(last&&last.t!=='\\n') r.push({t:'\\n'}); last=r[r.length-1]; return; }
+        if(x.t===' '){ if(last&&last.t!=='\\n'&&!/\\s$/.test(last.t)) { last.t+=' '; } return; }
+        if(last&&last.t!=='\\n'&&last.cor===x.cor){ last.t+=x.t; } else { r.push({t:x.t,cor:x.cor}); last=r[r.length-1]; }
+      });
+      while(r.length&&r[0].t==='\\n') r.shift();
+      while(r.length&&r[r.length-1].t==='\\n') r.pop();
+      r.forEach(function(x){ if(x.t!=='\\n') x.t=x.t.replace(/^ +| +$/g,''); });
+      return r.filter(function(x){ return x.t; });
+    }
     function cel(c){
       var p=pintor(c), st=cs(p);
+      var tr=trechos(c);
       /* o FUNDO só conta quando existe um elemento pintando DENTRO do td: o
          fundo do próprio td é o do card/tabela, e carregá-lo faria toda célula
          virar um retângulo cinza no slide. Alpha baixo é textura (o .uni-card
@@ -1040,7 +1073,7 @@ const CM_HELPER=`window.__cm={
       return { t:(c.innerText||'').replace(/[ \\t]+/g,' ').replace(/\\n{2,}/g,'\\n')
                  .split('\\n').map(function(x){return x.trim();}).filter(function(x,i,a){
                    return x||(i>0&&i<a.length-1); }).join('\\n').trim(),
-               cor:st.color, bg:bg, bloco:bloco,
+               cor:st.color, bg:bg, bloco:bloco, trechos:tr,
                neg:(parseInt(st.fontWeight,10)||400)>=700,
                dir:st.textAlign==='right'||c.classList.contains('num'),
                span:+(c.getAttribute('colspan')||1) };
@@ -1057,7 +1090,7 @@ const CM_HELPER=`window.__cm={
              dir:cab[cab.length-1].map(function(c){ return c.dir; }),
              linhas:lin.map(function(l){
                return { total:l.total, cels:l.cels.map(function(c){
-                 return { t:c.t, cor:c.cor, bg:c.bg, bloco:c.bloco,
+                 return { t:c.t, cor:c.cor, bg:c.bg, bloco:c.bloco, trechos:c.trechos,
                           neg:c.neg||l.total, dir:c.dir }; }) };
              }) };
   },
@@ -1815,7 +1848,7 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202609201310"></script>
-<script src="../assets/build-check.js?v=202609201310"></script>
+<script src="slides.js?v=202609201420"></script>
+<script src="../assets/build-check.js?v=202609201420"></script>
 </body>
 </html>
