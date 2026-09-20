@@ -2,11 +2,12 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609181350">
+<meta name="build" content="202609201700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Visão Financeira · DRE Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <style>
 /* ============================================================
    VISÃO FINANCEIRA — a DRE da Frota,
@@ -1267,34 +1268,40 @@ function renderCharts(f){
     const hasFocus=hlIdxs&&hlIdxs.length>0;
     const bg=data.map((v,i)=>{ if(v==null) return 'transparent';
       const o=ref&&ref[i]!=null?ref[i]:null, red=(o==null||v>o);
-      const a=hasFocus?(hlIdxs.includes(i)?'CC':'33'):'AA';
+      const a=hasFocus?(hlIdxs.includes(i)?'D9':'33'):'A6';
       return (red?vermelho:verde)+a; });
     const bc=data.map((v,i)=>{ if(v==null) return 'transparent';
       const o=ref&&ref[i]!=null?ref[i]:null; return (o==null||v>o)?vermelho:verde; });
-    return {type:'bar',label,data,backgroundColor:bg,borderColor:bc,borderWidth:1,borderRadius:0,
+    return {type:'bar',label,data,backgroundColor:bg,borderColor:bc,borderWidth:1,borderRadius:3,
       barPercentage:.97,categoryPercentage:.94,order:2};
   }
   const dsLin=(data,label,c)=>({type:'line',label,data,borderColor:c,borderWidth:2.5,tension:.3,fill:false,
     borderDash:[5,3],pointRadius:mkR(data),pointBackgroundColor:mkBg(data,c),pointBorderColor:mkBg(data,c),
     pointBorderWidth:mkBw(data),order:1});
   const tickC=isLight?'#4A5568':'#B2BCD2';
-  const tick={color:tickC,font:{family:'Montserrat',size:10}};
+  /* PADRÃO UNIVERSAL DE BARRA = o desenho do Painel KM (Renan, 20/09/2026:
+     "esse estilo de gráfico da dispersão de km quero que seja o padrão
+     universal dos nossos gráficos de barra"): barra clara com borda e canto
+     arredondado, o mês em foco cheio, rótulo de dados no topo em 14px/700,
+     eixo Y escondido, sem grade, eixo X em 15px. Copiado do painel-km, valor
+     por valor — não redesenhado. Painel por painel, este é o primeiro. */
+  const isMobile=window.innerWidth<768;
+  const tick={color:tickC,font:{family:'Montserrat',size:isMobile?9:15}};
+  const dlColor=isLight?'#333333':'#F1F5F9';
+  const dl=fmtFn=>({
+    display:c=>c.datasetIndex===0 && c.dataset.data[c.dataIndex]!=null
+               && (!hlIdxs.length || hlIdxs.includes(c.dataIndex)),
+    anchor:'end', align:'top', color:dlColor,
+    font:{family:'Montserrat',size:isMobile?8:14,weight:'700'},
+    formatter:v=>v!=null?fmtFn(v):''
+  });
   const tooltip={backgroundColor:isLight?'#FFFFFF':'#1B1B1E',titleColor:'#F97316',
     bodyColor:isLight?'#161D2B':'#EEF2FA',borderColor:isLight?'#d7dce4':'#33343A',borderWidth:1,
     titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'}};
-  function mkLabelPlugin(fmtFn,hl){
-    return {afterDatasetsDraw(chart){
-      const ds=chart.data.datasets[0], meta=chart.getDatasetMeta(0);
-      if(!meta||meta.hidden||!hl||!hl.length) return;
-      const ctx=chart.ctx; ctx.save();
-      ctx.font='700 11px Montserrat,sans-serif'; ctx.fillStyle=isLight?'#161D2B':'#EEF2FA';
-      ctx.textAlign='center'; ctx.textBaseline='bottom';
-      ds.data.forEach((val,i)=>{ if(val==null||hl.indexOf(i)===-1) return;
-        const pt=meta.data[i]; if(!pt) return; ctx.fillText(fmtFn(val),pt.x,pt.y-8); });
-      ctx.restore();
-    }};
-  }
   const cbFmt=v=>fmt(v), cbPct=v=>v!=null?v.toFixed(1)+'%':'';
+  /* CDN do plugin fora do ar não pode derrubar o gráfico inteiro: sem ele o
+     gráfico sai sem rótulo, que é o mesmo que acontecia antes */
+  const plugDL=typeof ChartDataLabels!=='undefined'?[ChartDataLabels]:[];
   function padBounds(arrs,below,above){
     const vals=[]; arrs.forEach(a=>(a||[]).forEach(v=>{ if(v!=null&&isFinite(v)) vals.push(+v); }));
     if(!vals.length) return null;
@@ -1305,10 +1312,12 @@ function renderCharts(f){
     return {min:lo,max:hi};
   }
   const bBrl=padBounds([dReal,dRem,dOrc],0.12,0.06), bAv=padBounds([dAvReal,dAvRem,dAvOrc],0.12,0.06);
+  /* o eixo Y some (o valor está no rótulo da barra), mas a JANELA continua a
+     do padBounds: com custos de 3,6 a 5,8 mi, começar do zero achataria tudo */
   const sc=(cb,b)=>({x:{ticks:tick,grid:{display:false},border:{display:false}},
-    y:Object.assign({beginAtZero:false,ticks:{...tick,maxTicksLimit:6,callback:cb},grid:{display:false},border:{display:false}}, b||{})});
-  const opt=s=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:22}},
-    plugins:{legend:{display:false},tooltip},scales:s});
+    y:Object.assign({display:false,beginAtZero:false}, b||{})});
+  const opt=(s,cb)=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:30}},
+    plugins:{legend:{display:false},tooltip,datalabels:dl(cb)},scales:s});
   const refBrl = REF_BRL==='orc'?dOrc:dRem;
   const refAv  = REF_AV ==='orc'?dAvOrc:dAvRem;
   set('ref-brl-v', REF_BRL==='orc'?'ORÇ':'REM');
@@ -1316,11 +1325,11 @@ function renderCharts(f){
   if(chReceita) chReceita.destroy();
   chReceita=new Chart($('ch-receita'),{type:'line',data:{labels:lbls,datasets:[
     dsReal(dReal,'REALIZADO',refBrl), dsLin(dRem,'REMUNERADO',remC), dsLin(dOrc,'ORÇADO',orcC)]},
-    plugins:[mkLabelPlugin(cbFmt,hlIdxs)],options:opt(sc(cbFmt,bBrl))});
+    plugins:plugDL,options:opt(sc(cbFmt,bBrl),cbFmt)});
   if(chAV) chAV.destroy();
   chAV=new Chart($('ch-av'),{type:'line',data:{labels:lbls,datasets:[
     dsReal(dAvReal,'AV REALIZADO',refAv), dsLin(dAvRem,'AV REMUNERADO',remC), dsLin(dAvOrc,'AV ORÇADO',orcC)]},
-    plugins:[mkLabelPlugin(cbPct,hlIdxs)],options:opt(sc(cbPct,bAv))});
+    plugins:plugDL,options:opt(sc(cbPct,bAv),cbPct)});
 }
 function toggleRef(which){
   if(which==='brl') REF_BRL = REF_BRL==='rem'?'orc':'rem';
@@ -2188,6 +2197,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609181350"></script>
+<script src="../assets/build-check.js?v=202609201700"></script>
 </body>
 </html>

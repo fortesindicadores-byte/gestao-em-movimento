@@ -95,7 +95,19 @@ async function abre(ctx, { banco, limpar = true }) {
     LINHAS: Object.fromEntries(Object.keys(TAB).map(a => [a, doBanco(a)])),
     TAB, banco, limpar, gvizPorAba: Object.fromEntries(Object.keys(TAB).map(a => [a, doGviz(a)])),
   });
-  await page.route('**/cdn.jsdelivr.net/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: '/*stub*/' }));
+  /* Chart.js DUBLADO que grava o config: é por ele que se prova o desenho de
+     barra no padrão do Painel KM (Renan, 20/09/2026), sem CDN. O plugin de
+     rótulo vira um objeto com id, como o real. */
+  const SHIM_CHART = `window.__charts=[];window.ChartDataLabels={id:'datalabels'};
+    (function(){function Chart(ctx,cfg){this.config=cfg;this.data=cfg.data;this.options=cfg.options||{};
+      window.__charts.push(cfg);this.destroy=function(){};this.update=function(){};this.resize=function(){};
+      this.$exportAoA=null;}
+    Chart.getChart=function(){return null;};Chart.register=function(){};Chart.defaults={font:{}};window.Chart=Chart;})();`;
+  await page.route('**/cdn.jsdelivr.net/**', r => {
+    const u = r.request().url();
+    r.fulfill({ status: 200, contentType: 'application/javascript',
+      body: /chart\.umd|chartjs-plugin-datalabels/.test(u) ? (u.includes('datalabels') ? '/*datalabels no shim*/' : SHIM_CHART) : '/*stub*/' });
+  });
   await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await page.goto('http://localhost:8766/visao-financeira/index.html', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => !/Carregando/.test(document.getElementById('titSub').textContent), { timeout: 20000 }).catch(() => {});
@@ -125,6 +137,29 @@ async function abre(ctx, { banco, limpar = true }) {
   ok('o selo diz banco', / · banco$/.test(r.sub), r.sub);
   ok('EBITDA de ago/26 na tela', r.ebitda === '512.35k', r.ebitda);
   ok('vigência do EBITDA viva (2026-07 e 2026-08)', r.ebVigs.join(',') === '2026-07,2026-08', r.ebVigs.join(','));
+
+  /* ── o gráfico de barra no PADRÃO DO PAINEL KM (Renan, 20/09/2026) ──
+     copiado do painel-km, valor por valor: barra clara com borda e canto 3,
+     rótulo 14px/700 no topo pelo plugin, eixo Y escondido, eixo X 15px. */
+  const g = await page.evaluate(() => (window.__charts || []).filter(c => c.data && c.data.datasets
+    && c.data.datasets[0] && c.data.datasets[0].type === 'bar' && c.data.datasets.length === 3)
+    .map(c => { const d = c.data.datasets[0], o = c.options || {}, dl = (o.plugins || {}).datalabels || {};
+      return { raio: d.borderRadius, borda: d.borderWidth, y: o.scales && o.scales.y && o.scales.y.display,
+               yMin: o.scales && o.scales.y && o.scales.y.min, tickX: o.scales && o.scales.x && o.scales.x.ticks && o.scales.x.ticks.font && o.scales.x.ticks.font.size,
+               dlTam: dl.font && dl.font.size, dlPeso: dl.font && dl.font.weight, dlAnc: dl.anchor,
+               topo: o.layout && o.layout.padding && o.layout.padding.top,
+               plug: (c.plugins || []).map(p => p && p.id).join(','),
+               alfa: [...new Set((d.backgroundColor || []).filter(x => x !== 'transparent').map(x => String(x).slice(-2)))].sort().join(','),
+               rotulo: typeof dl.formatter === 'function' ? dl.formatter(5.0e6) : null }; }));
+  console.log('   gráficos de barra:', JSON.stringify(g));
+  ok('os dois gráficos (BRL e AV) foram desenhados', g.length === 2, String(g.length));
+  ok('canto arredondado 3 e borda 1, como o KM', g.every(x => x.raio === 3 && x.borda === 1), JSON.stringify(g.map(x=>[x.raio,x.borda])));
+  ok('eixo Y escondido, mas com a janela do padBounds (não começa do zero)', g.every(x => x.y === false && typeof x.yMin === 'number'), JSON.stringify(g.map(x=>[x.y,x.yMin])));
+  ok('eixo X em 15px', g.every(x => x.tickX === 15), JSON.stringify(g.map(x=>x.tickX)));
+  ok('rótulo de dados pelo plugin, 14px/700 no topo da barra', g.every(x => x.dlTam === 14 && x.dlPeso === '700' && x.dlAnc === 'end' && /datalabels/.test(x.plug)), JSON.stringify(g.map(x=>[x.dlTam,x.dlPeso,x.dlAnc,x.plug])));
+  ok('respiro de 30 no topo, como o KM', g.every(x => x.topo === 30), JSON.stringify(g.map(x=>x.topo)));
+  ok('alfas do KM: 33 fora do foco, D9 no foco (jan→ago todos em foco no acumulado)', g.every(x => /D9/.test(x.alfa) && !/CC|AA/.test(x.alfa)), JSON.stringify(g.map(x=>x.alfa)));
+  ok('o rótulo em BRL usa o fmt do painel', g[0] && g[0].rotulo === '5.00 mi', g[0] && g[0].rotulo);
   await page.close();
 
   // ── 2) SEGUNDA carga, com o localStorage que a 1ª deixou ────────────────
