@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609201050">
+<meta name="build" content="202609201310">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -540,7 +540,7 @@ const ALVO_PADRAO="(document.querySelector('.vw.on')||document.querySelector('.c
 function P(tit,sub,url,prep,opt){ opt=opt||{};
   return {t:'p',tit,sub,url,podio:opt.podio,
           caps:[{prep,alvo:opt.alvo,esp:opt.esp,rot:opt.rot,foto:opt.foto,semCols:opt.semCols,
-                semTab:opt.semTab,nGraf:opt.nGraf,agrupa:opt.agrupa,juntar:opt.juntar}]}; }
+                semTab:opt.semTab,nGraf:opt.nGraf,agrupa:opt.agrupa,juntar:opt.juntar,escala:opt.escala}]}; }
 /* UNIDADE, PROJETO e VIGÊNCIA do FCA já estão no TÍTULO do slide
    ("Manutenções – PIR · EMPURRADA" / "FCA · ago/2026") e são iguais em toda
    linha — foi isso que deixou o slide com cara de FCA repetido três vezes
@@ -665,7 +665,7 @@ function montaRoteiro(avisa){
       const arvPrep=`__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); __cm.redesenha('onFilterChange'); var _tw=document.querySelector('.tree-wrap'); if(_tw){_tw.style.minWidth='0';_tw.style.width='max-content';}`;
       R.push(P(g.pac+' – '+nomeDe(d),'Árvore de Combustível · '+subDe(d),
         '../combustivel/arvore-combustivel/',arvPrep,
-        {foto:true,alvo:"document.querySelector('.tree-wrap')||document.querySelector('.tree')"}));
+        {foto:true,escala:.94,alvo:"document.querySelector('.tree-wrap')||document.querySelector('.tree')"}));
       if(d.feito) R.push(P(g.pac+' – '+nomeDe(d),'FCA · '+subDe(d),'../fca-consolidado/',
         fcaDe(d),{semCols:FCA_SEM,agrupa:['FATO']}));
     });
@@ -875,6 +875,14 @@ const CM_HELPER=`window.__cm={
   sel:function(id,alvos){
     var w=document.getElementById(id), self=this;
     if(!w){ this.faltou.push('não existe o filtro '+id); return; }
+    /* A LISTA TEM DE SER A ATUAL (bug real, 20/09/2026 — o FCA do PIR saiu
+       vazio no slide agrupado). O iframe é reutilizado entre unidades, e no
+       fca-consolidado a lista de projetos depende da UNIDADE: depois do CGR
+       ela era [AS, ROTA]; para o PIR eu procurava EMPURRADA nela, não achava,
+       e a seleção ROTA do CGR ficava PRESA — PIR não tem Manutenções em ROTA.
+       Renderizar antes de procurar deixa a lista do jeito que o painel a
+       mostraria agora. */
+    if(typeof w._render==='function'){ try{ w._render(''); }catch(e){} }
     var os=this.opts(w), achou=[];
     (alvos||[]).forEach(function(a){
       var cs=String(a).split('|').map(function(x){return self.norm(x);}), o=null;
@@ -886,7 +894,17 @@ const CM_HELPER=`window.__cm={
       }
       if(o) achou.push(o); else self.faltou.push(id+': não achei "'+String(a).split('|')[0]+'"');
     });
-    if(!achou.length) return;
+    if(!achou.length){
+      /* não achou: NÃO deixa a seleção do cap anterior presa no filtro —
+         "todos" é o estado honesto, e o aviso já foi para o Roteiro */
+      if(w._sel instanceof Set && w._sel.size){ w._sel.clear();
+        os.forEach(function(o){ o.el.checked=true; });
+        var all0=w.querySelector('.ms-all'); if(all0) all0.checked=true;
+        var cnt0=w.querySelector('.ms-cnt'); if(cnt0){ cnt0.textContent=''; cnt0.style.display='none'; }
+        w.classList.remove('ativo');
+        if(typeof w._render==='function'){ try{ w._render(''); }catch(e){} } }
+      return;
+    }
     if(!(w._sel instanceof Set)) w._sel=new Set();
     w._sel.clear(); achou.forEach(function(o){ w._sel.add(o.v); });
     os.forEach(function(o){ o.el.checked=w._sel.has(o.v); });
@@ -1256,11 +1274,25 @@ const CM_HELPER=`window.__cm={
         datasets:ds.map(function(d){
           var cor=function(v){ return (typeof v==='string')?v:(Array.isArray(v)?v.map(function(x){return typeof x==='string'?x:null;}):null); };
           var vals=(d.data||[]).map(function(v){ return (v&&typeof v==='object')?(v.y!=null?v.y:v.v):v; });
-          return { label:d.label||'', data:vals,
-                   mostra:vals.map(function(v,i){ return mostra(d,i,v); }),
-                   rotulos:vals.map(function(v,i){ return texto(d,i,v); }),
-                   backgroundColor:cor(d.backgroundColor), borderColor:cor(d.borderColor),
-                   borderDash:d.borderDash||undefined, tipo:d.type||null };
+          /* A APARÊNCIA É A DO PAINEL, INTEIRA: borda, raio, largura da barra,
+             pontos da linha, tensão, ordem. Eu levava só as cores e completava
+             com defaults meus — a Visão Financeira perdia a borda das barras e
+             ganhava pontos em toda linha (Renan: "não preciso nem falar"). Só
+             o que é JSON: string, número, booleano, array deles. */
+          var o={ label:d.label||'', data:vals,
+                  mostra:vals.map(function(v,i){ return mostra(d,i,v); }),
+                  rotulos:vals.map(function(v,i){ return texto(d,i,v); }),
+                  backgroundColor:cor(d.backgroundColor), borderColor:cor(d.borderColor),
+                  tipo:d.type||null };
+          var puro=function(v){ var t=typeof v;
+            if(t==='string'||t==='number'||t==='boolean') return v;
+            if(Array.isArray(v)) return v.map(function(x){ var tx=typeof x; return (tx==='string'||tx==='number'||tx==='boolean')?x:null; });
+            return undefined; };
+          ['borderWidth','borderRadius','borderDash','barPercentage','categoryPercentage','maxBarThickness',
+           'tension','fill','order','pointRadius','pointBackgroundColor','pointBorderColor','pointBorderWidth',
+           'pointStyle','borderSkipped','stack','yAxisID','spanGaps'].forEach(function(k){
+            if(d[k]!==undefined){ var pv=puro(d[k]); if(pv!==undefined) o[k]=pv; } });
+          return o;
         })
       });
     });
@@ -1381,11 +1413,22 @@ async function tiraFoto(win,el){
   const bg=doSlide;
   const nodes=prep?prep.preparar(el,true):null;
   const o={scale:2,backgroundColor:bg,useCORS:true,logging:false};
-  if(prep) o.onclone=prep.onclone;
+  /* O ALVO NÃO PINTA O PRÓPRIO FUNDO NA FOTO (Renan, 20/09/2026: "a porra do
+     quadrado branco atrás" · "sem esses fundos brancos"). No layout antigo o
+     alvo é o `.main`, que no tema claro é #F0F0F0 — a foto vinha como uma
+     placa clara com o conteúdo dentro. O fundo da captura já é o cinza do
+     slide; o alvo fica transparente no CLONE e os blocos de dentro (os
+     coloridos do Resumo Executivo, o card do gráfico) continuam como são. */
+  el.setAttribute('data-cm-alvo','1');
+  o.onclone=(doc)=>{
+    try{ if(prep&&prep.onclone) prep.onclone(doc); }catch(e){}
+    try{ const c=doc.querySelector('[data-cm-alvo]');
+         if(c){ c.style.background='transparent'; c.style.boxShadow='none'; c.style.borderColor='transparent'; } }catch(e){}
+  };
   try{
     const c=await h2c(el,o);
     return {png:c.toDataURL('image/jpeg',0.95),w:c.width,h:c.height};
-  } finally { if(prep&&prep.limpar) prep.limpar(nodes); }
+  } finally { el.removeAttribute('data-cm-alvo'); if(prep&&prep.limpar) prep.limpar(nodes); }
 }
 
 async function capturaSlide(s){
@@ -1495,7 +1538,14 @@ async function capturaSlide(s){
           }catch(e){ msgs.push('não consegui ler os dados: '+(e&&e.message||e)); }
         }
         if(c1) fotos.push({rot:c.rot,semCols:c.semCols,agrupa:c.agrupa,juntar:c.juntar,...c1});
-        else { const foto=await tiraFoto(win,alvo); fotos.push({rot:c.rot,foto:true,...foto}); }
+        else if(c.foto!==true && c.juntar){
+          /* RECORTE VAZIO NÃO VIRA FOTO (bug real, 20/09/2026): o PIR veio sem
+             linha, caiu na foto do painel vazio — com os filtros aparecendo no
+             slide — e, sem tabela, cancelou a fusão das outras unidades. Fica o
+             aviso; o slide segue com quem tem dado. */
+          msgs.push((c.rot||'recorte')+': o painel não trouxe linha nenhuma — ficou fora do slide');
+        }
+        else { const foto=await tiraFoto(win,alvo); fotos.push({rot:c.rot,foto:true,escala:c.escala,...foto}); }
       } finally {
         if(abriu){ try{ win.__cm.fecha(); }catch(e){}
           ifr.style.height=tam.h+'px'; ifr.style.width=tam.w+'px'; await espera(120); }
@@ -1548,7 +1598,7 @@ async function paginasDo(s){
   if(s.cheia) return [s.cheia];                       /* capa / divisória */
   const blocos=(s.fotos||[]).map(f=>({rot:f.rot,tabela:f.tabela,kpis:f.kpis,kcols:f.kcols,
     grafs:f.grafs,heros:f.heros,semCols:f.semCols,agrupa:f.agrupa,juntar:f.juntar,
-    png:f.foto?f.png:null}));
+    escala:f.escala,png:f.foto?f.png:null}));
   /* pódio: o do PAINEL (com boneco); sem ele, os três primeiros do ranking */
   let els;
   const pd=s.podioDados;
@@ -1765,7 +1815,7 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202609201050"></script>
-<script src="../assets/build-check.js?v=202609201050"></script>
+<script src="slides.js?v=202609201310"></script>
+<script src="../assets/build-check.js?v=202609201310"></script>
 </body>
 </html>
