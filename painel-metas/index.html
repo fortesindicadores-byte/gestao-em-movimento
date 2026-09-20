@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609201830">
+<meta name="build" content="202609202115">
 <title>Painel de Metas</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -357,7 +357,7 @@ function chartIndicador(){
   // MÉDIA dos pontos por indicador nas vigências selecionadas
   const indOrder=[],seen=new Set();
   ALL.forEach(o=>{if(!seen.has(o.indicador)){seen.add(o.indicador);indOrder.push(o.indicador);}});
-  const items=indOrder.map(ind=>{const rs=ALL.filter(o=>o.indicador===ind&&vigs.some(d=>vigKeyN(d)===vigKeyN(o.vigD)));const pts=rs.length?rs.reduce((s,o)=>s+(o.pontos||0),0)/rs.length:0;const peso=rs.length?rs[0].peso:(ALL.find(o=>o.indicador===ind)?.peso||0);return{ind,pts,peso};}).filter(x=>x.peso>0);
+  const items=indOrder.map(ind=>{const rs=ALL.filter(o=>o.indicador===ind&&vigs.some(d=>vigKeyN(d)===vigKeyN(o.vigD)));const peso=rs.length?rs[0].peso:(ALL.find(o=>o.indicador===ind)?.peso||0);const pts=aggPontos(rs,{indicador:ind,peso}).pts||0;return{ind,pts,peso};}).filter(x=>x.peso>0);
   const labels=items.map(x=>x.ind);
   const data=items.map(x=>+x.pts.toFixed(1));
   const bg=items.map(x=>{const r=x.peso?x.pts/x.peso:0;const a=.85;return r>=1?`rgba(59,179,59,${a})`:r>0?`rgba(244,161,0,${a})`:`rgba(255,102,102,${a})`;});
@@ -380,6 +380,26 @@ function atualizar(){
   document.getElementById('h-sub').textContent=`de 100 pontos · meta ${META_PONTOS} · ${lbl}`;
   chartMensal();chartIndicador();renderTable();
 }
+// ── AGREGADO DE VÁRIOS MESES (período filtrado e YTD) ──
+// OS PONTOS SEGUEM A LEGENDA DO ATINGIMENTO MOSTRADO (Renan, 20/09/2026: "104% não é
+// 7,8 pontos (olhe a legenda)"): a média dos pontos mensais não obedece à faixa da
+// regra — Custos com 104% no ano dava 7,8 de 25, quando a regra diz ≤100/101/102 % e
+// acima disso zero. Meta/Real/Ating. continuam a média dos meses; os pontos saem da
+// MESMA banda do mês (bandHigher / bandLowerRatio) aplicada a esse atingimento.
+// DPO/VPO não é média: vale o semestre corrente (mês mais recente da janela).
+// 'other' (valor digitado na aba) fica na média dos pontos, que é o que a aba dá.
+function aggPontos(rs,base){
+  const avg=a=>{const f=a.filter(v=>v!=null);return f.length?f.reduce((s,v)=>s+v,0)/f.length:null;};
+  if(!rs.length) return {meta:null,real:null,atg:null,pts:null};
+  const t=classify(base.indicador), peso=base.peso||0;
+  if(t==='dpo'){const u=rs.reduce((m,o)=>vigKeyN(o.vigD)>vigKeyN(m.vigD)?o:m);return {meta:avg(rs.map(o=>o.meta)),real:u.real,atg:u.atg,pts:u.pontos||0};}
+  const meta=avg(rs.map(o=>o.meta)), real=avg(rs.map(o=>o.real)), atg=avg(rs.map(o=>o.atg));
+  let pts=rs.reduce((s,o)=>s+(o.pontos||0),0)/rs.length;
+  if(t==='rank'||t==='fca') pts=atg==null?0:bandHigher(atg)*peso;
+  else if(t==='custo') pts=atg==null?0:bandLowerRatio(atg)*peso;
+  else if(t==='disp') pts=real==null?0:bandLowerRatio(meta?real/meta*100:null)*peso;   // a mesma conta do mês: real ÷ meta
+  return {meta,real,atg,pts};
+}
 function renderTable(){
   const tbl=document.getElementById('tbl');
   const selVig=getMsValues('ms-vig');
@@ -397,17 +417,9 @@ function renderTable(){
   indOrder.forEach(base=>{
     const ind=base.indicador;
     const per=ALL.filter(x=>x.indicador===ind&&perKeys.has(vigKeyN(x.vigD)));
-    // DPO/VPO NÃO é média de meses: vale o semestre corrente (o mês mais recente da janela) — no período e no YTD.
-    // Senão jan–jun no 1H com 100% e jul+ no 2H com 50% dariam um "acumulado" de 75% que não existe em auditoria nenhuma.
-    const ehDpo=classify(ind)==='dpo';
-    const ultimo=a=>a.length?a.reduce((m,o)=>vigKeyN(o.vigD)>vigKeyN(m.vigD)?o:m):null;
-    const pUlt=ehDpo?ultimo(per):null;
-    const pMeta=avgNN(per.map(o=>o.meta)),pReal=pUlt?pUlt.real:avgNN(per.map(o=>o.real)),pAtg=pUlt?pUlt.atg:avgNN(per.map(o=>o.atg));
-    const pPts=pUlt?(pUlt.pontos||0):(per.length?per.reduce((s,o)=>s+(o.pontos||0),0)/per.length:null);
     const yr=ALL.filter(x=>x.indicador===ind&&ytd.some(d=>vigKeyN(d)===vigKeyN(x.vigD)));
-    const yUlt=ehDpo?ultimo(yr):null;
-    const atgY=yUlt?yUlt.atg:avgNN(yr.map(o=>o.atg));
-    const ptsY=yUlt?(yUlt.pontos||0):(yr.length?yr.reduce((s,o)=>s+(o.pontos||0),0)/yr.length:null);
+    const PA=aggPontos(per,base), YA=aggPontos(yr,base);
+    const pMeta=PA.meta,pReal=PA.real,pAtg=PA.atg,pPts=PA.pts, atgY=YA.atg,ptsY=YA.pts;
     html+=`<tr><td class="lft ind">${ind}</td><td class="sec-col">${n1(base.peso)}</td><td class="lft desc sec-col">${(base.desc||'').replace(/\n/g,'<br>')}</td><td class="lft regra sec-col">${(base.regra||'').replace(/\n/g,'<br>')}</td><td class="un sec-col">${base.un||''}</td>`;
     if(per.length){html+=`<td class="sec-col">${n1(pMeta)}</td><td>${n1(pReal)}</td><td style="color:${atgColor(pPts,base.peso)};font-weight:700">${pctI(pAtg)}</td><td><span class="pts">${n1(pPts)}</span></td>`;}else{html+='<td class="sec-col">-</td><td>-</td><td>-</td><td>-</td>';}
     html+=`<td class="sep-l sec-col" style="color:${atgColor(ptsY,base.peso)};font-weight:700">${pctI(atgY)}</td><td class="sec-col"><span class="pts">${n1(ptsY)}</span></td>`;
@@ -497,6 +509,6 @@ carregar();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609201830"></script>
+<script src="../assets/build-check.js?v=202609202115"></script>
 </body>
 </html>

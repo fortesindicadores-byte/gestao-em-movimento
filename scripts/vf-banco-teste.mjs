@@ -150,6 +150,8 @@ async function abre(ctx, { banco, limpar = true }) {
                topo: o.layout && o.layout.padding && o.layout.padding.top,
                plug: (c.plugins || []).map(p => p && p.id).join(','),
                alfa: [...new Set((d.backgroundColor || []).filter(x => x !== 'transparent').map(x => String(x).slice(-2)))].sort().join(','),
+               cores: [...new Set((d.borderColor || []).filter(x => x !== 'transparent'))],
+               barPct: d.barPercentage, catPct: d.categoryPercentage,
                rotulo: typeof dl.formatter === 'function' ? dl.formatter(5.0e6) : null }; }));
   console.log('   gráficos de barra:', JSON.stringify(g));
   ok('os dois gráficos (BRL e AV) foram desenhados', g.length === 2, String(g.length));
@@ -159,6 +161,10 @@ async function abre(ctx, { banco, limpar = true }) {
   ok('rótulo de dados pelo plugin, 14px/700 no topo da barra', g.every(x => x.dlTam === 14 && x.dlPeso === '700' && x.dlAnc === 'end' && /datalabels/.test(x.plug)), JSON.stringify(g.map(x=>[x.dlTam,x.dlPeso,x.dlAnc,x.plug])));
   ok('respiro de 30 no topo, como o KM', g.every(x => x.topo === 30), JSON.stringify(g.map(x=>x.topo)));
   ok('alfas do KM: 33 fora do foco, D9 no foco (jan→ago todos em foco no acumulado)', g.every(x => /D9/.test(x.alfa) && !/CC|AA/.test(x.alfa)), JSON.stringify(g.map(x=>x.alfa)));
+  /* as CORES e o ESPAÇAMENTO do Painel KM (Renan, 20/09/2026: "distanciamento entre
+     as barras, verde e vermelho"): #3BB33B / #FF6666 fixos e sem barPercentage */
+  ok('verde e vermelho são os do Painel KM (#3BB33B / #FF6666), não os do tema', g.every(x => x.cores.every(c => /^#(3BB33B|FF6666)/i.test(c))), JSON.stringify(g.map(x=>x.cores)));
+  ok('sem barPercentage/categoryPercentage — o espaçamento padrão, como no KM', g.every(x => x.barPct == null && x.catPct == null), JSON.stringify(g.map(x=>[x.barPct,x.catPct])));
   ok('o rótulo em BRL usa o fmt do painel', g[0] && g[0].rotulo === '5.00 mi', g[0] && g[0].rotulo);
   await page.close();
 
