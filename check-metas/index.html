@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609201540">
+<meta name="build" content="202609202030">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -664,9 +664,17 @@ function montaRoteiro(avisa){
       /* o .tree-wrap é `min-width:100%`, então a foto vinha com a árvore à
          esquerda e um vão à direita (Renan: "só distribui melhor"). Encolhendo
          ao conteúdo, a foto é a árvore e o slide a escala para a página. */
-      const arvPrep=`__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); __cm.redesenha('onFilterChange'); var _tw=document.querySelector('.tree-wrap'); if(_tw){_tw.style.minWidth='0';_tw.style.width='max-content';}`;
-      R.push(P(g.pac+' – '+nomeDe(d),'Árvore de Combustível · '+subDe(d),
-        '../combustivel/arvore-combustivel/',arvPrep,
+      /* A ANG É A SEARA (bug real, 20/09/2026: "Árvore Seara saiu tudo zerado"):
+         a Árvore AMBEV não tem a unidade — só o Custo Combustível (do DRE) vinha
+         e o resto saía 0. A dela é a Árvore da Seara, que já é só ANG e tem
+         só o filtro de vigência. */
+      const seara=d.uni==='ANG';
+      const encolhe=`var _tw=document.querySelector('.tree-wrap'); if(_tw){_tw.style.minWidth='0';_tw.style.width='max-content';}`;
+      const arvPrep=seara
+        ? `__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.redesenha('onFilterChange'); ${encolhe}`
+        : `__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); __cm.redesenha('onFilterChange'); ${encolhe}`;
+      R.push(P(g.pac+' – '+nomeDe(d),'Árvore de Combustível'+(seara?' · Seara':'')+' · '+subDe(d),
+        seara?'../combustivel/seara/arvore/':'../combustivel/arvore-combustivel/',arvPrep,
         {foto:true,escala:.94,alvo:"document.querySelector('.tree-wrap')||document.querySelector('.tree')"}));
       if(d.feito) R.push(P(g.pac+' – '+nomeDe(d),'FCA · '+subDe(d),'../fca-consolidado/',fcaDe(d)));
     });
@@ -1210,8 +1218,15 @@ const CM_HELPER=`window.__cm={
         return {rotulo:rot, valor:v, cor:cs(b).color};
       }).filter(Boolean);
       var sub=h.querySelector('.hero-sub');
+      // a linha "Km remunerado: 88.070" embaixo do número (painel-km / seara-km, 20/09/2026)
+      var lin=h.querySelector('.hrem'), linha=null;
+      if(lin&&cs(lin).display!=='none'){
+        var lb=lin.querySelector('b'), lv=lb?(lb.innerText||'').trim():'';
+        var lr=(lin.innerText||'').replace(lv,'').replace(/\\s+/g,' ').trim();
+        if(lv&&lv!=='—') linha={rotulo:lr, valor:lv};
+      }
       out.push({ rotulo:lbl?(lbl.innerText||'').trim():'', valor:t, cor:cs(val).color,
-                 sub:sub?(sub.innerText||'').replace(/\\s+/g,' ').trim():'', deltas:del });
+                 sub:sub?(sub.innerText||'').replace(/\\s+/g,' ').trim():'', deltas:del, linha:linha });
     });
     return out;
   },
@@ -1848,7 +1863,7 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202609201540"></script>
-<script src="../assets/build-check.js?v=202609201540"></script>
+<script src="slides.js?v=202609202030"></script>
+<script src="../assets/build-check.js?v=202609202030"></script>
 </body>
 </html>

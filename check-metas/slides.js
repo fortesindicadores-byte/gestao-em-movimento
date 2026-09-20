@@ -104,6 +104,8 @@ const SL_CSS = `
 .sl-heros{flex:0 0 auto;display:flex;align-items:flex-start;gap:32px;
   padding-bottom:12px;border-bottom:1px solid ${TK.linha};}
 .sl-hero .s{font-size:10.5px;color:${TK.txt3};font-weight:600;margin-top:4px;}
+.sl-hero .l{font-size:13px;font-weight:700;color:${TK.txt2};margin-top:3px;}
+.sl-hero .l b{font-weight:800;color:${TK.txt};}
 
 /* ── legenda: a .gleg do painel, não as bolinhas do Chart.js ──
    Renan, 19/09/2026: "legendas nem gráfico está no padrão". O portal desenha a
@@ -500,6 +502,12 @@ function slHero(pai, h, dir){
   else v.textContent = h.valor || '—';
   v.style.color = slCor(h.cor);
   if (h.sub) d.querySelector('.s').textContent = h.sub;
+  if (h.linha && h.linha.valor) {                 // "Km remunerado: 88.070" embaixo do número
+    const l = document.createElement('div'); l.className = 'l';
+    l.textContent = (h.linha.rotulo || '').replace(/\s*:?\s*$/, ': ');
+    const b = document.createElement('b'); b.textContent = h.linha.valor; l.appendChild(b);
+    d.firstChild.appendChild(l);
+  }
   const ds = d.querySelector('.d');
   (h.deltas||[]).forEach(x => {
     const e = document.createElement('div');
