@@ -114,6 +114,15 @@ window.html2canvas = function(el, o){
       /* slide que é SÓ a tabela: só nele a sobra de altura vira respiro */
       soTab: !!(el.querySelector('.sl-tw') && !el.querySelector('.sl-card')
                 && !el.querySelector('.sl-kpis') && el.querySelectorAll('.sl-tw').length === 1),
+      hero: (function(){
+        var h = el.querySelector('.sl-hero'); if (!h) return null;
+        var v = h.querySelector('.v'), d = h.querySelector('.d');
+        return { fundo: getComputedStyle(h).backgroundColor,
+                 alt: Math.round(h.getBoundingClientRect().height),
+                 /* deltas AO LADO do valor = mesma faixa vertical */
+                 aoLado: !!(v && d && Math.abs(v.getBoundingClientRect().top
+                                              - d.getBoundingClientRect().top) < 60) };
+      })(),
       densa: !!el.querySelector('.sl-kpis.denso'),
       /* MEDIR as colunas, não ler o CSS: o computed de grid-template-columns
          volta "repeat(10, 1fr)" sem resolver e a conta dava UMA coluna. */
@@ -296,7 +305,9 @@ const CHART_NO_PAINEL = `
     var cv4 = document.getElementById('g4');
     if (cv4) new window.Chart(cv4.getContext('2d'), { type:'bar',
       data:{ labels:['jan','fev','mar'],
-             datasets:[{ label:'Média Geral', data:[84.6, 86.3, 91.3], backgroundColor:'#F4A100' },
+             datasets:[{ label:'Média Geral', data:[84.6, 86.3, 91.3], backgroundColor:'#F4A100',
+                         datalabels:{ anchor:'end', align:'end',
+                           formatter:function(v){ return v!=null ? v.toFixed(1) : ''; } } },
                        { label:'Meta 85%', type:'line', data:[85,85,85], borderColor:'#333',
                          datalabels:{display:false} }] },
       options:{ plugins:{ legend:{}, datalabels:{} },
@@ -827,12 +838,15 @@ let provas1 = [];
      cabeçalho para de cortar em "PROJET"/"RESPONS" e a data para de quebrar. */
   const slFca = ins.filter(x => (x.cabs || []).includes('CAUSA'));
   af(slFca.length >= 1, 'o slide de FCA saiu com a tabela do painel', slFca.length);
-  af(slFca.every(x => !x.cabs.includes('UNIDADE') && !x.cabs.includes('PROJETO')
-                   && !x.cabs.includes('VIGÊNCIA')),
-     'sem Unidade, Projeto e Vigência — já estão no título', JSON.stringify(slFca[0] && slFca[0].cabs));
+  /* NADA SAI DA TABELA DO FCA (Renan, 20/09/2026: "coluna unidade, igual o
+     FCA do painel. Não invente"). Eu tinha tirado Unidade/Projeto/Vigência
+     achando que o título bastava; não era meu para decidir. */
+  af(slFca.every(x => ['UNIDADE','PROJETO','VIGÊNCIA'].every(c => x.cabs.includes(c))),
+     'a tabela do slide é a do painel, com Unidade, Projeto e Vigência',
+     JSON.stringify(slFca[0] && slFca[0].cabs));
   af(slFca.every(x => ['FATO','CAUSA','AÇÃO','RESPONSÁVEL','PRAZO','STATUS'].every(c => x.cabs.includes(c))),
      'e com o que interessa inteiro, sem cortar o rótulo', JSON.stringify(slFca[0] && slFca[0].cabs));
-  af(slFca.every(x => x.nLin === 3), 'as três linhas continuam lá — são três FCAs, não um repetido',
+  af(slFca.every(x => x.nLin >= 3), 'as três linhas do recorte continuam lá',
      JSON.stringify(slFca.map(x => x.nLin)));
   af(slFca.some(x => x.cels.some(t => /10\/11\/2026|30\/09\/2026/.test(t))),
      'a data inteira, sem quebrar no meio', JSON.stringify((slFca[0]||{cels:[]}).cels.filter(t=>/\//.test(t)).slice(0,3)));
@@ -935,11 +949,41 @@ let provas1 = [];
 
   /* SOBRA DE ALTURA VIRA RESPIRO: a abertura de 12 unidades ocupava o terço
      de cima do slide e deixava dois terços em branco. */
+  /* A SOBRA DE ALTURA NÃO VIRA PADDING (revertido em 20/09/2026: inflou o
+     cabeçalho até virar uma placa, abriu vão, esticou tabela que já estava boa
+     e fez caber MENOS linha — a RON das Auditorias e a 13ª do Ranking caíram
+     fora). Tabela curta fica curta. */
   const soT = comTab.filter(x => x.soTab && x.larg);
   af(soT.length >= 3, 'há slides que são só a tabela', soT.length);
-  af(soT.every(x => x.alturaTab >= 0.75),
-     'e neles a tabela usa a altura da página, não o terço de cima',
-     JSON.stringify(soT.map(x => x.tit + '=' + x.alturaTab)));
+  af(soT.every(x => x.alturaTab <= 1.0),
+     'e nenhuma estoura a caixa', JSON.stringify(soT.map(x => x.tit + '=' + x.alturaTab)));
+  af(!ins.some(x => /não caiu inteira/.test((x.cels||[]).join(' '))),
+     'nenhuma tabela ficou com o aviso de que não coube');
+
+  /* O HERO É COMPACTO E SOLTO (Renan, 20/09/2026: "achatou, perdeu
+     qualidade" — em coluna ele virou uma faixa alta e roubou a altura do
+     gráfico). Deltas ao lado do valor e fundo nenhum. */
+  const her = ins.filter(x => x.hero);
+  af(her.length >= 1, 'o hero chega ao slide', her.length);
+  af(her.every(x => /rgba\(0, 0, 0, 0\)|transparent/.test(x.hero.fundo)),
+     'sem faixa clara atrás — o hero é solto sobre a página',
+     JSON.stringify(her.map(x => x.hero.fundo)));
+  af(her.every(x => x.hero.aoLado), 'com os deltas na mesma linha do valor',
+     JSON.stringify(her.map(x => x.tit + '=' + x.hero.aoLado)));
+  af(her.every(x => x.hero.alt <= 110), 'e baixo, para o gráfico ficar com a altura dele',
+     JSON.stringify(her.map(x => x.hero.alt)));
+
+  /* FCAs AGRUPADOS = UMA TABELA, UM CABEÇALHO (Renan: "coluna unidade, igual
+     o FCA do painel"). Antes era um bloco por unidade, com o cabeçalho
+     repetido e fonte minúscula. */
+  const junto = ins.filter(x => x.tit === 'Manutenções' && x.nLin > 0);
+  af(junto.length >= 1, 'o slide de FCAs agrupados existe', junto.length);
+  af(junto.every(x => x.nCab === 9), 'com UM cabeçalho só, o do painel',
+     JSON.stringify(junto.map(x => x.nCab)));
+  /* o dublê devolve a mesma tabela para toda unidade, então o que se mede é
+     que as linhas dos DOIS recortes entraram na mesma tabela */
+  af(junto.every(x => x.nLin >= 6), 'e as linhas dos recortes na mesma tabela',
+     JSON.stringify(junto.map(x => x.nLin)));
 
   /* A DENSIDADE DOS KPIs É A DO PAINEL: o Scorecard põe 20 em 10 colunas */
   const kdensa = ins.filter(x => x.cols >= 8);
@@ -1027,7 +1071,11 @@ let provas1 = [];
              meta: d.display({ dataset:{type:'line'}, datasetIndex:1, dataIndex:0 }) };
   });
   af(evo && evo.barra === true, 'a barra da Evolução volta a ter rótulo', evo && evo.barra);
-  af(evo && evo.txt === '84,6', 'com o número no formato do portal, porque o painel não escreve o texto', evo && evo.txt);
+  /* O FORMATTER MORA NO DATASET, não no gráfico — o Frota de Elite tem
+     `datalabels:{}` vazio no gráfico e o formatter na BARRA. Lendo só o do
+     gráfico eu nunca achava o texto, e a Evolução saiu sem rótulo três vezes
+     seguidas. */
+  af(evo && evo.txt === '84.6', 'com o texto que o DATASET do painel escreve', evo && evo.txt);
   af(evo && evo.meta === false, 'e a linha de meta segue sem rótulo, como o painel manda', evo && evo.meta);
 
   /* LEGENDA NO PADRÃO: a .gleg do painel, não as bolinhas do Chart.js */
