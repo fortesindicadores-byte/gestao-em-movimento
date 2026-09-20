@@ -82,9 +82,29 @@ const SL_CSS = `
   padding-bottom:16px;border-bottom:1px solid ${TK.linha};}
 .sl-hero .r{font-size:12px;font-weight:700;color:${TK.txt3};text-transform:uppercase;letter-spacing:1px;}
 .sl-hero .v{font-size:60px;font-weight:800;line-height:1;}
-.sl-hero .d{display:flex;gap:26px;padding-bottom:10px;}
+.sl-hero .d{display:flex;gap:22px;padding-bottom:10px;flex-wrap:wrap;}
 .sl-hero .d div{font-size:11px;color:${TK.txt3};font-weight:600;text-transform:uppercase;letter-spacing:.6px;}
 .sl-hero .d b{display:block;font-size:18px;font-weight:800;margin-top:3px;}
+/* o 2º hero (o EBITDA da Visão Financeira) vai à direita, como no painel */
+.sl-hero.dir{margin-left:auto;text-align:right;}
+.sl-hero.dir .d{justify-content:flex-end;}
+.sl-heros{flex:0 0 auto;display:flex;align-items:flex-end;gap:32px;
+  padding-bottom:14px;border-bottom:1px solid ${TK.linha};}
+.sl-heros .sl-hero{border-bottom:none;padding-bottom:0;}
+.sl-hero .s{font-size:11px;color:${TK.txt3};font-weight:600;margin-top:4px;}
+
+/* ── legenda: a .gleg do painel, não as bolinhas do Chart.js ──
+   Renan, 19/09/2026: "legendas nem gráfico está no padrão". O portal desenha a
+   legenda em HTML acima do canvas — quadradinho para barra, tracinho tracejado
+   para linha — e mantém "legend:{display:false}" no gráfico. */
+.sl-gleg{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;flex:0 0 auto;}
+.sl-gleg span{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
+  color:${TK.txt3};letter-spacing:.4px;}
+.sl-gleg i{width:16px;height:0;border-top:2px dashed currentColor;display:inline-block;}
+.sl-gleg i.sq{width:10px;height:10px;border:0;border-radius:2px;background:currentColor;}
+
+/* dois gráficos lado a lado (a Dispersão e o Scorecard Financeiro têm dois) */
+.sl-gg{flex:1;min-height:0;display:grid;gap:14px;}
 
 /* ── card que embrulha gráfico ── */
 .sl-card{background:${TK.card};border:1px solid ${TK.cardBrd};border-radius:14px;
@@ -94,16 +114,25 @@ const SL_CSS = `
 .sl-cv{flex:1;min-height:0;position:relative;margin-top:12px;}
 
 /* ── TABELA: o table.dre do portal ──
-   cabeçalho e linha de total no --cabec, grade fina, número à direita. */
+   cabeçalho e linha de total no --cabec, grade fina, número à direita.
+
+   table-layout AUTO, não fixed (Renan, 19/09/2026: "faltou alguns ajustes de
+   espaço" no FCA e "a coluna do # pode ser pequena"). Com "fixed" eu repartia
+   a largura por uma conta de caracteres minha: o "#" do ranking ficava gordo,
+   o cabeçalho do FCA cortava em "PROJET"/"RESPONS" e "10/11/2026" quebrava no
+   meio. Com "auto" quem reparte é o browser, pelo conteúdo — que é o que o
+   painel faz. O "nowrap" no cabeçalho garante que o rótulo nunca corte, e o
+   ".curto" impede data e número de quebrarem. */
 .sl-tw{flex:1;min-height:0;display:flex;flex-direction:column;}
-table.sl-t{width:100%;border-collapse:collapse;table-layout:fixed;}
-table.sl-t th{background:${TK.cabec};color:${TK.txt2};font-weight:800;
-  text-transform:uppercase;letter-spacing:.6px;text-align:left;
-  padding:12px 14px;border-bottom:1px solid ${TK.linha};}
+table.sl-t{width:100%;border-collapse:collapse;table-layout:auto;}
+table.sl-t th{background:${TK.cabec};color:${TK.txt2};font-weight:800;font-size:.86em;
+  text-transform:uppercase;letter-spacing:.5px;text-align:left;white-space:nowrap;
+  padding:11px 12px;border-bottom:1px solid ${TK.linha};}
 table.sl-t th.n{text-align:right;}
-table.sl-t td{padding:11px 14px;border-bottom:1px solid ${TK.linha};color:${TK.txt};
-  vertical-align:top;word-break:break-word;}
+table.sl-t td{padding:10px 12px;border-bottom:1px solid ${TK.linha};color:${TK.txt};
+  vertical-align:top;overflow-wrap:anywhere;}
 table.sl-t td.n{text-align:right;white-space:nowrap;}
+table.sl-t td.curto,table.sl-t th.curto{white-space:nowrap;overflow-wrap:normal;width:1%;}
 table.sl-t tr.tot td{background:${TK.cabec};font-weight:800;border-bottom:none;}
 /* SEM ZEBRA (Renan, 19/09/2026: "tabela com cor sim cor não"). A tabela do
    portal não tem linha alternada: o que separa as linhas é o filete de
@@ -133,31 +162,56 @@ table.sl-t td .fato-d{color:${TK.txt2};display:block;}
 .sl-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;
   vertical-align:middle;background:${TK.verde};}
 
-/* ── pódio: escuro, o slide inteiro ── */
-.sl.escuro{background:#141416;color:#EEF2FA;}
-.sl.escuro .sl-tit{color:#FFF;}
-.sl.escuro .sl-sub{color:#9AA3B2;}
+/* ── pódio: escuro, o slide inteiro, na temática do Frota de Elite ──
+   o fundo é o mesmo do .podio-section do painel (radiais quentes sobre um
+   quase-preto), não um cinza escuro qualquer */
+.sl.escuro{color:#EEF2FA;
+  background:radial-gradient(ellipse at 20% 0%,rgba(196,145,26,.14) 0%,transparent 55%),
+             radial-gradient(ellipse at 80% 100%,rgba(120,60,10,.20) 0%,transparent 50%),
+             linear-gradient(180deg,#0a0c0e 0%,#050608 100%);}
+.sl.escuro .sl-tit{color:#FFF;text-transform:uppercase;letter-spacing:2px;
+  text-shadow:0 0 30px rgba(196,145,26,.5);}
+.sl.escuro .sl-sub{color:#FFF;font-weight:600;}
+.sl.escuro .sl-cab,.sl.escuro .sl-mio{position:relative;z-index:2;}
 /* O BONECO É PARTE DO PÓDIO (Renan, 19/09/2026: "pódios sem os bonecos").
    O painel desenha o avatar do gestor acima do degrau — é o que faz o slide
    ser o pódio dele e não uma tabela de três linhas. A imagem vem do próprio
    painel (a URL do <img class="avatar-img">), então não há arte nova aqui. */
-.sl-pod{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:22px;padding-bottom:18px;}
+/* O NOME DA CLASSE ERA ".av" E COLIDIA COM A DO PRÓPRIO CHECK DE METAS
+   (bug real, 19/09/2026: "esse laranja curvado atrás ficou ridículo"). O palco
+   do slide mora DENTRO desta página, e ela tem ".av{border-radius:50%;
+   background:#F97316}" para o avatar do usuário na lateral — então cada boneco
+   ganhava uma elipse laranja atrás. Não era blend mode nem o arquivo do
+   boneco: os PNGs têm alfa e os cantos são transparentes. Toda classe do slide
+   é "sl-" justamente por isso; esta tinha escapado. */
+.sl-pod-bras{position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);
+  width:600px;height:600px;background-position:center;background-repeat:no-repeat;
+  background-size:contain;opacity:.09;pointer-events:none;z-index:0;}
+.sl-pod{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:0;
+  padding-bottom:18px;position:relative;z-index:2;}
 .sl-pod .s{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;}
-.sl-pod .av{display:block;object-fit:contain;object-position:bottom center;
-  margin-bottom:-2px;filter:drop-shadow(0 14px 34px rgba(0,0,0,.85));}
-.sl-pod .s1 .av{width:196px;height:236px;}
-.sl-pod .s2 .av,.sl-pod .s3 .av{width:164px;height:196px;}
-.sl-pod .p{background:#1E1E22;border:1px solid rgba(255,255,255,.08);border-radius:16px;
-  width:296px;padding:22px 20px;text-align:center;display:flex;flex-direction:column;
-  justify-content:center;gap:6px;}
-.sl-pod .p .lug{font-size:12px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:#8C93A3;}
-.sl-pod .p .nm{font-size:28px;font-weight:800;color:#FFF;line-height:1.1;}
-.sl-pod .p .un{font-size:12px;font-weight:600;letter-spacing:1px;color:#8C93A3;text-transform:uppercase;}
-.sl-pod .p .pt{font-size:24px;font-weight:800;}
-.sl-pod .s1 .p{height:236px;border-top:3px solid #E8B923;}
-.sl-pod .s1 .p .pt{color:#E8B923;}
-.sl-pod .s2 .p{height:194px;border-top:3px solid #B9BDC6;}
-.sl-pod .s3 .p{height:168px;border-top:3px solid #C08457;}
+.sl-pod .sl-av{display:block;background:none;border-radius:0;object-fit:contain;
+  object-position:bottom center;margin-bottom:-2px;
+  filter:drop-shadow(0 16px 40px rgba(0,0,0,.9));}
+.sl-pod .s1 .sl-av{width:200px;height:240px;}
+.sl-pod .s2 .sl-av,.sl-pod .s3 .sl-av{width:170px;height:200px;}
+/* o pedestal do painel: cilindro escuro, colado no vizinho, com o filete de
+   luz no topo — no painel os três se encostam (gap:0) e formam um pódio só */
+.sl-pod .p{width:220px;padding:18px 16px 20px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  background:linear-gradient(180deg,#1c1c1e 0%,#0d0d0f 100%);
+  border-top:3px solid rgba(255,255,255,.12);
+  border-left:1px solid rgba(255,255,255,.06);
+  border-right:1px solid rgba(255,255,255,.06);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.07), 0 -2px 20px rgba(0,0,0,.6);}
+.sl-pod .p .lug{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:#8C93A3;}
+.sl-pod .p .nm{font-size:24px;font-weight:800;color:#FFF;line-height:1.15;}
+.sl-pod .p .un{font-size:11px;font-weight:600;letter-spacing:1px;color:#8C93A3;text-transform:uppercase;}
+.sl-pod .p .pt{font-size:21px;font-weight:800;margin-top:2px;}
+.sl-pod .s1 .p{height:210px;border-top:3px solid #C4911A;}
+.sl-pod .s1 .p .lug,.sl-pod .s1 .p .pt{color:#C4911A;}
+.sl-pod .s2 .p{height:172px;}
+.sl-pod .s3 .p{height:150px;}
 
 .sl-vazio{flex:1;display:flex;align-items:center;justify-content:center;
   font-size:18px;font-weight:600;color:${TK.txt3};}
@@ -232,16 +286,15 @@ function slTabela(tit, sub, dados, opt){
   const cab = dados.cab || [], linhas = dados.linhas || [];
   if (!linhas.length) return [];
 
-  /* largura por coluna: a 1ª (rótulo) leva o dobro; as de número, o mínimo
-     que couber o maior valor. Coluna estreita demais é o que truncava. */
-  const nCol = cab.length;
-  const larg = cab.map((c,i) => {
-    if (opt.larg && opt.larg[i]) return opt.larg[i];
-    const maior = Math.max(String(c).length,
-      ...linhas.map(l => (l.cels[i] ? String(l.cels[i].t).length : 0)));
-    return Math.max(i === 0 ? 2.1 : 1, Math.min(4, maior / 9));
+  /* COLUNA CURTA NÃO QUEBRA. Quem reparte a largura é o browser (table-layout
+     auto), mas ele ainda quebraria "10/11/2026" ao meio se a coluna apertasse.
+     Coluna cujo maior valor cabe em 14 caracteres é rótulo curto, data ou
+     número: leva nowrap e ocupa o mínimo — é o que deixa o `#` do ranking
+     estreito e devolve a largura para Fato, Causa e Ação. */
+  const curta = cab.map((c,i) => {
+    const maior = Math.max(...linhas.map(l => (l.cels[i] ? String(l.cels[i].t).length : 0)), 0);
+    return maior > 0 && maior <= 14 && !/\n/.test(linhas.map(l => (l.cels[i]||{}).t || '').join(''));
   });
-  const som = larg.reduce((a,b)=>a+b,0);
 
   const paginas = [];
   let corpo = linhas.slice(), pag = 0;
@@ -252,9 +305,9 @@ function slTabela(tit, sub, dados, opt){
 
     const wrap = document.createElement('div'); wrap.className = 'sl-tw'; mio.appendChild(wrap);
     const t = document.createElement('table'); t.className = 'sl-t'; wrap.appendChild(t);
-    t.innerHTML = '<colgroup>' + larg.map(w=>`<col style="width:${(w/som*100).toFixed(2)}%">`).join('') + '</colgroup>'
-      + '<thead><tr>' + cab.map((c,i)=>`<th class="${dados.dir&&dados.dir[i]?'n':''}"></th>`).join('') + '</tr></thead>'
-      + '<tbody></tbody>';
+    t.innerHTML = '<thead><tr>'
+      + cab.map((c,i)=>`<th class="${dados.dir&&dados.dir[i]?'n ':''}${curta[i]?'curto':''}"></th>`).join('')
+      + '</tr></thead><tbody></tbody>';
     [...t.querySelectorAll('th')].forEach((th,i)=>{ th.textContent = cab[i]; });
 
     const tb = t.querySelector('tbody');
@@ -266,14 +319,15 @@ function slTabela(tit, sub, dados, opt){
        PRIMEIRA linha e a tabela saía a UMA LINHA POR SLIDE. Foi isso que
        inflou o deck de ago/2026 (o R$/Km sozinho virou quatro páginas de uma
        linha). O que cabe ou não é a altura da TABELA contra a caixa. */
-    let fs = opt.fs || 15, entraram = 0;
+    let fs = opt.fs || 14, entraram = 0;
     for (;;) {
       t.style.fontSize = fs + 'px';
       tb.innerHTML = ''; entraram = 0;
       for (const l of corpo) {
         const tr = document.createElement('tr');
         if (l.total) tr.className = 'tot';
-        tr.innerHTML = l.cels.map((c,i)=>`<td class="${c.dir||(dados.dir&&dados.dir[i])?'n':''}"></td>`).join('');
+        tr.innerHTML = l.cels.map((c,i)=>
+          `<td class="${c.dir||(dados.dir&&dados.dir[i])?'n ':''}${curta[i]?'curto':''}"></td>`).join('');
         [...tr.children].forEach((td,i)=>{
           const c = l.cels[i]; if (!c) return;
           slCelula(td, c);
@@ -349,11 +403,12 @@ function slKpis(mio, kpis, porLinha){
   return g;
 }
 
-function slHero(mio, h){
-  const d = document.createElement('div'); d.className = 'sl-hero';
-  d.innerHTML = `<div><div class="r"></div><div class="v"></div></div><div class="d"></div>`;
+function slHero(pai, h, dir){
+  const d = document.createElement('div'); d.className = 'sl-hero' + (dir ? ' dir' : '');
+  d.innerHTML = `<div><div class="r"></div><div class="v"></div>${h.sub?'<div class="s"></div>':''}</div><div class="d"></div>`;
   d.querySelector('.r').textContent = h.rotulo || '';
   const v = d.querySelector('.v'); v.textContent = h.valor || '—'; v.style.color = slCor(h.cor);
+  if (h.sub) d.querySelector('.s').textContent = h.sub;
   const ds = d.querySelector('.d');
   (h.deltas||[]).forEach(x => {
     const e = document.createElement('div');
@@ -362,8 +417,46 @@ function slHero(mio, h){
     const b = e.querySelector('b'); b.textContent = x.valor; b.style.color = slCor(x.cor);
     ds.appendChild(e);
   });
-  mio.appendChild(d);
+  pai.appendChild(d);
   return d;
+}
+
+/* O HERO É O NÚMERO QUE SE LÊ PRIMEIRO e ficava de fora do deck (Renan,
+   19/09/2026: "faltou realizado"). Quando o painel tem dois — Receita Líquida
+   e EBITDA —, o segundo vai à direita, como no painel. */
+function slHeros(mio, hs){
+  if (!hs || !hs.length) return null;
+  if (hs.length === 1) { const h = slHero(mio, hs[0]); h.style.flex = '0 0 auto'; return h; }
+  const fila = document.createElement('div'); fila.className = 'sl-heros';
+  mio.appendChild(fila);
+  hs.slice(0, 2).forEach((h, i) => slHero(fila, h, i > 0));
+  return fila;
+}
+
+/* vários gráficos no mesmo slide, lado a lado */
+function slGrafs(mio, gs){
+  if (!gs || !gs.length) return null;
+  if (gs.length === 1) return slGrafico(mio, gs[0]);
+  const g = document.createElement('div'); g.className = 'sl-gg';
+  g.style.gridTemplateColumns = `repeat(${Math.min(gs.length, 3)},minmax(0,1fr))`;
+  mio.appendChild(g);
+  gs.slice(0, 3).forEach(x => slGrafico(g, x));
+  return g;
+}
+
+/* COLUNA DO RECORTE SAI DA TABELA: Unidade, Projeto e Vigência do FCA são
+   iguais em toda linha e já estão no título do slide. Só remove quando o
+   cabeçalho casa E sobra coluna — nunca esvazia a tabela. */
+function slSemCols(tab, fora){
+  if (!tab || !(fora||[]).length) return tab;
+  const nrm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim();
+  const alvo = fora.map(nrm);
+  const manter = (tab.cab||[]).map((c,i) => !alvo.includes(nrm(c)));
+  if (manter.filter(Boolean).length < 2) return tab;
+  return { ...tab,
+    cab: tab.cab.filter((_,i)=>manter[i]),
+    dir: (tab.dir||[]).filter((_,i)=>manter[i]),
+    linhas: (tab.linhas||[]).map(l => ({ ...l, cels: l.cels.filter((_,i)=>manter[i]) })) };
 }
 
 /* ── GRÁFICO: redesenhado com os dados do painel ───────────────────────────
@@ -380,12 +473,36 @@ function slGrafico(mio, g){
   card.style.flex = '1';
   mio.appendChild(card);
 
+  /* A LEGENDA DO PAINEL, em HTML, acima do canvas — a do Chart.js (bolinhas
+     no canto, dentro de uma caixa) não existe em lugar nenhum do portal. */
+  if ((g.legenda||[]).length) {
+    const lg = document.createElement('div'); lg.className = 'sl-gleg';
+    g.legenda.forEach(x => {
+      const s = document.createElement('span');
+      s.style.color = x.cor || TK.txt3;
+      const i = document.createElement('i'); if (x.sq) i.className = 'sq';
+      s.appendChild(i);
+      const t = document.createElement('b');
+      t.style.cssText = 'font-weight:700;color:' + TK.txt3;
+      t.textContent = x.t; s.appendChild(t);
+      lg.appendChild(s);
+    });
+    card.insertBefore(lg, card.querySelector('.sl-cv'));
+  }
+
   const cv = card.querySelector('canvas');
   const Chart = window.Chart;
   if (!Chart) { card.querySelector('.sl-cv').innerHTML = '<div class="sl-vazio">gráfico indisponível</div>'; return card; }
   slRegistraRotulos();
 
   const fonte = { family:'Montserrat', size:12 };
+  /* O EIXO É O DO PAINEL: mesma janela e os MESMOS rótulos, que já vêm com
+     "%" e "mi". Forçar beginAtZero achatava o desenho — a Evolução vai de 70%
+     a 110% e virava 0 a 100, com as barras viradas torres. */
+  const eY = g.eixoY || null;
+  const mapaY = {};
+  if (eY) (eY.ticks||[]).forEach(t => { mapaY[t.v] = t.l; });
+  const temRot = (g.datasets||[]).some(d => (d.rotulos||[]).some(r => r !== undefined));
   new Chart(cv.getContext('2d'), {
     type: g.tipo || 'bar',
     data: {
@@ -401,30 +518,52 @@ function slGrafico(mio, g){
       animation:false,                       // ← é isto que tira a corrida
       layout:{ padding:{ top:18 } },
       plugins:{
-        legend:{ display:(g.datasets||[]).length>1, position:'top', align:'end',
-          labels:{ color:TK.txt2, font:fonte, boxWidth:14, usePointStyle:true } },
+        /* nunca a legenda nativa: quando o painel tem .gleg ela já foi
+           desenhada acima; quando não tem, o portal também não mostra */
+        legend:{ display:false },
         tooltip:{ enabled:false },
         /* RÓTULO DE DADOS NO TOPO DA BARRA — é o padrão do portal ("sem grade,
            barras coladas, rótulo de dados no topo") e faltava no deck
            (Renan, 19/09/2026). O número passa pelo slNum: cru, o valor vinha
            "1234567.8912" e ocupava mais que a barra. clamp segura o rótulo
            dentro da área quando a barra bate no teto. */
+        /* O RÓTULO É O QUE O PAINEL ESCREVE ("+17.7%", "334.55k", "5.00 mi"),
+           inclusive a regra de QUANDO aparecer — a Dispersão põe em toda
+           barra, o Scorecard Financeiro só no mês corrente. Reformatando eu
+           tirava o sinal e o sufixo. 13px = os 11 de antes + os 2 que ele
+           pediu. */
         datalabels: {
           anchor:'end', align:'end', offset:3, clamp:true, clip:false,
-          color:TK.txt2, font:{ family:'Montserrat', size:11, weight:'700' },
-          formatter:(v,c)=> (g.rotulo ? g.rotulo(v,c) : slNum(v)),
-          display:(c)=> g.semRotulo ? false : (c.dataset.type !== 'line' && c.dataset.type !== 'pie'),
+          color:TK.txt, font:{ family:'Montserrat', size:13, weight:'700' },
+          formatter:(v,c)=>{
+            const d = (g.datasets||[])[c.datasetIndex];
+            const r = d && d.rotulos ? d.rotulos[c.dataIndex] : undefined;
+            if (r === null) return '';
+            if (r !== undefined) return r;
+            return slNum(v);
+          },
+          display:(c)=>{
+            const d = (g.datasets||[])[c.datasetIndex];
+            const r = d && d.rotulos ? d.rotulos[c.dataIndex] : undefined;
+            if (r === null) return false;
+            if (r !== undefined) return true;
+            if (temRot) return false;     // o painel decide; este não tem rótulo
+            return c.dataset.type !== 'line' && c.dataset.type !== 'pie';
+          },
         },
       },
       scales:{
-        x:{ grid:{ display:false }, border:{ color:TK.linha },
+        x:{ grid:{ display:!!(g.eixoX && g.eixoX.grade), color:TK.grade },
+            border:{ color:TK.linha },
             ticks:{ color:TK.txt3, font:fonte } },
-        y:{ grid:{ color:TK.grade, drawBorder:false },
+        y:{ display: !(eY && eY.oculto),
+            grid:{ color:TK.grade, drawBorder:false },
             border:{ display:false },
             ticks:{ color:TK.txt3, font:fonte,
-                    callback:(v)=> g.eixoY ? g.eixoY(v) : slNum(v) },
-            beginAtZero: g.zero !== false,
-            suggestedMax: g.max },
+                    callback:(v)=> (mapaY[v] !== undefined ? mapaY[v] : slNum(v)) },
+            beginAtZero: eY ? false : true,
+            min: eY && isFinite(eY.min) ? eY.min : undefined,
+            max: eY && isFinite(eY.max) ? eY.max : undefined },
       },
     },
   });
@@ -464,8 +603,13 @@ function slNum(v){
    então o SLIDE INTEIRO é escuro e o pódio usa a altura toda. As medalhas
    viraram cor (ouro/prata/bronze): emoji não sobrevive à fonte do PDF — foi
    o que produziu "Ø>ÝG" no Ranking.                                        */
-function slPodio(tit, sub, tres){
+function slPodio(tit, sub, tres, brasao){
   const { el, mio } = slNovo(tit, sub, true);
+  if (brasao) {
+    const b = document.createElement('div'); b.className = 'sl-pod-bras';
+    b.style.backgroundImage = `url("${brasao}")`;
+    el.appendChild(b);
+  }
   const d = document.createElement('div'); d.className = 'sl-pod';
   const ordem = [tres[1], tres[0], tres[2]];      // 2º à esquerda, 1º ao centro
   const cls = ['s2','s1','s3'], lug = ['2º LUGAR','1º LUGAR','3º LUGAR'];
@@ -476,7 +620,7 @@ function slPodio(tit, sub, tres){
        de silhueta inventada no lugar */
     if (p.avatar) {
       const im = document.createElement('img');
-      im.className = 'av'; im.src = p.avatar; im.alt = '';
+      im.className = 'sl-av'; im.src = p.avatar; im.alt = '';
       s.appendChild(im);
     }
     const c = document.createElement('div'); c.className = 'p';
@@ -532,8 +676,8 @@ function slLimpa(){
   if (p) p.innerHTML = '';
 }
 
-window.SlidePadrao = { SL, TK, slNovo, slTabela, slKpis, slHero, slGrafico, slPodio,
-  slFoto, slLimpa, slCor, slPalco, slNum, slContraste };
+window.SlidePadrao = { SL, TK, slNovo, slTabela, slKpis, slHero, slHeros, slGrafico,
+  slGrafs, slPodio, slFoto, slLimpa, slCor, slPalco, slNum, slContraste, slSemCols };
 
 /* ── MONTADOR: de conteúdo colhido para páginas de slide ───────────────────
    Um slide pode ter um bloco (a tabela de pacotes) ou dois empilhados (a
@@ -546,8 +690,11 @@ function slMonta(tit, sub, blocos){
   const b = (blocos||[]).filter(Boolean);
   if (!b.length) return [];
 
+  b.forEach(x => { if (x.tabela && x.semCols) x.tabela = slSemCols(x.tabela, x.semCols); });
+
   /* bloco único e tabela pura: deixa o paginador trabalhar */
-  if (b.length === 1 && b[0].tabela && !b[0].graf && !(b[0].kpis||[]).length)
+  if (b.length === 1 && b[0].tabela && !(b[0].grafs||[]).length
+      && !(b[0].kpis||[]).length && !(b[0].heros||[]).length)
     return slTabela(tit, sub, b[0].tabela, { rotulo: b[0].rot });
 
   const { el, mio } = slNovo(tit, sub);
@@ -555,28 +702,36 @@ function slMonta(tit, sub, blocos){
     if (x.rot) { const r = document.createElement('div'); r.className='sl-rot'; r.textContent=x.rot; mio.appendChild(r); }
 
     /* hero + cards: o Scorecard e os painéis de KPI */
+    if (x.heros && x.heros.length) slHeros(mio, x.heros);
     if (x.kpis && x.kpis.length) {
       const k = x.kpis.slice(0, 20);
       slKpis(mio, k, k.length <= 6 ? k.length : (k.length <= 12 ? Math.ceil(k.length/2) : Math.ceil(k.length/3)));
     }
-    if (x.graf) slGrafico(mio, x.graf);
+    if (x.grafs && x.grafs.length) slGrafs(mio, x.grafs);
 
     if (x.tabela) {
       const wrap = document.createElement('div'); wrap.className='sl-tw';
       wrap.style.flex = b.length > 1 ? '1' : '1';
       mio.appendChild(wrap);
       const t = document.createElement('table'); t.className='sl-t';
-      t.style.fontSize = (b.length > 1 ? 12 : 14) + 'px';
+      t.style.fontSize = (b.length > 1 ? 12 : 13) + 'px';
       wrap.appendChild(t);
       x._t = t; x._wrap = wrap;
-      const cab = x.tabela.cab||[], dir = x.tabela.dir||[];
-      t.innerHTML = '<thead><tr>' + cab.map((c,i)=>`<th class="${dir[i]?'n':''}"></th>`).join('') + '</tr></thead><tbody></tbody>';
+      const cab = x.tabela.cab||[], dir = x.tabela.dir||[], lin = x.tabela.linhas||[];
+      const curta = cab.map((c,i) => {
+        const maior = Math.max(...lin.map(l => (l.cels[i] ? String(l.cels[i].t).length : 0)), 0);
+        return maior > 0 && maior <= 14;
+      });
+      t.innerHTML = '<thead><tr>'
+        + cab.map((c,i)=>`<th class="${dir[i]?'n ':''}${curta[i]?'curto':''}"></th>`).join('')
+        + '</tr></thead><tbody></tbody>';
       [...t.querySelectorAll('th')].forEach((th,i)=>{ th.textContent = cab[i]; });
       const tb = t.querySelector('tbody');
-      (x.tabela.linhas||[]).forEach(l => {
+      lin.forEach(l => {
         const tr = document.createElement('tr');
         if (l.total) tr.className = 'tot';
-        tr.innerHTML = l.cels.map((c,i)=>`<td class="${c.dir||dir[i]?'n':''}"></td>`).join('');
+        tr.innerHTML = l.cels.map((c,i)=>
+          `<td class="${c.dir||dir[i]?'n ':''}${curta[i]?'curto':''}"></td>`).join('');
         [...tr.children].forEach((td,j)=>{
           const c = l.cels[j]; if (!c) return;
           slCelula(td, c);

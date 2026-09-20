@@ -86,7 +86,11 @@ window.html2canvas = function(el, o){
         return { t: s.textContent, bg: c.backgroundColor, cor: c.color, bloco: c.display === 'block' };
       }) : [],
       /* o boneco do pódio */
-      avatares: [].slice.call(el.querySelectorAll('.sl-pod img.av')).map(function(i){ return i.getAttribute('src'); }),
+      avatares: [].slice.call(el.querySelectorAll('.sl-pod img.sl-av')).map(function(i){ return i.getAttribute('src'); }),
+      brasao: !!el.querySelector('.sl-pod-bras'),
+      gleg: [].slice.call(el.querySelectorAll('.sl-gleg span')).map(function(s){ return s.textContent.trim(); }),
+      nGraf: el.querySelectorAll('.sl-cv canvas').length,
+      nHero: el.querySelectorAll('.sl-hero').length,
       fsTit: tab ? null : parseFloat(getComputedStyle(el.querySelector('.sl-tit')||el).fontSize),
       fsTab: tab ? parseFloat(getComputedStyle(tab).fontSize) : null,
       vazio: !!el.querySelector('.sl-vazio'),
@@ -107,6 +111,18 @@ window.__charts = [];
   var reg = new Map();
   function Chart(ctx, cfg){
     this.config = cfg; this.data = cfg.data; this.options = cfg.options || {};
+    /* O Chart.js REAL expõe chart.scales.y com a janela resolvida e os ticks
+       já rotulados — é de lá que o slide copia o eixo do painel. O dublê
+       precisa expor o mesmo, senão o teste validaria um mundo sem eixo. */
+    var sc = this.options.scales || {}, self = this;
+    this.scales = {};
+    Object.keys(sc).forEach(function(k){
+      var o = sc[k] || {}, t = [];
+      if (isFinite(o.min) && isFinite(o.max))
+        for (var n = 0; n <= 4; n++) { var v = o.min + (o.max - o.min) * n / 4;
+          t.push({ value: v, label: String(Math.round(v)) + (o.__suf || '') }); }
+      self.scales[k] = { min: o.min, max: o.max, options: o, ticks: t };
+    });
     var cv = (ctx && ctx.canvas) ? ctx.canvas : ctx;
     if (cv) reg.set(cv, this);
     window.__charts.push(cfg);
@@ -207,15 +223,32 @@ const DIAL_DE = { 'visao-financeira':'chave', 'rs-por-km':'chave',
   'programa-reconhecimento':'curto' };
 
 /* painel dublado: a MESMA mecânica do padrão (setVw, ms-*, atualizar) */
+/* DOIS gráficos, como os painéis de verdade têm (Dispersão de KM % + Impacto
+   financeiro; Custo Nominal + AV Custo). Com um só, o teste nunca veria que o
+   segundo sumia. O 1º traz a régua do painel: eixo de 70 a 110 (não zero),
+   formatter próprio ("+12.5%") e rótulo só no dataset 0 — é disso que o slide
+   tem de copiar tudo. */
 const CHART_NO_PAINEL = `
   (function(){
+    if (!window.Chart) return;
     var cv = document.getElementById('g1');
-    if (!cv || !window.Chart) return;
-    new window.Chart(cv.getContext('2d'), { type:'bar',
+    if (cv) new window.Chart(cv.getContext('2d'), { type:'bar',
       data:{ labels:['jan/26','fev/26','mar/26'],
-             datasets:[{ label:'Δ Rem %', data:[12.5, 8.3, 30.7],
-                         backgroundColor:'#F97316' }] },
+             datasets:[{ label:'Δ Rem %', data:[12.5, 8.3, 30.7], backgroundColor:'#F97316' },
+                       { label:'Meta 5%', type:'line', data:[5,5,5], borderColor:'#333' }] },
+      options:{ plugins:{ legend:{display:false}, datalabels:{
+                  display:function(c){ return c.datasetIndex === 0; },
+                  formatter:function(v){ return (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; } } },
+                scales:{ y:{ min:70, max:110, __suf:'%' } } } });
+    var cv3 = document.getElementById('g3');
+    if (cv3) new window.Chart(cv3.getContext('2d'), { type:'bar',
+      data:{ labels:['A','B','C'], datasets:[{ label:'Pontos', data:[30.7, 3210987, 1] }] },
       options:{} });
+    var cv2 = document.getElementById('g2');
+    if (cv2) new window.Chart(cv2.getContext('2d'), { type:'bar',
+      data:{ labels:['jan/26','fev/26','mar/26'],
+             datasets:[{ label:'Impacto', data:[334550, -487570, 232030], backgroundColor:'#F97316' }] },
+      options:{ plugins:{ datalabels:{ formatter:function(v){ return (v/1000).toFixed(2) + 'k'; } } } } });
   })();`;
 
 /* PNG 1×1 de verdade (data URI): o pódio tem de carregar uma imagem que
@@ -234,6 +267,33 @@ function painelDuble(chaves, dialeto, comGate) {
       <tr><td class="conta">Manutenções</td><td class="num">-0,38</td><td class="num">-0,52</td><td class="num cr" style="color:rgb(255,0,0)">+35%</td></tr>
       <tr class="total"><td class="conta">Total</td><td class="num">-4,67</td><td class="num">-4,22</td><td class="num">-10%</td></tr>
     </tbody></table></div>`;
+  /* o HERO do padrão: .fin-hero > div com .hlbl/.hval/.hdel. É o número que
+     se lê primeiro e ficava de fora do deck. Dois, como na Visão Financeira. */
+  const HERO = () => `<div class="fin-hero">
+    <div><div class="hlbl">KM realizado</div><div class="hval">1.34 mi</div>
+      <div class="hdel"><div>Δ Rem<b style="color:rgb(255,0,0)">+202.47k</b></div>
+        <div>Δ Rem %<b style="color:rgb(255,0,0)">+17.7%</b></div>
+        <div>Balanço de massa<b>—</b></div></div></div>
+    <div class="heb"><div class="hlbl">EBITDA</div><div class="hval">5.14 mi (19,7%)</div>
+      <div class="hdel"><div>Δ Orç. %<b style="color:rgb(0,179,0)">+16.4%</b></div></div></div>
+  </div>`;
+  /* O FCA DE VERDADE: UNIDADE/PROJETO/VIGÊNCIA iguais em toda linha (são o
+     recorte do slide) e o mesmo FATO repetido, porque as três linhas são do
+     mesmo pacote com causas diferentes — foi isso que ele leu como "esse FCA
+     repetiu 3 vezes". */
+  const FCA_TAB = () => `<div class="twrap"><table class="dre">
+    <thead><tr><th>UNIDADE</th><th>PROJETO</th><th>VIGÊNCIA</th><th>FATO</th><th>CAUSA</th>
+      <th>AÇÃO</th><th>RESPONSÁVEL</th><th>PRAZO</th><th>STATUS</th></tr></thead><tbody>
+    ${[['Validar status renovação das carrocerias','30/09/2026'],
+       ['Solicita ajuste no R$/KM','30/09/2026'],
+       ['Finaliza manutenção dos carros de vendas','30/10/2026']]
+      .map(a=>`<tr><td>PIR</td><td>EMPURRADA</td><td>AGO/26</td>
+        <td>Manutenções\n▲ R$ 54.034 · ▲ 27%\nContas:\n- Manutenção de Carrocerias: ▲ 55K | ▲ 117%</td>
+        <td>Frota de carreta desgastada devido ao tempo de uso</td><td>${a[0]}</td>
+        <td>JEAN</td><td>${a[1]}</td>
+        <td><span style="background:rgb(244,161,0);color:rgb(12,16,23);display:inline-block;padding:3px 10px;border-radius:12px">Em andamento</span></td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
   const ops = id => vigs.map(v => `<label class="ms-opt"><input type="checkbox" data-v="${v.v}"> ${v.t}<span class="ms-only">only</span></label>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><style>
   .vw{display:none} .vw.on{display:block} .card,.tbl-section,.chart-card{min-height:220px;background:#eee}
@@ -243,6 +303,12 @@ function painelDuble(chaves, dialeto, comGate) {
   .niv{display:block;border-radius:7px;padding:10px 6px;font-weight:700}
   .uni-card{display:block;background:rgba(0,0,0,.05)}
   .score-pill{display:inline-block;padding:3px 10px;border-radius:12px;font-weight:800}
+  .fin-hero{display:flex;align-items:flex-end;gap:20px}
+  .hval{font-size:40px;font-weight:800}.hlbl{font-size:12px}
+  .hdel{display:flex;gap:16px}.hdel b{display:block;font-weight:800}
+  .gleg{display:flex;gap:12px}.gleg i{width:14px;height:0;border-top:2px dashed currentColor;display:inline-block}
+  .gleg i.sq{width:9px;height:9px;border:0;background:currentColor}
+  .tree-wrap{min-height:300px;background:#111}
   </style></head><body>
   <div class="app"><div class="side"></div><main class="board"><div class="top">
     <div class="tit-sub" id="titSub">pronto</div>
@@ -258,12 +324,16 @@ function painelDuble(chaves, dialeto, comGate) {
     <div class="ms-wrap" id="ms-pac"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
       ${['Combustíveis','Manutenções','Pneus','ICMS'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
   </div><div class="cols">
-    <section class="vw on" id="vw-resumo"><div class="card">resumo — texto suficiente para o motor considerar a tela carregada e estável</div></section>
+    <section class="vw on" id="vw-resumo"><div class="card">resumo — texto suficiente para o motor considerar a tela carregada e estável</div>
+      ${HERO()}</section>
     <section class="vw" id="vw-nominal"><div class="card">nominal <span id="ref-pac-v">REM</span>${TAB()}</div></section>
-    <section class="vw" id="vw-dispersao"><div class="card">dispersao por unidade${TAB()}
+    <section class="vw" id="vw-dispersao">${HERO()}<div class="card">dispersao por unidade${TAB()}
       <div class="gcard"><div class="gt">Dispersão de KM %</div><div class="gs">por vigência</div>
-        <canvas id="g1" width="600" height="280"></canvas></div></div></section>
-    <section class="vw" id="vw-tabela"><div class="card">FCA da unidade${TAB()}</div></section>
+        <div class="gleg"><span><i class="sq"></i> ▲ Rem %</span><span><i></i> Meta (5%)</span></div>
+        <canvas id="g1" width="600" height="280"></canvas></div>
+      <div class="gcard"><div class="gt">Impacto financeiro</div><div class="gs">por vigência</div>
+        <canvas id="g2" width="600" height="280"></canvas></div></div></section>
+    <section class="vw" id="vw-tabela"><div class="card">FCA da unidade${FCA_TAB()}</div></section>
     <div class="tbl-section">R$/KM Detalhado <span id="dim-atual">pacote</span>${TAB()}</div>
     <!-- RANKING como no painel: a cor mora num <span> DENTRO do td
          (.score-pill com fundo, .ind-green só com cor) -->
@@ -278,7 +348,9 @@ function painelDuble(chaves, dialeto, comGate) {
         <td class="num"><span class="ind-red" style="color:rgb(255,0,0)">71%</span></td>
         <td class="num"><span class="score-pill score-red" style="background:rgb(255,102,102);color:rgb(17,17,17)">95,0</span></td></tr></tbody></table></div>
     <!-- PÓDIO com o boneco, como o programa-reconhecimento desenha -->
-    <div id="podio-section" class="card"><div id="podio-wrap">
+    <!-- a ÁRVORE é um desenho, não tabela nem card: entra como foto -->
+    <div class="tree-wrap"><svg class="tree-svg" width="600" height="280"></svg><div class="tree">árvore</div></div>
+    <div id="podio-section" class="card" style="background-image:url('${PX}')"><div id="podio-wrap">
       ${['segundo','primeiro','terceiro'].map((cl,i)=>{
         const d=[{n:'Ritcher',u:'CDD PELOTAS',p:'97.2 pts'},{n:'Erick',u:'MACACU',p:'97.3 pts'},{n:'José',u:'CDD GUARULHOS',p:'95.0 pts'}][i];
         return `<div class="podio-slot ${cl}"><div class="avatar-wrap">`
@@ -297,6 +369,8 @@ function painelDuble(chaves, dialeto, comGate) {
           +`<td><span class="niv" style="background:${r[2]};color:${r[3]}">${r[1]}</span></td>`
           +`<td><span class="niv" style="background:${r[5]};color:${r[6]}">${r[4]}</span></td></tr>`).join('')}
       </tbody></table></div></div>`).join('')}
+    <div class="gcard"><div class="gt">Pontuação Mensal</div>
+      <canvas id="g3" width="600" height="240"></canvas></div>
     <!-- PAINEL DE METAS: a tabela mora num #tbl -->
     <div class="tbl-section"><div id="tbl"><table>
       <thead><tr class="cols"><th class="lft">INDICADOR</th><th>PESO</th><th>META</th><th>REAL</th><th>ATING.</th></tr></thead>
@@ -385,6 +459,10 @@ async function abre({ semJunEm = null, gateEm = null } = {}) {
      fotografada e virou dado, então o recorder antigo não via mais esses
      slides. Aqui o teste embrulha o extrai no momento em que o motor o
      instala no iframe — e anota se o slide saiu como TABELA ou imagem. */
+  /* A PROVA NÃO PODE DEPENDER DO extrai: o slide da Árvore sai como FOTO e o
+     1º do Painel de Metas pede hero+gráficos (semTab), e nenhum dos dois passa
+     por ele — sem isto esses slides sumiriam do relatório do teste, que é
+     justamente onde os defeitos moram. O `topo` roda em TODO cap. */
   await ctx.addInitScript(() => {
     if (window.top === window) return;
     let v;
@@ -392,18 +470,34 @@ async function abre({ semJunEm = null, gateEm = null } = {}) {
       configurable: true, get(){ return v; },
       set(nv){
         v = nv;
-        const orig = nv.extrai;
-        nv.extrai = function(el){
-          const r = orig.call(this, el);
+        const topo = nv.topo;
+        nv.topo = function(el){
           try {
             const e = document.getElementById('estado');
             window.top.__provas.push({ pag: location.pathname,
               estado: e ? JSON.parse(e.textContent) : null,
               alvo: (el && (el.id || el.className)) || 'sem-alvo',
-              tipo: r ? 'tabela' : 'imagem' });
+              tipo: 'imagem' });
+          } catch (err) {}
+          return topo.call(this, el);
+        };
+        const orig = nv.extrai;
+        nv.extrai = function(el){
+          const r = orig.call(this, el);
+          try {
+            const p = window.top.__provas;
+            if (p.length && r) { const u = p[p.length - 1];
+              u.tipo = 'tabela'; u.alvo = (el && (el.id || el.className)) || u.alvo; }
           } catch (err) {}
           return r;
         };
+        const gs = nv.grafs, hs = nv.heros;
+        nv.grafs = function(el){ const r = gs.call(this, el);
+          try { const p = window.top.__provas; if (p.length) p[p.length-1].nGraf = (r||[]).length; } catch(e){}
+          return r; };
+        nv.heros = function(el){ const r = hs.call(this, el);
+          try { const p = window.top.__provas; if (p.length) p[p.length-1].nHero = (r||[]).length; } catch(e){}
+          return r; };
       }
     });
   });
@@ -429,12 +523,18 @@ console.log('\n═══ 1 · o roteiro sai da tabela `fca`, não de uma lista f
   const secs = r.filter(s => s.t === 'sec').map(s => s.tit);
   af(JSON.stringify(secs) === JSON.stringify(['Frota','Pneus','Manutenção','Combustíveis','Resultados']),
      'as divisórias são Frota · Pneus · Manutenção · Combustíveis · Resultados', secs.join(' / '));
+  /* ÁRVORE E FCA EM SLIDES SEPARADOS (Renan, 19/09/2026: "se precisar separar
+     para caber, faça, mas quero as árvores"). Empilhados no mesmo slide, a
+     árvore — que é um desenho com conectores — ficava com meia página e
+     ilegível. Dois recortes de Combustíveis = 4 slides, aos pares. */
   const comb = r.filter(s => /Combustíveis – /.test(s.tit || ''));
-  af(comb.length === 2, 'Combustíveis: UM slide por unidade+projeto', comb.length);
-  af(comb.every(s => s.caps === 2), 'e cada um leva a Árvore E o FCA juntos, como ele pediu',
-     JSON.stringify(comb.map(s => s.caps)));
-  af(comb.every(s => /arvore-combustivel/.test(s.url) && /fca-consolidado/.test(s.urls)),
-     'as duas fotos vêm de painéis diferentes no mesmo slide', JSON.stringify(comb.map(s => s.urls)));
+  af(comb.length === 4, 'Combustíveis: a Árvore e o FCA em slides próprios', comb.length);
+  af(comb.filter(s => /arvore-combustivel/.test(s.url || '')).length === 2,
+     'duas árvores, uma por unidade+projeto', JSON.stringify(comb.map(s => s.url)));
+  af(comb.filter(s => /fca-consolidado/.test(s.url || '')).length === 2,
+     'e o FCA de cada uma logo depois');
+  af(/arvore/.test(comb[0].url) && /fca/.test(comb[1].url),
+     'nessa ordem: a árvore explica, o FCA responde', comb.map(s=>s.url).join(' '));
   const man = r.filter(s => /Manutenções – /.test(s.tit || ''));
   af(man.length === 2 && /CBA T1/.test(man[0].tit), 'Manutenções: 2 unidades, a de maior desvio primeiro', man.map(m=>m.tit).join(' / '));
   af(!r.some(s => /Pneus – /.test(s.tit || '')), 'Pneus de MAI não entra no deck de JUN');
@@ -599,6 +699,26 @@ let provas1 = [];
   af(comTab.every(x => x.nLin >= 2), 'e todo slide de tabela traz mais de uma linha',
      JSON.stringify(comTab.map(x => x.tit + '=' + x.nLin)));
 
+  /* 0b · O FCA NÃO REPETE O RECORTE EM TODA LINHA (Renan, 19/09/2026: "esse
+     FCA repetiu 3 vezes, não entendi"). São três registros do MESMO pacote com
+     causas diferentes — o que repetia de verdade eram Unidade, Projeto e
+     Vigência, que já estão no título do slide, e o Fato. Tirando as três, o
+     cabeçalho para de cortar em "PROJET"/"RESPONS" e a data para de quebrar. */
+  const slFca = ins.filter(x => (x.cabs || []).includes('CAUSA'));
+  af(slFca.length >= 1, 'o slide de FCA saiu com a tabela do painel', slFca.length);
+  af(slFca.every(x => !x.cabs.includes('UNIDADE') && !x.cabs.includes('PROJETO')
+                   && !x.cabs.includes('VIGÊNCIA')),
+     'sem Unidade, Projeto e Vigência — já estão no título', JSON.stringify(slFca[0] && slFca[0].cabs));
+  af(slFca.every(x => ['FATO','CAUSA','AÇÃO','RESPONSÁVEL','PRAZO','STATUS'].every(c => x.cabs.includes(c))),
+     'e com o que interessa inteiro, sem cortar o rótulo', JSON.stringify(slFca[0] && slFca[0].cabs));
+  af(slFca.every(x => x.nLin === 3), 'as três linhas continuam lá — são três FCAs, não um repetido',
+     JSON.stringify(slFca.map(x => x.nLin)));
+  af(slFca.some(x => x.cels.some(t => /10\/11\/2026|30\/09\/2026/.test(t))),
+     'a data inteira, sem quebrar no meio', JSON.stringify((slFca[0]||{cels:[]}).cels.filter(t=>/\//.test(t)).slice(0,3)));
+  af(slFca.every(x => x.chips.some(c => /andamento/i.test(c.t))),
+     'e o status continua sendo a pílula colorida do painel',
+     JSON.stringify((slFca[0]||{chips:[]}).chips.map(c=>c.t)));
+
   /* 1 · "tabela com cor sim cor não" — a tabela do portal não tem zebra */
   af(comTab.every(x => x.zebra === false || x.zebra === null),
      'nenhuma tabela sai com linha zebrada',
@@ -631,12 +751,18 @@ let provas1 = [];
      'o pódio leva o boneco de cada um dos três', JSON.stringify(pods.map(x => (x.avatares||[]).length)));
   af(pods.every(x => (x.avatares || []).every(s => /^data:image|avatares\//.test(s || ''))),
      'e a imagem é a do painel, não arte nova', JSON.stringify((pods[0]||{}).avatares || []));
+  /* O BRASÃO do Frota de Elite atrás (Renan: "poderia usar toda a temática") */
+  af(pods.every(x => x.brasao), 'e o brasão do Frota de Elite fica atrás', JSON.stringify(pods.map(x=>x.brasao)));
 
   /* 4 · "painel de metas não aparece" */
+  /* DOIS slides: hero+gráficos e a tabela inteira (Renan: "se coubesse tudo
+     até mais legal"). Numa página só a tabela era espremida pelo gráfico. */
   const pm = provas1.filter(p => /painel-metas/.test(p.pag));
-  af(pm.length === 1 && pm[0].tipo === 'tabela',
-     'o Painel de Metas sai como TABELA, não como gráfico com a tabela espremida',
-     pm.length + '/' + (pm[0] && pm[0].tipo));
+  af(pm.length === 2, 'o Painel de Metas sai em dois slides', pm.length);
+  af(pm[0] && pm[0].nHero >= 1 && pm[0].nGraf >= 1,
+     'o 1º leva o hero e os gráficos', pm[0] && pm[0].nHero + '/' + pm[0].nGraf);
+  af(pm[0] && pm[0].tipo === 'imagem', 'sem a tabela, que vai no seguinte', pm[0] && pm[0].tipo);
+  af(pm[1] && pm[1].tipo === 'tabela', 'e o 2º é a tabela inteira', pm[1] && pm[1].tipo);
   const pmSl = ins.filter(x => x.cels.includes('Disponibilidade') && x.cels.includes('Conformidade'));
   af(pmSl.length >= 1, 'e o slide dele existe no deck, com os indicadores', pmSl.length);
   af(pmSl.every(x => !x.vazio), 'não como página de aviso');
@@ -664,19 +790,66 @@ let provas1 = [];
   af(chs.every(c => c.options.plugins && c.options.plugins.datalabels),
      'todo gráfico do slide leva rótulo de dados');
   const fmt = await pg.evaluate(() => {
-    const g = (window.__charts || []).find(c => c.options && c.options.plugins && c.options.plugins.datalabels);
+    const g = (window.__charts || []).find(c => c.options && c.options.plugins
+      && c.options.plugins.datalabels && (c.data.labels || []).join() === 'A,B,C');
     const d = g && g.options.plugins.datalabels;
-    const ctx = { dataset: {} };
-    return d ? { rot: d.formatter(30.7, ctx), grande: d.formatter(3210987, ctx),
+    const ctx = { dataset: {}, datasetIndex: 0, dataIndex: 0 };
+    return d ? { rot: d.formatter(30.7, ctx), grande: d.formatter(3210987, { dataset:{}, datasetIndex:0, dataIndex:1 }),
                  mostra: d.display(ctx), clamp: d.clamp, ancora: d.anchor,
-                 linha: d.display({ dataset: { type: 'line' } }) } : null;
+                 tam: d.font && d.font.size,
+                 linha: d.display({ dataset: { type: 'line' }, datasetIndex: 1, dataIndex: 0 }) } : null;
   });
   af(fmt && fmt.mostra === true, 'o rótulo é mostrado nas barras', fmt && fmt.mostra);
   af(fmt && fmt.linha === false, 'e NÃO nos pontos da linha, que viraria sopa de números', fmt && fmt.linha);
   af(fmt && fmt.ancora === 'end' && fmt.clamp === true,
      'no topo da barra e preso dentro da área (barra no teto não perde o rótulo)', JSON.stringify(fmt));
-  af(fmt && fmt.rot === '30,7', 'o número vem em pt-BR, sem perder a casa decimal', fmt && fmt.rot);
+  af(fmt && fmt.tam === 13, 'o rótulo está 2px maior, como ele pediu', fmt && fmt.tam);
+  /* O RÓTULO É O QUE O PAINEL ESCREVE (Renan, 19/09/2026: "faltou... os ▲s").
+     O painel formata "+12.5%"; eu reformatava para "12,5" e o sinal e o sufixo
+     sumiam. O fallback em pt-BR só vale para gráfico SEM rótulo no painel. */
+  const rotP = await pg.evaluate(() => {
+    const g = (window.__charts || []).find(c => c.options && c.options.plugins
+      && c.options.plugins.datalabels && (c.data.labels || []).join() === 'jan/26,fev/26,mar/26'
+      && c.options.scales && c.options.scales.y && c.options.scales.y.min === 70);
+    const d = g && g.options.plugins.datalabels;
+    if (!d) return null;
+    const f = (di, i, v) => d.formatter(v, { dataset:{}, datasetIndex:di, dataIndex:i });
+    return { b0: f(0,0,12.5), b2: f(0,2,30.7), linha: d.display({ dataset:{}, datasetIndex:1, dataIndex:0 }),
+             yMin: g.options.scales.y.min, yMax: g.options.scales.y.max,
+             zero: g.options.scales.y.beginAtZero,
+             yTick: g.options.scales.y.ticks.callback(70) };
+  });
+  af(rotP && rotP.b0 === '+12.5%' && rotP.b2 === '+30.7%',
+     'o rótulo sai com o sinal e o % que o painel escreve', rotP && rotP.b0 + ' / ' + rotP.b2);
+  af(rotP && rotP.linha === false, 'e a série que o painel não rotula continua sem rótulo', rotP && rotP.linha);
+  /* O EIXO É O DO PAINEL (Renan: "ele começa no eixo Y do zero, diferente do
+     painel"): a Evolução vai de 70 a 110 e virava 0 a 100, achatando tudo. */
+  af(rotP && rotP.yMin === 70 && rotP.yMax === 110,
+     'a janela do eixo Y é a do painel, não do zero', rotP && rotP.yMin + '–' + rotP.yMax);
+  af(rotP && rotP.zero === false, 'e o beginAtZero fica desligado quando o painel define a janela', rotP && rotP.zero);
+  af(rotP && rotP.yTick === '70%', 'o rótulo do eixo vem pronto do painel, com o %', rotP && rotP.yTick);
+  af(fmt && fmt.rot === '30,7', 'gráfico sem rótulo no painel cai no pt-BR do portal', fmt && fmt.rot);
   af(fmt && fmt.grande === '3,2 mi', 'e o valor grande vem abreviado como no portal', fmt && fmt.grande);
+
+  /* LEGENDA NO PADRÃO: a .gleg do painel, não as bolinhas do Chart.js */
+  const legs = ins.flatMap(x => x.gleg || []);
+  af(legs.some(t => /Rem %/.test(t)) && legs.some(t => /Meta/.test(t)),
+     'a legenda do slide é a .gleg do painel', JSON.stringify(legs.slice(0, 4)));
+  af(chs.every(c => c.options.plugins.legend && c.options.plugins.legend.display === false),
+     'e a legenda nativa do Chart.js fica desligada');
+
+  /* TODOS os gráficos, não só o primeiro */
+  const disp = provas1.filter(p => /painel-km/.test(p.pag) && p.nGraf != null);
+  af(disp.some(p => p.nGraf >= 2), 'o slide leva os DOIS gráficos da visão, não só o primeiro',
+     JSON.stringify(disp.map(p => p.nGraf)));
+  af(ins.some(x => x.nGraf >= 2), 'e os dois são desenhados lado a lado no slide',
+     JSON.stringify(ins.map(x => x.nGraf).filter(n => n)));
+
+  /* O HERO — "faltou realizado" */
+  af(provas1.some(p => p.nHero >= 1), 'o hero do painel é lido',
+     JSON.stringify(provas1.map(p => p.nHero).filter(n => n)));
+  af(ins.some(x => x.nHero >= 1 && x.cels.length === 0 || x.nHero >= 1),
+     'e vai para o slide', JSON.stringify(ins.map(x => x.nHero).filter(n => n)));
   const reg = await pg.evaluate(() => window.__registrados || []);
   af(reg.filter(r => r === 'datalabels').length === 1,
      'o plugin de rótulo é registrado UMA vez (registrar por gráfico desenhava duas)',
@@ -810,12 +983,13 @@ console.log('\n═══ 6 · o PPT sai com o mesmo desenho do PDF ═══');
      'o slide é a arte inteira, encostada no canto', JSON.stringify(sl.imgs[0]));
   af(sl.imgs[0].w === 13.3333 && sl.imgs[0].h === 7.5, 'ocupando a página toda',
      JSON.stringify(sl.imgs[0]));
-  /* Árvore + FCA no MESMO slide (Renan, 18/09): os dois blocos são
-     empilhados DENTRO da arte, com o rótulo laranja de cada um. */
+  /* o slide de dois blocos continua existindo (rótulo laranja por bloco) para
+     quando o roteiro pedir; a Árvore saiu dele por caber mal, não por o
+     empilhamento ter morrido */
   const ins2 = (await pg.evaluate(() => window.__slInsp || [])).filter(x => !x.erro);
-  const dois = ins2.filter(x => (x.rot || []).length === 2);
-  af(dois.length >= 1, 'o slide de Árvore + FCA empilha os dois, como no dele',
-     JSON.stringify(ins2.map(x => (x.rot || []).length)));
+  af(ins2.some(x => (x.rot || []).includes('Vs Remunerado')),
+     'o slide de dois blocos empilha com o rótulo de cada um',
+     JSON.stringify(ins2.flatMap(x => x.rot || []).slice(0, 6)));
   af(p && /^Check_de_Metas_2026_06\.pptx$/.test(p.arquivo), 'o arquivo sai com o mês no nome', p && p.arquivo);
   await ctx.close();
 }
