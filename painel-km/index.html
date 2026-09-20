@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609110215">
+<meta name="build" content="202609202030">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -277,13 +277,19 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
    dele que sai a altura a menos do gráfico (Renan, 16/08/2026) */
 #vw-resumo .fin-hero{padding:4px 0 6px;}
 #vw-resumo .hlbl{font-size:10.5px;letter-spacing:1px;}
-#vw-resumo .hval{font-size:clamp(34px,5vh,56px);margin:7px 0 11px;}
+#vw-resumo .hval{font-size:clamp(34px,5vh,56px);margin:7px 0 6px;}
+/* o km remunerado embaixo do realizado, menor (Renan, 20/09/2026: "texto, dois
+   pontos e do lado o valor") */
+.hrem{font-size:15px;font-weight:700;color:var(--txt2);margin:0 0 10px;}
+.hrem b{font-weight:800;color:var(--txt);}
 #vw-resumo .hdel div{font-size:9.5px;}
 #vw-resumo .hdel b{font-size:15px;margin-top:3px;}
 /* O RESUMO PREENCHE A TELA (Renan, 04/09/2026): o gráfico é o último bloco da
-   visão, então o teto em vh só deixava faixa vazia embaixo. Os cards não
-   achatam porque .kpis é flex:0 0 auto — toda a sobra vai para o gráfico. */
-#vw-resumo .gr2{max-height:none;}
+   visão, então o teto em vh só deixava faixa vazia embaixo. Mas a sobra NÃO vai
+   toda para o gráfico (Renan, 20/09/2026: "gráficos muito altos... distribua
+   melhor"): cards e gráficos crescem juntos, 1 para 3, com teto nos cards. */
+#vw-resumo .kpis.k4{flex:1 1 auto;max-height:clamp(130px,19vh,185px);}
+#vw-resumo .gr2{flex:3 1 auto;max-height:none;}
 #vw-eficiencia .gr2{max-height:40vh;}
 
 /* tabela da dispersão: 9 colunas cabem sem rolagem lateral */
@@ -300,6 +306,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 @media(max-width:860px){
   .gr4{display:block;} .gr4 .gcard{height:260px;margin-bottom:12px;}
   #tbl-km{table-layout:auto;}
+  #vw-resumo .kpis.k4{max-height:none;}   /* no celular a fileira vira 2 colunas e não pode ter teto */
 }
 
 @media(max-width:1100px){ .kpis{grid-template-columns:repeat(3,1fr);} }
@@ -415,6 +422,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
           <div>
             <div class="hlbl">KM realizado</div>
             <div class="hval" id="hero-val">—</div>
+            <div class="hrem">Km remunerado: <b id="hero-rem">—</b></div>
             <div class="hdel">
               <div>Δ Rem<b id="d-rem-abs">—</b></div>
               <div>Δ Rem %<b id="d-rem-pct">—</b></div>
@@ -435,7 +443,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
         <div class="gr2">
           <div class="card gcard">
             <div class="gtit">Dispersão de KM %</div>
-            <div class="chart-leg"><span><i class="leg-sq"></i>▲ Rem %</span><span><i class="leg-dash"></i>Meta (5%)</span></div>
+            <div class="chart-leg"><span><i class="leg-sq"></i>▲ Rem %</span><span><i class="leg-dash"></i>Meta (10%)</span></div>
             <div class="gcv"><canvas id="chart-evolucao"></canvas></div>
           </div>
           <div class="card gcard">
@@ -1071,7 +1079,7 @@ function render() {
   const F = getFiltered();
 
   if(!F.length) {
-    ['hero-val','hero-kmfrota','hero-kmviagem','d-rem-abs','d-rem-pct','d-imp','d-ytd-abs','d-ytd-pct','d-ytd-imp','d-bm'].forEach(id => set(id, '—'));
+    ['hero-val','hero-rem','hero-kmfrota','hero-kmviagem','d-rem-abs','d-rem-pct','d-imp','d-ytd-abs','d-ytd-pct','d-ytd-imp','d-bm'].forEach(id => set(id, '—'));
     const body = document.getElementById('tbl-body');
     if(body) body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text2);padding:24px 8px;">Sem dados para os filtros selecionados</td></tr>`;
     const foot = document.getElementById('tbl-foot');
@@ -1098,6 +1106,7 @@ function render() {
   const ytdImp      = YTDrows.reduce((s, r) => s + r.imp, 0);
 
   set('hero-val', fmt(totReal));
+  set('hero-rem', totRem ? fmt(totRem) : '—');
   const totRec = F.reduce((s, r) => s + (r.recomp || 0), 0), totBm = F.reduce((s, r) => s + (r.bmValor || 0), 0);
   set('d-bm', totRec ? `+${fmt(totRec)} km · R$ ${fmt(totBm)}` : '—');
   set('hero-kmfrota', avgKmFrota ? fmt(avgKmFrota) : '—');
@@ -1272,15 +1281,15 @@ function renderCharts(F) {
     if(mData[m].cnt === 0 || mData[m].rem === 0) return null;
     return (mData[m].real - mData[m].rem) / Math.abs(mData[m].rem) * 100;
   });
-  const metaLine = MONTHS.map(function(_, i) { return mData[i+1].cnt > 0 ? 5 : null; });
+  const metaLine = MONTHS.map(function(_, i) { return mData[i+1].cnt > 0 ? 10 : null; });
 
   var hasFocusEvo = hiMonths.size > 0;
-  // cor pela META de 5%: ≤5% verde, >5% vermelho (só neste gráfico de Dispersão)
+  // cor pela META de 10% (Renan, 20/09/2026 — era 5%): ≤10% verde, >10% vermelho (só neste gráfico de Dispersão)
   var realBarBg = MONTHS.map(function(_, i) {
     var m = i + 1;
     if(mData[m].cnt === 0 || mData[m].rem === 0) return 'transparent';
     var dp = (mData[m].real - mData[m].rem) / Math.abs(mData[m].rem) * 100;
-    var red = dp > 5;
+    var red = dp > 10;
     var a = hasFocusEvo ? (hiMonths.has(m) ? '.85' : '.2') : '.65';
     return red ? 'rgba(255,102,102,' + a + ')' : 'rgba(59,179,59,' + a + ')';
   });
@@ -1288,7 +1297,7 @@ function renderCharts(F) {
     var m = i + 1;
     if(mData[m].cnt === 0 || mData[m].rem === 0) return 'transparent';
     var dp = (mData[m].real - mData[m].rem) / Math.abs(mData[m].rem) * 100;
-    return dp > 5 ? '#FF6666' : '#3BB33B';
+    return dp > 10 ? '#FF6666' : '#3BB33B';
   });
 
   chEvo = new Chart(document.getElementById('chart-evolucao').getContext('2d'), {
@@ -1301,7 +1310,7 @@ function renderCharts(F) {
           backgroundColor:realBarBg, borderColor:realBarBc, borderWidth:1, borderRadius:3, order:2
         },
         {
-          type:'line', label:'META 5%', data:metaLine,
+          type:'line', label:'META 10%', data:metaLine,
           borderColor:orcC, borderWidth:2, tension:0, fill:false, borderDash:[5,3],
           order:1,
           ...mkPts(orcC, orcC)
@@ -1647,6 +1656,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609110215"></script>
+<script src="../assets/build-check.js?v=202609202030"></script>
 </body>
 </html>

@@ -132,8 +132,11 @@ window.html2canvas = function(el, o){
       numFs: (function(){ var td = tab && tab.querySelector('td.sl-n'); return td ? getComputedStyle(td).fontSize : null; })(),
       hero: (function(){
         var h = el.querySelector('.sl-hero'); if (!h) return null;
-        var v = h.querySelector('.v'), d = h.querySelector('.d');
+        var v = h.querySelector('.v'), d = h.querySelector('.d'), l = h.querySelector('.l');
         return { fundo: getComputedStyle(h).backgroundColor,
+                 linha: l ? l.textContent : null,
+                 linhaEntre: !!(l && v && d && l.getBoundingClientRect().top >= v.getBoundingClientRect().bottom - 2
+                                && d.getBoundingClientRect().top >= l.getBoundingClientRect().bottom - 2),
                  alt: Math.round(h.getBoundingClientRect().height),
                  /* deltas AO LADO = começam antes de o valor terminar; EMBAIXO =
                     começam depois da base do valor */
@@ -245,6 +248,8 @@ Object.defineProperty(window.PptxGenJS.prototype, 'layout', { set:function(v){ i
 const FCAS = [
   { vigencia:'jun/26', unidade:'CGR', projeto:'AS - CGR',   fato:'Combustíveis', fato_desvio:'Desvio: ▲ R$ 120.000 · ▲ -9%', causa:'Consumo acima', acao:'Pauta de consumo', responsavel:'Michel', prazo:'30/09/2026' },
   { vigencia:'jun/26', unidade:'CGR', projeto:'ROTA - CGR', fato:'Combustíveis', fato_desvio:'Desvio: ▲ R$ 90.000 · ▲ -7%', causa:'Km/L abaixo', acao:'Treinar motoristas', responsavel:'Michel', prazo:'30/09/2026' },
+  // a Seara: a Árvore dela é OUTRO painel (a Ambev não tem a ANG e saía zerada)
+  { vigencia:'jun/26', unidade:'ANG', projeto:'DISTRIBUIÇÃO URBANA - ANG', fato:'Combustíveis', fato_desvio:'Desvio: ▲ R$ 15.349 · ▲ 10%', causa:'R$/L acima', acao:'Renegociar diesel', responsavel:'Paulo', prazo:'30/09/2026' },
   { vigencia:'jun/26', unidade:'CBA T1', projeto:'EMPURRADA - CBA', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 55.000 · ▲ -12%', causa:'Carreta desgastada', acao:'Renovar carrocerias', responsavel:'Jean', prazo:'30/09/2026' },
   { vigencia:'jun/26', unidade:'GRL', projeto:'ROTA - GRL', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 33.000 · ▲ -4%', causa:'Corretivas', acao:'Antecipar preventivas', responsavel:'Ana', prazo:'30/10/2026' },
   { vigencia:'jun/26', unidade:'FLP', projeto:'ROTA - FLP', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 30.000 · ▲ -6%', causa:'Pneu', acao:'Revisar', responsavel:'Ana', prazo:'30/10/2026' },
@@ -293,7 +298,7 @@ const rotLongo = k => MES3[+k.slice(5, 7) - 1] + '/' + k.slice(0, 4);
 const mmAaaa   = k => k.slice(5, 7) + '/' + k.slice(0, 4);
 const DIAL_DE = { 'visao-financeira':'chave', 'rs-por-km':'chave',
   'scorecard':'curto', 'resumo-executivo':'curto', 'painel-metas':'curto', 'fca-consolidado':'curto',
-  'painel-km':'longo', 'seara-km':'longo', 'combustivel/arvore-combustivel':'mm', 'auditorias':'curto',
+  'painel-km':'longo', 'seara-km':'longo', 'combustivel/arvore-combustivel':'mm', 'combustivel/seara/arvore':'mm', 'auditorias':'curto',
   'programa-reconhecimento':'curto' };
 
 /* painel dublado: a MESMA mecânica do padrão (setVw, ms-*, atualizar) */
@@ -358,6 +363,7 @@ function painelDuble(chaves, dialeto, comGate) {
      se lê primeiro e ficava de fora do deck. Dois, como na Visão Financeira. */
   const HERO = () => `<div class="fin-hero">
     <div><div class="hlbl">KM realizado</div><div class="hval">1.34 mi</div>
+      <div class="hrem">Km remunerado: <b>1.14 mi</b></div>
       <div class="hdel"><div>Δ Rem<b style="color:rgb(255,0,0)">+202.47k</b></div>
         <div>Δ Rem %<b style="color:rgb(255,0,0)">+17.7%</b></div>
         <div>Balanço de massa<b>—</b></div></div></div>
@@ -401,9 +407,9 @@ function painelDuble(chaves, dialeto, comGate) {
     <div class="tit-sub" id="titSub">pronto</div>
     <div class="ms-wrap" id="ms-vig"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">${ops('ms-vig')}</div></div></div>
     <div class="ms-wrap" id="ms-uni"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
-      ${['CGR','CBA T1','GRL','PIR','FLP'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
+      ${['CGR','CBA T1','GRL','PIR','FLP','ANG'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-proj"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
-      ${['AS - CGR','ROTA - CGR','EMPURRADA - CBA','ROTA - GRL'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
+      ${['AS - CGR','ROTA - CGR','EMPURRADA - CBA','ROTA - GRL','DISTRIBUIÇÃO URBANA - ANG'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-nv3"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
       ${['AS','ROTA','EMPURRADA'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-org"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
@@ -508,7 +514,7 @@ function painelDuble(chaves, dialeto, comGate) {
   (function(){
     var w = document.getElementById('ms-proj');
     var MAP = { 'CGR':['AS - CGR','ROTA - CGR'], 'CBA T1':['EMPURRADA - CBA'], 'GRL':['ROTA - GRL'],
-                'PIR':['EMPURRADA - PIR'], 'FLP':['ROTA - FLP'] };
+                'PIR':['EMPURRADA - PIR'], 'FLP':['ROTA - FLP'], 'ANG':['DISTRIBUIÇÃO URBANA - ANG'] };
     w._render = function(){
       var u = document.getElementById('ms-uni'), us = u._sel ? Array.from(u._sel) : [];
       var ps = us.length ? us.flatMap(function(x){ return MAP[x] || []; }) : Object.values(MAP).flat();
@@ -587,7 +593,7 @@ async function abre({ semJunEm = null, gateEm = null } = {}) {
   });
   // todo painel do roteiro entra dublado
   for (const p of ['scorecard','resumo-executivo','visao-financeira','rs-por-km','painel-km',
-                   'seara-km','fca-consolidado','combustivel/arvore-combustivel','auditorias',
+                   'seara-km','fca-consolidado','combustivel/arvore-combustivel','combustivel/seara/arvore','auditorias',
                    'programa-reconhecimento','painel-metas']) {
     await ctx.route(BASE + '/' + p + '/', r => r.fulfill({ status: 200, contentType: 'text/html;charset=utf-8',
       body: painelDuble(p === semJunEm ? VIGS_SEM_JUN : VIGS_OK, DIAL_DE[p], p === gateEm) }));
@@ -658,7 +664,7 @@ async function abre({ semJunEm = null, gateEm = null } = {}) {
 console.log('\n═══ 1 · o roteiro sai da tabela `fca`, não de uma lista fixa ═══');
 {
   const { ctx, pg } = await abre();
-  const r = await pg.evaluate(() => ROTEIRO.map(s => ({ t:s.t, tit:s.tit||s.txt, url:s.url,
+  const r = await pg.evaluate(() => ROTEIRO.map(s => ({ t:s.t, tit:s.tit||s.txt, sub:s.sub, url:s.url,
     caps:(s.caps||[]).length, rots:(s.caps||[]).map(c=>c.rot||''),
     urls:(s.caps||[]).map(c=>c.url||s.url).join(' '),
     prep:(s.caps||[]).map(c=>c.prep).join(' ') })));
@@ -674,10 +680,16 @@ console.log('\n═══ 1 · o roteiro sai da tabela `fca`, não de uma lista f
      árvore — que é um desenho com conectores — ficava com meia página e
      ilegível. Dois recortes de Combustíveis = 4 slides, aos pares. */
   const comb = r.filter(s => /Combustíveis – /.test(s.tit || ''));
-  af(comb.length === 4, 'Combustíveis: a Árvore e o FCA em slides próprios', comb.length);
+  af(comb.length === 6, 'Combustíveis: a Árvore e o FCA em slides próprios (3 recortes)', comb.length);
   af(comb.filter(s => /arvore-combustivel/.test(s.url || '')).length === 2,
-     'duas árvores, uma por unidade+projeto', JSON.stringify(comb.map(s => s.url)));
-  af(comb.filter(s => /fca-consolidado/.test(s.url || '')).length === 2,
+     'duas árvores Ambev, uma por unidade+projeto', JSON.stringify(comb.map(s => s.url)));
+  /* A ANG É A SEARA (bug real, 20/09/2026: "Árvore Seara saiu tudo zerado"):
+     a Árvore Ambev não tem a unidade, então a dela sai da Árvore da Seara. */
+  const arvAng = comb.find(s => /ANG/.test(s.tit || '') && !/fca/.test(s.url || ''));
+  af(arvAng && /combustivel\/seara\/arvore/.test(arvAng.url || ''),
+     'a árvore da ANG sai da Árvore da SEARA, não da Ambev', arvAng && arvAng.url);
+  af(arvAng && /Seara/.test(arvAng.sub || ''), 'e o subtítulo diz que é a Seara', arvAng && arvAng.sub);
+  af(comb.filter(s => /fca-consolidado/.test(s.url || '')).length === 3,
      'e o FCA de cada uma logo depois');
   af(/arvore/.test(comb[0].url) && /fca/.test(comb[1].url),
      'nessa ordem: a árvore explica, o FCA responde', comb.map(s=>s.url).join(' '));
@@ -750,7 +762,7 @@ let provas1 = [];
      'cada abertura leva o seu pacote no filtro', JSON.stringify(abertura.map(p => p.estado.filtros['ms-pac'])));
 
   const fca = provas1.filter(p => /fca-consolidado/.test(p.pag));
-  af(fca.length === 6, 'seis recortes de FCA (4 de Manutenções + 2 de Combustíveis)', fca.length);
+  af(fca.length === 7, 'sete recortes de FCA (4 de Manutenções + 3 de Combustíveis)', fca.length);
   af(fca.every(p => p.estado.vw === 'tabela'), 'o FCA sai na visão Tabela');
   af(fca.every(p => p.estado.chamou.includes('run')), 'o FCA foi redesenhado (run)');
   const fc = fca.find(p => p.estado.filtros['ms-fato'][0] === 'Combustíveis');
@@ -777,6 +789,11 @@ let provas1 = [];
      JSON.stringify(arv.map(p => p.estado.filtros['ms-nv3'])));
   af(arv.every(p => p.estado.filtros['ms-vig'].length === 1),
      'e a vigência casa também no dialeto MM/AAAA da Árvore', JSON.stringify(arv.map(p => p.estado.filtros['ms-vig'])));
+  const arvSea = provas1.filter(p => /seara\/arvore/.test(p.pag));
+  af(arvSea.length === 1 && arvSea[0].estado.chamou.includes('onFilterChange'), 'a Árvore da Seara foi redesenhada', arvSea.length);
+  af(arvSea[0] && arvSea[0].estado.filtros['ms-vig'].length === 1 && !(arvSea[0].estado.filtros['ms-nv3']||[]).length,
+     'a Árvore da Seara leva só a vigência (é só ANG, não tem filtro de unidade/projeto)',
+     arvSea[0] && JSON.stringify(arvSea[0].estado.filtros));
 
   const pr = provas1.filter(p => /programa-reconhecimento/.test(p.pag));
   af(pr.length === 4, 'Frota de Elite: ranking, dois pódios e a evolução', pr.length);
@@ -1027,6 +1044,12 @@ let provas1 = [];
      versão certa. É o CSS daquele build, copiado, não reescrito. */
   af(her.every(x => !x.hero.aoLado), 'com os deltas embaixo do valor, como na imagem 2',
      JSON.stringify(her.map(x => x.tit + '=' + x.hero.aoLado)));
+  /* A LINHA "Km remunerado: 1.14 mi" EMBAIXO DO REALIZADO (Renan, 20/09/2026:
+     "texto, dois pontos e do lado o valor") — entre o número e os deltas */
+  const herL = her.filter(x => x.hero.linha);
+  af(herL.length >= 1 && herL.every(x => x.hero.linha === 'Km remunerado: 1.14 mi'),
+     'o km remunerado vai embaixo do realizado, "texto: valor"', JSON.stringify(her.map(x => x.hero.linha)));
+  af(herL.every(x => x.hero.linhaEntre), 'entre o número e os deltas', JSON.stringify(herL.map(x => x.hero.linhaEntre)));
   af(her.every(x => x.hero.alt <= 120), 'e sem virar uma faixa alta',
      JSON.stringify(her.map(x => x.hero.alt)));
 
