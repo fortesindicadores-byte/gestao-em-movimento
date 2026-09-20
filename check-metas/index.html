@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609200210">
+<meta name="build" content="202609200520">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -539,7 +539,8 @@ const ALVO_PADRAO="(document.querySelector('.vw.on')||document.querySelector('.c
 
 function P(tit,sub,url,prep,opt){ opt=opt||{};
   return {t:'p',tit,sub,url,podio:opt.podio,
-          caps:[{prep,alvo:opt.alvo,esp:opt.esp,rot:opt.rot,foto:opt.foto,semCols:opt.semCols,semTab:opt.semTab}]}; }
+          caps:[{prep,alvo:opt.alvo,esp:opt.esp,rot:opt.rot,foto:opt.foto,semCols:opt.semCols,
+                semTab:opt.semTab,nGraf:opt.nGraf,agrupa:opt.agrupa}]}; }
 /* UNIDADE, PROJETO e VIGÊNCIA do FCA já estão no TÍTULO do slide
    ("Manutenções – PIR · EMPURRADA" / "FCA · ago/2026") e são iguais em toda
    linha — foi isso que deixou o slide com cara de FCA repetido três vezes
@@ -613,7 +614,7 @@ function montaRoteiro(avisa){
          ('ROTA'), não o nível 3 inteiro ('ROTA - CGR') como no FCA */
       const arvPrep=`__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); __cm.redesenha('onFilterChange');`;
       if(!g.arvore){
-        R.push(P(nome,'FCA · '+sub,'../fca-consolidado/',fcaPrep,{semCols:FCA_SEM}));
+        R.push(P(nome,'FCA · '+sub,'../fca-consolidado/',fcaPrep,{semCols:FCA_SEM,agrupa:['FATO']}));
       }else{
         /* A ÁRVORE É UM DESENHO, NÃO TABELA NEM CARD (Renan, 19/09/2026:
            "árvores do combustível muito fora do padrão... se precisar separar
@@ -623,8 +624,8 @@ function montaRoteiro(avisa){
            `.tree-wrap`, dentro da moldura do padrão — e em slide PRÓPRIO, com o
            FCA logo depois, porque os dois juntos não cabem sem espremer. */
         R.push(P(nome,'Árvore de Combustível · '+sub,'../combustivel/arvore-combustivel/',
-          arvPrep,{foto:true,alvo:"document.querySelector('.tree-wrap')"}));
-        R.push(P(nome,'FCA · '+sub,'../fca-consolidado/',fcaPrep,{semCols:FCA_SEM}));
+          arvPrep,{foto:true}));
+        R.push(P(nome,'FCA · '+sub,'../fca-consolidado/',fcaPrep,{semCols:FCA_SEM,agrupa:['FATO']}));
       }
     });
   });
@@ -666,7 +667,7 @@ function montaRoteiro(avisa){
      e o total continua sendo o do hero do painel, não uma soma minha. */
   const pmPrep=`__cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`;
   R.push(P('Painel de Metas','Gerente de Frota · '+vX,'../painel-metas/',pmPrep,
-    {semTab:true, alvo:"document.querySelector('.main')||document.body"}));
+    {semTab:true, nGraf:1, alvo:"document.querySelector('.main')||document.body"}));
   R.push(P('Painel de Metas','Indicadores · '+vX,'../painel-metas/',pmPrep,
     {alvo:"document.querySelector('#tbl table')"}));
 
@@ -1057,6 +1058,26 @@ const CM_HELPER=`window.__cm={
     });
     return out;
   },
+  /* QUANTAS COLUNAS A GRADE DE KPI DO PAINEL TEM. O Scorecard mostra os 20
+     indicadores em 10 colunas compactas; eu repartia por uma regra minha e
+     saíam 7 por linha, gordos, comendo a altura do gráfico. Quem sabe a
+     densidade certa é o painel. */
+  kcols:function(raiz){
+    /* MEDIR, não ler o CSS: o computed de grid-template-columns nem sempre vem
+       resolvido em px (veio "1fr" e a conta deu UMA coluna), e aí a fileira de
+       20 indicadores saía empilhada. Quantos cards dividem a PRIMEIRA linha é
+       o número de colunas, e isso é medida, não interpretação. */
+    var sel='.kpi,.kpi-card,.ch-min,.card-kpi,.mini-card';
+    var ks=[].slice.call((raiz||document).querySelectorAll(sel))
+      .filter(function(k){ return k.offsetHeight>10; });
+    if(ks.length<2) return 0;
+    var g=ks[0].parentNode, topo=ks[0].offsetTop, n=0;
+    for(var i=0;i<ks.length;i++){
+      if(ks[i].parentNode!==g || ks[i].offsetTop!==topo) break;
+      n++;
+    }
+    return n;
+  },
   /* ── HERO: o número principal, que no padrão fica FORA de card ──
      Renan, 19/09/2026: "faltou realizado". O hero é ".fin-hero > div" com
      .hlbl/.hval/.hdel (layout novo) ou ".hero" com .hero-label/.hero-value
@@ -1135,27 +1156,46 @@ const CM_HELPER=`window.__cm={
          mês corrente. Reformatar aqui foi o que tirou o sinal e o sufixo.
          undefined = o painel não diz; null = o painel esconde. */
       var dl=(ch.options&&ch.options.plugins&&ch.options.plugins.datalabels)||null;
-      var rotulo=function(d,i,v){
-        if(!dl) return undefined;
-        var ctx={chart:ch,dataset:d,dataIndex:i,datasetIndex:ch.data.datasets.indexOf(d),active:false};
-        try{
-          if(dl.display===false) return null;
-          if(typeof dl.display==='function' && !dl.display(ctx)) return null;
-        }catch(e){ return undefined; }
-        try{ if(typeof dl.formatter==='function'){ var t=dl.formatter(v,ctx); return t==null?null:String(t); } }catch(e){}
-        return undefined;
+      /* "rotDef" = o painel ESCREVE o texto (tem formatter). Só nesse caso o
+         slide copia as strings dele. Quando ele só liga/desliga (o Frota de
+         Elite tem "datalabels:{}" no gráfico e "display:false" nas linhas de
+         meta), quem formata é o portal — senão a Evolução saía SEM rótulo
+         nenhum, que foi o que aconteceu (Renan, 19/09/2026). */
+      var temFmt=!!(dl&&typeof dl.formatter==='function');
+      var mostra=function(d,i,v){
+        var dd=d.datalabels;
+        if(dd&&dd.display===false) return false;           // desligado NO dataset
+        if(!dl) return true;
+        if(dl.display===false) return false;
+        if(typeof dl.display==='function'){
+          try{ return !!dl.display({chart:ch,dataset:d,dataIndex:i,
+                 datasetIndex:ch.data.datasets.indexOf(d),active:false}); }catch(e){ return true; }
+        }
+        return true;
+      };
+      var texto=function(d,i,v){
+        if(!temFmt) return null;
+        try{ var t=dl.formatter(v,{chart:ch,dataset:d,dataIndex:i,
+               datasetIndex:ch.data.datasets.indexOf(d),active:false});
+             return t==null?'':String(t); }catch(e){ return null; }
       };
       out.push({
         titulo:tt?(tt.innerText||'').trim():'',
         sub:ss?(ss.innerText||'').replace(/\\s+/g,' ').trim():'',
         tipo:ch.config.type||'bar',
         labels:(ch.data.labels||[]).map(function(l){ return String(l); }),
-        legenda:leg, eixoY:eixo('y'), eixoX:eixo('x'),
+        legenda:leg, eixoY:eixo('y'), eixoX:eixo('x'), rotDef:temFmt,
+        /* legenda NATIVA ligada e sem .gleg: o painel mostra legenda, e o slide
+           precisa mostrar também — o Frota de Elite é assim e o slide saiu sem
+           nenhuma. O desenho continua o do portal (quadradinho/tracinho). */
+        legNativa:!!(ch.options&&ch.options.plugins&&ch.options.plugins.legend
+                     &&ch.options.plugins.legend.display!==false),
         datasets:ds.map(function(d){
           var cor=function(v){ return (typeof v==='string')?v:(Array.isArray(v)?v.map(function(x){return typeof x==='string'?x:null;}):null); };
           var vals=(d.data||[]).map(function(v){ return (v&&typeof v==='object')?(v.y!=null?v.y:v.v):v; });
           return { label:d.label||'', data:vals,
-                   rotulos:vals.map(function(v,i){ return rotulo(d,i,v); }),
+                   mostra:vals.map(function(v,i){ return mostra(d,i,v); }),
+                   rotulos:vals.map(function(v,i){ return texto(d,i,v); }),
                    backgroundColor:cor(d.backgroundColor), borderColor:cor(d.borderColor),
                    borderDash:d.borderDash||undefined, tipo:d.type||null };
         })
@@ -1365,15 +1405,24 @@ async function capturaSlide(s){
         let c1=null;
         if(c.foto!==true){
           try{
-            const tab=c.semTab?null:win.__cm.extrai(alvo);
-            const kp =win.__cm.kpis(alvoCheio);
-            const gs =win.__cm.grafs(alvoCheio);
-            const hs =win.__cm.heros(alvoCheio);
+            /* CLONE PARA ESTE REALM: o iframe é destruído antes de o slide ser
+               montado, e objeto vindo de um frame desligado é armadilha. Tudo
+               que sai do extrai/kpis/grafs/heros é texto, número, null ou
+               booleano, então o JSON basta. */
+            const puro = x => { try{ return JSON.parse(JSON.stringify(x)); }catch(e){ return x; } };
+            const tab=c.semTab?null:puro(win.__cm.extrai(alvo));
+            const kp =puro(win.__cm.kpis(alvoCheio));
+            const kc =win.__cm.kcols(alvoCheio);
+            let gs =puro(win.__cm.grafs(alvoCheio));
+            const hs =puro(win.__cm.heros(alvoCheio));
+            /* "deixe só esses dois" (Renan, 19/09/2026, no Painel de Metas):
+               o roteiro pode pedir só os N primeiros gráficos da visão. */
+            if(c.nGraf && gs) gs=gs.slice(0,c.nGraf);
             if(tab||(gs&&gs.length)||(kp&&kp.length)||(hs&&hs.length))
-              c1={tipo:'dados',tabela:tab,kpis:kp,grafs:gs,heros:hs};
+              c1={tipo:'dados',tabela:tab,kpis:kp,kcols:kc,grafs:gs,heros:hs};
           }catch(e){ msgs.push('não consegui ler os dados: '+(e&&e.message||e)); }
         }
-        if(c1) fotos.push({rot:c.rot,semCols:c.semCols,...c1});
+        if(c1) fotos.push({rot:c.rot,semCols:c.semCols,agrupa:c.agrupa,...c1});
         else { const foto=await tiraFoto(win,alvo); fotos.push({rot:c.rot,foto:true,...foto}); }
       } finally {
         if(abriu){ try{ win.__cm.fecha(); }catch(e){}
@@ -1425,8 +1474,8 @@ const LAY_W=13.3333, LAY_H=7.5;
 async function paginasDo(s){
   const SP=window.SlidePadrao;
   if(s.cheia) return [s.cheia];                       /* capa / divisória */
-  const blocos=(s.fotos||[]).map(f=>({rot:f.rot,tabela:f.tabela,kpis:f.kpis,grafs:f.grafs,
-    heros:f.heros,semCols:f.semCols,png:f.foto?f.png:null}));
+  const blocos=(s.fotos||[]).map(f=>({rot:f.rot,tabela:f.tabela,kpis:f.kpis,kcols:f.kcols,
+    grafs:f.grafs,heros:f.heros,semCols:f.semCols,agrupa:f.agrupa,png:f.foto?f.png:null}));
   /* pódio: o do PAINEL (com boneco); sem ele, os três primeiros do ranking */
   let els;
   const pd=s.podioDados;
@@ -1642,7 +1691,7 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202609200210"></script>
-<script src="../assets/build-check.js?v=202609200210"></script>
+<script src="slides.js?v=202609200520"></script>
+<script src="../assets/build-check.js?v=202609200520"></script>
 </body>
 </html>
