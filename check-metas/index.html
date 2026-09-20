@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609200720">
+<meta name="build" content="202609201050">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -540,14 +540,18 @@ const ALVO_PADRAO="(document.querySelector('.vw.on')||document.querySelector('.c
 function P(tit,sub,url,prep,opt){ opt=opt||{};
   return {t:'p',tit,sub,url,podio:opt.podio,
           caps:[{prep,alvo:opt.alvo,esp:opt.esp,rot:opt.rot,foto:opt.foto,semCols:opt.semCols,
-                semTab:opt.semTab,nGraf:opt.nGraf,agrupa:opt.agrupa}]}; }
+                semTab:opt.semTab,nGraf:opt.nGraf,agrupa:opt.agrupa,juntar:opt.juntar}]}; }
 /* UNIDADE, PROJETO e VIGÊNCIA do FCA já estão no TÍTULO do slide
    ("Manutenções – PIR · EMPURRADA" / "FCA · ago/2026") e são iguais em toda
    linha — foi isso que deixou o slide com cara de FCA repetido três vezes
    (Renan, 19/09/2026: "esse FCA repetiu 3 vezes, não entendi"; o que repete de
    verdade é o Fato, porque as três linhas são do mesmo pacote com causas
    diferentes). Tirando as três, sobra largura e o cabeçalho para de cortar. */
-const FCA_SEM=['UNIDADE','PROJETO','VIGÊNCIA'];
+/* NADA SAI DA TABELA DO FCA (Renan, 20/09/2026: "coluna unidade, igual o FCA
+   do painel FCA - Admin. Não invente"). Eu tinha tirado Unidade, Projeto e
+   Vigência achando que o título do slide bastava; não bastava, e não era meu
+   para decidir. A tabela do slide é a do painel. */
+const FCA_SEM=[];
 function P2(tit,sub,url,a,b){ return {t:'p',tit,sub,url,caps:[a,b]}; }
 
 const brlDesvio=s=>{ const m=String(s||'').match(/R\$\s*([\d.]+)/); return m?+m[1].replace(/\./g,''):0; };
@@ -655,7 +659,10 @@ function montaRoteiro(avisa){
        vem árvore e FCA"). É um desenho com conectores, não tabela nem card:
        entra como foto, em slide próprio. */
     if(g.arvore) dsv.forEach(d=>{
-      const arvPrep=`__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); __cm.redesenha('onFilterChange');`;
+      /* o .tree-wrap é `min-width:100%`, então a foto vinha com a árvore à
+         esquerda e um vão à direita (Renan: "só distribui melhor"). Encolhendo
+         ao conteúdo, a foto é a árvore e o slide a escala para a página. */
+      const arvPrep=`__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); __cm.redesenha('onFilterChange'); var _tw=document.querySelector('.tree-wrap'); if(_tw){_tw.style.minWidth='0';_tw.style.width='max-content';}`;
       R.push(P(g.pac+' – '+nomeDe(d),'Árvore de Combustível · '+subDe(d),
         '../combustivel/arvore-combustivel/',arvPrep,
         {foto:true,alvo:"document.querySelector('.tree-wrap')||document.querySelector('.tree')"}));
@@ -672,7 +679,7 @@ function montaRoteiro(avisa){
         return;
       }
       R.push({t:'p',tit:g.pac,sub:'FCA · '+vX,url:'../fca-consolidado/',
-        caps:gr.map(d=>({prep:fcaDe(d),semCols:FCA_SEM,agrupa:['FATO'],
+        caps:gr.map(d=>({prep:fcaDe(d),juntar:true,agrupa:['FATO'],
           rot:nomeDe(d)+' — desvio de R$ '+d.brl.toLocaleString('pt-BR')}))});
     });
   });
@@ -1203,40 +1210,44 @@ const CM_HELPER=`window.__cm={
          mês corrente. Reformatar aqui foi o que tirou o sinal e o sufixo.
          undefined = o painel não diz; null = o painel esconde. */
       var dl=(ch.options&&ch.options.plugins&&ch.options.plugins.datalabels)||null;
-      /* "rotDef" = o painel ESCREVE o texto (tem formatter). Só nesse caso o
-         slide copia as strings dele. Quando ele só liga/desliga (o Frota de
-         Elite tem "datalabels:{}" no gráfico e "display:false" nas linhas de
-         meta), quem formata é o portal — senão a Evolução saía SEM rótulo
-         nenhum, que foi o que aconteceu (Renan, 19/09/2026). */
-      var temFmt=!!(dl&&typeof dl.formatter==='function');
+      /* O AJUSTE DE CADA DATASET SOBREPÕE O DO GRÁFICO — é assim que o plugin
+         funciona, e é onde o Frota de Elite põe o formatter: o gráfico tem
+         "datalabels:{}" VAZIO e a BARRA carrega
+         "datalabels:{formatter: v => v.toFixed(1)}". Lendo só o do gráfico eu
+         nunca achava o texto, e a Evolução saía sem rótulo nenhum. */
+      var dlDe=function(d){
+        var o={}, k;
+        for(k in (dl||{})) o[k]=dl[k];
+        for(k in (d.datalabels||{})) o[k]=d.datalabels[k];
+        return o;
+      };
       var mostra=function(d,i,v){
-        var dd=d.datalabels;
-        if(dd&&dd.display===false) return false;           // desligado NO dataset
-        if(!dl) return true;
-        if(dl.display===false) return false;
-        if(typeof dl.display==='function'){
-          try{ return !!dl.display({chart:ch,dataset:d,dataIndex:i,
-                 datasetIndex:ch.data.datasets.indexOf(d),active:false}); }catch(e){ return true; }
+        var e=dlDe(d);
+        if(e.display===false) return false;
+        if(typeof e.display==='function'){
+          try{ return !!e.display({chart:ch,dataset:d,dataIndex:i,
+                 datasetIndex:ch.data.datasets.indexOf(d),active:false}); }catch(err){ return true; }
         }
         return true;
       };
-      /* TRÊS RESPOSTAS, não duas: a string que o painel escreveu, '' quando ele
-         escreveu vazio de propósito, e FALSE quando não deu para saber (sem
-         formatter, ou ele lançou). Tratar "não deu para saber" como vazio foi
-         o que deixou a Dispersão sem rótulo: o texto vinha nulo e o slide
-         imprimia nada em vez de formatar pelo portal. */
+      /* TRÊS RESPOSTAS, não duas: a string que o painel escreveu, vazio quando
+         ele escreveu vazio de propósito, e FALSE quando não deu para saber
+         (sem formatter, ou ele lançou). Tratar "não deu para saber" como vazio
+         imprimia nada em vez de deixar o portal formatar. */
       var texto=function(d,i,v){
-        if(!temFmt) return false;
-        try{ var t=dl.formatter(v,{chart:ch,dataset:d,dataIndex:i,
+        var e=dlDe(d);
+        if(typeof e.formatter!=='function') return false;
+        try{ var t=e.formatter(v,{chart:ch,dataset:d,dataIndex:i,
                datasetIndex:ch.data.datasets.indexOf(d),active:false});
-             return t==null?'':String(t); }catch(e){ return false; }
+             return t==null?'':String(t); }catch(err){ return false; }
       };
       out.push({
         titulo:tt?(tt.innerText||'').trim():'',
         sub:ss?(ss.innerText||'').replace(/\\s+/g,' ').trim():'',
         tipo:ch.config.type||'bar',
         labels:(ch.data.labels||[]).map(function(l){ return String(l); }),
-        legenda:leg, eixoY:eixo('y'), eixoX:eixo('x'), rotDef:temFmt,
+        legenda:leg, eixoY:eixo('y'), eixoX:eixo('x'),
+        rotDef:ds.some(function(d){ return typeof dlDe(d).formatter==='function'; }),
         /* legenda NATIVA ligada e sem .gleg: o painel mostra legenda, e o slide
            precisa mostrar também — o Frota de Elite é assim e o slide saiu sem
            nenhuma. O desenho continua o do portal (quadradinho/tracinho). */
@@ -1363,14 +1374,17 @@ async function tiraFoto(win,el){
      borda preta em volta de um card branco. E, no claro, fundo escuro é
      sinal de que a herança se perdeu: vale o branco. */
   const claro=win.document.body.classList.contains('claro')||win.document.body.classList.contains('light-mode');
-  let bg=prep?prep.fundoDe(el):'#FFFFFF';
-  if(claro && escuro(bg)) bg='#FFFFFF';
+  /* O FUNDO DA FOTO É O DO SLIDE (Renan, 20/09/2026: "sem fundo branco" ·
+     "sem esses fundos brancos porra"). Pegando o do painel, a árvore vinha
+     sobre um branco que virava uma placa dentro do slide cinza. */
+  const doSlide=(window.SlidePadrao&&window.SlidePadrao.TK.fundo)||'#E1E2E5';
+  const bg=doSlide;
   const nodes=prep?prep.preparar(el,true):null;
   const o={scale:2,backgroundColor:bg,useCORS:true,logging:false};
   if(prep) o.onclone=prep.onclone;
   try{
     const c=await h2c(el,o);
-    return {png:c.toDataURL('image/jpeg',0.93),w:c.width,h:c.height};
+    return {png:c.toDataURL('image/jpeg',0.95),w:c.width,h:c.height};
   } finally { if(prep&&prep.limpar) prep.limpar(nodes); }
 }
 
@@ -1480,7 +1494,7 @@ async function capturaSlide(s){
               c1={tipo:'dados',tabela:tab,kpis:kp,kcols:kc,grafs:gs,heros:hs};
           }catch(e){ msgs.push('não consegui ler os dados: '+(e&&e.message||e)); }
         }
-        if(c1) fotos.push({rot:c.rot,semCols:c.semCols,agrupa:c.agrupa,...c1});
+        if(c1) fotos.push({rot:c.rot,semCols:c.semCols,agrupa:c.agrupa,juntar:c.juntar,...c1});
         else { const foto=await tiraFoto(win,alvo); fotos.push({rot:c.rot,foto:true,...foto}); }
       } finally {
         if(abriu){ try{ win.__cm.fecha(); }catch(e){}
@@ -1533,7 +1547,8 @@ async function paginasDo(s){
   const SP=window.SlidePadrao;
   if(s.cheia) return [s.cheia];                       /* capa / divisória */
   const blocos=(s.fotos||[]).map(f=>({rot:f.rot,tabela:f.tabela,kpis:f.kpis,kcols:f.kcols,
-    grafs:f.grafs,heros:f.heros,semCols:f.semCols,agrupa:f.agrupa,png:f.foto?f.png:null}));
+    grafs:f.grafs,heros:f.heros,semCols:f.semCols,agrupa:f.agrupa,juntar:f.juntar,
+    png:f.foto?f.png:null}));
   /* pódio: o do PAINEL (com boneco); sem ele, os três primeiros do ranking */
   let els;
   const pd=s.podioDados;
@@ -1750,7 +1765,7 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202609200720"></script>
-<script src="../assets/build-check.js?v=202609200720"></script>
+<script src="slides.js?v=202609201050"></script>
+<script src="../assets/build-check.js?v=202609201050"></script>
 </body>
 </html>

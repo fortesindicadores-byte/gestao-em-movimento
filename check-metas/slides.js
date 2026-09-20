@@ -69,12 +69,12 @@ const SL_CSS = `
   text-transform:uppercase;letter-spacing:1.2px;}
 
 /* ── cards de KPI (a fileira do Scorecard) ── */
-.sl-kpis{flex:0 0 auto;display:grid;gap:14px;}
+.sl-kpis{flex:0 0 auto;display:grid;gap:12px;}
 .sl-kpi{background:${TK.card};border:1px solid ${TK.cardBrd};border-radius:12px;
-  padding:18px 20px;display:flex;flex-direction:column;justify-content:center;gap:4px;}
+  padding:13px 16px;display:flex;flex-direction:column;justify-content:center;gap:2px;}
 .sl-kpi .r{font-size:11px;font-weight:700;color:${TK.txt3};text-transform:uppercase;letter-spacing:.8px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sl-kpi .v{font-size:32px;font-weight:800;line-height:1.05;}
+.sl-kpi .v{font-size:28px;font-weight:800;line-height:1.05;}
 .sl-kpi .m{font-size:11px;font-weight:500;color:${TK.txt3};}
 /* grade DENSA: quando o painel põe 8+ por linha (o Scorecard mostra os 20
    indicadores em 10 colunas), o card encolhe junto — senão os cards tomam a
@@ -86,23 +86,22 @@ const SL_CSS = `
 .sl-kpis.denso .m{font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* ── hero (o número grande sem card) ──
-   PROPORÇÃO DO PAINEL (Renan, 19/09/2026: "olha a diferença das proporções").
-   No painel o hero é uma COLUNA — rótulo, valor, e os deltas na linha DE
-   BAIXO. Eu punha os deltas ao LADO do valor e o valor em 60px: o bloco comia
-   a largura toda, empurrava o EBITDA para o meio e roubava altura do gráfico,
-   que no painel fica com metade da tela. */
-.sl-hero{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;}
+   COMPACTO, como estava quando ele aprovou ("ficou perfeito, bem alinhado e
+   distribuído"): os deltas AO LADO do valor, na mesma linha, e fundo nenhum —
+   o hero é solto sobre a página. Em coluna ele ficou alto, pareceu uma faixa
+   clara atrás e roubou a altura do gráfico. */
+.sl-hero{flex:0 0 auto;display:flex;align-items:flex-end;gap:26px;background:transparent;}
 .sl-hero .r{font-size:11px;font-weight:700;color:${TK.txt3};text-transform:uppercase;letter-spacing:1px;}
-.sl-hero .v{font-size:42px;font-weight:800;line-height:1.05;margin-top:2px;}
+.sl-hero .v{font-size:44px;font-weight:800;line-height:1;margin-top:1px;}
 .sl-hero .v .mg{font-size:.52em;font-weight:700;color:${TK.txt3};margin-left:6px;}
-.sl-hero .d{display:flex;gap:18px;flex-wrap:wrap;margin-top:5px;}
-.sl-hero .d div{font-size:10px;color:${TK.txt3};font-weight:600;text-transform:uppercase;letter-spacing:.6px;}
+.sl-hero .d{display:flex;gap:18px;flex-wrap:wrap;padding-bottom:5px;}
+.sl-hero .d div{font-size:9.5px;color:${TK.txt3};font-weight:700;text-transform:uppercase;letter-spacing:.6px;}
 .sl-hero .d b{display:block;font-size:14px;font-weight:800;margin-top:2px;}
 /* o 2º hero (o EBITDA da Visão Financeira) vai à direita, como no painel */
 .sl-hero.dir{margin-left:auto;align-items:flex-end;text-align:right;}
 .sl-hero.dir .d{justify-content:flex-end;}
-.sl-heros{flex:0 0 auto;display:flex;align-items:flex-start;gap:32px;
-  padding-bottom:12px;border-bottom:1px solid ${TK.linha};}
+.sl-heros{flex:0 0 auto;display:flex;align-items:flex-end;gap:32px;background:transparent;
+  padding-bottom:10px;border-bottom:1px solid ${TK.linha};}
 .sl-hero .s{font-size:10.5px;color:${TK.txt3};font-weight:600;margin-top:4px;}
 
 /* ── legenda: a .gleg do painel, não as bolinhas do Chart.js ──
@@ -397,25 +396,12 @@ function slTabela(tit, sub, dados, opt){
     }
     slLarguras(t, wrap);
 
-    /* SOBRA DE ALTURA VIRA RESPIRO, NÃO VAZIO (Renan, 20/09/2026: "dá para
-       distribuir um pouco melhor" · "Manutenção também dá para distribuir").
-       Uma abertura de 12 unidades ocupava o terço de cima do slide e deixava
-       dois terços em branco. Se coube com folga, a folga é repartida entre as
-       linhas — a tabela continua a mesma, só respira. */
-    const sobra = wrap.clientHeight - t.offsetHeight;
-    if (sobra > 40) {
-      const n = tb.children.length + 1;
-      /* o teto é generoso de propósito: uma tabela de duas ou três linhas numa
-         página inteira precisa de MUITO respiro por linha, senão fica a faixa
-         de cima com dois terços de branco embaixo */
-      const extra = Math.min(90, Math.floor(sobra / n / 2));
-      if (extra > 0) {
-        t.querySelectorAll('td').forEach(td => {
-          td.style.paddingTop = td.style.paddingBottom = (10 + extra) + 'px'; });
-        t.querySelectorAll('th').forEach(th => {
-          th.style.paddingTop = th.style.paddingBottom = (11 + extra) + 'px'; });
-      }
-    }
+    /* NADA DE "RESPIRO" AQUI (revertido em 20/09/2026). Eu repartia a sobra
+       de altura como padding das linhas, e isso: inflou o cabeçalho a ponto de
+       virar uma placa clara no meio da página, abriu um vão entre ele e a
+       única linha, esticou tabelas que já estavam boas e — o pior — fez caber
+       MENOS linha, jogando a RON das Auditorias e a 13ª do Ranking para fora.
+       Renan: "mudou o que estava bom". Tabela curta fica curta. */
     paginas.push(el);
     corpo = corpo.slice(entraram);
     pag++;
@@ -532,9 +518,10 @@ function slGrafs(mio, gs){
   if (!gs || !gs.length) return null;
   if (gs.length === 1) return slGrafico(mio, gs[0]);
   const g = document.createElement('div'); g.className = 'sl-gg';
-  g.style.gridTemplateColumns = `repeat(${Math.min(gs.length, 3)},minmax(0,1fr))`;
+  const n = Math.min(gs.length, 3);
+  g.style.gridTemplateColumns = `repeat(${n},minmax(0,1fr))`;
   mio.appendChild(g);
-  gs.slice(0, 3).forEach(x => slGrafico(g, x));
+  gs.slice(0, 3).forEach(x => { x.apertado = (x.labels||[]).length > 8; slGrafico(g, x); });
   return g;
 }
 
@@ -653,7 +640,10 @@ function slGrafico(mio, g){
            pediu. */
         datalabels: {
           anchor:'end', align:'end', offset:3, clamp:true, clip:false,
-          color:TK.txt, font:{ family:'Montserrat', size:13, weight:'700' },
+          /* APERTADO = dois gráficos na mesma página com 12 meses: em 13px os
+             rótulos encostam uns nos outros ("-487.57k-731.40k-143.37k"
+             colados). O tamanho cai com o espaço, não com o meu gosto. */
+          color:TK.txt, font:{ family:'Montserrat', size:g.apertado?10:13, weight:'700' },
           /* O PAINEL MANDA EM DUAS COISAS SEPARADAS: se o rótulo aparece
              (`mostra`) e, quando ele mesmo escreve o texto, qual é
              (`rotulos`, só quando o painel tem formatter). Juntar as duas foi
@@ -814,6 +804,30 @@ function slMonta(tit, sub, blocos){
   if (!b.length) return [];
 
   b.forEach(x => { if (x.tabela && x.semCols) x.tabela = slSemCols(x.tabela, x.semCols); });
+
+  /* FCAs DE VÁRIAS UNIDADES = UMA TABELA SÓ (Renan, 20/09/2026: "coluna
+     unidade, igual o FCA do painel. Não invente" · "se não cabe inteira,
+     mantenha uma por unidade mesmo").
+     Antes eu empilhava um bloco por unidade, cada um com rótulo laranja e o
+     CABEÇALHO REPETIDO, em fonte minúscula — e ainda estourava. Agora as
+     linhas entram numa tabela só, com um cabeçalho; se ela não couber numa
+     página, o agrupamento é desfeito e cada unidade volta ao seu slide. */
+  /* SÓ QUEM PEDE (`juntar`). Sem essa trava o slide "Vs Remunerado / Vs
+     Orçado" da Visão Financeira, que são DUAS leituras da mesma tabela,
+     virava uma tabela só com as linhas misturadas e sem os rótulos — dois
+     recortes diferentes apresentados como um. */
+  if (b.length > 1 && b.every(x => x.juntar && x.tabela && !(x.grafs||[]).length
+        && !(x.kpis||[]).length && !(x.heros||[]).length)) {
+    const cab0 = JSON.stringify(b[0].tabela.cab);
+    if (b.every(x => JSON.stringify(x.tabela.cab) === cab0)) {
+      const juntas = { ...b[0].tabela,
+        linhas: b.flatMap(x => x.tabela.linhas.filter(l => !l.total)) };
+      const pg = slTabela(tit, sub, juntas, { agrupa: b[0].agrupa });
+      if (pg.length === 1) return pg;
+      pg.forEach(el => el.remove());          // não coube: volta uma por unidade
+      return b.flatMap(x => slTabela(tit, x.rot || sub, x.tabela, { agrupa: x.agrupa }));
+    }
+  }
 
   /* bloco único e tabela pura: deixa o paginador trabalhar */
   if (b.length === 1 && b[0].tabela && !(b[0].grafs||[]).length
