@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609201420">
+<meta name="build" content="202609201540">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1631,7 +1631,7 @@ async function paginasDo(s){
   if(s.cheia) return [s.cheia];                       /* capa / divisória */
   const blocos=(s.fotos||[]).map(f=>({rot:f.rot,tabela:f.tabela,kpis:f.kpis,kcols:f.kcols,
     grafs:f.grafs,heros:f.heros,semCols:f.semCols,agrupa:f.agrupa,juntar:f.juntar,
-    escala:f.escala,png:f.foto?f.png:null}));
+    escala:f.escala,w:f.w,h:f.h,png:f.foto?f.png:null}));
   /* pódio: o do PAINEL (com boneco); sem ele, os três primeiros do ranking */
   let els;
   const pd=s.podioDados;
@@ -1848,7 +1848,7 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202609201420"></script>
-<script src="../assets/build-check.js?v=202609201420"></script>
+<script src="slides.js?v=202609201540"></script>
+<script src="../assets/build-check.js?v=202609201540"></script>
 </body>
 </html>

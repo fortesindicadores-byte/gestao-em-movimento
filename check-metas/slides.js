@@ -86,22 +86,23 @@ const SL_CSS = `
 .sl-kpis.denso .m{font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* ── hero (o número grande sem card) ──
-   COMPACTO, como estava quando ele aprovou ("ficou perfeito, bem alinhado e
-   distribuído"): os deltas AO LADO do valor, na mesma linha, e fundo nenhum —
-   o hero é solto sobre a página. Em coluna ele ficou alto, pareceu uma faixa
-   clara atrás e roubou a altura do gráfico. */
-.sl-hero{flex:0 0 auto;display:flex;align-items:flex-end;gap:26px;background:transparent;}
+   PROPORÇÃO DO PAINEL (Renan, 19/09/2026: "olha a diferença das proporções").
+   No painel o hero é uma COLUNA — rótulo, valor, e os deltas na linha DE
+   BAIXO. Eu punha os deltas ao LADO do valor e o valor em 60px: o bloco comia
+   a largura toda, empurrava o EBITDA para o meio e roubava altura do gráfico,
+   que no painel fica com metade da tela. */
+.sl-hero{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;}
 .sl-hero .r{font-size:11px;font-weight:700;color:${TK.txt3};text-transform:uppercase;letter-spacing:1px;}
-.sl-hero .v{font-size:44px;font-weight:800;line-height:1;margin-top:1px;}
+.sl-hero .v{font-size:42px;font-weight:800;line-height:1.05;margin-top:2px;}
 .sl-hero .v .mg{font-size:.52em;font-weight:700;color:${TK.txt3};margin-left:6px;}
-.sl-hero .d{display:flex;gap:18px;flex-wrap:wrap;padding-bottom:5px;}
-.sl-hero .d div{font-size:9.5px;color:${TK.txt3};font-weight:700;text-transform:uppercase;letter-spacing:.6px;}
+.sl-hero .d{display:flex;gap:18px;flex-wrap:wrap;margin-top:5px;}
+.sl-hero .d div{font-size:10px;color:${TK.txt3};font-weight:600;text-transform:uppercase;letter-spacing:.6px;}
 .sl-hero .d b{display:block;font-size:14px;font-weight:800;margin-top:2px;}
 /* o 2º hero (o EBITDA da Visão Financeira) vai à direita, como no painel */
 .sl-hero.dir{margin-left:auto;align-items:flex-end;text-align:right;}
 .sl-hero.dir .d{justify-content:flex-end;}
-.sl-heros{flex:0 0 auto;display:flex;align-items:flex-end;gap:32px;background:transparent;
-  padding-bottom:10px;border-bottom:1px solid ${TK.linha};}
+.sl-heros{flex:0 0 auto;display:flex;align-items:flex-start;gap:32px;
+  padding-bottom:12px;border-bottom:1px solid ${TK.linha};}
 .sl-hero .s{font-size:10.5px;color:${TK.txt3};font-weight:600;margin-top:4px;}
 
 /* ── legenda: a .gleg do painel, não as bolinhas do Chart.js ──
@@ -890,13 +891,24 @@ function slMonta(tit, sub, blocos){
       box.style.cssText = 'flex:1;min-height:0;display:flex;align-items:center;'
         + 'justify-content:center;background:transparent;overflow:hidden;';
       const img = document.createElement('img');
-      img.src = x.png; img.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;';
+      img.src = x.png; img.style.cssText = 'display:block;';
       box.appendChild(img); mio.appendChild(box);
+      /* TAMANHO EM PX PELA PROPORÇÃO REAL DA FOTO (Renan, 20/09/2026: "ainda
+         estão esticando verticalmente os dados"). O html2canvas NÃO respeita
+         object-fit: com width/height em % ele desenha a imagem esticada até
+         o tamanho da caixa, e a árvore — mais larga que a caixa — ganhava
+         altura. Cabendo pela proporção, nada estica. */
+      const bw = box.clientWidth, bh = box.clientHeight, esc = x.escala || 1;
+      if (bw && bh && x.w && x.h) {
+        let iw = bw * esc, ih = iw * (x.h / x.w);
+        if (ih > bh * esc) { ih = bh * esc; iw = ih * (x.w / x.h); }
+        img.style.width = Math.round(iw) + 'px'; img.style.height = Math.round(ih) + 'px';
+      }
       /* ALINHADA COM O TÍTULO. Eu reduzia o respiro do miolo para 28px no
          slide de foto e a imagem começava 36px à esquerda do título — o
          "descentralizado" do Resumo Executivo (Renan, 20/09/2026). O miolo
          fica nos 64px de todo slide. */
-      if (x.escala) { img.style.width = (x.escala*100) + '%'; img.style.height = (x.escala*100) + '%'; }
+
     }
   });
 
