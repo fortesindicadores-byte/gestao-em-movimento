@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609200520">
+<meta name="build" content="202609200720">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -553,13 +553,53 @@ function P2(tit,sub,url,a,b){ return {t:'p',tit,sub,url,caps:[a,b]}; }
 const brlDesvio=s=>{ const m=String(s||'').match(/R\$\s*([\d.]+)/); return m?+m[1].replace(/\./g,''):0; };
 const prefProj=p=>{ const s=String(p||'').trim(); const i=s.indexOf('-'); return (i>=0?s.slice(0,i):s).trim(); };
 
+/* FCA EM BRANCO NÃO VIRA SLIDE (Renan, 20/09/2026: "se não preencheu, mesmo
+   desviando não traz"). O fato_desvio é gerado pelo robô; Causa, Ação,
+   Responsável e Prazo é a unidade que escreve. Quando ela não escreveu, o
+   slide sai com o Fato e quatro travessões — não explica nada e ainda ocupa
+   uma página da apresentação da diretoria. */
+const fcaPreenchido=f=>['causa','acao','responsavel','prazo']
+  .some(k=>{ const v=String(f[k]==null?'':f[k]).trim(); return v && v!=='—' && v!=='-'; });
+
+/* UMA ENTRADA POR UNIDADE+PROJETO, NÃO POR LINHA (bug real, 20/09/2026 — e a
+   causa de fundo do "esse FCA repetiu 3 vezes"). A tabela `fca` tem uma linha
+   por causa/ação, então PIR com três causas virava TRÊS slides idênticos, cada
+   um mostrando a mesma tabela de três linhas. O slide é do recorte, não da
+   linha. */
 function desviosDe(pac){
   const lbl=vigLbl(VIG);
-  return FCAS.filter(f=>String(f.vigencia||'').toLowerCase()===lbl && String(f.fato||'').trim()===pac)
-    .map(f=>({uni:String(f.unidade||'').trim(), proj:String(f.projeto||'').trim(), brl:brlDesvio(f.fato_desvio)}))
-    .filter(f=>f.uni)
-    .sort((a,b)=>b.brl-a.brl)
-    .slice(0,8);
+  const linhas=FCAS.filter(f=>String(f.vigencia||'').toLowerCase()===lbl
+                            && String(f.fato||'').trim()===pac
+                            && String(f.unidade||'').trim());
+  const por=new Map();
+  linhas.forEach(f=>{
+    const uni=String(f.unidade||'').trim(), proj=String(f.projeto||'').trim();
+    const k=uni+'|'+proj;
+    const o=por.get(k)||{uni,proj,brl:0,n:0,feito:false};
+    o.brl=Math.max(o.brl,brlDesvio(f.fato_desvio));
+    o.n++;
+    if(fcaPreenchido(f)) o.feito=true;
+    por.set(k,o);
+  });
+  return [...por.values()].sort((a,b)=>b.brl-a.brl).slice(0,8);
+}
+
+/* AGRUPA FCAs CURTOS NUMA PÁGINA (Renan, 20/09/2026: "se couberem em uma
+   página, pode agrupar para não ficar tanto espaço; se for apenas uma linha
+   pode agrupar mais de uma unidade"). Um FCA de uma linha ocupa um terço do
+   slide e deixa dois terços vazios. A régua é o nº de linhas do FCA, que já
+   sabemos aqui — cada linha carrega o bloco do Fato, que é alto. */
+function agrupaFca(ds){
+  const gs=[]; let atual=[], soma=0;
+  ds.forEach(d=>{
+    /* cabe até 4 linhas de FCA por página (a célula do Fato é alta) e no
+       máximo 4 unidades: três unidades de uma linha cada — o caso dos Pneus,
+       em que só três desviaram — entram todas no mesmo slide. */
+    if(atual.length && (soma+d.n>4 || atual.length>=4)){ gs.push(atual); atual=[]; soma=0; }
+    atual.push(d); soma+=d.n;
+  });
+  if(atual.length) gs.push(atual);
+  return gs;
 }
 
 function montaRoteiro(avisa){
@@ -606,27 +646,34 @@ function montaRoteiro(avisa){
     R.push(P(g.sec,g.sub,'../visao-financeira/',
       `__cm.vw('nominal'); __cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-pac',${JSON.stringify([g.pac])}); setPacoteDim('uni'); __cm.ate('ref-pac-v','REM','togglePacRef'); atualizar();`,
       {alvo:"document.querySelector('#vw-nominal .card')"}));
-    desviosDe(g.pac).forEach(d=>{
-      const nome=g.pac+' – '+d.uni+(prefProj(d.proj)?' · '+prefProj(d.proj):'');
-      const fcaPrep=`__cm.vw('tabela'); __cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-proj',${JSON.stringify([d.proj+'|'+(prefProj(d.proj)||d.proj)])}); __cm.sel('ms-fato',${JSON.stringify([g.pac])}); __cm.redesenha('render');`;
-      const sub=vX+' · desvio de R$ '+d.brl.toLocaleString('pt-BR');
-      /* na Árvore o filtro de projeto lista só o PREFIXO do nível 3
-         ('ROTA'), não o nível 3 inteiro ('ROTA - CGR') como no FCA */
+    const dsv=desviosDe(g.pac);
+    const fcaDe=d=>`__cm.vw('tabela'); __cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-proj',${JSON.stringify([d.proj+'|'+(prefProj(d.proj)||d.proj)])}); __cm.sel('ms-fato',${JSON.stringify([g.pac])}); __cm.redesenha('render');`;
+    const nomeDe=d=>d.uni+(prefProj(d.proj)?' · '+prefProj(d.proj):'');
+    const subDe=d=>vX+' · desvio de R$ '+d.brl.toLocaleString('pt-BR');
+
+    /* A ÁRVORE VEM ANTES E POR UNIDADE (Renan, 18/09/2026: "em combustíveis
+       vem árvore e FCA"). É um desenho com conectores, não tabela nem card:
+       entra como foto, em slide próprio. */
+    if(g.arvore) dsv.forEach(d=>{
       const arvPrep=`__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); __cm.redesenha('onFilterChange');`;
-      if(!g.arvore){
-        R.push(P(nome,'FCA · '+sub,'../fca-consolidado/',fcaPrep,{semCols:FCA_SEM,agrupa:['FATO']}));
-      }else{
-        /* A ÁRVORE É UM DESENHO, NÃO TABELA NEM CARD (Renan, 19/09/2026:
-           "árvores do combustível muito fora do padrão... se precisar separar
-           para caber, faça, mas quero as árvores"). São caixas ligadas por
-           conectores em SVG; o meu leitor genérico lia aquilo como uma fileira
-           de cards de KPI e uma tabelinha solta. Aqui ela entra como FOTO do
-           `.tree-wrap`, dentro da moldura do padrão — e em slide PRÓPRIO, com o
-           FCA logo depois, porque os dois juntos não cabem sem espremer. */
-        R.push(P(nome,'Árvore de Combustível · '+sub,'../combustivel/arvore-combustivel/',
-          arvPrep,{foto:true}));
-        R.push(P(nome,'FCA · '+sub,'../fca-consolidado/',fcaPrep,{semCols:FCA_SEM,agrupa:['FATO']}));
+      R.push(P(g.pac+' – '+nomeDe(d),'Árvore de Combustível · '+subDe(d),
+        '../combustivel/arvore-combustivel/',arvPrep,
+        {foto:true,alvo:"document.querySelector('.tree-wrap')||document.querySelector('.tree')"}));
+      if(d.feito) R.push(P(g.pac+' – '+nomeDe(d),'FCA · '+subDe(d),'../fca-consolidado/',
+        fcaDe(d),{semCols:FCA_SEM,agrupa:['FATO']}));
+    });
+    /* NOS OUTROS PACOTES os FCAs curtos dividem a página. Um FCA de uma linha
+       sozinho num slide deixa dois terços em branco. */
+    else agrupaFca(dsv.filter(d=>d.feito)).forEach(gr=>{
+      if(gr.length===1){
+        const d=gr[0];
+        R.push(P(g.pac+' – '+nomeDe(d),'FCA · '+subDe(d),'../fca-consolidado/',
+          fcaDe(d),{semCols:FCA_SEM,agrupa:['FATO']}));
+        return;
       }
+      R.push({t:'p',tit:g.pac,sub:'FCA · '+vX,url:'../fca-consolidado/',
+        caps:gr.map(d=>({prep:fcaDe(d),semCols:FCA_SEM,agrupa:['FATO'],
+          rot:nomeDe(d)+' — desvio de R$ '+d.brl.toLocaleString('pt-BR')}))});
     });
   });
 
@@ -1173,11 +1220,16 @@ const CM_HELPER=`window.__cm={
         }
         return true;
       };
+      /* TRÊS RESPOSTAS, não duas: a string que o painel escreveu, '' quando ele
+         escreveu vazio de propósito, e FALSE quando não deu para saber (sem
+         formatter, ou ele lançou). Tratar "não deu para saber" como vazio foi
+         o que deixou a Dispersão sem rótulo: o texto vinha nulo e o slide
+         imprimia nada em vez de formatar pelo portal. */
       var texto=function(d,i,v){
-        if(!temFmt) return null;
+        if(!temFmt) return false;
         try{ var t=dl.formatter(v,{chart:ch,dataset:d,dataIndex:i,
                datasetIndex:ch.data.datasets.indexOf(d),active:false});
-             return t==null?'':String(t); }catch(e){ return null; }
+             return t==null?'':String(t); }catch(e){ return false; }
       };
       out.push({
         titulo:tt?(tt.innerText||'').trim():'',
@@ -1384,7 +1436,13 @@ async function capturaSlide(s){
         /* `semTab` é o slide que quer o HERO e os GRÁFICOS, não a tabela: sem
            isto o tabela() reduziria o alvo ao <table> e o slide viria com a
            tabela que já vai no slide seguinte, sem o hero. */
-        if(!c.semTab) alvo=win.__cm.tabela(alvo);
+        /* FOTO NÃO PASSA PELO tabela() (bug real, 20/09/2026 — a Árvore saiu
+           como UMA caixa gigante). O tabela() reduz o alvo ao primeiro <table>
+           quando o card e bem maior que ele; na Árvore o primeiro <table> é a
+           caixa do Custo Combustível, então eu fotografava aquela caixinha e a
+           esticava para a página inteira. Slide de foto quer o desenho
+           INTEIRO. */
+        if(!c.semTab && c.foto!==true) alvo=win.__cm.tabela(alvo);
         const h=win.__cm.abre(alvo);
         const hh=Math.max(tam.h,Math.ceil(h)+40);
         if(hh>tam.h){
@@ -1651,7 +1709,8 @@ function mesAnterior(){
 }
 async function carregaFcas(){
   const {data,error}=await sb.from('fca')
-    .select('vigencia,unidade,projeto,fato,fato_desvio').eq('origem','Custos').limit(6000);
+    .select('vigencia,unidade,projeto,fato,fato_desvio,causa,acao,responsavel,prazo')
+    .eq('origem','Custos').limit(6000);
   if(error) throw new Error(error.message);
   FCAS=data||[];
   const ks=new Set();
@@ -1691,7 +1750,7 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202609200520"></script>
-<script src="../assets/build-check.js?v=202609200520"></script>
+<script src="slides.js?v=202609200720"></script>
+<script src="../assets/build-check.js?v=202609200720"></script>
 </body>
 </html>

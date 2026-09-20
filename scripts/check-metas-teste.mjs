@@ -94,6 +94,26 @@ window.html2canvas = function(el, o){
         return { fundo: c.backgroundColor, borda: c.borderTopWidth,
                  larg: Math.round(r.width), alt: Math.round(r.height) };
       })(),
+      /* largura das colunas: com TODA coluna curta eu punha width:1% em todas
+         e a sobra ia inteira para a primeira — o vão entre UNIDADE e REM */
+      larg: (function(){
+        if (!tab) return null;
+        var th = [].slice.call(tab.querySelectorAll('thead th'));
+        if (!th.length) return null;
+        var w = tab.getBoundingClientRect().width;
+        return { total: Math.round(w),
+                 pri: +(th[0].getBoundingClientRect().width / w).toFixed(2),
+                 encolhe: th.filter(function(h){ return h.classList.contains('curto'); }).length };
+      })(),
+      /* quanto da caixa a tabela ocupa: sobra grande = slide meio vazio */
+      alturaTab: (function(){
+        if (!tab) return null;
+        var w = tab.closest('.sl-tw'); if (!w) return null;
+        return +(tab.getBoundingClientRect().height / w.clientHeight).toFixed(2);
+      })(),
+      /* slide que é SÓ a tabela: só nele a sobra de altura vira respiro */
+      soTab: !!(el.querySelector('.sl-tw') && !el.querySelector('.sl-card')
+                && !el.querySelector('.sl-kpis') && el.querySelectorAll('.sl-tw').length === 1),
       densa: !!el.querySelector('.sl-kpis.denso'),
       /* MEDIR as colunas, não ler o CSS: o computed de grid-template-columns
          volta "repeat(10, 1fr)" sem resolver e a conta dava UMA coluna. */
@@ -194,12 +214,22 @@ window.PptxGenJS = function(){
 };
 Object.defineProperty(window.PptxGenJS.prototype, 'layout', { set:function(v){ if(window.__ppt) window.__ppt.usou = v; }, get:function(){ return null; } });`;
 
+/* A tabela `fca` tem uma linha por CAUSA/AÇÃO, não por unidade — PIR com três
+   causas é UM recorte com três linhas, e era isso que virava três slides
+   iguais. Causa/Ação vazias = unidade que não preencheu: não vira slide. */
 const FCAS = [
-  { vigencia:'jun/26', unidade:'CGR', projeto:'AS - CGR',   fato:'Combustíveis', fato_desvio:'Desvio: ▲ R$ 120.000 · ▲ -9%' },
-  { vigencia:'jun/26', unidade:'CGR', projeto:'ROTA - CGR', fato:'Combustíveis', fato_desvio:'Desvio: ▲ R$ 90.000 · ▲ -7%' },
-  { vigencia:'jun/26', unidade:'CBA T1', projeto:'EMPURRADA - CBA', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 55.000 · ▲ -12%' },
-  { vigencia:'jun/26', unidade:'GRL', projeto:'ROTA - GRL', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 33.000 · ▲ -4%' },
-  { vigencia:'mai/26', unidade:'PIR', projeto:'ROTA - PIR', fato:'Pneus', fato_desvio:'Desvio: ▲ R$ 10.000 · ▲ -3%' },
+  { vigencia:'jun/26', unidade:'CGR', projeto:'AS - CGR',   fato:'Combustíveis', fato_desvio:'Desvio: ▲ R$ 120.000 · ▲ -9%', causa:'Consumo acima', acao:'Pauta de consumo', responsavel:'Michel', prazo:'30/09/2026' },
+  { vigencia:'jun/26', unidade:'CGR', projeto:'ROTA - CGR', fato:'Combustíveis', fato_desvio:'Desvio: ▲ R$ 90.000 · ▲ -7%', causa:'Km/L abaixo', acao:'Treinar motoristas', responsavel:'Michel', prazo:'30/09/2026' },
+  { vigencia:'jun/26', unidade:'CBA T1', projeto:'EMPURRADA - CBA', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 55.000 · ▲ -12%', causa:'Carreta desgastada', acao:'Renovar carrocerias', responsavel:'Jean', prazo:'30/09/2026' },
+  { vigencia:'jun/26', unidade:'GRL', projeto:'ROTA - GRL', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 33.000 · ▲ -4%', causa:'Corretivas', acao:'Antecipar preventivas', responsavel:'Ana', prazo:'30/10/2026' },
+  { vigencia:'jun/26', unidade:'FLP', projeto:'ROTA - FLP', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 30.000 · ▲ -6%', causa:'Pneu', acao:'Revisar', responsavel:'Ana', prazo:'30/10/2026' },
+  // três causas do MESMO recorte: é UM slide, não três
+  { vigencia:'jun/26', unidade:'PIR', projeto:'EMPURRADA - PIR', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 54.034 · ▲ 27%', causa:'Carroceria', acao:'Validar renovação', responsavel:'Jean', prazo:'30/09/2026' },
+  { vigencia:'jun/26', unidade:'PIR', projeto:'EMPURRADA - PIR', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 54.034 · ▲ 27%', causa:'Lavação', acao:'Ajuste no R$/km', responsavel:'Jean', prazo:'30/09/2026' },
+  { vigencia:'jun/26', unidade:'PIR', projeto:'EMPURRADA - PIR', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 54.034 · ▲ 27%', causa:'Frota de venda', acao:'Finalizar manutenção', responsavel:'Jean', prazo:'30/10/2026' },
+  // desviou e NÃO preencheu: fica fora do deck
+  { vigencia:'jun/26', unidade:'MCC', projeto:'ROTA - MCC', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 44.000 · ▲ -8%', causa:'', acao:'—', responsavel:'', prazo:null },
+  { vigencia:'mai/26', unidade:'PIR', projeto:'ROTA - PIR', fato:'Pneus', fato_desvio:'Desvio: ▲ R$ 10.000 · ▲ -3%', causa:'x', acao:'y', responsavel:'z', prazo:'01/01/2026' },
 ];
 
 const SHIM_SB = `
@@ -289,6 +319,7 @@ function painelDuble(chaves, dialeto, comGate) {
   const TAB = () => `<div class="twrap"><table class="dre">
     <thead><tr><th>CONTA</th><th class="num">REM</th><th class="num">REAL</th><th class="num">Δ %</th></tr></thead>
     <tbody>
+      <tr><td class="conta">Manutenção de Veículos e Equipamentos</td><td class="num">-0,30</td><td class="num">-0,35</td><td class="num cr" style="color:rgb(255,0,0)">+17%</td></tr>
       <tr><td class="conta">Combustíveis</td><td class="num">-3,09</td><td class="num">-2,83</td><td class="num cg" style="color:rgb(0,179,0)">-8%</td></tr>
       <tr><td class="conta">Pneus Novos</td><td class="num">-0,34</td><td class="num">-0,15</td><td class="num cg" style="color:rgb(0,179,0)">-55%</td></tr>
       <tr><td class="conta">Manutenções</td><td class="num">-0,38</td><td class="num">-0,52</td><td class="num cr" style="color:rgb(255,0,0)">+35%</td></tr>
@@ -576,7 +607,8 @@ console.log('\n═══ 1 · o roteiro sai da tabela `fca`, não de uma lista f
 {
   const { ctx, pg } = await abre();
   const r = await pg.evaluate(() => ROTEIRO.map(s => ({ t:s.t, tit:s.tit||s.txt, url:s.url,
-    caps:(s.caps||[]).length, urls:(s.caps||[]).map(c=>c.url||s.url).join(' '),
+    caps:(s.caps||[]).length, rots:(s.caps||[]).map(c=>c.rot||''),
+    urls:(s.caps||[]).map(c=>c.url||s.url).join(' '),
     prep:(s.caps||[]).map(c=>c.prep).join(' ') })));
   af(r[0].t === 'capa', 'o 1º slide é a capa');
   af(r[1].t === 'sec' && /Frota/i.test(r[1].tit), 'o 2º é a divisória FROTA');
@@ -597,8 +629,35 @@ console.log('\n═══ 1 · o roteiro sai da tabela `fca`, não de uma lista f
      'e o FCA de cada uma logo depois');
   af(/arvore/.test(comb[0].url) && /fca/.test(comb[1].url),
      'nessa ordem: a árvore explica, o FCA responde', comb.map(s=>s.url).join(' '));
-  const man = r.filter(s => /Manutenções – /.test(s.tit || ''));
-  af(man.length === 2 && /CBA T1/.test(man[0].tit), 'Manutenções: 2 unidades, a de maior desvio primeiro', man.map(m=>m.tit).join(' / '));
+
+  /* UM SLIDE POR RECORTE, NÃO POR LINHA DO FCA (bug real, 20/09/2026): a
+     tabela `fca` tem uma linha por causa, e PIR com três causas virava TRÊS
+     slides idênticos — a causa de fundo do "esse FCA repetiu 3 vezes". */
+  const fcaMan = r.filter(s => /fca-consolidado/.test(s.url || '')
+    && (s.tit === 'Manutenções' || /^Manutenções – /.test(s.tit || '')));
+  const capsPir = fcaMan.flatMap(s => s.rots || []).concat(fcaMan.map(s => s.tit));
+  af(fcaMan.filter(s => /PIR/.test(s.tit + ' ' + (s.rots||[]).join(' '))).length === 1,
+     'PIR com três causas dá UM slide, não três', JSON.stringify(fcaMan.map(s => s.tit)));
+
+  /* FCA CURTO DIVIDE A PÁGINA (Renan, 20/09/2026: "se for apenas uma linha
+     pode agrupar mais de uma unidade") */
+  const agrup = fcaMan.filter(s => s.caps > 1);
+  af(agrup.length >= 1, 'os FCAs curtos entram juntos num slide',
+     JSON.stringify(fcaMan.map(s => s.tit + '=' + s.caps)));
+  af(fcaMan.every(s => s.caps <= 4), 'no máximo quatro por página',
+     JSON.stringify(fcaMan.map(s => s.caps)));
+  af(agrup.every(s => (s.rots||[]).every(t => /desvio de R\$/.test(t))),
+     'cada uma com o seu rótulo e o seu desvio', JSON.stringify(agrup[0] && agrup[0].rots));
+  af(fcaMan.reduce((n,s)=>n+s.caps,0) === 4,
+     'as quatro unidades preenchidas aparecem, nem a mais nem a menos',
+     fcaMan.reduce((n,s)=>n+s.caps,0));
+
+  /* NÃO PREENCHEU, NÃO ENTRA (Renan, 20/09/2026: "se não preencheu, mesmo
+     desviando não traz") — o MCC desviou R$ 44 mil e ficou sem causa/ação. */
+  af(!r.some(s => /MCC/.test(s.tit + ' ' + (s.rots||[]).join(' '))),
+     'unidade que desviou mas não preencheu o FCA fica fora',
+     JSON.stringify(r.filter(s => /MCC/.test(s.tit||'')).map(s=>s.tit)));
+
   af(!r.some(s => /Pneus – /.test(s.tit || '')), 'Pneus de MAI não entra no deck de JUN');
   af(r.filter(s => s.t === 'p').every(s => !/undefined/.test(s.prep)), 'nenhum prep com "undefined"');
   await ctx.close();
@@ -639,7 +698,7 @@ let provas1 = [];
      'cada abertura leva o seu pacote no filtro', JSON.stringify(abertura.map(p => p.estado.filtros['ms-pac'])));
 
   const fca = provas1.filter(p => /fca-consolidado/.test(p.pag));
-  af(fca.length === 4, 'quatro FCAs (2 de Manutenções + 2 de Combustíveis)', fca.length);
+  af(fca.length === 6, 'seis recortes de FCA (4 de Manutenções + 2 de Combustíveis)', fca.length);
   af(fca.every(p => p.estado.vw === 'tabela'), 'o FCA sai na visão Tabela');
   af(fca.every(p => p.estado.chamou.includes('run')), 'o FCA foi redesenhado (run)');
   const fc = fca.find(p => p.estado.filtros['ms-fato'][0] === 'Combustíveis');
@@ -849,6 +908,38 @@ let provas1 = [];
      JSON.stringify(comFoto2.map(x => x.foto.borda)));
   af(comFoto2.every(x => x.foto.larg > 1400), 'usando a largura da página',
      JSON.stringify(comFoto2.map(x => x.foto.larg)));
+
+  /* TABELA SÓ DE COLUNAS CURTAS TEM DE DISTRIBUIR (Renan, 20/09/2026: "aqui
+     dá para distribuir um pouco melhor"). Eu marcava toda coluna curta com
+     width:1%; sem nenhuma coluna larga para absorver a sobra, ela foi inteira
+     para a primeira e abriu um vão entre UNIDADE e REM. */
+  const curtas = comTab.filter(x => x.larg && x.larg.encolhe === 0);
+  af(curtas.length >= 1, 'existe tabela só de colunas curtas no deck', curtas.length);
+  af(curtas.every(x => x.larg.pri <= 0.45),
+     'e nela a 1ª coluna não fica com a sobra toda',
+     JSON.stringify(curtas.map(x => x.tit + '=' + x.larg.pri)));
+  const mistas = comTab.filter(x => x.larg && x.larg.encolhe > 0);
+  af(mistas.length >= 1, 'e a tabela com DUAS colunas largas (o FCA) continua encolhendo as curtas',
+     JSON.stringify(mistas.map(x => x.tit + '=' + x.larg.encolhe)));
+  /* UMA coluna larga e várias curtas — a abertura por conta e por unidade — é
+     o caso em que a sobra ia toda para o rótulo e abria um vão até o 1º
+     número (Renan, 20/09/2026: "todas as tabelas assim, sem distribuir"). */
+  const umaLarga = comTab.filter(x => (x.cabs||[]).includes('CONTA'));
+  af(umaLarga.length >= 1, 'a abertura por conta está no deck', umaLarga.length);
+  af(umaLarga.every(x => x.larg.encolhe === 0),
+     'com UMA coluna larga, ninguém é encolhido — o browser reparte',
+     JSON.stringify(umaLarga.map(x => x.larg.encolhe)));
+  af(umaLarga.every(x => x.larg.pri <= 0.45),
+     'e a coluna do rótulo não fica com a sobra toda',
+     JSON.stringify(umaLarga.map(x => x.tit + '=' + x.larg.pri)));
+
+  /* SOBRA DE ALTURA VIRA RESPIRO: a abertura de 12 unidades ocupava o terço
+     de cima do slide e deixava dois terços em branco. */
+  const soT = comTab.filter(x => x.soTab && x.larg);
+  af(soT.length >= 3, 'há slides que são só a tabela', soT.length);
+  af(soT.every(x => x.alturaTab >= 0.75),
+     'e neles a tabela usa a altura da página, não o terço de cima',
+     JSON.stringify(soT.map(x => x.tit + '=' + x.alturaTab)));
 
   /* A DENSIDADE DOS KPIs É A DO PAINEL: o Scorecard põe 20 em 10 colunas */
   const kdensa = ins.filter(x => x.cols >= 8);
