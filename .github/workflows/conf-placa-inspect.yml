@@ -1,0 +1,26 @@
+name: Conf Placa Inspect (uma placa no conformidade-detalhe)
+
+# O que o export do Ginfo diz de UMA placa, coluna por coluna, e a régua
+# (Tipo Aderência · Prazo) por projeto/tipo. Só leitura.
+on:
+  workflow_dispatch:
+    inputs:
+      placa:
+        description: 'Placa (padrão EMP0383)'
+        required: false
+        default: 'EMP0383'
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Inspecionar a placa
+        run: node scripts/conf-placa-inspect.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          CONF_PLACA: ${{ github.event.inputs.placa }}
