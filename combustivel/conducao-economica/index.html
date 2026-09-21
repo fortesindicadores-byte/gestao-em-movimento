@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609141400">
+<meta name="build" content="202609210900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1387,7 +1387,7 @@ let chartConsumo=null;
 function renderConsChart(){
   const cv=$('chartConsumo'); if(!cv || !cv.offsetParent) return;   // só desenha se a visão está na tela
   const isLight=document.body.classList.contains('claro');
-  const tickC = isLight?'#4A5568':'#B2BCD2';
+  const tickC = isLight?'#444444':'#94A3B8';
   const tooltip = isLight
     ? {backgroundColor:'#FFFFFF',titleColor:'#D95E08',bodyColor:'#161D2B',borderColor:'rgba(15,23,42,.15)',borderWidth:1,titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'}}
     : {backgroundColor:'#26262B',titleColor:'#F97316',bodyColor:'#EEF2FA',borderColor:'rgba(255,255,255,.12)',borderWidth:1,titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'}};
@@ -1405,7 +1405,12 @@ function renderConsChart(){
   });
   const vigPos=Array.from({length:12},(_,i)=>{ const r=base.find(x=>vigMonth(x.vig)===i+1); return r?r.vig:null; });
   const sel=i=>!filtroAtivo||(vigPos[i]&&sv.includes(vigPos[i]));
-  const cor=porMes.map((v,i)=>v==null?'rgba(100,100,100,.18)':`rgba(249,115,22,${sel(i)?'.9':'.18'})`);
+  /* PADRÃO DE BARRA DO PAINEL KM (Renan, 20/09/2026): alfa D9 no foco / 33 fora /
+     A6 sem foco, borda cheia, canto 3, rótulo 14px/700 no topo, eixo X 15px,
+     espaçamento padrão */
+  const isMobile=window.innerWidth<768;
+  const cor=porMes.map((v,i)=>v==null?'transparent':'#F97316'+(filtroAtivo?(sel(i)?'D9':'33'):'A6'));
+  const corB=porMes.map(v=>v==null?'transparent':'#F97316');
   const vals=porMes.filter(v=>v!=null);
   // eixo justo aos dados: 0,3 abaixo do menor mês e 0,3 acima do maior
   const yMin = vals.length ? Math.max(0, Math.floor((Math.min(...vals)-0.3)*10)/10) : 0;
@@ -1414,15 +1419,14 @@ function renderConsChart(){
   if(chartConsumo) chartConsumo.destroy();
   chartConsumo=new Chart(cv.getContext('2d'),{
     type:'bar',
-    data:{ labels:LABELS, datasets:[{ label:'Km/L', data:porMes, backgroundColor:cor, borderWidth:0, borderRadius:0,
-      barPercentage:.97, categoryPercentage:.94,
+    data:{ labels:LABELS, datasets:[{ label:'Km/L', data:porMes, backgroundColor:cor, borderColor:corB, borderWidth:1, borderRadius:3,
       datalabels:{ display:c=>porMes[c.dataIndex]!=null && sel(c.dataIndex),
-        color:isLight?'#161D2B':'#EEF2FA', font:{family:'Montserrat',size:11,weight:'700'},
-        formatter:v=>v!=null?v.toFixed(2).replace('.',','):'', anchor:'end', align:'end', offset:1 } }]},
-    options:{ responsive:true, maintainAspectRatio:false,
+        color:isLight?'#333333':'#F1F5F9', font:{family:'Montserrat',size:isMobile?8:14,weight:'700'},
+        formatter:v=>v!=null?v.toFixed(2).replace('.',','):'', anchor:'end', align:'top' } }]},
+    options:{ responsive:true, maintainAspectRatio:false, layout:{padding:{top:30}},
       plugins:{ legend:{display:false}, datalabels:{display:false},
         tooltip:{...tooltip, callbacks:{ label:c=>c.raw!=null?' '+c.raw.toFixed(2).replace('.',',')+' km/L':'' }} },
-      scales:{ x:{ grid:{display:false}, border:{display:false}, ticks:{color:tickC, font:{family:'Montserrat',size:11}} },
+      scales:{ x:{ grid:{display:false}, border:{display:false}, ticks:{color:tickC, font:{family:'Montserrat',size:isMobile?9:15}} },
                y:{ display:false, min:yMin, max:yMax } } },
   });
 }
@@ -1479,7 +1483,7 @@ function renderAcessos(){
   // gráfico por mês (12 últimos) e calendário do mês
   const cv = $('chartAcMes'); if (!cv || !cv.offsetParent) return;
   const isLight = document.body.classList.contains('claro');
-  const tick = { color: isLight ? '#4A5568' : '#B2BCD2', font: { family: 'Montserrat', size: 10 } };
+  const tick = { color: isLight ? '#444444' : '#94A3B8', font: { family: 'Montserrat', size: 10 } };
   const tooltip = isLight
     ? { backgroundColor: '#FFFFFF', titleColor: '#D95E08', bodyColor: '#161D2B', borderColor: 'rgba(15,23,42,.15)', borderWidth: 1, titleFont: { family: 'Montserrat' }, bodyFont: { family: 'Montserrat' } }
     : { backgroundColor: '#26262B', titleColor: '#F97316', bodyColor: '#EEF2FA', borderColor: 'rgba(255,255,255,.12)', borderWidth: 1, titleFont: { family: 'Montserrat' }, bodyFont: { family: 'Montserrat' } };
@@ -1490,12 +1494,13 @@ function renderAcessos(){
     mData.push(rows.filter(r => r.dia.slice(0, 7) === k).length); }
   if (chartAcMes) chartAcMes.destroy();
   chartAcMes = new Chart(cv.getContext('2d'), { type: 'bar',
-    data: { labels: mLabels, datasets: [{ data: mData, backgroundColor: '#F97316', borderWidth: 0, borderRadius: 0, barPercentage: .92, categoryPercentage: .94,
-      datalabels: { display: c => mData[c.dataIndex] > 0, color: isLight ? '#161D2B' : '#EEF2FA', font: { family: 'Montserrat', size: 10, weight: '800' }, formatter: v => v.toLocaleString('pt-BR'), anchor: 'end', align: 'end', offset: 1 } }] },
-    options: { responsive: true, maintainAspectRatio: false, animation: false, layout: { padding: { top: 18 } },
+    /* PADRÃO DE BARRA DO PAINEL KM (Renan, 20/09/2026) */
+    data: { labels: mLabels, datasets: [{ data: mData, backgroundColor: '#F97316A6', borderColor: '#F97316', borderWidth: 1, borderRadius: 3,
+      datalabels: { display: c => mData[c.dataIndex] > 0, color: isLight ? '#333333' : '#F1F5F9', font: { family: 'Montserrat', size: window.innerWidth < 768 ? 8 : 14, weight: '700' }, formatter: v => v.toLocaleString('pt-BR'), anchor: 'end', align: 'top' } }] },
+    options: { responsive: true, maintainAspectRatio: false, animation: false, layout: { padding: { top: 30 } },
       plugins: { legend: { display: false }, tooltip, datalabels: { display: false } },
-      scales: { x: { ticks: { ...tick, autoSkip: true, maxRotation: 0 }, grid: { display: false }, border: { display: false } },
-                y: { beginAtZero: true, suggestedMax: Math.ceil(Math.max(1, ...mData) * 1.12), ticks: { ...tick, precision: 0, maxTicksLimit: 4 }, grid: { display: false }, border: { display: false } } } } });
+      scales: { x: { ticks: { ...tick, font: { family: 'Montserrat', size: window.innerWidth < 768 ? 9 : 15 }, autoSkip: true, maxRotation: 0 }, grid: { display: false }, border: { display: false } },
+                y: { display: false, beginAtZero: true, suggestedMax: Math.ceil(Math.max(1, ...mData) * 1.12) } } } });
 
   const sv = selVigKeys();
   const [calY, calM] = sv.length === 1 ? [+sv[0].slice(0, 4), +sv[0].slice(5, 7) - 1] : [hoje.getFullYear(), hoje.getMonth()];
@@ -1556,7 +1561,7 @@ function vigMonth(vig){ const p=vig.split('/'); return p[0].length===4?parseInt(
 function renderChart(){
   const cv=$('chartTemporal'); if(!cv || !cv.offsetParent) return;   // só desenha se a visão está na tela
   const isLight=document.body.classList.contains('claro');
-  const tickC = isLight?'#4A5568':'#B2BCD2';
+  const tickC = isLight?'#444444':'#94A3B8';
   const metaClr = isLight?'rgba(15,23,42,.55)':'rgba(255,255,255,.65)';
   const tooltip = isLight
     ? {backgroundColor:'#FFFFFF',titleColor:'#D95E08',bodyColor:'#161D2B',borderColor:'rgba(15,23,42,.15)',borderWidth:1,titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'}}
@@ -1576,12 +1581,16 @@ function renderChart(){
   });
   const vigByMonthPos=Array.from({length:12},(_,i)=>[...(vigsByMonth[i+1]||[])][0]||null);
 
-  const rgba=(v,a)=> v==null ? `rgba(100,100,100,${a})`
-    : v>=85 ? `rgba(59,179,59,${a})` : v>=70 ? `rgba(244,161,0,${a})` : `rgba(255,82,82,${a})`;
+  /* PADRÃO DE BARRA DO PAINEL KM (Renan, 20/09/2026): cor da faixa em hex fixo,
+     alfa D9 no foco / 33 fora / A6 sem foco, borda cheia, canto 3 */
+  const isMobile=window.innerWidth<768;
+  const hexDe=v=> v==null ? '#94A3B8' : v>=85 ? '#3BB33B' : v>=70 ? '#F4A100' : '#FF6666';
   const barColor=avgByMonth.map((v,i)=>{
+    if(v==null) return 'transparent';
     const selected=!filtroAtivo||(vigByMonthPos[i]&&sv.includes(vigByMonthPos[i]));
-    return rgba(v, selected?'.9':'.18');
+    return hexDe(v)+(filtroAtivo?(selected?'D9':'33'):'A6');
   });
+  const barBorda=avgByMonth.map(v=>v==null?'transparent':hexDe(v));
 
   const vals=avgByMonth.filter(v=>v!=null);
   const shown=vals.length?vals.concat([70,85]):[60,85];
@@ -1598,15 +1607,14 @@ function renderChart(){
     type:'bar',
     data:{ labels:LABELS, datasets:[
       { label:IND_LABELS[activeInd]||activeInd, data:avgByMonth,
-        backgroundColor:barColor, borderWidth:0, borderRadius:0,
-        barPercentage:.97, categoryPercentage:.94, order:3,
+        backgroundColor:barColor, borderColor:barBorda, borderWidth:1, borderRadius:3, order:3,
         datalabels:{
           display:c=>{ const vig=vigByMonthPos[c.dataIndex];
             return avgByMonth[c.dataIndex]!=null && (!filtroAtivo||(vig&&sv.includes(vig))); },
-          color:isLight?'#161D2B':'#EEF2FA',
-          font:{family:'Montserrat',size:11,weight:'700'},
+          color:isLight?'#333333':'#F1F5F9',
+          font:{family:'Montserrat',size:isMobile?8:14,weight:'700'},
           formatter:v=>v!=null?v.toFixed(1):'',
-          anchor:'end', align:'end', offset:1,
+          anchor:'end', align:'top',
         } },
       { label:'Bom 70',   data:Array(12).fill(70), type:'line', borderColor:metaClr, borderWidth:1.5,
         borderDash:[5,3], tension:0, fill:false, pointRadius:0, order:1, datalabels:{display:false} },
@@ -1614,10 +1622,10 @@ function renderChart(){
         borderDash:[5,3], tension:0, fill:false, pointRadius:0, order:2, datalabels:{display:false} },
     ]},
     options:{
-      responsive:true, maintainAspectRatio:false,
+      responsive:true, maintainAspectRatio:false, layout:{padding:{top:30}},
       plugins:{ legend:{display:false}, tooltip, datalabels:{display:false} },
       scales:{
-        x:{ grid:{display:false}, border:{display:false}, ticks:{color:tickC, font:{family:'Montserrat',size:11}} },
+        x:{ grid:{display:false}, border:{display:false}, ticks:{color:tickC, font:{family:'Montserrat',size:isMobile?9:15}} },
         y:{ display:false, min:yMin, max:yMax },
       },
     },
@@ -1745,6 +1753,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202609141400"></script>
+<script src="../../assets/build-check.js?v=202609210900"></script>
 </body>
 </html>
