@@ -2,12 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609191620">
+<meta name="build" content="202609210900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Saúde do Ecossistema · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
@@ -730,11 +731,17 @@ function mkLabel(fmt,cor){
 }
 function renderGraficos(lin,agr){
   const isLight=document.body.classList.contains('claro');
-  const tick={color:isLight?'#4A5568':'#B2BCD2',font:{family:'Montserrat',size:10}};
+  /* PADRÃO DE BARRA DO PAINEL KM (Renan, 20/09/2026): cores fixas #3BB33B/#FF6666
+     com alfa A6 e borda cheia, canto 3, rótulo 14px/700 no topo pelo plugin, eixo Y
+     escondido, eixo X 15px, espaçamento padrão. */
+  const isMobile=window.innerWidth<768;
+  const tick={color:isLight?'#444444':'#94A3B8',font:{family:'Montserrat',size:isMobile?9:15}};
   const tooltip={backgroundColor:isLight?'#FFFFFF':'#1B1B1E',titleColor:'#F97316',
     bodyColor:isLight?'#161D2B':'#EEF2FA',borderColor:isLight?'#d7dce4':'#33343A',borderWidth:1,
     titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'}};
-  const verde=isLight?'#00B300':'#3BB33B', vermelho=isLight?'#FF0000':'#FF5252', cinza=isLight?'#939CAF':'#4C505C';
+  const verde='#3BB33B', vermelho='#FF6666', cinza=isLight?'#939CAF':'#4C505C';
+  const dlColor=isLight?'#333333':'#F1F5F9';
+  const plugDL=typeof ChartDataLabels!=='undefined'?[ChartDataLabels]:[];
 
   // 1) execuções por dia
   const dias=[...new Set(lin.map(d=>d.dia))].sort();
@@ -744,16 +751,21 @@ function renderGraficos(lin,agr){
   const lbl=dias.map(d=>d.slice(8)+'/'+d.slice(5,7));
   if(chDia) chDia.destroy();
   const cv1=document.getElementById('ch-dia');
+  const totalDia=dias.map((_,i)=>(ok[i]||0)+(falha[i]||0)+(outros[i]||0));
   if(cv1) chDia=new Chart(cv1,{type:'bar',
     data:{labels:lbl,datasets:[
-      {label:'Sucesso',data:ok,backgroundColor:verde,borderWidth:0,barPercentage:.96,categoryPercentage:.92},
-      {label:'Falha',data:falha,backgroundColor:vermelho,borderWidth:0},
-      {label:'Outros',data:outros,backgroundColor:cinza,borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:16}},
-      plugins:{legend:{display:false},tooltip},
+      {label:'Sucesso',data:ok,backgroundColor:verde+'A6',borderColor:verde,borderWidth:1,borderRadius:3},
+      {label:'Falha',data:falha,backgroundColor:vermelho+'A6',borderColor:vermelho,borderWidth:1,borderRadius:3},
+      {label:'Outros',data:outros,backgroundColor:cinza+'A6',borderColor:cinza,borderWidth:1,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:30}},
+      plugins:{legend:{display:false},tooltip,
+        /* o rótulo é o TOTAL do dia, no topo da pilha (o último dataset) */
+        datalabels:{display:c=>dias.length<=16&&c.datasetIndex===2&&totalDia[c.dataIndex]>0,
+          anchor:'end',align:'top',color:dlColor,font:{family:'Montserrat',size:isMobile?8:14,weight:'700'},
+          formatter:(v,c)=>br(totalDia[c.dataIndex])}},
       scales:{x:{stacked:true,ticks:{...tick,maxRotation:0,autoSkip:true,maxTicksLimit:16},grid:{display:false},border:{display:false}},
-        y:{stacked:true,beginAtZero:true,ticks:{...tick,maxTicksLimit:5,precision:0},grid:{display:false},border:{display:false}}}},
-    plugins:dias.length<=16?[mkLabel(v=>br(v),isLight?'#161D2B':'#EEF2FA')]:[]});
+        y:{stacked:true,display:false,beginAtZero:true}}},
+    plugins:plugDL});
 
   // 2) onde estão as falhas
   const top=Object.values(agr).filter(a=>a.falha>0).sort((a,b)=>b.falha-a.falha).slice(0,9);
@@ -762,7 +774,7 @@ function renderGraficos(lin,agr){
   const cv2=document.getElementById('ch-falha');
   if(cv2) chFalha=new Chart(cv2,{type:'bar',
     data:{labels:top.map(a=>nome(a.wf).replace(/\s*\(.*\)$/,'').slice(0,26)),
-      datasets:[{label:'Falhas',data:top.map(a=>a.falha),backgroundColor:vermelho,borderWidth:0,borderRadius:3,barPercentage:.8}]},
+      datasets:[{label:'Falhas',data:top.map(a=>a.falha),backgroundColor:vermelho+'A6',borderColor:vermelho,borderWidth:1,borderRadius:3}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{right:26}},
       plugins:{legend:{display:false},tooltip:{...tooltip,callbacks:{label:c=>{
         const a=top[c.dataIndex]; return ` ${br(a.falha)} de ${br(a.runs)} execuções (${fmtPct(a.falha/a.runs*100)})`;}}}},
@@ -999,6 +1011,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609191620"></script>
+<script src="../assets/build-check.js?v=202609210900"></script>
 </body>
 </html>

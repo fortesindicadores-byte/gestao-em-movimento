@@ -2,11 +2,12 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609210900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Scorecard · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/gerot-base.js?v=202608250100"></script>
 <script src="../assets/swr-cache.js"></script>
@@ -653,7 +654,6 @@ function rlAtt(perKeys,uf){let lit=0,tot=0,remxl=0,litrem=0;(XPANEL.kmlEf||[]).f
 function kmlAtt(perKeys,uf){let km=0,lit=0,rs=0,cnt=0;(XPANEL.kmlEf||[]).forEach(o=>{if(perKeys.has(o.vk)&&(!uf||uf(o))){km+=o.km;lit+=o.lit;if(o.remKmL>0){rs+=o.remKmL;cnt++;}}});if(!lit||!cnt)return null;const rem=rs/cnt;return rem?(km/lit)/rem*100:null;}
 // FCA separado: % no prazo e % concluída (acumulado até o mês selecionado)
 function fcaSplit(recs,year,monthIdx){const sel=recs.filter(r=>Math.floor(r.k/100)===year&&(r.k%100)<=monthIdx);if(!sel.length)return{prazo:null,concl:null};const tt=sel.length;return{prazo:sel.filter(r=>!r.venc).length/tt*100,concl:sel.filter(r=>r.concl==='C').length/tt*100};}
-const barLabels={id:'bl',afterDatasetsDraw(c){const ds=c.data.datasets[0],m=c.getDatasetMeta(0),ctx=c.ctx;ctx.save();ctx.font='700 11px Montserrat';ctx.fillStyle=document.body.classList.contains('claro')?'#1a1a1a':'#F1F5F9';ctx.textAlign='center';ctx.textBaseline='bottom';m.data.forEach((b,i)=>{const v=ds.data[i];if(v==null)return;if(ds._on&&!ds._on[i])return;ctx.fillText(n1(v),b.x,b.y-4);});ctx.restore();}};
 function cellBg(cls){return cls==='g'?'rgba(59,179,59,.20)':cls==='a'?'rgba(244,161,0,.20)':cls==='r'?'rgba(255,102,102,.18)':'transparent';}
 function cellFg(cls){return cls==='g'?'#3BB33B':cls==='y'?'#EAB308':cls==='o'?'#F97316':cls==='r'?'#FF6666':'var(--text3)';}
 
@@ -960,10 +960,18 @@ function chartTemporal(selD){
   }
   const hasFocus=selVig.length>0;
   const clOf=v=>v==null?'':(ind.key==='pont'?band(v):(ind.rr?bandCost(v):bandG(v,ind.good||90)));
-  const bg=data.map((v,i)=>{if(v==null)return 'transparent';const a=hasFocus?(on[i]?.9:.22):.8;const cl=clOf(v);const rgb=cl==='g'?'59,179,59':cl==='y'?'234,179,8':cl==='o'?'249,115,22':'255,102,102';return `rgba(${rgb},${a})`;});
-  const bc=data.map(v=>v==null?'transparent':cellFg(clOf(v)));
-  const grid={color:isLight?'rgba(0,0,0,.08)':'rgba(255,255,255,.06)'};
-  const tick={color:isLight?'#444':'#94A3B8',font:{family:'Montserrat',size:11}};
+  /* PADRÃO DE BARRA DO PAINEL KM (Renan, 20/09/2026): barra clara com borda cheia
+     e canto 3, alfa .85 no foco / .2 fora / .65 sem foco, rótulo 14px/700 no topo
+     pelo plugin, eixo Y escondido (a janela continua justa), eixo X 15px, sem grade.
+     A cor continua a da faixa (verde/amarelo/laranja/vermelho) — é regra de resultado. */
+  const isMobile=window.innerWidth<768;
+  const corB=v=>{const c=cellFg(clOf(v));return c.startsWith('#')?c:'#94A3B8';};
+  const bg=data.map((v,i)=>{if(v==null)return 'transparent';const a=hasFocus?(on[i]?'D9':'33'):'A6';return corB(v)+a;});
+  const bc=data.map(v=>v==null?'transparent':corB(v));
+  const grid={display:false};
+  const tick={color:isLight?'#444444':'#94A3B8',font:{family:'Montserrat',size:isMobile?9:15}};
+  const dlColor=isLight?'#333333':'#F1F5F9';
+  const plugDL=typeof ChartDataLabels!=='undefined'?[ChartDataLabels]:[];
   // eixo Y adaptável, não fixo em 0
   const vals=data.filter(v=>v!=null);
   const dMin=vals.length?Math.min(...vals):0,dMax=vals.length?Math.max(...vals):100;
@@ -973,9 +981,15 @@ function chartTemporal(selD){
                         +(ind.snap?' · foto atual, sem histórico mensal':'');
   const unit=ind.key==='pont'?' pts':'%';
   if(chT)chT.destroy();
+  const onI=hasFocus?on:labels.map(()=>true);
   chT=new Chart(document.getElementById('ch-temp'),{data:{labels,datasets:[
-    {type:'bar',data,backgroundColor:bg,borderColor:bc,borderWidth:1,_on:hasFocus?on:labels.map(()=>true),borderRadius:3,maxBarThickness:70,categoryPercentage:.9,barPercentage:.95}
-  ]},plugins:[barLabels],options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>n1(c.raw)+unit}}},scales:{x:{grid,ticks:tick},y:{min:yMin,max:yMax,grid,ticks:{...tick}}}}});
+    {type:'bar',data,backgroundColor:bg,borderColor:bc,borderWidth:1,borderRadius:3}
+  ]},plugins:plugDL,options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:30}},
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>n1(c.raw)+unit}},
+      datalabels:{display:c=>c.datasetIndex===0&&data[c.dataIndex]!=null&&!!onI[c.dataIndex],
+        anchor:'end',align:'top',color:dlColor,font:{family:'Montserrat',size:isMobile?8:14,weight:'700'},
+        formatter:v=>v!=null?n1(v):''}},
+    scales:{x:{grid,ticks:tick,border:{display:false}},y:{display:false,min:yMin,max:yMax}}}});
 }
 
 // ── Cache local (stale-while-revalidate) ──
@@ -1198,6 +1212,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609210900"></script>
 </body>
 </html>

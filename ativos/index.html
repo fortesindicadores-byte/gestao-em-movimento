@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609210900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Ativos · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -681,18 +681,22 @@ function renderHero(rows){
   set('h-f10',pct0(com.filter(r=>r.idade>IDADE_OK&&r.idade<=IDADE_ATENCAO).length/n*100));
   set('h-f99',pct0(com.filter(r=>r.idade>IDADE_ATENCAO).length/n*100));
 }
+/* PADRÃO DE BARRA DO PAINEL KM (Renan, 20/09/2026): rótulo 14px/700 no topo,
+   eixo X 15px, sem grade, eixo Y escondido, espaçamento padrão, borda cheia e
+   canto 3 (no mk abaixo). Os rótulos de categoria continuam podendo girar. */
 function chartOpts(fmtLbl){
   const isLight=document.body.classList.contains('claro');
-  const tickC=isLight?'#444':'#94A3B8';
+  const isMobile=window.innerWidth<768;
+  const tickC=isLight?'#444444':'#94A3B8';
   return {
-    responsive:true,maintainAspectRatio:false,layout:{padding:{top:14}},
+    responsive:true,maintainAspectRatio:false,layout:{padding:{top:30}},
     plugins:{
       legend:{display:false},
       tooltip:{backgroundColor:'#141B26',titleColor:'#F97316',bodyColor:'#F1F5F9',borderColor:'#1E2D40',borderWidth:1,titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'}},
-      datalabels:{color:isLight?'#1a1a1a':'#F1F5F9',font:{family:'Montserrat',size:11,weight:'700'},anchor:'end',align:'end',offset:0,formatter:fmtLbl},
+      datalabels:{color:isLight?'#333333':'#F1F5F9',font:{family:'Montserrat',size:isMobile?8:14,weight:'700'},anchor:'end',align:'top',formatter:fmtLbl},
     },
     scales:{
-      x:{ticks:{color:tickC,font:{family:'Montserrat',size:10},maxRotation:35,autoSkip:false},grid:{display:false}},
+      x:{ticks:{color:tickC,font:{family:'Montserrat',size:isMobile?9:15},maxRotation:35,autoSkip:false},grid:{display:false},border:{display:false}},
       y:{display:false,beginAtZero:true}
     }
   };
@@ -705,9 +709,10 @@ function groupCount(rows,fn){
 function renderCharts(rows){
   const mk=(ref,id_,labels,vals,cores,fmtLbl)=>{
     if(ref)ref.destroy();
-    return new Chart($(id_),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:cores,borderRadius:3,maxBarThickness:60}]},options:chartOpts(fmtLbl)});
+    return new Chart($(id_),{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:cores,
+      borderColor:cores.map(c=>String(c).slice(0,7)),borderWidth:1,borderRadius:3}]},options:chartOpts(fmtLbl)});
   };
-  const orange=v=>v.map(()=>'#F97316CC');
+  const orange=v=>v.map(()=>'#F97316A6');
   {
     const btn=$('tg-proj-chart'),sub=$('ch-projeto-sub');
     if(btn)btn.textContent=projChartMode==='qtde'?'Ver idade média':'Ver quantidade';
@@ -717,14 +722,14 @@ function renderCharts(rows){
       chProjeto=mk(chProjeto,'ch-projeto',g.map(x=>x.k),g.map(x=>x.n),orange(g),v=>fmt(v));
     }else{
       const g=groupCount(rows.filter(r=>r.idade!=null),r=>r.projMap).sort((a,b)=>(b.idade??0)-(a.idade??0));
-      chProjeto=mk(chProjeto,'ch-projeto',g.map(x=>x.k),g.map(x=>x.idade!=null?+x.idade.toFixed(1):null),g.map(x=>idadeColor(x.idade)+'CC'),v=>v!=null?v.toFixed(1):'');
+      chProjeto=mk(chProjeto,'ch-projeto',g.map(x=>x.k),g.map(x=>x.idade!=null?+x.idade.toFixed(1):null),g.map(x=>idadeColor(x.idade)+'A6'),v=>v!=null?v.toFixed(1):'');
     }
   }
   {
     const FAIXAS=[['0-2',0,2],['3-5',3,5],['6-10',6,10],['11-15',11,15],['16+',16,999]];
     const com=rows.filter(r=>r.idade!=null);
     const vals=FAIXAS.map(([,a,b])=>com.filter(r=>r.idade>=a&&r.idade<=b).length);
-    const cores=FAIXAS.map(([,a])=>idadeColor(a<=IDADE_OK?a:a<=IDADE_ATENCAO?a:99)+'CC');
+    const cores=FAIXAS.map(([,a])=>idadeColor(a<=IDADE_OK?a:a<=IDADE_ATENCAO?a:99)+'A6');
     chFaixa=mk(chFaixa,'ch-faixa',FAIXAS.map(f=>f[0]+' anos'),vals,cores,v=>v?fmt(v):'');
   }
 }
@@ -911,6 +916,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609210900"></script>
 </body>
 </html>

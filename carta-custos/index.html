@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609171520">
+<meta name="build" content="202609210900">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <style>
@@ -1236,29 +1237,32 @@ const TT={backgroundColor:'#141B26',titleColor:'#F97316',bodyColor:'#F1F5F9',bor
 /* PADRÃO DO PORTAL (Renan, 05/09/2026): todo mês com valor aparece; o que está
    no filtro vem cheio e com rótulo, o resto fica translúcido e sem rótulo —
    igual à Visão Financeira (alfa CC no foco, 33 fora dele, borda cheia). */
+/* PADRÃO DE BARRA DO PAINEL KM (Renan, 20/09/2026): alfa D9 no foco / 33 fora
+   (A6 quando não há foco), borda cheia, canto 3, rótulo 14px/700 no topo pelo
+   plugin, eixo Y escondido, eixo X 15px, espaçamento padrão. */
 function anoChart(id,labels,vals,foco){
   if(charts[id])charts[id].destroy();
   if(!$(id))return;
-  const f=foco||labels.map(()=>true);
+  const f=foco||labels.map(()=>true), temFoco=!!foco&&f.some(x=>!x);
+  const isMobile=window.innerWidth<768;
   charts[id]=new Chart($(id),{type:'bar',
     data:{labels,datasets:[{data:vals,
-      backgroundColor:vals.map((v,i)=>v?('#F97316'+(f[i]?'CC':'33')):'transparent'),
-      borderColor:vals.map(v=>v?'#F97316':'transparent'),borderWidth:1,
-      borderRadius:4,borderSkipped:false}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:Object.assign({callbacks:{label:c=>fmt(c.raw)}},TT)},
-      scales:{x:{grid:{display:false},border:{display:false},ticks:getTick(14)},
-        y:{grid:{display:false},border:{display:false},ticks:{display:false},beginAtZero:true,grace:'14%'}}},
-    plugins:[{id:'vlab',afterDatasetsDraw(ch){const m=ch.getDatasetMeta(0);if(!m)return;const c=ch.ctx;c.save();
-      c.font='700 10px Montserrat,sans-serif';c.fillStyle=isClaro()?'#161D2B':'#EEF2FA';c.textAlign='center';c.textBaseline='bottom';
-      ch.data.datasets[0].data.forEach((v,i)=>{const p=m.data[i];if(p&&v&&f[i])c.fillText(fmt(v),p.x,p.y-4);});c.restore();}}]});
+      backgroundColor:vals.map((v,i)=>v?('#F97316'+(temFoco?(f[i]?'D9':'33'):'A6')):'transparent'),
+      borderColor:vals.map(v=>v?'#F97316':'transparent'),borderWidth:1,borderRadius:3}]},
+    plugins:typeof ChartDataLabels!=='undefined'?[ChartDataLabels]:[],
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:30}},
+      plugins:{legend:{display:false},tooltip:Object.assign({callbacks:{label:c=>fmt(c.raw)}},TT),
+        datalabels:{display:c=>!!vals[c.dataIndex]&&!!f[c.dataIndex],anchor:'end',align:'top',
+          color:isClaro()?'#333333':'#F1F5F9',font:{family:'Montserrat',size:isMobile?8:14,weight:'700'},formatter:v=>fmt(v)}},
+      scales:{x:{grid:{display:false},border:{display:false},ticks:getTick(isMobile?9:15)},
+        y:{display:false,beginAtZero:true,grace:'14%'}}}});
 }
 function barChart(id,pairs,max){
   const top=pairs.slice(0,max||10);
   if(charts[id])charts[id].destroy();
   if(!$(id))return;
   charts[id]=new Chart($(id),{type:'bar',
-    data:{labels:top.map(p=>p[0]),datasets:[{data:top.map(p=>p[1]),backgroundColor:'rgba(249,115,22,.9)',borderColor:'#F97316',borderWidth:1,borderRadius:3}]},
+    data:{labels:top.map(p=>p[0]),datasets:[{data:top.map(p=>p[1]),backgroundColor:'#F97316A6',borderColor:'#F97316',borderWidth:1,borderRadius:3}]},
     plugins:[labelPlugin],
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{right:48}},
       plugins:{legend:{display:false},tooltip:Object.assign({callbacks:{label:c=>fmt(c.raw)}},TT)},
@@ -1760,6 +1764,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202609171520"></script>
+<script src="../assets/build-check.js?v=202609210900"></script>
 </body>
 </html>
