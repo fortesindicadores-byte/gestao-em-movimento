@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609210900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Disponibilidade · Frota do Dia</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1086,39 +1086,40 @@ async function renderResumo(){
   const opts=vs=>{
     const nums=(vs||[]).filter(v=>v!=null);
     const lo=nums.length?Math.max(0,Math.floor(Math.min(...nums)/5)*5-5):85;
-    return {responsive:true,maintainAspectRatio:false,layout:{padding:{top:10}},
+    return {responsive:true,maintainAspectRatio:false,layout:{padding:{top:30}},
       plugins:{legend:{display:false},
         tooltip:{backgroundColor:'#141B26',titleColor:'#F97316',bodyColor:'#F1F5F9',borderColor:'#1E2D40',borderWidth:1,
           titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'},
           callbacks:{label:c=>(c.parsed.y!=null?c.parsed.y.toFixed(0):'—')+'%'}},
         // no amarelo e no verde o rótulo é preto; só no vermelho fica branco
-        datalabels:{color:c=>{const d=c&&c.dataset&&c.dataset.data, v=d?d[c.dataIndex]:null;
-            return v!=null&&v>=META_DISP?'#0F1115':'#fff';},
-          font:{family:'Montserrat',size:11,weight:'700'},anchor:'end',align:'start',offset:2,
+        /* PADRÃO DE BARRA DO PAINEL KM (Renan, 20/09/2026): rótulo 14px/700 NO TOPO
+           da barra (era dentro dela), eixo X 15px, eixo Y escondido, borda cheia e
+           canto 3, alfa D9 no foco / 33 fora, espaçamento padrão */
+        datalabels:{color:document.body.classList.contains('claro')?'#333333':'#F1F5F9',
+          font:{family:'Montserrat',size:window.innerWidth<768?8:14,weight:'700'},anchor:'end',align:'top',
           formatter:v=>v!=null?v.toFixed(0)+'%':''}},
       // sem grade e sem linha de eixo — estilo do layout moderno (Renan, 15/08/2026)
-      scales:{x:{ticks:{color:tickC,font:{family:'Montserrat',size:10},maxRotation:35},
+      scales:{x:{ticks:{color:tickC,font:{family:'Montserrat',size:window.innerWidth<768?9:15},maxRotation:35},
                  grid:{display:false},border:{display:false}},
-              y:{min:lo,max:100,ticks:{color:tickC,font:{family:'Montserrat',size:10},maxTicksLimit:6,callback:v=>v+'%'},
-                 grid:{display:false},border:{display:false}}}};
+              y:{display:false,min:lo,max:100}}};
   };
   // sem as linhas de meta/sonho no gráfico (Renan, 15/08/2026) — a régua está
   // escrita no subtítulo do card e embaixo do número
   // barras largas e quase encostadas, e SEM cantos arredondados
-  const BARRA={borderRadius:0,barPercentage:.97,categoryPercentage:.94};
+  const BARRA={borderRadius:3};
   if(CH1)CH1.destroy(); if(CH2)CH2.destroy();
   // mês em destaque = o da vigência marcada e o do dia marcado (todos, se vazio)
   const mesesFoco=new Set(FDATA.size?[...FDATA].map(d=>d.slice(0,7)):[...FVIG]);
   const hi=i=>!mesesFoco.size||mesesFoco.has(cy+'-'+String(i+1).padStart(2,'0'));
   CH1=new Chart($('chVig'),{type:'bar',data:{labels:MES3,datasets:[
       {type:'bar',label:'Disp. %',data:vals,...BARRA,
-       backgroundColor:vals.map((v,i)=>v==null?'transparent':corDisp(v)+(hi(i)?'CC':'33')),
-       borderColor:vals.map((v,i)=>v==null?'transparent':corDisp(v)+(hi(i)?'':'55')),
+       backgroundColor:vals.map((v,i)=>v==null?'transparent':corDisp(v)+(hi(i)?'D9':'33')),
+       borderColor:vals.map((v,i)=>v==null?'transparent':corDisp(v)),
        borderWidth:1,order:1,
        datalabels:{display:c=>vals[c.dataIndex]!=null&&hi(c.dataIndex)}}]},options:opts(vals)});
   const pv=projs.map(x=>x.p);
   CH2=new Chart($('chProj'),{type:'bar',data:{labels:projs.map(x=>x.k),datasets:[
-      {type:'bar',label:'Disp. %',data:pv,...BARRA,backgroundColor:pv.map(v=>corDisp(v)+(v!=null?'CC':'44')),
+      {type:'bar',label:'Disp. %',data:pv,...BARRA,backgroundColor:pv.map(v=>corDisp(v)+(v!=null?'A6':'44')),
        borderColor:pv.map(v=>corDisp(v)),borderWidth:1,order:1}]},options:opts(pv)});
 }
 const fmtMil=v=>v==null?'—':Math.round(v).toLocaleString('pt-BR');
@@ -1789,6 +1790,6 @@ iniciar();
 <!-- exportação padrão do Gestão em Movimento: botão direito na tabela, no
      gráfico ou no card → Excel · PNG · PNG com fundo transparente -->
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609210900"></script>
 </body>
 </html>
