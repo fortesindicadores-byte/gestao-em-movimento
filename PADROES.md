@@ -122,7 +122,6 @@ Legenda: **Casca** padrão = `.app`+`.side`/`.board` (layout novo) · antiga = `
 | `fca-preenchimento/` | FCA | padrão | light-mode | Sheets:RPM, Sheets:Termômetro, Sheets:DRE, Sheets:Consumo, Sheets:Dispersão, sb:fca | 7 | — | — | Excel/PNG · ordenação | 202609101700 |
 | `fca/` | FCAs | antiga | light-mode | Sheets:Termômetro, sb:fca | 1 | — | tbl-section | ordenação | 202608192100 |
 | `financeiro-pessoal/` | Controle Financeiro · Renan & Tati | antiga | light-mode | — | 2 | line+bar | — | Excel/PNG · PDF · ordenação | 202609092400 |
-| `footprint-goiania/` | Footprint Goiânia · Gestão em Movimento | padrão | claro | sb:footprint_check | 0 | — | dre | Excel/PNG · PDF · ordenação | 202609081800 |
 | `forecast/` | Forecast Editável — Frota | antiga | claro | Sheets:DRE, sb:forecast_scenarios | 2 | bar | dre | Excel/PNG · ordenação | 202609092400 |
 | `gerot/` | Gerot | antiga | light-mode | — | 2 | — | tbl-section | Excel/PNG · PDF · ordenação | 202608240300 |
 | `gestao-a-vista/` | Gestão à Vista | padrão | claro | sb:elite_snapshot, sb:fca | 1 | — | dre | Excel/PNG · PDF · ordenação | 202609101830 |
@@ -160,7 +159,7 @@ Legenda: **Casca** padrão = `.app`+`.side`/`.board` (layout novo) · antiga = `
 
 | Cluster | Card → pasta | Restrição |
 |---|---|---|
-| Administração | Gerenciar Acessos (tela interna) · Acessos `acessos/` · Conferência de Locação `conferencia-locacao/` · Footprint Goiânia `footprint-goiania/` · Bases do Sheets (janela interna) · Saúde do Ecossistema `saude/` | cluster só admin |
+| Administração | Gerenciar Acessos (tela interna) · Acessos `acessos/` · Conferência de Locação `conferencia-locacao/` · Bases do Sheets (janela interna) · Saúde do Ecossistema `saude/` | cluster só admin |
 | Planejamento Estratégico | Estratégia e Governança `governanca/` · Papéis e Responsabilidades `papeis-responsabilidades/` | |
 | Visão Geral | Scorecard `scorecard/` · Diagnóstico `diagnostico/` · Resumo Executivo `resumo-executivo/` · Ativos `ativos/` · Gestão à Vista `gestao-a-vista/` | |
 | Financeiro | Visão Financeira `visao-financeira/` · Painel KM `painel-km/` · R$/KM `rs-por-km/` · Árvore de Custo da Frota `arvore-frota/` · Carta de Custos `carta-custos/` | |
@@ -643,7 +642,6 @@ Projeto `lozwipoeacpvplgkrxkq`. Cliente no navegador: `supabase.createClient(SUP
 | Preventivas Seara | `preventiva_lanc`, `hodometro_leitura` (+ anexos) | `preventivas-supabase.sql`, `preventivas-anexo.sql` | por unidade |
 | Forecast | `forecast_scenarios` | `forecast-supabase.sql` | |
 | MPR | `mpr_fields` | `mpr-supabase.sql` | |
-| Footprint | `footprint_check` (PK placa+chave; status OK/NOK/NA) | `footprint-goiania.sql` | leitura logados; escrita admin; escolher "—" apaga a linha |
 | Condução Econômica / DriverPro | `ce_motoristas` (chave `gt:<id>`, cpf), `ce_diario`, `ce_scores_mensais` (competencia, pontuacao, km, litros, km_litros, placa, podio…), `ce_app_acesso`, `ce_app_sessao`, `ce_app_admins`, `ce_app_regras` (pesos, saldo, top, km_min, unidades[]), `ce_app_unidade_cfg` (unidade, grupo, top_n, km_min, qlp), `ce_app_log`; funções `ce_app_login`, `ce_app_criar_pin`, `ce_app_dados`, `ce_app_ping`, `ce_app_sair`, `ce_app_cadastro(_lista)`, `ce_app_motoristas`, `ce_app_unidades`, `ce_app_unidade_set`, `ce_app_unidade_cfg_set`, `ce_app_criterios` (anon), `ce_app_km_min`, `ce_app_top_n`, `ce_app_grupo`, `ce_app_unidade_ativa` | `conducao-economica.sql`, `app-motorista.sql` | app fala só por RPC (`security definer`) |
 | Pneus (Prolog) | `snapshot`, `historico_mensal` (projeto antigo unificado no principal) | `pneus-unifica-*` | |
 

@@ -1087,7 +1087,11 @@ Auditoria: workflow **Locacao Inspect** (`scripts/locacao-inspect.mjs`) — por 
 
 Em paralelo: perguntar ao Ginfo se existe API/export oficial (trocaria o RPA por consulta estável).
 
-## Footprint Goiânia — check da entrada da operação (Renan, 08/09/2026)
+## Footprint Goiânia — REMOVIDO (Renan, 21/09/2026: "pode excluir esse painel. BI e banco")
+
+O painel, o card do hub, o workflow **Footprint Check**, o script e o SQL saíram do repositório em 21/09/2026 (voltam com `git show <commit>^:footprint-goiania/index.html`); a tabela `footprint_check` foi derrubada por SQL colado no chat. O que segue é o registro de como era.
+
+### Como era (08/09/2026)
 
 Visão **temporária** no cluster **Administração** (`/footprint-goiania/`, só admin) para conferir o footprint da operação de Goiânia enquanto ela entra: **uma linha por placa, uma coluna por check**, célula **OK · NOK · N/A**. Nasceu de um modelo em planilha que o Renan mandou — a tela reproduz aquele desenho, nada mais.
 
