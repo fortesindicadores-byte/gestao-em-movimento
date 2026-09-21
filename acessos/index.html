@@ -2,12 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609210900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Acessos · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <style>
 /* ============================================================
    ACESSOS — auditoria de uso do portal, no layout padrão.
@@ -561,31 +562,29 @@ function render(){
 
   // ── gráfico de barras por mês, no padrão do painel ──
   const isLight=document.body.classList.contains('claro');
-  const tick={color:isLight?'#4A5568':'#B2BCD2',font:{family:'Montserrat',size:10}};
+  /* PADRÃO DE BARRA DO PAINEL KM (Renan, 20/09/2026): borda cheia, canto 3, alfa
+     A6 (sem foco), rótulo 14px/700 no topo pelo plugin, eixo Y escondido, X 15px. */
+  const isMobile=window.innerWidth<768;
+  const tick={color:isLight?'#444444':'#94A3B8',font:{family:'Montserrat',size:isMobile?9:15}};
+  const dlColor=isLight?'#333333':'#F1F5F9';
+  const plugDL=typeof ChartDataLabels!=='undefined'?[ChartDataLabels]:[];
   const tooltip={backgroundColor:isLight?'#FFFFFF':'#1B1B1E',titleColor:'#F97316',
     bodyColor:isLight?'#161D2B':'#EEF2FA',borderColor:isLight?'#d7dce4':'#33343A',borderWidth:1,
     titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'}};
-  const rotulos={id:'rot',afterDatasetsDraw(ch){
-    const ds=ch.data.datasets[0], meta=ch.getDatasetMeta(0); if(!meta||!meta.data) return;
-    const cx=ch.ctx; cx.save(); cx.font='800 10px Montserrat';
-    cx.fillStyle=isLight?'#161D2B':'#EEF2FA'; cx.textAlign='center'; cx.textBaseline='bottom';
-    ds.data.forEach((v,k)=>{ if(!v) return; const pt=meta.data[k]; if(!pt) return;
-      cx.fillText(v.toLocaleString('pt-BR'), pt.x, pt.y-6); });
-    cx.restore(); }};
   const mLabels=[],mData=[];
   for(let i=11;i>=0;i--){const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);const k=mesKey(d);
     mLabels.push(MESES_PT[d.getMonth()]+'/'+String(d.getFullYear()).slice(2));
     mData.push(rows.filter(r=>r.dia.slice(0,7)===k).length);}
   if(chMes)chMes.destroy();
   chMes=new Chart(document.getElementById('ch-mes'),{type:'bar',
-    data:{labels:mLabels,datasets:[{data:mData,backgroundColor:'#F97316',borderWidth:0,
-      borderRadius:0,barPercentage:.92,categoryPercentage:.94}]},
-    plugins:[rotulos],
-    options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:18}},
-      plugins:{legend:{display:false},tooltip},
+    data:{labels:mLabels,datasets:[{data:mData,backgroundColor:'#F97316A6',borderColor:'#F97316',borderWidth:1,borderRadius:3}]},
+    plugins:plugDL,
+    options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:30}},
+      plugins:{legend:{display:false},tooltip,
+        datalabels:{display:c=>mData[c.dataIndex]>0,anchor:'end',align:'top',color:dlColor,
+          font:{family:'Montserrat',size:isMobile?8:14,weight:'700'},formatter:v=>v.toLocaleString('pt-BR')}},
       scales:{x:{ticks:{...tick,autoSkip:true,maxRotation:0},grid:{display:false},border:{display:false}},
-              y:{beginAtZero:true,suggestedMax:Math.ceil(Math.max(1,...mData)*1.12),
-                 ticks:{...tick,precision:0,maxTicksLimit:4},grid:{display:false},border:{display:false}}}}});
+              y:{display:false,beginAtZero:true,suggestedMax:Math.ceil(Math.max(1,...mData)*1.12)}}}});
 
   // ── acessos por dia: calendário de calor do mês (mesmo componente do
   //    Indisponibilidade). Mostra o mês filtrado; sem filtro, o mês atual. ──
@@ -786,6 +785,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609210900"></script>
 </body>
 </html>
