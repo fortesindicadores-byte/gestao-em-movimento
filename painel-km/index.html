@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609231000">
+<meta name="build" content="202609232100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -693,7 +693,7 @@ const PACOTES_RSKM = new Set(['Combustíveis','Manutenções','Pneus']);
    calculado sobre o km original (senão a taxa mudaria junto com o km). */
 const BM_TAB = 'Balanço de Massa';
 const BM_CIDADE = {'CUIABA':'CBA','PIRAI':'PIR','MACACU':'MCC','CACHOEIRAS DE MACACU':'MCC','CAMPO GRANDE':'CGR','RIO DE JANEIRO':'CGR',
-  'PELOTAS':'PLT','FLORIANOPOLIS':'FLP','GUARULHOS':'GRL','NOVA FRIBURGO':'NFR','RONDONOPOLIS':'RON','BALNEARIO CAMBORIU':'BLC','CAMBORIU':'BLC'};
+  'PELOTAS':'PLT','FLORIANOPOLIS':'FLP','GUARULHOS':'GRL','NOVA FRIBURGO':'NFR','RONDONOPOLIS':'RON','BALNEARIO CAMBORIU':'BLC','CAMBORIU':'BLC','GOIANIA':'GNA'};
 const _nkBM = s => String(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
 // "CUIABA EMPURRADA" → {uni:'CBA', proj:'EMPURRADA'}
 function bmChave(unidade){
@@ -1743,6 +1743,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609231000"></script>
+<script src="../assets/build-check.js?v=202609232100"></script>
 </body>
 </html>

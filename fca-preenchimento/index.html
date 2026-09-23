@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609111230">
+<meta name="build" content="202609232100">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="../assets/aderencia-view.css?v=202608250100">
 <script src="../assets/aderencia-view.js?v=202608250100"></script>
-<script src="../assets/gerot-base.js?v=202608250100"></script>
+<script src="../assets/gerot-base.js?v=202609232100"></script>
 <style>
 :root{--bg:#0C1017;--card:#141B26;--border:#1E2D40;--orange:#F97316;--blue:#38BDF8;--text:#F1F5F9;--text2:#94A3B8;--text3:#475569;--green:#3BB33B;--red:#FF6666;--amber:#F4A100;}
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -843,6 +843,7 @@ const DEPARA={
   'MCC T2':{dre:'CACHOEIRAS DE MACACU', base:'MCC', tier:'T2', ger:['CDI MACACU']},
   'PIR':{dre:'PIRAI',                ger:['PIRAI EMPURRADA']},
   'ANG':{dre:'ANHANGUERA',           ger:[]},   // só Custos (sem dados no Gerot)
+  'GNA':{dre:'GOIANIA',              ger:['CDD GOIANIA']},   // Goiânia (23/09/2026): DRE "GOIÂNIA" · Ginfo "CDD GOIANIA"
 };
 let UNIDADE_COD='CGR', UNIDADE_DRE='CAMPO GRANDE', UNIDADE_GER=['CDD RIO DE JANEIRO'], UNIDADE_BASE='', UNIDADE_TIER='';
 function applyDepara(cod){const d=DEPARA[cod]; if(d){UNIDADE_DRE=d.dre; UNIDADE_GER=d.ger; UNIDADE_BASE=d.base||''; UNIDADE_TIER=d.tier||'';}}
@@ -931,7 +932,8 @@ const RPM_UNIT_MAP={
   'CDD NOVA FRIBURGO': {abrev:'NFR', projeto:'ROTA'},   // você escreveu FLP — assumi NFR (parece engano); me avise se for proposital
   'CDD PELOTAS':       {abrev:'PLT', projeto:'ROTA'},
   'PIRAI EMPURRADA':   {abrev:'PIR', projeto:'EMPURRADA'},
-  'CDD CAMBORIU':      {abrev:'BLC', projeto:'ROTA'}
+  'CDD CAMBORIU':      {abrev:'BLC', projeto:'ROTA'},
+  'CDD GOIANIA':       {abrev:'GNA', projeto:'AS'}      // Goiânia: no Ginfo os projetos são AS (caminhões) e ARMAZEM; sem Rota
 };
 const _RPM_MAP_N=(()=>{const m={};Object.keys(RPM_UNIT_MAP).forEach(k=>m[_normU(k)]=RPM_UNIT_MAP[k]);return m;})();
 // Lê a aba "Base RPM" (POR NOME de coluna) → payloads de RPM prontos p/ a base. Unidade/projeto vêm do RPM_UNIT_MAP.
@@ -2199,6 +2201,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609111230"></script>
+<script src="../assets/build-check.js?v=202609232100"></script>
 </body>
 </html>

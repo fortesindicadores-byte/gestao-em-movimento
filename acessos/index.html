@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609210900">
+<meta name="build" content="202609232100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Acessos · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -486,7 +486,7 @@ const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
 let sb=null, ROWS=[], chMes=null, PROFILES=[], LAST_ACCESS={};
 // Unidades que o FCA cobre (mesma lista do fca-preenchimento) — CBA e MCC separadas por tier. Farol por cadastro.
-const DEPARA={'CGR':'CAMPO GRANDE','BLC':'BALNEARIO CAMBORIU','CBA T1':'CUIABA · EMPURRADA (T1)','CBA T1 WH':'CUIABA · APOIO (T1 WH)','CBA T2':'CUIABA · CDD (T2)','FLP':'FLORIANOPOLIS','GRL':'GUARULHOS','NFR':'NOVA FRIBURGO','PLT':'PELOTAS','RON':'RONDONOPOLIS','MCC T1':'MACACU · EMPURRADA (T1)','MCC T2':'MACACU · CDI (T2)','PIR':'PIRAI','ANG':'ANHANGUERA'};
+const DEPARA={'CGR':'CAMPO GRANDE','BLC':'BALNEARIO CAMBORIU','CBA T1':'CUIABA · EMPURRADA (T1)','CBA T1 WH':'CUIABA · APOIO (T1 WH)','CBA T2':'CUIABA · CDD (T2)','FLP':'FLORIANOPOLIS','GRL':'GUARULHOS','NFR':'NOVA FRIBURGO','PLT':'PELOTAS','RON':'RONDONOPOLIS','MCC T1':'MACACU · EMPURRADA (T1)','MCC T2':'MACACU · CDI (T2)','PIR':'PIRAI','ANG':'ANHANGUERA','GNA':'GOIANIA'};
 // resolve fca_profiles.unidade (lista com vírgula; código, nome ou token legado CBA/MCC) para código(s)
 function resolveUnis(u){
   if(!u)return [];
@@ -785,6 +785,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609210900"></script>
+<script src="../assets/build-check.js?v=202609232100"></script>
 </body>
 </html>

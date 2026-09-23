@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609210900">
+<meta name="build" content="202609232100">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -678,7 +678,7 @@ const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
 const ADMIN_EMAIL='fortesindicadores@gmail.com';
 let sb=null, SESSION=null, IS_ADMIN=false, ALLOWED=[];
 // unidades (mesmo mapa do FCA) — CBA e MCC separadas por projeto/tier
-const DEPARA={CGR:'CAMPO GRANDE',BLC:'BALNEARIO CAMBORIU','CBA T1':'CUIABA — EMPURRADA (T1)','CBA T1 WH':'CUIABA — APOIO (T1 WH)','CBA T2':'CUIABA — CDD (T2)',FLP:'FLORIANOPOLIS',GRL:'GUARULHOS',NFR:'NOVA FRIBURGO',PLT:'PELOTAS',RON:'RONDONOPOLIS','MCC T1':'MACACU — EMPURRADA (T1)','MCC T2':'MACACU — CDI (T2)',PIR:'PIRAI',ANG:'ANHANGUERA'};
+const DEPARA={CGR:'CAMPO GRANDE',BLC:'BALNEARIO CAMBORIU','CBA T1':'CUIABA — EMPURRADA (T1)','CBA T1 WH':'CUIABA — APOIO (T1 WH)','CBA T2':'CUIABA — CDD (T2)',FLP:'FLORIANOPOLIS',GRL:'GUARULHOS',NFR:'NOVA FRIBURGO',PLT:'PELOTAS',RON:'RONDONOPOLIS','MCC T1':'MACACU — EMPURRADA (T1)','MCC T2':'MACACU — CDI (T2)',PIR:'PIRAI',ANG:'ANHANGUERA',GNA:'GOIANIA'};
 const UNIT_BASE=c=>{c=String(c||'');return c.startsWith('CBA ')?'CBA':c.startsWith('MCC ')?'MCC':c;};
 const UNIT_TIER=c=>{c=String(c||'');return (c.startsWith('CBA ')||c.startsWith('MCC '))?c.slice(4):'';};
 const tierOfPrefix=(base,p)=>{p=String(p||'').toUpperCase();if(/EMPURRAD/.test(p))return 'T1';if(base==='CBA'&&/APOIO/.test(p))return 'T1 WH';return 'T2';};
@@ -1764,6 +1764,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202609210900"></script>
+<script src="../assets/build-check.js?v=202609232100"></script>
 </body>
 </html>

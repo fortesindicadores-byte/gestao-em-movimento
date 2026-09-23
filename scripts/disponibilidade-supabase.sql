@@ -41,7 +41,8 @@ insert into public.unidade_depara (nome, cod) values
   ('CDD NOVA FRIBURGO','NFR'), ('NOVA FRIBURGO','NFR'),
   ('PIRAI EMPURRADA','PIR'), ('PIRAI','PIR'),
   ('CDD PELOTAS','PLT'), ('PELOTAS','PLT'),
-  ('CDD RONDONOPOLIS','RON'), ('RONDONOPOLIS','RON')
+  ('CDD RONDONOPOLIS','RON'), ('RONDONOPOLIS','RON'),
+  ('CDD GOIANIA','GNA'), ('GOIANIA','GNA')
 on conflict (nome) do update set cod = excluded.cod;
 
 -- nome+projeto → código, refinando o tier de CBA/MCC pelo projeto
