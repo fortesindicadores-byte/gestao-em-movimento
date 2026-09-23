@@ -23,7 +23,7 @@ const UNIDADES={
   'CBA T1':'Cuiabá — Empurrada (T1)','CBA T1 WH':'Cuiabá — Apoio/Empilhadeiras (T1 WH)','CBA T2':'Cuiabá — CDD (T2)',
   'CGR':'Campo Grande','FLP':'Florianópolis','GRL':'Guarulhos',
   'MCC T1':'Cachoeiras de Macacu — Empurrada (T1)','MCC T2':'Cachoeiras de Macacu — CDI (T2)',
-  'NFR':'Nova Friburgo','PIR':'Piraí','PLT':'Pelotas','RON':'Rondonópolis'
+  'NFR':'Nova Friburgo','PIR':'Piraí','PLT':'Pelotas','RON':'Rondonópolis','GNA':'Goiânia'
 };
 // nomes usados nas abas do Farol → código do portal (CDD/CDI, cidades e variações)
 // Cuiabá/Macacu: o nome da filial já define o tier (CUIABA EMPURRADA=T1,
@@ -38,7 +38,8 @@ const FAROL2COD={
   'CDD NOVA FRIBURGO':'NFR','NOVA FRIBURGO':'NFR',
   'PIRAI EMPURRADA':'PIR','PIRAI':'PIR',
   'CDD PELOTAS':'PLT','PELOTAS':'PLT',
-  'CDD RONDONOPOLIS':'RON','RONDONOPOLIS':'RON'
+  'CDD RONDONOPOLIS':'RON','RONDONOPOLIS':'RON',
+  'CDD GOIANIA':'GNA','GOIANIA':'GNA'
 };
 
 // ── helpers ──
@@ -341,7 +342,7 @@ const DISP2CT={
   'MACACU EMPURRADA':['MCC T1','T1'],'CDI MACACU':['MCC T2','T2'],'CACHOEIRAS DE MACACU':['MCC T2','T2'],
   'CDD FLORIANOPOLIS':['FLP',''],'CDD RONDONOPOLIS':['RON',''],'CDD RIO DE JANEIRO':['CGR',''],
   'CDD GUARULHOS':['GRL',''],'CDD PELOTAS':['PLT',''],'PIRAI EMPURRADA':['PIR',''],
-  'CDD NOVA FRIBURGO':['NFR',''],'CDD CAMBORIU':['BLC','']
+  'CDD NOVA FRIBURGO':['NFR',''],'CDD CAMBORIU':['BLC',''],'CDD GOIANIA':['GNA','']
 };
 const dispCls=p=>p==null?'mut':p>=DISP_SONHO?'cg':p>=DISP_META?'cy':'cr';
 
@@ -443,7 +444,7 @@ async function loadDispSheet(){
   await loadInd();
 }
 // mapeia unidade da aba Indisponibilidade → [cod, tier] (mesma lógica do painel Disponibilidade)
-const IND_CITY={'RONDONOPOLIS':'RON','GUARULHOS':'GRL','FLORIANOPOLIS':'FLP','PELOTAS':'PLT','NOVA FRIBURGO':'NFR','BALNEARIO CAMBORIU':'BLC','CAMPO GRANDE':'CGR','PIRAI':'PIR'};
+const IND_CITY={'RONDONOPOLIS':'RON','GUARULHOS':'GRL','FLORIANOPOLIS':'FLP','PELOTAS':'PLT','NOVA FRIBURGO':'NFR','BALNEARIO CAMBORIU':'BLC','CAMPO GRANDE':'CGR','PIRAI':'PIR','GOIANIA':'GNA'};
 function mapIndCT(uni,proj,tipo){
   const u=_n(uni),p=_n(proj),t=_n(tipo);
   if(u==='CUIABA'){ if(p==='APOIO'||t.includes('EMPILHADEIRA'))return['CBA T1 WH','T1 WH']; if(p==='EMPURRADA')return['CBA T1','T1']; return['CBA T2','T2']; }
@@ -531,7 +532,7 @@ async function loadPneus(){
 
 // ── PREVISÃO DE TROCA (portado 1:1 do painel /pneus/: calcPrevisao + kmDiaVeiculo + loadKmDia) ──
 const KMDIA_SHEET_ID='1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A', KMDIA_TAB='Km/L', KMDIA_DIAS_VIG=25, KMDIA_EMPILHADEIRA=250;
-const CIDADE_PNEUS={'CBA T1 WH':'CUIABA','CBA T1':'CUIABA','CBA T2':'CUIABA','MCC T1':'CACHOEIRAS DE MACACU','MCC T2':'CACHOEIRAS DE MACACU','CGR':'CAMPO GRANDE','BLC':'BALNEARIO CAMBORIU','FLP':'FLORIANOPOLIS','GRL':'GUARULHOS','NFR':'NOVA FRIBURGO','PLT':'PELOTAS','RON':'RONDONOPOLIS','PIR':'PIRAI','ANG':'ANHANGUERA'};
+const CIDADE_PNEUS={'CBA T1 WH':'CUIABA','CBA T1':'CUIABA','CBA T2':'CUIABA','MCC T1':'CACHOEIRAS DE MACACU','MCC T2':'CACHOEIRAS DE MACACU','CGR':'CAMPO GRANDE','BLC':'BALNEARIO CAMBORIU','FLP':'FLORIANOPOLIS','GRL':'GUARULHOS','NFR':'NOVA FRIBURGO','PLT':'PELOTAS','RON':'RONDONOPOLIS','PIR':'PIRAI','ANG':'ANHANGUERA','GNA':'GOIANIA'};
 const _normP=s=>(s==null?'':String(s)).trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const _medP=a=>{const v=a.filter(x=>isFinite(x)).slice().sort((x,y)=>x-y);if(!v.length)return 0;const m=Math.floor(v.length/2);return v.length%2?v[m]:(v[m-1]+v[m])/2;};
 async function loadKmDiaFarol(){

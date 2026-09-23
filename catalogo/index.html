@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609181000">
+<meta name="build" content="202609232100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Catálogo · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -465,7 +465,7 @@ const SEM_ANO='(sem ano)';
 // unidade: mesmo de-para do painel Ativos
 const UNI_MAP={'CUIABA EMPURRADA':'CBA - T1','MACACU EMPURRADA':'MCC - T1','CDD FLORIANOPOLIS':'FLP','CDI MACACU':'MCC - T2',
   'CDD RONDONOPOLIS':'RON','CDD RIO DE JANEIRO':'CGR','CDD GUARULHOS':'GRL','CDD PELOTAS':'PLT','PIRAI EMPURRADA':'PIR','CDD CUIABA':'CBA T2',
-  'CDD NOVA FRIBURGO':'NFR','CDD CAMBORIU':'BLC','ANHANGUERA':'ANG','CAMPO GRANDE':'CGR','SEARA':'ANG'};
+  'CDD NOVA FRIBURGO':'NFR','CDD CAMBORIU':'BLC','CDD GOIANIA':'GNA','ANHANGUERA':'ANG','CAMPO GRANDE':'CGR','SEARA':'ANG'};
 function mapUni(fil,proj,tipo){
   const u=_nrm(fil),p=_nrm(proj),t=_nrm(tipo);
   if(u==='CUIABA'){ if(p==='APOIO'||t.includes('EMPILHADEIRA'))return 'CBA - T1 WH'; if(p==='EMPURRADA')return 'CBA - T1'; return 'CBA T2'; }
@@ -822,6 +822,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609181000"></script>
+<script src="../assets/build-check.js?v=202609232100"></script>
 </body>
 </html>

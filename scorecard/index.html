@@ -2,14 +2,14 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609210900">
+<meta name="build" content="202609232100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Scorecard · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../assets/gerot-base.js?v=202608250100"></script>
+<script src="../assets/gerot-base.js?v=202609232100"></script>
 <script src="../assets/swr-cache.js"></script>
 <style>
 /* ============================================================
@@ -572,13 +572,13 @@ let ICS=[],VIGS=[],XPANEL={},chT=null;
 // 13 unidades do scorecard (nome ICs) → código FCA/DPO, cidade (DRE), e Conlog.
 const UNI_LIST=['CDD CAMBORIU','CDD CUIABA','CDD FLORIANOPOLIS','CDD GUARULHOS','CDD NOVA FRIBURGO','CDD PELOTAS','CDD RIO DE JANEIRO','CDD RONDONOPOLIS','CDI MACACU','CUIABA','CUIABA EMPURRADA','MACACU EMPURRADA','PIRAI EMPURRADA'];
 // nome ICs → código base (FCA usa este; DPO/Conlog usam subcódigo abaixo)
-const UNI2COD={'CDD CAMBORIU':'BLC','CDD CUIABA':'CBA','CUIABA':'CBA','CUIABA EMPURRADA':'CBA','CDD FLORIANOPOLIS':'FLP','CDD GUARULHOS':'GRL','CDD NOVA FRIBURGO':'NFR','CDD PELOTAS':'PLT','CDD RIO DE JANEIRO':'CGR','CDD RONDONOPOLIS':'RON','CDI MACACU':'MCC','MACACU EMPURRADA':'MCC','PIRAI EMPURRADA':'PIR'};
+const UNI2COD={'CDD GOIANIA':'GNA','CDD CAMBORIU':'BLC','CDD CUIABA':'CBA','CUIABA':'CBA','CUIABA EMPURRADA':'CBA','CDD FLORIANOPOLIS':'FLP','CDD GUARULHOS':'GRL','CDD NOVA FRIBURGO':'NFR','CDD PELOTAS':'PLT','CDD RIO DE JANEIRO':'CGR','CDD RONDONOPOLIS':'RON','CDI MACACU':'MCC','MACACU EMPURRADA':'MCC','PIRAI EMPURRADA':'PIR'};
 // nome ICs → linha da aba DPO (subunidade T1/T2 quando existe)
-const UNI2DPO={'CDD CAMBORIU':'BLC','CDD CUIABA':'CBA T2','CUIABA':'CBA T1','CUIABA EMPURRADA':'CBA T1','CDD FLORIANOPOLIS':'FLP','CDD GUARULHOS':'GRL','CDD NOVA FRIBURGO':'NFR','CDD PELOTAS':'PLT','CDD RIO DE JANEIRO':'CGR','CDD RONDONOPOLIS':'RON','CDI MACACU':'MCC T2','MACACU EMPURRADA':'MCC T1','PIRAI EMPURRADA':'PIR'};
+const UNI2DPO={'CDD GOIANIA':'GNA','CDD CAMBORIU':'BLC','CDD CUIABA':'CBA T2','CUIABA':'CBA T1','CUIABA EMPURRADA':'CBA T1','CDD FLORIANOPOLIS':'FLP','CDD GUARULHOS':'GRL','CDD NOVA FRIBURGO':'NFR','CDD PELOTAS':'PLT','CDD RIO DE JANEIRO':'CGR','CDD RONDONOPOLIS':'RON','CDI MACACU':'MCC T2','MACACU EMPURRADA':'MCC T1','PIRAI EMPURRADA':'PIR'};
 // nome ICs → cidade (DRE col10, sem acento, upper)
-const UNI2CID={'CDD CAMBORIU':'BALNEARIO CAMBORIU','CDD CUIABA':'CUIABA','CUIABA':'CUIABA','CUIABA EMPURRADA':'CUIABA','CDD FLORIANOPOLIS':'FLORIANOPOLIS','CDD GUARULHOS':'GUARULHOS','CDD NOVA FRIBURGO':'NOVA FRIBURGO','CDD PELOTAS':'PELOTAS','CDD RIO DE JANEIRO':'CAMPO GRANDE','CDD RONDONOPOLIS':'RONDONOPOLIS','CDI MACACU':'CACHOEIRAS DE MACACU','MACACU EMPURRADA':'CACHOEIRAS DE MACACU','PIRAI EMPURRADA':'PIRAI'};
+const UNI2CID={'CDD GOIANIA':'GOIANIA','CDD CAMBORIU':'BALNEARIO CAMBORIU','CDD CUIABA':'CUIABA','CUIABA':'CUIABA','CUIABA EMPURRADA':'CUIABA','CDD FLORIANOPOLIS':'FLORIANOPOLIS','CDD GUARULHOS':'GUARULHOS','CDD NOVA FRIBURGO':'NOVA FRIBURGO','CDD PELOTAS':'PELOTAS','CDD RIO DE JANEIRO':'CAMPO GRANDE','CDD RONDONOPOLIS':'RONDONOPOLIS','CDI MACACU':'CACHOEIRAS DE MACACU','MACACU EMPURRADA':'CACHOEIRAS DE MACACU','PIRAI EMPURRADA':'PIRAI'};
 // nome ICs → código Conlog (UNIDADE_MAP do pneus/painel.html). Armazém (CUIABA/WH) usa CBA T1 WH.
-const UNI2CONLOG={'CDD CAMBORIU':'BLC','CDD CUIABA':'CBA T2','CUIABA':'CBA T1 WH','CUIABA EMPURRADA':'CBA T1','CDD FLORIANOPOLIS':'FLP','CDD GUARULHOS':'GRL','CDD NOVA FRIBURGO':'NFR','CDD PELOTAS':'PLT','CDD RIO DE JANEIRO':'CGR','CDD RONDONOPOLIS':'RON','CDI MACACU':'MCC T2','MACACU EMPURRADA':'MCC T1','PIRAI EMPURRADA':'PIR'};
+const UNI2CONLOG={'CDD GOIANIA':'GNA','CDD CAMBORIU':'BLC','CDD CUIABA':'CBA T2','CUIABA':'CBA T1 WH','CUIABA EMPURRADA':'CBA T1','CDD FLORIANOPOLIS':'FLP','CDD GUARULHOS':'GRL','CDD NOVA FRIBURGO':'NFR','CDD PELOTAS':'PLT','CDD RIO DE JANEIRO':'CGR','CDD RONDONOPOLIS':'RON','CDI MACACU':'MCC T2','MACACU EMPURRADA':'MCC T1','PIRAI EMPURRADA':'PIR'};
 // km/KmL: por projeto. Armazém (CUIABA = APOIO/WH) NÃO tem km/combustível → ausente.
 const UNI_SEM_KM=new Set(['CUIABA']);
 // nome ICs → prefixo de projeto na aba km/KmL (col PROJ tipo "EMPURRADA - CBA", "ROTA - BLC").
@@ -1212,6 +1212,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609210900"></script>
+<script src="../assets/build-check.js?v=202609232100"></script>
 </body>
 </html>

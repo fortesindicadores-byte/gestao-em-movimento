@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202608281545">
+<meta name="build" content="202609232100">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -821,7 +821,7 @@ let adminTabActive = 'pending';
 let allApprovals   = [];
 // Acesso FCA por usuário (perfil): uma ou mais unidades (lista com vírgula) ou admin.
 // CBA e MCC são separadas por projeto/tier (unidades independentes).
-const FCA_UNITS = ['CGR','BLC','CBA T1','CBA T1 WH','CBA T2','FLP','GRL','NFR','PLT','RON','MCC T1','MCC T2','PIR'];
+const FCA_UNITS = ['CGR','BLC','CBA T1','CBA T1 WH','CBA T2','FLP','GRL','NFR','PLT','RON','MCC T1','MCC T2','PIR','GNA'];
 const FCA_ALL   = [...FCA_UNITS, 'ANG'];   // ANG só tem Custos (sem Gerot) — entra no acesso FCA
 let _fcaProf = {};   // user_id -> { unidade, is_admin }
 
@@ -1450,6 +1450,6 @@ init();
 </script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202608281545"></script>
+<script src="../assets/build-check.js?v=202609232100"></script>
 </body>
 </html>

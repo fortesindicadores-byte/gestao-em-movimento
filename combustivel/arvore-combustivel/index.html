@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609110125">
+<meta name="build" content="202609232100">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="../../assets/pdf-export.js"></script>
@@ -876,7 +876,7 @@ const VAR_CTAS = new Set(['COMBUSTIVEIS VEICULOS E EQUIPAMENTOS','COMBUSTIVEIS',
   'PERSONALIZACAO/PADRONIZACAO DE VEICULOS','PERSONALIZACAO E PADRONIZACAO DE VEICULOS','PERSONALIZACAO/PADRONIZACAO','LAVACAO DE VEICULOS',
   'PNEUS E CAMARAS','PNEUS NOVOS','CONSERTOS E RECAPAGENS DE PNEUS','RECAPAGENS E OUTROS SERVICOS','RECAPAGENS']);
 const BM_CIDADE = {'CUIABA':'CBA','PIRAI':'PIR','MACACU':'MCC','CACHOEIRAS DE MACACU':'MCC','CAMPO GRANDE':'CGR','RIO DE JANEIRO':'CGR',
-  'PELOTAS':'PLT','FLORIANOPOLIS':'FLP','GUARULHOS':'GRL','NOVA FRIBURGO':'NFR','RONDONOPOLIS':'RON','BALNEARIO CAMBORIU':'BLC','CAMBORIU':'BLC'};
+  'PELOTAS':'PLT','FLORIANOPOLIS':'FLP','GUARULHOS':'GRL','NOVA FRIBURGO':'NFR','RONDONOPOLIS':'RON','BALNEARIO CAMBORIU':'BLC','CAMBORIU':'BLC','GOIANIA':'GNA'};
 let S_BM=[];                     // [{vig:'MM/YYYY', n3:'EMPURRADA - PIR', valor}]
 function parseBalanco(cols,rows){
   // VALOR 85% (Renan, 10/09/2026): a coluna "Valor 85%" é a que vira km; a "Valor" crua só se a de 85% não existir
@@ -1141,6 +1141,6 @@ function applyTheme(t){document.body.classList.toggle('light-mode',t==='light');
 <script src="../../assets/mobile.js?v=202608220020"></script>
 <script src="../../assets/ctrlk.js"></script>
 <script src="../../assets/sortable-table.js?v=202609042200"></script>
-<script src="../../assets/build-check.js?v=202609110125"></script>
+<script src="../../assets/build-check.js?v=202609232100"></script>
 </body>
 </html>

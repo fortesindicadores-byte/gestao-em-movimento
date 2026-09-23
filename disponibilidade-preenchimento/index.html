@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609210900">
+<meta name="build" content="202609232100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Disponibilidade · Frota do Dia</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -581,7 +581,7 @@ const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const ALL_UNITS=['ANG','BLC','CBA T1','CBA T1 WH','CBA T2','CGR','FLP','GRL','MCC T1','MCC T2','NFR','PIR','PLT','RON'];
+const ALL_UNITS=['ANG','BLC','CBA T1','CBA T1 WH','CBA T2','CGR','FLP','GRL','MCC T1','MCC T2','NFR','PIR','PLT','RON','GNA'];
 
 const NAME2COD={
   'CDD CAMBORIU':'BLC','BALNEARIO CAMBORIU':'BLC','CAMBORIU':'BLC',
@@ -594,7 +594,8 @@ const NAME2COD={
   'CDD NOVA FRIBURGO':'NFR','NOVA FRIBURGO':'NFR',
   'PIRAI EMPURRADA':'PIR','PIRAI':'PIR',
   'CDD PELOTAS':'PLT','PELOTAS':'PLT',
-  'CDD RONDONOPOLIS':'RON','RONDONOPOLIS':'RON'
+  'CDD RONDONOPOLIS':'RON','RONDONOPOLIS':'RON',
+  'CDD GOIANIA':'GNA','GOIANIA':'GNA'
 };
 const normU=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
 const normP=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
@@ -1790,6 +1791,6 @@ iniciar();
 <!-- exportação padrão do Gestão em Movimento: botão direito na tabela, no
      gráfico ou no card → Excel · PNG · PNG com fundo transparente -->
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202609210900"></script>
+<script src="../assets/build-check.js?v=202609232100"></script>
 </body>
 </html>

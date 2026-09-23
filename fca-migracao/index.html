@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202608192100">
+<meta name="build" content="202609232100">
 <title>FCA · Migração</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -171,7 +171,7 @@ function getMap(){const m={};document.querySelectorAll('#mapCard select[data-k]'
 // De-para nome/cidade → código de unidade (mesmo do scorecard). Importados entram pelo código.
 // CBA e MCC separadas por tier: EMPURRADA→T1 · CUIABA (Apoio)→T1 WH · CDD/CDI→T2.
 // Tokens legados 'CBA'/'MCC' caem no CDD/CDI (T2) — ajuste no Admin se for outro recorte.
-const _CODES=new Set(['CGR','BLC','CBA T1','CBA T1 WH','CBA T2','FLP','GRL','NFR','PLT','RON','MCC T1','MCC T2','PIR']);
+const _CODES=new Set(['CGR','BLC','CBA T1','CBA T1 WH','CBA T2','FLP','GRL','NFR','PLT','RON','MCC T1','MCC T2','PIR','GNA']);
 const NAME2COD={
   'CAMPO GRANDE':'CGR','CDD RIO DE JANEIRO':'CGR','RIO DE JANEIRO':'CGR',
   'BALNEARIO CAMBORIU':'BLC','CDD CAMBORIU':'BLC','CAMBORIU':'BLC',
@@ -181,6 +181,7 @@ const NAME2COD={
   'NOVA FRIBURGO':'NFR','CDD NOVA FRIBURGO':'NFR',
   'PELOTAS':'PLT','CDD PELOTAS':'PLT',
   'RONDONOPOLIS':'RON','CDD RONDONOPOLIS':'RON',
+  'GOIANIA':'GNA','CDD GOIANIA':'GNA',
   'CACHOEIRAS DE MACACU':'MCC T2','CDI MACACU':'MCC T2','MACACU':'MCC T2','MACACU EMPURRADA':'MCC T1','MCC':'MCC T2',
   'PIRAI':'PIR','PIRAI EMPURRADA':'PIR'
 };
@@ -271,6 +272,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202608192100"></script>
+<script src="../assets/build-check.js?v=202609232100"></script>
 </body>
 </html>
