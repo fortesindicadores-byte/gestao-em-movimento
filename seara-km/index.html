@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609202140">
+<meta name="build" content="202609231000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Seara · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -289,8 +289,13 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
    visão, então o teto em vh só deixava faixa vazia embaixo. Mas a sobra NÃO vai
    toda para o gráfico (Renan, 20/09/2026: "gráficos muito altos... distribua
    melhor"): cards e gráficos crescem juntos, 1 para 3, com teto nos cards. */
-#vw-resumo .kpis.k4{flex:1 1 auto;max-height:clamp(150px,24vh,230px);}   /* Renan, 20/09/2026: "aumente um pouco a altura dos cards e reduza dos gráficos" */
-#vw-resumo .gr2{flex:2 1 auto;max-height:none;}
+/* BASE ZERO, não auto (bug real, 23/09/2026): com o Chart.js de verdade o canvas
+   ganha altura explícita e infla a base do .gr2 — a divisão 1 para 2 de 20/09 nunca
+   chegou a valer na tela (cards ficavam no mínimo, 155px). Com flex-basis 0 os dois
+   blocos dividem a sobra pela proporção, e a linha da grade em minmax(0,1fr) deixa o
+   gráfico encolher junto. Medido em 1850x935: cards 224 · gráficos 460. */
+#vw-resumo .kpis.k4{flex:1 1 0;max-height:clamp(150px,24vh,230px);}   /* Renan, 20/09/2026: "aumente um pouco a altura dos cards e reduza dos gráficos" */
+#vw-resumo .gr2{flex:2 1 0;max-height:none;grid-template-rows:minmax(0,1fr);}
 #vw-projeto .gr2{max-height:none;}
 
 /* tabela da dispersão: 9 colunas cabem sem rolagem lateral */
@@ -1400,6 +1405,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609202140"></script>
+<script src="../assets/build-check.js?v=202609231000"></script>
 </body>
 </html>
