@@ -1,0 +1,26 @@
+name: Goiania Inspect (a unidade nova em cada fonte)
+
+# Como Goiânia aparece no DRE, na Dispersão, no Ginfo, no Frota de Elite e nas
+# tabelas do portal — para cadastrar o código certo. Só leitura.
+on:
+  workflow_dispatch:
+    inputs:
+      busca:
+        description: 'Trechos a procurar, separados por vírgula'
+        required: false
+        default: 'GOI,GNA,GYN'
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Varrer as fontes
+        run: node scripts/goiania-inspect.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          GOI_BUSCA: ${{ github.event.inputs.busca }}
