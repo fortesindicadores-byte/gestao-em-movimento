@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609240400">
+<meta name="build" content="202609240500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Correlações da Operação · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,7 +14,8 @@
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
 <script src="../assets/gerot-base.js?v=202609232100"></script>
 <script src="../assets/estatistica.js?v=202609240100"></script>
-<script src="../assets/correlacoes-dados.js?v=202609240400"></script>
+<script src="../assets/correlacoes-dados.js?v=202609240500"></script>
+<script src="../assets/correlacoes-quadrante.js?v=202609240500"></script>
 <style>
 /* ============================================================
    CORRELAÇÕES DA OPERAÇÃO — a cópia amigável do /correlacoes/ para as
@@ -357,9 +358,20 @@ table.dre td.mono{font-variant-numeric:tabular-nums;}
 .xlist label{display:flex;align-items:center;gap:6px;padding:4px 9px;border:1px solid var(--card-brd);border-radius:20px;
   font-size:10.5px;font-weight:700;color:var(--txt2);cursor:pointer;white-space:nowrap;}
 .xlist label:hover{background:var(--hover);}
+.xlist label.off{opacity:.35;cursor:not-allowed;}
 .xlist label.on{background:var(--hover);color:var(--txt);border-color:color-mix(in srgb,var(--laranja) 50%,transparent);}
 .xlist input{accent-color:var(--laranja);width:12px;height:12px;}
 .gcard .rot-x{text-align:center;font-size:9.5px;font-weight:700;color:var(--txt3);letter-spacing:.6px;text-transform:uppercase;margin-top:2px;}
+.gcard .rot-y{position:absolute;left:8px;top:50%;transform:rotate(-90deg) translateX(-50%);transform-origin:left top;font-size:9.5px;font-weight:700;color:var(--txt3);letter-spacing:.6px;text-transform:uppercase;white-space:nowrap;}
+.gcv.pad{margin-left:14px;}
+/* quadrantes: badge do quadrante na tabela e os 4 cards de contagem */
+.qd{display:inline-block;padding:1px 7px;border-radius:20px;border:1px solid var(--card-brd);font-size:9px;font-weight:800;letter-spacing:.3px;color:var(--txt3);white-space:nowrap;}
+.qd.melhor{color:var(--verde);border-color:color-mix(in srgb,var(--verde) 45%,transparent);}
+.qd.pior{color:var(--vermelho);border-color:color-mix(in srgb,var(--vermelho) 45%,transparent);}
+.resumo-stat.quad4{grid-template-columns:repeat(2,1fr);}
+.resumo-stat>div.melhor{border-color:color-mix(in srgb,var(--verde) 40%,transparent);}
+.resumo-stat>div.pior{border-color:color-mix(in srgb,var(--vermelho) 40%,transparent);}
+table.dre tr.minha td{background:color-mix(in srgb,var(--laranja) 9%,transparent);}
 @media(max-width:860px){ .perg{display:block;} .pcard{height:330px;margin-bottom:12px;} .gr2.g21{display:block;} .gcard{height:320px;margin-bottom:12px;}
   .resumo-stat{grid-template-columns:repeat(2,1fr);} .twrap{overflow-x:auto;} .twrap table.dre{table-layout:auto;min-width:640px;} table.dre thead th{position:static;} }
 #aviso-slot:not(:empty){margin-bottom:10px;}
@@ -380,6 +392,7 @@ table.dre td.mono{font-variant-numeric:tabular-nums;}
     <button class="s-item on" data-vw="resumo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Resumo Gerencial<span class="n" id="n-resumo"></span></button>
     <div class="s-sec">Explorar</div>
     <button class="s-item" data-vw="dispersao"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="16" r="1.6"/><circle cx="11" cy="10" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="18" cy="6" r="1.6"/><path d="M3 21h18M3 3v18"/></svg> Dois indicadores<span class="n" id="n-dispersao"></span></button>
+    <button class="s-item" data-vw="quadrante"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18M3 12h18"/><circle cx="16.5" cy="7.5" r="1.4" fill="currentColor" stroke="none"/></svg> Quadrantes<span class="n" id="n-quadrante"></span></button>
     <button class="s-item" data-vw="regressao"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 21h18M3 3v18"/><path d="M6 17 18 7"/></svg> O que explica<span class="n" id="n-regressao"></span></button>
     <button class="s-item" data-vw="defasagem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> O que vem antes<span class="n" id="n-defasagem"></span></button>
 
@@ -460,6 +473,35 @@ table.dre td.mono{font-variant-numeric:tabular-nums;}
             <div class="resumo-stat" id="disp-stats"></div>
             <div class="leitura" id="disp-leitura">—</div>
             <div class="twrap" id="t-disp" style="margin-top:10px"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ QUADRANTES — duas variáveis, um ponto por entidade, onde é melhor estar ══ -->
+      <section class="vw" id="vw-quadrante">
+        <div class="card tsec" style="flex:0 0 auto;padding-bottom:12px">
+          <div class="selrow">
+            <span>Indicador 1 (X)</span><select class="sel" id="sel-qx"></select>
+            <span>Indicador 2 (Y)</span><select class="sel" id="sel-qy"></select>
+            <span>Referência</span>
+            <div class="dims" id="dims-qref"><button class="dimb on" data-ref="media">Média da rede</button><button class="dimb" data-ref="mediana">Mediana</button></div>
+            <span class="mut" id="quad-nota"></span>
+          </div>
+        </div>
+        <div class="gr2 g21">
+          <div class="card gcard">
+            <div class="gtit" id="quad-tit">—</div>
+            <div class="gsub" id="quad-sub">—</div>
+            <div class="gleg"><span><i class="sq" style="color:#F97316"></i><span id="qleg-uni">Sua unidade</span></span><span><i class="sq" style="color:#8A93A6"></i>Demais</span><span><i class="sq" style="color:#3BB33B"></i>Melhor quadrante</span><span><i class="sq" style="color:#FF5252"></i>Pior quadrante</span><span>linhas tracejadas = referência</span></div>
+            <div class="gcv pad"><canvas id="ch-quad"></canvas></div>
+            <div class="rot-x" id="quad-rotx"></div>
+            <div class="rot-y" id="quad-roty"></div>
+          </div>
+          <div class="card tsec">
+            <div class="thead-row"><div><div class="ttit">Onde é melhor estar</div><div class="tsub" id="quad-sub2">—</div></div></div>
+            <div class="resumo-stat quad4" id="quad-stats"></div>
+            <div class="leitura" id="quad-leitura">—</div>
+            <div class="twrap" id="t-quad" style="margin-top:10px"></div>
           </div>
         </div>
       </section>
@@ -774,9 +816,11 @@ function renderPerguntas(){
    ═══════════════════════════════════════════════════════════════════ */
 function preencheSelects(){
   const vs=VARS[GRAO], rows=recorte(), comDado=varsComDado(rows), op=vs.map(v=>`<option value="${esc(v.id)}">${esc(v.rot)}</option>`).join('');
-  ['sel-x','sel-y','sel-ry','sel-lx','sel-ly'].forEach(id=>{ const s=document.getElementById(id); const cur=s.value; s.innerHTML=op; if(vs.some(v=>v.id===cur)) s.value=cur; });
+  ['sel-x','sel-y','sel-ry','sel-lx','sel-ly','sel-qx','sel-qy'].forEach(id=>{ const s=document.getElementById(id); const cur=s.value; s.innerHTML=op; if(vs.some(v=>v.id===cur)) s.value=cur; });
   const pad=(id,i)=>{ const s=document.getElementById(id); if(!comDado.some(v=>v.id===s.value)) s.value=(comDado[i]||vs[i]||vs[0]).id; };
-  pad('sel-x',0); pad('sel-y',1); pad('sel-ry',1); pad('sel-lx',0); pad('sel-ly',1);
+  pad('sel-x',0); pad('sel-y',1); pad('sel-ry',1); pad('sel-lx',0); pad('sel-ly',1); pad('sel-qx',0); pad('sel-qy',1);
+  // o par padrão nunca é trivial (X e Y da mesma conta): o Y pula para a primeira variável de outra base
+  [['sel-x','sel-y'],['sel-lx','sel-ly'],['sel-qx','sel-qy']].forEach(([ix,iy])=>{ const sx=document.getElementById(ix), sy=document.getElementById(iy); const vx=varDe(GRAO,sx.value); if(!vx) return; if(sy.value===sx.value||CorrDados.trivial(vx,varDe(GRAO,sy.value))){ const alt=comDado.find(v=>v.id!==vx.id&&!CorrDados.trivial(vx,v))||vs.find(v=>v.id!==vx.id&&!CorrDados.trivial(vx,v)); if(alt) sy.value=alt.id; } });
   const rx=document.getElementById('rx-list'); const marcados=new Set([...rx.querySelectorAll('input:checked')].map(i=>i.value));
   rx.innerHTML=vs.map(v=>`<label class="${marcados.has(v.id)?'on':''}"><input type="checkbox" value="${esc(v.id)}" ${marcados.has(v.id)?'checked':''}> ${esc(v.ab)}</label>`).join('');
 }
@@ -794,7 +838,8 @@ function renderDispersao(){
     ['Quanto a tendência explica',fin(fit.r2)?br(fit.r2*100,0)+'%':'—'],['Efeito',fin(fit.b)?`${fit.b>=0?'+':''}${br(fit.b,Math.abs(fit.b)<1?3:2)} de ${vy.ab} por 1 de ${vx.ab}`:'—'],['Pontos',br(pts.length)]]
     .map(([l,v])=>`<div><div class="l">${l}</div><div class="v" style="font-size:14px">${v}</div></div>`).join('');
   let txt;
-  if(poucos) txt=`<b>Poucos pontos (${pts.length}).</b> Com menos de ${E.N_MIN} não dá para ler nada — amplie as vigências.`;
+  if(CorrDados.trivial(vx,vy)) txt=`<b>Esses dois saem da mesma conta</b> (${vx.rot} e ${vy.rot}), então andam juntos por construção — não é uma ligação de verdade. Escolha indicadores de contas diferentes: custo de algo × km rodado, desvio × aderência.`;
+  else if(poucos) txt=`<b>Poucos pontos (${pts.length}).</b> Com menos de ${E.N_MIN} não dá para ler nada — amplie as vigências.`;
   else if(!fin(c.r)) txt='Um dos indicadores não varia no recorte.';
   else txt=`Quando <b>${vx.rot}</b> sobe, <b>${vy.rot}</b> tende a <b>${sentido(c.r)}</b> — ${forcaTxt(c.r)}, e ${coincTxt(c.p)}. Isso vale para o conjunto das unidades; os pontos em laranja mostram onde a sua fica nesse quadro. <span class="mut">Andar junto não é causa: as duas podem responder a uma terceira coisa.</span>`;
   document.getElementById('disp-leitura').innerHTML=txt;
@@ -807,6 +852,7 @@ function renderDispersao(){
 }
 function renderRegressao(){
   const rows=recorte(), yid=document.getElementById('sel-ry').value, vy=varDe(GRAO,yid); if(!vy) return;
+  document.querySelectorAll('#rx-list input').forEach(i=>{ const t=i.value===yid||CorrDados.trivial(varDe(GRAO,i.value),vy); i.disabled=t; if(t) i.checked=false; i.closest('label').classList.toggle('off',t); i.closest('label').title=t&&i.value!==yid?'sai da mesma conta que '+vy.ab:''; });
   const xs=[...document.querySelectorAll('#rx-list input:checked')].map(i=>i.value).filter(id=>id!==yid).slice(0,5);
   document.querySelectorAll('#rx-list label').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked));
   const vxs=xs.map(id=>varDe(GRAO,id)).filter(Boolean);
@@ -838,7 +884,8 @@ function renderDefasagem(){
   document.getElementById('t-lag').innerHTML=`<table class="dre"><colgroup><col style="width:34%"><col style="width:30%"><col style="width:16%"><col style="width:20%"></colgroup>
     <thead><tr><th>Defasagem</th><th>Ligação</th><th class="num">Pontos</th><th>Coincidência?</th></tr></thead><tbody>${lags.map(l=>`<tr class="${melhor&&l.k===melhor.k?'ref-row':''}"><td class="nome">${rot[l.k]}</td><td class="${fin(l.r)?(l.r>=0?'cg':'cr'):''}">${fin(l.r)?forcaTxt(l.r):'—'}</td><td class="num mono ${l.n<E.N_MIN?'cr':''}">${l.n}</td><td>${fin(l.p)?coincTxt(l.p):'—'}</td></tr>`).join('')}</tbody></table>`;
   let txt;
-  if(!melhor) txt=`<b>Poucos pontos.</b> Nenhuma defasagem chega a ${E.N_MIN} pares dentro da mesma unidade; amplie as vigências.`;
+  if(CorrDados.trivial(vx,vy)) txt=`<b>Esses dois saem da mesma conta</b> (${vx.rot} e ${vy.rot}) — não é uma ligação de verdade. Escolha uma possível causa de outra base.`;
+  else if(!melhor) txt=`<b>Poucos pontos.</b> Nenhuma defasagem chega a ${E.N_MIN} pares dentro da mesma unidade; amplie as vigências.`;
   else if(melhor.k===0||Math.abs(melhor.r)-Math.abs(lags[0].r)<0.1) txt=`A ligação mais forte é <b>no mesmo mês</b>: <b>${vx.ab}</b> e <b>${vy.ab}</b> andam juntos, mas não dá para dizer quem vem primeiro.`;
   else txt=`<b>${vx.rot}</b> se liga mais a <b>${vy.rot}</b> de <b>${melhor.k} ${melhor.k===1?'mês':'meses'} depois</b> (${forcaTxt(melhor.r)}, ${coincTxt(melhor.p)}) do que no mesmo mês. É o padrão de uma causa que antecede o efeito — indício, não prova.`;
   document.getElementById('lag-leitura').innerHTML=txt;
@@ -848,13 +895,47 @@ document.getElementById('sel-ry').addEventListener('change',renderRegressao);
 document.getElementById('rx-list').addEventListener('change',e=>{ if([...document.querySelectorAll('#rx-list input:checked')].length>5) e.target.checked=false; renderRegressao(); });
 ['sel-lx','sel-ly'].forEach(id=>document.getElementById(id).addEventListener('change',renderDefasagem));
 document.querySelectorAll('#dims-lag .dimb').forEach(b=>b.addEventListener('click',()=>{ KMAX=+b.dataset.k; document.querySelectorAll('#dims-lag .dimb').forEach(x=>x.classList.toggle('on',x===b)); renderDefasagem(); }));
-document.querySelectorAll('#dims-grao .dimb').forEach(b=>b.addEventListener('click',()=>{ GRAO=b.dataset.grao; document.querySelectorAll('#dims-grao .dimb').forEach(x=>x.classList.toggle('on',x===b)); preencheSelects(); renderDispersao(); renderRegressao(); renderDefasagem(); }));
+document.querySelectorAll('#dims-grao .dimb').forEach(b=>b.addEventListener('click',()=>{ GRAO=b.dataset.grao; document.querySelectorAll('#dims-grao .dimb').forEach(x=>x.classList.toggle('on',x===b)); preencheSelects(); renderDispersao(); renderQuadrante(); renderRegressao(); renderDefasagem(); }));
+
+/* ── quadrantes: duas variáveis, um ponto por entidade, a sua em laranja ── */
+let QREF='media';
+const ROT_ENT={uni:'unidades',placa:'placas',mot:'motoristas'};
+function renderQuadrante(){
+  const rows=recorte(), xid=document.getElementById('sel-qx').value, yid=document.getElementById('sel-qy').value, vx=varDe(GRAO,xid), vy=varDe(GRAO,yid); if(!vx||!vy) return;
+  const q=CorrQuad.monta(CorrDados.porEntidade(rows),vx,vy,{ref:QREF});
+  const minhas=q.pts.filter(daUni), ROT=p=>GRAO==='mot'&&p.nome?p.nome:p.ent;
+  set('quad-tit',`${vx.rot} × ${vy.rot}`); set('quad-sub',`${q.n} ${ROT_ENT[GRAO]} · média dos meses do recorte · referência = ${QREF==='mediana'?'mediana':'média'} da rede`);
+  set('quad-rotx',vx.rot); set('quad-roty',vy.rot); set('n-quadrante',br(q.n)); set('qleg-uni',nomeUni(UNI));
+  set('quad-nota',[vx.nota?`${vx.ab}: ${vx.nota}`:'',vy.nota?`${vy.ab}: ${vy.nota}`:''].filter(Boolean).join(' · '));
+  mata('ch-quad'); const cv=document.getElementById('ch-quad'), s=estilo();
+  if(cv&&q.n) CH['ch-quad']=CorrQuad.desenha(cv,q,vx,vy,{Chart,estilo:s,fmtVar,destaque:daUni,rotulo:ROT,plugDL:s.plugDL});
+  document.getElementById('quad-stats').innerHTML=q.ordem.map(k=>{ const c=CorrQuad.classe(q,k); const m=minhas.filter(p=>p.q===k).length; return `<div class="${c}"><div class="l">${esc(q.rot[k])}${c?' · '+c:''}</div><div class="v ${c==='melhor'?'cg':c==='pior'?'cr':''}" style="font-size:15px">${q.cont[k]}${GRAO!=='uni'&&m?` <span class="mut" style="font-size:10px">(${m} sua${m>1?'s':''})</span>`:''}</div></div>`; }).join('');
+  set('quad-sub2',`referência: ${vx.ab} = ${fmtVar(vx,q.rx)} · ${vy.ab} = ${fmtVar(vy,q.ry)}`);
+  let txt;
+  if(!q.n) txt='Nenhum ponto tem os dois indicadores no recorte.';
+  else if(!q.melhor) txt=`<b>${q.semDir.join(' e ')}</b> não ${q.semDir.length>1?'têm':'tem'} um lado bom (mais não é melhor nem pior), então os quadrantes só descrevem a posição. Escolha indicadores com lado bom — custo, desvio, aderência, km/L — para ver onde é melhor estar.`;
+  else{
+    const onde=`Melhor estar em <b>${q.rot[q.melhor]}</b> (${vx.dir==='up'?'mais':'menos'} ${vx.ab} e ${vy.dir==='up'?'mais':'menos'} ${vy.ab}); pior é <b>${q.rot[q.pior]}</b>.`;
+    if(GRAO==='uni'){ const p=minhas[0]; const c=p?CorrQuad.classe(q,p.q):'';
+      txt=(p?`Sua unidade (<b>${esc(nomeUni(UNI))}</b>) está em <b>${q.rot[p.q]}</b> — ${c==='melhor'?'<b class="cg">o melhor quadrante</b>':c==='pior'?'<b class="cr">o pior quadrante</b>':'um quadrante misto: ganha num eixo e perde no outro'}. `:'Sua unidade não tem os dois indicadores neste recorte. ')+onde; }
+    else{ const nb=minhas.filter(p=>p.q===q.melhor).length, np=minhas.filter(p=>p.q===q.pior).length;
+      txt=(minhas.length?`Das suas <b>${minhas.length}</b> ${ROT_ENT[GRAO]}, <b class="cg">${nb}</b> estão no melhor quadrante e <b class="cr">${np}</b> no pior. `:`Nenhuma ${GRAO==='placa'?'placa':'motorista'} da sua unidade tem os dois indicadores. `)+onde; }
+    txt+=` <span class="mut">A referência é a ${QREF==='mediana'?'mediana':'média'} da rede no recorte: a posição é relativa às outras, não a uma meta.</span>`;
+  }
+  document.getElementById('quad-leitura').innerHTML=txt;
+  const lin=q.pts.slice().sort((a,b)=>(daUni(b)-daUni(a))||(q.ordem.indexOf(a.q)-q.ordem.indexOf(b.q))||(b.escore-a.escore)).slice(0,60);
+  document.getElementById('t-quad').innerHTML=q.n?`<table class="dre"><colgroup><col style="width:34%"><col style="width:18%"><col style="width:18%"><col style="width:30%"></colgroup>
+    <thead><tr><th>${GRAO==='uni'?'Unidade':GRAO==='placa'?'Placa':'Motorista'}</th><th class="num">${esc(vx.ab)}</th><th class="num">${esc(vy.ab)}</th><th>Quadrante</th></tr></thead>
+    <tbody>${lin.map(p=>{ const c=CorrQuad.classe(q,p.q); return `<tr class="${daUni(p)?'minha':''}"><td class="nome">${esc(ROT(p))}${GRAO!=='uni'&&p.cod?` <span class="mut">${esc(p.cod)}</span>`:''}</td><td class="num mono">${fmtVar(vx,p.x)}</td><td class="num mono">${fmtVar(vy,p.y)}</td><td><span class="qd ${c}">${esc(q.rot[p.q])}</span></td></tr>`; }).join('')}</tbody></table>${q.n>60?`<div class="mut" style="padding:6px 0">Mostrando 60 de ${q.n}.</div>`:''}`:'';
+}
+['sel-qx','sel-qy'].forEach(id=>document.getElementById(id).addEventListener('change',renderQuadrante));
+document.querySelectorAll('#dims-qref .dimb').forEach(b=>b.addEventListener('click',()=>{ QREF=b.dataset.ref; document.querySelectorAll('#dims-qref .dimb').forEach(x=>x.classList.toggle('on',x===b)); renderQuadrante(); }));
 
 /* ── render geral ── */
 const ROT_GRAO={uni:'unidade × mês',placa:'placa × mês',mot:'motorista × mês'};
 function render(){
   preencheSelects(); renderPerguntas();
-  if(VW!=='resumo'){ renderDispersao(); renderRegressao(); renderDefasagem(); }
+  if(VW!=='resumo'){ renderDispersao(); renderQuadrante(); renderRegressao(); renderDefasagem(); }
   const vs=getSel('ms-vig'), n=recorte('uni').length;
   set('titSub',`${nomeUni(UNI)} contra a rede · ${br(n)} unidade-mês no recorte · ${vs.length?vs.length+' vigência(s)':'todas as vigências'} · tela carregada ${fmtDT(new Date())}`);
 }
@@ -876,7 +957,7 @@ async function initApp(){
   ADMIN=!!(prof&&prof.is_admin);
   PERFIL_UNIS=String((prof&&prof.unidade)||'').toUpperCase().split(',').map(s=>s.trim()).filter(Boolean);
   if(!ADMIN&&!PERFIL_UNIS.length){ gate('Sem unidade no perfil','Este painel mostra a sua unidade contra a rede, e o seu acesso ainda não tem unidade. Peça ao administrador para marcar a unidade em <b>Gerenciar Acessos</b>.'); return; }
-  set('titSub','Lendo as fontes… (DRE, Dispersão, Frota de Elite, FCA, disponibilidade, contratos)');
+  set('titSub','Lendo as fontes… (DRE, Dispersão, Frota de Elite, disponibilidade, contratos)');
   await carregar();
   if(!FATO.uni.length){ gate('Nenhuma fonte respondeu',`Nenhuma das ${FONTES.length} fontes devolveu linhas. ${esc(FONTES.map(f=>f.nome+': '+(f.msg||f.estado)).join(' · '))}`); return; }
   renderAviso(); montaUnidade(); montaVigs(); render();
@@ -884,7 +965,7 @@ async function initApp(){
 async function recarregar(){ set('titSub','Recarregando…'); try{ await carregar(); renderAviso(); montaUnidade(); montaVigs(); render(); }catch(e){ set('titSub','Erro ao recarregar: '+((e&&e.message)||e)); } }
 
 /* ── navegação ── */
-const TIT={resumo:'Resumo Gerencial',dispersao:'Dois indicadores',regressao:'O que explica',defasagem:'O que vem antes'};
+const TIT={resumo:'Resumo Gerencial',dispersao:'Dois indicadores',quadrante:'Quadrantes',regressao:'O que explica',defasagem:'O que vem antes'};
 let VW='resumo';
 function setVw(v){
   VW=v;
@@ -892,7 +973,7 @@ function setVw(v){
   document.querySelectorAll('.vw').forEach(x=>x.classList.toggle('on',x.id==='vw-'+v));
   set('tit',TIT[v]||'');
   document.getElementById('dims-grao').style.display=v==='resumo'?'none':'';
-  if(FATO.uni.length) setTimeout(()=>{ if(v==='resumo') renderPerguntas(); if(v==='dispersao') renderDispersao(); if(v==='regressao') renderRegressao(); if(v==='defasagem') renderDefasagem(); },30);
+  if(FATO.uni.length) setTimeout(()=>{ if(v==='resumo') renderPerguntas(); if(v==='dispersao') renderDispersao(); if(v==='regressao') renderRegressao(); if(v==='defasagem') renderDefasagem(); if(v==='quadrante') renderQuadrante(); },30);
 }
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
 
@@ -935,6 +1016,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609240400"></script>
+<script src="../assets/build-check.js?v=202609240500"></script>
 </body>
 </html>
