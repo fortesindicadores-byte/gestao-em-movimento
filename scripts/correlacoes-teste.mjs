@@ -89,6 +89,7 @@ const GEROT_RECS = FATO.flatMap(f => [
   { field: 'prev', unit: GEROT_UNI[f.u], vig: f.v, real: f.prev },
   { field: 'mttr', unit: GEROT_UNI[f.u], vig: f.v, real: f.mttr },
   { field: 'sla', unit: GEROT_UNI[f.u], vig: f.v, real: f.ruido },
+  { field: 'comb', unit: GEROT_UNI[f.u], vig: f.v, real: 2.6 - f.dcomb * 2 + (rnd() - 0.5) * 0.05 },   // km/L: cai quando o combustível estoura
   { field: 'pneuAmp', unit: GEROT_UNI[f.u], vig: f.v, real: 3, snapshot: true },      // amplitude: fica de fora (só a última vigência)
 ]).concat(VIGS.slice(0, 3).map(v => ({ field: 'blitz', unit: 'CDD PELOTAS', vig: v, real: 90 })));   // 3 pontos: abaixo do mínimo
 const FIL2COD = Object.fromEntries(Object.entries(GEROT_UNI).map(([c, n]) => [n, c]));
@@ -107,10 +108,10 @@ const T = {
     return { competencia: `${VIGS[Math.floor(i / 10) % 8]}-01`, chave: 'gt:' + (i % 10), motorista: 'M' + (i % 10), unidade: 'EMP PIRAI', km, dias: 20, rpm_pontos: nota, idle_pontos: 50, acel_pontos: 60, vel_pontos: 70, pontuacao: nota, viagens: 30, vel_excessos: 2, litros: km / kml, km_litros: km }; }),
 };
 
-const SHIM_SB = (admin, erroEm) => `window.supabase={createClient:()=>({
+const SHIM_SB = (admin, erroEm, unidade) => `window.supabase={createClient:()=>({
   auth:{getSession:async()=>({data:{session:{user:{id:'u1',email:'r@x.com',user_metadata:{name:'Renan Teste'}}}}})},
   from:(tabela)=>{const T=${JSON.stringify(T)};const ERRO=${JSON.stringify(erroEm || [])};let rows=(T[tabela]||[]).slice();let single=false;
-    const q={select(){return q;},order(){return q;},eq(c,v){if(tabela==='fca_profiles')rows=[{is_admin:${admin}}];else rows=rows.filter(r=>r[c]===v);return q;},in(){return q;},
+    const q={select(){return q;},order(){return q;},eq(c,v){if(tabela==='fca_profiles')rows=[{is_admin:${admin},unidade:${JSON.stringify(unidade || null)}}];else rows=rows.filter(r=>r[c]===v);return q;},in(){return q;},
       maybeSingle:async()=>({data:rows[0]||null,error:null}),
       range:async(a,b)=>ERRO.includes(tabela)?{data:null,error:{message:'relation "'+tabela+'" does not exist'}}:{data:rows.slice(a,b+1),error:null},
       then(res,rej){return (ERRO.includes(tabela)?Promise.resolve({data:null,error:{message:'relation does not exist'}}):Promise.resolve({data:rows,error:null})).then(res,rej);}};
@@ -122,14 +123,14 @@ const REAL_DL = CDN && fs.existsSync(path.join(CDN, 'chartjs-plugin-datalabels.j
 console.log(REAL_CHART ? 'Chart.js REAL do CDN_DIR' : 'Chart.js dublado (defina CDN_DIR para usar o real)');
 
 const nav = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium' });
-async function abre({ admin = true, erroEm = [], grao = 'uni' } = {}) {
+async function abre({ admin = true, erroEm = [], grao = 'uni', pagina = 'correlacoes', unidade = null } = {}) {
   const ctx = await nav.newContext({ viewport: { width: 1600, height: 900 } });
   await ctx.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await ctx.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
   await ctx.route('**/assets/gviz-cache.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
   await ctx.route('**/assets/gerot-base.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: STUB_GEROT }));
   await ctx.route('**/cdn.jsdelivr.net/**', r => { const u = r.request().url();
-    const body = u.includes('supabase') ? SHIM_SB(admin, erroEm)
+    const body = u.includes('supabase') ? SHIM_SB(admin, erroEm, unidade)
       : u.includes('datalabels') ? (REAL_DL || 'window.ChartDataLabels={id:"datalabels"};')
       : u.includes('chart') ? (REAL_CHART || SHIM_CHART)
       : u.includes('html2canvas') ? 'window.html2canvas=async()=>document.createElement("canvas");'
@@ -141,9 +142,9 @@ async function abre({ admin = true, erroEm = [], grao = 'uni' } = {}) {
   const pg = await ctx.newPage();
   const errs = []; pg.on('pageerror', e => errs.push(e.message));
   const logs = []; pg.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') logs.push(m.text().slice(0, 160)); });
-  await pg.addInitScript(g => { try { localStorage.setItem('corr_grao', g); localStorage.removeItem('corr_mini'); } catch (e) {} }, grao);
-  await pg.goto(BASE + '/correlacoes/index.html', { waitUntil: 'domcontentloaded' });
-  await pg.waitForFunction(() => { const s = document.getElementById('titSub'); return s && !/Carregando|Lendo/.test(s.textContent); }, { timeout: 30000 }).catch(() => {});
+  await pg.addInitScript(g => { try { localStorage.setItem('corr_grao', g); localStorage.removeItem('corr_mini'); localStorage.removeItem('corrop_mini'); } catch (e) {} }, grao);
+  await pg.goto(BASE + '/' + pagina + '/index.html', { waitUntil: 'domcontentloaded' });
+  await pg.waitForFunction(() => { const s = document.getElementById('titSub'); return s && !/Carregando|Lendo|Recarregando/.test(s.textContent); }, { timeout: 30000 }).catch(() => {});
   await pg.waitForTimeout(400);
   return { pg, ctx, errs, logs };
 }
@@ -287,6 +288,127 @@ const estado = pg => pg.evaluate(() => { const t = id => ((document.getElementBy
   const e = await estado(pg);
   af('gate "Apenas administradores" e nenhuma fonte lida', e.gate && /administradores/.test(e.gateTit) && e.fatoUni === 0, e.gateTit);
   await ctx.close();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   /correlacoes-operacao/ — a cópia amigável (Renan, 23/09/2026): perguntas
+   prontas + Explorar traduzido, a unidade do PERFIL contra a rede
+   ═══════════════════════════════════════════════════════════════════════════ */
+const estadoOp = pg => pg.evaluate(() => { const t = id => ((document.getElementById(id) || {}).textContent || '').trim(); const ch = id => { const c = Chart.getChart(id); return c ? { tipo: c.config.type, n: c.data.datasets.length, pts: c.data.datasets.map(d => d.data.length), cor: c.data.datasets.map(d => d.backgroundColor) } : null; }; return ({
+  sub: t('titSub'), tit: t('tit'), quemUni: t('quemUni'), gate: !!document.querySelector('.gate'), gateTit: (document.querySelector('.gate h2') || {}).textContent || '',
+  aviso: t('aviso-slot'), uni: typeof UNI !== 'undefined' ? UNI : null, admin: typeof ADMIN !== 'undefined' ? ADMIN : null,
+  msUniVisivel: !!document.getElementById('ms-uni') && document.getElementById('ms-uni').style.display !== 'none',
+  chips: [...document.querySelectorAll('#dims-uni .dimb')].map(b => [b.dataset.u, b.classList.contains('on')]),
+  grao: document.getElementById('dims-grao') ? document.getElementById('dims-grao').style.display : null,
+  nResumo: t('n-resumo'), cards: typeof PERGUNTAS !== 'undefined' ? PERGUNTAS.map(p => ({ id: p.id, num: t('pn-' + p.id), sub: t('ps-' + p.id), leit: t('pl-' + p.id), rod: t('pr-' + p.id), ch: ch('pg-' + p.id) })) : [],
+  fatoUni: typeof FATO !== 'undefined' ? FATO.uni.length : 0,
+}); }).catch(e => ({ erro: String(e) }));
+
+/* ══ 5 · perfil da unidade (PIR), tudo respondendo ══ */
+{
+  console.log('\n══ 5 · operação: perfil com unidade PIR');
+  const { pg, ctx, errs, logs } = await abre({ pagina: 'correlacoes-operacao', admin: false, unidade: 'PIR' });
+  const e = await estadoOp(pg);
+  af('sem erro de página', errs.length === 0, errs[0] || '');
+  af('sem gate: a unidade veio do perfil', !e.gate && e.uni === 'PIR' && e.admin === false, JSON.stringify([e.gate, e.uni, e.admin]));
+  af('sem seletor de unidade nem chips (uma unidade só); grão escondido no resumo', !e.msUniVisivel && e.chips.length === 0 && e.grao === 'none', JSON.stringify([e.msUniVisivel, e.chips, e.grao]));
+  af('subtítulo: "PIR contra a rede" e o recorte inteiro', /^PIR contra a rede/.test(e.sub) && /105 unidade-mês/.test(e.sub) && /todas as vigências/.test(e.sub), e.sub);
+  af('rodapé do usuário mostra a unidade', e.quemUni === 'PIR', e.quemUni);
+  af('6 perguntas, 6 com número', e.nResumo === '6/6' && e.cards.length === 6, e.nResumo + ' · ' + JSON.stringify(e.cards.map(c => [c.id, c.num])));
+  const c = Object.fromEntries(e.cards.map(x => [x.id, x]));
+  af('R$/km: número da unidade e a rede como referência (diferença abaixo de 0,5% vira "na média da rede")', /^R\$ \d+,\d{2}\/km$/.test(c.rskm.num) && /rede: R\$ \d+,\d{2}\/km/.test(c.rskm.sub) && /(acima|abaixo|na média) da rede/.test(c.rskm.sub) && !/0% (acima|abaixo)/.test(c.rskm.sub), c.rskm.num + ' · ' + c.rskm.sub);
+  af('…com barras unidade × rede por mês (2 séries × 8 meses, laranja + azul)', c.rskm.ch && c.rskm.ch.tipo === 'bar' && c.rskm.ch.n === 2 && c.rskm.ch.pts.join() === '8,8' && c.rskm.ch.cor[0] === '#F97316A6', JSON.stringify(c.rskm.ch));
+  af('Km/L: o valor de 0,1 km/L sai da regressão (R$/mês) e a leitura fala em "mesmo km rodado"', /^R\$ [\d.]+\/mês$/.test(c.kml.num) && /mesmo km rodado/.test(c.kml.leit), c.kml.num + ' · ' + c.kml.leit.slice(0, 80));
+  af('Dispersão × combustível: a relação plantada vira "ligação forte" e "difícil ser coincidência"', /ligação forte/.test(c.dispcomb.rod) && /difícil ser coincidência/.test(c.dispcomb.rod) && /104 pontos/.test(c.dispcomb.rod) && /estourar junto/.test(c.dispcomb.leit), c.dispcomb.rod);
+  af('…dispersão com a rede em cinza (96) e a unidade em laranja (8) + tendência', c.dispcomb.ch && c.dispcomb.ch.tipo === 'scatter' && c.dispcomb.ch.pts.join() === '96,8,2' && c.dispcomb.ch.cor[1] === '#F97316', JSON.stringify(c.dispcomb.ch));
+  af('Preventiva → manutenção: acha "1 mês depois" e chama de indício', /1 mês depois/.test(c.prevmanut.leit) && /Indício/.test(c.prevmanut.leit), c.prevmanut.leit.slice(0, 120));
+  af('MTTR × disponibilidade: "cair" com ligação forte', /tende a cair/.test(c.mttrdisp.leit) && /ligação forte/.test(c.mttrdisp.rod), c.mttrdisp.leit.slice(0, 100));
+  af('Idade × R$/km: usa o grão placa e conta as placas da unidade', /placa\(s\) suas/.test(c.idade.sub) && c.idade.ch && c.idade.ch.tipo === 'scatter', c.idade.sub);
+  const semJargao = e.cards.every(x => !/Pearson|β|p-valor|R²/.test(x.leit + x.rod + x.sub));
+  af('nenhum card fala em Pearson, β, p-valor ou R²', semJargao, '');
+  await shot(pg, 'corrop-resumo');
+
+  // ── Explorar: dois indicadores ──
+  await pg.click('.s-item[data-vw="dispersao"]'); await pg.waitForTimeout(150);
+  await pg.selectOption('#sel-x', 'dispersao'); await pg.selectOption('#sel-y', 'desvio_comb'); await pg.waitForTimeout(300);
+  const d = await pg.evaluate(() => ({ grao: document.getElementById('dims-grao').style.display, leitura: document.getElementById('disp-leitura').textContent, stats: document.getElementById('disp-stats').textContent, sub: document.getElementById('disp-sub').textContent,
+    linhas: document.querySelectorAll('#t-disp tbody tr').length, leg: document.getElementById('leg-uni').textContent,
+    ch: (() => { const c = Chart.getChart('ch-disp'); return c ? c.data.datasets.map(d => d.data.length) : null; })() }));
+  af('grão volta a aparecer fora do resumo', d.grao === '', d.grao);
+  af('leitura traduzida: "tende a subir", força, coincidência, "os pontos em laranja"', /tende a subir/.test(d.leitura) && /ligação forte/.test(d.leitura) && /coincidência/.test(d.leitura) && /laranja/.test(d.leitura) && !/Pearson/.test(d.leitura), d.leitura.slice(0, 120));
+  af('cards: Força · Sentido · Chance de coincidência · Efeito (sem r nem p)', /Força da ligação/.test(d.stats) && /Chance de coincidência/.test(d.stats) && /Efeito/.test(d.stats) && !/Pearson|Spearman/.test(d.stats), d.stats.slice(0, 100));
+  af('"104 pontos de todas as unidades · 8 da sua"; tabela com os 8 meses da unidade contra a tendência', /104 pontos/.test(d.sub) && /8 da sua/.test(d.sub) && d.linhas === 8 && d.leg === 'PIR', d.sub + ' · ' + d.linhas);
+  af('gráfico: rede 96 · unidade 8 · reta', d.ch && d.ch.join() === '96,8,2', JSON.stringify(d.ch));
+  await shot(pg, 'corrop-dispersao');
+
+  // ── O que explica ──
+  await pg.click('.s-item[data-vw="regressao"]'); await pg.waitForTimeout(150);
+  await pg.selectOption('#sel-ry', 'desvio_comb');
+  await pg.evaluate(() => { document.querySelectorAll('#rx-list input').forEach(i => { i.checked = ['dispersao', 'sla'].includes(i.value); }); document.getElementById('rx-list').dispatchEvent(new Event('change', { bubbles: true })); });
+  await pg.waitForTimeout(300);
+  const rg = await pg.evaluate(() => ({ linhas: [...document.querySelectorAll('#t-reg tbody tr')].map(tr => [...tr.children].map(td => td.textContent.trim())), cab: [...document.querySelectorAll('#t-reg thead th')].map(t => t.textContent.trim()), leitura: document.getElementById('reg-leitura').textContent, stats: document.getElementById('reg-stats').textContent }));
+  const lD = rg.linhas.find(l => /Dispersão/.test(l[0])), lS = rg.linhas.find(l => /SLA/.test(l[0]));
+  af('cabeçalho: Indicador · Peso · Efeito · Confiável?', rg.cab.join('|') === 'Indicador|Peso|Efeito|Confiável?', rg.cab.join('|'));
+  af('dispersão "sim", SLA "pode ser coincidência"', lD && lD[3] === 'sim' && lS && /coincidência/.test(lS[3]), JSON.stringify([lD, lS]));
+  af('leitura: "explicam X%" e "O que pesa de verdade: Dispersão"', /explicam/.test(rg.leitura) && /pesa de verdade: Dispersão/.test(rg.leitura) && /Explicar não é causar/.test(rg.leitura) && /Quanto explicam juntos/.test(rg.stats), rg.leitura.slice(0, 140));
+  await shot(pg, 'corrop-regressao');
+
+  // ── O que vem antes ──
+  await pg.click('.s-item[data-vw="defasagem"]'); await pg.waitForTimeout(150);
+  await pg.selectOption('#sel-lx', 'prev'); await pg.selectOption('#sel-ly', 'desvio_manut'); await pg.waitForTimeout(300);
+  const lg = await pg.evaluate(() => ({ leitura: document.getElementById('lag-leitura').textContent, linhas: [...document.querySelectorAll('#t-lag tbody tr')].map(tr => [...tr.children].map(td => td.textContent.trim())) }));
+  af('defasagem: "1 mês depois" e a linha k=1 marcada como ligação forte', /1 mês depois/.test(lg.leitura) && /indício/.test(lg.leitura) && lg.linhas[1] && /forte/.test(lg.linhas[1][1]), lg.leitura.slice(0, 120));
+  af('pontos caem a cada mês (104 → 91 → 78 → 65)', lg.linhas.map(l => l[2]).join() === '104,91,78,65', lg.linhas.map(l => l[2]).join());
+  await shot(pg, 'corrop-defasagem');
+
+  // ── filtro de vigência estreito: 3 meses → os cards ainda contam com a rede (39 pontos) ──
+  await pg.click('.s-item[data-vw="resumo"]'); await pg.waitForTimeout(100);
+  await pg.evaluate(() => { const v = document.getElementById('ms-vig'); v._sel = new Set(['2026-01', '2026-02', '2026-03']); v._render(''); render(); });
+  await pg.waitForTimeout(300);
+  const pf = await estadoOp(pg);
+  af('com 3 vigências a conta segue com todas as unidades (39 pontos)', /39 unidade-mês/.test(pf.sub) && /3 vigência/.test(pf.sub) && /39 pontos/.test(pf.cards.find(x => x.id === 'dispcomb').rod), pf.sub);
+  if (logs.length) console.log('   console:', logs.slice(0, 4).join(' | '));
+  await ctx.close();
+}
+
+/* ══ 6 · perfil com DUAS unidades → chips ══ */
+{
+  console.log('\n══ 6 · operação: perfil com duas unidades');
+  const { pg, ctx, errs } = await abre({ pagina: 'correlacoes-operacao', admin: false, unidade: 'PIR, CBA T1' });
+  const e = await estadoOp(pg);
+  af('sem erro de página', errs.length === 0, errs[0] || '');
+  af('dois chips, o primeiro ativo (PIR)', e.chips.length === 2 && e.chips[0][0] === 'PIR' && e.chips[0][1] === true && e.chips[1][0] === 'CBA T1' && !e.msUniVisivel, JSON.stringify(e.chips));
+  await pg.click('#dims-uni .dimb[data-u="CBA T1"]'); await pg.waitForTimeout(300);
+  const e2 = await estadoOp(pg);
+  af('clicar no chip troca a unidade de referência', e2.uni === 'CBA T1' && /^CBA T1 contra a rede/.test(e2.sub) && e2.chips[1][1] === true, e2.sub);
+  await ctx.close();
+}
+
+/* ══ 7 · admin escolhe a unidade no filtro ══ */
+{
+  console.log('\n══ 7 · operação: admin');
+  const { pg, ctx, errs } = await abre({ pagina: 'correlacoes-operacao', admin: true });
+  const e = await estadoOp(pg);
+  af('sem erro de página', errs.length === 0, errs[0] || '');
+  af('admin sem unidade no perfil NÃO cai no gate: seletor visível, PIR por padrão', !e.gate && e.msUniVisivel && e.uni === 'PIR' && /Admin · vendo PIR/.test(e.quemUni), JSON.stringify([e.gate, e.msUniVisivel, e.uni, e.quemUni]));
+  await pg.evaluate(() => { const w = document.getElementById('ms-uni'); w._sel = new Set(['GRL']); w._render(''); UNI = 'GRL'; render(); });
+  await pg.waitForTimeout(300);
+  const e2 = await estadoOp(pg);
+  af('troca para GRL: subtítulo e cards seguem', /^GRL contra a rede/.test(e2.sub) && e2.nResumo === '6/6', e2.sub);
+  await ctx.close();
+}
+
+/* ══ 8 · sem unidade no perfil → gate; fonte com erro → aviso ══ */
+{
+  console.log('\n══ 8 · operação: sem unidade · fonte com erro');
+  const { pg, ctx } = await abre({ pagina: 'correlacoes-operacao', admin: false, unidade: '' });
+  const e = await estadoOp(pg);
+  af('usuário sem unidade cai no gate "Sem unidade no perfil" sem ler fonte nenhuma', e.gate && /Sem unidade/.test(e.gateTit) && e.fatoUni === 0, e.gateTit);
+  await ctx.close();
+  const b = await abre({ pagina: 'correlacoes-operacao', admin: false, unidade: 'PIR', erroEm: ['disp_resumo'] });
+  const f = await estadoOp(b.pg);
+  af('disp_resumo com erro: aviso nomeia a fonte e as 6 perguntas seguem', /1 fonte\(s\) não respondeu/.test(f.aviso) && /Indisponibilidade/.test(f.aviso) && f.nResumo === '6/6' && b.errs.length === 0, f.aviso.slice(0, 100) + ' · ' + f.nResumo);
+  await b.ctx.close();
 }
 
 await nav.close(); srv.close();

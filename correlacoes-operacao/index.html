@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="build" content="202609240400">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Correlações da Operação · Gestão em Movimento</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="../assets/gviz-cache.js?v=202609050530"></script>
+<script src="../assets/gerot-base.js?v=202609232100"></script>
+<script src="../assets/estatistica.js?v=202609240100"></script>
+<script src="../assets/correlacoes-dados.js?v=202609240400"></script>
+<style>
+/* ============================================================
+   CORRELAÇÕES DA OPERAÇÃO — a cópia amigável do /correlacoes/ para as
+   unidades (Renan, 23/09/2026: "uma cópia mais amigável para a operação";
+   formato "os dois": perguntas prontas na entrada + Explorar traduzido;
+   recorte "só a própria unidade, com a rede como referência").
+
+   Mesma tabela-fato do painel admin (assets/correlacoes-dados.js) e o mesmo
+   motor (assets/estatistica.js). O que muda é a linguagem: nada de r, β ou
+   p na tela — "força da ligação", "efeito", "chance de coincidência".
+   A conta é sempre feita com TODAS as unidades (uma só não tem pontos
+   suficientes); a unidade do perfil aparece destacada contra a rede.
+   ============================================================ */
+:root{
+  /* fundo UNIFORME (mesma regra do hub): o degradê diagonal clareava para o
+     canto superior direito e deixava metade da tela mais clara que a outra */
+  --fundo:
+    radial-gradient(80% 60% at 90% 0%, rgba(255,244,232,.035) 0%, transparent 60%),
+    linear-gradient(45deg, #121214 0%, #121214 100%);
+  --luz:      inset 0 1px 0 rgba(255,255,255,.09);
+  --luz-card: inset 0 1px 0 rgba(255,255,255,.08);
+  --app:      rgba(150,185,255,.045);
+  --side:     rgba(30,30,30,.50);
+  --linha:    rgba(255,255,255,.06);
+  --card:     rgba(44,44,46,.78);
+  --brilho:   linear-gradient(180deg, rgba(255,255,255,.022) 0%, rgba(255,255,255,0) 46%);
+  --card-brd: rgba(255,255,255,.07);
+  --txt:      #EEF2FA;
+  --txt2:     #B2BCD2;
+  --txt3:     #676F83;
+  --txt4:     #4C505C;
+  --hover:    rgba(255,255,255,.06);
+  --azul:     #2E90E8;
+  --verde:    #3BB33B;
+  --vermelho: #FF5252;
+  --laranja:  #F97316;
+  --ambar:    #F4A100;
+  --cinza:    #5B657C;
+  --cabec:    #2B2B30;
+  --pop:      #26262B;   /* menus suspensos: OPACOS, nunca translúcidos */
+}
+body.claro{
+  --fundo:
+    radial-gradient(80% 60% at 90% 0%, rgba(255,255,255,.35) 0%, transparent 60%),
+    linear-gradient(45deg, #E1E2E5 0%, #E1E2E5 100%);
+  --luz:      inset 0 1px 0 rgba(255,255,255,.9);
+  --luz-card: inset 0 1px 0 rgba(255,255,255,1);
+  --app:      rgba(255,255,255,.20);
+  --side:     rgba(255,255,255,.50);
+  --linha:    rgba(15,23,42,.10);
+  --card:     rgba(255,255,255,.74);
+  --brilho:   linear-gradient(180deg, rgba(255,255,255,.6) 0%, rgba(255,255,255,0) 46%);
+  --card-brd: rgba(15,23,42,.10);
+  --txt:      #161D2B;
+  --txt2:     #4A5568;
+  --txt3:     #737D91;
+  --txt4:     #8B94A6;
+  --hover:    rgba(15,23,42,.05);
+  --azul:     #1B6FC4;
+  --verde:    #00B300;
+  --vermelho: #FF0000;
+  --ambar:    #E9A400;
+  --cinza:    #939CAF;
+  --cabec:    #DCDFE6;
+  --pop:      #FFFFFF;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+@supports not selector(::-webkit-scrollbar){
+  *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--txt3) 42%,transparent) transparent;}
+}
+::-webkit-scrollbar{width:11px;height:11px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--txt3) 42%,transparent);
+  border:3px solid transparent;background-clip:content-box;border-radius:9px;}
+::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--txt3) 72%,transparent);background-clip:content-box;}
+::-webkit-scrollbar-corner{background:transparent;}
+::-webkit-scrollbar-button{display:none;width:0;height:0;}
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");}
+.app{z-index:1;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;color:var(--txt);
+  background:var(--fundo);overflow:hidden;}
+
+.app{position:absolute;inset:16px;display:flex;border-radius:10px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.10);box-shadow:0 28px 70px rgba(0,0,0,.55), var(--luz);}
+.app::before{content:'';position:absolute;inset:0;background:var(--app);
+  z-index:0;}
+.side,.board{position:relative;z-index:1;}
+
+/* ── barra lateral ── */
+.side{width:264px;flex:0 0 264px;display:flex;flex-direction:column;
+  background:var(--side);border-right:1px solid var(--linha);padding:16px 10px 12px;
+  backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);
+  box-shadow:var(--luz), 8px 0 28px rgba(0,0,0,.25);overflow:auto;}
+.s-top{display:flex;align-items:center;gap:9px;padding:2px 8px 14px;}
+.s-top b{flex:1;font-size:13.5px;font-weight:600;}
+.s-mini{display:flex;align-items:center;justify-content:center;width:24px;height:24px;flex:0 0 24px;
+  background:transparent;border:0;border-radius:6px;color:var(--txt3);cursor:pointer;}
+.s-mini:hover{background:var(--hover);color:var(--txt);}
+.side.mini{width:64px;flex:0 0 64px;padding:16px 8px 12px;}
+.side.mini .s-top{justify-content:center;padding-bottom:12px;}
+.side.mini .s-top b,.side.mini .s-top>svg{display:none;}
+.side.mini .s-sec,.side.mini .s-item .n,.side.mini .s-user div{display:none;}
+.side.mini .s-item{font-size:0;justify-content:center;padding:9px 0;gap:0;}
+.side.mini .s-user{flex-wrap:wrap;gap:6px;justify-content:center;padding:12px 0 2px;}
+.side.mini .s-sair{margin:0;}
+.s-sec{display:flex;align-items:center;gap:6px;padding:14px 8px 8px;
+  font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:1.1px;}
+.s-item{display:flex;align-items:center;gap:9px;width:100%;padding:7px 8px;border:0;border-radius:7px;
+  background:transparent;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;text-align:left;cursor:pointer;}
+.s-item:hover{background:var(--hover);color:var(--txt);}
+.s-item.on{background:var(--hover);color:var(--txt);font-weight:600;}
+.s-item .n{margin-left:auto;font-size:11px;color:var(--txt3);font-weight:600;}
+.s-user{margin-top:auto;display:flex;align-items:center;gap:9px;padding:12px 8px 2px;border-top:1px solid var(--linha);}
+.s-user div{flex:1;min-width:0;}
+.s-user b{display:block;font-size:12px;font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.s-user i{display:block;font-size:9.5px;font-style:normal;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
+.s-user .av{flex:0 0 24px;}
+.av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:800;letter-spacing:.2px;color:#2A1405;background:#F97316;flex:0 0 24px;
+  box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.s-sair{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;
+  color:var(--txt3);text-decoration:none;flex:0 0 26px;}
+.s-sair:hover{background:var(--hover);color:var(--txt);}
+.dica{position:fixed;z-index:9000;transform:translateY(-50%);pointer-events:none;opacity:0;
+  background:var(--pop);color:var(--txt);border:1px solid var(--card-brd);border-radius:7px;
+  padding:5px 9px;font-size:11.5px;font-weight:600;white-space:nowrap;
+  box-shadow:0 8px 22px rgba(0,0,0,.45);transition:opacity .12s;}
+.dica.on{opacity:1;}
+
+/* ── quadro ── */
+.board{flex:1;min-width:0;display:flex;flex-direction:column;}
+.top{display:flex;align-items:center;gap:6px;padding:12px 24px 10px;flex-wrap:wrap;}
+.tit-wrap{flex:1;min-width:0;}
+.top h1{font-size:21px;font-weight:600;letter-spacing:-.3px;}
+.tit-sub{font-size:11px;color:var(--txt3);font-weight:600;margin-top:2px;letter-spacing:.2px;}
+.tool{display:flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:7px;
+  padding:6px 10px;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;}
+.tool:hover{background:var(--hover);color:var(--txt);}
+.tool.ico{padding:7px 9px;}
+.filtros{display:flex;align-items:center;gap:4px;min-width:0;}
+
+/* ── filtros multi-select (mesma mecânica do painel original, visual do app) ── */
+.ms-wrap{position:relative;}
+.ms-btn{display:flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:7px;
+  padding:6px 10px;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;}
+.ms-btn:hover{background:var(--hover);color:var(--txt);}
+.ms-wrap.ativo .ms-btn{background:var(--hover);color:var(--txt);}
+.ms-cnt{display:none;min-width:16px;height:16px;padding:0 5px;border-radius:9px;background:var(--laranja);
+  color:#2A1405;font-size:9.5px;font-weight:800;line-height:16px;text-align:center;}
+.ms-panel{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:60;min-width:236px;
+  background:var(--pop);border:1px solid var(--card-brd);border-radius:10px;padding:6px;
+  box-shadow:0 18px 44px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.35);}
+body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(15,23,42,.10);}
+.ms-panel.open{display:block;}
+.ms-search{display:flex;align-items:center;gap:7px;padding:6px 8px;margin-bottom:4px;border-bottom:1px solid var(--linha);}
+.ms-search input{flex:1;min-width:0;background:transparent;border:0;outline:0;font-family:inherit;font-size:12px;color:var(--txt);}
+.ms-list{max-height:262px;overflow:auto;}
+.ms-opt{display:flex;align-items:center;gap:9px;min-height:31px;padding:7px 9px;border-radius:7px;
+  color:var(--txt);font-size:12.5px;cursor:pointer;white-space:nowrap;}
+.ms-opt:hover{background:var(--hover);}
+.ms-opt input[type=checkbox]{accent-color:var(--azul);width:14px;height:14px;flex:0 0 14px;cursor:pointer;}
+.ms-opt.all-opt{font-weight:700;border-bottom:1px solid var(--linha);margin-bottom:4px;border-radius:0;}
+.ms-only{margin-left:auto;font-size:9px;font-weight:700;color:var(--laranja);padding:1px 7px;border-radius:4px;opacity:0;flex:0 0 auto;}
+.ms-opt:hover .ms-only{opacity:1;}
+.ms-only:hover{background:rgba(249,115,22,.2);}
+
+/* ── área de conteúdo ── */
+.cols{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:0 24px 24px;}
+.vw{display:none;flex:1;min-height:0;flex-direction:column;gap:12px;}
+.vw.on{display:flex;overflow:auto;}
+.vw.rola{overflow:auto;padding-bottom:6px;}
+.card{border:1px solid var(--card-brd);border-radius:12px;background:var(--side);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--luz-card);}
+
+/* hero + KPIs */
+/* igual ao painel original: Receita na ponta esquerda, EBITDA na ponta direita
+   com o conteúdo alinhado à direita (.hero-ebitda{margin-left:auto;text-align:right}) */
+.fin-hero{display:flex;align-items:flex-end;gap:20px;flex:0 0 auto;}
+.heb{margin-left:auto;text-align:right;}
+.heb .hdel{justify-content:flex-end;}
+.hlbl{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.9px;}
+.hval{font-size:clamp(26px,3.6vh,40px);font-weight:800;line-height:1;margin:4px 0 7px;color:var(--txt);}
+.hdel{display:flex;gap:18px;flex-wrap:wrap;}
+.hdel div{font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;}
+.hdel b{display:block;font-size:13px;font-weight:800;color:var(--txt);margin-top:2px;letter-spacing:0;text-transform:none;}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;flex:0 0 auto;}
+.kpi{padding:19px 16px;border:1px solid var(--card-brd);border-radius:11px;background:var(--side);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.kpi .kl{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;}
+.kpi .kv{font-size:25px;font-weight:800;color:var(--txt);margin-top:7px;line-height:1.1;}
+.kpi .km{font-size:10.5px;color:var(--txt3);margin-top:8px;font-weight:600;}
+.kpi .km b{font-weight:800;}
+
+/* gráficos */
+.gr2{flex:1 1 auto;min-height:190px;max-height:44vh;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.gcard{min-height:0;display:flex;flex-direction:column;padding:12px 16px 10px;position:relative;}
+.gtit{font-size:12px;font-weight:800;}
+.gsub{font-size:10px;color:var(--txt3);margin:2px 0 6px;}
+.gcv{flex:1;min-height:0;position:relative;}
+.gleg{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px;}
+.gleg span{display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;color:var(--txt3);letter-spacing:.5px;}
+.gleg i{width:14px;height:0;border-top:2px dashed currentColor;display:inline-block;}
+.gleg i.sq{width:9px;height:9px;border:0;border-radius:2px;background:currentColor;}
+
+/* botões de referência / dimensão */
+.rt{background:transparent;border:1px solid var(--card-brd);border-radius:20px;padding:3px 10px;cursor:pointer;
+  font-family:inherit;font-size:9.5px;font-weight:800;color:var(--txt2);letter-spacing:.6px;white-space:nowrap;}
+.rt:hover{background:var(--hover);color:var(--txt);}
+.rt .l{color:var(--txt3);font-weight:600;}
+.rt.abs{position:absolute;top:10px;right:12px;z-index:3;}
+.dims{display:flex;gap:4px;flex-wrap:wrap;}
+.dimb{background:transparent;border:1px solid var(--card-brd);border-radius:7px;padding:4px 10px;cursor:pointer;
+  font-family:inherit;font-size:10.5px;font-weight:700;color:var(--txt2);}
+.dimb:hover{background:var(--hover);color:var(--txt);}
+.dimb.on{background:var(--azul);border-color:transparent;color:#fff;}
+
+/* tabelas DRE */
+.tsec{flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 16px 12px;}
+.thead-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:2px;}
+.ttit{font-size:14px;font-weight:800;}
+.tsub{font-size:10px;color:var(--txt3);margin-bottom:8px;}
+.twrap{flex:1;min-height:0;overflow:auto;border:1px solid var(--card-brd);border-radius:10px;background:var(--side);}
+table.dre{width:100%;border-collapse:collapse;font-size:11px;}
+table.dre thead th{position:sticky;top:0;z-index:2;background:var(--cabec);text-align:left;
+  padding:10px 12px;font-size:9.5px;font-weight:700;color:var(--txt2);text-transform:uppercase;
+  letter-spacing:.7px;border-bottom:1px solid var(--card-brd);white-space:nowrap;}
+table.dre thead th .grp{display:block;font-size:8.5px;color:var(--txt3);letter-spacing:.6px;margin-bottom:1px;}
+table.dre td{padding:9px 12px;border-bottom:1px solid var(--linha);color:var(--txt2);white-space:nowrap;}
+table.dre td.conta{color:var(--txt);font-weight:600;text-align:left;}
+table.dre td.num{text-align:right;}
+table.dre tbody tr:hover{background:var(--hover);}
+/* totalizadores no tom do cabeçalho — vale para todas as tabelas do painel */
+table.dre tr.total td{font-weight:800;color:var(--txt);border-top:1px solid var(--card-brd);background:var(--cabec);}
+table.dre tr.ref-row td{color:var(--txt);background:color-mix(in srgb,var(--azul) 8%,transparent);}
+table.dre tr.ebitda-row td{color:var(--txt);font-weight:700;background:var(--cabec);}
+table.dre .sep-l{border-left:1px solid var(--card-brd);}
+/* precisa vencer o "table.dre td{color:...}", que tem especificidade maior */
+table.dre td.cr,.cr{color:var(--vermelho)!important;font-weight:700;}
+table.dre td.cg,.cg{color:var(--verde)!important;font-weight:700;}
+table.dre td.cr-t,.cr-t{color:var(--vermelho)!important;font-weight:700;}
+table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
+
+
+@media(max-width:860px){
+  body{overflow:auto;}
+  .app{position:static;inset:auto;min-height:100%;border-radius:0;flex-direction:column;box-shadow:none;border:0;}
+  .app::before{position:fixed;inset:0;}
+  .side{width:auto;flex:none;border-right:0;border-bottom:1px solid var(--linha);padding:8px 10px;overflow:visible;}
+  .side.mini{width:auto;flex:none;padding:8px 10px;}
+  .s-user,.s-top,.s-sec{display:none;}
+  /* as visões viram uma fileira que rola de lado */
+  .side{display:flex;flex-direction:row;gap:6px;overflow-x:auto;scrollbar-width:none;}
+  .side::-webkit-scrollbar{display:none;}
+  .side .s-item{width:auto;flex:0 0 auto;white-space:nowrap;font-size:12px;padding:7px 11px;
+    border:1px solid var(--card-brd);border-radius:20px;}
+  .side.mini .s-item{font-size:12px;padding:7px 11px;gap:9px;}
+  .side .s-item.on{background:var(--laranja);border-color:transparent;color:#2A1405;}
+  .top{padding:12px 14px 8px;gap:4px;}
+  .tit-wrap{flex:1 1 auto;min-width:0;}
+  .top h1{font-size:17px;}
+  /* filtros numa faixa própria que rola de lado, em vez de quebrar em 3 linhas */
+  .filtros{order:3;flex:1 1 100%;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+  .filtros::-webkit-scrollbar{display:none;}
+  .filtros .ms-wrap{flex:0 0 auto;}
+  .ms-btn{font-size:12px;padding:6px 9px;}
+  .ms-panel{right:auto;left:0;min-width:210px;}
+  .cols{overflow:visible;padding:0 14px 22px;}
+  .vw{display:none;}
+  .vw.on{display:block;}                      /* sem flex: cada bloco cresce sozinho */
+  .vw>*{margin-bottom:12px;}
+  .fin-hero{gap:14px;flex-direction:column;align-items:flex-start;}
+  .heb{margin-left:0;text-align:left;}
+  .heb .hdel{justify-content:flex-start;}
+  .kpis{grid-template-columns:repeat(2,1fr);}
+  .gr2,.wf-grid{display:block;height:auto;}
+  .wf-grid .gcard{height:280px;margin-bottom:12px;}
+  .gcard{height:300px;margin-bottom:12px;}
+  .tsec{display:block;padding:12px 12px 10px;}
+  .thead-row{margin-bottom:6px;}
+  .twrap{max-height:none;overflow-x:auto;}
+  .emb{height:76vh;}
+}
+
+/* ── Correlações da Operação: só o que é próprio desta tela ── */
+.gr2{flex:1 1 0;min-height:0;max-height:none;grid-template-rows:minmax(0,1fr);}
+.gr2.g21{grid-template-columns:1.25fr 1fr;}
+.sel{background:var(--pop);color:var(--txt);border:1px solid var(--card-brd);border-radius:7px;padding:6px 9px;
+  font-family:inherit;font-size:12px;font-weight:600;max-width:100%;cursor:pointer;}
+.sel:focus{outline:none;border-color:var(--laranja);}
+.selrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--txt3);font-weight:700;letter-spacing:.4px;text-transform:uppercase;}
+.selrow .sel{text-transform:none;letter-spacing:0;}
+.aviso{flex:0 0 auto;display:flex;align-items:center;gap:9px;padding:9px 14px;border-radius:10px;
+  font-size:11.5px;font-weight:600;color:var(--txt);
+  background:color-mix(in srgb,var(--ambar) 14%,transparent);
+  border:1px solid color-mix(in srgb,var(--ambar) 38%,transparent);}
+.nota{font-size:10.5px;color:var(--txt3);font-weight:600;line-height:1.5;}
+.nota b{color:var(--txt2);}
+.gate{max-width:560px;margin:60px auto;text-align:center;border-radius:14px;padding:36px 32px;
+  background:var(--brilho), var(--side);border:1px solid var(--card-brd);box-shadow:var(--luz-card);}
+.gate h2{font-size:18px;font-weight:800;margin-bottom:10px;}
+.gate p{font-size:13px;color:var(--txt2);line-height:1.6;}
+.mut{color:var(--txt3);}
+.lin2{display:block;font-size:9.5px;color:var(--txt3);font-weight:600;margin-top:2px;}
+.twrap{overflow-x:hidden;}
+.twrap table.dre{width:100%;table-layout:fixed;}
+table.dre td,table.dre th{white-space:normal;overflow-wrap:anywhere;}
+table.dre td.nome{color:var(--txt);font-weight:700;}
+table.dre td.mono{font-variant-numeric:tabular-nums;}
+/* as perguntas prontas: 3 colunas × 2 linhas, sem rolagem em desktop */
+.perg{flex:1 1 0;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:12px;}
+.pcard{min-height:0;display:flex;flex-direction:column;padding:13px 16px 11px;position:relative;}
+.ptit{font-size:13px;font-weight:800;line-height:1.3;}
+.pnum{display:flex;align-items:baseline;gap:10px;margin-top:6px;flex-wrap:wrap;}
+.pnum b{font-size:clamp(20px,2.6vh,27px);font-weight:800;color:var(--txt);line-height:1;}
+.pnum span{font-size:10.5px;font-weight:700;color:var(--txt3);}
+.pnum .vs{font-size:11px;font-weight:700;}
+.pcv{flex:1;min-height:70px;position:relative;margin:6px 0 4px;}
+.pleit{font-size:11px;color:var(--txt2);line-height:1.45;padding:7px 9px;border-radius:8px;
+  background:color-mix(in srgb,var(--azul) 8%,transparent);border:1px solid color-mix(in srgb,var(--azul) 22%,transparent);}
+.pleit b{color:var(--txt);}
+.prod{margin-top:6px;font-size:9.5px;font-weight:700;color:var(--txt3);letter-spacing:.3px;display:flex;gap:8px;flex-wrap:wrap;}
+.prod .tag{display:inline-block;padding:1px 7px;border-radius:20px;border:1px solid var(--card-brd);font-size:9px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;}
+.tag.forte{color:var(--laranja);border-color:color-mix(in srgb,var(--laranja) 45%,transparent);}
+.tag.moderada{color:var(--azul);border-color:color-mix(in srgb,var(--azul) 45%,transparent);}
+.tag.ok{color:var(--verde);border-color:color-mix(in srgb,var(--verde) 45%,transparent);}
+.tag.dup{color:var(--ambar);border-color:color-mix(in srgb,var(--ambar) 45%,transparent);}
+/* chips da unidade (perfil com mais de uma) */
+.uchips{display:flex;gap:4px;flex-wrap:wrap;}
+/* cards de leitura do Explorar */
+.resumo-stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 8px;}
+.resumo-stat>div{padding:8px 10px;border:1px solid var(--card-brd);border-radius:9px;background:var(--hover);}
+.resumo-stat .l{font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;}
+.resumo-stat .v{font-size:17px;font-weight:800;color:var(--txt);margin-top:2px;}
+.leitura{font-size:11.5px;color:var(--txt2);line-height:1.55;padding:8px 10px;border-radius:9px;
+  background:color-mix(in srgb,var(--azul) 8%,transparent);border:1px solid color-mix(in srgb,var(--azul) 25%,transparent);}
+.leitura b{color:var(--txt);}
+.xlist{display:flex;flex-wrap:wrap;gap:6px;}
+.xlist label{display:flex;align-items:center;gap:6px;padding:4px 9px;border:1px solid var(--card-brd);border-radius:20px;
+  font-size:10.5px;font-weight:700;color:var(--txt2);cursor:pointer;white-space:nowrap;}
+.xlist label:hover{background:var(--hover);}
+.xlist label.on{background:var(--hover);color:var(--txt);border-color:color-mix(in srgb,var(--laranja) 50%,transparent);}
+.xlist input{accent-color:var(--laranja);width:12px;height:12px;}
+.gcard .rot-x{text-align:center;font-size:9.5px;font-weight:700;color:var(--txt3);letter-spacing:.6px;text-transform:uppercase;margin-top:2px;}
+@media(max-width:860px){ .perg{display:block;} .pcard{height:330px;margin-bottom:12px;} .gr2.g21{display:block;} .gcard{height:320px;margin-bottom:12px;}
+  .resumo-stat{grid-template-columns:repeat(2,1fr);} .twrap{overflow-x:auto;} .twrap table.dre{table-layout:auto;min-width:640px;} table.dre thead th{position:static;} }
+#aviso-slot:not(:empty){margin-bottom:10px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="s-top">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--laranja)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="2"/><circle cx="11" cy="9" r="2"/><circle cx="18" cy="14" r="2"/><circle cx="19" cy="5" r="2"/><path d="M3 21 21 3"/></svg>
+      <b>Correlações</b>
+      <button class="s-mini" id="btMini" onclick="trocaMini()" title="Recolher menu">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>
+      </button>
+    </div>
+
+    <div class="s-sec">Visões</div>
+    <button class="s-item on" data-vw="resumo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Resumo Gerencial<span class="n" id="n-resumo"></span></button>
+    <div class="s-sec">Explorar</div>
+    <button class="s-item" data-vw="dispersao"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="16" r="1.6"/><circle cx="11" cy="10" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="18" cy="6" r="1.6"/><path d="M3 21h18M3 3v18"/></svg> Dois indicadores<span class="n" id="n-dispersao"></span></button>
+    <button class="s-item" data-vw="regressao"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 21h18M3 3v18"/><path d="M6 17 18 7"/></svg> O que explica<span class="n" id="n-regressao"></span></button>
+    <button class="s-item" data-vw="defasagem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> O que vem antes<span class="n" id="n-defasagem"></span></button>
+
+    <div class="s-sec">Atalhos</div>
+    <div id="pdf-slot"></div>
+    <button class="s-item" onclick="recarregar()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      Atualizar dados
+    </button>
+    <a class="s-item" href="../" style="text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+      Hub
+    </a>
+
+    <div class="s-user">
+      <span class="av" id="av">—</span>
+      <div><b id="quem">—</b><i id="quemUni">—</i></div>
+      <a class="s-sair" href="../" title="Sair para o hub">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </a>
+    </div>
+  </aside>
+
+  <main class="board">
+    <div class="top">
+      <div class="tit-wrap">
+        <h1 id="tit">Resumo Gerencial</h1>
+        <div class="tit-sub" id="titSub">Carregando…</div>
+      </div>
+      <div class="dims uchips" id="dims-uni"></div>
+      <div class="dims" id="dims-grao" style="display:none">
+        <button class="dimb on" data-grao="uni">Unidade × mês</button>
+        <button class="dimb" data-grao="placa">Placa × mês</button>
+        <button class="dimb" data-grao="mot">Motorista × mês</button>
+      </div>
+      <div class="filtros">
+        <div class="ms-wrap" id="ms-uni" style="display:none"><button class="ms-btn" onclick="toggleMs('ms-uni')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+          Unidade<span class="ms-cnt"></span></button>
+          <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
+        </div>
+        <div class="ms-wrap" id="ms-vig"><button class="ms-btn" onclick="toggleMs('ms-vig')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Vigência<span class="ms-cnt"></span></button>
+          <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
+        </div>
+      </div>
+      <button class="tool ico" id="btTema" onclick="trocaTema()" title="Claro / escuro"></button>
+    </div>
+
+    <div class="cols" id="cols">
+      <div id="aviso-slot"></div>
+
+      <!-- ══ 1 · RESUMO GERENCIAL — as perguntas prontas ══ -->
+      <section class="vw on" id="vw-resumo">
+        <div class="perg" id="perg"></div>
+      </section>
+
+      <!-- ══ 2 · DOIS INDICADORES (dispersão) ══ -->
+      <section class="vw" id="vw-dispersao">
+        <div class="card tsec" style="flex:0 0 auto;padding-bottom:12px">
+          <div class="selrow">
+            <span>Indicador 1</span><select class="sel" id="sel-x"></select>
+            <span>Indicador 2</span><select class="sel" id="sel-y"></select>
+            <span class="mut" id="disp-nota"></span>
+          </div>
+        </div>
+        <div class="gr2 g21">
+          <div class="card gcard">
+            <div class="gtit" id="disp-tit">—</div>
+            <div class="gsub" id="disp-sub">—</div>
+            <div class="gleg"><span><i class="sq" style="color:#F97316"></i><span id="leg-uni">Sua unidade</span></span><span><i class="sq" style="color:#8A93A6"></i>Demais unidades</span><span><i style="color:#2E90E8"></i>Tendência</span></div>
+            <div class="gcv"><canvas id="ch-disp"></canvas></div>
+            <div class="rot-x" id="disp-rotx"></div>
+          </div>
+          <div class="card tsec">
+            <div class="thead-row"><div><div class="ttit">Leitura</div><div class="tsub">conta feita com todas as unidades · a sua aparece em laranja</div></div></div>
+            <div class="resumo-stat" id="disp-stats"></div>
+            <div class="leitura" id="disp-leitura">—</div>
+            <div class="twrap" id="t-disp" style="margin-top:10px"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ 3 · O QUE EXPLICA (regressão) ══ -->
+      <section class="vw" id="vw-regressao">
+        <div class="card tsec" style="flex:0 0 auto;padding-bottom:12px;gap:8px">
+          <div class="selrow"><span>Explicar</span><select class="sel" id="sel-ry"></select><span class="mut" style="text-transform:none;letter-spacing:0;font-weight:600">a partir de até 5 indicadores:</span></div>
+          <div class="xlist" id="rx-list"></div>
+        </div>
+        <div class="gr2 g21">
+          <div class="card tsec">
+            <div class="thead-row"><div><div class="ttit">O que explica</div><div class="tsub" id="reg-sub">—</div></div></div>
+            <div class="resumo-stat" id="reg-stats"></div>
+            <div class="twrap" id="t-reg"></div>
+            <div class="leitura" id="reg-leitura" style="margin-top:10px">—</div>
+          </div>
+          <div class="card gcard">
+            <div class="gtit">Peso de cada indicador</div>
+            <div class="gsub">Quanto cada um mexe no resultado, na mesma régua</div>
+            <div class="gleg"><span><i class="sq" style="color:#F97316"></i>Faz subir</span><span><i class="sq" style="color:#2E90E8"></i>Faz descer</span></div>
+            <div class="gcv"><canvas id="ch-reg"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ 4 · O QUE VEM ANTES (defasagem) ══ -->
+      <section class="vw" id="vw-defasagem">
+        <div class="card tsec" style="flex:0 0 auto;padding-bottom:12px">
+          <div class="selrow">
+            <span>Possível causa</span><select class="sel" id="sel-lx"></select>
+            <span>Efeito</span><select class="sel" id="sel-ly"></select>
+            <span>Até</span>
+            <div class="dims" id="dims-lag"><button class="dimb on" data-k="3">3 meses</button><button class="dimb" data-k="6">6 meses</button></div>
+          </div>
+        </div>
+        <div class="gr2 g21">
+          <div class="card gcard">
+            <div class="gtit">Ligação entre a causa e o efeito de k meses depois</div>
+            <div class="gsub">Se a barra mais alta não é a do mesmo mês, a causa vem antes do efeito</div>
+            <div class="gleg"><span><i class="sq" style="color:#F97316"></i>Sobem juntos</span><span><i class="sq" style="color:#2E90E8"></i>Um sobe, o outro desce</span></div>
+            <div class="gcv"><canvas id="ch-lag"></canvas></div>
+          </div>
+          <div class="card tsec">
+            <div class="thead-row"><div><div class="ttit">Leitura</div><div class="tsub" id="lag-sub">—</div></div></div>
+            <div class="leitura" id="lag-leitura">—</div>
+            <div class="twrap" id="t-lag" style="margin-top:10px"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
+const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+let sb=null, ADMIN=false, PERFIL_UNIS=[], UNI=null;
+const E=window.Estat;
+const {VARS,varDe,fmtVar,vigKey,vigRot,vigIdx}=CorrDados;
+
+/* ── utilitários ── */
+const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const br=(n,d=0)=>(+n||0).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fin=v=>typeof v==='number'&&isFinite(v);
+const d2=n=>String(n).padStart(2,'0');
+function fmtDT(d){ d=new Date(d); return isNaN(d)?'—':`${d2(d.getDate())}/${d2(d.getMonth()+1)} ${d2(d.getHours())}:${d2(d.getMinutes())}`; }
+const brl=v=>'R$ '+br(v,0);
+/* ── a tradução: nada de r, β ou p na tela ── */
+function forcaTxt(r){ const a=Math.abs(r); if(!fin(r)) return 'sem leitura'; if(a>=0.7) return 'ligação forte'; if(a>=0.4) return 'ligação moderada'; if(a>=0.2) return 'ligação fraca'; return 'quase nenhuma ligação'; }
+function forcaCls(r){ const a=Math.abs(r); return !fin(r)?'':a>=0.7?'forte':a>=0.4?'moderada':''; }
+function efeitoTxt(b){ const a=Math.abs(b); if(!fin(b)) return 'sem leitura'; if(a>=0.7) return 'efeito grande'; if(a>=0.4) return 'efeito médio'; if(a>=0.2) return 'efeito pequeno'; return 'efeito muito pequeno'; }
+function coincTxt(p){ if(!fin(p)) return '—'; if(p<0.01) return 'muito difícil ser coincidência'; if(p<0.05) return 'dificilmente é coincidência'; return 'pode ser coincidência'; }
+function coincCls(p){ return fin(p)&&p<0.05?'ok':'dup'; }
+const sentido=r=>r>=0?'subir':'descer';
+const nomeUni=c=>c==null?'—':String(c);
+
+/* ═══════════════════════════════════════════════════════════════════
+   DADOS — a mesma tabela-fato do painel admin
+   ═══════════════════════════════════════════════════════════════════ */
+const FATO={uni:[],placa:[],mot:[]};
+let FONTES=[];
+let GRAO='uni';
+async function carregar(){ const r=await CorrDados.carregar(sb); FONTES=r.FONTES; FATO.uni=r.FATO.uni; FATO.placa=r.FATO.placa; FATO.mot=r.FATO.mot; }
+
+/* ── filtros ── */
+const getSel=id=>{const w=document.getElementById(id); return w&&w._sel&&w._sel.size?[...w._sel]:[];};
+function syncBadge(wrap){ const c=wrap.querySelector('.ms-cnt'); if(!c) return; const n=wrap._sel?wrap._sel.size:0; c.textContent=n; c.style.display=n?'':'none'; wrap.classList.toggle('ativo',n>0); }
+function buildMs(id,itens,onChange,rotulo){
+  const wrap=document.getElementById(id); if(!wrap) return;
+  if(!(wrap._sel instanceof Set)) wrap._sel=new Set();
+  wrap._itens=itens; wrap._rot=rotulo||(v=>v);
+  const list=wrap.querySelector('.ms-list'), srch=wrap.querySelector('.ms-search input');
+  const desenha=q=>{
+    const f=String(q||'').toLowerCase(), it=wrap._itens||[], sel=wrap._sel;
+    const vis=it.filter(v=>String(wrap._rot(v)).toLowerCase().includes(f)); const todos=sel.size===0;
+    list.innerHTML=(!f?`<label class="ms-opt all-opt"><input type="checkbox" class="ms-all" ${todos?'checked':''}> Todos (${it.length})</label>`:'')
+      +vis.map(v=>`<label class="ms-opt"><input type="checkbox" data-v="${esc(v)}" ${todos||sel.has(v)?'checked':''}> ${esc(wrap._rot(v))}<span class="ms-only" data-v="${esc(v)}">only</span></label>`).join('');
+    syncBadge(wrap);
+  };
+  wrap._render=desenha;
+  if(!wrap._wired){
+    wrap._wired=true;
+    list.addEventListener('change',e=>{ const sel=wrap._sel, box=e.target;
+      if(box.classList.contains('ms-all')) sel.clear();
+      else if(sel.size===0){ if(!box.checked) (wrap._itens||[]).forEach(v=>{ if(v!==box.dataset.v) sel.add(v); }); }
+      else { box.checked?sel.add(box.dataset.v):sel.delete(box.dataset.v); if((wrap._itens||[]).every(v=>sel.has(v))) sel.clear(); }
+      desenha(srch.value); onChange&&onChange(); });
+    list.addEventListener('click',e=>{ const o=e.target.closest('.ms-only'); if(!o) return; e.preventDefault(); e.stopPropagation(); wrap._sel.clear(); wrap._sel.add(o.dataset.v); desenha(srch.value); onChange&&onChange(); });
+    srch.addEventListener('input',()=>desenha(srch.value)); srch.addEventListener('click',e=>e.stopPropagation());
+  }
+  desenha('');
+}
+function toggleMs(id){ const w=document.getElementById(id); if(!w) return; const p=w.querySelector('.ms-panel'), ab=p.classList.contains('open');
+  document.querySelectorAll('.ms-panel.open').forEach(x=>x.classList.remove('open')); if(!ab){ p.classList.add('open'); const i=w.querySelector('.ms-search input'); if(i) setTimeout(()=>i.focus(),30); } }
+document.addEventListener('click',e=>{ if(!e.target.closest('.ms-wrap')) document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open')); });
+
+/* A UNIDADE vem do perfil (fca_profiles.unidade, lista por vírgula); com mais de
+   uma, chips no topo; o admin escolhe qualquer uma no filtro Unidade. */
+function montaUnidade(){
+  const todasU=[...new Set(FATO.uni.map(r=>r.cod).filter(Boolean))].sort();
+  const chips=document.getElementById('dims-uni'), ms=document.getElementById('ms-uni');
+  if(ADMIN){
+    chips.innerHTML=''; ms.style.display='';
+    buildMs('ms-uni',todasU,()=>{ const s=getSel('ms-uni'); UNI=s.length?s[0]:(todasU[0]||null); render(); });
+    if(!UNI) UNI=todasU.includes('PIR')?'PIR':(todasU[0]||null);
+    ms._sel=new Set(UNI?[UNI]:[]); ms._render('');
+  }else{
+    ms.style.display='none';
+    if(!UNI||!PERFIL_UNIS.includes(UNI)) UNI=PERFIL_UNIS[0]||null;
+    chips.innerHTML=PERFIL_UNIS.length>1?PERFIL_UNIS.map(u=>`<button class="dimb ${u===UNI?'on':''}" data-u="${esc(u)}">${esc(u)}</button>`).join(''):'';
+    chips.querySelectorAll('.dimb').forEach(b=>b.addEventListener('click',()=>{ UNI=b.dataset.u; chips.querySelectorAll('.dimb').forEach(x=>x.classList.toggle('on',x===b)); render(); }));
+  }
+  set('quemUni',ADMIN?'Admin · vendo '+nomeUni(UNI):(PERFIL_UNIS.join(' · ')||'sem unidade'));
+}
+function montaVigs(){
+  const vigs=[...new Set(FATO.uni.map(r=>r.vig))].sort().reverse();
+  const w=document.getElementById('ms-vig'); if(w._sel) w._sel=new Set([...w._sel].filter(v=>vigs.includes(v)));
+  buildMs('ms-vig',vigs,render,vigRot);
+}
+/* recorte: todas as unidades nas vigências escolhidas (a conta precisa da rede); a unidade do perfil vem marcada */
+function recorte(grao){
+  const vs=getSel('ms-vig');
+  return FATO[grao||GRAO].filter(r=>!vs.length||vs.includes(r.vig));
+}
+const daUni=r=>r.cod===UNI;
+const col=(rows,id)=>rows.map(r=>r.v[id]);
+function varsComDado(rows,grao){ return VARS[grao||GRAO].filter(v=>rows.reduce((n,r)=>n+(fin(r.v[v.id])?1:0),0)>=E.N_MIN); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   GRÁFICOS — barras no padrão do Painel KM; dispersão com a unidade em laranja
+   ═══════════════════════════════════════════════════════════════════ */
+const CH={};
+function estilo(){
+  const isLight=document.body.classList.contains('claro'), isMobile=window.innerWidth<768;
+  return { isLight, isMobile,
+    tick:{color:isLight?'#444444':'#94A3B8',font:{family:'Montserrat',size:isMobile?9:11}},
+    tickX:{color:isLight?'#444444':'#94A3B8',font:{family:'Montserrat',size:isMobile?9:13}},
+    tooltip:{backgroundColor:isLight?'#FFFFFF':'#1B1B1E',titleColor:'#F97316',bodyColor:isLight?'#161D2B':'#EEF2FA',borderColor:isLight?'#d7dce4':'#33343A',borderWidth:1,titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'}},
+    dlColor:isLight?'#333333':'#F1F5F9', grid:{color:isLight?'rgba(0,0,0,.07)':'rgba(255,255,255,.06)'}, cinza:isLight?'#8A93A6':'#5B657C',
+    plugDL:typeof ChartDataLabels!=='undefined'?[ChartDataLabels]:[] };
+}
+function mata(id){ if(CH[id]){ CH[id].destroy(); delete CH[id]; } }
+/* barras com sinal (laranja sobe · azul desce) */
+function barrasSinal(id,labels,vals,dica,fmt){
+  mata(id); const s=estilo(), cv=document.getElementById(id); if(!cv) return null;
+  const cor=vals.map(v=>v>=0?'#F97316':'#2E90E8'); const f=fmt||(v=>br(v,2));
+  CH[id]=new Chart(cv,{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:cor.map(c=>c+'A6'),borderColor:cor,borderWidth:1,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:24,bottom:2}},
+      plugins:{legend:{display:false},tooltip:{...s.tooltip,callbacks:{label:c=>dica?dica(c.dataIndex):f(c.raw)}},
+        datalabels:{anchor:v=>v.dataset.data[v.dataIndex]>=0?'end':'start',align:v=>v.dataset.data[v.dataIndex]>=0?'top':'bottom',color:s.dlColor,font:{family:'Montserrat',size:s.isMobile?8:12,weight:'700'},formatter:v=>f(v)}},
+      scales:{x:{ticks:{...s.tickX,maxRotation:0,autoSkip:false},grid:{display:false},border:{display:false}},y:{display:false,suggestedMin:Math.min(0,...vals)*1.15,suggestedMax:Math.max(0,...vals)*1.15}}},
+    plugins:s.plugDL});
+  return CH[id];
+}
+/* unidade × rede por mês (duas barras por vigência) */
+function barrasUniRede(id,vigs,uni,rede,fmt){
+  mata(id); const s=estilo(), cv=document.getElementById(id); if(!cv) return null;
+  CH[id]=new Chart(cv,{type:'bar',data:{labels:vigs.map(vigRot),datasets:[
+      {label:nomeUni(UNI),data:uni,backgroundColor:'#F97316A6',borderColor:'#F97316',borderWidth:1,borderRadius:3},
+      {label:'Rede',data:rede,backgroundColor:'#2E90E8A6',borderColor:'#2E90E8',borderWidth:1,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:18}},
+      plugins:{legend:{display:false},tooltip:{...s.tooltip,callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}},
+        datalabels:{display:vigs.length<=6,anchor:'end',align:'top',color:s.dlColor,font:{family:'Montserrat',size:s.isMobile?7:9,weight:'700'},formatter:v=>fin(v)?fmt(v):''}},
+      scales:{x:{ticks:{...s.tick,maxRotation:0},grid:{display:false},border:{display:false}},y:{display:false,beginAtZero:true}}},
+    plugins:s.plugDL});
+  return CH[id];
+}
+/* dispersão: rede em cinza, a unidade em laranja, tendência azul */
+function dispersaoUniRede(id,pts,xid,yid,vx,vy,fit,semEixos){
+  mata(id); const s=estilo(), cv=document.getElementById(id); if(!cv) return null;
+  const rede=pts.filter(r=>!daUni(r)), mine=pts.filter(daUni);
+  const ds=[
+    {type:'scatter',label:'rede',data:rede.map(r=>({x:r.v[xid],y:r.v[yid],r})),backgroundColor:s.cinza+'99',borderColor:s.cinza,borderWidth:0,pointRadius:s.isMobile?2.5:3.5,pointHoverRadius:6,order:2},
+    {type:'scatter',label:'uni',data:mine.map(r=>({x:r.v[xid],y:r.v[yid],r})),backgroundColor:'#F97316',borderColor:'#FFFFFF',borderWidth:1,pointRadius:s.isMobile?4:5.5,pointHoverRadius:8,order:1},
+  ];
+  if(fit&&fin(fit.b)&&pts.length>=3){ const xs=pts.map(r=>r.v[xid]); const mn=Math.min(...xs), mx=Math.max(...xs);
+    ds.push({type:'line',label:'reta',data:[{x:mn,y:fit.a+fit.b*mn},{x:mx,y:fit.a+fit.b*mx}],borderColor:'#2E90E8',borderWidth:2,borderDash:[5,3],pointRadius:0,order:3}); }
+  CH[id]=new Chart(cv,{type:'scatter',data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,animation:false,
+    plugins:{legend:{display:false},datalabels:{display:false},tooltip:{...s.tooltip,filter:i=>i.datasetIndex<2,callbacks:{
+      title:i=>{ const r=i[0].raw.r; return `${GRAO==='mot'&&r.nome?r.nome:r.ent} · ${vigRot(r.vig)}${r.cod&&r.cod!==r.ent?' · '+r.cod:''}`; },
+      label:i=>[`${vx.ab}: ${fmtVar(vx,i.raw.x)}`,`${vy.ab}: ${fmtVar(vy,i.raw.y)}`]}}},
+    scales:{x:{type:'linear',display:!semEixos,ticks:{...s.tick,callback:v=>fmtVar(vx,v)},grid:s.grid,border:{display:false}},
+      y:{type:'linear',display:!semEixos,ticks:{...s.tick,callback:v=>fmtVar(vy,v)},grid:s.grid,border:{display:false}}}}});
+  return CH[id];
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   AS PERGUNTAS PRONTAS
+   Cada uma tem: pergunta, como calcular, o número da unidade × rede,
+   um gráfico e a leitura em português. A conta usa TODAS as unidades
+   do recorte; a unidade do perfil entra destacada.
+   ═══════════════════════════════════════════════════════════════════ */
+const soma=(rows,id)=>rows.reduce((s,r)=>s+(fin(r.v[id])?r.v[id]:0),0);
+const media=(rows,id)=>{ const a=rows.map(r=>r.v[id]).filter(fin); return a.length?a.reduce((s,x)=>s+x,0)/a.length:NaN; };
+const razao=(rows,num,den)=>{ const ok=rows.filter(r=>fin(r.v[num])&&fin(r.v[den])&&r.v[den]>0); const d=soma(ok,den); return d>0?soma(ok,num)/d:NaN; };
+const pctDif=(a,b)=>fin(a)&&fin(b)&&b!==0?(a/b-1)*100:NaN;
+const acimaAbaixo=(a,b,bomBaixo)=>{ const d=pctDif(a,b); if(!fin(d)) return ''; if(Math.round(Math.abs(d))===0) return `<span class="vs">na média da rede</span>`; const dir=d>=0?'acima':'abaixo'; const cls=(d>=0)===!!bomBaixo?'cr':'cg'; return `<span class="vs ${cls}">${br(Math.abs(d),0)}% ${dir} da rede</span>`; };
+const rodape=(n,r,p)=>`<span class="tag ${forcaCls(r)}">${forcaTxt(r)}</span><span class="tag ${coincCls(p)}">${coincTxt(p)}</span><span>${br(n)} pontos, todas as unidades</span>`;
+
+const PERGUNTAS=[
+  { id:'rskm', pergunta:'Quanto custa cada km em combustível?',
+    calc(rows){
+      const mine=rows.filter(daUni), rede=rows.filter(r=>!daUni(r));
+      const a=razao(mine,'comb_real','km_real'), b=razao(rede,'comb_real','km_real');
+      const reta=E.reta(col(rows,'km_real'),col(rows,'comb_real')), c=E.pearson(col(rows,'km_real'),col(rows,'comb_real'));
+      const vigs=[...new Set(rows.map(r=>r.vig))].sort();
+      return {a,b,reta,c,vigs,
+        uniM:vigs.map(v=>razao(mine.filter(r=>r.vig===v),'comb_real','km_real')), redeM:vigs.map(v=>razao(rede.filter(r=>r.vig===v),'comb_real','km_real'))};
+    },
+    numero:d=>fin(d.a)?'R$ '+br(d.a,2)+'/km':'—', sub:d=>fin(d.b)?`rede: R$ ${br(d.b,2)}/km ${acimaAbaixo(d.a,d.b,true)}`:'sem referência da rede',
+    grafico:(id,d)=>barrasUniRede(id,d.vigs,d.uniM,d.redeM,v=>'R$ '+br(v,2)),
+    leitura(d){ if(!fin(d.a)) return 'Sua unidade não tem custo de combustível e km no recorte.';
+      return `Na sua unidade, cada km rodado custou <b>R$ ${br(d.a,2)}</b> de combustível${fin(d.b)?`; na rede, R$ ${br(d.b,2)}`:''}. `+(fin(d.reta.b)?`Olhando todas as unidades, cada km a mais custa <b>R$ ${br(d.reta.b,2)}</b> em combustível — ${forcaTxt(d.c.r)}.`:''); },
+    rod:d=>rodape(d.c.n,d.c.r,d.c.p) },
+  { id:'kml', pergunta:'Quanto vale ganhar 0,1 km/L?',
+    calc(rows){
+      const mine=rows.filter(daUni), rede=rows.filter(r=>!daUni(r));
+      const o=E.ols([col(rows,'km_real'),col(rows,'comb')],col(rows,'comb_real'));
+      const coef=o.ok?o.coef[1]:null;
+      const vigs=[...new Set(rows.map(r=>r.vig))].sort();
+      return {a:media(mine,'comb'),b:media(rede,'comb'),o,coef,vigs,uniM:vigs.map(v=>media(mine.filter(r=>r.vig===v),'comb')),redeM:vigs.map(v=>media(rede.filter(r=>r.vig===v),'comb'))};
+    },
+    numero:d=>d.coef&&fin(d.coef.b)?brl(Math.abs(d.coef.b)*0.1)+'/mês':'—', sub:d=>fin(d.a)?`sua unidade faz ${br(d.a,2)} km/L${fin(d.b)?` · rede ${br(d.b,2)} ${acimaAbaixo(d.a,d.b,false)}`:''}`:'sem km/L no recorte',
+    grafico:(id,d)=>barrasUniRede(id,d.vigs,d.uniM,d.redeM,v=>br(v,2)),
+    leitura(d){ if(!d.coef||!fin(d.coef.b)) return `Não deu para medir: ${esc(d.o.motivo||'faltam pontos com km, km/L e combustível')}.`;
+      const firme=d.coef.p<0.05;
+      return `Com o <b>mesmo km rodado</b>, cada 0,1 km/L a mais anda junto com <b>${brl(Math.abs(d.coef.b)*0.1)} a ${d.coef.b<0?'menos':'mais'} por mês</b> numa unidade (conta feita com todas as unidades). `+(firme?'É uma relação firme.':'Ainda é uma relação fraca nos dados: leia como indicação, não como certeza.'); },
+    rod:d=>d.coef?`<span class="tag ${forcaCls(d.coef.beta_pad)}">${efeitoTxt(d.coef.beta_pad)}</span><span class="tag ${coincCls(d.coef.p)}">${coincTxt(d.coef.p)}</span><span>${br(d.o.n)} pontos, todas as unidades</span>`:'' },
+  { id:'dispcomb', pergunta:'Rodar acima do remunerado estoura o combustível?',
+    calc(rows){ const pts=rows.filter(r=>fin(r.v.dispersao)&&fin(r.v.desvio_comb)); const c=E.pearson(col(pts,'dispersao'),col(pts,'desvio_comb')); const fit=E.reta(col(pts,'dispersao'),col(pts,'desvio_comb'));
+      const mine=pts.filter(daUni); return {pts,c,fit,a:media(mine,'dispersao'),ac:media(mine,'desvio_comb'),b:media(pts.filter(r=>!daUni(r)),'dispersao')}; },
+    numero:d=>fin(d.a)?(d.a>=0?'+':'')+br(d.a,1)+'% de km':'—', sub:d=>fin(d.ac)?`e ${d.ac>=0?'+':''}${br(d.ac,1)}% de combustível vs remunerado${fin(d.b)?` · rede ${d.b>=0?'+':''}${br(d.b,1)}% de km`:''}`:'sem dispersão no recorte',
+    grafico:(id,d)=>dispersaoUniRede(id,d.pts,'dispersao','desvio_comb',varDe('uni','dispersao'),varDe('uni','desvio_comb'),d.fit,false),
+    leitura(d){ if(!fin(d.c.r)) return 'Faltam pontos com dispersão de km e desvio de combustível.';
+      return `Quando a unidade roda <b>acima do km remunerado</b>, o combustível tende a ${d.c.r>=0?'<b>estourar junto</b>':'<b>não acompanhar</b>'} — ${forcaTxt(d.c.r)}. `+(fin(d.fit.b)?`Cada 1 ponto de dispersão anda com ${d.fit.b>=0?'+':''}${br(d.fit.b,2)} pontos de desvio no combustível.`:''); },
+    rod:d=>rodape(d.c.n,d.c.r,d.c.p) },
+  { id:'prevmanut', pergunta:'Preventiva atrasada vira manutenção no mês seguinte?',
+    calc(rows){ const serie=rows.map(r=>({ent:r.cod,t:vigIdx(r.vig),x:r.v.prev,y:r.v.desvio_manut})).filter(s=>s.t!=null); const lags=E.defasagens(serie,3);
+      const val=lags.filter(l=>l.n>=E.N_MIN&&fin(l.r)); const melhor=val.length?val.reduce((m,l)=>Math.abs(l.r)>Math.abs(m.r)?l:m):null;
+      const mine=rows.filter(daUni).sort((p,q)=>p.vig<q.vig?1:-1); const ult=mine.find(r=>fin(r.v.prev));
+      return {lags,melhor,prev:ult?ult.v.prev:NaN,prevVig:ult?ult.vig:null,b:media(rows.filter(r=>!daUni(r)),'prev')}; },
+    numero:d=>fin(d.prev)?br(d.prev,1)+'%':'—', sub:d=>fin(d.prev)?`preventivas em dia em ${vigRot(d.prevVig)}${fin(d.b)?` · rede ${br(d.b,1)}% ${acimaAbaixo(d.prev,d.b,false)}`:''}`:'sem aderência a preventivas no recorte',
+    grafico:(id,d)=>barrasSinal(id,d.lags.map(l=>l.k===0?'mesmo mês':`+${l.k} ${l.k===1?'mês':'meses'}`),d.lags.map(l=>fin(l.r)?+l.r.toFixed(2):0),i=>`ligação ${br(d.lags[i].r,2)} · ${d.lags[i].n} pontos`),
+    leitura(d){ if(!d.melhor) return 'Faltam meses seguidos com preventivas e manutenção para medir.';
+      const k0=d.lags[0]; if(d.melhor.k===0||Math.abs(d.melhor.r)-Math.abs(k0.r)<0.1) return `Preventiva e desvio de manutenção andam juntos <b>no mesmo mês</b> (${forcaTxt(k0.r)}), sem sinal claro de que uma vem antes da outra.`;
+      return `A aderência a preventivas de um mês se liga ao desvio de manutenção de <b>${d.melhor.k} ${d.melhor.k===1?'mês':'meses'} depois</b> (${forcaTxt(d.melhor.r)}, ${d.melhor.r<0?'quanto mais preventiva em dia, menos estouro':'quanto mais preventiva, mais estouro'}). Indício de causa, não prova.`; },
+    rod:d=>d.melhor?rodape(d.melhor.n,d.melhor.r,d.melhor.p):'' },
+  { id:'mttrdisp', pergunta:'Quando o conserto demora, a disponibilidade cai?',
+    calc(rows){ const pts=rows.filter(r=>fin(r.v.mttr)&&fin(r.v.disp)); const c=E.pearson(col(pts,'mttr'),col(pts,'disp')); const fit=E.reta(col(pts,'mttr'),col(pts,'disp'));
+      const mine=pts.filter(daUni); return {pts,c,fit,a:media(mine,'mttr'),ad:media(mine,'disp'),b:media(pts.filter(r=>!daUni(r)),'mttr')}; },
+    numero:d=>fin(d.a)?br(d.a,1)+' h de MTTR':'—', sub:d=>fin(d.ad)?`com ${br(d.ad,1)}% de disponibilidade${fin(d.b)?` · rede ${br(d.b,1)} h ${acimaAbaixo(d.a,d.b,true)}`:''}`:'sem MTTR no recorte',
+    grafico:(id,d)=>dispersaoUniRede(id,d.pts,'mttr','disp',varDe('uni','mttr'),varDe('uni','disp'),d.fit,false),
+    leitura(d){ if(!fin(d.c.r)) return 'Faltam pontos com MTTR e disponibilidade.';
+      return `Quando o tempo médio de conserto (MTTR) sobe, a disponibilidade tende a <b>${d.c.r<0?'cair':'subir'}</b> — ${forcaTxt(d.c.r)}. `+(fin(d.fit.b)?`Cada hora a mais de MTTR anda com ${br(Math.abs(d.fit.b),2)} pontos ${d.fit.b<0?'a menos':'a mais'} de disponibilidade.`:''); },
+    rod:d=>rodape(d.c.n,d.c.r,d.c.p) },
+  { id:'idade', pergunta:'Caminhão mais velho custa mais por km no contrato?',
+    calc(){ const rows=recorte('placa'); const pts=rows.filter(r=>fin(r.v.idade)&&fin(r.v.rskm)); const c=E.pearson(col(pts,'idade'),col(pts,'rskm')); const fit=E.reta(col(pts,'idade'),col(pts,'rskm'));
+      const mine=pts.filter(daUni); return {pts,c,fit,a:media(mine,'rskm'),ai:media(mine,'idade'),b:media(pts.filter(r=>!daUni(r)),'rskm'),placas:new Set(mine.map(r=>r.ent)).size}; },
+    numero:d=>fin(d.a)?'R$ '+br(d.a,2)+'/km':'—', sub:d=>fin(d.a)?`${d.placas} placa(s) suas, ${br(d.ai,1)} anos em média${fin(d.b)?` · rede R$ ${br(d.b,2)} ${acimaAbaixo(d.a,d.b,true)}`:''}`:'sua unidade não tem contrato variável no recorte',
+    grafico:(id,d)=>dispersaoUniRede(id,d.pts,'idade','rskm',varDe('placa','idade'),varDe('placa','rskm'),d.fit,false),
+    leitura(d){ if(!fin(d.c.r)) return 'Faltam placas com idade e custo de contrato.';
+      return `Olhando placa a placa (todas as unidades), o custo do contrato por km <b>${d.c.r>0?'sobe':'não sobe'} com a idade</b> — ${forcaTxt(d.c.r)}. `+(fin(d.fit.b)&&d.c.r>0.2?`Cada ano a mais anda com R$ ${br(d.fit.b,3)}/km a mais.`:'A idade sozinha explica pouco: modelo e contrato pesam mais.'); },
+    rod:d=>rodape(d.c.n,d.c.r,d.c.p) },
+];
+function renderPerguntas(){
+  const rows=recorte('uni');
+  const box=document.getElementById('perg');
+  box.innerHTML=PERGUNTAS.map(p=>`<div class="card pcard" id="pc-${p.id}">
+    <div class="ptit">${esc(p.pergunta)}</div>
+    <div class="pnum"><b id="pn-${p.id}">—</b><span id="ps-${p.id}">—</span></div>
+    <div class="pcv"><canvas id="pg-${p.id}"></canvas></div>
+    <div class="pleit" id="pl-${p.id}">—</div>
+    <div class="prod" id="pr-${p.id}"></div>
+  </div>`).join('');
+  let comDado=0;
+  PERGUNTAS.forEach(p=>{
+    let d; try{ d=p.calc(rows); }catch(e){ console.error(p.id,e); d=null; }
+    if(!d){ set('pl-'+p.id,'Não deu para calcular esta pergunta.'); return; }
+    set('pn-'+p.id,p.numero(d)); document.getElementById('ps-'+p.id).innerHTML=p.sub(d);
+    document.getElementById('pl-'+p.id).innerHTML=p.leitura(d);
+    document.getElementById('pr-'+p.id).innerHTML=p.rod(d);
+    try{ p.grafico('pg-'+p.id,d); }catch(e){ console.error('gráfico',p.id,e); }
+    if(p.numero(d)!=='—') comDado++;
+  });
+  set('n-resumo',`${comDado}/${PERGUNTAS.length}`);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EXPLORAR — as três visões do painel admin, traduzidas
+   ═══════════════════════════════════════════════════════════════════ */
+function preencheSelects(){
+  const vs=VARS[GRAO], rows=recorte(), comDado=varsComDado(rows), op=vs.map(v=>`<option value="${esc(v.id)}">${esc(v.rot)}</option>`).join('');
+  ['sel-x','sel-y','sel-ry','sel-lx','sel-ly'].forEach(id=>{ const s=document.getElementById(id); const cur=s.value; s.innerHTML=op; if(vs.some(v=>v.id===cur)) s.value=cur; });
+  const pad=(id,i)=>{ const s=document.getElementById(id); if(!comDado.some(v=>v.id===s.value)) s.value=(comDado[i]||vs[i]||vs[0]).id; };
+  pad('sel-x',0); pad('sel-y',1); pad('sel-ry',1); pad('sel-lx',0); pad('sel-ly',1);
+  const rx=document.getElementById('rx-list'); const marcados=new Set([...rx.querySelectorAll('input:checked')].map(i=>i.value));
+  rx.innerHTML=vs.map(v=>`<label class="${marcados.has(v.id)?'on':''}"><input type="checkbox" value="${esc(v.id)}" ${marcados.has(v.id)?'checked':''}> ${esc(v.ab)}</label>`).join('');
+}
+function renderDispersao(){
+  const rows=recorte(), xid=document.getElementById('sel-x').value, yid=document.getElementById('sel-y').value;
+  const vx=varDe(GRAO,xid), vy=varDe(GRAO,yid); if(!vx||!vy) return;
+  const pts=rows.filter(r=>fin(r.v[xid])&&fin(r.v[yid])), mine=pts.filter(daUni);
+  const c=E.pearson(col(pts,xid),col(pts,yid)), fit=E.reta(col(pts,xid),col(pts,yid));
+  set('disp-tit',`${vx.rot} × ${vy.rot}`); set('disp-sub',`${pts.length} pontos de todas as unidades · ${mine.length} da sua`); set('disp-rotx',vx.rot); set('leg-uni',nomeUni(UNI));
+  set('disp-nota',[vx.nota?`${vx.ab}: ${vx.nota}`:'',vy.nota?`${vy.ab}: ${vy.nota}`:''].filter(Boolean).join(' · '));
+  set('n-dispersao',br(pts.length));
+  dispersaoUniRede('ch-disp',pts,xid,yid,vx,vy,fit,false);
+  const poucos=pts.length<E.N_MIN;
+  document.getElementById('disp-stats').innerHTML=[['Força da ligação',fin(c.r)?forcaTxt(c.r):'—'],['Sentido',fin(c.r)?(c.r>=0?'sobem juntos':'um sobe, o outro desce'):'—'],['Chance de coincidência',fin(c.p)?(c.p<0.001?'menos de 0,1%':br(c.p*100,1)+'%'):'—'],
+    ['Quanto a tendência explica',fin(fit.r2)?br(fit.r2*100,0)+'%':'—'],['Efeito',fin(fit.b)?`${fit.b>=0?'+':''}${br(fit.b,Math.abs(fit.b)<1?3:2)} de ${vy.ab} por 1 de ${vx.ab}`:'—'],['Pontos',br(pts.length)]]
+    .map(([l,v])=>`<div><div class="l">${l}</div><div class="v" style="font-size:14px">${v}</div></div>`).join('');
+  let txt;
+  if(poucos) txt=`<b>Poucos pontos (${pts.length}).</b> Com menos de ${E.N_MIN} não dá para ler nada — amplie as vigências.`;
+  else if(!fin(c.r)) txt='Um dos indicadores não varia no recorte.';
+  else txt=`Quando <b>${vx.rot}</b> sobe, <b>${vy.rot}</b> tende a <b>${sentido(c.r)}</b> — ${forcaTxt(c.r)}, e ${coincTxt(c.p)}. Isso vale para o conjunto das unidades; os pontos em laranja mostram onde a sua fica nesse quadro. <span class="mut">Andar junto não é causa: as duas podem responder a uma terceira coisa.</span>`;
+  document.getElementById('disp-leitura').innerHTML=txt;
+  // a unidade, mês a mês, contra a tendência
+  const minhas=mine.slice().sort((p,q)=>p.vig<q.vig?1:-1).slice(0,8);
+  document.getElementById('t-disp').innerHTML=minhas.length&&fin(fit.b)?`<table class="dre"><colgroup><col style="width:34%"><col style="width:22%"><col style="width:22%"><col style="width:22%"></colgroup>
+    <thead><tr><th>Sua unidade</th><th class="num">${esc(vx.ab)}</th><th class="num">${esc(vy.ab)}</th><th class="num">Vs tendência</th></tr></thead>
+    <tbody>${minhas.map(r=>{ const e=r.v[yid]-(fit.a+fit.b*r.v[xid]); return `<tr><td class="nome">${GRAO==='uni'?vigRot(r.vig):esc(GRAO==='mot'&&r.nome?r.nome:r.ent)+' · '+vigRot(r.vig)}</td><td class="num mono">${fmtVar(vx,r.v[xid])}</td><td class="num mono">${fmtVar(vy,r.v[yid])}</td><td class="num mono ${e>=0?'cg':'cr'}">${e>=0?'+':''}${fmtVar(vy,e)}</td></tr>`; }).join('')}</tbody></table>`
+    :'<div class="mut" style="padding:8px 0">Sua unidade não tem pontos com os dois indicadores neste recorte.</div>';
+}
+function renderRegressao(){
+  const rows=recorte(), yid=document.getElementById('sel-ry').value, vy=varDe(GRAO,yid); if(!vy) return;
+  const xs=[...document.querySelectorAll('#rx-list input:checked')].map(i=>i.value).filter(id=>id!==yid).slice(0,5);
+  document.querySelectorAll('#rx-list label').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked));
+  const vxs=xs.map(id=>varDe(GRAO,id)).filter(Boolean);
+  const st=document.getElementById('reg-stats'), tb=document.getElementById('t-reg'), le=document.getElementById('reg-leitura');
+  mata('ch-reg');
+  if(!vxs.length){ st.innerHTML=''; tb.innerHTML=''; le.innerHTML='Escolha o que quer explicar e marque até cinco indicadores candidatos. A tela diz quanto cada um pesa e se o peso é confiável.'; set('reg-sub','—'); set('n-regressao',''); return; }
+  const o=E.ols(vxs.map(v=>col(rows,v.id)),col(rows,yid));
+  set('reg-sub',`${vy.rot} a partir de ${vxs.map(v=>v.ab).join(' + ')} · todas as unidades`);
+  if(!o.ok){ st.innerHTML=''; tb.innerHTML=''; le.innerHTML=`<b>Não deu para calcular:</b> ${esc(o.motivo)}.`; set('n-regressao',''); return; }
+  st.innerHTML=[['Quanto explicam juntos',br(Math.max(0,o.r2adj)*100,0)+'%'],['Pontos',br(o.n)],['Indicadores',br(vxs.length)]].map(([l,v])=>`<div><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+  tb.innerHTML=`<table class="dre"><colgroup><col style="width:38%"><col style="width:14%"><col style="width:24%"><col style="width:24%"></colgroup>
+    <thead><tr><th>Indicador</th><th class="num">Peso</th><th>Efeito</th><th>Confiável?</th></tr></thead><tbody>${vxs.map((v,i)=>{ const c=o.coef[i]; return `<tr><td class="nome">${esc(v.rot)}</td>
+    <td class="num mono ${c.beta_pad>=0?'cg':'cr'}">${c.beta_pad>=0?'+':''}${br(c.beta_pad,2)}</td><td>${c.b>=0?'+':''}${br(c.b,Math.abs(c.b)<1?4:2)} de ${esc(vy.ab)} por 1 de ${esc(v.ab)}</td><td>${c.p<0.05?'<span class="cg">sim</span>':'<span class="mut">pode ser coincidência</span>'}</td></tr>`; }).join('')}</tbody></table>`;
+  const sig=vxs.map((v,i)=>({v,c:o.coef[i]})).filter(x=>x.c.p<0.05).sort((a,b)=>Math.abs(b.c.beta_pad)-Math.abs(a.c.beta_pad));
+  le.innerHTML=(sig.length?`Juntos, esses indicadores explicam <b>${br(Math.max(0,o.r2adj)*100,0)}%</b> das diferenças de <b>${vy.rot}</b> entre as unidades e os meses. O que pesa de verdade: ${sig.map(x=>`<b>${x.v.rot}</b> (${x.c.beta_pad>=0?'faz subir':'faz descer'})`).join(', ')}. `
+    :`Os indicadores escolhidos explicam <b>${br(Math.max(0,o.r2adj)*100,0)}%</b> de ${vy.rot}, e nenhum deles é confiável com ${o.n} pontos. `)
+    +(o.n<vxs.length*10?`<span class="mut">Com ${o.n} pontos para ${vxs.length} indicadores a conta é frágil.</span> `:'')+'<span class="mut">Explicar não é causar.</span>';
+  barrasSinal('ch-reg',vxs.map(v=>v.ab),o.coef.map(c=>+c.beta_pad.toFixed(2)),i=>`peso ${br(o.coef[i].beta_pad,2)} · ${coincTxt(o.coef[i].p)}`);
+  set('n-regressao',br(o.n));
+}
+let KMAX=3;
+function renderDefasagem(){
+  const rows=recorte(), xid=document.getElementById('sel-lx').value, yid=document.getElementById('sel-ly').value, vx=varDe(GRAO,xid), vy=varDe(GRAO,yid); if(!vx||!vy) return;
+  const serie=rows.map(r=>({ent:r.ent,t:vigIdx(r.vig),x:r.v[xid],y:r.v[yid]})).filter(s=>s.t!=null);
+  const lags=E.defasagens(serie,KMAX), rot=lags.map(l=>l.k===0?'mesmo mês':`+${l.k} ${l.k===1?'mês':'meses'}`);
+  barrasSinal('ch-lag',rot,lags.map(l=>fin(l.r)?+l.r.toFixed(2):0),i=>`ligação ${fin(lags[i].r)?br(lags[i].r,2):'—'} · ${lags[i].n} pontos · ${coincTxt(lags[i].p)}`);
+  const validos=lags.filter(l=>l.n>=E.N_MIN&&fin(l.r)), melhor=validos.length?validos.reduce((m,l)=>Math.abs(l.r)>Math.abs(m.r)?l:m):null;
+  set('lag-sub',`${vx.rot} → ${vy.rot} · todas as unidades`); set('n-defasagem',melhor?`k=${melhor.k}`:'');
+  document.getElementById('t-lag').innerHTML=`<table class="dre"><colgroup><col style="width:34%"><col style="width:30%"><col style="width:16%"><col style="width:20%"></colgroup>
+    <thead><tr><th>Defasagem</th><th>Ligação</th><th class="num">Pontos</th><th>Coincidência?</th></tr></thead><tbody>${lags.map(l=>`<tr class="${melhor&&l.k===melhor.k?'ref-row':''}"><td class="nome">${rot[l.k]}</td><td class="${fin(l.r)?(l.r>=0?'cg':'cr'):''}">${fin(l.r)?forcaTxt(l.r):'—'}</td><td class="num mono ${l.n<E.N_MIN?'cr':''}">${l.n}</td><td>${fin(l.p)?coincTxt(l.p):'—'}</td></tr>`).join('')}</tbody></table>`;
+  let txt;
+  if(!melhor) txt=`<b>Poucos pontos.</b> Nenhuma defasagem chega a ${E.N_MIN} pares dentro da mesma unidade; amplie as vigências.`;
+  else if(melhor.k===0||Math.abs(melhor.r)-Math.abs(lags[0].r)<0.1) txt=`A ligação mais forte é <b>no mesmo mês</b>: <b>${vx.ab}</b> e <b>${vy.ab}</b> andam juntos, mas não dá para dizer quem vem primeiro.`;
+  else txt=`<b>${vx.rot}</b> se liga mais a <b>${vy.rot}</b> de <b>${melhor.k} ${melhor.k===1?'mês':'meses'} depois</b> (${forcaTxt(melhor.r)}, ${coincTxt(melhor.p)}) do que no mesmo mês. É o padrão de uma causa que antecede o efeito — indício, não prova.`;
+  document.getElementById('lag-leitura').innerHTML=txt;
+}
+['sel-x','sel-y'].forEach(id=>document.getElementById(id).addEventListener('change',renderDispersao));
+document.getElementById('sel-ry').addEventListener('change',renderRegressao);
+document.getElementById('rx-list').addEventListener('change',e=>{ if([...document.querySelectorAll('#rx-list input:checked')].length>5) e.target.checked=false; renderRegressao(); });
+['sel-lx','sel-ly'].forEach(id=>document.getElementById(id).addEventListener('change',renderDefasagem));
+document.querySelectorAll('#dims-lag .dimb').forEach(b=>b.addEventListener('click',()=>{ KMAX=+b.dataset.k; document.querySelectorAll('#dims-lag .dimb').forEach(x=>x.classList.toggle('on',x===b)); renderDefasagem(); }));
+document.querySelectorAll('#dims-grao .dimb').forEach(b=>b.addEventListener('click',()=>{ GRAO=b.dataset.grao; document.querySelectorAll('#dims-grao .dimb').forEach(x=>x.classList.toggle('on',x===b)); preencheSelects(); renderDispersao(); renderRegressao(); renderDefasagem(); }));
+
+/* ── render geral ── */
+const ROT_GRAO={uni:'unidade × mês',placa:'placa × mês',mot:'motorista × mês'};
+function render(){
+  preencheSelects(); renderPerguntas();
+  if(VW!=='resumo'){ renderDispersao(); renderRegressao(); renderDefasagem(); }
+  const vs=getSel('ms-vig'), n=recorte('uni').length;
+  set('titSub',`${nomeUni(UNI)} contra a rede · ${br(n)} unidade-mês no recorte · ${vs.length?vs.length+' vigência(s)':'todas as vigências'} · tela carregada ${fmtDT(new Date())}`);
+}
+function renderAviso(){
+  const slot=document.getElementById('aviso-slot'); const erros=FONTES.filter(f=>f.estado==='erro');
+  slot.innerHTML=erros.length?`<div class="aviso"><b>${erros.length} fonte(s) não respondeu(ram):</b> ${erros.map(f=>esc(f.nome.split(' (')[0])).join(' · ')} — as perguntas que dependem delas ficam sem número.</div>`:'';
+}
+
+/* ── gate + início ── */
+function gate(titulo,msg){ document.getElementById('cols').innerHTML=`<div class="gate"><h2>${esc(titulo)}</h2><p>${msg}</p></div>`; set('titSub','—'); }
+async function initApp(){
+  try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }
+  catch(e){ gate('Erro','Falha ao iniciar o Supabase.'); return; }
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){ gate('Login necessário','Entre pelo <b>hub</b> para acessar este painel.'); return; }
+  const nome=(session.user.user_metadata&&session.user.user_metadata.name)||session.user.email.split('@')[0];
+  set('quem',nome); set('av',String(nome).trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase());
+  const {data:prof}=await sb.from('fca_profiles').select('unidade,is_admin').eq('user_id',session.user.id).maybeSingle();
+  ADMIN=!!(prof&&prof.is_admin);
+  PERFIL_UNIS=String((prof&&prof.unidade)||'').toUpperCase().split(',').map(s=>s.trim()).filter(Boolean);
+  if(!ADMIN&&!PERFIL_UNIS.length){ gate('Sem unidade no perfil','Este painel mostra a sua unidade contra a rede, e o seu acesso ainda não tem unidade. Peça ao administrador para marcar a unidade em <b>Gerenciar Acessos</b>.'); return; }
+  set('titSub','Lendo as fontes… (DRE, Dispersão, Frota de Elite, FCA, disponibilidade, contratos)');
+  await carregar();
+  if(!FATO.uni.length){ gate('Nenhuma fonte respondeu',`Nenhuma das ${FONTES.length} fontes devolveu linhas. ${esc(FONTES.map(f=>f.nome+': '+(f.msg||f.estado)).join(' · '))}`); return; }
+  renderAviso(); montaUnidade(); montaVigs(); render();
+}
+async function recarregar(){ set('titSub','Recarregando…'); try{ await carregar(); renderAviso(); montaUnidade(); montaVigs(); render(); }catch(e){ set('titSub','Erro ao recarregar: '+((e&&e.message)||e)); } }
+
+/* ── navegação ── */
+const TIT={resumo:'Resumo Gerencial',dispersao:'Dois indicadores',regressao:'O que explica',defasagem:'O que vem antes'};
+let VW='resumo';
+function setVw(v){
+  VW=v;
+  document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===v));
+  document.querySelectorAll('.vw').forEach(x=>x.classList.toggle('on',x.id==='vw-'+v));
+  set('tit',TIT[v]||'');
+  document.getElementById('dims-grao').style.display=v==='resumo'?'none':'';
+  if(FATO.uni.length) setTimeout(()=>{ if(v==='resumo') renderPerguntas(); if(v==='dispersao') renderDispersao(); if(v==='regressao') renderRegressao(); if(v==='defasagem') renderDefasagem(); },30);
+}
+document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
+
+/* ── lateral recolhida + dicas ── */
+const DICA=document.createElement('div'); DICA.className='dica'; document.body.appendChild(DICA);
+const escondeDica=()=>DICA.classList.remove('on');
+function rotuloItem(b){ const c=b.cloneNode(true); c.querySelectorAll('svg').forEach(e=>e.remove()); return c.textContent.replace(/\s+/g,' ').trim()||b.getAttribute('title')||''; }
+document.querySelectorAll('.side .s-item, .side .s-sair').forEach(b=>{
+  b.addEventListener('mouseenter',()=>{ if(!document.querySelector('.side').classList.contains('mini')) return; const t=rotuloItem(b); if(!t) return;
+    DICA.textContent=t; const r=b.getBoundingClientRect(); DICA.style.top=Math.round(r.top+r.height/2)+'px'; DICA.style.left=Math.round(r.right+10)+'px'; DICA.classList.add('on'); });
+  b.addEventListener('mouseleave',escondeDica); b.addEventListener('click',escondeDica);
+});
+function trocaMini(){ escondeDica(); const l=document.querySelector('.side').classList.toggle('mini'); localStorage.setItem('corrop_mini',l?'1':'0');
+  const b=document.getElementById('btMini'); if(b) b.title=l?'Expandir menu':'Recolher menu'; setTimeout(()=>{ if(FATO.uni.length) setVw(VW); },260); }
+if(localStorage.getItem('corrop_mini')==='1'){ document.querySelector('.side').classList.add('mini'); document.getElementById('btMini').title='Expandir menu'; }
+
+/* ── tema (mesma chave do hub) ── */
+const _SOL=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2M12 20.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1.5 12h2M20.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>`;
+const _LUA=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+function aplicaTema(t){ document.body.classList.toggle('claro',t==='light'); localStorage.setItem('bi_theme',t);
+  const b=document.getElementById('btTema'); if(b) b.innerHTML=t==='light'?_LUA:_SOL; if(FATO.uni.length) render(); }
+function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark':'light'); }
+aplicaTema(localStorage.getItem('bi_theme')||'dark');
+let _rt; window.addEventListener('resize',()=>{ clearTimeout(_rt); _rt=setTimeout(()=>{ if(FATO.uni.length) setVw(VW); },400); });
+
+initApp();
+</script>
+<script src="../assets/mobile.js?v=202608220020"></script>
+<script src="../assets/ctrlk.js"></script>
+<script src="../assets/sortable-table.js?v=202609042200"></script>
+<script src="../assets/excel-export.js"></script>
+<script src="../assets/pdf-export.js"></script>
+<script>
+initPdfExport({
+  btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
+  title:'Correlações da Operação', subtitle:()=>document.getElementById('titSub').textContent,
+  fileBase:'correlacoes-operacao', main:()=>document.querySelector('.vw.on'),
+  views:()=>Object.keys(TIT).map(k=>({label:TIT[k], ativar:()=>setVw(k)})),
+  viewAtual:()=>VW, irPara:setVw,
+  isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
+});
+</script>
+<script src="../assets/build-check.js?v=202609240400"></script>
+</body>
+</html>
