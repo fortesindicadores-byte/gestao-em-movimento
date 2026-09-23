@@ -80,6 +80,12 @@ const gvizFrota = () => ({ status: 'ok', table: {
       lin('Seguro de Veículos e Equipamentos', 5000, 5000)];
   }).concat([{ c: [{ v: DATE('2026-08') }, { v: 0 }, { v: 0 }, { v: 'GOIÂNIA' }, { v: 'MOBILIZAÇÃO - GNA' }, { v: 'Pneus Novos' }, { v: 'x' }, { v: 2026 }, { v: -100 }, { v: -100 }, { v: -120 }] }]),
 } });
+// aba Receita Líquida: mesmos rótulos da Frota, receita POSITIVA; PIR ganha o dobro por km (para o quadrante ter um ponto conhecido)
+const gvizReceita = () => ({ status: 'ok', table: {
+  cols: ['VIGÊNCIA', 'Δ ORÇ (BRL)', 'Δ REM (BRL)', 'Unidade', 'NÍVEL 3', 'CONTA GERENCIAL', 'MÊS', 'ANO', 'ORÇADO', 'REMUNERADO', 'REALIZADO'].map(l => ({ label: l })),
+  rows: FATO.map(f => { const [cid, n3] = DRE_UNI[f.u]; const rec = f.kmReal * (f.u === 'PIR' ? 6.4 : 3.2);
+    return { c: [{ v: DATE(f.v) }, { v: 0 }, { v: 0 }, { v: cid }, { v: n3 }, { v: 'Receita Líquida' }, { v: 'x' }, { v: 2026 }, { v: rec }, { v: rec }, { v: rec }] }; }),
+} });
 const gvizDisp = () => { const rows = FATO.map(f => { const c = new Array(40).fill(null).map(() => ({ v: null }));
   c[0] = { v: DATE(f.v) }; c[13] = { v: f.u.split(' ')[0] }; c[14] = { v: DRE_UNI[f.u][1] }; c[22] = { v: 300 + f.ui * 10 }; c[31] = { v: f.kmRem }; c[32] = { v: f.kmReal }; return { c }; });
   return { status: 'ok', table: { cols: new Array(40).fill(0).map((_, i) => ({ label: 'c' + i })), rows } }; };
@@ -98,7 +104,8 @@ const STUB_GEROT = `window.GerotBase={load:async()=>${JSON.stringify(GEROT_RECS)
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago'];
 const T = {
   fca_profiles: [{ is_admin: true }],
-  fca: FATO.flatMap(f => Array.from({ length: 1 + (f.ui % 3) }, (_, i) => ({ unidade: f.u, vigencia: `${MESES[f.vi]}/26`, origem: i ? 'RPM' : 'Custos', status: i ? 'Concluída' : 'Em andamento', prazo: '2026-01-15' }))),
+  // a tabela fca existe no banco mas o painel NÃO a lê mais (Renan, 23/09/2026: "FCA não deve estar nisso") — fica aqui para provar que ninguém a pede
+  fca: [{ unidade: 'PIR', vigencia: 'jan/26', origem: 'Custos', status: 'Em andamento', prazo: '2026-01-15' }],
   disp_resumo: FATO.flatMap(f => [1, 15].map(d => ({ data: `${f.v}-${String(d).padStart(2, '0')}`, unidade: f.u, ativos: 100, indisponiveis: Math.round(f.mttr) }))),
   custo_vigencia_mv: Array.from({ length: 60 }, (_, i) => { const vig = VIGS[i % 8], placa = 'ABC' + String(1000 + (i % 15)); const km = 1000 + (i % 15) * 300 + (i % 8) * 50;
     return { vig_km: vig, placa, unidade: UNIS[i % 13], projeto: 'ROTA', tipo: i % 5 ? 'variavel' : 'fixo', taxa_km: 0.35, km_vig: km, custo_vig: km * 0.35, litros: km / 2.4, valor_diesel: km / 2.4 * 6.1, abastecimentos: 4, modelo: 'VW', valor_vw: i % 4 ? km * 0.36 : null, faixas_vw: 1, previa: false }; }),
@@ -137,7 +144,7 @@ async function abre({ admin = true, erroEm = [], grao = 'uni', pagina = 'correla
       : u.includes('jspdf') ? 'window.jspdf={jsPDF:function(){}};' : '/* nada */';
     r.fulfill({ status: 200, contentType: 'application/javascript', body }); });
   await ctx.route('**/docs.google.com/**', r => { const u = r.request().url(); const aba = decodeURIComponent((u.match(/sheet=([^&]+)/) || [])[1] || '');
-    const j = aba === 'Frota' ? gvizFrota() : aba === 'Dispersão de km' ? gvizDisp() : { status: 'error', errors: [{ message: 'aba desconhecida ' + aba }] };
+    const j = aba === 'Frota' ? gvizFrota() : aba === 'Receita Líquida' ? gvizReceita() : aba === 'Dispersão de km' ? gvizDisp() : { status: 'error', errors: [{ message: 'aba desconhecida ' + aba }] };
     r.fulfill({ status: 200, contentType: 'text/plain', body: '/*O_o*/\ngoogle.visualization.Query.setResponse(' + JSON.stringify(j) + ');' }); });
   const pg = await ctx.newPage();
   const errs = []; pg.on('pageerror', e => errs.push(e.message));
@@ -157,7 +164,8 @@ const estado = pg => pg.evaluate(() => { const t = id => ((document.getElementBy
   unis: ms('ms-uni'), vigs: ms('ms-vig'),
   fatoUni: FATO.uni.length, fatoPlaca: FATO.placa.length, fatoMot: FATO.mot.length,
   vars: MX ? MX.vars.map(v => v.id) : [],
-  cel: MX ? Object.fromEntries(['desvio_comb|dispersao', 'disp|mttr', 'blitz|sla', 'sla|desvio_comb', 'custo_real|km_real'].map(k => [k, MX.cel[k] ? { r: +MX.cel[k].r.toFixed(3), n: MX.cel[k].n, q: MX.cel[k].q } : null])) : {},
+  cel: MX ? Object.fromEntries(['desvio_comb|dispersao', 'disp|mttr', 'blitz|sla', 'sla|desvio_comb', 'custo_real|km_real', 'custo_real|comb_real', 'comb_rskm|km_real', 'desvio_comb|comb_real', 'receita|km_real'].map(k => [k, MX.cel[k] ? { r: +MX.cel[k].r.toFixed(3), n: MX.cel[k].n, q: MX.cel[k].q, triv: !!MX.cel[k].triv } : null])) : {},
+  triv: document.querySelectorAll('table.mx td.diag').length,
   achados: achados().slice(0, 8).map(a => [a.x.id, a.y.id, +a.r.toFixed(2), a.n]),
   fontes: FONTES.map(f => [f.nome.split(' (')[0], f.estado, f.linhas]),
   amostra: FATO.uni.filter(r => r.uni === 'CBA T1' && r.vig === '2026-03').map(r => r.v)[0] || null,
@@ -173,18 +181,26 @@ const estado = pg => pg.evaluate(() => { const t = id => ((document.getElementBy
   const e = await estado(pg);
   af('sem erro de página', errs.length === 0, errs[0] || '');
   af('sem gate (admin logado)', !e.gate, e.gateTit);
-  af('as 5 fontes do grão lidas', e.kFontes === '5/5', e.kFontes + ' · ' + JSON.stringify(e.fontes));
+  af('as 5 fontes do grão lidas (DRE Frota, DRE Receita, Dispersão, Gerot, disp_resumo) — FCA não é mais fonte', e.kFontes === '5/5' && !e.fontes.some(f => /FCA/.test(f[0])) && e.fontes.some(f => /Receita/.test(f[0]) && f[1] === 'ok'), e.kFontes + ' · ' + JSON.stringify(e.fontes));
+  af('FCA saiu das variáveis; custo_rem e km_rem também (rem × real não é correlação)', !e.vars.some(v => /^fca_/.test(v)) && !e.vars.includes('custo_rem') && !e.vars.includes('km_rem'), e.vars.join(','));
   af('13 unidades × 8 vigências = 104 pontos', e.fatoUni === 105 && e.hPontos === '105', `${e.fatoUni} (13×8 + a linha de GNA em ago)`);
   af('GNA entrou pelo DRE (GOIÂNIA + MOBILIZAÇÃO - GNA)', e.gna.length === 1 && e.gna[0][0] === '2026-08' && e.gna[0][1] === 120, JSON.stringify(e.gna));
   af('tier pelo Nível 3: CUIABÁ + EMPURRADA vira CBA T1', e.unis.includes('CBA T1') && e.unis.includes('CBA T1 WH') && e.unis.includes('CBA T2'), e.unis.join(','));
   const a = e.amostra || {};
   af('DRE: desvio de Combustíveis = real ÷ rem − 1', Math.abs(a.desvio_comb - FATO.find(f => f.u === 'CBA T1' && f.v === '2026-03').dcomb * 100) < 1e-6, String(a.desvio_comb));
   af('DRE: o custo vira POSITIVO (a aba guarda despesa negativa)', a.custo_real > 0 && a.comb_real > 0 && a.custo_rem > 0, JSON.stringify([a.custo_real, a.comb_real]));
+  af('Receita Líquida: receita e R$/km de receita (= receita ÷ km real)', a.receita > 0 && Math.abs(a.rec_km - 3.2) < 1e-9, JSON.stringify([a.receita, a.rec_km]));
   af('…e custo sobe com km (r > 0), não o contrário', e.cel['custo_real|km_real'] && e.cel['custo_real|km_real'].r > 0.9, JSON.stringify(e.cel['custo_real|km_real'] || e.achados));
   af('Dispersão: km rem/real e dispersão %', a.km_rem > 0 && a.km_real > 0 && Math.abs(a.dispersao - FATO.find(f => f.u === 'CBA T1' && f.v === '2026-03').disp * 100) < 1e-6, JSON.stringify([a.km_rem, a.km_real, a.dispersao]));
   af('R$/km de Combustíveis = comb_real ÷ km_real', Math.abs(a.comb_rskm - a.comb_real / a.km_real) < 1e-9, String(a.comb_rskm));
   af('Gerot: disp, prev, mttr entraram pelo FIL2COD; amplitude (snapshot) ficou fora', a.disp > 0 && a.prev > 0 && a.mttr > 0 && !('pneuAmp' in a), JSON.stringify([a.disp, a.prev, a.mttr]));
-  af('FCA: contagens por unidade × mês', a.fca_total === 3 && a.fca_custos === 1 && a.fca_rpm === 2 && a.fca_atras === 1 && Math.abs(a.fca_concl - 200 / 3) < 1e-6, JSON.stringify([a.fca_total, a.fca_custos, a.fca_rpm, a.fca_atras, a.fca_concl]));
+  af('nenhuma variável de FCA na linha', !Object.keys(a).some(k => /^fca_/.test(k)), Object.keys(a).filter(k => /^fca_/.test(k)).join(','));
+  // pares TRIVIAIS (mesma conta) ficam fora da matriz e dos achados
+  const T = e.cel;
+  af('custo total × Combustíveis (parte dele) é trivial: sem r, célula "—"', T['custo_real|comb_real'] && T['custo_real|comb_real'].triv && T['comb_rskm|km_real'].triv && T['desvio_comb|comb_real'].triv, JSON.stringify([T['custo_real|comb_real'], T['comb_rskm|km_real']]));
+  af('…e receita × km real, custo × km real NÃO são triviais (contas diferentes)', T['receita|km_real'] && !T['receita|km_real'].triv && T['receita|km_real'].r > 0.7 && !T['custo_real|km_real'].triv, JSON.stringify(T['receita|km_real']));
+  af('a matriz mostra "—" nas células triviais (dezenas delas)', e.triv > 20, String(e.triv));
+  af('nenhum par trivial entre os achados', !e.achados.some(x => (x[0] === 'custo_real' && x[1] === 'comb_real') || (x[0] === 'comb_real' && x[1] === 'custo_real') || x.includes('km_rem') || x.includes('custo_rem')), JSON.stringify(e.achados));
   af('disp_resumo: média do mês', a.disp_app > 90 && a.disp_app < 100 && a.indisp_med > 0, JSON.stringify([a.disp_app, a.indisp_med]));
   af('a relação plantada aparece: r(Δ Comb, dispersão) ≥ 0,9 com n = 104', e.cel['desvio_comb|dispersao'] && e.cel['desvio_comb|dispersao'].r >= 0.9 && e.cel['desvio_comb|dispersao'].n === 104, JSON.stringify(e.cel['desvio_comb|dispersao']));
   af('…e a negativa: r(disp, MTTR) ≤ −0,9', e.cel['disp|mttr'] && e.cel['disp|mttr'].r <= -0.9, JSON.stringify(e.cel['disp|mttr']));
@@ -236,8 +252,40 @@ const estado = pg => pg.evaluate(() => { const t = id => ((document.getElementBy
   af('o n cai a cada mês de defasagem (104 → 91 → 78 → 65)', lg.linhas.map(l => l[2]).join(',') === '104,91,78,65', lg.linhas.map(l => l[2]).join(','));
   await shot(pg, 'corr-defasagem');
 
+  // ── quadrantes: X = dispersão (menor é melhor) · Y = Km/L (maior é melhor) ──
+  await pg.click('.s-item[data-vw="quadrante"]'); await pg.waitForTimeout(150);
+  await pg.selectOption('#sel-qx', 'dispersao'); await pg.selectOption('#sel-qy', 'comb'); await pg.waitForTimeout(300);
+  const qd = await pg.evaluate(() => { const c = Chart.getChart('ch-quad'); const o = c && c.config.options.plugins.quad; return { vw: VW, tit: document.getElementById('quad-tit').textContent, leitura: document.getElementById('quad-leitura').textContent,
+    stats: [...document.querySelectorAll('#quad-stats>div')].map(d => [d.className, d.querySelector('.l').textContent, d.querySelector('.v').textContent]),
+    linhas: [...document.querySelectorAll('#t-quad tbody tr')].map(tr => [tr.children[0].textContent, tr.querySelector('.qd').className]),
+    ch: c ? { tipo: c.config.type, n: c.data.datasets.length, pts: c.data.datasets[0].data.length, melhor: o.melhor, pior: o.pior, rx: o.rx, ry: o.ry, rot: o.rot } : null,
+    pir: (() => { const e = CorrDados.porEntidade(recorte()).find(x => x.ent === 'PIR'); return e && { x: e.v.dispersao, y: e.v.comb, meses: e.meses }; })() }; });
+  af('visão Quadrantes abre com o gráfico: 13 pontos (um por unidade), scatter', qd.vw === 'quadrante' && qd.ch && qd.ch.tipo === 'scatter' && qd.ch.pts === 13, JSON.stringify(qd.ch && [qd.ch.tipo, qd.ch.pts]));
+  af('melhor = −Disp +Km/L (menos dispersão, mais km/L) · pior = +Disp −Km/L', qd.ch && qd.ch.melhor === 'mp' && qd.ch.pior === 'pm' && /− Disp km % · \+ Km\/L/.test(qd.ch.rot.mp), JSON.stringify(qd.ch && [qd.ch.melhor, qd.ch.pior, qd.ch.rot]));
+  af('4 cards na ordem melhor → mistos → pior, somando 13', qd.stats.length === 4 && qd.stats[0][0] === 'melhor' && qd.stats[3][0] === 'pior' && qd.stats.reduce((s, x) => s + (+x[2]), 0) === 13, JSON.stringify(qd.stats));
+  af('a leitura diz onde é melhor estar e quantas estão lá', /Melhor estar em/.test(qd.leitura) && /menos Disp km % e mais Km\/L/.test(qd.leitura) && /de 13 estão lá/.test(qd.leitura), qd.leitura.slice(0, 120));
+  const pirQ = qd.linhas.find(l => l[0] === 'PIR');
+  af('PIR: quadrante da tabela bate com a posição contra a referência', pirQ && qd.pir && pirQ[1].includes((qd.pir.x >= qd.ch.rx ? 'p' : 'm') === 'm' && (qd.pir.y >= qd.ch.ry ? 'p' : 'm') === 'p' ? 'melhor' : 'qd') && qd.pir.meses === 8, JSON.stringify([pirQ, qd.pir, qd.ch.rx, qd.ch.ry]));
+  // mediana como referência · variável sem direção
+  await pg.click('#dims-qref .dimb[data-ref="mediana"]'); await pg.waitForTimeout(200);
+  await pg.selectOption('#sel-qy', 'km_real'); await pg.waitForTimeout(300);
+  const qd2 = await pg.evaluate(() => { const c = Chart.getChart('ch-quad'); const o = c.config.options.plugins.quad; return { melhor: o.melhor, leitura: document.getElementById('quad-leitura').textContent, sub: document.getElementById('quad-sub').textContent, stats: [...document.querySelectorAll('#quad-stats>div')].map(d => d.className) }; });
+  af('variável sem direção (km real): nenhum quadrante é o melhor, e a leitura explica', qd2.melhor === null && /não tem direção definida/.test(qd2.leitura) && /Km Real/.test(qd2.leitura) && qd2.stats.every(c => c === ''), qd2.leitura.slice(0, 100));
+  af('referência trocada para a mediana', /mediana/.test(qd2.sub), qd2.sub);
+  await pg.selectOption('#sel-qy', 'comb'); await pg.waitForTimeout(200);
+  await shot(pg, 'corr-quadrante');
+
+  // ── regressão: X da mesma conta que Y fica desabilitado ──
+  await pg.click('.s-item[data-vw="regressao"]'); await pg.waitForTimeout(100);
+  await pg.selectOption('#sel-ry', 'custo_real'); await pg.waitForTimeout(200);
+  const rgx = await pg.evaluate(() => Object.fromEntries([...document.querySelectorAll('#rx-list input')].map(i => [i.value, i.disabled])));
+  af('Y = custo total: Combustíveis, R$/km e desvio do custo ficam desabilitados; km real e preventivas seguem', rgx.comb_real === true && rgx.rskm_real === true && rgx.desvio_custo === true && rgx.km_real === false && rgx.prev === false, JSON.stringify(rgx));
+  await pg.selectOption('#sel-ry', 'desvio_comb'); await pg.waitForTimeout(100);
+
   // ── filtro estreito: 1 unidade × 3 vigências → "Poucos pontos" ──
   await pg.click('.s-item[data-vw="dispersao"]'); await pg.waitForTimeout(100);
+  const padrao = await pg.evaluate(() => ({ x: document.getElementById('sel-x').value, y: document.getElementById('sel-y').value, qx: document.getElementById('sel-qx').value, qy: document.getElementById('sel-qy').value }));
+  af('o par padrão dos seletores nunca é trivial', !(await pg.evaluate(p => CorrDados.trivial(varDe(GRAO, p.x), varDe(GRAO, p.y)) || CorrDados.trivial(varDe(GRAO, p.qx), varDe(GRAO, p.qy)), padrao)), JSON.stringify(padrao));
   await pg.evaluate(() => { const w = document.getElementById('ms-uni'); w._sel = new Set(['PIR']); w._render(''); const v = document.getElementById('ms-vig'); v._sel = new Set(['2026-01', '2026-02', '2026-03']); v._render(''); render(); });
   await pg.waitForTimeout(300);
   const pf = await pg.evaluate(() => ({ leitura: document.getElementById('disp-leitura').textContent, sub: document.getElementById('titSub').textContent, pares: document.getElementById('h-pares').textContent }));
@@ -340,6 +388,17 @@ const estadoOp = pg => pg.evaluate(() => { const t = id => ((document.getElement
   af('"104 pontos de todas as unidades · 8 da sua"; tabela com os 8 meses da unidade contra a tendência', /104 pontos/.test(d.sub) && /8 da sua/.test(d.sub) && d.linhas === 8 && d.leg === 'PIR', d.sub + ' · ' + d.linhas);
   af('gráfico: rede 96 · unidade 8 · reta', d.ch && d.ch.join() === '96,8,2', JSON.stringify(d.ch));
   await shot(pg, 'corrop-dispersao');
+
+  // ── Quadrantes: a unidade em laranja, a leitura fala da sua unidade ──
+  await pg.click('.s-item[data-vw="quadrante"]'); await pg.waitForTimeout(150);
+  await pg.selectOption('#sel-qx', 'dispersao'); await pg.selectOption('#sel-qy', 'comb'); await pg.waitForTimeout(300);
+  const oq = await pg.evaluate(() => { const c = Chart.getChart('ch-quad'); const o = c && c.config.options.plugins.quad; return { leitura: document.getElementById('quad-leitura').textContent, leg: document.getElementById('qleg-uni').textContent,
+    ch: c ? { n: c.data.datasets.length, pts: c.data.datasets.map(d => d.data.length), cores: c.data.datasets.map(d => d.backgroundColor), melhor: o.melhor } : null,
+    minha: [...document.querySelectorAll('#t-quad tbody tr')].map((tr, i) => [i, tr.className, tr.children[0].textContent]).filter(x => x[1] === 'minha') }; });
+  af('operação: rede em cinza (12) + a unidade em laranja (1), melhor = −Disp +Km/L', oq.ch && oq.ch.pts.join() === '12,1' && oq.ch.cores[1] === '#F97316' && oq.ch.melhor === 'mp' && oq.leg === 'PIR', JSON.stringify(oq.ch));
+  af('a leitura diz em que quadrante a sua unidade está e onde é melhor estar', /Sua unidade \(PIR\) está em/.test(oq.leitura) && /Melhor estar em/.test(oq.leitura) && !/Pearson/.test(oq.leitura), oq.leitura.slice(0, 140));
+  af('a linha da sua unidade vem primeiro na tabela, destacada', oq.minha.length === 1 && oq.minha[0][0] === 0 && oq.minha[0][2] === 'PIR', JSON.stringify(oq.minha));
+  await shot(pg, 'corrop-quadrante');
 
   // ── O que explica ──
   await pg.click('.s-item[data-vw="regressao"]'); await pg.waitForTimeout(150);

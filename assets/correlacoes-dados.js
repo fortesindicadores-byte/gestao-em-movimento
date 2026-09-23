@@ -3,10 +3,12 @@
 
    Monta, no navegador, uma linha por entidade × vigência com as MESMAS
    leituras dos painéis (DRE Frota por rótulo, Dispersão de km por índice,
-   Frota de Elite/Gerot pelo gerot-base, fca, disp_resumo, custo_vigencia_mv +
+   DRE Receita Líquida, Frota de Elite/Gerot pelo gerot-base, disp_resumo, custo_vigencia_mv +
    ativos + indisponibilidade, ce_scores_mensais). Três grãos: uni (unidade ×
    mês) · placa (placa × mês) · mot (motorista × mês). Cada linha leva
    {ent, uni, cod, vig, v:{variável:valor}} — `cod` é o código do portal
+   (cada variável leva `dir`: 'up' = maior é melhor, 'down' = menor é melhor,
+   sem dir = neutra — é o que diz "onde é melhor estar" no quadrante)
    (CGR, CBA T1…) em todos os grãos, para o painel da operação recortar a
    própria unidade; `uni` é o rótulo como veio da fonte.
 
@@ -86,73 +88,68 @@ const FMT={
 };
 const VARS={
  uni:[
-  {id:'custo_real',rot:'Custo total realizado (Frota)',ab:'Custo R',g:'Custos (DRE)',f:'brl'},
-  {id:'custo_rem',rot:'Custo total remunerado (Frota)',ab:'Custo Rem',g:'Custos (DRE)',f:'brl'},
-  {id:'desvio_custo',rot:'Desvio do custo vs remunerado',ab:'Δ Custo %',g:'Custos (DRE)',f:'pct',nota:'realizado ÷ remunerado − 1; positivo = gastou mais que o remunerado'},
-  {id:'comb_real',rot:'Combustíveis realizado',ab:'Comb R',g:'Custos (DRE)',f:'brl'},
-  {id:'desvio_comb',rot:'Desvio Combustíveis vs remunerado',ab:'Δ Comb %',g:'Custos (DRE)',f:'pct'},
-  {id:'manut_real',rot:'Manutenções realizado',ab:'Manut R',g:'Custos (DRE)',f:'brl'},
-  {id:'desvio_manut',rot:'Desvio Manutenções vs remunerado',ab:'Δ Manut %',g:'Custos (DRE)',f:'pct'},
-  {id:'pneus_real',rot:'Pneus realizado',ab:'Pneus R',g:'Custos (DRE)',f:'brl'},
-  {id:'desvio_pneus',rot:'Desvio Pneus vs remunerado',ab:'Δ Pneus %',g:'Custos (DRE)',f:'pct'},
-  {id:'rskm_real',rot:'R$/km realizado (custo total ÷ km real)',ab:'R$/km',g:'Custos (DRE)',f:'rskm',nota:'custo total realizado da Frota ÷ km realizado da Dispersão'},
-  {id:'comb_rskm',rot:'R$/km de Combustíveis',ab:'R$/km Comb',g:'Custos (DRE)',f:'rskm'},
-  {id:'manut_rskm',rot:'R$/km de Manutenções',ab:'R$/km Manut',g:'Custos (DRE)',f:'rskm'},
-  {id:'pneus_rskm',rot:'R$/km de Pneus',ab:'R$/km Pneus',g:'Custos (DRE)',f:'rskm'},
-  {id:'km_rem',rot:'Km remunerado',ab:'Km Rem',g:'Dispersão de km',f:'num',nota:'km bruto da Dispersão, sem a recomposição do Balanço de Massa'},
-  {id:'km_real',rot:'Km realizado',ab:'Km Real',g:'Dispersão de km',f:'num'},
-  {id:'dispersao',rot:'Dispersão de km (real ÷ rem − 1)',ab:'Disp km %',g:'Dispersão de km',f:'pct',nota:'meta do Painel KM: 10%'},
-  {id:'viagens',rot:'Viagens realizadas',ab:'Viagens',g:'Dispersão de km',f:'num'},
-  {id:'km_viagem',rot:'Km por viagem',ab:'Km/viag',g:'Dispersão de km',f:'d1'},
-  {id:'disp',rot:'Disponibilidade (Ginfo)',ab:'Dispon.',g:'Frota de Elite / Gerot',f:'pct'},
-  {id:'prev',rot:'Aderência a preventivas',ab:'Prevent.',g:'Frota de Elite / Gerot',f:'pct'},
-  {id:'pneus',rot:'Aderência aferição de pneus',ab:'Pneus %',g:'Frota de Elite / Gerot',f:'pct'},
-  {id:'checkT',rot:'Checklist T1/T2',ab:'Check T',g:'Frota de Elite / Gerot',f:'pct'},
-  {id:'checkWH',rot:'Checklist WH',ab:'Check WH',g:'Frota de Elite / Gerot',f:'pct'},
-  {id:'conf',rot:'Conformidade',ab:'Conform.',g:'Frota de Elite / Gerot',f:'pct',nota:'a régua do Ginfo mudou em ago/26; antes e depois não são comparáveis'},
-  {id:'stVeic',rot:'Stress Test veículos',ab:'ST Veíc',g:'Frota de Elite / Gerot',f:'pct'},
-  {id:'stEmp',rot:'Stress Test empilhadeiras',ab:'ST Emp',g:'Frota de Elite / Gerot',f:'pct'},
-  {id:'civf',rot:'CIVF',ab:'CIVF',g:'Frota de Elite / Gerot',f:'pct'},
-  {id:'sla',rot:'SLA de manutenção',ab:'SLA',g:'Frota de Elite / Gerot',f:'pct'},
-  {id:'comb',rot:'Km/L realizado',ab:'Km/L',g:'Frota de Elite / Gerot',f:'kml'},
-  {id:'mtbf',rot:'MTBF',ab:'MTBF',g:'Frota de Elite / Gerot',f:'h'},
-  {id:'mttr',rot:'MTTR',ab:'MTTR',g:'Frota de Elite / Gerot',f:'h'},
-  {id:'osVenc',rot:'OS vencidas',ab:'OS Venc',g:'Frota de Elite / Gerot',f:'num'},
-  {id:'osCritica',rot:'Saídas com OS crítica',ab:'OS Crít',g:'Frota de Elite / Gerot',f:'num'},
-  {id:'blitz',rot:'Blitz de segurança',ab:'Blitz',g:'Frota de Elite / Gerot',f:'pct'},
-  {id:'fca_total',rot:'FCAs abertos no mês',ab:'FCA n',g:'FCA',f:'num'},
-  {id:'fca_custos',rot:'FCAs de Custos',ab:'FCA Cust',g:'FCA',f:'num'},
-  {id:'fca_rpm',rot:'FCAs da RPM',ab:'FCA RPM',g:'FCA',f:'num'},
-  {id:'fca_atras',rot:'FCAs com prazo vencido',ab:'FCA atr',g:'FCA',f:'num'},
-  {id:'fca_concl',rot:'FCAs concluídos (%)',ab:'FCA concl',g:'FCA',f:'pct'},
-  {id:'disp_app',rot:'Disponibilidade (app, média do mês)',ab:'Disp app',g:'Indisponibilidade',f:'pct',nota:'foto diária do disp_snapshot; histórico da planilha antes de 14/08/26'},
-  {id:'indisp_med',rot:'Veículos indisponíveis (média diária)',ab:'Indisp',g:'Indisponibilidade',f:'d1'},
+  {id:'receita',b:['rec'],dir:'up',rot:'Receita líquida realizada',ab:'Receita',g:'Receita (DRE)',f:'brl',nota:'aba Receita Líquida do DRE, por unidade × mês'},
+  {id:'rec_km',b:['rec','km'],dir:'up',rot:'Receita por km realizado',ab:'R$/km Rec',g:'Receita (DRE)',f:'rskm',nota:'receita líquida ÷ km realizado da Dispersão'},
+  {id:'custo_real',b:['custo'],dir:'down',rot:'Custo total realizado (Frota)',ab:'Custo R',g:'Custos (DRE)',f:'brl'},
+  {id:'desvio_custo',b:['custo'],dir:'down',rot:'Desvio do custo vs remunerado',ab:'Δ Custo %',g:'Custos (DRE)',f:'pct',nota:'realizado ÷ remunerado − 1; positivo = gastou mais que o remunerado'},
+  {id:'comb_real',b:['comb','custo'],dir:'down',rot:'Combustíveis realizado',ab:'Comb R',g:'Custos (DRE)',f:'brl'},
+  {id:'desvio_comb',b:['comb'],dir:'down',rot:'Desvio Combustíveis vs remunerado',ab:'Δ Comb %',g:'Custos (DRE)',f:'pct'},
+  {id:'manut_real',b:['manut','custo'],dir:'down',rot:'Manutenções realizado',ab:'Manut R',g:'Custos (DRE)',f:'brl'},
+  {id:'desvio_manut',b:['manut'],dir:'down',rot:'Desvio Manutenções vs remunerado',ab:'Δ Manut %',g:'Custos (DRE)',f:'pct'},
+  {id:'pneus_real',b:['pneus','custo'],dir:'down',rot:'Pneus realizado',ab:'Pneus R',g:'Custos (DRE)',f:'brl'},
+  {id:'desvio_pneus',b:['pneus'],dir:'down',rot:'Desvio Pneus vs remunerado',ab:'Δ Pneus %',g:'Custos (DRE)',f:'pct'},
+  {id:'rskm_real',b:['custo','km'],dir:'down',rot:'R$/km realizado (custo total ÷ km real)',ab:'R$/km',g:'Custos (DRE)',f:'rskm',nota:'custo total realizado da Frota ÷ km realizado da Dispersão'},
+  {id:'comb_rskm',b:['comb','km'],dir:'down',rot:'R$/km de Combustíveis',ab:'R$/km Comb',g:'Custos (DRE)',f:'rskm'},
+  {id:'manut_rskm',b:['manut','km'],dir:'down',rot:'R$/km de Manutenções',ab:'R$/km Manut',g:'Custos (DRE)',f:'rskm'},
+  {id:'pneus_rskm',b:['pneus','km'],dir:'down',rot:'R$/km de Pneus',ab:'R$/km Pneus',g:'Custos (DRE)',f:'rskm'},
+  {id:'km_real',b:['km'],rot:'Km realizado',ab:'Km Real',g:'Dispersão de km',f:'num'},
+  {id:'dispersao',b:['km'],dir:'down',rot:'Dispersão de km (real ÷ rem − 1)',ab:'Disp km %',g:'Dispersão de km',f:'pct',nota:'meta do Painel KM: 10%'},
+  {id:'viagens',b:['km'],rot:'Viagens realizadas',ab:'Viagens',g:'Dispersão de km',f:'num'},
+  {id:'km_viagem',b:['km'],rot:'Km por viagem',ab:'Km/viag',g:'Dispersão de km',f:'d1'},
+  {id:'disp',b:['disp'],dir:'up',rot:'Disponibilidade (Ginfo)',ab:'Dispon.',g:'Frota de Elite / Gerot',f:'pct'},
+  {id:'prev',b:['prev'],dir:'up',rot:'Aderência a preventivas',ab:'Prevent.',g:'Frota de Elite / Gerot',f:'pct'},
+  {id:'pneus',b:['pneusAd'],dir:'up',rot:'Aderência aferição de pneus',ab:'Pneus %',g:'Frota de Elite / Gerot',f:'pct'},
+  {id:'checkT',b:['checkT'],dir:'up',rot:'Checklist T1/T2',ab:'Check T',g:'Frota de Elite / Gerot',f:'pct'},
+  {id:'checkWH',b:['checkWH'],dir:'up',rot:'Checklist WH',ab:'Check WH',g:'Frota de Elite / Gerot',f:'pct'},
+  {id:'conf',b:['conf'],dir:'up',rot:'Conformidade',ab:'Conform.',g:'Frota de Elite / Gerot',f:'pct',nota:'a régua do Ginfo mudou em ago/26; antes e depois não são comparáveis'},
+  {id:'stVeic',b:['stV'],dir:'up',rot:'Stress Test veículos',ab:'ST Veíc',g:'Frota de Elite / Gerot',f:'pct'},
+  {id:'stEmp',b:['stE'],dir:'up',rot:'Stress Test empilhadeiras',ab:'ST Emp',g:'Frota de Elite / Gerot',f:'pct'},
+  {id:'civf',b:['civf'],dir:'up',rot:'CIVF',ab:'CIVF',g:'Frota de Elite / Gerot',f:'pct'},
+  {id:'sla',b:['sla'],dir:'up',rot:'SLA de manutenção',ab:'SLA',g:'Frota de Elite / Gerot',f:'pct'},
+  {id:'comb',b:['kml'],dir:'up',rot:'Km/L realizado',ab:'Km/L',g:'Frota de Elite / Gerot',f:'kml'},
+  {id:'mtbf',b:['mtbf'],dir:'up',rot:'MTBF',ab:'MTBF',g:'Frota de Elite / Gerot',f:'h'},
+  {id:'mttr',b:['mttr'],dir:'down',rot:'MTTR',ab:'MTTR',g:'Frota de Elite / Gerot',f:'h'},
+  {id:'osVenc',b:['osV'],dir:'down',rot:'OS vencidas',ab:'OS Venc',g:'Frota de Elite / Gerot',f:'num'},
+  {id:'osCritica',b:['osC'],dir:'down',rot:'Saídas com OS crítica',ab:'OS Crít',g:'Frota de Elite / Gerot',f:'num'},
+  {id:'blitz',b:['blitz'],dir:'up',rot:'Blitz de segurança',ab:'Blitz',g:'Frota de Elite / Gerot',f:'pct'},
+  {id:'disp_app',b:['disp'],dir:'up',rot:'Disponibilidade (app, média do mês)',ab:'Disp app',g:'Indisponibilidade',f:'pct',nota:'foto diária do disp_snapshot; histórico da planilha antes de 14/08/26'},
+  {id:'indisp_med',b:['disp'],dir:'down',rot:'Veículos indisponíveis (média diária)',ab:'Indisp',g:'Indisponibilidade',f:'d1'},
  ],
  placa:[
-  {id:'km_mes',rot:'Km no mês (ERP)',ab:'Km',g:'Contrato de manutenção',f:'num'},
-  {id:'custo_mes',rot:'Custo do contrato no mês',ab:'Custo',g:'Contrato de manutenção',f:'brl',nota:'nota da VW quando existe; senão km × taxa (contrato fixo = valor fixo)'},
-  {id:'rskm',rot:'R$/km do contrato',ab:'R$/km',g:'Contrato de manutenção',f:'rskm',nota:'só placas de contrato variável com km no mês'},
-  {id:'taxa_km',rot:'Taxa contratual por km',ab:'Taxa',g:'Contrato de manutenção',f:'rskm'},
-  {id:'faixas',rot:'Faixas cobradas no mês',ab:'Faixas',g:'Contrato de manutenção',f:'num'},
-  {id:'litros',rot:'Litros abastecidos',ab:'Litros',g:'Abastecimento (ERP)',f:'l'},
-  {id:'km_l',rot:'Km/L (ERP)',ab:'Km/L',g:'Abastecimento (ERP)',f:'kml'},
-  {id:'preco_l',rot:'Preço médio do litro',ab:'R$/L',g:'Abastecimento (ERP)',f:'d2'},
-  {id:'abast',rot:'Abastecimentos no mês',ab:'Abast',g:'Abastecimento (ERP)',f:'num'},
-  {id:'idade',rot:'Idade do veículo',ab:'Idade',g:'Ativos (Ginfo)',f:'anos'},
-  {id:'dias_indisp',rot:'Dias indisponível no mês',ab:'Dias ind',g:'Indisponibilidade',f:'dias',nota:'eventos do app; 0 quando a unidade lança e não há evento'},
+  {id:'km_mes',b:['km'],rot:'Km no mês (ERP)',ab:'Km',g:'Contrato de manutenção',f:'num'},
+  {id:'custo_mes',b:['custo'],dir:'down',rot:'Custo do contrato no mês',ab:'Custo',g:'Contrato de manutenção',f:'brl',nota:'nota da VW quando existe; senão km × taxa (contrato fixo = valor fixo)'},
+  {id:'rskm',b:['custo','km'],dir:'down',rot:'R$/km do contrato',ab:'R$/km',g:'Contrato de manutenção',f:'rskm',nota:'só placas de contrato variável com km no mês'},
+  {id:'taxa_km',b:['custo'],dir:'down',rot:'Taxa contratual por km',ab:'Taxa',g:'Contrato de manutenção',f:'rskm'},
+  {id:'faixas',b:['faixa'],rot:'Faixas cobradas no mês',ab:'Faixas',g:'Contrato de manutenção',f:'num'},
+  {id:'litros',b:['lit'],rot:'Litros abastecidos',ab:'Litros',g:'Abastecimento (ERP)',f:'l'},
+  {id:'km_l',b:['km','lit'],dir:'up',rot:'Km/L (ERP)',ab:'Km/L',g:'Abastecimento (ERP)',f:'kml'},
+  {id:'preco_l',b:['preco'],dir:'down',rot:'Preço médio do litro',ab:'R$/L',g:'Abastecimento (ERP)',f:'d2'},
+  {id:'abast',b:['lit'],rot:'Abastecimentos no mês',ab:'Abast',g:'Abastecimento (ERP)',f:'num'},
+  {id:'idade',b:['idade'],rot:'Idade do veículo',ab:'Idade',g:'Ativos (Ginfo)',f:'anos'},
+  {id:'dias_indisp',b:['disp'],dir:'down',rot:'Dias indisponível no mês',ab:'Dias ind',g:'Indisponibilidade',f:'dias',nota:'eventos do app; 0 quando a unidade lança e não há evento'},
  ],
  mot:[
-  {id:'nota',rot:'Nota de condução (0–100)',ab:'Nota',g:'Condução Econômica',f:'d1'},
-  {id:'rpm',rot:'Uso da faixa verde (pontos)',ab:'RPM',g:'Condução Econômica',f:'d1'},
-  {id:'idle',rot:'Motor ligado sem rodar (pontos)',ab:'Idle',g:'Condução Econômica',f:'d1'},
-  {id:'acel',rot:'Acelerações bruscas (pontos)',ab:'Acel',g:'Condução Econômica',f:'d1'},
-  {id:'vel',rot:'Velocidade (pontos)',ab:'Vel',g:'Condução Econômica',f:'d1'},
-  {id:'km',rot:'Km no mês',ab:'Km',g:'Condução Econômica',f:'num'},
-  {id:'dias',rot:'Dias com dado',ab:'Dias',g:'Condução Econômica',f:'num'},
-  {id:'viagens',rot:'Viagens (ciclos de ignição)',ab:'Viag',g:'Condução Econômica',f:'num'},
-  {id:'excessos',rot:'Excessos de velocidade por 100 km',ab:'Exc/100',g:'Condução Econômica',f:'d2'},
-  {id:'litros',rot:'Litros (telemetria)',ab:'Litros',g:'Condução Econômica',f:'l'},
-  {id:'km_l',rot:'Km/L (viagens com combustível)',ab:'Km/L',g:'Condução Econômica',f:'kml',nota:'km só das viagens com FuelUsed ÷ litros'},
+  {id:'nota',b:['nota'],dir:'up',rot:'Nota de condução (0–100)',ab:'Nota',g:'Condução Econômica',f:'d1'},
+  {id:'rpm',b:['nota','rpm'],dir:'up',rot:'Uso da faixa verde (pontos)',ab:'RPM',g:'Condução Econômica',f:'d1'},
+  {id:'idle',b:['nota','idle'],dir:'up',rot:'Motor ligado sem rodar (pontos)',ab:'Idle',g:'Condução Econômica',f:'d1'},
+  {id:'acel',b:['nota','acel'],dir:'up',rot:'Acelerações bruscas (pontos)',ab:'Acel',g:'Condução Econômica',f:'d1'},
+  {id:'vel',b:['nota','vel'],dir:'up',rot:'Velocidade (pontos)',ab:'Vel',g:'Condução Econômica',f:'d1'},
+  {id:'km',b:['km'],rot:'Km no mês',ab:'Km',g:'Condução Econômica',f:'num'},
+  {id:'dias',b:['dias'],rot:'Dias com dado',ab:'Dias',g:'Condução Econômica',f:'num'},
+  {id:'viagens',b:['km'],rot:'Viagens (ciclos de ignição)',ab:'Viag',g:'Condução Econômica',f:'num'},
+  {id:'excessos',b:['exc'],dir:'down',rot:'Excessos de velocidade por 100 km',ab:'Exc/100',g:'Condução Econômica',f:'d2'},
+  {id:'litros',b:['lit'],rot:'Litros (telemetria)',ab:'Litros',g:'Condução Econômica',f:'l'},
+  {id:'km_l',b:['km','lit'],dir:'up',rot:'Km/L (viagens com combustível)',ab:'Km/L',g:'Condução Econômica',f:'kml',nota:'km só das viagens com FuelUsed ÷ litros'},
  ],
 };
 const varDe=(grao,id)=>VARS[grao].find(v=>v.id===id);
@@ -201,6 +198,22 @@ async function loadDRE(mapa){
   });
   fonte('DRE · aba Frota','uni',n?'ok':'vazio',n);
 }
+/* DRE Receita Líquida → receita por unidade × mês (mesmos rótulos da Frota; a receita vem POSITIVA na aba) */
+async function loadReceita(mapa){
+  const {cols,rows}=await gviz(DRE_ID,'Receita Líquida');
+  const iVig=idxRot(cols,'vigência','vigencia'), iUni=idxRot(cols,'unidade'), iN3=idxRot(cols,'nível 3','nivel 3'), iReal=idxRot(cols,'realizado');
+  if([iVig,iUni,iN3,iReal].some(i=>i<0)) throw new Error('rótulos da aba Receita Líquida não encontrados: '+cols.join(' | '));
+  const acc={}; let n=0;
+  rows.forEach(r=>{
+    const vig=vigKey(r[iVig]); if(!vig) return;
+    const cod=CIDADE2COD[NK(String(r[iUni]||'').replace(/\s*\(INATIVO\)\s*/i,''))]; if(!cod) return;
+    const uni=comTier(cod,String(r[iN3]||'').split('-')[0]);
+    const real=num(r[iReal])||0; if(!real) return;
+    const a=acc[uni+'|'+vig]||(acc[uni+'|'+vig]={uni,vig,real:0}); a.real+=real; n++;
+  });
+  Object.values(acc).forEach(a=>{ if(a.real>0) linha(mapa,a.uni,a.uni,a.vig).v.receita=a.real; });
+  fonte('DRE · aba Receita Líquida','uni',n?'ok':'vazio',n);
+}
 /* Dispersão de km (base do Painel KM): km rem/real e viagens por unidade × mês */
 const DISP_ID='1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM';
 async function loadDispKm(mapa){
@@ -238,20 +251,6 @@ async function loadGerot(mapa){
   if(semUni.size) console.warn('Gerot: unidade sem código no FIL2COD:',[...semUni]);
   fonte('Frota de Elite / Gerot (elite_snapshot)','uni',n?'ok':'vazio',n,semUni.size?`sem de-para: ${[...semUni].join(', ')}`:'');
 }
-/* FCA: contagens por unidade × mês */
-async function loadFca(mapa){
-  const rows=await todas('fca','unidade,vigencia,origem,status,prazo');
-  const hoje=new Date().toISOString().slice(0,10); const acc={};
-  rows.forEach(r=>{
-    const vig=vigKey(r.vigencia); if(!vig||!r.unidade) return;
-    const a=acc[r.unidade+'|'+vig]||(acc[r.unidade+'|'+vig]={uni:r.unidade,vig,n:0,c:0,p:0,atr:0,ok:0});
-    a.n++; if(r.origem==='Custos') a.c++; else a.p++;
-    const concl=/conclu/i.test(String(r.status||'')); if(concl) a.ok++;
-    if(!concl&&r.prazo&&String(r.prazo)<hoje) a.atr++;
-  });
-  Object.values(acc).forEach(a=>{ const L=linha(mapa,a.uni,a.uni,a.vig).v; L.fca_total=a.n; L.fca_custos=a.c; L.fca_rpm=a.p; L.fca_atras=a.atr; L.fca_concl=a.ok/a.n*100; });
-  fonte('FCA (tabela fca)','uni',rows.length?'ok':'vazio',rows.length);
-}
 /* Disponibilidade do app: foto diária agregada por dia × unidade */
 async function loadDispApp(mapa){
   const rows=await todas('disp_resumo','data,unidade,ativos,indisponiveis','data');
@@ -267,7 +266,8 @@ function derivaUni(mapa){
     if(fin(v.custo_real)) v.rskm_real=v.custo_real/v.km_real;
     if(fin(v.comb_real)) v.comb_rskm=v.comb_real/v.km_real;
     if(fin(v.manut_real)) v.manut_rskm=v.manut_real/v.km_real;
-    if(fin(v.pneus_real)) v.pneus_rskm=v.pneus_real/v.km_real; } });
+    if(fin(v.pneus_real)) v.pneus_rskm=v.pneus_real/v.km_real;
+    if(fin(v.receita)) v.rec_km=v.receita/v.km_real; } });
 }
 
 /* ── grão PLACA: custo_vigencia_mv + ativos (idade) + indisponibilidade ── */
@@ -327,8 +327,8 @@ async function carregar(sb){
   FONTES=[];
   const mU={}, mP={}, mM={};
   const passos=[
-    ['DRE · aba Frota','uni',()=>loadDRE(mU)], ['Dispersão de km','uni',()=>loadDispKm(mU)], ['Frota de Elite / Gerot (elite_snapshot)','uni',()=>loadGerot(mU)],
-    ['FCA (tabela fca)','uni',()=>loadFca(mU)], ['Indisponibilidade (disp_resumo)','uni',()=>loadDispApp(mU)],
+    ['DRE · aba Frota','uni',()=>loadDRE(mU)], ['DRE · aba Receita Líquida','uni',()=>loadReceita(mU)], ['Dispersão de km','uni',()=>loadDispKm(mU)], ['Frota de Elite / Gerot (elite_snapshot)','uni',()=>loadGerot(mU)],
+    ['Indisponibilidade (disp_resumo)','uni',()=>loadDispApp(mU)],
     ['Contrato de manutenção (custo_vigencia_mv)','placa',()=>loadPlaca(mP)], ['Condução Econômica (ce_scores_mensais)','mot',()=>loadMot(mM)],
   ];
   const res=await Promise.allSettled(passos.map(p=>p[2]()));
@@ -336,5 +336,17 @@ async function carregar(sb){
   derivaUni(mU);
   return {FATO:{uni:Object.values(mU),placa:Object.values(mP),mot:Object.values(mM)},FONTES:FONTES.slice()};
 }
-global.CorrDados={VARS,FMT,varDe,fmtVar,vigKey,vigRot,vigIdx,CIDADE2COD,comTier,uniCodCE,carregar,NK};
+/* uma linha por ENTIDADE (média dos meses do recorte em cada variável) — é o ponto do quadrante */
+function porEntidade(rows){
+  const m={};
+  rows.forEach(r=>{ const e=m[r.ent]||(m[r.ent]={ent:r.ent,uni:r.uni,cod:r.cod,nome:r.nome,tipo:r.tipo,vigs:new Set(),s:{},k:{}});
+    e.vigs.add(r.vig); if(r.nome) e.nome=r.nome;
+    Object.entries(r.v).forEach(([id,x])=>{ if(!fin(x)) return; e.s[id]=(e.s[id]||0)+x; e.k[id]=(e.k[id]||0)+1; }); });
+  return Object.values(m).map(e=>{ const v={}; Object.keys(e.s).forEach(id=>{ v[id]=e.s[id]/e.k[id]; }); return {ent:e.ent,uni:e.uni,cod:e.cod,nome:e.nome,tipo:e.tipo,meses:e.vigs.size,v}; });
+}
+/* par TRIVIAL: as duas variáveis saem da mesma conta (rem × real, custo total × combustível,
+   desvio × o próprio custo, R$/km × km…) — a ligação é automática, não é achado
+   (Renan, 23/09/2026: "Não faz sentido correlacionar remunerado com realizado") */
+const trivial=(vx,vy)=>!!(vx&&vy&&vx.id!==vy.id&&(vx.b||[]).some(b=>(vy.b||[]).includes(b)));
+global.CorrDados={VARS,FMT,varDe,fmtVar,vigKey,vigRot,vigIdx,CIDADE2COD,comTier,uniCodCE,carregar,porEntidade,trivial,NK};
 })(typeof window!=='undefined'?window:globalThis);
