@@ -72,12 +72,13 @@ const gvizFrota = () => ({ status: 'ok', table: {
   cols: ['VIGÊNCIA', 'Δ ORÇ (BRL)', 'Δ REM (BRL)', 'Unidade', 'NÍVEL 3', 'CONTA GERENCIAL', 'MÊS', 'ANO', 'ORÇADO', 'REMUNERADO', 'REALIZADO'].map(l => ({ label: l })),
   rows: FATO.flatMap(f => {
     const [cid, n3] = DRE_UNI[f.u];
-    const lin = (cta, rem, real) => ({ c: [{ v: DATE(f.v) }, { v: 0 }, { v: 0 }, { v: cid }, { v: n3 }, { v: cta }, { v: 'x' }, { v: 2026 }, { v: rem }, { v: rem }, { v: real }] });
+    // a aba Frota guarda DESPESA COM SINAL NEGATIVO — o painel tem de inverter
+    const lin = (cta, rem, real) => ({ c: [{ v: DATE(f.v) }, { v: 0 }, { v: 0 }, { v: cid }, { v: n3 }, { v: cta }, { v: 'x' }, { v: 2026 }, { v: -rem }, { v: -rem }, { v: -real }] });
     return [lin('Combustíveis Veiculos e Equipamentos', f.combRem, f.combReal),
       lin('Manutenção de Veículos e Equipamentos', f.kmRem * 0.9, f.kmRem * 0.9 * (1 + f.dmanut)),
       lin('Pneus Novos', f.kmRem * 0.3, f.kmRem * 0.3 * (1 + (rnd() - 0.5) * 0.1)),
       lin('Seguro de Veículos e Equipamentos', 5000, 5000)];
-  }).concat([{ c: [{ v: DATE('2026-08') }, { v: 0 }, { v: 0 }, { v: 'GOIÂNIA' }, { v: 'MOBILIZAÇÃO - GNA' }, { v: 'Pneus Novos' }, { v: 'x' }, { v: 2026 }, { v: 100 }, { v: 100 }, { v: 120 }] }]),
+  }).concat([{ c: [{ v: DATE('2026-08') }, { v: 0 }, { v: 0 }, { v: 'GOIÂNIA' }, { v: 'MOBILIZAÇÃO - GNA' }, { v: 'Pneus Novos' }, { v: 'x' }, { v: 2026 }, { v: -100 }, { v: -100 }, { v: -120 }] }]),
 } });
 const gvizDisp = () => { const rows = FATO.map(f => { const c = new Array(40).fill(null).map(() => ({ v: null }));
   c[0] = { v: DATE(f.v) }; c[13] = { v: f.u.split(' ')[0] }; c[14] = { v: DRE_UNI[f.u][1] }; c[22] = { v: 300 + f.ui * 10 }; c[31] = { v: f.kmRem }; c[32] = { v: f.kmReal }; return { c }; });
@@ -155,7 +156,7 @@ const estado = pg => pg.evaluate(() => { const t = id => ((document.getElementBy
   unis: ms('ms-uni'), vigs: ms('ms-vig'),
   fatoUni: FATO.uni.length, fatoPlaca: FATO.placa.length, fatoMot: FATO.mot.length,
   vars: MX ? MX.vars.map(v => v.id) : [],
-  cel: MX ? Object.fromEntries(['desvio_comb|dispersao', 'disp|mttr', 'blitz|sla', 'sla|desvio_comb'].map(k => [k, MX.cel[k] ? { r: +MX.cel[k].r.toFixed(3), n: MX.cel[k].n, q: MX.cel[k].q } : null])) : {},
+  cel: MX ? Object.fromEntries(['desvio_comb|dispersao', 'disp|mttr', 'blitz|sla', 'sla|desvio_comb', 'custo_real|km_real'].map(k => [k, MX.cel[k] ? { r: +MX.cel[k].r.toFixed(3), n: MX.cel[k].n, q: MX.cel[k].q } : null])) : {},
   achados: achados().slice(0, 8).map(a => [a.x.id, a.y.id, +a.r.toFixed(2), a.n]),
   fontes: FONTES.map(f => [f.nome.split(' (')[0], f.estado, f.linhas]),
   amostra: FATO.uni.filter(r => r.uni === 'CBA T1' && r.vig === '2026-03').map(r => r.v)[0] || null,
@@ -177,6 +178,8 @@ const estado = pg => pg.evaluate(() => { const t = id => ((document.getElementBy
   af('tier pelo Nível 3: CUIABÁ + EMPURRADA vira CBA T1', e.unis.includes('CBA T1') && e.unis.includes('CBA T1 WH') && e.unis.includes('CBA T2'), e.unis.join(','));
   const a = e.amostra || {};
   af('DRE: desvio de Combustíveis = real ÷ rem − 1', Math.abs(a.desvio_comb - FATO.find(f => f.u === 'CBA T1' && f.v === '2026-03').dcomb * 100) < 1e-6, String(a.desvio_comb));
+  af('DRE: o custo vira POSITIVO (a aba guarda despesa negativa)', a.custo_real > 0 && a.comb_real > 0 && a.custo_rem > 0, JSON.stringify([a.custo_real, a.comb_real]));
+  af('…e custo sobe com km (r > 0), não o contrário', e.cel['custo_real|km_real'] && e.cel['custo_real|km_real'].r > 0.9, JSON.stringify(e.cel['custo_real|km_real'] || e.achados));
   af('Dispersão: km rem/real e dispersão %', a.km_rem > 0 && a.km_real > 0 && Math.abs(a.dispersao - FATO.find(f => f.u === 'CBA T1' && f.v === '2026-03').disp * 100) < 1e-6, JSON.stringify([a.km_rem, a.km_real, a.dispersao]));
   af('R$/km de Combustíveis = comb_real ÷ km_real', Math.abs(a.comb_rskm - a.comb_real / a.km_real) < 1e-9, String(a.comb_rskm));
   af('Gerot: disp, prev, mttr entraram pelo FIL2COD; amplitude (snapshot) ficou fora', a.disp > 0 && a.prev > 0 && a.mttr > 0 && !('pneuAmp' in a), JSON.stringify([a.disp, a.prev, a.mttr]));

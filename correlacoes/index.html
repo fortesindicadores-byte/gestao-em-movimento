@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609240100">
+<meta name="build" content="202609240200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Correlações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -750,7 +750,11 @@ async function loadDRE(mapa){
     const cod=CIDADE2COD[NK(String(r[iUni]||'').replace(/\s*\(INATIVO\)\s*/i,''))]; if(!cod) return;
     const uni=comTier(cod,String(r[iN3]||'').split('-')[0]);
     const pac=PACOTE[NK(r[iCta])]||null;
-    const rem=num(r[iRem])||0, real=num(r[iReal])||0;
+    // CUSTO NA DRE É NEGATIVO (bug real, 23/09/2026: "quando km real sobe custo desce?"): a
+    // despesa vem com sinal de menos, como no Painel KM (-(valor)) e no fca-preenchimento.
+    // Sem inverter, "gastou mais" virava "número mais negativo" e toda correlação com custo
+    // saía de cabeça para baixo. Aqui custo é sempre POSITIVO (crédito, como o ICMS, abate).
+    const rem=-(num(r[iRem])||0), real=-(num(r[iReal])||0);
     const a=acc[uni+'|'+vig]||(acc[uni+'|'+vig]={uni,vig,rem:0,real:0,comb_rem:0,comb_real:0,manut_rem:0,manut_real:0,pneus_rem:0,pneus_real:0});
     a.rem+=rem; a.real+=real; if(pac){ a[pac+'_rem']+=rem; a[pac+'_real']+=real; } n++;
   });
@@ -1266,6 +1270,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609240100"></script>
+<script src="../assets/build-check.js?v=202609240200"></script>
 </body>
 </html>
