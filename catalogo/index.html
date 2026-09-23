@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609232100">
+<meta name="build" content="202609240500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Catálogo · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -657,7 +657,7 @@ function render(){
   renderPlacas(at);
   renderItens();
   renderLacunas(modelosAt);
-  set('n-cat',modelosAt.size); set('n-pla',at.length); set('n-it',ITENS.length);
+  set('n-cat',modelosAt.size); set('n-pla',at.length);
 }
 
 function renderResumo(at,modelosAt){
@@ -733,10 +733,35 @@ function renderPlacas(at){
   h+='</tbody></table>';
   document.getElementById('t-pla').innerHTML=h;
 }
+/* O filtro Item lista os nomes das FICHAS ("Óleo de motor") e a lista mostra os nomes do
+   BENNER ("Óleo lubrificante de motor de Mineral") — não há chave entre os dois (bug real,
+   Renan 23/09/2026: "Filtrei óleo e não apareceu na lista"; a lista não aplicava filtro
+   nenhum). O casamento é por PALAVRAS: a primeira palavra do item (o substantivo-cabeça)
+   tem de abrir a peça, e as demais palavras significativas têm de aparecer nela. Assim
+   "Óleo de motor" acha "Óleo lubrificante de motor…" e NÃO acha "Filtro de óleo do motor". */
+const _STOP=new Set(['DE','DA','DO','DAS','DOS','E','OU','PARA','COM','EM','NO','NA','O','A','OS','AS','UM','UMA']);
+const _toks=s=>_nrm(s).replace(/[^A-Z0-9 ]/g,' ').split(/\s+/).filter(t=>t&&!_STOP.has(t));
+/* o nome da ficha perde o que está entre parênteses e o que vem depois do travessão
+   ("Filtro de óleo — código", "Bateria 12 V (partida)"): é qualificador, não nome de peça */
+const _nomeItem=s=>String(s||'').replace(/\(.*?\)/g,' ').split(/\s+[—–-]\s+/)[0];
+function itemCasaPeca(item,peca,frouxo){
+  const ti=_toks(_nomeItem(item)), tp=_toks(peca); if(!ti.length||!tp.length) return false;
+  const raiz=t=>t.length>4?t.slice(0,-1):t;               // tolera plural/singular: PNEU ~ PNEUS, FILTRO ~ FILTROS
+  const cab=raiz(ti[0]), cabP=raiz(tp[0]);
+  if(!(cabP.startsWith(cab)||cab.startsWith(cabP))) return false;
+  const P=_nrm(peca), resto=ti.slice(1);
+  if(!resto.length||frouxo===2) return true;                // 2 = só a cabeça ("Pneu dianteiro" lista os pneus)
+  return frouxo?resto.some(t=>P.includes(raiz(t))):resto.every(t=>P.includes(raiz(t)));
+}
 function renderItens(){
-  const T=termosBusca();
-  const rows=ITENS.filter(i=>!T.length||T.some(t=>_nrm(i.peca).includes(t)||_nrm(i.familia).includes(t)||String(i.ncm||'').includes(t)));
-  set('sub-it',`${fmt(rows.length)} de ${fmt(ITENS.length)} itens · ${fmt(ITENS.filter(i=>i.alerta).length)} com alerta das regras da Política/Parecer (NCM a confirmar pelo Fiscal)`);
+  const T=termosBusca(), item=getSel('ms-item');
+  // estrito (todas as palavras) primeiro; se um nome de ficha não acha peça nenhuma assim, cai no frouxo (cabeça + uma palavra) e por fim só na cabeça
+  const modo=Object.fromEntries(item.map(it=>[it,[0,1,2].find(m=>ITENS.some(i=>itemCasaPeca(it,i.peca,m)))??0]));
+  const rows=ITENS.filter(i=>!T.length||T.some(t=>_nrm(i.peca).includes(t)||_nrm(i.familia).includes(t)||String(i.ncm||'').includes(t)))
+    .filter(i=>!item.length||item.some(it=>itemCasaPeca(it,i.peca,modo[it])));
+  set('sub-it',`${fmt(rows.length)} de ${fmt(ITENS.length)} itens${item.length?` · filtro Item: ${item.length} nome(s) de ficha casado(s) por palavra com a peça do Benner`:''} · ${fmt(rows.filter(i=>i.alerta).length)} com alerta das regras da Política/Parecer (NCM a confirmar pelo Fiscal)`);
+  set('n-it',rows.length);
+  if(!rows.length){ document.getElementById('t-it').innerHTML=`<div class="mut" style="padding:18px 6px">Nenhum item do Benner casa com ${item.length?'"'+esc(item.join('", "'))+'"':'a busca'}. A lista é o cadastro genérico do Benner; o nome da ficha pode estar escrito de outro jeito lá — tente a busca livre com uma palavra só.</div>`; return; }
   let h='<table class="dre"><thead><tr><th class="num">Nº</th><th>Família</th><th>Peça</th><th>Material</th><th>NCM</th><th>Alerta</th></tr></thead><tbody>';
   rows.slice(0,1500).forEach(i=>{ h+=`<tr><td class="num">${i.n}</td><td>${esc(i.familia)}</td><td class="conta">${esc(i.peca)}</td><td>${esc(i.material||'—')}</td><td>${esc(i.ncm||'—')}</td><td style="white-space:normal;max-width:420px">${i.alerta?`<span class="selo inf">a confirmar</span> <span class="mut">${esc(i.alerta)}</span>`:''}</td></tr>`; });
   h+='</tbody></table>';
@@ -822,6 +847,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609232100"></script>
+<script src="../assets/build-check.js?v=202609240500"></script>
 </body>
 </html>
