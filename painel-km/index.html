@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609202140">
+<meta name="build" content="202609231000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -275,9 +275,9 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 .gr4 .gcard{min-height:0;}
 /* hero MAIOR nesses painéis: o número principal é o que se lê primeiro, e é
    dele que sai a altura a menos do gráfico (Renan, 16/08/2026) */
-#vw-resumo .fin-hero{padding:4px 0 6px;}
-#vw-resumo .hlbl{font-size:10.5px;letter-spacing:1px;}
-#vw-resumo .hval{font-size:clamp(34px,5vh,56px);margin:7px 0 6px;}
+#vw-resumo .fin-hero,#vw-balanco .fin-hero{padding:4px 0 6px;}
+#vw-resumo .hlbl,#vw-balanco .hlbl{font-size:10.5px;letter-spacing:1px;}
+#vw-resumo .hval,#vw-balanco .hval{font-size:clamp(34px,5vh,56px);margin:7px 0 6px;}
 /* o km remunerado embaixo do realizado, menor (Renan, 20/09/2026: "texto, dois
    pontos e do lado o valor") */
 .hrem{font-size:15px;font-weight:700;color:var(--txt2);margin:0 0 10px;}
@@ -288,8 +288,13 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
    visão, então o teto em vh só deixava faixa vazia embaixo. Mas a sobra NÃO vai
    toda para o gráfico (Renan, 20/09/2026: "gráficos muito altos... distribua
    melhor"): cards e gráficos crescem juntos, 1 para 3, com teto nos cards. */
-#vw-resumo .kpis.k4{flex:1 1 auto;max-height:clamp(150px,24vh,230px);}   /* Renan, 20/09/2026: "aumente um pouco a altura dos cards e reduza dos gráficos" */
-#vw-resumo .gr2{flex:2 1 auto;max-height:none;}
+/* BASE ZERO, não auto (bug real, 23/09/2026): com o Chart.js de verdade o canvas
+   ganha altura explícita e infla a base do .gr2 — a divisão 1 para 2 de 20/09 nunca
+   chegou a valer na tela (cards ficavam no mínimo, 155px). Com flex-basis 0 os dois
+   blocos dividem a sobra pela proporção, e a linha da grade em minmax(0,1fr) deixa o
+   gráfico encolher junto. Medido em 1850x935: cards 224 · gráficos 460. */
+#vw-resumo .kpis.k4,#vw-balanco .kpis.k4{flex:1 1 0;max-height:clamp(150px,24vh,230px);}   /* Renan, 20/09/2026: "aumente um pouco a altura dos cards e reduza dos gráficos" */
+#vw-resumo .gr2,#vw-balanco .gr2{flex:2 1 0;max-height:none;grid-template-rows:minmax(0,1fr);}
 #vw-eficiencia .gr2{max-height:40vh;}
 
 /* tabela da dispersão: 9 colunas cabem sem rolagem lateral */
@@ -306,7 +311,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 @media(max-width:860px){
   .gr4{display:block;} .gr4 .gcard{height:260px;margin-bottom:12px;}
   #tbl-km{table-layout:auto;}
-  #vw-resumo .kpis.k4{max-height:none;}   /* no celular a fileira vira 2 colunas e não pode ter teto */
+  #vw-resumo .kpis.k4,#vw-balanco .kpis.k4{max-height:none;}   /* no celular a fileira vira 2 colunas e não pode ter teto */
 }
 
 @media(max-width:1100px){ .kpis{grid-template-columns:repeat(3,1fr);} }
@@ -371,6 +376,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
     <button class="s-item" data-vw="eficiencia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><polyline points="21 4 21 9 16 9"/></svg> Eficiência e Projetos</button>
     <button class="s-item" data-vw="dispersao"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg> Dispersão</button>
     <button class="s-item" data-vw="placas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 12h2M11 12h2M16 12h2"/></svg> Placas</button>
+    <button class="s-item" data-vw="balanco"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7h14"/><path d="M3 15l2.5-8 2.5 8a2.5 2.5 0 0 1-5 0z"/><path d="M16 15l2.5-8 2.5 8a2.5 2.5 0 0 1-5 0z"/></svg> Balanço de Massa</button>
 
     <div class="s-sec">Atalhos</div>
     <div id="pdf-slot"></div>
@@ -450,6 +456,38 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
             <div class="gtit">Impacto financeiro</div>
             <div class="gsub">Impacto acumulado (BRL) · por vigência</div>
             <div class="gcv"><canvas id="chart-impacto"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ BALANÇO DE MASSA (Renan, 23/09/2026: "grana total recuperada, abaixo
+           km recuperado, alguns cards de insights embaixo e dois gráficos de barra,
+           um com grana mês a mês e outro com km mês a mês") — o mesmo dado do
+           hero do Resumo (aba Balanço de Massa → km recomposto), numa visão só. ══ -->
+      <section class="vw" id="vw-balanco">
+        <div class="fin-hero">
+          <div>
+            <div class="hlbl">R$ recuperado · balanço de massa</div>
+            <div class="hval" id="bm-val">—</div>
+            <div class="hrem">Km recuperado: <b id="bm-km">—</b></div>
+          </div>
+        </div>
+        <div class="kpis k4">
+          <div class="kpi"><div class="kl">Km recuperado ÷ km remunerado</div><div class="kv" id="bm-share">—</div><div class="km">quanto do remunerado veio da recomposição</div></div>
+          <div class="kpi"><div class="kl">R$/km da recomposição</div><div class="kv" id="bm-taxa">—</div><div class="km">R$ recuperado ÷ km recuperado</div></div>
+          <div class="kpi"><div class="kl">Unidades com balanço</div><div class="kv" id="bm-unis">—</div><div class="km" id="bm-unis-m">—</div></div>
+          <div class="kpi"><div class="kl">Vigências com balanço</div><div class="kv" id="bm-vigs">—</div><div class="km" id="bm-vigs-m">—</div></div>
+        </div>
+        <div class="gr2">
+          <div class="card gcard">
+            <div class="gtit">R$ recuperado</div>
+            <div class="gsub">Valor do balanço de massa (BRL) · por vigência</div>
+            <div class="gcv"><canvas id="chart-bm-rs"></canvas></div>
+          </div>
+          <div class="card gcard">
+            <div class="gtit">Km recuperado</div>
+            <div class="gsub">Km devolvido ao remunerado · por vigência</div>
+            <div class="gcv"><canvas id="chart-bm-km"></canvas></div>
           </div>
         </div>
       </section>
@@ -538,7 +576,7 @@ const SHEET_ID  = '1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM';
 const SHEET_TAB = 'Dispersão de km';
 
 let ALL = [];
-let chEvo = null, chImp = null, chKmFrota = null, chKmViagem = null, chProjKm = null, chProjPct = null;
+let chEvo = null, chImp = null, chKmFrota = null, chKmViagem = null, chProjKm = null, chProjPct = null, chBmRs = null, chBmKm = null;
 let drillKM = 'und', _lastTableArgs = null;
 
 function setDrillKM(v) {
@@ -1079,7 +1117,8 @@ function render() {
   const F = getFiltered();
 
   if(!F.length) {
-    ['hero-val','hero-rem','hero-kmfrota','hero-kmviagem','d-rem-abs','d-rem-pct','d-imp','d-ytd-abs','d-ytd-pct','d-ytd-imp','d-bm'].forEach(id => set(id, '—'));
+    ['hero-val','hero-rem','hero-kmfrota','hero-kmviagem','d-rem-abs','d-rem-pct','d-imp','d-ytd-abs','d-ytd-pct','d-ytd-imp','d-bm',
+     'bm-val','bm-km','bm-share','bm-taxa','bm-unis','bm-unis-m','bm-vigs','bm-vigs-m'].forEach(id => set(id, '—'));
     const body = document.getElementById('tbl-body');
     if(body) body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text2);padding:24px 8px;">Sem dados para os filtros selecionados</td></tr>`;
     const foot = document.getElementById('tbl-foot');
@@ -1109,6 +1148,17 @@ function render() {
   set('hero-rem', totRem ? fmt(totRem) : '—');
   const totRec = F.reduce((s, r) => s + (r.recomp || 0), 0), totBm = F.reduce((s, r) => s + (r.bmValor || 0), 0);
   set('d-bm', totRec ? `+${fmt(totRec)} km · R$ ${fmt(totBm)}` : '—');
+  /* visão Balanço de Massa: o MESMO total do hero, aberto em cards (Renan, 23/09/2026) */
+  set('bm-val', totBm ? 'R$ ' + fmt(totBm) : '—');
+  set('bm-km',  totRec ? '+' + fmt(totRec) + ' km' : '—');
+  set('bm-share', (totRec && totRem) ? (totRec / totRem * 100).toFixed(1).replace('.', ',') + '%' : '—');
+  set('bm-taxa',  totRec ? 'R$ ' + (totBm / totRec).toFixed(2).replace('.', ',') : '—');
+  const bmUnis = [...new Set(F.filter(r => (r.recomp || 0) > 0).map(r => r.und))].sort();
+  const bmVigs = [...new Set(F.filter(r => (r.recomp || 0) > 0).map(r => r.vig))].sort(sortVig);
+  set('bm-unis', bmUnis.length ? String(bmUnis.length) : '—');
+  set('bm-unis-m', bmUnis.length ? bmUnis.join(' · ') : 'nenhuma no recorte');
+  set('bm-vigs', bmVigs.length ? String(bmVigs.length) : '—');
+  set('bm-vigs-m', bmVigs.length ? 'média de R$ ' + fmt(totBm / bmVigs.length) + ' por mês' : 'nenhuma no recorte');
   set('hero-kmfrota', avgKmFrota ? fmt(avgKmFrota) : '—');
   set('hero-kmviagem', avgKmViagem ? fmt(avgKmViagem) : '—');
 
@@ -1224,6 +1274,8 @@ function renderCharts(F) {
   if(chKmViagem) { chKmViagem.destroy(); chKmViagem = null; }
   if(chProjKm)   { chProjKm.destroy();   chProjKm   = null; }
   if(chProjPct)  { chProjPct.destroy();  chProjPct  = null; }
+  if(chBmRs)     { chBmRs.destroy();     chBmRs     = null; }
+  if(chBmKm)     { chBmKm.destroy();     chBmKm     = null; }
   if(!F.length) return;
 
   const isLight  = document.body.classList.contains('claro');
@@ -1247,7 +1299,7 @@ function renderCharts(F) {
 
   const MONTHS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   const mData  = {};
-  for(let i = 1; i <= 12; i++) mData[i] = {rem:0, real:0, impSum:0, kmFrotaSum:0, viagensSum:0, cnt:0};
+  for(let i = 1; i <= 12; i++) mData[i] = {rem:0, real:0, impSum:0, kmFrotaSum:0, viagensSum:0, cnt:0, bmRs:0, bmKm:0};
   chartRows.forEach(r => {
     const m = +r.vig.split('/')[0];
     if(m >= 1 && m <= 12) {
@@ -1256,6 +1308,8 @@ function renderCharts(F) {
       mData[m].impSum     += r.imp;
       mData[m].kmFrotaSum += r.kmFrota;
       mData[m].viagensSum += r.viagens;
+      mData[m].bmRs       += r.bmValor || 0;
+      mData[m].bmKm       += r.recomp  || 0;
       mData[m].cnt        += 1;
     }
   });
@@ -1397,6 +1451,39 @@ function renderCharts(F) {
       }
     }
   });
+
+  /* BALANÇO DE MASSA mês a mês (Renan, 23/09/2026): R$ recuperado e km
+     recuperado, no padrão de barra do painel — laranja com alfa D9 no foco /
+     33 fora / A6 sem foco, borda cheia, canto 3, rótulo no topo, eixo Y escondido. */
+  const bmChart = (id, key, fmtRot) => {
+    const cv = document.getElementById(id); if(!cv) return null;
+    const data = MONTHS.map((_, i) => mData[i+1].cnt > 0 ? mData[i+1][key] : null);
+    const bg = MONTHS.map((_, i) => {
+      const m = i + 1; if(mData[m].cnt === 0) return 'transparent';
+      return '#F97316' + (hasVigFilter ? (hiMonths.has(m) ? 'D9' : '33') : 'A6');
+    });
+    const bc = MONTHS.map((_, i) => mData[i+1].cnt === 0 ? 'transparent' : '#F97316');
+    return new Chart(cv.getContext('2d'), {
+      type:'bar',
+      data:{ labels: MONTHS, datasets:[{ label:key === 'bmRs' ? 'R$ RECUPERADO' : 'KM RECUPERADO', data, backgroundColor:bg, borderColor:bc, borderWidth:1, borderRadius:3 }] },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        layout:{padding:{top:35}},
+        plugins:{
+          legend:{display:false}, tooltip,
+          datalabels:{
+            display: function(ctx){ const v = data[ctx.dataIndex]; return v !== null && v > 0 && (!hasVigFilter || hiMonths.has(ctx.dataIndex + 1)); },
+            anchor:'end', align:'top', color: dlColor,
+            font:{family:'Montserrat',size:isMobile?8:14,weight:'700'},
+            formatter: fmtRot
+          }
+        },
+        scales:{ x:{grid, ticks:tick}, y:{display:false, beginAtZero:true} }
+      }
+    });
+  };
+  chBmRs = bmChart('chart-bm-rs', 'bmRs', v => v !== null ? 'R$ ' + fmt(v) : '');
+  chBmKm = bmChart('chart-bm-km', 'bmKm', v => v !== null ? fmt(v) : '');
 
   const kmFrotaLine = MONTHS.map((_, i) => {
     const m = i + 1;
@@ -1590,7 +1677,7 @@ render=function(){
 };
 
 /* ── navegação entre as visões ────────────────────────────────────────────── */
-const TIT={resumo:'Resumo Gerencial',eficiencia:'Eficiência e Projetos',dispersao:'Dispersão de KM',placas:'Placas'};
+const TIT={resumo:'Resumo Gerencial',eficiencia:'Eficiência e Projetos',dispersao:'Dispersão de KM',placas:'Placas',balanco:'Balanço de Massa'};
 let VW='resumo';
 function setVw(v){
   VW=v;
@@ -1656,6 +1743,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609202140"></script>
+<script src="../assets/build-check.js?v=202609231000"></script>
 </body>
 </html>
