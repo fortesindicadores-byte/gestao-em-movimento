@@ -28,8 +28,23 @@
   var SUPA = 'https://lozwipoeacpvplgkrxkq.supabase.co';
   var KEY = 'sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
   var MAX_IDADE = 12 * 60 * 60 * 1000;   // idade máxima do SNAPSHOT (o banco não tem teto)
-  var PAG = 1000;                        // teto de linhas por leitura do PostgREST
+  // Pedimos até PAG_MAX linhas por leitura; o PostgREST devolve no máximo o
+  // "Max rows" da API do projeto (1.000 por padrão) e a página se adapta ao que
+  // voltou. Com o Max rows em 10.000 a Visão Financeira cai de 36 leituras
+  // para 4 — sem mexer aqui de novo (24/09/2026, o banco caiu sob leitura).
+  var PAG_MAX = 10000;
   var fetchOrig = window.fetch ? window.fetch.bind(window) : null;
+  // MEMÓRIA DA PÁGINA-MÃE (Check de Metas): cada slide abre o painel num
+  // iframe novo e relia o banco inteiro — 46 slides eram ~mil leituras de
+  // tabela grande em vinte minutos, e foi durante isso que o Nano parou de
+  // responder (24/09/2026). A mãe expõe window.__gvizMem = {} e os iframes,
+  // na mesma origem, guardam e reaproveitam ali tudo que já leram: as abas
+  // reconstruídas (por chave gviz) e os GETs ao REST (por URL + cabeçalhos).
+  var MEM = (function () {
+    try { var p = window.parent; if (p && p !== window && p.__gvizMem && typeof p.__gvizMem === 'object') return p.__gvizMem; } catch (e) { /* origem diferente */ }
+    return null;
+  })();
+  function memConta(campo) { if (!MEM) return; MEM.__n = MEM.__n || { hit: 0, miss: 0 }; MEM.__n[campo]++; }
 
   // ── reconstrução do payload gviz a partir das linhas tipadas ────────────
   // Exposta em window.GvizRebuild porque o Sheets Gviz Check roda ESTE mesmo
@@ -176,6 +191,7 @@
   var basesP = null;
   function bases() {
     if (!basesP) {
+      if (MEM && MEM.__bases) { memConta('hit'); basesP = Promise.resolve(MEM.__bases); return basesP; }
       basesP = rest('sh_base?select=slug,gviz_chave,colunas,linhas,erro,carregado_em')
         .then(function (r) { return r.ok ? r.json() : []; })
         .then(function (rows) {
@@ -184,25 +200,30 @@
             if (b.gviz_chave && b.colunas && b.linhas > 0 && confiavel(b)) m[b.gviz_chave] = b;
             else if (b.gviz_chave && b.erro) { try { console.warn('gviz-cache: base', b.slug, 'fora do banco —', b.erro.slice(0, 120)); } catch (_) {} }
           });
+          if (MEM && rows && rows.length) { memConta('miss'); MEM.__bases = m; }
           return m;
         })
         .catch(function () { return {}; });
     }
     return basesP;
   }
-  // as linhas de sh_<slug>, em ordem, paginadas de PAG em PAG (o PostgREST
-  // devolve no máximo 1.000 por leitura e há aba com 57 mil linhas)
+  function pagina(b, de, ate) {
+    return rest('sh_' + b.slug + '?select=*&order=linha.asc', { Range: de + '-' + ate })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  }
+  // as linhas de sh_<slug>, em ordem. A 1ª leitura pede PAG_MAX; o tamanho do
+  // que voltou é o teto do servidor e vira o passo das leituras seguintes, que
+  // saem em paralelo (há aba com 57 mil linhas).
   function linhasDa(b) {
-    var pags = Math.ceil(b.linhas / PAG), ps = [];
-    for (var i = 0; i < pags; i++) {
-      ps.push(rest('sh_' + b.slug + '?select=*&order=linha.asc', { Range: (i * PAG) + '-' + (i * PAG + PAG - 1) })
-        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }));
-    }
-    return Promise.all(ps).then(function (pp) {
-      var linhas = [].concat.apply([], pp);
+    return pagina(b, 0, PAG_MAX - 1).then(function (p0) {
       // tabela vazia conta como FALHA: anon sem sessão do hub recebe [] em vez
       // de 401, e sem isso o painel abriria zerado em vez de cair para o gviz
-      return linhas.length ? linhas : null;
+      if (!p0 || !p0.length) return null;
+      var pag = p0.length;
+      if (pag >= b.linhas) return p0;                       // coube numa leitura
+      var ps = [];
+      for (var de = pag; de < b.linhas; de += pag) ps.push(pagina(b, de, de + pag - 1));
+      return Promise.all(ps).then(function (pp) { return p0.concat([].concat.apply([], pp)); });
     });
   }
 
@@ -248,7 +269,21 @@
   }
 
   // devolve {obj, corpo} ou null; anota a fonte. csv=true responde texto CSV.
+  // Na memória da mãe fica só o CORPO (texto): o obj é reconstruído a cada
+  // hit, porque o painel recebe o objeto por referência (JSONP) e pode mexer nele.
   function resolve(key, csv) {
+    var mk = key + (csv ? '|csv' : '');
+    if (MEM && MEM[mk]) {
+      var g = MEM[mk]; memConta('hit');
+      window.GvizCache.hits++; window.GvizCache.fontes[key] = g.fonte + ' (memória)';
+      return Promise.resolve(csv ? { corpo: g.corpo } : { obj: parseGviz(g.corpo), corpo: g.corpo });
+    }
+    return resolveBanco(key, csv).then(function (r) {
+      if (r && MEM) { memConta('miss'); MEM[mk] = { corpo: r.corpo, fonte: window.GvizCache.fontes[key] }; }
+      return r;
+    });
+  }
+  function resolveBanco(key, csv) {
     return bases().then(function (m) {
       var b = m[APELIDOS[key] || key];
       if (!b) return null;
@@ -278,10 +313,42 @@
     });
   }
 
+  // ── GET ao REST do Supabase dentro do Check de Metas: memória por URL ────
+  // Vale para o que o painel lê por supabase-js (elite_snapshot, fca,
+  // custo_vigencia_mv…). Só GET, só /rest/v1/, só com a mãe presente. A chave
+  // leva os cabeçalhos que mudam a resposta (Range, Prefer, Accept).
+  var CAB = ['range', 'range-unit', 'prefer', 'accept', 'accept-profile'];
+  function chaveRest(input, init) {
+    if (!MEM) return null;
+    try {
+      var url = (typeof input === 'string') ? input : (input && input.url);
+      if (!url || url.indexOf(SUPA + '/rest/v1/') !== 0) return null;
+      var met = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+      if (met !== 'GET') return null;
+      var h = new Headers((init && init.headers) || (input && input.headers) || {});
+      return 'rest|' + url + '|' + CAB.map(function (c) { return c + '=' + (h.get(c) || ''); }).join('&');
+    } catch (e) { return null; }
+  }
+  function guardaRest(mk, r) {
+    if (!r || !r.ok) return Promise.resolve(r);
+    var ct = r.headers.get('content-type') || 'application/json', cr = r.headers.get('content-range');
+    return r.clone().text().then(function (t) {
+      MEM[mk] = { texto: t, status: r.status, ct: ct, cr: cr }; memConta('miss');
+      return r;
+    }).catch(function () { return r; });
+  }
+  function daMemoria(mk) {
+    var g = MEM[mk]; memConta('hit');
+    var h = { 'Content-Type': g.ct }; if (g.cr) h['Content-Range'] = g.cr;
+    return Promise.resolve(new Response(g.texto, { status: g.status, headers: h }));
+  }
+
   // ── fetch ──────────────────────────────────────────────────
   window.fetch = function (input, init) {
     try {
       var url = (typeof input === 'string') ? input : (input && input.url);
+      var mk = chaveRest(input, init);
+      if (mk) return MEM[mk] ? daMemoria(mk) : fetchOrig(input, init).then(function (r) { return guardaRest(mk, r); });
       if (url) {
         var key = chaveDe(url);
         if (key) {

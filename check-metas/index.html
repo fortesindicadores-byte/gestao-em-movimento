@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609241000">
+<meta name="build" content="202609242200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1744,6 +1744,13 @@ async function gerar(fmt){
   const t0=Date.now(); const saida=[]; let falhas=0, atencao=0;
   const temaDoRenan=localStorage.getItem('bi_theme');
   try{ localStorage.setItem('bi_theme','light'); }catch(e){}
+  /* MEMÓRIA DA GERAÇÃO (24/09/2026): cada slide abre o painel num iframe
+     novo, e cada iframe relia o banco inteiro — 46 slides eram ~mil leituras
+     de tabela grande, e foi durante isso que o banco parou de responder. O
+     gviz-cache.js dos iframes guarda aqui o que já leu (abas reconstruídas e
+     GETs ao REST) e o painel repetido não volta ao banco. Nasce vazia a cada
+     geração, para o deck sair todo do mesmo instante. */
+  window.__gvizMem={};
   try{
     await carregaFoto();
     try{ await document.fonts.load('800 104px Montserrat'); }catch(e){}
@@ -1775,6 +1782,8 @@ async function gerar(fmt){
     if(fmt==='pdf') await montaPDF(comFoto); else await montaPPT(comFoto);
     set('ov-tit','Pronto');
     set('ov-qual',comFoto.length+' slides · '+falhas+' falha(s) · '+atencao+' com atenção');
+    const mn=(window.__gvizMem&&window.__gvizMem.__n)||{hit:0,miss:0};
+    ovLog('Banco: '+mn.miss+' leitura(s) · '+mn.hit+' servida(s) da memória desta geração');
     ovLog('Arquivo salvo: '+nomeArq(fmt==='pdf'?'pdf':'pptx'));
   }catch(e){
     set('ov-tit','Não deu');
@@ -1782,6 +1791,7 @@ async function gerar(fmt){
   }finally{
     try{ if(temaDoRenan==null) localStorage.removeItem('bi_theme');
          else localStorage.setItem('bi_theme',temaDoRenan); }catch(e){}
+    window.__gvizMem=null;
     GERANDO=false; $('ov-fim').style.display='flex';
     set('ov-t',Math.round((Date.now()-t0)/1000)+'s');
     pintaRoteiro();
@@ -1888,6 +1898,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="slides.js?v=202609202300"></script>
-<script src="../assets/build-check.js?v=202609241000"></script>
+<script src="../assets/build-check.js?v=202609242200"></script>
 </body>
 </html>

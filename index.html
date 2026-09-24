@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609240500">
+<meta name="build" content="202609242200">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -136,6 +136,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
    dois arranjos, há um cluster por vez.                                     */
 #hub-screen{flex-direction:row;}
 .hmio .top{padding:0;flex-wrap:nowrap;}
+.hub-aviso{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--ambar);background:rgba(244,161,0,.10);border:1px solid rgba(244,161,0,.35);border-radius:8px;padding:8px 12px;}
 .hmio .top-dir{gap:9px;}
 /* 264px: a MESMA largura da lateral do Gerenciar Acessos (.adm-side) — com
    214px a barra ficava estreita ao lado do miolo largo e a marca quebrava
@@ -557,6 +558,7 @@ body.claro .farol-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rg
         <button class="ico-btn" id="btTema" onclick="trocaTema()" title="Claro / escuro"></button>
       </div>
     </header>
+    <div class="hub-aviso" id="hub-aviso" style="display:none"></div>
     <div class="board" id="board"></div>
   </main>
 </div>
@@ -795,42 +797,75 @@ document.addEventListener('click', e => {
   logAcesso(painel);
 });
 
-// Roteamento por papel: gestor (perfil com unidade e não-admin) vai direto pro preenchimento.
-// Trava por sessão p/ não prender (ele pode voltar ao hub). Falha silenciosa se a tabela não existir.
-async function maybeRouteByRole(user) {
-  if (sessionStorage.getItem('gem_routed')) return false;
-  try {
-    const { data: prof } = await sb.from('fca_profiles').select('unidade,is_admin').eq('user_id', user.id).maybeSingle();
-    if (prof && prof.unidade && !prof.is_admin) {
-      sessionStorage.setItem('gem_routed', '1');
-      sessionStorage.setItem('gem_hub', '1'); // libera acesso ao painel nesta sessão
-      await logAcesso('fca-preenchimento', user);   // gestor roteado direto não passa pelo hub
-      location.href = 'fca-preenchimento/';
-      return true;
-    }
-  } catch (e) {}
-  return false;
+/* ── O PERFIL NÃO SEGURA A TELA (24/09/2026) ──────────────────────────────
+   O banco caiu e o hub ficou em branco: os clusters estão escritos neste
+   arquivo, mas o showHub esperava fca_profiles — sem teto — antes de os
+   desenhar. Agora o perfil tem teto de 5 s, fica em cache no navegador
+   (gem_perfil_<uid>) e a tela é desenhada com o último papel conhecido antes
+   de o banco responder. Banco mudo vira a faixa #hub-aviso, não silêncio.  */
+const PERFIL_TETO = 5000;
+function perfilCache(uid) { try { return JSON.parse(localStorage.getItem('gem_perfil_' + uid) || 'null'); } catch (e) { return null; } }
+async function lePerfil(user) {
+  const r = await Promise.race([
+    sb.from('fca_profiles').select('unidade,is_admin').eq('user_id', user.id).maybeSingle(),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('o banco não respondeu em 5 s')), PERFIL_TETO))
+  ]);
+  if (r && r.error) throw new Error(r.error.message || 'erro do banco');
+  const d = (r && r.data) || {};
+  const prof = { unidade: String(d.unidade || ''), is_admin: !!d.is_admin };
+  try { localStorage.setItem('gem_perfil_' + user.id, JSON.stringify(prof)); } catch (e) {}
+  return prof;
+}
+let _bancoMudoDesde = null;
+function avisoBanco(erro) {
+  const el = document.getElementById('hub-aviso');
+  if (!el) return;
+  if (!erro) { el.style.display = 'none'; _bancoMudoDesde = null; return; }
+  if (!_bancoMudoDesde) _bancoMudoDesde = new Date();
+  const h = _bancoMudoDesde.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  el.textContent = 'Banco de dados sem resposta desde ' + h + ' (' + erro + ') · o hub abriu do cache e os painéis podem não carregar.';
+  el.style.display = '';
+}
+function aplicaPerfil(prof) {
+  _myUnits = String((prof && prof.unidade) || '').toUpperCase().split(',').map(u => u.trim()).filter(Boolean);
+  return !!(prof && prof.is_admin);
+}
+const ehGestor = prof => !!(prof && prof.unidade && !prof.is_admin);
+async function rotearGestor(user) {
+  sessionStorage.setItem('gem_routed', '1');
+  sessionStorage.setItem('gem_hub', '1'); // libera acesso ao painel nesta sessão
+  await logAcesso('fca-preenchimento', user);   // gestor roteado direto não passa pelo hub
+  location.href = 'fca-preenchimento/';
 }
 
 async function showHub(user) {
-  if (await maybeRouteByRole(user)) return;
   currentUser = user;
   isApproved = true;
   localStorage.setItem('bi_approved_' + user.id, '1');
   sessionStorage.setItem('gem_hub', '1');   // libera o acesso aos painéis nesta sessão (gate via hub)
   stopPolling();
+  const podeRotear = !sessionStorage.getItem('gem_routed');
+  const cache = perfilCache(user.id);
+  // Roteamento por papel: gestor (perfil com unidade e não-admin) vai direto
+  // pro preenchimento. Trava por sessão p/ não prender (ele pode voltar ao hub).
+  if (podeRotear && ehGestor(cache)) { await rotearGestor(user); return; }
   hideAll();
   document.getElementById('hub-screen').style.display = 'flex';
   const name = user.user_metadata?.name || user.email.split('@')[0];
   setQuem('hub', name);
-  let isAdmin = user.email === ADMIN_EMAIL;
-  try {
-    const { data: prof } = await sb.from('fca_profiles').select('unidade,is_admin').eq('user_id', user.id).maybeSingle();
-    if (prof && prof.is_admin) isAdmin = true;
-    _myUnits = String((prof && prof.unidade) || '').toUpperCase().split(',').map(u => u.trim()).filter(Boolean);
-  } catch (e) {}
-  renderBoard(isAdmin);
-  if (isAdmin) loadAdminBadge();
+  const admFixo = user.email === ADMIN_EMAIL;
+  // 1) desenha já, com o que se sabe (cache do perfil ou só o e-mail)
+  if (cache) renderBoard(admFixo || aplicaPerfil(cache));
+  else if (admFixo) renderBoard(true);
+  // 2) o banco refina — com teto. Sem cache e sem resposta, entra como Portal.
+  let prof = null, erro = null;
+  try { prof = await lePerfil(user); } catch (e) { erro = (e && e.message) || 'erro'; }
+  avisoBanco(erro);
+  if (prof) {
+    if (podeRotear && ehGestor(prof)) { await rotearGestor(user); return; }
+    renderBoard(admFixo || aplicaPerfil(prof));
+  } else if (!cache && !admFixo) renderBoard(false);
+  if (_isAdmin) loadAdminBadge();
   if (!_hubLogged) { _hubLogged = true; logAcesso('hub', user); }   // 1 registro por entrada no hub
 }
 
@@ -1478,6 +1513,6 @@ init();
 </script>
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202609240500"></script>
+<script src="assets/build-check.js?v=202609242200"></script>
 </body>
 </html>
