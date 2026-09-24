@@ -835,6 +835,10 @@ let provas1 = [];
      pr[3] && JSON.stringify(pr[3].estado.selVig));
 
   const ovlog = await pg.evaluate(() => (document.getElementById('ov-log')||{}).innerText || '');
+  /* O CRONÔMETRO (24/09/2026): o deck de 16.703 s não dizia onde o tempo foi */
+  af(/Tempo total .*abrir painéis .*esperar os dados .*ler\/fotografar .*montar o arquivo .*páginas/.test(ovlog),
+     'o log diz onde o tempo foi (abrir · esperar · ler · montar)', ovlog.split('\n').find(l => /Tempo total/.test(l)) || ovlog.slice(-200));
+  af(/Aba em segundo plano: nenhuma vez/.test(ovlog), 'e se a aba ficou escondida', (ovlog.match(/Aba em segundo plano[^\n]*/) || [''])[0]);
   af(pdf && pdf.pgs.length === nSlides, 'o PDF tem uma página por slide',
      (pdf && pdf.pgs.length + ' de ' + nSlides) + (pdf && pdf.pgs.length !== nSlides ? ' · log=' + ovlog.slice(-300) : ''));
   /* AGORA TODA página é arte de página inteira — capa, divisória e slide de
