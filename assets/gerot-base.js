@@ -543,17 +543,21 @@
     let rows; try{ rows=await fetchTabFrom(KML_ID,KML_TAB); }catch(e){ console.error('Gerot base — falha Km/L (comb)', e); return []; }
     const nRaw = c => { if(!c||c.v==null) return 0; const n=Number(c.v); return isFinite(n)?n:0; };
     const parsed = rows.map(r=>{ const c=r.c||[]; const vig=gvig(c[0]); if(!vig)return null;
-      return {vig, proj:String(c[14]&&c[14].v!=null?c[14].v:''), km:nRaw(c[22]), lit:nRaw(c[23]), rem:nRaw(c[4])}; }).filter(Boolean);
+      const proj=String(c[14]&&c[14].v!=null?c[14].v:''); const k=proj.indexOf('-');
+      return {vig, proj, pre:(k>=0?proj.slice(0,k):proj).trim(), km:nRaw(c[22]), lit:nRaw(c[23]), rem:nRaw(c[4])}; }).filter(Boolean);
     const vigsK=[...new Set(parsed.map(p=>p.vig))];
     COMB={};
     // COMB é sempre por FILIAL de origem — a fusão acontece depois, em combFunde.
     for(const uni of UNI_LIST_COMB){
       if(UNI_SEM_KM.has(uni)) continue;
       for(const vig of vigsK){
-        let km=0,lit=0,rems=[];
-        parsed.forEach(p=>{ if(p.vig!==vig||!projMatchUni(uni,p.proj))return; km+=p.km; lit+=p.lit; if(p.rem>0)rems.push(p.rem); });
+        let km=0,lit=0,rems=[]; const pj={};
+        parsed.forEach(p=>{ if(p.vig!==vig||!projMatchUni(uni,p.proj))return; km+=p.km; lit+=p.lit; if(p.rem>0)rems.push(p.rem);
+          const o=pj[p.pre]||(pj[p.pre]={s:0,n:0,km:0}); if(p.rem>0){o.s+=p.rem;o.n++;} o.km+=p.km; });
         if(!lit||!rems.length) continue;
-        (COMB[uni]=COMB[uni]||{})[vig]={km,lit,rems};
+        // litros que o remunerado previa: km ÷ rem médio de cada PROJETO no mês
+        let esp=0; Object.values(pj).forEach(o=>{ if(o.n&&o.km>0) esp+=o.km/(o.s/o.n); });
+        (COMB[uni]=COMB[uni]||{})[vig]={km,lit,rems,esp};
       }
     }
     const porVig={};
@@ -564,11 +568,18 @@
     for(const vig in porVig) recs.push(...combFunde(porVig[vig],vig));
     return recs;
   }
-  // uma filial: Km/L realizado = Σkm ÷ Σlitros, alvo = média do remunerado.
+  // uma filial — RÉGUA POR LITROS ESPERADOS, a MESMA do painel Km/L oficial
+  // (Renan, 24/09/2026: "Deve ler dos painéis oficiais"). Km/L realizado =
+  // Σkm ÷ Σlitros; alvo = Σkm ÷ Σ(litros previstos), com os previstos = km ÷ rem
+  // médio de cada projeto × mês; atingimento = previstos ÷ gastos. Antes o alvo
+  // era a média simples de todas as placas, e juntar ROTA (~3 km/L) com VAN
+  // (~7 km/L) desse jeito punha a unidade abaixo dos próprios projetos: o GRL
+  // de ago/26 saía 95% tendo batido o remunerado nos dois. Simulado antes de
+  // trocar (Elite Comb Simula): em ago/26 6 unidades mudam de posição.
   function combUm(uni,vig,o){
-    if(!o||!o.lit||!o.rems.length) return null;
-    const rem=o.rems.reduce((s,x)=>s+x,0)/o.rems.length; if(!rem) return null;
-    const real=o.km/o.lit, atg=real/rem*100;
+    if(!o||!o.lit||!o.rems.length||!(o.esp>0)) return null;
+    const rem=o.km/o.esp; if(!rem) return null;
+    const real=o.km/o.lit, atg=o.esp/o.lit*100;
     return {field:'comb',label:'Combustível',unit:uni,vig,meta:rem,real,atg,atgMeta:atg,_km:o.km,_lit:o.lit};
   }
   // FUSÃO do combustível — pool de LITROS, não Σkm ÷ Σlitros (bug real, 18/08/2026):
@@ -595,9 +606,9 @@
     if(!COMB) return [];
     const fim=vigs[vigs.length-1], itens=[];
     for(const uni in COMB){
-      let km=0,lit=0,rems=[];
-      vigs.forEach(v=>{ const o=COMB[uni][v]; if(!o)return; km+=o.km; lit+=o.lit; rems.push(...o.rems); });
-      const r=combUm(uni,fim,{km,lit,rems}); if(r) itens.push(r);
+      let km=0,lit=0,rems=[],esp=0;
+      vigs.forEach(v=>{ const o=COMB[uni][v]; if(!o)return; km+=o.km; lit+=o.lit; rems.push(...o.rems); esp+=o.esp||0; });
+      const r=combUm(uni,fim,{km,lit,rems,esp}); if(r) itens.push(r);
     }
     return combFunde(itens,fim);
   }

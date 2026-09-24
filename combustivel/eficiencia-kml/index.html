@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609101610">
+<meta name="build" content="202609250000">
 <title>Km/L — Eficiência de Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -923,9 +923,15 @@ function getYtdVigs(f){
 
 // ── AGREGAÇÃO ──
 function aggRows(rows){
-  // remMode='medio' (OFICIAL): coluna KM/l Rem Médio (col rem). No PROJETO é
-  //   média burra (média simples). Ao subir para UNIDADE/EMPRESA, pondera cada
-  //   projeto pelo seu KM RODADO do projeto (não pela placa).
+  // remMode='medio' (OFICIAL) — RÉGUA POR LITROS ESPERADOS (Renan, 24/09/2026):
+  //   dentro de cada PROJETO × MÊS o remunerado é a média simples da coluna
+  //   KM/l Rem Médio; os litros que o remunerado previa são km ÷ esse rem; e o
+  //   Km/L Rem do agregado é Σkm ÷ Σ(litros previstos). Era média por projeto
+  //   ponderada pelo KM, que junta frotas de km/L muito diferentes (ROTA ~3,
+  //   VAN ~7) pelo km enquanto o realizado (Σkm ÷ Σlitros) as junta pelos
+  //   LITROS: o GRL de ago/26 saía −7,7% tendo batido o remunerado em ROTA
+  //   (+1,8%) e em VAN (+15,4%). Pela régua de litros, +2,9%. É a mesma conta
+  //   do Frota de Elite/Gerot (gerot-base), da Árvore e da fusão do MACACU.
   // remMode='modelo': coluna Km/L Rem Modelo (col remM) ponderada pelo KM
   //   RODADO DA PLACA (ex.: placa A rem 2·100km e B rem 3·900km → 2,90).
   let sumKm=0,sumLitros=0,sumRsL=0,sumRemMKm=0,sumKmRem=0,sumPKm=0,sumKmP=0;
@@ -938,15 +944,17 @@ function aggRows(rows){
     // Remunerado (e não realizado) para isolar o efeito EFICIÊNCIA do efeito PREÇO.
     const pRem=remPriceFor(r), rsLimp=(pRem!=null&&pRem>0)?pRem:rsL;
     if(km>0&&rsLimp>0){sumPKm+=rsLimp*km;sumKmP+=km;}
-    const p=getProj(r)||'—';
+    const _d=_pvK(r[CL.vig]);
+    const p=(getProj(r)||'—')+'|'+(_d?_d.getFullYear()*100+_d.getMonth():String(r[CL.vig]));
     if(!proj[p])proj[p]={sumRem:0,cnt:0,km:0};
-    if(rem>0){proj[p].sumRem+=rem;proj[p].cnt++;}         // média burra no projeto
+    if(rem>0){proj[p].sumRem+=rem;proj[p].cnt++;}         // média simples no projeto × mês
     proj[p].km+=km;
   });
-  // médio: média burra por projeto, projetos ponderados pelo km do projeto
-  let sMp=0,kMp=0;
-  Object.values(proj).forEach(v=>{const rp=v.cnt>0?v.sumRem/v.cnt:null; if(rp!=null&&v.km>0){sMp+=rp*v.km;kMp+=v.km;}});
-  const remMedio=kMp>0?sMp/kMp:null;
+  // médio: litros que o remunerado previa (km ÷ rem de cada projeto × mês);
+  // Km/L Rem = Σkm ÷ Σ litros previstos → real ÷ rem = litros previstos ÷ gastos
+  let litEsp=0;
+  Object.values(proj).forEach(v=>{const rp=v.cnt>0?v.sumRem/v.cnt:null; if(rp>0&&v.km>0)litEsp+=v.km/rp;});
+  const remMedio=litEsp>0?sumKm/litEsp:null;
   const remModelo=sumKmRem>0?sumRemMKm/sumKmRem:null;
   const remAvg=remMode==='modelo'?remModelo:remMedio;
   const realWt=sumLitros>0?sumKm/sumLitros:null;
@@ -963,8 +971,8 @@ function aggRows(rows){
 // Por vir dos MESMOS dois números que a tela mostra, o sinal do impacto sempre
 // acompanha o sinal do ▲: real melhor que o remunerado = economia (verde),
 // pior = perda (vermelho). Antes o impacto era a soma placa a placa e podia
-// sair com o sinal contrário ao ▲ da linha, porque o REM do agregado é média
-// simples por projeto e não a média ponderada que a soma das placas embute.
+// sair com o sinal contrário ao ▲ da linha, porque o REM do agregado vem do
+// rem médio de cada projeto × mês (litros previstos), não do de cada placa.
 function calcImpacto(agg){
   if(!agg) return null;
   const {remAvg,realWt,sumKm,rsLRem}=agg;
@@ -1019,7 +1027,7 @@ function buildImpactoExport(active){
     ['Soma placa a placa vs Média Geral (R$):',_round(sumMed,2)],
     ['Soma placa a placa vs Média Modelo (R$):',_round(sumMod,2)],
     ['A soma das placas NÃO precisa bater com o impacto do painel: o REM do agregado'],
-    ['é média simples por projeto, e não a média que a soma das placas embute.'],
+    ['é Σkm ÷ Σ(litros previstos), com o rem médio de cada projeto × mês — não o de cada placa.'],
   ];
   return { nome:'Impacto Km-L', base, memoria };
 }
@@ -1233,7 +1241,7 @@ function renderVeiTable(active,ytd){
     const delta=real-rem,deltaP=rem?delta/Math.abs(rem)*100:null;
     // mesmo cálculo do resumo, agora na placa: o ▲ dela em litros × R$/L remunerado.
     // Serve para ACHAR o veículo — a soma das placas não precisa dar o total da
-    // unidade, porque lá o REM é média simples por projeto (ver memória de cálculo).
+    // unidade, porque lá o REM vem do rem de cada projeto × mês (ver memória de cálculo).
     const rb=remMode==='modelo'?remM:rem;
     const pRem=remPriceFor(r), rsLimp=(pRem!=null&&pRem>0)?pRem:rsL;
     const litrosSaved=km>0&&rb>0&&real>0?km/rb-km/real:null;
@@ -1383,6 +1391,6 @@ function applyTheme(t){document.body.classList.toggle('light-mode',t==='light');
 <script src="../../assets/mobile.js?v=202608220020"></script>
 <script src="../../assets/ctrlk.js"></script>
 <script src="../../assets/sortable-table.js?v=202609042200"></script>
-<script src="../../assets/build-check.js?v=202609101610"></script>
+<script src="../../assets/build-check.js?v=202609250000"></script>
 </body>
 </html>
