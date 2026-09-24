@@ -689,9 +689,11 @@ console.log('\n═══ 1 · o roteiro sai da tabela `fca`, não de uma lista f
   af(comb.length === 8, 'Combustíveis: a Árvore e o FCA em slides próprios (4 recortes)', comb.length);
   af(comb.filter(s => /arvore-combustivel/.test(s.url || '')).length === 3,
      'três árvores Ambev, uma por unidade+projeto', JSON.stringify(comb.map(s => s.url)));
-  /* o R$ do subtítulo é o do FCA (pacote = conta + Arla); a árvore mostra só a conta — o subtítulo diz qual é qual */
-  af(comb.filter(s => /arvore-combustivel/.test(s.url || '')).every(s => /desvio do pacote no FCA: R\$/.test(s.sub) && /só a conta Combustíveis/.test(s.sub)),
-     'o subtítulo da árvore diz que o R$ é o do pacote no FCA e que a árvore mostra só a conta', comb.filter(s => /arvore-combustivel/.test(s.url || '')).map(s => s.sub).join(' | '));
+  /* SEM R$ no subtítulo da árvore (Renan, 24/09/2026: "Tire esse desvio ali. Confunde"): só "Árvore de Combustível · vigência" */
+  af(comb.filter(s => /arvore-combustivel/.test(s.url || '')).every(s => /^Árvore de Combustível · [a-z]{3}\/\d{4}$/.test(s.sub)),
+     'o subtítulo da árvore é só "Árvore de Combustível · vigência", sem R$', comb.filter(s => /arvore-combustivel/.test(s.url || '')).map(s => s.sub).join(' | '));
+  af(comb.filter(s => /fca-consolidado/.test(s.url || '')).every(s => /desvio de R\$/.test(s.sub)),
+     'o R$ do desvio fica só no slide do FCA', comb.filter(s => /fca-consolidado/.test(s.url || '')).map(s => s.sub).join(' | '));
   /* A ANG É A SEARA (bug real, 20/09/2026: "Árvore Seara saiu tudo zerado"):
      a Árvore Ambev não tem a unidade, então a dela sai da Árvore da Seara. */
   const arvAng = comb.find(s => /ANG/.test(s.tit || '') && !/fca/.test(s.url || ''));
