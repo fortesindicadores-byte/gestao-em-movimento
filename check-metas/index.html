@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609240900">
+<meta name="build" content="202609241000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -683,12 +683,11 @@ function montaRoteiro(avisa){
       const arvPrep=seara
         ? `__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.redesenha('onFilterChange'); ${encolhe}`
         : `__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni+'|'+semTier(d.uni)])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); __cm.redesenha('onFilterChange'); ${encolhe}`;
-      /* O R$ DO SUBTÍTULO É O DO FCA — o pacote Combustíveis (conta Combustíveis
-         + Arla, como o fca-preenchimento monta); a árvore mostra SÓ a conta
-         Combustíveis ("conta é conta"). Os dois números são diferentes de
-         propósito (Renan, 24/09/2026: "41454 não 40706"), então o subtítulo diz
-         de qual dos dois está falando. */
-      R.push(P(g.pac+' – '+nomeDe(d),'Árvore de Combustível'+(seara?' · Seara':'')+' · '+vX+' · desvio do pacote no FCA: R$ '+d.brl.toLocaleString('pt-BR')+(seara?'':' · a árvore mostra só a conta Combustíveis, sem Arla'),
+      /* SEM R$ NO SUBTÍTULO DA ÁRVORE (Renan, 24/09/2026: "Tire esse desvio ali.
+         Confunde. Deixe apenas o árvore de combustível e a vigência"). O R$ do FCA
+         é o pacote (conta Combustíveis + Arla) e a árvore mostra só a conta —
+         dois números diferentes lado a lado pareciam erro. O R$ fica no slide do FCA. */
+      R.push(P(g.pac+' – '+nomeDe(d),'Árvore de Combustível'+(seara?' · Seara':'')+' · '+vX,
         seara?'../combustivel/seara/arvore/':'../combustivel/arvore-combustivel/',arvPrep,
         {foto:true,escala:.94,alvo:"document.querySelector('.tree-wrap')||document.querySelector('.tree')"}));
       if(d.feito) R.push(P(g.pac+' – '+nomeDe(d),'FCA · '+subDe(d),'../fca-consolidado/',fcaDe(d)));
@@ -1889,6 +1888,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="slides.js?v=202609202300"></script>
-<script src="../assets/build-check.js?v=202609240900"></script>
+<script src="../assets/build-check.js?v=202609241000"></script>
 </body>
 </html>
