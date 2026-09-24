@@ -36,7 +36,7 @@ const SL = { W:1600, H:900, esc:2 };
    cada camada VIRA depois de composta — medido sobre o fundo do tema claro.
    Trocar isto por cor chapada inventada é o que faz o card brigar com o fundo. */
 const TK = {
-  fundo:'#E1E2E5',     // a página do portal no claro
+  fundo:'#F0F0F0',     // Renan, 24/09/2026: o cinza claro da página do painel ("esse cinza fica cinza demais"); era #E1E2E5
   card:'#F2F3F5',      // o branco translúcido do card, já composto sobre o fundo
   cardBrd:'rgba(15,23,42,.10)',
   linha:'rgba(15,23,42,.10)',

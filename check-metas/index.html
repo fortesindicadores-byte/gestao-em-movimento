@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609242330">
+<meta name="build" content="202609250600">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -846,7 +846,7 @@ function desenhaCapa(s,W,H){
   const x=110*k;
   ctx.textBaseline='alphabetic';
   ctx.fillStyle=LARANJA; ctx.font=`800 ${Math.round(17*k)}px Montserrat, sans-serif`;
-  txtEsp(ctx,'GESTÃO EM MOVIMENTO · FORTES INDICADORES',x,H*.40,4.5*k);
+  txtEsp(ctx,'GESTÃO EM MOVIMENTO',x,H*.40,4.5*k);
   ctx.fillStyle='#FFFFFF'; ctx.font=`800 ${Math.round(104*k)}px Montserrat, sans-serif`;
   ctx.fillText(s.tit,x,H*.40+118*k);
   ctx.fillStyle=LARANJA; ctx.fillRect(x,H*.40+160*k,150*k,7*k);
@@ -1484,7 +1484,7 @@ async function tiraFoto(win,el){
   /* O FUNDO DA FOTO É O DO SLIDE (Renan, 20/09/2026: "sem fundo branco" ·
      "sem esses fundos brancos porra"). Pegando o do painel, a árvore vinha
      sobre um branco que virava uma placa dentro do slide cinza. */
-  const doSlide=(window.SlidePadrao&&window.SlidePadrao.TK.fundo)||'#E1E2E5';
+  const doSlide=(window.SlidePadrao&&window.SlidePadrao.TK.fundo)||'#F0F0F0';
   const bg=doSlide;
   const nodes=prep?prep.preparar(el,true):null;
   const o={scale:2,backgroundColor:bg,useCORS:true,logging:false};
@@ -1900,7 +1900,7 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202609202300"></script>
-<script src="../assets/build-check.js?v=202609242330"></script>
+<script src="slides.js?v=202609250600"></script>
+<script src="../assets/build-check.js?v=202609250600"></script>
 </body>
 </html>
