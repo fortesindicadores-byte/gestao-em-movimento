@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609232100">
+<meta name="build" content="202609242330">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="../../assets/pdf-export.js"></script>
@@ -637,7 +637,13 @@ function renderStatic() {
 // ═══════════════════════════════════════════════
 // FILTROS
 // ═══════════════════════════════════════════════
-const getNv3Prefix = v => v ? v.split('-')[0].trim() : v;
+// VAN É UM PROJETO SÓ (Renan, 24/09/2026: "chame tudo de Van, não 'Rota (Van)'"):
+// o DRE e a Dispersão de km escrevem "ROTA (VAN) - GRL" e a aba Km/L escreve
+// "VAN - GRL". Como a árvore junta as três fontes pelo rótulo, as vans viravam
+// dois projetos — um com custo e km, outro com km/L e R$/L — e o filtro
+// listava ROTA · ROTA (VAN) · VAN. Aqui os dois nomes viram VAN.
+const VAN_ALIAS = p => /^ROTA\s*\(VAN\)$/i.test(p) ? 'VAN' : p;
+const getNv3Prefix = v => v ? VAN_ALIAS(v.split('-')[0].trim()) : v;
 // Unidade = sufixo do nível 3, com "(INATIVO)" removido — mescla "MCC (INATIVO)" em "MCC"
 // (mesma regra da Visão Financeira). Sem isso, o filtro lista unidades duplicadas e a
 // agregação por unidade perde as linhas marcadas como inativas.
@@ -1141,6 +1147,6 @@ function applyTheme(t){document.body.classList.toggle('light-mode',t==='light');
 <script src="../../assets/mobile.js?v=202608220020"></script>
 <script src="../../assets/ctrlk.js"></script>
 <script src="../../assets/sortable-table.js?v=202609042200"></script>
-<script src="../../assets/build-check.js?v=202609232100"></script>
+<script src="../../assets/build-check.js?v=202609242330"></script>
 </body>
 </html>
