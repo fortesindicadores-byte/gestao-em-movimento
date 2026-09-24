@@ -72,6 +72,10 @@ function desenha(cv,q,vx,vy,o){
   const rotulo=o.rotulo||(p=>p.nome||p.ent);
   const dest=o.destaque?q.pts.filter(o.destaque):q.pts, resto=o.destaque?q.pts.filter(p=>!o.destaque(p)):[];
   const muitos=q.n>40;
+  // Receita × um custo em R$ → o índice Custo/Receita % entra na dica (Renan, 24/09/2026).
+  const ehRec=v=>v&&v.id==='receita', ehCusto=v=>v&&v.f==='brl'&&(v.b||[]).indexOf('custo')>=0;
+  const idx=ehRec(vx)&&ehCusto(vy)?{c:'y',r:'x',v:vy}:ehRec(vy)&&ehCusto(vx)?{c:'x',r:'y',v:vx}:null;
+  const idxTxt=p=>{ const r=p[idx.r], c=p[idx.c]; return `${idx.v.ab}/Receita: ${r>0&&isFinite(c)?(c/r*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%':'—'}`; };
   const ds=[];
   if(resto.length) ds.push({type:'scatter',label:'rede',data:resto.map(p=>({x:p.x,y:p.y,p})),backgroundColor:(s.cinza||'#5B657C')+'99',borderColor:s.cinza||'#5B657C',borderWidth:0,pointRadius:s.isMobile?2.5:(muitos?3:5),pointHoverRadius:7,order:2});
   ds.push({type:'scatter',label:'destaque',data:dest.map(p=>({x:p.x,y:p.y,p})),backgroundColor:'#F97316',borderColor:'#FFFFFF',borderWidth:o.destaque?1:0,pointRadius:s.isMobile?3.5:(muitos?3.5:6),pointHoverRadius:8,order:1});
@@ -81,7 +85,7 @@ function desenha(cv,q,vx,vy,o){
       quad:{rx:q.rx,ry:q.ry,rot:q.rot,melhor:q.melhor,pior:q.pior,corLinha:s.isLight?'rgba(60,70,90,.45)':'rgba(148,163,184,.5)',corTxt:s.isLight?'#5B6478':'#94A3B8',corMelhor:s.isLight?'rgba(0,179,0,.10)':'rgba(59,179,59,.10)',corPior:s.isLight?'rgba(255,0,0,.07)':'rgba(255,82,82,.08)'},
       datalabels:{display:!muitos,align:'top',offset:3,color:s.dlColor||'#F1F5F9',font:{family:'Montserrat',size:s.isMobile?8:9.5,weight:'700'},formatter:v=>rotulo(v.p),clamp:true},
       tooltip:Object.assign({},s.tooltip||{},{callbacks:{title:i=>{ const p=i[0].raw.p; return `${rotulo(p)}${p.cod&&p.cod!==p.ent&&p.cod!==rotulo(p)?' · '+p.cod:''} · ${p.meses} ${p.meses===1?'mês':'meses'}`; },
-        label:i=>{ const p=i.raw.p; return [`${vx.ab}: ${fmt(vx,p.x)}`,`${vy.ab}: ${fmt(vy,p.y)}`,`quadrante: ${q.rot[p.q]}${p.q===q.melhor?' (melhor)':p.q===q.pior?' (pior)':''}`]; }}})},
+        label:i=>{ const p=i.raw.p; return [`${vx.ab}: ${fmt(vx,p.x)}`,`${vy.ab}: ${fmt(vy,p.y)}`].concat(idx?[idxTxt(p)]:[]).concat([`quadrante: ${q.rot[p.q]}${p.q===q.melhor?' (melhor)':p.q===q.pior?' (pior)':''}`]); }}})},
     scales:{x:{type:'linear',ticks:Object.assign({},s.tick||{},{callback:v=>fmt(vx,v),maxTicksLimit:7}),grid:s.grid||{},border:{display:false}},
       y:{type:'linear',ticks:Object.assign({},s.tick||{},{callback:v=>fmt(vy,v),maxTicksLimit:7}),grid:s.grid||{},border:{display:false}}}},
     plugins:[plugin].concat(o.plugDL||[])});
