@@ -58,8 +58,6 @@ export const BASES = [
   { slug: 'consumo_rem_modelo', id: WB.KML, sheet: 'Base Remunerado Modelo', nome: 'Consumo · Base Remunerado Modelo' },
 
   // ── Disponibilidade (painel antigo, lê as abas do Consolidado) ──
-  { slug: 'disp_disponibilidade',   id: WB.TERM, sheet: 'Disponibilidade',   nome: 'Disponibilidade (aba)' },
-  { slug: 'disp_indisponibilidade', id: WB.TERM, sheet: 'Indisponibilidade', nome: 'Indisponibilidade (aba)' },
   { slug: 'disp_ativos',            id: WB.TERM, sheet: 'Ativos',            nome: 'Ativos (aba do Consolidado)' },
 
   // ── Auditorias / FCA / Metas ──
@@ -92,7 +90,6 @@ export const BASES = [
 
   // ── Seara (os parâmetros são os que o painel manda) ──
   { slug: 'seara_remunerado',  id: WB.SEARA, gid: '0', headers: '1',  nome: 'Seara · Base Remunerado' },
-  { slug: 'seara_ctes',        id: WB.SEARA, gid: '1672208132', headers: '1', tq: 'select B, C, D, J', nome: 'Seara · Base CTEs' },
   { slug: 'seara_combustivel', id: WB.SEARA, gid: '1982300845', headers: '1', nome: 'Seara · Combustível' },
   // As consultas AGREGADAS (tq com sum/count/group by) são calculadas pelo
   // Google — para sair do Sheets, cada uma vira a sua própria tabela, com o
