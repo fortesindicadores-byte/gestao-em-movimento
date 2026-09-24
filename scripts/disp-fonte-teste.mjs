@@ -26,6 +26,8 @@ const RAIZ = new URL('..', import.meta.url).pathname;
 
 /* ---------- o que cada lado devolve ---------- */
 // eventos abertos, como o app grava (unidade JÁ é o código do portal)
+// 'ontem' em BRT, para o teste não envelhecer (a fixture tinha 18/09 fixo)
+const ONTEM=(()=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');})();
 const EVENTOS = [
   { unidade:'GRL', unidade_nome:'CDD GUARULHOS', projeto:'ROTA', placa:'CIS7492', modelo:'VW 17.190',
     grupo:'CORRETIVA', descricao_problema:'Troca de embreagem', local_manutencao:'EXTERNO',
@@ -33,7 +35,7 @@ const EVENTOS = [
     data_retorno:null, updated_at:'2026-09-19T15:43:57.000Z' },
   { unidade:'GRL', unidade_nome:'CDD GUARULHOS', projeto:'ROTA', placa:'RUR5G11', modelo:'VW 26.260',
     grupo:'PREVENTIVA', descricao_problema:'Revisão programada', local_manutencao:'INTERNO',
-    status:'Em execução', data_parada:'2026-09-18', previsao_retorno:null,
+    status:'Em execução', data_parada:ONTEM, previsao_retorno:null,
     data_retorno:null, updated_at:'2026-09-19T12:10:00.000Z' },
   // ANG: a unidade que na planilha aparecia como "ANHANGUERA" e não casava
   { unidade:'ANG', unidade_nome:'ANHANGUERA', projeto:'ROTA', placa:'CNT2D51', modelo:'MB ATEGO',
@@ -150,7 +152,9 @@ async function roda(cenario) {
   srv.__stub = stub(cenario);
   const ctx = await nav.newContext();
   // o gviz é JSONP: o farol-core injeta <script src=docs.google...&responseHandler=fn>
+  let gviz = 0;
   await ctx.route('**/docs.google.com/**', r => {
+    gviz++;
     const url = r.request().url();
     const fn = (url.match(/responseHandler:([A-Za-z0-9_]+)/) || [])[1] || 'cb';
     if (cenario.gvizErro) return r.fulfill({ status:500, body:'erro' });
@@ -172,7 +176,7 @@ async function roda(cenario) {
     ind: window.__D.dispInd || [],
   }));
   await ctx.close();
-  return { ...out, erros };
+  return { ...out, erros, gviz };
 }
 
 /* ═════ 1) banco respondendo — é o caminho que passa a valer ═════ */
@@ -202,55 +206,42 @@ console.log('\n═══ banco respondendo (o app das unidades) ═══');
   const cba = r.ind.find(x => x.placa === 'EMP0857');
   af(!!cba && cba.cod === 'CBA T1' && cba.tier === 'T1', 'o tier sai do próprio código', JSON.stringify(cba && cba.tier));
   const g = r.ind.find(x => x.placa === 'RUR5G11');
-  af(g && g.dias === 1, 'dias parado = hoje − data_parada (18/09 → 1)', g && g.dias);
+  af(g && g.dias === 1, 'dias parado = hoje − data_parada (ontem → 1)', g && g.dias);
   af(g && g.prev === '—', 'sem previsão vira travessão, não data inválida', g && g.prev);
   af(/app de Indisponibilidade/.test(r.texto), 'a tela DIZ que está mostrando o app');
   af(/ativos da foto de 19\/09/.test(r.texto), 'e diz de quando é a foto dos ativos');
 }
 
 /* ═════ 2) tabela vazia — anon sem sessão do hub recebe [], não 401 ═════ */
-console.log('\n═══ banco vazio (anon sem sessão): tem de cair para a planilha ═══');
+/* A RESERVA DA PLANILHA SAIU (24/09/2026): banco mudo é dito na tela, não
+   trocado pela aba congelada do Apps Script — e NENHUM pedido vai ao Google. */
+console.log('\n═══ banco vazio (anon sem sessão): a tela diz, sem cair para planilha ═══');
 {
   const r = await roda({ eventos: [], snap: [] });
-  af(r.fonte && r.fonte.src === 'sheet', 'a fonte vira a planilha', JSON.stringify(r.fonte));
-  af(/planilha do Apps Script/.test(r.texto), 'e a tela avisa, em destaque, que é a base antiga');
-  af(/RUR5G13/.test(r.texto), 'mostrando o que a planilha tem — melhor que tela zerada');
-  af(!/XXX1A11/.test(r.texto), 'só o último dia da aba, como sempre foi');
+  af(r.fonte && r.fonte.src === 'erro', 'a fonte é marcada como erro', JSON.stringify(r.fonte));
+  af(/Banco de dados sem resposta/.test(r.texto), 'e a tela avisa, em destaque, que o banco não respondeu');
+  af(!/planilha do Apps Script/.test(r.texto) && !/RUR5G13/.test(r.texto), 'sem a base antiga na tela');
+  af(r.gviz === 0, 'e nenhum pedido foi ao Google', r.gviz);
 }
 
 /* ═════ 3) banco recusando a leitura ═════ */
 console.log('\n═══ banco recusando (RLS/erro) ═══');
 {
   const r = await roda({ evErro: true, eventos: [], snap: SNAP });
-  af(r.fonte && r.fonte.src === 'sheet', 'erro nos eventos também cai para a planilha', JSON.stringify(r.fonte));
+  af(r.fonte && r.fonte.src === 'erro' && r.gviz === 0, 'erro nos eventos: aviso na tela e nada no Google', JSON.stringify(r.fonte));
   const r2 = await roda({ eventos: EVENTOS, snapErro: true });
-  af(r2.fonte && r2.fonte.src === 'sheet',
-     'sem a foto de ativos não há percentual: cai para a planilha em vez de inventar denominador',
+  af(r2.fonte && r2.fonte.src === 'erro' && r2.gviz === 0,
+     'sem a foto de ativos não há percentual: aviso, em vez de inventar denominador',
      JSON.stringify(r2.fonte));
 }
 
-/* ═════ 4) o hero da planilha não infla mais ═════ */
-console.log('\n═══ a reserva também tem de estar certa ═══');
-{
-  const r = await roda({ eventos: [], snap: [] });
-  const at = r.disp.reduce((s, x) => s + x.ativos, 0);
-  // a aba tem 3 dias × 120 no GRL; com a chave mensal o hero somava os três (360)
-  af(at === 120, 'o hero da planilha usa UM dia (120), não os três somados (360)', at);
-  af(!/360/.test(r.texto), 'a frota não aparece somada 3 vezes na tela');
-  // e este é o OUTRO buraco do caminho antigo, que o caminho do banco não tem:
-  // 'ANHANGUERA' não está no de-para da planilha, então a unidade inteira era
-  // descartada em silêncio — ANG nunca apareceu nesta visão
-  af(!r.disp.some(x => x.cod === 'ANG' || x.cod === 'ANHANGUERA'),
-     'pela planilha, ANG é descartada por falta de de-para (no banco ela aparece)',
-     JSON.stringify(r.disp.map(x => x.cod)));
-}
-
-/* ═════ 5) os dois lados fora do ar ═════ */
-console.log('\n═══ banco e planilha fora ═══');
+/* ═════ 4) o banco inteiro fora do ar ═════ */
+console.log('\n═══ banco fora ═══');
 {
   const r = await roda({ evErro: true, eventos: [], snap: [], gvizErro: true });
   af(r.erros.length === 0, 'a página não quebra', r.erros.join(' | '));
-  af(/Sem dados de disponibilidade/.test(r.texto), 'a tela diz que não tem dado, em vez de mostrar 100%');
+  af(/Sem dados de disponibilidade|Banco de dados sem resposta/.test(r.texto), 'a tela diz que não tem dado, em vez de mostrar 100%');
+  af(r.gviz === 0, 'e o Google não é chamado', r.gviz);
 }
 
 await nav.close();

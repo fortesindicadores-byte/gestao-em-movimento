@@ -7,7 +7,6 @@ const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
 const FAROL_SHEET_ID='1xOv7OJzErGV3vNCMOY_5O6px7vFvC990CW-1vGul5sY';
 // Disponibilidade — mesma planilha do painel /disponibilidade/
-const DISP_SHEET_ID='1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o';
 const DISP_META=93, DISP_SONHO=97;   // <93 vermelho · 93–97 amarelo · ≥97 verde
 // Pneus — mesmo Supabase (Conlog) do painel /pneus/
 const PNEUS_SB_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
@@ -336,18 +335,10 @@ async function loadChecklist(){
   DATA.chk=row.data.map(r=>({dt:parseX(r[K.dt]),prob:String(r[K.prob]||'').trim(),os:String(r[K.os]||'').trim(),tipo:String(r[K.tipo]||'').trim(),st:String(r[K.st]||'').trim(),cod:refineCod(codDe(r[K.fil]),r[K.proj]),fil:String(r[K.fil]||'').trim(),mot:String(r[K.mot]||'').trim(),placa:String(r[K.pla]||'').trim(),tv:String(r[K.tv]||'').trim(),proj:String(r[K.proj]||'').trim()})).filter(r=>r.placa||r.os);
   DATA.chkAtt=row.updated_at?new Date(row.updated_at):null;
 }
-// nome da unidade na planilha de Disponibilidade → [código Farol (já com tier), tier de exibição]
-const DISP2CT={
-  'CUIABA EMPURRADA':['CBA T1','T1'],'CUIABA':['CBA T1 WH','T1 WH'],'CDD CUIABA':['CBA T2','T2'],
-  'MACACU EMPURRADA':['MCC T1','T1'],'CDI MACACU':['MCC T2','T2'],'CACHOEIRAS DE MACACU':['MCC T2','T2'],
-  'CDD FLORIANOPOLIS':['FLP',''],'CDD RONDONOPOLIS':['RON',''],'CDD RIO DE JANEIRO':['CGR',''],
-  'CDD GUARULHOS':['GRL',''],'CDD PELOTAS':['PLT',''],'PIRAI EMPURRADA':['PIR',''],
-  'CDD NOVA FRIBURGO':['NFR',''],'CDD CAMBORIU':['BLC',''],'CDD GOIANIA':['GNA','']
-};
 const dispCls=p=>p==null?'mut':p>=DISP_SONHO?'cg':p>=DISP_META?'cy':'cr';
 
 // ════════════════════════════════════════════════════════════════════
-//  DISPONIBILIDADE — a fonte é o BANCO; a planilha é RESERVA
+//  DISPONIBILIDADE — a fonte é o BANCO (sem reserva de planilha desde 24/09/2026)
 //
 //  O app das unidades (/disponibilidade-preenchimento/, tabela
 //  `indisponibilidade`) entrou em 14/08/2026 e é onde elas lançam. Estas
@@ -362,15 +353,23 @@ const dispCls=p=>p==null?'mut':p>=DISP_SONHO?'cg':p>=DISP_META?'cy':'cr';
 //  (EMP0857 → EMP0I57, trocando o 5º caractere dígito→letra como se fosse
 //  placa), então nem o mesmo veículo casava entre os dois lados.
 //
-//  Ordem: banco → planilha. Tabela vazia conta como FALHA (anon sem sessão
-//  do hub recebe [] em vez de 401, e aí o painel abriria zerado).
+//  Tabela vazia conta como FALHA (anon sem sessão do hub recebe [] em vez
+//  de 401, e aí o painel abriria zerado).
+//
+//  A RESERVA DA PLANILHA SAIU (Renan, 24/09/2026): as abas Disponibilidade e
+//  Indisponibilidade do Consolidado Geral estão congeladas desde que o Apps
+//  Script foi desligado (19/09) e a cópia delas morava no MESMO banco — uma
+//  reserva que nunca serviria. Banco mudo agora é dito na tela, não trocado
+//  por dado velho.
 // ════════════════════════════════════════════════════════════════════
 async function loadDisp(){
   DATA.fonte=DATA.fonte||{};
-  try{ if(await loadDispBanco()) return; }
-  catch(e){ console.error('disponibilidade · banco',e); }
-  console.warn('Disponibilidade: o banco não respondeu — caindo para a planilha do Apps Script.');
-  await loadDispSheet();
+  let motivo='sem resposta';
+  try{ if(await loadDispBanco()) return; motivo='tabela vazia ou sem sessão'; }
+  catch(e){ console.error('disponibilidade · banco',e); motivo=(e&&e.message)||'erro'; }
+  console.warn('Disponibilidade: o banco não respondeu —',motivo);
+  DATA.disp=null; DATA.dispInd=null; DATA.dispVig=0;
+  DATA.fonte.disp={src:'erro',motivo};
 }
 
 // 'CBA T1 WH' → 'T1 WH' (o código já vem com o tier; a tela quebra por ele)
@@ -422,58 +421,6 @@ async function loadDispBanco(){
   return true;
 }
 
-// RESERVA — as abas do Consolidado Geral (Apps Script). Era a fonte até
-// 19/09/2026 e fica como rede: se o banco não responder, a tela mostra o
-// que a planilha tem, DIZENDO que é a planilha.
-async function loadDispSheet(){
-  let T;try{T=await gvizAny(DISP_SHEET_ID,'Disponibilidade');}catch(e){DATA.disp=null;return;}
-  const c=T.cols;
-  const i={dt:idxDe(c,'Data'),uni:idxDe(c,'Unidade'),proj:idxDe(c,'Projeto'),tipo:idxDe(c,'Tipo Veículo','Tipo'),at:idxDe(c,'Ativos'),ind:idxDe(c,'Indisponíveis','Indisponiveis','Indisp')};
-  // a aba tem UMA LINHA POR DIA: a chave é o dia inteiro, não o mês. Com a
-  // chave mensal, o "último recorte" pegava todos os dias de setembro e o
-  // hero somava a frota 19 vezes (13.702 ativos para ~975 que existem). O
-  // percentual saía plausível porque numerador e denominador inflavam junto.
-  const vigDe=v=>{const s=String(v||'');const m=s.match(/Date\((\d+),(\d+),(\d+)/);if(m)return +m[1]*1e4+(+m[2]+1)*100+ +m[3];const p=s.split('/');return p.length>=3?+p[2]*1e4+ +p[1]*100+ +p[0]:0;};
-  let rs=T.rows.map(r=>{const ct=DISP2CT[_n(r[i.uni])]||[codDe(r[i.uni]),''];return {vig:vigDe(r[i.dt]),cod:ct[0],tier:ct[1],ativos:num(r[i.at])||0,indisp:num(r[i.ind])||0};}).filter(r=>r.cod);
-  const mx=Math.max(...rs.map(r=>r.vig));
-  rs=rs.filter(r=>r.vig===mx);
-  const g={};rs.forEach(r=>{const k=r.cod+'|'+r.tier;(g[k]=g[k]||{cod:r.cod,tier:r.tier,ativos:0,indisp:0}).ativos+=r.ativos;g[k].indisp+=r.indisp;});
-  DATA.disp=Object.values(g).map(o=>({...o,pct:o.ativos>0?(o.ativos-o.indisp)/o.ativos*100:null}));
-  DATA.dispVig=Math.floor(mx/100);
-  DATA.fonte.disp={src:'sheet',dia:mx};
-  await loadInd();
-}
-// mapeia unidade da aba Indisponibilidade → [cod, tier] (mesma lógica do painel Disponibilidade)
-const IND_CITY={'RONDONOPOLIS':'RON','GUARULHOS':'GRL','FLORIANOPOLIS':'FLP','PELOTAS':'PLT','NOVA FRIBURGO':'NFR','BALNEARIO CAMBORIU':'BLC','CAMPO GRANDE':'CGR','PIRAI':'PIR','GOIANIA':'GNA'};
-function mapIndCT(uni,proj,tipo){
-  const u=_n(uni),p=_n(proj),t=_n(tipo);
-  if(u==='CUIABA'){ if(p==='APOIO'||t.includes('EMPILHADEIRA'))return['CBA T1 WH','T1 WH']; if(p==='EMPURRADA')return['CBA T1','T1']; return['CBA T2','T2']; }
-  if(u==='CACHOEIRAS DE MACACU'||u==='MACACU'){ return p==='EMPURRADA'?['MCC T1','T1']:['MCC T2','T2']; }
-  return [IND_CITY[u]||codDe(uni),''];
-}
-// placas indisponíveis (cenário atual = última data do relatório)
-async function loadInd(){
-  let T;try{T=await gvizAny(DISP_SHEET_ID,'Indisponibilidade');}catch(e){DATA.dispInd=null;return;}
-  const c=T.cols;
-  const i={dt:idxDe(c,'Data'),uni:idxDe(c,'Unidade'),proj:idxDe(c,'Projeto'),tipo:idxDe(c,'Tipo Veículo','Tipo'),plaM:idxDe(c,'Placa Mercosul'),pla:idxDe(c,'Placa'),grp:idxDe(c,'Grupo'),desc:idxDe(c,'Descrição do Problema','Descrição Problema','Descricao do Problema','Problema'),obs:idxDe(c,'Observação','Observacao'),dPar:idxDe(c,'Data Parada','Data da Parada'),prev:idxDe(c,'Previsão Retorno','Previsão de Retorno','Retorno'),st:idxDe(c,'Status'),dias:idxDe(c,'Dias Parado','Dias Indisponível','Dias Indisponivel','Dias')};
-  const dnum=v=>{const s=String(v||'');const m=s.match(/Date\((\d+),(\d+),(\d+)/);if(m)return +m[1]*1e4+(+m[2]+1)*100+ +m[3];const p=s.split('/');return p.length>=3?+p[2]*1e4+ +p[1]*100+ +p[0]:0;};
-  const hoje=Date.now();
-  let rs=T.rows.map(r=>{const ct=mapIndCT(r[i.uni],r[i.proj],r[i.tipo]);
-    const par=parseAnyD(r[i.dPar]);
-    const dias=par?Math.max(0,Math.floor((hoje-par.getTime())/864e5)):num(r[i.dias]);
-    const pv=parseAnyD(r[i.prev]);
-    return {
-    dt:dnum(r[i.dt]),cod:ct[0],tier:ct[1],
-    placa:String((i.plaM>=0&&r[i.plaM])||r[i.pla]||'').trim(),
-    proj:String(r[i.proj]||'').trim(),grupo:String(r[i.grp]||'').trim(),
-    desc:String((r[i.desc]!=null?r[i.desc]:r[i.obs])||'').trim(),
-    dPar:par?fmtD(par):'—',
-    prev:pv?fmtD(pv):String(r[i.prev]||'').trim(),
-    st:String(r[i.st]||'').trim(),dias};
-  }).filter(r=>r.cod&&r.placa);
-  const mx=Math.max(0,...rs.map(r=>r.dt));
-  DATA.dispInd=mx>0?rs.filter(r=>r.dt===mx):rs;
-}
 // ── PNEUS (Supabase Conlog) — foto atual, carga sob demanda ──
 const PULL_POINT=3; // mm — ponto ideal de retirada p/ recape (igual ao painel /pneus/)
 async function loadPneus(){
@@ -1003,7 +950,7 @@ function renderResumo(el){
 // ── DISPONIBILIDADE (foto da última vigência) ──
 function renderDisp(el,cod,soPlacas){
   const rs=(DATA.disp||[]).filter(r=>cod?r.cod===cod:passU(r.cod));
-  if(!rs.length){el.innerHTML='<div class="loading">Sem dados de disponibilidade para o recorte.</div>';return;}
+  if(!rs.length){el.innerHTML='<div class="loading">Sem dados de disponibilidade para o recorte.</div>'+dispFonteTxt();return;}
   const at=sumA(rs.map(r=>r.ativos)),ind=sumA(rs.map(r=>r.indisp));
   const p=at>0?(at-ind)/at*100:null;
   let h=`<div class="mini-hero"><div class="mh-label">DISPONIBILIDADE</div><div class="mh-val ${dispCls(p)}">${pct1(p)}</div>
@@ -1047,8 +994,7 @@ function dispFonteTxt(){
     const fo=f.foto?` · ativos da foto de ${String(f.foto).slice(8,10)}/${String(f.foto).slice(5,7)}`:'';
     return `<div class="tbl-sub" style="margin-top:10px">Fonte: <b>app de Indisponibilidade</b> — eventos abertos agora${q}${fo}.</div>`;
   }
-  const d=f.dia?` (${String(f.dia%100).padStart(2,'0')}/${String(Math.floor(f.dia/100)%100).padStart(2,'0')}/${Math.floor(f.dia/1e4)})`:'';
-  return `<div class="tbl-sub" style="margin-top:10px"><b class="cy">Fonte: planilha do Apps Script${d}</b> — o banco não respondeu, então esta é a base antiga. As unidades lançam no app; confira lá antes de cobrar a placa.</div>`;
+  return `<div class="tbl-sub" style="margin-top:10px"><b class="cr">Banco de dados sem resposta</b> (${f.motivo||'erro'}) — sem os eventos do app de Indisponibilidade não há o que mostrar. Recarregue em instantes; se persistir, o banco está fora do ar.</div>`;
 }
 // ── PNEUS (foto Prolog — 3 blocos: Aferições · Milimetragem · Calibragem, como no painel /pneus/) ──
 const COR_ST={Bloquear:'#FF6666',Recapar:'#F97316',Regular:'#EAB308',Bom:'#3BB33B'};

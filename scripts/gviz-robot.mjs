@@ -52,8 +52,6 @@ const ALVOS = [
   { id: TERM, sheet: 'FCA Total', headers: '1' },
   { id: TERM, gid: '216663799' },
   { id: TERM, gid: '199351909' },
-  { id: TERM, sheet: 'Disponibilidade' },        // painel /disponibilidade/ (antigo) e a migração
-  { id: TERM, sheet: 'Indisponibilidade' },
   { id: TERM, sheet: 'Ativos' },
   // Gerot / RPM
   { id: RPM, gid: '0' },
@@ -66,7 +64,6 @@ const ALVOS = [
   { id: TERM2, sheet: 'Regras', headers: '0' },   // termômetro · regras de pontuação
   // Seara (mesmos parâmetros que o painel pede)
   { id: SEARA, gid: '0', headers: '1' },
-  { id: SEARA, gid: '1672208132', headers: '1', tq: 'select B, C, D, J' },
   { id: SEARA, gid: '1982300845', headers: '1' },
   // consultas agregadas dos painéis (levantadas pelo gviz-inventario.mjs) — cada
   // uma é uma chave própria, com os MESMOS parâmetros que o painel manda
