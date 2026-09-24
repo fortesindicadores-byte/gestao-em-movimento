@@ -51,11 +51,35 @@ const dp = await aba(GV_ID, 'Dispersão de km');
 const km = await aba(KML_ID, 'Km/L');
 
 const pFr = relatorio('Custo — aba Frota', fr.cols, fr.rows, acha(fr.cols, 'nível 3', 'nivel 3', 'nivel3'), -1);
-const pDp = relatorio('KM Rodado — Dispersão de km', dp.cols, dp.rows, acha(dp.cols, 'projeto'), -1);
+// a Árvore lê a coluna "PROJ. - COD" (detDisp: fi('proj.')), não a "Projeto"
+// genérica — o relatório tem de olhar a MESMA coluna que o painel
+const iDpProj = acha(dp.cols, 'proj.') >= 0 ? acha(dp.cols, 'proj.') : acha(dp.cols, 'projeto');
+const pDp = relatorio('KM Rodado — Dispersão de km', dp.cols, dp.rows, iDpProj, -1);
 const iKmProj = acha(km.cols, 'projeto');
 const pKm = relatorio('KM/L e R$/L — aba Km/L', km.cols, km.rows, iKmProj, acha(km.cols, 'km rodado'));
 
 console.log('\nCOLUNAS da aba Km/L:', JSON.stringify(km.cols));
+
+// ── VAN: como cada fonte escreve o projeto das vans, e em quais unidades ──
+// (24/09/2026: o filtro Projeto da Árvore listava ROTA · ROTA (VAN) · VAN)
+console.log('\n── VAN por fonte: projeto → unidades (última vigência de cada fonte) ──');
+function vanPor(rot, cols, rows, iProj, iVig) {
+  const vigs = rows.map(r => cell(r.c?.[iVig])).filter(Boolean);
+  const ult = vigs.sort().pop();
+  const m = new Map();
+  rows.forEach(r => {
+    const v = cell(r.c?.[iProj]); if (!/VAN/i.test(v)) return;
+    if (cell(r.c?.[iVig]) !== ult) return;
+    const p = prefixo(v), u = sufixo(v) || '(sem unidade)';
+    (m.get(p) || m.set(p, new Set()).get(p)).add(u);
+  });
+  console.log(`  ${rot} (vig ${ult}):`);
+  if (!m.size) console.log('    (nenhum projeto com VAN)');
+  [...m.entries()].forEach(([p, us]) => console.log(`    "${p}" → ${[...us].sort().join(' · ')}`));
+}
+vanPor('Custo — Frota', fr.cols, fr.rows, acha(fr.cols, 'nível 3', 'nivel 3'), acha(fr.cols, 'vigência', 'vigencia'));
+vanPor('KM Rodado — Dispersão', dp.cols, dp.rows, iDpProj, 0);
+vanPor('KM/L — aba Km/L', km.cols, km.rows, iKmProj, 0);
 
 const falta = [...pFr, ...pDp].filter(p => p && !pKm.has(p));
 console.log('\n── projetos que existem em Custo/KM Rodado e NÃO na aba Km/L ──');
