@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609242330">
+<meta name="build" content="202609250000">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="../../assets/pdf-export.js"></script>
@@ -946,13 +946,16 @@ function kmAgg(f){ let rem=0,real=0,vT=0,vR=0,vN=0,vM=0; if(!DP)return{rem,real,
     rem+=+r[DP.kmRem]||0; real+=+r[DP.kmReal]||0; vT+=+r[DP.vgTot]||0; vR+=+r[DP.vgRec]||0; vN+=+r[DP.vgNot]||0; vM+=+r[DP.vgMap]||0; }
   const bm=bmAgg(f); rem+=bm.km;   // o remunerado JÁ inclui o balanço de massa
   return{rem,real,viagem1:vT-vR-vN-vM,recs:vR,noturnas:vN,mapas:vM,bmKm:bm.km,bmValor:bm.valor,bmTaxa:bm.taxa}; }
-function kmlAgg(f){ // Eficiência: rem médio = média burra por projeto ponderada por km do projeto; real = Σkm/Σlitros
+// Eficiência — RÉGUA POR LITROS ESPERADOS (Renan, 24/09/2026), a mesma do painel
+// Km/L oficial e do Frota de Elite: rem de cada projeto × mês = média simples do
+// KM/l Rem Médio; Km/L Rem = Σkm ÷ Σ(km ÷ rem); real = Σkm ÷ Σlitros.
+function kmlAgg(f){
   let sumKm=0,sumLit=0; const proj={}; if(!KM)return{rem:null,real:null};
   for(const r of S_KM){ const d=kParseVig(r[KM.vig]); if(!d)continue; const n3=String(r[KM.proj]||''); if(!_match(f,vigBR(d),n3))continue;
-    const p=getNv3Prefix(n3)||'—', km=+r[KM.kmRod]||0, lit=+r[KM.litros]||0, rem=+r[KM.remMed]||0;
+    const p=(getNv3Prefix(n3)||'—')+'|'+vigBR(d), km=+r[KM.kmRod]||0, lit=+r[KM.litros]||0, rem=+r[KM.remMed]||0;
     sumKm+=km; sumLit+=lit; if(!proj[p])proj[p]={s:0,n:0,km:0}; if(rem>0){proj[p].s+=rem;proj[p].n++;} proj[p].km+=km; }
-  let sMp=0,kMp=0; for(const v of Object.values(proj)){ const rp=v.n>0?v.s/v.n:null; if(rp!=null&&v.km>0){sMp+=rp*v.km;kMp+=v.km;} }
-  return{rem:kMp>0?sMp/kMp:null, real:sumLit>0?sumKm/sumLit:null}; }
+  let litEsp=0; for(const v of Object.values(proj)){ const rp=v.n>0?v.s/v.n:null; if(rp>0&&v.km>0) litEsp+=v.km/rp; }
+  return{rem:litEsp>0?sumKm/litEsp:null, real:sumLit>0?sumKm/sumLit:null}; }
 function rslAgg(f){ // R$/L: real = ΣTotalR$/ΣLitros; rem = Σ(preço×litros)/Σlitros (preço da aba R$/L)
   let sumLit=0,sumTot=0,sumRxL=0,sumLitR=0; if(!KM)return{rem:null,real:null};
   for(const r of S_KM){ const d=kParseVig(r[KM.vig]); if(!d)continue; if(!_match(f,vigBR(d),String(r[KM.proj]||'')))continue;
@@ -1147,6 +1150,6 @@ function applyTheme(t){document.body.classList.toggle('light-mode',t==='light');
 <script src="../../assets/mobile.js?v=202608220020"></script>
 <script src="../../assets/ctrlk.js"></script>
 <script src="../../assets/sortable-table.js?v=202609042200"></script>
-<script src="../../assets/build-check.js?v=202609242330"></script>
+<script src="../../assets/build-check.js?v=202609250000"></script>
 </body>
 </html>

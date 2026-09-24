@@ -65,6 +65,8 @@ vm.runInContext(fs.readFileSync(new URL('../assets/gerot-base.js', import.meta.u
 // A régua A é recalculada aqui e CONFERIDA contra o que o gerot-base
 // entrega — se não bater, a simulação não vale e o script avisa.
 // ============================================================
+// régua que o gerot-base usa hoje: C desde 24/09/2026 (a de litros esperados)
+const CONTROLE = process.env.CONTROLE || 'C';
 const GerotBase = ctx.window.GerotBase;
 if (!GerotBase) { console.log('GerotBase não carregou'); process.exit(1); }
 const recs = await GerotBase.load({ fundir: true });
@@ -142,11 +144,14 @@ function simula(rot, campos, comb) {
   const pont = { A: {}, B: {}, C: {} }; let confere = 0, diverge = [];
   Object.entries(campos).forEach(([u, f]) => {
     const c = comb[u] || {};
-    if (f.comb != null && c.A != null) { if (Math.abs(f.comb - c.A) < 0.05) confere++; else diverge.push(`${u} gerot ${f.comb.toFixed(2)} × simulação ${c.A.toFixed(2)}`); }
-    ['A', 'B', 'C'].forEach(k => { pont[k][u] = score(Object.assign({}, f, { comb: k === 'A' ? f.comb : (c[k] ?? null) })); });
+    // desde 24/09/2026 o gerot-base JÁ usa a régua C — o controle diz qual das
+    // réguas simuladas bate com o que o leitor entrega
+    const ref = CONTROLE === 'C' ? c.C : c.A;
+    if (f.comb != null && ref != null) { if (Math.abs(f.comb - ref) < 0.05) confere++; else diverge.push(`${u} gerot ${f.comb.toFixed(2)} × simulação ${ref.toFixed(2)}`); }
+    ['A', 'B', 'C'].forEach(k => { pont[k][u] = score(Object.assign({}, f, { comb: c[k] ?? null })); });
   });
   const pA = rank(pont.A), pB = rank(pont.B), pC = rank(pont.C);
-  console.log(`\n═══ ${rot} ═══   controle: régua A recalculada bate com o gerot-base em ${confere} unidade(s)${diverge.length ? ' · DIVERGE: ' + diverge.join(' | ') : ''}`);
+  console.log(`\n═══ ${rot} ═══   controle: régua ${CONTROLE} recalculada bate com o gerot-base em ${confere} unidade(s)${diverge.length ? ' · DIVERGE: ' + diverge.join(' | ') : ''}`);
   console.log('  unidade'.padEnd(22) + 'comb A'.padStart(7) + 'comb B'.padStart(7) + 'comb C'.padStart(7) + '  │' + 'pont A'.padStart(7) + 'pont B'.padStart(7) + 'pont C'.padStart(7) + '  │ pos A→B  A→C');
   Object.keys(pA).sort((a, b) => pA[a] - pA[b]).forEach(u => {
     const c = comb[u] || {}, f = campos[u];

@@ -111,7 +111,12 @@ async function abre({ corrigido }) {
   });
 
   const pg = await ctx.newPage();
-  await pg.addInitScript(([cacheVigs, hidraVigs, unis, campos]) => {
+  // a chave do cache sai do PRÓPRIO painel: fixada no teste, ela envelhecia a
+  // cada subida de versão (v17 → v18 em 24/09/2026) e o teste passava a semear
+  // um cache que o painel nem lê
+  const CHAVE = ((await readFile(join(RAIZ, 'programa-reconhecimento/index.html'), 'utf8'))
+    .match(/CACHE_KEY='([^']+)'/) || [])[1];
+  await pg.addInitScript(([cacheVigs, hidraVigs, unis, campos, chave]) => {
     try { sessionStorage.setItem('gem_hub','1'); } catch(e) {}
     // o CACHE do navegador é o de ANTES de agosto entrar
     const rows = [];
@@ -120,10 +125,10 @@ async function abre({ corrigido }) {
       rows.push({ vig: v.slice(0,4) + '/' + v.slice(5) + '/01', unit: u, f, pts: 95 });
     }));
     try {
-      localStorage.setItem('bi_cache_reconhecimento_v17', JSON.stringify({ t: Date.now(), rows }));
+      localStorage.setItem(chave, JSON.stringify({ t: Date.now(), rows }));
       localStorage.setItem('bi_elite_cortina', '1');
     } catch(e) {}
-  }, [ATE_JUL, ATE_AGO, UNIS, CAMPOS]);
+  }, [ATE_JUL, ATE_AGO, UNIS, CAMPOS, CHAVE]);
   pg.on('pageerror', e => console.log('   [erro na página] ' + e.message));
   await pg.goto(BASE + '/programa-reconhecimento/', { waitUntil: 'load' });
   return { ctx, pg };

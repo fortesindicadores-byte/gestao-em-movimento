@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609232100">
+<meta name="build" content="202609250000">
 <title>Frota de Elite · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="../assets/pdf-export.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../assets/gerot-base.js?v=202609232100"></script>
+<script src="../assets/gerot-base.js?v=202609250000"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <style>
 :root{
@@ -615,11 +615,12 @@ let chartIndicadores = null;
 let activeInd = 'media_geral';
 
 /* ── Fetch ── */
-/* v17 = a lista de vigências passou a ser refeita na hidratação (19/09/2026).
+/* v18 = combustível pela régua de litros esperados, a do painel Km/L (24/09/2026).
+   v17 = a lista de vigências passou a ser refeita na hidratação (19/09/2026).
    Subir a chave é o que tem efeito IMEDIATO: sem isso, quem já tem o cache de
    antes de agosto continuaria com a lista velha até ele vencer. v15 = empurradas
    sem conformidade em jan/fev/mar · v16 = fusão do Macacu. */
-const CACHE_KEY='bi_cache_reconhecimento_v17';
+const CACHE_KEY='bi_cache_reconhecimento_v18';
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function fetchData() {
@@ -1415,6 +1416,6 @@ document.addEventListener('DOMContentLoaded',()=>{ initAccessLog(); cortinaInit(
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609232100"></script>
+<script src="../assets/build-check.js?v=202609250000"></script>
 </body>
 </html>
