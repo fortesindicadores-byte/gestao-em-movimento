@@ -2,15 +2,19 @@ name: OPMS Inspect (API do Portal Operacional)
 on:
   workflow_dispatch:
     inputs:
-      de:
-        description: "Data inicial AAAA-MM-DD (vazio = padrão da API)"
+      ano:
+        description: "Ano (vazio = do mês fechado)"
         default: ""
-      ate:
-        description: "Data final AAAA-MM-DD (vazio = padrão da API)"
+      mes:
+        description: "Mês 1-12 (vazio = mês fechado)"
         default: ""
+      spec:
+        description: "1 = imprime também a lista de rotas"
+        default: "0"
 jobs:
   inspect:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,5 +23,6 @@ jobs:
         env:
           OPMS_USER: ${{ secrets.OPMS_USER }}
           OPMS_PASS: ${{ secrets.OPMS_PASS }}
-          OPMS_DE: ${{ github.event.inputs.de }}
-          OPMS_ATE: ${{ github.event.inputs.ate }}
+          OPMS_ANO: ${{ github.event.inputs.ano }}
+          OPMS_MES: ${{ github.event.inputs.mes }}
+          OPMS_SPEC: ${{ github.event.inputs.spec }}
