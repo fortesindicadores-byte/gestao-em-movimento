@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609250000">
+<meta name="build" content="202609250100">
 <title>Km/L — Análise do Impacto (storytelling)</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -415,11 +415,15 @@ function buildRemLookup(cols,rows){
     if(!L2.has(k2))L2.set(k2,{s:0,n:0});L2.get(k2).s+=v;L2.get(k2).n++;});
   REMLK={L1,L2};
 }
+// VAN não tem preço remunerado na aba R$/L (Renan, 24/09/2026: "R$/L das Vans pode considerar os mesmos
+// dos projetos rotas de suas respectivas unidades"). Sem preço próprio, VAN - XXX usa o do ROTA - XXX.
+const _vanRota=p=>{const m=String(p).match(/^(?:ROTA \(VAN\)|VAN)\s*-\s*(.+)$/);return m?'ROTA - '+m[1]:null;};
 // Preço R$/L REMUNERADO da linha (por projeto/vigência[/combustível]); null se indisponível.
 function remPriceFor(r){
   if(!REMLK)return null; const p=_nkK(r[CL.proj]); if(!p)return null; const d=_pvK(r[CL.vig]); if(!d)return null;
   const ym=_ymK(d), fu=(CL.fuel>=0)?_nfK(r[CL.fuel]):'';
   let e=REMLK.L1.get(`${p}|${ym}|${fu}`); if(!e)e=REMLK.L2.get(`${p}|${ym}`);
+  const q=!e&&_vanRota(p); if(q){ e=REMLK.L1.get(`${q}|${ym}|${fu}`); if(!e)e=REMLK.L2.get(`${q}|${ym}`); }
   return e&&e.n>0?e.s/e.n:null;
 }
 
@@ -1329,6 +1333,6 @@ function applyTheme(t){document.body.classList.toggle('light-mode',t==='light');
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609250000"></script>
+<script src="../assets/build-check.js?v=202609250100"></script>
 </body>
 </html>
