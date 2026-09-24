@@ -1,0 +1,21 @@
+name: KmL Elite vs Painel (auditoria)
+on:
+  workflow_dispatch:
+    inputs:
+      vig:
+        description: "Vigência AAAA-MM"
+        default: "2026-08"
+      uni:
+        description: "Código da unidade (GRL, CGR, PIR…)"
+        default: "GRL"
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node scripts/kml-elite-vs-painel.mjs
+        env:
+          VIG: ${{ github.event.inputs.vig }}
+          UNI: ${{ github.event.inputs.uni }}

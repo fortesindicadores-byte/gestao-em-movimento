@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609242200">
+<meta name="build" content="202609242330">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -556,6 +556,9 @@ function P2(tit,sub,url,a,b){ return {t:'p',tit,sub,url,caps:[a,b]}; }
 
 const brlDesvio=s=>{ const m=String(s||'').match(/R\$\s*([\d.]+)/); return m?+m[1].replace(/\./g,''):0; };
 const prefProj=p=>{ const s=String(p||'').trim(); const i=s.indexOf('-'); return (i>=0?s.slice(0,i):s).trim(); };
+/* a Árvore de Combustível chama as vans de VAN (o DRE, e portanto a tabela fca,
+   escreve "ROTA (VAN)"); o slide da árvore pede o nome que ela lista */
+const projArv=p=>{ const x=prefProj(p)||p; return /^ROTA\s*\(VAN\)$/i.test(x)?'VAN|'+x:x; };
 /* "CBA T1 WH" → "CBA", "MCC T2" → "MCC": o código sem o tier, que é como a Árvore de Combustível lista a unidade */
 const semTier=u=>String(u||'').trim().replace(/\s+T1\s+WH$|\s+T[12]$/i,'').trim();
 
@@ -682,7 +685,7 @@ function montaRoteiro(avisa){
          APOIO = T1 WH, o resto = T2), então a unidade entra também sem o tier. */
       const arvPrep=seara
         ? `__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.redesenha('onFilterChange'); ${encolhe}`
-        : `__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni+'|'+semTier(d.uni)])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); __cm.redesenha('onFilterChange'); ${encolhe}`;
+        : `__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni+'|'+semTier(d.uni)])}); __cm.sel('ms-nv3',${JSON.stringify([projArv(d.proj)])}); __cm.redesenha('onFilterChange'); ${encolhe}`;
       /* SEM R$ NO SUBTÍTULO DA ÁRVORE (Renan, 24/09/2026: "Tire esse desvio ali.
          Confunde. Deixe apenas o árvore de combustível e a vigência"). O R$ do FCA
          é o pacote (conta Combustíveis + Arla) e a árvore mostra só a conta —
@@ -1898,6 +1901,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="slides.js?v=202609202300"></script>
-<script src="../assets/build-check.js?v=202609242200"></script>
+<script src="../assets/build-check.js?v=202609242330"></script>
 </body>
 </html>
