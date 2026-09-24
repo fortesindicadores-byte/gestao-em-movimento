@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609250500">
 <title>Painel de Metas — Diretoria</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -128,7 +128,7 @@ body.light-mode .pts{background:#1a1a1a;color:#fff;}
     <div class="hero-sub" id="h-sub"></div>
   </section>
   <div class="charts-row">
-    <div class="card"><div class="chart-title">Pontuação · Acumulada</div><div class="chart-wrap"><canvas id="ch-mensal"></canvas></div></div>
+    <div class="card"><div class="chart-title">Pontuação · Mês a Mês</div><div class="chart-wrap"><canvas id="ch-mensal"></canvas></div></div>
     <div class="card"><div class="chart-title">Pontuação por Indicador</div><div class="chart-wrap"><canvas id="ch-ind"></canvas></div></div>
   </div>
   <div class="tbl-section"><div class="tbl-head"><h2>Indicadores</h2><div class="tbl-sub" id="tbl-sub"></div></div><button class="tbl-ind-toggle" id="tbl-ind-toggle" onclick="toggleIndCols()">+ Ver detalhes</button><div class="tbl-wrap"><div id="tbl"><div class="loading">Carregando…</div></div></div></div>
@@ -247,7 +247,9 @@ function chartMensal(){
   const selVig=getMsValues('ms-vig');
   const XV=fullYearVigs();
   const labels=XV.map(d=>vigLbl(d));
-  const data=XV.map(d=>{const k=vigKeyN(d);if(!ALL.some(o=>vigKeyN(o.vigD)===k))return null;const ks=VIGS.filter(x=>vigKeyN(x)<=k).map(vigKeyN);return INDS.map(i=>indAccum(i.no,ks)).filter(Boolean).reduce((s,a)=>s+(a.pontos||0),0);});
+  // MÊS A MÊS (Renan, 24/09/2026): cada barra é a pontuação DAQUELE mês, a mesma conta do topo
+  // com o mês filtrado. Antes era o acumulado do ano até o mês, e o topo dizia 100 com a barra em 60.
+  const data=XV.map(d=>{const k=vigKeyN(d);if(!ALL.some(o=>vigKeyN(o.vigD)===k))return null;return INDS.map(i=>indAccum(i.no,[k])).filter(Boolean).reduce((s,a)=>s+(a.pontos||0),0);});
   const on=XV.map(d=>selVig.length===0||selVig.includes(vigLbl(d)));
   const hasFocus=selVig.length>0;
   const bg=data.map((v,i)=>{if(v==null)return 'transparent';const a=hasFocus?(on[i]?.85:.2):.65;return v>=META_PONTOS?`rgba(59,179,59,${a})`:`rgba(255,102,102,${a})`;});
@@ -366,6 +368,6 @@ carregar();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609250500"></script>
 </body>
 </html>
