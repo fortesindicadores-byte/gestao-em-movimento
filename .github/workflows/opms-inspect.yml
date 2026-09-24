@@ -1,0 +1,23 @@
+name: OPMS Inspect (API do Portal Operacional)
+on:
+  workflow_dispatch:
+    inputs:
+      de:
+        description: "Data inicial AAAA-MM-DD (vazio = padrão da API)"
+        default: ""
+      ate:
+        description: "Data final AAAA-MM-DD (vazio = padrão da API)"
+        default: ""
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node scripts/opms-inspect.mjs
+        env:
+          OPMS_USER: ${{ secrets.OPMS_USER }}
+          OPMS_PASS: ${{ secrets.OPMS_PASS }}
+          OPMS_DE: ${{ github.event.inputs.de }}
+          OPMS_ATE: ${{ github.event.inputs.ate }}
