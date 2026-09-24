@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609202300">
+<meta name="build" content="202609240900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -556,6 +556,8 @@ function P2(tit,sub,url,a,b){ return {t:'p',tit,sub,url,caps:[a,b]}; }
 
 const brlDesvio=s=>{ const m=String(s||'').match(/R\$\s*([\d.]+)/); return m?+m[1].replace(/\./g,''):0; };
 const prefProj=p=>{ const s=String(p||'').trim(); const i=s.indexOf('-'); return (i>=0?s.slice(0,i):s).trim(); };
+/* "CBA T1 WH" → "CBA", "MCC T2" → "MCC": o código sem o tier, que é como a Árvore de Combustível lista a unidade */
+const semTier=u=>String(u||'').trim().replace(/\s+T1\s+WH$|\s+T[12]$/i,'').trim();
 
 /* FCA EM BRANCO NÃO VIRA SLIDE (Renan, 20/09/2026: "se não preencheu, mesmo
    desviando não traz"). O fato_desvio é gerado pelo robô; Causa, Ação,
@@ -671,10 +673,22 @@ function montaRoteiro(avisa){
          só o filtro de vigência. */
       const seara=d.uni==='ANG';
       const encolhe=`var _tw=document.querySelector('.tree-wrap'); if(_tw){_tw.style.minWidth='0';_tw.style.width='max-content';}`;
+      /* A ÁRVORE NÃO CONHECE O TIER (bug real, 24/09/2026: "Imagem 1 é a árvore
+         MCC T2 do ppt, imagem 2 filtrando o projeto ROTA. Nada a ver os números").
+         O filtro Unidade da Árvore lista o SUFIXO do nível 3 ("ROTA - MCC" → "MCC"),
+         e a tabela `fca` guarda "MCC T2". O sel não achava, limpava o filtro e a
+         árvore saía com o ROTA de TODAS as unidades (569 mil km em vez de 63 mil),
+         com o aviso só no Roteiro. O tier já vai no projeto (EMPURRADA = T1,
+         APOIO = T1 WH, o resto = T2), então a unidade entra também sem o tier. */
       const arvPrep=seara
         ? `__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.redesenha('onFilterChange'); ${encolhe}`
-        : `__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); __cm.redesenha('onFilterChange'); ${encolhe}`;
-      R.push(P(g.pac+' – '+nomeDe(d),'Árvore de Combustível'+(seara?' · Seara':'')+' · '+subDe(d),
+        : `__cm.sel('ms-vig',${JSON.stringify([V])}); __cm.sel('ms-uni',${JSON.stringify([d.uni+'|'+semTier(d.uni)])}); __cm.sel('ms-nv3',${JSON.stringify([prefProj(d.proj)||d.proj])}); __cm.redesenha('onFilterChange'); ${encolhe}`;
+      /* O R$ DO SUBTÍTULO É O DO FCA — o pacote Combustíveis (conta Combustíveis
+         + Arla, como o fca-preenchimento monta); a árvore mostra SÓ a conta
+         Combustíveis ("conta é conta"). Os dois números são diferentes de
+         propósito (Renan, 24/09/2026: "41454 não 40706"), então o subtítulo diz
+         de qual dos dois está falando. */
+      R.push(P(g.pac+' – '+nomeDe(d),'Árvore de Combustível'+(seara?' · Seara':'')+' · '+vX+' · desvio do pacote no FCA: R$ '+d.brl.toLocaleString('pt-BR')+(seara?'':' · a árvore mostra só a conta Combustíveis, sem Arla'),
         seara?'../combustivel/seara/arvore/':'../combustivel/arvore-combustivel/',arvPrep,
         {foto:true,escala:.94,alvo:"document.querySelector('.tree-wrap')||document.querySelector('.tree')"}));
       if(d.feito) R.push(P(g.pac+' – '+nomeDe(d),'FCA · '+subDe(d),'../fca-consolidado/',fcaDe(d)));
@@ -1875,6 +1889,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="slides.js?v=202609202300"></script>
-<script src="../assets/build-check.js?v=202609202300"></script>
+<script src="../assets/build-check.js?v=202609240900"></script>
 </body>
 </html>
