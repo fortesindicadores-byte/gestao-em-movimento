@@ -444,8 +444,18 @@ async function acessos30() {
 // ─────────────────────────────────────────────────────────────
 // 5. Gravação
 // ─────────────────────────────────────────────────────────────
+/* TODAS AS LINHAS DO LOTE COM AS MESMAS CHAVES (bug real, 23/09/2026): o
+   PostgREST recusa um insert em massa cujos objetos tenham conjuntos de chaves
+   diferentes — `PGRST102: All object keys must match` — e a gravação inteira
+   da saude_base morria. As linhas do Sheets/gviz/Ginfo levam `impressao`; as
+   do Elite e dos aplicativos não levavam. A chave que falta entra como null. */
+function mesmasChaves(linhas) {
+  const chaves = [...new Set(linhas.flatMap(l => Object.keys(l)))];
+  return linhas.map(l => Object.fromEntries(chaves.map(k => [k, l[k] === undefined ? null : l[k]])));
+}
 async function grava(tabela, linhas, conflito) {
   if (SECO) { console.log(`  [seco] ${tabela}: ${linhas.length} linha(s)`); return; }
+  linhas = mesmasChaves(linhas);
   for (let i = 0; i < linhas.length; i += 400) {
     const lote = linhas.slice(i, i + 400);
     const r = await fetch(`${SUPA}/rest/v1/${tabela}?on_conflict=${conflito}`, {
