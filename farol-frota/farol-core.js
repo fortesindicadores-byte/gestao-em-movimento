@@ -926,21 +926,26 @@ function renderRanking(el,extras){
 function renderResumo(el){
   const stats=codsFiltrados().map(cod=>({cod,...unitStats(cod)}));
   const pos=[],neg=[],aten=[],acao=[];
-  const worstBy=(k,label,fmt)=>{const w=stats.filter(s=>s[k]!=null).sort((a,b)=>a[k]-b[k])[0];if(w)return `${label}: pior unidade <b>${w.cod}</b> (${fmt(w[k])})`;return null;};
-  const descV=sumA((DATA.stressV||[]).map(r=>r.desc));
-  const descE=sumA((DATA.stressE||[]).filter(r=>r.contratada).map(r=>r.dt));
-  const descC=sumA((DATA.cifv||[]).map(r=>r.dt));
+  // "Pior unidade" só compara quando há mais de uma unidade no recorte, e só
+  // aponta quem está abaixo de 100% — na visão de UMA unidade (ex.: GRL) virava
+  // "Preventivas: pior unidade GRL (100%)" (Renan, 24/09/2026).
+  const worstBy=(k,label,fmt)=>{if(stats.length<2)return null;const w=stats.filter(s=>s[k]!=null).sort((a,b)=>a[k]-b[k])[0];if(w&&w[k]<100)return `${label}: pior unidade <b>${w.cod}</b> (${fmt(w[k])})`;return null;};
+  // Contagens e descontos pelo MESMO recorte de unidade das outras visões (byCod):
+  // antes somavam a rede inteira e a unidade via o total de todo mundo.
+  const descV=sumA(byCod(DATA.stressV).map(r=>r.desc));
+  const descE=sumA(byCod(DATA.stressE).filter(r=>r.contratada).map(r=>r.dt));
+  const descC=sumA(byCod(DATA.cifv).map(r=>r.dt));
   const totDesc=descV+descE+descC;
-  const vencPrev=(DATA.prev||[]).filter(r=>_n(r.st)==='VENCIDA').length;
-  const vencAl=(DATA.alinh||[]).filter(r=>_n(r.st)==='VENCIDO').length;
-  const osFora=(DATA.os||[]).filter(r=>(r.dias??0)>OS_META).length;
+  const vencPrev=byCod(DATA.prev).filter(r=>_n(r.st)==='VENCIDA').length;
+  const vencAl=byCod(DATA.alinh).filter(r=>_n(r.st)==='VENCIDO').length;
+  const osFora=byCod(DATA.os).filter(r=>(r.dias??0)>OS_META).length;
   stats.forEach(s=>{[['sv','Stress Veíc.'],['cf','CIFV'],['pv','Preventivas']].forEach(([k,lb])=>{if(s[k]!=null&&s[k]>=100)pos.push(`<b>${s.cod}</b> — ${lb} 100%`);});});
   if(totDesc>0)neg.push(`Descontos da semana somam <b class="cr">${brl(totDesc)}</b> (Stress V ${brl(descV)} · Emp. ${brl(descE)} · CIFV ${brl(descC)})`);
   if(vencPrev)neg.push(`<b class="cr">${vencPrev}</b> preventiva(s) VENCIDA(S)`);
   if(vencAl)neg.push(`<b class="cr">${vencAl}</b> alinhamento(s) vencido(s)`);
   if(osFora)aten.push(`<b class="cy">${osFora}</b> OS(s) acima de ${OS_META} dias em aberto`);
   [ ['sv','Stress Veíc.'],['cf','CIFV'],['pv','Preventivas'],['al','Alinhamento'] ].forEach(([k,lb])=>{const w=worstBy(k,lb,pct1);if(w)aten.push(w);});
-  acao.push('Unidades com desconto: tratar placas SEM SAÍDA / não conformes antes da próxima janela.');
+  if(totDesc>0)acao.push('Unidades com desconto: tratar placas SEM SAÍDA / não conformes antes da próxima janela.');
   if(vencPrev)acao.push('Programar as preventivas vencidas (tabela Preventivas · piores primeiro).');
   if(osFora)acao.push('Cobrar fornecedores das OSs mais antigas (tabela Gestão de OS).');
   const quad=(t,items,cls)=>`<div class="quad ${cls}"><div class="quad-t">${t}</div>${items.length?'<ul>'+items.slice(0,6).map(i=>`<li>${i}</li>`).join('')+'</ul>':'<div class="mut" style="font-size:11px">—</div>'}</div>`;
