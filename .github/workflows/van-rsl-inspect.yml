@@ -1,0 +1,17 @@
+name: VAN RSL Inspect (auditoria)
+on:
+  workflow_dispatch:
+    inputs:
+      vig:
+        description: "Vigência AAAA-MM (vazio = 2026 inteiro)"
+        default: ""
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node scripts/van-rsl-inspect.mjs
+        env:
+          VIG: ${{ github.event.inputs.vig }}
