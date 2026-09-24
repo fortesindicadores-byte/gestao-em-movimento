@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609250100">
 <title>R$/L — Preço do Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -581,12 +581,16 @@ function buildRemLookup(cols,rows){
   });
   REM_LOOKUP={L1,L2};
 }
+// VAN não tem preço remunerado na aba R$/L (Renan, 24/09/2026: "R$/L das Vans pode considerar os mesmos
+// dos projetos rotas de suas respectivas unidades"). Sem preço próprio, VAN - XXX usa o do ROTA - XXX.
+const _vanRota=p=>{const m=String(p).match(/^(?:ROTA \(VAN\)|VAN)\s*-\s*(.+)$/);return m?'ROTA - '+m[1]:null;};
 function remPriceFor(r){
   if(!REM_LOOKUP)return null;
   const p=_normKey(r[CL.proj]),d=parseVig(r[CL.vig]);if(!p||!d)return null;
   const ym=vigKey(d),f=_normFuel(r[CL.fuel]);
   let e=REM_LOOKUP.L1.get(`${p}|${ym}|${f}`);
   if(!e)e=REM_LOOKUP.L2.get(`${p}|${ym}`);
+  const q=!e&&_vanRota(p); if(q){ e=REM_LOOKUP.L1.get(`${q}|${ym}|${f}`); if(!e)e=REM_LOOKUP.L2.get(`${q}|${ym}`); }
   return e&&e.n>0?e.s/e.n:null;
 }
 
@@ -891,6 +895,6 @@ function applyTheme(t){document.body.classList.toggle('light-mode',t==='light');
 <script src="../../assets/mobile.js?v=202608220020"></script>
 <script src="../../assets/ctrlk.js"></script>
 <script src="../../assets/sortable-table.js?v=202609042200"></script>
-<script src="../../assets/build-check.js?v=202609092400"></script>
+<script src="../../assets/build-check.js?v=202609250100"></script>
 </body>
 </html>
