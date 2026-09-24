@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609250600">
+<meta name="build" content="202609250700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1520,6 +1520,7 @@ async function capturaSlide(s){
     ifr.style.width=tam.w+'px'; ifr.style.height=tam.h+'px';
     $('palco').style.width=Math.max(1600,tam.w)+'px';
     $('palco').appendChild(ifr);
+    const tA=Date.now();
     await new Promise((res,rej)=>{
       const to=setTimeout(()=>rej(new Error('o painel não abriu em 60s')),60000);
       ifr.onload=()=>{clearTimeout(to);res();};
@@ -1528,7 +1529,10 @@ async function capturaSlide(s){
     });
     win=ifr.contentWindow; doc=ifr.contentDocument;
     if(!doc) throw new Error('iframe sem documento (origem diferente?)');
+    crono('abrir',Date.now()-tA);
+    const tE=Date.now();
     const estado=await esperaPronto(win,doc);
+    crono('esperar',Date.now()-tE);
     if(estado==='gate') throw new Error('o painel recusou: '+((doc.querySelector('.gate h2')||{}).textContent||'sem acesso'));
     if(estado==='demorou') msgs.push('o painel ainda estava carregando quando li os dados');
     if(estado==='vazio')   msgs.push('o painel não trouxe dado nenhum no tempo limite — slide vazio evitado');
@@ -1592,7 +1596,7 @@ async function capturaSlide(s){
            algo novo, seguindo 100% nosso padrão visual"). Tudo que dá para
            ler como dado é redesenhado no slide com os tokens do portal; a
            foto é o último recurso, para visão que ainda não sei extrair. */
-        let c1=null;
+        let c1=null; const tL=Date.now();
         if(c.foto!==true){
           try{
             /* CLONE PARA ESTE REALM: o iframe é destruído antes de o slide ser
@@ -1621,6 +1625,7 @@ async function capturaSlide(s){
           msgs.push((c.rot||'recorte')+': o painel não trouxe linha nenhuma — ficou fora do slide');
         }
         else { const foto=await tiraFoto(win,alvo); fotos.push({rot:c.rot,foto:true,escala:c.escala,...foto}); }
+        crono('ler',Date.now()-tL);
       } finally {
         if(abriu){ try{ win.__cm.fecha(); }catch(e){}
           ifr.style.height=tam.h+'px'; ifr.style.width=tam.w+'px'; await espera(120); }
@@ -1697,8 +1702,9 @@ async function paginasDo(s){
     mio.appendChild(v); els=[el];
     ovLog('⚠ '+s.tit+(s.sub?' ('+s.sub+')':'')+': saiu sem conteúdo');
   }
-  const out=[];
+  const out=[]; const tM=Date.now();
   for(const el of els){ out.push(await SP.slFoto(el)); }
+  crono('montar',Date.now()-tM); if(CRONO) CRONO.paginas+=els.length;
   SP.slLimpa();
   return out;
 }
@@ -1736,8 +1742,31 @@ const nomeArq=ext=>'Check_de_Metas_'+VIG.replace('-','_')+'.'+ext;
 
 /* ── o botão ── */
 let GERANDO=false;
+/* CRONÔMETRO DA GERAÇÃO (Renan, 24/09/2026: 46 slides em 16.703 s e o log não
+   dizia onde o tempo foi). Mede cada etapa — abrir o painel, esperar os dados,
+   ler/fotografar, montar a página — e quanto tempo a aba passou ESCONDIDA,
+   que é quando o navegador desacelera a página. */
+let CRONO=null;
+const crono=(k,ms)=>{ if(CRONO) CRONO[k]=(CRONO[k]||0)+ms; };
+const ocultoAgora=()=>CRONO?CRONO.oculto+(CRONO.escondeu?Date.now()-CRONO.escondeu:0):0;
+document.addEventListener('visibilitychange',()=>{
+  if(!CRONO) return;
+  if(document.hidden){ CRONO.escondeu=Date.now(); CRONO.vezes++; }
+  else if(CRONO.escondeu){ CRONO.oculto+=Date.now()-CRONO.escondeu; CRONO.escondeu=0; }
+});
 function ovLog(msg,ruim){ const l=$('ov-log'); if(l) l.innerHTML+=(ruim?'<b>':'')+esc(msg)+(ruim?'</b>':'')+'<br>'; if(l) l.scrollTop=l.scrollHeight; }
 function fechaOv(){ $('ger-ov').classList.remove('on'); }
+function relataCrono(total){
+  if(!CRONO) return;
+  const s=ms=>{ const x=Math.round((ms||0)/1000); return x>=90?Math.floor(x/60)+' min '+(x%60)+' s':x+' s'; };
+  const oc=ocultoAgora();
+  ovLog('Tempo total '+s(total)+' · abrir painéis '+s(CRONO.abrir)+' · esperar os dados '+s(CRONO.esperar)
+    +' · ler/fotografar '+s(CRONO.ler)+' · montar o arquivo '+s(CRONO.montagem)+' ('+CRONO.paginas+' páginas)');
+  ovLog(oc>1000?('Aba em segundo plano: '+s(oc)+' ('+CRONO.vezes+' vez(es)) — escondida, o navegador desacelera a geração')
+               :'Aba em segundo plano: nenhuma vez',oc>60000);
+  const lentos=CRONO.slides.slice().sort((a,b)=>b.ms-a.ms).slice(0,3).filter(x=>x.ms>20000);
+  if(lentos.length) ovLog('Mais lentos: '+lentos.map(x=>x.t+' '+s(x.ms)+(x.oc>1000?' (escondida '+s(x.oc)+')':'')).join(' · '));
+}
 async function gerar(fmt){
   if(GERANDO) return;
   if(!ROTEIRO.length){ alert('Escolha o fechamento no filtro do topo.'); return; }
@@ -1754,6 +1783,7 @@ async function gerar(fmt){
      GETs ao REST) e o painel repetido não volta ao banco. Nasce vazia a cada
      geração, para o deck sair todo do mesmo instante. */
   window.__gvizMem={};
+  CRONO={oculto:0,escondeu:document.hidden?Date.now():0,vezes:document.hidden?1:0,paginas:0,slides:[]};
   try{
     await carregaFoto();
     try{ await document.fonts.load('800 104px Montserrat'); }catch(e){}
@@ -1766,6 +1796,7 @@ async function gerar(fmt){
       set('ov-qual',s.t==='sec'?('Divisória · '+s.txt):(s.tit+(s.sub?' · '+s.sub:'')));
       if(s.t==='capa'){ saida.push({cheia:desenhaCapa(s,2400,1350)}); ESTADO[i]={ok:1,msgs:[]}; pintaRoteiro(); continue; }
       if(s.t==='sec'){ saida.push({cheia:desenhaSecao(s,2400,1350)}); ESTADO[i]={ok:1,msgs:[]}; pintaRoteiro(); continue; }
+      const tS=Date.now(), oS=ocultoAgora();
       try{
         const r=await capturaSlide(s);
         saida.push({tit:s.tit,sub:s.sub,podio:s.podio,podioDados:r.podioDados,fotos:r.fotos});
@@ -1775,6 +1806,7 @@ async function gerar(fmt){
         falhas++; ESTADO[i]={err:1,msgs:[String(e&&e.message||e)]};
         ovLog('✗ '+s.tit+': '+(e&&e.message||e),true);
       }
+      CRONO.slides.push({t:s.tit+(s.sub?' ('+s.sub+')':''),ms:Date.now()-tS,oc:ocultoAgora()-oS});
       pintaRoteiro();
     }
     $('ov-barra').style.width='100%';
@@ -1782,7 +1814,9 @@ async function gerar(fmt){
     const comFoto=saida.filter(s=>s.cheia||(s.fotos&&s.fotos.length)
       ||(s.podioDados&&(s.podioDados.tres||[]).length));
     if(!comFoto.length) throw new Error('nenhum slide saiu — nada a salvar');
+    const tMont=Date.now();
     if(fmt==='pdf') await montaPDF(comFoto); else await montaPPT(comFoto);
+    CRONO.montagem=Date.now()-tMont;
     set('ov-tit','Pronto');
     set('ov-qual',comFoto.length+' slides · '+falhas+' falha(s) · '+atencao+' com atenção');
     const mn=(window.__gvizMem&&window.__gvizMem.__n)||{hit:0,miss:0};
@@ -1795,6 +1829,7 @@ async function gerar(fmt){
     try{ if(temaDoRenan==null) localStorage.removeItem('bi_theme');
          else localStorage.setItem('bi_theme',temaDoRenan); }catch(e){}
     window.__gvizMem=null;
+    try{ relataCrono(Date.now()-t0); }catch(e){}   /* também quando dá erro: é quando mais importa */
     GERANDO=false; $('ov-fim').style.display='flex';
     set('ov-t',Math.round((Date.now()-t0)/1000)+'s');
     pintaRoteiro();
@@ -1901,6 +1936,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="slides.js?v=202609250600"></script>
-<script src="../assets/build-check.js?v=202609250600"></script>
+<script src="../assets/build-check.js?v=202609250700"></script>
 </body>
 </html>
