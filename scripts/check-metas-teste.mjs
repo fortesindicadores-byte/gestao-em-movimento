@@ -870,8 +870,8 @@ let provas1 = [];
   /* o fundo tem de ser o cinza do portal, nunca branco — era a emenda que
      aparecia como borda entre a imagem e o slide */
   const claros = pain.filter(x => !/escuro/.test(x.cls));
-  af(claros.length && claros.every(x => x.fundo === 'rgb(225, 226, 229)'),
-     'o fundo do slide é o cinza do portal, não branco',
+  af(claros.length && claros.every(x => x.fundo === 'rgb(240, 240, 240)'),
+     'o fundo do slide é o cinza claro #F0F0F0 (Renan, 24/09), não branco',
      (claros.find(x => x.fundo !== 'rgb(225, 226, 229)') || {}).fundo);
 
   /* a listra laranja do PPT dele: topo, encostada à direita, metade da largura */
@@ -1134,7 +1134,7 @@ let provas1 = [];
      slide e o alvo fica transparente no clone. */
   const fts = await pg.evaluate(() => window.__fotos || []);
   af(fts.length >= 1, 'houve captura de foto no painel', fts.length);
-  af(fts.every(f => f.bg === '#E1E2E5'), 'o fundo da captura é o cinza do slide, não branco',
+  af(fts.every(f => f.bg === '#F0F0F0'), 'o fundo da captura é o cinza do slide, não branco',
      JSON.stringify(fts.map(f => f.bg)));
   af(fts.every(f => f.alvoBg === 'transparent'), 'e o alvo não pinta o próprio fundo',
      JSON.stringify(fts.map(f => f.alvo + '=' + f.alvoBg)));
