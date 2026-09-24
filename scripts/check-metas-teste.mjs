@@ -250,6 +250,8 @@ const FCAS = [
   { vigencia:'jun/26', unidade:'CGR', projeto:'ROTA - CGR', fato:'Combustíveis', fato_desvio:'Desvio: ▲ R$ 90.000 · ▲ -7%', causa:'Km/L abaixo', acao:'Treinar motoristas', responsavel:'Michel', prazo:'30/09/2026' },
   // a Seara: a Árvore dela é OUTRO painel (a Ambev não tem a ANG e saía zerada)
   { vigencia:'jun/26', unidade:'ANG', projeto:'DISTRIBUIÇÃO URBANA - ANG', fato:'Combustíveis', fato_desvio:'Desvio: ▲ R$ 15.349 · ▲ 10%', causa:'R$/L acima', acao:'Renegociar diesel', responsavel:'Paulo', prazo:'30/09/2026' },
+  // unidade COM TIER: a Árvore lista "CBA", não "CBA T1" (bug real, 24/09/2026 — a árvore do MCC T2 saía com todas as unidades)
+  { vigencia:'jun/26', unidade:'CBA T1', projeto:'EMPURRADA - CBA', fato:'Combustíveis', fato_desvio:'Desvio: ▲ R$ 41.454 · ▲ -22%', causa:'Km/L abaixo', acao:'Condução econômica', responsavel:'Jean', prazo:'30/09/2026' },
   { vigencia:'jun/26', unidade:'CBA T1', projeto:'EMPURRADA - CBA', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 55.000 · ▲ -12%', causa:'Carreta desgastada', acao:'Renovar carrocerias', responsavel:'Jean', prazo:'30/09/2026' },
   { vigencia:'jun/26', unidade:'GRL', projeto:'ROTA - GRL', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 33.000 · ▲ -4%', causa:'Corretivas', acao:'Antecipar preventivas', responsavel:'Ana', prazo:'30/10/2026' },
   { vigencia:'jun/26', unidade:'FLP', projeto:'ROTA - FLP', fato:'Manutenções', fato_desvio:'Desvio: ▲ R$ 30.000 · ▲ -6%', causa:'Pneu', acao:'Revisar', responsavel:'Ana', prazo:'30/10/2026' },
@@ -407,7 +409,7 @@ function painelDuble(chaves, dialeto, comGate) {
     <div class="tit-sub" id="titSub">pronto</div>
     <div class="ms-wrap" id="ms-vig"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">${ops('ms-vig')}</div></div></div>
     <div class="ms-wrap" id="ms-uni"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
-      ${['CGR','CBA T1','GRL','PIR','FLP','ANG'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
+      ${(dialeto === 'mm' ? ['CGR','CBA','GRL','PIR','FLP'] : ['CGR','CBA T1','GRL','PIR','FLP','ANG']).map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-proj"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
       ${['AS - CGR','ROTA - CGR','EMPURRADA - CBA','ROTA - GRL','DISTRIBUIÇÃO URBANA - ANG'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-nv3"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
@@ -684,16 +686,19 @@ console.log('\n═══ 1 · o roteiro sai da tabela `fca`, não de uma lista f
      árvore — que é um desenho com conectores — ficava com meia página e
      ilegível. Dois recortes de Combustíveis = 4 slides, aos pares. */
   const comb = r.filter(s => /Combustíveis – /.test(s.tit || ''));
-  af(comb.length === 6, 'Combustíveis: a Árvore e o FCA em slides próprios (3 recortes)', comb.length);
-  af(comb.filter(s => /arvore-combustivel/.test(s.url || '')).length === 2,
-     'duas árvores Ambev, uma por unidade+projeto', JSON.stringify(comb.map(s => s.url)));
+  af(comb.length === 8, 'Combustíveis: a Árvore e o FCA em slides próprios (4 recortes)', comb.length);
+  af(comb.filter(s => /arvore-combustivel/.test(s.url || '')).length === 3,
+     'três árvores Ambev, uma por unidade+projeto', JSON.stringify(comb.map(s => s.url)));
+  /* o R$ do subtítulo é o do FCA (pacote = conta + Arla); a árvore mostra só a conta — o subtítulo diz qual é qual */
+  af(comb.filter(s => /arvore-combustivel/.test(s.url || '')).every(s => /desvio do pacote no FCA: R\$/.test(s.sub) && /só a conta Combustíveis/.test(s.sub)),
+     'o subtítulo da árvore diz que o R$ é o do pacote no FCA e que a árvore mostra só a conta', comb.filter(s => /arvore-combustivel/.test(s.url || '')).map(s => s.sub).join(' | '));
   /* A ANG É A SEARA (bug real, 20/09/2026: "Árvore Seara saiu tudo zerado"):
      a Árvore Ambev não tem a unidade, então a dela sai da Árvore da Seara. */
   const arvAng = comb.find(s => /ANG/.test(s.tit || '') && !/fca/.test(s.url || ''));
   af(arvAng && /combustivel\/seara\/arvore/.test(arvAng.url || ''),
      'a árvore da ANG sai da Árvore da SEARA, não da Ambev', arvAng && arvAng.url);
   af(arvAng && /Seara/.test(arvAng.sub || ''), 'e o subtítulo diz que é a Seara', arvAng && arvAng.sub);
-  af(comb.filter(s => /fca-consolidado/.test(s.url || '')).length === 3,
+  af(comb.filter(s => /fca-consolidado/.test(s.url || '')).length === 4,
      'e o FCA de cada uma logo depois');
   af(/arvore/.test(comb[0].url) && /fca/.test(comb[1].url),
      'nessa ordem: a árvore explica, o FCA responde', comb.map(s=>s.url).join(' '));
@@ -766,7 +771,7 @@ let provas1 = [];
      'cada abertura leva o seu pacote no filtro', JSON.stringify(abertura.map(p => p.estado.filtros['ms-pac'])));
 
   const fca = provas1.filter(p => /fca-consolidado/.test(p.pag));
-  af(fca.length === 7, 'sete recortes de FCA (4 de Manutenções + 3 de Combustíveis)', fca.length);
+  af(fca.length === 8, 'oito recortes de FCA (4 de Manutenções + 4 de Combustíveis)', fca.length);
   af(fca.every(p => p.estado.vw === 'tabela'), 'o FCA sai na visão Tabela');
   af(fca.every(p => p.estado.chamou.includes('run')), 'o FCA foi redesenhado (run)');
   const fc = fca.find(p => p.estado.filtros['ms-fato'][0] === 'Combustíveis');
@@ -786,11 +791,19 @@ let provas1 = [];
      'e nenhum painel ficou sem redesenho');
 
   const arv = provas1.filter(p => /arvore-combustivel/.test(p.pag));
-  af(arv.length === 2 && arv.every(p => p.estado.chamou.includes('onFilterChange')), 'as 2 árvores foram redesenhadas');
+  af(arv.length === 3 && arv.every(p => p.estado.chamou.includes('onFilterChange')), 'as 3 árvores foram redesenhadas');
   af(arv[0].estado.filtros['ms-nv3'].length === 1, 'a árvore vem recortada no projeto', JSON.stringify(arv[0].estado.filtros['ms-nv3']));
-  af(JSON.stringify(arv.map(p => p.estado.filtros['ms-nv3'][0]).sort()) === '["AS","ROTA"]',
-     'a Árvore leva o PREFIXO do nível 3 (AS/ROTA), que é o que o filtro dela lista',
+  af(JSON.stringify(arv.map(p => p.estado.filtros['ms-nv3'][0]).sort()) === '["AS","EMPURRADA","ROTA"]',
+     'a Árvore leva o PREFIXO do nível 3 (AS/EMPURRADA/ROTA), que é o que o filtro dela lista',
      JSON.stringify(arv.map(p => p.estado.filtros['ms-nv3'])));
+  /* UNIDADE COM TIER (bug real, 24/09/2026): a Árvore lista "CBA", a fca diz "CBA T1".
+     Sem a alternativa sem tier, o sel não achava, limpava o filtro e a árvore saía
+     com o projeto de TODAS as unidades — e o aviso ficava só no Roteiro. */
+  const arvCba = arv.find(p => (p.estado.filtros['ms-nv3'] || [])[0] === 'EMPURRADA');
+  af(arvCba && JSON.stringify(arvCba.estado.filtros['ms-uni']) === '["CBA"]',
+     'a árvore do CBA T1 acha a unidade "CBA" (sem o tier) no filtro da Árvore', arvCba && JSON.stringify(arvCba.estado.filtros['ms-uni']));
+  af(arvCba && !(arvCba.faltou || []).some(m => /ms-uni/.test(m)), 'e não deixa aviso de unidade não achada', arvCba && JSON.stringify(arvCba.faltou));
+  af(arv.every(p => (p.estado.filtros['ms-uni'] || []).length === 1), 'toda árvore Ambev sai recortada em UMA unidade', JSON.stringify(arv.map(p => p.estado.filtros['ms-uni'])));
   af(arv.every(p => p.estado.filtros['ms-vig'].length === 1),
      'e a vigência casa também no dialeto MM/AAAA da Árvore', JSON.stringify(arv.map(p => p.estado.filtros['ms-vig'])));
   const arvSea = provas1.filter(p => /seara\/arvore/.test(p.pag));
