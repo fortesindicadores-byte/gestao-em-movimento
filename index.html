@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609242200">
+<meta name="build" content="202609250400">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -579,7 +579,7 @@ body.claro .farol-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rg
     <button class="s-item" id="atab-blocked" onclick="switchAdminTab('blocked')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="5.5" y1="5.5" x2="18.5" y2="18.5"/></svg> Bloqueados<span class="admin-cnt" id="admin-cnt-blocked">0</span></button>
 
     <div class="s-sec">Atalhos</div>
-    <button class="s-item" onclick="exportUsersExcel()" title="Exportar nome, e-mail e telefone de todos os usuários">
+    <button class="s-item" onclick="exportUsersExcel()" title="Exportar nome, e-mail, telefone e filial de todos os usuários">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Exportar Excel
     </button>
@@ -1431,8 +1431,10 @@ function exportUsersExcel() {
   if (!rows.length) { alert('Não há usuários para exportar.'); return; }
   const statusMap = { pending: 'Pendente', approved: 'Ativo', blocked: 'Bloqueado' };
   const cell = v => { v = String(v == null ? '' : v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
-  const lines = [['Nome', 'E-mail', 'Telefone', 'Status'].join(';')];
-  rows.forEach(u => lines.push([(u.name || '').toUpperCase(), u.email || '', fmtPhone(u.phone), statusMap[u.status] || u.status || ''].map(cell).join(';')));
+  // Filial = as unidades do Acesso FCA, por extenso (o card resume em "2 unidades")
+  const filial = u => { const p = _fcaProf[u.user_id]; if (p && p.is_admin) return 'Admin (todas)'; return fcaUnitsOf(p).join(', '); };
+  const lines = [['Nome', 'E-mail', 'Telefone', 'Filial', 'Status'].join(';')];
+  rows.forEach(u => lines.push([(u.name || '').toUpperCase(), u.email || '', fmtPhone(u.phone), filial(u), statusMap[u.status] || u.status || ''].map(cell).join(';')));
   const csv = '﻿' + lines.join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
@@ -1513,6 +1515,6 @@ init();
 </script>
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202609242200"></script>
+<script src="assets/build-check.js?v=202609250400"></script>
 </body>
 </html>
