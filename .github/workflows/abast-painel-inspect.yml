@@ -4,6 +4,10 @@ name: Abast Painel Inspect
 # filiais, projetos e buracos. Só totais no log. Não grava nada.
 on:
   workflow_dispatch:
+    inputs:
+      recorte:
+        description: "vazio = empresa toda · portal = só Ambev + Seara"
+        default: "portal"
 
 jobs:
   inspect:
@@ -16,4 +20,5 @@ jobs:
       - name: Inspecionar
         env:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          ABAST_RECORTE: ${{ github.event.inputs.recorte }}
         run: node scripts/abast-painel-inspect.mjs
