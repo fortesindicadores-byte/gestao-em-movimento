@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609251100">
+<meta name="build" content="202609251300">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -330,6 +330,11 @@ table.dre thead th.num{text-align:right;}
    embaixo das contas. */
 #vw-resumo .tsec{flex:0 0 auto;}
 #vw-resumo .twrap{flex:0 0 auto;max-height:none;overflow:visible;}
+/* 1px a menos no texto da tabela do Resumo (Renan, 25/09/2026): a altura que
+   sobra vai para os três gráficos de baixo */
+#tbl-conta{font-size:10px;}
+#tbl-conta thead th{font-size:8.5px;}
+#tbl-conta .tag-pill{font-size:9.5px;}
 #vw-placas .tsec{flex:1 1 0;min-height:220px;}
 /* Consolidado: a tabela tem uma linha por unidade (altura conhecida) e fica
    com o que precisa; o gráfico do ano leva toda a sobra. As linhas são mais
@@ -1775,6 +1780,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202609251100"></script>
+<script src="../assets/build-check.js?v=202609251300"></script>
 </body>
 </html>
