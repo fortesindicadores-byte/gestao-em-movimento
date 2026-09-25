@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609232100">
+<meta name="build" content="202609251100">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1186,10 +1186,20 @@ function acompCells(orc,rem,real){
      outubro no dia 5 de setembro.
    O par unidade+vigência decide: se a planilha já cobriu, o ERP não entra. */
 const CONTA_CONTRATO='Contratos de Manutenção Fabricante';
-function contratoPrevia(){
+function contratoPreviaLinhas(){
   const fechados=new Set(ROWS.filter(r=>r.origem==='contratos-planilha').map(r=>r.unidade+'|'+r.vigencia));
-  return contrDoFiltro().filter(r=>!fechados.has(r.unidade+'|'+r.vig_cobranca))
-    .reduce((s,r)=>s+(+r.custo_vig||0),0);
+  return contrDoFiltro().filter(r=>!fechados.has(r.unidade+'|'+r.vig_cobranca));
+}
+function contratoPrevia(){ return contratoPreviaLinhas().reduce((s,r)=>s+(+r.custo_vig||0),0); }
+/* A PRÉVIA TAMBÉM ENTRA NOS GRÁFICOS (Renan, 25/09/2026: "contratos está ali
+   aparecendo e não está no top 10 grupo"). No mês fechado o contrato já chega
+   pelos gráficos como lançamento da planilha (grupo Contrato, equipamento =
+   placa, sem fornecedor); a prévia vira linha no MESMO formato, para o mês
+   aberto se comportar igual ao fechado. Sem fornecedor, ela fica fora do
+   gráfico de fornecedor, como o mês fechado já fica. */
+function contratoPreviaComoLanc(){
+  return contratoPreviaLinhas().map(r=>({grupo:'Contrato',equipamento:r.placa_origem||r.placa||'',
+    fornecedor:'',conta:CONTA_CONTRATO,data:'',valor:+r.custo_vig||0})).filter(r=>r.valor>0);
 }
 function renderAcomp(){
   let h=`<thead><tr><th>Conta</th><th class="num">Orç</th><th class="num">Rem (tend.)</th><th class="num">Real</th><th class="num">▲ Orç</th><th class="num">▲ Rem</th><th class="num">Ating. Orç %</th><th class="num">Ating. Rem %</th></tr></thead><tbody>`;
@@ -1270,7 +1280,7 @@ function barChart(id,pairs,max){
         x:{display:false,beginAtZero:true,grace:'8%'}}}});
 }
 function renderCharts(rows){
-  const cr=rows.filter(counts);
+  const cr=rows.filter(counts).concat(contratoPreviaComoLanc().filter(passaExtras));
   barChart('ch-grupo',aggBy(cr,'grupo'));
   barChart('ch-placa',aggBy(cr,'equipamento').filter(p=>p[0]!=='—'));
   barChart('ch-forn',aggBy(cr,'fornecedor').filter(p=>p[0]!=='—'));
@@ -1414,6 +1424,7 @@ async function loadContratos(){
   if(VIG_OPTS.length!==antes){ buildAnoFilter(); buildVigFilter(); }
   buildContratoFilter();
   renderAcomp(); renderPlacas(); renderConsol();
+  if(VW==='resumo') renderCharts(curRows());
 }
 // o recorte das duas visões novas é o do filtro do topo
 const contrDoFiltro=()=>{
@@ -1764,6 +1775,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202609232100"></script>
+<script src="../assets/build-check.js?v=202609251100"></script>
 </body>
 </html>
