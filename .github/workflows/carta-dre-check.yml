@@ -1,0 +1,24 @@
+name: Carta DRE Check
+
+# O Orçado e o Rem (tend.) do Acompanhamento por Conta da Carta de Custos
+# batem com a aba Frota do DRE? Roda o código da própria Carta contra a aba
+# e mostra a soma crua, dupla contagem, linhas repetidas e o mês a mês.
+on:
+  workflow_dispatch:
+    inputs:
+      vig:
+        description: "Vigência AAAA-MM"
+        default: "2026-09"
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          CARTA_VIG: ${{ github.event.inputs.vig }}
+        run: node scripts/carta-dre-check.mjs
