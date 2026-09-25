@@ -24,6 +24,38 @@ for (let off = 0; ; off += 1000) {
   if (p.length < 1000) break;
 }
 console.log(`erp_abastecimentos: ${n(linhas.length)} linhas`);
+
+// ── recorte Ambev + Seara (as unidades do portal), pelo projeto da OS ──
+// O projeto vem como no DRE ("ROTA - CGR", "EMPURRADA - PIR"); o código da
+// unidade é o que vem depois do último hífen, sem o "(INATIVO)".
+const COD_PORTAL = new Set(['CGR', 'BLC', 'CBA', 'FLP', 'GRL', 'NFR', 'PLT', 'RON', 'MCC', 'PIR', 'GNA', 'ANG']);
+const codDe = p => { const s = String(p || '').replace(/\(INATIVO\)/i, '').trim(); const i = s.lastIndexOf('-'); return i >= 0 ? s.slice(i + 1).trim().toUpperCase() : ''; };
+if (process.env.ABAST_RECORTE === 'portal') {
+  const antes = linhas.length;
+  for (let i = linhas.length - 1; i >= 0; i--) if (!COD_PORTAL.has(codDe(linhas[i].projeto_os))) linhas.splice(i, 1);
+  console.log(`recorte Ambev + Seara (projeto da OS): ${n(linhas.length)} de ${n(antes)} linhas`);
+  const RS = [3, 12];
+  const vig = new Map();
+  linhas.forEach(r => {
+    if (!r.data || r.data < '2026-01') return;
+    const k = r.data.slice(0, 7), grupo = codDe(r.projeto_os) === 'ANG' ? 'seara' : 'ambev';
+    const o = vig.get(k) || { ambev: { lit: 0, val: 0, valOk: 0, litOk: 0, n: 0, fora: 0 }, seara: { lit: 0, val: 0, valOk: 0, litOk: 0, n: 0, fora: 0 } };
+    const g = o[grupo], L = +r.litros || 0, V = +r.valor || 0;
+    g.n++; g.lit += L; g.val += V;
+    if (L > 0 && V > 0 && V / L >= RS[0] && V / L <= RS[1]) { g.valOk += V; g.litOk += L; } else g.fora++;
+    vig.set(k, o);
+  });
+  console.log(`\nmês       grupo  abast.     litros       valor bruto   R$/L bruto   valor na régua  R$/L régua  fora da régua`);
+  [...vig.keys()].sort().forEach(k => ['ambev', 'seara'].forEach(gr => {
+    const g = vig.get(k)[gr];
+    console.log(`${k}  ${gr.padEnd(5)}  ${String(g.n).padStart(6)}  ${n(g.lit).padStart(9)}  ${('R$ ' + n(g.val)).padStart(16)}  ${d2(g.lit ? g.val / g.lit : 0).padStart(10)}  ${('R$ ' + n(g.valOk)).padStart(15)}  ${d2(g.litOk ? g.valOk / g.litOk : 0).padStart(10)}  ${String(g.fora).padStart(6)}`);
+  }));
+  const uni = new Map();
+  linhas.forEach(r => { if (!r.data || r.data < '2026-01') return; const c = codDe(r.projeto_os); const o = uni.get(c) || { n: 0, lit: 0 }; o.n++; o.lit += +r.litros || 0; uni.set(c, o); });
+  console.log('\npor unidade (2026):');
+  [...uni.entries()].sort((a, b) => b[1].lit - a[1].lit).forEach(([c, o]) => console.log(`   ${c.padEnd(5)} ${String(o.n).padStart(6)} abast. ${n(o.lit).padStart(10)} L`));
+  process.exit(0);
+}
 const atual = linhas.map(r => r.atualizado_em).filter(Boolean).sort();
 console.log(`gravadas entre ${atual[0]} e ${atual[atual.length - 1]}\n`);
 
