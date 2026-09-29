@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609092400">
+<meta name="build" content="202609291500">
 <title>Manutenção — Detalhamento por NF</title>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--bg:#0C1017;--card:#141B26;--border:#1E2D40;--orange:#F97316;--blue:#38BDF8;--text:#F1F5F9;--text2:#94A3B8;--text3:#475569;--green:#3BB33B;--red:#FF6666;}
@@ -124,6 +125,8 @@ body.light-mode .cr{color:#cc0000!important;}
         <div class="hero-delta">Realizado (total)<b id="hero-real">—</b></div>
         <div class="hero-delta">Fornecedores<b id="hero-forn">—</b></div>
         <div class="hero-delta">Centros de custo<b id="hero-cc">—</b></div>
+        <div class="hero-delta" title="Frota do painel de Ativos (Ginfo) + ativos cadastrados à mão da ANG, no recorte de Unidade e Projeto">Ativos<b id="hero-ativos">—</b></div>
+        <div class="hero-delta" title="Realizado do recorte ÷ ativos do recorte (Unidade e Projeto)">Custo médio por ativo<b id="hero-cma">—</b></div>
       </div>
     </div>
   </div>
@@ -197,7 +200,50 @@ const NAO_MANUT=new Set(['Pneus/Borracharia','Tacógrafo','Máquinas e Equipamen
 const isForaManut=ramo=>NAO_MANUT.has(ramo);
 let gsort={key:'real',dir:1}, dsort={key:'real',dir:1};   // dir 1 = asc (mais negativo no topo)
 
+/* ── CUSTO MÉDIO POR ATIVO (Renan, 29/09/2026: "usando painel de ativos como base") ──
+   A frota vem da MESMA base do painel de Ativos: ginfo_snapshot['ativos'] (robô
+   do Ginfo), mais a ativos_manual, que é onde mora a frota da ANG (o Ginfo não
+   tem a Anhanguera). O de-para leva Filial + Projeto do Ginfo para o código de
+   unidade e o prefixo de projeto que o Nível 3 da Manutenção usa. FRETEIRO fica
+   fora, como no resto do portal. A base é a frota de HOJE, não a de cada mês. */
+let ATIVOS=null;   // null = ainda não leu / falhou · [] = leu vazio
+const _nrmA=v=>String(v||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+const AT_FIL={'PIRAI EMPURRADA':'PIR','CDD RIO DE JANEIRO':'CGR','CAMPO GRANDE':'CGR','CUIABA':'CBA','CDD CUIABA':'CBA',
+  'CUIABA EMPURRADA':'CBA','CDD GUARULHOS':'GRL','MACACU EMPURRADA':'MCC','CDI MACACU':'MCC','CACHOEIRAS DE MACACU':'MCC',
+  'MACACU':'MCC','CDD PELOTAS':'PLT','CDD FLORIANOPOLIS':'FLP','CDD NOVA FRIBURGO':'NFR','CDD CAMBORIU':'BLC',
+  'CDD RONDONOPOLIS':'RON','CDD GOIANIA':'GNA','ANHANGUERA':'ANG'};
+// projeto do Ginfo → prefixo do Nível 3 da Manutenção (ARMAZEM = empilhadeira, que o DRE lança em APOIO)
+const AT_PROJ={'ROTA':'ROTA','EMPURRADA':'EMPURRADA','AS':'AUTO SERVIÇO','AUTO SERVICO':'AUTO SERVIÇO','LATA':'INSUMOS',
+  'INSUMOS':'INSUMOS','APOIO':'APOIO','ARMAZEM':'APOIO','VANS':'ROTA (VAN)','VAN':'ROTA (VAN)'};
+async function loadAtivos(){
+  try{
+    if(!window.supabase)return;
+    const sb=supabase.createClient('https://lozwipoeacpvplgkrxkq.supabase.co','sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9');
+    const [g,m]=await Promise.allSettled([
+      sb.from('ginfo_snapshot').select('data').eq('chave','ativos').maybeSingle(),
+      sb.from('ativos_manual').select('placa,unidade,projeto')]);
+    const out=[];
+    const gd=g.status==='fulfilled'&&!g.value.error&&g.value.data&&Array.isArray(g.value.data.data)?g.value.data.data:null;
+    if(gd) gd.forEach(r=>{
+      const k=o=>Object.keys(r).find(x=>_nrmA(x)===o);
+      const fil=_nrmA(r[k('FILIAL')]), pj=_nrmA(r[k('PROJETO')]), pl=String(r[k('PLACA')]||'').trim();
+      if(!pl||pj==='FRETEIRO')return;
+      const cod=AT_FIL[fil]; if(!cod)return;
+      out.push({cod,proj:AT_PROJ[pj]||pj});
+    });
+    const md=m.status==='fulfilled'&&!m.value.error?(m.value.data||[]):[];
+    md.forEach(r=>{ if(_nrmA(r.projeto)==='FRETEIRO')return; out.push({cod:String(r.unidade||'').trim().toUpperCase(),proj:'DISTRIBUIÇÃO URBANA'}); });
+    ATIVOS=gd?out:null;
+    if(!gd)console.warn('Manutenção: base de ativos indisponível — custo médio por ativo fica em branco');
+  }catch(e){ console.warn('Manutenção: falha ao ler os ativos',e); ATIVOS=null; }
+}
+function ativosNoRecorte(){
+  if(!ATIVOS)return 0;
+  const fu=getMsV('ms-uni'),fp=getMsV('ms-proj'),has=(a,v)=>!a.length||a.includes(v);
+  return ATIVOS.filter(a=>has(fu,a.cod)&&has(fp,a.proj)).length;
+}
 async function carregar(){
+  const pAtivos=loadAtivos();
   await loadRamos();
   const t=await gviz(); COLS=t.cols;
   const i={
@@ -226,6 +272,7 @@ async function carregar(){
   ROWS.forEach(r=>{r.cluster=clusterDe(r.ramo);r.foraManut=isForaManut(r.ramo);});
   mapFooter();
   buildFilters();
+  await pAtivos;
 }
 function mapFooter(){
   const nm=(k,lbl)=>MAP[k]>=0?`<b>${lbl}</b>=${esc(COLS[MAP[k]])}`:`<span class="miss">${lbl}=(não achou)</span>`;
@@ -359,6 +406,9 @@ function render(){
   set('hero-real',brl(rows.reduce((s,r)=>s+(r.real||0),0)));
   set('hero-forn',uniq(rows.map(r=>r.forn)).length.toLocaleString('pt-BR'));
   set('hero-cc',uniq(rows.map(r=>r.cc)).length.toLocaleString('pt-BR'));
+  { const nA=ativosNoRecorte(), tot=rows.reduce((s,r)=>s+(r.real||0),0);
+    set('hero-ativos',ATIVOS?nA.toLocaleString('pt-BR'):'—');
+    set('hero-cma',ATIVOS&&nA?brl(tot/nA):'—'); }
 
   // agrupado (Ramo / Fornecedor / Centro de Custo)
   const key=dim;
@@ -444,6 +494,6 @@ atualizar();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202609092400"></script>
+<script src="../assets/build-check.js?v=202609291500"></script>
 </body>
 </html>
