@@ -1,0 +1,19 @@
+name: Manut Ativos Inspect
+
+# Rótulos de unidade/projeto da aba de Manutenção × os do painel de Ativos,
+# para o custo médio por ativo. Só rótulos e contagens. Não grava nada.
+on:
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Inspecionar
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/manut-ativos-inspect.mjs
