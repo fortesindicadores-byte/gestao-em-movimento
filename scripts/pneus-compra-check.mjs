@@ -45,6 +45,7 @@ if (pr.st === 200) {
 
 // ── Prolog ──
 const est = {}, nec = {}, carretas = {}, semMed = {};
+const D = { instCarreta: 0, eixos: {}, ultEixo: 0, ultBaixo: 0, ultBaixoVida: {} };
 let ult = null;
 for (const bid of Object.keys(BRANCH)) {
   let rows = [];
@@ -61,6 +62,11 @@ for (const bid of Object.keys(BRANCH)) {
   const ultE = ultEixoCarretas(veic);
   veic.filter(v => ehCarreta(v.tipo)).forEach(v => { const k = `${v.tipo} → eixo ${ultE[v.id]}`; carretas[k] = (carretas[k] || 0) + 1; });
   for (const t of tr.data || []) {
+    if (String(t.status || '').toUpperCase() === 'INSTALLED' && ultE[t.veiculoId]) {
+      const e = ultE[t.veiculoId], pos = String(t.nomePosicao || '').toUpperCase().trim(), mm = +t.menorMM, v = +t.cicloVida || 1;
+      D.instCarreta++; const eixo = (pos.match(/^\d+/) || ['?'])[0]; D.eixos[eixo] = (D.eixos[eixo] || 0) + 1;
+      if (pos.startsWith(String(e))) { D.ultEixo++; if (mm > 0 && mm < 4) { D.ultBaixo++; D.ultBaixoVida['vida ' + v] = (D.ultBaixoVida['vida ' + v] || 0) + 1; } }
+    }
     const m = medOpcao(t.medida); const st = String(t.status || '').toUpperCase();
     if (!m) { if (st === 'INVENTORY' || st === 'INSTALLED') semMed[t.medida || '(vazio)'] = (semMed[t.medida || '(vazio)'] || 0) + 1; continue; }
     const k = uni + '|' + m;
@@ -71,6 +77,7 @@ for (const bid of Object.keys(BRANCH)) {
   }
 }
 console.log(`\nsnapshot do Prolog: ${ult}`);
+console.log(`carretas: ${D.instCarreta} pneus instalados casados pelo veiculoId · por eixo ${JSON.stringify(D.eixos)} · no último eixo ${D.ultEixo} · abaixo de 4 mm ${D.ultBaixo} ${JSON.stringify(D.ultBaixoVida)}`);
 console.log('\n== carretas: tipo → último eixo ==');
 Object.entries(carretas).sort((a, b) => b[1] - a[1]).forEach(([k, n]) => console.log(`   ${String(n).padStart(4)}  ${k}`));
 console.log('\n== por unidade × medida ==  (estoque [novos] · necessidade = 1ª vida dianteiro + 4ª recap + último eixo carreta)');
