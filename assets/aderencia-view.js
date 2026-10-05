@@ -141,14 +141,20 @@
       borderColor: '#1E2D40', borderWidth: 1,
       titleFont: { family: 'Montserrat' }, bodyFont: { family: 'Montserrat' },
       callbacks: { label: c => (c.datasetIndex ? 'Meta ' : '') + Math.round(c.raw) + '%' } };
-    // eixo PROPORCIONAL, sem exagero (Renan, 05/10/2026: "quero que
-    // proporcionalize. Não exagere"): o piso desce até ~60% do menor mês, em
-    // dezenas, para a diferença entre os meses aparecer sem virar lupa; o teto
-    // fica justo ao pico (× 1,12, o padrão do portal) e sempre acima da meta.
+    // eixo que SE AJUSTA AOS DADOS (Renan, 05/10/2026: "proporcionalize. Não
+    // exagere" e "o eixo y precisa se ajustar aos dados lógicamente"): a
+    // mesma régua do Km/L no PADROES.md — abre para baixo pelo valor E pela
+    // amplitude do que está no gráfico (meta incluída, para a linha aparecer):
+    // piso = min(menor − 45% da amplitude, 82% do menor), teto = max(maior +
+    // 18% da amplitude, 104% do maior), em passos de 5, nunca abaixo de zero
+    // e nunca cortando a barra.
     const vals = data.filter(v => v != null);
-    const dMin = vals.length ? Math.min(...vals) : 0, dMax = vals.length ? Math.max(...vals) : 100;
-    const yMin = Math.max(0, Math.floor(Math.min(dMin, META) * .6 / 10) * 10);
-    const yMax = Math.max(dMax, META) * 1.12;
+    const lo = Math.min(vals.length ? Math.min(...vals) : META, META);
+    const hi = Math.max(vals.length ? Math.max(...vals) : META, META);
+    const rng = Math.max(hi - lo, 5);
+    let yMin = Math.max(0, Math.floor(Math.min(lo - rng * .45, lo * .82) / 5) * 5);
+    if (yMin >= lo) yMin = Math.max(0, lo - 5);
+    const yMax = Math.ceil(Math.max(hi + rng * .18, hi * 1.04) / 5) * 5;
     if (_charts[canvasId]) _charts[canvasId].destroy();
     _charts[canvasId] = new Chart(cv, {
       type: 'line',
