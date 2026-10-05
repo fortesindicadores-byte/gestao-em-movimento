@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610051800">
+<meta name="build" content="202610051830">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -739,7 +739,8 @@ async function enviaPedido(){
   await lePedidos(); montaFiltros(); render();
 }
 async function apagaPedido(id){
-  if(!confirm('Apagar este pedido?')) return;
+  const r=PEDIDOS.find(x=>x.id===id);
+  if(!confirm(r&&r.qtd_aprovada!=null?'Este pedido já foi avaliado pelo corporativo. Apagar mesmo assim?':'Apagar este pedido?')) return;
   const {data,error}=await sb.from('pneu_pedido').delete().eq('id',id).select('id');
   if(error||!data||!data.length){ alert('Não foi possível apagar: '+((error&&error.message)||'o pedido já foi avaliado pelo corporativo')); }
   await lePedidos(); render();
@@ -750,14 +751,14 @@ function renderMeus(){
   const us=unisVistas(), varias=us.length>1;
   const linhas=PEDIDOS.filter(r=>us.includes(r.unidade));
   set('tit-meus',varias?'Pedidos das unidades':`Pedidos da unidade · ${us[0]||'—'}`);
-  set('sub-meus',linhas.length?`${linhas.length} pedido(s) · do mais recente para o mais antigo · pedido ainda não avaliado pode ser apagado`:'Nenhum pedido lançado ainda.');
+  set('sub-meus',linhas.length?`${linhas.length} pedido(s) · do mais recente para o mais antigo · ${ADMIN?'o admin pode apagar qualquer pedido':'pedido ainda não avaliado pode ser apagado'}`:'Nenhum pedido lançado ainda.');
   const tb=document.getElementById('tb-meus'), nc=varias?10:9;
   tb.innerHTML=`<thead><tr><th>Vigência</th>${varias?'<th>Unidade</th>':''}<th>Projeto</th><th>Banda de rodagem</th><th>Medida</th><th class="num">Quantidade</th><th class="num">Aprovado</th><th>Situação</th><th>Lançado em</th><th></th></tr></thead><tbody>`+
     (linhas.map(r=>{ const [s,c]=situacao(r);
       return `<tr><td>${vigRot(r.vigencia)}</td>${varias?`<td class="nome">${esc(r.unidade)}</td>`:''}<td${varias?'':' class="nome"'}>${esc(r.projeto)}</td><td>${esc(r.banda)}</td><td>${esc(r.medida)}</td>
         <td class="num">${br(r.qtd)}</td><td class="num">${r.qtd_aprovada==null?'—':br(r.qtd_aprovada)}</td><td><span class="pill ${c}">${s}</span></td>
         <td>${fmtDT(r.created_at)}<span class="lin2">${esc(r.criado_nome||'')}</span></td>
-        <td>${r.qtd_aprovada==null?`<button class="ico-bt" title="Apagar pedido" onclick="apagaPedido(${r.id})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:''}</td></tr>`; }).join('')
+        <td>${ADMIN||r.qtd_aprovada==null?`<button class="ico-bt" title="Apagar pedido" onclick="apagaPedido(${r.id})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:''}</td></tr>`; }).join('')
      ||`<tr class="vazio" onclick="abrePedido()"><td colspan="${nc}" class="mut" style="text-align:center;padding:22px">Nenhum pedido lançado ainda — clique aqui ou em <b>Novo pedido</b> para lançar.</td></tr>`)+'</tbody>';
   set('n-pedido',linhas.length||'');
 }
@@ -944,6 +945,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610051800"></script>
+<script src="../assets/build-check.js?v=202610051830"></script>
 </body>
 </html>

@@ -234,6 +234,15 @@ console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor pre
   }
   await pg.setViewportSize({ width: 1600, height: 900 });
   af('Prolog lido uma vez por unidade (14 leituras)', await pg.evaluate(() => window.__log.snapshot) === 14, await pg.evaluate(() => window.__log.snapshot));
+  // admin apaga qualquer pedido, inclusive o já avaliado (Renan, 05/10/2026: "Admin precisa conseguir excluir")
+  await pg.click('.s-item[data-vw="pedido"]'); await pg.waitForTimeout(200);
+  const lix = await pg.$$eval('#tb-meus tbody tr', t => t.map(r => !!r.querySelector('.ico-bt')));
+  af('admin: lixeira em todos os pedidos, avaliados inclusive', lix.length > 1 && lix.every(Boolean), JSON.stringify(lix));
+  let msgDlg = ''; pg.once('dialog', d => { msgDlg = d.message(); });
+  const nAntes = await pg.$$eval('#tb-meus tbody tr', t => t.length);
+  await pg.click('#tb-meus .ico-bt[onclick="apagaPedido(2)"]'); await pg.waitForTimeout(400);
+  af('apagar avaliado pede confirmação própria e some da lista', /já foi avaliado/.test(msgDlg) && await pg.$$eval('#tb-meus tbody tr', t => t.length) === nAntes - 1
+    && !(await pg.evaluate(() => window.__db.pneu_pedido.some(r => r.id === 2))), msgDlg);
   af('sem erro de página', !errs.length, errs.join(' | '));
   await ctx.close();
 }
