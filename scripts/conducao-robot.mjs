@@ -14,6 +14,8 @@
 //            (usar quando a régua de pontos mudar).
 //   reproc   pergunta em /processamentos quais dias a vFleets reprocessou no
 //            período e recoleta SÓ esses dias (o dado antigo fica errado).
+//   freiomotor  sonda: o Geotab entrega freio motor? cobertura, codificação e
+//            rpm durante o uso (CE_DE = dia, CE_UNI = unidade em destaque).
 //   ident    relatório de IDENTIFICAÇÃO de motorista por unidade e por placa
 //            (quem rodou identificado e quem não), sem gravar nada. Período:
 //            CE_DE/CE_ATE; sem eles, os últimos 7 dias.
@@ -2096,6 +2098,143 @@ if (MODE === 'marchacalc') {
   const semGab = linhas.filter(l => l.acc == null && l.pctDer != null);
   console.log(`\nveículos que GANHARIAM o pilar pela derivação (não publicam marcha): ${semGab.length}`);
   console.log('   ' + semGab.slice(0, 12).map(l => `${l.placa}=${l.pctDer.toFixed(1)}%`).join(' · '));
+  console.log('\nSonda encerrada — nada foi gravado.');
+  process.exit(0);
+}
+
+if (MODE === 'freiomotor') {
+  // SONDA DO FREIO MOTOR (Renan, 05/10/2026) — só leitura, não grava nada.
+  // Um motorista educador sugeriu medir o uso do freio motor entre 2.000 e
+  // 2.200 rpm. Antes de qualquer desenho: o Geotab ENTREGA o sinal? Em quantos
+  // veículos (Piraí à parte)? Como ele vem codificado (liga/desliga, % de
+  // torque)? E quanto do tempo FORA da faixa verde (rpm > 1.700) acontece com
+  // o freio motor acionado — que é o tempo que a Faixa Verde hoje pune.
+  // Log só com nomes de diagnóstico, placas e contagens (repo público).
+  const cred = await geotabLogin();
+  if (!cred) { console.error('Geotab: sem credencial'); process.exit(1); }
+  const DIA = process.env.CE_DE || iso(ontem);
+  const UNI = (process.env.CE_UNI || 'PIRAI').toUpperCase();
+  const de0 = `${DIA}T03:00:00.000Z`, fim = new Date(new Date(de0).getTime() + 864e5 - 1).toISOString();
+  console.log(`sonda de freio motor · dia ${DIA} · destaque para unidades com "${UNI}"`);
+
+  // 1) catálogo: tudo que cheire a freio motor / retarder
+  const diags = await geotabRpc('Get', { typeName: 'Diagnostic' }, cred);
+  const RX = /retard|freio\s*(do\s*)?motor|freio\s*de\s*escape|engine\s*brake|exhaust\s*brake|compression\s*brake|jake|ret[aá]rd|intarder|top\s*brake|\bevb\b/i;
+  const cand = diags.filter(d => RX.test(d.name || ''));
+  console.log(`\ndiagnósticos no catálogo: ${diags.length} · candidatos a freio motor/retarder: ${cand.length}`);
+
+  // regras de exceção da conta que falem de freio motor
+  try {
+    const regras = await geotabRpc('Get', { typeName: 'Rule' }, cred);
+    const rf = regras.filter(r => /freio|brake|retard/i.test(r.name || ''));
+    console.log(`regras da conta com freio/brake/retard no nome: ${rf.length}`);
+    rf.forEach(r => console.log(`   ${String(r.name).slice(0, 80)}`));
+  } catch (e) { console.log('regras:', e.message.slice(0, 160)); }
+
+  // veículos, unidade (grupo UNI_*) e quem rodou no dia
+  const [devs, grupos, trips] = await Promise.all([
+    geotabRpc('Get', { typeName: 'Device' }, cred),
+    geotabRpc('Get', { typeName: 'Group' }, cred),
+    geotabRpc('Get', { typeName: 'Trip', search: { fromDate: de0, toDate: fim }, resultsLimit: 50000 }, cred),
+  ]);
+  const gN = new Map(grupos.map(g => [g.id, g.name || '']));
+  const info = new Map(devs.map(d => {
+    const u = (d.groups || []).map(g => gN.get(g.id) || '').find(n => /^UNI_/.test(n));
+    return [d.id, { placa: String(d.licensePlate || d.name || d.id).toUpperCase().trim(),
+                    uni: u ? u.replace(/^UNI_/, '') : '(sem grupo UNI)' }];
+  }));
+  const rodou = new Set(trips.map(t => t.device && t.device.id).filter(Boolean));
+  const ehUni = id => ((info.get(id) || {}).uni || '').toUpperCase().includes(UNI);
+  const rodouUni = [...rodou].filter(ehUni);
+  console.log(`\nveículos que rodaram no dia: ${rodou.size} · deles em "${UNI}": ${rodouUni.length}`);
+
+  // 2) amostras por candidato (pagina como o RPM)
+  async function baixa(id) {
+    const porDev = new Map(); let from = de0, pag = 0, total = 0;
+    while (pag < 20) {
+      const lote = await geotabRpc('Get', { typeName: 'StatusData',
+        search: { diagnosticSearch: { id }, fromDate: from, toDate: fim }, resultsLimit: 50000 }, cred);
+      pag++; total += lote.length;
+      for (const r of lote) {
+        const dv = r.device && r.device.id; if (!dv) continue;
+        let a = porDev.get(dv); if (!a) { a = []; porDev.set(dv, a); }
+        a.push({ t: new Date(r.dateTime).getTime(), v: +r.data });
+      }
+      if (lote.length < 50000) break;
+      from = new Date(new Date(lote[lote.length - 1].dateTime).getTime() + 1).toISOString();
+    }
+    porDev.forEach(a => a.sort((x, y) => x.t - y.t));
+    return { porDev, total };
+  }
+
+  const com = [];
+  const uniao = new Set();
+  for (const d of cand) {
+    let r; try { r = await baixa(d.id); } catch (e) { continue; }
+    if (!r.total) continue;
+    r.porDev.forEach((_, id) => uniao.add(id));
+    const nUni = [...r.porDev.keys()].filter(ehUni).length;
+    com.push({ d, ...r, nUni });
+  }
+  console.log(`\ncandidatos COM amostra no dia: ${com.length} de ${cand.length}`);
+  com.sort((a, b) => b.porDev.size - a.porDev.size).forEach(c => console.log(
+    `   ${String(c.total).padStart(7)} amostra(s) · ${String(c.porDev.size).padStart(4)} veículo(s) · ${String(c.nUni).padStart(3)} em ${UNI} · ${String(c.d.name).slice(0, 70)}`));
+  const semNada = cand.length - com.length;
+  if (semNada) console.log(`   (${semNada} candidato(s) do catálogo sem nenhuma amostra no dia)`);
+  const cobUni = rodouUni.filter(id => uniao.has(id)).length;
+  console.log(`\nCOBERTURA: rodaram ${rodou.size} · com algum sinal de freio motor ${[...rodou].filter(id => uniao.has(id)).length}`
+    + ` · em ${UNI}: ${cobUni} de ${rodouUni.length}`);
+
+  if (!com.length) { console.log('\nO Geotab NÃO entregou sinal de freio motor neste dia. Sonda encerrada — nada foi gravado.'); process.exit(0); }
+
+  // 3) os 3 candidatos com mais veículos: codificação e cruzamento com o RPM
+  const { porDev: rpmD } = await geotabRpmDia(DIA, cred);
+  const FAIXAS = [[0, 1100], [1100, 1500], [1500, 1700], [1700, 1800], [1800, 2000], [2000, 2200], [2200, 2500], [2500, 99999]];
+  const fx = rpm => FAIXAS.findIndex(([a, b]) => rpm >= a && rpm < b);
+  for (const c of com.slice(0, 3)) {
+    console.log(`\n── ${c.d.name} ──`);
+    const hist = new Map(); const difs = [];
+    c.porDev.forEach(a => { a.forEach((x, i) => { hist.set(x.v, (hist.get(x.v) || 0) + 1); if (i) difs.push(a[i].t - a[i - 1].t); }); });
+    const vals = [...hist.entries()].sort((a, b) => b[1] - a[1]);
+    console.log(`   valores distintos: ${vals.length} · mais frequentes: ` + vals.slice(0, 12).map(([v, n]) => `${v}×${n}`).join(' · '));
+    difs.sort((a, b) => a - b);
+    if (difs.length) console.log(`   intervalo entre amostras do mesmo veículo: mediana ${Math.round(difs[difs.length >> 1] / 1000)} s · p90 ${Math.round(difs[Math.floor(difs.length * .9)] / 1000)} s`);
+
+    // acionado = valor > 0, vale até a próxima amostra (teto 2 min)
+    const tFx = FAIXAS.map(() => 0), tFxUni = FAIXAS.map(() => 0);
+    let acion = 0, foraVerde = 0, foraVerdeFreio = 0, foraVerdeUni = 0, foraVerdeFreioUni = 0, vComRpm = 0;
+    for (const [id, ra] of rpmD) {
+      const fa = c.porDev.get(id); if (!fa || !fa.length) continue;
+      vComRpm++;
+      const u = ehUni(id);
+      let j = 0;
+      for (let i = 0; i < ra.length; i++) {
+        const a = ra[i]; const prox = i + 1 < ra.length ? ra[i + 1].t : a.t + 1000;
+        const t1 = Math.min(prox, a.t + RPM_GAP_MS); if (t1 <= a.t || !isFinite(a.rpm) || a.rpm <= RPM_LENTA) continue;
+        const dt = (t1 - a.t) / 1000;
+        while (j + 1 < fa.length && fa[j + 1].t <= a.t) j++;
+        const f = fa[j];
+        const ativo = f && f.t <= a.t && a.t - f.t <= RPM_GAP_MS * 5 && f.v > 0;
+        const fora = a.rpm > 1700;
+        if (fora) { foraVerde += dt; if (u) foraVerdeUni += dt; }
+        if (!ativo) continue;
+        acion += dt; const k = fx(a.rpm); if (k >= 0) { tFx[k] += dt; if (u) tFxUni[k] += dt; }
+        if (fora) { foraVerdeFreio += dt; if (u) foraVerdeFreioUni += dt; }
+      }
+    }
+    const h = s => (s / 3600).toFixed(1) + ' h';
+    console.log(`   veículos com RPM e este sinal: ${vComRpm} · tempo com freio motor acionado: ${h(acion)}`);
+    console.log('   rpm durante o freio motor (frota | ' + UNI + '):');
+    FAIXAS.forEach(([a, b], k) => { const tot = tFx.reduce((s, x) => s + x, 0) || 1, totU = tFxUni.reduce((s, x) => s + x, 0) || 1;
+      console.log(`      ${String(a).padStart(4)}–${b > 9999 ? '   +' : String(b).padStart(4)} rpm  ${(tFx[k] / tot * 100).toFixed(1).padStart(5)}%  |  ${(tFxUni[k] / totU * 100).toFixed(1).padStart(5)}%`); });
+    console.log(`   tempo acima de 1.700 rpm (fora da faixa verde) com freio motor acionado: `
+      + `frota ${(foraVerde ? foraVerdeFreio / foraVerde * 100 : 0).toFixed(1)}% (${h(foraVerdeFreio)} de ${h(foraVerde)})`
+      + ` · ${UNI} ${(foraVerdeUni ? foraVerdeFreioUni / foraVerdeUni * 100 : 0).toFixed(1)}% (${h(foraVerdeFreioUni)} de ${h(foraVerdeUni)})`);
+  }
+
+  // placas de UNI que rodaram e não mandam nenhum sinal
+  const faltam = rodouUni.filter(id => !uniao.has(id)).map(id => info.get(id).placa).sort();
+  console.log(`\n${UNI}: rodaram sem nenhum sinal de freio motor: ${faltam.length}` + (faltam.length ? ` → ${faltam.join(' · ')}` : ''));
   console.log('\nSonda encerrada — nada foi gravado.');
   process.exit(0);
 }
