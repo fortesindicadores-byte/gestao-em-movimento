@@ -1212,6 +1212,13 @@ Renan, ao ler o parágrafo acima: *"É meio lógico isso. Já havíamos criado"*
 - **Validação** (`scripts/saude-estado-teste.mjs`, `node:vm` rodando o `estadoBase` **do próprio painel** — extrair as regras para o teste mediria a minha cópia): **14 checagens**, e a que importa roda **os dois lados** — a aba lida há 30 min com conteúdo de 5 dias dá `Parada` pela régua nova e `Em dia` pela antiga.
 - **O que NÃO mudou:** os limites por fonte (Sheets 6h · Ginfo 30h · Elite 45 dias) e o aviso por e-mail, que segue sem tocar porque o `vars.MAIL_TO` continua vazio desde 27/08. **O painel enxerga; o e-mail ainda não sai.**
 
+### SAÚDE: DUAS RÉGUAS NO SHEETS E O GINFO LENTO (Renan, 05/10/2026: "Estamos piorando na saúde?")
+
+Não estava piorando: a taxa de 73% vinha de **uma aba filtrada** (Km/L do Consumo, filtrada desde 24/09) que fazia o Gviz Robot recusar a foto e fechar vermelho em **21 de 21** runs, mais o Sheets Check uma vez por dia. A guarda funcionou: a tabela guardou a colagem boa de 24/09. O Renan tirou o filtro.
+
+- **"94 bases atrasadas" era régua errada** (minha, de 19/09): o limite de 6h valia para o CONTEÚDO, e aba manual muda uma vez por mês. Agora são duas réguas no Sheets/gviz: **leitura** (`atualizado_em`) > 6h = "Leitura atrasada", > 24h = "Leitura parada" — é o robô que parou; **conteúdo** (`mudou_em`) > 35 dias = "Atrasada", > 60 = "Parada". A recusa da guarda (`erro` começando com `RECUSADA`) virou **âmbar "Recusada · aba filtrada?"**, não vermelho de carga quebrada. Teste: `scripts/saude-estado-teste.mjs` (16 ok), rodando o `estadoBase` do próprio painel.
+- **Ginfo: o checklist-031120 falhou em 7 de 9 runs de 01 a 05/10** com "card SAÍDAS COM OS CRÍTICA não encontrado". A tela não mudou: no run que passou, o card apareceu e o filtro de mês levou **5 minutos** — o portal estava lento e o robô esperava só 45 s. Agora: card até **2 min**, slicer até **60 s** para aparecer, **3 tentativas** por aba e `timeout-minutes: 45` no workflow.
+
 ## Robô Frota de Elite (Ginfo → Supabase, por vigência) — em construção (05/08/2026)
 
 Automatiza a planilha **Frota de Elite** (`1DXmjzj2KRrTdQxmvXRclGxhBeDMwoIoLvORqbh3GG6M`, hoje preenchida à mão a partir do Ginfo). Mesmo desenho do robô do Farol, com **duas diferenças**: coleta **mês a mês** e também o **acumulado do ano** (jan → mês de referência, ponderado pelo BI — não é média das médias).

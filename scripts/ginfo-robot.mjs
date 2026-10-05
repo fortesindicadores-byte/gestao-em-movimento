@@ -355,7 +355,11 @@ async function candidatosSlicer(page, campo) {
   return out;
 }
 async function aplicarSlicer(page, campo, valor) {
-  const cands = await candidatosSlicer(page, campo);
+  // o slicer também pode demorar a aparecer com o portal lento (Blitz, 05/10:
+  // "slicer Ano não encontrado" e, na tentativa seguinte, aplicado) — espera
+  // até 60 s por ele antes de desistir
+  let cands = await candidatosSlicer(page, campo);
+  for (let t = 0; t < 12 && !cands.length; t++) { await page.waitForTimeout(5000); cands = await candidatosSlicer(page, campo); }
   if (!cands.length) { log(`slicer "${campo}" não encontrado`); return false; }
   const buscarItem = () => emFrames(page, async fr => {
     const i = fr.locator(`.slicerItemContainer:has-text("${valor}"), [role="option"]:has-text("${valor}"), .slicerText:text-is("${valor}"), span:text-is("${valor}")`).first();
@@ -417,7 +421,11 @@ async function clicarMenu(page, secao, item) {
 }
 // drill-through: botão direito no card → (Drill through/Detalhamento) → página de detalhe
 async function drillThrough(page, cardTexto, itemMenu) {
-  // o card pode demorar a renderizar → polling de até 45s
+  // o card pode demorar a renderizar → polling de até 2 min. Eram 45 s, e na
+  // virada de setembro para outubro o Ginfo ficou lento a ponto de o card do
+  // Checklist só aparecer depois disso: de 01 a 05/10 o checklist-031120 falhou
+  // em 7 de 9 runs com "card não encontrado", e nos que passaram o filtro de mês
+  // sozinho levou 5 minutos. A tela não mudou — faltou paciência.
   // só nos frames do Power BI — o texto do card também existe no menu lateral
   // do portal (ex.: "VEÍCULOS" em "2.1 - INDISP. MANUT. VEÍCULOS") e clicar lá
   // é interceptado pelo iframe do relatório.
@@ -426,7 +434,7 @@ async function drillThrough(page, cardTexto, itemMenu) {
   // acha o RÓTULO EXATO do card, com caixa (case-sensitive): "NÃO EXECUTADAS"
   // (card) não pode casar com a coluna "Não Executadas" da tabela ao lado.
   let lbl = null;
-  for (let t = 0; t < 9 && !lbl; t++) {
+  for (let t = 0; t < 24 && !lbl; t++) {
     for (const fr of pbiFrames()) {
       try {
         const l = fr.getByText(new RegExp('^\\s*' + escRe(cardTexto) + '\\s*$')).filter({ visible: true }).first();
@@ -810,9 +818,11 @@ async function main() {
     if (SO_ABA && !alvos.length) { console.error(`GINFO_ABA="${SO_ABA}" não existe em ABAS`); process.exit(1); }
     if (SO_ABA) log(`rodando só a aba ${SO_ABA}`);
     for (const aba of alvos) {
-      // 2 tentativas por aba — a sessão do Ginfo pode cair no meio (outro
-      // login no portal derruba a anterior); a 2ª tentativa refaz o login.
-      for (let tent = 1; tent <= 2; tent++) {
+      // 3 tentativas por aba — a sessão do Ginfo pode cair no meio (outro
+      // login no portal derruba a anterior; a tentativa seguinte refaz o login)
+      // e o portal anda lento a ponto de um card não renderizar a tempo.
+      const TENT = 3;
+      for (let tent = 1; tent <= TENT; tent++) {
         try {
           if (/\/login/i.test(page.url())) { log('sessão caiu — refazendo o login'); await login(page); }
           const arq = await exportarVisual(page, aba);
@@ -827,8 +837,8 @@ async function main() {
         } catch (e) {
           log(`ERRO em ${aba.chave} (tentativa ${tent}):`, e.message);
           await shot(page, '99-erro-' + aba.chave + '-t' + tent);
-          if (tent === 2 && !aba.opcional) erros++;
-          if (tent === 2 && aba.opcional) log(`(${aba.chave} é opcional — não derruba o run)`);
+          if (tent === TENT && !aba.opcional) erros++;
+          if (tent === TENT && aba.opcional) log(`(${aba.chave} é opcional — não derruba o run)`);
         }
       }
     }
