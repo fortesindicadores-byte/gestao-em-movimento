@@ -4,7 +4,7 @@
 //
 //  1. NECESSIDADE pelas três premissas do Renan, e só por elas: abaixo de 4 mm
 //     E (1ª vida no dianteiro | vida 5+ | último eixo da CARRETA em vida 3+ —
-//     3xx no semirreboque 3 eixos, 4xx no de 4; 3EE de caminhão não conta).
+//     4xx se o tipo diz 4 EIXOS, senão 3xx; 3EE de caminhão não conta).
 //     SUGERIDO = pedido − estoque, com o estoque dividido entre os pendentes. Pneu
 //     abaixo de 4 mm que vai para recape, sem leitura (0 mm) ou acima de 4 mm
 //     NÃO conta; a medida do Prolog ("235/75 R17.5", "8/15 R15") cai na opção
@@ -62,8 +62,9 @@ const PNEUS_MCC_T2 = [
   T({ cicloVida: 3, nomePosicao: '3EE', menorMM: 3 }),                  // 3EE de CAMINHÃO (veículo 9) → não é carreta
   T({ cicloVida: 3, nomePosicao: '3EI', menorMM: 3, veiculoId: 21 }),   // semirreboque 4 eixos: eixo 3 não é o último
   T({ cicloVida: 4, nomePosicao: '4DI', menorMM: 3, veiculoId: 21 }),   // premissa 3: 4DI do semirreboque 4 eixos
-  T({ cicloVida: 3, nomePosicao: '1E', menorMM: 6, veiculoId: 22 }),    // "Semi Reboque" sem nº no nome: último eixo = 2
-  T({ cicloVida: 3, nomePosicao: '2DE', menorMM: 3, veiculoId: 22 }),   // premissa 3 pelo maior eixo com pneu
+  T({ cicloVida: 3, nomePosicao: '2DE', menorMM: 3, veiculoId: 22 }),   // "Semi Reboque" sem 4 no nome: último eixo = 3, então 2DE não conta
+  T({ cicloVida: 3, nomePosicao: '3DI', menorMM: 3, veiculoId: 22 }),   // premissa 3: 3DI do "Semi Reboque"
+  T({ cicloVida: 3, nomePosicao: '3DE', menorMM: 3, veiculoId: 23 }),   // "CARRETA BAU 2 EIXOS": não tem 4 → regra do 3
   T({ cicloVida: 1, nomePosicao: '2DI', menorMM: 3 }),              // tração vida 1 → recape
   T({ direcional: true, nomePosicao: '1D', menorMM: 0 }),           // sem leitura
   T({ direcional: true, nomePosicao: '1D', menorMM: 5 }),           // acima de 4 mm
@@ -73,7 +74,7 @@ const PNEUS_MCC_T2 = [
   T({ status: 'DISPOSAL', veiculoId: null }),
   T({ medida: '8/15 R15', direcional: true, nomePosicao: '1E', menorMM: 2 }), // 8.25-15 arredondado pelo loader
 ];
-const VEIC = [{ id: 9, tipo: 'CAMINHÃO BAÚ ROLL UP 10 PALLETS' }, { id: 20, tipo: 'SEMI REBOQUE - 3 EIXOS SIDER ASA DELTA' }, { id: 21, tipo: 'SEMI REBOQUE 4 EIXOS' }, { id: 22, tipo: 'Semi Reboque' }];
+const VEIC = [{ id: 9, tipo: 'CAMINHÃO BAÚ ROLL UP 10 PALLETS' }, { id: 20, tipo: 'SEMI REBOQUE - 3 EIXOS SIDER ASA DELTA' }, { id: 21, tipo: 'SEMI REBOQUE 4 EIXOS' }, { id: 22, tipo: 'Semi Reboque' }, { id: 23, tipo: 'CARRETA BAU 2 EIXOS' }];
 const SNAP = { 1677: { tires: PNEUS_MCC_T2, vehicles: VEIC }, 37: { tires: [T({ medida: '295/80 R22.5', cicloVida: 6, menorMM: 1 }), T({ medida: '295/80 R22.5', status: 'INVENTORY', veiculoId: null })], vehicles: VEIC } };
 
 /* dublê do supabase-js: o mínimo de PostgREST que a página usa, com as regras
@@ -149,13 +150,13 @@ console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor pre
   af('valor previsto = sugerido × menor preço + aprovados', await txt(pg, '#k-val') === 'R$ 27.744', await txt(pg, '#k-val'));
   af('pedido sem preço da medida vira aviso', /1 pedido\(s\) sem preço/.test(await txt(pg, '#k-val-m')), await txt(pg, '#k-val-m'));
   const l1 = await linha(pg, 1);
-  af('MCC T2 · 235: Necessidade = 5 (1 + 1 + 3 do último eixo das carretas)', l1[7] === '5', l1[7]);
+  af('MCC T2 · 235: Necessidade = 6 (1 + 1 + 4 do último eixo das carretas)', l1[7] === '6', l1[7]);
   af('Sugerido = 12 pedidos − 3 em estoque = 9', l1[8] === '9', l1[8]);
   af('2º pedido da mesma unidade e medida: estoque já usado, sugerido = 2', (await linha(pg, 5))[8] === '2', (await linha(pg, 5))[8]);
   af('pedido já avaliado não tem sugerido', (await linha(pg, 2))[8] === '—');
   af('MCC T2 · 235: Estoque = 3 (INVENTORY; descarte fora)', l1[6] === '3', l1[6]);
   const dica = await pg.$eval('#tb-ped tr[data-id="1"] td:nth-child(8) span', e => e.title).catch(() => '');
-  af('dica da Necessidade separa as premissas', /1ª vida no dianteiro: 1/.test(dica) && /4ª recapagem: 1/.test(dica) && /último eixo da carreta: 3/.test(dica), dica);
+  af('dica da Necessidade separa as premissas', /1ª vida no dianteiro: 1/.test(dica) && /4ª recapagem: 1/.test(dica) && /último eixo da carreta: 4/.test(dica), dica);
   af('sem produto escolhido: menor preço da medida, avisado', /menor preço da medida/.test(l1[10]) && /709/.test(l1[10]), l1[10]);
   const l3 = await linha(pg, 3);
   af('5.00-8 sem preço: célula diz "sem preço da medida"', /sem preço da medida/.test(l3[10]) && l3[11].startsWith('—'), l3[10] + ' | ' + l3[10]);

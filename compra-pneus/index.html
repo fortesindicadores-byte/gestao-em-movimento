@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610051930">
+<meta name="build" content="202610052000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -492,10 +492,10 @@ const BRANCH={1676:'MCC T1',1677:'MCC T2',37:'CGR',1906:'CBA T1 WH',1907:'CBA T1
    pneu NOVO por uma das três premissas —
      1. primeira vida no dianteiro (recapado não vai para a dianteira);
      2. 4ª recapagem (vida 5 em diante: não recapa mais);
-     3. ÚLTIMO EIXO DA CARRETA depois da 1ª recapagem (vida 3 em diante). Só
-        carreta (semirreboque): "SEMI REBOQUE - 3 EIXOS" → 3EE·3EI·3DI·3DE,
-        "SEMI REBOQUE 4 EIXOS" → 4EE·4EI·4DI·4DE. O nº de eixos sai do tipo do
-        veículo; tipo de carreta sem o nº no nome usa o maior eixo que tem pneu.
+     3. ÚLTIMO EIXO DA CARRETA depois da 1ª recapagem (vida 3 em diante). Vale
+        para todo tipo de carreta (semirreboque, sider, carreta). Regra do
+        Renan (05/10/2026): "se tiver 4 eixo, 4, senão 3" — tipo com "4 EIXOS"
+        no nome → 4EE·4EI·4DI·4DE; qualquer outro → 3EE·3EI·3DI·3DE.
         Caminhão e cavalo NÃO entram, mesmo com pneu na posição 3EE.
    O resto abaixo de 4 mm vai para recape e não entra na compra. ── */
 const MM_LIM=4;
@@ -503,11 +503,9 @@ const LADOS=['EE','EI','DI','DE'];
 const PREM_TXT={1:'1ª vida no dianteiro',2:'4ª recapagem',3:'último eixo da carreta'};
 const eixoDe=t=>{ const m=String(t.nomePosicao||'').trim().match(/^(\d+)/); return m?+m[1]:null; };
 const ehCarreta=tipo=>/REBOQUE|CARRETA|SIDER/i.test(tipo||'')&&!/CAVALO/i.test(tipo||'');
-/* último eixo de cada carreta: { veiculoId: nº do eixo } */
-function ultEixoCarretas(veiculos,pneus){
-  const maxE={}; pneus.forEach(t=>{ const e=eixoDe(t); if(t.veiculoId!=null&&e) maxE[t.veiculoId]=Math.max(maxE[t.veiculoId]||0,e); });
-  const out={}; veiculos.forEach(v=>{ if(!ehCarreta(v.tipo)) return; const m=String(v.tipo).match(/(\d+)\s*EIXOS?/i);
-    const e=m?+m[1]:maxE[v.id]; if(e) out[v.id]=e; });
+/* último eixo de cada carreta: { veiculoId: 4 ou 3 } */
+function ultEixoCarretas(veiculos){
+  const out={}; veiculos.forEach(v=>{ if(ehCarreta(v.tipo)) out[v.id]=/\b4\s*EIXOS?\b/i.test(v.tipo)?4:3; });
   return out;
 }
 function premissa(t,ult){
@@ -568,7 +566,7 @@ async function leProlog(){
           ok++; if(r.updated_at&&(!ult||r.updated_at>ult)) ult=r.updated_at;
           const uni=BRANCH[bid];
           const pneus=Array.isArray(r.data)?r.data:[];
-          const ultE=ultEixoCarretas(rv&&Array.isArray(rv.data)?rv.data:[],pneus);
+          const ultE=ultEixoCarretas(rv&&Array.isArray(rv.data)?rv.data:[]);
           pneus.forEach(t=>{
             const m=medOpcao(t.medida); if(!m) return;
             const st=String(t.status||'').toUpperCase();
@@ -900,6 +898,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610051930"></script>
+<script src="../assets/build-check.js?v=202610052000"></script>
 </body>
 </html>
