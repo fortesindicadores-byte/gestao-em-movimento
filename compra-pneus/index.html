@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610051830">
+<meta name="build" content="202610051845">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -314,8 +314,8 @@ table.dre input.inp{width:58px;text-align:right;padding:5px 7px;font-size:11.5px
 table.dre select.sel{padding:5px 7px;font-size:11px;width:100%;max-width:220px;}
 /* a tabela do admin tem 12 colunas: padding menor e o produto dividindo a sobra,
    para caber sem barra de rolagem horizontal em 1366 px */
-#tb-ped th,#tb-ped td{padding:9px 7px;}
-#tb-ped td:nth-child(11){width:22%;min-width:130px;}
+#tb-ped th,#tb-ped td{padding:9px 5px;}
+#tb-ped td:nth-child(12){width:22%;min-width:130px;}
 #tb-ped th,#tb-ped td:nth-child(3),#tb-ped td:nth-child(4){white-space:normal;}
 table.dre input.inp.vazio{border-style:dashed;border-color:color-mix(in srgb,var(--laranja) 55%,transparent);}
 .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:9.5px;font-weight:800;letter-spacing:.3px;white-space:nowrap;
@@ -793,18 +793,19 @@ function renderResumo(){
     tq+=+r.qtd||0; ta+=+r.qtd_aprovada||0; if(v!=null) tv+=v;
     const ops=precosDa(r.medida).map(x=>`<option value="${x.id}"${p&&x.id===p.id?' selected':''}>${esc(x.produto)} · ${brl(x.valor)}</option>`).join('');
     return `<tr data-id="${r.id}">
-      <td>${vigRot(r.vigencia)}</td><td class="nome">${esc(r.unidade)}</td><td>${esc(r.projeto)}</td><td>${esc(r.banda)}</td><td>${esc(r.medida)}</td>
+      <td>${vigRot(r.vigencia)}</td><td class="nome">${esc(r.unidade)}</td><td>${esc(r.projeto)}</td><td>${esc(r.banda).replace('/','/<wbr>')}</td><td>${esc(r.medida)}</td>
       <td class="num">${br(r.qtd)}</td>
       <td class="num">${celProlog(EST,r.unidade,r.medida,'est')}</td>
       <td class="num">${celProlog(NEC,r.unidade,r.medida,'nec')}</td>
       <td class="num">${r.qtd_aprovada!=null?'<span class="mut">—</span>':SUG[r.id]?`<b title="pedido ${br(r.qtd)} − ${br(SUG[r.id].usa)} em estoque">${br(SUG[r.id].sug)}</b>`:PROLOG.estado==='lendo'?'<span class="mut">…</span>':'<span class="mut">—</span>'}</td>
       <td class="num"><input class="inp${r.qtd_aprovada==null?' vazio':''}" type="number" min="0" step="1" value="${r.qtd_aprovada==null?'':r.qtd_aprovada}" data-apr="${r.id}" title="Quantidade aprovada (vazio = aguardando; 0 = não aprovado)"></td>
+      <td><span class="pill ${c}">${s}</span></td>
       <td>${ops?`<select class="sel" data-prod="${r.id}">${ops}</select>${auto&&p?'<span class="lin2">menor preço da medida</span>':''}`:'<span class="mut">sem preço da medida</span>'}</td>
-      <td class="num">${v==null?'—':brl(v)}<span class="lin2"><span class="pill ${c}">${s}</span></span></td>
+      <td class="num">${v==null?'—':brl(v)}</td>
     </tr>`; }).join('');
-  tb.innerHTML=`<thead><tr><th>Vigência</th><th>Unidade</th><th>Projeto</th><th>Banda</th><th>Medida</th><th class="num">Pedido</th><th class="num">Estoque</th><th class="num">Necessidade</th><th class="num">Sugerido</th><th class="num">Aprovado</th><th>Produto</th><th class="num">Valor previsto</th></tr></thead><tbody>`
-    +(corpo||'<tr><td colspan="12" class="mut" style="text-align:center;padding:18px">Nenhum pedido no recorte.</td></tr>')
-    +(rows.length?`<tr class="total"><td colspan="5">Total</td><td class="num">${br(tq)}</td><td></td><td></td><td></td><td class="num">${br(ta)}</td><td></td><td class="num">${brl(tv)}</td></tr>`:'')+'</tbody>';
+  tb.innerHTML=`<thead><tr><th>Vigência</th><th>Unidade</th><th>Projeto</th><th>Banda</th><th>Medida</th><th class="num">Pedido</th><th class="num">Estoque</th><th class="num">Necessidade</th><th class="num">Sugerido</th><th class="num">Aprovado</th><th>Situação</th><th>Produto</th><th class="num">Valor previsto</th></tr></thead><tbody>`
+    +(corpo||'<tr><td colspan="13" class="mut" style="text-align:center;padding:18px">Nenhum pedido no recorte.</td></tr>')
+    +(rows.length?`<tr class="total"><td colspan="5">Total</td><td class="num">${br(tq)}</td><td></td><td></td><td></td><td class="num">${br(ta)}</td><td></td><td></td><td class="num">${brl(tv)}</td></tr>`:'')+'</tbody>';
   tb.querySelectorAll('input[data-apr]').forEach(i=>i.addEventListener('change',()=>salvaAprov(+i.dataset.apr)));
   tb.querySelectorAll('select[data-prod]').forEach(s=>s.addEventListener('change',()=>salvaAprov(+s.dataset.prod)));
   set('n-resumo',pend.length||'');
@@ -945,6 +946,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610051830"></script>
+<script src="../assets/build-check.js?v=202610051845"></script>
 </body>
 </html>
