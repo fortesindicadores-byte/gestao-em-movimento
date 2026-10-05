@@ -550,13 +550,21 @@ function pinta(){
       + '<div class="dica"><b>Como a nota é feita:</b> ' + p.regra + '</div>'
       + '<div class="dica">' + p.dica + '</div></div>';
   }).join('');
+  /* LGPD (Renan, 05/10/2026): dos colegas, só as INICIAIS ("J. R."), nunca o
+     nome. O banco já manda abreviado (ce_app_abrevia); a tela reduz de novo
+     para valer mesmo antes de o SQL novo rodar. O próprio motorista é "Você". */
+  var iniciaisDe = function(nome){
+    var w = String(nome || '').trim().split(/\s+/).filter(Boolean);   // 1º nome + último ("Mario Sergio D." → "M. D.")
+    return (w.length > 1 ? [w[0], w[w.length - 1]] : w)
+      .map(function(p){ return p.charAt(0).toUpperCase() + '.'; }).join(' ') || '—';
+  };
   $('ranking').innerHTML = (D.ranking || []).map(function(r){
-    var ini = r.nome.split(' ').map(function(p){return p[0];}).join('').slice(0,2).toUpperCase();
+    var ini = iniciaisDe(r.nome).replace(/[.\s]/g, '');   // o círculo bate com o texto ("M. D." → MD)
     // quem não disputa vem depois dos que disputam, com a posição contando todo mundo
     var sub = r.pos != null
       ? r.pos + 'º lugar' + (r.pos <= R.podio.length ? ' · + R$ ' + R.podio[r.pos-1] : '')
       : (r.pos_geral != null ? r.pos_geral + 'º contando todo mundo · fora da disputa' : 'fora da disputa');
-    return linha('<b style="font-size:11px">' + ini + '</b>', r.eu ? 'Você' : r.nome, sub,
+    return linha('<b style="font-size:11px">' + ini + '</b>', r.eu ? 'Você' : iniciaisDe(r.nome), sub,
       (+r.pontuacao).toFixed(1).replace('.', ','), '', 'nota', r.eu ? ' eu' : '');
   }).join('') || '<div class="li"><div class="tx"><span>Ainda sem ranking neste mês.</span></div></div>';
   $('rg1').textContent = 'Todo mês você ganha ' + brl(R.saldo_inicial);
