@@ -17,6 +17,7 @@
 //   freiomotor  sonda: o Geotab entrega freio motor? cobertura, codificação e
 //            rpm durante o uso (CE_DE = dia, CE_UNI = unidade em destaque).
 //   freiodeduz  sonda: dá para deduzir o freio motor (rpm alto sem acelerador)?
+//   contador sonda: o contador de combustível acha o motor segurando?
 //   ident    relatório de IDENTIFICAÇÃO de motorista por unidade e por placa
 //            (quem rodou identificado e quem não), sem gravar nada. Período:
 //            CE_DE/CE_ATE; sem eles, os últimos 7 dias.
@@ -2376,6 +2377,128 @@ if (MODE === 'freiodeduz') {
     console.log(`   tempo sem ${nome} sem leitura próxima (descartado): ${h(semDado)}`);
     console.log('   faixa de rpm · % do tempo da faixa ' + (nome === 'pedal' ? 'sem acelerador' : 'sem consumo') + ' · horas');
     FX.forEach(([x, y], k) => console.log(`      ${String(x).padStart(4)}–${y > 9999 ? '   +' : String(y).padStart(4)}  ${(tFx[k] ? tFxSem[k] / tFx[k] * 100 : 0).toFixed(1).padStart(5)}%  ${h(tFxSem[k])} de ${h(tFx[k])}`));
+  }
+  console.log('\nSonda encerrada — nada foi gravado.');
+  process.exit(0);
+}
+
+if (MODE === 'contador') {
+  // SONDA: O CONTADOR DE COMBUSTÍVEL SERVE PARA ACHAR O MOTOR SEGURANDO?
+  // (Renan, 05/10/2026) — só leitura, não grava nada. A ideia é tirar da
+  // Faixa Verde o tempo acima de 1.700 rpm em que o caminhão perde velocidade
+  // e o contador de combustível não sobe. Aqui se mede: (1) o passo do
+  // contador (resolução) e de quanto em quanto tempo ele é gravado; (2) nos
+  // trechos acima de 1.700 rpm, quantos ficam com o contador PARADO quando o
+  // caminhão perde velocidade (motor segurando) e quando mantém ou ganha
+  // velocidade (motor puxando — o controle). Se parar nos dois, não serve.
+  const cred = await geotabLogin();
+  if (!cred) { console.error('Geotab: sem credencial'); process.exit(1); }
+  const DIA = process.env.CE_DE || iso(ontem);
+  const UNI = (process.env.CE_UNI || 'PIRAI').toUpperCase();
+  const ALTO = +process.env.CE_MARCHA_ALTO || 1700;
+  const de0 = `${DIA}T03:00:00.000Z`, fim = new Date(new Date(de0).getTime() + 864e5 - 1).toISOString();
+  console.log(`sonda do contador de combustível · dia ${DIA} · unidade "${UNI}" · giro alto > ${ALTO} rpm`);
+
+  const [diags, devs, grupos] = await Promise.all([
+    geotabRpc('Get', { typeName: 'Diagnostic' }, cred),
+    geotabRpc('Get', { typeName: 'Device' }, cred),
+    geotabRpc('Get', { typeName: 'Group' }, cred),
+  ]);
+  const gN = new Map(grupos.map(g => [g.id, g.name || '']));
+  const uniDe = new Map(devs.map(d => [d.id, ((d.groups || []).map(g => gN.get(g.id) || '').find(n => /^UNI_/.test(n)) || '').toUpperCase()]));
+  const ehUni = id => (uniDe.get(id) || '').includes(UNI);
+  const CONT = [
+    ['total', diags.find(d => /^Total de combust[ií]vel usado/i.test(d.name || ''))],
+    ['viagem', diags.find(d => /^Acumulador de combust[ií]vel de viagem/i.test(d.name || ''))],
+  ].filter(([, d]) => d);
+  console.log('contadores achados: ' + CONT.map(([k, d]) => `${k} = "${d.name}"`).join(' · '));
+
+  async function baixa(id) {
+    const porDev = new Map(); let from = de0, pag = 0;
+    while (pag < 20) {
+      const lote = await geotabRpc('Get', { typeName: 'StatusData',
+        search: { diagnosticSearch: { id }, fromDate: from, toDate: fim }, resultsLimit: 50000 }, cred);
+      pag++;
+      for (const r of lote) {
+        const dv = r.device && r.device.id; if (!dv || !ehUni(dv)) continue;
+        let a = porDev.get(dv); if (!a) { a = []; porDev.set(dv, a); }
+        a.push({ t: new Date(r.dateTime).getTime(), v: +r.data });
+      }
+      if (lote.length < 50000) break;
+      from = new Date(new Date(lote[lote.length - 1].dateTime).getTime() + 1).toISOString();
+    }
+    porDev.forEach(a => a.sort((x, y) => x.t - y.t));
+    return porDev;
+  }
+  const { porDev: rpmD } = await geotabRpmDia(DIA, cred);
+  const { porDev: velD } = await geotabVelDia(DIA, cred);
+  const ult = (arr, t, max) => {          // último valor até t (no máximo `max` ms antes)
+    let lo = 0, hi = arr.length - 1, k = -1;
+    while (lo <= hi) { const m = (lo + hi) >> 1; if (arr[m].t <= t) { k = m; lo = m + 1; } else hi = m - 1; }
+    return k >= 0 && t - arr[k].t <= max ? arr[k] : null;
+  };
+  const med = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return s[s.length >> 1]; };
+
+  // trechos acima de ALTO, contínuos (buraco de amostra > 2 min quebra o trecho)
+  const trechos = [];
+  for (const [id, ra] of rpmD) {
+    if (!ehUni(id)) continue;
+    let ini = null, ant = null;
+    const fecha = () => { if (ini != null && ant - ini >= 20000) trechos.push({ id, t0: ini, t1: ant }); ini = null; };
+    for (const a of ra) {
+      if (ant != null && a.t - ant > RPM_GAP_MS) fecha();
+      if (isFinite(a.rpm) && a.rpm > ALTO) { if (ini == null) ini = a.t; ant = a.t; }
+      else { if (ini != null) { ant = a.t; fecha(); } ant = a.t; }
+    }
+    fecha();
+  }
+  console.log(`trechos acima de ${ALTO} rpm com 20 s ou mais: ${trechos.length} em ${new Set(trechos.map(x => x.id)).size} veículo(s)`);
+
+  const FX = [[20, 40], [40, 60], [60, 120], [120, 1e9]];
+  for (const [nome, d] of CONT) {
+    const cd = await baixa(d.id);
+    // (1) passo e ritmo de gravação
+    const passos = new Map(), intervalos = [], porH = [];
+    let veic = 0;
+    for (const [id, a] of cd) {
+      if (a.length < 2) continue; veic++;
+      for (let i = 1; i < a.length; i++) {
+        const dv = +(a[i].v - a[i - 1].v).toFixed(3);
+        passos.set(dv, (passos.get(dv) || 0) + 1);
+        intervalos.push((a[i].t - a[i - 1].t) / 1000);
+      }
+    }
+    const pos = [...passos.entries()].filter(([v]) => v > 0).sort((a, b) => a[0] - b[0]);
+    console.log(`\n── CONTADOR ${nome.toUpperCase()} ("${d.name}") · ${veic} veículo(s) de ${UNI} ──`);
+    console.log(`   menor passo positivo: ${pos.length ? pos[0][0] + ' L' : '—'} · passos mais comuns: `
+      + [...passos.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([v, n]) => `${v}L×${n}`).join(' '));
+    console.log(`   amostras com passo zero: ${passos.get(0) || 0} · negativas: ${[...passos.entries()].filter(([v]) => v < 0).reduce((s, [, n]) => s + n, 0)}`);
+    const iv = [...intervalos].sort((a, b) => a - b);
+    if (iv.length) console.log(`   intervalo entre gravações: mediana ${Math.round(iv[iv.length >> 1])} s · p10 ${Math.round(iv[Math.floor(iv.length * .1)])} s · p90 ${Math.round(iv[Math.floor(iv.length * .9)])} s`);
+
+    // (2) nos trechos de giro alto: contador parado × velocidade caindo ou não
+    const res = { segurando: FX.map(() => ({ n: 0, zero: 0, lmin: [] })), puxando: FX.map(() => ({ n: 0, zero: 0, lmin: [] })) };
+    let semLeit = 0, semVel = 0, outros = 0;
+    for (const s of trechos) {
+      const ca = cd.get(s.id), va = velD.get(s.id);
+      if (!ca) { semLeit++; continue; }
+      if (!va) { semVel++; continue; }
+      const c0 = ult(ca, s.t0, 15 * 60000), c1 = ult(ca, s.t1, 15 * 60000);
+      const v0 = ult(va, s.t0, 120000), v1 = ult(va, s.t1, 120000);
+      if (!c0 || !c1) { semLeit++; continue; }
+      if (!v0 || !v1) { semVel++; continue; }
+      const dur = (s.t1 - s.t0) / 1000, dl = c1.v - c0.v, dv = v1.v - v0.v;
+      const cls = dv <= -5 ? 'segurando' : (dv >= 0 && v0.v > 10 ? 'puxando' : null);
+      if (!cls) { outros++; continue; }
+      const k = FX.findIndex(([a, b]) => dur >= a && dur < b);
+      const r = res[cls][k]; r.n++; if (dl <= 0) r.zero++; r.lmin.push(dl / (dur / 60));
+    }
+    console.log(`   trechos sem leitura do contador: ${semLeit} · sem velocidade: ${semVel} · velocidade estável/lenta (fora da conta): ${outros}`);
+    for (const cls of ['segurando', 'puxando']) {
+      console.log(`   ${cls === 'segurando' ? 'PERDENDO velocidade (motor segurando?)' : 'MANTENDO/GANHANDO velocidade (motor puxando — controle)'}:`);
+      FX.forEach(([a, b], k) => { const r = res[cls][k];
+        console.log(`      ${String(a).padStart(3)}–${b > 1e8 ? '   +' : String(b).padStart(3)} s: ${String(r.n).padStart(4)} trecho(s) · contador parado em ${r.n ? (r.zero / r.n * 100).toFixed(0).padStart(3) : '  —'}% · mediana ${med(r.lmin) == null ? '—' : med(r.lmin).toFixed(2)} L/min`); });
+    }
   }
   console.log('\nSonda encerrada — nada foi gravado.');
   process.exit(0);
