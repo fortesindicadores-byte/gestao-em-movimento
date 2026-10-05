@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610052130">
+<meta name="build" content="202610051745">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -301,7 +301,6 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 .nota{font-size:10.5px;color:var(--txt3);font-weight:600;line-height:1.5;}
 .nota b{color:var(--txt2);}
 .lin2{display:block;font-size:9.5px;color:var(--txt3);font-weight:600;margin-top:2px;}
-.ms-opt input[type=radio]{accent-color:var(--laranja);width:14px;height:14px;flex:0 0 14px;cursor:pointer;}
 .sel,.inp{background:var(--pop);color:var(--txt);border:1px solid var(--card-brd);border-radius:7px;padding:7px 9px;
   font-family:inherit;font-size:12.5px;font-weight:600;max-width:100%;}
 .sel{cursor:pointer;}
@@ -343,7 +342,8 @@ table.dre input.inp.vazio{border-style:dashed;border-color:color-mix(in srgb,var
 .f label{display:block;font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;}
 .f input,.f select,.f .ro{width:100%;background:var(--hover);border:1px solid var(--card-brd);border-radius:8px;color:var(--txt);
   font-family:inherit;font-size:13px;padding:9px 11px;outline:0;}
-.f .ro{font-weight:700;}
+.f .ro,.f select:disabled{font-weight:700;}
+.f select:disabled{opacity:1;color:var(--txt);cursor:default;appearance:none;-webkit-appearance:none;}
 body.claro .f input,body.claro .f select{background:#fff;border-color:#d7dce4;}
 .f input:focus,.f select:focus{border-color:var(--laranja);}
 .f select option{background:#141d2b;color:#fff;}
@@ -403,10 +403,11 @@ tr.vazio:hover td{color:var(--laranja);}
         <h1 id="tit">Pedidos</h1>
         <div class="tit-sub" id="titSub">Carregando…</div>
       </div>
-      <!-- unidade do pedido: FILTRO (Renan, 05/10/2026: "Aqui é filtro. Não toggle") -->
+      <!-- unidade da tela Pedidos: o MESMO filtro dos painéis (Renan, 05/10/2026:
+           "Aqui é filtro. Não toggle" e "Totalmente fora do padrão o filtro") -->
       <div class="filtros"><div class="ms-wrap" id="ms-uped" style="display:none"><button class="ms-btn" onclick="toggleMs('ms-uped')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
-          <span id="uped-lbl">Unidade</span></button>
+          Unidade<span class="ms-cnt"></span></button>
           <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
       </div></div>
       <div class="filtros" id="filtros" style="display:none">
@@ -473,7 +474,7 @@ tr.vazio:hover td{color:var(--laranja);}
     <h3 id="m-tit">Pedido de pneus novos</h3>
     <div class="fsub" id="form-sub">—</div>
     <div class="f2">
-      <div class="f"><label>Unidade</label><div class="ro" id="f-uni">—</div></div>
+      <div class="f"><label for="f-uni">Unidade</label><select id="f-uni" onchange="montaProjetos()"></select></div>
       <div class="f"><label>Vigência</label><div class="ro" id="f-vig">—</div></div>
     </div>
     <div class="f"><label for="f-banda">Banda de rodagem</label><select id="f-banda"></select></div>
@@ -490,7 +491,7 @@ tr.vazio:hover td{color:var(--laranja);}
 <script>
 const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
-let sb=null, ADMIN=false, PERFIL_UNIS=[], UNI=null, NOME='';
+let sb=null, ADMIN=false, PERFIL_UNIS=[], NOME='';
 
 /* ── listas do pedido (as mesmas da planilha que a unidade usava) ── */
 const BANDAS=['Tração/Borrachudo','Liso/Direcional','Leve','Empilhadeira'];
@@ -688,35 +689,36 @@ function montaFiltros(){
 const recorteAdm=()=>{ const vs=getSel('ms-vig'), us=getSel('ms-uni');
   return PEDIDOS.filter(r=>(!vs.length||vs.includes(r.vigencia))&&(!us.length||us.includes(r.unidade))); };
 
-/* ── unidade do formulário: chips do perfil (como no FCA); admin escolhe qualquer uma ── */
+/* ── unidade da tela Pedidos: o filtro do padrão (buildMs). A unidade vê as do
+   perfil, o admin as 14; nada marcado = todas as permitidas ── */
+const unisPerm=()=>ADMIN?UNIDADES:PERFIL_UNIS;
+const unisVistas=()=>{ const l=unisPerm(), s=getSel('ms-uped').filter(u=>l.includes(u)); return s.length?s:l; };
 function montaUnidade(){
-  const w=document.getElementById('ms-uped');
-  const lista=ADMIN?UNIDADES:PERFIL_UNIS;
-  if(!UNI||!lista.includes(UNI)) UNI=lista[0]||null;
-  if(VW!=='pedido'||lista.length<2){ w.style.display='none'; return; }
-  w.style.display=''; set('uped-lbl','Unidade: '+(UNI||'—'));
-  const list=w.querySelector('.ms-list'), srch=w.querySelector('.ms-search input');
-  w._desenha=q=>{ const f=String(q||'').toLowerCase();
-    list.innerHTML=lista.filter(u=>u.toLowerCase().includes(f)).map(u=>`<label class="ms-opt" data-u="${esc(u)}"><input type="radio" name="uped"${u===UNI?' checked':''}> ${esc(u)}</label>`).join(''); };
-  if(!w._wired){ w._wired=true;
-    list.addEventListener('click',e=>{ const o=e.target.closest('.ms-opt'); if(!o) return; e.preventDefault();
-      UNI=o.dataset.u; w.querySelector('.ms-panel').classList.remove('open'); srch.value='';
-      const m=document.getElementById('f-ok'); m.className='fmsg'; m.textContent='';   /* a mensagem era da unidade anterior */
-      montaUnidade(); montaForm(); renderMeus(); });
-    srch.addEventListener('input',()=>w._desenha(srch.value)); srch.addEventListener('click',e=>e.stopPropagation()); }
-  w._desenha(srch.value);
+  const w=document.getElementById('ms-uped'), l=unisPerm();
+  if(w._itens!==l) buildMs('ms-uped',l,()=>{ const m=document.getElementById('f-ok'); m.className='fmsg'; m.textContent=''; renderMeus(); });
+  w.style.display=VW==='pedido'&&l.length>1?'':'none';
 }
+/* o pedido é de UMA unidade: a caixa oferece as que estão na tela; com uma só,
+   ela já vem escolhida */
 function montaForm(){
   const v=vigAgora(), [a,m]=v.split('-');
-  set('f-vig',`${MESES_L[+m-1]}/${a}`); set('f-uni',UNI||'—');
+  set('f-vig',`${MESES_L[+m-1]}/${a}`);
   set('form-sub','A vigência é o mês do pedido · o corporativo avalia e aprova');
   const opt=(l,ph)=>`<option value="">${ph}</option>`+l.map(x=>`<option>${esc(x)}</option>`).join('');
-  const fb=document.getElementById('f-banda'), fp=document.getElementById('f-proj'), fm=document.getElementById('f-med');
-  const keep=[fb.value,fp.value,fm.value];
-  fb.innerHTML=opt(BANDAS,'Selecione…'); fp.innerHTML=opt(PROJETOS[UNI]||[],'Selecione…'); fm.innerHTML=opt(MEDIDAS,'Selecione…');
+  const fu=document.getElementById('f-uni'), fb=document.getElementById('f-banda'), fm=document.getElementById('f-med');
+  const us=unisVistas(), keepU=fu.value, keep=[fb.value,fm.value];
+  fu.innerHTML=us.length===1?`<option>${esc(us[0])}</option>`:opt(us,'Selecione…');
+  if(us.length===1) fu.value=us[0]; else if(us.includes(keepU)) fu.value=keepU;
+  fu.disabled=us.length===1;
+  fb.innerHTML=opt(BANDAS,'Selecione…'); fm.innerHTML=opt(MEDIDAS,'Selecione…');
   if(BANDAS.includes(keep[0])) fb.value=keep[0];
-  if((PROJETOS[UNI]||[]).includes(keep[1])) fp.value=keep[1];
-  if(MEDIDAS.includes(keep[2])) fm.value=keep[2];
+  if(MEDIDAS.includes(keep[1])) fm.value=keep[1];
+  montaProjetos();
+}
+function montaProjetos(){
+  const u=document.getElementById('f-uni').value, fp=document.getElementById('f-proj'), keep=fp.value, l=PROJETOS[u]||[];
+  fp.innerHTML=`<option value="">${u?'Selecione…':'Escolha a unidade'}</option>`+l.map(x=>`<option>${esc(x)}</option>`).join('');
+  if(l.includes(keep)) fp.value=keep;
 }
 function abrePedido(){
   montaForm(); const m=document.getElementById('f-msg'); m.className='fmsg'; m.textContent='';
@@ -726,16 +728,15 @@ function fechaPedido(){ document.getElementById('mbg').classList.remove('open');
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') fechaPedido(); });
 async function enviaPedido(){
   const msg=document.getElementById('f-msg'), bt=document.getElementById('f-env');
-  const banda=document.getElementById('f-banda').value, projeto=document.getElementById('f-proj').value,
+  const unidade=document.getElementById('f-uni').value, banda=document.getElementById('f-banda').value, projeto=document.getElementById('f-proj').value,
         medida=document.getElementById('f-med').value, qtd=parseInt(document.getElementById('f-qtd').value,10);
-  const falta=[!banda&&'banda de rodagem',!projeto&&'projeto',!medida&&'medida',!(qtd>0)&&'quantidade'].filter(Boolean);
-  if(!UNI){ msg.className='fmsg erro'; msg.textContent='Sem unidade no perfil.'; return; }
+  const falta=[!unidade&&'unidade',!banda&&'banda de rodagem',!projeto&&'projeto',!medida&&'medida',!(qtd>0)&&'quantidade'].filter(Boolean);
   if(falta.length){ msg.className='fmsg erro'; msg.textContent='Falta preencher: '+falta.join(', ')+'.'; return; }
   bt.disabled=true; msg.className='fmsg'; msg.textContent='Enviando…';
-  const {data,error}=await sb.from('pneu_pedido').insert({unidade:UNI,projeto,banda,medida,qtd,criado_nome:NOME,vigencia:vigAgora()}).select('id');
+  const {data,error}=await sb.from('pneu_pedido').insert({unidade,projeto,banda,medida,qtd,criado_nome:NOME,vigencia:vigAgora()}).select('id');
   bt.disabled=false;
   if(error||!data||!data.length){ msg.className='fmsg erro'; msg.textContent='O banco recusou o pedido: '+((error&&error.message)||'nenhuma linha gravada'); return; }
-  const ok=document.getElementById('f-ok'); ok.className='fmsg ok'; ok.textContent=`Pedido enviado: ${qtd} pneu(s) ${medida} · ${banda} · ${projeto}.`;
+  const ok=document.getElementById('f-ok'); ok.className='fmsg ok'; ok.textContent=`Pedido enviado: ${unidade} · ${qtd} pneu(s) ${medida} · ${banda} · ${projeto}.`;
   document.getElementById('f-qtd').value=''; fechaPedido();
   await lePedidos(); montaFiltros(); render();
 }
@@ -748,17 +749,18 @@ async function apagaPedido(id){
 
 /* ═════════════ RENDER ═════════════ */
 function renderMeus(){
-  const linhas=PEDIDOS.filter(r=>r.unidade===UNI);
-  set('tit-meus',`Pedidos da unidade${UNI?' · '+UNI:''}`);
+  const us=unisVistas(), varias=us.length>1;
+  const linhas=PEDIDOS.filter(r=>us.includes(r.unidade));
+  set('tit-meus',varias?'Pedidos das unidades':`Pedidos da unidade · ${us[0]||'—'}`);
   set('sub-meus',linhas.length?`${linhas.length} pedido(s) · do mais recente para o mais antigo · pedido ainda não avaliado pode ser apagado`:'Nenhum pedido lançado ainda.');
-  const tb=document.getElementById('tb-meus');
-  tb.innerHTML=`<thead><tr><th>Vigência</th><th>Projeto</th><th>Banda de rodagem</th><th>Medida</th><th class="num">Quantidade</th><th class="num">Aprovado</th><th>Situação</th><th>Lançado em</th><th></th></tr></thead><tbody>`+
+  const tb=document.getElementById('tb-meus'), nc=varias?10:9;
+  tb.innerHTML=`<thead><tr><th>Vigência</th>${varias?'<th>Unidade</th>':''}<th>Projeto</th><th>Banda de rodagem</th><th>Medida</th><th class="num">Quantidade</th><th class="num">Aprovado</th><th>Situação</th><th>Lançado em</th><th></th></tr></thead><tbody>`+
     (linhas.map(r=>{ const [s,c]=situacao(r);
-      return `<tr><td>${vigRot(r.vigencia)}</td><td class="nome">${esc(r.projeto)}</td><td>${esc(r.banda)}</td><td>${esc(r.medida)}</td>
+      return `<tr><td>${vigRot(r.vigencia)}</td>${varias?`<td class="nome">${esc(r.unidade)}</td>`:''}<td${varias?'':' class="nome"'}>${esc(r.projeto)}</td><td>${esc(r.banda)}</td><td>${esc(r.medida)}</td>
         <td class="num">${br(r.qtd)}</td><td class="num">${r.qtd_aprovada==null?'—':br(r.qtd_aprovada)}</td><td><span class="pill ${c}">${s}</span></td>
         <td>${fmtDT(r.created_at)}<span class="lin2">${esc(r.criado_nome||'')}</span></td>
         <td>${r.qtd_aprovada==null?`<button class="ico-bt" title="Apagar pedido" onclick="apagaPedido(${r.id})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:''}</td></tr>`; }).join('')
-     ||'<tr class="vazio" onclick="abrePedido()"><td colspan="9" class="mut" style="text-align:center;padding:22px">Nenhum pedido lançado ainda — clique aqui ou em <b>Novo pedido</b> para lançar.</td></tr>')+'</tbody>';
+     ||`<tr class="vazio" onclick="abrePedido()"><td colspan="${nc}" class="mut" style="text-align:center;padding:22px">Nenhum pedido lançado ainda — clique aqui ou em <b>Novo pedido</b> para lançar.</td></tr>`)+'</tbody>';
   set('n-pedido',linhas.length||'');
 }
 
@@ -944,6 +946,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610052130"></script>
+<script src="../assets/build-check.js?v=202610051745"></script>
 </body>
 </html>
