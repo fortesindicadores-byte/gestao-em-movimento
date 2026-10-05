@@ -44,6 +44,10 @@ if (r.j.token) {
   ok('posicao_geral' in j, 'ce_app_dados devolve posicao_geral (função nova no banco)');
   const rk = j.ranking || [];
   ok(!rk.length || 'pos_geral' in rk[0], 'cada linha do ranking traz pos_geral e disputa');
+  // LGPD (05/10/2026): o ranking só pode trazer INICIAIS ("J. R."), nunca nome.
+  // Conferido pela forma, sem imprimir nenhum nome no log (o repositório é público).
+  const comNome = rk.filter(x => !/^([A-ZÀ-Ý]\.)( [A-ZÀ-Ý]\.)?$|^—$/.test(String(x.nome || ''))).length;
+  ok(comNome === 0, `ranking só com iniciais (${rk.length - comNome} de ${rk.length} linha(s))`);
   const disp = rk.filter(x => x.disputa !== false).length;
   console.log('ranking: ' + rk.length + ' linha(s) · ' + disp + ' na disputa · ' + (rk.length - disp) + ' fora');
   console.log('regras:', JSON.stringify(j.regras));
