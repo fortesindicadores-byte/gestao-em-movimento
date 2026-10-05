@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610052300">
+<meta name="build" content="202610052330">
 <title>CO² — Emissões da Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -265,7 +265,11 @@ body{--red:var(--vermelho);--green:var(--verde);--text3:var(--txt3);}
 /* separador entre o recorte e o YTD (o "|" do hero antigo) */
 .hdel .hsep{align-self:stretch;width:1px;background:var(--card-brd);margin:0 2px;}
 /* gráficos do Resumo: ficam com a sobra, mas com teto */
-#vw-resumo .gr2{flex:1 1 auto;min-height:220px;max-height:56vh;grid-template-rows:minmax(0,1fr);}
+/* cards ESG mais altos (Renan, 05/10/2026: "pode aumentar altura um pouco dos cards
+   para distribuir melhor") — a mesma divisão do Painel KM: cards e gráficos repartem a
+   sobra, 1 para 2, com teto nos cards */
+#vw-resumo .esg-block{flex:1 1 0;min-height:clamp(112px,16.5vh,170px);max-height:clamp(150px,24vh,230px);}
+#vw-resumo .gr2{flex:2 1 0;min-height:220px;max-height:none;grid-template-rows:minmax(0,1fr);}
 
 /* legenda do Ton CO² Mensal: barra condicional (vermelho/verde) tem legenda NEUTRA */
 .chart-leg{display:flex;gap:12px;flex-wrap:wrap;margin:2px 0 6px;}
@@ -326,7 +330,7 @@ body.claro .seal-txt .st-1{color:#0E8C5A;}
 .esg-card{padding:12px 16px;border:1px solid var(--card-brd);border-radius:11px;background:var(--side);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;flex-direction:column;}
 .ec-lbl{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;}
-.ec-val{font-size:22px;font-weight:800;color:var(--txt);line-height:1.1;margin-top:6px;}
+.ec-val{font-size:28px;font-weight:800;color:var(--txt);line-height:1.1;margin-top:6px;}
 .ec-sub{font-size:10px;color:var(--txt3);margin-top:auto;padding-top:6px;font-weight:600;line-height:1.35;}
 
 @media(max-width:1100px){ .kpis{grid-template-columns:repeat(3,1fr);} }
@@ -375,6 +379,7 @@ body.claro .seal-txt .st-1{color:#0E8C5A;}
 @media(max-width:860px){
   #vw-resumo .gr2{max-height:none;}
   .esg-block{flex-direction:column;}
+  #vw-resumo .esg-block{max-height:none;}
   .esg-cards{grid-template-columns:repeat(2,1fr);}
   .seal-txt .st-3{max-width:none;}
   .hdel .hsep{display:none;}
@@ -1197,6 +1202,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610052300"></script>
+<script src="../../assets/build-check.js?v=202610052330"></script>
 </body>
 </html>
