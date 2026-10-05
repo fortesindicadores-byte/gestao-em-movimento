@@ -47,71 +47,53 @@ const af = (c, t, d) => { if (c) { ok++; console.log('  ok   ' + t); }
   else { ruim++; console.log('  FALHA ' + t + (d != null ? '  → ' + d : '')); } };
 const est = b => ctx.estadoBase(b);
 
-console.log('\n═══ o caso que motivou tudo: lida agora, conteúdo congelado ═══');
+console.log('\n═══ duas réguas no Sheets: LEITURA (6h) e CONTEÚDO (35/60 dias) ═══');
 {
-  // aba da Disponibilidade depois de o Apps Script ser desligado: o robô a lê
-  // de hora em hora (carregado_em = agora) e o conteúdo não muda há 5 dias
-  const congelada = { fonte:'sh', atualizado_em: atras(0.5), mudou_em: atras(120), impressao:'abc' };
-  af(est(congelada).t === 'Parada', 'aba lida há 30 min mas sem dado novo há 5 dias = Parada', est(congelada).t);
+  // o caso que motivou a régua de conteúdo (19/09): lida agora, conteúdo congelado
+  const congelada = { fonte:'sh', atualizado_em: atras(0.5), mudou_em: atras(70*24), impressao:'abc' };
+  af(est(congelada).t === 'Parada', 'aba lida há 30 min mas sem dado novo há 70 dias = Parada', est(congelada).t);
   af(est(congelada).c === 'r', 'e em vermelho', est(congelada).c);
+  af(est({ ...congelada, mudou_em: atras(40*24) }).t === 'Atrasada', 'sem dado novo há 40 dias = Atrasada');
 
-  // O LADO ERRADO: é o que a tela mostrava antes, medindo a leitura
-  const comoEraAntes = { ...congelada };
-  delete comoEraAntes.mudou_em;
-  comoEraAntes.mudou_em = null; comoEraAntes.impressao = null;   // sem impressão cai no atualizado_em
+  // o caso que motivou ESTA mudança (05/10): aba manual mensal, sem mudança há 5 dias
+  const mensal = { fonte:'sh', atualizado_em: atras(0.5), mudou_em: atras(5*24), impressao:'abc' };
+  af(est(mensal).t === 'Em dia', 'aba manual sem mudança há 5 dias continua Em dia (antes: Parada)', est(mensal).t);
+  af(est({ ...mensal, fonte:'gviz' }).t === 'Em dia', 'idem para a foto do gviz');
+
+  // o robô parou de LER: isso continua alarmando em horas, não em semanas
+  af(est({ fonte:'sh', atualizado_em: atras(9), mudou_em: atras(1), impressao:'a' }).t === 'Leitura atrasada',
+     'lida há 9h = Leitura atrasada, mesmo com dado novo');
+  af(est({ fonte:'sh', atualizado_em: atras(30), mudou_em: atras(1), impressao:'a' }).t === 'Leitura parada',
+     'lida há 30h = Leitura parada (vermelho)');
+
+  // O LADO ERRADO: medir só pela leitura diria "Em dia" para a congelada
+  const comoEraAntes = { ...congelada, mudou_em: null, impressao: null };
   af(est(comoEraAntes).t === 'Em dia',
-     'medindo pela LEITURA a mesma base diria "Em dia" — o defeito que isto conserta', est(comoEraAntes).t);
+     'medindo só pela LEITURA a base congelada diria "Em dia" — por isso o conteúdo continua medido', est(comoEraAntes).t);
 }
 
-console.log('\n═══ dado novo chegando: nada muda para pior ═══');
+console.log('\n═══ as outras fontes não mudaram ═══');
 {
-  af(est({ fonte:'sh', atualizado_em: atras(0.2), mudou_em: atras(1), impressao:'a' }).t === 'Em dia',
-     'aba do Sheets com dado novo há 1h (limite 6h)');
-  af(est({ fonte:'sh', atualizado_em: atras(0.2), mudou_em: atras(9), impressao:'a' }).t === 'Atrasada',
-     'sem dado novo há 9h = Atrasada');
   af(est({ fonte:'ginfo', atualizado_em: atras(0.2), mudou_em: atras(20), impressao:'a' }).t === 'Em dia',
      'Ginfo tem 30h de folga: 20h ainda é Em dia');
   af(est({ fonte:'ginfo', atualizado_em: atras(0.2), mudou_em: atras(40), impressao:'a' }).t === 'Atrasada',
      'e 40h já é Atrasada');
   af(est({ fonte:'elite', atualizado_em: atras(30*24), mudou_em: atras(30*24), impressao:null }).t === 'Em dia',
      'Frota de Elite: 30 dias é normal (limite 45)');
-}
-
-console.log('\n═══ a 1ª observação é um PISO que envelhece — não um cinza eterno ═══');
-{
-  // Na 1ª vez que vemos a base, mudou_em = agora com mudou_piso = true. Não
-  // sabemos desde quando está assim, mas sabemos que está assim desde agora.
-  const vista = { fonte:'sh', atualizado_em: atras(0.2), mudou_em: atras(0.2), mudou_piso:true, impressao:'a' };
-  af(est(vista).t === 'Em dia', 'recém-observada começa em dia', est(vista).t);
-  // …e, como a impressão não muda numa base congelada, essa data fica parada e ELA ENVELHECE
-  const velha = { fonte:'sh', atualizado_em: atras(0.2), mudou_em: atras(30), mudou_piso:true, impressao:'a' };
-  af(est(velha).t === 'Parada',
-     'a mesma base 30h depois vira Parada — o piso alarma sozinho', est(velha).t);
-
-  // O DESENHO ANTERIOR (mudou_em nulo) prendia a base congelada em cinza PARA
-  // SEMPRE: a impressão nunca muda, então o nulo seria preservado em toda
-  // coleta. Este é o lado errado, e ele não pode voltar.
-  const presoEmCinza = { fonte:'sh', atualizado_em: atras(0.2), mudou_em: null, impressao:'a' };
-  af(est(presoEmCinza).t === "Aguardando coleta",
-     'linha de robô antigo fica em cinza, nunca "Em dia" pela leitura', est(presoEmCinza).t);
-}
-
-console.log('\n═══ quem já media o conteúdo continua como estava ═══');
-{
-  // elite e app não têm impressão: o robô copia o atualizado_em, que nessas
-  // fontes JÁ é a data do próprio dado
+  af(est({ fonte:'sh', atualizado_em: atras(0.2), mudou_em: null, impressao:'a' }).t === 'Aguardando coleta',
+     'linha de robô antigo fica em cinza, nunca "Em dia" pela leitura');
   af(est({ fonte:'app', atualizado_em: atras(500), mudou_em: atras(500), impressao:null }).t === '—',
      'tabela de aplicativo é informativa (sem limite)');
   af(est({ fonte:'app', atualizado_em: null, mudou_em: null, impressao:null }).t === 'Sem data',
      'sem data nenhuma diz "Sem data"');
 }
 
-console.log('\n═══ erro na carga ganha do resto ═══');
+console.log('\n═══ erro e recusa ═══');
 {
   af(est({ fonte:'sh', erro:'FALHOU: …', atualizado_em: atras(0.2), mudou_em: atras(0.2), impressao:'a' }).t === 'Erro na carga',
-     'erro registrado aparece como erro, mesmo com dado fresco');
-  af(est({ fonte:'sh', erro:'RECUSADA: aba filtrada', atualizado_em: atras(0.2), mudou_em: atras(80), impressao:'a' }).c === 'r',
-     'e a recusa da guarda também é vermelho');
+     'carga que falhou é erro (vermelho), mesmo com dado fresco');
+  const rec = est({ fonte:'sh', erro:'RECUSADA: aba filtrada', atualizado_em: atras(0.2), mudou_em: atras(80), impressao:'a' });
+  af(rec.c === 'a' && /filtrada/.test(rec.t), 'recusa da guarda é ÂMBAR "aba filtrada?" — a tabela guarda a versão boa', JSON.stringify(rec));
 }
 
 console.log(`\n${ok} ok · ${ruim} falha(s)`);

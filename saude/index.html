@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609210900">
+<meta name="build" content="202610051000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Saúde do Ecossistema · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -545,7 +545,16 @@ function estadoWf(w){
   return {c:'a',t:w.ult_conclusao||'—',o:2};
 }
 /* idade esperada de cada base, por fonte (o resto é informativo) */
-const LIM_BASE={sh:6,gviz:6,ginfo:30,elite:45*24,app:null};
+const LIM_BASE={sh:35*24,gviz:35*24,ginfo:30,elite:45*24,app:null};
+/* DUAS RÉGUAS NO SHEETS (05/10/2026). A de 6h valia para o CONTEÚDO e pintava
+   de "atrasada" toda aba manual que muda uma vez por mês — 94 de 124 bases no
+   Resumo, quase todas falsas. Agora:
+   · a LEITURA (atualizado_em) tem de acontecer de hora em hora: passou de 6h, o
+     robô parou de ler a aba, e isso é problema do robô;
+   · o CONTEÚDO (mudou_em) de aba manual tem um ciclo mensal: só depois de 35
+     dias sem dado novo vira "Atrasada", e de 60 vira "Parada". */
+const LIM_LEIT={sh:6,gviz:6};
+const LIM_PARADA={sh:60*24,gviz:60*24};
 /* O QUE VALE É A IDADE DO DADO, NÃO DA LEITURA (19/09/2026).
    `atualizado_em` das bases do Sheets é o carregado_em, reescrito de hora em
    hora mesmo quando nada muda (e o do gviz é um PATCH no updated_at) — medir
@@ -555,7 +564,13 @@ const LIM_BASE={sh:6,gviz:6,ginfo:30,elite:45*24,app:null};
    afirmar nada, e dizer "Em dia" seria justamente o engano. */
 const idadeDoDado=b=>b.mudou_em!=null?horas(b.mudou_em):horas(b.atualizado_em);
 function estadoBase(b){
+  /* a recusa da guarda (aba filtrada no Sheets) não é carga quebrada: a tabela
+     guarda a última versão boa de propósito — mas alguém tem de tirar o filtro */
+  if(b.erro&&/^RECUSADA/i.test(b.erro)) return {c:'a',t:'Recusada · aba filtrada?'};
   if(b.erro) return {c:'r',t:'Erro na carga'};
+  const ll=LIM_LEIT[b.fonte], hl=horas(b.atualizado_em);
+  if(ll&&hl!=null&&hl>ll*4) return {c:'r',t:'Leitura parada'};
+  if(ll&&hl!=null&&hl>ll) return {c:'a',t:'Leitura atrasada'};
   const lim=LIM_BASE[b.fonte];
   /* tem impressão mas ainda não tem data: linha gravada por um robô anterior a
      esta regra. Cair no atualizado_em aqui traria de volta o defeito inteiro
@@ -565,7 +580,7 @@ function estadoBase(b){
   const h=idadeDoDado(b);
   if(h==null) return {c:'c',t:'Sem data'};
   if(lim==null) return {c:'v',t:'—'};
-  if(h>lim*4) return {c:'r',t:'Parada'};
+  if(h>(LIM_PARADA[b.fonte]||lim*4)) return {c:'r',t:'Parada'};
   if(h>lim) return {c:'a',t:'Atrasada'};
   return {c:'v',t:'Em dia'};
 }
@@ -1011,6 +1026,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609210900"></script>
+<script src="../assets/build-check.js?v=202610051000"></script>
 </body>
 </html>
