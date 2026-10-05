@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610051945">
+<meta name="build" content="202610052000">
 <title>Km/L · Análise do Impacto</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -665,7 +665,7 @@ let remModDiverg=[];
 let remModGroupMode=new Map();
 
 // Detected column indices (populated after fetch)
-let CL = {vig:0,rem:4,remM:5,real:6,rsLReal:9,ativo:11,proj:14,uni:-1,placa:15,modelo:16,tipoVei:17,kmRod:22,litros:23};
+let CL = {vig:0,rem:4,remM:5,real:6,rsLReal:9,ativo:11,proj:14,uni:-1,placa:16,modelo:19,tipoVei:21,kmRod:22,litros:23};
 
 function detectCols(cols) {
   const fi    = (tests)          => { for(let i=0;i<cols.length;i++){const lc=cols[i].toLowerCase();if(tests.some(t=>lc.includes(t)))return i;}return -1; };
@@ -681,9 +681,9 @@ function detectCols(cols) {
     proj:   fb(fi(['projeto']),14),
     uni:    fi(['unidade']),
     nv3:    fi(['nv3','nível 3','nivel 3']),
-    placa:  fb(fi(['placa']),15),
+    placa:  fb(fi(['placa']),16),   // Q · a aba chega SEM cabeçalho do Google (rótulos A, B, C…): vale a posição, e a 15 (P) é a Unidade (Renan, 05/10/2026: "Placa saiu com o nome da unidade")
     modelo: fb(fiNot(['modelo'],['rem','km/l','km /l']),19),
-    tipoVei:fb(fi(['tipo vei','tipo_vei']),17),
+    tipoVei:fb(fi(['tipo vei','tipo_vei']),21),   // V (a 17 é o Mês Início OS)
     kmRod:  fb(fi(['km rodado','km_rodado','kmrodado']),22),
     litros: fb(fi(['litro','qtd total','qtd_total','qtd litro']),23),
     fuel:   fi(['tipo combust','combustivel','combustível']),
@@ -1633,6 +1633,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610051945"></script>
+<script src="../assets/build-check.js?v=202610052000"></script>
 </body>
 </html>
