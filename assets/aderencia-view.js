@@ -87,20 +87,26 @@
     return saida;
   }
 
-  // rótulo em cima da barra — padrão do portal (o eixo Y some, o número fica na barra)
+  // META da aderência = a faixa "Adequado" (≥ 85%). Vira a linha tracejada
+  // do gráfico, como a meta do Painel KM.
+  const META = 85;
+
+  // rótulo em cima da barra — padrão do Painel KM (eixo Y some, o número fica
+  // na barra; 700 14px, 8px no celular; só nos meses em foco)
   const barLabels = {
     id: 'aderencia-bar-labels',
     afterDatasetsDraw(c) {
       const ds = c.data.datasets[0], m = c.getDatasetMeta(0), ctx = c.ctx;
+      const mob = window.innerWidth < 768;
       ctx.save();
-      ctx.font = '800 10.5px Montserrat';
+      ctx.font = `700 ${mob ? 8 : 14}px Montserrat`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      ctx.fillStyle = claroAgora() ? '#161D2B' : '#EEF2FA';
+      ctx.fillStyle = claroAgora() ? '#333333' : '#F1F5F9';
       m.data.forEach((b, i) => {
         const v = ds.data[i];
         if (v == null) return;
         if (ds._on && !ds._on[i]) return;   // mês fora do filtro: barra apagada, sem rótulo
-        ctx.fillText(Math.round(v) + '%', b.x, b.y - 5);
+        ctx.fillText(Math.round(v) + '%', b.x, b.y - 4);
       });
       ctx.restore();
     },
@@ -108,41 +114,57 @@
 
   const _charts = {};   // canvasId -> instância, para destruir antes de redesenhar
 
-  // `foco` = quais meses estão selecionados no filtro de vigência. Os demais
-  // continuam aparecendo, só que apagados — mesma leitura do Painel KM e da
-  // Visão Financeira: o mês escolhido salta, o resto vira contexto.
+  // Desenho do gráfico de barra PADRÃO (o do Painel KM, escolhido pelo Renan
+  // em 09/09/2026, aplicado aqui em 05/10/2026): barra translúcida (.65) com
+  // contorno sólido e cantos de 3px, cor pela faixa, linha de META tracejada,
+  // eixo Y escondido a partir do zero, sem grade, rótulo em cima da barra.
+  // `foco` = quais meses estão selecionados no filtro de vigência: o escolhido
+  // fica mais forte (.85) e o resto vira contexto (.2).
   function grafico(canvasId, labels, data, foco) {
     const cv = document.getElementById(canvasId);
     if (!cv || typeof Chart === 'undefined') return;
     const claro = claroAgora();
+    const mob = window.innerWidth < 768;
     const temFoco = !!(foco && foco.some(f => !f) && foco.some(f => f));
     const aceso = i => !temFoco || foco[i];
-    const bg = data.map((v, i) => v == null ? 'transparent' : (temFoco && !aceso(i) ? bandRgba(v, .22) : band(v)));
-    const tick = { color: claro ? '#737D91' : '#676F83', font: { family: 'Montserrat', size: 10, weight: '600' } };
-    // eixo Y adaptável em múltiplos de 10 — não fica travado em 0..100
-    const vals = data.filter(v => v != null);
-    const dMin = vals.length ? Math.min(...vals) : 0, dMax = vals.length ? Math.max(...vals) : 100;
-    const yMin = Math.max(0, Math.floor((dMin - 8) / 10) * 10);
-    const yMax = Math.max(yMin + 20, Math.min(112, Math.ceil((dMax + 6) / 10) * 10));
+    const bg = data.map((v, i) => v == null ? 'transparent'
+      : bandRgba(v, temFoco ? (aceso(i) ? .85 : .2) : .65));
+    const bc = data.map(v => v == null ? 'transparent' : band(v));
+    const metaC = claro ? '#1a1a1a' : '#F1F5F9';
+    const metaD = data.map(v => v == null ? null : META);
+    // fonte do eixo do Painel KM (15px) quando o card é largo; os dois gráficos
+    // dividem a linha, então em tela menor ela desce para o mês não girar
+    const larg = cv.parentElement ? cv.parentElement.clientWidth : 800;
+    const tick = { color: claro ? '#444444' : '#94A3B8', maxRotation: 0, autoSkip: false,
+      font: { family: 'Montserrat', size: mob ? 9 : (larg >= 700 ? 15 : larg >= 520 ? 12 : 10) } };
+    const tooltip = { backgroundColor: '#141B26', titleColor: '#F97316', bodyColor: '#F1F5F9',
+      borderColor: '#1E2D40', borderWidth: 1,
+      titleFont: { family: 'Montserrat' }, bodyFont: { family: 'Montserrat' },
+      callbacks: { label: c => (c.datasetIndex ? 'Meta ' : '') + Math.round(c.raw) + '%' } };
     if (_charts[canvasId]) _charts[canvasId].destroy();
     _charts[canvasId] = new Chart(cv, {
-      type: 'bar',
-      data: { labels, datasets: [{ data, backgroundColor: bg, borderColor: bg, borderWidth: 0,
-        borderRadius: 2, barPercentage: .97, categoryPercentage: .94,
-        _on: data.map((_, i) => aceso(i)) }] },
+      type: 'line',
+      data: { labels, datasets: [
+        { type: 'bar', label: 'Aderência', data, backgroundColor: bg, borderColor: bc,
+          borderWidth: 1, borderRadius: 3, order: 2, _on: data.map((_, i) => aceso(i)) },
+        { type: 'line', label: 'Meta ' + META + '%', data: metaD, borderColor: metaC, borderWidth: 2,
+          tension: 0, fill: false, borderDash: [5, 3], order: 1,
+          pointRadius: data.map(v => v == null ? 0 : 3), pointBackgroundColor: metaC,
+          pointBorderColor: metaC, pointBorderWidth: 0, pointHoverRadius: 8 },
+      ] },
       plugins: [barLabels],
       options: {
         responsive: true, maintainAspectRatio: false,
         animation: false,
-        layout: { padding: { top: 18 } },
+        layout: { padding: { top: 30 } },
         plugins: {
           legend: { display: false },
           datalabels: { display: false },
-          tooltip: { callbacks: { label: c => Math.round(c.raw) + '%' } },
+          tooltip,
         },
         scales: {
-          x: { grid: { display: false }, border: { display: false }, ticks: tick },
-          y: { display: false, min: yMin, max: yMax },
+          x: { grid: { display: false }, ticks: tick },
+          y: { display: false, beginAtZero: true, suggestedMax: 100 },
         },
       },
     });
@@ -199,11 +221,13 @@
 
       <div class="adv-gr2">
         <div class="adv-gcard">
+          <div class="adv-gleg"><span><i class="sq"></i>Aderência</span><span><i></i>Meta ${META}%</span></div>
           <div class="adv-gtit">Aderência ao Prazo</div>
           <div class="adv-gsub">% de ações dentro do prazo, mês a mês</div>
           <div class="adv-gcv"><canvas id="adv-ch-prazo"></canvas></div>
         </div>
         <div class="adv-gcard">
+          <div class="adv-gleg"><span><i class="sq"></i>Aderência</span><span><i></i>Meta ${META}%</span></div>
           <div class="adv-gtit">Aderência à Conclusão</div>
           <div class="adv-gsub">% de ações concluídas, mês a mês</div>
           <div class="adv-gcv"><canvas id="adv-ch-concl"></canvas></div>

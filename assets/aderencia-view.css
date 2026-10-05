@@ -63,6 +63,14 @@ body.light-mode, body.claro{
   border-radius:11px;padding:13px 15px 10px;min-width:0;min-height:0;
   display:flex;flex-direction:column;
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.adv-gcard{position:relative;}
+/* legenda do padrão: quadradinho = barra (neutro, a cor vem da faixa), tracinho = meta */
+.adv-gleg{position:absolute;top:13px;right:15px;display:flex;gap:14px;
+  font-size:9.5px;font-weight:700;color:var(--txt3,#475569);}
+.adv-gleg i{display:inline-block;width:14px;height:0;border-top:2px dashed var(--txt2,#94A3B8);
+  margin-right:6px;vertical-align:middle;}
+.adv-gleg i.sq{width:9px;height:9px;border:1px solid var(--txt3,#475569);border-radius:2px;
+  background:var(--hover,rgba(255,255,255,.06));vertical-align:-1px;}
 .adv-gtit{font-size:12px;font-weight:800;color:var(--txt,#F1F5F9);}
 .adv-gsub{font-size:9.5px;color:var(--txt3,#475569);margin-top:2px;font-weight:600;}
 .adv-gcv{flex:1;min-height:0;position:relative;margin-top:8px;}
