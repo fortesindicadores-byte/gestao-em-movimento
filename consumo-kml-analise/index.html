@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610052330">
+<meta name="build" content="202610051945">
 <title>Km/L · Análise do Impacto</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -276,12 +276,17 @@ table.dre tr.total td.imp-cell{font-size:12px;}
 /* a sobra de altura vai para os gráficos, com teto */
 /* fileira de cards (Renan, 05/10/2026: "Aqui ficou mal distribuído. Dá para ter uns
    cards") — o mesmo desenho do Painel KM: cards e gráficos dividem a sobra, 1 para 2 */
-.kpis.k4{grid-template-columns:repeat(4,1fr);gap:10px;flex:0 0 auto;min-height:clamp(112px,16.5vh,170px);}
+.kpis.k4{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;flex:0 0 auto;min-height:clamp(112px,16.5vh,170px);}
 .kpis.k4 .kpi{display:flex;flex-direction:column;justify-content:flex-start;padding:14px 16px;}
 .kpis.k4 .kpi .kv{font-size:32px;margin-top:6px;}
 .kpis.k4 .kpi .km{margin-top:auto;padding-top:8px;}
 @media(max-width:1100px){ .kpis.k4{grid-template-columns:repeat(2,1fr);} }
-#vw-resumo .kpis.k4{flex:1 1 0;max-height:clamp(150px,24vh,230px);}
+#vw-resumo .kpis.k4{flex:1 1 0;min-height:clamp(110px,16.5vh,168px);max-height:clamp(148px,24vh,228px);}
+#vw-resumo .kpis.k4 .kpi{padding:clamp(16px,3vh,28px) 18px;}
+.kpi .kv .kdel{font-size:16px;font-weight:800;}
+.kpi .kv.kvn{display:flex;align-items:baseline;gap:8px;min-width:0;}
+.kvn .kn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.kvn .kdel{flex:0 0 auto;}
 #vw-resumo .gr2{flex:2 1 0;max-height:none;grid-template-rows:minmax(0,1fr);}
 
 /* tabelas: preenchem a visão e rolam DENTRO do card */
@@ -487,8 +492,8 @@ table.dre.tbl-det thead th{font-size:8.5px;white-space:normal;line-height:1.25;v
         <div class="kpis k4">
           <div class="kpi"><div class="kl">Km rodado</div><div class="kv" id="k-km">—</div><div class="km">km no período filtrado</div></div>
           <div class="kpi"><div class="kl">Litros consumidos</div><div class="kv" id="k-lit">—</div><div class="km">abastecidos no período</div></div>
-          <div class="kpi"><div class="kl">Litros vs remunerado</div><div class="kv" id="k-litd">—</div><div class="km" id="k-litd-m">—</div></div>
-          <div class="kpi"><div class="kl">Veículos no recorte</div><div class="kv" id="k-vei">—</div><div class="km" id="k-vei-m">—</div></div>
+          <div class="kpi"><div class="kl" id="k-mel-l">Melhor unidade vs remunerado</div><div class="kv kvn" id="k-mel">—</div><div class="km" id="k-mel-m">—</div></div>
+          <div class="kpi"><div class="kl" id="k-pio-l">Pior unidade vs remunerado</div><div class="kv kvn" id="k-pio">—</div><div class="km" id="k-pio-m">—</div></div>
         </div>
         <div class="gr2">
           <div class="card gcard">
@@ -1265,19 +1270,31 @@ function renderHero(active,ytd){
   if(eYimp){eYimp.textContent=impY!=null?fmtBrlD(impY):'—';colI(eYimp,impY<0);}
   renderCards(active,a);
 }
-/* cards do Resumo: tudo sai do mesmo aggRows do hero. Litros vs remunerado =
-   litros gastos − litros que o remunerado previa para o km rodado (km ÷ Km/L rem),
-   a mesma régua do Δ — gastar a mais é vermelho. */
+/* cards do Resumo (Renan, 05/10/2026 — regra de todo painel migrado): os dois que
+   COMPÕEM o realizado e, ao lado, a melhor e a pior unidade contra o remunerado.
+   Cada grupo passa pelo MESMO aggRows do hero, e a régua é o Δ% sobre o remunerado
+   (unidades de tamanhos diferentes ficam comparáveis). Com uma unidade só no recorte
+   (Seara, ou filtro numa unidade), a comparação desce para o MODELO. */
 function renderCards(active,a){
   set('k-km',fmtKm(a.sumKm)); set('k-lit',fmtKm(a.sumLitros));
-  const prev=(a.remAvg>0&&a.sumKm>0)?a.sumKm/a.remAvg:null, dl=prev!=null?a.sumLitros-prev:null;
-  const e=document.getElementById('k-litd');
-  if(e){ e.textContent=dl==null?'—':(dl>0?'+':'')+fmtKm(dl); colI(e,dl>0); }
-  set('k-litd-m',prev==null?'sem remunerado no recorte':`remunerado previa ${fmtKm(prev)} L`);
-  const pl=new Set(), un=new Set(), vg=new Set();
-  active.forEach(r=>{ const p=String(r[CL.placa]||'').trim(); if(p) pl.add(p); const u=getUni(r); if(u) un.add(u); const d=parseVig(r[CL.vig]); if(d) vg.add(d.getFullYear()*100+d.getMonth()); });
-  set('k-vei',pl.size?fmtKm(pl.size):'—');
-  set('k-vei-m',`${un.size} unidade(s) · ${vg.size} vigência(s)`);
+  const MAIOR_MELHOR=true;
+  const porUni=new Set(active.map(r=>getUni(r)).filter(Boolean)).size>1;
+  const chave=porUni?(r=>getUni(r)):(r=>String(r[CL.modelo]||'').trim());
+  const g={}; active.forEach(r=>{ const k=chave(r); if(k) (g[k]=g[k]||[]).push(r); });
+  const lst=Object.entries(g).map(([k,rows])=>{ const x=aggRows(rows);
+    return (x.remAvg>0&&x.realWt>0)?{k,real:x.realWt,rem:x.remAvg,d:(x.realWt/x.remAvg-1)*100}:null; }).filter(Boolean);
+  const bom=v=>MAIOR_MELHOR?v.d:-v.d;
+  lst.sort((p,q)=>bom(q)-bom(p));
+  const nome=porUni?'unidade':'modelo';
+  set('k-mel-l',`Melhor ${nome} vs remunerado`); set('k-pio-l',`Pior ${nome} vs remunerado`);
+  const pinta=(id,v)=>{ const e=document.getElementById(id); if(!e) return;
+    if(!v){ e.textContent='—'; set(id+'-m','sem remunerado no recorte'); return; }
+    const ok=bom(v)>=0;
+    const nm=String(v.k).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c]);
+    e.innerHTML=`<span class="kn" title="${nm}">${nm}</span><span class="kdel ${ok?'cg':'cr'}">${pct(v.d)}</span>`;
+    set(id+'-m',`${kml(v.real)} realizado · ${kml(v.rem)} remunerado`); };
+  pinta('k-mel',lst.length?lst[0]:null);
+  pinta('k-pio',lst.length>1?lst[lst.length-1]:null);
 }
 
 // ── GRÁFICOS ──
@@ -1616,6 +1633,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610052330"></script>
+<script src="../assets/build-check.js?v=202610051945"></script>
 </body>
 </html>
