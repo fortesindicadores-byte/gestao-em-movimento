@@ -124,7 +124,16 @@ from (values
   ('205',     'PNEU FIRESTONE CV5000 205/75R16 LISO',                     '37873',     880.55),
   ('205',     'PNEU GOODYEAR CARGO MARATHON 205/75R16 LISO',              null,        701.55),
   ('6.00-9',  'INFINITY 600-9',                                           null,          0.00),
-  ('7.00-12', 'INFINITY 700-12',                                          null,          0.00)
+  ('7.00-12', 'INFINITY 700-12',                                          null,          0.00),
+  -- média de mercado (05/10/2026, Renan: "coloque os preços de mercado, valor
+  -- médio") para as medidas de empilhadeira que a lista do Benner não tinha;
+  -- uma linha por construção, porque maciço custa até 2× o pneumático
+  ('5.00-8',  'MÉDIA DE MERCADO · PNEUMÁTICO 5.00-8',                      null,        476.26),
+  ('5.00-8',  'MÉDIA DE MERCADO · MACIÇO 5.00-8',                          null,        716.08),
+  ('8.25-15', 'MÉDIA DE MERCADO · PNEUMÁTICO 8.25-15',                     null,       1382.39),
+  ('8.25-15', 'MÉDIA DE MERCADO · MACIÇO 8.25-15',                         null,       2971.75),
+  ('28x9-15', 'MÉDIA DE MERCADO · PNEUMÁTICO 28x9-15',                     null,       1612.25),
+  ('28x9-15', 'MÉDIA DE MERCADO · MACIÇO 28x9-15',                         null,       1860.13)
 ) as v(medida, produto, codigo, valor)
 where not exists (select 1 from public.pneu_preco p where p.produto = v.produto);
 
