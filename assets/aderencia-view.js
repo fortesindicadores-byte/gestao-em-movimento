@@ -141,12 +141,21 @@
       borderColor: '#1E2D40', borderWidth: 1,
       titleFont: { family: 'Montserrat' }, bodyFont: { family: 'Montserrat' },
       callbacks: { label: c => (c.datasetIndex ? 'Meta ' : '') + Math.round(c.raw) + '%' } };
+    // eixo PROPORCIONAL, sem exagero (Renan, 05/10/2026: "quero que
+    // proporcionalize. Não exagere"): o piso desce até ~60% do menor mês, em
+    // dezenas, para a diferença entre os meses aparecer sem virar lupa; o teto
+    // fica justo ao pico (× 1,12, o padrão do portal) e sempre acima da meta.
+    const vals = data.filter(v => v != null);
+    const dMin = vals.length ? Math.min(...vals) : 0, dMax = vals.length ? Math.max(...vals) : 100;
+    const yMin = Math.max(0, Math.floor(Math.min(dMin, META) * .6 / 10) * 10);
+    const yMax = Math.max(dMax, META) * 1.12;
     if (_charts[canvasId]) _charts[canvasId].destroy();
     _charts[canvasId] = new Chart(cv, {
       type: 'line',
       data: { labels, datasets: [
         { type: 'bar', label: 'Aderência', data, backgroundColor: bg, borderColor: bc,
-          borderWidth: 1, borderRadius: 3, order: 2, _on: data.map((_, i) => aceso(i)) },
+          borderWidth: 1, borderRadius: 3, order: 2, barPercentage: .9, categoryPercentage: .92,
+          _on: data.map((_, i) => aceso(i)) },
         { type: 'line', label: 'Meta ' + META + '%', data: metaD, borderColor: metaC, borderWidth: 2,
           tension: 0, fill: false, borderDash: [5, 3], order: 1,
           pointRadius: data.map(v => v == null ? 0 : 3), pointBackgroundColor: metaC,
@@ -164,7 +173,7 @@
         },
         scales: {
           x: { grid: { display: false }, ticks: tick },
-          y: { display: false, beginAtZero: true, suggestedMax: 100 },
+          y: { display: false, min: yMin, max: yMax },
         },
       },
     });
