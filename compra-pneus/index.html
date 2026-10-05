@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610052000">
+<meta name="build" content="202610052100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -301,7 +301,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 .nota{font-size:10.5px;color:var(--txt3);font-weight:600;line-height:1.5;}
 .nota b{color:var(--txt2);}
 .lin2{display:block;font-size:9.5px;color:var(--txt3);font-weight:600;margin-top:2px;}
-.uchips{display:flex;gap:4px;flex-wrap:wrap;}
+.ms-opt input[type=radio]{accent-color:var(--laranja);width:14px;height:14px;flex:0 0 14px;cursor:pointer;}
 .sel,.inp{background:var(--pop);color:var(--txt);border:1px solid var(--card-brd);border-radius:7px;padding:7px 9px;
   font-family:inherit;font-size:12.5px;font-weight:600;max-width:100%;}
 .sel{cursor:pointer;}
@@ -387,7 +387,12 @@ table.dre input.inp.vazio{border-style:dashed;border-color:color-mix(in srgb,var
         <h1 id="tit">Novo Pedido</h1>
         <div class="tit-sub" id="titSub">Carregando…</div>
       </div>
-      <div class="dims uchips" id="dims-uni"></div>
+      <!-- unidade do pedido: FILTRO (Renan, 05/10/2026: "Aqui é filtro. Não toggle") -->
+      <div class="filtros"><div class="ms-wrap" id="ms-uped" style="display:none"><button class="ms-btn" onclick="toggleMs('ms-uped')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+          <span id="uped-lbl">Unidade</span></button>
+          <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
+      </div></div>
       <div class="filtros" id="filtros" style="display:none">
         <div class="ms-wrap" id="ms-vig"><button class="ms-btn" onclick="toggleMs('ms-vig')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
@@ -659,12 +664,21 @@ const recorteAdm=()=>{ const vs=getSel('ms-vig'), us=getSel('ms-uni');
 
 /* ── unidade do formulário: chips do perfil (como no FCA); admin escolhe qualquer uma ── */
 function montaUnidade(){
-  const chips=document.getElementById('dims-uni');
+  const w=document.getElementById('ms-uped');
   const lista=ADMIN?UNIDADES:PERFIL_UNIS;
   if(!UNI||!lista.includes(UNI)) UNI=lista[0]||null;
-  if(VW!=='pedido'||lista.length<2){ chips.innerHTML=''; return; }
-  chips.innerHTML=lista.map(u=>`<button class="dimb${u===UNI?' on':''}" data-u="${esc(u)}">${esc(u)}</button>`).join('');
-  chips.querySelectorAll('.dimb').forEach(b=>b.addEventListener('click',()=>{ UNI=b.dataset.u; montaUnidade(); montaForm(); renderMeus(); }));
+  if(VW!=='pedido'||lista.length<2){ w.style.display='none'; return; }
+  w.style.display=''; set('uped-lbl','Unidade: '+(UNI||'—'));
+  const list=w.querySelector('.ms-list'), srch=w.querySelector('.ms-search input');
+  w._desenha=q=>{ const f=String(q||'').toLowerCase();
+    list.innerHTML=lista.filter(u=>u.toLowerCase().includes(f)).map(u=>`<label class="ms-opt" data-u="${esc(u)}"><input type="radio" name="uped"${u===UNI?' checked':''}> ${esc(u)}</label>`).join(''); };
+  if(!w._wired){ w._wired=true;
+    list.addEventListener('click',e=>{ const o=e.target.closest('.ms-opt'); if(!o) return; e.preventDefault();
+      UNI=o.dataset.u; w.querySelector('.ms-panel').classList.remove('open'); srch.value='';
+      const m=document.getElementById('f-msg'); m.className='fmsg'; m.textContent='';   /* a mensagem era da unidade anterior */
+      montaUnidade(); montaForm(); renderMeus(); });
+    srch.addEventListener('input',()=>w._desenha(srch.value)); srch.addEventListener('click',e=>e.stopPropagation()); }
+  w._desenha(srch.value);
 }
 function montaForm(){
   const v=vigAgora(), [a,m]=v.split('-');
@@ -898,6 +912,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610052000"></script>
+<script src="../assets/build-check.js?v=202610052100"></script>
 </body>
 </html>
