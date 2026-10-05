@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610051900">
+<meta name="build" content="202610051930">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -311,8 +311,13 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 .twrap table.dre{width:100%;}
 table.dre th.num{text-align:right;}
 table.dre td.nome{color:var(--txt);font-weight:700;}
-table.dre input.inp{width:72px;text-align:right;padding:5px 7px;font-size:11.5px;}
-table.dre select.sel{padding:5px 7px;font-size:11px;max-width:260px;}
+table.dre input.inp{width:58px;text-align:right;padding:5px 7px;font-size:11.5px;}
+table.dre select.sel{padding:5px 7px;font-size:11px;width:100%;max-width:220px;}
+/* a tabela do admin tem 12 colunas: padding menor e o produto dividindo a sobra,
+   para caber sem barra de rolagem horizontal em 1366 px */
+#tb-ped th,#tb-ped td{padding:9px 7px;}
+#tb-ped td:nth-child(11){width:22%;min-width:130px;}
+#tb-ped th,#tb-ped td:nth-child(3),#tb-ped td:nth-child(4){white-space:normal;}
 table.dre input.inp.vazio{border-style:dashed;border-color:color-mix(in srgb,var(--laranja) 55%,transparent);}
 .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:9.5px;font-weight:800;letter-spacing:.3px;white-space:nowrap;
   border:1px solid var(--card-brd);color:var(--txt3);}
@@ -487,19 +492,31 @@ const BRANCH={1676:'MCC T1',1677:'MCC T2',37:'CGR',1906:'CBA T1 WH',1907:'CBA T1
    pneu NOVO por uma das três premissas —
      1. primeira vida no dianteiro (recapado não vai para a dianteira);
      2. 4ª recapagem (vida 5 em diante: não recapa mais);
-     3. último eixo da carreta (posições 3EE · 3EI · 3DI · 3DE) depois da
-        1ª recapagem (vida 3 em diante).
+     3. ÚLTIMO EIXO DA CARRETA depois da 1ª recapagem (vida 3 em diante). Só
+        carreta (semirreboque): "SEMI REBOQUE - 3 EIXOS" → 3EE·3EI·3DI·3DE,
+        "SEMI REBOQUE 4 EIXOS" → 4EE·4EI·4DI·4DE. O nº de eixos sai do tipo do
+        veículo; tipo de carreta sem o nº no nome usa o maior eixo que tem pneu.
+        Caminhão e cavalo NÃO entram, mesmo com pneu na posição 3EE.
    O resto abaixo de 4 mm vai para recape e não entra na compra. ── */
 const MM_LIM=4;
-const ULT_EIXO=new Set(['3EE','3EI','3DI','3DE']);
+const LADOS=['EE','EI','DI','DE'];
 const PREM_TXT={1:'1ª vida no dianteiro',2:'4ª recapagem',3:'último eixo da carreta'};
 const eixoDe=t=>{ const m=String(t.nomePosicao||'').trim().match(/^(\d+)/); return m?+m[1]:null; };
-function premissa(t){
+const ehCarreta=tipo=>/REBOQUE|CARRETA|SIDER/i.test(tipo||'')&&!/CAVALO/i.test(tipo||'');
+/* último eixo de cada carreta: { veiculoId: nº do eixo } */
+function ultEixoCarretas(veiculos,pneus){
+  const maxE={}; pneus.forEach(t=>{ const e=eixoDe(t); if(t.veiculoId!=null&&e) maxE[t.veiculoId]=Math.max(maxE[t.veiculoId]||0,e); });
+  const out={}; veiculos.forEach(v=>{ if(!ehCarreta(v.tipo)) return; const m=String(v.tipo).match(/(\d+)\s*EIXOS?/i);
+    const e=m?+m[1]:maxE[v.id]; if(e) out[v.id]=e; });
+  return out;
+}
+function premissa(t,ult){
   const mm=+t.menorMM; if(!(mm>0&&mm<MM_LIM)) return null;
   const v=+t.cicloVida||1, pos=String(t.nomePosicao||'').toUpperCase().trim();
   if((t.direcional||eixoDe(t)===1)&&v===1) return 1;
   if(v>=5) return 2;
-  if(ULT_EIXO.has(pos)&&v>=3) return 3;
+  const e=ult&&ult[t.veiculoId];
+  if(e&&v>=3&&LADOS.some(l=>pos===e+l)) return 3;
   return null;
 }
 /* medida do Prolog ("295/80 R22.5", "600/9 R9", "8/15 R15") → opção do pedido.
@@ -546,16 +563,18 @@ async function leProlog(){
   for(let i=0;i<ids.length;i+=3){
     await Promise.all(ids.slice(i,i+3).map(async bid=>{
       for(let a=0;a<4;a++){
-        const {data,error}=await sb.from('snapshot').select('data,updated_at').eq('endpoint','tires').eq('branch_id',+bid);
-        if(!error){ const r=(data||[])[0]; if(!r) return;
+        const {data,error}=await sb.from('snapshot').select('endpoint,data,updated_at').in('endpoint',['tires','vehicles']).eq('branch_id',+bid);
+        if(!error){ const r=(data||[]).find(x=>x.endpoint==='tires'), rv=(data||[]).find(x=>x.endpoint==='vehicles'); if(!r) return;
           ok++; if(r.updated_at&&(!ult||r.updated_at>ult)) ult=r.updated_at;
           const uni=BRANCH[bid];
-          (Array.isArray(r.data)?r.data:[]).forEach(t=>{
+          const pneus=Array.isArray(r.data)?r.data:[];
+          const ultE=ultEixoCarretas(rv&&Array.isArray(rv.data)?rv.data:[],pneus);
+          pneus.forEach(t=>{
             const m=medOpcao(t.medida); if(!m) return;
             const st=String(t.status||'').toUpperCase();
             if(st==='INVENTORY'){ const s=slot(est,uni,m); s.n++; if((+t.cicloVida||1)===1) s.novos++; return; }
             if(st!=='INSTALLED') return;
-            const p=premissa(t); if(!p) return;
+            const p=premissa(t,ultE); if(!p) return;
             const s=slot(nec,uni,m); s.n++; s.p[p]++;
           });
           return; }
@@ -574,7 +593,25 @@ function precoDe(r){
   const p=r.preco_id!=null?precoPorId(r.preco_id):null; if(p) return {p,auto:false};
   const l=precosDa(r.medida).slice().sort((a,b)=>(+a.valor)-(+b.valor)); return l.length?{p:l[0],auto:true}:{p:null,auto:true};
 }
-const qtdBase=r=>r.qtd_aprovada!=null?+r.qtd_aprovada:+r.qtd;
+/* SUGERIDO (Renan, 05/10/2026: "se ele pedir 10 275, e tiver 2 em estoque,
+   aprovamos 8"): pedido − estoque da unidade na medida. Dois pedidos pendentes
+   da mesma unidade e medida dividem o MESMO estoque — o mais antigo consome
+   primeiro, senão os 2 em estoque seriam descontados duas vezes. Pedido já
+   avaliado não consome (a decisão já foi tomada). Sem Prolog, não há sugestão. */
+let SUG={};
+function calcSugeridos(){
+  SUG={}; if(PROLOG.estado!=='ok'||!EST) return;
+  const resta={};
+  PEDIDOS.filter(r=>r.qtd_aprovada==null).slice().sort((a,b)=>a.id-b.id).forEach(r=>{
+    const k=r.unidade+'|'+r.medida;
+    if(!(k in resta)) resta[k]=((EST[r.unidade]||{})[r.medida]||{n:0}).n;
+    const usa=Math.min(+r.qtd||0,resta[k]); resta[k]-=usa;
+    SUG[r.id]={sug:(+r.qtd||0)-usa,usa};
+  });
+}
+/* quantidade do valor previsto: o aprovado; enquanto não avaliado, o sugerido
+   (pedido − estoque); sem leitura do Prolog, o pedido */
+const qtdBase=r=>r.qtd_aprovada!=null?+r.qtd_aprovada:(SUG[r.id]?SUG[r.id].sug:+r.qtd);
 function situacao(r){
   if(r.qtd_aprovada==null) return ['Aguardando',''];
   if(+r.qtd_aprovada===0) return ['Não aprovado','nao'];
@@ -691,6 +728,7 @@ function celProlog(o,uni,med,tipo){
   return `<span title="${esc(dica)}">${br(s.n)}</span>`;
 }
 function renderResumo(){
+  calcSugeridos();
   const rows=recorteAdm();
   const qtd=rows.reduce((a,r)=>a+(+r.qtd||0),0);
   const av=rows.filter(r=>r.qtd_aprovada!=null), apr=av.reduce((a,r)=>a+(+r.qtd_aprovada||0),0);
@@ -700,9 +738,9 @@ function renderResumo(){
   set('k-qtd',br(qtd)); set('k-qtd-m',`${br(pend.reduce((a,r)=>a+(+r.qtd||0),0))} aguardando`);
   set('k-apr',br(apr)); set('k-apr-m',`${av.length} pedido(s) avaliado(s)`);
   set('k-pend',br(pend.length)); set('k-pend-m',pend.length?`${new Set(pend.map(r=>r.unidade)).size} unidade(s)`:'nada pendente');
-  set('k-val','R$ '+br(val,0)); set('k-val-m',semPreco?`${semPreco} pedido(s) sem preço da medida`:'aprovado, ou o pedido enquanto não avaliado');
+  set('k-val','R$ '+br(val,0)); set('k-val-m',semPreco?`${semPreco} pedido(s) sem preço da medida`:'aprovado; não avaliado = sugerido (pedido − estoque)');
   const pr=PROLOG.estado==='ok'?`Prolog ${fmtDT(PROLOG.em)}`:PROLOG.estado==='lendo'?'lendo o Prolog…':'Prolog sem resposta';
-  set('sub-ped',`Estoque = pneus em estoque da medida na unidade · Necessidade = instalados abaixo de ${MM_LIM} mm que pedem pneu novo (1ª vida no dianteiro · 4ª recapagem · último eixo da carreta depois da 1ª recapagem) · ${pr}`);
+  set('sub-ped',`Estoque = pneus em estoque da medida na unidade · Sugerido = pedido − estoque (o mais antigo consome primeiro) · Necessidade = instalados abaixo de ${MM_LIM} mm que pedem pneu novo (1ª vida no dianteiro · 4ª recapagem · último eixo da carreta depois da 1ª recapagem) · ${pr}`);
   const tb=document.getElementById('tb-ped');
   let tq=0,ta=0,tv=0;
   const corpo=rows.map(r=>{
@@ -714,13 +752,14 @@ function renderResumo(){
       <td class="num">${br(r.qtd)}</td>
       <td class="num">${celProlog(EST,r.unidade,r.medida,'est')}</td>
       <td class="num">${celProlog(NEC,r.unidade,r.medida,'nec')}</td>
+      <td class="num">${r.qtd_aprovada!=null?'<span class="mut">—</span>':SUG[r.id]?`<b title="pedido ${br(r.qtd)} − ${br(SUG[r.id].usa)} em estoque">${br(SUG[r.id].sug)}</b>`:PROLOG.estado==='lendo'?'<span class="mut">…</span>':'<span class="mut">—</span>'}</td>
       <td class="num"><input class="inp${r.qtd_aprovada==null?' vazio':''}" type="number" min="0" step="1" value="${r.qtd_aprovada==null?'':r.qtd_aprovada}" data-apr="${r.id}" title="Quantidade aprovada (vazio = aguardando; 0 = não aprovado)"></td>
       <td>${ops?`<select class="sel" data-prod="${r.id}">${ops}</select>${auto&&p?'<span class="lin2">menor preço da medida</span>':''}`:'<span class="mut">sem preço da medida</span>'}</td>
       <td class="num">${v==null?'—':brl(v)}<span class="lin2"><span class="pill ${c}">${s}</span></span></td>
     </tr>`; }).join('');
-  tb.innerHTML=`<thead><tr><th>Vigência</th><th>Unidade</th><th>Projeto</th><th>Banda</th><th>Medida</th><th class="num">Pedido</th><th class="num">Estoque</th><th class="num">Necessidade</th><th class="num">Aprovado</th><th>Produto</th><th class="num">Valor previsto</th></tr></thead><tbody>`
-    +(corpo||'<tr><td colspan="11" class="mut" style="text-align:center;padding:18px">Nenhum pedido no recorte.</td></tr>')
-    +(rows.length?`<tr class="total"><td colspan="5">Total</td><td class="num">${br(tq)}</td><td></td><td></td><td class="num">${br(ta)}</td><td></td><td class="num">${brl(tv)}</td></tr>`:'')+'</tbody>';
+  tb.innerHTML=`<thead><tr><th>Vigência</th><th>Unidade</th><th>Projeto</th><th>Banda</th><th>Medida</th><th class="num">Pedido</th><th class="num">Estoque</th><th class="num">Necessidade</th><th class="num">Sugerido</th><th class="num">Aprovado</th><th>Produto</th><th class="num">Valor previsto</th></tr></thead><tbody>`
+    +(corpo||'<tr><td colspan="12" class="mut" style="text-align:center;padding:18px">Nenhum pedido no recorte.</td></tr>')
+    +(rows.length?`<tr class="total"><td colspan="5">Total</td><td class="num">${br(tq)}</td><td></td><td></td><td></td><td class="num">${br(ta)}</td><td></td><td class="num">${brl(tv)}</td></tr>`:'')+'</tbody>';
   tb.querySelectorAll('input[data-apr]').forEach(i=>i.addEventListener('change',()=>salvaAprov(+i.dataset.apr)));
   tb.querySelectorAll('select[data-prod]').forEach(s=>s.addEventListener('change',()=>salvaAprov(+s.dataset.prod)));
   set('n-resumo',pend.length||'');
@@ -861,6 +900,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610051900"></script>
+<script src="../assets/build-check.js?v=202610051930"></script>
 </body>
 </html>
