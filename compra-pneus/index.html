@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610052100">
+<meta name="build" content="202610052130">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -330,17 +330,33 @@ table.dre input.inp.vazio{border-style:dashed;border-color:color-mix(in srgb,var
 .btn.sec{background:transparent;color:var(--txt2);border:1px solid var(--card-brd);}
 .ico-bt{background:transparent;border:0;border-radius:6px;padding:4px 6px;cursor:pointer;color:var(--txt3);}
 .ico-bt:hover{background:var(--hover);color:var(--vermelho);}
-/* o formulário do pedido: uma linha só, como a planilha que a unidade usava */
-.form{flex:0 0 auto;padding:16px 18px;}
-.form .ftit{font-size:14px;font-weight:800;}
-.form .fsub{font-size:10.5px;color:var(--txt3);margin:2px 0 12px;}
-.frow{display:grid;grid-template-columns:110px 1.2fr 1fr .8fr 110px auto;gap:10px;align-items:end;}
-.frow label{display:flex;flex-direction:column;gap:5px;font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;}
-.frow .vigro{padding:7px 9px;border:1px solid var(--card-brd);border-radius:7px;font-size:12.5px;font-weight:700;color:var(--txt);text-transform:none;letter-spacing:0;}
+/* a caixa do pedido: o mesmo modal do Planner */
+.mbg{display:none;position:fixed;inset:0;z-index:80;background:rgba(3,6,11,.55);backdrop-filter:blur(2px);
+  align-items:center;justify-content:center;padding:20px;}
+.mbg.open{display:flex;}
+.modal{width:100%;max-width:520px;max-height:92vh;overflow:auto;background:var(--brilho), var(--pop);
+  border:1px solid var(--card-brd);border-radius:14px;padding:22px 24px;box-shadow:0 30px 70px rgba(0,0,0,.6);}
+.modal h3{font-size:15px;font-weight:700;margin-bottom:2px;}
+.modal .fsub{font-size:10.5px;color:var(--txt3);margin-bottom:16px;}
+.f{margin-bottom:13px;}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.f label{display:block;font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;}
+.f input,.f select,.f .ro{width:100%;background:var(--hover);border:1px solid var(--card-brd);border-radius:8px;color:var(--txt);
+  font-family:inherit;font-size:13px;padding:9px 11px;outline:0;}
+.f .ro{font-weight:700;}
+body.claro .f input,body.claro .f select{background:#fff;border-color:#d7dce4;}
+.f input:focus,.f select:focus{border-color:var(--laranja);}
+.f select option{background:#141d2b;color:#fff;}
+body.claro .f select option{background:#fff;color:#0f172a;}
+.macoes{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;}
+#f-ok:empty{display:none;}
+#f-ok{margin:-4px 0 8px;}
+tr.vazio td{cursor:pointer;}
+tr.vazio:hover td{color:var(--laranja);}
 .fmsg{font-size:11px;font-weight:700;margin-top:8px;min-height:15px;}
 .fmsg.ok{color:var(--verde);} .fmsg.erro{color:var(--vermelho);}
 .addrow td{background:color-mix(in srgb,var(--laranja) 6%,transparent);}
-@media(max-width:860px){ .kpis.k5{grid-template-columns:repeat(2,1fr);} .frow{grid-template-columns:1fr 1fr;}
+@media(max-width:860px){ .kpis.k5{grid-template-columns:repeat(2,1fr);}
   .twrap{overflow-x:auto;} .twrap table.dre{min-width:760px;} table.dre thead th{position:static;} }
 #aviso-slot:not(:empty){margin-bottom:10px;}
 </style>
@@ -358,7 +374,7 @@ table.dre input.inp.vazio{border-style:dashed;border-color:color-mix(in srgb,var
 
     <div class="s-sec">Visões</div>
     <button class="s-item adm" data-vw="resumo" style="display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Resumo Gerencial<span class="n" id="n-resumo"></span></button>
-    <button class="s-item" data-vw="pedido"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Novo Pedido<span class="n" id="n-pedido"></span></button>
+    <button class="s-item" data-vw="pedido"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Pedidos<span class="n" id="n-pedido"></span></button>
     <button class="s-item adm" data-vw="precos" style="display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg> Preços<span class="n" id="n-precos"></span></button>
 
     <div class="s-sec">Atalhos</div>
@@ -384,7 +400,7 @@ table.dre input.inp.vazio{border-style:dashed;border-color:color-mix(in srgb,var
   <main class="board">
     <div class="top">
       <div class="tit-wrap">
-        <h1 id="tit">Novo Pedido</h1>
+        <h1 id="tit">Pedidos</h1>
         <div class="tit-sub" id="titSub">Carregando…</div>
       </div>
       <!-- unidade do pedido: FILTRO (Renan, 05/10/2026: "Aqui é filtro. Não toggle") -->
@@ -429,22 +445,13 @@ table.dre input.inp.vazio{border-style:dashed;border-color:color-mix(in srgb,var
 
       <!-- ══ NOVO PEDIDO (unidade e admin) ══ -->
       <section class="vw on" id="vw-pedido">
-        <div class="card form">
-          <div class="ftit">Pedido de pneus novos</div>
-          <div class="fsub" id="form-sub">—</div>
-          <div class="frow">
-            <label>Vigência<span class="vigro" id="f-vig">—</span></label>
-            <label>Banda de rodagem<select class="sel" id="f-banda"></select></label>
-            <label>Projeto<select class="sel" id="f-proj"></select></label>
-            <label>Medida<select class="sel" id="f-med"></select></label>
-            <label>Quantidade<input class="inp" id="f-qtd" type="number" min="1" step="1" inputmode="numeric"></label>
-            <button class="btn" id="f-env" onclick="enviaPedido()">Enviar pedido</button>
-          </div>
-          <div class="fmsg" id="f-msg"></div>
-        </div>
+        <!-- a tabela é a tela; o pedido abre numa caixa (Renan, 05/10/2026:
+             "clicar aqui e abrir caixa para preenchimento… a tabela fica mais visível") -->
         <div class="card tsec">
-          <div class="thead-row"><div class="ttit" id="tit-meus">Pedidos da unidade</div></div>
+          <div class="thead-row"><div class="ttit" id="tit-meus">Pedidos da unidade</div>
+            <button class="btn" id="bt-novo" onclick="abrePedido()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Novo pedido</button></div>
           <div class="tsub" id="sub-meus">—</div>
+          <div class="fmsg" id="f-ok"></div>
           <div class="twrap"><table class="dre" id="tb-meus"></table></div>
         </div>
       </section>
@@ -459,6 +466,25 @@ table.dre input.inp.vazio{border-style:dashed;border-color:color-mix(in srgb,var
       </section>
     </div>
   </main>
+</div>
+
+<div class="mbg" id="mbg" onclick="if(event.target===this) fechaPedido()">
+  <div class="modal" role="dialog" aria-labelledby="m-tit">
+    <h3 id="m-tit">Pedido de pneus novos</h3>
+    <div class="fsub" id="form-sub">—</div>
+    <div class="f2">
+      <div class="f"><label>Unidade</label><div class="ro" id="f-uni">—</div></div>
+      <div class="f"><label>Vigência</label><div class="ro" id="f-vig">—</div></div>
+    </div>
+    <div class="f"><label for="f-banda">Banda de rodagem</label><select id="f-banda"></select></div>
+    <div class="f"><label for="f-proj">Projeto</label><select id="f-proj"></select></div>
+    <div class="f2">
+      <div class="f"><label for="f-med">Medida</label><select id="f-med"></select></div>
+      <div class="f"><label for="f-qtd">Quantidade</label><input id="f-qtd" type="number" min="1" step="1" inputmode="numeric"></div>
+    </div>
+    <div class="fmsg" id="f-msg"></div>
+    <div class="macoes"><button class="btn sec" onclick="fechaPedido()">Cancelar</button><button class="btn" id="f-env" onclick="enviaPedido()">Enviar pedido</button></div>
+  </div>
 </div>
 
 <script>
@@ -675,15 +701,15 @@ function montaUnidade(){
   if(!w._wired){ w._wired=true;
     list.addEventListener('click',e=>{ const o=e.target.closest('.ms-opt'); if(!o) return; e.preventDefault();
       UNI=o.dataset.u; w.querySelector('.ms-panel').classList.remove('open'); srch.value='';
-      const m=document.getElementById('f-msg'); m.className='fmsg'; m.textContent='';   /* a mensagem era da unidade anterior */
+      const m=document.getElementById('f-ok'); m.className='fmsg'; m.textContent='';   /* a mensagem era da unidade anterior */
       montaUnidade(); montaForm(); renderMeus(); });
     srch.addEventListener('input',()=>w._desenha(srch.value)); srch.addEventListener('click',e=>e.stopPropagation()); }
   w._desenha(srch.value);
 }
 function montaForm(){
   const v=vigAgora(), [a,m]=v.split('-');
-  set('f-vig',`${MESES_L[+m-1]}/${a}`);
-  set('form-sub',`${UNI||'—'} · a vigência é o mês do pedido · o corporativo avalia e aprova`);
+  set('f-vig',`${MESES_L[+m-1]}/${a}`); set('f-uni',UNI||'—');
+  set('form-sub','A vigência é o mês do pedido · o corporativo avalia e aprova');
   const opt=(l,ph)=>`<option value="">${ph}</option>`+l.map(x=>`<option>${esc(x)}</option>`).join('');
   const fb=document.getElementById('f-banda'), fp=document.getElementById('f-proj'), fm=document.getElementById('f-med');
   const keep=[fb.value,fp.value,fm.value];
@@ -692,6 +718,12 @@ function montaForm(){
   if((PROJETOS[UNI]||[]).includes(keep[1])) fp.value=keep[1];
   if(MEDIDAS.includes(keep[2])) fm.value=keep[2];
 }
+function abrePedido(){
+  montaForm(); const m=document.getElementById('f-msg'); m.className='fmsg'; m.textContent='';
+  document.getElementById('mbg').classList.add('open'); setTimeout(()=>document.getElementById('f-banda').focus(),30);
+}
+function fechaPedido(){ document.getElementById('mbg').classList.remove('open'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') fechaPedido(); });
 async function enviaPedido(){
   const msg=document.getElementById('f-msg'), bt=document.getElementById('f-env');
   const banda=document.getElementById('f-banda').value, projeto=document.getElementById('f-proj').value,
@@ -703,8 +735,8 @@ async function enviaPedido(){
   const {data,error}=await sb.from('pneu_pedido').insert({unidade:UNI,projeto,banda,medida,qtd,criado_nome:NOME,vigencia:vigAgora()}).select('id');
   bt.disabled=false;
   if(error||!data||!data.length){ msg.className='fmsg erro'; msg.textContent='O banco recusou o pedido: '+((error&&error.message)||'nenhuma linha gravada'); return; }
-  msg.className='fmsg ok'; msg.textContent=`Pedido enviado: ${qtd} pneu(s) ${medida} · ${banda} · ${projeto}.`;
-  document.getElementById('f-qtd').value='';
+  const ok=document.getElementById('f-ok'); ok.className='fmsg ok'; ok.textContent=`Pedido enviado: ${qtd} pneu(s) ${medida} · ${banda} · ${projeto}.`;
+  document.getElementById('f-qtd').value=''; fechaPedido();
   await lePedidos(); montaFiltros(); render();
 }
 async function apagaPedido(id){
@@ -726,7 +758,7 @@ function renderMeus(){
         <td class="num">${br(r.qtd)}</td><td class="num">${r.qtd_aprovada==null?'—':br(r.qtd_aprovada)}</td><td><span class="pill ${c}">${s}</span></td>
         <td>${fmtDT(r.created_at)}<span class="lin2">${esc(r.criado_nome||'')}</span></td>
         <td>${r.qtd_aprovada==null?`<button class="ico-bt" title="Apagar pedido" onclick="apagaPedido(${r.id})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:''}</td></tr>`; }).join('')
-     ||'<tr><td colspan="9" class="mut" style="text-align:center;padding:18px">—</td></tr>')+'</tbody>';
+     ||'<tr class="vazio" onclick="abrePedido()"><td colspan="9" class="mut" style="text-align:center;padding:22px">Nenhum pedido lançado ainda — clique aqui ou em <b>Novo pedido</b> para lançar.</td></tr>')+'</tbody>';
   set('n-pedido',linhas.length||'');
 }
 
@@ -861,7 +893,7 @@ async function recarregar(){ set('titSub','Recarregando…');
   catch(e){ set('titSub','Erro ao recarregar: '+((e&&e.message)||e)); } }
 
 /* ── navegação ── */
-const TIT={resumo:'Resumo Gerencial',pedido:'Novo Pedido',precos:'Preços'};
+const TIT={resumo:'Resumo Gerencial',pedido:'Pedidos',precos:'Preços'};
 let VW='pedido';
 function setVw(v){
   if(!ADMIN&&v!=='pedido') v='pedido';
@@ -912,6 +944,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610052100"></script>
+<script src="../assets/build-check.js?v=202610052130"></script>
 </body>
 </html>
