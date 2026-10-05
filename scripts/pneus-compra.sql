@@ -130,9 +130,17 @@ from (values
   -- SÓ MACIÇO ("considere só maciço")
   ('5.00-8',  'MÉDIA DE MERCADO · MACIÇO 5.00-8',                          null,        716.08),
   ('8.25-15', 'MÉDIA DE MERCADO · MACIÇO 8.25-15',                         null,       2971.75),
-  ('28x9-15', 'MÉDIA DE MERCADO · MACIÇO 28x9-15',                         null,       1860.13)
+  ('28x9-15', 'MÉDIA DE MERCADO · MACIÇO 28x9-15',                         null,       1860.13),
+  ('6.00-9',  'MÉDIA DE MERCADO · MACIÇO 6.00-9',                          null,       1032.64),
+  ('7.00-12', 'MÉDIA DE MERCADO · MACIÇO 7.00-12',                         null,       1590.00)
 ) as v(medida, produto, codigo, valor)
 where not exists (select 1 from public.pneu_preco p where p.produto = v.produto);
+
+-- os INFINITY vieram da planilha com R$ 0,00; ativos, eles seriam o "menor
+-- preço da medida" e zerariam o valor previsto de 6.00-9 e 7.00-12. Ficam no
+-- cadastro, desativados, até alguém pôr o preço deles na visão Preços.
+update public.pneu_preco set ativo = false
+where produto in ('INFINITY 600-9','INFINITY 700-12') and valor = 0;
 
 notify pgrst, 'reload schema';
 
