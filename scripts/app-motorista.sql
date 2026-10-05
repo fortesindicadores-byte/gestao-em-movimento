@@ -98,12 +98,17 @@ create policy ce_app_regras_sel on public.ce_app_regras for select to authentica
 create or replace function public.ce_app_so_digitos(p text) returns text
 language sql immutable as $$ select regexp_replace(coalesce(p,''), '\D', '', 'g') $$;
 
--- nome abreviado para o ranking: "Marcio Andre Silva" → "Marcio A."
+-- nome no ranking: SÓ AS INICIAIS, 1º nome + último ("Marcio Andre Silva" → "M. S.")
+-- LGPD (Renan, 05/10/2026): o colega não vê o nome de ninguém; o próprio
+-- motorista aparece como "Você" (o app compara a chave, não o nome).
 create or replace function public.ce_app_abrevia(p_nome text) returns text
 language sql immutable as $$
-  select case when array_length(string_to_array(trim(p_nome), ' '), 1) > 1
-    then split_part(trim(p_nome), ' ', 1) || ' ' || left(split_part(trim(p_nome), ' ', 2), 1) || '.'
-    else trim(p_nome) end $$;
+  select case
+    when coalesce(trim(p_nome), '') = '' then '—'
+    when array_length(regexp_split_to_array(trim(p_nome), '\s+'), 1) > 1
+      then upper(left(trim(p_nome), 1)) || '. '
+        || upper(left((regexp_split_to_array(trim(p_nome), '\s+'))[array_length(regexp_split_to_array(trim(p_nome), '\s+'), 1)], 1)) || '.'
+    else upper(left(trim(p_nome), 1)) || '.' end $$;
 
 -- ---------- 5) primeiro acesso: cria o PIN ----------------------------------
 -- Só cria se o CPF já está em ce_motoristas (quem entra no programa é quem a
