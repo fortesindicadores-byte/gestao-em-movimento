@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610051745">
+<meta name="build" content="202610051800">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -565,8 +565,7 @@ const br=(n,d=0)=>(+n||0).toLocaleString('pt-BR',{minimumFractionDigits:d,maximu
 const brl=v=>'R$ '+br(v,2);
 const d2=n=>String(n).padStart(2,'0');
 const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-const MESES_L=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-const vigRot=v=>{ const [a,m]=String(v||'').split('-'); return m?`${MESES[+m-1]}/${a.slice(2)}`:String(v||'—'); };
+const vigRot=v=>{ const [a,m]=String(v||'').split('-'); return m?`${MESES[+m-1].toUpperCase()}/${a.slice(2)}`:String(v||'—'); };
 function vigAgora(){ const p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit'}).formatToParts(new Date());
   return p.find(x=>x.type==='year').value+'-'+p.find(x=>x.type==='month').value; }
 function fmtDT(d){ d=new Date(d); return isNaN(d)?'—':`${d2(d.getDate())}/${d2(d.getMonth()+1)} ${d2(d.getHours())}:${d2(d.getMinutes())}`; }
@@ -701,8 +700,7 @@ function montaUnidade(){
 /* o pedido é de UMA unidade: a caixa oferece as que estão na tela; com uma só,
    ela já vem escolhida */
 function montaForm(){
-  const v=vigAgora(), [a,m]=v.split('-');
-  set('f-vig',`${MESES_L[+m-1]}/${a}`);
+  set('f-vig',vigRot(vigAgora()));
   set('form-sub','A vigência é o mês do pedido · o corporativo avalia e aprova');
   const opt=(l,ph)=>`<option value="">${ph}</option>`+l.map(x=>`<option>${esc(x)}</option>`).join('');
   const fu=document.getElementById('f-uni'), fb=document.getElementById('f-banda'), fm=document.getElementById('f-med');
@@ -946,6 +944,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610051745"></script>
+<script src="../assets/build-check.js?v=202610051800"></script>
 </body>
 </html>

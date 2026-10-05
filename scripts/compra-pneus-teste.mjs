@@ -258,7 +258,7 @@ console.log('\n2 · Unidade (MCC T1, MCC T2) — só o pedido');
   await pg.click('#tb-meus tbody tr.vazio'); await pg.waitForTimeout(100);
   af('clicar na tabela vazia abre a caixa do pedido', !!(await pg.$('#mbg.open')) && await pg.$eval('#f-uni', e => e.value) === 'MCC T1');
   af('projetos de MCC T1 = EMPURRADA', JSON.stringify(await pg.$$eval('#f-proj option', o => o.map(x => x.value).filter(Boolean))) === '["EMPURRADA"]');
-  af('vigência = mês corrente, só leitura', /\d{4}$/.test(await txt(pg, '#f-vig')) && !(await pg.$('#f-vig input')));
+  af('vigência = mês corrente, só leitura', /^[A-Z]{3}\/\d{2}$/.test(await txt(pg, '#f-vig')) && !(await pg.$('#f-vig input')));
   af('não lê o Prolog', await pg.evaluate(() => window.__log.snapshot) === 0);
   await pg.click('#f-env'); await pg.waitForTimeout(100);
   af('campo faltando vira mensagem e a caixa fica aberta', /Falta preencher: banda de rodagem, projeto, medida, quantidade/.test(await txt(pg, '#f-msg')) && !!(await pg.$('#mbg.open')), await txt(pg, '#f-msg'));
