@@ -1696,6 +1696,13 @@ Recorte das linhas: **Operação · Empresa · Projeto · Unidade**, mais uma co
 
 **O ponto do Renan:** *"tenho essa aba que vem de uma planilha complexa"* — ou seja, o que o painel lê hoje é o **produto final** de uma cadeia de cálculo que mora fora daqui. Automatizar o Km/L significa reproduzir essa cadeia (ou achar a fonte a montante), não só copiar a aba consolidada. Esperar o Renan abrir a planilha de origem antes de propor desenho.
 
+## Compra de pneus — contextualização em andamento (Renan, 05/10/2026)
+
+Pedido dele (um dos três do dia): *"Colocar no painel processo de compras de pneus"*. Ele vai explicar o processo em partes; **nada implementado — ir anotando aqui e só construir quando ele mandar**.
+
+- **Onde:** card novo no cluster **Processos** do hub (não no hub Pneus).
+- **A explicar por ele:** se é o fluxo documentado, o acompanhamento de cada pedido por etapa, ou os dois; as etapas na ordem e quem faz cada uma; de onde vêm os dados (Benner, planilha ou lançado no portal); as regras (novo × recape, alçada de aprovação, marcas homologadas, prazos entre etapas).
+
 ## Próximas automações — Frota de Elite e RPM (anotado 04/08/2026, aguardando detalhes)
 
 O Renan vai automatizar as bases **Frota de Elite** (programa-reconhecimento, hoje workbook `1DXmjzj2KRrTdQxmvXRclGxhBeDMwoIoLvORqbh3GG6M` via GerotBase) e **RPM** (Base RPM do Gerot que alimenta o fca-preenchimento). Ele estava decidindo por qual começar porque **um indicador de um aparece no outro** (sobreposição entre as duas bases). Ele vai explicar aba a aba, como fez no robô Ginfo — ir salvando o mapeamento aqui conforme ele mostrar. Nada implementado ainda.
