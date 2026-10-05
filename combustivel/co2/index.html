@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610052330">
+<meta name="build" content="202610051945">
 <title>CO² — Emissões da Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -268,7 +268,8 @@ body{--red:var(--vermelho);--green:var(--verde);--text3:var(--txt3);}
 /* cards ESG mais altos (Renan, 05/10/2026: "pode aumentar altura um pouco dos cards
    para distribuir melhor") — a mesma divisão do Painel KM: cards e gráficos repartem a
    sobra, 1 para 2, com teto nos cards */
-#vw-resumo .esg-block{flex:1 1 0;min-height:clamp(112px,16.5vh,170px);max-height:clamp(150px,24vh,230px);}
+#vw-resumo .esg-block{flex:1 1 0;min-height:clamp(110px,16.5vh,168px);max-height:clamp(148px,24vh,228px);}
+#vw-resumo .esg-card{padding:clamp(16px,3vh,28px) 18px;}
 #vw-resumo .gr2{flex:2 1 0;min-height:220px;max-height:none;grid-template-rows:minmax(0,1fr);}
 
 /* legenda do Ton CO² Mensal: barra condicional (vermelho/verde) tem legenda NEUTRA */
@@ -1202,6 +1203,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610052330"></script>
+<script src="../../assets/build-check.js?v=202610051945"></script>
 </body>
 </html>

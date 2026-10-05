@@ -221,7 +221,7 @@ async function rodaPainel(chave) {
         ok('excel-export carregado (menu Excel/PNG)', exp.xls);
         const ordem = ['mobile.js','sortable-table.js','excel-export.js','pdf-export.js','build-check.js'].map(n => exp.srcs.findIndex(s => s.includes(n)));
         ok('scripts no fim, na ordem do padrão', ordem.every((x, i) => x >= 0 && (i === 0 || x > ordem[i - 1])), ordem.join(','));
-        ok('build-check com o build novo', exp.srcs.some(s => s.includes('build-check.js?v=202610052300')));
+        ok('build-check com o mesmo build do <meta>', await page.evaluate(() => { const b = (document.querySelector('meta[name=build]') || {}).content; return !!b && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + b)); }));
         // ordenação da tabela de veículos continua
         await page.click('.s-item[data-vw="veiculo"]');
         const s1 = await page.evaluate(() => document.querySelector('#body-vei tr')?.cells[0].textContent);
