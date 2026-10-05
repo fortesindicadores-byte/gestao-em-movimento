@@ -190,7 +190,7 @@ console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor pre
   await pg.evaluate(() => { const w = document.getElementById('ms-uni'); w._sel = new Set(); w._render(''); render(); });
 
   await pg.click('.s-item[data-vw="pedido"]'); await pg.waitForTimeout(200);
-  af('admin no Novo Pedido: filtro de unidade com as 14', await pg.$$eval('#ms-uped .ms-opt', o => o.length) === 14 && /^Unidade: /.test(await txt(pg, '#uped-lbl')));
+  af('admin em Pedidos: filtro de unidade com as 14', await pg.$$eval('#ms-uped .ms-opt', o => o.length) === 14 && /^Unidade: /.test(await txt(pg, '#uped-lbl')));
   await pg.click('#ms-uped .ms-btn'); await pg.fill('#ms-uped .ms-search input', 'cba'); await pg.waitForTimeout(100);
   af('busca do filtro acha as 3 de CBA', await pg.$$eval('#ms-uped .ms-opt', o => o.length) === 3);
   await pg.click('#ms-uped .ms-opt[data-u="CBA T2"]'); await pg.waitForTimeout(100);
@@ -225,25 +225,36 @@ console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor pre
 console.log('\n2 · Unidade (MCC T1, MCC T2) — só o pedido');
 {
   const { pg, ctx, errs } = await abre({ is_admin: false, unidade: 'MCC T1,MCC T2' });
-  af('abre no Novo Pedido', await txt(pg, '#tit') === 'Novo Pedido');
+  af('abre em Pedidos, com a tabela ocupando a visão (sem formulário fixo)', await txt(pg, '#tit') === 'Pedidos' && !(await pg.$('#vw-pedido .frow')) && !(await pg.$('#mbg.open')));
   af('visões de admin e filtros escondidos', await pg.$$eval('.s-item.adm', b => b.every(x => x.style.display === 'none')) && await pg.$eval('#filtros', e => e.style.display === 'none'));
+  af('Preços só para admin: some do menu e a unidade não consegue abrir', await pg.$eval('.s-item[data-vw="precos"]', e => e.style.display === 'none')
+    && await pg.evaluate(() => { setVw('precos'); return VW; }) === 'pedido' && !(await pg.$('#vw-precos.on')));
   af('unidade é FILTRO (não botões) com as duas do perfil', !(await pg.$('#dims-uni')) && await pg.$eval('#ms-uped', e => e.style.display !== 'none')
     && await txt(pg, '#uped-lbl') === 'Unidade: MCC T1'
     && JSON.stringify(await pg.$$eval('#ms-uped .ms-opt', o => o.map(x => x.dataset.u))) === '["MCC T1","MCC T2"]');
+  af('MCC T1 sem pedido: a linha vazia convida a lançar', /clique aqui/i.test(await txt(pg, '#tb-meus tbody tr.vazio')));
+  await pg.click('#tb-meus tbody tr.vazio'); await pg.waitForTimeout(100);
+  af('clicar na tabela vazia abre a caixa do pedido', !!(await pg.$('#mbg.open')) && await txt(pg, '#f-uni') === 'MCC T1');
   af('projetos de MCC T1 = EMPURRADA', JSON.stringify(await pg.$$eval('#f-proj option', o => o.map(x => x.value).filter(Boolean))) === '["EMPURRADA"]');
   af('vigência = mês corrente, só leitura', /\d{4}$/.test(await txt(pg, '#f-vig')) && !(await pg.$('#f-vig input')));
   af('não lê o Prolog', await pg.evaluate(() => window.__log.snapshot) === 0);
   await pg.click('#f-env'); await pg.waitForTimeout(100);
-  af('campo faltando vira mensagem', /Falta preencher: banda de rodagem, projeto, medida, quantidade/.test(await txt(pg, '#f-msg')), await txt(pg, '#f-msg'));
+  af('campo faltando vira mensagem e a caixa fica aberta', /Falta preencher: banda de rodagem, projeto, medida, quantidade/.test(await txt(pg, '#f-msg')) && !!(await pg.$('#mbg.open')), await txt(pg, '#f-msg'));
+  await pg.keyboard.press('Escape'); await pg.waitForTimeout(100);
+  af('Esc fecha a caixa', !(await pg.$('#mbg.open')));
   await pg.click('#ms-uped .ms-btn'); await pg.click('#ms-uped .ms-opt[data-u="MCC T2"]'); await pg.waitForTimeout(100);
   af('escolher no filtro troca o rótulo e fecha o menu', await txt(pg, '#uped-lbl') === 'Unidade: MCC T2' && !(await pg.$('#ms-uped .ms-panel.open')));
-  af('trocar o chip troca os projetos (MCC T2)', JSON.stringify(await pg.$$eval('#f-proj option', o => o.map(x => x.value).filter(Boolean))) === '["ROTA","VAN","PA PETRÓPOLIS"]');
   af('a lista mostra os pedidos de MCC T2 (3)', await pg.$$eval('#tb-meus tbody tr', t => t.length) === 3);
+  await pg.click('#bt-novo'); await pg.waitForTimeout(100);
+  af('"Novo pedido" abre a caixa já na unidade escolhida, com os projetos dela', !!(await pg.$('#mbg.open')) && await txt(pg, '#f-uni') === 'MCC T2'
+    && JSON.stringify(await pg.$$eval('#f-proj option', o => o.map(x => x.value).filter(Boolean))) === '["ROTA","VAN","PA PETRÓPOLIS"]');
+  if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'cp-modal.png') });
+  af('a caixa fica no <body>, fora do .app (position:fixed ancorado na tela)', await pg.$eval('#mbg', e => e.parentElement === document.body));
   await pg.selectOption('#f-banda', 'Liso/Direcional'); await pg.selectOption('#f-proj', 'ROTA'); await pg.selectOption('#f-med', '235'); await pg.fill('#f-qtd', '8');
   await pg.click('#f-env'); await pg.waitForTimeout(400);
   const ins = await pg.evaluate(() => window.__log.insert.slice(-1)[0]);
-  af('insert com a unidade do chip e sem aprovação', ins && ins.o.unidade === 'MCC T2' && ins.o.qtd === 8 && ins.o.medida === '235' && !('qtd_aprovada' in ins.o), JSON.stringify(ins && ins.o));
-  af('mensagem de enviado e lista atualizada (4)', /Pedido enviado: 8 pneu/.test(await txt(pg, '#f-msg')) && await pg.$$eval('#tb-meus tbody tr', t => t.length) === 4);
+  af('insert com a unidade do filtro e sem aprovação', ins && ins.o.unidade === 'MCC T2' && ins.o.qtd === 8 && ins.o.medida === '235' && !('qtd_aprovada' in ins.o), JSON.stringify(ins && ins.o));
+  af('enviar fecha a caixa, avisa acima da tabela e atualiza a lista (4)', !(await pg.$('#mbg.open')) && /Pedido enviado: 8 pneu/.test(await txt(pg, '#f-ok')) && await pg.$$eval('#tb-meus tbody tr', t => t.length) === 4);
   const btns = await pg.$$eval('#tb-meus tbody tr', t => t.map(r => !!r.querySelector('.ico-bt')));
   af('só pedido pendente tem lixeira (avaliado não)', btns.filter(Boolean).length === 3 && btns.length === 4, JSON.stringify(btns));
   const antes = await pg.$$eval('#tb-meus tbody tr', t => t.length);
