@@ -2393,11 +2393,11 @@ if (MODE === 'contador') {
   // velocidade (motor puxando — o controle). Se parar nos dois, não serve.
   const cred = await geotabLogin();
   if (!cred) { console.error('Geotab: sem credencial'); process.exit(1); }
-  const DIA = process.env.CE_DE || iso(ontem);
   const UNI = (process.env.CE_UNI || 'PIRAI').toUpperCase();
   const ALTO = +process.env.CE_MARCHA_ALTO || 1700;
-  const de0 = `${DIA}T03:00:00.000Z`, fim = new Date(new Date(de0).getTime() + 864e5 - 1).toISOString();
-  console.log(`sonda do contador de combustível · dia ${DIA} · unidade "${UNI}" · giro alto > ${ALTO} rpm`);
+  const DIAS = [];
+  for (let d = new Date(`${DE}T12:00:00Z`); iso(d) <= ATE && DIAS.length < 10; d = new Date(d.getTime() + 864e5)) DIAS.push(iso(d));
+  console.log(`sonda do contador de combustível · dias ${DIAS.join(', ')} · unidade "${UNI}" · giro alto > ${ALTO} rpm`);
 
   const [diags, devs, grupos] = await Promise.all([
     geotabRpc('Get', { typeName: 'Diagnostic' }, cred),
@@ -2407,13 +2407,15 @@ if (MODE === 'contador') {
   const gN = new Map(grupos.map(g => [g.id, g.name || '']));
   const uniDe = new Map(devs.map(d => [d.id, ((d.groups || []).map(g => gN.get(g.id) || '').find(n => /^UNI_/.test(n)) || '').toUpperCase()]));
   const ehUni = id => (uniDe.get(id) || '').includes(UNI);
+  // o catálogo tem MAIS DE UM diagnóstico com o mesmo começo de nome (a 1ª
+  // rodada pegou um sem dado): testa todos e fica com o que tem amostra
   const CONT = [
-    ['total', diags.find(d => /^Total de combust[ií]vel usado/i.test(d.name || ''))],
-    ['viagem', diags.find(d => /^Acumulador de combust[ií]vel de viagem/i.test(d.name || ''))],
-  ].filter(([, d]) => d);
-  console.log('contadores achados: ' + CONT.map(([k, d]) => `${k} = "${d.name}"`).join(' · '));
+    ['total', diags.filter(d => /^Total de combust[ií]vel usado/i.test(d.name || ''))],
+    ['viagem', diags.filter(d => /^Acumulador de combust[ií]vel de viagem/i.test(d.name || ''))],
+  ];
+  CONT.forEach(([k, ds]) => console.log(`candidatos "${k}": ${ds.length} · ` + ds.map(d => `"${String(d.name).slice(0, 70)}"`).join(' · ')));
 
-  async function baixa(id) {
+  async function baixa(id, de0, fim) {
     const porDev = new Map(); let from = de0, pag = 0;
     while (pag < 20) {
       const lote = await geotabRpc('Get', { typeName: 'StatusData',
@@ -2430,73 +2432,86 @@ if (MODE === 'contador') {
     porDev.forEach(a => a.sort((x, y) => x.t - y.t));
     return porDev;
   }
-  const { porDev: rpmD } = await geotabRpmDia(DIA, cred);
-  const { porDev: velD } = await geotabVelDia(DIA, cred);
   const ult = (arr, t, max) => {          // último valor até t (no máximo `max` ms antes)
     let lo = 0, hi = arr.length - 1, k = -1;
     while (lo <= hi) { const m = (lo + hi) >> 1; if (arr[m].t <= t) { k = m; lo = m + 1; } else hi = m - 1; }
     return k >= 0 && t - arr[k].t <= max ? arr[k] : null;
   };
   const med = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return s[s.length >> 1]; };
-
-  // trechos acima de ALTO, contínuos (buraco de amostra > 2 min quebra o trecho)
-  const trechos = [];
-  for (const [id, ra] of rpmD) {
-    if (!ehUni(id)) continue;
-    let ini = null, ant = null;
-    const fecha = () => { if (ini != null && ant - ini >= 20000) trechos.push({ id, t0: ini, t1: ant }); ini = null; };
-    for (const a of ra) {
-      if (ant != null && a.t - ant > RPM_GAP_MS) fecha();
-      if (isFinite(a.rpm) && a.rpm > ALTO) { if (ini == null) ini = a.t; ant = a.t; }
-      else { if (ini != null) { ant = a.t; fecha(); } ant = a.t; }
-    }
-    fecha();
-  }
-  console.log(`trechos acima de ${ALTO} rpm com 20 s ou mais: ${trechos.length} em ${new Set(trechos.map(x => x.id)).size} veículo(s)`);
-
   const FX = [[20, 40], [40, 60], [60, 120], [120, 1e9]];
-  for (const [nome, d] of CONT) {
-    const cd = await baixa(d.id);
-    // (1) passo e ritmo de gravação
-    const passos = new Map(), intervalos = [], porH = [];
-    let veic = 0;
-    for (const [id, a] of cd) {
-      if (a.length < 2) continue; veic++;
-      for (let i = 1; i < a.length; i++) {
-        const dv = +(a[i].v - a[i - 1].v).toFixed(3);
-        passos.set(dv, (passos.get(dv) || 0) + 1);
-        intervalos.push((a[i].t - a[i - 1].t) / 1000);
+  const novoRes = () => ({ segurando: FX.map(() => ({ n: 0, zero: 0, lmin: [] })), puxando: FX.map(() => ({ n: 0, zero: 0, lmin: [] })),
+    passos: new Map(), intervalos: [], veic: new Set(), cont: { trechos: 0, semLeit: 0, poucas: 0, reset: 0, semVel: 0, outros: 0 }, nome: null });
+  const RES = { total: novoRes(), viagem: novoRes() };
+
+  for (const DIA of DIAS) {
+    const de0 = `${DIA}T03:00:00.000Z`, fim = new Date(new Date(de0).getTime() + 864e5 - 1).toISOString();
+    const { porDev: rpmD } = await geotabRpmDia(DIA, cred);
+    const { porDev: velD } = await geotabVelDia(DIA, cred);
+    // trechos acima de ALTO, contínuos (buraco de amostra > 2 min quebra o trecho)
+    const trechos = [];
+    for (const [id, ra] of rpmD) {
+      if (!ehUni(id)) continue;
+      let ini = null, ant = null;
+      const fecha = () => { if (ini != null && ant - ini >= 20000) trechos.push({ id, t0: ini, t1: ant }); ini = null; };
+      for (const a of ra) {
+        if (ant != null && a.t - ant > RPM_GAP_MS) fecha();
+        if (isFinite(a.rpm) && a.rpm > ALTO) { if (ini == null) ini = a.t; ant = a.t; }
+        else { if (ini != null) { ant = a.t; fecha(); } ant = a.t; }
+      }
+      fecha();
+    }
+    console.log(`${DIA}: ${trechos.length} trecho(s) acima de ${ALTO} rpm com 20 s ou mais`);
+
+    for (const [nome, ds] of CONT) {
+      let cd = null;
+      for (const d of ds) { const x = await baixa(d.id, de0, fim); if (x.size) { cd = x; RES[nome].nome = d.name; break; } }
+      if (!cd) continue;
+      const R = RES[nome];
+      for (const [id, a] of cd) {
+        if (a.length < 2) continue; R.veic.add(id);
+        for (let i = 1; i < a.length; i++) {
+          const dv = +(a[i].v - a[i - 1].v).toFixed(3);
+          R.passos.set(dv, (R.passos.get(dv) || 0) + 1);
+          R.intervalos.push((a[i].t - a[i - 1].t) / 1000);
+        }
+      }
+      for (const s of trechos) {
+        R.cont.trechos++;
+        const ca = cd.get(s.id), va = velD.get(s.id);
+        if (!ca) { R.cont.semLeit++; continue; }
+        // SÓ gravações DENTRO do trecho: sem duas delas, "parado" quer dizer
+        // apenas que não houve gravação — não mede nada
+        const dentro = ca.filter(x => x.t >= s.t0 && x.t <= s.t1);
+        if (dentro.length < 2) { R.cont.poucas++; continue; }
+        const c0 = dentro[0], c1 = dentro[dentro.length - 1];
+        if (dentro.some((x, i) => i && x.v < dentro[i - 1].v)) { R.cont.reset++; continue; }   // contador zerou (viagem nova)
+        const v0 = va && ult(va, c0.t, 120000), v1 = va && ult(va, c1.t, 120000);
+        if (!v0 || !v1) { R.cont.semVel++; continue; }
+        const dur = (c1.t - c0.t) / 1000; if (dur < 20) { R.cont.poucas++; continue; }
+        const dl = c1.v - c0.v, dv = v1.v - v0.v;
+        const cls = dv <= -5 ? 'segurando' : (dv >= 0 && v0.v > 10 ? 'puxando' : null);
+        if (!cls) { R.cont.outros++; continue; }
+        const k = FX.findIndex(([x, y]) => dur >= x && dur < y);
+        const r = R[cls][k]; r.n++; if (dl <= 0.005) r.zero++; r.lmin.push(dl / (dur / 60));
       }
     }
-    const pos = [...passos.entries()].filter(([v]) => v > 0).sort((a, b) => a[0] - b[0]);
-    console.log(`\n── CONTADOR ${nome.toUpperCase()} ("${d.name}") · ${veic} veículo(s) de ${UNI} ──`);
-    console.log(`   menor passo positivo: ${pos.length ? pos[0][0] + ' L' : '—'} · passos mais comuns: `
-      + [...passos.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([v, n]) => `${v}L×${n}`).join(' '));
-    console.log(`   amostras com passo zero: ${passos.get(0) || 0} · negativas: ${[...passos.entries()].filter(([v]) => v < 0).reduce((s, [, n]) => s + n, 0)}`);
-    const iv = [...intervalos].sort((a, b) => a - b);
-    if (iv.length) console.log(`   intervalo entre gravações: mediana ${Math.round(iv[iv.length >> 1])} s · p10 ${Math.round(iv[Math.floor(iv.length * .1)])} s · p90 ${Math.round(iv[Math.floor(iv.length * .9)])} s`);
+  }
 
-    // (2) nos trechos de giro alto: contador parado × velocidade caindo ou não
-    const res = { segurando: FX.map(() => ({ n: 0, zero: 0, lmin: [] })), puxando: FX.map(() => ({ n: 0, zero: 0, lmin: [] })) };
-    let semLeit = 0, semVel = 0, outros = 0;
-    for (const s of trechos) {
-      const ca = cd.get(s.id), va = velD.get(s.id);
-      if (!ca) { semLeit++; continue; }
-      if (!va) { semVel++; continue; }
-      const c0 = ult(ca, s.t0, 15 * 60000), c1 = ult(ca, s.t1, 15 * 60000);
-      const v0 = ult(va, s.t0, 120000), v1 = ult(va, s.t1, 120000);
-      if (!c0 || !c1) { semLeit++; continue; }
-      if (!v0 || !v1) { semVel++; continue; }
-      const dur = (s.t1 - s.t0) / 1000, dl = c1.v - c0.v, dv = v1.v - v0.v;
-      const cls = dv <= -5 ? 'segurando' : (dv >= 0 && v0.v > 10 ? 'puxando' : null);
-      if (!cls) { outros++; continue; }
-      const k = FX.findIndex(([a, b]) => dur >= a && dur < b);
-      const r = res[cls][k]; r.n++; if (dl <= 0) r.zero++; r.lmin.push(dl / (dur / 60));
-    }
-    console.log(`   trechos sem leitura do contador: ${semLeit} · sem velocidade: ${semVel} · velocidade estável/lenta (fora da conta): ${outros}`);
+  for (const [nome] of CONT) {
+    const R = RES[nome];
+    console.log(`\n── CONTADOR ${nome.toUpperCase()} ("${R.nome || 'nenhum com dado em ' + UNI}") · ${R.veic.size} veículo(s) de ${UNI} ──`);
+    if (!R.nome) continue;
+    const pos = [...R.passos.entries()].filter(([v]) => v > 0).sort((a, b) => a[0] - b[0]);
+    console.log(`   menor passo positivo: ${pos.length ? pos[0][0] + ' L' : '—'} · passos mais comuns: `
+      + [...R.passos.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([v, n]) => `${v}L×${n}`).join(' '));
+    console.log(`   passos zero: ${R.passos.get(0) || 0} · negativos (contador zerou): ${[...R.passos.entries()].filter(([v]) => v < 0).reduce((s, [, n]) => s + n, 0)}`);
+    const iv = [...R.intervalos].sort((a, b) => a - b);
+    if (iv.length) console.log(`   intervalo entre gravações: mediana ${Math.round(iv[iv.length >> 1])} s · p10 ${Math.round(iv[Math.floor(iv.length * .1)])} s · p90 ${Math.round(iv[Math.floor(iv.length * .9)])} s`);
+    const c = R.cont;
+    console.log(`   trechos: ${c.trechos} · sem o contador: ${c.semLeit} · menos de 2 gravações dentro (ou < 20 s entre elas): ${c.poucas} · contador zerou no meio: ${c.reset} · sem velocidade: ${c.semVel} · velocidade estável/lenta: ${c.outros}`);
     for (const cls of ['segurando', 'puxando']) {
       console.log(`   ${cls === 'segurando' ? 'PERDENDO velocidade (motor segurando?)' : 'MANTENDO/GANHANDO velocidade (motor puxando — controle)'}:`);
-      FX.forEach(([a, b], k) => { const r = res[cls][k];
+      FX.forEach(([a, b], k) => { const r = R[cls][k];
         console.log(`      ${String(a).padStart(3)}–${b > 1e8 ? '   +' : String(b).padStart(3)} s: ${String(r.n).padStart(4)} trecho(s) · contador parado em ${r.n ? (r.zero / r.n * 100).toFixed(0).padStart(3) : '  —'}% · mediana ${med(r.lmin) == null ? '—' : med(r.lmin).toFixed(2)} L/min`); });
     }
   }
