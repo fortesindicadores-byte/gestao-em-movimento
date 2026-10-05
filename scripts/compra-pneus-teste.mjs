@@ -189,6 +189,14 @@ console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor pre
   af('filtro Unidade = CGR: 1 pedido, 10 pneus', await txt(pg, '#k-ped') === '1' && await txt(pg, '#k-qtd') === '10');
   await pg.evaluate(() => { const w = document.getElementById('ms-uni'); w._sel = new Set(); w._render(''); render(); });
 
+  await pg.click('.s-item[data-vw="pedido"]'); await pg.waitForTimeout(200);
+  af('admin no Novo Pedido: filtro de unidade com as 14', await pg.$$eval('#ms-uped .ms-opt', o => o.length) === 14 && /^Unidade: /.test(await txt(pg, '#uped-lbl')));
+  await pg.click('#ms-uped .ms-btn'); await pg.fill('#ms-uped .ms-search input', 'cba'); await pg.waitForTimeout(100);
+  af('busca do filtro acha as 3 de CBA', await pg.$$eval('#ms-uped .ms-opt', o => o.length) === 3);
+  await pg.click('#ms-uped .ms-opt[data-u="CBA T2"]'); await pg.waitForTimeout(100);
+  af('admin escolhe CBA T2: projetos de CBA T2', JSON.stringify(await pg.$$eval('#f-proj option', o => o.map(x => x.value).filter(Boolean))) === '["ROTA","VAN","AUTO SERVIÇO","INSUMOS"]');
+  await pg.click('.s-item[data-vw="resumo"]'); await pg.waitForTimeout(200);
+  af('filtro de unidade do pedido some no Resumo', await pg.$eval('#ms-uped', e => e.style.display === 'none'));
   // PREÇOS
   await pg.click('.s-item[data-vw="precos"]'); await pg.waitForTimeout(200);
   af('visão Preços lista os 5 produtos + linha de inclusão', await pg.$$eval('#tb-preco tr[data-pid]', t => t.length) === 5 && !!await pg.$('#np-prod'));
@@ -219,13 +227,16 @@ console.log('\n2 · Unidade (MCC T1, MCC T2) — só o pedido');
   const { pg, ctx, errs } = await abre({ is_admin: false, unidade: 'MCC T1,MCC T2' });
   af('abre no Novo Pedido', await txt(pg, '#tit') === 'Novo Pedido');
   af('visões de admin e filtros escondidos', await pg.$$eval('.s-item.adm', b => b.every(x => x.style.display === 'none')) && await pg.$eval('#filtros', e => e.style.display === 'none'));
-  af('chips das duas unidades', JSON.stringify(await pg.$$eval('#dims-uni .dimb', b => b.map(x => x.textContent))) === '["MCC T1","MCC T2"]');
+  af('unidade é FILTRO (não botões) com as duas do perfil', !(await pg.$('#dims-uni')) && await pg.$eval('#ms-uped', e => e.style.display !== 'none')
+    && await txt(pg, '#uped-lbl') === 'Unidade: MCC T1'
+    && JSON.stringify(await pg.$$eval('#ms-uped .ms-opt', o => o.map(x => x.dataset.u))) === '["MCC T1","MCC T2"]');
   af('projetos de MCC T1 = EMPURRADA', JSON.stringify(await pg.$$eval('#f-proj option', o => o.map(x => x.value).filter(Boolean))) === '["EMPURRADA"]');
   af('vigência = mês corrente, só leitura', /\d{4}$/.test(await txt(pg, '#f-vig')) && !(await pg.$('#f-vig input')));
   af('não lê o Prolog', await pg.evaluate(() => window.__log.snapshot) === 0);
   await pg.click('#f-env'); await pg.waitForTimeout(100);
   af('campo faltando vira mensagem', /Falta preencher: banda de rodagem, projeto, medida, quantidade/.test(await txt(pg, '#f-msg')), await txt(pg, '#f-msg'));
-  await pg.click('#dims-uni .dimb:nth-child(2)'); await pg.waitForTimeout(100);
+  await pg.click('#ms-uped .ms-btn'); await pg.click('#ms-uped .ms-opt[data-u="MCC T2"]'); await pg.waitForTimeout(100);
+  af('escolher no filtro troca o rótulo e fecha o menu', await txt(pg, '#uped-lbl') === 'Unidade: MCC T2' && !(await pg.$('#ms-uped .ms-panel.open')));
   af('trocar o chip troca os projetos (MCC T2)', JSON.stringify(await pg.$$eval('#f-proj option', o => o.map(x => x.value).filter(Boolean))) === '["ROTA","VAN","PA PETRÓPOLIS"]');
   af('a lista mostra os pedidos de MCC T2 (3)', await pg.$$eval('#tb-meus tbody tr', t => t.length) === 3);
   await pg.selectOption('#f-banda', 'Liso/Direcional'); await pg.selectOption('#f-proj', 'ROTA'); await pg.selectOption('#f-med', '235'); await pg.fill('#f-qtd', '8');
