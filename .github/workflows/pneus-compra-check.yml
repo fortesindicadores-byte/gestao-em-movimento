@@ -1,0 +1,20 @@
+name: Pneus Compra Check (conferência)
+
+# Roda as regras da página /compra-pneus/ contra o snapshot real do Prolog:
+# Estoque e Necessidade por unidade × medida, as carretas e o último eixo de
+# cada tipo, e as tabelas pneu_preco / pneu_pedido. Não grava nada.
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/pneus-compra-check.mjs
