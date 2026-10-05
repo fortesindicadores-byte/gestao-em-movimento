@@ -16,6 +16,7 @@
 //            período e recoleta SÓ esses dias (o dado antigo fica errado).
 //   freiomotor  sonda: o Geotab entrega freio motor? cobertura, codificação e
 //            rpm durante o uso (CE_DE = dia, CE_UNI = unidade em destaque).
+//   freiodeduz  sonda: dá para deduzir o freio motor (rpm alto sem acelerador)?
 //   ident    relatório de IDENTIFICAÇÃO de motorista por unidade e por placa
 //            (quem rodou identificado e quem não), sem gravar nada. Período:
 //            CE_DE/CE_ATE; sem eles, os últimos 7 dias.
@@ -2235,6 +2236,147 @@ if (MODE === 'freiomotor') {
   // placas de UNI que rodaram e não mandam nenhum sinal
   const faltam = rodouUni.filter(id => !uniao.has(id)).map(id => info.get(id).placa).sort();
   console.log(`\n${UNI}: rodaram sem nenhum sinal de freio motor: ${faltam.length}` + (faltam.length ? ` → ${faltam.join(' · ')}` : ''));
+  console.log('\nSonda encerrada — nada foi gravado.');
+  process.exit(0);
+}
+
+if (MODE === 'freiodeduz') {
+  // SONDA: DÁ PARA DEDUZIR O FREIO MOTOR EM PIRAÍ? (Renan, 05/10/2026) — só
+  // leitura, não grava nada. O Geotab não entrega o sinal de freio motor nos
+  // caminhões de Piraí (sonda `freiomotor`). A alternativa é deduzir: motor
+  // girando alto SEM acelerador = é a roda que gira o motor (o motor está
+  // segurando o caminhão, sem injetar diesel). Para isso Piraí precisa mandar
+  // posição do acelerador e/ou consumo instantâneo. Aqui: (1) TUDO o que os
+  // caminhões de Piraí mais rodados mandam no dia, (2) cobertura dos sinais
+  // candidatos em todos os de Piraí, (3) quanto do tempo acima de 1.700 rpm
+  // acontece sem acelerador. Log só com nomes de diagnóstico e contagens.
+  const cred = await geotabLogin();
+  if (!cred) { console.error('Geotab: sem credencial'); process.exit(1); }
+  const DIA = process.env.CE_DE || iso(ontem);
+  const UNI = (process.env.CE_UNI || 'PIRAI').toUpperCase();
+  const de0 = `${DIA}T03:00:00.000Z`, fim = new Date(new Date(de0).getTime() + 864e5 - 1).toISOString();
+  console.log(`sonda de freio motor DEDUZIDO · dia ${DIA} · unidade "${UNI}"`);
+
+  const [diags, devs, grupos, trips] = await Promise.all([
+    geotabRpc('Get', { typeName: 'Diagnostic' }, cred),
+    geotabRpc('Get', { typeName: 'Device' }, cred),
+    geotabRpc('Get', { typeName: 'Group' }, cred),
+    geotabRpc('Get', { typeName: 'Trip', search: { fromDate: de0, toDate: fim }, resultsLimit: 50000 }, cred),
+  ]);
+  const dN = new Map(diags.map(d => [d.id, d.name || d.id]));
+  const gN = new Map(grupos.map(g => [g.id, g.name || '']));
+  const uniDe = new Map(devs.map(d => [d.id, ((d.groups || []).map(g => gN.get(g.id) || '').find(n => /^UNI_/.test(n)) || '').toUpperCase()]));
+  const ehUni = id => (uniDe.get(id) || '').includes(UNI);
+  const km = new Map();
+  trips.forEach(t => { const id = t.device && t.device.id; if (id && ehUni(id)) km.set(id, (km.get(id) || 0) + (+t.distance || 0)); });
+  const rodou = [...km.keys()];
+  console.log(`veículos de ${UNI} que rodaram: ${rodou.length}`);
+  if (!rodou.length) { console.log('nenhum — sonda encerrada.'); process.exit(0); }
+
+  // 1) inventário: tudo o que os 6 mais rodados mandaram no dia
+  const amostra = rodou.sort((a, b) => km.get(b) - km.get(a)).slice(0, +process.env.CE_DEDUZ_N || 6);
+  const inv = new Map();   // diag → {n, devs:Set}
+  for (const id of amostra) {
+    let from = de0, pag = 0;
+    while (pag < 6) {
+      let lote;
+      try { lote = await geotabRpc('Get', { typeName: 'StatusData',
+        search: { deviceSearch: { id }, fromDate: from, toDate: fim }, resultsLimit: 50000 }, cred); }
+      catch (e) { console.log(`   inventário de 1 veículo falhou: ${e.message.slice(0, 120)}`); break; }
+      pag++;
+      for (const r of lote) {
+        const dg = r.diagnostic && r.diagnostic.id; if (!dg) continue;
+        let a = inv.get(dg); if (!a) { a = { n: 0, devs: new Set() }; inv.set(dg, a); }
+        a.n++; a.devs.add(id);
+      }
+      if (lote.length < 50000) break;
+      from = new Date(new Date(lote[lote.length - 1].dateTime).getTime() + 1).toISOString();
+    }
+  }
+  const linhas = [...inv.entries()].sort((a, b) => b[1].n - a[1].n);
+  console.log(`\n── INVENTÁRIO: ${linhas.length} sinal(is) distintos nos ${amostra.length} veículo(s) mais rodados de ${UNI} ──`);
+  linhas.forEach(([dg, a]) => console.log(`   ${String(a.n).padStart(7)} amostra(s) · ${a.devs.size}/${amostra.length} veíc. · ${String(dN.get(dg) || dg).slice(0, 90)}`));
+
+  // 2) candidatos a "sem acelerador": pedal/borboleta, consumo instantâneo, torque
+  const CAND = [
+    ['pedal', /pedal.*acelera|acelera.*pedal|accelerator|throttle|borboleta|posi(ç|c)(ã|a)o do acelerador/i],
+    ['consumo', /taxa.*combust|fuel\s*rate|consumo\s*instant|vaz(ã|a)o.*combust|combust.*vaz(ã|a)o/i],
+    ['torque', /torque/i],
+    ['freio de serviço', /pedal.*freio|freio.*pedal|brake\s*(pedal|switch)|interruptor.*freio/i],
+  ];
+  const doInv = (rx) => linhas.filter(([dg]) => rx.test(dN.get(dg) || ''));
+  console.log('\n── CANDIDATOS NO INVENTÁRIO ──');
+  const escolhidos = {};
+  for (const [nome, rx] of CAND) {
+    const c = doInv(rx);
+    console.log(`   ${nome}: ${c.length ? c.map(([dg, a]) => `"${String(dN.get(dg)).slice(0, 60)}" (${a.n}, ${a.devs.size} veíc.)`).join(' · ') : 'NENHUM'}`);
+    if (c.length) escolhidos[nome] = c[0][0];
+  }
+
+  // 3) cobertura em TODOS os de UNI + intervalo entre amostras
+  async function baixa(id) {
+    const porDev = new Map(); let from = de0, pag = 0;
+    while (pag < 20) {
+      const lote = await geotabRpc('Get', { typeName: 'StatusData',
+        search: { diagnosticSearch: { id }, fromDate: from, toDate: fim }, resultsLimit: 50000 }, cred);
+      pag++;
+      for (const r of lote) {
+        const dv = r.device && r.device.id; if (!dv || !ehUni(dv)) continue;
+        let a = porDev.get(dv); if (!a) { a = []; porDev.set(dv, a); }
+        a.push({ t: new Date(r.dateTime).getTime(), v: +r.data });
+      }
+      if (lote.length < 50000) break;
+      from = new Date(new Date(lote[lote.length - 1].dateTime).getTime() + 1).toISOString();
+    }
+    porDev.forEach(a => a.sort((x, y) => x.t - y.t));
+    return porDev;
+  }
+  const dados = {};
+  console.log(`\n── COBERTURA EM ${UNI} (${rodou.length} que rodaram) ──`);
+  for (const [nome, dg] of Object.entries(escolhidos)) {
+    const pd = await baixa(dg); dados[nome] = pd;
+    const difs = []; const vals = new Map();
+    pd.forEach(a => a.forEach((x, i) => { if (i) difs.push(a[i].t - a[i - 1].t); const k = Math.round(x.v); vals.set(k, (vals.get(k) || 0) + 1); }));
+    difs.sort((a, b) => a - b);
+    const cob = rodou.filter(id => pd.has(id)).length;
+    console.log(`   ${nome} ("${String(dN.get(dg)).slice(0, 50)}"): ${cob} de ${rodou.length} veículos`
+      + (difs.length ? ` · intervalo mediana ${Math.round(difs[difs.length >> 1] / 1000)} s, p90 ${Math.round(difs[Math.floor(difs.length * .9)] / 1000)} s` : '')
+      + ` · valores mais comuns: ${[...vals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([v, n]) => v + '×' + n).join(' ')}`);
+  }
+
+  // 4) a dedução: tempo acima de 1.700 rpm SEM acelerador (e/ou consumo ~0)
+  const { porDev: rpmD } = await geotabRpmDia(DIA, cred);
+  const rpmCob = rodou.filter(id => rpmD.has(id)).length;
+  console.log(`\nRPM em ${UNI}: ${rpmCob} de ${rodou.length} veículos`);
+  const valorEm = (arr, t) => {           // último valor até t (vale até 5 min)
+    let lo = 0, hi = arr.length - 1, k = -1;
+    while (lo <= hi) { const m = (lo + hi) >> 1; if (arr[m].t <= t) { k = m; lo = m + 1; } else hi = m - 1; }
+    return k >= 0 && t - arr[k].t <= 300000 ? arr[k].v : null;
+  };
+  const FX = [[1100, 1500], [1500, 1700], [1700, 1800], [1800, 2000], [2000, 2200], [2200, 2500], [2500, 99999]];
+  for (const nome of ['pedal', 'consumo']) {
+    const pd = dados[nome]; if (!pd) { console.log(`\n${nome}: sem sinal — dedução por ${nome} impossível.`); continue; }
+    let alto = 0, altoSem = 0, semDado = 0, veic = 0; const tFx = FX.map(() => 0), tFxSem = FX.map(() => 0);
+    for (const id of rodou) {
+      const ra = rpmD.get(id), pa = pd.get(id); if (!ra || !pa) continue; veic++;
+      for (let i = 0; i < ra.length; i++) {
+        const a = ra[i]; const prox = i + 1 < ra.length ? ra[i + 1].t : a.t + 1000;
+        const t1 = Math.min(prox, a.t + RPM_GAP_MS); if (t1 <= a.t || !isFinite(a.rpm) || a.rpm < 1100) continue;
+        const dt = (t1 - a.t) / 1000; const k = FX.findIndex(([x, y]) => a.rpm >= x && a.rpm < y);
+        const v = valorEm(pa, a.t);
+        if (v == null) { semDado += dt; continue; }
+        const sem = nome === 'pedal' ? v <= 1 : v <= 0.5;   // pedal 0–1% · consumo ~0
+        if (k >= 0) { tFx[k] += dt; if (sem) tFxSem[k] += dt; }
+        if (a.rpm > 1700) { alto += dt; if (sem) altoSem += dt; }
+      }
+    }
+    const h = s => (s / 3600).toFixed(1) + ' h';
+    console.log(`\n── DEDUÇÃO por ${nome} · ${veic} veículo(s) com RPM e ${nome} ──`);
+    console.log(`   acima de 1.700 rpm: ${h(alto)} · desses, ${nome === 'pedal' ? 'sem acelerador' : 'sem consumo'}: ${h(altoSem)} (${alto ? (altoSem / alto * 100).toFixed(1) : '0'}%)`);
+    console.log(`   tempo sem ${nome} sem leitura próxima (descartado): ${h(semDado)}`);
+    console.log('   faixa de rpm · % do tempo da faixa ' + (nome === 'pedal' ? 'sem acelerador' : 'sem consumo') + ' · horas');
+    FX.forEach(([x, y], k) => console.log(`      ${String(x).padStart(4)}–${y > 9999 ? '   +' : String(y).padStart(4)}  ${(tFx[k] ? tFxSem[k] / tFx[k] * 100 : 0).toFixed(1).padStart(5)}%  ${h(tFxSem[k])} de ${h(tFx[k])}`));
+  }
   console.log('\nSonda encerrada — nada foi gravado.');
   process.exit(0);
 }
