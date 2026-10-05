@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609250300">
+<meta name="build" content="202610052300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Correlações da Operação · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -590,7 +590,7 @@ async function carregar(){ const r=await CorrDados.carregar(sb); FONTES=r.FONTES
 
 /* ── filtros ── */
 const getSel=id=>{const w=document.getElementById(id); return w&&w._sel&&w._sel.size?[...w._sel]:[];};
-function syncBadge(wrap){ const c=wrap.querySelector('.ms-cnt'); if(!c) return; const n=wrap._sel?wrap._sel.size:0; c.textContent=n; c.style.display=n?'':'none'; wrap.classList.toggle('ativo',n>0); }
+function syncBadge(wrap){ const c=wrap.querySelector('.ms-cnt'); if(!c) return; const n=wrap._sel?wrap._sel.size:0; c.textContent=n; c.style.display=n?'inline-block':'none'; wrap.classList.toggle('ativo',n>0); }
 function buildMs(id,itens,onChange,rotulo){
   const wrap=document.getElementById(id); if(!wrap) return;
   if(!(wrap._sel instanceof Set)) wrap._sel=new Set();
@@ -1016,6 +1016,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609250300"></script>
+<script src="../assets/build-check.js?v=202610052300"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 // ============================================================================
 // Migração dos dois painéis de Km/L para o layout padrão — conferência no
-// Chromium, rodando os DOIS lados (HTML antigo do git HEAD × HTML novo) com as
+// Chromium, rodando os DOIS lados (HTML antigo do git — ANTIGO_REF — × HTML novo) com as
 // MESMAS fontes dubladas:
 //   · combustivel/eficiencia-kml  (lê sh_consumo_km_litro do banco, cai para a
 //     aba Km/L da planilha; aba Base Remunerado Modelo e R$/L pelo gviz)
@@ -16,7 +16,7 @@
 //      Excel carregado; o contrato de filtros (wrap._sel / _render / atualizar)
 //      do check-metas continua.
 // Uso (de uma pasta onde o playwright resolve):
-//   RAIZ=<repo> CHART_JS=<chart.umd.js> SHOT_DIR=<pasta> node kml-casca-teste.mjs
+//   RAIZ=<repo> CHART_JS=<chart.umd.js> SHOT_DIR=<pasta> [ANTIGO_REF=f736f61] node kml-casca-teste.mjs
 // ============================================================================
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
@@ -27,13 +27,15 @@ import path from 'node:path';
 const RAIZ = process.env.RAIZ || path.resolve(new URL('..', import.meta.url).pathname);
 const CHART_JS = process.env.CHART_JS || '';
 const SHOT = process.env.SHOT_DIR || '';
+// o HTML antigo: último commit ANTES da migração (o WIP 6979003 já levou o novo para o HEAD)
+const ANTIGO = process.env.ANTIGO_REF || 'f736f61';
 const MIME = { '.html': 'text/html;charset=utf-8', '.js': 'application/javascript', '.css': 'text/css' };
 // o HTML antigo é servido NA MESMA PASTA (os caminhos relativos dos assets valem)
 const srv = createServer((req, res) => {
   const p = decodeURIComponent(req.url.split('?')[0]);
   if (p.endsWith('/__antigo.html')) {
     const pasta = p.slice(1, -'/__antigo.html'.length);
-    const b = execSync(`git -C ${RAIZ} show HEAD:${pasta}/index.html`, { maxBuffer: 1 << 26 });
+    const b = execSync(`git -C ${RAIZ} show ${ANTIGO}:${pasta}/index.html`, { maxBuffer: 1 << 26 });
     res.writeHead(200, { 'content-type': MIME['.html'] }); res.end(b); return;
   }
   const f = path.join(RAIZ, p);

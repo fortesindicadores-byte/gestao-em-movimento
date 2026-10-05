@@ -920,7 +920,7 @@ function buildVigMsFilter(items){
 }
 function syncBadge(wrap){
   const cnt=wrap.querySelector('.ms-cnt'), n=wrap._sel?wrap._sel.size:0;
-  if(cnt){cnt.textContent=n; cnt.style.display=n?'':'none';}
+  if(cnt){cnt.textContent=n; cnt.style.display=n?'inline-block':'none';}
 }
 function toggleMs(id){
   document.querySelectorAll('.ms-panel.open').forEach(p=>{

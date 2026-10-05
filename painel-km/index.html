@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609232100">
+<meta name="build" content="202610052300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -917,7 +917,7 @@ function syncBadge(wrap){
   const cnt=wrap.querySelector('.ms-cnt');
   if(!cnt) return;
   const n=wrap._sel?wrap._sel.size:0;
-  cnt.textContent=n; cnt.style.display=n?'':'none';
+  cnt.textContent=n; cnt.style.display=n?'inline-block':'none';
 }
 
 function _buildMs(wrap, renderFn, getAllItemsFn, onChange){
@@ -1743,6 +1743,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609232100"></script>
+<script src="../assets/build-check.js?v=202610052300"></script>
 </body>
 </html>

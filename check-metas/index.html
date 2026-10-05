@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609250700">
+<meta name="build" content="202610052300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -492,7 +492,7 @@ const grafias=k=>!k?'':[k, vigLbl(k), vigLbl(k).toUpperCase(), vigExt(k), k.slic
 /* ── filtros (mesma mecânica dos outros painéis do padrão) ── */
 const getSel=id=>{const w=$(id); return w&&w._sel&&w._sel.size?[...w._sel]:[];};
 function syncBadge(wrap){ const c=wrap.querySelector('.ms-cnt'); if(!c) return;
-  const n=wrap._sel?wrap._sel.size:0; c.textContent=n; c.style.display=n?'':'none';
+  const n=wrap._sel?wrap._sel.size:0; c.textContent=n; c.style.display=n?'inline-block':'none';
   wrap.classList.toggle('ativo',n>0); }
 function buildMs(id,itens,onChange){
   const wrap=$(id); if(!wrap) return;
@@ -1936,6 +1936,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="slides.js?v=202609250600"></script>
-<script src="../assets/build-check.js?v=202609250700"></script>
+<script src="../assets/build-check.js?v=202610052300"></script>
 </body>
 </html>
