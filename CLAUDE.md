@@ -758,6 +758,16 @@ A busca do topo filtra os cards e esconde cluster vazio; no modo lista ela **abr
 
 **A migração é DIRETO NO PAINEL OFICIAL** (Renan, 16/08/2026) — acabou a etapa do clone `<painel>-novo/`. O método continua o mesmo (casca extraída por script, lógica de dados colada inteira, só a apresentação trocada), e o git é a rede de segurança: o painel antigo está no histórico e volta com um `git show <commit>^:<pasta>/index.html`.
 
+## MIGRAÇÃO DOS PAINÉIS QUE FALTAVAM (Renan, 05/10/2026: "Transformar todos os painéis que faltam na visão nova")
+
+Escolhas dele: **por grupo, ele confere cada grupo antes do próximo**; ficam de fora **só os institucionais** (governanca, papeis-responsabilidades, suprimentos-padronizacao). Ordem: **Combustível** → Custos (rs-por-km, arvore-frota, forecast, ytg, manutencao, tendencia-frota, 3 comparativos) → Resultados (programa-reconhecimento, painel-metas, painel-metas-diretor, resumo-executivo, diagnostico, gerot, termometro, mpr) → FCA (fca, fca-gerencial) → Operacional (eficiencia-ativacao, auditorias) → avulsos (catalogo-pecas antigo/externo, financeiro-pessoal, controle-ficticio, farol-frota) → Pneus (o maior bloco).
+
+- **Método:** um agente por painel (ou par de painéis parecidos) com um brief comum (casca copiada do `painel-km`, lógica de dados colada inteira, IDs de filtro e funções de redesenho iguais por causa do Check de Metas, sem página rolando, 1ª visão "Resumo Gerencial", tabelas grandes em visão própria), cada um com teste no Chromium que roda o HTML ANTIGO e o NOVO com os mesmos dados e exige os mesmos números. Os testes ficam em `scripts/*-casca-teste.mjs`; Chart.js real e html2canvas são passados por variável (`CHART_JS`/`CHARTJS`/`H2C`), porque o sandbox não alcança os CDNs.
+- **Grupo Combustível publicado em 05/10/2026:** sub-hubs `combustivel/` e `combustivel/seara/` (casca do hub, sem lateral), Eficiência Km/L, Análise do Impacto (`consumo-kml-analise`), R$/L, CO², Km/L Seara, R$/L Seara (visões Resumo Gerencial · Detalhado · Consumo por Veículo · Diagnóstico quando havia) e as duas Árvores (uma visão, escala que cabe no palco, `.tree-wrap` e `onFilterChange` mantidos para o Check de Metas).
+- **O número das caixas de Impacto das árvores voltou a 32 px:** o render troca `className` para `impact-bad/good` e apagava o `.impact-value`; o CSS agora vale também pelo id.
+- **A contagem laranja dos filtros NUNCA aparecia** (achado na migração): `syncBadge` fazia `style.display=n?'':'none'`, e `''` devolve ao CSS, que é `.ms-cnt{display:none}`. Corrigido para `'inline-block'` em todos os painéis da casca padrão (17). Os da casca antiga ganham a correção ao migrar.
+- **Selo "Último acesso"** não tem lugar na casca: o registro continua gravado, só não é exibido (como já era no painel-km).
+
 ## Gráfico de barra: o padrão universal foi REVERTIDO (09/09/2026)
 
 O Renan comparou o Painel KM com a Visão Financeira, escolheu o desenho do KM e pediu um padrão universal. Foi feito como `assets/grafico-barra.js` (arquivo único, incluído depois do Chart.js nos 37 painéis com barra) e **revertido no mesmo dia**: *"volte uma versão antes, ficou tudo bugado"*.

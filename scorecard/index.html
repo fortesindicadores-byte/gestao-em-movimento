@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609250000">
+<meta name="build" content="202610052300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Scorecard · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -692,7 +692,7 @@ function refreshCascade(){
   const uniOk=ICS.filter(o=>rowPassesExcept(o,'uni'));
   setMsOptions('ms-uni',[...new Set(uniOk.map(o=>o.unidade))].sort());
 }
-function syncBadge(wrap){const cnt=wrap.querySelector('.ms-cnt'),n=wrap._sel?wrap._sel.size:0;if(cnt){cnt.textContent=n;cnt.style.display=n?'':'none';}}
+function syncBadge(wrap){const cnt=wrap.querySelector('.ms-cnt'),n=wrap._sel?wrap._sel.size:0;if(cnt){cnt.textContent=n;cnt.style.display=n?'inline-block':'none';}}
 function toggleMs(id){document.querySelectorAll('.ms-panel.open').forEach(p=>{if(p.closest('.ms-wrap').id!==id)p.classList.remove('open');});const panel=document.querySelector(`#${id} .ms-panel`);panel.classList.toggle('open');if(panel.classList.contains('open')){const inp=panel.querySelector('input[type=text]');if(inp)setTimeout(()=>inp.focus(),50);}}
 function getMsValues(id){const wrap=document.getElementById(id);if(!wrap)return[];return wrap._sel?[...wrap._sel]:[];}
 document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrap'))document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open'));});
@@ -1212,6 +1212,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202609250000"></script>
+<script src="../assets/build-check.js?v=202610052300"></script>
 </body>
 </html>

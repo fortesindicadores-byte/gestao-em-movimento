@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610051800">
+<meta name="build" content="202610052300">
 <title>FCA · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -930,7 +930,7 @@ function gateError(msg){gate('⚠️','Não foi possível carregar',`<p>${esc(ms
 // Projeto "limpo": corta no '-' (ex.: "AUTO SERVIÇO - CGR" → "AUTO SERVIÇO"). RPM já vem limpo. Unifica exibição e filtro.
 function projLabel(s){const t=String(s==null?'':s).replace(/\s*\(INATIVO\)\s*/gi,' ').replace(/\s+/g,' ').trim();if(!t)return '—';const i=t.indexOf('-');return i>=0?(t.substring(0,i).trim()||'—'):t;}
 // ── Multi-select (padrão Gestão em Movimento) ──
-function syncBadge(w){const c=w.querySelector('.ms-cnt'),n=w._sel?w._sel.size:0;if(c){c.textContent=n;c.style.display=n?'':'none';}}
+function syncBadge(w){const c=w.querySelector('.ms-cnt'),n=w._sel?w._sel.size:0;if(c){c.textContent=n;c.style.display=n?'inline-block':'none';}}
 function _buildMs(w,getItems,after){
   if(!w)return; if(!(w._sel instanceof Set))w._sel=new Set();
   const list=w.querySelector('.ms-list'),srch=w.querySelector('.ms-search input'),run=after||render;
@@ -1671,6 +1671,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610051800"></script>
+<script src="../assets/build-check.js?v=202610052300"></script>
 </body>
 </html>
