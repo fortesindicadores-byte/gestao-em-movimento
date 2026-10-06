@@ -43,7 +43,8 @@ on:
         required: false
         default: false
         type: boolean
-  # todo dia às 7:30 BRT (10:30 UTC). O próprio script só age do dia 01 ao 15.
+  # todo dia às 7:30 BRT (10:30 UTC). O próprio script só age do dia 01 ao 15;
+  # o Conf Detalhe roda depois dele, no mesmo job, todo dia.
   schedule:
     - cron: '30 10 * * *'
 
@@ -81,6 +82,23 @@ jobs:
           ELITE_ESCOPOS:            ${{ github.event.inputs.escopos }}
           ELITE_FORCAR:             ${{ github.event.inputs.forcar == 'true' && '1' || '' }}
           ELITE_REFAZER:            ${{ github.event.inputs.refazer == 'true' && '1' || '' }}
+          GINFO_USER:               ${{ secrets.GINFO_USER }}
+          GINFO_PASS:               ${{ secrets.GINFO_PASS }}
+          GINFO_URL:                ${{ secrets.GINFO_URL }}
+          GINFO_EMPRESA:            ${{ secrets.GINFO_EMPRESA }}
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+      # O Conf Detalhe roda AQUI, depois do Elite, no mesmo agendamento — e não
+      # mais com cron próprio. Os três robôs do Ginfo dividem o grupo
+      # `ginfo-conta`, e o GitHub guarda UM run pendente por grupo: com o
+      # agendador atrasando os crons para a mesma janela da tarde, o terceiro a
+      # chegar (o conf-detalhe) cancelava o Elite pendente. Foi o que deixou
+      # 09/2026 sem coleta (27/09 a 05/10, todos `cancelled`). Com dois
+      # agendamentos no grupo, ninguém é cancelado.
+      - name: Conf Detalhe (cobrança por placa da Conformidade)
+        if: always() && github.event_name == 'schedule'
+        run: node scripts/elite-robot.mjs
+        env:
+          ELITE_MODE:               conf-detalhe
           GINFO_USER:               ${{ secrets.GINFO_USER }}
           GINFO_PASS:               ${{ secrets.GINFO_PASS }}
           GINFO_URL:                ${{ secrets.GINFO_URL }}

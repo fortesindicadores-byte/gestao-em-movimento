@@ -353,7 +353,7 @@ async function coletaBases() {
       chave: 'elite:' + ind, rotulo: ind + (a.vig ? ` · até ${a.vig.slice(4)}/${a.vig.slice(0, 4)}` : ''),
       grupo: 'Frota de Elite · Gerot', fonte: 'elite', linhas: a.n,
       atualizado_em: a.em || null, erro: null,
-      wf: ind === 'conformidade-detalhe' ? 'conf-detalhe.yml' : 'elite-robot.yml', visto_em: AGORA,
+      wf: 'elite-robot.yml', visto_em: AGORA,   // conf-detalhe roda dentro do elite-robot desde 06/10/2026
     }));
   } catch (e) { console.warn('elite_snapshot:', e.message); }
 

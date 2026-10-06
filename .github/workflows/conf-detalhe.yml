@@ -6,10 +6,10 @@ name: Conf Detalhe (cobrança por placa -> Supabase)
 # vencidas" da visão Conformidade do Gestão à Vista. Foto do dia: sempre
 # sobrescreve. Reusa o scripts/elite-robot.mjs (ELITE_MODE=conf-detalhe).
 on:
+  # SÓ MANUAL. A rodada diária mora no elite-robot.yml, como passo depois do
+  # Elite: com cron próprio, este workflow cancelava o Elite pendente no grupo
+  # `ginfo-conta` (27/09 a 05/10/2026).
   workflow_dispatch:
-  # todo dia às 8:00 BRT (11:00 UTC) — depois do robô Ginfo (7h) e do Elite (7:30)
-  schedule:
-    - cron: '0 11 * * *'
 
 concurrency:
   # UMA CONTA SÓ NO GINFO: elite-robot, ginfo-robot e conf-detalhe entram no
