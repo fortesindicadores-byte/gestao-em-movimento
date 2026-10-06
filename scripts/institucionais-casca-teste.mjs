@@ -7,7 +7,7 @@
 //  - em Papéis, as mesmas 19 linhas (bloco, descrição, dono e cor do chip) e a
 //    mesma legenda de donos; ordenação por cabeçalho e menu do Excel vivos;
 //  - zero erro de página nos dois lados;
-//  - scripts do antigo todos presentes no novo, build 202610070500;
+//  - scripts do antigo todos presentes no novo, build 202610070700;
 //  - tema (abre escuro, botão vira body.claro + bi_theme, bi_theme=light abre claro);
 //  - "Hub Principal" volta para a raiz; sem gem_hub vai para o hub;
 //  - sem rolagem da página e sem barra horizontal em 1366x768 e 1600x900,
@@ -111,7 +111,7 @@ for (const P of PAGS) {
   const faltam = so.filter(s => !sn.includes(s));
   af('todos os scripts do antigo estão no novo', faltam.length === 0, faltam.length ? 'faltam ' + faltam.join(',') : sn.join(' '));
   const build = await n.pg.evaluate(() => document.querySelector('meta[name=build]').content + ' ' + [...document.scripts].map(s => s.getAttribute('src') || '').find(s => s.includes('build-check')));
-  af('build 202610070500 no meta e no build-check', build === '202610070500 ../assets/build-check.js?v=202610070500', build);
+  af('build 202610070700 no meta e no build-check', build === '202610070700 ../assets/build-check.js?v=202610070700', build);
   af('sem menu lateral (.side ausente)', await n.pg.evaluate(() => !document.querySelector('.side')));
   const casca = await n.pg.evaluate(() => {
     const app = getComputedStyle(document.querySelector('.app')), bf = getComputedStyle(document.querySelector('.app'), '::before'), gr = getComputedStyle(document.body, '::after');
