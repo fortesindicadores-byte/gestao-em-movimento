@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610061900">
+<meta name="build" content="202610062000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -729,13 +729,14 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
       <section class="vw" id="vw-notakml">
         <div class="fin-hero">
           <div>
-            <div class="hlbl">Correlação nota × km/L · Pearson (r)</div>
+            <div class="hlbl">Correlação das variações mês a mês · nota × km/L (r)</div>
             <div class="hval" id="nk-r">—</div>
             <div class="hdel">
               <div>Leitura<b id="nk-leit">—</b></div>
-              <div>R²<b id="nk-r2">—</b></div>
-              <div>Meses comparados<b id="nk-n">—</b></div>
+              <div>Mesmo sentido<b id="nk-mesmo">—</b></div>
+              <div>Spearman (variações)<b id="nk-rho">—</b></div>
               <div>Coincidência?<b id="nk-p">—</b></div>
+              <div>r dos níveis<b id="nk-niv">—</b></div>
             </div>
           </div>
         </div>
@@ -750,7 +751,7 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
           </div>
           <div class="card gcard">
             <div class="gtit">Motoristas: nota × km/L</div>
-            <div class="gsub" id="nk-dsub">Um ponto por motorista no recorte · linha = tendência</div>
+            <div class="gsub" id="nk-dsub">Um ponto por motorista no recorte, modelos misturados · linha = tendência</div>
             <div class="gcv"><canvas id="chartNotaDisp"></canvas></div>
           </div>
         </div>
@@ -1566,30 +1567,74 @@ function renderNotaKml(){
   const nota=mes.map(m=>m.nota), kml=mes.map(m=>m.kml);
   const sel=i=>!filtroAtivo||(mes[i].vig&&sv.includes(mes[i].vig));
 
-  // ── coeficiente solto no topo: as duas curvas ──
-  const c = E ? E.pearson(nota, kml) : { r:NaN, n:0, p:NaN };
+  /* ── coeficiente solto no topo: as VARIAÇÕES mês a mês (Renan, 06/10/2026,
+     "Está lendo se as linhas andam juntas mesmo? Pearson é a melhor maneira?").
+     O r dos NÍVEIS sobe sozinho quando as duas séries têm tendência comum
+     (frota nova, estação, rota) — duas curvas que sobem no ano dariam r alto
+     mesmo sem acompanhar uma à outra. A pergunta "andam juntas?" é sobre a
+     VARIAÇÃO: quando a nota sobe de um mês para o outro, o km/L sobe junto?
+     Só pares de meses CONSECUTIVOS com as duas curvas; o r dos níveis fica
+     como informação secundária. ── */
+  const dN=[], dK=[]; let mesmo=0, pares=0;
+  for(let i=1;i<12;i++){
+    if(!nkFin(nota[i])||!nkFin(nota[i-1])||!nkFin(kml[i])||!nkFin(kml[i-1])) continue;
+    const a=nota[i]-nota[i-1], b=kml[i]-kml[i-1];
+    dN.push(a); dK.push(b); pares++;
+    if(a!==0 && b!==0 && Math.sign(a)===Math.sign(b)) mesmo++;
+  }
+  const c  = E ? E.pearson(dN, dK) : { r:NaN, n:0, p:NaN };
+  const sp = E ? E.spearman(dN, dK) : { rho:NaN };
+  const cn = E ? E.pearson(nota, kml) : { r:NaN };
   set('nk-r', nkFin(c.r) ? nkBr(c.r,2) : '—');
   const hr=$('nk-r'); if(hr){ hr.classList.toggle('nk-pos', nkFin(c.r)&&c.r>=0.4); hr.classList.toggle('nk-neg', nkFin(c.r)&&c.r<=-0.4); }
-  set('nk-leit', nkLeit(c.r));
-  set('nk-r2', nkFin(c.r) ? Math.round(c.r*c.r*100)+'%' : '—');
-  set('nk-n', String(c.n||0) + (E && c.n && c.n < E.N_MIN ? ' · poucos' : ''));
+  set('nk-leit', nkLeit(c.r) + (E && pares && pares < E.N_MIN ? ' · poucos meses' : ''));
+  set('nk-mesmo', pares ? `${mesmo} de ${pares} meses` : '—');
+  set('nk-rho', nkBr(sp.rho,2));
   set('nk-p', nkFin(c.p) ? `${nkCoinc(c.p)} (p ${c.p<0.001?'< 0,001':nkBr(c.p,3)})` : '—');
+  set('nk-niv', nkBr(cn.r,2));
 
-  // ── cards: motorista a motorista no recorte, + a faixa verde nas curvas ──
+  /* ── cards: motorista a motorista DENTRO do mesmo mês e do mesmo modelo.
+     No mesmo mês rota, estação e preço são iguais para todos; no mesmo modelo,
+     Actros e Constellation não se misturam (km/L de partida diferente). Cada
+     motorista-mês com ≥ NK_KM_MIN km com combustível vira um ponto, e nota e
+     km/L são tirados da média do seu grupo (vigência × modelo) — o que sobra é
+     a diferença de condução. Grupo com um motorista só não diz nada e sai. ── */
+  const pts=[];
+  getFiltered().forEach(r=>{
+    if(r.semLogin || r.pont==null || !(r.lit>0) || !(r.kmLit>=NK_KM_MIN)) return;
+    const at=r.placa ? ATIVOS[placaNorm(r.placa)] : null;
+    pts.push({ g:r.vig+'|'+((at&&at.modelo)||'sem modelo'), nota:r.pont, fv:r.rpm, kml:r.kmLit/r.lit });
+  });
+  const grp={}; pts.forEach(p=>(grp[p.g]=grp[p.g]||[]).push(p));
+  const dentro=[];
+  Object.values(grp).forEach(l=>{ if(l.length<2) return;
+    const mN=l.reduce((s,p)=>s+p.nota,0)/l.length, mK=l.reduce((s,p)=>s+p.kml,0)/l.length;
+    const fvs=l.filter(p=>p.fv!=null), mF=fvs.length?fvs.reduce((s,p)=>s+p.fv,0)/fvs.length:null;
+    l.forEach(p=>dentro.push({ ...p, dx:p.nota-mN, dy:p.kml-mK, df:(p.fv!=null&&mF!=null)?p.fv-mF:null, mK }));
+  });
+  const cw = E ? E.pearson(dentro.map(p=>p.dx), dentro.map(p=>p.dy)) : { r:NaN, n:0 };
+  const cf = E ? E.pearson(dentro.map(p=>p.df), dentro.map(p=>p.dy)) : { r:NaN, n:0 };
+  const sxx=dentro.reduce((s,p)=>s+p.dx*p.dx,0), sxy=dentro.reduce((s,p)=>s+p.dx*p.dy,0);
+  const bw = sxx>0 ? sxy/sxx : null;            // km/L por ponto de nota, dentro do grupo
+  const passo = bw!=null ? bw*10 : null;
+  /* A nota PREVÊ o km/L? MAPE do modelo (média do grupo + inclinação × nota)
+     contra o chute ingênuo (só a média do mês e do modelo). Sozinho o MAPE
+     engana: o km/L varia pouco e até o chute erra pouco — o que vale é quanto
+     a nota melhora sobre ele. */
+  const mape = f => dentro.length ? dentro.reduce((s,p)=>s+Math.abs(f(p)-p.kml)/p.kml,0)/dentro.length*100 : null;
+  const mModelo = bw!=null ? mape(p=>p.mK+bw*p.dx) : null, mChute = mape(p=>p.mK);
+  const ganho = nkFin(mModelo)&&nkFin(mChute)&&mChute>0 ? (1-mModelo/mChute)*100 : null;
   const mot = nkMotoristas(getFiltered());
-  const cm = E ? E.pearson(mot.map(m=>m.nota), mot.map(m=>m.kml)) : { r:NaN, n:0 };
-  const cf = E ? E.pearson(mes.map(m=>m.fv), kml) : { r:NaN, n:0 };
   const reta = E && mot.length>=3 ? E.reta(mot.map(m=>m.nota), mot.map(m=>m.kml)) : null;
   const faixa = (lo,hi)=>{ const g=mot.filter(m=>m.nota>=lo && m.nota<hi); const k=g.reduce((s,m)=>s+m.k,0), l=g.reduce((s,m)=>s+m.l,0); return { kml: l>0?k/l:null, n:g.length }; };
   const alto=faixa(85,1e9), baixo=faixa(-1e9,70);
   const dif = nkFin(alto.kml)&&nkFin(baixo.kml)&&baixo.kml>0 ? (alto.kml/baixo.kml-1)*100 : null;
-  const passo = reta && nkFin(reta.b) ? reta.b*10 : null;
   const box=$('nk-kpis');
   if(box) box.innerHTML = [
-    ['Entre motoristas (r)', nkBr(cm.r,2), `${cm.n||0} motorista(s) com ≥ ${NK_KM_MIN} km com combustível · ligação ${nkForca(cm.r)}`],
-    ['Faixa verde × km/L (r)', nkBr(cf.r,2), `as duas curvas mês a mês · ligação ${nkForca(cf.r)}`],
+    ['Entre motoristas · mesmo mês e modelo (r)', nkBr(cw.r,2), `${cw.n||0} motorista-mês · ligação ${nkForca(cw.r)}`+(passo!=null?` · ${passo>=0?'+':''}${nkBr(passo,2)} km/L a cada 10 pontos`:'')],
+    ['Faixa verde × km/L · mesmo mês e modelo (r)', nkBr(cf.r,2), `ligação ${nkForca(cf.r)} · parte da ligação é por construção (a faixa verde já mede consumo)`],
     ['Km/L de quem tira 85+', alto.n ? nkBr(alto.kml,2) : '—', baixo.n ? `contra ${nkBr(baixo.kml,2)} de quem fica abaixo de 70`+(dif!=null?` (${dif>=0?'+':''}${nkBr(dif,1)}%)`:'') : 'ninguém abaixo de 70 no recorte'],
-    ['A cada 10 pontos de nota', passo!=null ? (passo>=0?'+':'')+nkBr(passo,2)+' km/L' : '—', 'inclinação da tendência entre motoristas'],
+    ['A nota prevê o km/L? (MAPE)', nkFin(mModelo) ? nkBr(mModelo,1)+'%' : '—', nkFin(mChute) ? `chutando a média do mês e modelo: ${nkBr(mChute,1)}%`+(ganho==null?'':ganho>=0.5?` · a nota tira ${nkBr(ganho,0)}% do erro`:' · a nota não reduz o erro') : 'poucos motoristas por mês e modelo'],
   ].map(([l,v,m])=>`<div class="kpi"><div class="kl">${l}</div><div class="kv">${v}</div><div class="km">${m}</div></div>`).join('');
 
   // ── gráfico de linhas (só desenha com a visão na tela) ──
@@ -1634,7 +1679,7 @@ function renderNotaKml(){
     const pts=mot.map(m=>({x:m.nota, y:m.kml, unit:m.unit}));
     const xs=pts.map(p=>p.x);
     const linha = reta && nkFin(reta.b) && xs.length ? [Math.min(...xs), Math.max(...xs)].map(x=>({x, y:reta.a+reta.b*x})) : [];
-    set('nk-dsub', `Um ponto por motorista no recorte (${pts.length}) · linha = tendência`);
+    set('nk-dsub', `Um ponto por motorista no recorte (${pts.length}), modelos misturados · linha = tendência`);
     if(chartNotaDisp) chartNotaDisp.destroy();
     chartNotaDisp=new Chart(cd.getContext('2d'),{
       type:'scatter',
@@ -1973,6 +2018,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610061900"></script>
+<script src="../../assets/build-check.js?v=202610062000"></script>
 </body>
 </html>
