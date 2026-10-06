@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610070015">
+<meta name="build" content="202610070300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -724,20 +724,24 @@ function montaRoteiro(avisa){
     {alvo:"document.querySelector('#tbl-demarco table')"}));
   R.push(P('Auditorias','DPO/VPO · '+ano,'../auditorias/',``,
     {alvo:"document.querySelector('#tbl-dpo table')"}));
+  /* O Frota de Elite está na casca padrão (07/10/2026): ranking e Evolução
+     Temporal moram em visões próprias e a foto de elemento escondido sai
+     vazia — por isso o __cm.vw() antes do recorte. O pódio é lido do DOM
+     mesmo escondido; o alvo dele é o ranking, então abre a visão Ranking. */
   R.push(P('Ranking Unidades','Frota de Elite · '+vX,'../programa-reconhecimento/',
-    `__cm.elite(${JSON.stringify([V])}); var _c=document.querySelector('.ind-col'); if(_c&&getComputedStyle(_c).display==='none') toggleIndCols();`,
+    `__cm.vw('ranking'); __cm.elite(${JSON.stringify([V])}); var _c=document.querySelector('.ind-col'); if(_c&&getComputedStyle(_c).display==='none') toggleIndCols();`,
     {alvo:"document.querySelector('#ranking-table').closest('.tbl-section')"}));
   /* O PÓDIO É MONTADO NO SLIDE, a partir do RANKING (Renan, 19/09/2026: ele
      saía como tarja escura estreita boiando no branco, com os degraus
      cortados na base). O ranking é o mesmo dado do pódio do painel — os três
      primeiros —, e desenhá-lo aqui deixa o slide inteiro escuro e inteiro
      usado, em vez de uma ilha preta no meio da página. */
-  R.push(P('Pódio',vX,'../programa-reconhecimento/',`__cm.elite(${JSON.stringify([V])});`,
+  R.push(P('Pódio',vX,'../programa-reconhecimento/',`__cm.vw('ranking'); __cm.elite(${JSON.stringify([V])});`,
     {alvo:"document.querySelector('#ranking-table')",podio:true}));
   R.push(P('Pódio','Acum '+ano,'../programa-reconhecimento/',
-    `__cm.elite(${JSON.stringify(ACUM)});`,{alvo:"document.querySelector('#ranking-table')",podio:true}));
+    `__cm.vw('ranking'); __cm.elite(${JSON.stringify(ACUM)});`,{alvo:"document.querySelector('#ranking-table')",podio:true}));
   R.push(P('Evolução','Frota de Elite · '+ano,'../programa-reconhecimento/',
-    `__cm.elite([]);`,{alvo:"document.querySelector('#chartTemporal').closest('.chart-card')"}));
+    `__cm.vw('evolucao'); __cm.elite([]);`,{alvo:"document.querySelector('#chartTemporal').closest('.chart-card')"}));
   /* PAINEL DE METAS: aponta a TABELA, não o .main (Renan, 19/09/2026: "painel
      de metas não aparece"). O painel tem dois gráficos, então o alvo cheio
      fazia o slide virar "gráfico + tabela": o gráfico levava flex:1 e a tabela
@@ -749,10 +753,12 @@ function montaRoteiro(avisa){
      Descrição e Regra em prosa a dividir espaço com o hero e dois gráficos —
      que foi como ela sumiu na 1ª geração. Assim nada é espremido e nada falta,
      e o total continua sendo o do hero do painel, não uma soma minha. */
+  /* Na casca padrão (07/10/2026) o hero e os gráficos moram na visão Resumo
+     Gerencial e a tabela na visão Indicadores — cada slide abre a sua. */
   const pmPrep=`__cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`;
-  R.push(P('Painel de Metas','Gerente de Frota · '+vX,'../painel-metas/',pmPrep,
-    {semTab:true, nGraf:1, alvo:"document.querySelector('.main')||document.body"}));
-  R.push(P('Painel de Metas','Indicadores · '+vX,'../painel-metas/',pmPrep,
+  R.push(P('Painel de Metas','Gerente de Frota · '+vX,'../painel-metas/',`__cm.vw('resumo'); `+pmPrep,
+    {semTab:true, nGraf:1, alvo:"document.querySelector('#vw-resumo')||document.querySelector('.vw.on')||document.body"}));
+  R.push(P('Painel de Metas','Indicadores · '+vX,'../painel-metas/',`__cm.vw('indicadores'); `+pmPrep,
     {alvo:"document.querySelector('#tbl table')"}));
 
   ROTEIRO=R; ESTADO={};
@@ -1941,6 +1947,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="slides.js?v=202609250600"></script>
-<script src="../assets/build-check.js?v=202610070015"></script>
+<script src="../assets/build-check.js?v=202610070300"></script>
 </body>
 </html>
