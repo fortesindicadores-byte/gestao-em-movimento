@@ -272,7 +272,9 @@ button,input,select,textarea{font-family:'Montserrat',-apple-system,sans-serif;}
 
 /* topo: 11 filtros não cabem ao lado do título em 1366 — eles quebram para a
    linha de baixo, alinhados à direita, em vez de empurrar a página */
-.filtros{flex-wrap:wrap;justify-content:flex-end;row-gap:2px;}
+.tit-wrap{flex:0 1 auto;min-width:0;}
+.top h1,.tit-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.filtros{flex:1 1 520px;flex-wrap:wrap;justify-content:flex-end;row-gap:2px;}
 .top{row-gap:4px;}
 #lastUpdate{font-weight:600;}
 
@@ -366,7 +368,9 @@ button,input,select,textarea{font-family:'Montserrat',-apple-system,sans-serif;}
 .pesos-row b{color:var(--txt);font-weight:800;font-size:12.5px;text-align:right;}
 .pesos-note{font-size:10px;color:var(--txt3);margin-top:8px;line-height:1.45;}
 
-/* tabelas: a tabela é o miolo da visão e rola dentro da própria moldura */
+/* tabelas: a tabela é o miolo da visão e rola dentro da própria moldura; com poucas
+   linhas (ranking por unidade) a moldura acaba no conteúdo, sem caixa vazia embaixo */
+.tsec>.twrap{flex:0 1 auto;}
 .tsec .thead-row{margin-bottom:8px;}
 .tsec .thead-row .chart-chips,.tsec .thead-row .search-box{margin-left:auto;}
 .tsub{margin-bottom:0;}
@@ -405,7 +409,8 @@ table.dre td.empty{text-align:center;color:var(--txt3);padding:28px;}
 #vw-pressao .saude-cards{flex:0 0 auto;height:clamp(104px,15vh,150px);max-height:none;min-height:0;}
 
 /* Orçamento: total + tabela à esquerda, os dois gráficos empilhados à direita */
-.orc-grid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px;}
+.orc-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+#orcTable thead th{white-space:normal;vertical-align:bottom;}
 .orc-grid>.tsec{min-width:0;}
 .orc-graf{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));gap:12px;min-height:0;}
 

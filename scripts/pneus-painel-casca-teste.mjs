@@ -310,6 +310,20 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
   }
 }
 
+console.log('\n══ celular (390×844) ══');
+{
+  const N = await abre(browser, { vp: { width: 390, height: 844 } });
+  const m = await N.page.evaluate(() => ({ rola: document.scrollingElement.scrollHeight > innerHeight,
+    cv: Chart.getChart(document.getElementById('chartSaudeMensal')).height, larg: document.scrollingElement.scrollWidth <= innerWidth + 1 }));
+  ok('celular: a página rola, o gráfico tem altura e não há barra lateral na página', m.rola && m.cv > 150 && m.larg, JSON.stringify(m));
+  await N.page.evaluate(() => setVw('mm-bottom')); await N.page.waitForTimeout(300);
+  const t = await N.page.evaluate(() => [document.querySelector('#vw-mm-bottom .twrap').getBoundingClientRect().height, getComputedStyle(document.querySelector('#vw-mm-bottom .row-toggle')).display]);
+  ok('celular: a tabela do Menor Sulco aparece com o "+" de detalhar', t[0] > 200 && t[1] !== 'none', t.join(' · '));
+  if (SHOTS) await N.page.screenshot({ path: path.join(SHOTS, 'mobile-mm-bottom.png') });
+  ok('celular: zero erro de página', N.errs.length === 0, N.errs.slice(0, 2).join(' | '));
+  await N.ctx.close();
+}
+
 // scripts antigo × novo
 const srcs = h => [...h.matchAll(/<script src="([^"]+)"/g)].map(m => m[1].replace(/\?.*$/, '').replace(/^.*\//, ''));
 const sa = new Set(srcs(htmlAntigo)), sn = new Set(srcs(fs.readFileSync(path.join(RAIZ, 'pneus/painel.html'), 'utf8')));
