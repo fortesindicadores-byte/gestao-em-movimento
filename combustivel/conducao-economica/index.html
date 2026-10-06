@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610061600">
+<meta name="build" content="202610061700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -283,10 +283,13 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
    pouquinho mais para cima e um pouquinho mais para baixo… sem extremos"):
    space-between leva rótulo e resultado para as pontas, e o padding vertical
    maior é quem os segura longe da borda */
+/* o NÚMERO fica colado no rótulo (é o par que se lê junto) e só o "resultado
+   medido" desce para o pé do card — Renan, 06/10/2026, ao ver o número solto
+   no meio: "Isso não". */
 #kpi-pilares .kpi,#cart-kpis .kpi,#cons-kpis .kpi,#ac-kpis .kpi{min-height:clamp(130px,20vh,200px);display:flex;
-  flex-direction:column;justify-content:space-between;padding:clamp(16px,3vh,28px) 20px;}
-#kpi-pilares .kpi .kv,#cart-kpis .kpi .kv,#cons-kpis .kpi .kv,#ac-kpis .kpi .kv,
-#kpi-pilares .kpi .km,#cart-kpis .kpi .km,#cons-kpis .kpi .km,#ac-kpis .kpi .km{margin-top:0;}
+  flex-direction:column;justify-content:flex-start;padding:clamp(16px,3vh,28px) 20px;}
+#kpi-pilares .kpi .kv,#cart-kpis .kpi .kv,#cons-kpis .kpi .kv,#ac-kpis .kpi .kv{margin-top:8px;}
+#kpi-pilares .kpi .km,#cart-kpis .kpi .km,#cons-kpis .kpi .km,#ac-kpis .kpi .km{margin-top:auto;padding-top:8px;}
 #kpi-pilares .kpi .kv,#cart-kpis .kpi .kv,#cons-kpis .kpi .kv,#ac-kpis .kpi .kv{font-size:clamp(25px,3.6vh,34px);}
 #kpi-pilares .kpi .km,#cart-kpis .kpi .km,#cons-kpis .kpi .km,#ac-kpis .kpi .km{font-size:11px;}
 .cart-kpis{grid-template-columns:repeat(5,1fr);margin-top:0;margin-bottom:12px;flex:0 0 auto;}
@@ -390,13 +393,17 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
 .sort-ar{font-size:8px;margin-left:3px;vertical-align:middle;}
 /* notas de rodapé da tabela */
 /* explicação da régua, embaixo da tabela de pesos */
-.reg-exp{flex:0 1 auto;min-height:0;overflow:auto;padding:12px 2px 2px;font-size:11px;
-  line-height:1.6;color:var(--txt2);}
+.reg-exp{flex:0 1 auto;min-height:0;overflow:auto;padding:10px 2px 2px;font-size:11px;
+  line-height:1.45;color:var(--txt2);}
 .reg-exp h4{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;
-  letter-spacing:.7px;margin:12px 0 5px;}
+  letter-spacing:.7px;margin:9px 0 4px;}
 .reg-exp h4:first-child{margin-top:0;}
-.reg-exp p{margin:0 0 7px;}
+.reg-exp p{margin:0 0 5px;}
 .reg-exp b{color:var(--txt);font-weight:700;}
+/* com os cards mais altos (06/10/2026) o card de Regras perdeu altura: linhas
+   da tabela de pesos e texto um pouco mais justos para caber sem barra */
+#tbl-pesos tbody td{padding-top:clamp(4px,.9vh,9px);padding-bottom:clamp(4px,.9vh,9px);}
+@media(max-height:920px),(max-width:1700px){.reg-exp{font-size:10.5px;line-height:1.4;} .reg-exp h4{margin:7px 0 3px;} .reg-exp p{margin:0 0 4px;}}
 /* NOTAS LEGÍVEIS (Renan, 04/09/2026: "não dá para enxergar nada, principalmente
    na visão escura"). Eram 9,5px em itálico no --txt4, o tom mais apagado da
    paleta — no escuro isso é cinza sobre cinza. Passam a 11px, sem itálico e no
@@ -1785,6 +1792,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610061600"></script>
+<script src="../../assets/build-check.js?v=202610061700"></script>
 </body>
 </html>
