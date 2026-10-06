@@ -46,6 +46,7 @@ create table if not exists public.ce_app_regras (
   atualizado_em  timestamptz not null default now()
 );
 insert into public.ce_app_regras (id) values (1) on conflict (id) do nothing;
+update public.ce_app_regras set top_n = 0 where id = 1 and top_n <> 0;   -- todos ganham (06/10/2026)
 comment on table public.ce_app_regras is
   'Parâmetros do programa lidos pelo app. Ajustar aqui, sem mexer em código.';
 
@@ -659,9 +660,11 @@ create table if not exists public.ce_app_unidade_cfg (
 alter table public.ce_app_unidade_cfg enable row level security;   -- sem policy: só as funções
 drop table if exists public.ce_app_unidade_qlp;
 
+-- TODOS GANHAM (Renan, 06/10/2026): com a régua de R$ 5/ponto a partir da
+-- nota 60, a cota de N primeiros acabou — top_n = 0 é "todos". O km mínimo fica.
 insert into public.ce_app_unidade_cfg (unidade, grupo, top_n, km_min) values
-  ('EMP PIRAI',      'PIRAI', 15, 1000),
-  ('INS LATA PIRAI', 'PIRAI',  5,  500)
+  ('EMP PIRAI',      'PIRAI', 0, 1000),
+  ('INS LATA PIRAI', 'PIRAI', 0,  500)
 on conflict (unidade) do update set grupo = excluded.grupo, top_n = excluded.top_n, km_min = excluded.km_min, atualizado_em = now();
 
 create or replace function public.ce_app_top_n(p_unidade text)
