@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610070600">
+<meta name="build" content="202610070700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Gestão de Pneus · Gestão em Movimento</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -398,7 +398,7 @@ table.dre td.empty{text-align:center;color:var(--txt3);padding:28px;}
 .tw-compacta table.dre td{padding:8px 7px;font-size:11px;}
 
 /* Aderência: hero + gráficos + as duas tabelas lado a lado, que ficam com o resto */
-.adh-charts{flex:0 0 auto;height:clamp(200px,34vh,320px);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.adh-charts{flex:1 1 0;min-height:200px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 .adh-tables{flex:1 1 0;min-height:160px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 .adh-tables>.tsec{min-width:0;}
 
@@ -596,6 +596,7 @@ tr.detail-row td{padding:10px 16px 14px;}
     <button class="s-item on" data-vw="resumo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> Resumo Gerencial</button>
     <button class="s-item" data-vw="saude-bottom"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg> Bottom — Saúde dos Pneus</button>
     <button class="s-item" data-vw="aderencia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Aderência às Aferições</button>
+    <button class="s-item" data-vw="adh-tabelas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Milimetragem e Calibragem</button>
     <button class="s-item" data-vw="milimetragem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h18M6 17v-4M10 17V9M14 17v-6M18 17V7"/></svg> Milimetragem</button>
     <button class="s-item" data-vw="mm-bottom"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg> Bottom — Menor Sulco</button>
     <button class="s-item" data-vw="pressao"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16a8 8 0 1 1 15 0"/><path d="M12 13l4-4"/><circle cx="12" cy="14" r="1.2"/></svg> Pressão dos Pneus</button>
@@ -875,6 +876,10 @@ tr.detail-row td{padding:10px 16px 14px;}
           </div>
         </div>
 
+      </section>
+
+      <!-- Aderência às Aferições · tabelas por placa (Renan, 06/10/2026: "Separe tabelas e gráficos em duas visões") -->
+      <section class="vw" id="vw-adh-tabelas">
         <div class="adh-tables">
           <div class="card tsec">
             <div class="thead-row"><div class="ttit">Milimetragem</div></div>
@@ -1836,6 +1841,7 @@ const TIT = {
   resumo: 'Resumo Gerencial',
   'saude-bottom': 'Bottom — Saúde dos Pneus',
   aderencia: 'Aderência às Aferições',
+  'adh-tabelas': 'Milimetragem e Calibragem',
   milimetragem: 'Milimetragem',
   'mm-bottom': 'Bottom — Menor Sulco',
   pressao: 'Pressão dos Pneus',
@@ -1851,7 +1857,7 @@ const TIT = {
   compat: 'Placas Compatíveis para Rodízio — Pneus Bons e Nota Alta'
 };
 const VW_PAGE = {
-  resumo: 'saude', 'saude-bottom': 'saude', aderencia: 'painel',
+  resumo: 'saude', 'saude-bottom': 'saude', aderencia: 'painel', 'adh-tabelas': 'painel',
   milimetragem: 'milimetragem', 'mm-bottom': 'milimetragem',
   pressao: 'pressao', 'pressao-bottom': 'pressao', cpk: 'cpk',
   previsao: 'previsao', 'prev-bottom': 'previsao',
@@ -5083,6 +5089,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610070600"></script>
+<script src="../assets/build-check.js?v=202610070700"></script>
 </body>
 </html>
