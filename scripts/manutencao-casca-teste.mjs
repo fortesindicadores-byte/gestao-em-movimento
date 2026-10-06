@@ -8,7 +8,7 @@
 // lida pelo supabase-js real (SBJS). Chart.js real via CHART_JS + DATALABELS.
 //
 // Uso (Playwright só importa de dentro de docs/driverpro-apresentacao/):
-//   git show HEAD:manutencao/index.html > /tmp/.../mnt-antigo.html
+//   git show 42239fd:manutencao/index.html > /tmp/.../mnt-antigo.html   (o último antes da casca)
 //   cp scripts/manutencao-casca-teste.mjs docs/driverpro-apresentacao/_mnt-casca.mjs
 //   cd docs/driverpro-apresentacao && RAIZ=/home/user/gestao-em-movimento \
 //     ANTIGO=<html antigo> CHART_JS=<chart.umd.js> DATALABELS=<datalabels.min.js> \
