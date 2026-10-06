@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610070015">
+<meta name="build" content="202610071000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Manutenção — Detalhamento por NF</title>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
@@ -428,7 +428,7 @@ table.dre td b{color:var(--txt);font-weight:700;}
           <div class="kpi" title="Realizado do recorte ÷ ativos do recorte (Unidade e Projeto)"><div class="kl">Custo médio por ativo</div><div class="kv" id="hero-cma">—</div></div>
         </div>
         <div class="dist-head">
-          <div><div class="ttit" id="dist-tit">Distribuição por Cluster</div><div class="tsub">Top 10 por gasto · valor (R$) e % do realizado</div></div>
+          <div><div class="ttit" id="dist-tit" style="display:none">Distribuição por Cluster</div><div class="tsub">Top 10 por gasto · valor (R$) e % do realizado</div></div>
           <div class="dims">
             <button class="dimb on" data-dim="cluster" onclick="setDim('cluster')">Cluster</button>
             <button class="dimb" data-dim="ramo" onclick="setDim('ramo')">Ramo</button>
@@ -469,7 +469,7 @@ table.dre td b{color:var(--txt);font-weight:700;}
       <section class="vw" id="vw-detalhe">
         <div class="card tsec">
           <div class="thead-row">
-            <div><div class="ttit">Detalhamento (todas as NFs)</div>
+            <div><div class="ttit" style="display:none">Detalhamento (todas as NFs)</div>
               <div class="tsub" id="det-sub">Carregando…</div></div>
           </div>
           <div class="twrap"><table class="dre" id="tbl-det">
@@ -483,7 +483,7 @@ table.dre td b{color:var(--txt);font-weight:700;}
       <section class="vw" id="vw-diag">
         <div class="card tsec">
           <div class="thead-row">
-            <div><div class="ttit">Diagnóstico · Fora de manutenção</div>
+            <div><div class="ttit">Fora de manutenção</div>
               <div class="tsub">Ramos que normalmente não são manutenção de veículo — revisar se devem sair do pacote</div></div>
           </div>
           <div class="warn-box" id="diag-warn">Carregando…</div>
@@ -895,6 +895,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610070015"></script>
+<script src="../assets/build-check.js?v=202610071000"></script>
 </body>
 </html>

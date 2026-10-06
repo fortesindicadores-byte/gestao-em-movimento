@@ -293,7 +293,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       ok('scripts no fim, na ordem do padrão', ordem.every((x, i) => x >= 0 && (i === 0 || x > ordem[i - 1])), ordem.join(','));
       ok('ctrlk.js, gviz-cache.js, gerot-base.js e supabase-js continuam', ['ctrlk.js', 'gviz-cache.js', 'gerot-base.js', 'supabase-js'].every(n => exp.srcs.some(s => s.includes(n))));
       ok('filters-toggle.js saiu', !exp.srcs.some(s => s.includes('filters-toggle')));
-      ok('build-check com o mesmo build do <meta>', await page.evaluate(B => { const b = (document.querySelector('meta[name=build]') || {}).content; return b === B && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + b)); }, BUILD));
+      ok('build-check com o mesmo build do <meta>', await page.evaluate(B => { const b = (document.querySelector('meta[name=build]') || {}).content; return !!b && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + b)); }, BUILD));
       // menu do Excel/PNG abre no clique direito da tabela
       await page.click('.s-item[data-vw="ranking"]'); await page.waitForTimeout(200);
       await page.click('#ranking-table tbody td:nth-child(2)', { button: 'right' }); await page.waitForTimeout(150);

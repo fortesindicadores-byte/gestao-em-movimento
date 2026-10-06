@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610070015">
+<meta name="build" content="202610071000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Correlações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -513,7 +513,7 @@ table.mx td:hover{outline:2px solid var(--laranja);outline-offset:-2px;}
       <section class="vw" id="vw-matriz">
         <div class="card tsec">
           <div class="thead-row">
-            <div><div class="ttit">Matriz de correlação</div><div class="tsub" id="sub-matriz">—</div></div>
+            <div><div class="ttit" style="display:none">Matriz de correlação</div><div class="tsub" id="sub-matriz">—</div></div>
             <div class="mxleg"><span><i style="background:color-mix(in srgb,var(--laranja) 75%,transparent)"></i>positiva</span><span><i style="background:color-mix(in srgb,var(--azul) 75%,transparent)"></i>negativa</span><span>número apagado = q ≥ 5%</span><span>· = menos de <b id="mx-nmin">8</b> pontos</span><span>— = mesma conta (rem × real, custo × parte dele), não é correlação</span><span>clique numa célula para abrir a dispersão</span></div>
           </div>
           <div class="mxwrap" id="t-matriz"></div>
@@ -1057,6 +1057,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610070015"></script>
+<script src="../assets/build-check.js?v=202610071000"></script>
 </body>
 </html>
