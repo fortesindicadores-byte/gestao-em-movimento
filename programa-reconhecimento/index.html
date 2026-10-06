@@ -440,6 +440,20 @@ body.claro .podio-slot.primeiro .pedestal{box-shadow:0 -4px 24px rgba(196,145,26
 .rl-from{font-size:10px;color:var(--txt3);white-space:nowrap;}
 .rl-up{color:var(--green);} .rl-down{color:var(--red);}
 .rc-empty{font-size:11px;color:var(--txt3);}
+/* a visão é só este card: ele ocupa a altura inteira e as linhas crescem com a tela */
+@media(min-width:861px){
+  .resumo-section{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
+  .resumo-grid{flex:1;min-height:0;grid-template-rows:repeat(2,minmax(0,1fr));}
+  .resumo-card{display:flex;flex-direction:column;justify-content:center;padding:clamp(14px,2.6vh,26px) clamp(16px,1.6vw,24px);}
+  .rc-h{font-size:clamp(9.5px,1.3vh,11.5px);margin-bottom:clamp(12px,2vh,20px);}
+  .rc-big{font-size:clamp(30px,6.4vh,58px);}
+  .rc-big span{font-size:clamp(15px,2.6vh,22px);}
+  .rc-note{font-size:clamp(10px,1.3vh,12px);}
+  .rc-list{gap:clamp(10px,2.2vh,20px);}
+  .rc-list li{font-size:clamp(12px,1.7vh,15px);}
+  .rl-delta{font-size:clamp(13px,1.85vh,16px);}
+  .rl-from{font-size:clamp(10px,1.3vh,12px);}
+}
 @media(max-width:1100px){ .kpis{grid-template-columns:repeat(3,1fr);} }
 /* ── celular: nada de altura por flex (colapsava gráfico e tabela para 0);
       a página rola e cada bloco tem altura própria ── */
