@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610061700">
+<meta name="build" content="202610061800">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1309,7 +1309,8 @@ function ajustaAlturaLinhas(){
 addEventListener('resize', ()=>requestAnimationFrame(ajustaAlturaLinhas));
 
 /* ── Carteira em R$ (mesma conta do app; regras de ce_app_criterios) ── */
-const brl = v => 'R$ ' + (+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+// dinheiro sem "R$" e sem centavos (Renan, 06/10/2026: "grana sem R$ e sem casa da vírgula")
+const brl = v => Math.round(+v||0).toLocaleString('pt-BR');
 /* piso da rampa (ce_app_regras.piso_nota). Mora FORA do carteiraDe porque o
    renderCarteira também o escreve no card: dentro dele era um ReferenceError
    que parava o atualizar() e deixava Carteira, Km/L e Ranking Km/L vazios. */
@@ -1351,7 +1352,7 @@ function renderCarteira(data){
   if(box) box.innerHTML = [
     ['Custo do programa', brl(tot.cart+tot.pod), `${nv} mês(es) no recorte`],
     ['Carteiras pagas', brl(tot.cart), 'rampa a partir da nota '+pisoNota()+', dos elegíveis'],
-    ['Pódios', brl(tot.pod), (CRIT.regras.podio||[300,150,100]).map(v=>'R$ '+v).join(' · ')],
+    ['Pódios', brl(tot.pod), (CRIT.regras.podio||[300,150,100]).map(v=>brl(v)).join(' · ')],
     ['Motoristas elegíveis', String(tot.eleg), `de ${rows.length} com nota (motorista-mês)`],
     ['Maior ganho', rows.length ? brl(rows[0].total) : '—', rows.length ? rows[0].unit : ''],
   ].map(([l,v,m])=>`<div class="kpi"><div class="kl">${l}</div><div class="kv">${v}</div><div class="km">${m}</div></div>`).join('');
@@ -1792,6 +1793,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610061700"></script>
+<script src="../../assets/build-check.js?v=202610061800"></script>
 </body>
 </html>
