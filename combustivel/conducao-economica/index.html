@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610061300">
+<meta name="build" content="202610061400">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -273,6 +273,10 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
    ============================================================ */
 /* miolo do Resumo: gráfico maior à esquerda, regras à direita */
 .ce-kpis{grid-template-columns:repeat(3,1fr);margin-top:14px;}
+/* cards dos pilares um pouco mais altos (Renan, 06/10/2026: "aumentar um
+   pouco os cards") — mesma régua dos cards do Resumo nos painéis migrados */
+#vw-resumo #kpi-pilares .kpi{min-height:clamp(110px,16.5vh,168px);display:flex;flex-direction:column;
+  justify-content:center;padding:clamp(16px,3vh,28px) 18px;}
 .cart-kpis{grid-template-columns:repeat(5,1fr);margin-top:0;margin-bottom:12px;flex:0 0 auto;}
 #vw-carteira{display:none;flex-direction:column;} #vw-carteira.on{display:flex;}
 .cart-td b{font-weight:800;} .cart-neg{color:var(--txt3);}
@@ -556,6 +560,7 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
               <div>Período<b id="h-per">—</b></div>
               <div>Motoristas<b id="h-mot">—</b></div>
               <div>Fonte<b id="h-fonte">—</b></div>
+              <div><span id="h-pagar-l">A pagar no mês</span><b id="h-pagar">—</b></div>
             </div>
           </div>
         </div>
@@ -846,10 +851,14 @@ const COD_OF = {}, SRC_OF = {}, UNI_OF = {};   // UNI_OF = nome da unidade como 
    unidade é olhada. Renan, 06/09/2026: "Lata 5, Empurrada 15, olhados juntos
    como unidade Piraí; Lata elegibilidade 500 km". Sem banco, fica a regra
    geral (1.000 km + top 15). */
-let CRIT = { regras: { km_min: 1000, top_n: 15 }, unidades: [] };
+/* TODOS GANHAM (Renan, 06/10/2026: "agora todos ganham na nova regra"): com a
+   régua de R$ 5 por ponto a partir da nota 60, a cota de N primeiros acabou —
+   top_n = 0 quer dizer "todos" (mesma convenção do ce_app_dados). O km mínimo
+   da unidade continua valendo. */
+let CRIT = { regras: { km_min: 1000, top_n: 0 }, unidades: [] };
 function critDe(uniRaw){
   const c = CRIT.unidades.find(u => u.unidade === uniRaw) || {};
-  return { km_min: c.km_min ?? CRIT.regras.km_min ?? 1000, top_n: c.top_n ?? CRIT.regras.top_n ?? 15, grupo: c.grupo || uniRaw };
+  return { km_min: c.km_min ?? CRIT.regras.km_min ?? 1000, top_n: c.top_n ?? CRIT.regras.top_n ?? 0, grupo: c.grupo || uniRaw };
 }
 async function fetchCriterios(){
   try {
@@ -1142,6 +1151,12 @@ function renderHero(data){
   set('h-per', period);
   set('h-mot', String(new Set(data.map(r=>r.unit)).size));
   set('h-fonte', ORIGEM==='banco' ? 'Geotab' : 'Exemplo');
+  /* VALOR A PAGAR (Renan, 06/10/2026): carteiras + pódios do recorte, pela
+     MESMA conta da visão Carteira em R$ (carteiraDe). Com uma vigência é o
+     total do mês; com várias, a soma delas. */
+  const cart = carteiraDe(data).reduce((s,r)=>s+r.total,0);
+  set('h-pagar-l', sv.length===1 ? 'A pagar no mês' : 'A pagar no recorte');
+  set('h-pagar', data.length ? brl(cart) : '—');
   /* O PERÍODO MORA NO SUBTÍTULO DA PÁGINA (Renan, 04/09/2026): o card do
      Ranking perdeu o título, que só repetia o do topo, e com ele iria embora
      a única indicação de qual recorte está na tela. O período passa a ficar
@@ -1276,9 +1291,13 @@ addEventListener('resize', ()=>requestAnimationFrame(ajustaAlturaLinhas));
 
 /* ── Carteira em R$ (mesma conta do app; regras de ce_app_criterios) ── */
 const brl = v => 'R$ ' + (+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+/* piso da rampa (ce_app_regras.piso_nota). Mora FORA do carteiraDe porque o
+   renderCarteira também o escreve no card: dentro dele era um ReferenceError
+   que parava o atualizar() e deixava Carteira, Km/L e Ranking Km/L vazios. */
+function pisoNota(){ const p = +CRIT.regras.piso_nota; return (isFinite(p) && p > 0 && p < 100) ? p : 0; }
 function carteiraDe(data){
   const saldo = +(CRIT.regras.saldo_inicial ?? 200), podio = CRIT.regras.podio || [300,150,100];
-  const _p = +CRIT.regras.piso_nota, PISO = (isFinite(_p) && _p > 0 && _p < 100) ? _p : 0;
+  const PISO = pisoNota();
   const porVig = {};
   data.forEach(r=>{ (porVig[r.vig] = porVig[r.vig] || []).push(r); });
   const acc = {};
@@ -1312,7 +1331,7 @@ function renderCarteira(data){
   const box=$('cart-kpis');
   if(box) box.innerHTML = [
     ['Custo do programa', brl(tot.cart+tot.pod), `${nv} mês(es) no recorte`],
-    ['Carteiras pagas', brl(tot.cart), 'rampa a partir da nota '+PISO+', dos elegíveis'],
+    ['Carteiras pagas', brl(tot.cart), 'rampa a partir da nota '+pisoNota()+', dos elegíveis'],
     ['Pódios', brl(tot.pod), (CRIT.regras.podio||[300,150,100]).map(v=>'R$ '+v).join(' · ')],
     ['Motoristas elegíveis', String(tot.eleg), `de ${rows.length} com nota (motorista-mês)`],
     ['Maior ganho', rows.length ? brl(rows[0].total) : '—', rows.length ? rows[0].unit : ''],
@@ -1754,6 +1773,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610061300"></script>
+<script src="../../assets/build-check.js?v=202610061400"></script>
 </body>
 </html>
