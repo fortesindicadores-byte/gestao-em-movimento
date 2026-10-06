@@ -2,13 +2,14 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610061800">
+<meta name="build" content="202610061900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+<script src="../../assets/estatistica.js"></script>
 <style>
 /* ============================================================
    CONDUÇÃO ECONÔMICA — casca extraída da Visão Financeira
@@ -286,19 +287,26 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 /* o NÚMERO fica colado no rótulo (é o par que se lê junto) e só o "resultado
    medido" desce para o pé do card — Renan, 06/10/2026, ao ver o número solto
    no meio: "Isso não". */
-#kpi-pilares .kpi,#cart-kpis .kpi,#cons-kpis .kpi,#ac-kpis .kpi{min-height:clamp(130px,20vh,200px);display:flex;
+#kpi-pilares .kpi,#cart-kpis .kpi,#cons-kpis .kpi,#ac-kpis .kpi,#nk-kpis .kpi{min-height:clamp(130px,20vh,200px);display:flex;
   flex-direction:column;justify-content:flex-start;padding:clamp(16px,3vh,28px) 20px;}
-#kpi-pilares .kpi .kv,#cart-kpis .kpi .kv,#cons-kpis .kpi .kv,#ac-kpis .kpi .kv{margin-top:8px;}
-#kpi-pilares .kpi .km,#cart-kpis .kpi .km,#cons-kpis .kpi .km,#ac-kpis .kpi .km{margin-top:auto;padding-top:8px;}
-#kpi-pilares .kpi .kv,#cart-kpis .kpi .kv,#cons-kpis .kpi .kv,#ac-kpis .kpi .kv{font-size:clamp(25px,3.6vh,34px);}
-#kpi-pilares .kpi .km,#cart-kpis .kpi .km,#cons-kpis .kpi .km,#ac-kpis .kpi .km{font-size:11px;}
+#kpi-pilares .kpi .kv,#cart-kpis .kpi .kv,#cons-kpis .kpi .kv,#ac-kpis .kpi .kv,#nk-kpis .kpi .kv{margin-top:8px;}
+#kpi-pilares .kpi .km,#cart-kpis .kpi .km,#cons-kpis .kpi .km,#ac-kpis .kpi .km,#nk-kpis .kpi .km{margin-top:auto;padding-top:8px;}
+#kpi-pilares .kpi .kv,#cart-kpis .kpi .kv,#cons-kpis .kpi .kv,#ac-kpis .kpi .kv,#nk-kpis .kpi .kv{font-size:clamp(25px,3.6vh,34px);}
+#kpi-pilares .kpi .km,#cart-kpis .kpi .km,#cons-kpis .kpi .km,#ac-kpis .kpi .km,#nk-kpis .kpi .km{font-size:11px;}
 .cart-kpis{grid-template-columns:repeat(5,1fr);margin-top:0;margin-bottom:12px;flex:0 0 auto;}
 #vw-carteira{display:none;flex-direction:column;} #vw-carteira.on{display:flex;}
 .cart-td b{font-weight:800;} .cart-neg{color:var(--txt3);}
 /* Consumo (Renan, 07/09/2026): litros por viagem da telemetria — KPIs, km/L
    por mês e a tabela por motorista. O gráfico tem teto de altura para a
    tabela ficar com a sobra (a regra da sobra dividida). */
-#vw-consumo,#vw-consrank{display:none;flex-direction:column;} #vw-consumo.on,#vw-consrank.on{display:flex;}
+#vw-consumo,#vw-consrank,#vw-notakml{display:none;flex-direction:column;} #vw-consumo.on,#vw-consrank.on,#vw-notakml.on{display:flex;}
+/* NOTA × KM/L (Renan, 06/10/2026): coeficiente solto no topo, cards de leitura e
+   as duas curvas mês a mês + a dispersão por motorista */
+.nk-kpis{grid-template-columns:repeat(4,1fr);}
+.nk-gr{margin-top:12px;}
+.gleg i.ln{width:16px;height:0;border-top:2px solid currentColor;position:relative;}
+.gleg i.ln::after{content:'';position:absolute;left:5px;top:-4px;width:6px;height:6px;border-radius:50%;background:currentColor;}
+.nk-pos{color:var(--verde)!important;} .nk-neg{color:var(--vermelho)!important;}
 /* o gráfico do ano é o miolo da visão: ocupa a sobra inteira, como o do
    Resumo. O que fazia parecer "muito alto" (Renan, 07/09/2026) era o eixo em
    zero: barras de 2,17 a 2,28 viram um paredão igual. O eixo agora corta
@@ -500,6 +508,10 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
     <button class="s-item" data-vw="consrank">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg>
       Ranking Km/L
+    </button>
+    <button class="s-item" data-vw="notakml">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 3 4-6 5 4"/><circle cx="8" cy="11" r="1"/><circle cx="16" cy="8" r="1"/></svg>
+      Nota × Km/L
     </button>
     <button class="s-item" data-vw="acessos">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M11 18h2"/></svg>
@@ -706,6 +718,41 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
             <thead><tr><th style="width:34px;">#</th><th>Motorista</th><th>Modelo mais dirigido</th><th>Unidade</th><th>Projeto</th><th class="num">Km com combustível</th><th class="num">Litros</th><th class="num">Km/L</th></tr></thead>
             <tbody id="cons-tbody"></tbody>
           </table></div>
+        </div>
+      </section>
+
+      <!-- ══ 5b · NOTA × KM/L (Renan, 06/10/2026: "um gráfico de linhas… uma linha o
+           score do modo de condução e outra o km/L… ver se a curva acompanha… algum
+           coeficiente que meça a correlação entre as curvas… o coeficiente deve ser
+           o card solto lá em cima"). r de Pearson das duas curvas mensais; os cards
+           e a dispersão olham motorista a motorista no recorte de vigência. ══ -->
+      <section class="vw" id="vw-notakml">
+        <div class="fin-hero">
+          <div>
+            <div class="hlbl">Correlação nota × km/L · Pearson (r)</div>
+            <div class="hval" id="nk-r">—</div>
+            <div class="hdel">
+              <div>Leitura<b id="nk-leit">—</b></div>
+              <div>R²<b id="nk-r2">—</b></div>
+              <div>Meses comparados<b id="nk-n">—</b></div>
+              <div>Coincidência?<b id="nk-p">—</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="kpis ce-kpis nk-kpis" id="nk-kpis"></div>
+        <div class="gr2 ce-gr nk-gr">
+          <div class="card gcard">
+            <div class="thead-row" style="margin-bottom:0">
+              <div><div class="gtit">Nota × Km/L por mês</div><div class="gsub" id="nk-sub">Mesmos motoristas nas duas curvas: só quem tem litros reportados · 2026</div></div>
+            </div>
+            <div class="gleg" id="nk-leg"></div>
+            <div class="gcv"><canvas id="chartNotaKml"></canvas></div>
+          </div>
+          <div class="card gcard">
+            <div class="gtit">Motoristas: nota × km/L</div>
+            <div class="gsub" id="nk-dsub">Um ponto por motorista no recorte · linha = tendência</div>
+            <div class="gcv"><canvas id="chartNotaDisp"></canvas></div>
+          </div>
         </div>
       </section>
 
@@ -1157,6 +1204,7 @@ function atualizar(){
   renderRanking(data);
   renderCarteira(data);
   renderConsumo(data);
+  renderNotaKml();
   renderAcessos();
   renderChart();
 }
@@ -1474,6 +1522,134 @@ function renderConsChart(){
   });
 }
 
+/* ── Nota × Km/L (Renan, 06/10/2026) ──────────────────────────────────────
+   CURVAS: mês a mês, no recorte de unidade/motorista do topo (o ano inteiro,
+   como o Km/L por mês), e com a MESMA população nas duas — só motorista-mês
+   com litros reportados; senão a nota de quem não tem combustível entraria numa
+   curva e não na outra. Nota = média simples por motorista-mês (como o hero);
+   km/L = Σ km ÷ Σ litros das viagens com litros (como o Km/L Gerencial).
+   O r de Pearson e o p saem do assets/estatistica.js, o mesmo motor das
+   Correlações. CARDS e DISPERSÃO: motorista a motorista, no recorte completo
+   (vigência incluída), com mínimo de km com combustível para km/L de poucas
+   viagens não virar ponto solto. */
+let chartNotaKml=null, chartNotaDisp=null;
+const NK_KM_MIN = 300;
+const nkFin = v => typeof v==='number' && isFinite(v);
+const nkBr = (v,d) => nkFin(v) ? v.toFixed(d).replace('.',',') : '—';
+const nkForca = r => { const a=Math.abs(r); if(!nkFin(r)) return 'sem leitura'; if(a>=0.7) return 'forte'; if(a>=0.4) return 'moderada'; if(a>=0.2) return 'fraca'; return 'quase nenhuma'; };
+const nkLeit = r => !nkFin(r) ? 'sem leitura' : `${nkForca(r)}${Math.abs(r)>=0.2 ? (r>0?' · sobem juntas':' · andam ao contrário') : ''}`;
+const nkCoinc = p => !nkFin(p) ? '—' : p<0.01 ? 'muito difícil' : p<0.05 ? 'improvável' : 'pode ser';
+function nkMotoristas(data){
+  const m={};
+  data.forEach(r=>{ if(r.semLogin || !(r.lit>0 && r.kmLit>0) || r.pont==null) return;
+    const a=m[r.unit]||(m[r.unit]={unit:r.unit, k:0, l:0, pts:[], fv:[]});
+    a.k+=r.kmLit; a.l+=r.lit; a.pts.push(r.pont); if(r.rpm!=null) a.fv.push(r.rpm); });
+  return Object.values(m).filter(a=>a.k>=NK_KM_MIN && a.l>0)
+    .map(a=>({ ...a, nota:a.pts.reduce((x,y)=>x+y,0)/a.pts.length, kml:a.k/a.l }));
+}
+function renderNotaKml(){
+  const E = window.Estat;
+  const isLight=document.body.classList.contains('claro');
+  const corNota = isLight ? '#111111' : '#FFFFFF', corKml = '#F97316';
+  const LABELS=['jan.','fev.','mar.','abr.','mai.','jun.','jul.','ago.','set.','out.','nov.','dez.'];
+  const su=getMsValues('ms-uni'), sm=getMsValues('ms-mot');
+  const base=RAW.filter(r=>!r.semLogin && (!su.length||su.includes(COD_OF[r.unit]||'—'))&&(!sm.length||sm.includes(r.unit)));
+  const sv=selVigKeys(), allVigs=[...new Set(RAW.map(r=>r.vig))];
+  const filtroAtivo = sv.length>0 && sv.length<allVigs.length;
+  const mes=Array.from({length:12},(_,i)=>{
+    const rows=base.filter(r=>vigMonth(r.vig)===i+1 && r.lit>0 && r.kmLit>0 && r.pont!=null);
+    const k=rows.reduce((s,r)=>s+r.kmLit,0), l=rows.reduce((s,r)=>s+r.lit,0);
+    const fv=rows.filter(r=>r.rpm!=null).map(r=>r.rpm);
+    return { nota: rows.length ? rows.reduce((s,r)=>s+r.pont,0)/rows.length : null, kml: l>0 ? k/l : null,
+             fv: fv.length ? fv.reduce((a,b)=>a+b,0)/fv.length : null, vig: rows[0] ? rows[0].vig : null };
+  });
+  const nota=mes.map(m=>m.nota), kml=mes.map(m=>m.kml);
+  const sel=i=>!filtroAtivo||(mes[i].vig&&sv.includes(mes[i].vig));
+
+  // ── coeficiente solto no topo: as duas curvas ──
+  const c = E ? E.pearson(nota, kml) : { r:NaN, n:0, p:NaN };
+  set('nk-r', nkFin(c.r) ? nkBr(c.r,2) : '—');
+  const hr=$('nk-r'); if(hr){ hr.classList.toggle('nk-pos', nkFin(c.r)&&c.r>=0.4); hr.classList.toggle('nk-neg', nkFin(c.r)&&c.r<=-0.4); }
+  set('nk-leit', nkLeit(c.r));
+  set('nk-r2', nkFin(c.r) ? Math.round(c.r*c.r*100)+'%' : '—');
+  set('nk-n', String(c.n||0) + (E && c.n && c.n < E.N_MIN ? ' · poucos' : ''));
+  set('nk-p', nkFin(c.p) ? `${nkCoinc(c.p)} (p ${c.p<0.001?'< 0,001':nkBr(c.p,3)})` : '—');
+
+  // ── cards: motorista a motorista no recorte, + a faixa verde nas curvas ──
+  const mot = nkMotoristas(getFiltered());
+  const cm = E ? E.pearson(mot.map(m=>m.nota), mot.map(m=>m.kml)) : { r:NaN, n:0 };
+  const cf = E ? E.pearson(mes.map(m=>m.fv), kml) : { r:NaN, n:0 };
+  const reta = E && mot.length>=3 ? E.reta(mot.map(m=>m.nota), mot.map(m=>m.kml)) : null;
+  const faixa = (lo,hi)=>{ const g=mot.filter(m=>m.nota>=lo && m.nota<hi); const k=g.reduce((s,m)=>s+m.k,0), l=g.reduce((s,m)=>s+m.l,0); return { kml: l>0?k/l:null, n:g.length }; };
+  const alto=faixa(85,1e9), baixo=faixa(-1e9,70);
+  const dif = nkFin(alto.kml)&&nkFin(baixo.kml)&&baixo.kml>0 ? (alto.kml/baixo.kml-1)*100 : null;
+  const passo = reta && nkFin(reta.b) ? reta.b*10 : null;
+  const box=$('nk-kpis');
+  if(box) box.innerHTML = [
+    ['Entre motoristas (r)', nkBr(cm.r,2), `${cm.n||0} motorista(s) com ≥ ${NK_KM_MIN} km com combustível · ligação ${nkForca(cm.r)}`],
+    ['Faixa verde × km/L (r)', nkBr(cf.r,2), `as duas curvas mês a mês · ligação ${nkForca(cf.r)}`],
+    ['Km/L de quem tira 85+', alto.n ? nkBr(alto.kml,2) : '—', baixo.n ? `contra ${nkBr(baixo.kml,2)} de quem fica abaixo de 70`+(dif!=null?` (${dif>=0?'+':''}${nkBr(dif,1)}%)`:'') : 'ninguém abaixo de 70 no recorte'],
+    ['A cada 10 pontos de nota', passo!=null ? (passo>=0?'+':'')+nkBr(passo,2)+' km/L' : '—', 'inclinação da tendência entre motoristas'],
+  ].map(([l,v,m])=>`<div class="kpi"><div class="kl">${l}</div><div class="kv">${v}</div><div class="km">${m}</div></div>`).join('');
+
+  // ── gráfico de linhas (só desenha com a visão na tela) ──
+  const cv=$('chartNotaKml');
+  if(cv && cv.offsetParent){
+    const tooltip = isLight
+      ? {backgroundColor:'#FFFFFF',titleColor:'#D95E08',bodyColor:'#161D2B',borderColor:'rgba(15,23,42,.15)',borderWidth:1,titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'}}
+      : {backgroundColor:'#26262B',titleColor:'#F97316',bodyColor:'#EEF2FA',borderColor:'rgba(255,255,255,.12)',borderWidth:1,titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'}};
+    const isMobile=window.innerWidth<768, tickC=isLight?'#444444':'#94A3B8';
+    // cada eixo justo à própria curva, com folga: as duas ocupam a mesma faixa
+    // de altura, que é o que deixa comparar o FORMATO — nota fica na metade de
+    // cima e km/L na de baixo só pela folga, para os rótulos não se cruzarem
+    const ext=(v,f)=>{ const a=v.filter(nkFin); if(!a.length) return {min:0,max:1}; const lo=Math.min(...a), hi=Math.max(...a), amp=Math.max(hi-lo, f); return {min:lo-amp*0.9, max:hi+amp*0.35}; };
+    const en=ext(nota,2), ek=ext(kml,0.05);
+    const ek2={min:ek.min-(ek.max-ek.min)*0.1, max:ek.max+(ek.max-ek.min)*0.75};
+    $('nk-leg').innerHTML = `<span style="color:${corNota}"><i class="ln"></i><b style="color:var(--txt3)">Nota do modo de condução</b></span>`
+      + `<span style="color:${corKml}"><i class="ln"></i><b style="color:var(--txt3)">Km/L</b></span>`;
+    const pr=arr=>arr.map((v,i)=>v==null?0:(filtroAtivo&&sel(i)?6:4));
+    const ds=(lbl,data,cor,eixo,fmt,pos)=>({ label:lbl, data, yAxisID:eixo, borderColor:cor, backgroundColor:cor,
+      borderWidth:2.5, tension:.3, spanGaps:true, pointRadius:pr(data), pointHoverRadius:7,
+      pointBackgroundColor:data.map((_,i)=>filtroAtivo&&!sel(i)?(isLight?'#FFFFFF':'#1E1E20'):cor), pointBorderColor:cor, pointBorderWidth:2,
+      datalabels:{ display:c=>data[c.dataIndex]!=null && sel(c.dataIndex), color:cor==='#F97316'?cor:(isLight?'#111111':'#F1F5F9'),
+        font:{family:'Montserrat',size:isMobile?8:12,weight:'700'}, formatter:fmt, anchor:'center', align:pos, offset:6 } });
+    if(chartNotaKml) chartNotaKml.destroy();
+    chartNotaKml=new Chart(cv.getContext('2d'),{
+      type:'line',
+      data:{ labels:LABELS, datasets:[
+        ds('Nota', nota, corNota, 'y', v=>v!=null?nkBr(v,1):'', 'top'),
+        ds('Km/L', kml, corKml, 'y1', v=>v!=null?nkBr(v,2):'', 'bottom') ]},
+      options:{ responsive:true, maintainAspectRatio:false, layout:{padding:{top:18,bottom:8,left:8,right:8}},
+        interaction:{mode:'index',intersect:false},
+        plugins:{ legend:{display:false}, datalabels:{display:false},
+          tooltip:{...tooltip, callbacks:{ label:c=>c.raw==null?'':' '+c.dataset.label+': '+(c.dataset.label==='Nota'?nkBr(c.raw,1):nkBr(c.raw,2)+' km/L') }} },
+        scales:{ x:{ grid:{display:false}, border:{display:false}, ticks:{color:tickC, font:{family:'Montserrat',size:isMobile?9:15}} },
+                 y:{ display:false, min:en.min, max:en.max }, y1:{ display:false, min:ek2.min, max:ek2.max } } },
+    });
+  }
+  // ── dispersão: um ponto por motorista, com a reta de tendência ──
+  const cd=$('chartNotaDisp');
+  if(cd && cd.offsetParent){
+    const tickC=isLight?'#444444':'#94A3B8', gridC=isLight?'rgba(15,23,42,.06)':'rgba(255,255,255,.05)';
+    const pts=mot.map(m=>({x:m.nota, y:m.kml, unit:m.unit}));
+    const xs=pts.map(p=>p.x);
+    const linha = reta && nkFin(reta.b) && xs.length ? [Math.min(...xs), Math.max(...xs)].map(x=>({x, y:reta.a+reta.b*x})) : [];
+    set('nk-dsub', `Um ponto por motorista no recorte (${pts.length}) · linha = tendência`);
+    if(chartNotaDisp) chartNotaDisp.destroy();
+    chartNotaDisp=new Chart(cd.getContext('2d'),{
+      type:'scatter',
+      data:{ datasets:[
+        { label:'Motoristas', data:pts, backgroundColor:'rgba(249,115,22,.55)', borderColor:'#F97316', borderWidth:1, pointRadius:4, pointHoverRadius:6 },
+        { label:'Tendência', type:'line', data:linha, borderColor:isLight?'#111111':'#FFFFFF', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false } ]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, datalabels:{display:false},
+          tooltip:{ filter:i=>i.datasetIndex===0, callbacks:{ label:c=>` ${c.raw.unit}: nota ${nkBr(c.raw.x,1)} · ${nkBr(c.raw.y,2)} km/L` } } },
+        scales:{ x:{ title:{display:true,text:'Nota',color:tickC,font:{family:'Montserrat',size:10,weight:'700'}}, grid:{color:gridC}, border:{display:false}, ticks:{color:tickC,font:{family:'Montserrat',size:10}} },
+                 y:{ title:{display:true,text:'Km/L',color:tickC,font:{family:'Montserrat',size:10,weight:'700'}}, grid:{color:gridC}, border:{display:false}, ticks:{color:tickC,font:{family:'Montserrat',size:10}, callback:v=>nkBr(v,2)} } } },
+    });
+  }
+}
+
 /* ── Acessos: filtros do topo (vigência = mês do acesso; elegível não se aplica) ── */
 function acessosFiltrados(semVig){
   const sv = semVig ? [] : selVigKeys().map(v => v.slice(0, 7).replace('/', '-'));
@@ -1719,7 +1895,7 @@ async function recarregar(){
 }
 
 /* ── navegação entre as visões ── */
-const TIT={resumo:'Resumo Gerencial', ranking:'Ranking Geral', carteira:'Carteira em R$', consumo:'Km/L Gerencial', consrank:'Ranking Km/L', acessos:'Acessos', acessrank:'Ranking de Acessos'};
+const TIT={resumo:'Resumo Gerencial', ranking:'Ranking Geral', carteira:'Carteira em R$', consumo:'Km/L Gerencial', consrank:'Ranking Km/L', notakml:'Nota × Km/L', acessos:'Acessos', acessrank:'Ranking de Acessos'};
 function setVw(v){
   VW=v;
   document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===v));
@@ -1727,6 +1903,7 @@ function setVw(v){
   set('tit', TIT[v]||'');
   if(v==='resumo') setTimeout(renderChart,30);     // o canvas precisa estar visível
   if(v==='consumo') setTimeout(renderConsChart,30);
+  if(v==='notakml') setTimeout(renderNotaKml,30);
   if(v==='acessos') setTimeout(renderAcessos,30);
   // o .twrap do ranking só tem altura depois de a seção ficar visível
   if(v==='ranking') requestAnimationFrame(ajustaAlturaLinhas);
@@ -1758,7 +1935,7 @@ function trocaMini(){
   const l=document.querySelector('.side').classList.toggle('mini');
   localStorage.setItem('ce_mini', l?'1':'0');
   const b=$('btMini'); if(b) b.title=l?'Expandir menu':'Recolher menu';
-  setTimeout(()=>{ renderChart(); renderConsChart(); renderAcessos(); },260);
+  setTimeout(()=>{ renderChart(); renderConsChart(); renderNotaKml(); renderAcessos(); },260);
 }
 if(localStorage.getItem('ce_mini')==='1'){ document.querySelector('.side').classList.add('mini'); $('btMini').title='Expandir menu'; }
 
@@ -1769,7 +1946,7 @@ function aplicaTema(t){
   document.body.classList.toggle('claro', t==='light');
   localStorage.setItem('bi_theme', t);
   const b=$('btTema'); if(b) b.innerHTML = t==='light'?_LUA:_SOL;
-  if(RAW.length){ renderChart(); renderConsChart(); renderAcessos(); }
+  if(RAW.length){ renderChart(); renderConsChart(); renderNotaKml(); renderAcessos(); }
 }
 function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark':'light'); }
 aplicaTema(localStorage.getItem('bi_theme')||'dark');
@@ -1796,6 +1973,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610061800"></script>
+<script src="../../assets/build-check.js?v=202610061900"></script>
 </body>
 </html>
