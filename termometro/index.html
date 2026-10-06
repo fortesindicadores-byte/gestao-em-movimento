@@ -270,15 +270,15 @@ body.claro{--yellow:#B8860B;}
 
 /* cards por GEO: a fileira tem altura própria e o gráfico fica com o resto,
    com teto — a sobra de altura é DIVIDIDA */
-.cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;flex:0 0 auto;
-  min-height:clamp(112px,16.5vh,170px);}
+.cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;flex:1 1 0;
+  min-height:clamp(112px,16.5vh,170px);max-height:clamp(150px,22vh,210px);}
 .kpi-card{display:flex;flex-direction:column;justify-content:center;padding:14px 16px;border:1px solid var(--card-brd);
   border-radius:11px;background:var(--side);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
 .card-label{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;}
 .card-value{font-size:clamp(22px,3.6vh,32px);font-weight:800;color:var(--txt);margin-top:6px;line-height:1.1;}
 .card-meta{font-size:10.5px;color:var(--txt3);margin-top:8px;font-weight:600;}
 .card-meta b{font-weight:800;color:var(--txt);}
-#vw-resumo .gcard{flex:1 1 0;min-height:220px;max-height:56vh;}
+#vw-resumo .gcard{flex:3 1 0;min-height:220px;max-height:56vh;}
 .ghead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;}
 /* seletor de indicador = pílulas do padrão */
 .ind-selector{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;}
@@ -299,7 +299,7 @@ body.claro .tier-chip{color:#1a1a1a;}
 /* Ranking: 4 colunas fixas + até 11 indicadores, sem rolagem lateral */
 #rk-table{table-layout:fixed;}
 #rk-table th,#rk-table td{padding:8px 4px;overflow:hidden;text-overflow:ellipsis;}
-#rk-table th{font-size:8.5px;letter-spacing:.2px;white-space:normal;line-height:1.2;vertical-align:bottom;overflow-wrap:anywhere;}
+#rk-table th{font-size:8.5px;letter-spacing:.2px;white-space:normal;line-height:1.2;vertical-align:bottom;hyphens:manual;overflow-wrap:anywhere;}
 #rk-table th:nth-child(1),#rk-table td:nth-child(1){width:28px!important;padding-left:10px;}
 #rk-table th:nth-child(2){width:150px!important;}
 #rk-table th:nth-child(3){width:88px!important;}
@@ -317,7 +317,7 @@ table.mtx td.empty{color:var(--txt3);}
 table.mtx tbody tr:hover td.uni-c,table.mtx tbody tr:hover td.tier-c{background:var(--hover);}
 /* Regras: texto que quebra linha, colunas em proporção (sem rolagem lateral) */
 table.dre#reg-table{table-layout:fixed;}
-#reg-table th{min-width:0!important;}
+#reg-table th{min-width:0!important;white-space:normal;line-height:1.25;}
 #reg-table th:nth-child(1){width:15%;}#reg-table th:nth-child(2){width:26%;}#reg-table th:nth-child(3){width:20%;}
 #reg-table th:nth-child(4){width:10%;}#reg-table th:nth-child(5){width:18%;}#reg-table th:nth-child(6){width:11%;}
 table.dre#reg-table td,table.dre#reg-table th{vertical-align:top;}
@@ -376,18 +376,14 @@ table.dre td.uni{white-space:normal;}
 }
 @media(max-width:860px){
   .filtros{flex-wrap:nowrap;justify-content:flex-start;}
-  #vw-resumo .fin-hero{gap:10px;}
+  #vw-resumo .fin-hero{gap:10px;align-items:flex-start;}
   .hside{gap:18px;flex-wrap:wrap;}
   .color-legend{margin-left:0;gap:12px;}
   .cards-row{grid-template-columns:repeat(2,1fr);min-height:0;}
   #vw-resumo .gcard{height:340px;max-height:none;}
   .tsec .twrap{max-height:70vh;overflow:auto;}
-  /* no celular as tabelas largas rolam de lado; unidade e tier ficam presas */
-  #rk-table,table.mtx,table.dre#reg-table{table-layout:auto;}
-  #rk-table{min-width:900px;} table.mtx{min-width:980px;} table.dre#reg-table{min-width:860px;}
-  table.mtx th.uni-h,table.mtx td.uni-c{position:sticky;left:0;z-index:3;background:var(--pop);}
-  table.mtx th.tier-h,table.mtx td.tier-c{position:sticky;left:150px;z-index:3;background:var(--pop);}
-  table.mtx thead th.uni-h,table.mtx thead th.tier-h{z-index:4;background:var(--cabec);}
+  /* tabela larga no celular: o mobile.js mostra as colunas-chave e o "+ Detalhar" abre a tabela inteira */
+  #rk-table,table.mtx{min-width:900px;}
 }
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
@@ -1041,6 +1037,9 @@ function renderRegras(){
 
 // ════════ RANKING ════════
 function ptColor(p){ if(p>=20)return 'var(--green)'; if(p>=10)return '#22C55E'; if(p>=5)return 'var(--yellow)'; return 'var(--red)'; }
+// hífen opcional (U+00AD) nos nomes longos do cabeçalho: em coluna estreita a palavra quebra com hífen, não no meio
+const HIFEN={'Preventiva':'Preven\u00adtiva','Conformidade':'Confor\u00admidade','Segurança':'Segu\u00adrança','Checklist':'Check\u00adlist','Manutenção':'Manu\u00adtenção','Disponibilidade':'Disponi\u00adbilidade'};
+const hifen=s=>HIFEN[s]||s;
 function renderRanking(rows){
   const tbl=document.getElementById('rk-table');
   if(!rows.length){ tbl.innerHTML='<tbody><tr><td style="padding:20px;color:var(--text2)">Sem dados para o filtro selecionado.</td></tr></tbody>'; return; }
@@ -1067,7 +1066,7 @@ function renderRanking(rows){
   const head=`<thead><tr>
     <th style="text-align:left;width:28px">#</th><th style="text-align:left;width:158px">Unidade</th><th style="text-align:left;width:96px">Tier</th>
     <th class="num sep-l" style="width:62px">Pontuação</th>
-    ${indCols.map(n=>`<th class="num sep-l">${indShort(n)}</th>`).join('')}
+    ${indCols.map(n=>`<th class="num sep-l">${hifen(indShort(n))}</th>`).join('')}
   </tr></thead>`;
   const body='<tbody>'+list.map((m,i)=>{
     const cells=indCols.map(n=>{

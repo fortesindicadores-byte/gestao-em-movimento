@@ -7,7 +7,7 @@
 // Chart.js real via CHART_JS.
 //
 // Uso (Playwright só importa de dentro de docs/driverpro-apresentacao/):
-//   git show HEAD:termometro/index.html > /tmp/.../termo-antigo.html   (o último antes da casca)
+//   git show 60297e2:termometro/index.html > /tmp/.../termo-antigo.html   (o último antes da casca)
 //   cp scripts/termometro-casca-teste.mjs docs/driverpro-apresentacao/_termo-casca-<id>.mjs
 //   cd docs/driverpro-apresentacao && RAIZ=/home/user/gestao-em-movimento \
 //     ANTIGO=<html antigo> CHART_JS=<chart.umd.js> SHOTS=<pasta> node _termo-casca-<id>.mjs ; rm _termo-casca-<id>.mjs
@@ -132,7 +132,7 @@ const leNumeros = () => {
   out.heroCor = getComputedStyle(document.querySelector('.hero-value')).color;
   out.cards = [...document.querySelectorAll('#tier-cards .kpi-card')].map(c => c.textContent.replace(/\s+/g, ' ').trim()).join(' ;; ');
   const linhas = tb => [...(tb ? tb.querySelectorAll('tbody tr') : [])].map(tr => [...tr.cells].map(c => c.textContent.replace(/\s+/g, ' ').trim()).join(' | '));
-  const cab = tb => tb ? [...tb.querySelectorAll('thead th')].map(c => c.textContent.trim()).join(' | ') : null;
+  const cab = tb => tb ? [...tb.querySelectorAll('thead th')].map(c => c.textContent.replace(/\u00ad/g, '').trim()).join(' | ') : null;   // hífen opcional do cabeçalho novo
   for (const id of ['rk-table', 'mtx-table', 'reg-table']) { const tb = document.getElementById(id); out[id + ':cab'] = cab(tb); out[id] = linhas(tb).join(' ;; '); }
   out.cores = [...document.querySelectorAll('#mtx-table td.cell')].slice(0, 40).map(td => td.style.background).join(',');
   out.rkCores = [...document.querySelectorAll('#rk-table .rk-ind .p')].slice(0, 40).map(s => s.style.color).join(',');
@@ -224,9 +224,9 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       if (m.canv.length) ok(`${tag} · ${v}: gráfico com altura`, m.canv.every(h => h > 150), m.canv.map(Math.round).join(','));
       if (m.kpi.length) ok(`${tag} · ${v}: cards com altura (≥ 100px)`, m.kpi.every(h => h >= 100), m.kpi.map(Math.round).join(','));
       if (v === 'resumo') ok(`${tag} · resumo: sem faixa vazia embaixo (≤ 40px)`, m.sobra <= 40, m.sobra + 'px');
-      if (SHOTS && vp.width === 1600) {
+      if (SHOTS) {
         const dir = path.join(SHOTS, PASTA); fs.mkdirSync(dir, { recursive: true });
-        await page.screenshot({ path: path.join(dir, `${v}-${tema === 'light' ? 'claro' : 'escuro'}.png`) });
+        await page.screenshot({ path: path.join(dir, `${v}-${tema === 'light' ? 'claro' : 'escuro'}${vp.width === 1600 ? '' : '-' + vp.width}.png`) });
       }
     }
     if (vp.width === 1600 && tema === 'dark') {
@@ -289,12 +289,14 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
 // 4 · celular: a página volta a rolar e o gráfico tem altura
 {
   const { ctx, page, errs } = await abre(browser, null, { width: 390, height: 844 }, 'dark');
-  const m = await page.evaluate(() => ({ rola: document.scrollingElement.scrollHeight > innerHeight || document.body.scrollHeight > document.body.clientHeight + 1,
+  const m = await page.evaluate(() => ({ rola: /auto|scroll/.test(getComputedStyle(document.body).overflowY) && getComputedStyle(document.querySelector('.app')).position === 'static',
     canv: [...document.querySelectorAll('#vw-resumo canvas')].map(c => c.getBoundingClientRect().height) }));
-  ok('celular: página rola e gráfico com altura', m.rola && m.canv.every(h => h > 150), m.canv.map(Math.round).join(','));
-  await page.click('.s-item[data-vw="matriz"]'); await page.waitForTimeout(300);
-  const mt = await page.evaluate(() => { const t = document.querySelector('#vw-matriz .twrap'); return [t.getBoundingClientRect().height, t.scrollWidth > t.clientWidth]; });
-  ok('celular: matriz com altura e rolando de lado dentro do card', mt[0] > 150 && mt[1], mt.join(' · '));
+  ok('celular: página livre para rolar e gráfico com altura', m.rola && m.canv.every(h => h > 150), m.canv.map(Math.round).join(','));
+  await page.click('.s-item[data-vw="matriz"]'); await page.waitForTimeout(600);
+  const mt = await page.evaluate(() => { const t = document.querySelector('#vw-matriz .twrap'); return [Math.round(t.getBoundingClientRect().height), document.querySelectorAll('#vw-matriz .mt-detail-btn').length]; });
+  ok('celular: matriz com altura e o "+ Detalhar" do mobile.js', mt[0] > 150 && mt[1] > 0, mt.join(' · '));
+  await page.click('#vw-matriz .mt-detail-btn'); await page.waitForTimeout(300);
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular-matriz.png'), fullPage: true });
   ok('celular: zero erro de página', errs.length === 0, errs.join(' / '));
   if (SHOTS) { await page.click('.s-item[data-vw="resumo"]'); await page.waitForTimeout(300); await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular.png'), fullPage: true }); }
   await ctx.close();
