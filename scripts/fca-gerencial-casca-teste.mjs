@@ -6,12 +6,12 @@
 // dois lados (formato real: origem RPM/Custos, vigencia "mmm/aa", unidade com e
 // sem "(INATIVO)", projeto "NÍVEL 3 - COD", prazo AAAA-MM-DD, status, causa,
 // ação e alguns fatos de Km/L e R$/L que o painel descarta). O MESMO roteiro roda
-// no HTML antigo (git show HEAD:…) e no novo, e os números (hero, os seis
+// no HTML antigo (git show 35353c4:…) e no novo, e os números (hero, os seis
 // cards, os dois gráficos mensais, a tabela por Unidade e por Projeto e o
 // Preenchimento) têm de sair IGUAIS — texto e cor de faixa, nos dois temas.
 //
 // Uso (Playwright só importa de dentro de docs/driverpro-apresentacao/):
-//   git show HEAD:fca-gerencial/index.html > <scratch>/fcag-antigo.html
+//   git show 35353c4:fca-gerencial/index.html > <scratch>/fcag-antigo.html   (o último antes da casca)
 //   cp scripts/fca-gerencial-casca-teste.mjs docs/driverpro-apresentacao/_fcag-casca-x1.mjs
 //   cd docs/driverpro-apresentacao && RAIZ=/home/user/gestao-em-movimento \
 //     ANTIGO=<html antigo> CHART_JS=<chart.umd.js> H2C=<html2canvas.min.js> \
@@ -315,7 +315,13 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     cv: [...document.querySelectorAll('#vw-resumo canvas')].map(c => Math.round(c.getBoundingClientRect().height)) }));
   ok('celular: página livre para rolar', m.rola);
   ok('celular: gráficos com altura', m.cv.every(h => h > 150), m.cv.join('/'));
-  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular.png'), fullPage: true });
+  if (SHOTS) {
+    await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular.png') });
+    await page.evaluate(() => document.querySelector('#vw-resumo .gr2').scrollIntoView()); await page.waitForTimeout(1200);
+    await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular-graficos.png') });
+  }
+  ok('celular: gráfico desenhado (barras com cor no canvas)', await page.evaluate(() => { const c = document.getElementById('ch-prazo'), x = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let n = 0; for (let i = 0; i < x.length; i += 16) if (x[i + 3] > 0 && x[i] > 150 && x[i + 1] < 120) n++; return n > 50; }));
   await page.evaluate(() => setVw('aderencia')); await page.waitForTimeout(600);
   // o mobile.js troca o "+ Ver detalhes" do painel pelo "+ Detalhar" dele (tabela compacta) — como no antigo
   const leMob = () => ({ box: !!document.querySelector('[data-mt-box] #tbl, #tbl [data-mt-box], [data-mt-box] table') && !!document.querySelector('.mt-detail-btn'),
@@ -327,7 +333,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
   await page.click('#vw-aderencia .mt-detail-btn'); await page.waitForTimeout(200);
   const t1 = await page.evaluate(() => getComputedStyle(document.querySelector('#tbl tbody td:nth-child(2)')).display);
   ok('celular: "+ Detalhar" mostra TT Ações', t1 === 'table-cell', t1);
-  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular-aderencia.png'), fullPage: true });
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular-aderencia.png') });
   ok('celular: zero erro de página', errs.length === 0, errs.join(' / '));
   await ctx.close();
 }
