@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610062000">
+<meta name="build" content="202610062100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -302,7 +302,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 #vw-consumo,#vw-consrank,#vw-notakml{display:none;flex-direction:column;} #vw-consumo.on,#vw-consrank.on,#vw-notakml.on{display:flex;}
 /* NOTA × KM/L (Renan, 06/10/2026): coeficiente solto no topo, cards de leitura e
    as duas curvas mês a mês + a dispersão por motorista */
-.nk-kpis{grid-template-columns:repeat(4,1fr);}
+.nk-kpis{grid-template-columns:repeat(5,minmax(0,1fr));}
 .nk-gr{margin-top:12px;}
 .gleg i.ln{width:16px;height:0;border-top:2px solid currentColor;position:relative;}
 .gleg i.ln::after{content:'';position:absolute;left:5px;top:-4px;width:6px;height:6px;border-radius:50%;background:currentColor;}
@@ -568,6 +568,11 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
       <div class="ms-wrap" id="ms-mot"><button class="ms-btn" onclick="toggleMs('ms-mot')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Motorista<span class="ms-cnt"></span></button>
+        <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
+      </div>
+      <div class="ms-wrap" id="ms-mod"><button class="ms-btn" onclick="toggleMs('ms-mod')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6h13v10H1zM14 10h4l4 4v2h-8z"/><circle cx="5.5" cy="18" r="2"/><circle cx="17.5" cy="18" r="2"/></svg>
+        Modelo<span class="ms-cnt"></span></button>
         <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
       </div>
       <div class="ms-wrap" id="ms-eleg"><button class="ms-btn" onclick="toggleMs('ms-eleg')">
@@ -1154,6 +1159,7 @@ function populateFilters(){
   setMsOptions('ms-vig',  vigs.map(vigLabel));
   setMsOptions('ms-uni',  [...new Set(RAW.map(r=>COD_OF[r.unit]||'—'))].sort((a,b)=>a.localeCompare(b,'pt')));
   setMsOptions('ms-mot',  [...new Set(RAW.map(r=>r.unit))].sort((a,b)=>a.localeCompare(b,'pt')));
+  setMsOptions('ms-mod',  [...new Set(RAW.map(r=>r.modelo))].sort((a,b)=>a===SEM_MOD?1:b===SEM_MOD?-1:a.localeCompare(b,'pt')));
   setMsOptions('ms-eleg', ['Sim','Não']);
 }
 
@@ -1186,17 +1192,24 @@ function elegiveisDe(rows){
 }
 function getFiltered(){
   const sv=getMsValues('ms-vig').map(l=>L2V[l]).filter(Boolean);
-  const su=getMsValues('ms-uni'), sm=getMsValues('ms-mot');
-  const base = RAW.filter(r=>
-    (!sv.length || sv.includes(r.vig)) &&
-    (!su.length || su.includes(COD_OF[r.unit]||'—')) &&
-    (!sm.length || sm.includes(r.unit)));
+  const base = RAW.filter(r=>(!sv.length || sv.includes(r.vig)) && passaUMM(r));
   const se = getMsValues('ms-eleg');
   if(!se.length || se.length > 1) return base;      // "Todos" ou Sim+Não
   const ok = elegiveisDe(base), quer = se.includes('Sim');
   return base.filter(r => ok.has(r.unit) === quer);
 }
 function selVigKeys(){ return getMsValues('ms-vig').map(l=>L2V[l]).filter(Boolean); }
+/* FILTRO MODELO (Renan, 06/10/2026: "Não poderia ter filtro de modelo também?").
+   O modelo de cada motorista-mês é o da PLACA MAIS RODADA no mês
+   (ce_scores_mensais.placa) na base Ativos do Ginfo; sem placa ou sem ativo =
+   "Sem modelo". Quem dirigiu dois modelos no mês conta pelo principal. */
+const SEM_MOD = 'Sem modelo';
+function modeloDe(placa){ const at = placa ? ATIVOS[placaNorm(placa)] : null; return (at && (at.modelo || at.marca)) || SEM_MOD; }
+// unidade + motorista + modelo — o recorte do topo SEM a vigência
+function passaUMM(r){
+  const su=getMsValues('ms-uni'), sm=getMsValues('ms-mot'), sd=getMsValues('ms-mod');
+  return (!su.length || su.includes(COD_OF[r.unit]||'—')) && (!sm.length || sm.includes(r.unit)) && (!sd.length || sd.includes(r.modelo));
+}
 
 /* ── Render ── */
 function atualizar(){
@@ -1486,8 +1499,7 @@ function renderConsChart(){
   const LABELS=['jan.','fev.','mar.','abr.','mai.','jun.','jul.','ago.','set.','out.','nov.','dez.'];
   // mesmo recorte de unidade/motorista do topo, o ano inteiro; a vigência
   // selecionada só fica em destaque (igual à Evolução Temporal)
-  const su=getMsValues('ms-uni'), sm=getMsValues('ms-mot');
-  const base=RAW.filter(r=>(!su.length||su.includes(COD_OF[r.unit]||'—'))&&(!sm.length||sm.includes(r.unit)));
+  const base=RAW.filter(passaUMM);
   const sv=selVigKeys(), allVigs=[...new Set(RAW.map(r=>r.vig))];
   const filtroAtivo = sv.length>0 && sv.length<allVigs.length;
   const porMes=Array.from({length:12},(_,i)=>{
@@ -1553,8 +1565,7 @@ function renderNotaKml(){
   const isLight=document.body.classList.contains('claro');
   const corNota = isLight ? '#111111' : '#FFFFFF', corKml = '#F97316';
   const LABELS=['jan.','fev.','mar.','abr.','mai.','jun.','jul.','ago.','set.','out.','nov.','dez.'];
-  const su=getMsValues('ms-uni'), sm=getMsValues('ms-mot');
-  const base=RAW.filter(r=>!r.semLogin && (!su.length||su.includes(COD_OF[r.unit]||'—'))&&(!sm.length||sm.includes(r.unit)));
+  const base=RAW.filter(r=>!r.semLogin && passaUMM(r));
   const sv=selVigKeys(), allVigs=[...new Set(RAW.map(r=>r.vig))];
   const filtroAtivo = sv.length>0 && sv.length<allVigs.length;
   const mes=Array.from({length:12},(_,i)=>{
@@ -1602,8 +1613,7 @@ function renderNotaKml(){
   const pts=[];
   getFiltered().forEach(r=>{
     if(r.semLogin || r.pont==null || !(r.lit>0) || !(r.kmLit>=NK_KM_MIN)) return;
-    const at=r.placa ? ATIVOS[placaNorm(r.placa)] : null;
-    pts.push({ g:r.vig+'|'+((at&&at.modelo)||'sem modelo'), nota:r.pont, fv:r.rpm, kml:r.kmLit/r.lit });
+    pts.push({ g:r.vig+'|'+(r.modelo||SEM_MOD), unit:r.unit, vig:r.vig, nota:r.pont, fv:r.rpm, kml:r.kmLit/r.lit });
   });
   const grp={}; pts.forEach(p=>(grp[p.g]=grp[p.g]||[]).push(p));
   const dentro=[];
@@ -1629,13 +1639,41 @@ function renderNotaKml(){
   const faixa = (lo,hi)=>{ const g=mot.filter(m=>m.nota>=lo && m.nota<hi); const k=g.reduce((s,m)=>s+m.k,0), l=g.reduce((s,m)=>s+m.l,0); return { kml: l>0?k/l:null, n:g.length }; };
   const alto=faixa(85,1e9), baixo=faixa(-1e9,70);
   const dif = nkFin(alto.kml)&&nkFin(baixo.kml)&&baixo.kml>0 ? (alto.kml/baixo.kml-1)*100 : null;
+  /* CARDS COM A LEITURA EM PORTUGUÊS (Renan, 06/10/2026: "Esses insights que
+     deveria aparecer nos cards") — o número e, embaixo, o que ele quer dizer. */
+  const mK = dentro.length ? dentro.reduce((s2,p)=>s2+p.kml,0)/dentro.length : null;
+  const pct = passo!=null && mK ? passo/mK*100 : null;                  // % de km/L a cada 10 pontos
+  const diesel20 = passo!=null && mK ? (1 - mK/(mK+2*passo))*100 : null; // 20 pontos a mais → menos diesel
+  const r2w = nkFin(cw.r) ? Math.round(cw.r*cw.r*100) : null;
+  // pontos para conferir: km/L muito longe do esperado para o mês e o modelo
+  // (desvio robusto: mais de 3,5 MADs da mediana dos resíduos E mais de 15% longe do esperado) — leitura de
+  // litros a checar antes de tirar conclusão
+  const res = bw!=null ? dentro.map(p=>({ ...p, e:p.dy-bw*p.dx })) : [];
+  const med = v=>{ const a2=[...v].sort((x,y)=>x-y); const n=a2.length; return n? (n%2?a2[(n-1)/2]:(a2[n/2-1]+a2[n/2])/2) : 0; };
+  const mE = med(res.map(p=>p.e)), mad = 1.4826*med(res.map(p=>Math.abs(p.e-mE)));
+  // e o km/L real a mais de 15% do esperado — sem isso, com pouca dispersão, até variação normal vira "suspeito"
+  const conf = mad>0 ? res.filter(p=>{ const esp=p.mK+bw*p.dx; return Math.abs(p.e-mE)/mad>3.5 && esp>0 && Math.abs(p.kml-esp)/esp>0.15; }).sort((x,y)=>Math.abs(y.e)-Math.abs(x.e)) : [];
+  const exConf = conf.slice(0,1).map(p=>`${String(p.unit).split(' ')[0]} ${nkBr(p.kml,2)} (esp. ${nkBr(p.mK+bw*p.dx,2)})`).join('');
+  const listaConf = conf.slice(0,12).map(p=>`${p.unit} · ${vigLabel(p.vig)}: ${nkBr(p.kml,2)} km/L, esperado ${nkBr(p.mK+bw*p.dx,2)}`).join('\n');
   const box=$('nk-kpis');
+  // [rótulo, valor, leitura curta, dica com a explicação inteira]
   if(box) box.innerHTML = [
-    ['Entre motoristas · mesmo mês e modelo (r)', nkBr(cw.r,2), `${cw.n||0} motorista-mês · ligação ${nkForca(cw.r)}`+(passo!=null?` · ${passo>=0?'+':''}${nkBr(passo,2)} km/L a cada 10 pontos`:'')],
-    ['Faixa verde × km/L · mesmo mês e modelo (r)', nkBr(cf.r,2), `ligação ${nkForca(cf.r)} · parte da ligação é por construção (a faixa verde já mede consumo)`],
-    ['Km/L de quem tira 85+', alto.n ? nkBr(alto.kml,2) : '—', baixo.n ? `contra ${nkBr(baixo.kml,2)} de quem fica abaixo de 70`+(dif!=null?` (${dif>=0?'+':''}${nkBr(dif,1)}%)`:'') : 'ninguém abaixo de 70 no recorte'],
-    ['A nota prevê o km/L? (MAPE)', nkFin(mModelo) ? nkBr(mModelo,1)+'%' : '—', nkFin(mChute) ? `chutando a média do mês e modelo: ${nkBr(mChute,1)}%`+(ganho==null?'':ganho>=0.5?` · a nota tira ${nkBr(ganho,0)}% do erro`:' · a nota não reduz o erro') : 'poucos motoristas por mês e modelo'],
-  ].map(([l,v,m])=>`<div class="kpi"><div class="kl">${l}</div><div class="kv">${v}</div><div class="km">${m}</div></div>`).join('');
+    ['Nota × km/L entre motoristas (r)', nkBr(cw.r,2),
+      !nkFin(cw.r) ? 'poucos motoristas por mês e modelo' : `ligação ${nkForca(cw.r)} · a nota explica ~${r2w}% da diferença de km/L · ${cw.n} motorista-mês`,
+      'Compara motoristas no mesmo mês e no mesmo modelo de caminhão: o que sobra é a diferença de condução. Parte da ligação vem da faixa verde, que já é uma medida de consumo. Correlação não é causa.'],
+    ['Cada 10 pontos de nota', passo!=null ? (passo>=0?'+':'')+nkBr(passo,2)+' km/L' : '—',
+      pct!=null ? `≈ ${pct>=0?'+':''}${nkBr(pct,1)}% de km/L · de 60 para 80 pontos, ~${nkBr(Math.abs(diesel20),0)}% ${diesel20>=0?'menos':'mais'} diesel` : '—',
+      'Inclinação da tendência entre motoristas no mesmo mês e modelo. O diesel é para o mesmo km rodado.'],
+    ['Km/L de quem tira 85+', alto.n ? nkBr(alto.kml,2) : '—',
+      baixo.n ? `contra ${nkBr(baixo.kml,2)} abaixo de 70`+(dif!=null?` (${dif>=0?'+':''}${nkBr(dif,1)}%)`:'') : 'ninguém abaixo de 70 no recorte',
+      'Σ km ÷ Σ litros de cada grupo de nota, no recorte do topo. Mistura modelos — use o filtro Modelo para comparar iguais.'],
+    ['A nota prevê o km/L? (MAPE)', nkFin(mModelo) ? nkBr(mModelo,1)+'%' : '—',
+      nkFin(mChute) ? `chutando a média: ${nkBr(mChute,1)}%`+(ganho==null?'':ganho>=0.5?` · a nota tira ${nkBr(ganho,0)}% do erro`:' · a nota não reduz o erro') : 'poucos motoristas por mês e modelo',
+      'Erro médio (%) do km/L previsto pela nota, contra o chute de só usar a média do mês e do modelo. O km/L varia pouco, então até o chute erra pouco — o que importa é quanto a nota reduz esse erro.'],
+    ['Pontos para conferir', String(conf.length),
+      conf.length ? `km/L longe do esperado · ${exConf}` : 'nenhum km/L fora do esperado',
+      conf.length ? 'Km/L a mais de 15% e muito fora do esperado para o mês e o modelo — provável leitura de litros a conferir:\n'+listaConf : 'Nenhum motorista-mês com km/L muito fora do esperado.'],
+  ].map(([l,v,m,t])=>`<div class="kpi" title="${String(t).replace(/"/g,'&quot;')}"><div class="kl">${l}</div><div class="kv">${v}</div><div class="km">${m}</div></div>`).join('');
 
   // ── gráfico de linhas (só desenha com a visão na tela) ──
   const cv=$('chartNotaKml');
@@ -1679,7 +1717,7 @@ function renderNotaKml(){
     const pts=mot.map(m=>({x:m.nota, y:m.kml, unit:m.unit}));
     const xs=pts.map(p=>p.x);
     const linha = reta && nkFin(reta.b) && xs.length ? [Math.min(...xs), Math.max(...xs)].map(x=>({x, y:reta.a+reta.b*x})) : [];
-    set('nk-dsub', `Um ponto por motorista no recorte (${pts.length}), modelos misturados · linha = tendência`);
+    set('nk-dsub', `Um ponto por motorista no recorte (${pts.length}) · ${getMsValues('ms-mod').length===1 ? getMsValues('ms-mod')[0] : 'modelos misturados, use o filtro Modelo'} · linha = tendência`);
     if(chartNotaDisp) chartNotaDisp.destroy();
     chartNotaDisp=new Chart(cd.getContext('2d'),{
       type:'scatter',
@@ -1927,6 +1965,7 @@ async function recarregar(){
     try{ linhas=await fetchFromSupabase(); }catch(e){ console.warn('Supabase indisponível:', e.message); }
     if(linhas.length){ RAW=semRpmFora(linhas); ORIGEM='banco'; }
     else             { RAW=generateRawRows(); ORIGEM='exemplo'; }
+    RAW.forEach(r=>{ r.modelo = modeloDe(r.placa); });
     populateFilters();
     // o SUB_BASE precisa existir ANTES do atualizar(), que é quem escreve o
     // subtítulo junto com o período do recorte
@@ -2018,6 +2057,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610062000"></script>
+<script src="../../assets/build-check.js?v=202610062100"></script>
 </body>
 </html>
