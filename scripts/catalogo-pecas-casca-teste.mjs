@@ -14,8 +14,8 @@
 // (SBJS) com uma sessão falsa no localStorage — é o que liga os filtros Unidade/Placa.
 //
 // Uso (Playwright só importa de dentro de docs/driverpro-apresentacao/):
-//   git show HEAD:catalogo-pecas/index.html          > <tmp>/catpecas-index-antigo.html
-//   git show HEAD:assets/catalogo-pecas-app.js       > <tmp>/catpecas-app-antigo.js
+//   git show 3daea6e:catalogo-pecas/index.html       > <tmp>/catpecas-index-antigo.html
+//   git show 3daea6e:assets/catalogo-pecas-app.js    > <tmp>/catpecas-app-antigo.js
 //   cp scripts/catalogo-pecas-casca-teste.mjs docs/driverpro-apresentacao/_catpecas-casca.mjs
 //   cd docs/driverpro-apresentacao && RAIZ=/home/user/gestao-em-movimento \
 //     ANTIGO=<tmp>/catpecas-index-antigo.html APP_ANTIGO=<tmp>/catpecas-app-antigo.js \
