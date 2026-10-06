@@ -629,8 +629,11 @@ function montaRoteiro(avisa){
 
   R.push(P('Scorecard da Frota',vX,'../scorecard/',
     `__cm.vw('resumo'); __cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`));
+  /* FOTO, não dados (casca padrão, 07/10/2026): o hero do Resumo Executivo agora é
+     o .fin-hero do padrão, que o leitor de dados enxerga — sem isto o slide sairia
+     só com a Pontuação Geral, sem os quatro quadrantes (que são texto, não KPI). */
   R.push(P('Resumo Executivo',vX,'../resumo-executivo/',
-    `__cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`));
+    `__cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`,{foto:true}));
   R.push(P('Scorecard Financeiro','Acum/'+ano+' · Ambev + Seara','../visao-financeira/',
     `__cm.vw('resumo'); __cm.sel('ms-vig',${JSON.stringify(ACUM)}); atualizar();`));
   R.push(P('Scorecard Financeiro',vX+' · Ambev + Seara','../visao-financeira/',
