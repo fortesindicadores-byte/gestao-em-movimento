@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610061700">
+<meta name="build" content="202610061800">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1273,7 +1273,7 @@ function renderRanking(data){
       <td class="rank-num">${canonical&&rank<=3?medals[i]:rank}</td>
       <td class="conta">${r.unit}<div class="mot-sub">${SRC_OF[r.unit]||''}</div></td>
       <td>${COD_OF[r.unit]||'—'}</td>
-      <td class="num">${r.km ? Math.round(r.km).toLocaleString('pt-BR') : '—'}</td>
+      <td class="num">${r.km ? fmtN(r.km) : '—'}</td>
       ${FIELD_ORDER.map(k=>cell(k,r[k])).join('')}
       <td class="num rk-ind pont-td">${scorePill(r.pont)}<span class="v">${cls}</span></td>
     </tr>`;
@@ -1309,7 +1309,11 @@ function ajustaAlturaLinhas(){
 addEventListener('resize', ()=>requestAnimationFrame(ajustaAlturaLinhas));
 
 /* ── Carteira em R$ (mesma conta do app; regras de ce_app_criterios) ── */
-const brl = v => 'R$ ' + (+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+/* PADRÃO NUMÉRICO DO PORTAL (Renan, 06/10/2026: "grana sem R$ e sem casa da
+   vírgula… temos um padrão numérico") — o mesmo `fmt` da Visão Financeira e do
+   Painel KM (PADROES.md): até 99.999 inteiro, depois k / mi / bi. */
+const fmtN = v => { const neg=+v<0,a=Math.abs(+v||0); let s; if(a>=1e9) s=(a/1e9).toFixed(2)+' bi'; else if(a>=1e6) s=(a/1e6).toFixed(2)+' mi'; else if(a>=1e5) s=(a/1e3).toFixed(2)+'k'; else s=Math.round(a).toLocaleString('pt-BR'); return (neg?'-':'')+s; };
+const brl = fmtN;
 /* piso da rampa (ce_app_regras.piso_nota). Mora FORA do carteiraDe porque o
    renderCarteira também o escreve no card: dentro dele era um ReferenceError
    que parava o atualizar() e deixava Carteira, Km/L e Ranking Km/L vazios. */
@@ -1351,7 +1355,7 @@ function renderCarteira(data){
   if(box) box.innerHTML = [
     ['Custo do programa', brl(tot.cart+tot.pod), `${nv} mês(es) no recorte`],
     ['Carteiras pagas', brl(tot.cart), 'rampa a partir da nota '+pisoNota()+', dos elegíveis'],
-    ['Pódios', brl(tot.pod), (CRIT.regras.podio||[300,150,100]).map(v=>'R$ '+v).join(' · ')],
+    ['Pódios', brl(tot.pod), (CRIT.regras.podio||[300,150,100]).map(v=>brl(v)).join(' · ')],
     ['Motoristas elegíveis', String(tot.eleg), `de ${rows.length} com nota (motorista-mês)`],
     ['Maior ganho', rows.length ? brl(rows[0].total) : '—', rows.length ? rows[0].unit : ''],
   ].map(([l,v,m])=>`<div class="kpi"><div class="kl">${l}</div><div class="kv">${v}</div><div class="km">${m}</div></div>`).join('');
@@ -1360,7 +1364,7 @@ function renderCarteira(data){
       <td class="rank-num">${i<3&&r.total>0?medals[i]:i+1}</td>
       <td class="conta">${r.unit}<div class="mot-sub">${SRC_OF[r.unit]||''}</div></td>
       <td>${COD_OF[r.unit]||'—'}${critDe(r.uni).grupo!==r.uni?`<div class="mot-sub">${critDe(r.uni).grupo}</div>`:''}</td>
-      <td class="num">${Math.round(r.km).toLocaleString('pt-BR')}</td>
+      <td class="num">${fmtN(r.km)}</td>
       <td class="num">${scorePill(r.pont)}</td>
       <td class="num">${r.eleg}/${r.meses}</td>
       <td class="num cart-td ${r.cart?'':'cart-neg'}">${brl(r.cart)}</td>
@@ -1391,8 +1395,8 @@ function renderConsumo(data){
   const rows=consumoDe(data);
   const km=rows.reduce((s,r)=>s+r.km,0), lit=rows.reduce((s,r)=>s+r.lit,0);
   set('cons-kml', kmL(km,lit));
-  set('cons-km',  km ? Math.round(km).toLocaleString('pt-BR')+' km' : '—');
-  set('cons-lit', lit ? Math.round(lit).toLocaleString('pt-BR')+' L' : '—');
+  set('cons-km',  km ? fmtN(km)+' km' : '—');
+  set('cons-lit', lit ? fmtN(lit)+' L' : '—');
   // insights do recorte — só o que a telemetria responde sozinha
   const f2=v=>v.toFixed(2).replace('.',',');
   const comLit = rows.filter(r=>r.lit>0);
@@ -1408,7 +1412,7 @@ function renderConsumo(data){
     ['Pior mês', mm.length>1?`${mesLbl(mm[mm.length-1].v)} ${f2(mm[mm.length-1].kml)}`:'—', mm.length>1?'km/L do mês, Σ km ÷ Σ litros':(mm.length?'um mês só no recorte':'')],
     ['Motoristas com litros', String(comLit.length), `de ${rows.length} com nota no recorte`],
     ['Melhor · pior motorista', top?`${f2(top.kml)} · ${f2(low.kml)}`:'—', top?`${top.unit.split(' ')[0]} · ${low.unit.split(' ')[0]}`:''],
-    ['Km com combustível', kmTot?`${Math.round(km/kmTot*100)}%`:'—', kmTot?`${Math.round(km).toLocaleString('pt-BR')} de ${Math.round(kmTot).toLocaleString('pt-BR')} km reportaram litros`:''],
+    ['Km com combustível', kmTot?`${Math.round(km/kmTot*100)}%`:'—', kmTot?`${fmtN(km)} de ${fmtN(kmTot)} km reportaram litros`:''],
   ].map(([l,v,m])=>`<div class="kpi"><div class="kl">${l}</div><div class="kv">${v}</div><div class="km">${m}</div></div>`).join('');
   $('cons-tbody').innerHTML = rows.map((r,i)=>`<tr>
       <td class="rank-num">${i+1}</td>
@@ -1416,8 +1420,8 @@ function renderConsumo(data){
       <td title="${r.placa||''}">${r.modelo||'—'}</td>
       <td>${COD_OF[r.unit]||'—'}</td>
       <td>${r.proj||'—'}</td>
-      <td class="num">${r.lit>0?Math.round(r.km).toLocaleString('pt-BR'):'—'}</td>
-      <td class="num">${r.lit>0?Math.round(r.lit).toLocaleString('pt-BR'):'—'}</td>
+      <td class="num">${r.lit>0?fmtN(r.km):'—'}</td>
+      <td class="num">${r.lit>0?fmtN(r.lit):'—'}</td>
       <td class="num"><b>${kmL(r.km,r.lit)}</b></td>
     </tr>`).join('') || '<tr><td colspan="8">Sem dados no recorte.</td></tr>';
   renderConsChart();
@@ -1792,6 +1796,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610061700"></script>
+<script src="../../assets/build-check.js?v=202610061800"></script>
 </body>
 </html>
