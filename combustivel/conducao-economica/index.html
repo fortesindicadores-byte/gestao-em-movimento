@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610062100">
+<meta name="build" content="202610062200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -287,14 +287,21 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 /* o NÚMERO fica colado no rótulo (é o par que se lê junto) e só o "resultado
    medido" desce para o pé do card — Renan, 06/10/2026, ao ver o número solto
    no meio: "Isso não". */
-#kpi-pilares .kpi,#cart-kpis .kpi,#cons-kpis .kpi,#ac-kpis .kpi,#nk-kpis .kpi{min-height:clamp(130px,20vh,200px);display:flex;
+#kpi-pilares .kpi,#cart-kpis .kpi,#cons-kpis .kpi,#ac-kpis .kpi,#nk-kpis .kpi,#cg-kpis .kpi{min-height:clamp(130px,20vh,200px);display:flex;
   flex-direction:column;justify-content:flex-start;padding:clamp(16px,3vh,28px) 20px;}
-#kpi-pilares .kpi .kv,#cart-kpis .kpi .kv,#cons-kpis .kpi .kv,#ac-kpis .kpi .kv,#nk-kpis .kpi .kv{margin-top:8px;}
-#kpi-pilares .kpi .km,#cart-kpis .kpi .km,#cons-kpis .kpi .km,#ac-kpis .kpi .km,#nk-kpis .kpi .km{margin-top:auto;padding-top:8px;}
-#kpi-pilares .kpi .kv,#cart-kpis .kpi .kv,#cons-kpis .kpi .kv,#ac-kpis .kpi .kv,#nk-kpis .kpi .kv{font-size:clamp(25px,3.6vh,34px);}
-#kpi-pilares .kpi .km,#cart-kpis .kpi .km,#cons-kpis .kpi .km,#ac-kpis .kpi .km,#nk-kpis .kpi .km{font-size:11px;}
+#kpi-pilares .kpi .kv,#cart-kpis .kpi .kv,#cons-kpis .kpi .kv,#ac-kpis .kpi .kv,#nk-kpis .kpi .kv,#cg-kpis .kpi .kv{margin-top:8px;}
+#kpi-pilares .kpi .km,#cart-kpis .kpi .km,#cons-kpis .kpi .km,#ac-kpis .kpi .km,#nk-kpis .kpi .km,#cg-kpis .kpi .km{margin-top:auto;padding-top:8px;}
+#kpi-pilares .kpi .kv,#cart-kpis .kpi .kv,#cons-kpis .kpi .kv,#ac-kpis .kpi .kv,#nk-kpis .kpi .kv,#cg-kpis .kpi .kv{font-size:clamp(25px,3.6vh,34px);}
+#kpi-pilares .kpi .km,#cart-kpis .kpi .km,#cons-kpis .kpi .km,#ac-kpis .kpi .km,#nk-kpis .kpi .km,#cg-kpis .kpi .km{font-size:11px;}
 .cart-kpis{grid-template-columns:repeat(5,1fr);margin-top:0;margin-bottom:12px;flex:0 0 auto;}
-#vw-carteira{display:none;flex-direction:column;} #vw-carteira.on{display:flex;}
+#vw-carteira,#vw-cartger{display:none;flex-direction:column;} #vw-carteira.on,#vw-cartger.on{display:flex;}
+/* CARTEIRA GERENCIAL (Renan, 06/10/2026: "podia ter um carteira Gerencial, e outro só
+   ranking") — mesmo desenho do Km/L Gerencial: hero sem card, cards e o gráfico
+   mês a mês ocupando a sobra. */
+#vw-cartger .gr2{grid-template-columns:1fr;margin-top:12px;flex:1 1 auto;min-height:0;max-height:none;}
+#vw-cartger .hval{font-size:clamp(34px,calc(3.6vh + 8px),48px);}
+#vw-cartger .hdel b{font-size:16px;}
+@media(max-width:860px){#vw-cartger .gr2{max-height:none;}}
 .cart-td b{font-weight:800;} .cart-neg{color:var(--txt3);}
 /* Consumo (Renan, 07/09/2026): litros por viagem da telemetria — KPIs, km/L
    por mês e a tabela por motorista. O gráfico tem teto de altura para a
@@ -497,9 +504,13 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M7 4h10v6a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg>
       Ranking Geral
     </button>
-    <button class="s-item" data-vw="carteira">
+    <button class="s-item" data-vw="cartger">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M16 12h4"/><path d="M2 10h20"/></svg>
-      Carteira em R$
+      Carteira Gerencial
+    </button>
+    <button class="s-item" data-vw="carteira">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg>
+      Ranking Carteira
     </button>
     <button class="s-item" data-vw="consumo">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>
@@ -670,8 +681,32 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
            carteira = rampa do piso até 100 × saldo, para quem é elegível na regra da
            própria unidade (km mínimo + cota, ce_app_criterios), pódio para
            os 3 primeiros do GRUPO. Várias vigências somam. ══ -->
+      <section class="vw" id="vw-cartger">
+        <div class="fin-hero">
+          <div>
+            <div class="hlbl" id="cg-lbl">Custo do programa</div>
+            <div class="hval" id="cg-tot">—</div>
+            <div class="hdel">
+              <div>Carteiras<b id="cg-cart">—</b></div>
+              <div>Pódios<b id="cg-pod">—</b></div>
+              <div>Meses no recorte<b id="cg-mes">—</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="kpis ce-kpis cons-kpis" id="cg-kpis"></div>
+        <div class="gr2">
+          <div class="card gcard">
+            <div class="thead-row" style="margin-bottom:0">
+              <div><div class="gtit">Valor do programa por mês</div><div class="gsub">carteiras + pódios, pela mesma conta do app · 2026</div></div>
+            </div>
+            <div class="gleg" id="cg-leg"></div>
+            <div class="gcv"><canvas id="chartCarteira"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ranking em R$ por motorista (a tabela que ficava embaixo dos cards) -->
       <section class="vw" id="vw-carteira">
-        <div class="kpis ce-kpis cart-kpis" id="cart-kpis"></div>
         <div class="rank-sec">
           <div class="twrap"><table class="dre" id="cart-table">
             <thead><tr><th style="width:34px;">#</th><th>Motorista</th><th>Unidade</th><th class="num">Km</th><th class="num">Nota</th><th class="num">Meses elegível</th><th class="num">Carteira</th><th class="num">Pódio</th><th class="num">Total</th></tr></thead>
@@ -1402,8 +1437,9 @@ function carteiraDe(data){
       // mesma rampa do app: começa no piso (ce_app_regras.piso_nota), não no zero
       const cart = eleg ? Math.min(saldo, Math.max(0, Math.min(100, a.pont) - PISO) * saldo / (100 - PISO)) : 0;
       const pod  = eleg && a.posGrp <= podio.length ? +podio[a.posGrp-1] : 0;
-      const t = acc[a.unit] || (acc[a.unit] = { unit:a.unit, uni:a.uni, km:0, pts:[], meses:0, eleg:0, cart:0, pod:0 });
+      const t = acc[a.unit] || (acc[a.unit] = { unit:a.unit, uni:a.uni, km:0, pts:[], meses:0, eleg:0, cart:0, pod:0, semKm:0, zero:0 });
       t.km += a.km; t.pts.push(a.pont); t.meses++; if(eleg) t.eleg++; t.cart += cart; t.pod += pod;
+      if(a.km < a.crit.km_min) t.semKm++; if(eleg && !cart) t.zero++;
     });
   });
   return Object.values(acc).map(t=>({ ...t, pont: t.pts.reduce((x,y)=>x+y,0)/t.pts.length, total: t.cart + t.pod }))
@@ -1411,16 +1447,23 @@ function carteiraDe(data){
 }
 function renderCarteira(data){
   const rows = carteiraDe(data);
-  const tot = rows.reduce((s,r)=>({ cart:s.cart+r.cart, pod:s.pod+r.pod, eleg:s.eleg+r.eleg }), { cart:0, pod:0, eleg:0 });
+  const tot = rows.reduce((s,r)=>({ cart:s.cart+r.cart, pod:s.pod+r.pod, eleg:s.eleg+r.eleg, meses:s.meses+r.meses, semKm:s.semKm+r.semKm, zero:s.zero+r.zero }), { cart:0, pod:0, eleg:0, meses:0, semKm:0, zero:0 });
   const nv = new Set(data.map(r=>r.vig)).size;
-  const box=$('cart-kpis');
+  set('cg-lbl', nv===1 ? 'Custo do programa no mês' : 'Custo do programa no recorte');
+  set('cg-tot', rows.length ? brl(tot.cart+tot.pod) : '—');
+  set('cg-cart', brl(tot.cart));
+  set('cg-pod', brl(tot.pod));
+  set('cg-mes', String(nv));
+  const pagos = rows.filter(r=>r.total>0);
+  const box=$('cg-kpis');
   if(box) box.innerHTML = [
-    ['Custo do programa', brl(tot.cart+tot.pod), `${nv} mês(es) no recorte`],
-    ['Carteiras pagas', brl(tot.cart), 'rampa a partir da nota '+pisoNota()+', dos elegíveis'],
-    ['Pódios', brl(tot.pod), (CRIT.regras.podio||[300,150,100]).map(v=>brl(v)).join(' · ')],
-    ['Motoristas elegíveis', String(tot.eleg), `de ${rows.length} com nota (motorista-mês)`],
-    ['Maior ganho', rows.length ? brl(rows[0].total) : '—', rows.length ? rows[0].unit : ''],
+    ['Motoristas que recebem', String(pagos.length), `de ${rows.length} com nota no recorte`],
+    ['Carteira média', tot.eleg ? brl(tot.cart/tot.eleg) : '—', 'por elegível no mês, rampa a partir da nota '+pisoNota()],
+    ['Maior ganho', pagos.length ? brl(rows[0].total) : '—', pagos.length ? rows[0].unit : ''],
+    ['Abaixo do piso', String(tot.zero), `elegíveis no mês com nota até ${pisoNota()}, carteira zerada`],
+    ['Sem o km mínimo', String(tot.semKm), `de ${tot.meses} motorista-mês, não disputam`],
   ].map(([l,v,m])=>`<div class="kpi"><div class="kl">${l}</div><div class="kv">${v}</div><div class="km">${m}</div></div>`).join('');
+  renderCartChart();
   const medals=['🥇','🥈','🥉'];
   $('cart-tbody').innerHTML = rows.map((r,i)=>`<tr class="rank-${i<3?i+1:'x'}">
       <td class="rank-num">${i<3&&r.total>0?medals[i]:i+1}</td>
@@ -1433,6 +1476,53 @@ function renderCarteira(data){
       <td class="num cart-td ${r.pod?'':'cart-neg'}">${brl(r.pod)}</td>
       <td class="num cart-td"><b>${brl(r.total)}</b></td>
     </tr>`).join('') || '<tr><td colspan="9">Sem dados no recorte.</td></tr>';
+}
+
+let chartCarteira=null;
+function renderCartChart(){
+  const cv=$('chartCarteira'); if(!cv || !cv.offsetParent) return;   // só desenha se a visão está na tela
+  const isLight=document.body.classList.contains('claro');
+  const tickC = isLight?'#444444':'#94A3B8';
+  const tooltip = isLight
+    ? {backgroundColor:'#FFFFFF',titleColor:'#D95E08',bodyColor:'#161D2B',borderColor:'rgba(15,23,42,.15)',borderWidth:1,titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'}}
+    : {backgroundColor:'#26262B',titleColor:'#F97316',bodyColor:'#EEF2FA',borderColor:'rgba(255,255,255,.12)',borderWidth:1,titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'}};
+  const LABELS=['jan.','fev.','mar.','abr.','mai.','jun.','jul.','ago.','set.','out.','nov.','dez.'];
+  // mesmo recorte de unidade/motorista/modelo do topo, o ano inteiro; a
+  // vigência selecionada fica em destaque (igual ao Km/L por mês)
+  const base=RAW.filter(passaUMM);
+  const sv=selVigKeys(), allVigs=[...new Set(RAW.map(r=>r.vig))];
+  const filtroAtivo = sv.length>0 && sv.length<allVigs.length;
+  const porMes=Array.from({length:12},(_,i)=>{
+    const rows=base.filter(r=>vigMonth(r.vig)===i+1);
+    if(!rows.length) return null;
+    const c=carteiraDe(rows);
+    return { cart:c.reduce((s,r)=>s+r.cart,0), pod:c.reduce((s,r)=>s+r.pod,0) };
+  });
+  const vigPos=Array.from({length:12},(_,i)=>{ const r=base.find(x=>vigMonth(x.vig)===i+1); return r?r.vig:null; });
+  const sel=i=>!filtroAtivo||(vigPos[i]&&sv.includes(vigPos[i]));
+  const isMobile=window.innerWidth<768;
+  const AZ = isLight ? '#1B6FC4' : '#2E90E8';
+  const alfa=i=>filtroAtivo?(sel(i)?'D9':'33'):'A6';
+  const dCart=porMes.map(m=>m?m.cart:null), dPod=porMes.map(m=>m?m.pod:null);
+  const tot=porMes.map(m=>m?m.cart+m.pod:null);
+  const vals=tot.filter(v=>v!=null);
+  $('cg-leg').innerHTML = `<span><i class="sq" style="background:var(--laranja)"></i>Carteiras</span><span><i class="sq" style="background:${AZ}"></i>Pódios</span>`;
+  if(chartCarteira) chartCarteira.destroy();
+  chartCarteira=new Chart(cv.getContext('2d'),{
+    type:'bar',
+    data:{ labels:LABELS, datasets:[
+      { label:'Carteiras', data:dCart, stack:'p', backgroundColor:dCart.map((v,i)=>v==null?'transparent':'#F97316'+alfa(i)), borderColor:dCart.map(v=>v==null?'transparent':'#F97316'), borderWidth:1, borderRadius:3, datalabels:{display:false} },
+      { label:'Pódios', data:dPod, stack:'p', backgroundColor:dPod.map((v,i)=>v==null?'transparent':AZ+alfa(i)), borderColor:dPod.map(v=>v==null?'transparent':AZ), borderWidth:1, borderRadius:3,
+        datalabels:{ display:c=>tot[c.dataIndex]!=null && sel(c.dataIndex),
+          color:isLight?'#333333':'#F1F5F9', font:{family:'Montserrat',size:isMobile?8:14,weight:'700'},
+          formatter:(v,c)=>tot[c.dataIndex]!=null?fmtN(tot[c.dataIndex]):'', anchor:'end', align:'top' } }]},
+    options:{ responsive:true, maintainAspectRatio:false, layout:{padding:{top:30}},
+      plugins:{ legend:{display:false}, datalabels:{display:false},
+        tooltip:{...tooltip, callbacks:{ label:c=>c.raw!=null?` ${c.dataset.label}: ${fmtN(c.raw)}`:'',
+          footer:items=>{ const t=tot[items[0].dataIndex]; return t!=null?'Total: '+fmtN(t):''; } }} },
+      scales:{ x:{ stacked:true, grid:{display:false}, border:{display:false}, ticks:{color:tickC, font:{family:'Montserrat',size:isMobile?9:15}} },
+               y:{ stacked:true, display:false, min:0, suggestedMax: vals.length ? Math.max(...vals)*1.12 : 1 } } },
+  });
 }
 
 /* ── Consumo (litros por viagem da telemetria) ── */
@@ -1979,7 +2069,7 @@ async function recarregar(){
 }
 
 /* ── navegação entre as visões ── */
-const TIT={resumo:'Resumo Gerencial', ranking:'Ranking Geral', carteira:'Carteira em R$', consumo:'Km/L Gerencial', consrank:'Ranking Km/L', notakml:'Nota × Km/L', acessos:'Acessos', acessrank:'Ranking de Acessos'};
+const TIT={resumo:'Resumo Gerencial', ranking:'Ranking Geral', cartger:'Carteira Gerencial', carteira:'Ranking Carteira', consumo:'Km/L Gerencial', consrank:'Ranking Km/L', notakml:'Nota × Km/L', acessos:'Acessos', acessrank:'Ranking de Acessos'};
 function setVw(v){
   VW=v;
   document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===v));
@@ -1987,6 +2077,7 @@ function setVw(v){
   set('tit', TIT[v]||'');
   if(v==='resumo') setTimeout(renderChart,30);     // o canvas precisa estar visível
   if(v==='consumo') setTimeout(renderConsChart,30);
+  if(v==='cartger') setTimeout(renderCartChart,30);
   if(v==='notakml') setTimeout(renderNotaKml,30);
   if(v==='acessos') setTimeout(renderAcessos,30);
   // o .twrap do ranking só tem altura depois de a seção ficar visível
@@ -2019,7 +2110,7 @@ function trocaMini(){
   const l=document.querySelector('.side').classList.toggle('mini');
   localStorage.setItem('ce_mini', l?'1':'0');
   const b=$('btMini'); if(b) b.title=l?'Expandir menu':'Recolher menu';
-  setTimeout(()=>{ renderChart(); renderConsChart(); renderNotaKml(); renderAcessos(); },260);
+  setTimeout(()=>{ renderChart(); renderConsChart(); renderCartChart(); renderNotaKml(); renderAcessos(); },260);
 }
 if(localStorage.getItem('ce_mini')==='1'){ document.querySelector('.side').classList.add('mini'); $('btMini').title='Expandir menu'; }
 
@@ -2030,7 +2121,7 @@ function aplicaTema(t){
   document.body.classList.toggle('claro', t==='light');
   localStorage.setItem('bi_theme', t);
   const b=$('btTema'); if(b) b.innerHTML = t==='light'?_LUA:_SOL;
-  if(RAW.length){ renderChart(); renderConsChart(); renderNotaKml(); renderAcessos(); }
+  if(RAW.length){ renderChart(); renderConsChart(); renderCartChart(); renderNotaKml(); renderAcessos(); }
 }
 function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark':'light'); }
 aplicaTema(localStorage.getItem('bi_theme')||'dark');
@@ -2057,6 +2148,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610062100"></script>
+<script src="../../assets/build-check.js?v=202610062200"></script>
 </body>
 </html>
