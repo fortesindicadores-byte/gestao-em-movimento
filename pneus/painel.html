@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610070700">
+<meta name="build" content="202610071100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Gestão de Pneus · Gestão em Movimento</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -399,6 +399,13 @@ table.dre td.empty{text-align:center;color:var(--txt3);padding:28px;}
 
 /* Aderência: hero + gráficos + as duas tabelas lado a lado, que ficam com o resto */
 .adh-charts{flex:1 1 0;min-height:200px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+/* Resumo da Aderência no padrão do Painel KM: cards e gráficos dividem a sobra,
+   1 para 2, com teto nos cards — antes os gráficos tomavam a altura inteira */
+.adh-kpis{grid-template-columns:repeat(5,minmax(0,1fr));flex:1 1 0;min-height:clamp(112px,16.5vh,170px);max-height:clamp(150px,24vh,230px);}
+.adh-kpis .kpi{display:flex;flex-direction:column;justify-content:flex-start;padding:14px 16px;min-width:0;}
+.adh-kpis .kpi .kv{font-size:32px;margin-top:6px;}
+.adh-kpis .kpi .km{margin-top:auto;padding-top:8px;}
+#vw-aderencia .adh-charts{flex:2 1 0;min-height:180px;grid-template-rows:minmax(0,1fr);}
 .adh-tables{flex:1 1 0;min-height:160px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 .adh-tables>.tsec{min-width:0;}
 
@@ -567,6 +574,7 @@ tr.detail-row td{padding:10px 16px 14px;}
   .pesos-card{height:auto;}
   .eixo-card,.laudo-card{overflow:visible;}
   .adh-tables .twrap{max-height:60vh;}
+  .adh-kpis{grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;min-height:0;}
   .search-box{width:100%!important;}
   .filtros{flex-wrap:nowrap;justify-content:flex-start;}   /* uma faixa que rola de lado, como no padrão */
 }
@@ -845,14 +853,18 @@ tr.detail-row td{padding:10px 16px 14px;}
           <div class="adh-hero-left">
             <div class="adh-label">Aderência</div>
             <div class="adh-value" id="adhValue">—</div>
-            <div class="adh-deltas">
-              <div class="adh-delta">Total Veículos<b id="adhTotalVeic">—</b></div>
-              <div class="adh-delta">No Prazo<b id="adhDeltaPrazo" style="color:var(--green)">—</b></div>
-              <div class="adh-delta">Em Atenção<b id="adhDeltaAtencao" style="color:var(--yellow)">—</b></div>
-              <div class="adh-delta">Vencidos<b id="adhDeltaVencida" style="color:var(--red-soft)">—</b></div>
-              <div class="adh-delta">Sem Aferição<b id="adhDeltaSemAfer" style="color:var(--text2)">—</b></div>
-            </div>
           </div>
+        </div>
+
+        <!-- os cinco números do hero viram a fileira de cards do padrão: altura
+             própria, e a sobra de altura é DIVIDIDA com os gráficos (Renan,
+             06/10/2026: "Tinha um padrão. Olha a altura dos gráficos") -->
+        <div class="kpis adh-kpis">
+          <div class="kpi"><div class="kl">Total de veículos</div><div class="kv" id="adhTotalVeic">—</div><div class="km">no recorte do filtro</div></div>
+          <div class="kpi"><div class="kl">No prazo</div><div class="kv" id="adhDeltaPrazo" style="color:var(--green)">—</div><div class="km" id="adhPctPrazo">—</div></div>
+          <div class="kpi"><div class="kl">Em atenção</div><div class="kv" id="adhDeltaAtencao" style="color:var(--yellow)">—</div><div class="km" id="adhPctAtencao">—</div></div>
+          <div class="kpi"><div class="kl">Vencidos</div><div class="kv" id="adhDeltaVencida" style="color:var(--red-soft)">—</div><div class="km" id="adhPctVencida">—</div></div>
+          <div class="kpi"><div class="kl">Sem aferição</div><div class="kv" id="adhDeltaSemAfer" style="color:var(--text2)">—</div><div class="km" id="adhPctSemAfer">—</div></div>
         </div>
 
         <div class="adh-charts">
@@ -3535,7 +3547,13 @@ function renderPainel() {
   document.getElementById('adhDeltaPrazo').textContent   = noPrazo;
   document.getElementById('adhDeltaAtencao').textContent = emAten;
   document.getElementById('adhDeltaVencida').textContent = vencida;
-  document.getElementById('adhDeltaSemAfer').textContent = lista.filter(v => v.status === 'sem').length;
+  const semAfer = lista.filter(v => v.status === 'sem').length;
+  document.getElementById('adhDeltaSemAfer').textContent = semAfer;
+  const pctDe = n => lista.length ? (n / lista.length * 100).toFixed(1).replace('.', ',') + '% dos veículos' : '—';
+  document.getElementById('adhPctPrazo').textContent   = pctDe(noPrazo);
+  document.getElementById('adhPctAtencao').textContent = pctDe(emAten);
+  document.getElementById('adhPctVencida').textContent = pctDe(vencida);
+  document.getElementById('adhPctSemAfer').textContent = pctDe(semAfer);
 
   // Tabelas — inclui os SEM AFERIÇÃO (no topo), depois vencidos→no prazo por dias
   const ordenados = [...lista].sort((a, b) => {
@@ -5089,6 +5107,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610070700"></script>
+<script src="../assets/build-check.js?v=202610071100"></script>
 </body>
 </html>
