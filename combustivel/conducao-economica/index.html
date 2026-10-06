@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202609232100">
+<meta name="build" content="202610061300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -592,8 +592,8 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
                  função nota) — se a régua mudar lá, muda aqui. -->
             <div class="reg-exp">
               <h4>Como a nota nasce (0 a 100)</h4>
-              <p><b>Faixa Verde</b> — a nota é o próprio percentual: 80% do tempo na faixa
-                verde vale 80.</p>
+              <p><b>Faixa Verde</b> (1.000 a 1.400 rpm, régua da Fabet) — a nota é o próprio
+                percentual: 80% do tempo na faixa verde vale 80.</p>
               <p><b>Motor Ocioso</b> — 0% do tempo parado com o motor ligado vale 100;
                 <b>25% zera</b>. No meio, proporcional.</p>
               <p><b>Aceleração</b> — nenhuma brusca vale 100; <b>3 por 100 km zeram</b>.
@@ -749,7 +749,7 @@ const br=(v,d)=>(+v||0).toFixed(d).replace('.',',');
    reporta na frota. O freio_pontos da vFleets continuará sendo gravado.
    "Câmbio" virou "Uso de Marchas" (Renan, 01/09/2026): nome genérico demais. */
 const PILAR = {
-  rpm:   {nome:'Faixa Verde',    full:'Faixa Verde de RPM',      peso:50, both:true,  fmt:s=>Math.round(s)+'%',        calc:'% do tempo em movimento com o RPM na faixa verde (econômica/potência).'},
+  rpm:   {nome:'Faixa Verde',    full:'Faixa Verde de RPM',      peso:50, both:true,  fmt:s=>Math.round(s)+'%',        calc:'% do tempo em movimento com o RPM na faixa verde (1.000 a 1.400 rpm, régua da Fabet).'},
   idle:  {nome:'Motor Ocioso',   full:'Motor Ocioso (idle)',     peso:30, both:true,  fmt:s=>br((100-s)/4,1)+'%',      calc:'% do tempo de motor ligado parado, sem rodar (motor ocioso).'},
   // régua: 3 acelerações bruscas/100 km → 0 (Renan, 03/09/2026)
   acel:  {nome:'Aceleração',     full:'Aceleração',              peso:20, both:true,  fmt:s=>br((100-s)*3/100,1)+'/100km', calc:'nº de acelerações bruscas a cada 100 km rodados (regra padrão do Geotab, 0,29 G); 3/100 km zera a nota.'},
@@ -1754,6 +1754,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202609232100"></script>
+<script src="../../assets/build-check.js?v=202610061300"></script>
 </body>
 </html>
