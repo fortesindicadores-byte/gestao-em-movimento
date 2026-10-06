@@ -229,7 +229,14 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
         const blocos = [...vw.querySelectorAll('.tsec,.twrap')].map(c => c.getBoundingClientRect());
         const cortes = [...vw.querySelectorAll('tr.hdr th')].filter(th => th.scrollWidth > th.clientWidth + 1).map(th => th.textContent.trim());
         const cortesV = [...vw.querySelectorAll('td.vc')].filter(td => td.scrollWidth > td.clientWidth + 1).map(td => td.textContent.trim());
-        const inputs = [...vw.querySelectorAll('input.sml')].filter(i => i.scrollWidth > i.clientWidth + 1).length;
+        // input não denuncia corte pelo scrollWidth: mede o texto (placeholder / "dd/mm/aaaa") com a fonte da caixa
+        const cv = document.createElement('canvas').getContext('2d');
+        const inputs = [...vw.querySelectorAll('input.sml')].filter(i => {
+          const cs = getComputedStyle(i); cv.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+          const txt = i.type === 'date' ? '00/00/0000' : (i.value || i.placeholder);
+          const livre = i.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - (i.type === 'date' ? 13 : 0);
+          return cv.measureText(txt).width > livre + .5;
+        }).length;
         return { id: vw.id, pagRola: se.scrollHeight > se.clientHeight + 1 || se.scrollWidth > se.clientWidth + 1,
           vwRola: vw.scrollHeight > vw.clientHeight + 1, horiz: tw.some(t => t.scrollWidth > t.clientWidth + 1),
           twRolaV: tw.map(t => t.scrollHeight > t.clientHeight),
