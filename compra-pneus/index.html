@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610070015">
+<meta name="build" content="202610071000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -454,8 +454,8 @@ tr.vazio:hover td{color:var(--laranja);}
         <!-- a tabela é a tela; o pedido abre numa caixa (Renan, 05/10/2026:
              "clicar aqui e abrir caixa para preenchimento… a tabela fica mais visível") -->
         <div class="card tsec">
-          <div class="thead-row"><div class="ttit" id="tit-meus">Pedidos da unidade</div>
-            <button class="btn" id="bt-novo" onclick="abrePedido()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Novo pedido</button></div>
+          <div class="thead-row"><div class="ttit" id="tit-meus" style="display:none">Pedidos da unidade</div>
+            <button class="btn" id="bt-novo" style="margin-left:auto" onclick="abrePedido()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Novo pedido</button></div>
           <div class="tsub" id="sub-meus">—</div>
           <div class="fmsg" id="f-ok"></div>
           <div class="twrap"><table class="dre" id="tb-meus"></table></div>
@@ -465,7 +465,7 @@ tr.vazio:hover td{color:var(--laranja);}
       <!-- ══ PREÇOS (admin): todas as medidas e seus valores ══ -->
       <section class="vw" id="vw-precos">
         <div class="card tsec">
-          <div class="thead-row"><div class="ttit">Tabela de preços</div></div>
+          <div class="thead-row" style="display:none"><div class="ttit">Tabela de preços</div></div>
           <div class="tsub">Valor unitário de cada produto, por medida. É daqui que sai o valor previsto dos pedidos. Alterou, salvou: vale na hora para todos os pedidos que usam o produto.</div>
           <div class="twrap"><table class="dre" id="tb-preco"></table></div>
         </div>
@@ -951,6 +951,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610070015"></script>
+<script src="../assets/build-check.js?v=202610071000"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610070015">
+<meta name="build" content="202610071000">
 <title>Km/L · Análise do Impacto</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -518,7 +518,7 @@ table.dre.tbl-det thead th{font-size:8.5px;white-space:normal;line-height:1.25;v
       <section class="vw" id="vw-detalhado">
         <div class="det-row">
           <div class="card tsec">
-            <div class="ttit">Km/L Detalhado — por Unidade</div>
+            <div class="ttit">Por Unidade</div>
             <div class="tsub" id="sub-uni">—</div>
             <div class="twrap"><table class="dre tbl-det">
               <thead><tr>
@@ -530,7 +530,7 @@ table.dre.tbl-det thead th{font-size:8.5px;white-space:normal;line-height:1.25;v
             </table></div>
           </div>
           <div class="card tsec">
-            <div class="ttit">Km/L Detalhado — por Projeto</div>
+            <div class="ttit">Por Projeto</div>
             <div class="tsub" id="sub-proj">—</div>
             <div class="twrap"><table class="dre tbl-det">
               <thead><tr>
@@ -579,7 +579,7 @@ table.dre.tbl-det thead th{font-size:8.5px;white-space:normal;line-height:1.25;v
       <section class="vw" id="vw-diverg">
         <div class="card tsec">
           <div class="thead-row">
-            <div><div class="ttit">Diagnóstico · Divergências de Média Modelo</div>
+            <div><div class="ttit">Divergências de Média Modelo</div>
               <div class="tsub" id="sub-diverg">—</div></div>
             <button class="export-btn" onclick="exportBaseRemMod()" title="Baixar em Excel, no formato da aba Base Remunerado Modelo, apenas o que está filtrado — com Modelo, Rem Mod., Predominante, Δ, Δ%, KM Rodado e Impacto">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -1638,6 +1638,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610070015"></script>
+<script src="../assets/build-check.js?v=202610071000"></script>
 </body>
 </html>
