@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DriverPro">
-<meta name="build" content="202609141530">
+<meta name="build" content="202610061300">
 <title>DriverPro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -406,12 +406,15 @@ var PILARES = [
   /* o nome do card fica CURTO de propósito: em tela de 360px "Uso da faixa
      verde (até 1.700 RPM)" pedia 208px e só cabiam 183, e o nome era cortado
      com reticências (Renan, 08/09/2026). A faixa aparece inteira na Nota e nas
-     Regras, onde o rótulo pode ocupar a largura do card. */
-  { k:'rpm',  nome:'Uso da faixa verde', faixa:'até 1.700 RPM',
+     Regras, onde o rótulo pode ocupar a largura do card.
+     A faixa é a da FABET desde 06/10/2026 (1.000 a 1.400 RPM): é a mesma que o
+     instrutor ensina e a do torque máximo dos motores de Piraí. O texto da dica
+     é o conselho de troca de marcha do material deles. */
+  { k:'rpm',  nome:'Uso da faixa verde', faixa:'1.000 a 1.400 RPM',
     mede: function(n){ return Math.round(n) + '% do tempo rodando na faixa verde'; },
     curto: function(n){ return Math.round(n) + '% na faixa verde'; },
     regra:'A nota é a porcentagem do tempo em movimento com o motor na faixa verde: 100% na faixa = nota 100; 63% = nota 63.',
-    dica:'Trocar a marcha antes de o motor gritar mantém o giro na faixa verde. É o que mais pesa no seu saldo.' },
+    dica:'Rode entre 1.000 e 1.400 RPM. Na troca de marcha, acelere só até o fim da faixa verde, para o giro não cair abaixo dela. É o que mais pesa no seu saldo.' },
   { k:'idle', nome:'Motor ligado sem rodar',
     mede: function(n){ return n1((100 - n) * REGUA.idle / 100) + '% do tempo parado com o motor ligado'; },
     curto: function(n){ return n1((100 - n) * REGUA.idle / 100) + '% parado ligado'; },

@@ -332,9 +332,22 @@ function gtUni(u) {
    FAIXA VERDE ÚNICA da frota: 1.100–1.700 rpm. Marcha lenta (≤ 900) fica
    FORA do denominador — a MESMA régua da vFleets, para os dois lados serem
    comparáveis quando a Trimble entrar. Calibragem por env:
-   CE_RPM_VERDE="1100-1700" · CE_RPM_LENTA=900 · CE_RPM=0 desliga a coleta. */
+   CE_RPM_VERDE="1000-1400" · CE_RPM_LENTA=900 · CE_RPM=0 desliga a coleta.
+
+   FAIXA VERDE DA FABET: 1.000–1.400 rpm (Renan, 06/10/2026: "Vamos mudar a
+   faixa verde para regra Fabet"). A régua acima foi tirada de motores que
+   Piraí NÃO tem (ISF/ISB das VW médias). A frota de Piraí é 43 de 51 Actros
+   (OM 471: torque máximo em ~1.100 rpm, curva de torque plana de 900 a
+   1.450, potência constante de 1.450 a 1.800), 5 Constellation 19.330
+   (Cummins ISL: 1.450 Nm de 1.000 a 1.500), Scania R540 (DC13: 1.000–1.300)
+   e Volvo FH 460 (D13: 1.000–1.400). O material da Fabet ensina 1.000–1.400
+   como verde, 1.400–1.800 como faixa branca (aceleração excessiva) e
+   1.800–2.300 como a do freio motor. A régua antiga punia 1.000–1.100 (torque
+   cheio) e premiava 1.400–1.700 (marcha abaixo do ideal). Cada dia gravado
+   leva a faixa usada em bruto.rpm.faixa; o modo `faixa` refaz o histórico. */
 const RPM_LENTA = +process.env.CE_RPM_LENTA || 900;
-const [RPM_V_MIN, RPM_V_MAX] = String(process.env.CE_RPM_VERDE || '1100-1700').split('-').map(Number);
+const RPM_VERDE_TXT = String(process.env.CE_RPM_VERDE || '1000-1400');
+const [RPM_V_MIN, RPM_V_MAX] = RPM_VERDE_TXT.split('-').map(Number);
 const RPM_GAP_MS = 120 * 1000;   // buraco entre amostras > 2 min não conta tempo
 
 // baixa TODAS as amostras de rotação do dia, paginando pela data da última
@@ -627,7 +640,7 @@ async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev,
       cambio_ruim_pct: (g.mchT || 0) > 60 ? g.mchR / g.mchT * 100 : null,
       registros: g.n,
       bruto: { viagens: g.n, seg: { dir: g.dir, idle: g.idle, v1: g.v1, v2: g.v2, v3: g.v3 },
-               rpm: { verde: Math.round(g.rpmV || 0), rodando: Math.round(g.rpmR || 0) },
+               rpm: { verde: Math.round(g.rpmV || 0), rodando: Math.round(g.rpmR || 0), faixa: RPM_VERDE_TXT },
                marcha: { ruim: Math.round(g.mchR || 0), total: Math.round(g.mchT || 0) },
                banguela: { neutro: Math.round(g.bgN || 0), movimento: Math.round(g.bgM || 0) },
                // km por placa no dia — o mensal escolhe a mais rodada
@@ -659,7 +672,7 @@ async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev,
       registros: g.n,
       bruto: { semLogin: true, viagens: g.n, seg: { dir: g.dir, idle: g.idle, v1: g.v1, v2: g.v2, v3: g.v3 },
                kmLitros: g.lit > 0 ? Math.round(g.kmLit) : undefined, litRuim: g.litRuim || undefined,
-               rpm: { verde: Math.round(g.rpmV || 0), rodando: Math.round(g.rpmR || 0) },
+               rpm: { verde: Math.round(g.rpmV || 0), rodando: Math.round(g.rpmR || 0), faixa: RPM_VERDE_TXT },
                marcha: { ruim: Math.round(g.mchR || 0), total: Math.round(g.mchT || 0) },
                banguela: { neutro: Math.round(g.bgN || 0), movimento: Math.round(g.bgM || 0) } },
       _nome: 'Sem Login · ' + uni, _uo: null, _uni: uni,
@@ -3289,6 +3302,59 @@ if (MODE === 'litros') {
     + ` · FuelUsed: ${casTot}/${regTot} registro(s) casados com viagem`
     + ` · ${Math.round(litTot)} L em ${Math.round(kmLit)} km (${kmTot ? Math.round(kmLit / kmTot * 100) : 0}% do km) → ${litTot ? (kmLit / litTot).toFixed(2) : '—'} km/L`);
   if (dias && !semColuna) { const n = await recalculaMes(DE.slice(0, 8) + '01', ATE); console.log(`recalculado: ${n} linha(s) em ce_scores_mensais`); }
+  process.exit(0);
+}
+
+if (MODE === 'faixa') {
+  /* FAIXA VERDE NOVA NO HISTÓRICO (Renan, 06/10/2026: regra da Fabet,
+     1.000–1.400 rpm). Mesmo desenho do modo `litros`: baixa as amostras de
+     RPM do dia, refaz a conta pela faixa vigente e grava SÓ rpm_verde_pct e
+     bruto.rpm nas linhas que JÁ existem — litros, eventos, marcha, banguela
+     ficam intactos. Dia em que o RPM falha é pulado (gravaria nota vazia por
+     cima da boa). CE_SECO=1 só compara antes × depois, sem gravar. O log diz
+     a faixa média do dia antes e depois, ponderada pelo km, como o mensal. */
+  if (!GT) { console.error('Geotab: sem credencial'); process.exit(1); }
+  if (!SB_KEY) { console.error('GEM_SUPABASE_SERVICE_KEY ausente'); process.exit(1); }
+  const SECO = process.env.CE_SECO === '1';
+  console.log(`faixa verde ${RPM_VERDE_TXT} rpm · ${DE} → ${ATE}${SECO ? ' · SECO (não grava)' : ''}`);
+  const pondKm = ls => { let n = 0, p = 0; ls.forEach(l => { if (l.v == null) return; const w = +l.km > 0 ? +l.km : 1; n += l.v * w; p += w; }); return p ? n / p : null; };
+  const f1 = v => v == null ? '—' : v.toFixed(1) + '%';
+  let dias = 0, gravTot = 0, semLinha = 0, puladas = 0; const acA = [], acD = [];
+  for (let d = new Date(DE + 'T12:00:00Z'); iso(d) <= ATE; d = new Date(d.getTime() + 864e5)) {
+    if (Date.now() - T0 > LIMITE_MS) { console.log(`⏱  teto de tempo — parou antes de ${iso(d)}; redispare a partir daí`); break; }
+    const dia = iso(d);
+    try {
+      let rpmDev;
+      try { rpmDev = (await geotabRpmDia(dia, GT)).porDev; }
+      catch (e) { console.log(`${dia}: RPM FALHOU (${e.message.slice(0, 80)}) — dia pulado, nada gravado`); puladas++; continue; }
+      const novas = await geotabDia(dia, GT, GT_USERS, GT_RULES, GT_UNIDEV, rpmDev, null, null);
+      const atuais = await sbTodos(`ce_diario?select=id,chave,km,rpm_verde_pct,bruto&dia=eq.${dia}&fonte=eq.Geotab`);
+      const porChave = new Map(atuais.map(a => [a.chave, a]));
+      const patch = [], antes = [], depois = [];
+      for (const l of novas) {
+        const a = porChave.get(l.chave);
+        if (!a) { semLinha++; continue; }
+        antes.push({ v: a.rpm_verde_pct, km: a.km }); depois.push({ v: l.rpm_verde_pct, km: a.km });
+        acA.push({ v: a.rpm_verde_pct, km: a.km }); acD.push({ v: l.rpm_verde_pct, km: a.km });
+        const bruto = { ...(a.bruto || {}), rpm: l.bruto && l.bruto.rpm };
+        patch.push({ dia, chave: l.chave, fonte: 'Geotab', rpm_verde_pct: l.rpm_verde_pct, bruto });
+      }
+      let gravadas = 0;
+      if (!SECO) for (let i = 0; i < patch.length; i += 500) {
+        const r = await fetch(`${SB_URL}/rest/v1/ce_diario?on_conflict=dia,chave`, {
+          method: 'POST', headers: { ...H_SB, Prefer: 'resolution=merge-duplicates' },
+          body: JSON.stringify(patch.slice(i, i + 500)) });
+        if (!r.ok) throw new Error(`ce_diario: ${r.status} ${(await r.text()).slice(0, 200)}`);
+        gravadas += Math.min(500, patch.length - i);
+      }
+      console.log(`${dia}: ${patch.length} linha(s) · faixa verde ${f1(pondKm(antes))} → ${f1(pondKm(depois))}`
+        + (SECO ? '' : ` · ${gravadas} gravada(s)`));
+      dias++; gravTot += gravadas;
+    } catch (e) { console.log(`${dia}: FALHOU (${String(e.message || e).slice(0, 120)})`); puladas++; }
+  }
+  console.log(`\n${dias} dia(s) · faixa verde média (ponderada por km) ${f1(pondKm(acA))} → ${f1(pondKm(acD))}`
+    + ` · ${gravTot} linha(s) gravada(s) · ${semLinha} motorista-dia sem linha no banco · ${puladas} dia(s) pulado(s)`);
+  if (dias && !SECO) { const n = await recalculaMes(DE.slice(0, 8) + '01', ATE); console.log(`recalculado: ${n} linha(s) em ce_scores_mensais`); }
   process.exit(0);
 }
 
