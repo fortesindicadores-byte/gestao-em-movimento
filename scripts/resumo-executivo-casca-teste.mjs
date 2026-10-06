@@ -292,17 +292,22 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
         pagRola: se.scrollHeight > se.clientHeight + 1 || se.scrollWidth > se.clientWidth + 1,
         vwRola: vw.scrollHeight > vw.clientHeight + 1, ulRola: uls, horiz: boxes.some(bx => bx.scrollWidth > bx.clientWidth + 1),
         grade: boxes.map(bx => { const b = bx.getBoundingClientRect(); return [Math.round(b.left), Math.round(b.top), Math.round(b.width), Math.round(b.height)]; }),
-        quadH: Math.round(r.height), vwH: Math.round(vr.height), sobra: Math.round(vr.bottom - foot.bottom), bg,
+        k: (getComputedStyle(quad).getPropertyValue('--k') || '1').trim(), g: (getComputedStyle(quad).getPropertyValue('--g') || '1').trim(), quadH: Math.round(r.height), vwH: Math.round(vr.height), sobra: Math.round(vr.bottom - foot.bottom), bg,
         foraTela: foot.bottom > innerHeight + 1 };
     });
     ok(`${tag}: visão "Resumo Gerencial" abre`, m.id === 'vw-resumo' && m.tit === 'Resumo Gerencial');
     ok(`${tag}: subtítulo do topo = vigência · carga`, /^[A-Z]{3}\/\d{2} · Atualizado /.test(m.sub), m.sub);
     ok(`${tag}: página não rola`, !m.pagRola);
     ok(`${tag}: a visão não transborda`, !m.vwRola);
-    ok(`${tag}: nenhum quadrante com barra (o texto cabe)`, !m.ulRola.some(Boolean), m.ulRola.join(','));
+    // com o texto pesado destes dados: em 1600×900 tudo cabe; em 1366×768 a letra desce até o piso (80%)
+    // e o que ainda sobrar rola DENTRO do quadrante (nunca a página)
+    if (vp.width === 1600) ok(`${tag}: nenhum quadrante com barra (o texto cabe)`, !m.ulRola.some(Boolean), m.ulRola.join(',') + ' · g=' + m.g + ' k=' + m.k);
+    else ok(`${tag}: só rola dentro do quadrante, e só depois de a letra chegar ao piso`, !m.ulRola.some(Boolean) || +m.k <= .8 + 1e-9, m.ulRola.join(',') + ' · g=' + m.g + ' k=' + m.k);
     ok(`${tag}: sem barra horizontal`, !m.horiz);
-    ok(`${tag}: quadrantes em 2×2, mesmo tamanho`, m.grade[0][1] === m.grade[1][1] && m.grade[2][1] === m.grade[3][1] && m.grade[0][0] === m.grade[2][0]
-      && new Set(m.grade.map(g => g[2])).size === 1 && new Set(m.grade.map(g => g[3])).size === 1, JSON.stringify(m.grade));
+    // 2 × 2 alinhado: mesma largura nos quatro, mesma altura dentro de cada linha (a linha mais cheia pode ser mais alta)
+    const p1 = (x, y) => Math.abs(x - y) <= 1;
+    ok(`${tag}: quadrantes em 2×2 alinhados`, p1(m.grade[0][1], m.grade[1][1]) && p1(m.grade[2][1], m.grade[3][1]) && p1(m.grade[0][0], m.grade[2][0])
+      && m.grade.every(g => p1(g[2], m.grade[0][2])) && p1(m.grade[0][3], m.grade[1][3]) && p1(m.grade[2][3], m.grade[3][3]), JSON.stringify(m.grade) + ' · k=' + m.k);
     ok(`${tag}: os quadrantes ficam com a maior parte da altura (≥ 70% da visão)`, m.quadH / m.vwH >= .7, `${m.quadH}/${m.vwH}`);
     ok(`${tag}: sem faixa vazia embaixo (≤ 4px)`, m.sobra <= 4, m.sobra + 'px');
     ok(`${tag}: nada fora da tela`, !m.foraTela);

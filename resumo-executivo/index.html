@@ -189,8 +189,8 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
 
 /* ── os quatro quadrantes dividem a altura que sobra (2 × 2) ──
    A linha mais cheia ganha mais altura (ajustaQuad mede o texto de cada quadrante e
-   escreve o grid-template-rows) e, se ainda não couber, a letra encolhe um pouco
-   (--k) em vez de a página rolar. O que ainda assim passar rola dentro do card. */
+   escreve o grid-template-rows) e, se ainda não couber, primeiro o espaço entre as
+   linhas (--g) e depois a letra (--k) encolhem um pouco, em vez de a página rolar. O que ainda assim passar rola dentro do card. */
 .quad{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
   grid-template-rows:repeat(2,minmax(0,1fr));gap:12px;}
 .box{min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:0 0 12px;}
@@ -201,14 +201,14 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
 .box.neg h2{background:rgba(255,102,102,.15);color:#FF6666;}
 .box.at  h2{background:rgba(234,179,8,.16);color:#EAB308;}
 .box.next h2{background:rgba(56,189,248,.14);color:#38BDF8;}
-.box ul{list-style:none;flex:1;min-height:0;overflow:auto;padding:calc(clamp(9px,1.4vh,14px)*var(--k,1)) 18px 0;
-  display:flex;flex-direction:column;gap:calc(clamp(6px,1.2vh,12px)*var(--k,1));}
+.box ul{list-style:none;flex:1;min-height:0;overflow:auto;padding:calc(clamp(9px,1.4vh,14px)*var(--g,1)) 18px 0;
+  display:flex;flex-direction:column;gap:calc(clamp(6px,1.2vh,12px)*var(--g,1));}
 .box li{display:flex;gap:9px;align-items:flex-start;font-size:calc(clamp(12px,1.62vh,14.5px)*var(--k,1));line-height:1.36;color:var(--txt);}
 .box li .mk{flex-shrink:0;font-weight:800;opacity:.8;}
 .box.pos li .mk{color:#3BB33B;}.box.neg li .mk{color:#FF6666;}.box.at li .mk{color:#EAB308;}.box.next li .mk{color:#38BDF8;}
 .box li b{font-weight:700;}
 /* destaque ★ no pé do quadrante, na cor dele */
-.box li.hl{border:1px solid;border-radius:7px;padding:calc(7px*var(--k,1)) 10px;margin-top:auto;font-weight:600;}
+.box li.hl{border:1px solid;border-radius:7px;padding:calc(7px*var(--g,1)) 10px;margin-top:auto;font-weight:600;}
 .box.pos li.hl{background:rgba(59,179,59,.15);border-color:rgba(59,179,59,.4);}
 .box.neg li.hl{background:rgba(255,102,102,.13);border-color:rgba(255,102,102,.4);}
 .box.at li.hl{background:rgba(234,179,8,.15);border-color:rgba(234,179,8,.4);}
@@ -257,7 +257,7 @@ body.claro .box.next h2,body.claro .box.next li .mk{color:#1B6FC4;}
   .box h2{font-size:12px;padding:9px 13px;}
   .box ul{overflow:visible;padding:9px 13px 0;gap:7px;}
   .box li{font-size:11.5px;gap:7px;line-height:1.35;}
-  .quad{--k:1;}
+  .quad{--k:1;--g:1;}
   .box li.hl{padding:6px 9px;}
   .box li b{word-break:break-word;}
   .foot{font-size:9px;}
@@ -575,26 +575,24 @@ function atualizar(){
 
 /* ── sem rolagem: a altura dos quadrantes segue o texto de cada linha ─────────
    Só apresentação: mede quanto texto cada quadrante tem, dá mais altura à linha
-   mais cheia e, se ainda não couber, reduz a letra em passos de 5% (até 75%). */
+   mais cheia e, se ainda não couber, aperta o espaço entre os itens e depois a letra
+   (em passos de 5%, até 80%). */
+// degraus do aperto: primeiro o espaço entre os itens (--g), depois a letra (--k, até 80%)
+const APERTO=[[1,1],[.7,1],[.45,1],[.3,1],[.3,.95],[.3,.9],[.3,.85],[.3,.8]];
 function ajustaQuad(){
   const q=document.getElementById('quad'); if(!q) return;
-  q.style.removeProperty('--k'); q.style.removeProperty('grid-template-rows');
+  q.style.removeProperty('--k'); q.style.removeProperty('--g'); q.style.removeProperty('grid-template-rows');
   if(window.matchMedia('(max-width:860px)').matches) return;
   const bx=[...q.querySelectorAll('.box')]; if(bx.length!==4) return;
-  const precisa=b=>{   // altura natural do quadrante: título + itens + espaços
-    const ul=b.querySelector('ul'), cs=getComputedStyle(ul), it=[...ul.children];
-    const gap=parseFloat(cs.rowGap)||0;
-    return b.querySelector('h2').offsetHeight+(parseFloat(cs.paddingTop)||0)+(parseFloat(getComputedStyle(b).paddingBottom)||0)
-      +it.reduce((s,li)=>s+li.offsetHeight,0)+gap*Math.max(0,it.length-1);
-  };
-  const transborda=()=>bx.some(b=>{const ul=b.querySelector('ul');return ul.scrollHeight>ul.clientHeight+1;});
-  let k=1;
-  for(let i=0;i<8;i++){
-    const r1=Math.max(precisa(bx[0]),precisa(bx[1])), r2=Math.max(precisa(bx[2]),precisa(bx[3]));
-    q.style.gridTemplateRows=`minmax(0,${Math.round(r1)}fr) minmax(0,${Math.round(r2)}fr)`;
-    if(!transborda()||k<=.75) break;
-    k=Math.round((k-.05)*100)/100; q.style.setProperty('--k',k);
+  const livre=q.clientHeight-(parseFloat(getComputedStyle(q).rowGap)||0);   // altura das duas linhas
+  // altura natural de cada linha = o quadrante mais cheio dela, sem teto
+  const natural=()=>{ q.style.gridTemplateRows='max-content max-content';
+    const h=bx.map(b=>b.offsetHeight); return [Math.max(h[0],h[1]),Math.max(h[2],h[3])]; };
+  let r=natural();
+  for(let i=1;i<APERTO.length&&r[0]+r[1]>livre;i++){
+    q.style.setProperty('--g',APERTO[i][0]); q.style.setProperty('--k',APERTO[i][1]); r=natural();
   }
+  q.style.gridTemplateRows=`minmax(0,${r[0]}fr) minmax(0,${r[1]}fr)`;
 }
 let _ajT; window.addEventListener('resize',()=>{clearTimeout(_ajT);_ajT=setTimeout(ajustaQuad,120);});
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ if(ICS.length) ajustaQuad(); });
