@@ -265,11 +265,11 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 .root-col{display:flex;flex-direction:column;gap:12px;flex:0 0 auto;}
 .pacotes{display:flex;flex-direction:column;gap:20px;flex:0 0 auto;margin-left:96px;}
 .pac-block{display:flex;align-items:center;flex:0 0 auto;}
-.contas{display:flex;flex-direction:column;gap:12px;flex:0 0 auto;margin-left:64px;}
+.contas{display:flex;flex-direction:column;gap:12px;flex:0 0 auto;margin-left:52px;}
 .conta-block{display:flex;align-items:center;flex:0 0 auto;}
 /* na visão do pacote as três leituras da conta ficam lado a lado (empilhadas, a
    visão do maior pacote passaria de 1.500px de altura) */
-.views{display:flex;flex-direction:row;gap:8px;flex:0 0 auto;margin-left:52px;}
+.views{display:flex;flex-direction:row;gap:8px;flex:0 0 auto;margin-left:44px;}
 .arv-vazio{padding:40px;text-align:center;color:var(--txt3);font-size:12px;font-weight:600;}
 /* a dica que ficava no cabeçalho do painel antigo (escopo e base das razões) */
 .arv-nota{flex:0 0 auto;font-size:10px;color:var(--txt3);font-style:italic;text-align:center;}
@@ -283,6 +283,8 @@ body.claro .kpi-card{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
 .root-total{border-color:color-mix(in srgb,var(--laranja) 50%,transparent);
   box-shadow:var(--luz-card), 0 0 0 1px color-mix(in srgb,var(--laranja) 35%,transparent), 0 8px 20px rgba(0,0,0,.35);}
 .conta-card{width:300px;}   /* o nome da conta é o rótulo mais longo da árvore */
+.pac-tree .pac-card{width:250px;}
+.view-card{width:236px;}     /* R$/km, R$/Frota Ativa e AV: números curtos */
 .card-label{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--txt2);padding:10px 14px 6px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .kpi-table{width:100%;border-collapse:collapse;table-layout:fixed;}

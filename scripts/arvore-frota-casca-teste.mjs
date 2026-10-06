@@ -144,10 +144,12 @@ async function abre(browser, pagina, { w = 1600, h = 900, tema = 'dark', mini = 
     return r.fulfill({ status: 200, contentType: 'application/javascript', body: '/*stub*/' });
   });
   await page.route('**/cdn.sheetjs.com/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: '/*stub*/' }));
+  // o service worker do build-check recarrega a página na 1ª visita; fora do teste
+  await page.route('**/sw.js', r => r.fulfill({ status: 404, body: '' }));
   await page.goto(BASE + PASTA + pagina, { waitUntil: 'load' });
-  await page.evaluate(() => document.fonts.ready);
   await page.waitForFunction(() => { const e = document.getElementById('titSub') || document.getElementById('status-badge');
     return e && /Atualizado|Erro/.test(e.textContent); }, null, { timeout: 15000 });
+  await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(500);
   return { ctx, page, errs };
 }
