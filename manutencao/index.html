@@ -255,14 +255,14 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 #vw-resumo .hlbl{font-size:10.5px;letter-spacing:1px;}
 #vw-resumo .hval{font-size:clamp(34px,5vh,56px);margin:7px 0 2px;}
 /* os cinco números que ficavam ao lado do hero viram a fileira de cards; a
-   sobra de altura é DIVIDIDA entre os cards e os gráficos (1 para 2) */
+   sobra de altura é DIVIDIDA: cards com altura própria, gráficos com teto */
 .kpis{grid-template-columns:repeat(5,minmax(0,1fr));}
-#vw-resumo .kpis{flex:1 1 0;min-height:clamp(112px,16.5vh,170px);max-height:clamp(150px,24vh,230px);}
+#vw-resumo .kpis{flex:0 0 auto;min-height:clamp(112px,16.5vh,170px);}
 #vw-resumo .kpi{display:flex;flex-direction:column;justify-content:center;padding:14px 16px;}
-#vw-resumo .kpi .kv{font-size:clamp(22px,3.4vh,30px);}
+#vw-resumo .kpi .kv{font-size:clamp(17px,min(3.4vh,1.45vw),30px);white-space:nowrap;}
 .dist-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap;flex:0 0 auto;}
 .dist-head .tsub{margin-bottom:0;}
-#vw-resumo .gr2{flex:2 1 0;max-height:56vh;grid-template-rows:minmax(0,1fr);}
+#vw-resumo .gr2{flex:1 1 0;max-height:56vh;grid-template-rows:minmax(0,1fr);}
 /* cabeçalho alinhado ao conteúdo: texto à esquerda, número à direita */
 table.dre thead th.num{text-align:right;}
 table.dre thead th[onclick]{cursor:pointer;user-select:none;}

@@ -12,7 +12,7 @@
 // antes e depois de filtrar, e no roteiro do /check-metas/ (vigência + setDim).
 //
 // Uso (Playwright só importa de dentro de docs/driverpro-apresentacao/):
-//   git show HEAD:rs-por-km/index.html > /tmp/rskm-antigo.html
+//   git show 228d273^:rs-por-km/index.html > /tmp/rskm-antigo.html   # o painel ANTES da migração
 //   cp scripts/rs-por-km-casca-teste.mjs docs/driverpro-apresentacao/_rskm-casca.mjs
 //   cd docs/driverpro-apresentacao && RAIZ=/home/user/gestao-em-movimento \
 //     ANTIGO=/tmp/rskm-antigo.html CHART_JS=<chart.umd.js> SHOTS=<pasta> \
@@ -274,8 +274,8 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       // botão direito na tabela abre o menu com Excel
       await page.click('.s-item[data-vw="detalhado"]'); await page.waitForTimeout(200);
       await page.click('#body-rskm tr td', { button: 'right' }); await page.waitForTimeout(200);
-      const menu = await page.evaluate(() => [...document.querySelectorAll('body *')].filter(e => /Exportar Excel/i.test(e.textContent) && e.children.length === 0 && e.offsetParent).length);
-      ok('botão direito na tabela: menu "Exportar Excel"', menu > 0);
+      const menu = await page.evaluate(() => { const m = document.getElementById('xl-menu'); return m && getComputedStyle(m).display !== 'none' ? m.textContent : ''; });
+      ok('botão direito na tabela: menu "Exportar Excel"', /Exportar Excel/.test(menu), menu.trim().slice(0, 80));
       await page.keyboard.press('Escape'); await page.mouse.click(5, 5);
       // ordenação da tabela (sortable-table.js) — clicar no cabeçalho reordena
       const s1 = await page.evaluate(() => [...document.querySelectorAll('#body-rskm tr:not(.total)')].map(tr => tr.cells[0].textContent).join(','));
@@ -300,16 +300,19 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
 // 4 · celular: a página volta a rolar, gráficos com altura, tabela compacta com "+ Ver detalhes"
 {
   const { ctx, page, errs } = await abre(browser, null, { width: 390, height: 844 }, 'dark');
-  const m = await page.evaluate(() => ({ rola: document.scrollingElement.scrollHeight > innerHeight,
+  const m = await page.evaluate(() => ({ rola: document.scrollingElement.scrollHeight > innerHeight || document.body.scrollHeight > document.body.clientHeight + 1,
     canv: [...document.querySelectorAll('#vw-resumo canvas')].map(c => c.getBoundingClientRect().height) }));
   ok('celular: página rola e gráficos com altura', m.rola && m.canv.every(h => h > 120), m.canv.map(Math.round).join(','));
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular-resumo.png'), fullPage: true });
-  await page.click('.s-item[data-vw="detalhado"]'); await page.waitForTimeout(200);
-  const t = await page.evaluate(() => ({ btn: getComputedStyle(document.getElementById('tbl-detail-toggle')).display,
-    cols: [...document.querySelectorAll('#tbl-rskm thead th')].filter(th => getComputedStyle(th).display !== 'none').length }));
-  await page.click('#tbl-detail-toggle'); await page.waitForTimeout(100);
-  const t2 = await page.evaluate(() => [...document.querySelectorAll('#tbl-rskm thead th')].filter(th => getComputedStyle(th).display !== 'none').length);
-  ok('celular: tabela compacta (4 colunas) e "+ Ver detalhes" mostra as 9', t.btn !== 'none' && t.cols === 4 && t2 === 9, `${t.btn} · ${t.cols} → ${t2}`);
+  await page.click('.s-item[data-vw="detalhado"]'); await page.waitForTimeout(700);
+  // no celular o mobile.js assume o "+ Ver detalhes" da página (esconde o botão dela e põe o "+ Detalhar"), como no painel antigo
+  const vis = () => [...document.querySelectorAll('#tbl-rskm thead th')].filter(th => getComputedStyle(th).display !== 'none').length;
+  const t = await page.evaluate(vis => ({ cols: eval(vis)(), mt: !!document.querySelector('#vw-detalhado .mt-detail-btn') }), vis.toString());
+  if (t.mt) { await page.click('#vw-detalhado .mt-detail-btn'); await page.waitForTimeout(300); }
+  const t2 = await page.evaluate(vis => eval(vis)(), vis.toString());
+  ok('celular: tabela compacta e "+ Detalhar" abre a completa', t.mt && t.cols < 9 && t2 === 9, `${t.cols} → ${t2}`);
+  const lin = await page.evaluate(() => document.querySelectorAll('#body-rskm tr').length);
+  ok('celular: tabela com linhas', lin > 2, String(lin));
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular-detalhado.png'), fullPage: true });
   ok('celular: zero erro de página', errs.length === 0, errs.join(' / '));
   await ctx.close();

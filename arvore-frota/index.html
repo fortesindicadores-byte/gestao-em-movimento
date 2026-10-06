@@ -282,7 +282,8 @@ body.claro .kpi-card{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
 /* Custo Pacote Frota em destaque (era a borda laranja do painel antigo) */
 .root-total{border-color:color-mix(in srgb,var(--laranja) 50%,transparent);
   box-shadow:var(--luz-card), 0 0 0 1px color-mix(in srgb,var(--laranja) 35%,transparent), 0 8px 20px rgba(0,0,0,.35);}
-.card-label{font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--txt2);padding:10px 14px 6px;
+.conta-card{width:300px;}   /* o nome da conta é o rótulo mais longo da árvore */
+.card-label{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--txt2);padding:10px 14px 6px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .kpi-table{width:100%;border-collapse:collapse;table-layout:fixed;}
 .kpi-table th{background:var(--cabec);color:var(--txt2);font-size:10px;font-weight:800;letter-spacing:.5px;
@@ -829,7 +830,9 @@ function drawConnectors(){
   svg.innerHTML=out;
 }
 // Ajusta a escala da árvore para caber na área da visão (largura E altura — a página
-// do layout padrão não rola). Só reduz, como antes; o tamanho natural é o teto.
+// do layout padrão não rola). Reduz o que não cabe; o Resumo (só raiz e pacotes)
+// pode crescer um pouco para ocupar o palco, até ARV_MAX.
+const ARV_MAX=1.35;
 function fitTree(){
   const wrap=id('treeWrap'+_sfx(VW)); if(!wrap)return;
   const area=wrap.closest('.arv-area')||wrap.parentElement;
@@ -838,12 +841,12 @@ function fitTree(){
   const treeW=wrap.scrollWidth, treeH=wrap.scrollHeight;
   const availW=area.clientWidth-8, availH=area.clientHeight-8;
   if(!treeW||!treeH||availW<=0||availH<=0)return;
-  const sc=Math.min(1,availW/treeW,availH/treeH);
-  if(sc<1){
+  const sc=Math.min(ARV_MAX,availW/treeW,availH/treeH);
+  if(Math.abs(sc-1)>.005){
     wrap.style.transformOrigin='top left'; wrap.style.transform='scale('+sc+')';
-    // a caixa de layout encolhe junto, para a área centralizar a árvore escalada
-    wrap.style.marginRight='-'+Math.round(treeW*(1-sc))+'px';
-    wrap.style.marginBottom='-'+Math.round(treeH*(1-sc))+'px';
+    // a caixa de layout acompanha a escala, para a área centralizar a árvore
+    wrap.style.marginRight=Math.round(treeW*(sc-1))+'px';
+    wrap.style.marginBottom=Math.round(treeH*(sc-1))+'px';
   }
 }
 function fitAndDraw(){ const wrap=id('treeWrap'+_sfx(VW)); if(!wrap)return; wrap.style.transform=''; wrap.style.marginRight=''; wrap.style.marginBottom=''; drawConnectors(); fitTree(); }

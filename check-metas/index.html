@@ -636,7 +636,7 @@ function montaRoteiro(avisa){
     {rot:'Vs Orçado',prep:`__cm.ate('ref-pac-v','ORÇ','togglePacRef');`,
      alvo:"document.querySelector('#vw-nominal .card')"}));
   R.push(P('R$/Km Pacotes Frota','Abertura – '+vX+' e YTD','../rs-por-km/',
-    `__cm.sel('ms-vig',${JSON.stringify([V])}); atualizar(); setDim('conta');`,
+    `__cm.vw('detalhado'); __cm.sel('ms-vig',${JSON.stringify([V])}); atualizar(); setDim('conta');`,
     {alvo:"document.querySelector('.tbl-section')"}));
   R.push(P('Dispersão de Km','Ambev · '+vX,'../painel-km/',
     `__cm.vw('resumo'); __cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`));
