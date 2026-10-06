@@ -192,14 +192,14 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
 /* ── tabela do MPR (grade própria: um bloco por indicador, GEO → unidade·tier) ──
    larguras em % para as 20 colunas caberem sem barra lateral (1366 e 1600) */
 table.mpr{border-collapse:collapse;width:100%;table-layout:fixed;font-size:11px;border-style:hidden;}
-table.mpr td{padding:6px 3px;border:1px solid var(--grid);color:var(--txt);white-space:nowrap;text-align:center;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;}
+table.mpr td{padding:6px 2px;border:1px solid var(--grid);color:var(--txt);white-space:nowrap;text-align:center;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;}
 /* dentro dos indicadores (Ano/YTD/meses): SÓ linha horizontal, sem nenhuma vertical. */
 table.mpr td.vc{border-left:none!important;border-right:none!important;}
 /* larguras — meses todos iguais */
-col.c-uni{width:11%;}col.c-plan{width:5.2%;}col.c-ano{width:3.4%;}col.c-val{width:5%;}col.c-mes{width:3.7%;}
-col.c-causa,col.c-acao{width:8.6%;}
-col.c-resp{width:6.6%;}
-col.c-prazo{width:7.2%;}
+col.c-uni{width:10.6%;}col.c-plan{width:4.6%;}col.c-ano{width:2.9%;}col.c-val{width:4.6%;}col.c-mes{width:3.8%;}
+col.c-causa,col.c-acao{width:7.35%;}
+col.c-resp{width:7.8%;}
+col.c-prazo{width:9.3%;}
 /* linha mais grossa separando cada GEO */
 tr.geo-start td{border-top:2px solid rgba(255,255,255,.16);}
 body.claro tr.geo-start td{border-top-color:rgba(0,0,0,.22);}
@@ -216,23 +216,23 @@ tr.kpi-row td{padding:14px 8px 6px;text-align:left;border-bottom:1px solid var(-
 /* separador entre grupos (unidade/GEO) */
 tr.grp-end td{border-bottom:1px solid var(--linha);}
 
-.uni-cell{text-align:left;font-weight:700;color:var(--txt);padding-left:8px;}
+.uni-cell{text-align:left;font-weight:700;color:var(--txt);padding-left:8px;font-size:10.5px;}
 /* nome da unidade/tier quebra linha (não corta em "…") */
-table.mpr td.uni-cell{white-space:normal;overflow:visible;text-overflow:clip;word-break:break-word;line-height:1.25;text-align:left;padding-left:8px;}
+table.mpr td.uni-cell{white-space:normal;overflow:visible;text-overflow:clip;word-break:break-word;line-height:1.25;text-align:left;padding-left:8px;padding-right:4px;}
 .uni-cell.geo{cursor:pointer;}
 .uni-cell .toggle{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:3px;background:rgba(249,115,22,.2);color:var(--laranja);font-weight:800;font-size:12px;margin-right:6px;}
-table.mpr td.uni-cell.unit{padding-left:20px;color:var(--txt2);font-weight:600;}
-.per{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;text-align:left;padding-left:6px;}
+table.mpr td.uni-cell.unit{padding-left:14px;color:var(--txt2);font-weight:600;}
+.per{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;text-align:left;padding-left:6px;}
 .per.p2026{color:var(--txt);}
 
 /* valores — COR NA FONTE, do termômetro */
-.cell{font-weight:700;font-size:11px;}
+.cell{font-weight:700;font-size:10px;}
 .cell.v-green{color:#3BB33B;}
 .cell.v-amber{color:#EAB308;}
 .cell.v-red{color:#FF6666;}
 .cell.v-na,.cell.dash{color:var(--txt3);font-weight:500;}
 .cell.tot{font-weight:800;}
-.cell.pill{display:inline-block;min-width:36px;padding:3px 5px;border-radius:5px;font-weight:800;color:#0C1017!important;}
+.cell.pill{display:inline-block;min-width:34px;padding:3px 4px;border-radius:5px;font-weight:800;color:#0C1017!important;}
 body.claro .cell.v-green{color:#0E8C0E;}
 body.claro .cell.v-red{color:#cc0000;}
 /* Plan: a meta quebra linha em vez de cortar (ex.: "≥ 3º quartil") */
@@ -247,8 +247,8 @@ textarea.fld{min-height:150px;}
 .fld:focus{background:rgba(249,115,22,.06);}
 body.claro .fld:focus{background:rgba(249,115,22,.10);}
 /* Responsável/Prazo — caixinhas menores */
-table.mpr td.smc{padding:8px 4px;vertical-align:middle;}
-.sml{width:100%;background:var(--side);border:1px solid var(--card-brd);border-radius:6px;color:var(--txt);font-family:'Montserrat',sans-serif;font-size:10.5px;padding:7px 4px;outline:none;cursor:text;box-sizing:border-box;}
+table.mpr td.smc{padding:8px 3px;vertical-align:middle;}
+.sml{width:100%;background:var(--side);border:1px solid var(--card-brd);border-radius:6px;color:var(--txt);font-family:'Montserrat',sans-serif;font-size:10px;padding:7px 3px;outline:none;cursor:text;box-sizing:border-box;}
 .sml[type=date]{cursor:pointer;padding:6px 2px;font-size:10px;color-scheme:dark;}
 body.claro .sml[type=date]{color-scheme:light;}
 .sml[type=date]::-webkit-calendar-picker-indicator{margin:0;padding:0;width:11px;height:11px;cursor:pointer;}
@@ -285,7 +285,7 @@ body.claro .sml[type=date]{color-scheme:light;}
   .vw>*{margin-bottom:12px;}
   .tsec{display:block;padding:12px 12px 10px;}
   .thead-row{margin-bottom:6px;}
-  .twrap{height:76vh;overflow:auto;}
+  .twrap{max-height:76vh;overflow:auto;}   /* fechada: só o "+ Detalhar" do mobile.js; aberta: rola dentro */
   table.mpr{min-width:1150px;}
 }
 </style>

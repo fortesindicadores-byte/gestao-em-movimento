@@ -8,7 +8,7 @@
 // Responsável/Prazo vêm do localStorage — semeado igual nos dois lados.
 //
 // Uso (Playwright só importa de dentro de docs/driverpro-apresentacao/):
-//   git show HEAD:mpr/index.html > /tmp/.../mpr-antigo.html      (o último antes da casca)
+//   git show 3daea6e:mpr/index.html > /tmp/.../mpr-antigo.html   (o último antes da casca)
 //   cp scripts/mpr-casca-teste.mjs docs/driverpro-apresentacao/_mpr-casca-<id>.mjs
 //   cd docs/driverpro-apresentacao && RAIZ=/home/user/gestao-em-movimento \
 //     ANTIGO=<html antigo> FONT_DIR=<@fontsource/montserrat/files> SHOTS=<pasta> node _mpr-casca-<id>.mjs ; rm _mpr-casca-<id>.mjs
@@ -158,7 +158,7 @@ const leTabela = () => {
     filtros: [...document.querySelectorAll('.ms-wrap')].map(w => w.id + ':' + w.querySelectorAll('.ms-opt input[data-v]').length + ':' + [...(w._sel || [])].join('/')).join(',') };
 };
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--lang=pt-BR'] });   // data em dd/mm/aaaa, como no navegador do usuário
 const htmlAntigo = fs.readFileSync(ANTIGO, 'utf8');
 
 // 1 · números: antigo × novo, base, filtros, drill de GEO e Excel
@@ -233,7 +233,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
         const cv = document.createElement('canvas').getContext('2d');
         const inputs = [...vw.querySelectorAll('input.sml')].filter(i => {
           const cs = getComputedStyle(i); cv.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-          const txt = i.type === 'date' ? '00/00/0000' : (i.value || i.placeholder);
+          const txt = i.type === 'date' ? 'dd/mm/aaaa' : (i.value || i.placeholder);
           const livre = i.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - (i.type === 'date' ? 13 : 0);
           return cv.measureText(txt).width > livre + .5;
         }).length;
@@ -327,12 +327,23 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
 
 // 4 · celular: a página volta a rolar e a tabela tem altura
 {
+  const { ctx, page } = await abre(browser, htmlAntigo, { width: 390, height: 844 }, 'dark');
+  await page.waitForTimeout(600);
+  ok('celular (antigo): a tabela também ficava atrás do "+ Detalhar"', await page.evaluate(() => !!document.querySelector('.mt-detail-btn')));
+  await ctx.close();
+}
+{
   const { ctx, page, errs } = await abre(browser, null, { width: 390, height: 844 }, 'dark');
-  const m = await page.evaluate(() => ({ rola: /auto|scroll/.test(getComputedStyle(document.body).overflowY) && getComputedStyle(document.querySelector('.app')).position === 'static',
-    h: Math.round(document.querySelector('.twrap').getBoundingClientRect().height) }));
-  ok('celular: página livre para rolar e tabela com altura', m.rola && m.h > 300, m.h + 'px');
-  ok('celular: zero erro de página', errs.length === 0, errs.join(' / '));
+  await page.waitForTimeout(600);
+  const rola = await page.evaluate(() => /auto|scroll/.test(getComputedStyle(document.body).overflowY) && getComputedStyle(document.querySelector('.app')).position === 'static');
+  ok('celular: página livre para rolar', rola);
+  ok('celular: tabela larga atrás do "+ Detalhar" do mobile.js (como antes)', await page.evaluate(() => !!document.querySelector('#vw-resumo .mt-detail-btn')));
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular.png'), fullPage: false });
+  await page.click('#vw-resumo .mt-detail-btn'); await page.waitForTimeout(300);
+  const h = await page.evaluate(() => Math.round(document.querySelector('.twrap').getBoundingClientRect().height));
+  ok('celular: "+ Detalhar" abre a tabela com altura (rola dentro)', h > 300, h + 'px');
+  ok('celular: zero erro de página', errs.length === 0, errs.join(' / '));
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular-detalhar.png'), fullPage: false });
   await ctx.close();
 }
 await browser.close();
