@@ -343,12 +343,12 @@ for (const [w, h] of [[1600, 900], [1366, 768]]) for (const tema of ['dark', 'li
   await s.page.evaluate(() => setVw('manut')); await s.page.waitForTimeout(250);
   const m = await s.page.evaluate(() => {
     const vw = document.querySelector('.vw.on'), wrap = vw.querySelector('.tree-wrap'), cards = [...vw.querySelectorAll('.kpi-card')];
-    return { trans: getComputedStyle(wrap).transform, larg: Math.max(...cards.map(c => c.getBoundingClientRect().right)),
+    return { trans: getComputedStyle(wrap).transform, larg: Math.max(...cards.map(c => c.getBoundingClientRect().right)), estreito: cards.filter(c => c.getBoundingClientRect().width < 340).length,
       rola: getComputedStyle(document.body).overflowY, svg: getComputedStyle(vw.querySelector('.tree-svg')).display, n: cards.length };
   });
   af('zero erro de página', s.errs.length === 0, s.errs[0] || '');
   af('árvore empilhada, sem escala e sem conectores', m.trans === 'none' && m.svg === 'none', m.n + ' cards');
-  af('cards cabem na largura do celular', m.larg <= 390, Math.round(m.larg) + 'px');
+  af('cards cabem na largura do celular e ocupam a largura toda', m.larg <= 390 && m.estreito === 0, Math.round(m.larg) + 'px · ' + m.estreito + ' estreitos');
   af('a página volta a rolar no celular', m.rola === 'auto');
   if (SHOT) await s.page.screenshot({ path: path.join(SHOT, 'celular-manut.png'), fullPage: true });
   await s.ctx.close();
