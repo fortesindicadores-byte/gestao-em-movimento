@@ -28,7 +28,7 @@ const SHOTS = process.env.SHOTS || '';
 const ANTIGO = process.env.ANTIGO;
 const ORIG = 'http://gem.teste';
 const PASTA = 'eficiencia-ativacao';
-const BUILD = '202610062345';
+const BUILD = '202610070000';
 
 // ── dados sintéticos: Dispersão de km ────────────────────────────────────────
 let seed = 23; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
