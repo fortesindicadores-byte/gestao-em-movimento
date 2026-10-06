@@ -12,7 +12,7 @@
 // vazio, e cai no "Google" dublado.
 //
 // Uso (Playwright só importa de dentro de docs/driverpro-apresentacao/):
-//   git show HEAD:resumo-executivo/index.html > <scratch>/antigo.html   (o último antes da casca)
+//   git show 179afa3:resumo-executivo/index.html > <scratch>/antigo.html   (o último antes da casca)
 //   cp scripts/resumo-executivo-casca-teste.mjs docs/driverpro-apresentacao/_resexec-casca-x1.mjs
 //   cd docs/driverpro-apresentacao && RAIZ=/home/user/gestao-em-movimento ANTIGO=<html antigo> \
 //     SBJS=<supabase.js umd> FONT_DIR=<montserrat files> SHOTS=<pasta> node _resexec-casca-x1.mjs ; rm _resexec-casca-x1.mjs
@@ -363,6 +363,34 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
   ok('banco fora: a reserva Base RPM (CSV) traz a pontuação', /^\d+,\d$/.test(lados.novo.hero || ''), lados.novo.hero + ' · ' + lados.novo.heroSub);
   ok('banco fora: antigo × novo iguais (hero, quadrantes, filtro)', JSON.stringify({ ...lados.antigo, errs: 0 }) === JSON.stringify({ ...lados.novo, errs: 0 }));
   ok('banco fora: zero erro de página no novo', lados.novo.errs.length === 0, lados.novo.errs.join(' / '));
+}
+
+// 3b · Check de Metas: o slide é FOTO do painel (P(...,{foto:true})). Roda o MESMO helper __cm do
+//      check-metas/index.html no iframe do tamanho do palco (1760×866), tema claro: filtro pelo contrato
+//      (__cm.sel + atualizar), alvo padrão (.vw.on), __cm.abre — e nada pode ficar cortado.
+{
+  const cm = fs.readFileSync(path.join(RAIZ, 'check-metas/index.html'), 'utf8');
+  const i = cm.indexOf('const CM_HELPER=`') + 17, j = cm.indexOf('`;\n', i);
+  const HELPER = new Function('return `' + cm.slice(i, j) + '`')();
+  ok('check-metas: o roteiro fotografa o Resumo Executivo (foto:true)', /P\('Resumo Executivo'[\s\S]{0,200}\{foto:true\}\)\)/.test(cm));
+  const { ctx, page, errs } = await abre(browser, null, { width: 1760, height: 866 }, 'dark');
+  const r = await page.evaluate(H => {
+    (0, eval)(H);
+    aplicaTema('light');
+    __cm.faltou = []; __cm.sel('ms-vig', ['jul/26|2026-07|JUL/26|jul/2026|07/2026']); atualizar();
+    const alvo = document.querySelector('.vw.on');
+    __cm.topo(alvo); const h = __cm.abre(alvo);
+    const cortado = [...alvo.querySelectorAll('*')].filter(n => n.scrollHeight > n.clientHeight + 2 && getComputedStyle(n).overflowY !== 'visible').length;
+    const boxes = [...alvo.querySelectorAll('#quad .box')].map(b => Math.round(b.getBoundingClientRect().height));
+    const ultimo = [...alvo.querySelectorAll('#quad li')].pop().getBoundingClientRect().bottom <= alvo.getBoundingClientRect().bottom + 1;
+    return { faltou: __cm.faltou, h, cortado, boxes, ultimo, sub: document.getElementById('titSub').textContent, hero: document.querySelector('#hero .hval').textContent };
+  }, HELPER);
+  ok('check-metas: filtro da vigência casou (sem aviso)', r.faltou.length === 0 && /^JUL\/26 · /.test(r.sub), r.faltou.join(' / ') + ' · ' + r.sub);
+  ok('check-metas: depois do __cm.abre nada fica cortado no alvo', r.cortado === 0 && r.ultimo && r.boxes.every(x => x > 80), `cortados ${r.cortado} · caixas ${r.boxes.join(',')} · alvo ${r.h}px`);
+  if (SHOTS) await (await page.$('.vw.on')).screenshot({ path: path.join(SHOTS, PASTA, 'check-metas-foto.png') });
+  await page.evaluate(() => __cm.fecha());
+  ok('check-metas: zero erro de página', errs.length === 0, errs.join(' / '));
+  await ctx.close();
 }
 
 // 4 · celular: a página volta a rolar e os quadrantes empilham com altura

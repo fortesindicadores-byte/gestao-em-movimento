@@ -627,6 +627,7 @@ function trocaMini(){
   localStorage.setItem('resumo_executivo_mini', mini?'1':'0');
   document.getElementById('btMini').title=mini?'Expandir menu':'Recolher menu';
   escondeDica();
+  if(ICS.length) ajustaQuad();   // a largura mudou: o texto quebra diferente
 }
 if(localStorage.getItem('resumo_executivo_mini')==='1'){ document.querySelector('.side').classList.add('mini'); document.getElementById('btMini').title='Expandir menu'; }
 
