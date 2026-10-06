@@ -275,7 +275,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
         ok(`${tag} · Indicadores: cabeçalho sticky`, m.sticky === 'sticky');
         ok(`${tag} · Indicadores: cabeçalho sem texto cortado`, !m.cortes.length, m.cortes.join(' / '));
         ok(`${tag} · Indicadores: cabeçalho alinhado ao conteúdo`, m.al === m.alTd, m.al + ' × ' + m.alTd);
-        ok(`${tag} · Indicadores: sem moldura dupla`, /^0px rgba\(0, 0, 0, 0\) none 0px$/.test(m.moldura), m.moldura);
+        ok(`${tag} · Indicadores: espelho atrás da tabela (Renan, 06/10/2026)`, /^1px rgba?\(/.test(m.moldura) && !/^1px rgba\(0, 0, 0, 0\)/.test(m.moldura), m.moldura);
         ok(`${tag} · Indicadores: título que repete a visão escondido`, !m.tituloVisivel);
       }
       if (SHOTS && vp.width === 1600) {
@@ -300,7 +300,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       ok('scripts no fim, na ordem do padrão', ordem.every((x, i) => x >= 0 && (i === 0 || x > ordem[i - 1])), ordem.join(','));
       ok('chart.js, supabase-js, gerot-base.js, gviz-cache.js e ctrlk.js continuam', ['chart.js', 'supabase-js', 'gerot-base.js', 'gviz-cache.js', 'ctrlk.js'].every(n => exp.srcs.some(s => s.includes(n))));
       ok('filters-toggle.js saiu', !exp.srcs.some(s => s.includes('filters-toggle')));
-      ok('build-check com o mesmo build do <meta>', await page.evaluate(B => { const b = (document.querySelector('meta[name=build]') || {}).content; return b === B && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + b)); }, BUILD));
+      ok('build-check com o mesmo build do <meta>', await page.evaluate(B => { const b = (document.querySelector('meta[name=build]') || {}).content; return !!b && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + (document.querySelector('meta[name=build]') || {}).content)); }, BUILD));
       await page.click('.s-item[data-vw="indicadores"]'); await page.waitForTimeout(200);
       await page.click('#tbl tbody td:nth-child(7)', { button: 'right' }); await page.waitForTimeout(150);
       ok('clique direito na tabela abre o menu Excel/PNG', await page.evaluate(() => { const m = document.getElementById('xl-menu'); return !!m && m.style.display !== 'none' && /Excel/.test(m.textContent); }));

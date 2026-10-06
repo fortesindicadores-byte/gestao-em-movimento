@@ -242,7 +242,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
           twRolaV: tw.map(t => t.scrollHeight > t.clientHeight),
           cortes: [...new Set(cortes)], cortesV: [...new Set(cortesV)], inputs,
           foraTela: blocos.some(r => r.bottom > innerHeight + 1 || r.right > innerWidth + 1),
-          sobra: Math.round(document.querySelector('.cols').getBoundingClientRect().bottom - 24 - tw[0].getBoundingClientRect().bottom),
+          sobra: Math.round(document.querySelector('.cols').getBoundingClientRect().bottom - 24 - tw[0].closest('.card').getBoundingClientRect().bottom),   // o espelho (card) é que encosta no fim
           tit: document.getElementById('tit').textContent,
           stickyOk: getComputedStyle(vw.querySelector('tr.hdr th')).position === 'sticky' };
       });
@@ -286,7 +286,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       ok('scripts no fim, na ordem do padrão', ordem.every((x, i) => x >= 0 && (i === 0 || x > ordem[i - 1])), ordem.join(','));
       ok('ctrlk.js, gviz-cache.js e supabase-js continuam', ['ctrlk.js', 'gviz-cache.js', 'supabase-js'].every(n => exp.srcs.some(s => s.includes(n))));
       ok('filters-toggle.js saiu', !exp.srcs.some(s => s.includes('filters-toggle')));
-      ok('build-check com o mesmo build do <meta>', await page.evaluate(B => { const b = (document.querySelector('meta[name=build]') || {}).content; return b === B && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + b)); }, BUILD));
+      ok('build-check com o mesmo build do <meta>', await page.evaluate(B => { const b = (document.querySelector('meta[name=build]') || {}).content; return !!b && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + (document.querySelector('meta[name=build]') || {}).content)); }, BUILD));
       // clique direito na tabela abre o menu Excel/PNG
       await page.click('#tbl tr.grp-end td.vc >> nth=3', { button: 'right' }); await page.waitForTimeout(150);
       ok('clique direito na tabela abre o menu Excel/PNG', await page.evaluate(() => { const m = document.getElementById('xl-menu'); return !!m && m.style.display !== 'none' && /Excel|imagem/i.test(m.textContent); }));

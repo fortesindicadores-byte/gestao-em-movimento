@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610070700">
+<meta name="build" content="202610071400">
 <title>Papéis e Responsabilidades</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -126,6 +126,8 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
 
 /* Tabela: a única moldura é a do .twrap; quem rola é ele (cabeçalho sticky), nunca a página */
 .tsec{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
+/* o espelho atrás da tabela fica sempre (Renan, 06/10/2026) */
+.card.tsec{padding:12px 14px;flex:0 1 auto;}   /* abraça a tabela, sem sobra de card embaixo */
 .twrap{flex:0 1 auto;min-height:0;overflow:auto;border:1px solid var(--card-brd);border-radius:10px;background:var(--side);
   box-shadow:var(--luz-card);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
 table.dre{width:100%;border-collapse:collapse;font-size:12.5px;}
@@ -208,7 +210,7 @@ body.claro .chip{color:var(--txt)!important;}
         <span class="owner-leg"><i style="background:#2DD4BF"></i>Emili Ariza</span>
       </div>
 
-      <div class="tsec"><div class="twrap">
+      <div class="card tsec"><div class="twrap">
         <table class="dre">
           <thead><tr><th>Bloco</th><th>Descrição</th><th>Dono</th></tr></thead>
           <tbody id="tb"></tbody>
@@ -268,6 +270,6 @@ aplicaTema((function(){ try{ return localStorage.getItem('bi_theme'); }catch(e){
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202610070700"></script>
+<script src="../assets/build-check.js?v=202610071400"></script>
 </body>
 </html>

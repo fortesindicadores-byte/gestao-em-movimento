@@ -111,7 +111,7 @@ for (const P of PAGS) {
   const faltam = so.filter(s => !sn.includes(s));
   af('todos os scripts do antigo estão no novo', faltam.length === 0, faltam.length ? 'faltam ' + faltam.join(',') : sn.join(' '));
   const build = await n.pg.evaluate(() => document.querySelector('meta[name=build]').content + ' ' + [...document.scripts].map(s => s.getAttribute('src') || '').find(s => s.includes('build-check')));
-  af('build 202610070700 no meta e no build-check', build === '202610070700 ../assets/build-check.js?v=202610070700', build);
+  af('mesmo build no meta e no build-check', /^(\d{12}) \.\.\/assets\/build-check\.js\?v=\1$/.test(build), build);
   af('sem menu lateral (.side ausente)', await n.pg.evaluate(() => !document.querySelector('.side')));
   const casca = await n.pg.evaluate(() => {
     const app = getComputedStyle(document.querySelector('.app')), bf = getComputedStyle(document.querySelector('.app'), '::before'), gr = getComputedStyle(document.body, '::after');
