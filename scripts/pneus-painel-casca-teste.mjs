@@ -21,7 +21,7 @@
 //     do filtro aparecendo, PDF na lateral, Excel carregado.
 //
 // Uso (Playwright só importa de dentro de docs/driverpro-apresentacao/):
-//   git show HEAD:pneus/painel.html > <scratch>/antigo.html
+//   git show 3daea6e:pneus/painel.html > <scratch>/antigo.html   (o último antes da casca)
 //   cp scripts/pneus-painel-casca-teste.mjs docs/driverpro-apresentacao/_pneus-painel-casca.mjs
 //   cd docs/driverpro-apresentacao && RAIZ=/home/user/gestao-em-movimento ANTIGO=<scratch>/antigo.html \
 //     CDN_DIR=<pasta com chart.umd.js e chartjs-plugin-datalabels.js> H2C=<html2canvas.min.js> \
@@ -313,7 +313,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
 console.log('\n══ celular (390×844) ══');
 {
   const N = await abre(browser, { vp: { width: 390, height: 844 } });
-  const m = await N.page.evaluate(() => ({ rola: document.scrollingElement.scrollHeight > innerHeight,
+  const m = await N.page.evaluate(() => ({ rola: Math.max(document.scrollingElement.scrollHeight, document.body.scrollHeight) > innerHeight && getComputedStyle(document.body).overflowY !== "hidden",
     cv: Chart.getChart(document.getElementById('chartSaudeMensal')).height, larg: document.scrollingElement.scrollWidth <= innerWidth + 1 }));
   ok('celular: a página rola, o gráfico tem altura e não há barra lateral na página', m.rola && m.cv > 150 && m.larg, JSON.stringify(m));
   await N.page.evaluate(() => setVw('mm-bottom')); await N.page.waitForTimeout(300);
