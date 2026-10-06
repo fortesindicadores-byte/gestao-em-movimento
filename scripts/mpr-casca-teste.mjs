@@ -22,7 +22,7 @@ const SHOTS = process.env.SHOTS || '';
 // Montserrat de verdade (@fontsource, pasta files/), senão o navegador mede com a fonte de
 // reserva, mais estreita, e a conferência de "nada cortado" passa por engano
 const FONT_DIR = process.env.FONT_DIR || '';
-const BUILD = '202610070100';
+const BUILD = '202610070200';
 const ORIG = 'http://gem.teste';
 const PASTA = 'mpr';
 
@@ -221,7 +221,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     console.log(`\n══ ${tag} ══`);
     ok(`${tag}: body.claro = tema`, await page.evaluate(t => document.body.classList.contains('claro') === (t === 'light') && !document.body.classList.contains('light-mode'), tema));
     for (const v of VISOES) {
-      await page.click(`.s-item[data-vw="${v}"]`);
+      await page.evaluate(v => setVw(v), v);
       await page.waitForTimeout(300);
       const medir = () => page.evaluate(() => {
         const se = document.scrollingElement, vw = document.querySelector('.vw.on');
@@ -246,8 +246,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
           tit: document.getElementById('tit').textContent,
           stickyOk: getComputedStyle(vw.querySelector('tr.hdr th')).position === 'sticky' };
       });
-      for (const mini of [false, true]) {
-        if (mini) { await page.click('#btMini'); await page.waitForTimeout(300); }
+      for (const mini of [false]) {   // sem menu lateral desde 06/10/2026
         const m = await medir(); const t2 = tag + (mini ? ' (lateral recolhida)' : '');
         ok(`${t2} · ${v}: visão abre (${m.tit})`, m.id === 'vw-' + v && m.tit === 'Resumo Gerencial');
         ok(`${t2} · ${v}: página não rola`, !m.pagRola);
@@ -268,7 +267,6 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
             await page.evaluate(() => { document.querySelector('.twrap').scrollTop = 0; });
           }
         }
-        if (mini) { await page.click('#btMini'); await page.waitForTimeout(250); }
       }
     }
     if (vp.width === 1600 && tema === 'dark') {
@@ -276,11 +274,13 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       const depois = await page.evaluate(() => [document.body.classList.contains('claro'), localStorage.getItem('bi_theme'), getComputedStyle(document.querySelector('tr.hdr th')).backgroundColor]);
       ok('troca de tema: body.claro + bi_theme + cabeçalho no tom do tema', depois[0] && depois[1] === 'light' && depois[2] === 'rgb(220, 223, 230)', JSON.stringify(depois));
       await page.click('#btTema'); await page.waitForTimeout(200);
-      const exp = await page.evaluate(() => ({ pdf: !!document.querySelector('#pdf-slot .s-item, #pdf-slot button'),
-        xlsItem: [...document.querySelectorAll('.side .s-item')].some(b => /Exportar Excel/.test(b.textContent) && /exportExcel/.test(b.getAttribute('onclick') || '')),
+      const exp = await page.evaluate(() => ({ pdf: !!document.querySelector('.top .acoes #pdf-slot button'),
+        xlsItem: [...document.querySelectorAll('.top .acoes .tool')].some(b => /Excel/.test(b.textContent) && /exportExcel/.test(b.getAttribute('onclick') || '')),
+        semLateral: !document.querySelector('.side') && !!document.querySelector('.top .acoes a[href="../"]') && [...document.querySelectorAll('.top .acoes .tool')].some(b => /atualizar\(\)/.test(b.getAttribute('onclick') || '')),
         h2c: typeof window.H2CPrep !== 'undefined', srcs: [...document.scripts].map(s => s.getAttribute('src')).filter(Boolean) }));
-      ok('Gerar PDF na lateral (Atalhos)', exp.pdf);
-      ok('Exportar Excel (o .xls do painel) na lateral', exp.xlsItem);
+      ok('Gerar PDF no topo', exp.pdf);
+      ok('sem menu lateral: Atualizar e Hub no topo', exp.semLateral);
+      ok('Exportar Excel (o .xls do painel) no topo', exp.xlsItem);
       ok('excel-export carregado (menu Excel/PNG no clique direito)', exp.h2c);
       const ordem = ['mobile.js', 'sortable-table.js', 'excel-export.js', 'pdf-export.js', 'build-check.js'].map(n => exp.srcs.findIndex(s => s.includes(n)));
       ok('scripts no fim, na ordem do padrão', ordem.every((x, i) => x >= 0 && (i === 0 || x > ordem[i - 1])), ordem.join(','));
@@ -303,10 +303,6 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       await page.click('#tbl td.uni-cell.geo >> nth=0'); await page.waitForTimeout(150);
       const n1 = await page.evaluate(() => document.querySelectorAll('#tbl td.uni-cell.unit').length);
       ok('clique no GEO recolhe/expande as unidades', n0 !== n1, `${n0} → ${n1}`);
-      // lateral recolhida guarda a chave
-      await page.click('#btMini'); await page.waitForTimeout(300);
-      ok('lateral recolhe e guarda mpr_mini', await page.evaluate(() => document.querySelector('.side').classList.contains('mini') && localStorage.getItem('mpr_mini') === '1'));
-      await page.click('#btMini'); await page.waitForTimeout(200);
       ok('contrato dos filtros: wrap._sel (Set) + wrap._render + render/atualizar', await page.evaluate(() => ['ms-tier', 'ms-kpi', 'ms-geo', 'ms-uni'].every(id => { const w = document.getElementById(id); return w._sel instanceof Set && typeof w._render === 'function'; }) && typeof render === 'function' && typeof atualizar === 'function'));
       await page.evaluate(() => atualizar()); await page.waitForTimeout(600);
       ok('Atualizar dados: subtítulo "Atualizado …"', await page.evaluate(() => /^Atualizado /.test(document.getElementById('titSub').textContent)));
