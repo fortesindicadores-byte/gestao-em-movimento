@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610070300">
+<meta name="build" content="202610070600">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Gestão de Pneus · Gestão em Movimento</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1861,7 +1861,24 @@ const VW_PAGE = {
 // ?page=<x> do hub de Pneus → a 1ª visão da página (saude = Resumo Gerencial)
 const PAGE_VW = { saude: 'resumo', painel: 'aderencia', milimetragem: 'milimetragem', pressao: 'pressao',
   cpk: 'cpk', previsao: 'previsao', desgaste: 'desgaste', orcamento: 'orcamento', eixos: 'eixos' };
-let VW = 'resumo';
+// CADA CARD DO HUB DE PNEUS É UM PAINEL (Renan, 06/10/2026: "todos os painéis estão dentro desse
+// card, olhe o menu lateral"): o ?page=<x> escolhe o painel, e o menu lateral, o título e o PDF mostram
+// SÓ as visões dele. A 1ª visão de cada um chama-se "Resumo Gerencial", como em todo painel do portal.
+const PAGE_NOME = { saude: 'Saúde dos Pneus', painel: 'Aderência às Aferições', milimetragem: 'Milimetragem',
+  pressao: 'Pressão', cpk: 'CPK — Custo por Km', previsao: 'Previsão de Troca',
+  desgaste: 'Desgaste — mm/1.000km', orcamento: 'Previsão Orçamentária', eixos: 'Visão de Eixos' };
+const PAGINA = PAGE_NOME[new URLSearchParams(location.search).get('page')] ? new URLSearchParams(location.search).get('page') : 'saude';
+Object.keys(TIT).forEach(k => {
+  if (VW_PAGE[k] !== PAGINA) { delete TIT[k]; const b = document.querySelector('.s-item[data-vw="' + k + '"]'); if (b) b.remove(); }
+});
+TIT[PAGE_VW[PAGINA]] = 'Resumo Gerencial';
+(function () {
+  const b = document.querySelector('.s-item[data-vw="' + PAGE_VW[PAGINA] + '"]');
+  if (b) { const tn = [...b.childNodes].reverse().find(n => n.nodeType === 3 && n.textContent.trim()); if (tn) tn.textContent = ' Resumo Gerencial'; }
+  const marca = document.querySelector('.s-top b'); if (marca) marca.textContent = PAGE_NOME[PAGINA];
+  document.title = PAGE_NOME[PAGINA] + ' · Gestão em Movimento';
+})();
+let VW = PAGE_VW[PAGINA];
 
 function navigate(page) {
   if (!PAGE_RENDER[page]) return;
@@ -1870,7 +1887,7 @@ function navigate(page) {
 }
 
 function setVw(v) {
-  if (!TIT[v]) v = 'resumo';
+  if (!TIT[v]) v = PAGE_VW[PAGINA];
   VW = v;
   document.querySelectorAll('.s-item[data-vw]').forEach(b => b.classList.toggle('on', b.dataset.vw === v));
   document.querySelectorAll('.vw').forEach(x => x.classList.toggle('on', x.id === 'vw-' + v));
@@ -1882,7 +1899,7 @@ function setVw(v) {
 document.querySelectorAll('.s-item[data-vw]').forEach(b => b.addEventListener('click', () => setVw(b.dataset.vw)));
 
 // Abre a visão indicada na URL (?page=milimetragem etc.)
-setVw(PAGE_VW[new URLSearchParams(location.search).get('page')] || 'resumo');
+setVw(PAGE_VW[PAGINA]);
 
 // ============================================================
 // CACHE (localStorage, TTL 1h)
@@ -5059,13 +5076,13 @@ try{ if(localStorage.getItem('pneus_mini')==='1'){ document.querySelector('.side
 <script>
 initPdfExport({
   btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
-  title:'Gestão de Pneus', subtitle:()=>document.getElementById('titSub').textContent,
-  fileBase:'gestao-de-pneus', main:()=>document.querySelector('.vw.on'),
+  title:()=>PAGE_NOME[PAGINA], subtitle:()=>document.getElementById('titSub').textContent,
+  fileBase:'pneus-'+PAGINA, main:()=>document.querySelector('.vw.on'),
   views:()=>Object.keys(TIT).map(k=>({label:TIT[k], ativar:()=>setVw(k)})),
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610070300"></script>
+<script src="../assets/build-check.js?v=202610070600"></script>
 </body>
 </html>
