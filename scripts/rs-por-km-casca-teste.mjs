@@ -270,7 +270,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       const ordem = ['mobile.js', 'sortable-table.js', 'excel-export.js', 'pdf-export.js', 'build-check.js'].map(n => exp.srcs.findIndex(s => s.includes(n)));
       ok('scripts no fim, na ordem do padrão', ordem.every((x, i) => x >= 0 && (i === 0 || x > ordem[i - 1])), ordem.join(','));
       ok('filters-toggle.js saiu', !exp.srcs.some(s => s.includes('filters-toggle')));
-      ok('build-check com o mesmo build do <meta>', await page.evaluate(() => { const b = (document.querySelector('meta[name=build]') || {}).content; return b === '202610062300' && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + b)); }));
+      ok('build-check com o mesmo build do <meta>', await page.evaluate(() => { const b = (document.querySelector('meta[name=build]') || {}).content; return b === '202610070015' && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + b)); }));
       // botão direito na tabela abre o menu com Excel
       await page.click('.s-item[data-vw="detalhado"]'); await page.waitForTimeout(200);
       await page.click('#body-rskm tr td', { button: 'right' }); await page.waitForTimeout(200);

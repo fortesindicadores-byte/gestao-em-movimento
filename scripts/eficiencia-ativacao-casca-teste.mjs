@@ -28,13 +28,13 @@ const SHOTS = process.env.SHOTS || '';
 const ANTIGO = process.env.ANTIGO;
 const ORIG = 'http://gem.teste';
 const PASTA = 'eficiencia-ativacao';
-const BUILD = '202610070000';
+const BUILD = '202610070020';
 
 // ── dados sintéticos: Dispersão de km ────────────────────────────────────────
 let seed = 23; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const VIGS = []; for (let m = 0; m < 12; m++) VIGS.push([2025, m]); for (let m = 0; m <= 8; m++) VIGS.push([2026, m]);
 const PU = ['ROTA - PIR', 'EMPURRADA - PIR', 'ROTA - CBA', 'AS - CBA', 'EMPURRADA - CBA', 'ROTA - GRL', 'ROTA (VAN) - GRL',
-            'ROTA - CGR', 'AS - MCC', 'ROTA - MCC', 'ROTA - FLP', 'ROTA - NFR', 'ROTA - PLT'];
+            'ROTA - CGR', 'AS - MCC', 'ROTA - MCC', 'ROTA - FLP', 'ROTA - NFR', 'ROTA - PLT', 'ROTA - BLC', 'ROTA - RON'];   // as 10 unidades reais
 const du = (y, m) => { let n = 0; const d = new Date(y, m, 1); while (d.getMonth() === m) { if (d.getDay() !== 0) n++; d.setDate(d.getDate() + 1); } return n; };
 const DISP = [];
 VIGS.forEach(([y, m]) => PU.forEach((pu, i) => {
@@ -213,6 +213,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
           return { id: vw.id, pagRola: se.scrollHeight > se.clientHeight + 1 || se.scrollWidth > se.clientWidth + 1,
                    vwRola: vw.scrollHeight > vw.clientHeight + 1,
                    horiz: tw.some(t => t.scrollWidth > t.clientWidth + 1),
+                   vert: tw.some(t => t.scrollHeight > t.clientHeight + 1),
                    canv, kpis, foraTela: blocos.some(r => r.bottom > innerHeight + 1 || r.right > innerWidth + 1),
                    thAlto: [...vw.querySelectorAll('thead tr')].map(tr => Math.round(tr.getBoundingClientRect().height)).filter(h => h > 70),
                    thAlin: [...vw.querySelectorAll('thead th')].map(th => getComputedStyle(th).textAlign).join(','),
@@ -225,6 +226,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
         ok(`${tag} · ${vt}: página não rola`, !m.pagRola);
         ok(`${tag} · ${vt}: a visão não transborda`, !m.vwRola);
         ok(`${tag} · ${vt}: tabela sem barra horizontal`, !m.horiz);
+        if (v === 'projetos') ok(`${tag} · ${vt}: todas as linhas da tabela à vista, sem barra vertical`, !m.vert);
         ok(`${tag} · ${vt}: nada fora da tela`, !m.foraTela);
         ok(`${tag} · ${vt}: cabeçalho de tabela numa linha só`, !m.thAlto.length, m.thAlto.join(','));
         if (m.canv.length) ok(`${tag} · ${vt}: gráficos com altura`, m.canv.every(h => h > 120), m.canv.map(Math.round).join(','));

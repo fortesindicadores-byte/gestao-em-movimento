@@ -19,7 +19,7 @@ const RAIZ = process.env.RAIZ || '/home/user/gestao-em-movimento';
 const ANTIGO = process.env.ANTIGO;
 const CHART_JS = process.env.CHART_JS || '';
 const SHOTS = process.env.SHOTS || '';
-const BUILD = '202610062330';
+const BUILD = '202610070015';
 const ORIG = 'http://gem.teste';
 const PASTA = 'termometro';
 
