@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610061400">
+<meta name="build" content="202610061500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -275,8 +275,20 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 .ce-kpis{grid-template-columns:repeat(3,1fr);margin-top:14px;}
 /* cards dos pilares um pouco mais altos (Renan, 06/10/2026: "aumentar um
    pouco os cards") — mesma régua dos cards do Resumo nos painéis migrados */
-#vw-resumo #kpi-pilares .kpi{min-height:clamp(110px,16.5vh,168px);display:flex;flex-direction:column;
-  justify-content:center;padding:clamp(16px,3vh,28px) 18px;}
+/* Renan, 06/10/2026, de novo: "aumente os cards e distribua sempre na tela
+   toda a visão" — a MESMA altura em todas as fileiras de cards do painel
+   (Resumo, Carteira, Km/L, Acessos), e quem preenche a sobra é o gráfico ou
+   a tabela de baixo, nunca um vão vazio no rodapé. */
+/* conteúdo espalhado, mas sem encostar nas bordas (Renan, 06/10/2026: "um
+   pouquinho mais para cima e um pouquinho mais para baixo… sem extremos"):
+   space-between leva rótulo e resultado para as pontas, e o padding vertical
+   maior é quem os segura longe da borda */
+#kpi-pilares .kpi,#cart-kpis .kpi,#cons-kpis .kpi,#ac-kpis .kpi{min-height:clamp(130px,20vh,200px);display:flex;
+  flex-direction:column;justify-content:space-between;padding:clamp(22px,4.4vh,42px) 20px;}
+#kpi-pilares .kpi .kv,#cart-kpis .kpi .kv,#cons-kpis .kpi .kv,#ac-kpis .kpi .kv,
+#kpi-pilares .kpi .km,#cart-kpis .kpi .km,#cons-kpis .kpi .km,#ac-kpis .kpi .km{margin-top:0;}
+#kpi-pilares .kpi .kv,#cart-kpis .kpi .kv,#cons-kpis .kpi .kv,#ac-kpis .kpi .kv{font-size:clamp(25px,3.6vh,34px);}
+#kpi-pilares .kpi .km,#cart-kpis .kpi .km,#cons-kpis .kpi .km,#ac-kpis .kpi .km{font-size:11px;}
 .cart-kpis{grid-template-columns:repeat(5,1fr);margin-top:0;margin-bottom:12px;flex:0 0 auto;}
 #vw-carteira{display:none;flex-direction:column;} #vw-carteira.on{display:flex;}
 .cart-td b{font-weight:800;} .cart-neg{color:var(--txt3);}
@@ -288,7 +300,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
    Resumo. O que fazia parecer "muito alto" (Renan, 07/09/2026) era o eixo em
    zero: barras de 2,17 a 2,28 viram um paredão igual. O eixo agora corta
    perto dos dados (renderConsChart) e a diferença entre os meses aparece. */
-#vw-consumo .gr2{grid-template-columns:1fr;max-height:56vh;margin-top:12px;}
+#vw-consumo .gr2{grid-template-columns:1fr;margin-top:12px;flex:1 1 auto;min-height:0;max-height:none;}
 .cons-kpis{grid-template-columns:repeat(5,1fr);margin-top:14px;flex:0 0 auto;}
 /* Acessos do DriverPro (Renan, 07/09/2026) — mesmo desenho do painel Acessos
    do portal: hero, 3 cards, gráfico por mês (2 colunas) e calendário (1). */
@@ -296,7 +308,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 /* os 3 cards têm altura própria (Renan, 08/09/2026: "aumente um pouquinho os
    cards para ficar proporcional") — a mesma régua do /acessos/ */
 /* o .vw já separa os blocos com gap:12px — nada de margem por cima (era o vão) */
-#vw-acessos{gap:10px;} #ac-kpis{margin-top:0;min-height:clamp(100px,14vh,150px);} #ac-kpis .kpi{display:flex;flex-direction:column;justify-content:center;gap:3px;}
+#vw-acessos{gap:10px;} #ac-kpis{margin-top:0;} #ac-kpis .kpi{display:flex;flex-direction:column;justify-content:center;gap:3px;}
 /* a fileira de baixo OCUPA A SOBRA da visão (regra da sobra dividida), em vez
    da altura fixa do /acessos/ — numa tela alta sobrava um vão embaixo */
 .res-cols{flex:1 1 auto;min-height:230px;margin-top:0;
@@ -1773,6 +1785,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610061400"></script>
+<script src="../../assets/build-check.js?v=202610061500"></script>
 </body>
 </html>
