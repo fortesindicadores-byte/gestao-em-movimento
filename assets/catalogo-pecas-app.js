@@ -11,6 +11,13 @@
 // Filtro em TODO cabeçalho de coluna (multisseleção + ordenação, estilo
 // autofiltro), busca livre e — no painel do hub — filtro por unidade e placa,
 // que cruza a frota do ginfo_snapshot com a coluna de aplicação da peça.
+//
+// CASCA PADRÃO (06/10/2026) — OPT-IN: `init({ ..., casca:{...} })` desenha o
+// mesmo conteúdo dentro da casca do portal (.app/.side/.board, tokens, tema
+// body.claro), que o catalogo-pecas/index.html fornece. Sem `casca` (o
+// catalogo-pecas-externo), NADA muda: mesmo HTML, mesmo CSS, mesmo menu.
+// A lógica (segmentação, filtros em cascata, menu de coluna, frota × aplicação,
+// hero) é UMA só; a casca troca só a marcação e o CSS.
 // ============================================================
 (function (global) {
   'use strict';
@@ -214,11 +221,89 @@
     .tbl-scroll{max-height:none;}
   }`;
 
+  // ── CSS da casca padrão: só o que é próprio do catálogo. A casca em si
+  // (tokens, .app, .side, .top, .ms-*, .card, .tsec, table.dre, @media 860)
+  // mora no catalogo-pecas/index.html, copiada do painel-km. ──────────────
+  const CSS_CASCA = `
+  #cp-nav{display:contents;}   /* os itens das visões são filhos diretos da lateral (fileira no celular) */
+  #cp-main{gap:12px;}
+  #cp-main .hero{display:flex;align-items:flex-end;gap:44px;flex:0 0 auto;flex-wrap:wrap;}
+  #cp-main .hero-label{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.9px;}
+  #cp-main .hero-value{font-size:clamp(26px,3.6vh,40px);font-weight:800;line-height:1;margin:4px 0 6px;color:var(--txt);}
+  #cp-main .hero-value.accent{color:var(--laranja);}
+  #cp-main .hero-sub{font-size:10px;color:var(--txt3);font-weight:600;}
+  .cp-grid{flex:1;min-height:0;display:grid;gap:12px;grid-template-rows:minmax(0,1fr);}
+  .cp-grid>.card{min-height:0;min-width:0;}
+  .cp-tsec{flex:1;min-height:0;min-width:0;}
+  .cp-tsec .twrap{overflow-x:hidden;}
+  table.dre.cp-tbl{table-layout:fixed;}
+  table.dre.cp-tbl thead th{cursor:pointer;user-select:none;overflow:hidden;text-overflow:ellipsis;padding:10px 10px;vertical-align:bottom;}
+  table.dre.cp-tbl thead th.num{text-align:right;}
+  table.dre.cp-tbl thead th:hover,table.dre.cp-tbl thead th.filtrada{color:var(--laranja);}
+  table.dre.cp-tbl thead th .fi{opacity:0;margin-left:4px;font-size:9px;transition:opacity .12s;}
+  table.dre.cp-tbl thead th:hover .fi{opacity:.6;}
+  table.dre.cp-tbl thead th.filtrada .fi{opacity:1;}
+  table.dre.cp-tbl td{padding:9px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  table.dre.cp-tbl td.num{text-align:right;}
+  .cp-mais{align-self:center;flex:0 0 auto;margin-top:10px;background:transparent;border:1px solid var(--card-brd);
+    border-radius:20px;padding:5px 14px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;color:var(--laranja);}
+  .cp-mais:hover{background:var(--hover);}
+  .cp-vazio{color:var(--txt3);font-size:12px;padding:14px 4px;}
+  .ptxt{flex:1;min-height:0;min-width:0;overflow:auto;padding:14px 18px;}
+  .ptxt .ptb+.ptb{border-top:1px solid var(--linha);margin-top:12px;padding-top:12px;}
+  .ptxt h3{font-size:13px;font-weight:800;color:var(--laranja);margin:10px 0 5px;}
+  .ptxt .ptb>h3:first-child{margin-top:0;}
+  .ptxt p{font-size:11.5px;color:var(--txt2);line-height:1.6;margin-bottom:4px;}
+
+  /* até 12 filtros (as colunas da aba): o título guarda a largura dele e os
+     filtros descem para a linha de baixo quando não cabem ao lado */
+  .top .tit-wrap{flex:1 1 340px;}
+  #cp-filtros{flex-wrap:wrap;justify-content:flex-end;gap:2px;margin-left:auto;}
+  #cp-filtros .ms-btn svg{flex-shrink:0;opacity:.8;}
+  #cp-filtros .ms-opt .ms-txt{overflow:hidden;text-overflow:ellipsis;}
+  #cp-filtros .ms-panel{max-width:340px;}
+  .f-limpa{background:transparent;border:1px solid var(--card-brd);border-radius:7px;padding:5px 10px;cursor:pointer;
+    font-family:inherit;font-size:11.5px;font-weight:700;color:var(--laranja);white-space:nowrap;}
+  .f-limpa:hover{background:var(--hover);}
+
+  .colmenu{position:fixed;z-index:400;background:var(--pop);border:1px solid var(--card-brd);border-radius:10px;
+    box-shadow:0 18px 44px rgba(0,0,0,.55),0 3px 10px rgba(0,0,0,.35);width:266px;max-height:400px;
+    display:flex;flex-direction:column;padding:4px;}
+  body.claro .colmenu{box-shadow:0 18px 44px rgba(15,23,42,.20),0 3px 10px rgba(15,23,42,.10);}
+  .colmenu .cm-ord{display:flex;border-bottom:1px solid var(--linha);}
+  .colmenu .cm-ord button{flex:1;background:none;border:none;border-radius:7px;color:var(--txt2);cursor:pointer;
+    font-family:inherit;font-size:11px;font-weight:700;padding:8px 6px;}
+  .colmenu .cm-ord button:hover{background:var(--hover);color:var(--txt);}
+  .colmenu .cm-busca{margin:6px;background:transparent;border:1px solid var(--card-brd);border-radius:7px;color:var(--txt);
+    font-family:inherit;font-size:12px;padding:6px 9px;outline:0;}
+  .colmenu .cm-lista{overflow-y:auto;flex:1;padding:0 2px 4px;}
+  .colmenu label{display:flex;align-items:center;gap:9px;padding:6px 9px;font-size:12px;color:var(--txt);
+    cursor:pointer;border-radius:7px;}
+  .colmenu label:hover{background:var(--hover);}
+  .colmenu label.todos{border-bottom:1px solid var(--linha);font-weight:700;border-radius:0;}
+  .colmenu input[type=checkbox]{accent-color:var(--azul);cursor:pointer;width:14px;height:14px;flex:0 0 auto;}
+  .colmenu .cm-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  @media(max-width:860px){
+    .cp-grid{display:block;}
+    .cp-grid>.card{margin-bottom:12px;}
+    .cp-tsec{height:72vh;}
+    .ptxt{max-height:72vh;}
+    #cp-main .hero{gap:20px;}
+    .top .tit-wrap{flex:1 1 auto;}
+    #cp-filtros{flex-wrap:nowrap;justify-content:flex-start;}
+    #cp-filtros .filter-group{flex:0 0 auto;}
+  }
+  @media(max-width:768px){
+    table.dre.cp-tbl{table-layout:auto;}
+    table.dre.cp-tbl col{width:auto!important;}
+  }`;
+
   function injetarCSS() {
     if (document.getElementById('cp-style')) return;
     const st = document.createElement('style');
     st.id = 'cp-style';
-    st.textContent = CSS;
+    st.textContent = CASCA ? CSS_CASCA : CSS;
     document.head.appendChild(st);
   }
 
@@ -265,6 +350,9 @@
   let DADOS = {}, ABAS = [], atual = null, BLOCOS = {}, USA_PLACA = false;
   let FROTA = [], placasSel = new Set(), unidsSel = new Set();
   const st = new Map();   // chave → {busca, ordCol, ordDir, filtros:Map(col→Set), mostrando}
+  // casca padrão (opt-in): null = layout antigo, intocado
+  let CASCA = null;
+  const HEAD = {};        // chave da tabela → {tit, sub} (texto da planilha logo acima dela)
 
   const chave = (aba, i) => aba + '#' + i;
   function estado(k) {
@@ -388,7 +476,50 @@
   }
 
   // ── Render ───────────────────────────────────────────────────────────────
+  // Casca: colunas numéricas (número pt-BR, não código como NCM "8409.99.51")
+  // ficam à direita, com o cabeçalho junto.
+  const RE_NUM = /^-?(\d{1,3}(\.\d{3})+|\d+)(,\d+)?\s*%?$/;
+  function colsNum(bloco) {
+    if (!bloco._num) {
+      const amostra = bloco.rows.slice(0, 300);
+      bloco._num = bloco.cols.map((_, i) => {
+        const vs = amostra.map(r => r[i]).filter(v => txt(v) && txt(v) !== '—' && txt(v) !== '-');
+        return vs.length > 0 && vs.filter(v => typeof v === 'number' || RE_NUM.test(txt(v))).length >= vs.length * .9;
+      });
+    }
+    return bloco._num;
+  }
+
+  function renderTabelaCasca(bloco, k) {
+    const e = estado(k);
+    const linhas = aplicar(bloco, e);
+    const vis = linhas.slice(0, e.mostrando);
+    const cols = bloco.vis || bloco.cols.map((_, i) => i);
+    const lg = larguras(bloco.cols);
+    const tot = cols.reduce((s, i) => s + lg[i].w, 0);
+    const num = colsNum(bloco);
+    const cls = i => (keepMobile(bloco.cols)[i] ? 'mt-keep' : 'mt-hide') + (num[i] ? ' num' : '');
+    const colg = `<colgroup>${cols.map(i => `<col style="width:${(lg[i].w / tot * 100).toFixed(3)}%">`).join('')}</colgroup>`;
+    const seta = i => e.ordCol === i ? (e.ordDir === 'asc' ? ' ▲' : ' ▼') : '';
+    const hd = HEAD[k];
+    // totalizador da planilha ("TOTAL", "TOTAL DA FROTA") no tom do cabeçalho
+    const ehTotal = r => /^total\b/i.test(txt(r[cols[0]]));
+    return `<div class="card tsec cp-tsec" data-tbl="${esc(k)}" data-linhas="${linhas.length}">
+      ${hd ? `<div class="thead-row"><div><div class="ttit">${esc(hd.tit)}</div>${hd.sub ? `<div class="tsub">${esc(hd.sub)}</div>` : ''}</div></div>` : ''}
+      ${linhas.length ? `<div class="twrap"><table class="dre cp-tbl" data-no-sort>${colg}<thead><tr>${
+        cols.map(i => `<th class="${cls(i)}${e.filtros.get(i) && e.filtros.get(i).size ? ' filtrada' : ''}" data-col="${i}" title="${esc(bloco.cols[i])}">${esc(bloco.cols[i])}${seta(i)}<span class="fi">▾</span></th>`).join('')
+      }</tr></thead><tbody>${
+        vis.map(r => `<tr${ehTotal(r) ? ' class="total"' : ''}>${cols.map(i => {
+          const v = r[i] === undefined ? '' : r[i];
+          return `<td class="${cls(i)}" title="${esc(v)}">${esc(v)}</td>`;
+        }).join('')}</tr>`).join('')
+      }</tbody></table></div>` : '<div class="cp-vazio">Nada encontrado com os filtros aplicados.</div>'}
+      ${linhas.length > vis.length ? `<button class="cp-mais">Mostrar mais ${nf(Math.min(LOTE, linhas.length - vis.length))} (faltam ${nf(linhas.length - vis.length)})</button>` : ''}
+    </div>`;
+  }
+
   function renderTabela(bloco, k, titulo) {
+    if (CASCA) return renderTabelaCasca(bloco, k);
     const e = estado(k);
     const linhas = aplicar(bloco, e);
     const vis = linhas.slice(0, e.mostrando);
@@ -488,7 +619,9 @@
 
   function syncBadge(wrap) {
     const cnt = wrap.querySelector('.ms-cnt'), n = wrap._sel ? wrap._sel.size : 0;
-    if (cnt) { cnt.textContent = n; cnt.style.display = n ? '' : 'none'; }
+    if (cnt) { cnt.textContent = n; cnt.style.display = n ? (CASCA ? 'inline-block' : '') : 'none'; }
+    // na casca, '' devolveria ao CSS (.ms-cnt{display:none}) e a contagem nunca apareceria
+    if (CASCA) wrap.classList.toggle('ativo', n > 0);
   }
 
   // Liga um .ms-wrap (uma única vez) e devolve o render, usado pela cascata.
@@ -621,7 +754,8 @@
     if (USA_PLACA && FROTA.length) h += msWrapHtml('ms-uni', 'Unidade') + msWrapHtml('ms-placa', 'Placa');
     h += COLF.map(({ c, i }) => msWrapHtml('ms-c' + i, c.replace(/\s*\(.*/, ''))).join('');
     h += `<button class="f-limpa" id="f-limpa" style="display:none">Limpar filtros</button>`;
-    h += `<div class="filter-hint">Todo cabeçalho de coluna também filtra e ordena.</div>`;
+    // na casca a mesma dica já está no subtítulo do topo
+    if (!CASCA) h += `<div class="filter-hint">Todo cabeçalho de coluna também filtra e ordena.</div>`;
     cx.innerHTML = h;
 
     cx.querySelectorAll('.ms-wrap').forEach(w => ligarMs(w, aplicarFiltros));
@@ -634,7 +768,57 @@
     ajustaHH();
   }
 
+  // Casca: a aba vira uma visão que cabe na tela. O texto curto logo acima de
+  // uma tabela vira o título/subtítulo do card dela; o resto do texto da aba
+  // vai, na ordem, para um card de texto que rola por dentro. As tabelas
+  // dividem a largura (peso = nº de colunas exibidas) e cada uma rola dentro
+  // do próprio card, com o cabeçalho fixo.
+  function rotuloAba(aba) { return (CASCA && CASCA.rotulos && CASCA.rotulos[aba]) || aba; }
+  function subCasca(nTb) {
+    return [CASCA.selo || '',
+      nTb ? 'Filtros no topo da página · todo cabeçalho de coluna também filtra e ordena.' : 'Conteúdo descritivo desta aba da planilha.',
+      VERSAO ? 'build ' + VERSAO : ''].filter(Boolean).join(' · ');
+  }
+  const txtHtml = b => b.linhas.map(l => l.titulo ? `<h3>${esc(l.t)}</h3>` : `<p>${esc(l.t)}</p>`).join('');
+  function renderAbaCasca(aba) {
+    atual = aba;
+    const blocos = blocosDe(aba);
+    const tabs = [], notas = [];
+    let pend = [];
+    blocos.forEach((b, i) => {
+      if (b.tipo !== 'tabela') { pend.push(b); return; }
+      const k = chave(aba, i);
+      const ult = pend.length ? pend[pend.length - 1] : null;
+      if (ult && ult.linhas.length <= 3) {
+        pend.pop();
+        HEAD[k] = { tit: ult.linhas[0].t, sub: ult.linhas.slice(1).map(l => l.t).join(' ') };
+      }
+      notas.push(...pend); pend = [];
+      tabs.push({ b, k });
+    });
+    notas.push(...pend);
+    const notasHtml = notas.length ? `<div class="card ptxt">${notas.map(b => `<div class="ptb">${txtHtml(b)}</div>`).join('')}</div>` : '';
+    let corpo;
+    if (!tabs.length) corpo = notasHtml;
+    else {
+      // tabela comprida ganha mais largura que a de poucas linhas
+      const peso = tabs.map(({ b }) => Math.max(2, Math.min(8, (b.vis || b.cols).length)) * (b.rows.length > 10 ? 1.6 : 1));
+      if (notas.length) peso.push(3);
+      corpo = `<div class="cp-grid" style="grid-template-columns:${peso.map(p => `minmax(0,${p}fr)`).join(' ')}">${
+        tabs.map(({ b, k }) => renderTabelaCasca(b, k)).join('')}${notasHtml}</div>`;
+    }
+    const main = document.getElementById('cp-main');
+    main.innerHTML = heroDe(aba, blocos) + corpo;
+    main.scrollTop = 0;
+    const tt = document.getElementById(CASCA.tit || 'tit'); if (tt) tt.textContent = rotuloAba(aba);
+    const sb = document.getElementById(CASCA.sub || 'titSub'); if (sb) sb.textContent = subCasca(tabs.length);
+    document.querySelectorAll('#cp-nav .s-item[data-aba]').forEach(x => x.classList.toggle('on', x.dataset.aba === aba));
+    montarFiltros(aba);
+    if (typeof CASCA.aoTrocar === 'function') CASCA.aoTrocar(aba);
+  }
+
   function renderAba(aba) {
+    if (CASCA) return renderAbaCasca(aba);
     atual = aba;
     const blocos = blocosDe(aba);
     const nTb = blocos.filter(b => b.tipo === 'tabela').length;
@@ -719,6 +903,32 @@
     });
   }
 
+  // Casca: a aba "Resumo" da planilha é a 1ª visão e se chama "Resumo Gerencial"
+  // (regra do portal); o resto mantém os grupos e a ordem de antes.
+  const GRUPOS_CASCA = [
+    { nome: 'Catálogo',        abas: ['Resumo', 'Lista de Peças'] },
+    { nome: 'Cadastro no ERP', abas: ['A. Peça+NCM', 'B. Peça+Material+NCM'] },
+    { nome: 'Apoio',           abas: ['Modelos da Frota', 'Índice NCM'] },
+    { nome: 'Leitura',         abas: ['Leia-me', 'Validação', 'Fontes'] },
+  ];
+  const ICO = {
+    resumo: '<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>',
+    tabela: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
+    texto: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/>',
+  };
+  const abasCasca = () => GRUPOS_CASCA.flatMap(g => g.abas).filter(a => ABAS.includes(a));
+  function menuLateralCasca() {
+    const prim = abasCasca()[0];
+    return GRUPOS_CASCA.map(g => {
+      const its = g.abas.filter(a => ABAS.includes(a));
+      if (!its.length) return '';
+      return `<div class="s-sec">${esc(g.nome)}</div>` + its.map(a => {
+        const ic = a === prim ? ICO.resumo : (blocosDe(a).some(b => b.tipo === 'tabela') ? ICO.tabela : ICO.texto);
+        return `<button class="s-item" data-aba="${esc(a)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg> ${esc(rotuloAba(a))} <span class="n">${nf((DADOS[a] || []).length)}</span></button>`;
+      }).join('');
+    }).join('');
+  }
+
   function menuLateral() {
     return GRUPOS.map(g => {
       const its = g.abas.filter(a => ABAS.includes(a));
@@ -756,7 +966,48 @@
   // A atualização automática agora é do assets/build-check.js + sw.js, que
   // valem para todos os painéis — este arquivo não duplica mais a checagem.
 
+  function initCasca(cfg) {
+    injetarCSS();
+    DADOS = Object.assign({}, ...(cfg.fontes || []).filter(Boolean));
+    ABAS_FORA.forEach(a => { delete DADOS[a]; });
+    ABAS = Object.keys(DADOS);
+    USA_PLACA = !!cfg.placas;
+
+    const nav = document.getElementById(CASCA.nav || 'cp-nav');
+    nav.innerHTML = menuLateralCasca();
+    nav.addEventListener('click', ev => {
+      const it = ev.target.closest('.s-item[data-aba]');
+      if (it) renderAba(it.dataset.aba);
+    });
+
+    const main = document.getElementById('cp-main');
+    main.addEventListener('click', ev => {
+      const th = ev.target.closest('.cp-tbl thead th');
+      if (th) { abrirMenu(th, th.closest('[data-tbl]').dataset.tbl); return; }
+      const mais = ev.target.closest('.cp-mais');
+      if (mais) {
+        const k = mais.closest('[data-tbl]').dataset.tbl;
+        estado(k).mostrando += LOTE;
+        repinta(k);
+      }
+    });
+
+    document.addEventListener('click', ev => {
+      if (menuAberto && !ev.target.closest('.colmenu') && !ev.target.closest('.cp-tbl thead th')) fecharMenu();
+      if (!ev.target.closest('.ms-wrap')) document.querySelectorAll('.ms-panel.open').forEach(p => p.classList.remove('open'));
+    });
+    // a página não rola: quem rola é o card da tabela — o menu de coluna fecha junto
+    document.addEventListener('scroll', ev => {
+      if (menuAberto && !(ev.target.closest && ev.target.closest('.colmenu'))) fecharMenu();
+    }, { capture: true, passive: true });
+    window.addEventListener('resize', fecharMenu);
+
+    renderAba(abasCasca()[0] || ABAS[0]);
+    if (USA_PLACA) carregarFrota(cfg).then(() => { if (FROTA.length) montarFiltros(atual); });
+  }
+
   function init(cfg) {
+    if (cfg && cfg.casca) { CASCA = cfg.casca; return initCasca(cfg); }
     injetarCSS();
     DADOS = Object.assign({}, ...(cfg.fontes || []).filter(Boolean));
     ABAS_FORA.forEach(a => { delete DADOS[a]; });
@@ -828,5 +1079,11 @@
     if (USA_PLACA) carregarFrota(cfg).then(() => { if (FROTA.length) montarFiltros(atual); });
   }
 
-  global.CatalogoPecas = { init };
+  global.CatalogoPecas = {
+    init,
+    // casca: as visões (abas) na ordem do menu, para o PDF e o título
+    abas: () => abasCasca().map(a => ({ aba: a, label: rotuloAba(a) })),
+    abrir: aba => renderAba(aba),
+    atual: () => atual,
+  };
 })(window);
