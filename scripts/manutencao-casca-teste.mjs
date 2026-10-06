@@ -223,7 +223,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       ok('scripts no fim, na ordem do padrão', ordem.every((x, i) => x >= 0 && (i === 0 || x > ordem[i - 1])), ordem.join(','));
       ok('ctrlk.js continua', exp.srcs.some(s => s.includes('ctrlk.js')));
       ok('filters-toggle.js saiu', !exp.srcs.some(s => s.includes('filters-toggle')));
-      ok('build-check com o mesmo build do <meta>', await page.evaluate(() => { const b = (document.querySelector('meta[name=build]') || {}).content; return b === '202610062300' && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + b)); }));
+      ok('build-check com o mesmo build do <meta>', await page.evaluate(() => { const b = (document.querySelector('meta[name=build]') || {}).content; return b === '202610070015' && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + b)); }));
       // menu do Excel/PNG abre no clique direito da tabela
       await page.click('.s-item[data-vw="grupo"]'); await page.waitForTimeout(200);
       await page.click('#tbl-grp tbody td', { button: 'right' }); await page.waitForTimeout(150);

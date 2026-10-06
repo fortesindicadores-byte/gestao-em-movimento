@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610070000">
+<meta name="build" content="202610070020">
 <title>Ativação de Frota · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -290,8 +290,13 @@ body.claro table.dre td.cy,body.claro .cy{color:#b45309!important;}
 /* Projetos e Unidades (Renan, 06/10/2026: "podem estar todas juntas em uma visão, com
    tabela em cima e gráficos abaixo"): tabela e gráficos dividem a altura meio a meio;
    a tabela rola dentro do próprio card quando não couber */
-#vw-projetos .tsec{flex:1 1 0;}
-#vw-projetos .gr2{flex:1 1 0;max-height:none;grid-template-rows:minmax(0,1fr);}
+#vw-projetos .tsec{flex:0 1 auto;}
+/* a tabela fica com a altura do conteúdo (todas as unidades à vista, sem barra) e os
+   gráficos com o resto (Renan, 06/10/2026: "diminua bem pouquinho a altura dos gráficos
+   para que caibam todas as unidades visíveis na tabela"); só numa tela baixa demais o
+   gráfico para no piso e a tabela volta a rolar por dentro */
+#vw-projetos .twrap{flex:0 1 auto;}
+#vw-projetos .gr2{flex:1 1 0;min-height:clamp(170px,30vh,300px);max-height:none;grid-template-rows:minmax(0,1fr);}
 #vw-projetos .thead-row{justify-content:flex-end;margin-bottom:6px;}
 
 /* legenda do gráfico de dispersão: barra condicional (verde/amarelo/vermelho) tem legenda NEUTRA */
@@ -1525,6 +1530,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610070000"></script>
+<script src="../assets/build-check.js?v=202610070020"></script>
 </body>
 </html>
