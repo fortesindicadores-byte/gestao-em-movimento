@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610062330">
+<meta name="build" content="202610062345">
 <title>Ativação de Frota · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -283,8 +283,12 @@ body.claro table.dre td.cy,body.claro .cy{color:#b45309!important;}
 .kvn .kdel{flex:0 0 auto;}
 /* gráficos do Resumo: ficam com a sobra, mas com teto */
 #vw-resumo .gr2{flex:2 1 0;max-height:56vh;grid-template-rows:minmax(0,1fr);}
-/* Projetos e Unidades: os dois gráficos são o miolo da visão (não há cards nela) */
+/* Projetos e Unidades (Renan, 06/10/2026: "podem estar todas juntas em uma visão, com
+   tabela em cima e gráficos abaixo"): tabela e gráficos dividem a altura meio a meio;
+   a tabela rola dentro do próprio card quando não couber */
+#vw-projetos .tsec{flex:1 1 0;}
 #vw-projetos .gr2{flex:1 1 0;max-height:none;grid-template-rows:minmax(0,1fr);}
+#vw-projetos .thead-row{justify-content:flex-end;margin-bottom:6px;}
 
 /* legenda do gráfico de dispersão: barra condicional (verde/amarelo/vermelho) tem legenda NEUTRA */
 .chart-leg{display:flex;gap:12px;flex-wrap:wrap;margin:2px 0 6px;}
@@ -378,7 +382,6 @@ table.dre tfoot tr.total td{position:sticky;bottom:0;z-index:1;}
     <div class="s-sec">Visões</div>
     <button class="s-item on" data-vw="resumo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Resumo Gerencial</button>
     <button class="s-item" data-vw="projetos"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg> Projetos e Unidades</button>
-    <button class="s-item" data-vw="dispersao"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg> Dispersão por Unidade</button>
 
     <div class="s-sec">Atalhos</div>
     <div id="pdf-slot"></div>
@@ -463,34 +466,16 @@ table.dre tfoot tr.total td{position:sticky;bottom:0;z-index:1;}
         </div>
       </section>
 
-      <!-- ══ 2 · PROJETOS E UNIDADES ══ -->
+      <!-- ══ 2 · PROJETOS E UNIDADES — tabela de dispersão em cima, gráficos embaixo.
+           a classe tbl-section fica no card: é por ela que o toggleTblDet do celular acha a tabela ══ -->
       <section class="vw" id="vw-projetos">
-        <div class="gr2">
-          <div class="card gcard">
-            <div class="gtit">Ativação por Projeto</div>
-            <div class="gsub">Ativação % · período filtrado</div>
-            <div class="gcv"><canvas id="chart-proj"></canvas></div>
-          </div>
-          <div class="card gcard">
-            <div class="gtit">Ativação por Unidade</div>
-            <div class="gsub">Ativação % · período filtrado</div>
-            <div class="gcv"><canvas id="chart-und"></canvas></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ══ 3 · DISPERSÃO POR UNIDADE ══
-           a classe tbl-section fica no card: é por ela que o toggleTblDet do celular acha a tabela -->
-      <section class="vw" id="vw-dispersao">
         <div class="card tsec tbl-section">
           <div class="thead-row">
-            <div class="ttit" id="title-disp">Dispersão por Unidade</div>
             <div class="dim-toggle drill-tabs">
               <button class="dim-btn drill-tab active" data-view="und" onclick="setDrill('und')">Unidade</button>
               <button class="dim-btn drill-tab" data-view="proj" onclick="setDrill('proj')">Projeto</button>
             </div>
           </div>
-          <div class="tsub">Ranqueado pelo Δ Ativação do mês · positivo = realizou mais que o ativo</div>
           <div><button class="rt tbl-det-toggle" id="tbl-det-toggle" onclick="toggleTblDet()">+ Ver detalhes</button></div>
           <div class="twrap"><table class="dre" id="tbl-ativ">
             <thead><tr>
@@ -508,7 +493,20 @@ table.dre tfoot tr.total td{position:sticky;bottom:0;z-index:1;}
             <tfoot id="tbl-foot"></tfoot>
           </table></div>
         </div>
+        <div class="gr2">
+          <div class="card gcard">
+            <div class="gtit">Ativação por Projeto</div>
+            <div class="gsub">Ativação % · período filtrado</div>
+            <div class="gcv"><canvas id="chart-proj"></canvas></div>
+          </div>
+          <div class="card gcard">
+            <div class="gtit">Ativação por Unidade</div>
+            <div class="gsub">Ativação % · período filtrado</div>
+            <div class="gcv"><canvas id="chart-und"></canvas></div>
+          </div>
+        </div>
       </section>
+
     </div>
   </main>
 </div>
@@ -528,7 +526,7 @@ let drillMode = 'und', _lastTblArgs = null;
 function setDrill(v) {
   drillMode = v;
   document.querySelectorAll('.drill-tab').forEach(b => b.classList.toggle('active', b.dataset.view === v));
-  document.getElementById('title-disp').textContent = v === 'und' ? 'Dispersão por Unidade' : 'Dispersão por Projeto';
+  const _td=document.getElementById('title-disp'); if(_td) _td.textContent = v === 'und' ? 'Dispersão por Unidade' : 'Dispersão por Projeto';
   document.getElementById('th-key').textContent = v === 'und' ? 'Unidade' : 'Projeto';
   if (_lastTblArgs) renderTable(..._lastTblArgs);
 }
@@ -1455,7 +1453,7 @@ render=function(){
 };
 
 /* ── navegação entre as visões ────────────────────────────────────────────── */
-const TIT={resumo:'Resumo Gerencial',projetos:'Projetos e Unidades',dispersao:'Dispersão por Unidade'};
+const TIT={resumo:'Resumo Gerencial',projetos:'Projetos e Unidades'};
 let VW='resumo';
 function setVw(v){
   VW=v;
@@ -1523,6 +1521,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610062330"></script>
+<script src="../assets/build-check.js?v=202610062345"></script>
 </body>
 </html>

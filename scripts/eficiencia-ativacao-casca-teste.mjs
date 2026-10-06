@@ -28,7 +28,7 @@ const SHOTS = process.env.SHOTS || '';
 const ANTIGO = process.env.ANTIGO;
 const ORIG = 'http://gem.teste';
 const PASTA = 'eficiencia-ativacao';
-const BUILD = '202610062330';
+const BUILD = '202610062345';
 
 // ── dados sintéticos: Dispersão de km ────────────────────────────────────────
 let seed = 23; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -199,10 +199,10 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     const { ctx, page, errs } = await abre(browser, null, vp, tema);
     const tag = `${vp.width}×${vp.height} ${tema === 'light' ? 'claro' : 'escuro'}`;
     ok(`${tag}: body.claro = tema`, await page.evaluate(t => document.body.classList.contains('claro') === (t === 'light'), tema));
-    for (const v of ['resumo', 'projetos', 'dispersao']) {
+    for (const v of ['resumo', 'projetos']) {
       await page.click(`.s-item[data-vw="${v}"]`);
       await page.waitForTimeout(400);
-      for (const d of (v === 'dispersao' ? ['und', 'proj'] : [null])) {
+      for (const d of (v === 'projetos' ? ['und', 'proj'] : [null])) {
         if (d) { await page.evaluate(d => setDrill(d), d); await page.waitForTimeout(100); }
         const m = await page.evaluate(() => {
           const se = document.scrollingElement, vw = document.querySelector('.vw.on');
@@ -255,7 +255,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       ok('filters-toggle.js saiu, ctrlk.js e gviz-cache.js ficaram', !exp.srcs.some(s => s.includes('filters-toggle')) && exp.srcs.some(s => s.includes('ctrlk.js')) && exp.srcs.some(s => s.includes('gviz-cache.js')));
       ok('build-check com o mesmo build do <meta>', await page.evaluate(b => { const m = (document.querySelector('meta[name=build]') || {}).content; return m === b && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + b)); }, BUILD));
       // botão direito na tabela abre o menu com Excel
-      await page.click('.s-item[data-vw="dispersao"]'); await page.waitForTimeout(200);
+      await page.click('.s-item[data-vw="projetos"]'); await page.waitForTimeout(200);
       await page.click('#tbl-body tr td', { button: 'right' }); await page.waitForTimeout(200);
       const menu = await page.evaluate(() => { const m = document.getElementById('xl-menu'); return m && getComputedStyle(m).display !== 'none' ? m.textContent : ''; });
       ok('botão direito na tabela: menu "Exportar Excel"', /Exportar Excel/.test(menu), menu.trim().slice(0, 80));
@@ -287,16 +287,16 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     canv: [...document.querySelectorAll('#vw-resumo canvas')].map(c => c.getBoundingClientRect().height) }));
   ok('celular: página rola e gráficos com altura', m.rola && m.canv.every(h => h > 120), m.canv.map(Math.round).join(','));
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular-resumo.png'), fullPage: true });
-  await page.click('.s-item[data-vw="dispersao"]'); await page.waitForTimeout(700);
+  await page.click('.s-item[data-vw="projetos"]'); await page.waitForTimeout(700);
   const vis = () => [...document.querySelectorAll('#tbl-ativ thead th')].filter(th => getComputedStyle(th).display !== 'none').length;
-  const t = await page.evaluate(vis => ({ cols: eval(vis)(), mt: !!document.querySelector('#vw-dispersao .mt-detail-btn'), pg: !!document.querySelector('#tbl-det-toggle') }), vis.toString());
-  if (t.mt) await page.click('#vw-dispersao .mt-detail-btn'); else await page.click('#tbl-det-toggle');
+  const t = await page.evaluate(vis => ({ cols: eval(vis)(), mt: !!document.querySelector('#vw-projetos .mt-detail-btn'), pg: !!document.querySelector('#tbl-det-toggle') }), vis.toString());
+  if (t.mt) await page.click('#vw-projetos .mt-detail-btn'); else await page.click('#tbl-det-toggle');
   await page.waitForTimeout(300);
   const t2 = await page.evaluate(vis => eval(vis)(), vis.toString());
   ok('celular: tabela compacta e o "+ detalhes" abre a completa', t.cols < 9 && t2 === 9, `${t.cols} → ${t2} (${t.mt ? 'mobile.js' : 'botão da página'})`);
   const lin = await page.evaluate(() => document.querySelectorAll('#tbl-body tr').length);
   ok('celular: tabela com linhas', lin > 2, String(lin));
-  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular-dispersao.png'), fullPage: true });
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular-projetos.png'), fullPage: true });
   ok('celular: zero erro de página', errs.length === 0, errs.join(' / '));
   await ctx.close();
 }
