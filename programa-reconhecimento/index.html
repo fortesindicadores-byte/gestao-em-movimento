@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610070300">
+<meta name="build" content="202610070400">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Frota de Elite · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -420,40 +420,6 @@ body.claro .ind-yellow{color:#b45309;}
 .podio-floor{height:5px;background:rgba(255,255,255,.04);width:100%;}
 body.claro .podio-slot.primeiro .pedestal{box-shadow:0 -4px 24px rgba(196,145,26,.25);}
 
-/* ── 5 · Resumo Executivo (para slide) ── */
-.resumo-section{flex:0 0 auto;padding:18px 20px;}
-.resumo-title{font-size:14px;font-weight:800;color:var(--txt);}
-.resumo-sub{font-size:10px;color:var(--txt3);margin-top:2px;margin-bottom:14px;font-weight:600;}
-.resumo-grid{display:grid;grid-template-columns:minmax(0,.8fr) repeat(2,minmax(0,1fr));gap:12px;}
-/* a pontuação geral ocupa a 1ª coluna inteira; as quatro listas ficam em 2×2,
-   largas o bastante para o nome da unidade não cortar */
-.resumo-grid>.resumo-card:first-child{grid-row:span 2;display:flex;flex-direction:column;justify-content:center;}
-.resumo-card{background:var(--hover);border:1px solid var(--card-brd);border-radius:10px;padding:14px 16px;min-width:0;}
-.rc-h{font-size:9.5px;font-weight:800;color:var(--laranja);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;}
-.rc-big{font-size:30px;font-weight:800;color:var(--txt);line-height:1;}
-.rc-big span{font-size:15px;font-weight:800;margin-left:6px;}
-.rc-note{font-size:10px;color:var(--txt3);margin-top:7px;}
-.rc-list{list-style:none;display:flex;flex-direction:column;gap:10px;margin:0;padding:0;}
-.rc-list li{display:flex;align-items:baseline;gap:8px;font-size:12px;}
-.rl-nome{color:var(--txt);font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.rl-delta{font-weight:800;font-size:13px;white-space:nowrap;}
-.rl-from{font-size:10px;color:var(--txt3);white-space:nowrap;}
-.rl-up{color:var(--green);} .rl-down{color:var(--red);}
-.rc-empty{font-size:11px;color:var(--txt3);}
-/* a visão é só este card: ele ocupa a altura inteira e as linhas crescem com a tela */
-@media(min-width:861px){
-  .resumo-section{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
-  .resumo-grid{flex:1;min-height:0;grid-template-rows:repeat(2,minmax(0,1fr));}
-  .resumo-card{display:flex;flex-direction:column;justify-content:center;padding:clamp(14px,2.6vh,26px) clamp(16px,1.6vw,24px);}
-  .rc-h{font-size:clamp(9.5px,1.3vh,11.5px);margin-bottom:clamp(12px,2vh,20px);}
-  .rc-big{font-size:clamp(30px,6.4vh,58px);}
-  .rc-big span{font-size:clamp(15px,2.6vh,22px);}
-  .rc-note{font-size:clamp(10px,1.3vh,12px);}
-  .rc-list{gap:clamp(10px,2.2vh,20px);}
-  .rc-list li{font-size:clamp(12px,1.7vh,15px);}
-  .rl-delta{font-size:clamp(13px,1.85vh,16px);}
-  .rl-from{font-size:clamp(10px,1.3vh,12px);}
-}
 @media(max-width:1100px){ .kpis{grid-template-columns:repeat(3,1fr);} }
 /* ── celular: nada de altura por flex (colapsava gráfico e tabela para 0);
       a página rola e cada bloco tem altura própria ── */
@@ -533,7 +499,6 @@ body.claro .podio-slot.primeiro .pedestal{box-shadow:0 -4px 24px rgba(196,145,26
   .pedestal-unit{font-size:7px;}
   .pedestal-score{font-size:10px;}
   .podio-slot.primeiro .pedestal-score{font-size:12px;}
-  .resumo-grid{grid-template-columns:1fr;}
   /* Ranking: colunas de indicadores escondidas por padrão; o botão as abre */
   #ranking-table{table-layout:auto;}
   .ind-col{display:none;}
@@ -565,7 +530,6 @@ body.claro .podio-slot.primeiro .pedestal{box-shadow:0 -4px 24px rgba(196,145,26
     <button class="s-item" data-vw="ranking"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21V11M16 21V7M12 21V3"/><path d="M3 21h18"/></svg> Ranking Geral</button>
     <button class="s-item" data-vw="evolucao"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><polyline points="21 4 21 9 16 9"/></svg> Evolução Temporal</button>
     <button class="s-item" data-vw="podio"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="7" width="6" height="14"/><rect x="2" y="12" width="7" height="9"/><rect x="15" y="14" width="7" height="7"/></svg> Pódio</button>
-    <button class="s-item" data-vw="executivo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8M8 17h8"/></svg> Resumo Executivo</button>
 
     <div class="s-sec">Atalhos</div>
     <div id="pdf-slot"></div>
@@ -728,13 +692,6 @@ body.claro .podio-slot.primeiro .pedestal{box-shadow:0 -4px 24px rgba(196,145,26
       </section>
 
       <!-- ══ 5 · RESUMO EXECUTIVO (para slide) ══ -->
-      <section class="vw" id="vw-executivo">
-        <section class="card resumo-section" id="resumo-section">
-          <div class="resumo-title" style="display:none">Resumo Executivo · Frota de Elite</div>
-          <div class="resumo-sub" id="resumo-sub">—</div>
-          <div class="resumo-grid" id="resumo"></div>
-        </section>
-      </section>
     </div>
   </main>
 </div>
@@ -1040,64 +997,8 @@ function renderAll() {
   renderPodio(acum || data);
   renderChart();
   renderIndChart(data);
-  renderResumo(data);
 }
 
-/* ── Resumo executivo (para slide): evolução por unidade e por indicador ── */
-function renderResumo(data) {
-  const box = document.getElementById('resumo'); if (!box) return;
-  const subEl = document.getElementById('resumo-sub');
-  // usa o filtrado se tiver ≥2 períodos; senão o histórico completo (RAW)
-  const src  = (new Set(data.map(r => r.vig))).size >= 2 ? data : RAW;
-  const vigs = [...new Set(src.map(r => r.vig))].sort();
-  if (vigs.length < 2) {
-    if (subEl) subEl.textContent = 'Selecione ao menos dois períodos para comparar a evolução.';
-    box.innerHTML = '';
-    return;
-  }
-  const first = vigs[0], last = vigs[vigs.length - 1];
-  if (subEl) subEl.textContent = `Evolução de ${vigLabel(first)} → ${vigLabel(last)}`;
-
-  const rowsAt = v => src.filter(r => r.vig === v);
-  const media  = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
-  const dfmt   = d => (d >= 0 ? '+' : '') + d.toFixed(1);
-  const cls    = d => d >= 0 ? 'rl-up' : 'rl-down';
-
-  // ── por unidade: pontuação na 1ª e na última ponta ──
-  const scoreByUnit = v => { const m = {}; rowsAt(v).forEach(r => { if (r.pont != null) m[r.unit] = r.pont; }); return m; };
-  const sf = scoreByUnit(first), sl = scoreByUnit(last);
-  const deltas = Object.keys(sl).filter(u => u in sf).map(u => ({ u, a: sf[u], b: sl[u], d: sl[u] - sf[u] }));
-
-  const evol  = deltas.filter(x => x.d > 0).sort((a, b) => b.d - a.d).slice(0, 4);
-  const caiu  = deltas.filter(x => x.a >= 90 && x.d < 0).sort((a, b) => a.d - b.d).slice(0, 4); // estava bem e caiu
-  const gFirst = media(Object.values(sf)), gLast = media(Object.values(sl));
-  const gDelta = (gLast != null && gFirst != null) ? gLast - gFirst : 0;
-
-  // ── por indicador: média na 1ª e na última ponta ──
-  const indAvg = (v, f) => media(rowsAt(v).map(r => r[f]).filter(x => x != null));
-  const indD = FIELD_ORDER
-    .map(f => ({ label: IND_LABELS[f] || f, a: indAvg(first, f), b: indAvg(last, f) }))
-    .filter(x => x.a != null && x.b != null)
-    .map(x => ({ ...x, d: x.b - x.a }));
-  const indUp   = indD.filter(x => x.d > 0).sort((a, b) => b.d - a.d).slice(0, 4);
-  const indDown = indD.filter(x => x.d < 0).sort((a, b) => a.d - b.d).slice(0, 4);
-
-  const lista = (arr, emptyMsg) => arr.length
-    ? `<ul class="rc-list">${arr.map(x => `<li><span class="rl-nome">${x.u || x.label}</span><span class="rl-delta ${cls(x.d)}">${dfmt(x.d)}</span><span class="rl-from">${x.a.toFixed(1)}→${x.b.toFixed(1)}</span></li>`).join('')}</ul>`
-    : `<div class="rc-empty">${emptyMsg}</div>`;
-
-  box.innerHTML = `
-    <div class="resumo-card">
-      <div class="rc-h">Pontuação geral</div>
-      <div class="rc-big">${gLast != null ? gLast.toFixed(1) : '—'}<span class="${cls(gDelta)}">${dfmt(gDelta)}</span></div>
-      <div class="rc-note">média das unidades · ${gFirst != null ? gFirst.toFixed(1) : '—'} → ${gLast != null ? gLast.toFixed(1) : '—'}</div>
-    </div>
-    <div class="resumo-card"><div class="rc-h">Quem mais evoluiu</div>${lista(evol, 'Sem evolução no período.')}</div>
-    <div class="resumo-card"><div class="rc-h">Estava bem e caiu</div>${lista(caiu, 'Ninguém que estava bem recuou.')}</div>
-    <div class="resumo-card"><div class="rc-h">Indicadores em evolução</div>${lista(indUp, 'Nenhum indicador subiu.')}</div>
-    <div class="resumo-card"><div class="rc-h">Indicadores em involução</div>${lista(indDown, 'Nenhum indicador caiu.')}</div>
-  `;
-}
 
 /* ── Cards dos 11 indicadores (pontuação média · padrão scorecard) ── */
 function renderIndCards(data) {
@@ -1605,7 +1506,7 @@ function initAccessLog() {
 
 
 /* ── navegação entre as visões ────────────────────────────────────────────── */
-const TIT={resumo:'Resumo Gerencial',ranking:'Ranking Geral',evolucao:'Evolução Temporal',podio:'Pódio',executivo:'Resumo Executivo'};
+const TIT={resumo:'Resumo Gerencial',ranking:'Ranking Geral',evolucao:'Evolução Temporal',podio:'Pódio'};
 let VW='resumo';
 function redesenhaGraficos(){ if(RAW.length){ renderChart(); renderIndChart(getFiltered()); } }
 function setVw(v){
@@ -1673,6 +1574,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610070300"></script>
+<script src="../assets/build-check.js?v=202610070400"></script>
 </body>
 </html>

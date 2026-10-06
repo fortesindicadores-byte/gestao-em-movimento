@@ -24,7 +24,7 @@ const CHART_JS = process.env.CHART_JS || '';
 const DL_JS = process.env.DL_JS || '';
 const FONT_DIR = process.env.FONT_DIR || '';
 const SHOTS = process.env.SHOTS || '';
-const BUILD = '202610070300';
+const BUILD = '202610070400';
 const ORIG = 'http://gem.teste';
 const PASTA = 'programa-reconhecimento';
 
@@ -127,13 +127,13 @@ async function abre(browser, htmlAntigo, vp, tema, T = { visivel: true, admin: f
 const leNumeros = () => {
   const t = id => (document.getElementById(id) || {}).textContent?.replace(/\s+/g, ' ').trim();
   const out = {};
-  ['hero-score', 'hero-period', 'podio-period', 'ranking-sub', 'resumo-sub', 'ms-vig-lbl', 'ms-vig-cnt'].forEach(id => out[id] = t(id));
+  ['hero-score', 'hero-period', 'podio-period', 'ranking-sub', 'ms-vig-lbl', 'ms-vig-cnt'].forEach(id => out[id] = t(id));
   out.cards = [...document.querySelectorAll('#ind-cards .kpi-card')].map(c => c.textContent.replace(/\s+/g, ' ').trim() + '@' + c.querySelector('.ind-farol').style.background).join(' ;; ');
   out.ranking = [...document.querySelectorAll('#ranking-tbody tr')].map(tr => tr.className + ':' + [...tr.cells].map(c => c.textContent.replace(/\s+/g, ' ').trim() + (c.querySelector('span') ? '[' + c.querySelector('span').className + ']' : '')).join(' | ')).join(' ;; ');
   out.podio = [...document.querySelectorAll('.podio-slot')].map(s => [s.className, s.querySelector('.pedestal-place')?.textContent, s.querySelector('.pedestal-name')?.textContent,
     s.querySelector('.pedestal-unit')?.textContent, s.querySelector('.pedestal-score')?.textContent, s.querySelector('img')?.getAttribute('src')].join('|')).join(' ;; ');
   out.vigs = [...document.querySelectorAll('#ms-vig-list .ms-opt:not(.all-opt)')].map(o => o.querySelector('input').value + '=' + o.querySelector('label').textContent + (o.querySelector('input').checked ? '*' : '')).join(',');
-  out.resumo = (document.getElementById('resumo') || {}).textContent?.replace(/\s+/g, ' ').trim();
+  // o Resumo Executivo saiu do painel (Renan, 06/10/2026) — não se compara mais
   out.pesos = (document.getElementById('peso-grid') || {}).textContent?.replace(/\s+/g, ' ').trim();
   out.indBtns = [...document.querySelectorAll('#ind-selector .ind-btn')].map(b => b.textContent + (b.classList.contains('active') ? '*' : '')).join(',');
   const ch = id => { const k = window.Chart && Chart.getChart && Chart.getChart(document.getElementById(id)); return k ? JSON.stringify([k.data.labels, k.data.datasets.map(d => [d.label, d.data, d.backgroundColor])]) : null; };
@@ -236,7 +236,7 @@ for (const lado of ['antigo', 'novo']) {
 }
 
 // 3 · casca: sem rolagem, visões, tema, exportação — 1366×768 e 1600×900
-const VISOES = ['resumo', 'ranking', 'evolucao', 'podio', 'executivo'];
+const VISOES = ['resumo', 'ranking', 'evolucao', 'podio'];
 for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
   for (const tema of ['dark', 'light']) {
     const { ctx, page, errs } = await abre(browser, null, vp, tema);
