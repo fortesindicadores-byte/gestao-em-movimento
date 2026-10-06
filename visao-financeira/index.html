@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610070015">
+<meta name="build" content="202610071200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Visão Financeira · DRE Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2040,7 +2040,7 @@ function tblFct(model, F, opts){
   const totSigned=remMonths.map(mo=>{ let s=0; PAC_ORDER.forEach(p=>{ if(F.per[p]) s+=(F.per[p].month[mo]||0); }); return `<td class="num">${fmt(s)}</td>`; }).join('').replace('<td class="num','<td class="num sep-l',1);
   rows+=`<tr class="total"><td class="conta">Total Frota</td><td class="num">${pctN(sumAvRef(model))}</td><td class="num">${pctN(sumAvReal(model))}</td>${dppImp(sumAvReal(model)-sumAvRef(model),tImpYtd)}${totSigned}${blockCols(F.avOrc,F.avFc,F.avFc-F.avOrc,F.impFc)}</tr>`;
   return `<div class="card tsec">
-    <div class="thead-row"><div><div class="ttit">${opts.title}</div><div class="tsub">${opts.sub}</div></div></div>
+    <div class="thead-row"><div><div class="ttit" style="display:none">${opts.title}</div><div class="tsub">${opts.sub}</div></div></div>
     <div class="twrap"><table class="dre" style="table-layout:auto;min-width:100%"><thead>
       <tr><th class="conta">Receita / Pacotes</th><th class="num">${refAb()} - YTD</th><th class="num">Real - YTD</th><th class="num">Δ</th><th class="num">Impacto</th>${monthHead}<th class="num sep-l">${refAb()} - ${year}</th><th class="num">FCT - ${year}</th><th class="num">Δ</th><th class="num">Impacto</th></tr>
     </thead><tbody>${rows}</tbody></table></div></div>`;
@@ -2206,6 +2206,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610070015"></script>
+<script src="../assets/build-check.js?v=202610071200"></script>
 </body>
 </html>

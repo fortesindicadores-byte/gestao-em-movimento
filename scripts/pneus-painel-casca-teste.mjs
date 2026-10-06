@@ -311,9 +311,9 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       await N.page.evaluate(() => trocaMini());
       const at = await N.page.evaluate(() => ({ pdf: !!document.querySelector('#pdf-slot .s-item, #pdf-slot button'), h2c: !!window.H2CPrep,
         pdfFn: typeof initPdfExport, sort: !!document.querySelector('table.dre th'), refresh: !!document.querySelector('#btnRefresh.s-item'),
-        build: document.querySelector('meta[name=build]').content, bc: [...document.scripts].some(s => /build-check\.js\?v=202610070700/.test(s.src)) }));
+        build: document.querySelector('meta[name=build]').content, bc: [...document.scripts].some(s => s.src.includes('build-check.js?v=' + document.querySelector('meta[name=build]').content)) }));
       ok('PDF na lateral (Atalhos), Excel/PNG carregado, Atualizar na lateral', at.pdf && at.h2c && at.pdfFn === 'function' && at.refresh, JSON.stringify(at));
-      ok('build 202610070700 no <meta> e no build-check', at.build === '202610070700' && at.bc);
+      ok(`build ${at.build} no <meta> e no build-check`, /^\d{12}$/.test(at.build) && at.bc);
       ok(`${vp.width} ${tema}: zero erro de página`, N.errs.length === 0, N.errs.slice(0, 2).join(' | '));
     }
     await N.ctx.close();

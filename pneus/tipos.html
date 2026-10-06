@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610070300">
+<meta name="build" content="202610071200">
 <title>Tipos de Pneus — Prolog</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -398,7 +398,7 @@ function render(tires){
     <div class="kpi"><div class="kl">Marcas</div><div class="kv">${marcas}</div></div>
     <div class="kpi"><div class="kl">Medidas</div><div class="kv">${medidas}</div></div>
   </div>`;
-  h+=`<div class="card tsec"><div class="thead-row"><div><div class="ttit">Tipos de pneus cadastrados</div>
+  h+=`<div class="card tsec"><div class="thead-row"><div><div class="ttit" style="display:none">Tipos de pneus cadastrados</div>
     <div class="tsub">Distintos por Marca · Modelo · Medida — ordenado pela quantidade de pneus</div></div></div>
     <div class="twrap"><table class="dre"><thead><tr><th>#</th><th>Marca</th><th>Modelo</th><th>Medida</th><th class="num">Sulcos</th><th class="num">Pneus</th><th class="num">Novos</th><th class="num">Recap.</th><th>Unidades</th></tr></thead><tbody>`+
     lista.map((g,i)=>`<tr><td class="mut">${i+1}</td><td><b>${esc(g.marca)}</b></td><td>${esc(g.modelo)}</td><td>${esc(g.medida)}</td>
@@ -486,6 +486,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610070300"></script>
+<script src="../assets/build-check.js?v=202610071200"></script>
 </body>
 </html>

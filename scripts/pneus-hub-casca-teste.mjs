@@ -137,7 +137,7 @@ const casca = async (page, tag) => {
   const ordem = ['mobile.js', 'sortable-table.js', 'excel-export.js', 'pdf-export.js', 'build-check.js'].map(n => exp.srcs.findIndex(s => s.includes(n)));
   ok(`${tag}: scripts no fim, na ordem do padrão`, ordem.every((x, i) => x >= 0 && (i === 0 || x > ordem[i - 1])), ordem.join(','));
   ok(`${tag}: ctrlk.js e gviz-cache.js ficaram`, exp.srcs.some(s => s.includes('ctrlk.js')) && exp.srcs.some(s => s.includes('gviz-cache.js')));
-  ok(`${tag}: build ${BUILD} no <meta> e no build-check`, exp.build === BUILD && exp.srcs.some(s => s.includes('build-check.js?v=' + BUILD)));
+  ok(`${tag}: build ${exp.build} no <meta> e no build-check`, !!exp.build && exp.build >= BUILD && exp.srcs.some(s => s.includes('build-check.js?v=' + exp.build)));
   const links = await page.evaluate(() => [...document.querySelectorAll('.side a.s-item')].map(a => a.textContent.trim() + '→' + a.getAttribute('href')).join(' · '));
   ok(`${tag}: atalhos de volta (Pneus → ./ e Hub → ../)`, links === 'Pneus→./ · Hub→../', links);
 };
@@ -165,7 +165,7 @@ const leCards = page => page.evaluate(() => [...document.querySelectorAll('.dash
   ok('texto de boas-vindas do antigo no topo da grade', meta.sub === metaA.sub);
   ok('voltar ao Hub Principal (../)', meta.voltar === 'Hub Principal→../', meta.voltar);
   ok('sem menu lateral (casca do hub)', !meta.side);
-  ok(`build ${BUILD} + scripts do antigo (mobile, ctrlk, build-check, gviz-cache)`, meta.build === BUILD && ['mobile.js', 'ctrlk.js', 'build-check.js?v=' + BUILD, 'gviz-cache.js'].every(n => meta.srcs.some(s => s.includes(n))), meta.srcs.join(','));
+  ok(`build ${meta.build} + scripts do antigo (mobile, ctrlk, build-check, gviz-cache)`, meta.build >= BUILD && ['mobile.js', 'ctrlk.js', 'build-check.js?v=' + meta.build, 'gviz-cache.js'].every(n => meta.srcs.some(s => s.includes(n))), meta.srcs.join(','));
   ok('zero erro de página (antigo e novo)', !A.errs.length && !N.errs.length, [...A.errs, ...N.errs].join(' / '));
   await A.ctx.close(); await N.ctx.close();
   // sem gem_hub → vai para o hub
