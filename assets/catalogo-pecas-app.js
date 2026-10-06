@@ -225,6 +225,7 @@
   // (tokens, .app, .side, .top, .ms-*, .card, .tsec, table.dre, @media 860)
   // mora no catalogo-pecas/index.html, copiada do painel-km. ──────────────
   const CSS_CASCA = `
+  #cp-nav{display:contents;}   /* os itens das visões são filhos diretos da lateral (fileira no celular) */
   #cp-main{gap:12px;}
   #cp-main .hero{display:flex;align-items:flex-end;gap:44px;flex:0 0 auto;flex-wrap:wrap;}
   #cp-main .hero-label{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.9px;}
@@ -254,7 +255,10 @@
   .ptxt .ptb>h3:first-child{margin-top:0;}
   .ptxt p{font-size:11.5px;color:var(--txt2);line-height:1.6;margin-bottom:4px;}
 
-  #cp-filtros{flex-wrap:wrap;justify-content:flex-end;gap:2px;}
+  /* até 12 filtros (as colunas da aba): o título guarda a largura dele e os
+     filtros descem para a linha de baixo quando não cabem ao lado */
+  .top .tit-wrap{flex:1 1 340px;}
+  #cp-filtros{flex-wrap:wrap;justify-content:flex-end;gap:2px;margin-left:auto;}
   #cp-filtros .ms-btn svg{flex-shrink:0;opacity:.8;}
   #cp-filtros .ms-opt .ms-txt{overflow:hidden;text-overflow:ellipsis;}
   #cp-filtros .ms-panel{max-width:340px;}
@@ -286,6 +290,7 @@
     .cp-tsec{height:72vh;}
     .ptxt{max-height:72vh;}
     #cp-main .hero{gap:20px;}
+    .top .tit-wrap{flex:1 1 auto;}
     #cp-filtros{flex-wrap:nowrap;justify-content:flex-start;}
     #cp-filtros .filter-group{flex:0 0 auto;}
   }
@@ -796,7 +801,8 @@
     let corpo;
     if (!tabs.length) corpo = notasHtml;
     else {
-      const peso = tabs.map(({ b }) => Math.max(2, Math.min(8, (b.vis || b.cols).length)));
+      // tabela comprida ganha mais largura que a de poucas linhas
+      const peso = tabs.map(({ b }) => Math.max(2, Math.min(8, (b.vis || b.cols).length)) * (b.rows.length > 10 ? 1.6 : 1));
       if (notas.length) peso.push(3);
       corpo = `<div class="cp-grid" style="grid-template-columns:${peso.map(p => `minmax(0,${p}fr)`).join(' ')}">${
         tabs.map(({ b, k }) => renderTabelaCasca(b, k)).join('')}${notasHtml}</div>`;
