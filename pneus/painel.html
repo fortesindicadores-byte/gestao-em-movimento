@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610071100">
+<meta name="build" content="202610071200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Gestão de Pneus · Gestão em Movimento</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -401,11 +401,15 @@ table.dre td.empty{text-align:center;color:var(--txt3);padding:28px;}
 .adh-charts{flex:1 1 0;min-height:200px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 /* Resumo da Aderência no padrão do Painel KM: cards e gráficos dividem a sobra,
    1 para 2, com teto nos cards — antes os gráficos tomavam a altura inteira */
-.adh-kpis{grid-template-columns:repeat(5,minmax(0,1fr));flex:1 1 0;min-height:clamp(112px,16.5vh,170px);max-height:clamp(150px,24vh,230px);}
-.adh-kpis .kpi{display:flex;flex-direction:column;justify-content:flex-start;padding:14px 16px;min-width:0;}
-.adh-kpis .kpi .kv{font-size:32px;margin-top:6px;}
-.adh-kpis .kpi .km{margin-top:auto;padding-top:8px;}
-#vw-aderencia .adh-charts{flex:2 1 0;min-height:180px;grid-template-rows:minmax(0,1fr);}
+/* cards na altura do padrão, SEM esticar (Renan, 06/10/2026, com setas no espaço
+   vazio dos cards): a fileira fica em clamp(112px,16.5vh,170px), como no FCA
+   Consolidado, e o gráfico fica com o resto: com o card de altura FIXA ele não
+   é esmagado, e o teto de 56vh só deixaria uma faixa vazia embaixo */
+.adh-kpis{grid-template-columns:repeat(5,minmax(0,1fr));flex:0 0 auto;height:clamp(112px,16.5vh,170px);}
+.adh-kpis .kpi{display:flex;flex-direction:column;justify-content:center;padding:14px 16px;min-width:0;}
+.adh-kpis .kpi .kv{font-size:30px;margin-top:6px;}
+.adh-kpis .kpi .km{margin-top:8px;}
+#vw-aderencia .adh-charts{flex:1 1 0;min-height:180px;grid-template-rows:minmax(0,1fr);}
 .adh-tables{flex:1 1 0;min-height:160px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 .adh-tables>.tsec{min-width:0;}
 
@@ -574,7 +578,7 @@ tr.detail-row td{padding:10px 16px 14px;}
   .pesos-card{height:auto;}
   .eixo-card,.laudo-card{overflow:visible;}
   .adh-tables .twrap{max-height:60vh;}
-  .adh-kpis{grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;min-height:0;}
+  .adh-kpis{grid-template-columns:repeat(2,minmax(0,1fr));height:auto;}
   .search-box{width:100%!important;}
   .filtros{flex-wrap:nowrap;justify-content:flex-start;}   /* uma faixa que rola de lado, como no padrão */
 }
@@ -5107,6 +5111,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610071100"></script>
+<script src="../assets/build-check.js?v=202610071200"></script>
 </body>
 </html>
