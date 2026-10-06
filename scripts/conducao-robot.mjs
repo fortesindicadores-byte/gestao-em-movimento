@@ -2122,7 +2122,7 @@ if (MODE === 'freiomotor') {
   // Um motorista educador sugeriu medir o uso do freio motor entre 2.000 e
   // 2.200 rpm. Antes de qualquer desenho: o Geotab ENTREGA o sinal? Em quantos
   // veículos (Piraí à parte)? Como ele vem codificado (liga/desliga, % de
-  // torque)? E quanto do tempo FORA da faixa verde (rpm > 1.700) acontece com
+  // torque)? E quanto do tempo ACIMA da faixa verde (rpm > RPM_V_MAX) acontece com
   // o freio motor acionado — que é o tempo que a Faixa Verde hoje pune.
   // Log só com nomes de diagnóstico, placas e contagens (repo público).
   const cred = await geotabLogin();
@@ -2204,7 +2204,9 @@ if (MODE === 'freiomotor') {
 
   // 3) os 3 candidatos com mais veículos: codificação e cruzamento com o RPM
   const { porDev: rpmD } = await geotabRpmDia(DIA, cred);
-  const FAIXAS = [[0, 1100], [1100, 1500], [1500, 1700], [1700, 1800], [1800, 2000], [2000, 2200], [2200, 2500], [2500, 99999]];
+  // faixas da Fabet (06/10/2026): verde = a régua vigente (RPM_VERDE_TXT),
+  // branca até 1.800, amarela (freio motor certo) até 2.300, vermelha acima
+  const FAIXAS = [[0, RPM_V_MIN], [RPM_V_MIN, RPM_V_MAX], [RPM_V_MAX, 1800], [1800, 2300], [2300, 99999]];
   const fx = rpm => FAIXAS.findIndex(([a, b]) => rpm >= a && rpm < b);
   for (const c of com.slice(0, 3)) {
     console.log(`\n── ${c.d.name} ──`);
@@ -2217,7 +2219,7 @@ if (MODE === 'freiomotor') {
 
     // acionado = valor > 0, vale até a próxima amostra (teto 2 min)
     const tFx = FAIXAS.map(() => 0), tFxUni = FAIXAS.map(() => 0);
-    let acion = 0, foraVerde = 0, foraVerdeFreio = 0, foraVerdeUni = 0, foraVerdeFreioUni = 0, vComRpm = 0;
+    let acion = 0, foraVerde = 0, foraVerdeFreio = 0, foraVerdeUni = 0, foraVerdeFreioUni = 0, vComRpm = 0, rodando = 0;
     for (const [id, ra] of rpmD) {
       const fa = c.porDev.get(id); if (!fa || !fa.length) continue;
       vComRpm++;
@@ -2230,7 +2232,8 @@ if (MODE === 'freiomotor') {
         while (j + 1 < fa.length && fa[j + 1].t <= a.t) j++;
         const f = fa[j];
         const ativo = f && f.t <= a.t && a.t - f.t <= RPM_GAP_MS * 5 && f.v > 0;
-        const fora = a.rpm > 1700;
+        rodando += dt;
+        const fora = a.rpm > RPM_V_MAX;
         if (fora) { foraVerde += dt; if (u) foraVerdeUni += dt; }
         if (!ativo) continue;
         acion += dt; const k = fx(a.rpm); if (k >= 0) { tFx[k] += dt; if (u) tFxUni[k] += dt; }
@@ -2242,9 +2245,13 @@ if (MODE === 'freiomotor') {
     console.log('   rpm durante o freio motor (frota | ' + UNI + '):');
     FAIXAS.forEach(([a, b], k) => { const tot = tFx.reduce((s, x) => s + x, 0) || 1, totU = tFxUni.reduce((s, x) => s + x, 0) || 1;
       console.log(`      ${String(a).padStart(4)}–${b > 9999 ? '   +' : String(b).padStart(4)} rpm  ${(tFx[k] / tot * 100).toFixed(1).padStart(5)}%  |  ${(tFxUni[k] / totU * 100).toFixed(1).padStart(5)}%`); });
-    console.log(`   tempo acima de 1.700 rpm (fora da faixa verde) com freio motor acionado: `
+    console.log(`   tempo acima de ${RPM_V_MAX} rpm (acima da faixa verde) com freio motor acionado: `
       + `frota ${(foraVerde ? foraVerdeFreio / foraVerde * 100 : 0).toFixed(1)}% (${h(foraVerdeFreio)} de ${h(foraVerde)})`
       + ` · ${UNI} ${(foraVerdeUni ? foraVerdeFreioUni / foraVerdeUni * 100 : 0).toFixed(1)}% (${h(foraVerdeFreioUni)} de ${h(foraVerdeUni)})`);
+    // o que isso custa na nota: a Faixa Verde é % do tempo rodando, então o
+    // freio motor acima da verde tira esses pontos percentuais do pilar
+    console.log(`   freio motor acima de ${RPM_V_MAX} rpm = ${(rodando ? foraVerdeFreio / rodando * 100 : 0).toFixed(1)}% do tempo rodando`
+      + ` (${h(foraVerdeFreio)} de ${h(rodando)}) — é o que ele tira, em pontos percentuais, da Faixa Verde desses veículos`);
   }
 
   // placas de UNI que rodaram e não mandam nenhum sinal
@@ -2262,7 +2269,7 @@ if (MODE === 'freiodeduz') {
   // segurando o caminhão, sem injetar diesel). Para isso Piraí precisa mandar
   // posição do acelerador e/ou consumo instantâneo. Aqui: (1) TUDO o que os
   // caminhões de Piraí mais rodados mandam no dia, (2) cobertura dos sinais
-  // candidatos em todos os de Piraí, (3) quanto do tempo acima de 1.700 rpm
+  // candidatos em todos os de Piraí, (3) quanto do tempo acima da faixa verde
   // acontece sem acelerador. Log só com nomes de diagnóstico e contagens.
   const cred = await geotabLogin();
   if (!cred) { console.error('Geotab: sem credencial'); process.exit(1); }
@@ -2358,7 +2365,7 @@ if (MODE === 'freiodeduz') {
       + ` · valores mais comuns: ${[...vals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([v, n]) => v + '×' + n).join(' ')}`);
   }
 
-  // 4) a dedução: tempo acima de 1.700 rpm SEM acelerador (e/ou consumo ~0)
+  // 4) a dedução: tempo acima da faixa verde SEM acelerador (e/ou consumo ~0)
   const { porDev: rpmD } = await geotabRpmDia(DIA, cred);
   const rpmCob = rodou.filter(id => rpmD.has(id)).length;
   console.log(`\nRPM em ${UNI}: ${rpmCob} de ${rodou.length} veículos`);
@@ -2367,7 +2374,7 @@ if (MODE === 'freiodeduz') {
     while (lo <= hi) { const m = (lo + hi) >> 1; if (arr[m].t <= t) { k = m; lo = m + 1; } else hi = m - 1; }
     return k >= 0 && t - arr[k].t <= 300000 ? arr[k].v : null;
   };
-  const FX = [[1100, 1500], [1500, 1700], [1700, 1800], [1800, 2000], [2000, 2200], [2200, 2500], [2500, 99999]];
+  const FX = [[RPM_V_MIN, RPM_V_MAX], [RPM_V_MAX, 1800], [1800, 2300], [2300, 99999]];
   for (const nome of ['pedal', 'consumo']) {
     const pd = dados[nome]; if (!pd) { console.log(`\n${nome}: sem sinal — dedução por ${nome} impossível.`); continue; }
     let alto = 0, altoSem = 0, semDado = 0, veic = 0; const tFx = FX.map(() => 0), tFxSem = FX.map(() => 0);
@@ -2375,18 +2382,18 @@ if (MODE === 'freiodeduz') {
       const ra = rpmD.get(id), pa = pd.get(id); if (!ra || !pa) continue; veic++;
       for (let i = 0; i < ra.length; i++) {
         const a = ra[i]; const prox = i + 1 < ra.length ? ra[i + 1].t : a.t + 1000;
-        const t1 = Math.min(prox, a.t + RPM_GAP_MS); if (t1 <= a.t || !isFinite(a.rpm) || a.rpm < 1100) continue;
+        const t1 = Math.min(prox, a.t + RPM_GAP_MS); if (t1 <= a.t || !isFinite(a.rpm) || a.rpm < RPM_V_MIN) continue;
         const dt = (t1 - a.t) / 1000; const k = FX.findIndex(([x, y]) => a.rpm >= x && a.rpm < y);
         const v = valorEm(pa, a.t);
         if (v == null) { semDado += dt; continue; }
         const sem = nome === 'pedal' ? v <= 1 : v <= 0.5;   // pedal 0–1% · consumo ~0
         if (k >= 0) { tFx[k] += dt; if (sem) tFxSem[k] += dt; }
-        if (a.rpm > 1700) { alto += dt; if (sem) altoSem += dt; }
+        if (a.rpm > RPM_V_MAX) { alto += dt; if (sem) altoSem += dt; }
       }
     }
     const h = s => (s / 3600).toFixed(1) + ' h';
     console.log(`\n── DEDUÇÃO por ${nome} · ${veic} veículo(s) com RPM e ${nome} ──`);
-    console.log(`   acima de 1.700 rpm: ${h(alto)} · desses, ${nome === 'pedal' ? 'sem acelerador' : 'sem consumo'}: ${h(altoSem)} (${alto ? (altoSem / alto * 100).toFixed(1) : '0'}%)`);
+    console.log(`   acima de ${RPM_V_MAX} rpm: ${h(alto)} · desses, ${nome === 'pedal' ? 'sem acelerador' : 'sem consumo'}: ${h(altoSem)} (${alto ? (altoSem / alto * 100).toFixed(1) : '0'}%)`);
     console.log(`   tempo sem ${nome} sem leitura próxima (descartado): ${h(semDado)}`);
     console.log('   faixa de rpm · % do tempo da faixa ' + (nome === 'pedal' ? 'sem acelerador' : 'sem consumo') + ' · horas');
     FX.forEach(([x, y], k) => console.log(`      ${String(x).padStart(4)}–${y > 9999 ? '   +' : String(y).padStart(4)}  ${(tFx[k] ? tFxSem[k] / tFx[k] * 100 : 0).toFixed(1).padStart(5)}%  ${h(tFxSem[k])} de ${h(tFx[k])}`));
@@ -2398,16 +2405,16 @@ if (MODE === 'freiodeduz') {
 if (MODE === 'contador') {
   // SONDA: O CONTADOR DE COMBUSTÍVEL SERVE PARA ACHAR O MOTOR SEGURANDO?
   // (Renan, 05/10/2026) — só leitura, não grava nada. A ideia é tirar da
-  // Faixa Verde o tempo acima de 1.700 rpm em que o caminhão perde velocidade
+  // Faixa Verde o tempo acima da faixa verde em que o caminhão perde velocidade
   // e o contador de combustível não sobe. Aqui se mede: (1) o passo do
   // contador (resolução) e de quanto em quanto tempo ele é gravado; (2) nos
-  // trechos acima de 1.700 rpm, quantos ficam com o contador PARADO quando o
+  // trechos acima da faixa verde, quantos ficam com o contador PARADO quando o
   // caminhão perde velocidade (motor segurando) e quando mantém ou ganha
   // velocidade (motor puxando — o controle). Se parar nos dois, não serve.
   const cred = await geotabLogin();
   if (!cred) { console.error('Geotab: sem credencial'); process.exit(1); }
   const UNI = (process.env.CE_UNI || 'PIRAI').toUpperCase();
-  const ALTO = +process.env.CE_MARCHA_ALTO || 1700;
+  const ALTO = +process.env.CE_MARCHA_ALTO || RPM_V_MAX;
   const DIAS = [];
   for (let d = new Date(`${DE}T12:00:00Z`); iso(d) <= ATE && DIAS.length < 10; d = new Date(d.getTime() + 864e5)) DIAS.push(iso(d));
   console.log(`sonda do contador de combustível · dias ${DIAS.join(', ')} · unidade "${UNI}" · giro alto > ${ALTO} rpm`);
