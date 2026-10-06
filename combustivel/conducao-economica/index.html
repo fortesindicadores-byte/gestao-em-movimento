@@ -1679,7 +1679,7 @@ function renderNotaKml(){
     const pts=mot.map(m=>({x:m.nota, y:m.kml, unit:m.unit}));
     const xs=pts.map(p=>p.x);
     const linha = reta && nkFin(reta.b) && xs.length ? [Math.min(...xs), Math.max(...xs)].map(x=>({x, y:reta.a+reta.b*x})) : [];
-    set('nk-dsub', `Um ponto por motorista no recorte (${pts.length}) · linha = tendência`);
+    set('nk-dsub', `Um ponto por motorista no recorte (${pts.length}), modelos misturados · linha = tendência`);
     if(chartNotaDisp) chartNotaDisp.destroy();
     chartNotaDisp=new Chart(cd.getContext('2d'),{
       type:'scatter',
