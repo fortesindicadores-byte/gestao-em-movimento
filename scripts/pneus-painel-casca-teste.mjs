@@ -256,18 +256,27 @@ for (const [pg, vw] of Object.entries(PAGINAS)) {
 }
 
 console.log('\n══ casca: cada visão sem rolagem, tabelas sem barra lateral ══');
-const VIEWS = ['resumo', 'saude-bottom', 'aderencia', 'milimetragem', 'mm-bottom', 'pressao', 'pressao-bottom', 'cpk', 'previsao', 'prev-bottom',
-  'desgaste', 'dsg-ranking', 'orcamento', 'eixos', 'laudo', 'compat'];
+// cada card do hub é um painel: o menu lateral mostra SÓ as visões da página (Renan, 06/10/2026)
+const VIEWS_PG = { saude: ['resumo', 'saude-bottom'], painel: ['aderencia'], milimetragem: ['milimetragem', 'mm-bottom'],
+  pressao: ['pressao', 'pressao-bottom'], cpk: ['cpk'], previsao: ['previsao', 'prev-bottom'],
+  desgaste: ['desgaste', 'dsg-ranking'], orcamento: ['orcamento'], eixos: ['eixos', 'laudo', 'compat'] };
+const NOME_PG = { saude: 'Saúde dos Pneus', painel: 'Aderência às Aferições', milimetragem: 'Milimetragem', pressao: 'Pressão',
+  cpk: 'CPK — Custo por Km', previsao: 'Previsão de Troca', desgaste: 'Desgaste — mm/1.000km', orcamento: 'Previsão Orçamentária', eixos: 'Visão de Eixos' };
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
   for (const tema of (vp.width === 1600 ? ['dark', 'light'] : ['dark'])) {
-    const N = await abre(browser, { vp, tema });
+   for (const [pg, VIEWS] of Object.entries(VIEWS_PG)) {
+    const N = await abre(browser, { vp, tema, page: pg });
+    const menu = await N.page.evaluate(() => [...document.querySelectorAll('.s-item[data-vw]')].map(b => b.dataset.vw));
+    ok(`${vp.width} ${tema} · ?page=${pg}: o menu lateral só tem as visões do painel`, JSON.stringify(menu) === JSON.stringify(VIEWS), menu.join(','));
+    const marca = await N.page.evaluate(() => [document.querySelector('.s-top b').textContent, document.title, document.querySelector('.s-item[data-vw]').textContent.trim()]);
+    ok(`${vp.width} ${tema} · ?page=${pg}: nome do painel na lateral e 1º item "Resumo Gerencial"`, marca[0] === NOME_PG[pg] && marca[1].startsWith(NOME_PG[pg]) && marca[2] === 'Resumo Gerencial', marca.join(' · '));
     const lado = await N.page.evaluate(() => { const s = document.querySelector('.side'); return [s.scrollHeight, s.clientHeight]; });
     ok(`${vp.width}×${vp.height} ${tema}: a lateral cabe sem rolar`, lado[0] <= lado[1] + 1, lado.join(' / '));
     const tit = [];
     for (const v of VIEWS) {
       await N.page.evaluate(v => setVw(v), v);
-      await N.page.waitForTimeout(v === 'resumo' ? 450 : 350);
+      await N.page.waitForTimeout(v === VIEWS[0] ? 450 : 350);
       const m = await N.page.evaluate(() => {
         const vw = document.querySelector('.vw.on'); const se = document.scrollingElement;
         const tw = [...vw.querySelectorAll('.twrap')].map(w => [w.scrollWidth, w.clientWidth, w.clientHeight]);
@@ -283,10 +292,11 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       const cvOk = m.cv.every(h => h >= 110);
       ok(`${vp.width}×${vp.height} ${tema} · ${v}: sem rolagem${m.tw.length ? ', tabela sem barra lateral e com altura' : ''}${m.cv.length ? ', gráficos com altura' : ''}`,
         semRol && semHoriz && tabAlta && cvOk, `pág ${m.pag.join('/')} · visão ${m.vw.join('/')} · twrap ${JSON.stringify(m.tw)} · canvas ${m.cv.map(Math.round).join(',')} · cards ${m.cards.map(Math.round).join(',')}`);
-      if (SHOTS && (vp.width === 1600 || tema === 'dark')) await N.page.screenshot({ path: path.join(SHOTS, `${vp.width}-${tema}-${String(VIEWS.indexOf(v) + 1).padStart(2, '0')}-${v}.png`) });
+      if (SHOTS && (vp.width === 1600 || tema === 'dark')) await N.page.screenshot({ path: path.join(SHOTS, `${vp.width}-${tema}-${pg}-${v}.png`) });
     }
+    ok(`${vp.width} ${tema} · ?page=${pg}: primeira visão = "Resumo Gerencial"`, tit[0] === 'Resumo Gerencial', tit[0]);
+    if (pg !== 'saude') { await N.ctx.close(); continue; }
     if (vp.width === 1600 && tema === 'dark') {
-      ok('primeira visão = "Resumo Gerencial"', tit[0] === 'Resumo Gerencial', tit[0]);
       // tema claro: classe, chave e gráficos redesenhados
       await N.page.evaluate(() => setVw('resumo')); await N.page.waitForTimeout(300);
       const antes = await N.page.evaluate(() => Chart.getChart(document.getElementById('chartSaudeMensal')).options.scales.x.ticks.color);
@@ -301,12 +311,13 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       await N.page.evaluate(() => trocaMini());
       const at = await N.page.evaluate(() => ({ pdf: !!document.querySelector('#pdf-slot .s-item, #pdf-slot button'), h2c: !!window.H2CPrep,
         pdfFn: typeof initPdfExport, sort: !!document.querySelector('table.dre th'), refresh: !!document.querySelector('#btnRefresh.s-item'),
-        build: document.querySelector('meta[name=build]').content, bc: [...document.scripts].some(s => /build-check\.js\?v=202610070300/.test(s.src)) }));
+        build: document.querySelector('meta[name=build]').content, bc: [...document.scripts].some(s => /build-check\.js\?v=202610070600/.test(s.src)) }));
       ok('PDF na lateral (Atalhos), Excel/PNG carregado, Atualizar na lateral', at.pdf && at.h2c && at.pdfFn === 'function' && at.refresh, JSON.stringify(at));
-      ok('build 202610070300 no <meta> e no build-check', at.build === '202610070300' && at.bc);
+      ok('build 202610070600 no <meta> e no build-check', at.build === '202610070600' && at.bc);
       ok(`${vp.width} ${tema}: zero erro de página`, N.errs.length === 0, N.errs.slice(0, 2).join(' | '));
     }
     await N.ctx.close();
+   }
   }
 }
 
@@ -316,10 +327,12 @@ console.log('\n══ celular (390×844) ══');
   const m = await N.page.evaluate(() => ({ rola: Math.max(document.scrollingElement.scrollHeight, document.body.scrollHeight) > innerHeight && getComputedStyle(document.body).overflowY !== "hidden",
     cv: Chart.getChart(document.getElementById('chartSaudeMensal')).height, larg: document.scrollingElement.scrollWidth <= innerWidth + 1 }));
   ok('celular: a página rola, o gráfico tem altura e não há barra lateral na página', m.rola && m.cv > 150 && m.larg, JSON.stringify(m));
-  await N.page.evaluate(() => setVw('mm-bottom')); await N.page.waitForTimeout(300);
-  const t = await N.page.evaluate(() => [document.querySelector('#vw-mm-bottom .twrap').getBoundingClientRect().height, getComputedStyle(document.querySelector('#vw-mm-bottom .row-toggle')).display]);
+  const N2 = await abre(browser, { vp: { width: 390, height: 844 }, page: 'milimetragem' });
+  await N2.page.evaluate(() => setVw('mm-bottom')); await N2.page.waitForTimeout(300);
+  const t = await N2.page.evaluate(() => [document.querySelector('#vw-mm-bottom .twrap').getBoundingClientRect().height, getComputedStyle(document.querySelector('#vw-mm-bottom .row-toggle')).display]);
   ok('celular: a tabela do Menor Sulco aparece com o "+" de detalhar', t[0] > 200 && t[1] !== 'none', t.join(' · '));
-  if (SHOTS) await N.page.screenshot({ path: path.join(SHOTS, 'mobile-mm-bottom.png') });
+  if (SHOTS) await N2.page.screenshot({ path: path.join(SHOTS, 'mobile-mm-bottom.png') });
+  await N2.ctx.close();
   ok('celular: zero erro de página', N.errs.length === 0, N.errs.slice(0, 2).join(' | '));
   await N.ctx.close();
 }
