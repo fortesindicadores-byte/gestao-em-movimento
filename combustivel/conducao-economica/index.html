@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610070015">
+<meta name="build" content="202610071400">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -246,11 +246,11 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
 .ttit{font-size:14px;font-weight:800;}
 .tsub{font-size:10px;color:var(--txt3);margin-bottom:8px;}
 .twrap{flex:1;min-height:0;overflow:auto;border:1px solid var(--card-brd);border-radius:10px;background:var(--side);}
-/* SEM MOLDURA DUPLA (Renan, 06/10/2026: "essas redundâncias… acabam gerando mais um espelho
-   atrás da tabela, tire" e "pode aplicar em todos os painéis"): o card que envolve uma tabela
-   não desenha borda, fundo nem sombra — quem tem moldura é o próprio .twrap. */
+/* O ESPELHO ATRÁS DA TABELA FICA SEMPRE (Renan, 06/10/2026: "algumas ficaram estranhas sem o
+   espelho no fundo, pois como as bordas são arredondadas, fica comendo as bordas. Pode manter
+   sempre o espelho no fundo, mesmo que não tenha nada escrito"): o card da tabela voltou a ter
+   fundo, borda e padding. O título que repete a visão continua escondido. */
 .thead-row > .dim-toggle,.thead-row > .dims,.thead-row > .drill-tabs{margin-left:auto;}
-.card.tsec,.card:has(> .twrap){border:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;padding:0;border-radius:0;}
 table.dre{width:100%;border-collapse:collapse;font-size:11px;}
 table.dre thead th{position:sticky;top:0;z-index:2;background:var(--cabec);text-align:left;
   padding:10px 12px;font-size:9.5px;font-weight:700;color:var(--txt2);text-transform:uppercase;
@@ -366,6 +366,8 @@ body.claro .cal-c.vaz{background:repeating-linear-gradient(45deg,rgba(15,23,42,.
    traz borda, fundo e cantos, e a moldura extra só desenhava a mesma coisa
    duas vezes e roubava a altura de duas linhas */
 .rank-sec{flex:1;min-height:0;display:flex;flex-direction:column;}
+/* o espelho atrás da tabela fica sempre (Renan, 06/10/2026) */
+.rank-sec.card{padding:12px 14px;}
 @media(max-width:860px){ .rank-sec{display:block;} }
 /* OS 15 PRIMEIROS TÊM DE CABER SEM ROLAR (Renan, 04/09/2026): são eles os
    elegíveis do programa, então é a primeira coisa que se quer ver ao abrir o
@@ -673,7 +675,7 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
              volta era uma segunda borda desenhando a mesma coisa e comendo
              a altura de duas linhas. Sem título e sem card, a visão é a
              legenda de faixas + a tabela. -->
-        <div class="rank-sec">
+        <div class="rank-sec card">
           <div class="twrap"><table class="dre" id="ranking-table" data-no-sort>
             <thead><tr id="rank-head"></tr></thead>
             <tbody id="ranking-tbody"></tbody>
@@ -712,7 +714,7 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
 
       <!-- ranking em R$ por motorista (a tabela que ficava embaixo dos cards) -->
       <section class="vw" id="vw-carteira">
-        <div class="rank-sec">
+        <div class="rank-sec card">
           <div class="twrap"><table class="dre" id="cart-table">
             <thead><tr><th style="width:34px;">#</th><th>Motorista</th><th>Unidade</th><th class="num">Km</th><th class="num">Nota</th><th class="num">Meses elegível</th><th class="num">Carteira</th><th class="num">Pódio</th><th class="num">Total</th></tr></thead>
             <tbody id="cart-tbody"></tbody>
@@ -758,7 +760,7 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
            rodada × base Ativos do Ginfo), unidade, projeto e km/L. Km e litros
            ficam ao lado para o km/L ser conferível. ══ -->
       <section class="vw" id="vw-consrank">
-        <div class="rank-sec">
+        <div class="rank-sec card">
           <div class="twrap"><table class="dre" id="cons-table">
             <thead><tr><th style="width:34px;">#</th><th>Motorista</th><th>Modelo mais dirigido</th><th>Unidade</th><th>Projeto</th><th class="num">Km com combustível</th><th class="num">Litros</th><th class="num">Km/L</th></tr></thead>
             <tbody id="cons-tbody"></tbody>
@@ -836,7 +838,7 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
 
       <!-- ══ 7 · RANKING DE ACESSOS — por motorista ══ -->
       <section class="vw" id="vw-acessrank">
-        <div class="rank-sec">
+        <div class="rank-sec card">
           <div class="twrap"><table class="dre" id="ac-table">
             <thead><tr><th style="width:34px;">#</th><th>Motorista</th><th>Unidade</th><th>Senha criada em</th><th>Último acesso</th><th class="num">Últimos 7 dias</th><th class="num">Dias com acesso</th><th class="num">Acessos</th></tr></thead>
             <tbody id="ac-tbody"></tbody>
@@ -2153,6 +2155,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610070015"></script>
+<script src="../../assets/build-check.js?v=202610071400"></script>
 </body>
 </html>

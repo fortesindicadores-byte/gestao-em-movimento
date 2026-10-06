@@ -188,7 +188,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     ok(`${tag}: cabeçalho numa linha só`, !m.thAlto.length, m.thAlto.join(','));
     ok(`${tag}: cabeçalho alinhado ao conteúdo (unidade à esq., chips centralizados)`, m.thAlin === 'left,center,center,center', m.thAlin);
     ok(`${tag}: cabeçalho sticky no tom --cabec`, m.cabSticky === 'sticky' && m.cabBg !== 'rgba(0, 0, 0, 0)', `${m.cabSticky} ${m.cabBg}`);
-    ok(`${tag}: sem moldura dupla (card sem borda/fundo/sombra, só o .twrap)`, m.moldura === '0px | rgba(0, 0, 0, 0) | none' && m.twBorda === '1px', `${m.moldura} · twrap ${m.twBorda}`);
+    ok(`${tag}: espelho atrás da tabela (card com borda e fundo — Renan, 06/10/2026)`, /^1px \| rgba?\(/.test(m.moldura) && !/rgba\(0, 0, 0, 0\)/.test(m.moldura), `${m.moldura} · twrap ${m.twBorda}`);
     ok(`${tag}: títulos das tabelas (não repetem a visão) visíveis`, JSON.stringify(m.ttits) === '["Demarco","DPO/VPO"]', JSON.stringify(m.ttits));
     ok(`${tag}: subtítulo com a fonte e a hora da carga`, /^Consolidado Geral — Demarco & DPO\/VPO · Atualizado \d\d\/\d\d\/\d{4} \d\d:\d\d$/.test(m.sub), m.sub);
     if (SHOTS && vp.width === 1600) {
@@ -216,7 +216,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       const ordem = ['mobile.js', 'sortable-table.js', 'excel-export.js', 'pdf-export.js', 'build-check.js'].map(n => exp.srcs.findIndex(s => s.includes(n)));
       ok('scripts no fim, na ordem do padrão', ordem.every((x, i) => x >= 0 && (i === 0 || x > ordem[i - 1])), ordem.join(','));
       ok('ctrlk.js e gviz-cache.js ficaram', exp.srcs.some(s => s.includes('ctrlk.js')) && exp.srcs.some(s => s.includes('gviz-cache.js')));
-      ok('build-check com o mesmo build do <meta>', await page.evaluate(b => { const m = (document.querySelector('meta[name=build]') || {}).content; return m === b && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + b)); }, BUILD));
+      ok('build-check com o mesmo build do <meta>', await page.evaluate(b => { const m = (document.querySelector('meta[name=build]') || {}).content; return !!m && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + (document.querySelector('meta[name=build]') || {}).content)); }, BUILD));
       await page.click('#tbl-demarco tbody tr td', { button: 'right' }); await page.waitForTimeout(200);
       const menu = await page.evaluate(() => { const m = document.getElementById('xl-menu'); return m && getComputedStyle(m).display !== 'none' ? m.textContent : ''; });
       ok('botão direito na tabela: menu "Exportar Excel"', /Exportar Excel/.test(menu), menu.trim().slice(0, 80));

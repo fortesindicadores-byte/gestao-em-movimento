@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610070020">
+<meta name="build" content="202610071400">
 <title>Ativação de Frota · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -227,10 +227,8 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
 .ttit{font-size:14px;font-weight:800;}
 .tsub{font-size:10px;color:var(--txt3);margin-bottom:8px;}
 .twrap{flex:1;min-height:0;overflow:auto;border:1px solid var(--card-brd);border-radius:10px;background:var(--side);}
-/* SEM MOLDURA DUPLA (Renan, 06/10/2026: "essas redundâncias… acabam gerando mais um espelho
-   atrás da tabela, tire"): o card da tabela não desenha borda, fundo nem sombra — quem tem
-   moldura é o .twrap. Os botões Unidade/Projeto ficam soltos acima dela. */
-.card.tsec{border:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;padding:0;border-radius:0;}
+/* O ESPELHO ATRÁS DA TABELA FICA SEMPRE (Renan, 06/10/2026: "Pode manter sempre o espelho no
+   fundo, mesmo que não tenha nada escrito"): o card da tabela voltou a ter fundo e borda. */
 table.dre{width:100%;border-collapse:collapse;font-size:11px;}
 table.dre thead th{position:sticky;top:0;z-index:2;background:var(--cabec);text-align:left;
   padding:10px 12px;font-size:9.5px;font-weight:700;color:var(--txt2);text-transform:uppercase;
@@ -290,13 +288,13 @@ body.claro table.dre td.cy,body.claro .cy{color:#b45309!important;}
 /* Projetos e Unidades (Renan, 06/10/2026: "podem estar todas juntas em uma visão, com
    tabela em cima e gráficos abaixo"): tabela e gráficos dividem a altura meio a meio;
    a tabela rola dentro do próprio card quando não couber */
-#vw-projetos .tsec{flex:0 1 auto;}
+#vw-projetos .tsec{flex:0 1 auto;padding:10px 12px 10px;}   /* espelho de volta com padding curto, para as 10 unidades seguirem à vista em 1366×768 */
 /* a tabela fica com a altura do conteúdo (todas as unidades à vista, sem barra) e os
    gráficos com o resto (Renan, 06/10/2026: "diminua bem pouquinho a altura dos gráficos
    para que caibam todas as unidades visíveis na tabela"); só numa tela baixa demais o
    gráfico para no piso e a tabela volta a rolar por dentro */
 #vw-projetos .twrap{flex:0 1 auto;}
-#vw-projetos .gr2{flex:1 1 0;min-height:clamp(170px,30vh,300px);max-height:none;grid-template-rows:minmax(0,1fr);}
+#vw-projetos .gr2{flex:1 1 0;min-height:clamp(160px,27vh,300px);max-height:none;grid-template-rows:minmax(0,1fr);}
 #vw-projetos .thead-row{justify-content:flex-end;margin-bottom:6px;}
 
 /* legenda do gráfico de dispersão: barra condicional (verde/amarelo/vermelho) tem legenda NEUTRA */
@@ -1530,6 +1528,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610070020"></script>
+<script src="../assets/build-check.js?v=202610071400"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202609210900">
+<meta name="build" content="202610071400">
 <title>Preventivas Seara · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -442,8 +442,11 @@ table.tab th.gapL,table.tab td.gapL{padding-left:34px;}
           <div style="flex:1;min-height:0;position:relative"><canvas id="gGraf"></canvas></div>
         </div>
       </div>
+      <!-- o espelho atrás da tabela fica sempre (Renan, 06/10/2026) -->
+      <div class="tab-wrap tab-card" id="tabCard" style="flex:1;min-height:0;overflow:hidden;padding:12px 14px;display:flex;flex-direction:column">
       <div class="tab-wrap" id="tabWrap">
         <table class="tab"><thead><tr id="th"></tr></thead><tbody id="tb"></tbody></table>
+      </div>
       </div>
     </div>
   </main>
@@ -761,7 +764,7 @@ const filtradas=()=>LINHAS.filter(l=>
 function render(){
   const resumo=VISAO==='resumo';
   $('secResumo').style.display=resumo?'flex':'none';
-  $('tabWrap').style.display=resumo?'none':'';
+  $('tabCard').style.display=resumo?'none':'flex';
   document.querySelectorAll('.menu-wrap').forEach(x=>x.style.display=resumo?'none':'');
   // a lateral mostra quantas estão vencidas em CADA visão, não só na aberta
   ['montadora','frio'].forEach(e=>{
@@ -942,6 +945,6 @@ iniciar();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202609210900"></script>
+<script src="../assets/build-check.js?v=202610071400"></script>
 </body>
 </html>

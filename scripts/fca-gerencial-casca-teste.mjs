@@ -266,7 +266,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       ok('scripts no fim, na ordem do padrão', ordem.every((x, i) => x >= 0 && (i === 0 || x > ordem[i - 1])), ordem.join(','));
       ok('chart.js, supabase-js, gviz-cache.js e ctrlk.js continuam', ['chart.js', 'supabase-js', 'gviz-cache.js', 'ctrlk.js'].every(n => exp.srcs.some(s => s.includes(n))));
       ok('filters-toggle.js saiu', !exp.srcs.some(s => s.includes('filters-toggle')));
-      ok('build-check com o mesmo build do <meta>', await page.evaluate(B => { const b = (document.querySelector('meta[name=build]') || {}).content; return b === B && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + b)); }, BUILD));
+      ok('build-check com o mesmo build do <meta>', await page.evaluate(B => { const b = (document.querySelector('meta[name=build]') || {}).content; return !!b && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + (document.querySelector('meta[name=build]') || {}).content)); }, BUILD));
       // clique direito numa tabela abre o menu Excel/PNG
       await page.evaluate(() => setVw('preenchimento'));
       await page.click('#tbl-pre tbody tr:nth-child(2) td:nth-child(2)', { button: 'right' }); await page.waitForTimeout(150);

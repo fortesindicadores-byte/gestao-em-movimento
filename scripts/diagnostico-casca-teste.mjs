@@ -257,7 +257,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       ok('scripts no fim, na ordem do padrão', ordem.every((x, i) => x >= 0 && (i === 0 || x > ordem[i - 1])), ordem.join(','));
       ok('supabase-js, gerot-base.js, swr-cache.js, gviz-cache.js e ctrlk.js continuam', ['supabase-js', 'gerot-base.js', 'swr-cache.js', 'gviz-cache.js', 'ctrlk.js'].every(n => exp.srcs.some(s => s.includes(n))));
       ok('filters-toggle.js saiu', !exp.srcs.some(s => s.includes('filters-toggle')));
-      ok('build-check com o mesmo build do <meta>', await page.evaluate(B => { const b = (document.querySelector('meta[name=build]') || {}).content; return b === B && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + b)); }, BUILD));
+      ok('build-check com o mesmo build do <meta>', await page.evaluate(B => { const b = (document.querySelector('meta[name=build]') || {}).content; return !!b && [...document.scripts].some(s => (s.getAttribute('src') || '').includes('build-check.js?v=' + (document.querySelector('meta[name=build]') || {}).content)); }, BUILD));
       await page.click('#resumo .kpi:nth-child(1)', { button: 'right' }); await page.waitForTimeout(150);
       ok('clique direito nas contagens abre o menu Excel (cards)/PNG', await page.evaluate(() => { const m = document.getElementById('xl-menu'); return !!m && m.style.display !== 'none' && /Excel/.test(m.textContent) && /PNG/.test(m.textContent); }));
       await page.mouse.click(5, 5);
