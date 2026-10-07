@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610072030">
+<meta name="build" content="202610072130">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -668,7 +668,7 @@ body.claro input[type=date]{color-scheme:light;}
         <label class="mf"><span>Vigência</span><select id="f-vigencia"></select></label>
       </div>
       <div class="mgrid">
-        <label class="mf"><span>Data</span><input type="date" id="f-data"></label>
+        <label class="mf"><span>Data</span><input type="date" id="f-data" onchange="dataMudou()"></label>
         <label class="mf"><span>Projeto</span><select id="f-projeto"></select></label>
         <label class="mf"><span>Equipamento</span><input id="f-equipamento" placeholder="Placa" oninput="this.value=this.value.toUpperCase()"></label>
         <label class="mf"><span>Fornecedor</span><input id="f-fornecedor" placeholder="FORNECEDOR" oninput="this.value=this.value.toUpperCase()"></label>
@@ -1128,7 +1128,12 @@ function abrirLanc(id){
   if(id && !r) return;
   LANC_ABERTO = id || null;
   const hoje=new Date(), iso=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(hoje.getDate()).padStart(2,'0');
-  const d = r || {data:iso, projeto:(UNIT_PROJETOS[0]||''), conta:(CONTAS['Manutenção']||[])[0]||''};
+  /* lançamento novo nasce com a data dentro do mês filtrado: hoje, se o
+     filtro é o mês corrente; senão o dia 1º da vigência do filtro — a data é
+     que decide a vigência (vigDaData), então "hoje" jogaria o lançamento de
+     setembro para outubro sem ninguém pedir */
+  const vigF=curVigs()[0], dNovo=(vigF && iso.slice(0,7)!==vigF) ? vigF+'-01' : iso;
+  const d = r || {data:dNovo, projeto:(UNIT_PROJETOS[0]||''), conta:(CONTAS['Manutenção']||[])[0]||''};
   set('mTit', r ? 'Editar lançamento' : 'Novo lançamento');
   const ctx=$('m-ctx'), agreg=!singleCtx();
   ctx.style.display = agreg ? '' : 'none';
@@ -1184,6 +1189,20 @@ function ctxUnidadeMudou(){
   const projs=projetosDe($('f-unidade').value);
   sel.innerHTML = selOpts(projs, projs.includes(atual)?atual:(projs[0]||''));
 }
+/* A VIGÊNCIA SEGUE A DATA (Renan, 07/10/2026: "lançou em setembro, mas entrou
+   em outubro. Ele mudou a data, mas continuou em setembro"). Antes a vigência
+   vinha do filtro (ou do seletor da caixa) e a data era só um campo: mudar a
+   data para 02/10 deixava o custo em setembro. Agora o mês da data manda; sem
+   data, vale o de antes. O seletor Vigência da caixa acompanha a data. */
+const vigDaData=iso=>/^\d{4}-\d{2}-\d{2}/.test(String(iso||''))?String(iso).slice(0,7):'';
+function dataMudou(){
+  const vig=vigDaData($('f-data').value), sel=$('f-vigencia');
+  if(!vig || $('m-ctx').style.display==='none' || !sel) return;
+  if(![...sel.options].some(o=>o.value===vig)){
+    const o=document.createElement('option'); o.value=vig; o.textContent=vigLabel(vig); sel.prepend(o);
+  }
+  sel.value=vig;
+}
 function fecharLanc(){ $('mbg').classList.remove('open'); LANC_ABERTO=null; }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !e.defaultPrevented && $('mbg').classList.contains('open')) fecharLanc(); });
 async function salvarLancModal(){
@@ -1192,29 +1211,35 @@ async function salvarLancModal(){
   const valor=parseValor(v('f-valor'));
   const agreg=$('m-ctx').style.display!=='none';
   const payload={unidade: agreg?v('f-unidade'):curUnits()[0],
-    vigencia: agreg?v('f-vigencia'):curVigs()[0], pacote:'Manutenção',
+    vigencia: vigDaData(v('f-data')) || (agreg?v('f-vigencia'):curVigs()[0]), pacote:'Manutenção',
     data:v('f-data')||null, projeto:v('f-projeto'),
     equipamento:v('f-equipamento').trim().toUpperCase(), fornecedor:v('f-fornecedor').trim().toUpperCase(),
     rc:v('f-rc').trim(), oc:v('f-oc').trim(), nf:v('f-nf').trim(),
     conta:v('f-conta'), grupo:v('f-grupo'), descricao:v('f-descricao').trim(), valor:valor};
   const semRC=$('f-semrc').checked;
   if(semRC) payload.rc='N/A';
+  let idSalvo=LANC_ABERTO;
   if(LANC_ABERTO){
     const r=ROWS.find(x=>x.id===LANC_ABERTO);
     if(semRC) payload.aprovado=true;
     else if(r && String(r.rc||'').trim().toUpperCase()==='N/A'){ payload.aprovado=false; payload.aprovado_oc=false; }
-    if(r) Object.assign(r,payload);
     const {error}=await sb.from('carta_custos').update(payload).eq('id',LANC_ABERTO);
     if(error){ alert('Erro ao salvar: '+error.message); return; }
+    if(r) Object.assign(r,payload);
   }else{
     if(!payload.rc){ alert('Informe a RC, ou marque "sem RC" se o custo nasce direto na OC.'); $('f-rc').focus(); return; }
     payload.aprovado=semRC;
     payload.aprovado_oc=false;
     const {data,error}=await sb.from('carta_custos').insert(payload).select('*').single();
     if(error){ alert('Erro ao lançar: '+error.message); return; }
-    ROWS.unshift(fromDB(data));
+    ROWS.unshift(fromDB(data)); idSalvo=data.id;
   }
+  // a data levou o lançamento para um mês fora do filtro: sai da tela e avisa
+  // para onde foi, senão parece que sumiu
+  const foraFiltro=!curVigs().includes(payload.vigencia);
+  if(foraFiltro) ROWS=ROWS.filter(x=>x.id!==idSalvo);
   fecharLanc(); render();
+  if(foraFiltro) alert('Lançamento salvo em '+vigLabel(payload.vigencia)+', o mês da data. Para vê-lo, marque '+vigLabel(payload.vigencia)+' no filtro Vigência.');
 }
 async function excluirLancModal(){
   if(!LANC_ABERTO || !sb) return;
@@ -1852,6 +1877,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610072030"></script>
+<script src="../assets/build-check.js?v=202610072130"></script>
 </body>
 </html>
