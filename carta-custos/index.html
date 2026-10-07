@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610071930">
+<meta name="build" content="202610072000">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -710,7 +710,7 @@ const CONTAS={
   'Pneus':['Pneus Novos','Recapagens e Outros Serviços']
 };
 const GRUPOS={
-  'Manutenção':['Plano','Contrato','Motor','Transmissão','Embreagem','Diferencial','Elétrica','Freios','Suspensão','Direção','Arrefecimento','Combustível','Injeção','Climatização','Rodagem','Eixos','Carroceria','Funilaria','Pintura','Vidros','Escapamento','Hidráulico','Pneumático','Implemento','Telemetria','Preventiva','Corretiva','Lavação','Lubrificação','Ferramentas','Solda','Guincho','Terceiros','Diversos'],
+  'Manutenção':['Plano','Contrato','Motor','Transmissão','Embreagem','Diferencial','Elétrica','Freios','Suspensão','Direção','Arrefecimento','Combustível','Injeção','Climatização','Frio - Revisão Preventiva','Frio - Ventiladores','Frio - Condensadora','Frio - Sensor temperatura','Frio - Visor display','Rodagem','Eixos','Carroceria','Funilaria','Pintura','Vidros','Escapamento','Hidráulico','Pneumático','Implemento','Telemetria','Preventiva','Corretiva','Lavação','Lubrificação','Ferramentas','Solda','Guincho','Terceiros','Diversos'],
   'Pneus':['Novos','Recapagem','Vulcanização','Reparo','Manchão','Válvula','Câmara','Alinhamento','Balanceamento','Rodízio','Borracharia','Descarte']
 };
 (function(){const dl=document.createElement('datalist');dl.id='dl-grupos';dl.innerHTML=GRUPOS['Manutenção'].map(g=>'<option value="'+g.replace(/"/g,'&quot;')+'">').join('');document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(dl));})();
@@ -1794,6 +1794,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610071930"></script>
+<script src="../assets/build-check.js?v=202610072000"></script>
 </body>
 </html>
