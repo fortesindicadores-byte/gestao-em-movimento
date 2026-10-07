@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610072230">
+<meta name="build" content="202610080010">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -210,7 +210,7 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
 .kpi .km b{font-weight:800;}
 
 /* gráficos */
-.gr2{flex:1 1 auto;min-height:190px;max-height:44vh;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.gr2{flex:1 1 auto;min-height:190px;max-height:44vh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;}
 
 /* TELA BAIXA (notebook 1366x768 e afins) — o card de KPI tinha altura fixa em
    qualquer tela, então quando a janela encolhia só o gráfico é que perdia
@@ -226,7 +226,7 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
   /* três gráficos numa tela baixa comem a tabela inteira — a sobra é DIVIDIDA */
 
 }
-.gcard{min-height:0;display:flex;flex-direction:column;padding:12px 16px 10px;position:relative;}
+.gcard{min-height:0;min-width:0;display:flex;flex-direction:column;padding:12px 16px 10px;position:relative;}
 .gtit{font-size:12px;font-weight:800;}
 .gsub{font-size:10px;color:var(--txt3);margin:2px 0 6px;}
 .gcv{flex:1;min-height:0;position:relative;}
@@ -331,7 +331,10 @@ table.dre thead th.num{text-align:right;}
    vh. Com teto, tela grande sobrava faixa vazia embaixo e tela pequena cortava
    a tabela — os dois defeitos ao mesmo tempo. O `flex:1 1 0` reparte o que
    existe, e o min-height só garante que nenhum dos dois desapareça. */
-.gr3{flex:1 1 0;min-height:170px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+/* minmax(0,1fr), não 1fr: com 1fr o mínimo da coluna é a largura do canvas,
+   e ao diminuir a janela o gráfico não encolhia e empurrava o terceiro card
+   para fora da tela (Renan, 07/10/2026) */
+.gr3{flex:1 1 0;min-height:170px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
 /* O PACOTE TEM SEMPRE AS MESMAS 6 CONTAS + total (Renan, 04/09/2026), então a
    tabela do Resumo tem altura conhecida e não precisa esticar: ela ocupa o que
    precisa e TODA a sobra vai para os gráficos, em vez de virar faixa vazia
@@ -350,8 +353,7 @@ table.dre thead th.num{text-align:right;}
    e tabela, lado a lado (mesma regra do Resumo da Aderência às Aferições) */
 .ad-kpis{grid-template-columns:repeat(4,minmax(0,1fr));}
 .ad-kpis .kpi{height:clamp(112px,16.5vh,170px);display:flex;flex-direction:column;justify-content:center;}
-#vw-ader .ad-gr{flex:1 1 0;min-height:220px;max-height:none;}
-#vw-ader .ad-gr .tsec{min-height:0;}
+#vw-ader .ad-tab{flex:1 1 0;min-height:220px;}
 #tbl-ader td.ok{color:var(--txt);font-weight:700;}
 /* Consolidado: a tabela tem uma linha por unidade (altura conhecida) e fica
    com o que precisa; o gráfico do ano leva toda a sobra. As linhas são mais
@@ -644,10 +646,9 @@ body.claro input[type=date]{color-scheme:light;}
             <div class="hdel" id="ad-hdel"></div></div>
         </div>
         <div class="kpis ad-kpis" id="ad-kpis"></div>
-        <div class="gr2 ad-gr">
-          <div class="card gcard"><div class="gtit">Onde o processo está</div><div class="gsub" id="ad-gsub">lançamentos por etapa atual</div><div class="gcv"><canvas id="ch-ader"></canvas></div></div>
-          <div class="card tsec"><div class="twrap"><table class="dre" id="tbl-ader"></table></div></div>
-        </div>
+        <!-- sem gráfico (Renan, 07/10/2026: "Isso aqui não precisa. A tabela diz
+             tudo"): a tabela fica com a largura e a altura que sobram -->
+        <div class="card tsec ad-tab"><div class="twrap"><table class="dre" id="tbl-ader"></table></div></div>
       </section>
 
       <!-- ══ 3 · PLACAS ══ -->
@@ -1426,7 +1427,6 @@ function renderCharts(rows){
    planilha entra com as duas aprovações e a NF), porque não passaram pelo
    processo e inflariam a aderência. Cada % é sobre o total de lançamentos.
    ══════════════════════════════════════════════════════════════ */
-const AD_ETAPAS=['Sem RC','RC sem aprovação','Sem OC','OC sem aprovação','Sem NF','Concluído'];
 const temTxt=v=>!!String(v||'').trim();
 function etapaDe(r){
   if(!temTxt(r.rc)) return 0;
@@ -1441,10 +1441,13 @@ function adConta(rows){
   const e=rows.map(etapaDe);
   const c=k=>e.filter(x=>x>=k).length;      // chegou ao menos até a etapa k
   const v=k=>rows.reduce((s,r,i)=>s+(e[i]>=k?(+r.valor||0):0),0);
-  return {n,val,rcAp:c(2),ocLan:c(3),ocAp:c(4),nf:c(5),valNf:v(5),
-    porEtapa:AD_ETAPAS.map((_,k)=>e.filter(x=>x===k).length)};
+  return {n,val,rcAp:c(2),ocLan:c(3),ocAp:c(4),nf:c(5),valNf:v(5)};
 }
 const adPct=(a,n)=>n?a/n*100:null;
+/* ADERÊNCIA = MÉDIA DAS QUATRO ETAPAS (Renan, 07/10/2026: "No final da tabela,
+   última coluna, deve ter a aderência % média"): RC aprovada, OC lançada, OC
+   aprovada e NF lançada, cada uma valendo o mesmo. */
+const adMedia=x=>x.n?(x.rcAp+x.ocLan+x.ocAp+x.nf)/(4*x.n)*100:null;
 function renderAderencia(rows){
   if(!$('vw-ader')) return;
   const lanc=rows.filter(r=>!r.origem);
@@ -1471,18 +1474,16 @@ function renderAderencia(rows){
   const tr=(nome,x,cls)=>`<tr${cls?` class="${cls}"`:''}><td class="conta">${esc(nome)}</td>`+
     `<td class="num">${x.n.toLocaleString('pt-BR')}</td><td class="num">${fmt(x.val)}</td>`+
     cel(x.rcAp,x.n)+cel(x.ocLan,x.n)+cel(x.ocAp,x.n)+cel(x.nf,x.n)+
-    `<td class="num">${fmt(x.val-x.valNf)}</td></tr>`;
+    `<td class="num">${fmt(x.val-x.valNf)}</td><td class="num ok">${pct(adMedia(x))}</td></tr>`;
   let h=`<thead><tr><th>${multi?'Unidade':'Projeto'}</th><th class="num">Lanç.</th><th class="num">Valor</th>`+
     `<th class="num">RC aprov.</th><th class="num">OC lançada</th><th class="num">OC aprov.</th><th class="num">NF lançada</th>`+
-    `<th class="num" title="Valor dos lançamentos que ainda não têm NF">Sem NF</th></tr></thead><tbody>`;
-  if(!linhas.length) h+=`<tr><td colspan="8"><div class="vazio">Nenhum custo lançado no filtro atual.</div></td></tr>`;
+    `<th class="num" title="Valor dos lançamentos que ainda não têm NF">Sem NF</th>`+
+    `<th class="num" title="Média das quatro etapas: RC aprovada, OC lançada, OC aprovada e NF lançada">Aderência</th></tr></thead><tbody>`;
+  if(!linhas.length) h+=`<tr><td colspan="9"><div class="vazio">Nenhum custo lançado no filtro atual.</div></td></tr>`;
   h+=linhas.map(([k,x])=>tr(k,x)).join('');
   h+=`</tbody>`;
   if(linhas.length) h+=`<tfoot>${tr('Total',t,'total')}</tfoot>`;
   $('tbl-ader').innerHTML=h;
-  set('ad-gsub', `${t.n.toLocaleString('pt-BR')} lançamento(s) por etapa atual`);
-  if($('vw-ader').classList.contains('on'))
-    barChart('ch-ader', AD_ETAPAS.map((l,k)=>[l,t.porEtapa[k]]).filter((p,k)=>p[1]||k>0), 6);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1887,7 +1888,6 @@ function setVw(v){
   // canvas só mede certo depois de visível
   if(v==='resumo') setTimeout(()=>renderCharts(curRows()),30);
   if(v==='consol') setTimeout(renderConsol,30);
-  if(v==='ader') setTimeout(()=>renderAderencia(curRows()),30);
 }
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
 
@@ -1975,6 +1975,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610072230"></script>
+<script src="../assets/build-check.js?v=202610080010"></script>
 </body>
 </html>

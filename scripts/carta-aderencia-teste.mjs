@@ -2,9 +2,9 @@ import { chromium } from 'playwright';
 import http from 'http'; import fs from 'fs'; import path from 'path';
 // Teste da visão Aderência ao Processo da Carta de Custos (Chromium, banco dublado).
 // CHART_JS = caminho do chart.umd.js 4.4.0 (o sandbox não alcança o CDN);
-// DATALABELS opcional; SHOT_DIR salva um print por tela/tema.
+// DATALABELS = caminho do chartjs-plugin-datalabels 2.2.0 (o painel o registra); SHOT_DIR salva um print por tela/tema.
 const CHART_JS=process.env.CHART_JS, DL=process.env.DATALABELS, SHOT=process.env.SHOT_DIR, ROOT=process.cwd();
-if(!CHART_JS){ console.error('defina CHART_JS'); process.exit(2); }
+if(!CHART_JS||!DL){ console.error('defina CHART_JS e DATALABELS'); process.exit(2); }
 const srv=http.createServer((q,r)=>{let f=path.join(ROOT,decodeURIComponent(q.url.split('?')[0]));if(f.endsWith('/'))f+='index.html';
   if(!fs.existsSync(f)){r.writeHead(404);return r.end();} r.writeHead(200,{'content-type':f.endsWith('.js')?'text/javascript':'text/html'});r.end(fs.readFileSync(f));}).listen(0);
 const port=srv.address().port;
@@ -47,11 +47,10 @@ for(const [w,h] of [[1366,768],[1600,900],[1920,1080]]){
     const cards=[...document.querySelectorAll('#ad-kpis .kpi')].map(k=>[k.querySelector('.kl').textContent,k.querySelector('.kv').textContent,k.querySelector('.km').textContent]);
     const rows=[...document.querySelectorAll('#tbl-ader tbody tr')].map(tr=>[...tr.cells].map(c=>c.textContent));
     const tot=[...document.querySelectorAll('#tbl-ader tfoot td')].map(c=>c.textContent);
-    const ch=Chart.getChart(q('#ch-ader'));
     return {tit:q('#tit').textContent,hval:q('#ad-hval').textContent,hdel:q('#ad-hdel').textContent,cards,rows,tot,
-      lbl:ch&&ch.data.labels, dat:ch&&ch.data.datasets[0].data,
+      semGrafico:!q('#ch-ader'), tabW:q('#vw-ader .ad-tab').getBoundingClientRect().width, vwW:vw.clientWidth,
       vwScroll:vw.scrollHeight-vw.clientHeight, twH:tw.scrollWidth-tw.clientWidth, twV:tw.scrollHeight-tw.clientHeight,
-      bodyScroll:document.documentElement.scrollHeight-innerHeight, gcvH:q('#ch-ader').parentElement.clientHeight,
+      bodyScroll:document.documentElement.scrollHeight-innerHeight, tabH:tw.clientHeight,
       kpiH:q('#ad-kpis .kpi').getBoundingClientRect().height};
   });
   const tag=`${w}x${h} ${tema}`;
@@ -61,14 +60,17 @@ for(const [w,h] of [[1366,768],[1600,900],[1920,1080]]){
     t(/Lançamentos6/.test(r.hdel)&&/Concluídos2/.test(r.hdel),'hero: 6 lançamentos, 2 concluídos');
     t(JSON.stringify(r.cards.map(c=>c[1]))===JSON.stringify(['83.3%','66.7%','50.0%','33.3%']),'cards RC aprov/OC lanç/OC aprov/NF = '+r.cards.map(c=>c[1]));
     t(/1 aguardando/.test(r.cards[0][2])&&/4 sem NF/.test(r.cards[3][2]),'rodapé dos cards');
-    t(JSON.stringify(r.dat)===JSON.stringify([1,1,1,1,2]),'etapas: '+r.lbl+' = '+r.dat);
+    t(r.semGrafico,'sem o gráfico "Onde o processo está"');
+    t(Math.abs(r.tabW-r.vwW)<=2,'tabela com a largura toda da visão');
+    t(r.rows[0][8]==='50.0%'&&r.rows[1][8]==='75.0%','aderência média por linha (ROTA 8/16, APOIO 6/8): '+r.rows.map(x=>x[8]));
+    t(r.tot[8]==='58.3%','aderência média do total = 14/24 → '+r.tot[8]);
     t(r.rows.length===2&&r.rows[0][0]==='ROTA'&&r.rows[0][1]==='4','tabela por projeto (uma unidade): '+JSON.stringify(r.rows));
     t(r.rows[1][0]==='APOIO'&&r.rows[1][6]==='50.0%','APOIO: NF 1 de 2');
     t(r.tot[0]==='Total'&&r.tot[1]==='6'&&r.tot[7]===(4*0+1000).toLocaleString('pt-BR'),'total: 6 lanç., sem NF R$ 1.000 → '+r.tot);
   }
   t(r.vwScroll<=1&&r.bodyScroll<=1,tag+': sem rolagem (visão '+r.vwScroll+', página '+r.bodyScroll+')');
   t(r.twH<=1,tag+': tabela sem barra horizontal ('+r.twH+')');
-  t(r.gcvH>=120,tag+': gráfico com altura ('+r.gcvH+'px), card '+Math.round(r.kpiH)+'px');
+  t(r.tabH>=150,tag+': tabela com altura ('+r.tabH+'px), card '+Math.round(r.kpiH)+'px');
   if(SHOT) await pg.screenshot({path:`${SHOT}/ader-${w}-${tema}.png`});
   await pg.close();
  }
@@ -86,6 +88,20 @@ for(const [w,h] of [[1366,768],[1600,900],[1920,1080]]){
   t(r==='Unidade','com 2 unidades a tabela abre por unidade');
   const pdf=await pg.evaluate(()=>Object.values(TIT));
   t(pdf.includes('Aderência ao Processo'),'visão entra no PDF (TIT)');
+  await pg.close();
+}
+// janela que diminui: os gráficos do Resumo têm de encolher junto (com 1fr o
+// canvas prendia a coluna e o 3º card saía da tela — Renan, 07/10/2026)
+{
+  const pg=await b.newPage({viewport:{width:2200,height:919}});
+  await pg.route(/supabase-js/,r=>r.fulfill({body:'',contentType:'text/javascript'}));
+  await pg.route(/chart\.umd/,r=>r.fulfill({path:CHART_JS}));
+  await pg.route(/datalabels|fonts\.g|html2canvas|jspdf|xlsx/,r=>r.fulfill({body:'',contentType:'text/javascript'}));
+  await pg.addInitScript(init);
+  await pg.goto(`http://localhost:${port}/carta-custos/`); await pg.waitForTimeout(900);
+  await pg.setViewportSize({width:1890,height:919}); await pg.waitForTimeout(900);
+  const r=await pg.evaluate(()=>{const v=document.querySelector('#vw-resumo');return v.scrollWidth-v.clientWidth;});
+  t(r<=1,'Resumo: janela de 2200 para 1890 px sem barra horizontal ('+r+')');
   await pg.close();
 }
 await b.close(); srv.close();
