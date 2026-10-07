@@ -779,11 +779,15 @@
   }
 
   // ── carga completa: registros mensais (contrato antigo) ──────────────────
+  // opts.soChave: só os indicadores-chave do Frota de Elite (o Painel de Metas só usa a
+  // pontuação deles). Pula os adicionais do Gerot — as 4 abas do Termômetro e o retrato
+  // inteiro dos pneus do Prolog —, que eram a parte mais pesada da carga e não entram na conta.
   async function load(opts){
     FUNDIR = !!(opts&&opts.fundir);
+    const soChave = !!(opts&&opts.soChave);
     const combP=loadComb();
     const pneusP=loadPneusSheet();
-    const termoP=loadTermometro();
+    const termoP=soChave ? Promise.resolve([]) : loadTermometro();
     await fetchElite();
     await pneusP;
     const records=[];
@@ -797,12 +801,14 @@
         });
       });
     });
-    records.push(...loadAdicionais());
-    try{ records.push(...loadOsCritica()); }catch(e){ console.error('Saída com OS Crítica', e); }
+    if(!soChave){
+      records.push(...loadAdicionais());
+      try{ records.push(...loadOsCritica()); }catch(e){ console.error('Saída com OS Crítica', e); }
+    }
     try{ records.push(...await termoP); }catch(e){ console.error('adicionais do termômetro', e); }
     records.push(...await combP);
     const vigsAll=[...new Set(records.map(r=>r.vig))].sort();
-    try{ records.push(...await loadPneusAdic(vigsAll[vigsAll.length-1])); }catch(e){ console.error('adicionais de pneus', e); }
+    if(!soChave){ try{ records.push(...await loadPneusAdic(vigsAll[vigsAll.length-1])); }catch(e){ console.error('adicionais de pneus', e); } }
     return records;
   }
 

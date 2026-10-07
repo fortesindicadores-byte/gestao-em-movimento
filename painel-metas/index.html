@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610071830">
+<meta name="build" content="202610071900">
 <title>Painel de Metas</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../assets/gerot-base.js?v=202609250000"></script>
+<script src="../assets/gerot-base.js?v=202610071900"></script>
 <style>
 /* ============================================================
    PAINEL DE METAS — pontuação do Gerente de Frota, no layout padrão do portal.
@@ -232,7 +232,18 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 /* o hero é o número que se lê primeiro: ele fica com a faixa acima dos
    gráficos (que têm teto de 56vh), com o conteúdo no meio dela — sem sobrar
    faixa vazia embaixo da tela */
-#vw-resumo .fin-hero{flex:1 1 auto;align-items:center;min-height:0;padding:4px 0 6px;}
+#vw-resumo .fin-hero{flex:0 0 auto;align-items:center;min-height:0;padding:4px 0 6px;}
+/* cards por indicador: altura FIXA do padrão; o gráfico mensal, inteiro, fica com o resto */
+.pm-kpis{display:grid;grid-template-columns:repeat(var(--n,5),minmax(0,1fr));gap:12px;flex:0 0 auto;height:clamp(112px,16.5vh,170px);}
+.pm-kpis .kpi{display:flex;flex-direction:column;justify-content:center;gap:6px;padding:14px 16px;min-width:0;
+  border-radius:11px;background:var(--side);border:1px solid var(--card-brd);box-shadow:var(--luz-card), 0 8px 20px rgba(0,0,0,.30);}
+.pm-kpis .klbl{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.pm-kpis .kval{font-size:clamp(20px,3.2vh,28px);font-weight:800;line-height:1;}
+.pm-kpis .kval small{font-size:11px;font-weight:600;color:var(--txt3);margin-left:4px;}
+.pm-kpis .kmeta{font-size:10.5px;color:var(--txt2);line-height:1.45;}
+.pm-kpis .kmeta span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#vw-resumo .pm-mensal{flex:1 1 auto;min-height:200px;}
 #vw-resumo .hlbl{font-size:10.5px;letter-spacing:1px;}
 #vw-resumo .hval{font-size:clamp(40px,6.5vh,64px);margin:7px 0 6px;}
 .hero-sub{font-size:13px;font-weight:600;color:var(--txt2);margin-top:4px;}
@@ -298,6 +309,8 @@ body.claro .pts{background:#1a1a1a;color:#fff;}
 @media(max-width:860px){
   #vw-resumo .fin-hero{flex:none;}
   #vw-resumo .hval{font-size:36px;}
+  .pm-kpis{grid-template-columns:repeat(2,minmax(0,1fr));height:auto;}
+  .pm-kpis .kpi{min-height:104px;}
   .hero-sub{font-size:11px;}
   .gr2{max-height:none;}
   #tbl table.dre{height:auto;}
@@ -342,7 +355,7 @@ body.claro .pts{background:#1a1a1a;color:#fff;}
 
     <div class="s-sec">Atalhos</div>
     <div id="pdf-slot"></div>
-    <button class="s-item" onclick="carregar()">
+    <button class="s-item" onclick="carregar(true)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
       Atualizar dados
     </button>
@@ -383,10 +396,9 @@ body.claro .pts{background:#1a1a1a;color:#fff;}
             <div class="hero-sub" id="h-sub"></div>
           </div>
         </div>
-        <div class="gr2">
-          <div class="card gcard"><div class="gtit">Pontuação · Mensal</div><div class="gcv"><canvas id="ch-mensal"></canvas></div></div>
-          <div class="card gcard"><div class="gtit">Pontuação por Indicador</div><div class="gcv"><canvas id="ch-ind"></canvas></div></div>
-        </div>
+        <!-- um card por indicador (era o gráfico "Pontuação por Indicador") -->
+        <div class="kpis pm-kpis" id="ind-cards"></div>
+        <div class="card gcard pm-mensal"><div class="gtit">Pontuação · Mensal</div><div class="gcv"><canvas id="ch-mensal"></canvas></div></div>
       </section>
 
       <!-- ══ 2 · INDICADORES — a tabela (com Descrição e Regra em prosa) ══ -->
@@ -425,7 +437,7 @@ const ELITE_NOMES=['CDI MACACU','CDD PELOTAS','CDD RONDONOPOLIS','CDD NOVA FRIBU
 const ELITE_WEIGHTS={disp:20,prev:15,comb:10,pneus:10,checkT:10,checkWH:10,conf:5,stVeic:5,stEmp:5,sla:5,civf:5};
 const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const META_PONTOS=80;
-let ALL=[],VIGS=[],chM=null,chI=null;
+let ALL=[],VIGS=[],chM=null;
 // Bandas de pontuação (fração do peso)
 function bandHigher(atg){return atg==null?0:atg>=100?1:atg>=99?.75:atg>=98?.5:0;}      // ≥100/99/98 % da meta
 function bandLowerRatio(ratio){return ratio==null?0:ratio<=100?1:ratio<=101?.75:ratio<=102?.5:0;} // ≤100/101/102 % da meta
@@ -628,24 +640,22 @@ function chartMensal(){
     {type:'line',label:'Meta 80%',data:metaLine,borderColor:remC,borderWidth:2,borderDash:[6,4],tension:0,fill:false,pointRadius:4,pointBackgroundColor:remC,order:1}
   ]},plugins:[barLabels],options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.type==='line'?'Meta '+META_PONTOS:n1(c.raw)+' pts'}}},scales:{x:{grid,ticks:tick},y:{min:0,max:100,grid,ticks:{...tick}}}}});
 }
-function chartIndicador(){
-  const isLight=document.body.classList.contains('claro');
+function cardsIndicador(){
   const selVig=getMsValues('ms-vig');
   const vigs=selVig.length?VIGS.filter(d=>selVig.includes(vigLbl(d))):VIGS;
-  // MÉDIA dos pontos por indicador nas vigências selecionadas
+  // MESMA conta do gráfico que estava aqui e da tabela Indicadores: aggPontos nas vigências do filtro
   const indOrder=[],seen=new Set();
-  ALL.forEach(o=>{if(!seen.has(o.indicador)){seen.add(o.indicador);indOrder.push(o.indicador);}});
-  const items=indOrder.map(ind=>{const rs=ALL.filter(o=>o.indicador===ind&&vigs.some(d=>vigKeyN(d)===vigKeyN(o.vigD)));const peso=rs.length?rs[0].peso:(ALL.find(o=>o.indicador===ind)?.peso||0);const pts=aggPontos(rs,{indicador:ind,peso}).pts||0;return{ind,pts,peso};}).filter(x=>x.peso>0);
-  const labels=items.map(x=>x.ind);
-  const data=items.map(x=>+x.pts.toFixed(1));
-  const bg=items.map(x=>{const r=x.peso?x.pts/x.peso:0;const a=.85;return r>=1?`rgba(59,179,59,${a})`:r>0?`rgba(244,161,0,${a})`:`rgba(255,102,102,${a})`;});
-  const bc=items.map(x=>{const r=x.peso?x.pts/x.peso:0;return r>=1?'#3BB33B':r>0?'#F4A100':'#FF6666';});
-  const grid={color:isLight?'rgba(0,0,0,.08)':'rgba(255,255,255,.06)'};
-  const tick={color:isLight?'#444':'#94A3B8',font:{family:'Montserrat',size:9}};
-  // card estreito (lateral aberta em 1366): a fonte do eixo X desce para os rótulos não se encostarem
-  const fx=(document.getElementById('ch-ind').parentNode.clientWidth||999)<600?9:11;
-  if(chI)chI.destroy();
-  chI=new Chart(document.getElementById('ch-ind'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:bg,borderColor:bc,borderWidth:1,borderRadius:3,maxBarThickness:54}]},plugins:[barLabels],options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>n1(c.raw)+' pts'}}},scales:{x:{grid,ticks:{...tick,font:{family:'Montserrat',size:fx},maxRotation:0,minRotation:0,autoSkip:false,callback:function(v){const l=this.getLabelForValue(v);const words=String(l).split(' ');const lines=[];let cur='';words.forEach(w=>{if((cur+' '+w).trim().length>14){if(cur)lines.push(cur);cur=w;}else{cur=(cur+' '+w).trim();}});if(cur)lines.push(cur);return lines;}}},y:{beginAtZero:true,grid,ticks:tick}}}});
+  ALL.forEach(o=>{if(!seen.has(o.indicador)){seen.add(o.indicador);indOrder.push(o);}});
+  const items=indOrder.map(base=>{const rs=ALL.filter(o=>o.indicador===base.indicador&&vigs.some(d=>vigKeyN(d)===vigKeyN(o.vigD)));
+    const peso=rs.length?rs[0].peso:(base.peso||0);const A=aggPontos(rs,{...base,peso});return{ind:base.indicador,peso,tem:rs.length>0,...A};}).filter(x=>x.peso>0);
+  const cor=x=>{if(!x.tem||x.pts==null)return 'var(--txt3)';const r=x.pts/x.peso;return r>=1?'var(--verde)':r>0?'var(--ambar)':'var(--vermelho)';};
+  const el=document.getElementById('ind-cards');
+  el.style.setProperty('--n',Math.max(1,items.length));
+  el.innerHTML=items.map(x=>`<div class="kpi" title="${x.ind}">
+    <div class="klbl">${x.ind}</div>
+    <div class="kval" style="color:${cor(x)}">${x.tem?n1(x.pts||0):'—'}<small>de ${n1(x.peso)}</small></div>
+    <div class="kmeta">${x.tem?`<span>Real ${n1(x.real)} · Meta ${n1(x.meta)}</span><span>Ating. ${pctI(x.atg)}</span>`:'<span>sem dado no recorte</span>'}</div>
+  </div>`).join('');
 }
 
 function atualizar(){
@@ -658,7 +668,7 @@ function atualizar(){
   const eT=document.getElementById('h-total');eT.textContent=n1(total);eT.style.color=total>=META_PONTOS?'var(--verde)':total>=70?'var(--ambar)':'var(--vermelho)';
   const lbl=selVig.length?selVig.join(', '):'todas as vigências';
   document.getElementById('h-sub').textContent=`de 100 pontos · meta ${META_PONTOS} · ${lbl}`;
-  chartMensal();chartIndicador();renderTable();
+  chartMensal();cardsIndicador();renderTable();
 }
 // ── AGREGADO DE VÁRIOS MESES (período filtrado e YTD) ──
 // OS PONTOS SEGUEM A LEGENDA DO ATINGIMENTO MOSTRADO (Renan, 20/09/2026: "104% não é
@@ -710,15 +720,52 @@ function renderTable(){
   tbl.innerHTML=indOrder.length?html:'<div class="loading">Sem dados</div>';
 }
 
-async function carregar(){
-  setCarga('Carregando…');
+// ── MEMÓRIA DA ÚLTIMA CONTA (Renan, 07/10/2026: "Está demorando bastante para carregar") ──
+// A conta junta 7 fontes (DRE Frota e Receita inteiras, Dispersão, DPO, FCA, Frota de Elite).
+// A tela abre na hora com o resultado da última visita e a leitura nova roda por trás,
+// redesenhando quando chega (a vigência escolhida é mantida). Dentro do Check de Metas
+// (iframe) não usa a memória: o deck tem de sair com a leitura do momento.
+const PM_CACHE='pm_cache_v1', PM_CACHE_MAX=24*3600e3;
+function salvaCache(){try{localStorage.setItem(PM_CACHE,JSON.stringify({ts:Date.now(),herd:VIG_HERDADAS,fca:FCA_FONTE,
+  all:ALL.map(o=>({...o,vigD:[o.vigD.getFullYear(),o.vigD.getMonth()]}))}));}catch(e){}}
+function leCache(){
+  try{ if(window.top!==window) return 0; }catch(e){ return 0; }
+  try{const c=JSON.parse(localStorage.getItem(PM_CACHE)||'null');
+    if(!c||!Array.isArray(c.all)||!c.all.length||Date.now()-c.ts>PM_CACHE_MAX) return 0;
+    ALL=c.all.map(o=>({...o,vigD:new Date(o.vigD[0],o.vigD[1],1)})); VIG_HERDADAS=c.herd||[]; FCA_FONTE=c.fca||''; return c.ts;
+  }catch(e){ return 0; }
+}
+const hhmm=d=>`${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+// monta filtro + tela a partir de ALL; manter=true preserva a vigência que já está marcada
+function montaTela(manter){
+  const vm=new Map();ALL.forEach(o=>{if(o.vigD)vm.set(vigKeyN(o.vigD),o.vigD);});
+  VIGS=[...vm.values()].sort((a,b)=>vigKeyN(a)-vigKeyN(b));
+  const vigItems=VIGS.map(d=>vigLbl(d));
+  const vw=document.getElementById('ms-vig'); const ant=vw._sel?[...vw._sel]:[];
+  if(manter&&ant.length&&ant.every(v=>vigItems.includes(v))) vw._sel=new Set(ant);
+  else if(vigItems.length) vw._sel=new Set([vigItems[vigItems.length-1]]); // auto último mês
+  buildMsFilter('ms-vig',vigItems);
+  atualizar();
+}
+function rodapeCarga(d){
+  // mês herdado não é mês cadastrado: quem lê tem de saber de onde veio a estrutura
+  const herd=(VIG_HERDADAS.length?` · ${VIG_HERDADAS.join(', ')} com a estrutura do último mês da aba`:'')
+    + (FCA_FONTE==='planilha'?' · FCA da planilha (o banco não respondeu)':'');
+  return hhmm(d)+herd;
+}
+async function carregar(semCache){
+  const tinha=ALL.length>0;                       // "Atualizar dados" mantém a vigência marcada
+  const tsCache=semCache?0:leCache();
+  const fonteCache=FCA_FONTE, herdCache=VIG_HERDADAS.slice();
+  if(tsCache){ montaTela(false); setCarga(rodapeCarga(new Date(tsCache))+' · atualizando…'); }
+  else setCarga('Carregando…');
   try{
     // A aba Painel de Metas dá só a ESTRUTURA (indicador, peso, descrição, regra, un) — todo o
     // Meta/Real de cada indicador é calculado a partir do painel de origem correspondente.
     const [mRows,kmRows,dpoRows,fcaRecs,frotaTab,receitaTab,eliteRecords]=await Promise.all([
       gviz(SRC.metas),gviz(SRC.km),gviz(SRC.dpo),carregaFCA(),
       fetchDreTab(DRE_TAB_FROTA),fetchDreTab(DRE_TAB_RECEITA),
-      window.GerotBase.load()
+      window.GerotBase.load({soChave:true})   // só os indicadores-chave: a pontuação do Frota de Elite
     ]);
     const rankMap=compRankingElite(eliteRecords), dispMap=compDisp(kmRows), dpo=compDPO(dpoRows), custoMap=compCusto(frotaTab,receitaTab);
 
@@ -754,18 +801,10 @@ async function carregar(){
       } // 'other' mantém o que veio da planilha
       return o;
     });
-    const vm=new Map();ALL.forEach(o=>{if(o.vigD)vm.set(vigKeyN(o.vigD),o.vigD);});
-    VIGS=[...vm.values()].sort((a,b)=>vigKeyN(a)-vigKeyN(b));
-    const vigItems=VIGS.map(d=>vigLbl(d));
-    const vw=document.getElementById('ms-vig');if(vigItems.length)vw._sel=new Set([vigItems[vigItems.length-1]]); // auto último mês
-    buildMsFilter('ms-vig',vigItems);
-    atualizar();
-    const now=new Date();
-    // mês herdado não é mês cadastrado: quem lê tem de saber de onde veio a estrutura
-    const herd=(VIG_HERDADAS.length?` · ${VIG_HERDADAS.join(', ')} com a estrutura do último mês da aba`:'')
-      + (FCA_FONTE==='planilha'?' · FCA da planilha (o banco não respondeu)':'');
-    setCarga(`${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${herd}`);
-  }catch(e){console.error(e);setCarga('Erro ao carregar');}
+    montaTela(tinha||!!tsCache);
+    salvaCache();
+    setCarga(rodapeCarga(new Date()));
+  }catch(e){console.error(e);if(tsCache){FCA_FONTE=fonteCache;VIG_HERDADAS=herdCache;}setCarga(tsCache?rodapeCarga(new Date(tsCache))+' · a atualização falhou':'Erro ao carregar');}
 }
 
 /* ── navegação entre as visões ────────────────────────────────────────────── */
@@ -843,6 +882,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610071830"></script>
+<script src="../assets/build-check.js?v=202610071900"></script>
 </body>
 </html>

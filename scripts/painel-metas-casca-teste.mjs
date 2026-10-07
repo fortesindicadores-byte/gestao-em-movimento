@@ -175,7 +175,14 @@ const leNumeros = () => {
   out.cab = tb ? [...tb.querySelectorAll('thead th')].map(c => c.textContent.trim()).join(' | ') : null;
   out.linhas = tb ? [...tb.querySelectorAll('tbody tr')].map(tr => [...tr.cells].map(c => c.textContent.replace(/\s+/g, ' ').trim() + (c.getAttribute('style') ? '[' + cat(c.getAttribute('style')) + ']' : '')).join(' | ')) : [];
   const ch = c => c ? { labels: c.data.labels.map(l => String(l)), data: c.data.datasets.map(d => d.data), bg: c.data.datasets[0].backgroundColor } : null;
-  out.chMensal = ch(chM); out.chInd = ch(chI);
+  out.chMensal = ch(chM);
+  // pontos por indicador: no antigo é o gráfico (chI); no novo são os cards (Renan, 07/10/2026:
+  // "transformar os indicadores em cards"). Mesma conta: compara nome e pontos formatados.
+  // Card sem dado no recorte mostra "—" onde o gráfico desenhava 0,0.
+  out.ind = (typeof chI !== 'undefined' && chI)
+    ? { labels: chI.data.labels.map(String), pts: chI.data.datasets[0].data.map(v => n1(v)) }
+    : (() => { const ks = [...document.querySelectorAll('#ind-cards .kpi')];
+        return { labels: ks.map(k => k.querySelector('.klbl').textContent), pts: ks.map(k => { const t = k.querySelector('.kval').firstChild.textContent.trim(); return t === '—' ? n1(0) : t; }) }; })();
   out.vigs = [...document.querySelectorAll('#ms-vig .ms-opt input[data-v]')].map(i => i.dataset.v + (i.checked ? '*' : '')).join(',');
   return out;
 };
@@ -230,9 +237,11 @@ const mede = () => {
   if (vw.id === 'vw-resumo') {
     const cv = [...vw.querySelectorAll('canvas')].map(c => Math.round(c.getBoundingClientRect().height));
     r.canvas = cv;
-    const gr = vw.querySelector('.gr2').getBoundingClientRect(), hv = vw.querySelector('.hval').getBoundingClientRect();
+    const gr = vw.querySelector('.pm-mensal').getBoundingClientRect(), hv = vw.querySelector('.hval').getBoundingClientRect();
     r.sobra = Math.round(vw.getBoundingClientRect().bottom - gr.bottom);
     r.gr2 = Math.round(gr.height); r.hval = Math.round(hv.height);
+    const ks = [...vw.querySelectorAll('#ind-cards .kpi')].map(k => k.getBoundingClientRect());
+    r.cards = ks.length; r.cardH = [...new Set(ks.map(k => Math.round(k.height)))]; r.grLarg = Math.round(gr.width); r.vwLarg = Math.round(vw.getBoundingClientRect().width);
     r.charts = [...vw.querySelectorAll('canvas')].every(c => window.Chart && Chart.getChart(c));
   } else {
     const tw = vw.querySelector('.twrap'), card = vw.querySelector('.card.tsec'), cs = getComputedStyle(card);
@@ -264,8 +273,9 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       ok(`${tag} · ${nome}: a visão não transborda`, !m.vwRola);
       ok(`${tag} · ${nome}: nada fora da tela`, !m.foraTela, m.foraTela);
       if (v === 'resumo') {
-        ok(`${tag} · Resumo: os dois gráficos desenhados com altura`, m.charts && m.canvas.length === 2 && m.canvas.every(h => h > 150), m.canvas.join('/'));
-        ok(`${tag} · Resumo: gráficos com teto (≤ 56vh)`, m.gr2 <= Math.ceil(vp.height * .56) + 1, m.gr2 + 'px');
+        ok(`${tag} · Resumo: um gráfico só (mensal), desenhado com altura`, m.charts && m.canvas.length === 1 && m.canvas.every(h => h > 150), m.canvas.join('/'));
+        ok(`${tag} · Resumo: gráfico mensal na largura inteira`, m.grLarg >= m.vwLarg - 2, m.grLarg + '/' + m.vwLarg);
+        ok(`${tag} · Resumo: um card por indicador, todos da mesma altura (112–170px)`, m.cards === b.linhas.length && m.cardH.length === 1 && m.cardH[0] >= 112 && m.cardH[0] <= 171, m.cards + ' · ' + m.cardH.join('/'));
         ok(`${tag} · Resumo: sem faixa vazia embaixo dos gráficos (≤ 4px)`, m.sobra <= 4, m.sobra + 'px');
         ok(`${tag} · Resumo: subtítulo do topo = recorte · carga`, /\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/.test(m.sub), m.sub);
       } else {
@@ -325,9 +335,9 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
         const graf = [...a.querySelectorAll('canvas')].filter(c => c.offsetHeight >= 40 && Chart.getChart(c)).length;
         const tit = [...a.querySelectorAll('.gcard')].map(c => (c.querySelector('.gtit') || {}).textContent);
         setVw('indicadores'); const t = document.querySelector('#tbl table');
-        return { hero: hv && hv.textContent, sub: (a.querySelector('.hero-sub') || {}).textContent, graf, tit, tab: t ? t.offsetHeight : 0, linhas: t ? t.tBodies[0].rows.length : 0 };
+        return { hero: hv && hv.textContent, sub: (a.querySelector('.hero-sub') || {}).textContent, graf, tit, cards: a.querySelectorAll('#ind-cards .kpi').length, tab: t ? t.offsetHeight : 0, linhas: t ? t.tBodies[0].rows.length : 0 };
       });
-      ok('Check de Metas · slide 1: #vw-resumo com hero (.fin-hero > div .hval) e os gráficos com título', !!cm.hero && cm.hero !== '—' && cm.graf === 2 && cm.tit.join('|') === 'Pontuação · Mensal|Pontuação por Indicador', JSON.stringify(cm));
+      ok('Check de Metas · slide 1: #vw-resumo com hero (.fin-hero > div .hval) e o gráfico com título e os cards', !!cm.hero && cm.hero !== '—' && cm.graf === 1 && cm.tit.join('|') === 'Pontuação · Mensal' && cm.cards === cm.linhas, JSON.stringify(cm));
       ok('Check de Metas · slide 1: a vigência do prep chega ao hero', /jul\/26/.test(cm.sub), cm.sub);
       ok('Check de Metas · slide 2: #tbl table visível na visão Indicadores', cm.tab > 100 && cm.linhas === 6, cm.tab + 'px · ' + cm.linhas);
       await page.evaluate(() => setVw('resumo'));
