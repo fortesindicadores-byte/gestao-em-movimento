@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610071600">
+<meta name="build" content="202610071830">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>MPR — Monthly Performance Review</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -28,9 +28,9 @@
   --brilho:   linear-gradient(180deg, rgba(255,255,255,.022) 0%, rgba(255,255,255,0) 46%);
   --card-brd: rgba(255,255,255,.07);
   --txt:      #EEF2FA;
-  --txt2:     #E8ECF4;
-  --txt3:     #D5DBE6;
-  --txt4:     #A3ABBA;
+  --txt2:     #D8DEE8;
+  --txt3:     #BEC5D2;
+  --txt4:     #8E96A6;
   --hover:    rgba(255,255,255,.06);
   --azul:     #2E90E8;
   --verde:    #3BB33B;
@@ -288,6 +288,12 @@ body.claro .sml[type=date]{color-scheme:light;}
   .twrap{max-height:76vh;overflow:auto;}   /* fechada: só o "+ Detalhar" do mobile.js; aberta: rola dentro */
   table.mpr{min-width:1150px;}
 }
+/* "Voltar" sempre no rodapé, à esquerda (Renan, 07/10/2026) */
+.pe-volta{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:0 24px 14px;}
+.pe-volta a{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--card-brd);border-radius:20px;padding:6px 13px;
+  font-family:inherit;font-size:9.5px;font-weight:800;color:var(--txt2);letter-spacing:.6px;text-transform:uppercase;text-decoration:none;white-space:nowrap;}
+.pe-volta a:hover{background:var(--hover);color:var(--txt);}
+.pe-volta svg{width:12px;height:12px;stroke:currentColor;fill:none;}
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
 </head>
@@ -316,8 +322,6 @@ body.claro .sml[type=date]{color-scheme:light;}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="19"/><line x1="15" y1="13" x2="9" y2="19"/></svg>Excel</button>
         <button class="tool ico" onclick="atualizar()" title="Atualizar dados">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button>
-        <a class="tool ico" href="../" title="Voltar ao hub" style="text-decoration:none">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></a>
         <button class="tool ico" id="btTema" onclick="trocaTema()" title="Claro / escuro"></button>
       </div>
     </div>
@@ -334,6 +338,9 @@ body.claro .sml[type=date]{color-scheme:light;}
         </div>
       </section>
     </div>
+    <footer class="pe-volta">
+      <a href="../" title="Voltar ao Hub"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Voltar ao Hub</a>
+    </footer>
   </main>
 </div>
 
@@ -824,6 +831,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610071600"></script>
+<script src="../assets/build-check.js?v=202610071830"></script>
 </body>
 </html>

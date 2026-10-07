@@ -145,10 +145,11 @@ for (const P of PAGS) {
   const t2 = await n.pg.evaluate(() => [document.body.classList.contains('claro'), localStorage.getItem('bi_theme')]);
   af('tema: abre escuro, botão alterna body.claro e grava bi_theme', !t0 && t1[0] && t1[1] === 'light' && !t2[0] && t2[1] === 'dark', JSON.stringify([t1, t2]));
   // voltar ao hub
-  const volta = await n.pg.evaluate(() => { const a = [...document.querySelectorAll('.top a')].find(a => a.textContent.trim() === 'Hub Principal'); return a && a.getAttribute('href'); });
-  af('topo: "Hub Principal" → ../', volta === '../');
-  await Promise.all([n.pg.waitForURL(u => new URL(u).pathname === '/' || new URL(u).pathname === '/index.html', { timeout: 8000 }).catch(() => {}), n.pg.click('.top a.rt')]);
-  af('clicar em "Hub Principal" abre a raiz', ['/', '/index.html'].includes(new URL(n.pg.url()).pathname), new URL(n.pg.url()).pathname);
+  // "Voltar ao Hub" no rodapé, à esquerda (Renan, 07/10/2026)
+  const volta = await n.pg.evaluate(() => { const a = [...document.querySelectorAll('.pe-volta a')].find(a => a.textContent.trim() === 'Voltar ao Hub'); return a && a.getAttribute('href'); });
+  af('rodapé: "Voltar ao Hub" → ../', volta === '../');
+  await Promise.all([n.pg.waitForURL(u => new URL(u).pathname === '/' || new URL(u).pathname === '/index.html', { timeout: 8000 }).catch(() => {}), n.pg.click('.pe-volta a')]);
+  af('clicar em "Voltar ao Hub" abre a raiz', ['/', '/index.html'].includes(new URL(n.pg.url()).pathname), new URL(n.pg.url()).pathname);
   await o.ctx.close(); await n.ctx.close();
 
   const c2 = await abre({ url: P.url, theme: 'light' });

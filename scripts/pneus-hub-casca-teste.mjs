@@ -138,8 +138,8 @@ const casca = async (page, tag) => {
   ok(`${tag}: scripts no fim, na ordem do padrão`, ordem.every((x, i) => x >= 0 && (i === 0 || x > ordem[i - 1])), ordem.join(','));
   ok(`${tag}: ctrlk.js e gviz-cache.js ficaram`, exp.srcs.some(s => s.includes('ctrlk.js')) && exp.srcs.some(s => s.includes('gviz-cache.js')));
   ok(`${tag}: build ${exp.build} no <meta> e no build-check`, !!exp.build && exp.build >= BUILD && exp.srcs.some(s => s.includes('build-check.js?v=' + exp.build)));
-  const links = await page.evaluate(() => [...document.querySelectorAll('.side a.s-item')].map(a => a.textContent.trim() + '→' + a.getAttribute('href')).join(' · '));
-  ok(`${tag}: atalhos de volta (Pneus → ./ e Hub → ../)`, links === 'Pneus→./ · Hub→../', links);
+  const links = await page.evaluate(() => [...document.querySelectorAll('.side .s-volta a.s-item')].map(a => a.textContent.trim() + '→' + a.getAttribute('href')).join(' · '));
+  ok(`${tag}: atalhos de volta no rodapé (Pneus → ./ e Hub → ../)`, links === 'Voltar a Pneus→./ · Voltar ao Hub→../', links);
 };
 
 // ═════════════════════════ 1 · SUB-HUB ═════════════════════════
@@ -157,13 +157,13 @@ const leCards = page => page.evaluate(() => [...document.querySelectorAll('.dash
   ok('10 cards no antigo e no novo', ca.length === 10 && cn.length === 10, ca.length + '/' + cn.length);
   ok('mesmos cards, mesma ordem: título, texto, destino e selo', JSON.stringify(ca) === JSON.stringify(cn), cn.find((c, i) => c !== ca[i]) || '');
   const meta = await N.page.evaluate(() => ({ h1: document.querySelector('.marca h1').textContent, p: document.querySelector('.marca p').textContent,
-    sub: document.querySelector('.tit-pg p').textContent, voltar: [...document.querySelectorAll('.top-dir a')].map(a => a.textContent.trim() + '→' + a.getAttribute('href')).join(','),
+    sub: document.querySelector('.tit-pg p').textContent, voltar: [...document.querySelectorAll('.pe-volta a')].map(a => a.textContent.trim() + '→' + a.getAttribute('href')).join(','),
     side: !!document.querySelector('.side'), build: document.querySelector('meta[name=build]').content,
     srcs: [...document.scripts].map(s => s.getAttribute('src')).filter(Boolean) }));
   const metaA = await A.page.evaluate(() => ({ h1: document.querySelector('.hub-brand h1').textContent, p: document.querySelector('.hub-brand p').textContent, sub: document.querySelector('.hub-welcome p').textContent }));
   ok('marca e subtítulo do antigo (Gestão de Pneus · Frota)', meta.h1 === metaA.h1 && meta.p === metaA.p, meta.h1 + ' / ' + meta.p);
   ok('texto de boas-vindas do antigo no topo da grade', meta.sub === metaA.sub);
-  ok('voltar ao Hub Principal (../)', meta.voltar === 'Hub Principal→../', meta.voltar);
+  ok('rodapé: Voltar ao Hub (../)', meta.voltar === 'Voltar ao Hub→../', meta.voltar);
   ok('sem menu lateral (casca do hub)', !meta.side);
   ok(`build ${meta.build} + scripts do antigo (mobile, ctrlk, build-check, gviz-cache)`, meta.build >= BUILD && ['mobile.js', 'ctrlk.js', 'build-check.js?v=' + meta.build, 'gviz-cache.js'].every(n => meta.srcs.some(s => s.includes(n))), meta.srcs.join(','));
   ok('zero erro de página (antigo e novo)', !A.errs.length && !N.errs.length, [...A.errs, ...N.errs].join(' / '));

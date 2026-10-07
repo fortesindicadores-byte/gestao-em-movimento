@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610071700">
+<meta name="build" content="202610071830">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -32,9 +32,9 @@
   --brilho:   linear-gradient(180deg, rgba(255,255,255,.022) 0%, rgba(255,255,255,0) 46%);
   --card-brd: rgba(255,255,255,.07);
   --txt:      #EEF2FA;
-  --txt2:     #E8ECF4;
-  --txt3:     #D5DBE6;
-  --txt4:     #A3ABBA;
+  --txt2:     #D8DEE8;
+  --txt3:     #BEC5D2;
+  --txt4:     #8E96A6;
   --hover:    rgba(255,255,255,.06);
   --azul:     #2E90E8;
   --verde:    #3BB33B;
@@ -326,6 +326,10 @@ body.claro .auth-card{box-shadow:0 28px 70px rgba(15,23,42,.16), var(--luz-card)
 .adm-side .s-item .admin-cnt{margin-left:auto;background:var(--hover);color:var(--txt2);}
 .adm-side .s-item.active .admin-cnt{background:var(--laranja);color:#2A1405;}
 .adm-side .s-user{margin-top:auto;display:flex;align-items:center;gap:9px;padding:12px 8px 2px;border-top:1px solid var(--linha);}
+/* "Voltar ao Hub" sempre no rodapé da lateral, logo acima do usuário (Renan, 07/10/2026) */
+.adm-side .s-volta{margin-top:auto;padding-top:8px;display:flex;flex-direction:column;gap:2px;}
+.adm-side .s-volta+.s-user{margin-top:6px;}
+@media(max-width:760px){.adm-side .s-volta{display:contents;}}
 .adm-side .s-user div{flex:1;min-width:0;}
 .adm-side .s-user .av{flex:0 0 24px;}
 .adm-side .s-user b{display:block;font-size:12px;font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -612,10 +616,13 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11.
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Exportar Excel
     </button>
-    <button class="s-item" onclick="goToHub()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
-      Hub
-    </button>
+
+    <div class="s-volta">
+      <button class="s-item" onclick="goToHub()" title="Voltar ao Hub">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+        Voltar ao Hub
+      </button>
+    </div>
 
     <div class="s-user">
       <span class="av" id="admin-avatar">—</span>
@@ -1580,6 +1587,6 @@ init();
 </script>
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202610071700"></script>
+<script src="assets/build-check.js?v=202610071830"></script>
 </body>
 </html>

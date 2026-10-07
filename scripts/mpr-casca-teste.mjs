@@ -276,10 +276,10 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       await page.click('#btTema'); await page.waitForTimeout(200);
       const exp = await page.evaluate(() => ({ pdf: !!document.querySelector('.top .acoes #pdf-slot button'),
         xlsItem: [...document.querySelectorAll('.top .acoes .tool')].some(b => /Excel/.test(b.textContent) && /exportExcel/.test(b.getAttribute('onclick') || '')),
-        semLateral: !document.querySelector('.side') && !!document.querySelector('.top .acoes a[href="../"]') && [...document.querySelectorAll('.top .acoes .tool')].some(b => /atualizar\(\)/.test(b.getAttribute('onclick') || '')),
+        semLateral: !document.querySelector('.side') && !!document.querySelector('.pe-volta a[href="../"]') && !document.querySelector('.top a[href="../"]') && [...document.querySelectorAll('.top .acoes .tool')].some(b => /atualizar\(\)/.test(b.getAttribute('onclick') || '')),
         h2c: typeof window.H2CPrep !== 'undefined', srcs: [...document.scripts].map(s => s.getAttribute('src')).filter(Boolean) }));
       ok('Gerar PDF no topo', exp.pdf);
-      ok('sem menu lateral: Atualizar e Hub no topo', exp.semLateral);
+      ok('sem menu lateral: Atualizar no topo, Voltar ao Hub no rodapé', exp.semLateral);
       ok('Exportar Excel (o .xls do painel) no topo', exp.xlsItem);
       ok('excel-export carregado (menu Excel/PNG no clique direito)', exp.h2c);
       const ordem = ['mobile.js', 'sortable-table.js', 'excel-export.js', 'pdf-export.js', 'build-check.js'].map(n => exp.srcs.findIndex(s => s.includes(n)));

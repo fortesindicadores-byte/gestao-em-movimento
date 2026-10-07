@@ -697,7 +697,7 @@ body.claro{                              /* claro */
   --azul:#1B6FC4; --verde:#00B300; --vermelho:#FF0000; --ambar:#E9A400;
 }
 ```
-**OS CINZAS DO TEMA ESCURO VIRARAM QUASE BRANCO (Renan, 07/10/2026: *"essa cor dos textos meio cinza fica muito ruim de ver. Geral"* → *"Poderia ser branco"*).** Nos 55 painéis da casca: `--txt2 #B2BCD2 → #E8ECF4`, `--txt3 #676F83 → #D5DBE6`, `--txt4 #4C505C → #A3ABBA`. O tema claro não mudou; os apps do motorista têm paleta própria e ficaram de fora. A hierarquia agora vem do tamanho e do peso, não do cinza. **Os valores do bloco acima são os antigos** — vale o que está nos arquivos.
+**OS CINZAS DO TEMA ESCURO VIRARAM QUASE BRANCO (Renan, 07/10/2026: *"essa cor dos textos meio cinza fica muito ruim de ver. Geral"* → *"Poderia ser branco"*).** Nos 55 painéis da casca: `--txt2 #B2BCD2 → #E8ECF4`, `--txt3 #676F83 → #D5DBE6`, `--txt4 #4C505C → #A3ABBA`. O tema claro não mudou; os apps do motorista têm paleta própria e ficaram de fora. A hierarquia agora vem do tamanho e do peso, não do cinza. **Os valores do bloco acima são os antigos** — vale o que está nos arquivos. **Um passo de volta no mesmo dia** (Renan, 07/10/2026: *"Pode ficar um pouquinho mais cinza. Não tanto como antes"*): `--txt2 #D8DEE8 · --txt3 #BEC5D2 · --txt4 #8E96A6` — mais perto do branco do que do cinza antigo.
 
 **Tema claro é classe `body.claro`** (não `light-mode`), chave `bi_theme`, botão sol/lua no topo. Cards usam `background:var(--side)` — o mesmo tom do menu lateral (regra do Renan). Tudo que é "um degrau acima" (painéis, chips, inputs) usa `--side`; nada de `rgba` chapado. **Não mexer no valor de `--side` para ganhar contraste** — já tentei e quebrou a regra; o contraste vem do fundo uniforme e da sombra do card.
 
@@ -713,6 +713,11 @@ body.claro{                              /* claro */
 - `.s-item` — item com ícone 14px + rótulo; ativo = fundo `--hover` + texto `--txt`;
 - `.s-user` no rodapé — avatar circular + nome + sair. **`.av` precisa de `.s-user .av`** para não virar elipse (o `.s-user div{flex:1}` vence pela especificidade);
 - **dica ao passar o mouse quando recolhido**: um `.dica` `position:fixed` posicionado por JS no `mouseenter`.
+
+**O "VOLTAR AO HUB" MORA NO RODAPÉ, SEMPRE (Renan, 07/10/2026: *"O voltar ao Hub está em cada painel em um lugar diferente. Quero que em 100% seja ali embaixo… Caso não tenha menu lateral, mantenha lá embaixo à esquerda"*).** Antes cada painel tinha o seu: item "Hub" em Atalhos, ícone de saída no bloco do usuário, os dois, ou pílula "Hub Principal" no topo. Agora:
+- **Com lateral (46 painéis + Gerenciar Acessos):** um `<div class="s-volta">` logo acima do `.s-user`, com UM item `Voltar ao Hub` (ícone de casa) e, nos painéis de sub-hub, antes dele o `Voltar ao Combustível` / `Voltar à Seara` / `Voltar a Pneus` (seta). Saíram o item "Hub" de Atalhos e o ícone `.s-sair` que apontava para o hub; os `.s-sair` que levam a OUTRO lugar ficaram (Voltar às unidades do Gestão à Vista e do FCA, Trocar de unidade). CSS: `.s-volta{margin-top:auto…}` + `.s-volta+.s-user{margin-top:6px}` (senão as duas margens automáticas dividem a sobra) e `display:contents` no celular, onde a lateral vira fileira. Recolhida, vira só o ícone (é `.s-item`).
+- **Sem lateral** (sub-hubs Combustível/Seara/Pneus, Governança, Papéis, MPR): `<footer class="pe-volta">` no fim da moldura, à esquerda, com as mesmas pílulas; o `.hmio` perdeu padding embaixo e Papéis apertou as linhas para as 18 caberem em 1366×768. A Remuneração por placa (página antiga, que rola) leva o rodapé no fim do conteúdo.
+- **Painel novo nasce assim.** Teste: `scripts/voltar-hub-teste.mjs` (lista das páginas com lateral pela entrada padrão; 208 ok) confere UM "Voltar ao Hub", só no rodapé, colado no usuário, e nada de hub no topo das páginas sem lateral.
 
 ## Topo e filtros
 
