@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610080020">
+<meta name="build" content="202610080030">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -644,7 +644,7 @@ body.claro input[type=date]{color-scheme:light;}
            o contrato da planilha entra com tudo pronto e inflaria a aderência. -->
       <section class="vw" id="vw-ader">
         <div class="fin-hero">
-          <div><div class="hlbl">Processo concluído · NF lançada</div>
+          <div><div class="hlbl">Aderência ao processo</div>
             <div class="hval" id="ad-hval">—</div>
             <div class="hdel" id="ad-hdel"></div></div>
         </div>
@@ -1466,7 +1466,9 @@ function renderAderencia(rows){
   if(!$('vw-ader')) return;
   const lanc=rows.filter(r=>!r.origem);
   const t=adConta(lanc);
-  set('ad-hval', pct(adPct(t.nf,t.n)));
+  // o número grande é a ADERÊNCIA TOTAL (média das quatro etapas, a mesma do
+  // Total da tabela); a NF lançada já está no 4º card (Renan, 07/10/2026)
+  set('ad-hval', pct(adMedia(t)));
   $('ad-hdel').innerHTML=
     `<div>Lançamentos<b>${t.n.toLocaleString('pt-BR')}</b></div>`+
     `<div>Concluídos<b>${t.nf.toLocaleString('pt-BR')}</b></div>`+
@@ -1989,6 +1991,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610080020"></script>
+<script src="../assets/build-check.js?v=202610080030"></script>
 </body>
 </html>

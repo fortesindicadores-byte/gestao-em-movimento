@@ -59,7 +59,7 @@ for(const [w,h] of [[1366,768],[1600,900],[1920,1080]]){
   const tag=`${w}x${h} ${tema}`;
   if(w===1366&&tema==='escuro'){
     t(r.tit==='Aderência ao Processo','título da visão');
-    t(r.hval==='33.3%','hero: 2 de 6 concluídos = 33.3% (robô fora) → '+r.hval);
+    t(r.hval==='58.3%','hero = aderência total (média das 4 etapas, 14/24; robô fora) → '+r.hval);
     t(/Lançamentos6/.test(r.hdel)&&/Concluídos2/.test(r.hdel),'hero: 6 lançamentos, 2 concluídos');
     t(JSON.stringify(r.cards.map(c=>c[1]))===JSON.stringify(['83.3%','66.7%','50.0%','33.3%']),'cards RC aprov/OC lanç/OC aprov/NF = '+r.cards.map(c=>c[1]));
     t(/1 aguardando/.test(r.cards[0][2])&&/4 sem NF/.test(r.cards[3][2]),'rodapé dos cards');
