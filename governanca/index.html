@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610071600">
+<meta name="build" content="202610071830">
 <title>Estratégia e Governança</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -26,9 +26,9 @@
   --brilho:   linear-gradient(180deg, rgba(255,255,255,.022) 0%, rgba(255,255,255,0) 46%);
   --card-brd: rgba(255,255,255,.07);
   --txt:      #EEF2FA;
-  --txt2:     #E8ECF4;
-  --txt3:     #D5DBE6;
-  --txt4:     #A3ABBA;
+  --txt2:     #D8DEE8;
+  --txt3:     #BEC5D2;
+  --txt4:     #8E96A6;
   --hover:    rgba(255,255,255,.06);
   --azul:     #2E90E8;
   --verde:    #3BB33B;
@@ -212,6 +212,13 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
   .t-obj{grid-column:2;}
   .t-per{grid-column:2;justify-self:start;text-align:left;margin-top:2px;}
 }
+/* "Voltar" sempre no rodapé, à esquerda (Renan, 07/10/2026) */
+.pe-volta{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:0 24px 14px;}
+.pe-volta a{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--card-brd);border-radius:20px;padding:6px 13px;
+  font-family:inherit;font-size:9.5px;font-weight:800;color:var(--txt2);letter-spacing:.6px;text-transform:uppercase;text-decoration:none;white-space:nowrap;}
+.pe-volta a:hover{background:var(--hover);color:var(--txt);}
+.pe-volta svg{width:12px;height:12px;stroke:currentColor;fill:none;}
+.hmio{padding-bottom:10px;}   /* o rodapé do "Voltar" ocupa o fim da moldura */
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
@@ -225,10 +232,6 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
       <div><h1>Estratégia e Governança</h1><p>Planejamento Estratégico · Frota</p></div>
     </div>
     <div class="top-dir">
-      <a href="../" class="rt" title="Voltar ao Hub">
-        <svg viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        Hub Principal
-      </a>
       <button class="ico-btn" id="btTema" onclick="trocaTema()" title="Modo claro/escuro"></button>
     </div>
   </header>
@@ -296,6 +299,9 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
       </div>
     </div>
   </main>
+  <footer class="pe-volta">
+    <a href="../" title="Voltar ao Hub"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Voltar ao Hub</a>
+  </footer>
 </div>
 
 <script>
@@ -312,6 +318,6 @@ aplicaTema((function(){ try{ return localStorage.getItem('bi_theme'); }catch(e){
 </script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202610071600"></script>
+<script src="../assets/build-check.js?v=202610071830"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610071600">
+<meta name="build" content="202610071830">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Disponibilidade · Frota do Dia</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -28,9 +28,9 @@
   --brilho:   linear-gradient(180deg, rgba(255,255,255,.022) 0%, rgba(255,255,255,0) 46%);
   --card-brd: rgba(255,255,255,.07);
   --txt:      #EEF2FA;
-  --txt2:     #E8ECF4;
-  --txt3:     #D5DBE6;
-  --txt4:     #A3ABBA;
+  --txt2:     #D8DEE8;
+  --txt3:     #BEC5D2;
+  --txt4:     #8E96A6;
   --hover:    rgba(255,255,255,.06);
   --azul:     #2E90E8;
   --verde:    #3BB33B;
@@ -202,6 +202,9 @@ body.claro .cal-c.vaz .cal-d{color:var(--txt3);}
 .s-ck.ok{color:var(--verde);font-weight:700;}
 .s-ck.pend{color:var(--ambar);}
 .s-user{margin-top:auto;display:flex;align-items:center;gap:9px;padding:12px 8px 2px;border-top:1px solid var(--linha);}
+.s-volta{margin-top:auto;padding-top:8px;display:flex;flex-direction:column;gap:2px;}
+.s-volta+.s-user{margin-top:6px;}
+@media(max-width:860px){.s-volta{display:contents;}}
 .s-user div{flex:1;min-width:0;}
 .s-user b{display:block;font-size:12px;font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .s-user i{display:block;font-size:9.5px;font-style:normal;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
@@ -417,12 +420,16 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;}
       Sem RC/OC <span class="n" data-n="semrcoc"></span>
     </button>
 
+    <div class="s-volta">
+      <a class="s-item" href="../" style="text-decoration:none" title="Voltar ao Hub">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+        Voltar ao Hub
+      </a>
+    </div>
+
     <div class="s-user">
       <span class="av" id="euAv">—</span>
       <div><b id="euNome">—</b><i id="euUni">—</i></div>
-      <a class="s-sair" href="../" title="Voltar ao hub">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 4h5v16h-5M11 8l-4 4 4 4M7 12h10"/></svg>
-      </a>
     </div>
   </aside>
 
@@ -1791,6 +1798,6 @@ iniciar();
 <!-- exportação padrão do Gestão em Movimento: botão direito na tabela, no
      gráfico ou no card → Excel · PNG · PNG com fundo transparente -->
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202610071600"></script>
+<script src="../assets/build-check.js?v=202610071830"></script>
 </body>
 </html>

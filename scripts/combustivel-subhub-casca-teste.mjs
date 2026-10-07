@@ -72,9 +72,9 @@ const cards = pg => pg.evaluate(() => {
 
 const PAGS = [
   { nome: 'combustivel', url: '/combustivel/', hub: '/', esperaAdm: { 'admin-email': true, 'admin-prof': true, user: false, anon: false }, cardAdm: 'Condução Econômica',
-    voltar: [['Hub Principal', '../'], ['Seara', 'seara/']] },
+    voltar: [['Voltar ao Hub', '../', '.pe-volta a'], ['Seara', 'seara/', '.top a']] },
   { nome: 'seara', url: '/combustivel/seara/', hub: '/', esperaAdm: { 'admin-email': false, 'admin-prof': true, user: false, anon: false }, cardAdm: 'Remuneração por placa',
-    voltar: [['Combustível', '../']] },
+    voltar: [['Voltar ao Combustível', '../', '.pe-volta a'], ['Voltar ao Hub', '../../', '.pe-volta a']] },
 ];
 
 for (const P of PAGS) {
@@ -92,12 +92,14 @@ for (const P of PAGS) {
   }
   // botões do topo
   const n = await abre({ url: P.url, role: 'user' });
-  for (const [txt, href] of P.voltar) {
-    const achou = await n.pg.evaluate(([txt, href]) => [...document.querySelectorAll('.top a')].some(a => a.textContent.trim() === txt && a.getAttribute('href') === href), [txt, href]);
-    af(`topo: "${txt}" → ${href}`, achou);
+  // "Voltar" no rodapé, à esquerda (Renan, 07/10/2026); Seara continua no topo
+  for (const [txt, href, sel] of P.voltar) {
+    const achou = await n.pg.evaluate(([txt, href, sel]) => [...document.querySelectorAll(sel)].some(a => a.textContent.trim() === txt && a.getAttribute('href') === href), [txt, href, sel]);
+    af(`${sel.startsWith('.top') ? 'topo' : 'rodapé'}: "${txt}" → ${href}`, achou);
   }
   const meta = await n.pg.evaluate(() => document.querySelector('meta[name=build]').content + ' · ' + [...document.scripts].map(s => s.getAttribute('src') || '').filter(Boolean).join(' '));
-  af('build 202610052300 no meta e no build-check', meta.startsWith('202610052300') && meta.includes('build-check.js?v=202610052300'), meta);
+  const bm = (meta.match(/^(\d{12})/) || [])[1];
+  af('mesmo build no meta e no build-check', !!bm && meta.includes('build-check.js?v=' + bm), meta);
   af('scripts: mobile.js, ctrlk.js, gviz-cache.js, supabase', ['mobile.js', 'ctrlk.js', 'gviz-cache.js', 'supabase-js'].every(s => meta.includes(s)));
   // tema
   const t0 = await n.pg.evaluate(() => document.body.classList.contains('claro'));
