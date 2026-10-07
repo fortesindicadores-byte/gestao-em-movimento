@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610072000">
+<meta name="build" content="202610072030">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -441,6 +441,14 @@ table.dre td.forte{font-weight:800;color:var(--txt);}
 .mf input:focus,.mf select:focus{outline:none;border-color:var(--laranja);}
 .mf input:disabled{opacity:.45;cursor:not-allowed;}
 .mf select option{background:var(--pop);color:var(--txt);}
+/* lista de sugestões do Grupo (substitui o datalist, cuja altura não se controla) */
+#f-grupo{padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 11px center;}
+.ac-pop{display:none;position:fixed;z-index:1000;overflow:auto;padding:5px;border-radius:10px;
+  background:var(--pop);border:1px solid var(--card-brd);box-shadow:0 18px 44px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.35);}
+body.claro .ac-pop{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(15,23,42,.10);}
+.ac-opt{padding:6px 10px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--txt);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ac-opt:hover,.ac-opt.on{background:var(--hover);}
 .mhint{font-size:11px;color:var(--txt3);line-height:1.5;}
 .mfoot{display:flex;align-items:center;gap:10px;padding:13px 20px 16px;border-top:1px solid var(--linha);}
 .mfoot-r{margin-left:auto;display:flex;gap:8px;}
@@ -665,7 +673,7 @@ body.claro input[type=date]{color-scheme:light;}
         <label class="mf"><span>Equipamento</span><input id="f-equipamento" placeholder="Placa" oninput="this.value=this.value.toUpperCase()"></label>
         <label class="mf"><span>Fornecedor</span><input id="f-fornecedor" placeholder="FORNECEDOR" oninput="this.value=this.value.toUpperCase()"></label>
         <label class="mf"><span>Conta</span><select id="f-conta"></select></label>
-        <label class="mf"><span>Grupo</span><input id="f-grupo" list="dl-grupos" placeholder="Grupo…"></label>
+        <label class="mf"><span>Grupo</span><input id="f-grupo" placeholder="Grupo…" autocomplete="off"></label>
       </div>
       <label class="mf mf-wide"><span>Descrição</span><input id="f-descricao" placeholder="descrição do serviço"></label>
       <div class="mgrid mgrid-4">
@@ -713,7 +721,57 @@ const GRUPOS={
   'Manutenção':['Plano','Contrato','Motor','Transmissão','Embreagem','Diferencial','Elétrica','Freios','Suspensão','Direção','Arrefecimento','Combustível','Injeção','Climatização','Frio - Revisão Preventiva','Frio - Ventiladores','Frio - Condensadora','Frio - Sensor temperatura','Frio - Visor display','Rodagem','Eixos','Carroceria','Funilaria','Pintura','Vidros','Escapamento','Hidráulico','Pneumático','Implemento','Telemetria','Preventiva','Corretiva','Lavação','Lubrificação','Ferramentas','Solda','Guincho','Terceiros','Diversos'],
   'Pneus':['Novos','Recapagem','Vulcanização','Reparo','Manchão','Válvula','Câmara','Alinhamento','Balanceamento','Rodízio','Borracharia','Descarte']
 };
-(function(){const dl=document.createElement('datalist');dl.id='dl-grupos';dl.innerHTML=GRUPOS['Manutenção'].map(g=>'<option value="'+g.replace(/"/g,'&quot;')+'">').join('');document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(dl));})();
+/* SUGESTÕES DO GRUPO (Renan, 07/10/2026: "aumentar um pouco a altura para não ter que usar tanto a
+   barra de rolagem"): era um <datalist>, e a altura do menu nativo não se controla por CSS. Agora é
+   uma lista própria no <body> (dentro da caixa, que tem backdrop-filter, o position:fixed se ancoraria
+   nela): usa a altura que sobra na tela abaixo do campo (abre para cima se faltar), filtra pelo que se
+   digita e o campo continua livre. ↑/↓ escolhem, Enter confirma, Esc só fecha a lista. */
+(function(){
+  const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  let pop=null, inp=null, itens=[], ativo=-1;
+  function lista(){
+    const q=norm(inp.value); const todos=GRUPOS['Manutenção'];
+    const f=todos.filter(g=>norm(g).includes(q));
+    return (f.length===1&&norm(f[0])===q)?todos:f;      // valor já escolhido: mostra tudo de novo
+  }
+  function posiciona(){
+    if(!pop||!inp||pop.style.display!=='block') return;
+    const r=inp.getBoundingClientRect(), M=12;
+    const baixo=innerHeight-r.bottom-4-M, cima=r.top-4-M;
+    const abreCima=baixo<240&&cima>baixo, lim=Math.max(120,abreCima?cima:baixo);
+    pop.style.left=r.left+'px'; pop.style.minWidth=r.width+'px'; pop.style.maxHeight=lim+'px';
+    const h=Math.min(pop.scrollHeight,lim);
+    pop.style.top=(abreCima?r.top-4-h:r.bottom+4)+'px';
+  }
+  function desenha(){
+    itens=lista(); if(ativo>=itens.length) ativo=itens.length-1;
+    if(!itens.length){ fecha(); return; }
+    pop.innerHTML=itens.map((g,i)=>`<div class="ac-opt${i===ativo?' on':''}" data-i="${i}">${g.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`).join('');
+    pop.style.display='block'; posiciona();
+    const on=pop.querySelector('.ac-opt.on'); if(on) on.scrollIntoView({block:'nearest'});
+  }
+  function abre(){ ativo=-1; desenha(); }
+  function fecha(){ if(pop) pop.style.display='none'; ativo=-1; }
+  function escolhe(i){ if(i<0||i>=itens.length) return; inp.value=itens[i]; inp.dispatchEvent(new Event('input',{bubbles:true})); fecha(); }
+  document.addEventListener('DOMContentLoaded',()=>{
+    inp=document.getElementById('f-grupo'); if(!inp) return;
+    pop=document.createElement('div'); pop.className='ac-pop'; pop.id='ac-grupo'; document.body.appendChild(pop);
+    pop.addEventListener('mousedown',e=>{ e.preventDefault(); const o=e.target.closest('.ac-opt'); if(o){ ativo=+o.dataset.i; escolhe(ativo); } });
+    inp.addEventListener('focus',abre);
+    inp.addEventListener('click',()=>{ if(pop.style.display!=='block') abre(); });
+    inp.addEventListener('input',e=>{ if(e.isTrusted){ ativo=-1; desenha(); } });
+    inp.addEventListener('blur',()=>setTimeout(fecha,0));
+    inp.addEventListener('keydown',e=>{
+      const aberto=pop.style.display==='block';
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); if(!aberto){ abre(); return; }
+        ativo=e.key==='ArrowDown'?Math.min(itens.length-1,ativo+1):Math.max(0,ativo-1); desenha(); }
+      else if(e.key==='Enter'&&aberto&&ativo>=0){ e.preventDefault(); escolhe(ativo); }
+      else if(e.key==='Escape'&&aberto){ e.preventDefault(); e.stopImmediatePropagation(); fecha(); }
+    });
+    addEventListener('resize',posiciona);
+    document.addEventListener('scroll',posiciona,true);
+  });
+})();
 
 // ── seleção dos filtros (Set vazio = "Todos") ──
 const selUni=new Set(), selVig=new Set(), selProj=new Set(), selAno=new Set();
@@ -751,7 +809,7 @@ let VW='resumo';
 
 // ── DRE (Orçado / Remunerado por unidade × conta × vigência) ──
 const SHEET_ID='1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8', TAB_FROTA='Frota';
-const _normEb=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+const _normEb=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
 function ebIdx(h,...names){const nc=h.map(_normEb);for(const n of names){const i=nc.indexOf(_normEb(n));if(i>=0)return i;}for(const n of names){const nn=_normEb(n);const i=nc.findIndex(c=>c.includes(nn));if(i>=0)return i;}return -1;}
 const _numBR=v=>{if(v==null||v==='')return null;if(typeof v==='number')return v;let s=String(v).replace(/\s|R\$/g,'');if(s.indexOf(',')>=0)s=s.replace(/\./g,'').replace(',','.');const f=parseFloat(s);return isNaN(f)?null:f;};
 const _MESN={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
@@ -1127,7 +1185,7 @@ function ctxUnidadeMudou(){
   sel.innerHTML = selOpts(projs, projs.includes(atual)?atual:(projs[0]||''));
 }
 function fecharLanc(){ $('mbg').classList.remove('open'); LANC_ABERTO=null; }
-document.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('mbg').classList.contains('open')) fecharLanc(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !e.defaultPrevented && $('mbg').classList.contains('open')) fecharLanc(); });
 async function salvarLancModal(){
   if(!sb) return;
   const v=k=>{ const e=$(k); return e?e.value:''; };
@@ -1794,6 +1852,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610072000"></script>
+<script src="../assets/build-check.js?v=202610072030"></script>
 </body>
 </html>
