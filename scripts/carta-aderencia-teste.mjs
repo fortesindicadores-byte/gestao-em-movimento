@@ -48,7 +48,10 @@ for(const [w,h] of [[1366,768],[1600,900],[1920,1080]]){
     const rows=[...document.querySelectorAll('#tbl-ader tbody tr')].map(tr=>[...tr.cells].map(c=>c.textContent));
     const tot=[...document.querySelectorAll('#tbl-ader tfoot td')].map(c=>c.textContent);
     return {tit:q('#tit').textContent,hval:q('#ad-hval').textContent,hdel:q('#ad-hdel').textContent,cards,rows,tot,
-      semGrafico:!q('#ch-ader'), tabW:q('#vw-ader .ad-tab').getBoundingClientRect().width, vwW:vw.clientWidth,
+      semGrafico:!q('#ch-ader'),
+      cls:[...document.querySelectorAll('#tbl-ader tbody tr')].map(tr=>[...tr.cells].slice(3,7).map(c=>c.classList.contains('cr')?'cr':c.classList.contains('ca')?'ca':c.classList.contains('cg')?'cg':'')),
+      pill:[...document.querySelectorAll('#tbl-ader tr')].slice(1).map(tr=>{const p=tr.cells[8]&&tr.cells[8].querySelector('.tag-pill');return p?getComputedStyle(p).backgroundColor:null;}),
+      faixas:(q('#vw-ader .ad-faixas')||{}).textContent||'', tabW:q('#vw-ader .ad-tab').getBoundingClientRect().width, vwW:vw.clientWidth,
       vwScroll:vw.scrollHeight-vw.clientHeight, twH:tw.scrollWidth-tw.clientWidth, twV:tw.scrollHeight-tw.clientHeight,
       bodyScroll:document.documentElement.scrollHeight-innerHeight, tabH:tw.clientHeight,
       kpiH:q('#ad-kpis .kpi').getBoundingClientRect().height};
@@ -63,6 +66,9 @@ for(const [w,h] of [[1366,768],[1600,900],[1920,1080]]){
     t(r.semGrafico,'sem o gráfico "Onde o processo está"');
     t(Math.abs(r.tabW-r.vwW)<=2,'tabela com a largura toda da visão');
     t(r.rows[0][8]==='50.0%'&&r.rows[1][8]==='75.0%','aderência média por linha (ROTA 8/16, APOIO 6/8): '+r.rows.map(x=>x[8]));
+    t(JSON.stringify(r.cls[0])===JSON.stringify(['ca','cr','cr','cr'])&&JSON.stringify(r.cls[1])===JSON.stringify(['cg','cg','cr','cr']),'etapas coloridas pelas faixas do FCA: '+JSON.stringify(r.cls));
+    t(r.pill.length===3&&/255, 82, 82/.test(r.pill[0])&&/244, 161, 0/.test(r.pill[1])&&/255, 82, 82/.test(r.pill[2]),'Aderência com fundo pintado (50 crítico · 75 atenção · total 58,3 crítico): '+r.pill);
+    t(/< 70%/.test(r.faixas)&&/≥ 85%/.test(r.faixas),'legenda das faixas acima da tabela');
     t(r.tot[8]==='58.3%','aderência média do total = 14/24 → '+r.tot[8]);
     t(r.rows.length===2&&r.rows[0][0]==='ROTA'&&r.rows[0][1]==='4','tabela por projeto (uma unidade): '+JSON.stringify(r.rows));
     t(r.rows[1][0]==='APOIO'&&r.rows[1][6]==='50.0%','APOIO: NF 1 de 2');
