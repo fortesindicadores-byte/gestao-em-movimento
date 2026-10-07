@@ -1137,6 +1137,10 @@ Visão **Contrato**: ranking de placas do **mês de km que está correndo**, que
 - **A visão aparece SEMPRE** (não tem `temDado`): sumir do menu quando a leitura falha esconde a diferença entre "não há contrato", "o ERP não recebeu carga do mês" e "o banco recusou a leitura". A tela diz qual dos três é, com a mensagem do erro.
 - Conferência: workflow **Contrato Agora Inspect** (`scripts/contrato-agora-inspect.mjs`). Em 10/09/2026: 360 linhas, todas prévia, km de 2026-09 → fatura de 2026-10 — variável 265 placas / 68.188 km / R$ 43.265 · fixo 95 placas / 129.059 km / R$ 199.635 (Piraí sozinha, R$ 113 mil no fixo).
 
+## Carta de Custos — grupos de Manutenção
+
+A lista de sugestões do campo **Grupo** (datalist `dl-grupos`) sai da constante `GRUPOS['Manutenção']` do `carta-custos/index.html`; o campo continua livre. **Grupos do Frio entraram em 07/10/2026** (Renan: *"Precisa adicionar esses grupos na carta de custos"*), logo depois de Climatização: `Frio - Revisão Preventiva · Frio - Ventiladores · Frio - Condensadora · Frio - Sensor temperatura · Frio - Visor display` (o print dele dizia "Condensadarora"; foi grafado "Condensadora").
+
 ## Conferência de Locação — a importação só grava o que ela sabe rotear
 
 `/conferencia-locacao/` (admin) confere o que a Vamos fatura contra o que o Freightech remunera. Os arquivos entram por arrastar e o **tipo sai do NOME** (`Prévia - Mensal - MM_AAAA`, `Faturamento Vamos - MM_AAAA`, `WH/Empurrada/AS/Rota/Van/Lata - MM_AAAA`, `Benner`). O mês fica em `locacao_conferencia`, uma linha por vigência (`AAAA-MM`), com as linhas inteiras em JSON.
