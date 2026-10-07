@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610071600">
+<meta name="build" content="202610071700">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -438,6 +438,35 @@ body.claro .farol-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rg
 .btn-reject,.btn-remove{background:transparent;border:1px solid var(--card-brd);border-radius:8px;padding:5px 11px;font-family:inherit;
   font-size:9.5px;font-weight:800;color:var(--txt3);cursor:pointer;text-transform:uppercase;letter-spacing:.5px;}
 .btn-reject:hover,.btn-remove:hover{border-color:var(--vermelho);color:var(--vermelho);}
+/* ── Gerenciar Acessos em LISTA (botão grade/lista no topo, chave gem_acessos_modo) ──
+   Mesmas informações e os mesmos seletores do card, uma linha por usuário.
+   Sem overflow no card: o cabeçalho sticky e o menu suspenso não podem ser cortados. */
+#admin-users-list.lista{display:block;}
+.acc-card{border-radius:12px;padding:4px 10px 6px;background:var(--brilho), var(--side);border:1px solid var(--card-brd);
+  box-shadow:var(--luz-card), 0 8px 20px rgba(0,0,0,.40), 0 2px 5px rgba(0,0,0,.28);}
+body.claro .acc-card{box-shadow:var(--luz-card), 0 8px 20px rgba(15,23,42,.13), 0 2px 5px rgba(15,23,42,.09);}
+table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11.5px;}
+.acc-tbl thead th{position:sticky;top:0;z-index:3;background:var(--cabec);color:var(--txt);text-align:left;
+  font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:9px 10px;white-space:nowrap;}
+.acc-tbl thead th:first-child{border-radius:8px 0 0 8px;} .acc-tbl thead th:last-child{border-radius:0 8px 8px 0;}
+.acc-tbl td{padding:8px 10px;border-bottom:1px solid var(--linha);color:var(--txt);vertical-align:middle;}
+.acc-tbl tbody tr:last-child td{border-bottom:0;}
+.acc-tbl tbody tr:hover td{background:var(--hover);}
+.acc-tbl tr.farol-open{position:relative;z-index:5;}
+.acc-tbl tr:hover .edit-name{opacity:1;}
+.acc-tbl .acc-u{display:flex;align-items:center;gap:10px;min-width:0;}
+.acc-tbl .acc-u .user-avatar{width:28px;height:28px;flex:0 0 28px;font-size:11px;}
+.acc-tbl .acc-u .user-info{min-width:0;}
+.acc-tbl .user-name{font-size:11.5px;}
+.acc-tbl .user-email{margin-top:1px;}
+.acc-tbl td.acc-dt{color:var(--txt2);white-space:nowrap;font-size:10.5px;}
+.acc-tbl td.acc-tel{white-space:nowrap;}
+.acc-tbl td.acc-perm{width:170px;}
+.acc-tbl .user-fca>label,.acc-tbl .user-farol>label{display:none;}
+.acc-tbl .farol-panel{left:0;}
+.acc-tbl td.acc-act{width:1%;white-space:nowrap;text-align:right;}
+.acc-tbl td.acc-act button+button{margin-left:6px;}
+@media(max-width:760px){ #btAccModo{display:none;} }
 .admin-empty{text-align:center;padding:44px 24px;color:var(--txt3);font-size:12px;}
 
 /* ── Bases do Sheets: a janelinha do botão "Atualizar agora" ─────────────── */
@@ -604,6 +633,7 @@ body.claro .farol-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rg
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="admin-search" data-ctrlk placeholder="Pesquisar por nome ou e-mail…  Ctrl+K" oninput="onAdminSearch(this.value)" autocomplete="off">
       </div>
+      <button class="ico-btn" id="btAccModo" onclick="trocaAccModo()" title="Ver em lista"></button>
       <button class="ico-btn" onclick="trocaTema()" title="Claro / escuro"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
     </div>
     <main class="adm-main">
@@ -1233,7 +1263,7 @@ function renderFcaPicker(userId, p, nm) {
 }
 function toggleFcaPanel(userId) {
   const panel = document.getElementById('fapanel-' + userId);
-  const card = panel.closest('.user-card');
+  const card = panel.closest('.user-card, tr');
   const open = panel.classList.toggle('open');
   if (card) card.classList.toggle('farol-open', open);
   if (open) {
@@ -1296,7 +1326,7 @@ function renderFarolPicker(userId, cur, nm) {
 }
 function toggleFarolPanel(userId) {
   const panel = document.getElementById('fpanel-' + userId);
-  const card = panel.closest('.user-card');
+  const card = panel.closest('.user-card, tr');
   const open = panel.classList.toggle('open');
   if (card) card.classList.toggle('farol-open', open);
   if (open) {
@@ -1360,10 +1390,28 @@ function switchAdminTab(tab) {
 
 let adminSearch = '';
 function onAdminSearch(v) { adminSearch = (v || '').toLowerCase().trim(); renderAdminUsers(); }
+// Grade (cards) ou lista (tabela). No celular é sempre grade: a tabela não cabe.
+const _icoLista = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>';
+const _icoGrade = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>';
+function accModo() { let m = 'grade'; try { m = localStorage.getItem('gem_acessos_modo') || 'grade'; } catch (e) {} return m === 'lista' ? 'lista' : 'grade'; }
+function accEmLista() { return accModo() === 'lista' && !matchMedia('(max-width:760px)').matches; }
+function syncAccModoBtn() {
+  const b = document.getElementById('btAccModo'); if (!b) return;
+  const l = accModo() === 'lista';
+  b.innerHTML = l ? _icoGrade : _icoLista;
+  b.title = l ? 'Ver em cards' : 'Ver em lista';
+}
+function trocaAccModo() {
+  try { localStorage.setItem('gem_acessos_modo', accModo() === 'lista' ? 'grade' : 'lista'); } catch (e) {}
+  syncAccModoBtn(); renderAdminUsers();
+}
 function renderAdminUsers() {
+  syncAccModoBtn();
   let filtered = allApprovals.filter(u => u.status === adminTabActive);
   if (adminSearch) filtered = filtered.filter(u => ((u.name || '') + ' ' + (u.email || '')).toLowerCase().includes(adminSearch));
   const list = document.getElementById('admin-users-list');
+  const lista = accEmLista();
+  list.classList.toggle('lista', lista);
   if (filtered.length === 0) {
     const msg = adminSearch
       ? `Nenhum usuário encontrado para “${adminSearch.replace(/[<>&]/g, '')}”.`
@@ -1371,7 +1419,7 @@ function renderAdminUsers() {
     list.innerHTML = `<div class="admin-empty">${msg}</div>`;
     return;
   }
-  list.innerHTML = filtered.map(u => {
+  const linhas = filtered.map(u => {
     const initial = (u.name || u.email)[0].toUpperCase();
     const dt = new Date(u.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
     const idx = allApprovals.indexOf(u);
@@ -1398,6 +1446,18 @@ function renderAdminUsers() {
     const phoneHtml = waHref
       ? `<a href="${waHref}" target="_blank" rel="noopener" title="Abrir no WhatsApp"><svg class="wa-ico" viewBox="0 0 24 24" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>${phoneFmt}</a>`
       : (phoneFmt || '—');
+    if (lista) return `<tr class="st-${u.status}">
+      <td><div class="acc-u">
+        <div class="user-avatar">${initial}</div>
+        <div class="user-info">
+          <div class="user-name">${u.name || '—'}<button class="edit-name" title="Editar nome" onclick="editUserName(${idx})">✎</button></div>
+          <div class="user-email">${u.email}</div>
+        </div></div></td>
+      <td class="acc-tel"><span class="user-phone">${phoneHtml}</span></td>
+      <td class="acc-dt">${dt}</td>
+      ${u.status === 'approved' ? `<td class="acc-perm">${fcaSel}</td><td class="acc-perm">${farolSel}</td>` : ''}
+      <td class="acc-act">${actions}</td>
+    </tr>`;
     return `<div class="user-card st-${u.status}">
       <div class="user-topo">
         <div class="user-avatar">${initial}</div>
@@ -1410,7 +1470,12 @@ function renderAdminUsers() {
       ${fcaSel || farolSel ? `<div class="user-perms">${fcaSel}${farolSel}</div>` : ''}
       <div class="user-actions">${actions}</div>
     </div>`;
-  }).join('');
+  });
+  if (!lista) { list.innerHTML = linhas.join(''); return; }
+  const perm = adminTabActive === 'approved' ? '<th>Acesso FCA</th><th>Recebe Farol</th>' : '';
+  list.innerHTML = `<div class="acc-card"><table class="acc-tbl"><thead><tr>
+    <th>Usuário</th><th>Telefone</th><th>Cadastro</th>${perm}<th></th></tr></thead>
+    <tbody>${linhas.join('')}</tbody></table></div>`;
 }
 
 async function editUserName(idx) {
@@ -1515,6 +1580,6 @@ init();
 </script>
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202610071600"></script>
+<script src="assets/build-check.js?v=202610071700"></script>
 </body>
 </html>
