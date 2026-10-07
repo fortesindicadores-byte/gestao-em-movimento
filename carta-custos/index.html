@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610080030">
+<meta name="build" content="202610080100">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -455,9 +455,15 @@ table.dre td.forte{font-weight:800;color:var(--txt);}
 .mf select option{background:var(--pop);color:var(--txt);}
 /* lista de sugestões do Grupo (substitui o datalist, cuja altura não se controla) */
 #f-grupo{padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 11px center;}
-.ac-pop{display:none;position:fixed;z-index:1000;overflow:auto;padding:5px;border-radius:10px;
+  background-repeat:no-repeat;background-position:right 11px center;cursor:pointer;caret-color:transparent;}
+#f-grupo.fixo{background-image:none;cursor:default;opacity:.8;}
+/* o menu tem a busca no topo, como os filtros (Renan, 07/10/2026), e a lista rola embaixo dela */
+.ac-pop{display:none;position:fixed;z-index:1000;flex-direction:column;overflow:hidden;padding:5px;border-radius:10px;
   background:var(--pop);border:1px solid var(--card-brd);box-shadow:0 18px 44px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.35);}
+.ac-pop.open{display:flex;}
+.ac-pop .ms-search{flex:0 0 auto;}
+.ac-list{flex:1 1 auto;min-height:0;overflow:auto;}
+.ac-vazio{padding:7px 10px;font-size:11.5px;color:var(--txt3);}
 body.claro .ac-pop{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(15,23,42,.10);}
 .ac-opt{padding:6px 10px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--txt);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ac-opt:hover,.ac-opt.on{background:var(--hover);}
@@ -593,6 +599,11 @@ body.claro input[type=date]{color-scheme:light;}
           Fornecedor<span class="ms-cnt"></span></button>
           <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
         </div>
+        <div class="ms-wrap" id="ms-pac"><button class="ms-btn" onclick="toggleMs('ms-pac')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>
+          Pacote<span class="ms-cnt"></span></button>
+          <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
+        </div>
         <div class="ms-wrap" id="ms-conta"><button class="ms-btn" onclick="toggleMs('ms-conta')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Conta<span class="ms-cnt"></span></button>
@@ -707,7 +718,7 @@ body.claro input[type=date]{color-scheme:light;}
         <label class="mf"><span>Projeto</span><select id="f-projeto"></select></label>
         <label class="mf"><span>Equipamento</span><input id="f-equipamento" placeholder="Placa" oninput="this.value=this.value.toUpperCase()"></label>
         <label class="mf"><span>Fornecedor</span><input id="f-fornecedor" placeholder="FORNECEDOR" oninput="this.value=this.value.toUpperCase()"></label>
-        <label class="mf"><span>Conta</span><select id="f-conta"></select></label>
+        <label class="mf"><span>Conta</span><select id="f-conta" onchange="contaMudou()"></select></label>
         <label class="mf"><span>Grupo</span><input id="f-grupo" placeholder="Grupo…" autocomplete="off"></label>
       </div>
       <label class="mf mf-wide"><span>Descrição</span><input id="f-descricao" placeholder="descrição do serviço"></label>
@@ -754,59 +765,101 @@ const CONTAS={
 };
 const GRUPOS={
   'Manutenção':['Plano','Contrato','Motor','Transmissão','Embreagem','Diferencial','Elétrica','Freios','Suspensão','Direção','Arrefecimento','Combustível','Injeção','Climatização','Frio - Revisão Preventiva','Frio - Ventiladores','Frio - Condensadora','Frio - Sensor temperatura','Frio - Visor display','Rodagem','Eixos','Carroceria','Funilaria','Pintura','Vidros','Escapamento','Hidráulico','Pneumático','Implemento','Telemetria','Preventiva','Corretiva','Lavação','Lubrificação','Ferramentas','Solda','Guincho','Terceiros','Diversos'],
-  'Pneus':['Novos','Recapagem','Vulcanização','Reparo','Manchão','Válvula','Câmara','Alinhamento','Balanceamento','Rodízio','Borracharia','Descarte']
+  /* PNEUS (Renan, 07/10/2026): "Pneus Novos é só compra mesmo" → o grupo vem
+     sozinho e travado; "Recapagens e Outros Serviços" é que tem grupos */
+  'Pneus':['Recapagens','Rodízio','Vulcanização','Reparo','Manchão','Válvula','Câmara','Alinhamento','Balanceamento','Borracharia','Descarte']
 };
+const GRUPO_FIXO={'Pneus Novos':'Pneus Novos'};
+const PACOTES=Object.keys(CONTAS);
+const pacoteDaConta=c=>PACOTES.find(p=>CONTAS[p].includes(c))||'';
+// linha antiga sem pacote gravado: a conta diz qual é; sem conta conhecida, Manutenção
+const pacDe=r=>(r&&r.pacote)||pacoteDaConta(r&&r.conta)||'Manutenção';
+const gruposDaConta=c=>GRUPO_FIXO[c]?[GRUPO_FIXO[c]]:(GRUPOS[pacoteDaConta(c)||'Manutenção']||[]);
 /* SUGESTÕES DO GRUPO (Renan, 07/10/2026: "aumentar um pouco a altura para não ter que usar tanto a
    barra de rolagem"): era um <datalist>, e a altura do menu nativo não se controla por CSS. Agora é
    uma lista própria no <body> (dentro da caixa, que tem backdrop-filter, o position:fixed se ancoraria
    nela): usa a altura que sobra na tela abaixo do campo (abre para cima se faltar), filtra pelo que se
-   digita e o campo continua livre. ↑/↓ escolhem, Enter confirma, Esc só fecha a lista. */
+   digita e o campo continua livre. ↑/↓ escolhem, Enter confirma, Esc só fecha a lista.
+   BUSCA NO MENU, IGUAL OS FILTROS (Renan, 07/10/2026: "Ao abrir o menu de grupos
+   deve ter também uma pesquisa para digitar o nome, igual os filtros, pois ficarão
+   muitos grupos"): clicar no campo abre o menu com a caixa "Pesquisar…" no topo;
+   a lista é a da CONTA escolhida (gruposDaConta). Texto que não casa com nenhum
+   grupo continua valendo: Enter usa o que foi digitado. */
 (function(){
-  const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  let pop=null, inp=null, itens=[], ativo=-1;
-  function lista(){
-    const q=norm(inp.value); const todos=GRUPOS['Manutenção'];
-    const f=todos.filter(g=>norm(g).includes(q));
-    return (f.length===1&&norm(f[0])===q)?todos:f;      // valor já escolhido: mostra tudo de novo
-  }
+  const norm=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  const escH=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  let pop=null, inp=null, busca=null, lst=null, itens=[], ativo=-1;
+  const aberto=()=>!!pop&&pop.classList.contains('open');
+  const todos=()=>gruposDaConta((document.getElementById('f-conta')||{}).value||'');
   function posiciona(){
-    if(!pop||!inp||pop.style.display!=='block') return;
+    if(!aberto()||!inp) return;
     const r=inp.getBoundingClientRect(), M=12;
     const baixo=innerHeight-r.bottom-4-M, cima=r.top-4-M;
-    const abreCima=baixo<240&&cima>baixo, lim=Math.max(120,abreCima?cima:baixo);
+    const abreCima=baixo<240&&cima>baixo, lim=Math.max(140,abreCima?cima:baixo);
     pop.style.left=r.left+'px'; pop.style.minWidth=r.width+'px'; pop.style.maxHeight=lim+'px';
     const h=Math.min(pop.scrollHeight,lim);
     pop.style.top=(abreCima?r.top-4-h:r.bottom+4)+'px';
   }
   function desenha(){
-    itens=lista(); if(ativo>=itens.length) ativo=itens.length-1;
-    if(!itens.length){ fecha(); return; }
-    pop.innerHTML=itens.map((g,i)=>`<div class="ac-opt${i===ativo?' on':''}" data-i="${i}">${g.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`).join('');
-    pop.style.display='block'; posiciona();
-    const on=pop.querySelector('.ac-opt.on'); if(on) on.scrollIntoView({block:'nearest'});
+    const q=norm(busca.value.trim());
+    itens=todos().filter(g=>norm(g).includes(q));
+    if(ativo>=itens.length) ativo=itens.length-1;
+    lst.innerHTML=itens.length
+      ? itens.map((g,i)=>`<div class="ac-opt${i===ativo?' on':''}" data-i="${i}">${escH(g)}</div>`).join('')
+      : `<div class="ac-vazio">${q?'Nenhum grupo. Enter usa “'+escH(busca.value.trim())+'”':'Nenhum grupo'}</div>`;
+    posiciona();
+    const on=lst.querySelector('.ac-opt.on'); if(on) on.scrollIntoView({block:'nearest'});
   }
-  function abre(){ ativo=-1; desenha(); }
-  function fecha(){ if(pop) pop.style.display='none'; ativo=-1; }
-  function escolhe(i){ if(i<0||i>=itens.length) return; inp.value=itens[i]; inp.dispatchEvent(new Event('input',{bubbles:true})); fecha(); }
+  function abre(txt){
+    if(inp.classList.contains('fixo')) return;
+    busca.value=txt||''; ativo=txt?0:-1;
+    pop.classList.add('open'); desenha(); busca.focus();
+  }
+  function fecha(volta){ if(!aberto()) return; pop.classList.remove('open'); ativo=-1; if(volta) inp.focus(); }
+  function poe(v){ inp.value=v; inp.dispatchEvent(new Event('input',{bubbles:true})); fecha(true); }
   document.addEventListener('DOMContentLoaded',()=>{
     inp=document.getElementById('f-grupo'); if(!inp) return;
-    pop=document.createElement('div'); pop.className='ac-pop'; pop.id='ac-grupo'; document.body.appendChild(pop);
-    pop.addEventListener('mousedown',e=>{ e.preventDefault(); const o=e.target.closest('.ac-opt'); if(o){ ativo=+o.dataset.i; escolhe(ativo); } });
-    inp.addEventListener('focus',abre);
-    inp.addEventListener('click',()=>{ if(pop.style.display!=='block') abre(); });
-    inp.addEventListener('input',e=>{ if(e.isTrusted){ ativo=-1; desenha(); } });
-    inp.addEventListener('blur',()=>setTimeout(fecha,0));
+    inp.readOnly=true;
+    pop=document.createElement('div'); pop.className='ac-pop'; pop.id='ac-grupo';
+    pop.innerHTML='<div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…" autocomplete="off"></div><div class="ac-list"></div>';
+    document.body.appendChild(pop);
+    busca=pop.querySelector('input'); lst=pop.querySelector('.ac-list');
+    lst.addEventListener('mousedown',e=>{ e.preventDefault(); const o=e.target.closest('.ac-opt'); if(o) poe(itens[+o.dataset.i]); });
+    inp.addEventListener('mousedown',e=>{ if(inp.classList.contains('fixo')) return; e.preventDefault(); aberto()?fecha(true):abre(''); });
     inp.addEventListener('keydown',e=>{
-      const aberto=pop.style.display==='block';
-      if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); if(!aberto){ abre(); return; }
-        ativo=e.key==='ArrowDown'?Math.min(itens.length-1,ativo+1):Math.max(0,ativo-1); desenha(); }
-      else if(e.key==='Enter'&&aberto&&ativo>=0){ e.preventDefault(); escolhe(ativo); }
-      else if(e.key==='Escape'&&aberto){ e.preventDefault(); e.stopImmediatePropagation(); fecha(); }
+      if(inp.classList.contains('fixo')) return;
+      if(e.key==='Enter'||e.key==='ArrowDown'||e.key===' '){ e.preventDefault(); abre(''); }
+      else if(e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey){ e.preventDefault(); abre(e.key); }
+      else if(e.key==='Backspace'||e.key==='Delete'){ e.preventDefault(); inp.value=''; }
     });
+    busca.addEventListener('input',()=>{ ativo=busca.value.trim()?0:-1; desenha(); });
+    busca.addEventListener('keydown',e=>{
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); if(!itens.length) return;
+        ativo=e.key==='ArrowDown'?Math.min(itens.length-1,ativo+1):Math.max(0,ativo-1); desenha(); }
+      else if(e.key==='Enter'){ e.preventDefault();
+        if(ativo>=0&&itens[ativo]) poe(itens[ativo]); else if(busca.value.trim()) poe(busca.value.trim()); }
+      else if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); fecha(true); }
+      else if(e.key==='Tab'){ fecha(false); }
+    });
+    busca.addEventListener('blur',()=>setTimeout(()=>{ if(!pop.contains(document.activeElement)) fecha(false); },0));
     addEventListener('resize',posiciona);
     document.addEventListener('scroll',posiciona,true);
   });
 })();
+/* A CONTA DECIDE OS GRUPOS: Pneus Novos vem com o grupo pronto e travado; ao
+   trocar de pacote, um grupo que não é do pacote novo é limpo (senão um "Motor"
+   ficaria pendurado num lançamento de pneu). Grupo antigo fora da lista, no
+   mesmo pacote, fica como está. */
+function contaMudou(){
+  const c=document.getElementById('f-conta').value, g=document.getElementById('f-grupo');
+  const fixo=GRUPO_FIXO[c], antes=g.dataset.conta||'';
+  if(fixo){ g.value=fixo; g.classList.add('fixo'); g.title='Pneus Novos é só compra: o grupo vem pronto'; }
+  else{
+    const eraFixo=!!GRUPO_FIXO[antes]; g.classList.remove('fixo'); g.title='';
+    if(eraFixo || (antes && pacoteDaConta(antes)!==pacoteDaConta(c) && !gruposDaConta(c).includes(g.value))) g.value='';
+  }
+  g.dataset.conta=c;
+}
 
 // ── seleção dos filtros (Set vazio = "Todos") ──
 const selUni=new Set(), selVig=new Set(), selProj=new Set(), selAno=new Set();
@@ -814,11 +867,24 @@ const selUni=new Set(), selVig=new Set(), selProj=new Set(), selAno=new Set();
    do lançamento. Recortam NO CLIENTE — as opções nascem do que já foi lido
    para o filtro de unidade/vigência, então não há nova consulta ao banco. */
 const selGrupo=new Set(), selForn=new Set(), selConta=new Set(), selData=new Set();
+/* PACOTE (Renan, 07/10/2026: "Caso filtre o pacote pneus ou conta relacionada a
+   pneus devem aparecer apenas os grupos de pneus para lançar"): Manutenção e
+   Pneus. As opções são fixas (não saem das linhas), senão o primeiro pneu nunca
+   poderia ser lançado com o filtro já em Pneus. */
+const selPac=new Set();
+/* pacotes que valem para a tela e para a caixa: o do filtro Pacote; sem ele, os
+   das contas marcadas no filtro Conta; sem os dois, todos */
+function pacsAtivos(){
+  if(selPac.size) return PACOTES.filter(p=>selPac.has(p));
+  const pc=new Set([...selConta].map(pacoteDaConta).filter(Boolean));
+  return pc.size ? PACOTES.filter(p=>pc.has(p)) : PACOTES.slice();
+}
 /* CONTRATO (Renan, 15/09/2026): recorta a visão Placas Contrato. As opções
    saem do próprio contrato lido (contratos_placa → custo_vigencia), não de um
    cadastro à parte — contrato que não tem placa no recorte não aparece. */
 const selContrato=new Set();
-const passaExtras=r=>(!selGrupo.size||selGrupo.has(r.grupo||'—'))
+const passaExtras=r=>(!selPac.size||selPac.has(pacDe(r)))
+  && (!selGrupo.size||selGrupo.has(r.grupo||'—'))
   && (!selForn.size||selForn.has(r.fornecedor||'—'))
   && (!selConta.size||selConta.has(r.conta||'—'))
   && (!selData.size||selData.has(String(r.data||'').slice(0,10)||'—'));
@@ -1017,6 +1083,7 @@ function buildExtras(){
   limpa(selGrupo,g); limpa(selForn,f); limpa(selConta,c); limpa(selData,d);
   buildMs('ms-grupo', ()=>g, v=>v, selGrupo, render, 'Todos');
   buildMs('ms-forn',  ()=>f, v=>v, selForn,  render, 'Todos');
+  buildMs('ms-pac',   ()=>PACOTES, v=>v, selPac, render, 'Todos');
   buildMs('ms-conta', ()=>c, v=>v, selConta, render, 'Todas');
   buildMs('ms-data',  ()=>d, v=>v==='—'?v:dataBR(v), selData, render, 'Todas');
 }
@@ -1169,7 +1236,14 @@ function abrirLanc(id){
      que decide a vigência (vigDaData), então "hoje" jogaria o lançamento de
      setembro para outubro sem ninguém pedir */
   const vigF=curVigs()[0], dNovo=(vigF && iso.slice(0,7)!==vigF) ? vigF+'-01' : iso;
-  const d = r || {data:dNovo, projeto:(UNIT_PROJETOS[0]||''), conta:(CONTAS['Manutenção']||[])[0]||''};
+  /* CONTA DA CAIXA: as do pacote em foco no filtro (Pacote, ou Conta). Novo
+     lançamento com UMA conta marcada no filtro já nasce nela. Ao editar, o
+     pacote do próprio lançamento entra sempre, senão a conta dele sumiria. */
+  const pacs=pacsAtivos();
+  if(r && !pacs.includes(pacDe(r))) pacs.push(pacDe(r));
+  const contasOk=pacs.flatMap(p=>CONTAS[p]);
+  const contaFiltro=[...selConta].filter(c=>contasOk.includes(c));
+  const d = r || {data:dNovo, projeto:(UNIT_PROJETOS[0]||''), conta:(contaFiltro.length===1?contaFiltro[0]:contasOk[0])||''};
   set('mTit', r ? 'Editar lançamento' : 'Novo lançamento');
   const ctx=$('m-ctx'), agreg=!singleCtx();
   ctx.style.display = agreg ? '' : 'none';
@@ -1182,11 +1256,17 @@ function abrirLanc(id){
   }
   const projs = agreg ? projetosDe($('f-unidade').value) : UNIT_PROJETOS;
   $('f-projeto').innerHTML = selOpts(projs, d.projeto||projs[0]||'');
-  $('f-conta').innerHTML   = selOpts(CONTAS['Manutenção'], d.conta||CONTAS['Manutenção'][0]);
+  const contaSel=d.conta||contasOk[0]||'';
+  $('f-conta').innerHTML   = pacs.length>1
+    ? pacs.map(p=>`<optgroup label="${esc(p)}">${selOpts(CONTAS[p],contaSel)}</optgroup>`).join('')
+    : selOpts(CONTAS[pacs[0]], contaSel);
+  // conta antiga que não está mais na lista (ex.: nome do DRE) continua aparecendo
+  if(d.conta && !contasOk.includes(d.conta)) $('f-conta').insertAdjacentHTML('afterbegin',`<option selected>${esc(d.conta)}</option>`);
   $('f-data').value        = d.data ? String(d.data).slice(0,10) : '';
   $('f-equipamento').value = d.equipamento||'';
   $('f-fornecedor').value  = d.fornecedor||'';
   $('f-grupo').value       = d.grupo||'';
+  $('f-grupo').dataset.conta = $('f-conta').value; contaMudou();
   $('f-descricao').value   = d.descricao||'';
   $('f-valor').value       = d.valor?fmtValorBR(d.valor):'';
   $('f-rc').value          = d.rc||'';
@@ -1239,7 +1319,7 @@ function dataMudou(){
   }
   sel.value=vig;
 }
-function fecharLanc(){ $('mbg').classList.remove('open'); LANC_ABERTO=null; }
+function fecharLanc(){ $('mbg').classList.remove('open'); LANC_ABERTO=null; const p=$('ac-grupo'); if(p) p.classList.remove('open'); }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !e.defaultPrevented && $('mbg').classList.contains('open')) fecharLanc(); });
 async function salvarLancModal(){
   if(!sb) return;
@@ -1247,7 +1327,7 @@ async function salvarLancModal(){
   const valor=parseValor(v('f-valor'));
   const agreg=$('m-ctx').style.display!=='none';
   const payload={unidade: agreg?v('f-unidade'):curUnits()[0],
-    vigencia: vigDaData(v('f-data')) || (agreg?v('f-vigencia'):curVigs()[0]), pacote:'Manutenção',
+    vigencia: vigDaData(v('f-data')) || (agreg?v('f-vigencia'):curVigs()[0]), pacote:pacoteDaConta(v('f-conta'))||'Manutenção',
     data:v('f-data')||null, projeto:v('f-projeto'),
     equipamento:v('f-equipamento').trim().toUpperCase(), fornecedor:v('f-fornecedor').trim().toUpperCase(),
     rc:v('f-rc').trim(), oc:v('f-oc').trim(), nf:v('f-nf').trim(),
@@ -1287,12 +1367,11 @@ async function excluirLancModal(){
 }
 
 // ── render ──
-const PACS=['Manutenção'];
 function curRows(){const ps=curProjs();return ROWS.filter(r=>(!ps||ps.includes(r.projeto))&&passaExtras(r));}
 function geralTotals(){
   const real=curRows().filter(counts).reduce((s,r)=>s+r.valor,0);
   let orc=0,rem=0,hasO=false;
-  PACS.forEach(pac=>CONTAS[pac].forEach(c=>{const d=DRE[c];if(d){orc+=d.orc;rem+=d.rem;hasO=true;}}));
+  pacsAtivos().forEach(pac=>CONTAS[pac].forEach(c=>{const d=DRE[c];if(d){orc+=d.orc;rem+=d.rem;hasO=true;}}));
   return {real,orc:hasO?orc:null,rem:hasO?rem:null};
 }
 function render(){const rows=curRows();renderAcomp();renderLanc(rows);renderCharts(rows);renderAderencia(rows);}
@@ -1340,21 +1419,29 @@ function contratoPreviaComoLanc(){
     fornecedor:'',conta:CONTA_CONTRATO,data:'',valor:+r.custo_vig||0})).filter(r=>r.valor>0);
 }
 function renderAcomp(){
+  /* UM BLOCO POR PACOTE, cada um fechando no "Total <pacote>"; com os dois na
+     tela, o "Total Geral" embaixo (mesmo desenho da Carta antiga). A prévia do
+     contrato é conta de Manutenção e só entra nesse bloco. */
+  const pacs=pacsAtivos(), ps=curProjs();
   let h=`<thead><tr><th>Conta</th><th class="num">Orç</th><th class="num">Rem (tend.)</th><th class="num">Real</th><th class="num">▲ Orç</th><th class="num">▲ Rem</th><th class="num">Ating. Orç %</th><th class="num">Ating. Rem %</th></tr></thead><tbody>`;
-  PACS.forEach(pac=>{
+  let gR=0,gO=0,gRe=0,gHas=false;
+  pacs.forEach(pac=>{
     const byC=new Map(CONTAS[pac].map(c=>[c,0]));
-    const ps=curProjs();
-    ROWS.filter(r=>(PACS.length===1||r.pacote===pac)&&(!ps||ps.includes(r.projeto))&&passaExtras(r)&&counts(r)).forEach(r=>byC.set(r.conta,(byC.get(r.conta)||0)+r.valor));
+    ROWS.filter(r=>pacDe(r)===pac&&(!ps||ps.includes(r.projeto))&&passaExtras(r)&&counts(r)).forEach(r=>byC.set(r.conta,(byC.get(r.conta)||0)+r.valor));
+    if(pac==='Manutenção'){
+      const prev=contratoPrevia();
+      if(prev>0) byC.set(CONTA_CONTRATO,(byC.get(CONTA_CONTRATO)||0)+prev);
+    }
     let tR=0,tO=0,tRe=0,tHas=false;
-    const prev=contratoPrevia();
-    if(prev>0) byC.set(CONTA_CONTRATO,(byC.get(CONTA_CONTRATO)||0)+prev);
     [...byC.entries()].forEach(([c,real])=>{
       const d=DRE[c]; const orc=d?d.orc:null, rem=d?d.rem:null;
       tR+=real; if(d){tO+=orc;tRe+=rem;tHas=true;}
       h+=`<tr><td class="conta">${esc(c)}</td>${acompCells(orc,rem,real)}</tr>`;
     });
+    gR+=tR; if(tHas){gO+=tO;gRe+=tRe;gHas=true;}
     h+=`<tr class="total"><td class="conta">Total ${esc(pac)}</td>${acompCells(tHas?tO:null,tHas?tRe:null,tR)}</tr>`;
   });
+  if(pacs.length>1) h+=`<tr class="total geral"><td class="conta">Total Geral</td>${acompCells(gHas?gO:null,gHas?gRe:null,gR)}</tr>`;
   h+='</tbody>';
   $('tbl-conta').innerHTML=h;
 }
@@ -1970,6 +2057,7 @@ async function init(){
   if(!ALLOWED.length){ showRestricted('Seu usuário não tem unidade vinculada. Fale com o corporativo para liberar seu acesso à Carta de Custos.'); return; }
   selUni.add(ALLOWED[0]);
   buildUniFilter(); buildVigFilter(); buildAnoFilter(); buildProjFilter();
+  buildMs('ms-pac', ()=>PACOTES, v=>v, selPac, render, 'Todos');   // opções fixas: já na abertura
   // lançamentos e contrato carregam JUNTOS: o contrato não depende do DRE nem
   // dos lançamentos, e esperar por eles só atrasava as visões novas
   loadContratos();
@@ -1991,6 +2079,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610080030"></script>
+<script src="../assets/build-check.js?v=202610080100"></script>
 </body>
 </html>
