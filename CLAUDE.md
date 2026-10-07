@@ -697,6 +697,8 @@ body.claro{                              /* claro */
   --azul:#1B6FC4; --verde:#00B300; --vermelho:#FF0000; --ambar:#E9A400;
 }
 ```
+**OS CINZAS DO TEMA ESCURO VIRARAM QUASE BRANCO (Renan, 07/10/2026: *"essa cor dos textos meio cinza fica muito ruim de ver. Geral"* → *"Poderia ser branco"*).** Nos 55 painéis da casca: `--txt2 #B2BCD2 → #E8ECF4`, `--txt3 #676F83 → #D5DBE6`, `--txt4 #4C505C → #A3ABBA`. O tema claro não mudou; os apps do motorista têm paleta própria e ficaram de fora. A hierarquia agora vem do tamanho e do peso, não do cinza. **Os valores do bloco acima são os antigos** — vale o que está nos arquivos.
+
 **Tema claro é classe `body.claro`** (não `light-mode`), chave `bi_theme`, botão sol/lua no topo. Cards usam `background:var(--side)` — o mesmo tom do menu lateral (regra do Renan). Tudo que é "um degrau acima" (painéis, chips, inputs) usa `--side`; nada de `rgba` chapado. **Não mexer no valor de `--side` para ganhar contraste** — já tentei e quebrou a regra; o contraste vem do fundo uniforme e da sombra do card.
 
 **Menus suspensos são OPACOS** — token `--pop` (`#26262B` escuro / `#FFFFFF` claro). Filtro (`.ms-panel`), seletor de unidades do Gerenciar Acessos (`.farol-panel`) e a dica da lateral usam `--pop` com sombra em duas camadas. Com fundo translúcido dá para ler o card de baixo através do menu — foi exatamente o que aconteceu.
