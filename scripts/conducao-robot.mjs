@@ -884,13 +884,36 @@ async function diasGravados(de, ate, fontes) {
 }
 
 // mensal = média dos dias ponderada por km (quem rodou mais pesa mais)
+/* PERÍODO DE APURAÇÃO DO DIA 21 AO DIA 20 (Renan, 08/10/2026: "Será de 21 a 20"),
+   para casar com o fechamento da folha. A competência de ce_scores_mensais é o
+   1º dia do mês em que o período TERMINA: '2026-12-01' = 21/11/2026 a 20/12/2026
+   (1º período do piloto, pago na folha de janeiro/2027). */
+const DIA_CORTE = 21;
+function compDe(dia) {
+  let [y, m, d] = String(dia).slice(0, 10).split('-').map(Number);
+  if (d >= DIA_CORTE) { m++; if (m > 12) { m = 1; y++; } }
+  return `${y}-${String(m).padStart(2, '0')}-01`;
+}
+function periodoDe(comp) {
+  const [y, m] = String(comp).split('-').map(Number);
+  let py = y, pm = m - 1; if (pm < 1) { pm = 12; py--; }
+  return { ini: `${py}-${String(pm).padStart(2, '0')}-${DIA_CORTE}`,
+           fim: `${y}-${String(m).padStart(2, '0')}-${String(DIA_CORTE - 1).padStart(2, '0')}` };
+}
 async function recalculaMes(de, ate) {
+  // o recorte pedido é alargado para os períodos INTEIROS que ele toca: recalcular
+  // um pedaço gravaria a competência só com parte dos dias por cima da completa
+  const comp0 = compDe(de), comp1 = compDe(ate);
+  de = periodoDe(comp0).ini; ate = periodoDe(comp1).fim;
+  const comps = [];
+  for (let c = comp0; c <= comp1; ) { comps.push(c); const [y, m] = c.split('-').map(Number); c = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`; }
+  console.log(`recálculo por período (21 a 20): ${comps.map(c => c.slice(0, 7)).join(', ')} · dias ${de} a ${ate}`);
   const dias = await sbTodos(`ce_diario?select=*&dia=gte.${de}&dia=lte.${ate}`);
   const cad = new Map((await sbTodos('ce_motoristas?select=chave,nome,unidade,fonte')).map(m => [m.chave, m]));
 
   const grupos = new Map();
   dias.forEach(d => {
-    const comp = d.dia.slice(0, 8) + '01';
+    const comp = compDe(d.dia);
     const k = comp + '|' + d.chave;
     if (!grupos.has(k)) grupos.set(k, []);
     grupos.get(k).push(d);
@@ -990,6 +1013,16 @@ async function recalculaMes(de, ate) {
     }
     if (!r2.ok) throw new Error(`ce_scores_mensais: ${r2.status} ${(await r2.text()).slice(0, 300)}`);
   }
+  // linha que sobrou de uma conta antiga (o mês civil de antes de 08/10/2026, ou
+  // um motorista que saiu do período) é apagada: só fica o que este recálculo gerou
+  const feitos = new Set(linhas.map(l => l.competencia + '|' + l.chave));
+  const exist = await sbTodos(`ce_scores_mensais?select=id,competencia,chave&competencia=in.(${comps.join(',')})`);
+  const sobra = exist.filter(r => !feitos.has(String(r.competencia).slice(0, 10) + '|' + r.chave)).map(r => r.id);
+  for (let i = 0; i < sobra.length; i += 200) {
+    const r3 = await fetch(`${SB_URL}/rest/v1/ce_scores_mensais?id=in.(${sobra.slice(i, i + 200).join(',')})`, { method: 'DELETE', headers: H_SB });
+    if (!r3.ok) throw new Error(`ce_scores_mensais (limpeza): ${r3.status} ${(await r3.text()).slice(0, 300)}`);
+  }
+  if (sobra.length) console.log(`limpeza: ${sobra.length} linha(s) antiga(s) apagada(s) em ce_scores_mensais`);
   return linhas.length;
 }
 
