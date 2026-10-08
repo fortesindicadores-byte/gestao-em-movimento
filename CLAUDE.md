@@ -836,6 +836,8 @@ Os três exportadores funcionam no layout padrão; o painel só precisa incluir 
 
 **A sobra de altura é DIVIDIDA — nunca `max-height:none` no `.gr2`** (Renan cobrou 3×): o `.gr2` da casca trava em `44vh` porque lá embaixo há tabela; numa visão em que o gráfico é o miolo dá vontade de tirar o teto, e aí TODA a sobra vai para o gráfico e os cards ficam achatados. O certo é dar altura própria à fileira de cards (`min-height:clamp(112px,16.5vh,170px)` + `justify-content:center` no `.kpi`) e **manter um teto no gráfico** (`max-height:56vh`). Em 1600×900 isso dá ~150px de card e ~480px de gráfico; em 1366×768, ~127 e ~377.
 
+**Resumo do Acessos ocupa a altura toda (Renan, 08/10/2026: *"Aqui não distribui?"*):** o `.res-cols` (gráfico por mês + calendário) tinha altura fixa `min(47vh,440px)` e sobrava uma faixa vazia embaixo em tela alta. Agora é `flex:1 1 auto` (piso 230px): os cards seguem com altura fixa e gráfico + calendário ficam com todo o resto. Medido no Chromium em 1366/1600/1897/1920 nos dois temas: sobra 0, sem rolagem.
+
 **Regras que saíram da validação do Acessos:** cabeçalho de tabela **sempre alinhado com o conteúdo** (texto à esquerda, número à direita — a casca alinha tudo à direita, o que só serve para tabela numérica) · **nunca barra de rolagem horizontal** (a tabela se ajusta; coluna que estoura vira dica na linha) · fileiras de baixo usam **a mesma grade e o mesmo gap dos cards**, para as bordas baterem · a sobra de altura é **dividida** entre cards e gráficos, nunca despejada num só · eixo Y **justo ao pico** (`suggestedMax` ≈ pico × 1,12), senão o gráfico parece alto e vazio.
 
 ---

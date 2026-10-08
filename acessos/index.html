@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610080010">
+<meta name="build" content="202610081530">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Acessos · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -286,7 +286,10 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 /* gráficos baixos: altura fixa; o que sobra vai para o hero e os cards */
  /* mesma grade da fileira de cards (3 colunas): o gráfico ocupa 2 e o
     calendário 1, então as bordas batem exatamente com os cards de cima */
-.res-cols{flex:0 0 auto;height:min(47vh,440px);min-height:230px;
+/* os cards têm altura fixa e o gráfico + calendário ficam com TODO o resto
+   da altura (Renan, 08/10/2026: "Aqui não distribui?" — com altura fixa de
+   47vh sobrava uma faixa vazia embaixo em telas altas) */
+.res-cols{flex:1 1 auto;min-height:230px;
   display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .res-graf{grid-column:span 2;min-width:0;}
 .res-cal{min-width:0;overflow:hidden;padding:12px 14px;display:flex;flex-direction:column;}
@@ -793,6 +796,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610080010"></script>
+<script src="../assets/build-check.js?v=202610081530"></script>
 </body>
 </html>
