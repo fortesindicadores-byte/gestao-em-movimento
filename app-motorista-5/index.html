@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DriverPro">
-<meta name="build" content="202610061400">
+<meta name="build" content="202610081000">
 <title>DriverPro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -409,9 +409,12 @@ var PILARES = [
      instrutor ensina e a do torque máximo dos motores de Piraí. O texto da dica
      é o conselho de troca de marcha do material deles. */
   { k:'rpm',  nome:'Uso da faixa verde', faixa:'1.000 a 1.400 RPM',
-    mede: function(n){ return Math.round(n) + '% do tempo rodando na faixa verde'; },
-    curto: function(n){ return Math.round(n) + '% na faixa verde'; },
-    regra:'A nota é a porcentagem do tempo em movimento com o motor na faixa verde: 100% na faixa = nota 100; 63% = nota 63.',
+    /* TRÊS FAIXAS PONTUAM (Renan, 08/10/2026: "1, 2/3 e 1/3"): a nota deixou
+       de ser a % na verde, então ela não se traduz mais em "X% na faixa" —
+       o texto diz a régua, e a nota aparece ao lado. */
+    mede: function(n){ return 'giro: verde vale o ponto inteiro, branca 2/3, amarela 1/3'; },
+    curto: function(n){ return 'pelo giro do motor'; },
+    regra:'Cada minuto em movimento vale o ponto inteiro na faixa verde (1.000 a 1.400 RPM), 2/3 na branca (1.400 a 1.800), 1/3 na amarela (1.800 a 2.300) e nada abaixo de 1.000 ou acima de 2.300. A nota é a média: tudo na verde = nota 100; metade na verde e metade na branca = nota 83.',
     dica:'Rode entre 1.000 e 1.400 RPM. Na troca de marcha, acelere só até o fim da faixa verde, para o giro não cair abaixo dela. É o que mais pesa no seu saldo.' },
   { k:'idle', nome:'Motor ligado sem rodar',
     mede: function(n){ return n1((100 - n) * REGUA.idle / 100) + '% do tempo parado com o motor ligado'; },
