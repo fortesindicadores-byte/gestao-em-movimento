@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DriverPro">
-<meta name="build" content="202610082000">
+<meta name="build" content="202610082130">
 <title>DriverPro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -322,9 +322,9 @@ body.claro .nav button.on{color:#fff;}
     <section class="tela" id="v-regras">
       <div class="sec" style="margin-top:20px">Como funciona o&nbsp;<span id="nomeApp2"></span></div>
       <div>
-        <div class="passo"><div class="n">1</div><div class="t"><b id="rg1">Todo mês você ganha R$ 200</b><span>O dinheiro já entra na sua conta no dia 21. Ele é seu — o que você faz até o dia 20 seguinte decide quanto fica.</span></div></div>
-        <div class="passo"><div class="n">2</div><div class="t"><b id="rg2">Cada ponto da sua nota vale dinheiro</b><span id="rg2s">Cada coisa que a gente mede tem um peso. Quanto pior o resultado, mais o saldo desce. Você vê a queda todo dia, aqui.</span></div></div>
-        <div class="passo"><div class="n">3</div><div class="t"><b>No dia 20 você recebe o que sobrou</b><span id="rg3">Se rodou 1.000 km e ficou entre os 15. Os três melhores da unidade ainda levam R$ 300, R$ 150 e R$ 100.</span></div></div>
+        <div class="passo"><div class="n">1</div><div class="t"><b id="rg1">Você pode ganhar até R$ 200,00 por mês</b><span>O prêmio depende de como você dirige. Quem dirige bem leva até R$ 200,00. Quem dirige mal leva menos, ou nada.</span></div></div>
+        <div class="passo"><div class="n">2</div><div class="t"><b id="rg2">Sua nota decide quanto você leva</b><span id="rg2s">A nota vai de 0 a 100. Com nota 100, você leva R$ 200,00. Cada ponto a menos tira R$ 5,00. Com nota abaixo de 60, você não leva nada. Exemplo: nota 80 = R$ 100,00.</span></div></div>
+        <div class="passo"><div class="n">3</div><div class="t"><b>Quem recebe</b><span id="rg3">Precisa rodar 1.000 km no mês (do dia 21 ao dia 20), com o seu login no Geotab. O valor vem no seu contracheque. Os 3 melhores da unidade ganham mais R$ 300, R$ 150 e R$ 100.</span></div></div>
       </div>
       <div class="sec">Como a nota é feita</div>
       <div id="regua"></div>
@@ -578,24 +578,28 @@ function pinta(){
     return linha('<b style="font-size:11px">' + ini + '</b>', r.eu ? 'Você' : iniciaisDe(r.nome), sub,
       (+r.pontuacao).toFixed(1).replace('.', ','), '', 'nota', r.eu ? ' eu' : '');
   }).join('') || '<div class="li"><div class="tx"><span>Ainda sem ranking neste mês.</span></div></div>';
-  $('rg1').textContent = 'Todo mês você ganha ' + brl(R.saldo_inicial);
+  $('rg1').textContent = 'Você pode ganhar até ' + brl(R.saldo_inicial) + ' por mês';
+  var rg1s = $('rg1').nextElementSibling;
+  if (rg1s) rg1s.textContent = 'O prêmio depende de como você dirige. Quem dirige bem leva até ' + brl(R.saldo_inicial) + '. Quem dirige mal leva menos, ou nada.';
   // a régua dita em reais, não em porcentagem — é assim que o motorista pensa
   (function(){
     var piso = pisoDe(R), porPonto = R.saldo_inicial / (100 - piso);
     var e2 = $('rg2'), s2 = $('rg2s');
-    if (e2) e2.textContent = 'Cada ponto da sua nota vale ' + brl(porPonto);
-    if (s2) s2.textContent = 'Um ponto a menos na nota é ' + brl(porPonto) + ' a menos na carteira.'
-      + (piso ? ' A conta começa na nota ' + Math.round(piso) + ': abaixo disso a carteira fica zerada, e da nota '
-                + Math.round(piso) + ' até 100 você vai juntando até os ' + brl(R.saldo_inicial) + '.' : '')
-      + ' Você vê a queda todo dia, aqui.';
+    if (e2) e2.textContent = 'Sua nota decide quanto você leva';
+    if (s2) s2.textContent = 'A nota vai de 0 a 100. Com nota 100, você leva ' + brl(R.saldo_inicial)
+      + '. Cada ponto a menos tira ' + brl(porPonto) + '.'
+      + (piso ? ' Com nota abaixo de ' + Math.round(piso) + ', você não leva nada.' : '')
+      + (piso < 80 ? ' Exemplo: nota 80 = ' + brl((80 - piso) * porPonto) + '.' : '');
   })();
   var cond = [];
-  if (R.km_min > 0) cond.push('rodou ' + R.km_min.toLocaleString('pt-BR') + ' km');
-  if (R.viagens_min > 0) cond.push('fez ' + R.viagens_min + ' viagens');
-  if (R.dias_min > 0) cond.push('teve ' + R.dias_min + ' dias medidos');
-  if (R.score_min > 0) cond.push('tirou nota ' + R.score_min + ' ou mais');
-  if (R.top_n > 0) cond.push('ficou entre os ' + R.top_n);
-  $('rg3').textContent = (cond.length ? 'Se ' + cond.join(' e ') + '. ' : '') + 'Os ' + R.podio.length + ' melhores da unidade ainda levam ' + R.podio.map(function(v){ return 'R$ ' + v; }).join(', ') + '.';
+  if (R.km_min > 0) cond.push('rodar ' + R.km_min.toLocaleString('pt-BR') + ' km');
+  if (R.viagens_min > 0) cond.push('fazer ' + R.viagens_min + ' viagens');
+  if (R.dias_min > 0) cond.push('ter ' + R.dias_min + ' dias medidos');
+  if (R.score_min > 0) cond.push('tirar nota ' + R.score_min + ' ou mais');
+  if (R.top_n > 0) cond.push('ficar entre os ' + R.top_n);
+  /* RENAN, 08/10/2026 ("ficou meio confuso" → "Melhor ser direto… Pense que são motoristas" → "parece que é certo que ganha. Seja didático"): "entra na sua conta no dia 21" e "no dia 20
+     você recebe" pareciam dois pagamentos. A carteira é do app; o dinheiro vem no contracheque. */
+  $('rg3').textContent = (cond.length ? 'Precisa ' + cond.join(' e ') + ' no mês (do dia 21 ao dia 20), com o seu login no Geotab. ' : '') + 'O valor vem no seu contracheque. Os ' + R.podio.length + ' melhores da unidade ganham mais ' + R.podio.map(function(v){ return 'R$ ' + v; }).join(', ').replace(/, ([^,]*)$/, ' e $1') + '.';
   $('regua').innerHTML = PILARES.map(function(p, i){
     return '<div class="passo"><div class="n">' + (i+1) + '</div><div class="t"><b>' + nomeCheio(p) + '</b><span>Vale ' + R.pesos[p.k] + ' pontos. ' + p.regra + ' Nota 100 não tira nada do saldo; nota 0 tira a parte inteira deste pilar.</span></div></div>';
   }).join('');
