@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DriverPro">
-<meta name="build" content="202610081000">
+<meta name="build" content="202610081500">
 <title>DriverPro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -320,9 +320,9 @@ body.claro .nav button.on{color:#fff;}
     <section class="tela" id="v-regras">
       <div class="sec" style="margin-top:20px">Como funciona o&nbsp;<span id="nomeApp2"></span></div>
       <div>
-        <div class="passo"><div class="n">1</div><div class="t"><b id="rg1">Todo mês você ganha R$ 200</b><span>O dinheiro já entra na sua conta no dia 1º. Ele é seu — o que você faz durante o mês decide quanto fica.</span></div></div>
+        <div class="passo"><div class="n">1</div><div class="t"><b id="rg1">Todo mês você ganha R$ 200</b><span>O dinheiro já entra na sua conta no dia 21. Ele é seu — o que você faz até o dia 20 seguinte decide quanto fica.</span></div></div>
         <div class="passo"><div class="n">2</div><div class="t"><b id="rg2">Cada ponto da sua nota vale dinheiro</b><span id="rg2s">Cada coisa que a gente mede tem um peso. Quanto pior o resultado, mais o saldo desce. Você vê a queda todo dia, aqui.</span></div></div>
-        <div class="passo"><div class="n">3</div><div class="t"><b>No fim do mês você recebe o que sobrou</b><span id="rg3">Se rodou 1.000 km e ficou entre os 15. Os três melhores da unidade ainda levam R$ 300, R$ 150 e R$ 100.</span></div></div>
+        <div class="passo"><div class="n">3</div><div class="t"><b>No dia 20 você recebe o que sobrou</b><span id="rg3">Se rodou 1.000 km e ficou entre os 15. Os três melhores da unidade ainda levam R$ 300, R$ 150 e R$ 100.</span></div></div>
       </div>
       <div class="sec">Como a nota é feita</div>
       <div id="regua"></div>
@@ -434,7 +434,9 @@ function linha(ico, nome, sub, valor, cls, small, extra){
     + '<div class="vl ' + (cls||'') + '">' + valor + (small ? '<small>' + small + '</small>' : '') + '</div></div>';
 }
 function fmtVal(v){ var t = (+v || 0).toFixed(2).replace('.', ','); return '<small>R$</small>' + t.replace(/\B(?=(\d{3})+(?!\d),)/g, '.'); }
-function mesDe(comp){ var y = +comp.slice(0,4), mo = +comp.slice(5,7) - 1; return { ano:y, mes:mo, nome:MESES_N[mo], rot:MESES_N[mo].slice(0,3) + '/' + y }; }
+/* período de apuração do dia 21 ao dia 20 (Renan, 08/10/2026): a competência é o mês em que o período termina — dez/2026 = 21/11 a 20/12 */
+function mesDe(comp){ var y = +comp.slice(0,4), mo = +comp.slice(5,7) - 1, ma = (mo + 11) % 12; var dd = function(n){ return (n < 10 ? '0' : '') + n; };
+  return { ano:y, mes:mo, nome:MESES_N[mo], rot:MESES_N[mo].slice(0,3) + '/' + y, per:'21/' + dd(ma + 1) + ' a 20/' + dd(mo + 1) }; }
 /* A CARTEIRA É UMA RAMPA QUE COMEÇA NO PISO (Renan, 14/09/2026) — antes começava
    no zero, e cada ponto de nota valia R$ 2: nota 55 levava R$ 135 dos R$ 200 e
    a diferença entre dirigir bem e dirigir mal quase não aparecia. Com piso 60,
@@ -479,7 +481,7 @@ function pinta(){
   var pct = Math.round(carteira / R.saldo_inicial * 100);
 
   $('ola').textContent = 'Olá, ' + D.nome.split(' ')[0] + '!';
-  $('sub').textContent = vig.nome.charAt(0).toUpperCase() + vig.nome.slice(1) + ', ' + vig.ano;
+  $('sub').textContent = vig.nome.charAt(0).toUpperCase() + vig.nome.slice(1) + ', ' + vig.ano + ' · ' + vig.per;
   $('unid').textContent = (D.unidade || '') + (D.unidade_real && D.unidade_real !== D.unidade ? ' · ' + D.unidade_real : '');
   $('av').textContent = D.nome.split(' ').map(function(p){return p[0];}).join('').slice(0,2).toUpperCase();
 

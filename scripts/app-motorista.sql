@@ -170,9 +170,20 @@ returns void language sql security definer set search_path = public, extensions 
 --                    proporcionalmente quando a soma passa do saldo (nota ≤ piso)
 -- Elegível = bate km_min, viagens_min, dias_min, score_min e está no top_n
 -- da unidade (ranking pela pontuação gravada em ce_scores_mensais).
+-- PERÍODO DE APURAÇÃO DO DIA 21 AO DIA 20 (Renan, 08/10/2026: "Será de 21 a 20"):
+-- a competência é o 1º dia do mês em que o período TERMINA (dez/2026 = 21/11 a
+-- 20/12/2026). É a mesma regra do compDe() do conducao-robot.mjs.
+create or replace function public.ce_app_comp(p_ts timestamptz)
+returns date language sql stable set search_path = public as $$
+  select (date_trunc('month', (p_ts at time zone 'America/Sao_Paulo'))
+          + case when extract(day from (p_ts at time zone 'America/Sao_Paulo')) >= 21
+                 then interval '1 month' else interval '0' end)::date
+$$;
+grant execute on function public.ce_app_comp(timestamptz) to anon, authenticated;
+
 create or replace function public.ce_app_dados(p_token uuid)
 returns jsonb language plpgsql security definer set search_path = public, extensions as $$
-declare s record; m record; R record; v_vig date := date_trunc('month', now())::date;
+declare s record; m record; R record; v_vig date := public.ce_app_comp(now());
         v_meses jsonb; v_rank jsonb; v_pos int; v_atual jsonb;
 begin
   select * into s from ce_app_sessao where token = p_token and expira_em > now();
@@ -328,7 +339,7 @@ end $$;
 drop function if exists public.ce_app_dados(uuid);
 create or replace function public.ce_app_dados(p_token uuid, p_chave text default null)
 returns jsonb language plpgsql security definer set search_path = public, extensions as $$
-declare s record; m record; R record; v_vig date := date_trunc('month', now())::date;
+declare s record; m record; R record; v_vig date := public.ce_app_comp(now());
         v_chave text; v_meses jsonb; v_rank jsonb; v_pos int;
 begin
   select * into s from ce_app_sessao where token = p_token and expira_em > now();
@@ -590,7 +601,7 @@ end $$;
 -- admin: lista de unidades com o estado e quantos motoristas cada uma tem
 create or replace function public.ce_app_unidades(p_token uuid)
 returns jsonb language plpgsql security definer set search_path = public, extensions as $$
-declare s record; v_vig date := date_trunc('month', now())::date;
+declare s record; v_vig date := public.ce_app_comp(now());
 begin
   select * into s from ce_app_sessao where token = p_token and expira_em > now();
   if s is null or s.admin_cpf is null then return jsonb_build_object('ok', false, 'erro', 'Só administrador.'); end if;
@@ -720,7 +731,7 @@ $$;
 -- mostra como recado embaixo da posição que vale.
 create or replace function public.ce_app_dados(p_token uuid, p_chave text default null)
 returns jsonb language plpgsql security definer set search_path = public, extensions as $$
-declare s record; m record; R record; v_vig date := date_trunc('month', now())::date;
+declare s record; m record; R record; v_vig date := public.ce_app_comp(now());
         v_chave text; v_meses jsonb; v_rank jsonb; v_pos int; v_pos_ger int;
         v_top int; v_km int; v_grupo text;
 begin
@@ -807,7 +818,7 @@ end $$;
 -- admin: unidades com grupo, cota, km mínimo e QLP
 create or replace function public.ce_app_unidades(p_token uuid)
 returns jsonb language plpgsql security definer set search_path = public, extensions as $$
-declare s record; v_vig date := date_trunc('month', now())::date;
+declare s record; v_vig date := public.ce_app_comp(now());
 begin
   select * into s from ce_app_sessao where token = p_token and expira_em > now();
   if s is null or s.admin_cpf is null then return jsonb_build_object('ok', false, 'erro', 'Só administrador.'); end if;
