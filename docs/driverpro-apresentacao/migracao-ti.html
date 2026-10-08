@@ -49,7 +49,7 @@ ol,ul{margin:4px 0 8px 18px;padding:0;} li{margin:2px 0;}
 <h3>Regras vigentes que o sistema aplica</h3>
 <ul>
 <li>Nota 0–100 = 50% giro + 30% motor ligado sem rodar + 20% acelerações; dia → período ponderado por km.</li>
-<li>Giro (régua Fabet): verde 1.000–1.400 rpm = 1 · branca até 1.800 = 2/3 · amarela até 2.300 = 1/3 · fora = 0. Marcha lenta (≤ 900) fora da conta.</li>
+<li>Giro (régua Fabet): só a verde 1.000–1.400 rpm pontua; nota = verde ÷ (rodando − amarela 1.800–2.300 em descida ≤ −2%). Marcha lenta (≤ 900) fora da conta. A rampa sai do GPS (LogRecord) + relevo Copernicus DEM 30 m (npm geotiff@2.1.3; acesso de rede a copernicus-dem-30m.s3.amazonaws.com).</li>
 <li>Carteira R$ 200, R$ 5 por ponto acima da nota 60 (<code>ce_app_carteira</code>, <code>ce_app_regras.piso_nota</code>). Todos que rodam 1.000 km recebem. Pódio R$ 300/150/100. Desempate por km.</li>
 <li>Piloto só na unidade <code>EMP PIRAI</code> (<code>ce_app_regras.unidades</code>).</li>
 <li><b>Período de apuração do dia 21 ao dia 20.</b> A competência é o 1º dia do mês em que o período termina: <code>2026-12-01</code> = 21/11 a 20/12/2026 (1º período do piloto, pago na folha de janeiro/2027). No robô: <code>compDe()</code>/<code>periodoDe()</code>; no banco: <code>ce_app_comp()</code>.</li>
