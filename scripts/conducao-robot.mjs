@@ -445,14 +445,21 @@ function demKit() {
     const nome = `Copernicus_DSM_COG_10_${a < 0 ? 'S' : 'N'}${String(Math.abs(a)).padStart(2, '0')}_00_${o < 0 ? 'W' : 'E'}${String(Math.abs(o)).padStart(3, '0')}_00_DEM`;
     if (TILES.has(nome)) return TILES.get(nome);
     let t = null;
-    try {
-      if (!fab) fab = (await import('geotiff')).fromArrayBuffer;
-      const r = await fetch(`https://copernicus-dem-30m.s3.amazonaws.com/${nome}/${nome}.tif`);
-      if (r.ok) {
-        const im = await (await fab(await r.arrayBuffer())).getImage();
-        t = { bb: im.getBoundingBox(), w: im.getWidth(), h: im.getHeight(), z: (await im.readRasters())[0] };
+    // falha de rede tenta de novo (até 4×); 404 é tile sem terra (mar) e fica nulo
+    for (let tent = 1; tent <= 4; tent++) {
+      try {
+        if (!fab) fab = (await import('geotiff')).fromArrayBuffer;
+        const r = await fetch(`https://copernicus-dem-30m.s3.amazonaws.com/${nome}/${nome}.tif`);
+        if (r.ok) {
+          const im = await (await fab(await r.arrayBuffer())).getImage();
+          t = { bb: im.getBoundingBox(), w: im.getWidth(), h: im.getHeight(), z: (await im.readRasters())[0] };
+        }
+        break;
+      } catch (e) {
+        console.log(`   DEM ${nome}: ${e.message.slice(0, 80)}${tent < 4 ? ` — nova tentativa em ${5 * tent} s` : ' — fica sem relevo nesta rodada'}`);
+        if (tent < 4) await new Promise(r => setTimeout(r, 5000 * tent));
       }
-    } catch (e) { console.log(`   DEM ${nome}: ${e.message.slice(0, 80)}`); }
+    }
     TILES.set(nome, t); return t;
   }
   async function alt(la, lo) {
