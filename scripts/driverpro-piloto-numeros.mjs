@@ -16,7 +16,7 @@ const MESES = (process.env.DP_MES || '2026-08,2026-09').split(',').map(s => s.tr
 const KM_MIN = +process.env.DP_KM || 1000;
 
 async function todos(caminho) {
-  const url = caminho + (caminho.includes('?') ? '&' : '?') + 'order=id.asc';
+  const url = caminho.includes('order=') ? caminho : caminho + (caminho.includes('?') ? '&' : '?') + 'order=id.asc';
   const out = [];
   for (let de = 0; ; de += 1000) {
     const r = await fetch(`${SB_URL}/rest/v1/${url}`, { headers: { ...H, Range: `${de}-${de + 999}` } });
@@ -83,7 +83,7 @@ for (const mes of MESES) {
 
 // diesel realizado: DRE (aba Frota) — conta de combustível dos níveis 3 de Piraí
 try {
-  const dre = await todos('sh_dre_frota?select=id,vigencia,unidade,nivel_3,conta_gerencial,realizado,remunerado&nivel_3=ilike.*PIR*');
+  const dre = await todos('sh_dre_frota?order=linha.asc&select=linha,vigencia,unidade,nivel_3,conta_gerencial,realizado,remunerado&nivel_3=ilike.*PIR*');
   const comb = dre.filter(d => /combust/i.test(d.conta_gerencial || '') && /ve[ií]culos/i.test(d.conta_gerencial || ''));
   const contas = [...new Set(dre.filter(d => /combust|arla/i.test(d.conta_gerencial || '')).map(d => d.conta_gerencial))];
   console.log('contas de combustível nos níveis 3 de Piraí:', JSON.stringify(contas));
