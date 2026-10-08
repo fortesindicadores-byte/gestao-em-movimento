@@ -1,0 +1,34 @@
+name: DriverPro Faixas Impacto
+
+on:
+  workflow_dispatch:
+    inputs:
+      uni:
+        description: 'Unidade do Geotab'
+        required: false
+        default: 'EMP PIRAI'
+      mes:
+        description: 'Competência AAAA-MM (período 21 do mês anterior a 20 deste)'
+        required: false
+        default: '2026-09'
+      km:
+        description: 'Km mínimo'
+        required: false
+        default: '1000'
+
+jobs:
+  impacto:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Só verde × três faixas
+        env:
+          DP_UNI: ${{ inputs.uni }}
+          DP_MES: ${{ inputs.mes }}
+          DP_KM: ${{ inputs.km }}
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/driverpro-faixas-impacto.mjs
