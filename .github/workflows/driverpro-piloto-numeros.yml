@@ -1,0 +1,34 @@
+name: DriverPro Piloto Numeros
+
+on:
+  workflow_dispatch:
+    inputs:
+      uni:
+        description: 'Unidade(s) do Geotab no piloto (vírgula)'
+        required: false
+        default: 'EMP PIRAI'
+      mes:
+        description: 'Meses AAAA-MM separados por vírgula'
+        required: false
+        default: '2026-08,2026-09'
+      km:
+        description: 'Km mínimo'
+        required: false
+        default: '1000'
+
+jobs:
+  numeros:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Números do piloto com as regras vigentes
+        env:
+          DP_UNI: ${{ inputs.uni }}
+          DP_MES: ${{ inputs.mes }}
+          DP_KM: ${{ inputs.km }}
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/driverpro-piloto-numeros.mjs
