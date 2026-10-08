@@ -662,10 +662,18 @@ drop table if exists public.ce_app_unidade_qlp;
 
 -- TODOS GANHAM (Renan, 06/10/2026): com a régua de R$ 5/ponto a partir da
 -- nota 60, a cota de N primeiros acabou — top_n = 0 é "todos". O km mínimo fica.
+-- PILOTO SÓ NA EMPURRADA DE PIRAÍ (Renan, 08/10/2026: "o Piloto é só na
+-- Empurrada Piraí"): a Lata sai do programa E do grupo PIRAI — sem o grupo,
+-- ela deixa de entrar no ranking e no pódio da Empurrada. O km mínimo de
+-- 500 km fica guardado para o dia em que ela entrar.
 insert into public.ce_app_unidade_cfg (unidade, grupo, top_n, km_min) values
   ('EMP PIRAI',      'PIRAI', 0, 1000),
-  ('INS LATA PIRAI', 'PIRAI', 0,  500)
+  ('INS LATA PIRAI', null,    0,  500)
 on conflict (unidade) do update set grupo = excluded.grupo, top_n = excluded.top_n, km_min = excluded.km_min, atualizado_em = now();
+update public.ce_app_regras
+   set unidades = case when unidades is null or cardinality(unidades) = 0 then array['EMP PIRAI']
+                       else array_remove(unidades, 'INS LATA PIRAI') end
+ where id = 1;
 
 create or replace function public.ce_app_top_n(p_unidade text)
 returns int language sql stable security definer set search_path = public, extensions as $$
