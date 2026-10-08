@@ -32,7 +32,7 @@
   <h2>O diesel é o maior custo variável da frota, e quem decide como ele é gasto está ao volante</h2>
   <p class="sub">Três hábitos do motorista mexem no consumo todos os dias. A telemetria já mede os três. O que falta é dar ao motorista um motivo para mudar, e mostrar o resultado para ele de um jeito simples.</p>
   <div class="grid g3" style="margin-top:30px">
-    <div class="box"><h3>Uso da faixa verde do motor</h3><p>Rodar acima de 1.400 rpm queima combustível sem ganhar velocidade. É o hábito que mais custa dinheiro.</p></div>
+    <div class="box"><h3>Uso da faixa verde do motor</h3><p>Rodar acima de 1.400 rpm queima combustível sem ganhar velocidade. É o hábito que mais custa dinheiro, e quanto mais longe da faixa verde, menos o tempo vale na nota.</p></div>
     <div class="box"><h3>Motor ligado sem rodar</h3><p>Em Piraí, a nota de marcha lenta vai de 16 a 92 entre os motoristas. Mesmo caminhão, mesma operação, comportamentos opostos.</p></div>
     <div class="box"><h3>Acelerações bruscas</h3><p>Sair forte do sinal gasta mais e desgasta o veículo. Hoje quase todo mundo já acerta, e isso precisa continuar.</p></div>
   </div>
@@ -78,16 +78,17 @@
 <!-- 6 · REGRAS -->
 <section class="slide">
   <div class="kicker">As regras</div>
-  <h2>Seis regras. Nenhuma exceção, nenhuma avaliação subjetiva.</h2>
+  <h2>Sete regras. Nenhuma exceção, nenhuma avaliação subjetiva.</h2>
   <div class="grid" style="grid-template-columns:1.2fr 1fr;margin-top:18px;gap:34px">
     <table>
       <tr><th>Regra</th><th>Valor</th><th>Como funciona</th></tr>
       <tr><td><b>Carteira do mês</b></td><td class="r"><b>R$ 200</b></td><td>Igual para todos. Paga da nota 60 até 100: <b>R$ 5,00 por ponto</b>. Abaixo de 60, zero.</td></tr>
-      <tr><td><b>Uso da faixa verde</b></td><td class="r"><b>50 pontos</b></td><td>% do tempo em movimento entre 1.000 e 1.400 rpm (faixa da Fabet).</td></tr>
+      <tr><td><b>Uso da faixa verde</b></td><td class="r"><b>50 pontos</b></td><td>Tempo em movimento pela faixa de giro (régua da Fabet): verde 1.000–1.400 rpm vale o ponto inteiro, branca 1.400–1.800 vale 2/3, amarela 1.800–2.300 vale 1/3, fora delas nada.</td></tr>
       <tr><td><b>Motor ligado sem rodar</b></td><td class="r"><b>30 pontos</b></td><td>Tempo parado com motor ligado, sobre o tempo de direção.</td></tr>
       <tr><td><b>Acelerações bruscas</b></td><td class="r"><b>20 pontos</b></td><td>Acelerações bruscas a cada 100 km, pela regra do Geotab.</td></tr>
       <tr><td><b>Elegibilidade</b></td><td class="r"><b>km mínimo + cota</b></td><td>Empurrada: 1.000 km e os 15 melhores. Lata: 500 km e os 5 melhores.</td></tr>
       <tr><td><b>Pódio</b></td><td class="r"><b>R$ 300 / 150 / 100</b></td><td>1º, 2º e 3º de Piraí, num ranking único das duas unidades.</td></tr>
+      <tr><td><b>Celular da empresa</b></td><td class="r"><b>obrigatório</b></td><td>O motorista usa o DriverPro no celular corporativo. É nele que acompanha saldo, nota e ranking.</td></tr>
     </table>
     <div>
       <div class="box" style="margin-bottom:14px"><h3>Nota = média ponderada dos três pilares</h3><p>Cada pilar vale de 0 a 100 e pesa 50 / 30 / 20. A nota do mês é a média dos dias ponderada por km: um dia bom não compensa um mês ruim.</p></div>
@@ -112,6 +113,7 @@
         <tr class="tot"><td>Nota final</td><td class="r">100</td><td class="r">89,5</td><td class="r">− R$ 52,50</td></tr>
       </table>
       <p class="note">Cada ponto vale R$ 5,00. Desconto do pilar = (peso ÷ 100) × (100 − nota) × R$ 5,00. Faixa verde: 0,50 × 15 × 5 = R$ 37,50.</p>
+      <p class="note">Nota 85 no giro é, por exemplo, 70% do tempo na verde, 15% na branca e 15% na amarela: 70 + 15 × 2/3 + 15 × 1/3 = 85.</p>
     </div>
     <div>
       <div class="grid g2" style="gap:14px">
@@ -133,10 +135,10 @@
   <div class="phones" style="margin-top:6px;gap:26px">
     <div class="phone"><div class="fr"><img src="shots/inicio.png"></div><div class="cap">Carteira<span>Saldo do mês, onde o dinheiro foi (em reais, por hábito) e o que falta para receber.</span></div></div>
     <div class="phone"><div class="fr"><img src="shots/nota.png"></div><div class="cap">Nota<span>Os três pilares, o peso de cada um e a dica prática para melhorar amanhã.</span></div></div>
-    <div class="phone"><div class="fr"><img src="shots/ranking.png"></div><div class="cap">Ranking<span>Os 15 da unidade e a posição dele. Dos colegas, só o primeiro nome e a nota.</span></div></div>
+    <div class="phone"><div class="fr"><img src="shots/ranking.png"></div><div class="cap">Ranking<span>Os 15 da unidade e a posição dele. Dos colegas, só as iniciais e a nota (LGPD).</span></div></div>
     <div class="phone"><div class="fr"><img src="shots/ganhos.png"></div><div class="cap">Ganhos<span>Total do ano e o mês a mês, com carteira e pódio.</span></div></div>
   </div>
-  <div class="foot"><span>DriverPro · Programa de condução econômica · entrada com CPF e senha de 4 números, instala na tela do celular como um app</span><span>8</span></div>
+  <div class="foot"><span>DriverPro · Programa de condução econômica · uso obrigatório no celular da empresa · entrada com CPF e senha de 4 números, instala na tela como um app</span><span>8</span></div>
 </section>
 
 <!-- 9 · PAINEL DO GESTOR -->
@@ -220,7 +222,7 @@
   <div class="kicker">Piloto em Piraí</div>
   <h2>Três apurações completas, balanço em janeiro</h2>
   <div class="tl">
-    <div class="m"><b>Setembro</b><span>Reunião com os motoristas de Piraí, instalação do app e criação de senha. Reforço da identificação no Geotab.</span></div>
+    <div class="m"><b>Setembro</b><span>Reunião com os motoristas de Piraí, instalação do app no celular da empresa e criação de senha. Reforço da identificação no Geotab.</span></div>
     <div class="m on"><b>Outubro</b><span>1ª apuração. Saldo visível todo dia no app. Fechamento em 31/10, lista de pagamento no dia 1º.</span></div>
     <div class="m on"><b>Novembro</b><span>2ª apuração. Primeira leitura de km/L contra outubro e contra novembro de 2025.</span></div>
     <div class="m on"><b>Dezembro</b><span>3ª apuração. Pódio do trimestre reconhecido na unidade.</span></div>
@@ -228,7 +230,7 @@
   </div>
   <div class="grid g2" style="margin-top:30px">
     <div class="box"><h3>Critérios de sucesso</h3><ul class="cl" style="margin-top:8px"><li>Custo dentro do teto (≤ R$ 13.650 nos 3 meses).</li><li>Nota mediana de faixa verde e marcha lenta acima de 75 em dezembro (hoje 70).</li><li>Pelo menos 70% dos cadastrados rodando identificados (hoje 52%).</li><li>Km/L de Piraí igual ou melhor que o mesmo trimestre de 2025.</li></ul></div>
-    <div class="box"><h3>Rotina do mês</h3><ul class="cl" style="margin-top:8px"><li>Motorista: abre o app e vê o saldo. Gestor: usa o ranking na conversa semanal.</li><li>Dia 1º: a nota fecha e o app mostra o resultado.</li><li>Até o dia 5: lista de pagamento gerada pelo sistema (nome, CPF, valor). Pódio anunciado na unidade.</li></ul></div>
+    <div class="box"><h3>Rotina do mês</h3><ul class="cl" style="margin-top:8px"><li>Motorista: abre o app no celular da empresa e vê o saldo. Gestor: usa o ranking na conversa semanal.</li><li>Dia 1º: a nota fecha e o app mostra o resultado.</li><li>Até o dia 5: lista de pagamento gerada pelo sistema (nome, CPF, valor). Pódio anunciado na unidade.</li></ul></div>
   </div>
   <div class="foot"><span>DriverPro · Programa de condução econômica</span><span>12</span></div>
 </section>
