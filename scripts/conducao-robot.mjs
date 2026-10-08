@@ -2326,6 +2326,172 @@ if (MODE === 'freiomotor') {
   process.exit(0);
 }
 
+if (MODE === 'declive') {
+  // SONDA DO DECLIVE (Renan, 08/10/2026: "Não tem mede declive? Se for declive
+  // em faixa amarela seria bom já" → "Mas tente ver se realmente não mede") —
+  // só leitura, não grava nada. Três perguntas:
+  //   1) o Geotab entrega altitude/inclinação? (catálogo de diagnósticos + o
+  //      que vem num LogRecord);
+  //   2) se não entrega, o declive sai do GPS + mapa de relevo? (Copernicus
+  //      DEM 30 m, aberto na AWS: altitude de cada ponto da rota e a rampa
+  //      numa base de 200 m);
+  //   3) quanto do tempo em cada faixa de giro acontece em DESCIDA — é o que diz
+  //      se "amarela em descida" separa o freio motor do pé no acelerador.
+  // Log só com contagens, porcentagens e horas (repo público).
+  const cred = await geotabLogin();
+  if (!cred) { console.error('Geotab: sem credencial'); process.exit(1); }
+  const UNI = (process.env.CE_UNI || 'EMP PIRAI').toUpperCase();
+  const NMAX = +process.env.CE_DIAG_LIM || 10;
+  const dias = []; for (let d = new Date(DE + 'T12:00:00Z'); iso(d) <= ATE; d = new Date(d.getTime() + 864e5)) dias.push(iso(d));
+  console.log(`sonda do declive · dias ${dias.join(', ')} · unidade "${UNI}" · até ${NMAX} veículo(s) por dia`);
+  const RX = /altit|eleva|inclin|declive|aclive|grade|slope|pitch|gradient|ângulo|angulo|tilt|level|nivel|nível/i;
+  const [diags, devs, grupos] = await Promise.all([
+    geotabRpc('Get', { typeName: 'Diagnostic' }, cred),
+    geotabRpc('Get', { typeName: 'Device' }, cred),
+    geotabRpc('Get', { typeName: 'Group' }, cred),
+  ]);
+  const cand = diags.filter(d => RX.test(d.name || '') && !/combust|fuel|óleo|oleo|oil|def|arla|bateria|battery|sinal|signal|líquido|liquido|coolant|tanque|tank|freio|brake|pneu|tire|tyre/i.test(d.name || ''));
+  console.log(`\n1) CATÁLOGO: ${diags.length} diagnósticos · ${cand.length} com cara de altitude/inclinação:`);
+  cand.slice(0, 40).forEach(d => console.log(`   ${String(d.name).slice(0, 110)}`));
+  const gN = new Map(grupos.map(g => [g.id, g.name || '']));
+  const uniDe = new Map(devs.map(d => [d.id, ((d.groups || []).map(g => gN.get(g.id) || '').find(n => /^UNI_/.test(n)) || '').toUpperCase()]));
+  const ehUni = id => (uniDe.get(id) || '').includes(UNI);
+
+  // DEM: um tile de 1°×1° por vez, guardado inteiro em memória
+  const { fromArrayBuffer } = await import('geotiff');
+  const TILES = new Map();
+  async function tile(la, lo) {
+    const a = Math.floor(la), o = Math.floor(lo);
+    const nome = `Copernicus_DSM_COG_10_${a < 0 ? 'S' : 'N'}${String(Math.abs(a)).padStart(2, '0')}_00_${o < 0 ? 'W' : 'E'}${String(Math.abs(o)).padStart(3, '0')}_00_DEM`;
+    if (TILES.has(nome)) return TILES.get(nome);
+    let t = null;
+    try {
+      const r = await fetch(`https://copernicus-dem-30m.s3.amazonaws.com/${nome}/${nome}.tif`);
+      if (r.ok) {
+        const im = await (await fromArrayBuffer(await r.arrayBuffer())).getImage();
+        t = { bb: im.getBoundingBox(), w: im.getWidth(), h: im.getHeight(), z: (await im.readRasters())[0] };
+      }
+    } catch (e) { console.log(`   DEM ${nome}: ${e.message.slice(0, 80)}`); }
+    TILES.set(nome, t); return t;
+  }
+  async function alt(la, lo) {
+    const t = await tile(la, lo); if (!t) return null;
+    const fx = (lo - t.bb[0]) / (t.bb[2] - t.bb[0]) * t.w - .5, fy = (t.bb[3] - la) / (t.bb[3] - t.bb[1]) * t.h - .5;
+    const x = Math.max(0, Math.min(t.w - 2, Math.floor(fx))), y = Math.max(0, Math.min(t.h - 2, Math.floor(fy)));
+    const dx = fx - x, dy = fy - y, Z = (i, j) => t.z[j * t.w + i];
+    return Z(x, y) * (1 - dx) * (1 - dy) + Z(x + 1, y) * dx * (1 - dy) + Z(x, y + 1) * (1 - dx) * dy + Z(x + 1, y + 1) * dx * dy;
+  }
+  const dist = (a, b) => { const R = 6371000, r = Math.PI / 180, dla = (b.la - a.la) * r, dlo = (b.lo - a.lo) * r;
+    const h = Math.sin(dla / 2) ** 2 + Math.cos(a.la * r) * Math.cos(b.la * r) * Math.sin(dlo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+  async function todosDev(tipo, extra, devId, de0, fim) {
+    const out = []; let from = de0;
+    for (let p = 0; p < 20; p++) {
+      const lote = await geotabRpc('Get', { typeName: tipo, search: { ...extra, deviceSearch: { id: devId }, fromDate: from, toDate: fim }, resultsLimit: 50000 }, cred);
+      out.push(...lote); if (lote.length < 50000) break;
+      from = new Date(new Date(lote[lote.length - 1].dateTime).getTime() + 1).toISOString();
+    }
+    return out;
+  }
+
+  const FX = ['abaixo da verde', 'verde', 'branca', 'amarela', 'vermelha'];
+  const faixa = rpm => rpm < RPM_V_MIN ? 0 : rpm <= RPM_V_MAX ? 1 : rpm <= RPM_BRANCA_MAX ? 2 : rpm <= RPM_AMARELA_MAX ? 3 : 4;
+  const RAMPAS = [['descida forte (< -4%)', -99, -4], ['descida (-4% a -2%)', -4, -2], ['leve descida (-2% a -1%)', -2, -1],
+    ['plano (-1% a +1%)', -1, 1], ['leve subida (+1% a +2%)', 1, 2], ['subida (+2% a +4%)', 2, 4], ['subida forte (> +4%)', 4, 99]];
+  const rampa = g => RAMPAS.findIndex(([, a, b]) => g >= a && g < b);
+  const T = FX.map(() => RAMPAS.map(() => 0)); let semRampa = 0, kmTot = 0, zMin = 1e9, zMax = -1e9, nPts = 0, nVeic = 0;
+  // perdendo velocidade na descida = motor segurando de verdade
+  const amarDesc = { perde: 0, mantem: 0 };
+  let primeiroLog = true, candAmostras = 0;
+
+  for (const dia of dias) {
+    const de0 = `${dia}T03:00:00.000Z`, fim = new Date(new Date(de0).getTime() + 864e5 - 1).toISOString();
+    const trips = await geotabRpc('Get', { typeName: 'Trip', search: { fromDate: de0, toDate: fim }, resultsLimit: 50000 }, cred);
+    const km = new Map();
+    trips.forEach(t => { const id = t.device && t.device.id; if (id && ehUni(id)) km.set(id, (km.get(id) || 0) + (+t.distance || 0)); });
+    const sel = [...km.entries()].sort((a, b) => b[1] - a[1]).slice(0, NMAX).map(([id]) => id);
+    console.log(`\n${dia}: ${km.size} veículo(s) de ${UNI} rodaram · analisando ${sel.length}`);
+    for (const id of sel) {
+      const logs = await todosDev('LogRecord', {}, id, de0, fim);
+      if (primeiroLog && logs.length) { primeiroLog = false;
+        console.log(`\n2) CAMPOS DE UM LogRecord: ${Object.keys(logs[0]).join(', ')}`); }
+      if (cand.length && candAmostras < 1) {
+        for (const d of cand.slice(0, 40)) {
+          try { const am = await geotabRpc('Get', { typeName: 'StatusData', search: { diagnosticSearch: { id: d.id }, deviceSearch: { id }, fromDate: de0, toDate: fim }, resultsLimit: 50 }, cred);
+            if (am.length) console.log(`   ✓ "${String(d.name).slice(0, 70)}": ${am.length} amostra(s) no dia (ex.: ${am.slice(0, 3).map(a => a.data).join(', ')})`); } catch (e) {}
+        }
+        candAmostras++;
+        console.log('   (candidatos sem ✓ não mandaram amostra nesse veículo no dia)');
+      }
+      const pts = logs.map(r => ({ t: new Date(r.dateTime).getTime(), la: +r.latitude, lo: +r.longitude, v: +r.speed }))
+        .filter(p => isFinite(p.la) && isFinite(p.lo) && Math.abs(p.la) > .01).sort((a, b) => a.t - b.t);
+      if (pts.length < 10) continue;
+      // trilha densificada a cada ~50 m, com distância acumulada e altitude
+      const tr = []; let s = 0;
+      for (let i = 0; i < pts.length; i++) {
+        if (i) {
+          const d = dist(pts[i - 1], pts[i]); const n = Math.min(40, Math.floor(d / 50));
+          for (let k = 1; k <= n; k++) { const f = k / (n + 1);
+            tr.push({ s: s + d * f, t: pts[i - 1].t + (pts[i].t - pts[i - 1].t) * f, la: pts[i - 1].la + (pts[i].la - pts[i - 1].la) * f, lo: pts[i - 1].lo + (pts[i].lo - pts[i - 1].lo) * f }); }
+          s += d;
+        }
+        tr.push({ s, t: pts[i].t, la: pts[i].la, lo: pts[i].lo });
+      }
+      for (const p of tr) { p.z = await alt(p.la, p.lo); if (p.z != null) { zMin = Math.min(zMin, p.z); zMax = Math.max(zMax, p.z); } }
+      nPts += tr.length; kmTot += s / 1000; nVeic++;
+      const zEm = alvo => { // altitude interpolada na distância alvo
+        let lo = 0, hi = tr.length - 1; if (alvo <= tr[0].s || alvo >= tr[hi].s) return null;
+        while (hi - lo > 1) { const m = (lo + hi) >> 1; if (tr[m].s <= alvo) lo = m; else hi = m; }
+        const a = tr[lo], b = tr[hi]; if (a.z == null || b.z == null) return null;
+        return b.s > a.s ? a.z + (b.z - a.z) * (alvo - a.s) / (b.s - a.s) : a.z;
+      };
+      const sEm = t => { // distância acumulada no instante t
+        let lo = 0, hi = tr.length - 1; if (t <= tr[0].t || t >= tr[hi].t) return null;
+        while (hi - lo > 1) { const m = (lo + hi) >> 1; if (tr[m].t <= t) lo = m; else hi = m; }
+        const a = tr[lo], b = tr[hi]; return b.t > a.t ? a.s + (b.s - a.s) * (t - a.t) / (b.t - a.t) : a.s;
+      };
+      const vEm = t => { let j = 0; while (j + 1 < pts.length && pts[j + 1].t <= t) j++; return pts[j]; };
+      const rpm = (await todosDev('StatusData', { diagnosticSearch: { id: 'DiagnosticEngineSpeedId' } }, id, de0, fim))
+        .map(r => ({ t: new Date(r.dateTime).getTime(), rpm: +r.data })).sort((a, b) => a.t - b.t);
+      for (let i = 0; i < rpm.length; i++) {
+        const a = rpm[i]; if (!isFinite(a.rpm) || a.rpm <= RPM_LENTA) continue;
+        const prox = i + 1 < rpm.length ? rpm[i + 1].t : a.t + 1000;
+        const dt = Math.min(prox - a.t, RPM_GAP_MS) / 1000; if (dt <= 0) continue;
+        const sm = sEm(a.t + dt * 500);
+        const za = sm == null ? null : zEm(sm - 100), zb = sm == null ? null : zEm(sm + 100);
+        if (za == null || zb == null) { semRampa += dt; continue; }
+        const g = (zb - za) / 200 * 100, f = faixa(a.rpm), k = rampa(g);
+        T[f][k] += dt;
+        if (f === 3 && g < -2) {
+          const p0 = vEm(a.t), p1 = vEm(a.t + 30000);
+          if (p0 && p1 && p1.t > p0.t) { if (p1.v < p0.v - 2) amarDesc.perde += dt; else amarDesc.mantem += dt; }
+        }
+      }
+    }
+  }
+  const h = s => (s / 3600).toFixed(1) + ' h';
+  console.log(`\n3) RELEVO PELO GPS: ${nVeic} veículo-dia · ${Math.round(kmTot).toLocaleString('pt-BR')} km · ${nPts.toLocaleString('pt-BR')} pontos · altitude de ${Math.round(zMin)} a ${Math.round(zMax)} m · tiles do DEM: ${[...TILES.values()].filter(Boolean).length}`);
+  const totF = T.map(l => l.reduce((a, b) => a + b, 0)), tot = totF.reduce((a, b) => a + b, 0);
+  console.log(`tempo rodando com rampa medida: ${h(tot)} · sem rampa (fora da trilha/DEM): ${h(semRampa)}`);
+  console.log('\nRAMPA DO TERRENO EM CADA FAIXA DE GIRO (% do tempo da faixa):');
+  console.log('   ' + 'faixa'.padEnd(17) + RAMPAS.map(r => r[0].split(' (')[0].padStart(14)).join('') + '      horas');
+  FX.forEach((n, f) => console.log('   ' + n.padEnd(17) + RAMPAS.map((_, k) => ((totF[f] ? T[f][k] / totF[f] * 100 : 0).toFixed(1) + '%').padStart(14)).join('') + h(totF[f]).padStart(11)));
+  const desc = f => T[f][0] + T[f][1];
+  console.log(`\nAMARELA em descida de 2% ou mais: ${h(desc(3))} = ${(totF[3] ? desc(3) / totF[3] * 100 : 0).toFixed(1)}% da amarela`
+    + ` · desse tempo, perdendo velocidade em 30 s: ${(amarDesc.perde + amarDesc.mantem ? amarDesc.perde / (amarDesc.perde + amarDesc.mantem) * 100 : 0).toFixed(1)}%`);
+  console.log(`BRANCA em descida de 2% ou mais: ${(totF[2] ? desc(2) / totF[2] * 100 : 0).toFixed(1)}% da branca · em subida de 2% ou mais: ${(totF[2] ? (T[2][5] + T[2][6]) / totF[2] * 100 : 0).toFixed(1)}%`);
+  // a nota de giro da frota analisada em quatro réguas
+  const nota = pesos => tot ? FX.reduce((a, _, f) => a + RAMPAS.reduce((b, _r, k) => b + T[f][k] * pesos(f, k), 0), 0) / tot * 100 : 0;
+  const desce = k => k <= 1;
+  console.log('\nNOTA DE GIRO DOS VEÍCULOS ANALISADOS:');
+  console.log(`   só verde                                        ${nota(f => f === 1 ? 1 : 0).toFixed(1)}`);
+  console.log(`   três faixas (hoje: 1 · 2/3 · 1/3)               ${nota(f => [0, 1, 2 / 3, 1 / 3, 0][f]).toFixed(1)}`);
+  console.log(`   verde + amarela em descida ≥ 2% valem 1         ${nota((f, k) => f === 1 || (f === 3 && desce(k)) ? 1 : 0).toFixed(1)}`);
+  console.log(`   idem + branca/amarela em descida ≥ 2% valem 1   ${nota((f, k) => f === 1 || ((f === 2 || f === 3) && desce(k)) ? 1 : 0).toFixed(1)}`);
+  console.log('\nO DEM é de SUPERFÍCIE (Copernicus DSM): árvore e prédio na beira da estrada e ponte/túnel viram ruído; a rampa é medida numa base de 200 m para suavizar.');
+  console.log('\nSonda encerrada — nada foi gravado.');
+  process.exit(0);
+}
+
 if (MODE === 'freiodeduz') {
   // SONDA: DÁ PARA DEDUZIR O FREIO MOTOR EM PIRAÍ? (Renan, 05/10/2026) — só
   // leitura, não grava nada. O Geotab não entrega o sinal de freio motor nos
