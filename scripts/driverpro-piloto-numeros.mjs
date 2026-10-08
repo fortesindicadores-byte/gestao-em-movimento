@@ -84,14 +84,15 @@ for (const mes of MESES) {
 // diesel realizado: DRE (aba Frota) — conta de combustível dos níveis 3 de Piraí
 try {
   const dre = await todos('sh_dre_frota?order=linha.asc&select=linha,vigencia,unidade,nivel_3,conta_gerencial,realizado,remunerado&nivel_3=ilike.*PIR*');
-  const comb = dre.filter(d => /combust/i.test(d.conta_gerencial || '') && /ve[ií]culos/i.test(d.conta_gerencial || ''));
+  const comb = dre.filter(d => /^combust[ií]veis( ve[ií]culos e equipamentos)?$/i.test(String(d.conta_gerencial || '').trim())
+    && +String(d.vigencia || '').slice(3) >= 2025);
   const contas = [...new Set(dre.filter(d => /combust|arla/i.test(d.conta_gerencial || '')).map(d => d.conta_gerencial))];
   console.log('contas de combustível nos níveis 3 de Piraí:', JSON.stringify(contas));
   const por = {};
   comb.forEach(d => { const k = `${d.nivel_3}|${d.vigencia}`; por[k] = (por[k] || 0) + (-(+d.realizado || 0)); });
   const niveis = [...new Set(comb.map(d => d.nivel_3))].sort();
   const vigs = [...new Set(comb.map(d => d.vigencia))].sort((a, b) => a.slice(3) + a.slice(0, 2) < b.slice(3) + b.slice(0, 2) ? -1 : 1);
-  console.log('\nDIESEL REALIZADO (Combustíveis Veículos e Equipamentos, sinal invertido = gasto):');
+  console.log('\nDIESEL REALIZADO desde 2025 (conta Combustíveis / Combustíveis Veículos e Equipamentos, sinal invertido = gasto):');
   for (const nv of niveis) console.log(`  ${nv.padEnd(22)} ` + vigs.map(v => `${v} ${brl(por[`${nv}|${v}`] || 0)}`).join(' · '));
   for (const nv of niveis) {
     const ult = vigs.filter(v => por[`${nv}|${v}`]).slice(-3);
