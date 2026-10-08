@@ -364,7 +364,7 @@ function rpc(fn, args){
 
 /* ── dados de exemplo (?demo=1): o mesmo formato que ce_app_dados devolve ── */
 var DEMO_DADOS = { ok:true, nome:'Marcio Andre', unidade:'EMP PIRAI', vigente:'2026-09', posicao:7, posicao_geral:12,
-  regras:{ saldo_inicial:200, km_min:1000, viagens_min:0, dias_min:0, score_min:0, top_n:0, podio:[300,150,100], pesos:{rpm:50,idle:30,acel:20} },
+  regras:{ saldo_inicial:200, piso_nota:60, km_min:1000, viagens_min:0, dias_min:0, score_min:0, top_n:0, podio:[300,150,100], pesos:{rpm:50,idle:30,acel:20} },
   ranking:[['Marcio A.',90.5],['Anderson M.',89.3],['Wanderson P.',88.4],['Mario Sergio D.',86.4],['Breno E.',86.4],['Lucas C.',85.8],['Willian A.',84.1],
     ['Luiz Carlos S.',83.8],['Thiago A.',83.7],['Paulo Roberto A.',83.6],['Wandiney T.',83.6],['Carlos Roberto C.',83.4],['Dalisvan S.',83.4],['Luiz Carlos B.',83.3],['Natanael S.',83.3]]
     .map(function(r,i){ return { pos:i+1, pos_geral:i+1+(i<6?3:5), disputa:true, nome:r[0], pontuacao:r[1], eu:i===6 }; }),
