@@ -349,25 +349,36 @@ const RPM_LENTA = +process.env.CE_RPM_LENTA || 900;
 const RPM_VERDE_TXT = String(process.env.CE_RPM_VERDE || '1000-1400');
 const [RPM_V_MIN, RPM_V_MAX] = RPM_VERDE_TXT.split('-').map(Number);
 const RPM_GAP_MS = 120 * 1000;   // buraco entre amostras > 2 min não conta tempo
-/* TRÊS FAIXAS PONTUAM, CADA UMA COM O SEU PESO (Renan, 08/10/2026: "para não
-   onerarmos tanto a faixa amarela… divida em 3 pontuações, sendo 1, 2/3 e
-   1/3"). Cada segundo em movimento vale: verde (1.000–1.400) o ponto inteiro,
-   branca (1.400–1.800) 2/3, amarela (1.800–2.300) 1/3; abaixo da verde (entre
-   a marcha lenta e 1.000) e vermelha (acima de 2.300) não valem nada. A nota
-   do pilar é a média desses valores no tempo rodando. O rpm_verde_pct continua
-   sendo só a % na verde (é a medida que os painéis mostram); a nota sai das
-   três faixas guardadas em bruto.rpm (rpmNotaDia). */
+/* SÓ A VERDE PONTUA; A AMARELA EM DESCIDA FICA FORA DA CONTA (Renan,
+   08/10/2026: "Pontua só faixa verde e faixa amarela na descida não entra na
+   conta" → "pode fazer assim. Mude tudo"). Substitui as três faixas com peso
+   (1 · 2/3 · 1/3), que mascaravam a verde: a amplitude do giro caía quase à
+   metade e 17 dos 19 pontos ganhos vinham da faixa branca, a que a Fabet chama
+   de aceleração excessiva. Cada segundo em movimento (acima da marcha lenta)
+   vale: verde (1.000–1.400) o ponto inteiro; branca (1.400–1.800), amarela
+   (1.800–2.300) fora de descida, vermelha (acima de 2.300, mesmo descendo) e
+   abaixo de 1.000 não valem nada. A AMARELA EM DESCIDA DE 2% OU MAIS (rampa
+   medida pelo GPS + relevo, `rampasDia`) é o uso certo do freio motor: sai do
+   numerador e do denominador — nem ganha nem perde. Nota do dia =
+   verde ÷ (rodando − amarela em descida) × 100. Dia sem trilha de GPS fica
+   com a amarela inteira no denominador (é a régua só verde). O rpm_verde_pct
+   continua sendo a % na verde sobre todo o tempo rodando (é a medida dos
+   painéis); a nota sai de bruto.rpm (rpmNotaDia). Simulado antes de trocar
+   (modo `declivesim`, Empurrada Piraí, 21/08–20/09): giro mediano 81,2 → 64,1,
+   amplitude p10–p90 11,0 → 19,4. */
 const RPM_BRANCA_MAX  = +process.env.CE_RPM_BRANCA  || 1800;
 const RPM_AMARELA_MAX = +process.env.CE_RPM_AMARELA || 2300;
-const PESO_FAIXA = { verde: 1, branca: 2 / 3, amarela: 1 / 3 };
-const RPM_REGRA_TXT = `verde ${RPM_VERDE_TXT}=1 · branca até ${RPM_BRANCA_MAX}=2/3 · amarela até ${RPM_AMARELA_MAX}=1/3`;
-// nota do pilar num dia: das três faixas quando o dia já foi apurado com
-// elas; dia antigo (só verde no bruto) cai na % da verde, como era
+const RAMPA_DESC = +process.env.CE_RAMPA_DESC || -2;     // % — descida a partir de 2%
+const RPM_REGRA_TXT = `só verde ${RPM_VERDE_TXT} · amarela até ${RPM_AMARELA_MAX} em descida ≤ ${RAMPA_DESC}% fora da conta`;
+// nota do pilar num dia: verde ÷ (rodando − amarela em descida). Dia gravado
+// antes da rampa (sem amarDesc no bruto) cai na % da verde — a mesma régua,
+// só sem o desconto da descida
 function rpmNotaDia(d) {
   const r = d && d.bruto && d.bruto.rpm;
-  if (r && r.branca != null && r.amarela != null && (+r.rodando || 0) > 60)
-    return ((+r.verde || 0) * PESO_FAIXA.verde + (+r.branca || 0) * PESO_FAIXA.branca
-          + (+r.amarela || 0) * PESO_FAIXA.amarela) / +r.rodando * 100;
+  if (r && r.amarDesc != null && r.rodando != null) {
+    const den = (+r.rodando || 0) - (+r.amarDesc || 0);
+    return den > 60 ? (+r.verde || 0) / den * 100 : null;
+  }
   return d ? d.rpm_verde_pct : null;
 }
 
@@ -395,8 +406,10 @@ async function geotabRpmDia(dia, cred) {
 }
 // tempo na faixa verde e tempo rodando (rpm > marcha lenta) numa janela.
 // Cada amostra vale até a próxima (com teto de RPM_GAP_MS, p/ buraco de sinal).
-function rpmJanela(amostras, ini, fim) {
-  let verde = 0, branca = 0, amarela = 0, rodando = 0;
+// Com a rampa do veículo (rampaEm), separa a amarela em descida e conta o
+// tempo rodando sem rampa medida.
+function rpmJanela(amostras, ini, fim, rampaEm) {
+  let verde = 0, branca = 0, amarela = 0, rodando = 0, amarDesc = 0, semRampa = 0;
   for (let i = 0; i < amostras.length; i++) {
     const a = amostras[i];
     if (a.t > fim) break;
@@ -409,8 +422,13 @@ function rpmJanela(amostras, ini, fim) {
     if (a.rpm >= RPM_V_MIN && a.rpm <= RPM_V_MAX) verde += dt;
     else if (a.rpm > RPM_V_MAX && a.rpm <= RPM_BRANCA_MAX) branca += dt;
     else if (a.rpm > RPM_BRANCA_MAX && a.rpm <= RPM_AMARELA_MAX) amarela += dt;
+    if (rampaEm) {
+      const r = rampaEm((t0 + t1) / 2);
+      if (r == null) semRampa += dt;
+      else if (r <= RAMPA_DESC && a.rpm > RPM_BRANCA_MAX && a.rpm <= RPM_AMARELA_MAX) amarDesc += dt;
+    }
   }
-  return { verde, branca, amarela, rodando };
+  return { verde, branca, amarela, rodando, amarDesc, semRampa, comRampa: !!rampaEm };
 }
 
 /* ── RELEVO: rampa da rota pelo GPS + Copernicus DEM 30 m (Renan, 08/10/2026) ──
@@ -479,6 +497,24 @@ async function trilhaRampa(pts, alt) {
   const rampaEm = t => { const sm = sEm(t); if (sm == null) return null;
     const za = zEm(sm - 100), zb = zEm(sm + 100); return za == null || zb == null ? null : (zb - za) / 200 * 100; };
   return { n: tr.length, km: s / 1000, zMin, zMax, rampaEm };
+}
+// rampa de cada veículo no dia, a partir do GPS do dia inteiro (geotabVelDia).
+// O relevo é um só para a rodada inteira (os tiles ficam em memória entre os
+// dias). Falha aqui não derruba o dia: o veículo só fica sem rampa e a
+// amarela dele conta inteira no denominador.
+let DEM_RODADA = null;
+async function rampasDia(gpsPorDev, soDevs) {
+  if (!DEM_RODADA) DEM_RODADA = demKit();
+  const out = new Map(); let km = 0, semGps = 0;
+  for (const [dev, am] of gpsPorDev) {
+    if (soDevs && !soDevs.has(dev)) continue;
+    const pts = am.filter(p => isFinite(p.la) && isFinite(p.lo) && Math.abs(p.la) > .01);
+    if (pts.length < 10) { semGps++; continue; }
+    try { const tr = await trilhaRampa(pts, DEM_RODADA.alt); km += tr.km; out.set(dev, tr.rampaEm); }
+    catch (e) { semGps++; }
+  }
+  out._log = { veiculos: out.size, semGps, km: Math.round(km), tiles: [...DEM_RODADA.tiles.values()].filter(Boolean).length };
+  return out;
 }
 // um tipo do Geotab de UM veículo num dia, paginando
 async function geotabDevDia(tipo, extra, devId, de0, fim, cred) {
@@ -598,7 +634,7 @@ function marchaJanela(marchas, rpmAm, ini, fim, maxMarcha) {
 }
 
 var GT_PLACA = new Map();   // device → placa, preenchido no login (ver abaixo)
-async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev, mch, velPorDev) {
+async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev, mch, velPorDev, rampaPorDev) {
   // a janela é o dia em BRT (UTC-3), não em UTC
   const de = `${dia}T03:00:00.000Z`;
   const ate = new Date(new Date(de).getTime() + 864e5 - 1).toISOString();
@@ -669,7 +705,7 @@ async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev,
       // veículo (Renan, 31/08/2026) — o km não some, aparece cobrado no ranking
       const uni = uniPorDev && uniPorDev.get(t.device?.id);
       if (uni) {
-        const g = semLogin.get(uni) || { km: 0, dir: 0, idle: 0, v1: 0, v2: 0, v3: 0, n: 0, rpmV: 0, rpmB: 0, rpmA: 0, rpmR: 0 };
+        const g = semLogin.get(uni) || { km: 0, dir: 0, idle: 0, v1: 0, v2: 0, v3: 0, n: 0, rpmV: 0, rpmB: 0, rpmA: 0, rpmR: 0, rpmAD: 0, rpmSR: 0 };
         g.km += +t.distance || 0; g.dir += gtSeg(t.drivingDuration); g.idle += gtSeg(t.idlingDuration);
         g.v1 += gtSeg(t.speedRange1Duration); g.v2 += gtSeg(t.speedRange2Duration); g.v3 += gtSeg(t.speedRange3Duration);
         g.n++;
@@ -677,7 +713,9 @@ async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev,
         const am = rpmPorDev && rpmPorDev.get(dev);
         const ti = new Date(t.start).getTime(), tf = new Date(t.stop).getTime();
         somaLitros(g, dev, ti, tf, +t.distance || 0);
-        if (am) { const j = rpmJanela(am, ti, tf); g.rpmV += j.verde; g.rpmB += j.branca; g.rpmA += j.amarela; g.rpmR += j.rodando; }
+        if (am) { const j = rpmJanela(am, ti, tf, rampaPorDev && rampaPorDev.get(dev));
+                  g.rpmV += j.verde; g.rpmB += j.branca; g.rpmA += j.amarela; g.rpmR += j.rodando;
+                  g.rpmAD += j.amarDesc; g.rpmSR += j.comRampa ? j.semRampa : j.rodando; if (j.comRampa) g.rpmCR = true; }
         if (mch && am) { const k = marchaJanela(mch.porDev.get(dev), am, ti, tf, mch.maxG.get(dev));
                          g.mchR = (g.mchR || 0) + k.ruim; g.mchT = (g.mchT || 0) + k.total; }
         if (mch && velPorDev) { const bg = banguelaJanela(mch.porDev.get(dev), velPorDev.get(dev), ti, tf);
@@ -701,8 +739,11 @@ async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev,
     const pl = GT_PLACA.get(t.device?.id);
     if (pl) { g.pla = g.pla || {}; g.pla[pl] = (g.pla[pl] || 0) + (+t.distance || 0); }
     const am = rpmPorDev && rpmPorDev.get(t.device?.id);
-    if (am) { const j = rpmJanela(am, ini, fim); g.rpmV = (g.rpmV || 0) + j.verde; g.rpmB = (g.rpmB || 0) + j.branca;
-              g.rpmA = (g.rpmA || 0) + j.amarela; g.rpmR = (g.rpmR || 0) + j.rodando; }
+    if (am) { const j = rpmJanela(am, ini, fim, rampaPorDev && rampaPorDev.get(t.device?.id));
+              g.rpmV = (g.rpmV || 0) + j.verde; g.rpmB = (g.rpmB || 0) + j.branca;
+              g.rpmA = (g.rpmA || 0) + j.amarela; g.rpmR = (g.rpmR || 0) + j.rodando;
+              g.rpmAD = (g.rpmAD || 0) + j.amarDesc; g.rpmSR = (g.rpmSR || 0) + (j.comRampa ? j.semRampa : j.rodando);
+              if (j.comRampa) g.rpmCR = true; }
     if (mch && am) { const k = marchaJanela(mch.porDev.get(t.device?.id), am, ini, fim, mch.maxG.get(t.device?.id));
                      g.mchR = (g.mchR || 0) + k.ruim; g.mchT = (g.mchT || 0) + k.total; }
     if (mch && velPorDev) { const bg = banguelaJanela(mch.porDev.get(t.device?.id), velPorDev.get(t.device?.id), ini, fim);
@@ -749,7 +790,10 @@ async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev,
       registros: g.n,
       bruto: { viagens: g.n, seg: { dir: g.dir, idle: g.idle, v1: g.v1, v2: g.v2, v3: g.v3 },
                rpm: { verde: Math.round(g.rpmV || 0), branca: Math.round(g.rpmB || 0), amarela: Math.round(g.rpmA || 0),
-                      rodando: Math.round(g.rpmR || 0), faixa: RPM_VERDE_TXT, regra: RPM_REGRA_TXT },
+                      rodando: Math.round(g.rpmR || 0), faixa: RPM_VERDE_TXT, regra: RPM_REGRA_TXT,
+                      // amarela em descida (fora da conta) e tempo rodando sem rampa medida;
+                      // sem GPS no dia o amarDesc fica de fora e a nota é a % da verde
+                      ...(rampaPorDev ? { amarDesc: Math.round(g.rpmAD || 0), semRampa: Math.round(g.rpmSR || 0) } : {}) },
                marcha: { ruim: Math.round(g.mchR || 0), total: Math.round(g.mchT || 0) },
                banguela: { neutro: Math.round(g.bgN || 0), movimento: Math.round(g.bgM || 0) },
                // km por placa no dia — o mensal escolhe a mais rodada
@@ -782,7 +826,10 @@ async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev,
       bruto: { semLogin: true, viagens: g.n, seg: { dir: g.dir, idle: g.idle, v1: g.v1, v2: g.v2, v3: g.v3 },
                kmLitros: g.lit > 0 ? Math.round(g.kmLit) : undefined, litRuim: g.litRuim || undefined,
                rpm: { verde: Math.round(g.rpmV || 0), branca: Math.round(g.rpmB || 0), amarela: Math.round(g.rpmA || 0),
-                      rodando: Math.round(g.rpmR || 0), faixa: RPM_VERDE_TXT, regra: RPM_REGRA_TXT },
+                      rodando: Math.round(g.rpmR || 0), faixa: RPM_VERDE_TXT, regra: RPM_REGRA_TXT,
+                      // amarela em descida (fora da conta) e tempo rodando sem rampa medida;
+                      // sem GPS no dia o amarDesc fica de fora e a nota é a % da verde
+                      ...(rampaPorDev ? { amarDesc: Math.round(g.rpmAD || 0), semRampa: Math.round(g.rpmSR || 0) } : {}) },
                marcha: { ruim: Math.round(g.mchR || 0), total: Math.round(g.mchT || 0) },
                banguela: { neutro: Math.round(g.bgN || 0), movimento: Math.round(g.bgM || 0) } },
       _nome: 'Sem Login · ' + uni, _uo: null, _uni: uni,
@@ -1353,7 +1400,8 @@ async function geotabVelDia(dia, cred) {
       const id = r.device && r.device.id; if (!id) continue;
       const v = +r.speed; if (!isFinite(v)) continue;
       let a = porDev.get(id); if (!a) { a = []; porDev.set(id, a); }
-      a.push({ t: new Date(r.dateTime).getTime(), v });
+      // latitude/longitude vão junto: é da trilha do GPS que sai a rampa (relevo)
+      a.push({ t: new Date(r.dateTime).getTime(), v, la: +r.latitude, lo: +r.longitude });
     }
     if (lote.length < 50000) break;
     from = new Date(new Date(lote[lote.length - 1].dateTime).getTime() + 1).toISOString();
@@ -3735,7 +3783,16 @@ if (MODE === 'faixa') {
       let rpmDev;
       try { rpmDev = (await geotabRpmDia(dia, GT)).porDev; }
       catch (e) { console.log(`${dia}: RPM FALHOU (${e.message.slice(0, 80)}) — dia pulado, nada gravado`); puladas++; continue; }
-      const novas = await geotabDia(dia, GT, GT_USERS, GT_RULES, GT_UNIDEV, rpmDev, null, null);
+      // rampa do dia (GPS + relevo) para tirar a amarela em descida da conta.
+      // Sem GPS o dia é pulado: gravaria a régua só verde sem o desconto por
+      // cima de um dia que pode ser refeito depois
+      let rampaDia, rampaRot = '';
+      if (process.env.CE_RAMPA !== '0') {
+        try { const v = await geotabVelDia(dia, GT); rampaDia = await rampasDia(v.porDev, new Set(rpmDev.keys()));
+              const L = rampaDia._log; rampaRot = ` · rampa em ${L.veiculos} veículo(s), ${L.km} km`; }
+        catch (e) { console.log(`${dia}: GPS/rampa FALHOU (${e.message.slice(0, 80)}) — dia pulado, nada gravado`); puladas++; continue; }
+      }
+      const novas = await geotabDia(dia, GT, GT_USERS, GT_RULES, GT_UNIDEV, rpmDev, null, null, rampaDia);
       const atuais = await sbTodos(`ce_diario?select=id,chave,km,rpm_verde_pct,bruto&dia=eq.${dia}&fonte=eq.Geotab`);
       const porChave = new Map(atuais.map(a => [a.chave, a]));
       const patch = [], antes = [], depois = [];
@@ -3757,7 +3814,7 @@ if (MODE === 'faixa') {
         if (!r.ok) throw new Error(`ce_diario: ${r.status} ${(await r.text()).slice(0, 200)}`);
         gravadas += Math.min(500, patch.length - i);
       }
-      console.log(`${dia}: ${patch.length} linha(s) · nota rpm ${f1(pondKm(antes))} → ${f1(pondKm(depois))}`
+      console.log(`${dia}: ${patch.length} linha(s) · nota rpm ${f1(pondKm(antes))} → ${f1(pondKm(depois))}` + rampaRot
         + (SECO ? '' : ` · ${gravadas} gravada(s)`));
       dias++; gravTot += gravadas;
     } catch (e) { console.log(`${dia}: FALHOU (${String(e.message || e).slice(0, 120)})`); puladas++; }
@@ -3838,14 +3895,21 @@ for (let i = 0; i < AGENDA.length; i++) {
           mchRot = ` · marcha: ${m.total} amostra(s)`;
         } catch (e) { mchRot = ` · marcha FALHOU (${e.message.slice(0, 80)})`; }
       }
-      // velocidade do dia: só é preciso quando há marcha (banguela = neutro
-      // em movimento). Falha aqui não derruba o dia.
-      let velDia = null, bgRot = '';
-      if (mchDia && process.env.CE_BANGUELA !== '0') {
+      // GPS do dia (LogRecord): velocidade para a banguela (neutro em
+      // movimento) e trilha para a rampa da faixa amarela em descida. Falha
+      // aqui não derruba o dia: a banguela fica vazia e a amarela conta inteira.
+      let velDia = null, bgRot = '', rampaDia = null, rampaRot = '';
+      if (rpmDev) {
         try { const v = await geotabVelDia(dia, GT); velDia = v.porDev; }
-        catch (e) { bgRot = ` · banguela FALHOU (${e.message.slice(0, 60)})`; }
+        catch (e) { bgRot = ` · GPS FALHOU (${e.message.slice(0, 60)})`; }
+        if (velDia) try {
+          rampaDia = await rampasDia(velDia, new Set(rpmDev.keys()));
+          const L = rampaDia._log;
+          rampaRot = ` · rampa: ${L.veiculos} veículo(s), ${L.km} km, ${L.tiles} tile(s) do relevo`;
+        } catch (e) { rampaRot = ` · rampa FALHOU (${e.message.slice(0, 60)})`; }
       }
-      const lg = await geotabDia(dia, GT, GT_USERS, GT_RULES, GT_UNIDEV, rpmDev, mchDia, velDia);
+      const lg = await geotabDia(dia, GT, GT_USERS, GT_RULES, GT_UNIDEV, rpmDev, mchDia,
+        mchDia && process.env.CE_BANGUELA !== '0' ? velDia : null, rampaDia);
       await garanteMotoristas(lg);
       total += await gravaDiario(lg);
       const comRpm = lg.filter(l => l.rpm_verde_pct != null).length;
@@ -3853,7 +3917,7 @@ for (let i = 0; i < AGENDA.length; i++) {
       console.log(`${dia}: Geotab → ${lg.length} motorista(s) · ${Math.round(lg.reduce((s, l) => s + (+l.km || 0), 0))} km`
         + rpmRot + (rpmDev ? ` · faixa verde em ${comRpm} linha(s)` : '')
         + mchRot + (mchDia ? ` · marchas em ${comMch} linha(s)` : '')
-        + bgRot + (velDia ? ` · banguela em ${lg.filter(l => l.banguela_pct != null).length} linha(s)` : '')
+        + bgRot + (velDia && mchDia ? ` · banguela em ${lg.filter(l => l.banguela_pct != null).length} linha(s)` : '') + rampaRot
         + ` · litros em ${lg.filter(l => l.litros != null).length} linha(s)`
         + (lg._fuel && lg._fuel.erro ? ` · FuelUsed FALHOU (${lg._fuel.erro.slice(0, 80)})` : ''));
     } catch (e) { console.log(`${dia} Geotab: ${e.message}`); falhas++; }
