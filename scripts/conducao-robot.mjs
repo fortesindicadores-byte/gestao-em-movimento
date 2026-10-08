@@ -503,9 +503,24 @@ async function trilhaRampa(pts, alt) {
 // dias). Falha aqui não derruba o dia: o veículo só fica sem rampa e a
 // amarela dele conta inteira no denominador.
 let DEM_RODADA = null;
-async function rampasDia(gpsPorDev, soDevs) {
+async function rampasDia(gpsPorDev, soDevs, dia, cred) {
   if (!DEM_RODADA) DEM_RODADA = demKit();
-  const out = new Map(); let km = 0, semGps = 0;
+  const out = new Map(); let km = 0, semGps = 0, buscados = 0;
+  /* a leitura da frota inteira pagina pela hora do último registro, e o
+     Geotab não devolve o lote em ordem de hora entre veículos: num dia com
+     mais de uma página, parte da frota volta sem trilha (08/10/2026, 1/9:
+     32 de ~100). Quem tem RPM e ficou com menos de 10 pontos é buscado
+     veículo a veículo, que pagina certo. */
+  if (soDevs && dia && cred) {
+    const falta = [...soDevs].filter(d => !((gpsPorDev.get(d) || []).length >= 10));
+    const de0 = `${dia}T03:00:00.000Z`, fim = new Date(new Date(de0).getTime() + 864e5 - 1).toISOString();
+    let i = 0;
+    const trab = async () => { while (i < falta.length) { const dev = falta[i++];
+      try { const logs = await geotabDevDia('LogRecord', {}, dev, de0, fim, cred);
+            if (logs.length) { buscados++; gpsPorDev.set(dev, logs.map(r => ({ t: new Date(r.dateTime).getTime(), v: +r.speed, la: +r.latitude, lo: +r.longitude })).sort((a, b) => a.t - b.t)); } }
+      catch (e) { /* fica sem rampa */ } } };
+    await Promise.all([trab(), trab(), trab()]);
+  }
   for (const [dev, am] of gpsPorDev) {
     if (soDevs && !soDevs.has(dev)) continue;
     const pts = am.filter(p => isFinite(p.la) && isFinite(p.lo) && Math.abs(p.la) > .01);
@@ -513,7 +528,7 @@ async function rampasDia(gpsPorDev, soDevs) {
     try { const tr = await trilhaRampa(pts, DEM_RODADA.alt); km += tr.km; out.set(dev, tr.rampaEm); }
     catch (e) { semGps++; }
   }
-  out._log = { veiculos: out.size, semGps, km: Math.round(km), tiles: [...DEM_RODADA.tiles.values()].filter(Boolean).length };
+  out._log = { veiculos: out.size, de: soDevs ? soDevs.size : gpsPorDev.size, buscados, semGps, km: Math.round(km), tiles: [...DEM_RODADA.tiles.values()].filter(Boolean).length };
   return out;
 }
 // um tipo do Geotab de UM veículo num dia, paginando
@@ -3788,8 +3803,8 @@ if (MODE === 'faixa') {
       // cima de um dia que pode ser refeito depois
       let rampaDia, rampaRot = '';
       if (process.env.CE_RAMPA !== '0') {
-        try { const v = await geotabVelDia(dia, GT); rampaDia = await rampasDia(v.porDev, new Set(rpmDev.keys()));
-              const L = rampaDia._log; rampaRot = ` · rampa em ${L.veiculos} veículo(s), ${L.km} km`; }
+        try { const v = await geotabVelDia(dia, GT); rampaDia = await rampasDia(v.porDev, new Set(rpmDev.keys()), dia, GT);
+              const L = rampaDia._log; rampaRot = ` · rampa em ${L.veiculos} de ${L.de} veículo(s) com RPM (${L.buscados} buscado(s) um a um), ${L.km} km`; }
         catch (e) { console.log(`${dia}: GPS/rampa FALHOU (${e.message.slice(0, 80)}) — dia pulado, nada gravado`); puladas++; continue; }
       }
       const novas = await geotabDia(dia, GT, GT_USERS, GT_RULES, GT_UNIDEV, rpmDev, null, null, rampaDia);
@@ -3903,9 +3918,9 @@ for (let i = 0; i < AGENDA.length; i++) {
         try { const v = await geotabVelDia(dia, GT); velDia = v.porDev; }
         catch (e) { bgRot = ` · GPS FALHOU (${e.message.slice(0, 60)})`; }
         if (velDia) try {
-          rampaDia = await rampasDia(velDia, new Set(rpmDev.keys()));
+          rampaDia = await rampasDia(velDia, new Set(rpmDev.keys()), dia, GT);
           const L = rampaDia._log;
-          rampaRot = ` · rampa: ${L.veiculos} veículo(s), ${L.km} km, ${L.tiles} tile(s) do relevo`;
+          rampaRot = ` · rampa: ${L.veiculos} de ${L.de} veículo(s) com RPM (${L.buscados} buscado(s) um a um), ${L.km} km, ${L.tiles} tile(s) do relevo`;
         } catch (e) { rampaRot = ` · rampa FALHOU (${e.message.slice(0, 60)})`; }
       }
       const lg = await geotabDia(dia, GT, GT_USERS, GT_RULES, GT_UNIDEV, rpmDev, mchDia,
