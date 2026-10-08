@@ -56,7 +56,7 @@ const GT_SERVER = process.env.GEOTAB_SERVER || 'my.geotab.com';
 // caminho inverso desta conta). Os limites são o valor da métrica que zera o
 // pilar — é aqui que se calibra quando o Renan fechar a régua com dados reais.
 const REGUA = {
-  rpm:    { direto: true },                    // % na faixa verde já é a nota
+  rpm:    { direto: true },                    // nota das três faixas (rpmNotaDia) já é a nota
   freio:  { direto: true },                    // % de uso de freio motor idem
   idle:   { zeraEm: 25 },                      // 25% do tempo em marcha lenta → 0
   // 3 acelerações bruscas/100 km → 0 (Renan, 03/09/2026). A regra padrão do
@@ -349,6 +349,27 @@ const RPM_LENTA = +process.env.CE_RPM_LENTA || 900;
 const RPM_VERDE_TXT = String(process.env.CE_RPM_VERDE || '1000-1400');
 const [RPM_V_MIN, RPM_V_MAX] = RPM_VERDE_TXT.split('-').map(Number);
 const RPM_GAP_MS = 120 * 1000;   // buraco entre amostras > 2 min não conta tempo
+/* TRÊS FAIXAS PONTUAM, CADA UMA COM O SEU PESO (Renan, 08/10/2026: "para não
+   onerarmos tanto a faixa amarela… divida em 3 pontuações, sendo 1, 2/3 e
+   1/3"). Cada segundo em movimento vale: verde (1.000–1.400) o ponto inteiro,
+   branca (1.400–1.800) 2/3, amarela (1.800–2.300) 1/3; abaixo da verde (entre
+   a marcha lenta e 1.000) e vermelha (acima de 2.300) não valem nada. A nota
+   do pilar é a média desses valores no tempo rodando. O rpm_verde_pct continua
+   sendo só a % na verde (é a medida que os painéis mostram); a nota sai das
+   três faixas guardadas em bruto.rpm (rpmNotaDia). */
+const RPM_BRANCA_MAX  = +process.env.CE_RPM_BRANCA  || 1800;
+const RPM_AMARELA_MAX = +process.env.CE_RPM_AMARELA || 2300;
+const PESO_FAIXA = { verde: 1, branca: 2 / 3, amarela: 1 / 3 };
+const RPM_REGRA_TXT = `verde ${RPM_VERDE_TXT}=1 · branca até ${RPM_BRANCA_MAX}=2/3 · amarela até ${RPM_AMARELA_MAX}=1/3`;
+// nota do pilar num dia: das três faixas quando o dia já foi apurado com
+// elas; dia antigo (só verde no bruto) cai na % da verde, como era
+function rpmNotaDia(d) {
+  const r = d && d.bruto && d.bruto.rpm;
+  if (r && r.branca != null && r.amarela != null && (+r.rodando || 0) > 60)
+    return ((+r.verde || 0) * PESO_FAIXA.verde + (+r.branca || 0) * PESO_FAIXA.branca
+          + (+r.amarela || 0) * PESO_FAIXA.amarela) / +r.rodando * 100;
+  return d ? d.rpm_verde_pct : null;
+}
 
 // baixa TODAS as amostras de rotação do dia, paginando pela data da última
 async function geotabRpmDia(dia, cred) {
@@ -375,7 +396,7 @@ async function geotabRpmDia(dia, cred) {
 // tempo na faixa verde e tempo rodando (rpm > marcha lenta) numa janela.
 // Cada amostra vale até a próxima (com teto de RPM_GAP_MS, p/ buraco de sinal).
 function rpmJanela(amostras, ini, fim) {
-  let verde = 0, rodando = 0;
+  let verde = 0, branca = 0, amarela = 0, rodando = 0;
   for (let i = 0; i < amostras.length; i++) {
     const a = amostras[i];
     if (a.t > fim) break;
@@ -386,8 +407,10 @@ function rpmJanela(amostras, ini, fim) {
     const dt = (t1 - t0) / 1000;
     rodando += dt;
     if (a.rpm >= RPM_V_MIN && a.rpm <= RPM_V_MAX) verde += dt;
+    else if (a.rpm > RPM_V_MAX && a.rpm <= RPM_BRANCA_MAX) branca += dt;
+    else if (a.rpm > RPM_BRANCA_MAX && a.rpm <= RPM_AMARELA_MAX) amarela += dt;
   }
-  return { verde, rodando };
+  return { verde, branca, amarela, rodando };
 }
 
 /* ── USO DE MARCHAS (Renan, 01/09/2026) ────────────────────────────────────
@@ -562,7 +585,7 @@ async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev,
       // veículo (Renan, 31/08/2026) — o km não some, aparece cobrado no ranking
       const uni = uniPorDev && uniPorDev.get(t.device?.id);
       if (uni) {
-        const g = semLogin.get(uni) || { km: 0, dir: 0, idle: 0, v1: 0, v2: 0, v3: 0, n: 0, rpmV: 0, rpmR: 0 };
+        const g = semLogin.get(uni) || { km: 0, dir: 0, idle: 0, v1: 0, v2: 0, v3: 0, n: 0, rpmV: 0, rpmB: 0, rpmA: 0, rpmR: 0 };
         g.km += +t.distance || 0; g.dir += gtSeg(t.drivingDuration); g.idle += gtSeg(t.idlingDuration);
         g.v1 += gtSeg(t.speedRange1Duration); g.v2 += gtSeg(t.speedRange2Duration); g.v3 += gtSeg(t.speedRange3Duration);
         g.n++;
@@ -570,7 +593,7 @@ async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev,
         const am = rpmPorDev && rpmPorDev.get(dev);
         const ti = new Date(t.start).getTime(), tf = new Date(t.stop).getTime();
         somaLitros(g, dev, ti, tf, +t.distance || 0);
-        if (am) { const j = rpmJanela(am, ti, tf); g.rpmV += j.verde; g.rpmR += j.rodando; }
+        if (am) { const j = rpmJanela(am, ti, tf); g.rpmV += j.verde; g.rpmB += j.branca; g.rpmA += j.amarela; g.rpmR += j.rodando; }
         if (mch && am) { const k = marchaJanela(mch.porDev.get(dev), am, ti, tf, mch.maxG.get(dev));
                          g.mchR = (g.mchR || 0) + k.ruim; g.mchT = (g.mchT || 0) + k.total; }
         if (mch && velPorDev) { const bg = banguelaJanela(mch.porDev.get(dev), velPorDev.get(dev), ti, tf);
@@ -594,7 +617,8 @@ async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev,
     const pl = GT_PLACA.get(t.device?.id);
     if (pl) { g.pla = g.pla || {}; g.pla[pl] = (g.pla[pl] || 0) + (+t.distance || 0); }
     const am = rpmPorDev && rpmPorDev.get(t.device?.id);
-    if (am) { const j = rpmJanela(am, ini, fim); g.rpmV = (g.rpmV || 0) + j.verde; g.rpmR = (g.rpmR || 0) + j.rodando; }
+    if (am) { const j = rpmJanela(am, ini, fim); g.rpmV = (g.rpmV || 0) + j.verde; g.rpmB = (g.rpmB || 0) + j.branca;
+              g.rpmA = (g.rpmA || 0) + j.amarela; g.rpmR = (g.rpmR || 0) + j.rodando; }
     if (mch && am) { const k = marchaJanela(mch.porDev.get(t.device?.id), am, ini, fim, mch.maxG.get(t.device?.id));
                      g.mchR = (g.mchR || 0) + k.ruim; g.mchT = (g.mchT || 0) + k.total; }
     if (mch && velPorDev) { const bg = banguelaJanela(mch.porDev.get(t.device?.id), velPorDev.get(t.device?.id), ini, fim);
@@ -640,7 +664,8 @@ async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev,
       cambio_ruim_pct: (g.mchT || 0) > 60 ? g.mchR / g.mchT * 100 : null,
       registros: g.n,
       bruto: { viagens: g.n, seg: { dir: g.dir, idle: g.idle, v1: g.v1, v2: g.v2, v3: g.v3 },
-               rpm: { verde: Math.round(g.rpmV || 0), rodando: Math.round(g.rpmR || 0), faixa: RPM_VERDE_TXT },
+               rpm: { verde: Math.round(g.rpmV || 0), branca: Math.round(g.rpmB || 0), amarela: Math.round(g.rpmA || 0),
+                      rodando: Math.round(g.rpmR || 0), faixa: RPM_VERDE_TXT, regra: RPM_REGRA_TXT },
                marcha: { ruim: Math.round(g.mchR || 0), total: Math.round(g.mchT || 0) },
                banguela: { neutro: Math.round(g.bgN || 0), movimento: Math.round(g.bgM || 0) },
                // km por placa no dia — o mensal escolhe a mais rodada
@@ -672,7 +697,8 @@ async function geotabDia(dia, cred, cacheUsuarios, regras, uniPorDev, rpmPorDev,
       registros: g.n,
       bruto: { semLogin: true, viagens: g.n, seg: { dir: g.dir, idle: g.idle, v1: g.v1, v2: g.v2, v3: g.v3 },
                kmLitros: g.lit > 0 ? Math.round(g.kmLit) : undefined, litRuim: g.litRuim || undefined,
-               rpm: { verde: Math.round(g.rpmV || 0), rodando: Math.round(g.rpmR || 0), faixa: RPM_VERDE_TXT },
+               rpm: { verde: Math.round(g.rpmV || 0), branca: Math.round(g.rpmB || 0), amarela: Math.round(g.rpmA || 0),
+                      rodando: Math.round(g.rpmR || 0), faixa: RPM_VERDE_TXT, regra: RPM_REGRA_TXT },
                marcha: { ruim: Math.round(g.mchR || 0), total: Math.round(g.mchT || 0) },
                banguela: { neutro: Math.round(g.bgN || 0), movimento: Math.round(g.bgM || 0) } },
       _nome: 'Sem Login · ' + uni, _uo: null, _uni: uni,
@@ -879,8 +905,14 @@ async function recalculaMes(de, ate) {
       ds.forEach(d => { const v = d[campo]; if (v == null) return; const w = (+d.km > 0 ? +d.km : 1); n += v * w; p += w; });
       return p ? n / p : null;
     };
+    // pond por função: a nota do rpm é do dia (três faixas), não uma coluna
+    const pondF = fn => {
+      let n = 0, p = 0;
+      ds.forEach(d => { const v = fn(d); if (v == null || !isFinite(v)) return; const w = (+d.km > 0 ? +d.km : 1); n += v * w; p += w; });
+      return p ? n / p : null;
+    };
     const notas = {
-      rpm:    nota('rpm',    pond('rpm_verde_pct')),
+      rpm:    nota('rpm',    pondF(rpmNotaDia)),
       idle:   nota('idle',   pond('idle_pct')),
       acel:   (() => { const v = pond('acel_100km'); if (v != null) acelDist.push(v); return nota('acel', v); })(),
       vel:    (() => { const v = pond('vel_excesso_pct'); if (v != null) velDist.push(v); return nota('vel', v); })(),
@@ -3323,7 +3355,7 @@ if (MODE === 'faixa') {
   if (!GT) { console.error('Geotab: sem credencial'); process.exit(1); }
   if (!SB_KEY) { console.error('GEM_SUPABASE_SERVICE_KEY ausente'); process.exit(1); }
   const SECO = process.env.CE_SECO === '1';
-  console.log(`faixa verde ${RPM_VERDE_TXT} rpm · ${DE} → ${ATE}${SECO ? ' · SECO (não grava)' : ''}`);
+  console.log(`régua ${RPM_REGRA_TXT} · ${DE} → ${ATE}${SECO ? ' · SECO (não grava)' : ''}`);
   const pondKm = ls => { let n = 0, p = 0; ls.forEach(l => { if (l.v == null) return; const w = +l.km > 0 ? +l.km : 1; n += l.v * w; p += w; }); return p ? n / p : null; };
   const f1 = v => v == null ? '—' : v.toFixed(1) + '%';
   let dias = 0, gravTot = 0, semLinha = 0, puladas = 0; const acA = [], acD = [];
@@ -3341,8 +3373,10 @@ if (MODE === 'faixa') {
       for (const l of novas) {
         const a = porChave.get(l.chave);
         if (!a) { semLinha++; continue; }
-        antes.push({ v: a.rpm_verde_pct, km: a.km }); depois.push({ v: l.rpm_verde_pct, km: a.km });
-        acA.push({ v: a.rpm_verde_pct, km: a.km }); acD.push({ v: l.rpm_verde_pct, km: a.km });
+        // nota do pilar antes (como estava gravada) × depois (régua vigente)
+        const vA = rpmNotaDia(a), vD = rpmNotaDia(l);
+        antes.push({ v: vA, km: a.km }); depois.push({ v: vD, km: a.km });
+        acA.push({ v: vA, km: a.km }); acD.push({ v: vD, km: a.km });
         const bruto = { ...(a.bruto || {}), rpm: l.bruto && l.bruto.rpm };
         patch.push({ dia, chave: l.chave, fonte: 'Geotab', rpm_verde_pct: l.rpm_verde_pct, bruto });
       }
@@ -3354,12 +3388,12 @@ if (MODE === 'faixa') {
         if (!r.ok) throw new Error(`ce_diario: ${r.status} ${(await r.text()).slice(0, 200)}`);
         gravadas += Math.min(500, patch.length - i);
       }
-      console.log(`${dia}: ${patch.length} linha(s) · faixa verde ${f1(pondKm(antes))} → ${f1(pondKm(depois))}`
+      console.log(`${dia}: ${patch.length} linha(s) · nota rpm ${f1(pondKm(antes))} → ${f1(pondKm(depois))}`
         + (SECO ? '' : ` · ${gravadas} gravada(s)`));
       dias++; gravTot += gravadas;
     } catch (e) { console.log(`${dia}: FALHOU (${String(e.message || e).slice(0, 120)})`); puladas++; }
   }
-  console.log(`\n${dias} dia(s) · faixa verde média (ponderada por km) ${f1(pondKm(acA))} → ${f1(pondKm(acD))}`
+  console.log(`\n${dias} dia(s) · nota rpm média (ponderada por km) ${f1(pondKm(acA))} → ${f1(pondKm(acD))}`
     + ` · ${gravTot} linha(s) gravada(s) · ${semLinha} motorista-dia sem linha no banco · ${puladas} dia(s) pulado(s)`);
   if (dias && !SECO) { const n = await recalculaMes(DE.slice(0, 8) + '01', ATE); console.log(`recalculado: ${n} linha(s) em ce_scores_mensais`); }
   process.exit(0);
