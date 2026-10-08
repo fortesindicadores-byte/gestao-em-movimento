@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DriverPro">
-<meta name="build" content="202610081700">
+<meta name="build" content="202610082000">
 <title>DriverPro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -551,7 +551,7 @@ function pinta(){
   var VOLTA = 2 * Math.PI * 42;
   $('arco').style.strokeDasharray = VOLTA; $('arco').style.strokeDashoffset = VOLTA * (1 - (nota || 0) / 100);
   $('score').textContent = nota != null ? nota.toFixed(1).replace('.', ',') : '—';
-  $('faixaTxt').textContent = nota == null ? 'Sem nota ainda' : nota >= 85 ? 'Elite' : nota >= 70 ? 'Bom' : 'Precisa melhorar';
+  $('faixaTxt').textContent = nota == null ? 'Sem nota ainda' : nota >= 85 ? 'Elite' : nota >= 75 ? 'Bom' : 'Precisa melhorar';
   $('pilares').innerHTML = PILARES.map(function(p){
     var n = atual ? atual[p.k] : null;
     return '<div class="pilar"><div class="cab"><b>' + nomeCheio(p) + '</b><div class="nota">' + (n != null ? Math.round(n) : '—') + '</div></div>'

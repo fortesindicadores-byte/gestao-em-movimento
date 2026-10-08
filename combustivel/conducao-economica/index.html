@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610081700">
+<meta name="build" content="202610082000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -557,8 +557,8 @@ table.dre thead th.sortable:hover{color:var(--laranja);}
     <div class="s-sec">Faixas</div>
     <div class="s-leg">
       <span><i class="sq lg-g"></i>≥ 85 — Elite</span>
-      <span><i class="sq lg-y"></i>70 a 84,9 — Bom</span>
-      <span><i class="sq lg-r"></i>&lt; 70 — Atenção</span>
+      <span><i class="sq lg-y"></i>75 a 84,9 — Bom</span>
+      <span><i class="sq lg-r"></i>&lt; 75 — Atenção</span>
     </div>
 
     <div class="s-volta">
@@ -1363,10 +1363,10 @@ function sortRankRows(rows){
     return dir*(av-bv);
   });
 }
-function indClass(v){ if(v==null)return 'ind-dash'; if(v>=85)return 'ind-green'; if(v>=70)return 'ind-yellow'; return 'ind-red'; }
+function indClass(v){ if(v==null)return 'ind-dash'; if(v>=85)return 'ind-green'; if(v>=75)return 'ind-yellow'; return 'ind-red'; }
 function scorePill(v){
   if(v==null) return '<span class="ind-dash">—</span>';
-  const cls=v>=85?'score-green':v>=70?'score-yellow':'score-red';
+  const cls=v>=85?'score-green':v>=75?'score-yellow':'score-red';
   return `<span class="score-pill ${cls}">${v.toFixed(1)}</span>`;
 }
 function renderRanking(data){
@@ -1387,7 +1387,7 @@ function renderRanking(data){
        pontuação ficou com uma só, desencontrada da fileira. Agora ela usa a
        MESMA classe `.v` das outras, então o alinhamento é o mesmo por
        construção, não por coincidência de tamanho. */
-    const cls=r.pont==null?'—':r.pont>=85?'Elite':r.pont>=70?'Bom':'Atenção';
+    const cls=r.pont==null?'—':r.pont>=85?'Elite':r.pont>=75?'Bom':'Atenção';
     return `<tr class="rank-${canonical&&rank<=3?rank:'x'}">
       <td class="rank-num">${canonical&&rank<=3?medals[i]:rank}</td>
       <td class="conta">${r.unit}<div class="mot-sub">${SRC_OF[r.unit]||''}</div></td>
@@ -1749,7 +1749,7 @@ function renderNotaKml(){
   const mot = nkMotoristas(getFiltered());
   const reta = E && mot.length>=3 ? E.reta(mot.map(m=>m.nota), mot.map(m=>m.kml)) : null;
   const faixa = (lo,hi)=>{ const g=mot.filter(m=>m.nota>=lo && m.nota<hi); const k=g.reduce((s,m)=>s+m.k,0), l=g.reduce((s,m)=>s+m.l,0); return { kml: l>0?k/l:null, n:g.length }; };
-  const alto=faixa(85,1e9), baixo=faixa(-1e9,70);
+  const alto=faixa(85,1e9), baixo=faixa(-1e9,75);
   const dif = nkFin(alto.kml)&&nkFin(baixo.kml)&&baixo.kml>0 ? (alto.kml/baixo.kml-1)*100 : null;
   /* CARDS COM A LEITURA EM PORTUGUÊS (Renan, 06/10/2026: "Esses insights que
      deveria aparecer nos cards") — o número e, embaixo, o que ele quer dizer. */
@@ -1777,7 +1777,7 @@ function renderNotaKml(){
       pct!=null ? `≈ ${pct>=0?'+':''}${nkBr(pct,1)}% de km/L · de 60 para 80 pontos, ~${nkBr(Math.abs(diesel20),0)}% ${diesel20>=0?'menos':'mais'} diesel` : '—',
       'Inclinação da tendência entre motoristas no mesmo mês e modelo. O diesel é para o mesmo km rodado.'],
     ['Km/L de quem tira 85+', alto.n ? nkBr(alto.kml,2) : '—',
-      baixo.n ? `contra ${nkBr(baixo.kml,2)} abaixo de 70`+(dif!=null?` (${dif>=0?'+':''}${nkBr(dif,1)}%)`:'') : 'ninguém abaixo de 70 no recorte',
+      baixo.n ? `contra ${nkBr(baixo.kml,2)} abaixo de 75`+(dif!=null?` (${dif>=0?'+':''}${nkBr(dif,1)}%)`:'') : 'ninguém abaixo de 75 no recorte',
       'Σ km ÷ Σ litros de cada grupo de nota, no recorte do topo. Mistura modelos — use o filtro Modelo para comparar iguais.'],
     ['A nota prevê o km/L? (MAPE)', nkFin(mModelo) ? nkBr(mModelo,1)+'%' : '—',
       nkFin(mChute) ? `chutando a média: ${nkBr(mChute,1)}%`+(ganho==null?'':ganho>=0.5?` · a nota tira ${nkBr(ganho,0)}% do erro`:' · a nota não reduz o erro') : 'poucos motoristas por mês e modelo',
@@ -1998,7 +1998,7 @@ function renderChart(){
   /* PADRÃO DE BARRA DO PAINEL KM (Renan, 20/09/2026): cor da faixa em hex fixo,
      alfa D9 no foco / 33 fora / A6 sem foco, borda cheia, canto 3 */
   const isMobile=window.innerWidth<768;
-  const hexDe=v=> v==null ? '#94A3B8' : v>=85 ? '#3BB33B' : v>=70 ? '#F4A100' : '#FF6666';
+  const hexDe=v=> v==null ? '#94A3B8' : v>=85 ? '#3BB33B' : v>=75 ? '#F4A100' : '#FF6666';
   const barColor=avgByMonth.map((v,i)=>{
     if(v==null) return 'transparent';
     const selected=!filtroAtivo||(vigByMonthPos[i]&&sv.includes(vigByMonthPos[i]));
@@ -2007,14 +2007,14 @@ function renderChart(){
   const barBorda=avgByMonth.map(v=>v==null?'transparent':hexDe(v));
 
   const vals=avgByMonth.filter(v=>v!=null);
-  const shown=vals.length?vals.concat([70,85]):[60,85];
+  const shown=vals.length?vals.concat([75,85]):[60,85];
   const yMin=Math.max(0, Math.floor((Math.min(...shown)-5)/5)*5);
   const yMax=Math.min(112, Math.ceil((Math.max(...shown)+7)/5)*5);
 
   // legenda própria (.gleg) — série condicional tem legenda NEUTRA
   $('g-leg').innerHTML =
     `<span><i class="sq" style="background:var(--txt3)"></i>${IND_LABELS[activeInd]||''}</span>`+
-    `<span><i></i>Bom 70</span><span><i></i>Elite 85</span>`;
+    `<span><i></i>Bom 75</span><span><i></i>Elite 85</span>`;
 
   if(chartTemporal) chartTemporal.destroy();
   chartTemporal=new Chart(cv.getContext('2d'),{
@@ -2030,7 +2030,7 @@ function renderChart(){
           formatter:v=>v!=null?v.toFixed(1):'',
           anchor:'end', align:'top',
         } },
-      { label:'Bom 70',   data:Array(12).fill(70), type:'line', borderColor:metaClr, borderWidth:1.5,
+      { label:'Bom 75',   data:Array(12).fill(75), type:'line', borderColor:metaClr, borderWidth:1.5,
         borderDash:[5,3], tension:0, fill:false, pointRadius:0, order:1, datalabels:{display:false} },
       { label:'Elite 85', data:Array(12).fill(85), type:'line', borderColor:metaClr, borderWidth:1.5,
         borderDash:[5,3], tension:0, fill:false, pointRadius:0, order:2, datalabels:{display:false} },
@@ -2170,6 +2170,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610081700"></script>
+<script src="../../assets/build-check.js?v=202610082000"></script>
 </body>
 </html>
