@@ -153,7 +153,8 @@ if (dre.length) {
   }
 
   // por unidade no último mês completo, para enxergar o de-para filial → unidade
-  const ultimo = vigs.filter(v => v < new Date().toISOString().slice(0, 7)).pop();
+  // último mês que o DRE já fechou (o mês corrente e o anterior ainda vêm zerados)
+  const ultimo = vigs.filter(v => (D.get(v + '|Diesel') || {}).real > 0).pop();
   if (ultimo) {
     console.log(`\n   ${ultimo} — Diesel por unidade, para montar o de-para (ERP pela filial · DRE pela unidade):`);
     const ef = new Map();
