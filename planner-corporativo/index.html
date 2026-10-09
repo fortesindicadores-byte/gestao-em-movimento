@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610091000">
+<meta name="build" content="202610091100">
 <title>Planner Corporativo</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -454,13 +454,13 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;}
     </label>
 
     <div class="s-sec"><b>Visões</b></div>
-    <button class="s-item on" data-ver="kanban" title="Kanban">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 4h5v16H4zM10 4h5v11h-5zM16 4h4v7h-4z"/></svg>
-      Kanban
-    </button>
-    <button class="s-item" data-ver="tabela" title="Tabela">
+    <button class="s-item on" data-ver="tabela" title="Tabela">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 5h18v14H3zM3 10h18M9 10v9"/></svg>
       Tabela
+    </button>
+    <button class="s-item" data-ver="kanban" title="Kanban">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 4h5v16H4zM10 4h5v11h-5zM16 4h4v7h-4z"/></svg>
+      Kanban
     </button>
     <button class="s-item" data-ver="gantt" title="Gantt">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M4 12h14M4 18h7"/></svg>
@@ -513,7 +513,7 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;}
   <!-- ══════════ quadro ══════════ -->
   <main class="board">
     <div class="top">
-      <h1>Kanban</h1>
+      <h1>Tabela</h1>
 
       <div class="menu-wrap">
         <button class="tool" id="btPessoas" onclick="abreMenu('mPessoas')">
@@ -643,7 +643,7 @@ const ASSUNTOS=['Governança','Custos','Projetos','Disponibilidade','Xadrez de F
   'Blitz de Segurança','Checklist','Viagens','Processos','Ativação de Frota'];
 
 let sb=null, LINHAS=[], NOMES=[], EU='';
-let BUSCA='', VISAO='', VER='kanban', RESUMO_POR='assunto', RESP=new Set(), ASS=new Set();
+let BUSCA='', VISAO='', VER='tabela', RESUMO_POR='assunto', RESP=new Set(), ASS=new Set();
 let DT_DE='', DT_ATE='';
 const VIG=new Set();
 const ETA=new Set();   // filtro de Etapa (o "Status" do painel antigo)
@@ -1056,7 +1056,8 @@ document.querySelectorAll('.s-item[data-vis]').forEach(b=>b.addEventListener('cl
   VISAO = (v && VISAO===v) ? '' : v;    // clicar de novo desliga
   render();
 }));
-const TIT={kanban:'Kanban',tabela:'Tabela',gantt:'Gantt',resumo:'Resumo'};
+// Tabela abre primeiro (Renan, 09/10/2026: "Deixe tabela primeiro do Kanban")
+const TIT={tabela:'Tabela',kanban:'Kanban',gantt:'Gantt',resumo:'Resumo'};
 document.querySelectorAll('.s-item[data-ver]').forEach(b=>b.addEventListener('click',()=>{
   VER=b.dataset.ver;
   document.querySelector('.top h1').textContent=TIT[VER];
@@ -1237,6 +1238,6 @@ iniciar();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202610091000"></script>
+<script src="../assets/build-check.js?v=202610091100"></script>
 </body>
 </html>
