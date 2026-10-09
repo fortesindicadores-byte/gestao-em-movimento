@@ -302,3 +302,11 @@ grant execute on function public.refresh_custo_vigencia() to service_role;
 
 select cron.schedule('custo-vigencia-refresh', '*/10 * * * *',
   $$refresh materialized view concurrently public.custo_vigencia_mv$$);
+
+-- ── 6) tipo de combustível (Renan, 09/10/2026) ────────────────────────────
+-- A TI incluiu na query a coluna TIPO_COMBUSTIVEL (pd.NOME de PD_PRODUTOS),
+-- que separa Diesel de Arla. É ela que permite levar o pacote Combustíveis
+-- para a Carta de Custos: diesel → conta Combustíveis, Arla → conta Arla
+-- (as mesmas contas do pacote na Visão Financeira). Coluna nula não quebra
+-- nada: as linhas antigas ficam sem tipo até a carga as reenviar.
+alter table public.erp_abastecimentos add column if not exists tipo_combustivel text;
