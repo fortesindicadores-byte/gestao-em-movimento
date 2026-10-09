@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610080010">
+<meta name="build" content="202610100010">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -367,6 +367,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
+<script src="../assets/balanco-massa.js?v=202610100010"></script>
 </head>
 <body>
 <div class="app">
@@ -392,6 +393,10 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
       Atualizar dados
     </button>
+    <a class="s-item" href="balanco-massa/" id="lnk-bm-import" style="text-decoration:none;display:none" title="Subir o export do DRE com os lançamentos do balanço de massa (só administradores)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Importar Balanço
+    </a>
     <a class="s-item" href="../seara-km/" style="text-decoration:none" title="Ver visão da Seara">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
       Seara
@@ -444,7 +449,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
               <div>Δ YTD<b id="d-ytd-abs">—</b></div>
               <div>Δ YTD %<b id="d-ytd-pct">—</b></div>
               <div>Impacto YTD<b id="d-ytd-imp">—</b></div>
-              <div title="Viagens sem CTE cobradas depois (aba Balanço de Massa), convertidas em km pelo R$/km remunerado (todas as contas de Combustíveis, Manutenções e Pneus) e somadas ao km remunerado das empurradas">Balanço de massa<b id="d-bm">—</b></div>
+              <div title="Viagens sem CTE cobradas depois, convertidas em km e somadas ao km remunerado das empurradas. De ago/26 em diante: por conta (export do DRE), somado no trimestre e rateado pelo remunerado da conta, km pelo R$/km da própria conta. Até jul/26: aba Balanço de Massa (Valor 85%) ÷ R$/km de todas as contas">Balanço de massa<b id="d-bm">—</b></div>
             </div>
           </div>
         </div>
@@ -700,6 +705,41 @@ const PACOTES_RSKM = new Set(['Combustíveis','Manutenções','Pneus']);
    proporção do km remunerado de cada uma. O R$/km do IMPACTO continua sendo
    calculado sobre o km original (senão a taxa mudaria junto com o km). */
 const BM_TAB = 'Balanço de Massa';
+/* A CONTA NOVA, POR CONTA (Renan, 09/10/2026) — vale de ago/26 em diante
+   (`BM_INICIO`): o balanço entra pela tabela `balanco_massa` do Supabase
+   (importada do export do DRE em ./balanco-massa/), conta a conta, somado no
+   TRIMESTRE e rateado pelo remunerado da conta, e vira km pelo R$/km da
+   própria conta (remunerado líquido do balanço ÷ km original). O motor é
+   `assets/balanco-massa.js`, o mesmo da Árvore e do Balanco Massa Check.
+   Antes de ago/26 continua a aba do Sheets com o "Valor 85%" (acima). */
+const BM_INICIO = (window.BalancoMassa && BalancoMassa.INICIO) || '08/2026';
+const SUPA_URL = 'https://lozwipoeacpvplgkrxkq.supabase.co', SUPA_KEY = 'sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+// JWT do login do hub (supabase-js guarda no localStorage desta origem); sem sessão, a chave pública
+function supaAuth(){
+  try { const s = JSON.parse(localStorage.getItem('sb-lozwipoeacpvplgkrxkq-auth-token') || 'null');
+    if (s && s.access_token && (!s.expires_at || s.expires_at * 1000 > Date.now() + 30000)) return s.access_token; } catch (e) {}
+  return SUPA_KEY;
+}
+// → { 'MM/AAAA|UNI|PROJ': { CONTA_NK: valor } } — só vigências ≥ BM_INICIO
+async function fetchBalancoBanco(){
+  const h = { apikey: SUPA_KEY, Authorization: 'Bearer ' + supaAuth() };
+  const out = {}; const passo = 1000;
+  for (let i = 0; ; i += passo) {
+    const r = await fetch(`${SUPA_URL}/rest/v1/balanco_massa?select=unidade,projeto,vigencia,conta,valor&order=vigencia,unidade&limit=${passo}&offset=${i}`, { headers: h });
+    if (!r.ok) throw new Error('balanco_massa HTTP ' + r.status);
+    const rows = await r.json();
+    rows.forEach(x => {
+      const m = String(x.vigencia || '').match(/^(\d{4})-(\d{2})$/); if (!m) return;
+      const vig = m[2] + '/' + m[1]; if (vigToDate(vig) < vigToDate(BM_INICIO)) return;
+      const k = chaveRs(vig, x.unidade, x.projeto), c = ctaNK(x.conta);
+      (out[k] = out[k] || {})[c] = (out[k][c] || 0) + (+x.valor || 0);
+    });
+    if (rows.length < passo) break;
+  }
+  return out;
+}
+// conta no formato que casa a Frota com o export do DRE: alias do painel + caixa alta sem acento
+const ctaNK = c => _nkBM(CONTAS_ALIAS[String(c || '').trim()] || c);
 const BM_CIDADE = {'CUIABA':'CBA','PIRAI':'PIR','MACACU':'MCC','CACHOEIRAS DE MACACU':'MCC','CAMPO GRANDE':'CGR','RIO DE JANEIRO':'CGR',
   'PELOTAS':'PLT','FLORIANOPOLIS':'FLP','GUARULHOS':'GRL','NOVA FRIBURGO':'NFR','RONDONOPOLIS':'RON','BALNEARIO CAMBORIU':'BLC','CAMBORIU':'BLC','GOIANIA':'GNA'};
 const _nkBM = s => String(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
@@ -733,6 +773,7 @@ async function fetchBalanco(){
     const g = i => (row.c && row.c[i] && row.c[i].v != null) ? row.c[i].v : null;
     const vig = bmVig(row.c && row.c[K.vig]); const ch = bmChave(g(K.uni)); const valor = parseFloat(g(K.val)) || 0;
     if (!vig || !ch || !valor) return;
+    if (vigToDate(vig) >= vigToDate(BM_INICIO)) return;   // de ago/26 em diante vale a conta por conta (banco)
     const k = chaveRs(vig, ch.uni, ch.proj);
     out[k] = (out[k] || 0) + valor;
   });
@@ -843,8 +884,9 @@ async function fetchCustoRem() {
   const idx = (...t) => cols.findIndex(c => t.some(x => c.includes(x)));
   const K = { vig:idx('vigência','vigencia'), nv3:idx('nível 3','nivel 3','nv3'),
               cta:idx('conta'), rem:idx('remunerado') };
-  if (Object.values(K).some(i => i < 0)) { console.warn('Aba Frota: coluna não encontrada', K, cols); return {}; }
-  const out = {};
+  if (Object.values(K).some(i => i < 0)) { console.warn('Aba Frota: coluna não encontrada', K, cols); return { tot: {}, cta: {} }; }
+  // tot: Σ das contas dos 3 pacotes por chave (o R$/km do impacto) · cta: por conta, TODAS (o balanço de massa por conta)
+  const out = {}, porCta = {};
   (json.table.rows||[]).forEach(row => {
     const g = i => (row.c && row.c[i] && row.c[i].v != null) ? row.c[i].v : null;
     const vig = parseVigCell(row.c && row.c[K.vig]); if (!vig) return;
@@ -855,20 +897,23 @@ async function fetchCustoRem() {
     const k = chaveRs(vig, uni, proj);
     // custo na DRE vem NEGATIVO: o custo de verdade é -valor
     const v = -(parseFloat(g(K.rem)) || 0);
+    const c = _nkBM(cta); (porCta[k] = porCta[k] || {})[c] = (porCta[k][c] || 0) + v;
     if (!PACOTES_RSKM.has(PACOTES_MAP[cta])) return;
     out[k] = (out[k] || 0) + v;
   });
-  return out;
+  return { tot: out, cta: porCta };
 }
 
 async function fetchData() {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}&t=${Date.now()}`;
-  const [text, custoRem, balanco, abertura] = await Promise.all([
+  const [text, custoFrota, balanco, abertura, balancoBanco] = await Promise.all([
     fetch(url).then(r => r.text()),
-    fetchCustoRem().catch(e => { console.warn('Custo (aba Frota) indisponível:', e); return {}; }),
-    fetchBalanco().catch(e => { console.warn('Balanço de Massa indisponível:', e); return {}; }),
-    fetchAbertura().catch(e => { console.warn('Abertura (placas) indisponível:', e); return []; })
+    fetchCustoRem().catch(e => { console.warn('Custo (aba Frota) indisponível:', e); return { tot: {}, cta: {} }; }),
+    fetchBalanco().catch(e => { console.warn('Balanço de Massa (aba, até jul/26) indisponível:', e); return {}; }),
+    fetchAbertura().catch(e => { console.warn('Abertura (placas) indisponível:', e); return []; }),
+    fetchBalancoBanco().catch(e => { console.warn('Balanço de Massa (banco, ago/26+) indisponível:', e); return {}; })
   ]);
+  const custoRem = custoFrota.tot;
   PLACAS = abertura;
   const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
   ALL = (json.table.rows || [])
@@ -893,7 +938,19 @@ async function fetchData() {
       const parte = r.rem0 / km0; r.recomp += kmRec * parte; r.bmValor += valor * parte; r.bmTaxa = taxa; r.rem = r.rem0 + r.recomp; });
     bmKm += kmRec; bmValor += valor;
   });
-  if (bmKm) console.info(`Balanço de massa: R$ ${Math.round(bmValor).toLocaleString('pt-BR')} → +${Math.round(bmKm).toLocaleString('pt-BR')} km remunerados em ${Object.keys(balanco).length} chave(s)`);
+  // DE AGO/26 EM DIANTE: conta a conta, trimestre rateado pelo remunerado (motor compartilhado)
+  let bmNovo = { porChave: {}, avisos: [] };
+  if (window.BalancoMassa) {
+    bmNovo = BalancoMassa.recompoe({ bal: balancoBanco, remCta: custoFrota.cta, km0: kmPorChave, inicio: BM_INICIO });
+    Object.entries(bmNovo.porChave).forEach(([k, e]) => {
+      const km0 = kmPorChave[k] || 0; if (!(km0 > 0) || !e.km) return;
+      ALL.forEach(r => { if (chaveRs(r.vig, r.und, r.proj) !== k) return;
+        const parte = r.rem0 / km0; r.recomp += e.km * parte; r.bmValor += e.valor * parte; r.bmTaxa = e.taxa; r.bmContas = e.contas; r.rem = r.rem0 + r.recomp; });
+      bmKm += e.km; bmValor += e.valor;
+    });
+    if (bmNovo.avisos.length) console.warn('Balanço de massa (conta a conta):', bmNovo.avisos);
+  } else console.warn('assets/balanco-massa.js não carregou — o balanço de ago/26 em diante não foi recomposto');
+  if (bmKm) console.info(`Balanço de massa: R$ ${Math.round(bmValor).toLocaleString('pt-BR')} → +${Math.round(bmKm).toLocaleString('pt-BR')} km remunerados em ${Object.keys(balanco).length + Object.keys(bmNovo.porChave).length} chave(s)`);
   if (bmSem.length) console.warn('Balanço de massa sem km ou sem custo remunerado na chave (não recomposto):', bmSem);
   let semTaxa = 0;
   ALL.forEach(r => {
@@ -1735,6 +1792,17 @@ let _rt;
 window.addEventListener('resize',()=>{ clearTimeout(_rt); _rt=setTimeout(()=>{ if(ALL.length) renderCharts(getFiltered()); },400); });
 
 document.addEventListener('DOMContentLoaded', () => { initAccessLog(); initData(); setInterval(atualizar, CACHE_TTL); });
+/* "Importar Balanço" só para admin: lê o perfil que o hub deixa em cache
+   (gem_perfil_<uid>) — sem ida ao banco; quem não é admin nem vê o atalho,
+   e a página de importação confere de novo antes de gravar. */
+(function () {
+  try {
+    const s = JSON.parse(localStorage.getItem('sb-lozwipoeacpvplgkrxkq-auth-token') || 'null');
+    const uid = s && s.user && s.user.id; if (!uid) return;
+    const p = JSON.parse(localStorage.getItem('gem_perfil_' + uid) || 'null');
+    if (p && p.is_admin) { const a = document.getElementById('lnk-bm-import'); if (a) a.style.display = ''; }
+  } catch (e) {}
+})();
 </script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
@@ -1751,6 +1819,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610080010"></script>
+<script src="../assets/build-check.js?v=202610100010"></script>
 </body>
 </html>

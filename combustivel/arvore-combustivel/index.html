@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610080010">
+<meta name="build" content="202610100010">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -395,6 +395,7 @@ body.claro .kpi-card{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../");}catch(e){}</script>
 <script src="../../assets/gviz-cache.js?v=202609050530"></script>
+<script src="../../assets/balanco-massa.js?v=202610100010"></script>
 </head>
 <body>
 
@@ -533,7 +534,7 @@ const STATIC = {
             <!-- Col 3 / Row 5: Recomposição pelo Balanço de Massa (Renan, 08/09/2026) — o km
                  remunerado acima JÁ inclui este km; a caixa mostra quanto voltou ao remunerado -->
             <div id="pos-recomp">
-              <div class="kpi-card recomp-card" id="card-recomp" title="Viagens sem CTE cobradas depois (aba Balanço de Massa), convertidas em km pelo R$/km remunerado (todas as contas de Combustíveis, Manutenções e Pneus) e já somadas ao Km Rodado remunerado">
+              <div class="kpi-card recomp-card" id="card-recomp" title="Viagens sem CTE cobradas depois, convertidas em km e já somadas ao Km Rodado remunerado. De ago/26 em diante: por conta (export do DRE), somado no trimestre e rateado pelo remunerado da conta, km pelo R$/km da própria conta. Até jul/26: aba Balanço de Massa (Valor 85%) ÷ R$/km de todas as contas">
                 <div class="card-label">Recomposição · Balanço de Massa</div>
                 <table class="kpi-table">
                   <thead><tr><th>Valor R$</th><th>R$/km rem.</th><th>Km no Rem</th></tr></thead>
@@ -1022,7 +1023,51 @@ const VAR_CTAS = new Set(['COMBUSTIVEIS VEICULOS E EQUIPAMENTOS','COMBUSTIVEIS',
   'PNEUS E CAMARAS','PNEUS NOVOS','CONSERTOS E RECAPAGENS DE PNEUS','RECAPAGENS E OUTROS SERVICOS','RECAPAGENS']);
 const BM_CIDADE = {'CUIABA':'CBA','PIRAI':'PIR','MACACU':'MCC','CACHOEIRAS DE MACACU':'MCC','CAMPO GRANDE':'CGR','RIO DE JANEIRO':'CGR',
   'PELOTAS':'PLT','FLORIANOPOLIS':'FLP','GUARULHOS':'GRL','NOVA FRIBURGO':'NFR','RONDONOPOLIS':'RON','BALNEARIO CAMBORIU':'BLC','CAMBORIU':'BLC','GOIANIA':'GNA'};
-let S_BM=[];                     // [{vig:'MM/YYYY', n3:'EMPURRADA - PIR', valor}]
+let S_BM=[];                     // [{vig:'MM/YYYY', n3:'EMPURRADA - PIR', valor}]  — regra antiga, até jul/26
+/* A CONTA NOVA, POR CONTA (Renan, 09/10/2026) — vale de ago/26 em diante
+   (`BM_INICIO`): o balanço vem da tabela `balanco_massa` do Supabase
+   (importada do export do DRE em /painel-km/balanco-massa/), conta a conta,
+   somado no TRIMESTRE e rateado pelo remunerado da conta, e vira km pelo
+   R$/km da própria conta (remunerado líquido do balanço ÷ km original). O
+   motor é `assets/balanco-massa.js`, o mesmo do Painel KM e do Balanco Massa
+   Check. `BM_NOVO.porChave['MM/YYYY|EMPURRADA - PIR'] = {km, valor, taxa}`. */
+const BM_INICIO=(window.BalancoMassa&&BalancoMassa.INICIO)||'08/2026';
+const _bmIni=()=>{ const [m,y]=BM_INICIO.split('/'); return new Date(+y,+m-1,1); };
+const SUPA_URL='https://lozwipoeacpvplgkrxkq.supabase.co', SUPA_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+function supaAuth(){ try{ const s=JSON.parse(localStorage.getItem('sb-lozwipoeacpvplgkrxkq-auth-token')||'null');
+  if(s&&s.access_token&&(!s.expires_at||s.expires_at*1000>Date.now()+30000)) return s.access_token; }catch(e){} return SUPA_KEY; }
+// conta no formato que casa a Frota com o export do DRE (caixa alta sem acento + alias dos nomes compridos)
+const CTA_ALIAS_BM={'COMBUSTIVEIS VEICULOS E EQUIPAMENTOS':'COMBUSTIVEIS','FLUIDOS (ARLA)':'ARLA',
+  'PERSONALIZACAO/PADRONIZACAO DE VEICULOS':'PERSONALIZACAO/PADRONIZACAO','PERSONALIZACAO E PADRONIZACAO DE VEICULOS':'PERSONALIZACAO/PADRONIZACAO',
+  'MANUTENCAO DE VEICULOS E EQUIPAMENTOS':'MANUTENCAO DE VEICULOS E EQUIP.','CONSERTOS E RECAPAGENS DE PNEUS':'RECAPAGENS E OUTROS SERVICOS','PNEUS E CAMARAS':'PNEUS NOVOS'};
+const ctaNK=c=>{ const n=_nk(c); return CTA_ALIAS_BM[n]||n; };
+let BM_NOVO={porChave:{},avisos:[]};
+// → { 'MM/YYYY|EMPURRADA - PIR': { CONTA: valor } } — só vigências ≥ BM_INICIO
+async function fetchBalancoBanco(){
+  const h={apikey:SUPA_KEY, Authorization:'Bearer '+supaAuth()}; const out={}; const passo=1000;
+  for(let i=0;;i+=passo){
+    const r=await fetch(`${SUPA_URL}/rest/v1/balanco_massa?select=unidade,projeto,vigencia,conta,valor&order=vigencia,unidade&limit=${passo}&offset=${i}`,{headers:h});
+    if(!r.ok) throw new Error('balanco_massa HTTP '+r.status);
+    const rows=await r.json();
+    rows.forEach(x=>{ const m=String(x.vigencia||'').match(/^(\d{4})-(\d{2})$/); if(!m)return;
+      const d=new Date(+m[1],+m[2]-1,1); if(d<_bmIni())return;
+      const k=vigBR(d)+'|'+_nk(x.projeto)+' - '+_nk(x.unidade), c=ctaNK(x.conta);
+      (out[k]=out[k]||{})[c]=(out[k][c]||0)+(+x.valor||0); });
+    if(rows.length<passo)break;
+  }
+  return out;
+}
+// roda o motor com km0 (Dispersão) e remunerado por conta (Frota, todas as contas) das chaves vig|n3
+function recompoeNovo(bal){
+  if(!window.BalancoMassa){ console.warn('assets/balanco-massa.js não carregou — o balanço de ago/26 em diante não foi recomposto'); return {porChave:{},avisos:[]}; }
+  const km0={}, remCta={};
+  for(const r of S_DP){ const d=kParseVig(r[DP.vig]); if(!d||d<_bmIni())continue; const k=vigBR(d)+'|'+_nk(r[DP.proj]); km0[k]=(km0[k]||0)+(+r[DP.kmRem]||0); }
+  for(const r of S_FR){ const d=kParseVig(r[FR.vig]); if(!d||d<_bmIni())continue; const k=vigBR(d)+'|'+_nk(r[FR.n3]); const c=ctaNK(r[FR.cta]);
+    (remCta[k]=remCta[k]||{})[c]=(remCta[k][c]||0)+(-(+r[FR.rem]||0)); }   // custo na DRE vem negativo
+  const res=BalancoMassa.recompoe({bal, remCta, km0, inicio:BM_INICIO});
+  if(res.avisos.length) console.warn('Balanço de massa (conta a conta):', res.avisos);
+  return res;
+}
 function parseBalanco(cols,rows){
   // VALOR 85% (Renan, 10/09/2026): a coluna "Valor 85%" é a que vira km; a "Valor" crua só se a de 85% não existir
   const fi=_fiFactory(cols); const cU=fi('unidade'), cV=fi('vig'); const out=[];
@@ -1031,6 +1076,7 @@ function parseBalanco(cols,rows){
   if(c85<0) console.warn('Balanço de Massa: coluna "Valor 85%" não encontrada — usando "Valor"', cols);
   if(cU<0||cV<0||cVal<0){ console.warn('Balanço de Massa: coluna não encontrada', cols); return out; }
   rows.forEach(r=>{ const d=kParseVig(r[cV]); const valor=+r[cVal]||0; if(!d||!valor)return;
+    if(d>=_bmIni())return;   // de ago/26 em diante vale a conta por conta (banco)
     const partes=_nk(r[cU]).split(' '); const proj=partes.pop(); const cid=partes.join(' ');
     const cod=BM_CIDADE[cid]||BM_CIDADE[partes[partes.length-1]]; if(!cod){ console.warn('Balanço de Massa: unidade sem código', r[cU]); return; }
     out.push({vig:vigBR(d), n3:proj+' - '+cod, valor}); });
@@ -1041,7 +1087,10 @@ function kmRemChave(vig,n3){ let km=0; for(const r of S_DP){ const d=kParseVig(r
 function varRemChave(vig,n3){ let v=0; for(const r of S_FR){ if(!VAR_CTAS.has(_nk(r[FR.cta])))continue; const d=kParseVig(r[FR.vig]); if(!d||vigBR(d)!==vig)continue; if(_nk(r[FR.n3])!==_nk(n3))continue; v+=Math.abs(+r[FR.rem]||0); } return v; }
 // recomposição do recorte f: {km, valor, taxa}
 function bmAgg(f){ let km=0,valor=0; for(const b of S_BM){ if(!_match(f,b.vig,b.n3))continue; const km0=kmRemChave(b.vig,b.n3), rv=varRemChave(b.vig,b.n3);
-    if(!(km0>0)||!(rv>0))continue; km+=b.valor/(rv/km0); valor+=b.valor; } return {km, valor, taxa: km>0?valor/km:0}; }
+    if(!(km0>0)||!(rv>0))continue; km+=b.valor/(rv/km0); valor+=b.valor; }
+  // ago/26 em diante: o motor já devolve km e valor por chave (conta a conta, trimestre rateado)
+  for(const [k,e] of Object.entries(BM_NOVO.porChave)){ const i=k.indexOf('|'); if(!_match(f,k.slice(0,i),k.slice(i+1)))continue; km+=e.km; valor+=e.valor; }
+  return {km, valor, taxa: km?valor/km:0}; }
 
 // Passa uma linha pelos filtros atuais (vigStr='MM/YYYY', n3='PROJETO - CODE')
 function _match(f, vigStr, n3){
@@ -1108,18 +1157,20 @@ function rslAgg(f){ // R$/L: real = ΣTotalR$/ΣLitros; rem = Σ(preço×litros)
 
 // Carrega as 4 abas-fonte e monta as opções de filtro (union project-unit-vigência)
 async function fetchAll(){
-  const [fr,dp,km,rs,bm]=await Promise.all([
+  const [fr,dp,km,rs,bm,bmBanco]=await Promise.all([
     gvFetchSheet(VF_ID,'Frota'),
     gvFetchSheet(GV_ID,'Dispersão de km'),
     gvFetchSheet(KML_ID,KML_TAB),
     gvFetchSheet(KML_ID,'R$/L'),   // MESMO workbook do painel Preço R$/L — a aba "R$/L" do workbook GV_ID (Base Dispersão de km) é uma cópia velha/incompleta (não tem GRL, por ex.)
-    gvFetchSheet(GV_ID,'Balanço de Massa').catch(e=>{ console.warn('Balanço de Massa indisponível:', e); return {cols:[],rows:[]}; }),
+    gvFetchSheet(GV_ID,'Balanço de Massa').catch(e=>{ console.warn('Balanço de Massa (aba, até jul/26) indisponível:', e); return {cols:[],rows:[]}; }),
+    fetchBalancoBanco().catch(e=>{ console.warn('Balanço de Massa (banco, ago/26+) indisponível:', e); return {}; }),
   ]);
   FR=detFrota(fr.cols); S_FR=fr.rows;
   DP=detDisp(dp.cols);  S_DP=dp.rows;
   KM=detKmlSrc(km.cols);S_KM=km.rows;
   buildRemLookup(rs.cols,rs.rows);
   S_BM=parseBalanco(bm.cols,bm.rows);
+  BM_NOVO=recompoeNovo(bmBanco);
 
   // allRows = união {vigencia:'MM/YYYY', nivel3:'PROJETO - CODE'} p/ cascata e opções de filtro.
   // Só entram meses COM dado real — a Frota tem meses orçados futuros (rem/real=0) que, se listados,
@@ -1361,6 +1412,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610080010"></script>
+<script src="../../assets/build-check.js?v=202610100010"></script>
 </body>
 </html>
