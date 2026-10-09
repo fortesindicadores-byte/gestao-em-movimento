@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610091430">
+<meta name="build" content="202610092230">
 <title>FCA · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../assets/aderencia-view.css?v=202610091430">
-<script src="../assets/aderencia-view.js?v=202610091430"></script>
+<link rel="stylesheet" href="../assets/aderencia-view.css?v=202610092230">
+<script src="../assets/aderencia-view.js?v=202610092230"></script>
 <style>
 :root{--bg:#0C1017;--card:#141B26;--border:#1E2D40;--orange:#F97316;--blue:#38BDF8;--text:#F1F5F9;--text2:#94A3B8;--text3:#475569;--green:#3BB33B;--red:#FF6666;--amber:#F4A100;}
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -817,6 +817,10 @@ table.cons{min-width:1560px!important;}
 .col-acomp{min-width:170px;}
 .col-resp{min-width:130px;}
 
+/* totalizador do Preenchimento FCA: tom do cabeçalho, como os totais do portal,
+   e grudado no rodapé quando a tabela rola por dentro */
+table.adv-table tr.pre-total td{background:var(--cabec);font-weight:800;border-top:1px solid var(--card-brd);
+  position:sticky;bottom:0;z-index:1;}
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
 </head>
@@ -1250,7 +1254,12 @@ function preenchHTML(rows){
       <th class="num" style="cursor:pointer" onclick="sortPre('cus')">Custos${seta('cus')}</th>
       <th class="num" style="cursor:pointer" onclick="sortPre('ader')">Aderência${seta('ader')}</th>
     </tr></thead><tbody>${itens.map(it=>
-      `<tr><td class="nome">${esc(it.k)}</td>${cel(it.rpm)}${cel(it.cus)}${chip(it.ader)}</tr>`).join('')}</tbody></table></div>
+      `<tr><td class="nome">${esc(it.k)}</td>${cel(it.rpm)}${cel(it.cus)}${chip(it.ader)}</tr>`).join('')}${
+      /* TOTALIZADOR (Renan, 09/10/2026: "Aqui poderia ter um totalizador"): a mesma
+         conta das linhas, poolando TODOS os FCAs do recorte (não é média das
+         unidades); no tom do cabeçalho, como os totais do portal */
+      itens.length?`<tr class="pre-total"><td class="nome">Total</td>${cel(preStat(rows.filter(o=>o.origem==='RPM')))}${cel(preStat(rows.filter(o=>o.origem==='Custos')))}${chip(preStat(rows))}</tr>`:''
+    }</tbody></table></div>
   </div>`;
 }
 
@@ -1682,6 +1691,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610091430"></script>
+<script src="../assets/build-check.js?v=202610092230"></script>
 </body>
 </html>
