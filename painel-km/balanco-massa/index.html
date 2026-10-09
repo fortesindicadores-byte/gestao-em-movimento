@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="build" content="202610100010">
+<title>Balanço de Massa · Importar · BI Frota</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --fundo:#202022; --app:rgba(30,40,60,.34); --side:rgba(30,30,30,.50);
+  --card-brd:rgba(255,255,255,.07); --luz-card:inset 0 1px 0 rgba(255,255,255,.08);
+  --txt:#EEF2FA; --txt2:#C9D0DD; --txt3:#A9B1C0;
+  --linha:rgba(255,255,255,.06); --hover:rgba(255,255,255,.06); --cabec:#2B2B30;
+  --laranja:#F97316; --verde:#3BB33B; --vermelho:#FF5252; --ambar:#F4A100;
+}
+body.claro{
+  --fundo:#E1E2E5; --app:rgba(255,255,255,.34); --side:rgba(255,255,255,.50);
+  --card-brd:rgba(15,23,42,.10); --luz-card:inset 0 1px 0 rgba(255,255,255,1);
+  --txt:#161D2B; --txt2:#4A5568; --txt3:#737D91;
+  --linha:rgba(15,23,42,.10); --hover:rgba(15,23,42,.05); --cabec:#DCDFE6;
+  --verde:#00B300; --vermelho:#FF0000; --ambar:#E9A400;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--fundo);color:var(--txt);font-family:'Montserrat',sans-serif;font-size:13px;min-height:100vh;}
+.app{max-width:1180px;margin:0 auto;padding:26px 24px 60px;}
+.topo{display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap;}
+.voltar{display:inline-flex;align-items:center;gap:6px;background:var(--side);border:1px solid var(--card-brd);
+  border-radius:8px;padding:7px 12px;font-size:10.5px;font-weight:800;color:var(--txt2);text-decoration:none;
+  text-transform:uppercase;letter-spacing:.6px;}
+.voltar:hover{background:var(--hover);color:var(--txt);}
+/* "Voltar" sempre embaixo, à esquerda (Renan, 07/10/2026) */
+.pe-volta{display:flex;gap:8px;margin-top:18px;}
+h1{font-size:20px;font-weight:800;}
+.sub{font-size:11.5px;color:var(--txt3);margin:2px 0 22px;line-height:1.6;}
+.card{background:var(--side);border:1px solid var(--card-brd);border-radius:13px;box-shadow:var(--luz-card);
+  padding:18px 20px;margin-bottom:14px;}
+.ctit{font-size:13px;font-weight:800;margin-bottom:3px;}
+.csub{font-size:11px;color:var(--txt3);margin-bottom:14px;line-height:1.6;}
+.drop{border:1.6px dashed var(--card-brd);border-radius:13px;background:var(--side);padding:30px 22px;
+  text-align:center;cursor:pointer;transition:border-color .18s,background .18s;}
+.drop:hover,.drop.sobre{border-color:var(--laranja);background:var(--hover);}
+.drop b{display:block;font-size:14px;font-weight:800;margin-bottom:5px;}
+.drop span{font-size:11.5px;color:var(--txt3);line-height:1.75;}
+.drop code{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--laranja);}
+.res{margin-top:14px;display:flex;flex-direction:column;gap:9px;}
+.item{border:1px solid var(--card-brd);border-left-width:3px;border-radius:9px;padding:11px 14px;background:var(--side);}
+.item.ok{border-left-color:var(--verde);}
+.item.erro{border-left-color:var(--vermelho);}
+.item.aviso{border-left-color:var(--ambar);}
+.item b{font-size:12px;font-weight:800;display:block;margin-bottom:3px;}
+.item span{font-size:11px;color:var(--txt2);line-height:1.6;}
+.item span b{display:inline;font-size:inherit;margin:0;}   /* negrito dentro do texto não quebra linha */
+.item .mot{color:var(--vermelho);font-weight:700;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--cabec);color:var(--txt);font-size:10px;font-weight:800;padding:9px 11px;
+  text-transform:uppercase;letter-spacing:.5px;text-align:left;white-space:nowrap;position:sticky;top:0;}
+thead th.num{text-align:right;}
+td{padding:9px 11px;border-bottom:1px solid var(--linha);color:var(--txt);white-space:nowrap;}
+td.num{text-align:right;}
+tbody tr:hover{background:var(--hover);}
+.vazio{padding:26px;text-align:center;color:var(--txt3);font-size:11.5px;}
+.bt{background:rgba(249,115,22,.14);border:1px solid rgba(249,115,22,.3);border-radius:8px;padding:8px 15px;
+  font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:800;color:var(--laranja);cursor:pointer;
+  text-transform:uppercase;letter-spacing:.6px;}
+.bt:hover{background:rgba(249,115,22,.28);}
+.aviso-topo{border:1px solid rgba(244,161,0,.35);background:rgba(244,161,0,.1);border-radius:10px;
+  padding:11px 14px;font-size:11.5px;color:var(--txt2);line-height:1.65;margin-bottom:14px;}
+@media(max-width:700px){ .app{padding:18px 14px 40px;} table{font-size:11px;} td,thead th{padding:7px 8px;} }
+</style>
+</head>
+<body>
+<script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../");}catch(e){}</script>
+
+<div class="app">
+  <div class="topo">
+    <h1>Balanço de Massa</h1>
+  </div>
+  <p class="sub">Sobe o export do DRE com os lançamentos <b>AJUSTES CONTÁBEIS - BALANÇO DE MASSA</b> para o banco,
+    por conta. É daqui que o <b>Painel KM</b> e a <b>Árvore de Combustível</b> recompõem o km remunerado das
+    empurradas de <b>ago/26</b> em diante — conta a conta, pelo R$/km da própria conta, com o trimestre rateado pelo remunerado.</p>
+
+  <div id="gate"></div>
+
+  <div id="miolo" style="display:none">
+    <div class="card">
+      <div class="ctit">Subir o export</div>
+      <div class="csub">Vale o export do DRE a nível de lançamento (colunas <b>NÍVEL 3 · CONTA GERENCIAL · HISTÓRICO · DATA · REMUNERADO</b>).
+        Só entram os lançamentos cujo histórico fala em balanço de massa; o mês é o da <b>DATA</b>. Subir de novo
+        <b>substitui</b> o que havia nas unidades e meses que vêm no arquivo.</div>
+      <div class="drop" id="drop">
+        <b>Arraste o arquivo aqui</b>
+        <span>ou clique para escolher<br>
+          <code>export do DRE · xlsx</code></span>
+      </div>
+      <input type="file" id="fileInput" multiple accept=".xlsx,.xlsm,.xls" style="display:none">
+      <div class="res" id="res"></div>
+    </div>
+
+    <div class="card" style="padding-bottom:6px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div class="ctit">O que já está no banco</div>
+          <div class="csub">Uma linha por unidade e mês · valor = custo cobrado no balanço (crédito abate).</div>
+        </div>
+        <button class="bt" onclick="carregaResumo()">Atualizar</button>
+      </div>
+      <div id="tab"></div>
+    </div>
+  </div>
+  <footer class="pe-volta">
+    <a href="../" class="voltar">← Voltar ao Painel KM</a>
+    <a href="../../" class="voltar">⌂ Voltar ao Hub</a>
+  </footer>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   IMPORTAÇÃO DO BALANÇO DE MASSA POR CONTA (Renan, 09/10/2026)
+
+   Mesmo desenho da Remuneração por placa da Seara, e pela mesma razão — a
+   lição da Conferência de Locação: arquivo que a tela não sabe rotear é lido,
+   o cartão fica verde e o banco não muda. Aqui:
+
+     · o arquivo é reconhecido pelo CONTEÚDO (as colunas do export do DRE),
+       não pelo nome — e coluna que falta é ERRO VISÍVEL;
+     · só conta lançamento cujo HISTÓRICO fala em balanço de massa; o resto do
+       export (se vier) é contado como ignorado, não gravado em silêncio;
+     · o cartão só fica verde depois que o banco confirmou a gravação;
+     · a tabela de baixo relê o banco depois de cada carga.
+   ══════════════════════════════════════════════════════════════ */
+const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
+const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+let sb=null, EMAIL='', ADMIN=false;
+
+const $=i=>document.getElementById(i);
+const brl=v=>(v<0?'-':'')+'R$ '+Math.abs(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm=s=>String(s==null?'':s).toLowerCase().normalize('NFD')
+  .replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+const NK=s=>String(s==null?'':s).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
+
+/* A COLUNA É ACHADA PELO RÓTULO, NUNCA PELA POSIÇÃO. */
+function acha(hdr,...alvos){
+  const h=hdr.map(norm);
+  for(const a of alvos){ const i=h.indexOf(norm(a)); if(i>=0) return i; }
+  for(const a of alvos){ const i=h.findIndex(x=>x.includes(norm(a))); if(i>=0) return i; }
+  return -1;
+}
+const num=v=>{
+  if(typeof v==='number') return isFinite(v)?v:0;
+  const s=String(v==null?'':v).replace(/[^\d,.-]/g,'');
+  if(!s) return 0;
+  const u=Math.max(s.lastIndexOf(','),s.lastIndexOf('.'));
+  const casas=u<0?0:s.length-u-1;
+  const lim=(u<0||casas===3)?s.replace(/[.,]/g,'')
+           :s.slice(0,u).replace(/[.,]/g,'')+'.'+s.slice(u+1);
+  const x=parseFloat(lim); return isFinite(x)?x:0;
+};
+/* DATA → 'AAAA-MM'. No xlsx ela chega como SERIAL do Excel (46023 = 01/01/2026);
+   também aceita Date, 'dd/mm/aaaa' e 'aaaa-mm-dd'. Sem data, cai no DOCUMENTO
+   (REMUNMMAA), que no export sempre bateu com a DATA. */
+function vigDe(data, documento){
+  if(typeof data==='number' && data>20000 && data<80000){
+    const d=new Date(Date.UTC(1899,11,30)); d.setUTCDate(d.getUTCDate()+Math.round(data));
+    return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0');
+  }
+  if(data instanceof Date && !isNaN(data)) return data.getFullYear()+'-'+String(data.getMonth()+1).padStart(2,'0');
+  const s=String(data==null?'':data).trim();
+  let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if(m) return m[3]+'-'+m[2].padStart(2,'0');
+  m=s.match(/^(\d{4})-(\d{2})/); if(m) return m[1]+'-'+m[2];
+  m=String(documento==null?'':documento).toUpperCase().match(/REMUN(\d{2})(\d{2})/); if(m) return '20'+m[2]+'-'+m[1];
+  return '';
+}
+/* É balanço de massa? Pelo HISTÓRICO: "BALANÇO DE MASSA" ou a sigla "BM"
+   ("AJUSTES CONTÁBEIS - BM", "- BM - RETROATIVO", "EMISSÃO BM A MAIS…"). */
+const ehBalanco=h=>{ const n=NK(h); return /BALANCO DE MASSA/.test(n) || /(^|[^A-Z])BM([^A-Z]|$)/.test(n); };
+// 'EMPURRADA - PIR' → { projeto:'EMPURRADA', unidade:'PIR' }
+function n3Parte(n3){
+  const s=String(n3==null?'':n3).trim(); const i=s.indexOf('-'); if(i<0) return null;
+  const projeto=s.slice(0,i).trim().toUpperCase(), unidade=s.slice(i+1).trim().toUpperCase();
+  return projeto&&unidade ? { projeto, unidade } : null;
+}
+
+// ── lê o xlsx e devolve as linhas agregadas por unidade × projeto × mês × conta ──
+function lePlanilha(buf, arquivo){
+  const wb=XLSX.read(buf,{type:'array'});
+  const aba=wb.SheetNames[0];
+  const g=XLSX.utils.sheet_to_json(wb.Sheets[aba],{header:1,defval:null,blankrows:false,raw:true});
+  if(!g.length) throw new Error(`a aba "${aba}" está vazia`);
+  // o cabeçalho é a linha que tem "NÍVEL 3" (no export é a 1ª, mas não se confia nisso)
+  const iCab=g.findIndex(l=>(l||[]).some(c=>/n[ií]vel\s*3/i.test(String(c==null?'':c))));
+  if(iCab<0) throw new Error('não achei a linha de cabeçalho (nenhuma coluna "NÍVEL 3") — é o export do DRE a nível de lançamento?');
+  const hdr=(g[iCab]||[]).map(v=>String(v==null?'':v).trim());
+  const C={ n3:acha(hdr,'nivel 3','nível 3'), cta:acha(hdr,'conta gerencial'), hist:acha(hdr,'historico','histórico'),
+            data:acha(hdr,'data'), doc:acha(hdr,'documento'), rem:acha(hdr,'remunerado') };
+  const falta=Object.entries(C).filter(([k,i])=>i<0&&k!=='doc').map(([k])=>({n3:'NÍVEL 3',cta:'CONTA GERENCIAL',hist:'HISTÓRICO',data:'DATA',rem:'REMUNERADO'}[k]));
+  if(falta.length) throw new Error('faltam as colunas: '+falta.join(', '));
+
+  const agg=new Map(); let lidas=0, foraBalanco=0, semVig=0, semN3=0, semValor=0;
+  for(let i=iCab+1;i<g.length;i++){
+    const l=g[i]||[]; const hist=l[C.hist];
+    if(l.every(c=>c==null||c==='')) continue;
+    lidas++;
+    if(!ehBalanco(hist)){ foraBalanco++; continue; }
+    const p=n3Parte(l[C.n3]); if(!p){ semN3++; continue; }
+    const vig=vigDe(l[C.data], C.doc>=0?l[C.doc]:null); if(!vig){ semVig++; continue; }
+    const rem=num(l[C.rem]); if(!rem){ semValor++; continue; }
+    const conta=String(l[C.cta]==null?'':l[C.cta]).trim(); if(!conta){ semN3++; continue; }
+    const k=[p.unidade,p.projeto,vig,conta].join('|');
+    const a=agg.get(k)||{ unidade:p.unidade, projeto:p.projeto, vigencia:vig, conta, nivel3:String(l[C.n3]).trim(),
+                          valor:0, linhas:0, historicos:{}, arquivo, updated_by:EMAIL };
+    // custo na DRE vem NEGATIVO: o custo cobrado no balanço é −remunerado; crédito vira negativo e abate
+    a.valor+=-rem; a.linhas++;
+    const h=String(hist).trim(); a.historicos[h]=(a.historicos[h]||0)+rem;
+    agg.set(k,a);
+  }
+  const linhas=[...agg.values()].map(a=>({ ...a, valor:Math.round(a.valor*100)/100 }));
+  return { linhas, aba, lidas, foraBalanco, semVig, semN3, semValor };
+}
+
+// ── o RAMO QUE GRAVA ─────────────────────────────────────────────────────
+/* Substitui por (unidade, projeto, vigência): apaga o que havia nessas chaves
+   e grava o que veio — assim uma conta que sumiu do export some do banco. Se a
+   gravação falhar depois do apagar, o cartão fica vermelho e subir o arquivo
+   de novo repõe tudo. */
+async function grava(linhas){
+  const pares=new Map();
+  linhas.forEach(r=>pares.set(r.unidade+'|'+r.projeto+'|'+r.vigencia, r));
+  for(const r of pares.values()){
+    const { error } = await sb.from('balanco_massa').delete()
+      .eq('unidade',r.unidade).eq('projeto',r.projeto).eq('vigencia',r.vigencia);
+    if(error) throw new Error('ao limpar '+r.unidade+' '+r.vigencia+': '+error.message);
+  }
+  const passo=500; let n=0;
+  for(let i=0;i<linhas.length;i+=passo){
+    const { error, data } = await sb.from('balanco_massa')
+      .upsert(linhas.slice(i,i+passo), { onConflict:'unidade,projeto,vigencia,conta' })
+      .select('conta');
+    if(error) throw new Error(error.message);
+    n += (data||[]).length;
+  }
+  return n;
+}
+
+function cartao(classe, titulo, texto, motivo){
+  const d=document.createElement('div');
+  d.className='item '+classe;
+  d.innerHTML=`<b>${esc(titulo)}</b><span>${texto}${motivo?`<br><span class="mot">${esc(motivo)}</span>`:''}</span>`;
+  $('res').appendChild(d);
+}
+
+async function recebeArquivos(lista){
+  if(!lista||!lista.length) return;
+  $('res').innerHTML='';
+  if(typeof XLSX==='undefined'){ cartao('erro','Leitor de planilha ainda carregando','Tente de novo em um instante.'); return; }
+  if(!ADMIN){ cartao('erro','Sem permissão para gravar','Seu acesso não é de administrador — o banco recusaria a escrita.'); return; }
+
+  let algumOk=false;
+  for(const f of lista){
+    try{
+      const buf=await f.arrayBuffer();
+      const r=lePlanilha(buf, f.name);
+      if(!r.linhas.length){
+        cartao('erro', f.name, `Li <b>${r.lidas}</b> linha(s) da aba <b>${esc(r.aba)}</b>, mas <b>nenhum lançamento de balanço de massa</b> — nada foi gravado.`,
+          r.foraBalanco?`${r.foraBalanco} linha(s) com histórico que não fala em balanço de massa.`:'');
+        continue;
+      }
+      const gravadas=await grava(r.linhas);
+      const unis=[...new Set(r.linhas.map(l=>l.nivel3))].sort();
+      const vigs=[...new Set(r.linhas.map(l=>l.vigencia))].sort();
+      const tot=r.linhas.reduce((s,l)=>s+l.valor,0);
+      const lanc=r.linhas.reduce((s,l)=>s+l.linhas,0);
+      const ignoradas=[];
+      if(r.foraBalanco) ignoradas.push(`${r.foraBalanco} fora do balanço`);
+      if(r.semN3) ignoradas.push(`${r.semN3} sem Nível 3 ou conta`);
+      if(r.semVig) ignoradas.push(`${r.semVig} sem data`);
+      if(r.semValor) ignoradas.push(`${r.semValor} com remunerado zero`);
+      algumOk=true;
+      cartao(ignoradas.length?'aviso':'ok', f.name,
+        `<b>${gravadas}</b> linha(s) gravada(s) (unidade × mês × conta) a partir de <b>${lanc}</b> lançamento(s)`
+        +`<br>unidades <b>${esc(unis.join(' · '))}</b> · meses <b>${esc(vigs[0])}</b> a <b>${esc(vigs[vigs.length-1])}</b> · balanço <b>${brl(tot)}</b>`
+        +(gravadas!==r.linhas.length?`<br><span class="mot">o banco confirmou ${gravadas} de ${r.linhas.length} linhas</span>`:''),
+        ignoradas.length?'Linhas ignoradas: '+ignoradas.join(' · ')+'.':'');
+    }catch(e){
+      cartao('erro', f.name, 'Falhou e <b>nada foi gravado</b> deste arquivo.', e.message||String(e));
+    }
+  }
+  if(algumOk) carregaResumo();
+}
+
+// ── o que já está no banco ────────────────────────────────────────────────
+async function carregaResumo(){
+  $('tab').innerHTML='<div class="vazio">Lendo…</div>';
+  const data=[]; const passo=1000;
+  for(let i=0;;i+=passo){
+    const { data:p, error } = await sb.from('balanco_massa')
+      .select('unidade,projeto,vigencia,conta,valor,linhas,updated_at')
+      .order('vigencia',{ascending:false}).order('unidade').range(i,i+passo-1);
+    if(error){ $('tab').innerHTML=`<div class="vazio">Não consegui ler: ${esc(error.message)}</div>`; return; }
+    data.push(...(p||[]));
+    if(!p||p.length<passo) break;
+  }
+  if(!data.length){ $('tab').innerHTML='<div class="vazio">Nada no banco ainda — suba o primeiro export acima.</div>'; return; }
+  const m=new Map();
+  data.forEach(r=>{
+    const k=r.unidade+'|'+r.projeto+'|'+r.vigencia;
+    const a=m.get(k)||{unidade:r.unidade,projeto:r.projeto,vigencia:r.vigencia,contas:[],valor:0,linhas:0,quando:''};
+    a.contas.push(r.conta); a.valor+=+r.valor||0; a.linhas+=+r.linhas||0;
+    if(r.updated_at>a.quando) a.quando=r.updated_at;
+    m.set(k,a);
+  });
+  const linhas=[...m.values()].sort((a,b)=>(b.vigencia+a.unidade).localeCompare(a.vigencia+b.unidade));
+  const dt=s=>{ const d=new Date(s); return isNaN(d)?'—':d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
+  $('tab').innerHTML='<div style="overflow:auto;max-height:52vh"><table><thead><tr>'
+    +'<th>Unidade</th><th>Projeto</th><th>Mês</th><th class="num">Contas</th><th class="num">Lançamentos</th>'
+    +'<th class="num">Balanço</th><th>Última carga</th></tr></thead><tbody>'
+    + linhas.map(r=>`<tr><td>${esc(r.unidade)}</td><td>${esc(r.projeto)}</td><td>${esc(r.vigencia)}</td>`
+        +`<td class="num" title="${esc(r.contas.sort().join(' · '))}">${r.contas.length}</td><td class="num">${r.linhas}</td>`
+        +`<td class="num">${brl(r.valor)}</td><td>${esc(dt(r.quando))}</td></tr>`).join('')
+    +'</tbody></table></div>';
+}
+
+// ── entrada ───────────────────────────────────────────────────────────────
+(async function(){
+  try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }
+  catch(e){ $('gate').innerHTML='<div class="card">Não consegui iniciar a conexão com o portal.</div>'; return; }
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ $('gate').innerHTML='<div class="card">Entre pelo portal para usar esta tela. <a href="../../" style="color:var(--laranja)">Ir para o hub</a></div>'; return; }
+  EMAIL=session.user.email||'';
+  try{
+    const { data } = await sb.from('fca_profiles').select('is_admin').eq('user_id',session.user.id).maybeSingle();
+    ADMIN=!!(data&&data.is_admin);
+  }catch(e){ ADMIN=false; }
+  $('gate').innerHTML = ADMIN ? '' :
+    '<div class="aviso-topo">Você consegue <b>ver</b> o que está carregado, mas a gravação é só para administradores — é o banco que decide, não a tela.</div>';
+  $('miolo').style.display='';
+
+  const drop=$('drop'), inp=$('fileInput');
+  drop.addEventListener('click',()=>inp.click());
+  inp.addEventListener('change',e=>{ recebeArquivos([...e.target.files]); inp.value=''; });
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('sobre');}));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('sobre');}));
+  drop.addEventListener('drop',e=>recebeArquivos([...e.dataTransfer.files]));
+  ['dragover','drop'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
+
+  try{ document.body.classList.toggle('claro',(localStorage.getItem('bi_theme')||'dark')==='light'); }catch(e){}
+  carregaResumo();
+})();
+</script>
+<script src="../../assets/mobile.js"></script>
+<script src="../../assets/build-check.js?v=202610100010"></script>
+</body>
+</html>

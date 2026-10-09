@@ -1,8 +1,10 @@
 name: Balanco Massa Check (auditoria)
 
 # Reproduz a recomposição do km remunerado das empurradas pelo Balanço de
-# Massa (Valor ÷ R$/km dos variáveis) e imprime o antes × depois por unidade
-# e vigência. Não grava nada. Abas públicas: sem segredo.
+# Massa e imprime o antes × depois por unidade e vigência. Até jul/26 é a aba
+# do Sheets (Valor 85% ÷ R$/km de todas as contas); de ago/26 em diante é a
+# tabela `balanco_massa` do Supabase, conta a conta, com o MESMO motor dos
+# painéis (assets/balanco-massa.js). Não grava nada.
 on:
   workflow_dispatch:
 
@@ -15,4 +17,6 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - name: Conferir
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
         run: node scripts/balanco-massa-check.mjs
