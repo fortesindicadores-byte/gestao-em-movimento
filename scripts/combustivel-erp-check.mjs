@@ -61,7 +61,7 @@ console.log(`═══ Combustível do ERP × DRE (desde ${DESDE}) ═══\n`)
 // ── 1) abastecimentos ──
 let ab;
 try {
-  ab = await todas(`erp_abastecimentos?select=ordem_servico,data,placa_origem,filial,projeto_os,litros,valor,tipo_combustivel,encerrada,status_os,atualizado_em&data=gte.${DESDE}${process.env.SO_ENCERRADAS ? '&encerrada=eq.S' : ''}&order=data.asc`);
+  ab = await todas(`erp_abastecimentos?select=ordem_servico,data,placa_origem,filial,projeto_os,litros,valor,tipo_combustivel,projeto_veiculo,encerrada,status_os,atualizado_em&data=gte.${DESDE}${process.env.SO_ENCERRADAS ? '&encerrada=eq.S' : ''}&order=data.asc`);
 } catch (e) {
   console.log('ERRO lendo erp_abastecimentos:', e.message);
   if (/tipo_combustivel/.test(e.message)) console.log('→ a coluna tipo_combustivel não existe: rodar o ALTER no Supabase.');
@@ -168,6 +168,13 @@ if (dre.length) {
     }
     [...du].sort((a, b) => b[1] - a[1]).forEach(([u, v]) => console.log(`      DRE  ${u}: R$ ${n(v, 0)}`));
   }
+}
+// ── PROJETOS: como o ERP escreve filial × projeto (para o de-para da Carta) ──
+if (process.env.PROJETOS) {
+  console.log('\n━━ Filial × projeto da OS × projeto do veículo (contagem, R$)');
+  const m = new Map();
+  for (const r of L) { const k = `${r.filial}|${r.projeto_os}|${r.projeto_veiculo}`; const a = m.get(k) || [0, 0]; a[0]++; a[1] += r.valor; m.set(k, a); }
+  [...m].sort().forEach(([k, a]) => console.log(`PRJ|${k}|${a[0]}|${a[1].toFixed(0)}`));
 }
 // ── 4) DUMP: linhas cruas agregadas, para comparar com relatório de fora (Qlik) ──
 if (process.env.DUMP) {
