@@ -61,7 +61,7 @@ console.log(`═══ Combustível do ERP × DRE (desde ${DESDE}) ═══\n`)
 // ── 1) abastecimentos ──
 let ab;
 try {
-  ab = await todas(`erp_abastecimentos?select=ordem_servico,data,placa_origem,filial,projeto_os,litros,valor,tipo_combustivel,atualizado_em&data=gte.${DESDE}&order=data.asc`);
+  ab = await todas(`erp_abastecimentos?select=ordem_servico,data,placa_origem,filial,projeto_os,litros,valor,tipo_combustivel,encerrada,status_os,atualizado_em&data=gte.${DESDE}${process.env.SO_ENCERRADAS ? '&encerrada=eq.S' : ''}&order=data.asc`);
 } catch (e) {
   console.log('ERRO lendo erp_abastecimentos:', e.message);
   if (/tipo_combustivel/.test(e.message)) console.log('→ a coluna tipo_combustivel não existe: rodar o ALTER no Supabase.');
@@ -69,7 +69,7 @@ try {
 }
 const semTipo = ab.filter(r => !r.tipo_combustivel);
 const ultCarga = ab.reduce((m, r) => (r.atualizado_em > m ? r.atualizado_em : m), '');
-console.log(`━━ 1) Carga`);
+console.log(`━━ 1) Carga${process.env.SO_ENCERRADAS ? ' (só OS encerradas)' : ''}`);
 console.log(`   ${n(ab.length)} abastecimento(s) desde ${DESDE} · última gravação ${ultCarga}`);
 console.log(`   sem tipo de combustível: ${n(semTipo.length)}${semTipo.length ? ' ← a carga com a coluna nova ainda não passou por essas linhas' : ''}\n`);
 
