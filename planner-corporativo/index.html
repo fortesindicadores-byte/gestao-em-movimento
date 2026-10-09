@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610091200">
+<meta name="build" content="202610091400">
 <title>Planner Corporativo</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -545,8 +545,6 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;}
         <div class="menu" id="mFiltro"><div class="tit">Assunto</div><div class="rol" id="lstAssuntos"></div></div>
       </div>
 
-      <button class="tool ico" id="btTemaTopo" onclick="trocaTema()" title="Modo claro/escuro"></button>
-
       <div class="menu-wrap">
         <button class="tool" id="btEtapa" onclick="abreMenu('mEtapa')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h9l3 3.5L13 12H4zM4 12h11l3 3.5L15 19H4z"/></svg>
@@ -592,6 +590,8 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;}
           <div class="tit">Dados do planner corporativo</div>
         </div>
       </div>
+
+      <button class="tool ico" id="btTemaTopo" onclick="trocaTema()" title="Modo claro/escuro"></button>
     </div>
 
     <div class="cheads" id="cheads"></div>
@@ -1255,6 +1255,6 @@ iniciar();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202610091200"></script>
+<script src="../assets/build-check.js?v=202610091400"></script>
 </body>
 </html>
