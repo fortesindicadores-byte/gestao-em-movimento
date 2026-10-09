@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610071930">
+<meta name="build" content="202610091000">
 <title>Planner Corporativo</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -228,9 +228,9 @@ body.claro .menu .mdata input{background:#fff;border-color:#d7dce4;}
 /* faixa dos títulos: fica FORA do que rola, com as mesmas colunas do grid de
    baixo. --sb é a largura da barra de rolagem, medida no JS, para as duas
    grades continuarem alinhadas quando a barra aparece. */
-.cheads{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+.cheads{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;
   padding:0 calc(24px + var(--sb,0px)) 0 24px;flex:0 0 auto;}
-.cols{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+.cols{flex:1;min-height:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;
   padding:0 24px 24px;overflow:auto;align-items:stretch;}
 .col{display:flex;flex-direction:column;min-height:100%;border-radius:10px;}
 /* o corpo estica até o fim da coluna: soltar em qualquer altura muda a etapa */
@@ -262,7 +262,7 @@ body.claro .menu .mdata input{background:#fff;border-color:#d7dce4;}
   backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
   box-shadow:0 8px 22px rgba(0,0,0,.36), var(--luz-card);}
 .card.venc{--pz:var(--vermelho);} .card.ok{--pz:var(--verde);}
-.card.sem,.card.bkl{--pz:var(--cinza);}
+.card.sem,.card.bkl,.card.pau{--pz:var(--cinza);}
 .card:active{cursor:grabbing;} .card.arrasta{opacity:.35;}
 .card:hover{border-color:rgba(249,115,22,.55);}
 /* concluídas ficam normais — o verde da barra já diz que terminaram */
@@ -618,19 +618,25 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 // O que aparece na coluna é o RÓTULO; o que vai para o banco é o
 // status que o /planner-corporativo/ já usa. 'Backlog' é a única
 // etapa nova (hoje nenhuma ação está nela).
+// PAUSADA (Renan, 09/10/2026: "ela deve ser que nem o backlog, ou seja, não
+// conta na aderência"): ação parada de propósito. Fica fora da aderência, do
+// Gantt e da régua de prazo, como o Backlog — não vira "vencida" enquanto parada.
 const ETAPAS=[
   {k:'Backlog',       rot:'Backlog'},
   {k:'Não iniciada',  rot:'Planejando'},
   {k:'Em andamento',  rot:'Em execução'},
+  {k:'Pausada',       rot:'Pausada'},
   {k:'Concluída',     rot:'Concluído'},
 ];
+// Backlog e Pausada: fora da aderência e sem prazo correndo
+const SEM_PRAZO=st=>st==='Backlog'||st==='Pausada';
 const CHAVES=ETAPAS.map(e=>e.k);
 const ROTULO=Object.fromEntries(ETAPAS.map(e=>[e.k,e.rot]));
 const STATUS=[...CHAVES,'Cancelada'];
 const PADRAO='Não iniciada';
-const PROG={'Backlog':0,'Não iniciada':15,'Em andamento':55,'Concluída':100,'Cancelada':100};
+const PROG={'Backlog':0,'Não iniciada':15,'Em andamento':55,'Pausada':55,'Concluída':100,'Cancelada':100};
 // Backlog é fila de ideias: sem prazo, fica fora de qualquer conta
-const CONTA=r=>!(r.status==='Backlog' && !r.prazo);
+const CONTA=r=>!(SEM_PRAZO(r.status) && !r.prazo);
 const ASSUNTOS=['Governança','Custos','Projetos','Disponibilidade','Xadrez de Frota','Capacitação Técnica',
   'Contratos de Manutenção','Contratos de Locação','Km Rodado','Descarte de Resíduos','Pneus','Stress Test','CIVF',
   'Conformidade da Frota','Estoque','Demarco','DPO/VPO','Combustível','Manutenção','MTBF','MTTR',
@@ -644,8 +650,8 @@ const ETA=new Set();   // filtro de Etapa (o "Status" do painel antigo)
 const SIT=new Set();   // filtro de Situação do prazo — o mesmo rótulo da coluna
 // rótulo da situação: é exatamente o que a coluna "Situação" da tabela mostra,
 // para o filtro casar com o que se lê na tela.
-const SIT_ROT={venc:'Vencida', ok:'No prazo', sem:'Sem prazo', bkl:'Backlog'};
-const SIT_ORDEM=['Vencida','No prazo','Sem prazo','Backlog'];
+const SIT_ROT={venc:'Vencida', ok:'No prazo', sem:'Sem prazo', bkl:'Backlog', pau:'Pausada'};
+const SIT_ORDEM=['Vencida','No prazo','Sem prazo','Pausada','Backlog'];
 const sitDe=r=>SIT_ROT[estadoPrazo(r)]||'';
 // vigência da ação = mês em que ela foi criada, no padrão MM/AAAA
 function vigDe(r){
@@ -660,6 +666,7 @@ const RECOLHIDAS=new Set();
 const hoje=()=>{const d=new Date();d.setHours(0,0,0,0);return d;};
 function estadoPrazo(r){
   if(r.status==='Backlog') return 'bkl';        // fila de ideias: não tem prazo
+  if(r.status==='Pausada') return 'pau';        // parada: o prazo não corre
   if(r.status==='Concluída'||r.status==='Cancelada') return 'ok';
   if(!r.prazo) return 'sem';
   return new Date(r.prazo+'T00:00:00') < hoje() ? 'venc' : 'ok';
@@ -675,7 +682,7 @@ function porVencimento(a,b){
   const va=estadoPrazo(a)==='venc', vb=estadoPrazo(b)==='venc';
   if(va!==vb) return va?-1:1;
   // Backlog não tem prazo (nem quando há data gravada): vai para o fim
-  const pa=a.status==='Backlog'?'':(a.prazo||''), pb=b.status==='Backlog'?'':(b.prazo||'');
+  const pa=SEM_PRAZO(a.status)?'':(a.prazo||''), pb=SEM_PRAZO(b.status)?'':(b.prazo||'');
   if(!pa && !pb) return String(a.criado).localeCompare(String(b.criado));
   if(!pa) return 1;
   if(!pb) return -1;
@@ -751,7 +758,7 @@ async function carregar(){
 function daVisao(r,v){
   if(v==='minhas')   return !!EU && nomeFmt(r.resp)===EU;
   if(v==='vencidas') return estadoPrazo(r)==='venc';
-  if(v==='semprazo') return !r.prazo && r.status!=='Backlog';
+  if(v==='semprazo') return !r.prazo && !SEM_PRAZO(r.status);
   if(v==='semresp')  return !r.resp;
   if(v==='recentes') return desde(r.criado)<=7;
   if(v==='concl3s')  return r.status==='Concluída' && desde(r.criado)<=21;
@@ -760,7 +767,7 @@ function daVisao(r,v){
 // período do prazo: Backlog (sem prazo) fica de fora quando há filtro
 function noPeriodo(r){
   if(!DT_DE && !DT_ATE) return true;
-  const d=r.status==='Backlog'?'':(r.prazo||'');
+  const d=SEM_PRAZO(r.status)?'':(r.prazo||'');
   if(!d) return false;
   if(DT_DE && d<DT_DE) return false;
   if(DT_ATE && d>DT_ATE) return false;
@@ -784,6 +791,7 @@ function card(r){
   const pct=PROG[r.status]!=null?PROG[r.status]:0;
   let meta;
   if(r.status==='Backlog') meta='';             // Backlog não fala de prazo
+  else if(r.status==='Pausada') meta='pausada'+(r.prazo?' · prazo '+dataBR(r.prazo):'');
   else if(!r.prazo) meta='sem prazo';
   else if(pz==='venc') meta=`<span class="atraso">${dataBR(r.prazo)} · ${Math.abs(dias(r.prazo))}d de atraso</span>`;
   else meta=dataBR(r.prazo)+(r.status==='Concluída'||r.status==='Cancelada'?'':` · ${dias(r.prazo)}d`);
@@ -848,7 +856,7 @@ function pintaLateral(){
 /* ══════════ VISÕES: Tabela · Relatório · Resumo ══════════ */
 const pctTxt=(a,b)=>b?Math.round(a/b*100)+'%':'—';
 function chip(st){
-  const c={'Backlog':'var(--cinza)','Não iniciada':'var(--vermelho)','Em andamento':'#F4A100',
+  const c={'Backlog':'var(--cinza)','Não iniciada':'var(--vermelho)','Em andamento':'#F4A100','Pausada':'var(--azul)',
            'Concluída':'var(--verde)','Cancelada':'#6B7280'}[st]||'var(--cinza)';
   return `<span class="tag" style="--c:${c}">${ROTULO[st]||esc(st)}</span>`;
 }
@@ -860,6 +868,7 @@ function htmlTabela(rows){
     <tbody>${ord.map(r=>{
       const pz=estadoPrazo(r);
       const sit=pz==='bkl'?'<span style="color:var(--txt3)">—</span>'
+              :pz==='pau'?'<span style="color:var(--txt3)">Pausada</span>'
               :(pz==='venc'?`<span class="atraso">Vencida · ${Math.abs(dias(r.prazo))}d</span>`
               :(pz==='sem'?'<span style="color:var(--txt3)">Sem prazo</span>'
               :`<span style="color:var(--verde)">No prazo</span>`));
@@ -878,7 +887,7 @@ function htmlTabela(rows){
 function htmlGantt(rows){
   const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   const dia=v=>{ if(!v) return null; const d=new Date(String(v).slice(0,10)+'T00:00:00'); return isNaN(d)?null:d; };
-  const itens=rows.filter(r=>r.status!=='Backlog').sort(porVencimento);
+  const itens=rows.filter(r=>!SEM_PRAZO(r.status)).sort(porVencimento);
   if(!itens.length) return '<div class="cvazia">Nenhuma ação com prazo nos filtros atuais</div>';
   const h=hoje();
   let min=h, max=h;
@@ -930,7 +939,7 @@ function htmlGantt(rows){
     <span><i style="background:var(--vermelho)"></i>Vencida</span>
     <span><i class="gtrac"></i>Sem prazo</span>
     <span><i class="grastro"></i>Atraso, do prazo até hoje</span>
-    <span class="obs">Backlog fora: não tem prazo</span>
+    <span class="obs">Backlog e Pausada fora: o prazo não corre</span>
   </div></div>`;
 }
 
@@ -940,10 +949,10 @@ function htmlGantt(rows){
 const DIMS_RESUMO=[{k:'assunto',rot:'Assunto'},{k:'resp',rot:'Pessoa'}];
 const _MESR=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 function linhasAderencia(rows){
-  // Backlog e canceladas ficam fora da conta, como antes.
+  // Backlog, Pausada e canceladas ficam fora da conta.
   // O mês de cada ação é o mês do PRAZO — sem prazo, não entra em mês nenhum
   // (mas continua contando no total).
-  return rows.filter(r=>r.status!=='Backlog' && r.status!=='Cancelada').map(r=>{
+  return rows.filter(r=>!SEM_PRAZO(r.status) && r.status!=='Cancelada').map(r=>{
     const d=r.prazo?new Date(r.prazo+'T00:00:00'):null;
     return {
       vig: d?_MESR[d.getMonth()]+'/'+String(d.getFullYear()).slice(2):'',
@@ -1228,6 +1237,6 @@ iniciar();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202610071930"></script>
+<script src="../assets/build-check.js?v=202610091000"></script>
 </body>
 </html>
