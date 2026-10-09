@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610080100">
+<meta name="build" content="202610091800">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -252,6 +252,7 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
 .thead-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:2px;}
 .ttit{font-size:14px;font-weight:800;}
 .tsub{font-size:10px;color:var(--txt3);margin-bottom:8px;}
+table.dre tr.nota-comb td{font-size:10px;font-style:italic;color:var(--ambar);padding-top:5px;padding-bottom:5px;cursor:help;white-space:normal;}
 .twrap{flex:1;min-height:0;overflow:auto;border:1px solid var(--card-brd);border-radius:10px;background:var(--side);}
 /* O ESPELHO ATRÁS DA TABELA FICA SEMPRE (Renan, 06/10/2026: "algumas ficaram estranhas sem o
    espelho no fundo, pois como as bordas são arredondadas, fica comendo as bordas. Pode manter
@@ -348,6 +349,9 @@ table.dre thead th.num{text-align:right;}
 #tbl-conta .tag-pill{font-size:9.5px;}
 #tbl-conta td{padding:7px 12px;}
 #tbl-conta thead th{padding:8px 12px;}
+/* com os três pacotes (Manutenção, Pneus e Combustíveis) a tabela ganhou linhas:
+   em tela baixa a linha aperta para o Resumo continuar sem rolar */
+@media (max-height:820px){ #tbl-conta td{padding:4px 12px;} #tbl-conta thead th{padding:6px 12px;} }
 #vw-placas .tsec{flex:1 1 0;min-height:220px;}
 /* Aderência ao Processo: cards de altura FIXA e o resto da altura para gráfico
    e tabela, lado a lado (mesma regra do Resumo da Aderência às Aferições) */
@@ -628,7 +632,7 @@ body.claro input[type=date]{color-scheme:light;}
              número duas vezes, comendo a altura que faltava aos gráficos. -->
         <div class="card tsec">
           <div class="thead-row"><div><div class="ttit">Acompanhamento por Conta</div>
-            <div class="tsub">Orçado e Remunerado do DRE (aba Frota) · Contratos: mês fechado vem da planilha, mês em aberto vem do km do ERP (prévia) · Ating. ≥90% âmbar, ≥100% vermelho · botão direito → exportar Excel</div></div></div>
+            <div class="tsub">Orçado e Remunerado do DRE (aba Frota) · Contratos: mês fechado vem da planilha, mês em aberto vem do km do ERP (prévia) · Combustíveis: abastecimentos encerrados do ERP, sem PIS/COFINS · Ating. ≥90% âmbar, ≥100% vermelho · botão direito → exportar Excel</div></div></div>
           <div class="twrap"><table class="dre" id="tbl-conta"></table></div>
         </div>
 
@@ -761,8 +765,14 @@ const PROJETOS_EXCLUIR=new Set(['ADMINISTRATIVO','ADMINISTRATIVO APOIO','ADMINIS
 let UNIT_PROJETOS=PROJETOS.slice();
 const CONTAS={
   'Manutenção':['Manutenção de Veículos e Equip.','Materiais e Ferramentas de Oficina','Lavação de Veículos','Manutenção de Carrocerias','Personalização/Padronização','Contratos de Manutenção Fabricante'],
-  'Pneus':['Pneus Novos','Recapagens e Outros Serviços']
+  'Pneus':['Pneus Novos','Recapagens e Outros Serviços'],
+  /* COMBUSTÍVEIS (Renan, 09/10/2026): o realizado NÃO é lançado — vem sozinho
+     dos abastecimentos ENCERRADOS do ERP (erp_abastecimentos, carga diária do
+     PowerShell), sem PIS/COFINS, como o DRE. Ver loadComb(). */
+  'Combustíveis':['Combustíveis','Arla']
 };
+// pacotes cujo realizado vem de robô: ficam fora da caixa de lançamento
+const PAC_AUTO=new Set(['Combustíveis']);
 const GRUPOS={
   'Manutenção':['Plano','Contrato','Motor','Transmissão','Embreagem','Diferencial','Elétrica','Freios','Suspensão','Direção','Arrefecimento','Combustível','Injeção','Climatização','Frio - Revisão Preventiva','Frio - Ventiladores','Frio - Condensadora','Frio - Sensor temperatura','Frio - Visor display','Rodagem','Eixos','Carroceria','Funilaria','Pintura','Vidros','Escapamento','Hidráulico','Pneumático','Implemento','Telemetria','Preventiva','Corretiva','Lavação','Lubrificação','Ferramentas','Solda','Guincho','Terceiros','Diversos'],
   /* PNEUS (Renan, 07/10/2026): "Pneus Novos é só compra mesmo" → o grupo vem
@@ -918,7 +928,7 @@ function _mesNum(m){if(m==null)return null;if(typeof m==='number'&&m>=1&&m<=12)r
 function parseVigD(v){if(v==null)return null;if(v instanceof Date)return v;const s=String(v);let m=s.match(/(\d{1,2})[\/\-](\d{4})/);if(m)return new Date(+m[2],+m[1]-1,1);m=s.match(/(\d{4})[\/\-](\d{1,2})/);if(m)return new Date(+m[1],+m[2]-1,1);const d=new Date(s);return isNaN(d)?null:d;}
 const getUniLabel=v=>{if(!v)return '';v=String(v);const i=v.lastIndexOf('-');const s=i>=0?v.slice(i+1).trim():v.trim();return s.replace(/\s*\(INATIVO\)\s*/i,'').trim();};
 const getNv3Prefix=v=>v?String(v).split('-')[0].trim():'';
-const CONTAS_ALIAS={'Manutenção de Veículos e Equipamentos':'Manutenção de Veículos e Equip.','Consertos e Recapagens de Pneus':'Recapagens e Outros Serviços','Pneus e Camaras':'Pneus Novos','Personalização/Padronização de Veículos':'Personalização/Padronização','Personalização e Padronização de Veículos':'Personalização/Padronização'};
+const CONTAS_ALIAS={'Manutenção de Veículos e Equipamentos':'Manutenção de Veículos e Equip.','Consertos e Recapagens de Pneus':'Recapagens e Outros Serviços','Pneus e Camaras':'Pneus Novos','Personalização/Padronização de Veículos':'Personalização/Padronização','Personalização e Padronização de Veículos':'Personalização/Padronização','Combustíveis Veiculos e Equipamentos':'Combustíveis','Combustíveis Veículos e Equipamentos':'Combustíveis','Fluídos (Arla)':'Arla'};
 const canonConta=c=>CONTAS_ALIAS[c]||c;
 function mapTab(h){return{orc:ebIdx(h,'orçado','orcado'),rem:ebIdx(h,'remunerado'),real:ebIdx(h,'realizado'),vig:ebIdx(h,'vigência','vigencia'),nv3:ebIdx(h,'nível 3','nivel 3','nivel3'),cta:ebIdx(h,'conta gerencial','conta'),mes:ebIdx(h,'mês','mes'),ano:ebIdx(h,'ano')};}
 async function fetchTab(tab){
@@ -1076,7 +1086,7 @@ function onFiltroAno(){
 }
 function buildProjFilter(){ buildMs('ms-proj', ()=>UNIT_PROJETOS.slice(), p=>p, selProj, onFiltroProj, 'Todos'); }
 // as opções saem das linhas já lidas; valor vazio aparece como "—"
-const opsDe=k=>[...new Set(ROWS.map(r=>k==='data'?(String(r.data||'').slice(0,10)||'—'):(r[k]||'—')))].sort();
+const opsDe=k=>[...new Set(ROWS.concat(COMB).map(r=>k==='data'?(String(r.data||'').slice(0,10)||'—'):(r[k]||'—')))].sort();
 function buildExtras(){
   const limpa=(sel,ops)=>[...sel].forEach(v=>{ if(!ops.includes(v)) sel.delete(v); });
   const g=opsDe('grupo'), f=opsDe('fornecedor'), c=opsDe('conta'), d=opsDe('data').reverse();
@@ -1151,7 +1161,7 @@ async function loadRows(){
   if(seq!==_loadSeq) return;
   if(erro){ console.error(erro); ROWS=[]; }
   else ROWS=data.map(fromDB);
-  await loadDRE();
+  await Promise.all([loadDRE(), loadComb()]);
   if(seq!==_loadSeq) return;
   refreshProjetos(); buildExtras();
   render();
@@ -1169,6 +1179,88 @@ function atualizaSub(){
   const now=new Date();
   set('titSub', `${uL} · ${vL} · atualizado ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
 }
+/* ══════════════════════════════════════════════════════════════
+   COMBUSTÍVEIS — realizado dos abastecimentos do ERP (Renan, 09/10/2026)
+   Validado contra o Qlik (relatório de OS encerradas) e o DRE, jan→ago/2026:
+   só OS ENCERRADAS, o ERP bate com o Qlik (100,9% diesel · 101,0% Arla) e,
+   sem PIS/COFINS, com o DRE (101,6% · 100,8%). As regras:
+   · só encerrada = 'S' (a OS aberta ainda muda);
+   · unidade e projeto pelo PROJETO DA OS ('ROTA - CBA'), o mesmo formato do
+     Nível 3 do DRE — por isso o unitMatchNv3 e o tier de CBA/MCC valem igual;
+   · conta: Arla → Arla; diesel, gasolina e GLP → Combustíveis; o GLP marcado
+     "(SEM CUSTO)" (o da Ambev) fica fora;
+   · PREÇO ABSURDO (R$/L fora de 1,50 a 12): o ERP tem lançamentos com o valor
+     digitado errado em TODOS os campos (um abastecimento de 144 L em Cuiabá vale
+     R$ 1,49 bi). Esses entram por litros × preço mediano do mesmo combustível na
+     mesma filial e mês, e são listados no Resumo para a unidade corrigir no ERP;
+   · PIS/COFINS 9,25% sai de tudo, MENOS Campo Grande (diesel e Arla) e o diesel
+     de Florianópolis — as duas têm tanque interno e o DRE já registra a compra.
+   ══════════════════════════════════════════════════════════════ */
+let COMB=[], COMB_ERR='';
+const PISCOFINS=0.0925;
+const COMB_RL_MIN=1.5, COMB_RL_MAX=12;
+const semPisCofins=(unit,conta)=>{const b=UNIT_BASE(unit);return b==='CGR'||(b==='FLP'&&conta==='Combustíveis');};
+function combProduto(t){
+  const n=_normEb(t);
+  if(!n) return null;
+  if(n.includes('sem custo')) return null;
+  if(n.includes('arla')) return {conta:'Arla',grupo:'Arla 32',glp:false};
+  if(n.includes('glp')||n.startsWith('gas ')||n.includes('gas empilhadeira')) return {conta:'Combustíveis',grupo:'GLP Empilhadeira',glp:true};
+  if(n.includes('gasolina')) return {conta:'Combustíveis',grupo:'Gasolina',glp:false};
+  if(n.includes('diesel')){
+    const adit=n.includes('adit');
+    return {conta:'Combustíveis',grupo:n.includes('s10')?(adit?'Diesel S10 Aditivado':'Diesel S10'):(adit?'Diesel Aditivado':'Diesel'),glp:false};
+  }
+  return {conta:'Combustíveis',grupo:String(t),glp:false};
+}
+// o projeto da OS de Goiânia vem com o código GOI; no portal é GNA
+const combNv3=p=>String(p||'').replace(/-\s*GOI\s*$/i,'- GNA');
+async function loadComb(){
+  COMB=[]; COMB_ERR='';
+  const units=curUnits(), vigs=curVigs().slice().sort();
+  if(!sb||!units.length||!vigs.length) return;
+  const ini=vigs[0]+'-01';
+  const [ay,am]=vigs[vigs.length-1].split('-').map(Number);
+  const fim=am===12?(ay+1)+'-01-01':ay+'-'+String(am+1).padStart(2,'0')+'-01';
+  let lin;
+  try{
+    lin=await pgAll('erp_abastecimentos','ordem_servico,data,placa_origem,placa,filial,projeto_os,litros,valor,tipo_combustivel',
+      [['data'],['ordem_servico']], q=>q.eq('encerrada','S').gte('data',ini).lt('data',fim));
+  }catch(e){ console.warn('Abastecimentos do ERP indisponíveis:',e); COMB_ERR=e.message||String(e); return; }
+  const vigSet=new Set(vigs);
+  const base=[];
+  (lin||[]).forEach(r=>{
+    const vig=String(r.data||'').slice(0,7); if(!vigSet.has(vig)) return;
+    const pr=combProduto(r.tipo_combustivel); if(!pr) return;
+    const nv3=combNv3(r.projeto_os);
+    const unit=units.find(u=>unitMatchNv3(u,nv3)); if(!unit) return;
+    const litros=+r.litros||0, valor=+r.valor||0;
+    base.push({r,vig,pr,nv3,unit,litros,valor,rl:litros>0?valor/litros:null});
+  });
+  // preço mediano por filial × combustível × mês, para os preços absurdos
+  const med=xs=>{ if(!xs.length) return null; const s=xs.slice().sort((a,b)=>a-b); return s[Math.floor(s.length/2)]; };
+  const fora=b=>!b.pr.glp&&(b.rl==null||b.rl<COMB_RL_MIN||b.rl>COMB_RL_MAX);
+  const pf=new Map(), pg=new Map();
+  base.forEach(b=>{ if(fora(b)||b.rl==null) return;
+    const k1=b.r.filial+'|'+b.pr.grupo+'|'+b.vig, k2=b.pr.grupo+'|'+b.vig;
+    (pf.get(k1)||pf.set(k1,[]).get(k1)).push(b.rl); (pg.get(k2)||pg.set(k2,[]).get(k2)).push(b.rl); });
+  base.forEach(b=>{
+    let valor=b.valor, corrigido=false;
+    if(fora(b)){
+      const p=med(pf.get(b.r.filial+'|'+b.pr.grupo+'|'+b.vig)||[])||med(pg.get(b.pr.grupo+'|'+b.vig)||[]);
+      if(p==null||!(b.litros>0)) return;
+      valor=b.litros*p; corrigido=true;
+    }
+    const liq=semPisCofins(b.unit,b.pr.conta)?valor:valor*(1-PISCOFINS);
+    COMB.push({origem:'erp-combustivel',unidade:b.unit,vigencia:b.vig,pacote:'Combustíveis',
+      data:String(b.r.data||'').slice(0,10),projeto:getNv3Prefix(b.nv3).toUpperCase(),
+      equipamento:String(b.r.placa_origem||b.r.placa||'').toUpperCase(),fornecedor:'',
+      conta:b.pr.conta,grupo:b.pr.grupo,litros:b.litros,valor:liq,
+      os:b.r.ordem_servico,corrigido,valorErp:b.valor,filial:b.r.filial||''});
+  });
+}
+const curComb=()=>{const ps=curProjs();return COMB.filter(r=>(!ps||ps.includes(r.projeto))&&passaExtras(r));};
+
 function projetosDaUnidade(){
   if(!FROTA) return PROJETOS;
   const m=mapTab(FROTA.header); const s=new Set(); const units=curUnits();
@@ -1239,7 +1331,9 @@ function abrirLanc(id){
   /* CONTA DA CAIXA: as do pacote em foco no filtro (Pacote, ou Conta). Novo
      lançamento com UMA conta marcada no filtro já nasce nela. Ao editar, o
      pacote do próprio lançamento entra sempre, senão a conta dele sumiria. */
-  const pacs=pacsAtivos();
+  // Combustíveis não se lança à mão (vem do ERP): fica fora da caixa
+  let pacs=pacsAtivos().filter(p=>!PAC_AUTO.has(p));
+  if(!pacs.length) pacs=PACOTES.filter(p=>!PAC_AUTO.has(p));
   if(r && !pacs.includes(pacDe(r))) pacs.push(pacDe(r));
   const contasOk=pacs.flatMap(p=>CONTAS[p]);
   const contaFiltro=[...selConta].filter(c=>contasOk.includes(c));
@@ -1432,6 +1526,8 @@ function renderAcomp(){
       const prev=contratoPrevia();
       if(prev>0) byC.set(CONTA_CONTRATO,(byC.get(CONTA_CONTRATO)||0)+prev);
     }
+    const comb=pac==='Combustíveis'?curComb():[];
+    comb.forEach(r=>byC.set(r.conta,(byC.get(r.conta)||0)+r.valor));
     let tR=0,tO=0,tRe=0,tHas=false;
     [...byC.entries()].forEach(([c,real])=>{
       const d=DRE[c]; const orc=d?d.orc:null, rem=d?d.rem:null;
@@ -1440,6 +1536,15 @@ function renderAcomp(){
     });
     gR+=tR; if(tHas){gO+=tO;gRe+=tRe;gHas=true;}
     h+=`<tr class="total"><td class="conta">Total ${esc(pac)}</td>${acompCells(tHas?tO:null,tHas?tRe:null,tR)}</tr>`;
+    if(pac==='Combustíveis'){
+      const corr=comb.filter(r=>r.corrigido);
+      if(COMB_ERR) h+=`<tr class="nota-comb"><td colspan="8">Abastecimentos do ERP indisponíveis agora: ${esc(COMB_ERR)}</td></tr>`;
+      else if(corr.length){
+        const lista=corr.sort((a,b)=>b.valorErp-a.valorErp).slice(0,20)
+          .map(r=>`OS ${r.os} · ${dataBR(r.data)} · ${r.equipamento} · ${r.litros.toLocaleString('pt-BR',{maximumFractionDigits:1})} L · no ERP R$ ${fmtValorBR(r.valorErp)}`).join('\n');
+        h+=`<tr class="nota-comb" title="${esc(lista+(corr.length>20?'\n… e mais '+(corr.length-20):''))}"><td colspan="8">⚠ ${corr.length} abastecimento(s) com preço por litro fora do normal no ERP entraram pelo preço médio da filial no mês · passe o mouse para ver quais corrigir</td></tr>`;
+      }
+    }
   });
   if(pacs.length>1) h+=`<tr class="total geral"><td class="conta">Total Geral</td>${acompCells(gHas?gO:null,gHas?gRe:null,gR)}</tr>`;
   h+='</tbody>';
@@ -1505,7 +1610,7 @@ function barChart(id,pairs,max){
         x:{display:false,beginAtZero:true,grace:'8%'}}}});
 }
 function renderCharts(rows){
-  const cr=rows.filter(counts).concat(contratoPreviaComoLanc().filter(passaExtras));
+  const cr=rows.filter(counts).concat(contratoPreviaComoLanc().filter(passaExtras), curComb());
   barChart('ch-grupo',aggBy(cr,'grupo'));
   barChart('ch-placa',aggBy(cr,'equipamento').filter(p=>p[0]!=='—'));
   barChart('ch-forn',aggBy(cr,'fornecedor').filter(p=>p[0]!=='—'));
@@ -2079,6 +2184,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610080100"></script>
+<script src="../assets/build-check.js?v=202610091800"></script>
 </body>
 </html>
