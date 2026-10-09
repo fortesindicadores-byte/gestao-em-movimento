@@ -132,11 +132,12 @@
     const bc = data.map(v => v == null ? 'transparent' : band(v));
     const metaC = claro ? '#1a1a1a' : '#F1F5F9';
     const metaD = data.map(v => v == null ? null : META);
-    // fonte do eixo do Painel KM (15px) quando o card é largo; os dois gráficos
-    // dividem a linha, então em tela menor ela desce para o mês não girar
+    // fonte do eixo X discreta (Renan, 09/10/2026: "Eixo X pode ser menor a
+    // fonte"); os dois gráficos dividem a linha, então em tela menor ela desce
+    // mais um pouco para o mês não girar
     const larg = cv.parentElement ? cv.parentElement.clientWidth : 800;
     const tick = { color: claro ? '#444444' : '#94A3B8', maxRotation: 0, autoSkip: false,
-      font: { family: 'Montserrat', size: mob ? 9 : (larg >= 700 ? 15 : larg >= 520 ? 12 : 10) } };
+      font: { family: 'Montserrat', size: mob ? 8 : (larg >= 700 ? 11 : larg >= 520 ? 10 : 9) } };
     const tooltip = { backgroundColor: '#141B26', titleColor: '#F97316', bodyColor: '#F1F5F9',
       borderColor: '#1E2D40', borderWidth: 1,
       titleFont: { family: 'Montserrat' }, bodyFont: { family: 'Montserrat' },
@@ -236,15 +237,15 @@
 
       <div class="adv-gr2">
         <div class="adv-gcard">
-          <div class="adv-gleg"><span><i class="sq"></i>Aderência</span><span><i></i>Meta ${META}%</span></div>
           <div class="adv-gtit">Aderência ao Prazo</div>
           <div class="adv-gsub">% de ações dentro do prazo, mês a mês</div>
+          <div class="adv-gleg"><span><i class="sq"></i>Aderência</span><span><i></i>Meta ${META}%</span></div>
           <div class="adv-gcv"><canvas id="adv-ch-prazo"></canvas></div>
         </div>
         <div class="adv-gcard">
-          <div class="adv-gleg"><span><i class="sq"></i>Aderência</span><span><i></i>Meta ${META}%</span></div>
           <div class="adv-gtit">Aderência à Conclusão</div>
           <div class="adv-gsub">% de ações concluídas, mês a mês</div>
+          <div class="adv-gleg"><span><i class="sq"></i>Aderência</span><span><i></i>Meta ${META}%</span></div>
           <div class="adv-gcv"><canvas id="adv-ch-concl"></canvas></div>
         </div>
       </div>
