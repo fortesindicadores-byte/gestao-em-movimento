@@ -40,22 +40,45 @@ console.log('1) trimestre rateado pelo remunerado (regra 1 e 3)');
   t('sem avisos', r.avisos.length === 0, r.avisos);
 }
 
-// ── 2) conta a conta, km = soma das contas (regra 2) ──
-console.log('2) conta a conta');
+// ── 2) conta a conta no detalhe, mas o KM SAI DO VALOR TOTAL (regra 2) ──
+console.log('2) conta a conta → km pelo total');
 {
   const bal = { [ch('08/2026')]: { COMBUSTIVEIS: 30000, 'PNEUS NOVOS': 5000 } };
   const remCta = { [ch('08/2026')]: { COMBUSTIVEIS: 330000, 'PNEUS NOVOS': 55000, ARLA: 10000 } };   // líquido: 300k e 50k
-  const km0 = { [ch('08/2026')]: 100000 };   // R$/km comb 3,00 · pneus 0,50
+  const km0 = { [ch('08/2026')]: 100000 };   // R$/km comb 3,00 · pneus 0,50 · as duas juntas 3,50
   const r = BM.recompoe({ bal, remCta, km0, inicio: '08/2026' });
   const e = r.porChave[ch('08/2026')];
-  t('combustíveis → 10.000 km (30k ÷ 3,00)', perto(e.contas.COMBUSTIVEIS.km, 10000), e.contas.COMBUSTIVEIS.km);
-  t('pneus → 10.000 km (5k ÷ 0,50)', perto(e.contas['PNEUS NOVOS'].km, 10000), e.contas['PNEUS NOVOS'].km);
-  t('km da chave = soma das contas', perto(e.km, 20000), e.km);
+  t('índice da unidade = 35k ÷ 350k = 10%', perto(e.indice, 0.1), e.indice);
+  t('km = 35.000 ÷ 3,50 = 10.000 (NÃO a soma 10.000 + 10.000)', perto(e.km, 10000), e.km);
   t('valor = 35.000', perto(e.valor, 35000), e.valor);
-  t('Arla sem balanço não aparece', !e.contas.ARLA);
-  // o mesmo balanço pela regra antiga (valor total ÷ R$/km de todas as contas) daria outro km
-  const antiga = 35000 / ((330000 + 55000 + 10000) / 100000);
-  t('difere da regra antiga (valor total ÷ R$/km de tudo)', !perto(e.km, antiga, 1e-3), { nova: e.km, antiga });
+  t('taxa = 3,50 (R$/km das contas do balanço)', perto(e.taxa, 3.5), e.taxa);
+  t('detalhe: Combustíveis sozinha diria 10.000 km (30k ÷ 3,00)', perto(e.contas.COMBUSTIVEIS.km, 10000), e.contas.COMBUSTIVEIS.km);
+  t('detalhe: Pneus sozinha diria 10.000 km (5k ÷ 0,50)', perto(e.contas['PNEUS NOVOS'].km, 10000), e.contas['PNEUS NOVOS'].km);
+  t('Arla (sem balanço) fica fora do R$/km', !e.contas.ARLA);
+  // o bug do 1º deploy: somar o km das contas dobraria
+  t('a soma dos km das contas NÃO é o km da unidade', !perto(e.contas.COMBUSTIVEIS.km + e.contas['PNEUS NOVOS'].km, e.km));
+  // contas com índices diferentes: o total pondera pelo remunerado
+  const r2 = BM.recompoe({ bal: { [ch('08/2026')]: { COMBUSTIVEIS: 30000, LAVACAO: 1000 } }, remCta: { [ch('08/2026')]: { COMBUSTIVEIS: 330000, LAVACAO: 2000 } }, km0, inicio: '08/2026' });
+  const e2 = r2.porChave[ch('08/2026')];
+  t('conta pequena com balanço grande não explode: índice = 31k ÷ 301k', perto(e2.indice, 31000 / 301000), e2.indice);
+  t('…embora sozinha a Lavação dissesse 100% (1k ÷ 1k)', perto(e2.contas.LAVACAO.indice, 1), e2.contas.LAVACAO.indice);
+}
+
+// ── 2b) regra ANTIGA rateada: bloco único jan→jul, remunerado bruto dos 3 pacotes ──
+console.log('2b) regra antiga: janela tudo, sem líquido, com fim');
+{
+  const bal = { [ch('04/2026')]: { TOTAL: 60000 }, [ch('05/2026')]: { TOTAL: 30000 }, [ch('08/2026')]: { TOTAL: 999 } };
+  const remCta = {}; const km0 = {};
+  ['01/2026', '02/2026', '03/2026', '04/2026', '05/2026', '06/2026', '07/2026', '08/2026'].forEach(v => { remCta[ch(v)] = { TOTAL: 300000 }; km0[ch(v)] = 100000; });
+  const r = BM.recompoe({ bal, remCta, km0, inicio: '01/2026', fim: '08/2026', janela: 'tudo', liquido: false });
+  const meses = Object.keys(r.porChave).map(k => k.slice(0, 7)).sort();
+  t('os 7 meses de jan a jul recebem rateio (ago fica fora pelo fim)', meses.join(',') === '01/2026,02/2026,03/2026,04/2026,05/2026,06/2026,07/2026', meses);
+  t('cada mês leva 90k ÷ 7 (remunerado igual)', perto(r.porChave[ch('01/2026')].valor, 90000 / 7), r.porChave[ch('01/2026')].valor);
+  t('remunerado BRUTO (sem descontar o balanço): R$/km = 3,00', perto(r.porChave[ch('04/2026')].taxa, 3), r.porChave[ch('04/2026')].taxa);
+  t('km do mês = valor ÷ 3,00', perto(r.porChave[ch('04/2026')].km, 90000 / 7 / 3), r.porChave[ch('04/2026')].km);
+  const soma = Object.values(r.porChave).reduce((s, e) => s + e.valor, 0);
+  t('a soma dos meses bate com o lançado (90.000)', perto(soma, 90000), soma);
+  t('bloco rotulado "tudo"', r.porChave[ch('01/2026')].bloco === 'tudo');
 }
 
 // ── 3) só de agosto em diante: T3/2026 = ago + set ──
@@ -93,9 +116,9 @@ console.log('5) plano B');
   const km0 = { [ch('08/2026')]: 100000 };
   const r = BM.recompoe({ bal, remCta, km0, inicio: '08/2026' });
   const e = r.porChave[ch('08/2026')];
-  t('aviso de plano B', r.avisos.some(a => /rateado pelo remunerado total/.test(a)), r.avisos);
+  t('aviso de plano B', r.avisos.some(a => /remunerado de todas as contas/.test(a)), r.avisos);
   t('km pelo R$/km de todas as contas (600 ÷ 3,00)', perto(e.km, 200), e.km);
-  t('marcado como planoB', e.contas['LAVACAO DE VEICULOS'].planoB === true);
+  t('marcado como planoB', e.planoB === true);
 }
 
 // ── 6) crédito tira km; balanço sem km nenhum avisa ──
