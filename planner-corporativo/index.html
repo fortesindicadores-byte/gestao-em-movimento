@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610091100">
+<meta name="build" content="202610091200">
 <title>Planner Corporativo</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -292,6 +292,14 @@ body.claro .cass span{color:#000000;}
 
 /* ── visões Tabela / Relatório / Resumo ── */
 .cols.solto{display:block;}
+/* Resumo Gerencial e Ranking ocupam a altura da visão, como no FCA Admin: cards
+   com altura própria, gráfico com o resto (com teto) e a tabela rolando por dentro */
+.cols.solto:has(.adv),.cols.solto:has(.adv-tsec){display:flex;flex-direction:column;overflow:hidden;}
+.cols.solto:has(.adv) .adv{height:100%;min-height:0;}
+.cols.solto:has(.adv) .adv-kpis{flex:0 0 auto;}
+.cols.solto:has(.adv) .adv-kpi{min-height:clamp(112px,16.5vh,170px);}
+.cols.solto:has(.adv) .adv-gr2{flex:1 1 auto;min-height:262px;max-height:56vh;}
+.cols.solto:has(.adv-tsec) .adv-tsec{flex:1 1 auto;min-height:0;}
 /* Tabela e Gantt rolam por dentro: sem isso o sticky do cabeçalho se
    ancora no wrapper, que rola junto, e o cabeçalho some ao descer */
 .cols.rola{display:flex;flex-direction:column;overflow:hidden;}
@@ -428,6 +436,8 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;}
   .s-sec,.s-item.filho,.s-item.pai,.s-user,.s-top{display:none;}
   .s-search{margin:0;flex:1 0 100%;background:var(--hover);}
   .cols{grid-template-columns:1fr;overflow:visible;padding:0 14px 24px;}
+  .cols.solto:has(.adv),.cols.solto:has(.adv-tsec){display:block;overflow:visible;}
+  .cols.solto:has(.adv) .adv-gr2{max-height:none;}
   .top{padding:10px 14px 8px;}
   .top h1{font-size:18px;}
 }
@@ -454,7 +464,15 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;}
     </label>
 
     <div class="s-sec"><b>Visões</b></div>
-    <button class="s-item on" data-ver="tabela" title="Tabela">
+    <button class="s-item on" data-ver="resumo" title="Resumo Gerencial">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+      Resumo Gerencial
+    </button>
+    <button class="s-item" data-ver="ranking" title="Ranking de aderência">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h11M4 12h7M4 17h15"/></svg>
+      Ranking
+    </button>
+    <button class="s-item" data-ver="tabela" title="Tabela">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 5h18v14H3zM3 10h18M9 10v9"/></svg>
       Tabela
     </button>
@@ -465,10 +483,6 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;}
     <button class="s-item" data-ver="gantt" title="Gantt">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M4 12h14M4 18h7"/></svg>
       Gantt
-    </button>
-    <button class="s-item" data-ver="resumo" title="Resumo">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
-      Resumo
     </button>
 
     <div class="s-sec"><b>Atalhos</b></div>
@@ -513,7 +527,7 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;}
   <!-- ══════════ quadro ══════════ -->
   <main class="board">
     <div class="top">
-      <h1>Tabela</h1>
+      <h1>Resumo Gerencial</h1>
 
       <div class="menu-wrap">
         <button class="tool" id="btPessoas" onclick="abreMenu('mPessoas')">
@@ -643,7 +657,7 @@ const ASSUNTOS=['Governança','Custos','Projetos','Disponibilidade','Xadrez de F
   'Blitz de Segurança','Checklist','Viagens','Processos','Ativação de Frota'];
 
 let sb=null, LINHAS=[], NOMES=[], EU='';
-let BUSCA='', VISAO='', VER='tabela', RESUMO_POR='assunto', RESP=new Set(), ASS=new Set();
+let BUSCA='', VISAO='', VER='resumo', RESUMO_POR='assunto', RESP=new Set(), ASS=new Set();
 let DT_DE='', DT_ATE='';
 const VIG=new Set();
 const ETA=new Set();   // filtro de Etapa (o "Status" do painel antigo)
@@ -812,7 +826,9 @@ function render(){
   $('cheads').style.display = VER==='kanban' ? '' : 'none';
   if(VER==='tabela'){ $('cols').innerHTML=htmlTabela(vis); pintaLateral(); return; }
   if(VER==='gantt'){ $('cols').innerHTML=htmlGantt(vis); pintaLateral(); return; }
-  if(VER==='resumo'){ $('cols').innerHTML=AderenciaView.html({dims:DIMS_RESUMO});
+  if(VER==='ranking'){ $('cols').innerHTML=AderenciaView.htmlTabela({dims:DIMS_RESUMO});
+                      pintaResumo(vis); pintaLateral(); return; }
+  if(VER==='resumo'){ $('cols').innerHTML=AderenciaView.html({dims:DIMS_RESUMO,tabela:false});
                       pintaResumo(vis); pintaLateral(); return; }
   // Os títulos ficam numa faixa FORA da área que rola — o quadro continua com
   // UMA barra de rolagem só, e o nome da etapa nunca sai da tela.
@@ -1056,8 +1072,9 @@ document.querySelectorAll('.s-item[data-vis]').forEach(b=>b.addEventListener('cl
   VISAO = (v && VISAO===v) ? '' : v;    // clicar de novo desliga
   render();
 }));
-// Tabela abre primeiro (Renan, 09/10/2026: "Deixe tabela primeiro do Kanban")
-const TIT={tabela:'Tabela',kanban:'Kanban',gantt:'Gantt',resumo:'Resumo'};
+// Resumo Gerencial abre primeiro e a tabela de aderência tem visão própria,
+// como no FCA Admin (Renan, 09/10/2026: "separe o resumo e a tabela… resumo por primeiro… no padrão")
+const TIT={resumo:'Resumo Gerencial',ranking:'Ranking',tabela:'Tabela',kanban:'Kanban',gantt:'Gantt'};
 document.querySelectorAll('.s-item[data-ver]').forEach(b=>b.addEventListener('click',()=>{
   VER=b.dataset.ver;
   document.querySelector('.top h1').textContent=TIT[VER];
@@ -1238,6 +1255,6 @@ iniciar();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202610091100"></script>
+<script src="../assets/build-check.js?v=202610091200"></script>
 </body>
 </html>
