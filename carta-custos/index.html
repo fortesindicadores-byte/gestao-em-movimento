@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610091800">
+<meta name="build" content="202610091900">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1187,8 +1187,8 @@ function atualizaSub(){
    · só encerrada = 'S' (a OS aberta ainda muda);
    · unidade e projeto pelo PROJETO DA OS ('ROTA - CBA'), o mesmo formato do
      Nível 3 do DRE — por isso o unitMatchNv3 e o tier de CBA/MCC valem igual;
-   · conta: Arla → Arla; diesel, gasolina e GLP → Combustíveis; o GLP marcado
-     "(SEM CUSTO)" (o da Ambev) fica fora;
+   · SÓ DIESEL E ARLA (Renan, 09/10/2026): Arla → conta Arla, diesel → conta
+     Combustíveis. Gasolina, GLP e qualquer outro produto ficam FORA;
    · PREÇO ABSURDO (R$/L fora de 1,50 a 12): o ERP tem lançamentos com o valor
      digitado errado em TODOS os campos (um abastecimento de 144 L em Cuiabá vale
      R$ 1,49 bi). Esses entram por litros × preço mediano do mesmo combustível na
@@ -1203,15 +1203,12 @@ const semPisCofins=(unit,conta)=>{const b=UNIT_BASE(unit);return b==='CGR'||(b==
 function combProduto(t){
   const n=_normEb(t);
   if(!n) return null;
-  if(n.includes('sem custo')) return null;
-  if(n.includes('arla')) return {conta:'Arla',grupo:'Arla 32',glp:false};
-  if(n.includes('glp')||n.startsWith('gas ')||n.includes('gas empilhadeira')) return {conta:'Combustíveis',grupo:'GLP Empilhadeira',glp:true};
-  if(n.includes('gasolina')) return {conta:'Combustíveis',grupo:'Gasolina',glp:false};
+  if(n.includes('arla')) return {conta:'Arla',grupo:'Arla 32'};
   if(n.includes('diesel')){
     const adit=n.includes('adit');
-    return {conta:'Combustíveis',grupo:n.includes('s10')?(adit?'Diesel S10 Aditivado':'Diesel S10'):(adit?'Diesel Aditivado':'Diesel'),glp:false};
+    return {conta:'Combustíveis',grupo:n.includes('s10')?(adit?'Diesel S10 Aditivado':'Diesel S10'):(adit?'Diesel Aditivado':'Diesel')};
   }
-  return {conta:'Combustíveis',grupo:String(t),glp:false};
+  return null;   // gasolina, GLP, etc.: fora
 }
 // o projeto da OS de Goiânia vem com o código GOI; no portal é GNA
 const combNv3=p=>String(p||'').replace(/-\s*GOI\s*$/i,'- GNA');
@@ -1239,7 +1236,7 @@ async function loadComb(){
   });
   // preço mediano por filial × combustível × mês, para os preços absurdos
   const med=xs=>{ if(!xs.length) return null; const s=xs.slice().sort((a,b)=>a-b); return s[Math.floor(s.length/2)]; };
-  const fora=b=>!b.pr.glp&&(b.rl==null||b.rl<COMB_RL_MIN||b.rl>COMB_RL_MAX);
+  const fora=b=>(b.rl==null||b.rl<COMB_RL_MIN||b.rl>COMB_RL_MAX);
   const pf=new Map(), pg=new Map();
   base.forEach(b=>{ if(fora(b)||b.rl==null) return;
     const k1=b.r.filial+'|'+b.pr.grupo+'|'+b.vig, k2=b.pr.grupo+'|'+b.vig;
@@ -2184,6 +2181,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610091800"></script>
+<script src="../assets/build-check.js?v=202610091900"></script>
 </body>
 </html>

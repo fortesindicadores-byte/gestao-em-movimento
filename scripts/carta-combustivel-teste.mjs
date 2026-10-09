@@ -5,7 +5,7 @@ import http from 'http'; import fs from 'fs'; import path from 'path';
 // pelo projeto da OS, Arla × diesel, PIS/COFINS 9,25% fora (menos Campo Grande e
 // o diesel de Florianópolis), preço por litro absurdo trocado pelo mediano da
 // filial no mês e listado, GLP "(SEM CUSTO)" e filiais fora do portal ignorados,
-// e Combustíveis fora da caixa de lançamento. Resumo com três pacotes sem rolar.
+// GLP e gasolina ficam fora (só diesel e Arla), e Combustíveis fora da caixa de lançamento. Resumo com três pacotes sem rolar.
 // CHART_JS = chart.umd.js 4.4.0 · DATALABELS = chartjs-plugin-datalabels 2.2.0 · SHOT_DIR salva prints.
 const CHART_JS=process.env.CHART_JS, DL=process.env.DATALABELS, SHOT=process.env.SHOT_DIR, ROOT=process.cwd();
 if(!CHART_JS||!DL){ console.error('defina CHART_JS e DATALABELS'); process.exit(2); }
@@ -29,6 +29,8 @@ const ABAST=[
   A({filial:'FILIAL AMBEV PALHOÇA - SC',projeto_os:'ROTA - FLP',tipo_combustivel:'ARLA - 32',litros:10,valor:40}),       // FLP Arla com desconto → 36,30
   A({filial:'FILIAL AMBEV GOIÂNIA - GO',projeto_os:'AUTO SERVIÇO - GOI',litros:10,valor:70}),                          // GOI → GNA 63,53
   A({tipo_combustivel:'GAS EMPILHADEIRA - USAR APENAS PARA AQUELE DISPONIBILIZADO PELA AMBEV (SEM CUSTO)',litros:50,valor:300}), // fora
+  A({tipo_combustivel:'GAS (GLP) EMPILHADEIRA',litros:50,valor:200}),                                                   // fora: só diesel e Arla
+  A({tipo_combustivel:'GASOLINA COMUM',litros:30,valor:200}),                                                           // fora: só diesel e Arla
   A({filial:'FILIAL TEODORO SAMPAIO - SP',projeto_os:'OPERACIONAL - UTS',litros:100,valor:575480}),                    // fora do portal
   A({data:'2026-08-30',valor:9999}),                                                        // fora do mês
 ];
@@ -89,8 +91,8 @@ const R2=x=>Math.round(x*100)/100;
   t(soma('CBA T2')===cbaT2,`CBA T2: 340 + absurdo trocado por 144,381 × 6,90, menos 9,25% = ${cbaT2} → ${soma('CBA T2')}`);
   t(soma('CBA T1')===R2(690*0.9075),'EMPURRADA - CBA vai para CBA T1 → '+soma('CBA T1'));
   t(C.filter(r=>r.corr).length===1,'um abastecimento corrigido (o de R$ 1,49 bi)');
-  t(!C.some(r=>/GLP/.test(r.g)),'GLP "(SEM CUSTO)" fica fora');
-  t(C.length===10,'10 abastecimentos entram (fora: GLP sem custo, Teodoro Sampaio, agosto) → '+C.length);
+  t(!C.some(r=>/GLP|Gasolina/i.test(r.g))&&C.every(r=>r.c==='Combustíveis'||r.c==='Arla'),'só diesel e Arla: GLP e gasolina ficam fora');
+  t(C.length===10,'10 abastecimentos entram (fora: GLP, gasolina, Teodoro Sampaio, agosto) → '+C.length);
   t(C.find(r=>r.u==='PIR').p==='EMPURRADA','projeto = prefixo do projeto da OS (EMPURRADA)');
   const tb=await tabela(pg); const nomes=tb.map(x=>x[0]);
   t(nomes.includes('Total Combustíveis')&&nomes.includes('Total Manutenção')&&nomes.includes('Total Pneus')&&nomes[nomes.length-1]==='Total Geral','Resumo com os três pacotes e o Total Geral → '+nomes.join(' | '));
