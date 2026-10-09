@@ -135,9 +135,9 @@ const tabela=pg=>pg.evaluate(()=>[...document.querySelectorAll('#tbl-conta tbody
 // 4 · Resumo com os dois pacotes sem rolar
 for(const [w,h] of [[1366,768],[1600,900],[1920,1080]]) for(const tema of ['escuro','claro']){
   const pg=await abre(w,h,tema);
-  const r=await pg.evaluate(()=>{const v=document.querySelector('#vw-resumo'),g=document.querySelector('#vw-resumo .gr3');
-    return {vs:v.scrollHeight-v.clientHeight,bs:document.documentElement.scrollHeight-innerHeight,hs:v.scrollWidth-v.clientWidth,gh:g.getBoundingClientRect().height};});
-  t(r.vs<=1&&r.bs<=1&&r.hs<=1,`${w}x${h} ${tema}: Resumo sem rolagem (v ${r.vs} · pág ${r.bs} · h ${r.hs}), gráficos ${Math.round(r.gh)}px`);
+  const r=await pg.evaluate(()=>{const v=document.querySelector('#vw-resumo');
+    return {vs:v.scrollHeight-v.clientHeight,bs:document.documentElement.scrollHeight-innerHeight,hs:v.scrollWidth-v.clientWidth};});
+  t(r.vs<=1&&r.bs<=1&&r.hs<=1,`${w}x${h} ${tema}: Resumo sem rolagem (v ${r.vs} · pág ${r.bs} · h ${r.hs})`);
   if(SHOT) await pg.screenshot({path:`${SHOT}/pneus-resumo-${w}-${tema}.png`});
   if(SHOT&&w===1600&&tema==='escuro'){ await pg.evaluate(()=>abrirLanc('')); await pg.selectOption('#f-conta','Recapagens e Outros Serviços'); await pg.click('#f-grupo'); await pg.waitForTimeout(150); await pg.screenshot({path:`${SHOT}/pneus-menu.png`}); }
   await pg.close();

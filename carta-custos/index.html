@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610091900">
+<meta name="build" content="202610092000">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -336,12 +336,11 @@ table.dre thead th.num{text-align:right;}
    e ao diminuir a janela o gráfico não encolhia e empurrava o terceiro card
    para fora da tela (Renan, 07/10/2026) */
 .gr3{flex:1 1 0;min-height:170px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
-/* O PACOTE TEM SEMPRE AS MESMAS 6 CONTAS + total (Renan, 04/09/2026), então a
-   tabela do Resumo tem altura conhecida e não precisa esticar: ela ocupa o que
-   precisa e TODA a sobra vai para os gráficos, em vez de virar faixa vazia
-   embaixo das contas. */
-#vw-resumo .tsec{flex:0 0 auto;}
-#vw-resumo .twrap{flex:0 0 auto;max-height:none;overflow:visible;}
+/* O Resumo é SÓ a tabela (Renan, 09/10/2026): o card tem a altura do conteúdo
+   e só rola por dentro se os três pacotes não couberem na tela. */
+#vw-resumo .tsec{flex:0 1 auto;min-height:0;}
+#vw-resumo .twrap{flex:0 1 auto;min-height:0;max-height:none;overflow:auto;}
+#vw-graficos .gr3{flex:1 1 0;min-height:0;}
 /* 1px a menos no texto da tabela do Resumo (Renan, 25/09/2026): a altura que
    sobra vai para os três gráficos de baixo */
 #tbl-conta{font-size:10px;}
@@ -349,9 +348,6 @@ table.dre thead th.num{text-align:right;}
 #tbl-conta .tag-pill{font-size:9.5px;}
 #tbl-conta td{padding:7px 12px;}
 #tbl-conta thead th{padding:8px 12px;}
-/* com os três pacotes (Manutenção, Pneus e Combustíveis) a tabela ganhou linhas:
-   em tela baixa a linha aperta para o Resumo continuar sem rolar */
-@media (max-height:820px){ #tbl-conta td{padding:4px 12px;} #tbl-conta thead th{padding:6px 12px;} }
 #vw-placas .tsec{flex:1 1 0;min-height:220px;}
 /* Aderência ao Processo: cards de altura FIXA e o resto da altura para gráfico
    e tabela, lado a lado (mesma regra do Resumo da Aderência às Aferições) */
@@ -524,6 +520,10 @@ body.claro input[type=date]{color-scheme:light;}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
       Resumo Gerencial
     </button>
+    <button class="s-item" data-vw="graficos">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h4V9H3zM10 17h4V4h-4zM17 17h4v-5h-4z"/></svg>
+      Gráficos
+    </button>
     <button class="s-item" data-vw="lanc">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
       Lançamentos
@@ -626,16 +626,20 @@ body.claro input[type=date]{color-scheme:light;}
 
       <!-- ══ 1 · RESUMO GERENCIAL ══ -->
       <section class="vw on" id="vw-resumo">
-        <!-- A TABELA VEM PRIMEIRO e os gráficos embaixo (Renan, 04/09/2026):
-             os cards de KPI saíram porque a linha "Total Manutenção" da tabela
-             já dá orçado, remunerado, realizado, Δ e atingimento — eram o mesmo
-             número duas vezes, comendo a altura que faltava aos gráficos. -->
+        <!-- SÓ A TABELA (Renan, 09/10/2026: "Deixe só a tabela no gerencial e
+             os gráficos em outra visão"): com os três pacotes a tabela cresceu e
+             os gráficos foram para a visão Gráficos. Os cards de KPI tinham saído
+             antes (04/09/2026): a linha "Total" já dá orçado, remunerado,
+             realizado, Δ e atingimento. -->
         <div class="card tsec">
           <div class="thead-row"><div><div class="ttit">Acompanhamento por Conta</div>
             <div class="tsub">Orçado e Remunerado do DRE (aba Frota) · Contratos: mês fechado vem da planilha, mês em aberto vem do km do ERP (prévia) · Combustíveis: abastecimentos encerrados do ERP, sem PIS/COFINS · Ating. ≥90% âmbar, ≥100% vermelho · botão direito → exportar Excel</div></div></div>
           <div class="twrap"><table class="dre" id="tbl-conta"></table></div>
         </div>
+      </section>
 
+      <!-- ══ 1b · GRÁFICOS ══ -->
+      <section class="vw" id="vw-graficos">
         <div class="gr3">
           <div class="card gcard"><div class="gtit">Custo por Grupo</div><div class="gsub">no mês · top 10</div><div class="gcv"><canvas id="ch-grupo"></canvas></div></div>
           <div class="card gcard"><div class="gtit">Custo por Placa</div><div class="gsub">top 10 equipamentos</div><div class="gcv"><canvas id="ch-placa"></canvas></div></div>
@@ -1829,7 +1833,7 @@ async function loadContratos(){
   if(VIG_OPTS.length!==antes){ buildAnoFilter(); buildVigFilter(); }
   buildContratoFilter();
   renderAcomp(); renderPlacas(); renderConsol();
-  if(VW==='resumo') renderCharts(curRows());
+  if(VW==='graficos') renderCharts(curRows());
 }
 // o recorte das duas visões novas é o do filtro do topo
 const contrDoFiltro=()=>{
@@ -2084,14 +2088,14 @@ function renderConsol(){
 }
 
 /* ── navegação entre as visões ── */
-const TIT={resumo:'Resumo Gerencial',lanc:'Lançamentos',ader:'Aderência ao Processo',placas:'Placas Contrato',consol:'Consolidado Contrato'};
+const TIT={resumo:'Resumo Gerencial',graficos:'Gráficos',lanc:'Lançamentos',ader:'Aderência ao Processo',placas:'Placas Contrato',consol:'Consolidado Contrato'};
 function setVw(v){
   VW=v;
   document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===v));
   document.querySelectorAll('.vw').forEach(s=>s.classList.toggle('on', s.id==='vw-'+v));
   set('tit', TIT[v]||'');
   // canvas só mede certo depois de visível
-  if(v==='resumo') setTimeout(()=>renderCharts(curRows()),30);
+  if(v==='graficos') setTimeout(()=>renderCharts(curRows()),30);
   if(v==='consol') setTimeout(renderConsol,30);
 }
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
@@ -2121,7 +2125,7 @@ function trocaMini(){
   const l=document.querySelector('.side').classList.toggle('mini');
   localStorage.setItem('cc_mini', l?'1':'0');
   const b=$('btMini'); if(b) b.title=l?'Expandir menu':'Recolher menu';
-  setTimeout(()=>{ if(VW==='resumo') renderCharts(curRows()); if(VW==='consol') renderConsol(); },260);
+  setTimeout(()=>{ if(VW==='graficos') renderCharts(curRows()); if(VW==='consol') renderConsol(); },260);
 }
 if(localStorage.getItem('cc_mini')==='1'){ document.querySelector('.side').classList.add('mini'); $('btMini').title='Expandir menu'; }
 
@@ -2181,6 +2185,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610091900"></script>
+<script src="../assets/build-check.js?v=202610092000"></script>
 </body>
 </html>
