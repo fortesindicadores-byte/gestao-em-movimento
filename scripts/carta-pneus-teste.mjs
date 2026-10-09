@@ -19,7 +19,7 @@ const ROWS=[
   L('p3',{pacote:null,conta:'Recapagens e Outros Serviços',grupo:'Rodízio',valor:50}),   // linha sem pacote: a conta decide
 ];
 const init=`(()=>{const R=${JSON.stringify(ROWS)}; window.__ins=[];
- const q=(t)=>{const o={_t:t,select(){return o},in(){return o},eq(){return o},order(){return o},range(){return o},gte(){return o},lte(){return o},neq(){return o},limit(){return o},
+ const q=(t)=>{const o={_t:t,select(){return o},in(){return o},eq(){return o},order(){return o},range(){return o},gte(){return o},lt(){return o},lte(){return o},neq(){return o},limit(){return o},
    insert(p){window.__ins.push(p);return {select(){return {single(){return Promise.resolve({data:Object.assign({id:'novo'+window.__ins.length},p),error:null})}}}}},
    maybeSingle(){return Promise.resolve({data:t==='fca_profiles'?{is_admin:true,unidade:''}:null,error:null})},single(){return o.maybeSingle()},
    then(res,rej){return Promise.resolve({data:t==='carta_custos'?R:[],error:null,count:0}).then(res,rej)}};return o;};
@@ -55,7 +55,7 @@ const tabela=pg=>pg.evaluate(()=>[...document.querySelectorAll('#tbl-conta tbody
   t(v('Total Pneus')==='3.450'&&v('Recapagens e Outros Serviços')==='450','Pneus real 3.450 (linha sem pacote entra pela conta) → '+v('Total Pneus'));
   t(v('Total Manutenção')==='1.200'&&v('Total Geral')==='4.650','Manutenção 1.200, Total Geral 4.650 → '+v('Total Manutenção')+' / '+v('Total Geral'));
   const pac=await pg.evaluate(()=>[...document.querySelectorAll('#ms-pac .ms-opt')].map(o=>o.textContent.replace('só','').trim()));
-  t(JSON.stringify(pac)===JSON.stringify(['Todos','MANUTENÇÃO','PNEUS']),'filtro Pacote com Manutenção e Pneus → '+pac);
+  t(JSON.stringify(pac)===JSON.stringify(['Todos','MANUTENÇÃO','PNEUS','COMBUSTÍVEIS']),'filtro Pacote com Manutenção, Pneus e Combustíveis → '+pac);
   await pg.evaluate(()=>{selPac.add('Pneus');render();setVw('lanc');});
   r=await tabela(pg);
   t(r.map(x=>x[0]).join('|')==='Pneus Novos|Recapagens e Outros Serviços|Total Pneus','Pacote = Pneus: só o bloco Pneus, sem Total Geral → '+r.map(x=>x[0]).join('|'));
