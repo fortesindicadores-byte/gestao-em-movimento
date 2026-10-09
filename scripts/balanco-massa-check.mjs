@@ -99,24 +99,34 @@ frota.rows.forEach(r => { const vig = vigDe(r[K.vig]); const n3 = String((r[K.n3
   if (PAC[cta]) remPac[k] = (remPac[k] || 0) + v; });
 
 const linhas = [];
-// ── REGRA ANTIGA (até jul/26): aba Balanço de Massa, Valor 85% ──
+// ── REGRA ANTIGA (até jul/26): aba Balanço de Massa, Valor 85%, R$/km BRUTO dos 3 pacotes —
+//    RATEADA pelo motor: jan→jul num bloco só ('tudo'), pelo remunerado de cada mês
+//    (Renan, 09/10/2026: "os meses anteriores seria importante dividir… Ou de jan a jul proporcionalize tudo")
+const ANTIGA_INICIO = '01/2026', ANTIGA_JANELA = 'tudo';
 const bi = (...t) => bm.cols.findIndex(c => t.some(x => c.toLowerCase().includes(x)));
 const b85 = bm.cols.findIndex(c => /valor/i.test(c) && /85/.test(c));
 const B = { uni: bi('unidade'), vig: bi('vig'), val: b85 >= 0 ? b85 : bi('valor') };
 console.log(b85 >= 0 ? `aba · usando a coluna "${bm.cols[b85]}"` : '⚠ aba: coluna "Valor 85%" não encontrada — usando "Valor"');
-let abaDepois = 0;
+let abaDepois = 0; const balAnt = {}, lancadoAnt = {};
 bm.rows.forEach(r => { const vig = vigDe(r[B.vig]); const valor = num(r[B.val]); const uni = String((r[B.uni] && r[B.uni].v) || '');
   if (!vig || !uni) return;
   if (!antes(vig)) { abaDepois++; return; }
   const kb = chaveBM(uni); if (!kb) { console.log(`  ⚠ unidade sem código: "${uni}"`); return; }
   const [proj, cod] = kb.split('|'); const k = `${vig}|${proj}|${cod}`;
-  const k0 = km0[k] || 0, real = kmReal[k] || 0, rv = remPac[k] || 0;
-  const taxaVar = k0 > 0 && rv > 0 ? rv / k0 : 0;
-  const kmRec = taxaVar > 0 ? valor / taxaVar : 0;
-  linhas.push({ regra: 'antiga', uni: `${cod} ${proj}`, vig, proj, cod, valor, km0: k0, real, remVar: rv, taxaVar, kmRec, km1: k0 + kmRec, taxaImp: taxaVar,
-    dAntes: real - k0, dDepois: real - (k0 + kmRec), impAntes: (real - k0) * taxaVar, impDepois: (real - k0 - kmRec) * taxaVar,
-    semKm: k0 <= 0, semCusto: rv <= 0, contas: null }); });
+  (balAnt[k] = balAnt[k] || {}).TOTAL = (balAnt[k].TOTAL || 0) + valor; lancadoAnt[k] = (lancadoAnt[k] || 0) + valor; });
 if (abaDepois) console.log(`aba · ${abaDepois} linha(s) de ${INICIO} em diante IGNORADAS — nesse período vale o banco`);
+const remPacAnt = {}, km0Ant = {};
+Object.keys(remPac).forEach(k => { if (antes(k.slice(0, 7))) remPacAnt[k] = { TOTAL: remPac[k] }; });
+Object.keys(km0).forEach(k => { if (antes(k.slice(0, 7))) km0Ant[k] = km0[k]; });
+const resAnt = BM.recompoe({ bal: balAnt, remCta: remPacAnt, km0: km0Ant, inicio: ANTIGA_INICIO, fim: INICIO, janela: ANTIGA_JANELA, liquido: false });
+resAnt.avisos.forEach(a => console.log('  ⚠ motor (antiga): ' + a));
+console.log(`regra antiga · janela "${ANTIGA_JANELA}" de ${ANTIGA_INICIO} até antes de ${INICIO} · ${Object.keys(resAnt.porChave).length} chave(s) com rateio`);
+Object.entries(resAnt.porChave).forEach(([k, e]) => {
+  const [vig, proj, cod] = k.split('|'); const k0 = km0[k] || 0, real = kmReal[k] || 0, rv = remPac[k] || 0;
+  const taxaImp = k0 > 0 && rv > 0 ? rv / k0 : 0;
+  linhas.push({ regra: 'antiga', uni: `${cod} ${proj}`, vig, proj, cod, valor: e.valor, lancado: lancadoAnt[k] || 0, km0: k0, real, remVar: rv, taxaVar: e.taxa, kmRec: e.km, km1: k0 + e.km, taxaImp,
+    dAntes: real - k0, dDepois: real - (k0 + e.km), impAntes: (real - k0) * taxaImp, impDepois: (real - k0 - e.km) * taxaImp,
+    semKm: k0 <= 0, semCusto: rv <= 0, contas: null }); });
 
 // ── REGRA NOVA (ago/26+): tabela balanco_massa, motor compartilhado ──
 const bal = {}; let bancoAntes = 0;
@@ -126,12 +136,13 @@ banco.forEach(x => { const m = String(x.vigencia || '').match(/^(\d{4})-(\d{2})$
   (bal[k] = bal[k] || {})[c] = (bal[k][c] || 0) + (+x.valor || 0); });
 if (bancoAntes) console.log(`banco · ${bancoAntes} linha(s) anteriores a ${INICIO} ignoradas — nesse período vale a aba`);
 const km0Novo = {}; Object.keys(km0).forEach(k => { if (!antes(k.slice(0, 7))) km0Novo[k] = km0[k]; });
-const res = BM.recompoe({ bal, remCta, km0: km0Novo, inicio: INICIO });
-res.avisos.forEach(a => console.log('  ⚠ motor: ' + a));
-Object.entries(res.porChave).forEach(([k, e]) => {
+const resNova = BM.recompoe({ bal, remCta, km0: km0Novo, inicio: INICIO });
+resNova.avisos.forEach(a => console.log('  ⚠ motor: ' + a));
+Object.entries(resNova.porChave).forEach(([k, e]) => {
   const [vig, proj, cod] = k.split('|'); const k0 = km0[k] || 0, real = kmReal[k] || 0, rv = remPac[k] || 0;
   const taxaImp = k0 > 0 && rv > 0 ? rv / k0 : 0;
-  linhas.push({ regra: 'nova', uni: `${cod} ${proj}`, vig, proj, cod, valor: e.valor, km0: k0, real, remVar: rv, taxaVar: e.taxa, kmRec: e.km, km1: k0 + e.km, taxaImp,
+  const lanc = Object.values(bal[k] || {}).reduce((s, v) => s + v, 0);
+  linhas.push({ regra: 'nova', uni: `${cod} ${proj}`, vig, proj, cod, valor: e.valor, lancado: lanc, km0: k0, real, remVar: rv, taxaVar: e.taxa, kmRec: e.km, km1: k0 + e.km, taxaImp,
     dAntes: real - k0, dDepois: real - (k0 + e.km), impAntes: (real - k0) * taxaImp, impDepois: (real - k0 - e.km) * taxaImp,
     semKm: k0 <= 0, semCusto: rv <= 0, contas: e.contas }); });
 // chaves com balanço no banco que o motor não recompôs (sem km no trimestre) aparecem nos avisos acima
@@ -140,16 +151,17 @@ const ym = v => v.slice(3) + v.slice(0, 2);
 const ord = (a, b) => a.uni.localeCompare(b.uni) || ym(a.vig).localeCompare(ym(b.vig));
 linhas.sort(ord);
 console.log('\n── ANTES × DEPOIS por unidade e vigência ──');
-console.log('regra   unidade          vig      valor R$   R$/km bm   km rem antes  km recomp  km rem depois   km real   Δ antes   Δ depois  imp antes  imp depois');
-linhas.filter(l => l.valor).forEach(l => console.log(
-  `${l.regra.padEnd(7)} ${l.uni.padEnd(16)} ${l.vig}  ${br(l.valor).padStart(10)}  ${br(l.taxaVar, 4).padStart(9)}  ${br(l.km0).padStart(12)}  ${br(l.kmRec).padStart(9)}  ${br(l.km1).padStart(13)}  ${br(l.real).padStart(8)}  ${br(l.dAntes).padStart(8)}  ${br(l.dDepois).padStart(9)}  ${br(l.impAntes).padStart(9)}  ${br(l.impDepois).padStart(10)}`
+console.log('regra   unidade          vig     lançado R$   rateado R$   R$/km bm   km rem antes  km recomp  km rem depois   km real   Δ antes   Δ depois  imp antes  imp depois');
+linhas.filter(l => l.valor || l.lancado).forEach(l => console.log(
+  `${l.regra.padEnd(7)} ${l.uni.padEnd(16)} ${l.vig}  ${br(l.lancado).padStart(10)}  ${br(l.valor).padStart(10)}  ${br(l.taxaVar, 4).padStart(9)}  ${br(l.km0).padStart(12)}  ${br(l.kmRec).padStart(9)}  ${br(l.km1).padStart(13)}  ${br(l.real).padStart(8)}  ${br(l.dAntes).padStart(8)}  ${br(l.dDepois).padStart(9)}  ${br(l.impAntes).padStart(9)}  ${br(l.impDepois).padStart(10)}`
   + (l.semKm ? '  ⚠ sem km na Dispersão' : '') + (l.semCusto ? '  ⚠ sem custo remunerado na Frota' : '')));
 
-console.log('\n── DETALHE POR CONTA (regra nova) · balanço lançado → rateado · remunerado bruto → líquido · R$/km da conta · km ──');
+console.log('\n── DETALHE POR CONTA (regra nova) · o km da unidade sai do TOTAL (valor ÷ R$/km das contas do balanço); o km por conta é só o que ela SOZINHA diria ──');
 linhas.filter(l => l.contas).forEach(l => {
-  console.log(`${l.uni} ${l.vig} · trimestre ${BM.trimestre(l.vig)}`);
-  Object.entries(l.contas).sort((a, b) => b[1].km - a[1].km).forEach(([c, d]) => console.log(
-    `   ${c.padEnd(36)} lançado ${br(d.bal).padStart(9)} → rateado ${br(d.balApp).padStart(9)}  rem ${br(d.remBruto).padStart(10)} → ${br(d.remNet).padStart(10)}  índice ${(d.indice * 100).toFixed(2).padStart(6)}%  R$/km ${br(d.remNet / (l.km0 || 1), 4)}  km ${br(d.km).padStart(8)}${d.planoB ? '  (plano B: remunerado total)' : ''}`));
+  const e = resNova.porChave[`${l.vig}|${l.proj}|${l.cod}`];
+  console.log(`${l.uni} ${l.vig} · trimestre ${BM.trimestre(l.vig)} · índice da unidade ${(e.indice * 100).toFixed(2)}% · R$/km ${br(l.taxaVar, 4)} · km ${br(l.kmRec)}${e.planoB ? ' (plano B)' : ''}`);
+  Object.entries(l.contas).sort((a, b) => b[1].remNet - a[1].remNet).forEach(([c, d]) => console.log(
+    `   ${c.padEnd(36)} lançado ${br(d.bal).padStart(9)} → rateado ${br(d.balApp).padStart(9)}  rem ${br(d.remBruto).padStart(10)} → ${br(d.remNet).padStart(10)}  índice ${d.indice == null ? '     —' : (d.indice * 100).toFixed(2).padStart(6) + '%'}  R$/km ${br(d.rsKm, 4)}  sozinha ${br(d.km).padStart(8)} km`));
 });
 
 console.log('\n── TOTAL por unidade ──');
@@ -160,5 +172,5 @@ Object.entries(porUni).forEach(([u, t]) => console.log(`${u.padEnd(18)} valor ${
 const tot = Object.values(porUni).reduce((a, t) => ({ valor: a.valor + t.valor, km0: a.km0 + t.km0, kmRec: a.kmRec + t.kmRec, real: a.real + t.real, impAntes: a.impAntes + t.impAntes, impDepois: a.impDepois + t.impDepois }), { valor: 0, km0: 0, kmRec: 0, real: 0, impAntes: 0, impDepois: 0 });
 console.log(`${'TOTAL'.padEnd(18)} valor ${br(tot.valor).padStart(10)} · km rem ${br(tot.km0)} → ${br(tot.km0 + tot.kmRec)} (+${br(tot.kmRec)}) · Δ ${br(tot.real - tot.km0)} → ${br(tot.real - tot.km0 - tot.kmRec)} · impacto ${br(tot.impAntes)} → ${br(tot.impDepois)}`);
 console.log('\nJSON_INICIO');
-console.log(JSON.stringify({ linhas: linhas.map(l => ({ ...l, contas: undefined })), porUni, tot, avisos: res.avisos }));
+console.log(JSON.stringify({ linhas: linhas.map(l => ({ ...l, contas: undefined })), porUni, tot, avisos: [...resAnt.avisos, ...resNova.avisos] }));
 console.log('JSON_FIM');

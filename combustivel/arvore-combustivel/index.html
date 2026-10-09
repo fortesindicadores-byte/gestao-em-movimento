@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610100010">
+<meta name="build" content="202610100130">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -395,7 +395,7 @@ body.claro .kpi-card{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../");}catch(e){}</script>
 <script src="../../assets/gviz-cache.js?v=202609050530"></script>
-<script src="../../assets/balanco-massa.js?v=202610100010"></script>
+<script src="../../assets/balanco-massa.js?v=202610100130"></script>
 </head>
 <body>
 
@@ -534,7 +534,7 @@ const STATIC = {
             <!-- Col 3 / Row 5: Recomposição pelo Balanço de Massa (Renan, 08/09/2026) — o km
                  remunerado acima JÁ inclui este km; a caixa mostra quanto voltou ao remunerado -->
             <div id="pos-recomp">
-              <div class="kpi-card recomp-card" id="card-recomp" title="Viagens sem CTE cobradas depois, convertidas em km e já somadas ao Km Rodado remunerado. De ago/26 em diante: por conta (export do DRE), somado no trimestre e rateado pelo remunerado da conta, km pelo R$/km da própria conta. Até jul/26: aba Balanço de Massa (Valor 85%) ÷ R$/km de todas as contas">
+              <div class="kpi-card recomp-card" id="card-recomp" title="Viagens sem CTE cobradas depois, convertidas em km e já somadas ao Km Rodado remunerado. De ago/26 em diante: por conta (export do DRE), somado no trimestre e rateado pelo remunerado, km = valor total ÷ R$/km das contas do balanço. Até jul/26: aba Balanço de Massa (Valor 85%), jan→jul rateado pelo remunerado ÷ R$/km dos 3 pacotes">
                 <div class="card-label">Recomposição · Balanço de Massa</div>
                 <table class="kpi-table">
                   <thead><tr><th>Valor R$</th><th>R$/km rem.</th><th>Km no Rem</th></tr></thead>
@@ -1057,16 +1057,25 @@ async function fetchBalancoBanco(){
   }
   return out;
 }
-// roda o motor com km0 (Dispersão) e remunerado por conta (Frota, todas as contas) das chaves vig|n3
-function recompoeNovo(bal){
-  if(!window.BalancoMassa){ console.warn('assets/balanco-massa.js não carregou — o balanço de ago/26 em diante não foi recomposto'); return {porChave:{},avisos:[]}; }
-  const km0={}, remCta={};
-  for(const r of S_DP){ const d=kParseVig(r[DP.vig]); if(!d||d<_bmIni())continue; const k=vigBR(d)+'|'+_nk(r[DP.proj]); km0[k]=(km0[k]||0)+(+r[DP.kmRem]||0); }
-  for(const r of S_FR){ const d=kParseVig(r[FR.vig]); if(!d||d<_bmIni())continue; const k=vigBR(d)+'|'+_nk(r[FR.n3]); const c=ctaNK(r[FR.cta]);
-    (remCta[k]=remCta[k]||{})[c]=(remCta[k][c]||0)+(-(+r[FR.rem]||0)); }   // custo na DRE vem negativo
-  const res=BalancoMassa.recompoe({bal, remCta, km0, inicio:BM_INICIO});
-  if(res.avisos.length) console.warn('Balanço de massa (conta a conta):', res.avisos);
-  return res;
+// roda o motor nas DUAS regras, com km0 (Dispersão) e remunerado da Frota por chave vig|n3:
+//  · ago/26+: por conta, líquido do balanço, trimestre;
+//  · jan→jul/26 (regra antiga, Valor 85% da aba): bloco único rateado pelo remunerado,
+//    remunerado BRUTO das contas dos 3 pacotes (VAR_CTAS) — Renan, 09/10/2026:
+//    "os meses anteriores seria importante dividir… Ou de jan a jul proporcionalize tudo".
+const BM_ANTIGA_INICIO='01/2026', BM_ANTIGA_JANELA='tudo';
+function recompoeTudo(balBanco, sBM){
+  if(!window.BalancoMassa){ console.warn('assets/balanco-massa.js não carregou — o balanço de massa não foi recomposto'); return {porChave:{},avisos:[]}; }
+  const km0={}, remCta={}, remPac={};
+  for(const r of S_DP){ const d=kParseVig(r[DP.vig]); if(!d)continue; const k=vigBR(d)+'|'+_nk(r[DP.proj]); km0[k]=(km0[k]||0)+(+r[DP.kmRem]||0); }
+  for(const r of S_FR){ const d=kParseVig(r[FR.vig]); if(!d)continue; const k=vigBR(d)+'|'+_nk(r[FR.n3]); const v=-(+r[FR.rem]||0);   // custo na DRE vem negativo
+    if(d>=_bmIni()){ const c=ctaNK(r[FR.cta]); (remCta[k]=remCta[k]||{})[c]=(remCta[k][c]||0)+v; }
+    else if(VAR_CTAS.has(_nk(r[FR.cta]))){ (remPac[k]=remPac[k]||{}).TOTAL=(remPac[k].TOTAL||0)+Math.abs(v); } }
+  const balAnt={}; sBM.forEach(b=>{ const k=b.vig+'|'+_nk(b.n3); (balAnt[k]=balAnt[k]||{}).TOTAL=(balAnt[k].TOTAL||0)+b.valor; });
+  const ant=BalancoMassa.recompoe({bal:balAnt, remCta:remPac, km0, inicio:BM_ANTIGA_INICIO, fim:BM_INICIO, janela:BM_ANTIGA_JANELA, liquido:false});
+  const nov=BalancoMassa.recompoe({bal:balBanco, remCta, km0, inicio:BM_INICIO});
+  if(ant.avisos.length) console.warn('Balanço de massa (regra antiga, rateada):', ant.avisos);
+  if(nov.avisos.length) console.warn('Balanço de massa (conta a conta):', nov.avisos);
+  return {porChave:Object.assign({},ant.porChave,nov.porChave), avisos:[...ant.avisos,...nov.avisos]};
 }
 function parseBalanco(cols,rows){
   // VALOR 85% (Renan, 10/09/2026): a coluna "Valor 85%" é a que vira km; a "Valor" crua só se a de 85% não existir
@@ -1086,9 +1095,8 @@ function parseBalanco(cols,rows){
 function kmRemChave(vig,n3){ let km=0; for(const r of S_DP){ const d=kParseVig(r[DP.vig]); if(!d||vigBR(d)!==vig)continue; if(_nk(r[DP.proj])!==_nk(n3))continue; km+=+r[DP.kmRem]||0; } return km; }
 function varRemChave(vig,n3){ let v=0; for(const r of S_FR){ if(!VAR_CTAS.has(_nk(r[FR.cta])))continue; const d=kParseVig(r[FR.vig]); if(!d||vigBR(d)!==vig)continue; if(_nk(r[FR.n3])!==_nk(n3))continue; v+=Math.abs(+r[FR.rem]||0); } return v; }
 // recomposição do recorte f: {km, valor, taxa}
-function bmAgg(f){ let km=0,valor=0; for(const b of S_BM){ if(!_match(f,b.vig,b.n3))continue; const km0=kmRemChave(b.vig,b.n3), rv=varRemChave(b.vig,b.n3);
-    if(!(km0>0)||!(rv>0))continue; km+=b.valor/(rv/km0); valor+=b.valor; }
-  // ago/26 em diante: o motor já devolve km e valor por chave (conta a conta, trimestre rateado)
+function bmAgg(f){ let km=0,valor=0;
+  // o motor já devolve km e valor por chave, nas duas regras (jan→jul rateado · ago/26+ conta a conta)
   for(const [k,e] of Object.entries(BM_NOVO.porChave)){ const i=k.indexOf('|'); if(!_match(f,k.slice(0,i),k.slice(i+1)))continue; km+=e.km; valor+=e.valor; }
   return {km, valor, taxa: km?valor/km:0}; }
 
@@ -1170,7 +1178,7 @@ async function fetchAll(){
   KM=detKmlSrc(km.cols);S_KM=km.rows;
   buildRemLookup(rs.cols,rs.rows);
   S_BM=parseBalanco(bm.cols,bm.rows);
-  BM_NOVO=recompoeNovo(bmBanco);
+  BM_NOVO=recompoeTudo(bmBanco,S_BM);
 
   // allRows = união {vigencia:'MM/YYYY', nivel3:'PROJETO - CODE'} p/ cascata e opções de filtro.
   // Só entram meses COM dado real — a Frota tem meses orçados futuros (rem/real=0) que, se listados,
@@ -1412,6 +1420,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610100010"></script>
+<script src="../../assets/build-check.js?v=202610100130"></script>
 </body>
 </html>
