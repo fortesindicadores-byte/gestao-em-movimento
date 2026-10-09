@@ -55,7 +55,7 @@ const tabela=pg=>pg.evaluate(()=>[...document.querySelectorAll('#tbl-conta tbody
   t(v('Total Pneus')==='3.450'&&v('Recapagens e Outros Serviços')==='450','Pneus real 3.450 (linha sem pacote entra pela conta) → '+v('Total Pneus'));
   t(v('Total Manutenção')==='1.200'&&v('Total Geral')==='4.650','Manutenção 1.200, Total Geral 4.650 → '+v('Total Manutenção')+' / '+v('Total Geral'));
   const pac=await pg.evaluate(()=>[...document.querySelectorAll('#ms-pac .ms-opt')].map(o=>o.textContent.replace('só','').trim()));
-  t(JSON.stringify(pac)===JSON.stringify(['Todos','MANUTENÇÃO','PNEUS','COMBUSTÍVEIS']),'filtro Pacote com Manutenção, Pneus e Combustíveis → '+pac);
+  t(JSON.stringify(pac)===JSON.stringify(['Todos','COMBUSTÍVEIS','MANUTENÇÃO','PNEUS']),'filtro Pacote com Combustíveis, Manutenção e Pneus → '+pac);
   await pg.evaluate(()=>{selPac.add('Pneus');render();setVw('lanc');});
   r=await tabela(pg);
   t(r.map(x=>x[0]).join('|')==='Pneus Novos|Recapagens e Outros Serviços|Total Pneus','Pacote = Pneus: só o bloco Pneus, sem Total Geral → '+r.map(x=>x[0]).join('|'));
