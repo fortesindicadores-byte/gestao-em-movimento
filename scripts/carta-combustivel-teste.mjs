@@ -102,6 +102,8 @@ const R2=x=>Math.round(x*100)/100;
   t(conta.some(c=>/COMBUST/i.test(c))&&conta.some(c=>/ARLA/i.test(c)),'filtro Conta traz Combustíveis e Arla → '+conta.join(', '));
   const lanc=await pg.evaluate(()=>[...document.querySelectorAll('#tbl-lanc tbody tr.clicavel')].length);
   t(lanc===2,'Lançamentos continua só com os lançados à mão ('+lanc+')');
+  await pg.evaluate(()=>setVw('graficos')); await pg.waitForTimeout(200);
+  t(await pg.evaluate(()=>document.querySelector('#vw-graficos').classList.contains('on')&&!document.querySelector('#vw-resumo .gr3')),'gráficos ficam na visão Gráficos, fora do Resumo');
   const placas=await pg.evaluate(()=>charts['ch-placa']?charts['ch-placa'].data.labels:[]);
   t(placas.includes('JBD7A17'),'gráfico por placa inclui o combustível → '+placas.slice(0,5).join(', '));
   await pg.close();
@@ -136,9 +138,15 @@ const R2=x=>Math.round(x*100)/100;
 // 4 · Resumo com os três pacotes sem rolar
 for(const [w,h] of [[1366,768],[1600,900],[1920,1080]]) for(const tema of ['escuro','claro']){
   const pg=await abre(w,h,tema);
-  const r=await pg.evaluate(()=>{const v=document.querySelector('#vw-resumo'),g=document.querySelector('#vw-resumo .gr3'),tw=document.querySelector('#vw-resumo .twrap');
-    return {vs:v.scrollHeight-v.clientHeight,bs:document.documentElement.scrollHeight-innerHeight,hs:v.scrollWidth-v.clientWidth,gh:g.getBoundingClientRect().height,ts:tw.scrollHeight-tw.clientHeight};});
-  t(r.vs<=1&&r.bs<=1&&r.hs<=1,`${w}x${h} ${tema}: Resumo sem rolagem (v ${r.vs} · pág ${r.bs} · h ${r.hs}), gráficos ${Math.round(r.gh)}px, tabela rola ${r.ts}px por dentro`);
+  const r=await pg.evaluate(()=>{const v=document.querySelector('#vw-resumo'),tw=document.querySelector('#vw-resumo .twrap');
+    return {vs:v.scrollHeight-v.clientHeight,bs:document.documentElement.scrollHeight-innerHeight,hs:v.scrollWidth-v.clientWidth,ts:tw.scrollHeight-tw.clientHeight};});
+  t(r.vs<=1&&r.bs<=1&&r.hs<=1&&r.ts<=1,`${w}x${h} ${tema}: Resumo só com a tabela, sem rolagem (v ${r.vs} · pág ${r.bs} · h ${r.hs} · tabela ${r.ts})`);
+  await pg.evaluate(()=>setVw('graficos')); await pg.waitForTimeout(250);
+  const g=await pg.evaluate(()=>{const v=document.querySelector('#vw-graficos'),g=v.querySelector('.gr3');
+    return {vs:v.scrollHeight-v.clientHeight,bs:document.documentElement.scrollHeight-innerHeight,gh:g.getBoundingClientRect().height,vh:v.getBoundingClientRect().height};});
+  t(g.vs<=1&&g.bs<=1&&g.gh>=g.vh*0.9,`${w}x${h} ${tema}: Gráficos ocupam a visão (${Math.round(g.gh)} de ${Math.round(g.vh)}px) sem rolagem`);
+  if(SHOT) await pg.screenshot({path:`${SHOT}/comb-graficos-${w}-${tema}.png`});
+  await pg.evaluate(()=>setVw('resumo'));
   if(SHOT) await pg.screenshot({path:`${SHOT}/comb-resumo-${w}-${tema}.png`});
   await pg.close();
 }
