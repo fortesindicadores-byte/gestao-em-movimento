@@ -739,7 +739,7 @@ Pesos do DriverPro: `PESOS = {rpm:50, idle:30, acel:20}` (base 100, 07/09/2026),
 
 ### 17.2 Planner Corporativo (`planner-corporativo/`, admin)
 
-Tabela `planner` (assunto, acao, resp, prazo, status, obs). Etapas `ETAPAS = Backlog → Não iniciada ("Planejando") → Em andamento ("Em execução") → Concluída ("Concluído")` + `Cancelada`. Visões Kanban (abre) · Tabela · Gantt · Aderência (por Assunto/Pessoa). Cópia de teste em localStorage (`planner-teste*`).
+Tabela `planner` (assunto, acao, resp, prazo, status, obs). Etapas `ETAPAS = Backlog → Não iniciada ("Planejando") → Em andamento ("Em execução") → Pausada → Concluída ("Concluído")` + `Cancelada`. Backlog e Pausada (`SEM_PRAZO`) ficam fora da aderência e do Gantt, e o prazo delas não vence. Visões Kanban (abre) · Tabela · Gantt · Aderência (por Assunto/Pessoa). Cópia de teste em localStorage (`planner-teste*`).
 
 ### 17.3 Gerot / Frota de Elite / Scorecard
 
