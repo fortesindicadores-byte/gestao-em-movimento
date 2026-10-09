@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610092000">
+<meta name="build" content="202610092130">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -336,18 +336,19 @@ table.dre thead th.num{text-align:right;}
    e ao diminuir a janela o gráfico não encolhia e empurrava o terceiro card
    para fora da tela (Renan, 07/10/2026) */
 .gr3{flex:1 1 0;min-height:170px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
-/* O Resumo é SÓ a tabela (Renan, 09/10/2026): o card tem a altura do conteúdo
-   e só rola por dentro se os três pacotes não couberem na tela. */
-#vw-resumo .tsec{flex:0 1 auto;min-height:0;}
-#vw-resumo .twrap{flex:0 1 auto;min-height:0;max-height:none;overflow:auto;}
+/* O Resumo é SÓ a tabela (Renan, 09/10/2026: "Pode distribuir melhor a
+   tabela"): o card ocupa a altura toda da visão e as linhas se distribuem nela
+   (table height:100%); só rola por dentro se os três pacotes não couberem. */
+#vw-resumo .tsec{flex:1 1 0;min-height:0;}
+#vw-resumo .twrap{flex:1 1 auto;min-height:0;max-height:none;overflow:auto;}
+#tbl-conta{height:100%;}
 #vw-graficos .gr3{flex:1 1 0;min-height:0;}
-/* 1px a menos no texto da tabela do Resumo (Renan, 25/09/2026): a altura que
-   sobra vai para os três gráficos de baixo */
-#tbl-conta{font-size:10px;}
-#tbl-conta thead th{font-size:8.5px;}
-#tbl-conta .tag-pill{font-size:9.5px;}
+/* com a tabela sozinha na visão, a letra voltou ao tamanho normal */
+#tbl-conta{font-size:11.5px;}
+#tbl-conta thead th{font-size:9.5px;}
+#tbl-conta .tag-pill{font-size:10.5px;}
 #tbl-conta td{padding:7px 12px;}
-#tbl-conta thead th{padding:8px 12px;}
+#tbl-conta thead th{padding:9px 12px;}
 #vw-placas .tsec{flex:1 1 0;min-height:220px;}
 /* Aderência ao Processo: cards de altura FIXA e o resto da altura para gráfico
    e tabela, lado a lado (mesma regra do Resumo da Aderência às Aferições) */
@@ -767,13 +768,16 @@ const unitMatchNv3=(unit,nv3)=>{const b=UNIT_BASE(unit),t=UNIT_TIER(unit);if(get
 const PROJETOS=['ROTA','APOIO','EMPURRADA','AUTO SERVIÇO','INSUMOS'];
 const PROJETOS_EXCLUIR=new Set(['ADMINISTRATIVO','ADMINISTRATIVO APOIO','ADMINISTRATIVO T1','ADMINISTRATIVO T2','ASVD','DEEP ARRENDAMENTOS','DEEP ARRENDADOS','EMPURRADA BITREM','MOBILIZAÇÃO','PA PETRÓPOLIS','TERCEIROS','TERCEIROS ARRENDADOS','ROTA (VAN)','UDC']);
 let UNIT_PROJETOS=PROJETOS.slice();
+/* a ordem das chaves é a ordem dos blocos no Resumo e das opções do filtro
+   Pacote — Combustíveis primeiro (Renan, 09/10/2026: "Combustível deve ser a
+   primeira linha") */
 const CONTAS={
-  'Manutenção':['Manutenção de Veículos e Equip.','Materiais e Ferramentas de Oficina','Lavação de Veículos','Manutenção de Carrocerias','Personalização/Padronização','Contratos de Manutenção Fabricante'],
-  'Pneus':['Pneus Novos','Recapagens e Outros Serviços'],
   /* COMBUSTÍVEIS (Renan, 09/10/2026): o realizado NÃO é lançado — vem sozinho
      dos abastecimentos ENCERRADOS do ERP (erp_abastecimentos, carga diária do
      PowerShell), sem PIS/COFINS, como o DRE. Ver loadComb(). */
-  'Combustíveis':['Combustíveis','Arla']
+  'Combustíveis':['Combustíveis','Arla'],
+  'Manutenção':['Manutenção de Veículos e Equip.','Materiais e Ferramentas de Oficina','Lavação de Veículos','Manutenção de Carrocerias','Personalização/Padronização','Contratos de Manutenção Fabricante'],
+  'Pneus':['Pneus Novos','Recapagens e Outros Serviços']
 };
 // pacotes cujo realizado vem de robô: ficam fora da caixa de lançamento
 const PAC_AUTO=new Set(['Combustíveis']);
@@ -1537,15 +1541,11 @@ function renderAcomp(){
     });
     gR+=tR; if(tHas){gO+=tO;gRe+=tRe;gHas=true;}
     h+=`<tr class="total"><td class="conta">Total ${esc(pac)}</td>${acompCells(tHas?tO:null,tHas?tRe:null,tR)}</tr>`;
-    if(pac==='Combustíveis'){
-      const corr=comb.filter(r=>r.corrigido);
-      if(COMB_ERR) h+=`<tr class="nota-comb"><td colspan="8">Abastecimentos do ERP indisponíveis agora: ${esc(COMB_ERR)}</td></tr>`;
-      else if(corr.length){
-        const lista=corr.sort((a,b)=>b.valorErp-a.valorErp).slice(0,20)
-          .map(r=>`OS ${r.os} · ${dataBR(r.data)} · ${r.equipamento} · ${r.litros.toLocaleString('pt-BR',{maximumFractionDigits:1})} L · no ERP R$ ${fmtValorBR(r.valorErp)}`).join('\n');
-        h+=`<tr class="nota-comb" title="${esc(lista+(corr.length>20?'\n… e mais '+(corr.length-20):''))}"><td colspan="8">⚠ ${corr.length} abastecimento(s) com preço por litro fora do normal no ERP entraram pelo preço médio da filial no mês · passe o mouse para ver quais corrigir</td></tr>`;
-      }
-    }
+    /* a linha âmbar "N abastecimentos com preço fora do normal entraram pelo
+       preço médio" SAIU (Renan, 09/10/2026: "aquela mensagem em amarelo não faz
+       sentido nenhum ter"); a correção continua acontecendo em silêncio (ver
+       loadComb, r.corrigido). Fica só o aviso de banco fora, que é falha. */
+    if(pac==='Combustíveis'&&COMB_ERR) h+=`<tr class="nota-comb"><td colspan="8">Abastecimentos do ERP indisponíveis agora: ${esc(COMB_ERR)}</td></tr>`;
   });
   if(pacs.length>1) h+=`<tr class="total geral"><td class="conta">Total Geral</td>${acompCells(gHas?gO:null,gHas?gRe:null,gR)}</tr>`;
   h+='</tbody>';
@@ -2185,6 +2185,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610092000"></script>
+<script src="../assets/build-check.js?v=202610092130"></script>
 </body>
 </html>
