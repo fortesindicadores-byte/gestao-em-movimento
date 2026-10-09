@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610092130">
+<meta name="build" content="202610092150">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -642,9 +642,9 @@ body.claro input[type=date]{color-scheme:light;}
       <!-- ══ 1b · GRÁFICOS ══ -->
       <section class="vw" id="vw-graficos">
         <div class="gr3">
-          <div class="card gcard"><div class="gtit">Custo por Grupo</div><div class="gsub">no mês · top 10</div><div class="gcv"><canvas id="ch-grupo"></canvas></div></div>
-          <div class="card gcard"><div class="gtit">Custo por Placa</div><div class="gsub">top 10 equipamentos</div><div class="gcv"><canvas id="ch-placa"></canvas></div></div>
-          <div class="card gcard"><div class="gtit">Custo por Fornecedor</div><div class="gsub">top 10 fornecedores</div><div class="gcv"><canvas id="ch-forn"></canvas></div></div>
+          <div class="card gcard"><div class="gtit">Custo por Grupo</div><div class="gsub">no mês · top 15</div><div class="gcv"><canvas id="ch-grupo"></canvas></div></div>
+          <div class="card gcard"><div class="gtit">Custo por Placa</div><div class="gsub">top 15 equipamentos</div><div class="gcv"><canvas id="ch-placa"></canvas></div></div>
+          <div class="card gcard"><div class="gtit">Custo por Fornecedor</div><div class="gsub">top 15 fornecedores</div><div class="gcv"><canvas id="ch-forn"></canvas></div></div>
         </div>
       </section>
 
@@ -1599,7 +1599,7 @@ function anoChart(id,labels,vals,foco){
         y:{display:false,beginAtZero:true,grace:'14%'}}}});
 }
 function barChart(id,pairs,max){
-  const top=pairs.slice(0,max||10);
+  const top=pairs.slice(0,max||15);   // top 15 (Renan, 09/10/2026: "Pode colocar top 15 agora" — a visão Gráficos tem a altura inteira)
   if(charts[id])charts[id].destroy();
   if(!$(id))return;
   charts[id]=new Chart($(id),{type:'bar',
@@ -2185,6 +2185,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610092130"></script>
+<script src="../assets/build-check.js?v=202610092150"></script>
 </body>
 </html>
