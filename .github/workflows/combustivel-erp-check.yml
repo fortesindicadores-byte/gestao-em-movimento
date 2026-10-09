@@ -11,6 +11,10 @@ on:
         description: 'Desde (AAAA-MM-DD)'
         required: false
         default: '2026-01-01'
+      dump:
+        description: 'Imprimir ERP por filial e DRE por unidade (1 = sim)'
+        required: false
+        default: ''
 
 jobs:
   conferir:
@@ -24,4 +28,5 @@ jobs:
         env:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           DESDE: ${{ inputs.desde }}
+          DUMP: ${{ inputs.dump }}
         run: node scripts/combustivel-erp-check.mjs

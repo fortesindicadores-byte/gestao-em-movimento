@@ -169,4 +169,31 @@ if (dre.length) {
     [...du].sort((a, b) => b[1] - a[1]).forEach(([u, v]) => console.log(`      DRE  ${u}: R$ ${n(v, 0)}`));
   }
 }
+// ── 4) DUMP: linhas cruas agregadas, para comparar com relatório de fora (Qlik) ──
+if (process.env.DUMP) {
+  console.log('\n━━ 4) DUMP (ERP por filial e DRE por unidade, mês a mês)');
+  const e = new Map();
+  for (const r of L) {
+    if (r.cls !== 'Diesel' && r.cls !== 'Arla') continue;
+    const k = `${r.vig}|${r.filial || ''}|${r.cls}`;
+    const a = e.get(k) || { n: 0, lit: 0, val: 0, vs: 0 };
+    a.n++; a.lit += r.litros; a.val += r.valor; if (!suspeita(r)) a.vs += r.valor;
+    e.set(k, a);
+  }
+  [...e].sort().forEach(([k, a]) => console.log(`ERP|${k}|${a.n}|${a.lit.toFixed(1)}|${a.val.toFixed(2)}|${a.vs.toFixed(2)}`));
+  if (dre.length) {
+    const ks = Object.keys(dre[0]);
+    const kCta = ks.find(k => norm(k).includes('conta'));
+    const d = new Map();
+    for (const l of dre) {
+      const t = norm(l[kCta]); const cls = t.includes('arla') ? 'Arla' : t.startsWith('combustiveis') ? 'Diesel' : null;
+      if (!cls) continue;
+      const vig = String(l.vigencia_orig || l.vigencia || '').slice(0, 7);
+      if (vig < DESDE.slice(0, 7)) continue;
+      const k = `${vig}|${l.unidade || ''}|${cls}`;
+      const a = d.get(k) || { real: 0, rem: 0 }; a.real -= num(l.realizado); a.rem -= num(l.remunerado); d.set(k, a);
+    }
+    [...d].sort().forEach(([k, a]) => console.log(`DRE|${k}|${a.real.toFixed(2)}|${a.rem.toFixed(2)}`));
+  }
+}
 console.log('\nFim. Nada foi gravado.');
