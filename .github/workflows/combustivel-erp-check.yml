@@ -15,6 +15,10 @@ on:
         description: 'Só OS encerradas (1 = sim)'
         required: false
         default: ''
+      projetos:
+        description: 'Listar filial × projeto (1 = sim)'
+        required: false
+        default: ''
       dump:
         description: 'Imprimir ERP por filial e DRE por unidade (1 = sim)'
         required: false
@@ -33,5 +37,6 @@ jobs:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           DESDE: ${{ inputs.desde }}
           DUMP: ${{ inputs.dump }}
+          PROJETOS: ${{ inputs.projetos }}
           SO_ENCERRADAS: ${{ inputs.so_encerradas }}
         run: node scripts/combustivel-erp-check.mjs
