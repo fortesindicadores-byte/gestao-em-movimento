@@ -65,7 +65,8 @@ body.light-mode, body.claro{
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
 .adv-gcard{position:relative;}
 /* legenda do padrão: quadradinho = barra (neutro, a cor vem da faixa), tracinho = meta */
-.adv-gleg{position:absolute;top:13px;right:15px;display:flex;gap:14px;
+/* abaixo do título e do subtítulo (Renan, 09/10/2026: "legenda abaixo do título") */
+.adv-gleg{display:flex;gap:14px;margin-top:6px;
   font-size:9.5px;font-weight:700;color:var(--txt3,#475569);}
 .adv-gleg i{display:inline-block;width:14px;height:0;border-top:2px dashed var(--txt2,#94A3B8);
   margin-right:6px;vertical-align:middle;}
