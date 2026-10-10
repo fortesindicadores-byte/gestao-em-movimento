@@ -2,6 +2,11 @@ name: TCC Dados
 
 on:
   workflow_dispatch:
+    inputs:
+      so:
+        description: 'Imprimir no log só esta tabela (ex.: A_indicadores_por_tier); vazio = todas'
+        required: false
+        default: ''
 
 jobs:
   dados:
@@ -16,6 +21,7 @@ jobs:
         env:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           TCC_OUT: tcc-dados
+          TCC_SO: ${{ github.event.inputs.so }}
         run: node scripts/tcc-dados.mjs
       - uses: actions/upload-artifact@v4
         with:

@@ -83,9 +83,13 @@ const LABEL = GerotBase.fieldLabels;
 const fmt = v => v == null || !isFinite(v) ? '' : String(Math.round(v * 1000) / 1000).replace('.', ',');
 const mmaaaa = v => { const m = String(v || '').match(/^(\d{4})-(\d{2})$/); return m ? `${m[2]}/${m[1]}` : v; };
 
+// TCC_SO=<nome> imprime no log SÓ essa tabela (o leitor de log guarda ~5.000
+// linhas e a Tabela A por tier sozinha tem ~2.000); os arquivos saem todos.
+const SO = (process.env.TCC_SO || '').trim();
 const tsv = (nome, cab, linhas) => {
   const txt = [cab.join('\t'), ...linhas.map(l => l.map(x => x == null ? '' : String(x).replace(/[\t\n\r]+/g, ' ')).join('\t'))].join('\n');
   fs.writeFileSync(path.join(OUT, nome + '.tsv'), txt + '\n');
+  if (SO && SO !== nome) { console.log(`(${nome}: ${linhas.length} linhas, não impressa — TCC_SO=${SO})`); return; }
   console.log(`\n=== TSV ${nome} (${linhas.length} linhas) ===`);
   console.log(txt);
   console.log(`=== FIM ${nome} ===`);
