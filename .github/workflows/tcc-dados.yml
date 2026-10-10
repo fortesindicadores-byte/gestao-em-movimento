@@ -1,0 +1,23 @@
+name: TCC Dados
+
+on:
+  workflow_dispatch:
+
+jobs:
+  dados:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Tabelas A, B, C e D do TCC (Scorecard pelo gerot-base real + tabela fca)
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          TCC_OUT: tcc-dados
+        run: node scripts/tcc-dados.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tcc-dados
+          path: tcc-dados/
