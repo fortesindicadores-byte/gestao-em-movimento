@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="build" content="202610112330">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Relatórios · Gestão em Movimento</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+/* ============================================================
+   RELATÓRIOS — Excel detalhado de cada painel, direto do banco
+   (Renan, 11/10/2026). Casca copiada do painel Saúde; o que é
+   próprio desta tela está no bloco "Relatórios" abaixo.
+   ============================================================ */
+:root{
+  /* fundo UNIFORME (mesma regra do hub): o degradê diagonal clareava para o
+     canto superior direito e deixava metade da tela mais clara que a outra */
+  --fundo:
+    radial-gradient(80% 60% at 90% 0%, rgba(255,244,232,.035) 0%, transparent 60%),
+    linear-gradient(45deg, #121214 0%, #121214 100%);
+  --luz:      inset 0 1px 0 rgba(255,255,255,.09);
+  --luz-card: inset 0 1px 0 rgba(255,255,255,.08);
+  --app:      rgba(150,185,255,.045);
+  --side:     rgba(30,30,30,.50);
+  --linha:    rgba(255,255,255,.06);
+  --card:     rgba(44,44,46,.78);
+  --brilho:   linear-gradient(180deg, rgba(255,255,255,.022) 0%, rgba(255,255,255,0) 46%);
+  --card-brd: rgba(255,255,255,.07);
+  --txt:      #EEF2FA;
+  --txt2:     #C9D0DD;
+  --txt3:     #A9B1C0;
+  --txt4:     #7D8596;
+  --hover:    rgba(255,255,255,.06);
+  --azul:     #2E90E8;
+  --verde:    #3BB33B;
+  --vermelho: #FF5252;
+  --laranja:  #F97316;
+  --ambar:    #F4A100;
+  --cinza:    #5B657C;
+  --cabec:    #2B2B30;
+  --pop:      #26262B;   /* menus suspensos: OPACOS, nunca translúcidos */
+}
+body.claro{
+  --fundo:
+    radial-gradient(80% 60% at 90% 0%, rgba(255,255,255,.35) 0%, transparent 60%),
+    linear-gradient(45deg, #E1E2E5 0%, #E1E2E5 100%);
+  --luz:      inset 0 1px 0 rgba(255,255,255,.9);
+  --luz-card: inset 0 1px 0 rgba(255,255,255,1);
+  --app:      rgba(255,255,255,.20);
+  --side:     rgba(255,255,255,.50);
+  --linha:    rgba(15,23,42,.10);
+  --card:     rgba(255,255,255,.74);
+  --brilho:   linear-gradient(180deg, rgba(255,255,255,.6) 0%, rgba(255,255,255,0) 46%);
+  --card-brd: rgba(15,23,42,.10);
+  --txt:      #161D2B;
+  --txt2:     #4A5568;
+  --txt3:     #737D91;
+  --txt4:     #8B94A6;
+  --hover:    rgba(15,23,42,.05);
+  --azul:     #1B6FC4;
+  --verde:    #00B300;
+  --vermelho: #FF0000;
+  --ambar:    #E9A400;
+  --cinza:    #939CAF;
+  --cabec:    #DCDFE6;
+  --pop:      #FFFFFF;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+@supports not selector(::-webkit-scrollbar){
+  *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--txt3) 42%,transparent) transparent;}
+}
+::-webkit-scrollbar{width:11px;height:11px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--txt3) 42%,transparent);
+  border:3px solid transparent;background-clip:content-box;border-radius:9px;}
+::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--txt3) 72%,transparent);background-clip:content-box;}
+::-webkit-scrollbar-corner{background:transparent;}
+::-webkit-scrollbar-button{display:none;width:0;height:0;}
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");}
+.app{z-index:1;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;color:var(--txt);
+  background:var(--fundo);overflow:hidden;}
+
+.app{position:absolute;inset:16px;display:flex;border-radius:10px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.10);box-shadow:0 28px 70px rgba(0,0,0,.55), var(--luz);}
+.app::before{content:'';position:absolute;inset:0;background:var(--app);
+  z-index:0;}
+.side,.board{position:relative;z-index:1;}
+
+/* ── barra lateral ── */
+.side{width:264px;flex:0 0 264px;display:flex;flex-direction:column;
+  background:var(--side);border-right:1px solid var(--linha);padding:16px 10px 12px;
+  backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);
+  box-shadow:var(--luz), 8px 0 28px rgba(0,0,0,.25);overflow:auto;}
+.s-top{display:flex;align-items:center;gap:9px;padding:2px 8px 14px;}
+.s-top b{flex:1;font-size:13.5px;font-weight:600;}
+.s-mini{display:flex;align-items:center;justify-content:center;width:24px;height:24px;flex:0 0 24px;
+  background:transparent;border:0;border-radius:6px;color:var(--txt3);cursor:pointer;}
+.s-mini:hover{background:var(--hover);color:var(--txt);}
+.side.mini{width:64px;flex:0 0 64px;padding:16px 8px 12px;}
+.side.mini .s-top{justify-content:center;padding-bottom:12px;}
+.side.mini .s-top b,.side.mini .s-top>svg{display:none;}
+.side.mini .s-sec,.side.mini .s-item .n,.side.mini .s-user div{display:none;}
+.side.mini .s-item{font-size:0;justify-content:center;padding:9px 0;gap:0;}
+.side.mini .s-user{flex-wrap:wrap;gap:6px;justify-content:center;padding:12px 0 2px;}
+.side.mini .s-sair{margin:0;}
+.s-sec{display:flex;align-items:center;gap:6px;padding:14px 8px 8px;
+  font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:1.1px;}
+.s-item{display:flex;align-items:center;gap:9px;width:100%;padding:7px 8px;border:0;border-radius:7px;
+  background:transparent;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;text-align:left;cursor:pointer;}
+.s-item:hover{background:var(--hover);color:var(--txt);}
+.s-item.on{background:var(--hover);color:var(--txt);font-weight:600;}
+.s-item .n{margin-left:auto;font-size:11px;color:var(--txt3);font-weight:600;}
+.s-user{margin-top:auto;display:flex;align-items:center;gap:9px;padding:12px 8px 2px;border-top:1px solid var(--linha);}
+.s-volta{margin-top:auto;padding-top:8px;display:flex;flex-direction:column;gap:2px;}
+.s-volta+.s-user{margin-top:6px;}
+@media(max-width:860px){.s-volta{display:contents;}}
+.s-user div{flex:1;min-width:0;}
+.s-user b{display:block;font-size:12px;font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.s-user i{display:block;font-size:9.5px;font-style:normal;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
+.s-user .av{flex:0 0 24px;}
+.av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:800;letter-spacing:.2px;color:#2A1405;background:#F97316;flex:0 0 24px;
+  box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.s-sair{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;
+  color:var(--txt3);text-decoration:none;flex:0 0 26px;}
+.s-sair:hover{background:var(--hover);color:var(--txt);}
+.dica{position:fixed;z-index:9000;transform:translateY(-50%);pointer-events:none;opacity:0;
+  background:var(--pop);color:var(--txt);border:1px solid var(--card-brd);border-radius:7px;
+  padding:5px 9px;font-size:11.5px;font-weight:600;white-space:nowrap;
+  box-shadow:0 8px 22px rgba(0,0,0,.45);transition:opacity .12s;}
+.dica.on{opacity:1;}
+
+/* ── quadro ── */
+.board{flex:1;min-width:0;display:flex;flex-direction:column;}
+.top{display:flex;align-items:center;gap:6px;padding:12px 24px 10px;flex-wrap:wrap;}
+.tit-wrap{flex:1;min-width:0;}
+.top h1{font-size:21px;font-weight:600;letter-spacing:-.3px;}
+.tit-sub{font-size:11px;color:var(--txt3);font-weight:600;margin-top:2px;letter-spacing:.2px;}
+.tool{display:flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:7px;
+  padding:6px 10px;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;}
+.tool:hover{background:var(--hover);color:var(--txt);}
+.tool.ico{padding:7px 9px;}
+.filtros{display:flex;align-items:center;gap:4px;min-width:0;}
+
+/* ── filtros multi-select (mesma mecânica do painel original, visual do app) ── */
+.ms-wrap{position:relative;}
+.ms-btn{display:flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:7px;
+  padding:6px 10px;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;}
+.ms-btn:hover{background:var(--hover);color:var(--txt);}
+.ms-wrap.ativo .ms-btn{background:var(--hover);color:var(--txt);}
+.ms-cnt{display:none;min-width:16px;height:16px;padding:0 5px;border-radius:9px;background:var(--laranja);
+  color:#2A1405;font-size:9.5px;font-weight:800;line-height:16px;text-align:center;}
+.ms-panel{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:60;min-width:236px;
+  background:var(--pop);border:1px solid var(--card-brd);border-radius:10px;padding:6px;
+  box-shadow:0 18px 44px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.35);}
+body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(15,23,42,.10);}
+.ms-panel.open{display:block;}
+.ms-search{display:flex;align-items:center;gap:7px;padding:6px 8px;margin-bottom:4px;border-bottom:1px solid var(--linha);}
+.ms-search input{flex:1;min-width:0;background:transparent;border:0;outline:0;font-family:inherit;font-size:12px;color:var(--txt);}
+.ms-list{max-height:262px;overflow:auto;}
+.ms-opt{display:flex;align-items:center;gap:9px;min-height:31px;padding:7px 9px;border-radius:7px;
+  color:var(--txt);font-size:12.5px;cursor:pointer;white-space:nowrap;}
+.ms-opt:hover{background:var(--hover);}
+.ms-opt input[type=checkbox]{accent-color:var(--azul);width:14px;height:14px;flex:0 0 14px;cursor:pointer;}
+.ms-opt.all-opt{font-weight:700;border-bottom:1px solid var(--linha);margin-bottom:4px;border-radius:0;}
+.ms-only{margin-left:auto;font-size:9px;font-weight:700;color:var(--laranja);padding:1px 7px;border-radius:4px;opacity:0;flex:0 0 auto;}
+.ms-opt:hover .ms-only{opacity:1;}
+.ms-only:hover{background:rgba(249,115,22,.2);}
+
+/* ── área de conteúdo ── */
+.cols{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:0 24px 24px;}
+.vw{display:none;flex:1;min-height:0;flex-direction:column;gap:12px;}
+.vw.on{display:flex;overflow:auto;}
+.vw.rola{overflow:auto;padding-bottom:6px;}
+.card{border:1px solid var(--card-brd);border-radius:12px;background:var(--side);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--luz-card);}
+
+/* hero + KPIs */
+/* igual ao painel original: Receita na ponta esquerda, EBITDA na ponta direita
+   com o conteúdo alinhado à direita (.hero-ebitda{margin-left:auto;text-align:right}) */
+.fin-hero{display:flex;align-items:flex-end;gap:20px;flex:0 0 auto;}
+.heb{margin-left:auto;text-align:right;}
+.heb .hdel{justify-content:flex-end;}
+.hlbl{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.9px;}
+.hval{font-size:clamp(26px,3.6vh,40px);font-weight:800;line-height:1;margin:4px 0 7px;color:var(--txt);}
+.hdel{display:flex;gap:18px;flex-wrap:wrap;}
+.hdel div{font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;}
+.hdel b{display:block;font-size:13px;font-weight:800;color:var(--txt);margin-top:2px;letter-spacing:0;text-transform:none;}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;flex:0 0 auto;}
+.kpi{padding:19px 16px;border:1px solid var(--card-brd);border-radius:11px;background:var(--side);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.kpi .kl{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;}
+.kpi .kv{font-size:25px;font-weight:800;color:var(--txt);margin-top:7px;line-height:1.1;}
+.kpi .km{font-size:10.5px;color:var(--txt3);margin-top:8px;font-weight:600;}
+.kpi .km b{font-weight:800;}
+
+/* gráficos */
+.gr2{flex:1 1 auto;min-height:190px;max-height:44vh;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.gcard{min-height:0;min-width:0;display:flex;flex-direction:column;padding:12px 16px 10px;position:relative;}
+.gtit{font-size:12px;font-weight:800;}
+.gsub{font-size:10px;color:var(--txt3);margin:2px 0 6px;}
+.gcv{flex:1;min-height:0;position:relative;}
+.gleg{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px;}
+.gleg span{display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;color:var(--txt3);letter-spacing:.5px;}
+.gleg i{width:14px;height:0;border-top:2px dashed currentColor;display:inline-block;}
+.gleg i.sq{width:9px;height:9px;border:0;border-radius:2px;background:currentColor;}
+
+/* botões de referência / dimensão */
+.rt{background:transparent;border:1px solid var(--card-brd);border-radius:20px;padding:3px 10px;cursor:pointer;
+  font-family:inherit;font-size:9.5px;font-weight:800;color:var(--txt2);letter-spacing:.6px;white-space:nowrap;}
+.rt:hover{background:var(--hover);color:var(--txt);}
+.rt .l{color:var(--txt3);font-weight:600;}
+.rt.abs{position:absolute;top:10px;right:12px;z-index:3;}
+.dims{display:flex;gap:4px;flex-wrap:wrap;}
+.dimb{background:transparent;border:1px solid var(--card-brd);border-radius:7px;padding:4px 10px;cursor:pointer;
+  font-family:inherit;font-size:10.5px;font-weight:700;color:var(--txt2);}
+.dimb:hover{background:var(--hover);color:var(--txt);}
+.dimb.on{background:var(--azul);border-color:transparent;color:#fff;}
+
+/* tabelas DRE */
+.tsec{flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 16px 12px;}
+.thead-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:2px;}
+.ttit{font-size:14px;font-weight:800;}
+.tsub{font-size:10px;color:var(--txt3);margin-bottom:8px;}
+.twrap{flex:1;min-height:0;overflow:auto;border:1px solid var(--card-brd);border-radius:10px;background:var(--side);}
+/* O ESPELHO ATRÁS DA TABELA FICA SEMPRE (Renan, 06/10/2026: "algumas ficaram estranhas sem o
+   espelho no fundo, pois como as bordas são arredondadas, fica comendo as bordas. Pode manter
+   sempre o espelho no fundo, mesmo que não tenha nada escrito"): o card da tabela voltou a ter
+   fundo, borda e padding. O título que repete a visão continua escondido. */
+.thead-row > .dim-toggle,.thead-row > .dims,.thead-row > .drill-tabs{margin-left:auto;}
+table.dre{width:100%;border-collapse:collapse;font-size:11px;}
+table.dre thead th{position:sticky;top:0;z-index:2;background:var(--cabec);text-align:left;
+  padding:10px 12px;font-size:9.5px;font-weight:700;color:var(--txt2);text-transform:uppercase;
+  letter-spacing:.7px;border-bottom:1px solid var(--card-brd);white-space:nowrap;}
+table.dre thead th .grp{display:block;font-size:8.5px;color:var(--txt3);letter-spacing:.6px;margin-bottom:1px;}
+table.dre td{padding:9px 12px;border-bottom:1px solid var(--linha);color:var(--txt2);white-space:nowrap;}
+table.dre td.conta{color:var(--txt);font-weight:600;text-align:left;}
+table.dre td.num{text-align:right;}
+table.dre tbody tr:hover{background:var(--hover);}
+/* totalizadores no tom do cabeçalho — vale para todas as tabelas do painel */
+table.dre tr.total td{font-weight:800;color:var(--txt);border-top:1px solid var(--card-brd);background:var(--cabec);}
+table.dre tr.ref-row td{color:var(--txt);background:color-mix(in srgb,var(--azul) 8%,transparent);}
+table.dre tr.ebitda-row td{color:var(--txt);font-weight:700;background:var(--cabec);}
+table.dre .sep-l{border-left:1px solid var(--card-brd);}
+/* precisa vencer o "table.dre td{color:...}", que tem especificidade maior */
+table.dre td.cr,.cr{color:var(--vermelho)!important;font-weight:700;}
+table.dre td.cg,.cg{color:var(--verde)!important;font-weight:700;}
+table.dre td.cr-t,.cr-t{color:var(--vermelho)!important;font-weight:700;}
+table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
+
+
+/* ── Relatórios: só o que é próprio desta tela ── */
+.twrap{overflow-x:hidden;}
+.twrap table.dre{width:100%;table-layout:fixed;}
+table.dre td,table.dre th{white-space:normal;overflow-wrap:anywhere;}
+table.dre td{vertical-align:middle;}
+table.dre td.nome{color:var(--txt);font-weight:700;}
+table.dre td.mono{font-variant-numeric:tabular-nums;}
+table.dre tr.grp td{background:var(--cabec);color:var(--txt);font-weight:800;font-size:10px;
+  text-transform:uppercase;letter-spacing:.9px;padding:7px 12px;}
+.mut{color:var(--txt3);}
+.lin2{display:block;font-size:10px;color:var(--txt3);font-weight:500;margin-top:3px;line-height:1.35;}
+.abas{display:block;font-size:10px;color:var(--txt3);line-height:1.45;}
+/* botão de exportar: pílula fantasma, laranja enquanto lê, verde quando baixou */
+.bx{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--card-brd);border-radius:20px;
+  padding:5px 12px;background:transparent;color:var(--txt);font-family:inherit;font-size:11px;font-weight:700;
+  cursor:pointer;white-space:nowrap;}
+.bx:hover{border-color:var(--laranja);color:var(--laranja);}
+.bx[disabled]{cursor:progress;}
+.bx.run{color:var(--laranja);border-color:color-mix(in srgb,var(--laranja) 50%,transparent);}
+.bx.ok{color:var(--verde);border-color:color-mix(in srgb,var(--verde) 45%,transparent);}
+.bx.err{color:var(--vermelho);border-color:color-mix(in srgb,var(--vermelho) 45%,transparent);}
+.st{display:block;font-size:9.5px;color:var(--txt3);font-weight:600;margin-top:4px;min-height:12px;}
+.st.err{color:var(--vermelho);}
+.busca{display:flex;align-items:center;gap:7px;border:1px solid var(--card-brd);border-radius:20px;
+  padding:5px 12px;min-width:240px;color:var(--txt3);}
+.busca input{flex:1;min-width:0;background:transparent;border:0;outline:0;font-family:inherit;font-size:12px;color:var(--txt);}
+.kpis{min-height:clamp(104px,15vh,150px);grid-template-columns:repeat(4,minmax(0,1fr));}
+.kpi{display:flex;flex-direction:column;justify-content:center;}
+.gate{max-width:560px;margin:60px auto;text-align:center;border-radius:14px;padding:36px 32px;
+  background:var(--brilho), var(--side);border:1px solid var(--card-brd);box-shadow:var(--luz-card);}
+.gate h2{font-size:18px;font-weight:800;margin-bottom:10px;}
+.gate p{font-size:13px;color:var(--txt2);line-height:1.6;}
+@media(max-width:860px){
+  .twrap{overflow-x:auto;} .twrap table.dre{table-layout:auto;min-width:760px;} table.dre thead th{position:static;}
+  .busca{min-width:0;flex:1 1 100%;}
+  /* no celular a lista de abas sai: fica o painel e o botão, sem rolar de lado */
+  .twrap table.dre.rel{min-width:0;table-layout:auto;}
+  table.dre.rel colgroup{display:none;}
+  table.dre.rel th:nth-child(2),table.dre.rel td:nth-child(2){display:none;}
+  table.dre.rel tr.grp td{display:table-cell;}
+}
+@media(max-width:860px){
+  body{overflow:auto;}
+  .app{position:static;inset:auto;min-height:100%;border-radius:0;flex-direction:column;box-shadow:none;border:0;}
+  .app::before{position:fixed;inset:0;}
+  .side{width:auto;flex:none;border-right:0;border-bottom:1px solid var(--linha);padding:8px 10px;overflow:visible;}
+  .side.mini{width:auto;flex:none;padding:8px 10px;}
+  .s-user,.s-top,.s-sec{display:none;}
+  /* as visões viram uma fileira que rola de lado */
+  .side{display:flex;flex-direction:row;gap:6px;overflow-x:auto;scrollbar-width:none;}
+  .side::-webkit-scrollbar{display:none;}
+  .side .s-item{width:auto;flex:0 0 auto;white-space:nowrap;font-size:12px;padding:7px 11px;
+    border:1px solid var(--card-brd);border-radius:20px;}
+  .side.mini .s-item{font-size:12px;padding:7px 11px;gap:9px;}
+  .side .s-item.on{background:var(--laranja);border-color:transparent;color:#2A1405;}
+  .top{padding:12px 14px 8px;gap:4px;}
+  .tit-wrap{flex:1 1 auto;min-width:0;}
+  .top h1{font-size:17px;}
+  /* filtros numa faixa própria que rola de lado, em vez de quebrar em 3 linhas */
+  .filtros{order:3;flex:1 1 100%;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+  .filtros::-webkit-scrollbar{display:none;}
+  .filtros .ms-wrap{flex:0 0 auto;}
+  .ms-btn{font-size:12px;padding:6px 9px;}
+  .ms-panel{right:auto;left:0;min-width:210px;}
+  .cols{overflow:visible;padding:0 14px 22px;}
+  .vw{display:none;}
+  .vw.on{display:block;}                      /* sem flex: cada bloco cresce sozinho */
+  .vw>*{margin-bottom:12px;}
+  .fin-hero{gap:14px;flex-direction:column;align-items:flex-start;}
+  .heb{margin-left:0;text-align:left;}
+  .heb .hdel{justify-content:flex-start;}
+  .kpis{grid-template-columns:repeat(2,1fr);}
+  .gr2,.wf-grid{display:block;height:auto;}
+  .wf-grid .gcard{height:280px;margin-bottom:12px;}
+  .gcard{height:300px;margin-bottom:12px;}
+  .tsec{display:block;padding:12px 12px 10px;}
+  .thead-row{margin-bottom:6px;}
+  .twrap{max-height:none;overflow-x:auto;}
+  .emb{height:76vh;}
+}
+#aviso-slot:not(:empty){margin-bottom:10px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="s-top">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--laranja)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8M8 17h8M8 9h2"/></svg>
+      <b>Relatórios</b>
+      <button class="s-mini" id="btMini" onclick="trocaMini()" title="Recolher menu">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>
+      </button>
+    </div>
+
+    <div class="s-sec">Visões</div>
+    <button class="s-item on" data-vw="resumo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Resumo Gerencial<span class="n" id="n-resumo"></span></button>
+    <button class="s-item" data-vw="ger"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg> Visão Geral<span class="n" id="n-ger"></span></button>
+    <button class="s-item" data-vw="fin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Financeiro<span class="n" id="n-fin"></span></button>
+    <button class="s-item" data-vw="op"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> Operacional<span class="n" id="n-op"></span></button>
+    <button class="s-item" data-vw="proc"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> Processos<span class="n" id="n-proc"></span></button>
+    <button class="s-item" data-vw="res"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Resultados<span class="n" id="n-res"></span></button>
+    <button class="s-item" data-vw="adm" id="it-adm" style="display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Administração<span class="n" id="n-adm"></span></button>
+    <button class="s-item" data-vw="sheets"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 5v14c0 1.66-4.03 3-9 3s-9-1.34-9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg> Bases do Sheets<span class="n" id="n-sheets"></span></button>
+
+    <div class="s-sec">Atalhos</div>
+    <button class="s-item" onclick="recarregar()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      Atualizar dados
+    </button>
+
+    <div class="s-volta">
+      <a class="s-item" href="../" style="text-decoration:none" title="Voltar ao Hub">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+        Voltar ao Hub
+      </a>
+    </div>
+
+    <div class="s-user">
+      <span class="av" id="av">—</span>
+      <div><b id="quem">—</b><i id="papel">—</i></div>
+    </div>
+  </aside>
+
+  <main class="board">
+    <div class="top">
+      <div class="tit-wrap">
+        <h1 id="tit">Resumo Gerencial</h1>
+        <div class="tit-sub" id="titSub">Carregando…</div>
+      </div>
+      <button class="tool ico" id="btTema" onclick="trocaTema()" title="Claro / escuro"></button>
+    </div>
+
+    <div class="cols" id="cols">
+      <!-- ══ 1 · RESUMO GERENCIAL ══ -->
+      <section class="vw on" id="vw-resumo">
+        <div class="fin-hero">
+          <div>
+            <div class="hlbl">Relatórios em Excel</div>
+            <div class="hval" id="h-rel">—</div>
+            <div class="hdel">
+              <div>Áreas<b id="h-pain">—</b></div>
+              <div>Abas no total<b id="h-abas">—</b></div>
+              <div>Tabelas do portal<b id="h-tabs">—</b></div>
+            </div>
+          </div>
+          <div class="heb">
+            <div class="hlbl">Linhas das bases do Sheets no banco</div>
+            <div class="hval" id="h-lin">—</div>
+            <div class="hdel">
+              <div>Bases<b id="h-bases">—</b></div>
+              <div>Última carga<b id="h-carga">—</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="card tsec">
+          <div class="thead-row">
+            <div><div class="tsub" id="sub-resumo">—</div></div>
+            <label class="busca"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar painel ou base…" data-busca="resumo"></label>
+          </div>
+          <div class="twrap" id="t-resumo"></div>
+        </div>
+      </section>
+
+      <section class="vw" id="vw-ger"><div class="card tsec"><div class="thead-row"><div><div class="tsub" id="sub-ger">—</div></div><label class="busca"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…" data-busca="ger"></label></div><div class="twrap" id="t-ger"></div></div></section>
+      <section class="vw" id="vw-fin"><div class="card tsec"><div class="thead-row"><div><div class="tsub" id="sub-fin">—</div></div><label class="busca"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…" data-busca="fin"></label></div><div class="twrap" id="t-fin"></div></div></section>
+      <section class="vw" id="vw-op"><div class="card tsec"><div class="thead-row"><div><div class="tsub" id="sub-op">—</div></div><label class="busca"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…" data-busca="op"></label></div><div class="twrap" id="t-op"></div></div></section>
+      <section class="vw" id="vw-proc"><div class="card tsec"><div class="thead-row"><div><div class="tsub" id="sub-proc">—</div></div><label class="busca"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…" data-busca="proc"></label></div><div class="twrap" id="t-proc"></div></div></section>
+      <section class="vw" id="vw-res"><div class="card tsec"><div class="thead-row"><div><div class="tsub" id="sub-res">—</div></div><label class="busca"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…" data-busca="res"></label></div><div class="twrap" id="t-res"></div></div></section>
+      <section class="vw" id="vw-adm"><div class="card tsec"><div class="thead-row"><div><div class="tsub" id="sub-adm">—</div></div><label class="busca"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…" data-busca="adm"></label></div><div class="twrap" id="t-adm"></div></div></section>
+      <section class="vw" id="vw-sheets"><div class="card tsec"><div class="thead-row"><div><div class="tsub" id="sub-sheets">—</div></div><label class="busca"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar base…" data-busca="sheets"></label></div><div class="twrap" id="t-sheets"></div></div></section>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   RELATÓRIOS — o banco inteiro em Excel, painel a painel
+   (Renan, 11/10/2026: "uma opção de card chamada Relatórios, onde possa
+   exportar em excel relatórios detalhados de todos os painéis, com todas
+   as infos, no detalhe máximo possível, do banco").
+
+   Um relatório por painel do hub. Cada um é UM arquivo .xlsx com a aba
+   "Sobre" (de onde veio cada aba, quantas linhas, quando a base carregou)
+   e uma aba por fonte que o painel lê — a base INTEIRA, linha a linha, sem
+   agregação nem filtro: é o dado de onde o painel tira os números.
+
+   Quatro tipos de fonte:
+   · sh  — aba do Sheets copiada para o banco (sh_<slug>). Os nomes das
+           colunas são os RÓTULOS da aba (sh_base.colunas), não col_N;
+   · tab — tabela do próprio portal (FCA, Carta, Indisponibilidade…);
+   · tab com `expande` — tabela que guarda um JSON por linha (Ginfo, Frota de
+           Elite, Prolog, Conferência de Locação): o JSON vira linhas, com
+           as colunas do "pai" (vigência, unidade, data da coleta) na frente,
+           e `porAba` separa uma aba por relatório/indicador.
+   O que a pessoa vê segue a RLS do banco: o relatório traz o que o login
+   dela enxerga, igual ao painel.
+
+   FICA DE FORA, DE PROPÓSITO (o repositório é público e o arquivo roda no
+   navegador de quem abriu): token, PIN e sessão do app do motorista,
+   perfis de acesso, e toda coluna cujo NOME é cpf/e-mail/senha/pin/token/
+   telefone (`SENS`). A exceção é o e-mail do relatório de Acessos (só
+   admin), que é a própria identidade do acesso.
+   ============================================================ */
+const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
+const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+let sb=null, ADMIN=false, NOME='', SHB=[], SHMAP={};
+
+const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const br=n=>(+n||0).toLocaleString('pt-BR');
+const d2=n=>String(n).padStart(2,'0');
+function fmtDT(d){ d=new Date(d); return isNaN(d)?'—':`${d2(d.getDate())}/${d2(d.getMonth()+1)}/${d.getFullYear()} ${d2(d.getHours())}:${d2(d.getMinutes())}`; }
+const semAcento=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+
+/* branch_id do Prolog → unidade do portal (o mesmo UNIDADE_MAP do pneus/painel.html) */
+const UNI_PROLOG={1676:'MCC T1',1677:'MCC T2',37:'CGR',1906:'CBA T1 WH',1907:'CBA T1',1878:'CBA T2',
+  20:'FLP',30:'GRL',24:'BLC',2517:'NFR',26:'PLT',38:'PIR',2277:'RON',2550:'ANG'};
+
+/* ── fontes ── */
+const S=slug=>({k:'sh',slug});
+const T=(tab,nome,o)=>Object.assign({k:'tab',tab,nome},o||{});
+const GINFO=chaves=>T('ginfo_snapshot','Ginfo',{sel:'chave,updated_at,data',ordem:'chave',pag:4,
+  expande:'data',porAba:'chave',pai:[['updated_at','Exportado do Ginfo em']],
+  filtro:chaves?(x=>x.in('chave',chaves)):null,
+  rot:chaves?('Ginfo · '+chaves.join(', ')):'Ginfo · todas as exportações (uma aba por relatório)'});
+const ELITE=inds=>T('elite_snapshot','Elite',{sel:'indicador,vigencia,escopo,updated_at,data',ordem:'indicador,vigencia,escopo',pag:25,
+  expande:'data',porAba:'indicador',pai:[['vigencia','Vigência'],['escopo','Escopo'],['updated_at','Coletado em']],
+  filtro:inds?(x=>x.in('indicador',inds)):null,
+  rot:inds?('Frota de Elite · '+inds.join(', ')):'Frota de Elite · os indicadores do Ginfo, mês e acumulado (uma aba por indicador)'});
+const PROLOG=(ep,nome)=>T('snapshot','Prolog · '+nome,{sel:'branch_id,endpoint,updated_at,data',ordem:'branch_id',pag:1,
+  expande:'data',pai:[['branch_id','Unidade',b=>UNI_PROLOG[b]||b],['updated_at','Lido do Prolog em']],
+  filtro:x=>x.eq('endpoint',ep),rot:'Prolog · '+nome});
+const TERM4=[S('term_transportes_t1'),S('term_transportes_t2'),S('term_wh_t1'),S('term_wh_t2')];
+const TERM8=TERM4.concat([S('term_transportes_t1_acum'),S('term_transportes_t2_acum'),S('term_wh_t1_acum'),S('term_wh_t2_acum')]);
+const CUSTO_PLACA=T('custo_vigencia_mv','Contrato · custo por placa e vigência',{ordem:'vig_cobranca,placa'});
+
+/* ── um relatório por painel do hub (cl = cluster) ── */
+const REL=[
+  // Visão Geral
+  {cl:'ger',t:'Scorecard',h:'scorecard/',d:'Indicadores do Frota de Elite, RPM, auditorias, FCA, combustível, pneus do Prolog e termômetro.',
+    f:[ELITE(null),S('rpm_base'),S('rpm_ics'),S('dpo'),S('demarco'),S('fca_total'),T('fca','FCA',{ordem:'id'}),
+       S('consumo_km_litro'),S('consumo_rs_litro'),S('elite_pneus'),S('dre_frota'),S('dispersao_km'),PROLOG('inspections','Aferições')].concat(TERM4)},
+  {cl:'ger',t:'Diagnóstico',h:'diagnostico/',d:'Base dos alertas e tendências: indicadores, DPO, FCA, combustível e termômetro.',
+    f:[ELITE(null),S('rpm_base'),S('dpo'),S('fca_total'),S('consumo_km_litro'),S('elite_pneus')].concat(TERM4)},
+  {cl:'ger',t:'Resumo Executivo',h:'resumo-executivo/',d:'Base dos quatro quadrantes: indicadores, DRE, dispersão, combustível, auditorias e termômetro.',
+    f:[ELITE(null),S('rpm_base'),S('dre_frota'),S('dispersao_km'),S('consumo_km_litro'),S('consumo_rs_litro'),S('dpo'),S('demarco'),S('fca_total'),S('elite_pneus')].concat(TERM4)},
+  {cl:'ger',t:'Ativos',h:'ativos/',d:'A frota placa a placa: cadastro do Ginfo e os veículos lançados à mão (Anhanguera).',
+    f:[GINFO(['ativos']),T('ativos_manual','Ativos manuais',{ordem:'placa'})]},
+  {cl:'ger',t:'Gestão à Vista',h:'gestao-a-vista/',d:'Todas as exportações do Ginfo, conformidade por placa, indisponibilidade, FCA e contrato de manutenção.',
+    f:[GINFO(null),ELITE(['conformidade-detalhe']),T('indisponibilidade','Indisponibilidade · eventos',{ordem:'id'}),
+       T('disp_snapshot','Disponibilidade · foto diária',{ordem:'id'}),T('fca','FCA',{ordem:'id'}),CUSTO_PLACA]},
+  {cl:'ger',t:'Correlações da Operação',h:'correlacoes-operacao/',d:'A tabela-fato das correlações: DRE, dispersão, Frota de Elite, disponibilidade, contrato e condução.',
+    f:[S('dre_frota'),S('dre_receita'),S('dispersao_km'),ELITE(null),T('disp_resumo','Disponibilidade por dia e unidade',{ordem:'data,unidade'}),
+       CUSTO_PLACA,T('ce_scores_mensais','Condução econômica · mensal',{ordem:'id'})]},
+  // Financeiro
+  {cl:'fin',t:'Visão Financeira',h:'visao-financeira/',d:'O DRE inteiro, conta a conta: Frota, EBITDA e Receita Líquida, mais os cenários de forecast salvos.',
+    f:[S('dre_frota'),S('dre_ebitda'),S('dre_receita'),T('forecast_scenarios','Cenários de forecast',{ordem:'id'})]},
+  {cl:'fin',t:'Painel KM',h:'painel-km/',d:'Dispersão de km linha a linha, abertura por placa, balanço de massa (aba e importação por conta) e DRE.',
+    f:[S('dispersao_km'),S('dispersao_abertura'),S('balanco_massa'),T('balanco_massa','Balanço de massa · por conta',{ordem:'unidade,projeto,vigencia,conta'}),S('dre_frota')]},
+  {cl:'fin',t:'R$/KM',h:'rs-por-km/',d:'DRE Frota, dispersão de km e o km remunerado da Seara.',
+    f:[S('dre_frota'),S('dispersao_km'),S('seara_rem_vig')]},
+  {cl:'fin',t:'Árvore de Custo da Frota',h:'arvore-frota/',d:'DRE (Frota e Receita), dispersão de km e as bases da Seara (CTEs, remunerado, combustível).',
+    f:[S('dre_frota'),S('dre_receita'),S('dispersao_km'),S('seara_ctes_viagens'),S('seara_rem_vig'),S('seara_comb_vig')]},
+  {cl:'fin',t:'Carta de Custos',h:'carta-custos/',d:'Lançamentos com RC/OC/NF, contrato por placa e vigência, abastecimentos do ERP, contratos e notas da VW.',
+    f:[T('carta_custos','Lançamentos',{ordem:'id'}),CUSTO_PLACA,T('erp_abastecimentos','Abastecimentos do ERP',{ordem:'ordem_servico'}),
+       T('contratos_placa','Contratos por placa',{ordem:'placa'}),T('vw_contrato_km','Notas da VW · por chassi e faixa',{ordem:'contrato,vigencia,chassi'})]},
+  // Operacional
+  {cl:'op',t:'Ativação de Frota',h:'eficiencia-ativacao/',d:'A dispersão de km, de onde saem frota realizada e frota ativa.',f:[S('dispersao_km')]},
+  {cl:'op',t:'Combustível · Eficiência Km/L',h:'combustivel/eficiencia-kml/',d:'A aba Km/L inteira, o R$/L remunerado e a base de remunerado por modelo.',
+    f:[S('consumo_km_litro'),S('consumo_rs_litro'),S('consumo_rem_modelo')]},
+  {cl:'op',t:'Combustível · Análise do Impacto',h:'consumo-kml-analise/',d:'Km/L, R$/L e remunerado por modelo.',
+    f:[S('consumo_km_litro'),S('consumo_rs_litro'),S('consumo_rem_modelo')]},
+  {cl:'op',t:'Combustível · Árvore de Combustível',h:'combustivel/arvore-combustivel/',d:'DRE Frota, dispersão de km, Km/L, R$/L e balanço de massa.',
+    f:[S('dre_frota'),S('dispersao_km'),S('consumo_km_litro'),S('consumo_rs_litro'),S('balanco_massa'),T('balanco_massa','Balanço de massa · por conta',{ordem:'unidade,projeto,vigencia,conta'})]},
+  {cl:'op',t:'Combustível · Preço R$/L',h:'combustivel/preco-litro/',d:'Km/L (litros e gasto por placa) e o R$/L remunerado.',f:[S('consumo_km_litro'),S('consumo_rs_litro')]},
+  {cl:'op',t:'Combustível · Consumo CO²',h:'combustivel/co2/',d:'A aba Km/L, de onde saem litros e emissões.',f:[S('consumo_km_litro')]},
+  {cl:'op',t:'Combustível · Condução Econômica',h:'combustivel/conducao-economica/',adm:1,d:'Notas mensais e diárias por motorista, cadastro (sem CPF) e acessos ao DriverPro.',
+    f:[T('ce_scores_mensais','Condução · mensal',{ordem:'id'}),T('ce_diario','Condução · diário',{ordem:'id'}),
+       T('ce_motoristas','Motoristas',{ordem:'id'}),T('ce_app_log','DriverPro · acessos',{ordem:'id'})]},
+  {cl:'op',t:'Seara · Painel KM',h:'seara-km/',d:'Km remunerado por placa, combustível e base de remunerado da Seara.',
+    f:[S('seara_rem_placa'),S('seara_combustivel'),S('seara_remunerado')]},
+  {cl:'op',t:'Seara · Árvore',h:'combustivel/seara/arvore/',d:'DRE Frota e as bases da Seara (remunerado, combustível, CTEs).',
+    f:[S('dre_frota'),S('seara_rem_placa'),S('seara_remunerado'),S('seara_combustivel'),S('seara_ctes_viagens')]},
+  {cl:'op',t:'Seara · Km/L e R$/L',h:'combustivel/seara/eficiencia/',d:'Base de remunerado e aba de combustível da Seara.',
+    f:[S('seara_remunerado'),S('seara_combustivel')]},
+  {cl:'op',t:'Seara · Remuneração por placa',h:'combustivel/seara/remunerado/',adm:1,d:'As planilhas VariavelDeFrete importadas, por unidade, vigência e placa.',
+    f:[T('seara_remunerado','Remuneração por placa',{ordem:'unidade,vigencia,placa'})]},
+  {cl:'op',t:'Pneus',h:'pneus/',d:'Retrato do Prolog — todos os pneus, veículos e aferições por medida —, histórico de CPK e a aba de aferições do Elite.',
+    f:[PROLOG('tires','Pneus'),PROLOG('vehicles','Veículos'),PROLOG('inspections','Aferições'),
+       T('historico_mensal','Histórico mensal (CPK)'),S('elite_pneus')]},
+  {cl:'op',t:'Termômetro',h:'termometro/',d:'Os quatro tiers, no mês e no acumulado, e a aba de regras.',f:TERM8.concat([S('term_regras')])},
+  {cl:'op',t:'Manutenção',h:'manutencao/',d:'As notas do pacote linha a linha e o cadastro de ativos.',
+    f:[S('manutencao'),GINFO(['ativos']),T('ativos_manual','Ativos manuais',{ordem:'placa'})]},
+  {cl:'op',t:'Preventivas Seara',h:'preventivas-seara/',d:'Lançamentos de preventiva, leituras de hodômetro e ativos da Anhanguera.',
+    f:[T('preventiva_lanc','Preventivas · lançamentos',{ordem:'id'}),T('hodometro_leitura','Hodômetro · leituras',{ordem:'placa,data'}),T('ativos_manual','Ativos manuais',{ordem:'placa'})]},
+  {cl:'op',t:'Catálogo',h:'catalogo/',adm:1,d:'Lista de itens, fichas de aplicação por modelo, cadastro de modelos, sinônimos e exceções por placa.',
+    f:[T('cat_item','Itens',{ordem:'n'}),T('cat_aplicacao','Aplicações',{ordem:'id'}),T('cat_modelo','Modelos',{ordem:'marca,modelo'}),
+       T('cat_sinonimo','Sinônimos',{ordem:'termo'}),T('cat_placa','Exceções por placa',{ordem:'placa,item'})]},
+  // Processos
+  {cl:'proc',t:'Gerot',h:'gerot/',d:'Indicadores do Frota de Elite, Km/L, aferições do Elite e o termômetro (OS vencida, blitz).',
+    f:[ELITE(null),S('consumo_km_litro'),S('elite_pneus')].concat(TERM4)},
+  {cl:'proc',t:'Auditorias',h:'auditorias/',d:'Demarco e DPO/VPO por unidade e semestre.',f:[S('demarco'),S('dpo')]},
+  {cl:'proc',t:'FCA',h:'fca-preenchimento/',d:'Todos os FCAs (fato, desvio, causa, ação, prazo, status) e o histórico da planilha FCA Total.',
+    f:[T('fca','FCA',{ordem:'id'}),S('fca_total')]},
+  {cl:'proc',t:'Indisponibilidade',h:'disponibilidade-preenchimento/',d:'Eventos de parada, fotos diárias, resumo por dia, check-ins e a frota (Ginfo + manual).',
+    f:[T('indisponibilidade','Eventos',{ordem:'id'}),T('indisp_snapshot','Indisponíveis · foto diária',{ordem:'id'}),
+       T('disp_snapshot','Disponibilidade · foto diária',{ordem:'id'}),T('disp_resumo','Resumo por dia e unidade',{ordem:'data,unidade'}),
+       T('disp_checkins','Check-ins',{ordem:'id'}),GINFO(['ativos']),T('ativos_manual','Ativos manuais',{ordem:'placa'})]},
+  {cl:'proc',t:'MPR',h:'mpr/',d:'Causas e ações gravadas no MPR e os quatro tiers do termômetro, mês e acumulado.',
+    f:[T('mpr_fields','MPR · causa e ação',{ordem:'ind,uni'})].concat(TERM8)},
+  {cl:'proc',t:'Planner Corporativo',h:'planner-corporativo/',adm:1,d:'Todas as ações do time corporativo.',f:[T('planner','Ações',{ordem:'created_at'})]},
+  {cl:'proc',t:'Compra de Pneus',h:'compra-pneus/',d:'Pedidos, aprovações e tabela de preços, mais o retrato do Prolog de onde saem estoque e necessidade.',
+    f:[T('pneu_pedido','Pedidos',{ordem:'id'}),T('pneu_preco','Preços',{ordem:'id'}),PROLOG('tires','Pneus'),PROLOG('vehicles','Veículos')]},
+  // Resultados
+  {cl:'res',t:'Programa de Reconhecimento',h:'programa-reconhecimento/',d:'Frota de Elite: todos os indicadores, Km/L, aferições e termômetro.',
+    f:[ELITE(null),S('consumo_km_litro'),S('elite_pneus')].concat(TERM4)},
+  {cl:'res',t:'Aderência ao FCA',h:'fca-gerencial/',d:'Todos os FCAs, com prazo e status.',f:[T('fca','FCA',{ordem:'id'})]},
+  {cl:'res',t:'Painel de Metas',h:'painel-metas/',d:'Indicadores, FCA, metas, DPO, DRE, dispersão, Km/L, aferições e termômetro.',
+    f:[ELITE(null),T('fca','FCA',{ordem:'id'}),S('metas'),S('dpo'),S('fca_total'),S('dispersao_km'),S('dre_frota'),S('dre_receita'),
+       S('consumo_km_litro'),S('elite_pneus')].concat(TERM4)},
+  // Administração (só admin)
+  {cl:'adm',adm:1,t:'Acessos',h:'acessos/',d:'Cada abertura de painel: quem, qual painel e quando.',
+    f:[T('access_log','Acessos',{ordem:'id',manter:['email']})]},
+  {cl:'adm',adm:1,t:'Conferência de Locação',h:'conferencia-locacao/',d:'A conferência de cada mês linha a linha, os resumos, observações, Benner e modelos.',
+    f:[T('locacao_conferencia','Conferência',{ordem:'vigencia',expande:'linhas',pai:[['vigencia','Vigência']],
+         resto:'Conferência · meses',rot:'Conferência · linhas de todos os meses + resumo por mês'}),
+       T('locacao_obs','Observações',{ordem:'ativo'}),T('locacao_benner','Benner'),T('locacao_modelos','Modelos')]},
+  {cl:'adm',adm:1,t:'Saúde do Ecossistema',h:'saude/',d:'Robôs, execuções por dia, bases, painéis e a última coleta.',
+    f:[T('saude_wf','Robôs',{ordem:'wf'}),T('saude_dia','Execuções por dia',{ordem:'wf,dia'}),T('saude_base','Bases',{ordem:'chave'}),
+       T('saude_painel','Painéis',{ordem:'pasta'}),T('saude_coleta','Coleta')]},
+  {cl:'adm',adm:1,t:'Correlações',h:'correlacoes/',d:'A tabela-fato das correlações, nos três grãos.',
+    f:[S('dre_frota'),S('dre_receita'),S('dispersao_km'),ELITE(null),T('disp_resumo','Disponibilidade por dia e unidade',{ordem:'data,unidade'}),
+       CUSTO_PLACA,T('ce_scores_mensais','Condução econômica · mensal',{ordem:'id'}),GINFO(['ativos']),T('indisponibilidade','Indisponibilidade · eventos',{ordem:'id'})]},
+];
+const CL={ger:'Visão Geral',fin:'Financeiro',op:'Operacional',proc:'Processos',res:'Resultados',adm:'Administração'};
+const visiveis=()=>REL.filter(r=>!r.adm||ADMIN);
+
+/* ── leitura paginada ──
+   A 1ª página traz a contagem; o passo das seguintes é o tamanho do que
+   voltou (o servidor pode cortar em menos do que pedimos), em lotes de 4. */
+async function lerTabela(src,prog){
+  const pag=src.pag||1000;
+  const q=(de,n)=>{ let x=sb.from(src.tab).select(src.sel||'*',de===0?{count:'exact'}:undefined);
+    if(src.filtro) x=src.filtro(x);
+    String(src.ordem||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(c=>{ x=x.order(c,{ascending:true}); });
+    return x.range(de,de+n-1); };
+  const p0=await q(0,pag); if(p0.error) throw p0.error;
+  const out=(p0.data||[]).slice(), total=p0.count;
+  prog(out.length,total);
+  const passo=Math.max(out.length,1);
+  if(total==null){
+    let ult=out.length;
+    while(ult>=passo){ const r=await q(out.length,passo); if(r.error) throw r.error; out.push(...(r.data||[])); ult=(r.data||[]).length; prog(out.length); }
+    return out;
+  }
+  const offs=[]; for(let o=out.length;o<total;o+=passo) offs.push(o);
+  const LOTE=src.pag&&src.pag<50?2:4;
+  for(let i=0;i<offs.length;i+=LOTE){
+    const rs=await Promise.all(offs.slice(i,i+LOTE).map(o=>q(o,passo)));
+    rs.forEach(r=>{ if(r.error) throw r.error; out.push(...(r.data||[])); });
+    prog(out.length,total);
+  }
+  return out;
+}
+
+/* ── valores para o Excel ── */
+const SENS=/(^|[_\s.-])(cpf|e-?mail|senha|pin|pin_hash|token|telefone|celular|fone|phone)([_\s.-]|$)/i;
+const MAXC=32000;   // o Excel guarda no máximo 32.767 caracteres por célula
+function valor(v){
+  if(v==null||v==='') return null;
+  if(typeof v==='number'||typeof v==='boolean') return v;
+  if(typeof v==='object'){ const s=JSON.stringify(v); return s.length>MAXC?s.slice(0,MAXC)+'…':s; }
+  const s=String(v); let m;
+  // data montada por partes: new Date('2026-08-01') é meia-noite UTC e cai em 31/07 no Brasil
+  if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/))) return new Date(+m[1],+m[2]-1,+m[3]);
+  if(/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(s)){ const d=new Date(s.replace(' ','T')); if(!isNaN(d)) return d; }
+  return s.length>MAXC?s.slice(0,MAXC)+'…':s;
+}
+function limpa(o,manter){
+  const r={};
+  for(const k in o){ if(SENS.test(k)&&!(manter&&manter.includes(k))) continue; r[k]=valor(o[k]); }
+  return r;
+}
+/* célula do sh_*: mesmo tipo que o gviz declarou para a coluna */
+function valSh(v,tipo){
+  if(v==null||v==='') return null;
+  let m;
+  if(tipo==='date'&&(m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/))) return new Date(+m[1],+m[2]-1,+m[3]);
+  if(tipo==='datetime'&&(m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/)))
+    return new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6]);
+  if(tipo==='number'){ const n=typeof v==='number'?v:+v; return isFinite(n)?n:String(v); }
+  if(tipo==='boolean') return v===true||v==='true';
+  return valor(v);
+}
+const letra=i=>{ let s=''; i=i+1; while(i>0){ const r=(i-1)%26; s=String.fromCharCode(65+r)+s; i=Math.floor((i-1)/26); } return s; };
+function unicos(nomes){ const vis={}; return nomes.map(n=>{ n=String(n||'').trim()||'(sem rótulo)'; if(!vis[n]){ vis[n]=1; return n; } vis[n]++; return n+' ('+vis[n]+')'; }); }
+
+/* ── uma fonte → uma ou mais abas ── */
+async function abasDe(src,prog){
+  if(src.k==='sh'){
+    const b=SHMAP[src.slug];
+    if(!b) throw new Error('a base sh_'+src.slug+' não está no banco');
+    const rows=await lerTabela({tab:'sh_'+src.slug,ordem:'linha'},prog);
+    const cols=(b.colunas||[]).slice().sort((a,c)=>a.i-c.i);
+    const nomes=unicos(cols.map(c=>c.label||letra(c.i)));
+    const temVig=rows.length&&('vigencia' in rows[0])&&!nomes.some(n=>/^vig[eê]ncia \(mm\/aaaa\)$/i.test(n));
+    const linhas=rows.map(r=>{ const o={}; cols.forEach((c,j)=>{ if(!SENS.test(nomes[j])) o[nomes[j]]=valSh(r[c.col],c.tipo); });
+      if(temVig) o['Vigência (MM/AAAA)']=r.vigencia||null; return o; });
+    return [{nome:b.nome||src.slug,linhas,fonte:'sh_'+src.slug,
+      obs:'Aba do Sheets no banco · carregada '+fmtDT(b.carregado_em)+(b.erro?' · '+String(b.erro).slice(0,90):'')}];
+  }
+  const rows=await lerTabela(src,prog);
+  if(!src.expande) return [{nome:src.nome,linhas:rows.map(r=>limpa(r,src.manter)),fonte:src.tab,obs:''}];
+  const grupos=new Map(), quando=new Map();
+  rows.forEach(r=>{
+    const k=src.porAba?String(r[src.porAba]):'';
+    const pai={}; (src.pai||[]).forEach(([c,rot,fn])=>{ pai[rot]=fn?fn(r[c]):r[c]; });
+    let arr=r[src.expande];
+    if(typeof arr==='string'){ try{ arr=JSON.parse(arr); }catch(e){ arr=null; } }
+    if(!Array.isArray(arr)) arr=arr&&typeof arr==='object'?[arr]:[];
+    if(!grupos.has(k)) grupos.set(k,[]);
+    const g=grupos.get(k);
+    arr.forEach(it=>g.push(limpa(Object.assign({},pai,it&&typeof it==='object'?it:{valor:it}),src.manter)));
+    if(r.updated_at) quando.set(k,r.updated_at>(quando.get(k)||'')?r.updated_at:quando.get(k));
+  });
+  const abas=[...grupos].map(([k,l])=>({nome:src.nome+(k?' · '+k:''),linhas:l,
+    fonte:src.tab+(k?' · '+src.porAba+' = '+k:''),obs:quando.get(k)?'Atualizado em '+fmtDT(quando.get(k)):''}));
+  if(src.resto) abas.push({nome:src.resto,fonte:src.tab,obs:'Uma linha por registro, sem a coluna '+src.expande,
+    linhas:rows.map(r=>{ const o=Object.assign({},r); delete o[src.expande]; return limpa(o,src.manter); })});
+  return abas;
+}
+
+/* ── monta o .xlsx ── */
+const LIM_LIN=1048000;   // o Excel aceita 1.048.576 linhas por aba
+function nomeAba(n,usados){
+  let b=String(n).replace(/[\[\]:*?\/\\]/g,'-').replace(/\s+/g,' ').trim().slice(0,31)||'Aba', s=b, i=2;
+  while(usados.has(s.toLowerCase())){ const suf=' ('+(i++)+')'; s=b.slice(0,31-suf.length)+suf; }
+  usados.add(s.toLowerCase()); return s;
+}
+/* DATA VAI COMO NÚMERO SERIAL MONTADO À MÃO. O SheetJS converte Date usando a
+   data-base de 1899 no fuso LOCAL, e em 1899 o fuso de São Paulo era a hora
+   média local (−3:06:28): toda data saía 28 s ANTES — 01/08/2026 00:00 virava
+   31/07/2026 23:59:32 e a vigência caía no mês anterior (achado no teste com
+   timezoneId America/Sao_Paulo). O serial pelos componentes locais é exato. */
+const serial=d=>(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate(),d.getHours(),d.getMinutes(),d.getSeconds())-Date.UTC(1899,11,30))/864e5;
+function folha(linhas){
+  if(!linhas.length) return XLSX.utils.aoa_to_sheet([['(sem linhas)']]);
+  const cab=[], vis=new Set();
+  linhas.forEach(l=>{ for(const k in l) if(!vis.has(k)){ vis.add(k); cab.push(k); } });
+  const data=cab.map(()=>false), hora=cab.map(()=>false), larg=cab.map(h=>Math.min(Math.max(h.length,6),40));
+  const aoa=[cab];
+  linhas.forEach((l,ri)=>{
+    aoa.push(cab.map((k,c)=>{ const v=l[k];
+      if(v instanceof Date){ data[c]=true; if(v.getHours()||v.getMinutes()||v.getSeconds()) hora[c]=true; return serial(v); }
+      if(ri<300&&v!=null) larg[c]=Math.min(Math.max(larg[c],String(v).length),48);
+      return v==null?null:v; }));
+  });
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  cab.forEach((k,c)=>{ if(!data[c]) return;
+    const z=hora[c]?'dd/mm/yyyy hh:mm':'dd/mm/yyyy'; larg[c]=Math.max(larg[c],hora[c]?16:11);
+    for(let r=1;r<aoa.length;r++){ const cel=ws[XLSX.utils.encode_cell({r,c})]; if(cel&&cel.t==='n') cel.z=z; } });
+  ws['!cols']=larg.map(w=>({wch:w+2}));
+  ws['!autofilter']={ref:ws['!ref']};
+  return ws;
+}
+const nomeArq=t=>'Relatorio_'+semAcento(t).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')+'_'+new Date().toISOString().slice(0,10)+'.xlsx';
+
+async function exportar(rel,bt){
+  if(bt.disabled) return;
+  const st=bt.parentNode.querySelector('.st');
+  const rotOrig=bt.innerHTML;
+  bt.disabled=true; bt.className='bx run'; st.className='st';
+  const abas=[], erros=[];
+  try{
+    for(let i=0;i<rel.f.length;i++){
+      const src=rel.f[i], rot=rotDe(src);
+      bt.innerHTML=ICO_XLS+` ${i+1} de ${rel.f.length}`;
+      try{
+        const a=await abasDe(src,(n,tot)=>{ st.textContent=rot+' · '+br(n)+(tot!=null?' de '+br(tot):'')+' linhas'; });
+        abas.push(...a);
+      }catch(e){ erros.push({rot,msg:String((e&&e.message)||e)}); console.warn('relatórios:',rot,e); }
+    }
+    if(!abas.length) throw new Error(erros.length?erros[0].rot+': '+erros[0].msg:'nenhuma fonte respondeu');
+    bt.innerHTML=ICO_XLS+' Montando…'; st.textContent='montando o Excel…';
+    await new Promise(r=>setTimeout(r,30));
+    const wb=XLSX.utils.book_new(), usados=new Set(['sobre']);
+    const sobre=[['Relatório',rel.t],['Painel',rel.h?('/'+rel.h):'—'],['Gerado em',fmtDT(new Date())],['Gerado por',NOME||'—'],
+      ['Leitura','Cada aba é a base inteira, linha a linha, sem filtro nem agregação. O que aparece segue o acesso do seu usuário.'],
+      ['Fora do arquivo','Colunas de CPF, e-mail, senha, PIN, token e telefone.'],[],['Aba','Fonte no banco','Linhas','Observação']];
+    let total=0;
+    abas.forEach(a=>{
+      const partes=Math.max(1,Math.ceil(a.linhas.length/LIM_LIN));
+      for(let p=0;p<partes;p++){
+        const lin=a.linhas.slice(p*LIM_LIN,(p+1)*LIM_LIN);
+        const nm=nomeAba(a.nome+(partes>1?' '+(p+1):''),usados);
+        XLSX.utils.book_append_sheet(wb,folha(lin),nm);
+        sobre.push([nm,a.fonte,lin.length,a.obs||'']); total+=lin.length;
+      }
+    });
+    erros.forEach(e=>sobre.push(['(não exportada)',e.rot,0,'ERRO: '+e.msg]));
+    const wsS=XLSX.utils.aoa_to_sheet(sobre);
+    wsS['!cols']=[{wch:34},{wch:46},{wch:12},{wch:80}];
+    XLSX.utils.book_append_sheet(wb,wsS,'Sobre');
+    wb.SheetNames.unshift(wb.SheetNames.pop());          // "Sobre" primeiro
+    XLSX.writeFile(wb,nomeArq(rel.t),{compression:true});
+    bt.className='bx ok'; bt.innerHTML=ICO_OK+' Baixado';
+    st.textContent=br(total)+' linhas · '+abas.length+' aba(s)'+(erros.length?' · '+erros.length+' fonte(s) com erro (ver aba Sobre)':'');
+    if(erros.length) st.className='st err';
+  }catch(e){
+    bt.className='bx err'; bt.innerHTML=rotOrig; st.className='st err';
+    st.textContent='Erro: '+String((e&&e.message)||e).slice(0,140);
+  }finally{
+    bt.disabled=false;
+    if(bt.classList.contains('ok')) setTimeout(()=>{ if(!bt.disabled){ bt.className='bx'; bt.innerHTML=rotOrig; } },6000);
+  }
+}
+
+/* ── telas ── */
+const ICO_XLS='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+const ICO_OK='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+function rotDe(src){
+  if(src.k==='sh'){ const b=SHMAP[src.slug]; return (b&&b.nome)||src.slug; }
+  return src.rot||src.nome;
+}
+const BUSCA={};
+const linhaRel=(r,i)=>{
+  const abas=r.f.map(rotDe);
+  return `<tr data-q="${esc(semAcento(r.t+' '+r.d+' '+abas.join(' ')))}">
+    <td class="nome">${esc(r.t)}<span class="lin2">${esc(r.d)}</span></td>
+    <td><span class="abas">${abas.map(esc).join(', ')}</span></td>
+    <td class="num"><button class="bx" data-rel="${i}">${ICO_XLS} Excel</button><span class="st"></span></td></tr>`;
+};
+const CAB_REL='<colgroup><col style="width:30%"><col><col style="width:200px"></colgroup>'
+  +'<thead><tr><th>Painel</th><th>Abas no arquivo</th><th style="text-align:right">Exportar</th></tr></thead>';
+function renderTabRel(id,lista,agrupa){
+  let h='<table class="dre rel">'+CAB_REL+'<tbody>';
+  if(agrupa){
+    Object.keys(CL).forEach(c=>{ const g=lista.filter(r=>r.cl===c); if(!g.length) return;
+      h+=`<tr class="grp" data-g="1"><td colspan="3">${esc(CL[c])} · ${g.length}</td></tr>`+g.map(r=>linhaRel(r,REL.indexOf(r))).join(''); });
+  } else h+=lista.map(r=>linhaRel(r,REL.indexOf(r))).join('');
+  document.getElementById('t-'+id).innerHTML=h+'</tbody></table>';
+  aplicaBusca(id);
+}
+function renderSheets(){
+  const lista=SHB.slice().sort((a,b)=>String(a.nome||a.slug).localeCompare(String(b.nome||b.slug),'pt-BR'));
+  let h='<table class="dre"><colgroup><col><col style="width:110px"><col style="width:90px"><col style="width:150px"><col style="width:200px"></colgroup>'
+    +'<thead><tr><th>Base</th><th style="text-align:right">Linhas</th><th style="text-align:right">Colunas</th><th>Carregada em</th><th style="text-align:right">Exportar</th></tr></thead><tbody>';
+  h+=lista.map(b=>`<tr data-q="${esc(semAcento((b.nome||'')+' '+b.slug+' '+(b.aba||'')))}">
+      <td class="nome">${esc(b.nome||b.slug)}<span class="lin2">sh_${esc(b.slug)}${b.erro?' · <span class="cr">'+esc(String(b.erro).slice(0,80))+'</span>':''}</span></td>
+      <td class="num mono">${br(b.linhas)}</td><td class="num mono">${br((b.colunas||[]).length)}</td>
+      <td class="mono">${fmtDT(b.carregado_em)}</td>
+      <td class="num"><button class="bx" data-sh="${esc(b.slug)}">${ICO_XLS} Excel</button><span class="st"></span></td></tr>`).join('');
+  document.getElementById('t-sheets').innerHTML=h+'</tbody></table>';
+  set('sub-sheets',lista.length+' abas do Sheets copiadas para o banco · cada uma num arquivo, com os rótulos da aba');
+  set('n-sheets',lista.length||'');
+  aplicaBusca('sheets');
+}
+function aplicaBusca(id){
+  const q=semAcento(BUSCA[id]||'').trim(), tb=document.querySelector('#t-'+id+' tbody'); if(!tb) return;
+  let grp=null, vis=0;
+  [...tb.rows].forEach(tr=>{
+    if(tr.dataset.g){ if(grp) grp.style.display=vis?'':'none'; grp=tr; vis=0; return; }
+    const ok=!q||(tr.dataset.q||'').includes(q); tr.style.display=ok?'':'none'; if(ok) vis++;
+  });
+  if(grp) grp.style.display=vis?'':'none';
+}
+document.querySelectorAll('[data-busca]').forEach(inp=>inp.addEventListener('input',()=>{ BUSCA[inp.dataset.busca]=inp.value; aplicaBusca(inp.dataset.busca); }));
+document.getElementById('cols').addEventListener('click',e=>{
+  const b=e.target.closest('.bx'); if(!b) return;
+  if(b.dataset.rel!=null) exportar(REL[+b.dataset.rel],b);
+  else if(b.dataset.sh){ const s=SHMAP[b.dataset.sh]; exportar({t:(s&&s.nome)||b.dataset.sh,h:'',f:[S(b.dataset.sh)]},b); }
+});
+
+function render(){
+  const vis=visiveis();
+  const fontes=new Set(), tabs=new Set(); let abas=0;
+  vis.forEach(r=>r.f.forEach(s=>{ abas++; fontes.add(s.k==='sh'?'sh_'+s.slug:s.tab+(s.filtro?'·'+rotDe(s):'')); if(s.k!=='sh') tabs.add(s.tab); }));
+  set('h-rel',br(vis.length)); set('h-pain',br(new Set(vis.map(r=>r.cl)).size)); set('h-abas',br(abas)); set('h-tabs',br(tabs.size));
+  const lin=SHB.reduce((s,b)=>s+(+b.linhas||0),0);
+  const ult=SHB.reduce((m,b)=>b.carregado_em&&b.carregado_em>m?b.carregado_em:m,'');
+  set('h-lin',br(lin)); set('h-bases',br(SHB.length)); set('h-carga',ult?fmtDT(ult):'—');
+  set('sub-resumo','Um arquivo por painel do hub, com uma aba para cada base que ele lê · '+br(fontes.size)+' fontes distintas');
+  renderTabRel('resumo',vis,true);
+  Object.keys(CL).forEach(c=>{
+    const g=vis.filter(r=>r.cl===c);
+    set('n-'+c,g.length||'');
+    set('sub-'+c,g.length+' relatório(s) · a base inteira de cada painel, linha a linha');
+    renderTabRel(c,g,false);
+  });
+  set('n-resumo',vis.length||'');
+  renderSheets();
+  set('titSub','Excel direto do banco · '+fmtDT(new Date()));
+}
+
+/* ── gate + início ── */
+function gate(titulo,msg){
+  document.getElementById('cols').innerHTML=`<div class="gate"><h2>${esc(titulo)}</h2><p>${msg}</p></div>`;
+  set('titSub','—');
+}
+async function carregar(){
+  const r=await sb.from('sh_base').select('slug,nome,aba,colunas,linhas,erro,carregado_em');
+  if(r.error) throw r.error;
+  SHB=(r.data||[]).filter(b=>b.colunas&&b.linhas>0);
+  SHMAP={}; SHB.forEach(b=>{ SHMAP[b.slug]=b; });
+}
+async function initApp(){
+  if(typeof XLSX==='undefined'){ gate('Erro','A biblioteca de Excel não carregou. Recarregue a página.'); return; }
+  try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }
+  catch(e){ gate('Erro','Falha ao iniciar o Supabase.'); return; }
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){ gate('Login necessário','Entre pelo <b>hub</b> para acessar os relatórios.'); return; }
+  NOME=(session.user.user_metadata&&session.user.user_metadata.name)||String(session.user.email||'').split('@')[0];
+  set('quem',NOME); set('av',String(NOME).trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase());
+  try{ const {data:prof}=await sb.from('fca_profiles').select('is_admin').eq('user_id',session.user.id).maybeSingle(); ADMIN=!!(prof&&prof.is_admin); }
+  catch(e){ ADMIN=false; }
+  set('papel',ADMIN?'Administrador':'Usuário');
+  document.getElementById('it-adm').style.display=ADMIN?'':'none';
+  try{ await carregar(); }
+  catch(e){ console.warn('relatórios: sh_base',e); SHB=[]; SHMAP={}; }
+  render();
+}
+async function recarregar(){
+  set('titSub','Carregando…');
+  try{ await carregar(); render(); }
+  catch(e){ set('titSub','Erro ao recarregar: '+((e&&e.message)||e)); }
+}
+
+/* ── navegação entre as visões ── */
+const TIT={resumo:'Resumo Gerencial',ger:'Visão Geral',fin:'Financeiro',op:'Operacional',proc:'Processos',res:'Resultados',adm:'Administração',sheets:'Bases do Sheets'};
+let VW='resumo';
+function setVw(v){
+  if(v==='adm'&&!ADMIN) v='resumo';
+  VW=v;
+  document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===v));
+  document.querySelectorAll('.vw').forEach(x=>x.classList.toggle('on',x.id==='vw-'+v));
+  set('tit',TIT[v]||'');
+}
+document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
+
+/* ── lateral recolhida + dicas ── */
+const DICA=document.createElement('div'); DICA.className='dica'; document.body.appendChild(DICA);
+const escondeDica=()=>DICA.classList.remove('on');
+function rotuloItem(b){ const c=b.cloneNode(true); c.querySelectorAll('svg,.n').forEach(e=>e.remove());
+  return c.textContent.replace(/\s+/g,' ').trim()||b.getAttribute('title')||''; }
+document.querySelectorAll('.side .s-item').forEach(b=>{
+  b.addEventListener('mouseenter',()=>{
+    if(!document.querySelector('.side').classList.contains('mini')) return;
+    const t=rotuloItem(b); if(!t) return;
+    DICA.textContent=t;
+    const r=b.getBoundingClientRect();
+    DICA.style.top=Math.round(r.top+r.height/2)+'px';
+    DICA.style.left=Math.round(r.right+10)+'px';
+    DICA.classList.add('on');
+  });
+  b.addEventListener('mouseleave',escondeDica);
+  b.addEventListener('click',escondeDica);
+});
+function trocaMini(){
+  escondeDica();
+  const l=document.querySelector('.side').classList.toggle('mini');
+  try{ localStorage.setItem('relatorios_mini',l?'1':'0'); }catch(e){}
+  const b=document.getElementById('btMini'); if(b) b.title=l?'Expandir menu':'Recolher menu';
+}
+try{ if(localStorage.getItem('relatorios_mini')==='1'){ document.querySelector('.side').classList.add('mini'); document.getElementById('btMini').title='Expandir menu'; } }catch(e){}
+
+/* ── tema (mesma chave do hub) ── */
+const _SOL=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2M12 20.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1.5 12h2M20.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>`;
+const _LUA=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+function aplicaTema(t){
+  document.body.classList.toggle('claro',t==='light');
+  try{ localStorage.setItem('bi_theme',t); }catch(e){}
+  const b=document.getElementById('btTema'); if(b) b.innerHTML=t==='light'?_LUA:_SOL;
+}
+function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark':'light'); }
+aplicaTema((()=>{ try{ return localStorage.getItem('bi_theme'); }catch(e){ return null; } })()||'dark');
+
+initApp();
+</script>
+<script src="../assets/mobile.js?v=202608220020"></script>
+<script src="../assets/modo-tv.js?v=202610111500"></script>
+<script src="../assets/ctrlk.js"></script>
+<script src="../assets/build-check.js?v=202610112330"></script>
+</body>
+</html>
