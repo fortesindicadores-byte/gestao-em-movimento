@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610111500">
+<meta name="build" content="202610112240">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Scorecard · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -717,12 +717,51 @@ async function fetchConlog(){
   const fetchBranch=bid=>fetch(`${CONLOG_URL}/rest/v1/snapshot?branch_id=eq.${bid}&select=endpoint,branch_id,data`,{headers:{apikey:CONLOG_KEY,Authorization:'Bearer '+CONLOG_KEY}}).then(r=>r.ok?r.json():null).catch(()=>null);
   const perBranch=[];const CHUNK=3;
   for(let i=0;i<bids.length;i+=CHUNK){const batch=bids.slice(i,i+CHUNK);const res=await Promise.all(batch.map(async bid=>{for(let a=0;a<4;a++){const out=await fetchBranch(bid);if(out!==null)return out;await sleep(700);}return[];}));perBranch.push(...res);}
-  perBranch.flat().forEach(r=>{const uni=CONLOG_BRANCH[r.branch_id];const arr=Array.isArray(r.data)?r.data:[];if(!merged[r.endpoint])return;for(const rec of arr){rec.unidade=uni;merged[r.endpoint].push(rec);}});
-  if(!merged.vehicles.length)return null;
+  perBranch.flat().forEach(r=>{const uni=CONLOG_BRANCH[r.branch_id];const arr=Array.isArray(r.data)?r.data:[];if(!merged[r.endpoint])return;for(const rec of arr){rec.unidade=uni;merged[r.endpoint].push(rec);}});  if(!merged.vehicles.length)return null;
   return conlogAgg(merged);
 }
 // Agrega por código Conlog: saude=(Bom+Regular)/total, pressao=% calibrados (|desvio|≤15%), afer=% placas última aferição ≤30 dias.
+// OS PNEUS SEGUEM O FILTRO DE VIGÊNCIA (Renan, 11/10/2026: "Eu filtro vigências e alguns cards
+// não respondem ao filtro"). Antes os três cards eram a foto de HOJE (pneus instalados agora,
+// última aferição até hoje), e mudar o mês não mudava nada. A mesma régua agora é aplicada às
+// INSPEÇÕES do Prolog, que o snapshot já traz desde 01/01 com data e medida por pneu:
+//   saúde e pressão do mês = a última medida de cada pneu inspecionado NAQUELE mês;
+//   aferição do mês = placas cuja última inspeção até o fim do mês (ou hoje) tem ≤30 dias.
+// Guardado como CONTAGEM por unidade × mês, então o período soma pneu-mês e placa-mês (sem
+// média de médias). `snap` continua sendo a foto de hoje, para cache antigo sem `mes`.
+function conlogMes(d){
+  const tipoV={};(d.vehicles||[]).forEach(v=>{if(v&&v.id!=null)tipoV[v.id]=v.tipo||'';});
+  const pal=i=>/PALETEIRA/i.test(tipoV[i.veiculoId]||'');
+  const mes={};const ens=(u,vk)=>{const a=mes[u]=mes[u]||{};return a[vk]=a[vk]||{tBom:0,tTot:0,pOk:0,pTot:0,aOk:0,aTot:0};};
+  const ult={};                         // u|vk|pneu → medida mais recente do mês
+  const porPlaca={};                    // u|placa → datas (ms) das inspeções
+  (d.inspections||[]).forEach(i=>{
+    if(!i||!i.placa||!i.unidade||pal(i))return;const t=Date.parse(i.dataInspecao);if(!isFinite(t))return;
+    const dt=new Date(t),vk=dt.getFullYear()*100+dt.getMonth();
+    const kp=i.unidade+'|'+i.placa;(porPlaca[kp]=porPlaca[kp]||new Set()).add(t);
+    if(i.tireId==null)return;const k=i.unidade+'|'+vk+'|'+i.tireId;
+    if(!ult[k]||t>ult[k].t)ult[k]={t,u:i.unidade,vk,mm:+i.menorMM||0,pid:+i.pressaoIdeal||0,dsv:+i.desvioPressao||0};
+  });
+  Object.values(ult).forEach(m=>{const o=ens(m.u,m.vk);
+    if(m.mm>0){o.tTot++;if(m.mm>3)o.tBom++;}
+    if(m.pid>0){o.pTot++;if(Math.abs(m.dsv)<=15)o.pOk++;}
+  });
+  const agora=Date.now();
+  Object.entries(porPlaca).forEach(([kp,set])=>{
+    const u=kp.split('|')[0];const ts=[...set].sort((a,b)=>a-b);
+    const d0=new Date(ts[0]),hoje=new Date(agora);
+    for(let y=d0.getFullYear(),m=d0.getMonth();y*100+m<=hoje.getFullYear()*100+hoje.getMonth();m===11?(y++,m=0):m++){
+      const fim=Math.min(new Date(y,m+1,1).getTime()-1,agora);
+      let last=null;for(const t of ts){if(t<=fim)last=t;else break;}
+      if(last==null)continue;const o=ens(u,y*100+m);o.aTot++;if((fim-last)/86400000<=30)o.aOk++;
+    }
+  });
+  return mes;
+}
 function conlogAgg(d){
+  const r=conlogAggSnap(d);return {snap:r,mes:conlogMes(d)};
+}
+function conlogAggSnap(d){
   const tires=(d.tires||[]).filter(t=>t.status==='INSTALLED'&&t.placa&&!/PALETEIRA/i.test(t.tipo||''));
   const byU={};
   const ensure=u=>byU[u]=byU[u]||{tBom:0,tTot:0,pOk:0,pTot:0};
@@ -739,20 +778,85 @@ function conlogAgg(d){
   Object.keys(byU).forEach(u=>{const o=byU[u];out[u]={saude:o.tTot?o.tBom/o.tTot*100:null,pressao:o.pTot?o.pOk/o.pTot*100:null,afer:afer[u]&&afer[u].tot?afer[u].ok/afer[u].tot*100:null};});
   return out;
 }
-// média de uma métrica Conlog sobre as unidades scorecard selecionadas
-function conlogU(unis,metric){if(!XPANEL.conlog)return null;const vs=unis.map(u=>{const c=XPANEL.conlog[UNI2CONLOG[u]];return c?c[metric]:null;}).filter(v=>v!=null);return vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:null;}
+// métrica Conlog das unidades selecionadas NO PERÍODO: soma as contagens de pneu-mês e
+// placa-mês das vigências marcadas. Cache antigo (sem `mes`) cai na foto de hoje.
+function conlogU(unis,metric,perKeys){
+  const C=XPANEL.conlog;if(!C)return null;
+  if(C.mes&&perKeys){
+    const NUM={saude:'tBom',pressao:'pOk',afer:'aOk'}[metric],DEN={saude:'tTot',pressao:'pTot',afer:'aTot'}[metric];
+    let n=0,t=0;unis.forEach(u=>{const a=C.mes[UNI2CONLOG[u]];if(!a)return;perKeys.forEach(vk=>{const o=a[vk];if(o){n+=o[NUM];t+=o[DEN];}});});
+    return t?n/t*100:null;
+  }
+  const S=C.snap||C;const vs=unis.map(u=>{const c=S[UNI2CONLOG[u]];return c?c[metric]:null;}).filter(v=>v!=null);return vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:null;
+}
 
 function gviz(url){return new Promise((res,rej)=>{const fn='_gv'+Math.floor(Math.random()*1e9);const s=document.createElement('script');const clr=()=>{try{delete window[fn];s.remove();}catch(e){}};window[fn]=r=>{clr();try{if(r.status!=='ok')throw 0;res((r.table.rows||[]).map(x=>(x.c||[]).map(c=>c?c.v:null)));}catch(e){rej(e);}};s.onerror=()=>{clr();rej(0);};s.src=url+(url.includes('?')?'&':'?')+'tqx=out:json;responseHandler:'+fn;document.head.appendChild(s);});}
 
 // ── Indicadores cross-painel (nível empresa) ──
 function compDisp(rows){const mo={};rows.forEach(r=>{const d=parseD(r[0]);if(!d)return;const proj=String(r[14]||'').split('-')[0].trim().toUpperCase();if(!(proj==='ROTA'||proj==='AUTO SERVIÇO'||proj==='AUTO SERVICO'))return;const k=vigKeyN(d);const rem=r[31]!=null?+r[31]:0,real=r[32]!=null?+r[32]:0;const o=mo[k]=mo[k]||{rem:0,real:0};o.rem+=rem;o.real+=real;});const out={},acc={};Object.keys(mo).map(Number).sort((a,b)=>a-b).forEach(k=>{const y=Math.floor(k/100);acc[y]=acc[y]||{rem:0,real:0};acc[y].rem+=mo[k].rem;acc[y].real+=mo[k].real;out[k]=acc[y].rem?((acc[y].real-acc[y].rem)/acc[y].rem*100):null;});return out;}
 // DPO Sustentável = último H; por unidade ≥ Nível 3 = 100%, senão 0% → % de unidades sustentáveis
-function compDPO(rows){const hdr=rows[0]||[];let li=-1;for(let i=hdr.length-1;i>=1;i--){if(rows.slice(1).some(r=>/Nível/i.test(String(r[i]||'')))){li=i;break;}}if(li<0)return{pct:null,ok:0,tot:0,n4:[],sem:null,byUni:{}};const NOTA=l=>l>=4?100:l===3?80:l===2?60:l===1?40:0;let ok=0,tot=0;const n4=[];const byUni={};rows.slice(1).forEach(r=>{const label=String(r[0]||'').trim().toUpperCase().replace(/\s+/g,' ');if(!label||label==='UNIDADE')return;const code=label.split(' ')[0];const me=String(r[li]||'').match(/Nível\s*(\d+)/i);if(me){tot++;const lvl=+me[1];if(lvl>=3)ok++;if(lvl>=4&&n4.indexOf(code)<0)n4.push(code);}for(let i=li;i>=1;i--){const m=String(r[i]||'').match(/Nível\s*(\d+)/i);if(m){byUni[label]=NOTA(+m[1]);break;}}});return{pct:tot?ok/tot*100:null,ok,tot,n4,sem:String(hdr[li]||''),byUni};}
-// DPO nota por unidade scorecard (média das linhas DPO mapeadas; null se ausente)
-function dpoNotaU(unis){if(!XPANEL.dpo||!XPANEL.dpo.byUni)return null;const vs=unis.map(u=>XPANEL.dpo.byUni[UNI2DPO[u]]).filter(v=>v!=null);return vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:null;}
+// O DPO SEGUE O PERÍODO (Renan, 11/10/2026): vale o SEMESTRE do mês mais recente da janela, a
+// mesma regra do Painel de Metas ("no momento que uma unidade foi auditada no H2, vale só o H2").
+// Por unidade, a nota é a da última coluna xHaa até aquele semestre que tem "Nível" para ela.
+// Sem cabeçalho de semestre na aba, volta à regra antiga (última coluna com Nível).
+function compDPO(rows){
+  const hdr=rows[0]||[],corpo=rows.slice(1);
+  const NOTA=l=>l>=4?100:l===3?80:l===2?60:l===1?40:0;
+  const lbl=r=>String(r[0]||'').trim().toUpperCase().replace(/\s+/g,' ');
+  const cols=[];
+  hdr.forEach((h,i)=>{if(i<1)return;const m=String(h||'').match(/^\s*([12])\s*H\s*(\d{2}|\d{4})\s*$/i);if(!m)return;
+    const yy=m[2].length===2?2000+ +m[2]:+m[2];let ok=0,tot=0;const byUni={};
+    corpo.forEach(r=>{const l=lbl(r);if(!l||l==='UNIDADE')return;const mm=String(r[i]||'').match(/Nível\s*(\d+)/i);if(!mm)return;tot++;if(+mm[1]>=3)ok++;byUni[l]=NOTA(+mm[1]);});
+    if(tot)cols.push({key:yy*10+ +m[1],sem:String(h).trim(),ok,tot,byUni});});
+  cols.sort((a,b)=>a.key-b.key);
+  // regra antiga (sem semestre no cabeçalho): última coluna com Nível vale para todos os meses
+  let li=-1;for(let i=hdr.length-1;i>=1;i--){if(corpo.some(r=>/Nível/i.test(String(r[i]||'')))){li=i;break;}}
+  if(li<0&&!cols.length)return{pct:null,ok:0,tot:0,n4:[],sem:null,byUni:{},cols:[]};
+  let ok=0,tot=0;const n4=[];const byUni={};
+  corpo.forEach(r=>{const label=lbl(r);if(!label||label==='UNIDADE')return;const code=label.split(' ')[0];if(li<0)return;const me=String(r[li]||'').match(/Nível\s*(\d+)/i);if(me){tot++;const lvl=+me[1];if(lvl>=3)ok++;if(lvl>=4&&n4.indexOf(code)<0)n4.push(code);}for(let i=li;i>=1;i--){const m=String(r[i]||'').match(/Nível\s*(\d+)/i);if(m){byUni[label]=NOTA(+m[1]);break;}}});
+  return{pct:tot?ok/tot*100:null,ok,tot,n4,sem:li<0?null:String(hdr[li]||''),byUni,cols};
+}
+// semestre que vale no mês (yr, mIdx): a última coluna auditada até ele
+function dpoSemDe(yr,mi){const D=XPANEL.dpo;if(!D||!D.cols||!D.cols.length)return null;const k=yr*10+(mi<6?1:2);let best=null;D.cols.forEach(c=>{if(c.key<=k)best=c;});return best;}
+// DPO nota por unidade scorecard (média das linhas DPO mapeadas; null se ausente), no semestre do mês
+function dpoNotaU(unis,yr,mi){
+  const D=XPANEL.dpo;if(!D)return null;
+  const notaDe=l=>{if(D.cols&&D.cols.length&&yr!=null){const k=yr*10+(mi<6?1:2);let v=null;D.cols.forEach(c=>{if(c.key<=k&&c.byUni[l]!=null)v=c.byUni[l];});return v;}return D.byUni?D.byUni[l]:null;};
+  const vs=unis.map(u=>notaDe(UNI2DPO[u])).filter(v=>v!=null);return vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:null;
+}
 function compFCA(rows){const today=new Date();today.setHours(0,0,0,0);const recs=[];rows.forEach(r=>{const d=parseD(r[1]);if(!d)return;const st=String(r[8]||'');const prazo=parseD(r[7]);const concl=/conclu/i.test(st)?'C':/andamento/i.test(st)?'A':'N';const venc=concl==='C'?false:(prazo&&prazo<today);const cod=String(r[2]||'').trim().toUpperCase().split(/\s+/)[0];recs.push({k:vigKeyN(d),cod,concl,venc});});return recs;}
 // FCA por unidade (cods=Set de códigos das unidades selecionadas; null=todas)
-function fcaSplitU(recs,year,monthIdx,cods){const sel=recs.filter(r=>Math.floor(r.k/100)===year&&(r.k%100)<=monthIdx&&(!cods||cods.has(r.cod)));if(!sel.length)return{prazo:null,concl:null};const tt=sel.length;return{prazo:sel.filter(r=>!r.venc).length/tt*100,concl:sel.filter(r=>r.concl==='C').length/tt*100};}
+// FCA SEGUE O PERÍODO (Renan, 11/10/2026): conta os FCAs das VIGÊNCIAS MARCADAS. Antes era o
+// acumulado de janeiro até o último mês marcado, então marcar jun+jul dava o mesmo que jan→jul.
+// Registro do banco casa pela unidade inteira ('CBA T1 WH', 'MCC T2'…, o mesmo código do Conlog);
+// registro da aba antiga (reserva) casa pelo código-base ('CBA'), como sempre foi.
+function fcaSplitP(recs,perKeys,unis){
+  const full=new Set(unis.map(u=>UNI2CONLOG[u]).filter(Boolean)),base=new Set(unis.map(u=>UNI2COD[u]).filter(Boolean));
+  const sel=recs.filter(r=>perKeys.has(r.k)&&(r.full?full.has(r.full):base.has(r.cod)));
+  if(!sel.length)return{prazo:null,concl:null};const tt=sel.length;
+  return{prazo:sel.filter(r=>!r.venc).length/tt*100,concl:sel.filter(r=>r.concl==='C').length/tt*100};
+}
+// O FCA MORA NO BANCO (tabela fca) desde 2026 — a aba "FCA Total" do Termômetro parou em dez/25.
+// Mesmo desenho do Painel de Metas: banco primeiro, aba como reserva. Tabela vazia conta como
+// falha (anon sem sessão recebe lista vazia, não erro).
+async function fcaDoBanco(){
+  let tok=CONLOG_KEY;
+  try{const ss=JSON.parse(localStorage.getItem('sb-lozwipoeacpvplgkrxkq-auth-token')||'null');if(ss&&ss.access_token)tok=ss.access_token;}catch(e){}
+  const out=[];
+  for(let de=0;;de+=1000){
+    const r=await fetch(`${CONLOG_URL}/rest/v1/fca?select=unidade,vigencia,status,prazo&order=id`,{headers:{apikey:CONLOG_KEY,Authorization:'Bearer '+tok,Range:`${de}-${de+999}`}});
+    if(!r.ok)throw new Error('fca '+r.status);const pg=await r.json();out.push(...pg);if(pg.length<1000)break;
+  }
+  if(!out.length)throw new Error('tabela fca vazia');
+  const today=new Date();today.setHours(0,0,0,0);
+  return out.map(r=>{
+    const m=String(r.vigencia||'').match(/^([a-zç]{3})\/(\d{2})$/i);if(!m)return null;const mi=MESES.indexOf(m[1].toLowerCase());if(mi<0)return null;
+    const st=String(r.status||'');const concl=/conclu/i.test(st)?'C':/andamento/i.test(st)?'A':'N';
+    const prazo=r.prazo?new Date(String(r.prazo).slice(0,10)+'T00:00:00'):null;
+    const full=String(r.unidade||'').trim().toUpperCase().replace(/\s+/g,' ');
+    return{k:(2000+ +m[2])*100+mi,full,cod:full.split(' ')[0],concl,venc:concl==='C'?false:!!(prazo&&prazo<today)};
+  }).filter(Boolean);
+}
 function fcaAderAte(recs,year,monthIdx){const sel=recs.filter(r=>Math.floor(r.k/100)===year&&(r.k%100)<=monthIdx);if(!sel.length)return null;const tt=sel.length,noP=sel.filter(r=>!r.venc).length,cc=sel.filter(r=>r.concl==='C').length;return((noP/tt*100)+(cc/tt*100))/2;}
 // Consolidação FCAs: média do score por status (Concluída=100, Em andamento=50, Não iniciada=0), acumulado até o mês.
 function fcaConsol(recs,year,monthIdx){const sel=recs.filter(r=>Math.floor(r.k/100)===year&&(r.k%100)<=monthIdx);if(!sel.length)return null;return sel.reduce((s,r)=>s+(r.concl==='C'?100:r.concl==='A'?50:0),0)/sel.length;}
@@ -781,7 +885,8 @@ function atualizar(){
   const yr=selD.getFullYear(),mi=selD.getMonth();
   const unisSel=selUni.length?selUni.filter(u=>UNI_LIST.includes(u)):UNI_LIST.slice();
   const CV=cardVals(perKeys,yr,mi,unisSel);
-  const dpoMeta=XPANEL.dpo&&XPANEL.dpo.sem?XPANEL.dpo.sem+(selUni.length?'':' · '+XPANEL.dpo.ok+'/'+XPANEL.dpo.tot+' ≥ N3'):'nível unidade';
+  const _sem=dpoSemDe(yr,mi);
+  const dpoMeta=_sem?_sem.sem+(selUni.length?'':' · '+_sem.ok+'/'+_sem.tot+' ≥ N3'):(XPANEL.dpo&&XPANEL.dpo.sem&&!(XPANEL.dpo.cols||[]).length?XPANEL.dpo.sem+(selUni.length?'':' · '+XPANEL.dpo.ok+'/'+XPANEL.dpo.tot+' ≥ N3'):'nível unidade');
   const cards=[
     {lbl:'Custos Frota', peso:SCORE_PESOS.custos,         val:CV.custos, meta:'Real / Remunerado'},
     {lbl:'Disponibilidade', peso:SCORE_PESOS.disp,      val:CV.disp},
@@ -832,7 +937,7 @@ function cardVals(perKeys,yr,mi,unisSel){
   const ufDre=o=>cidSet.has(o.cid);
   const ufProj=o=>unisKm.some(u=>projMatchUni(u,o.proj));
   const hasKm=unisKm.length>0;
-  const fcaS=XPANEL.fca?fcaSplitU(XPANEL.fca,yr,mi,codSet):{prazo:null,concl:null};
+  const fcaS=XPANEL.fca?fcaSplitP(XPANEL.fca,perKeys,unisSel):{prazo:null,concl:null};
   return {
     custos:XPANEL.dre?inv(sumAtt(XPANEL.dre,perKeys,ufDre)):null,
     disp:cap(icAvg(0)),prev:cap(icAvg(1)),chkT:cap(icAvg(4)),chkApoio:cap(icAvg(5)),
@@ -841,8 +946,8 @@ function cardVals(perKeys,yr,mi,unisSel){
     kmAt:(XPANEL.km&&hasKm)?inv(sumAtt(XPANEL.km,perKeys,ufProj)):null,
     rkm:(XPANEL.dre&&XPANEL.km&&hasKm)?inv(rkmAtt(perKeys,ufDre,ufProj)):null,
     rl:(XPANEL.kmlEf&&hasKm)?inv(rlAtt(perKeys,ufProj)):null,
-    dpo:cap(dpoNotaU(unisSel)),
-    saude:cap(conlogU(unisSel,'saude')),pressao:cap(conlogU(unisSel,'pressao')),afer:cap(conlogU(unisSel,'afer')),
+    dpo:cap(dpoNotaU(unisSel,yr,mi)),
+    saude:cap(conlogU(unisSel,'saude',perKeys)),pressao:cap(conlogU(unisSel,'pressao',perKeys)),afer:cap(conlogU(unisSel,'afer',perKeys)),
     fcaP:cap(fcaS.prazo),fcaC:cap(fcaS.concl)
   };
 }
@@ -854,28 +959,27 @@ function unitScores(uni,perKeys,yr,mi){
   const icAvg=i=>{const vs=r.map(o=>o.ic[i]).filter(v=>v!=null);return vs.length?vs.reduce((a,b)=>a+b,0)/vs.length*100:null;};
   const cid=NK(UNI2CID[uni]);const ufDre=o=>o.cid===cid;
   const semKm=UNI_SEM_KM.has(uni);const ufProj=o=>projMatchUni(uni,o.proj);
-  const codSet=new Set([UNI2COD[uni]]);
-  const fcaS=XPANEL.fca?fcaSplitU(XPANEL.fca,yr,mi,codSet):{prazo:null,concl:null};
+  const fcaS=XPANEL.fca?fcaSplitP(XPANEL.fca,perKeys,[uni]):{prazo:null,concl:null};
   return {
     custos: XPANEL.dre?inv(sumAtt(XPANEL.dre,perKeys,ufDre)):null,
     disp:   cap(icAvg(0)),
-    dpo:    cap(dpoNotaU([uni])),
+    dpo:    cap(dpoNotaU([uni],yr,mi)),
     kmAt:   (XPANEL.km&&!semKm)?inv(sumAtt(XPANEL.km,perKeys,ufProj)):null,
     prev:   cap(icAvg(1)),
     kml:    (XPANEL.kmlEf&&!semKm)?cap(kmlAtt(perKeys,ufProj)):null,
-    saude:  cap(conlogU([uni],'saude')),
+    saude:  cap(conlogU([uni],'saude',perKeys)),
     conf:   cap(icAvg(6)),
     sla:    cap(icAvg(9)),
     chkT:   cap(icAvg(4)),
     stCam:  cap(icAvg(7)),
     rkm:    (XPANEL.dre&&XPANEL.km&&!semKm)?inv(rkmAtt(perKeys,ufDre,ufProj)):null,
-    pressao:cap(conlogU([uni],'pressao')),
+    pressao:cap(conlogU([uni],'pressao',perKeys)),
     fcaC:   cap(fcaS.concl),
     fcaP:   cap(fcaS.prazo),
     rl:     (XPANEL.kmlEf&&!semKm)?inv(rlAtt(perKeys,ufProj)):null,
     chkApoio:cap(icAvg(5)),
     stEmp:  cap(icAvg(8)),
-    afer:   cap(conlogU([uni],'afer')),
+    afer:   cap(conlogU([uni],'afer',perKeys)),
     civf:   cap(icAvg(10))
   };
 }
@@ -910,21 +1014,19 @@ function renderRanking(rk,periodo){
 }
 
 // ── Seletor de indicador do gráfico mensal ──
-// snap:1 = indicador SEM série mensal — o DPO é o último semestre da auditoria
-// e os três de pneus vêm da foto de hoje do Conlog (pneus instalados agora,
-// última aferição ≤30 dias). Repetir esse número em 12 meses desenhava uma
-// "evolução" que não existe (e ainda pintava ago→dez), então ele aparece só
-// no mês de referência.
+// snap:1 = indicador SEM série mensal (aparece só no mês de referência). Desde
+// 11/10/2026 nenhum está assim: o DPO vale o semestre de cada mês e os três de
+// pneus saem das inspeções do mês (conlogMes). O mecanismo fica para quem vier.
 const CH_INDS=[
   {key:'pont',lbl:'Pontuação Geral'},
   {key:'custos',lbl:'Custos Frota',rr:1},
   {key:'disp',lbl:'Disponibilidade'},
-  {key:'dpo',lbl:'DPO/VPO Sustentável',snap:1},
+  {key:'dpo',lbl:'DPO/VPO Sustentável'},
   {key:'prev',lbl:'Preventivas',good:95},
   {key:'kml',lbl:'Consumo Km/L',rr:1},
-  {key:'saude',lbl:'Saúde dos Pneus',snap:1},
-  {key:'pressao',lbl:'Pressão dos Pneus',snap:1},
-  {key:'afer',lbl:'Aferições',snap:1},
+  {key:'saude',lbl:'Saúde dos Pneus'},
+  {key:'pressao',lbl:'Pressão dos Pneus'},
+  {key:'afer',lbl:'Aferições'},
   {key:'chkT',lbl:'Checklist T1/T2'},
   {key:'chkApoio',lbl:'Checklist Apoio'},
   {key:'conf',lbl:'Conformidade Frota'},
@@ -1007,7 +1109,7 @@ function wr(k,v){try{localStorage.setItem('sc_'+k,JSON.stringify(v));}catch(e){}
 function applyData(d){
   const selV=getMsValues('ms-vig'),selU=getMsValues('ms-uni'); // preserva seleção ao revalidar
   XPANEL={};
-  const {ics:icRows,dre:dreR,km:kmR,dpo:dpoR,fca:fcaR,rsl:rslR,kmlEf:kmlEfR,conlog:conlogR}=d;
+  const {ics:icRows,dre:dreR,km:kmR,dpo:dpoR,fca:fcaR,fcaRecs,rsl:rslR,kmlEf:kmlEfR,conlog:conlogR}=d;
   if(conlogR)XPANEL.conlog=conlogR;
   // Custos = custo da FROTA → EXCLUI a linha "Receita Líquida" (ela só baliza o AV)
   // Frota: vig=0, unidade=3, conta=5, rem=9, real=10
@@ -1020,7 +1122,8 @@ function applyData(d){
   // aba Km/L (consumo): km=22, lit=23, remKmL=4, totalRS=25, proj=14, comb=20 → guarda rp (preço rem) por linha
   if(kmlEfR)try{XPANEL.kmlEf=kmlEfR.filter(r=>parseD(r[0])).map(r=>{const vk=vigKeyN(parseD(r[0]));return{vk,proj:r[14],km:r[22]!=null?+r[22]:0,lit:r[23]!=null?+r[23]:0,remKmL:r[4]!=null?+r[4]:0,tot:r[25]!=null?+r[25]:0,rp:remPrice(NK(r[14]),vk,NF(r[20]))};});}catch(e){}
   if(dpoR)try{XPANEL.dpo=compDPO(dpoR);}catch(e){}
-  if(fcaR)try{XPANEL.fca=compFCA(fcaR);}catch(e){}
+  if(fcaRecs&&fcaRecs.length)XPANEL.fca=fcaRecs;
+  else if(fcaR)try{XPANEL.fca=compFCA(fcaR);}catch(e){}
   ICS=(icRows||[]).filter(o=>o&&o.vigD).map(o=>({vigD:new Date(o.vigD),unidade:o.unidade,ic:o.ic,pont:o.pont}));
   const vm=new Map();ICS.forEach(o=>vm.set(vigKeyN(o.vigD),o.vigD));
   VIGS=[...vm.values()].sort((a,b)=>vigKeyN(a)-vigKeyN(b));
@@ -1089,8 +1192,9 @@ async function carregar(){
   else STATUS.textContent='Carregando…';
   try{
     const icRows=await carregarICs();
-    const [dreR,kmR,dpoR,fcaR,rslR,kmlEfR,conlogR]=await Promise.all([gviz(SRC.dre).catch(()=>null),gviz(SRC.km).catch(()=>null),gviz(SRC.dpo).catch(()=>null),gviz(SRC.fca).catch(()=>null),gviz(SRC.rsl).catch(()=>null),gviz(SRC.kmlEf).catch(()=>null),fetchConlog().catch(()=>null)]);
-    const d={ics:icRows,dre:dreR,km:kmR,dpo:dpoR,fca:fcaR,rsl:rslR,kmlEf:kmlEfR,conlog:conlogR};
+    const [dreR,kmR,dpoR,fcaRecs,rslR,kmlEfR,conlogR]=await Promise.all([gviz(SRC.dre).catch(()=>null),gviz(SRC.km).catch(()=>null),gviz(SRC.dpo).catch(()=>null),fcaDoBanco().catch(e=>{console.warn('FCA do banco falhou, caindo para a aba FCA Total:',e);return null;}),gviz(SRC.rsl).catch(()=>null),gviz(SRC.kmlEf).catch(()=>null),fetchConlog().catch(()=>null)]);
+    const fcaR=fcaRecs?null:await gviz(SRC.fca).catch(()=>null);
+    const d={ics:icRows,dre:dreR,km:kmR,dpo:dpoR,fca:fcaR,fcaRecs,rsl:rslR,kmlEf:kmlEfR,conlog:conlogR};
     try{ if(typeof SwrCache!=='undefined') SwrCache.put('sc_data2',d); }catch(e){}
     applyData(d);
     const now=new Date();STATUS.textContent=`${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
@@ -1221,6 +1325,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610111500"></script>
+<script src="../assets/build-check.js?v=202610112240"></script>
 </body>
 </html>
