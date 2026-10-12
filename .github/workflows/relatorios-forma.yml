@@ -1,0 +1,20 @@
+name: Relatorios Forma (auditoria)
+
+# Mostra a FORMA de cada fonte que o /relatorios/ exporta (rótulos, tipos,
+# colunas vazias, datas gravadas como número, JSON dentro da célula), sem
+# imprimir dado de pessoa. É a medida que orienta a limpeza dos relatórios.
+on:
+  workflow_dispatch:
+
+jobs:
+  forma:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Medir
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/relatorios-forma.mjs
