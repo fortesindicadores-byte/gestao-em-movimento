@@ -2,12 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610112330">
+<meta name="build" content="202610122330">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Relatórios · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
+<script src="../assets/xlsx-tabela.js"></script>
 <style>
 /* ============================================================
    RELATÓRIOS — Excel detalhado de cada painel, direto do banco
@@ -475,16 +476,27 @@ const UNI_PROLOG={1676:'MCC T1',1677:'MCC T2',37:'CGR',1906:'CBA T1 WH',1907:'CB
 /* ── fontes ── */
 const S=slug=>({k:'sh',slug});
 const T=(tab,nome,o)=>Object.assign({k:'tab',tab,nome},o||{});
+/* nome de aba de cada exportação do Ginfo e de cada indicador do Frota de
+   Elite (a aba do Excel aceita só 31 caracteres) */
+const NOME_GINFO={'ativos':'Ativos','civf':'CIVF','preventivas':'Preventivas','alinhamentos':'Alinhamentos',
+  'os-em-aberto':'OS em aberto','checklist-031120':'Checklist 031120','blitz-seguranca':'Blitz de segurança',
+  'stress-test-frota':'Stress test frota','stress-test-empilhadeira':'Stress test empilhad.'};
+const NOME_ELITE={'disponibilidade':'Disponibilidade','preventivas':'Preventivas','pneus':'Pneus','checklist-t1':'Checklist T1',
+  'checklist-t2':'Checklist T2','checklist-wh':'Checklist WH','conformidade':'Conformidade','conformidade-detalhe':'Conformidade placa',
+  'conformidade-dia':'Conformidade do dia','conformidade-mar':'Conformidade mar','stress-test-frota':'Stress test frota',
+  'stress-test-empilhadeira':'Stress test empilhad.','civf':'CIVF','sla-manutencao':'SLA manutenção'};
+const nomeChave=(mapa,k)=>mapa[k]||String(k).replace(/-/g,' ').replace(/^./,c=>c.toUpperCase());
 const GINFO=chaves=>T('ginfo_snapshot','Ginfo',{sel:'chave,updated_at,data',ordem:'chave',pag:4,
-  expande:'data',porAba:'chave',pai:[['updated_at','Exportado do Ginfo em']],
+  expande:'data',porAba:'chave',rotulo:k=>'Ginfo · '+nomeChave(NOME_GINFO,k),
   filtro:chaves?(x=>x.in('chave',chaves)):null,
-  rot:chaves?('Ginfo · '+chaves.join(', ')):'Ginfo · todas as exportações (uma aba por relatório)'});
+  rot:chaves?('Ginfo · '+chaves.map(k=>nomeChave(NOME_GINFO,k)).join(', ')):'Ginfo · todas as exportações (uma aba por relatório)'});
 const ELITE=inds=>T('elite_snapshot','Elite',{sel:'indicador,vigencia,escopo,updated_at,data',ordem:'indicador,vigencia,escopo',pag:25,
-  expande:'data',porAba:'indicador',pai:[['vigencia','Vigência'],['escopo','Escopo'],['updated_at','Coletado em']],
+  expande:'data',porAba:'indicador',rotulo:k=>'Elite · '+nomeChave(NOME_ELITE,k),
+  pai:[['vigencia','Vigência'],['escopo','Recorte',e=>e==='ano'?'Acumulado do ano':'Mês']],
   filtro:inds?(x=>x.in('indicador',inds)):null,
-  rot:inds?('Frota de Elite · '+inds.join(', ')):'Frota de Elite · os indicadores do Ginfo, mês e acumulado (uma aba por indicador)'});
+  rot:inds?('Frota de Elite · '+inds.map(k=>nomeChave(NOME_ELITE,k)).join(', ')):'Frota de Elite · os indicadores do Ginfo, mês e acumulado (uma aba por indicador)'});
 const PROLOG=(ep,nome)=>T('snapshot','Prolog · '+nome,{sel:'branch_id,endpoint,updated_at,data',ordem:'branch_id',pag:1,
-  expande:'data',pai:[['branch_id','Unidade',b=>UNI_PROLOG[b]||b],['updated_at','Lido do Prolog em']],
+  expande:'data',pai:[['branch_id','Unidade',b=>UNI_PROLOG[b]||b]],
   filtro:x=>x.eq('endpoint',ep),rot:'Prolog · '+nome});
 const TERM4=[S('term_transportes_t1'),S('term_transportes_t2'),S('term_wh_t1'),S('term_wh_t2')];
 const TERM8=TERM4.concat([S('term_transportes_t1_acum'),S('term_transportes_t2_acum'),S('term_wh_t1_acum'),S('term_wh_t2_acum')]);
@@ -539,8 +551,6 @@ const REL=[
     f:[S('dre_frota'),S('seara_rem_placa'),S('seara_remunerado'),S('seara_combustivel'),S('seara_ctes_viagens')]},
   {cl:'op',t:'Seara · Km/L e R$/L',h:'combustivel/seara/eficiencia/',d:'Base de remunerado e aba de combustível da Seara.',
     f:[S('seara_remunerado'),S('seara_combustivel')]},
-  {cl:'op',t:'Seara · Remuneração por placa',h:'combustivel/seara/remunerado/',adm:1,d:'As planilhas VariavelDeFrete importadas, por unidade, vigência e placa.',
-    f:[T('seara_remunerado','Remuneração por placa',{ordem:'unidade,vigencia,placa'})]},
   {cl:'op',t:'Pneus',h:'pneus/',d:'Retrato do Prolog — todos os pneus, veículos e aferições por medida —, histórico de CPK e a aba de aferições do Elite.',
     f:[PROLOG('tires','Pneus'),PROLOG('vehicles','Veículos'),PROLOG('inspections','Aferições'),
        T('historico_mensal','Histórico mensal (CPK)'),S('elite_pneus')]},
@@ -619,54 +629,191 @@ async function lerTabela(src,prog){
   return out;
 }
 
-/* ── valores para o Excel ── */
+/* ── LIMPEZA: de linha do banco para TABELA de análise ──
+   (Renan, 12/10/2026: "Os relatórios não ficaram limpos e com cara de
+   relatório em excel… tabelas dos dados, para utilizar em análises").
+   Medido antes no workflow Relatorios Forma, fonte a fonte — cada regra
+   abaixo responde a uma sujeira que estava lá:
+   · coluna 100% vazia sai (fca_total, metas e dispersao_abertura tinham 17;
+     o Ginfo da Blitz, 13);
+   · id técnico sai: UUID, autoria (created_by/updated_by/user_id), hash,
+     controle de carga (carregado_em/coletado_em) e as chaves internas da
+     Conferência de Locação (_v, k);
+   · JSON dentro da célula sai (cenário de forecast, o "bruto" do diário de
+     condução, o de-para do Benner) — não é coisa que se cruze numa tabela;
+     lista de valores simples vira texto separado por ";";
+   · data gravada como NÚMERO do Excel vira data (o Ginfo manda 46296 em
+     Período, Última Saída, Data CIVF…), "AAAA-MM" e "MM/AAAA" de vigência
+     viram mês, hora solta vira duração;
+   · Sim/Não no lugar de true/false;
+   · cabeçalho legível: rótulo duplicado pelo gviz ("Total Pontos Total
+     Pontos") vira um só, o "#" de pontos do Termômetro vira "Pontos · <o
+     indicador ao lado>", nome de coluna do banco vira português
+     ("vig_cobranca" → "Vigência cobrança");
+   · aba sem cabeçalho (DPO, Demarco, Regras do Termômetro) usa a 1ª linha. */
 const SENS=/(^|[_\s.-])(cpf|e-?mail|senha|pin|pin_hash|token|telefone|celular|fone|phone)([_\s.-]|$)/i;
-const MAXC=32000;   // o Excel guarda no máximo 32.767 caracteres por célula
-function valor(v){
-  if(v==null||v==='') return null;
-  if(typeof v==='number'||typeof v==='boolean') return v;
-  if(typeof v==='object'){ const s=JSON.stringify(v); return s.length>MAXC?s.slice(0,MAXC)+'…':s; }
-  const s=String(v); let m;
-  // data montada por partes: new Date('2026-08-01') é meia-noite UTC e cai em 31/07 no Brasil
-  if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/))) return new Date(+m[1],+m[2]-1,+m[3]);
-  if(/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(s)){ const d=new Date(s.replace(' ','T')); if(!isNaN(d)) return d; }
-  return s.length>MAXC?s.slice(0,MAXC)+'…':s;
-}
-function limpa(o,manter){
-  const r={};
-  for(const k in o){ if(SENS.test(k)&&!(manter&&manter.includes(k))) continue; r[k]=valor(o[k]); }
-  return r;
-}
-/* célula do sh_*: mesmo tipo que o gviz declarou para a coluna */
-function valSh(v,tipo){
-  if(v==null||v==='') return null;
-  let m;
-  if(tipo==='date'&&(m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/))) return new Date(+m[1],+m[2]-1,+m[3]);
-  if(tipo==='datetime'&&(m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/)))
-    return new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6]);
-  if(tipo==='number'){ const n=typeof v==='number'?v:+v; return isFinite(n)?n:String(v); }
-  if(tipo==='boolean') return v===true||v==='true';
-  return valor(v);
+const TEC=new Set(['_v','k','linha','hash','bytes','user_id','created_by','updated_by','origem_chave','carregado_em','coletado_em','visto_em']);
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const PROMOVE=new Set(['dpo','demarco','term_regras']);    // abas cujo cabeçalho mora na 1ª linha
+const PAL={vigencia:'vigência',cobranca:'cobrança',descricao:'descrição',observacao:'observação',acao:'ação',acoes:'ações',
+  responsavel:'responsável',numero:'número',combustivel:'combustível',ultimo:'último',ultima:'última',previa:'prévia',
+  hodometro:'hodômetro',divergencia:'divergência',mes:'mês',inicio:'início',aprovacao:'aprovação',preco:'preço',
+  indisponivel:'indisponível',indisponiveis:'indisponíveis',disponivel:'disponível',historico:'histórico',historicos:'históricos',
+  servico:'serviço',operacao:'operação',competencia:'competência',periodo:'período',previsao:'previsão',manutencao:'manutenção',
+  especificacao:'especificação',familia:'família',peca:'peça',codigo:'código',pontuacao:'pontuação',aceleracao:'aceleração',
+  cambio:'câmbio',concorrencia:'concorrência',conclusao:'conclusão',graficos:'gráficos',orcado:'orçado',pressao:'pressão',
+  inspecao:'inspeção',aderencia:'aderência',odometro:'odômetro',posicao:'posição',fabricacao:'fabricação',veiculo:'veículo',
+  criado:'criado',atualizado:'atualizado',faixa:'faixa',acessos30:'acessos 30 dias',created:'criado',updated:'atualizado',at:'em',
+  locked:'travado',abast:'abastecimento',hodo:'hodômetro',qlp:'QLP',
+  ncm:'NCM',nf:'NF',rc:'RC',oc:'OC',rpm:'RPM',os:'OS',id:'ID',cpk:'CPK',dot:'DOT',mm:'MM',mm1:'MM 1',mm2:'MM 2',mm3:'MM 3',mm4:'MM 4',
+  vw:'VW',erp:'ERP',ft:'FT',pct:'%',uni:'unidade',vig:'vigência',proj:'projeto',resp:'responsável',ind:'indicador',
+  obs:'observação',qtd:'quantidade',n:'nº',dur:'duração',s:'(s)',ult:'último',idle:'marcha lenta',acel:'aceleração',
+  frea:'frenagem',vel:'velocidade',h:'horas',km:'km',ok:'OK',wf:'robô',cron:'agenda',url:'link',sla:'SLA',uf:'UF'};
+function humano(k){
+  k=String(k);
+  if(!/^[a-z][a-zA-Z0-9_]*$/.test(k)) return k.replace(/\s+/g,' ').trim();     // rótulo de planilha/Ginfo: como veio
+  if(/^[a-z][A-Z]+$/.test(k)) return k;                                         // sigla interna (dFP, dPF): sem chute
+  const t=k.replace(/([a-z0-9])([A-Z])/g,'$1_$2').split('_').filter(Boolean)
+    .map(w=>{ const l=w.toLowerCase(); return PAL[l]!=null?PAL[l]:(w.length>1&&w===w.toUpperCase()?w:l); }).join(' ');
+  return t.charAt(0).toUpperCase()+t.slice(1);
 }
 const letra=i=>{ let s=''; i=i+1; while(i>0){ const r=(i-1)%26; s=String.fromCharCode(65+r)+s; i=Math.floor((i-1)/26); } return s; };
-function unicos(nomes){ const vis={}; return nomes.map(n=>{ n=String(n||'').trim()||'(sem rótulo)'; if(!vis[n]){ vis[n]=1; return n; } vis[n]++; return n+' ('+vis[n]+')'; }); }
+const vazio=v=>v==null||v===''||(typeof v==='string'&&!v.trim());
+const ehDate=v=>Object.prototype.toString.call(v)==='[object Date]';
+const ehObj=v=>v!=null&&typeof v==='object'&&!Array.isArray(v)&&!ehDate(v)&&v.dur==null;
+const NOME_DATA=/data|per[ií]odo|[uú]ltim|pr[oó]x|vencimento|in[ií]cio|(^|\s)fim(\s|$)|compet[eê]ncia|realiza[cç][aã]o|realizado em|leitura|evento|limite|criad|emiss/i;
+const NAO_DATA=/km|hr|dias|qtd|quant|realiza[cç][oõ]es|intervalo|ciclo|n[º°]|tempo/i;
+const NOME_MES=/vig|compet|(^|\s)m[eê]s(\s|$)|per[ií]odo/i;
+const NOME_COD=/(^|\s)(ano|ordem|n[º°]|n[uú]mero|id|c[oó]d\.?|c[oó]digo|os|nf|rc|oc|cnpj|cep|serial|dot|mapa|chassi|placa|documento|contrato|faixa|medida|inspe[cç][aã]o id|ve[ií]culo id|tire id|evento|registros)(\s|$)/i;
+const NOME_PCT=/ader[eê]ncia|conformidade|disponibilidade|sla|%|percent|ating/i;
+const dataLocal=(y,m,d,h,mi,s)=>new Date(+y,+m-1,+d,+(h||0),+(mi||0),+(s||0));
+function deSerial(v){   // número do Excel → data, pelos componentes, arredondado ao segundo
+  const u=new Date(Date.UTC(1899,11,30)+Math.round(v*86400)*1000);
+  return new Date(u.getUTCFullYear(),u.getUTCMonth(),u.getUTCDate(),u.getUTCHours(),u.getUTCMinutes(),u.getUTCSeconds());
+}
+function numBR(s){      // "1.234,56" · "1234.5" · "95%" · "R$ 1.234" → número (ou null)
+  let t=String(s).trim(), pct=false;
+  if(/%$/.test(t)){ pct=true; t=t.slice(0,-1).trim(); }
+  t=t.replace(/^R\$\s*/,'');
+  if(!/^-?[\d.,]+$/.test(t)) return null;
+  if(/,/.test(t)) t=t.replace(/\./g,'').replace(',','.');
+  else if(/^-?\d{1,3}(\.\d{3})+$/.test(t)) t=t.replace(/\./g,'');
+  const n=+t; if(!isFinite(n)) return null;
+  return pct?n/100:n;
+}
+/* uma coluna: devolve {fmt, vals} ou null (= sai da tabela) */
+function trataColuna(nome,vals,tipoSh){
+  const nv=vals.filter(v=>!vazio(v));
+  if(!nv.length) return null;
+  if(nv.every(v=>typeof v==='string'&&UUID.test(v))) return null;
+  if(nv.some(ehObj)) return null;
+  if(nv.some(Array.isArray)){
+    if(!nv.every(v=>!Array.isArray(v)||v.every(x=>x==null||typeof x!=='object'))) return null;
+    vals=vals.map(v=>Array.isArray(v)?v.filter(x=>x!=null&&x!=='').join('; '):v);
+  }
+  if(nv.every(v=>typeof v==='boolean')) return {fmt:'texto',vals:vals.map(v=>v===true?'Sim':v===false?'Não':null)};
+  const data=NOME_DATA.test(nome)&&!NAO_DATA.test(nome), mesNome=NOME_MES.test(nome);
+  let m;
+  vals=vals.map(v=>{
+    if(vazio(v)) return null;
+    if(typeof v==='string'){
+      const s=v.trim();
+      if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/))) return dataLocal(m[1],m[2],m[3]);
+      if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/))){
+        // com fuso (timestamptz) é instante: o Date converte para a hora daqui; sem fuso, vale como está
+        if(/[zZ]|[+-]\d{2}:?\d{2}$/.test(s)){ const d=new Date(s.replace(' ','T')); if(!isNaN(d)) return new Date(d.getFullYear(),d.getMonth(),d.getDate(),d.getHours(),d.getMinutes(),d.getSeconds()); }
+        return dataLocal(m[1],m[2],m[3],m[4],m[5],m[6]);
+      }
+      if(mesNome&&(m=s.match(/^(\d{4})-(\d{2})$/))) return dataLocal(m[1],m[2],1);
+      if(mesNome&&(m=s.match(/^(\d{2})\/(\d{4})$/))) return dataLocal(m[2],m[1],1);
+      if((m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/))) return dataLocal(m[3],m[2],m[1],m[4],m[5],m[6]);
+      return s.length>32000?s.slice(0,32000)+'…':s;
+    }
+    if(typeof v==='number'&&data&&tipoSh!=='number'&&v>20000&&v<80000) return deSerial(v);
+    if(typeof v==='number'&&/^hora/i.test(nome)&&v>=0&&v<1) return {dur:v};
+    return v;
+  });
+  // texto que é número (vem do Sheets/xlsx como "1.234,56") — nunca em coluna de código
+  const txt=vals.filter(v=>typeof v==='string');
+  if(txt.length&&!NOME_COD.test(nome)){
+    const conv=txt.map(numBR);
+    if(conv.filter(x=>x!=null).length>=txt.length*0.9) vals=vals.map(v=>typeof v==='string'?numBR(v):v);
+  }
+  const nn=vals.filter(v=>v!=null);
+  if(!nn.length) return null;
+  if(nn.every(ehDate)){
+    const hora=nn.some(d=>d.getHours()||d.getMinutes()||d.getSeconds());
+    const dia1=!hora&&nn.every(d=>d.getDate()===1);
+    return {fmt:hora?'datahora':(dia1&&mesNome?'mes':'data'),vals};
+  }
+  if(nn.every(v=>v&&v.dur!=null)) return {fmt:'dur',vals};
+  const nums=nn.filter(v=>typeof v==='number');
+  if(nums.length&&nums.length===nn.length){
+    if(NOME_COD.test(nome)&&nums.every(Number.isInteger)) return {fmt:'int0',vals};
+    let mx=0; for(const v of nums){ const a=Math.abs(v); if(a>mx) mx=a; }   // sem espalhar: 170 mil argumentos estouram a pilha
+    if(NOME_PCT.test(nome)&&mx<=1.05&&!/pontos|nº|qtd|quant/i.test(nome)) return {fmt:'pct',vals};
+    return {fmt:nums.every(Number.isInteger)?'int':'dec',vals};
+  }
+  return {fmt:'texto',vals};
+}
+function larguraDe(nome,vals,fmt){
+  let w=Math.min(Math.max(String(nome).length,6),40);
+  if(fmt==='data'||fmt==='mes') w=Math.max(w,10); else if(fmt==='datahora') w=Math.max(w,16);
+  else { const n=Math.min(vals.length,400); for(let i=0;i<n;i++){ const v=vals[i]; if(v!=null) w=Math.max(w,Math.min(String(typeof v==='number'?v.toLocaleString('pt-BR'):v).length,60)); } }
+  return w;
+}
+/* linhas (objetos) → {colunas, linhas (arrays), fora (colunas que saíram)} */
+function preparaAba(linhas,opt){
+  opt=opt||{};
+  const chaves=[], vis=new Set();
+  linhas.forEach(l=>{ for(const k in l) if(!vis.has(k)){ vis.add(k); chaves.push(k); } });
+  const colunas=[], valores=[], fora=[];
+  chaves.forEach(k=>{
+    if(SENS.test(k)&&!(opt.manter&&opt.manter.includes(k))) return;
+    if(TEC.has(k)){ return; }
+    const nome=opt.nomes&&opt.nomes[k]!=null?opt.nomes[k]:humano(k);
+    const r=trataColuna(nome,linhas.map(l=>l[k]),opt.tipos&&opt.tipos[k]);
+    if(!r){ if(linhas.some(l=>ehObj(l[k])||Array.isArray(l[k]))) fora.push(nome); return; }
+    colunas.push({nome,fmt:r.fmt,larg:larguraDe(nome,r.vals,r.fmt)}); valores.push(r.vals);
+  });
+  const out=linhas.map((_,i)=>valores.map(v=>v[i]));
+  return {colunas,linhas:out,fora};
+}
+/* rótulos de uma aba do Sheets: o que o gviz entrega precisa de faxina */
+function rotulosSh(cols){
+  let ant='';
+  return cols.map((c,i)=>{
+    let l=String(c.label==null?'':c.label).replace(/\s+/g,' ').trim();
+    const m=l.match(/^(.+) \1$/); if(m) l=m[1];                      // "Ranking Ranking" → "Ranking"
+    if(/^#/.test(l)) l='Pontos · '+(ant||'indicador');                // "# #" / "# T1" do Termômetro
+    else if(l) ant=l;
+    return l||('Coluna '+letra(c.i!=null?c.i:i));
+  });
+}
 
-/* ── uma fonte → uma ou mais abas ── */
+/* ── uma fonte → uma ou mais abas (linhas cruas, ainda em objetos) ── */
 async function abasDe(src,prog){
   if(src.k==='sh'){
     const b=SHMAP[src.slug];
     if(!b) throw new Error('a base sh_'+src.slug+' não está no banco');
     const rows=await lerTabela({tab:'sh_'+src.slug,ordem:'linha'},prog);
     const cols=(b.colunas||[]).slice().sort((a,c)=>a.i-c.i);
-    const nomes=unicos(cols.map(c=>c.label||letra(c.i)));
-    const temVig=rows.length&&('vigencia' in rows[0])&&!nomes.some(n=>/^vig[eê]ncia \(mm\/aaaa\)$/i.test(n));
-    const linhas=rows.map(r=>{ const o={}; cols.forEach((c,j)=>{ if(!SENS.test(nomes[j])) o[nomes[j]]=valSh(r[c.col],c.tipo); });
-      if(temVig) o['Vigência (MM/AAAA)']=r.vigencia||null; return o; });
-    return [{nome:b.nome||src.slug,linhas,fonte:'sh_'+src.slug,
-      obs:'Aba do Sheets no banco · carregada '+fmtDT(b.carregado_em)+(b.erro?' · '+String(b.erro).slice(0,90):'')}];
+    let rot=rotulosSh(cols);
+    let corpo=rows;
+    if(PROMOVE.has(src.slug)&&rows.length){                           // cabeçalho na 1ª linha
+      rot=cols.map((c,i)=>{ const v=rows[0][c.col]; return vazio(v)?rot[i]:String(v).trim(); });
+      corpo=rows.slice(1);
+    }
+    const nomes={}, tipos={};
+    cols.forEach((c,i)=>{ nomes[c.col]=rot[i]; tipos[c.col]=c.tipo; });
+    const temVig=!rot.some(n=>/vig[eê]ncia/i.test(n))&&corpo.some(r=>r.vigencia);
+    const linhas=corpo.map(r=>{ const o={}; cols.forEach(c=>{ o[c.col]=valShCru(r[c.col],c.tipo); }); if(temVig) o.__vig=r.vigencia||null; return o; });
+    if(temVig){ nomes.__vig='Vigência'; }
+    return [{nome:b.nome||src.slug,linhas,nomes,tipos,fonte:'sh_'+src.slug,
+      obs:'Aba do Sheets copiada para o banco · carregada '+fmtDT(b.carregado_em)+(b.erro?' · '+String(b.erro).slice(0,90):'')}];
   }
   const rows=await lerTabela(src,prog);
-  if(!src.expande) return [{nome:src.nome,linhas:rows.map(r=>limpa(r,src.manter)),fonte:src.tab,obs:''}];
+  if(!src.expande) return [{nome:src.nome,linhas:rows,manter:src.manter,fonte:src.tab,obs:''}];
   const grupos=new Map(), quando=new Map();
   rows.forEach(r=>{
     const k=src.porAba?String(r[src.porAba]):'';
@@ -676,93 +823,93 @@ async function abasDe(src,prog){
     if(!Array.isArray(arr)) arr=arr&&typeof arr==='object'?[arr]:[];
     if(!grupos.has(k)) grupos.set(k,[]);
     const g=grupos.get(k);
-    arr.forEach(it=>g.push(limpa(Object.assign({},pai,it&&typeof it==='object'?it:{valor:it}),src.manter)));
-    if(r.updated_at) quando.set(k,r.updated_at>(quando.get(k)||'')?r.updated_at:quando.get(k));
+    arr.forEach(it=>{ const o=Object.assign({},pai);
+      // o export do Ginfo repete as colunas da 2ª quinzena com "_1" ou um espaço no fim ("Parada? ")
+      if(it&&typeof it==='object') for(const c in it){ let n=String(c).trim().replace(/_1$/,' (2ª quinzena)');
+        if(n in pai) n+=' (dado)'; else if(o[n]!==undefined) n+=' (2ª quinzena)'; o[n]=it[c]; }
+      else o.Valor=it;
+      g.push(o); });
+    if(r.updated_at&&r.updated_at>(quando.get(k)||'')) quando.set(k,r.updated_at);
   });
-  const abas=[...grupos].map(([k,l])=>({nome:src.nome+(k?' · '+k:''),linhas:l,
+  const abas=[...grupos].filter(([,l])=>l.length).map(([k,l])=>({nome:src.rotulo?src.rotulo(k):src.nome+(k?' · '+k:''),linhas:l,manter:src.manter,
     fonte:src.tab+(k?' · '+src.porAba+' = '+k:''),obs:quando.get(k)?'Atualizado em '+fmtDT(quando.get(k)):''}));
-  if(src.resto) abas.push({nome:src.resto,fonte:src.tab,obs:'Uma linha por registro, sem a coluna '+src.expande,
-    linhas:rows.map(r=>{ const o=Object.assign({},r); delete o[src.expande]; return limpa(o,src.manter); })});
+  if(src.resto) abas.push({nome:src.resto,fonte:src.tab,manter:src.manter,obs:'Um registro por mês',
+    linhas:rows.map(r=>{ const o=Object.assign({},r); delete o[src.expande];
+      if(o.resumo&&typeof o.resumo==='object'){ for(const c in o.resumo) o['resumo_'+c]=o.resumo[c]; delete o.resumo; }
+      return o; })});
   return abas;
+}
+/* célula do sh_*: o tipo que o gviz declarou para a coluna (o resto é com o trataColuna) */
+function valShCru(v,tipo){
+  if(vazio(v)) return null;
+  let m;
+  if(tipo==='date'&&(m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/))) return dataLocal(m[1],m[2],m[3]);
+  if(tipo==='datetime'&&(m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/))){
+    // MTTR/MTBF chegam como hora sobre a data-base do Sheets (1899): é duração, não data
+    if(+m[1]<1901) return {dur:(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6])-Date.UTC(1899,11,30))/864e5};
+    return dataLocal(m[1],m[2],m[3],m[4],m[5],m[6]);
+  }
+  if(tipo==='number'){ const n=typeof v==='number'?v:+v; return isFinite(n)?n:String(v); }
+  if(tipo==='boolean') return v===true||v==='true';
+  return v;
 }
 
 /* ── monta o .xlsx ── */
 const LIM_LIN=1048000;   // o Excel aceita 1.048.576 linhas por aba
-function nomeAba(n,usados){
-  let b=String(n).replace(/[\[\]:*?\/\\]/g,'-').replace(/\s+/g,' ').trim().slice(0,31)||'Aba', s=b, i=2;
-  while(usados.has(s.toLowerCase())){ const suf=' ('+(i++)+')'; s=b.slice(0,31-suf.length)+suf; }
-  usados.add(s.toLowerCase()); return s;
-}
-/* DATA VAI COMO NÚMERO SERIAL MONTADO À MÃO. O SheetJS converte Date usando a
-   data-base de 1899 no fuso LOCAL, e em 1899 o fuso de São Paulo era a hora
-   média local (−3:06:28): toda data saía 28 s ANTES — 01/08/2026 00:00 virava
-   31/07/2026 23:59:32 e a vigência caía no mês anterior (achado no teste com
-   timezoneId America/Sao_Paulo). O serial pelos componentes locais é exato. */
-const serial=d=>(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate(),d.getHours(),d.getMinutes(),d.getSeconds())-Date.UTC(1899,11,30))/864e5;
-function folha(linhas){
-  if(!linhas.length) return XLSX.utils.aoa_to_sheet([['(sem linhas)']]);
-  const cab=[], vis=new Set();
-  linhas.forEach(l=>{ for(const k in l) if(!vis.has(k)){ vis.add(k); cab.push(k); } });
-  const data=cab.map(()=>false), hora=cab.map(()=>false), larg=cab.map(h=>Math.min(Math.max(h.length,6),40));
-  const aoa=[cab];
-  linhas.forEach((l,ri)=>{
-    aoa.push(cab.map((k,c)=>{ const v=l[k];
-      if(v instanceof Date){ data[c]=true; if(v.getHours()||v.getMinutes()||v.getSeconds()) hora[c]=true; return serial(v); }
-      if(ri<300&&v!=null) larg[c]=Math.min(Math.max(larg[c],String(v).length),48);
-      return v==null?null:v; }));
-  });
-  const ws=XLSX.utils.aoa_to_sheet(aoa);
-  cab.forEach((k,c)=>{ if(!data[c]) return;
-    const z=hora[c]?'dd/mm/yyyy hh:mm':'dd/mm/yyyy'; larg[c]=Math.max(larg[c],hora[c]?16:11);
-    for(let r=1;r<aoa.length;r++){ const cel=ws[XLSX.utils.encode_cell({r,c})]; if(cel&&cel.t==='n') cel.z=z; } });
-  ws['!cols']=larg.map(w=>({wch:w+2}));
-  ws['!autofilter']={ref:ws['!ref']};
-  return ws;
-}
 const nomeArq=t=>'Relatorio_'+semAcento(t).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')+'_'+new Date().toISOString().slice(0,10)+'.xlsx';
+function baixa(blob,nome){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nome;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },4000);
+}
 
 async function exportar(rel,bt){
   if(bt.disabled) return;
   const st=bt.parentNode.querySelector('.st');
   const rotOrig=bt.innerHTML;
   bt.disabled=true; bt.className='bx run'; st.className='st';
-  const abas=[], erros=[];
+  const brutas=[], erros=[];
   try{
     for(let i=0;i<rel.f.length;i++){
       const src=rel.f[i], rot=rotDe(src);
       bt.innerHTML=ICO_XLS+` ${i+1} de ${rel.f.length}`;
       try{
         const a=await abasDe(src,(n,tot)=>{ st.textContent=rot+' · '+br(n)+(tot!=null?' de '+br(tot):'')+' linhas'; });
-        abas.push(...a);
+        brutas.push(...a);
       }catch(e){ erros.push({rot,msg:String((e&&e.message)||e)}); console.warn('relatórios:',rot,e); }
     }
-    if(!abas.length) throw new Error(erros.length?erros[0].rot+': '+erros[0].msg:'nenhuma fonte respondeu');
-    bt.innerHTML=ICO_XLS+' Montando…'; st.textContent='montando o Excel…';
+    if(!brutas.length) throw new Error(erros.length?erros[0].rot+': '+erros[0].msg:'nenhuma fonte respondeu');
+    bt.innerHTML=ICO_XLS+' Montando…'; st.textContent='organizando as tabelas…';
     await new Promise(r=>setTimeout(r,30));
-    const wb=XLSX.utils.book_new(), usados=new Set(['sobre']);
-    const sobre=[['Relatório',rel.t],['Painel',rel.h?('/'+rel.h):'—'],['Gerado em',fmtDT(new Date())],['Gerado por',NOME||'—'],
-      ['Leitura','Cada aba é a base inteira, linha a linha, sem filtro nem agregação. O que aparece segue o acesso do seu usuário.'],
-      ['Fora do arquivo','Colunas de CPF, e-mail, senha, PIN, token e telefone.'],[],['Aba','Fonte no banco','Linhas','Observação']];
+    const abas=[], fonte=[];
     let total=0;
-    abas.forEach(a=>{
-      const partes=Math.max(1,Math.ceil(a.linhas.length/LIM_LIN));
-      for(let p=0;p<partes;p++){
-        const lin=a.linhas.slice(p*LIM_LIN,(p+1)*LIM_LIN);
-        const nm=nomeAba(a.nome+(partes>1?' '+(p+1):''),usados);
-        XLSX.utils.book_append_sheet(wb,folha(lin),nm);
-        sobre.push([nm,a.fonte,lin.length,a.obs||'']); total+=lin.length;
+    brutas.forEach(b=>{
+      const p=preparaAba(b.linhas,{nomes:b.nomes,tipos:b.tipos,manter:b.manter});
+      b.linhas=null;                                      // libera a memória da linha crua
+      const obs=[b.obs,p.fora.length?'fora (estrutura interna): '+p.fora.join(', '):''].filter(Boolean).join(' · ');
+      if(!p.linhas.length){ fonte.push([b.nome,b.fonte,0,0,['sem linhas no banco',obs].filter(Boolean).join(' · ')]); return; }
+      const partes=Math.max(1,Math.ceil(p.linhas.length/LIM_LIN));
+      for(let k=0;k<partes;k++){
+        const lin=p.linhas.slice(k*LIM_LIN,(k+1)*LIM_LIN);
+        abas.push({nome:b.nome+(partes>1?' '+(k+1):''),colunas:p.colunas,linhas:lin});
+        fonte.push([b.nome+(partes>1?' '+(k+1):''),b.fonte,lin.length,p.colunas.length,obs]);
+        total+=lin.length;
       }
     });
-    erros.forEach(e=>sobre.push(['(não exportada)',e.rot,0,'ERRO: '+e.msg]));
-    const wsS=XLSX.utils.aoa_to_sheet(sobre);
-    wsS['!cols']=[{wch:34},{wch:46},{wch:12},{wch:80}];
-    XLSX.utils.book_append_sheet(wb,wsS,'Sobre');
-    wb.SheetNames.unshift(wb.SheetNames.pop());          // "Sobre" primeiro
-    XLSX.writeFile(wb,nomeArq(rel.t),{compression:true});
+    erros.forEach(e=>fonte.push(['(não exportada)',e.rot,0,0,'ERRO: '+e.msg]));
+    abas.push({nome:'Fonte',
+      topo:[['Relatório · '+rel.t],['Painel',rel.h?('/'+rel.h):'—'],['Gerado em',new Date()],['Gerado por',NOME||'—'],
+        ['Como usar','Cada aba é uma Tabela do Excel com a base inteira do banco, uma linha por registro, sem filtro nem soma. Para cruzar: Inserir → Tabela Dinâmica e escolher a tabela da aba.']],
+      colunas:[{nome:'Aba',fmt:'texto',larg:30},{nome:'Fonte no banco',fmt:'texto',larg:40},{nome:'Linhas',fmt:'int',larg:10},
+        {nome:'Colunas',fmt:'int',larg:9},{nome:'Observação',fmt:'texto',larg:70}],
+      linhas:fonte});
+    const blob=await XlsxTabela.monta(abas,{aoProgresso:(i,n,a,feitas)=>{ st.textContent='gravando '+a.nome+(feitas?' · '+br(feitas)+' linhas':'')+' ('+(i+1)+' de '+n+')'; }});
+    baixa(blob,nomeArq(rel.t));
     bt.className='bx ok'; bt.innerHTML=ICO_OK+' Baixado';
-    st.textContent=br(total)+' linhas · '+abas.length+' aba(s)'+(erros.length?' · '+erros.length+' fonte(s) com erro (ver aba Sobre)':'');
+    st.textContent=br(total)+' linhas · '+(abas.length-1)+' tabela(s)'+(erros.length?' · '+erros.length+' fonte(s) com erro (ver aba Fonte)':'');
     if(erros.length) st.className='st err';
   }catch(e){
+    console.error('relatórios:',e);
     bt.className='bx err'; bt.innerHTML=rotOrig; st.className='st err';
     st.textContent='Erro: '+String((e&&e.message)||e).slice(0,140);
   }finally{
@@ -835,7 +982,7 @@ function render(){
   const lin=SHB.reduce((s,b)=>s+(+b.linhas||0),0);
   const ult=SHB.reduce((m,b)=>b.carregado_em&&b.carregado_em>m?b.carregado_em:m,'');
   set('h-lin',br(lin)); set('h-bases',br(SHB.length)); set('h-carga',ult?fmtDT(ult):'—');
-  set('sub-resumo','Um arquivo por painel do hub, com uma aba para cada base que ele lê · '+br(fontes.size)+' fontes distintas');
+  set('sub-resumo','Um arquivo por painel do hub · cada aba é uma Tabela do Excel com a base inteira, pronta para filtro e Tabela Dinâmica · '+br(fontes.size)+' fontes distintas');
   renderTabRel('resumo',vis,true);
   Object.keys(CL).forEach(c=>{
     const g=vis.filter(r=>r.cl===c);
@@ -860,7 +1007,7 @@ async function carregar(){
   SHMAP={}; SHB.forEach(b=>{ SHMAP[b.slug]=b; });
 }
 async function initApp(){
-  if(typeof XLSX==='undefined'){ gate('Erro','A biblioteca de Excel não carregou. Recarregue a página.'); return; }
+  if(typeof fflate==='undefined'||typeof XlsxTabela==='undefined'){ gate('Erro','A biblioteca de Excel não carregou. Recarregue a página.'); return; }
   try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }
   catch(e){ gate('Erro','Falha ao iniciar o Supabase.'); return; }
   const {data:{session}}=await sb.auth.getSession();
@@ -935,6 +1082,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202610112330"></script>
+<script src="../assets/build-check.js?v=202610122330"></script>
 </body>
 </html>
