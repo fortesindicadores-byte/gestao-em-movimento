@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610131000">
+<meta name="build" content="202610131100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -395,7 +395,7 @@ body.claro .kpi-card{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../");}catch(e){}</script>
 <script src="../../assets/gviz-cache.js?v=202609050530"></script>
-<script src="../../assets/balanco-massa.js?v=202610100130"></script>
+<script src="../../assets/balanco-massa.js?v=202610131100"></script>
 </head>
 <body>
 
@@ -1042,7 +1042,7 @@ const CTA_ALIAS_BM={'COMBUSTIVEIS VEICULOS E EQUIPAMENTOS':'COMBUSTIVEIS','FLUID
   'MANUTENCAO DE VEICULOS E EQUIPAMENTOS':'MANUTENCAO DE VEICULOS E EQUIP.','CONSERTOS E RECAPAGENS DE PNEUS':'RECAPAGENS E OUTROS SERVICOS','PNEUS E CAMARAS':'PNEUS NOVOS'};
 const ctaNK=c=>{ const n=_nk(c); return CTA_ALIAS_BM[n]||n; };
 let BM_NOVO={porChave:{},avisos:[]};
-// → { 'MM/YYYY|EMPURRADA - PIR': { CONTA: valor } } — só vigências ≥ BM_INICIO
+// → { 'MM/YYYY|EMPURRADA - PIR': { CONTA: valor } } — TODAS as vigências do banco (o corte aba × banco é no recompoeTudo)
 async function fetchBalancoBanco(){
   const h={apikey:SUPA_KEY, Authorization:'Bearer '+supaAuth()}; const out={}; const passo=1000;
   for(let i=0;;i+=passo){
@@ -1050,7 +1050,7 @@ async function fetchBalancoBanco(){
     if(!r.ok) throw new Error('balanco_massa HTTP '+r.status);
     const rows=await r.json();
     rows.forEach(x=>{ const m=String(x.vigencia||'').match(/^(\d{4})-(\d{2})$/); if(!m)return;
-      const d=new Date(+m[1],+m[2]-1,1); if(d<_bmIni())return;
+      const d=new Date(+m[1],+m[2]-1,1);
       const k=vigBR(d)+'|'+_nk(x.projeto)+' - '+_nk(x.unidade), c=ctaNK(x.conta);
       (out[k]=out[k]||{})[c]=(out[k][c]||0)+(+x.valor||0); });
     if(rows.length<passo)break;
@@ -1065,14 +1065,16 @@ async function fetchBalancoBanco(){
 const BM_ANTIGA_INICIO='01/2026', BM_ANTIGA_JANELA='tudo';
 function recompoeTudo(balBanco, sBM){
   if(!window.BalancoMassa){ console.warn('assets/balanco-massa.js não carregou — o balanço de massa não foi recomposto'); return {porChave:{},avisos:[]}; }
+  // o BANCO manda desde o primeiro mês que ele tem; a aba só cobre os meses anteriores
+  const bmIni=BalancoMassa.inicioDoBanco(balBanco, BM_INICIO); const [im,iy]=bmIni.split('/'); const dIni=new Date(+iy,+im-1,1);
   const km0={}, remCta={}, remPac={};
   for(const r of S_DP){ const d=kParseVig(r[DP.vig]); if(!d)continue; const k=vigBR(d)+'|'+_nk(r[DP.proj]); km0[k]=(km0[k]||0)+(+r[DP.kmRem]||0); }
   for(const r of S_FR){ const d=kParseVig(r[FR.vig]); if(!d)continue; const k=vigBR(d)+'|'+_nk(r[FR.n3]); const v=-(+r[FR.rem]||0);   // custo na DRE vem negativo
-    if(d>=_bmIni()){ const c=ctaNK(r[FR.cta]); (remCta[k]=remCta[k]||{})[c]=(remCta[k][c]||0)+v; }
+    if(d>=dIni){ const c=ctaNK(r[FR.cta]); (remCta[k]=remCta[k]||{})[c]=(remCta[k][c]||0)+v; }
     else if(VAR_CTAS.has(_nk(r[FR.cta]))){ (remPac[k]=remPac[k]||{}).TOTAL=(remPac[k].TOTAL||0)+Math.abs(v); } }
-  const balAnt={}; sBM.forEach(b=>{ const k=b.vig+'|'+_nk(b.n3); (balAnt[k]=balAnt[k]||{}).TOTAL=(balAnt[k].TOTAL||0)+b.valor; });
-  const ant=BalancoMassa.recompoe({bal:balAnt, remCta:remPac, km0, inicio:BM_ANTIGA_INICIO, fim:BM_INICIO, janela:BM_ANTIGA_JANELA, liquido:false});
-  const nov=BalancoMassa.recompoe({bal:balBanco, remCta, km0, inicio:BM_INICIO});
+  const balAnt={}; sBM.forEach(b=>{ if(BalancoMassa.ym(b.vig)>=BalancoMassa.ym(bmIni))return; const k=b.vig+'|'+_nk(b.n3); (balAnt[k]=balAnt[k]||{}).TOTAL=(balAnt[k].TOTAL||0)+b.valor; });
+  const ant=BalancoMassa.recompoe({bal:balAnt, remCta:remPac, km0, inicio:BM_ANTIGA_INICIO, fim:bmIni, janela:BM_ANTIGA_JANELA, liquido:false});
+  const nov=BalancoMassa.recompoe({bal:balBanco, remCta, km0, inicio:bmIni});
   if(ant.avisos.length) console.warn('Balanço de massa (regra antiga, rateada):', ant.avisos);
   if(nov.avisos.length) console.warn('Balanço de massa (conta a conta):', nov.avisos);
   // RATEIO ANUAL (Renan, 13/10/2026: "dividir ano"): o km do ano das duas regras é repartido pelos meses do ano pelo km remunerado original
@@ -1088,7 +1090,6 @@ function parseBalanco(cols,rows){
   if(c85<0) console.warn('Balanço de Massa: coluna "Valor 85%" não encontrada — usando "Valor"', cols);
   if(cU<0||cV<0||cVal<0){ console.warn('Balanço de Massa: coluna não encontrada', cols); return out; }
   rows.forEach(r=>{ const d=kParseVig(r[cV]); const valor=+r[cVal]||0; if(!d||!valor)return;
-    if(d>=_bmIni())return;   // de ago/26 em diante vale a conta por conta (banco)
     const partes=_nk(r[cU]).split(' '); const proj=partes.pop(); const cid=partes.join(' ');
     const cod=BM_CIDADE[cid]||BM_CIDADE[partes[partes.length-1]]; if(!cod){ console.warn('Balanço de Massa: unidade sem código', r[cU]); return; }
     out.push({vig:vigBR(d), n3:proj+' - '+cod, valor}); });
@@ -1424,6 +1425,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610131000"></script>
+<script src="../../assets/build-check.js?v=202610131100"></script>
 </body>
 </html>

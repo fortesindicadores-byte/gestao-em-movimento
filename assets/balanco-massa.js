@@ -192,5 +192,17 @@
     return { porChave, avisos };
   }
 
-  return { recompoe, porAno, trimestre, ym, parte, INICIO: '08/2026' };
+  /**
+   * Primeira vigência que o BANCO (export do DRE) tem — dali em diante vale a conta por conta e a
+   * aba do Sheets (Valor 85%) só cobre os meses anteriores. Nunca depois de `padrao` (ago/26).
+   * (Renan, 13/10/2026: "Vou subir todo o DRE para ver como fica" — com o DRE de jan em diante
+   * no banco, a aba sai de cena sozinha.)
+   */
+  function inicioDoBanco(bal, padrao) {
+    let min = ym(padrao || '08/2026'), vig = padrao || '08/2026';
+    Object.keys(bal || {}).forEach(ch => { const v = parte(ch).vig, y = ym(v); if (y && y < min) { min = y; vig = v; } });
+    return vig;
+  }
+
+  return { recompoe, porAno, inicioDoBanco, trimestre, ym, parte, INICIO: '08/2026' };
 });
