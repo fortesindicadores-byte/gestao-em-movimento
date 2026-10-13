@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610131900">
+<meta name="build" content="202610132000">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -505,7 +505,7 @@ body.claro input[type=date]{color-scheme:light;}
 }
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
-<script src="../assets/carta-calc.js?v=202610131900"></script>
+<script src="../assets/carta-calc.js?v=202610132000"></script>
 </head>
 <body>
 
@@ -772,8 +772,8 @@ const CC=window.CartaCalc;
 const DEPARA=CC.DEPARA;
 const {UNIT_BASE,UNIT_TIER,tierOfPrefix,unitMatchNv3}=CC;
 /* SÓ UNIDADE E SÓ PROJETO (Renan, 13/10/2026: "Deveria ter só unidade e só
-   projeto. Fica mais correto…" → "Não MCC T1 por exemplo"). O filtro Unidade
-   mostra a unidade (MACACU, CUIABA), o filtro Projeto mostra os projetos dela,
+   projeto. Fica mais correto…" → "Não MCC T1 por exemplo" → "use as siglas").
+   O filtro Unidade mostra a sigla sem tier (MCC, CBA, PIR), o filtro Projeto mostra os projetos dela,
    e o tier (MCC T1/T2, CBA T1/T1 WH/T2) sai do projeto na hora de gravar. Por
    dentro tudo continua no código com tier (banco, RLS, DRE). */
 const NOME_BASE=b=>({CBA:'CUIABA',MCC:'MACACU'})[b]||DEPARA[b]||b;
@@ -1026,7 +1026,7 @@ function marcarCarregando(on){
   if(on) set('lanc-sub','Carregando…');
 }
 async function onFiltroProj(){ await loadDRE(); render(); renderPlacas(); renderConsol(); }
-function buildUniFilter(){ buildMs('ms-uni', BASES_PERM, NOME_BASE, selUni, onFiltroUniVig, 'Todas'); }
+function buildUniFilter(){ buildMs('ms-uni', BASES_PERM, b=>b, selUni, onFiltroUniVig, 'Todas'); }
 function buildVigFilter(){
   // de AGO/2026 — quando a carta começou a rodar de verdade — até 6 meses à
   // frente. Mês que passou NÃO some da lista: na virada a unidade perderia o
@@ -1242,7 +1242,7 @@ function abrirLanc(id){
   if(agreg){
     const bs=BASES_PERM(), uni=UNIT_BASE((r && r.unidade) || curUnits()[0]);
     const selB=bs.includes(uni)?uni:(curBases()[0]||bs[0]);
-    $('f-unidade').innerHTML  = bs.map(b=>`<option value="${esc(b)}"${b===selB?' selected':''}>${esc(NOME_BASE(b))}</option>`).join('');
+    $('f-unidade').innerHTML  = bs.map(b=>`<option value="${esc(b)}"${b===selB?' selected':''}>${esc(b)}</option>`).join('');
     const vig  = (r && r.vigencia) || curVigs()[0];
     const vigs = VIG_OPTS.includes(vig) ? VIG_OPTS : [vig, ...VIG_OPTS];
     $('f-vigencia').innerHTML = vigs.map(v=>`<option value="${esc(v)}"${v===vig?' selected':''}>${esc(vigLabel(v))}</option>`).join('');
@@ -1352,7 +1352,7 @@ async function salvarLancModal(){
   fecharLanc(); render();
   if(foraVig||foraUni){
     const onde=[foraUni?nomeUni(payload.unidade):'', foraVig?vigLabel(payload.vigencia):''].filter(Boolean).join(' · ');
-    const marque=[foraUni?nomeUni(payload.unidade)+' no filtro Unidade':'', foraVig?vigLabel(payload.vigencia)+' no filtro Vigência':''].filter(Boolean).join(' e ');
+    const marque=[foraUni?UNIT_BASE(payload.unidade)+' no filtro Unidade':'', foraVig?vigLabel(payload.vigencia)+' no filtro Vigência':''].filter(Boolean).join(' e ');
     alert('Lançamento salvo em '+onde+'. Para vê-lo, marque '+marque+'.');
   }
 }
@@ -1957,7 +1957,7 @@ async function init(){
   ALLOWED=IS_ADMIN?Object.keys(DEPARA):(prof&&prof.unidade?String(prof.unidade).toUpperCase().split(',').map(s=>s.trim()).filter(c=>DEPARA[c]):[]);
   const nome=(session.user.user_metadata&&(session.user.user_metadata.nome||session.user.user_metadata.full_name))||session.user.email||'';
   set('euNome', nome); set('euAv', iniciais(nome));
-  set('euSub', IS_ADMIN?'Coordenação':([...new Set(ALLOWED.map(nomeUni))].join(' · ')||'Frota'));
+  set('euSub', IS_ADMIN?'Coordenação':(BASES_PERM().join(' · ')||'Frota'));
   if(!ALLOWED.length){ showRestricted('Seu usuário não tem unidade vinculada. Fale com o corporativo para liberar seu acesso à Carta de Custos.'); return; }
   selUni.add(UNIT_BASE(ALLOWED[0]));
   buildUniFilter(); buildVigFilter(); buildAnoFilter(); buildProjFilter();
@@ -1984,6 +1984,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610131900"></script>
+<script src="../assets/build-check.js?v=202610132000"></script>
 </body>
 </html>
