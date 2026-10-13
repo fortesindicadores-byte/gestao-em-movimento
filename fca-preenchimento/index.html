@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610111500">
+<meta name="build" content="202610132100">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1441,7 +1441,8 @@ let PROJ_OPTS=[],IND_OPTS=[],VIG_OPTS=[],ORG_OPTS=[],CONTA_OPTS=[],_vigInit=fals
 // nunca o valor do desvio.
 const nomeLimpo=t=>{
   let x=String(t||'').split('\n')[0].trim();
-  x=x.replace(/\s+desvio\b[\s\S]*$/i,'').replace(/^pacote\s+/i,'').trim();
+  // fato antigo grudado: "CombustíveisDesvio de R$ 10.947" (sem espaço antes do Desvio)
+  x=x.replace(/(\S)\s*desvio\s*(de\s+r\$|:|$)[\s\S]*$/i,'$1').replace(/\s+desvio\b[\s\S]*$/i,'').replace(/^pacote\s+/i,'').trim();
   return x;
 };
 // Indicador/Conta: nos Custos o fato é o PACOTE e as contas ficam nas linhas
@@ -1467,6 +1468,8 @@ function toggleMs(id){
   document.querySelectorAll('.ms-panel.open').forEach(p=>{if(p.closest('.ms-wrap').id!==id)p.classList.remove('open');});
   const p=document.querySelector('#'+id+' .ms-panel'); if(!p) return;
   p.classList.toggle('open');
+  // as opções em cascata (Fato, Indicador/Conta) seguem os outros filtros: refaz ao abrir
+  if(p.classList.contains('open')){ const w=document.getElementById(id), s=w&&w.querySelector('.ms-search input'); if(w&&w._render) w._render(s?s.value:''); }
   // o painel dos ÚLTIMOS filtros (Causa, Ação) estourava a borda da janela e
   // sumia: se não couber ancorado à esquerda, ancora à direita do botão.
   if(p.classList.contains('open')){
@@ -1480,6 +1483,13 @@ function toggleMs(id){
 function getMsValues(id){const w=document.getElementById(id);return w&&w._sel?[...w._sel]:[];}
 function respFiltro(){const e=document.getElementById('f-resp');return e?e.value.trim().toLowerCase():'';}
 function respOk(v,fr){return !fr||String(v||'').toLowerCase().includes(fr);}
+// INDICADOR E INDICADOR/CONTA EM CASCATA (Renan, 13/10/2026): as opções saem só
+// dos fatos que passam em Vigência, Origem e Projeto; o já marcado fica na lista.
+function _fatosCascata(){const fv=getMsValues('ms-vig'),fo=getMsValues('ms-org'),fp=getMsValues('ms-proj');
+  return _FATOS.filter(f=>(!fv.length||fv.includes(f.vig))&&(!fo.length||fo.includes(f.origem))&&(!fp.length||fp.includes(projLabel(f.proj))));}
+const _comMarcados=(id,arr)=>[...new Set(arr.concat(getMsValues(id)))].sort();
+function indItems(){return _comMarcados('ms-ind',_fatosCascata().map(f=>f.fato).filter(Boolean));}
+function contaItems(){return _comMarcados('ms-conta',_fatosCascata().flatMap(contasDeF).filter(Boolean));}
 function popFiltros(){
   VIG_OPTS=[...new Set(_FATOS.map(f=>f.vig).filter(Boolean))].sort((a,b)=>vigNum(b)-vigNum(a));
   ORG_OPTS=[...new Set(_FATOS.map(f=>f.origem).filter(Boolean))].sort();
@@ -2074,8 +2084,8 @@ applyTheme(localStorage.getItem('bi_theme')||'dark');
 _buildMs(document.getElementById('ms-vig'),()=>VIG_OPTS);
 _buildMs(document.getElementById('ms-org'),()=>ORG_OPTS);
 _buildMs(document.getElementById('ms-proj'),()=>PROJ_OPTS);
-_buildMs(document.getElementById('ms-ind'),()=>IND_OPTS);
-_buildMs(document.getElementById('ms-conta'),()=>CONTA_OPTS);
+_buildMs(document.getElementById('ms-ind'),indItems);
+_buildMs(document.getElementById('ms-conta'),contaItems);
 _buildMs(document.getElementById('ms-st'),()=>STATUS);
 _buildMs(document.getElementById('ms-prazo'),()=>PRZ_OPTS);
 document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrap'))document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open'));});
@@ -2205,10 +2215,10 @@ function setupUniSel(){
 initApp();
 </script>
 <script src="../assets/mobile.js?v=202608220020"></script>
-<script src="../assets/modo-tv.js?v=202610111500"></script>
+<script src="../assets/modo-tv.js?v=202610132100"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610111500"></script>
+<script src="../assets/build-check.js?v=202610132100"></script>
 </body>
 </html>
