@@ -166,6 +166,19 @@ async function abre(ctx, { banco, limpar = true }) {
   ok('verde e vermelho são os do Painel KM (#3BB33B / #FF6666), não os do tema', g.every(x => x.cores.every(c => /^#(3BB33B|FF6666)/i.test(c))), JSON.stringify(g.map(x=>x.cores)));
   ok('sem barPercentage/categoryPercentage — o espaçamento padrão, como no KM', g.every(x => x.barPct == null && x.catPct == null), JSON.stringify(g.map(x=>[x.barPct,x.catPct])));
   ok('o rótulo em BRL usa o fmt do painel', g[0] && g[0].rotulo === '5.00 mi', g[0] && g[0].rotulo);
+  /* ── toggle Unidade - Projeto na Análise Nominal (Renan, 13/10/2026) ── */
+  const up = await page.evaluate(() => {
+    const k = Object.keys(TIT).find(x => TIT[x] === 'Análise Nominal'); setVw(k);
+    const bt = document.querySelector('.dim-pac[data-dim="uniproj"]'); bt.click();
+    const linhas = [...document.querySelectorAll('#body-pacote tr:not(.total)')].map(tr => tr.cells[0].textContent.trim());
+    return { rot: bt.textContent.trim(), on: bt.classList.contains('on'), th: document.getElementById('th-pacote-dim').textContent, linhas };
+  });
+  console.log('   Unidade - Projeto:', JSON.stringify(up));
+  ok('toggle "Unidade - Projeto" liga e o cabeçalho acompanha', up.rot === 'Unidade - Projeto' && up.on && up.th === 'UNIDADE - PROJETO', JSON.stringify(up));
+  await page.setViewportSize({ width: 1366, height: 768 }); await page.waitForTimeout(300);
+  const cabe = await page.evaluate(() => { const b = document.querySelector('.dim-pac[data-dim="uniproj"]').getBoundingClientRect(), c = document.querySelector('.vw.on .card').getBoundingClientRect(); return b.right <= c.right && b.top < c.top + 80; });
+  ok('em 1366 px os botões cabem na linha do título do card', cabe);
+  ok('uma linha por unidade + projeto do Nível 3', up.linhas.length === 2 && up.linhas.every(t => / - /.test(t)), up.linhas.join(' | '));
   await page.close();
 
   // ── 2) SEGUNDA carga, com o localStorage que a 1ª deixou ────────────────

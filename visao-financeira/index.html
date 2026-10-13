@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610132300">
+<meta name="build" content="202610140100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Visão Financeira · DRE Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -574,6 +574,7 @@ table.dre tr.rec-row td.conta{font-weight:800;}
                 <button class="dimb dim-pac" data-dim="conta" onclick="setPacoteDim('conta')">Conta</button>
                 <button class="dimb dim-pac" data-dim="uni" onclick="setPacoteDim('uni')">Unidade</button>
                 <button class="dimb dim-pac" data-dim="proj" onclick="setPacoteDim('proj')">Projeto</button>
+                <button class="dimb dim-pac" data-dim="uniproj" onclick="setPacoteDim('uniproj')">Unidade - Projeto</button>
               </div>
             </div>
           </div>
@@ -735,6 +736,8 @@ const PACOTES_MAP = {
 const getPac = r => PACOTES_MAP[r[C.cta]] || '-';
 const getNv3Prefix = v => v ? v.split('-')[0].trim() : v;
 const getUniLabel  = v => { if(!v) return ''; const i=v.indexOf('-'); const s=i>=0?v.slice(i+1).trim():v.trim(); return s.replace(/\s*\(INATIVO\)\s*/i,'').trim(); };
+// Unidade - Projeto (Renan, 13/10/2026: "crie mais um toggle Unidade - Projeto"): GRL - ROTA, GRL - ROTA (VAN)…
+const getUniProj   = v => { const u=getUniLabel(v), p=getNv3Prefix(v); return u&&p ? u+' - '+p : (u||p||''); };
 
 const CONTAS = ['Combustíveis','Estorno ICMS','Manutenção de Carrocerias',
   'Contratos de Manutenção Fabricante','Recapagens e Outros Serviços','IPVA e Licenciamento','Seguros',
@@ -1394,7 +1397,7 @@ function renderPacote(rows,allRowsRef,f){
       .forEach(c=>{ const mm=m[c]||{orc:0,rem:0,real:0}, yy=ytdM[c]||{orc:0,rem:0,real:0};
         if(mm[RK]===0&&mm.real===0) return; html+=linha(c,mm,yy); });
   } else {
-    const getKey=pacoteDim==='uni'?r=>getUniLabel(r[C.nv3]):pacoteDim==='proj'?r=>getNv3Prefix(r[C.nv3]):getPac;
+    const getKey=pacoteDim==='uni'?r=>getUniLabel(r[C.nv3]):pacoteDim==='proj'?r=>getNv3Prefix(r[C.nv3]):pacoteDim==='uniproj'?r=>getUniProj(r[C.nv3]):getPac;
     const m=aggByKey(rows,getKey), ytdM=aggByKey(ytdRows,getKey);
     Object.keys(m).filter(k=>m[k][RK]!==0||m[k].real!==0)
       .sort((a,b)=>{ const ma=m[a],mb=m[b]; return (ma.real-ma[RK])-(mb.real-mb[RK]); })
@@ -1410,7 +1413,7 @@ function renderPacote(rows,allRowsRef,f){
 function setPacoteDim(dim){
   pacoteDim=dim;
   document.querySelectorAll('.dim-pac').forEach(b=>b.classList.toggle('on',b.dataset.dim===dim));
-  set('th-pacote-dim', dim==='uni'?'UNIDADE':dim==='proj'?'PROJETO':dim==='pacote'?'PACOTE':'CONTA');
+  set('th-pacote-dim', dim==='uni'?'UNIDADE':dim==='proj'?'PROJETO':dim==='uniproj'?'UNIDADE - PROJETO':dim==='pacote'?'PACOTE':'CONTA');
   rerenderPacote();
 }
 function togglePacRef(){
@@ -2222,6 +2225,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610132300"></script>
+<script src="../assets/build-check.js?v=202610140100"></script>
 </body>
 </html>
