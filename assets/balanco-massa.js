@@ -156,5 +156,41 @@
     return { porChave, avisos };
   }
 
-  return { recompoe, trimestre, ym, parte, INICIO: '08/2026' };
+  /**
+   * RATEIO ANUAL (Renan, 13/10/2026: "Está dividindo por trimestre né? Acho que talvez faça
+   * mais sentido dividir ano"). Junta o que as duas regras recompuseram (cada uma com a sua
+   * conversão em km: Valor 85% ÷ R$/km dos 3 pacotes até jul/26, conta a conta de ago/26 em
+   * diante) e reparte o km e o valor do ANO de cada unidade|projeto entre os meses do ano que
+   * têm km remunerado, na proporção do km remunerado original. O total do ano não muda; muda
+   * só o mês em que ele aparece — o retroativo de set/26 deixa de cair inteiro em agosto.
+   * @param {object[]} partes  saídas `porChave` de `recompoe` (uma por regra)
+   * @param {object}   km0     { 'MM/AAAA|grupo': km } km remunerado ORIGINAL
+   * @returns {{ porChave: object, avisos: string[] }}  porChave[chave] = { km, valor, taxa, bloco:'AAAA', contas }
+   */
+  function porAno(partes, km0) {
+    km0 = km0 || {};
+    const avisos = [], porChave = {}, anos = {};
+    (partes || []).forEach(pc => Object.entries(pc || {}).forEach(([ch, e]) => {
+      const p = parte(ch), ano = p.vig.slice(3); if (!p.grupo || !ano) return;
+      const id = p.grupo + '|' + ano;
+      const a = anos[id] || (anos[id] = { grupo: p.grupo, ano, km: 0, valor: 0, contas: {} });
+      a.km += +e.km || 0; a.valor += +e.valor || 0;
+      if (e.contas) a.contas[p.vig] = e.contas;
+    }));
+    Object.keys(km0).forEach(ch => {
+      const p = parte(ch), id = p.grupo + '|' + p.vig.slice(3);
+      if (anos[id] && km0[ch] > 0) (anos[id].meses = anos[id].meses || []).push(p.vig);
+    });
+    Object.values(anos).forEach(a => {
+      const meses = a.meses || []; const base = meses.reduce((s, v) => s + (+km0[v + '|' + a.grupo] || 0), 0);
+      if (!(base > 0)) { if (a.km || a.valor) avisos.push(`${a.grupo} ${a.ano}: sem km remunerado no ano — não recomposto`); return; }
+      meses.forEach(v => {
+        const f = (+km0[v + '|' + a.grupo] || 0) / base;
+        porChave[v + '|' + a.grupo] = { km: a.km * f, valor: a.valor * f, taxa: a.km ? a.valor / a.km : 0, bloco: a.ano, contas: a.contas[v] || null };
+      });
+    });
+    return { porChave, avisos };
+  }
+
+  return { recompoe, porAno, trimestre, ym, parte, INICIO: '08/2026' };
 });

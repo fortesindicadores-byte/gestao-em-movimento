@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610130900">
+<meta name="build" content="202610131000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -709,7 +709,9 @@ const BM_TAB = 'Balanço de Massa';
    (`BM_INICIO`): o balanço entra pela tabela `balanco_massa` do Supabase
    (importada do export do DRE em ./balanco-massa/), conta a conta, somado no
    TRIMESTRE e rateado pelo remunerado da conta, e vira km pelo R$/km da
-   própria conta (remunerado líquido do balanço ÷ km original). O motor é
+   própria conta (remunerado líquido do balanço ÷ km original).
+   Depois as duas regras são somadas no ANO e repartidas entre os meses pelo
+   km remunerado original (Renan, 13/10/2026: "dividir ano"). O motor é
    `assets/balanco-massa.js`, o mesmo da Árvore e do Balanco Massa Check.
    Antes de ago/26 continua a aba do Sheets com o "Valor 85%" (acima). */
 const BM_INICIO = (window.BalancoMassa && BalancoMassa.INICIO) || '08/2026';
@@ -948,12 +950,16 @@ async function fetchData() {
     Object.entries(balanco).forEach(([k, v]) => { balAnt[k] = { TOTAL: v }; });
     Object.entries(custoRem).forEach(([k, v]) => { if (vigToDate(k.slice(0, 7)) < vigToDate(BM_INICIO)) remAnt[k] = { TOTAL: v }; });
     const antiga = BalancoMassa.recompoe({ bal: balAnt, remCta: remAnt, km0: kmPorChave, inicio: BM_ANTIGA_INICIO, fim: BM_INICIO, janela: BM_ANTIGA_JANELA, liquido: false });
-    aplicaBM(antiga.porChave);
     if (antiga.avisos.length) console.warn('Balanço de massa (regra antiga, rateada):', antiga.avisos);
-    // DE AGO/26 EM DIANTE: por conta (banco), trimestre rateado pelo remunerado líquido
+    // DE AGO/26 EM DIANTE: por conta (banco), convertido em km pelo R$/km das contas com balanço
     const nova = BalancoMassa.recompoe({ bal: balancoBanco, remCta: custoFrota.cta, km0: kmPorChave, inicio: BM_INICIO });
-    aplicaBM(nova.porChave);
     if (nova.avisos.length) console.warn('Balanço de massa (conta a conta):', nova.avisos);
+    // RATEIO ANUAL (Renan, 13/10/2026: "Acho que talvez faça mais sentido dividir ano"): cada regra
+    // converte o seu valor em km e o km do ANO de cada unidade|projeto é repartido entre os meses
+    // do ano pelo km remunerado original — o total do ano não muda, só o mês em que ele aparece.
+    const anual = BalancoMassa.porAno([antiga.porChave, nova.porChave], kmPorChave);
+    aplicaBM(anual.porChave);
+    if (anual.avisos.length) console.warn('Balanço de massa (rateio anual):', anual.avisos);
   } else console.warn('assets/balanco-massa.js não carregou — o balanço de massa não foi recomposto');
   if (bmKm) console.info(`Balanço de massa: R$ ${Math.round(bmValor).toLocaleString('pt-BR')} → +${Math.round(bmKm).toLocaleString('pt-BR')} km remunerados em ${nCh} chave(s)`);
   let semTaxa = 0;
@@ -1676,7 +1682,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_km_v6';  // v6: balanço de massa pela coluna Valor 85% · v5: placas
+const CACHE_KEY='bi_cache_km_v7';  // v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
@@ -1824,6 +1830,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610130900"></script>
+<script src="../assets/build-check.js?v=202610131000"></script>
 </body>
 </html>

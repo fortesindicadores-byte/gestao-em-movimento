@@ -147,6 +147,24 @@ Object.entries(resNova.porChave).forEach(([k, e]) => {
     semKm: k0 <= 0, semCusto: rv <= 0, contas: e.contas }); });
 // chaves com balanço no banco que o motor não recompôs (sem km no trimestre) aparecem nos avisos acima
 
+// ── RATEIO ANUAL (Renan, 13/10/2026: "dividir ano"): o km das duas regras é somado no ANO de cada
+//    unidade|projeto e repartido entre os meses pelo km remunerado original — o MESMO motor do painel.
+//    `kmRegra` guarda o que a regra sozinha punha no mês, para enxergar o deslocamento.
+const anual = BM.porAno([resAnt.porChave, resNova.porChave], km0);
+anual.avisos.forEach(a => console.log('  ⚠ motor (anual): ' + a));
+linhas.forEach(l => { const e = anual.porChave[`${l.vig}|${l.proj}|${l.cod}`] || { km: 0, valor: 0, taxa: 0 };
+  l.kmRegra = l.kmRec; l.valorRegra = l.valor; l.kmRec = e.km; l.valor = e.valor; l.taxaVar = e.taxa; l.km1 = l.km0 + e.km;
+  l.dDepois = l.real - l.km1; l.impDepois = l.dDepois * l.taxaImp; });
+console.log('\n── RATEIO ANUAL · km recomposto por mês: regra sozinha → dividido no ano ──');
+console.log('unidade          vig     km rem orig   km regra   km anual    Δ% regra   Δ% anual');
+[...linhas].sort((a, b) => a.uni.localeCompare(b.uni) || (a.vig.slice(3) + a.vig.slice(0, 2)).localeCompare(b.vig.slice(3) + b.vig.slice(0, 2))).forEach(l => {
+  const pct = km => l.km0 + km > 0 ? ((l.real - l.km0 - km) / (l.km0 + km) * 100).toFixed(1) + '%' : '—';
+  console.log(`${l.uni.padEnd(16)} ${l.vig}  ${br(l.km0).padStart(11)}  ${br(l.kmRegra).padStart(9)}  ${br(l.kmRec).padStart(9)}  ${pct(l.kmRegra).padStart(9)}  ${pct(l.kmRec).padStart(9)}`); });
+const porVig = {}; linhas.forEach(l => { const t = porVig[l.vig] = porVig[l.vig] || { km0: 0, real: 0, regra: 0, anual: 0 }; t.km0 += l.km0; t.real += l.real; t.regra += l.kmRegra; t.anual += l.kmRec; });
+console.log('\n── RATEIO ANUAL · soma das unidades por mês ──');
+Object.entries(porVig).sort((a, b) => (a[0].slice(3) + a[0].slice(0, 2)).localeCompare(b[0].slice(3) + b[0].slice(0, 2))).forEach(([v, t]) =>
+  console.log(`${v}  km rem ${br(t.km0)} · real ${br(t.real)} · recomp ${br(t.regra)} → ${br(t.anual)} · Δ% ${((t.real - t.km0 - t.regra) / (t.km0 + t.regra) * 100).toFixed(1)}% → ${((t.real - t.km0 - t.anual) / (t.km0 + t.anual) * 100).toFixed(1)}%`));
+
 const ym = v => v.slice(3) + v.slice(0, 2);
 const ord = (a, b) => a.uni.localeCompare(b.uni) || ym(a.vig).localeCompare(ym(b.vig));
 linhas.sort(ord);
@@ -172,5 +190,5 @@ Object.entries(porUni).forEach(([u, t]) => console.log(`${u.padEnd(18)} valor ${
 const tot = Object.values(porUni).reduce((a, t) => ({ valor: a.valor + t.valor, km0: a.km0 + t.km0, kmRec: a.kmRec + t.kmRec, real: a.real + t.real, impAntes: a.impAntes + t.impAntes, impDepois: a.impDepois + t.impDepois }), { valor: 0, km0: 0, kmRec: 0, real: 0, impAntes: 0, impDepois: 0 });
 console.log(`${'TOTAL'.padEnd(18)} valor ${br(tot.valor).padStart(10)} · km rem ${br(tot.km0)} → ${br(tot.km0 + tot.kmRec)} (+${br(tot.kmRec)}) · Δ ${br(tot.real - tot.km0)} → ${br(tot.real - tot.km0 - tot.kmRec)} · impacto ${br(tot.impAntes)} → ${br(tot.impDepois)}`);
 console.log('\nJSON_INICIO');
-console.log(JSON.stringify({ linhas: linhas.map(l => ({ ...l, contas: undefined })), porUni, tot, avisos: [...resAnt.avisos, ...resNova.avisos] }));
+console.log(JSON.stringify({ linhas: linhas.map(l => ({ ...l, contas: undefined })), porUni, tot, avisos: [...resAnt.avisos, ...resNova.avisos, ...anual.avisos] }));
 console.log('JSON_FIM');
