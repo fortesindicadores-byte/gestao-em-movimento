@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610132300">
+<meta name="build" content="202610132330">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>R$/L Seara — Preço do Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -861,6 +861,22 @@ function renderHero(active,ytd){
   if(eYimp){eYimp.textContent=impY!=null?fmtBrlD(impY):'—';colI(eYimp,impY>0);}
   renderCards(active,a);
 }
+/* nome do modelo resumido no card (Renan, 13/10/2026: "É o modelo que fica grande…
+   poderia resumir o nome do modelo"): marca curta + até dois termos do modelo, sem a
+   configuração (DRC, CRM, 4X2…). "VW/9.170 DRC 4X2" → "VW 9.170"; "M. BENZ ATRON 1635"
+   → "MB ATRON 1635". O nome inteiro continua na dica. */
+function resumoModelo(s){
+  let t=String(s||'').toUpperCase().replace(/\s*\|\s*/g,' ').replace(/\s+/g,' ').trim();
+  t=t.replace(/^(M\.\s?BENZ|MERCEDES[\s-]?BENZ|MERCEDES|MBB|MB)\b[\s/]*/,'MB ')
+     .replace(/^(VOLKSWAGEN|VW)\b[\s/]*/,'VW ')
+     .replace(/^([A-Z]+)\//,'$1 ');
+  const tk=t.split(' ').filter(Boolean);
+  if(tk.length<=1) return t;
+  const cfg=/^(\d+X\d+|DRC|CRM|CNL|CE|CD|CS|LS|TB|BAU|BAÚ|CHASSI|CABINE|AUT|AUTOM[AÁ]TICO|MANUAL)$/;
+  const out=[tk[0]];
+  for(const w of tk.slice(1)){ if(cfg.test(w)||out.length>=3) break; out.push(w); }
+  return out.length>1?out.join(' '):t;
+}
 /* cards do Resumo (Renan, 05/10/2026 — regra de todo painel migrado): os dois que
    COMPÕEM o realizado e, ao lado, a melhor e a pior unidade contra o remunerado.
    Cada grupo passa pelo MESMO aggRows do hero, e a régua é o Δ% sobre o remunerado
@@ -881,8 +897,9 @@ function renderCards(active,a){
   const pinta=(id,v)=>{ const e=document.getElementById(id); if(!e) return;
     if(!v){ e.textContent='—'; set(id+'-m','sem remunerado no recorte'); return; }
     const ok=bom(v)>=0;
-    const nm=String(v.k).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c]);
-    e.innerHTML=`<span class="kn" title="${nm}">${nm}</span><span class="kdel ${ok?'cg':'cr'}">${pct(v.d)}</span>`;
+    const esc=x=>String(x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c]);
+    const nm=esc(v.k), cur=esc(porUni?v.k:resumoModelo(v.k));
+    e.innerHTML=`<span class="kn" title="${nm}">${cur}</span><span class="kdel ${ok?'cg':'cr'}">${pct(v.d)}</span>`;
     set(id+'-m',`${kml(v.real)} realizado · ${kml(v.rem)} remunerado`); };
   pinta('k-mel',lst.length?lst[0]:null);
   pinta('k-pio',lst.length>1?lst[lst.length-1]:null);
@@ -1187,6 +1204,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../../assets/build-check.js?v=202610132300"></script>
+<script src="../../../assets/build-check.js?v=202610132330"></script>
 </body>
 </html>
