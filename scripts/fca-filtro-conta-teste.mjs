@@ -35,12 +35,12 @@ await pg.goto(`http://localhost:${port}/${ARQ}/`);
 await pg.waitForTimeout(1500);
 const opcoes=id=>pg.evaluate(id=>{toggleMs(id);const v=[...document.querySelectorAll('#'+id+' .ms-opt:not(.all-opt)')].map(l=>l.textContent.replace('só','').trim());toggleMs(id);return v;},id);
 let todas=await opcoes('ms-conta');
-t(todas.includes('Conformidade')&&todas.includes('Arla'),'sem filtro: indicadores e contas → '+JSON.stringify(todas));
+t(todas.includes('Conformidade')&&todas.includes('Combustíveis')&&!todas.includes('Arla')&&!todas.includes('Lavação de Veículos'),'sem filtro: indicadores e pacotes, sem conta contábil → '+JSON.stringify(todas));
 t(!todas.some(x=>/desvio/i.test(x)),'nenhuma opção com "Desvio de R$" → '+JSON.stringify(todas.filter(x=>/desvio/i.test(x))));
 // marca Origem = Custos (o "só" do filtro)
 await pg.evaluate(()=>{toggleMs('ms-org');const s=[...document.querySelectorAll('#ms-org .ms-only')].find(e=>e.dataset.v==='Custos');s.click();toggleMs('ms-org');});
 const custos=await opcoes('ms-conta');
-t(JSON.stringify(custos)===JSON.stringify(['Arla','Combustíveis','Lavação de Veículos']),'Origem Custos: só as contas dos Custos → '+JSON.stringify(custos));
+t(JSON.stringify(custos)===JSON.stringify(['Combustíveis','Manutenções']),'Origem Custos: só os pacotes → '+JSON.stringify(custos));
 await pg.evaluate(()=>{toggleMs('ms-org');const s=[...document.querySelectorAll('#ms-org .ms-only')].find(e=>e.dataset.v==='RPM');s.click();toggleMs('ms-org');});
 const rpm=await opcoes('ms-conta');
 t(JSON.stringify(rpm)===JSON.stringify(['Conformidade','Preventivas']),'Origem RPM: só os indicadores → '+JSON.stringify(rpm));
