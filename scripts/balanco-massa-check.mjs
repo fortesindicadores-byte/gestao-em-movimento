@@ -25,7 +25,7 @@ const DISP_ID = '1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM';
 const COST_ID = '1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8';
 const SUPA_URL = 'https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPA_KEY = process.env.GEM_SUPABASE_SERVICE_KEY || process.env.GEM_SUPABASE_KEY || '';
-const INICIO = BM.INICIO;   // '08/2026'
+let INICIO = BM.INICIO;   // '08/2026' — vira o 1º mês do banco quando ele tiver meses antes (o banco manda)
 
 const parse = t => { const s = t.indexOf('{'), e = t.lastIndexOf('}'); return JSON.parse(t.slice(s, e + 1)); };
 async function sheet(id, tab) {
@@ -79,6 +79,8 @@ async function tabelaBanco() {
 }
 
 const [disp, frota, bm, banco] = await Promise.all([sheet(DISP_ID, 'Dispersão de km'), sheet(COST_ID, 'Frota'), sheet(DISP_ID, 'Balanço de Massa'), tabelaBanco()]);
+{ const vb = {}; banco.forEach(x => { const m = String(x.vigencia || '').match(/^(\d{4})-(\d{2})$/); if (m) vb[m[2] + '/' + m[1] + '|x'] = 1; });
+  INICIO = BM.inicioDoBanco(vb, BM.INICIO); }
 console.log(`Dispersão de km: ${disp.rows.length} linha(s) · Frota: ${frota.rows.length} · aba Balanço de Massa: ${bm.rows.length} · tabela balanco_massa: ${banco.length} linha(s)`);
 console.log(`Regra antiga até ${INICIO === '08/2026' ? 'jul/26' : 'antes de ' + INICIO} (aba, Valor 85%) · regra nova de ${INICIO} em diante (banco, conta a conta)`);
 

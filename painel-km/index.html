@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610131000">
+<meta name="build" content="202610131100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -367,7 +367,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
-<script src="../assets/balanco-massa.js?v=202610100130"></script>
+<script src="../assets/balanco-massa.js?v=202610131100"></script>
 </head>
 <body>
 <div class="app">
@@ -724,7 +724,7 @@ function supaAuth(){
     if (s && s.access_token && (!s.expires_at || s.expires_at * 1000 > Date.now() + 30000)) return s.access_token; } catch (e) {}
   return SUPA_KEY;
 }
-// → { 'MM/AAAA|UNI|PROJ': { CONTA_NK: valor } } — só vigências ≥ BM_INICIO
+// → { 'MM/AAAA|UNI|PROJ': { CONTA_NK: valor } } — TODAS as vigências do banco (o corte entre aba e banco é feito depois)
 async function fetchBalancoBanco(){
   const h = { apikey: SUPA_KEY, Authorization: 'Bearer ' + supaAuth() };
   const out = {}; const passo = 1000;
@@ -734,7 +734,7 @@ async function fetchBalancoBanco(){
     const rows = await r.json();
     rows.forEach(x => {
       const m = String(x.vigencia || '').match(/^(\d{4})-(\d{2})$/); if (!m) return;
-      const vig = m[2] + '/' + m[1]; if (vigToDate(vig) < vigToDate(BM_INICIO)) return;
+      const vig = m[2] + '/' + m[1];
       const k = chaveRs(vig, x.unidade, x.projeto), c = ctaNK(x.conta);
       (out[k] = out[k] || {})[c] = (out[k][c] || 0) + (+x.valor || 0);
     });
@@ -777,7 +777,6 @@ async function fetchBalanco(){
     const g = i => (row.c && row.c[i] && row.c[i].v != null) ? row.c[i].v : null;
     const vig = bmVig(row.c && row.c[K.vig]); const ch = bmChave(g(K.uni)); const valor = parseFloat(g(K.val)) || 0;
     if (!vig || !ch || !valor) return;
-    if (vigToDate(vig) >= vigToDate(BM_INICIO)) return;   // de ago/26 em diante vale a conta por conta (banco)
     const k = chaveRs(vig, ch.uni, ch.proj);
     out[k] = (out[k] || 0) + valor;
   });
@@ -946,13 +945,16 @@ async function fetchData() {
     // RATEADA: jan→jul como um bloco só, pelo remunerado de cada mês (Renan, 09/10/2026:
     // "os meses anteriores seria importante dividir… Ou de jan a jul proporcionalize tudo").
     // O balanço antigo veio em blocos (abr/mai/jun) que não eram daqueles meses.
+    // O BANCO MANDA desde o primeiro mês que ele tem (o export do DRE pode vir de jan em diante);
+    // a aba só cobre os meses anteriores a isso — nunca os dois no mesmo mês.
+    const bmIni = BalancoMassa.inicioDoBanco(balancoBanco, BM_INICIO);
     const balAnt = {}, remAnt = {};
-    Object.entries(balanco).forEach(([k, v]) => { balAnt[k] = { TOTAL: v }; });
-    Object.entries(custoRem).forEach(([k, v]) => { if (vigToDate(k.slice(0, 7)) < vigToDate(BM_INICIO)) remAnt[k] = { TOTAL: v }; });
-    const antiga = BalancoMassa.recompoe({ bal: balAnt, remCta: remAnt, km0: kmPorChave, inicio: BM_ANTIGA_INICIO, fim: BM_INICIO, janela: BM_ANTIGA_JANELA, liquido: false });
+    Object.entries(balanco).forEach(([k, v]) => { if (vigToDate(k.slice(0, 7)) < vigToDate(bmIni)) balAnt[k] = { TOTAL: v }; });
+    Object.entries(custoRem).forEach(([k, v]) => { if (vigToDate(k.slice(0, 7)) < vigToDate(bmIni)) remAnt[k] = { TOTAL: v }; });
+    const antiga = BalancoMassa.recompoe({ bal: balAnt, remCta: remAnt, km0: kmPorChave, inicio: BM_ANTIGA_INICIO, fim: bmIni, janela: BM_ANTIGA_JANELA, liquido: false });
     if (antiga.avisos.length) console.warn('Balanço de massa (regra antiga, rateada):', antiga.avisos);
     // DE AGO/26 EM DIANTE: por conta (banco), convertido em km pelo R$/km das contas com balanço
-    const nova = BalancoMassa.recompoe({ bal: balancoBanco, remCta: custoFrota.cta, km0: kmPorChave, inicio: BM_INICIO });
+    const nova = BalancoMassa.recompoe({ bal: balancoBanco, remCta: custoFrota.cta, km0: kmPorChave, inicio: bmIni });
     if (nova.avisos.length) console.warn('Balanço de massa (conta a conta):', nova.avisos);
     // RATEIO ANUAL (Renan, 13/10/2026: "Acho que talvez faça mais sentido dividir ano"): cada regra
     // converte o seu valor em km e o km do ANO de cada unidade|projeto é repartido entre os meses
@@ -1830,6 +1832,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610131000"></script>
+<script src="../assets/build-check.js?v=202610131100"></script>
 </body>
 </html>
