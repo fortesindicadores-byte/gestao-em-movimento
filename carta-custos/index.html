@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610131800">
+<meta name="build" content="202610131900">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -505,7 +505,7 @@ body.claro input[type=date]{color-scheme:light;}
 }
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
-<script src="../assets/carta-calc.js?v=202610131800"></script>
+<script src="../assets/carta-calc.js?v=202610131900"></script>
 </head>
 <body>
 
@@ -771,6 +771,14 @@ const CC=window.CartaCalc;
 // unidades (mesmo mapa do FCA) — CBA e MCC separadas por projeto/tier
 const DEPARA=CC.DEPARA;
 const {UNIT_BASE,UNIT_TIER,tierOfPrefix,unitMatchNv3}=CC;
+/* SÓ UNIDADE E SÓ PROJETO (Renan, 13/10/2026: "Deveria ter só unidade e só
+   projeto. Fica mais correto…" → "Não MCC T1 por exemplo"). O filtro Unidade
+   mostra a unidade (MACACU, CUIABA), o filtro Projeto mostra os projetos dela,
+   e o tier (MCC T1/T2, CBA T1/T1 WH/T2) sai do projeto na hora de gravar. Por
+   dentro tudo continua no código com tier (banco, RLS, DRE). */
+const NOME_BASE=b=>({CBA:'CUIABA',MCC:'MACACU'})[b]||DEPARA[b]||b;
+const nomeUni=c=>NOME_BASE(UNIT_BASE(c));
+const codigoDe=(base,proj)=>(base==='CBA'||base==='MCC')?base+' '+tierOfPrefix(base,proj):base;
 const PROJETOS=['ROTA','APOIO','EMPURRADA','AUTO SERVIÇO','INSUMOS'];
 const PROJETOS_EXCLUIR=new Set(['ADMINISTRATIVO','ADMINISTRATIVO APOIO','ADMINISTRATIVO T1','ADMINISTRATIVO T2','ASVD','DEEP ARRENDAMENTOS','DEEP ARRENDADOS','EMPURRADA BITREM','MOBILIZAÇÃO','PA PETRÓPOLIS','TERCEIROS','TERCEIROS ARRENDADOS','ROTA (VAN)','UDC']);
 let UNIT_PROJETOS=PROJETOS.slice();
@@ -901,7 +909,10 @@ const passaExtras=r=>(!selPac.size||selPac.has(pacDe(r)))
   && (!selConta.size||selConta.has(r.conta||'—'))
   && (!selData.size||selData.has(String(r.data||'').slice(0,10)||'—'));
 let VIG_OPTS=[], ROWS=[];
-const curUnits =()=> selUni.size ? [...selUni] : ALLOWED.slice();
+// selUni guarda a unidade sem tier (MCC); um código com tier (MCC T1) também vale
+const curUnits =()=> ALLOWED.filter(c=>!selUni.size||selUni.has(c)||selUni.has(UNIT_BASE(c)));
+const BASES_PERM=()=>[...new Set(ALLOWED.map(UNIT_BASE))];
+const curBases =()=>[...new Set(curUnits().map(UNIT_BASE))];
 /* FILTRO DE ANO (Renan, 04/09/2026): "vamos precisar quando o ano virar".
    O ano não é um filtro paralelo ao da vigência — ele RECORTA a lista dela.
    Sem isso, na virada do ano a lista de meses cresceria sem parar e jan/27
@@ -916,7 +927,7 @@ const curVigs  =()=>{
   return rec.length?rec:base;   // mês selecionado que não é do ano escolhido não zera a tela
 };
 const curProjs =()=> selProj.size ? [...selProj] : null;
-const singleCtx=()=> curUnits().length===1 && curVigs().length===1;
+const singleCtx=()=> curBases().length===1 && curVigs().length===1;
 const charts={};
 let VW='resumo';
 
@@ -1015,7 +1026,7 @@ function marcarCarregando(on){
   if(on) set('lanc-sub','Carregando…');
 }
 async function onFiltroProj(){ await loadDRE(); render(); renderPlacas(); renderConsol(); }
-function buildUniFilter(){ buildMs('ms-uni', ()=>ALLOWED.slice(), u=>u, selUni, onFiltroUniVig, 'Todas'); }
+function buildUniFilter(){ buildMs('ms-uni', BASES_PERM, NOME_BASE, selUni, onFiltroUniVig, 'Todas'); }
 function buildVigFilter(){
   // de AGO/2026 — quando a carta começou a rodar de verdade — até 6 meses à
   // frente. Mês que passou NÃO some da lista: na virada a unidade perderia o
@@ -1117,13 +1128,11 @@ async function loadRows(){
   renderPlacas(); renderConsol();   // as visões novas seguem o mesmo filtro
   marcarCarregando(false);
   const now=new Date();
-  set('titSub', curUnits().length===1?DEPARA[curUnits()[0]]||curUnits()[0]:curUnits().length+' unidades'
-    + '');
   atualizaSub();
 }
 function atualizaSub(){
-  const u=curUnits(), v=curVigs();
-  const uL=u.length===1?(DEPARA[u[0]]||u[0]):u.length+' unidades';
+  const u=curBases(), v=curVigs();
+  const uL=u.length===1?NOME_BASE(u[0]):u.length+' unidades';
   const vL=v.length===1?vigLabel(v[0]).toUpperCase():v.length+' vigências';
   const now=new Date();
   set('titSub', `${uL} · ${vL} · atualizado ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
@@ -1155,6 +1164,8 @@ function projetosDe(unit){
   (FROTA.rows||[]).forEach(r=>{const nv3=m.nv3>=0?String(r[m.nv3]||''):'';if(unitMatchNv3(unit,nv3)){const p=getNv3Prefix(nv3).toUpperCase();if(p&&!PROJETOS_EXCLUIR.has(p))s.add(p);}});
   return s.size?[...s].sort():PROJETOS;
 }
+// projetos que a caixa oferece para a unidade: só os de tier que o acesso cobre
+function projetosBox(base){ return projetosDe(base).filter(p=>ALLOWED.includes(codigoDe(base,p))); }
 function refreshProjetos(){
   UNIT_PROJETOS=projetosDaUnidade();
   [...selProj].forEach(p=>{ if(!UNIT_PROJETOS.includes(p)) selProj.delete(p); });
@@ -1183,9 +1194,9 @@ function lancRowBox(r){
      unidade e mês grudada no projeto não se lia. Unidade vira coluna de texto
      — só quando há mais de uma no filtro, porque quem é de uma unidade só vê a
      dela — e Projeto fica na coluna dele. O mês já está na Data. */
-  const multiUni=curUnits().length>1;
+  const multiUni=curBases().length>1;
   return `<tr class="clicavel${pend?' pend':''}" data-id="${r.id||''}" onclick="abrirLanc('${r.id||''}')" title="Clique para abrir">
-    <td>${esc(dataBR(r.data))}</td>`+(multiUni?`<td>${esc(r.unidade||'—')}</td>`:'')+`
+    <td>${esc(dataBR(r.data))}</td>`+(multiUni?`<td>${esc(UNIT_BASE(r.unidade)||'—')}</td>`:'')+`
     <td>${esc(r.projeto||'—')}</td>
     <td>${esc(r.equipamento||'—')}</td>
     <td class="wrap forn">${esc(r.fornecedor||'—')}</td>
@@ -1219,23 +1230,24 @@ function abrirLanc(id){
   if(r && !pacs.includes(pacDe(r))) pacs.push(pacDe(r));
   const contasOk=pacs.flatMap(p=>CONTAS[p]);
   const contaFiltro=[...selConta].filter(c=>contasOk.includes(c));
-  const d = r || {data:dNovo, projeto:(UNIT_PROJETOS[0]||''), conta:(contaFiltro.length===1?contaFiltro[0]:contasOk[0])||''};
+  const d = r || {data:dNovo, projeto:(selProj.size===1?[...selProj][0]:(UNIT_PROJETOS[0]||'')), conta:(contaFiltro.length===1?contaFiltro[0]:contasOk[0])||''};
   set('mTit', r ? 'Editar lançamento' : 'Novo lançamento');
   /* QUEM TEM MAIS DE UMA UNIDADE ESCOLHE A UNIDADE NA CAIXA (Erick, Macacu,
      13/10/2026: "consegue liberar o meu acesso para lançar na carta da rota?").
      O acesso estava liberado (MCC T1,MCC T2); a tela é que abria na 1ª unidade
      do perfil (Empurrada) e a caixa só oferecia os projetos dela — a ROTA, que
      é do MCC T2, só aparecia trocando o filtro Unidade lá em cima. */
-  const ctx=$('m-ctx'), agreg=!singleCtx() || (!IS_ADMIN && ALLOWED.length>1);
+  const ctx=$('m-ctx'), agreg=!singleCtx() || (!IS_ADMIN && BASES_PERM().length>1);
   ctx.style.display = agreg ? '' : 'none';
   if(agreg){
-    const uni = (r && r.unidade) || curUnits()[0];
-    $('f-unidade').innerHTML  = selOpts(ALLOWED, ALLOWED.includes(uni)?uni:(curUnits()[0]||ALLOWED[0]));
+    const bs=BASES_PERM(), uni=UNIT_BASE((r && r.unidade) || curUnits()[0]);
+    const selB=bs.includes(uni)?uni:(curBases()[0]||bs[0]);
+    $('f-unidade').innerHTML  = bs.map(b=>`<option value="${esc(b)}"${b===selB?' selected':''}>${esc(NOME_BASE(b))}</option>`).join('');
     const vig  = (r && r.vigencia) || curVigs()[0];
     const vigs = VIG_OPTS.includes(vig) ? VIG_OPTS : [vig, ...VIG_OPTS];
     $('f-vigencia').innerHTML = vigs.map(v=>`<option value="${esc(v)}"${v===vig?' selected':''}>${esc(vigLabel(v))}</option>`).join('');
   }
-  const projs = agreg ? projetosDe($('f-unidade').value) : UNIT_PROJETOS;
+  const projs = projetosBox(agreg ? $('f-unidade').value : curBases()[0]);
   $('f-projeto').innerHTML = selOpts(projs, d.projeto||projs[0]||'');
   const contaSel=d.conta||contasOk[0]||'';
   $('f-conta').innerHTML   = pacs.length>1
@@ -1283,7 +1295,7 @@ function travaCaixa(){
 }
 function ctxUnidadeMudou(){
   const sel=$('f-projeto'), atual=sel.value;
-  const projs=projetosDe($('f-unidade').value);
+  const projs=projetosBox($('f-unidade').value);
   sel.innerHTML = selOpts(projs, projs.includes(atual)?atual:(projs[0]||''));
 }
 /* A VIGÊNCIA SEGUE A DATA (Renan, 07/10/2026: "lançou em setembro, mas entrou
@@ -1307,7 +1319,9 @@ async function salvarLancModal(){
   const v=k=>{ const e=$(k); return e?e.value:''; };
   const valor=parseValor(v('f-valor'));
   const agreg=$('m-ctx').style.display!=='none';
-  const payload={unidade: agreg?v('f-unidade'):curUnits()[0],
+  const base=agreg?v('f-unidade'):curBases()[0], unidade=codigoDe(base,v('f-projeto'));
+  if(!ALLOWED.includes(unidade)){ alert('Seu acesso não cobre o projeto '+v('f-projeto')+' em '+NOME_BASE(base)+'. Fale com o corporativo.'); return; }
+  const payload={unidade,
     vigencia: vigDaData(v('f-data')) || (agreg?v('f-vigencia'):curVigs()[0]), pacote:pacoteDaConta(v('f-conta'))||'Manutenção',
     data:v('f-data')||null, projeto:v('f-projeto'),
     equipamento:v('f-equipamento').trim().toUpperCase(), fornecedor:v('f-fornecedor').trim().toUpperCase(),
@@ -1337,8 +1351,8 @@ async function salvarLancModal(){
   if(foraVig||foraUni) ROWS=ROWS.filter(x=>x.id!==idSalvo);
   fecharLanc(); render();
   if(foraVig||foraUni){
-    const onde=[foraUni?(DEPARA[payload.unidade]||payload.unidade):'', foraVig?vigLabel(payload.vigencia):''].filter(Boolean).join(' · ');
-    const marque=[foraUni?(DEPARA[payload.unidade]||payload.unidade)+' no filtro Unidade':'', foraVig?vigLabel(payload.vigencia)+' no filtro Vigência':''].filter(Boolean).join(' e ');
+    const onde=[foraUni?nomeUni(payload.unidade):'', foraVig?vigLabel(payload.vigencia):''].filter(Boolean).join(' · ');
+    const marque=[foraUni?nomeUni(payload.unidade)+' no filtro Unidade':'', foraVig?vigLabel(payload.vigencia)+' no filtro Vigência':''].filter(Boolean).join(' e ');
     alert('Lançamento salvo em '+onde+'. Para vê-lo, marque '+marque+'.');
   }
 }
@@ -1426,7 +1440,7 @@ function renderAcomp(){
 }
 function renderLanc(rows){
   const single=singleCtx();
-  const multiUni=curUnits().length>1;
+  const multiUni=curBases().length>1;
   const th=`<thead><tr><th>Data</th>${multiUni?'<th>Unidade</th>':''}<th>Projeto</th><th>Equipamento</th><th>Fornecedor</th><th>Conta</th><th>Grupo</th><th>Descrição</th><th class="num">Valor</th><th>RC</th><th class="num" title="Aprovação da RC — libera a OC">OK</th><th>OC</th><th class="num" title="Aprovação da OC — libera a NF">OK</th><th>NF</th></tr></thead><tbody>`;
   let h=th;
   set('lanc-sub', rows.length+' lançamento(s) · '
@@ -1548,9 +1562,9 @@ function renderAderencia(rows){
     kpi('OC aprovada',t.ocAp,(t.n-t.ocAp)+' aguardando')+
     kpi('NF lançada',t.nf,(t.n-t.nf)+' sem NF');
   // tabela: por unidade quando há várias, senão por projeto
-  const multi=curUnits().length>1, chave=multi?'unidade':'projeto';
+  const multi=curBases().length>1, chave=multi?'unidade':'projeto';
   const grupos=new Map();
-  lanc.forEach(r=>{ const k=r[chave]||'—'; if(!grupos.has(k)) grupos.set(k,[]); grupos.get(k).push(r); });
+  lanc.forEach(r=>{ const k=(multi?UNIT_BASE(r.unidade):r.projeto)||'—'; if(!grupos.has(k)) grupos.set(k,[]); grupos.get(k).push(r); });
   const linhas=[...grupos.entries()].map(([k,rs])=>[k,adConta(rs)]).sort((a,b)=>b[1].n-a[1].n);
   const cel=(a,n)=>{ const p=adPct(a,n); return `<td class="num ${adCls(p)}">${pct(p)}</td>`; };
   const tr=(nome,x,cls)=>`<tr${cls?` class="${cls}"`:''}><td class="conta">${esc(nome)}</td>`+
@@ -1654,7 +1668,7 @@ function renderPlacas(){
     +`<button class="chip${PL_TIPO==='fixo'?' on':''}" onclick="setPlTipo('fixo')">Fixo</button>`;
   const fixo=PL_TIPO==='fixo';
   const rows=contrDoFiltro().filter(r=>r.tipo===PL_TIPO);
-  const multiVig=curVigs().length>1, multiUni=curUnits().length>1;
+  const multiVig=curVigs().length>1, multiUni=curBases().length>1;
   if(!CONTR_OK){
     $('pl-kpis').innerHTML=''; set('pl-sub','Carregando o contrato…');
     $('tbl-placas').innerHTML=`<tbody><tr><td><div class="vazio">Carregando…</div></td></tr></tbody>`;
@@ -1943,9 +1957,9 @@ async function init(){
   ALLOWED=IS_ADMIN?Object.keys(DEPARA):(prof&&prof.unidade?String(prof.unidade).toUpperCase().split(',').map(s=>s.trim()).filter(c=>DEPARA[c]):[]);
   const nome=(session.user.user_metadata&&(session.user.user_metadata.nome||session.user.user_metadata.full_name))||session.user.email||'';
   set('euNome', nome); set('euAv', iniciais(nome));
-  set('euSub', IS_ADMIN?'Coordenação':(ALLOWED[0]||'Frota'));
+  set('euSub', IS_ADMIN?'Coordenação':([...new Set(ALLOWED.map(nomeUni))].join(' · ')||'Frota'));
   if(!ALLOWED.length){ showRestricted('Seu usuário não tem unidade vinculada. Fale com o corporativo para liberar seu acesso à Carta de Custos.'); return; }
-  selUni.add(ALLOWED[0]);
+  selUni.add(UNIT_BASE(ALLOWED[0]));
   buildUniFilter(); buildVigFilter(); buildAnoFilter(); buildProjFilter();
   buildMs('ms-pac', ()=>PACOTES, v=>v, selPac, render, 'Todos');   // opções fixas: já na abertura
   // lançamentos e contrato carregam JUNTOS: o contrato não depende do DRE nem
@@ -1970,6 +1984,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610131800"></script>
+<script src="../assets/build-check.js?v=202610131900"></script>
 </body>
 </html>
