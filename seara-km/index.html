@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610132300">
+<meta name="build" content="202610132350">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Seara · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -506,8 +506,8 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
           <div class="twrap"><table class="dre" id="tbl-km">
             <thead><tr>
               <th id="tbl-dim-th">Placa</th><th class="num">Rem</th><th class="num">Real</th>
-              <th class="num">Δ</th><th class="num">Δ %</th><th class="num sep-imp">Impacto (R$)</th>
-              <th class="num">Δ YTD</th><th class="num">Δ YTD %</th><th class="num">Impacto YTD</th>
+              <th class="num">Δ</th><th class="num">Δ %</th><th class="num">Impacto (R$)</th>
+              <th class="num sep-imp">Δ YTD</th><th class="num">Δ YTD %</th><th class="num">Impacto YTD</th>
             </tr></thead>
             <tbody id="tbl-body"><tr><td class="loading" colspan="9">Carregando…</td></tr></tbody>
             <tfoot id="tbl-foot"></tfoot>
@@ -635,31 +635,44 @@ async function fetchData() {
   // Combustível (realizado): E=4 placa, F=5 mês(texto), G=6 ano, H=7 modelo, J=9 tipo veíc., K=10 km rodado
   // aba Remunerado (remunerado): A=vigência, B=placa, D=km remunerado
   // Base Remunerado: A=0 vigência, D=3 placa, O=14 ReaisPorKm
-  const [comb, remLinhas, brem] = await Promise.all([
+  const [comb, remLinhas, brem, prevMod] = await Promise.all([
     gvizRows(GID_COMB),
     gvizAba(ABA_REM, 'select A, B, D'),
-    gvizRows(GID_REM)
+    gvizRows(GID_REM),
+    SearaBenchModelo.modelos()
   ]);
 
   // R$/km de CADA PLACA, da Base Remunerado (col O — ReaisPorKm). É o custo
   // variável inteiro do km: diesel + arla + manutenção + pneu + recapagem +
   // lubrificante + lavagem.
-  const rsKmMap = {}, rsKmHist = {};
+  // Base Remunerado: F=5 ModeloVeiculo — entra na média por modelo (abaixo)
+  const rsKmMap = {}, rsKmHist = {}, porMod = SearaBenchModelo.nova(prevMod);
+  const _ym = v => v.slice(-4) + '-' + v.slice(0, 2);   // 'MM/AAAA' → 'AAAA-MM'
   brem.forEach(r => {
     const placa = _placaKey(r[3]), vig = _vigDeData(r[0]), o = +r[14] || 0;
     if (!placa || !vig || o <= 0) return;
     rsKmMap[placa + '|' + vig] = o;
+    porMod.add(placa, _ym(vig), r[5], { rsKm: o });
     (rsKmHist[placa] || (rsKmHist[placa] = [])).push({ ord: vig.slice(-4) + vig.slice(0,2), o });
   });
   Object.values(rsKmHist).forEach(a => a.sort((x,y) => x.ord.localeCompare(y.ord)));
   // Placa sem linha na vigência: usa a tabela mais recente da PRÓPRIA placa até
   // aquele mês (ou a primeira que existir). Preferível a zerar o impacto — e o
   // console avisa quantas vezes o desvio foi usado.
-  function rsKmDe(placa, vig){
+  // PLACA FORA DA BASE REMUNERADO = MÉDIA DO MODELO (Renan, 13/10/2026: "use a
+  // base de preventivas para pegar modelo e trazer"): placa nova, que nunca
+  // entrou na lista, recebe o R$/km médio das placas do mesmo modelo na vigência.
+  // Modelo pela base das preventivas (ativos_manual); fora dela, o da Combustível.
+  const _porModelo = [];
+  function rsKmDe(placa, vig, mod){
     const exata = rsKmMap[placa + '|' + vig];
     if (exata) return exata;
     const h = rsKmHist[placa];
-    if (!h || !h.length) return 0;
+    if (!h || !h.length) {
+      const m = porMod.media(placa, _ym(vig), mod);
+      if (m && m.rsKm > 0) { _porModelo.push(placa + '|' + vig + ' → ' + m.modelo + ' (' + m.vig + ', ' + m.n + ' placa(s))'); return m.rsKm; }
+      return 0;
+    }
     const alvo = vig.slice(-4) + vig.slice(0,2);
     let melhor = null;
     for (const x of h) { if (x.ord <= alvo) melhor = x; }
@@ -709,7 +722,7 @@ async function fetchData() {
     if (!placa || mi < 0 || !yr || real <= 0) return;
     const vig = String(mi + 1).padStart(2,'0') + '/' + yr;
     const rem = remDe(placa, vig);
-    const rsKm = rsKmDe(placa, vig);
+    const rsKm = rsKmDe(placa, vig, r[7]);
     if (!rsKmMap[placa + '|' + vig] && rem > 0) _semRsKm++;
     ALL.push({
       vig, ano: String(yr),
@@ -722,6 +735,7 @@ async function fetchData() {
       remFb: !mesesRem.has(vig) && rem > 0          // remunerado veio do mês anterior
     });
   });
+  if (_porModelo.length) console.info('[KM Seara] R$/km remunerado pela média do modelo:', _porModelo);
   if (_semRsKm) console.warn(`Impacto: ${_semRsKm} placa(s)/vigência(s) sem linha na Base Remunerado — usada a tabela anterior da própria placa.`);
   try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(),rows:ALL})); }catch(e){}
   const savedVig = getSel('ms-vig');
@@ -1020,8 +1034,8 @@ function renderTable(F, YTD) {
     <td class="num">${fmt(u.real)}</td>
     <td class="num ${u.delta>0?'cr':'cg'}">${sign(u.delta)}${fmt(u.delta)}</td>
     <td class="num ${u.deltaPct>0?'cr':'cg'}">${pctInt(u.deltaPct)}</td>
-    <td class="num sep-imp ${u.imp>0?'cr':'cg'}">${sign(u.imp)}${fmt(u.imp)}</td>
-    <td class="num ${u.ytdDelta>0?'cr':'cg'}">${sign(u.ytdDelta)}${fmt(u.ytdDelta)}</td>
+    <td class="num ${u.imp>0?'cr':'cg'}">${sign(u.imp)}${fmt(u.imp)}</td>
+    <td class="num sep-imp ${u.ytdDelta>0?'cr':'cg'}">${sign(u.ytdDelta)}${fmt(u.ytdDelta)}</td>
     <td class="num ${u.ytdDeltaPct>0?'cr':'cg'}">${pctInt(u.ytdDeltaPct)}</td>
     <td class="num ${u.ytdImp>0?'cr':'cg'}">${sign(u.ytdImp)}${fmt(u.ytdImp)}</td>
   </tr>`).join('');
@@ -1043,8 +1057,8 @@ function renderTable(F, YTD) {
     <td class="num">${fmt(tReal)}</td>
     <td class="num ${tDelta>0?'cr':'cg'}">${sign(tDelta)}${fmt(tDelta)}</td>
     <td class="num ${tDPct>0?'cr':'cg'}">${pctInt(tDPct)}</td>
-    <td class="num sep-imp ${tImp>0?'cr':'cg'}">${sign(tImp)}${fmt(tImp)}</td>
-    <td class="num ${tYD>0?'cr':'cg'}">${sign(tYD)}${fmt(tYD)}</td>
+    <td class="num ${tImp>0?'cr':'cg'}">${sign(tImp)}${fmt(tImp)}</td>
+    <td class="num sep-imp ${tYD>0?'cr':'cg'}">${sign(tYD)}${fmt(tYD)}</td>
     <td class="num ${tYDPct>0?'cr':'cg'}">${pctInt(tYDPct)}</td>
     <td class="num ${tYImp>0?'cr':'cg'}">${sign(tYImp)}${fmt(tYImp)}</td>
   </tr>`;
@@ -1278,7 +1292,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_kmseara_v3';  // v3: remunerado de mês não colado cai no mês anterior
+const CACHE_KEY='bi_cache_kmseara_v4';  // v4: placa fora da Base Remunerado usa o R$/km médio do modelo (v3: remunerado de mês não colado cai no mês anterior)
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
@@ -1406,6 +1420,7 @@ window.addEventListener('resize',()=>{ clearTimeout(_rt); _rt=setTimeout(()=>{ i
 
 document.addEventListener('DOMContentLoaded', () => { initAccessLog(); initData(); setInterval(atualizar, CACHE_TTL); });
 </script>
+<script src="../assets/seara-bench-modelo.js?v=202610131700"></script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
@@ -1422,6 +1437,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610132300"></script>
+<script src="../assets/build-check.js?v=202610132350"></script>
 </body>
 </html>

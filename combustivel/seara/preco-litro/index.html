@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610132330">
+<meta name="build" content="202610132350">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>R$/L Seara — Preço do Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -716,23 +716,27 @@ async function gvz(id,opts={},tries=3){
 }
 // Monta allRows (linhas sintéticas por placa|vig) a partir do workbook Seara.
 async function fetchData(){
-  const [comb,brem]=await Promise.all([
+  const [comb,brem,prevMod]=await Promise.all([
     gvz(SEARA_ID,{gid:GID_COMB}),
     gvz(SEARA_ID,{gid:GID_REM}),
+    SearaBenchModelo.modelos(),
   ]);
   const vyk=(y,m)=>y+'-'+String(m).padStart(2,'0');
   // Benchmark remunerado (PrecoDiesel) por placa|vig — coluna pelo NOME
   // (fallback: índices do layout largo, Placa=3/D e PrecoDiesel=17/R)
   const _bl=brem.cols.map(c=>String(c||'').toLowerCase().replace(/\s/g,''));
   const _bi=(alvo,def)=>{const i=_bl.findIndex(c=>c.includes(alvo));return i>=0?i:def;};
-  const iVigB=_bi('vigencia',0), iPlacaB=_bi('placa',3), iPrecoB=_bi('precodiesel',17);
-  const bench={};
-  brem.rows.forEach(r=>{ const p=_placaKey(r[iPlacaB]), d=parseVig(r[iVigB]); if(!p||!d)return; bench[p+'|'+vyk(d.getFullYear(),d.getMonth()+1)]=+r[iPrecoB]||0; });
+  const iVigB=_bi('vigencia',0), iPlacaB=_bi('placa',3), iPrecoB=_bi('precodiesel',17), iModB=_bi('modeloveiculo',5);
+  const bench={}, porMod=SearaBenchModelo.nova(prevMod);
+  brem.rows.forEach(r=>{ const p=_placaKey(r[iPlacaB]), d=parseVig(r[iVigB]); if(!p||!d)return; const ym=vyk(d.getFullYear(),d.getMonth()+1); bench[p+'|'+ym]=+r[iPrecoB]||0; porMod.add(p,ym,r[iModB],{preco:+r[iPrecoB]||0}); });
   // MÊS SEM BASE AINDA = MÊS ANTERIOR (Renan, 14/08/2026): Combustível já tem
   // julho; a Base Remunerado vai até junho. O preço remunerado cai no mês
   // anterior da MESMA placa até o mês ser colado (aí o direto vence).
   const _mesAnt=k=>{const [p,ym]=k.split('|');const [y,m]=ym.split('-').map(Number);const d=new Date(y,m-2,1);return p+'|'+vyk(d.getFullYear(),d.getMonth()+1);};
-  const benchFor=k=>bench[k]||bench[_mesAnt(k)]||0;
+  // PLACA FORA DA BASE REMUNERADO = MÉDIA DO MODELO (Renan, 13/10/2026): modelo
+  // pela base das preventivas (ativos_manual); fora dela, o da aba Combustível.
+  const porModelo=[];
+  const benchFor=(k,mod)=>{const v=bench[k]||bench[_mesAnt(k)];if(v)return v;const [p,ym]=k.split('|');const m=porMod.media(p,ym,mod);if(m&&m.preco>0){porModelo.push(k+' → '+m.modelo+' ('+m.vig+', '+m.n+' placa(s))');return m.preco;}return 0;};
   const MES3=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   const rows=[];
   comb.rows.forEach(r=>{
@@ -742,7 +746,7 @@ async function fetchData(){
     const row=[];
     row[CL.vig]=new Date(y,mi,1);
     row[CL.real]=lit>0?tot/lit:0;             // R$/L Real da placa
-    row[CL.preco]=benchFor(k);                // R$/L Rem (PrecoDiesel; mês anterior se o mês ainda não foi colado)
+    row[CL.preco]=benchFor(k,r[7]);                // R$/L Rem (PrecoDiesel; mês anterior se o mês ainda não foi colado)
     row[CL.ativo]='';
     row[CL.proj]=String(r[2]||'').trim();
     row[CL.uni]=String(r[3]||'').trim()||'ANHANGUERA';
@@ -754,6 +758,7 @@ async function fetchData(){
     row[CL.fuel]=String(r[8]||'').trim();
     rows.push(row);
   });
+  if(porModelo.length) console.info('[R$/L Seara] remunerado pela média do modelo:', porModelo);
   return rows;
 }
 
@@ -1188,6 +1193,7 @@ function aplicaTema(t){
 function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark':'light'); }
 aplicaTema(localStorage.getItem('bi_theme')||'dark');
 </script>
+<script src="../../../assets/seara-bench-modelo.js?v=202610131700"></script>
 <script src="../../../assets/mobile.js?v=202608220020"></script>
 <script src="../../../assets/modo-tv.js?v=202610111500"></script>
 <script src="../../../assets/ctrlk.js"></script>
@@ -1204,6 +1210,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../../assets/build-check.js?v=202610132330"></script>
+<script src="../../../assets/build-check.js?v=202610132350"></script>
 </body>
 </html>

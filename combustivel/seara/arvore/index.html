@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610132310">
+<meta name="build" content="202610132350">
 <title>Árvore de Combustível Seara · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -919,12 +919,14 @@ function custoAgg(f){
 
 // Carrega Frota + workbook Seara e monta as opções de filtro (ano/vigência)
 async function fetchAll(){
+  const prevModP = SearaBenchModelo.modelos();
   const [fr, comb, rawVg, brem] = await Promise.all([
     gvz(VF_ID,{tab:'Frota'}),
     gvz(SEARA_ID,{gid:GID_COMB}),
     gvz(SEARA_ID,{tab:ABA_REM, tq:'select A, B, D'}),
     gvz(SEARA_ID,{gid:GID_REM}),
   ]);
+  const prevMod = await prevModP;
   FR_ROWS = fr.rows;
 
   // KM remunerado: uma linha por placa e mês na aba `Remunerado`, já somado.
@@ -943,26 +945,33 @@ async function fetchAll(){
   // (fallback: índices do layout largo, KmPorLitro=15/P e PrecoDiesel=17/R)
   const _bl=brem.cols.map(c=>String(c||'').toLowerCase().replace(/\s/g,''));
   const _bi=(alvo,def)=>{const i=_bl.findIndex(c=>c.includes(alvo));return i>=0?i:def;};
-  const iVigB=_bi('vigencia',0), iPlacaB=_bi('placa',3), iKmLB=_bi('kmporlitro',15), iPrecoB=_bi('precodiesel',17);
-  const bench={};
-  brem.rows.forEach(r=>{ const p=_placaKey(r[iPlacaB]), d=kParseVig(r[iVigB]); if(!p||!d) return; bench[p+'|'+_vigYM(d.getFullYear(),d.getMonth()+1)]={kmL:+r[iKmLB]||0, preco:+r[iPrecoB]||0}; });
+  const iVigB=_bi('vigencia',0), iPlacaB=_bi('placa',3), iKmLB=_bi('kmporlitro',15), iPrecoB=_bi('precodiesel',17), iModB=_bi('modeloveiculo',5);
+  const bench={}, porMod=SearaBenchModelo.nova(prevMod);
+  const _ymDe=v=>{const [m,y]=v.split('/');return y+'-'+m;};
+  brem.rows.forEach(r=>{ const p=_placaKey(r[iPlacaB]), d=kParseVig(r[iVigB]); if(!p||!d) return; const vg=_vigYM(d.getFullYear(),d.getMonth()+1), b={kmL:+r[iKmLB]||0, preco:+r[iPrecoB]||0}; bench[p+'|'+vg]=b; porMod.add(p,_ymDe(vg),r[iModB],b); });
   // MÊS SEM BASE AINDA = MÊS ANTERIOR (Renan, 14/08/2026): a Combustível chega
   // antes da Base Remunerado. O benchmark cai no mês anterior da MESMA placa até
   // o mês ser colado (aí o direto vence).
   // km remunerado NÃO cai (é quantidade do mês, não taxa) — fica 0 até chegar.
   const _mesAnt=k=>{const [p,ym]=k.split('|');const [m,y]=ym.split('/').map(Number);const d=new Date(y,m-2,1);return p+'|'+_vigYM(d.getFullYear(),d.getMonth()+1);};
-  const benchFor=k=>{const b=bench[k];if(b&&(b.kmL>0||b.preco>0))return b;return bench[_mesAnt(k)]||{kmL:0,preco:0};};
+  // PLACA FORA DA BASE REMUNERADO = MÉDIA DO MODELO (Renan, 13/10/2026): modelo
+  // pela base das preventivas (ativos_manual); fora dela, o da aba Combustível.
+  const porModelo=[];
+  const benchFor=(k,mod)=>{const b=bench[k];if(b&&(b.kmL>0||b.preco>0))return b;const a=bench[_mesAnt(k)];if(a&&(a.kmL>0||a.preco>0))return a;
+    const [p,vg]=k.split('|');const m=porMod.media(p,_ymDe(vg),mod);if(m){porModelo.push(k+' → '+m.modelo+' ('+m.vig+', '+m.n+' placa(s))');return m;}return {kmL:0,preco:0};};
 
   // ALL = raiz aba Combustível (real), cruzada com rem/bench
   ALL=[];
   comb.rows.forEach(r=>{
     const placa=_placaKey(r[4]); const mi=_MESES3.indexOf(String(r[5]||'').toLowerCase().slice(0,3)); const y=+r[6];
     const real=+r[10]||0; if(!placa||mi<0||!y||real<=0) return;
-    const vig=_vigYM(y, mi+1); const k=placa+'|'+vig; const b=benchFor(k);
+    const vig=_vigYM(y, mi+1); const k=placa+'|'+vig; const b=benchFor(k,r[7]);
     ALL.push({ vig, ano:String(y), placa:String(r[4]).trim(), modelo:String(r[7]||'').trim()||'—',
       kmReal:real, litros:+r[11]||0, totalRS:+r[13]||0,
       kmRem:remKm[k]||0, kmL:b.kmL, preco:b.preco });
   });
+
+  if(porModelo.length) console.info('[Árvore Seara] remunerado pela média do modelo:', porModelo);
 
   // allRows = meses com dado real (default cai no último mês com dados)
   const seenV=new Set(); allRows=[];
@@ -1170,6 +1179,7 @@ function aplicaTema(t){
 function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark':'light'); }
 aplicaTema(localStorage.getItem('bi_theme')||'dark');
 </script>
+<script src="../../../assets/seara-bench-modelo.js?v=202610131700"></script>
 <script src="../../../assets/mobile.js?v=202608220020"></script>
 <script src="../../../assets/arvore-impacto.js?v=202610132300"></script>
 <script src="../../../assets/modo-tv.js?v=202610111500"></script>
@@ -1187,6 +1197,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../../assets/build-check.js?v=202610132310"></script>
+<script src="../../../assets/build-check.js?v=202610132350"></script>
 </body>
 </html>
