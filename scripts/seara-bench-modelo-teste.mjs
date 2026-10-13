@@ -38,7 +38,7 @@ for (const v of ['08/2026', '09/2026']) {
 }
 const COLS_COMB = ['Pode começa','Empresa','Projeto','Unidade','Placa','Mês Inicio OS','Ano Inicio OS','Modelo','Tipo Combustivel','Tipo Veiculo','KM Rodado','QTD Total de Litros','Valor Médio Litro','TOTAS R$'];
 const comb = (placa, mod, km, lit) => [null, 'SEARA', 'ROTA', 'ANHANGUERA', placa, 'set', 2026, mod, 'DIESEL S10', 'CAMINHAO BAU', km, lit, null, lit * 7];
-const COMB = [comb('SAA1A11', 'VW 11.180', 3000, 750), comb('SAB1A12', 'VW 11.180', 2000, 500), comb('SCC3C33', 'VW 17.190', 2500, 900),
+const COMB = [comb('SAA1A11', 'VW/11.180 DRC 4X2', 3000, 750), comb('SAB1A12', 'VW/11.180 DRC 4X2', 2000, 500), comb('SCC3C33', 'VW 17.190', 2500, 900),
   comb('NOVA111', 'VW 11.180', 1500, 400), comb('NOVA222', 'VW 11.180', 1200, 300), comb('NOVA333', 'IVECO DAILY', 900, 120)];
 const REMU = [['09/2026', 'SAA1A11', 2800], ['09/2026', 'SAB1A12', 1900], ['09/2026', 'SCC3C33', 2400], ['09/2026', 'NOVA111', 1000], ['09/2026', 'NOVA222', 1000], ['09/2026', 'NOVA333', 800]];
 const PREV = [{ placa: 'SAA1A11', modelo: 'VW/11.180 DRC 4X2' }, { placa: 'SAB1A12', modelo: 'VW/11.180 DRC 4X2' },
@@ -94,6 +94,8 @@ for (const banco of [true, false]) {
     af('Km/L: NOVA111 (fora das duas bases) = média 11.180 pela Combustível', near(m.NOVA111, 4.1), m.NOVA111);
     af(`Km/L: NOVA222 = ${banco ? 'média 17.190 (base das preventivas vence)' : 'média 11.180 (Combustível)'}`, near(m.NOVA222, n2.kml), m.NOVA222);
     af('Km/L: modelo que ninguém tem segue sem remunerado', m.NOVA333 === 0, m.NOVA333);
+    const mk = await page.evaluate(() => [...new Set(allRows.map(r => r[CL.modelo]))].sort());
+    af('Km/L: um nome por modelo', mk.join('|') === 'IVECO DAILY|VW 17.190|VW/11.180 DRC 4X2', mk.join(' | '));
     af('Km/L: sem erro de página', errs.length === 0, errs[0] || ''); await page.close(); }
 
   { const { page, errs } = await abre('/combustivel/seara/preco-litro/index.html', banco);
@@ -114,6 +116,8 @@ for (const banco of [true, false]) {
     af('KM Seara: placa da base com o próprio R$/km', near(m.SAA1A11, (3000 - 2800) * 2.0), JSON.stringify(m));
     af('KM Seara: NOVA111 = (1500 − 1000) × R$/km médio 11.180', near(m.NOVA111, 500 * 2.1), m.NOVA111);
     af('KM Seara: NOVA222 pela regra do modelo; NOVA333 com impacto 0', near(m.NOVA222, 200 * n2.rk) && m.NOVA333 === 0, `${m.NOVA222} · ${m.NOVA333}`);
+    const mods = await page.evaluate(() => [...new Set(ALL.map(r => r.proj))].sort());
+    af('KM Seara: "VW/11.180 DRC 4X2" e "VW 11.180" viram um modelo só', mods.join('|') === 'IVECO DAILY|VW 17.190|VW/11.180 DRC 4X2', mods.join(' | '));
     const th = await page.evaluate(() => [...document.querySelectorAll('#tbl-km thead th')].map(t => t.classList.contains('sep-imp')));
     af('KM Seara: filete separa o mês do YTD (antes do Δ YTD)', th.indexOf(true) === 6 && th.filter(Boolean).length === 1, JSON.stringify(th));
     af('KM Seara: sem erro de página', errs.length === 0, errs[0] || ''); await page.close(); }

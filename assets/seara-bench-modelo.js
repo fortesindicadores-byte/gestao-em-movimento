@@ -96,5 +96,21 @@
     };
   }
 
-  window.SearaBenchModelo = { modelos: modelos, nova: nova, chave: chave, placaKey: placaKey };
+  // UM NOME POR MODELO (Renan, 13/10/2026: "São o mesmo modelo"): a aba
+  // Combustível grava o mesmo modelo de jeitos diferentes ("VW/11.180 DRC 4X2" e
+  // "VW 11.180"), e a tabela por modelo e o filtro mostravam dois. Recebe a lista
+  // de nomes (um por linha) e devolve nome -> nome mais usado da mesma chave.
+  function unifica(nomes) {
+    var cont = {}, melhor = {};
+    nomes.forEach(function (n) { n = String(n == null ? '' : n).trim(); if (n && n !== '—') cont[n] = (cont[n] || 0) + 1; });
+    Object.keys(cont).forEach(function (n) {
+      var k = chave(n); if (!k) return;
+      if (!melhor[k] || cont[n] > cont[melhor[k]] || (cont[n] === cont[melhor[k]] && n.length > melhor[k].length)) melhor[k] = n;
+    });
+    var m = {};
+    Object.keys(cont).forEach(function (n) { var k = chave(n); m[n] = (k && melhor[k]) || n; });
+    return function (n) { var t = String(n == null ? '' : n).trim(); return m[t] || n; };
+  }
+
+  window.SearaBenchModelo = { modelos: modelos, nova: nova, chave: chave, placaKey: placaKey, unifica: unifica };
 })();

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610132350">
+<meta name="build" content="202610140010">
 <title>Árvore de Combustível Seara · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -972,6 +972,9 @@ async function fetchAll(){
   });
 
   if(porModelo.length) console.info('[Árvore Seara] remunerado pela média do modelo:', porModelo);
+  // um nome por modelo ("VW/11.180 DRC 4X2" e "VW 11.180" são o mesmo)
+  const _nomeMod=SearaBenchModelo.unifica(ALL.map(r=>r.modelo));
+  ALL.forEach(r=>{ r.modelo=_nomeMod(r.modelo); });
 
   // allRows = meses com dado real (default cai no último mês com dados)
   const seenV=new Set(); allRows=[];
@@ -1179,7 +1182,7 @@ function aplicaTema(t){
 function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark':'light'); }
 aplicaTema(localStorage.getItem('bi_theme')||'dark');
 </script>
-<script src="../../../assets/seara-bench-modelo.js?v=202610131700"></script>
+<script src="../../../assets/seara-bench-modelo.js?v=202610140010"></script>
 <script src="../../../assets/mobile.js?v=202608220020"></script>
 <script src="../../../assets/arvore-impacto.js?v=202610132300"></script>
 <script src="../../../assets/modo-tv.js?v=202610111500"></script>
@@ -1197,6 +1200,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../../assets/build-check.js?v=202610132350"></script>
+<script src="../../../assets/build-check.js?v=202610140010"></script>
 </body>
 </html>

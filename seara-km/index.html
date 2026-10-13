@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610132350">
+<meta name="build" content="202610140010">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Seara · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -736,6 +736,10 @@ async function fetchData() {
     });
   });
   if (_porModelo.length) console.info('[KM Seara] R$/km remunerado pela média do modelo:', _porModelo);
+  // um nome por modelo (Renan, 13/10/2026: "São o mesmo modelo"): a Combustível
+  // grava "VW/11.180 DRC 4X2" e "VW 11.180" para o mesmo modelo
+  const _nomeMod = SearaBenchModelo.unifica(ALL.map(r => r.proj));
+  ALL.forEach(r => { r.proj = _nomeMod(r.proj); });
   if (_semRsKm) console.warn(`Impacto: ${_semRsKm} placa(s)/vigência(s) sem linha na Base Remunerado — usada a tabela anterior da própria placa.`);
   try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(),rows:ALL})); }catch(e){}
   const savedVig = getSel('ms-vig');
@@ -1292,7 +1296,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_kmseara_v4';  // v4: placa fora da Base Remunerado usa o R$/km médio do modelo (v3: remunerado de mês não colado cai no mês anterior)
+const CACHE_KEY='bi_cache_kmseara_v5';  // v5: um nome por modelo · v4: placa fora da Base Remunerado usa o R$/km médio do modelo (v3: remunerado de mês não colado cai no mês anterior)
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
@@ -1420,7 +1424,7 @@ window.addEventListener('resize',()=>{ clearTimeout(_rt); _rt=setTimeout(()=>{ i
 
 document.addEventListener('DOMContentLoaded', () => { initAccessLog(); initData(); setInterval(atualizar, CACHE_TTL); });
 </script>
-<script src="../assets/seara-bench-modelo.js?v=202610131700"></script>
+<script src="../assets/seara-bench-modelo.js?v=202610140010"></script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
@@ -1437,6 +1441,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610132350"></script>
+<script src="../assets/build-check.js?v=202610140010"></script>
 </body>
 </html>
