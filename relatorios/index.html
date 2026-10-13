@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610122330">
+<meta name="build" content="202610131700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Relatórios · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -528,7 +528,7 @@ const REL=[
   {cl:'fin',t:'R$/KM',h:'rs-por-km/',d:'DRE Frota, dispersão de km e o km remunerado da Seara.',
     f:[S('dre_frota'),S('dispersao_km'),S('seara_rem_vig')]},
   {cl:'fin',t:'Árvore de Custo da Frota',h:'arvore-frota/',d:'DRE (Frota e Receita), dispersão de km e as bases da Seara (CTEs, remunerado, combustível).',
-    f:[S('dre_frota'),S('dre_receita'),S('dispersao_km'),S('seara_ctes_viagens'),S('seara_rem_vig'),S('seara_comb_vig')]},
+    f:[S('dre_frota'),S('dre_receita'),S('dispersao_km'),S('seara_rem_cte_vig'),S('seara_rem_vig'),S('seara_comb_vig')]},
   {cl:'fin',t:'Carta de Custos',h:'carta-custos/',d:'Lançamentos com RC/OC/NF, contrato por placa e vigência, abastecimentos do ERP, contratos e notas da VW.',
     f:[T('carta_custos','Lançamentos',{ordem:'id'}),CUSTO_PLACA,T('erp_abastecimentos','Abastecimentos do ERP',{ordem:'ordem_servico'}),
        T('contratos_placa','Contratos por placa',{ordem:'placa'}),T('vw_contrato_km','Notas da VW · por chassi e faixa',{ordem:'contrato,vigencia,chassi'})]},
@@ -548,7 +548,7 @@ const REL=[
   {cl:'op',t:'Seara · Painel KM',h:'seara-km/',d:'Km remunerado por placa, combustível e base de remunerado da Seara.',
     f:[S('seara_rem_placa'),S('seara_combustivel'),S('seara_remunerado')]},
   {cl:'op',t:'Seara · Árvore',h:'combustivel/seara/arvore/',d:'DRE Frota e as bases da Seara (remunerado, combustível, CTEs).',
-    f:[S('dre_frota'),S('seara_rem_placa'),S('seara_remunerado'),S('seara_combustivel'),S('seara_ctes_viagens')]},
+    f:[S('dre_frota'),S('seara_rem_placa'),S('seara_remunerado'),S('seara_combustivel'),S('seara_rem_cte_vig')]},
   {cl:'op',t:'Seara · Km/L e R$/L',h:'combustivel/seara/eficiencia/',d:'Base de remunerado e aba de combustível da Seara.',
     f:[S('seara_remunerado'),S('seara_combustivel')]},
   {cl:'op',t:'Pneus',h:'pneus/',d:'Retrato do Prolog — todos os pneus, veículos e aferições por medida —, histórico de CPK e a aba de aferições do Elite.',
@@ -1082,6 +1082,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202610122330"></script>
+<script src="../assets/build-check.js?v=202610131700"></script>
 </body>
 </html>

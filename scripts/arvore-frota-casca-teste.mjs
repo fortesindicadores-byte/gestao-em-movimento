@@ -91,10 +91,13 @@ FROTA.rows.push([D(2026, 12), -50000, 0, 0, 'ROTA - GRL', 'Pneus Novos']);
 const SEARA = {
   ctes: { cols: ['B', 'year(D)', 'month(D)', 'count(A)'], rows: [] },
   rem: { cols: ['Vigência', 'sum KM'], rows: [['06/2026', 84100], ['07/2026', 87057], ['08/2026', 88070]] },
+  // Σ CT-e por vigência (viagens da Seara, aba Remunerado col C): os mesmos totais
+  // da contagem da Base CTEs abaixo, para o antigo e o novo darem o mesmo número
+  cte: { cols: ['Vigência', 'sum CT-e'], rows: [['06/2026', 610], ['07/2026', 640], ['08/2026', 655]] },
   comb: { cols: ['Mês', 'Ano', 'sum KM'], rows: [['junho', 2026, 86200], ['julho', 2026, 90110], ['agosto', 2026, 91950]] },
 };
 [[5, 610], [6, 640], [7, 655]].forEach(([mo, n]) => { for (let v = 0; v < n; v++) SEARA.ctes.rows.push(['V' + mo + '-' + v, 2026, mo, 2 + (v % 3)]); });
-const ABAS = { 'Frota': FROTA, 'Receita Líquida': REC, 'Dispersão de km': DISP, 'Remunerado': SEARA.rem, 'g1672208132': SEARA.ctes, 'g1982300845': SEARA.comb };
+const ABAS = { 'Frota': FROTA, 'Receita Líquida': REC, 'Dispersão de km': DISP, 'Remunerado': SEARA.rem, 'Remunerado CT-e': SEARA.cte, 'g1672208132': SEARA.ctes, 'g1982300845': SEARA.comb };
 
 const H2C_SRC = H2C && fs.existsSync(H2C) ? fs.readFileSync(H2C, 'utf8') : null;
 // jsPDF dublado: conta as páginas e o nome do arquivo (a montagem é do pdf-export.js de verdade)
@@ -117,7 +120,8 @@ async function abre(browser, pagina, { w = 1600, h = 900, tema = 'dark', mini = 
     const resp = u => {
       const s = decodeURIComponent(u);
       const m = s.match(/sheet=([^&]+)/), g = s.match(/gid=(\d+)/);
-      const nome = m ? m[1].replace(/\+/g, ' ') : g ? 'g' + g[1] : '';
+      let nome = m ? m[1].replace(/\+/g, ' ') : g ? 'g' + g[1] : '';
+      if (nome === 'Remunerado' && /sum\(C\)/.test(s)) nome = 'Remunerado CT-e';
       window.__GV.push(nome);
       const a = ABAS[nome];
       if (!a) return { status: 'error', errors: [{ message: 'aba ' + nome }] };
@@ -212,7 +216,8 @@ for (const v of ['resumo', 'pneus', 'manut', 'comb']) { await n.page.evaluate(v 
 await n.page.evaluate(() => setVw('resumo'));
 const N = { r: await percorre(n.page), errs: n.errs, gv: await n.page.evaluate(() => window.__GV) };
 af('novo: zero erro de página', N.errs.length === 0, N.errs[0] || '');
-af('novo: leu as seis fontes (3 abas + 3 da Seara)', ['Frota', 'Receita Líquida', 'Dispersão de km', 'Remunerado', 'g1672208132', 'g1982300845'].every(x => N.gv.includes(x)), N.gv.join(' · '));
+af('novo: leu as seis fontes (3 abas + 3 da Seara: km rem, CT-e e combustível da Remunerado/Combustível)', ['Frota', 'Receita Líquida', 'Dispersão de km', 'Remunerado', 'Remunerado CT-e', 'g1982300845'].every(x => N.gv.includes(x)), N.gv.join(' · '));
+af('novo: não pede mais a Base CTEs', !N.gv.includes('g1672208132'), N.gv.join(' · '));
 const num = s => s.split(' ; ').map(x => x.split('|')[0]).join(' ; ');
 if (A) {
   af('antigo: zero erro de página', A.errs.length === 0, A.errs[0] || '');

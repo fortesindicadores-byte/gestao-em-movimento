@@ -8,7 +8,7 @@
    "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Frota|g=|q=|h=",
    "1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8|s=Receita Líquida|g=|q=|h=",
    "1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Dispersão de km|g=|q=|h=",
-   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1672208132|q=select B, year(D), month(D), count(A) group by B, year(D), month(D)|h=",
+   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=Remunerado|g=|q=select A, sum(C) group by A|h=",
    "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=Remunerado|g=|q=select A, sum(D) group by A|h=",
    "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1982300845|q=select F, G, sum(K) group by F, G|h="
   ],
@@ -180,7 +180,7 @@
  },
  "semBase": [
   "SEU_SHEET_ID_AQUI|s=Nome da Aba|g=|q=|h=",
-  "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1672208132|q=select B, year(D), month(D), count(A) group by B, year(D), month(D)|h=",
+  "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=Remunerado|g=|q=select A, sum(C) group by A|h=",
   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=Remunerado|g=|q=select A, sum(D) group by A|h=",
   "1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE|s=|g=1982300845|q=select F, G, sum(K) group by F, G|h=",
   "1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A|s=Base Remunerado Modelo|g=|q=|h=",
