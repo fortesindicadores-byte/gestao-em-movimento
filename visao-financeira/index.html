@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610111500">
+<meta name="build" content="202610132300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Visão Financeira · DRE Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -381,6 +381,14 @@ table.dre tr.rec-row td.conta{font-weight:800;}
   .thead-row{margin-bottom:6px;}
   .twrap{max-height:none;overflow-x:auto;}
   .emb{height:76vh;}
+}
+
+/* números grandes acompanham a tela (Renan, 13/10/2026: "no notebook fica muito grande"):
+   no desktop cada número encolhe com a altura e a largura da janela,
+   até o tamanho de antes numa tela de 1920×950 */
+@media(min-width:861px){
+  .kpi .kv{font-size:clamp(18px,min(2.632vh,1.303vw),25px);}
+  .fct-kpis .kpi .kv{font-size:clamp(15px,min(2.211vh,1.094vw),21px);}
 }
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
@@ -2214,6 +2222,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610111500"></script>
+<script src="../assets/build-check.js?v=202610132300"></script>
 </body>
 </html>

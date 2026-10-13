@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610111500">
+<meta name="build" content="202610132300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Catálogo de Peças · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -274,6 +274,13 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
   .twrap{max-height:none;overflow-x:auto;}
   .emb{height:76vh;}
 }
+
+/* números grandes acompanham a tela (Renan, 13/10/2026: "no notebook fica muito grande"):
+   no desktop cada número encolhe com a altura e a largura da janela,
+   até o tamanho de antes numa tela de 1920×950 */
+@media(min-width:861px){
+  .kpi .kv{font-size:clamp(18px,min(2.632vh,1.303vw),25px);}
+}
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
 </head>
@@ -394,6 +401,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610111500"></script>
+<script src="../assets/build-check.js?v=202610132300"></script>
 </body>
 </html>
