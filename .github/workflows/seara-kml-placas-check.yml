@@ -1,0 +1,30 @@
+name: Seara KmL Placas Check
+
+# Onde falta o Km/L remunerado de uma placa da Seara: aba Combustível × Base
+# Remunerado (planilha) × carga no banco. Ver scripts/seara-kml-placas-check.mjs.
+on:
+  workflow_dispatch:
+    inputs:
+      placas:
+        description: 'Placas separadas por vírgula (vazio = todas sem benchmark na vigência)'
+        required: false
+        default: ''
+      vig:
+        description: 'Vigência AAAA-MM'
+        required: false
+        default: '2026-09'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          PLACAS: ${{ inputs.placas }}
+          VIG: ${{ inputs.vig }}
+        run: node scripts/seara-kml-placas-check.mjs
