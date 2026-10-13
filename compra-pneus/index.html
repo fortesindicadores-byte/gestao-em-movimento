@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610132300">
+<meta name="build" content="202610140130">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -323,7 +323,10 @@ table.dre select.sel{padding:5px 7px;font-size:11px;width:100%;max-width:220px;}
 /* a tabela do admin tem 12 colunas: padding menor e o produto dividindo a sobra,
    para caber sem barra de rolagem horizontal em 1366 px */
 #tb-ped th,#tb-ped td{padding:9px 5px;}
-#tb-ped td:nth-child(12){width:22%;min-width:130px;}
+#tb-ped td:nth-child(13){width:20%;min-width:116px;}   /* Produto (a 13ª desde o Estoque em duas colunas) */
+#tb-ped .sel{max-width:100%;}
+#tb-ped thead th{letter-spacing:.2px;}            /* 14 colunas em 1366 px (Estoque em duas) */
+#tb-ped .pill{white-space:normal;text-align:center;line-height:1.25;}
 #tb-ped th,#tb-ped td:nth-child(3),#tb-ped td:nth-child(4){white-space:normal;}
 table.dre input.inp.vazio{border-style:dashed;border-color:color-mix(in srgb,var(--laranja) 55%,transparent);}
 .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:9.5px;font-weight:800;letter-spacing:.3px;white-space:nowrap;
@@ -544,8 +547,34 @@ const BRANCH={1676:'MCC T1',1677:'MCC T2',37:'CGR',1906:'CBA T1 WH',1907:'CBA T1
         Renan (05/10/2026): "se tiver 4 eixo, 4, senão 3" — tipo com "4 EIXOS"
         no nome → 4EE·4EI·4DI·4DE; qualquer outro → 3EE·3EI·3DI·3DE.
         Caminhão e cavalo NÃO entram, mesmo com pneu na posição 3EE.
-   O resto abaixo de 4 mm vai para recape e não entra na compra. ── */
-const MM_LIM=4;
+   O resto abaixo do limite vai para recape e não entra na compra.
+   LIMITE (Renan, 13/10/2026: "O parâmetro para necessidade deve ser <=4mm para
+   todos, exceto Empurrada e Insumos, que devem ser <=5mm"): o projeto vem da
+   placa na base de Ativos do Ginfo; sem a placa lá, MCC T1 e CBA T1 (unidades
+   só de Empurrada) usam 5 mm e o resto 4 mm. ── */
+const MM_LIM=4, MM_LIM_EMP=5;
+const UNI_EMP=new Set(['MCC T1','CBA T1']);
+const _MERC='ABCDEFGHIJ';
+const placaKey=s=>{ const p=String(s==null?'':s).toUpperCase().replace(/[^A-Z0-9]/g,''); return /^[A-Z]{3}[0-9]{4}$/.test(p)?p.slice(0,4)+_MERC[+p[4]]+p.slice(5):p; };
+const nrm=s=>String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
+const projEmp=p=>/EMPURRADA|INSUMOS|LATA/.test(nrm(p));
+/* placa → projeto do Ginfo (ginfo_snapshot 'ativos'); falha = {} (vale o fallback por unidade) */
+async function leProjetosGinfo(){
+  try{
+    const {data,error}=await sb.from('ginfo_snapshot').select('data').eq('chave','ativos').maybeSingle();
+    if(error||!data||!Array.isArray(data.data)) return {};
+    const m={}; const ks=data.data.length?Object.keys(data.data[0]):[];
+    const kP=ks.find(k=>nrm(k)==='PLACA'), kJ=ks.find(k=>nrm(k)==='PROJETO');
+    if(!kP||!kJ) return {};
+    data.data.forEach(r=>{ const pk=placaKey(r[kP]); if(pk&&r[kJ]) m[pk]=r[kJ]; });
+    return m;
+  }catch(e){ return {}; }
+}
+function mmLimDe(t,uni,proj){
+  const pj=proj[placaKey(t.placa)];
+  if(pj!=null) return projEmp(pj)?MM_LIM_EMP:MM_LIM;
+  return UNI_EMP.has(uni)?MM_LIM_EMP:MM_LIM;
+}
 const LADOS=['EE','EI','DI','DE'];
 const PREM_TXT={1:'1ª vida no dianteiro',2:'4ª recapagem',3:'último eixo da carreta'};
 const eixoDe=t=>{ const m=String(t.nomePosicao||'').trim().match(/^(\d+)/); return m?+m[1]:null; };
@@ -555,8 +584,8 @@ function ultEixoCarretas(veiculos){
   const out={}; veiculos.forEach(v=>{ if(ehCarreta(v.tipo)) out[v.id]=/\b4\s*EIXOS?\b/i.test(v.tipo)?4:3; });
   return out;
 }
-function premissa(t,ult){
-  const mm=+t.menorMM; if(!(mm>0&&mm<MM_LIM)) return null;
+function premissa(t,ult,lim){
+  const mm=+t.menorMM; if(!(mm>0&&mm<=(lim||MM_LIM))) return null;
   const v=+t.cicloVida||1, pos=String(t.nomePosicao||'').toUpperCase().trim();
   if((t.direcional||eixoDe(t)===1)&&v===1) return 1;
   if(v>=5) return 2;
@@ -604,6 +633,7 @@ async function leProlog(){
   const nec={}, est={}; let ok=0, ult=null;
   const slot=(o,u,m)=>((o[u]=o[u]||{})[m]=o[u][m]||{n:0,p:{1:0,2:0,3:0},novos:0});
   const ids=Object.keys(BRANCH);
+  const proj=await leProjetosGinfo();
   for(let i=0;i<ids.length;i+=3){
     await Promise.all(ids.slice(i,i+3).map(async bid=>{
       for(let a=0;a<4;a++){
@@ -618,7 +648,7 @@ async function leProlog(){
             const st=String(t.status||'').toUpperCase();
             if(st==='INVENTORY'){ const s=slot(est,uni,m); s.n++; if((+t.cicloVida||1)===1) s.novos++; return; }
             if(st!=='INSTALLED') return;
-            const p=premissa(t,ultE); if(!p) return;
+            const p=premissa(t,ultE,mmLimDe(t,uni,proj)); if(!p) return;
             const s=slot(nec,uni,m); s.n++; s.p[p]++;
           });
           return; }
@@ -782,7 +812,8 @@ function celProlog(o,uni,med,tipo){
   if(PROLOG.estado==='lendo') return '<span class="mut">…</span>';
   if(PROLOG.estado!=='ok') return '<span class="mut" title="O Prolog não respondeu">—</span>';
   const s=o&&o[uni]&&o[uni][med];
-  if(tipo==='est') return s?`<span title="${s.novos} de primeira vida · ${s.n-s.novos} recapado(s)">${br(s.n)}</span>`:'0';
+  if(tipo==='est1') return s?br(s.novos):'0';                 // estoque de 1ª vida
+  if(tipo==='estR') return s?br(s.n-s.novos):'0';             // estoque recapado
   if(!s) return '0';
   const dica=[1,2,3].filter(k=>s.p[k]).map(k=>`${PREM_TXT[k]}: ${s.p[k]}`).join(' · ');
   return `<span title="${esc(dica)}">${br(s.n)}</span>`;
@@ -800,7 +831,7 @@ function renderResumo(){
   set('k-pend',br(pend.length)); set('k-pend-m',pend.length?`${new Set(pend.map(r=>r.unidade)).size} unidade(s)`:'nada pendente');
   set('k-val','R$ '+br(val,0)); set('k-val-m',semPreco?`${semPreco} pedido(s) sem preço da medida`:'aprovado; não avaliado = sugerido (pedido − estoque)');
   const pr=PROLOG.estado==='ok'?`Prolog ${fmtDT(PROLOG.em)}`:PROLOG.estado==='lendo'?'lendo o Prolog…':'Prolog sem resposta';
-  set('sub-ped',`Estoque = pneus em estoque da medida na unidade · Sugerido = pedido − estoque (o mais antigo consome primeiro) · Necessidade = instalados abaixo de ${MM_LIM} mm que pedem pneu novo (1ª vida no dianteiro · 4ª recapagem · último eixo da carreta depois da 1ª recapagem) · ${pr}`);
+  set('sub-ped',`Estoque = pneus em estoque da medida na unidade (vida 1 e recapado) · Sugerido = pedido − estoque total (o mais antigo consome primeiro) · Necessidade = instalados com até ${MM_LIM} mm (${MM_LIM_EMP} mm na Empurrada e Insumos) que pedem pneu novo (1ª vida no dianteiro · 4ª recapagem · último eixo da carreta depois da 1ª recapagem) · ${pr}`);
   const tb=document.getElementById('tb-ped');
   let tq=0,ta=0,tv=0;
   const corpo=rows.map(r=>{
@@ -810,7 +841,8 @@ function renderResumo(){
     return `<tr data-id="${r.id}">
       <td>${vigRot(r.vigencia)}</td><td class="nome">${esc(r.unidade)}</td><td>${esc(r.projeto)}</td><td>${esc(r.banda).replace('/','/<wbr>')}</td><td>${esc(r.medida)}</td>
       <td class="num">${br(r.qtd)}</td>
-      <td class="num">${celProlog(EST,r.unidade,r.medida,'est')}</td>
+      <td class="num">${celProlog(EST,r.unidade,r.medida,'est1')}</td>
+      <td class="num">${celProlog(EST,r.unidade,r.medida,'estR')}</td>
       <td class="num">${celProlog(NEC,r.unidade,r.medida,'nec')}</td>
       <td class="num">${r.qtd_aprovada!=null?'<span class="mut">—</span>':SUG[r.id]?`<b title="pedido ${br(r.qtd)} − ${br(SUG[r.id].usa)} em estoque">${br(SUG[r.id].sug)}</b>`:PROLOG.estado==='lendo'?'<span class="mut">…</span>':'<span class="mut">—</span>'}</td>
       <td class="num"><input class="inp${r.qtd_aprovada==null?' vazio':''}" type="number" min="0" step="1" value="${r.qtd_aprovada==null?'':r.qtd_aprovada}" data-apr="${r.id}" title="Quantidade aprovada (vazio = aguardando; 0 = não aprovado)"></td>
@@ -818,9 +850,9 @@ function renderResumo(){
       <td>${ops?`<select class="sel" data-prod="${r.id}">${ops}</select>${auto&&p?'<span class="lin2">menor preço da medida</span>':''}`:'<span class="mut">sem preço da medida</span>'}</td>
       <td class="num">${v==null?'—':brl(v)}</td>
     </tr>`; }).join('');
-  tb.innerHTML=`<thead><tr><th>Vigência</th><th>Unidade</th><th>Projeto</th><th>Banda</th><th>Medida</th><th class="num">Pedido</th><th class="num">Estoque</th><th class="num">Necessidade</th><th class="num">Sugerido</th><th class="num">Aprovado</th><th>Situação</th><th>Produto</th><th class="num">Valor previsto</th></tr></thead><tbody>`
-    +(corpo||'<tr><td colspan="13" class="mut" style="text-align:center;padding:18px">Nenhum pedido no recorte.</td></tr>')
-    +(rows.length?`<tr class="total"><td colspan="5">Total</td><td class="num">${br(tq)}</td><td></td><td></td><td></td><td class="num">${br(ta)}</td><td></td><td></td><td class="num">${brl(tv)}</td></tr>`:'')+'</tbody>';
+  tb.innerHTML=`<thead><tr><th>Vigência</th><th>Unidade</th><th>Projeto</th><th>Banda</th><th>Medida</th><th class="num">Pedido</th><th class="num">Estoque Vida 1</th><th class="num">Estoque Recapado</th><th class="num">Necessidade</th><th class="num">Sugerido</th><th class="num">Aprovado</th><th>Situação</th><th>Produto</th><th class="num">Valor previsto</th></tr></thead><tbody>`
+    +(corpo||'<tr><td colspan="14" class="mut" style="text-align:center;padding:18px">Nenhum pedido no recorte.</td></tr>')
+    +(rows.length?`<tr class="total"><td colspan="5">Total</td><td class="num">${br(tq)}</td><td></td><td></td><td></td><td></td><td class="num">${br(ta)}</td><td></td><td></td><td class="num">${brl(tv)}</td></tr>`:'')+'</tbody>';
   tb.querySelectorAll('input[data-apr]').forEach(i=>i.addEventListener('change',()=>salvaAprov(+i.dataset.apr)));
   tb.querySelectorAll('select[data-prod]').forEach(s=>s.addEventListener('change',()=>salvaAprov(+s.dataset.prod)));
   set('n-resumo',pend.length||'');
@@ -962,6 +994,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610132300"></script>
+<script src="../assets/build-check.js?v=202610140130"></script>
 </body>
 </html>

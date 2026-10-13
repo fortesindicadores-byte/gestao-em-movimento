@@ -75,14 +75,19 @@ const PNEUS_MCC_T2 = [
   T({ medida: '8/15 R15', direcional: true, nomePosicao: '1E', menorMM: 2 }), // 8.25-15 arredondado pelo loader
 ];
 const VEIC = [{ id: 9, tipo: 'CAMINHÃO BAÚ ROLL UP 10 PALLETS' }, { id: 20, tipo: 'SEMI REBOQUE - 3 EIXOS SIDER ASA DELTA' }, { id: 21, tipo: 'SEMI REBOQUE 4 EIXOS' }, { id: 22, tipo: 'Semi Reboque' }, { id: 23, tipo: 'CARRETA BAU 2 EIXOS' }];
-const SNAP = { 1677: { tires: PNEUS_MCC_T2, vehicles: VEIC }, 37: { tires: [T({ medida: '295/80 R22.5', cicloVida: 6, menorMM: 1 }), T({ medida: '295/80 R22.5', status: 'INVENTORY', veiculoId: null })], vehicles: VEIC } };
+const P295 = o => T({ medida: '295/80 R22.5', direcional: true, nomePosicao: '1E', ...o });
+const ATIVOS = [{ Filial: 'PIRAI', Projeto: 'EMPURRADA', Placa: 'ABC1D23' }, { Filial: 'PIRAI', Projeto: 'ROTA', Placa: 'ABC1D24' },
+  { Filial: 'PIRAI', Projeto: 'INSUMOS', Placa: 'ABC1D25' }];
+const SNAP = { 1676: { tires: [P295({ menorMM: 4.5, placa: 'ZZZ9Z99' }), P295({ menorMM: 5.5, placa: 'ZZZ9Z98' })], vehicles: VEIC },
+  38: { tires: [P295({ menorMM: 4.5, placa: 'ABC1D23' }), P295({ menorMM: 4.5, placa: 'ABC1D24' }), P295({ menorMM: 4, placa: 'ABC1D24' }), P295({ menorMM: 4.5, placa: 'ABC-1325' })], vehicles: VEIC },
+  1677: { tires: PNEUS_MCC_T2, vehicles: VEIC }, 37: { tires: [T({ medida: '295/80 R22.5', cicloVida: 6, menorMM: 1 }), T({ medida: '295/80 R22.5', status: 'INVENTORY', veiculoId: null })], vehicles: VEIC } };
 
 /* dublê do supabase-js: o mínimo de PostgREST que a página usa, com as regras
    do banco (scripts/pneus-compra.sql) — vigência carimbada, unidade não aprova,
    unidade só apaga pendente */
 const SHIM_SB = (perfil, faltaTabela) => `(function(){
 const DB={pneu_pedido:${JSON.stringify(PEDIDOS)},pneu_preco:${JSON.stringify(PRECOS)}};
-const SNAP=${JSON.stringify(SNAP)}; const PERFIL=${JSON.stringify(perfil)}; const FALTA=${JSON.stringify(!!faltaTabela)};
+const SNAP=${JSON.stringify(SNAP)}; const ATIVOS=${JSON.stringify(ATIVOS)}; const PERFIL=${JSON.stringify(perfil)}; const FALTA=${JSON.stringify(!!faltaTabela)};
 window.__log={insert:[],update:[],snapshot:0}; window.__db=DB;
 const admin=!!PERFIL.is_admin, unis=String(PERFIL.unidade||'').split(',').map(s=>s.trim()).filter(Boolean);
 const pode=r=>admin||unis.includes(r.unidade);
@@ -96,6 +101,7 @@ function q(t){ let op='select', val=null, f=[], ord=null, rg=null, one=false, re
     if(t==='fca_profiles') return {data:one?PERFIL:[PERFIL],error:null};
     if(t==='snapshot'){ window.__log.snapshot++; const bid=(f.find(x=>x[0]==='branch_id')||[])[1]; const d=SNAP[bid];
       return {data:d?Object.keys(d).map(e=>({endpoint:e,data:d[e],updated_at:'2026-10-05T15:00:00Z'})):[],error:null}; }
+    if(t==='ginfo_snapshot') return {data:{data:ATIVOS},error:null};
     if(FALTA) return {data:null,error:{message:'relation "public.'+t+'" does not exist'}};
     const tab=DB[t]; if(!tab) return {data:null,error:{message:'tabela '+t}};
     if(op==='select'){ let rows=tab.filter(r=>t!=='pneu_pedido'||pode(r)).filter(casa); if(rg) rows=rows.slice(rg[0],rg[1]+1); return {data:JSON.parse(JSON.stringify(rows)),error:null}; }
@@ -140,7 +146,7 @@ const linha = (pg, id) => pg.$$eval(`#tb-ped tr[data-id="${id}"] td`, tds => tds
 console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor previsto');
 {
   const { pg, ctx, errs } = await abre({ is_admin: true, unidade: null });
-  await pg.waitForFunction(() => !/…/.test((document.querySelector('#tb-ped tr[data-id="1"] td:nth-child(8)') || {}).textContent || '…'), { timeout: 10000 }).catch(() => {});
+  await pg.waitForFunction(() => !/…/.test((document.querySelector('#tb-ped tr[data-id="1"] td:nth-child(9)') || {}).textContent || '…'), { timeout: 10000 }).catch(() => {});
   af('abre no Resumo Gerencial', await txt(pg, '#tit') === 'Resumo Gerencial');
   af('visões de admin visíveis', await pg.$$eval('.s-item.adm', b => b.every(x => x.style.display !== 'none')));
   af('KPIs: 5 pedidos · 34 pneus pedidos · 14 aprovados · 3 aguardando',
@@ -150,20 +156,25 @@ console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor pre
   af('valor previsto = sugerido × menor preço + aprovados', await txt(pg, '#k-val') === 'R$ 27.744', await txt(pg, '#k-val'));
   af('pedido sem preço da medida vira aviso', /1 pedido\(s\) sem preço/.test(await txt(pg, '#k-val-m')), await txt(pg, '#k-val-m'));
   const l1 = await linha(pg, 1);
-  af('MCC T2 · 235: Necessidade = 6 (1 + 1 + 4 do último eixo das carretas)', l1[7] === '6', l1[7]);
-  af('Sugerido = 12 pedidos − 3 em estoque = 9', l1[8] === '9', l1[8]);
-  af('2º pedido da mesma unidade e medida: estoque já usado, sugerido = 2', (await linha(pg, 5))[8] === '2', (await linha(pg, 5))[8]);
-  af('pedido já avaliado não tem sugerido', (await linha(pg, 2))[8] === '—');
-  af('MCC T2 · 235: Estoque = 3 (INVENTORY; descarte fora)', l1[6] === '3', l1[6]);
-  const dica = await pg.$eval('#tb-ped tr[data-id="1"] td:nth-child(8) span', e => e.title).catch(() => '');
+  af('MCC T2 · 235: Necessidade = 6 (1 + 1 + 4 do último eixo das carretas)', l1[8] === '6', l1[8]);
+  af('Sugerido = 12 pedidos − 3 em estoque = 9', l1[9] === '9', l1[9]);
+  af('2º pedido da mesma unidade e medida: estoque já usado, sugerido = 2', (await linha(pg, 5))[9] === '2', (await linha(pg, 5))[9]);
+  af('pedido já avaliado não tem sugerido', (await linha(pg, 2))[9] === '—');
+  af('MCC T2 · 235: Estoque Vida 1 = 2 e Estoque Recapado = 1 (INVENTORY; descarte fora)', l1[6] === '2' && l1[7] === '1', l1[6] + ' · ' + l1[7]);
+  af('cabeçalho com as duas colunas de estoque', /Estoque Vida 1/.test(await txt(pg, '#tb-ped thead')) && /Estoque Recapado/.test(await txt(pg, '#tb-ped thead')));
+  // limite da Necessidade (Renan, 13/10/2026): ≤ 4 mm; ≤ 5 mm na Empurrada e Insumos
+  const lim = await pg.evaluate(() => ({ mcc: NEC['MCC T1'] && NEC['MCC T1']['295'] ? NEC['MCC T1']['295'].n : 0, pir: NEC['PIR'] && NEC['PIR']['295'] ? NEC['PIR']['295'].n : 0 }));
+  af('MCC T1 (só Empurrada, placa fora do Ginfo): 4,5 mm conta pelo limite de 5 mm', lim.mcc === 1, lim.mcc);
+  af('PIR: 4,0 mm na ROTA conta, 4,5 mm na ROTA não, 4,5 mm na EMPURRADA e no INSUMOS contam (placa → Ginfo)', lim.pir === 3, lim.pir);
+  const dica = await pg.$eval('#tb-ped tr[data-id="1"] td:nth-child(9) span', e => e.title).catch(() => '');
   af('dica da Necessidade separa as premissas', /1ª vida no dianteiro: 1/.test(dica) && /4ª recapagem: 1/.test(dica) && /último eixo da carreta: 4/.test(dica), dica);
-  af('sem produto escolhido: menor preço da medida, avisado', /menor preço da medida/.test(l1[11]) && /709/.test(l1[11]), l1[11]);
+  af('sem produto escolhido: menor preço da medida, avisado', /menor preço da medida/.test(l1[12]) && /709/.test(l1[12]), l1[12]);
   const l3 = await linha(pg, 3);
-  af('5.00-8 sem preço: célula diz "sem preço da medida"', /sem preço da medida/.test(l3[11]) && l3[12].startsWith('—'), l3[11] + ' | ' + l3[12]);
-  af('CGR · 295 com vida 6 abaixo de 4 mm conta (4ª recapagem em diante)', (await linha(pg, 2))[7] === '1');
+  af('5.00-8 sem preço: célula diz "sem preço da medida"', /sem preço da medida/.test(l3[12]) && l3[13].startsWith('—'), l3[12] + ' | ' + l3[13]);
+  af('CGR · 295 com vida 6 abaixo de 4 mm conta (4ª recapagem em diante)', (await linha(pg, 2))[8] === '1');
   const nec825 = await pg.evaluate(() => NEC['MCC T2'] && NEC['MCC T2']['8.25-15'] ? NEC['MCC T2']['8.25-15'].n : 0);
   af('"8/15 R15" do Prolog cai em 8.25-15', nec825 === 1, nec825);
-  af('situação: aguardando / aprovado parcial', /Aguardando/.test(l1[10]) && /Aprovado parcial/.test((await linha(pg, 2))[10]));
+  af('situação: aguardando / aprovado parcial', /Aguardando/.test(l1[11]) && /Aprovado parcial/.test((await linha(pg, 2))[11]));
   if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'cp-resumo.png') });
 
   // aprovar 10 → 10×709
@@ -171,18 +182,18 @@ console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor pre
   let up = await pg.evaluate(() => window.__log.update.slice(-1)[0]);
   af('aprovar grava qtd_aprovada, o produto mostrado e quem aprovou', up && up.val.qtd_aprovada === 10 && up.val.preco_id === 4 && up.val.aprovado_nome === 'Teste Pneus', JSON.stringify(up && up.val));
   let l = await linha(pg, 1);
-  af('valor da linha = 10 × 709', /R\$ 7\.090,00/.test(l[12]) && /Aprovado parcial/.test(l[10]), l[12]);
+  af('valor da linha = 10 × 709', /R\$ 7\.090,00/.test(l[13]) && /Aprovado parcial/.test(l[11]), l[13]);
   // trocar o produto → 10 × 1357
   await pg.selectOption('#tb-ped select[data-prod="1"]', '3'); await pg.waitForTimeout(300);
   l = await linha(pg, 1);
-  af('trocar o produto refaz o valor (10 × 1.357)', /R\$ 13\.570,00/.test(l[12]) && !/menor preço/.test(l[11]), l[12]);
+  af('trocar o produto refaz o valor (10 × 1.357)', /R\$ 13\.570,00/.test(l[13]) && !/menor preço/.test(l[12]), l[13]);
   // aprovar 0 → não aprovado, valor 0
   await pg.fill('#tb-ped input[data-apr="3"]', '0'); await pg.press('#tb-ped input[data-apr="3"]', 'Tab'); await pg.waitForTimeout(300);
-  af('0 aprovado = "Não aprovado"', /Não aprovado/.test((await linha(pg, 3))[10]));
+  af('0 aprovado = "Não aprovado"', /Não aprovado/.test((await linha(pg, 3))[11]));
   // limpar volta para aguardando
   await pg.fill('#tb-ped input[data-apr="3"]', ''); await pg.press('#tb-ped input[data-apr="3"]', 'Tab'); await pg.waitForTimeout(300);
   up = await pg.evaluate(() => window.__log.update.slice(-1)[0]);
-  af('apagar o aprovado volta para aguardando (qtd_aprovada nula)', up && up.val.qtd_aprovada === null && /Aguardando/.test((await linha(pg, 3))[10]));
+  af('apagar o aprovado volta para aguardando (qtd_aprovada nula)', up && up.val.qtd_aprovada === null && /Aguardando/.test((await linha(pg, 3))[11]));
 
   // filtro de unidade
   await pg.evaluate(() => { const w = document.getElementById('ms-uni'); w._sel = new Set(['CGR']); w._render(''); render(); });
@@ -224,8 +235,8 @@ console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor pre
   await pg.click('#tb-preco .addrow .btn'); await pg.waitForTimeout(300);
   af('adicionar produto entra na tabela', await pg.$$eval('#tb-preco tr[data-pid]', t => t.length) === 6);
   await pg.click('.s-item[data-vw="resumo"]'); await pg.waitForTimeout(200);
-  af('preço novo vale na hora: 10 × 1.400', /R\$ 14\.000,00/.test((await linha(pg, 1))[12]), (await linha(pg, 1))[12]);
-  af('medida que ganhou preço passa a ter valor (4 × 350,50)', /R\$ 1\.402,00/.test((await linha(pg, 3))[12]), (await linha(pg, 3))[12]);
+  af('preço novo vale na hora: 10 × 1.400', /R\$ 14\.000,00/.test((await linha(pg, 1))[13]), (await linha(pg, 1))[13]);
+  af('medida que ganhou preço passa a ter valor (4 × 350,50)', /R\$ 1\.402,00/.test((await linha(pg, 3))[13]), (await linha(pg, 3))[13]);
   for (const w of [1600, 1366]) {
     await pg.setViewportSize({ width: w, height: 768 }); await pg.waitForTimeout(200);
     const sw = await pg.$eval('#tb-ped', t => { const w = t.closest('.twrap'); return [w.scrollWidth, w.clientWidth]; });
