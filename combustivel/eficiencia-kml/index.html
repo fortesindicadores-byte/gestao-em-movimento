@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610111500">
+<meta name="build" content="202610131600">
 <title>Km/L · Eficiência de Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -856,6 +856,13 @@ function _vigDoBanco(l){
 }
 async function fetchBanco(){
   const sb=sbCli(); if(!sb)throw new Error('supabase-js não carregou');
+  // CARGA QUE FALHOU = TABELA CONGELADA (13/10/2026): quando a aba muda de
+  // forma, o robô não grava e a tabela fica no último conteúdo bom — o painel
+  // mostrava jan→ago enquanto a planilha já tinha setembro. Mesma regra do
+  // gviz-cache: erro "FALHOU" no sh_base manda para a planilha.
+  let st=null;
+  try{ ({data:st}=await sb.from('sh_base').select('erro').eq('slug','consumo_km_litro').maybeSingle()); }catch(e){}
+  if(st&&/^FALHOU/i.test(String(st.erro||'')))throw new Error('carga do banco falhou: '+String(st.erro).slice(0,80));
   const linhas=[];
   for(let de=0;;de+=1000){                       // o PostgREST corta em 1000
     const {data,error}=await sb.from('sh_consumo_km_litro').select('*')
@@ -1698,6 +1705,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610111500"></script>
+<script src="../../assets/build-check.js?v=202610131600"></script>
 </body>
 </html>

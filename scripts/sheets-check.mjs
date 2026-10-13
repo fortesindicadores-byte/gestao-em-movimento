@@ -27,6 +27,25 @@ async function conta(tabela) {
   return { n: isFinite(n) ? n : null };
 }
 
+// vigências da tabela (coluna normalizada MM/AAAA): é o que mostra se o mês
+// novo entrou, coisa que a contagem de linhas sozinha não diz
+async function vigs(tabela) {
+  const cont = {};
+  for (let de = 0; ; de += 1000) {
+    const r = await fetch(`${SUPA}/rest/v1/${tabela}?select=vigencia&order=linha`,
+      { headers: { ...H, Range: `${de}-${de + 999}` } });
+    if (!r.ok) return null;
+    const d = await r.json();
+    for (const x of d) { const v = x.vigencia || '(sem)'; cont[v] = (cont[v] || 0) + 1; }
+    if (d.length < 1000 || de > 200000) break;
+  }
+  const chave = v => { const m = /^(\d{2})\/(\d{4})$/.exec(v); return m ? m[2] + m[1] : ''; };
+  const ord = Object.keys(cont).filter(chave).sort((a, b) => chave(a).localeCompare(chave(b)));
+  if (!ord.length) return 'sem vigência';
+  const ult = ord.slice(-2).map(v => `${v} (${cont[v]})`).join(' · ');
+  return `${ord.length} vig. · últimas: ${ult}`;
+}
+
 const rb = await fetch(`${SUPA}/rest/v1/sh_base?select=*`, { headers: H });
 if (!rb.ok) {
   console.error(`sh_base não respondeu (HTTP ${rb.status}). Rodou o scripts/bases-manuais.sql?`);
@@ -35,6 +54,7 @@ if (!rb.ok) {
 const meta = Object.fromEntries((await rb.json()).map(r => [r.slug, r]));
 console.log(`sh_base tem ${Object.keys(meta).length} de ${BASES.length} base(s) registradas\n`);
 console.log('base                      planilha    sh_base    tabela   carregado há   situação');
+const VIGS = [];
 
 const hMin = t => t ? Math.round((Date.now() - new Date(t)) / 60000) : null;
 let problemas = 0;
@@ -60,6 +80,9 @@ for (const b of BASES) {
   console.log(`${b.slug.padEnd(24)} ${String(naPlanilha ?? '—').padStart(9)} `
     + `${String(m ? m.linhas : '—').padStart(10)} ${String(t.n ?? t.erro ?? '—').padStart(9)} `
     + `${idade.padStart(13)}   ${notas.length ? '⚠ ' + notas.join(' · ') : 'ok'}`);
+  if (!t.erro) VIGS.push(`${b.slug.padEnd(24)} ${await vigs(`sh_${b.slug}`) ?? 'erro na leitura'}`);
 }
+console.log('\n── vigências na tabela (o que os painéis enxergam) ──');
+VIGS.forEach(l => console.log(l));
 console.log(`\n${BASES.length - problemas} ok · ${problemas} com observação`);
 process.exit(problemas ? 1 : 0);
