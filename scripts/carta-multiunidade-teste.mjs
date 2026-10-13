@@ -49,8 +49,7 @@ const opsSel=(pg,id)=>pg.evaluate(id=>[...document.querySelectorAll('#'+id+' opt
 async function lanca(pg,proj){
   await pg.evaluate(()=>{window.__ins=[];abrirLanc('');});
   await pg.selectOption('#f-projeto',proj);
-  await pg.fill('#f-rc','77'); await pg.fill('#f-valor','10,00');
-  await pg.evaluate(()=>salvarLancModal()); await pg.waitForTimeout(400);
+  await pg.evaluate(()=>{$('f-rc').value='77';$('f-valor').value='10,00';return salvarLancModal();}); await pg.waitForTimeout(400);
   return pg.evaluate(()=>window.__ins[0]?{u:window.__ins[0].unidade,p:window.__ins[0].projeto}:{al:window.__al,mbg:$('mbg').className,proj:$('f-projeto').value});
 }
 // 1 · perfil MCC T1,MCC T2 (o caso do Erick): filtro MACACU, projetos Empurrada e Rota
@@ -61,7 +60,7 @@ async function lanca(pg,proj){
   let m=await pg.evaluate(()=>({uni:curUnits(),bases:typeof curBases==='function'?curBases():[],sub:$('titSub').textContent}));
   t(m.uni.join()==='MCC T1,MCC T2'&&m.bases.join()==='MCC','abre com a unidade inteira (os dois tiers) → '+JSON.stringify(m.uni));
   const u=await opsMs(pg,'ms-uni');
-  t(u.join()==='MACACU','filtro Unidade só com MACACU, sem tier → '+JSON.stringify(u));
+  t(u.join()==='MCC','filtro Unidade só com a sigla MCC, sem tier → '+JSON.stringify(u));
   const pr=await opsMs(pg,'ms-proj');
   t(pr.includes('EMPURRADA')&&pr.includes('ROTA'),'filtro Projeto com Empurrada e Rota → '+JSON.stringify(pr));
   t(/^MACACU ·/.test(m.sub),'subtítulo diz MACACU → '+m.sub);
@@ -92,16 +91,15 @@ async function lanca(pg,proj){
   const pg=await abre(1600,900,'escuro',{is_admin:false,unidade:'PIR,MCC T2'});
   await pg.evaluate(FROTA_D.toString().replace(/^\(\)=>/,''));
   const u=await opsMs(pg,'ms-uni');
-  t(u.join()==='PIRAI,MACACU','filtro Unidade PIRAI e MACACU → '+JSON.stringify(u));
+  t(u.join()==='PIR,MCC','filtro Unidade PIR e MCC → '+JSON.stringify(u));
   await pg.evaluate(()=>abrirLanc(''));
   const m=await pg.evaluate(()=>({ctx:$('m-ctx').style.display,ops:[...document.querySelectorAll('#f-unidade option')].map(o=>o.value+':'+o.textContent)}));
-  t(m.ctx!=='none'&&m.ops.join()==='PIR:PIRAI,MCC:MACACU','caixa com o seletor Unidade pelo nome → '+JSON.stringify(m.ops));
+  t(m.ctx!=='none'&&m.ops.join()==='PIR:PIR,MCC:MCC','caixa com o seletor Unidade pela sigla → '+JSON.stringify(m.ops));
   await pg.selectOption('#f-unidade','MCC');
   const pc=await opsSel(pg,'f-projeto');
   t(pc.includes('ROTA')&&!pc.includes('EMPURRADA'),'MACACU com só T2 liberado: sem Empurrada → '+JSON.stringify(pc));
   await pg.selectOption('#f-projeto','ROTA');
-  await pg.fill('#f-rc','77'); await pg.fill('#f-valor','10,00');
-  await pg.evaluate(()=>salvarLancModal()); await pg.waitForTimeout(400);
+  await pg.evaluate(()=>{$('f-rc').value='77';$('f-valor').value='10,00';return salvarLancModal();}); await pg.waitForTimeout(400);
   const ins=await pg.evaluate(()=>window.__ins[0]);
   t(ins&&ins.unidade==='MCC T2','grava MCC T2 → '+(ins&&ins.unidade));
   await pg.close();
@@ -110,7 +108,7 @@ async function lanca(pg,proj){
 {
   const pg=await abre(1600,900,'escuro',{is_admin:true,unidade:''});
   const u=await opsMs(pg,'ms-uni');
-  t(u.filter(x=>x==='CUIABA').length===1&&u.filter(x=>x==='MACACU').length===1&&!u.some(x=>/ T\d/.test(x)),'admin: unidades sem tier → '+JSON.stringify(u));
+  t(u.filter(x=>x==='CBA').length===1&&u.filter(x=>x==='MCC').length===1&&!u.some(x=>/ T\d/.test(x)),'admin: unidades sem tier → '+JSON.stringify(u));
   await pg.evaluate(()=>abrirLanc(''));
   t(await pg.evaluate(()=>$('m-ctx').style.display)==='none','admin com 1 unidade no filtro: caixa sem seletor');
   await pg.evaluate(FROTA_D.toString().replace(/^\(\)=>/,''));
