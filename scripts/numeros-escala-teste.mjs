@@ -38,7 +38,9 @@ for(const a of arqs){
   if(!ks.length){console.log('  (sem elemento medível)',a);continue;}
   t(ks.every(k=>A[k]===N[k]),`${a} 1920×950 igual ao antigo ${JSON.stringify(A)} → ${JSON.stringify(N)}`);
   const n15=res[`N|${a}|1536`],a15=res[`A|${a}|1536`];
-  t(ks.some(k=>n15[k]<a15[k]),`${a} 1536×730 menor que o antigo ${JSON.stringify(a15)} → ${JSON.stringify(n15)}`);
+  // o que era tamanho fixo (igual em 1920 e 1536 no antigo) tem de encolher
+  const fixos=ks.filter(k=>a15[k]===A[k]&&A[k]>=16);
+  t(fixos.every(k=>n15[k]<a15[k]),`${a} 1536×730: números fixos menores que o antigo ${JSON.stringify(fixos.map(k=>[k,a15[k],n15[k]]))}`);
   t(ks.every(k=>n15[k]<=a15[k]),`${a} 1536×730 nada maior`);
   t(ks.every(k=>res[`N|${a}|1366`][k]<=n15[k]),`${a} 1366×650 ≤ 1536×730`);
   t(ks.every(k=>res[`N|${a}|390`][k]===res[`A|${a}|390`][k]),`${a} celular igual ao antigo`);
