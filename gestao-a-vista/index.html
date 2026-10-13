@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610111500">
+<meta name="build" content="202610131800">
 <title>Gestão à Vista</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -529,7 +529,9 @@ body.prehub .s-uni{display:none;}   /* já está nas unidades — a seta de volt
 
 <div class="dica" id="dica"></div>
 
-<script src="../farol-frota/farol-core.js?v=202610070015"></script>
+<!-- a conta da Carta de Custos (visão Custos = Carta do mês corrente, 13/10/2026) -->
+<script src="../assets/carta-calc.js?v=202610131800"></script>
+<script src="../farol-frota/farol-core.js?v=202610131800"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════════
    Gestão à Vista — o Farol no layout padrão do portal (Renan, 21/08/2026).
@@ -578,7 +580,7 @@ const VIEWS=[
   // ENTRE O RESUMO E O PRIMEIRO INDICADOR (Renan, 10/09/2026): fecha as
   // Visões, antes de Custos. Uma linha por placa com todos os indicadores.
   {id:'placas', g:'v', ic:ICO.placas, t:'Placas', s:'Todos os indicadores por placa — dias para vencer e status', r:(el,cod)=>renderPlacas(el,cod)},
-  {id:'custos', g:'i', ic:ICO.custos, t:'Custos', s:()=>'Realizado × Remunerado × Orçado — '+(codAtual()?'por projeto':'por unidade'), r:(el,cod)=>renderCustos(el,cod)},
+  {id:'custos', g:'i', ic:ICO.custos, t:'Custos', s:()=>custosSub(codAtual()), r:(el,cod)=>renderCustos(el,cod)},
   {id:'stressv',g:'i', ic:ICO.veic,   t:'Stress Test — Veículos', s:()=>'Aderência (sem desconto) vs meta 100% · descontos por placa'+fx('stressV'), r:(el,cod)=>renderStressV(el,cod)},
   {id:'stresse',g:'i', ic:ICO.emp,    t:'Stress Test — Empilhadeiras', s:()=>'Aderência 1ª/2ª quinzena · descontos por equipamento'+fx('stressE'), r:(el,cod)=>renderStressE(el,cod), temDado:()=>byCod(DATA.stressE,codAtual()).filter(r=>r.contratada).length>0},
   {id:'prev',   g:'i', ic:ICO.prev,   t:'Preventivas', s:()=>'Aderência vs 100% · placas por status, dias e km'+fx('prev'), r:(el,cod)=>renderPrev(el,cod)},
@@ -1475,6 +1477,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:t=>aplicaTema(t==='light'?'light':'dark')
 });
 </script>
-<script src="../assets/build-check.js?v=202610111500"></script>
+<script src="../assets/build-check.js?v=202610131800"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610131500">
+<meta name="build" content="202610131800">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -505,6 +505,7 @@ body.claro input[type=date]{color-scheme:light;}
 }
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
+<script src="../assets/carta-calc.js?v=202610131800"></script>
 </head>
 <body>
 
@@ -762,26 +763,19 @@ const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
 const ADMIN_EMAIL='fortesindicadores@gmail.com';
 let sb=null, SESSION=null, IS_ADMIN=false, ALLOWED=[];
+/* A CONTA DA CARTA MORA EM assets/carta-calc.js (Renan, 13/10/2026: "Farol
+   semanal custos: deve ser substituída pela carta de custos"). O Gestão à
+   Vista mostra o Resumo Gerencial do mês corrente, e as duas telas usam as
+   MESMAS funções — aqui ficam só apelidos com os nomes de sempre. */
+const CC=window.CartaCalc;
 // unidades (mesmo mapa do FCA) — CBA e MCC separadas por projeto/tier
-const DEPARA={CGR:'CAMPO GRANDE',BLC:'BALNEARIO CAMBORIU','CBA T1':'CUIABA — EMPURRADA (T1)','CBA T1 WH':'CUIABA — APOIO (T1 WH)','CBA T2':'CUIABA — CDD (T2)',FLP:'FLORIANOPOLIS',GRL:'GUARULHOS',NFR:'NOVA FRIBURGO',PLT:'PELOTAS',RON:'RONDONOPOLIS','MCC T1':'MACACU — EMPURRADA (T1)','MCC T2':'MACACU — CDI (T2)',PIR:'PIRAI',ANG:'ANHANGUERA',GNA:'GOIANIA'};
-const UNIT_BASE=c=>{c=String(c||'');return c.startsWith('CBA ')?'CBA':c.startsWith('MCC ')?'MCC':c;};
-const UNIT_TIER=c=>{c=String(c||'');return (c.startsWith('CBA ')||c.startsWith('MCC '))?c.slice(4):'';};
-const tierOfPrefix=(base,p)=>{p=String(p||'').toUpperCase();if(/EMPURRAD/.test(p))return 'T1';if(base==='CBA'&&/APOIO/.test(p))return 'T1 WH';return 'T2';};
-const unitMatchNv3=(unit,nv3)=>{const b=UNIT_BASE(unit),t=UNIT_TIER(unit);if(getUniLabel(nv3).toUpperCase().trim()!==b)return false;return !t||tierOfPrefix(b,getNv3Prefix(nv3).toUpperCase())===t;};
+const DEPARA=CC.DEPARA;
+const {UNIT_BASE,UNIT_TIER,tierOfPrefix,unitMatchNv3}=CC;
 const PROJETOS=['ROTA','APOIO','EMPURRADA','AUTO SERVIÇO','INSUMOS'];
 const PROJETOS_EXCLUIR=new Set(['ADMINISTRATIVO','ADMINISTRATIVO APOIO','ADMINISTRATIVO T1','ADMINISTRATIVO T2','ASVD','DEEP ARRENDAMENTOS','DEEP ARRENDADOS','EMPURRADA BITREM','MOBILIZAÇÃO','PA PETRÓPOLIS','TERCEIROS','TERCEIROS ARRENDADOS','ROTA (VAN)','UDC']);
 let UNIT_PROJETOS=PROJETOS.slice();
-/* a ordem das chaves é a ordem dos blocos no Resumo e das opções do filtro
-   Pacote — Combustíveis primeiro (Renan, 09/10/2026: "Combustível deve ser a
-   primeira linha") */
-const CONTAS={
-  /* COMBUSTÍVEIS (Renan, 09/10/2026): o realizado NÃO é lançado — vem sozinho
-     dos abastecimentos ENCERRADOS do ERP (erp_abastecimentos, carga diária do
-     PowerShell), sem PIS/COFINS, como o DRE. Ver loadComb(). */
-  'Combustíveis':['Combustíveis','Arla'],
-  'Manutenção':['Manutenção de Veículos e Equip.','Materiais e Ferramentas de Oficina','Lavação de Veículos','Manutenção de Carrocerias','Personalização/Padronização','Contratos de Manutenção Fabricante'],
-  'Pneus':['Pneus Novos','Recapagens e Outros Serviços']
-};
+// contas por pacote (a ordem das chaves é a dos blocos no Resumo e do filtro Pacote)
+const CONTAS=CC.CONTAS;
 // pacotes cujo realizado vem de robô: ficam fora da caixa de lançamento
 const PAC_AUTO=new Set(['Combustíveis']);
 const GRUPOS={
@@ -791,10 +785,7 @@ const GRUPOS={
   'Pneus':['Recapagens','Rodízio','Vulcanização','Reparo','Manchão','Válvula','Câmara','Alinhamento','Balanceamento','Borracharia','Descarte']
 };
 const GRUPO_FIXO={'Pneus Novos':'Pneus Novos'};
-const PACOTES=Object.keys(CONTAS);
-const pacoteDaConta=c=>PACOTES.find(p=>CONTAS[p].includes(c))||'';
-// linha antiga sem pacote gravado: a conta diz qual é; sem conta conhecida, Manutenção
-const pacDe=r=>(r&&r.pacote)||pacoteDaConta(r&&r.conta)||'Manutenção';
+const {PACOTES,pacoteDaConta,pacDe}=CC;   // linha sem pacote: a conta decide (CC.pacDe)
 const gruposDaConta=c=>GRUPO_FIXO[c]?[GRUPO_FIXO[c]]:(GRUPOS[pacoteDaConta(c)||'Manutenção']||[]);
 /* SUGESTÕES DO GRUPO (Renan, 07/10/2026: "aumentar um pouco a altura para não ter que usar tanto a
    barra de rolagem"): era um <datalist>, e a altura do menu nativo não se controla por CSS. Agora é
@@ -930,61 +921,15 @@ const charts={};
 let VW='resumo';
 
 // ── DRE (Orçado / Remunerado por unidade × conta × vigência) ──
-const SHEET_ID='1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8', TAB_FROTA='Frota';
-const _normEb=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-function ebIdx(h,...names){const nc=h.map(_normEb);for(const n of names){const i=nc.indexOf(_normEb(n));if(i>=0)return i;}for(const n of names){const nn=_normEb(n);const i=nc.findIndex(c=>c.includes(nn));if(i>=0)return i;}return -1;}
-const _numBR=v=>{if(v==null||v==='')return null;if(typeof v==='number')return v;let s=String(v).replace(/\s|R\$/g,'');if(s.indexOf(',')>=0)s=s.replace(/\./g,'').replace(',','.');const f=parseFloat(s);return isNaN(f)?null:f;};
-const _MESN={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
-function _mesNum(m){if(m==null)return null;if(typeof m==='number'&&m>=1&&m<=12)return m;const s=_normEb(m).slice(0,3);if(_MESN[s])return _MESN[s];const n=parseInt(m);return n>=1&&n<=12?n:null;}
-function parseVigD(v){if(v==null)return null;if(v instanceof Date)return v;const s=String(v);let m=s.match(/(\d{1,2})[\/\-](\d{4})/);if(m)return new Date(+m[2],+m[1]-1,1);m=s.match(/(\d{4})[\/\-](\d{1,2})/);if(m)return new Date(+m[1],+m[2]-1,1);const d=new Date(s);return isNaN(d)?null:d;}
-const getUniLabel=v=>{if(!v)return '';v=String(v);const i=v.lastIndexOf('-');const s=i>=0?v.slice(i+1).trim():v.trim();return s.replace(/\s*\(INATIVO\)\s*/i,'').trim();};
-const getNv3Prefix=v=>v?String(v).split('-')[0].trim():'';
-const CONTAS_ALIAS={'Manutenção de Veículos e Equipamentos':'Manutenção de Veículos e Equip.','Consertos e Recapagens de Pneus':'Recapagens e Outros Serviços','Pneus e Camaras':'Pneus Novos','Personalização/Padronização de Veículos':'Personalização/Padronização','Personalização e Padronização de Veículos':'Personalização/Padronização','Combustíveis Veiculos e Equipamentos':'Combustíveis','Combustíveis Veículos e Equipamentos':'Combustíveis','Fluídos (Arla)':'Arla'};
-const canonConta=c=>CONTAS_ALIAS[c]||c;
-function mapTab(h){return{orc:ebIdx(h,'orçado','orcado'),rem:ebIdx(h,'remunerado'),real:ebIdx(h,'realizado'),vig:ebIdx(h,'vigência','vigencia'),nv3:ebIdx(h,'nível 3','nivel 3','nivel3'),cta:ebIdx(h,'conta gerencial','conta'),mes:ebIdx(h,'mês','mes'),ano:ebIdx(h,'ano')};}
-async function fetchTab(tab){
-  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tab)}`;
-  const res=await fetch(url); const raw=await res.text();
-  const json=JSON.parse(raw.replace(/^[\s\S]*?\(/,'').replace(/\);?\s*$/,''));
-  let header=(json.table.cols||[]).map(c=>c&&c.label?c.label:'');
-  let rows=json.table.rows.map(r=>r.c.map(c=>c&&c.v!=null?c.v:null));
-  if(!header.some(x=>_normEb(x).includes('realizado'))&&rows.length){header=rows[0].map(x=>x==null?'':String(x));rows=rows.slice(1);}
-  return {header,rows};
-}
+const {_normEb,ebIdx,_numBR,_mesNum,parseVigD,getUniLabel,getNv3Prefix,canonConta,mapTab}=CC;
 let FROTA=null;
 async function getFrota(){
   if(FROTA)return FROTA;
-  try{const c=JSON.parse(localStorage.getItem('cc_frota_v1')||'null');if(c&&Date.now()-c.t<36e5){FROTA=c.d;return FROTA;}}catch(e){}
-  FROTA=await fetchTab(TAB_FROTA);
-  try{localStorage.setItem('cc_frota_v1',JSON.stringify({t:Date.now(),d:FROTA}));}catch(e){}
+  FROTA=await CC.frota();   // aba Frota (1 h no localStorage, chave cc_frota_v1)
   return FROTA;
 }
 let DRE={};
-function accDreForUnit(rows,m,unit,vigSet,years,projs){
-  const orcMes={}, remAcc={}, orcAcc={};
-  (rows||[]).forEach(r=>{
-    const nv3=m.nv3>=0?String(r[m.nv3]||''):'';
-    if(!unitMatchNv3(unit,nv3))return;
-    if(projs && !projs.includes(getNv3Prefix(nv3).toUpperCase()))return;
-    let ry=m.ano>=0?parseInt(r[m.ano]):null, rm=m.mes>=0?_mesNum(r[m.mes]):null;
-    if((!ry||!rm)&&m.vig>=0){const d=parseVigD(r[m.vig]);if(d){ry=d.getFullYear();rm=d.getMonth()+1;}}
-    if(!ry||!rm)return;
-    const conta=canonConta(m.cta>=0?(r[m.cta]||''):'');
-    const o=Math.abs(_numBR(m.orc>=0?r[m.orc]:null)||0);
-    const rr=_numBR(m.rem>=0?r[m.rem]:null);
-    const ym=ry+'-'+String(rm).padStart(2,'0');
-    if(vigSet.has(ym)) orcMes[conta]=(orcMes[conta]||0)+o;
-    if(years.has(String(ry)) && rr!=null){ orcAcc[conta]=(orcAcc[conta]||0)+o; remAcc[conta]=(remAcc[conta]||0)+Math.abs(rr); }
-  });
-  let tR=0,tO=0; for(const c in remAcc){tR+=remAcc[c];tO+=orcAcc[c];}
-  const overall=tO?tR/tO:1;
-  for(const c in orcMes){
-    const ratio=orcAcc[c]?remAcc[c]/orcAcc[c]:overall;
-    if(!DRE[c])DRE[c]={orc:0,rem:0};
-    DRE[c].orc+=orcMes[c];
-    DRE[c].rem+=orcMes[c]*ratio;
-  }
-}
+function accDreForUnit(rows,m,unit,vigSet,years,projs){ CC.accDre(rows,m,unit,vigSet,years,projs,DRE); }
 async function loadDRE(){
   DRE={};
   const units=curUnits(), vigs=curVigs(), projs=curProjs();
@@ -1110,7 +1055,7 @@ function buildExtras(){
 }
 
 // ── DB ──
-function fromDB(d){return{id:d.id,origem:d.origem||'',unidade:d.unidade,vigencia:d.vigencia,pacote:d.pacote,data:d.data||'',projeto:d.projeto||'',equipamento:(d.equipamento||''),fornecedor:(d.fornecedor||''),rc:d.rc||'',oc:d.oc||'',nf:d.nf||'',conta:d.conta||'',grupo:d.grupo||'',descricao:d.descricao||'',valor:+d.valor||0,aprovado:!!d.aprovado,aprovado_oc:!!d.aprovado_oc};}
+const fromDB=CC.doBanco;
 /* Aprovação em DUAS ETAPAS, uma por documento (Renan, 27/08/2026):
      RC → farol 1 → libera a OC → farol 2 → libera a NF
    cinza = documento anterior em branco · vermelho = aguardando o coordenador ·
@@ -1160,18 +1105,11 @@ async function loadRows(){
   /* PAGINADO (bug real, 05/09/2026): o PostgREST devolve no máximo 1.000
      linhas por pedido, sem erro. Com todas as unidades e vigências no filtro
      a Carta mostrava "1000 lançamento(s)" — o teto, não o total — e o resto
-     simplesmente não existia na tela. */
-  const data=[]; let erro=null;
-  for(let off=0;;off+=1000){
-    const r=await sb.from('carta_custos').select('*').in('unidade',units).in('vigencia',vigs)
-      .order('data',{ascending:false}).order('created_at',{ascending:false}).range(off,off+999);
-    if(r.error){ erro=r.error; break; }
-    data.push(...(r.data||[]));
-    if(!r.data||r.data.length<1000) break;
-  }
+     simplesmente não existia na tela. (A leitura é CC.lerLancamentos.) */
+  const {data,erro}=await CC.lerLancamentos(sb,units,vigs);
   if(seq!==_loadSeq) return;
   if(erro){ console.error(erro); ROWS=[]; }
-  else ROWS=data.map(fromDB);
+  else ROWS=data;
   await Promise.all([loadDRE(), loadComb()]);
   if(seq!==_loadSeq) return;
   refreshProjetos(); buildExtras();
@@ -1190,82 +1128,18 @@ function atualizaSub(){
   const now=new Date();
   set('titSub', `${uL} · ${vL} · atualizado ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
 }
-/* ══════════════════════════════════════════════════════════════
-   COMBUSTÍVEIS — realizado dos abastecimentos do ERP (Renan, 09/10/2026)
-   Validado contra o Qlik (relatório de OS encerradas) e o DRE, jan→ago/2026:
-   só OS ENCERRADAS, o ERP bate com o Qlik (100,9% diesel · 101,0% Arla) e,
-   sem PIS/COFINS, com o DRE (101,6% · 100,8%). As regras:
-   · só encerrada = 'S' (a OS aberta ainda muda);
-   · unidade e projeto pelo PROJETO DA OS ('ROTA - CBA'), o mesmo formato do
-     Nível 3 do DRE — por isso o unitMatchNv3 e o tier de CBA/MCC valem igual;
-   · SÓ DIESEL E ARLA (Renan, 09/10/2026): Arla → conta Arla, diesel → conta
-     Combustíveis. Gasolina, GLP e qualquer outro produto ficam FORA;
-   · PREÇO ABSURDO (R$/L fora de 1,50 a 12): o ERP tem lançamentos com o valor
-     digitado errado em TODOS os campos (um abastecimento de 144 L em Cuiabá vale
-     R$ 1,49 bi). Esses entram por litros × preço mediano do mesmo combustível na
-     mesma filial e mês, e são listados no Resumo para a unidade corrigir no ERP;
-   · PIS/COFINS 9,25% sai de tudo, MENOS Campo Grande (diesel e Arla) e o diesel
-     de Florianópolis — as duas têm tanque interno e o DRE já registra a compra.
-   ══════════════════════════════════════════════════════════════ */
+/* COMBUSTÍVEIS — realizado dos abastecimentos do ERP (Renan, 09/10/2026).
+   As regras (só OS encerradas, só diesel e Arla, unidade pelo projeto da OS,
+   preço absurdo pelo mediano, PIS/COFINS fora menos CGR e o diesel de FLP)
+   estão em CC.montaComb, com a validação contra o Qlik e o DRE. */
 let COMB=[], COMB_ERR='';
-const PISCOFINS=0.0925;
-const COMB_RL_MIN=1.5, COMB_RL_MAX=12;
-const semPisCofins=(unit,conta)=>{const b=UNIT_BASE(unit);return b==='CGR'||(b==='FLP'&&conta==='Combustíveis');};
-function combProduto(t){
-  const n=_normEb(t);
-  if(!n) return null;
-  if(n.includes('arla')) return {conta:'Arla',grupo:'Arla 32'};
-  if(n.includes('diesel')){
-    const adit=n.includes('adit');
-    return {conta:'Combustíveis',grupo:n.includes('s10')?(adit?'Diesel S10 Aditivado':'Diesel S10'):(adit?'Diesel Aditivado':'Diesel')};
-  }
-  return null;   // gasolina, GLP, etc.: fora
-}
-// o projeto da OS de Goiânia vem com o código GOI; no portal é GNA
-const combNv3=p=>String(p||'').replace(/-\s*GOI\s*$/i,'- GNA');
+const {PISCOFINS,COMB_RL_MIN,COMB_RL_MAX,semPisCofins,combProduto,combNv3}=CC;
 async function loadComb(){
   COMB=[]; COMB_ERR='';
   const units=curUnits(), vigs=curVigs().slice().sort();
   if(!sb||!units.length||!vigs.length) return;
-  const ini=vigs[0]+'-01';
-  const [ay,am]=vigs[vigs.length-1].split('-').map(Number);
-  const fim=am===12?(ay+1)+'-01-01':ay+'-'+String(am+1).padStart(2,'0')+'-01';
-  let lin;
-  try{
-    lin=await pgAll('erp_abastecimentos','ordem_servico,data,placa_origem,placa,filial,projeto_os,litros,valor,tipo_combustivel',
-      [['data'],['ordem_servico']], q=>q.eq('encerrada','S').gte('data',ini).lt('data',fim));
-  }catch(e){ console.warn('Abastecimentos do ERP indisponíveis:',e); COMB_ERR=e.message||String(e); return; }
-  const vigSet=new Set(vigs);
-  const base=[];
-  (lin||[]).forEach(r=>{
-    const vig=String(r.data||'').slice(0,7); if(!vigSet.has(vig)) return;
-    const pr=combProduto(r.tipo_combustivel); if(!pr) return;
-    const nv3=combNv3(r.projeto_os);
-    const unit=units.find(u=>unitMatchNv3(u,nv3)); if(!unit) return;
-    const litros=+r.litros||0, valor=+r.valor||0;
-    base.push({r,vig,pr,nv3,unit,litros,valor,rl:litros>0?valor/litros:null});
-  });
-  // preço mediano por filial × combustível × mês, para os preços absurdos
-  const med=xs=>{ if(!xs.length) return null; const s=xs.slice().sort((a,b)=>a-b); return s[Math.floor(s.length/2)]; };
-  const fora=b=>(b.rl==null||b.rl<COMB_RL_MIN||b.rl>COMB_RL_MAX);
-  const pf=new Map(), pg=new Map();
-  base.forEach(b=>{ if(fora(b)||b.rl==null) return;
-    const k1=b.r.filial+'|'+b.pr.grupo+'|'+b.vig, k2=b.pr.grupo+'|'+b.vig;
-    (pf.get(k1)||pf.set(k1,[]).get(k1)).push(b.rl); (pg.get(k2)||pg.set(k2,[]).get(k2)).push(b.rl); });
-  base.forEach(b=>{
-    let valor=b.valor, corrigido=false;
-    if(fora(b)){
-      const p=med(pf.get(b.r.filial+'|'+b.pr.grupo+'|'+b.vig)||[])||med(pg.get(b.pr.grupo+'|'+b.vig)||[]);
-      if(p==null||!(b.litros>0)) return;
-      valor=b.litros*p; corrigido=true;
-    }
-    const liq=semPisCofins(b.unit,b.pr.conta)?valor:valor*(1-PISCOFINS);
-    COMB.push({origem:'erp-combustivel',unidade:b.unit,vigencia:b.vig,pacote:'Combustíveis',
-      data:String(b.r.data||'').slice(0,10),projeto:getNv3Prefix(b.nv3).toUpperCase(),
-      equipamento:String(b.r.placa_origem||b.r.placa||'').toUpperCase(),fornecedor:'',
-      conta:b.pr.conta,grupo:b.pr.grupo,litros:b.litros,valor:liq,
-      os:b.r.ordem_servico,corrigido,valorErp:b.valor,filial:b.r.filial||''});
-  });
+  try{ COMB=await CC.lerComb(sb,units,vigs); }
+  catch(e){ console.warn('Abastecimentos do ERP indisponíveis:',e); COMB_ERR=e.message||String(e); }
 }
 const curComb=()=>{const ps=curProjs();return COMB.filter(r=>(!ps||ps.includes(r.projeto))&&passaExtras(r));};
 
@@ -1301,7 +1175,7 @@ function fmtValorInput(el){
 }
 let LANC_ABERTO=null;
 const dataBR=iso=>iso?String(iso).slice(0,10).split('-').reverse().join('/'):'—';
-const counts=r=>!!(r&&r.nf&&String(r.nf).trim())&&r.valor>0;
+const counts=CC.counts;   // NF preenchida e valor > 0
 const contaRC=r=>!!(r&&r.rc&&String(r.rc).trim())&&r.valor>0;
 function lancRowBox(r){
   const pend=!counts(r);
@@ -1513,12 +1387,9 @@ function acompCells(orc,rem,real){
      km real do ERP (view custo_vigencia): é a prévia, e é o que aparece em
      outubro no dia 5 de setembro.
    O par unidade+vigência decide: se a planilha já cobriu, o ERP não entra. */
-const CONTA_CONTRATO='Contratos de Manutenção Fabricante';
-function contratoPreviaLinhas(){
-  const fechados=new Set(ROWS.filter(r=>r.origem==='contratos-planilha').map(r=>r.unidade+'|'+r.vigencia));
-  return contrDoFiltro().filter(r=>!fechados.has(r.unidade+'|'+r.vig_cobranca));
-}
-function contratoPrevia(){ return contratoPreviaLinhas().reduce((s,r)=>s+(+r.custo_vig||0),0); }
+const CONTA_CONTRATO=CC.CONTA_CONTRATO;
+function contratoPreviaLinhas(){ return CC.previaLinhas(contrDoFiltro(),ROWS); }
+function contratoPrevia(){ return CC.somaPrevia(contratoPreviaLinhas()); }
 /* A PRÉVIA TAMBÉM ENTRA NOS GRÁFICOS (Renan, 25/09/2026: "contratos está ali
    aparecendo e não está no top 10 grupo"). No mês fechado o contrato já chega
    pelos gráficos como lançamento da planilha (grupo Contrato, equipamento =
@@ -1533,30 +1404,20 @@ function renderAcomp(){
   /* UM BLOCO POR PACOTE, cada um fechando no "Total <pacote>"; com os dois na
      tela, o "Total Geral" embaixo (mesmo desenho da Carta antiga). A prévia do
      contrato é conta de Manutenção e só entra nesse bloco. */
-  const pacs=pacsAtivos(), ps=curProjs();
+  const pacs=pacsAtivos();
   let h=`<thead><tr><th>Conta</th><th class="num">Orç</th><th class="num">Rem (tend.)</th><th class="num">Real</th><th class="num">▲ Orç</th><th class="num">▲ Rem</th><th class="num">Ating. Orç %</th><th class="num">Ating. Rem %</th></tr></thead><tbody>`;
   let gR=0,gO=0,gRe=0,gHas=false;
-  pacs.forEach(pac=>{
-    const byC=new Map(CONTAS[pac].map(c=>[c,0]));
-    ROWS.filter(r=>pacDe(r)===pac&&(!ps||ps.includes(r.projeto))&&passaExtras(r)&&counts(r)).forEach(r=>byC.set(r.conta,(byC.get(r.conta)||0)+r.valor));
-    if(pac==='Manutenção'){
-      const prev=contratoPrevia();
-      if(prev>0) byC.set(CONTA_CONTRATO,(byC.get(CONTA_CONTRATO)||0)+prev);
-    }
-    const comb=pac==='Combustíveis'?curComb():[];
-    comb.forEach(r=>byC.set(r.conta,(byC.get(r.conta)||0)+r.valor));
-    let tR=0,tO=0,tRe=0,tHas=false;
-    [...byC.entries()].forEach(([c,real])=>{
-      const d=DRE[c]; const orc=d?d.orc:null, rem=d?d.rem:null;
-      tR+=real; if(d){tO+=orc;tRe+=rem;tHas=true;}
-      h+=`<tr><td class="conta">${esc(c)}</td>${acompCells(orc,rem,real)}</tr>`;
+  // a conta é a CC.resumoPacotes — a mesma que o Gestão à Vista mostra
+  CC.resumoPacotes({pacs,rows:curRows(),comb:curComb(),previa:pacs.includes('Manutenção')?contratoPrevia():0,dre:DRE}).forEach(({pac,contas,tot})=>{
+    contas.forEach(({conta,orc,rem,real})=>{
+      h+=`<tr><td class="conta">${esc(conta)}</td>${acompCells(orc,rem,real)}</tr>`;
     });
-    gR+=tR; if(tHas){gO+=tO;gRe+=tRe;gHas=true;}
-    h+=`<tr class="total"><td class="conta">Total ${esc(pac)}</td>${acompCells(tHas?tO:null,tHas?tRe:null,tR)}</tr>`;
+    gR+=tot.real; if(tot.has){gO+=tot.orc;gRe+=tot.rem;gHas=true;}
+    h+=`<tr class="total"><td class="conta">Total ${esc(pac)}</td>${acompCells(tot.orc,tot.rem,tot.real)}</tr>`;
     /* a linha âmbar "N abastecimentos com preço fora do normal entraram pelo
        preço médio" SAIU (Renan, 09/10/2026: "aquela mensagem em amarelo não faz
        sentido nenhum ter"); a correção continua acontecendo em silêncio (ver
-       loadComb, r.corrigido). Fica só o aviso de banco fora, que é falha. */
+       CC.montaComb, r.corrigido). Fica só o aviso de banco fora, que é falha. */
     if(pac==='Combustíveis'&&COMB_ERR) h+=`<tr class="nota-comb"><td colspan="8">Abastecimentos do ERP indisponíveis agora: ${esc(COMB_ERR)}</td></tr>`;
   });
   if(pacs.length>1) h+=`<tr class="total geral"><td class="conta">Total Geral</td>${acompCells(gHas?gO:null,gHas?gRe:null,gR)}</tr>`;
@@ -1725,20 +1586,7 @@ let CONTR_VW=false;             // …e as do portal da VW + os dois hodômetros
 let CONTR_FX=false;             // …e o rótulo da faixa do contrato?
 // o PostgREST corta a resposta em 1.000 linhas e ignora um limit maior —
 // são ~360 placas × 9 vigências, então sem paginar a tabela vem pela metade
-async function pgAll(tabela,select,ordem,ajuste){
-  const passo=1000;
-  const q=()=>{ let x=sb.from(tabela).select(select,{count:'exact'});
-    if(ajuste) x=ajuste(x);
-    if(ordem) ordem.forEach(o=>{ x=x.order(o[0],{ascending:o[1]!==false}); }); return x; };
-  // a 1ª página traz a contagem; as outras saem TODAS de uma vez. Em sequência
-  // cada página esperava a anterior, e cada uma recalcula a view inteira.
-  const p0=await q().range(0,passo-1);
-  if(p0.error) throw p0.error;
-  const total=p0.count||0, out=p0.data||[];
-  const resto=[]; for(let off=passo;off<total;off+=passo) resto.push(q().range(off,off+passo-1));
-  for(const r of await Promise.all(resto)){ if(r.error) throw r.error; out.push(...(r.data||[])); }
-  return out;
-}
+const pgAll=(tabela,select,ordem,ajuste)=>CC.pgAll(sb,tabela,select,ordem,ajuste);
 async function loadContratos(){
   if(!sb) return;
   /* VIGÊNCIA = MÊS DE COBRANÇA (Renan, 05/09/2026): "o de setembro que estamos
@@ -1747,91 +1595,20 @@ async function loadContratos(){
      só para dizer de qual mês veio o km. Eu tinha trocado isso por engano. */
   const base='vig_cobranca,vig_km,placa,placa_origem,unidade,projeto,tipo,taxa_km,km_vig,'
     +'valor_fixo,km_hodometro,divergencia_pct,origem_km,custo_vig,abastecimentos,ultimo_abast,previa,modelo';
-  const ordem=[['vig_cobranca',false],['custo_vig',false]];
-  /* A MATERIALIZADA PRIMEIRO (05/09/2026): a view recalcula o rateio dos 57 mil
-     abastecimentos a cada pedido — é o que deixava o painel lento. Se a
-     `custo_vigencia_mv` existir no banco, lê dela (pronta, instantânea);
-     se ainda não existir, cai na view e funciona como antes, só mais devagar. */
-  const leTudo=async(cols)=>{
-    try{ return await pgAll('custo_vigencia_mv',cols,ordem); }
-    catch(e){ if(e.code==='42703') throw e;   // coluna que não existe: nem tenta a view
-      console.warn('custo_vigencia_mv indisponível, usando a view:',e.message);
-      return await pgAll('custo_vigencia',cols,ordem); }
-  };
-  /* AS COLUNAS NOVAS PODEM NÃO ESTAR NO BANCO AINDA — `contrato` entra por
-     scripts/contrato-numero.sql e as cinco do portal por
-     scripts/contrato-portal.sql. Pedir coluna que não existe faz o PostgREST
-     devolver 400, e a Carta ficaria SEM CONTRATO NENHUM na tela, não só sem a
-     coluna. Por isso a leitura desce em degraus: tudo, só o número do
-     contrato, e o mínimo — cada degrau liga ou desliga o que a tela mostra. */
-  const DEGRAUS=[['contrato','hodo_abast','hodo_contrato','km_vw','valor_vw','faixas_vw','faixa_vw'],
-                 ['contrato','hodo_abast','hodo_contrato','km_vw','valor_vw','faixas_vw'],
-                 ['contrato'],
-                 []];
-  for(const extra of DEGRAUS){
-    try{
-      CONTR=await leTudo(base+extra.map(c=>','+c).join(''));
-      CONTR_NUM=extra.includes('contrato');
-      CONTR_VW =extra.includes('hodo_abast');
-      CONTR_FX =extra.includes('faixa_vw');
-      break;
-    }catch(e){
-      CONTR=[];
-      if(e.code!=='42703' && !/column .* does not exist/i.test(e.message||'')){
-        console.warn('custo_vigencia:',e.message); break;
-      }
-      console.warn(`custo_vigencia ainda sem [${extra.join(', ')}] — seguindo sem elas:`,e.message);
-    }
-  }
+  /* A MATERIALIZADA PRIMEIRO (05/09/2026), com a view de reserva, e A LEITURA
+     EM DEGRAUS (as colunas `contrato` e as do portal da VW podem não estar no
+     banco ainda — cada degrau liga ou desliga o que a tela mostra): as duas
+     moram em CC.lerContratos. */
+  const c=await CC.lerContratos(sb,{base});
+  CONTR=c.rows; CONTR_NUM=c.num; CONTR_VW=c.vw; CONTR_FX=c.fx;
   const perm=new Set(ALLOWED);
   CONTR=CONTR.filter(r=>!r.unidade||perm.has(r.unidade));
-  /* MÊS QUE A PLANILHA TEM, VALE A PLANILHA — sem conta (Renan, 05/09/2026:
-     "não precisa fazer conta, o valor está na planilha"). O robô já gravou em
-     carta_custos uma linha por placa e mês da planilha Contratos Man. (origem
-     'contratos-planilha'). Aqui essas linhas SOBREPÕEM o cálculo: em toda
-     unidade+vigência coberta pela planilha, o custo da placa passa a ser o da
-     planilha (zero se a placa não está nela naquele mês) e a linha deixa de
-     ser prévia. O cálculo pelo km do ERP fica só para o mês que a planilha
-     ainda não fechou. O km continua vindo do ERP nas duas situações. */
+  /* MÊS QUE A PLANILHA TEM, VALE A PLANILHA (Renan, 05/09/2026); O FIXO DA
+     PRÉVIA É O DO MÊS ANTERIOR (05/09/2026); O PORTAL DA VW MANDA, DE FEVEREIRO
+     EM DIANTE (15/09/2026). A ordem e os porquês estão em CC.sobrepoeContrato. */
   try{
-    const plan=await pgAll('carta_custos','unidade,vigencia,equipamento,valor',[['vigencia',true]],
-      q=>q.eq('origem','contratos-planilha').in('unidade',ALLOWED));
-    const cobre=new Set(), val=new Map(), ultFixo=new Map();
-    plan.forEach(r=>{ cobre.add(r.unidade+'|'+r.vigencia);
-      const pl=String(r.equipamento||'').toUpperCase();
-      val.set(r.vigencia+'|'+pl,(val.get(r.vigencia+'|'+pl)||0)+(+r.valor||0)); });
-    /* O FIXO DA PRÉVIA É O DO MÊS ANTERIOR (Renan, 05/09/2026): a estimativa do
-       mês que ainda não fechou é o km já rodado × a taxa, MAIS o valor fixo que
-       a planilha cobrou por último naquela placa — não o `valor_fixo` derivado
-       do contrato, que é uma reconstrução minha. `plan` vem ordenado por
-       vigência, então o último visto é o mais recente. */
-    plan.forEach(r=>ultFixo.set(String(r.equipamento||'').toUpperCase(),+r.valor||0));
-    /* O PORTAL DA VW MANDA, DE FEVEREIRO EM DIANTE (Renan, 15/09/2026: "pode
-       subir já o contrato do site, à partir de fevereiro"). O valor passa a ser
-       o da nota que a VW emitiu, e não o digitado na planilha — foi a
-       comparação vigência a vigência que liberou a troca: março e junho batem
-       centavo a centavo, e toda diferença que sobrou era falha de preenchimento
-       da planilha (42 placas com valor zero em maio, a 2ª faixa não lançada em
-       julho e agosto, placa digitada errada).
-
-       JANEIRO NÃO EXISTE NO PORTAL e a causa é desconhecida — 2025 inteiro está
-       lá, fevereiro também. Por isso o corte é explícito em vez de sair do
-       "tem dado ou não": em janeiro continua valendo a planilha, e uma coleta
-       parcial de janeiro no futuro não passa por cima dela sozinha.
-
-       E o portal só tem os 43 contratos da VW: o resto da frota (contrato fixo,
-       outros fornecedores) segue saindo da planilha, como sempre. */
-    const VW_INI='2026-02';
-    CONTR.forEach(r=>{
-      const pl=String(r.placa_origem||r.placa).toUpperCase();
-      if(CONTR_VW && r.valor_vw!=null && r.vig_cobranca>=VW_INI){
-        r.custo_vig=+r.valor_vw||0; r.previa=false; r.origem='portal VW';
-      }else if(cobre.has(r.unidade+'|'+r.vig_cobranca)){
-        r.custo_vig=val.get(r.vig_cobranca+'|'+pl)||0; r.previa=false; r.origem='planilha';
-      }else if(r.tipo==='fixo' && ultFixo.has(pl)){
-        r.custo_vig=ultFixo.get(pl); r.origem='fixo do mês anterior';
-      }
-    });
+    const plan=await CC.lerPlanilhaContrato(sb,ALLOWED);
+    CC.sobrepoeContrato(CONTR,plan,CONTR_VW);
   }catch(e){ console.warn('planilha do contrato indisponível, ficou o cálculo:',e.message); }
   CONTR_OK=true;
   /* UM FILTRO DE VIGÊNCIA SÓ (Renan, 04/09/2026): a lista do topo nasce em
@@ -1848,12 +1625,7 @@ async function loadContratos(){
   if(VW==='graficos') renderCharts(curRows());
 }
 // o recorte das duas visões novas é o do filtro do topo
-const contrDoFiltro=()=>{
-  const u=new Set(curUnits()), v=new Set(curVigs()), p=curProjs();
-  return CONTR.filter(r=>u.has(r.unidade) && v.has(r.vig_cobranca)
-    && (!p || !r.projeto || p.includes(String(r.projeto).toUpperCase()))
-    && (!selContrato.size || selContrato.has(r.contrato||'—')));
-};
+const contrDoFiltro=()=>CC.contrDoRecorte(CONTR,{units:curUnits(),vigs:curVigs(),projs:curProjs(),contratos:selContrato});
 /* O FILTRO DE CONTRATO SÓ EXISTE SE HOUVER NÚMERO (15/09/2026): enquanto o
    scripts/contrato-numero.sql não for rodado, toda placa fica com contrato
    nulo e o filtro seria um botão com uma opção só, chamada "—". Nesse caso ele
@@ -2198,6 +1970,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610131500"></script>
+<script src="../assets/build-check.js?v=202610131800"></script>
 </body>
 </html>
