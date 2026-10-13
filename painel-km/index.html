@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610111500">
+<meta name="build" content="202610130900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -462,7 +462,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
         <div class="gr2">
           <div class="card gcard">
             <div class="gtit">Dispersão de KM %</div>
-            <div class="chart-leg"><span><i class="leg-sq"></i>▲ Rem %</span><span><i class="leg-dash"></i>Meta (10%)</span></div>
+            <div class="chart-leg"><span><i class="leg-sq"></i>▲ Rem %</span><span><i class="leg-dash"></i>Meta (5%)</span></div>
             <div class="gcv"><canvas id="chart-evolucao"></canvas></div>
           </div>
           <div class="card gcard">
@@ -1404,15 +1404,15 @@ function renderCharts(F) {
     if(mData[m].cnt === 0 || mData[m].rem === 0) return null;
     return (mData[m].real - mData[m].rem) / Math.abs(mData[m].rem) * 100;
   });
-  const metaLine = MONTHS.map(function(_, i) { return mData[i+1].cnt > 0 ? 10 : null; });
+  const metaLine = MONTHS.map(function(_, i) { return mData[i+1].cnt > 0 ? 5 : null; });
 
   var hasFocusEvo = hiMonths.size > 0;
-  // cor pela META de 10% (Renan, 20/09/2026 — era 5%): ≤10% verde, >10% vermelho (só neste gráfico de Dispersão)
+  // cor pela META de 5% (Renan, 13/10/2026: "a meta é 10% só na Seara, na Ambev é 5%"): ≤5% verde, >5% vermelho (só neste gráfico de Dispersão)
   var realBarBg = MONTHS.map(function(_, i) {
     var m = i + 1;
     if(mData[m].cnt === 0 || mData[m].rem === 0) return 'transparent';
     var dp = (mData[m].real - mData[m].rem) / Math.abs(mData[m].rem) * 100;
-    var red = dp > 10;
+    var red = dp > 5;
     var a = hasFocusEvo ? (hiMonths.has(m) ? '.85' : '.2') : '.65';
     return red ? 'rgba(255,102,102,' + a + ')' : 'rgba(59,179,59,' + a + ')';
   });
@@ -1420,7 +1420,7 @@ function renderCharts(F) {
     var m = i + 1;
     if(mData[m].cnt === 0 || mData[m].rem === 0) return 'transparent';
     var dp = (mData[m].real - mData[m].rem) / Math.abs(mData[m].rem) * 100;
-    return dp > 10 ? '#FF6666' : '#3BB33B';
+    return dp > 5 ? '#FF6666' : '#3BB33B';
   });
 
   chEvo = new Chart(document.getElementById('chart-evolucao').getContext('2d'), {
@@ -1433,7 +1433,7 @@ function renderCharts(F) {
           backgroundColor:realBarBg, borderColor:realBarBc, borderWidth:1, borderRadius:3, order:2
         },
         {
-          type:'line', label:'META 10%', data:metaLine,
+          type:'line', label:'META 5%', data:metaLine,
           borderColor:orcC, borderWidth:2, tension:0, fill:false, borderDash:[5,3],
           order:1,
           ...mkPts(orcC, orcC)
@@ -1824,6 +1824,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610111500"></script>
+<script src="../assets/build-check.js?v=202610130900"></script>
 </body>
 </html>
