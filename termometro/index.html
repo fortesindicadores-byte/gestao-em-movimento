@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610111500">
+<meta name="build" content="202610132300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Termômetro — BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -392,6 +392,13 @@ table.dre td.uni{white-space:normal;}
   .tsec .twrap{max-height:70vh;overflow:auto;}
   /* tabela larga no celular: o mobile.js mostra as colunas-chave e o "+ Detalhar" abre a tabela inteira */
   #rk-table,table.mtx{min-width:900px;}
+}
+
+/* números grandes acompanham a tela (Renan, 13/10/2026: "no notebook fica muito grande"):
+   no desktop cada número encolhe com a altura e a largura da janela,
+   até o tamanho de antes numa tela de 1920×950 */
+@media(min-width:861px){
+  .kpi .kv{font-size:clamp(18px,min(2.63vh,1.30vw),25px);}
 }
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
@@ -1223,6 +1230,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610111500"></script>
+<script src="../assets/build-check.js?v=202610132300"></script>
 </body>
 </html>

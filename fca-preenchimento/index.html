@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610132200">
+<meta name="build" content="202610132300">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -750,6 +750,14 @@ body.light-mode .kcard-fato{color:#000000!important;}
   .kanban{grid-template-columns:1fr;}
 }
 
+
+/* números grandes acompanham a tela (Renan, 13/10/2026: "no notebook fica muito grande"):
+   no desktop cada número encolhe com a altura e a largura da janela,
+   até o tamanho de antes numa tela de 1920×950 */
+@media(min-width:861px){
+  .hn{font-size:clamp(32px,min(4.84vh,2.40vw),46px);}
+  .kpi b{font-size:clamp(18px,min(2.74vh,1.35vw),26px);}
+}
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
 </head>
@@ -2214,6 +2222,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610132200"></script>
+<script src="../assets/build-check.js?v=202610132300"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610111500">
+<meta name="build" content="202610132300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Disponibilidade · Frota do Dia</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -335,6 +335,13 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;}
   .top{padding:10px 14px 8px;}
   .tit-wrap{flex-basis:100%;}
   .top h1{font-size:17px;}
+}
+
+/* números grandes acompanham a tela (Renan, 13/10/2026: "no notebook fica muito grande"):
+   no desktop cada número encolhe com a altura e a largura da janela,
+   até o tamanho de antes numa tela de 1920×950 */
+@media(min-width:861px){
+  .s-hero .hv{font-size:clamp(21px,min(3.16vh,1.56vw),30px);}
 }
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
@@ -1799,6 +1806,6 @@ iniciar();
 <!-- exportação padrão do Gestão em Movimento: botão direito na tabela, no
      gráfico ou no card → Excel · PNG · PNG com fundo transparente -->
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202610111500"></script>
+<script src="../assets/build-check.js?v=202610132300"></script>
 </body>
 </html>
