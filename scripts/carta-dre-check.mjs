@@ -2,8 +2,8 @@
 // Carta de Custos: o Orçado e o Rem (tend.) do Acompanhamento por Conta
 // estão certos? (Renan, 25/09/2026: "esse orçado e rem estão o dobro?")
 //
-// Roda o CÓDIGO da própria Carta (DEPARA, unitMatchNv3, accDreForUnit…,
-// extraído do carta-custos/index.html e executado em node:vm) contra a aba
+// Roda o CÓDIGO da própria Carta (DEPARA, unitMatchNv3, accDre…, do
+// assets/carta-calc.js que a Carta carrega, executado em node:vm) contra a aba
 // Frota do DRE, e põe ao lado:
 //   · a soma CRUA da aba para as mesmas contas (sem filtro de unidade);
 //   · quantas linhas casam com MAIS DE UMA unidade (seria contagem dobrada);
@@ -18,20 +18,16 @@ const DRE_ID = '1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8';
 const VIG = process.env.CARTA_VIG || '2026-09';
 const ANO = VIG.slice(0, 4);
 
-const html = readFileSync(new URL('../carta-custos/index.html', import.meta.url), 'utf8');
-const corta = (ini, fim) => {
-  const a = html.indexOf(ini), b = html.indexOf(fim, a);
-  if (a < 0 || b < 0) throw new Error(`trecho não encontrado: ${ini}`);
-  return html.slice(a, b);
-};
-const codigo = [
-  corta('const DEPARA=', 'const PROJETOS='),
-  corta('const CONTAS={', 'const GRUPOS='),
-  corta('const _normEb=', 'async function fetchTab('),
-  corta('let DRE={};', 'async function loadDRE('),
-].join('\n') + '\n;globalThis.__c={DEPARA,CONTAS,unitMatchNv3,mapTab,accDreForUnit,canonConta,_numBR,_mesNum,parseVigD,getDRE:()=>DRE,resetDRE:()=>{DRE={};}};';
-const ctx = {}; vm.createContext(ctx); vm.runInContext(codigo, ctx);
-const C = ctx.__c;
+// a conta da Carta mora em assets/carta-calc.js desde 13/10/2026 (a Carta e o
+// Gestão à Vista usam as mesmas funções) — roda o próprio arquivo em node:vm
+const calc = readFileSync(new URL('../assets/carta-calc.js', import.meta.url), 'utf8');
+const ctx = { window: {}, console }; vm.createContext(ctx); vm.runInContext(calc, ctx);
+const CC = ctx.window.CartaCalc;
+let DRE = {};
+const C = { DEPARA: CC.DEPARA, CONTAS: CC.CONTAS, unitMatchNv3: CC.unitMatchNv3, mapTab: CC.mapTab,
+  accDreForUnit: (rows, m, u, vigSet, years, projs) => CC.accDre(rows, m, u, vigSet, years, projs, DRE),
+  canonConta: CC.canonConta, _numBR: CC._numBR, _mesNum: CC._mesNum, parseVigD: CC.parseVigD,
+  getDRE: () => DRE, resetDRE: () => { DRE = {}; } };
 
 const r = await fetch(`https://docs.google.com/spreadsheets/d/${DRE_ID}/gviz/tq?tqx=out:json&sheet=Frota`);
 const raw = await r.text();

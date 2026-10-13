@@ -137,6 +137,9 @@ async function farolLoad(opts){
   }catch(e){console.error('ginfo_snapshot',e);}
   // fonte de cada seção (p/ mostrar "última exportação" nas tabelas do Farol)
   DATA.fonte={};
+  // Custos = a Carta de Custos do mês corrente (Renan, 13/10/2026) — corre em
+  // paralelo com o resto; ver loadCustosCarta
+  const pCustos=loadCustosCarta().catch(e=>{console.error('custos (carta)',e);DATA.fonte.custos={src:'carta',erros:[String(e&&e.message||e)]};});
   const CHAVE_DE={stressV:'stress-test-frota',stressE:'stress-test-empilhadeira',cifv:'civf',prev:'preventivas',alinh:'alinhamentos',os:'os-em-aberto'};
   DATA.ginfoAtt=Object.values(G).reduce((mx,r)=>{const t=r.updated_at?new Date(r.updated_at).getTime():0;return t>mx?t:mx;},0)||null;
   const toT=arr=>{const cols=Object.keys(arr[0]);return {cols,rows:arr.map(o=>cols.map(k=>o[k]))};};
@@ -169,7 +172,8 @@ async function farolLoad(opts){
     })),
   };
   // ── 2) monta as tabelas: Ginfo primeiro, Sheets como fallback ──
-  const abas={custos:'Custos',stressV:'Stress Test Veículos',stressE:'Stress Test Empilhadeiras',cifv:'CIFV',prev:'Preventivas',alinh:'Alinhamentos',os:'OS em aberto'};
+  // a aba "Custos" saiu daqui (13/10/2026): o farol não pede mais essa aba ao Google
+  const abas={stressV:'Stress Test Veículos',stressE:'Stress Test Empilhadeiras',cifv:'CIFV',prev:'Preventivas',alinh:'Alinhamentos',os:'OS em aberto'};
   const out=await Promise.all(Object.entries(abas).map(async([k,aba])=>{
     if(GADAPT[k]){
       try{
@@ -185,14 +189,6 @@ async function farolLoad(opts){
   }));
   const T={};out.forEach(([k,v])=>T[k]=v);
 
-  // Custos: Δ ORÇ. | Δ FCT | Vigência | ESTRUTURA | UNIDADE | NÍVEL 3 | CONTA GERENCIAL | MÊS | ANO | ORÇADO | REMUNERADO | REALIZADO
-  if(T.custos){const c=T.custos.cols;
-    const i={vig:idxDe(c,'Vigência'),uni:idxDe(c,'UNIDADE'),n3:idxDe(c,'NÍVEL 3','NIVEL 3'),cta:idxDe(c,'CONTA GERENCIAL'),orc:idxDe(c,'ORÇADO','ORCADO'),rem:idxDe(c,'REMUNERADO'),rea:idxDe(c,'REALIZADO')};
-    let rs=T.custos.rows.map(r=>({vig:parseD(r[i.vig]),cod:refineCod(codDe(r[i.uni]),r[i.n3]),uni:String(r[i.uni]||'').trim(),n3:String(r[i.n3]||'').trim(),conta:String(r[i.cta]||'').trim(),orc:num(r[i.orc])||0,rem:num(r[i.rem])||0,rea:num(r[i.rea])||0})).filter(r=>r.conta);
-    const mx=Math.max(...rs.map(r=>r.vig?r.vig.getTime():0));
-    DATA.custos=rs.filter(r=>!r.vig||r.vig.getTime()===mx);
-    DATA.custosVig=mx>0?new Date(mx):null;
-  }
   // Stress Test Veículos: Período | Empresa | Filial Freightech | Placa Freightech | Freightech | Projeto | Pallets | Última Saída | Saída | Saída na FIlial | Total Viagens | Justificativa | Status | Desconto
   if(T.stressV){const c=T.stressV.cols;
     const i={per:idxDe(c,'Período','Periodo'),fil:idxDe(c,'Filial Freightech'),pla:idxDe(c,'Placa Freightech'),proj:idxDe(c,'Projeto'),sai:idxDe(c,'Saída','Saida'),saiF:idxDe(c,'Saída na FIlial','Saida na Filial'),via:idxDe(c,'Total Viagens'),jus:idxDe(c,'Justificativa'),des:idxDe(c,'Desconto')};
@@ -275,6 +271,7 @@ async function farolLoad(opts){
   // visão de Pneus — as páginas antigas chamam sem opção e nada muda.
   if(!(opts&&opts.semPneus)){ try{ await loadPneus(); }catch(e){ console.error('pneus load',e); } }
   try{ await loadChecklist(); }catch(e){ console.error('checklist load',e); }
+  await pCustos;
   return DATA;
 }
 
@@ -616,7 +613,9 @@ const byCod=(rows,cod)=>{
 const codsFiltrados=()=>Object.keys(UNIDADES).filter(passU);
 
 // ── CUSTOS ──
-// Pacotes — MESMO mapa do visão financeira (PACOTES_MAP); conta fora do mapa cai em 'Outros'
+// Pacotes — MESMO mapa do visão financeira (PACOTES_MAP); conta fora do mapa cai em 'Outros'.
+// Desde 13/10/2026 o Custos usa o pacote da Carta (r.pac); este mapa segue no
+// De-Para de assunto do FCA (Gestão à Vista) e para linhas sem r.pac.
 const FAROL_PACOTES={
   'Combustíveis Veiculos e Equipamentos':'Combustíveis','Combustíveis':'Combustíveis',
   'Estorno de ICMS não Aproveitado':'ICMS','Fluídos (Arla)':'Combustíveis',
@@ -631,14 +630,54 @@ const FAROL_PACOTES={
   'Seguro de Veículos e Equipamentos':'Seguros e licenças','Seguros':'Seguros e licenças',
 };
 const getPacF=conta=>FAROL_PACOTES[conta]||'Outros';
+/* ── CUSTOS = A CARTA DE CUSTOS DO MÊS CORRENTE (Renan, 13/10/2026: "Farol
+   semanal custos: deve ser substituída pela carta de custos" → "Pode trocar") ──
+   Antes vinha da aba "Custos" da planilha Farol Semanal, colada à mão do DRE.
+   Agora são os MESMOS números do Resumo Gerencial da Carta (carta-custos/), no
+   MÊS CORRENTE (horário de Brasília) e só nos pacotes Combustíveis, Manutenção
+   e Pneus: Orç e Rem (tend.) do DRE (aba Frota), Real = lançamentos com NF +
+   prévia do contrato + combustível do ERP. A conta não é refeita aqui — é a
+   CartaCalc.cartaMes (assets/carta-calc.js), a mesma que a Carta usa.
+   DATA.custos     = uma linha por unidade × conta (a Carta com a unidade no filtro);
+   DATA.custosProj = uma linha por unidade × projeto × conta (a Carta filtrada
+   também no projeto). A soma dos projetos não precisa bater com a unidade: o
+   Rem (tend.) usa a proporção rem ÷ orç de cada recorte, lançamento sem projeto
+   só aparece na unidade e placa de contrato sem projeto entra em todo projeto. */
+const _MES_CU=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+async function loadCustosCarta(){
+  if(typeof CartaCalc==='undefined'){
+    DATA.custos=null; DATA.custosProj=null;
+    DATA.fonte.custos={src:'carta',erros:['assets/carta-calc.js não carregado nesta página']};
+    return;
+  }
+  const vig=CartaCalc.mesCorrenteBR();
+  const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  // o universo da planilha do contrato é o da Carta (o fixo do mês anterior é
+  // por placa, de qualquer unidade); o banco corta pelo acesso de quem olha
+  const r=await CartaCalc.cartaMes(sb,{units:Object.keys(UNIDADES),vig,planUnits:Object.keys(CartaCalc.DEPARA)});
+  const linhas=(cod,n3,blocos)=>blocos.flatMap(b=>b.contas.map(c=>({cod,uni:cod,n3,pac:b.pac,conta:c.conta,orc:c.orc||0,rem:c.rem||0,rea:c.real||0})));
+  DATA.custos=Object.keys(r.porUnidade).flatMap(u=>linhas(u,'',r.porUnidade[u]));
+  DATA.custosProj=Object.keys(r.porProjeto).flatMap(u=>Object.keys(r.porProjeto[u]).flatMap(p=>linhas(u,p,r.porProjeto[u][p])));
+  const [a,m]=vig.split('-').map(Number);
+  DATA.custosVig=new Date(a,m-1,1);
+  DATA.custosVigTxt=_MES_CU[m-1]+'/'+String(a).slice(2);
+  DATA.fonte.custos={src:'carta',vig,erros:r.erros};
+}
+// subtítulo da visão Custos (farol antigo e Gestão à Vista)
+function custosSub(cod){
+  const v=DATA.custosVigTxt;
+  return 'Realizado × Remunerado × Orçado — '+(cod?'por projeto':'por unidade')+' · Carta de Custos, mês corrente'+(v?' ('+v+')':'');
+}
 function renderCustos(el,cod){
   const rs=byCod(DATA.custos,cod);
-  if(!rs.length){el.innerHTML='<div class="loading">Sem dados de custos para o recorte.</div>';return;}
+  const f=DATA.fonte&&DATA.fonte.custos, erros=(f&&f.erros)||[];
+  const aviso=erros.length?`<div class="tbl-sub" style="margin-top:8px">Fonte com falha agora: ${escF(erros.join(' · '))}</div>`:'';
+  if(!rs.length){el.innerHTML='<div class="loading">Sem dados de custos na Carta de Custos para o recorte.</div>'+aviso;return;}
   const tot={orc:sumA(rs.map(r=>r.orc)),rem:sumA(rs.map(r=>r.rem)),rea:sumA(rs.map(r=>r.rea))};
   const dOrc=Math.abs(tot.rea)-Math.abs(tot.orc), dRem=Math.abs(tot.rea)-Math.abs(tot.rem);
   const pOrc=Math.abs(tot.orc)>0?dOrc/Math.abs(tot.orc)*100:null, pRem=Math.abs(tot.rem)>0?dRem/Math.abs(tot.rem)*100:null;
   const dcls=v=>v==null?'mut':v>0?'cr':'cg';
-  const vigTx=DATA.custosVig?' · '+DATA.custosVig.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}).toUpperCase():'';
+  const vigTx=DATA.custosVigTxt?' · '+DATA.custosVigTxt:'';
   let h=`<div class="hero" style="margin-bottom:16px"><div class="hero-main" style="padding:0 0 4px">
     <div class="hero-label">REALIZADO${vigTx}</div>
     <div class="hero-value">${brl(tot.rea)}</div>
@@ -649,14 +688,16 @@ function renderCustos(el,cod){
       <div class="hero-delta"><span>▲ vs Rem.</span><b class="${dcls(dRem)}">${brlFull(dRem)} <small style="font-weight:600">(${pct0(pRem)})</small></b></div>
     </div>
   </div></div>`;
-  // tabela agrupada: geral → por UNIDADE; unidade → por NÍVEL 3 (projeto)
-  const key=cod?'n3':'uni';
-  const grupos={};rs.forEach(r=>{(grupos[r[key]]=grupos[r[key]]||[]).push(r);});
+  // tabela agrupada: geral → por UNIDADE; unidade → por PROJETO (a Carta
+  // filtrada em cada projeto)
+  const base=cod?byCod(DATA.custosProj,cod):rs, key=cod?'n3':'cod';
+  const ordPac=p=>{const i=(typeof CartaCalc!=='undefined'?CartaCalc.PACOTES:[]).indexOf(p);return i<0?99:i;};
+  const grupos={};base.forEach(r=>{(grupos[r[key]]=grupos[r[key]]||[]).push(r);});
   h+='<table>'+th(cod?'Projeto':'Unidade','Pacote','Orç.','Rem','Real','Δ Orç.','Δ Rem','Δ Orç %','Δ Rem %')+'<tbody>';
   Object.keys(grupos).sort().forEach(g=>{
-    // soma por PACOTE dentro do grupo (visão pacotes — mesma lógica do visão financeira)
-    const byPac={};grupos[g].forEach(r=>{const pk=getPacF(r.conta);const a=byPac[pk]=byPac[pk]||{conta:pk,orc:0,rem:0,rea:0};a.orc+=r.orc;a.rem+=r.rem;a.rea+=r.rea;});
-    const rows=Object.values(byPac).sort((a,b)=>a.orc-b.orc);
+    // soma por PACOTE dentro do grupo (os pacotes da Carta, na ordem dela)
+    const byPac={};grupos[g].forEach(r=>{const pk=r.pac||getPacF(r.conta);const a=byPac[pk]=byPac[pk]||{conta:pk,orc:0,rem:0,rea:0};a.orc+=r.orc;a.rem+=r.rem;a.rea+=r.rea;});
+    const rows=Object.values(byPac).sort((a,b)=>ordPac(a.conta)-ordPac(b.conta));
     rows.forEach((r,i)=>{
       const dO=Math.abs(r.rea)-Math.abs(r.orc), dR=Math.abs(r.rea)-Math.abs(r.rem);
       const pO=Math.abs(r.orc)>0?dO/Math.abs(r.orc)*100:null, pR=Math.abs(r.rem)>0?dR/Math.abs(r.rem)*100:null;
@@ -672,7 +713,8 @@ function renderCustos(el,cod){
       <td class="num ${dcls(dO)}">${pct0(Math.abs(t.orc)>0?dO/Math.abs(t.orc)*100:null)}</td><td class="num ${dcls(dR)}">${pct0(Math.abs(t.rem)>0?dR/Math.abs(t.rem)*100:null)}</td></tr>`;
   });
   h+='</tbody></table>';
-  el.innerHTML=wrapT(h);
+  if(cod) h+='<div class="tbl-sub" style="margin-top:8px">Cada projeto é a Carta de Custos filtrada no projeto; o número do alto é a unidade inteira. A soma dos projetos pode não bater com ele: o Rem (tend.) usa a proporção de cada recorte.</div>';
+  el.innerHTML=wrapT(h+aviso);
 }
 
 // ── STRESS TEST VEÍCULOS ──
@@ -1104,7 +1146,7 @@ function renderFarol(el,cod){
   };
   const S=[];
   if(!cod){S.push(['resumo','Resumo Executivo','Leitura automática do farol da semana']);S.push(['ranking','Ranking das Unidades','Aderências por indicador — melhor → pior']);}
-  S.push(['custos','Custos','Realizado × Remunerado × Orçado — '+(cod?'por projeto':'por unidade')]);
+  S.push(['custos','Custos',custosSub(cod)]);
   S.push(['stressv','Stress Test — Veículos','Aderência (sem desconto) vs meta 100% · descontos por placa'+fx('stressV')]);
   const temEmp=byCod(DATA.stressE,cod).filter(r=>r.contratada).length>0;
   if(temEmp) S.push(['stresse','Stress Test — Empilhadeiras','Aderência 1ª/2ª quinzena · descontos por equipamento'+fx('stressE')]);
