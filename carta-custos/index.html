@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610111500">
+<meta name="build" content="202610131500">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1347,7 +1347,12 @@ function abrirLanc(id){
   const contaFiltro=[...selConta].filter(c=>contasOk.includes(c));
   const d = r || {data:dNovo, projeto:(UNIT_PROJETOS[0]||''), conta:(contaFiltro.length===1?contaFiltro[0]:contasOk[0])||''};
   set('mTit', r ? 'Editar lançamento' : 'Novo lançamento');
-  const ctx=$('m-ctx'), agreg=!singleCtx();
+  /* QUEM TEM MAIS DE UMA UNIDADE ESCOLHE A UNIDADE NA CAIXA (Erick, Macacu,
+     13/10/2026: "consegue liberar o meu acesso para lançar na carta da rota?").
+     O acesso estava liberado (MCC T1,MCC T2); a tela é que abria na 1ª unidade
+     do perfil (Empurrada) e a caixa só oferecia os projetos dela — a ROTA, que
+     é do MCC T2, só aparecia trocando o filtro Unidade lá em cima. */
+  const ctx=$('m-ctx'), agreg=!singleCtx() || (!IS_ADMIN && ALLOWED.length>1);
   ctx.style.display = agreg ? '' : 'none';
   if(agreg){
     const uni = (r && r.unidade) || curUnits()[0];
@@ -1454,10 +1459,14 @@ async function salvarLancModal(){
   }
   // a data levou o lançamento para um mês fora do filtro: sai da tela e avisa
   // para onde foi, senão parece que sumiu
-  const foraFiltro=!curVigs().includes(payload.vigencia);
-  if(foraFiltro) ROWS=ROWS.filter(x=>x.id!==idSalvo);
+  const foraVig=!curVigs().includes(payload.vigencia), foraUni=!curUnits().includes(payload.unidade);
+  if(foraVig||foraUni) ROWS=ROWS.filter(x=>x.id!==idSalvo);
   fecharLanc(); render();
-  if(foraFiltro) alert('Lançamento salvo em '+vigLabel(payload.vigencia)+', o mês da data. Para vê-lo, marque '+vigLabel(payload.vigencia)+' no filtro Vigência.');
+  if(foraVig||foraUni){
+    const onde=[foraUni?(DEPARA[payload.unidade]||payload.unidade):'', foraVig?vigLabel(payload.vigencia):''].filter(Boolean).join(' · ');
+    const marque=[foraUni?(DEPARA[payload.unidade]||payload.unidade)+' no filtro Unidade':'', foraVig?vigLabel(payload.vigencia)+' no filtro Vigência':''].filter(Boolean).join(' e ');
+    alert('Lançamento salvo em '+onde+'. Para vê-lo, marque '+marque+'.');
+  }
 }
 async function excluirLancModal(){
   if(!LANC_ABERTO || !sb) return;
@@ -2175,7 +2184,7 @@ async function init(){
 init();
 </script>
 <script src="../assets/mobile.js?v=202608220020"></script>
-<script src="../assets/modo-tv.js?v=202610111500"></script>
+<script src="../assets/modo-tv.js?v=202610131500"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="../assets/excel-export.js"></script>
@@ -2189,6 +2198,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610111500"></script>
+<script src="../assets/build-check.js?v=202610131500"></script>
 </body>
 </html>
