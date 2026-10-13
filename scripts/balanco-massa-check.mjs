@@ -152,7 +152,9 @@ Object.entries(resNova.porChave).forEach(([k, e]) => {
 // ── RATEIO ANUAL (Renan, 13/10/2026: "dividir ano"): o km das duas regras é somado no ANO de cada
 //    unidade|projeto e repartido entre os meses pelo km remunerado original — o MESMO motor do painel.
 //    `kmRegra` guarda o que a regra sozinha punha no mês, para enxergar o deslocamento.
-const anual = BM.porAno([resAnt.porChave, resNova.porChave], km0);
+const PESO = process.env.BM_PESO || 'diferenca';   // 'diferenca' (km real − rem, o que o painel usa) ou 'km' (km remunerado)
+const anual = BM.porAno([resAnt.porChave, resNova.porChave], km0, PESO === 'km' ? null : kmReal);
+console.log(`rateio anual pelo peso: ${PESO === 'km' ? 'km remunerado' : 'diferença do mês (km real − km remunerado)'}`);
 anual.avisos.forEach(a => console.log('  ⚠ motor (anual): ' + a));
 linhas.forEach(l => { const e = anual.porChave[`${l.vig}|${l.proj}|${l.cod}`] || { km: 0, valor: 0, taxa: 0 };
   l.kmRegra = l.kmRec; l.valorRegra = l.valor; l.kmRec = e.km; l.valor = e.valor; l.taxaVar = e.taxa; l.km1 = l.km0 + e.km;

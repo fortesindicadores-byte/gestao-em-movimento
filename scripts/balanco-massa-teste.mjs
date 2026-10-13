@@ -152,6 +152,21 @@ console.log('8) rateio anual');
   t('sem km no ano → aviso e nada', Object.keys(r2.porChave).length === 0 && r2.avisos.length === 1, r2.avisos);
 }
 
+// ── 9) rateio anual pela diferença (km real − km remunerado) ──
+console.log('9) rateio pela diferença');
+{
+  const km0 = { [ch('01/2026')]: 100000, [ch('02/2026')]: 100000, [ch('03/2026')]: 100000 };
+  const real = { [ch('01/2026')]: 110000, [ch('02/2026')]: 95000, [ch('03/2026')]: 130000 };   // diferenças 10k, −5k, 30k
+  const r = BM.porAno([{ [ch('01/2026')]: { km: 20000, valor: 80000 } }], km0, real);
+  const k = v => (r.porChave[ch(v)] || { km: 0 }).km;
+  t('jan = 20k × 10/40', perto(k('01/2026'), 5000), k('01/2026'));
+  t('fev (diferença negativa) não recebe', !(k('02/2026') > 0), k('02/2026'));
+  t('mar = 20k × 30/40', perto(k('03/2026'), 15000), k('03/2026'));
+  t('modo = diferenca', r.porChave[ch('03/2026')].modo === 'diferenca');
+  const r2 = BM.porAno([{ [ch('01/2026')]: { km: 300, valor: 900 } }], km0, km0);
+  t('sem diferença positiva → cai no km remunerado, com aviso', perto(r2.porChave[ch('02/2026')].km, 100) && r2.avisos.length === 1, r2.avisos);
+}
+
 // ── 7) helpers ──
 console.log('7) helpers');
 t('trimestre(08/2026) = 2026-T3', BM.trimestre('08/2026') === '2026-T3');
