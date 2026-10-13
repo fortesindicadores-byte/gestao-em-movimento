@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610132310">
+<meta name="build" content="202610140030">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -693,7 +693,7 @@ function setStatus(v){ _carga=v; atualizaSub(); }
 // f = filtros atuais {ano, vigencia, unidade, nivel3(=projeto)}.
 function calcular(f){
   if(!FR||!DP||!KM) return null;
-  const c=custoAgg(f), k=kmAgg(f), rl=rslAgg(f), kl=kmlAgg(f);
+  const c=custoAgg(f), k=kmAgg(f), rl=rslAgg(f), kl=kmlAgg(f), ib=impBases(f);
 
   const custoRem=c.rem, custoReal=c.real;
   const kmRem=k.rem, kmReal=k.real;
@@ -709,6 +709,8 @@ function calcular(f){
   const kmLRem=kl.rem||0, kmLReal=kl.real||0;
 
   return {
+    kmBase: kl.km||0, litBase: kl.lit||0,          // km e litros da aba Km/L (impactos sem a Dispersão)
+    impPrecoBase: ib.preco, impEficBase: ib.efic, totBase: rl.tot||0,   // = Impacto dos painéis R$/L e Km/L
     rsLRem,  rsLReal,  dRsL:  rsLRem - rsLReal,   // positivo = real mais barato = bom
     kmLRem,  kmLReal,  dKmL:  kmLReal - kmLRem,   // negativo = real pior eficiência = ruim
     rsKmRem, rsKmReal,
@@ -800,6 +802,11 @@ function renderKPIs(d) {
   const elVol   = id('v-impVolume');
   if (elPreco)  elPreco.className  = dKmAbs > 0    ? 'impact-bad' : 'impact-good';
   if (elVol)    elVol.className    = d.dKmRod < 0  ? 'impact-bad' : 'impact-good';
+  // sem km na Dispersão (mês ainda não atualizado): R$/km e volume ficam "—", não 0
+  if (!d.kmRem && !d.kmReal) {
+    if (elPreco) { elPreco.textContent = '—'; elPreco.className = 'impact-value'; }
+    if (elVol)   { elVol.textContent   = '—'; elVol.className   = 'impact-value'; }
+  }
   // Impacto Preço (R$/L) e Km/L + diagnóstico: assets/arvore-impacto.js
   if (window.ArvImpacto) {
     const b = ArvImpacto.calc(d);
@@ -1044,7 +1051,7 @@ function onFilterChange(){
 const _fiFactory = cols => (...tests) => { for(let i=0;i<cols.length;i++){ const lc=String(cols[i]||'').toLowerCase(); if(tests.some(t=>lc.includes(t))) return i; } return -1; };
 function detFrota(cols){ const fi=_fiFactory(cols); return {vig:0, rem:fi('remunerado'), real:fi('realizado'), cta:fi('conta gerencial'), n3:fi('nível 3','nivel 3')}; }
 function detDisp(cols){ const fi=_fiFactory(cols); return {vig:0, proj:fi('proj.'), kmRem:fi('km rem. tt'), kmReal:fi('km rodado tt'), vgTot:fi('viagens - real'), vgRec:fi('viagens rec'), vgNot:fi('viagens noturnas'), vgMap:fi('viagens mapa aberto')}; }
-function detKmlSrc(cols){ const fi=_fiFactory(cols); return {vig:0, proj:fi('projeto'), remMed:fi('rem médio','rem medio'), kmlReal:fi('km/l real'), kmRod:fi('km rodado'), litros:fi('qtd total de litro','qtd litro','qtd total','litro'), totalRS:fi('totas r$','total r$','total geral'), fuel:fi('tipo combust','combustivel','combustível')}; }
+function detKmlSrc(cols){ const fi=_fiFactory(cols); return {vig:0, proj:fi('projeto'), remMed:fi('rem médio','rem medio'), kmlReal:fi('km/l real'), kmRod:fi('km rodado'), litros:fi('qtd total de litro','qtd litro','qtd total','litro'), totalRS:fi('totas r$','total r$','total geral'), fuel:fi('tipo combust','combustivel','combustível'), rsLReal:fi('r$/l/real','r$/l real','rs/l real')}; }
 
 // ── Normalização + chaves de vigência ──
 const _nk = s => String(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
@@ -1217,13 +1224,41 @@ function kmlAgg(f){
     const p=(getNv3Prefix(n3)||'—')+'|'+vigBR(d), km=+r[KM.kmRod]||0, lit=+r[KM.litros]||0, rem=+r[KM.remMed]||0;
     sumKm+=km; sumLit+=lit; if(!proj[p])proj[p]={s:0,n:0,km:0}; if(rem>0){proj[p].s+=rem;proj[p].n++;} proj[p].km+=km; }
   let litEsp=0; for(const v of Object.values(proj)){ const rp=v.n>0?v.s/v.n:null; if(rp>0&&v.km>0) litEsp+=v.km/rp; }
-  return{rem:litEsp>0?sumKm/litEsp:null, real:sumLit>0?sumKm/sumLit:null}; }
+  return{rem:litEsp>0?sumKm/litEsp:null, real:sumLit>0?sumKm/sumLit:null, km:sumKm, lit:sumLit}; }
+// IMPACTOS DE PREÇO E EFICIÊNCIA = A MESMA CONTA DOS PAINÉIS (Renan, 13/10/2026: "os
+// valores precisam bater entre os painéis (R$/L, Km/L e Árvore)"). Saem só das abas
+// Km/L e R$/L, com ou sem a Dispersão de km do mês. Sinal: positivo = custou a mais.
+//  · Preço = o Impacto do painel R$/L: Σ R$ abastecido − Σ(preço rem × litros), nos
+//    litros que têm preço remunerado.
+//  · Eficiência = o Impacto do painel Km/L com o sinal trocado: soma das unidades de
+//    (litros gastos − litros que o Km/L rem previa) × R$/L rem ponderado pelo km
+//    (linha sem preço rem usa o R$/L real dela), como o impactoSomaUni de lá.
+function impBases(f){
+  let tot=0, rxl=0, litR=0; const uni={}; if(!KM) return {preco:null, efic:null};
+  for(const r of S_KM){ const d=kParseVig(r[KM.vig]); if(!d)continue; const n3=String(r[KM.proj]||''); if(!_match(f,vigBR(d),n3))continue;
+    const lit=+r[KM.litros]||0, t=+r[KM.totalRS]||0, km=+r[KM.kmRod]||0, rem=remPriceFor(r,d), remMed=+r[KM.remMed]||0;
+    if(rem!=null&&rem>0){ rxl+=rem*lit; litR+=lit; if(t>0)tot+=t; }
+    const u=getNv3Suffix(n3)||'—', o=uni[u]||(uni[u]={km:0,lit:0,pkm:0,kmp:0,proj:{}});
+    o.km+=km; o.lit+=lit;
+    const rsL=KM.rsLReal>=0 ? +r[KM.rsLReal]||0 : (lit>0?t/lit:0), pr=(rem!=null&&rem>0)?rem:rsL;
+    if(km>0&&pr>0){ o.pkm+=pr*km; o.kmp+=km; }
+    const pk=(getNv3Prefix(n3)||'—')+'|'+vigBR(d), pp=o.proj[pk]||(o.proj[pk]={s:0,c:0,km:0});
+    if(remMed>0){ pp.s+=remMed; pp.c++; } pp.km+=km;
+  }
+  let efic=0, nE=0;
+  for(const o of Object.values(uni)){
+    let litEsp=0; for(const v of Object.values(o.proj)){ const rp=v.c>0?v.s/v.c:null; if(rp>0&&v.km>0) litEsp+=v.km/rp; }
+    const pr=o.kmp>0?o.pkm/o.kmp:0;
+    if(litEsp>0 && o.lit>0 && o.km>0 && pr>0){ efic+=(o.lit-litEsp)*pr; nE++; }
+  }
+  return {preco: litR>0 ? tot-rxl : null, efic: nE>0 ? efic : null};
+}
 function rslAgg(f){ // R$/L: real = ΣTotalR$/ΣLitros; rem = Σ(preço×litros)/Σlitros (preço da aba R$/L)
   let sumLit=0,sumTot=0,sumRxL=0,sumLitR=0; if(!KM)return{rem:null,real:null};
   for(const r of S_KM){ const d=kParseVig(r[KM.vig]); if(!d)continue; if(!_match(f,vigBR(d),String(r[KM.proj]||'')))continue;
     const lit=+r[KM.litros]||0, tot=+r[KM.totalRS]||0, rem=remPriceFor(r,d);
     sumLit+=lit; if(tot>0)sumTot+=tot; if(rem!=null&&rem>0){sumRxL+=rem*lit;sumLitR+=lit;} }
-  return{rem:sumLitR>0?sumRxL/sumLitR:null, real:sumLit>0?sumTot/sumLit:null}; }
+  return{rem:sumLitR>0?sumRxL/sumLitR:null, real:sumLit>0?sumTot/sumLit:null, tot:sumTot}; }
 
 // Carrega as 4 abas-fonte e monta as opções de filtro (union project-unit-vigência)
 async function fetchAll(){
@@ -1474,7 +1509,7 @@ function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark
 aplicaTema(localStorage.getItem('bi_theme')||'dark');
 </script>
 <script src="../../assets/mobile.js?v=202608220020"></script>
-<script src="../../assets/arvore-impacto.js?v=202610132300"></script>
+<script src="../../assets/arvore-impacto.js?v=202610140030"></script>
 <script src="../../assets/modo-tv.js?v=202610111500"></script>
 <script src="../../assets/ctrlk.js"></script>
 <script src="../../assets/sortable-table.js?v=202609042200"></script>
@@ -1490,6 +1525,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610132310"></script>
+<script src="../../assets/build-check.js?v=202610140030"></script>
 </body>
 </html>

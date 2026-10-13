@@ -166,7 +166,9 @@ if (A) {
   af('antigo: zero erro de página', A.errs.length === 0, A.errs[0] || '');
   for (let i = 0; i < RECORTES.length; i++) {
     const [nome, va] = A.r[i], vn = N.r[i][1];
-    const ks = Object.keys(va);
+    // v-impKmL passou a ser o Impacto do painel Km/L (13/10/2026: "os valores precisam
+    // bater entre os painéis") — conferido contra o painel em combustivel-paineis-batem-teste
+    const ks = Object.keys(va).filter(k => k !== 'v-impKmL');
     const difN = ks.filter(k => num(va[k]) !== num(vn[k]));
     const difC = ks.filter(k => cls(va[k]) !== cls(vn[k]));
     af(`${nome}: ${ks.length} valores iguais`, ks.length >= 25 && difN.length === 0, difN.map(k => `${k} ${num(va[k])}≠${num(vn[k])}`).join(', ') || `custo ${num(vn['v-custoReal'])} · km ${num(vn['v-kmReal'])} · km/L ${num(vn['v-kmLReal'])} · imp ${num(vn['v-impPreco'])}`);

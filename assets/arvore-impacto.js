@@ -35,17 +35,37 @@
       rsKm: (rkReal - rkRem) * kmReal,
       preco: null, efic: null, dif: null, difRem: null, difReal: null,
       litros: null, rkBaseRem: null, rkBaseReal: null, custoBaseReal: null };
+    // Preço e Eficiência que os painéis R$/L e Km/L mostram (d.impPrecoBase /
+    // d.impEficBase, calculados pela árvore com a conta deles). Sem eles, a conta
+    // sobre o km real da DRE (como era antes).
+    const temBase = d.impPrecoBase != null && d.impEficBase != null;
     if (pRem && pReal && eRem && eReal && kmReal) {
-      const lit = kmReal / eReal;
+      const lit = temBase && d.litBase > 0 ? d.litBase : kmReal / eReal;
       b.litros = lit;
-      b.preco = (pReal - pRem) * lit;
-      b.efic = pRem * (lit - kmReal / eRem);
+      b.kmBase = temBase && d.kmBase > 0 ? d.kmBase : kmReal;
+      b.preco = temBase ? d.impPrecoBase : (pReal - pRem) * lit;
+      b.efic = temBase ? d.impEficBase : pRem * (lit - kmReal / eRem);
       b.dif = b.rsKm - b.preco - b.efic;
       b.rkBaseRem = pRem / eRem;
       b.rkBaseReal = pReal / eReal;
-      b.custoBaseReal = lit * pReal;
-      b.difRem = kmReal * (b.rkBaseRem - rkRem);
+      // lado realizado = DRE − o que os abastecimentos somam; o resto é o lado
+      // remunerado (e a diferença de km entre a DRE e as bases)
+      b.custoBaseReal = temBase && d.totBase > 0 ? d.totBase : lit * pReal;
       b.difReal = cReal - b.custoBaseReal;
+      b.difRem = b.dif - b.difReal;
+    } else if (pRem && pReal && eRem && eReal && !kmReal && !kmRem && d.litBase > 0 && d.kmBase > 0) {
+      // SEM A DISPERSÃO DE KM DO MÊS (Renan, 13/10/2026: "Ainda não consegue chegar
+      // nesses impactos na Ambev, sem a atualização da dispersão de km?"): preço e
+      // eficiência saem do km e dos litros da própria base de combustível (aba Km/L).
+      // Volume, R$/km e a diferença DRE × bases precisam do km da Dispersão: ficam
+      // vazios até ela entrar.
+      const lit = d.litBase;
+      b.semDisp = true;
+      b.litros = lit;
+      b.kmBase = d.kmBase;
+      b.preco = temBase ? d.impPrecoBase : (pReal - pRem) * lit;
+      b.efic = temBase ? d.impEficBase : pRem * (lit - d.kmBase / eRem);
+      b.vol = null; b.rsKm = null;
     }
     return b;
   }
@@ -73,6 +93,7 @@
     el.className = v > 0 ? 'impact-value impact-bad' : 'impact-value impact-good';
   }
 
+  const d_temKmDif = b => b.kmBase && b.kmReal && Math.abs(b.kmBase - b.kmReal) > 0.5;
   function html(b) {
     if (!b || (!b.cRem && !b.cReal)) return '<div class="dg-vazio">Sem custo de combustível no recorte.</div>';
     const acima = b.dCusto >= 0;
@@ -83,6 +104,15 @@
       + `<div class="dg-v ${cor(v)}">${rs(v)}</div><div class="dg-txt">${txt}</div></div>`;
     const dKm = b.kmReal - b.kmRem;
     const its = [];
+    if (b.semDisp) {
+      const dp = b.pReal - b.pRem, de = b.eReal - b.eRem;
+      its.push(item('Preço (R$/L)', b.preco,
+        `Pagou R$ ${n2(b.pReal)}/L contra R$ ${n2(b.pRem)}/L remunerado (${dp > 0 ? 'mais caro' : dp < 0 ? 'mais barato' : 'igual'}) em ${int(b.litros)} L abastecidos`));
+      its.push(item('Eficiência (Km/L)', b.efic,
+        `Fez ${n2(b.eReal)} km/L contra ${n2(b.eRem)} remunerado (${pct(b.eReal, b.eRem)} ${de < 0 ? 'abaixo' : de > 0 ? 'acima' : ''}): ${int(b.litros - b.kmBase / b.eRem)} L ${de < 0 ? 'a mais' : 'a menos'} nos ${int(b.kmBase)} km da base de combustível`));
+      its.push(`<div class="dg-it dg-falta"><div class="dg-rot">Volume · R$/km</div><div class="dg-txt">A Dispersão de km ainda não tem km neste recorte: volume, R$/km e a diferença DRE × bases entram quando ela for atualizada</div></div>`);
+      return cab + `<div class="dg-its">${its.join('')}</div>`;
+    }
     its.push(item('Volume', b.vol,
       dKm === 0 ? 'Rodou o mesmo km do remunerado'
         : `Rodou ${int(dKm)} km ${dKm > 0 ? 'a mais' : 'a menos'} que o remunerado (${pct(b.kmReal, b.kmRem)}), a R$ ${n2(b.rkRem)}/km`));
@@ -94,10 +124,12 @@
       its.push(item('Preço (R$/L)', b.preco,
         `Pagou R$ ${n2(b.pReal)}/L contra R$ ${n2(b.pRem)}/L remunerado (${dp > 0 ? 'mais caro' : dp < 0 ? 'mais barato' : 'igual'}) em ${int(b.litros)} L`));
       its.push(item('Eficiência (Km/L)', b.efic,
-        `Fez ${n2(b.eReal)} km/L contra ${n2(b.eRem)} remunerado (${pct(b.eReal, b.eRem)} ${de < 0 ? 'abaixo' : de > 0 ? 'acima' : ''}): ${int(b.litros - b.kmReal / b.eRem)} L ${de < 0 ? 'a mais' : 'a menos'}`));
+        `Fez ${n2(b.eReal)} km/L contra ${n2(b.eRem)} remunerado (${pct(b.eReal, b.eRem)} ${de < 0 ? 'abaixo' : de > 0 ? 'acima' : ''}): ${int(b.litros - b.kmBase / b.eRem)} L ${de < 0 ? 'a mais' : 'a menos'}`));
       its.push(item('Diferença DRE × bases', b.dif,
-        `Remunerado: a DRE paga R$ ${n2(b.rkRem)}/km e as bases preveem R$ ${n2(b.rkBaseRem)}/km (${rs(b.difRem)}). `
-        + `Realizado: a DRE lançou ${rs(b.cReal, true)} e os abastecimentos somam ${rs(b.custoBaseReal, true)} (${rs(b.difReal)})`));
+        `Realizado: a DRE lançou ${rs(b.cReal, true)} e os abastecimentos somam ${rs(b.custoBaseReal, true)} (${rs(b.difReal)}). `
+        + `Remunerado${d_temKmDif(b) ? ' e km' : ''}: a DRE paga R$ ${n2(b.rkRem)}/km e as bases preveem R$ ${n2(b.rkBaseRem)}/km`
+        + (d_temKmDif(b) ? `; a DRE usa ${int(b.kmReal)} km da Dispersão e as bases, ${int(b.kmBase)} km dos abastecimentos` : '')
+        + ` (${rs(b.difRem)})`));
     }
     return cab + `<div class="dg-its">${its.join('')}</div>`;
   }

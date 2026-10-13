@@ -110,6 +110,23 @@ for (const banco of [true, false]) {
     af('Árvore: NOVA222 pela regra do modelo; NOVA333 sem remunerado; base intacta', near(m.NOVA222[0], n2.kml) && m.NOVA333[0] === 0 && near(m.SCC3C33[0], 2.99));
     af('Árvore: sem erro de página', errs.length === 0, errs[0] || ''); await page.close(); }
 
+  // os três painéis de combustível da Seara batem (Renan, 13/10/2026: "os valores
+  // precisam bater entre os painéis (R$/L, Km/L e Árvore)")
+  { const K = await abre('/combustivel/seara/eficiencia/index.html', banco);
+    const R = await abre('/combustivel/seara/preco-litro/index.html', banco);
+    const A = await abre('/combustivel/seara/arvore/index.html', banco);
+    const set9 = 'r=>{const d=parseVig(r[CL.vig]);return d&&d.getMonth()===8&&d.getFullYear()===2026;}';
+    const k = await K.page.evaluate(f => { const rows = allRows.filter(eval(f)); const a = aggRows(rows); return { rem: a.remAvg, real: a.realWt, imp: calcImpacto(a) }; }, set9);
+    const r = await R.page.evaluate(f => { const rows = allRows.filter(eval(f)); const a = aggRows(rows); return { rem: a.remAvg, real: a.realWt, imp: calcImpacto(a) }; }, set9);
+    const t = await A.page.evaluate(() => { const d = calcular({ ano: [], vigencia: ['09/2026'] }); const b = ArvImpacto.calc(d);
+      return { kmLRem: d.kmLRem, kmLReal: d.kmLReal, rsLRem: d.rsLRem, rsLReal: d.rsLReal, preco: b.preco, efic: b.efic }; });
+    const nr = (a, b, e) => a != null && b != null && Math.abs(a - b) <= e;
+    af(`Seara: Km/L rem e real da Árvore = painel Km/L (${k.rem?.toFixed(3)} · ${k.real?.toFixed(3)})`, nr(t.kmLRem, k.rem, 1e-9) && nr(t.kmLReal, k.real, 1e-9), `${t.kmLRem} · ${t.kmLReal}`);
+    af(`Seara: R$/L rem e real da Árvore = painel R$/L (${r.rem?.toFixed(3)} · ${r.real?.toFixed(3)})`, nr(t.rsLRem, r.rem, 1e-9) && nr(t.rsLReal, r.real, 1e-9), `${t.rsLRem} · ${t.rsLReal}`);
+    af(`Seara: Impacto Preço · R$/L da Árvore = painel R$/L (${Math.round(r.imp)})`, nr(t.preco, r.imp, 0.01), t.preco);
+    af(`Seara: Impacto Km/L da Árvore = painel Km/L, sinal da árvore (${Math.round(-k.imp)})`, nr(t.efic, -k.imp, 0.01), t.efic);
+    for (const p of [K, R, A]) await p.page.close(); }
+
   { const { page, errs } = await abre('/seara-km/index.html', banco);
     const m = await page.evaluate(() => Object.fromEntries(ALL.map(r => [r.placa, r.imp])));
     // impacto = (real − rem) × R$/km
