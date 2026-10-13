@@ -120,7 +120,8 @@ if (abaDepois) console.log(`aba · ${abaDepois} linha(s) de ${INICIO} em diante 
 const remPacAnt = {}, km0Ant = {};
 Object.keys(remPac).forEach(k => { if (antes(k.slice(0, 7))) remPacAnt[k] = { TOTAL: remPac[k] }; });
 Object.keys(km0).forEach(k => { if (antes(k.slice(0, 7))) km0Ant[k] = km0[k]; });
-const resAnt = BM.recompoe({ bal: balAnt, remCta: remPacAnt, km0: km0Ant, inicio: ANTIGA_INICIO, fim: INICIO, janela: ANTIGA_JANELA, liquido: false });
+const antC = BM.comRealizado(balAnt, kmReal);
+const resAnt = BM.recompoe({ bal: antC.bal, remCta: remPacAnt, km0: km0Ant, inicio: ANTIGA_INICIO, fim: INICIO, janela: ANTIGA_JANELA, liquido: false });
 resAnt.avisos.forEach(a => console.log('  ⚠ motor (antiga): ' + a));
 console.log(`regra antiga · janela "${ANTIGA_JANELA}" de ${ANTIGA_INICIO} até antes de ${INICIO} · ${Object.keys(resAnt.porChave).length} chave(s) com rateio`);
 Object.entries(resAnt.porChave).forEach(([k, e]) => {
@@ -138,7 +139,9 @@ banco.forEach(x => { const m = String(x.vigencia || '').match(/^(\d{4})-(\d{2})$
   (bal[k] = bal[k] || {})[c] = (bal[k][c] || 0) + (+x.valor || 0); });
 if (bancoAntes) console.log(`banco · ${bancoAntes} linha(s) anteriores a ${INICIO} ignoradas — nesse período vale a aba`);
 const km0Novo = {}; Object.keys(km0).forEach(k => { if (!antes(k.slice(0, 7))) km0Novo[k] = km0[k]; });
-const resNova = BM.recompoe({ bal, remCta, km0: km0Novo, inicio: INICIO });
+const novC = BM.comRealizado(bal, kmReal);
+[...antC.adiados, ...novC.adiados].forEach(k => console.log(`  ⏸ ${k}: balanço fora da conta até o realizado do mês entrar na Dispersão (R$ ${br(Object.values((bal[k] || balAnt[k] || {})).reduce((a, v) => a + v, 0))})`));
+const resNova = BM.recompoe({ bal: novC.bal, remCta, km0: km0Novo, inicio: INICIO });
 resNova.avisos.forEach(a => console.log('  ⚠ motor: ' + a));
 Object.entries(resNova.porChave).forEach(([k, e]) => {
   const [vig, proj, cod] = k.split('|'); const k0 = km0[k] || 0, real = kmReal[k] || 0, rv = remPac[k] || 0;

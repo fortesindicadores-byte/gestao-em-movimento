@@ -215,5 +215,18 @@
     return vig;
   }
 
-  return { recompoe, porAno, inicioDoBanco, trimestre, ym, parte, INICIO: '08/2026' };
+  /**
+   * SÓ ENTRA O MÊS QUE JÁ TEM REALIZADO (Renan, 13/10/2026: "Setembro só deve entrar na conta
+   * quando o realizado de setembro entrar"). Balanço de mês sem km realizado na Dispersão fica
+   * de fora — antes ele era jogado nos outros meses do bloco e inflava o km deles (o de set/26,
+   * R$ 1,32 mi, caía inteiro em jul e ago). Entra sozinho quando a Dispersão do mês chegar.
+   * @returns {{ bal: object, adiados: string[] }}  `adiados` = chaves deixadas de fora
+   */
+  function comRealizado(bal, kmReal) {
+    const out = {}, adiados = [];
+    Object.keys(bal || {}).forEach(ch => { if ((+(kmReal || {})[ch] || 0) > 0) out[ch] = bal[ch]; else adiados.push(ch); });
+    return { bal: out, adiados };
+  }
+
+  return { recompoe, porAno, inicioDoBanco, comRealizado, trimestre, ym, parte, INICIO: '08/2026' };
 });
