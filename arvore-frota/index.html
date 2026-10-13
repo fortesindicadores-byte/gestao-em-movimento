@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610111500">
+<meta name="build" content="202610131700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvore de Custo da Frota · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -584,12 +584,12 @@ function detDisp(cols){ const fi=_fi(cols); return {vig:0,proj:_fb(fi('proj.','p
 let FR=null,RE=null,DP=null, S_FR=[],S_RE=[],S_DP=[], allRows=[];
 
 // ── Seara (Distribuição Urbana) — km + frota da fonte própria (Base CTEs) ──
-const SEARA_ID='1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE', SEARA_GID_CTES=1672208132, SEARA_GID_COMB=1982300845;
+const SEARA_ID='1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE', SEARA_GID_COMB=1982300845;
 // KM REMUNERADO = aba `Remunerado` (Renan, 16/09/2026). Vinha de `sum(Z)` na
 // Base CTEs, coluna que NÃO EXISTE MAIS — a leitura estava quebrada e o km
-// remunerado da Seara vinha zerado. A Base CTEs continua servindo só para a
-// CONTAGEM DE VIAGENS (frotaReal), que a aba nova não tem: a coluna CT-e dela
-// conta CTEs, e a mesma viagem gera vários.
+// remunerado da Seara vinha zerado.
+// VIAGENS = coluna C (CT-e) da mesma aba (Renan, 13/10/2026: "Viagens Seara pode
+// utilizar a coluna C da aba Remunerado chamada CT-e"). A Base CTEs saiu de uso.
 const SEARA_ABA_REM='Remunerado';
 // vigência da aba `Remunerado` → 'AAAA-MM'. Ela vem como TEXTO "MM/AAAA", mas
 // se um dia a coluna virar data de verdade o gviz manda "Date(a,m,d)" — os dois
@@ -608,13 +608,13 @@ function _seVig(v){ return SEARA_VIG[v]=SEARA_VIG[v]||{kmRem:0,kmReal:0,frotaRea
 async function loadSeara(){
   SEARA_VIG={};
   try{
-    // igual ao painel KM-Seara: km REM = Σ D (aba Remunerado) · km REAL = Σ K (aba Combustível) · frota realizada = countdistinct(CD_VIAGEM_TRANSPORTE B)
-    const [dist,kmRem,kmReal]=await Promise.all([
-      gvFetchSheet(SEARA_ID,{gid:SEARA_GID_CTES,tq:'select B, year(D), month(D), count(A) group by B, year(D), month(D)'}),
+    // igual ao painel KM-Seara: km REM = Σ D (aba Remunerado) · km REAL = Σ K (aba Combustível) · viagens = Σ C (CT-e, aba Remunerado)
+    const [cte,kmRem,kmReal]=await Promise.all([
+      gvFetchSheet(SEARA_ID,{tab:SEARA_ABA_REM,tq:'select A, sum(C) group by A'}),
       gvFetchSheet(SEARA_ID,{tab:SEARA_ABA_REM,tq:'select A, sum(D) group by A'}),
       gvFetchSheet(SEARA_ID,{gid:SEARA_GID_COMB,tq:'select F, G, sum(K) group by F, G'}),
     ]);
-    dist.rows.forEach(r=>{ const yr=+r[1], mo=(+r[2])+1; if(!yr)return; _seVig(String(mo).padStart(2,'0')+'/'+yr).frotaReal++; });
+    cte.rows.forEach(r=>{ const vk=_vkRemAba(r[0]); if(!vk)return; _seVig(vk.slice(5)+'/'+vk.slice(0,4)).frotaReal=+r[1]||0; });
     kmRem.rows.forEach(r=>{ const vk=_vkRemAba(r[0]); if(!vk)return; _seVig(vk.slice(5)+'/'+vk.slice(0,4)).kmRem=+r[1]||0; });
     kmReal.rows.forEach(r=>{ const mi=_M3.indexOf(String(r[0]||'').toLowerCase().slice(0,3)), yr=+r[1]; if(mi<0||!yr)return; _seVig(String(mi+1).padStart(2,'0')+'/'+yr).kmReal=+r[2]||0; });
   }catch(e){ console.warn('Seara indisponível:',e.message); SEARA_VIG={}; }
@@ -986,6 +986,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610111500"></script>
+<script src="../assets/build-check.js?v=202610131700"></script>
 </body>
 </html>

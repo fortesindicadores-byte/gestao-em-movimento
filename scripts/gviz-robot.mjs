@@ -70,7 +70,7 @@ const ALVOS = [
   { id: SEARA, sheet: 'Remunerado', headers: '1', tq: 'select A, B, D' },
   { id: SEARA, sheet: 'Remunerado', tq: 'select A, sum(D) group by A' },
   { id: SEARA, sheet: 'Remunerado', headers: '1', tq: 'select A, sum(D) group by A' },
-  { id: SEARA, gid: '1672208132', tq: 'select B, year(D), month(D), count(A) group by B, year(D), month(D)' },
+  { id: SEARA, sheet: 'Remunerado', tq: 'select A, sum(C) group by A' },   // viagens da Seara (CT-e)
   { id: SEARA, gid: '1982300845', tq: 'select F, G, sum(K) group by F, G' },
   // Frota de Elite / Manutenção / Tendência
   { id: ELITE, sheet: 'Pneus' },

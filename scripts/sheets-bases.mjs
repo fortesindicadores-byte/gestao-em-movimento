@@ -100,8 +100,8 @@ export const BASES = [
   { slug: 'seara_rem_vig',       id: WB.SEARA, sheet: 'Remunerado', tq: 'select A, sum(D) group by A',
     nome: 'Seara · Remunerado Σkm por vigência — arvore-frota',
     apelidos: [{ sheet: 'Remunerado', tq: 'select A, sum(D) group by A', headers: '1' }] },  // rs-por-km pede com headers=1
-  { slug: 'seara_ctes_viagens',  id: WB.SEARA, gid: '1672208132', tq: 'select B, year(D), month(D), count(A) group by B, year(D), month(D)',
-    nome: 'Seara · CTEs por placa e mês — arvore-frota' },
+  { slug: 'seara_rem_cte_vig',   id: WB.SEARA, sheet: 'Remunerado', tq: 'select A, sum(C) group by A',
+    nome: 'Seara · Remunerado ΣCT-e por vigência — viagens da Seara (arvore-frota, visao-financeira-arvore)' },
   { slug: 'seara_comb_vig',      id: WB.SEARA, gid: '1982300845', tq: 'select F, G, sum(K) group by F, G',
     nome: 'Seara · Combustível Σkm por mês/ano — arvore-frota' },
 
