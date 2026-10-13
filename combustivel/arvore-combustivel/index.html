@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610111500">
+<meta name="build" content="202610131000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1075,7 +1075,10 @@ function recompoeTudo(balBanco, sBM){
   const nov=BalancoMassa.recompoe({bal:balBanco, remCta, km0, inicio:BM_INICIO});
   if(ant.avisos.length) console.warn('Balanço de massa (regra antiga, rateada):', ant.avisos);
   if(nov.avisos.length) console.warn('Balanço de massa (conta a conta):', nov.avisos);
-  return {porChave:Object.assign({},ant.porChave,nov.porChave), avisos:[...ant.avisos,...nov.avisos]};
+  // RATEIO ANUAL (Renan, 13/10/2026: "dividir ano"): o km do ano das duas regras é repartido pelos meses do ano pelo km remunerado original
+  const anu=BalancoMassa.porAno([ant.porChave,nov.porChave], km0);
+  if(anu.avisos.length) console.warn('Balanço de massa (rateio anual):', anu.avisos);
+  return {porChave:anu.porChave, avisos:[...ant.avisos,...nov.avisos,...anu.avisos]};
 }
 function parseBalanco(cols,rows){
   // VALOR 85% (Renan, 10/09/2026): a coluna "Valor 85%" é a que vira km; a "Valor" crua só se a de 85% não existir
@@ -1421,6 +1424,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610111500"></script>
+<script src="../../assets/build-check.js?v=202610131000"></script>
 </body>
 </html>

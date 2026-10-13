@@ -133,6 +133,25 @@ console.log('6) crédito e sem km');
   t('sem km em mês nenhum → aviso e nada recomposto', Object.keys(r2.porChave).length === 0 && r2.avisos.length === 1, r2.avisos);
 }
 
+// ── 8) rateio anual: soma as duas regras no ano e reparte pelo km remunerado original ──
+console.log('8) rateio anual');
+{
+  // regra antiga deu 30k km em jan→jul (ratio 30%), regra nova deu 5k em ago: ano = 35k km sobre 105k de km0
+  const km0 = { [ch('01/2026')]: 50000, [ch('07/2026')]: 30000, [ch('08/2026')]: 25000, '08/2026|ROTA|PIR': 9000, '01/2027|EMPURRADA|PIR': 40000 };
+  const ant = { [ch('01/2026')]: { km: 15000, valor: 60000 }, [ch('07/2026')]: { km: 15000, valor: 60000 } };
+  const nov = { [ch('08/2026')]: { km: 5000, valor: 25000, contas: { COMBUSTIVEIS: {} } } };
+  const r = BM.porAno([ant, nov], km0);
+  const k = v => r.porChave[ch(v)].km;
+  t('total do ano preservado (35.000 km)', perto(k('01/2026') + k('07/2026') + k('08/2026'), 35000), r.porChave);
+  t('jan = 35k × 50/105', perto(k('01/2026'), 35000 * 50 / 105), k('01/2026'));
+  t('ago = 35k × 25/105', perto(k('08/2026'), 35000 * 25 / 105), k('08/2026'));
+  t('valor do ano preservado (145.000)', perto(Object.values(r.porChave).reduce((s2, e) => s2 + e.valor, 0), 145000));
+  t('outro projeto e outro ano não recebem', !r.porChave['08/2026|ROTA|PIR'] && !r.porChave['01/2027|EMPURRADA|PIR']);
+  t('detalhe por conta mantido no mês dele', !!r.porChave[ch('08/2026')].contas && !r.porChave[ch('01/2026')].contas);
+  const r2 = BM.porAno([{ [ch('08/2026')]: { km: 100, valor: 400 } }], {});
+  t('sem km no ano → aviso e nada', Object.keys(r2.porChave).length === 0 && r2.avisos.length === 1, r2.avisos);
+}
+
 // ── 7) helpers ──
 console.log('7) helpers');
 t('trimestre(08/2026) = 2026-T3', BM.trimestre('08/2026') === '2026-T3');
