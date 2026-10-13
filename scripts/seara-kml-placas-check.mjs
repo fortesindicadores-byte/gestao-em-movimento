@@ -80,3 +80,28 @@ if (KEY) {
   const r = await fetch(`${SUPA}/rest/v1/sh_base?slug=in.(seara_remunerado,seara_combustivel)&select=slug,linhas,carregado_em,erro`, { headers: H });
   console.log('\nBanco (sh_base):', r.ok ? JSON.stringify(await r.json()) : 'HTTP '+r.status);
 }
+
+// ── modelo pela base de preventivas (ativos_manual): placa sem benchmark recebe
+// o KmPorLitro/PrecoDiesel médio das placas do MESMO modelo na mesma vigência
+console.log('\nBase Remunerado — todas as colunas:', brem.cols.join(' | '));
+if (KEY) {
+  const H = { apikey: KEY, Authorization: 'Bearer ' + KEY };
+  const r = await fetch(`${SUPA}/rest/v1/ativos_manual?select=placa,unidade,marca,modelo,tipo_veiculo`, { headers: H });
+  const am = r.ok ? await r.json() : [];
+  console.log(`\nativos_manual (base das preventivas): ${am.length} veículo(s)`);
+  const modDe = {}; am.forEach(a => modDe[placaKey(a.placa)] = `${a.marca||''}|${a.modelo||''}`.trim());
+  const cont = {}; am.forEach(a => { const k=modDe[placaKey(a.placa)]; cont[k]=(cont[k]||0)+1; });
+  console.log('  modelos:', Object.entries(cont).map(([k,n])=>`${k} (${n})`).join(' · '));
+  for (const v of [VIG, mesAnt(VIG)]) {
+    const g = {};
+    Object.keys(bench).filter(k => k.endsWith('|'+v)).forEach(k => { const p=k.split('|')[0]; const b=bench[k]; const m=modDe[p]||'(fora da base)';
+      const o = g[m] || (g[m] = {n:0, kml:[], pr:[]}); o.n++; if(b.kml>0) o.kml.push(b.kml); if(b.pr>0) o.pr.push(b.pr); });
+    console.log(`\n  ${v} — Base Remunerado por modelo (preventivas):`);
+    const med = a => a.length ? (a.reduce((s,x)=>s+x,0)/a.length).toFixed(3) : '—';
+    Object.entries(g).sort().forEach(([m,o]) => console.log(`    ${m.padEnd(30)} placas ${String(o.n).padStart(2)} · KmPorLitro médio ${med(o.kml)} (${o.kml.map(x=>x.toFixed(2)).join(',')}) · Preço médio ${med(o.pr)}`));
+  }
+  console.log('\n  placas pedidas na base das preventivas:');
+  for (const p of alvo) console.log(`    ${p}: ${modDe[p] || 'NÃO ESTÁ'}`);
+  const semMod = Object.keys(bench).filter(k=>k.endsWith('|'+VIG)).map(k=>k.split('|')[0]).filter(p=>!modDe[p]);
+  console.log(`  placas da Base Remunerado ${VIG} fora da base das preventivas: ${semMod.join(', ') || 'nenhuma'}`);
+}
