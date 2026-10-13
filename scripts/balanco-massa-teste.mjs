@@ -167,6 +167,14 @@ console.log('9) rateio pela diferença');
   t('sem diferença positiva → cai no km remunerado, com aviso', perto(r2.porChave[ch('02/2026')].km, 100) && r2.avisos.length === 1, r2.avisos);
 }
 
+// ── 10) só entra o mês com realizado ──
+console.log('10) só mês com realizado');
+{
+  const r = BM.comRealizado({ [ch('08/2026')]: { COMBUSTIVEIS: 100 }, [ch('09/2026')]: { COMBUSTIVEIS: 500 } }, { [ch('08/2026')]: 1000, [ch('09/2026')]: 0 });
+  t('agosto entra', !!r.bal[ch('08/2026')]);
+  t('setembro sem realizado fica de fora e é listado', !r.bal[ch('09/2026')] && r.adiados.join() === ch('09/2026'), r.adiados);
+}
+
 // ── 7) helpers ──
 console.log('7) helpers');
 t('trimestre(08/2026) = 2026-T3', BM.trimestre('08/2026') === '2026-T3');

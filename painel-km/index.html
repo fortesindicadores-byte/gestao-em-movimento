@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610131200">
+<meta name="build" content="202610131400">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -367,7 +367,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
-<script src="../assets/balanco-massa.js?v=202610131200"></script>
+<script src="../assets/balanco-massa.js?v=202610131400"></script>
 </head>
 <body>
 <div class="app">
@@ -952,10 +952,14 @@ async function fetchData() {
     const balAnt = {}, remAnt = {};
     Object.entries(balanco).forEach(([k, v]) => { if (vigToDate(k.slice(0, 7)) < vigToDate(bmIni)) balAnt[k] = { TOTAL: v }; });
     Object.entries(custoRem).forEach(([k, v]) => { if (vigToDate(k.slice(0, 7)) < vigToDate(bmIni)) remAnt[k] = { TOTAL: v }; });
-    const antiga = BalancoMassa.recompoe({ bal: balAnt, remCta: remAnt, km0: kmPorChave, inicio: BM_ANTIGA_INICIO, fim: bmIni, janela: BM_ANTIGA_JANELA, liquido: false });
+    // só entra o balanço de mês que já tem km REALIZADO na Dispersão (Renan, 13/10/2026)
+    const antC = BalancoMassa.comRealizado(balAnt, kmRealPorChave), novC = BalancoMassa.comRealizado(balancoBanco, kmRealPorChave);
+    const adiados = [...antC.adiados, ...novC.adiados];
+    if (adiados.length) console.info('Balanço de massa aguardando o realizado do mês na Dispersão:', adiados);
+    const antiga = BalancoMassa.recompoe({ bal: antC.bal, remCta: remAnt, km0: kmPorChave, inicio: BM_ANTIGA_INICIO, fim: bmIni, janela: BM_ANTIGA_JANELA, liquido: false });
     if (antiga.avisos.length) console.warn('Balanço de massa (regra antiga, rateada):', antiga.avisos);
     // DE AGO/26 EM DIANTE: por conta (banco), convertido em km pelo R$/km das contas com balanço
-    const nova = BalancoMassa.recompoe({ bal: balancoBanco, remCta: custoFrota.cta, km0: kmPorChave, inicio: bmIni });
+    const nova = BalancoMassa.recompoe({ bal: novC.bal, remCta: custoFrota.cta, km0: kmPorChave, inicio: bmIni });
     if (nova.avisos.length) console.warn('Balanço de massa (conta a conta):', nova.avisos);
     // RATEIO ANUAL (Renan, 13/10/2026: "dividir ano" → "a 1 talvez, vamos testar"): cada regra
     // converte o seu valor em km e o km do ANO de cada unidade|projeto é repartido entre os meses
@@ -1686,7 +1690,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_km_v8';  // v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
+const CACHE_KEY='bi_cache_km_v9';  // v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
@@ -1834,6 +1838,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610131200"></script>
+<script src="../assets/build-check.js?v=202610131400"></script>
 </body>
 </html>
