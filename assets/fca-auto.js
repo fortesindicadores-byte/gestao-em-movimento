@@ -567,9 +567,10 @@ function diagManut(f, ctx, D, causa, acao, base) {
   const ruins = new Set(ind.filter(i => i.ruim).map(i => i.k)), causasInd = new Set(ind.filter(i => i.ruim && i.rede && i.rede.sust).map(i => i.k));
   if (prevV.length) acao('Preventiva', `${ACAO_IND.prev}: ${prevV.length} placa(s)`, prevV.slice(0, 6).map(p => `${p.placa}${fin(p.dias) ? ' (' + br(Math.abs(p.dias), 0) + 'd)' : ''}`));
   else if (ruins.has('prev')) acao('Preventiva', ACAO_IND.prev);
-  if (osAb.length && (ruins.has('sla') || ruins.has('mttr') || ruins.has('osVenc') || osAb.some(o => o.dias > 7))) {
-    const velhas = top(osAb, 6, o => o.dias || 0);
-    acao('Oficina / SLA', `${ACAO_IND.sla}: ${osAb.length} OS em aberto na unidade hoje`, velhas.map(o => `OS ${o.os} ${o.placa} ${br(o.dias, 0)}d${o.crit ? ' (' + o.crit + ')' : ''}`));
+  if (osAb.length && (ruins.has('sla') || ruins.has('mttr') || ruins.has('osVenc') || osAb.some(o => (o.dias || 0) > 7))) {
+    // sem data no export, a mais antiga é a de menor número
+    const velhas = osAb.slice().sort((a, b) => (b.dias != null && a.dias != null ? b.dias - a.dias : (+a.os || 0) - (+b.os || 0))).slice(0, 6);
+    acao('Oficina / SLA', `${ACAO_IND.sla}: ${osAb.length} OS em aberto na unidade hoje`, velhas.map(o => `OS ${o.os} ${o.placa}${o.dias != null ? ' ' + br(o.dias, 0) + 'd' : ''}${o.crit ? ' (' + o.crit + ')' : ''}`));
   }
   ['conf', 'checkT', 'osCritica', 'mtbf', 'civf', 'stVeic', 'mttr', 'osVenc', 'disp'].forEach(kx => { if (causasInd.has(kx) && !(kx === 'osVenc' && osAb.length) && !(kx === 'mttr' && osAb.length)) acao(TEMA_IND[kx], ACAO_IND[kx]); });
   // placas paradas mais dias no mês (eventos do app de indisponibilidade)
@@ -635,7 +636,9 @@ function indexaGinfo(snap, hoje) {
   (snap.preventivas || []).forEach(r => { if (!/VENCID/.test(NK(r['Status']))) return; const u = uniDe(r); if (!u) return;
     slot(u).prevVencidas.push({ placa: placaKey(r['Placa']), dias: num(r['Dias Próxima'] != null ? r['Dias Próxima'] : r['Dias Proxima']), modelo: r['Modelo'] || '' }); });
   Object.values(out).forEach(o => o.prevVencidas.sort((a, b) => (a.dias || 0) - (b.dias || 0)));
-  (snap['os-em-aberto'] || []).forEach(r => { const u = uniDe(r); if (!u) return; const d = parseData(r['Data']);
+  // a data da OS: "Data" (o export às vezes vem sem ela) ou a 1ª coluna "Data…" que for data
+  const dataOS = r => { let d = parseData(r['Data']); if (d) return d; for (const k of Object.keys(r)) { if (/^data/i.test(k) && (d = parseData(r[k]))) return d; } return null; };
+  (snap['os-em-aberto'] || []).forEach(r => { const u = uniDe(r); if (!u) return; const d = dataOS(r);
     slot(u).osAbertas.push({ os: r['Nº OS'] || r['N° OS'] || '', placa: placaKey(r['Placa']), dias: d ? Math.max(0, Math.floor((hoje - d) / 864e5)) : null, crit: r['Criticidade'] || '', tipo: r['Tipo'] || '' }); });
   (snap.alinhamentos || []).forEach(r => { if (!/VENCID/.test(NK(r['Status']))) return; const u = uniDe(r); if (!u) return; slot(u).alinVencidos.push({ placa: placaKey(r['Placa']) }); });
   return out;
