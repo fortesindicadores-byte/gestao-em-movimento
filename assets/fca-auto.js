@@ -61,7 +61,7 @@ function parseData(v) {
   const s = String(v).trim(); let m;
   if ((m = s.match(/^Date\((\d+),(\d+)(?:,(\d+))?/))) return new Date(+m[1], +m[2], +(m[3] || 1));
   if ((m = s.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/))) return new Date(+m[1], +m[2] - 1, +(m[3] || 1));
-  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/))) return new Date(+m[3], +m[2] - 1, +m[1]);
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/))) return (/AM|PM/i.test(s) || +m[2] > 12) ? new Date(+m[3], +m[1] - 1, +m[2]) : new Date(+m[3], +m[2] - 1, +m[1]);
   if ((m = s.match(/^(\d{1,2})\/(\d{4})$/))) return new Date(+m[2], +m[1] - 1, 1);
   if ((m = s.toLowerCase().match(/^([a-zç]{3})[a-zç]*\.?\s*\/\s*(\d{2,4})$/))) { const i = MESES.indexOf(m[1]); if (i >= 0) { let y = +m[2]; if (y < 100) y += 2000; return new Date(y, i, 1); } }
   return null;
@@ -361,7 +361,7 @@ function aprendizado(fcaRows, todosFatos, maxVig) {
           prolog, rede, aprend, metasRede} */
 const METAS = { disp: 95, prev: 100, pneus: 100, checkT: 95, checkWH: 95, conf: 100, stVeic: 100, stEmp: 100, civf: 100, sla: 75, osVenc: 10, osCritica: 0, blitz: 100 };
 const FMT_IND = { disp: 'pct', prev: 'pct', pneus: 'pct', checkT: 'pct', conf: 'pct', stVeic: 'pct', civf: 'pct', sla: 'pct', osVenc: 'n', osCritica: 'n', mttr: 'h', mtbf: 'h', disp_app: 'pct', indisp_med: 'd1', dispersao: 'pct' };
-const fmtInd = (k, v) => !fin(v) ? '—' : FMT_IND[k] === 'pct' ? pct(v, 1) : FMT_IND[k] === 'h' ? br(v, 1) + ' h' : FMT_IND[k] === 'd1' ? br(v, 1) : br(v, 0);
+const fmtInd = (k, v) => !fin(v) ? '—' : FMT_IND[k] === 'pct' ? pct(v, 1) : FMT_IND[k] === 'h' ? br(v / 3600, 1) + ' h' : FMT_IND[k] === 'd1' ? br(v, 1) : br(v, 0);
 const quartis = xs => { const s = xs.filter(fin).sort((a, b) => a - b); if (s.length < 4) return null; const q = p => { const i = (s.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i); return s[lo] + (s[hi] - s[lo]) * (i - lo); }; return { q1: q(.25), q2: q(.5), q3: q(.75) }; };
 /* indicadores da unidade no mês contra a meta (ou o quartil da rede no MTTR/MTBF) */
 function indicadores(cod, vig, ctx, lista) {
@@ -382,6 +382,7 @@ function indicadores(cod, vig, ctx, lista) {
   });
   return out;
 }
+const ehPlaca = s => /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''));
 const top = (arr, n, by) => arr.slice().sort((a, b) => by(b) - by(a)).slice(0, n);
 const somaPor = (rows, key, val) => { const m = {}; rows.forEach(r => { const k = key(r) || '(sem ' + 'informação)'; m[k] = (m[k] || 0) + val(r); }); return Object.entries(m).map(([k, v]) => ({ k, v })).sort((a, b) => b.v - a.v); };
 function taxaTema(ctx, pac, tema) {
@@ -497,7 +498,7 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
     if (baixos.length) {
       D.sinais.push({ tema: 'Condução', txt: `Condução (telemetria): ${baixos.length} de ${mot.length} motoristas abaixo de 75 pontos, com ${pct(kmT ? kmB / kmT * 100 : 0)} do km` });
       const of = top(baixos, 5, m => (75 - m.v.nota) * (m.v.km || 0)).map(m => `${m.nome || m.ent} ${br(m.v.nota, 0)} pts, ${br(m.v.km, 0)} km${fin(m.v.km_l) ? ', ' + br(m.v.km_l, 2) + ' km/L' : ''}`);
-      if (cb && cb.efic > 0) acao('Condução', `Feedback de condução (faixa verde, motor ligado parado) com os motoristas de pior nota no DriverPro`, of);
+      if (cb && cb.efic > 0) acao('Condução', `Feedback de condução (faixa verde, motor ligado parado) com os motoristas de pior nota da unidade no DriverPro`, of);
     }
   }
   // indicadores que a rede liga ao desvio de Combustíveis
@@ -537,7 +538,7 @@ function diagManut(f, ctx, D, causa, acao, base) {
   D.blocos.carta = lanc;
   const tot = lanc.rows.reduce((s, r) => s + r.valor, 0);
   if (lanc.rows.length) {
-    const gr = somaPor(lanc.rows, r => r.grupo, r => r.valor), pl = somaPor(lanc.rows.filter(r => r.equipamento), r => r.equipamento, r => r.valor), fo = somaPor(lanc.rows.filter(r => r.fornecedor), r => r.fornecedor, r => r.valor);
+    const gr = somaPor(lanc.rows, r => r.grupo, r => r.valor), pl = somaPor(lanc.rows.filter(r => ehPlaca(r.equipamento)), r => r.equipamento, r => r.valor), fo = somaPor(lanc.rows.filter(r => r.fornecedor), r => r.fornecedor, r => r.valor);
     D.blocos.cartaGr = gr; D.blocos.cartaPl = pl; D.blocos.cartaFo = fo;
     const g1 = gr[0], top3 = pl.slice(0, 3), sTop3 = top3.reduce((s, x) => s + x.v, 0);
     // concentração: o maior grupo e as 3 maiores placas; R$ "explicado" = parte do estouro proporcional ao peso no lançado
@@ -554,8 +555,8 @@ function diagManut(f, ctx, D, causa, acao, base) {
     const cContr = f.contas.find(c => /CONTRATOS DE MANUTENCAO/.test(c.ck));
     D.blocos.contrato = { tot: tc, n: ct.length, faixa2: fx2 };
     if (cContr && cContr.ov > 0) {
-      causa('Contrato', `Contrato de manutenção: ${rs(cContr.ov)} acima do remunerado; ${ct.length} placas faturadas (${rs(tc)}) pelo km de ${vigLbl(kmMes)}${fx2.length ? ', ' + fx2.length + ' atravessaram para a faixa 2' : ''}`, cContr.ov);
-      acao('Contrato', `Conferir a fatura do contrato: km cobrado × km rodado e as placas que subiram de faixa`, top(ct, 5, p => p.v.custo_mes).map(p => `${p.ent} ${rs(p.v.custo_mes)}${fin(p.v.km_mes) ? ', ' + br(p.v.km_mes, 0) + ' km' : ''}${(p.v.faixas || 0) >= 2 ? ', faixa 2' : ''}`));
+      causa('Contrato', `Contrato de manutenção: ${rs(cContr.ov)} acima do remunerado; na unidade, ${ct.length} placas faturadas (${rs(tc)}) pelo km de ${vigLbl(kmMes)}${fx2.length ? ', ' + fx2.length + ' atravessaram para a faixa 2' : ''}`, cContr.ov);
+      acao('Contrato', `Conferir a fatura do contrato (km cobrado × km rodado)${fx2.length ? ' e as ' + fx2.length + ' placas que passaram para a faixa 2' : ''}; as de maior fatura`, top(ct, 5, p => p.v.custo_mes).map(p => `${p.ent} ${rs(p.v.custo_mes)}${fin(p.v.km_mes) ? ', ' + br(p.v.km_mes, 0) + ' km' : ''}${(p.v.faixas || 0) >= 2 ? ', faixa 2' : ''}`));
     }
   }
   // indicadores do Ginfo/Gerot
@@ -563,14 +564,14 @@ function diagManut(f, ctx, D, causa, acao, base) {
   // listas de hoje do Ginfo → ações com placa
   const gi = ctx.ginfo[f.uni] || {};
   const prevV = gi.prevVencidas || [], osAb = gi.osAbertas || [];
-  const ruins = new Set(ind.filter(i => i.ruim).map(i => i.k));
+  const ruins = new Set(ind.filter(i => i.ruim).map(i => i.k)), causasInd = new Set(ind.filter(i => i.ruim && i.rede && i.rede.sust).map(i => i.k));
   if (prevV.length) acao('Preventiva', `${ACAO_IND.prev}: ${prevV.length} placa(s)`, prevV.slice(0, 6).map(p => `${p.placa}${fin(p.dias) ? ' (' + br(Math.abs(p.dias), 0) + 'd)' : ''}`));
   else if (ruins.has('prev')) acao('Preventiva', ACAO_IND.prev);
   if (osAb.length && (ruins.has('sla') || ruins.has('mttr') || ruins.has('osVenc') || osAb.some(o => o.dias > 7))) {
     const velhas = top(osAb, 6, o => o.dias || 0);
     acao('Oficina / SLA', `${ACAO_IND.sla}: ${osAb.length} OS em aberto na unidade hoje`, velhas.map(o => `OS ${o.os} ${o.placa} ${br(o.dias, 0)}d${o.crit ? ' (' + o.crit + ')' : ''}`));
   }
-  ['conf', 'checkT', 'osCritica', 'mtbf', 'civf', 'stVeic', 'mttr', 'osVenc', 'disp'].forEach(kx => { if (ruins.has(kx) && !(kx === 'osVenc' && osAb.length) && !(kx === 'mttr' && osAb.length)) acao(TEMA_IND[kx], ACAO_IND[kx]); });
+  ['conf', 'checkT', 'osCritica', 'mtbf', 'civf', 'stVeic', 'mttr', 'osVenc', 'disp'].forEach(kx => { if (causasInd.has(kx) && !(kx === 'osVenc' && osAb.length) && !(kx === 'mttr' && osAb.length)) acao(TEMA_IND[kx], ACAO_IND[kx]); });
   // placas paradas mais dias no mês (eventos do app de indisponibilidade)
   const par = (ctx.fatoPlaca[f.uni + '|' + f.vig] || []).filter(p => (p.v.dias_indisp || 0) >= 3);
   if (par.length) { D.blocos.paradas = par; D.sinais.push({ tema: 'Oficina / SLA', txt: `Indisponibilidade: ${par.length} placa(s) paradas 3 dias ou mais no mês (${top(par, 4, p => p.v.dias_indisp).map(p => p.ent + ' ' + br(p.v.dias_indisp, 0) + 'd').join(', ')})` }); }
@@ -588,7 +589,7 @@ function diagPneus(f, ctx, D, causa, acao, base) {
   const tot = lanc.rows.reduce((s, r) => s + r.valor, 0);
   if (lanc.rows.length) {
     const novos = lanc.rows.filter(r => /NOVOS/.test(NK(r.conta))).reduce((s, r) => s + r.valor, 0);
-    const gr = somaPor(lanc.rows, r => r.grupo, r => r.valor), pl = somaPor(lanc.rows.filter(r => r.equipamento), r => r.equipamento, r => r.valor), fo = somaPor(lanc.rows.filter(r => r.fornecedor), r => r.fornecedor, r => r.valor);
+    const gr = somaPor(lanc.rows, r => r.grupo, r => r.valor), pl = somaPor(lanc.rows.filter(r => ehPlaca(r.equipamento)), r => r.equipamento, r => r.valor), fo = somaPor(lanc.rows.filter(r => r.fornecedor), r => r.fornecedor, r => r.valor);
     D.blocos.cartaGr = gr; D.blocos.cartaPl = pl; D.blocos.cartaFo = fo;
     causa('Pneus', `Onde o dinheiro foi (Carta de Custos${lanc.nivel === 'unidade' ? ', unidade inteira' : ''}): ${rs(tot)} lançados, ${pct(tot ? novos / tot * 100 : 0)} em pneus novos; ${gr.slice(0, 3).map(g => g.k + ' ' + rs(g.v)).join(', ')}`, null);
     if (pl.length) acao('Pneus', `Conferir as placas com mais gasto de pneu (troca antes da hora, desalinhamento, avaria)`, pl.slice(0, 5).map(x => `${x.k} ${rs(x.v)}`));
