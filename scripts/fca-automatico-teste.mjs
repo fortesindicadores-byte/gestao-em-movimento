@@ -366,8 +366,8 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   console.log('\n══ 2b · sem a tabela fca_auto_acao');
   const { pg, ctx, errs } = await abre({ acErr: true });
   await pg.click('.s-item[data-v="tabela"]'); await pg.waitForTimeout(150);
-  const r = await pg.evaluate(() => ({ err: (document.querySelector('.fa-tbar-err') || {}).textContent || '', dis: [...document.querySelectorAll('tbody.fg [data-c]')].every(x => x.disabled), n: document.querySelectorAll('tbody.fg').length }));
-  af('sem a tabela: a tela abre com as ações, os campos ficam travados e o topo diz para rodar o SQL', r.n > 0 && r.dis && /fca_auto_acao não existe no banco/.test(r.err) && errs.length === 0, JSON.stringify(r));
+  const r = await pg.evaluate(() => ({ err: (document.querySelector('.fa-tbar-prev') || {}).textContent || '', dis: [...document.querySelectorAll('tbody.fg [data-c]')].every(x => x.disabled), n: document.querySelectorAll('tbody.fg').length }));
+  af('sem a tabela: a tela abre com as ações, os campos ficam travados e o topo diz que é prévia (sem pedir SQL)', r.n > 0 && r.dis && /Prévia: dono, prazo e status/.test(r.err) && !/SQL/.test(r.err) && errs.length === 0, JSON.stringify(r));
   await ctx.close();
 }
 

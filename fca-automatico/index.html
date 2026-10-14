@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610150300">
+<meta name="build" content="202610150330">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -921,6 +921,7 @@ table.rel.fa-rel.din tbody.fg td.ln.fim{border-bottom:0!important;}
 table.rel.fa-rel.din tr.feita td.ln:not(.ac-c) small{text-decoration:none;}
 .ac-sem{font-size:10.5px;color:var(--txt3);font-style:italic;}
 .fa-tbar-err{font-size:10.5px;font-weight:700;color:var(--vermelho);}
+.fa-tbar-prev{font-size:10.5px;font-weight:600;color:var(--amber);}
 .fa-tbar-ok{font-size:10.5px;font-weight:700;color:var(--verde);}
 table.rel.fa-rel tbody.fg{border-top:2px solid var(--card-brd);}
 table.rel.fa-rel.din tbody.fg td.id{vertical-align:top;border-bottom:0!important;}
@@ -940,7 +941,7 @@ table.rel td.fato .fa-ano{font-size:10.5px;}
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610150300"></script>
+<script src="../assets/fca-auto.js?v=202610150330"></script>
 </head>
 <body>
 <div class="app">
@@ -1160,7 +1161,7 @@ function camposAcao(f,l){
 }
 function tabelaHTML(vis){
   const linha=TAB_MODO==='linha';
-  const aviso=linha&&ACOES_ERR?`<span class="fa-tbar-err">Responsável, prazo e status ainda não gravam: ${esc(ACOES_ERR)}</span>`:'';
+  const aviso=!linha||!ACOES_ERR?'':ACOES_ERR==='PREVIA'?`<span class="fa-tbar-prev">Prévia: dono, prazo e status passam a gravar quando a ação for para o FCA oficial</span>`:`<span class="fa-tbar-err">Responsável, prazo e status não gravam: ${esc(ACOES_ERR)}</span>`;
   let h=`<div class="rel-section"><div class="fa-tbar"><span class="fa-tbar-n">${linha?'Uma linha por ação. Clique na ação para abrir; no fato, o diagnóstico completo':'Clique na linha para abrir o diagnóstico completo'}</span>${aviso}<span class="fa-tbar-ok" id="acSalvo"></span><div class="fa-tog" id="tabModo">
       <button data-m="linha" class="${linha?'on':''}">Uma por linha</button><button data-m="grupo" class="${linha?'':'on'}">Agrupado</button></div></div>
     <datalist id="dl-resp">${NOMES.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
@@ -1211,7 +1212,7 @@ async function carregaAcoes(){
     const out=[]; for(let off=0;off<50000;off+=1000){ const {data,error}=await sb.from('fca_auto_acao').select('*').range(off,off+999);
       if(error) throw new Error(error.message); out.push(...(data||[])); if(!data||data.length<1000) break; }
     ACOES={}; out.forEach(r=>{ ACOES[acKey(r.fato_id,r.chave)]=r; }); ACOES_OK=true; ACOES_ERR=null;
-  }catch(e){ ACOES_OK=false; ACOES_ERR=/fca_auto_acao|relation|schema cache|does not exist/i.test(e.message||'')?'a tabela fca_auto_acao não existe no banco (rodar o SQL)':(e.message||String(e)); }
+  }catch(e){ ACOES_OK=false; ACOES_ERR=/fca_auto_acao|relation|schema cache|does not exist/i.test(e.message||'')?'PREVIA':(e.message||String(e)); }
   try{ const {data}=await sb.from('fca_profiles').select('nome'); NOMES=[...new Set((data||[]).map(p=>String(p.nome||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')); }catch(e){ NOMES=[]; }
 }
 /* ── KANBAN — uma coluna por pacote ── */
@@ -1457,6 +1458,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610150300"></script>
+<script src="../assets/build-check.js?v=202610150330"></script>
 </body>
 </html>
