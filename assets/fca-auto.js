@@ -426,9 +426,9 @@ function redeFala(e, pac) {
   if (fin(e.r1) && e.n1 >= 8) melhor.push({ k: 1, r: e.r1, q: e.q1, ap: e.apoia1 });
   const b = melhor.filter(m => m.ap).sort((x, y) => Math.abs(y.r) - Math.abs(x.r))[0];
   const nome = pac ? 'o ' + pac : 'o pacote';
-  if (!b) return `nas outras unidades isso não anda junto com o estouro d${nome.slice(1)}`;
+  if (!b) return `Nas outras unidades isso não anda junto com o estouro d${nome}`;
   const forca = forcaTxt(b.r);
-  return `nas outras unidades, quando isso piora ${nome} estoura junto${b.k ? ' no mês seguinte' : ''} (ligação ${forca}${b.q < 0.10 ? '' : ', pode ser coincidência'})`;
+  return `Nas outras unidades, quando isso piora ${nome} estoura junto${b.k ? ' no mês seguinte' : ''} (ligação ${forca}${b.q < 0.10 ? '' : ', pode ser coincidência'})`;
 }
 
 /* ═════════ 4) HISTÓRICO DO FCA — o que as unidades já escreveram ═════════ */
@@ -759,7 +759,7 @@ function diagManut(f, ctx, D, causa, acao, base) {
   D.blocos.carta = lanc;
   const tot = lanc.rows.reduce((s, r) => s + r.valor, 0);
   if (lanc.rows.length) {
-    const grupo = r => r.grupo || '(sem grupo)';
+    const grupo = r => r.grupo || 'sem grupo';
     const gr = somaPor(lanc.rows, grupo, r => r.valor), pl = somaPor(lanc.rows.filter(r => ehPlaca(r.equipamento)), r => r.equipamento, r => r.valor), fo = somaPor(lanc.rows.filter(r => r.fornecedor), r => r.fornecedor, r => r.valor);
     // o grupo que pesa em cada placa (a "causa" da placa cara: Motor, Embreagem…)
     const grPl = {}; lanc.rows.filter(r => ehPlaca(r.equipamento)).forEach(r => { const g = grPl[r.equipamento] || (grPl[r.equipamento] = {}); g[grupo(r)] = (g[grupo(r)] || 0) + r.valor; });
