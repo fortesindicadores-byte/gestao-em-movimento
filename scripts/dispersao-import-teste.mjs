@@ -256,9 +256,11 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
     await pg.goto(BASE + html, { waitUntil: 'domcontentloaded' });
     await pg.waitForFunction(() => { try { return ALL.length > 0; } catch (e) { return false; } }, { timeout: 20000 }).catch(() => {});
     await pg.waitForTimeout(800);
-    const out = await pg.evaluate(() => ({ all: ALL.map(r => ({ vig: r.vig, und: r.und, proj: r.proj, rem: r.rem, real: r.real, viagens: r.viagens, kmFrota: r.kmFrota, rsKm: r.rsKm, imp: r.imp })),
+    const kh = await pg.evaluate(() => { const k = document.querySelector('#vw-resumo .kpis.k4'); return k ? Math.round(k.getBoundingClientRect().height) : 0; });
+    if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'painel-km-' + (ligado ? 'com' : 'sem') + '-set.png') });
+    const out = await pg.evaluate(() => ({ kh: 0, all: ALL.map(r => ({ vig: r.vig, und: r.und, proj: r.proj, rem: r.rem, real: r.real, viagens: r.viagens, kmFrota: r.kmFrota, rsKm: r.rsKm, imp: r.imp })),
       placas: PLACAS.map(p => ({ vig: p.vig, und: p.und, proj: p.proj, placa: p.placa, rem: p.rem, real: p.real })) }));
-    await ctx.close(); return { ...out, errs };
+    await ctx.close(); return { ...out, kh, errs };
   };
   const A = await roda('/painel-km/__antigo.html'), N = await roda('/painel-km/index.html');
   const ate = rs => JSON.stringify(rs.filter(r => r.vig !== '09/2026'));
@@ -276,6 +278,7 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
   af('visão Placas de set/26 mostra CUC9514 (como está na planilha) com 4.300 km', pl && pl.placa === 'CUC9514' && pl.real === 4300 && pl.rem === 4000, JSON.stringify(pl));
   const D = await roda('/painel-km/index.html', false);
   af('desligado (padrão hoje): set/26 fora e jan a ago iguais', !D.all.some(r => r.vig === '09/2026') && !D.placas.some(p => p.vig === '09/2026') && ate(D.all) === ate(A.all), D.all.length);
+  af('cards do Resumo com a altura do padrão (≤ 170px)', N.kh > 0 && N.kh <= 170 && D.kh <= 170, N.kh + ' · ' + D.kh);
   af('sem erro de página nos dois', !A.errs.length && !N.errs.length, [...A.errs, ...N.errs].join(' | '));
 }
 
