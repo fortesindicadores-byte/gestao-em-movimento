@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610150630">
+<meta name="build" content="202610150715">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -935,6 +935,11 @@ table.rel.fa-rel.din tbody.fg td.ln small{display:block;color:var(--txt3);font-s
 table.rel.fa-rel tbody.fg:hover td{background:var(--hover)!important;}
 table.rel.fa-rel.din tbody tr:hover{background:none!important;}
 table.rel td.fato .fa-ano{font-size:10.5px;border-top:0;padding-top:0;margin-top:10px;}
+table.rel td.fato{position:relative;}
+table.rel td.fato .fa-ano-res{visibility:hidden;}
+table.rel td.fato .fa-ano-pe{position:absolute;left:0;right:0;bottom:10px;margin:0;padding-left:inherit;padding-right:inherit;}
+/* filete pontilhado entre as linhas de causa/ação do mesmo fato (Renan, 14/10/2026: "poderia ter aquela linha pontilhadinha") */
+table.rel.fa-rel.din tbody.fg tr+tr td.ln{border-top:1px dashed var(--linha)!important;}
 @media(max-width:860px){.fa-kpis{grid-template-columns:repeat(2,1fr);}.fa-dois,.fa-rede,.fm-two{grid-template-columns:1fr;}.board .main.res{overflow:visible;}}
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
@@ -944,7 +949,7 @@ table.rel td.fato .fa-ano{font-size:10.5px;border-top:0;padding-top:0;margin-top
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610150630"></script>
+<script src="../assets/fca-auto.js?v=202610150715"></script>
 </head>
 <body>
 <div class="app">
@@ -1126,7 +1131,10 @@ function linhaAcoes(d,n){ const as=d.acoes.slice(0,n||9); if(!as.length) return 
 /* fato curto para a tabela (contas resumidas, um ▲/▼ e o % entre parênteses) + YTD */
 // o nome do pacote 2 px maior e o desvio total do pacote (1ª linha) em negrito (Renan, 14/10/2026)
 const fatoHTML=(f,d)=>{ const [tot,...ct]=String(FA.desvioCurto(f)).split('\n');
-  return `<b class="fa-pac">${esc(f.pac)}</b><small><span class="fa-tot">${nl(tot)}</span>${ct.length?'<br>'+nl(ct.join('\n')):''}</small>${anoHTML(d)}`; };
+    // YTD no pé da célula mesclada (Renan, 14/10/2026: "YTD lá embaixo"): uma cópia invisível
+  // guarda o espaço no fluxo e a visível fica presa ao fundo da célula
+  const ano=anoHTML(d);
+  return `<b class="fa-pac">${esc(f.pac)}</b><small><span class="fa-tot">${nl(tot)}</span>${ct.length?'<br>'+nl(ct.join('\n')):''}</small>${ano?ano.replace('class="fa-ano"','class="fa-ano fa-ano-res" aria-hidden="true"')+ano.replace('class="fa-ano"','class="fa-ano fa-ano-pe"'):''}`; };
 /* DOIS ARRANJOS. "Uma por linha" (padrão) = UMA LINHA POR AÇÃO, e cada ação é um item com
    dono, prazo e status gravados no banco (Renan, 14/10/2026: "Ideia é da dinâmica é separar para
    cada ação ser fechada individualmente. E cada ação com um dono… Traga também as colunas prazo,
@@ -1482,6 +1490,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610150630"></script>
+<script src="../assets/build-check.js?v=202610150715"></script>
 </body>
 </html>
