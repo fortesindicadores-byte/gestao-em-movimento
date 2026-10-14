@@ -1474,6 +1474,8 @@ números por trás já eram os de agosto. "Antes aparecia" é literal: enquanto 
   arquivo), e o `buildEliteRows` **descarta unidade fora do `NOMES`** — com
   `fundir:true` é `MACACU`, não `CDI MACACU`, então o RAW saía vazio.
 
+**O SELO E O CACHE TAMBÉM TÊM DE ACOMPANHAR A HIDRATAÇÃO (bug real, 14/10/2026, Renan: *"Não atualizou mais frota de elite?"*).** A tela mostrava setembro (9 períodos), mas o topo dizia "Atualizado 25/09/2026 17:18 (cache)" em 14/10: a hidratação redesenhava com o dado novo e não regravava o `localStorage` nem trocava o selo, então o cache de 25/09 era o primeiro a aparecer em toda abertura e o selo nunca saía dele. Agora o `.then` da hidratação grava o cache e escreve "Atualizado <agora>". `elite-vigencia-teste` 11 ok (o código antigo falha nos dois testes novos).
+
 **Vale para qualquer painel com cache + hidratação:** redesenhar sem repovoar os
 filtros deixa a tela mostrando um recorte que não existe mais. Hoje este é o
 único (`grep` por `GerotBase.load(.*).then` acha só ele).

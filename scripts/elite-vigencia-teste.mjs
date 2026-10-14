@@ -104,8 +104,7 @@ async function abre({ corrigido }) {
   await ctx.route(BASE + '/programa-reconhecimento/', async r => {
     let html = await readFile(join(RAIZ, 'programa-reconhecimento/index.html'), 'utf8');
     if (!corrigido) {
-      html = html.replace('RAW=buildEliteRows(recs); populateFilters(); renderAll();',
-                          'RAW=buildEliteRows(recs); renderAll();');
+      html = html.replace(/populateFilters\(\); renderAll\(\);(\s*const n=new Date\(\);)/, 'renderAll();$1');
     }
     r.fulfill({ status:200, contentType:'text/html;charset=utf-8', body: html });
   });
@@ -125,7 +124,8 @@ async function abre({ corrigido }) {
       rows.push({ vig: v.slice(0,4) + '/' + v.slice(5) + '/01', unit: u, f, pts: 95 });
     }));
     try {
-      localStorage.setItem(chave, JSON.stringify({ t: Date.now(), rows }));
+      // cache VELHO (25/09/2026): a hidratação tem de regravá-lo e trocar o selo do topo
+      localStorage.setItem(chave, JSON.stringify({ t: new Date(2026, 8, 25, 17, 18).getTime(), rows }));
       localStorage.setItem('bi_elite_cortina', '1');
     } catch(e) {}
   }, [ATE_JUL, ATE_AGO, UNIS, CAMPOS, CHAVE]);
@@ -134,6 +134,7 @@ async function abre({ corrigido }) {
   return { ctx, pg };
 }
 
+const CHAVE_PAINEL = ((await readFile(join(RAIZ, 'programa-reconhecimento/index.html'), 'utf8')).match(/CACHE_KEY='([^']+)'/) || [])[1];
 const vigsNaTela = pg => pg.evaluate(() =>
   [...document.querySelectorAll('#ms-vig-list .ms-opt:not(.all-opt) input')].map(i => i.value));
 
@@ -166,6 +167,12 @@ console.log('\n═══ DEPOIS da correção ═══');
   af(depois.includes('2026/08/01'), 'agosto ENTRA no seletor sozinho, sem F5', depois.join(' '));
   af(depois.length === 4, 'e os meses antigos continuam lá', depois.join(' '));
   af(depois[0] === '2026/08/01', 'com o mais recente no topo, como o painel ordena', depois[0]);
+  // bug real, 14/10/2026 ("Não atualizou mais frota de elite?"): os números vinham
+  // frescos, mas o selo ficava em "Atualizado 25/09 (cache)" e o cache nunca era regravado
+  const selo = await pg.evaluate(() => document.getElementById('status-badge').textContent);
+  af(!/cache/.test(selo) && !/25\/09/.test(selo), 'o selo do topo deixa de dizer "(cache)" de 25/09', selo);
+  const cacheT = await pg.evaluate(ch => { const c = JSON.parse(localStorage.getItem(ch)); return { t: c.t, vigs: [...new Set(c.rows.map(r => r.vig))].length }; }, CHAVE_PAINEL);
+  af(Date.now() - cacheT.t < 60000 && cacheT.vigs === 4, 'e o cache é regravado com o dado novo (agosto incluso)', JSON.stringify(cacheT));
   await ctx.close();
 }
 

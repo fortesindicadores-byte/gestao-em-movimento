@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610132300">
+<meta name="build" content="202610142230">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Frota de Elite · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -824,8 +824,16 @@ function initData(){
       // agosto entrou no banco em 10–15/09 e quem já tinha cache nunca o via.
       // A seleção do usuário sobrevive: `selVig` não é tocado aqui, e o
       // updateMsBtn remarca os checkboxes a partir dele.
+      // e a leitura nova REGRAVA o cache e troca o selo (bug real, 14/10/2026: "Não
+      // atualizou mais frota de elite?"): os números vinham frescos, mas o cache e o
+      // "Atualizado 25/09 (cache)" do topo ficavam parados na última vez em que o
+      // painel abriu sem cache, e toda abertura pintava primeiro o dado de 25/09.
       GerotBase.load({fundir:true})
-        .then(recs=>{ RAW=buildEliteRows(recs); populateFilters(); renderAll(); })
+        .then(recs=>{ RAW=buildEliteRows(recs);
+          try{ localStorage.setItem(CACHE_KEY,JSON.stringify({t:Date.now(),rows:RAW})); }catch(e){}
+          populateFilters(); renderAll();
+          const n=new Date();
+          set('status-badge',`Atualizado ${n.toLocaleDateString('pt-BR')} ${n.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`); })
         .catch(e=>{
           // engolir era o que fazia a falha não ter sintoma nenhum: a tela
           // ficava com o cache velho parecendo atual
@@ -1585,6 +1593,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610132300"></script>
+<script src="../assets/build-check.js?v=202610142230"></script>
 </body>
 </html>
