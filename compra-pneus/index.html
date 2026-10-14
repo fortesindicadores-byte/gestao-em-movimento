@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610150745">
+<meta name="build" content="202610151100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -323,7 +323,8 @@ table.dre select.sel{padding:5px 7px;font-size:11px;width:100%;max-width:220px;}
 /* a tabela do admin tem 12 colunas: padding menor e o produto dividindo a sobra,
    para caber sem barra de rolagem horizontal em 1366 px */
 #tb-ped th,#tb-ped td{padding:9px 5px;}
-#tb-ped td:nth-child(13){width:20%;min-width:116px;}   /* Produto (a 13ª desde o Estoque em duas colunas) */
+#tb-ped td:nth-child(12){min-width:150px;}   /* Produto (a 12ª desde que o Sugerido saiu, 14/10/2026) */
+#tb-ped td:nth-child(13){white-space:nowrap;}
 #tb-ped .sel{max-width:100%;}
 #tb-ped thead th{letter-spacing:.2px;}            /* 14 colunas em 1366 px (Estoque em duas) */
 #tb-ped .pill{white-space:normal;text-align:center;line-height:1.25;}
@@ -830,6 +831,18 @@ function celProlog(o,uni,med,tipo){
   const dica=[1,2,3].filter(k=>s.p[k]).map(k=>`${PREM_TXT[k]}: ${s.p[k]}`).join(' · ');
   return `<span title="${esc(dica)}">${br(s.n)}</span>`;
 }
+/* NOME CURTO DO PRODUTO no seletor (Renan, 14/10/2026: "Resuma um pouco o nome do produto.
+   Speedmax Easymax já serve, pois já foi dito que é liso/Direcional e a medida"): marca + linha,
+   sem "PNEU", aro, medida, índice de carga e lonas. O nome inteiro fica na dica e na visão Preços. */
+function prodCurto(nome){
+  const t=String(nome||'').trim();
+  if(/M[ÉE]DIA DE MERCADO/i.test(t)) return 'Média de mercado'+(/MACI[ÇC]O/i.test(t)?' (maciço)':'');
+  const fora=w=>/^(PNEU|ARO|LISO|BORRACHUDO|DIRECIONAL)$/i.test(w)||/\d+[.,]\d+$/.test(w)&&!/[A-Z]/i.test(w)
+    ||/\//.test(w)||/^\d+[A-Z]?\/\d+/i.test(w)||/^\d+[LM]$/i.test(w)||/^\d+-\d+$/.test(w)||/^\d{3}\/\d{3}[A-Z]$/i.test(w);
+  const ws=t.split(/\s+/).filter(w=>!fora(w)&&!/^\d+([.,]\d+)?$/.test(w));
+  const tit=w=>/\d/.test(w)?w.toUpperCase():w.charAt(0).toUpperCase()+w.slice(1).toLowerCase();
+  return ws.map(tit).join(' ')||t;
+}
 function renderResumo(){
   calcSugeridos();
   const rows=recorteAdm();
@@ -849,7 +862,7 @@ function renderResumo(){
   const corpo=rows.map(r=>{
     const {p,auto}=precoDe(r), qb=qtdBase(r), v=p?qb*(+p.valor||0):null; const [s,c]=situacao(r);
     tq+=+r.qtd||0; ta+=+r.qtd_aprovada||0; if(v!=null) tv+=v; te0+=+r.est_vida0||0; ter+=+r.est_recap||0; tn+=necNum(r);
-    const ops=precosDa(r.medida).map(x=>`<option value="${x.id}"${p&&x.id===p.id?' selected':''}>${esc(x.produto)} · ${brl(x.valor)}</option>`).join('');
+    const ops=precosDa(r.medida).map(x=>`<option value="${x.id}"${p&&x.id===p.id?' selected':''} title="${esc(x.produto)}">${esc(prodCurto(x.produto))} · ${brl(x.valor)}</option>`).join('');
     return `<tr data-id="${r.id}">
       <td>${vigRot(r.vigencia)}</td><td class="nome">${esc(r.unidade)}</td><td>${esc(r.projeto)}</td><td>${esc(r.banda).replace('/','/<wbr>')}</td><td>${esc(r.medida)}</td>
       <td class="num">${br(r.qtd)}</td>
@@ -1014,6 +1027,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610150745"></script>
+<script src="../assets/build-check.js?v=202610151100"></script>
 </body>
 </html>
