@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610150230">
+<meta name="build" content="202610150300">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -940,7 +940,7 @@ table.rel td.fato .fa-ano{font-size:10.5px;}
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610150230"></script>
+<script src="../assets/fca-auto.js?v=202610150300"></script>
 </head>
 <body>
 <div class="app">
@@ -1092,7 +1092,7 @@ function resumoHTML(vis){
       <div class="hero-sub"><div>Fatos <b>${vis.length}</b></div><div>Ações sugeridas <b>${nAcoes}</b></div><div>Combustíveis explicado <b>${combRs>0?Math.round(Math.min(1,expl/combRs)*100)+'%':'—'}</b></div><div>Unidades <b>${unis.length}</b></div></div></div>
     <div class="kpis fa-kpis" style="grid-template-columns:repeat(${porPac.length+2},minmax(0,1fr))">
       ${porPac.map(x=>`<div class="kpi"><span class="kl">${x.p}</span><b>${FA.rs(x.rs)}</b><i>${x.n} fato(s) · ${tot?Math.round(x.rs/tot*100):0}% do desvio</i></div>`).join('')}
-      <div class="kpi"><span class="kl">Combustíveis · explicado em R$</span><b>${FA.rs(expl)}</b><i>líquido: preço, eficiência, km rodado e Arla</i></div>
+      <div class="kpi"><span class="kl">Combustíveis · explicado em R$</span><b>${FA.rs(expl)}</b><i>líquido: Dispersão de km, Eficiência Km/L, Preço R$/L e Arla</i></div>
       <div class="kpi"><span class="kl">Placas e itens citados nas ações</span><b>${FA.br(ofens.length,0)}</b><i>ofensores com nome, para agir</i></div>
     </div>
     <div class="fa-dois">
@@ -1296,10 +1296,10 @@ function abreModal(id){
     const se=b.seara;
     P.push(`<div class="fm-sec"><h4>Ponte da conta Combustíveis (a mesma da ${se?'Árvore da Seara':'Árvore de Combustível'})</h4><div class="fm-box"><table class="fa-t"><thead><tr><th>Parte</th><th class="n">R$</th><th>Como sai</th></tr></thead><tbody>
       ${row('Δ custo (DRE)',p.dCusto,'realizado − remunerado da conta Combustíveis, sem Arla')}
-      ${row('Km rodado',p.vol,(p.volBases?'(km real − km rem) ÷ Km/L rem × R$/L rem':'(km real − km rem) × custo rem da DRE por km (sem Km/L e R$/L rem no mês)')+(se?' — aba Remunerado da Seara':' — Dispersão de km'))}
-      ${row('Eficiência (Km/L)',p.efic,se?'(km ÷ Km/L real − km ÷ Km/L rem) × R$/L real — Combustível e Base Remunerado (KmPorLitro)':'(litros − litros previstos pela régua) × R$/L rem — aba Km/L')}
-      ${row('Preço (R$/L)',p.preco,se?'R$ abastecido − PrecoDiesel × litros — Combustível e Base Remunerado':'R$ abastecido − preço rem × litros — abas Km/L e R$/L')}
-      ${row('Diferença DRE × bases',p.dif,'o que o km, a eficiência e o preço não explicam; só vira causa quando as três explicam metade ou menos do desvio')}</tbody></table></div></div>`); }
+      ${row('Dispersão de km',p.vol,(p.volBases?'(km real − km rem) ÷ Km/L rem × R$/L rem':'(km real − km rem) × custo rem da DRE por km (sem Km/L e R$/L rem no mês)')+(se?' — aba Remunerado da Seara':' — Dispersão de km'))}
+      ${row('Eficiência Km/L',p.efic,se?'(km ÷ Km/L real − km ÷ Km/L rem) × R$/L real — Combustível e Base Remunerado (KmPorLitro)':'(litros − litros previstos pela régua) × R$/L rem — aba Km/L')}
+      ${row('Preço R$/L',p.preco,se?'R$ abastecido − PrecoDiesel × litros — Combustível e Base Remunerado':'R$ abastecido − preço rem × litros — abas Km/L e R$/L')}
+      ${row('Diferença DRE × bases',p.dif,'o que Dispersão, Eficiência e Preço não explicam; só vira causa quando os três explicam metade ou menos do desvio')}</tbody></table></div></div>`); }
   if(b.ind&&b.ind.length) P.push(`<div class="fm-sec"><h4>Tudo o que a rede cruza, na unidade e no mês (fora da meta ou no pior quartil primeiro)</h4><div class="fm-box"><table class="fa-t"><thead><tr><th>Indicador</th><th class="n">Valor</th><th>Referência</th><th>Na rede</th></tr></thead><tbody>
     ${b.ind.slice().sort((x,y)=>(y.ruim===true)-(x.ruim===true)||((y.rede&&y.rede.forca)||0)-((x.rede&&x.rede.forca)||0)).map(i=>`<tr><td><b>${esc(i.rot)}</b><br><span style="color:var(--txt3);font-size:10.5px">${esc(i.g||'')}</span></td><td class="n" style="color:${i.ruim?'var(--vermelho)':i.ruim===false?'var(--verde)':'var(--txt2)'}"><b>${FA.fmtInd(i.k,i.val)}</b></td><td>${esc(i.ref||'—')}</td><td>${esc(FA.redeLeitura(i.rede))}</td></tr>`).join('')}</tbody></table></div></div>`);
   const ofTab=(tit,arr)=>arr&&arr.length?`<div><h4 style="font-size:10px;color:var(--txt3);margin:0 0 5px;text-transform:uppercase;letter-spacing:.8px">${tit}</h4><table class="fa-t"><tbody>${arr.slice(0,6).map(x=>`<tr><td>${esc(x.k)}</td><td class="n"><b>${FA.rs(x.v)}</b></td></tr>`).join('')}</tbody></table></div>`:'';
@@ -1457,6 +1457,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610150230"></script>
+<script src="../assets/build-check.js?v=202610150300"></script>
 </body>
 </html>

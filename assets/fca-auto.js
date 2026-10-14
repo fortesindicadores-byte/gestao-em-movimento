@@ -473,9 +473,9 @@ function redeFala(e, pac) {
   if (fin(e.r1) && e.n1 >= 8) melhor.push({ k: 1, r: e.r1, q: e.q1, ap: e.apoia1 });
   const b = melhor.filter(m => m.ap).sort((x, y) => Math.abs(y.r) - Math.abs(x.r))[0];
   const nome = pac ? 'o ' + pac : 'o pacote';
-  if (!b) return `Nas outras unidades isso não anda junto com o estouro d${nome}`;
+  if (!b) return `na rede, não anda junto com ${nome}`;
   const forca = forcaTxt(b.r);
-  return `Nas outras unidades, quando isso piora ${nome} estoura junto${b.k ? ' no mês seguinte' : ''} (ligação ${forca}${b.q < 0.10 ? '' : ', pode ser coincidência'})`;
+  return `na rede, piora junto com ${nome}${b.k ? ' no mês seguinte' : ''} (ligação ${forca}${b.q < 0.10 ? '' : ', pode ser coincidência'})`;
 }
 
 /* ═════════ 4) HISTÓRICO DO FCA — o que as unidades já escreveram ═════════ */
@@ -676,45 +676,45 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
   D.blocos.ponte = b; D.blocos.comb = cb; D.blocos.disp = dp;
   if (!cb) D.avisos.push(seara ? 'Sem linhas na aba Combustível da Seara para este mês: eficiência e preço não foram abertos.' : 'Sem linhas na aba Km/L para este projeto e mês: eficiência e preço não foram abertos.');
   if (!dp) D.avisos.push(seara ? 'Sem km remunerado na aba Remunerado da Seara para este mês: o volume não foi calculado.' : 'Sem km da Dispersão de km para este projeto e mês: o volume não foi calculado.');
-  if (cb && cb.porModelo) D.avisos.push(`${cb.porModelo} placa(s) sem remunerado na Base Remunerado: Km/L e R$/L remunerados pela média do modelo (a mesma regra da Árvore da Seara).`);
+  if (cb && cb.porModelo) D.avisos.push(`${cb.porModelo} placa${cb.porModelo>1?'s':''} sem remunerado na Base Remunerado: Km/L e R$/L remunerados pela média do modelo (a mesma regra da Árvore da Seara).`);
 
   // Volume
   if (b && fin(b.vol) && dp && dp.rem > 0) {
     const dkm = dp.real - dp.rem, dpct = (dp.real / dp.rem - 1) * 100;
     if (b.vol >= D.minimo) {
-      const extra = EMPURRADA(f.uni) ? ' (km remunerado bruto, sem o balanço de massa: conferir no Painel KM antes de agir)' : '';
-      const como = b.volBases ? `: ${br(b.litVol, 0)} L a mais pelo Km/L remunerado (${br(cb.kmLRem, 2)}), ${rs(b.vol)} ao R$/L remunerado (R$ ${br(cb.rsLRem, 2)})`
-        : `, ${rs(b.vol)} (sem Km/L e R$/L remunerados no mês: valor pelo custo remunerado da DRE)`;
-      causa('Km / rota', `Km rodado: rodou ${br(dkm, 0)} km acima do remunerado (${sinalPct(dpct, 1)})${como}${extra}`, b.vol);
+      // TEXTO DIRETO (Renan, 14/10/2026: "Km Rodado chame de Dispersão de km… pode ser mais direto")
+      const extra = EMPURRADA(f.uni) ? ' · km rem. sem balanço de massa' : '';
+      const como = b.volBases ? ` · +${br(b.litVol, 0)} L · ${rs(b.vol)}` : ` · ${rs(b.vol)} (pelo custo rem. da DRE)`;
+      causa('Km / rota', `Dispersão de km: +${br(dkm, 0)} km (${sinalPct(dpct, 1)})${como}${extra}`, b.vol);
       const vg = []; if (dp.vgRec) vg.push(br(dp.vgRec, 0) + ' recs'); if (dp.vgNot) vg.push(br(dp.vgNot, 0) + ' noturnas'); if (dp.vgMap) vg.push(br(dp.vgMap, 0) + ' com mapa aberto');
       acao('Km / rota', `Conferir as viagens que não remuneram e a roteirização no ${painelKm}${vg.length ? ' (no mês: ' + vg.join(', ') + ' de ' + br(dp.vgTot, 0) + ' viagens)' : ''}`);
-    } else if (Math.abs(b.vol) >= D.minimo) causa('Km / rota', `Km rodado: rodou ${br(-dkm, 0)} km abaixo do remunerado (${sinalPct(dpct, 1)})${b.volBases ? ': ' + br(-b.litVol, 0) + ' L a menos pelo Km/L remunerado, ' + rs(-b.vol) + ' ao R$/L remunerado' : ', ' + rs(-b.vol) + ' a menos'}: o km não explica o estouro`, b.vol, { soma: false });
+    } else if (Math.abs(b.vol) >= D.minimo) causa('Km / rota', `Dispersão de km: −${br(-dkm, 0)} km (${sinalPct(dpct, 1)}) · −${rs(-b.vol)}, não explica o estouro`, b.vol, { soma: false });
   }
   // Eficiência
   if (cb && fin(cb.efic)) {
     const dk = cb.kmLRem > 0 && cb.kmLReal > 0 ? (cb.kmLReal / cb.kmLRem - 1) * 100 : null;
     if (cb.efic >= D.minimo) {
-      causa('Condução', `Eficiência: fizemos ${br(cb.kmLReal, 2)} km/L contra ${br(cb.kmLRem, 2)} remunerado (${sinalPct(dk, 1)}): ${br(cb.lit - cb.litEsp, 0)} L a mais do que o remunerado previa para o km rodado, ${rs(cb.efic)}`, cb.efic);
+      causa('Condução', `Eficiência Km/L: ${br(cb.kmLReal, 2)} vs ${br(cb.kmLRem, 2)} rem. (${sinalPct(dk, 1)}) · +${br(cb.lit - cb.litEsp, 0)} L · ${rs(cb.efic)}`, cb.efic);
       const of = top(cb.placas.filter(p => p.rsEfic > 0 && p.placa), 5, p => p.rsEfic)
         .map(p => `${p.placa}${p.modelo ? ' (' + p.modelo + ')' : ''} ${br(p.kmlReal, 2)} km/L, ${br(p.litMais, 0)} L, ${rs(p.rsEfic)}`);
       if (of.length) acao('Condução', `Vistoria de consumo nas placas que mais gastaram acima da régua (vazamento, injeção, filtro, pneu murcho, ocioso) e acompanhar quem dirige`, of);
-    } else if (Math.abs(cb.efic) >= D.minimo) causa('Condução', `Eficiência: fizemos ${br(cb.kmLReal, 2)} km/L contra ${br(cb.kmLRem, 2)} remunerado (${sinalPct(dk, 1)}): gastamos menos litros do que o previsto, economizou ${rs(-cb.efic)}`, cb.efic, { soma: false });
+    } else if (Math.abs(cb.efic) >= D.minimo) causa('Condução', `Eficiência Km/L: ${br(cb.kmLReal, 2)} vs ${br(cb.kmLRem, 2)} rem. (${sinalPct(dk, 1)}) · economizou ${rs(-cb.efic)}`, cb.efic, { soma: false });
   }
   // Preço
   if (cb && fin(cb.preco)) {
     const dp2 = cb.rsLRem > 0 && cb.rsLReal > 0 ? (cb.rsLReal / cb.rsLRem - 1) * 100 : null;
     if (cb.preco >= D.minimo) {
-      causa('Abastecimento / preço', `Preço: pagamos R$ ${br(cb.rsLReal, 2)}/L contra R$ ${br(cb.rsLRem, 2)}/L remunerado (${sinalPct(dp2, 1)}): ${rs(cb.preco)} a mais nos litros abastecidos`, cb.preco);
+      causa('Abastecimento / preço', `Preço R$/L: ${br(cb.rsLReal, 2)} vs ${br(cb.rsLRem, 2)} rem. (${sinalPct(dp2, 1)}) · ${rs(cb.preco)}`, cb.preco);
       const of = top(cb.placas.filter(p => p.rsPreco > 0 && p.placa), 5, p => p.rsPreco).map(p => `${p.placa} R$/L ${br(p.rsLReal, 2)} × ${br(p.pRem, 2)}, ${rs(p.rsPreco)}`);
-      acao('Abastecimento / preço', `Direcionar o abastecimento para o posto/tanque com preço no remunerado e cobrar o preço negociado; placas que mais pagaram acima`, of);
+      acao('Abastecimento / preço', `Abastecer no posto/tanque com preço no remunerado e cobrar o preço negociado`, of);
     } else if (Math.abs(cb.preco) >= D.minimo) {
       // SAVING DE PREÇO NÃO É LINHA PRÓPRIA (Renan, 14/10/2026: "Quando Preço tiver saving, fica só como
       // observação dentro da causa da eficiência. Não gera uma linha de ação"). Sem causa de eficiência,
       // vai para os sinais.
-      const obs = `no preço economizamos ${rs(-cb.preco)} (R$ ${br(cb.rsLReal, 2)}/L contra R$ ${br(cb.rsLRem, 2)}/L remunerado, ${sinalPct(dp2, 1)})`;
-      const ef = D.causas.find(c => c.tema === 'Condução' && /^Eficiência:/.test(c.txt));
+      const obs = `Preço R$/L economizou ${rs(-cb.preco)} (${br(cb.rsLReal, 2)} vs ${br(cb.rsLRem, 2)} rem.)`;
+      const ef = D.causas.find(c => c.tema === 'Condução' && /^Eficiência Km\/L:/.test(c.txt));
       if (ef) ef.txt += `. Obs.: ${obs}`;
-      else D.sinais.push({ tema: 'Abastecimento / preço', txt: `Preço: ${obs}` });
+      else D.sinais.push({ tema: 'Abastecimento / preço', txt: obs });
     }
   }
   // Arla (faz parte do pacote: entra no que as alavancas explicam)
@@ -723,11 +723,11 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
   // representar um impacto maior que 10% de todo o desvio"); abaixo disso fica nos sinais (e segue contando
   // no que as alavancas explicam).
   if (ovArla > 0 && Math.abs(arla.rem) > 0) {
-    const txtArla = `Arla: ${rs(ovArla)} acima do remunerado (${sinalPct(ovArla / Math.abs(arla.rem) * 100, 0)})`;
+    const txtArla = `Arla: ${rs(ovArla)} acima do rem. (${sinalPct(ovArla / Math.abs(arla.rem) * 100, 0)})`;
     if (f.over > 0 && ovArla > 0.1 * f.over) {
       causa('Arla', txtArla, ovArla);
       acao('Arla', `Conferir a proporção Arla/diesel por placa e o preço do Arla do mês`, [], 'Abastecimento / preço');
-    } else D.sinais.push({ tema: 'Arla', txt: txtArla + ` — abaixo de 10% do desvio, sem ação própria` });
+    } else D.sinais.push({ tema: 'Arla', txt: txtArla + ` · menos de 10% do desvio, sem ação` });
   }
   // AS TRÊS ALAVANCAS EXPLICAM O DESVIO? (Renan, 14/10/2026: "Tanto Seara quanto Ambev, quando no
   // combustível os 3 parâmetros não explicarem diretamente o desvio (nunca vai bater na vírgula, mas
@@ -740,24 +740,24 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
   D.explicado = f.over > 0 ? Math.max(0, Math.min(1, tres / f.over)) : 0;
   const resto = f.over - tres;
   if (f.over > 0 && D.explicado <= 0.5 && resto >= Math.max(1000, 0.1 * base)) {
-    const medidas = [temPr && 'preço', temEf && 'eficiência', temVol && 'km rodado'].filter(Boolean);
-    const quem = medidas.length ? medidas.join(', ').replace(/, ([^,]+)$/, ' e $1') : 'as bases';
+    const medidas = [temVol && 'Dispersão de km', temEf && 'Eficiência Km/L', temPr && 'Preço R$/L'].filter(Boolean);
+    const quem = medidas.length ? medidas.join(', ').replace(/, ([^,]+)$/, ' e $1') : 'As bases';
     const verbo = medidas.length === 1 ? 'explica' : 'explicam';
     const faltas = [];
-    if (!temVol) faltas.push(seara ? 'o km rodado ainda não entrou (aba Remunerado da Seara sem o mês)' : 'o km rodado ainda não entrou (Dispersão de km sem o mês)');
-    if (!temEf && !temPr) faltas.push(seara ? 'eficiência e preço sem a aba Combustível da Seara no mês' : 'eficiência e preço sem a aba Km/L no mês');
-    else { if (!temPr) faltas.push('o preço não foi medido (sem R$/L remunerado)'); if (!temEf) faltas.push('a eficiência não foi medida (sem Km/L remunerado)'); }
+    if (!temVol) faltas.push(seara ? 'aba Remunerado da Seara sem o mês' : 'Dispersão de km sem o mês');
+    if (!temEf && !temPr) faltas.push(seara ? 'aba Combustível da Seara sem o mês' : 'aba Km/L sem o mês');
+    else { if (!temPr) faltas.push('sem R$/L rem.'); if (!temEf) faltas.push('sem Km/L rem.'); }
     const l = [];
     if (b && fin(b.dif)) {
-      if (fin(b.difReal) && Math.abs(b.difReal) >= 500) l.push(`realizado da DRE ${b.difReal > 0 ? 'acima' : 'abaixo'} dos abastecimentos da ${abaKm} em ${rs(Math.abs(b.difReal))}`);
-      if (fin(b.difRem) && Math.abs(b.difRem) >= 500) l.push(`remunerado da DRE ${b.difRem > 0 ? 'abaixo' : 'acima'} do que as bases preveem em ${rs(Math.abs(b.difRem))}`);
+      if (fin(b.difReal) && Math.abs(b.difReal) >= 500) l.push(`real DRE ${b.difReal > 0 ? '+' : '−'}${rs(Math.abs(b.difReal))} vs abastecimentos`);
+      if (fin(b.difRem) && Math.abs(b.difRem) >= 500) l.push(`rem. DRE ${b.difRem > 0 ? '−' : '+'}${rs(Math.abs(b.difRem))} vs bases`);
     }
-    const q = quem.charAt(0).toUpperCase() + quem.slice(1);
-    const cauda = `${l.length ? ' (' + l.join('; ') + ')' : ''}${faltas.length ? '; ' + faltas.join('; ') : ''}`;
+    const q = quem;
+    const cauda = `${l.length ? ' (' + l.join('; ') + ')' : ''}${faltas.length ? ' · ' + faltas.join('; ') : ''}`;
     // alavancas que ECONOMIZARAM (tres < 0): o desvio inteiro fica sem explicação — dizer isso, e não "0% (R$ 0 de X): Y", com Y maior que o desvio
     const txtExpl = tres < 0
-      ? `${q} não ${verbo} o desvio (nas bases, ${rs(-tres)} a menos que o remunerado): o desvio inteiro, ${rs(f.over)}, fica sem explicação pelas bases${cauda}`
-      : `${q} ${verbo} só ${Math.round(D.explicado * 100)}% do desvio (${rs(tres)} de ${rs(f.over)}): ${rs(resto)} ${medidas.length === 3 ? 'não batem com os abastecimentos' : 'sem explicação pelas bases'}${cauda}`;
+      ? `${q} não ${verbo} o desvio (bases −${rs(-tres)}) · ${rs(f.over)} sem explicação${cauda}`
+      : `${q} ${verbo} só ${Math.round(D.explicado * 100)}% (${rs(tres)} de ${rs(f.over)}) · ${rs(resto)} sem explicação${cauda}`;
     causa('Lançamento / contábil', txtExpl, null, { prio: -1, fixa: true });
     acao('Lançamento / contábil', `${temVol ? 'C' : (seara ? 'Atualizar a aba Remunerado da Seara e c' : 'Atualizar a Dispersão de km do mês e c')}onciliar a conta Combustíveis do DRE com os abastecimentos do mês (lançamento de outra competência, provisão, placa de outro projeto)`);
   }
@@ -792,7 +792,7 @@ function sinaisRede(f, ctx, D, excluir, apenas) {
   const lista = Object.keys(CAT).filter(k => !ex.has(k) && !(CAT[k].pac && !CAT[k].pac.includes(f.pac)) && (!apenas || apenas(k)));
   const ind = indicadores(f.uni, f.vig, ctx, lista); D.blocos.ind = ind;
   ind.filter(i => i.ruim).forEach(i => {
-    const txt = `${i.rot}: ${fmtInd(i.k, i.val)} (${i.ref}). ${redeFala(i.rede, f.pac)}`;
+    const txt = `${i.rot}: ${fmtInd(i.k, i.val)} (${i.ref}) · ${redeFala(i.rede, f.pac)}`;
     if (i.rede && i.rede.sust) D.causas.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || 'Oficina / SLA', txt, rs: null, rede: true, ind: i.k, forca: i.rede.forca, val: i.val, meta: i.meta, dir: METAS[i.k] != null ? (/osVenc|osCritica/.test(i.k) ? 'down' : 'up') : (CAT[i.k] || {}).dir });
     else if (METAS[i.k] != null || i.k === 'dispersao' || (i.rede && i.rede.forca >= 0.2 && Math.max(i.rede.n0 || 0, i.rede.n1 || 0) >= 30)) D.sinais.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || '', txt, ind: i.k });
   });
@@ -900,13 +900,13 @@ function diagManut(f, ctx, D, causa, acao, base) {
     const grupoDa = p => Object.entries(grPl[p] || {}).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([g, v]) => `${g} ${rs(v)}`).join(', ');
     D.blocos.cartaGr = gr; D.blocos.cartaPl = pl; D.blocos.cartaFo = fo; D.blocos.cartaPlGr = grPl;
     // a Carta numa causa só: grupos (o principal), a placa que mais pesa e o fornecedor que concentra
-    const g3 = gr.slice(0, 3).map((g, i) => `${g.k} ${rs(g.v)} (${pct(g.v / tot * 100)}${i === 0 ? ' do lançado de ' + rs(tot) : ''})`);
+    const g3 = gr.slice(0, 3).map((g, i) => `${g.k} ${rs(g.v)} (${pct(g.v / tot * 100)}${i === 0 ? ' de ' + rs(tot) : ''})`);
     const mediaPl = pl.length ? pl.reduce((s, x) => s + x.v, 0) / pl.length : 0;
     const caras = pl.filter(p => p.v >= Math.max(2 * mediaPl, 0.15 * tot, 1000)).slice(0, 2);
     const conc = fo[0] && fo.length > 1 && fo[0].v >= 0.4 * tot ? fo[0] : null;
     causa('Carta de Custos', `Carta de Custos${lanc.nivel === 'unidade' ? ' (unidade inteira)' : ''}: ${g3.join(', ')}`
-      + (caras.length ? `; placa${caras.length > 1 ? 's' : ''} que mais pesa${caras.length > 1 ? 'm' : ''}: ${caras.map(p => `${p.k} ${rs(p.v)} (${grupoDa(p.k)})`).join(', ')}` : '')
-      + (conc ? `; fornecedor que concentra: ${conc.k} ${rs(conc.v)} (${pct(conc.v / tot * 100)})` : ''), null, { prio: 3 });
+      + (caras.length ? ` · placa${caras.length > 1 ? 's' : ''}: ${caras.map(p => `${p.k} ${rs(p.v)} (${grupoDa(p.k)})`).join(', ')}` : '')
+      + (conc ? ` · fornecedor: ${conc.k} ${pct(conc.v / tot * 100)}` : ''), null, { prio: 3 });
     const g1 = gr[0];
     if (g1) { const plG = somaPor(lanc.rows.filter(r => grupo(r) === g1.k && ehPlaca(r.equipamento)), r => r.equipamento, r => r.valor);
       const lista = plG.slice(0, 4).map(x => `${x.k} ${rs(x.v)}`); caras.filter(p => !plG.slice(0, 4).some(x => x.k === p.k)).forEach(p => lista.push(`${p.k} ${rs(p.v)} (${grupoDa(p.k)})`));
@@ -936,10 +936,10 @@ function diagManut(f, ctx, D, causa, acao, base) {
     const acima = cruz.filter(x => x.delta > 0), kmAcima = acima.reduce((s, x) => s + x.delta, 0), rsAcima = acima.reduce((s, x) => s + (x.rsDelta || 0), 0), remT = cruz.reduce((s, x) => s + x.rem, 0);
     if (cruz.length) D.blocos.contratoKm = { mes: kmMes, nivel: abProj.length ? 'projeto' : 'unidade', cruz: cruz.slice().sort((a, b) => (b.rsDelta || 0) - (a.rsDelta || 0)), acima: acima.length, kmAcima, rsAcima };
     const kmPesa = acima.length && rsAcima >= D.minimo;
-    causa('Contrato', `Contrato de manutenção: ${rs(cContr.ov)} acima do remunerado; ${ct.length} placas faturadas (${rs(tc)}) pelo km de ${vigLbl(kmMes)}`
-      + (kmPesa ? `; ${acima.length} de ${cruz.length} placas do contrato variável rodaram acima do km remunerado (+${br(kmAcima, 0)} km${remT > 0 ? ', ' + sinalPct(kmAcima / remT * 100, 0) + ' sobre o remunerado delas' : ''}), ${rs(rsAcima)} na fatura`
-        : cruz.length ? `; as placas do contrato variável rodaram no km remunerado: o estouro não vem de km a mais` : '')
-      + (fx2.length ? `; ${fx2.length} atravessaram para a faixa 2` : ''), cContr.ov, { prio: 2 });
+    causa('Contrato', `Contrato de manutenção: ${rs(cContr.ov)} acima do rem.`
+      + (kmPesa ? ` · ${acima.length} de ${cruz.length} placas variáveis acima do km rem. em ${vigLbl(kmMes)} (+${br(kmAcima, 0)} km${remT > 0 ? ', ' + sinalPct(kmAcima / remT * 100, 0) : ''}) · ${rs(rsAcima)} na fatura`
+        : cruz.length ? ` · placas variáveis no km rem.: não é km a mais` : ` · ${ct.length} placas faturadas (${rs(tc)}) pelo km de ${vigLbl(kmMes)}`)
+      + (fx2.length ? ` · ${fx2.length} na faixa 2` : ''), cContr.ov, { prio: 2 });
     if (kmPesa) acao('Contrato', `Conter o km das placas variáveis que rodam acima do remunerado (viagens que não remuneram, roteirização, placa de contrato fixo nas rotas mais longas)`,
       top(acima, 5, x => x.rsDelta || x.delta).map(x => `${x.placa} +${br(x.delta, 0)} km (${x.rem >= 500 ? sinalPct(x.delta / x.rem * 100, 0) : 'só ' + br(x.rem, 0) + ' km remunerados'})${x.rsDelta != null ? ', ' + rs(x.rsDelta) : ''}`));
     else acao('Contrato', `Conferir a fatura do contrato (km cobrado × km rodado${fx2.length ? ', placas na faixa 2' : ''}); as de maior fatura`,
@@ -951,7 +951,7 @@ function diagManut(f, ctx, D, causa, acao, base) {
   if (r) {
     const gi = ctx.ginfo[f.uni] || {}, prevV = gi.prevVencidas || [], osAb = gi.osAbertas || [];
     const tx = taxaTema(ctx, f.pac, r.tema);
-    if (r.ind === 'prev' && prevV.length) D.acoes.push({ tema: r.tema, txt: `${ACAO_IND.prev}: ${prevV.length} placa(s)`, ofens: prevV.slice(0, 6).map(p => `${p.placa}${fin(p.dias) ? ' (' + br(Math.abs(p.dias), 0) + 'd)' : ''}`), taxa: tx });
+    if (r.ind === 'prev' && prevV.length) D.acoes.push({ tema: r.tema, txt: `${ACAO_IND.prev}: ${prevV.length} placa${prevV.length>1?'s':''}`, ofens: prevV.slice(0, 6).map(p => `${p.placa}${fin(p.dias) ? ' (' + br(Math.abs(p.dias), 0) + 'd)' : ''}`), taxa: tx });
     else if (['sla', 'mttr', 'osVenc'].includes(r.ind) && osAb.length) {
       const velhas = osAb.slice().sort((a, b) => (b.dias != null && a.dias != null ? b.dias - a.dias : (+a.os || 0) - (+b.os || 0))).slice(0, 6);
       D.acoes.push({ tema: r.tema, txt: `${ACAO_IND[r.ind]}: ${osAb.length} OS em aberto na unidade hoje`, ofens: velhas.map(o => `OS ${o.os} ${o.placa}${o.dias != null ? ' ' + br(o.dias, 0) + 'd' : ''}${o.crit ? ' (' + o.crit + ')' : ''}`), taxa: tx });
@@ -959,7 +959,7 @@ function diagManut(f, ctx, D, causa, acao, base) {
   }
   // placas paradas mais dias no mês (eventos do app de indisponibilidade): sinal, sem ação
   const par = (ctx.fatoPlaca[f.uni + '|' + f.vig] || []).filter(p => (p.v.dias_indisp || 0) >= 3);
-  if (par.length) { D.blocos.paradas = par; D.sinais.push({ tema: 'Oficina / SLA', txt: `Placas paradas: ${par.length} placa(s) ficaram 3 dias ou mais paradas no mês (${top(par, 4, p => p.v.dias_indisp).map(p => p.ent + ' ' + br(p.v.dias_indisp, 0) + 'd').join(', ')})` }); }
+  if (par.length) { D.blocos.paradas = par; D.sinais.push({ tema: 'Oficina / SLA', txt: `Placas paradas: ${par.length} ${par.length>1?'placas ficaram':'placa ficou'} 3 dias ou mais paradas no mês (${top(par, 4, p => p.v.dias_indisp).map(p => p.ent + ' ' + br(p.v.dias_indisp, 0) + 'd').join(', ')})` }); }
 }
 /* lançamentos da Carta do fato: do projeto; sem nada no projeto, da unidade */
 function cartaDo(f, ctx, pacCarta) {
@@ -971,7 +971,7 @@ function cartaDo(f, ctx, pacCarta) {
 /* ── SEGUROS E LICENÇAS · ICMS · OUTROS — sem base operacional para cruzar:
    a causa é a conta que estourou, e a ação é conferir o lançamento ── */
 function diagOutros(f, ctx, D, causa, acao, base) {
-  f.contas.filter(c => c.ov > 0).forEach(c => causa('Lançamento / contábil', `${c.conta}: ${rs(c.ov)} acima do remunerado${c.p != null ? ' (▲ ' + c.p + '%)' : ''}${fin(c.real) ? ' · realizado ' + rs(c.real) + ' × remunerado ' + rs(c.rem) : ''}`, c.ov));
+  f.contas.filter(c => c.ov > 0).forEach(c => causa('Lançamento / contábil', `${c.conta}: ${rs(c.ov)} acima do rem.${c.p != null ? ' (▲ ' + c.p + '%)' : ''}${fin(c.real) ? ' · real ' + rs(c.real) + ' vs rem. ' + rs(c.rem) : ''}`, c.ov));
   const dSeg = f.pac === 'Seguros e licenças';
   const lanc = (ctx.carta[f.uni + '|' + f.vig] || []).filter(r => r.valor > 0 && f.contas.some(c => NK(r.conta) === c.ck));
   if (lanc.length) { const fo = somaPor(lanc.filter(r => r.fornecedor), r => r.fornecedor, r => r.valor); D.blocos.cartaFo = fo;
@@ -992,7 +992,7 @@ function diagPneus(f, ctx, D, causa, acao, base) {
     const novos = lanc.rows.filter(r => /NOVOS/.test(NK(r.conta))).reduce((s, r) => s + r.valor, 0);
     const gr = somaPor(lanc.rows, r => r.grupo, r => r.valor), pl = somaPor(lanc.rows.filter(r => ehPlaca(r.equipamento)), r => r.equipamento, r => r.valor), fo = somaPor(lanc.rows.filter(r => r.fornecedor), r => r.fornecedor, r => r.valor);
     D.blocos.cartaGr = gr; D.blocos.cartaPl = pl; D.blocos.cartaFo = fo;
-    causa('Carta de Custos', `Carta de Custos${lanc.nivel === 'unidade' ? ' (unidade inteira)' : ''}: ${rs(tot)} lançados, ${pct(tot ? novos / tot * 100 : 0)} em pneus novos; ${gr.slice(0, 3).map(g => g.k + ' ' + rs(g.v)).join(', ')}`, null, { prio: 3 });
+    causa('Carta de Custos', `Carta de Custos${lanc.nivel === 'unidade' ? ' (unidade inteira)' : ''}: ${rs(tot)}, ${pct(tot ? novos / tot * 100 : 0)} em pneus novos · ${gr.slice(0, 3).map(g => g.k + ' ' + rs(g.v)).join(', ')}`, null, { prio: 3 });
     if (novos > 0 && novos >= 0.5 * tot) acao('Carta de Custos', `Revisar a compra de pneus novos do mês contra as premissas da Compra de Pneus (vida 1 no dianteiro, 4ª recapagem, último eixo da carreta)`, [], 'Pneus');
     if (pl.length) acao('Carta de Custos', `Conferir as placas com mais gasto de pneu (troca antes da hora, desalinhamento, avaria)`, pl.slice(0, 5).map(x => `${x.k} ${rs(x.v)}`), 'Pneus');
   } else D.avisos.push('Sem lançamentos de Pneus na Carta de Custos para este mês.');
@@ -1001,19 +1001,19 @@ function diagPneus(f, ctx, D, causa, acao, base) {
   if (pr && pr.inst) {
     D.blocos.prolog = pr;
     const pPres = pr.presNOK / pr.inst * 100, partes = [];
-    if (pr.presNOK && pPres >= 10) partes.push(`${br(pr.presNOK, 0)} de ${br(pr.inst, 0)} pneus com pressão fora (±10% da ideal), ${pct(pPres, 1)}`);
-    if (pr.ate3) partes.push(`${br(pr.ate3, 0)} pneu(s) com 3 mm ou menos (carcaça perdida para recape)`);
-    if (pr.amp) partes.push(`${br(pr.amp, 0)} pneu(s) com amplitude de sulco acima de 5 mm`);
+    if (pr.presNOK && pPres >= 10) partes.push(`pressão fora em ${br(pr.presNOK, 0)} de ${br(pr.inst, 0)} pneus (${pct(pPres, 1)})`);
+    if (pr.ate3) partes.push(`${br(pr.ate3, 0)} com ≤ 3 mm`);
+    if (pr.amp) partes.push(`${br(pr.amp, 0)} com amplitude > 5 mm`);
     if (partes.length) {
-      causa('Prolog', `Prolog (hoje): ${partes.join('; ')}`, null, { prio: 2 });
-      if (pr.presNOK && pPres >= 10) acao('Prolog', `Calibrar os pneus com pressão fora (pneu murcho gasta o pneu e o diesel)`, pr.topPres.map(x => `${x.placa} ${x.n} pneu(s)`), 'Pneus');
-      if (pr.janela) acao('Prolog', `Mandar para recape os ${br(pr.janela, 0)} pneu(s) entre 3 e 4 mm antes de perder a carcaça`, pr.topJanela.map(x => `${x.placa} ${x.n}`), 'Pneus');
+      causa('Prolog', `Prolog (hoje): ${partes.join(' · ')}`, null, { prio: 2 });
+      if (pr.presNOK && pPres >= 10) acao('Prolog', `Calibrar os pneus com pressão fora (pneu murcho gasta o pneu e o diesel)`, pr.topPres.map(x => `${x.placa} ${x.n} pneu${x.n>1?'s':''}`), 'Pneus');
+      if (pr.janela) acao('Prolog', `Mandar para recape ${pr.janela>1?'os '+br(pr.janela, 0)+' pneus':'o pneu'} entre 3 e 4 mm antes de perder a carcaça`, pr.topJanela.map(x => `${x.placa} ${x.n}`), 'Pneus');
       else if (pr.amp) acao('Prolog', `Verificar alinhamento/geometria nas placas com amplitude de sulco acima de 5 mm`, pr.topAmp.map(x => `${x.placa} ${x.n}`), 'Pneus');
     } else if (pr.presNOK) D.sinais.push({ tema: 'Prolog', txt: `Prolog (hoje): ${br(pr.presNOK, 0)} de ${br(pr.inst, 0)} pneus instalados com pressão fora (±10% da ideal), ${pct(pPres, 1)}` });
   }
   const al = ((ctx.ginfo[f.uni] || {}).alinVencidos) || [];
-  if (al.length) { causa('Alinhamento', `Ginfo (hoje): ${al.length} placa(s) com alinhamento vencido (desgaste irregular)`, null, { prio: 1 });
-    acao('Alinhamento', `Alinhar as placas com alinhamento vencido no Ginfo: ${al.length} placa(s)`, al.slice(0, 6).map(a => a.placa), 'Pneus'); }
+  if (al.length) { causa('Alinhamento', `Alinhamento vencido (Ginfo, hoje): ${al.length} placa${al.length>1?'s':''}`, null, { prio: 1 });
+    acao('Alinhamento', `Alinhar as placas com alinhamento vencido no Ginfo: ${al.length} placa${al.length>1?'s':''}`, al.slice(0, 6).map(a => a.placa), 'Pneus'); }
   sinaisRede(f, ctx, D, SEM_COMB, k => foraComb(k) && REDE_PNEUS.includes(k));
   const r = umaDaRede(D, REDE_PNEUS);
   if (r && ACAO_IND[r.ind]) D.acoes.push({ tema: r.tema, txt: ACAO_IND[r.ind], ofens: ofensoresDe(r.ind, f, ctx), taxa: taxaTema(ctx, f.pac, r.tema) });
