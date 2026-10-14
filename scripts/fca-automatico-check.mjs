@@ -24,12 +24,24 @@ const BASE = 'http://127.0.0.1:' + srv.address().port;
 const nav = await chromium.launch();
 const ctx = await nav.newContext({ viewport: { width: 1600, height: 900 }, serviceWorkers: 'block' });
 await ctx.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
-await ctx.route('https://lozwipoeacpvplgkrxkq.supabase.co/**', r => {
+await ctx.route('https://lozwipoeacpvplgkrxkq.supabase.co/**', async r => {
   const u = r.request().url();
   if (/\/rest\/v1\/fca_profiles/.test(u)) return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(/vnd\.pgrst\.object/.test(r.request().headers()['accept'] || '') ? { is_admin: true, nome: 'Check' } : [{ is_admin: true, nome: 'Check' }]) });
   if (/\/auth\/v1\//.test(u)) return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ id: 'check', email: 'check@local' }) });
-  const h = { ...r.request().headers(), apikey: KEY, authorization: 'Bearer ' + KEY };
-  return r.continue({ headers: h });
+  // o Supabase recusa a service key vinda de navegador ("Forbidden use of secret API key in browser"):
+  // o pedido sai do Node, com a chave, e a resposta volta para a página
+  const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS', 'access-control-expose-headers': 'content-range,content-profile' };
+  const rq = r.request();
+  if (rq.method() === 'OPTIONS') return r.fulfill({ status: 204, headers: CORS, body: '' });
+  const hin = rq.headers(), h = { apikey: KEY, authorization: 'Bearer ' + KEY };
+  ['accept', 'prefer', 'range', 'range-unit', 'content-type', 'accept-profile', 'content-profile'].forEach(k => { if (hin[k]) h[k] = hin[k]; });
+  try {
+    const resp = await fetch(u, { method: rq.method(), headers: h, body: ['GET', 'HEAD'].includes(rq.method()) ? undefined : rq.postDataBuffer() });
+    const body = Buffer.from(await resp.arrayBuffer());
+    const out = { ...CORS, 'content-type': resp.headers.get('content-type') || 'application/json' };
+    if (resp.headers.get('content-range')) out['content-range'] = resp.headers.get('content-range');
+    return r.fulfill({ status: resp.status, headers: out, body });
+  } catch (e) { return r.fulfill({ status: 599, headers: CORS, body: String(e) }); }
 });
 const pg = await ctx.newPage();
 pg.on('pageerror', e => console.log('  [pageerror]', e.message));

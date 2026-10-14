@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610140300">
+<meta name="build" content="202610140330">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -845,6 +845,7 @@ table.adv-table tr.pre-total td{background:var(--cabec);font-weight:800;border-t
 .barra .bt b{display:block;height:100%;border-radius:4px;background:var(--laranja);}
 .barra .bv{text-align:right;font-weight:800;color:var(--txt);}
 .barra.cinza .bt b{background:var(--txt4);}
+.barra.verde .bt b{background:var(--verde);}.barra.verde .bv{color:var(--verde);}
 table.fa-t{width:100%;border-collapse:collapse;font-size:11.5px;}
 table.fa-t th{background:var(--cabec);color:var(--txt2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:8px 10px;text-align:left;position:sticky;top:0;z-index:1;}
 table.fa-t th.n,table.fa-t td.n{text-align:right;}
@@ -891,7 +892,7 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 <script src="../assets/correlacoes-dados.js?v=202610140300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
-<script src="../assets/fca-auto.js?v=202610140300"></script>
+<script src="../assets/fca-auto.js?v=202610140330"></script>
 </head>
 <body>
 <div class="app">
@@ -1024,11 +1025,12 @@ function resumoHTML(vis){
   const porPac=FA.PACOTES.map(p=>{const fs=vis.filter(f=>f.pac===p);return {p,n:fs.length,rs:fs.reduce((s,f)=>s+f.over,0)};});
   const comb=vis.filter(f=>f.pac==='Combustíveis'), combRs=comb.reduce((s,f)=>s+f.over,0);
   // causas em R$ (Combustíveis) e temas das causas (todos)
-  const porCausa={}; let expl=0;
-  comb.forEach(f=>{const d=diag(f); d.causas.forEach(c=>{ if(c.rs>0&&c.soma!==false){ const k=c.txt.split(':')[0]; porCausa[k]=(porCausa[k]||0)+c.rs; expl+=c.rs; } }); });
-  const naoExp=Math.max(0,combRs-expl);
+  const porCausa={}; let expl=0, econ=0;
+  comb.forEach(f=>{const d=diag(f); d.causas.forEach(c=>{ if(!isFinite(c.rs)||c.rs==null) return; if(c.rs>0&&c.soma!==false){ const k=c.txt.split(':')[0]; porCausa[k]=(porCausa[k]||0)+c.rs; expl+=c.rs; } else if(c.rs<0) econ+=c.rs; }); });
+  // o que economizou (preço abaixo do rem, km a menos) abate: explicado é LÍQUIDO
+  const liq=Math.max(0,expl+econ), naoExp=Math.max(0,combRs-liq); expl=liq;
   const linhasC=Object.entries(porCausa).sort((a,b)=>b[1]-a[1]);
-  const maxC=Math.max(1,...linhasC.map(x=>x[1]),naoExp);
+  const maxC=Math.max(1,...linhasC.map(x=>x[1]),naoExp,-econ);
   const temas={}; vis.forEach(f=>{const d=diag(f); new Set(d.causas.map(c=>c.tema).concat(d.acoes.map(a=>a.tema))).forEach(t=>{ if(t) temas[t]=(temas[t]||0)+1; }); });
   const ofens=[]; vis.forEach(f=>{const d=diag(f); d.acoes.forEach(a=>a.ofens.forEach(o=>ofens.push(o)));});
   const nAcoes=vis.reduce((s,f)=>s+diag(f).acoes.length,0);
@@ -1040,12 +1042,13 @@ function resumoHTML(vis){
       <div class="hero-sub"><div>Fatos <b>${vis.length}</b></div><div>Ações sugeridas <b>${nAcoes}</b></div><div>Combustíveis explicado <b>${combRs>0?Math.round(Math.min(1,expl/combRs)*100)+'%':'—'}</b></div><div>Unidades <b>${unis.length}</b></div></div></div>
     <div class="kpis fa-kpis">
       ${porPac.map(x=>`<div class="kpi"><span class="kl">${x.p}</span><b>${FA.rs(x.rs)}</b><i>${x.n} fato(s) · ${tot?Math.round(x.rs/tot*100):0}% do desvio</i></div>`).join('')}
-      <div class="kpi"><span class="kl">Combustíveis · explicado em R$</span><b>${FA.rs(expl)}</b><i>volume, eficiência, preço, Arla e DRE × bases</i></div>
+      <div class="kpi"><span class="kl">Combustíveis · explicado em R$</span><b>${FA.rs(expl)}</b><i>líquido: volume, eficiência, preço, Arla e DRE × bases</i></div>
       <div class="kpi"><span class="kl">Placas e itens citados nas ações</span><b>${FA.br(ofens.length,0)}</b><i>ofensores com nome, para agir</i></div>
     </div>
     <div class="fa-dois">
       <div class="bloco"><div class="bhead"><h3>Para onde vai o desvio de Combustíveis</h3></div><div class="corpo"><div class="barras">
         ${linhasC.map(([k,v])=>`<div class="barra"><span class="bl" title="${esc(k)}">${esc(k)}</span><span class="bt"><b style="width:${(v/maxC*100).toFixed(1)}%"></b></span><span class="bv">${FA.rs(v)}</span></div>`).join('')}
+        ${econ<0?`<div class="barra verde"><span class="bl" title="Preço abaixo do remunerado, km a menos, Km/L acima: abatem o que estourou">Economias (abatem)</span><span class="bt"><b style="width:${(-econ/maxC*100).toFixed(1)}%"></b></span><span class="bv">${FA.rs(econ)}</span></div>`:''}
         ${naoExp>0?`<div class="barra cinza"><span class="bl">Não explicado</span><span class="bt"><b style="width:${(naoExp/maxC*100).toFixed(1)}%"></b></span><span class="bv">${FA.rs(naoExp)}</span></div>`:''}
         ${!linhasC.length&&!naoExp?'<div class="kempty">Sem fato de Combustíveis no recorte.</div>':''}
         <div class="fa-nota" style="margin-top:12px">Temas que mais aparecem nas causas e ações: ${Object.entries(temas).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([t,n])=>`<span class="tema">${esc(t)} · ${n}</span>`).join(' ')||'—'}</div>
@@ -1233,6 +1236,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610140300"></script>
+<script src="../assets/build-check.js?v=202610140330"></script>
 </body>
 </html>

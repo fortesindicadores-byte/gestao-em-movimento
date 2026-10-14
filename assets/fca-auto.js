@@ -405,8 +405,9 @@ function diagnostico(f, ctx) {
   // fecha no Δ do custo; em Manutenções e Pneus as contas JÁ são o fato, e o que
   // o motor traz é onde o dinheiro foi e o que estava fora da meta)
   if (f.pac === 'Combustíveis') {
-    const pos = D.causas.filter(c => c.rs > 0 && c.soma !== false).reduce((s, c) => s + c.rs, 0);
-    D.explicado = f.over > 0 ? Math.min(1, pos / f.over) : 0;
+    // LÍQUIDO: o que economizou (preço abaixo do remunerado, km a menos) abate o que estourou
+    const liq = D.causas.filter(c => fin(c.rs)).reduce((s, c) => s + c.rs, 0);
+    D.explicado = f.over > 0 ? Math.max(0, Math.min(1, liq / f.over)) : 0;
     D.causas.forEach(c => { if (c.rs > 0 && c.soma !== false && f.over > 0) c.part = c.rs / f.over; });
   } else D.explicado = null;
   // ordem: R$ primeiro (o que fecha a conta), depois o que a rede sustenta, depois o resto
