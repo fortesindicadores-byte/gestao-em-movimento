@@ -1,0 +1,17 @@
+name: Dispersao KmL Placas
+
+# Lista a aba Km/L (Consumo) placa a placa em 2026, para cruzar com as placas
+# da planilha da Dispersão de km (Van, Rota, Empurrada...). Não grava nada.
+on:
+  workflow_dispatch:
+
+jobs:
+  listar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Listar
+        run: node scripts/dispersao-kml-placas.mjs
