@@ -1,0 +1,37 @@
+name: FCA Automatico Check
+
+# Abre o /fca-automatico/ no Chromium com os dados REAIS (banco lido com a
+# service key) e imprime no log os fatos de Custos com a causa e a ação que o
+# motor gerou, a rede de correlações e o aprendizado. Só leitura: a tela não grava.
+on:
+  workflow_dispatch:
+    inputs:
+      vig:
+        description: 'Vigência AAAA-MM (vazio = o último mês com realizado no DRE)'
+        required: false
+        default: ''
+      uni:
+        description: 'Só esta unidade (ex.: CGR, PIR, CBA T1). Vazio = todas'
+        required: false
+        default: ''
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Rodar
+        run: node scripts/fca-automatico-check.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          VIG: ${{ github.event.inputs.vig }}
+          UNI: ${{ github.event.inputs.uni }}

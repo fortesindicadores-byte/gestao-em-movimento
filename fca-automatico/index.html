@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="build" content="202610140300">
+<title>FCA Automático</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#0C1017;--card:#141B26;--border:#1E2D40;--orange:#F97316;--blue:#38BDF8;--text:#F1F5F9;--text2:#94A3B8;--text3:#475569;--green:#3BB33B;--red:#FF6666;--amber:#F4A100;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:radial-gradient(ellipse at 10% 25%,rgba(249,115,22,.06) 0%,transparent 50%),radial-gradient(ellipse at 90% 75%,rgba(56,189,248,.05) 0%,transparent 50%),var(--bg);color:var(--text);font-family:'Montserrat',-apple-system,sans-serif;font-size:13px;min-height:100vh;}
+.header{background:rgba(12,16,23,.75);border-bottom:1px solid rgba(255,255,255,.07);padding:10px 24px 12px;display:flex;flex-wrap:wrap;align-items:center;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 2px 12px rgba(0,0,0,.3);}
+.brand{flex:1;order:1;min-width:160px;}.brand h1{font-size:16px;font-weight:700;color:var(--orange);line-height:1.1;}.brand p{font-size:10px;color:var(--text2);margin-top:2px;}
+.brand-eyebrow{display:none;}
+.header-right{flex-shrink:0;order:2;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.header-filters{flex-basis:100%;order:3;margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;}
+.hfilter{display:flex;flex-direction:column;gap:3px;}
+.hfilter>label{display:none;}
+.ms-wrap{position:relative;}
+.ms-btn{display:flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:7px;
+  color:var(--txt2);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:500;
+  padding:7px 9px;cursor:pointer;white-space:nowrap;}
+.ms-btn:hover{background:var(--hover);color:var(--txt);}
+.ms-btn .ms-lbl{font-weight:500;}
+.ms-cnt{background:var(--laranja,#F97316);color:#1a1008;border-radius:10px;padding:1px 6px;
+  font-size:9px;font-weight:800;display:none;}
+.ms-lbl{flex:1;text-align:left;}
+.ms-cnt{background:var(--orange);color:#000;border-radius:10px;padding:1px 6px;font-size:9px;font-weight:800;display:none;}
+.ms-panel{display:none;flex-direction:column;position:absolute;top:calc(100% + 4px);left:0;z-index:500;background:#0f1824;border:1px solid #2a3a50;border-radius:4px;min-width:230px;max-height:320px;box-shadow:0 8px 24px rgba(0,0,0,.7);}
+.ms-panel.open{display:flex;}
+.ms-search{padding:7px 10px;border-bottom:1px solid #1e2d40;flex-shrink:0;}
+.ms-search input{width:100%;background:transparent;border:none;color:var(--text);font-family:'Montserrat',sans-serif;font-size:11px;outline:none;}
+.ms-list{overflow-y:auto;flex:1;}
+.ms-opt{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;}
+.ms-only{margin-left:auto;font-size:8px;color:var(--orange);padding:1px 6px;border-radius:3px;cursor:pointer;opacity:0;transition:opacity .12s;flex-shrink:0;}
+.ms-opt:hover .ms-only{opacity:1;}.ms-only:hover{background:rgba(249,115,22,.2);}
+.ms-opt:hover{background:rgba(255,255,255,.05);color:var(--text);}
+.ms-opt.all-opt{border-bottom:1px solid #1e2d40;color:var(--text);font-weight:700;}
+.ms-opt input[type=checkbox]{accent-color:var(--orange);cursor:pointer;width:14px;height:14px;flex-shrink:0;}
+.btn{background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.35);border-radius:4px;padding:6px 11px;cursor:pointer;color:var(--orange);font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px;display:flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap;}
+.btn:hover{background:rgba(249,115,22,.3);}
+.btn.ghost{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);color:var(--text2);}
+.btn.ghost:hover{background:rgba(255,255,255,.1);color:var(--text);}
+.btn.theme{padding:6px 8px;}
+.saved-msg{font-size:11px;font-weight:700;color:var(--green);align-self:center;opacity:0;transition:opacity .2s;}
+.saved-msg.show{opacity:1;}
+.saved-msg.err{color:var(--red);}
+.main{flex:1;min-height:0;overflow:auto;padding:0 24px 24px;}
+/* Resumo Gerencial no padrão: a visão inteira ocupa a área e quem rola é a
+   tabela, dentro do próprio card — não a página. */
+/* Resumo e Ranking ocupam a altura da visão — nada de rolagem de página.
+   A sobra é DIVIDIDA: a fileira de cards tem altura própria e o gráfico
+   tem teto, senão toda a sobra vai para o gráfico e os cards achatam. */
+#content:has(.adv){display:flex;flex-direction:column;height:100%;min-height:0;}
+#content:has(.adv) .adv{height:100%;min-height:0;}
+/* a fileira de cards tem altura PRÓPRIA (a do padrão) e o gráfico fica com
+   o resto, com teto. Antes os cards esticavam para fechar a tela e ficavam
+   altos demais, com o número em cima e a meta lá embaixo (Renan, 05/10/2026). */
+#content:has(.adv) .adv-kpis{flex:0 0 auto;}
+#content:has(.adv) .adv-kpi{min-height:clamp(112px,16.5vh,170px);}
+#content:has(.adv) .adv-gr2{flex:1 1 auto;min-height:262px;max-height:56vh;}
+#content:has(.adv-tsec){display:flex;flex-direction:column;height:100%;min-height:0;}
+.intro{font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;}
+.intro b{color:var(--text);}
+.loading{text-align:center;color:var(--text3);padding:50px;font-size:14px;}
+
+/* ── Gate (telas de acesso) ── */
+.gate{max-width:520px;margin:80px auto;text-align:center;background:rgba(20,27,38,.55);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:38px 34px;backdrop-filter:blur(16px);box-shadow:0 2px 18px rgba(0,0,0,.3);}
+.gate .ic{font-size:38px;margin-bottom:14px;}
+.gate h2{font-size:18px;font-weight:800;color:var(--text);margin-bottom:10px;}
+.gate p{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:18px;}
+.gate code{background:rgba(249,115,22,.14);color:var(--orange);padding:2px 7px;border-radius:5px;font-size:12px;}
+.gate .btn{display:inline-flex;}
+
+/* ── Resumo ── */
+.summary{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px;}
+.scard{background:rgba(20,27,38,.55);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:12px 18px;min-width:120px;backdrop-filter:blur(16px);box-shadow:0 2px 12px rgba(0,0,0,.25);}
+.scard .sval{font-size:26px;font-weight:800;line-height:1;}
+.scard .slbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-top:5px;}
+.scard.tot .sval{color:var(--orange);}
+.scard.con .sval{color:var(--green);}
+.scard.and .sval{color:var(--amber);}
+.scard.nao .sval{color:var(--red);}
+.scard.can .sval{color:var(--text3);}
+
+/* ── Tabela consolidada ── */
+.tbl-section{background:rgba(20,27,38,.55);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:6px 4px 12px;backdrop-filter:blur(16px);box-shadow:0 2px 12px rgba(0,0,0,.25);}
+table.cons{width:100%;border-collapse:collapse;font-size:12px;min-width:1180px;}
+table.cons thead th{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;text-align:left;padding:10px 8px 8px;border-bottom:1px solid rgba(255,255,255,.10);white-space:nowrap;position:sticky;top:0;background:var(--cabec);z-index:2;}
+table.cons td{padding:7px 8px;vertical-align:top;border-top:1px solid rgba(255,255,255,.05);}
+table.cons tbody tr:hover{background:rgba(255,255,255,.025);}
+.c-uni{font-weight:800;color:var(--text);white-space:nowrap;}
+.c-vig,.c-org{color:var(--text2);white-space:nowrap;}
+.org-tag{display:inline-block;background:rgba(56,189,248,.16);color:var(--blue);border-radius:4px;padding:1px 7px;font-weight:800;font-size:9.5px;letter-spacing:.6px;}
+.org-tag.cst{background:rgba(249,115,22,.18);color:var(--orange);}
+.c-fato{font-weight:700;color:var(--text);max-width:220px;}
+.c-fato small{display:block;font-weight:600;color:var(--text3);font-size:10px;margin-top:2px;white-space:normal;}
+.c-fato .fato-edit{font-weight:700;}
+.c-fato .desv-edit{font-weight:600;color:var(--text3);font-size:11px;margin-top:4px;min-height:30px;}
+.c-proj{color:var(--text2);max-width:120px;white-space:normal;}
+.cons input,.cons textarea,.cons select{background:#0a0f18;border:1px solid #2a3a50;border-radius:6px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:12px;padding:6px 8px;outline:none;width:100%;min-height:34px;}
+.cons input:focus,.cons textarea:focus,.cons select:focus{border-color:var(--orange);}
+.cons textarea{resize:none;overflow:hidden;line-height:1.4;display:block;}
+.cons select option{background:#0f1824;color:#fff;}
+.col-causa,.col-acao{min-width:250px;}
+.col-acomp{min-width:130px;}
+.col-resp{min-width:90px;}
+.col-prazo{min-width:115px;}
+.col-status{min-width:120px;}
+.col-acts{width:52px;}
+.acts{display:flex;flex-direction:column;gap:4px;align-items:stretch;}
+select.st[data-v="Concluída"]{background:#3BB33B;color:#fff;border-color:#3BB33B;}
+select.st[data-v="Em andamento"]{background:#F4A100;color:#0C1017;border-color:#F4A100;font-weight:700;}
+select.st[data-v="Não iniciada"]{background:#FF6666;color:#0C1017;border-color:#FF6666;font-weight:700;}
+select.st[data-v="Cancelada"]{background:#333333;color:#fff;border-color:#333333;}
+.lock-btn{background:transparent;border:none;font-size:17px;line-height:1;cursor:pointer;padding:6px 4px;border-radius:5px;opacity:.45;}
+.lock-btn.on{opacity:1;}
+.lock-btn:hover{background:rgba(255,255,255,.08);}
+.acts .lock-btn{padding:3px 0;font-size:15px;width:100%;border-radius:5px;}
+.mini-add{background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.30);color:var(--orange);font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;border-radius:5px;padding:4px 0;cursor:pointer;white-space:nowrap;width:100%;}
+.mini-add:hover{background:rgba(249,115,22,.28);}
+.mini-del{background:rgba(255,102,102,.10);border:1px solid rgba(255,102,102,.30);color:var(--red);font-size:11px;font-weight:700;line-height:1;border-radius:5px;padding:5px 0;cursor:pointer;width:100%;}
+.mini-del:hover{background:rgba(255,102,102,.25);}
+.cell-saving{outline:2px solid rgba(249,115,22,.5)!important;}
+.empty{text-align:center;color:var(--text2);padding:40px;}
+
+/* modo claro (cinza translúcido) */
+/* fundo do claro vem do --fundo (vidro, igual ao Planner) — nada de chapado aqui */
+body.claro .main{--text:#1a1a1a;--text2:#444444;--text3:#666666;color:var(--text);}
+body.claro .tbl-section,body.claro .scard,body.claro .gate{background:rgba(128,128,128,.14)!important;border:none!important;box-shadow:none!important;--text:#1a1a1a;--text2:#444444;--text3:#666666;}
+body.claro table.cons thead th{border-bottom-color:rgba(0,0,0,.12);background:rgba(225,225,225,.96);}
+body.claro table.cons td{border-top-color:rgba(0,0,0,.07);}
+body.claro .cons input,body.claro .cons textarea,body.claro .cons select{background:#fff;border-color:#ccc;color:#1a1a1a;}
+body.claro select.st[data-v="Concluída"]{background:#3BB33B;color:#fff;}
+body.claro select.st[data-v="Em andamento"]{background:#F4A100;color:#0C1017;}
+body.claro select.st[data-v="Não iniciada"]{background:#FF6666;color:#0C1017;}
+body.claro select.st[data-v="Cancelada"]{background:#333333;color:#fff;}
+
+/* ── Kanban ── */
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start;}
+.kcol{background:rgba(20,27,38,.55);border:1px solid var(--border);border-radius:10px;min-height:120px;display:flex;flex-direction:column;overflow:hidden;}
+.kcol.kover{border-color:var(--orange);background:rgba(249,115,22,.06);}
+.kcol-head{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;}
+.kcol-head.nao{background:var(--red);color:#0C1017;}
+.kcol-head.and{background:#F4A100;color:#0C1017;}
+.kcol-head.con{background:var(--green);color:#fff;}
+.kcount{background:rgba(0,0,0,.22);border-radius:10px;padding:1px 9px;font-size:11px;font-weight:700;}
+.kcol-body{padding:10px;display:flex;flex-direction:column;gap:9px;}
+.kempty{color:var(--text3);text-align:center;padding:14px 0;font-size:12px;}
+.kcard{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 11px;cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.kcard:active{cursor:grabbing;}
+.kcard.dragging{opacity:.4;}
+.kcard-top{font-size:10px;color:var(--text2);margin-bottom:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.korg{font-size:8.5px;font-weight:800;padding:1px 6px;border-radius:4px;}
+.korg.rpm{background:rgba(56,189,248,.18);color:#38BDF8;}
+.korg.cst{background:rgba(249,115,22,.18);color:var(--orange);}
+.kcard-fato{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.25;}
+.kcard-ac{font-size:11.5px;color:var(--text2);margin-top:5px;line-height:1.3;}
+.kcard-meta{font-size:10px;color:var(--text2);margin-top:7px;}
+.kcard-meta .dim{color:var(--text3);}
+.kbadge{font-size:8.5px;font-weight:800;padding:1px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.3px;margin-left:6px;}
+.kbadge.venc{background:rgba(255,102,102,.18);color:var(--red);}
+.kbadge.ok{background:rgba(59,179,59,.18);color:var(--green);}
+.kbadge.sem{background:rgba(148,163,184,.15);color:var(--text2);}
+.kdays{font-size:8.5px;font-weight:800;margin-left:6px;letter-spacing:.3px;white-space:nowrap;}
+.kdays.venc{color:var(--red);}
+.kdays.ok{color:var(--text2);}
+body.claro .kcol{background:#fff;border-color:rgba(0,0,0,.10);}
+body.claro .kcard{background:#F7F7F7;border-color:rgba(0,0,0,.10);}
+
+/* ── Mobile: vira card empilhado ── */
+@media(max-width:760px){
+  .kanban{grid-template-columns:1fr;}
+  .main{padding:16px;}
+  .tbl-section{overflow-x:visible;}
+  table.cons,table.cons thead,table.cons tbody,table.cons tr,table.cons td{display:block;width:100%;min-width:0;}
+  table.cons thead{display:none;}
+  table.cons tbody tr{border:1px solid rgba(255,255,255,.10);border-radius:8px;padding:8px;margin-bottom:10px;position:relative;}
+  body.claro table.cons tbody tr{border-color:rgba(0,0,0,.12);}
+  table.cons td{padding:5px 0;border-top:none;}
+  .col-causa,.col-acao,.col-resp,.col-prazo,.col-status,.col-acomp,.c-fato,.c-proj{min-width:0;max-width:none;}
+  .cell-label{display:block;font-size:9.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+  .col-acts{width:auto;}
+  .col-acts .acts{flex-direction:row;flex-wrap:wrap;}
+  .col-acts .lock-btn,.col-acts .mini-add,.col-acts .mini-del{width:auto;padding:5px 10px;}
+}
+.cell-label{display:none;}
+/* ══════════════════════════════════════════════════════════════════
+   LAYOUT DO PAINEL DE GESTÃO no FCA.
+   O motor (fatos, RPM, hub de unidades, preenchimento com causa e
+   ação) não muda; muda a casca. Duas lições do tombo anterior:
+   a classe de tema é a MESMA do FCA (body.claro) e as variáveis
+   antigas (--text, --border, --bg…) viram apelidos das novas.
+   ══════════════════════════════════════════════════════════════════ */
+:root{
+  /* ══ PALETA MEDIDA na imagem de referência (amostragem por pixel) ══
+     foto de fundo  topo-esq #283D67 · topo-centro #101F46 · direita
+                    #213352 · rodapé #0C1323  → o degradê abaixo repete
+                    esse tom, já que não temos a foto;
+     sidebar        #141C30   painel #0D1520   card #222531
+     card DONE      #161B27
+     azul   #1986B1 (borda) · #0C8BB9 (barra)
+     vermelho #DD5B60 (borda) · #E05852 (barra)
+     trilho #262934
+     textos  título #FFFFFF · card #EEF2FA · coluna #676F83 ·
+             id #4C505C · lateral #B2BCD2 · seção #505B75 ·
+             card apagado #9196A2                                    */
+  /* PROFUNDIDADE — três ingredientes:
+     1. o fundo tem RAMPA (cinza neutro na diagonal, do escuro embaixo
+        à esquerda ao claro em cima à direita): é o que se enxerga
+        através do vidro;
+     2. um foco de luz no alto à direita dá DIREÇÃO à iluminação;
+     3. cada camada é um DEGRAU mais clara que a de baixo
+        (fundo → painel → lateral → card), com fio de luz na borda
+        de cima e sombra embaixo — é o degrau que o olho lê como
+        "uma placa sobre a outra". */
+  --fundo:
+    radial-gradient(80% 60% at 90% 0%, rgba(255,244,232,.035) 0%, transparent 60%),
+    linear-gradient(45deg, #121214 0%, #121214 100%);
+  --luz:      inset 0 1px 0 rgba(255,255,255,.09);
+  --luz-card: inset 0 1px 0 rgba(255,255,255,.08);
+  --app:      rgba(150,185,255,.045);
+  --side:     rgba(30,30,30,.50);
+  --linha:    rgba(255,255,255,.06);
+  --card:     rgba(44,44,46,.78);
+  --brilho:   linear-gradient(180deg, rgba(255,255,255,.022) 0%, rgba(255,255,255,0) 46%);
+  --card-brd: rgba(255,255,255,.07);
+  --txt:      #EEF2FA;
+  --txt2:     #C9D0DD;
+  --txt3:     #A9B1C0;
+  --txt4:     #7D8596;
+  --hover:    rgba(255,255,255,.06);
+  --azul:     #2E90E8;
+  --azul-b:   #2E90E8;
+  --verde:    #3BB33B;
+  --vermelho: #FF5252;
+  --verm-b:   #E05852;
+  --cinza:    #5B657C;
+  --trilho:   #262934;
+  --sombra:   0 2px 10px rgba(0,0,0,.30);
+  --cabec:    #2B2B30;   /* opaco de propósito: cabeçalho fixo com fundo translúcido deixa as linhas passarem por baixo */
+  --pop:      #26262B;   /* menus suspensos: OPACOS, nunca translúcidos */
+  --laranja:  #F97316;
+}
+body.claro{
+  --fundo:
+    radial-gradient(80% 60% at 90% 0%, rgba(255,255,255,.35) 0%, transparent 60%),
+    linear-gradient(45deg, #E1E2E5 0%, #E1E2E5 100%);
+  --luz:      inset 0 1px 0 rgba(255,255,255,.9);
+  --luz-card: inset 0 1px 0 rgba(255,255,255,1);
+  --app:      rgba(255,255,255,.20);
+  --side:     rgba(255,255,255,.50);
+  --linha:    rgba(15,23,42,.10);
+  --card:     rgba(255,255,255,.74);
+  --brilho:   linear-gradient(180deg, rgba(255,255,255,.6) 0%, rgba(255,255,255,0) 46%);
+  --card-brd: rgba(15,23,42,.10);
+  --txt:      #161D2B;
+  --txt2:     #4A5568;
+  --txt3:     #737D91;
+  --txt4:     #8B94A6;
+  --hover:    rgba(15,23,42,.05);
+  --azul:     #1B6FC4;
+  --azul-b:   #1B6FC4;
+  --verde:    #0E8C0E;
+  --vermelho: #E03131;
+  --verm-b:   #D2453F;
+  --cinza:    #939CAF;
+  --trilho:   rgba(15,23,42,.13);
+  --sombra:   0 2px 8px rgba(15,23,42,.10);
+  --text:  var(--txt);
+  --text2: var(--txt2);
+  --text3: var(--txt3);
+  --bg:     #E9EAEC;
+  --border: var(--card-brd);
+  --card2:  var(--card);
+  --orange: #C2410C;
+  --blue:   #1B6FC4;
+  --amber:  #B45309;
+  --red:    var(--vermelho);
+  --green:  var(--verde);
+  --cabec:    #DCDFE6;
+  --pop:      #FFFFFF;
+  --laranja:  #F97316;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+/* barra de rolagem no tom do painel — a padrão vem branca e salta aos olhos */
+@supports not selector(::-webkit-scrollbar){
+  *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--txt3) 42%,transparent) transparent;}
+}
+::-webkit-scrollbar{width:11px;height:11px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--txt3) 42%,transparent);
+  border:3px solid transparent;background-clip:content-box;border-radius:9px;}
+::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--txt3) 72%,transparent);
+  background-clip:content-box;}
+::-webkit-scrollbar-corner{background:transparent;}
+::-webkit-scrollbar-button{display:none;width:0;height:0;}
+/* ruído contra o BANDING do degradê: sem ele o gradiente cai em degraus
+   de 1 valor por canal e o olho lê como listras */
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");}
+.app{z-index:1;}
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:13px;color:var(--txt);
+  background:var(--fundo);
+  overflow:hidden;
+}
+
+/* ── painel do app, flutuando sobre a foto ── */
+.app{
+  position:absolute;inset:16px;display:flex;
+  border-radius:10px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 28px 70px rgba(0,0,0,.55), var(--luz);
+}
+.app::before{content:'';position:absolute;inset:0;background:var(--app);
+  z-index:0;}
+.side,.board{position:relative;z-index:1;}
+
+/* ── barra lateral ── */
+.side{
+  width:256px;flex:0 0 256px;display:flex;flex-direction:column;
+  background:var(--side);border-right:1px solid var(--linha);padding:16px 10px 12px;
+  backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);
+  box-shadow:var(--luz), 8px 0 28px rgba(0,0,0,.25);
+}
+.s-top{display:flex;align-items:center;gap:9px;padding:2px 8px 16px;}
+.s-mini{display:flex;align-items:center;justify-content:center;width:24px;height:24px;flex:0 0 24px;
+  background:transparent;border:0;border-radius:6px;color:var(--txt3);cursor:pointer;}
+.s-mini:hover{background:var(--hover);color:var(--txt);}
+/* ── menu recolhido: só os ícones ── */
+.side.mini{width:64px;flex:0 0 64px;padding:16px 8px 12px;}
+.side.mini .s-top{justify-content:center;padding-bottom:12px;}
+.side.mini .s-top b,.side.mini .s-top>svg{display:none;}
+.side.mini .s-sec,.side.mini .s-kbd,.side.mini .s-item .n,.side.mini .s-user div,
+.side.mini .s-item.pai{display:none;}
+/* recolhido, o rodapé continua com os atalhos (voltar ao hub, sair): são
+   só ícones, e sem eles não há como sair do painel com o menu fechado */
+.side.mini .s-user{flex-wrap:wrap;gap:6px;}
+.side.mini .s-sair{margin:0;}
+.side.mini .s-search{justify-content:center;padding:8px 0;margin-bottom:10px;background:var(--hover);}
+.side.mini .s-search input{display:none;}
+.side.mini .s-item{font-size:0;justify-content:center;padding:9px 0;gap:0;}
+.side.mini .s-item.filho{padding-left:0;}
+.side.mini .s-user{justify-content:center;padding:12px 0 2px;}
+.s-top b{flex:1;font-size:13.5px;font-weight:600;}
+.s-search{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;margin-bottom:14px;}
+.s-search:hover{background:var(--hover);}
+.s-search input{flex:1;min-width:0;background:transparent;border:0;outline:0;
+  font-family:inherit;font-size:12.5px;color:var(--txt);}
+.s-search input::placeholder{color:var(--txt2);}
+.s-kbd{font-size:10.5px;color:var(--txt3);white-space:nowrap;}
+.s-sec{display:flex;align-items:center;gap:6px;padding:16px 8px 8px;
+  font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:1.1px;}
+.s-sec b{flex:1;font-weight:600;}
+.s-sec svg{opacity:.7;}
+.s-item{display:flex;align-items:center;gap:9px;width:100%;padding:7px 8px;border:0;border-radius:7px;
+  background:transparent;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;
+  text-align:left;cursor:pointer;}
+.s-item:hover{background:var(--hover);color:var(--txt);}
+.s-item.on{background:var(--hover);color:var(--txt);font-weight:600;}
+.s-item.pai{color:var(--txt);font-weight:600;cursor:default;}
+.s-item.pai:hover{background:transparent;}
+.s-item.filho{padding-left:26px;}
+.s-item .n{margin-left:auto;font-size:11px;color:var(--txt3);font-weight:600;}
+.s-user{margin-top:auto;display:flex;align-items:center;gap:9px;padding:12px 8px 2px;border-top:1px solid var(--linha);}
+.s-volta{margin-top:auto;padding-top:8px;display:flex;flex-direction:column;gap:2px;}
+.s-volta+.s-user{margin-top:6px;}
+@media(max-width:860px){.s-volta{display:contents;}}
+.s-user div{flex:1;min-width:0;}
+.s-user b{display:block;font-size:12px;font-weight:600;line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* sem isto o avatar vira elipse: `.s-user div{flex:1}` vence pela ordem */
+.s-user .av{flex:0 0 24px;margin-left:0;}
+.s-sair{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;
+  color:var(--txt3);text-decoration:none;flex:0 0 26px;}
+.s-sair:hover{background:var(--hover);color:var(--txt);}
+.s-user i{display:block;font-size:9.5px;font-style:normal;color:var(--txt3);
+  text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
+
+/* ── área do quadro ── */
+.board{flex:1;min-width:0;display:flex;flex-direction:column;}
+.top{display:flex;align-items:center;gap:6px;padding:12px 24px 10px;}
+.top h1{font-size:21px;font-weight:600;letter-spacing:-.3px;}
+.top .tit-wrap{flex:1 1 auto;min-width:min-content;}
+.top h1{white-space:nowrap;}
+/* a regra da visão mora embaixo do título, não repetida dentro da tabela (Renan, 06/10/2026) */
+.top .tit-sub{font-size:10.5px;color:var(--txt3);font-weight:600;margin-top:2px;line-height:1.35;}
+.top .tit-sub:empty{display:none;}
+.tool{display:flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:7px;
+  padding:6px 10px;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;}
+.tool:hover{background:var(--hover);color:var(--txt);}
+.tool.on{background:var(--hover);color:var(--txt);}
+.tool.ico{padding:7px 9px;}
+.menu-wrap{position:relative;}
+.menu{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:40;min-width:214px;
+  background:var(--brilho), var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--card-brd);border-radius:10px;padding:6px;
+  box-shadow:0 18px 40px rgba(0,0,0,.5);}
+body.claro .menu{box-shadow:0 18px 40px rgba(15,23,42,.16);}
+.menu.open{display:block;}
+.menu button,.menu label{display:flex;align-items:center;gap:9px;width:100%;padding:7px 9px;border:0;border-radius:7px;
+  background:transparent;color:var(--txt);font-family:inherit;font-size:12.5px;text-align:left;cursor:pointer;}
+.menu button:hover,.menu label:hover{background:var(--hover);}
+.menu .tit{padding:8px 9px 4px;font-size:10px;font-weight:600;color:var(--txt3);
+  text-transform:uppercase;letter-spacing:1px;}
+.menu input[type=checkbox]{accent-color:var(--azul);width:14px;height:14px;flex:0 0 14px;cursor:pointer;}
+.menu .rol{max-height:250px;overflow:auto;}
+.menu .mdata{display:flex;align-items:center;gap:8px;padding:6px 9px;font-size:12px;color:var(--txt2);}
+.menu .mdata input{flex:1;min-width:0;background:var(--hover);border:1px solid var(--card-brd);
+  border-radius:6px;color:var(--txt);font-family:inherit;font-size:12px;padding:5px 8px;outline:0;}
+body.claro .menu .mdata input{background:#fff;border-color:#d7dce4;}
+.menu .mall{font-weight:700;border-bottom:1px solid var(--linha);margin-bottom:4px;}
+.menu .mtx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.menu .so{font-size:9px;font-weight:700;color:#F97316;padding:1px 7px;border-radius:4px;
+  opacity:0;cursor:pointer;flex:0 0 auto;}
+.menu label:hover .so{opacity:1;}
+.menu .so:hover{background:rgba(249,115,22,.2);}
+
+/* ── colunas ── */
+.cols{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+  padding:0 24px 24px;overflow:auto;align-items:stretch;}
+.col{display:flex;flex-direction:column;min-height:100%;border-radius:10px;}
+/* o corpo estica até o fim da coluna: soltar em qualquer altura muda a etapa */
+.cbody{flex:1;}
+.col.over{background:rgba(46,155,214,.10);box-shadow:0 0 0 1px rgba(46,155,214,.35) inset;}
+.chead{display:flex;align-items:center;gap:8px;padding:2px 2px 12px;}
+.cname{font-size:10.5px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:1.3px;}
+.cnum{font-size:10.5px;font-weight:600;color:var(--txt3);}
+.ic{display:flex;align-items:center;justify-content:center;width:20px;height:20px;flex:0 0 20px;
+  background:transparent;border:0;border-radius:5px;color:var(--txt3);cursor:pointer;
+  font-family:inherit;font-size:14px;font-weight:500;line-height:1;padding:0;}
+.ic:hover{background:var(--hover);color:var(--txt);}
+.chead .ic:first-of-type{margin-left:auto;}
+.cbody{display:flex;flex-direction:column;gap:10px;flex:1;}
+.col.rec .cbody{display:none;}
+
+/* ── card: chip-rótulo no topo em degradê laranja → cor do painel
+      (padrão do hub); prazo em VERDE/VERMELHO, as cores das barras
+      do FCA Gerencial. Sem risco lateral. ── */
+.card{position:relative;overflow:hidden;background:var(--brilho), var(--card);
+  border:1px solid var(--card-brd);border-radius:4px;padding:0 0 12px;cursor:grab;
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+  box-shadow:0 8px 22px rgba(0,0,0,.36), var(--luz-card);}
+.card.venc{--pz:var(--vermelho);} .card.ok{--pz:var(--verde);}
+.card.sem,.card.bkl{--pz:var(--cinza);}
+.card:active{cursor:grabbing;} .card.arrasta{opacity:.35;}
+.card:hover{border-color:rgba(249,115,22,.55);}
+/* concluídas ficam normais — o verde da barra já diz que terminaram */
+/* assunto: texto puro, sem botão e sem bandeira — é o título do card */
+.cass{display:flex;padding:11px 13px 0;margin-bottom:5px;}
+.cass span{max-width:100%;font-size:13px;font-weight:800;letter-spacing:-.1px;color:#FFFFFF;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+body.claro .cass span{color:#000000;}
+.ctit{font-size:11.5px;font-weight:400;line-height:1.4;padding:0 13px;color:var(--txt2);
+  /* dois renques reservados: card de 1 linha fica do mesmo tamanho do de 2.
+     Passando de 2 linhas o card cresce — raro, e aí é melhor crescer que cortar */
+  min-height:calc(2 * 1.4em);}
+.cdata{font-size:10.5px;color:var(--txt3);white-space:nowrap;}
+.cdata .atraso{color:var(--vermelho);font-weight:700;}
+.cfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-top:12px;min-height:24px;padding:0 13px;}
+
+.avs{display:flex;align-items:center;margin-left:auto;}
+.av{width:24px;height:24px;border-radius:50%;margin-left:auto;display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:800;letter-spacing:.2px;color:#2A1405;background:#F97316;flex:0 0 24px;
+  box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.add-av{width:24px;height:24px;border-radius:50%;margin-left:auto;background:transparent;
+  border:1px dashed var(--trilho);color:var(--txt3);font-family:inherit;font-size:13px;line-height:1;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.add-av:hover{border-color:var(--verde);color:var(--verde);}
+.cvazia{padding:12px 2px;font-size:12px;color:var(--txt3);}
+
+/* ── visões Tabela / Relatório / Resumo ── */
+.cols.solto{display:block;}
+/* Tabela e Gantt rolam por dentro: sem isso o sticky do cabeçalho se
+   ancora no wrapper, que rola junto, e o cabeçalho some ao descer */
+.cols.rola{display:flex;flex-direction:column;overflow:hidden;}
+.cols.rola .tab-wrap,.cols.rola .grol{flex:1;min-height:0;overflow:auto;}
+.cols.rola .gantt{display:flex;flex-direction:column;min-height:0;}
+.tab-wrap{overflow:auto;border:1px solid var(--card-brd);border-radius:10px;background:var(--side);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+table.tab{width:100%;border-collapse:collapse;font-size:11px;}
+table.tab thead th{position:sticky;top:0;z-index:2;background:var(--cabec);text-align:left;
+  padding:11px 12px;font-size:10px;font-weight:700;color:var(--txt2);text-transform:uppercase;
+  letter-spacing:.8px;border-bottom:1px solid var(--card-brd);white-space:nowrap;}
+table.tab td{padding:11px 12px;border-bottom:1px solid var(--linha);color:var(--txt2);vertical-align:top;
+  white-space:nowrap;}
+table.tab td.forte{color:var(--txt);font-weight:600;}
+table.tab td.livre{white-space:normal;min-width:230px;line-height:1.45;}
+table.tab td.suave{color:var(--txt3);}
+table.tab td.num,table.tab th.num{text-align:right;white-space:nowrap;}
+table.tab tbody tr{cursor:pointer;}
+table.tab tbody tr:hover{background:var(--hover);}
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;
+  background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c);
+  border:1px solid color-mix(in srgb,var(--c) 45%,transparent);}
+/* no claro a cor fica no fundo e a letra vai para o preto */
+body.claro .tag{background:color-mix(in srgb,var(--c) 34%,transparent);color:#141922;
+  border-color:color-mix(in srgb,var(--c) 55%,transparent);}
+.atraso{color:var(--vermelho);font-weight:600;}
+
+.resumo{display:flex;flex-direction:column;gap:14px;}
+.heros{display:flex;flex-direction:column;gap:8px;}
+.hl{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:1.1px;}
+.hn{font-size:46px;font-weight:800;line-height:1.02;letter-spacing:-1.5px;margin-top:2px;}
+.hero-sub{display:flex;gap:32px;}
+.hero-sub b{font-size:19px;font-weight:800;margin-left:8px;letter-spacing:-.4px;}
+.hero-sub>div{display:flex;align-items:baseline;}
+.faixas{display:flex;flex-wrap:wrap;align-items:center;gap:6px 20px;font-size:10.5px;color:var(--txt2);}
+.faixas i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px;}
+.faixas .obs{color:var(--txt3);font-style:italic;}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
+.kpi{background:var(--card);border:1px solid var(--card-brd);border-radius:10px;padding:12px 14px 13px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.kpi .pt{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;}
+.kpi .kl{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;}
+.kpi b{display:block;margin-top:6px;font-size:26px;font-weight:800;line-height:1;}
+.dois{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.bloco{background:var(--card);border:1px solid var(--card-brd);border-radius:10px;padding:14px 16px 12px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.bloco h3{font-size:11px;font-weight:700;color:var(--txt);text-transform:uppercase;letter-spacing:1.1px;}
+.bhead{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.bhead h3{flex:1;margin:0;}
+.toggle{display:flex;border:1px solid var(--card-brd);border-radius:7px;overflow:hidden;}
+.toggle button{background:transparent;border:0;color:var(--txt3);font-family:inherit;font-size:10px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.7px;padding:6px 14px;cursor:pointer;}
+.toggle button:hover{color:var(--txt);background:var(--hover);}
+.toggle button.on{background:var(--vermelho);color:#0F0B07;}
+.graf{display:flex;align-items:flex-end;gap:6px;height:190px;margin-top:14px;}
+.gcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;}
+.gv{font-size:9.5px;font-weight:800;color:var(--txt2);height:14px;}
+.gbar{width:100%;border-radius:4px 4px 0 0;min-height:2px;}
+.gl{margin-top:6px;font-size:9px;font-weight:600;color:var(--txt3);white-space:nowrap;}
+table.res-tab td,table.res-tab th{border-bottom:1px solid var(--linha);}
+table.res-tab tbody tr:hover{background:var(--hover);}
+.pctcell{display:inline-block;min-width:52px;text-align:center;padding:3px 10px;border-radius:6px;
+  font-weight:800;font-size:11px;color:#0F0B07;}
+@media(max-width:1180px){.kpis{grid-template-columns:repeat(3,1fr);}.dois{grid-template-columns:1fr;}}
+
+
+/* ── Gantt ── */
+.gantt{background:var(--card);border:1px solid var(--card-brd);border-radius:8px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow:hidden;}
+.grol{overflow:auto;}
+.grow{display:grid;grid-template-columns:340px 1fr;border-bottom:1px solid var(--linha);}
+.grow:last-child{border-bottom:0;}
+.grow:not(.ghead){cursor:pointer;}
+.grow:not(.ghead):hover{background:var(--hover);}
+.ghead{background:var(--cabec);position:sticky;top:0;z-index:2;}
+.ghead .glbl{font-size:10px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;}
+.glbl{padding:9px 14px;min-width:0;display:flex;flex-direction:column;gap:2px;justify-content:center;}
+.glbl b{font-size:11.5px;font-weight:800;color:var(--txt);line-height:1.3;}
+/* o texto da ação quebra em até duas linhas em vez de ser cortado */
+.glbl span{font-size:10.5px;font-weight:400;color:var(--txt2);line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+/* terceira linha do rótulo: projeto · vigência · responsável */
+.glbl .gsub{font-style:normal;font-size:9.5px;font-weight:600;color:var(--txt3);
+  letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gbar{position:relative;min-height:46px;border-left:1px solid var(--linha);}
+.gmeses{display:flex;align-items:center;min-height:32px;}
+.gmeses span{font-size:9.5px;font-weight:700;color:var(--txt3);text-align:center;
+  border-left:1px solid var(--linha);text-transform:uppercase;letter-spacing:.4px;}
+.gmeses span:first-child{border-left:0;}
+.gbar i{position:absolute;top:50%;transform:translateY(-50%);height:12px;border-radius:6px;min-width:6px;}
+.gbar i.gsem{background:transparent;border:1.5px dashed var(--cinza);}
+.gbar u{position:absolute;top:50%;transform:translateY(-50%);height:3px;text-decoration:none;
+  background:repeating-linear-gradient(90deg,var(--vermelho) 0 5px,transparent 5px 9px);}
+.gbar em{position:absolute;top:50%;transform:translateY(-50%);padding-left:7px;
+  font-style:normal;font-size:9px;font-weight:700;color:var(--txt3);white-space:nowrap;}
+.ghoje{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed var(--txt3);opacity:.7;pointer-events:none;}
+.gleg{display:flex;flex-wrap:wrap;gap:6px 18px;padding:11px 4px 0;font-size:10px;color:var(--txt2);}
+.gleg i{display:inline-block;width:15px;height:8px;border-radius:4px;margin-right:6px;vertical-align:-1px;}
+.gleg i.gtrac{background:transparent;border:1.5px dashed var(--cinza);}
+.gleg i.grastro{border-radius:0;height:3px;
+  background:repeating-linear-gradient(90deg,var(--vermelho) 0 5px,transparent 5px 9px);}
+.gleg .obs{color:var(--txt3);font-style:italic;}
+
+
+/* .main continua existindo dentro do quadro, então o CSS antigo do
+   preenchimento (fato-block, tabela de ações, hub de unidades) segue
+   valendo sem eu ter de reescrevê-lo */
+.board .main{flex:1;min-height:0;overflow:auto;padding:0 24px 24px;background:transparent;}
+/* Tabela e Gantt rolam por DENTRO: sem isso o sticky do cabeçalho se ancora
+   num wrapper que não rola, e o cabeçalho sobe junto com as linhas */
+.board .main.rola{display:flex;flex-direction:column;overflow:hidden;}
+/* Kanban: a faixa dos títulos fica FORA da área que rola; o quadro continua
+   com UMA barra de rolagem só. --sb é a largura dessa barra, medida no JS,
+   para as duas grades continuarem alinhadas. */
+.board .main.kan{display:flex;flex-direction:column;overflow:hidden;padding:0;}
+/* AQUI o quadro mora em #content (no preenchimento é #list) — era por isso que
+   o Kanban do Admin não rolava: a corrente de altura não chegava no .kanban */
+.board .main.kan #content{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+.kheads{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;flex:0 0 auto;
+  padding:0 calc(24px + var(--sb,0px)) 0 24px;}
+.board .main.kan .kanban{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 24px 24px;}
+.board .main.rola #content{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+.board .main.rola .tab-wrap,.board .main.rola .grol{flex:1;min-height:0;overflow:auto;}
+.board .main.rola .rel-wrap{flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;}
+.board .main.rola .gantt,
+.board .main.rola .rel-section{display:flex;flex-direction:column;min-height:0;flex:1;}
+
+/* a Tabela (relatório) no visual novo — mesmas regras da tabela do Planner */
+.rel-section{background:var(--card)!important;border:1px solid var(--card-brd)!important;
+  border-radius:10px!important;padding:0!important;overflow:hidden;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:none!important;}
+table.rel thead th{background:var(--cabec)!important;color:var(--txt2)!important;
+  padding:11px 12px!important;letter-spacing:.8px;border-bottom:1px solid var(--card-brd)!important;}
+table.rel tbody td{padding:11px 12px!important;color:var(--txt2)!important;
+  border-bottom:1px solid var(--linha)!important;}
+table.rel tbody tr:hover{background:var(--hover)!important;}
+table.rel td.txt b{color:var(--txt);}
+body.claro .rel-section{background:var(--card)!important;}
+body.claro table.rel thead th{background:var(--cabec)!important;}
+/* com table-layout:fixed nada transborda na horizontal — a barra que
+   aparecia era só a largura da barra vertical entrando na conta */
+.rel-wrap{overflow-x:hidden;overflow-y:auto;}
+/* A tabela se dimensiona sozinha, como a do FCA da unidade: sem largura
+   mínima e sem largura fixa por coluna. As colunas curtas não quebram, as
+   de texto quebram e absorvem o espaço que sobra — assim ela acompanha a
+   janela em vez de empurrar barra de rolagem. */
+table.rel{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+table.rel td.txt,table.rel td.txtsm{overflow-wrap:anywhere;}
+table.rel td.txt{white-space:normal;}
+table.rel td.txtsm{white-space:normal;color:var(--txt3);}
+/* o cabeçalho quebra em duas linhas em vez de ser cortado */
+table.rel thead th{white-space:normal!important;}
+/* a pílula quebra em vez de vazar da célula (a coluna tem largura fixa) */
+table.rel .chip{white-space:normal;}
+/* o desvio embaixo da conta, menor e discreto */
+table.rel td.fato small{display:block;margin-top:3px;font-size:10.5px;font-weight:600;color:var(--txt3);}
+/* Causa e Ação com a MESMA largura, e as MAIORES da tabela (Renan, 18/08/2026:
+   o fato é curto na maioria das linhas e sobrava um vão gigante; as contas
+   dos fatos de Custos passam a quebrar linha dentro do Fato quando preciso) */
+table.rel th.c-txt{width:21%;}   /* Causa e Ação: iguais */
+table.rel th.c-fato{width:16%;}
+table.rel th.c-uni{width:5.5%;} table.rel th.c-vig{width:5.5%;}
+table.rel th.c-proj{width:8%;} table.rel th.c-resp{width:7.5%;}
+table.rel th.c-prazo{width:8%;} table.rel th.c-st{width:9%;}
+/* o farol do prazo mora AO LADO DA DATA (a coluna Status Prazo saiu) */
+table.rel td.prazo{white-space:nowrap;}
+table.rel td.prazo .dot{margin-right:6px;vertical-align:middle;}
+/* títulos de duas palavras (Status Prazo) quebram em vez de serem cortados */
+table.rel thead th{white-space:normal;}
+/* as linhas do fato (Contas: …) quebram só quando não couber MESMO */
+table.rel td.fato small{display:block;line-height:1.45;overflow-wrap:normal;word-break:keep-all;hyphens:none;}
+/* janela estreita: tipografia mais compacta para as 13 colunas continuarem
+   cabendo sem barra de rolagem */
+@media(max-width:1600px){
+  table.rel{font-size:11px;}
+  table.rel thead th{padding:9px 7px!important;letter-spacing:.4px;}
+  table.rel tbody td{padding:9px 7px!important;}
+  table.rel .chip{font-size:10px;padding:2px 6px;}
+}
+@media(max-width:1360px){
+  table.rel{font-size:10.5px;}
+  table.rel thead th{padding:8px 5px!important;}
+  table.rel tbody td{padding:8px 5px!important;}
+}
+table.rel td.center{text-align:left;white-space:normal;}
+table.rel thead th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;white-space:nowrap;position:sticky;top:0;z-index:2;}
+table.rel tbody td{vertical-align:top;line-height:1.45;}
+.rel .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+.rel .chip{display:inline-block;padding:3px 9px;border-radius:5px;font-weight:700;font-size:11px;white-space:nowrap;}
+
+
+
+
+
+
+/* o claro antigo pintava esses blocos de cinza chapado — no visual novo eles
+   são o mesmo cartão translúcido das outras visões */
+
+
+
+/* filtros antigos (.ms-*) no desenho dos menus novos */
+.hfilter{position:relative;}
+/* só a legenda do filtro some (o botão já diz o nome) — as opções do
+   dropdown também são <label> e precisam continuar aparecendo */
+.hfilter>label{display:none;}
+.ms-btn{display:flex;align-items:center;gap:7px;background:transparent!important;border:0!important;
+  border-radius:7px;padding:6px 10px!important;color:var(--txt2)!important;font-family:inherit;
+  font-size:12.5px!important;font-weight:500!important;text-transform:none!important;
+  letter-spacing:0!important;min-width:0!important;cursor:pointer;}
+.ms-btn:hover{background:var(--hover);color:var(--txt)!important;}
+.ms-cnt{background:var(--laranja,#F97316)!important;color:#1a1008!important;}
+/* painel do filtro OPACO (--pop): translúcido deixava ler a tabela por baixo
+   das opções — é a regra do padrão para todo menu suspenso. */
+.ms-panel{background:var(--pop)!important;border:1px solid var(--card-brd)!important;
+  border-radius:10px!important;padding:6px!important;
+  box-shadow:0 18px 44px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.35)!important;}
+body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(15,23,42,.10)!important;}
+.ms-opt{border-radius:7px;color:var(--txt)!important;text-transform:none!important;
+  letter-spacing:0!important;font-size:12.5px!important;}
+.ms-opt:hover{background:var(--hover);}
+.ms-opt.all-opt{border-bottom:1px solid var(--linha)!important;font-weight:700;}
+
+/* Kanban do FCA: Fato é o título, e a linha de cima leva a VIGÊNCIA */
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch;}
+/* overflow:hidden (do CSS antigo) impede o cabeçalho de grudar: com ele a
+   coluna vira contexto de recorte e o sticky se ancora nela, que não rola */
+/* o overflow:hidden do CSS antigo cortava os cards agora que quem rola é a
+   grade inteira — a coluna não recorta nada */
+.kcol{background:transparent!important;border:0!important;display:flex;flex-direction:column;
+  min-height:100%;overflow:visible!important;}
+/* o título fica FORA da área que rola: quem rola é a lista de cards de cada
+   coluna. Assim ele nunca some nem é atravessado pelos cards, e não precisa de
+   faixa de fundo nenhuma. */
+.kcol-head,.kcol-head.nao,.kcol-head.and,.kcol-head.con{
+  background:transparent!important;color:var(--txt2)!important;font-size:10.5px!important;
+  letter-spacing:1.3px;padding:2px 2px 12px!important;justify-content:flex-start;gap:8px;}
+.kcount{background:transparent!important;color:var(--txt3)!important;padding:0!important;}
+.kcol-body{padding:0 0 36px!important;gap:10px!important;flex:1;}   /* 36 embaixo: o último card não fica colado */
+.kcard{background:var(--brilho), var(--card)!important;border:1px solid var(--card-brd)!important;border-radius:4px!important;
+  padding:0 0 12px!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+  box-shadow:0 8px 22px rgba(0,0,0,.36), var(--luz-card)!important;}
+/* sombra do card: a MESMA do Planner nos dois temas (sem versão amaciada no claro) */
+.kcard:hover{border-color:rgba(249,115,22,.55)!important;}
+.kcard-top{padding:11px 13px 0!important;margin:0!important;font-size:9.5px!important;color:var(--txt3)!important;}
+/* ordem do card, de cima para baixo: conta/indicador · Fato (o desvio) ·
+   Causa · Ação. Só Fato e Causa levam rótulo escrito; a conta é o título
+   e a ação é o texto corrido do fim. */
+.kcard-fato{padding:0 13px;margin-top:5px;font-size:14px!important;font-weight:800!important;
+  color:#FFFFFF!important;line-height:1.3;}
+body.claro .kcard-fato{color:#000000!important;}
+.kl{font-size:9.5px;font-weight:700;color:var(--txt4);text-transform:uppercase;letter-spacing:.6px;}
+.kcard-desvio{padding:0 13px;margin-top:5px;font-size:11px;font-weight:700;color:var(--txt2);line-height:1.35;}
+.kcard-causa{padding:0 13px;margin-top:4px;font-size:11px;font-weight:700;color:var(--txt2);
+  line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.kcard-ac{padding:0 13px;margin-top:7px!important;font-size:11.5px!important;font-weight:400!important;
+  color:var(--txt3)!important;line-height:1.4;min-height:calc(2 * 1.4em);}
+.kcard-desvio i,.kcard-causa i,.kcard-ac i{color:var(--txt4);font-weight:400;font-style:italic;}
+/* atalhos de "mais uma causa / mais uma ação" no próprio card — aparecem
+   ao passar o mouse para não poluir, e ficam sempre visíveis no toque */
+.kmais{display:flex;gap:6px;margin-left:auto;margin-right:6px;opacity:0;transition:opacity .12s;}
+.kcard:hover .kmais{opacity:1;}
+@media(hover:none){.kmais{opacity:1;}}
+.kadd{background:transparent;border:1px solid var(--card-brd);border-radius:6px;color:var(--txt3);
+  font-family:inherit;font-size:9.5px;font-weight:700;padding:2px 7px;cursor:pointer;white-space:nowrap;}
+.kadd:hover{border-color:rgba(249,115,22,.6);color:var(--orange);}
+/* rodapé do card: prazo à esquerda, iniciais do responsável à direita — igual ao Planner */
+.kcard-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:24px;
+  padding:0 13px;margin-top:12px!important;font-size:10.5px!important;color:var(--txt3)!important;}
+.kcard-meta .atraso{color:var(--vermelho);font-weight:700;}
+.kav{width:24px;height:24px;border-radius:50%;flex:0 0 24px;display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:800;letter-spacing:.2px;color:#2A1405;background:#F97316;
+  box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.korg{border-radius:4px;padding:1px 6px;font-weight:800;}
+
+/* ── telas pequenas: o quadro flutuante vira página comum ── */
+@media(max-width:860px){
+  html,body{overflow:auto;}
+  .app{position:static;inset:auto;min-height:100%;border-radius:0;flex-direction:column;box-shadow:none;}
+  .side{width:auto;flex:none;flex-direction:row;flex-wrap:wrap;gap:6px;align-items:center;
+    border-right:0;border-bottom:1px solid var(--linha);padding:10px;}
+  .s-sec,.s-user,.s-top{display:none;}
+  .s-item{width:auto;font-size:11px;}
+  .top{flex-wrap:wrap;padding:14px 14px 10px;}
+  .top h1{font-size:18px;}
+  .board .main{overflow:visible;padding:0 14px 24px;}
+  .kanban{grid-template-columns:1fr;}
+}
+
+
+/* ── faixa de números do consolidado ── */
+.summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px;}
+.scard{background:var(--brilho), var(--card)!important;border:1px solid var(--card-brd)!important;
+  border-radius:10px!important;padding:12px 14px 13px!important;box-shadow:none!important;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+body.claro .scard{background:var(--card)!important;border:1px solid var(--card-brd)!important;}
+.scard .sval{font-size:26px;font-weight:800;line-height:1;color:var(--txt);}
+.scard .slbl{margin-top:6px;font-size:9.5px;font-weight:700;color:var(--txt3);
+  text-transform:uppercase;letter-spacing:.7px;}
+.scard.tot .sval{color:var(--orange);}
+.scard.con .sval{color:var(--verde);}
+.scard.and .sval{color:var(--amber);}
+.scard.nao .sval{color:var(--vermelho);}
+.scard.can .sval{color:var(--txt3);}
+@media(max-width:1180px){.summary{grid-template-columns:repeat(3,minmax(0,1fr));}}
+
+/* ── tabela do consolidado (editável) no visual novo ── */
+.tbl-section{background:var(--card)!important;border:1px solid var(--card-brd)!important;
+  border-radius:10px!important;padding:0!important;overflow:hidden;box-shadow:none!important;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+body.claro .tbl-section{background:var(--card)!important;border:1px solid var(--card-brd)!important;}
+.tbl-section>.empty{padding:22px 20px;color:var(--txt3);font-size:12.5px;}
+table.cons thead th{background:var(--cabec)!important;color:var(--txt2)!important;
+  border-bottom:1px solid var(--card-brd)!important;padding:11px 10px!important;letter-spacing:.8px;}
+body.claro table.cons thead th{background:var(--cabec)!important;}
+table.cons td{border-top:1px solid var(--linha)!important;color:var(--txt2)!important;}
+table.cons tbody tr:hover{background:var(--hover);}
+.cons input,.cons textarea,.cons select{background:var(--hover)!important;
+  border:1px solid var(--card-brd)!important;color:var(--txt)!important;border-radius:7px!important;}
+body.claro .cons input,body.claro .cons textarea,body.claro .cons select{
+  background:#fff!important;border-color:#d7dce4!important;}
+.mini-add,.mini-del,.lock-btn{background:transparent!important;border:1px solid var(--card-brd)!important;
+  color:var(--txt3)!important;border-radius:6px!important;}
+.mini-add:hover,.lock-btn:hover{border-color:rgba(249,115,22,.6)!important;color:var(--orange)!important;}
+.mini-del:hover{border-color:rgba(255,82,82,.6)!important;color:var(--vermelho)!important;}
+/* a faixa de números fica parada e só a tabela/gantt rola por dentro */
+.board .main.rola #content{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+.board .main.rola .tbl-section{display:flex;flex-direction:column;min-height:0;flex:1;overflow:hidden;}
+.board .main.rola .tbl-section>.tbl-rola{flex:1;min-height:0;overflow:auto;}
+.gate{background:var(--card)!important;border:1px solid var(--card-brd)!important;box-shadow:none!important;}
+/* a tabela rola na horizontal dentro do quadro: sem largura mínima nas colunas
+   o navegador espremia o Fato até quebrar letra por letra */
+table.cons{min-width:1560px!important;}
+.c-fato{min-width:210px;}
+.c-proj{min-width:110px;}
+.col-acomp{min-width:170px;}
+.col-resp{min-width:130px;}
+
+/* totalizador do Preenchimento FCA: tom do cabeçalho, como os totais do portal,
+   e grudado no rodapé quando a tabela rola por dentro */
+table.adv-table tr.pre-total td{background:var(--cabec);font-weight:800;border-top:1px solid var(--card-brd);
+  position:sticky;bottom:0;z-index:1;}
+
+/* números grandes acompanham a tela (Renan, 13/10/2026: "no notebook fica muito grande"):
+   no desktop cada número encolhe com a altura e a largura da janela,
+   até o tamanho de antes numa tela de 1920×950 */
+@media(min-width:861px){
+  .scard .sval{font-size:clamp(18px,min(2.737vh,1.355vw),26px);}
+  .hn{font-size:clamp(32px,min(4.843vh,2.396vw),46px);}
+  .kpi b{font-size:clamp(18px,min(2.737vh,1.355vw),26px);}
+}
+
+/* ══ FCA Automático (14/10/2026) ══ */
+.board .main.res{display:flex;flex-direction:column;overflow:hidden;}
+.board .main.res #content{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+.resumo{flex:1;min-height:0;}
+.fa-kpis{grid-template-columns:repeat(5,minmax(0,1fr));}
+.fa-kpis .kpi{display:flex;flex-direction:column;justify-content:center;min-height:clamp(96px,14vh,150px);}
+.fa-kpis .kpi i{display:block;font-style:normal;font-size:10.5px;color:var(--txt3);margin-top:6px;}
+.fa-dois{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:14px;}
+.fa-dois .bloco{display:flex;flex-direction:column;min-height:0;}
+.fa-dois .bloco .corpo{flex:1;min-height:0;overflow:auto;}
+.barras{display:flex;flex-direction:column;gap:9px;}
+.barra{display:grid;grid-template-columns:150px minmax(0,1fr) 92px;align-items:center;gap:10px;font-size:11.5px;}
+.barra .bl{color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.barra .bt{height:14px;border-radius:4px;background:var(--hover);overflow:hidden;}
+.barra .bt b{display:block;height:100%;border-radius:4px;background:var(--laranja);}
+.barra .bv{text-align:right;font-weight:800;color:var(--txt);}
+.barra.cinza .bt b{background:var(--txt4);}
+table.fa-t{width:100%;border-collapse:collapse;font-size:11.5px;}
+table.fa-t th{background:var(--cabec);color:var(--txt2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:8px 10px;text-align:left;position:sticky;top:0;z-index:1;}
+table.fa-t th.n,table.fa-t td.n{text-align:right;}
+table.fa-t td{padding:8px 10px;border-bottom:1px solid var(--linha);color:var(--txt2);vertical-align:top;}
+table.fa-t td b{color:var(--txt);}
+table.fa-t tbody tr.cl{cursor:pointer;}
+table.fa-t tbody tr:hover{background:var(--hover);}
+.pctx{display:inline-block;min-width:46px;text-align:center;padding:2px 8px;border-radius:6px;font-weight:800;font-size:10.5px;color:#0F0B07;}
+.tema{display:inline-block;font-size:9px;font-weight:800;padding:1px 6px;border-radius:4px;margin-right:4px;background:rgba(249,115,22,.16);color:var(--laranja);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.tema.rede{background:rgba(46,144,232,.18);color:var(--azul);}
+table.rel td.txt ol{margin:0;padding-left:16px;}
+table.rel td.txt li{margin:0 0 4px;}
+table.rel td.txt li small{display:block;color:var(--txt3);font-size:10.5px;margin-top:2px;}
+table.rel.fa-rel th:nth-child(1){width:6%;}table.rel.fa-rel th:nth-child(2){width:8%;}table.rel.fa-rel th:nth-child(3){width:6%;}
+table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){width:30%;}table.rel.fa-rel th:nth-child(6){width:28%;}table.rel.fa-rel th:nth-child(7){width:6%;}
+.kcol-head.cmb{background:var(--laranja);color:#0C1017;}
+.kcol-head.mnt{background:var(--azul);color:#fff;}
+.kcol-head.pne{background:#8B5CF6;color:#fff;}
+.kcard-causa{font-size:11px;color:var(--txt2);margin-top:5px;line-height:1.35;}
+.kl{font-weight:700;color:var(--txt3);}
+.fa-rede{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:14px;}
+.fa-rede .bloco{display:flex;flex-direction:column;min-height:0;}
+.fa-rede .bloco .corpo{flex:1;min-height:0;overflow:auto;}
+.fa-nota{font-size:10.5px;color:var(--txt3);line-height:1.45;margin:0 0 10px;}
+.fa-hist{flex:1;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:14px;}
+.fa-hist .bloco{display:flex;flex-direction:column;min-height:0;}
+.fa-hist .bloco .corpo{flex:1;min-height:0;overflow:auto;}
+.res-ok{color:var(--verde);font-weight:700;}.res-ruim{color:var(--vermelho);font-weight:700;}.res-esp{color:var(--txt3);}
+.kmodal{width:min(980px,96vw)!important;}
+.fm-sec{margin-top:16px;}
+.fm-sec h4{font-size:10px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.9px;margin:0 0 7px;}
+.fm-box{background:var(--hover);border:1px solid var(--card-brd);border-radius:8px;padding:10px 12px;font-size:12.5px;color:var(--txt2);line-height:1.5;}
+.fm-box ol{margin:0;padding-left:18px;}.fm-box li{margin:0 0 6px;}
+.fm-box li .of{display:block;color:var(--txt3);font-size:11.5px;margin-top:2px;}
+.fm-box li .tx{display:block;color:var(--azul);font-size:11px;margin-top:2px;}
+.fm-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;}
+.fm-aviso{font-size:11px;color:var(--ambar);margin-top:6px;}
+.copiar{margin-left:auto;}
+@media(max-width:860px){.fa-kpis{grid-template-columns:repeat(2,1fr);}.fa-dois,.fa-rede,.fm-two{grid-template-columns:1fr;}.board .main.res{overflow:visible;}}
+</style>
+<script src="../assets/gviz-cache.js?v=202609050530"></script>
+<script src="../assets/gerot-base.js"></script>
+<script src="../assets/estatistica.js"></script>
+<script src="../assets/correlacoes-dados.js?v=202610140300"></script>
+<script src="../assets/carta-calc.js"></script>
+<script src="../assets/arvore-impacto.js"></script>
+<script src="../assets/fca-auto.js?v=202610140300"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="s-top">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 14.4 7.2 16.9l.9-5.4L4.2 7.7l5.4-.8z"/></svg>
+      <b>FCA Automático</b>
+      <button class="s-mini" id="btMini" title="Recolher menu">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18v14H3z"/><path d="M9 5v14"/></svg>
+      </button>
+    </div>
+
+    <div class="s-sec"><b>Visões</b></div>
+    <button class="s-item on" data-v="resumo" title="Resumo Gerencial">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+      Resumo Gerencial
+    </button>
+    <button class="s-item" data-v="kanban" title="Kanban por pacote">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 4h5v16H4zM10 4h5v11h-5zM16 4h4v7h-4z"/></svg>
+      Kanban
+    </button>
+    <button class="s-item" data-v="tabela" title="Tabela">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 5h18v14H3zM3 10h18M9 10v9"/></svg>
+      Tabela
+    </button>
+    <button class="s-item" data-v="rede" title="O que a rede mostra: desvio × indicadores">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="2"/><circle cx="11" cy="9" r="2"/><circle cx="18" cy="14" r="2"/><path d="M3 21 21 3"/></svg>
+      Correlações da Rede
+    </button>
+    <button class="s-item" data-v="historico" title="O que as unidades já escreveram e o resultado no mês seguinte">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>
+      Aprendizado
+    </button>
+    <button class="s-item" data-v="fontes" title="De onde veio cada dado">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 5v14c0 1.66-4.03 3-9 3s-9-1.34-9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
+      Fontes
+    </button>
+
+    <div class="s-sec"><b>Atalhos</b></div>
+    <a class="s-item" href="../fca-consolidado/" style="text-decoration:none" title="FCA · Admin">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      FCA · Admin
+    </a>
+
+    <div class="s-volta">
+      <a class="s-item" href="../" style="text-decoration:none" title="Voltar ao Hub">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+        Voltar ao Hub
+      </a>
+    </div>
+
+    <div class="s-user">
+      <span class="av" id="euAv">—</span>
+      <div><b id="euNome">—</b><i>administrador</i></div>
+    </div>
+  </aside>
+
+  <main class="board">
+    <div class="top">
+      <div class="tit-wrap"><h1 id="tituloVista">Resumo Gerencial</h1><div class="tit-sub" id="subVista"></div></div>
+      <div class="hfilter"><label>Unidade</label><div class="ms-wrap" id="ms-uni"><button class="ms-btn" onclick="toggleMs('ms-uni')"><span class="ms-lbl">Unidade</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Vigência</label><div class="ms-wrap" id="ms-vig"><button class="ms-btn" onclick="toggleMs('ms-vig')"><span class="ms-lbl">Vigência</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Projeto</label><div class="ms-wrap" id="ms-proj"><button class="ms-btn" onclick="toggleMs('ms-proj')"><span class="ms-lbl">Projeto</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Fato</label><div class="ms-wrap" id="ms-pac"><button class="ms-btn" onclick="toggleMs('ms-pac')"><span class="ms-lbl">Fato</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <button class="tool ico" id="themeBtn" title="Claro / escuro"></button>
+    </div>
+    <div class="main res" id="mainBox">
+      <div id="content"><div class="loading">Verificando acesso…</div></div>
+    </div>
+  </main>
+</div>
+<script>
+const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
+const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+let sb=null, CTX=null, LIDO=null, FATOS=[], VIEW='resumo';
+const MEMO=new Map();
+const FA=window.FcaAuto;
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const tri=h=>String(h==null?'':h).replace(/▲/g,'<span style="color:var(--vermelho)">▲</span>').replace(/▼/g,'<span style="color:var(--verde)">▼</span>');
+const nl=s=>tri(esc(s).replace(/\n/g,'<br>'));
+
+/* ── gates ── */
+function gate(ic,title,html){document.getElementById('content').innerHTML=`<div class="gate"><div class="ic">${ic}</div><h2>${title}</h2>${html}</div>`;}
+function gateLogin(){gate('🔒','Login necessário','<p>O FCA Automático é restrito a administradores. Entre pelo hub para continuar.</p><a class="btn" href="../index.html">Ir para o hub</a>');}
+function gateAdmin(){gate('⛔','Acesso restrito (somente admin)','<p>Sua conta está logada, mas não tem permissão de administrador.</p><a class="btn ghost" href="../index.html">← Voltar ao hub</a>');}
+function gateError(msg){gate('⚠️','Não foi possível carregar',`<p>${esc(msg||'Erro inesperado.')}</p>`);}
+
+/* ── filtros (mesma mecânica do FCA · Admin) ── */
+function syncBadge(w){const c=w.querySelector('.ms-cnt'),n=w._sel?w._sel.size:0;if(c){c.textContent=n;c.style.display=n?'inline-block':'none';}}
+function _buildMs(w,getItems,after){
+  if(!w)return; if(!(w._sel instanceof Set))w._sel=new Set();
+  const list=w.querySelector('.ms-list'),srch=w.querySelector('.ms-search input'),run=after||render;
+  w._render=(q='')=>{const sel=w._sel,f=(q||'').toLowerCase(),items=getItems(),shown=items.filter(v=>String(v).toLowerCase().includes(f)),all=sel.size===0;
+    list.innerHTML=(!q?`<label class="ms-opt all-opt"><input type="checkbox" class="ms-all" ${all?'checked':''}> Todos</label>`:'')+shown.map(v=>`<label class="ms-opt"><input type="checkbox" data-v="${esc(v)}" ${all||sel.has(v)?'checked':''}> ${esc(v)}<span class="ms-only" data-v="${esc(v)}">só</span></label>`).join('');syncBadge(w);};
+  list.addEventListener('change',e=>{const sel=w._sel,b=e.target;if(!b.matches('input[type=checkbox]'))return;if(b.classList.contains('ms-all')){sel.clear();}else if(sel.size===0){if(!b.checked)getItems().forEach(v=>{if(v!==b.dataset.v)sel.add(v);});}else{if(b.checked)sel.add(b.dataset.v);else sel.delete(b.dataset.v);const a=getItems();if(a.length&&a.every(v=>sel.has(v)))sel.clear();}w._render(srch.value);run();});
+  list.addEventListener('click',e=>{const sel=w._sel,o=e.target.closest('.ms-only');if(!o)return;e.preventDefault();e.stopPropagation();sel.clear();sel.add(o.dataset.v);w._render(srch.value);run();});
+  srch.addEventListener('input',()=>w._render(srch.value));srch.addEventListener('click',e=>e.stopPropagation());
+  w._render();
+}
+function toggleMs(id){
+  document.querySelectorAll('.ms-panel.open').forEach(p=>{if(p.closest('.ms-wrap').id!==id)p.classList.remove('open');});
+  const p=document.querySelector('#'+id+' .ms-panel'); if(!p) return;
+  p.classList.toggle('open');
+  if(p.classList.contains('open')){ const w=document.getElementById(id), s=w&&w.querySelector('.ms-search input'); if(w&&w._render) w._render(s?s.value:'');
+    p.style.left=''; p.style.right=''; const r=p.getBoundingClientRect(); if(r.right>window.innerWidth-8){p.style.left='auto';p.style.right='0';} }
+}
+const sel=id=>{const w=document.getElementById(id);return w&&w._sel?[...w._sel]:[];};
+let UNI_OPTS=[],VIG_OPTS=[],PROJ_OPTS=[],PAC_OPTS=FA.PACOTES.slice();
+const vigDoRot=r=>FA.vigDeLbl(String(r).toLowerCase());
+function popFiltros(){
+  UNI_OPTS=[...new Set(FATOS.map(f=>f.uni))].sort();
+  VIG_OPTS=[...new Set(FATOS.map(f=>f.vig))].sort().reverse().map(v=>FA.vigLbl(v).toUpperCase());
+  const wv=document.getElementById('ms-vig');
+  if(wv&&!wv._init){ wv._init=true; if(CTX&&CTX.maxVig){ wv._sel.clear(); wv._sel.add(FA.vigLbl(CTX.maxVig).toUpperCase()); } }
+  ['ms-uni','ms-vig','ms-proj','ms-pac'].forEach(id=>{const w=document.getElementById(id);if(w&&w._render)w._render('');});
+}
+function projItems(){ const us=sel('ms-uni'); return [...new Set(FATOS.filter(f=>!us.length||us.includes(f.uni)).map(f=>f.proj))].sort(); }
+function visiveis(){
+  const us=sel('ms-uni'), vs=sel('ms-vig').map(vigDoRot), ps=sel('ms-proj'), pc=sel('ms-pac');
+  return FATOS.filter(f=>(!us.length||us.includes(f.uni))&&(!vs.length||vs.includes(f.vig))&&(!ps.length||ps.includes(f.proj))&&(!pc.length||pc.includes(f.pac)))
+    .sort((a,b)=>b.over-a.over);
+}
+function diag(f){ if(!MEMO.has(f.id)) MEMO.set(f.id,FA.diagnostico(f,CTX)); return MEMO.get(f.id); }
+const faixaCor=p=>p==null?'var(--txt4)':p>=.85?'var(--verde)':p>=.6?'var(--ambar)':'var(--vermelho)';
+const pctBadge=p=>p==null?'<span class="pctx" style="background:var(--hover);color:var(--txt3)">—</span>':`<span class="pctx" style="background:${faixaCor(p)}">${Math.round(p*100)}%</span>`;
+
+/* ── RESUMO GERENCIAL ── */
+function resumoHTML(vis){
+  const tot=vis.reduce((s,f)=>s+f.over,0);
+  const porPac=FA.PACOTES.map(p=>{const fs=vis.filter(f=>f.pac===p);return {p,n:fs.length,rs:fs.reduce((s,f)=>s+f.over,0)};});
+  const comb=vis.filter(f=>f.pac==='Combustíveis'), combRs=comb.reduce((s,f)=>s+f.over,0);
+  // causas em R$ (Combustíveis) e temas das causas (todos)
+  const porCausa={}; let expl=0;
+  comb.forEach(f=>{const d=diag(f); d.causas.forEach(c=>{ if(c.rs>0&&c.soma!==false){ const k=c.txt.split(':')[0]; porCausa[k]=(porCausa[k]||0)+c.rs; expl+=c.rs; } }); });
+  const naoExp=Math.max(0,combRs-expl);
+  const linhasC=Object.entries(porCausa).sort((a,b)=>b[1]-a[1]);
+  const maxC=Math.max(1,...linhasC.map(x=>x[1]),naoExp);
+  const temas={}; vis.forEach(f=>{const d=diag(f); new Set(d.causas.map(c=>c.tema).concat(d.acoes.map(a=>a.tema))).forEach(t=>{ if(t) temas[t]=(temas[t]||0)+1; }); });
+  const ofens=[]; vis.forEach(f=>{const d=diag(f); d.acoes.forEach(a=>a.ofens.forEach(o=>ofens.push(o)));});
+  const nAcoes=vis.reduce((s,f)=>s+diag(f).acoes.length,0);
+  const porUni={}; vis.forEach(f=>{const u=porUni[f.uni]||(porUni[f.uni]={uni:f.uni,rs:0,n:0,pacs:new Set()}); u.rs+=f.over; u.n++; u.pacs.add(f.pac);});
+  const unis=Object.values(porUni).sort((a,b)=>b.rs-a.rs);
+  return `<div class="resumo">
+    <div class="heros"><div class="hl">Desvio de custos no recorte · fatos com estouro vs remunerado</div>
+      <div class="hn" style="color:var(--vermelho)">${FA.rs(tot)}</div>
+      <div class="hero-sub"><div>Fatos <b>${vis.length}</b></div><div>Ações sugeridas <b>${nAcoes}</b></div><div>Combustíveis explicado <b>${combRs>0?Math.round(Math.min(1,expl/combRs)*100)+'%':'—'}</b></div><div>Unidades <b>${unis.length}</b></div></div></div>
+    <div class="kpis fa-kpis">
+      ${porPac.map(x=>`<div class="kpi"><span class="kl">${x.p}</span><b>${FA.rs(x.rs)}</b><i>${x.n} fato(s) · ${tot?Math.round(x.rs/tot*100):0}% do desvio</i></div>`).join('')}
+      <div class="kpi"><span class="kl">Combustíveis · explicado em R$</span><b>${FA.rs(expl)}</b><i>volume, eficiência, preço, Arla e DRE × bases</i></div>
+      <div class="kpi"><span class="kl">Placas e itens citados nas ações</span><b>${FA.br(ofens.length,0)}</b><i>ofensores com nome, para agir</i></div>
+    </div>
+    <div class="fa-dois">
+      <div class="bloco"><div class="bhead"><h3>Para onde vai o desvio de Combustíveis</h3></div><div class="corpo"><div class="barras">
+        ${linhasC.map(([k,v])=>`<div class="barra"><span class="bl" title="${esc(k)}">${esc(k)}</span><span class="bt"><b style="width:${(v/maxC*100).toFixed(1)}%"></b></span><span class="bv">${FA.rs(v)}</span></div>`).join('')}
+        ${naoExp>0?`<div class="barra cinza"><span class="bl">Não explicado</span><span class="bt"><b style="width:${(naoExp/maxC*100).toFixed(1)}%"></b></span><span class="bv">${FA.rs(naoExp)}</span></div>`:''}
+        ${!linhasC.length&&!naoExp?'<div class="kempty">Sem fato de Combustíveis no recorte.</div>':''}
+        <div class="fa-nota" style="margin-top:12px">Temas que mais aparecem nas causas e ações: ${Object.entries(temas).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([t,n])=>`<span class="tema">${esc(t)} · ${n}</span>`).join(' ')||'—'}</div>
+      </div></div></div>
+      <div class="bloco"><div class="bhead"><h3>Unidades no recorte</h3></div><div class="corpo">
+        <table class="fa-t"><thead><tr><th>Unidade</th><th>Fatos</th><th class="n">Desvio</th><th class="n">% do total</th></tr></thead><tbody>
+        ${unis.map(u=>`<tr class="cl" data-uni="${esc(u.uni)}"><td><b>${esc(u.uni)}</b></td><td>${[...u.pacs].join(', ')}</td><td class="n"><b>${FA.rs(u.rs)}</b></td><td class="n">${tot?Math.round(u.rs/tot*100):0}%</td></tr>`).join('')||'<tr><td colspan="4">Nenhum fato no recorte.</td></tr>'}
+        </tbody></table></div></div>
+    </div></div>`;
+}
+/* ── TABELA (o clone da Tabela do FCA, com causa e ação automáticas) ── */
+function linhaCausas(d,n){ const cs=d.causas.slice(0,n||9); if(!cs.length) return '<i style="color:var(--txt3)">Sem evidência nas bases para este mês</i>';
+  return '<ol>'+cs.map(c=>`<li>${c.rede?'<span class="tema rede">rede</span>':''}${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}%)</b>`:''}</li>`).join('')+'</ol>'; }
+function linhaAcoes(d,n){ const as=d.acoes.slice(0,n||9); if(!as.length) return '<i style="color:var(--txt3)">—</i>';
+  return '<ol>'+as.map(a=>`<li>${esc(a.txt)}${a.ofens.length?`<small>${esc(a.ofens.slice(0,3).join(' · '))}${a.ofens.length>3?' …':''}</small>`:''}</li>`).join('')+'</ol>'; }
+function tabelaHTML(vis){
+  let h=`<div class="rel-section"><div class="rel-wrap"><table class="rel fa-rel"><thead><tr>
+    <th>Unidade</th><th>Projeto</th><th>Vigência</th><th>Fato</th><th>Causa automática</th><th>Ação automática</th><th>Explica</th></tr></thead><tbody>`;
+  vis.forEach(f=>{ const d=diag(f);
+    h+=`<tr data-id="${esc(f.id)}" title="Clique para abrir o diagnóstico completo">
+      <td class="center">${esc(f.uni)}</td><td class="center">${esc(f.proj)}</td><td class="center">${esc(f.vigLbl.toUpperCase())}</td>
+      <td class="txt fato"><b>${esc(f.pac)}</b><small>${nl(FA.desvioTxt(f))}</small></td>
+      <td class="txt">${linhaCausas(d,4)}</td><td class="txt">${linhaAcoes(d,4)}</td>
+      <td class="center">${pctBadge(d.explicado)}</td></tr>`; });
+  if(!vis.length) h+='<tr><td colspan="7" class="center">Nenhum fato no recorte.</td></tr>';
+  return h+'</tbody></table></div></div>';
+}
+/* ── KANBAN — uma coluna por pacote ── */
+const KCOLS=[{k:'Combustíveis',cls:'cmb'},{k:'Manutenções',cls:'mnt'},{k:'Pneus',cls:'pne'}];
+function kcardHTML(f){ const d=diag(f); const c1=d.causas[0], a1=d.acoes[0];
+  return `<div class="kcard" data-id="${esc(f.id)}">
+    <div class="kcard-top"><span class="korg cst">Custos</span> ${esc(f.uni)} · ${esc(f.proj)} · ${esc(f.vigLbl)}</div>
+    <div class="kcard-fato">${esc(f.pac)} · ${FA.rs(f.over)} <span style="color:var(--txt3);font-weight:600">(▲ ${Math.round(f.dpct)}%)</span></div>
+    <div class="kcard-causa"><span class="kl">Causa:</span> ${c1?tri(esc(c1.txt)):'<i>sem evidência nas bases</i>'}</div>
+    <div class="kcard-ac"><span class="kl">Ação:</span> ${a1?esc(a1.txt)+(a1.ofens.length?' ('+esc(a1.ofens.slice(0,2).join(' · '))+')':''):'<i>—</i>'}</div>
+    <div class="kcard-meta"><span>${d.causas.length} causa(s) · ${d.acoes.length} ação(ões)</span> ${d.explicado!=null?pctBadge(d.explicado):''}</div></div>`; }
+function kanbanHTML(vis){
+  const cols=KCOLS.map(c=>({c,items:vis.filter(f=>f.pac===c.k)}));
+  return `<div class="kheads">${cols.map(({c,items})=>`<div class="kcol-head ${c.cls}">${c.k}<span class="kcount">${items.length}</span></div>`).join('')}</div>`+
+    `<div class="kanban">${cols.map(({c,items})=>`<div class="kcol"><div class="kcol-body">${items.map(kcardHTML).join('')||'<div class="kempty">—</div>'}</div></div>`).join('')}</div>`;
+}
+/* ── CORRELAÇÕES DA REDE ── */
+const rTxt=(r,n,q,ap)=>!isFinite(r)||n<8?'<span style="color:var(--txt4)">poucos pontos</span>':`<b style="color:${ap?(q<.1?'var(--vermelho)':'var(--txt)'):'var(--txt3)'}">${FA.br(r,2)}</b> <span style="color:var(--txt3)">${FA.forcaTxt(r)}${q<.1?'':' · pode ser acaso'}</span>`;
+function redeHTML(){
+  const R=CTX.rede||{};
+  return `<div class="fa-nota">Cada linha cruza o desvio do pacote (realizado ÷ remunerado − 1) com o indicador, em todas as unidades × meses do banco. <b>Mesmo mês</b> = os dois no mesmo mês; <b>mês seguinte</b> = o indicador de um mês contra o desvio do mês seguinte, na mesma unidade. Em vermelho, quando o indicador pior vem junto com o desvio maior e dificilmente é acaso (p ajustado &lt; 0,10, Benjamini-Hochberg): é o que o motor usa para chamar um indicador fora da meta de causa. Correlação não é causa: é a pista de onde olhar primeiro.</div>
+  <div class="fa-rede">${FA.PACOTES.map(p=>`<div class="bloco"><div class="bhead"><h3>${p}</h3></div><div class="corpo"><table class="fa-t"><thead><tr><th>Indicador</th><th>Mesmo mês</th><th>Mês seguinte</th></tr></thead><tbody>
+    ${(R[p]||[]).map(e=>`<tr><td><b>${esc(e.rot)}</b>${e.sust?' <span class="tema rede">sustenta</span>':''}<br><span style="color:var(--txt3);font-size:10.5px">${e.n0} unidade-mês</span></td><td>${rTxt(e.r0,e.n0,e.q0,e.apoia0)}</td><td>${rTxt(e.r1,e.n1,e.q1,e.apoia1)}</td></tr>`).join('')}
+  </tbody></table></div></div>`).join('')}</div>`;
+}
+/* ── APRENDIZADO ── */
+function historicoHTML(vis){
+  const A=CTX.aprend||{casos:[],temas:[]};
+  const us=sel('ms-uni'), pc=sel('ms-pac');
+  const casos=A.casos.filter(c=>(!us.length||us.includes(c.uni))&&(!pc.length||pc.includes(c.pac))).sort((a,b)=>b.vig.localeCompare(a.vig));
+  const resTxt=c=>c.res==='melhorou'?'<span class="res-ok">melhorou</span>':c.res==='piorou'?'<span class="res-ruim">piorou</span>':c.res==='igual'?'<span>igual</span>':'<span class="res-esp">aguardando o mês seguinte</span>';
+  const temas=A.temas.filter(t=>!pc.length||pc.includes(t.pac));
+  return `<div class="fa-hist">
+    <div class="bloco"><div class="bhead"><h3>O que funcionou, por tema</h3></div><div class="fa-nota">As causas e ações que as unidades escreveram nos FCAs de Custos, classificadas por tema pelas palavras do texto. <b>Melhorou</b> = no mês seguinte o desvio do mesmo pacote, unidade e projeto caiu mais de 10% (ou sumiu). É essa taxa que aparece ao lado de cada ação automática.</div>
+      <div class="corpo" style="max-height:28vh"><table class="fa-t"><thead><tr><th>Fato</th><th>Tema</th><th class="n">FCAs</th><th class="n">Com mês seguinte</th><th class="n">Melhoraram</th><th class="n">Taxa</th></tr></thead><tbody>
+      ${temas.map(t=>`<tr><td>${esc(t.pac)}</td><td><b>${esc(t.tema)}</b></td><td class="n">${t.n}</td><td class="n">${t.aval}</td><td class="n">${t.melhor}</td><td class="n">${t.aval?pctBadge(t.melhor/t.aval):'—'}</td></tr>`).join('')||'<tr><td colspan="6">Nenhum FCA de Custos preenchido ainda.</td></tr>'}
+      </tbody></table></div></div>
+    <div class="bloco"><div class="bhead"><h3>FCAs de Custos preenchidos · ${casos.length}</h3></div><div class="corpo"><table class="fa-t"><thead><tr><th style="width:6%">Unidade</th><th style="width:7%">Projeto</th><th style="width:6%">Vigência</th><th style="width:9%">Fato</th><th>Causa (unidade)</th><th>Ação (unidade)</th><th style="width:12%">Temas</th><th style="width:10%">Mês seguinte</th></tr></thead><tbody>
+      ${casos.map(c=>`<tr><td>${esc(c.uni)}</td><td>${esc(c.proj)}</td><td>${esc(FA.vigLbl(c.vig).toUpperCase())}</td><td>${esc(c.pac)}${c.over!=null?'<br><span style="color:var(--txt3)">'+FA.rs(c.over)+'</span>':''}</td><td>${nl(c.causa)}</td><td>${nl(c.acao)}</td><td>${c.temas.map(t=>`<span class="tema">${esc(t)}</span>`).join(' ')||'—'}</td><td>${resTxt(c)}${c.overProx!=null?'<br><span style="color:var(--txt3)">'+FA.rs(c.overProx)+'</span>':''}</td></tr>`).join('')||'<tr><td colspan="8">Nenhum FCA de Custos preenchido no recorte.</td></tr>'}
+      </tbody></table></div></div></div>`;
+}
+/* ── FONTES ── */
+function fontesHTML(){
+  const F=(LIDO&&LIDO.fontes)||[];
+  return `<div class="bloco" style="flex:1;min-height:0;display:flex;flex-direction:column"><div class="bhead"><h3>De onde vem cada dado</h3></div><div class="corpo" style="flex:1;min-height:0;overflow:auto"><table class="fa-t"><thead><tr><th>Fonte</th><th>Estado</th><th class="n">Linhas</th><th>Observação</th></tr></thead><tbody>
+    ${F.map(f=>`<tr><td><b>${esc(f.nome)}</b></td><td>${f.estado==='ok'?'<span class="res-ok">ok</span>':'<span class="res-ruim">erro</span>'}</td><td class="n">${f.linhas!=null?FA.br(f.linhas,0):'—'}</td><td>${esc(f.msg||'')}</td></tr>`).join('')}
+    <tr><td><b>Prolog de hoje (pneus)</b></td><td>${PROLOG_ESTADO==='ok'?'<span class="res-ok">ok</span>':PROLOG_ESTADO==='lendo'?'lendo…':'<span class="res-ruim">'+esc(PROLOG_ESTADO)+'</span>'}</td><td class="n">${FA.br(Object.keys((CTX&&CTX.prolog)||{}).length,0)} unid.</td><td>pressão, sulco e amplitude dos pneus instalados</td></tr>
+  </tbody></table>
+  <div class="fa-nota" style="margin-top:12px">Nada é gravado: a tela só lê. Os fatos saem do DRE (aba Frota) com a mesma regra do botão "Custos da DRE" do FCA · Admin: o pacote líquido que estourou contra o remunerado, por unidade, projeto e mês.</div></div></div>`;
+}
+/* ── modal: o diagnóstico completo de um fato ── */
+function ensureModal(){
+  if(document.getElementById('fm-ov'))return;
+  const st=document.createElement('style');
+  st.textContent='.kmodal-ov{position:fixed;inset:0;background:rgba(3,6,11,.55);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:2000;padding:20px;}'+
+    '.kmodal{background:var(--brilho), var(--pop, var(--card));border:1px solid var(--card-brd);border-radius:14px;max-height:92vh;overflow:auto;padding:22px 24px;box-shadow:0 30px 70px rgba(0,0,0,.6);}'+
+    '.kmodal-head{display:flex;align-items:flex-start;gap:10px;}.kmodal-head b{font-size:15px;font-weight:800;color:var(--txt);line-height:1.3;}'+
+    '.kmodal-x{background:none;border:none;color:var(--txt3);font-size:18px;cursor:pointer;line-height:1;}.kmodal-x:hover{color:var(--txt);}'+
+    '.kmodal-sub{font-size:10px;color:var(--txt3);margin:3px 0 4px;text-transform:uppercase;letter-spacing:1px;font-weight:600;}';
+  document.head.appendChild(st);
+  const d=document.createElement('div');d.id='fm-ov';d.className='kmodal-ov';
+  d.innerHTML='<div class="kmodal"><div class="kmodal-head"><b id="fm-tit"></b><button class="btn ghost copiar" id="fm-cop">Copiar causa e ação</button><button class="kmodal-x" onclick="fechaModal()">✕</button></div><div class="kmodal-sub" id="fm-sub"></div><div id="fm-corpo"></div></div>';
+  d.addEventListener('click',e=>{if(e.target===d)fechaModal();});
+  document.body.appendChild(d);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')fechaModal();});
+}
+function fechaModal(){const o=document.getElementById('fm-ov');if(o)o.style.display='none';}
+function humanoDo(f){ return (LIDO.fca||[]).filter(r=>String(r.origem||'').toLowerCase()==='custos'&&String(r.unidade||'').trim()===f.uni&&FA.vigDeLbl(r.vigencia)===f.vig&&FA.projKey(r.projeto||'')===f.proj&&/^(combust|manut|pneu)/i.test(String(r.fato||'').replace(/^pacote\s+/i,''))&&String(r.fato||'').toLowerCase().startsWith(f.pac.toLowerCase().slice(0,6))); }
+function abreModal(id){
+  const f=FATOS.find(x=>x.id===id); if(!f) return; ensureModal(); const d=diag(f);
+  document.getElementById('fm-tit').textContent=f.pac+' · '+FA.rs(f.over)+' acima do remunerado';
+  document.getElementById('fm-sub').textContent=`Custos · ${f.uni} · ${f.proj} · ${f.vigLbl}${d.explicado!=null?' · explica '+Math.round(d.explicado*100)+'% do desvio em R$':''}`;
+  const b=d.blocos, P=[];
+  P.push(`<div class="fm-sec"><h4>Fato</h4><div class="fm-box">${nl(FA.desvioTxt(f))}</div></div>`);
+  P.push(`<div class="fm-sec"><h4>Causa automática</h4><div class="fm-box">${d.causas.length?'<ol>'+d.causas.map(c=>`<li><span class="tema${c.rede?' rede':''}">${esc(c.rede?'rede · '+c.tema:c.tema)}</span>${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}% do desvio)</b>`:''}</li>`).join('')+'</ol>':'<i>Sem evidência nas bases para este mês.</i>'}</div></div>`);
+  P.push(`<div class="fm-sec"><h4>Ação automática</h4><div class="fm-box">${d.acoes.length?'<ol>'+d.acoes.map(a=>`<li><span class="tema">${esc(a.tema)}</span>${esc(a.txt)}${a.ofens.length?`<span class="of">${esc(a.ofens.join(' · '))}</span>`:''}${a.taxa?`<span class="tx">${esc(a.taxa.txt)}</span>`:''}</li>`).join('')+'</ol>':'<i>—</i>'}</div></div>`);
+  if(d.sinais.length) P.push(`<div class="fm-sec"><h4>Sinais a conferir (fora da meta, sem ligação comprovada na rede)</h4><div class="fm-box"><ul style="margin:0;padding-left:18px">${d.sinais.map(s=>`<li>${tri(esc(s.txt))}</li>`).join('')}</ul></div></div>`);
+  if(b.ponte){ const p=b.ponte, row=(k,v,t)=>`<tr><td><b>${k}</b></td><td class="n" style="color:${v>0?'var(--vermelho)':v<0?'var(--verde)':'var(--txt2)'}"><b>${v==null?'—':(v>0?'+':'')+FA.rs(v)}</b></td><td>${t||''}</td></tr>`;
+    P.push(`<div class="fm-sec"><h4>Ponte da conta Combustíveis (a mesma da Árvore de Combustível)</h4><div class="fm-box"><table class="fa-t"><thead><tr><th>Parte</th><th class="n">R$</th><th>Como sai</th></tr></thead><tbody>
+      ${row('Δ custo (DRE)',p.dCusto,'realizado − remunerado da conta Combustíveis, sem Arla')}
+      ${row('Volume',p.vol,'(km real − km rem) × R$/km rem — Dispersão de km')}
+      ${row('Eficiência (Km/L)',p.efic,'(litros − litros previstos pela régua) × R$/L rem — aba Km/L')}
+      ${row('Preço (R$/L)',p.preco,'R$ abastecido − preço rem × litros — abas Km/L e R$/L')}
+      ${row('Diferença DRE × bases',p.dif,'o que o km, a eficiência e o preço não explicam')}</tbody></table></div></div>`); }
+  if(b.ind&&b.ind.length) P.push(`<div class="fm-sec"><h4>Indicadores do Ginfo / Gerot no mês</h4><div class="fm-box"><table class="fa-t"><thead><tr><th>Indicador</th><th class="n">Valor</th><th>Referência</th><th>Na rede</th></tr></thead><tbody>
+    ${b.ind.map(i=>`<tr><td><b>${esc(i.rot)}</b></td><td class="n" style="color:${i.ruim?'var(--vermelho)':i.ruim===false?'var(--verde)':'var(--txt2)'}"><b>${FA.fmtInd(i.k,i.val)}</b></td><td>${esc(i.ref||'—')}</td><td>${esc(FA.redeLeitura(i.rede))}</td></tr>`).join('')}</tbody></table></div></div>`);
+  const ofTab=(tit,arr)=>arr&&arr.length?`<div><h4 style="font-size:10px;color:var(--txt3);margin:0 0 5px;text-transform:uppercase;letter-spacing:.8px">${tit}</h4><table class="fa-t"><tbody>${arr.slice(0,6).map(x=>`<tr><td>${esc(x.k)}</td><td class="n"><b>${FA.rs(x.v)}</b></td></tr>`).join('')}</tbody></table></div>`:'';
+  if(b.cartaGr) P.push(`<div class="fm-sec"><h4>Carta de Custos do mês${b.carta&&b.carta.nivel==='unidade'?' (unidade inteira: sem lançamento no projeto)':''}</h4><div class="fm-box"><div class="fm-two" style="grid-template-columns:repeat(3,minmax(0,1fr))">${ofTab('Grupo',b.cartaGr)}${ofTab('Placa',b.cartaPl)}${ofTab('Fornecedor',b.cartaFo)}</div></div></div>`);
+  const H=d.historico, hum=humanoDo(f);
+  const caso=c=>`<li><b>${esc(c.uni)} · ${esc(c.proj)} · ${esc(FA.vigLbl(c.vig))}</b> — ${c.res==='melhorou'?'<span class="res-ok">melhorou</span>':c.res==='piorou'?'<span class="res-ruim">piorou</span>':c.res==='igual'?'igual':'<span class="res-esp">aguardando</span>'}${c.over!=null&&c.overProx!=null?` (${FA.rs(c.over)} → ${FA.rs(c.overProx)})`:''}<br><span class="kl">Causa:</span> ${nl(c.causa||'—')}<br><span class="kl">Ação:</span> ${nl(c.acao||'—')}</li>`;
+  P.push(`<div class="fm-sec fm-two"><div><h4>O que a unidade escreveu neste FCA</h4><div class="fm-box">${hum.length?hum.map(r=>`<div style="margin-bottom:8px"><span class="kl">Causa:</span> ${nl(r.causa||'—')}<br><span class="kl">Ação:</span> ${nl(r.acao||'—')}${r.status?'<br><span class="kl">Status:</span> '+esc(r.status):''}</div>`).join(''):'<i>Nenhum FCA preenchido para este fato.</i>'}</div>
+      <h4 style="margin-top:12px">Histórico da unidade neste pacote</h4><div class="fm-box">${H.daUni.length?'<ol>'+H.daUni.map(caso).join('')+'</ol>':'<i>Sem FCA anterior preenchido.</i>'}</div></div>
+    <div><h4>O que funcionou em outras unidades (${esc(f.pac)})</h4><div class="fm-box">${H.outras.length?'<ol>'+H.outras.map(caso).join('')+'</ol>':'<i>Ainda sem FCA de outra unidade com queda no mês seguinte.</i>'}</div></div></div>`);
+  if(d.avisos.length) P.push(`<div class="fm-sec">${d.avisos.map(a=>`<div class="fm-aviso">⚠ ${esc(a)}</div>`).join('')}</div>`);
+  document.getElementById('fm-corpo').innerHTML=P.join('');
+  document.getElementById('fm-cop').onclick=()=>{ const t='Causa:\n'+d.causaTxt+'\n\nAção:\n'+d.acaoTxt; (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{const b=document.getElementById('fm-cop');b.textContent='Copiado ✓';setTimeout(()=>b.textContent='Copiar causa e ação',1600);}).catch(()=>prompt('Copie o texto:',t)); };
+  document.getElementById('fm-ov').style.display='flex';
+}
+
+/* ── render ── */
+const TIT={resumo:'Resumo Gerencial',kanban:'Kanban',tabela:'Tabela',rede:'Correlações da Rede',historico:'Aprendizado',fontes:'Fontes'};
+let PROLOG_ESTADO='lendo';
+function render(){
+  if(!CTX) return;
+  const vis=visiveis(), m=document.getElementById('mainBox'), c=document.getElementById('content');
+  m.className='main '+(VIEW==='kanban'?'kan':VIEW==='tabela'?'rola':'res');
+  const vs=sel('ms-vig'); document.getElementById('subVista').textContent=`${vs.length?vs.join(', '):'todas as vigências'} · ${vis.length} fato(s) · DRE até ${FA.vigLbl(CTX.maxVig||'').toUpperCase()}`;
+  c.innerHTML=VIEW==='kanban'?kanbanHTML(vis):VIEW==='tabela'?tabelaHTML(vis):VIEW==='rede'?redeHTML():VIEW==='historico'?historicoHTML(vis):VIEW==='fontes'?fontesHTML():resumoHTML(vis);
+}
+function vaiPara(v){ VIEW=v; document.getElementById('tituloVista').textContent=TIT[v]||''; document.querySelectorAll('.s-item[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); render(); }
+document.querySelectorAll('.s-item[data-v]').forEach(b=>b.addEventListener('click',()=>vaiPara(b.dataset.v)));
+document.getElementById('content').addEventListener('click',e=>{
+  const k=e.target.closest('.kcard[data-id],tr[data-id]'); if(k){ abreModal(k.dataset.id); return; }
+  const u=e.target.closest('tr[data-uni]'); if(u){ const w=document.getElementById('ms-uni'); w._sel.clear(); w._sel.add(u.dataset.uni); w._render(''); vaiPara('tabela'); }
+});
+(function(){ const bt=document.getElementById('btMini'), sd=document.querySelector('.side');
+  bt.addEventListener('click',()=>{ const l=sd.classList.toggle('mini'); try{localStorage.setItem('fcaauto_mini',l?'1':'0');}catch(e){} });
+  try{ if(localStorage.getItem('fcaauto_mini')==='1') sd.classList.add('mini'); }catch(e){} })();
+const _SOL=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2M12 20.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1.5 12h2M20.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>`;
+const _LUA=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+function applyTheme(t){document.body.classList.toggle('claro',t==='light');try{localStorage.setItem('bi_theme',t);}catch(e){}document.getElementById('themeBtn').innerHTML=t==='light'?_LUA:_SOL;}
+document.getElementById('themeBtn').addEventListener('click',()=>applyTheme(document.body.classList.contains('claro')?'dark':'light'));
+applyTheme((()=>{try{return localStorage.getItem('bi_theme')||'dark';}catch(e){return 'dark';}})());
+_buildMs(document.getElementById('ms-uni'),()=>UNI_OPTS,()=>{const p=document.getElementById('ms-proj');p._sel.clear();p._render('');render();});
+_buildMs(document.getElementById('ms-vig'),()=>VIG_OPTS);
+_buildMs(document.getElementById('ms-proj'),projItems);
+_buildMs(document.getElementById('ms-pac'),()=>PAC_OPTS);
+document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrap'))document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open'));});
+
+function pintaUsuario(user,prof){
+  const nome=(prof&&(prof.nome||prof.name))||String((user&&user.email)||'').split('@')[0].replace(/[._-]+/g,' ')||'—';
+  document.getElementById('euAv').textContent=nome.trim().split(/\s+/).slice(0,2).map(p=>p[0]||'').join('').toUpperCase()||'—';
+  document.getElementById('euNome').textContent=nome.replace(/\b\w/g,c=>c.toUpperCase());
+}
+async function initApp(){
+  try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }catch(e){ gateError('Falha ao iniciar o cliente Supabase.'); return; }
+  let session; try{ session=(await sb.auth.getSession()).data.session; }catch(e){ gateError('Falha ao verificar a sessão.'); return; }
+  if(!session){ gateLogin(); return; }
+  const {data:prof,error}=await sb.from('fca_profiles').select('*').eq('user_id',session.user.id).maybeSingle();
+  if(error){ gateError(error.message); return; }
+  pintaUsuario(session.user,prof||{});
+  if(!(prof&&prof.is_admin)){ gateAdmin(); return; }
+  const msg=t=>{document.getElementById('content').innerHTML=`<div class="loading">Lendo as bases… ${esc(t)}</div>`;};
+  msg('');
+  try{
+    LIDO=await FA.carregar(sb,{etapa:msg});
+    if(!LIDO.dre){ gateError('O DRE (aba Frota) não respondeu: sem ele não há fato.'); return; }
+    CTX=FA.contexto(LIDO,{});
+    FATOS=CTX.todos.filter(f=>f.estourou);
+    popFiltros(); render();
+  }catch(e){ console.error(e); gateError(e.message||String(e)); return; }
+  // Prolog de hoje (pneus) chega depois: a tela não espera
+  FA.carregarProlog(sb).then(p=>{ LIDO.prolog=p; PROLOG_ESTADO=Object.keys(p).length?'ok':'sem dados';
+    Object.entries(p).forEach(([u,t])=>{ CTX.prolog[u]=FA.resumoProlog(t); }); MEMO.clear(); render(); })
+    .catch(e=>{ PROLOG_ESTADO='erro: '+(e.message||e); render(); });
+}
+initApp();
+</script>
+<script src="../assets/mobile.js?v=202608220020"></script>
+<script src="../assets/modo-tv.js?v=202610132200"></script>
+<script src="../assets/excel-export.js"></script>
+<script src="../assets/sortable-table.js?v=202609042200"></script>
+<script src="../assets/build-check.js?v=202610140300"></script>
+</body>
+</html>

@@ -604,6 +604,9 @@ const REL=[
   {cl:'adm',adm:1,t:'Correlações',h:'correlacoes/',d:'A tabela-fato das correlações, nos três grãos.',
     f:[S('dre_frota'),S('dre_receita'),S('dispersao_km'),ELITE(null),T('disp_resumo','Disponibilidade por dia e unidade',{ordem:'data,unidade'}),
        CUSTO_PLACA,T('ce_scores_mensais','Condução econômica · mensal',{ordem:'id'}),GINFO(['ativos']),T('indisponibilidade','Indisponibilidade · eventos',{ordem:'id'})]},
+  {cl:'adm',adm:1,t:'FCA Automático',h:'fca-automatico/',d:'O que o motor cruza para gerar causa e ação dos desvios de Custos.',
+    f:[S('dre_frota'),S('dispersao_km'),S('consumo_km_litro'),S('consumo_rs_litro'),T('fca','FCA',{ordem:'id'}),T('carta_custos','Carta de Custos · lançamentos',{ordem:'id'}),
+       ELITE(null),CUSTO_PLACA,T('ce_scores_mensais','Condução econômica · mensal',{ordem:'id'}),GINFO(['preventivas','os-em-aberto','alinhamentos','ativos']),PROLOG('tires','Pneus')]},
 ];
 const CL={ger:'Visão Geral',fin:'Financeiro',op:'Operacional',proc:'Processos',res:'Resultados',adm:'Administração'};
 const visiveis=()=>REL.filter(r=>!r.adm||ADMIN);
