@@ -17,7 +17,14 @@ jobs:
     steps:
       - name: Estado do deploy preso
         env: { GH_TOKEN: "${{ github.token }}" }
-        run: gh api "repos/${{ github.repository }}/pages/deployments/${{ inputs.sha }}" || true
+        run: |
+          r=$(gh api "repos/${{ github.repository }}/pages/deployments/${{ inputs.sha }}" 2>&1 || true)
+          echo "::notice::antes: $(echo "$r" | tr '\n' ' ' | cut -c1-400)"
       - name: Cancela
         env: { GH_TOKEN: "${{ github.token }}" }
-        run: gh api -X POST "repos/${{ github.repository }}/pages/deployments/${{ inputs.sha }}/cancel" && echo "cancelado"
+        run: |
+          r=$(gh api -X POST "repos/${{ github.repository }}/pages/deployments/${{ inputs.sha }}/cancel" 2>&1 || true)
+          echo "::notice::cancel: $(echo "$r" | tr '\n' ' ' | cut -c1-400)"
+          sleep 20
+          r=$(gh api "repos/${{ github.repository }}/pages/deployments/${{ inputs.sha }}" 2>&1 || true)
+          echo "::notice::depois: $(echo "$r" | tr '\n' ' ' | cut -c1-400)"
