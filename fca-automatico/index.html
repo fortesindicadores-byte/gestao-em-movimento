@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610142330">
+<meta name="build" content="202610150010">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -860,7 +860,7 @@ table.rel td.txt ol{margin:0;padding-left:16px;}
 table.rel td.txt li{margin:0 0 4px;}
 table.rel td.txt li small{display:block;color:var(--txt3);font-size:10.5px;margin-top:2px;}
 table.rel.fa-rel th:nth-child(1){width:6%;}table.rel.fa-rel th:nth-child(2){width:8%;}table.rel.fa-rel th:nth-child(3){width:6%;}
-table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){width:30%;}table.rel.fa-rel th:nth-child(6){width:28%;}table.rel.fa-rel th:nth-child(7){width:6%;}
+table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){width:33%;}table.rel.fa-rel th:nth-child(6){width:31%;}
 .kcol-head.cmb{background:var(--laranja);color:#0C1017;}
 .kcol-head.mnt{background:var(--azul);color:#fff;}
 .kcol-head.pne{background:#8B5CF6;color:#fff;}
@@ -894,8 +894,10 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 .fa-tog button.on{background:var(--laranja);color:#0C1017;}
 table.rel.fa-rel td.center{white-space:normal;overflow-wrap:anywhere;}
 table.rel.fa-rel.din th:nth-child(1){width:4.5%;}table.rel.fa-rel.din th:nth-child(2){width:6%;}table.rel.fa-rel.din th:nth-child(3){width:5.5%;}
-table.rel.fa-rel.din th:nth-child(4){width:12%;}table.rel.fa-rel.din th:nth-child(5){width:19.5%;}table.rel.fa-rel.din th:nth-child(6){width:20.5%;}
-table.rel.fa-rel.din th:nth-child(7){width:8.5%;}table.rel.fa-rel.din th:nth-child(8){width:8.5%;}table.rel.fa-rel.din th:nth-child(9){width:9%;}table.rel.fa-rel.din th:nth-child(10){width:6%;}
+table.rel.fa-rel.din th:nth-child(4){width:12%;}table.rel.fa-rel.din th:nth-child(5){width:22.5%;}table.rel.fa-rel.din th:nth-child(6){width:23.5%;}
+table.rel.fa-rel.din th:nth-child(7){width:8.5%;}table.rel.fa-rel.din th:nth-child(8){width:8.5%;}table.rel.fa-rel.din th:nth-child(9){width:9%;}
+table.rel.fa-rel.din tbody.fg td.ln.cz{vertical-align:top;}
+table.rel.fa-rel.din tbody.fg td.ln.cz .ln-n{background:var(--laranja);color:#fff;}
 table.rel.fa-rel.din td.id.center{font-size:11px;}
 table.rel.fa-rel.din .pctx{min-width:0;padding:2px 5px;}
 table.rel.fa-rel.din thead th{letter-spacing:.3px!important;padding-left:6px!important;padding-right:6px!important;}
@@ -914,7 +916,8 @@ table.rel.fa-rel.din tbody.fg td.ln.ac-c{padding:7px 4px!important;vertical-alig
 .ac-st[data-v="Concluída"]{background:#3BB33B;color:#fff;border-color:#3BB33B;}
 .ac-st[data-v="Cancelada"]{background:#333333;color:#fff;border-color:#333333;}
 .ac-in:disabled,.ac-st:disabled{opacity:.45;cursor:not-allowed;}
-table.rel.fa-rel.din tr.feita td.ln:not(.ac-c){opacity:.5;}
+table.rel.fa-rel.din tr.feita td.ln:not(.ac-c):not(.cz){opacity:.5;}
+table.rel.fa-rel.din tbody.fg td.ln.fim{border-bottom:0!important;}
 table.rel.fa-rel.din tr.feita td.ln:not(.ac-c) small{text-decoration:none;}
 .ac-sem{font-size:10.5px;color:var(--txt3);font-style:italic;}
 .fa-tbar-err{font-size:10.5px;font-weight:700;color:var(--vermelho);}
@@ -937,7 +940,7 @@ table.rel td.fato .fa-ano{font-size:10.5px;}
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610142330"></script>
+<script src="../assets/fca-auto.js?v=202610150010"></script>
 </head>
 <body>
 <div class="app">
@@ -1129,12 +1132,20 @@ const ST_AC=['Não iniciada','Em andamento','Concluída','Cancelada'];
 let ACOES={}, ACOES_ERR=null, ACOES_OK=false, EU_NOME='', NOMES=[];
 // a ação é identificada pelo tema + as primeiras palavras do texto, sem números (contagens e valores mudam a cada leitura)
 const chaveAcao=a=>(a.tema||'')+'|'+FA.NK(a.txt).replace(/[0-9]+([.,][0-9]+)*/g,' ').replace(/[^A-Z ]/g,' ').split(/\s+/).filter(Boolean).slice(0,6).join(' ');
+/* CAUSAS NUMERADAS 1, 2, 3 (Renan, 14/10/2026: "Quando dividir as causas, chame de 1, 2, 3"): as linhas
+   saem na ordem das causas, cada causa com as ações dela logo abaixo (a célula da causa é mesclada
+   quando ela tem duas ações). ci = índice da causa (-1 = ação sem causa), span = linhas da causa. */
 function linhasDoFato(d){
-  const usadas=new Set(), vistos={}, out=[];
-  d.acoes.forEach(a=>{ const ci=d.causas.findIndex((c,i)=>!usadas.has(i)&&c.tema===a.tema); if(ci>=0) usadas.add(ci);
+  const usadas=new Set(), vistos={}, acs=[];
+  d.acoes.forEach(a=>{ let ci=d.causas.findIndex((c,i)=>!usadas.has(i)&&c.tema===a.tema);
+    if(ci>=0) usadas.add(ci); else ci=d.causas.findIndex(c=>c.tema===a.tema);
     let k=chaveAcao(a); vistos[k]=(vistos[k]||0)+1; if(vistos[k]>1) k+='#'+vistos[k];
-    out.push({a,c:ci>=0?d.causas[ci]:null,k}); });
-  d.causas.forEach((c,i)=>{ if(!usadas.has(i)) out.push({a:null,c,k:null}); });
+    acs.push({a,k,ci}); });
+  const out=[];
+  d.causas.forEach((c,ci)=>{ const meus=acs.filter(x=>x.ci===ci);
+    if(!meus.length){ out.push({a:null,c,k:null,ci,span:1}); return; }
+    meus.forEach((x,j)=>out.push({a:x.a,c,k:x.k,ci,span:j===0?meus.length:0})); });
+  acs.filter(x=>x.ci<0).forEach(x=>out.push({a:x.a,c:null,k:x.k,ci:-1,span:1}));
   return out;
 }
 const acKey=(fid,k)=>fid+'||'+k;
@@ -1154,28 +1165,28 @@ function tabelaHTML(vis){
       <button data-m="linha" class="${linha?'on':''}">Uma por linha</button><button data-m="grupo" class="${linha?'':'on'}">Agrupado</button></div></div>
     <datalist id="dl-resp">${NOMES.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
     <div class="rel-wrap"><table class="rel fa-rel${linha?' din':''}"><thead><tr>
-    ${linha?'<th title="Unidade">Unid.</th><th>Projeto</th><th title="Vigência">Vig.</th>':'<th>Unidade</th><th>Projeto</th><th>Vigência</th>'}<th>Fato</th><th>Causa automática</th><th>Ação automática</th>${linha?'<th>Responsável</th><th>Prazo</th><th>Status</th>':''}<th>Explica</th></tr></thead>`;
+    ${linha?'<th title="Unidade">Unid.</th><th>Projeto</th><th title="Vigência">Vig.</th>':'<th>Unidade</th><th>Projeto</th><th>Vigência</th>'}<th>Fato</th><th>Causa automática</th><th>Ação automática</th>${linha?'<th>Responsável</th><th>Prazo</th><th>Status</th>':''}</tr></thead>`;
   vis.forEach(f=>{ const d=diag(f);
     if(!linha){
       h+=`<tbody class="fg"><tr data-id="${esc(f.id)}" title="Clique para abrir o diagnóstico completo">
         <td class="center">${esc(f.uni)}</td><td class="center">${esc(f.proj)}</td><td class="center">${esc(f.vigLbl.toUpperCase())}</td>
         <td class="txt fato">${fatoHTML(f,d)}</td>
-        <td class="txt">${linhaCausas(d,4)}</td><td class="txt">${linhaAcoes(d,4)}</td>
-        <td class="center">${pctBadge(d.explicado)}</td></tr></tbody>`; return; }
+        <td class="txt">${linhaCausas(d,4)}</td><td class="txt">${linhaAcoes(d,4)}</td></tr></tbody>`; return; }
     const ls=linhasDoFato(d), n=Math.max(1,ls.length);
     h+=`<tbody class="fg">`;
     for(let i=0;i<n;i++){
-      const l=ls[i]||{a:null,c:null,k:null}, r=l.a?(ACOES[acKey(f.id,l.k)]||{}):{}, feita=r.status==='Concluída'||r.status==='Cancelada';
+      const l=ls[i]||{a:null,c:null,k:null,ci:-1,span:1}, r=l.a?(ACOES[acKey(f.id,l.k)]||{}):{}, feita=r.status==='Concluída'||r.status==='Cancelada';
       h+=`<tr data-id="${esc(f.id)}"${feita?' class="feita"':''}>`;
       if(i===0) h+=`<td class="center id" rowspan="${n}">${esc(f.uni)}</td><td class="center id" rowspan="${n}">${esc(f.proj)}</td><td class="center id" rowspan="${n}">${esc(f.vigLbl.toUpperCase())}</td><td class="txt fato id" rowspan="${n}">${fatoHTML(f,d)}</td>`;
-      h+=`<td class="txt ln">${l.c?causaHTML(l.c):(i===0&&!ls.length?'<i style="color:var(--txt3)">Sem evidência nas bases para este mês</i>':'')}</td>
-          <td class="txt ln">${l.a?acaoHTML(l.a):(i===0&&!ls.length?'<i style="color:var(--txt3)">—</i>':'<span class="ac-sem">sem ação: só explica o desvio</span>')}</td>${camposAcao(f,l)}`;
-      if(i===0) h+=`<td class="center id" rowspan="${n}">${pctBadge(d.explicado)}</td>`;
+      if(l.span){ const fim=i+l.span>=n?' fim':'';
+        h+=l.c?`<td class="txt ln cz${fim}"${l.span>1?` rowspan="${l.span}"`:''}><span class="ln-n">${l.ci+1}</span>${causaHTML(l.c)}</td>`
+          :`<td class="txt ln${fim}">${i===0&&!ls.length?'<i style="color:var(--txt3)">Sem evidência nas bases para este mês</i>':''}</td>`; }
+      h+=`<td class="txt ln">${l.a?acaoHTML(l.a):(i===0&&!ls.length?'<i style="color:var(--txt3)">—</i>':'<span class="ac-sem">sem ação: só explica o desvio</span>')}</td>${camposAcao(f,l)}`;
       h+='</tr>';
     }
     h+='</tbody>';
   });
-  if(!vis.length) h+=`<tbody><tr><td colspan="${linha?10:7}" class="center">Nenhum fato no recorte.</td></tr></tbody>`;
+  if(!vis.length) h+=`<tbody><tr><td colspan="${linha?9:6}" class="center">Nenhum fato no recorte.</td></tr></tbody>`;
   return h+'</table></div></div>';
 }
 /* grava o campo da ação (upsert por fato × ação) com a causa e a ação como estavam */
@@ -1376,6 +1387,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610142330"></script>
+<script src="../assets/build-check.js?v=202610150010"></script>
 </body>
 </html>
