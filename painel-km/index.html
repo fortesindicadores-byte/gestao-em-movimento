@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610151030">
+<meta name="build" content="202610142000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -900,6 +900,10 @@ function renderPlacas(){
    (assets/dispersao-km.js). Jan a ago continuam vindo da aba Dispersão de km: o banco
    só ACRESCENTA os meses de set/26 em diante que a aba não tem. O projeto segue a
    convenção da aba em ago/26: Van = ROTA (VAN) e Insumos dentro de EMPURRADA. */
+/* DESLIGADO por enquanto (Renan, 14/10/2026: "Não fazem sentido essas informações… Vou validar
+   melhor. Tire por enquanto da conta"): set/26 da planilha importada fica fora do painel até ele
+   validar. Para religar, true (o teste liga com window.__dispBanco = true). */
+const DISP_BANCO_LIGADO = window.__dispBanco === true;
 const DISP_PROJ = { 'Rota':'ROTA', 'Auto Serviço':'AUTO SERVIÇO', 'Van':'ROTA (VAN)',
   'Empurrada - 28 Palets':'EMPURRADA', 'Empurrada - 42 Palets':'EMPURRADA', 'Empurrada - Insumos':'EMPURRADA' };
 async function fetchDispBanco(){
@@ -960,7 +964,7 @@ async function fetchData() {
     fetchBalanco().catch(e => { console.warn('Balanço de Massa (aba, até jul/26) indisponível:', e); return {}; }),
     fetchAbertura().catch(e => { console.warn('Abertura (placas) indisponível:', e); return []; }),
     fetchBalancoBanco().catch(e => { console.warn('Balanço de Massa (banco, ago/26+) indisponível:', e); return {}; }),
-    (window.DispersaoKm ? fetchDispBanco() : Promise.resolve({ linhas: [] })).catch(e => { console.warn('Dispersão de km (banco, set/26+) indisponível:', e); return { linhas: [] }; })
+    (window.DispersaoKm && DISP_BANCO_LIGADO ? fetchDispBanco() : Promise.resolve({ linhas: [] })).catch(e => { console.warn('Dispersão de km (banco, set/26+) indisponível:', e); return { linhas: [] }; })
   ]);
   const custoRem = custoFrota.tot;
   PLACAS = abertura;
@@ -1771,7 +1775,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_km_v10';  // v10: set/26 em diante do banco (Dispersão de km importada) · v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
+const CACHE_KEY='bi_cache_km_v11';  // v11: set/26 do banco desligado até validar · v10: set/26 em diante do banco (Dispersão de km importada) · v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
@@ -1919,6 +1923,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610151030"></script>
+<script src="../assets/build-check.js?v=202610142000"></script>
 </body>
 </html>

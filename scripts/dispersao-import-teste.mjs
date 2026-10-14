@@ -237,7 +237,7 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
     balanco_massa: [{ unidade: 'PIR', projeto: 'EMPURRADA', vigencia: '2026-08', conta: 'Combustíveis', valor: 200000 },
                     { unidade: 'PIR', projeto: 'EMPURRADA', vigencia: '2026-09', conta: 'Combustíveis', valor: 300000 }],
   };
-  const roda = async (html) => {
+  const roda = async (html, ligado = true) => {
     const ctx = await nav.newContext({ viewport: { width: 1600, height: 900 } });
     await ctx.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
     await ctx.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
@@ -252,6 +252,7 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
     await ctx.route('**/painel-km/__antigo.html', r => r.fulfill({ status: 200, contentType: 'text/html', body: ANTIGO }));
     const pg = await ctx.newPage(); const errs = []; pg.on('pageerror', e => errs.push(e.message));
     await pg.addInitScript(() => { try { sessionStorage.setItem('gem_hub', '1'); localStorage.clear(); } catch (e) {} });
+    if (ligado) await pg.addInitScript(() => { window.__dispBanco = true; });
     await pg.goto(BASE + html, { waitUntil: 'domcontentloaded' });
     await pg.waitForFunction(() => { try { return ALL.length > 0; } catch (e) { return false; } }, { timeout: 20000 }).catch(() => {});
     await pg.waitForTimeout(800);
@@ -273,6 +274,8 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
   af('agosto do banco não entra (a aba já tem agosto)', N.all.filter(r => r.vig === '08/2026' && r.und === 'PLT').length === 1 && N.all.find(r => r.vig === '08/2026' && r.und === 'PLT').rem === 48000);
   const pl = N.placas.find(p => p.vig === '09/2026' && p.und === 'PLT');
   af('visão Placas de set/26 mostra CUC9514 (como está na planilha) com 4.300 km', pl && pl.placa === 'CUC9514' && pl.real === 4300 && pl.rem === 4000, JSON.stringify(pl));
+  const D = await roda('/painel-km/index.html', false);
+  af('desligado (padrão hoje): set/26 fora e jan a ago iguais', !D.all.some(r => r.vig === '09/2026') && !D.placas.some(p => p.vig === '09/2026') && ate(D.all) === ate(A.all), D.all.length);
   af('sem erro de página nos dois', !A.errs.length && !N.errs.length, [...A.errs, ...N.errs].join(' | '));
 }
 
