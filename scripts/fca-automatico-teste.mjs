@@ -340,7 +340,19 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     const tg = await pg.evaluate(() => ({ modo: document.querySelector('#tabModo button.on').dataset.m, din: !!document.querySelector('table.fa-rel.din'), rows: [...document.querySelectorAll('tbody.fg')].every(t => t.querySelectorAll('tr').length === 1), ol: !!document.querySelector('tbody.fg td.txt ol'), guardado: localStorage.getItem('fcaauto_tab_modo') }));
     af('…"Agrupado" volta à linha única por fato com as listas, e a escolha fica guardada', tg.modo === 'grupo' && !tg.din && tg.rows && tg.ol && tg.guardado === 'grupo', JSON.stringify(tg));
     await pg.click('#tabModo button[data-m="linha"]'); await pg.waitForTimeout(100);
-    await pg.click('tr[data-id="CGR|ROTA|Combustíveis|2026-08"]'); await pg.waitForTimeout(150);
+    // clicar na AÇÃO abre a caixa dela, no desenho da caixa do FCA · Admin (prévia, nada grava)
+    await pg.click('tr[data-id="CGR|ROTA|Combustíveis|2026-08"][data-k] td.ln:not(.ac-c):not(.cz)'); await pg.waitForTimeout(150);
+    const ac = await pg.evaluate(() => { const g = id => document.getElementById(id); return { vis: getComputedStyle(g('ac-ov')).display, tit: g('ac-tit').textContent, ctx: g('ac-ctx').textContent, fato: g('ac-fato').value, desv: g('ac-desv').value, causa: g('ac-causa').value, acao: g('ac-acao').value, st: g('ac-status').value, campos: ['ac-resp','ac-prazo','ac-acomp'].every(i => g(i)), dir: [...document.querySelectorAll('#ac-ov .btn')].some(b => /Direcionar à unidade/.test(b.textContent) && b.disabled), previa: /nada é gravado/.test(document.querySelector('#ac-ov .ac-previa').textContent), diag: getComputedStyle(g('fm-ov') || document.body).display }; });
+    af('AÇÃO ABRE NA CAIXA DO FCA: fato, desvio com YTD, a causa dela, a ação com os ofensores, responsável, prazo, status e acompanhamento; "Direcionar à unidade" travado e o aviso de prévia', ac.vis === 'flex' && ac.tit === 'Combustíveis' && /CGR · ROTA · AGO\/26/.test(ac.ctx) && ac.fato === 'Combustíveis' && /^Desvio: ▲ R\$ 31\.000/.test(ac.desv) && /\nYTD: ▲/.test(ac.desv) && ac.causa.length > 10 && ac.acao.length > 10 && ac.st === 'Não iniciada' && ac.campos && ac.dir && ac.previa && ac.diag !== 'flex', JSON.stringify(ac));
+    if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'fa-acao.png') });
+    await pg.click('#ac-diag'); await pg.waitForTimeout(150);
+    const dg = await pg.evaluate(() => ({ ac: getComputedStyle(document.getElementById('ac-ov')).display, fm: getComputedStyle(document.getElementById('fm-ov')).display, lis: document.querySelectorAll('#fm-corpo li.ac-abre[data-k]').length }));
+    af('…"Ver diagnóstico" troca para o diagnóstico do fato, e lá cada ação também abre a caixa dela', dg.ac === 'none' && dg.fm === 'flex' && dg.lis > 0, JSON.stringify(dg));
+    await pg.click('#fm-corpo li.ac-abre[data-k]'); await pg.waitForTimeout(150);
+    const dg2 = await pg.evaluate(() => ({ ac: getComputedStyle(document.getElementById('ac-ov')).display, fm: getComputedStyle(document.getElementById('fm-ov')).display }));
+    af('…clicar na ação dentro do diagnóstico abre a caixa da ação', dg2.ac === 'flex' && dg2.fm === 'none', JSON.stringify(dg2));
+    await pg.keyboard.press('Escape'); await pg.waitForTimeout(100);
+    await pg.click('tr[data-id="CGR|ROTA|Combustíveis|2026-08"] td.fato'); await pg.waitForTimeout(150);
     const m = await pg.evaluate(() => ({ vis: getComputedStyle(document.getElementById('fm-ov')).display, tit: document.getElementById('fm-tit').textContent, txt: document.getElementById('fm-corpo').textContent }));
     af('clique na linha abre o diagnóstico (ponte, causas, ações) com a linha do ano', m.vis === 'flex' && /Combustíveis · R\$ 31,0 mil/.test(m.tit) && /Ponte da conta Combustíveis/.test(m.txt) && /Vistoria de consumo/.test(m.txt) && /YTD.{0,3}[▲▼]|YTD.{0,3}no remunerado/.test(m.txt), m.tit);
     af('…com o que a unidade escreveu no FCA do mês', /Rodamos mais km por causa da rota nova/.test(m.txt), '');
