@@ -97,14 +97,33 @@ function unidadeDoNv3(nv3) {
   for (const u of UNITS) { if (UNIT_BASE(u) !== suf) continue; const t = UNIT_TIER(u); if (!t || tierOfPrefix(UNIT_BASE(u), pre) === t) return u; }
   return null;
 }
-const PACOTES = ['Combustíveis', 'Manutenções', 'Pneus'];
+/* A REGRA DE FATOS É A DO FCA (Renan, 14/10/2026: "Ele tem que seguir a mesma
+   regra de fatos que já existe. Simples assim"): o mesmo PACOTES_MAP e as mesmas
+   exclusões do pushDRE do fca-preenchimento; conta fora do mapa cai em "Outros";
+   unidade pela coluna Unidade do DRE (cidade) e tier pelo prefixo do Nível 3. */
+const PACOTES = ['Combustíveis', 'Manutenções', 'Pneus'];           // os que têm base própria para cruzar
 const PACOTES_MAP = {
   'COMBUSTIVEIS VEICULOS E EQUIPAMENTOS': 'Combustíveis', 'COMBUSTIVEIS': 'Combustíveis', 'FLUIDOS (ARLA)': 'Combustíveis', 'ARLA': 'Combustíveis',
+  'ESTORNO DE ICMS NAO APROVEITADO': 'ICMS', 'ICMS CREDITO PRESUMIDO': 'ICMS',
   'MANUTENCAO DE VEICULOS E EQUIPAMENTOS': 'Manutenções', 'MANUTENCAO DE VEICULOS E EQUIP.': 'Manutenções', 'MATERIAIS E FERRAMENTAS DE OFICINA': 'Manutenções',
   'LAVACAO DE VEICULOS': 'Manutenções', 'MANUTENCAO DE CARROCERIAS': 'Manutenções', 'PERSONALIZACAO/PADRONIZACAO DE VEICULOS': 'Manutenções',
   'PERSONALIZACAO/PADRONIZACAO': 'Manutenções', 'PERSONALIZACAO E PADRONIZACAO DE VEICULOS': 'Manutenções', 'CONTRATOS DE MANUTENCAO FABRICANTE': 'Manutenções',
-  'CONSERTOS E RECAPAGENS DE PNEUS': 'Pneus', 'PNEUS E CAMARAS': 'Pneus', 'RECAPAGENS E OUTROS SERVICOS': 'Pneus', 'PNEUS NOVOS': 'Pneus'
+  'CONSERTOS E RECAPAGENS DE PNEUS': 'Pneus', 'PNEUS E CAMARAS': 'Pneus', 'RECAPAGENS E OUTROS SERVICOS': 'Pneus', 'PNEUS NOVOS': 'Pneus',
+  'IPVA E LICENCIAMENTO DE VEICULOS': 'Seguros e licenças', 'IPVA E LICENCIAMENTO': 'Seguros e licenças',
+  'SEGURO DE VEICULOS E EQUIPAMENTOS': 'Seguros e licenças', 'SEGUROS': 'Seguros e licenças'
 };
+const getPacote = ck => PACOTES_MAP[ck] || 'Outros';
+// as contas que o FCA nem lê (EXCL do pushDRE)
+const EXCL_FCA = new Set(['RECEITA LIQUIDA', 'ICMS CREDITO PRESUMIDO', 'IPVA E LICENCIAMENTO DE VEICULOS', 'ESTORNO ICMS NAO APROVEITADO', 'ESTORNO DE ICMS NAO APROVEITADO']);
+// coluna Unidade do DRE (cidade) → código base; o tier vem do Nível 3 (como o DEPARA + tierMatch do FCA)
+const CIDADE_DRE = { 'CAMPO GRANDE': 'CGR', 'BALNEARIO CAMBORIU': 'BLC', 'CUIABA': 'CBA', 'FLORIANOPOLIS': 'FLP', 'GUARULHOS': 'GRL', 'NOVA FRIBURGO': 'NFR', 'PELOTAS': 'PLT',
+  'RONDONOPOLIS': 'RON', 'CACHOEIRAS DE MACACU': 'MCC', 'MACACU': 'MCC', 'PIRAI': 'PIR', 'ANHANGUERA': 'ANG', 'GOIANIA': 'GNA' };
+function unidadeDoDRE(cidade, nv3) {
+  const base = CIDADE_DRE[NK(String(cidade || '').replace(/\s*\(INATIVO\)\s*/i, ''))];
+  if (!base) return unidadeDoNv3(nv3);                   // sem a coluna Unidade: pelo sufixo do Nível 3
+  if (base !== 'CBA' && base !== 'MCC') return base;
+  return base + ' ' + tierOfPrefix(base, prefixo(nv3));
+}
 const CONTA_COMB = new Set(['COMBUSTIVEIS VEICULOS E EQUIPAMENTOS', 'COMBUSTIVEIS']);   // a conta da Árvore (sem Arla)
 const CONTA_ARLA = new Set(['FLUIDOS (ARLA)', 'ARLA']);
 // pacote da Carta (Manutenção) ↔ pacote do FCA (Manutenções)
@@ -125,7 +144,7 @@ function achaCol(cols, testes, padrao) {
 function indexaDRE(dre) {
   const h = (dre && dre.header) || [], rows = (dre && dre.rows) || [];
   const iVig = achaCol(h, ['vigência', 'vigencia']), iMes = achaCol(h, ['mês', 'mes']), iAno = achaCol(h, ['ano']);
-  const iN3 = achaCol(h, ['nível 3', 'nivel 3', 'nivel3']), iCta = achaCol(h, ['conta gerencial', 'conta']);
+  const iN3 = achaCol(h, ['nível 3', 'nivel 3', 'nivel3']), iCta = achaCol(h, ['conta gerencial', 'conta']), iUni = achaCol(h, ['unidade']);
   const iRem = achaCol(h, ['remunerado']), iReal = achaCol(h, ['realizado']);
   const MES = { jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6, jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12 };
   const acc = {};         // uni|proj|vig → {uni, nv3, proj, vig, contas:{conta:{rem,real}}}
@@ -135,9 +154,10 @@ function indexaDRE(dre) {
     if (!vig && iAno >= 0 && iMes >= 0) { const y = parseInt(r[iAno]); const mm = typeof r[iMes] === 'number' ? r[iMes] : MES[NK(r[iMes]).toLowerCase().slice(0, 3)]; if (y && mm) vig = y + '-' + d2(mm); }
     if (!vig) return;
     const nv3 = String(r[iN3] || '').replace(/\s*\(INATIVO\)\s*/i, ' ').replace(/\s+/g, ' ').trim();
-    const uni = unidadeDoNv3(nv3); if (!uni) return;
-    const conta = String(r[iCta] || '').trim(); const ck = NK(conta);
-    const pac = PACOTES_MAP[ck]; if (!pac) return;
+    const uni = unidadeDoDRE(iUni >= 0 ? r[iUni] : null, nv3); if (!uni) return;
+    const conta = String(r[iCta] || '—').trim(); const ck = NK(conta);
+    if (EXCL_FCA.has(ck)) return;
+    const pac = getPacote(ck);
     const rem = num(r[iRem]) || 0, real = num(r[iReal]) || 0;
     if (real !== 0 && (!maxReal || vig > maxReal)) maxReal = vig;
     const pk = projKey(nv3), k = uni + '|' + pk + '|' + vig;
@@ -151,11 +171,9 @@ function fatos(dreIdx) {
   const out = [];
   Object.values(dreIdx.acc).forEach(a => {
     if (dreIdx.maxReal && a.vig > dreIdx.maxReal) return;           // meses só orçados
-    PACOTES.forEach(pac => {
+    [...new Set(Object.values(a.contas).map(c => c.pac))].forEach(pac => {
       const cs = Object.values(a.contas).filter(c => c.pac === pac);
-      if (!cs.length) return;
       const rem = cs.reduce((s, c) => s + c.rem, 0), real = cs.reduce((s, c) => s + c.real, 0);
-      if (!real) return;
       const over = rem - real, dpct = Math.abs(rem) > 0 ? over / Math.abs(rem) * 100 : 0;
       const contas = cs.map(c => { const ov = c.rem - c.real, b = Math.abs(c.rem); return { conta: c.conta, ck: c.ck, ov, rem: -c.rem, real: -c.real, p: b > 0 ? Math.round(Math.abs(ov) / b * 100) : null }; })
         .filter(c => Math.round(c.ov) !== 0)
@@ -360,7 +378,8 @@ const TEMAS = [
 ];
 const temasDe = t => { const s = String(t || '').toLowerCase(); return TEMAS.filter(x => x.re.test(s)).map(x => x.k); };
 const nomeLimpo = t => String(t || '').split('\n')[0].trim().replace(/(\S)\s*desvio\s*(de\s+r\$|:|$)[\s\S]*$/i, '$1').replace(/\s+desvio\b[\s\S]*$/i, '').replace(/^pacote\s+/i, '').trim();
-const pacDoFato = t => { const n = NK(nomeLimpo(t)); if (/COMBUST/.test(n)) return 'Combustíveis'; if (/MANUT/.test(n)) return 'Manutenções'; if (/PNEU/.test(n)) return 'Pneus'; return null; };
+const pacDoFato = t => { const n = NK(nomeLimpo(t)); if (/COMBUST/.test(n)) return 'Combustíveis'; if (/MANUT/.test(n)) return 'Manutenções'; if (/PNEU/.test(n)) return 'Pneus';
+  if (/SEGURO|LICEN/.test(n)) return 'Seguros e licenças'; if (/ICMS/.test(n)) return 'ICMS'; if (/OUTROS/.test(n)) return 'Outros'; return null; };
 /* fcaRows = tabela fca (todas); mapaFatos = id → fato (todas as vigências).
    Resultado de cada FCA preenchido: o desvio do MESMO pacote no mês seguinte. */
 function aprendizado(fcaRows, todosFatos, maxVig) {
@@ -435,7 +454,8 @@ function diagnostico(f, ctx) {
 
   if (f.pac === 'Combustíveis') diagComb(f, ctx, D, causa, acao, k, base);
   else if (f.pac === 'Manutenções') diagManut(f, ctx, D, causa, acao, base);
-  else diagPneus(f, ctx, D, causa, acao, base);
+  else if (f.pac === 'Pneus') diagPneus(f, ctx, D, causa, acao, base);
+  else diagOutros(f, ctx, D, causa, acao, base);
 
   // quanto do desvio as causas em R$ explicam (só Combustíveis tem a ponte que
   // fecha no Δ do custo; em Manutenções e Pneus as contas JÁ são o fato, e o que
@@ -546,6 +566,7 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
    rede sustenta a ligação com o desvio do pacote; vira SINAL quando tem meta
    ou a rede mostra alguma ligação no sentido certo; o resto fica só na tabela. */
 function sinaisRede(f, ctx, D, excluir) {
+  if (!ctx.rede[f.pac]) return [];
   const ex = new Set(excluir || []);
   const lista = Object.keys(CAT).filter(k => !ex.has(k) && !(CAT[k].pac && !CAT[k].pac.includes(f.pac)));
   const ind = indicadores(f.uni, f.vig, ctx, lista); D.blocos.ind = ind;
@@ -669,6 +690,20 @@ function cartaDo(f, ctx, pacCarta) {
   const all = (ctx.carta[f.uni + '|' + f.vig] || []).filter(r => r.pacote === pacCarta && r.valor > 0);
   const doProj = all.filter(r => projKey(r.projeto) === f.proj);
   return doProj.length ? { rows: doProj, nivel: 'projeto' } : { rows: all, nivel: all.length ? 'unidade' : 'nenhum' };
+}
+
+/* ── SEGUROS E LICENÇAS · ICMS · OUTROS — sem base operacional para cruzar:
+   a causa é a conta que estourou, e a ação é conferir o lançamento ── */
+function diagOutros(f, ctx, D, causa, acao, base) {
+  f.contas.filter(c => c.ov > 0).forEach(c => causa('Lançamento / contábil', `${c.conta}: ${rs(c.ov)} acima do remunerado${c.p != null ? ' (▲ ' + c.p + '%)' : ''}${fin(c.real) ? ' · realizado ' + rs(c.real) + ' × remunerado ' + rs(c.rem) : ''}`, c.ov));
+  const dSeg = f.pac === 'Seguros e licenças';
+  const lanc = (ctx.carta[f.uni + '|' + f.vig] || []).filter(r => r.valor > 0 && f.contas.some(c => NK(r.conta) === c.ck));
+  if (lanc.length) { const fo = somaPor(lanc.filter(r => r.fornecedor), r => r.fornecedor, r => r.valor); D.blocos.cartaFo = fo;
+    acao('Lançamento / contábil', `Conferir os lançamentos da Carta de Custos nessas contas`, fo.slice(0, 4).map(x => `${x.k} ${rs(x.v)}`)); }
+  if (dSeg) acao('Lançamento / contábil', `Conferir apólice e parcelas do seguro lançadas no mês (competência, placa de outra unidade, sinistro) contra o remunerado`);
+  else if (f.pac === 'ICMS') acao('Lançamento / contábil', `Conferir o crédito e o estorno de ICMS do mês com o Fiscal`);
+  else acao('Lançamento / contábil', `Conciliar o lançamento com a Contabilidade: conta sem pacote de custo (competência, rateio, reclassificação)`);
+  D.explicado = null;
 }
 
 /* ── PNEUS ── */
@@ -879,6 +914,6 @@ async function carregarProlog(sb) {
 }
 
 global.FcaAuto = { UNITS, PACOTES, vigLbl, vigDeLbl, vigIdx, vigAnt, vigSeg, projKey, unidadeDoNv3, rs, br, pct, sinalPct, impFmt, NK,
-  indexaDRE, fatos, desvioTxt, indexaDisp, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
+  indexaDRE, fatos, desvioTxt, getPacote, EXCL_FCA, unidadeDoDRE, indexaDisp, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
   diagnostico, indicadores, indexaGinfo, EXTRA, montaCatalogo, CAT: () => CAT, resumoProlog, contexto, carregar, carregarProlog, ROT, METAS, fmtInd, placaKey };
 })(typeof window !== 'undefined' ? window : globalThis);

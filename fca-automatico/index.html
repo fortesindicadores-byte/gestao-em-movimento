@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610140600">
+<meta name="build" content="202610140700">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -864,6 +864,7 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 .kcol-head.cmb{background:var(--laranja);color:#0C1017;}
 .kcol-head.mnt{background:var(--azul);color:#fff;}
 .kcol-head.pne{background:#8B5CF6;color:#fff;}
+.kcol-head.out{background:var(--cabec);color:var(--txt);}
 .kcard-causa{font-size:11px;color:var(--txt2);margin-top:5px;line-height:1.35;}
 .kl{font-weight:700;color:var(--txt3);}
 .fa-rede{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:14px;}
@@ -892,7 +893,7 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 <script src="../assets/correlacoes-dados.js?v=202610140300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
-<script src="../assets/fca-auto.js?v=202610140600"></script>
+<script src="../assets/fca-auto.js?v=202610140700"></script>
 </head>
 <body>
 <div class="app">
@@ -1000,10 +1001,12 @@ function toggleMs(id){
     p.style.left=''; p.style.right=''; const r=p.getBoundingClientRect(); if(r.right>window.innerWidth-8){p.style.left='auto';p.style.right='0';} }
 }
 const sel=id=>{const w=document.getElementById(id);return w&&w._sel?[...w._sel]:[];};
-let UNI_OPTS=[],VIG_OPTS=[],PROJ_OPTS=[],PAC_OPTS=FA.PACOTES.slice();
+let UNI_OPTS=[],VIG_OPTS=[],PROJ_OPTS=[],PAC_OPTS=[];
+const ORDEM_PAC=['Combustíveis','Manutenções','Pneus','Seguros e licenças','ICMS','Outros'];
+const pacsDe=fs=>[...new Set(fs.map(f=>f.pac))].sort((a,b)=>(ORDEM_PAC.indexOf(a)+1||99)-(ORDEM_PAC.indexOf(b)+1||99));
 const vigDoRot=r=>FA.vigDeLbl(String(r).toLowerCase());
 function popFiltros(){
-  UNI_OPTS=[...new Set(FATOS.map(f=>f.uni))].sort();
+  UNI_OPTS=[...new Set(FATOS.map(f=>f.uni))].sort(); PAC_OPTS=pacsDe(FATOS);
   VIG_OPTS=[...new Set(FATOS.map(f=>f.vig))].sort().reverse().map(v=>FA.vigLbl(v).toUpperCase());
   const wv=document.getElementById('ms-vig');
   if(wv&&!wv._init){ wv._init=true; if(CTX&&CTX.maxVig){ wv._sel.clear(); wv._sel.add(FA.vigLbl(CTX.maxVig).toUpperCase()); } }
@@ -1022,7 +1025,7 @@ const pctBadge=p=>p==null?'<span class="pctx" style="background:var(--hover);col
 /* ── RESUMO GERENCIAL ── */
 function resumoHTML(vis){
   const tot=vis.reduce((s,f)=>s+f.over,0);
-  const porPac=FA.PACOTES.map(p=>{const fs=vis.filter(f=>f.pac===p);return {p,n:fs.length,rs:fs.reduce((s,f)=>s+f.over,0)};});
+  const porPac=pacsDe(vis).map(p=>{const fs=vis.filter(f=>f.pac===p);return {p,n:fs.length,rs:fs.reduce((s,f)=>s+f.over,0)};});
   const comb=vis.filter(f=>f.pac==='Combustíveis'), combRs=comb.reduce((s,f)=>s+f.over,0);
   // causas em R$ (Combustíveis) e temas das causas (todos)
   const porCausa={}; let expl=0, econ=0;
@@ -1040,7 +1043,7 @@ function resumoHTML(vis){
     <div class="heros"><div class="hl">Desvio de custos no recorte · fatos com estouro vs remunerado</div>
       <div class="hn" style="color:var(--vermelho)">${FA.rs(tot)}</div>
       <div class="hero-sub"><div>Fatos <b>${vis.length}</b></div><div>Ações sugeridas <b>${nAcoes}</b></div><div>Combustíveis explicado <b>${combRs>0?Math.round(Math.min(1,expl/combRs)*100)+'%':'—'}</b></div><div>Unidades <b>${unis.length}</b></div></div></div>
-    <div class="kpis fa-kpis">
+    <div class="kpis fa-kpis" style="grid-template-columns:repeat(${porPac.length+2},minmax(0,1fr))">
       ${porPac.map(x=>`<div class="kpi"><span class="kl">${x.p}</span><b>${FA.rs(x.rs)}</b><i>${x.n} fato(s) · ${tot?Math.round(x.rs/tot*100):0}% do desvio</i></div>`).join('')}
       <div class="kpi"><span class="kl">Combustíveis · explicado em R$</span><b>${FA.rs(expl)}</b><i>líquido: volume, eficiência, preço, Arla e DRE × bases</i></div>
       <div class="kpi"><span class="kl">Placas e itens citados nas ações</span><b>${FA.br(ofens.length,0)}</b><i>ofensores com nome, para agir</i></div>
@@ -1077,7 +1080,7 @@ function tabelaHTML(vis){
   return h+'</tbody></table></div></div>';
 }
 /* ── KANBAN — uma coluna por pacote ── */
-const KCOLS=[{k:'Combustíveis',cls:'cmb'},{k:'Manutenções',cls:'mnt'},{k:'Pneus',cls:'pne'}];
+const KCLS={'Combustíveis':'cmb','Manutenções':'mnt','Pneus':'pne'};
 function kcardHTML(f){ const d=diag(f); const c1=d.causas[0], a1=d.acoes[0];
   return `<div class="kcard" data-id="${esc(f.id)}">
     <div class="kcard-top"><span class="korg cst">Custos</span> ${esc(f.uni)} · ${esc(f.proj)} · ${esc(f.vigLbl)}</div>
@@ -1086,15 +1089,17 @@ function kcardHTML(f){ const d=diag(f); const c1=d.causas[0], a1=d.acoes[0];
     <div class="kcard-ac"><span class="kl">Ação:</span> ${a1?esc(a1.txt)+(a1.ofens.length?' ('+esc(a1.ofens.slice(0,2).join(' · '))+')':''):'<i>—</i>'}</div>
     <div class="kcard-meta"><span>${d.causas.length} causa(s) · ${d.acoes.length} ação(ões)</span> ${d.explicado!=null?pctBadge(d.explicado):''}</div></div>`; }
 function kanbanHTML(vis){
-  const cols=KCOLS.map(c=>({c,items:vis.filter(f=>f.pac===c.k)}));
-  return `<div class="kheads">${cols.map(({c,items})=>`<div class="kcol-head ${c.cls}">${c.k}<span class="kcount">${items.length}</span></div>`).join('')}</div>`+
-    `<div class="kanban">${cols.map(({c,items})=>`<div class="kcol"><div class="kcol-body">${items.map(kcardHTML).join('')||'<div class="kempty">—</div>'}</div></div>`).join('')}</div>`;
+  const cols=pacsDe(vis).map(k=>({c:{k,cls:KCLS[k]||'out'},items:vis.filter(f=>f.pac===k)}));
+  const gc=`grid-template-columns:repeat(${cols.length||1},minmax(0,1fr))`;
+  return `<div class="kheads" style="${gc}">${cols.map(({c,items})=>`<div class="kcol-head ${c.cls}">${c.k}<span class="kcount">${items.length}</span></div>`).join('')}</div>`+
+    `<div class="kanban" style="${gc}">${cols.map(({c,items})=>`<div class="kcol"><div class="kcol-body">${items.map(kcardHTML).join('')||'<div class="kempty">—</div>'}</div></div>`).join('')}</div>`;
 }
 /* ── CORRELAÇÕES DA REDE ── */
 const rTxt=(r,n,q,ap)=>!isFinite(r)||n<8?'<span style="color:var(--txt4)">poucos pontos</span>':`<b style="color:${ap?(q<.1?'var(--vermelho)':'var(--txt)'):'var(--txt3)'}">${FA.br(r,2)}</b> <span style="color:var(--txt3)">${FA.forcaTxt(r)}${q<.1?'':' · pode ser acaso'}</span>`;
 function redeHTML(){
   const R=CTX.rede||{};
   return `<div class="fa-nota">Tudo o que o banco tem por unidade × mês entra: indicadores do Ginfo/Gerot, Dispersão de km, disponibilidade, condução (DriverPro), frota (idade, contrato, dias parados, ERP), bases de combustível, Carta de Custos e o próprio FCA. Cada linha cruza o desvio do pacote (realizado ÷ remunerado − 1) com a variável, em todas as unidades × meses. <b>Mesmo mês</b> = os dois no mesmo mês; <b>mês seguinte</b> = o indicador de um mês contra o desvio do mês seguinte, na mesma unidade. Em vermelho, quando o indicador pior vem junto com o desvio maior e dificilmente é acaso (p ajustado &lt; 0,10, Benjamini-Hochberg): é o que o motor usa para chamar um indicador fora da meta de causa. Correlação não é causa: é a pista de onde olhar primeiro.</div>
+  <div class="fa-nota">Seguros e licenças, ICMS e Outros não têm base operacional para cruzar: entram como fato (a mesma regra do FCA), com a conta que estourou como causa.</div>
   <div class="fa-rede">${FA.PACOTES.map(p=>`<div class="bloco"><div class="bhead"><h3>${p}</h3></div><div class="corpo"><table class="fa-t"><thead><tr><th>Indicador</th><th>Mesmo mês</th><th>Mês seguinte</th></tr></thead><tbody>
     ${(R[p]||[]).map(e=>`<tr><td><b>${esc(e.rot)}</b>${e.sust?' <span class="tema rede">sustenta</span>':''}<br><span style="color:var(--txt3);font-size:10.5px">${esc(e.g||'')} · ${e.n0} unidade-mês</span></td><td>${rTxt(e.r0,e.n0,e.q0,e.apoia0)}</td><td>${rTxt(e.r1,e.n1,e.q1,e.apoia1)}</td></tr>`).join('')}
   </tbody></table></div></div>`).join('')}</div>`;
@@ -1236,6 +1241,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610140600"></script>
+<script src="../assets/build-check.js?v=202610140700"></script>
 </body>
 </html>

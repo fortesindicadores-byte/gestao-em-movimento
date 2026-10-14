@@ -73,7 +73,7 @@ const lin = (v, cid, n3, cta, rem, real) => ({ c: [{ v: DATE(v) }, { v: 0 }, { v
 const gvizFrota = () => ({ status: 'ok', table: { cols: FROTA_COLS.map(l => ({ label: l })), rows: G.flatMap(x => { const [cid, n3] = U[x.u]; return [
   lin(x.v, cid, n3, 'Combustíveis Veiculos e Equipamentos', x.combRem, x.combReal), lin(x.v, cid, n3, 'Fluídos (Arla)', x.arlaRem, x.arlaReal),
   lin(x.v, cid, n3, 'Manutenção de Veículos e Equipamentos', x.manRem, x.manReal), lin(x.v, cid, n3, 'Pneus Novos', x.pnRem, x.pnReal),
-  lin(x.v, cid, n3, 'Seguro de Veículos e Equipamentos', 5000, 9000)]; })
+  lin(x.v, cid, n3, 'Seguro de Veículos e Equipamentos', 5000, 9000), lin(x.v, cid, n3, 'IPVA e Licenciamento de Veículos', 1000, 9000), lin(x.v, cid, n3, 'Depreciação', 2000, 2500)]; })
   // VAN do GRL em ago/26: o DRE escreve "ROTA (VAN) - GRL"
   .concat([lin('2026-08', 'GUARULHOS', 'ROTA (VAN) - GRL', 'Combustíveis Veiculos e Equipamentos', 20000, 22000)])
   // mês só orçado (set/26 sem realizado) não pode virar fato
@@ -173,7 +173,9 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
     const f = id => FATOS.find(x => x.id === id);
     const cgr = f('CGR|ROTA|Combustíveis|2026-08'), grl = f('GRL|ROTA|Manutenções|2026-08'), pir = f('PIR|EMPURRADA|Pneus|2026-08'), pirc = f('PIR|EMPURRADA|Combustíveis|2026-08'), van = f('GRL|VAN|Combustíveis|2026-08');
     const d = cgr && diag(cgr), dg = grl && diag(grl), dp = pir && diag(pir), dpc = pirc && diag(pirc), dv = van && diag(van);
-    return { n: FATOS.length, maxVig: CTX.maxVig, setembro: FATOS.some(x => x.vig === '2026-09'), seguro: FATOS.some(x => x.pac !== 'Combustíveis' && x.pac !== 'Manutenções' && x.pac !== 'Pneus'),
+    const seg = f('CGR|ROTA|Seguros e licenças|2026-08'), outros = f('CGR|ROTA|Outros|2026-08');
+    return { n: FATOS.length, maxVig: CTX.maxVig, setembro: FATOS.some(x => x.vig === '2026-09'), seguro: FATOS.some(x => x.pac === 'Seguros e licenças'),
+      seg: seg && { over: seg.over, dpct: seg.dpct, txt: FcaAuto.desvioTxt(seg) }, outros: outros && { over: outros.over }, segD: seg && { causas: diag(seg).causas.map(c => c.txt), acoes: diag(seg).acoes.map(a => a.txt) },
       cgr: cgr && { over: cgr.over, contas: cgr.contas.map(c => [c.conta, Math.round(c.ov)]), txt: FcaAuto.desvioTxt(cgr) },
       ponte: d && { dCusto: d.blocos.ponte.dCusto, vol: d.blocos.ponte.vol, efic: d.blocos.ponte.efic, preco: d.blocos.ponte.preco, dif: d.blocos.ponte.dif, expl: d.explicado,
         kmL: [d.blocos.comb.kmLReal, d.blocos.comb.kmLRem], causas: d.causas.map(c => [c.tema, Math.round(c.rs || 0), c.txt.slice(0, 60)]), acoes: d.acoes.map(a => [a.tema, a.ofens]) },
@@ -187,7 +189,9 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
         redeNota: (CTX.rede['Combustíveis'] || []).find(e => e.x === 'cond_nota'),
         cgrCausas: d && d.causas.map(c => [c.ind || c.tema, !!c.rede]), cgrCausa: !!(d && d.causas.some(c => c.rede && c.ind === 'cond_nota') && !d.sinais.some(x => x.ind === 'cond_nota')) } };
   });
-  af('fatos: só pacotes que estouraram; set/26 (só orçado) e Seguro ficam fora', r.n > 0 && !r.setembro && !r.seguro && r.maxVig === '2026-08', `${r.n} fatos · DRE até ${r.maxVig}`);
+  af('fatos: a regra do FCA — todo pacote que estourou, inclusive Seguros e licenças e Outros; set/26 (só orçado) fora', r.n > 0 && !r.setembro && r.seguro && r.maxVig === '2026-08', `${r.n} fatos · DRE até ${r.maxVig}`);
+  af('Seguro vira fato "Seguros e licenças" de R$ 4.000 (+80%); IPVA (excluído no FCA) não entra; Depreciação cai em "Outros"', r.seg && Math.round(r.seg.over) === 4000 && Math.round(r.seg.dpct) === 80 && !r.seg.txt.includes('IPVA') && r.outros && Math.round(r.outros.over) === 500, JSON.stringify([r.seg, r.outros]));
+  af('…com a conta como causa e a conferência do lançamento como ação', r.segD && r.segD.causas[0] && /Seguro de Veículos e Equipamentos: R\$ 4,0 mil acima do remunerado \(▲ 80%\)/.test(r.segD.causas[0]) && r.segD.acoes.some(a => /apólice/.test(a)), JSON.stringify(r.segD));
   af('CGR · ROTA · ago/26 · Combustíveis = R$ 31.000 (30 mil da conta + 1 mil do Arla)', r.cgr && Math.round(r.cgr.over) === 31000, JSON.stringify(r.cgr && r.cgr.contas));
   af('o fato tem o MESMO texto do FCA (Desvio + Contas)', r.cgr && /^Desvio: ▲ R\$ 31\.000 · ▲ -30%\nContas:\n- Combustíveis Veiculos e Equipamentos: ▲ 30K \| ▲ 30%\n- Fluídos \(Arla\): ▲ 1K \| ▲ 20%$/.test(r.cgr.txt), r.cgr && JSON.stringify(r.cgr.txt));
   const P = r.ponte || {};
