@@ -529,7 +529,7 @@ function diagnostico(f, ctx) {
   } else D.explicado = null;
   // ordem: R$ primeiro (o que fecha a conta), depois o que a rede sustenta, depois o resto
   // (os grupos da Carta vêm antes de tudo em Manutenções — Renan, 14/10/2026: "principalmente grupos")
-  const peso = c => (c.prio ? 1e12 : 0) + (c.soma === false ? 0 : (c.rs || 0)) * 10 + (c.rede ? 5 : 0) + (c.rs != null && c.soma !== false ? 1 : 0);
+  const peso = c => (c.prio || 0) * 1e12 + (c.soma === false ? 0 : (c.rs || 0)) * 10 + (c.rede ? 5 : 0) + (c.rs != null && c.soma !== false ? 1 : 0);
   D.causas.sort((a, b) => peso(b) - peso(a));
   D.historico = histDoFato(f, ctx);
   D.causaTxt = D.causas.map((c, i) => `${i + 1}. ${c.txt}`).join('\n') + (D.ano ? (D.causas.length ? '\n' : '') + 'Ano: ' + D.ano.txt : '');
@@ -556,7 +556,10 @@ function acumuladoAno(f, ctx) {
   const per = de === ate ? ate : de + ' → ' + ate;
   if (Math.round(over) > 0) {
     if (restam > 0 && remMes > 0) { r.reducao = over / (remMes * restam) * 100;
-      r.txt = `Desvio no ano (${per}) ▲ ${vals} · curva de captura: rodar ${Math.round(r.reducao)}% abaixo do remunerado ${restam === 1 ? 'no mês que falta' : 'nos ' + restam + ' meses que faltam'} (${vigLbl(vigSeg(f.vig))}${restam > 1 ? ' → dez/' + ano.slice(2) : ''}) para fechar o ano no remunerado`; }
+      const quando = `${restam === 1 ? 'no mês que falta' : 'nos ' + restam + ' meses que faltam'} (${vigLbl(vigSeg(f.vig))}${restam > 1 ? ' → dez/' + ano.slice(2) : ''})`;
+      // acima de 100% não há como capturar: o desvio já passa do remunerado inteiro dos meses que faltam
+      if (r.reducao > 100) r.txt = `Desvio no ano (${per}) ▲ ${vals} · não fecha no ano: o desvio já supera o remunerado ${quando}, R$ ${Math.round(remMes * restam).toLocaleString('pt-BR')}`;
+      else r.txt = `Desvio no ano (${per}) ▲ ${vals} · curva de captura: rodar ${r.reducao < 10 ? br(r.reducao, 1) : Math.round(r.reducao)}% abaixo do remunerado ${quando} para fechar o ano no remunerado`; }
     else r.txt = `Desvio no ano (${per}) ▲ ${vals} · ano fechado: não há mês para capturar`;
   } else if (Math.round(over) < 0) r.txt = `Saving no ano (${per}) ▼ ${vals} · tratar o desvio do mês como pontual`;
   else r.txt = `No ano (${per}), no remunerado`;
@@ -748,12 +751,12 @@ function diagManut(f, ctx, D, causa, acao, base) {
     // que mais gastaram. Placas, fornecedores e grupos de custos podem explicar. Mas principalmente grupos.
     // Placas se ficaram com gastos muito altos, trazer valor e a causa (Motor, Embreagem etc)")
     const g3 = gr.slice(0, 3).map((g, i) => `${g.k} ${rs(g.v)} (${pct(g.v / tot * 100)}${i === 0 ? ' do lançado de ' + rs(tot) : ''})`);
-    causa('Corretiva / quebra', `Grupos que mais gastaram (Carta de Custos${lanc.nivel === 'unidade' ? ', unidade inteira' : ''}): ${g3.join(', ')}`, null, { prio: true });
+    causa('Corretiva / quebra', `Grupos que mais gastaram (Carta de Custos${lanc.nivel === 'unidade' ? ', unidade inteira' : ''}): ${g3.join(', ')}`, null, { prio: 3 });
     // placa com gasto muito alto = acima de 2× a média por placa e de 15% do lançado; vai com o valor e o grupo
     const mediaPl = pl.length ? pl.reduce((s, x) => s + x.v, 0) / pl.length : 0;
     const caras = pl.filter(p => p.v >= Math.max(2 * mediaPl, 0.15 * tot, 1000)).slice(0, 4);
-    if (caras.length) causa('Corretiva / quebra', `Placas com gasto muito alto: ${caras.map(p => `${p.k} ${rs(p.v)} (${grupoDa(p.k)})`).join('; ')}`, null);
-    if (fo[0] && fo.length > 1 && fo[0].v >= 0.4 * tot) causa('Peças / fornecedor', `Fornecedor que concentra o gasto: ${fo[0].k} ${rs(fo[0].v)} (${pct(fo[0].v / tot * 100)} do lançado)`, null);
+    if (caras.length) causa('Corretiva / quebra', `Placas com gasto muito alto: ${caras.map(p => `${p.k} ${rs(p.v)} (${grupoDa(p.k)})`).join('; ')}`, null, { prio: 2 });
+    if (fo[0] && fo.length > 1 && fo[0].v >= 0.4 * tot) causa('Peças / fornecedor', `Fornecedor que concentra o gasto: ${fo[0].k} ${rs(fo[0].v)} (${pct(fo[0].v / tot * 100)} do lançado)`, null, { prio: 1 });
     const g1 = gr[0], top3 = pl.slice(0, 3);
     if (g1) { const plG = somaPor(lanc.rows.filter(r => grupo(r) === g1.k && ehPlaca(r.equipamento)), r => r.equipamento, r => r.valor).slice(0, 5);
       acao('Corretiva / quebra', `Atacar o grupo que mais pesa (${g1.k}): análise de causa raiz nas placas desse grupo (reincidência, idade, garantia, cobertura do contrato)`, plG.map(x => `${x.k} ${rs(x.v)}`)); }
