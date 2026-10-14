@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610132350">
+<meta name="build" content="202610150900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -404,6 +404,10 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
     <a class="s-item" href="balanco-massa/" id="lnk-bm-import" style="text-decoration:none;display:none" title="Subir o export do DRE com os lançamentos do balanço de massa (só administradores)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       Importar Balanço
+    </a>
+    <a class="s-item" href="dispersao/" id="lnk-disp-import" style="text-decoration:none;display:none" title="Subir a planilha Dispersão de KM - Consolidado, de set/26 em diante (só administradores)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Importar Dispersão
     </a>
     <a class="s-item" href="../seara-km/" style="text-decoration:none" title="Ver visão da Seara">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
@@ -1826,7 +1830,7 @@ document.addEventListener('DOMContentLoaded', () => { initAccessLog(); initData(
     const s = JSON.parse(localStorage.getItem('sb-lozwipoeacpvplgkrxkq-auth-token') || 'null');
     const uid = s && s.user && s.user.id; if (!uid) return;
     const p = JSON.parse(localStorage.getItem('gem_perfil_' + uid) || 'null');
-    if (p && p.is_admin) { const a = document.getElementById('lnk-bm-import'); if (a) a.style.display = ''; }
+    if (p && p.is_admin) { ['lnk-bm-import','lnk-disp-import'].forEach(id => { const a = document.getElementById(id); if (a) a.style.display = ''; }); }
   } catch (e) {}
 })();
 </script>
@@ -1846,6 +1850,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610132350"></script>
+<script src="../assets/build-check.js?v=202610150900"></script>
 </body>
 </html>

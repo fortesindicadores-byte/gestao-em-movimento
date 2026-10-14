@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="build" content="202610150900">
+<title>Dispersão de km · Importar · BI Frota</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="../../assets/dispersao-km.js?v=202610150900"></script>
+<style>
+:root{
+  --fundo:#202022; --app:rgba(30,40,60,.34); --side:rgba(30,30,30,.50);
+  --card-brd:rgba(255,255,255,.07); --luz-card:inset 0 1px 0 rgba(255,255,255,.08);
+  --txt:#EEF2FA; --txt2:#C9D0DD; --txt3:#A9B1C0;
+  --linha:rgba(255,255,255,.06); --hover:rgba(255,255,255,.06); --cabec:#2B2B30;
+  --laranja:#F97316; --verde:#3BB33B; --vermelho:#FF5252; --ambar:#F4A100;
+}
+body.claro{
+  --fundo:#E1E2E5; --app:rgba(255,255,255,.34); --side:rgba(255,255,255,.50);
+  --card-brd:rgba(15,23,42,.10); --luz-card:inset 0 1px 0 rgba(255,255,255,1);
+  --txt:#161D2B; --txt2:#4A5568; --txt3:#737D91;
+  --linha:rgba(15,23,42,.10); --hover:rgba(15,23,42,.05); --cabec:#DCDFE6;
+  --verde:#00B300; --vermelho:#FF0000; --ambar:#E9A400;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--fundo);color:var(--txt);font-family:'Montserrat',sans-serif;font-size:13px;min-height:100vh;}
+.app{max-width:1180px;margin:0 auto;padding:26px 24px 60px;}
+.topo{display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap;}
+.voltar{display:inline-flex;align-items:center;gap:6px;background:var(--side);border:1px solid var(--card-brd);
+  border-radius:8px;padding:7px 12px;font-size:10.5px;font-weight:800;color:var(--txt2);text-decoration:none;
+  text-transform:uppercase;letter-spacing:.6px;}
+.voltar:hover{background:var(--hover);color:var(--txt);}
+/* "Voltar" sempre embaixo, à esquerda (Renan, 07/10/2026) */
+.pe-volta{display:flex;gap:8px;margin-top:18px;}
+h1{font-size:20px;font-weight:800;}
+.sub{font-size:11.5px;color:var(--txt3);margin:2px 0 22px;line-height:1.6;}
+.card{background:var(--side);border:1px solid var(--card-brd);border-radius:13px;box-shadow:var(--luz-card);
+  padding:18px 20px;margin-bottom:14px;}
+.ctit{font-size:13px;font-weight:800;margin-bottom:3px;}
+.csub{font-size:11px;color:var(--txt3);margin-bottom:14px;line-height:1.6;}
+.drop{border:1.6px dashed var(--card-brd);border-radius:13px;background:var(--side);padding:30px 22px;
+  text-align:center;cursor:pointer;transition:border-color .18s,background .18s;}
+.drop:hover,.drop.sobre{border-color:var(--laranja);background:var(--hover);}
+.drop b{display:block;font-size:14px;font-weight:800;margin-bottom:5px;}
+.drop span{font-size:11.5px;color:var(--txt3);line-height:1.75;}
+.drop code{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--laranja);}
+.res{margin-top:14px;display:flex;flex-direction:column;gap:9px;}
+.item{border:1px solid var(--card-brd);border-left-width:3px;border-radius:9px;padding:11px 14px;background:var(--side);}
+.item.ok{border-left-color:var(--verde);}
+.item.erro{border-left-color:var(--vermelho);}
+.item.aviso{border-left-color:var(--ambar);}
+.item b{font-size:12px;font-weight:800;display:block;margin-bottom:3px;}
+.item span{font-size:11px;color:var(--txt2);line-height:1.6;}
+.item span b{display:inline;font-size:inherit;margin:0;}   /* negrito dentro do texto não quebra linha */
+.item .mot{color:var(--vermelho);font-weight:700;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--cabec);color:var(--txt);font-size:10px;font-weight:800;padding:9px 11px;
+  text-transform:uppercase;letter-spacing:.5px;text-align:left;white-space:nowrap;position:sticky;top:0;}
+thead th.num{text-align:right;}
+td{padding:9px 11px;border-bottom:1px solid var(--linha);color:var(--txt);white-space:nowrap;}
+td.num{text-align:right;}
+tbody tr:hover{background:var(--hover);}
+.vazio{padding:26px;text-align:center;color:var(--txt3);font-size:11.5px;}
+.bt{background:rgba(249,115,22,.14);border:1px solid rgba(249,115,22,.3);border-radius:8px;padding:8px 15px;
+  font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:800;color:var(--laranja);cursor:pointer;
+  text-transform:uppercase;letter-spacing:.6px;}
+.bt:hover{background:rgba(249,115,22,.28);}
+.aviso-topo{border:1px solid rgba(244,161,0,.35);background:rgba(244,161,0,.1);border-radius:10px;
+  padding:11px 14px;font-size:11.5px;color:var(--txt2);line-height:1.65;margin-bottom:14px;}
+@media(max-width:700px){ .app{padding:18px 14px 40px;} table{font-size:11px;} td,thead th{padding:7px 8px;} }
+
+.ferr{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.ferr label{font-size:10px;font-weight:800;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;}
+select.sel{background:var(--side);color:var(--txt);border:1px solid var(--card-brd);border-radius:8px;padding:6px 10px;
+  font-family:'Montserrat',sans-serif;font-size:11.5px;font-weight:700;}
+td.cr{color:var(--vermelho);font-weight:700;} td.cg{color:var(--verde);font-weight:700;}
+tr.tot td{background:var(--cabec);font-weight:800;position:sticky;bottom:0;}
+.tag{display:inline-block;font-size:9.5px;font-weight:800;border-radius:6px;padding:2px 7px;text-transform:uppercase;letter-spacing:.4px;}
+.tag.pl{background:rgba(59,179,59,.14);color:var(--verde);} .tag.km{background:rgba(244,161,0,.16);color:var(--ambar);}
+.mut{color:var(--txt3);}
+</style>
+</head>
+<body>
+<script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../");}catch(e){}</script>
+
+<div class="app">
+  <div class="topo">
+    <h1>Dispersão de km</h1>
+  </div>
+  <p class="sub">Sobe a planilha <b>Dispersão de KM - Consolidado</b> para o banco, <b>de set/26 em diante</b> (jan a ago continuam vindo
+    da aba Dispersão de km). O km remunerado vem da planilha. O km rodado também, quando o mês já tem; quando não tem, é
+    <b>completado pela aba Km/L</b>, placa a placa, com o projeto da sua planilha (Van pela Km/L, UDC = Van).</p>
+
+  <div id="gate"></div>
+
+  <div id="miolo" style="display:none">
+    <div class="card">
+      <div class="ctit">Subir a planilha</div>
+      <div class="csub">Lê a <b>01-BD</b> (km por mês × unidade × projeto) e a lista de placas (<b>02-ABERT. PLACA</b> e a parte T1 da
+        <b>02-Dinamica. Placa</b>). As placas são comparadas sempre em <b>Mercosul</b>; na tela aparecem como estão na planilha.
+        Subir de novo <b>substitui</b> os meses que vêm no arquivo.</div>
+      <div class="drop" id="drop">
+        <b>Arraste o arquivo aqui</b>
+        <span>ou clique para escolher<br>
+          <code>Dispersão de KM - Consolidado · xlsm / xlsx</code></span>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.xlsm,.xls" style="display:none">
+      <div class="res" id="res"></div>
+    </div>
+
+    <div class="card" style="padding-bottom:10px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div class="ctit">Dispersão por unidade e projeto</div>
+          <div class="csub" id="subRes">Lendo…</div>
+        </div>
+        <button class="bt" onclick="carrega()">Atualizar</button>
+      </div>
+      <div class="ferr"><label for="selVig">Vigência</label><select class="sel" id="selVig"></select></div>
+      <div id="tab"></div>
+    </div>
+
+    <div class="card" style="padding-bottom:10px">
+      <div class="ctit">Placas do mês</div>
+      <div class="csub">Km rodado de cada placa na aba Km/L (uma linha por placa e mês) e de onde saiu o projeto.</div>
+      <div class="ferr"><label for="selUni">Unidade</label><select class="sel" id="selUni"></select></div>
+      <div id="tabPl"></div>
+    </div>
+  </div>
+  <footer class="pe-volta">
+    <a href="../" class="voltar">← Voltar ao Painel KM</a>
+    <a href="../../" class="voltar">⌂ Voltar ao Hub</a>
+  </footer>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   IMPORTAÇÃO DA DISPERSÃO DE KM (Renan, 14/10/2026)
+   A leitura e a regra do km rodado moram em assets/dispersao-km.js.
+   Mesmo cuidado das outras importações: coluna que falta é erro visível,
+   o cartão só fica verde com o banco confirmando, a tabela relê o banco.
+   ══════════════════════════════════════════════════════════════ */
+const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
+const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+let sb=null, EMAIL='', ADMIN=false;
+let LINHAS=[], PLACAS=[], KML=[], KMLINFO=null, KM=null;
+const D=window.DispersaoKm;
+
+const $=i=>document.getElementById(i);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const n0=v=>v==null||!isFinite(v)?'—':Math.round(v).toLocaleString('pt-BR');
+const pct=v=>v==null||!isFinite(v)?'—':(v>0?'+':'')+(v*100).toFixed(1).replace('.',',')+'%';
+const brl=v=>v==null||!isFinite(v)?'—':(v<0?'-':'')+'R$ '+Math.abs(Math.round(v)).toLocaleString('pt-BR');
+const vigRot=v=>{ const [a,m]=String(v).split('-'); return ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][+m-1]+'/'+String(a).slice(2); };
+const dt=s=>{ const d=new Date(s); return isNaN(d)?'—':d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
+
+function cartao(classe, titulo, texto, motivo){
+  const d=document.createElement('div'); d.className='item '+classe;
+  d.innerHTML=`<b>${esc(titulo)}</b><span>${texto}${motivo?`<br><span class="mot">${esc(motivo)}</span>`:''}</span>`;
+  $('res').appendChild(d);
+}
+
+async function todas(tab, cols, ordem){
+  const out=[]; const passo=1000;
+  for(let i=0;;i+=passo){
+    let q=sb.from(tab).select(cols).range(i,i+passo-1); if(ordem) q=q.order(ordem);
+    const { data, error } = await q;
+    if(error) throw new Error(tab+': '+error.message);
+    out.push(...(data||[])); if(!data||data.length<passo) break;
+  }
+  return out;
+}
+
+// ── o RAMO QUE GRAVA: apaga as vigências do arquivo e grava as novas ──
+async function grava(r){
+  const vigs=[...new Set(r.linhas.map(l=>l.vigencia))];
+  for(const t of ['dispersao_km','dispersao_placa']){
+    const { error } = await sb.from(t).delete().in('vigencia',vigs);
+    if(error) throw new Error('ao limpar '+t+': '+error.message);
+  }
+  const marca={ arquivo:r.arquivo };
+  const lk=r.linhas.map(l=>({ ...l, ...marca, updated_by:EMAIL }));
+  const { data:dk, error:ek } = await sb.from('dispersao_km').insert(lk).select('vigencia');
+  if(ek) throw new Error(ek.message);
+  let np=0; const passo=500;
+  for(let i=0;i<r.placas.length;i+=passo){
+    const { data, error } = await sb.from('dispersao_placa').insert(r.placas.slice(i,i+passo).map(p=>({ ...p, ...marca }))).select('placa');
+    if(error) throw new Error(error.message);
+    np+=(data||[]).length;
+  }
+  return { nk:(dk||[]).length, np, vigs };
+}
+
+async function recebeArquivos(lista){
+  if(!lista||!lista.length) return;
+  $('res').innerHTML='';
+  if(typeof XLSX==='undefined'){ cartao('erro','Leitor de planilha ainda carregando','Tente de novo em um instante.'); return; }
+  if(!ADMIN){ cartao('erro','Sem permissão para gravar','Seu acesso não é de administrador: o banco recusaria a escrita.'); return; }
+  const f=lista[0];
+  try{
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
+    const r=D.lePlanilha(XLSX, wb, f.name); r.arquivo=f.name;
+    if(!r.linhas.length){
+      cartao('erro', f.name, `O arquivo não tem nenhum mês de <b>${esc(vigRot(r.inicio))}</b> em diante, então <b>nada foi gravado</b>.`,
+        r.antes.length?`Meses lidos e deixados de fora: ${r.antes.map(vigRot).join(', ')}.`:'');
+      return;
+    }
+    const g=await grava(r);
+    const semKm=r.linhas.filter(l=>l.km_real==null).length;
+    const notas=[...r.avisos];
+    if(r.antes.length) notas.push(`ficaram de fora (vêm da aba Dispersão de km): ${r.antes.map(vigRot).join(', ')}`);
+    if(g.nk!==r.linhas.length||g.np!==r.placas.length) notas.push(`o banco confirmou ${g.nk} de ${r.linhas.length} linhas e ${g.np} de ${r.placas.length} placas`);
+    cartao(notas.length?'aviso':'ok', f.name,
+      `<b>${g.nk}</b> linha(s) (mês × unidade × projeto) e <b>${g.np}</b> placa(s) gravadas · meses <b>${esc(g.vigs.sort().map(vigRot).join(', '))}</b>`
+      +(semKm?`<br><b>${semKm}</b> linha(s) sem km rodado na planilha: completadas pela aba Km/L`:''),
+      notas.length?notas.join(' · '):'');
+    await carrega();
+  }catch(e){
+    cartao('erro', f.name, 'Falhou e <b>nada foi gravado</b> deste arquivo.', e.message||String(e));
+  }
+}
+
+// ── leitura do banco e a conta ──
+async function carrega(){
+  $('tab').innerHTML='<div class="vazio">Lendo…</div>'; $('tabPl').innerHTML='';
+  try{
+    const [lin, pls, kml, base] = await Promise.all([
+      todas('dispersao_km','*','vigencia'),
+      todas('dispersao_placa','vigencia,unidade,projeto,placa,placa_origem,km_rem','vigencia'),
+      todas('sh_consumo_km_litro','vigencia,projeto,placa,km_rodado_horas_trabalhadas','linha'),
+      sb.from('sh_base').select('carregado_em,erro').eq('slug','consumo_km_litro').maybeSingle().then(r=>r.data).catch(()=>null)
+    ]);
+    LINHAS=lin; PLACAS=pls; KMLINFO=base;
+    KML=kml.map(r=>{ const m=String(r.vigencia||'').match(/^(\d{2})\/(\d{4})$/);
+      return { vigencia:m?m[2]+'-'+m[1]:'', projeto:r.projeto, placa:r.placa, km:+r.km_rodado_horas_trabalhadas||0 }; })
+      .filter(r=>r.vigencia>=D.INICIO);
+    KM=D.kmRodado(PLACAS, KML);
+  }catch(e){
+    $('tab').innerHTML=`<div class="vazio">Não consegui ler: ${esc(e.message||e)}</div>`; $('subRes').textContent=''; return;
+  }
+  const vigs=[...new Set(LINHAS.map(l=>l.vigencia))].sort().reverse();
+  const atual=$('selVig').value;
+  $('selVig').innerHTML=vigs.map(v=>`<option value="${v}">${vigRot(v)}</option>`).join('');
+  if(vigs.includes(atual)) $('selVig').value=atual;
+  desenha();
+}
+
+function desenha(){
+  const v=$('selVig').value;
+  const kmlTxt=KMLINFO?` · aba Km/L carregada em ${dt(KMLINFO.carregado_em)}${KMLINFO.erro&&/^FALHOU/.test(KMLINFO.erro)?' (a última carga falhou: o km rodado pode estar parado)':''}`:'';
+  if(!v){ $('tab').innerHTML='<div class="vazio">Nada no banco ainda: suba a planilha acima.</div>'; $('subRes').textContent='De set/26 em diante'+kmlTxt; return; }
+  const t=D.monta(LINHAS.filter(l=>l.vigencia===v), KM)
+    .sort((a,b)=>a.unidade.localeCompare(b.unidade)||D.PROJ.indexOf(a.projeto)-D.PROJ.indexOf(b.projeto));
+  const quando=LINHAS.filter(l=>l.vigencia===v).reduce((m,l)=>l.updated_at>m?l.updated_at:m,'');
+  $('subRes').textContent=`${vigRot(v)} · planilha carregada em ${dt(quando)}${kmlTxt}`;
+  let tr=0, tk=0, tR=0;
+  const corpo=t.map(r=>{
+    tr+=+r.km_rem||0; if(r.km_rodado!=null) tk+=r.km_rodado; const rs=r.disp_km!=null&&r.fator_rskm!=null?r.disp_km*r.fator_rskm:null; if(rs!=null) tR+=rs;
+    return `<tr><td>${esc(r.unidade)}</td><td title="${esc(r.unidade_orig||'')} · ${esc(r.projetos_orig||'')}">${esc(r.projeto)}</td>`
+      +`<td class="num">${n0(r.km_rem)}</td><td class="num">${n0(r.km_rodado)}</td>`
+      +`<td>${r.fonte==='planilha'?'<span class="tag pl">planilha</span>':r.fonte?'<span class="tag km">Km/L</span>':'<span class="mut">—</span>'}</td>`
+      +`<td class="num ${r.disp_km>0?'cr':r.disp_km<0?'cg':''}">${n0(r.disp_km)}</td><td class="num ${r.disp_pct>0?'cr':r.disp_pct<0?'cg':''}">${pct(r.disp_pct)}</td>`
+      +`<td class="num">${r.fator_rskm!=null?String(r.fator_rskm.toFixed(2)).replace('.',','):'—'}</td><td class="num ${rs>0?'cr':rs<0?'cg':''}">${brl(rs)}</td></tr>`;
+  }).join('');
+  const dT=tk-tr;
+  $('tab').innerHTML='<div style="overflow:auto;max-height:56vh"><table><thead><tr>'
+    +'<th>Unidade</th><th>Projeto</th><th class="num">Km remunerado</th><th class="num">Km rodado</th><th>Fonte</th>'
+    +'<th class="num">Dispersão (km)</th><th class="num">Dispersão (%)</th><th class="num">R$/km</th><th class="num">Dispersão (R$)</th></tr></thead><tbody>'
+    +corpo+`<tr class="tot"><td>Total</td><td></td><td class="num">${n0(tr)}</td><td class="num">${n0(tk)}</td><td></td>`
+    +`<td class="num ${dT>0?'cr':'cg'}">${n0(dT)}</td><td class="num ${dT>0?'cr':'cg'}">${pct(tr?dT/tr:null)}</td><td></td><td class="num ${tR>0?'cr':'cg'}">${brl(tR)}</td></tr>`
+    +'</tbody></table></div>';
+  desenhaPlacas(v);
+}
+
+function desenhaPlacas(v){
+  const det=KM.det.filter(d=>d.vigencia===v);
+  const unis=[...new Set(LINHAS.filter(l=>l.vigencia===v).map(l=>l.unidade))].sort();
+  const sel=$('selUni').value;
+  $('selUni').innerHTML='<option value="">Todas</option>'+unis.map(u=>`<option${u===sel?' selected':''}>${u}</option>`).join('');
+  const u=$('selUni').value;
+  // placa como está NA PLANILHA (senão, como está na aba Km/L); km rem da planilha no projeto escolhido
+  const pOrig=new Map(), pRem=new Map();
+  PLACAS.filter(p=>p.vigencia===v).forEach(p=>{ if(!pOrig.has(p.placa)) pOrig.set(p.placa,p.placa_origem||p.placa);
+    const k=p.placa+'|'+p.unidade+'|'+p.projeto; pRem.set(k,(pRem.get(k)||0)+(+p.km_rem||0)); });
+  const ls=det.filter(d=>unis.includes(d.unidade)&&(!u||d.unidade===u))
+    .sort((a,b)=>a.unidade.localeCompare(b.unidade)||a.projeto.localeCompare(b.projeto)||b.km-a.km);
+  if(!ls.length){ $('tabPl').innerHTML='<div class="vazio">Nenhuma placa da aba Km/L neste mês.</div>'; return; }
+  $('tabPl').innerHTML='<div style="overflow:auto;max-height:52vh"><table><thead><tr><th>Placa</th><th>Unidade</th><th>Projeto</th>'
+    +'<th>De onde saiu o projeto</th><th>Projeto na Km/L</th><th class="num">Km rem (planilha)</th><th class="num">Km rodado (Km/L)</th></tr></thead><tbody>'
+    +ls.map(d=>{ const rem=pRem.get(d.placa+'|'+d.unidade+'|'+d.projeto);
+      return `<tr><td>${esc(pOrig.get(d.placa)||d.placa_origem)}</td><td>${esc(d.unidade)}</td><td>${esc(d.projeto)}</td>`
+        +`<td>${esc(d.origem.replace(/\((\d{4}-\d{2})\)/,(m,x)=>'(de '+vigRot(x)+')'))}</td><td class="mut">${esc(d.projeto_kml)}</td>`
+        +`<td class="num">${rem!=null?n0(rem):'—'}</td><td class="num">${n0(d.km)}</td></tr>`; }).join('')
+    +'</tbody></table></div>';
+}
+
+// ── entrada ──
+(async function(){
+  try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }
+  catch(e){ $('gate').innerHTML='<div class="card">Não consegui iniciar a conexão com o portal.</div>'; return; }
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ $('gate').innerHTML='<div class="card">Entre pelo portal para usar esta tela. <a href="../../" style="color:var(--laranja)">Ir para o hub</a></div>'; return; }
+  EMAIL=session.user.email||'';
+  try{ const { data } = await sb.from('fca_profiles').select('is_admin').eq('user_id',session.user.id).maybeSingle(); ADMIN=!!(data&&data.is_admin); }
+  catch(e){ ADMIN=false; }
+  $('gate').innerHTML = ADMIN ? '' :
+    '<div class="aviso-topo">Você consegue <b>ver</b> o que está carregado, mas a gravação é só para administradores: é o banco que decide, não a tela.</div>';
+  $('miolo').style.display='';
+  const drop=$('drop'), inp=$('fileInput');
+  drop.addEventListener('click',()=>inp.click());
+  inp.addEventListener('change',e=>{ recebeArquivos([...e.target.files]); inp.value=''; });
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('sobre');}));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('sobre');}));
+  drop.addEventListener('drop',e=>recebeArquivos([...e.dataTransfer.files]));
+  ['dragover','drop'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
+  $('selVig').addEventListener('change',desenha);
+  $('selUni').addEventListener('change',()=>desenhaPlacas($('selVig').value));
+  try{ document.body.classList.toggle('claro',(localStorage.getItem('bi_theme')||'dark')==='light'); }catch(e){}
+  carrega();
+})();
+</script>
+<script src="../../assets/mobile.js"></script>
+<script src="../../assets/modo-tv.js?v=202610150900"></script>
+<script src="../../assets/build-check.js?v=202610150900"></script>
+</body>
+</html>
