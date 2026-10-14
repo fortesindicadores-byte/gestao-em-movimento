@@ -4,6 +4,11 @@ name: Painel KM BM Check
 # painel calculou, por mês e por unidade|projeto. Só leitura.
 on:
   workflow_dispatch:
+    inputs:
+      set:
+        description: '1 = simula set/26 da Dispersão importada ligado'
+        required: false
+        default: ''
 
 jobs:
   check:
@@ -23,3 +28,4 @@ jobs:
         run: node scripts/painel-km-bm-check.mjs
         env:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          SET: ${{ github.event.inputs.set }}

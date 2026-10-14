@@ -43,12 +43,13 @@ await ctx.route('https://lozwipoeacpvplgkrxkq.supabase.co/**', async r => {
 const pg = await ctx.newPage();
 pg.on('pageerror', e => console.log('  [pageerror]', e.message));
 pg.on('console', m => { const t = m.text(); if (m.type() !== 'log' || /balan/i.test(t)) console.log('  [console]', t.slice(0, 600)); });
-await pg.addInitScript(() => {
-  sessionStorage.setItem('gem_hub', '1'); try { Object.keys(localStorage).filter(k => /^bi_cache_km/.test(k)).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+const SET = process.env.SET === '1'; console.log(SET ? 'SIMULAÇÃO: set/26 do banco LIGADO' : 'painel como está publicado');
+await pg.addInitScript((SET) => {
+  sessionStorage.setItem('gem_hub', '1'); if (SET) window.__dispBanco = true; try { Object.keys(localStorage).filter(k => /^bi_cache_km/.test(k)).forEach(k => localStorage.removeItem(k)); } catch (e) {}
   const exp = Math.floor(Date.now() / 1000) + 86400 * 30;
   localStorage.setItem('sb-lozwipoeacpvplgkrxkq-auth-token', JSON.stringify({ access_token: 'x.eyJzdWIiOiJjaGVjayJ9.x', refresh_token: 'r', token_type: 'bearer', expires_in: 86400 * 30, expires_at: exp,
     user: { id: 'check', email: 'check@local', aud: 'authenticated', role: 'authenticated' } }));
-});
+}, SET);
 const t0 = Date.now();
 await pg.goto(BASE + '/painel-km/index.html', { waitUntil: 'domcontentloaded' });
 await pg.waitForFunction(() => typeof ALL !== 'undefined' && ALL.length && ALL.some(r => 'rem0' in r), { timeout: 300000 });
