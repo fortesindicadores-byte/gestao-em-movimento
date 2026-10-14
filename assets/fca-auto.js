@@ -768,7 +768,7 @@ function sinaisRede(f, ctx, D, excluir, apenas) {
   const ind = indicadores(f.uni, f.vig, ctx, lista); D.blocos.ind = ind;
   ind.filter(i => i.ruim).forEach(i => {
     const txt = `${i.rot}: ${fmtInd(i.k, i.val)} (${i.ref}). ${redeFala(i.rede, f.pac)}`;
-    if (i.rede && i.rede.sust) D.causas.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || 'Oficina / SLA', txt, rs: null, rede: true, ind: i.k, forca: i.rede.forca, val: i.val, meta: METAS[i.k] });
+    if (i.rede && i.rede.sust) D.causas.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || 'Oficina / SLA', txt, rs: null, rede: true, ind: i.k, forca: i.rede.forca, val: i.val, meta: i.meta, dir: METAS[i.k] != null ? (/osVenc|osCritica/.test(i.k) ? 'down' : 'up') : (CAT[i.k] || {}).dir });
     else if (METAS[i.k] != null || i.k === 'dispersao' || (i.rede && i.rede.forca >= 0.2 && Math.max(i.rede.n0 || 0, i.rede.n1 || 0) >= 30)) D.sinais.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || '', txt, ind: i.k });
   });
   return ind;
@@ -854,7 +854,9 @@ const REDE_PNEUS = ['pneus'];
 function umaDaRede(D, permitidos) {
   // perto da meta não é causa (Renan, 14/10/2026, sobre o Checklist 94,3% × 95% ao lado do km do contrato):
   // com meta, só entra quem está a 5% dela ou mais (OS vencida/crítica: acima da meta)
-  const longe = c => { if (c.meta == null || !fin(c.val)) return true; if (c.ind === 'osVenc' || c.ind === 'osCritica') return c.val > c.meta; return c.val <= c.meta * 0.95; };
+  // vale também para a régua do quartil da rede (MTTR, MTBF, idade…): só quem passa dela por 5% ou mais
+  const longe = c => { if (c.meta == null || !fin(c.val)) return true; if (c.ind === 'osVenc' || c.ind === 'osCritica') return c.val > c.meta;
+    return c.dir === 'down' ? c.val >= c.meta * 1.05 : c.val <= c.meta * 0.95; };
   const rede = D.causas.filter(c => c.rede), fora = c => !permitidos.includes(c.ind) || !longe(c);
   const ok = rede.filter(c => !fora(c)).sort((a, b) => (b.forca || 0) - (a.forca || 0));
   const fica = ok[0] || null;

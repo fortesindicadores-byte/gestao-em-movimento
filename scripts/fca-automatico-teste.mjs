@@ -208,7 +208,7 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
     const ang = f('ANG|DISTRIBUICAO URBANA|Combustíveis|2026-08'), da = ang && diag(ang), cgrp = f('CGR|ROTA|Pneus|2026-08');
     const inv = { n: 0, erros: [] }; FATOS.forEach(fx => { const dx = diag(fx); inv.n++; const tm = new Set(dx.causas.map(c => c.tema)), pt = {};
       if (dx.causas.length > 3) inv.erros.push(fx.id + ': ' + dx.causas.length + ' causas');
-      dx.causas.filter(c => c.rede && c.meta != null && isFinite(c.val) && !/osVenc|osCritica/.test(c.ind)).forEach(c => { if (c.val > c.meta * 0.95) inv.erros.push(fx.id + ': ' + c.ind + ' colado na meta virou causa'); });
+      dx.causas.filter(c => c.rede && c.meta != null && isFinite(c.val) && !/osVenc|osCritica/.test(c.ind)).forEach(c => { if (c.dir === 'down' ? c.val < c.meta * 1.05 : c.val > c.meta * 0.95) inv.erros.push(fx.id + ': ' + c.ind + ' colado na meta virou causa'); });
       dx.acoes.forEach(a => { if (!tm.has(a.tema)) inv.erros.push(fx.id + ': ação sem causa (' + a.tema + ')'); pt[a.tema] = (pt[a.tema] || 0) + 1; if (pt[a.tema] > 2) inv.erros.push(fx.id + ': 3+ ações em ' + a.tema); }); });
     return { inv, n: FATOS.length, maxVig: CTX.maxVig, setembro: FATOS.some(x => x.vig === '2026-09'), seguro: FATOS.some(x => x.pac === 'Seguros e licenças'),
       seg: seg && { over: seg.over, dpct: seg.dpct, txt: FcaAuto.desvioTxt(seg) }, outros: outros && { over: outros.over }, segD: seg && { causas: diag(seg).causas.map(c => c.txt), acoes: diag(seg).acoes.map(a => a.txt) },
