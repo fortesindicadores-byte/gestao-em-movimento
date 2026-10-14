@@ -152,29 +152,34 @@ console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor pre
   af('KPIs: 5 pedidos · 34 pneus pedidos · 14 aprovados · 3 aguardando',
     await txt(pg, '#k-ped') === '5' && await txt(pg, '#k-qtd') === '34' && await txt(pg, '#k-apr') === '14' && await txt(pg, '#k-pend') === '3',
     [await txt(pg, '#k-ped'), await txt(pg, '#k-qtd'), await txt(pg, '#k-apr'), await txt(pg, '#k-pend')].join(' · '));
-  // não avaliado vale o SUGERIDO: id1 9×709 + id5 2×709 (estoque já consumido) + 8×1967 + 6×701,55 = 27744,30
-  af('valor previsto = sugerido × menor preço + aprovados', await txt(pg, '#k-val') === 'R$ 27.744', await txt(pg, '#k-val'));
+  // não avaliado vale o PEDIDO (o Sugerido saiu, 14/10/2026): 12×709 + 2×709 + 8×1967 + 6×701,55 = 29871,30
+  af('valor previsto = pedido × menor preço + aprovados', await txt(pg, '#k-val') === 'R$ 29.871', await txt(pg, '#k-val'));
   af('pedido sem preço da medida vira aviso', /1 pedido\(s\) sem preço/.test(await txt(pg, '#k-val-m')), await txt(pg, '#k-val-m'));
   const l1 = await linha(pg, 1);
   af('MCC T2 · 235: Necessidade = 6 (1 + 1 + 4 do último eixo das carretas)', l1[8] === '6', l1[8]);
-  af('Sugerido = 12 pedidos − 3 em estoque = 9', l1[9] === '9', l1[9]);
-  af('2º pedido da mesma unidade e medida: estoque já usado, sugerido = 2', (await linha(pg, 5))[9] === '2', (await linha(pg, 5))[9]);
-  af('pedido já avaliado não tem sugerido', (await linha(pg, 2))[9] === '—');
-  af('MCC T2 · 235: Estoque Vida 1 = 2 e Estoque Recapado = 1 (INVENTORY; descarte fora)', l1[6] === '2' && l1[7] === '1', l1[6] + ' · ' + l1[7]);
-  af('cabeçalho com as duas colunas de estoque', /Estoque Vida 1/.test(await txt(pg, '#tb-ped thead')) && /Estoque Recapado/.test(await txt(pg, '#tb-ped thead')));
+  const th = await txt(pg, '#tb-ped thead');
+  af('cabeçalho: Estoque Vida 0 e Estoque Recapado, sem Sugerido', /Estoque Vida 0/.test(th) && /Estoque Recapado/.test(th) && !/Sugerido/.test(th) && !/Vida 1/.test(th), th);
+  const est = await pg.$$eval('#tb-ped tr[data-id="1"] input[data-est]', a => a.map(i => [i.dataset.est, i.value, i.title]));
+  af('estoque é campo manual vazio, com o Prolog só na dica (2 vida 0 · 1 recapado)', est.length === 2 && est[0][1] === '' && /Prolog: 2/.test(est[0][2]) && /Prolog: 1/.test(est[1][2]), JSON.stringify(est));
+  await pg.fill('#tb-ped input[data-est="v0"][data-pid="1"]', '7'); await pg.press('#tb-ped input[data-est="v0"][data-pid="1"]', 'Tab'); await pg.waitForTimeout(300);
+  await pg.fill('#tb-ped input[data-est="rc"][data-pid="2"]', '5'); await pg.press('#tb-ped input[data-est="rc"][data-pid="2"]', 'Tab'); await pg.waitForTimeout(300);
+  const ue = await pg.evaluate(() => window.__log.update.slice(-2).map(u => u.val));
+  af('estoque digitado grava est_vida0 / est_recap no pedido', ue[0].est_vida0 === 7 && ue[1].est_recap === 5, JSON.stringify(ue));
+  const tot = await pg.$$eval('#tb-ped tr.total td', t => t.map(x => x.textContent.trim()));
+  af('Total soma todas as colunas de número (pedido 34 · vida 0 7 · recapado 5 · necessidade · aprovado 14 · valor)', tot[1] === '34' && tot[2] === '7' && tot[3] === '5' && /^\d/.test(tot[4]) && tot[5] === '14' && /R\$/.test(tot[8]), JSON.stringify(tot));
   // limite da Necessidade (Renan, 13/10/2026): ≤ 4 mm; ≤ 5 mm na Empurrada e Insumos
   const lim = await pg.evaluate(() => ({ mcc: NEC['MCC T1'] && NEC['MCC T1']['295'] ? NEC['MCC T1']['295'].n : 0, pir: NEC['PIR'] && NEC['PIR']['295'] ? NEC['PIR']['295'].n : 0 }));
   af('MCC T1 (só Empurrada, placa fora do Ginfo): 4,5 mm conta pelo limite de 5 mm', lim.mcc === 1, lim.mcc);
   af('PIR: 4,0 mm na ROTA conta, 4,5 mm na ROTA não, 4,5 mm na EMPURRADA e no INSUMOS contam (placa → Ginfo)', lim.pir === 3, lim.pir);
   const dica = await pg.$eval('#tb-ped tr[data-id="1"] td:nth-child(9) span', e => e.title).catch(() => '');
   af('dica da Necessidade separa as premissas', /1ª vida no dianteiro: 1/.test(dica) && /4ª recapagem: 1/.test(dica) && /último eixo da carreta: 4/.test(dica), dica);
-  af('sem produto escolhido: menor preço da medida, avisado', /menor preço da medida/.test(l1[12]) && /709/.test(l1[12]), l1[12]);
+  af('sem produto escolhido: menor preço da medida, avisado', /menor preço da medida/.test(l1[11]) && /709/.test(l1[11]), l1[11]);
   const l3 = await linha(pg, 3);
-  af('5.00-8 sem preço: célula diz "sem preço da medida"', /sem preço da medida/.test(l3[12]) && l3[13].startsWith('—'), l3[12] + ' | ' + l3[13]);
+  af('5.00-8 sem preço: célula diz "sem preço da medida"', /sem preço da medida/.test(l3[11]) && l3[12].startsWith('—'), l3[11] + ' | ' + l3[12]);
   af('CGR · 295 com vida 6 abaixo de 4 mm conta (4ª recapagem em diante)', (await linha(pg, 2))[8] === '1');
   const nec825 = await pg.evaluate(() => NEC['MCC T2'] && NEC['MCC T2']['8.25-15'] ? NEC['MCC T2']['8.25-15'].n : 0);
   af('"8/15 R15" do Prolog cai em 8.25-15', nec825 === 1, nec825);
-  af('situação: aguardando / aprovado parcial', /Aguardando/.test(l1[11]) && /Aprovado parcial/.test((await linha(pg, 2))[11]));
+  af('situação: aguardando / aprovado parcial', /Aguardando/.test(l1[10]) && /Aprovado parcial/.test((await linha(pg, 2))[10]));
   if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'cp-resumo.png') });
 
   // aprovar 10 → 10×709
@@ -182,18 +187,18 @@ console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor pre
   let up = await pg.evaluate(() => window.__log.update.slice(-1)[0]);
   af('aprovar grava qtd_aprovada, o produto mostrado e quem aprovou', up && up.val.qtd_aprovada === 10 && up.val.preco_id === 4 && up.val.aprovado_nome === 'Teste Pneus', JSON.stringify(up && up.val));
   let l = await linha(pg, 1);
-  af('valor da linha = 10 × 709', /R\$ 7\.090,00/.test(l[13]) && /Aprovado parcial/.test(l[11]), l[13]);
+  af('valor da linha = 10 × 709', /R\$ 7\.090,00/.test(l[12]) && /Aprovado parcial/.test(l[10]), l[12]);
   // trocar o produto → 10 × 1357
   await pg.selectOption('#tb-ped select[data-prod="1"]', '3'); await pg.waitForTimeout(300);
   l = await linha(pg, 1);
-  af('trocar o produto refaz o valor (10 × 1.357)', /R\$ 13\.570,00/.test(l[13]) && !/menor preço/.test(l[12]), l[13]);
+  af('trocar o produto refaz o valor (10 × 1.357)', /R\$ 13\.570,00/.test(l[12]) && !/menor preço/.test(l[11]), l[12]);
   // aprovar 0 → não aprovado, valor 0
   await pg.fill('#tb-ped input[data-apr="3"]', '0'); await pg.press('#tb-ped input[data-apr="3"]', 'Tab'); await pg.waitForTimeout(300);
-  af('0 aprovado = "Não aprovado"', /Não aprovado/.test((await linha(pg, 3))[11]));
+  af('0 aprovado = "Não aprovado"', /Não aprovado/.test((await linha(pg, 3))[10]));
   // limpar volta para aguardando
   await pg.fill('#tb-ped input[data-apr="3"]', ''); await pg.press('#tb-ped input[data-apr="3"]', 'Tab'); await pg.waitForTimeout(300);
   up = await pg.evaluate(() => window.__log.update.slice(-1)[0]);
-  af('apagar o aprovado volta para aguardando (qtd_aprovada nula)', up && up.val.qtd_aprovada === null && /Aguardando/.test((await linha(pg, 3))[11]));
+  af('apagar o aprovado volta para aguardando (qtd_aprovada nula)', up && up.val.qtd_aprovada === null && /Aguardando/.test((await linha(pg, 3))[10]));
 
   // filtro de unidade
   await pg.evaluate(() => { const w = document.getElementById('ms-uni'); w._sel = new Set(['CGR']); w._render(''); render(); });
@@ -235,8 +240,8 @@ console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor pre
   await pg.click('#tb-preco .addrow .btn'); await pg.waitForTimeout(300);
   af('adicionar produto entra na tabela', await pg.$$eval('#tb-preco tr[data-pid]', t => t.length) === 6);
   await pg.click('.s-item[data-vw="resumo"]'); await pg.waitForTimeout(200);
-  af('preço novo vale na hora: 10 × 1.400', /R\$ 14\.000,00/.test((await linha(pg, 1))[13]), (await linha(pg, 1))[13]);
-  af('medida que ganhou preço passa a ter valor (4 × 350,50)', /R\$ 1\.402,00/.test((await linha(pg, 3))[13]), (await linha(pg, 3))[13]);
+  af('preço novo vale na hora: 10 × 1.400', /R\$ 14\.000,00/.test((await linha(pg, 1))[12]), (await linha(pg, 1))[12]);
+  af('medida que ganhou preço passa a ter valor (4 × 350,50)', /R\$ 1\.402,00/.test((await linha(pg, 3))[12]), (await linha(pg, 3))[12]);
   for (const w of [1600, 1366]) {
     await pg.setViewportSize({ width: w, height: 768 }); await pg.waitForTimeout(200);
     const sw = await pg.$eval('#tb-ped', t => { const w = t.closest('.twrap'); return [w.scrollWidth, w.clientWidth]; });

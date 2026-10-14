@@ -45,6 +45,12 @@ create table if not exists public.pneu_pedido (
 );
 create index if not exists pneu_pedido_vig on public.pneu_pedido (vigencia, unidade);
 
+-- estoque preenchido à mão pelo admin (Renan, 14/10/2026: "Estoque Vida 0, Estoque
+-- recapado devem ser preenchidos manualmente esse mês")
+alter table public.pneu_pedido
+  add column if not exists est_vida0 integer check (est_vida0 >= 0),
+  add column if not exists est_recap integer check (est_recap >= 0);
+
 -- ── carimbo do insert: vigência, autor e nada de aprovação vinda da unidade ──
 create or replace function public.pneu_pedido_ins() returns trigger
   language plpgsql security definer set search_path = public as $$

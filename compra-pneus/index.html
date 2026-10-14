@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610140130">
+<meta name="build" content="202610150745">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -683,9 +683,21 @@ function calcSugeridos(){
     SUG[r.id]={sug:(+r.qtd||0)-usa,usa};
   });
 }
-/* quantidade do valor previsto: o aprovado; enquanto não avaliado, o sugerido
-   (pedido − estoque); sem leitura do Prolog, o pedido */
-const qtdBase=r=>r.qtd_aprovada!=null?+r.qtd_aprovada:(SUG[r.id]?SUG[r.id].sug:+r.qtd);
+/* quantidade do valor previsto: o aprovado; enquanto não avaliado, o pedido.
+   O Sugerido saiu (Renan, 14/10/2026: "Sugerido pode tirar, porque necessidade é o
+   que interessa"); calcSugeridos fica só para o histórico do código. */
+const qtdBase=r=>r.qtd_aprovada!=null?+r.qtd_aprovada:+r.qtd;
+/* ESTOQUE MANUAL (Renan, 14/10/2026: "Estoque Vida 0, Estoque recapado devem ser
+   preenchidos manualmente esse mês"): colunas est_vida0 / est_recap do pedido,
+   gravadas pelo admin. O número do Prolog fica só na dica do campo. */
+const ESTCOL={v0:'est_vida0',rc:'est_recap'};
+function celEst(r,k){
+  const col=ESTCOL[k], v=r[col], s=PROLOG.estado==='ok'&&EST&&EST[r.unidade]&&EST[r.unidade][r.medida];
+  const pl=s?(k==='v0'?s.novos:s.n-s.novos):null;
+  const dica=`Preenchido à mão${pl!=null?` · Prolog: ${br(pl)}`:''}`;
+  return `<input class="inp${v==null?' vazio':''}" type="number" min="0" step="1" value="${v==null?'':v}" data-est="${k}" data-pid="${r.id}" title="${esc(dica)}">`;
+}
+const necNum=r=>{ const s=PROLOG.estado==='ok'&&NEC&&NEC[r.unidade]&&NEC[r.unidade][r.medida]; return s?+s.n||0:0; };
 function situacao(r){
   if(r.qtd_aprovada==null) return ['Aguardando',''];
   if(+r.qtd_aprovada===0) return ['Não aprovado','nao'];
@@ -829,33 +841,41 @@ function renderResumo(){
   set('k-qtd',br(qtd)); set('k-qtd-m',`${br(pend.reduce((a,r)=>a+(+r.qtd||0),0))} aguardando`);
   set('k-apr',br(apr)); set('k-apr-m',`${av.length} pedido(s) avaliado(s)`);
   set('k-pend',br(pend.length)); set('k-pend-m',pend.length?`${new Set(pend.map(r=>r.unidade)).size} unidade(s)`:'nada pendente');
-  set('k-val','R$ '+br(val,0)); set('k-val-m',semPreco?`${semPreco} pedido(s) sem preço da medida`:'aprovado; não avaliado = sugerido (pedido − estoque)');
+  set('k-val','R$ '+br(val,0)); set('k-val-m',semPreco?`${semPreco} pedido(s) sem preço da medida`:'aprovado; não avaliado = pedido');
   const pr=PROLOG.estado==='ok'?`Prolog ${fmtDT(PROLOG.em)}`:PROLOG.estado==='lendo'?'lendo o Prolog…':'Prolog sem resposta';
-  set('sub-ped',`Estoque = pneus em estoque da medida na unidade (vida 1 e recapado) · Sugerido = pedido − estoque total (o mais antigo consome primeiro) · Necessidade = instalados com até ${MM_LIM} mm (${MM_LIM_EMP} mm na Empurrada e Insumos) que pedem pneu novo (1ª vida no dianteiro · 4ª recapagem · último eixo da carreta depois da 1ª recapagem) · ${pr}`);
+  set('sub-ped',`Estoque Vida 0 e Estoque Recapado = preenchidos à mão (o número do Prolog fica na dica do campo) · Necessidade = instalados com até ${MM_LIM} mm (${MM_LIM_EMP} mm na Empurrada e Insumos) que pedem pneu novo (1ª vida no dianteiro · 4ª recapagem · último eixo da carreta depois da 1ª recapagem) · ${pr}`);
   const tb=document.getElementById('tb-ped');
-  let tq=0,ta=0,tv=0;
+  let tq=0,ta=0,tv=0,te0=0,ter=0,tn=0;
   const corpo=rows.map(r=>{
     const {p,auto}=precoDe(r), qb=qtdBase(r), v=p?qb*(+p.valor||0):null; const [s,c]=situacao(r);
-    tq+=+r.qtd||0; ta+=+r.qtd_aprovada||0; if(v!=null) tv+=v;
+    tq+=+r.qtd||0; ta+=+r.qtd_aprovada||0; if(v!=null) tv+=v; te0+=+r.est_vida0||0; ter+=+r.est_recap||0; tn+=necNum(r);
     const ops=precosDa(r.medida).map(x=>`<option value="${x.id}"${p&&x.id===p.id?' selected':''}>${esc(x.produto)} · ${brl(x.valor)}</option>`).join('');
     return `<tr data-id="${r.id}">
       <td>${vigRot(r.vigencia)}</td><td class="nome">${esc(r.unidade)}</td><td>${esc(r.projeto)}</td><td>${esc(r.banda).replace('/','/<wbr>')}</td><td>${esc(r.medida)}</td>
       <td class="num">${br(r.qtd)}</td>
-      <td class="num">${celProlog(EST,r.unidade,r.medida,'est1')}</td>
-      <td class="num">${celProlog(EST,r.unidade,r.medida,'estR')}</td>
+      <td class="num">${celEst(r,'v0')}</td>
+      <td class="num">${celEst(r,'rc')}</td>
       <td class="num">${celProlog(NEC,r.unidade,r.medida,'nec')}</td>
-      <td class="num">${r.qtd_aprovada!=null?'<span class="mut">—</span>':SUG[r.id]?`<b title="pedido ${br(r.qtd)} − ${br(SUG[r.id].usa)} em estoque">${br(SUG[r.id].sug)}</b>`:PROLOG.estado==='lendo'?'<span class="mut">…</span>':'<span class="mut">—</span>'}</td>
       <td class="num"><input class="inp${r.qtd_aprovada==null?' vazio':''}" type="number" min="0" step="1" value="${r.qtd_aprovada==null?'':r.qtd_aprovada}" data-apr="${r.id}" title="Quantidade aprovada (vazio = aguardando; 0 = não aprovado)"></td>
       <td><span class="pill ${c}">${s}</span></td>
       <td>${ops?`<select class="sel" data-prod="${r.id}">${ops}</select>${auto&&p?'<span class="lin2">menor preço da medida</span>':''}`:'<span class="mut">sem preço da medida</span>'}</td>
       <td class="num">${v==null?'—':brl(v)}</td>
     </tr>`; }).join('');
-  tb.innerHTML=`<thead><tr><th>Vigência</th><th>Unidade</th><th>Projeto</th><th>Banda</th><th>Medida</th><th class="num">Pedido</th><th class="num">Estoque Vida 1</th><th class="num">Estoque Recapado</th><th class="num">Necessidade</th><th class="num">Sugerido</th><th class="num">Aprovado</th><th>Situação</th><th>Produto</th><th class="num">Valor previsto</th></tr></thead><tbody>`
-    +(corpo||'<tr><td colspan="14" class="mut" style="text-align:center;padding:18px">Nenhum pedido no recorte.</td></tr>')
-    +(rows.length?`<tr class="total"><td colspan="5">Total</td><td class="num">${br(tq)}</td><td></td><td></td><td></td><td></td><td class="num">${br(ta)}</td><td></td><td></td><td class="num">${brl(tv)}</td></tr>`:'')+'</tbody>';
+  tb.innerHTML=`<thead><tr><th>Vigência</th><th>Unidade</th><th>Projeto</th><th>Banda</th><th>Medida</th><th class="num">Pedido</th><th class="num">Estoque Vida 0</th><th class="num">Estoque Recapado</th><th class="num">Necessidade</th><th class="num">Aprovado</th><th>Situação</th><th>Produto</th><th class="num">Valor previsto</th></tr></thead><tbody>`
+    +(corpo||'<tr><td colspan="13" class="mut" style="text-align:center;padding:18px">Nenhum pedido no recorte.</td></tr>')
+    +(rows.length?`<tr class="total"><td colspan="5">Total</td><td class="num">${br(tq)}</td><td class="num">${br(te0)}</td><td class="num">${br(ter)}</td><td class="num">${PROLOG.estado==='ok'?br(tn):'—'}</td><td class="num">${br(ta)}</td><td></td><td></td><td class="num">${brl(tv)}</td></tr>`:'')+'</tbody>';
   tb.querySelectorAll('input[data-apr]').forEach(i=>i.addEventListener('change',()=>salvaAprov(+i.dataset.apr)));
   tb.querySelectorAll('select[data-prod]').forEach(s=>s.addEventListener('change',()=>salvaAprov(+s.dataset.prod)));
+  tb.querySelectorAll('input[data-est]').forEach(i=>i.addEventListener('change',()=>salvaEst(i)));
   set('n-resumo',pend.length||'');
+}
+async function salvaEst(i){
+  const id=+i.dataset.pid, col=ESTCOL[i.dataset.est], raw=String(i.value).trim(), q=raw===''?null:parseInt(raw,10);
+  if(q!=null&&!(q>=0)){ alert('Estoque inválido.'); return; }
+  const {data,error}=await sb.from('pneu_pedido').update({[col]:q}).eq('id',id).select('*');
+  if(error||!data||!data.length){ alert('O banco recusou o estoque: '+((error&&error.message)||'nenhuma linha alterada')+(/est_vida0|est_recap|column/i.test((error&&error.message)||'')?'\n\nFalta rodar o SQL das colunas de estoque.':'')); }
+  else { const k=PEDIDOS.findIndex(r=>r.id===id); if(k>=0) PEDIDOS[k]=data[0]; }
+  renderResumo();
 }
 async function salvaAprov(id){
   const tr=document.querySelector(`#tb-ped tr[data-id="${id}"]`); if(!tr) return;
@@ -994,6 +1014,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610140130"></script>
+<script src="../assets/build-check.js?v=202610150745"></script>
 </body>
 </html>
