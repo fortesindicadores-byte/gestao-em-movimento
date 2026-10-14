@@ -1,0 +1,25 @@
+name: Painel KM BM Check
+
+# Abre o /painel-km/ com os dados REAIS e imprime o balanço de massa que o próprio
+# painel calculou, por mês e por unidade|projeto. Só leitura.
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Rodar
+        run: node scripts/painel-km-bm-check.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
