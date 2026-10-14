@@ -538,7 +538,7 @@ function diagnostico(f, ctx) {
   // o motor traz é onde o dinheiro foi e o que estava fora da meta)
   if (f.pac === 'Combustíveis') {
     // LÍQUIDO: o que economizou (preço abaixo do remunerado, km a menos) abate o que estourou
-    const liq = D.causas.filter(c => fin(c.rs)).reduce((s, c) => s + c.rs, 0);
+    const liq = fin(D.tres) ? D.tres : D.causas.filter(c => fin(c.rs)).reduce((s, c) => s + c.rs, 0);
     D.explicado = f.over > 0 ? Math.max(0, Math.min(1, liq / f.over)) : 0;
     D.causas.forEach(c => { if (c.rs > 0 && c.soma !== false && f.over > 0) c.part = c.rs / f.over; });
   } else D.explicado = null;
@@ -614,8 +614,7 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
     const dkm = dp.real - dp.rem, dpct = (dp.real / dp.rem - 1) * 100;
     if (b.vol >= D.minimo) {
       const extra = EMPURRADA(f.uni) ? ' (km remunerado bruto, sem o balanço de massa: conferir no Painel KM antes de agir)' : '';
-      const quem = seara ? 'a Seara revisa o km remunerado em ciclos maiores' : 'a Ambev revisa o km remunerado a cada quinzena';
-      causa('Km / rota', `Km rodado: rodou ${br(dkm, 0)} km acima do remunerado (${sinalPct(dpct, 1)}), ${rs(b.vol)} no R$/km remunerado. Somos pagos pelo km remunerado (${quem}): o km a mais sai do nosso bolso${extra}`, b.vol);
+      causa('Km / rota', `Km rodado: rodou ${br(dkm, 0)} km acima do remunerado (${sinalPct(dpct, 1)}), ${rs(b.vol)} no R$/km remunerado${extra}`, b.vol);
       const vg = []; if (dp.vgRec) vg.push(br(dp.vgRec, 0) + ' recs'); if (dp.vgNot) vg.push(br(dp.vgNot, 0) + ' noturnas'); if (dp.vgMap) vg.push(br(dp.vgMap, 0) + ' com mapa aberto');
       acao('Km / rota', `Conferir as viagens que não remuneram e a roteirização no ${painelKm}${vg.length ? ' (no mês: ' + vg.join(', ') + ' de ' + br(dp.vgTot, 0) + ' viagens)' : ''}`);
     } else if (Math.abs(b.vol) >= D.minimo) causa('Km / rota', `Km rodado: rodou ${br(-dkm, 0)} km abaixo do remunerado (${sinalPct(dpct, 1)}), ${rs(b.vol)} a menos: o km não explica o estouro`, b.vol, { soma: false });
@@ -639,21 +638,38 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
       acao('Abastecimento / preço', `Direcionar o abastecimento para o posto/tanque com preço no remunerado e cobrar o preço negociado; placas que mais pagaram acima`, of);
     } else if (Math.abs(cb.preco) >= D.minimo) causa('Abastecimento / preço', `Preço: pagamos R$ ${br(cb.rsLReal, 2)}/L contra R$ ${br(cb.rsLRem, 2)}/L remunerado (${sinalPct(dp2, 1)}): economizou ${rs(-cb.preco)}`, cb.preco, { soma: false });
   }
-  // Diferença DRE × bases
-  if (b && fin(b.dif) && Math.abs(b.dif) >= Math.max(1000, 0.1 * base)) {
-    const l = [];
-    if (fin(b.difReal) && Math.abs(b.difReal) >= 500) l.push(`realizado da DRE ${b.difReal > 0 ? 'acima' : 'abaixo'} dos abastecimentos da ${abaKm} em ${rs(Math.abs(b.difReal))}`);
-    if (fin(b.difRem) && Math.abs(b.difRem) >= 500) l.push(`remunerado da DRE ${b.difRem > 0 ? 'abaixo' : 'acima'} do que as bases preveem em ${rs(Math.abs(b.difRem))}`);
-    if (b.dif > 0) {
-      causa('Lançamento / contábil', `Diferença entre a DRE e os abastecimentos: ${rs(b.dif)} que o km, a eficiência e o preço não explicam${l.length ? ' (' + l.join('; ') + ')' : ''}`, b.dif);
-      acao('Lançamento / contábil', `Conciliar a conta Combustíveis do DRE com os abastecimentos do mês (lançamento de outra competência, provisão, placa de outro projeto)`);
-    }
-  }
-  // Arla
+  // Arla (faz parte do pacote: entra no que as alavancas explicam)
   const ovArla = arla.rem - arla.real;    // negativos: estouro > 0
   if (ovArla > 0 && Math.abs(arla.rem) > 0) {
     causa('Abastecimento / preço', `Arla: ${rs(ovArla)} acima do remunerado (${sinalPct(ovArla / Math.abs(arla.rem) * 100, 0)})`, ovArla);
     acao('Abastecimento / preço', `Conferir a proporção Arla/diesel por placa e o preço do Arla do mês`);
+  }
+  // AS TRÊS ALAVANCAS EXPLICAM O DESVIO? (Renan, 14/10/2026: "Tanto Seara quanto Ambev, quando no
+  // combustível os 3 parâmetros não explicarem diretamente o desvio (nunca vai bater na vírgula, mas
+  // quando estiverem muito discrepantes), por exemplo o desvio ser de 100k e os três explicarem 50% ou
+  // menos"). Explicado = preço + eficiência + km rodado (+ Arla, que é do pacote), líquido. Só quando
+  // isso fica em metade ou menos do desvio entra a linha do resto (DRE × bases), com o que faltou medir.
+  const temVol = !!(b && fin(b.vol) && dp && dp.rem > 0), temEf = !!(cb && fin(cb.efic)), temPr = !!(cb && fin(cb.preco));
+  const tres = (temVol ? b.vol : 0) + (temEf ? cb.efic : 0) + (temPr ? cb.preco : 0) + ovArla;
+  D.tres = tres;
+  D.explicado = f.over > 0 ? Math.max(0, Math.min(1, tres / f.over)) : 0;
+  const resto = f.over - tres;
+  if (f.over > 0 && D.explicado <= 0.5 && resto >= Math.max(1000, 0.1 * base)) {
+    const medidas = [temPr && 'preço', temEf && 'eficiência', temVol && 'km rodado'].filter(Boolean);
+    const quem = medidas.length ? medidas.join(', ').replace(/, ([^,]+)$/, ' e $1') : 'as bases';
+    const verbo = medidas.length === 1 ? 'explica' : 'explicam';
+    const faltas = [];
+    if (!temVol) faltas.push(seara ? 'o km rodado ainda não entrou (aba Remunerado da Seara sem o mês)' : 'o km rodado ainda não entrou (Dispersão de km sem o mês)');
+    if (!temEf && !temPr) faltas.push(seara ? 'eficiência e preço sem a aba Combustível da Seara no mês' : 'eficiência e preço sem a aba Km/L no mês');
+    else { if (!temPr) faltas.push('o preço não foi medido (sem R$/L remunerado)'); if (!temEf) faltas.push('a eficiência não foi medida (sem Km/L remunerado)'); }
+    const l = [];
+    if (b && fin(b.dif)) {
+      if (fin(b.difReal) && Math.abs(b.difReal) >= 500) l.push(`realizado da DRE ${b.difReal > 0 ? 'acima' : 'abaixo'} dos abastecimentos da ${abaKm} em ${rs(Math.abs(b.difReal))}`);
+      if (fin(b.difRem) && Math.abs(b.difRem) >= 500) l.push(`remunerado da DRE ${b.difRem > 0 ? 'abaixo' : 'acima'} do que as bases preveem em ${rs(Math.abs(b.difRem))}`);
+    }
+    const q = quem.charAt(0).toUpperCase() + quem.slice(1);
+    causa('Lançamento / contábil', `${q} ${verbo} só ${Math.round(D.explicado * 100)}% do desvio (${rs(Math.max(tres, 0))} de ${rs(f.over)}): ${rs(resto)} ${medidas.length === 3 ? 'não batem com os abastecimentos' : 'sem explicação pelas bases'}${l.length ? ' (' + l.join('; ') + ')' : ''}${faltas.length ? '; ' + faltas.join('; ') : ''}`, null, { prio: -1 });
+    acao('Lançamento / contábil', `${temVol ? 'C' : (seara ? 'Atualizar a aba Remunerado da Seara e c' : 'Atualizar a Dispersão de km do mês e c')}onciliar a conta Combustíveis do DRE com os abastecimentos do mês (lançamento de outra competência, provisão, placa de outro projeto)`);
   }
   // condução (telemetria) — quando a unidade tem
   const mot = (ctx.fatoMot[f.uni + '|' + f.vig] || []).filter(m => fin(m.v.nota) && (m.v.km || 0) >= 500);
