@@ -629,15 +629,15 @@ function acumuladoAno(f, ctx) {
   const r = { over, rem, real, pct: pctA, meses: fs.length, restam, de, ate, reducao: null, txt: '' };
   const vals = 'R$ ' + Math.round(Math.abs(over)).toLocaleString('pt-BR') + (pctA != null ? ' (' + Math.round(Math.abs(pctA)) + '%)' : '');
   const per = de === ate ? ate : de + ' → ' + ate;
+  // YTD DIRETO (Renan, 14/10/2026: "Texto demais no YTD. Bem direto tem que ser"): valor, % e o que fazer.
+  // O período (jan → mês do fato) e o remunerado dos meses que faltam ficam no objeto, não no texto.
   if (Math.round(over) > 0) {
     if (restam > 0 && remMes > 0) { r.reducao = over / (remMes * restam) * 100;
-      const quando = `${restam === 1 ? 'no mês que falta' : 'nos ' + restam + ' meses que faltam'} (${vigLbl(vigSeg(f.vig))}${restam > 1 ? ' → dez/' + ano.slice(2) : ''})`;
-      // acima de 100% não há como capturar: o desvio já passa do remunerado inteiro dos meses que faltam
-      if (r.reducao > 100) r.txt = `Desvio no ano (${per}) ▲ ${vals} · não fecha no ano: o desvio já supera o remunerado ${quando}, R$ ${Math.round(remMes * restam).toLocaleString('pt-BR')}`;
-      else r.txt = `Desvio no ano (${per}) ▲ ${vals} · curva de captura: rodar ${r.reducao < 10 ? br(r.reducao, 1) : Math.round(r.reducao)}% abaixo do remunerado ${quando} para fechar o ano no remunerado`; }
-    else r.txt = `Desvio no ano (${per}) ▲ ${vals} · ano fechado: não há mês para capturar`;
-  } else if (Math.round(over) < 0) r.txt = `Saving no ano (${per}) ▼ ${vals} · tratar o desvio do mês como pontual`;
-  else r.txt = `No ano (${per}), no remunerado`;
+      r.txt = r.reducao > 100 ? `▲ ${vals} · não fecha no ano`
+        : `▲ ${vals} · reduzir ${r.reducao < 10 ? br(r.reducao, 1) : Math.round(r.reducao)}% até dez/${ano.slice(2)}`; }
+    else r.txt = `▲ ${vals} · ano fechado`;
+  } else if (Math.round(over) < 0) r.txt = `▼ ${vals} · desvio pontual`;
+  else r.txt = 'no remunerado';
   return r;
 }
 function histDoFato(f, ctx) {
