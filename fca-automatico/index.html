@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610150330">
+<meta name="build" content="202610150430">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -941,7 +941,7 @@ table.rel td.fato .fa-ano{font-size:10.5px;}
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610150330"></script>
+<script src="../assets/fca-auto.js?v=202610150430"></script>
 </head>
 <body>
 <div class="app">
@@ -1131,6 +1131,11 @@ const fatoHTML=(f,d)=>`<b>${esc(f.pac)}</b><small>${nl(FA.desvioCurto(f))}</smal
 let TAB_MODO=(()=>{ try{ return localStorage.getItem('fcaauto_tab_modo')||'linha'; }catch(e){ return 'linha'; } })();
 const ST_AC=['Não iniciada','Em andamento','Concluída','Cancelada'];
 let ACOES={}, ACOES_ERR=null, ACOES_OK=false, EU_NOME='', NOMES=[];
+/* PRÉVIA LOCAL: sem a tabela no banco, dono/prazo/status ficam guardados neste navegador
+   até a ação ir para o FCA oficial (a validação segue preenchendo normalmente). */
+let ACOES_LOCAL=false; const PREVIA_LS='fcaauto_previa_v1';
+function lePrevia(){ try{ return JSON.parse(localStorage.getItem(PREVIA_LS)||'{}')||{}; }catch(e){ return {}; } }
+function gravaPrevia(){ try{ localStorage.setItem(PREVIA_LS,JSON.stringify(ACOES)); return true; }catch(e){ return false; } }
 // a ação é identificada pelo tema + as primeiras palavras do texto, sem números (contagens e valores mudam a cada leitura)
 const chaveAcao=a=>(a.tema||'')+'|'+FA.NK(a.txt).replace(/[0-9]+([.,][0-9]+)*/g,' ').replace(/[^A-Z ]/g,' ').split(/\s+/).filter(Boolean).slice(0,6).join(' ');
 /* CAUSAS NUMERADAS 1, 2, 3 (Renan, 14/10/2026: "Quando dividir as causas, chame de 1, 2, 3"): as linhas
@@ -1161,7 +1166,7 @@ function camposAcao(f,l){
 }
 function tabelaHTML(vis){
   const linha=TAB_MODO==='linha';
-  const aviso=!linha||!ACOES_ERR?'':ACOES_ERR==='PREVIA'?`<span class="fa-tbar-prev">Prévia: dono, prazo e status passam a gravar quando a ação for para o FCA oficial</span>`:`<span class="fa-tbar-err">Responsável, prazo e status não gravam: ${esc(ACOES_ERR)}</span>`;
+  const aviso=!linha||!ACOES_ERR?'':ACOES_ERR==='PREVIA'?`<span class="fa-tbar-prev">Prévia: dono, prazo e status ficam guardados neste navegador até a ação ir para o FCA oficial</span>`:`<span class="fa-tbar-err">Responsável, prazo e status não gravam: ${esc(ACOES_ERR)}</span>`;
   let h=`<div class="rel-section"><div class="fa-tbar"><span class="fa-tbar-n">${linha?'Uma linha por ação. Clique na ação para abrir; no fato, o diagnóstico completo':'Clique na linha para abrir o diagnóstico completo'}</span>${aviso}<span class="fa-tbar-ok" id="acSalvo"></span><div class="fa-tog" id="tabModo">
       <button data-m="linha" class="${linha?'on':''}">Uma por linha</button><button data-m="grupo" class="${linha?'':'on'}">Agrupado</button></div></div>
     <datalist id="dl-resp">${NOMES.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
@@ -1191,28 +1196,40 @@ function tabelaHTML(vis){
   return h+'</table></div></div>';
 }
 /* grava o campo da ação (upsert por fato × ação) com a causa e a ação como estavam */
-async function salvaAcao(el){
-  const fid=el.dataset.fid, k=el.dataset.k, c=el.dataset.c, f=FATOS.find(x=>x.id===fid); if(!f) return;
+function salvaAcao(el){ return salvaCampo(el.dataset.fid,el.dataset.k,el.dataset.c,el.value); }
+/* reflete o campo gravado na linha da Tabela (quando ele foi mudado na caixa da ação) */
+function pintaCampo(fid,k,c,row){
+  const el=[...document.querySelectorAll('[data-fid][data-k][data-c]')].find(x=>x.dataset.fid===fid&&x.dataset.k===k&&x.dataset.c===c); if(!el) return;
+  el.value=row[c]||(c==='status'?'Não iniciada':'');
+  const st=row.status||'Não iniciada';
+  if(c==='status'){ el.dataset.v=st; const tr=el.closest('tr'); if(tr) tr.classList.toggle('feita',st==='Concluída'||st==='Cancelada'); }
+  const pz=[...document.querySelectorAll('[data-fid][data-k][data-c="prazo"]')].find(x=>x.dataset.fid===fid&&x.dataset.k===k);
+  if(pz) pz.classList.toggle('venc',!!row.prazo&&st!=='Concluída'&&st!=='Cancelada'&&row.prazo<new Date().toISOString().slice(0,10));
+}
+async function salvaCampo(fid,k,c,valor){
+  const f=FATOS.find(x=>x.id===fid); if(!f) return;
   const l=linhasDoFato(diag(f)).find(x=>x.k===k); if(!l||!l.a) return;
   const cur=ACOES[acKey(fid,k)]||{};
   const row={fato_id:fid,chave:k,unidade:f.uni,vigencia:f.vig,pacote:f.pac,projeto:f.proj,tema:l.a.tema||null,
     causa:l.c?l.c.txt:null,acao:l.a.txt+(l.a.ofens.length?': '+l.a.ofens.join(' · '):''),
     responsavel:cur.responsavel||null,prazo:cur.prazo||null,status:cur.status||'Não iniciada',updated_nome:EU_NOME||null};
-  row[c]=String(el.value||'').trim()||null; if(c==='status'&&!row.status) row.status='Não iniciada';
+  row[c]=String(valor||'').trim()||null; if(c==='status'&&!row.status) row.status='Não iniciada';
   const msg=document.getElementById('acSalvo');
-  const {error}=await sb.from('fca_auto_acao').upsert(row,{onConflict:'fato_id,chave'});
-  if(error){ if(msg){ msg.className='fa-tbar-err'; msg.textContent='Não gravou: '+error.message; } return; }
-  ACOES[acKey(fid,k)]=row;
-  if(c==='status'){ el.dataset.v=row.status; const tr=el.closest('tr'); if(tr) tr.classList.toggle('feita',row.status==='Concluída'||row.status==='Cancelada'); }
-  if(c==='prazo'){ const st=row.status; el.classList.toggle('venc',!!row.prazo&&st!=='Concluída'&&st!=='Cancelada'&&row.prazo<new Date().toISOString().slice(0,10)); }
-  if(msg){ msg.className='fa-tbar-ok'; msg.textContent='Gravado ✓'; clearTimeout(salvaAcao._t); salvaAcao._t=setTimeout(()=>{ msg.textContent=''; },1800); }
+  if(ACOES_LOCAL){ ACOES[acKey(fid,k)]=row;
+    if(!gravaPrevia()){ if(msg){ msg.className='fa-tbar-err'; msg.textContent='Não guardou: o navegador bloqueou o armazenamento'; } return; } }
+  else { const {error}=await sb.from('fca_auto_acao').upsert(row,{onConflict:'fato_id,chave'});
+    if(error){ if(msg){ msg.className='fa-tbar-err'; msg.textContent='Não gravou: '+error.message; } return; }
+    ACOES[acKey(fid,k)]=row; }
+  pintaCampo(fid,k,c,row);
+  if(msg){ msg.className='fa-tbar-ok'; msg.textContent=ACOES_LOCAL?'Guardado ✓':'Gravado ✓'; clearTimeout(salvaCampo._t); salvaCampo._t=setTimeout(()=>{ msg.textContent=''; },1800); }
 }
 async function carregaAcoes(){
   try{
     const out=[]; for(let off=0;off<50000;off+=1000){ const {data,error}=await sb.from('fca_auto_acao').select('*').range(off,off+999);
       if(error) throw new Error(error.message); out.push(...(data||[])); if(!data||data.length<1000) break; }
     ACOES={}; out.forEach(r=>{ ACOES[acKey(r.fato_id,r.chave)]=r; }); ACOES_OK=true; ACOES_ERR=null;
-  }catch(e){ ACOES_OK=false; ACOES_ERR=/fca_auto_acao|relation|schema cache|does not exist/i.test(e.message||'')?'PREVIA':(e.message||String(e)); }
+  }catch(e){ ACOES_OK=false; ACOES_ERR=/fca_auto_acao|relation|schema cache|does not exist/i.test(e.message||'')?'PREVIA':(e.message||String(e));
+    if(ACOES_ERR==='PREVIA'){ ACOES=lePrevia(); ACOES_OK=true; ACOES_LOCAL=true; } }
   try{ const {data}=await sb.from('fca_profiles').select('nome'); NOMES=[...new Set((data||[]).map(p=>String(p.nome||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')); }catch(e){ NOMES=[]; }
 }
 /* ── KANBAN — uma coluna por pacote ── */
@@ -1348,7 +1365,7 @@ function ensureAcao(){
   d.innerHTML='<div class="kmodal kac">'+
     '<div class="kmodal-head"><b id="ac-tit"></b><button class="kmodal-x" onclick="fechaAcao()">✕</button></div>'+
     '<div class="kmodal-sub" id="ac-ctx"></div>'+
-    '<div class="ac-previa">Sugestão automática. Prévia de como a ação abre: nada é gravado até ela ir para o FCA oficial.</div>'+
+    '<div class="ac-previa">Sugestão automática. Prévia: responsável, prazo e status ficam guardados neste navegador; o resto entra quando a ação for para o FCA oficial.</div>'+
     '<label>Fato</label><input id="ac-fato" type="text"><textarea id="ac-desv" rows="3"></textarea>'+
     '<label>Causa</label><textarea id="ac-causa" rows="5"></textarea>'+
     '<label>Ação</label><textarea id="ac-acao" rows="4"></textarea>'+
@@ -1383,7 +1400,10 @@ function abreAcao(fid,k){
   document.getElementById('ac-resp').value=r.responsavel||'';
   document.getElementById('ac-prazo').value=r.prazo||'';
   document.getElementById('ac-status').value=r.status||'Não iniciada';
+  [['ac-resp','responsavel'],['ac-prazo','prazo'],['ac-status','status']].forEach(([id,c])=>{
+    const el=document.getElementById(id); el.disabled=!ACOES_OK; el.onchange=()=>salvaCampo(fid,k,c,el.value); });
   document.getElementById('ac-acomp').value='';
+  document.querySelector('#ac-ov .ac-previa').textContent='Sugestão automática. Prévia: '+(ACOES_LOCAL?'responsável, prazo e status ficam guardados neste navegador; o resto':'responsável, prazo e status gravam; o resto')+' entra quando a ação for para o FCA oficial.';
   document.getElementById('ac-diag').onclick=()=>{ fechaAcao(); abreModal(fid); };
   document.getElementById('ac-ov').style.display='flex';
 }
@@ -1458,6 +1478,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610150330"></script>
+<script src="../assets/build-check.js?v=202610150430"></script>
 </body>
 </html>

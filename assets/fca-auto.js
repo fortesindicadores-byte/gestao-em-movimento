@@ -936,9 +936,10 @@ function diagManut(f, ctx, D, causa, acao, base) {
     const acima = cruz.filter(x => x.delta > 0), kmAcima = acima.reduce((s, x) => s + x.delta, 0), rsAcima = acima.reduce((s, x) => s + (x.rsDelta || 0), 0), remT = cruz.reduce((s, x) => s + x.rem, 0);
     if (cruz.length) D.blocos.contratoKm = { mes: kmMes, nivel: abProj.length ? 'projeto' : 'unidade', cruz: cruz.slice().sort((a, b) => (b.rsDelta || 0) - (a.rsDelta || 0)), acima: acima.length, kmAcima, rsAcima };
     const kmPesa = acima.length && rsAcima >= D.minimo;
-    causa('Contrato', `Contrato de manutenção: ${rs(cContr.ov)} acima do rem.`
-      + (kmPesa ? ` · ${acima.length} de ${cruz.length} placas variáveis acima do km rem. em ${vigLbl(kmMes)} (+${br(kmAcima, 0)} km${remT > 0 ? ', ' + sinalPct(kmAcima / remT * 100, 0) : ''}) · ${rs(rsAcima)} na fatura`
-        : cruz.length ? ` · placas variáveis no km rem.: não é km a mais` : ` · ${ct.length} placas faturadas (${rs(tc)}) pelo km de ${vigLbl(kmMes)}`)
+    // o valor acima do remunerado já está no fato (a conta Contratos): a causa diz só o porquê
+    causa('Contrato', `Contrato de manutenção: `
+      + (kmPesa ? `${acima.length} de ${cruz.length} placas variáveis acima do km rem. em ${vigLbl(kmMes)} (+${br(kmAcima, 0)} km${remT > 0 ? ', ' + sinalPct(kmAcima / remT * 100, 0) : ''}) · ${rs(rsAcima)} na fatura`
+        : cruz.length ? `placas variáveis no km rem.: não é km a mais` : `${ct.length} placas faturadas (${rs(tc)}) pelo km de ${vigLbl(kmMes)}`)
       + (fx2.length ? ` · ${fx2.length} na faixa 2` : ''), cContr.ov, { prio: 2 });
     if (kmPesa) acao('Contrato', `Conter o km das placas variáveis que rodam acima do remunerado (viagens que não remuneram, roteirização, placa de contrato fixo nas rotas mais longas)`,
       top(acima, 5, x => x.rsDelta || x.delta).map(x => `${x.placa} +${br(x.delta, 0)} km (${x.rem >= 500 ? sinalPct(x.delta / x.rem * 100, 0) : 'só ' + br(x.rem, 0) + ' km remunerados'})${x.rsDelta != null ? ', ' + rs(x.rsDelta) : ''}`));
