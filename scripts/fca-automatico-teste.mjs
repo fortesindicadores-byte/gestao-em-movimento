@@ -64,7 +64,7 @@ const g = (u, v) => G.find(x => x.u === u && x.v === v);
 Object.assign(g('CGR', '2026-08'), { combRem: 100000, combReal: 130000, arlaRem: 5000, arlaReal: 6000, kmRem: 50000, kmReal: 55000 });
 // GRL: Manutenções jul 30 mil → ago 15 mil (o FCA de jul "melhorou"); SLA ago 50
 Object.assign(g('GRL', '2026-07'), { manRem: 100000, manReal: 130000, sla: 45 });
-Object.assign(g('GRL', '2026-08'), { manRem: 100000, manReal: 115000, sla: 50, prev: 80 });
+Object.assign(g('GRL', '2026-08'), { manRem: 100000, manReal: 113000, ctRem: 10000, ctReal: 12000, sla: 50, prev: 80 });
 // PIR ago/26: combustível com eficiência ruim, sem volume e sem preço
 Object.assign(g('PIR', '2026-08'), { combRem: 100000, combReal: 120000, arlaReal: 5000, kmRem: 50000, kmReal: 50000, pnRem: 30000, pnReal: 40000 });
 // ANG (Seara) ago/26: a ponte pela Árvore da Seara — custo 100 → 125 mil; km rem 36.000 × real 40.000 (abas Remunerado/Combustível)
@@ -80,11 +80,15 @@ const lin = (v, cid, n3, cta, rem, real) => ({ c: [{ v: DATE(v) }, { v: 0 }, { v
 const gvizFrota = () => ({ status: 'ok', table: { cols: FROTA_COLS.map(l => ({ label: l })), rows: G.flatMap(x => { const [cid, n3] = U[x.u]; return [
   lin(x.v, cid, n3, 'Combustíveis Veiculos e Equipamentos', x.combRem, x.combReal), lin(x.v, cid, n3, 'Fluídos (Arla)', x.arlaRem, x.arlaReal),
   lin(x.v, cid, n3, 'Manutenção de Veículos e Equipamentos', x.manRem, x.manReal), lin(x.v, cid, n3, 'Pneus Novos', x.pnRem, x.pnReal),
-  lin(x.v, cid, n3, 'Seguro de Veículos e Equipamentos', 5000, 9000), lin(x.v, cid, n3, 'IPVA e Licenciamento de Veículos', 1000, 9000), lin(x.v, cid, n3, 'Depreciação', 2000, 2500)]; })
+  lin(x.v, cid, n3, 'Seguro de Veículos e Equipamentos', 5000, 9000), lin(x.v, cid, n3, 'IPVA e Licenciamento de Veículos', 1000, 9000), lin(x.v, cid, n3, 'Depreciação', 2000, 2500)]
+  .concat(x.ctRem != null ? [lin(x.v, cid, n3, 'Contratos de Manutenção Fabricante', x.ctRem, x.ctReal)] : []); })
   // VAN do GRL em ago/26: o DRE escreve "ROTA (VAN) - GRL"
   .concat([lin('2026-08', 'GUARULHOS', 'ROTA (VAN) - GRL', 'Combustíveis Veiculos e Equipamentos', 20000, 22000)])
   // mês só orçado (set/26 sem realizado) não pode virar fato
   .concat([lin('2026-09', 'CAMPO GRANDE', 'ROTA - CGR', 'Combustíveis Veiculos e Equipamentos', 100000, 0)]) } });
+const gvizAbertura = () => ({ status: 'ok', table: { cols: ['Unidade', 'Mês', 'Projeto', 'Placa', 'Remunerado', 'Real', 'R$/km', 'Impacto'].map(l => ({ label: l })), rows: [
+  ['Guarulhos - SP', DATE('2026-07'), 'ROTA', 'GRL4D44', 2000, 3000, 'R$ 2,50', 'R$ 2.500,00'], ['Guarulhos - SP', DATE('2026-07'), 'ROTA', 'GRL1A11', 2200, 2000, 'R$ 2,50', '-R$ 500,00'],
+  ['CDD GUARULHOS', DATE('2026-08'), 'ROTA', 'GRL4D44', 2000, 2100, 'R$ 2,50', 'R$ 250,00'], ['Cuiába - MT', DATE('2026-07'), 'EMPURRADA', 'CBA9Z99', 5000, 5500, 'R$ 4,00', 'R$ 2.000,00'] ].map(r => ({ c: r.map(v => ({ v })) })) } });
 const gvizReceita = () => ({ status: 'ok', table: { cols: FROTA_COLS.map(l => ({ label: l })), rows: [] } });
 const gvizDisp = () => { const rows = G.map(x => { const c = new Array(40).fill(null).map(() => ({ v: null }));
   c[0] = { v: DATE(x.v) }; c[13] = { v: x.u.split(' ')[0] }; c[14] = { v: U[x.u][1] }; c[22] = { v: 400 }; c[25] = { v: 12 }; c[28] = { v: 8 }; c[38] = { v: 5 }; c[31] = { v: x.kmRem }; c[32] = { v: x.kmReal }; return { c }; });
@@ -142,7 +146,10 @@ const T = {
     { status: 'INSTALLED', placa: 'PIR1A11', menorMM: 3.5, amplitude: 1, pressaoNOK: true }, { status: 'INSTALLED', placa: 'PIR1A11', menorMM: 8, amplitude: 6, pressaoNOK: true },
     { status: 'INSTALLED', placa: 'PIR3C33', menorMM: 2.5, amplitude: 1, pressaoNOK: false }, { status: 'INSTALLED', placa: 'PIR3C33', menorMM: 9, amplitude: 1, pressaoNOK: false },
     { status: 'INVENTORY', placa: '', menorMM: 12 } ] }],
-  custo_vigencia_mv: [], disp_resumo: [], indisponibilidade: [],
+  custo_vigencia_mv: [
+    { vig_km: '2026-07-01', placa: 'GRL4D44', unidade: 'GRL', projeto: 'ROTA - GRL', tipo: 'variavel', taxa_km: 0.4, km_vig: 3000, custo_vig: 1200, previa: false },
+    { vig_km: '2026-07-01', placa: 'GRL1A11', unidade: 'GRL', projeto: 'ROTA - GRL', tipo: 'variavel', taxa_km: 0.4, km_vig: 2000, custo_vig: 800, previa: false },
+    { vig_km: '2026-07-01', placa: 'GRL6F66', unidade: 'GRL', projeto: 'ROTA - GRL', tipo: 'fixo', taxa_km: 0, km_vig: 2500, custo_vig: 1500, previa: false } ], disp_resumo: [], indisponibilidade: [],
   ce_scores_mensais: [
     { competencia: '2026-08-01', chave: 'gt:1', motorista: 'JOAO RUIM', unidade: 'EMP PIRAI', km: 3000, dias: 20, pontuacao: 52, rpm_pontos: 40, idle_pontos: 60, acel_pontos: 80, vel_pontos: 90, viagens: 30, vel_excessos: 1, litros: 1300, km_litros: 3000 },
     { competencia: '2026-08-01', chave: 'gt:2', motorista: 'ANA BOA', unidade: 'EMP PIRAI', km: 3500, dias: 20, pontuacao: 91, rpm_pontos: 90, idle_pontos: 90, acel_pontos: 95, vel_pontos: 95, viagens: 30, vel_excessos: 0, litros: 1250, km_litros: 3500 } ],
@@ -171,7 +178,7 @@ async function abre({ admin = true, w = 1600, h = 900, tema = 'dark' } = {}) {
     r.fulfill({ status: 200, contentType: 'application/javascript', body: u.includes('supabase') ? SHIM_SB(admin) : u.includes('html2canvas') ? 'window.html2canvas=async()=>document.createElement("canvas");' : '' }); });
   await ctx.route('**/lozwipoeacpvplgkrxkq.supabase.co/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
   await ctx.route('**/docs.google.com/**', r => { const u = r.request().url(); const aba = decodeURIComponent((u.match(/sheet=([^&]+)/) || [])[1] || ''); const gid = (u.match(/gid=(\d+)/) || [])[1];
-    const j = aba === 'Frota' ? gvizFrota() : aba === 'Receita Líquida' ? gvizReceita() : aba === 'Dispersão de km' ? gvizDisp() : aba === 'Km/L' ? gvizKml() : aba === 'R$/L' ? gvizRsl()
+    const j = aba === 'Frota' ? gvizFrota() : aba === 'Receita Líquida' ? gvizReceita() : aba === 'Dispersão de km' ? gvizDisp() : aba === 'Abertura' ? gvizAbertura() : aba === 'Km/L' ? gvizKml() : aba === 'R$/L' ? gvizRsl()
       : aba === 'Remunerado' && u.includes(SEARA_ID) ? gvizSearaRem() : gid === '1982300845' ? gvizSearaComb() : gid === '0' && u.includes(SEARA_ID) ? gvizSearaBrem() : { status: 'error', errors: [{ message: 'aba desconhecida ' + aba }] };
     r.fulfill({ status: 200, contentType: 'text/plain', body: '/*O_o*/\ngoogle.visualization.Query.setResponse(' + JSON.stringify(j) + ');' }); });
   const pg = await ctx.newPage();
@@ -202,6 +209,7 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
       ponte: d && { dCusto: d.blocos.ponte.dCusto, vol: d.blocos.ponte.vol, efic: d.blocos.ponte.efic, preco: d.blocos.ponte.preco, dif: d.blocos.ponte.dif, expl: d.explicado,
         kmL: [d.blocos.comb.kmLReal, d.blocos.comb.kmLRem], causas: d.causas.map(c => [c.tema, Math.round(c.rs || 0), c.txt.slice(0, 60)]), acoes: d.acoes.map(a => [a.tema, a.ofens]) },
       grl: dg && { causas: dg.causas.map(c => [c.tema, !!c.rede, c.txt]), acoes: dg.acoes.map(a => [a.tema, a.txt, a.ofens, a.taxa && a.taxa.txt]), hist: dg.historico.daUni.map(c => [c.vig, c.res, c.over, c.overProx]) },
+      grlSinais: dg && dg.sinais.map(x => x.txt), grlKm: dg && dg.blocos.contratoKm,
       pir: dp && { causas: dp.causas.map(c => c.txt), acoes: dp.acoes.map(a => [a.txt, a.ofens]) },
       pirc: dpc && { over: pirc.over, expl: dpc.explicado, causas: dpc.causas.map(c => [c.tema, c.txt]), acoes: dpc.acoes.map(a => [a.tema, a.ofens, a.txt]), efic: dpc.blocos.comb && dpc.blocos.comb.efic, sinais: dpc.sinais.map(s => s.txt), avisos: dpc.avisos },
       van: dv && { comb: dv.blocos.comb && { lit: dv.blocos.comb.lit, rsLRem: dv.blocos.comb.rsLRem } },
@@ -244,6 +252,10 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
   af('ação: OS em aberto, da mais velha (OS 777 há 30 dias, Alta)', aSla && aSla[2][0] === 'OS 777 GRL6F66 30d (Alta)', JSON.stringify(aSla));
   af('ação: causa raiz nas placas que mais custaram, cada uma com o grupo (GRL4D44 R$ 60,0 mil (Embreagem…) primeiro)', aRaiz && aRaiz[2][0] === 'GRL4D44 R$ 60,0 mil (Embreagem R$ 60,0 mil)' && aRaiz[2][1] === 'GRL1A11 R$ 18,0 mil (Freios R$ 18,0 mil)', JSON.stringify(aRaiz));
   af('ação: fornecedor que concentra o gasto (Retífica Beta 70%)', aFor && /^Retífica Beta R\$ 70,0 mil \(70%\)$/.test(aFor[2][0]), JSON.stringify(aFor));
+  af('CONTRATO × KM POR PLACA: a fatura de ago cobra o km de jul; GRL4D44 (variável) rodou +1.000 km acima do remunerado (+24% das 2 variáveis) = R$ 400 a R$ 0,40/km; GRL6F66 (fixa) fica fora', G1.causas.some(c => c[0] === 'Contrato' && /^Km das placas do contrato variável: 1 de 2 placas rodaram acima do km remunerado em jul\/26 \(\+1\.000 km, \+24% sobre o remunerado delas\), e cada km a mais entra na fatura do contrato: R\$ 400 ao R\$\/km de cada placa$/.test(c[2])), JSON.stringify(G1.causas.filter(c => c[0] === 'Contrato').map(c => c[2])));
+  const aKm = G1.acoes.find(a => /Conter o km das placas variáveis/.test(a[1]));
+  af('…e a ação de contenção lista a placa, o km a mais, o % e o R$', aKm && aKm[2].join() === 'GRL4D44 +1.000 km (+50%), R$ 400', JSON.stringify(aKm));
+  af('…a causa do contrato continua (R$ 2,0 mil acima, 3 placas faturadas) e nada de Km/L vira causa nem sinal de Manutenções', G1.causas.some(c => /^Contrato de manutenção: R\$ 2,0 mil acima do remunerado; na unidade, 3 placas faturadas/.test(c[2])) && !G1.causas.some(c => /Km\/L|R\$\/L/.test(c[2])) && !(r.grlSinais || []).some(t => /Km\/L|R\$\/L/.test(t)), JSON.stringify([G1.causas.map(c => c[2].slice(0, 60)), r.grlSinais]));
   af('aprendizado: FCA de jul/26 do GRL "melhorou" (30 mil → 15 mil no mês seguinte)', G1.hist.length === 1 && G1.hist[0][1] === 'melhorou' && Math.round(G1.hist[0][2]) === 30000 && Math.round(G1.hist[0][3]) === 15000, JSON.stringify(G1.hist));
   af('…e a ação de SLA traz a taxa do tema na rede (1 de 1)', aSla && /FCAs de oficina \/ sla em Manutenções melhoraram o mês seguinte em 1 de 1/.test(aSla[3] || ''), JSON.stringify(aSla && aSla[3]));
   af('FCA de RPM fica fora do aprendizado de Custos; o de ago/26 fica "aguardando"', !r.casos.some(c => c[0] === 'PIR') && r.casos.some(c => c[0] === 'CGR' && c[2] === 'aguardando'), JSON.stringify(r.casos));

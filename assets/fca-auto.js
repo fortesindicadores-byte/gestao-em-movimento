@@ -207,6 +207,34 @@ function indexaDisp(disp) {
   });
   return acc;
 }
+/* ABA ABERTURA (Painel KM · Placas): km remunerado × realizado POR PLACA e mês
+   (Renan, 14/10/2026: "Nos contratos, as placas variáveis pode correlacionar com a
+   dispersão de km das placas para explicar desvios e sugerir ações de contenção").
+   Colunas por rótulo (Unidade · Mês · Projeto · Placa · Remunerado · Real · R$/km ·
+   Impacto); a unidade vem em grafias ("CDD CUIABÁ", "Cuiába - MT", "Piraí -RJ") e o
+   projeto como AS / VAN / ROTA / EMPURRADA. Índice: unidade|AAAA-MM → [{placa, proj,
+   rem, real, delta}]. */
+const AB_PROJ = { 'AS': 'AUTO SERVICO', 'VAN': 'VAN', 'ROTA (VAN)': 'VAN' };
+const AB_CIDADE = Object.assign({ 'RIO DE JANEIRO': 'CGR', 'CAMBORIU': 'BLC' }, CIDADE_DRE);
+function abUnidade(unidade, proj) {
+  const n = NK(unidade).replace(/^CDD\s+/, '').replace(/\s*-\s*[A-Z]{2}$/, '').trim();
+  const base = AB_CIDADE[n] || AB_CIDADE[n.split(' ').pop()]; if (!base) return null;
+  return (base === 'CBA' || base === 'MCC') ? base + ' ' + tierOfPrefix(base, proj) : base;
+}
+function indexaAbertura(ab) {
+  const cols = (ab && ab.cols) || [], rows = (ab && ab.rows) || [];
+  const c = { uni: achaCol(cols, ['unidade']), vig: achaCol(cols, ['mês', 'mes']), proj: achaCol(cols, ['projeto']), placa: achaCol(cols, ['placa']),
+    rem: achaCol(cols, ['remunerado']), real: achaCol(cols, ['real']) };
+  const out = {};
+  if (Object.values(c).some(i => i < 0)) return out;
+  rows.forEach(r => {
+    const vig = vigDe(r[c.vig]), placa = placaKey(r[c.placa]); if (!vig || !placa) return;
+    const pj = NK(r[c.proj]), proj = AB_PROJ[pj] || pj, uni = abUnidade(r[c.uni], proj); if (!uni) return;
+    const rem = num(r[c.rem]) || 0, real = num(r[c.real]) || 0;
+    (out[uni + '|' + vig] = out[uni + '|' + vig] || []).push({ placa, proj, rem, real, delta: real - rem });
+  });
+  return out;
+}
 /* preço remunerado da aba R$/L (KML_ID): mesma consulta da Árvore — chave
    "PROJ - UNI" × mês × combustível, VAN sem preço usa o do ROTA da unidade */
 function indexaPreco(rsl) {
@@ -774,6 +802,9 @@ function ofensoresDe(k, f, ctx) {
   return [];
 }
 
+/* variáveis de combustível que não viram causa nem sinal de Manutenções/Pneus (Renan, 14/10/2026: "Porque km/L em manutenção? Retire") */
+const SEM_COMB = ['kml_gap', 'preco_gap', 'erp_kml', 'erp_preco', 'cond_kml'];
+
 /* ── MANUTENÇÕES ── */
 function diagManut(f, ctx, D, causa, acao, base) {
   const lanc = cartaDo(f, ctx, 'Manutenção');
@@ -812,10 +843,29 @@ function diagManut(f, ctx, D, causa, acao, base) {
     if (cContr && cContr.ov > 0) {
       causa('Contrato', `Contrato de manutenção: ${rs(cContr.ov)} acima do remunerado; na unidade, ${ct.length} placas faturadas (${rs(tc)}) pelo km de ${vigLbl(kmMes)}${fx2.length ? ', ' + fx2.length + ' atravessaram para a faixa 2' : ''}`, cContr.ov);
       acao('Contrato', `Conferir a fatura do contrato (km cobrado × km rodado)${fx2.length ? ' e as ' + fx2.length + ' placas que passaram para a faixa 2' : ''}; as de maior fatura`, top(ct, 5, p => p.v.custo_mes).map(p => `${p.ent} ${rs(p.v.custo_mes)}${fin(p.v.km_mes) ? ', ' + br(p.v.km_mes, 0) + ' km' : ''}${(p.v.faixas || 0) >= 2 ? ', faixa 2' : ''}`));
+      // CONTRATO VARIÁVEL × DISPERSÃO DE KM POR PLACA (Renan, 14/10/2026: "Nos contratos, as placas variáveis
+      // pode correlacionar com a dispersão de km das placas para explicar desvios e sugerir ações de contenção"):
+      // a fatura do contrato variável é km × taxa, então cada km rodado acima do remunerado (aba Abertura do
+      // Painel KM, no mês do km) entra na fatura. Cruza placa a placa; do projeto do fato, senão da unidade.
+      const abTudo = (ctx.abertura || {})[f.uni + '|' + kmMes] || [], abProj = abTudo.filter(r => r.proj === f.proj), abUse = abProj.length ? abProj : abTudo;
+      const porPl = {}; abUse.forEach(r => { porPl[r.placa] = r; });
+      const cruz = ct.filter(p => p.tipo !== 'fixo' && p.v.km_mes > 0).map(p => { const a = porPl[placaKey(p.ent)]; if (!a) return null;
+        const rk = fin(p.v.rskm) ? p.v.rskm : (p.v.taxa_km > 0 ? p.v.taxa_km : null);
+        return { placa: p.ent, rem: a.rem, real: a.real, delta: a.delta, rk, rsDelta: rk != null ? a.delta * rk : null, custo: p.v.custo_mes }; }).filter(Boolean);
+      if (cruz.length) {
+        const acima = cruz.filter(x => x.delta > 0), kmAcima = acima.reduce((s, x) => s + x.delta, 0), rsAcima = acima.reduce((s, x) => s + (x.rsDelta || 0), 0);
+        const remT = cruz.reduce((s, x) => s + x.rem, 0);
+        D.blocos.contratoKm = { mes: kmMes, nivel: abProj.length ? 'projeto' : 'unidade', cruz: cruz.slice().sort((a, b) => (b.rsDelta || 0) - (a.rsDelta || 0)), acima: acima.length, kmAcima, rsAcima };
+        if (acima.length && rsAcima >= D.minimo) {
+          causa('Contrato', `Km das placas do contrato variável: ${acima.length} de ${cruz.length} placas rodaram acima do km remunerado em ${vigLbl(kmMes)} (+${br(kmAcima, 0)} km${remT > 0 ? ', ' + sinalPct(kmAcima / remT * 100, 0) + ' sobre o remunerado delas' : ''}), e cada km a mais entra na fatura do contrato: ${rs(rsAcima)} ao R$/km de cada placa`, rsAcima, { soma: false });
+          acao('Contrato', `Conter o km das placas variáveis que rodam acima do remunerado (viagens que não remuneram, roteirização, usar placa de contrato fixo nas rotas mais longas)`,
+            top(acima, 5, x => x.rsDelta || x.delta).map(x => `${x.placa} +${br(x.delta, 0)} km${x.rem > 0 ? ' (' + sinalPct(x.delta / x.rem * 100, 0) + ')' : ''}${x.rsDelta != null ? ', ' + rs(x.rsDelta) : ''}`));
+        } else D.sinais.push({ tema: 'Contrato', txt: `Km das placas do contrato variável: as ${cruz.length} placas cruzadas rodaram no km remunerado ou abaixo em ${vigLbl(kmMes)}: o estouro do contrato não vem de km a mais` });
+      }
     }
   }
-  // indicadores do Ginfo/Gerot
-  const ind = sinaisRede(f, ctx, D, []);
+  // indicadores do Ginfo/Gerot — Km/L e R$/L ficam fora (Renan, 14/10/2026: "Porque km/L em manutenção? Retire")
+  const ind = sinaisRede(f, ctx, D, SEM_COMB);
   // listas de hoje do Ginfo → ações com placa
   const gi = ctx.ginfo[f.uni] || {};
   const prevV = gi.prevVencidas || [], osAb = gi.osAbertas || [];
@@ -882,7 +932,7 @@ function diagPneus(f, ctx, D, causa, acao, base) {
   const al = ((ctx.ginfo[f.uni] || {}).alinVencidos) || [];
   if (al.length) causa('Pneus', `Ginfo (hoje): ${al.length} placa(s) com alinhamento vencido (desgaste irregular)`, null);
   if (al.length) acao('Pneus', `Alinhar as placas com alinhamento vencido no Ginfo: ${al.length} placa(s)`, al.slice(0, 6).map(a => a.placa));
-  sinaisRede(f, ctx, D, []);
+  sinaisRede(f, ctx, D, SEM_COMB);
   acoesDaRede(f, ctx, D);
 }
 
@@ -997,7 +1047,7 @@ function contexto(L, deps) {
   const porVig = {}; FU.forEach(r => { (porVig[r.vig] = porVig[r.vig] || []).push(r.v); });
   Object.entries(porVig).forEach(([vg, vs]) => { const q = {}; Object.keys(CAT).forEach(k => { q[k] = quartis(vs.map(v => v[k])); }); quartisRede[vg] = q; });
   const prolog = {}; Object.entries(L.prolog || {}).forEach(([u, t]) => { prolog[u] = resumoProlog(t); });
-  const ctx = { dreAcc: dreIdx.acc, maxVig: dreIdx.maxReal, todos, disp: indexaDisp(L.disp), kml: kmlIdx, cat: CAT, fatoRede: FU,
+  const ctx = { dreAcc: dreIdx.acc, maxVig: dreIdx.maxReal, todos, disp: indexaDisp(L.disp), abertura: indexaAbertura(L.abertura), kml: kmlIdx, cat: CAT, fatoRede: FU,
     fatoUni, quartisRede, fatoPlaca, fatoMot, carta, seara: searaIdx, ginfo: indexaGinfo(L.ginfo || {}, deps.hoje), prolog, ArvImpacto: deps.ArvImpacto || global.ArvImpacto };
   ctx.rede = rede(FU, deps.Estat || global.Estat);
   ctx.aprend = aprendizado(L.fca, todos, dreIdx.maxReal);
@@ -1039,9 +1089,10 @@ async function carregar(sb, o) {
     catch (e) { console.error(nome, e); fontes.push({ nome, estado: 'erro', msg: String((e && e.message) || e) }); return null; } };
   const CC = global.CartaCalc;
   const SBM = global.SearaBenchModelo;
-  const [dre, disp, kml, rsl, fca, corr, gin, sComb, sBrem, sRem, sMod] = await Promise.all([
+  const [dre, disp, abert, kml, rsl, fca, corr, gin, sComb, sBrem, sRem, sMod] = await Promise.all([
     passo('DRE · aba Frota', () => CC.frota(), v => v.rows.length),
     passo('Dispersão de km', () => gviz(DISP_ID, 'Dispersão de km'), v => v.rows.length),
+    passo('Dispersão · Abertura (km por placa)', () => gviz(DISP_ID, 'Abertura'), v => v.rows.length),
     passo('Km/L (aba Km/L do Consumo)', () => gviz(KML_ID, 'Km/L'), v => v.rows.length),
     passo('R$/L remunerado (aba R$/L)', () => gviz(KML_ID, 'R$/L'), v => v.rows.length),
     passo('FCA (histórico de causas e ações)', () => todasLinhas(sb, 'fca', 'id,unidade,vigencia,origem,fato,projeto,fato_desvio,causa,acao,responsavel,prazo,status,created_at'), v => v.length),
@@ -1064,7 +1115,7 @@ async function carregar(sb, o) {
     if (ate) { const vigs = []; for (let i = 0; i < 13; i++) vigs.push(vigDeIdx(vigIdx(ate) - i));
       carta = await passo('Carta de Custos (lançamentos)', async () => { const r = await CC.lerLancamentos(sb, UNITS, vigs); if (r.erro) throw new Error(r.erro.message || String(r.erro)); return r.data; }, v => v.length); }
   }
-  return { dre, disp, kml, rsl, fca: fca || [], corr, ginfo: gin || {}, carta: carta || [], prolog: {}, fontes,
+  return { dre, disp, abertura: abert, kml, rsl, fca: fca || [], corr, ginfo: gin || {}, carta: carta || [], prolog: {}, fontes,
     seara: { comb: sComb, brem: sBrem, rem: sRem, prevMod: sMod || {} } };
 }
 /* Prolog de hoje: uma leitura por unidade (o jsonb das 14 juntas estoura o payload) */
@@ -1080,6 +1131,6 @@ async function carregarProlog(sb) {
 }
 
 global.FcaAuto = { UNITS, PACOTES, vigLbl, vigDeLbl, vigIdx, vigAnt, vigSeg, projKey, unidadeDoNv3, rs, br, pct, sinalPct, impFmt, NK,
-  indexaDRE, fatos, desvioTxt, getPacote, pacDoFato, EXCL_FCA, indexaSeara, acumuladoAno, redeFala, unidadeDoDRE, indexaDisp, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
+  indexaDRE, fatos, desvioTxt, getPacote, pacDoFato, EXCL_FCA, indexaSeara, acumuladoAno, redeFala, unidadeDoDRE, indexaDisp, indexaAbertura, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
   diagnostico, indicadores, indexaGinfo, EXTRA, montaCatalogo, CAT: () => CAT, resumoProlog, contexto, carregar, carregarProlog, ROT, METAS, fmtInd, placaKey };
 })(typeof window !== 'undefined' ? window : globalThis);

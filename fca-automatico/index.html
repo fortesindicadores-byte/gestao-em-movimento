@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610141745">
+<meta name="build" content="202610141830">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -895,7 +895,7 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610141745"></script>
+<script src="../assets/fca-auto.js?v=202610141830"></script>
 </head>
 <body>
 <div class="app">
@@ -1172,6 +1172,8 @@ function abreModal(id){
   if(b.ind&&b.ind.length) P.push(`<div class="fm-sec"><h4>Tudo o que a rede cruza, na unidade e no mês (fora da meta ou no pior quartil primeiro)</h4><div class="fm-box"><table class="fa-t"><thead><tr><th>Indicador</th><th class="n">Valor</th><th>Referência</th><th>Na rede</th></tr></thead><tbody>
     ${b.ind.slice().sort((x,y)=>(y.ruim===true)-(x.ruim===true)||((y.rede&&y.rede.forca)||0)-((x.rede&&x.rede.forca)||0)).map(i=>`<tr><td><b>${esc(i.rot)}</b><br><span style="color:var(--txt3);font-size:10.5px">${esc(i.g||'')}</span></td><td class="n" style="color:${i.ruim?'var(--vermelho)':i.ruim===false?'var(--verde)':'var(--txt2)'}"><b>${FA.fmtInd(i.k,i.val)}</b></td><td>${esc(i.ref||'—')}</td><td>${esc(FA.redeLeitura(i.rede))}</td></tr>`).join('')}</tbody></table></div></div>`);
   const ofTab=(tit,arr)=>arr&&arr.length?`<div><h4 style="font-size:10px;color:var(--txt3);margin:0 0 5px;text-transform:uppercase;letter-spacing:.8px">${tit}</h4><table class="fa-t"><tbody>${arr.slice(0,6).map(x=>`<tr><td>${esc(x.k)}</td><td class="n"><b>${FA.rs(x.v)}</b></td></tr>`).join('')}</tbody></table></div>`:'';
+  if(b.contratoKm&&b.contratoKm.cruz.length){ const ck=b.contratoKm; P.push(`<div class="fm-sec"><h4>Contrato variável × km rodado por placa (${FA.vigLbl(ck.mes)}${ck.nivel==='unidade'?' · unidade inteira':''})</h4><div class="fm-box"><table class="fa-t"><thead><tr><th>Placa</th><th class="n">Km rem.</th><th class="n">Km real</th><th class="n">Δ km</th><th class="n">R$/km</th><th class="n">R$ do Δ</th></tr></thead><tbody>
+    ${ck.cruz.slice(0,10).map(x=>`<tr><td><b>${esc(x.placa)}</b></td><td class="n">${FA.br(x.rem,0)}</td><td class="n">${FA.br(x.real,0)}</td><td class="n" style="color:${x.delta>0?'var(--vermelho)':x.delta<0?'var(--verde)':'var(--txt2)'}"><b>${(x.delta>0?'+':'')+FA.br(x.delta,0)}</b></td><td class="n">${x.rk!=null?'R$ '+FA.br(x.rk,2):'—'}</td><td class="n">${x.rsDelta!=null?(x.rsDelta>0?'+':'')+FA.rs(x.rsDelta):'—'}</td></tr>`).join('')}</tbody></table></div></div>`); }
   if(b.cartaGr) P.push(`<div class="fm-sec"><h4>Carta de Custos do mês${b.carta&&b.carta.nivel==='unidade'?' (unidade inteira: sem lançamento no projeto)':''}</h4><div class="fm-box"><div class="fm-two" style="grid-template-columns:repeat(3,minmax(0,1fr))">${ofTab('Grupo',b.cartaGr)}${ofTab('Placa',b.cartaPl)}${ofTab('Fornecedor',b.cartaFo)}</div></div></div>`);
   const H=d.historico, hum=humanoDo(f);
   const caso=c=>`<li><b>${esc(c.uni)} · ${esc(c.proj)} · ${esc(FA.vigLbl(c.vig))}</b> — ${c.res==='melhorou'?'<span class="res-ok">melhorou</span>':c.res==='piorou'?'<span class="res-ruim">piorou</span>':c.res==='igual'?'igual':'<span class="res-esp">aguardando</span>'}${c.over!=null&&c.overProx!=null?` (${FA.rs(c.over)} → ${FA.rs(c.overProx)})`:''}<br><span class="kl">Causa:</span> ${nl(c.causa||'—')}<br><span class="kl">Ação:</span> ${nl(c.acao||'—')}</li>`;
@@ -1247,6 +1249,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610141745"></script>
+<script src="../assets/build-check.js?v=202610141830"></script>
 </body>
 </html>
