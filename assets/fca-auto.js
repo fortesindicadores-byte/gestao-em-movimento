@@ -275,17 +275,17 @@ const EXTRA = [
   { id: 'cond_baixo', rot: 'Km com motorista abaixo de 75 pontos', g: 'Condução (DriverPro)', dir: 'down', f: 'pct' },
   { id: 'cond_kml', rot: 'Km/L da telemetria', g: 'Condução (DriverPro)', dir: 'up', f: 'd2' },
   { id: 'frota_idade', rot: 'Idade média da frota', g: 'Frota', dir: 'down', f: 'anos' },
-  { id: 'contr_rskm', rot: 'R$/km do contrato de manutenção', g: 'Frota', dir: 'down', f: 'rskm' },
-  { id: 'contr_faixa2', rot: 'Placas do contrato na faixa 2', g: 'Frota', dir: 'down', f: 'pct' },
+  { id: 'contr_rskm', pac: ['Manutenções'], rot: 'R$/km do contrato de manutenção', g: 'Frota', dir: 'down', f: 'rskm' },
+  { id: 'contr_faixa2', pac: ['Manutenções'], rot: 'Placas do contrato na faixa 2', g: 'Frota', dir: 'down', f: 'pct' },
   { id: 'dias_parado', rot: 'Dias parado por placa (média)', g: 'Frota', dir: 'down', f: 'd1' },
   { id: 'erp_kml', rot: 'Km/L do ERP (abastecimentos)', g: 'Frota', dir: 'up', f: 'd2' },
   { id: 'erp_preco', rot: 'R$/L pago no ERP', g: 'Frota', dir: 'down', f: 'd2' },
   { id: 'kml_gap', rot: 'Km/L real contra remunerado (aba Km/L)', g: 'Combustível (bases)', dir: 'up', f: 'pct', ponte: true },
   { id: 'preco_gap', rot: 'R$/L real contra remunerado (aba Km/L)', g: 'Combustível (bases)', dir: 'down', f: 'pct', ponte: true },
-  { id: 'carta_n', rot: 'Lançamentos de manutenção na Carta', g: 'Carta de Custos', dir: 'down', f: 'n' },
-  { id: 'carta_ticket', rot: 'Valor médio do lançamento de manutenção', g: 'Carta de Custos', dir: 'down', f: 'brl' },
-  { id: 'carta_forn', rot: 'Concentração no maior fornecedor', g: 'Carta de Custos', dir: 'down', f: 'pct' },
-  { id: 'carta_novos', rot: 'Pneus novos no lançado de pneus', g: 'Carta de Custos', dir: 'down', f: 'pct' },
+  { id: 'carta_n', pac: ['Manutenções'], rot: 'Lançamentos de manutenção na Carta', g: 'Carta de Custos', dir: 'down', f: 'n' },
+  { id: 'carta_ticket', pac: ['Manutenções'], rot: 'Valor médio do lançamento de manutenção', g: 'Carta de Custos', dir: 'down', f: 'brl' },
+  { id: 'carta_forn', pac: ['Manutenções'], rot: 'Concentração no maior fornecedor', g: 'Carta de Custos', dir: 'down', f: 'pct' },
+  { id: 'carta_novos', pac: ['Pneus'], rot: 'Pneus novos no lançado de pneus', g: 'Carta de Custos', dir: 'down', f: 'pct' },
   { id: 'fca_preench', rot: 'FCAs de Custos com ação preenchida', g: 'FCA', dir: 'up', f: 'pct' }
 ];
 const FMT_CAT = { pct: v => pct(v, 1), brl: v => rs(v), num: v => br(v, 0), n: v => br(v, 0), d1: v => br(v, 1), d2: v => br(v, 2), kml: v => br(v, 2) + ' km/L',
@@ -307,6 +307,7 @@ function rede(fatoUni, Estat) {
   PACOTES.forEach(pac => {
     const y = Y_PAC[pac]; out[pac] = [];
     Object.values(CAT).forEach(cv => {
+      if (cv.pac && !cv.pac.includes(pac)) return;     // Carta e contrato só no pacote deles
       const x = cv.id;
       const xs = [], ys = [], ser = [];
       fatoUni.forEach(L => { const vx = L.v[x], vy = L.v[y]; const t = vigIdx(L.vig);
@@ -546,12 +547,12 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
    ou a rede mostra alguma ligação no sentido certo; o resto fica só na tabela. */
 function sinaisRede(f, ctx, D, excluir) {
   const ex = new Set(excluir || []);
-  const lista = Object.keys(CAT).filter(k => !ex.has(k));
+  const lista = Object.keys(CAT).filter(k => !ex.has(k) && !(CAT[k].pac && !CAT[k].pac.includes(f.pac)));
   const ind = indicadores(f.uni, f.vig, ctx, lista); D.blocos.ind = ind;
   ind.filter(i => i.ruim).forEach(i => {
     const txt = `${i.rot} ${fmtInd(i.k, i.val)} (${i.ref}); ${redeLeitura(i.rede)}`;
     if (i.rede && i.rede.sust) D.causas.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || 'Oficina / SLA', txt, rs: null, rede: true, ind: i.k, forca: i.rede.forca });
-    else if (METAS[i.k] != null || i.k === 'dispersao' || (i.rede && i.rede.forca >= 0.2)) D.sinais.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || '', txt, ind: i.k });
+    else if (METAS[i.k] != null || i.k === 'dispersao' || (i.rede && i.rede.forca >= 0.2 && Math.max(i.rede.n0 || 0, i.rede.n1 || 0) >= 30)) D.sinais.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || '', txt, ind: i.k });
   });
   return ind;
 }
