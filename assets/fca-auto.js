@@ -416,6 +416,21 @@ function redeLeitura(e) {
   return `na rede, ligação ${forcaTxt(b.r)} ${b.k} (r = ${br(b.r, 2)}, ${b.n} unidade-mês${b.q < 0.10 ? '' : ', pode ser coincidência'})`;
 }
 
+/* A MESMA leitura, em português da ponta (Renan, 14/10/2026: "precisa ser mais didático e
+   menos estatístico… essas causas e ações serão para o time da ponta"): sem r, sem n, sem
+   quartil. A tabela do modal continua com o redeLeitura técnico. */
+function redeFala(e, pac) {
+  if (!e) return '';
+  const melhor = [];
+  if (fin(e.r0) && e.n0 >= 8) melhor.push({ k: 0, r: e.r0, q: e.q0, ap: e.apoia0 });
+  if (fin(e.r1) && e.n1 >= 8) melhor.push({ k: 1, r: e.r1, q: e.q1, ap: e.apoia1 });
+  const b = melhor.filter(m => m.ap).sort((x, y) => Math.abs(y.r) - Math.abs(x.r))[0];
+  const nome = pac ? 'o ' + pac : 'o pacote';
+  if (!b) return `nas outras unidades isso não anda junto com o estouro d${nome.slice(1)}`;
+  const forca = forcaTxt(b.r);
+  return `nas outras unidades, quando isso piora ${nome} estoura junto${b.k ? ' no mês seguinte' : ''} (ligação ${forca}${b.q < 0.10 ? '' : ', pode ser coincidência'})`;
+}
+
 /* ═════════ 4) HISTÓRICO DO FCA — o que as unidades já escreveram ═════════ */
 const TEMAS = [
   { k: 'Preventiva', re: /preventiv|revis[aã]o program/ },
@@ -488,8 +503,8 @@ function indicadores(cod, vig, ctx, lista) {
     else if (meta != null) { ruim = (k === 'osVenc' || k === 'osCritica') ? x > meta : x < meta; ref = `meta ${fmtInd(k, meta)}`; }
     else if (dir) {
       const qs = (ctx.quartisRede[vig] || {})[k];
-      if (qs) { if (dir === 'down') { ruim = x > qs.q3; meta = qs.q3; ref = `pior quartil da rede: acima de ${fmtInd(k, qs.q3)}`; }
-                else { ruim = x < qs.q1; meta = qs.q1; ref = `pior quartil da rede: abaixo de ${fmtInd(k, qs.q1)}`; } }
+      if (qs) { if (dir === 'down') { ruim = x > qs.q3; meta = qs.q3; ref = `entre os 25% piores da rede no mês`; }
+                else { ruim = x < qs.q1; meta = qs.q1; ref = `entre os 25% piores da rede no mês`; } }
     }
     const re = ((ctx.rede[ctx._pac] || []).find(e => e.x === k)) || null;
     out.push({ k, rot: cv.rot || k, g: cv.g || '', val: x, meta, ref, ruim, rede: re });
@@ -599,29 +614,30 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
     const dkm = dp.real - dp.rem, dpct = (dp.real / dp.rem - 1) * 100;
     if (b.vol >= D.minimo) {
       const extra = EMPURRADA(f.uni) ? ' (km remunerado bruto, sem o balanço de massa: conferir no Painel KM antes de agir)' : '';
-      causa('Km / rota', `Volume: rodou ${br(dkm, 0)} km acima do remunerado (Dispersão ${sinalPct(dpct, 1)}), ${rs(b.vol)} no R$/km remunerado${extra}`, b.vol);
+      const quem = seara ? 'a Seara revisa o km remunerado em ciclos maiores' : 'a Ambev revisa o km remunerado a cada quinzena';
+      causa('Km / rota', `Km rodado: rodou ${br(dkm, 0)} km acima do remunerado (${sinalPct(dpct, 1)}), ${rs(b.vol)} no R$/km remunerado. Somos pagos pelo km remunerado (${quem}): o km a mais sai do nosso bolso${extra}`, b.vol);
       const vg = []; if (dp.vgRec) vg.push(br(dp.vgRec, 0) + ' recs'); if (dp.vgNot) vg.push(br(dp.vgNot, 0) + ' noturnas'); if (dp.vgMap) vg.push(br(dp.vgMap, 0) + ' com mapa aberto');
       acao('Km / rota', `Conferir as viagens que não remuneram e a roteirização no ${painelKm}${vg.length ? ' (no mês: ' + vg.join(', ') + ' de ' + br(dp.vgTot, 0) + ' viagens)' : ''}`);
-    } else if (Math.abs(b.vol) >= D.minimo) causa('Km / rota', `Volume: rodou ${br(-dkm, 0)} km abaixo do remunerado (Dispersão ${sinalPct(dpct, 1)}), ${rs(b.vol)}: o km não explica o estouro`, b.vol, { soma: false });
+    } else if (Math.abs(b.vol) >= D.minimo) causa('Km / rota', `Km rodado: rodou ${br(-dkm, 0)} km abaixo do remunerado (${sinalPct(dpct, 1)}), ${rs(b.vol)} a menos: o km não explica o estouro`, b.vol, { soma: false });
   }
   // Eficiência
   if (cb && fin(cb.efic)) {
     const dk = cb.kmLRem > 0 && cb.kmLReal > 0 ? (cb.kmLReal / cb.kmLRem - 1) * 100 : null;
     if (cb.efic >= D.minimo) {
-      causa('Condução', `Eficiência: Km/L ${br(cb.kmLReal, 2)} contra ${br(cb.kmLRem, 2)} remunerado (${sinalPct(dk, 1)}), ${br(cb.lit - cb.litEsp, 0)} L a mais, ${rs(cb.efic)}`, cb.efic);
+      causa('Condução', `Eficiência: fizemos ${br(cb.kmLReal, 2)} km/L contra ${br(cb.kmLRem, 2)} remunerado (${sinalPct(dk, 1)}): ${br(cb.lit - cb.litEsp, 0)} L a mais do que o remunerado previa para o km rodado, ${rs(cb.efic)}`, cb.efic);
       const of = top(cb.placas.filter(p => p.rsEfic > 0 && p.placa), 5, p => p.rsEfic)
         .map(p => `${p.placa}${p.modelo ? ' (' + p.modelo + ')' : ''} ${br(p.kmlReal, 2)} km/L, ${br(p.litMais, 0)} L, ${rs(p.rsEfic)}`);
       if (of.length) acao('Condução', `Vistoria de consumo nas placas que mais gastaram acima da régua (vazamento, injeção, filtro, pneu murcho, ocioso) e acompanhar quem dirige`, of);
-    } else if (Math.abs(cb.efic) >= D.minimo) causa('Condução', `Eficiência: Km/L ${br(cb.kmLReal, 2)} contra ${br(cb.kmLRem, 2)} remunerado (${sinalPct(dk, 1)}), economizou ${rs(-cb.efic)}`, cb.efic, { soma: false });
+    } else if (Math.abs(cb.efic) >= D.minimo) causa('Condução', `Eficiência: fizemos ${br(cb.kmLReal, 2)} km/L contra ${br(cb.kmLRem, 2)} remunerado (${sinalPct(dk, 1)}): gastamos menos litros do que o previsto, economizou ${rs(-cb.efic)}`, cb.efic, { soma: false });
   }
   // Preço
   if (cb && fin(cb.preco)) {
     const dp2 = cb.rsLRem > 0 && cb.rsLReal > 0 ? (cb.rsLReal / cb.rsLRem - 1) * 100 : null;
     if (cb.preco >= D.minimo) {
-      causa('Abastecimento / preço', `Preço: R$/L ${br(cb.rsLReal, 2)} contra ${br(cb.rsLRem, 2)} remunerado (${sinalPct(dp2, 1)}), ${rs(cb.preco)}`, cb.preco);
+      causa('Abastecimento / preço', `Preço: pagamos R$ ${br(cb.rsLReal, 2)}/L contra R$ ${br(cb.rsLRem, 2)}/L remunerado (${sinalPct(dp2, 1)}): ${rs(cb.preco)} a mais nos litros abastecidos`, cb.preco);
       const of = top(cb.placas.filter(p => p.rsPreco > 0 && p.placa), 5, p => p.rsPreco).map(p => `${p.placa} R$/L ${br(p.rsLReal, 2)} × ${br(p.pRem, 2)}, ${rs(p.rsPreco)}`);
       acao('Abastecimento / preço', `Direcionar o abastecimento para o posto/tanque com preço no remunerado e cobrar o preço negociado; placas que mais pagaram acima`, of);
-    } else if (Math.abs(cb.preco) >= D.minimo) causa('Abastecimento / preço', `Preço: R$/L ${br(cb.rsLReal, 2)} contra ${br(cb.rsLRem, 2)} remunerado (${sinalPct(dp2, 1)}), economizou ${rs(-cb.preco)}`, cb.preco, { soma: false });
+    } else if (Math.abs(cb.preco) >= D.minimo) causa('Abastecimento / preço', `Preço: pagamos R$ ${br(cb.rsLReal, 2)}/L contra R$ ${br(cb.rsLRem, 2)}/L remunerado (${sinalPct(dp2, 1)}): economizou ${rs(-cb.preco)}`, cb.preco, { soma: false });
   }
   // Diferença DRE × bases
   if (b && fin(b.dif) && Math.abs(b.dif) >= Math.max(1000, 0.1 * base)) {
@@ -629,7 +645,7 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
     if (fin(b.difReal) && Math.abs(b.difReal) >= 500) l.push(`realizado da DRE ${b.difReal > 0 ? 'acima' : 'abaixo'} dos abastecimentos da ${abaKm} em ${rs(Math.abs(b.difReal))}`);
     if (fin(b.difRem) && Math.abs(b.difRem) >= 500) l.push(`remunerado da DRE ${b.difRem > 0 ? 'abaixo' : 'acima'} do que as bases preveem em ${rs(Math.abs(b.difRem))}`);
     if (b.dif > 0) {
-      causa('Lançamento / contábil', `Diferença DRE × bases: ${rs(b.dif)} que o km, a eficiência e o preço não explicam${l.length ? ' (' + l.join('; ') + ')' : ''}`, b.dif);
+      causa('Lançamento / contábil', `Diferença entre a DRE e os abastecimentos: ${rs(b.dif)} que o km, a eficiência e o preço não explicam${l.length ? ' (' + l.join('; ') + ')' : ''}`, b.dif);
       acao('Lançamento / contábil', `Conciliar a conta Combustíveis do DRE com os abastecimentos do mês (lançamento de outra competência, provisão, placa de outro projeto)`);
     }
   }
@@ -651,22 +667,24 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
       if (cb && cb.efic > 0) acao('Condução', `Feedback de condução (faixa verde, motor ligado parado) com os motoristas de pior nota da unidade no DriverPro`, of);
     }
   }
-  // indicadores que a rede liga ao desvio de Combustíveis
-  // o que a ponte já mede em R$ (volume, eficiência, preço) não entra de novo como sinal
-  sinaisRede(f, ctx, D, ['dispersao', 'comb', 'kml_gap', 'preco_gap', 'erp_kml', 'erp_preco', 'cond_kml']);
+  // COMBUSTÍVEIS SÓ TEM TRÊS ALAVANCAS (Renan, 14/10/2026: "O que checklist de saída e retorno tem a ver com
+  // combustível? Combustível temos variáveis bem direcionadas: 1. Preço 2. Eficiência 3. Km rodado"): a ponte já
+  // mede as três em R$; da rede entra SÓ a condução (DriverPro), que explica a eficiência. Checklist,
+  // preventivas, conformidade etc. ficam na tabela da rede, nunca como causa ou ação de combustível.
+  sinaisRede(f, ctx, D, ['cond_kml'], k => /^cond_/.test(k));
   acoesDaRede(f, ctx, D);
 }
 /* TODAS as variáveis do catálogo, menos as que o diagnóstico já mede em R$
    (a ponte do combustível). Fora da meta / no pior quartil: vira CAUSA quando a
    rede sustenta a ligação com o desvio do pacote; vira SINAL quando tem meta
    ou a rede mostra alguma ligação no sentido certo; o resto fica só na tabela. */
-function sinaisRede(f, ctx, D, excluir) {
+function sinaisRede(f, ctx, D, excluir, apenas) {
   if (!ctx.rede[f.pac]) return [];
   const ex = new Set(excluir || []);
-  const lista = Object.keys(CAT).filter(k => !ex.has(k) && !(CAT[k].pac && !CAT[k].pac.includes(f.pac)));
+  const lista = Object.keys(CAT).filter(k => !ex.has(k) && !(CAT[k].pac && !CAT[k].pac.includes(f.pac)) && (!apenas || apenas(k)));
   const ind = indicadores(f.uni, f.vig, ctx, lista); D.blocos.ind = ind;
   ind.filter(i => i.ruim).forEach(i => {
-    const txt = `${i.rot} ${fmtInd(i.k, i.val)} (${i.ref}); ${redeLeitura(i.rede)}`;
+    const txt = `${i.rot}: ${fmtInd(i.k, i.val)} (${i.ref}). ${redeFala(i.rede, f.pac)}`;
     if (i.rede && i.rede.sust) D.causas.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || 'Oficina / SLA', txt, rs: null, rede: true, ind: i.k, forca: i.rede.forca });
     else if (METAS[i.k] != null || i.k === 'dispersao' || (i.rede && i.rede.forca >= 0.2 && Math.max(i.rede.n0 || 0, i.rede.n1 || 0) >= 30)) D.sinais.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || '', txt, ind: i.k });
   });
@@ -791,7 +809,7 @@ function diagManut(f, ctx, D, causa, acao, base) {
   acoesDaRede(f, ctx, D, osAb.length ? ['osVenc', 'mttr', 'sla', 'prev'] : ['prev']);
   // placas paradas mais dias no mês (eventos do app de indisponibilidade)
   const par = (ctx.fatoPlaca[f.uni + '|' + f.vig] || []).filter(p => (p.v.dias_indisp || 0) >= 3);
-  if (par.length) { D.blocos.paradas = par; D.sinais.push({ tema: 'Oficina / SLA', txt: `Indisponibilidade: ${par.length} placa(s) paradas 3 dias ou mais no mês (${top(par, 4, p => p.v.dias_indisp).map(p => p.ent + ' ' + br(p.v.dias_indisp, 0) + 'd').join(', ')})` }); }
+  if (par.length) { D.blocos.paradas = par; D.sinais.push({ tema: 'Oficina / SLA', txt: `Placas paradas: ${par.length} placa(s) ficaram 3 dias ou mais paradas no mês (${top(par, 4, p => p.v.dias_indisp).map(p => p.ent + ' ' + br(p.v.dias_indisp, 0) + 'd').join(', ')})` }); }
 }
 /* lançamentos da Carta do fato: do projeto; sem nada no projeto, da unidade */
 function cartaDo(f, ctx, pacCarta) {
@@ -1041,6 +1059,6 @@ async function carregarProlog(sb) {
 }
 
 global.FcaAuto = { UNITS, PACOTES, vigLbl, vigDeLbl, vigIdx, vigAnt, vigSeg, projKey, unidadeDoNv3, rs, br, pct, sinalPct, impFmt, NK,
-  indexaDRE, fatos, desvioTxt, getPacote, pacDoFato, EXCL_FCA, indexaSeara, acumuladoAno, unidadeDoDRE, indexaDisp, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
+  indexaDRE, fatos, desvioTxt, getPacote, pacDoFato, EXCL_FCA, indexaSeara, acumuladoAno, redeFala, unidadeDoDRE, indexaDisp, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
   diagnostico, indicadores, indexaGinfo, EXTRA, montaCatalogo, CAT: () => CAT, resumoProlog, contexto, carregar, carregarProlog, ROT, METAS, fmtInd, placaKey };
 })(typeof window !== 'undefined' ? window : globalThis);
