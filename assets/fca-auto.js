@@ -668,7 +668,12 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
       if (fin(b.difRem) && Math.abs(b.difRem) >= 500) l.push(`remunerado da DRE ${b.difRem > 0 ? 'abaixo' : 'acima'} do que as bases preveem em ${rs(Math.abs(b.difRem))}`);
     }
     const q = quem.charAt(0).toUpperCase() + quem.slice(1);
-    causa('Lançamento / contábil', `${q} ${verbo} só ${Math.round(D.explicado * 100)}% do desvio (${rs(Math.max(tres, 0))} de ${rs(f.over)}): ${rs(resto)} ${medidas.length === 3 ? 'não batem com os abastecimentos' : 'sem explicação pelas bases'}${l.length ? ' (' + l.join('; ') + ')' : ''}${faltas.length ? '; ' + faltas.join('; ') : ''}`, null, { prio: -1 });
+    const cauda = `${l.length ? ' (' + l.join('; ') + ')' : ''}${faltas.length ? '; ' + faltas.join('; ') : ''}`;
+    // alavancas que ECONOMIZARAM (tres < 0): o desvio inteiro fica sem explicação — dizer isso, e não "0% (R$ 0 de X): Y", com Y maior que o desvio
+    const txtExpl = tres < 0
+      ? `${q} não ${verbo} o desvio (nas bases, ${rs(-tres)} a menos que o remunerado): o desvio inteiro, ${rs(f.over)}, fica sem explicação pelas bases${cauda}`
+      : `${q} ${verbo} só ${Math.round(D.explicado * 100)}% do desvio (${rs(tres)} de ${rs(f.over)}): ${rs(resto)} ${medidas.length === 3 ? 'não batem com os abastecimentos' : 'sem explicação pelas bases'}${cauda}`;
+    causa('Lançamento / contábil', txtExpl, null, { prio: -1 });
     acao('Lançamento / contábil', `${temVol ? 'C' : (seara ? 'Atualizar a aba Remunerado da Seara e c' : 'Atualizar a Dispersão de km do mês e c')}onciliar a conta Combustíveis do DRE com os abastecimentos do mês (lançamento de outra competência, provisão, placa de outro projeto)`);
   }
   // condução (telemetria) — quando a unidade tem
