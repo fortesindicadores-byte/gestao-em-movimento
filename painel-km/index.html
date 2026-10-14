@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610142030">
+<meta name="build" content="202610142130">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -993,12 +993,12 @@ async function fetchData() {
   // (km ORIGINAL, antes do balanço de massa — a taxa não muda com a recomposição)
   const kmPorChave = {};
   const kmRealPorChave = {};
-  // o balanço de massa enxerga SÓ os meses da aba (bmKm0/bmKmReal): as linhas de set/26+ que
-  // vêm do banco não entram, senão o balanço de setembro passaria a contar e o rateio anual
-  // redistribuiria jan a ago (Renan, 14/10/2026: "Não mude resultados anteriores").
+  // o balanço de massa enxerga TODO mês que entrou no painel, inclusive os que vêm do banco
+  // (Renan, 14/10/2026: "Sempre quando subir o mês com os valores, deve subir o BM. Senão não
+  // faz sentido"). Com o mês novo, o rateio anual refaz a divisão de jan em diante.
   const bmKm0 = {}, bmKmReal = {};
   ALL.forEach(r => { const k = chaveRs(r.vig, r.und, r.proj); kmPorChave[k] = (kmPorChave[k]||0) + r.rem; kmRealPorChave[k] = (kmRealPorChave[k]||0) + r.real;
-    if (!r.fonteKm) { bmKm0[k] = (bmKm0[k]||0) + r.rem; bmKmReal[k] = (bmKmReal[k]||0) + r.real; } });
+    bmKm0[k] = (bmKm0[k]||0) + r.rem; bmKmReal[k] = (bmKmReal[k]||0) + r.real; });
 
   // BALANÇO DE MASSA → km remunerado recomposto, rateado pelas linhas da chave
   // (taxa = R$/km remunerado da chave, todas as contas — o mesmo do impacto)
@@ -1924,6 +1924,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610142030"></script>
+<script src="../assets/build-check.js?v=202610142130"></script>
 </body>
 </html>

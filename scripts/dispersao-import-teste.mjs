@@ -207,7 +207,7 @@ console.log('2) sem ser admin');
   await ctx.close();
 }
 
-/* ── 4) Painel KM: jan a ago iguais ao de antes, set/26 entra do banco ── */
+/* ── 4) Painel KM: set/26 entra do banco COM o balanço de massa dele; desligado, nada muda ── */
 console.log('4) Painel KM · antigo × novo com os mesmos dados');
 {
   const { execSync } = await import('node:child_process');
@@ -233,7 +233,7 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
                       { vigencia: '2026-09', unidade: 'GRL', projeto: 'Van', placa: 'GRL4D44', placa_origem: 'GRL4D44', km_rem: 1300 }],
     sh_consumo_km_litro: [{ vigencia: '09/2026', projeto: 'ROTA - PLT', placa: 'CUC9F14', km_rodado_horas_trabalhadas: 4300 },
                           { vigencia: '09/2026', projeto: 'VAN - GRL', placa: 'GRL4D44', km_rodado_horas_trabalhadas: 1400 }],
-    // balanço de massa por conta (banco): ago e set. O de set NÃO pode mexer em jan a ago.
+    // balanço de massa por conta (banco): ago e set. O de set entra junto com o mês (Renan, 14/10/2026).
     balanco_massa: [{ unidade: 'PIR', projeto: 'EMPURRADA', vigencia: '2026-08', conta: 'Combustíveis', valor: 200000 },
                     { unidade: 'PIR', projeto: 'EMPURRADA', vigencia: '2026-09', conta: 'Combustíveis', valor: 300000 }],
   };
@@ -258,14 +258,18 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
     await pg.waitForTimeout(800);
     const kh = await pg.evaluate(() => { const k = document.querySelector('#vw-resumo .kpis.k4'); return k ? Math.round(k.getBoundingClientRect().height) : 0; });
     if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'painel-km-' + (ligado ? 'com' : 'sem') + '-set.png') });
-    const out = await pg.evaluate(() => ({ kh: 0, all: ALL.map(r => ({ vig: r.vig, und: r.und, proj: r.proj, rem: r.rem, real: r.real, viagens: r.viagens, kmFrota: r.kmFrota, rsKm: r.rsKm, imp: r.imp })),
+    const out = await pg.evaluate(() => ({ kh: 0, all: ALL.map(r => ({ vig: r.vig, und: r.und, proj: r.proj, rem: r.rem, rem0: r.rem0, recomp: r.recomp || 0, real: r.real, viagens: r.viagens, kmFrota: r.kmFrota, rsKm: r.rsKm, imp: r.imp })),
       placas: PLACAS.map(p => ({ vig: p.vig, und: p.und, proj: p.proj, placa: p.placa, rem: p.rem, real: p.real })) }));
     await ctx.close(); return { ...out, kh, errs };
   };
   const A = await roda('/painel-km/__antigo.html'), N = await roda('/painel-km/index.html');
   const ate = rs => JSON.stringify(rs.filter(r => r.vig !== '09/2026'));
   af('o balanço de massa entrou nos dois (PIR com km recomposto)', A.all.some(r => r.und === 'PIR' && r.vig !== '09/2026' && r.rem > (r.vig === '01/2026' ? 300000 : 330000)), JSON.stringify(A.all.filter(r => r.und === 'PIR').map(r => [r.vig, Math.round(r.rem)])));
-  af('jan a ago idênticos ao painel de antes (linha a linha)', A.all.length > 0 && ate(A.all) === ate(N.all), A.all.length + ' × ' + N.all.length);
+  const recPIR = rs => rs.filter(r => r.und === 'PIR').reduce((s, r) => s + (r.recomp || 0), 0);
+  const pirSet = N.all.find(r => r.vig === '09/2026' && r.und === 'PIR');
+  af('ligado: o balanço de set/26 entra junto com o mês (PIR set com km recomposto)', pirSet && pirSet.recomp > 0 && pirSet.rem > pirSet.rem0, JSON.stringify(pirSet));
+  af('ligado: o balanço do ano de PIR cresce com o de set/26', recPIR(N.all) > recPIR(A.all) + 1, Math.round(recPIR(A.all)) + ' → ' + Math.round(recPIR(N.all)));
+  af('ligado: o km rodado e o remunerado bruto de jan a ago não mudam', JSON.stringify(A.all.filter(r => r.vig !== '09/2026').map(r => [r.vig, r.und, r.real, Math.round(r.rem0 ?? r.rem)])) === JSON.stringify(N.all.filter(r => r.vig !== '09/2026').map(r => [r.vig, r.und, r.real, Math.round(r.rem0)])));
   af('o painel de antes não tinha set/26', !A.all.some(r => r.vig === '09/2026'));
   const s9 = N.all.filter(r => r.vig === '09/2026');
   af('set/26 entra do banco: 3 linhas', s9.length === 3, JSON.stringify(s9));
