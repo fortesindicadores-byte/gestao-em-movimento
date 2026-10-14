@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610150010">
+<meta name="build" content="202610150040">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -940,7 +940,7 @@ table.rel td.fato .fa-ano{font-size:10.5px;}
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610150010"></script>
+<script src="../assets/fca-auto.js?v=202610150040"></script>
 </head>
 <body>
 <div class="app">
@@ -1296,7 +1296,7 @@ function abreModal(id){
     const se=b.seara;
     P.push(`<div class="fm-sec"><h4>Ponte da conta Combustíveis (a mesma da ${se?'Árvore da Seara':'Árvore de Combustível'})</h4><div class="fm-box"><table class="fa-t"><thead><tr><th>Parte</th><th class="n">R$</th><th>Como sai</th></tr></thead><tbody>
       ${row('Δ custo (DRE)',p.dCusto,'realizado − remunerado da conta Combustíveis, sem Arla')}
-      ${row('Volume',p.vol,se?'(km real − km rem) × R$/km rem — abas Combustível e Remunerado da Seara':'(km real − km rem) × R$/km rem — Dispersão de km')}
+      ${row('Km rodado',p.vol,(p.volBases?'(km real − km rem) ÷ Km/L rem × R$/L rem':'(km real − km rem) × custo rem da DRE por km (sem Km/L e R$/L rem no mês)')+(se?' — aba Remunerado da Seara':' — Dispersão de km'))}
       ${row('Eficiência (Km/L)',p.efic,se?'(km ÷ Km/L real − km ÷ Km/L rem) × R$/L real — Combustível e Base Remunerado (KmPorLitro)':'(litros − litros previstos pela régua) × R$/L rem — aba Km/L')}
       ${row('Preço (R$/L)',p.preco,se?'R$ abastecido − PrecoDiesel × litros — Combustível e Base Remunerado':'R$ abastecido − preço rem × litros — abas Km/L e R$/L')}
       ${row('Diferença DRE × bases',p.dif,'o que o km, a eficiência e o preço não explicam; só vira causa quando as três explicam metade ou menos do desvio')}</tbody></table></div></div>`); }
@@ -1387,6 +1387,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610150010"></script>
+<script src="../assets/build-check.js?v=202610150040"></script>
 </body>
 </html>

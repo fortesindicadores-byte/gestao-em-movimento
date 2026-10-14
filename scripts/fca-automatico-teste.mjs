@@ -5,7 +5,7 @@
 //  1. FATO = pacote que estourou no DRE, a mesma regra do FCA: CGR · ROTA ·
 //     ago/26 · Combustíveis com R$ 31.000 (conta Combustíveis 30 mil + Arla 1 mil);
 //  2. a PONTE da conta Combustíveis fecha no Δ do custo, como a Árvore:
-//     Volume 10.000 (5.000 km × R$ 2,00/km rem) · Eficiência 11.600 (2.000 L a
+//     Km rodado 11.600 (5.000 km ÷ 2,50 km/L rem × R$ 5,80/L rem) · Eficiência 11.600 (2.000 L a
 //     mais × R$ 5,80) · Preço 4.800 · Diferença DRE × bases 3.600, e o Arla
 //     1.000 à parte → 100% do desvio explicado em R$;
 //  3. o OFENSOR de eficiência é a placa que gastou acima da régua (CGR0A01,
@@ -210,11 +210,14 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
       if (dx.causas.length > 3) inv.erros.push(fx.id + ': ' + dx.causas.length + ' causas');
       dx.causas.filter(c => c.rede && c.meta != null && isFinite(c.val) && !/osVenc|osCritica/.test(c.ind)).forEach(c => { if (c.dir === 'down' ? c.val < c.meta * 1.05 : c.val > c.meta * 0.95) inv.erros.push(fx.id + ': ' + c.ind + ' colado na meta virou causa'); });
       dx.acoes.forEach(a => { if (!tm.has(a.tema)) inv.erros.push(fx.id + ': ação sem causa (' + a.tema + ')'); pt[a.tema] = (pt[a.tema] || 0) + 1; if (pt[a.tema] > 2) inv.erros.push(fx.id + ': 3+ ações em ' + a.tema); }); });
-    return { inv, n: FATOS.length, maxVig: CTX.maxVig, setembro: FATOS.some(x => x.vig === '2026-09'), seguro: FATOS.some(x => x.pac === 'Seguros e licenças'),
+    const kS = Object.keys(CTX.kml).find(x => /^CGR\|ROTA\|2026-08$/.test(x)) || Object.keys(CTX.kml).find(x => x.startsWith('CGR|') && x.endsWith('|2026-08'));
+    const dS = kS && FcaAuto.diagnostico(cgr, Object.assign({}, CTX, { kml: Object.assign({}, CTX.kml, { [kS]: CTX.kml[kS].map(r => ({ ...r, pRem: r.pRem > 0 ? r.pRem * 1.2 : r.pRem })) }) }));
+    const savP = dS && { k: kS, preco: dS.blocos.comb.preco, causas: dS.causas.map(c => [c.tema, c.txt]), acoes: dS.acoes.map(a => a.tema) };
+    return { savP, inv, n: FATOS.length, maxVig: CTX.maxVig, setembro: FATOS.some(x => x.vig === '2026-09'), seguro: FATOS.some(x => x.pac === 'Seguros e licenças'),
       seg: seg && { over: seg.over, dpct: seg.dpct, txt: FcaAuto.desvioTxt(seg) }, outros: outros && { over: outros.over }, segD: seg && { causas: diag(seg).causas.map(c => c.txt), acoes: diag(seg).acoes.map(a => a.txt) },
       cgr: cgr && { over: cgr.over, contas: cgr.contas.map(c => [c.conta, Math.round(c.ov)]), txt: FcaAuto.desvioTxt(cgr) },
       ponte: d && { dCusto: d.blocos.ponte.dCusto, vol: d.blocos.ponte.vol, efic: d.blocos.ponte.efic, preco: d.blocos.ponte.preco, dif: d.blocos.ponte.dif, expl: d.explicado,
-        kmL: [d.blocos.comb.kmLReal, d.blocos.comb.kmLRem], causas: d.causas.map(c => [c.tema, Math.round(c.rs || 0), c.txt.slice(0, 60)]), acoes: d.acoes.map(a => [a.tema, a.ofens]) },
+        kmL: [d.blocos.comb.kmLReal, d.blocos.comb.kmLRem], causas: d.causas.map(c => [c.tema, Math.round(c.rs || 0), c.txt.slice(0, 60), c.txt]), acoes: d.acoes.map(a => [a.tema, a.ofens]) },
       grl: dg && { causas: dg.causas.map(c => [c.tema, !!c.rede, c.txt]), acoes: dg.acoes.map(a => [a.tema, a.txt, a.ofens, a.taxa && a.taxa.txt]), hist: dg.historico.daUni.map(c => [c.vig, c.res, c.over, c.overProx]) },
       grlSinais: dg && dg.sinais.map(x => x.txt), grlKm: dg && dg.blocos.contratoKm, cgrSinais: d && d.sinais.map(x => x.txt),
       pir: dp && { causas: dp.causas.map(c => c.txt), acoes: dp.acoes.map(a => [a.txt, a.ofens]) },
@@ -237,10 +240,11 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
   af('CGR · ROTA · ago/26 · Combustíveis = R$ 31.000 (30 mil da conta + 1 mil do Arla)', r.cgr && Math.round(r.cgr.over) === 31000, JSON.stringify(r.cgr && r.cgr.contas));
   af('o fato tem o MESMO texto do FCA (Desvio + Contas)', r.cgr && /^Desvio: ▲ R\$ 31\.000 · ▲ -30%\nContas:\n- Combustíveis Veiculos e Equipamentos: ▲ 30K \| ▲ 30%\n- Fluídos \(Arla\): ▲ 1K \| ▲ 20%$/.test(r.cgr.txt), r.cgr && JSON.stringify(r.cgr.txt));
   const P = r.ponte || {};
-  af('ponte: Δ custo 30.000 = Volume 10.000 + Eficiência 11.600 + Preço 4.800 + Diferença 3.600', Math.round(P.dCusto) === 30000 && Math.round(P.vol) === 10000 && Math.round(P.efic) === 11600 && Math.round(P.preco) === 4800 && Math.round(P.dif) === 3600, JSON.stringify([P.dCusto, P.vol, P.efic, P.preco, P.dif]));
+  af('ponte: Δ custo 30.000 = Km rodado 11.600 (5.000 km ÷ Km/L rem 2,50 × R$/L rem 5,80, sem R$/km) + Eficiência 11.600 + Preço 4.800 + Diferença 2.000', Math.round(P.dCusto) === 30000 && Math.round(P.vol) === 11600 && Math.round(P.efic) === 11600 && Math.round(P.preco) === 4800 && Math.round(P.dif) === 2000, JSON.stringify([P.dCusto, P.vol, P.efic, P.preco, P.dif]));
   af('aba Km/L sem cabeçalho: Km/L real 2,29 × rem 2,50 pelas posições padrão', P.kmL && Math.abs(P.kmL[0] - 55000 / 24000) < 1e-9 && P.kmL[1] === 2.5, JSON.stringify(P.kmL));
-  af('as três alavancas + Arla explicam 88% (27.400 de 31.000): acima da metade, a diferença DRE × bases (3.600) NÃO vira causa', Math.abs(P.expl - 27400 / 31000) < 1e-9 && !(P.causas || []).some(c => c[0] === 'Lançamento / contábil') && !(P.acoes || []).some(a => a[0] === 'Lançamento / contábil'), String(P.expl) + ' ' + JSON.stringify(P.causas));
-  af('NO MÁXIMO 3 CAUSAS: Eficiência, Volume e Preço (na ordem do R$); o Arla (R$ 1.000) sai para os sinais, e a ação dele junto', P.causas && P.causas.map(c => c[1]).join(',') === '11600,10000,4800' && !(P.acoes || []).some(a => a[0] === 'Arla') && (r.cgrSinais || []).some(t => /^Arla: R\$ 1,0 mil acima/.test(t)), JSON.stringify([P.causas, r.cgrSinais]));
+  af('as três alavancas + Arla explicam 94% (29.000 de 31.000): acima da metade, a diferença DRE × bases (2.000) NÃO vira causa; o km fala em litros e R$/L, nunca em R$/km', Math.abs(P.expl - 29000 / 31000) < 1e-9 && (P.causas || []).some(c => c[0] === 'Km / rota' && /2\.000 L a mais pelo Km\/L remunerado \(2,50\), R\$ 11,6 mil ao R\$\/L remunerado \(R\$ 5,80\)/.test(c[3])) && !(P.causas || []).some(c => /R\$\/km/.test(c[3])) && !(P.causas || []).some(c => c[0] === 'Lançamento / contábil') && !(P.acoes || []).some(a => a[0] === 'Lançamento / contábil'), String(P.expl) + ' ' + JSON.stringify(P.causas));
+  af('SAVING DE PREÇO vira só observação dentro da causa da eficiência: sem linha de preço e sem ação de preço', r.savP && r.savP.preco < 0 && !r.savP.causas.some(c => /^Preço:/.test(c[1])) && r.savP.causas.some(c => /^Eficiência:.*Obs\.: no preço economizamos R\$/.test(c[1])) && !r.savP.acoes.includes('Abastecimento / preço'), JSON.stringify(r.savP));
+  af('NO MÁXIMO 3 CAUSAS: Km rodado, Eficiência e Preço (na ordem do R$); o Arla (R$ 1.000) sai para os sinais, e a ação dele junto', P.causas && P.causas.map(c => c[1]).join(',') === '11600,11600,4800' && !(P.acoes || []).some(a => a[0] === 'Arla') && (r.cgrSinais || []).some(t => /^Arla: R\$ 1,0 mil acima/.test(t)), JSON.stringify([P.causas, r.cgrSinais]));
   const ofE = (P.acoes || []).find(a => a[0] === 'Condução'), ofP = (P.acoes || []).find(a => a[0] === 'Abastecimento / preço');
   af('ofensor de eficiência: só a placa que gastou acima da régua (CGR0A01, 2.000 L)', ofE && ofE[1].length === 1 && /^CGR0A01 \(VW 13\.180\) 2,00 km\/L, 2\.000 L, R\$ 11,6 mil$/.test(ofE[1][0]), JSON.stringify(ofE));
   af('ofensores de preço na ordem do R$ pago acima (A 2.000, B 1.600, C 1.200)', ofP && ofP[1].map(x => x.slice(0, 7)).join(',') === 'CGR0A01,CGR0B02,CGR0C03', JSON.stringify(ofP));
@@ -278,7 +282,7 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
   const INV = r.inv || {};
   af('EM TODOS OS FATOS: no máximo 3 causas, nenhum indicador a menos de 5% da meta como causa, toda ação com o tema de uma causa mostrada e no máximo 2 ações por causa', INV.n > 0 && !INV.erros.length, JSON.stringify(INV));
   const A = r.ang || {};
-  af('SEARA pela Árvore da Seara: ANG ago/26 tem a ponte (Δ 25.000 = volume 11.111 + eficiência 4.000 + preço 7.000 + diferença 2.889)', A.seara && A.ponte && A.ponte.join() === '25000,11111,4000,7000,2889' && Math.abs(A.expl - 22111 / 25000) < 1e-4, JSON.stringify(A.ponte) + ' ' + A.expl);
+  af('SEARA pela Árvore da Seara: ANG ago/26 tem a ponte (Δ 25.000 = km rodado 7.333 pelo Km/L e R$/L rem + eficiência 4.000 + preço 7.000 + diferença 6.667)', A.seara && A.ponte && A.ponte.join() === '25000,7333,4000,7000,6667' && Math.abs(A.expl - 18333.33 / 25000) < 1e-4, JSON.stringify(A.ponte) + ' ' + A.expl);
   af('…Km/L 2,86 × 3,00 rem (KmPorLitro) e R$/L 6,00 × 5,50 (PrecoDiesel); ANG2B22 pela média do modelo (aviso)', A.kmL && Math.abs(A.kmL[0] - 40000 / 14000) < 1e-9 && A.kmL[1] === 3 && A.rsL[0] === 6 && A.rsL[1] === 5.5 && A.avisos.some(a => /1 placa\(s\) sem remunerado na Base Remunerado/.test(a)) && A.avisos.length === 1, JSON.stringify([A.kmL, A.rsL, A.avisos]));
   af('…ofensores: só a ANG1A11 gastou acima da régua (8.000 L × 6.667) e pagou acima do preço', A.ofE && A.ofE.length === 1 && /^ANG1A11/.test(A.ofE[0]) && A.ofP && A.ofP.length === 2 && /^ANG1A11/.test(A.ofP[0]), JSON.stringify([A.ofE, A.ofP]));
   af('…e a rede recebe o Km/L (−4,8%) e o R$/L (+9,1%) da Anhanguera contra o remunerado', A.gap && Math.abs(A.gap.kml_gap - (40000 / 14000 / 3 - 1) * 100) < 1e-9 && Math.abs(A.gap.preco_gap - (6 / 5.5 - 1) * 100) < 1e-9, JSON.stringify(A.gap));

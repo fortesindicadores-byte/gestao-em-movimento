@@ -664,6 +664,15 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
   const b = Arv ? Arv.calc({ custoRem: comb.rem, custoReal: comb.real, kmRem: dp ? dp.rem : 0, kmReal: dp ? dp.real : 0,
     rsLRem: cb && cb.rsLRem, rsLReal: cb && cb.rsLReal, kmLRem: cb && cb.kmLRem, kmLReal: cb && cb.kmLReal,
     impPrecoBase: cb ? cb.preco : null, impEficBase: cb ? cb.efic : null, litBase: cb ? cb.lit : 0, kmBase: cb ? cb.km : 0, totBase: cb ? cb.tot : 0 }) : null;
+  // KM RODADO PELOS DOIS OUTROS PARÂMETROS, NÃO PELO R$/km (Renan, 14/10/2026: "Porque no R$/km se está
+  // falando de km? … R$/km é aberto em Km/L e R$/L. Eu expliquei o que deveria ser explicado. Km, R$/L e
+  // Km/L, não R$/km"): o km a mais vira litros pelo Km/L remunerado e R$ pelo R$/L remunerado. Sem os dois
+  // remunerados no mês, fica o valor da Árvore (custo remunerado da DRE por km). A diferença DRE × bases
+  // é refeita para a ponte continuar fechando no Δ custo.
+  if (b && fin(b.vol) && cb && cb.kmLRem > 0 && cb.rsLRem > 0) {
+    b.volDre = b.vol; b.litVol = (b.kmReal - b.kmRem) / cb.kmLRem; b.vol = b.litVol * cb.rsLRem; b.volBases = true;
+    if (fin(b.preco) && fin(b.efic)) { b.dif = b.dCusto - b.vol - b.preco - b.efic; if (fin(b.difReal)) b.difRem = b.dif - b.difReal; }
+  }
   D.blocos.ponte = b; D.blocos.comb = cb; D.blocos.disp = dp;
   if (!cb) D.avisos.push(seara ? 'Sem linhas na aba Combustível da Seara para este mês: eficiência e preço não foram abertos.' : 'Sem linhas na aba Km/L para este projeto e mês: eficiência e preço não foram abertos.');
   if (!dp) D.avisos.push(seara ? 'Sem km remunerado na aba Remunerado da Seara para este mês: o volume não foi calculado.' : 'Sem km da Dispersão de km para este projeto e mês: o volume não foi calculado.');
@@ -674,10 +683,12 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
     const dkm = dp.real - dp.rem, dpct = (dp.real / dp.rem - 1) * 100;
     if (b.vol >= D.minimo) {
       const extra = EMPURRADA(f.uni) ? ' (km remunerado bruto, sem o balanço de massa: conferir no Painel KM antes de agir)' : '';
-      causa('Km / rota', `Km rodado: rodou ${br(dkm, 0)} km acima do remunerado (${sinalPct(dpct, 1)}), ${rs(b.vol)} no R$/km remunerado${extra}`, b.vol);
+      const como = b.volBases ? `: ${br(b.litVol, 0)} L a mais pelo Km/L remunerado (${br(cb.kmLRem, 2)}), ${rs(b.vol)} ao R$/L remunerado (R$ ${br(cb.rsLRem, 2)})`
+        : `, ${rs(b.vol)} (sem Km/L e R$/L remunerados no mês: valor pelo custo remunerado da DRE)`;
+      causa('Km / rota', `Km rodado: rodou ${br(dkm, 0)} km acima do remunerado (${sinalPct(dpct, 1)})${como}${extra}`, b.vol);
       const vg = []; if (dp.vgRec) vg.push(br(dp.vgRec, 0) + ' recs'); if (dp.vgNot) vg.push(br(dp.vgNot, 0) + ' noturnas'); if (dp.vgMap) vg.push(br(dp.vgMap, 0) + ' com mapa aberto');
       acao('Km / rota', `Conferir as viagens que não remuneram e a roteirização no ${painelKm}${vg.length ? ' (no mês: ' + vg.join(', ') + ' de ' + br(dp.vgTot, 0) + ' viagens)' : ''}`);
-    } else if (Math.abs(b.vol) >= D.minimo) causa('Km / rota', `Km rodado: rodou ${br(-dkm, 0)} km abaixo do remunerado (${sinalPct(dpct, 1)}), ${rs(b.vol)} a menos: o km não explica o estouro`, b.vol, { soma: false });
+    } else if (Math.abs(b.vol) >= D.minimo) causa('Km / rota', `Km rodado: rodou ${br(-dkm, 0)} km abaixo do remunerado (${sinalPct(dpct, 1)})${b.volBases ? ': ' + br(-b.litVol, 0) + ' L a menos pelo Km/L remunerado, ' + rs(-b.vol) + ' ao R$/L remunerado' : ', ' + rs(-b.vol) + ' a menos'}: o km não explica o estouro`, b.vol, { soma: false });
   }
   // Eficiência
   if (cb && fin(cb.efic)) {
@@ -696,7 +707,15 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
       causa('Abastecimento / preço', `Preço: pagamos R$ ${br(cb.rsLReal, 2)}/L contra R$ ${br(cb.rsLRem, 2)}/L remunerado (${sinalPct(dp2, 1)}): ${rs(cb.preco)} a mais nos litros abastecidos`, cb.preco);
       const of = top(cb.placas.filter(p => p.rsPreco > 0 && p.placa), 5, p => p.rsPreco).map(p => `${p.placa} R$/L ${br(p.rsLReal, 2)} × ${br(p.pRem, 2)}, ${rs(p.rsPreco)}`);
       acao('Abastecimento / preço', `Direcionar o abastecimento para o posto/tanque com preço no remunerado e cobrar o preço negociado; placas que mais pagaram acima`, of);
-    } else if (Math.abs(cb.preco) >= D.minimo) causa('Abastecimento / preço', `Preço: pagamos R$ ${br(cb.rsLReal, 2)}/L contra R$ ${br(cb.rsLRem, 2)}/L remunerado (${sinalPct(dp2, 1)}): economizou ${rs(-cb.preco)}`, cb.preco, { soma: false });
+    } else if (Math.abs(cb.preco) >= D.minimo) {
+      // SAVING DE PREÇO NÃO É LINHA PRÓPRIA (Renan, 14/10/2026: "Quando Preço tiver saving, fica só como
+      // observação dentro da causa da eficiência. Não gera uma linha de ação"). Sem causa de eficiência,
+      // vai para os sinais.
+      const obs = `no preço economizamos ${rs(-cb.preco)} (R$ ${br(cb.rsLReal, 2)}/L contra R$ ${br(cb.rsLRem, 2)}/L remunerado, ${sinalPct(dp2, 1)})`;
+      const ef = D.causas.find(c => c.tema === 'Condução' && /^Eficiência:/.test(c.txt));
+      if (ef) ef.txt += `. Obs.: ${obs}`;
+      else D.sinais.push({ tema: 'Abastecimento / preço', txt: `Preço: ${obs}` });
+    }
   }
   // Arla (faz parte do pacote: entra no que as alavancas explicam)
   const ovArla = arla.rem - arla.real;    // negativos: estouro > 0
