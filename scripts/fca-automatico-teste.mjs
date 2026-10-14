@@ -128,6 +128,9 @@ const T = {
     { competencia: '2026-08-01', chave: 'gt:1', motorista: 'JOAO RUIM', unidade: 'EMP PIRAI', km: 3000, dias: 20, pontuacao: 52, rpm_pontos: 40, idle_pontos: 60, acel_pontos: 80, vel_pontos: 90, viagens: 30, vel_excessos: 1, litros: 1300, km_litros: 3000 },
     { competencia: '2026-08-01', chave: 'gt:2', motorista: 'ANA BOA', unidade: 'EMP PIRAI', km: 3500, dias: 20, pontuacao: 91, rpm_pontos: 90, idle_pontos: 90, acel_pontos: 95, vel_pontos: 95, viagens: 30, vel_excessos: 0, litros: 1250, km_litros: 3500 } ],
 };
+const CE_UNI = { CGR: 'CDD CAMPO GRANDE', GRL: 'CDD GUARULHOS', PIR: 'EMP PIRAI', 'CBA T2': 'CDD CUIABA', FLP: 'CDD FLORIANOPOLIS', NFR: 'CDD NOVA FRIBURGO', PLT: 'CDD PELOTAS', RON: 'CDD RONDONOPOLIS', BLC: 'CDD BALNEARIO', 'MCC T2': 'CDI MACACU' };
+G.forEach((x, i) => { const dc = x.combReal / x.combRem - 1; const nota = Math.max(5, Math.min(99, 80 - dc * 150 + (rnd() - 0.5) * 2));
+  T.ce_scores_mensais.push({ competencia: x.v + '-01', chave: 'gt:p' + i, motorista: 'MOT ' + x.u + ' ' + x.v, unidade: CE_UNI[x.u], km: 2000, dias: 20, pontuacao: nota, rpm_pontos: nota, idle_pontos: 70, acel_pontos: 80, vel_pontos: 90, viagens: 30, vel_excessos: 0, litros: 800, km_litros: 2000 }); });
 const SHIM_SB = admin => `window.supabase={createClient:()=>({
   auth:{getSession:async()=>({data:{session:{user:{id:'u1',email:'renan@x.com'}}}})},
   from:(tabela)=>{const T=${JSON.stringify(T)};let rows=(T[tabela]||[]).slice();
@@ -179,7 +182,10 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
       pirc: dpc && { acoes: dpc.acoes.map(a => [a.tema, a.ofens]), efic: dpc.blocos.comb && dpc.blocos.comb.efic, sinais: dpc.sinais.map(s => s.txt), avisos: dpc.avisos },
       van: dv && { comb: dv.blocos.comb && { lit: dv.blocos.comb.lit, rsLRem: dv.blocos.comb.rsLRem } },
       redeManut: (CTX.rede['Manutenções'] || []).filter(e => e.x === 'sla').map(e => ({ r0: +e.r0.toFixed(2), n0: e.n0, sust: e.sust, q0: e.q0 })),
-      aprend: CTX.aprend.temas.map(t => [t.pac, t.tema, t.aval, t.melhor]), casos: CTX.aprend.casos.map(c => [c.uni, c.vig, c.res]) };
+      aprend: CTX.aprend.temas.map(t => [t.pac, t.tema, t.aval, t.melhor]), casos: CTX.aprend.casos.map(c => [c.uni, c.vig, c.res]),
+      extra: { cat: Object.keys(CTX.cat), nRede: (CTX.rede['Manutenções'] || []).length, pir: CTX.fatoUni['PIR|2026-08'], grl: CTX.fatoUni['GRL|2026-08'], grlJul: CTX.fatoUni['GRL|2026-07'], cgr: CTX.fatoUni['CGR|2026-08'],
+        redeNota: (CTX.rede['Combustíveis'] || []).find(e => e.x === 'cond_nota'),
+        cgrCausas: d && d.causas.map(c => [c.ind || c.tema, !!c.rede]), cgrCausa: !!(d && d.causas.some(c => c.rede && c.ind === 'cond_nota') && !d.sinais.some(x => x.ind === 'cond_nota')) } };
   });
   af('fatos: só pacotes que estouraram; set/26 (só orçado) e Seguro ficam fora', r.n > 0 && !r.setembro && !r.seguro && r.maxVig === '2026-08', `${r.n} fatos · DRE até ${r.maxVig}`);
   af('CGR · ROTA · ago/26 · Combustíveis = R$ 31.000 (30 mil da conta + 1 mil do Arla)', r.cgr && Math.round(r.cgr.over) === 31000, JSON.stringify(r.cgr && r.cgr.contas));
@@ -188,7 +194,7 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
   af('ponte: Δ custo 30.000 = Volume 10.000 + Eficiência 11.600 + Preço 4.800 + Diferença 3.600', Math.round(P.dCusto) === 30000 && Math.round(P.vol) === 10000 && Math.round(P.efic) === 11600 && Math.round(P.preco) === 4800 && Math.round(P.dif) === 3600, JSON.stringify([P.dCusto, P.vol, P.efic, P.preco, P.dif]));
   af('aba Km/L sem cabeçalho: Km/L real 2,29 × rem 2,50 pelas posições padrão', P.kmL && Math.abs(P.kmL[0] - 55000 / 24000) < 1e-9 && P.kmL[1] === 2.5, JSON.stringify(P.kmL));
   af('100% do desvio explicado em R$ (ponte + Arla)', Math.abs(P.expl - 1) < 1e-9, String(P.expl));
-  af('causas na ordem do R$: Eficiência, Volume, Preço, Diferença, Arla', P.causas && P.causas.map(c => c[1]).join(',') === '11600,10000,4800,3600,1000', JSON.stringify(P.causas));
+  af('causas na ordem do R$: Eficiência, Volume, Preço, Diferença, Arla (as da rede vêm depois)', P.causas && P.causas.slice(0, 5).map(c => c[1]).join(',') === '11600,10000,4800,3600,1000', JSON.stringify(P.causas));
   const ofE = (P.acoes || []).find(a => a[0] === 'Condução'), ofP = (P.acoes || []).find(a => a[0] === 'Abastecimento / preço');
   af('ofensor de eficiência: só a placa que gastou acima da régua (CGR0A01, 2.000 L)', ofE && ofE[1].length === 1 && /^CGR0A01 \(VW 13\.180\) 2,00 km\/L, 2\.000 L, R\$ 11,6 mil$/.test(ofE[1][0]), JSON.stringify(ofE));
   af('ofensores de preço na ordem do R$ pago acima (A 2.000, B 1.600, C 1.200)', ofP && ofP[1].map(x => x.slice(0, 7)).join(',') === 'CGR0A01,CGR0B02,CGR0C03', JSON.stringify(ofP));
@@ -210,6 +216,14 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
   af('Pneus: ações com placa (calibrar PIR1A11; recape 3–4 mm; alinhar PIR2B22)', Pn.acoes.some(a => /Calibrar/.test(a[0]) && a[1][0] === 'PIR1A11 2 pneu(s)') && Pn.acoes.some(a => /recape/.test(a[0])) && Pn.acoes.some(a => /Alinhar/.test(a[0]) && a[1][0] === 'PIR2B22'), JSON.stringify(Pn.acoes));
   const Pc = r.pirc || { acoes: [], sinais: [] };
   af('condução: o motorista de pior nota de PIR entra na ação de eficiência', Pc.acoes.some(a => a[0] === 'Condução' && a[1].some(x => /^JOAO RUIM 52 pts/.test(x))) && !Pc.acoes.some(a => a[1].some(x => /ANA BOA/.test(x))), JSON.stringify(Pc.acoes));
+  const X = r.extra || {};
+  af('catálogo: as variáveis novas entram na rede (condução, frota, Carta, FCA, bases de combustível)', ['cond_nota', 'cond_baixo', 'carta_n', 'carta_forn', 'fca_preench', 'kml_gap', 'preco_gap'].every(k => X.cat.includes(k)) && X.cat.length >= 40 && X.nRede >= 15, `${X.cat.length} no catálogo · ${X.nRede} com dado em Manutenções`);
+  af('condução de PIR ago/26: inclui o motorista plantado (≥ 500 km) e pesa pelo km', X.pir && X.pir.cond_nota > 0 && X.pir.cond_nota < 91 && X.pir.cond_baixo > 0, JSON.stringify(X.pir));
+  af('Carta do GRL ago/26: 3 lançamentos, ticket R$ 13.333, maior fornecedor 75%', X.grl && X.grl.carta_n === 3 && Math.round(X.grl.carta_ticket) === 13333 && Math.round(X.grl.carta_forn) === 75, JSON.stringify(X.grl));
+  af('Carta de PIR ago/26: 100% de pneus novos; FCA do GRL jul/26: 100% com ação', X.pir && Math.round(X.pir.carta_novos) === 100 && X.grlJul && X.grlJul.fca_preench === 100, JSON.stringify([X.pir && X.pir.carta_novos, X.grlJul]));
+  af('bases de combustível do CGR ago/26: Km/L −8,3% e R$/L +3,4% contra o remunerado', X.cgr && Math.abs(X.cgr.kml_gap - (22000 / 24000 - 1) * 100) < 1e-9 && Math.abs(X.cgr.preco_gap - (144000 / 139200 - 1) * 100) < 1e-9, JSON.stringify(X.cgr));
+  af('a nota de condução PLANTADA sai sustentada pela rede no Combustíveis', X.redeNota && X.redeNota.sust && X.redeNota.r0 < -0.8, JSON.stringify(X.redeNota));
+  af('…e vira causa "rede" no CGR ago/26, sem entrar como sinal duplicado', X.cgrCausa, JSON.stringify(X.cgrCausas));
   af('empurrada sem Dispersão maior: sem causa de volume; aviso nenhum de base faltando', Pc.efic > 0 && !Pc.avisos.length, JSON.stringify(Pc.avisos));
   await ctx.close();
 }

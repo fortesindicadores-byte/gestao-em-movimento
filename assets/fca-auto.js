@@ -256,36 +256,68 @@ function combBases(ls) {
     preco: litR > 0 ? totR - rxl : null, efic: litEsp > 0 && lit > 0 && pr > 0 ? (lit - litEsp) * pr : null, litEsp, prRem: pr, placas };
 }
 
-/* ═════════ 3) A REDE — correlação desvio × indicador ═════════
-   fatoUni = CorrDados FATO.uni ({ent, cod, vig, v}). Mesmo mês e mês
-   seguinte (indicador de t−1 contra o desvio de t, dentro da unidade). */
-const DRIVERS = {
-  'Combustíveis': ['dispersao', 'comb', 'km_viagem', 'disp', 'sla', 'prev', 'checkT'],
-  'Manutenções': ['sla', 'conf', 'prev', 'disp', 'mttr', 'mtbf', 'osVenc', 'osCritica', 'checkT', 'civf', 'stVeic', 'disp_app', 'indisp_med', 'dispersao', 'km_viagem'],
-  'Pneus': ['pneus', 'dispersao', 'km_viagem', 'conf', 'checkT', 'civf', 'stVeic', 'prev']
-};
+/* ═════════ 3) A REDE — correlação desvio × TUDO que pode explicar ═════════
+   (Renan, 14/10/2026: "Leia tudo que pode ter correlação"). O catálogo junta
+   todas as variáveis por unidade × mês que o banco tem: os indicadores do
+   Gerot/Ginfo e da Dispersão (CorrDados), a condução (DriverPro), a frota
+   (idade, contrato, dias parados, ERP), as bases de combustível (diferença de
+   Km/L e de R$/L contra o remunerado), a Carta de Custos e o próprio FCA.
+   Cada uma é cruzada com o desvio de cada pacote (real ÷ rem − 1), no mesmo
+   mês e no seguinte. Ficam de fora só as variáveis de custo/receita do DRE,
+   que são a própria conta (correlacionar o desvio com o custo é trivial). */
 const Y_PAC = { 'Combustíveis': 'desvio_comb', 'Manutenções': 'desvio_manut', 'Pneus': 'desvio_pneus' };
-// sentido em que o indicador é BOM (up = maior é melhor); o resto vem do catálogo do CorrDados
-const DIR = { dispersao: 'down', comb: 'up', km_viagem: null, disp: 'up', sla: 'up', prev: 'up', checkT: 'up', conf: 'up', mttr: 'down', mtbf: 'up', osVenc: 'down', osCritica: 'down',
-  civf: 'up', stVeic: 'up', disp_app: 'up', indisp_med: 'down', pneus: 'up' };
-const ROT = { dispersao: 'Dispersão de km', comb: 'Km/L', km_viagem: 'Km por viagem', disp: 'Disponibilidade', sla: 'SLA de manutenção', prev: 'Preventivas',
-  checkT: 'Checklist T1/T2', conf: 'Conformidade', mttr: 'MTTR', mtbf: 'MTBF', osVenc: 'OS vencidas', osCritica: 'Saída com OS crítica', civf: 'CIVF',
-  stVeic: 'Stress Test veículos', disp_app: 'Disponibilidade (app)', indisp_med: 'Veículos indisponíveis', pneus: 'Aferição de pneus' };
+// variáveis montadas aqui (as do CorrDados entram pelo catálogo dele)
+const EXTRA = [
+  { id: 'cond_nota', rot: 'Nota de condução (média ponderada pelo km)', g: 'Condução (DriverPro)', dir: 'up', f: 'd1' },
+  { id: 'cond_rpm', rot: 'Faixa verde de RPM (pontos)', g: 'Condução (DriverPro)', dir: 'up', f: 'd1' },
+  { id: 'cond_idle', rot: 'Motor ligado parado (pontos)', g: 'Condução (DriverPro)', dir: 'up', f: 'd1' },
+  { id: 'cond_acel', rot: 'Acelerações bruscas (pontos)', g: 'Condução (DriverPro)', dir: 'up', f: 'd1' },
+  { id: 'cond_baixo', rot: 'Km com motorista abaixo de 75 pontos', g: 'Condução (DriverPro)', dir: 'down', f: 'pct' },
+  { id: 'cond_kml', rot: 'Km/L da telemetria', g: 'Condução (DriverPro)', dir: 'up', f: 'd2' },
+  { id: 'frota_idade', rot: 'Idade média da frota', g: 'Frota', dir: 'down', f: 'anos' },
+  { id: 'contr_rskm', rot: 'R$/km do contrato de manutenção', g: 'Frota', dir: 'down', f: 'rskm' },
+  { id: 'contr_faixa2', rot: 'Placas do contrato na faixa 2', g: 'Frota', dir: 'down', f: 'pct' },
+  { id: 'dias_parado', rot: 'Dias parado por placa (média)', g: 'Frota', dir: 'down', f: 'd1' },
+  { id: 'erp_kml', rot: 'Km/L do ERP (abastecimentos)', g: 'Frota', dir: 'up', f: 'd2' },
+  { id: 'erp_preco', rot: 'R$/L pago no ERP', g: 'Frota', dir: 'down', f: 'd2' },
+  { id: 'kml_gap', rot: 'Km/L real contra remunerado (aba Km/L)', g: 'Combustível (bases)', dir: 'up', f: 'pct', ponte: true },
+  { id: 'preco_gap', rot: 'R$/L real contra remunerado (aba Km/L)', g: 'Combustível (bases)', dir: 'down', f: 'pct', ponte: true },
+  { id: 'carta_n', rot: 'Lançamentos de manutenção na Carta', g: 'Carta de Custos', dir: 'down', f: 'n' },
+  { id: 'carta_ticket', rot: 'Valor médio do lançamento de manutenção', g: 'Carta de Custos', dir: 'down', f: 'brl' },
+  { id: 'carta_forn', rot: 'Concentração no maior fornecedor', g: 'Carta de Custos', dir: 'down', f: 'pct' },
+  { id: 'carta_novos', rot: 'Pneus novos no lançado de pneus', g: 'Carta de Custos', dir: 'down', f: 'pct' },
+  { id: 'fca_preench', rot: 'FCAs de Custos com ação preenchida', g: 'FCA', dir: 'up', f: 'pct' }
+];
+const FMT_CAT = { pct: v => pct(v, 1), brl: v => rs(v), num: v => br(v, 0), n: v => br(v, 0), d1: v => br(v, 1), d2: v => br(v, 2), kml: v => br(v, 2) + ' km/L',
+  rskm: v => 'R$ ' + br(v, 2) + '/km', mm: v => br(v, 2) + ' mm', h: v => br(v / 3600, 1) + ' h', anos: v => br(v, 1) + ' anos', l: v => br(v, 0) + ' L', dias: v => br(v, 1) + ' d' };
+let CAT = {};      // id → {id, rot, g, dir, f}
+const ROT = new Proxy({}, { get: (_, k) => (CAT[k] && CAT[k].rot) || k });
+function montaCatalogo(CD) {
+  CAT = {};
+  const fora = new Set(['Custos (DRE)', 'Receita (DRE)']);
+  ((CD && CD.VARS && CD.VARS.uni) || []).forEach(v => { if (fora.has(v.g)) return;
+    CAT[v.id] = { id: v.id, rot: v.rot, g: v.g, dir: v.dir || null, f: v.id === 'mttr' || v.id === 'mtbf' ? 'h' : v.f }; });
+  // o CorrDados não traz o MTTR/MTBF em horas: chegam em segundos (gerot-base)
+  EXTRA.forEach(v => { CAT[v.id] = Object.assign({}, v); });
+  return CAT;
+}
 function rede(fatoUni, Estat) {
   const out = {}; if (!Estat || !fatoUni) return out;
   const todos = [];
   PACOTES.forEach(pac => {
     const y = Y_PAC[pac]; out[pac] = [];
-    DRIVERS[pac].forEach(x => {
+    Object.values(CAT).forEach(cv => {
+      const x = cv.id;
       const xs = [], ys = [], ser = [];
       fatoUni.forEach(L => { const vx = L.v[x], vy = L.v[y]; const t = vigIdx(L.vig);
         if (fin(vx) && fin(vy)) { xs.push(vx); ys.push(vy); }
         if (t != null) ser.push({ ent: L.ent, t, x: fin(vx) ? vx : null, y: fin(vy) ? vy : null }); });
+      if (xs.length < 3 && !ser.some(z => fin(z.x))) return;      // sem dado nenhum: nem entra
       const c0 = Estat.pearson(xs, ys);
       const lag = Estat.defasagens(ser, 1)[1] || { r: NaN, n: 0, p: NaN };
-      const d = DIR[x];
+      const d = cv.dir;
       const apoia = r => fin(r) && d ? (d === 'up' ? r < 0 : r > 0) : null;   // indicador pior ↔ desvio maior
-      const e = { pac, x, rot: ROT[x] || x, dir: d, r0: c0.r, n0: c0.n, p0: c0.p, r1: lag.r, n1: lag.n, p1: lag.p, apoia0: apoia(c0.r), apoia1: apoia(lag.r) };
+      const e = { pac, x, rot: cv.rot, g: cv.g, dir: d, r0: c0.r, n0: c0.n, p0: c0.p, r1: lag.r, n1: lag.n, p1: lag.p, apoia0: apoia(c0.r), apoia1: apoia(lag.r) };
       out[pac].push(e); todos.push(e);
     });
   });
@@ -293,9 +325,10 @@ function rede(fatoUni, Estat) {
   const ps = []; todos.forEach(e => { ps.push(e.n0 >= Estat.N_MIN ? e.p0 : NaN); ps.push(e.n1 >= Estat.N_MIN ? e.p1 : NaN); });
   const q = Estat.bh(ps);
   todos.forEach((e, i) => { e.q0 = q[2 * i]; e.q1 = q[2 * i + 1];
-    e.sust = (e.apoia0 && e.q0 < 0.10) || (e.apoia1 && e.q1 < 0.10);   // a rede sustenta: sentido certo e dificilmente acaso
-    e.forca = Math.max(fin(e.r0) && e.apoia0 ? Math.abs(e.r0) : 0, fin(e.r1) && e.apoia1 ? Math.abs(e.r1) : 0); });
-  PACOTES.forEach(p => out[p].sort((a, b) => (b.sust - a.sust) || (b.forca - a.forca)));
+    e.sust = !!((e.apoia0 && e.q0 < 0.10) || (e.apoia1 && e.q1 < 0.10));   // a rede sustenta: sentido certo e dificilmente acaso
+    e.forca = Math.max(fin(e.r0) && e.apoia0 ? Math.abs(e.r0) : 0, fin(e.r1) && e.apoia1 ? Math.abs(e.r1) : 0);
+    e.forte = Math.max(fin(e.r0) && e.n0 >= 8 ? Math.abs(e.r0) : 0, fin(e.r1) && e.n1 >= 8 ? Math.abs(e.r1) : 0); });
+  PACOTES.forEach(p => out[p].sort((a, b) => (b.sust - a.sust) || (b.forca - a.forca) || (b.forte - a.forte)));
   return out;
 }
 const forcaTxt = r => { const a = Math.abs(r); if (!fin(r)) return '—'; if (a >= 0.7) return 'forte'; if (a >= 0.4) return 'moderada'; if (a >= 0.2) return 'fraca'; return 'quase nenhuma'; };
@@ -359,26 +392,27 @@ function aprendizado(fcaRows, todosFatos, maxVig) {
 /* ═════════ 5) DIAGNÓSTICO de um fato: causas + ações ═════════
    ctx = {kml, disp, fatoUni:{cod|vig → v}, fatoPlaca, fatoMot, carta, ginfo,
           prolog, rede, aprend, metasRede} */
-const METAS = { disp: 95, prev: 100, pneus: 100, checkT: 95, checkWH: 95, conf: 100, stVeic: 100, stEmp: 100, civf: 100, sla: 75, osVenc: 10, osCritica: 0, blitz: 100 };
-const FMT_IND = { disp: 'pct', prev: 'pct', pneus: 'pct', checkT: 'pct', conf: 'pct', stVeic: 'pct', civf: 'pct', sla: 'pct', osVenc: 'n', osCritica: 'n', mttr: 'h', mtbf: 'h', disp_app: 'pct', indisp_med: 'd1', dispersao: 'pct' };
-const fmtInd = (k, v) => !fin(v) ? '—' : FMT_IND[k] === 'pct' ? pct(v, 1) : FMT_IND[k] === 'h' ? br(v / 3600, 1) + ' h' : FMT_IND[k] === 'd1' ? br(v, 1) : br(v, 0);
-const quartis = xs => { const s = xs.filter(fin).sort((a, b) => a - b); if (s.length < 4) return null; const q = p => { const i = (s.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i); return s[lo] + (s[hi] - s[lo]) * (i - lo); }; return { q1: q(.25), q2: q(.5), q3: q(.75) }; };
-/* indicadores da unidade no mês contra a meta (ou o quartil da rede no MTTR/MTBF) */
+const METAS = { disp: 95, prev: 100, pneus: 100, checkT: 95, checkWH: 95, conf: 100, stVeic: 100, stEmp: 100, civf: 100, sla: 75, osVenc: 10, osCritica: 0, blitz: 100, disp_app: 95 };
+const fmtInd = (k, v) => { if (!fin(v)) return '—'; const c = CAT[k]; return ((c && FMT_CAT[c.f]) || FMT_CAT.d1)(v); };
+const quartis = xs => { const s = xs.filter(fin).sort((a, b) => a - b); if (s.length < 4) return null; const q = p => { const i = (s.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i); return s[lo] + (s[hi] - s[lo]) * (i - lo); }; return { q1: q(.25), q2: q(.5), q3: q(.75), n: s.length }; };
+/* a unidade no mês contra a META, quando há (Gerot, Dispersão); senão contra o
+   PIOR QUARTIL da rede naquele mês, no sentido de cada variável */
 function indicadores(cod, vig, ctx, lista) {
   const v = (ctx.fatoUni[cod + '|' + vig] || {});
   const out = [];
   lista.forEach(k => {
     const x = v[k]; if (!fin(x)) return;
+    const cv = CAT[k] || {}, dir = cv.dir;
     let meta = METAS[k], ruim = null, ref = '';
-    if (k === 'mttr' || k === 'mtbf') {
-      const qs = (ctx.quartisRede[vig] || {})[k];
-      if (qs) { if (k === 'mttr') { ruim = x > qs.q3; ref = `pior quartil da rede > ${fmtInd(k, qs.q3)}`; meta = qs.q3; } else { ruim = x < qs.q1; ref = `pior quartil da rede < ${fmtInd(k, qs.q1)}`; meta = qs.q1; } }
-    } else if (k === 'dispersao') { meta = SEARA(cod) ? 10 : 5; ruim = x > meta; ref = `meta ${meta}%`; }
-    else if (k === 'disp_app') { meta = 95; ruim = x < meta; ref = 'meta 95%'; }
-    else if (k === 'indisp_med') { ruim = null; }
+    if (k === 'dispersao') { meta = SEARA(cod) ? 10 : 5; ruim = x > meta; ref = `meta ${meta}%`; }
     else if (meta != null) { ruim = (k === 'osVenc' || k === 'osCritica') ? x > meta : x < meta; ref = `meta ${fmtInd(k, meta)}`; }
+    else if (dir) {
+      const qs = (ctx.quartisRede[vig] || {})[k];
+      if (qs) { if (dir === 'down') { ruim = x > qs.q3; meta = qs.q3; ref = `pior quartil da rede: acima de ${fmtInd(k, qs.q3)}`; }
+                else { ruim = x < qs.q1; meta = qs.q1; ref = `pior quartil da rede: abaixo de ${fmtInd(k, qs.q1)}`; } }
+    }
     const re = ((ctx.rede[ctx._pac] || []).find(e => e.x === k)) || null;
-    out.push({ k, rot: ROT[k] || k, val: x, meta, ref, ruim, rede: re });
+    out.push({ k, rot: cv.rot || k, g: cv.g || '', val: x, meta, ref, ruim, rede: re });
   });
   return out;
 }
@@ -502,21 +536,33 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
     }
   }
   // indicadores que a rede liga ao desvio de Combustíveis
-  // Dispersão e Km/L já estão na ponte (volume e eficiência): aqui só o que ela não mede
-  sinaisRede(f, ctx, D, ['disp', 'sla', 'prev', 'checkT']);
+  // o que a ponte já mede em R$ (volume, eficiência, preço) não entra de novo como sinal
+  sinaisRede(f, ctx, D, ['dispersao', 'comb', 'kml_gap', 'preco_gap', 'erp_kml', 'erp_preco', 'cond_kml']);
+  acoesDaRede(f, ctx, D);
 }
-/* indicadores fora da meta: viram causa quando a rede sustenta, sinal quando não */
-function sinaisRede(f, ctx, D, lista) {
+/* TODAS as variáveis do catálogo, menos as que o diagnóstico já mede em R$
+   (a ponte do combustível). Fora da meta / no pior quartil: vira CAUSA quando a
+   rede sustenta a ligação com o desvio do pacote; vira SINAL quando tem meta
+   ou a rede mostra alguma ligação no sentido certo; o resto fica só na tabela. */
+function sinaisRede(f, ctx, D, excluir) {
+  const ex = new Set(excluir || []);
+  const lista = Object.keys(CAT).filter(k => !ex.has(k));
   const ind = indicadores(f.uni, f.vig, ctx, lista); D.blocos.ind = ind;
   ind.filter(i => i.ruim).forEach(i => {
     const txt = `${i.rot} ${fmtInd(i.k, i.val)} (${i.ref}); ${redeLeitura(i.rede)}`;
-    if (i.rede && i.rede.sust) D.causas.push({ tema: TEMA_IND[i.k] || 'Oficina / SLA', txt, rs: null, rede: true, ind: i.k });
-    else D.sinais.push({ tema: TEMA_IND[i.k] || '', txt, ind: i.k });
+    if (i.rede && i.rede.sust) D.causas.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || 'Oficina / SLA', txt, rs: null, rede: true, ind: i.k, forca: i.rede.forca });
+    else if (METAS[i.k] != null || i.k === 'dispersao' || (i.rede && i.rede.forca >= 0.2)) D.sinais.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || '', txt, ind: i.k });
   });
   return ind;
 }
+const TEMA_GRUPO = { 'Condução (DriverPro)': 'Condução', 'Frota': 'Frota / idade', 'Carta de Custos': 'Peças / fornecedor', 'FCA': 'Lançamento / contábil',
+  'Combustível (bases)': 'Abastecimento / preço', 'Dispersão de km': 'Km / rota', 'Indisponibilidade': 'Oficina / SLA', 'Frota de Elite / Gerot': 'Oficina / SLA' };
 const TEMA_IND = { sla: 'Oficina / SLA', mttr: 'Oficina / SLA', osVenc: 'Oficina / SLA', prev: 'Preventiva', conf: 'Corretiva / quebra', checkT: 'Corretiva / quebra', osCritica: 'Corretiva / quebra',
-  mtbf: 'Corretiva / quebra', civf: 'Corretiva / quebra', stVeic: 'Frota / idade', disp: 'Oficina / SLA', disp_app: 'Oficina / SLA', indisp_med: 'Oficina / SLA', dispersao: 'Km / rota', comb: 'Condução', pneus: 'Pneus' };
+  mtbf: 'Corretiva / quebra', civf: 'Corretiva / quebra', stVeic: 'Frota / idade', disp: 'Oficina / SLA', disp_app: 'Oficina / SLA', indisp_med: 'Oficina / SLA', dispersao: 'Km / rota', comb: 'Condução', pneus: 'Pneus',
+  checkWH: 'Corretiva / quebra', stEmp: 'Frota / idade', blitz: 'Corretiva / quebra', viagens: 'Km / rota', km_viagem: 'Km / rota', km_real: 'Km / rota',
+  cond_nota: 'Condução', cond_rpm: 'Condução', cond_idle: 'Condução', cond_acel: 'Condução', cond_baixo: 'Condução', cond_kml: 'Condução',
+  frota_idade: 'Frota / idade', contr_rskm: 'Contrato', contr_faixa2: 'Contrato', dias_parado: 'Oficina / SLA', erp_kml: 'Condução', erp_preco: 'Abastecimento / preço',
+  kml_gap: 'Condução', preco_gap: 'Abastecimento / preço', carta_n: 'Corretiva / quebra', carta_ticket: 'Peças / fornecedor', carta_forn: 'Peças / fornecedor', carta_novos: 'Pneus', fca_preench: 'Lançamento / contábil' };
 const ACAO_IND = {
   prev: 'Zerar as preventivas vencidas (lista do Ginfo de hoje)',
   sla: 'Cobrar o SLA da oficina/fornecedor e priorizar as OS em aberto há mais tempo',
@@ -529,8 +575,48 @@ const ACAO_IND = {
   civf: 'Tratar as pendências de CIVF (manutenção e lavação) apontadas pela Ambev',
   stVeic: 'Rodar as placas paradas no Stress Test do mês',
   disp: 'Recuperar disponibilidade: placas indisponíveis há mais tempo primeiro',
-  pneus: 'Recuperar a aderência de aferição (calibragem e sulco) das placas sem aferição'
+  pneus: 'Recuperar a aderência de aferição (calibragem e sulco) das placas sem aferição',
+  checkWH: 'Retomar o checklist das empilhadeiras (WH) nos turnos em falta',
+  stEmp: 'Rodar as empilhadeiras paradas no Stress Test da quinzena',
+  blitz: 'Fazer as blitz de segurança vencidas',
+  cond_nota: 'Feedback de condução com os motoristas de pior nota no DriverPro',
+  cond_rpm: 'Treinar troca de marcha na faixa verde (1.000 a 1.400 RPM) com os motoristas de pior nota',
+  cond_idle: 'Cortar o motor ligado parado (carga, descarga, espera) com os motoristas de pior nota',
+  cond_acel: 'Corrigir as acelerações bruscas com os motoristas de pior nota',
+  cond_baixo: 'Feedback de condução com os motoristas abaixo de 75 pontos, que rodam a maior parte do km',
+  frota_idade: 'Priorizar inspeção e revisão nas placas mais velhas (e levar a idade para a renovação de frota)',
+  contr_rskm: 'Conferir a fatura do contrato de manutenção: R$/km acima do resto da rede',
+  contr_faixa2: 'Conferir as placas que passaram para a faixa 2 do contrato',
+  dias_parado: 'Atacar as placas paradas há mais dias (indisponibilidade do app)',
+  carta_n: 'Revisar a reincidência: muitos lançamentos de manutenção no mês',
+  carta_ticket: 'Auditar os orçamentos de maior valor antes de aprovar',
+  carta_forn: 'Cotar com outro fornecedor: o gasto está concentrado em um só',
+  carta_novos: 'Recapar antes de comprar: pneu novo pesa acima do resto da rede',
+  fca_preench: 'Preencher causa e ação dos FCAs de Custos em aberto da unidade'
 };
+
+/* ação de cada variável que virou CAUSA pela rede (sem repetir tema já com ação) */
+function acoesDaRede(f, ctx, D, pular) {
+  const ja = new Set(D.acoes.map(a => a.txt)), pl = new Set(pular || []);
+  D.causas.filter(c => c.rede && c.ind && ACAO_IND[c.ind] && !pl.has(c.ind)).forEach(c => {
+    const t = ACAO_IND[c.ind]; if (ja.has(t)) return; ja.add(t);
+    // condução: se o diagnóstico já mandou o feedback com os motoristas, não repete
+    if (/^cond_/.test(c.ind) && D.acoes.some(a => /DriverPro/.test(a.txt))) return;
+    const tx = taxaTema(ctx, f.pac, TEMA_IND[c.ind] || c.tema);
+    D.acoes.push({ tema: TEMA_IND[c.ind] || c.tema, txt: t, ofens: ofensoresDe(c.ind, f, ctx), taxa: tx });
+  });
+}
+/* quem puxa a variável para baixo na unidade, quando dá para dizer */
+function ofensoresDe(k, f, ctx) {
+  if (/^cond_/.test(k)) return top((ctx.fatoMot[f.uni + '|' + f.vig] || []).filter(m => fin(m.v.nota) && (m.v.km || 0) >= 500 && m.v.nota < 75), 5, m => (75 - m.v.nota) * (m.v.km || 0))
+    .map(m => `${m.nome || m.ent} ${br(m.v.nota, 0)} pts, ${br(m.v.km, 0)} km`);
+  const pl = ctx.fatoPlaca[f.uni + '|' + f.vig] || [], pa = ctx.fatoPlaca[f.uni + '|' + vigAnt(f.vig)] || [];
+  if (k === 'frota_idade') return top(pl.filter(p => fin(p.v.idade)), 5, p => p.v.idade).map(p => `${p.ent} ${br(p.v.idade, 1)} anos`);
+  if (k === 'dias_parado') return top(pl.filter(p => (p.v.dias_indisp || 0) > 0), 5, p => p.v.dias_indisp).map(p => `${p.ent} ${br(p.v.dias_indisp, 0)}d`);
+  if (k === 'contr_rskm') return top(pa.filter(p => fin(p.v.rskm)), 5, p => p.v.rskm).map(p => `${p.ent} R$ ${br(p.v.rskm, 2)}/km`);
+  if (k === 'contr_faixa2') return pa.filter(p => (p.v.faixas || 0) >= 2).slice(0, 6).map(p => p.ent);
+  return [];
+}
 
 /* ── MANUTENÇÕES ── */
 function diagManut(f, ctx, D, causa, acao, base) {
@@ -560,7 +646,7 @@ function diagManut(f, ctx, D, causa, acao, base) {
     }
   }
   // indicadores do Ginfo/Gerot
-  const ind = sinaisRede(f, ctx, D, ['sla', 'conf', 'prev', 'mttr', 'mtbf', 'osVenc', 'osCritica', 'checkT', 'civf', 'stVeic', 'disp', 'disp_app']);
+  const ind = sinaisRede(f, ctx, D, []);
   // listas de hoje do Ginfo → ações com placa
   const gi = ctx.ginfo[f.uni] || {};
   const prevV = gi.prevVencidas || [], osAb = gi.osAbertas || [];
@@ -572,7 +658,7 @@ function diagManut(f, ctx, D, causa, acao, base) {
     const velhas = osAb.slice().sort((a, b) => (b.dias != null && a.dias != null ? b.dias - a.dias : (+a.os || 0) - (+b.os || 0))).slice(0, 6);
     acao('Oficina / SLA', `${ACAO_IND.sla}: ${osAb.length} OS em aberto na unidade hoje`, velhas.map(o => `OS ${o.os} ${o.placa}${o.dias != null ? ' ' + br(o.dias, 0) + 'd' : ''}${o.crit ? ' (' + o.crit + ')' : ''}`));
   }
-  ['conf', 'checkT', 'osCritica', 'mtbf', 'civf', 'stVeic', 'mttr', 'osVenc', 'disp'].forEach(kx => { if (causasInd.has(kx) && !(kx === 'osVenc' && osAb.length) && !(kx === 'mttr' && osAb.length)) acao(TEMA_IND[kx], ACAO_IND[kx]); });
+  acoesDaRede(f, ctx, D, osAb.length ? ['osVenc', 'mttr', 'sla', 'prev'] : ['prev']);
   // placas paradas mais dias no mês (eventos do app de indisponibilidade)
   const par = (ctx.fatoPlaca[f.uni + '|' + f.vig] || []).filter(p => (p.v.dias_indisp || 0) >= 3);
   if (par.length) { D.blocos.paradas = par; D.sinais.push({ tema: 'Oficina / SLA', txt: `Indisponibilidade: ${par.length} placa(s) paradas 3 dias ou mais no mês (${top(par, 4, p => p.v.dias_indisp).map(p => p.ent + ' ' + br(p.v.dias_indisp, 0) + 'd').join(', ')})` }); }
@@ -613,7 +699,8 @@ function diagPneus(f, ctx, D, causa, acao, base) {
   const al = ((ctx.ginfo[f.uni] || {}).alinVencidos) || [];
   if (al.length) causa('Pneus', `Ginfo (hoje): ${al.length} placa(s) com alinhamento vencido (desgaste irregular)`, null);
   if (al.length) acao('Pneus', `Alinhar as placas com alinhamento vencido no Ginfo: ${al.length} placa(s)`, al.slice(0, 6).map(a => a.placa));
-  sinaisRede(f, ctx, D, ['pneus', 'dispersao', 'conf', 'checkT', 'stVeic']);
+  sinaisRede(f, ctx, D, []);
+  acoesDaRede(f, ctx, D);
 }
 
 /* ═════════ 6) Ginfo (hoje) e Prolog (hoje) — por unidade ═════════ */
@@ -656,29 +743,78 @@ function resumoProlog(tires) {
   return r;
 }
 
-/* ═════════ 7) monta o contexto a partir do que foi lido ═════════ */
+/* ═════════ 7) as variáveis novas, por unidade × mês ═════════ */
+function enriquece(o) {
+  const { fatoPlaca, fatoMot, carta, fca, linhaU } = o;   // tudo já indexado por unidade|mês
+  // condução: média ponderada pelo km dos motoristas com 500 km ou mais
+  Object.entries(fatoMot).forEach(([k, ms]) => { const [cod, vig] = k.split('|');
+    const ok = ms.filter(m => fin(m.v.nota) && (m.v.km || 0) >= 500); if (!ok.length) return;
+    const km = ok.reduce((s, m) => s + m.v.km, 0), w = f => ok.filter(m => fin(m.v[f])).reduce((s, m) => s + m.v[f] * m.v.km, 0) / (ok.filter(m => fin(m.v[f])).reduce((s, m) => s + m.v.km, 0) || NaN);
+    const v = linhaU(cod, vig); v.cond_nota = w('nota'); v.cond_rpm = w('rpm'); v.cond_idle = w('idle'); v.cond_acel = w('acel');
+    v.cond_baixo = ok.filter(m => m.v.nota < 75).reduce((s, m) => s + m.v.km, 0) / km * 100;
+    const lit = ms.reduce((s, m) => s + (m.v.litros || 0), 0), kml = ms.reduce((s, m) => s + (fin(m.v.km_l) && m.v.litros ? m.v.km_l * m.v.litros : 0), 0);
+    if (lit > 0 && kml > 0) v.cond_kml = kml / lit; });
+  // frota: idade, contrato, dias parado e ERP — das placas da unidade no mês (contrato e ERP pelo km do mês)
+  Object.entries(fatoPlaca).forEach(([k, ps]) => { const [cod, vig] = k.split('|'); const v = linhaU(cod, vig);
+    const id = ps.filter(p => fin(p.v.idade)); if (id.length) v.frota_idade = id.reduce((s, p) => s + p.v.idade, 0) / id.length;
+    const cv = ps.filter(p => p.tipo !== 'fixo' && fin(p.v.custo_mes) && p.v.km_mes > 0); if (cv.length) v.contr_rskm = cv.reduce((s, p) => s + p.v.custo_mes, 0) / cv.reduce((s, p) => s + p.v.km_mes, 0);
+    const fx = ps.filter(p => fin(p.v.faixas)); if (fx.length) v.contr_faixa2 = fx.filter(p => p.v.faixas >= 2).length / fx.length * 100;
+    const di = ps.filter(p => fin(p.v.dias_indisp)); if (di.length) v.dias_parado = di.reduce((s, p) => s + p.v.dias_indisp, 0) / di.length;
+    const ab = ps.filter(p => p.v.litros > 0 && p.v.km_mes > 0); if (ab.length) { const lit = ab.reduce((s, p) => s + p.v.litros, 0); v.erp_kml = ab.reduce((s, p) => s + p.v.km_mes, 0) / lit;
+      const pr = ab.filter(p => fin(p.v.preco_l)); if (pr.length) v.erp_preco = pr.reduce((s, p) => s + p.v.preco_l * p.v.litros, 0) / pr.reduce((s, p) => s + p.v.litros, 0); } });
+  // Carta: manutenção (quantos lançamentos, valor médio, peso do maior fornecedor) e pneus (peso dos novos)
+  Object.entries(carta).forEach(([k, ls]) => { const [cod, vig] = k.split('|'); const v = linhaU(cod, vig);
+    const mn = ls.filter(r => r.pacote === 'Manutenção' && r.valor > 0 && r.origem !== 'contratos-planilha' && !/CONTRATO/.test(NK(r.conta)));
+    if (mn.length) { const t = mn.reduce((s, r) => s + r.valor, 0); v.carta_n = mn.length; v.carta_ticket = t / mn.length;
+      const fo = somaPor(mn.filter(r => r.fornecedor), r => r.fornecedor, r => r.valor); if (fo.length && t > 0) v.carta_forn = fo[0].v / t * 100; }
+    const pn = ls.filter(r => r.pacote === 'Pneus' && r.valor > 0); if (pn.length) { const t = pn.reduce((s, r) => s + r.valor, 0); if (t > 0) v.carta_novos = pn.filter(r => /NOVOS/.test(NK(r.conta))).reduce((s, r) => s + r.valor, 0) / t * 100; } });
+  // FCA: dos fatos de Custos do mês, quantos já têm ação
+  const fc = {}; (fca || []).forEach(r => { if (String(r.origem || '').toLowerCase() !== 'custos') return; const vig = vigDeLbl(r.vigencia); if (!vig) return;
+    const k = String(r.unidade || '').trim() + '|' + vig, e = fc[k] || (fc[k] = { n: 0, ok: 0 }); e.n++; if (String(r.acao || '').trim()) e.ok++; });
+  Object.entries(fc).forEach(([k, e]) => { const [cod, vig] = k.split('|'); if (UNITS.includes(cod)) linhaU(cod, vig).fca_preench = e.ok / e.n * 100; });
+}
+/* bases de combustível: Km/L real contra a régua e R$/L contra o remunerado, por unidade × mês */
+function enriqueceKml(kmlIdx, linhaU) {
+  // a régua é por projeto × mês: litros previstos somados projeto a projeto
+  const prev = {};
+  Object.entries(kmlIdx).forEach(([k, ls]) => { const [cod, , vig] = k.split('|'); const cb = combBases(ls); if (!cb) return;
+    const e = prev[cod + '|' + vig] || (prev[cod + '|' + vig] = { km: 0, lit: 0, esp: 0, tot: 0, rxl: 0, litR: 0 });
+    e.km += cb.km; e.lit += cb.lit; if (cb.litEsp > 0) e.esp += cb.litEsp;
+    ls.forEach(r => { if (r.pRem > 0 && r.lit > 0 && r.tot > 0) { e.tot += r.tot; e.rxl += r.pRem * r.lit; e.litR += r.lit; } }); });
+  Object.entries(prev).forEach(([k, e]) => { const [cod, vig] = k.split('|'); const v = linhaU(cod, vig);
+    if (e.esp > 0 && e.lit > 0) v.kml_gap = ((e.km / e.lit) / (e.km / e.esp) - 1) * 100;
+    if (e.rxl > 0 && e.litR > 0) v.preco_gap = (e.tot / e.rxl - 1) * 100; });
+}
+
+/* ═════════ 8) monta o contexto a partir do que foi lido ═════════ */
 function contexto(L, deps) {
   deps = deps || {};
   const dreIdx = indexaDRE(L.dre);
   const todos = fatos(dreIdx);
   const precoRem = indexaPreco(L.rsl);
   const fatoUni = {}, quartisRede = {}, fatoPlaca = {}, fatoMot = {};
-  const FU = (L.corr && L.corr.FATO && L.corr.FATO.uni) || [];
+  montaCatalogo(deps.CorrDados || global.CorrDados);
+  // cópia das linhas do CorrDados (a página não deve mexer no objeto de lá)
+  const FU = ((L.corr && L.corr.FATO && L.corr.FATO.uni) || []).map(r => ({ ent: r.cod, cod: r.cod, vig: r.vig, v: Object.assign({}, r.v) }));
+  const linhaU = (cod, vig) => { const k = cod + '|' + vig; if (!fatoUni[k]) { const r = { ent: cod, cod, vig, v: {} }; FU.push(r); fatoUni[k] = r.v; } return fatoUni[k]; };
   FU.forEach(r => { fatoUni[r.cod + '|' + r.vig] = r.v; });
-  const porVig = {}; FU.forEach(r => { (porVig[r.vig] = porVig[r.vig] || []).push(r.v); });
-  Object.entries(porVig).forEach(([vg, vs]) => { quartisRede[vg] = { mttr: quartis(vs.map(v => v.mttr)), mtbf: quartis(vs.map(v => v.mtbf)) }; });
   ((L.corr && L.corr.FATO && L.corr.FATO.placa) || []).forEach(r => { (fatoPlaca[r.cod + '|' + r.vig] = fatoPlaca[r.cod + '|' + r.vig] || []).push(r); });
   ((L.corr && L.corr.FATO && L.corr.FATO.mot) || []).forEach(r => { if (!r.cod) return; (fatoMot[r.cod + '|' + r.vig] = fatoMot[r.cod + '|' + r.vig] || []).push(r); });
   const carta = {}; (L.carta || []).forEach(r => { const k = r.unidade + '|' + r.vigencia; (carta[k] = carta[k] || []).push(r); });
+  enriquece({ fatoPlaca, fatoMot, carta, fca: L.fca, linhaU });
+  const kmlIdx = indexaKml(L.kml, precoRem);
+  enriqueceKml(kmlIdx, linhaU);
+  const porVig = {}; FU.forEach(r => { (porVig[r.vig] = porVig[r.vig] || []).push(r.v); });
+  Object.entries(porVig).forEach(([vg, vs]) => { const q = {}; Object.keys(CAT).forEach(k => { q[k] = quartis(vs.map(v => v[k])); }); quartisRede[vg] = q; });
   const prolog = {}; Object.entries(L.prolog || {}).forEach(([u, t]) => { prolog[u] = resumoProlog(t); });
-  const ctx = { dreAcc: dreIdx.acc, maxVig: dreIdx.maxReal, todos, disp: indexaDisp(L.disp), kml: indexaKml(L.kml, precoRem),
+  const ctx = { dreAcc: dreIdx.acc, maxVig: dreIdx.maxReal, todos, disp: indexaDisp(L.disp), kml: kmlIdx, cat: CAT, fatoRede: FU,
     fatoUni, quartisRede, fatoPlaca, fatoMot, carta, ginfo: indexaGinfo(L.ginfo || {}, deps.hoje), prolog, ArvImpacto: deps.ArvImpacto || global.ArvImpacto };
   ctx.rede = rede(FU, deps.Estat || global.Estat);
   ctx.aprend = aprendizado(L.fca, todos, dreIdx.maxReal);
   return ctx;
 }
 
-/* ═════════ 8) leitura (navegador) ═════════ */
+/* ═════════ 9) leitura (navegador) ═════════ */
 const KML_ID = '1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A', DISP_ID = '1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM';
 async function gviz(id, aba) {
   const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(aba)}`;
@@ -743,5 +879,5 @@ async function carregarProlog(sb) {
 
 global.FcaAuto = { UNITS, PACOTES, vigLbl, vigDeLbl, vigIdx, vigAnt, vigSeg, projKey, unidadeDoNv3, rs, br, pct, sinalPct, impFmt, NK,
   indexaDRE, fatos, desvioTxt, indexaDisp, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
-  diagnostico, indicadores, indexaGinfo, resumoProlog, contexto, carregar, carregarProlog, ROT, METAS, fmtInd, placaKey };
+  diagnostico, indicadores, indexaGinfo, EXTRA, montaCatalogo, CAT: () => CAT, resumoProlog, contexto, carregar, carregarProlog, ROT, METAS, fmtInd, placaKey };
 })(typeof window !== 'undefined' ? window : globalThis);
