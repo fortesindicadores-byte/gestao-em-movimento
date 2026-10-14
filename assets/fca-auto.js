@@ -803,7 +803,9 @@ function ofensoresDe(k, f, ctx) {
 }
 
 /* variáveis de combustível que não viram causa nem sinal de Manutenções/Pneus (Renan, 14/10/2026: "Porque km/L em manutenção? Retire") */
-const SEM_COMB = ['kml_gap', 'preco_gap', 'erp_kml', 'erp_preco', 'cond_kml'];
+const SEM_COMB = ['kml_gap', 'preco_gap', 'erp_kml', 'erp_preco', 'cond_kml', 'comb', 'km_l', 'preco_l'];
+// vale também para qualquer variável cujo rótulo fale em Km/L ou R$/L (o catálogo cresce com o CorrDados)
+const foraComb = k => !SEM_COMB.includes(k) && !/km\/l|r\$\/l/i.test((CAT[k] && CAT[k].rot) || '');
 
 /* ── MANUTENÇÕES ── */
 function diagManut(f, ctx, D, causa, acao, base) {
@@ -859,13 +861,13 @@ function diagManut(f, ctx, D, causa, acao, base) {
         if (acima.length && rsAcima >= D.minimo) {
           causa('Contrato', `Km das placas do contrato variável: ${acima.length} de ${cruz.length} placas rodaram acima do km remunerado em ${vigLbl(kmMes)} (+${br(kmAcima, 0)} km${remT > 0 ? ', ' + sinalPct(kmAcima / remT * 100, 0) + ' sobre o remunerado delas' : ''}), e cada km a mais entra na fatura do contrato: ${rs(rsAcima)} ao R$/km de cada placa`, rsAcima, { soma: false });
           acao('Contrato', `Conter o km das placas variáveis que rodam acima do remunerado (viagens que não remuneram, roteirização, usar placa de contrato fixo nas rotas mais longas)`,
-            top(acima, 5, x => x.rsDelta || x.delta).map(x => `${x.placa} +${br(x.delta, 0)} km${x.rem > 0 ? ' (' + sinalPct(x.delta / x.rem * 100, 0) + ')' : ''}${x.rsDelta != null ? ', ' + rs(x.rsDelta) : ''}`));
+            top(acima, 5, x => x.rsDelta || x.delta).map(x => `${x.placa} +${br(x.delta, 0)} km (${x.rem >= 500 ? sinalPct(x.delta / x.rem * 100, 0) : 'só ' + br(x.rem, 0) + ' km remunerados'})${x.rsDelta != null ? ', ' + rs(x.rsDelta) : ''}`));
         } else D.sinais.push({ tema: 'Contrato', txt: `Km das placas do contrato variável: as ${cruz.length} placas cruzadas rodaram no km remunerado ou abaixo em ${vigLbl(kmMes)}: o estouro do contrato não vem de km a mais` });
       }
     }
   }
   // indicadores do Ginfo/Gerot — Km/L e R$/L ficam fora (Renan, 14/10/2026: "Porque km/L em manutenção? Retire")
-  const ind = sinaisRede(f, ctx, D, SEM_COMB);
+  const ind = sinaisRede(f, ctx, D, SEM_COMB, foraComb);
   // listas de hoje do Ginfo → ações com placa
   const gi = ctx.ginfo[f.uni] || {};
   const prevV = gi.prevVencidas || [], osAb = gi.osAbertas || [];
@@ -932,7 +934,7 @@ function diagPneus(f, ctx, D, causa, acao, base) {
   const al = ((ctx.ginfo[f.uni] || {}).alinVencidos) || [];
   if (al.length) causa('Pneus', `Ginfo (hoje): ${al.length} placa(s) com alinhamento vencido (desgaste irregular)`, null);
   if (al.length) acao('Pneus', `Alinhar as placas com alinhamento vencido no Ginfo: ${al.length} placa(s)`, al.slice(0, 6).map(a => a.placa));
-  sinaisRede(f, ctx, D, SEM_COMB);
+  sinaisRede(f, ctx, D, SEM_COMB, foraComb);
   acoesDaRede(f, ctx, D);
 }
 
