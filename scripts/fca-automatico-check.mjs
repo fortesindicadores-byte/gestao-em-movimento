@@ -67,6 +67,7 @@ const R = await pg.evaluate(({ VIG, UNI }) => {
       ponte: d.blocos.ponte ? ['dCusto', 'vol', 'efic', 'preco', 'dif'].map(k => k + ' ' + Math.round(d.blocos.ponte[k] || 0)).join(' · ') : '',
       hist: d.historico.daUni.length, outras: d.historico.outras.length }; }),
     rede: Object.fromEntries(Object.entries(CTX.rede).map(([p, l]) => [p, l.map(e => `${e.rot}: r0 ${isFinite(e.r0) ? e.r0.toFixed(2) : '—'} (n ${e.n0}, q ${isFinite(e.q0) ? e.q0.toFixed(3) : '—'}) · r1 ${isFinite(e.r1) ? e.r1.toFixed(2) : '—'} (n ${e.n1})${e.sust ? ' · SUSTENTA' : ''}`)])),
+    fcaFatos: Object.entries((LIDO.fca||[]).filter(r=>String(r.origem||'').toLowerCase()==='custos').reduce((m,r)=>{const k=String(r.fato||'').split('\n')[0].replace(/(\S)\s*desvio[\s\S]*$/i,'$1').trim(); m[k]=(m[k]||0)+1; return m;},{})).sort((a,b)=>b[1]-a[1]),
     aprend: { casos: CTX.aprend.casos.length, porRes: CTX.aprend.casos.reduce((m, c) => { m[c.res] = (m[c.res] || 0) + 1; return m; }, {}), temas: CTX.aprend.temas.map(t => `${t.pac} · ${t.tema}: ${t.n} FCAs, ${t.melhor}/${t.aval} melhoraram`) },
     amostraOS: (LIDO.ginfo['os-em-aberto'] || []).slice(0, 3).map(r => [r['Data'], typeof r['Data']]), amostraPrev: (LIDO.ginfo['preventivas'] || []).slice(0, 2),
     ginfo: Object.fromEntries(Object.entries(CTX.ginfo).map(([u, g]) => [u, `prev venc ${g.prevVencidas.length} · OS ab ${g.osAbertas.length} · alin venc ${g.alinVencidos.length}`])),
@@ -86,6 +87,7 @@ R.fatos.forEach(f => {
   if (f.avisos.length) console.log('   AVISOS:\n' + f.avisos.map(l => '     ⚠ ' + l).join('\n'));
 });
 console.log('\n══ REDE'); Object.entries(R.rede).forEach(([p, l]) => { console.log('  ' + p); l.forEach(x => console.log('    ' + x)); });
+console.log('\n══ FATOS NA TABELA fca (origem Custos), por nome:', JSON.stringify(R.fcaFatos));
 console.log('\n══ APRENDIZADO', JSON.stringify(R.aprend.porRes), R.aprend.casos, 'casos'); R.aprend.temas.forEach(t => console.log('  ' + t));
 console.log('\n══ GINFO HOJE · amostra OS', JSON.stringify(R.amostraOS), '· preventivas', JSON.stringify(R.amostraPrev)); Object.entries(R.ginfo).forEach(([u, t]) => console.log(`  ${u}: ${t}`));
 console.log('\n══ PROLOG HOJE'); Object.entries(R.prologU).forEach(([u, t]) => console.log(`  ${u}: ${t}`));
