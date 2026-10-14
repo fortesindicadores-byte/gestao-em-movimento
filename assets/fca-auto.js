@@ -378,8 +378,12 @@ const TEMAS = [
 ];
 const temasDe = t => { const s = String(t || '').toLowerCase(); return TEMAS.filter(x => x.re.test(s)).map(x => x.k); };
 const nomeLimpo = t => String(t || '').split('\n')[0].trim().replace(/(\S)\s*desvio\s*(de\s+r\$|:|$)[\s\S]*$/i, '$1').replace(/\s+desvio\b[\s\S]*$/i, '').replace(/^pacote\s+/i, '').trim();
-const pacDoFato = t => { const n = NK(nomeLimpo(t)); if (/COMBUST/.test(n)) return 'Combustíveis'; if (/MANUT/.test(n)) return 'Manutenções'; if (/PNEU/.test(n)) return 'Pneus';
-  if (/SEGURO|LICEN/.test(n)) return 'Seguros e licenças'; if (/ICMS/.test(n)) return 'ICMS'; if (/OUTROS/.test(n)) return 'Outros'; return null; };
+/* O fato antigo vinha com o NOME DA CONTA (Recapagens e Outros Serviços, Lavação de Veículos,
+   Arla…) — classifica pelo PACOTES_MAP do FCA antes de olhar o nome do pacote. */
+const pacDoFato = t => { const n = NK(nomeLimpo(t)); const pm = PACOTES_MAP[n]; if (pm) return pm;
+  if (/COMBUST|ARLA|FLUID/.test(n)) return 'Combustíveis'; if (/PNEU|RECAP|CAMARA/.test(n)) return 'Pneus';
+  if (/MANUT|LAVAC|OFICINA|CARROCERIA|PERSONALIZ|PADRONIZ/.test(n)) return 'Manutenções';
+  if (/SEGURO|LICEN|IPVA/.test(n)) return 'Seguros e licenças'; if (/ICMS/.test(n)) return 'ICMS'; if (/^OUTROS$/.test(n)) return 'Outros'; return null; };
 /* fcaRows = tabela fca (todas); mapaFatos = id → fato (todas as vigências).
    Resultado de cada FCA preenchido: o desvio do MESMO pacote no mês seguinte. */
 function aprendizado(fcaRows, todosFatos, maxVig) {
@@ -914,6 +918,6 @@ async function carregarProlog(sb) {
 }
 
 global.FcaAuto = { UNITS, PACOTES, vigLbl, vigDeLbl, vigIdx, vigAnt, vigSeg, projKey, unidadeDoNv3, rs, br, pct, sinalPct, impFmt, NK,
-  indexaDRE, fatos, desvioTxt, getPacote, EXCL_FCA, unidadeDoDRE, indexaDisp, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
+  indexaDRE, fatos, desvioTxt, getPacote, pacDoFato, EXCL_FCA, unidadeDoDRE, indexaDisp, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
   diagnostico, indicadores, indexaGinfo, EXTRA, montaCatalogo, CAT: () => CAT, resumoProlog, contexto, carregar, carregarProlog, ROT, METAS, fmtInd, placaKey };
 })(typeof window !== 'undefined' ? window : globalThis);
