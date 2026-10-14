@@ -68,6 +68,17 @@ const R = await pg.evaluate(({ VIG, UNI }) => {
       hist: d.historico.daUni.length, outras: d.historico.outras.length }; }),
     rede: Object.fromEntries(Object.entries(CTX.rede).map(([p, l]) => [p, l.map(e => `${e.rot}: r0 ${isFinite(e.r0) ? e.r0.toFixed(2) : '—'} (n ${e.n0}, q ${isFinite(e.q0) ? e.q0.toFixed(3) : '—'}) · r1 ${isFinite(e.r1) ? e.r1.toFixed(2) : '—'} (n ${e.n1})${e.sust ? ' · SUSTENTA' : ''}`)])),
     fcaFatos: Object.entries((LIDO.fca||[]).filter(r=>String(r.origem||'').toLowerCase()==='custos').reduce((m,r)=>{const k=String(r.fato||'').split('\n')[0].replace(/(\S)\s*desvio[\s\S]*$/i,'$1').trim(); m[k]=(m[k]||0)+1; return m;},{})).sort((a,b)=>b[1]-a[1]),
+    // LADO A LADO no mês: o que a tabela fca tem (origem Custos) × o que o Automático gera
+    ladoALado: (() => {
+      const A = FcaAuto, nome = t => String(t || '').split('\n')[0].replace(/(\S)\s*desvio[\s\S]*$/i, '$1').replace(/^pacote\s+/i, '').trim();
+      const noFca = {}; (LIDO.fca || []).forEach(r => { if (String(r.origem || '').toLowerCase() !== 'custos') return; if (A.vigDeLbl(r.vigencia) !== vig) return;
+        const uni = String(r.unidade || '').replace(/\s*\(INATIVO\)\s*/gi, ' ').trim(), proj = A.projKey(r.projeto || '');
+        const k = uni + '|' + proj + '|' + nome(r.fato); noFca[k] = (noFca[k] || 0) + 1; });
+      const noAuto = {}; fs.forEach(f => { noAuto[f.uni + '|' + f.proj + '|' + f.pac] = Math.round(f.over); });
+      const ks = [...new Set([...Object.keys(noFca), ...Object.keys(noAuto)])].sort();
+      return { vigsFca: [...new Set((LIDO.fca || []).filter(r => String(r.origem || '').toLowerCase() === 'custos').map(r => r.vigencia))].sort(),
+        linhas: ks.map(k => ({ k, fca: noFca[k] || 0, auto: noAuto[k] })) };
+    })(),
     aprend: { casos: CTX.aprend.casos.length, porRes: CTX.aprend.casos.reduce((m, c) => { m[c.res] = (m[c.res] || 0) + 1; return m; }, {}), temas: CTX.aprend.temas.map(t => `${t.pac} · ${t.tema}: ${t.n} FCAs, ${t.melhor}/${t.aval} melhoraram`) },
     amostraOS: (LIDO.ginfo['os-em-aberto'] || []).slice(0, 3).map(r => [r['Data'], typeof r['Data']]), amostraPrev: (LIDO.ginfo['preventivas'] || []).slice(0, 2),
     ginfo: Object.fromEntries(Object.entries(CTX.ginfo).map(([u, g]) => [u, `prev venc ${g.prevVencidas.length} · OS ab ${g.osAbertas.length} · alin venc ${g.alinVencidos.length}`])),
@@ -88,6 +99,11 @@ R.fatos.forEach(f => {
 });
 console.log('\n══ REDE'); Object.entries(R.rede).forEach(([p, l]) => { console.log('  ' + p); l.forEach(x => console.log('    ' + x)); });
 console.log('\n══ FATOS NA TABELA fca (origem Custos), por nome:', JSON.stringify(R.fcaFatos));
+console.log(`\n══ LADO A LADO em ${R.vig} (vigências na fca: ${R.ladoALado.vigsFca.join(' ')})`);
+console.log('   unidade|projeto|fato                                   na fca   no Automático');
+R.ladoALado.linhas.forEach(l => console.log(`   ${l.k.padEnd(56)} ${String(l.fca).padStart(6)}   ${l.auto != null ? 'R$ ' + l.auto.toLocaleString('pt-BR') : '—'}`));
+const so = { fca: R.ladoALado.linhas.filter(l => l.fca && l.auto == null).length, auto: R.ladoALado.linhas.filter(l => !l.fca && l.auto != null).length, ambos: R.ladoALado.linhas.filter(l => l.fca && l.auto != null).length };
+console.log(`   → nos dois ${so.ambos} · só na fca ${so.fca} · só no Automático ${so.auto}`);
 console.log('\n══ APRENDIZADO', JSON.stringify(R.aprend.porRes), R.aprend.casos, 'casos'); R.aprend.temas.forEach(t => console.log('  ' + t));
 console.log('\n══ GINFO HOJE · amostra OS', JSON.stringify(R.amostraOS), '· preventivas', JSON.stringify(R.amostraPrev)); Object.entries(R.ginfo).forEach(([u, t]) => console.log(`  ${u}: ${t}`));
 console.log('\n══ PROLOG HOJE'); Object.entries(R.prologU).forEach(([u, t]) => console.log(`  ${u}: ${t}`));
