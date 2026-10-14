@@ -146,6 +146,8 @@ const T = {
     { status: 'INSTALLED', placa: 'PIR1A11', menorMM: 3.5, amplitude: 1, pressaoNOK: true }, { status: 'INSTALLED', placa: 'PIR1A11', menorMM: 8, amplitude: 6, pressaoNOK: true },
     { status: 'INSTALLED', placa: 'PIR3C33', menorMM: 2.5, amplitude: 1, pressaoNOK: false }, { status: 'INSTALLED', placa: 'PIR3C33', menorMM: 9, amplitude: 1, pressaoNOK: false },
     { status: 'INVENTORY', placa: '', menorMM: 12 } ] }],
+  fca_auto_acao: [ { fato_id: 'GRL|ROTA|Manutenções|2026-08', chave: 'Corretiva / quebra|ATACAR O GRUPO QUE MAIS PESA', unidade: 'GRL', vigencia: '2026-08', responsavel: 'Ana Souza', prazo: '2026-09-30', status: 'Concluída' } ],
+  fca_profiles: [ { nome: 'Ana Souza' }, { nome: 'Bruno Lima' } ],
   custo_vigencia_mv: [
     { vig_km: '2026-07-01', placa: 'GRL4D44', unidade: 'GRL', projeto: 'ROTA - GRL', tipo: 'variavel', taxa_km: 0.4, km_vig: 3000, custo_vig: 1200, previa: false },
     { vig_km: '2026-07-01', placa: 'GRL1A11', unidade: 'GRL', projeto: 'ROTA - GRL', tipo: 'variavel', taxa_km: 0.4, km_vig: 2000, custo_vig: 800, previa: false },
@@ -157,25 +159,26 @@ const T = {
 const CE_UNI = { CGR: 'CDD CAMPO GRANDE', GRL: 'CDD GUARULHOS', PIR: 'EMP PIRAI', 'CBA T2': 'CDD CUIABA', FLP: 'CDD FLORIANOPOLIS', NFR: 'CDD NOVA FRIBURGO', PLT: 'CDD PELOTAS', RON: 'CDD RONDONOPOLIS', BLC: 'CDD BALNEARIO', 'MCC T2': 'CDI MACACU' };
 G.forEach((x, i) => { const dc = x.combReal / x.combRem - 1; const nota = Math.max(5, Math.min(99, 80 - dc * 150 + (rnd() - 0.5) * 2));
   T.ce_scores_mensais.push({ competencia: x.v + '-01', chave: 'gt:p' + i, motorista: 'MOT ' + x.u + ' ' + x.v, unidade: CE_UNI[x.u], km: 2000, dias: 20, pontuacao: nota, rpm_pontos: nota, idle_pontos: 70, acel_pontos: 80, vel_pontos: 90, viagens: 30, vel_excessos: 0, litros: 800, km_litros: 2000 }); });
-const SHIM_SB = admin => `window.supabase={createClient:()=>({
+const SHIM_SB = (admin, acErr) => `window.__ups=[];window.supabase={createClient:()=>({
   auth:{getSession:async()=>({data:{session:{user:{id:'u1',email:'renan@x.com'}}}})},
   from:(tabela)=>{const T=${JSON.stringify(T)};let rows=(T[tabela]||[]).slice();
     const q={select(){return q;},order(){return q;},eq(c,v){if(tabela==='fca_profiles')rows=[{is_admin:${admin},nome:'Renan Teste'}];else rows=rows.filter(r=>r[c]===v);return q;},
       in(c,vs){rows=rows.filter(r=>!(c in r)||vs.includes(r[c]));return q;},gte(){return q;},lt(){return q;},
       maybeSingle:async()=>({data:rows[0]||null,error:null}),
-      range:async(a,b)=>({data:rows.slice(a,b+1),error:null,count:rows.length}),
+      range:async(a,b)=>(tabela==='fca_auto_acao'&&${!!acErr}?{data:null,error:{message:'relation "public.fca_auto_acao" does not exist'}}:{data:rows.slice(a,b+1),error:null,count:rows.length}),
+      upsert:async(row)=>{ if(${!!acErr}) return {data:null,error:{message:'relation "public.fca_auto_acao" does not exist'}}; window.__ups.push(row); return {data:null,error:null}; },
       then(res,rej){return Promise.resolve({data:rows,error:null}).then(res,rej);}};
     return q;}})};`;
 
 const nav = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium' });
-async function abre({ admin = true, w = 1600, h = 900, tema = 'dark' } = {}) {
+async function abre({ admin = true, w = 1600, h = 900, tema = 'dark', acErr = false } = {}) {
   const ctx = await nav.newContext({ viewport: { width: w, height: h }, serviceWorkers: 'block' });
   await ctx.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await ctx.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
   await ctx.route('**/assets/gviz-cache.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
   await ctx.route('**/assets/gerot-base.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: STUB_GEROT }));
   await ctx.route('**/cdn.jsdelivr.net/**', r => { const u = r.request().url();
-    r.fulfill({ status: 200, contentType: 'application/javascript', body: u.includes('supabase') ? SHIM_SB(admin) : u.includes('html2canvas') ? 'window.html2canvas=async()=>document.createElement("canvas");' : '' }); });
+    r.fulfill({ status: 200, contentType: 'application/javascript', body: u.includes('supabase') ? SHIM_SB(admin, acErr) : u.includes('html2canvas') ? 'window.html2canvas=async()=>document.createElement("canvas");' : '' }); });
   await ctx.route('**/lozwipoeacpvplgkrxkq.supabase.co/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
   await ctx.route('**/docs.google.com/**', r => { const u = r.request().url(); const aba = decodeURIComponent((u.match(/sheet=([^&]+)/) || [])[1] || ''); const gid = (u.match(/gid=(\d+)/) || [])[1];
     const j = aba === 'Frota' ? gvizFrota() : aba === 'Receita Líquida' ? gvizReceita() : aba === 'Dispersão de km' ? gvizDisp() : aba === 'Abertura' ? gvizAbertura() : aba === 'Km/L' ? gvizKml() : aba === 'R$/L' ? gvizRsl()
@@ -306,12 +309,26 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     af('resumo abre em ago/26 (último mês com realizado) com o desvio total', /AGO\/26/.test(res.sub) && /^R\$/.test(res.hn), JSON.stringify(res));
     await pg.click('.s-item[data-v="tabela"]'); await pg.waitForTimeout(100);
     const tb = await pg.evaluate(() => { const g = [...document.querySelectorAll('tbody.fg')]; const grl = g.find(t => t.querySelector('tr').dataset.id === 'GRL|ROTA|Manutenções|2026-08'), cgr = g.find(t => t.querySelector('tr').dataset.id === 'CGR|ROTA|Combustíveis|2026-08');
-      const d = diag(FATOS.find(f => f.id === 'GRL|ROTA|Manutenções|2026-08'));
+      const f = FATOS.find(x => x.id === 'GRL|ROTA|Manutenções|2026-08'), d = diag(f), ls = linhasDoFato(d);
+      const ana = grl && [...grl.querySelectorAll('input[data-c="responsavel"]')].find(x => x.value === 'Ana Souza');
+      const trAna = ana && ana.closest('tr');
       return { n: g.length, fatos: visiveis().length, modo: document.querySelector('#tabModo button.on').dataset.m, din: !!document.querySelector('table.fa-rel.din'),
-        grlRows: grl && grl.querySelectorAll('tr').length, grlEsp: Math.max(1, Math.min(8, d.causas.length), Math.min(8, d.acoes.length)), grlSpan: grl && grl.querySelector('td').getAttribute('rowspan'), grlIds: grl && [...grl.querySelectorAll('tr')].every(t => t.dataset.id === 'GRL|ROTA|Manutenções|2026-08'),
-        grlNums: grl && [...grl.querySelectorAll('td.ln .ln-n')].map(x => x.textContent).join(','), cgrFato: cgr && cgr.querySelector('td.fato').innerText.replace(/\s+/g, ' ').trim(), ytdNaCausa: !!document.querySelector('td.txt:not(.fato) .fa-ano') }; });
-    af('TABELA "uma por linha": um tbody por fato, a identificação mesclada (rowspan) e uma causa e uma ação por linha, numeradas', tb.modo === 'linha' && tb.din && tb.n === tb.fatos && tb.grlRows === tb.grlEsp && +tb.grlSpan === tb.grlEsp && tb.grlIds && tb.grlNums.startsWith('1,1,2,2'), JSON.stringify(tb));
+        cols: [...document.querySelectorAll('table.fa-rel thead th')].map(x => x.textContent).join('|'),
+        grlRows: grl && grl.querySelectorAll('tr').length, linhas: ls.length, acoes: d.acoes.length, campos: grl && grl.querySelectorAll('input[data-c="responsavel"]').length,
+        grlSpan: grl && grl.querySelector('td').getAttribute('rowspan'), grlIds: grl && [...grl.querySelectorAll('tr')].every(t => t.dataset.id === 'GRL|ROTA|Manutenções|2026-08'),
+        pareado: ls.filter(l => l.a && l.c).every(l => l.a.tema === l.c.tema), chaves: new Set(ls.filter(l => l.a).map(l => l.k)).size === d.acoes.length,
+        ana: !!ana, anaAcao: trAna && trAna.querySelector('td.ln:not(.ac-c):nth-last-of-type(1)') ? '' : '', anaTxt: trAna && [...trAna.querySelectorAll('td.ln')][1].innerText.slice(0, 60), anaSt: trAna && trAna.querySelector('select[data-c="status"]').value, anaFeita: trAna && trAna.classList.contains('feita'), anaPrazo: trAna && trAna.querySelector('input[data-c="prazo"]').value,
+        dl: [...document.querySelectorAll('#dl-resp option')].map(o => o.value).join(','), cgrFato: cgr && cgr.querySelector('td.fato').innerText.replace(/\s+/g, ' ').trim(), ytdNaCausa: !!document.querySelector('td.txt:not(.fato) .fa-ano'), erro: (document.querySelector('.fa-tbar-err') || {}).textContent || '' }; });
+    af('TABELA "uma por linha" = UMA LINHA POR AÇÃO, com Responsável · Prazo · Status; identificação mesclada (rowspan); causa do mesmo tema ao lado', tb.modo === 'linha' && tb.din && tb.n === tb.fatos && /Responsável\|Prazo\|Status\|Explica$/.test(tb.cols) && tb.grlRows === tb.linhas && +tb.grlSpan === tb.linhas && tb.grlIds && tb.campos === tb.acoes && tb.pareado && tb.chaves && !tb.erro, JSON.stringify(tb));
+    af('…a ação já gravada volta do banco: dono Ana Souza, prazo 30/09, Concluída e a linha esmaecida; os nomes do perfil viram sugestão', tb.ana && /^Atacar o grupo que mais pesa/.test(tb.anaTxt || '') && tb.anaSt === 'Concluída' && tb.anaFeita && tb.anaPrazo === '2026-09-30' && tb.dl === 'Ana Souza,Bruno Lima', JSON.stringify([tb.anaTxt, tb.anaSt, tb.anaFeita, tb.anaPrazo, tb.dl]));
     af('…o fato curto: contas resumidas, um ▲/▼ e o % entre parênteses, com o YTD dentro do Fato (e não nas causas)', /^Combustíveis ▲ R\$ 31\.000 \(30%\) Combustíveis ▲ 30K \(30%\) Arla ▲ 1K \(20%\) YTD/.test(tb.cgrFato) && !tb.ytdNaCausa, tb.cgrFato);
+    // fecha uma ação sozinha: muda o status de outra ação do GRL
+    const alvo = await pg.evaluate(() => { const sel = [...document.querySelectorAll('tbody.fg select[data-c="status"]')].find(x => x.dataset.fid === 'GRL|ROTA|Manutenções|2026-08' && x.value === 'Não iniciada'); sel.setAttribute('id', 'stAlvo'); return sel.dataset.k; });
+    await pg.selectOption('#stAlvo', 'Em andamento'); await pg.waitForTimeout(150);
+    await pg.fill('input[data-fid="GRL|ROTA|Manutenções|2026-08"][data-k="' + alvo + '"][data-c="responsavel"]', 'Bruno Lima'); await pg.press('input[data-fid="GRL|ROTA|Manutenções|2026-08"][data-k="' + alvo + '"][data-c="responsavel"]', 'Tab'); await pg.waitForTimeout(150);
+    const up = await pg.evaluate(() => ({ ups: window.__ups, cls: document.getElementById('stAlvo').dataset.v, ok: (document.getElementById('acSalvo') || {}).textContent, modal: (o => o ? getComputedStyle(o).display : 'none')(document.getElementById('fm-ov')) }));
+    const u2 = up.ups[up.ups.length - 1] || {};
+    af('…cada ação fecha sozinha: mudar o status e o dono grava UMA linha (fato × ação) com unidade, vigência, causa e ação, sem abrir o modal', up.ups.length === 2 && up.ups.every(r => r.fato_id === 'GRL|ROTA|Manutenções|2026-08' && r.chave === alvo && r.unidade === 'GRL' && r.vigencia === '2026-08' && r.acao) && u2.status === 'Em andamento' && u2.responsavel === 'Bruno Lima' && up.cls === 'Em andamento' && /Gravado/.test(up.ok) && up.modal !== 'flex', JSON.stringify(up));
     await pg.click('#tabModo button[data-m="grupo"]'); await pg.waitForTimeout(100);
     const tg = await pg.evaluate(() => ({ modo: document.querySelector('#tabModo button.on').dataset.m, din: !!document.querySelector('table.fa-rel.din'), rows: [...document.querySelectorAll('tbody.fg')].every(t => t.querySelectorAll('tr').length === 1), ol: !!document.querySelector('tbody.fg td.txt ol'), guardado: localStorage.getItem('fcaauto_tab_modo') }));
     af('…"Agrupado" volta à linha única por fato com as listas, e a escolha fica guardada', tg.modo === 'grupo' && !tg.din && tg.rows && tg.ol && tg.guardado === 'grupo', JSON.stringify(tg));
@@ -322,6 +339,16 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     af('…com o que a unidade escreveu no FCA do mês', /Rodamos mais km por causa da rota nova/.test(m.txt), '');
     if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'fa-modal.png') });
   }
+  await ctx.close();
+}
+
+/* ══ 2b · tabela fca_auto_acao ainda não criada ══ */
+{
+  console.log('\n══ 2b · sem a tabela fca_auto_acao');
+  const { pg, ctx, errs } = await abre({ acErr: true });
+  await pg.click('.s-item[data-v="tabela"]'); await pg.waitForTimeout(150);
+  const r = await pg.evaluate(() => ({ err: (document.querySelector('.fa-tbar-err') || {}).textContent || '', dis: [...document.querySelectorAll('tbody.fg [data-c]')].every(x => x.disabled), n: document.querySelectorAll('tbody.fg').length }));
+  af('sem a tabela: a tela abre com as ações, os campos ficam travados e o topo diz para rodar o SQL', r.n > 0 && r.dis && /fca_auto_acao não existe no banco/.test(r.err) && errs.length === 0, JSON.stringify(r));
   await ctx.close();
 }
 

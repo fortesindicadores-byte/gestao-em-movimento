@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610142000">
+<meta name="build" content="202610142130">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -893,8 +893,32 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 .fa-tog button{font:inherit;font-size:10.5px;font-weight:700;color:var(--txt2);background:none;border:0;border-radius:6px;padding:4px 10px;cursor:pointer;}
 .fa-tog button.on{background:var(--laranja);color:#0C1017;}
 table.rel.fa-rel td.center{white-space:normal;overflow-wrap:anywhere;}
-table.rel.fa-rel.din th:nth-child(1){width:5.5%;}table.rel.fa-rel.din th:nth-child(2){width:8%;}table.rel.fa-rel.din th:nth-child(3){width:5.5%;}
-table.rel.fa-rel.din th:nth-child(4){width:16%;}table.rel.fa-rel.din th:nth-child(5){width:30%;}table.rel.fa-rel.din th:nth-child(6){width:29%;}table.rel.fa-rel.din th:nth-child(7){width:6%;}
+table.rel.fa-rel.din th:nth-child(1){width:4.5%;}table.rel.fa-rel.din th:nth-child(2){width:6%;}table.rel.fa-rel.din th:nth-child(3){width:5.5%;}
+table.rel.fa-rel.din th:nth-child(4){width:12%;}table.rel.fa-rel.din th:nth-child(5){width:19.5%;}table.rel.fa-rel.din th:nth-child(6){width:20.5%;}
+table.rel.fa-rel.din th:nth-child(7){width:8.5%;}table.rel.fa-rel.din th:nth-child(8){width:8.5%;}table.rel.fa-rel.din th:nth-child(9){width:9%;}table.rel.fa-rel.din th:nth-child(10){width:6%;}
+table.rel.fa-rel.din td.id.center{font-size:11px;}
+table.rel.fa-rel.din .pctx{min-width:0;padding:2px 5px;}
+table.rel.fa-rel.din thead th{letter-spacing:.3px!important;padding-left:6px!important;padding-right:6px!important;}
+table.rel.fa-rel.din td.id{padding-left:6px!important;padding-right:6px!important;}
+.ac-in[type=date]::-webkit-calendar-picker-indicator{display:none;}
+.ac-st{-webkit-appearance:none;appearance:none;text-align:center;text-align-last:center;padding:5px 2px!important;}
+table.rel.fa-rel.din tbody.fg td.ln.ac-c{padding:7px 4px!important;vertical-align:top;}
+.ac-in,.ac-st{width:100%;box-sizing:border-box;font:inherit;font-size:10px;font-weight:600;color:var(--txt);background:var(--side);border:1px solid var(--card-brd);border-radius:6px;padding:5px 6px;}
+.ac-in:focus,.ac-st:focus{outline:none;border-color:var(--laranja);box-shadow:0 0 0 2px rgba(249,115,22,.18);}
+.ac-in::placeholder{color:var(--txt3);font-weight:500;}
+.ac-in.venc{border-color:var(--vermelho);color:var(--vermelho);}
+.ac-in[type=date]{padding:5px 2px;font-size:9.5px;letter-spacing:-.2px;color-scheme:dark;cursor:pointer;}body.claro .ac-in[type=date]{color-scheme:light;}
+.ac-st{cursor:pointer;font-weight:700;}
+.ac-st[data-v="Não iniciada"]{background:#FF6666;color:#0C1017;border-color:#FF6666;}
+.ac-st[data-v="Em andamento"]{background:#F4A100;color:#0C1017;border-color:#F4A100;}
+.ac-st[data-v="Concluída"]{background:#3BB33B;color:#fff;border-color:#3BB33B;}
+.ac-st[data-v="Cancelada"]{background:#333333;color:#fff;border-color:#333333;}
+.ac-in:disabled,.ac-st:disabled{opacity:.45;cursor:not-allowed;}
+table.rel.fa-rel.din tr.feita td.ln:not(.ac-c){opacity:.5;}
+table.rel.fa-rel.din tr.feita td.ln:not(.ac-c) small{text-decoration:none;}
+.ac-sem{font-size:10.5px;color:var(--txt3);font-style:italic;}
+.fa-tbar-err{font-size:10.5px;font-weight:700;color:var(--vermelho);}
+.fa-tbar-ok{font-size:10.5px;font-weight:700;color:var(--verde);}
 table.rel.fa-rel tbody.fg{border-top:2px solid var(--card-brd);}
 table.rel.fa-rel.din tbody.fg td.id{vertical-align:top;border-bottom:0!important;}
 table.rel.fa-rel.din tbody.fg td.ln{border-bottom:1px dashed var(--linha)!important;padding:8px 12px!important;line-height:1.4;}
@@ -913,7 +937,7 @@ table.rel td.fato .fa-ano{font-size:10.5px;}
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610142000"></script>
+<script src="../assets/fca-auto.js?v=202610142130"></script>
 </head>
 <body>
 <div class="app">
@@ -1094,17 +1118,43 @@ function linhaAcoes(d,n){ const as=d.acoes.slice(0,n||9); if(!as.length) return 
   return '<ol>'+as.map(a=>`<li>${acaoHTML(a)}</li>`).join('')+'</ol>'; }
 /* fato curto para a tabela (contas resumidas, um ▲/▼ e o % entre parênteses) + YTD */
 const fatoHTML=(f,d)=>`<b>${esc(f.pac)}</b><small>${nl(FA.desvioCurto(f))}</small>${anoHTML(d)}`;
-/* DOIS ARRANJOS (Renan, 14/10/2026: "testar dividir as causas e ações em uma ação por linha e mesclar
-   unidade, projeto, vigência e fato que ficam antes. Tipo dinâmica"): "Uma por linha" = um tbody por
-   fato, uma causa e uma ação por linha, as células de identificação mescladas (rowspan); "Agrupado" =
-   a linha única de antes, com as listas. Chave fcaauto_tab_modo. */
+/* DOIS ARRANJOS. "Uma por linha" (padrão) = UMA LINHA POR AÇÃO, e cada ação é um item com
+   dono, prazo e status gravados no banco (Renan, 14/10/2026: "Ideia é da dinâmica é separar para
+   cada ação ser fechada individualmente. E cada ação com um dono… Traga também as colunas prazo,
+   status e responsável"). A causa ao lado é a do mesmo tema; causa sem ação vira linha sem campos,
+   no fim do fato. Unidade · Projeto · Vigência · Fato · Explica ficam mescladas (rowspan).
+   "Agrupado" = a linha única de antes, com as listas. Chave fcaauto_tab_modo. */
 let TAB_MODO=(()=>{ try{ return localStorage.getItem('fcaauto_tab_modo')||'linha'; }catch(e){ return 'linha'; } })();
+const ST_AC=['Não iniciada','Em andamento','Concluída','Cancelada'];
+let ACOES={}, ACOES_ERR=null, ACOES_OK=false, EU_NOME='', NOMES=[];
+// a ação é identificada pelo tema + as primeiras palavras do texto, sem números (contagens e valores mudam a cada leitura)
+const chaveAcao=a=>(a.tema||'')+'|'+FA.NK(a.txt).replace(/[0-9]+([.,][0-9]+)*/g,' ').replace(/[^A-Z ]/g,' ').split(/\s+/).filter(Boolean).slice(0,6).join(' ');
+function linhasDoFato(d){
+  const usadas=new Set(), vistos={}, out=[];
+  d.acoes.forEach(a=>{ const ci=d.causas.findIndex((c,i)=>!usadas.has(i)&&c.tema===a.tema); if(ci>=0) usadas.add(ci);
+    let k=chaveAcao(a); vistos[k]=(vistos[k]||0)+1; if(vistos[k]>1) k+='#'+vistos[k];
+    out.push({a,c:ci>=0?d.causas[ci]:null,k}); });
+  d.causas.forEach((c,i)=>{ if(!usadas.has(i)) out.push({a:null,c,k:null}); });
+  return out;
+}
+const acKey=(fid,k)=>fid+'||'+k;
+function camposAcao(f,l){
+  if(!l.a) return '<td class="ln ac-vazio"></td><td class="ln ac-vazio"></td><td class="ln ac-vazio"></td>';
+  const r=ACOES[acKey(f.id,l.k)]||{}, st=r.status||'Não iniciada', dis=ACOES_OK?'':' disabled title="Rode o SQL fca_auto_acao para gravar"';
+  const at=`data-fid="${esc(f.id)}" data-k="${esc(l.k)}"`;
+  const venc=r.prazo&&st!=='Concluída'&&st!=='Cancelada'&&r.prazo<new Date().toISOString().slice(0,10);
+  return `<td class="ln ac-c"><input class="ac-in" list="dl-resp" ${at} data-c="responsavel" value="${esc(r.responsavel||'')}" placeholder="Dono"${dis}></td>
+    <td class="ln ac-c"><input class="ac-in${venc?' venc':''}" type="date" ${at} data-c="prazo" value="${esc(r.prazo||'')}"${dis}></td>
+    <td class="ln ac-c"><select class="ac-st" ${at} data-c="status" data-v="${esc(st)}"${dis}>${ST_AC.map(o=>`<option${o===st?' selected':''}>${o}</option>`).join('')}</select></td>`;
+}
 function tabelaHTML(vis){
   const linha=TAB_MODO==='linha';
-  let h=`<div class="rel-section"><div class="fa-tbar"><span class="fa-tbar-n">Clique na linha para abrir o diagnóstico completo</span><div class="fa-tog" id="tabModo">
+  const aviso=linha&&ACOES_ERR?`<span class="fa-tbar-err">Responsável, prazo e status ainda não gravam: ${esc(ACOES_ERR)}</span>`:'';
+  let h=`<div class="rel-section"><div class="fa-tbar"><span class="fa-tbar-n">${linha?'Uma linha por ação: cada uma com dono, prazo e status. Clique no texto para abrir o diagnóstico':'Clique na linha para abrir o diagnóstico completo'}</span>${aviso}<span class="fa-tbar-ok" id="acSalvo"></span><div class="fa-tog" id="tabModo">
       <button data-m="linha" class="${linha?'on':''}">Uma por linha</button><button data-m="grupo" class="${linha?'':'on'}">Agrupado</button></div></div>
+    <datalist id="dl-resp">${NOMES.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
     <div class="rel-wrap"><table class="rel fa-rel${linha?' din':''}"><thead><tr>
-    <th>Unidade</th><th>Projeto</th><th>Vigência</th><th>Fato</th><th>Causa automática</th><th>Ação automática</th><th>Explica</th></tr></thead>`;
+    ${linha?'<th title="Unidade">Unid.</th><th>Projeto</th><th title="Vigência">Vig.</th>':'<th>Unidade</th><th>Projeto</th><th>Vigência</th>'}<th>Fato</th><th>Causa automática</th><th>Ação automática</th>${linha?'<th>Responsável</th><th>Prazo</th><th>Status</th>':''}<th>Explica</th></tr></thead>`;
   vis.forEach(f=>{ const d=diag(f);
     if(!linha){
       h+=`<tbody class="fg"><tr data-id="${esc(f.id)}" title="Clique para abrir o diagnóstico completo">
@@ -1112,21 +1162,46 @@ function tabelaHTML(vis){
         <td class="txt fato">${fatoHTML(f,d)}</td>
         <td class="txt">${linhaCausas(d,4)}</td><td class="txt">${linhaAcoes(d,4)}</td>
         <td class="center">${pctBadge(d.explicado)}</td></tr></tbody>`; return; }
-    const cs=d.causas.slice(0,8), as=d.acoes.slice(0,8), n=Math.max(1,cs.length,as.length);
+    const ls=linhasDoFato(d), n=Math.max(1,ls.length);
     h+=`<tbody class="fg">`;
     for(let i=0;i<n;i++){
-      const c=cs[i], a=as[i];
-      h+=`<tr data-id="${esc(f.id)}" title="Clique para abrir o diagnóstico completo">`;
+      const l=ls[i]||{a:null,c:null,k:null}, r=l.a?(ACOES[acKey(f.id,l.k)]||{}):{}, feita=r.status==='Concluída'||r.status==='Cancelada';
+      h+=`<tr data-id="${esc(f.id)}"${feita?' class="feita"':''}>`;
       if(i===0) h+=`<td class="center id" rowspan="${n}">${esc(f.uni)}</td><td class="center id" rowspan="${n}">${esc(f.proj)}</td><td class="center id" rowspan="${n}">${esc(f.vigLbl.toUpperCase())}</td><td class="txt fato id" rowspan="${n}">${fatoHTML(f,d)}</td>`;
-      h+=`<td class="txt ln">${c?`<span class="ln-n">${i+1}</span>${causaHTML(c)}`:(i===0?'<i style="color:var(--txt3)">Sem evidência nas bases para este mês</i>':'')}</td>
-          <td class="txt ln">${a?`<span class="ln-n">${i+1}</span>${acaoHTML(a)}`:(i===0?'<i style="color:var(--txt3)">—</i>':'')}</td>`;
+      h+=`<td class="txt ln">${l.c?causaHTML(l.c):(i===0&&!ls.length?'<i style="color:var(--txt3)">Sem evidência nas bases para este mês</i>':'')}</td>
+          <td class="txt ln">${l.a?acaoHTML(l.a):(i===0&&!ls.length?'<i style="color:var(--txt3)">—</i>':'<span class="ac-sem">sem ação: só explica o desvio</span>')}</td>${camposAcao(f,l)}`;
       if(i===0) h+=`<td class="center id" rowspan="${n}">${pctBadge(d.explicado)}</td>`;
       h+='</tr>';
     }
     h+='</tbody>';
   });
-  if(!vis.length) h+='<tbody><tr><td colspan="7" class="center">Nenhum fato no recorte.</td></tr></tbody>';
+  if(!vis.length) h+=`<tbody><tr><td colspan="${linha?10:7}" class="center">Nenhum fato no recorte.</td></tr></tbody>`;
   return h+'</table></div></div>';
+}
+/* grava o campo da ação (upsert por fato × ação) com a causa e a ação como estavam */
+async function salvaAcao(el){
+  const fid=el.dataset.fid, k=el.dataset.k, c=el.dataset.c, f=FATOS.find(x=>x.id===fid); if(!f) return;
+  const l=linhasDoFato(diag(f)).find(x=>x.k===k); if(!l||!l.a) return;
+  const cur=ACOES[acKey(fid,k)]||{};
+  const row={fato_id:fid,chave:k,unidade:f.uni,vigencia:f.vig,pacote:f.pac,projeto:f.proj,tema:l.a.tema||null,
+    causa:l.c?l.c.txt:null,acao:l.a.txt+(l.a.ofens.length?': '+l.a.ofens.join(' · '):''),
+    responsavel:cur.responsavel||null,prazo:cur.prazo||null,status:cur.status||'Não iniciada',updated_nome:EU_NOME||null};
+  row[c]=String(el.value||'').trim()||null; if(c==='status'&&!row.status) row.status='Não iniciada';
+  const msg=document.getElementById('acSalvo');
+  const {error}=await sb.from('fca_auto_acao').upsert(row,{onConflict:'fato_id,chave'});
+  if(error){ if(msg){ msg.className='fa-tbar-err'; msg.textContent='Não gravou: '+error.message; } return; }
+  ACOES[acKey(fid,k)]=row;
+  if(c==='status'){ el.dataset.v=row.status; const tr=el.closest('tr'); if(tr) tr.classList.toggle('feita',row.status==='Concluída'||row.status==='Cancelada'); }
+  if(c==='prazo'){ const st=row.status; el.classList.toggle('venc',!!row.prazo&&st!=='Concluída'&&st!=='Cancelada'&&row.prazo<new Date().toISOString().slice(0,10)); }
+  if(msg){ msg.className='fa-tbar-ok'; msg.textContent='Gravado ✓'; clearTimeout(salvaAcao._t); salvaAcao._t=setTimeout(()=>{ msg.textContent=''; },1800); }
+}
+async function carregaAcoes(){
+  try{
+    const out=[]; for(let off=0;off<50000;off+=1000){ const {data,error}=await sb.from('fca_auto_acao').select('*').range(off,off+999);
+      if(error) throw new Error(error.message); out.push(...(data||[])); if(!data||data.length<1000) break; }
+    ACOES={}; out.forEach(r=>{ ACOES[acKey(r.fato_id,r.chave)]=r; }); ACOES_OK=true; ACOES_ERR=null;
+  }catch(e){ ACOES_OK=false; ACOES_ERR=/fca_auto_acao|relation|schema cache|does not exist/i.test(e.message||'')?'a tabela fca_auto_acao não existe no banco (rodar o SQL)':(e.message||String(e)); }
+  try{ const {data}=await sb.from('fca_profiles').select('nome'); NOMES=[...new Set((data||[]).map(p=>String(p.nome||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')); }catch(e){ NOMES=[]; }
 }
 /* ── KANBAN — uma coluna por pacote ── */
 const KCLS={'Combustíveis':'cmb','Manutenções':'mnt','Pneus':'pne'};
@@ -1137,7 +1212,7 @@ function kcardHTML(f){ const d=diag(f); const c1=d.causas[0], a1=d.acoes[0];
     <div class="kcard-causa"><span class="kl">Causa:</span> ${c1?tri(esc(c1.txt)):'<i>sem evidência nas bases</i>'}</div>
     ${d.ano?`<div class="kcard-causa"><span class="kl">YTD:</span> ${tri(esc(d.ano.txt.replace(/ · curva de captura:.*$/,'').replace(/ · tratar.*$/,' · pontual')))}</div>`:''}
     <div class="kcard-ac"><span class="kl">Ação:</span> ${a1?esc(a1.txt)+(a1.ofens.length?' ('+esc(a1.ofens.slice(0,2).join(' · '))+')':''):'<i>—</i>'}</div>
-    <div class="kcard-meta"><span>${d.causas.length} causa(s) · ${d.acoes.length} ação(ões)</span> ${d.explicado!=null?pctBadge(d.explicado):''}</div></div>`; }
+    <div class="kcard-meta"><span>${d.causas.length} causa(s) · ${d.acoes.length} ação(ões)${(()=>{ const fe=linhasDoFato(d).filter(l=>l.a&&/Conclu|Cancel/.test((ACOES[acKey(f.id,l.k)]||{}).status||'')).length; return fe?` · <b style="color:var(--verde)">${fe} fechada(s)</b>`:''; })()}</span> ${d.explicado!=null?pctBadge(d.explicado):''}</div></div>`; }
 function kanbanHTML(vis){
   const cols=pacsDe(vis).map(k=>({c:{k,cls:KCLS[k]||'out'},items:vis.filter(f=>f.pac===k)}));
   const gc=`grid-template-columns:repeat(${cols.length||1},minmax(0,1fr))`;
@@ -1245,9 +1320,12 @@ function vaiPara(v){ VIEW=v; document.getElementById('tituloVista').textContent=
 document.querySelectorAll('.s-item[data-v]').forEach(b=>b.addEventListener('click',()=>vaiPara(b.dataset.v)));
 document.getElementById('content').addEventListener('click',e=>{
   const tg=e.target.closest('#tabModo button[data-m]'); if(tg){ TAB_MODO=tg.dataset.m; try{ localStorage.setItem('fcaauto_tab_modo',TAB_MODO); }catch(x){} render(); return; }
+  if(e.target.closest('input,select,textarea,datalist,td.ac-c')) return;
   const k=e.target.closest('.kcard[data-id],tr[data-id]'); if(k){ abreModal(k.dataset.id); return; }
   const u=e.target.closest('tr[data-uni]'); if(u){ const w=document.getElementById('ms-uni'); w._sel.clear(); w._sel.add(u.dataset.uni); w._render(''); vaiPara('tabela'); }
 });
+document.getElementById('content').addEventListener('change',e=>{ const el=e.target.closest('[data-fid][data-c]'); if(el) salvaAcao(el); });
+document.getElementById('content').addEventListener('click',e=>{ const d=e.target.closest('input.ac-in[type=date]'); if(d&&!d.disabled&&d.showPicker){ try{ d.showPicker(); }catch(x){} } });
 (function(){ const bt=document.getElementById('btMini'), sd=document.querySelector('.side');
   bt.addEventListener('click',()=>{ const l=sd.classList.toggle('mini'); try{localStorage.setItem('fcaauto_mini',l?'1':'0');}catch(e){} });
   try{ if(localStorage.getItem('fcaauto_mini')==='1') sd.classList.add('mini'); }catch(e){} })();
@@ -1266,6 +1344,7 @@ function pintaUsuario(user,prof){
   const nome=(prof&&(prof.nome||prof.name))||String((user&&user.email)||'').split('@')[0].replace(/[._-]+/g,' ')||'—';
   document.getElementById('euAv').textContent=nome.trim().split(/\s+/).slice(0,2).map(p=>p[0]||'').join('').toUpperCase()||'—';
   document.getElementById('euNome').textContent=nome.replace(/\b\w/g,c=>c.toUpperCase());
+  EU_NOME=nome.replace(/\b\w/g,c=>c.toUpperCase());
 }
 async function initApp(){
   try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }catch(e){ gateError('Falha ao iniciar o cliente Supabase.'); return; }
@@ -1278,7 +1357,9 @@ async function initApp(){
   const msg=t=>{document.getElementById('content').innerHTML=`<div class="loading">Lendo as bases… ${esc(t)}</div>`;};
   msg('');
   try{
+    const acP=carregaAcoes();
     LIDO=await FA.carregar(sb,{etapa:msg});
+    await acP;
     if(!LIDO.dre){ gateError('O DRE (aba Frota) não respondeu: sem ele não há fato.'); return; }
     CTX=FA.contexto(LIDO,{});
     FATOS=CTX.todos.filter(f=>f.estourou);
@@ -1295,6 +1376,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610142000"></script>
+<script src="../assets/build-check.js?v=202610142130"></script>
 </body>
 </html>
