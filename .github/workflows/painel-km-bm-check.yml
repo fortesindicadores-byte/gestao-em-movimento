@@ -9,6 +9,10 @@ on:
         description: '1 = simula set/26 da Dispersão importada ligado'
         required: false
         default: ''
+      sem_bm:
+        description: '1 = simula a tabela balanco_massa sem resposta (vazia)'
+        required: false
+        default: ''
 
 jobs:
   check:
@@ -29,3 +33,4 @@ jobs:
         env:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           SET: ${{ github.event.inputs.set }}
+          SEM_BM: ${{ github.event.inputs.sem_bm }}

@@ -23,6 +23,7 @@ const ctx = await nav.newContext({ viewport: { width: 1600, height: 900 }, servi
 await ctx.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
 await ctx.route('https://lozwipoeacpvplgkrxkq.supabase.co/**', async r => {
   const u = r.request().url();
+  if (process.env.SEM_BM === '1' && /\/rest\/v1\/balanco_massa/.test(u)) return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '[]' });
   if (/\/rest\/v1\/fca_profiles/.test(u)) return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(/vnd\.pgrst\.object/.test(r.request().headers()['accept'] || '') ? { is_admin: true, nome: 'Check' } : [{ is_admin: true, nome: 'Check' }]) });
   if (/\/auth\/v1\//.test(u)) return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ id: 'check', email: 'check@local' }) });
   // o Supabase recusa a service key vinda de navegador ("Forbidden use of secret API key in browser"):
