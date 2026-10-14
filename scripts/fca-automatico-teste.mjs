@@ -308,6 +308,9 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     const s = await rola(pg);
     af(`${v}: a página não rola${v === 'resumo' || v === 'rede' || v === 'fontes' ? ' e o miolo também não' : ''}`, !s.doc && (v === 'kanban' || v === 'tabela' || v === 'historico' || !s.main), JSON.stringify(s));
     if (SHOT && w === 1366) await pg.screenshot({ path: path.join(SHOT, `fa-${v}-${tema}.png`) });
+    if (v === 'tabela') { const q = await pg.evaluate(() => { const ls = [...document.querySelectorAll('table.fa-rel.din td.fato small')].filter(x => !x.classList.contains('fa-ano'));
+      const lh = x => parseFloat(getComputedStyle(x).lineHeight) || 15; return { n: ls.length, quebra: ls.filter(x => Math.round(x.getBoundingClientRect().height / lh(x)) > x.querySelectorAll('br').length + 1).map(x => x.innerText.trim()) }; });
+      af(`tabela ${w}: as contas do fato cabem numa linha`, q.n > 0 && !q.quebra.length, JSON.stringify(q)); }
   }
   if (w === 1366 && tema === 'dark') {
     await pg.click('.s-item[data-v="resumo"]'); await pg.waitForTimeout(100);

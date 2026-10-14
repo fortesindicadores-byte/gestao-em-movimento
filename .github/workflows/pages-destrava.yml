@@ -1,0 +1,23 @@
+# Destrava o GitHub Pages quando um deploy anterior fica preso "em andamento"
+# e todo deploy novo falha com "due to in progress deployment. Please cancel <sha> first".
+# Cancela o deploy preso (pelo SHA) com o token do próprio repositório; o próximo push publica normal.
+name: Pages Destrava
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "SHA (completo) do deploy preso"
+        required: true
+permissions:
+  pages: write
+  contents: read
+jobs:
+  cancela:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Estado do deploy preso
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: gh api "repos/${{ github.repository }}/pages/deployments/${{ inputs.sha }}" || true
+      - name: Cancela
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: gh api -X POST "repos/${{ github.repository }}/pages/deployments/${{ inputs.sha }}/cancel" && echo "cancelado"

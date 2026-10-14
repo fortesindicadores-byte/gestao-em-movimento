@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610150530">
+<meta name="build" content="202610150630">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -614,6 +614,8 @@ table.rel tbody td{padding:11px 12px!important;color:var(--txt2)!important;
   border-bottom:1px solid var(--linha)!important;}
 table.rel tbody tr:hover{background:var(--hover)!important;}
 table.rel td.txt b{color:var(--txt);}
+table.rel td.fato b.fa-pac{font-size:calc(1em + 2px);}
+table.rel td.fato .fa-tot{font-weight:800;color:var(--txt);}
 body.claro .rel-section{background:var(--card)!important;}
 body.claro table.rel thead th{background:var(--cabec)!important;}
 /* com table-layout:fixed nada transborda na horizontal — a barra que
@@ -894,8 +896,9 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 .fa-tog button.on{background:var(--laranja);color:#0C1017;}
 table.rel.fa-rel td.center{white-space:normal;overflow-wrap:anywhere;}
 table.rel.fa-rel.din th:nth-child(1){width:4.5%;}table.rel.fa-rel.din th:nth-child(2){width:6%;}table.rel.fa-rel.din th:nth-child(3){width:5.5%;}
-table.rel.fa-rel.din th:nth-child(4){width:12%;}table.rel.fa-rel.din th:nth-child(5){width:22.5%;}table.rel.fa-rel.din th:nth-child(6){width:23.5%;}
+table.rel.fa-rel.din th:nth-child(4){width:16%;}table.rel.fa-rel.din th:nth-child(5){width:20.5%;}table.rel.fa-rel.din th:nth-child(6){width:21.5%;}
 table.rel.fa-rel.din th:nth-child(7){width:8.5%;}table.rel.fa-rel.din th:nth-child(8){width:8.5%;}table.rel.fa-rel.din th:nth-child(9){width:9%;}
+@media(max-width:1599px){table.rel.fa-rel.din th:nth-child(4){width:19%;}table.rel.fa-rel.din th:nth-child(5){width:19%;}table.rel.fa-rel.din th:nth-child(6){width:20%;}}   /* notebook: o fato ganha o que causa e ação perdem por igual, para a conta não quebrar */
 table.rel.fa-rel.din tbody.fg td.ln.cz{vertical-align:top;}
 table.rel.fa-rel.din tbody.fg td.ln.cz .ln-n{display:inline;min-width:0;height:auto;line-height:inherit;background:none;border-radius:0;color:inherit;font-size:inherit;font-weight:700;margin-right:4px;vertical-align:baseline;}
 table.rel.fa-rel.din td.id.center{font-size:11px;}
@@ -925,13 +928,13 @@ table.rel.fa-rel.din tr.feita td.ln:not(.ac-c) small{text-decoration:none;}
 .fa-tbar-ok{font-size:10.5px;font-weight:700;color:var(--verde);}
 table.rel.fa-rel tbody.fg{border-top:2px solid var(--card-brd);}
 table.rel.fa-rel.din tbody.fg td.id{vertical-align:top;border-bottom:0!important;}
-table.rel.fa-rel.din tbody.fg td.ln{border-bottom:1px dashed var(--linha)!important;padding:8px 12px!important;line-height:1.4;}
+table.rel.fa-rel.din tbody.fg td.ln{border-bottom:0!important;padding:8px 12px!important;line-height:1.4;}   /* sem o tracejado entre as linhas do fato (Renan, 14/10/2026: "essa separação confunde") */
 table.rel.fa-rel.din tbody.fg tr:last-child td.ln{border-bottom:0!important;}
 table.rel.fa-rel.din tbody.fg td.ln small{display:block;color:var(--txt3);font-size:10.5px;margin-top:2px;}
 .ln-n{display:inline-block;min-width:16px;height:16px;line-height:16px;text-align:center;border-radius:50%;background:var(--hover);color:var(--txt3);font-size:9.5px;font-weight:800;margin-right:6px;vertical-align:1px;}
 table.rel.fa-rel tbody.fg:hover td{background:var(--hover)!important;}
 table.rel.fa-rel.din tbody tr:hover{background:none!important;}
-table.rel td.fato .fa-ano{font-size:10.5px;}
+table.rel td.fato .fa-ano{font-size:10.5px;border-top:0;padding-top:0;margin-top:10px;}
 @media(max-width:860px){.fa-kpis{grid-template-columns:repeat(2,1fr);}.fa-dois,.fa-rede,.fm-two{grid-template-columns:1fr;}.board .main.res{overflow:visible;}}
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
@@ -941,7 +944,7 @@ table.rel td.fato .fa-ano{font-size:10.5px;}
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610150530"></script>
+<script src="../assets/fca-auto.js?v=202610150630"></script>
 </head>
 <body>
 <div class="app">
@@ -1121,7 +1124,9 @@ function linhaCausas(d,n){ const cs=d.causas.slice(0,n||9); if(!cs.length) retur
 function linhaAcoes(d,n){ const as=d.acoes.slice(0,n||9); if(!as.length) return '<i style="color:var(--txt3)">—</i>';
   return '<ol>'+as.map(a=>`<li>${acaoHTML(a)}</li>`).join('')+'</ol>'; }
 /* fato curto para a tabela (contas resumidas, um ▲/▼ e o % entre parênteses) + YTD */
-const fatoHTML=(f,d)=>`<b>${esc(f.pac)}</b><small>${nl(FA.desvioCurto(f))}</small>${anoHTML(d)}`;
+// o nome do pacote 2 px maior e o desvio total do pacote (1ª linha) em negrito (Renan, 14/10/2026)
+const fatoHTML=(f,d)=>{ const [tot,...ct]=String(FA.desvioCurto(f)).split('\n');
+  return `<b class="fa-pac">${esc(f.pac)}</b><small><span class="fa-tot">${nl(tot)}</span>${ct.length?'<br>'+nl(ct.join('\n')):''}</small>${anoHTML(d)}`; };
 /* DOIS ARRANJOS. "Uma por linha" (padrão) = UMA LINHA POR AÇÃO, e cada ação é um item com
    dono, prazo e status gravados no banco (Renan, 14/10/2026: "Ideia é da dinâmica é separar para
    cada ação ser fechada individualmente. E cada ação com um dono… Traga também as colunas prazo,
@@ -1477,6 +1482,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610150530"></script>
+<script src="../assets/build-check.js?v=202610150630"></script>
 </body>
 </html>
