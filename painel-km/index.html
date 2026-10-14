@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610150900">
+<meta name="build" content="202610151030">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -376,6 +376,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
 <script src="../assets/balanco-massa.js?v=202610131400"></script>
+<script src="../assets/dispersao-km.js?v=202610151030"></script>
 </head>
 <body>
 <div class="app">
@@ -891,6 +892,38 @@ function renderPlacas(){
   </tr>`;
 }
 
+/* SET/26 EM DIANTE VEM DO BANCO (Renan, 14/10/2026: "Consigo importar essa planilha
+   para o banco sempre e o km rodado que já está lá completa?" · "traga só de set/2026 em
+   diante" · "Não mude resultados anteriores"). A planilha "Dispersão de KM - Consolidado"
+   é subida em ./dispersao/ (tabelas dispersao_km e dispersao_placa); o km rodado vem da
+   planilha quando ela tem e, quando não tem, é completado pela aba Km/L, placa a placa
+   (assets/dispersao-km.js). Jan a ago continuam vindo da aba Dispersão de km: o banco
+   só ACRESCENTA os meses de set/26 em diante que a aba não tem. O projeto segue a
+   convenção da aba em ago/26: Van = ROTA (VAN) e Insumos dentro de EMPURRADA. */
+const DISP_PROJ = { 'Rota':'ROTA', 'Auto Serviço':'AUTO SERVIÇO', 'Van':'ROTA (VAN)',
+  'Empurrada - 28 Palets':'EMPURRADA', 'Empurrada - 42 Palets':'EMPURRADA', 'Empurrada - Insumos':'EMPURRADA' };
+async function fetchDispBanco(){
+  const h = { apikey: SUPA_KEY, Authorization: 'Bearer ' + supaAuth() };
+  const todas = async (tab, cols) => { const out = []; const passo = 1000;
+    for (let i = 0; ; i += passo) {
+      const r = await fetch(`${SUPA_URL}/rest/v1/${tab}?select=${cols}&limit=${passo}&offset=${i}`, { headers: h });
+      if (!r.ok) throw new Error(tab + ' HTTP ' + r.status);
+      const rows = await r.json(); out.push(...rows); if (rows.length < passo) break;
+    } return out; };
+  const [linhas, placas, kml] = await Promise.all([
+    todas('dispersao_km', '*'),
+    todas('dispersao_placa', 'vigencia,unidade,projeto,placa,placa_origem,km_rem'),
+    todas('sh_consumo_km_litro', 'vigencia,projeto,placa,km_rodado_horas_trabalhadas')
+  ]);
+  if (!linhas.length) return { linhas: [], placas: [], km: null };
+  const D = window.DispersaoKm;
+  const kmlRows = kml.map(r => { const m = String(r.vigencia || '').match(/^(\d{2})\/(\d{4})$/);
+    return { vigencia: m ? m[2] + '-' + m[1] : '', projeto: r.projeto, placa: r.placa, km: +r.km_rodado_horas_trabalhadas || 0 }; })
+    .filter(r => r.vigencia >= D.INICIO);
+  const km = D.kmRodado(placas, kmlRows);
+  return { linhas: D.monta(linhas, km), placas, km };
+}
+
 async function fetchCustoRem() {
   const url = `https://docs.google.com/spreadsheets/d/${COST_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(COST_TAB)}&t=${Date.now()}`;
   const json = JSON.parse((await (await fetch(url)).text()).match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
@@ -921,12 +954,13 @@ async function fetchCustoRem() {
 
 async function fetchData() {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}&t=${Date.now()}`;
-  const [text, custoFrota, balanco, abertura, balancoBanco] = await Promise.all([
+  const [text, custoFrota, balanco, abertura, balancoBanco, dispBanco] = await Promise.all([
     fetch(url).then(r => r.text()),
     fetchCustoRem().catch(e => { console.warn('Custo (aba Frota) indisponível:', e); return { tot: {}, cta: {} }; }),
     fetchBalanco().catch(e => { console.warn('Balanço de Massa (aba, até jul/26) indisponível:', e); return {}; }),
     fetchAbertura().catch(e => { console.warn('Abertura (placas) indisponível:', e); return []; }),
-    fetchBalancoBanco().catch(e => { console.warn('Balanço de Massa (banco, ago/26+) indisponível:', e); return {}; })
+    fetchBalancoBanco().catch(e => { console.warn('Balanço de Massa (banco, ago/26+) indisponível:', e); return {}; }),
+    (window.DispersaoKm ? fetchDispBanco() : Promise.resolve({ linhas: [] })).catch(e => { console.warn('Dispersão de km (banco, set/26+) indisponível:', e); return { linhas: [] }; })
   ]);
   const custoRem = custoFrota.tot;
   PLACAS = abertura;
@@ -935,12 +969,31 @@ async function fetchData() {
     .map(parseRow)
     .filter(r => r.vig && (r.rem > 0 || r.real > 0));
 
+  // set/26 em diante, do banco: só os meses que a aba NÃO tem (nada de jan a ago muda)
+  const vigAba = new Set(ALL.map(r => r.vig)), dispVigs = new Set(), dispSem = [];
+  const vigBR = v => { const [a, m] = String(v).split('-'); return m + '/' + a; };
+  (dispBanco.linhas || []).forEach(l => {
+    const vig = vigBR(l.vigencia); if (vigAba.has(vig)) return;
+    if (l.km_rodado == null) { dispSem.push(l.unidade + ' ' + l.projeto + ' ' + vig); return; }
+    dispVigs.add(vig);
+    ALL.push({ vig, ano: vig.split('/')[1], und: l.unidade, proj: DISP_PROJ[l.projeto] || _nkBM(l.projeto),
+      rem: +l.km_rem || 0, real: +l.km_rodado || 0, viagens: +l.viagens_prim || 0,
+      kmFrota: +l.frota_ativa ? (+l.km_rodado || 0) / +l.frota_ativa : 0, imp: 0, fonteKm: l.fonte });
+  });
+  if (dispVigs.size) console.info('Dispersão de km do banco (set/26+):', [...dispVigs].join(', '));
+  if (dispSem.length) console.warn('Dispersão de km do banco sem km rodado (nem na planilha, nem na aba Km/L) — fora do painel:', dispSem);
+
   // IMPACTO = Δ km × R$/km remunerado da chave. O km remunerado da chave é a
   // soma das linhas do painel, o mesmo denominador que o /rs-por-km/ usa.
   // (km ORIGINAL, antes do balanço de massa — a taxa não muda com a recomposição)
   const kmPorChave = {};
   const kmRealPorChave = {};
-  ALL.forEach(r => { const k = chaveRs(r.vig, r.und, r.proj); kmPorChave[k] = (kmPorChave[k]||0) + r.rem; kmRealPorChave[k] = (kmRealPorChave[k]||0) + r.real; });
+  // o balanço de massa enxerga SÓ os meses da aba (bmKm0/bmKmReal): as linhas de set/26+ que
+  // vêm do banco não entram, senão o balanço de setembro passaria a contar e o rateio anual
+  // redistribuiria jan a ago (Renan, 14/10/2026: "Não mude resultados anteriores").
+  const bmKm0 = {}, bmKmReal = {};
+  ALL.forEach(r => { const k = chaveRs(r.vig, r.und, r.proj); kmPorChave[k] = (kmPorChave[k]||0) + r.rem; kmRealPorChave[k] = (kmRealPorChave[k]||0) + r.real;
+    if (!r.fonteKm) { bmKm0[k] = (bmKm0[k]||0) + r.rem; bmKmReal[k] = (bmKmReal[k]||0) + r.real; } });
 
   // BALANÇO DE MASSA → km remunerado recomposto, rateado pelas linhas da chave
   // (taxa = R$/km remunerado da chave, todas as contas — o mesmo do impacto)
@@ -948,7 +1001,7 @@ async function fetchData() {
   ALL.forEach(r => { r.rem0 = r.rem; r.recomp = 0; r.bmValor = 0; });
   // rateia o km e o valor de uma chave pelas linhas dela, na proporção do km remunerado original
   const aplicaBM = (porChave) => Object.entries(porChave).forEach(([k, e]) => {
-    const km0 = kmPorChave[k] || 0; if (!(km0 > 0) || !e.km) return;
+    const km0 = bmKm0[k] || 0; if (!(km0 > 0) || !e.km) return;
     ALL.forEach(r => { if (chaveRs(r.vig, r.und, r.proj) !== k) return;
       const parte = r.rem0 / km0; r.recomp += e.km * parte; r.bmValor += e.valor * parte; r.bmTaxa = e.taxa; r.bmContas = e.contas; r.rem = r.rem0 + r.recomp; });
     bmKm += e.km; bmValor += e.valor; nCh++;
@@ -965,19 +1018,19 @@ async function fetchData() {
     Object.entries(balanco).forEach(([k, v]) => { if (vigToDate(k.slice(0, 7)) < vigToDate(bmIni)) balAnt[k] = { TOTAL: v }; });
     Object.entries(custoRem).forEach(([k, v]) => { if (vigToDate(k.slice(0, 7)) < vigToDate(bmIni)) remAnt[k] = { TOTAL: v }; });
     // só entra o balanço de mês que já tem km REALIZADO na Dispersão (Renan, 13/10/2026)
-    const antC = BalancoMassa.comRealizado(balAnt, kmRealPorChave), novC = BalancoMassa.comRealizado(balancoBanco, kmRealPorChave);
+    const antC = BalancoMassa.comRealizado(balAnt, bmKmReal), novC = BalancoMassa.comRealizado(balancoBanco, bmKmReal);
     const adiados = [...antC.adiados, ...novC.adiados];
     if (adiados.length) console.info('Balanço de massa aguardando o realizado do mês na Dispersão:', adiados);
-    const antiga = BalancoMassa.recompoe({ bal: antC.bal, remCta: remAnt, km0: kmPorChave, inicio: BM_ANTIGA_INICIO, fim: bmIni, janela: BM_ANTIGA_JANELA, liquido: false });
+    const antiga = BalancoMassa.recompoe({ bal: antC.bal, remCta: remAnt, km0: bmKm0, inicio: BM_ANTIGA_INICIO, fim: bmIni, janela: BM_ANTIGA_JANELA, liquido: false });
     if (antiga.avisos.length) console.warn('Balanço de massa (regra antiga, rateada):', antiga.avisos);
     // DE AGO/26 EM DIANTE: por conta (banco), convertido em km pelo R$/km das contas com balanço
-    const nova = BalancoMassa.recompoe({ bal: novC.bal, remCta: custoFrota.cta, km0: kmPorChave, inicio: bmIni });
+    const nova = BalancoMassa.recompoe({ bal: novC.bal, remCta: custoFrota.cta, km0: bmKm0, inicio: bmIni });
     if (nova.avisos.length) console.warn('Balanço de massa (conta a conta):', nova.avisos);
     // RATEIO ANUAL (Renan, 13/10/2026: "dividir ano" → "a 1 talvez, vamos testar"): cada regra
     // converte o seu valor em km e o km do ANO de cada unidade|projeto é repartido entre os meses
     // pela DIFERENÇA do mês (km real − km remunerado original): mês com mais km rodado sem
     // cobrança recebe mais balanço. O total do ano não muda, só o mês em que ele aparece.
-    const anual = BalancoMassa.porAno([antiga.porChave, nova.porChave], kmPorChave, kmRealPorChave);
+    const anual = BalancoMassa.porAno([antiga.porChave, nova.porChave], bmKm0, bmKmReal);
     aplicaBM(anual.porChave);
     if (anual.avisos.length) console.warn('Balanço de massa (rateio anual):', anual.avisos);
   } else console.warn('assets/balanco-massa.js não carregou — o balanço de massa não foi recomposto');
@@ -991,6 +1044,22 @@ async function fetchData() {
     r.rsKm = taxa;
     r.imp  = (r.real - r.rem) * taxa;
   });
+  if (dispVigs.size && dispBanco.km) {
+    const taxaDe = {}; ALL.forEach(r => { taxaDe[chaveRs(r.vig, r.und, r.proj)] = r.rsKm; });
+    const remP = {}, origP = {};
+    (dispBanco.placas || []).forEach(p => { const k = p.vigencia + '|' + p.placa + '|' + p.unidade + '|' + p.projeto;
+      remP[k] = (remP[k] || 0) + (+p.km_rem || 0); if (!origP[p.placa]) origP[p.placa] = p.placa_origem || p.placa; });
+    const unisVig = {}; (dispBanco.linhas || []).forEach(l => (unisVig[l.vigencia] = unisVig[l.vigencia] || new Set()).add(l.unidade));
+    PLACAS = PLACAS.filter(p => !dispVigs.has(p.vig));
+    dispBanco.km.det.forEach(d => {
+      const vig = vigBR(d.vigencia); if (!dispVigs.has(vig) || !(unisVig[d.vigencia] || new Set()).has(d.unidade)) return;
+      const proj = DISP_PROJ[d.projeto] || _nkBM(d.projeto);
+      const rem = remP[d.vigencia + '|' + d.placa + '|' + d.unidade + '|' + d.projeto] || 0, real = d.km;
+      const rsKm = taxaDe[chaveRs(vig, d.unidade, proj)] || 0;
+      PLACAS.push({ vig, ano: vig.split('/')[1], und: d.unidade, undOrig: d.unidade, proj, placa: origP[d.placa] || d.placa_origem,
+        rem, real, delta: real - rem, rsKm, imp: (real - rem) * rsKm });
+    });
+  }
   if (semTaxa) console.warn(`Impacto: ${semTaxa} linha(s) sem R$/km (vigência sem custo fechado no DRE, ou projeto sem custo próprio) — impacto zerado nelas.`);
   try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(),rows:ALL,placas:PLACAS})); }catch(e){}
   const savedVig = getSel('ms-vig');
@@ -1702,7 +1771,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_km_v9';  // v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
+const CACHE_KEY='bi_cache_km_v10';  // v10: set/26 em diante do banco (Dispersão de km importada) · v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
@@ -1850,6 +1919,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610150900"></script>
+<script src="../assets/build-check.js?v=202610151030"></script>
 </body>
 </html>

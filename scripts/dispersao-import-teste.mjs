@@ -207,6 +207,75 @@ console.log('2) sem ser admin');
   await ctx.close();
 }
 
+/* ── 4) Painel KM: jan a ago iguais ao de antes, set/26 entra do banco ── */
+console.log('4) Painel KM · antigo × novo com os mesmos dados');
+{
+  const { execSync } = await import('node:child_process');
+  const ANTIGO = execSync(`git -C ${RAIZ} show ${process.env.ANTIGO || 'bd38bb7'}:painel-km/index.html`, { maxBuffer: 1 << 26 }).toString();
+  // aba Dispersão de km (gviz): jan e ago, as colunas que o parseRow lê
+  const linhaAba = (y, m, pc, kmFrota, viagens, rem, real) => { const c = Array.from({ length: 33 }, () => null);
+    c[0] = { v: `Date(${y},${m - 1},1)` }; c[5] = { v: kmFrota }; c[14] = { v: pc }; c[22] = { v: viagens }; c[31] = { v: rem }; c[32] = { v: real }; return { c }; };
+  const ABA = { status: 'ok', table: { cols: Array.from({ length: 33 }, (_, i) => ({ id: 'c' + i, label: '' })), rows: [
+    linhaAba(2026, 1, 'ROTA - PLT', 2000, 300, 50000, 52000), linhaAba(2026, 1, 'EMPURRADA - PIR', 6000, 1400, 300000, 360000), linhaAba(2026, 8, 'ROTA - PLT', 1900, 280, 48000, 51000),
+    linhaAba(2026, 8, 'ROTA (VAN) - GRL', 800, 40, 8000, 9000), linhaAba(2026, 8, 'EMPURRADA - PIR', 7000, 1500, 330000, 430000)] } };
+  const VAZIO = { status: 'ok', table: { cols: [], rows: [] } };
+  // aba Frota do DRE (o R$/km das chaves e o remunerado por conta do balanço de massa)
+  const fr = (m, n3, conta, rem) => ({ c: [{ v: `Date(2026,${m - 1},1)` }, { v: n3 }, { v: conta }, { v: rem }] });
+  const FROTA = { status: 'ok', table: { cols: [{ label: 'Vigência' }, { label: 'NÍVEL 3' }, { label: 'CONTA GERENCIAL' }, { label: 'REMUNERADO' }], rows: [
+    fr(1, 'EMPURRADA - PIR', 'Combustíveis', -900000), fr(8, 'EMPURRADA - PIR', 'Combustíveis', -1000000), fr(9, 'EMPURRADA - PIR', 'Combustíveis', -950000),
+    fr(8, 'ROTA - PLT', 'Combustíveis', -90000), fr(9, 'ROTA - PLT', 'Combustíveis', -80000)] } };
+  const BANCO = {
+    dispersao_km: [{ vigencia: '2026-09', unidade: 'PLT', projeto: 'Rota', km_rem: 4000, km_real: null, frota_ativa: 2, viagens_prim: 50, fator_rskm: 2 },
+                   { vigencia: '2026-09', unidade: 'GRL', projeto: 'Van', km_rem: 1300, km_real: null, frota_ativa: 3, viagens_prim: 20, fator_rskm: 2 },
+                   { vigencia: '2026-09', unidade: 'PIR', projeto: 'Empurrada - 28 Palets', km_rem: 9000, km_real: 9500, frota_ativa: 5, viagens_prim: 90, fator_rskm: 3 },
+                   { vigencia: '2026-08', unidade: 'PLT', projeto: 'Rota', km_rem: 1, km_real: 1, frota_ativa: 1, viagens_prim: 1 }],   // ago no banco NÃO entra (a aba tem ago)
+    dispersao_placa: [{ vigencia: '2026-09', unidade: 'PLT', projeto: 'Rota', placa: 'CUC9F14', placa_origem: 'CUC9514', km_rem: 4000 },
+                      { vigencia: '2026-09', unidade: 'GRL', projeto: 'Van', placa: 'GRL4D44', placa_origem: 'GRL4D44', km_rem: 1300 }],
+    sh_consumo_km_litro: [{ vigencia: '09/2026', projeto: 'ROTA - PLT', placa: 'CUC9F14', km_rodado_horas_trabalhadas: 4300 },
+                          { vigencia: '09/2026', projeto: 'VAN - GRL', placa: 'GRL4D44', km_rodado_horas_trabalhadas: 1400 }],
+    // balanço de massa por conta (banco): ago e set. O de set NÃO pode mexer em jan a ago.
+    balanco_massa: [{ unidade: 'PIR', projeto: 'EMPURRADA', vigencia: '2026-08', conta: 'Combustíveis', valor: 200000 },
+                    { unidade: 'PIR', projeto: 'EMPURRADA', vigencia: '2026-09', conta: 'Combustíveis', valor: 300000 }],
+  };
+  const roda = async (html) => {
+    const ctx = await nav.newContext({ viewport: { width: 1600, height: 900 } });
+    await ctx.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+    await ctx.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
+    await ctx.route('**/assets/gviz-cache.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
+    await ctx.route('**/cdn.jsdelivr.net/**', r => { const u = r.request().url();
+      r.fulfill({ status: 200, contentType: 'application/javascript', body: u.includes('chart.js') ? 'window.Chart=class{static register(){}constructor(){}destroy(){}update(){}};' : u.includes('datalabels') ? 'window.ChartDataLabels={};' : u.includes('html2canvas') ? 'window.html2canvas=async()=>document.createElement("canvas");' : u.includes('jspdf') ? 'window.jspdf={jsPDF:function(){}};' : '' }); });
+    await ctx.route('**/docs.google.com/**', r => { const u = decodeURIComponent(r.request().url()); const corpo = /sheet=Dispersão de km/.test(u) ? ABA : /sheet=Frota/.test(u) ? FROTA : VAZIO;
+      r.fulfill({ status: 200, contentType: 'application/javascript', body: `google.visualization.Query.setResponse(${JSON.stringify(corpo)})` }); });
+    await ctx.route('**/*.supabase.co/rest/v1/**', r => { const u = r.request().url(); const t = (u.match(/rest\/v1\/([a-z_]+)/) || [])[1];
+      const off = +((u.match(/offset=(\d+)/) || [])[1] || 0);
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(off ? [] : (BANCO[t] || [])) }); });
+    await ctx.route('**/painel-km/__antigo.html', r => r.fulfill({ status: 200, contentType: 'text/html', body: ANTIGO }));
+    const pg = await ctx.newPage(); const errs = []; pg.on('pageerror', e => errs.push(e.message));
+    await pg.addInitScript(() => { try { sessionStorage.setItem('gem_hub', '1'); localStorage.clear(); } catch (e) {} });
+    await pg.goto(BASE + html, { waitUntil: 'domcontentloaded' });
+    await pg.waitForFunction(() => { try { return ALL.length > 0; } catch (e) { return false; } }, { timeout: 20000 }).catch(() => {});
+    await pg.waitForTimeout(800);
+    const out = await pg.evaluate(() => ({ all: ALL.map(r => ({ vig: r.vig, und: r.und, proj: r.proj, rem: r.rem, real: r.real, viagens: r.viagens, kmFrota: r.kmFrota, rsKm: r.rsKm, imp: r.imp })),
+      placas: PLACAS.map(p => ({ vig: p.vig, und: p.und, proj: p.proj, placa: p.placa, rem: p.rem, real: p.real })) }));
+    await ctx.close(); return { ...out, errs };
+  };
+  const A = await roda('/painel-km/__antigo.html'), N = await roda('/painel-km/index.html');
+  const ate = rs => JSON.stringify(rs.filter(r => r.vig !== '09/2026'));
+  af('o balanço de massa entrou nos dois (PIR com km recomposto)', A.all.some(r => r.und === 'PIR' && r.vig !== '09/2026' && r.rem > (r.vig === '01/2026' ? 300000 : 330000)), JSON.stringify(A.all.filter(r => r.und === 'PIR').map(r => [r.vig, Math.round(r.rem)])));
+  af('jan a ago idênticos ao painel de antes (linha a linha)', A.all.length > 0 && ate(A.all) === ate(N.all), A.all.length + ' × ' + N.all.length);
+  af('o painel de antes não tinha set/26', !A.all.some(r => r.vig === '09/2026'));
+  const s9 = N.all.filter(r => r.vig === '09/2026');
+  af('set/26 entra do banco: 3 linhas', s9.length === 3, JSON.stringify(s9));
+  const plt = s9.find(r => r.und === 'PLT'), grl = s9.find(r => r.und === 'GRL'), pir = s9.find(r => r.und === 'PIR');
+  af('PLT ROTA: km rodado completado pela Km/L (CUC9F14 = 4.300)', plt && plt.proj === 'ROTA' && plt.real === 4300 && plt.rem === 4000, JSON.stringify(plt));
+  af('GRL Van vira ROTA (VAN), como a aba usa', grl && grl.proj === 'ROTA (VAN)' && grl.real === 1400, JSON.stringify(grl));
+  af('PIR Empurrada com km rodado da planilha (9.500) em EMPURRADA', pir && pir.proj === 'EMPURRADA' && pir.real === 9500, JSON.stringify(pir));
+  af('agosto do banco não entra (a aba já tem agosto)', N.all.filter(r => r.vig === '08/2026' && r.und === 'PLT').length === 1 && N.all.find(r => r.vig === '08/2026' && r.und === 'PLT').rem === 48000);
+  const pl = N.placas.find(p => p.vig === '09/2026' && p.und === 'PLT');
+  af('visão Placas de set/26 mostra CUC9514 (como está na planilha) com 4.300 km', pl && pl.placa === 'CUC9514' && pl.real === 4300 && pl.rem === 4000, JSON.stringify(pl));
+  af('sem erro de página nos dois', !A.errs.length && !N.errs.length, [...A.errs, ...N.errs].join(' | '));
+}
+
 if (process.env.DISP_XLSX && process.env.KML_LOG) {
   console.log('3) planilha real + aba Km/L real');
   createRequire(import.meta.url)(path.join(RAIZ, 'assets/dispersao-km.js'));
