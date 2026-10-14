@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610151000">
+<meta name="build" content="202610151100">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -905,21 +905,12 @@ table.rel.fa-rel.din td.id.center{font-size:11px;}
 table.rel.fa-rel.din .pctx{min-width:0;padding:2px 5px;}
 table.rel.fa-rel.din thead th{letter-spacing:.3px!important;padding-left:6px!important;padding-right:6px!important;}
 table.rel.fa-rel.din td.id{padding-left:6px!important;padding-right:6px!important;}
-.ac-in[type=date]::-webkit-calendar-picker-indicator{display:none;}
-.ac-st{-webkit-appearance:none;appearance:none;text-align:center;text-align-last:center;padding:5px 2px!important;}
 table.rel.fa-rel.din tbody.fg td.ln.ac-c{padding:7px 4px!important;vertical-align:top;}
-.ac-in,.ac-st{width:100%;box-sizing:border-box;font:inherit;font-size:10px;font-weight:600;color:var(--txt);background:var(--side);border:1px solid var(--card-brd);border-radius:6px;padding:5px 6px;}
-.ac-in:focus,.ac-st:focus{outline:none;border-color:var(--laranja);box-shadow:0 0 0 2px rgba(249,115,22,.18);}
-.ac-in::placeholder{color:var(--txt3);font-weight:500;}
-.ac-in.venc{border-color:var(--vermelho);color:var(--vermelho);}
-.ac-in[type=date]{padding:5px 2px;font-size:9.5px;letter-spacing:-.2px;color-scheme:dark;cursor:pointer;}body.claro .ac-in[type=date]{color-scheme:light;}
-.ac-st{cursor:pointer;font-weight:700;}
-.ac-st[data-v="Não iniciada"]{background:#FF6666;color:#0C1017;border-color:#FF6666;}
-.ac-st[data-v="Em andamento"]{background:#F4A100;color:#0C1017;border-color:#F4A100;}
-.ac-st[data-v="Concluída"]{background:#3BB33B;color:#fff;border-color:#3BB33B;}
-.ac-st[data-v="Cancelada"]{background:#333333;color:#fff;border-color:#333333;}
-.ac-in:disabled,.ac-st:disabled{opacity:.45;cursor:not-allowed;}
 table.rel.fa-rel.din tr.feita td.ln:not(.ac-c):not(.cz){opacity:.5;}
+.fa-of{list-style:none;margin:5px 0 0;padding:0;font-size:10px;font-weight:500;color:var(--txt2);line-height:1.45;}
+.fa-of li{padding-left:10px;position:relative;white-space:normal;}
+.fa-of li::before{content:'';position:absolute;left:2px;top:.62em;width:4px;height:4px;border-radius:50%;background:var(--laranja);}
+.fa-obs{margin-top:6px;}
 table.rel.fa-rel.din tbody.fg td.ln.fim{border-bottom:0!important;}
 table.rel.fa-rel.din tr.feita td.ln:not(.ac-c) small{text-decoration:none;}
 .ac-sem{font-size:10.5px;color:var(--txt3);font-style:italic;}
@@ -951,7 +942,7 @@ body.claro table.rel.fa-rel.din tbody.fg tr+tr td.ln{border-top-color:rgba(15,23
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610151000"></script>
+<script src="../assets/fca-auto.js?v=202610151100"></script>
 </head>
 <body>
 <div class="app">
@@ -1093,7 +1084,7 @@ function resumoHTML(vis){
   const linhasC=Object.entries(porCausa).sort((a,b)=>b[1]-a[1]);
   const maxC=Math.max(1,...linhasC.map(x=>x[1]),naoExp,-econ);
   const temas={}; vis.forEach(f=>{const d=diag(f); new Set(d.causas.map(c=>c.tema).concat(d.acoes.map(a=>a.tema))).forEach(t=>{ if(t) temas[t]=(temas[t]||0)+1; }); });
-  const ofens=[]; vis.forEach(f=>{const d=diag(f); d.acoes.forEach(a=>a.ofens.forEach(o=>ofens.push(o)));});
+  const ofens=[]; vis.forEach(f=>{const d=diag(f); d.causas.forEach(c=>(c.ofens||[]).forEach(o=>ofens.push(o)));});
   const nAcoes=vis.reduce((s,f)=>s+diag(f).acoes.length,0);
   const porUni={}; vis.forEach(f=>{const u=porUni[f.uni]||(porUni[f.uni]={uni:f.uni,rs:0,n:0,pacs:new Set()}); u.rs+=f.over; u.n++; u.pacs.add(f.pac);});
   const unis=Object.values(porUni).sort((a,b)=>b.rs-a.rs);
@@ -1104,7 +1095,7 @@ function resumoHTML(vis){
     <div class="kpis fa-kpis" style="grid-template-columns:repeat(${porPac.length+2},minmax(0,1fr))">
       ${porPac.map(x=>`<div class="kpi"><span class="kl">${x.p}</span><b>${FA.rs(x.rs)}</b><i>${x.n} fato(s) · ${tot?Math.round(x.rs/tot*100):0}% do desvio</i></div>`).join('')}
       <div class="kpi"><span class="kl">Combustíveis · explicado em R$</span><b>${FA.rs(expl)}</b><i>líquido: Dispersão de km, Eficiência Km/L, Preço R$/L e Arla</i></div>
-      <div class="kpi"><span class="kl">Placas e itens citados nas ações</span><b>${FA.br(ofens.length,0)}</b><i>ofensores com nome, para agir</i></div>
+      <div class="kpi"><span class="kl">Placas e itens citados nas causas</span><b>${FA.br(ofens.length,0)}</b><i>ofensores com nome, para agir</i></div>
     </div>
     <div class="fa-dois">
       <div class="bloco"><div class="bhead"><h3>Para onde vai o desvio de Combustíveis</h3></div><div class="corpo"><div class="barras">
@@ -1124,8 +1115,15 @@ function resumoHTML(vis){
 /* ACUMULADO DO ANO embaixo das causas, em todo pacote (Renan, 14/10/2026) */
 /* O ANO VIROU "YTD" E MORA NO FATO (Renan, 14/10/2026: "jogue o ano para o Fato e chama de YTD") */
 const anoHTML=d=>d.ano?`<div class="fa-ano"><span class="kl">YTD</span>${tri(esc(d.ano.txt))}</div>`:'';
-const causaHTML=c=>nl(c.txt);   // sem o % do desvio: lido junto do preço, confundia (Renan, 14/10/2026)
-const acaoHTML=a=>`${esc(a.txt)}${a.ofens.length?`<small>${esc(a.ofens.slice(0,3).join(' · '))}${a.ofens.length>3?' …':''}</small>`:''}`;
+/* AS PLACAS OFENSORAS FICAM EMBAIXO DA CAUSA, UMA POR LINHA (Renan, 14/10/2026: "Muito embolado… as placas
+   ofensoras, em qualquer ação, ficam abaixo da sua respectiva causa"), antes da observação; a ação fica só
+   com o que fazer. Sem o % do desvio na causa: lido junto do preço, confundia. */
+const ofensHTML=c=>c.ofens&&c.ofens.length?`<ul class="fa-of">${c.ofens.map(o=>`<li>${esc(o)}</li>`).join('')}</ul>`:'';
+function causaHTML(c){ const i=c.txt.indexOf('\n\nObs.:'); const cab=i<0?c.txt:c.txt.slice(0,i), obs=i<0?'':c.txt.slice(i);
+  return nl(cab)+ofensHTML(c)+(obs?'<div class="fa-obs">'+nl(obs.replace(/^\n+/,''))+'</div>':''); }
+const causaTexto=c=>{ const i=c.txt.indexOf('\n\nObs.:'), of=(c.ofens||[]).map(o=>'- '+o).join('\n');
+  return i<0?c.txt+(of?'\n'+of:''):c.txt.slice(0,i)+(of?'\n'+of:'')+c.txt.slice(i); };
+const acaoHTML=a=>esc(a.txt);
 function linhaCausas(d,n){ const cs=d.causas.slice(0,n||9); if(!cs.length) return '<i style="color:var(--txt3)">Sem evidência nas bases para este mês</i>';
   return '<ol>'+cs.map(c=>`<li>${causaHTML(c)}</li>`).join('')+'</ol>'; }
 function linhaAcoes(d,n){ const as=d.acoes.slice(0,n||9); if(!as.length) return '<i style="color:var(--txt3)">—</i>';
@@ -1172,12 +1170,25 @@ function linhasDoFato(d){
 const acKey=(fid,k)=>fid+'||'+k;
 function camposAcao(f,l){
   if(!l.a) return '<td class="ln ac-vazio"></td><td class="ln ac-vazio"></td><td class="ln ac-vazio"></td>';
-  const r=ACOES[acKey(f.id,l.k)]||{}, st=r.status||'Não iniciada', dis=ACOES_OK?'':' disabled title="Rode o SQL fca_auto_acao para gravar"';
-  const at=`data-fid="${esc(f.id)}" data-k="${esc(l.k)}"`;
-  const venc=r.prazo&&st!=='Concluída'&&st!=='Cancelada'&&r.prazo<new Date().toISOString().slice(0,10);
-  return `<td class="ln ac-c"><input class="ac-in" list="dl-resp" ${at} data-c="responsavel" value="${esc(r.responsavel||'')}" placeholder="Dono"${dis}></td>
-    <td class="ln ac-c"><input class="ac-in${venc?' venc':''}" type="date" ${at} data-c="prazo" value="${esc(r.prazo||'')}"${dis}></td>
-    <td class="ln ac-c"><select class="ac-st" ${at} data-c="status" data-v="${esc(st)}"${dis}>${ST_AC.map(o=>`<option${o===st?' selected':''}>${o}</option>`).join('')}</select></td>`;
+  const at=`data-fid="${esc(f.id)}" data-k="${esc(l.k)}"`, cel=celulasAcao(ACOES[acKey(f.id,l.k)]||{});
+  return `<td class="ln ac-c center" ${at} data-c="responsavel">${cel.responsavel}</td>
+    <td class="ln ac-c center prazo" ${at} data-c="prazo">${cel.prazo}</td>
+    <td class="ln ac-c center" ${at} data-c="status">${cel.status}</td>`;
+}
+/* SÓ LEITURA, COMO NA TABELA DO FCA (Renan, 14/10/2026: "No FCA original, na visão tabela, não se edita
+   nada ali. apenas clicando na ação"): responsável em texto, prazo com o farol e status em chip.
+   Edita-se na caixa da ação, que abre no clique da linha. */
+function celulasAcao(r){
+  const st=r.status||'Não iniciada', aberto=st!=='Concluída'&&st!=='Cancelada';
+  const venc=!!r.prazo&&aberto&&r.prazo<new Date().toISOString().slice(0,10);
+  const pz=r.prazo?`<span class="dot" style="background:${venc?'var(--vermelho)':'var(--verde)'}"></span><span${venc?' style="color:var(--vermelho);font-weight:700"':''}>${esc(String(r.prazo).slice(0,10).split('-').reverse().join('/'))}</span>`:'<span style="color:var(--txt3)">—</span>';
+  return {responsavel:r.responsavel?esc(r.responsavel):'<span style="color:var(--txt3)">—</span>',prazo:pz,status:chipStatusAc(st)};
+}
+function chipStatusAc(st){
+  if(/conclu/i.test(st)) return `<span class="chip" style="background:rgba(59,179,59,.85);color:#06210a">${esc(st)}</span>`;
+  if(/andamento/i.test(st)) return `<span class="chip" style="background:rgba(244,161,0,.9);color:#241900">${esc(st)}</span>`;
+  if(/cancel/i.test(st)) return `<span class="chip" style="background:rgba(120,120,120,.5);color:#fff">${esc(st)}</span>`;
+  return `<span class="chip" style="background:rgba(227,52,52,.85);color:#2a0606">${esc(st)}</span>`;
 }
 function tabelaHTML(vis){
   const linha=TAB_MODO==='linha';
@@ -1210,23 +1221,20 @@ function tabelaHTML(vis){
   if(!vis.length) h+=`<tbody><tr><td colspan="${linha?9:6}" class="center">Nenhum fato no recorte.</td></tr></tbody>`;
   return h+'</table></div></div>';
 }
-/* grava o campo da ação (upsert por fato × ação) com a causa e a ação como estavam */
-function salvaAcao(el){ return salvaCampo(el.dataset.fid,el.dataset.k,el.dataset.c,el.value); }
-/* reflete o campo gravado na linha da Tabela (quando ele foi mudado na caixa da ação) */
+/* reflete na linha da Tabela o que foi gravado na caixa da ação (as três células, porque o status muda o farol do prazo) */
 function pintaCampo(fid,k,c,row){
-  const el=[...document.querySelectorAll('[data-fid][data-k][data-c]')].find(x=>x.dataset.fid===fid&&x.dataset.k===k&&x.dataset.c===c); if(!el) return;
-  el.value=row[c]||(c==='status'?'Não iniciada':'');
-  const st=row.status||'Não iniciada';
-  if(c==='status'){ el.dataset.v=st; const tr=el.closest('tr'); if(tr) tr.classList.toggle('feita',st==='Concluída'||st==='Cancelada'); }
-  const pz=[...document.querySelectorAll('[data-fid][data-k][data-c="prazo"]')].find(x=>x.dataset.fid===fid&&x.dataset.k===k);
-  if(pz) pz.classList.toggle('venc',!!row.prazo&&st!=='Concluída'&&st!=='Cancelada'&&row.prazo<new Date().toISOString().slice(0,10));
+  const cel=celulasAcao(row);
+  document.querySelectorAll('td[data-fid][data-k][data-c]').forEach(td=>{
+    if(td.dataset.fid!==fid||td.dataset.k!==k) return;
+    td.innerHTML=cel[td.dataset.c]||'';
+    const st=row.status||'Não iniciada', tr=td.closest('tr'); if(tr) tr.classList.toggle('feita',st==='Concluída'||st==='Cancelada'); });
 }
 async function salvaCampo(fid,k,c,valor){
   const f=FATOS.find(x=>x.id===fid); if(!f) return;
   const l=linhasDoFato(diag(f)).find(x=>x.k===k); if(!l||!l.a) return;
   const cur=ACOES[acKey(fid,k)]||{};
   const row={fato_id:fid,chave:k,unidade:f.uni,vigencia:f.vig,pacote:f.pac,projeto:f.proj,tema:l.a.tema||null,
-    causa:l.c?l.c.txt:null,acao:l.a.txt+(l.a.ofens.length?': '+l.a.ofens.join(' · '):''),
+    causa:l.c?causaTexto(l.c):null,acao:l.a.txt,
     responsavel:cur.responsavel||null,prazo:cur.prazo||null,status:cur.status||'Não iniciada',updated_nome:EU_NOME||null};
   row[c]=String(valor||'').trim()||null; if(c==='status'&&!row.status) row.status='Não iniciada';
   const msg=document.getElementById('acSalvo');
@@ -1255,7 +1263,7 @@ function kcardHTML(f){ const d=diag(f); const c1=d.causas[0], a1=d.acoes[0];
     <div class="kcard-fato">${esc(f.pac)} · ${FA.rs(f.over)} <span style="color:var(--txt3);font-weight:600">(▲ ${Math.round(f.dpct)}%)</span></div>
     <div class="kcard-causa"><span class="kl">Causa:</span> ${c1?tri(esc(c1.txt)):'<i>sem evidência nas bases</i>'}</div>
     ${d.ano?`<div class="kcard-causa"><span class="kl">YTD:</span> ${tri(esc(d.ano.txt))}</div>`:''}
-    <div class="kcard-ac"><span class="kl">Ação:</span> ${a1?esc(a1.txt)+(a1.ofens.length?' ('+esc(a1.ofens.slice(0,2).join(' · '))+')':''):'<i>—</i>'}</div>
+    <div class="kcard-ac"><span class="kl">Ação:</span> ${a1?esc(a1.txt):'<i>—</i>'}</div>
     <div class="kcard-meta"><span>${d.causas.length} causa(s) · ${d.acoes.length} ação(ões)${(()=>{ const fe=linhasDoFato(d).filter(l=>l.a&&/Conclu|Cancel/.test((ACOES[acKey(f.id,l.k)]||{}).status||'')).length; return fe?` · <b style="color:var(--verde)">${fe} fechada(s)</b>`:''; })()}</span> ${d.explicado!=null?pctBadge(d.explicado):''}</div></div>`; }
 function kanbanHTML(vis){
   const cols=pacsDe(vis).map(k=>({c:{k,cls:KCLS[k]||'out'},items:vis.filter(f=>f.pac===k)}));
@@ -1322,8 +1330,8 @@ function abreModal(id){
   document.getElementById('fm-sub').textContent=`Custos · ${f.uni} · ${f.proj} · ${f.vigLbl}${d.explicado!=null?' · explica '+Math.round(d.explicado*100)+'% do desvio em R$':''}`;
   const b=d.blocos, P=[];
   P.push(`<div class="fm-sec"><h4>Fato</h4><div class="fm-box">${nl(FA.desvioTxt(f))}${anoHTML(d)}</div></div>`);
-  P.push(`<div class="fm-sec"><h4>Causa automática</h4><div class="fm-box">${d.causas.length?'<ol>'+d.causas.map(c=>`<li><span class="tema">${esc(c.tema)}</span>${nl(c.txt)}${c.part?` <b>(${Math.round(c.part*100)}% do desvio)</b>`:''}</li>`).join('')+'</ol>':'<i>Sem evidência nas bases para este mês.</i>'}</div></div>`);
-  P.push(`<div class="fm-sec"><h4>Ação automática</h4><div class="fm-box">${d.acoes.length?'<ol>'+d.acoes.map(a=>`<li class="ac-abre" data-fid="${esc(f.id)}" data-k="${esc(chavesDe(d).get(a)||'')}" title="Abrir a ação"><span class="tema">${esc(a.tema)}</span>${esc(a.txt)}${a.ofens.length?`<span class="of">${esc(a.ofens.join(' · '))}</span>`:''}${a.taxa?`<span class="tx">${esc(a.taxa.txt)}</span>`:''}</li>`).join('')+'</ol>':'<i>—</i>'}</div></div>`);
+  P.push(`<div class="fm-sec"><h4>Causa automática</h4><div class="fm-box">${d.causas.length?'<ol>'+d.causas.map(c=>`<li><span class="tema">${esc(c.tema)}</span>${causaHTML(c)}${c.part?` <b>(${Math.round(c.part*100)}% do desvio)</b>`:''}</li>`).join('')+'</ol>':'<i>Sem evidência nas bases para este mês.</i>'}</div></div>`);
+  P.push(`<div class="fm-sec"><h4>Ação automática</h4><div class="fm-box">${d.acoes.length?'<ol>'+d.acoes.map(a=>`<li class="ac-abre" data-fid="${esc(f.id)}" data-k="${esc(chavesDe(d).get(a)||'')}" title="Abrir a ação"><span class="tema">${esc(a.tema)}</span>${esc(a.txt)}${a.taxa?`<span class="tx">${esc(a.taxa.txt)}</span>`:''}</li>`).join('')+'</ol>':'<i>—</i>'}</div></div>`);
   if(d.sinais.length) P.push(`<div class="fm-sec"><h4>Sinais a conferir e observações</h4><div class="fm-box"><ul style="margin:0;padding-left:18px">${d.sinais.map(s=>`<li>${tri(esc(s.txt))}</li>`).join('')}</ul></div></div>`);
   if(b.ponte){ const p=b.ponte, row=(k,v,t)=>`<tr><td><b>${k}</b></td><td class="n" style="color:${v>0?'var(--vermelho)':v<0?'var(--verde)':'var(--txt2)'}"><b>${v==null?'—':(v>0?'+':'')+FA.rs(v)}</b></td><td>${t||''}</td></tr>`;
     const se=b.seara;
@@ -1410,8 +1418,8 @@ function abreAcao(fid,k){
   document.getElementById('ac-ctx').textContent=['Custos',f.uni,f.proj,f.vigLbl.toUpperCase()].join(' · ');
   document.getElementById('ac-fato').value=f.pac;
   document.getElementById('ac-desv').value=FA.desvioTxt(f)+(d.ano?'\nYTD: '+d.ano.txt:'');
-  document.getElementById('ac-causa').value=l.c?l.c.txt:'';
-  document.getElementById('ac-acao').value=l.a.txt+(l.a.ofens.length?'\n'+l.a.ofens.map(o=>'- '+o).join('\n'):'');
+  document.getElementById('ac-causa').value=l.c?causaTexto(l.c):'';
+  document.getElementById('ac-acao').value=l.a.txt;
   document.getElementById('ac-resp').value=r.responsavel||'';
   document.getElementById('ac-prazo').value=r.prazo||'';
   document.getElementById('ac-status').value=r.status||'Não iniciada';
@@ -1435,13 +1443,11 @@ function render(){
 function vaiPara(v){ VIEW=v; document.getElementById('tituloVista').textContent=TIT[v]||''; document.querySelectorAll('.s-item[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); render(); }
 document.querySelectorAll('.s-item[data-v]').forEach(b=>b.addEventListener('click',()=>vaiPara(b.dataset.v)));
 document.getElementById('content').addEventListener('click',e=>{
-  if(e.target.closest('input,select,textarea,datalist,td.ac-c')) return;
+  if(e.target.closest('input,select,textarea,datalist')) return;
   const tr=e.target.closest('tr[data-id][data-k]'); if(tr&&!e.target.closest('td.id')){ abreAcao(tr.dataset.id,tr.dataset.k); return; }
   const k=e.target.closest('.kcard[data-id],tr[data-id]'); if(k){ abreModal(k.dataset.id); return; }
   const u=e.target.closest('tr[data-uni]'); if(u){ const w=document.getElementById('ms-uni'); w._sel.clear(); w._sel.add(u.dataset.uni); w._render(''); vaiPara('tabela'); }
 });
-document.getElementById('content').addEventListener('change',e=>{ const el=e.target.closest('[data-fid][data-c]'); if(el) salvaAcao(el); });
-document.getElementById('content').addEventListener('click',e=>{ const d=e.target.closest('input.ac-in[type=date]'); if(d&&!d.disabled&&d.showPicker){ try{ d.showPicker(); }catch(x){} } });
 (function(){ const bt=document.getElementById('btMini'), sd=document.querySelector('.side');
   bt.addEventListener('click',()=>{ const l=sd.classList.toggle('mini'); try{localStorage.setItem('fcaauto_mini',l?'1':'0');}catch(e){} });
   try{ if(localStorage.getItem('fcaauto_mini')==='1') sd.classList.add('mini'); }catch(e){} })();
@@ -1492,6 +1498,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610151000"></script>
+<script src="../assets/build-check.js?v=202610151100"></script>
 </body>
 </html>

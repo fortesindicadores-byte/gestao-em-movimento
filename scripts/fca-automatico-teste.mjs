@@ -209,7 +209,7 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
     const inv = { n: 0, erros: [] }; FATOS.forEach(fx => { const dx = diag(fx); inv.n++; const tm = new Set(dx.causas.map(c => c.tema)), pt = {};
       if (dx.causas.length > 3) inv.erros.push(fx.id + ': ' + dx.causas.length + ' causas');
       dx.causas.filter(c => c.rede && c.meta != null && isFinite(c.val) && !/osVenc|osCritica/.test(c.ind)).forEach(c => { if (c.dir === 'down' ? c.val < c.meta * 1.05 : c.val > c.meta * 0.95) inv.erros.push(fx.id + ': ' + c.ind + ' colado na meta virou causa'); });
-      dx.acoes.forEach(a => { if (!tm.has(a.tema)) inv.erros.push(fx.id + ': ação sem causa (' + a.tema + ')'); pt[a.tema] = (pt[a.tema] || 0) + 1; if (pt[a.tema] > 2) inv.erros.push(fx.id + ': 3+ ações em ' + a.tema); }); });
+      dx.acoes.forEach(a => { if (!tm.has(a.tema)) inv.erros.push(fx.id + ': ação sem causa (' + a.tema + ')'); pt[a.tema] = (pt[a.tema] || 0) + 1; if (pt[a.tema] > 3) inv.erros.push(fx.id + ': 4+ ações em ' + a.tema); }); });
     const kS = Object.keys(CTX.kml).find(x => /^CGR\|ROTA\|2026-08$/.test(x)) || Object.keys(CTX.kml).find(x => x.startsWith('CGR|') && x.endsWith('|2026-08'));
     const dS = kS && FcaAuto.diagnostico(cgr, Object.assign({}, CTX, { kml: Object.assign({}, CTX.kml, { [kS]: CTX.kml[kS].map(r => ({ ...r, pRem: r.pRem > 0 ? r.pRem * 1.2 : r.pRem })) }) }));
     const savP = dS && { k: kS, preco: dS.blocos.comb.preco, causas: dS.causas.map(c => [c.tema, c.txt]), acoes: dS.acoes.map(a => a.tema) };
@@ -260,8 +260,8 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
   af('a REDE entra com UM indicador (o SLA, a ligação mais forte) e a preventiva fora da meta vai para os sinais, sem ação', G1.causas.filter(c => c[1]).length === 1 && !G1.acoes.some(a => a[0] === 'Preventiva') && (r.grlSinais || []).some(t => /^Aderência a preventivas: 80,0%/.test(t)), JSON.stringify([G1.causas.map(c => c[0]), r.grlSinais]));
   af('…e a ação do SLA é a dele: OS em aberto, da mais velha (OS 777 há 30 dias, Alta)', aSla && /^Cobrar o SLA/.test(aSla[1]) && aSla[2][0] === 'OS 777 GRL6F66 30d (Alta)', JSON.stringify(aSla));
   af('CONTRATO numa causa só, com o km das placas variáveis: a fatura de ago cobra o km de jul; GRL4D44 rodou +1.000 km acima do remunerado (+24% das 2 variáveis), R$ 400 a R$ 0,40/km; a fixa fica fora', G1.causas.some(c => c[0] === 'Contrato' && /^Contrato de manutenção: 1 de 2 placas variáveis acima do km rem\. em jul\/26 \(\+1\.000 km, \+24%\) · R\$ 400 na fatura$/.test(c[2])), JSON.stringify(G1.causas.filter(c => c[0] === 'Contrato').map(c => c[2])));
-  const aKm = G1.acoes.find(a => /^Conter o km das placas listadas/.test(a[1]));
-  af('…e a ação de contenção lista a placa, o km a mais, o % e o R$', aKm && aKm[2].join() === 'GRL4D44 +1.000 km (+50%), R$ 400', JSON.stringify(aKm));
+  const aKm = G1.acoes.find(a => /^Rever as viagens que não remuneram e a roteirização das placas listadas/.test(a[1]));
+  af('…e a ação de contenção (rever viagens e roteirização, separada de "usar placa de contrato fixo") lista a placa, o km a mais, o % e o R$', aKm && aKm[2].join() === 'GRL4D44 +1.000 km (+50%), R$ 400' && G1.acoes.some(a => /^Usar placa de contrato fixo/.test(a[1])), JSON.stringify(aKm));
   af('…3 causas no total (Carta, Contrato, SLA), e nada de Km/L vira causa nem sinal de Manutenções', G1.causas.length === 3 && !G1.causas.some(c => /Km\/L|R\$\/L/.test(c[2])) && !(r.grlSinais || []).some(t => /Km\/L|R\$\/L/.test(t)), JSON.stringify([G1.causas.map(c => c[0]), r.grlSinais]));
   af('aprendizado: FCA de jul/26 do GRL "melhorou" (30 mil → 15 mil no mês seguinte)', G1.hist.length === 1 && G1.hist[0][1] === 'melhorou' && Math.round(G1.hist[0][2]) === 30000 && Math.round(G1.hist[0][3]) === 15000, JSON.stringify(G1.hist));
   af('…e a ação de SLA traz a taxa do tema na rede (1 de 1)', aSla && /FCAs de oficina \/ sla em Manutenções melhoraram o mês seguinte em 1 de 1/.test(aSla[3] || ''), JSON.stringify(aSla && aSla[3]));
@@ -280,7 +280,7 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
   af('DriverPro SÓ NA EMPURRADA: a nota plantada nas CDDs fica fora; a rede só tem os 8 meses de PIR, e ainda sai sustentada', X.redeNota && X.redeNota.sust && X.redeNota.r0 < -0.8 && X.redeNota.n0 === 8 && !(X.cgr && 'cond_nota' in X.cgr), JSON.stringify([X.redeNota, X.cgr && X.cgr.cond_nota]));
   af('…CGR ago/26 não ganha causa nem sinal de condução; em PIR ago/26 (nota 68 < 75) a condução entra como SINAL (a causa é a eficiência, e a ação do DriverPro fica com ela)', !X.cgrCond && X.pirSinal && !X.pirRede, JSON.stringify([X.cgrCausas, X.pirCausas]));
   const INV = r.inv || {};
-  af('EM TODOS OS FATOS: no máximo 3 causas, nenhum indicador a menos de 5% da meta como causa, toda ação com o tema de uma causa mostrada e no máximo 2 ações por causa', INV.n > 0 && !INV.erros.length, JSON.stringify(INV));
+  af('EM TODOS OS FATOS: no máximo 3 causas, nenhum indicador a menos de 5% da meta como causa, toda ação com o tema de uma causa mostrada e no máximo 3 ações por causa (uma por linha)', INV.n > 0 && !INV.erros.length, JSON.stringify(INV));
   const A = r.ang || {};
   af('SEARA pela Árvore da Seara: ANG ago/26 tem a ponte (Δ 25.000 = km rodado 7.333 pelo Km/L e R$/L rem + eficiência 4.000 + preço 7.000 + diferença 6.667)', A.seara && A.ponte && A.ponte.join() === '25000,7333,4000,7000,6667' && Math.abs(A.expl - 18333.33 / 25000) < 1e-4, JSON.stringify(A.ponte) + ' ' + A.expl);
   af('…Km/L 2,86 × 3,00 rem (KmPorLitro) e R$/L 6,00 × 5,50 (PrecoDiesel); ANG2B22 pela média do modelo (aviso)', A.kmL && Math.abs(A.kmL[0] - 40000 / 14000) < 1e-9 && A.kmL[1] === 3 && A.rsL[0] === 6 && A.rsL[1] === 5.5 && A.avisos.some(a => /1 placa sem remunerado na Base Remunerado/.test(a)) && A.avisos.length === 1, JSON.stringify([A.kmL, A.rsL, A.avisos]));
@@ -319,26 +319,35 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     await pg.click('.s-item[data-v="tabela"]'); await pg.waitForTimeout(100);
     const tb = await pg.evaluate(() => { const g = [...document.querySelectorAll('tbody.fg')]; const grl = g.find(t => t.querySelector('tr').dataset.id === 'GRL|ROTA|Manutenções|2026-08'), cgr = g.find(t => t.querySelector('tr').dataset.id === 'CGR|ROTA|Combustíveis|2026-08');
       const f = FATOS.find(x => x.id === 'GRL|ROTA|Manutenções|2026-08'), d = diag(f), ls = linhasDoFato(d);
-      const ana = grl && [...grl.querySelectorAll('input[data-c="responsavel"]')].find(x => x.value === 'Ana Souza');
+      const ana = grl && [...grl.querySelectorAll('td[data-c="responsavel"]')].find(x => x.innerText.trim() === 'Ana Souza');
       const trAna = ana && ana.closest('tr');
       return { n: g.length, fatos: visiveis().length, modo: document.querySelector('#tabModo') ? 'botao' : 'linha', faixa: !!document.querySelector('.fa-tbar'), din: !!document.querySelector('table.fa-rel.din'),
         cols: [...document.querySelectorAll('table.fa-rel thead th')].map(x => x.textContent).join('|'),
-        grlRows: grl && grl.querySelectorAll('tr').length, linhas: ls.length, acoes: d.acoes.length, campos: grl && grl.querySelectorAll('input[data-c="responsavel"]').length,
+        grlRows: grl && grl.querySelectorAll('tr').length, linhas: ls.length, acoes: d.acoes.length, campos: grl && grl.querySelectorAll('td[data-c="responsavel"]').length, editavel: !!document.querySelector('tbody.fg input, tbody.fg select'),
         grlSpan: grl && grl.querySelector('td').getAttribute('rowspan'), nums: grl && [...grl.querySelectorAll('td.cz .ln-n')].map(x => x.textContent.replace('.', '')).join(','), nCausas: d.causas.length, czSpan: grl && [...grl.querySelectorAll('td.cz')].reduce((s, x) => s + (+x.getAttribute('rowspan') || 1), 0), grlIds: grl && [...grl.querySelectorAll('tr')].every(t => t.dataset.id === 'GRL|ROTA|Manutenções|2026-08'),
         pareado: ls.filter(l => l.a && l.c).every(l => l.a.tema === l.c.tema), chaves: new Set(ls.filter(l => l.a).map(l => l.k)).size === d.acoes.length,
-        ana: !!ana, anaAcao: trAna && trAna.querySelector('td.ln:not(.ac-c):nth-last-of-type(1)') ? '' : '', anaTxt: trAna && trAna.querySelector('td.ln:not(.cz):not(.ac-c)').innerText.slice(0, 60), anaSt: trAna && trAna.querySelector('select[data-c="status"]').value, anaFeita: trAna && trAna.classList.contains('feita'), anaPrazo: trAna && trAna.querySelector('input[data-c="prazo"]').value,
+        ana: !!ana, anaAcao: trAna && trAna.querySelector('td.ln:not(.ac-c):nth-last-of-type(1)') ? '' : '', anaTxt: trAna && trAna.querySelector('td.ln:not(.cz):not(.ac-c)').innerText.slice(0, 60), anaSt: trAna && trAna.querySelector('td[data-c="status"] .chip').textContent, anaFeita: trAna && trAna.classList.contains('feita'), anaPrazo: trAna && trAna.querySelector('td[data-c="prazo"]').innerText.trim(),
         dl: [...document.querySelectorAll('#dl-resp option')].map(o => o.value).join(','), cgrFato: cgr && cgr.querySelector('td.fato').innerText.replace(/\s+/g, ' ').trim(), ytdNaCausa: !!document.querySelector('td.txt:not(.fato) .fa-ano'), erro: (document.querySelector('.fa-tbar-err') || {}).textContent || '' }; });
-    af('TABELA SEMPRE "uma por linha" (sem a faixa de cima nem o botão Agrupado) = UMA LINHA POR AÇÃO, com Responsável · Prazo · Status; identificação mesclada (rowspan); causa do mesmo tema ao lado', tb.modo === 'linha' && !tb.faixa && tb.din && tb.n === tb.fatos && /Responsável\|Prazo\|Status$/.test(tb.cols) && !/Explica/.test(tb.cols) && tb.grlRows === tb.linhas && +tb.grlSpan === tb.linhas && tb.grlIds && tb.campos === tb.acoes && tb.pareado && tb.chaves && !tb.erro, JSON.stringify(tb));
+    af('TABELA SÓ LEITURA, COMO A DO FCA (nenhum input/select; dono, prazo e status em texto e chip) e SEMPRE "uma por linha" (sem a faixa de cima nem o botão Agrupado) = UMA LINHA POR AÇÃO, com Responsável · Prazo · Status; identificação mesclada (rowspan); causa do mesmo tema ao lado', tb.modo === 'linha' && !tb.faixa && tb.din && tb.n === tb.fatos && /Responsável\|Prazo\|Status$/.test(tb.cols) && !/Explica/.test(tb.cols) && tb.grlRows === tb.linhas && +tb.grlSpan === tb.linhas && tb.grlIds && tb.campos === tb.acoes && !tb.editavel && tb.pareado && tb.chaves && !tb.erro, JSON.stringify(tb));
     af('…causas numeradas 1, 2, 3 na ordem, cada uma mesclada sobre as ações dela; sem a coluna Explica', tb.nums === Array.from({ length: tb.nCausas }, (_, i) => i + 1).join(',') && tb.czSpan === tb.linhas, JSON.stringify([tb.nums, tb.nCausas, tb.czSpan, tb.linhas, tb.cols]));
-    af('…a ação já gravada volta do banco: dono Ana Souza, prazo 30/09, Concluída e a linha esmaecida; os nomes do perfil viram sugestão', tb.ana && /^Fazer a análise de causa raiz/.test(tb.anaTxt || '') && tb.anaSt === 'Concluída' && tb.anaFeita && tb.anaPrazo === '2026-09-30' && tb.dl === 'Ana Souza,Bruno Lima', JSON.stringify([tb.anaTxt, tb.anaSt, tb.anaFeita, tb.anaPrazo, tb.dl]));
+    af('…a ação já gravada volta do banco: dono Ana Souza, prazo 30/09, Concluída e a linha esmaecida; os nomes do perfil viram sugestão', tb.ana && /^Fazer a análise de causa raiz/.test(tb.anaTxt || '') && tb.anaSt === 'Concluída' && tb.anaFeita && tb.anaPrazo === '30/09/2026' && tb.dl === 'Ana Souza,Bruno Lima', JSON.stringify([tb.anaTxt, tb.anaSt, tb.anaFeita, tb.anaPrazo, tb.dl]));
     af('…o fato curto: contas resumidas, um ▲/▼ e o % entre parênteses, com o YTD dentro do Fato (e não nas causas)', /^Combustíveis ▲ R\$ 31\.000 \(30%\) Combustíveis ▲ 30K \(30%\) Arla ▲ 1K \(20%\) YTD/.test(tb.cgrFato) && !tb.ytdNaCausa, tb.cgrFato);
-    // fecha uma ação sozinha: muda o status de outra ação do GRL
-    const alvo = await pg.evaluate(() => { const sel = [...document.querySelectorAll('tbody.fg select[data-c="status"]')].find(x => x.dataset.fid === 'GRL|ROTA|Manutenções|2026-08' && x.value === 'Não iniciada'); sel.setAttribute('id', 'stAlvo'); return sel.dataset.k; });
-    await pg.selectOption('#stAlvo', 'Em andamento'); await pg.waitForTimeout(150);
-    await pg.fill('input[data-fid="GRL|ROTA|Manutenções|2026-08"][data-k="' + alvo + '"][data-c="responsavel"]', 'Bruno Lima'); await pg.press('input[data-fid="GRL|ROTA|Manutenções|2026-08"][data-k="' + alvo + '"][data-c="responsavel"]', 'Tab'); await pg.waitForTimeout(150);
-    const up = await pg.evaluate(() => ({ ups: window.__ups, cls: document.getElementById('stAlvo').dataset.v, ok: (document.getElementById('acSalvo') || {}).textContent, modal: (o => o ? getComputedStyle(o).display : 'none')(document.getElementById('fm-ov')) }));
+    // fecha uma ação sozinha: na Tabela nada se edita; o clique no STATUS da linha abre a caixa da ação, e é lá que se muda
+    const alvo = await pg.evaluate(() => { const td = [...document.querySelectorAll('tbody.fg td[data-c="status"]')].find(x => x.dataset.fid === 'GRL|ROTA|Manutenções|2026-08' && /Não iniciada/.test(x.innerText)); td.setAttribute('id', 'stAlvo'); return td.dataset.k; });
+    await pg.click('#stAlvo'); await pg.waitForTimeout(150);
+    const abriu = await pg.evaluate(() => getComputedStyle(document.getElementById('ac-ov')).display);
+    await pg.selectOption('#ac-status', 'Em andamento'); await pg.waitForTimeout(150);
+    await pg.fill('#ac-resp', 'Bruno Lima'); await pg.press('#ac-resp', 'Tab'); await pg.waitForTimeout(150);
+    await pg.keyboard.press('Escape'); await pg.waitForTimeout(100);
+    const up = await pg.evaluate(() => ({ ups: window.__ups, st: document.getElementById('stAlvo').innerText.trim(), resp: [...document.querySelectorAll('tbody.fg td[data-c="responsavel"]')].find(x => x.dataset.k === document.getElementById('stAlvo').dataset.k && x.dataset.fid === 'GRL|ROTA|Manutenções|2026-08').innerText.trim() }));
     const u2 = up.ups[up.ups.length - 1] || {};
-    af('…cada ação fecha sozinha: mudar o status e o dono grava UMA linha (fato × ação) com unidade, vigência, causa e ação, sem abrir o modal', up.ups.length === 2 && up.ups.every(r => r.fato_id === 'GRL|ROTA|Manutenções|2026-08' && r.chave === alvo && r.unidade === 'GRL' && r.vigencia === '2026-08' && r.acao) && u2.status === 'Em andamento' && u2.responsavel === 'Bruno Lima' && up.cls === 'Em andamento' && up.modal !== 'flex', JSON.stringify(up));
+    af('…cada ação fecha sozinha: o clique no status da linha abre a caixa; status e dono mudados lá gravam UMA linha (fato × ação) e a linha da Tabela mostra o novo status e o dono', abriu === 'flex' && up.ups.length === 2 && up.ups.every(r => r.fato_id === 'GRL|ROTA|Manutenções|2026-08' && r.chave === alvo && r.unidade === 'GRL' && r.vigencia === '2026-08' && r.acao) && u2.status === 'Em andamento' && u2.responsavel === 'Bruno Lima' && up.st === 'Em andamento' && up.resp === 'Bruno Lima', JSON.stringify(up));
+    // as placas ofensoras ficam embaixo da causa, a ação só com o que fazer, uma por linha
+    const of = await pg.evaluate(() => { const g = [...document.querySelectorAll('tbody.fg')].find(t => t.querySelector('tr').dataset.id === 'CGR|ROTA|Combustíveis|2026-08');
+      const cz = [...g.querySelectorAll('td.cz')].find(x => /^.{0,4}Eficiência Km\/L/.test(x.innerText));
+      const acs = [...g.querySelectorAll('tr[data-k]')].map(tr => tr.querySelector('td.ln:not(.cz):not(.ac-c)').innerText.trim());
+      return { lis: cz ? [...cz.querySelectorAll('.fa-of li')].map(x => x.innerText) : null, acs, placaNaAcao: acs.some(a => /[A-Z]{3}[0-9][A-Z0-9][0-9]{2}/.test(a)), small: !!g.querySelector('td.ln:not(.cz) small') }; });
+    af('PLACAS OFENSORAS EMBAIXO DA CAUSA (uma por linha) e a ação só com o que fazer, vistoria · rota · motoristas em três linhas', of.lis && of.lis.length === 1 && /^CGR0A01/.test(of.lis[0]) && !of.placaNaAcao && !of.small && of.acs.some(a => /^Vistoriar as placas listadas/.test(a)) && of.acs.some(a => /^Validar o perfil de rota/.test(a)) && of.acs.some(a => /^Acompanhar os motoristas/.test(a)), JSON.stringify(of));
     // clicar na AÇÃO abre a caixa dela, no desenho da caixa do FCA · Admin (prévia, nada grava)
     await pg.click('tr[data-id="CGR|ROTA|Combustíveis|2026-08"][data-k] td.ln:not(.ac-c):not(.cz)'); await pg.waitForTimeout(150);
     const ac = await pg.evaluate(() => { const g = id => document.getElementById(id); return { vis: getComputedStyle(g('ac-ov')).display, tit: g('ac-tit').textContent, ctx: g('ac-ctx').textContent, fato: g('ac-fato').value, desv: g('ac-desv').value, causa: g('ac-causa').value, acao: g('ac-acao').value, st: g('ac-status').value, campos: ['ac-resp','ac-prazo','ac-acomp'].every(i => g(i)), dir: [...document.querySelectorAll('#ac-ov .btn')].some(b => /Direcionar à unidade/.test(b.textContent) && b.disabled), previa: /^Sugestão automática\. Prévia: .*FCA oficial/.test(document.querySelector('#ac-ov .ac-previa').textContent), diag: getComputedStyle(g('fm-ov') || document.body).display }; });
@@ -365,20 +374,20 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   console.log('\n══ 2b · sem a tabela fca_auto_acao');
   const { pg, ctx, errs } = await abre({ acErr: true });
   await pg.click('.s-item[data-v="tabela"]'); await pg.waitForTimeout(150);
-  const r = await pg.evaluate(() => ({ faixa: !!document.querySelector('.fa-tbar'), dis: [...document.querySelectorAll('tbody.fg [data-c]')].some(x => x.disabled), n: document.querySelectorAll('tbody.fg').length }));
-  af('sem a tabela: a tela abre com as ações, os campos ficam LIBERADOS e não aparece faixa nem aviso em cima', r.n > 0 && !r.dis && !r.faixa && errs.length === 0, JSON.stringify(r));
-  // preenche dono na tabela e status na caixa da ação: guarda no navegador e volta depois do F5
-  const alvo = await pg.evaluate(() => { const el = document.querySelector('tbody.fg input[data-c="responsavel"]'); return el ? { fid: el.dataset.fid, k: el.dataset.k } : null; });
-  await pg.fill('tbody.fg input[data-c="responsavel"]', 'Fulano Teste'); await pg.press('tbody.fg input[data-c="responsavel"]', 'Tab'); await pg.waitForTimeout(150);
-  const ok1 = await pg.evaluate(() => { try { return localStorage.getItem('fcaauto_previa_v1') || ''; } catch (e) { return ''; } });
+  const r = await pg.evaluate(() => ({ faixa: !!document.querySelector('.fa-tbar'), dis: false, n: document.querySelectorAll('tbody.fg').length }));
+  af('sem a tabela: a tela abre com as ações e não aparece faixa nem aviso em cima', r.n > 0 && !r.dis && !r.faixa && errs.length === 0, JSON.stringify(r));
+  // preenche dono e status na caixa da ação: guarda no navegador, aparece na linha da tabela e volta depois do F5
+  const alvo = await pg.evaluate(() => { const el = document.querySelector('tbody.fg td[data-c="responsavel"]'); return el ? { fid: el.dataset.fid, k: el.dataset.k } : null; });
   await pg.evaluate(a => abreAcao(a.fid, a.k), alvo); await pg.waitForTimeout(100);
-  const caixa = await pg.evaluate(() => ({ resp: document.getElementById('ac-resp').value, dis: document.getElementById('ac-status').disabled }));
+  const dis = await pg.evaluate(() => document.getElementById('ac-status').disabled || document.getElementById('ac-resp').disabled);
+  await pg.fill('#ac-resp', 'Fulano Teste'); await pg.press('#ac-resp', 'Tab'); await pg.waitForTimeout(150);
   await pg.selectOption('#ac-status', 'Em andamento'); await pg.waitForTimeout(150);
-  const naLinha = await pg.evaluate(a => { const el = [...document.querySelectorAll('tbody.fg select[data-c="status"]')].find(x => x.dataset.fid === a.fid && x.dataset.k === a.k); return el && el.value; }, alvo);
-  af('prévia: dono preenchido na tabela é guardado ("Guardado ✓") e aparece na caixa da ação, que também está liberada', /Fulano Teste/.test(ok1) && caixa.resp === 'Fulano Teste' && !caixa.dis, JSON.stringify([ok1, caixa]));
-  af('prévia: status mudado na caixa da ação aparece na linha da tabela', naLinha === 'Em andamento', String(naLinha));
+  const ok1 = await pg.evaluate(() => { try { return localStorage.getItem('fcaauto_previa_v1') || ''; } catch (e) { return ''; } });
+  const naLinha = await pg.evaluate(a => { const q = c => [...document.querySelectorAll('tbody.fg td[data-c="' + c + '"]')].find(x => x.dataset.fid === a.fid && x.dataset.k === a.k); return [q('responsavel').innerText.trim(), q('status').innerText.trim()]; }, alvo);
+  af('prévia: dono e status preenchidos na caixa da ação (liberada) são guardados no navegador', /Fulano Teste/.test(ok1) && !dis, JSON.stringify([ok1, dis]));
+  af('prévia: o que foi mudado na caixa aparece na linha da tabela', naLinha[0] === 'Fulano Teste' && naLinha[1] === 'Em andamento', JSON.stringify(naLinha));
   await pg.reload(); await pg.waitForTimeout(400); await pg.click('.s-item[data-v="tabela"]'); await pg.waitForTimeout(200);
-  const volta = await pg.evaluate(a => { const q = c => [...document.querySelectorAll('tbody.fg [data-c="' + c + '"]')].find(x => x.dataset.fid === a.fid && x.dataset.k === a.k); return [q('responsavel') && q('responsavel').value, q('status') && q('status').value]; }, alvo);
+  const volta = await pg.evaluate(a => { const q = c => [...document.querySelectorAll('tbody.fg td[data-c="' + c + '"]')].find(x => x.dataset.fid === a.fid && x.dataset.k === a.k); return [q('responsavel') && q('responsavel').innerText.trim(), q('status') && q('status').innerText.trim()]; }, alvo);
   af('prévia: depois do F5 o dono e o status voltam (guardados no navegador)', volta[0] === 'Fulano Teste' && volta[1] === 'Em andamento', JSON.stringify(volta));
   await ctx.close();
 }

@@ -609,10 +609,17 @@ function diagnostico(f, ctx) {
   if (D.obs.length) { if (D.causas.length) D.causas[0].txt += D.obs.map(o => `\n\nObs.: ${o}`).join('');
     else D.obs.forEach(o => D.sinais.push({ tema: 'Observação', txt: o })); }
   const temas = new Set(D.causas.map(c => c.tema)), porTema = {};
-  D.acoes = D.acoes.filter(a => { if (!temas.has(a.tema)) return false; porTema[a.tema] = (porTema[a.tema] || 0) + 1; return porTema[a.tema] <= 2; });
+  // até 3 por causa: uma ação por linha (a vistoria, a rota e os motoristas eram uma só, "embolada")
+  D.acoes = D.acoes.filter(a => { if (!temas.has(a.tema)) return false; porTema[a.tema] = (porTema[a.tema] || 0) + 1; return porTema[a.tema] <= 3; });
+  // AS PLACAS OFENSORAS FICAM EMBAIXO DA CAUSA (Renan, 14/10/2026: "as placas ofensoras, em qualquer ação,
+  // ficam abaixo da sua respectiva causa"): a ação fica só com o que fazer. A causa de cada ação é a mesma
+  // que a Tabela usa (a 1ª ainda livre do tema; senão, a 1ª do tema).
+  const usadas = new Set(); D.causas.forEach(c => { c.ofens = []; });
+  D.acoes.forEach(a => { let ci = D.causas.findIndex((c, i) => !usadas.has(i) && c.tema === a.tema); if (ci >= 0) usadas.add(ci); else ci = D.causas.findIndex(c => c.tema === a.tema);
+    if (ci >= 0) a.ofens.forEach(o => { if (!D.causas[ci].ofens.includes(o)) D.causas[ci].ofens.push(o); }); });
   D.historico = histDoFato(f, ctx);
-  D.causaTxt = D.causas.map((c, i) => `${i + 1}. ${c.txt}`).join('\n') + (D.ano ? (D.causas.length ? '\n' : '') + 'YTD: ' + D.ano.txt : '');
-  D.acaoTxt = D.acoes.map((a, i) => `${i + 1}. ${a.txt}${a.ofens.length ? ': ' + a.ofens.join(' · ') : ''}`).join('\n');
+  D.causaTxt = D.causas.map((c, i) => `${i + 1}. ${c.txt}${c.ofens.length ? '\n' + c.ofens.map(o => '   - ' + o).join('\n') : ''}`).join('\n') + (D.ano ? (D.causas.length ? '\n' : '') + 'YTD: ' + D.ano.txt : '');
+  D.acaoTxt = D.acoes.map((a, i) => `${i + 1}. ${a.txt}`).join('\n');
   return D;
 }
 /* ACUMULADO DO ANO embaixo das causas, em TODO pacote (Renan, 14/10/2026: "Todos
@@ -701,7 +708,12 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
       causa('Condução', `Eficiência Km/L: ${br(cb.kmLReal, 2)} vs ${br(cb.kmLRem, 2)} rem. (${sinalPct(dk, 1)}) · +${br(cb.lit - cb.litEsp, 0)} L · ${rs(cb.efic)}`, cb.efic);
       const of = top(cb.placas.filter(p => p.rsEfic > 0 && p.placa), 5, p => p.rsEfic)
         .map(p => `${p.placa}${p.modelo ? ' (' + p.modelo + ')' : ''} ${br(p.kmlReal, 2)} km/L, ${br(p.litMais, 0)} L, ${rs(p.rsEfic)}`);
-      if (of.length) acao('Condução', `Vistoriar as placas listadas (vazamento, injeção, filtro, pneu murcho, motor ligado parado), validar o perfil de rota de cada uma e acompanhar os motoristas que mais dirigem esses veículos`, of);
+      // UMA AÇÃO POR LINHA (Renan, 14/10/2026: "3 ações escritas na mesma ação"): vistoria, rota e motoristas
+      if (of.length) {
+        acao('Condução', `Vistoriar as placas listadas (vazamento, injeção, filtro, pneu murcho, motor ligado parado)`, of);
+        acao('Condução', `Validar o perfil de rota das placas listadas`);
+        acao('Condução', `Acompanhar os motoristas que mais dirigem as placas listadas`);
+      }
     } else if (Math.abs(cb.efic) >= D.minimo) D.obs.push(`Eficiência Km/L: ${br(cb.kmLReal, 2)} vs ${br(cb.kmLRem, 2)} rem. (${sinalPct(dk, 1)}) · economizou ${rs(-cb.efic)}`);
   }
   // Preço
@@ -778,6 +790,8 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
     if (baixos.length) {
       D.sinais.push({ tema: 'Condução', txt: `Condução (telemetria): ${baixos.length} de ${mot.length} motoristas abaixo de 75 pontos, com ${pct(kmT ? kmB / kmT * 100 : 0)} do km` });
       const of = top(baixos, 5, m => (75 - m.v.nota) * (m.v.km || 0)).map(m => `${m.nome || m.ent} ${br(m.v.nota, 0)} pts, ${br(m.v.km, 0)} km${fin(m.v.km_l) ? ', ' + br(m.v.km_l, 2) + ' km/L' : ''}`);
+      // com o DriverPro, o feedback com os motoristas de pior nota fica no lugar do "acompanhar os motoristas"
+      if (cb && cb.efic > 0) D.acoes = D.acoes.filter(a => !/^Acompanhar os motoristas/.test(a.txt));
       if (cb && cb.efic > 0) acao('Condução', `Feedback de condução (faixa verde, motor ligado parado) com os motoristas de pior nota da unidade no DriverPro`, of);
     }
   }
@@ -949,8 +963,9 @@ function diagManut(f, ctx, D, causa, acao, base) {
       + (kmPesa ? `${acima.length} de ${cruz.length} placas variáveis acima do km rem. em ${vigLbl(kmMes)} (+${br(kmAcima, 0)} km${remT > 0 ? ', ' + sinalPct(kmAcima / remT * 100, 0) : ''}) · ${rs(rsAcima)} na fatura`
         : cruz.length ? `placas variáveis no km rem.: não é km a mais` : `${ct.length} placas faturadas (${rs(tc)}) pelo km de ${vigLbl(kmMes)}`)
       + (fx2.length ? ` · ${fx2.length} na faixa 2` : ''), cContr.ov, { prio: 2 });
-    if (kmPesa) acao('Contrato', `Conter o km das placas listadas: rever viagens que não remuneram e roteirização, e usar placa de contrato fixo nas rotas mais longas`,
+    if (kmPesa) { acao('Contrato', `Rever as viagens que não remuneram e a roteirização das placas listadas`,
       top(acima, 5, x => x.rsDelta || x.delta).map(x => `${x.placa} +${br(x.delta, 0)} km (${x.rem >= 500 ? sinalPct(x.delta / x.rem * 100, 0) : 'só ' + br(x.rem, 0) + ' km remunerados'})${x.rsDelta != null ? ', ' + rs(x.rsDelta) : ''}`));
+      acao('Contrato', `Usar placa de contrato fixo nas rotas mais longas`); }
     else acao('Contrato', `Conferir a fatura do contrato nas placas listadas: km cobrado × km rodado${fx2.length ? ' e as que foram para a faixa 2' : ''}`,
       top(ct, 5, p => p.v.custo_mes).map(p => `${p.ent} ${rs(p.v.custo_mes)}${fin(p.v.km_mes) ? ', ' + br(p.v.km_mes, 0) + ' km' : ''}${(p.v.faixas || 0) >= 2 ? ', faixa 2' : ''}`));
   }
