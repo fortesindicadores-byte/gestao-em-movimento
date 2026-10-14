@@ -191,6 +191,25 @@ function desvioTxt(f) {
   return ls.join('\n');
 }
 
+/* O MESMO FATO, CURTO, PARA A TABELA (Renan, 14/10/2026: "As contas poderiam ser mais
+   resumidas, tipo 'Ferramentas', 'Personalização', 'Man. Veículos e Equip.'… o desvio da
+   conta também poderia ter apenas uma vez o ▲ ou ▼, e o % entre parênteses"). O texto
+   inteiro do FCA (desvioTxt) continua no modal e no que vai para o FCA. */
+const CONTA_CURTA = {
+  'MANUTENCAO DE VEICULOS E EQUIPAMENTOS': 'Man. Veículos e Equip.', 'MANUTENCAO DE VEICULOS E EQUIP.': 'Man. Veículos e Equip.',
+  'CONTRATOS DE MANUTENCAO FABRICANTE': 'Contratos Fabricante', 'MANUTENCAO DE CARROCERIAS': 'Carrocerias', 'MATERIAIS E FERRAMENTAS DE OFICINA': 'Ferramentas',
+  'LAVACAO DE VEICULOS': 'Lavação', 'PERSONALIZACAO/PADRONIZACAO DE VEICULOS': 'Personalização', 'PERSONALIZACAO/PADRONIZACAO': 'Personalização', 'PERSONALIZACAO E PADRONIZACAO DE VEICULOS': 'Personalização',
+  'COMBUSTIVEIS VEICULOS E EQUIPAMENTOS': 'Combustíveis', 'COMBUSTIVEIS': 'Combustíveis', 'FLUIDOS (ARLA)': 'Arla', 'ARLA': 'Arla',
+  'PNEUS NOVOS': 'Pneus Novos', 'RECAPAGENS E OUTROS SERVICOS': 'Recapagens', 'CONSERTOS E RECAPAGENS DE PNEUS': 'Consertos e Recap.', 'PNEUS E CAMARAS': 'Pneus e Câmaras',
+  'SEGURO DE VEICULOS E EQUIPAMENTOS': 'Seguro', 'SEGUROS': 'Seguro', 'IPVA E LICENCIAMENTO DE VEICULOS': 'IPVA', 'IPVA E LICENCIAMENTO': 'IPVA'
+};
+const contaCurta = o => CONTA_CURTA[o.ck] || o.conta;
+function desvioCurto(f) {
+  const ls = [`▲ R$ ${Math.round(Math.abs(f.over)).toLocaleString('pt-BR')} (${Math.round(Math.abs(f.dpct))}%)`];
+  f.contas.forEach(o => { const s = o.ov > 0 ? '▲' : '▼'; ls.push(`${contaCurta(o)} ${s} ${impFmt(o.ov)}${o.p != null ? ' (' + Math.abs(o.p) + '%)' : ''}`); });
+  return ls.join('\n');
+}
+
 /* ═════════ 2) BASES DE COMBUSTÍVEL (Dispersão, Km/L, R$/L) ═════════ */
 function indexaDisp(disp) {
   const cols = (disp && disp.cols) || [], rows = (disp && disp.rows) || [];
@@ -575,7 +594,7 @@ function diagnostico(f, ctx) {
   const peso = c => (c.prio || 0) * 1e12 + (c.soma === false ? 0 : (c.rs || 0)) * 10 + (c.rede ? 5 : 0) + (c.rs != null && c.soma !== false ? 1 : 0);
   D.causas.sort((a, b) => peso(b) - peso(a));
   D.historico = histDoFato(f, ctx);
-  D.causaTxt = D.causas.map((c, i) => `${i + 1}. ${c.txt}`).join('\n') + (D.ano ? (D.causas.length ? '\n' : '') + 'Ano: ' + D.ano.txt : '');
+  D.causaTxt = D.causas.map((c, i) => `${i + 1}. ${c.txt}`).join('\n') + (D.ano ? (D.causas.length ? '\n' : '') + 'YTD: ' + D.ano.txt : '');
   D.acaoTxt = D.acoes.map((a, i) => `${i + 1}. ${a.txt}${a.ofens.length ? ': ' + a.ofens.join(' · ') : ''}`).join('\n');
   return D;
 }
@@ -1133,6 +1152,6 @@ async function carregarProlog(sb) {
 }
 
 global.FcaAuto = { UNITS, PACOTES, vigLbl, vigDeLbl, vigIdx, vigAnt, vigSeg, projKey, unidadeDoNv3, rs, br, pct, sinalPct, impFmt, NK,
-  indexaDRE, fatos, desvioTxt, getPacote, pacDoFato, EXCL_FCA, indexaSeara, acumuladoAno, redeFala, unidadeDoDRE, indexaDisp, indexaAbertura, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
+  indexaDRE, fatos, desvioTxt, desvioCurto, contaCurta, getPacote, pacDoFato, EXCL_FCA, indexaSeara, acumuladoAno, redeFala, unidadeDoDRE, indexaDisp, indexaAbertura, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
   diagnostico, indicadores, indexaGinfo, EXTRA, montaCatalogo, CAT: () => CAT, resumoProlog, contexto, carregar, carregarProlog, ROT, METAS, fmtInd, placaKey };
 })(typeof window !== 'undefined' ? window : globalThis);

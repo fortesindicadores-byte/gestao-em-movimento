@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610141900">
+<meta name="build" content="202610142000">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -886,6 +886,24 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 .fm-aviso{font-size:11px;color:var(--ambar);margin-top:6px;}
 .fa-ano{margin-top:6px;padding-top:6px;border-top:1px dashed var(--linha);font-size:11px;font-weight:700;color:var(--txt2);}.fa-ano .kl{color:var(--txt3);font-weight:600;text-transform:uppercase;font-size:9.5px;letter-spacing:.5px;margin-right:4px;}.fa-rel .fa-ano{font-size:10.5px;}
 .copiar{margin-left:auto;}
+/* Tabela: barra com o toggle e o arranjo "uma por linha" (tbody por fato, identificação mesclada) */
+.fa-tbar{display:flex;align-items:center;gap:10px;padding:0 0 10px;}
+.fa-tbar-n{font-size:10.5px;color:var(--txt3);font-weight:600;}
+.fa-tog{margin-left:auto;display:flex;gap:4px;background:var(--side);border:1px solid var(--card-brd);border-radius:8px;padding:3px;}
+.fa-tog button{font:inherit;font-size:10.5px;font-weight:700;color:var(--txt2);background:none;border:0;border-radius:6px;padding:4px 10px;cursor:pointer;}
+.fa-tog button.on{background:var(--laranja);color:#0C1017;}
+table.rel.fa-rel td.center{white-space:normal;overflow-wrap:anywhere;}
+table.rel.fa-rel.din th:nth-child(1){width:5.5%;}table.rel.fa-rel.din th:nth-child(2){width:8%;}table.rel.fa-rel.din th:nth-child(3){width:5.5%;}
+table.rel.fa-rel.din th:nth-child(4){width:16%;}table.rel.fa-rel.din th:nth-child(5){width:30%;}table.rel.fa-rel.din th:nth-child(6){width:29%;}table.rel.fa-rel.din th:nth-child(7){width:6%;}
+table.rel.fa-rel tbody.fg{border-top:2px solid var(--card-brd);}
+table.rel.fa-rel.din tbody.fg td.id{vertical-align:top;border-bottom:0!important;}
+table.rel.fa-rel.din tbody.fg td.ln{border-bottom:1px dashed var(--linha)!important;padding:8px 12px!important;line-height:1.4;}
+table.rel.fa-rel.din tbody.fg tr:last-child td.ln{border-bottom:0!important;}
+table.rel.fa-rel.din tbody.fg td.ln small{display:block;color:var(--txt3);font-size:10.5px;margin-top:2px;}
+.ln-n{display:inline-block;min-width:16px;height:16px;line-height:16px;text-align:center;border-radius:50%;background:var(--hover);color:var(--txt3);font-size:9.5px;font-weight:800;margin-right:6px;vertical-align:1px;}
+table.rel.fa-rel tbody.fg:hover td{background:var(--hover)!important;}
+table.rel.fa-rel.din tbody tr:hover{background:none!important;}
+table.rel td.fato .fa-ano{font-size:10.5px;}
 @media(max-width:860px){.fa-kpis{grid-template-columns:repeat(2,1fr);}.fa-dois,.fa-rede,.fm-two{grid-template-columns:1fr;}.board .main.res{overflow:visible;}}
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
@@ -895,7 +913,7 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610141900"></script>
+<script src="../assets/fca-auto.js?v=202610142000"></script>
 </head>
 <body>
 <div class="app">
@@ -1066,22 +1084,49 @@ function resumoHTML(vis){
 }
 /* ── TABELA (o clone da Tabela do FCA, com causa e ação automáticas) ── */
 /* ACUMULADO DO ANO embaixo das causas, em todo pacote (Renan, 14/10/2026) */
-const anoHTML=d=>d.ano?`<div class="fa-ano"><span class="kl">Ano</span>${tri(esc(d.ano.txt))}</div>`:'';
-function linhaCausas(d,n){ const cs=d.causas.slice(0,n||9); if(!cs.length) return '<i style="color:var(--txt3)">Sem evidência nas bases para este mês</i>'+anoHTML(d);
-  return '<ol>'+cs.map(c=>`<li>${c.rede?'<span class="tema rede">rede</span>':''}${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}%)</b>`:''}</li>`).join('')+'</ol>'+anoHTML(d); }
+/* O ANO VIROU "YTD" E MORA NO FATO (Renan, 14/10/2026: "jogue o ano para o Fato e chama de YTD") */
+const anoHTML=d=>d.ano?`<div class="fa-ano"><span class="kl">YTD</span>${tri(esc(d.ano.txt))}</div>`:'';
+const causaHTML=c=>`${c.rede?'<span class="tema rede">rede</span>':''}${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}%)</b>`:''}`;
+const acaoHTML=a=>`${esc(a.txt)}${a.ofens.length?`<small>${esc(a.ofens.slice(0,3).join(' · '))}${a.ofens.length>3?' …':''}</small>`:''}`;
+function linhaCausas(d,n){ const cs=d.causas.slice(0,n||9); if(!cs.length) return '<i style="color:var(--txt3)">Sem evidência nas bases para este mês</i>';
+  return '<ol>'+cs.map(c=>`<li>${causaHTML(c)}</li>`).join('')+'</ol>'; }
 function linhaAcoes(d,n){ const as=d.acoes.slice(0,n||9); if(!as.length) return '<i style="color:var(--txt3)">—</i>';
-  return '<ol>'+as.map(a=>`<li>${esc(a.txt)}${a.ofens.length?`<small>${esc(a.ofens.slice(0,3).join(' · '))}${a.ofens.length>3?' …':''}</small>`:''}</li>`).join('')+'</ol>'; }
+  return '<ol>'+as.map(a=>`<li>${acaoHTML(a)}</li>`).join('')+'</ol>'; }
+/* fato curto para a tabela (contas resumidas, um ▲/▼ e o % entre parênteses) + YTD */
+const fatoHTML=(f,d)=>`<b>${esc(f.pac)}</b><small>${nl(FA.desvioCurto(f))}</small>${anoHTML(d)}`;
+/* DOIS ARRANJOS (Renan, 14/10/2026: "testar dividir as causas e ações em uma ação por linha e mesclar
+   unidade, projeto, vigência e fato que ficam antes. Tipo dinâmica"): "Uma por linha" = um tbody por
+   fato, uma causa e uma ação por linha, as células de identificação mescladas (rowspan); "Agrupado" =
+   a linha única de antes, com as listas. Chave fcaauto_tab_modo. */
+let TAB_MODO=(()=>{ try{ return localStorage.getItem('fcaauto_tab_modo')||'linha'; }catch(e){ return 'linha'; } })();
 function tabelaHTML(vis){
-  let h=`<div class="rel-section"><div class="rel-wrap"><table class="rel fa-rel"><thead><tr>
-    <th>Unidade</th><th>Projeto</th><th>Vigência</th><th>Fato</th><th>Causa automática</th><th>Ação automática</th><th>Explica</th></tr></thead><tbody>`;
+  const linha=TAB_MODO==='linha';
+  let h=`<div class="rel-section"><div class="fa-tbar"><span class="fa-tbar-n">Clique na linha para abrir o diagnóstico completo</span><div class="fa-tog" id="tabModo">
+      <button data-m="linha" class="${linha?'on':''}">Uma por linha</button><button data-m="grupo" class="${linha?'':'on'}">Agrupado</button></div></div>
+    <div class="rel-wrap"><table class="rel fa-rel${linha?' din':''}"><thead><tr>
+    <th>Unidade</th><th>Projeto</th><th>Vigência</th><th>Fato</th><th>Causa automática</th><th>Ação automática</th><th>Explica</th></tr></thead>`;
   vis.forEach(f=>{ const d=diag(f);
-    h+=`<tr data-id="${esc(f.id)}" title="Clique para abrir o diagnóstico completo">
-      <td class="center">${esc(f.uni)}</td><td class="center">${esc(f.proj)}</td><td class="center">${esc(f.vigLbl.toUpperCase())}</td>
-      <td class="txt fato"><b>${esc(f.pac)}</b><small>${nl(FA.desvioTxt(f))}</small></td>
-      <td class="txt">${linhaCausas(d,4)}</td><td class="txt">${linhaAcoes(d,4)}</td>
-      <td class="center">${pctBadge(d.explicado)}</td></tr>`; });
-  if(!vis.length) h+='<tr><td colspan="7" class="center">Nenhum fato no recorte.</td></tr>';
-  return h+'</tbody></table></div></div>';
+    if(!linha){
+      h+=`<tbody class="fg"><tr data-id="${esc(f.id)}" title="Clique para abrir o diagnóstico completo">
+        <td class="center">${esc(f.uni)}</td><td class="center">${esc(f.proj)}</td><td class="center">${esc(f.vigLbl.toUpperCase())}</td>
+        <td class="txt fato">${fatoHTML(f,d)}</td>
+        <td class="txt">${linhaCausas(d,4)}</td><td class="txt">${linhaAcoes(d,4)}</td>
+        <td class="center">${pctBadge(d.explicado)}</td></tr></tbody>`; return; }
+    const cs=d.causas.slice(0,8), as=d.acoes.slice(0,8), n=Math.max(1,cs.length,as.length);
+    h+=`<tbody class="fg">`;
+    for(let i=0;i<n;i++){
+      const c=cs[i], a=as[i];
+      h+=`<tr data-id="${esc(f.id)}" title="Clique para abrir o diagnóstico completo">`;
+      if(i===0) h+=`<td class="center id" rowspan="${n}">${esc(f.uni)}</td><td class="center id" rowspan="${n}">${esc(f.proj)}</td><td class="center id" rowspan="${n}">${esc(f.vigLbl.toUpperCase())}</td><td class="txt fato id" rowspan="${n}">${fatoHTML(f,d)}</td>`;
+      h+=`<td class="txt ln">${c?`<span class="ln-n">${i+1}</span>${causaHTML(c)}`:(i===0?'<i style="color:var(--txt3)">Sem evidência nas bases para este mês</i>':'')}</td>
+          <td class="txt ln">${a?`<span class="ln-n">${i+1}</span>${acaoHTML(a)}`:(i===0?'<i style="color:var(--txt3)">—</i>':'')}</td>`;
+      if(i===0) h+=`<td class="center id" rowspan="${n}">${pctBadge(d.explicado)}</td>`;
+      h+='</tr>';
+    }
+    h+='</tbody>';
+  });
+  if(!vis.length) h+='<tbody><tr><td colspan="7" class="center">Nenhum fato no recorte.</td></tr></tbody>';
+  return h+'</table></div></div>';
 }
 /* ── KANBAN — uma coluna por pacote ── */
 const KCLS={'Combustíveis':'cmb','Manutenções':'mnt','Pneus':'pne'};
@@ -1090,7 +1135,7 @@ function kcardHTML(f){ const d=diag(f); const c1=d.causas[0], a1=d.acoes[0];
     <div class="kcard-top"><span class="korg cst">Custos</span> ${esc(f.uni)} · ${esc(f.proj)} · ${esc(f.vigLbl)}</div>
     <div class="kcard-fato">${esc(f.pac)} · ${FA.rs(f.over)} <span style="color:var(--txt3);font-weight:600">(▲ ${Math.round(f.dpct)}%)</span></div>
     <div class="kcard-causa"><span class="kl">Causa:</span> ${c1?tri(esc(c1.txt)):'<i>sem evidência nas bases</i>'}</div>
-    ${d.ano?`<div class="kcard-causa"><span class="kl">Ano:</span> ${tri(esc(d.ano.txt.replace(/ · curva de captura:.*$/,'').replace(/ · tratar.*$/,' · pontual')))}</div>`:''}
+    ${d.ano?`<div class="kcard-causa"><span class="kl">YTD:</span> ${tri(esc(d.ano.txt.replace(/ · curva de captura:.*$/,'').replace(/ · tratar.*$/,' · pontual')))}</div>`:''}
     <div class="kcard-ac"><span class="kl">Ação:</span> ${a1?esc(a1.txt)+(a1.ofens.length?' ('+esc(a1.ofens.slice(0,2).join(' · '))+')':''):'<i>—</i>'}</div>
     <div class="kcard-meta"><span>${d.causas.length} causa(s) · ${d.acoes.length} ação(ões)</span> ${d.explicado!=null?pctBadge(d.explicado):''}</div></div>`; }
 function kanbanHTML(vis){
@@ -1157,8 +1202,8 @@ function abreModal(id){
   document.getElementById('fm-tit').textContent=f.pac+' · '+FA.rs(f.over)+' acima do remunerado';
   document.getElementById('fm-sub').textContent=`Custos · ${f.uni} · ${f.proj} · ${f.vigLbl}${d.explicado!=null?' · explica '+Math.round(d.explicado*100)+'% do desvio em R$':''}`;
   const b=d.blocos, P=[];
-  P.push(`<div class="fm-sec"><h4>Fato</h4><div class="fm-box">${nl(FA.desvioTxt(f))}</div></div>`);
-  P.push(`<div class="fm-sec"><h4>Causa automática</h4><div class="fm-box">${d.causas.length?'<ol>'+d.causas.map(c=>`<li><span class="tema${c.rede?' rede':''}">${esc(c.rede?'rede · '+c.tema:c.tema)}</span>${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}% do desvio)</b>`:''}</li>`).join('')+'</ol>':'<i>Sem evidência nas bases para este mês.</i>'}${anoHTML(d)}</div></div>`);
+  P.push(`<div class="fm-sec"><h4>Fato</h4><div class="fm-box">${nl(FA.desvioTxt(f))}${anoHTML(d)}</div></div>`);
+  P.push(`<div class="fm-sec"><h4>Causa automática</h4><div class="fm-box">${d.causas.length?'<ol>'+d.causas.map(c=>`<li><span class="tema${c.rede?' rede':''}">${esc(c.rede?'rede · '+c.tema:c.tema)}</span>${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}% do desvio)</b>`:''}</li>`).join('')+'</ol>':'<i>Sem evidência nas bases para este mês.</i>'}</div></div>`);
   P.push(`<div class="fm-sec"><h4>Ação automática</h4><div class="fm-box">${d.acoes.length?'<ol>'+d.acoes.map(a=>`<li><span class="tema">${esc(a.tema)}</span>${esc(a.txt)}${a.ofens.length?`<span class="of">${esc(a.ofens.join(' · '))}</span>`:''}${a.taxa?`<span class="tx">${esc(a.taxa.txt)}</span>`:''}</li>`).join('')+'</ol>':'<i>—</i>'}</div></div>`);
   if(d.sinais.length) P.push(`<div class="fm-sec"><h4>Sinais a conferir (fora da meta, sem ligação comprovada na rede)</h4><div class="fm-box"><ul style="margin:0;padding-left:18px">${d.sinais.map(s=>`<li>${tri(esc(s.txt))}</li>`).join('')}</ul></div></div>`);
   if(b.ponte){ const p=b.ponte, row=(k,v,t)=>`<tr><td><b>${k}</b></td><td class="n" style="color:${v>0?'var(--vermelho)':v<0?'var(--verde)':'var(--txt2)'}"><b>${v==null?'—':(v>0?'+':'')+FA.rs(v)}</b></td><td>${t||''}</td></tr>`;
@@ -1199,6 +1244,7 @@ function render(){
 function vaiPara(v){ VIEW=v; document.getElementById('tituloVista').textContent=TIT[v]||''; document.querySelectorAll('.s-item[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); render(); }
 document.querySelectorAll('.s-item[data-v]').forEach(b=>b.addEventListener('click',()=>vaiPara(b.dataset.v)));
 document.getElementById('content').addEventListener('click',e=>{
+  const tg=e.target.closest('#tabModo button[data-m]'); if(tg){ TAB_MODO=tg.dataset.m; try{ localStorage.setItem('fcaauto_tab_modo',TAB_MODO); }catch(x){} render(); return; }
   const k=e.target.closest('.kcard[data-id],tr[data-id]'); if(k){ abreModal(k.dataset.id); return; }
   const u=e.target.closest('tr[data-uni]'); if(u){ const w=document.getElementById('ms-uni'); w._sel.clear(); w._sel.add(u.dataset.uni); w._render(''); vaiPara('tabela'); }
 });
@@ -1249,6 +1295,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610141900"></script>
+<script src="../assets/build-check.js?v=202610142000"></script>
 </body>
 </html>

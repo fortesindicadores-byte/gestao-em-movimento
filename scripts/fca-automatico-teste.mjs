@@ -281,7 +281,7 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
   const Y = r.ano || {};
   af('ANO em todo pacote: GRL Manutenções ▲ R$ 45.000 (6%) com a curva de captura (11% abaixo nos 4 meses que faltam, set → dez/26)', Y.grl && Math.round(Y.grl.over) === 45000 && Y.grl.restam === 4 && Math.round(Y.grl.reducao) === 11 && /^Desvio no ano \(jan\/26 → ago\/26\) ▲ R\$ 45\.000 \(6%\) · curva de captura: rodar 11% abaixo do remunerado nos 4 meses que faltam \(set\/26 → dez\/26\) para fechar o ano no remunerado$/.test(Y.grl.txt), JSON.stringify(Y.grl));
   af('…CGR Pneus estourou em ago mas o ano é saving ▼ R$ 13.000 (5%): tratar como pontual', Y.cgrp && Math.round(Y.cgrp.over) === -13000 && /^Saving no ano \(jan\/26 → ago\/26\) ▼ R\$ 13\.000 \(5%\) · tratar o desvio do mês como pontual$/.test(Y.cgrp.txt), JSON.stringify(Y.cgrp));
-  af('…e a linha do ano vai no texto copiado, depois das causas', /\nAno: Desvio no ano/.test(Y.txt || ''), '');
+  af('…e a linha do ano vai no texto copiado, depois das causas, como YTD', /\nYTD: Desvio no ano/.test(Y.txt || ''), '');
   af('empurrada sem Dispersão maior: sem causa de volume; aviso nenhum de base faltando', Pc.efic > 0 && !Pc.avisos.length, JSON.stringify(Pc.avisos));
   const Lc = (Pc.causas || []).find(c => c[0] === 'Lançamento / contábil'), La = (Pc.acoes || []).find(a => a[0] === 'Lançamento / contábil');
   af('PIR: as três alavancas explicam só 29% (5,8 de 20 mil): entra a linha do resto (14,2 mil que não batem com os abastecimentos, com os dois lados) e a ação de conciliar', Lc && /^Preço, eficiência e km rodado explicam só 29% do desvio \(R\$ 5,8 mil de R\$ 20,0 mil\): R\$ 14,2 mil não batem com os abastecimentos \(realizado da DRE abaixo dos abastecimentos da aba Km\/L em R\$ 1,8 mil; remunerado da DRE abaixo do que as bases preveem em R\$ 16,0 mil\)$/.test(Lc[1]) && La && /^Conciliar a conta Combustíveis/.test(La[2]) && Pc.expl <= 0.5, JSON.stringify([Pc.expl, Lc, La]));
@@ -305,9 +305,20 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     const res = await pg.evaluate(() => ({ hn: document.querySelector('.hn').textContent, sub: document.getElementById('subVista').textContent, kpis: [...document.querySelectorAll('.fa-kpis .kpi .kl')].map(x => x.textContent) }));
     af('resumo abre em ago/26 (último mês com realizado) com o desvio total', /AGO\/26/.test(res.sub) && /^R\$/.test(res.hn), JSON.stringify(res));
     await pg.click('.s-item[data-v="tabela"]'); await pg.waitForTimeout(100);
+    const tb = await pg.evaluate(() => { const g = [...document.querySelectorAll('tbody.fg')]; const grl = g.find(t => t.querySelector('tr').dataset.id === 'GRL|ROTA|Manutenções|2026-08'), cgr = g.find(t => t.querySelector('tr').dataset.id === 'CGR|ROTA|Combustíveis|2026-08');
+      const d = diag(FATOS.find(f => f.id === 'GRL|ROTA|Manutenções|2026-08'));
+      return { n: g.length, fatos: visiveis().length, modo: document.querySelector('#tabModo button.on').dataset.m, din: !!document.querySelector('table.fa-rel.din'),
+        grlRows: grl && grl.querySelectorAll('tr').length, grlEsp: Math.max(1, Math.min(8, d.causas.length), Math.min(8, d.acoes.length)), grlSpan: grl && grl.querySelector('td').getAttribute('rowspan'), grlIds: grl && [...grl.querySelectorAll('tr')].every(t => t.dataset.id === 'GRL|ROTA|Manutenções|2026-08'),
+        grlNums: grl && [...grl.querySelectorAll('td.ln .ln-n')].map(x => x.textContent).join(','), cgrFato: cgr && cgr.querySelector('td.fato').innerText.replace(/\s+/g, ' ').trim(), ytdNaCausa: !!document.querySelector('td.txt:not(.fato) .fa-ano') }; });
+    af('TABELA "uma por linha": um tbody por fato, a identificação mesclada (rowspan) e uma causa e uma ação por linha, numeradas', tb.modo === 'linha' && tb.din && tb.n === tb.fatos && tb.grlRows === tb.grlEsp && +tb.grlSpan === tb.grlEsp && tb.grlIds && tb.grlNums.startsWith('1,1,2,2'), JSON.stringify(tb));
+    af('…o fato curto: contas resumidas, um ▲/▼ e o % entre parênteses, com o YTD dentro do Fato (e não nas causas)', /^Combustíveis ▲ R\$ 31\.000 \(30%\) Combustíveis ▲ 30K \(30%\) Arla ▲ 1K \(20%\) YTD/.test(tb.cgrFato) && !tb.ytdNaCausa, tb.cgrFato);
+    await pg.click('#tabModo button[data-m="grupo"]'); await pg.waitForTimeout(100);
+    const tg = await pg.evaluate(() => ({ modo: document.querySelector('#tabModo button.on').dataset.m, din: !!document.querySelector('table.fa-rel.din'), rows: [...document.querySelectorAll('tbody.fg')].every(t => t.querySelectorAll('tr').length === 1), ol: !!document.querySelector('tbody.fg td.txt ol'), guardado: localStorage.getItem('fcaauto_tab_modo') }));
+    af('…"Agrupado" volta à linha única por fato com as listas, e a escolha fica guardada', tg.modo === 'grupo' && !tg.din && tg.rows && tg.ol && tg.guardado === 'grupo', JSON.stringify(tg));
+    await pg.click('#tabModo button[data-m="linha"]'); await pg.waitForTimeout(100);
     await pg.click('tr[data-id="CGR|ROTA|Combustíveis|2026-08"]'); await pg.waitForTimeout(150);
     const m = await pg.evaluate(() => ({ vis: getComputedStyle(document.getElementById('fm-ov')).display, tit: document.getElementById('fm-tit').textContent, txt: document.getElementById('fm-corpo').textContent }));
-    af('clique na linha abre o diagnóstico (ponte, causas, ações) com a linha do ano', m.vis === 'flex' && /Combustíveis · R\$ 31,0 mil/.test(m.tit) && /Ponte da conta Combustíveis/.test(m.txt) && /Vistoria de consumo/.test(m.txt) && /AnoDesvio no ano|Ano.{0,3}Desvio no ano|Ano.{0,3}Saving no ano|Ano.{0,3}No ano/.test(m.txt), m.tit);
+    af('clique na linha abre o diagnóstico (ponte, causas, ações) com a linha do ano', m.vis === 'flex' && /Combustíveis · R\$ 31,0 mil/.test(m.tit) && /Ponte da conta Combustíveis/.test(m.txt) && /Vistoria de consumo/.test(m.txt) && /YTD.{0,3}Desvio no ano|YTD.{0,3}Saving no ano|YTD.{0,3}No ano/.test(m.txt), m.tit);
     af('…com o que a unidade escreveu no FCA do mês', /Rodamos mais km por causa da rota nova/.test(m.txt), '');
     if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'fa-modal.png') });
   }
