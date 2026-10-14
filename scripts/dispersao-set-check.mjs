@@ -65,7 +65,7 @@ console.log(`aba Dispersão de km: col0=${cV} col14=${c14} col31=${c31} (${cols[
 const aba = await todas(`sh_dispersao_km?select=vigencia,${[cV, c13, c14, c31, c32].filter(Boolean).join(',')}`);
 const ago = new Map();
 aba.forEach(r => {
-  const v = String(r.vigencia || r[cV] || '').slice(0, 7); if (v !== ANT) return;
+  const raw = String(r.vigencia || r[cV] || ''); const mm = raw.match(/^(\d{2})\/(\d{4})/); const v = mm ? mm[2] + '-' + mm[1] : raw.slice(0, 7); if (v !== ANT) return;
   const pu = String(r[c14] || ''); const i = pu.indexOf('-');
   const uni = i >= 0 ? pu.slice(i + 1).trim() : String(r[c13] || '').trim(), proj = (i >= 0 ? pu.slice(0, i) : pu).trim();
   const k = uni + '|' + proj; const a = ago.get(k) || { rem: 0, real: 0 };
@@ -132,6 +132,10 @@ const sk = new Map(); semKm.forEach(p => { const k = p.unidade + '|' + p.projeto
 sk.forEach((o, k) => console.log(`  ${pad(k, 28)} ${padl(o.n, 3)} placas · ${n(o.km)} km rem`));
 
 // lista de placas × 01-BD: o km rem por unidade × projeto bate?
+{ const ps = placas.filter(p => p.vigencia === VIG); const vz = ps.filter(p => !(+p.km_rem > 0));
+  console.log(`\n── lista de placas ${VIG}: ${ps.length} placas · ${vz.length} sem km rem · por projeto: ` +
+    Object.entries(ps.reduce((o, p) => (o[p.unidade + '|' + p.projeto] = (o[p.unidade + '|' + p.projeto] || 0) + 1, o), {})).map(([k, c]) => k + ' ' + c).join(' · '));
+  console.log('amostra vigência da aba:', JSON.stringify(aba.slice(0, 2).map(r => ({ v: r.vigencia, o: r[cV] })))); }
 console.log(`\n── km rem: 01-BD × lista de placas (${VIG}) ──`);
 const lp = new Map(); placas.filter(p => p.vigencia === VIG).forEach(p => { const k = p.unidade + '|' + p.projeto; lp.set(k, (lp.get(k) || 0) + (+p.km_rem || 0)); });
 tab.forEach(l => { const k = l.unidade + '|' + l.projeto; const v = lp.get(k) || 0; const d = (+l.km_rem || 0) - v;
