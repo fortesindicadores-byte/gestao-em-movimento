@@ -208,6 +208,7 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
     const ang = f('ANG|DISTRIBUICAO URBANA|Combustíveis|2026-08'), da = ang && diag(ang), cgrp = f('CGR|ROTA|Pneus|2026-08');
     const inv = { n: 0, erros: [] }; FATOS.forEach(fx => { const dx = diag(fx); inv.n++; const tm = new Set(dx.causas.map(c => c.tema)), pt = {};
       if (dx.causas.length > 3) inv.erros.push(fx.id + ': ' + dx.causas.length + ' causas');
+      dx.causas.filter(c => c.rede && c.meta != null && isFinite(c.val) && !/osVenc|osCritica/.test(c.ind)).forEach(c => { if (c.val > c.meta * 0.95) inv.erros.push(fx.id + ': ' + c.ind + ' colado na meta virou causa'); });
       dx.acoes.forEach(a => { if (!tm.has(a.tema)) inv.erros.push(fx.id + ': ação sem causa (' + a.tema + ')'); pt[a.tema] = (pt[a.tema] || 0) + 1; if (pt[a.tema] > 2) inv.erros.push(fx.id + ': 3+ ações em ' + a.tema); }); });
     return { inv, n: FATOS.length, maxVig: CTX.maxVig, setembro: FATOS.some(x => x.vig === '2026-09'), seguro: FATOS.some(x => x.pac === 'Seguros e licenças'),
       seg: seg && { over: seg.over, dpct: seg.dpct, txt: FcaAuto.desvioTxt(seg) }, outros: outros && { over: outros.over }, segD: seg && { causas: diag(seg).causas.map(c => c.txt), acoes: diag(seg).acoes.map(a => a.txt) },
@@ -275,7 +276,7 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
   af('DriverPro SÓ NA EMPURRADA: a nota plantada nas CDDs fica fora; a rede só tem os 8 meses de PIR, e ainda sai sustentada', X.redeNota && X.redeNota.sust && X.redeNota.r0 < -0.8 && X.redeNota.n0 === 8 && !(X.cgr && 'cond_nota' in X.cgr), JSON.stringify([X.redeNota, X.cgr && X.cgr.cond_nota]));
   af('…CGR ago/26 não ganha causa nem sinal de condução; em PIR ago/26 (nota 68 < 75) a condução entra como SINAL (a causa é a eficiência, e a ação do DriverPro fica com ela)', !X.cgrCond && X.pirSinal && !X.pirRede, JSON.stringify([X.cgrCausas, X.pirCausas]));
   const INV = r.inv || {};
-  af('EM TODOS OS FATOS: no máximo 3 causas, toda ação com o tema de uma causa mostrada e no máximo 2 ações por causa', INV.n > 0 && !INV.erros.length, JSON.stringify(INV));
+  af('EM TODOS OS FATOS: no máximo 3 causas, nenhum indicador a menos de 5% da meta como causa, toda ação com o tema de uma causa mostrada e no máximo 2 ações por causa', INV.n > 0 && !INV.erros.length, JSON.stringify(INV));
   const A = r.ang || {};
   af('SEARA pela Árvore da Seara: ANG ago/26 tem a ponte (Δ 25.000 = volume 11.111 + eficiência 4.000 + preço 7.000 + diferença 2.889)', A.seara && A.ponte && A.ponte.join() === '25000,11111,4000,7000,2889' && Math.abs(A.expl - 22111 / 25000) < 1e-4, JSON.stringify(A.ponte) + ' ' + A.expl);
   af('…Km/L 2,86 × 3,00 rem (KmPorLitro) e R$/L 6,00 × 5,50 (PrecoDiesel); ANG2B22 pela média do modelo (aviso)', A.kmL && Math.abs(A.kmL[0] - 40000 / 14000) < 1e-9 && A.kmL[1] === 3 && A.rsL[0] === 6 && A.rsL[1] === 5.5 && A.avisos.some(a => /1 placa\(s\) sem remunerado na Base Remunerado/.test(a)) && A.avisos.length === 1, JSON.stringify([A.kmL, A.rsL, A.avisos]));

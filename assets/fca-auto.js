@@ -768,7 +768,7 @@ function sinaisRede(f, ctx, D, excluir, apenas) {
   const ind = indicadores(f.uni, f.vig, ctx, lista); D.blocos.ind = ind;
   ind.filter(i => i.ruim).forEach(i => {
     const txt = `${i.rot}: ${fmtInd(i.k, i.val)} (${i.ref}). ${redeFala(i.rede, f.pac)}`;
-    if (i.rede && i.rede.sust) D.causas.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || 'Oficina / SLA', txt, rs: null, rede: true, ind: i.k, forca: i.rede.forca });
+    if (i.rede && i.rede.sust) D.causas.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || 'Oficina / SLA', txt, rs: null, rede: true, ind: i.k, forca: i.rede.forca, val: i.val, meta: METAS[i.k] });
     else if (METAS[i.k] != null || i.k === 'dispersao' || (i.rede && i.rede.forca >= 0.2 && Math.max(i.rede.n0 || 0, i.rede.n1 || 0) >= 30)) D.sinais.push({ tema: TEMA_IND[i.k] || TEMA_GRUPO[i.g] || '', txt, ind: i.k });
   });
   return ind;
@@ -852,7 +852,10 @@ const REDE_MANUT = ['prev', 'conf', 'sla', 'mttr', 'mtbf', 'osVenc', 'osCritica'
 const REDE_PNEUS = ['pneus'];
 /* fica só a causa da rede mais forte entre as permitidas; as demais viram sinal */
 function umaDaRede(D, permitidos) {
-  const rede = D.causas.filter(c => c.rede), fora = c => !permitidos.includes(c.ind);
+  // perto da meta não é causa (Renan, 14/10/2026, sobre o Checklist 94,3% × 95% ao lado do km do contrato):
+  // com meta, só entra quem está a 5% dela ou mais (OS vencida/crítica: acima da meta)
+  const longe = c => { if (c.meta == null || !fin(c.val)) return true; if (c.ind === 'osVenc' || c.ind === 'osCritica') return c.val > c.meta; return c.val <= c.meta * 0.95; };
+  const rede = D.causas.filter(c => c.rede), fora = c => !permitidos.includes(c.ind) || !longe(c);
   const ok = rede.filter(c => !fora(c)).sort((a, b) => (b.forca || 0) - (a.forca || 0));
   const fica = ok[0] || null;
   rede.forEach(c => { if (c !== fica) D.sinais.push({ tema: c.tema, txt: c.txt, ind: c.ind }); });
@@ -880,7 +883,13 @@ function diagManut(f, ctx, D, causa, acao, base) {
     const g1 = gr[0];
     if (g1) { const plG = somaPor(lanc.rows.filter(r => grupo(r) === g1.k && ehPlaca(r.equipamento)), r => r.equipamento, r => r.valor);
       const lista = plG.slice(0, 4).map(x => `${x.k} ${rs(x.v)}`); caras.filter(p => !plG.slice(0, 4).some(x => x.k === p.k)).forEach(p => lista.push(`${p.k} ${rs(p.v)} (${grupoDa(p.k)})`));
-      acao('Carta de Custos', `Causa raiz no grupo que mais pesou (${g1.k}) e nas placas mais caras: reincidência, idade, garantia e o que o contrato deveria cobrir`, lista, 'Corretiva / quebra'); }
+      // o que fazer depende do grupo: preventiva é custo de plano (conferir o lançado), "Diversos" esconde a causa (reclassificar)
+      const gk = NK(g1.k);
+      const txtG = /PREVENTIV|REVISAO/.test(gk) ? `Conferir as preventivas lançadas no mês (itens fora do plano, preço acima da tabela, serviço repetido) nas placas que mais custaram`
+        : /DIVERSOS|SEM GRUPO|OUTROS/.test(gk) ? `Reclassificar os lançamentos em "${g1.k}" na Carta de Custos (${pct(g1.v / tot * 100)} do lançado sem grupo definido) e conferir os de maior valor`
+        : /CONTRATO/.test(gk) ? `Conferir o que o contrato de manutenção cobrou além da fatura de km (serviços fora do escopo) nas placas que mais custaram`
+        : `Causa raiz no grupo que mais pesou (${g1.k}) e nas placas mais caras: reincidência, idade, garantia e o que o contrato deveria cobrir`;
+      acao('Carta de Custos', txtG, lista, 'Corretiva / quebra'); }
     if (conc) acao('Carta de Custos', `Auditar os orçamentos e cotar com outro fornecedor: ${conc.k} concentra ${pct(conc.v / tot * 100)} do lançado`, [], 'Peças / fornecedor');
   } else D.avisos.push('Sem lançamentos na Carta de Custos para este mês: a abertura por grupo, placa e fornecedor ficou de fora.');
   // contrato de manutenção: a fatura do mês V cobra o km de V−1 (Carta), cruzado com o km das placas variáveis
