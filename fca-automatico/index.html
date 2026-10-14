@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610150055">
+<meta name="build" content="202610150120">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -940,7 +940,7 @@ table.rel td.fato .fa-ano{font-size:10.5px;}
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610150055"></script>
+<script src="../assets/fca-auto.js?v=202610150120"></script>
 </head>
 <body>
 <div class="app">
@@ -1113,7 +1113,7 @@ function resumoHTML(vis){
 /* ACUMULADO DO ANO embaixo das causas, em todo pacote (Renan, 14/10/2026) */
 /* O ANO VIROU "YTD" E MORA NO FATO (Renan, 14/10/2026: "jogue o ano para o Fato e chama de YTD") */
 const anoHTML=d=>d.ano?`<div class="fa-ano"><span class="kl">YTD</span>${tri(esc(d.ano.txt))}</div>`:'';
-const causaHTML=c=>`${c.rede?'<span class="tema rede">rede</span>':''}${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}%)</b>`:''}`;
+const causaHTML=c=>`${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}%)</b>`:''}`;
 const acaoHTML=a=>`${esc(a.txt)}${a.ofens.length?`<small>${esc(a.ofens.slice(0,3).join(' · '))}${a.ofens.length>3?' …':''}</small>`:''}`;
 function linhaCausas(d,n){ const cs=d.causas.slice(0,n||9); if(!cs.length) return '<i style="color:var(--txt3)">Sem evidência nas bases para este mês</i>';
   return '<ol>'+cs.map(c=>`<li>${causaHTML(c)}</li>`).join('')+'</ol>'; }
@@ -1289,7 +1289,7 @@ function abreModal(id){
   document.getElementById('fm-sub').textContent=`Custos · ${f.uni} · ${f.proj} · ${f.vigLbl}${d.explicado!=null?' · explica '+Math.round(d.explicado*100)+'% do desvio em R$':''}`;
   const b=d.blocos, P=[];
   P.push(`<div class="fm-sec"><h4>Fato</h4><div class="fm-box">${nl(FA.desvioTxt(f))}${anoHTML(d)}</div></div>`);
-  P.push(`<div class="fm-sec"><h4>Causa automática</h4><div class="fm-box">${d.causas.length?'<ol>'+d.causas.map(c=>`<li><span class="tema${c.rede?' rede':''}">${esc(c.rede?'rede · '+c.tema:c.tema)}</span>${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}% do desvio)</b>`:''}</li>`).join('')+'</ol>':'<i>Sem evidência nas bases para este mês.</i>'}</div></div>`);
+  P.push(`<div class="fm-sec"><h4>Causa automática</h4><div class="fm-box">${d.causas.length?'<ol>'+d.causas.map(c=>`<li><span class="tema">${esc(c.tema)}</span>${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}% do desvio)</b>`:''}</li>`).join('')+'</ol>':'<i>Sem evidência nas bases para este mês.</i>'}</div></div>`);
   P.push(`<div class="fm-sec"><h4>Ação automática</h4><div class="fm-box">${d.acoes.length?'<ol>'+d.acoes.map(a=>`<li><span class="tema">${esc(a.tema)}</span>${esc(a.txt)}${a.ofens.length?`<span class="of">${esc(a.ofens.join(' · '))}</span>`:''}${a.taxa?`<span class="tx">${esc(a.taxa.txt)}</span>`:''}</li>`).join('')+'</ol>':'<i>—</i>'}</div></div>`);
   if(d.sinais.length) P.push(`<div class="fm-sec"><h4>Sinais a conferir (fora da meta, sem ligação comprovada na rede)</h4><div class="fm-box"><ul style="margin:0;padding-left:18px">${d.sinais.map(s=>`<li>${tri(esc(s.txt))}</li>`).join('')}</ul></div></div>`);
   if(b.ponte){ const p=b.ponte, row=(k,v,t)=>`<tr><td><b>${k}</b></td><td class="n" style="color:${v>0?'var(--vermelho)':v<0?'var(--verde)':'var(--txt2)'}"><b>${v==null?'—':(v>0?'+':'')+FA.rs(v)}</b></td><td>${t||''}</td></tr>`;
@@ -1387,6 +1387,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610150055"></script>
+<script src="../assets/build-check.js?v=202610150120"></script>
 </body>
 </html>

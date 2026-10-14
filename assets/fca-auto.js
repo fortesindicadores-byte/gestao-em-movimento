@@ -719,9 +719,15 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
   }
   // Arla (faz parte do pacote: entra no que as alavancas explicam)
   const ovArla = arla.rem - arla.real;    // negativos: estouro > 0
+  // ARLA SÓ VIRA CAUSA E AÇÃO ACIMA DE 10% DO DESVIO (Renan, 14/10/2026: "Arla só gere ações quando o valor
+  // representar um impacto maior que 10% de todo o desvio"); abaixo disso fica nos sinais (e segue contando
+  // no que as alavancas explicam).
   if (ovArla > 0 && Math.abs(arla.rem) > 0) {
-    causa('Arla', `Arla: ${rs(ovArla)} acima do remunerado (${sinalPct(ovArla / Math.abs(arla.rem) * 100, 0)})`, ovArla);
-    acao('Arla', `Conferir a proporção Arla/diesel por placa e o preço do Arla do mês`, [], 'Abastecimento / preço');
+    const txtArla = `Arla: ${rs(ovArla)} acima do remunerado (${sinalPct(ovArla / Math.abs(arla.rem) * 100, 0)})`;
+    if (f.over > 0 && ovArla > 0.1 * f.over) {
+      causa('Arla', txtArla, ovArla);
+      acao('Arla', `Conferir a proporção Arla/diesel por placa e o preço do Arla do mês`, [], 'Abastecimento / preço');
+    } else D.sinais.push({ tema: 'Arla', txt: txtArla + ` — abaixo de 10% do desvio, sem ação própria` });
   }
   // AS TRÊS ALAVANCAS EXPLICAM O DESVIO? (Renan, 14/10/2026: "Tanto Seara quanto Ambev, quando no
   // combustível os 3 parâmetros não explicarem diretamente o desvio (nunca vai bater na vírgula, mas
