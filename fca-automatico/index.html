@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610141020">
+<meta name="build" content="202610141300">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -884,6 +884,7 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 .fm-box li .tx{display:block;color:var(--azul);font-size:11px;margin-top:2px;}
 .fm-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;}
 .fm-aviso{font-size:11px;color:var(--ambar);margin-top:6px;}
+.fa-ano{margin-top:6px;padding-top:6px;border-top:1px dashed var(--linha);font-size:11px;font-weight:700;color:var(--txt2);}.fa-ano .kl{color:var(--txt3);font-weight:600;text-transform:uppercase;font-size:9.5px;letter-spacing:.5px;margin-right:4px;}.fa-rel .fa-ano{font-size:10.5px;}
 .copiar{margin-left:auto;}
 @media(max-width:860px){.fa-kpis{grid-template-columns:repeat(2,1fr);}.fa-dois,.fa-rede,.fm-two{grid-template-columns:1fr;}.board .main.res{overflow:visible;}}
 </style>
@@ -893,7 +894,8 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 <script src="../assets/correlacoes-dados.js?v=202610140300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
-<script src="../assets/fca-auto.js?v=202610141020"></script>
+<script src="../assets/seara-bench-modelo.js"></script>
+<script src="../assets/fca-auto.js?v=202610141300"></script>
 </head>
 <body>
 <div class="app">
@@ -1063,8 +1065,10 @@ function resumoHTML(vis){
     </div></div>`;
 }
 /* ── TABELA (o clone da Tabela do FCA, com causa e ação automáticas) ── */
-function linhaCausas(d,n){ const cs=d.causas.slice(0,n||9); if(!cs.length) return '<i style="color:var(--txt3)">Sem evidência nas bases para este mês</i>';
-  return '<ol>'+cs.map(c=>`<li>${c.rede?'<span class="tema rede">rede</span>':''}${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}%)</b>`:''}</li>`).join('')+'</ol>'; }
+/* ACUMULADO DO ANO embaixo das causas, em todo pacote (Renan, 14/10/2026) */
+const anoHTML=d=>d.ano?`<div class="fa-ano"><span class="kl">Ano</span>${tri(esc(d.ano.txt))}</div>`:'';
+function linhaCausas(d,n){ const cs=d.causas.slice(0,n||9); if(!cs.length) return '<i style="color:var(--txt3)">Sem evidência nas bases para este mês</i>'+anoHTML(d);
+  return '<ol>'+cs.map(c=>`<li>${c.rede?'<span class="tema rede">rede</span>':''}${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}%)</b>`:''}</li>`).join('')+'</ol>'+anoHTML(d); }
 function linhaAcoes(d,n){ const as=d.acoes.slice(0,n||9); if(!as.length) return '<i style="color:var(--txt3)">—</i>';
   return '<ol>'+as.map(a=>`<li>${esc(a.txt)}${a.ofens.length?`<small>${esc(a.ofens.slice(0,3).join(' · '))}${a.ofens.length>3?' …':''}</small>`:''}</li>`).join('')+'</ol>'; }
 function tabelaHTML(vis){
@@ -1086,6 +1090,7 @@ function kcardHTML(f){ const d=diag(f); const c1=d.causas[0], a1=d.acoes[0];
     <div class="kcard-top"><span class="korg cst">Custos</span> ${esc(f.uni)} · ${esc(f.proj)} · ${esc(f.vigLbl)}</div>
     <div class="kcard-fato">${esc(f.pac)} · ${FA.rs(f.over)} <span style="color:var(--txt3);font-weight:600">(▲ ${Math.round(f.dpct)}%)</span></div>
     <div class="kcard-causa"><span class="kl">Causa:</span> ${c1?tri(esc(c1.txt)):'<i>sem evidência nas bases</i>'}</div>
+    ${d.ano?`<div class="kcard-causa"><span class="kl">Ano:</span> ${tri(esc(d.ano.txt.replace(/ · curva de captura:.*$/,'').replace(/ · tratar.*$/,' · pontual')))}</div>`:''}
     <div class="kcard-ac"><span class="kl">Ação:</span> ${a1?esc(a1.txt)+(a1.ofens.length?' ('+esc(a1.ofens.slice(0,2).join(' · '))+')':''):'<i>—</i>'}</div>
     <div class="kcard-meta"><span>${d.causas.length} causa(s) · ${d.acoes.length} ação(ões)</span> ${d.explicado!=null?pctBadge(d.explicado):''}</div></div>`; }
 function kanbanHTML(vis){
@@ -1098,8 +1103,8 @@ function kanbanHTML(vis){
 const rTxt=(r,n,q,ap)=>!isFinite(r)||n<8?'<span style="color:var(--txt4)">poucos pontos</span>':`<b style="color:${ap?(q<.1?'var(--vermelho)':'var(--txt)'):'var(--txt3)'}">${FA.br(r,2)}</b> <span style="color:var(--txt3)">${FA.forcaTxt(r)}${q<.1?'':' · pode ser acaso'}</span>`;
 function redeHTML(){
   const R=CTX.rede||{};
-  return `<div class="fa-nota">Tudo o que o banco tem por unidade × mês entra: indicadores do Ginfo/Gerot, Dispersão de km, disponibilidade, condução (DriverPro), frota (idade, contrato, dias parados, ERP), bases de combustível, Carta de Custos e o próprio FCA. Cada linha cruza o desvio do pacote (realizado ÷ remunerado − 1) com a variável, em todas as unidades × meses. <b>Mesmo mês</b> = os dois no mesmo mês; <b>mês seguinte</b> = o indicador de um mês contra o desvio do mês seguinte, na mesma unidade. Em vermelho, quando o indicador pior vem junto com o desvio maior e dificilmente é acaso (p ajustado &lt; 0,10, Benjamini-Hochberg): é o que o motor usa para chamar um indicador fora da meta de causa. Correlação não é causa: é a pista de onde olhar primeiro.</div>
-  <div class="fa-nota">Seguros e licenças, ICMS e Outros não têm base operacional para cruzar: entram como fato (a mesma regra do FCA), com a conta que estourou como causa.</div>
+  return `<div class="fa-nota">Tudo o que o banco tem por unidade × mês entra: indicadores do Ginfo/Gerot, Dispersão de km, disponibilidade, condução (DriverPro, <b>só da Empurrada</b>: a Rota ainda tem Trimble/Veltec), frota (idade, contrato, dias parados, ERP), bases de combustível (na Seara, as abas da Árvore da Seara), Carta de Custos e o próprio FCA. Cada linha cruza o desvio do pacote (realizado ÷ remunerado − 1) com a variável, em todas as unidades × meses. <b>Mesmo mês</b> = os dois no mesmo mês; <b>mês seguinte</b> = o indicador de um mês contra o desvio do mês seguinte, na mesma unidade. Em vermelho, quando o indicador pior vem junto com o desvio maior e dificilmente é acaso (p ajustado &lt; 0,10, Benjamini-Hochberg): é o que o motor usa para chamar um indicador fora da meta de causa. Correlação não é causa: é a pista de onde olhar primeiro.</div>
+  <div class="fa-nota">Seguros e licenças, ICMS e Outros não têm base operacional para cruzar: entram como fato (a mesma regra do FCA), com a conta que estourou como causa. Em todo pacote, embaixo das causas, vai o acumulado do ano: desvio com a curva de captura, ou saving (aí o desvio do mês é pontual).</div>
   <div class="fa-rede">${FA.PACOTES.map(p=>`<div class="bloco"><div class="bhead"><h3>${p}</h3></div><div class="corpo"><table class="fa-t"><thead><tr><th>Indicador</th><th>Mesmo mês</th><th>Mês seguinte</th></tr></thead><tbody>
     ${(R[p]||[]).map(e=>`<tr><td><b>${esc(e.rot)}</b>${e.sust?' <span class="tema rede">sustenta</span>':''}<br><span style="color:var(--txt3);font-size:10.5px">${esc(e.g||'')} · ${e.n0} unidade-mês</span></td><td>${rTxt(e.r0,e.n0,e.q0,e.apoia0)}</td><td>${rTxt(e.r1,e.n1,e.q1,e.apoia1)}</td></tr>`).join('')}
   </tbody></table></div></div>`).join('')}</div>`;
@@ -1153,15 +1158,16 @@ function abreModal(id){
   document.getElementById('fm-sub').textContent=`Custos · ${f.uni} · ${f.proj} · ${f.vigLbl}${d.explicado!=null?' · explica '+Math.round(d.explicado*100)+'% do desvio em R$':''}`;
   const b=d.blocos, P=[];
   P.push(`<div class="fm-sec"><h4>Fato</h4><div class="fm-box">${nl(FA.desvioTxt(f))}</div></div>`);
-  P.push(`<div class="fm-sec"><h4>Causa automática</h4><div class="fm-box">${d.causas.length?'<ol>'+d.causas.map(c=>`<li><span class="tema${c.rede?' rede':''}">${esc(c.rede?'rede · '+c.tema:c.tema)}</span>${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}% do desvio)</b>`:''}</li>`).join('')+'</ol>':'<i>Sem evidência nas bases para este mês.</i>'}</div></div>`);
+  P.push(`<div class="fm-sec"><h4>Causa automática</h4><div class="fm-box">${d.causas.length?'<ol>'+d.causas.map(c=>`<li><span class="tema${c.rede?' rede':''}">${esc(c.rede?'rede · '+c.tema:c.tema)}</span>${tri(esc(c.txt))}${c.part?` <b>(${Math.round(c.part*100)}% do desvio)</b>`:''}</li>`).join('')+'</ol>':'<i>Sem evidência nas bases para este mês.</i>'}${anoHTML(d)}</div></div>`);
   P.push(`<div class="fm-sec"><h4>Ação automática</h4><div class="fm-box">${d.acoes.length?'<ol>'+d.acoes.map(a=>`<li><span class="tema">${esc(a.tema)}</span>${esc(a.txt)}${a.ofens.length?`<span class="of">${esc(a.ofens.join(' · '))}</span>`:''}${a.taxa?`<span class="tx">${esc(a.taxa.txt)}</span>`:''}</li>`).join('')+'</ol>':'<i>—</i>'}</div></div>`);
   if(d.sinais.length) P.push(`<div class="fm-sec"><h4>Sinais a conferir (fora da meta, sem ligação comprovada na rede)</h4><div class="fm-box"><ul style="margin:0;padding-left:18px">${d.sinais.map(s=>`<li>${tri(esc(s.txt))}</li>`).join('')}</ul></div></div>`);
   if(b.ponte){ const p=b.ponte, row=(k,v,t)=>`<tr><td><b>${k}</b></td><td class="n" style="color:${v>0?'var(--vermelho)':v<0?'var(--verde)':'var(--txt2)'}"><b>${v==null?'—':(v>0?'+':'')+FA.rs(v)}</b></td><td>${t||''}</td></tr>`;
-    P.push(`<div class="fm-sec"><h4>Ponte da conta Combustíveis (a mesma da Árvore de Combustível)</h4><div class="fm-box"><table class="fa-t"><thead><tr><th>Parte</th><th class="n">R$</th><th>Como sai</th></tr></thead><tbody>
+    const se=b.seara;
+    P.push(`<div class="fm-sec"><h4>Ponte da conta Combustíveis (a mesma da ${se?'Árvore da Seara':'Árvore de Combustível'})</h4><div class="fm-box"><table class="fa-t"><thead><tr><th>Parte</th><th class="n">R$</th><th>Como sai</th></tr></thead><tbody>
       ${row('Δ custo (DRE)',p.dCusto,'realizado − remunerado da conta Combustíveis, sem Arla')}
-      ${row('Volume',p.vol,'(km real − km rem) × R$/km rem — Dispersão de km')}
-      ${row('Eficiência (Km/L)',p.efic,'(litros − litros previstos pela régua) × R$/L rem — aba Km/L')}
-      ${row('Preço (R$/L)',p.preco,'R$ abastecido − preço rem × litros — abas Km/L e R$/L')}
+      ${row('Volume',p.vol,se?'(km real − km rem) × R$/km rem — abas Combustível e Remunerado da Seara':'(km real − km rem) × R$/km rem — Dispersão de km')}
+      ${row('Eficiência (Km/L)',p.efic,se?'(km ÷ Km/L real − km ÷ Km/L rem) × R$/L real — Combustível e Base Remunerado (KmPorLitro)':'(litros − litros previstos pela régua) × R$/L rem — aba Km/L')}
+      ${row('Preço (R$/L)',p.preco,se?'R$ abastecido − PrecoDiesel × litros — Combustível e Base Remunerado':'R$ abastecido − preço rem × litros — abas Km/L e R$/L')}
       ${row('Diferença DRE × bases',p.dif,'o que o km, a eficiência e o preço não explicam')}</tbody></table></div></div>`); }
   if(b.ind&&b.ind.length) P.push(`<div class="fm-sec"><h4>Tudo o que a rede cruza, na unidade e no mês (fora da meta ou no pior quartil primeiro)</h4><div class="fm-box"><table class="fa-t"><thead><tr><th>Indicador</th><th class="n">Valor</th><th>Referência</th><th>Na rede</th></tr></thead><tbody>
     ${b.ind.slice().sort((x,y)=>(y.ruim===true)-(x.ruim===true)||((y.rede&&y.rede.forca)||0)-((x.rede&&x.rede.forca)||0)).map(i=>`<tr><td><b>${esc(i.rot)}</b><br><span style="color:var(--txt3);font-size:10.5px">${esc(i.g||'')}</span></td><td class="n" style="color:${i.ruim?'var(--vermelho)':i.ruim===false?'var(--verde)':'var(--txt2)'}"><b>${FA.fmtInd(i.k,i.val)}</b></td><td>${esc(i.ref||'—')}</td><td>${esc(FA.redeLeitura(i.rede))}</td></tr>`).join('')}</tbody></table></div></div>`);
@@ -1241,6 +1247,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610141020"></script>
+<script src="../assets/build-check.js?v=202610141300"></script>
 </body>
 </html>

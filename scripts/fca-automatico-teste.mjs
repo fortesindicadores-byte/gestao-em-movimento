@@ -49,7 +49,8 @@ let seed = 11; const rnd = () => { seed = (seed * 1103515245 + 12345) % 21474836
 const VIGS = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08'];
 const U = { CGR: ['CAMPO GRANDE', 'ROTA - CGR', 'CDD RIO DE JANEIRO'], GRL: ['GUARULHOS', 'ROTA - GRL', 'CDD GUARULHOS'], PIR: ['PIRAÍ', 'EMPURRADA - PIR', 'PIRAI EMPURRADA'],
   'CBA T2': ['CUIABÁ', 'ROTA - CBA', 'CDD CUIABA'], FLP: ['FLORIANÓPOLIS', 'ROTA - FLP', 'CDD FLORIANOPOLIS'], NFR: ['NOVA FRIBURGO', 'ROTA - NFR', 'CDD NOVA FRIBURGO'],
-  PLT: ['PELOTAS', 'ROTA - PLT', 'CDD PELOTAS'], RON: ['RONDONÓPOLIS', 'ROTA - RON', 'CDD RONDONOPOLIS'], BLC: ['BALNEÁRIO CAMBORIÚ', 'ROTA - BLC', 'CDD CAMBORIU'], 'MCC T2': ['CACHOEIRAS DE MACACU', 'ROTA - MCC', 'CDI MACACU'] };
+  PLT: ['PELOTAS', 'ROTA - PLT', 'CDD PELOTAS'], RON: ['RONDONÓPOLIS', 'ROTA - RON', 'CDD RONDONOPOLIS'], BLC: ['BALNEÁRIO CAMBORIÚ', 'ROTA - BLC', 'CDD CAMBORIU'], 'MCC T2': ['CACHOEIRAS DE MACACU', 'ROTA - MCC', 'CDI MACACU'],
+  ANG: ['ANHANGUERA', 'DISTRIBUIÇÃO URBANA - ANG', 'ANHANGUERA'] };
 const G = [];   // uma linha por unidade × mês, com as relações PLANTADAS
 Object.keys(U).forEach(u => VIGS.forEach(v => {
   const sla = 55 + rnd() * 40;                                  // SLA de manutenção
@@ -66,6 +67,12 @@ Object.assign(g('GRL', '2026-07'), { manRem: 100000, manReal: 130000, sla: 45 })
 Object.assign(g('GRL', '2026-08'), { manRem: 100000, manReal: 115000, sla: 50, prev: 80 });
 // PIR ago/26: combustível com eficiência ruim, sem volume e sem preço
 Object.assign(g('PIR', '2026-08'), { combRem: 100000, combReal: 120000, arlaReal: 5000, kmRem: 50000, kmReal: 50000, pnRem: 30000, pnReal: 40000 });
+// ANG (Seara) ago/26: a ponte pela Árvore da Seara — custo 100 → 125 mil; km rem 36.000 × real 40.000 (abas Remunerado/Combustível)
+Object.assign(g('ANG', '2026-08'), { combRem: 100000, combReal: 125000, arlaRem: 5000, arlaReal: 5000 });
+// acumulado do ano do GRL Manutenções: jan→jun no remunerado, jul +30 mil, ago +15 mil ⇒ ano ▲ 45 mil (5,6% de 800 mil), 4 meses restantes
+VIGS.slice(0, 6).forEach(v => Object.assign(g('GRL', v), { manRem: 100000, manReal: 100000 }));
+// CGR Pneus: saving no ano (todo mês 5% abaixo) e um estouro só em ago
+VIGS.forEach(v => Object.assign(g('CGR', v), { pnRem: 30000, pnReal: v === '2026-08' ? 31000 : 28000 }));
 
 const DATE = v => `Date(${v.slice(0, 4)},${+v.slice(5, 7) - 1},1)`;
 const FROTA_COLS = ['VIGÊNCIA', 'Δ ORÇ (BRL)', 'Δ REM (BRL)', 'Unidade', 'NÍVEL 3', 'CONTA GERENCIAL', 'MÊS', 'ANO', 'ORÇADO', 'REMUNERADO', 'REALIZADO'];
@@ -98,6 +105,17 @@ const gvizRsl = () => ({ status: 'ok', table: { cols: ['Unidade Benner', 'TipoCo
   { c: [{ v: 'ROTA - CGR' }, { v: 'DIESEL S10' }, { v: null }, { v: DATE('2026-08') }, { v: 5.8 }] },
   { c: [{ v: 'EMPURRADA - PIR' }, { v: 'DIESEL S10' }, { v: null }, { v: DATE('2026-08') }, { v: 5.8 }] },
   { c: [{ v: 'ROTA - GRL' }, { v: 'DIESEL S10' }, { v: null }, { v: DATE('2026-08') }, { v: 6.0 }] } ] } });
+// SEARA: as três abas da Árvore da Seara (Combustível por gid, Base Remunerado gid 0, Remunerado por nome com tq)
+const SEARA_ID = '1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE';
+const sc = (placa, mes, ano, modelo, km, lit, tot) => { const c = new Array(14).fill(null).map(() => ({ v: null })); c[4] = { v: placa }; c[5] = { v: mes }; c[6] = { v: ano }; c[7] = { v: modelo }; c[10] = { v: km }; c[11] = { v: lit }; c[13] = { v: tot }; return { c }; };
+const gvizSearaComb = () => ({ status: 'ok', table: { cols: ['A', 'B', 'C', 'D', 'Placa', 'Mês', 'Ano', 'Modelo', 'I', 'Tipo', 'Km Rodado', 'Litros', 'M', 'Total R$'].map(l => ({ label: l })), rows: [
+  sc('ANG1A11', 'ago', 2026, 'VW/11.180 DRC 4X2', 20000, 8000, 48000), sc('ANG2B22', 'ago', 2026, 'VW 11.180', 20000, 6000, 36000), sc('ANG1A11', 'jul', 2026, 'VW/11.180 DRC 4X2', 19000, 6500, 39000) ] } });
+// Base Remunerado só tem a ANG1A11: a ANG2B22 recebe a média do modelo (11.180)
+const gvizSearaBrem = () => ({ status: 'ok', table: { cols: ['Vigencia', 'Empresa', 'Unidade', 'Placa', 'Tipo', 'ModeloVeiculo', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'TotalReaisPorKm', 'KmPorLitro', 'Q', 'PrecoDiesel'].map(l => ({ label: l })), rows: [
+  { c: [{ v: '08/2026' }, { v: 'SEARA' }, { v: 'ANHANGUERA' }, { v: 'ANG1A11' }, { v: 'x' }, { v: 'VW/11.180 DRC 4X2' }, { v: null }, { v: null }, { v: null }, { v: null }, { v: null }, { v: null }, { v: null }, { v: null }, { v: 2 }, { v: 3.0 }, { v: null }, { v: 5.5 }] },
+  { c: [{ v: '07/2026' }, { v: 'SEARA' }, { v: 'ANHANGUERA' }, { v: 'ANG1A11' }, { v: 'x' }, { v: 'VW/11.180 DRC 4X2' }, { v: null }, { v: null }, { v: null }, { v: null }, { v: null }, { v: null }, { v: null }, { v: null }, { v: 2 }, { v: 3.0 }, { v: null }, { v: 5.4 }] } ] } });
+const gvizSearaRem = () => ({ status: 'ok', table: { cols: ['Vigência', 'Placa', 'KM'].map(l => ({ label: l })), rows: [
+  { c: [{ v: '08/2026' }, { v: 'ANG1A11' }, { v: 18000 }] }, { c: [{ v: '08/2026' }, { v: 'ANG2B22' }, { v: 18000 }] }, { c: [{ v: '07/2026' }, { v: 'ANG1A11' }, { v: 18500 }] } ] } });
 // Gerot: o contrato que o CorrDados usa (records com o NOME da unidade)
 const RECS = G.flatMap(x => [{ field: 'sla', unit: U[x.u][2], vig: x.v, real: x.sla }, { field: 'prev', unit: U[x.u][2], vig: x.v, real: x.prev }, { field: 'disp', unit: U[x.u][2], vig: x.v, real: 96 }]);
 const FIL2COD = Object.fromEntries(Object.entries(U).map(([c, a]) => [a[2], c]));
@@ -113,6 +131,7 @@ const T = {
     { id: 1, unidade: 'GRL', vigencia: '2026-08', pacote: 'Manutenção', conta: 'Manutenção de Veículos e Equip.', grupo: 'Freios', equipamento: 'GRL1A11', fornecedor: 'Oficina Alfa', valor: 18000, nf: '10', projeto: 'ROTA' },
     { id: 2, unidade: 'GRL', vigencia: '2026-08', pacote: 'Manutenção', conta: 'Manutenção de Veículos e Equip.', grupo: 'Freios', equipamento: 'GRL2B22', fornecedor: 'Oficina Alfa', valor: 12000, nf: '11', projeto: 'ROTA' },
     { id: 3, unidade: 'GRL', vigencia: '2026-08', pacote: 'Manutenção', conta: 'Manutenção de Veículos e Equip.', grupo: 'Motor', equipamento: 'GRL3C33', fornecedor: 'Retífica Beta', valor: 10000, nf: '12', projeto: 'ROTA' },
+    { id: 5, unidade: 'GRL', vigencia: '2026-08', pacote: 'Manutenção', conta: 'Manutenção de Veículos e Equip.', grupo: 'Embreagem', equipamento: 'GRL4D44', fornecedor: 'Retífica Beta', valor: 60000, nf: '14', projeto: 'ROTA' },
     { id: 4, unidade: 'PIR', vigencia: '2026-08', pacote: 'Pneus', conta: 'Pneus Novos', grupo: 'Pneus Novos', equipamento: 'PIR1A11', fornecedor: 'Pneus Gama', valor: 9000, nf: '13', projeto: 'EMPURRADA' } ],
   ginfo_snapshot: [
     { chave: 'ativos', data: [{ Placa: 'GRL1A11', Projeto: 'ROTA', 'Ano Fabricação': 2020 }, { Placa: 'PIR1A11', Projeto: 'EMPURRADA', 'Ano Fabricação': 2024 }] },
@@ -150,8 +169,10 @@ async function abre({ admin = true, w = 1600, h = 900, tema = 'dark' } = {}) {
   await ctx.route('**/assets/gerot-base.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: STUB_GEROT }));
   await ctx.route('**/cdn.jsdelivr.net/**', r => { const u = r.request().url();
     r.fulfill({ status: 200, contentType: 'application/javascript', body: u.includes('supabase') ? SHIM_SB(admin) : u.includes('html2canvas') ? 'window.html2canvas=async()=>document.createElement("canvas");' : '' }); });
-  await ctx.route('**/docs.google.com/**', r => { const u = r.request().url(); const aba = decodeURIComponent((u.match(/sheet=([^&]+)/) || [])[1] || '');
-    const j = aba === 'Frota' ? gvizFrota() : aba === 'Receita Líquida' ? gvizReceita() : aba === 'Dispersão de km' ? gvizDisp() : aba === 'Km/L' ? gvizKml() : aba === 'R$/L' ? gvizRsl() : { status: 'error', errors: [{ message: 'aba desconhecida ' + aba }] };
+  await ctx.route('**/lozwipoeacpvplgkrxkq.supabase.co/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+  await ctx.route('**/docs.google.com/**', r => { const u = r.request().url(); const aba = decodeURIComponent((u.match(/sheet=([^&]+)/) || [])[1] || ''); const gid = (u.match(/gid=(\d+)/) || [])[1];
+    const j = aba === 'Frota' ? gvizFrota() : aba === 'Receita Líquida' ? gvizReceita() : aba === 'Dispersão de km' ? gvizDisp() : aba === 'Km/L' ? gvizKml() : aba === 'R$/L' ? gvizRsl()
+      : aba === 'Remunerado' && u.includes(SEARA_ID) ? gvizSearaRem() : gid === '1982300845' ? gvizSearaComb() : gid === '0' && u.includes(SEARA_ID) ? gvizSearaBrem() : { status: 'error', errors: [{ message: 'aba desconhecida ' + aba }] };
     r.fulfill({ status: 200, contentType: 'text/plain', body: '/*O_o*/\ngoogle.visualization.Query.setResponse(' + JSON.stringify(j) + ');' }); });
   const pg = await ctx.newPage();
   const errs = []; pg.on('pageerror', e => errs.push(e.message));
@@ -174,6 +195,7 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
     const cgr = f('CGR|ROTA|Combustíveis|2026-08'), grl = f('GRL|ROTA|Manutenções|2026-08'), pir = f('PIR|EMPURRADA|Pneus|2026-08'), pirc = f('PIR|EMPURRADA|Combustíveis|2026-08'), van = f('GRL|VAN|Combustíveis|2026-08');
     const d = cgr && diag(cgr), dg = grl && diag(grl), dp = pir && diag(pir), dpc = pirc && diag(pirc), dv = van && diag(van);
     const seg = f('CGR|ROTA|Seguros e licenças|2026-08'), outros = f('CGR|ROTA|Outros|2026-08');
+    const ang = f('ANG|DISTRIBUICAO URBANA|Combustíveis|2026-08'), da = ang && diag(ang), cgrp = f('CGR|ROTA|Pneus|2026-08');
     return { n: FATOS.length, maxVig: CTX.maxVig, setembro: FATOS.some(x => x.vig === '2026-09'), seguro: FATOS.some(x => x.pac === 'Seguros e licenças'),
       seg: seg && { over: seg.over, dpct: seg.dpct, txt: FcaAuto.desvioTxt(seg) }, outros: outros && { over: outros.over }, segD: seg && { causas: diag(seg).causas.map(c => c.txt), acoes: diag(seg).acoes.map(a => a.txt) },
       cgr: cgr && { over: cgr.over, contas: cgr.contas.map(c => [c.conta, Math.round(c.ov)]), txt: FcaAuto.desvioTxt(cgr) },
@@ -183,11 +205,16 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
       pir: dp && { causas: dp.causas.map(c => c.txt), acoes: dp.acoes.map(a => [a.txt, a.ofens]) },
       pirc: dpc && { acoes: dpc.acoes.map(a => [a.tema, a.ofens]), efic: dpc.blocos.comb && dpc.blocos.comb.efic, sinais: dpc.sinais.map(s => s.txt), avisos: dpc.avisos },
       van: dv && { comb: dv.blocos.comb && { lit: dv.blocos.comb.lit, rsLRem: dv.blocos.comb.rsLRem } },
+      ang: da && { over: ang.over, seara: da.blocos.seara, ponte: da.blocos.ponte && ['dCusto', 'vol', 'efic', 'preco', 'dif'].map(k => Math.round(da.blocos.ponte[k])), kmL: [da.blocos.comb.kmLReal, da.blocos.comb.kmLRem], rsL: [da.blocos.comb.rsLReal, da.blocos.comb.rsLRem],
+        expl: da.explicado, avisos: da.avisos, ofE: (da.acoes.find(a => a.tema === 'Condução') || {}).ofens, ofP: (da.acoes.find(a => a.tema === 'Abastecimento / preço') || {}).ofens, gap: CTX.fatoUni['ANG|2026-08'] },
+      ano: { grl: dg && dg.ano, cgrp: cgrp && diag(cgrp).ano, cgr: d && d.ano, txt: dg && dg.causaTxt },
+      fontes: LIDO.fontes.map(x => [x.nome, x.estado, x.linhas]),
       redeManut: (CTX.rede['Manutenções'] || []).filter(e => e.x === 'sla').map(e => ({ r0: +e.r0.toFixed(2), n0: e.n0, sust: e.sust, q0: e.q0 })),
       aprend: CTX.aprend.temas.map(t => [t.pac, t.tema, t.aval, t.melhor]), casos: CTX.aprend.casos.map(c => [c.uni, c.vig, c.res]),
       extra: { cat: Object.keys(CTX.cat), nRede: (CTX.rede['Manutenções'] || []).length, pir: CTX.fatoUni['PIR|2026-08'], grl: CTX.fatoUni['GRL|2026-08'], grlJul: CTX.fatoUni['GRL|2026-07'], cgr: CTX.fatoUni['CGR|2026-08'],
         redeNota: (CTX.rede['Combustíveis'] || []).find(e => e.x === 'cond_nota'),
-        cgrCausas: d && d.causas.map(c => [c.ind || c.tema, !!c.rede]), cgrCausa: !!(d && d.causas.some(c => c.rede && c.ind === 'cond_nota') && !d.sinais.some(x => x.ind === 'cond_nota')) } };
+        cgrCausas: d && d.causas.map(c => [c.ind || c.tema, !!c.rede]), cgrCond: !!(d && (d.causas.some(c => /^cond_/.test(c.ind || '')) || d.sinais.some(x => /^cond_/.test(x.ind || '')))),
+        pirCausa: !!(dpc && dpc.causas.some(c => c.rede && c.ind === 'cond_nota') && !dpc.sinais.some(x => x.ind === 'cond_nota')), pirCausas: dpc && dpc.causas.map(c => [c.ind || c.tema, !!c.rede]) } };
   });
   af('fatos: a regra do FCA — todo pacote que estourou, inclusive Seguros e licenças e Outros; set/26 (só orçado) fora', r.n > 0 && !r.setembro && r.seguro && r.maxVig === '2026-08', `${r.n} fatos · DRE até ${r.maxVig}`);
   af('Seguro vira fato "Seguros e licenças" de R$ 4.000 (+80%); IPVA (excluído no FCA) não entra; Depreciação cai em "Outros"', r.seg && Math.round(r.seg.over) === 4000 && Math.round(r.seg.dpct) === 80 && !r.seg.txt.includes('IPVA') && r.outros && Math.round(r.outros.over) === 500, JSON.stringify([r.seg, r.outros]));
@@ -204,14 +231,18 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
   af('ofensores de preço na ordem do R$ pago acima (A 2.000, B 1.600, C 1.200)', ofP && ofP[1].map(x => x.slice(0, 7)).join(',') === 'CGR0A01,CGR0B02,CGR0C03', JSON.stringify(ofP));
   af('VAN: "ROTA (VAN) - GRL" do DRE casa com "VAN - GRL" da Km/L e usa o preço do ROTA (6,00)', r.van && r.van.comb && r.van.comb.lit === 1200 && r.van.comb.rsLRem === 6, JSON.stringify(r.van));
   const G1 = r.grl || { causas: [], acoes: [] };
-  af('Manutenções: a Carta diz onde o dinheiro foi (Freios R$ 30 mil, 75% de R$ 40 mil)', G1.causas.some(c => /Freios R\$ 30,0 mil \(75% do lançado de R\$ 40,0 mil\)/.test(c[2])), JSON.stringify(G1.causas.map(c => c[2].slice(0, 90))));
+  af('Manutenções: GRUPOS primeiro (Embreagem R$ 60 mil, 60% de R$ 100 mil; Freios 30%; Motor 10%)', G1.causas[0] && /^Grupos que mais gastaram \(Carta de Custos\): Embreagem R\$ 60,0 mil \(60% do lançado de R\$ 100,0 mil\), Freios R\$ 30,0 mil \(30%\), Motor R\$ 10,0 mil \(10%\)$/.test(G1.causas[0][2]), JSON.stringify(G1.causas.map(c => c[2].slice(0, 120))));
+  af('…placa com gasto muito alto traz o valor e o grupo (GRL4D44 R$ 60 mil, Embreagem)', G1.causas.some(c => /^Placas com gasto muito alto: GRL4D44 R\$ 60,0 mil \(Embreagem R\$ 60,0 mil\)$/.test(c[2])), '');
+  af('…e o fornecedor que concentra (Retífica Beta 70%) vira causa', G1.causas.some(c => /^Fornecedor que concentra o gasto: Retífica Beta R\$ 70,0 mil \(70% do lançado\)$/.test(c[2])), '');
+  const aGr = G1.acoes.find(a => /Atacar o grupo que mais pesa \(Embreagem\)/.test(a[1]));
+  af('ação: atacar o grupo que mais pesa, com as placas desse grupo', aGr && aGr[2].join() === 'GRL4D44 R$ 60,0 mil', JSON.stringify(aGr));
   af('rede: SLA × desvio de Manutenções plantado sai forte, sentido certo e sustentado', r.redeManut[0] && r.redeManut[0].r0 < -0.8 && r.redeManut[0].sust, JSON.stringify(r.redeManut));
   af('SLA 50% (meta 75%) vira causa "rede" no GRL', G1.causas.some(c => c[1] && /SLA de manutenção 50,0% \(meta 75,0%\); na rede, ligação forte/.test(c[2])), JSON.stringify(G1.causas.filter(c => c[1])));
-  const aPrev = G1.acoes.find(a => a[0] === 'Preventiva'), aSla = G1.acoes.find(a => a[0] === 'Oficina / SLA'), aRaiz = G1.acoes.find(a => /causa raiz/.test(a[1])), aFor = G1.acoes.find(a => a[0] === 'Peças / fornecedor');
+  const aPrev = G1.acoes.find(a => a[0] === 'Preventiva'), aSla = G1.acoes.find(a => a[0] === 'Oficina / SLA'), aRaiz = G1.acoes.find(a => /placas que mais custaram/.test(a[1])), aFor = G1.acoes.find(a => a[0] === 'Peças / fornecedor');
   af('ação: preventivas vencidas do Ginfo de hoje com a placa (GRL4D44, 12d)', aPrev && aPrev[2].join() === 'GRL4D44 (12d)', JSON.stringify(aPrev));
   af('ação: OS em aberto, da mais velha (OS 777 há 30 dias, Alta)', aSla && aSla[2][0] === 'OS 777 GRL6F66 30d (Alta)', JSON.stringify(aSla));
-  af('ação: causa raiz nas placas que mais custaram (GRL1A11 R$ 18,0 mil primeiro)', aRaiz && aRaiz[2][0] === 'GRL1A11 R$ 18,0 mil', JSON.stringify(aRaiz));
-  af('ação: fornecedor que concentra o gasto (Oficina Alfa 75%)', aFor && /^Oficina Alfa R\$ 30,0 mil \(75%\)$/.test(aFor[2][0]), JSON.stringify(aFor));
+  af('ação: causa raiz nas placas que mais custaram, cada uma com o grupo (GRL4D44 R$ 60,0 mil (Embreagem…) primeiro)', aRaiz && aRaiz[2][0] === 'GRL4D44 R$ 60,0 mil (Embreagem R$ 60,0 mil)' && aRaiz[2][1] === 'GRL1A11 R$ 18,0 mil (Freios R$ 18,0 mil)', JSON.stringify(aRaiz));
+  af('ação: fornecedor que concentra o gasto (Retífica Beta 70%)', aFor && /^Retífica Beta R\$ 70,0 mil \(70%\)$/.test(aFor[2][0]), JSON.stringify(aFor));
   af('aprendizado: FCA de jul/26 do GRL "melhorou" (30 mil → 15 mil no mês seguinte)', G1.hist.length === 1 && G1.hist[0][1] === 'melhorou' && Math.round(G1.hist[0][2]) === 30000 && Math.round(G1.hist[0][3]) === 15000, JSON.stringify(G1.hist));
   af('…e a ação de SLA traz a taxa do tema na rede (1 de 1)', aSla && /FCAs de oficina \/ sla em Manutenções melhoraram o mês seguinte em 1 de 1/.test(aSla[3] || ''), JSON.stringify(aSla && aSla[3]));
   af('FCA de RPM fica fora do aprendizado de Custos; o de ago/26 fica "aguardando"', !r.casos.some(c => c[0] === 'PIR') && r.casos.some(c => c[0] === 'CGR' && c[2] === 'aguardando'), JSON.stringify(r.casos));
@@ -223,11 +254,21 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
   const X = r.extra || {};
   af('catálogo: as variáveis novas entram na rede (condução, frota, Carta, FCA, bases de combustível)', ['cond_nota', 'cond_baixo', 'carta_n', 'carta_forn', 'fca_preench', 'kml_gap', 'preco_gap'].every(k => X.cat.includes(k)) && X.cat.length >= 40 && X.nRede >= 15, `${X.cat.length} no catálogo · ${X.nRede} com dado em Manutenções`);
   af('condução de PIR ago/26: inclui o motorista plantado (≥ 500 km) e pesa pelo km', X.pir && X.pir.cond_nota > 0 && X.pir.cond_nota < 91 && X.pir.cond_baixo > 0, JSON.stringify(X.pir));
-  af('Carta do GRL ago/26: 3 lançamentos, ticket R$ 13.333, maior fornecedor 75%', X.grl && X.grl.carta_n === 3 && Math.round(X.grl.carta_ticket) === 13333 && Math.round(X.grl.carta_forn) === 75, JSON.stringify(X.grl));
+  af('Carta do GRL ago/26: 4 lançamentos, ticket R$ 25.000, maior fornecedor 70%', X.grl && X.grl.carta_n === 4 && Math.round(X.grl.carta_ticket) === 25000 && Math.round(X.grl.carta_forn) === 70, JSON.stringify(X.grl));
   af('Carta de PIR ago/26: 100% de pneus novos; FCA do GRL jul/26: 100% com ação', X.pir && Math.round(X.pir.carta_novos) === 100 && X.grlJul && X.grlJul.fca_preench === 100, JSON.stringify([X.pir && X.pir.carta_novos, X.grlJul]));
   af('bases de combustível do CGR ago/26: Km/L −8,3% e R$/L +3,4% contra o remunerado', X.cgr && Math.abs(X.cgr.kml_gap - (22000 / 24000 - 1) * 100) < 1e-9 && Math.abs(X.cgr.preco_gap - (144000 / 139200 - 1) * 100) < 1e-9, JSON.stringify(X.cgr));
-  af('a nota de condução PLANTADA sai sustentada pela rede no Combustíveis', X.redeNota && X.redeNota.sust && X.redeNota.r0 < -0.8, JSON.stringify(X.redeNota));
-  af('…e vira causa "rede" no CGR ago/26, sem entrar como sinal duplicado', X.cgrCausa, JSON.stringify(X.cgrCausas));
+  af('DriverPro SÓ NA EMPURRADA: a nota plantada nas CDDs fica fora; a rede só tem os 8 meses de PIR, e ainda sai sustentada', X.redeNota && X.redeNota.sust && X.redeNota.r0 < -0.8 && X.redeNota.n0 === 8 && !(X.cgr && 'cond_nota' in X.cgr), JSON.stringify([X.redeNota, X.cgr && X.cgr.cond_nota]));
+  af('…CGR ago/26 não ganha causa nem sinal de condução; PIR ago/26 (nota 68 < 75) ganha causa "rede", sem sinal duplicado', !X.cgrCond && X.pirCausa, JSON.stringify([X.cgrCausas, X.pirCausas]));
+  const A = r.ang || {};
+  af('SEARA pela Árvore da Seara: ANG ago/26 tem a ponte (Δ 25.000 = volume 11.111 + eficiência 4.000 + preço 7.000 + diferença 2.889)', A.seara && A.ponte && A.ponte.join() === '25000,11111,4000,7000,2889' && Math.abs(A.expl - 1) < 1e-6, JSON.stringify(A.ponte) + ' ' + A.expl);
+  af('…Km/L 2,86 × 3,00 rem (KmPorLitro) e R$/L 6,00 × 5,50 (PrecoDiesel); ANG2B22 pela média do modelo (aviso)', A.kmL && Math.abs(A.kmL[0] - 40000 / 14000) < 1e-9 && A.kmL[1] === 3 && A.rsL[0] === 6 && A.rsL[1] === 5.5 && A.avisos.some(a => /1 placa\(s\) sem remunerado na Base Remunerado/.test(a)) && A.avisos.length === 1, JSON.stringify([A.kmL, A.rsL, A.avisos]));
+  af('…ofensores: só a ANG1A11 gastou acima da régua (8.000 L × 6.667) e pagou acima do preço', A.ofE && A.ofE.length === 1 && /^ANG1A11/.test(A.ofE[0]) && A.ofP && A.ofP.length === 2 && /^ANG1A11/.test(A.ofP[0]), JSON.stringify([A.ofE, A.ofP]));
+  af('…e a rede recebe o Km/L (−4,8%) e o R$/L (+9,1%) da Anhanguera contra o remunerado', A.gap && Math.abs(A.gap.kml_gap - (40000 / 14000 / 3 - 1) * 100) < 1e-9 && Math.abs(A.gap.preco_gap - (6 / 5.5 - 1) * 100) < 1e-9, JSON.stringify(A.gap));
+  af('fontes: as três abas da Seara lidas com o nº de linhas', ['Seara · aba Combustível', 'Seara · Base Remunerado (Km/L e R$/L rem)', 'Seara · Remunerado (km por placa)'].every(n => (r.fontes || []).some(x => x[0] === n && x[1] === 'ok' && x[2] > 0)), JSON.stringify(r.fontes));
+  const Y = r.ano || {};
+  af('ANO em todo pacote: GRL Manutenções ▲ R$ 45.000 (6%) com a curva de captura (11% abaixo nos 4 meses que faltam, set → dez/26)', Y.grl && Math.round(Y.grl.over) === 45000 && Y.grl.restam === 4 && Math.round(Y.grl.reducao) === 11 && /^Desvio no ano \(jan\/26 → ago\/26\) ▲ R\$ 45\.000 \(6%\) · curva de captura: rodar 11% abaixo do remunerado nos 4 meses que faltam \(set\/26 → dez\/26\) para fechar o ano no remunerado$/.test(Y.grl.txt), JSON.stringify(Y.grl));
+  af('…CGR Pneus estourou em ago mas o ano é saving ▼ R$ 13.000 (5%): tratar como pontual', Y.cgrp && Math.round(Y.cgrp.over) === -13000 && /^Saving no ano \(jan\/26 → ago\/26\) ▼ R\$ 13\.000 \(5%\) · tratar o desvio do mês como pontual$/.test(Y.cgrp.txt), JSON.stringify(Y.cgrp));
+  af('…e a linha do ano vai no texto copiado, depois das causas', /\nAno: Desvio no ano/.test(Y.txt || ''), '');
   af('empurrada sem Dispersão maior: sem causa de volume; aviso nenhum de base faltando', Pc.efic > 0 && !Pc.avisos.length, JSON.stringify(Pc.avisos));
   await ctx.close();
 }
@@ -250,7 +291,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     await pg.click('.s-item[data-v="tabela"]'); await pg.waitForTimeout(100);
     await pg.click('tr[data-id="CGR|ROTA|Combustíveis|2026-08"]'); await pg.waitForTimeout(150);
     const m = await pg.evaluate(() => ({ vis: getComputedStyle(document.getElementById('fm-ov')).display, tit: document.getElementById('fm-tit').textContent, txt: document.getElementById('fm-corpo').textContent }));
-    af('clique na linha abre o diagnóstico (ponte, causas, ações)', m.vis === 'flex' && /Combustíveis · R\$ 31,0 mil/.test(m.tit) && /Ponte da conta Combustíveis/.test(m.txt) && /Vistoria de consumo/.test(m.txt), m.tit);
+    af('clique na linha abre o diagnóstico (ponte, causas, ações) com a linha do ano', m.vis === 'flex' && /Combustíveis · R\$ 31,0 mil/.test(m.tit) && /Ponte da conta Combustíveis/.test(m.txt) && /Vistoria de consumo/.test(m.txt) && /AnoDesvio no ano|Ano.{0,3}Desvio no ano|Ano.{0,3}Saving no ano|Ano.{0,3}No ano/.test(m.txt), m.tit);
     af('…com o que a unidade escreveu no FCA do mês', /Rodamos mais km por causa da rota nova/.test(m.txt), '');
     if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'fa-modal.png') });
   }
