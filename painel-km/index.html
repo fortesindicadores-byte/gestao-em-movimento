@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610142130">
+<meta name="build" content="202610142215">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -754,7 +754,26 @@ async function fetchBalancoBanco(){
     });
     if (rows.length < passo) break;
   }
+  if (!Object.keys(out).length) throw new Error('a tabela veio vazia (login do hub vencido?)');
   return out;
+}
+// A LEITURA DO BANCO NUNCA CAI EM SILÊNCIO NA ABA (bug real, 14/10/2026): o login do hub vale 1 h;
+// vencido, o banco devolve a lista VAZIA sem erro e o painel voltava para a aba do Sheets no ano
+// todo (ago/26 passou de +103 mil km para +244 mil). Agora: banco → última leitura boa deste
+// navegador → sem balanço, com o aviso na tela.
+const BM_CACHE = 'bm_banco_km_v1';
+let BM_FONTE = { fonte: 'banco' };
+async function fetchBalancoBancoSeguro(){
+  try {
+    const out = await fetchBalancoBanco();
+    try { localStorage.setItem(BM_CACHE, JSON.stringify({ t: Date.now(), out })); } catch (e) {}
+    BM_FONTE = { fonte: 'banco' }; return out;
+  } catch (e) {
+    console.warn('Balanço de Massa (banco) sem resposta:', e);
+    try { const c = JSON.parse(localStorage.getItem(BM_CACHE) || 'null');
+      if (c && c.out && Object.keys(c.out).length) { BM_FONTE = { fonte: 'copia', quando: c.t, erro: String(e.message || e) }; return c.out; } } catch (_) {}
+    BM_FONTE = { fonte: 'erro', erro: String(e.message || e) }; return null;
+  }
 }
 // conta no formato que casa a Frota com o export do DRE: alias do painel + caixa alta sem acento
 const ctaNK = c => _nkBM(CONTAS_ALIAS[String(c || '').trim()] || c);
@@ -964,7 +983,7 @@ async function fetchData() {
     fetchCustoRem().catch(e => { console.warn('Custo (aba Frota) indisponível:', e); return { tot: {}, cta: {} }; }),
     fetchBalanco().catch(e => { console.warn('Balanço de Massa (aba, até jul/26) indisponível:', e); return {}; }),
     fetchAbertura().catch(e => { console.warn('Abertura (placas) indisponível:', e); return []; }),
-    fetchBalancoBanco().catch(e => { console.warn('Balanço de Massa (banco, ago/26+) indisponível:', e); return {}; }),
+    fetchBalancoBancoSeguro(),
     (window.DispersaoKm && DISP_BANCO_LIGADO ? fetchDispBanco() : Promise.resolve({ linhas: [] })).catch(e => { console.warn('Dispersão de km (banco, set/26+) indisponível:', e); return { linhas: [] }; })
   ]);
   const custoRem = custoFrota.tot;
@@ -1011,7 +1030,8 @@ async function fetchData() {
       const parte = r.rem0 / km0; r.recomp += e.km * parte; r.bmValor += e.valor * parte; r.bmTaxa = e.taxa; r.bmContas = e.contas; r.rem = r.rem0 + r.recomp; });
     bmKm += e.km; bmValor += e.valor; nCh++;
   });
-  if (window.BalancoMassa) {
+  if (!balancoBanco) console.warn('Balanço de massa NÃO recomposto: o banco não respondeu e não há leitura anterior neste navegador');
+  else if (window.BalancoMassa) {
     // ATÉ JUL/26 (regra antiga, aba do Sheets com o Valor 85% ÷ R$/km dos 3 pacotes), mas
     // RATEADA: jan→jul como um bloco só, pelo remunerado de cada mês (Renan, 09/10/2026:
     // "os meses anteriores seria importante dividir… Ou de jan a jul proporcionalize tudo").
@@ -1066,7 +1086,8 @@ async function fetchData() {
     });
   }
   if (semTaxa) console.warn(`Impacto: ${semTaxa} linha(s) sem R$/km (vigência sem custo fechado no DRE, ou projeto sem custo próprio) — impacto zerado nelas.`);
-  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(),rows:ALL,placas:PLACAS})); }catch(e){}
+  // sem o balanço do banco a conta está incompleta: não vira cache
+  if (BM_FONTE.fonte !== 'erro') try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(),rows:ALL,placas:PLACAS})); }catch(e){}
   const savedVig = getSel('ms-vig');
   populateFilters();
   if (savedVig.length > 0) {
@@ -1316,7 +1337,10 @@ function render() {
   set('hero-val', fmt(totReal));
   set('hero-rem', totRem ? fmt(totRem) : '—');
   const totRec = F.reduce((s, r) => s + (r.recomp || 0), 0), totBm = F.reduce((s, r) => s + (r.bmValor || 0), 0);
-  set('d-bm', totRec ? `+${fmt(totRec)} km · R$ ${fmt(totBm)}` : '—');
+  set('d-bm', BM_FONTE.fonte === 'erro' ? 'sem resposta do banco' : totRec ? `+${fmt(totRec)} km · R$ ${fmt(totBm)}` : '—');
+  { const b = document.getElementById('d-bm'); if (b) { b.classList.toggle('cr', BM_FONTE.fonte === 'erro');
+    b.title = BM_FONTE.fonte === 'erro' ? 'O banco não respondeu (login do hub vencido?) e o km remunerado está SEM o balanço de massa. Entre de novo pelo hub.'
+      : BM_FONTE.fonte === 'copia' ? 'O banco não respondeu: valendo a última leitura boa deste navegador, de ' + new Date(BM_FONTE.quando).toLocaleString('pt-BR') : ''; } }
   /* visão Balanço de Massa: o MESMO total do hero, aberto em cards (Renan, 23/09/2026) */
   set('bm-val', totBm ? 'R$ ' + fmt(totBm) : '—');
   set('bm-km',  totRec ? '+' + fmt(totRec) + ' km' : '—');
@@ -1776,7 +1800,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_km_v11';  // v11: set/26 do banco desligado até validar · v10: set/26 em diante do banco (Dispersão de km importada) · v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
+const CACHE_KEY='bi_cache_km_v12';  // v12: balanço sem resposta do banco não cai na aba · v11: set/26 do banco desligado até validar · v10: set/26 em diante do banco (Dispersão de km importada) · v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
@@ -1924,6 +1948,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610142130"></script>
+<script src="../assets/build-check.js?v=202610142215"></script>
 </body>
 </html>

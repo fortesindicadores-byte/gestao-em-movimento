@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610140030">
+<meta name="build" content="202610142215">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -793,6 +793,11 @@ function renderKPIs(d) {
   set('v-bmValor', d.bmValor ? fmt(d.bmValor) : '—');
   set('v-bmTaxa',  d.bmTaxa  ? f2(d.bmTaxa)   : '—');
   set('v-bmKm',    d.bmKm    ? '+'+fmtInt(d.bmKm) : '—');
+  { const cr=id('card-recomp'), lb=cr&&cr.querySelector('.card-label'); if(lb){
+    lb.textContent = BM_FONTE.fonte==='erro' ? 'Balanço de Massa · sem resposta do banco' : 'Recomposição · Balanço de Massa';
+    lb.classList.toggle('cr', BM_FONTE.fonte==='erro');
+    lb.title = BM_FONTE.fonte==='erro' ? 'O banco não respondeu (login do hub vencido?): o km remunerado está SEM o balanço de massa. Entre de novo pelo hub.'
+      : BM_FONTE.fonte==='copia' ? 'O banco não respondeu: valendo a última leitura boa deste navegador, de '+new Date(BM_FONTE.quando).toLocaleString('pt-BR') : ''; } }
 
   // ── Impactos ──
   const fmtImp = v => Math.round(Math.abs(+v)).toLocaleString('pt-BR');
@@ -1115,7 +1120,20 @@ async function fetchBalancoBanco(){
       (out[k]=out[k]||{})[c]=(out[k][c]||0)+(+x.valor||0); });
     if(rows.length<passo)break;
   }
+  if(!Object.keys(out).length) throw new Error('a tabela veio vazia (login do hub vencido?)');
   return out;
+}
+// A LEITURA DO BANCO NUNCA CAI EM SILÊNCIO NA ABA (bug real, 14/10/2026, no Painel KM): login do hub
+// vencido devolve a lista VAZIA sem erro, e a conta voltava para a aba do Sheets no ano todo.
+// Agora: banco → última leitura boa deste navegador → sem balanço, com o aviso na caixa.
+const BM_CACHE='bm_banco_arv_v1'; let BM_FONTE={fonte:'banco'};
+async function fetchBalancoBancoSeguro(){
+  try{ const out=await fetchBalancoBanco(); try{ localStorage.setItem(BM_CACHE, JSON.stringify({t:Date.now(), out})); }catch(e){}
+    BM_FONTE={fonte:'banco'}; return out; }
+  catch(e){ console.warn('Balanço de Massa (banco) sem resposta:', e);
+    try{ const c=JSON.parse(localStorage.getItem(BM_CACHE)||'null');
+      if(c&&c.out&&Object.keys(c.out).length){ BM_FONTE={fonte:'copia', quando:c.t}; return c.out; } }catch(_){}
+    BM_FONTE={fonte:'erro'}; return null; }
 }
 // roda o motor nas DUAS regras, com km0 (Dispersão) e remunerado da Frota por chave vig|n3:
 //  · ago/26+: por conta, líquido do balanço, trimestre;
@@ -1268,14 +1286,14 @@ async function fetchAll(){
     gvFetchSheet(KML_ID,KML_TAB),
     gvFetchSheet(KML_ID,'R$/L'),   // MESMO workbook do painel Preço R$/L — a aba "R$/L" do workbook GV_ID (Base Dispersão de km) é uma cópia velha/incompleta (não tem GRL, por ex.)
     gvFetchSheet(GV_ID,'Balanço de Massa').catch(e=>{ console.warn('Balanço de Massa (aba, até jul/26) indisponível:', e); return {cols:[],rows:[]}; }),
-    fetchBalancoBanco().catch(e=>{ console.warn('Balanço de Massa (banco, ago/26+) indisponível:', e); return {}; }),
+    fetchBalancoBancoSeguro(),
   ]);
   FR=detFrota(fr.cols); S_FR=fr.rows;
   DP=detDisp(dp.cols);  S_DP=dp.rows;
   KM=detKmlSrc(km.cols);S_KM=km.rows;
   buildRemLookup(rs.cols,rs.rows);
   S_BM=parseBalanco(bm.cols,bm.rows);
-  BM_NOVO=recompoeTudo(bmBanco,S_BM);
+  BM_NOVO=bmBanco ? recompoeTudo(bmBanco,S_BM) : {porChave:{},avisos:['banco sem resposta: balanço não recomposto']};
 
   // allRows = união {vigencia:'MM/YYYY', nivel3:'PROJETO - CODE'} p/ cascata e opções de filtro.
   // Só entram meses COM dado real — a Frota tem meses orçados futuros (rem/real=0) que, se listados,
@@ -1525,6 +1543,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610140030"></script>
+<script src="../../assets/build-check.js?v=202610142215"></script>
 </body>
 </html>

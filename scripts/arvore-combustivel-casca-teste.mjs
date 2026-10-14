@@ -73,6 +73,10 @@ const RECS = [
 });
 // mês orçado futuro, sem dado (não pode aparecer no filtro de vigência)
 FROTA.rows.push([D(2026, 12), -50000, 0, 0, 'ROTA - GRL', 'Combustíveis Veiculos e Equipamentos']);
+// a tabela balanco_massa do banco (o banco manda: a aba só valeria antes do 1º mês dele) —
+// mesmo valor da aba (Valor 85%), numa conta de manutenção
+const BMB = BM.rows.map(r => { const [mm, yy] = r[1].split('/'); return { unidade: r[0].startsWith('PIRAI') ? 'PIR' : 'MCC', projeto: 'EMPURRADA',
+  vigencia: `${yy}-${mm}`, conta: 'Manutenção de Veículos e Equipamentos', valor: r[3] }; });
 const ABAS = { 'Frota': FROTA, 'Dispersão de km': DISP, 'Km/L': KML, 'R$/L': RSL, 'Balanço de Massa': BM };
 
 const CMH = (() => { const s = fs.readFileSync(RAIZ + '/check-metas/index.html', 'utf8');
@@ -80,7 +84,7 @@ const CMH = (() => { const s = fs.readFileSync(RAIZ + '/check-metas/index.html',
   return eval('`' + s.slice(i, j) + '`'); })();
 const H2C_SRC = H2C && fs.existsSync(H2C) ? fs.readFileSync(H2C, 'utf8') : null;
 
-async function abre(browser, pagina, { w = 1600, h = 900, tema = 'dark', mini = false } = {}) {
+async function abre(browser, pagina, { w = 1600, h = 900, tema = 'dark', mini = false, semBM = false } = {}) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h } });
   const page = await ctx.newPage();
   const errs = [];
@@ -111,6 +115,7 @@ async function abre(browser, pagina, { w = 1600, h = 900, tema = 'dark', mini = 
       return ap.call(this, n);
     };
   }, { ABAS, tema, mini });
+  await page.route('**/rest/v1/balanco_massa*', r => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(semBM ? [] : BMB) }));
   await page.route('**/assets/gviz-cache.js*', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: '/*gviz-cache fora do teste*/' }));
   await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await page.route('**/cdn.jsdelivr.net/**', r => {
@@ -179,6 +184,23 @@ if (A) {
   af('VAN tem R$/L remunerado (o do ROTA da unidade)', +num(N.r[2][1]['v-rsLRem']).replace(',', '.') > 0, num(N.r[2][1]['v-rsLRem']));
 }
 await n.ctx.close();
+// o banco do balanço sem resposta (login do hub vencido devolve a lista vazia): nada de cair na aba
+{ const LER = () => { const lb = document.querySelector('#card-recomp .card-label'); return { lb: lb.textContent, t: lb.title, km: document.getElementById('v-bmKm').textContent.trim(), val: document.getElementById('v-bmValor').textContent.trim() }; };
+  const z = await abre(browser, 'index.html', { semBM: true });
+  await z.page.evaluate(SEL, { id: 'ms-uni', v: ['PIR'] });
+  const e = await z.page.evaluate(LER);
+  af('banco sem resposta e sem leitura anterior: caixa avisa e não recompõe pela aba', /sem resposta do banco/.test(e.lb) && e.km === '—' && e.val === '—', JSON.stringify(e));
+  await z.ctx.close();
+  const c = await abre(browser, 'index.html');
+  await c.page.unroute('**/rest/v1/balanco_massa*');
+  await c.page.route('**/rest/v1/balanco_massa*', r => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '[]' }));
+  await c.page.reload({ waitUntil: 'load' });
+  await c.page.waitForFunction(() => { const e = document.getElementById('titSub'); return e && /Atualizado|Erro/.test(e.textContent); }, null, { timeout: 15000 });
+  await c.page.waitForTimeout(500);
+  await c.page.evaluate(SEL, { id: 'ms-uni', v: ['PIR'] });
+  const k = await c.page.evaluate(LER);
+  af('banco sem resposta com leitura anterior: vale a última leitura boa, igual à do banco', k.km === num(N.r[1][1]['v-bmKm']) && /última leitura boa/.test(k.t) && !/sem resposta/.test(k.lb), JSON.stringify(k));
+  await c.ctx.close(); }
 
 /* ── 2. a casca nova ── */
 const medeCasca = () => {
