@@ -70,7 +70,7 @@ async function tabelaBanco() {
   if (!SUPA_KEY) { console.log('⚠ sem GEM_SUPABASE_SERVICE_KEY: a tabela balanco_massa não foi lida — só a regra antiga (até jul/26) está conferida'); return []; }
   const out = []; const passo = 1000;
   for (let i = 0; ; i += passo) {
-    const r = await fetch(`${SUPA_URL}/rest/v1/balanco_massa?select=unidade,projeto,vigencia,conta,valor,linhas&order=vigencia,unidade,conta&limit=${passo}&offset=${i}`,
+    const r = await fetch(`${SUPA_URL}/rest/v1/balanco_massa?select=unidade,projeto,vigencia,conta,valor,linhas,arquivo,updated_at&order=vigencia,unidade,conta&limit=${passo}&offset=${i}`,
       { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY } });
     if (!r.ok) throw new Error('balanco_massa HTTP ' + r.status + ' ' + (await r.text()).slice(0, 200));
     const rows = await r.json(); out.push(...rows); if (rows.length < passo) break;
@@ -82,6 +82,10 @@ const [disp, frota, bm, banco] = await Promise.all([sheet(DISP_ID, 'Dispersão d
 { const vb = {}; banco.forEach(x => { const m = String(x.vigencia || '').match(/^(\d{4})-(\d{2})$/); if (m) vb[m[2] + '/' + m[1] + '|x'] = 1; });
   INICIO = BM.inicioDoBanco(vb, BM.INICIO); }
 console.log(`Dispersão de km: ${disp.rows.length} linha(s) · Frota: ${frota.rows.length} · aba Balanço de Massa: ${bm.rows.length} · tabela balanco_massa: ${banco.length} linha(s)`);
+{ const g = {}; banco.forEach(x => { const k = `${x.vigencia} ${String(x.unidade).padEnd(6)} ${String(x.projeto).padEnd(22)}`; const t = g[k] = g[k] || { n: 0, v: 0, up: '', arq: new Set() };
+    t.n++; t.v += +x.valor || 0; if (String(x.updated_at) > t.up) t.up = String(x.updated_at); if (x.arquivo) t.arq.add(x.arquivo); });
+  console.log('\n── TABELA balanco_massa · por vigência × unidade × projeto ──');
+  Object.keys(g).sort().forEach(k => console.log(`${k} ${String(g[k].n).padStart(3)} conta(s)  R$ ${br(g[k].v).padStart(11)}  carga ${g[k].up.slice(0, 16)}  ${[...g[k].arq].join(' · ')}`)); }
 console.log(`Regra antiga até ${INICIO === '08/2026' ? 'jul/26' : 'antes de ' + INICIO} (aba, Valor 85%) · regra nova de ${INICIO} em diante (banco, conta a conta)`);
 
 // Dispersão: col 0 vig · col 14 "PROJETO - COD" · col 31 km rem · col 32 km real (índices do /painel-km/)
