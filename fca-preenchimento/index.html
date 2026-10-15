@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610132300">
+<meta name="build" content="202610151400">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1048,8 +1048,11 @@ function pushDRE(dre,fatos){
   // 'ESTORNO ICMS NAO APROVEITADO' (sem o "DE") NUNCA casava com a conta real
   // 'Estorno de ICMS não Aproveitado' — por isso ela vinha na causa do pacote
   // Combustíveis. As duas grafias ficam no set.
+  // SEGUROS E LICENÇAS FORA DO FCA (Renan, 15/10/2026: "deve sair de FCA. unidade não tem ação sobre, é
+  // corporativo"): as contas do pacote não geram fato.
   const EXCL=new Set(['RECEITA LIQUIDA','ICMS CREDITO PRESUMIDO','IPVA E LICENCIAMENTO DE VEICULOS',
-                      'ESTORNO ICMS NAO APROVEITADO','ESTORNO DE ICMS NAO APROVEITADO']);
+                      'ESTORNO ICMS NAO APROVEITADO','ESTORNO DE ICMS NAO APROVEITADO',
+                      'IPVA E LICENCIAMENTO','SEGURO DE VEICULOS E EQUIPAMENTOS','SEGUROS']);
   const drRows=(dre||[]).filter(r=>parseD(r[0])&&uniMatch(r[3])&&tierMatch(r[4])&&!EXCL.has(_nc(r[5])));
   if(!drRows.length)return;
   // Frota tem meses ORÇADOS futuros (rem/real=0); mês de análise = última vigência COM realizado ≠ 0.

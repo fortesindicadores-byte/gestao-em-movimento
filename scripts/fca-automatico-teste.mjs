@@ -213,7 +213,7 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
     const kS = Object.keys(CTX.kml).find(x => /^CGR\|ROTA\|2026-08$/.test(x)) || Object.keys(CTX.kml).find(x => x.startsWith('CGR|') && x.endsWith('|2026-08'));
     const dS = kS && FcaAuto.diagnostico(cgr, Object.assign({}, CTX, { kml: Object.assign({}, CTX.kml, { [kS]: CTX.kml[kS].map(r => ({ ...r, pRem: r.pRem > 0 ? r.pRem * 1.2 : r.pRem })) }) }));
     const savP = dS && { k: kS, preco: dS.blocos.comb.preco, causas: dS.causas.map(c => [c.tema, c.txt]), acoes: dS.acoes.map(a => a.tema) };
-    return { savP, inv, n: FATOS.length, maxVig: CTX.maxVig, setembro: FATOS.some(x => x.vig === '2026-09'), seguro: FATOS.some(x => x.pac === 'Seguros e licenças'),
+    return { savP, inv, n: FATOS.length, maxVig: CTX.maxVig, setembro: FATOS.some(x => x.vig === '2026-09'), seguro: FATOS.some(x => x.pac === 'Seguros e licenças'), goi: FcaAuto.unidadeDoDRE('', 'AUTO SERVIÇO - GOI'),
       seg: seg && { over: seg.over, dpct: seg.dpct, txt: FcaAuto.desvioTxt(seg) }, outros: outros && { over: outros.over }, segD: seg && { causas: diag(seg).causas.map(c => c.txt), acoes: diag(seg).acoes.map(a => a.txt) },
       cgr: cgr && { over: cgr.over, contas: cgr.contas.map(c => [c.conta, Math.round(c.ov)]), txt: FcaAuto.desvioTxt(cgr) },
       ponte: d && { dCusto: d.blocos.ponte.dCusto, vol: d.blocos.ponte.vol, efic: d.blocos.ponte.efic, preco: d.blocos.ponte.preco, dif: d.blocos.ponte.dif, expl: d.explicado,
@@ -234,9 +234,9 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
         cgrCausas: d && d.causas.map(c => [c.ind || c.tema, !!c.rede]), cgrCond: !!(d && (d.causas.some(c => /^cond_/.test(c.ind || '')) || d.sinais.some(x => /^cond_/.test(x.ind || '')))),
         pirSinal: !!(dpc && dpc.sinais.some(x => x.ind === 'cond_nota')), pirRede: !!(dpc && dpc.causas.some(c => c.rede)), pirCausas: dpc && dpc.causas.map(c => [c.ind || c.tema, !!c.rede]) } };
   });
-  af('fatos: a regra do FCA — todo pacote que estourou, inclusive Seguros e licenças e Outros; set/26 (só orçado) fora', r.n > 0 && !r.setembro && r.seguro && r.maxVig === '2026-08', `${r.n} fatos · DRE até ${r.maxVig}`);
-  af('Seguro vira fato "Seguros e licenças" de R$ 4.000 (+80%); IPVA (excluído no FCA) não entra; Depreciação cai em "Outros"', r.seg && Math.round(r.seg.over) === 4000 && Math.round(r.seg.dpct) === 80 && !r.seg.txt.includes('IPVA') && r.outros && Math.round(r.outros.over) === 500, JSON.stringify([r.seg, r.outros]));
-  af('…com a conta como causa e a conferência do lançamento como ação', r.segD && r.segD.causas[0] && /^Seguro de Veículos e Equipamentos: real R\$ 9,0 mil vs rem\. R\$ 5,0 mil$/.test(r.segD.causas[0]) && r.segD.acoes.some(a => /apólice/.test(a)), JSON.stringify(r.segD));
+  af('fatos: a regra do FCA — todo pacote que estourou, SEM Seguros e licenças (corporativo, 15/10/2026); set/26 (só orçado) fora', r.n > 0 && !r.setembro && !r.seguro && r.maxVig === '2026-08', `${r.n} fatos · DRE até ${r.maxVig}`);
+  af('Goiânia: "AUTO SERVIÇO - GOI" da aba Km/L é a unidade GNA', r.goi === 'GNA', String(r.goi));
+  af('Seguro e IPVA não viram fato (Seguros e licenças fora do FCA); Depreciação cai em "Outros"', !r.seg && r.outros && Math.round(r.outros.over) === 500, JSON.stringify([r.seg, r.outros]));
   af('CGR · ROTA · ago/26 · Combustíveis = R$ 31.000 (30 mil da conta + 1 mil do Arla)', r.cgr && Math.round(r.cgr.over) === 31000, JSON.stringify(r.cgr && r.cgr.contas));
   af('o fato tem o MESMO texto do FCA (Desvio + Contas)', r.cgr && /^Desvio: ▲ R\$ 31\.000 · ▲ -30%\nContas:\n- Combustíveis Veiculos e Equipamentos: ▲ 30K \| ▲ 30%\n- Fluídos \(Arla\): ▲ 1K \| ▲ 20%$/.test(r.cgr.txt), r.cgr && JSON.stringify(r.cgr.txt));
   const P = r.ponte || {};

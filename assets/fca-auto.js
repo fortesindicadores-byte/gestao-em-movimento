@@ -92,8 +92,10 @@ const sufixo = v => { v = String(v || ''); const i = v.indexOf('-'); return (i >
 const prefixo = v => { v = String(v || ''); const i = v.indexOf('-'); return (i >= 0 ? v.slice(0, i) : v).trim(); };
 // VAN: o DRE e a Dispersão escrevem "ROTA (VAN)", a aba Km/L escreve "VAN" (Árvore, 24/09/2026)
 const projKey = p => { const n = NK(prefixo(p)).replace(/\s*\(INATIVO\)\s*/, ''); return n === 'ROTA (VAN)' ? 'VAN' : n; };
+// a aba Km/L escreve Goiânia como "AUTO SERVIÇO - GOI"; no portal é GNA
+const SUF_ALIAS = { GOI: 'GNA' };
 function unidadeDoNv3(nv3) {
-  const suf = NK(sufixo(nv3)), pre = prefixo(nv3);
+  let suf = NK(sufixo(nv3)); suf = SUF_ALIAS[suf] || suf; const pre = prefixo(nv3);
   for (const u of UNITS) { if (UNIT_BASE(u) !== suf) continue; const t = UNIT_TIER(u); if (!t || tierOfPrefix(UNIT_BASE(u), pre) === t) return u; }
   return null;
 }
@@ -114,7 +116,9 @@ const PACOTES_MAP = {
 };
 const getPacote = ck => PACOTES_MAP[ck] || 'Outros';
 // as contas que o FCA nem lê (EXCL do pushDRE)
-const EXCL_FCA = new Set(['RECEITA LIQUIDA', 'ICMS CREDITO PRESUMIDO', 'IPVA E LICENCIAMENTO DE VEICULOS', 'ESTORNO ICMS NAO APROVEITADO', 'ESTORNO DE ICMS NAO APROVEITADO']);
+// Seguros e licenças saiu do FCA (Renan, 15/10/2026: "unidade não tem ação sobre, é corporativo")
+const EXCL_FCA = new Set(['RECEITA LIQUIDA', 'ICMS CREDITO PRESUMIDO', 'IPVA E LICENCIAMENTO DE VEICULOS', 'ESTORNO ICMS NAO APROVEITADO', 'ESTORNO DE ICMS NAO APROVEITADO',
+  'IPVA E LICENCIAMENTO', 'SEGURO DE VEICULOS E EQUIPAMENTOS', 'SEGUROS']);
 // coluna Unidade do DRE (cidade) → código base; o tier vem do Nível 3 (como o DEPARA + tierMatch do FCA)
 const CIDADE_DRE = { 'CAMPO GRANDE': 'CGR', 'BALNEARIO CAMBORIU': 'BLC', 'CUIABA': 'CBA', 'FLORIANOPOLIS': 'FLP', 'GUARULHOS': 'GRL', 'NOVA FRIBURGO': 'NFR', 'PELOTAS': 'PLT',
   'RONDONOPOLIS': 'RON', 'CACHOEIRAS DE MACACU': 'MCC', 'MACACU': 'MCC', 'PIRAI': 'PIR', 'ANHANGUERA': 'ANG', 'GOIANIA': 'GNA' };
@@ -745,7 +749,7 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
   // ARLA SÓ VIRA CAUSA E AÇÃO ACIMA DE 10% DO DESVIO (Renan, 14/10/2026: "Arla só gere ações quando o valor
   // representar um impacto maior que 10% de todo o desvio"); abaixo disso fica nos sinais (e segue contando
   // no que as alavancas explicam).
-  if (ovArla > 0 && Math.abs(arla.rem) > 0) {
+  if (ovArla > 0) {   // sem remunerado de Arla no mês (Goiânia, set/26) o real inteiro é o estouro
     const txtArla = `Arla: real ${rs(Math.abs(arla.real))} vs rem. ${rs(Math.abs(arla.rem))}`;
     if (f.over > 0 && ovArla > 0.1 * f.over) {
       causa('Arla', txtArla, ovArla);
