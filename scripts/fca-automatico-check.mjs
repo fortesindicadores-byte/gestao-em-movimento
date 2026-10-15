@@ -82,6 +82,8 @@ const R = await pg.evaluate(({ VIG, UNI }) => {
     aprend: { casos: CTX.aprend.casos.length, porRes: CTX.aprend.casos.reduce((m, c) => { m[c.res] = (m[c.res] || 0) + 1; return m; }, {}), temas: CTX.aprend.temas.map(t => `${t.pac} · ${t.tema}: ${t.n} FCAs, ${t.melhor}/${t.aval} melhoraram`) },
     amostraOS: (LIDO.ginfo['os-em-aberto'] || []).slice(0, 3).map(r => [r['Data'], typeof r['Data']]), amostraPrev: (LIDO.ginfo['preventivas'] || []).slice(0, 2),
     ginfo: Object.fromEntries(Object.entries(CTX.ginfo).map(([u, g]) => [u, `prev venc ${g.prevVencidas.length} · OS ab ${g.osAbertas.length} · alin venc ${g.alinVencidos.length}`])),
+    dispInfo: CTX.dispInfo || null,
+    dispVig: Object.entries(CTX.disp || {}).filter(([k]) => k.endsWith('|' + vig)).map(([k, a]) => `${k.padEnd(28)} rem ${Math.round(a.rem).toLocaleString('pt-BR')}${a.rem0 != null ? ' (bruto ' + Math.round(a.rem0).toLocaleString('pt-BR') + ' + balanço ' + Math.round(a.bmKm).toLocaleString('pt-BR') + ' km · R$ ' + Math.round(a.bmValor).toLocaleString('pt-BR') + ')' : ''} · real ${Math.round(a.real).toLocaleString('pt-BR')} · ${a.rem ? ((a.real / a.rem - 1) * 100).toFixed(1) + '%' : '—'}${a.fonte ? ' · ' + a.fonte : ''}`).sort(),
     prologU: Object.fromEntries(Object.entries(CTX.prolog).map(([u, p]) => [u, `inst ${p.inst} · pressão fora ${p.presNOK} · ≤3mm ${p.ate3} · 3–4mm ${p.janela} · amp>5 ${p.amp}`]))
   };
 }, { VIG, UNI });
@@ -97,6 +99,8 @@ R.fatos.forEach(f => {
   if (f.sinais.length) console.log('   SINAIS:\n' + f.sinais.map(l => '     · ' + l).join('\n'));
   if (f.avisos.length) console.log('   AVISOS:\n' + f.avisos.map(l => '     ⚠ ' + l).join('\n'));
 });
+console.log(`\n══ DISPERSÃO NO FCA (${R.vig}) · meses do banco: ${R.dispInfo ? R.dispInfo.banco.join(' ') : '—'} · balanço desde ${R.dispInfo && R.dispInfo.bm ? R.dispInfo.bm.inicio : '—'}${R.dispInfo && R.dispInfo.semKm.length ? ' · sem km rodado: ' + R.dispInfo.semKm.join(', ') : ''}`);
+R.dispVig.forEach(l => console.log('   ' + l));
 console.log('\n══ REDE'); Object.entries(R.rede).forEach(([p, l]) => { console.log('  ' + p); l.forEach(x => console.log('    ' + x)); });
 console.log('\n══ FATOS NA TABELA fca (origem Custos), por nome:', JSON.stringify(R.fcaFatos));
 console.log(`\n══ LADO A LADO em ${R.vig} (vigências na fca: ${R.ladoALado.vigsFca.join(' ')})`);
