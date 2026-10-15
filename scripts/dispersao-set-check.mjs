@@ -50,6 +50,13 @@ const [linhas, placas, kml, base] = await Promise.all([
 console.log('bases:', base.map(b => `${b.slug} ${b.linhas} linhas, carregada ${b.carregado_em}`).join(' · '));
 console.log(`dispersao_km: ${linhas.length} linhas (${[...new Set(linhas.map(l => l.vigencia))].join(', ')}) · dispersao_placa: ${placas.length}`);
 
+// ── linhas cruas da 01-BD gravadas no banco (para conferir contra a planilha, campo a campo)
+console.log(`\n── 01-BD no banco · ${VIG} (cru) ──`);
+console.log(['uni', 'projeto', 'frota', 'viag1', 'kmRem1', 'kmRem', 'kmReal', 'R$/km', 'gravada em', 'arquivo'].join(' | '));
+linhas.filter(l => l.vigencia === VIG).sort((a, b) => a.projeto.localeCompare(b.projeto) || a.unidade.localeCompare(b.unidade)).forEach(l =>
+  console.log([l.unidade, l.projeto, l.frota_ativa, l.viagens_prim, l.km_rem_prim, l.km_rem, l.km_real, l.fator_rskm, l.updated_at, l.arquivo].join(' | ')));
+console.log('');
+
 const kmlRows = kml.map(r => { const m = String(r.vigencia || '').match(/^(\d{2})\/(\d{4})$/);
   return { vigencia: m ? m[2] + '-' + m[1] : '', projeto: r.projeto, placa: r.placa, km: +r.km_rodado_horas_trabalhadas || 0 }; });
 const kmlVig = kmlRows.filter(r => r.vigencia >= D.INICIO);
