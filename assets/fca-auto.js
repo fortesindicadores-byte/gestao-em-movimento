@@ -582,6 +582,7 @@ const TEMAS = [
   { k: 'Pneus', re: /pneu|recap|calibr|alinh|sulco|afer/ },
   { k: 'Condução', re: /motorist|condu[cç]|treinament|telemetr|ociosid|marcha lenta|rpm/ },
   { k: 'Abastecimento / preço', re: /pre[cç]o|posto|abastec|diesel|litro|arla|tanque/ },
+  { k: 'Deslocamento p/ abastecer', re: /deslocament[^.\n]{0,40}abastec|abastec[^.\n]{0,40}deslocament|km[^.\n]{0,25}(posto|abastec)|posto[^.\n]{0,25}(fora|longe|distan)/ },   // ANG set/26 (reunião do Renan): km rodado só para abastecer
   { k: 'Km / rota', re: /\bkm\b|rota|roteir|viage|dispers|deslocament/ },
   { k: 'Lançamento / contábil', re: /lan[cç]ament|provis|nota fiscal|\bnf\b|rateio|cont[aá]bil|estorno|reclassific|competência|competencia/ },
   { k: 'Sinistro / avaria', re: /sinistr|acident|colis|avaria|batid/ },
@@ -1319,7 +1320,13 @@ async function carregar(sb, o) {
     passo('Dispersão · Abertura (km por placa)', () => gviz(DISP_ID, 'Abertura'), v => v.rows.length),
     passo('Km/L (aba Km/L do Consumo)', () => gviz(KML_ID, 'Km/L'), v => v.rows.length),
     passo('R$/L remunerado (aba R$/L)', () => gviz(KML_ID, 'R$/L'), v => v.rows.length),
-    passo('FCA (histórico de causas e ações)', () => todasLinhas(sb, 'fca', 'id,unidade,vigencia,origem,fato,projeto,fato_desvio,causa,acao,responsavel,prazo,status,created_at'), v => v.length),
+    passo('FCA (histórico de causas e ações)', async () => {
+      // OFICIAL (15/10/2026): as linhas que o automático gravou levam auto_chave. Banco sem a coluna
+      // (SQL fca-auto-oficial.sql não rodado) → lê sem ela e a página avisa.
+      const COLS = 'id,unidade,vigencia,origem,fato,projeto,fato_desvio,causa,acao,responsavel,prazo,status,acompanhamento,created_at';
+      try { const v = await todasLinhas(sb, 'fca', COLS + ',auto_chave,auto_em'); v.autoCol = true; return v; }
+      catch (e) { if (!/auto_chave|auto_em/.test(String(e && e.message))) throw e; const v = await todasLinhas(sb, 'fca', COLS); v.autoCol = false; return v; }
+    }, v => v.length),
     passo('Gerot/Ginfo, contrato, condução (Correlações)', () => global.CorrDados.carregar(sb), v => v.FATO.uni.length + v.FATO.placa.length + v.FATO.mot.length),
     passo('Ginfo de hoje (preventivas, OS, alinhamentos, ativos)', async () => {
       const { data, error } = await sb.from('ginfo_snapshot').select('chave,data,updated_at').in('chave', ['preventivas', 'os-em-aberto', 'alinhamentos', 'ativos']);
@@ -1353,7 +1360,7 @@ async function carregar(sb, o) {
     if (ate) { const vigs = []; for (let i = 0; i < 13; i++) vigs.push(vigDeIdx(vigIdx(ate) - i));
       carta = await passo('Carta de Custos (lançamentos)', async () => { const r = await CC.lerLancamentos(sb, UNITS, vigs); if (r.erro) throw new Error(r.erro.message || String(r.erro)); return r.data; }, v => v.length); }
   }
-  return { dre, disp, dispBanco, balanco: balanco || [], abertura: abert, kml, rsl, fca: fca || [], corr, ginfo: gin || {}, carta: carta || [], prolog: {}, fontes,
+  return { dre, disp, dispBanco, balanco: balanco || [], abertura: abert, kml, rsl, fca: fca || [], fcaAutoCol: !!(fca && fca.autoCol), corr, ginfo: gin || {}, carta: carta || [], prolog: {}, fontes,
     seara: { comb: sComb, brem: sBrem, rem: sRem, prevMod: sMod || {} } };
 }
 /* Prolog de hoje: uma leitura por unidade (o jsonb das 14 juntas estoura o payload) */

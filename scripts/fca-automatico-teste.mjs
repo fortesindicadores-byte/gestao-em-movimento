@@ -130,7 +130,8 @@ const T = {
   fca: [
     { id: 'h1', unidade: 'GRL', vigencia: 'jul/26', origem: 'Custos', fato: 'Manutenções', projeto: 'ROTA - GRL', causa: 'SLA da oficina credenciada estourado, OS paradas', acao: 'Cobrar a oficina e priorizar as OS antigas', status: 'Concluída' },
     { id: 'h2', unidade: 'CGR', vigencia: 'ago/26', origem: 'Custos', fato: 'Combustíveis', projeto: 'ROTA - CGR', causa: 'Rodamos mais km por causa da rota nova', acao: 'Rever roteirização', status: 'Em andamento' },
-    { id: 'h3', unidade: 'PIR', vigencia: 'ago/26', origem: 'RPM', fato: 'SLA Man.', projeto: 'EMPURRADA', causa: 'x', acao: 'y' } ],
+    { id: 'h3', unidade: 'PIR', vigencia: 'ago/26', origem: 'RPM', fato: 'SLA Man.', projeto: 'EMPURRADA', causa: 'x', acao: 'y' },
+    { id: 'e1', unidade: 'GRL', vigencia: 'ago/26', origem: 'Custos', fato: 'Manutenções', projeto: 'ROTA - GRL', fato_desvio: 'Desvio: ▲ R$ 1', causa: null, acao: null, status: 'Não iniciada' } ],
   carta_custos: [
     { id: 1, unidade: 'GRL', vigencia: '2026-08', pacote: 'Manutenção', conta: 'Manutenção de Veículos e Equip.', grupo: 'Freios', equipamento: 'GRL1A11', fornecedor: 'Oficina Alfa', valor: 18000, nf: '10', projeto: 'ROTA' },
     { id: 2, unidade: 'GRL', vigencia: '2026-08', pacote: 'Manutenção', conta: 'Manutenção de Veículos e Equip.', grupo: 'Freios', equipamento: 'GRL2B22', fornecedor: 'Oficina Alfa', valor: 12000, nf: '11', projeto: 'ROTA' },
@@ -167,11 +168,13 @@ const SHIM_SB = (admin, acErr) => `window.__ups=[];window.supabase={createClient
       maybeSingle:async()=>({data:rows[0]||null,error:null}),
       range:async(a,b)=>(tabela==='fca_auto_acao'&&${!!acErr}?{data:null,error:{message:'relation "public.fca_auto_acao" does not exist'}}:{data:rows.slice(a,b+1),error:null,count:rows.length}),
       upsert:async(row)=>{ if(${!!acErr}) return {data:null,error:{message:'relation "public.fca_auto_acao" does not exist'}}; window.__ups.push(row); return {data:null,error:null}; },
+      insert:(rs)=>{ window.__ins=window.__ins||[]; const data=rs.map((r,i)=>Object.assign({id:'ins'+(window.__ins.length+i)},r)); window.__ins.push(...rs); const q2={select:()=>q2,then:(r,j)=>Promise.resolve({data,error:null}).then(r,j)}; return q2; },
+      update:(p)=>{ window.__upd=window.__upd||[]; const rec={tabela,p}; window.__upd.push(rec); const q2={eq:(c,v)=>{rec.eq=[c,v];return q2;},then:(r,j)=>Promise.resolve({data:null,error:null}).then(r,j)}; return q2; },
       then(res,rej){return Promise.resolve({data:rows,error:null}).then(res,rej);}};
     return q;}})};`;
 
 const nav = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium' });
-async function abre({ admin = true, w = 1600, h = 900, tema = 'dark', acErr = false } = {}) {
+async function abre({ admin = true, w = 1600, h = 900, tema = 'dark', acErr = false, oficial = null } = {}) {
   const ctx = await nav.newContext({ viewport: { width: w, height: h }, serviceWorkers: 'block' });
   await ctx.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await ctx.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
@@ -187,6 +190,8 @@ async function abre({ admin = true, w = 1600, h = 900, tema = 'dark', acErr = fa
   const pg = await ctx.newPage();
   const errs = []; pg.on('pageerror', e => errs.push(e.message));
   await pg.addInitScript(t => { try { localStorage.setItem('bi_theme', t); localStorage.removeItem('fcaauto_mini'); } catch (e) {} }, tema);
+  // a prévia guardada no navegador só é limpa no cenário oficial (o cenário da prévia depende dela sobreviver ao F5)
+  if (oficial) await pg.addInitScript(o => { window.__oficialInicio = o.inicio; window.__oficialFora = o.fora; try { localStorage.removeItem('fcaauto_previa_v1'); } catch (e) {} }, oficial);
   await pg.goto(BASE + '/fca-automatico/index.html', { waitUntil: 'domcontentloaded' });
   await pg.waitForFunction(() => document.querySelector('.gate') || (typeof CTX !== 'undefined' && CTX && typeof PROLOG_ESTADO !== 'undefined' && PROLOG_ESTADO !== 'lendo'), { timeout: 30000 }).catch(() => {});
   await pg.waitForTimeout(300);
@@ -446,6 +451,42 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   await ctx.close();
 }
 
+/* ══ 2b · FCA OFICIAL (Renan, 15/10/2026: "subir como oficial, de setembro em diante. Anhanguera… ainda não") ══ */
+{
+  console.log('\n══ 2b · envio ao FCA oficial');
+  const { pg, ctx, errs } = await abre({ acErr: true, oficial: { inicio: '2026-08', fora: ['ANG|2026-08'] } });
+  const cte = await pg.evaluate(() => ({ ini: OFICIAL_INICIO, fora: [...OFICIAL_FORA], ok: fcaOk(), elegiveis: FATOS.filter(oficialElegivel).map(f => f.uni + '|' + f.vig) }));
+  af('o corte de verdade é set/26 com a ANG de set/26 fora (o teste adianta para ago/26 e a ANG de ago/26)', cte.ini === '2026-08' && cte.fora.join() === 'ANG|2026-08' && cte.ok, JSON.stringify(cte).slice(0, 200));
+  const src = fs.readFileSync(path.join(RAIZ, 'fca-automatico/index.html'), 'utf8');
+  af('…no arquivo: OFICIAL_INICIO 2026-09 e ANG|2026-09 fora', /\|\|'2026-09'/.test(src) && /\['ANG\|2026-09'\]/.test(src));
+  af('…só fatos de ago/26 em diante e nenhum da ANG entram', cte.elegiveis.length > 0 && cte.elegiveis.every(k => k.endsWith('2026-08') && !k.startsWith('ANG|')), cte.elegiveis.join(' '));
+  const P = await pg.evaluate(() => { const P = planoOficial(); const g = r => r.unidade + '|' + r.vigencia + '|' + r.projeto + '|' + r.fato;
+    return { ins: P.ins.length, upd: P.upd.length, pulados: P.pulados.map(f => f.id), semAcao: P.semAcao.length,
+      e1: P.upd.find(x => x.id === 'e1'), grlIns: P.ins.filter(r => g(r) === 'GRL|ago/26|ROTA - GRL|Manutenções'), todosIns: P.ins.map(r => ({ u: r.unidade, v: r.vigencia, o: r.origem, p: r.projeto, f: r.fato, st: r.status, ch: r.auto_chave, resp: r.responsavel, c: (r.causa || '').slice(0, 3), a: (r.acao || '').slice(0, 5), fd: !!r.fato_desvio })),
+      anyAng: P.ins.some(r => r.unidade === 'ANG') || P.upd.some(x => x.f.uni === 'ANG'), anyJul: P.ins.some(r => r.vigencia !== 'ago/26') || P.upd.some(x => x.f.vig !== '2026-08') }; });
+  af('o plano tem ações novas e nenhuma da ANG nem de antes do corte', P.ins > 0 && !P.anyAng && !P.anyJul, JSON.stringify({ ins: P.ins, upd: P.upd }));
+  af('o fato que a unidade JÁ preencheu à mão (CGR ROTA Combustíveis ago/26, h2) é pulado, não misturado', P.pulados.includes('CGR|ROTA|Combustíveis|2026-08') && !P.todosIns.some(r => r.u === 'CGR' && r.f === 'Combustíveis'), P.pulados.join(' '));
+  af('a 1ª ação do GRL Manutenções REUSA a linha vazia do fca-preenchimento (e1) com causa, ação, gestor e auto_chave', !!P.e1 && P.e1.u.auto_chave && /^1\. /.test(P.e1.u.causa || '') && /^1\.1\. /.test(P.e1.u.acao || '') && P.e1.u.responsavel === 'JOSE SANTOS' && P.e1.u.status === 'Não iniciada', JSON.stringify(P.e1 && P.e1.u).slice(0, 300));
+  af('…as demais ações do mesmo fato viram linhas novas na fca: unidade, ago/26, Custos, projeto nível 3 inteiro, fato = pacote, desvio, dono = gestor, Não iniciada', P.grlIns.length > 0 && P.todosIns.every(r => r.v === 'ago/26' && r.o === 'Custos' && r.st === 'Não iniciada' && r.ch && r.fd && /^\d\.\d\. /.test(r.a)) && P.grlIns.every(r => r.projeto === 'ROTA - GRL' && r.fato === 'Manutenções' && r.responsavel === 'JOSE SANTOS'), JSON.stringify(P.todosIns.slice(0, 3)));
+  // grava (confirm aceito) e confere o que foi ao banco
+  const alerta = []; pg.on('dialog', d => { alerta.push(d.message()); d.accept(); });   // o confirm e o alert, os dois aceitos
+  await pg.evaluate(() => enviarOficial()); await pg.waitForTimeout(400);
+  const G1 = await pg.evaluate(() => ({ ins: (window.__ins || []).filter(r => r.auto_chave).length, upd: (window.__upd || []).filter(x => x.tabela === 'fca').map(x => ({ id: x.eq && x.eq[1], ch: x.p.auto_chave })), fca: LIDO.fca.filter(r => r.auto_chave).length,
+    acoes: Object.values(ACOES).filter(a => a._fca).length, plano2: (() => { const P = planoOficial(); return { ins: P.ins.length, upd: P.upd.length, iguais: P.iguais.length }; })() }));
+  af('gravou: as linhas novas foram inseridas na fca e a e1 atualizada; as ações passaram a existir na fca e em ACOES', G1.ins === P.ins && G1.upd.some(x => x.id === 'e1' && x.ch) && G1.fca === P.ins + P.upd && G1.acoes === G1.fca, JSON.stringify(G1).slice(0, 300));
+  af('reenviar não duplica nada: o plano volta vazio (tudo igual)', G1.plano2.ins === 0 && G1.plano2.upd === 0 && G1.plano2.iguais === G1.fca, JSON.stringify(G1.plano2));
+  af('o aviso diz quantas gravou e o fato pulado', alerta.some(m => /Gravado no FCA oficial/.test(m) && /preenchidos à mão/.test(m)), alerta.join(' | ').slice(0, 200));
+  // dono/prazo/status de uma ação oficial gravam na própria fca
+  await pg.click('.s-item[data-v="tabela"]'); await pg.waitForTimeout(200);
+  const alvo = await pg.evaluate(() => { const td = [...document.querySelectorAll('tbody.fg td[data-c="status"]')].find(x => x.dataset.fid === 'GRL|ROTA|Manutenções|2026-08'); return td ? { fid: td.dataset.fid, k: td.dataset.k } : null; });
+  af('a Tabela mostra o gestor como dono da ação oficial', !!alvo && await pg.evaluate(a => [...document.querySelectorAll('tbody.fg td[data-c="responsavel"]')].find(x => x.dataset.fid === a.fid && x.dataset.k === a.k).innerText.trim() === 'JOSE SANTOS', alvo));
+  await pg.evaluate(a => salvaCampo(a.fid, a.k, 'status', 'Em andamento'), alvo); await pg.waitForTimeout(200);
+  const G2 = await pg.evaluate(a => { const u = (window.__upd || []).filter(x => x.tabela === 'fca' && x.p.status === 'Em andamento'); const ac = ACOES[a.fid + '||' + a.k];
+    return { n: u.length, eq: u[0] && u[0].eq, fcaId: ac && ac._fca, st: ac && ac.status, naFca: (LIDO.fca.find(r => r.id === (ac && ac._fca)) || {}).status, ups: window.__ups.length, msg: document.getElementById('acSalvo').textContent }; }, alvo);
+  af('status mudado na ação oficial vai para a tabela fca (update pelo id), não para a prévia local nem para a fca_auto_acao', G2.n === 1 && G2.eq && G2.eq[0] === 'id' && G2.eq[1] === G2.fcaId && G2.st === 'Em andamento' && G2.naFca === 'Em andamento' && G2.ups === 0 && /Gravado no FCA/.test(G2.msg), JSON.stringify(G2));
+  af('sem erro de página', !errs.length, errs.join(' | '));
+  await ctx.close();
+}
 /* ══ 3 · sem admin ══ */
 {
   console.log('\n══ 3 · sem admin');
