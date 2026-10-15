@@ -91,5 +91,79 @@ af('o total por unidade × projeto não muda com a Abertura', t2.acc['GRL|ROTA|2
 const ia = FA.indexaAbertura(AB);
 af('linha da Abertura sem Real fica marcada para receber o km da Km/L', (ia['GRL|2026-09'] || [])[0] && ia['GRL|2026-09'][0].semReal === true && !ia['PIR|2026-08'][0].semReal, JSON.stringify(ia));
 
+console.log('\n══ 5 · planilha de viagens: remunerado por placa de Rota, AS e Van (T1 fora)');
+{
+  const { createRequire } = await import('node:module');
+  const XLSX = createRequire(import.meta.url)('../node_modules/xlsx');
+  const H5 = ['Tipo', 'Vigência', 'Entrega ', 'Carga Atual', 'Frota ', 'VBZ', 'Projeto', 'Nome - Unidade', 'Data', 'Entrega', 'Frota', 'Placa'];
+  const V = (tipo, vig, ent, carga, frota, proj, uni, placa) => [tipo, vig, ent, carga, frota, 5, proj, uni, 1092026, ent, frota, placa];
+  const rows = [H5,
+    ...Array(3).fill(V('TRUCK', 'ROTA_1_9_2026', 'Rota', 'Roteriz', 'Padrao', 'ROTA - CBA', 'CDD CUIABA', 'ABC1234')),
+    V('TRUCK', 'ROTA_2_9_2026', 'Rota', 'Extra', 'Padrao', 'ROTA - CBA', 'CDD CUIABA', 'ABC1234'),
+    V('TRUCK', 'ROTA_2_9_2026', 'Rota', 'Recarga', 'Padrao', 'ROTA - CBA', 'CDD CUIABA', 'ABC1234'),
+    V('TOCO', 'ROTA_1_9_2026', 'Rota', 'Roteriz', 'Padrao', 'ROTA - CBA', 'CDD CUIABA', 'XYZ9A99'),
+    V('TOCO', 'ROTA_1_9_2026', 'Rota', 'Noturna', 'Padrao', 'ROTA - CBA', 'CDD CUIABA', 'XYZ9A99'),
+    V('VAN', 'ROTA_1_9_2026', 'Rota', 'Roteriz', 'Fixo', 'ROTA - CBA', 'CDD CUIABA', 'VAN1A11'),
+    V('TOCO', 'ROTA_1_9_2026', 'Rota', 'Extra', 'Spot', 'TERCEIROS - CBA', 'CDD CUIABA', 'SPO1T00'),
+    V('TOCO', 'ROTA_1_9_2026', 'Rota', 'MKT', 'Padrao', 'ROTA - CBA', 'CDD CUIABA', 'XYZ9A99'),
+    V('TOCO', 'ROTA_1_9_2026', 'Rota', 'Recolha', 'Padrao', 'ROTA - CBA', 'CDD CUIABA', 'XYZ9A99'),
+    V('BI-TRUCK', 'AS_1_9_2026', 'AS', 'Roteriz', 'Padrao', 'ROTA - PLT', 'CDD PELOTAS', 'CUC9514'),
+    V('TRUCK', 'AS_1_9_2026', 'AS', 'Roteriz', 'Padrao', 'AUTO SERVIÇO - GOI', 'CDD GOIANIA', 'PRX4934'),
+    V('TRUCK', 'ROTA_1_8_2026', 'Rota', 'Roteriz', 'Padrao', 'ROTA - CBA', 'CDD CUIABA', 'ABC1234'),
+  ];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Planilha1');
+  const rv = DK.leViagens(XLSX, wb, 'viagens.xlsx');
+  const acha = (u, p, pl) => rv.linhas.find(l => l.unidade === u && l.projeto === p && l.placa === pl);
+  const abc = acha('CBA', 'Rota', 'ABC1C34');
+  af('Extra e Roteriz = 1ª; Recarga à parte; placa em Mercosul', abc && abc.viagens_prim === 4 && abc.viagens_rec === 1 && abc.placa_origem === 'ABC1234', JSON.stringify(abc));
+  af('Tipo VAN vira o projeto Van', !!acha('CBA', 'Van', 'VAN1A11'));
+  af('Spot, MKT e Recolha fora da conta', rv.fora['Spot (freteiro)'] === 1 && rv.fora.MKT === 1 && rv.fora.Recolha === 1 && !rv.linhas.some(l => l.placa === 'SPO1T00'), JSON.stringify(rv.fora));
+  af('Pelotas AS conta como Rota', !!acha('PLT', 'Rota', 'CUC9F14') && !rv.linhas.some(l => l.unidade === 'PLT' && l.projeto === 'Auto Serviço'));
+  af('Goiânia (GOI) entra como GNA · Auto Serviço', !!acha('GNA', 'Auto Serviço', 'PRX4J34'));
+  af('mês antes de set/26 fica de fora', JSON.stringify(rv.antes) === '["2026-08"]', JSON.stringify(rv.antes));
+  af('arquivo sem as colunas da planilha de viagens não é lido como viagens', DK.leViagens(XLSX, (() => { const w = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(w, XLSX.utils.aoa_to_sheet([['01-BD'], [1]]), 'x'); return w; })(), 'x') === null);
+
+  // 01-BD: CBA Rota 5 viagens de 1ª (500 km) + 1 recarga (60 km) + 1 noturna (40 km) = 600 km; Van 1 viagem 80 km
+  const bd = [
+    { vigencia: '2026-09', unidade: 'CBA', projeto: 'Rota', viagens_prim: 5, km_rem_prim: 500, viagens_rec: 1, km_rem_rec: 60, viagens_not: 1, km_rem_not: 40, km_rem: 600 },
+    { vigencia: '2026-09', unidade: 'CBA', projeto: 'Van', viagens_prim: 1, km_rem_prim: 80, km_rem: 80 },
+    { vigencia: '2026-09', unidade: 'PLT', projeto: 'Rota', viagens_prim: 0, km_rem_prim: 0, km_rem: 0 },
+  ];
+  const rp = DK.remPlacas(rv.linhas, bd);
+  const km = (u, p, pl) => (rp.placas.find(x => x.unidade === u && x.projeto === p && x.placa === pl) || {}).km_rem;
+  af('km rem da placa = viagens × km por viagem do tipo', km('CBA', 'Rota', 'ABC1C34') === 460 && km('CBA', 'Rota', 'XYZ9A99') === 140, km('CBA', 'Rota', 'ABC1C34') + ' · ' + km('CBA', 'Rota', 'XYZ9A99'));
+  const cR = rp.conf.find(c => c.unidade === 'CBA' && c.projeto === 'Rota');
+  af('a soma das placas bate com o km remunerado da 01-BD', cR && cR.km === 600 && cR.v1 === cR.v1BD, JSON.stringify(cR));
+  af('unidade × projeto sem linha na 01-BD fica marcada', rp.conf.some(c => c.unidade === 'GNA' && c.semLinha));
+  const rp2 = DK.remPlacas([{ vigencia: '2026-09', unidade: 'CBA', projeto: 'Rota', placa: 'AAA1A11', viagens_prim: 2, viagens_rec: 0, viagens_not: 0 },
+    { vigencia: '2026-09', unidade: 'CBA', projeto: 'Rota', placa: 'BBB1B11', viagens_prim: 3, viagens_rec: 0, viagens_not: 0 }], bd);
+  af('recarga/noturna da 01-BD sem viagem na planilha: o resto vai pelas viagens de 1ª', rp2.conf[0].km === 600 && rp2.conf[0].restoPela1a === 100, JSON.stringify(rp2.conf[0]));
+
+  // realizado: ABC1C34 rodou 1.000 km na Km/L; tem 460 rem na Rota e 1.840 rem de Empurrada (T1) na lista do banco
+  const det = [{ vigencia: '2026-09', unidade: 'CBA', projeto: 'Empurrada - 28 Palets', placa: 'ABC1C34', placa_origem: 'ABC1234', km: 1000 },
+    { vigencia: '2026-09', unidade: 'CBA', projeto: 'Rota', placa: 'XYZ9A99', placa_origem: 'XYZ9A99', km: 300 },
+    { vigencia: '2026-09', unidade: 'CBA', projeto: 'Rota', placa: 'NOV0A00', placa_origem: 'NOV0A00', km: 500 }];
+  const lista = [{ vigencia: '2026-09', unidade: 'CBA', projeto: 'Empurrada - 28 Palets', placa: 'ABC1C34', km_rem: 1840 }];
+  const rr = DK.realPlacas(rp.placas, det, lista);
+  const pr = pl => rr.find(x => x.placa === pl && x.unidade === 'CBA');
+  af('placa que roda T1: a Rota leva só a parte do remunerado dela (o resto é T1, fora)', pr('ABC1C34').km_real === 200, JSON.stringify(pr('ABC1C34')));
+  af('placa só de Rota leva o km inteiro da Km/L', pr('XYZ9A99').km_real === 300);
+  af('placa da Km/L na Rota sem viagem na planilha entra com remunerado 0', pr('NOV0A00') && pr('NOV0A00').km_rem === 0 && pr('NOV0A00').km_real === 500 && pr('NOV0A00').semViagem);
+  af('nenhuma linha T1 no resultado', !rr.some(x => /^Empurrada/.test(x.projeto)));
+
+  // FCA: T1 fora em todos os meses; Abertura só com Real; set/26 pela planilha de viagens (CBA Rota = CBA T2)
+  const AB5 = { cols: ['UNIDADE', 'MÊS', 'PROJETO', 'Placa', 'Remunerado', 'Real'], rows: [
+    ['Piraí -RJ', 'Date(2026,7,1)', 'EMPURRADA', 'CUK9G80', 6594, 4632],
+    ['Cuiába - MT', 'Date(2026,7,1)', 'ROTA', 'ABC1234', 3000, 3300],
+    ['Cuiába - MT', 'Date(2026,8,1)', 'ROTA', 'ABC1234', 999, null],
+  ] };
+  const ip = FA.indexaPlacas(AB5, rr);
+  af('T1 fora das análises do FCA (Empurrada da Abertura não entra)', !ip['PIR|2026-08'], Object.keys(ip).join(' '));
+  af('ago/26 continua da Abertura (com o Real)', (ip['CBA T2|2026-08'] || []).length === 1 && ip['CBA T2|2026-08'][0].real === 3300, JSON.stringify(ip['CBA T2|2026-08']));
+  const s9 = ip['CBA T2|2026-09'] || [];
+  af('set/26 pela planilha de viagens, sem a linha da Abertura sem Real', s9.length && s9.every(r => r.fonte === 'viagens') && s9.some(r => r.placa === 'ABC1C34' && r.rem === 460 && r.real === 200 && r.proj === 'ROTA'), JSON.stringify(s9));
+  af('Van no projeto VAN', s9.some(r => r.proj === 'VAN'), JSON.stringify(s9.map(r => r.proj)));
+}
+
 console.log(`\n${ok} ok · ${falha} falha(s)`);
 process.exit(falha ? 1 : 0);

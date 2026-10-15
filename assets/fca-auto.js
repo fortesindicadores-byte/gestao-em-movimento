@@ -246,7 +246,7 @@ const ctaBM = c => { const n = NK(c).replace(/\s+/g, ' ').trim(); return CTA_ALI
 const vigBM = v => v.slice(5) + '/' + v.slice(0, 4);   // 'AAAA-MM' → 'MM/AAAA' (formato do motor do balanço)
 function indexaDispTudo(L, dreAcc, DK, BM) {
   const acc = indexaDisp(L.disp), vigsAba = new Set(Object.keys(acc).map(k => k.split('|').pop()));
-  const info = { banco: [], semKm: [], bm: null, bmAvisos: [], kmPlaca: null };
+  const info = { banco: [], semKm: [], bm: null, bmAvisos: [], kmPlaca: null, placasViagem: [] };
   // 1) set/26 em diante, do banco: só os meses que a aba não tem
   const db = L.dispBanco;
   if (db && DK && (db.linhas || []).length) {
@@ -257,6 +257,9 @@ function indexaDispTudo(L, dreAcc, DK, BM) {
     // km rodado por placa e mês (aba Km/L): é o realizado da placa nas linhas da aba Abertura que só
     // trazem o remunerado (set/26 em diante)
     info.kmPlaca = {}; kmR.det.forEach(d => { const k = d.vigencia + '|' + d.placa; info.kmPlaca[k] = (info.kmPlaca[k] || 0) + (+d.km || 0); });
+    // REMUNERADO POR PLACA PELA PLANILHA DE VIAGENS (Renan, 15/10/2026): Rota, AS e Van; viagens × km por
+    // viagem da 01-BD, realizado = km da placa na Km/L repartido pelo remunerado (a parte T1 fica fora)
+    if ((db.viagens || []).length && DK.remPlacas) info.placasViagem = DK.realPlacas(DK.remPlacas(db.viagens, db.linhas).placas, kmR.det, db.placas || []);
     DK.monta(db.linhas, kmR).forEach(l => {
       const vig = l.vigencia; if (!vig || vigsAba.has(vig)) return;
       const n3 = (DISP_PROJ_BANCO[l.projeto] || l.projeto) + ' - ' + l.unidade;
@@ -319,6 +322,21 @@ function indexaAbertura(ab) {
     const pj = NK(r[c.proj]), proj = AB_PROJ[pj] || pj, uni = abUnidade(r[c.uni], proj); if (!uni) return;
     const rem = num(r[c.rem]) || 0, real = num(r[c.real]) || 0, semReal = r[c.real] == null || r[c.real] === '';
     (out[uni + '|' + vig] = out[uni + '|' + vig] || []).push({ placa, proj, rem, real, delta: real - rem, semReal, vig });
+  });
+  return out;
+}
+/* KM POR PLACA DAS ANÁLISES DO FCA (Renan, 15/10/2026: "Use essa planilha para subir remunerado por
+   placa Rota, AS e Van. Deixe T1 fora de setembro e das análises do FCA"): a aba Abertura vale só nas
+   linhas com o Real preenchido (até ago/26); de set/26 em diante, a planilha de viagens do banco.
+   T1 (Empurrada) fica fora em todos os meses. Mesmo formato do indexaAbertura. */
+function indexaPlacas(ab, viag) {
+  const out = {};
+  Object.entries(indexaAbertura(ab)).forEach(([k, rs]) => { const v = rs.filter(r => !r.semReal && !/^EMPURR|INSUMO/.test(r.proj)); if (v.length) out[k] = v; });
+  (viag || []).forEach(p => {
+    if (/^Empurrada/.test(p.projeto)) return;
+    const n3 = (DISP_PROJ_BANCO[p.projeto] || p.projeto) + ' - ' + p.unidade, uni = unidadeDoNv3(n3); if (!uni) return;
+    const placa = placaKey(p.placa), rem = +p.km_rem || 0, real = +p.km_real || 0;
+    (out[uni + '|' + p.vigencia] = out[uni + '|' + p.vigencia] || []).push({ placa, proj: projKey(n3), rem, real, delta: real - rem, vig: p.vigencia, fonte: 'viagens' });
   });
   return out;
 }
@@ -783,7 +801,7 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
       causa('Km / rota', `Dispersão de km: +${br(dkm, 0)} km (${sinalPct(dpct, 1)})${como}${extra}`, b.vol);
       const vg = []; if (dp.vgRec) vg.push(br(dp.vgRec, 0) + ' recs'); if (dp.vgNot) vg.push(br(dp.vgNot, 0) + ' noturnas'); if (dp.vgMap) vg.push(br(dp.vgMap, 0) + ' com mapa aberto');
       // DISPERSÃO POR PLACA (Renan, 15/10/2026): as placas que mais rodaram acima do km remunerado no mês,
-      // da aba Abertura (remunerado) × aba Km/L (realizado, de set/26 em diante); do projeto, senão da unidade
+      // (indexaPlacas: aba Abertura até ago/26, planilha de viagens de set/26 em diante, T1 fora); do projeto, senão da unidade
       const abT = (ctx.abertura || {})[f.uni + '|' + f.vig] || [], abP = abT.filter(r => r.proj === f.proj), abU = abP.length ? abP : abT;
       const ofPl = top(abU.filter(r => r.delta > 0), 5, r => r.delta)
         .map(r => `${r.placa} +${br(r.delta, 0)} km (${r.rem >= 500 ? sinalPct(r.delta / r.rem * 100, 0) : 'só ' + br(r.rem, 0) + ' km rem.'})`);
@@ -1244,16 +1262,7 @@ function contexto(L, deps) {
   Object.entries(porVig).forEach(([vg, vs]) => { const q = {}; Object.keys(CAT).forEach(k => { q[k] = quartis(vs.map(v => v[k])); }); quartisRede[vg] = q; });
   const prolog = {}; Object.entries(L.prolog || {}).forEach(([u, t]) => { prolog[u] = resumoProlog(t); });
   const dispT = indexaDispTudo(L, dreIdx.acc, deps.DispersaoKm || global.DispersaoKm, deps.BalancoMassa || global.BalancoMassa);
-  // ABERTURA DE SET/26 EM DIANTE (Renan, 15/10/2026: "ler apenas essas colunas para subir remunerado por
-  // placa? Realizado e R$/km por placa já estão no banco" → "Já temos o total. É só para mensurar por placa"):
-  // a aba traz só UNIDADE · MÊS · PROJETO · Placa · Remunerado; o realizado da placa é o km dela na aba Km/L
-  // no mês (o mesmo da Dispersão do banco). Placa em dois projetos: o km entra uma vez, no de mais km rem.
-  const abertura = indexaAbertura(L.abertura), kmPl = dispT.info.kmPlaca;
-  if (kmPl) {   // entre TODAS as unidades/tiers: a placa em Empurrada (T1) e Rota (T2) leva o km uma vez só
-    const visto = new Set();
-    Object.values(abertura).flat().sort((a, b) => b.rem - a.rem).forEach(r => { if (!r.semReal) return;
-      const k = r.vig + '|' + r.placa; r.real = visto.has(k) ? 0 : (kmPl[k] || 0); visto.add(k); r.delta = r.real - r.rem; r.realKml = true; });
-  }
+  const abertura = indexaPlacas(L.abertura, dispT.info.placasViagem);
   const ctx = { dreAcc: dreIdx.acc, maxVig: dreIdx.maxReal, todos, disp: dispT.acc, dispInfo: dispT.info, abertura, kml: kmlIdx, cat: CAT, fatoRede: FU,
     fatoUni, quartisRede, fatoPlaca, fatoMot, carta, seara: searaIdx, ginfo: indexaGinfo(L.ginfo || {}, deps.hoje), prolog, ArvImpacto: deps.ArvImpacto || global.ArvImpacto };
   ctx.rede = rede(FU, deps.Estat || global.Estat);
@@ -1315,15 +1324,19 @@ async function carregar(sb, o) {
     passo('Seara · modelo das placas (base das preventivas)', async () => SBM ? await SBM.modelos() : {}, v => Object.keys(v || {}).length)
   ]);
   // Dispersão de km do banco (set/26+) e balanço de massa: em sequência, depois do resto (tabela vazia = falha: login vencido ou mês não importado)
-  const [dispBanco, balanco] = await Promise.all([
+  const [dispBanco, viagens, balanco] = await Promise.all([
     passo('Dispersão de km do banco (set/26 em diante)', async () => {
       const [linhas, placas, kml] = await Promise.all([todasLinhas(sb, 'dispersao_km', '*'),
         todasLinhas(sb, 'dispersao_placa', 'vigencia,unidade,projeto,placa,placa_origem,km_rem'),
         todasLinhas(sb, 'sh_consumo_km_litro', 'vigencia,projeto,placa,km_rodado_horas_trabalhadas')]);
       if (!linhas.length) throw new Error('a tabela dispersao_km veio vazia'); return { linhas, placas, kml }; }, v => v.linhas.length),
+    passo('Viagens por placa (remunerado por placa de Rota, AS e Van)', async () => {
+      const r = await todasLinhas(sb, 'dispersao_placa_viagem', 'vigencia,unidade,projeto,placa,placa_origem,viagens_prim,viagens_rec,viagens_not');
+      if (!r.length) throw new Error('a tabela dispersao_placa_viagem veio vazia'); return r; }, v => v.length),
     passo('Balanço de massa (banco)', async () => { const r = await todasLinhas(sb, 'balanco_massa', 'unidade,projeto,vigencia,conta,valor');
       if (!r.length) throw new Error('a tabela balanco_massa veio vazia'); return r; }, v => v.length)
   ]);
+  if (dispBanco) dispBanco.viagens = viagens || [];
   if (corr && corr.FONTES) corr.FONTES.filter(x => x.estado === 'erro').forEach(x => fontes.push({ nome: '· ' + x.nome, estado: 'erro', msg: x.msg }));
   // Carta: os meses do DRE com realizado nos últimos 13 meses
   let carta = null;
@@ -1348,6 +1361,6 @@ async function carregarProlog(sb) {
 }
 
 global.FcaAuto = { UNITS, PACOTES, vigLbl, vigDeLbl, vigIdx, vigAnt, vigSeg, projKey, unidadeDoNv3, rs, br, pct, sinalPct, impFmt, NK,
-  indexaDRE, fatos, desvioTxt, desvioCurto, contaCurta, getPacote, pacDoFato, EXCL_FCA, indexaSeara, acumuladoAno, redeFala, unidadeDoDRE, indexaDisp, indexaDispTudo, indexaAbertura, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
+  indexaDRE, fatos, desvioTxt, desvioCurto, contaCurta, getPacote, pacDoFato, EXCL_FCA, indexaSeara, acumuladoAno, redeFala, unidadeDoDRE, indexaDisp, indexaDispTudo, indexaAbertura, indexaPlacas, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
   diagnostico, TOL, naTolerancia, indicadores, indexaGinfo, EXTRA, montaCatalogo, CAT: () => CAT, resumoProlog, contexto, carregar, carregarProlog, ROT, METAS, fmtInd, placaKey };
 })(typeof window !== 'undefined' ? window : globalThis);

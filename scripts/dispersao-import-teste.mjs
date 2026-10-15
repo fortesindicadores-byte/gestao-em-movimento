@@ -88,6 +88,19 @@ const ARQ = path.join(TMP, 'Dispersao de KM - Consolidado 2026 (SET).xlsx');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(AB), '02-ABERT. PLACA');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(BD), '01-BD');
   XLSX.writeFile(wb, ARQ); }
+// planilha de viagens (uma linha por viagem): PLT Rota 10 viagens (4 delas AS, que em Pelotas é Rota), GRL Van 20
+const ARQ_VIAG = path.join(TMP, 'viagens set.xlsx');
+{ const HV = ['Tipo', 'Vigência', 'Entrega ', 'Carga Atual', 'Frota ', 'VBZ', 'Projeto', 'Nome - Unidade', 'Data', 'Placa'];
+  const v = (tipo, vig, ent, carga, frota, proj, uni, placa, n) => Array(n).fill([tipo, vig, ent, carga, frota, 5, proj, uni, 1092026, placa]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([HV,
+    ...v('TRUCK', 'ROTA_1_9_2026', 'Rota', 'Roteriz', 'Padrao', 'ROTA - PLT', 'CDD PELOTAS', 'PLT1A11', 6),
+    ...v('BI-TRUCK', 'AS_1_9_2026', 'AS', 'Roteriz', 'Padrao', 'ROTA - PLT', 'CDD PELOTAS', 'CUC9514', 4),
+    ...v('VAN', 'ROTA_2_9_2026', 'Rota', 'Extra', 'Fixo', 'ROTA - GRL', 'CDD GUARULHOS', 'GRL3C33', 12),
+    ...v('VAN', 'ROTA_2_9_2026', 'Rota', 'Roteriz', 'Fixo', 'ROTA - GRL', 'CDD GUARULHOS', 'GRL4D44', 8),
+    ...v('TOCO', 'ROTA_2_9_2026', 'Rota', 'Extra', 'Spot', 'TERCEIROS - GRL', 'CDD GUARULHOS', 'SPO1A00', 5),
+    ...v('TOCO', 'ROTA_2_9_2026', 'Rota', 'MKT', 'Padrao', 'ROTA - GRL', 'CDD GUARULHOS', 'GRL2B22', 2)]), 'Planilha1');
+  XLSX.writeFile(wb, ARQ_VIAG); }
 const ARQ_AGO = path.join(TMP, 'Dispersao de KM - Consolidado 2026 (AGO).xlsx');
 { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[], [], [], H01, B(8, 'Pelotas-RS', 'Rota', 5000, 6000)]), '01-BD'); XLSX.writeFile(wb, ARQ_AGO); }
 
@@ -108,7 +121,7 @@ const KML = [
 
 /* ── dublê do supabase-js ── */
 const SHIM_SB = (perfil) => `(function(){
-const PERFIL=${JSON.stringify(perfil)}; const DB={dispersao_km:[],dispersao_placa:[],sh_consumo_km_litro:${JSON.stringify(KML)},
+const PERFIL=${JSON.stringify(perfil)}; const DB={dispersao_km:[],dispersao_placa:[],dispersao_placa_viagem:[],sh_consumo_km_litro:${JSON.stringify(KML)},
   sh_base:[{slug:'consumo_km_litro',carregado_em:'2026-10-14T13:49:00Z',erro:null}]};
 window.__log={del:[],ins:{}}; window.__db=DB;
 function q(t){ let op='select', val=null, f=[], fin=null, rg=null, one=false;
@@ -185,6 +198,18 @@ console.log('1) admin · planilha sintética');
   // subir de novo substitui
   const r2 = await sobe(pg, ARQ);
   af('subir de novo substitui (mesmo nº de linhas no banco)', r2.db.km.length === r.db.km.length && r2.db.pl.length === r.db.pl.length, r2.db.km.length + ' / ' + r2.db.pl.length);
+  // planilha de viagens: grava as placas e a soma bate com a 01-BD
+  const rv = await sobe(pg, ARQ_VIAG);
+  const dbv = await pg.evaluate(() => window.__db.dispersao_placa_viagem);
+  const tv = await pg.evaluate(() => [...document.querySelectorAll('#tabViag tbody tr')].map(tr => [...tr.children].map(td => td.textContent.trim())));
+  af('planilha de viagens reconhecida pelo conteúdo e gravada (Spot e MKT fora)', rv.cartoes.length === 1 && rv.cartoes[0].classe === 'ok' && /Planilha de viagens/.test(rv.cartoes[0].texto) && /Spot \(freteiro\) 5/.test(rv.cartoes[0].texto) && /MKT 2/.test(rv.cartoes[0].texto), JSON.stringify(rv.cartoes));
+  af('banco: 4 placas, Pelotas AS como Rota, placa em Mercosul', dbv.length === 4 && dbv.some(x => x.unidade === 'PLT' && x.projeto === 'Rota' && x.placa === 'CUC9F14' && x.viagens_prim === 4) && dbv.filter(x => x.unidade === 'GRL' && x.projeto === 'Van').length === 2, JSON.stringify(dbv.map(x => [x.unidade, x.projeto, x.placa, x.viagens_prim])));
+  af('a 01-BD não foi tocada pela planilha de viagens', rv.db.km.length === r.db.km.length);
+  const vP = linha(tv, 'PLT', 'Rota'), vG = linha(tv, 'GRL', 'Van');
+  af('conferência PLT Rota: 10 viagens = 10 na 01-BD, 4.000 km nas placas = 4.000 na 01-BD', vP && vP[3] === '10' && vP[4] === '10' && vP[8] === '4.000' && vP[9] === '4.000' && vP[10] === '0', JSON.stringify(vP));
+  af('conferência GRL Van: 20 viagens e 1.300 km', vG && vG[3] === '20' && vG[8] === '1.300' && vG[9] === '1.300', JSON.stringify(vG));
+  const rv2 = await sobe(pg, ARQ_VIAG);
+  af('subir de novo a planilha de viagens substitui', (await pg.evaluate(() => window.__db.dispersao_placa_viagem.length)) === 4 && rv2.cartoes[0].classe === 'ok');
   // arquivo só com agosto: nada grava
   const r3 = await sobe(pg, ARQ_AGO);
   af('arquivo só com agosto: cartão vermelho e nada gravado', r3.cartoes[0].classe === 'erro' && /nada foi gravado/.test(r3.cartoes[0].texto), r3.cartoes[0].texto);
@@ -281,6 +306,22 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
   af('agosto do banco não entra (a aba já tem agosto)', N.all.filter(r => r.vig === '08/2026' && r.und === 'PLT').length === 1 && N.all.find(r => r.vig === '08/2026' && r.und === 'PLT').rem === 48000);
   const pl = N.placas.find(p => p.vig === '09/2026' && p.und === 'PLT');
   af('visão Placas de set/26 mostra CUC9514 (como está na planilha) com 4.300 km', pl && pl.placa === 'CUC9514' && pl.real === 4300 && pl.rem === 4000, JSON.stringify(pl));
+  af('sem a planilha de viagens, T1 fica fora da visão Placas de set/26', !N.placas.some(p => p.vig === '09/2026' && p.proj === 'EMPURRADA'), JSON.stringify(N.placas.filter(p => p.vig === '09/2026')));
+  // COM a planilha de viagens: PLT Rota 50 viagens = 4.000 km (CUC9514 30, PLT1A11 20); GRL Van 20 = 1.300
+  BANCO.dispersao_placa_viagem = [
+    { vigencia: '2026-09', unidade: 'PLT', projeto: 'Rota', placa: 'CUC9F14', placa_origem: 'CUC9514', viagens_prim: 30, viagens_rec: 0, viagens_not: 0 },
+    { vigencia: '2026-09', unidade: 'PLT', projeto: 'Rota', placa: 'PLT1A11', placa_origem: 'PLT1A11', viagens_prim: 20, viagens_rec: 0, viagens_not: 0 },
+    { vigencia: '2026-09', unidade: 'GRL', projeto: 'Van', placa: 'GRL4D44', placa_origem: 'GRL4D44', viagens_prim: 20, viagens_rec: 0, viagens_not: 0 }];
+  BANCO.dispersao_placa.push({ vigencia: '2026-09', unidade: 'PIR', projeto: 'Empurrada - 28 Palets', placa: 'PIR6F66', placa_origem: 'PIR6F66', km_rem: 9000 });
+  BANCO.sh_consumo_km_litro.push({ vigencia: '09/2026', projeto: 'EMPURRADA - PIR', placa: 'PIR6F66', km_rodado_horas_trabalhadas: 9500 });
+  const V = await roda('/painel-km/index.html');
+  const V9 = V.placas.filter(p => p.vig === '09/2026'), vpl = pl => V9.find(p => p.placa === pl);
+  af('com viagens: CUC9514 = 2.400 km rem (30 × 80) e os 4.300 km da Km/L', vpl('CUC9514') && Math.round(vpl('CUC9514').rem) === 2400 && vpl('CUC9514').real === 4300, JSON.stringify(V9));
+  af('com viagens: PLT1A11 = 1.600 km rem, sem km na Km/L', vpl('PLT1A11') && Math.round(vpl('PLT1A11').rem) === 1600 && vpl('PLT1A11').real === 0);
+  af('com viagens: a soma das placas de PLT Rota = 4.000 (o total da 01-BD)', Math.round(V9.filter(p => p.und === 'PLT').reduce((s, p) => s + p.rem, 0)) === 4000);
+  af('com viagens: T1 fora da visão Placas de set/26', !V9.some(p => p.proj === 'EMPURRADA'), JSON.stringify(V9.map(p => p.proj)));
+  af('com viagens: o total por unidade × projeto não muda', JSON.stringify(V.all.filter(r => r.vig === '09/2026' && r.und !== 'PIR').map(r => [r.und, r.proj, r.rem, r.real])) === JSON.stringify(N.all.filter(r => r.vig === '09/2026' && r.und !== 'PIR').map(r => [r.und, r.proj, r.rem, r.real])));
+  delete BANCO.dispersao_placa_viagem; BANCO.dispersao_placa.pop(); BANCO.sh_consumo_km_litro.pop();
   // FILTRO BM / SEM BM (Renan, 15/10/2026): Sem BM = km remunerado bruto; voltar a BM devolve o de antes
   const leHero = pg => pg.evaluate(() => ({ rem: document.getElementById('hero-rem').textContent, sub: document.getElementById('titSub').textContent,
     bm: document.getElementById('d-bm').textContent, sel: [...document.getElementById('ms-bm')._sel],

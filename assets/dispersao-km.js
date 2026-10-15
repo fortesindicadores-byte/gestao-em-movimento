@@ -318,5 +318,120 @@
     });
     return [...P.values()];
   }
-  raiz.DispersaoKm = { merc, unidadeDe, projetoDe, projetoKml, lePlanilha, kmRodado, monta, vigCel, placasAbertura, PROJ, AS_PELA_PLANILHA, INICIO };
+  /* ══ KM REMUNERADO POR PLACA PELA PLANILHA DE VIAGENS (Renan, 15/10/2026: "Use essa planilha
+     para subir remunerado por placa Rota, AS e Van. Deixe T1 fora") ══
+     Uma linha por VIAGEM (export do Roadshow). Regras dele:
+       · C Entrega = AS ou Rota; na Rota, A Tipo = VAN é o projeto Van (De-Para dele pela placa);
+         Pelotas: AS conta como Rota ("Pelotas o AS pode considerar como Rota");
+       · D Carga Atual = Extra e Roteriz são 1ª viagem; Recarga e Noturna têm km próprio;
+         MKT e Recolha ficam fora;
+       · E Frota = Spot é freteiro e fica fora (e o projeto TERCEIROS também).
+     O km de cada viagem é o km por viagem do tipo na 01-BD da unidade × projeto × mês,
+     então a soma das placas bate com o km remunerado da 01-BD quando as viagens batem. */
+  const AS_COMO_ROTA = ['PLT'];
+  const UNI_COD = ['BLC', 'CBA', 'CGR', 'FLP', 'GNA', 'GRL', 'MCC', 'NFR', 'PLT', 'RON', 'PIR', 'ANG'];
+  const CARGA = { EXTRA: 'prim', ROTERIZ: 'prim', RECARGA: 'rec', NOTURNA: 'not' };
+  function vigViagem(c, data) {
+    const t = String(c == null ? '' : c).trim();
+    let m = t.match(/_(\d{1,2})_(\d{4})$/); if (m) return vig(+m[2], +m[1]);   // ROTA_1_9_2026 = 1ª quinzena de set/26
+    const v = vigCel(c); if (v) return v;
+    m = String(data == null ? '' : data).trim().match(/^(\d{1,2})(\d{2})(\d{4})$/);   // Data 1092026 = 01/09/2026
+    return m ? vig(+m[3], +m[2]) : null;
+  }
+  function leViagens(XLSX, wb, nome, inicio) {
+    const ini = inicio || INICIO;
+    let g = null, iH = -1, h = null;
+    for (const sn of wb.SheetNames) {
+      const gg = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, defval: null, blankrows: false, raw: true });
+      const i = gg.slice(0, 15).findIndex(l => { const n = (l || []).map(norm); return n.includes('PLACA') && n.includes('CARGAATUAL') && n.includes('ENTREGA') && n.includes('PROJETO'); });
+      if (i >= 0) { g = gg; iH = i; h = (gg[i] || []).map(v => String(v == null ? '' : v)); break; }
+    }
+    if (!g) return null;   // não é a planilha de viagens
+    const C = { tipo: col(h, 0, 'Tipo'), vig: col(h, 0, 'Vigência'), ent: col(h, 0, 'Entrega'), carga: col(h, 0, 'Carga Atual'),
+      frota: col(h, 0, 'Frota'), proj: col(h, 0, 'Projeto'), uni: col(h, 0, 'Nome - Unidade'), data: col(h, 0, 'Data'), pl: col(h, 0, 'Placa') };
+    const falta = ['tipo', 'vig', 'ent', 'carga', 'frota', 'proj', 'pl'].filter(k => C[k] < 0);
+    if (falta.length) throw new Error('na planilha de viagens faltam as colunas: ' + falta.join(', '));
+    const P = new Map(), fora = {}, antes = new Set(); let lidas = 0;
+    const conta = m => { fora[m] = (fora[m] || 0) + 1; };
+    for (let i = iH + 1; i < g.length; i++) {
+      const l = g[i] || []; if (!l.some(v => v != null && String(v).trim() !== '')) continue;
+      lidas++;
+      const vg = vigViagem(l[C.vig], C.data >= 0 ? l[C.data] : null); if (!vg) { conta('sem vigência'); continue; }
+      if (vg < ini) { antes.add(vg); continue; }
+      if (NK(l[C.frota]) === 'SPOT') { conta('Spot (freteiro)'); continue; }
+      const tc = CARGA[NK(l[C.carga])]; if (!tc) { conta(String(l[C.carga] || '(vazio)').trim() || '(vazio)'); continue; }
+      const pj = String(l[C.proj] == null ? '' : l[C.proj]).trim(), k3 = pj.lastIndexOf(' - ');
+      const pre = NK(k3 >= 0 ? pj.slice(0, k3) : pj);
+      if (/TERCEIRO/.test(pre)) { conta('projeto TERCEIROS'); continue; }
+      if (/EMPURR|INSUMO/.test(pre)) { conta('T1 (Empurrada)'); continue; }
+      let u = k3 >= 0 ? pj.slice(k3 + 3).trim().toUpperCase() : ''; if (u === 'GOI') u = 'GNA';
+      if (!UNI_COD.includes(u)) u = C.uni >= 0 ? unidadeDe(l[C.uni]) : null;
+      if (!u) { conta('unidade não reconhecida'); continue; }
+      const pm = merc(l[C.pl]); if (!pm) { conta('sem placa'); continue; }
+      let p = NK(l[C.ent]) === 'AS' ? 'Auto Serviço' : (NK(l[C.tipo]) === 'VAN' ? 'Van' : 'Rota');
+      if (p === 'Auto Serviço' && AS_COMO_ROTA.includes(u)) p = NK(l[C.tipo]) === 'VAN' ? 'Van' : 'Rota';
+      const k = vg + '|' + u + '|' + p + '|' + pm;
+      const a = P.get(k) || { vigencia: vg, unidade: u, projeto: p, placa: pm, placa_origem: String(l[C.pl]).trim(), viagens_prim: 0, viagens_rec: 0, viagens_not: 0 };
+      a['viagens_' + tc]++; P.set(k, a);
+    }
+    return { linhas: [...P.values()], fora, lidas, antes: [...antes].sort(), inicio: ini };
+  }
+
+  /* viagens × 01-BD → km remunerado por placa. 1ª viagem = km da 1ª ÷ viagens da 1ª da 01-BD;
+     recarga + noturna dividem o resto do km remunerado da 01-BD (km rem − km da 1ª), na proporção
+     das viagens de cada placa pesadas pelo km por viagem de cada tipo (sem viagem do tipo na 01-BD,
+     pesa como a 1ª). conf: a conferência por unidade × projeto (viagens e km, placas × 01-BD). */
+  function remPlacas(viagens, linhas) {
+    const bd = new Map(); (linhas || []).forEach(l => bd.set(l.vigencia + '|' + l.unidade + '|' + l.projeto, l));
+    const grupos = new Map();
+    (viagens || []).forEach(v => { const k = v.vigencia + '|' + v.unidade + '|' + v.projeto; (grupos.get(k) || grupos.set(k, []).get(k)).push(v); });
+    const placas = [], conf = [];
+    grupos.forEach((vs, k) => {
+      const l = bd.get(k), [vg, u, p] = k.split('|');
+      const v1 = vs.reduce((s, v) => s + (+v.viagens_prim || 0), 0), vr = vs.reduce((s, v) => s + (+v.viagens_rec || 0), 0), vn = vs.reduce((s, v) => s + (+v.viagens_not || 0), 0);
+      const c = { vigencia: vg, unidade: u, projeto: p, placas: vs.length, v1, vr, vn, v1BD: null, vrBD: null, vnBD: null, kmBD: null, km: null, semLinha: !l };
+      if (!l) { vs.forEach(v => placas.push({ ...v, km_rem: null })); conf.push(c); return; }
+      const t1 = (+l.viagens_prim || 0) > 0 ? (+l.km_rem_prim || 0) / +l.viagens_prim : 0;
+      const tr = (+l.viagens_rec || 0) > 0 && +l.km_rem_rec > 0 ? +l.km_rem_rec / +l.viagens_rec : t1;
+      const tn = (+l.viagens_not || 0) > 0 && +l.km_rem_not > 0 ? +l.km_rem_not / +l.viagens_not : t1;
+      const resto = Math.max(0, (+l.km_rem || 0) - (+l.km_rem_prim || 0));
+      const peso = v => (+v.viagens_rec || 0) * tr + (+v.viagens_not || 0) * tn, pT = vs.reduce((s, v) => s + peso(v), 0);
+      // sem recarga nem noturna na planilha e com resto na 01-BD: o resto vai pelas viagens de 1ª (a soma bate)
+      const pesoF = pT > 0 ? peso : v => +v.viagens_prim || 0, pF = pT > 0 ? pT : v1;
+      let km = 0;
+      vs.forEach(v => { const kr = (+v.viagens_prim || 0) * t1 + (pF > 0 ? resto * pesoF(v) / pF : 0); km += kr; placas.push({ ...v, km_rem: r2(kr) }); });
+      Object.assign(c, { v1BD: +l.viagens_prim || 0, vrBD: +l.viagens_rec || 0, vnBD: +l.viagens_not || 0, kmBD: +l.km_rem || 0, km: r2(km), restoPela1a: pT > 0 ? 0 : r2(resto) });
+      conf.push(c);
+    });
+    // linha da 01-BD (Rota, AS, Van) dos meses da planilha sem nenhuma viagem: fica na conferência
+    const vigs = new Set((viagens || []).map(v => v.vigencia));
+    (linhas || []).forEach(l => { const k = l.vigencia + '|' + l.unidade + '|' + l.projeto;
+      if (!vigs.has(l.vigencia) || grupos.has(k) || /^Empurrada/.test(l.projeto)) return;
+      conf.push({ vigencia: l.vigencia, unidade: l.unidade, projeto: l.projeto, placas: 0, v1: 0, vr: 0, vn: 0,
+        v1BD: +l.viagens_prim || 0, vrBD: +l.viagens_rec || 0, vnBD: +l.viagens_not || 0, kmBD: +l.km_rem || 0, km: 0, semViagem: true }); });
+    return { placas, conf };
+  }
+
+  /* o REALIZADO de cada placa: o km dela na aba Km/L no mês (det do kmRodado), repartido entre as
+     linhas dela na proporção do km remunerado. A parte T1 (lista de placas do banco, Empurrada) entra
+     na conta e fica de fora (Renan, 15/10/2026: "Deixe T1 fora"), senão a placa que roda Empurrada e
+     faz umas viagens de Rota levaria o mês inteiro para a Rota. Placa da Km/L num projeto T2 sem
+     nenhuma viagem na planilha entra com remunerado 0 (rodou sem viagem remunerada). */
+  function realPlacas(rem, det, lista) {
+    const kmPl = new Map(); (det || []).forEach(d => { const k = d.vigencia + '|' + d.placa; kmPl.set(k, (kmPl.get(k) || 0) + (+d.km || 0)); });
+    const t1 = new Map(); (lista || []).forEach(p => { if (!/^Empurrada/.test(p.projeto)) return; const k = p.vigencia + '|' + p.placa; t1.set(k, (t1.get(k) || 0) + (+p.km_rem || 0)); });
+    const porPl = new Map(); (rem || []).forEach(r => { const k = r.vigencia + '|' + r.placa; (porPl.get(k) || porPl.set(k, []).get(k)).push(r); });
+    const out = [];
+    porPl.forEach((rs, k) => {
+      const km = kmPl.get(k) || 0, w1 = t1.get(k) || 0, wT = rs.reduce((s, r) => s + (+r.km_rem || 0), 0) + w1;
+      rs.forEach(r => out.push({ ...r, km_real: r2(wT > 0 ? km * (+r.km_rem || 0) / wT : (w1 > 0 ? 0 : km / rs.length)), t1: w1 > 0 }));
+    });
+    const vigs = new Set((rem || []).map(r => r.vigencia));
+    (det || []).forEach(d => { if (!vigs.has(d.vigencia) || /^Empurrada/.test(d.projeto) || porPl.has(d.vigencia + '|' + d.placa)) return;
+      out.push({ vigencia: d.vigencia, unidade: d.unidade, projeto: d.projeto, placa: d.placa, placa_origem: d.placa_origem,
+        viagens_prim: 0, viagens_rec: 0, viagens_not: 0, km_rem: 0, km_real: r2(+d.km || 0), semViagem: true }); });
+    return out;
+  }
+  raiz.DispersaoKm = { merc, unidadeDe, projetoDe, projetoKml, lePlanilha, kmRodado, monta, vigCel, placasAbertura,
+    leViagens, remPlacas, realPlacas, PROJ, AS_PELA_PLANILHA, AS_COMO_ROTA, INICIO };
 })(typeof window !== 'undefined' ? window : globalThis);
