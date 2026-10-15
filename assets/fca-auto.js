@@ -230,6 +230,66 @@ function indexaDisp(disp) {
   });
   return acc;
 }
+/* DISPERSÃO DO BANCO E BALANÇO DE MASSA (Renan, 15/10/2026: "Agora gere o FCA automático
+   considerando a dispersão"). A aba Dispersão de km vai até ago/26; set/26 em diante mora
+   no banco (dispersao_km + lista de placas + aba Km/L, o mesmo motor `assets/dispersao-km.js`
+   do Painel KM), e entra só nos meses que a aba não tem. O km remunerado das Empurradas
+   recebe o BALANÇO DE MASSA (tabela balanco_massa, o motor `assets/balanco-massa.js`, conta a
+   conta e rateado no ano pela diferença do mês, igual ao Painel KM): sem ele, PIR set/26
+   daria +27,7% de dispersão quando o balanço devolve o km cobrado depois (+0,4%). */
+const DISP_PROJ_BANCO = { 'Rota': 'ROTA', 'Auto Serviço': 'AUTO SERVIÇO', 'Van': 'ROTA (VAN)',
+  'Empurrada - 28 Palets': 'EMPURRADA', 'Empurrada - 42 Palets': 'EMPURRADA', 'Empurrada - Insumos': 'EMPURRADA' };
+const CTA_ALIAS_BM = { 'COMBUSTIVEIS VEICULOS E EQUIPAMENTOS': 'COMBUSTIVEIS', 'FLUIDOS (ARLA)': 'ARLA',
+  'PERSONALIZACAO/PADRONIZACAO DE VEICULOS': 'PERSONALIZACAO/PADRONIZACAO', 'PERSONALIZACAO E PADRONIZACAO DE VEICULOS': 'PERSONALIZACAO/PADRONIZACAO',
+  'MANUTENCAO DE VEICULOS E EQUIPAMENTOS': 'MANUTENCAO DE VEICULOS E EQUIP.', 'CONSERTOS E RECAPAGENS DE PNEUS': 'RECAPAGENS E OUTROS SERVICOS', 'PNEUS E CAMARAS': 'PNEUS NOVOS' };
+const ctaBM = c => { const n = NK(c).replace(/\s+/g, ' ').trim(); return CTA_ALIAS_BM[n] || n; };
+const vigBM = v => v.slice(5) + '/' + v.slice(0, 4);   // 'AAAA-MM' → 'MM/AAAA' (formato do motor do balanço)
+function indexaDispTudo(L, dreAcc, DK, BM) {
+  const acc = indexaDisp(L.disp), vigsAba = new Set(Object.keys(acc).map(k => k.split('|').pop()));
+  const info = { banco: [], semKm: [], bm: null, bmAvisos: [] };
+  // 1) set/26 em diante, do banco: só os meses que a aba não tem
+  const db = L.dispBanco;
+  if (db && DK && (db.linhas || []).length) {
+    const kmlRows = (db.kml || []).map(r => { const m = String(r.vigencia || '').match(/^(\d{2})\/(\d{4})$/);
+      return { vigencia: m ? m[2] + '-' + m[1] : '', projeto: r.projeto, placa: r.placa, km: +r.km_rodado_horas_trabalhadas || 0 }; })
+      .filter(r => r.vigencia >= DK.INICIO);
+    DK.monta(db.linhas, DK.kmRodado(db.placas || [], kmlRows)).forEach(l => {
+      const vig = l.vigencia; if (!vig || vigsAba.has(vig)) return;
+      const n3 = (DISP_PROJ_BANCO[l.projeto] || l.projeto) + ' - ' + l.unidade;
+      const uni = unidadeDoNv3(n3); if (!uni) return;
+      if (l.km_rodado == null) { info.semKm.push(uni + ' ' + l.projeto + ' ' + vig); return; }
+      const k = uni + '|' + projKey(n3) + '|' + vig;
+      const a = acc[k] || (acc[k] = { rem: 0, real: 0, vgTot: 0, vgRec: 0, vgNot: 0, vgMap: 0, fonte: 'banco' });
+      const vp = +l.viagens_prim || 0, vr = +l.viagens_rec || 0, vn = +l.viagens_not || 0, vm = +l.viagens_mapa_aberto || 0;
+      a.rem += +l.km_rem || 0; a.real += +l.km_rodado || 0; a.vgTot += vp + vr + vn + vm; a.vgRec += vr; a.vgNot += vn; a.vgMap += vm;
+      if (!info.banco.includes(vig)) info.banco.push(vig);
+    });
+  }
+  // 2) balanço de massa das Empurradas
+  const bal = {};
+  (L.balanco || []).forEach(x => { const m = String(x.vigencia || '').match(/^(\d{4})-(\d{2})$/); if (!m) return;
+    const n3 = NK(x.projeto) + ' - ' + NK(x.unidade), uni = unidadeDoNv3(n3); if (!uni) return;
+    const ch = m[2] + '/' + m[1] + '|' + uni + '|' + projKey(n3), c = ctaBM(x.conta);
+    (bal[ch] = bal[ch] || {})[c] = (bal[ch][c] || 0) + (+x.valor || 0); });
+  if (BM && Object.keys(bal).length) {
+    const km0 = {}, kmRe = {}, remCta = {};
+    Object.entries(acc).forEach(([k, a]) => { const [u, p, v] = k.split('|'); const ch = vigBM(v) + '|' + u + '|' + p; km0[ch] = a.rem; kmRe[ch] = a.real; });
+    Object.values(dreAcc || {}).forEach(a => { const ch = vigBM(a.vig) + '|' + a.uni + '|' + a.proj;
+      Object.values(a.contas).forEach(c => { const n = ctaBM(c.conta); (remCta[ch] = remCta[ch] || {})[n] = (remCta[ch][n] || 0) - c.rem; }); });   // custo na DRE vem negativo
+    const ini = BM.inicioDoBanco(bal, '08/2026');
+    const cr = BM.comRealizado(bal, kmRe);
+    const nov = BM.recompoe({ bal: cr.bal, remCta, km0, inicio: ini });
+    const anu = BM.porAno([nov.porChave], km0, kmRe);
+    info.bm = { inicio: ini, adiados: cr.adiados };
+    info.bmAvisos = [...nov.avisos, ...anu.avisos];
+    Object.entries(anu.porChave).forEach(([ch, e]) => {
+      const p = BM.parte(ch), [u, pr] = p.grupo.split('|'), v = p.vig.slice(3) + '-' + p.vig.slice(0, 2);
+      const a = acc[u + '|' + pr + '|' + v]; if (!a || !(e.km > 0)) return;
+      a.rem0 = a.rem; a.bmKm = e.km; a.bmValor = e.valor; a.rem += e.km;
+    });
+  }
+  return { acc, info };
+}
 /* ABA ABERTURA (Painel KM · Placas): km remunerado × realizado POR PLACA e mês
    (Renan, 14/10/2026: "Nos contratos, as placas variáveis pode correlacionar com a
    dispersão de km das placas para explicar desvios e sugerir ações de contenção").
@@ -714,7 +774,7 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
     const dkm = dp.real - dp.rem, dpct = (dp.real / dp.rem - 1) * 100;
     if (b.vol >= D.minimo) {
       // TEXTO DIRETO (Renan, 14/10/2026: "Km Rodado chame de Dispersão de km… pode ser mais direto")
-      const extra = EMPURRADA(f.uni) ? ' · km rem. sem balanço de massa' : '';
+      const extra = dp.bmKm ? ` · km rem. com balanço de massa (+${br(dp.bmKm, 0)} km)` : (EMPURRADA(f.uni) ? ' · km rem. sem balanço de massa' : '');
       const como = b.volBases ? ` · ${rs(b.vol)}` : ` · ${rs(b.vol)} (pelo custo rem. da DRE)`;
       causa('Km / rota', `Dispersão de km: +${br(dkm, 0)} km (${sinalPct(dpct, 1)})${como}${extra}`, b.vol);
       const vg = []; if (dp.vgRec) vg.push(br(dp.vgRec, 0) + ' recs'); if (dp.vgNot) vg.push(br(dp.vgNot, 0) + ' noturnas'); if (dp.vgMap) vg.push(br(dp.vgMap, 0) + ' com mapa aberto');
@@ -1174,7 +1234,8 @@ function contexto(L, deps) {
   const porVig = {}; FU.forEach(r => { (porVig[r.vig] = porVig[r.vig] || []).push(r.v); });
   Object.entries(porVig).forEach(([vg, vs]) => { const q = {}; Object.keys(CAT).forEach(k => { q[k] = quartis(vs.map(v => v[k])); }); quartisRede[vg] = q; });
   const prolog = {}; Object.entries(L.prolog || {}).forEach(([u, t]) => { prolog[u] = resumoProlog(t); });
-  const ctx = { dreAcc: dreIdx.acc, maxVig: dreIdx.maxReal, todos, disp: indexaDisp(L.disp), abertura: indexaAbertura(L.abertura), kml: kmlIdx, cat: CAT, fatoRede: FU,
+  const dispT = indexaDispTudo(L, dreIdx.acc, deps.DispersaoKm || global.DispersaoKm, deps.BalancoMassa || global.BalancoMassa);
+  const ctx = { dreAcc: dreIdx.acc, maxVig: dreIdx.maxReal, todos, disp: dispT.acc, dispInfo: dispT.info, abertura: indexaAbertura(L.abertura), kml: kmlIdx, cat: CAT, fatoRede: FU,
     fatoUni, quartisRede, fatoPlaca, fatoMot, carta, seara: searaIdx, ginfo: indexaGinfo(L.ginfo || {}, deps.hoje), prolog, ArvImpacto: deps.ArvImpacto || global.ArvImpacto };
   ctx.rede = rede(FU, deps.Estat || global.Estat);
   ctx.aprend = aprendizado(L.fca, todos, dreIdx.maxReal);
@@ -1234,6 +1295,16 @@ async function carregar(sb, o) {
     passo('Seara · Remunerado (km por placa)', () => gvizP(SEARA_ID, { sheet: SEARA_ABA_REM, tq: 'select A, B, D', headers: '1' }), v => v.rows.length),
     passo('Seara · modelo das placas (base das preventivas)', async () => SBM ? await SBM.modelos() : {}, v => Object.keys(v || {}).length)
   ]);
+  // Dispersão de km do banco (set/26+) e balanço de massa: em sequência, depois do resto (tabela vazia = falha: login vencido ou mês não importado)
+  const [dispBanco, balanco] = await Promise.all([
+    passo('Dispersão de km do banco (set/26 em diante)', async () => {
+      const [linhas, placas, kml] = await Promise.all([todasLinhas(sb, 'dispersao_km', '*'),
+        todasLinhas(sb, 'dispersao_placa', 'vigencia,unidade,projeto,placa,placa_origem,km_rem'),
+        todasLinhas(sb, 'sh_consumo_km_litro', 'vigencia,projeto,placa,km_rodado_horas_trabalhadas')]);
+      if (!linhas.length) throw new Error('a tabela dispersao_km veio vazia'); return { linhas, placas, kml }; }, v => v.linhas.length),
+    passo('Balanço de massa (banco)', async () => { const r = await todasLinhas(sb, 'balanco_massa', 'unidade,projeto,vigencia,conta,valor');
+      if (!r.length) throw new Error('a tabela balanco_massa veio vazia'); return r; }, v => v.length)
+  ]);
   if (corr && corr.FONTES) corr.FONTES.filter(x => x.estado === 'erro').forEach(x => fontes.push({ nome: '· ' + x.nome, estado: 'erro', msg: x.msg }));
   // Carta: os meses do DRE com realizado nos últimos 13 meses
   let carta = null;
@@ -1242,7 +1313,7 @@ async function carregar(sb, o) {
     if (ate) { const vigs = []; for (let i = 0; i < 13; i++) vigs.push(vigDeIdx(vigIdx(ate) - i));
       carta = await passo('Carta de Custos (lançamentos)', async () => { const r = await CC.lerLancamentos(sb, UNITS, vigs); if (r.erro) throw new Error(r.erro.message || String(r.erro)); return r.data; }, v => v.length); }
   }
-  return { dre, disp, abertura: abert, kml, rsl, fca: fca || [], corr, ginfo: gin || {}, carta: carta || [], prolog: {}, fontes,
+  return { dre, disp, dispBanco, balanco: balanco || [], abertura: abert, kml, rsl, fca: fca || [], corr, ginfo: gin || {}, carta: carta || [], prolog: {}, fontes,
     seara: { comb: sComb, brem: sBrem, rem: sRem, prevMod: sMod || {} } };
 }
 /* Prolog de hoje: uma leitura por unidade (o jsonb das 14 juntas estoura o payload) */
@@ -1258,6 +1329,6 @@ async function carregarProlog(sb) {
 }
 
 global.FcaAuto = { UNITS, PACOTES, vigLbl, vigDeLbl, vigIdx, vigAnt, vigSeg, projKey, unidadeDoNv3, rs, br, pct, sinalPct, impFmt, NK,
-  indexaDRE, fatos, desvioTxt, desvioCurto, contaCurta, getPacote, pacDoFato, EXCL_FCA, indexaSeara, acumuladoAno, redeFala, unidadeDoDRE, indexaDisp, indexaAbertura, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
+  indexaDRE, fatos, desvioTxt, desvioCurto, contaCurta, getPacote, pacDoFato, EXCL_FCA, indexaSeara, acumuladoAno, redeFala, unidadeDoDRE, indexaDisp, indexaDispTudo, indexaAbertura, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
   diagnostico, TOL, naTolerancia, indicadores, indexaGinfo, EXTRA, montaCatalogo, CAT: () => CAT, resumoProlog, contexto, carregar, carregarProlog, ROT, METAS, fmtInd, placaKey };
 })(typeof window !== 'undefined' ? window : globalThis);
