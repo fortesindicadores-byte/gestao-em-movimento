@@ -614,12 +614,15 @@ function diagnostico(f, ctx) {
   // AS PLACAS OFENSORAS FICAM EMBAIXO DA CAUSA (Renan, 14/10/2026: "as placas ofensoras, em qualquer ação,
   // ficam abaixo da sua respectiva causa"): a ação fica só com o que fazer. A causa de cada ação é a mesma
   // que a Tabela usa (a 1ª ainda livre do tema; senão, a 1ª do tema).
-  const usadas = new Set(); D.causas.forEach(c => { c.ofens = []; });
+  // A AÇÃO LEVA O NÚMERO DA CAUSA (Renan, 15/10/2026: "As ações podem começar com o número da causa… 2.1., 2.2. e 2.3."):
+  // a.num = "<causa>.<ordem dentro da causa>"
+  const usadas = new Set(), nPorCausa = {}; D.causas.forEach(c => { c.ofens = []; });
   D.acoes.forEach(a => { let ci = D.causas.findIndex((c, i) => !usadas.has(i) && c.tema === a.tema); if (ci >= 0) usadas.add(ci); else ci = D.causas.findIndex(c => c.tema === a.tema);
+    a.ci = ci; a.num = ci >= 0 ? `${ci + 1}.${(nPorCausa[ci] = (nPorCausa[ci] || 0) + 1)}` : null;
     if (ci >= 0) a.ofens.forEach(o => { if (!D.causas[ci].ofens.includes(o)) D.causas[ci].ofens.push(o); }); });
   D.historico = histDoFato(f, ctx);
   D.causaTxt = D.causas.map((c, i) => `${i + 1}. ${c.txt}${c.ofens.length ? '\n' + c.ofens.map(o => '   - ' + o).join('\n') : ''}`).join('\n') + (D.ano ? (D.causas.length ? '\n' : '') + 'YTD: ' + D.ano.txt : '');
-  D.acaoTxt = D.acoes.map((a, i) => `${i + 1}. ${a.txt}`).join('\n');
+  D.acaoTxt = D.acoes.map((a, i) => `${a.num || i + 1}. ${a.txt}`).join('\n');
   return D;
 }
 /* ACUMULADO DO ANO embaixo das causas, em TODO pacote (Renan, 14/10/2026: "Todos

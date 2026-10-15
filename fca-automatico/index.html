@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610151100">
+<meta name="build" content="202610151200">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -942,7 +942,7 @@ body.claro table.rel.fa-rel.din tbody.fg tr+tr td.ln{border-top-color:rgba(15,23
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610151100"></script>
+<script src="../assets/fca-auto.js?v=202610151200"></script>
 </head>
 <body>
 <div class="app">
@@ -1213,7 +1213,7 @@ function tabelaHTML(vis){
       if(l.span){ const fim=i+l.span>=n?' fim':'';
         h+=l.c?`<td class="txt ln cz${fim}"${l.span>1?` rowspan="${l.span}"`:''}><span class="ln-n">${l.ci+1}.</span>${causaHTML(l.c)}</td>`
           :`<td class="txt ln${fim}">${i===0&&!ls.length?'<i style="color:var(--txt3)">Sem evidência nas bases para este mês</i>':''}</td>`; }
-      h+=`<td class="txt ln">${l.a?acaoHTML(l.a):(i===0&&!ls.length?'<i style="color:var(--txt3)">—</i>':'<span class="ac-sem">sem ação: só explica o desvio</span>')}</td>${camposAcao(f,l)}`;
+      h+=`<td class="txt ln">${l.a?(l.a.num?`<span class="ln-n">${esc(l.a.num)}.</span>`:'')+acaoHTML(l.a):(i===0&&!ls.length?'<i style="color:var(--txt3)">—</i>':'<span class="ac-sem">sem ação: só explica o desvio</span>')}</td>${camposAcao(f,l)}`;
       h+='</tr>';
     }
     h+='</tbody>';
@@ -1331,7 +1331,7 @@ function abreModal(id){
   const b=d.blocos, P=[];
   P.push(`<div class="fm-sec"><h4>Fato</h4><div class="fm-box">${nl(FA.desvioTxt(f))}${anoHTML(d)}</div></div>`);
   P.push(`<div class="fm-sec"><h4>Causa automática</h4><div class="fm-box">${d.causas.length?'<ol>'+d.causas.map(c=>`<li><span class="tema">${esc(c.tema)}</span>${causaHTML(c)}${c.part?` <b>(${Math.round(c.part*100)}% do desvio)</b>`:''}</li>`).join('')+'</ol>':'<i>Sem evidência nas bases para este mês.</i>'}</div></div>`);
-  P.push(`<div class="fm-sec"><h4>Ação automática</h4><div class="fm-box">${d.acoes.length?'<ol>'+d.acoes.map(a=>`<li class="ac-abre" data-fid="${esc(f.id)}" data-k="${esc(chavesDe(d).get(a)||'')}" title="Abrir a ação"><span class="tema">${esc(a.tema)}</span>${esc(a.txt)}${a.taxa?`<span class="tx">${esc(a.taxa.txt)}</span>`:''}</li>`).join('')+'</ol>':'<i>—</i>'}</div></div>`);
+  P.push(`<div class="fm-sec"><h4>Ação automática</h4><div class="fm-box">${d.acoes.length?'<ol style="list-style:none;padding-left:0">'+d.acoes.map(a=>`<li class="ac-abre" data-fid="${esc(f.id)}" data-k="${esc(chavesDe(d).get(a)||'')}" title="Abrir a ação">${a.num?`<b>${esc(a.num)}.</b> `:''}<span class="tema">${esc(a.tema)}</span>${esc(a.txt)}${a.taxa?`<span class="tx">${esc(a.taxa.txt)}</span>`:''}</li>`).join('')+'</ol>':'<i>—</i>'}</div></div>`);
   if(d.sinais.length) P.push(`<div class="fm-sec"><h4>Sinais a conferir e observações</h4><div class="fm-box"><ul style="margin:0;padding-left:18px">${d.sinais.map(s=>`<li>${tri(esc(s.txt))}</li>`).join('')}</ul></div></div>`);
   if(b.ponte){ const p=b.ponte, row=(k,v,t)=>`<tr><td><b>${k}</b></td><td class="n" style="color:${v>0?'var(--vermelho)':v<0?'var(--verde)':'var(--txt2)'}"><b>${v==null?'—':(v>0?'+':'')+FA.rs(v)}</b></td><td>${t||''}</td></tr>`;
     const se=b.seara;
@@ -1498,6 +1498,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610151100"></script>
+<script src="../assets/build-check.js?v=202610151200"></script>
 </body>
 </html>
