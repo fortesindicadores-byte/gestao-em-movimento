@@ -1,0 +1,25 @@
+name: Goiania Comb Inspect (auditoria)
+
+# Goiânia na Árvore de Combustível: o que as abas Km/L, R$/L, Frota e Dispersão
+# de km trazem da operação (só leitura).
+on:
+  workflow_dispatch:
+    inputs:
+      alvo:
+        description: 'regex do que procurar nas linhas'
+        required: false
+        default: 'GOI|GNA|GYN|ANAPOLIS|APARECIDA'
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Inspecionar
+        env:
+          ALVO: ${{ inputs.alvo }}
+        run: node scripts/goiania-comb-inspect.mjs
