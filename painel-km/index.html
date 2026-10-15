@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610142215">
+<meta name="build" content="202610151100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -443,6 +443,8 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
         <div class="ms-wrap" id="ms-und"><button class="ms-btn" onclick="toggleMs('ms-und')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>Unidade<span class="ms-cnt"></span></button>
         <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
         <div class="ms-wrap" id="ms-proj"><button class="ms-btn" onclick="toggleMs('ms-proj')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M6 12h12M9 18h6"/></svg>Projeto<span class="ms-cnt"></span></button>
+        <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
+        <div class="ms-wrap" id="ms-bm" title="Balanço de massa: BM soma a recomposição ao km remunerado das empurradas; Sem BM mostra o km remunerado bruto da Dispersão de km"><button class="ms-btn" onclick="toggleMs('ms-bm')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 21h10M5 7h14"/><path d="M5 7l-3 7h6zM19 7l-3 7h6z"/></svg>BM<span class="ms-cnt"></span></button>
         <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
       </div>
       <button class="tool ico" id="btTema" onclick="trocaTema()" title="Claro / escuro"></button>
@@ -1166,7 +1168,7 @@ function buildMsFilter(id, items, label, displayFn, afterChange){
     const shown=it.filter(v=>String(disp(v)).toLowerCase().includes(f));
     const allChk=sel.size===0;
     list.innerHTML=
-      (!q?`<label class="ms-opt all-opt"><input type="checkbox" class="ms-all" ${allChk?'checked':''}> Todos (${it.length})</label>`:'')+
+      (!q&&!wrap._unico?`<label class="ms-opt all-opt"><input type="checkbox" class="ms-all" ${allChk?'checked':''}> Todos (${it.length})</label>`:'')+
       shown.map(v=>`<label class="ms-opt"><input type="checkbox" data-v="${v}" ${allChk||sel.has(v)?'checked':''}> ${disp(v)}<span class="ms-only" data-v="${v}">only</span></label>`).join('');
   }, ()=>wrap._items||[], afterChange||render);
 }
@@ -1253,6 +1255,29 @@ function repopulateVig() {
   render();
 }
 
+/* FILTRO BM / SEM BM (Renan, 15/10/2026: "crie um filtro com BM e Sem BM na dispersão de km").
+   Escolha única: BM = km remunerado com a recomposição do balanço de massa (como sempre foi);
+   Sem BM = o km remunerado bruto da Dispersão de km. O impacto acompanha (mesmo R$/km). */
+let BM_MODO = 'BM';
+function montaFiltroBM(){
+  const w = document.getElementById('ms-bm'); if (!w) return;
+  w._unico = true; w._sel = new Set([BM_MODO]);
+  buildMsFilter('ms-bm', ['BM', 'Sem BM'], 'BM', null, () => {
+    const s = w._sel;
+    // clicar na outra opção marca as duas (e o filtro limpa); desmarcar a atual esvazia: nos dois casos, troca
+    const novo = s.size === 1 ? [...s][0] : (BM_MODO === 'BM' ? 'Sem BM' : 'BM');
+    BM_MODO = novo; w._sel = new Set([novo]); w._render();
+    document.querySelectorAll('.ms-panel.open').forEach(p => p.classList.remove('open'));
+    render();
+  });
+}
+function modoBM(){
+  const sem = BM_MODO === 'Sem BM';
+  ALL.forEach(r => { if (r.rem0 == null) return;
+    r.rem = sem ? r.rem0 : r.rem0 + (r.recomp || 0);
+    r.imp = (r.real - r.rem) * (r.rsKm || 0); });
+}
+
 function populateFilters() {
   const anos  = [...new Set(ALL.map(r => r.ano))].filter(Boolean).sort().reverse();
   const unds  = [...new Set(ALL.map(r => r.und))].filter(Boolean).sort();
@@ -1260,6 +1285,7 @@ function populateFilters() {
   buildMsFilter('ms-ano',  anos,  'Ano', null, repopulateVig);
   buildMsFilter('ms-und',  unds,  'Unidade');
   buildMsFilter('ms-proj', projs, 'Projeto');
+  montaFiltroBM();
   repopulateVig();
 }
 
@@ -1303,6 +1329,7 @@ function getYTDRows(F) {
 }
 
 function render() {
+  modoBM();
   refreshCascade();        // recalcula opções de todos os filtros conforme a seleção atual (cascata)
   const F = getFiltered();
 
@@ -1337,14 +1364,15 @@ function render() {
   set('hero-val', fmt(totReal));
   set('hero-rem', totRem ? fmt(totRem) : '—');
   const totRec = F.reduce((s, r) => s + (r.recomp || 0), 0), totBm = F.reduce((s, r) => s + (r.bmValor || 0), 0);
-  set('d-bm', BM_FONTE.fonte === 'erro' ? 'sem resposta do banco' : totRec ? `+${fmt(totRec)} km · R$ ${fmt(totBm)}` : '—');
+  set('d-bm', BM_FONTE.fonte === 'erro' ? 'sem resposta do banco' : totRec ? (BM_MODO === 'Sem BM' ? 'fora · ' : '') + `+${fmt(totRec)} km · R$ ${fmt(totBm)}` : '—');
   { const b = document.getElementById('d-bm'); if (b) { b.classList.toggle('cr', BM_FONTE.fonte === 'erro');
     b.title = BM_FONTE.fonte === 'erro' ? 'O banco não respondeu (login do hub vencido?) e o km remunerado está SEM o balanço de massa. Entre de novo pelo hub.'
       : BM_FONTE.fonte === 'copia' ? 'O banco não respondeu: valendo a última leitura boa deste navegador, de ' + new Date(BM_FONTE.quando).toLocaleString('pt-BR') : ''; } }
   /* visão Balanço de Massa: o MESMO total do hero, aberto em cards (Renan, 23/09/2026) */
   set('bm-val', totBm ? 'R$ ' + fmt(totBm) : '—');
   set('bm-km',  totRec ? '+' + fmt(totRec) + ' km' : '—');
-  set('bm-share', (totRec && totRem) ? (totRec / totRem * 100).toFixed(1).replace('.', ',') + '%' : '—');
+  const remComBm = totRem + (BM_MODO === 'Sem BM' ? totRec : 0);
+  set('bm-share', (totRec && remComBm) ? (totRec / remComBm * 100).toFixed(1).replace('.', ',') + '%' : '—');
   set('bm-taxa',  totRec ? 'R$ ' + (totBm / totRec).toFixed(2).replace('.', ',') : '—');
   const bmUnis = [...new Set(F.filter(r => (r.recomp || 0) > 0).map(r => r.und))].sort();
   const bmVigs = [...new Set(F.filter(r => (r.recomp || 0) > 0).map(r => r.vig))].sort(sortVig);
@@ -1865,7 +1893,7 @@ render=function(){
   set('k-unis-m', [...new Set(F.map(r=>r.proj).filter(Boolean))].length+' projeto(s)');
   set('k-vigs', vigs.length||'—');
   set('k-vigs-m', vigs.length?vigLabelShort(vigs[0])+(vigs.length>1?' → '+vigLabelShort(vigs[vigs.length-1]):''):'—');
-  _recorte=(vigs.length?vigLabelShort(vigs[vigs.length-1]).toUpperCase():'—')+' · '+(unis.length||0)+' unidade(s)';
+  _recorte=(vigs.length?vigLabelShort(vigs[vigs.length-1]).toUpperCase():'—')+' · '+(unis.length||0)+' unidade(s)'+(BM_MODO==='Sem BM'?' · Sem BM':'');
   const e=document.getElementById('titSub'); if(e) e.textContent=_recorte+(_carga?' · '+_carga:'');
 };
 
@@ -1948,6 +1976,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610142215"></script>
+<script src="../assets/build-check.js?v=202610151100"></script>
 </body>
 </html>

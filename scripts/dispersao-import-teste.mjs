@@ -237,7 +237,7 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
     balanco_massa: [{ unidade: 'PIR', projeto: 'EMPURRADA', vigencia: '2026-08', conta: 'Combustíveis', valor: 200000 },
                     { unidade: 'PIR', projeto: 'EMPURRADA', vigencia: '2026-09', conta: 'Combustíveis', valor: 300000 }],
   };
-  const roda = async (html, ligado = true) => {
+  const roda = async (html, ligado = true, apos = null) => {
     const ctx = await nav.newContext({ viewport: { width: 1600, height: 900 } });
     await ctx.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
     await ctx.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
@@ -260,7 +260,8 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
     if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'painel-km-' + (ligado ? 'com' : 'sem') + '-set.png') });
     const out = await pg.evaluate(() => ({ kh: 0, all: ALL.map(r => ({ vig: r.vig, und: r.und, proj: r.proj, rem: r.rem, rem0: r.rem0, recomp: r.recomp || 0, real: r.real, viagens: r.viagens, kmFrota: r.kmFrota, rsKm: r.rsKm, imp: r.imp })),
       placas: PLACAS.map(p => ({ vig: p.vig, und: p.und, proj: p.proj, placa: p.placa, rem: p.rem, real: p.real })) }));
-    await ctx.close(); return { ...out, kh, errs };
+    const extra = apos ? await apos(pg) : null;
+    await ctx.close(); return { ...out, kh, errs, extra };
   };
   const A = await roda('/painel-km/__antigo.html'), N = await roda('/painel-km/index.html');
   const ate = rs => JSON.stringify(rs.filter(r => r.vig !== '09/2026'));
@@ -280,7 +281,20 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
   af('agosto do banco não entra (a aba já tem agosto)', N.all.filter(r => r.vig === '08/2026' && r.und === 'PLT').length === 1 && N.all.find(r => r.vig === '08/2026' && r.und === 'PLT').rem === 48000);
   const pl = N.placas.find(p => p.vig === '09/2026' && p.und === 'PLT');
   af('visão Placas de set/26 mostra CUC9514 (como está na planilha) com 4.300 km', pl && pl.placa === 'CUC9514' && pl.real === 4300 && pl.rem === 4000, JSON.stringify(pl));
-  const D = await roda('/painel-km/index.html', false);
+  // FILTRO BM / SEM BM (Renan, 15/10/2026): Sem BM = km remunerado bruto; voltar a BM devolve o de antes
+  const leHero = pg => pg.evaluate(() => ({ rem: document.getElementById('hero-rem').textContent, sub: document.getElementById('titSub').textContent,
+    bm: document.getElementById('d-bm').textContent, sel: [...document.getElementById('ms-bm')._sel],
+    todos: !!document.querySelector('#ms-bm .ms-all'), igual0: ALL.every(r => r.rem === r.rem0),
+    imp0: ALL.every(r => Math.abs(r.imp - (r.real - r.rem0) * (r.rsKm || 0)) < 1e-6), recomp: ALL.reduce((s, r) => s + (r.recomp || 0), 0) }));
+  const clicaBM = async (pg, v) => { await pg.click('#ms-bm .ms-btn'); await pg.click(`#ms-bm input[data-v="${v}"]`); await pg.waitForTimeout(200); };
+  const D = await roda('/painel-km/index.html', false, async pg => {
+    await pg.evaluate(() => { const w = document.getElementById('ms-vig'); w._sel = new Set(); render(); });   // todas as vigências
+    const com = await leHero(pg); await clicaBM(pg, 'Sem BM'); const sem = await leHero(pg); await clicaBM(pg, 'BM'); const volta = await leHero(pg);
+    return { com, sem, volta }; });
+  const X = D.extra;
+  af('filtro BM: abre em BM, sem a opção "Todos"', X.com.sel.join() === 'BM' && !X.com.todos && !X.com.igual0 && X.com.recomp > 0, JSON.stringify(X.com));
+  af('Sem BM: km remunerado bruto em todas as linhas, impacto refeito com o mesmo R$/km, e o topo diz "Sem BM"', X.sem.sel.join() === 'Sem BM' && X.sem.igual0 && X.sem.imp0 && X.sem.rem !== X.com.rem && /Sem BM/.test(X.sem.sub) && /^fora/.test(X.sem.bm), JSON.stringify(X.sem));
+  af('voltar a BM devolve o mesmo km remunerado', X.volta.sel.join() === 'BM' && X.volta.rem === X.com.rem && !/Sem BM/.test(X.volta.sub), JSON.stringify(X.volta));
   af('desligado (padrão hoje): set/26 fora e jan a ago iguais', !D.all.some(r => r.vig === '09/2026') && !D.placas.some(p => p.vig === '09/2026') && ate(D.all) === ate(A.all), D.all.length);
   af('cards do Resumo com a altura do padrão (≤ 170px)', N.kh > 0 && N.kh <= 170 && D.kh <= 170, N.kh + ' · ' + D.kh);
   af('sem erro de página nos dois', !A.errs.length && !N.errs.length, [...A.errs, ...N.errs].join(' | '));
