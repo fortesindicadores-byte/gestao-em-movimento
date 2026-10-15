@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610151800">
+<meta name="build" content="202610151900">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -964,7 +964,7 @@ body.claro table.rel.fa-rel.din tbody.fg tr+tr td.ln{border-top-color:rgba(15,23
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610151800"></script>
+<script src="../assets/fca-auto.js?v=202610151900"></script>
 </head>
 <body>
 <div class="app">
@@ -1408,7 +1408,9 @@ function ensureAcao(){
      em caixa do mesmo tamanho, rótulo pequeno com dica ao lado, Causa e Ação lado a lado, status em botões
      lado a lado e a gravação continua automática (o rodapé diz "Salvo ✓"). */
   const st=document.createElement('style');
-  st.textContent='.kmodal.kac{width:min(860px,96vw)!important;padding:0!important;display:flex;flex-direction:column;overflow:hidden;}'+
+  /* CAIXA MAIOR (Renan, 15/10/2026: "aumentar mais o tamanho do quadrado… na maioria das vezes conseguirá ver
+     Fato, causa e ação completa abertos"): 1180 px e até 94vh; Fato, Causa e Ação crescem até o texto (ajustaAltura). */
+  st.textContent='.kmodal.kac{width:min(1180px,96vw)!important;max-height:94vh!important;padding:0!important;display:flex;flex-direction:column;overflow:hidden;}'+
     '.kac .ac-hd{display:flex;align-items:flex-start;gap:12px;padding:18px 22px 14px;border-bottom:1px solid var(--card-brd);}'+
     '.kac .ac-hd .t{flex:1;min-width:0;}.kac .ac-hd b{display:block;font-size:16px;font-weight:800;color:var(--txt);line-height:1.25;}'+
     '.kac .ac-hd .kmodal-sub{margin:4px 0 0;}'+
@@ -1509,6 +1511,16 @@ function abreAcao(fid,k){
   document.querySelector('#ac-ov .ac-previa').textContent='Sugestão automática. Prévia: '+(ACOES_LOCAL?'responsável, prazo e status ficam guardados neste navegador; o resto':'responsável, prazo e status gravam; o resto')+' entra quando a ação for para o FCA oficial.';
   g('ac-diag').onclick=()=>{ fechaAcao(); abreModal(fid); };
   g('ac-ov').style.display='flex';
+  ajustaAltura();
+}
+// Fato, Causa e Ação abrem do tamanho do texto; Causa e Ação ficam com a mesma altura (a maior das duas).
+// Teto para texto muito longo: aí o campo rola por dentro, e o corpo da caixa rola se ainda faltar espaço.
+function ajustaAltura(){
+  const g=id=>document.getElementById(id), alt=el=>{ el.style.height='auto'; return el.scrollHeight+2; };
+  const vh=window.innerHeight;
+  const ds=g('ac-desv'); ds.style.height=Math.min(alt(ds),Math.round(vh*.24))+'px';
+  const c=g('ac-causa'), a=g('ac-acao'); const h=Math.max(112,Math.min(Math.max(alt(c),alt(a)),Math.round(vh*.42)));
+  c.style.height=a.style.height=h+'px';
 }
 /* ── render ── */
 const TIT={resumo:'Resumo Gerencial',kanban:'Kanban',tabela:'Tabela',rede:'Correlações da Rede',historico:'Aprendizado',fontes:'Fontes'};
@@ -1578,6 +1590,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610151800"></script>
+<script src="../assets/build-check.js?v=202610151900"></script>
 </body>
 </html>
