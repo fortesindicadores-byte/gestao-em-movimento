@@ -252,7 +252,7 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
     await ctx.route('**/painel-km/__antigo.html', r => r.fulfill({ status: 200, contentType: 'text/html', body: ANTIGO }));
     const pg = await ctx.newPage(); const errs = []; pg.on('pageerror', e => errs.push(e.message));
     await pg.addInitScript(() => { try { sessionStorage.setItem('gem_hub', '1'); localStorage.clear(); } catch (e) {} });
-    if (ligado) await pg.addInitScript(() => { window.__dispBanco = true; });
+    await pg.addInitScript(l => { window.__dispBanco = l; }, ligado);
     await pg.goto(BASE + html, { waitUntil: 'domcontentloaded' });
     await pg.waitForFunction(() => { try { return ALL.length > 0; } catch (e) { return false; } }, { timeout: 20000 }).catch(() => {});
     await pg.waitForTimeout(800);
@@ -295,7 +295,7 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
   af('filtro BM: abre em BM, sem a opção "Todos"', X.com.sel.join() === 'BM' && !X.com.todos && !X.com.igual0 && X.com.recomp > 0, JSON.stringify(X.com));
   af('Sem BM: km remunerado bruto em todas as linhas, impacto refeito com o mesmo R$/km, e o topo diz "Sem BM"', X.sem.sel.join() === 'Sem BM' && X.sem.igual0 && X.sem.imp0 && X.sem.rem !== X.com.rem && /Sem BM/.test(X.sem.sub) && /^fora/.test(X.sem.bm), JSON.stringify(X.sem));
   af('voltar a BM devolve o mesmo km remunerado', X.volta.sel.join() === 'BM' && X.volta.rem === X.com.rem && !/Sem BM/.test(X.volta.sub), JSON.stringify(X.volta));
-  af('desligado (padrão hoje): set/26 fora e jan a ago iguais', !D.all.some(r => r.vig === '09/2026') && !D.placas.some(p => p.vig === '09/2026') && ate(D.all) === ate(A.all), D.all.length);
+  af('desligado: set/26 fora e jan a ago iguais', !D.all.some(r => r.vig === '09/2026') && !D.placas.some(p => p.vig === '09/2026') && ate(D.all) === ate(A.all), D.all.length);
   af('cards do Resumo com a altura do padrão (≤ 170px)', N.kh > 0 && N.kh <= 170 && D.kh <= 170, N.kh + ' · ' + D.kh);
   af('sem erro de página nos dois', !A.errs.length && !N.errs.length, [...A.errs, ...N.errs].join(' | '));
 }

@@ -1,0 +1,25 @@
+name: Dispersao Ajuste Set26
+
+# Grava na dispersao_km de set/26 os números da 01-BD corrigida pelo Renan
+# (Rota, AS e Van, print de 15/10/2026). gravar=1 grava; vazio só confere.
+on:
+  workflow_dispatch:
+    inputs:
+      gravar:
+        description: '1 = grava no banco; vazio = só imprime antes × depois'
+        required: false
+        default: ''
+
+jobs:
+  ajuste:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Ajustar
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          GRAVAR: ${{ inputs.gravar }}
+        run: node scripts/dispersao-ajuste-set26.mjs
