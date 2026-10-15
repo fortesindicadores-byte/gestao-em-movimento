@@ -350,11 +350,32 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     af('…cada ação fecha sozinha: o clique no status da linha abre a caixa; status e dono mudados lá gravam UMA linha (fato × ação) e a linha da Tabela mostra o novo status e o dono', abriu === 'flex' && up.ups.length === 2 && up.ups.every(r => r.fato_id === 'GRL|ROTA|Manutenções|2026-08' && r.chave === alvo && r.unidade === 'GRL' && r.vigencia === '2026-08' && r.acao) && u2.status === 'Em andamento' && u2.responsavel === 'Bruno Lima' && up.st === 'Em andamento' && up.resp === 'Bruno Lima', JSON.stringify(up));
     af('…a caixa grava sozinha: o botão de status fica marcado e o rodapé diz "Salvo ✓"', /^(Salvo|Guardado) ✓$/.test(up.ok) && up.seg.join() === 'Em andamento', JSON.stringify([up.ok, up.seg]));
     await pg.click('.s-item[data-v="kanban"]'); await pg.waitForTimeout(150);
-    const kc = await pg.evaluate(() => { const c = document.querySelector('.kcard.fa-kc[data-id="CGR|ROTA|Combustíveis|2026-08"]'), base = document.querySelector('.kcard.fa-kc'), cs = getComputedStyle(base);
-      return c && { chip: !!document.querySelector('.kcard .korg'), top: c.querySelector('.fk-top').innerText.replace(/\s+/g, ' '), val: c.querySelector('.fk-val').innerText.replace(/\s+/g, ' '), pct: c.querySelector('.fk-pct').className,
-        tags: [...c.querySelectorAll('.fk-tag')].map(x => x.innerText.replace(/\s+/g, ' ')), ft: c.querySelector('.fk-ft').innerText.replace(/\s+/g, ' '), raio: cs.borderTopLeftRadius, tot: document.querySelector('.kcol-head .ktot') && document.querySelector('.kcol-head .ktot').textContent }; });
-    af('KANBAN: borda e cantos do padrão (4px); unidade, projeto e mês; desvio com o % tingido pela gravidade; causas em etiquetas numeradas com o R$; ações fechadas e YTD; total na coluna', kc && !kc.chip && kc.raio === '4px' && /^CGR ROTA AGO\/26$/.test(kc.top) && /^R\$ 31,0 mil ▲ 30%$/.test(kc.val) && /g3/.test(kc.pct) && kc.tags.length >= 2 && /^1 Dispersão de km R\$/.test(kc.tags[0]) && /^\d+\/\d+ ações/.test(kc.ft) && /YTD ▲ R\$/.test(kc.ft) && /^R\$/.test(kc.tot || ''), JSON.stringify(kc));
+    // KANBAN do FCA · Admin: um card por ação, colunas pelo status, arrastar muda o status
+    const kc = await pg.evaluate(a => { const cols = [...document.querySelectorAll('.kcol[data-status]')], noCol = (fid, k) => { const c = [...document.querySelectorAll('.kcard[data-k]')].find(x => x.dataset.id === fid && x.dataset.k === k); return c && c.closest('.kcol').dataset.status; };
+      const c = document.querySelector('.kcard.fa-kc[data-id="CGR|ROTA|Combustíveis|2026-08"]'), cs = c && getComputedStyle(c), inn = c && getComputedStyle(c.querySelector('.fk-in'));
+      const nAc = FATOS.filter(f => visiveis().includes(f)).reduce((t, f) => t + linhasDoFato(diag(f)).filter(l => l.a).length, 0);
+      return c && { heads: [...document.querySelectorAll('.kcol-head')].map(h => h.firstChild.textContent.trim()), cols: cols.map(x => x.dataset.status), cards: document.querySelectorAll('.kcard[data-k]').length, nAc,
+        grl: noCol('GRL|ROTA|Manutenções|2026-08', a), top: c.querySelector('.kcard-top').innerText.replace(/\s+/g, ' '), fato: c.querySelector('.kcard-fato').innerText, ac: c.querySelector('.kcard-ac').innerText, causa: (c.querySelector('.kcard-causa') || {}).innerText || '',
+        drag: c.getAttribute('draggable'), raio: cs.borderTopLeftRadius, inBg: inn.backgroundColor, k: c.dataset.k }; }, alvo);
+    af('KANBAN como o do FCA · Admin: colunas Não iniciada · Em andamento · Concluída, um card por ação, e a ação que foi para "Em andamento" está nessa coluna', kc && kc.heads.join() === 'Não iniciada,Em andamento,Concluída' && kc.cols.join() === kc.heads.join() && kc.cards === kc.nAc && kc.cards > 0 && kc.grl === 'Em andamento', JSON.stringify(kc && [kc.heads, kc.cards, kc.nAc, kc.grl]));
+    af('…o card: Custos · unidade · projeto · mês, o pacote, a causa numerada e a ação inteira com o número dela, num bloco interno translúcido; arrastável, cantos de 4px', kc && /^Custos CGR · ROTA · AGO\/26$/.test(kc.top) && kc.fato === 'Combustíveis' && /^causa 1:/i.test(kc.causa) && /^1\.1 \S/.test(kc.ac) && kc.drag === 'true' && kc.raio === '4px' && /rgba\(0, 0, 0, 0\.2/.test(kc.inBg), JSON.stringify(kc));
     if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'fa-kanban.png') });
+    const caber = await pg.evaluate(() => { const ws = [...document.querySelectorAll('.top .ms-wrap')], r = ws[ws.length - 1].getBoundingClientRect(), t = document.getElementById('themeBtn').getBoundingClientRect(); return { dir: Math.round(r.right), tema: Math.round(t.right), w: innerWidth }; });
+    af('…em 1366 px os 11 filtros e o botão de tema cabem no topo', caber.tema <= caber.w - 8, JSON.stringify(caber));
+    // arrasta o card para Concluída: grava o status e o card muda de coluna
+    const nUps = await pg.evaluate(() => window.__ups.length);
+    await pg.dragAndDrop(`.kcard[data-id="CGR|ROTA|Combustíveis|2026-08"][data-k="${kc.k}"]`, '.kcol[data-status="Concluída"]'); await pg.waitForTimeout(250);
+    const ar = await pg.evaluate(k => ({ ups: window.__ups.slice(-1)[0] || {}, n: window.__ups.length, col: (() => { const c = [...document.querySelectorAll('.kcard[data-k]')].find(x => x.dataset.id === 'CGR|ROTA|Combustíveis|2026-08' && x.dataset.k === k); return c && c.closest('.kcol').dataset.status; })() }), kc.k);
+    af('…arrastar para "Concluída" grava o status da ação e o card passa para essa coluna', ar.n === nUps + 1 && ar.ups.status === 'Concluída' && ar.ups.chave === kc.k && ar.col === 'Concluída', JSON.stringify(ar));
+    // os filtros do Admin: Status = Concluída deixa só as ações concluídas, no Kanban e na Tabela
+    const fl = await pg.evaluate(() => { const w = document.getElementById('ms-st'); w._sel.clear(); w._sel.add('Concluída'); w._render(''); render();
+      const sts = [...document.querySelectorAll('.kcard[data-k]')].map(c => c.closest('.kcol').dataset.status); vaiPara('tabela');
+      const tb = [...document.querySelectorAll('tbody.fg td[data-c="status"]')].map(td => td.innerText.trim());
+      const ids = [...document.querySelectorAll('.top .ms-wrap')].map(x => x.id); w._sel.clear(); w._render(''); vaiPara('kanban'); return { sts, tb, ids }; });
+    af('FILTROS DO ADMIN: os 11, na mesma ordem; Status = Concluída deixa só as concluídas no Kanban e na Tabela', fl.ids.join() === 'ms-uni,ms-vig,ms-proj,ms-org,ms-pac,ms-st,ms-prazo,ms-conta,ms-causa,ms-acao,ms-resp' && fl.sts.length >= 2 && fl.sts.every(x => x === 'Concluída') && fl.tb.length === fl.sts.length && fl.tb.every(x => x === 'Concluída'), JSON.stringify(fl));
+    await pg.dragAndDrop(`.kcard[data-id="CGR|ROTA|Combustíveis|2026-08"][data-k="${kc.k}"]`, '.kcol[data-status="Não iniciada"]'); await pg.waitForTimeout(250);
+    const volta = await pg.evaluate(() => (window.__ups.slice(-1)[0] || {}).status);
+    af('…e arrastar de volta para "Não iniciada" grava de novo', volta === 'Não iniciada', volta);
     await pg.click('.s-item[data-v="tabela"]'); await pg.waitForTimeout(150);
     // as placas ofensoras ficam embaixo da causa, a ação só com o que fazer, uma por linha
     const of = await pg.evaluate(() => { const g = [...document.querySelectorAll('tbody.fg')].find(t => t.querySelector('tr').dataset.id === 'CGR|ROTA|Combustíveis|2026-08');

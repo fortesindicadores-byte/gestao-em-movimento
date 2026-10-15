@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610151900">
+<meta name="build" content="202610152000">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -689,6 +689,8 @@ table.rel tbody td{vertical-align:top;line-height:1.45;}
   font-size:12.5px!important;font-weight:500!important;text-transform:none!important;
   letter-spacing:0!important;min-width:0!important;cursor:pointer;}
 .ms-btn:hover{background:var(--hover);color:var(--txt)!important;}
+/* com os 11 filtros do Admin, telas até 1500 px apertam os botões para o último caber */
+@media(max-width:1500px) and (min-width:861px){.top .ms-btn{padding:6px 5px!important;gap:4px;font-size:11.5px!important;}.top{gap:2px;}}
 .ms-cnt{background:var(--laranja,#F97316)!important;color:#1a1008!important;}
 /* painel do filtro OPACO (--pop): translúcido deixava ler a tabela por baixo
    das opções — é a regra do padrão para todo menu suspenso. */
@@ -877,27 +879,18 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 .fa-hist .bloco{display:flex;flex-direction:column;min-height:0;}
 .fa-hist .bloco .corpo{flex:1;min-height:0;overflow:auto;}
 .res-ok{color:var(--verde);font-weight:700;}.res-ruim{color:var(--vermelho);font-weight:700;}.res-esp{color:var(--txt3);}
-.kcard.fa-kc{padding:12px 14px 11px!important;display:flex;flex-direction:column;gap:9px;cursor:pointer!important;}
-.fa-kc .fk-top{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--txt3);min-width:0;}
-.fa-kc .fk-uni{font-weight:800;font-size:10.5px;letter-spacing:.4px;color:var(--txt);}
-.fa-kc .fk-proj{font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
-.fa-kc .fk-vig{margin-left:auto;font-weight:600;letter-spacing:.5px;white-space:nowrap;}
-.fa-kc .fk-val{font-size:19px;font-weight:800;color:var(--txt);line-height:1.1;display:flex;align-items:center;gap:8px;}
-.fa-kc .fk-pct{font-size:10.5px;font-weight:800;border-radius:20px;padding:2px 8px;}
-.fa-kc .fk-pct.g3{color:var(--vermelho);background:color-mix(in srgb,var(--vermelho) 14%,transparent);}
-.fa-kc .fk-pct.g2{color:var(--amber);background:color-mix(in srgb,var(--amber) 14%,transparent);}
-.fa-kc .fk-pct.g1{color:var(--txt2);padding-left:0;}
-.fa-kc .fk-tags{display:flex;flex-wrap:wrap;gap:5px;}
-.fa-kc .fk-tag{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);background:transparent;border:1px solid var(--card-brd);border-radius:20px;padding:3px 9px 3px 4px;max-width:100%;}
-.fa-kc .fk-tag i{font-style:normal;font-size:9.5px;font-weight:800;color:var(--txt3);width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--card-brd);flex:0 0 16px;}
-.fa-kc .fk-tag b{font-weight:700;color:var(--txt);}
-.fa-kc .fk-vazio{font-size:11px;color:var(--txt3);font-style:italic;}
-.fa-kc .fk-ft{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:9px;border-top:1px solid var(--linha);font-size:10.5px;color:var(--txt3);}
-.fa-kc .fk-ac{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;}
-.fa-kc .fk-bar{width:38px;height:4px;border-radius:4px;background:var(--linha);overflow:hidden;display:inline-block;}
-.fa-kc .fk-bar span{display:block;height:100%;background:var(--verde);border-radius:4px;}
-.fa-kc .fk-ytd{white-space:nowrap;}.fa-kc .fk-ytd em{font-style:normal;}
-.fa-kc .fk-ytd em.up{color:var(--vermelho);}.fa-kc .fk-ytd em.dn{color:var(--verde);}
+.kcard.fa-kc{padding:0 0 13px!important;cursor:grab!important;}
+.kcard.fa-kc:active{cursor:grabbing!important;}
+.fa-kc .kcard-top{padding:13px 15px 0!important;font-size:10px!important;}
+.fa-kc .kcard-fato{padding:0 15px;font-size:15.5px!important;margin-top:6px;}
+.fa-kc .kcard-desvio{padding:0 15px;font-size:11.5px;margin-top:6px;line-height:1.45;}
+.fa-kc .fk-ytd{margin-top:3px;font-weight:600;color:var(--txt3);}
+.fa-kc .fk-in{margin:10px 15px 0;padding:10px 12px;border-radius:4px;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.05);}
+body.claro .fa-kc .fk-in{background:rgba(15,23,42,.05);border-color:rgba(15,23,42,.07);}
+.fa-kc .kcard-causa{padding:0;margin:0 0 7px;font-size:11.5px;font-weight:700;color:var(--txt2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.fa-kc .kcard-ac{padding:0;margin:0!important;font-size:12.5px!important;color:var(--txt)!important;line-height:1.45;min-height:0;}
+.fa-kc .fk-n{color:var(--laranja);font-weight:800;}
+.fa-kc .kcard-meta{padding:0 15px;margin-top:11px!important;}
 .kcol-head .ktot{margin-left:auto;font-weight:700;color:var(--txt3);letter-spacing:.3px;text-transform:none;}
 .kmodal{width:min(980px,96vw)!important;}
 .fm-sec{margin-top:16px;}
@@ -964,7 +957,7 @@ body.claro table.rel.fa-rel.din tbody.fg tr+tr td.ln{border-top-color:rgba(15,23
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610151900"></script>
+<script src="../assets/fca-auto.js?v=202610152000"></script>
 </head>
 <body>
 <div class="app">
@@ -1028,7 +1021,14 @@ body.claro table.rel.fa-rel.din tbody.fg tr+tr td.ln{border-top-color:rgba(15,23
       <div class="hfilter"><label>Unidade</label><div class="ms-wrap" id="ms-uni"><button class="ms-btn" onclick="toggleMs('ms-uni')"><span class="ms-lbl">Unidade</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
       <div class="hfilter"><label>Vigência</label><div class="ms-wrap" id="ms-vig"><button class="ms-btn" onclick="toggleMs('ms-vig')"><span class="ms-lbl">Vigência</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
       <div class="hfilter"><label>Projeto</label><div class="ms-wrap" id="ms-proj"><button class="ms-btn" onclick="toggleMs('ms-proj')"><span class="ms-lbl">Projeto</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Origem</label><div class="ms-wrap" id="ms-org"><button class="ms-btn" onclick="toggleMs('ms-org')"><span class="ms-lbl">Origem</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
       <div class="hfilter"><label>Fato</label><div class="ms-wrap" id="ms-pac"><button class="ms-btn" onclick="toggleMs('ms-pac')"><span class="ms-lbl">Fato</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Status</label><div class="ms-wrap" id="ms-st"><button class="ms-btn" onclick="toggleMs('ms-st')"><span class="ms-lbl">Status</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Status Prazo</label><div class="ms-wrap" id="ms-prazo"><button class="ms-btn" onclick="toggleMs('ms-prazo')"><span class="ms-lbl">Status Prazo</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Indicador/Conta</label><div class="ms-wrap" id="ms-conta"><button class="ms-btn" onclick="toggleMs('ms-conta')"><span class="ms-lbl">Indicador/Conta</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Causa</label><div class="ms-wrap" id="ms-causa"><button class="ms-btn" onclick="toggleMs('ms-causa')"><span class="ms-lbl">Causa</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Ação</label><div class="ms-wrap" id="ms-acao"><button class="ms-btn" onclick="toggleMs('ms-acao')"><span class="ms-lbl">Ação</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Responsável</label><div class="ms-wrap" id="ms-resp"><button class="ms-btn" onclick="toggleMs('ms-resp')"><span class="ms-lbl">Responsável</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
       <button class="tool ico" id="themeBtn" title="Claro / escuro"></button>
     </div>
     <div class="main res" id="mainBox">
@@ -1081,12 +1081,36 @@ function popFiltros(){
   VIG_OPTS=[...new Set(FATOS.map(f=>f.vig))].sort().reverse().map(v=>FA.vigLbl(v).toUpperCase());
   const wv=document.getElementById('ms-vig');
   if(wv&&!wv._init){ wv._init=true; if(CTX&&CTX.maxVig){ wv._sel.clear(); wv._sel.add(FA.vigLbl(CTX.maxVig).toUpperCase()); } }
-  ['ms-uni','ms-vig','ms-proj','ms-pac'].forEach(id=>{const w=document.getElementById(id);if(w&&w._render)w._render('');});
+  ['ms-uni','ms-vig','ms-proj','ms-pac','ms-org','ms-st','ms-prazo','ms-conta','ms-causa','ms-acao','ms-resp'].forEach(id=>{const w=document.getElementById(id);if(w&&w._render)w._render('');});
+}
+/* OS FILTROS DO FCA · ADMIN (Renan, 15/10/2026: "não tem todos os filtros que já existem"): Unidade, Vigência,
+   Projeto, Origem, Fato, Status, Status Prazo, Indicador/Conta, Causa, Ação e Responsável, na mesma ordem.
+   Origem é sempre Custos; Fato e Indicador/Conta são o pacote (a mesma regra do Admin nos Custos).
+   Status, Status Prazo, Causa, Ação e Responsável valem por AÇÃO: a Tabela e o Kanban mostram só as ações
+   que passam, e o fato some quando nenhuma passa. */
+const respLabel=v=>{const t=String(v==null?'':v).trim();return t||'(Em branco)';};
+const PRZ_OPTS=['Vencida','No prazo','Sem prazo'], FILL_OPTS=['Preenchida','Em branco'];
+const hojeISO=()=>{const h=new Date();return h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0');};
+function prazoStateAc(r){ const st=r.status||'Não iniciada'; if(/conclu|cancel/i.test(st)) return 'No prazo'; if(!r.prazo) return 'Sem prazo'; return String(r.prazo).slice(0,10)<hojeISO()?'Vencida':'No prazo'; }
+const respItems=()=>[...new Set(Object.values(ACOES).map(r=>respLabel(r.responsavel)).concat('(Em branco)'))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+function filtrosAc(){ return {st:sel('ms-st'),pz:sel('ms-prazo'),ca:sel('ms-causa'),ac:sel('ms-acao'),rp:sel('ms-resp')}; }
+const temFiltroAc=F=>!!(F.st.length||F.pz.length||F.ca.length||F.ac.length||F.rp.length);
+function linhaPassa(f,l,F){ const r=l.a?(ACOES[acKey(f.id,l.k)]||{}):{}, st=r.status||'Não iniciada';
+  return (!F.st.length||F.st.includes(st))&&(!F.pz.length||F.pz.includes(prazoStateAc(r)))&&(!F.ca.length||F.ca.includes(l.c?'Preenchida':'Em branco'))
+    &&(!F.ac.length||F.ac.includes(l.a?'Preenchida':'Em branco'))&&(!F.rp.length||F.rp.includes(respLabel(r.responsavel))); }
+// as linhas do fato que passam nos filtros por ação (null = o fato sai); a mescla da causa é refeita
+function linhasVis(f){
+  const ls=linhasDoFato(diag(f)), F=filtrosAc(); if(!temFiltroAc(F)) return ls;
+  if(!ls.length) return linhaPassa(f,{a:null,c:null},F)?[]:null;
+  const out=ls.filter(l=>linhaPassa(f,l,F)).map(l=>Object.assign({},l)); if(!out.length) return null;
+  out.forEach((l,i)=>{ if(i>0&&l.c&&out[i-1].c===l.c){ l.span=0; return; } let n=1; while(l.c&&i+n<out.length&&out[i+n].c===l.c) n++; l.span=n; });
+  return out;
 }
 function projItems(){ const us=sel('ms-uni'); return [...new Set(FATOS.filter(f=>!us.length||us.includes(f.uni)).map(f=>f.proj))].sort(); }
 function visiveis(){
-  const us=sel('ms-uni'), vs=sel('ms-vig').map(vigDoRot), ps=sel('ms-proj'), pc=sel('ms-pac');
-  return FATOS.filter(f=>(!us.length||us.includes(f.uni))&&(!vs.length||vs.includes(f.vig))&&(!ps.length||ps.includes(f.proj))&&(!pc.length||pc.includes(f.pac)))
+  const us=sel('ms-uni'), vs=sel('ms-vig').map(vigDoRot), ps=sel('ms-proj'), pc=sel('ms-pac'), og=sel('ms-org'), ct=sel('ms-conta'), ac=temFiltroAc(filtrosAc());
+  return FATOS.filter(f=>(!us.length||us.includes(f.uni))&&(!vs.length||vs.includes(f.vig))&&(!ps.length||ps.includes(f.proj))&&(!pc.length||pc.includes(f.pac))
+      &&(!og.length||og.includes('Custos'))&&(!ct.length||ct.includes(f.pac))&&(!ac||linhasVis(f)!==null))
     .sort((a,b)=>b.over-a.over);
 }
 function diag(f){ if(!MEMO.has(f.id)) MEMO.set(f.id,FA.diagnostico(f,CTX)); return MEMO.get(f.id); }
@@ -1228,7 +1252,7 @@ function tabelaHTML(vis){
         <td class="center">${esc(f.uni)}</td><td class="center">${esc(f.proj)}</td><td class="center">${esc(f.vigLbl.toUpperCase())}</td>
         <td class="txt fato">${fatoHTML(f,d)}</td>
         <td class="txt">${linhaCausas(d,4)}</td><td class="txt">${linhaAcoes(d,4)}</td></tr></tbody>`; return; }
-    const ls=linhasDoFato(d), n=Math.max(1,ls.length);
+    const ls=linhasVis(f)||[], n=Math.max(1,ls.length);
     h+=`<tbody class="fg">`;
     for(let i=0;i<n;i++){
       const l=ls[i]||{a:null,c:null,k:null,ci:-1,span:1}, r=l.a?(ACOES[acKey(f.id,l.k)]||{}):{}, feita=r.status==='Concluída'||r.status==='Cancelada';
@@ -1268,6 +1292,7 @@ async function salvaCampo(fid,k,c,valor){
     if(error){ alert('Não gravou: '+error.message); return; }
     ACOES[acKey(fid,k)]=row; }
   pintaCampo(fid,k,c,row);
+  if(VIEW==='kanban') render();
   if(msg){ msg.className='fa-tbar-ok'; msg.textContent=ACOES_LOCAL?'Guardado ✓':'Gravado ✓'; clearTimeout(salvaCampo._t); salvaCampo._t=setTimeout(()=>{ msg.textContent=''; },1800); }
 }
 async function carregaAcoes(){
@@ -1279,34 +1304,47 @@ async function carregaAcoes(){
     if(ACOES_ERR==='PREVIA'){ ACOES=lePrevia(); ACOES_OK=true; ACOES_LOCAL=true; } }
   try{ const {data}=await sb.from('fca_profiles').select('nome'); NOMES=[...new Set((data||[]).map(p=>String(p.nome||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')); }catch(e){ NOMES=[]; }
 }
-/* ── KANBAN — uma coluna por pacote ── */
-const KCLS={'Combustíveis':'cmb','Manutenções':'mnt','Pneus':'pne'};
-/* CARD DO KANBAN (Renan, 15/10/2026: "os cards do kanban acho meio poluído demais" → "Ficou feio, e Cru demais…
-   e mexeu nas bordas também"): borda, cantos e sombra são os do Kanban do portal (não mexer). Dentro, uma leitura
-   em três degraus: quem (unidade + projeto, mês), quanto (o desvio grande e o % numa pílula tingida pela gravidade:
-   ≥ 20% vermelho, ≥ 5% âmbar, abaixo cinza) e por quê (as causas como etiquetas curtas, com o R$ quando a causa tem;
-   o texto inteiro fica na dica). Embaixo, as ações com a barrinha das fechadas e o YTD. */
-const gravCls=p=>p>=20?'g3':p>=5?'g2':'g1';
-function kcardHTML(f){ const d=diag(f);
-  const ls=linhasDoFato(d).filter(l=>l.a), fech=ls.filter(l=>/Conclu|Cancel/.test((ACOES[acKey(f.id,l.k)]||{}).status||'')).length;
-  const pc=Math.round(Math.abs(f.dpct));
-  const tags=d.causas.length?d.causas.map((c,i)=>{ const t0=String(c.txt).split('\n')[0], nome=/explicam só/.test(t0)&&!/^[^:]{1,40}:/.test(t0)?'Não explicado pelas bases':t0.split(':')[0].replace(/\s*\([^)]*\)\s*$/,'').trim();
-      const rsv=isFinite(c.rs)&&c.rs>0&&c.soma!==false?`<b>${FA.rs(c.rs)}</b>`:'';
-      return `<span class="fk-tag" title="${esc(String(c.txt).split('\n\n')[0])}"><i>${i+1}</i>${esc(nome)}${rsv}</span>`; }).join('')
-    :`<span class="fk-vazio">${d.tol?'Dentro da tolerância':'Sem evidência nas bases'}</span>`;
-  const a=d.ano, ytd=a&&Math.round(a.over)!==0?`<span class="fk-ytd" title="YTD ${esc(a.txt)}">YTD <em class="${a.over>0?'up':'dn'}">${a.over>0?'▲':'▼'}</em> ${FA.rs(Math.abs(a.over))}${a.pct!=null?` · ${Math.round(Math.abs(a.pct))}%`:''}</span>`:'';
-  const nA=ls.length, bar=nA?`<span class="fk-bar"><span style="width:${Math.round(fech/nA*100)}%"></span></span>`:'';
-  return `<div class="kcard fa-kc" data-id="${esc(f.id)}">
-    <div class="fk-top"><span class="fk-uni">${esc(f.uni)}</span><span class="fk-proj">${esc(f.proj)}</span><span class="fk-vig">${esc(f.vigLbl.toUpperCase())}</span></div>
-    <div class="fk-val">${FA.rs(f.over)}<span class="fk-pct ${gravCls(pc)}">▲ ${pc}%</span></div>
-    <div class="fk-tags">${tags}</div>
-    <div class="fk-ft"><span class="fk-ac">${nA?`${fech}/${nA} ${nA===1?'ação':'ações'}`:'sem ação'}${bar}</span>${ytd}</div></div>`; }
-function kanbanHTML(vis){
-  const cols=pacsDe(vis).map(k=>({c:{k,cls:KCLS[k]||'out'},items:vis.filter(f=>f.pac===k)}));
-  const gc=`grid-template-columns:repeat(${cols.length||1},minmax(0,1fr))`;
-  return `<div class="kheads" style="${gc}">${cols.map(({c,items})=>`<div class="kcol-head ${c.cls}">${c.k}<span class="kcount">${items.length}</span><span class="ktot">${FA.rs(items.reduce((t,f)=>t+f.over,0))}</span></div>`).join('')}</div>`+
-    `<div class="kanban" style="${gc}">${cols.map(({c,items})=>`<div class="kcol"><div class="kcol-body">${items.map(kcardHTML).join('')||'<div class="kempty">—</div>'}</div></div>`).join('')}</div>`;
+/* ── KANBAN — o do FCA · Admin (Renan, 15/10/2026: "não parece ser possível arrastar, e não está por Não iniciada,
+   Em andamento e Concluída. Está dividido pelos pacotes. E não tem as regras de arrastar que já existem"):
+   UM CARD POR AÇÃO, colunas pelo status, arrastar o card para outra coluna muda o status (a coluna alvo é a da
+   posição horizontal do ponteiro, como no Admin). Na coluna, o prazo mais perto primeiro. Cancelada não tem
+   coluna, como no Admin. O card é maior e mostra a ação inteira; causa e ação ficam num bloco interno um degrau
+   mais escuro e translúcido ("o cinza menos claro interno… com uma transparência que seja visível").
+   Fato sem ação (tolerância, sem evidência) não entra: não há o que fechar. ── */
+const KCOLS=[{k:'Não iniciada',cls:'nao'},{k:'Em andamento',cls:'and'},{k:'Concluída',cls:'con'}];
+function prazoTextoK(r){
+  const dt=r.prazo?String(r.prazo).slice(0,10).split('-').reverse().join('/'):'';
+  if(!dt) return 'sem prazo';
+  if(/conclu|cancel/i.test(String(r.status||''))) return dt;
+  const [a,m,dd]=String(r.prazo).slice(0,10).split('-').map(Number), h=new Date(); h.setHours(0,0,0,0);
+  const d=Math.round((new Date(a,m-1,dd)-h)/864e5);
+  if(d<0) return `<span class="atraso">${dt} · ${-d}d de atraso</span>`;
+  return dt+(d===0?' · vence hoje':' · '+d+'d');
 }
+function iniciaisK(n){ const p=String(n||'').trim().split(/\s+/).filter(Boolean); if(!p.length) return '?';
+  return (p.length>1?p[0][0]+p[p.length-1][0]:p[0].slice(0,2)).toUpperCase(); }
+function kcardHTML(x){ const {f,d,l,r}=x;
+  const cz=l.c?String(l.c.txt).split('\n')[0]:'';
+  return `<div class="kcard fa-kc"${ACOES_OK?' draggable="true"':''} data-id="${esc(f.id)}" data-k="${esc(l.k)}">
+    <div class="kcard-top"><span class="korg cst">Custos</span> ${esc(f.uni)} · ${esc(f.proj)} · ${esc(f.vigLbl.toUpperCase())}</div>
+    <div class="kcard-fato">${esc(f.pac)}</div>
+    <div class="kcard-desvio"><span class="kl">Fato:</span> ${nl(FA.desvioCurto(f))}${d.ano?`<div class="fk-ytd"><span class="kl">YTD</span> ${tri(esc(d.ano.txt))}</div>`:''}</div>
+    <div class="fk-in">
+      ${cz?`<div class="kcard-causa"><span class="kl">Causa ${l.ci+1}:</span> ${esc(cz)}</div>`:''}
+      <div class="kcard-ac">${l.a.num?`<b class="fk-n">${esc(l.a.num)}</b> `:''}${esc(l.a.txt)}</div>
+    </div>
+    <div class="kcard-meta"><span>${prazoTextoK(r)}</span>${r.responsavel?`<span class="kav" title="${esc(r.responsavel)}">${esc(iniciaisK(r.responsavel))}</span>`:'<span></span>'}</div>
+  </div>`; }
+function kanbanHTML(vis){
+  const its=[]; vis.forEach(f=>{ const d=diag(f); (linhasVis(f)||[]).forEach(l=>{ if(l.a) its.push({f,d,l,r:ACOES[acKey(f.id,l.k)]||{}}); }); });
+  const porCol=KCOLS.map(c=>{ const items=its.filter(x=>(x.r.status||'Não iniciada')===c.k);
+    items.sort((a,b)=>String(a.r.prazo||'9999').localeCompare(String(b.r.prazo||'9999'))||(b.f.over-a.f.over)||String(a.l.a.num||'').localeCompare(String(b.l.a.num||''),'pt-BR',{numeric:true}));
+    return {c,items}; });
+  return `<div class="kheads">${porCol.map(({c,items})=>`<div class="kcol-head ${c.cls}">${c.k}<span class="kcount">${items.length}</span></div>`).join('')}</div>`+
+    `<div class="kanban">${porCol.map(({c,items})=>`<div class="kcol" data-status="${esc(c.k)}"><div class="kcol-body">${items.map(kcardHTML).join('')||'<div class="kempty">—</div>'}</div></div>`).join('')}</div>`;
+}
+async function moveCard(fid,k,st){ const r=ACOES[acKey(fid,k)]||{}; if((r.status||'Não iniciada')===st) return;
+  await salvaCampo(fid,k,'status',st); }
 /* ── CORRELAÇÕES DA REDE ── */
 const rTxt=(r,n,q,ap)=>!isFinite(r)||n<8?'<span style="color:var(--txt4)">poucos pontos</span>':`<b style="color:${ap?(q<.1?'var(--vermelho)':'var(--txt)'):'var(--txt3)'}">${FA.br(r,2)}</b> <span style="color:var(--txt3)">${FA.forcaTxt(r)}${q<.1?'':' · pode ser acaso'}</span>`;
 function redeHTML(){
@@ -1530,6 +1568,7 @@ function render(){
   const vis=visiveis(), m=document.getElementById('mainBox'), c=document.getElementById('content');
   m.className='main '+(VIEW==='kanban'?'kan':VIEW==='tabela'?'rola':'res');
   const vs=sel('ms-vig'); document.getElementById('subVista').textContent=`${vs.length?vs.join(', '):'todas as vigências'} · ${vis.length} fato(s) · DRE até ${FA.vigLbl(CTX.maxVig||'').toUpperCase()}`;
+  setTimeout(()=>{ const k=c.querySelector('.kanban'), h=c.querySelector('.kheads'); if(k&&h) h.style.setProperty('--sb',(k.offsetWidth-k.clientWidth)+'px'); },0);
   c.innerHTML=VIEW==='kanban'?kanbanHTML(vis):VIEW==='tabela'?tabelaHTML(vis):VIEW==='rede'?redeHTML():VIEW==='historico'?historicoHTML(vis):VIEW==='fontes'?fontesHTML():resumoHTML(vis);
 }
 function vaiPara(v){ VIEW=v; document.getElementById('tituloVista').textContent=TIT[v]||''; document.querySelectorAll('.s-item[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); render(); }
@@ -1537,9 +1576,20 @@ document.querySelectorAll('.s-item[data-v]').forEach(b=>b.addEventListener('clic
 document.getElementById('content').addEventListener('click',e=>{
   if(e.target.closest('input,select,textarea,datalist')) return;
   const tr=e.target.closest('tr[data-id][data-k]'); if(tr&&!e.target.closest('td.id')){ abreAcao(tr.dataset.id,tr.dataset.k); return; }
+  const kc=e.target.closest('.kcard[data-id][data-k]'); if(kc){ abreAcao(kc.dataset.id,kc.dataset.k); return; }
   const k=e.target.closest('.kcard[data-id],tr[data-id]'); if(k){ abreModal(k.dataset.id); return; }
   const u=e.target.closest('tr[data-uni]'); if(u){ const w=document.getElementById('ms-uni'); w._sel.clear(); w._sel.add(u.dataset.uni); w._render(''); vaiPara('tabela'); }
 });
+(function(){ const c=document.getElementById('content');
+  c.addEventListener('dragstart',e=>{const card=e.target.closest&&e.target.closest('.kcard[data-k]');if(card){e.dataTransfer.setData('text/plain',card.dataset.id+'||'+card.dataset.k);e.dataTransfer.effectAllowed='move';card.classList.add('dragging');}});
+  c.addEventListener('dragend',e=>{const card=e.target.closest&&e.target.closest('.kcard');if(card)card.classList.remove('dragging');});
+  // coluna alvo pela POSIÇÃO HORIZONTAL do ponteiro (a mesma regra do FCA · Admin)
+  const colEmX=x=>[...c.querySelectorAll('.kcol')].find(k=>{const r=k.getBoundingClientRect();return x>=r.left&&x<=r.right;})||null;
+  const marcaCol=k=>{c.querySelectorAll('.kcol.kover').forEach(o=>{if(o!==k)o.classList.remove('kover');});if(k)k.classList.add('kover');};
+  c.addEventListener('dragover',e=>{const col=colEmX(e.clientX);if(col){e.preventDefault();e.dataTransfer.dropEffect='move';marcaCol(col);}});
+  c.addEventListener('dragleave',e=>{if(!c.contains(e.relatedTarget))marcaCol(null);});
+  c.addEventListener('drop',e=>{const col=colEmX(e.clientX);if(!col)return;e.preventDefault();marcaCol(null);const v=e.dataTransfer.getData('text/plain'),i=v.indexOf('||');if(i>0&&col.dataset.status)moveCard(v.slice(0,i),v.slice(i+2),col.dataset.status);});
+})();
 (function(){ const bt=document.getElementById('btMini'), sd=document.querySelector('.side');
   bt.addEventListener('click',()=>{ const l=sd.classList.toggle('mini'); try{localStorage.setItem('fcaauto_mini',l?'1':'0');}catch(e){} });
   try{ if(localStorage.getItem('fcaauto_mini')==='1') sd.classList.add('mini'); }catch(e){} })();
@@ -1552,6 +1602,13 @@ _buildMs(document.getElementById('ms-uni'),()=>UNI_OPTS,()=>{const p=document.ge
 _buildMs(document.getElementById('ms-vig'),()=>VIG_OPTS);
 _buildMs(document.getElementById('ms-proj'),projItems);
 _buildMs(document.getElementById('ms-pac'),()=>PAC_OPTS);
+_buildMs(document.getElementById('ms-org'),()=>['Custos']);
+_buildMs(document.getElementById('ms-st'),()=>ST_AC);
+_buildMs(document.getElementById('ms-prazo'),()=>PRZ_OPTS);
+_buildMs(document.getElementById('ms-conta'),()=>PAC_OPTS);
+_buildMs(document.getElementById('ms-causa'),()=>FILL_OPTS);
+_buildMs(document.getElementById('ms-acao'),()=>FILL_OPTS);
+_buildMs(document.getElementById('ms-resp'),respItems);
 document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrap'))document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open'));});
 
 function pintaUsuario(user,prof){
@@ -1590,6 +1647,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610151900"></script>
+<script src="../assets/build-check.js?v=202610152000"></script>
 </body>
 </html>
