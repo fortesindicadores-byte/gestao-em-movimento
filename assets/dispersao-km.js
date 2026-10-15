@@ -73,7 +73,8 @@
     const s = String(o == null ? '' : o).trim();
     const i = s.lastIndexOf(' - ');
     if (i < 0) return null;
-    const uni = s.slice(i + 3).trim().toUpperCase(), pre = NK(s.slice(0, i));
+    let uni = s.slice(i + 3).trim().toUpperCase(); const pre = NK(s.slice(0, i));
+    if (uni === 'GOI') uni = 'GNA';   // a Km/L escreve 'AUTO SERVIÇO - GOI'; a planilha e o portal usam GNA (15/10/2026)
     let proj = null;
     if (/VAN|UDC/.test(pre)) proj = 'Van';
     else if (/INSUMO/.test(pre)) proj = 'Empurrada - Insumos';
