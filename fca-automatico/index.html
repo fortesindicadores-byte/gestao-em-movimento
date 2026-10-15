@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610151700">
+<meta name="build" content="202610151800">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -877,18 +877,28 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 .fa-hist .bloco{display:flex;flex-direction:column;min-height:0;}
 .fa-hist .bloco .corpo{flex:1;min-height:0;overflow:auto;}
 .res-ok{color:var(--verde);font-weight:700;}.res-ruim{color:var(--vermelho);font-weight:700;}.res-esp{color:var(--txt3);}
-.kcard.fa-kc{padding:13px 14px 12px!important;border-radius:10px!important;
-  box-shadow:0 4px 14px rgba(0,0,0,.22), var(--luz-card)!important;display:flex;flex-direction:column;gap:6px;cursor:pointer!important;}
-.fa-kc .fk-top{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--txt3);}
-.fa-kc .fk-top span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.fa-kc .fk-val{font-size:17px;font-weight:800;color:var(--txt);line-height:1.15;display:flex;align-items:baseline;gap:7px;}
-.fa-kc .fk-pct{font-size:11px;font-weight:700;color:var(--txt3);}
-.fa-kc .fk-ln{font-size:11.5px;color:var(--txt2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.fa-kc .fk-ln.ac{color:var(--txt3);-webkit-line-clamp:1;}
-.fa-kc .fk-ln .n{font-weight:700;color:var(--txt3);margin-right:5px;}
-.fa-kc .fk-ln i{color:var(--txt3);}
-.fa-kc .fk-ft{display:flex;justify-content:space-between;gap:8px;margin-top:4px;padding-top:8px;border-top:1px solid var(--linha);font-size:10.5px;color:var(--txt3);}
-.fa-kc .fk-ft span:last-child{white-space:nowrap;}
+.kcard.fa-kc{padding:12px 14px 11px!important;display:flex;flex-direction:column;gap:9px;cursor:pointer!important;}
+.fa-kc .fk-top{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--txt3);min-width:0;}
+.fa-kc .fk-uni{font-weight:800;font-size:10.5px;letter-spacing:.4px;color:var(--txt);}
+.fa-kc .fk-proj{font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.fa-kc .fk-vig{margin-left:auto;font-weight:600;letter-spacing:.5px;white-space:nowrap;}
+.fa-kc .fk-val{font-size:19px;font-weight:800;color:var(--txt);line-height:1.1;display:flex;align-items:center;gap:8px;}
+.fa-kc .fk-pct{font-size:10.5px;font-weight:800;border-radius:20px;padding:2px 8px;}
+.fa-kc .fk-pct.g3{color:var(--vermelho);background:color-mix(in srgb,var(--vermelho) 14%,transparent);}
+.fa-kc .fk-pct.g2{color:var(--amber);background:color-mix(in srgb,var(--amber) 14%,transparent);}
+.fa-kc .fk-pct.g1{color:var(--txt2);padding-left:0;}
+.fa-kc .fk-tags{display:flex;flex-wrap:wrap;gap:5px;}
+.fa-kc .fk-tag{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);background:transparent;border:1px solid var(--card-brd);border-radius:20px;padding:3px 9px 3px 4px;max-width:100%;}
+.fa-kc .fk-tag i{font-style:normal;font-size:9.5px;font-weight:800;color:var(--txt3);width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--card-brd);flex:0 0 16px;}
+.fa-kc .fk-tag b{font-weight:700;color:var(--txt);}
+.fa-kc .fk-vazio{font-size:11px;color:var(--txt3);font-style:italic;}
+.fa-kc .fk-ft{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:9px;border-top:1px solid var(--linha);font-size:10.5px;color:var(--txt3);}
+.fa-kc .fk-ac{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;}
+.fa-kc .fk-bar{width:38px;height:4px;border-radius:4px;background:var(--linha);overflow:hidden;display:inline-block;}
+.fa-kc .fk-bar span{display:block;height:100%;background:var(--verde);border-radius:4px;}
+.fa-kc .fk-ytd{white-space:nowrap;}.fa-kc .fk-ytd em{font-style:normal;}
+.fa-kc .fk-ytd em.up{color:var(--vermelho);}.fa-kc .fk-ytd em.dn{color:var(--verde);}
+.kcol-head .ktot{margin-left:auto;font-weight:700;color:var(--txt3);letter-spacing:.3px;text-transform:none;}
 .kmodal{width:min(980px,96vw)!important;}
 .fm-sec{margin-top:16px;}
 .fm-sec h4{font-size:10px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.9px;margin:0 0 7px;}
@@ -954,7 +964,7 @@ body.claro table.rel.fa-rel.din tbody.fg tr+tr td.ln{border-top-color:rgba(15,23
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610151700"></script>
+<script src="../assets/fca-auto.js?v=202610151800"></script>
 </head>
 <body>
 <div class="app">
@@ -1271,25 +1281,30 @@ async function carregaAcoes(){
 }
 /* ── KANBAN — uma coluna por pacote ── */
 const KCLS={'Combustíveis':'cmb','Manutenções':'mnt','Pneus':'pne'};
-/* CARD MAIS LIMPO (Renan, 15/10/2026: "os cards do kanban acho meio poluído demais a visão. Não sei se é cor"):
-   sem o chip "Custos" (a página inteira é de Custos) e sem o nome do pacote (é a coluna), tudo em tom neutro,
-   uma linha por informação — unidade · projeto e mês, o desvio grande, a 1ª causa e a 1ª ação com o número da
-   Tabela, o YTD curto e o rodapé com a contagem. O resto está na caixa e no diagnóstico. */
-function kcardHTML(f){ const d=diag(f); const c1=d.causas[0], a1=d.acoes[0];
-  const fech=linhasDoFato(d).filter(l=>l.a&&/Conclu|Cancel/.test((ACOES[acKey(f.id,l.k)]||{}).status||'')).length;
-  const ytd=d.ano?String(d.ano.txt).split(' · ')[0]:'';
-  const cz=c1?esc(String(c1.txt).split('\n')[0]):`<i>${d.tol?'Dentro da tolerância: sem causa e ação':'Sem evidência nas bases'}</i>`;
-  const pl=(n,a,b)=>n+' '+(n===1?a:b);
+/* CARD DO KANBAN (Renan, 15/10/2026: "os cards do kanban acho meio poluído demais" → "Ficou feio, e Cru demais…
+   e mexeu nas bordas também"): borda, cantos e sombra são os do Kanban do portal (não mexer). Dentro, uma leitura
+   em três degraus: quem (unidade + projeto, mês), quanto (o desvio grande e o % numa pílula tingida pela gravidade:
+   ≥ 20% vermelho, ≥ 5% âmbar, abaixo cinza) e por quê (as causas como etiquetas curtas, com o R$ quando a causa tem;
+   o texto inteiro fica na dica). Embaixo, as ações com a barrinha das fechadas e o YTD. */
+const gravCls=p=>p>=20?'g3':p>=5?'g2':'g1';
+function kcardHTML(f){ const d=diag(f);
+  const ls=linhasDoFato(d).filter(l=>l.a), fech=ls.filter(l=>/Conclu|Cancel/.test((ACOES[acKey(f.id,l.k)]||{}).status||'')).length;
+  const pc=Math.round(Math.abs(f.dpct));
+  const tags=d.causas.length?d.causas.map((c,i)=>{ const t0=String(c.txt).split('\n')[0], nome=/explicam só/.test(t0)&&!/^[^:]{1,40}:/.test(t0)?'Não explicado pelas bases':t0.split(':')[0].replace(/\s*\([^)]*\)\s*$/,'').trim();
+      const rsv=isFinite(c.rs)&&c.rs>0&&c.soma!==false?`<b>${FA.rs(c.rs)}</b>`:'';
+      return `<span class="fk-tag" title="${esc(String(c.txt).split('\n\n')[0])}"><i>${i+1}</i>${esc(nome)}${rsv}</span>`; }).join('')
+    :`<span class="fk-vazio">${d.tol?'Dentro da tolerância':'Sem evidência nas bases'}</span>`;
+  const a=d.ano, ytd=a&&Math.round(a.over)!==0?`<span class="fk-ytd" title="YTD ${esc(a.txt)}">YTD <em class="${a.over>0?'up':'dn'}">${a.over>0?'▲':'▼'}</em> ${FA.rs(Math.abs(a.over))}${a.pct!=null?` · ${Math.round(Math.abs(a.pct))}%`:''}</span>`:'';
+  const nA=ls.length, bar=nA?`<span class="fk-bar"><span style="width:${Math.round(fech/nA*100)}%"></span></span>`:'';
   return `<div class="kcard fa-kc" data-id="${esc(f.id)}">
-    <div class="fk-top"><span>${esc(f.uni)} · ${esc(f.proj)}</span><span>${esc(f.vigLbl.toUpperCase())}</span></div>
-    <div class="fk-val">${FA.rs(f.over)}<span class="fk-pct">▲ ${Math.round(Math.abs(f.dpct))}%</span></div>
-    <div class="fk-ln">${c1?'<span class="n">1.</span>':''}${cz}</div>
-    ${a1?`<div class="fk-ln ac"><span class="n">${esc(a1.num||'1.1')}</span>${esc(a1.txt)}</div>`:''}
-    <div class="fk-ft"><span>${pl(d.causas.length,'causa','causas')} · ${pl(d.acoes.length,'ação','ações')}${fech?` · ${pl(fech,'fechada','fechadas')}`:''}</span>${ytd?`<span title="${esc(d.ano.txt)}">YTD ${esc(ytd)}</span>`:''}</div></div>`; }
+    <div class="fk-top"><span class="fk-uni">${esc(f.uni)}</span><span class="fk-proj">${esc(f.proj)}</span><span class="fk-vig">${esc(f.vigLbl.toUpperCase())}</span></div>
+    <div class="fk-val">${FA.rs(f.over)}<span class="fk-pct ${gravCls(pc)}">▲ ${pc}%</span></div>
+    <div class="fk-tags">${tags}</div>
+    <div class="fk-ft"><span class="fk-ac">${nA?`${fech}/${nA} ${nA===1?'ação':'ações'}`:'sem ação'}${bar}</span>${ytd}</div></div>`; }
 function kanbanHTML(vis){
   const cols=pacsDe(vis).map(k=>({c:{k,cls:KCLS[k]||'out'},items:vis.filter(f=>f.pac===k)}));
   const gc=`grid-template-columns:repeat(${cols.length||1},minmax(0,1fr))`;
-  return `<div class="kheads" style="${gc}">${cols.map(({c,items})=>`<div class="kcol-head ${c.cls}">${c.k}<span class="kcount">${items.length}</span></div>`).join('')}</div>`+
+  return `<div class="kheads" style="${gc}">${cols.map(({c,items})=>`<div class="kcol-head ${c.cls}">${c.k}<span class="kcount">${items.length}</span><span class="ktot">${FA.rs(items.reduce((t,f)=>t+f.over,0))}</span></div>`).join('')}</div>`+
     `<div class="kanban" style="${gc}">${cols.map(({c,items})=>`<div class="kcol"><div class="kcol-body">${items.map(kcardHTML).join('')||'<div class="kempty">—</div>'}</div></div>`).join('')}</div>`;
 }
 /* ── CORRELAÇÕES DA REDE ── */
@@ -1563,6 +1578,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610151700"></script>
+<script src="../assets/build-check.js?v=202610151800"></script>
 </body>
 </html>
