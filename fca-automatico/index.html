@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610152330">
+<meta name="build" content="202610160010">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1097,12 +1097,12 @@ const respLabel=v=>{const t=String(v==null?'':v).trim();return t||'(Em branco)';
 const PRZ_OPTS=['Vencida','No prazo','Sem prazo'], FILL_OPTS=['Preenchida','Em branco'];
 const hojeISO=()=>{const h=new Date();return h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0');};
 function prazoStateAc(r){ const st=r.status||'Não iniciada'; if(/conclu|cancel/i.test(st)) return 'No prazo'; if(!r.prazo) return 'Sem prazo'; return String(r.prazo).slice(0,10)<hojeISO()?'Vencida':'No prazo'; }
-const respItems=()=>[...new Set(Object.values(ACOES).map(r=>respLabel(r.responsavel)).concat('(Em branco)'))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+const respItems=()=>[...new Set(Object.values(ACOES).map(r=>respLabel(respDe(r,r.unidade))).concat(Object.values(GESTOR_FROTA),'(Em branco)'))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
 function filtrosAc(){ return {st:sel('ms-st'),pz:sel('ms-prazo'),ca:sel('ms-causa'),ac:sel('ms-acao'),rp:sel('ms-resp')}; }
 const temFiltroAc=F=>!!(F.st.length||F.pz.length||F.ca.length||F.ac.length||F.rp.length);
 function linhaPassa(f,l,F){ const r=l.a?(ACOES[acKey(f.id,l.k)]||{}):{}, st=r.status||'Não iniciada';
   return (!F.st.length||F.st.includes(st))&&(!F.pz.length||F.pz.includes(prazoStateAc(r)))&&(!F.ca.length||F.ca.includes(l.c?'Preenchida':'Em branco'))
-    &&(!F.ac.length||F.ac.includes(l.a?'Preenchida':'Em branco'))&&(!F.rp.length||F.rp.includes(respLabel(r.responsavel))); }
+    &&(!F.ac.length||F.ac.includes(l.a?'Preenchida':'Em branco'))&&(!F.rp.length||F.rp.includes(respLabel(respDe(r,f.uni)))); }
 // as linhas do fato que passam nos filtros por ação (null = o fato sai); a mescla da causa é refeita
 function linhasVis(f){
   const ls=linhasDoFato(diag(f)), F=filtrosAc(); if(!temFiltroAc(F)) return ls;
@@ -1223,7 +1223,7 @@ function linhasDoFato(d){
 const acKey=(fid,k)=>fid+'||'+k;
 function camposAcao(f,l){
   if(!l.a) return '<td class="ln ac-vazio"></td><td class="ln ac-vazio"></td><td class="ln ac-vazio"></td>';
-  const at=`data-fid="${esc(f.id)}" data-k="${esc(l.k)}"`, cel=celulasAcao(ACOES[acKey(f.id,l.k)]||{});
+  const at=`data-fid="${esc(f.id)}" data-k="${esc(l.k)}"`, cel=celulasAcao(ACOES[acKey(f.id,l.k)]||{},f.uni);
   return `<td class="ln ac-c center" ${at} data-c="responsavel">${cel.responsavel}</td>
     <td class="ln ac-c center prazo" ${at} data-c="prazo">${cel.prazo}</td>
     <td class="ln ac-c center" ${at} data-c="status">${cel.status}</td>`;
@@ -1231,11 +1231,11 @@ function camposAcao(f,l){
 /* SÓ LEITURA, COMO NA TABELA DO FCA (Renan, 14/10/2026: "No FCA original, na visão tabela, não se edita
    nada ali. apenas clicando na ação"): responsável em texto, prazo com o farol e status em chip.
    Edita-se na caixa da ação, que abre no clique da linha. */
-function celulasAcao(r){
+function celulasAcao(r,uni){ const resp=respDe(r,uni);
   const st=r.status||'Não iniciada', aberto=st!=='Concluída'&&st!=='Cancelada';
   const venc=!!r.prazo&&aberto&&r.prazo<new Date().toISOString().slice(0,10);
   const pz=r.prazo?`<span class="dot" style="background:${venc?'var(--vermelho)':'var(--verde)'}"></span><span${venc?' style="color:var(--vermelho);font-weight:700"':''}>${esc(String(r.prazo).slice(0,10).split('-').reverse().join('/'))}</span>`:'<span style="color:var(--txt3)">—</span>';
-  return {responsavel:r.responsavel?esc(r.responsavel):'<span style="color:var(--txt3)">—</span>',prazo:pz,status:chipStatusAc(st)};
+  return {responsavel:resp?esc(resp):'<span style="color:var(--txt3)">—</span>',prazo:pz,status:chipStatusAc(st)};
 }
 function chipStatusAc(st){
   if(/conclu/i.test(st)) return `<span class="chip" style="background:rgba(59,179,59,.85);color:#06210a">${esc(st)}</span>`;
@@ -1276,7 +1276,7 @@ function tabelaHTML(vis){
 }
 /* reflete na linha da Tabela o que foi gravado na caixa da ação (as três células, porque o status muda o farol do prazo) */
 function pintaCampo(fid,k,c,row){
-  const cel=celulasAcao(row);
+  const cel=celulasAcao(row,row.unidade);
   document.querySelectorAll('td[data-fid][data-k][data-c]').forEach(td=>{
     if(td.dataset.fid!==fid||td.dataset.k!==k) return;
     td.innerHTML=cel[td.dataset.c]||'';
@@ -1288,7 +1288,7 @@ async function salvaCampo(fid,k,c,valor){
   const cur=ACOES[acKey(fid,k)]||{};
   const row={fato_id:fid,chave:k,unidade:f.uni,vigencia:f.vig,pacote:f.pac,projeto:f.proj,tema:l.a.tema||null,
     causa:l.c?causaTexto(l.c):null,acao:l.a.txt,
-    responsavel:cur.responsavel||null,prazo:cur.prazo||null,status:cur.status||'Não iniciada',updated_nome:EU_NOME||null};
+    responsavel:respDe(cur,f.uni)||null,prazo:cur.prazo||null,status:cur.status||'Não iniciada',updated_nome:EU_NOME||null};
   row[c]=String(valor||'').trim()||null; if(c==='status'&&!row.status) row.status='Não iniciada';
   const msg=document.getElementById('acSalvo');
   if(ACOES_LOCAL){ ACOES[acKey(fid,k)]=row;
@@ -1321,6 +1321,16 @@ function nomeCurto(n){ const p=String(n||'').trim().split(/\s+/).filter(Boolean)
 function perfisDe(uni){ const u=String(uni||'').trim(), base=u.split(' ')[0];
   return PERFIS.filter(p=>p.admin||p.unis.some(x=>x===u||x.split(' ')[0]===base));
 }
+/* GESTOR DE FROTA = DONO AUTOMÁTICO (Renan, 15/10/2026: "Esses são os responsáveis que devem aparecer nas
+   unidades… é para vir automático, mas com lista para selecionar caso queira trocar"). Toda ação nasce com o
+   gestor da unidade do fato; a caixa continua listando os cadastrados na unidade + admins para trocar. */
+const GESTOR_FROTA={'CBA T1':'ALEXANDRE SILVERIO','CBA T1 WH':'ALEXANDRE SILVERIO','CBA T2':'JOAO SILVA',
+  'FLP':'ANA ROCHA','MCC T1':'ERICK SILVA','MCC T2':'ERICK SILVA','ANG':'FERNANDO MOREIRA','RON':'GABRIEL BARBOSA',
+  'PIR':'JEAN GOMES','GRL':'JOSE SANTOS','NFR':'LUCAS TARDIM','BLC':'MÁRCIO PRIETO','CGR':'MICHEL OLIVEIRA',
+  'PLT':'RITCHER SALVADOR','GNA':'WESLLEY VASCONCELOS'};
+const gestorDe=uni=>GESTOR_FROTA[String(uni||'').trim()]||'';
+// o responsável que vale: o escolhido na caixa ou, sem escolha, o gestor de frota da unidade
+const respDe=(r,uni)=>String((r&&r.responsavel)||'').trim()||gestorDe(uni);
 /* ── KANBAN — o do FCA · Admin (Renan, 15/10/2026: "não parece ser possível arrastar, e não está por Não iniciada,
    Em andamento e Concluída. Está dividido pelos pacotes. E não tem as regras de arrastar que já existem"):
    UM CARD POR AÇÃO, colunas pelo status, arrastar o card para outra coluna muda o status (a coluna alvo é a da
@@ -1350,7 +1360,7 @@ function kcardHTML(x){ const {f,d,l,r}=x;
       ${cz?`<div class="kcard-causa"><span class="kl">Causa ${l.ci+1}:</span> ${esc(cz)}</div>`:''}
       <div class="kcard-ac">${l.a.num?`<b class="fk-n">${esc(l.a.num)}</b> `:''}${esc(l.a.txt)}</div>
     </div>
-    <div class="kcard-meta"><span>${prazoTextoK(r)}</span>${r.responsavel?`<span class="kav" title="${esc(r.responsavel)}">${esc(iniciaisK(r.responsavel))}</span>`:'<span></span>'}</div>
+    <div class="kcard-meta"><span>${prazoTextoK(r)}</span>${respDe(r,f.uni)?`<span class="kav" title="${esc(respDe(r,f.uni))}">${esc(iniciaisK(respDe(r,f.uni)))}</span>`:'<span></span>'}</div>
   </div>`; }
 function kanbanHTML(vis){
   const its=[]; vis.forEach(f=>{ const d=diag(f); (linhasVis(f)||[]).forEach(l=>{ if(l.a) its.push({f,d,l,r:ACOES[acKey(f.id,l.k)]||{}}); }); });
@@ -1552,8 +1562,11 @@ function abreAcao(fid,k){
   g('ac-causa').value=l.c?causaTexto(l.c):'';
   g('ac-acao').value=l.a.txt;
   // o seletor lista os usuários do portal; um nome já gravado que não é usuário entra como opção para não se perder
-  { const sel=g('ac-resp'), atual=String(r.responsavel||'').trim(), lista=perfisDe(f.uni), tem=lista.some(p=>p.nome===atual);
-    sel.innerHTML='<option value="">—</option>'+(atual&&!tem?`<option value="${esc(atual)}">${esc(atual)} (não é usuário da unidade)</option>`:'')+lista.map(p=>`<option value="${esc(p.nome)}">${esc(p.nome)}${p.uni?' · '+esc(p.uni):''}</option>`).join('');
+  // sem escolha, vem o gestor de frota da unidade; ele entra na lista mesmo se o cadastro dele estiver com outro nome
+  { const sel=g('ac-resp'), gest=gestorDe(f.uni), atual=respDe(r,f.uni), lista=perfisDe(f.uni).slice();
+    if(gest&&!lista.some(p=>p.nome===gest)) lista.unshift({nome:gest,uni:''});
+    const tem=lista.some(p=>p.nome===atual), rot=p=>p.nome===gest?'gestor de frota':p.uni;
+    sel.innerHTML=(gest?'':'<option value="">—</option>')+(atual&&!tem?`<option value="${esc(atual)}">${esc(atual)} (não é usuário da unidade)</option>`:'')+lista.map(p=>`<option value="${esc(p.nome)}">${esc(p.nome)}${rot(p)?' · '+esc(rot(p)):''}</option>`).join('');
     sel.value=atual; }
   g('ac-prazo').value=r.prazo||'';
   const st0=r.status||'Não iniciada'; g('ac-status').value=st0;
@@ -1669,6 +1682,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610152330"></script>
+<script src="../assets/build-check.js?v=202610160010"></script>
 </body>
 </html>
