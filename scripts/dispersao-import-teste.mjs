@@ -101,6 +101,17 @@ const ARQ_VIAG = path.join(TMP, 'viagens set.xlsx');
     ...v('TOCO', 'ROTA_2_9_2026', 'Rota', 'Extra', 'Spot', 'TERCEIROS - GRL', 'CDD GUARULHOS', 'SPO1A00', 5),
     ...v('TOCO', 'ROTA_2_9_2026', 'Rota', 'MKT', 'Padrao', 'ROTA - GRL', 'CDD GUARULHOS', 'GRL2B22', 2)]), 'Planilha1');
   XLSX.writeFile(wb, ARQ_VIAG); }
+// planilha de viagens de AGOSTO (sem 01-BD no banco: o total vem da aba Dispersão de km)
+const ARQ_VIAG8 = path.join(TMP, 'viagens ago.xlsx');
+{ const HV = ['Tipo', 'Vigência', 'Entrega ', 'Carga Atual', 'Frota ', 'VBZ', 'Projeto', 'Nome - Unidade', 'Data', 'Placa'];
+  const v = (tipo, vig, ent, carga, frota, proj, uni, placa, n) => Array(n).fill([tipo, vig, ent, carga, frota, 5, proj, uni, 1082026, placa]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([HV,
+    ...v('TRUCK', 'ROTA_1_8_2026', 'Rota', 'Roteriz', 'Padrao', 'ROTA - PLT', 'CDD PELOTAS', 'PLT1A11', 3),
+    ...v('TRUCK', 'ROTA_2_8_2026', 'Rota', 'Recarga', 'Padrao', 'ROTA - PLT', 'CDD PELOTAS', 'CUC9514', 1)]), 'Planilha1');
+  XLSX.writeFile(wb, ARQ_VIAG8); }
+const ABA_AGO = { status: 'ok', table: { cols: Array.from({ length: 33 }, (_, i) => ({ id: 'c' + i, label: '' })), rows: [
+  (() => { const c = Array.from({ length: 33 }, () => null); c[0] = { v: 'Date(2026,7,1)' }; c[14] = { v: 'ROTA - PLT' }; c[22] = { v: 4 }; c[31] = { v: 4800 }; c[32] = { v: 5000 }; return { c }; })()] } };
 const ARQ_AGO = path.join(TMP, 'Dispersao de KM - Consolidado 2026 (AGO).xlsx');
 { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[], [], [], H01, B(8, 'Pelotas-RS', 'Rota', 5000, 6000)]), '01-BD'); XLSX.writeFile(wb, ARQ_AGO); }
 
@@ -148,6 +159,8 @@ async function abre(perfil, tam = { width: 1400, height: 900 }, claro = false) {
   await ctx.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await ctx.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
   await ctx.route('**/cdn.sheetjs.com/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: SHEETJS }));
+  await ctx.route('**/assets/gviz-cache.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
+  await ctx.route('**/docs.google.com/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: `google.visualization.Query.setResponse(${JSON.stringify(ABA_AGO)})` }));
   await ctx.route('**/cdn.jsdelivr.net/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: r.request().url().includes('supabase') ? SHIM_SB(perfil) : '' }));
   const pg = await ctx.newPage();
   const errs = []; pg.on('pageerror', e => { errs.push(e.message); if (process.env.DEBUG) console.log('PAGEERR', e.message); }); if (process.env.DEBUG) pg.on('console', m => console.log('CONSOLE', m.text()));
@@ -210,6 +223,15 @@ console.log('1) admin · planilha sintética');
   af('conferência GRL Van: 20 viagens e 1.300 km', vG && vG[3] === '20' && vG[8] === '1.300' && vG[9] === '1.300', JSON.stringify(vG));
   const rv2 = await sobe(pg, ARQ_VIAG);
   af('subir de novo a planilha de viagens substitui', (await pg.evaluate(() => window.__db.dispersao_placa_viagem.length)) === 4 && rv2.cartoes[0].classe === 'ok');
+  // planilha de viagens de AGOSTO: grava e confere contra o total da aba
+  const rv8 = await sobe(pg, ARQ_VIAG8);
+  const db8 = await pg.evaluate(() => window.__db.dispersao_placa_viagem);
+  await pg.waitForTimeout(400);
+  const tv8 = await pg.evaluate(() => ({ sel: document.getElementById('selVig').value, sub: document.getElementById('subViag').textContent,
+    linhas: [...document.querySelectorAll('#tabViag tbody tr')].map(tr => [...tr.children].map(td => td.textContent.trim())) }));
+  af('viagens de agosto gravadas, setembro intacto', rv8.cartoes[0].classe === 'ok' && db8.filter(x => x.vigencia === '2026-08').length === 2 && db8.filter(x => x.vigencia === '2026-09').length === 4, JSON.stringify(db8.map(x => [x.vigencia, x.placa])));
+  const p8 = linha(tv8.linhas, 'PLT', 'Rota');
+  af('ago/26: a tela abre no mês, diz que não há 01-BD e confere contra a aba (4 viagens, 4.800 km)', tv8.sel === '2026-08' && /Sem 01-BD/.test(tv8.sub) && p8 && p8[8] === '4.800' && p8[9] === '4.800', JSON.stringify(tv8));
   // arquivo só com agosto: nada grava
   const r3 = await sobe(pg, ARQ_AGO);
   af('arquivo só com agosto: cartão vermelho e nada gravado', r3.cartoes[0].classe === 'erro' && /nada foi gravado/.test(r3.cartoes[0].texto), r3.cartoes[0].texto);
@@ -321,7 +343,16 @@ console.log('4) Painel KM · antigo × novo com os mesmos dados');
   af('com viagens: a soma das placas de PLT Rota = 4.000 (o total da 01-BD)', Math.round(V9.filter(p => p.und === 'PLT').reduce((s, p) => s + p.rem, 0)) === 4000);
   af('com viagens: T1 fora da visão Placas de set/26', !V9.some(p => p.proj === 'EMPURRADA'), JSON.stringify(V9.map(p => p.proj)));
   af('com viagens: o total por unidade × projeto não muda', JSON.stringify(V.all.filter(r => r.vig === '09/2026' && r.und !== 'PIR').map(r => [r.und, r.proj, r.rem, r.real])) === JSON.stringify(N.all.filter(r => r.vig === '09/2026' && r.und !== 'PIR').map(r => [r.und, r.proj, r.rem, r.real])));
-  delete BANCO.dispersao_placa_viagem; BANCO.dispersao_placa.pop(); BANCO.sh_consumo_km_litro.pop();
+  // AGO/26 pela planilha de viagens: PLT Rota 3 + 1 viagens, total da aba 48.000 km
+  BANCO.dispersao_placa_viagem.push(
+    { vigencia: '2026-08', unidade: 'PLT', projeto: 'Rota', placa: 'PLT1A11', placa_origem: 'PLT1A11', viagens_prim: 3, viagens_rec: 0, viagens_not: 0 },
+    { vigencia: '2026-08', unidade: 'PLT', projeto: 'Rota', placa: 'CUC9F14', placa_origem: 'CUC9514', viagens_prim: 0, viagens_rec: 1, viagens_not: 0 });
+  BANCO.sh_consumo_km_litro.push({ vigencia: '08/2026', projeto: 'ROTA - PLT', placa: 'PLT1A11', km_rodado_horas_trabalhadas: 40000 });
+  const V8 = await roda('/painel-km/index.html');
+  const p8s = V8.placas.filter(p => p.vig === '08/2026' && p.und === 'PLT');
+  af('ago/26: placas de PLT Rota pela planilha de viagens, somando o total da aba (48.000)', p8s.length >= 2 && Math.round(p8s.reduce((s, p) => s + p.rem, 0)) === 48000 && Math.round(p8s.find(p => p.placa === 'PLT1A11').rem) === 36000, JSON.stringify(p8s));
+  af('ago/26: o total por unidade × projeto não muda', JSON.stringify(V8.all.filter(r => r.vig === '08/2026').map(r => [r.und, r.proj, r.rem0, r.real])) === JSON.stringify(N.all.filter(r => r.vig === '08/2026').map(r => [r.und, r.proj, r.rem0, r.real])));
+  delete BANCO.dispersao_placa_viagem; BANCO.dispersao_placa.pop(); BANCO.sh_consumo_km_litro.pop(); BANCO.sh_consumo_km_litro.pop();
   // FILTRO BM / SEM BM (Renan, 15/10/2026): Sem BM = km remunerado bruto; voltar a BM devolve o de antes
   const leHero = pg => pg.evaluate(() => ({ rem: document.getElementById('hero-rem').textContent, sub: document.getElementById('titSub').textContent,
     bm: document.getElementById('d-bm').textContent, sel: [...document.getElementById('ms-bm')._sel],

@@ -329,6 +329,9 @@
      O km de cada viagem é o km por viagem do tipo na 01-BD da unidade × projeto × mês,
      então a soma das placas bate com o km remunerado da 01-BD quando as viagens batem. */
   const AS_COMO_ROTA = ['PLT'];
+  // A PLANILHA DE VIAGENS VALE DE AGO/26 EM DIANTE (Renan, 15/10/2026: "Libera agosto todo T2 também"):
+  // agosto não tem 01-BD no banco, então o km por viagem sai do total da aba Dispersão de km (totaisT2)
+  const VIAG_INICIO = '2026-08';
   const UNI_COD = ['BLC', 'CBA', 'CGR', 'FLP', 'GNA', 'GRL', 'MCC', 'NFR', 'PLT', 'RON', 'PIR', 'ANG'];
   const CARGA = { EXTRA: 'prim', ROTERIZ: 'prim', RECARGA: 'rec', NOTURNA: 'not' };
   function vigViagem(c, data) {
@@ -339,7 +342,7 @@
     return m ? vig(+m[3], +m[2]) : null;
   }
   function leViagens(XLSX, wb, nome, inicio) {
-    const ini = inicio || INICIO;
+    const ini = inicio || VIAG_INICIO;
     let g = null, iH = -1, h = null;
     for (const sn of wb.SheetNames) {
       const gg = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, defval: null, blankrows: false, raw: true });
@@ -391,6 +394,13 @@
       const v1 = vs.reduce((s, v) => s + (+v.viagens_prim || 0), 0), vr = vs.reduce((s, v) => s + (+v.viagens_rec || 0), 0), vn = vs.reduce((s, v) => s + (+v.viagens_not || 0), 0);
       const c = { vigencia: vg, unidade: u, projeto: p, placas: vs.length, v1, vr, vn, v1BD: null, vrBD: null, vnBD: null, kmBD: null, km: null, semLinha: !l };
       if (!l) { vs.forEach(v => placas.push({ ...v, km_rem: null })); conf.push(c); return; }
+      if (l.semTipo) {   // mês sem 01-BD (ago/26): só o total da aba, km por viagem igual para todo tipo
+        const tot = v1 + vr + vn, kv = tot > 0 ? (+l.km_rem || 0) / tot : 0;
+        let km = 0;
+        vs.forEach(v => { const kr = ((+v.viagens_prim || 0) + (+v.viagens_rec || 0) + (+v.viagens_not || 0)) * kv; km += kr; placas.push({ ...v, km_rem: r2(kr) }); });
+        Object.assign(c, { kmBD: +l.km_rem || 0, km: r2(km), viagensAba: +l.viagens || null, semTipo: true });
+        conf.push(c); return;
+      }
       const t1 = (+l.viagens_prim || 0) > 0 ? (+l.km_rem_prim || 0) / +l.viagens_prim : 0;
       const tr = (+l.viagens_rec || 0) > 0 && +l.km_rem_rec > 0 ? +l.km_rem_rec / +l.viagens_rec : t1;
       const tn = (+l.viagens_not || 0) > 0 && +l.km_rem_not > 0 ? +l.km_rem_not / +l.viagens_not : t1;
@@ -410,6 +420,21 @@
       conf.push({ vigencia: l.vigencia, unidade: l.unidade, projeto: l.projeto, placas: 0, v1: 0, vr: 0, vn: 0,
         v1BD: +l.viagens_prim || 0, vrBD: +l.viagens_rec || 0, vnBD: +l.viagens_not || 0, kmBD: +l.km_rem || 0, km: 0, semViagem: true }); });
     return { placas, conf };
+  }
+
+  /* totais de Rota, AS e Van de um mês sem 01-BD no banco, a partir da aba Dispersão de km:
+     [{ vigencia:'AAAA-MM', unidade:'CBA'|'CBA T2', projeto:'ROTA'|'AUTO SERVIÇO'|'ROTA (VAN)', km_rem, viagens }]
+     → linhas no formato da dispersao_km, com semTipo (o km por viagem não separa 1ª, recarga e noturna) */
+  function totaisT2(lista) {
+    const M = new Map();
+    (lista || []).forEach(t => {
+      const p = projetoDe(t.projeto); if (!p || /^Empurrada/.test(p)) return;
+      let u = String(t.unidade || '').trim().toUpperCase().split(' ')[0]; if (u === 'GOI') u = 'GNA'; if (!u || !t.vigencia) return;
+      const k = t.vigencia + '|' + u + '|' + p;
+      const a = M.get(k) || { vigencia: t.vigencia, unidade: u, projeto: p, km_rem: 0, viagens: 0, semTipo: true };
+      a.km_rem += +t.km_rem || 0; a.viagens += +t.viagens || 0; M.set(k, a);
+    });
+    return [...M.values()];
   }
 
   /* o REALIZADO de cada placa: o km dela na aba Km/L no mês (det do kmRodado), repartido entre as
@@ -438,5 +463,5 @@
     return out;
   }
   raiz.DispersaoKm = { merc, unidadeDe, projetoDe, projetoKml, lePlanilha, kmRodado, monta, vigCel, placasAbertura,
-    leViagens, remPlacas, realPlacas, PROJ, AS_PELA_PLANILHA, AS_COMO_ROTA, INICIO };
+    leViagens, remPlacas, realPlacas, totaisT2, PROJ, AS_PELA_PLANILHA, AS_COMO_ROTA, INICIO, VIAG_INICIO };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610152200">
+<meta name="build" content="202610152330">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -377,7 +377,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
 <script src="../assets/balanco-massa.js?v=202610131400"></script>
-<script src="../assets/dispersao-km.js?v=202610152200"></script>
+<script src="../assets/dispersao-km.js?v=202610152330"></script>
 </head>
 <body>
 <div class="app">
@@ -951,17 +951,12 @@ async function fetchDispBanco(){
   ]);
   if (!linhas.length) return { linhas: [], placas: [], km: null };
   const D = window.DispersaoKm;
-  const kmlRows = kml.map(r => { const m = String(r.vigencia || '').match(/^(\d{2})\/(\d{4})$/);
-    return { vigencia: m ? m[2] + '-' + m[1] : '', projeto: r.projeto, placa: r.placa, km: +r.km_rodado_horas_trabalhadas || 0 }; })
-    .filter(r => r.vigencia >= D.INICIO);
-  const km = D.kmRodado(placas, kmlRows);
-  // REMUNERADO POR PLACA PELA PLANILHA DE VIAGENS (Renan, 15/10/2026: "Use essa planilha para subir
-  // remunerado por placa Rota, AS e Van. Deixe T1 fora de setembro"): viagens × km por viagem da 01-BD,
-  // o realizado é o km da placa na aba Km/L repartido pelo remunerado. O total por unidade × projeto
-  // NÃO muda: segue a lista de placas do banco (kmRodado); isto só abre a visão Placas.
-  const plV = viag.length && D.remPlacas ? D.realPlacas(D.remPlacas(viag, linhas).placas, km.det, placas) : [];
-  if (plV.length) console.info('Dispersão de km: remunerado por placa pela planilha de viagens em', [...new Set(plV.map(p => p.vigencia))].join(', '));
-  return { linhas: D.monta(linhas, km), placas, km, plV };
+  const kmlTodas = kml.map(r => { const m = String(r.vigencia || '').match(/^(\d{2})\/(\d{4})$/);
+    return { vigencia: m ? m[2] + '-' + m[1] : '', projeto: r.projeto, placa: r.placa, km: +r.km_rodado_horas_trabalhadas || 0 }; });
+  const km = D.kmRodado(placas, kmlTodas.filter(r => r.vigencia >= D.INICIO));
+  // o km de cada placa para a planilha de viagens (desde ago/26); o total por unidade × projeto não usa isto
+  const kmV = D.VIAG_INICIO ? D.kmRodado(placas, kmlTodas.filter(r => r.vigencia >= D.VIAG_INICIO)) : km;
+  return { linhas: D.monta(linhas, km), linhasBD: linhas, placas, km, kmV, viag };
 }
 
 async function fetchCustoRem() {
@@ -1098,10 +1093,24 @@ async function fetchData() {
       const vig = vigBR(vigencia), proj = DISP_PROJ[projeto] || _nkBM(projeto), rsKm = taxaDe[chaveRs(vig, unidade, proj)] || 0;
       PLACAS.push({ vig, ano: vig.split('/')[1], und: unidade, undOrig: unidade, proj, placa, rem, real, delta: real - rem, rsKm, imp: (real - rem) * rsKm });
     };
-    // mês com a planilha de viagens no banco: o remunerado por placa é o dela (Rota, AS e Van), o realizado
-    // é o km da placa na aba Km/L repartido pelo remunerado e o R$/km o da unidade × projeto da linha
-    const vVigs = new Set((dispBanco.plV || []).map(p => p.vigencia));
-    (dispBanco.plV || []).forEach(p => { if (!dispVigs.has(vigBR(p.vigencia))) return;
+    // REMUNERADO POR PLACA PELA PLANILHA DE VIAGENS (Renan, 15/10/2026: "Use essa planilha para subir
+    // remunerado por placa Rota, AS e Van. Deixe T1 fora de setembro" → "Libera agosto todo T2 também"):
+    // viagens × km por viagem (01-BD do banco; ago/26, sem 01-BD, o total da aba Dispersão de km ÷ viagens),
+    // o realizado é o km da placa na aba Km/L repartido pelo remunerado e o R$/km o da unidade × projeto.
+    // O total por unidade × projeto NÃO muda; isto só abre a visão Placas. No mês da aba (ago/26) o T2
+    // da Abertura sai e o T1 dela fica.
+    const D = window.DispersaoKm, viag = dispBanco.viag || [];
+    // mês que a aba Dispersão de km tem (ago/26): o total é o dela, como no resto do painel; senão, a 01-BD do banco
+    const aIso = v => v.slice(3) + '-' + v.slice(0, 2);
+    const vigsAbaV = new Set(viag.map(v => v.vigencia).filter(v => vigAba.has(vigBR(v))));
+    const linhasBD = (dispBanco.linhasBD || []).filter(l => !vigAba.has(vigBR(l.vigencia)));
+    const totAba = D.totaisT2 ? D.totaisT2(ALL.filter(r => !r.fonteKm && vigsAbaV.has(aIso(r.vig)))
+      .map(r => ({ vigencia: aIso(r.vig), unidade: r.und, projeto: r.proj, km_rem: r.rem0 != null ? r.rem0 : r.rem, viagens: r.viagens }))) : [];
+    const plV = viag.length && D.remPlacas ? D.realPlacas(D.remPlacas(viag, [...linhasBD, ...totAba]).placas, (dispBanco.kmV || dispBanco.km).det, dispBanco.placas || []) : [];
+    const vVigs = new Set(plV.map(p => p.vigencia));
+    if (vVigs.size) console.info('Dispersão de km: remunerado por placa pela planilha de viagens em', [...vVigs].join(', '));
+    PLACAS = PLACAS.filter(p => { const v = p.vig.slice(3) + '-' + p.vig.slice(0, 2); return !vVigs.has(v) || /^EMPURR|INSUMO/.test(_nkBM(p.proj)); });
+    plV.forEach(p => { const vig = vigBR(p.vigencia); if (!dispVigs.has(vig) && !vigAba.has(vig)) return;
       pushPl(p.vigencia, p.unidade, p.projeto, p.placa_origem || origP[p.placa] || p.placa, +p.km_rem || 0, +p.km_real || 0); });
     // mês sem a planilha de viagens: a lista de placas do banco, como antes. T1 (Empurrada) fica fora
     // da visão Placas de set/26 em diante (Renan, 15/10/2026: "Deixe T1 fora de setembro")
@@ -1851,7 +1860,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_km_v16';  // v16: placa T1 pela Km/L fora das placas de T2 · v15: placas de set/26+ pela planilha de viagens, T1 fora · v14: placas de set/26+ pela aba Abertura · v13: set/26 do banco ligado (com o balanço dele) · v12: balanço sem resposta do banco não cai na aba · v11: set/26 do banco desligado até validar · v10: set/26 em diante do banco (Dispersão de km importada) · v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
+const CACHE_KEY='bi_cache_km_v17';  // v17: planilha de viagens também em ago/26 (T2) · v16: placa T1 pela Km/L fora das placas de T2 · v15: placas de set/26+ pela planilha de viagens, T1 fora · v14: placas de set/26+ pela aba Abertura · v13: set/26 do banco ligado (com o balanço dele) · v12: balanço sem resposta do banco não cai na aba · v11: set/26 do banco desligado até validar · v10: set/26 em diante do banco (Dispersão de km importada) · v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
@@ -1999,6 +2008,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610152200"></script>
+<script src="../assets/build-check.js?v=202610152330"></script>
 </body>
 </html>

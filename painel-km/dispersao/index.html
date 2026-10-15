@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610152200">
+<meta name="build" content="202610152330">
 <title>Dispersão de km · Importar · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="../../assets/gviz-cache.js?v=202609050530"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<script src="../../assets/dispersao-km.js?v=202610152200"></script>
+<script src="../../assets/dispersao-km.js?v=202610152330"></script>
 <style>
 :root{
   --fundo:#202022; --app:rgba(30,40,60,.34); --side:rgba(30,30,30,.50);
@@ -153,7 +154,7 @@ tr.tot td{background:var(--cabec);font-weight:800;position:sticky;bottom:0;}
 const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
 let sb=null, EMAIL='', ADMIN=false;
-let LINHAS=[], PLACAS=[], KML=[], KMLINFO=null, KM=null, VIAG=[], VIAG_ERR=null;
+let LINHAS=[], PLACAS=[], KML=[], KMLINFO=null, KM=null, VIAG=[], VIAG_ERR=null, ABA=null;
 const D=window.DispersaoKm;
 
 const $=i=>document.getElementById(i);
@@ -269,6 +270,7 @@ async function carrega(){
   $('tab').innerHTML='<div class="vazio">Lendo…</div>'; $('tabPl').innerHTML='';
   try{
     VIAG_ERR=null;
+    if(!ABA) ABA=leAbaDisp().catch(e=>{ console.warn('aba Dispersão de km indisponível:', e); return []; });
     const viagP=todas('dispersao_placa_viagem','vigencia,unidade,projeto,placa,placa_origem,viagens_prim,viagens_rec,viagens_not,updated_at','vigencia')
       .catch(e=>{ VIAG_ERR=e.message||String(e); return []; });
     const [lin, pls, kml, base, viag] = await Promise.all([
@@ -286,7 +288,7 @@ async function carrega(){
   }catch(e){
     $('tab').innerHTML=`<div class="vazio">Não consegui ler: ${esc(e.message||e)}</div>`; $('subRes').textContent=''; return;
   }
-  const vigs=[...new Set(LINHAS.map(l=>l.vigencia))].sort().reverse();
+  const vigs=[...new Set([...LINHAS.map(l=>l.vigencia), ...VIAG.map(l=>l.vigencia)])].sort().reverse();
   const atual=$('selVig').value;
   $('selVig').innerHTML=vigs.map(v=>`<option value="${v}">${vigRot(v)}</option>`).join('');
   if(vigs.includes(atual)) $('selVig').value=atual;
@@ -297,6 +299,10 @@ function desenha(){
   const v=$('selVig').value;
   const kmlTxt=KMLINFO?` · aba Km/L carregada em ${dt(KMLINFO.carregado_em)}${KMLINFO.erro&&/^FALHOU/.test(KMLINFO.erro)?' (a última carga falhou: o km rodado pode estar parado)':''}`:'';
   if(!v){ $('tab').innerHTML='<div class="vazio">Nada no banco ainda: suba a planilha acima.</div>'; $('subRes').textContent='De set/26 em diante'+kmlTxt; return; }
+  if(!LINHAS.some(l=>l.vigencia===v)){   // mês só com a planilha de viagens (ago/26): sem 01-BD no banco
+    $('tab').innerHTML='<div class="vazio">Sem a Dispersão de KM - Consolidado deste mês no banco: os totais vêm da aba Dispersão de km.</div>';
+    $('subRes').textContent=vigRot(v)+kmlTxt; $('tabPl').innerHTML=''; desenhaViagens(v); return;
+  }
   const t=D.monta(LINHAS.filter(l=>l.vigencia===v), KM)
     .sort((a,b)=>a.unidade.localeCompare(b.unidade)||D.PROJ.indexOf(a.projeto)-D.PROJ.indexOf(b.projeto));
   const quando=LINHAS.filter(l=>l.vigencia===v).reduce((m,l)=>l.updated_at>m?l.updated_at:m,'');
@@ -321,27 +327,41 @@ function desenha(){
   desenhaViagens(v);
 }
 
+// os totais da aba Dispersão de km (mês sem 01-BD no banco, ago/26): a MESMA consulta do Painel KM
+async function leAbaDisp(){
+  const url=`https://docs.google.com/spreadsheets/d/1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('Dispersão de km')}&t=${Date.now()}`;
+  const j=JSON.parse((await (await fetch(url)).text()).match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+  const c=(r,i)=>r.c&&r.c[i]&&r.c[i].v!=null?r.c[i].v:null;
+  return (j.table.rows||[]).map(r=>{ const pc=String(c(r,14)||''), k=pc.lastIndexOf('-');
+    return { vigencia:D.vigCel(c(r,0)), unidade:k>=0?pc.slice(k+1).trim():'', projeto:k>=0?pc.slice(0,k).trim():pc, km_rem:+c(r,31)||0, viagens:+c(r,22)||0 }; })
+    .filter(t=>t.vigencia&&t.vigencia>=D.VIAG_INICIO);
+}
+
 // conferência da planilha de viagens contra a 01-BD: viagens de 1ª e km remunerado por unidade × projeto
-function desenhaViagens(v){
+async function desenhaViagens(v){
   if(VIAG_ERR){ $('tabViag').innerHTML=`<div class="vazio">Não consegui ler a tabela das viagens: ${esc(VIAG_ERR)}<br>(rodar o SQL <code>scripts/dispersao-placa-viagem.sql</code>)</div>`; return; }
   const vs=VIAG.filter(x=>x.vigencia===v);
   if(!vs.length){ $('tabViag').innerHTML='<div class="vazio">Nenhuma planilha de viagens deste mês no banco: suba o arquivo acima.</div>'; return; }
-  const { conf } = D.remPlacas(vs, LINHAS.filter(l=>l.vigencia===v));
+  let bd=LINHAS.filter(l=>l.vigencia===v), daAba=false;
+  if(!bd.length){ bd=D.totaisT2((await ABA).filter(t=>t.vigencia===v)); daAba=true; }
+  const { conf } = D.remPlacas(vs, bd);
   const quando=vs.reduce((m,l)=>l.updated_at>m?l.updated_at:m,'');
-  $('subViag').innerHTML=`${vigRot(v)} · planilha de viagens carregada em ${dt(quando)} · ${vs.length} placas. Cada viagem vale o km por viagem do tipo na 01-BD; Spot, TERCEIROS, MKT e Recolha fora; Pelotas AS conta como Rota; T1 fora.`;
+  $('subViag').innerHTML=`${vigRot(v)} · planilha de viagens carregada em ${dt(quando)} · ${vs.length} placas. `
+    +(daAba?`<b>Sem 01-BD no banco neste mês</b>: o km remunerado é o total da aba Dispersão de km e cada viagem (1ª, recarga ou noturna) vale o mesmo km. `
+      :`Cada viagem vale o km por viagem do tipo na 01-BD. `)+`Spot, TERCEIROS, MKT e Recolha fora; Pelotas AS conta como Rota; T1 fora.`;
   let a=0,b=0,c=0,d=0;
   const corpo=conf.sort((x,y)=>x.unidade.localeCompare(y.unidade)||D.PROJ.indexOf(x.projeto)-D.PROJ.indexOf(y.projeto)).map(r=>{
     a+=r.v1; b+=r.v1BD||0; c+=r.km||0; d+=r.kmBD||0;
     const dv=r.v1BD!=null?r.v1-r.v1BD:null, dk=r.kmBD!=null?(r.km||0)-r.kmBD:null;
-    const nota=r.semLinha?'sem linha na 01-BD (sem km por viagem)':r.semViagem?'01-BD sem nenhuma viagem na planilha':r.restoPela1a?`recarga/noturna da 01-BD sem viagem na planilha: ${n0(r.restoPela1a)} km pelas viagens de 1ª`:'';
+    const nota=r.semTipo?(r.viagensAba?`aba: ${n0(r.viagensAba)} viagens no total`:''):r.semLinha?(daAba?'sem linha na aba Dispersão de km':'sem linha na 01-BD (sem km por viagem)'):r.semViagem?'01-BD sem nenhuma viagem na planilha':r.restoPela1a?`recarga/noturna da 01-BD sem viagem na planilha: ${n0(r.restoPela1a)} km pelas viagens de 1ª`:'';
     return `<tr><td>${esc(r.unidade)}</td><td>${esc(r.projeto)}</td><td class="num">${n0(r.placas)}</td>`
       +`<td class="num">${n0(r.v1)}</td><td class="num">${r.v1BD!=null?n0(r.v1BD):'—'}</td><td class="num ${dv?'cr':''}">${dv==null?'—':(dv>0?'+':'')+n0(dv)}</td>`
       +`<td class="num">${n0(r.vr)}</td><td class="num">${n0(r.vn)}</td>`
       +`<td class="num">${r.km!=null?n0(r.km):'—'}</td><td class="num">${r.kmBD!=null?n0(r.kmBD):'—'}</td><td class="num ${dk&&Math.abs(dk)>=1?'cr':''}">${dk==null?'—':(Math.round(dk)>0?'+':'')+n0(dk)}</td>`
       +`<td class="mut" style="white-space:normal">${esc(nota)}</td></tr>`; }).join('');
   $('tabViag').innerHTML='<div style="overflow:auto;max-height:56vh"><table><thead><tr><th>Unidade</th><th>Projeto</th><th class="num">Placas</th>'
-    +'<th class="num">Viagens 1ª</th><th class="num">1ª na 01-BD</th><th class="num">Δ</th><th class="num">Recargas</th><th class="num">Noturnas</th>'
-    +'<th class="num">Km rem placas</th><th class="num">Km rem 01-BD</th><th class="num">Δ km</th><th>Observação</th></tr></thead><tbody>'
+    +`<th class="num">Viagens 1ª</th><th class="num">1ª na 01-BD</th><th class="num">Δ</th><th class="num">Recargas</th><th class="num">Noturnas</th>`
+    +`<th class="num">Km rem placas</th><th class="num">Km rem ${daAba?'aba':'01-BD'}</th><th class="num">Δ km</th><th>Observação</th></tr></thead><tbody>`
     +corpo+`<tr class="tot"><td>Total</td><td></td><td></td><td class="num">${n0(a)}</td><td class="num">${n0(b)}</td><td class="num">${(a-b>0?'+':'')+n0(a-b)}</td><td></td><td></td>`
     +`<td class="num">${n0(c)}</td><td class="num">${n0(d)}</td><td class="num">${(Math.round(c-d)>0?'+':'')+n0(c-d)}</td><td></td></tr></tbody></table></div>`;
 }
@@ -394,7 +414,7 @@ function desenhaPlacas(v){
 })();
 </script>
 <script src="../../assets/mobile.js"></script>
-<script src="../../assets/modo-tv.js?v=202610152200"></script>
-<script src="../../assets/build-check.js?v=202610152200"></script>
+<script src="../../assets/modo-tv.js?v=202610152330"></script>
+<script src="../../assets/build-check.js?v=202610152330"></script>
 </body>
 </html>

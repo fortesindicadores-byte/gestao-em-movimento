@@ -250,16 +250,24 @@ function indexaDispTudo(L, dreAcc, DK, BM) {
   // 1) set/26 em diante, do banco: só os meses que a aba não tem
   const db = L.dispBanco;
   if (db && DK && (db.linhas || []).length) {
-    const kmlRows = (db.kml || []).map(r => { const m = String(r.vigencia || '').match(/^(\d{2})\/(\d{4})$/);
-      return { vigencia: m ? m[2] + '-' + m[1] : '', projeto: r.projeto, placa: r.placa, km: +r.km_rodado_horas_trabalhadas || 0 }; })
-      .filter(r => r.vigencia >= DK.INICIO);
+    const kmlTodas = (db.kml || []).map(r => { const m = String(r.vigencia || '').match(/^(\d{2})\/(\d{4})$/);
+      return { vigencia: m ? m[2] + '-' + m[1] : '', projeto: r.projeto, placa: r.placa, km: +r.km_rodado_horas_trabalhadas || 0 }; });
+    const kmlRows = kmlTodas.filter(r => r.vigencia >= DK.INICIO);
     const kmR = DK.kmRodado(db.placas || [], kmlRows);
     // km rodado por placa e mês (aba Km/L): é o realizado da placa nas linhas da aba Abertura que só
     // trazem o remunerado (set/26 em diante)
     info.kmPlaca = {}; kmR.det.forEach(d => { const k = d.vigencia + '|' + d.placa; info.kmPlaca[k] = (info.kmPlaca[k] || 0) + (+d.km || 0); });
     // REMUNERADO POR PLACA PELA PLANILHA DE VIAGENS (Renan, 15/10/2026): Rota, AS e Van; viagens × km por
     // viagem da 01-BD, realizado = km da placa na Km/L repartido pelo remunerado (a parte T1 fica fora)
-    if ((db.viagens || []).length && DK.remPlacas) info.placasViagem = DK.realPlacas(DK.remPlacas(db.viagens, db.linhas).placas, kmR.det, db.placas || []);
+    if ((db.viagens || []).length && DK.remPlacas) {
+      // ago/26 não tem 01-BD no banco: o km por viagem sai do total da aba Dispersão de km (acc, km bruto)
+      // mês que a aba Dispersão de km tem: o total é o dela (como no Painel KM); senão, a 01-BD do banco
+      const vigsAbaV = new Set(db.viagens.map(v => v.vigencia).filter(v => vigsAba.has(v)));
+      const totAba = DK.totaisT2 ? DK.totaisT2(Object.entries(acc).filter(([k, a]) => a.fonte !== 'banco' && vigsAbaV.has(k.split('|')[2]))
+        .map(([k, a]) => { const [u, p, v] = k.split('|'); return { vigencia: v, unidade: u, projeto: p === 'VAN' ? 'ROTA (VAN)' : p, km_rem: a.rem, viagens: a.vgTot }; })) : [];
+      const kmV = DK.VIAG_INICIO ? DK.kmRodado(db.placas || [], kmlTodas.filter(r => r.vigencia >= DK.VIAG_INICIO)) : kmR;
+      info.placasViagem = DK.realPlacas(DK.remPlacas(db.viagens, [...db.linhas.filter(l => !vigsAba.has(l.vigencia)), ...totAba]).placas, kmV.det, db.placas || []);
+    }
     DK.monta(db.linhas, kmR).forEach(l => {
       const vig = l.vigencia; if (!vig || vigsAba.has(vig)) return;
       const n3 = (DISP_PROJ_BANCO[l.projeto] || l.projeto) + ' - ' + l.unidade;
@@ -327,11 +335,11 @@ function indexaAbertura(ab) {
 }
 /* KM POR PLACA DAS ANÁLISES DO FCA (Renan, 15/10/2026: "Use essa planilha para subir remunerado por
    placa Rota, AS e Van. Deixe T1 fora de setembro e das análises do FCA"): a aba Abertura vale só nas
-   linhas com o Real preenchido (até ago/26); de set/26 em diante, a planilha de viagens do banco.
+   linhas com o Real preenchido; no mês que tem a planilha de viagens no banco (ago/26 em diante), ela.
    T1 (Empurrada) fica fora em todos os meses. Mesmo formato do indexaAbertura. */
 function indexaPlacas(ab, viag) {
-  const out = {};
-  Object.entries(indexaAbertura(ab)).forEach(([k, rs]) => { const v = rs.filter(r => !r.semReal && !/^EMPURR|INSUMO/.test(r.proj)); if (v.length) out[k] = v; });
+  const out = {}, vigsV = new Set((viag || []).map(p => p.vigencia));   // mês com a planilha de viagens: ela manda (ago/26 em diante)
+  Object.entries(indexaAbertura(ab)).forEach(([k, rs]) => { const v = rs.filter(r => !r.semReal && !vigsV.has(r.vig) && !/^EMPURR|INSUMO/.test(r.proj)); if (v.length) out[k] = v; });
   (viag || []).forEach(p => {
     if (/^Empurrada/.test(p.projeto)) return;
     const n3 = (DISP_PROJ_BANCO[p.projeto] || p.projeto) + ' - ' + p.unidade, uni = unidadeDoNv3(n3); if (!uni) return;

@@ -109,7 +109,7 @@ console.log('\n══ 5 · planilha de viagens: remunerado por placa de Rota, AS
     V('TOCO', 'ROTA_1_9_2026', 'Rota', 'Recolha', 'Padrao', 'ROTA - CBA', 'CDD CUIABA', 'XYZ9A99'),
     V('BI-TRUCK', 'AS_1_9_2026', 'AS', 'Roteriz', 'Padrao', 'ROTA - PLT', 'CDD PELOTAS', 'CUC9514'),
     V('TRUCK', 'AS_1_9_2026', 'AS', 'Roteriz', 'Padrao', 'AUTO SERVIÇO - GOI', 'CDD GOIANIA', 'PRX4934'),
-    V('TRUCK', 'ROTA_1_8_2026', 'Rota', 'Roteriz', 'Padrao', 'ROTA - CBA', 'CDD CUIABA', 'ABC1234'),
+    V('TRUCK', 'ROTA_1_7_2026', 'Rota', 'Roteriz', 'Padrao', 'ROTA - CBA', 'CDD CUIABA', 'ABC1234'),
   ];
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Planilha1');
   const rv = DK.leViagens(XLSX, wb, 'viagens.xlsx');
@@ -120,7 +120,7 @@ console.log('\n══ 5 · planilha de viagens: remunerado por placa de Rota, AS
   af('Spot, MKT e Recolha fora da conta', rv.fora['Spot (freteiro)'] === 1 && rv.fora.MKT === 1 && rv.fora.Recolha === 1 && !rv.linhas.some(l => l.placa === 'SPO1T00'), JSON.stringify(rv.fora));
   af('Pelotas AS conta como Rota', !!acha('PLT', 'Rota', 'CUC9F14') && !rv.linhas.some(l => l.unidade === 'PLT' && l.projeto === 'Auto Serviço'));
   af('Goiânia (GOI) entra como GNA · Auto Serviço', !!acha('GNA', 'Auto Serviço', 'PRX4J34'));
-  af('mês antes de set/26 fica de fora', JSON.stringify(rv.antes) === '["2026-08"]', JSON.stringify(rv.antes));
+  af('mês antes de ago/26 fica de fora', JSON.stringify(rv.antes) === '["2026-07"]', JSON.stringify(rv.antes));
   af('arquivo sem as colunas da planilha de viagens não é lido como viagens', DK.leViagens(XLSX, (() => { const w = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(w, XLSX.utils.aoa_to_sheet([['01-BD'], [1]]), 'x'); return w; })(), 'x') === null);
 
   // 01-BD: CBA Rota 5 viagens de 1ª (500 km) + 1 recarga (60 km) + 1 noturna (40 km) = 600 km; Van 1 viagem 80 km
@@ -169,6 +169,28 @@ console.log('\n══ 5 · planilha de viagens: remunerado por placa de Rota, AS
   const s9 = ip['CBA T2|2026-09'] || [];
   af('set/26 pela planilha de viagens, sem a linha da Abertura sem Real', s9.length && s9.every(r => r.fonte === 'viagens') && s9.some(r => r.placa === 'ABC1C34' && r.rem === 460 && r.real === 200 && r.proj === 'ROTA'), JSON.stringify(s9));
   af('Van no projeto VAN', s9.some(r => r.proj === 'VAN'), JSON.stringify(s9.map(r => r.proj)));
+
+  // AGO/26 (Renan, 15/10/2026: "Libera agosto todo T2 também"): sem 01-BD no banco, o total vem da aba
+  const viagAgo = [{ vigencia: '2026-08', unidade: 'CBA', projeto: 'Rota', placa: 'ABC1C34', placa_origem: 'ABC1234', viagens_prim: 6, viagens_rec: 2, viagens_not: 0 },
+    { vigencia: '2026-08', unidade: 'CBA', projeto: 'Rota', placa: 'XYZ9A99', placa_origem: 'XYZ9A99', viagens_prim: 2, viagens_rec: 0, viagens_not: 0 }];
+  const tot = DK.totaisT2([{ vigencia: '2026-08', unidade: 'CBA T2', projeto: 'ROTA', km_rem: 800, viagens: 10 },
+    { vigencia: '2026-08', unidade: 'CBA', projeto: 'EMPURRADA', km_rem: 9000 }, { vigencia: '2026-08', unidade: 'GOI', projeto: 'AUTO SERVIÇO', km_rem: 100 }]);
+  af('totaisT2: Rota da aba vira linha sem tipo, Empurrada fora, GOI vira GNA', tot.length === 2 && tot.some(l => l.unidade === 'CBA' && l.projeto === 'Rota' && l.km_rem === 800 && l.semTipo) && tot.some(l => l.unidade === 'GNA'), JSON.stringify(tot));
+  const ra = DK.remPlacas(viagAgo, tot), kmA = pl => ra.placas.find(x => x.placa === pl).km_rem;
+  af('ago/26: toda viagem vale o mesmo km (800 ÷ 10) e a soma bate com a aba', kmA('ABC1C34') === 640 && kmA('XYZ9A99') === 160 && ra.conf.find(c => c.projeto === 'Rota').km === 800, JSON.stringify(ra.conf));
+  const AB8 = { cols: ['UNIDADE', 'MÊS', 'PROJETO', 'Placa', 'Remunerado', 'Real'], rows: [
+    ['Cuiába - MT', 'Date(2026,7,1)', 'ROTA', 'ABC1234', 79, 2161], ['Piraí -RJ', 'Date(2026,7,1)', 'EMPURRADA', 'CUK9G80', 6594, 4632]] };
+  const ip8 = FA.indexaPlacas(AB8, DK.realPlacas(ra.placas, [], []));
+  const a8 = ip8['CBA T2|2026-08'] || [];
+  af('ago/26 com planilha de viagens: a linha da Abertura (79 km rem.) sai e entram as viagens', a8.length === 2 && a8.every(r => r.fonte === 'viagens') && a8.find(r => r.placa === 'ABC1C34').rem === 640, JSON.stringify(a8));
+  const ip8b = FA.indexaPlacas(AB8, []);
+  // pelo caminho do motor: ago/26 da aba (GRL Rota 60.000) e o banco de ago/26 (999.999) não entra
+  const L8 = Object.assign({}, L, { dispBanco: Object.assign({}, dispBanco, { viagens: [
+    { vigencia: '2026-08', unidade: 'GRL', projeto: 'Rota', placa: 'GRL1A11', placa_origem: 'GRL1A11', viagens_prim: 3, viagens_rec: 0, viagens_not: 0 },
+    { vigencia: '2026-08', unidade: 'GRL', projeto: 'Rota', placa: 'GRL2B22', placa_origem: 'GRL2B22', viagens_prim: 1, viagens_rec: 0, viagens_not: 0 }] }) });
+  const pv8 = FA.indexaDispTudo(L8, idx.acc, DK, BM).info.placasViagem.filter(p => p.vigencia === '2026-08');
+  af('motor: ago/26 reparte o total da aba (60.000) pelas viagens, não o do banco', pv8.length === 2 && Math.round(pv8.reduce((s2, p) => s2 + p.km_rem, 0)) === 60000 && pv8.find(p => p.placa === 'GRL1A11').km_rem === 45000, JSON.stringify(pv8));
+  af('ago/26 sem a planilha de viagens: continua a Abertura', (ip8b['CBA T2|2026-08'] || []).length === 1 && ip8b['CBA T2|2026-08'][0].rem === 79);
 }
 
 console.log(`\n${ok} ok · ${falha} falha(s)`);
