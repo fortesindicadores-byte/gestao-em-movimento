@@ -570,9 +570,20 @@ function taxaTema(ctx, pac, tema) {
   return e && e.aval ? { ...e, txt: `nas unidades, FCAs de ${tema.toLowerCase()} em ${pac} melhoraram o mês seguinte em ${e.melhor} de ${e.aval}` } : null;
 }
 const MAX_CAUSAS = 3;
+/* DESVIO PEQUENO NÃO PRECISA DE EXPLICAÇÃO (Renan, 15/10/2026: "2% ou 5.000. Lembrando que se for >2%,
+   independente do valor nominal, aparece"): até 2% (o % que a tela mostra, arredondado) E até R$ 5 mil
+   o fato continua, mas sem causa e ação. Acima de 2%, sempre explica; até 2% com mais de R$ 5 mil também. */
+const TOL = { pct: 2, rs: 5000 };
+const naTolerancia = f => f.over > 0 && Math.round(Math.abs(f.dpct)) <= TOL.pct && f.over <= TOL.rs;
 function diagnostico(f, ctx) {
   ctx._pac = f.pac;
   const D = { causas: [], acoes: [], sinais: [], obs: [], blocos: {}, explicado: 0, avisos: [] };
+  if (naTolerancia(f)) {
+    D.tol = true; D.explicado = null; D.ano = acumuladoAno(f, ctx); D.historico = histDoFato(f, ctx);
+    D.causaTxt = `Dentro da tolerância (até ${TOL.pct}% e até R$ ${TOL.rs.toLocaleString('pt-BR')}): sem causa e ação` + (D.ano ? '\nYTD: ' + D.ano.txt : '');
+    D.acaoTxt = '';
+    return D;
+  }
   const causa = (tema, txt, rsv, extra) => D.causas.push(Object.assign({ tema, txt, rs: fin(rsv) ? rsv : null }, extra || {}));
   const acao = (tema, txt, ofens, temaRede) => { const tx = taxaTema(ctx, f.pac, temaRede || tema); D.acoes.push({ tema, txt, ofens: ofens || [], taxa: tx }); };
   const k = f.uni + '|' + f.proj + '|' + f.vig;
@@ -1248,5 +1259,5 @@ async function carregarProlog(sb) {
 
 global.FcaAuto = { UNITS, PACOTES, vigLbl, vigDeLbl, vigIdx, vigAnt, vigSeg, projKey, unidadeDoNv3, rs, br, pct, sinalPct, impFmt, NK,
   indexaDRE, fatos, desvioTxt, desvioCurto, contaCurta, getPacote, pacDoFato, EXCL_FCA, indexaSeara, acumuladoAno, redeFala, unidadeDoDRE, indexaDisp, indexaAbertura, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
-  diagnostico, indicadores, indexaGinfo, EXTRA, montaCatalogo, CAT: () => CAT, resumoProlog, contexto, carregar, carregarProlog, ROT, METAS, fmtInd, placaKey };
+  diagnostico, TOL, naTolerancia, indicadores, indexaGinfo, EXTRA, montaCatalogo, CAT: () => CAT, resumoProlog, contexto, carregar, carregarProlog, ROT, METAS, fmtInd, placaKey };
 })(typeof window !== 'undefined' ? window : globalThis);

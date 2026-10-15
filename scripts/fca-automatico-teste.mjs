@@ -214,6 +214,7 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
     const dS = kS && FcaAuto.diagnostico(cgr, Object.assign({}, CTX, { kml: Object.assign({}, CTX.kml, { [kS]: CTX.kml[kS].map(r => ({ ...r, pRem: r.pRem > 0 ? r.pRem * 1.2 : r.pRem })) }) }));
     const savP = dS && { k: kS, preco: dS.blocos.comb.preco, causas: dS.causas.map(c => [c.tema, c.txt]), acoes: dS.acoes.map(a => a.tema) };
     return { savP, inv, n: FATOS.length, maxVig: CTX.maxVig, setembro: FATOS.some(x => x.vig === '2026-09'), seguro: FATOS.some(x => x.pac === 'Seguros e licenças'), goi: FcaAuto.unidadeDoDRE('', 'AUTO SERVIÇO - GOI'),
+      tol: cgr && [{ over: 4000, dpct: 1.5 }, { over: 6000, dpct: 1.5 }, { over: 3000, dpct: 2.6 }, { over: 5000, dpct: 2.4 }].map(o => { const dx = FcaAuto.diagnostico(Object.assign({}, cgr, o), CTX); return [!!dx.tol, dx.causas.length, dx.acoes.length, dx.causaTxt]; }),
       seg: seg && { over: seg.over, dpct: seg.dpct, txt: FcaAuto.desvioTxt(seg) }, outros: outros && { over: outros.over }, segD: seg && { causas: diag(seg).causas.map(c => c.txt), acoes: diag(seg).acoes.map(a => a.txt) },
       cgr: cgr && { over: cgr.over, contas: cgr.contas.map(c => [c.conta, Math.round(c.ov)]), txt: FcaAuto.desvioTxt(cgr) },
       ponte: d && { dCusto: d.blocos.ponte.dCusto, vol: d.blocos.ponte.vol, efic: d.blocos.ponte.efic, preco: d.blocos.ponte.preco, dif: d.blocos.ponte.dif, expl: d.explicado,
@@ -236,6 +237,11 @@ const rola = pg => pg.evaluate(() => ({ doc: document.documentElement.scrollHeig
   });
   af('fatos: a regra do FCA — todo pacote que estourou, SEM Seguros e licenças (corporativo, 15/10/2026); set/26 (só orçado) fora', r.n > 0 && !r.setembro && !r.seguro && r.maxVig === '2026-08', `${r.n} fatos · DRE até ${r.maxVig}`);
   af('Goiânia: "AUTO SERVIÇO - GOI" da aba Km/L é a unidade GNA', r.goi === 'GNA', String(r.goi));
+  const tl = r.tol || [];
+  af('tolerância: até 2% e até R$ 5 mil fica sem causa e ação', tl[0] && tl[0][0] && tl[0][1] === 0 && tl[0][2] === 0 && /toler/.test(tl[0][3]), JSON.stringify(tl[0]));
+  af('tolerância: até 2% com mais de R$ 5 mil é explicado', tl[1] && !tl[1][0] && tl[1][1] > 0, JSON.stringify(tl[1]));
+  af('tolerância: acima de 2% é explicado, qualquer valor', tl[2] && !tl[2][0] && tl[2][1] > 0, JSON.stringify(tl[2]));
+  af('tolerância: 2,4% (a tela mostra 2%) e R$ 5 mil fica sem causa', tl[3] && tl[3][0], JSON.stringify(tl[3]));
   af('Seguro e IPVA não viram fato (Seguros e licenças fora do FCA); Depreciação cai em "Outros"', !r.seg && r.outros && Math.round(r.outros.over) === 500, JSON.stringify([r.seg, r.outros]));
   af('CGR · ROTA · ago/26 · Combustíveis = R$ 31.000 (30 mil da conta + 1 mil do Arla)', r.cgr && Math.round(r.cgr.over) === 31000, JSON.stringify(r.cgr && r.cgr.contas));
   af('o fato tem o MESMO texto do FCA (Desvio + Contas)', r.cgr && /^Desvio: ▲ R\$ 31\.000 · ▲ -30%\nContas:\n- Combustíveis Veiculos e Equipamentos: ▲ 30K \| ▲ 30%\n- Fluídos \(Arla\): ▲ 1K \| ▲ 20%$/.test(r.cgr.txt), r.cgr && JSON.stringify(r.cgr.txt));
