@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610151600">
+<meta name="build" content="202610151700">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -877,6 +877,18 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 .fa-hist .bloco{display:flex;flex-direction:column;min-height:0;}
 .fa-hist .bloco .corpo{flex:1;min-height:0;overflow:auto;}
 .res-ok{color:var(--verde);font-weight:700;}.res-ruim{color:var(--vermelho);font-weight:700;}.res-esp{color:var(--txt3);}
+.kcard.fa-kc{padding:13px 14px 12px!important;border-radius:10px!important;
+  box-shadow:0 4px 14px rgba(0,0,0,.22), var(--luz-card)!important;display:flex;flex-direction:column;gap:6px;cursor:pointer!important;}
+.fa-kc .fk-top{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--txt3);}
+.fa-kc .fk-top span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fa-kc .fk-val{font-size:17px;font-weight:800;color:var(--txt);line-height:1.15;display:flex;align-items:baseline;gap:7px;}
+.fa-kc .fk-pct{font-size:11px;font-weight:700;color:var(--txt3);}
+.fa-kc .fk-ln{font-size:11.5px;color:var(--txt2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.fa-kc .fk-ln.ac{color:var(--txt3);-webkit-line-clamp:1;}
+.fa-kc .fk-ln .n{font-weight:700;color:var(--txt3);margin-right:5px;}
+.fa-kc .fk-ln i{color:var(--txt3);}
+.fa-kc .fk-ft{display:flex;justify-content:space-between;gap:8px;margin-top:4px;padding-top:8px;border-top:1px solid var(--linha);font-size:10.5px;color:var(--txt3);}
+.fa-kc .fk-ft span:last-child{white-space:nowrap;}
 .kmodal{width:min(980px,96vw)!important;}
 .fm-sec{margin-top:16px;}
 .fm-sec h4{font-size:10px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.9px;margin:0 0 7px;}
@@ -885,7 +897,7 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 .fm-box li .of{display:block;color:var(--txt3);font-size:11.5px;margin-top:2px;}
 .fm-box li .tx{display:block;color:var(--azul);font-size:11px;margin-top:2px;}
 .fm-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;}
-.fm-aviso{font-size:11px;color:var(--ambar);margin-top:6px;}
+.fm-aviso{font-size:11px;color:var(--amber);margin-top:6px;}
 .fa-ano{margin-top:6px;padding-top:6px;border-top:1px dashed var(--linha);font-size:11px;font-weight:700;color:var(--txt2);}.fa-ano .kl{color:var(--txt3);font-weight:600;text-transform:uppercase;font-size:9.5px;letter-spacing:.5px;margin-right:4px;}.fa-rel .fa-ano{font-size:10.5px;}
 .copiar{margin-left:auto;}
 /* Tabela: barra com o toggle e o arranjo "uma por linha" (tbody por fato, identificação mesclada) */
@@ -942,7 +954,7 @@ body.claro table.rel.fa-rel.din tbody.fg tr+tr td.ln{border-top-color:rgba(15,23
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610151600"></script>
+<script src="../assets/fca-auto.js?v=202610151700"></script>
 </head>
 <body>
 <div class="app">
@@ -1068,7 +1080,7 @@ function visiveis(){
     .sort((a,b)=>b.over-a.over);
 }
 function diag(f){ if(!MEMO.has(f.id)) MEMO.set(f.id,FA.diagnostico(f,CTX)); return MEMO.get(f.id); }
-const faixaCor=p=>p==null?'var(--txt4)':p>=.85?'var(--verde)':p>=.6?'var(--ambar)':'var(--vermelho)';
+const faixaCor=p=>p==null?'var(--txt4)':p>=.85?'var(--verde)':p>=.6?'var(--amber)':'var(--vermelho)';
 const pctBadge=p=>p==null?'<span class="pctx" style="background:var(--hover);color:var(--txt3)">—</span>':`<span class="pctx" style="background:${faixaCor(p)}">${Math.round(p*100)}%</span>`;
 
 /* ── RESUMO GERENCIAL ── */
@@ -1259,14 +1271,21 @@ async function carregaAcoes(){
 }
 /* ── KANBAN — uma coluna por pacote ── */
 const KCLS={'Combustíveis':'cmb','Manutenções':'mnt','Pneus':'pne'};
+/* CARD MAIS LIMPO (Renan, 15/10/2026: "os cards do kanban acho meio poluído demais a visão. Não sei se é cor"):
+   sem o chip "Custos" (a página inteira é de Custos) e sem o nome do pacote (é a coluna), tudo em tom neutro,
+   uma linha por informação — unidade · projeto e mês, o desvio grande, a 1ª causa e a 1ª ação com o número da
+   Tabela, o YTD curto e o rodapé com a contagem. O resto está na caixa e no diagnóstico. */
 function kcardHTML(f){ const d=diag(f); const c1=d.causas[0], a1=d.acoes[0];
-  return `<div class="kcard" data-id="${esc(f.id)}">
-    <div class="kcard-top"><span class="korg cst">Custos</span> ${esc(f.uni)} · ${esc(f.proj)} · ${esc(f.vigLbl)}</div>
-    <div class="kcard-fato">${esc(f.pac)} · ${FA.rs(f.over)} <span style="color:var(--txt3);font-weight:600">(▲ ${Math.round(f.dpct)}%)</span></div>
-    <div class="kcard-causa"><span class="kl">Causa:</span> ${c1?tri(esc(c1.txt)):'<i>sem evidência nas bases</i>'}</div>
-    ${d.ano?`<div class="kcard-causa"><span class="kl">YTD:</span> ${tri(esc(d.ano.txt))}</div>`:''}
-    <div class="kcard-ac"><span class="kl">Ação:</span> ${a1?esc(a1.txt):'<i>—</i>'}</div>
-    <div class="kcard-meta"><span>${d.causas.length} causa(s) · ${d.acoes.length} ação(ões)${(()=>{ const fe=linhasDoFato(d).filter(l=>l.a&&/Conclu|Cancel/.test((ACOES[acKey(f.id,l.k)]||{}).status||'')).length; return fe?` · <b style="color:var(--verde)">${fe} fechada(s)</b>`:''; })()}</span> ${d.explicado!=null?pctBadge(d.explicado):''}</div></div>`; }
+  const fech=linhasDoFato(d).filter(l=>l.a&&/Conclu|Cancel/.test((ACOES[acKey(f.id,l.k)]||{}).status||'')).length;
+  const ytd=d.ano?String(d.ano.txt).split(' · ')[0]:'';
+  const cz=c1?esc(String(c1.txt).split('\n')[0]):`<i>${d.tol?'Dentro da tolerância: sem causa e ação':'Sem evidência nas bases'}</i>`;
+  const pl=(n,a,b)=>n+' '+(n===1?a:b);
+  return `<div class="kcard fa-kc" data-id="${esc(f.id)}">
+    <div class="fk-top"><span>${esc(f.uni)} · ${esc(f.proj)}</span><span>${esc(f.vigLbl.toUpperCase())}</span></div>
+    <div class="fk-val">${FA.rs(f.over)}<span class="fk-pct">▲ ${Math.round(Math.abs(f.dpct))}%</span></div>
+    <div class="fk-ln">${c1?'<span class="n">1.</span>':''}${cz}</div>
+    ${a1?`<div class="fk-ln ac"><span class="n">${esc(a1.num||'1.1')}</span>${esc(a1.txt)}</div>`:''}
+    <div class="fk-ft"><span>${pl(d.causas.length,'causa','causas')} · ${pl(d.acoes.length,'ação','ações')}${fech?` · ${pl(fech,'fechada','fechadas')}`:''}</span>${ytd?`<span title="${esc(d.ano.txt)}">YTD ${esc(ytd)}</span>`:''}</div></div>`; }
 function kanbanHTML(vis){
   const cols=pacsDe(vis).map(k=>({c:{k,cls:KCLS[k]||'out'},items:vis.filter(f=>f.pac===k)}));
   const gc=`grid-template-columns:repeat(${cols.length||1},minmax(0,1fr))`;
@@ -1369,68 +1388,112 @@ const chavesDe=d=>{ const m=new Map(); linhasDoFato(d).forEach(l=>{ if(l.a) m.se
 function ensureAcao(){
   if(document.getElementById('ac-ov'))return;
   ensureModal();
+  /* FORMATO MAIS LIMPO (Renan, 15/10/2026, vendo um cadastro de outro app: "apenas formato mais moderno e clean…
+     Aplique no automático para testarmos" · "gravar sozinho"): cabeçalho e rodapé separados por filete, campos
+     em caixa do mesmo tamanho, rótulo pequeno com dica ao lado, Causa e Ação lado a lado, status em botões
+     lado a lado e a gravação continua automática (o rodapé diz "Salvo ✓"). */
   const st=document.createElement('style');
-  st.textContent='.kac{width:min(760px,96vw);}'+
-    '.kac .kmodal-head{justify-content:space-between;}'+
-    '.kac .kmodal-sub{margin:3px 0 10px;}'+
-    '.kac label{display:block;font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;margin:13px 0 5px;}'+
-    '.kac textarea,.kac input,.kac select{width:100%;box-sizing:border-box;background:var(--hover);border:1px solid var(--card-brd);border-radius:8px;color:var(--txt);font-family:inherit;font-size:13px;padding:9px 11px;outline:none;}'+
-    'body.claro .kac textarea,body.claro .kac input,body.claro .kac select{background:#fff;border-color:#d7dce4;}'+
-    '.kac textarea:focus,.kac input:focus,.kac select:focus{border-color:var(--azul);}'+
-    '.kac select option{background:#141d2b;color:#fff;}body.claro .kac select option{background:#fff;color:#0f172a;}'+
-    '.kac textarea{resize:vertical;min-height:90px;line-height:1.45;}'+
-    '.kac #ac-desv{min-height:70px;margin-top:6px;}.kac #ac-acomp{min-height:72px;}'+
-    '.kac .kmodal-row{display:flex;gap:12px;}.kac .kmodal-row>div{flex:1;min-width:0;}'+
-    '.kac .kmodal-foot{display:flex;align-items:center;gap:8px;margin-top:18px;}.kac .kmodal-foot .esq{margin-right:auto;display:flex;gap:8px;}'+
-    '.kac .kmodal-foot .btn[disabled]{opacity:.45;cursor:not-allowed;}'+
-    '.ac-previa{font-size:11px;color:var(--amber);border:1px dashed var(--amber);border-radius:8px;padding:7px 10px;line-height:1.4;}'+
-    'li.ac-abre{cursor:pointer;border-radius:6px;}li.ac-abre:hover{background:var(--hover);}';
+  st.textContent='.kmodal.kac{width:min(860px,96vw)!important;padding:0!important;display:flex;flex-direction:column;overflow:hidden;}'+
+    '.kac .ac-hd{display:flex;align-items:flex-start;gap:12px;padding:18px 22px 14px;border-bottom:1px solid var(--card-brd);}'+
+    '.kac .ac-hd .t{flex:1;min-width:0;}.kac .ac-hd b{display:block;font-size:16px;font-weight:800;color:var(--txt);line-height:1.25;}'+
+    '.kac .ac-hd .kmodal-sub{margin:4px 0 0;}'+
+    '.kac .ac-bd{padding:6px 22px 16px;overflow:auto;flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:14px;}'+
+    '.kac .ac-bd>.cheio{grid-column:1/-1;}'+
+    '.kac label{display:flex;align-items:baseline;gap:6px;font-size:9.5px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.9px;margin:14px 0 6px;}'+
+    '.kac label .dica{text-transform:none;letter-spacing:0;font-weight:500;color:var(--txt3);font-size:10.5px;}'+
+    '.kac label .dica.venc{color:var(--vermelho);font-weight:700;}'+
+    '.kac textarea,.kac input{width:100%;box-sizing:border-box;background:var(--hover);border:1px solid var(--card-brd);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12.5px;padding:9px 11px;outline:none;}'+
+    'body.claro .kac textarea,body.claro .kac input{background:#fff;border-color:#d7dce4;}'+
+    '.kac textarea:focus,.kac input:focus{border-color:var(--laranja);}'+
+    '.kac input{height:36px;}.kac input[readonly],.kac textarea[readonly]{color:var(--txt2);}'+
+    '.kac textarea{resize:vertical;line-height:1.45;}'+
+    '.kac #ac-desv{min-height:64px;margin-top:6px;}.kac #ac-causa,.kac #ac-acao{min-height:96px;height:112px;}.kac #ac-acomp{min-height:56px;height:56px;}'+
+    '.kac #ac-status{display:none;}'+
+    '.ac-seg{display:inline-flex;gap:2px;padding:3px;border-radius:9px;background:var(--hover);border:1px solid var(--card-brd);flex-wrap:wrap;}'+
+    '.ac-seg button{background:transparent;border:0;border-radius:6px;color:var(--txt2);font-family:inherit;font-size:11.5px;font-weight:600;padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:6px;}'+
+    '.ac-seg button:hover{color:var(--txt);}'+
+    '.ac-seg button i{width:7px;height:7px;border-radius:50%;display:inline-block;}'+
+    '.ac-seg button.on{background:var(--laranja);color:#1A0D02;font-weight:800;}.ac-seg button.on i{background:#1A0D02!important;}'+
+    '.ac-seg button[disabled]{cursor:not-allowed;opacity:.5;}'+
+    '.kac .ac-ft{display:flex;align-items:center;gap:8px;padding:12px 22px;border-top:1px solid var(--card-brd);}'+
+    '.kac .ac-ft .esq{margin-right:auto;display:flex;gap:14px;align-items:center;}'+
+    '.kac .ac-ft .lnk{background:none;border:0;padding:0;font-family:inherit;font-size:11px;font-weight:600;color:var(--txt3);cursor:pointer;}'+
+    '.kac .ac-ft .lnk:hover:not([disabled]){color:var(--txt);}.kac .ac-ft .lnk[disabled]{opacity:.45;cursor:not-allowed;}'+
+    '.kac .ac-ft .btn[disabled]{opacity:.45;cursor:not-allowed;}'+
+    '.kac .ac-ok{font-size:11px;font-weight:700;color:var(--verde);min-width:70px;text-align:right;}'+
+    '.ac-previa{grid-column:1/-1;margin-top:12px;font-size:10.5px;color:var(--txt3);line-height:1.4;display:flex;gap:7px;align-items:baseline;}'+
+    '.ac-previa::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--amber);flex:0 0 6px;transform:translateY(-1px);}'+
+    'li.ac-abre{cursor:pointer;border-radius:6px;}li.ac-abre:hover{background:var(--hover);}'+
+    '@media(max-width:860px){.kac .ac-bd{grid-template-columns:1fr;}}';
   document.head.appendChild(st);
+  const cor={'Não iniciada':'var(--vermelho)','Em andamento':'var(--amber)','Concluída':'var(--verde)','Cancelada':'var(--txt3)'};
   const d=document.createElement('div');d.id='ac-ov';d.className='kmodal-ov';d.style.zIndex='2100';
   d.innerHTML='<div class="kmodal kac">'+
-    '<div class="kmodal-head"><b id="ac-tit"></b><button class="kmodal-x" onclick="fechaAcao()">✕</button></div>'+
-    '<div class="kmodal-sub" id="ac-ctx"></div>'+
-    '<div class="ac-previa">Sugestão automática. Prévia: responsável, prazo e status ficam guardados neste navegador; o resto entra quando a ação for para o FCA oficial.</div>'+
-    '<label>Fato</label><input id="ac-fato" type="text"><textarea id="ac-desv" rows="3"></textarea>'+
-    '<label>Causa</label><textarea id="ac-causa" rows="5"></textarea>'+
-    '<label>Ação</label><textarea id="ac-acao" rows="4"></textarea>'+
-    '<div class="kmodal-row"><div><label>Responsável</label><input id="ac-resp" type="text" list="dl-resp"></div>'+
-      '<div><label>Prazo</label><input id="ac-prazo" type="date"></div>'+
-      '<div><label>Status</label><select id="ac-status">'+ST_AC.map(o=>'<option>'+o+'</option>').join('')+'</select></div></div>'+
-    '<label>Acompanhamento</label><textarea id="ac-acomp" rows="3"></textarea>'+
-    '<div class="kmodal-foot"><span class="esq">'+
-      '<button class="btn ghost" disabled title="Entra quando a ação for para o FCA oficial">+ ação (mesma causa)</button>'+
-      '<button class="btn ghost" disabled title="Entra quando a ação for para o FCA oficial">+ causa (mesmo fato)</button>'+
-      '<button class="btn ghost" disabled title="Entra quando a ação for para o FCA oficial" style="color:var(--vermelho)">Excluir</button>'+
-    '</span><button class="btn ghost" id="ac-diag">Ver diagnóstico</button>'+
-    '<button class="btn" disabled title="Entra quando a ação for para o FCA oficial">Direcionar à unidade</button>'+
-    '<button class="btn ghost" onclick="fechaAcao()">Fechar</button></div>'+
+    '<div class="ac-hd"><div class="t"><b id="ac-tit"></b><div class="kmodal-sub" id="ac-ctx"></div></div><button class="kmodal-x" onclick="fechaAcao()">✕</button></div>'+
+    '<div class="ac-bd">'+
+      '<div class="ac-previa">Sugestão automática.</div>'+
+      '<div class="cheio"><label>Fato <span class="dica">desvio do pacote e YTD</span></label><input id="ac-fato" type="text" readonly><textarea id="ac-desv" rows="3" readonly></textarea></div>'+
+      '<div><label>Causa</label><textarea id="ac-causa" readonly></textarea></div>'+
+      '<div><label>Ação</label><textarea id="ac-acao" readonly></textarea></div>'+
+      '<div><label>Responsável <span class="dica">quem fecha a ação</span></label><input id="ac-resp" type="text" list="dl-resp" placeholder="Nome"></div>'+
+      '<div><label>Prazo <span class="dica" id="ac-prazo-dica"></span></label><input id="ac-prazo" type="date"></div>'+
+      '<div class="cheio"><label>Status <span class="dica">concluída ou cancelada fecha a ação</span></label>'+
+        '<div class="ac-seg" id="ac-seg">'+ST_AC.map(o=>'<button type="button" data-st="'+o+'"><i style="background:'+cor[o]+'"></i>'+o+'</button>').join('')+'</div>'+
+        '<select id="ac-status">'+ST_AC.map(o=>'<option>'+o+'</option>').join('')+'</select></div>'+
+      '<div class="cheio"><label>Acompanhamento <span class="dica">o que já foi feito</span></label><textarea id="ac-acomp" rows="3"></textarea></div>'+
+    '</div>'+
+    '<div class="ac-ft"><span class="esq">'+
+      '<button class="lnk" disabled title="Entra quando a ação for para o FCA oficial">+ ação (mesma causa)</button>'+
+      '<button class="lnk" disabled title="Entra quando a ação for para o FCA oficial">+ causa (mesmo fato)</button>'+
+      '<button class="lnk" disabled title="Entra quando a ação for para o FCA oficial" style="color:var(--vermelho)">Excluir</button>'+
+      '<button class="lnk" id="ac-diag">Ver diagnóstico</button>'+
+    '</span><span class="ac-ok" id="ac-ok"></span>'+
+    '<button class="btn ghost" disabled title="Entra quando a ação for para o FCA oficial">Direcionar à unidade</button>'+
+    '<button class="btn" onclick="fechaAcao()">Fechar</button></div>'+
   '</div>';
   d.addEventListener('click',e=>{if(e.target===d)fechaAcao();});
   document.body.appendChild(d);
   document.addEventListener('keydown',e=>{if(e.key==='Escape')fechaAcao();});
 }
 function fechaAcao(){const o=document.getElementById('ac-ov');if(o)o.style.display='none';}
+// dica do prazo: quanto falta ou há quanto venceu (a ação fechada não vence)
+function prazoDica(prazo,st){
+  const el=document.getElementById('ac-prazo-dica'); if(!el) return;
+  el.className='dica'; el.textContent='';
+  if(!prazo) return; if(st==='Concluída'||st==='Cancelada'){ el.textContent='ação fechada'; return; }
+  const h=new Date(); h.setHours(0,0,0,0); const [a,m,dd]=String(prazo).slice(0,10).split('-').map(Number);
+  const n=Math.round((new Date(a,m-1,dd)-h)/864e5);
+  if(n<0){ el.className='dica venc'; el.textContent='vencida há '+(-n)+(n===-1?' dia':' dias'); }
+  else el.textContent=n===0?'vence hoje':'faltam '+n+(n===1?' dia':' dias');
+}
 function abreAcao(fid,k){
   const f=FATOS.find(x=>x.id===fid); if(!f) return; const d=diag(f);
   const l=linhasDoFato(d).find(x=>x.k===k); if(!l||!l.a) return abreModal(fid);
   ensureAcao();
-  const r=ACOES[acKey(fid,k)]||{};
-  document.getElementById('ac-tit').textContent=f.pac;
-  document.getElementById('ac-ctx').textContent=['Custos',f.uni,f.proj,f.vigLbl.toUpperCase()].join(' · ');
-  document.getElementById('ac-fato').value=f.pac;
-  document.getElementById('ac-desv').value=FA.desvioTxt(f)+(d.ano?'\nYTD: '+d.ano.txt:'');
-  document.getElementById('ac-causa').value=l.c?causaTexto(l.c):'';
-  document.getElementById('ac-acao').value=l.a.txt;
-  document.getElementById('ac-resp').value=r.responsavel||'';
-  document.getElementById('ac-prazo').value=r.prazo||'';
-  document.getElementById('ac-status').value=r.status||'Não iniciada';
-  [['ac-resp','responsavel'],['ac-prazo','prazo'],['ac-status','status']].forEach(([id,c])=>{
-    const el=document.getElementById(id); el.disabled=!ACOES_OK; el.onchange=()=>salvaCampo(fid,k,c,el.value); });
-  document.getElementById('ac-acomp').value='';
+  const r=ACOES[acKey(fid,k)]||{}, g=id=>document.getElementById(id);
+  g('ac-tit').textContent=f.pac;
+  g('ac-ctx').textContent=['Custos',f.uni,f.proj,f.vigLbl.toUpperCase()].join(' · ')+(l.a.num?' · ação '+l.a.num:'');
+  g('ac-fato').value=f.pac;
+  g('ac-desv').value=FA.desvioTxt(f)+(d.ano?'\nYTD: '+d.ano.txt:'');
+  g('ac-causa').value=l.c?causaTexto(l.c):'';
+  g('ac-acao').value=l.a.txt;
+  g('ac-resp').value=r.responsavel||'';
+  g('ac-prazo').value=r.prazo||'';
+  const st0=r.status||'Não iniciada'; g('ac-status').value=st0;
+  const marca=v=>g('ac-seg').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.st===v));
+  marca(st0); prazoDica(r.prazo,st0);
+  g('ac-ok').textContent='';
+  // grava sozinho: cada campo que muda vai na hora, e o rodapé confirma
+  const grava=async(c,v)=>{ await salvaCampo(fid,k,c,v); const a=ACOES[acKey(fid,k)]||{};
+    if(String(a[c]||'')===String(v||'').trim()||(c==='status'&&a.status===v)){ g('ac-ok').textContent=ACOES_LOCAL?'Guardado ✓':'Salvo ✓'; clearTimeout(abreAcao._t); abreAcao._t=setTimeout(()=>{ g('ac-ok').textContent=''; },2200); }
+    prazoDica(a.prazo,a.status||'Não iniciada'); };
+  [['ac-resp','responsavel'],['ac-prazo','prazo']].forEach(([id,c])=>{ const el=g(id); el.disabled=!ACOES_OK; el.onchange=()=>grava(c,el.value); });
+  g('ac-status').disabled=!ACOES_OK; g('ac-status').onchange=()=>{ marca(g('ac-status').value); grava('status',g('ac-status').value); };
+  g('ac-seg').querySelectorAll('button').forEach(b=>{ b.disabled=!ACOES_OK; b.onclick=()=>{ if(g('ac-status').value===b.dataset.st) return; g('ac-status').value=b.dataset.st; marca(b.dataset.st); grava('status',b.dataset.st); }; });
+  g('ac-acomp').value='';
   document.querySelector('#ac-ov .ac-previa').textContent='Sugestão automática. Prévia: '+(ACOES_LOCAL?'responsável, prazo e status ficam guardados neste navegador; o resto':'responsável, prazo e status gravam; o resto')+' entra quando a ação for para o FCA oficial.';
-  document.getElementById('ac-diag').onclick=()=>{ fechaAcao(); abreModal(fid); };
-  document.getElementById('ac-ov').style.display='flex';
+  g('ac-diag').onclick=()=>{ fechaAcao(); abreModal(fid); };
+  g('ac-ov').style.display='flex';
 }
 /* ── render ── */
 const TIT={resumo:'Resumo Gerencial',kanban:'Kanban',tabela:'Tabela',rede:'Correlações da Rede',historico:'Aprendizado',fontes:'Fontes'};
@@ -1500,6 +1563,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610151600"></script>
+<script src="../assets/build-check.js?v=202610151700"></script>
 </body>
 </html>

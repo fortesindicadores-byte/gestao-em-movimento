@@ -342,12 +342,19 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     const alvo = await pg.evaluate(() => { const td = [...document.querySelectorAll('tbody.fg td[data-c="status"]')].find(x => x.dataset.fid === 'GRL|ROTA|Manutenções|2026-08' && /Não iniciada/.test(x.innerText)); td.setAttribute('id', 'stAlvo'); return td.dataset.k; });
     await pg.click('#stAlvo'); await pg.waitForTimeout(150);
     const abriu = await pg.evaluate(() => getComputedStyle(document.getElementById('ac-ov')).display);
-    await pg.selectOption('#ac-status', 'Em andamento'); await pg.waitForTimeout(150);
+    await pg.click('#ac-seg button[data-st="Em andamento"]'); await pg.waitForTimeout(150);
     await pg.fill('#ac-resp', 'Bruno Lima'); await pg.press('#ac-resp', 'Tab'); await pg.waitForTimeout(150);
     await pg.keyboard.press('Escape'); await pg.waitForTimeout(100);
-    const up = await pg.evaluate(() => ({ ups: window.__ups, st: document.getElementById('stAlvo').innerText.trim(), resp: [...document.querySelectorAll('tbody.fg td[data-c="responsavel"]')].find(x => x.dataset.k === document.getElementById('stAlvo').dataset.k && x.dataset.fid === 'GRL|ROTA|Manutenções|2026-08').innerText.trim() }));
+    const up = await pg.evaluate(() => ({ ok: document.getElementById('ac-ok').textContent, seg: [...document.querySelectorAll('#ac-seg button.on')].map(b => b.dataset.st), ups: window.__ups, st: document.getElementById('stAlvo').innerText.trim(), resp: [...document.querySelectorAll('tbody.fg td[data-c="responsavel"]')].find(x => x.dataset.k === document.getElementById('stAlvo').dataset.k && x.dataset.fid === 'GRL|ROTA|Manutenções|2026-08').innerText.trim() }));
     const u2 = up.ups[up.ups.length - 1] || {};
     af('…cada ação fecha sozinha: o clique no status da linha abre a caixa; status e dono mudados lá gravam UMA linha (fato × ação) e a linha da Tabela mostra o novo status e o dono', abriu === 'flex' && up.ups.length === 2 && up.ups.every(r => r.fato_id === 'GRL|ROTA|Manutenções|2026-08' && r.chave === alvo && r.unidade === 'GRL' && r.vigencia === '2026-08' && r.acao) && u2.status === 'Em andamento' && u2.responsavel === 'Bruno Lima' && up.st === 'Em andamento' && up.resp === 'Bruno Lima', JSON.stringify(up));
+    af('…a caixa grava sozinha: o botão de status fica marcado e o rodapé diz "Salvo ✓"', /^(Salvo|Guardado) ✓$/.test(up.ok) && up.seg.join() === 'Em andamento', JSON.stringify([up.ok, up.seg]));
+    await pg.click('.s-item[data-v="kanban"]'); await pg.waitForTimeout(150);
+    const kc = await pg.evaluate(() => { const c = document.querySelector('.kcard.fa-kc[data-id="CGR|ROTA|Combustíveis|2026-08"]');
+      return c && { chip: !!document.querySelector('.kcard .korg'), top: c.querySelector('.fk-top').innerText.replace(/\s+/g, ' '), val: c.querySelector('.fk-val').innerText.replace(/\s+/g, ' '), lns: c.querySelectorAll('.fk-ln').length, ft: c.querySelector('.fk-ft').innerText.replace(/\s+/g, ' '), cores: [...c.querySelectorAll('span')].some(x => /color:\s*var\(--(vermelho|verde)/.test(x.getAttribute('style') || '')) }; });
+    af('KANBAN LIMPO: sem o chip Custos e sem cor; unidade · projeto e mês em cima, o desvio grande, 1ª causa e 1ª ação numeradas, rodapé com a contagem e o YTD', kc && !kc.chip && !kc.cores && /^CGR · ROTA AGO\/26$/.test(kc.top) && /^R\$ 31,0 mil ▲ 30%$/.test(kc.val) && kc.lns === 2 && /causas · \d+ ações/.test(kc.ft) && /YTD ▲/.test(kc.ft), JSON.stringify(kc));
+    if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'fa-kanban.png') });
+    await pg.click('.s-item[data-v="tabela"]'); await pg.waitForTimeout(150);
     // as placas ofensoras ficam embaixo da causa, a ação só com o que fazer, uma por linha
     const of = await pg.evaluate(() => { const g = [...document.querySelectorAll('tbody.fg')].find(t => t.querySelector('tr').dataset.id === 'CGR|ROTA|Combustíveis|2026-08');
       const cz = [...g.querySelectorAll('td.cz')].find(x => /^.{0,4}Eficiência Km\/L/.test(x.innerText));
@@ -395,7 +402,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   await pg.evaluate(a => abreAcao(a.fid, a.k), alvo); await pg.waitForTimeout(100);
   const dis = await pg.evaluate(() => document.getElementById('ac-status').disabled || document.getElementById('ac-resp').disabled);
   await pg.fill('#ac-resp', 'Fulano Teste'); await pg.press('#ac-resp', 'Tab'); await pg.waitForTimeout(150);
-  await pg.selectOption('#ac-status', 'Em andamento'); await pg.waitForTimeout(150);
+  await pg.click('#ac-seg button[data-st="Em andamento"]'); await pg.waitForTimeout(150);
   const ok1 = await pg.evaluate(() => { try { return localStorage.getItem('fcaauto_previa_v1') || ''; } catch (e) { return ''; } });
   const naLinha = await pg.evaluate(a => { const q = c => [...document.querySelectorAll('tbody.fg td[data-c="' + c + '"]')].find(x => x.dataset.fid === a.fid && x.dataset.k === a.k); return [q('responsavel').innerText.trim(), q('status').innerText.trim()]; }, alvo);
   af('prévia: dono e status preenchidos na caixa da ação (liberada) são guardados no navegador', /Fulano Teste/.test(ok1) && !dis, JSON.stringify([ok1, dis]));
