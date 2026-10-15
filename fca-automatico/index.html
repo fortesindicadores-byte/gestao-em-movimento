@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610160010">
+<meta name="build" content="202610160030">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1565,8 +1565,9 @@ function abreAcao(fid,k){
   // sem escolha, vem o gestor de frota da unidade; ele entra na lista mesmo se o cadastro dele estiver com outro nome
   { const sel=g('ac-resp'), gest=gestorDe(f.uni), atual=respDe(r,f.uni), lista=perfisDe(f.uni).slice();
     if(gest&&!lista.some(p=>p.nome===gest)) lista.unshift({nome:gest,uni:''});
-    const tem=lista.some(p=>p.nome===atual), rot=p=>p.nome===gest?'gestor de frota':p.uni;
-    sel.innerHTML=(gest?'':'<option value="">—</option>')+(atual&&!tem?`<option value="${esc(atual)}">${esc(atual)} (não é usuário da unidade)</option>`:'')+lista.map(p=>`<option value="${esc(p.nome)}">${esc(p.nome)}${rot(p)?' · '+esc(rot(p)):''}</option>`).join('');
+    // só o nome na lista (Renan, 15/10/2026: "Só nomes")
+    const tem=lista.some(p=>p.nome===atual);
+    sel.innerHTML=(gest?'':'<option value="">—</option>')+(atual&&!tem?`<option value="${esc(atual)}">${esc(atual)}</option>`:'')+lista.map(p=>`<option value="${esc(p.nome)}">${esc(p.nome)}</option>`).join('');
     sel.value=atual; }
   g('ac-prazo').value=r.prazo||'';
   const st0=r.status||'Não iniciada'; g('ac-status').value=st0;
@@ -1682,6 +1683,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610160010"></script>
+<script src="../assets/build-check.js?v=202610160030"></script>
 </body>
 </html>
