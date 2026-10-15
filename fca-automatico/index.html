@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610152100">
+<meta name="build" content="202610152300">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -880,6 +880,10 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 .fa-hist .bloco .corpo{flex:1;min-height:0;overflow:auto;}
 .res-ok{color:var(--verde);font-weight:700;}.res-ruim{color:var(--vermelho);font-weight:700;}.res-esp{color:var(--txt3);}
 .kcard.fa-kc{padding:0 0 13px!important;cursor:grab!important;}
+/* Renan, 15/10/2026: "Tire um pouco a sombra e deixe mais escuro o cinza" — só no escuro;
+   borda, cantos e brilho ficam os do Planner */
+body:not(.claro) .kcard.fa-kc{background:var(--brilho), rgba(30,30,32,.88)!important;
+  box-shadow:0 3px 10px rgba(0,0,0,.22), var(--luz-card)!important;}
 .kcard.fa-kc:active{cursor:grabbing!important;}
 .fa-kc .kcard-top{padding:13px 15px 0!important;font-size:10px!important;}
 .fa-kc .kcard-fato{padding:0 15px;font-size:15.5px!important;margin-top:6px;}
@@ -956,7 +960,7 @@ body.claro table.rel.fa-rel.din tbody.fg tr+tr td.ln{border-top-color:rgba(15,23
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610152100"></script>
+<script src="../assets/fca-auto.js?v=202610152300"></script>
 </head>
 <body>
 <div class="app">
@@ -1190,7 +1194,7 @@ const fatoHTML=(f,d)=>{ const [tot,...ct]=String(FA.desvioCurto(f)).split('\n');
    "Agrupado" = a linha única de antes, com as listas. Chave fcaauto_tab_modo. */
 const TAB_MODO='linha';   // definido: uma linha por ação (Renan, 14/10/2026: "já está definido que será por linha")
 const ST_AC=['Não iniciada','Em andamento','Concluída','Cancelada'];
-let ACOES={}, ACOES_ERR=null, ACOES_OK=false, EU_NOME='', NOMES=[];
+let ACOES={}, ACOES_ERR=null, ACOES_OK=false, EU_NOME='', NOMES=[], PERFIS=[];
 /* PRÉVIA LOCAL: sem a tabela no banco, dono/prazo/status ficam guardados neste navegador
    até a ação ir para o FCA oficial (a validação segue preenchendo normalmente). */
 let ACOES_LOCAL=false; const PREVIA_LS='fcaauto_previa_v1';
@@ -1301,7 +1305,11 @@ async function carregaAcoes(){
     ACOES={}; out.forEach(r=>{ ACOES[acKey(r.fato_id,r.chave)]=r; }); ACOES_OK=true; ACOES_ERR=null;
   }catch(e){ ACOES_OK=false; ACOES_ERR=/fca_auto_acao|relation|schema cache|does not exist/i.test(e.message||'')?'PREVIA':(e.message||String(e));
     if(ACOES_ERR==='PREVIA'){ ACOES=lePrevia(); ACOES_OK=true; ACOES_LOCAL=true; } }
-  try{ const {data}=await sb.from('fca_profiles').select('nome'); NOMES=[...new Set((data||[]).map(p=>String(p.nome||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')); }catch(e){ NOMES=[]; }
+  // RESPONSÁVEL É ESCOLHIDO, NÃO DIGITADO (Renan, 15/10/2026): a lista é TODO usuário do portal (fca_profiles),
+  // com a unidade ao lado do nome; o valor gravado continua sendo o nome, como na tabela fca.
+  try{ const {data}=await sb.from('fca_profiles').select('nome,unidade,is_admin');
+    const m=new Map(); (data||[]).forEach(p=>{ const n=String(p.nome||'').trim(); if(!n) return; const us=p.is_admin?['admin']:String(p.unidade||'').split(',').map(x=>x.trim()).filter(Boolean); const c=m.get(n)||{nome:n,uni:new Set()}; us.forEach(u=>c.uni.add(u)); m.set(n,c); });
+    PERFIS=[...m.values()].map(p=>({nome:p.nome,uni:[...p.uni].join(', ')})).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR')); NOMES=PERFIS.map(p=>p.nome); }catch(e){ NOMES=[]; PERFIS=[]; }
 }
 /* ── KANBAN — o do FCA · Admin (Renan, 15/10/2026: "não parece ser possível arrastar, e não está por Não iniciada,
    Em andamento e Concluída. Está dividido pelos pacotes. E não tem as regras de arrastar que já existem"):
@@ -1459,7 +1467,9 @@ function ensureAcao(){
     '.kac textarea,.kac input{width:100%;box-sizing:border-box;background:var(--hover);border:1px solid var(--card-brd);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12.5px;padding:9px 11px;outline:none;}'+
     'body.claro .kac textarea,body.claro .kac input{background:#fff;border-color:#d7dce4;}'+
     '.kac textarea:focus,.kac input:focus{border-color:var(--laranja);}'+
-    '.kac input{height:36px;}.kac input[readonly],.kac textarea[readonly]{color:var(--txt2);}'+
+    '.kac input,.kac select{height:36px;}.kac input[readonly],.kac textarea[readonly]{color:var(--txt2);}'+
+    '.kac select{width:100%;box-sizing:border-box;background:var(--hover);border:1px solid var(--card-brd);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12.5px;padding:0 11px;outline:none;cursor:pointer;}'+
+    '.kac select:focus{border-color:var(--laranja);}.kac select option{background:var(--pop);color:var(--txt);}body.claro .kac select{background:#fff;border-color:#d7dce4;}'+
     '.kac textarea{resize:vertical;line-height:1.45;}'+
     '.kac #ac-desv{min-height:64px;margin-top:6px;}.kac #ac-causa,.kac #ac-acao{min-height:96px;height:112px;}.kac #ac-acomp{min-height:56px;height:56px;}'+
     '.kac #ac-status{display:none;}'+
@@ -1489,7 +1499,7 @@ function ensureAcao(){
       '<div class="cheio"><label>Fato <span class="dica">desvio do pacote e YTD</span></label><input id="ac-fato" type="text" readonly><textarea id="ac-desv" rows="3" readonly></textarea></div>'+
       '<div><label>Causa</label><textarea id="ac-causa" readonly></textarea></div>'+
       '<div><label>Ação</label><textarea id="ac-acao" readonly></textarea></div>'+
-      '<div><label>Responsável <span class="dica">quem fecha a ação</span></label><input id="ac-resp" type="text" list="dl-resp" placeholder="Nome"></div>'+
+      '<div><label>Responsável <span class="dica">quem fecha a ação</span></label><select id="ac-resp"></select></div>'+
       '<div><label>Prazo <span class="dica" id="ac-prazo-dica"></span></label><input id="ac-prazo" type="date"></div>'+
       '<div class="cheio"><label>Status <span class="dica">concluída ou cancelada fecha a ação</span></label>'+
         '<div class="ac-seg" id="ac-seg">'+ST_AC.map(o=>'<button type="button" data-st="'+o+'"><i style="background:'+cor[o]+'"></i>'+o+'</button>').join('')+'</div>'+
@@ -1531,7 +1541,10 @@ function abreAcao(fid,k){
   g('ac-desv').value=FA.desvioTxt(f)+(d.ano?'\nYTD: '+d.ano.txt:'');
   g('ac-causa').value=l.c?causaTexto(l.c):'';
   g('ac-acao').value=l.a.txt;
-  g('ac-resp').value=r.responsavel||'';
+  // o seletor lista os usuários do portal; um nome já gravado que não é usuário entra como opção para não se perder
+  { const sel=g('ac-resp'), atual=String(r.responsavel||'').trim(), tem=PERFIS.some(p=>p.nome===atual);
+    sel.innerHTML='<option value="">—</option>'+(atual&&!tem?`<option value="${esc(atual)}">${esc(atual)} (não é usuário)</option>`:'')+PERFIS.map(p=>`<option value="${esc(p.nome)}">${esc(p.nome)}${p.uni?' · '+esc(p.uni):''}</option>`).join('');
+    sel.value=atual; }
   g('ac-prazo').value=r.prazo||'';
   const st0=r.status||'Não iniciada'; g('ac-status').value=st0;
   const marca=v=>g('ac-seg').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.st===v));
@@ -1646,6 +1659,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610152100"></script>
+<script src="../assets/build-check.js?v=202610152300"></script>
 </body>
 </html>

@@ -147,7 +147,7 @@ const T = {
     { status: 'INSTALLED', placa: 'PIR3C33', menorMM: 2.5, amplitude: 1, pressaoNOK: false }, { status: 'INSTALLED', placa: 'PIR3C33', menorMM: 9, amplitude: 1, pressaoNOK: false },
     { status: 'INVENTORY', placa: '', menorMM: 12 } ] }],
   fca_auto_acao: [ { fato_id: 'GRL|ROTA|Manutenções|2026-08', chave: 'Carta de Custos|FAZER A ANALISE DE CAUSA RAIZ', unidade: 'GRL', vigencia: '2026-08', responsavel: 'Ana Souza', prazo: '2026-09-30', status: 'Concluída' } ],
-  fca_profiles: [ { nome: 'Ana Souza' }, { nome: 'Bruno Lima' } ],
+  fca_profiles: [ { nome: 'Ana Souza', unidade: 'GRL', is_admin: false }, { nome: 'Bruno Lima', unidade: 'CGR,PIR', is_admin: false }, { nome: 'Renan Teste', unidade: null, is_admin: true } ],
   custo_vigencia_mv: [
     { vig_km: '2026-07-01', placa: 'GRL4D44', unidade: 'GRL', projeto: 'ROTA - GRL', tipo: 'variavel', taxa_km: 0.4, km_vig: 3000, custo_vig: 1200, previa: false },
     { vig_km: '2026-07-01', placa: 'GRL1A11', unidade: 'GRL', projeto: 'ROTA - GRL', tipo: 'variavel', taxa_km: 0.4, km_vig: 2000, custo_vig: 800, previa: false },
@@ -336,18 +336,20 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
         dl: [...document.querySelectorAll('#dl-resp option')].map(o => o.value).join(','), cgrFato: cgr && cgr.querySelector('td.fato').innerText.replace(/\s+/g, ' ').trim(), ytdNaCausa: !!document.querySelector('td.txt:not(.fato) .fa-ano'), erro: (document.querySelector('.fa-tbar-err') || {}).textContent || '' }; });
     af('TABELA SÓ LEITURA, COMO A DO FCA (nenhum input/select; dono, prazo e status em texto e chip) e SEMPRE "uma por linha" (sem a faixa de cima nem o botão Agrupado) = UMA LINHA POR AÇÃO, com Responsável · Prazo · Status; identificação mesclada (rowspan); causa do mesmo tema ao lado', tb.modo === 'linha' && !tb.faixa && tb.din && tb.n === tb.fatos && /Responsável\|Prazo\|Status$/.test(tb.cols) && !/Explica/.test(tb.cols) && tb.grlRows === tb.linhas && +tb.grlSpan === tb.linhas && tb.grlIds && tb.campos === tb.acoes && !tb.editavel && tb.pareado && tb.chaves && !tb.erro, JSON.stringify(tb));
     af('…causas numeradas 1, 2, 3 na ordem, cada uma mesclada sobre as ações dela; sem a coluna Explica', tb.nums === Array.from({ length: tb.nCausas }, (_, i) => i + 1).join(',') && tb.czSpan === tb.linhas, JSON.stringify([tb.nums, tb.nCausas, tb.czSpan, tb.linhas, tb.cols]));
-    af('…a ação já gravada volta do banco: dono Ana Souza, prazo 30/09, Concluída e a linha esmaecida; os nomes do perfil viram sugestão', tb.ana && /^\d\.\d\.\s*Fazer a análise de causa raiz/.test(tb.anaTxt || '') && tb.anaSt === 'Concluída' && tb.anaFeita && tb.anaPrazo === '30/09/2026' && tb.dl === 'Ana Souza,Bruno Lima', JSON.stringify([tb.anaTxt, tb.anaSt, tb.anaFeita, tb.anaPrazo, tb.dl]));
+    af('…a ação já gravada volta do banco: dono Ana Souza, prazo 30/09, Concluída e a linha esmaecida; os nomes do perfil viram sugestão', tb.ana && /^\d\.\d\.\s*Fazer a análise de causa raiz/.test(tb.anaTxt || '') && tb.anaSt === 'Concluída' && tb.anaFeita && tb.anaPrazo === '30/09/2026' && tb.dl === 'Ana Souza,Bruno Lima,Renan Teste', JSON.stringify([tb.anaTxt, tb.anaSt, tb.anaFeita, tb.anaPrazo, tb.dl]));
     af('…o fato curto: contas resumidas, um ▲/▼ e o % entre parênteses, com o YTD dentro do Fato (e não nas causas)', /^Combustíveis ▲ R\$ 31\.000 \(30%\) Combustíveis ▲ 30K \(30%\) Arla ▲ 1K \(20%\) YTD/.test(tb.cgrFato) && !tb.ytdNaCausa, tb.cgrFato);
     // fecha uma ação sozinha: na Tabela nada se edita; o clique no STATUS da linha abre a caixa da ação, e é lá que se muda
     const alvo = await pg.evaluate(() => { const td = [...document.querySelectorAll('tbody.fg td[data-c="status"]')].find(x => x.dataset.fid === 'GRL|ROTA|Manutenções|2026-08' && /Não iniciada/.test(x.innerText)); td.setAttribute('id', 'stAlvo'); return td.dataset.k; });
     await pg.click('#stAlvo'); await pg.waitForTimeout(150);
     const abriu = await pg.evaluate(() => getComputedStyle(document.getElementById('ac-ov')).display);
     await pg.click('#ac-seg button[data-st="Em andamento"]'); await pg.waitForTimeout(150);
-    await pg.fill('#ac-resp', 'Bruno Lima'); await pg.press('#ac-resp', 'Tab'); await pg.waitForTimeout(150);
+    await pg.selectOption('#ac-resp', 'Bruno Lima'); await pg.waitForTimeout(150);
     await pg.keyboard.press('Escape'); await pg.waitForTimeout(100);
     const up = await pg.evaluate(() => ({ ok: document.getElementById('ac-ok').textContent, seg: [...document.querySelectorAll('#ac-seg button.on')].map(b => b.dataset.st), ups: window.__ups, st: document.getElementById('stAlvo').innerText.trim(), resp: [...document.querySelectorAll('tbody.fg td[data-c="responsavel"]')].find(x => x.dataset.k === document.getElementById('stAlvo').dataset.k && x.dataset.fid === 'GRL|ROTA|Manutenções|2026-08').innerText.trim() }));
     const u2 = up.ups[up.ups.length - 1] || {};
     af('…cada ação fecha sozinha: o clique no status da linha abre a caixa; status e dono mudados lá gravam UMA linha (fato × ação) e a linha da Tabela mostra o novo status e o dono', abriu === 'flex' && up.ups.length === 2 && up.ups.every(r => r.fato_id === 'GRL|ROTA|Manutenções|2026-08' && r.chave === alvo && r.unidade === 'GRL' && r.vigencia === '2026-08' && r.acao) && u2.status === 'Em andamento' && u2.responsavel === 'Bruno Lima' && up.st === 'Em andamento' && up.resp === 'Bruno Lima', JSON.stringify(up));
+    const selR = await pg.evaluate(() => { const s = document.getElementById('ac-resp'); return { tag: s.tagName, ops: [...s.options].map(o => o.textContent), val: s.value }; });
+    af('RESPONSÁVEL É SELETOR: todos os usuários do portal, com a unidade ao lado, e nada digitado', selR.tag === 'SELECT' && selR.ops.join('|') === '—|Ana Souza · GRL|Bruno Lima · CGR, PIR|Renan Teste · admin' && selR.val === 'Bruno Lima', JSON.stringify(selR));
     af('…a caixa grava sozinha: o botão de status fica marcado e o rodapé diz "Salvo ✓"', /^(Salvo|Guardado) ✓$/.test(up.ok) && up.seg.join() === 'Em andamento', JSON.stringify([up.ok, up.seg]));
     await pg.click('.s-item[data-v="kanban"]'); await pg.waitForTimeout(150);
     // KANBAN do FCA · Admin: um card por ação, colunas pelo status, arrastar muda o status
@@ -427,15 +429,15 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   const alvo = await pg.evaluate(() => { const el = document.querySelector('tbody.fg td[data-c="responsavel"]'); return el ? { fid: el.dataset.fid, k: el.dataset.k } : null; });
   await pg.evaluate(a => abreAcao(a.fid, a.k), alvo); await pg.waitForTimeout(100);
   const dis = await pg.evaluate(() => document.getElementById('ac-status').disabled || document.getElementById('ac-resp').disabled);
-  await pg.fill('#ac-resp', 'Fulano Teste'); await pg.press('#ac-resp', 'Tab'); await pg.waitForTimeout(150);
+  await pg.selectOption('#ac-resp', 'Ana Souza'); await pg.waitForTimeout(150);
   await pg.click('#ac-seg button[data-st="Em andamento"]'); await pg.waitForTimeout(150);
   const ok1 = await pg.evaluate(() => { try { return localStorage.getItem('fcaauto_previa_v1') || ''; } catch (e) { return ''; } });
   const naLinha = await pg.evaluate(a => { const q = c => [...document.querySelectorAll('tbody.fg td[data-c="' + c + '"]')].find(x => x.dataset.fid === a.fid && x.dataset.k === a.k); return [q('responsavel').innerText.trim(), q('status').innerText.trim()]; }, alvo);
-  af('prévia: dono e status preenchidos na caixa da ação (liberada) são guardados no navegador', /Fulano Teste/.test(ok1) && !dis, JSON.stringify([ok1, dis]));
-  af('prévia: o que foi mudado na caixa aparece na linha da tabela', naLinha[0] === 'Fulano Teste' && naLinha[1] === 'Em andamento', JSON.stringify(naLinha));
+  af('prévia: dono e status preenchidos na caixa da ação (liberada) são guardados no navegador', /Ana Souza/.test(ok1) && !dis, JSON.stringify([ok1, dis]));
+  af('prévia: o que foi mudado na caixa aparece na linha da tabela', naLinha[0] === 'Ana Souza' && naLinha[1] === 'Em andamento', JSON.stringify(naLinha));
   await pg.reload(); await pg.waitForTimeout(400); await pg.click('.s-item[data-v="tabela"]'); await pg.waitForTimeout(200);
   const volta = await pg.evaluate(a => { const q = c => [...document.querySelectorAll('tbody.fg td[data-c="' + c + '"]')].find(x => x.dataset.fid === a.fid && x.dataset.k === a.k); return [q('responsavel') && q('responsavel').innerText.trim(), q('status') && q('status').innerText.trim()]; }, alvo);
-  af('prévia: depois do F5 o dono e o status voltam (guardados no navegador)', volta[0] === 'Fulano Teste' && volta[1] === 'Em andamento', JSON.stringify(volta));
+  af('prévia: depois do F5 o dono e o status voltam (guardados no navegador)', volta[0] === 'Ana Souza' && volta[1] === 'Em andamento', JSON.stringify(volta));
   await ctx.close();
 }
 
