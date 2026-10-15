@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610132300">
+<meta name="build" content="202610160200">
 <title>FCA · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -871,7 +871,7 @@ table.adv-table tr.pre-total td{background:var(--cabec);font-weight:800;border-t
     </button>
 
     <div class="s-sec"><b>Gerar</b></div>
-    <button class="s-item" id="genAllBtn" title="Gera os desvios de CUSTOS (DRE) do último mês — todas as unidades, vazios p/ preencher (aditivo)" onclick="if(confirm('Gerar os desvios de CUSTOS do último mês (todas as unidades)?\n\nAditivo: só adiciona o que ainda não existe (não apaga, não duplica). As unidades preenchem causa/ação no painel.'))location.href='../fca-preenchimento/?gen=all';">
+    <button class="s-item" id="genAllBtn" title="Gera os desvios de CUSTOS (DRE) do último mês — todas as unidades, já com causa, ação e dono do FCA Automático (set/26 em diante; aditivo)" onclick="if(confirm('Gerar os desvios de CUSTOS do último mês (todas as unidades)?\n\nAditivo: só adiciona o que ainda não existe (não apaga, não duplica).\n\nDe set/26 em diante cada fato já nasce com causa, ação e dono do FCA Automático (gestor de frota); o que a unidade já escreveu à mão não é tocado.'))location.href='../fca-preenchimento/?gen=all';">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       Custos da DRE
     </button>
@@ -1708,6 +1708,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610132300"></script>
+<script src="../assets/build-check.js?v=202610160200"></script>
 </body>
 </html>

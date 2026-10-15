@@ -1375,7 +1375,92 @@ async function carregarProlog(sb) {
   return out;
 }
 
+/* ══ OFICIAL — a sugestão vira linha da tabela `fca` (Renan, 15/10/2026: "Agora vamos subir como oficial, de
+   setembro em diante. Anhanguera eu já fiz a reunião com eles, então ainda não considere esse mês o automático"
+   → "Não quero enviar. Quero que já seja direto o oficial quando for gerar FCA custos").
+   Quem grava é a GERAÇÃO do FCA de Custos (fca-preenchimento ?gen=all), logo depois de criar os fatos do mês;
+   o /fca-automatico/ só lê o que está na fca. As peças moram aqui para as duas páginas usarem a MESMA conta:
+   · chaveAcao: identidade da ação (tema + as 6 primeiras palavras sem números — contagens e valores mudam a cada leitura);
+   · linhasDoFato: o pareamento ação → causa da Tabela (causas numeradas 1, 2, 3; ações 1.1, 1.2…);
+   · causaTexto/textoCausa/textoAcao: o texto gravado (causa com as placas e o "Obs."; ação com o número);
+   · GESTOR_FROTA/respDe: o dono automático (nome curto, maiúsculo);
+   · planoOficial: o que vai para a fca sem gravar (é o que o teste e o relatório da geração olham);
+   · aplicaOficial: grava o plano (updates um a um, inserts em lotes de 200) e devolve as linhas à lista lida. ══ */
+const OFICIAL_INICIO = (global.__oficialInicio) || '2026-09';            // o teste adianta o corte (o dublê só tem fatos até ago/26)
+const OFICIAL_FORA = new Set((global.__oficialFora) || ['ANG|2026-09']);   // unidade|vigência fechada à mão (a reunião da ANG)
+const oficialElegivel = f => f.vig >= OFICIAL_INICIO && !OFICIAL_FORA.has(f.uni + '|' + f.vig);
+const chaveAcao = a => (a.tema || '') + '|' + NK(a.txt).replace(/[0-9]+([.,][0-9]+)*/g, ' ').replace(/[^A-Z ]/g, ' ').split(/\s+/).filter(Boolean).slice(0, 6).join(' ');
+function linhasDoFato(d) {
+  const usadas = new Set(), vistos = {}, acs = [];
+  d.acoes.forEach(a => { let ci = d.causas.findIndex((c, i) => !usadas.has(i) && c.tema === a.tema);
+    if (ci >= 0) usadas.add(ci); else ci = d.causas.findIndex(c => c.tema === a.tema);
+    let k = chaveAcao(a); vistos[k] = (vistos[k] || 0) + 1; if (vistos[k] > 1) k += '#' + vistos[k];
+    acs.push({ a, k, ci }); });
+  const out = [];
+  d.causas.forEach((c, ci) => { const meus = acs.filter(x => x.ci === ci);
+    if (!meus.length) { out.push({ a: null, c, k: null, ci, span: 1 }); return; }
+    meus.forEach((x, j) => out.push({ a: x.a, c, k: x.k, ci, span: j === 0 ? meus.length : 0 })); });
+  acs.filter(x => x.ci < 0).forEach(x => out.push({ a: x.a, c: null, k: x.k, ci: -1, span: 1 }));
+  return out;
+}
+// a causa gravada leva as placas/ofensores (um por linha) antes do "Obs."
+const causaTexto = c => { const i = c.txt.indexOf('\n\nObs.:'), of = (c.ofens || []).map(o => '- ' + o).join('\n');
+  return i < 0 ? c.txt + (of ? '\n' + of : '') : c.txt.slice(0, i) + (of ? '\n' + of : '') + c.txt.slice(i); };
+const textoCausa = l => (l.c ? (l.ci >= 0 ? (l.ci + 1) + '. ' : '') + causaTexto(l.c) : '');
+const textoAcao = l => (l.a.num ? l.a.num + '. ' : '') + l.a.txt;
+// GESTOR DE FROTA = DONO AUTOMÁTICO (Renan, 15/10/2026: "é para vir automático, mas com lista para selecionar caso queira trocar")
+const GESTOR_FROTA = { 'CBA T1': 'ALEXANDRE SILVERIO', 'CBA T1 WH': 'ALEXANDRE SILVERIO', 'CBA T2': 'JOAO SILVA',
+  'FLP': 'ANA ROCHA', 'MCC T1': 'ERICK SILVA', 'MCC T2': 'ERICK SILVA', 'ANG': 'FERNANDO MOREIRA', 'RON': 'GABRIEL BARBOSA',
+  'PIR': 'JEAN GOMES', 'GRL': 'JOSE SANTOS', 'NFR': 'LUCAS TARDIM', 'BLC': 'MÁRCIO PRIETO', 'CGR': 'MICHEL OLIVEIRA',
+  'PLT': 'RITCHER SALVADOR', 'GNA': 'WESLLEY VASCONCELOS' };
+const gestorDe = uni => GESTOR_FROTA[String(uni || '').trim()] || '';
+// primeiro + último nome, em maiúsculo: "Márcio Rodrigues Prieto" → "MÁRCIO PRIETO"
+function nomeCurto(n) { const p = String(n || '').trim().split(/\s+/).filter(Boolean); if (!p.length) return ''; return (p.length > 1 ? p[0] + ' ' + p[p.length - 1] : p[0]).toUpperCase(); }
+const respDe = (r, uni) => String((r && r.responsavel) || '').trim() || gestorDe(uni);
+// linha da fca → id do fato do automático (unidade|projeto|pacote|AAAA-MM)
+const fidDe = r => String(r.unidade || '').replace(/\s*\(INATIVO\)\s*/gi, ' ').trim() + '|' + projKey(r.projeto || '') + '|' + (pacDoFato(r.fato) || '') + '|' + (vigDeLbl(r.vigencia) || '');
+const tocada = r => !!(r.prazo || (r.acompanhamento && String(r.acompanhamento).trim()) || (r.status && r.status !== 'Não iniciada'));
+const escritaAMao = r => !r.auto_chave && !!((r.causa && String(r.causa).trim()) || (r.acao && String(r.acao).trim()) || (r.responsavel && String(r.responsavel).trim()) || tocada(r));
+/* planoOficial(fatos, fcaRows, ctx, o) → {ins, upd, pulados, semAcao, iguais}. Regras:
+   · só fatos de OFICIAL_INICIO em diante, fora de OFICIAL_FORA;
+   · a 1ª ação REUSA a linha vazia que o fca-preenchimento criou para o fato (update); as demais viram inserts;
+   · fato com linha escrita à mão (sem auto_chave) é pulado inteiro;
+   · linha já com auto_chave só muda se o texto mudou e ninguém mexeu (prazo, acompanhamento, status);
+   o.diag(f) = diagnóstico memoizado (padrão: diagnostico(f, ctx)); o.resp(f, k) = dono já escolhido (padrão: o gestor). */
+function planoOficial(fatos, fcaRows, ctx, o) {
+  o = o || {}; const diag = o.diag || (f => diagnostico(f, ctx)); const respAt = o.resp || (() => '');
+  const ins = [], upd = [], pulados = [], semAcao = [], iguais = [], agora = new Date().toISOString();
+  const porFid = {}; (fcaRows || []).forEach(r => { if (String(r.origem || '').toLowerCase() !== 'custos') return; (porFid[fidDe(r)] = porFid[fidDe(r)] || []).push(r); });
+  (fatos || []).filter(oficialElegivel).sort((a, b) => a.vig.localeCompare(b.vig) || a.uni.localeCompare(b.uni)).forEach(f => {
+    const d = diag(f), ls = linhasDoFato(d).filter(l => l.a); if (!ls.length) { semAcao.push(f); return; }
+    const rows = porFid[f.id] || [];
+    if (rows.some(escritaAMao)) { pulados.push(f); return; }
+    const vazias = rows.filter(r => !r.auto_chave);
+    ls.forEach(l => { const causa = textoCausa(l) || null, acao = textoAcao(l), resp = String(respAt(f, l.k) || '').trim() || gestorDe(f.uni) || null;
+      const ja = rows.find(r => r.auto_chave === l.k);
+      if (ja) { if (tocada(ja)) { iguais.push(ja); return; }
+        const u = {}; if (ja.causa !== causa) u.causa = causa; if (ja.acao !== acao) u.acao = acao; if (!ja.responsavel && resp) u.responsavel = resp;
+        if (Object.keys(u).length) { u.auto_em = agora; upd.push({ id: ja.id, f, u }); } else iguais.push(ja); return; }
+      const base = vazias.shift();
+      const campos = { causa, acao, responsavel: resp, status: 'Não iniciada', auto_chave: l.k, auto_em: agora };
+      if (base) { if (!base.fato_desvio) campos.fato_desvio = desvioTxt(f); upd.push({ id: base.id, f, u: campos }); }
+      else ins.push(Object.assign({ unidade: f.uni, vigencia: f.vigLbl, origem: 'Custos', fato: f.pac, projeto: f.nv3 || f.proj || null, fato_desvio: desvioTxt(f), prazo: null, acompanhamento: null, locked: false }, campos)); });
+  });
+  return { ins, upd, pulados, semAcao, iguais };
+}
+const FCA_SEL = 'id,unidade,vigencia,origem,fato,projeto,fato_desvio,causa,acao,responsavel,prazo,status,acompanhamento,auto_chave,auto_em';
+// grava o plano; fcaRows (a lista lida) recebe as linhas novas e as mudanças, para quem redesenha depois
+async function aplicaOficial(sb, P, fcaRows) {
+  for (const x of P.upd) { const { error } = await sb.from('fca').update(x.u).eq('id', x.id); if (error) throw new Error(error.message);
+    const lf = (fcaRows || []).find(r => r.id === x.id); if (lf) Object.assign(lf, x.u); }
+  for (let i = 0; i < P.ins.length; i += 200) { const lote = P.ins.slice(i, i + 200);
+    const { data, error } = await sb.from('fca').insert(lote).select(FCA_SEL);
+    if (error) throw new Error(error.message); if (fcaRows) (data && data.length ? data : lote).forEach(r => fcaRows.push(r)); }
+  return { ins: P.ins.length, upd: P.upd.length };
+}
+
 global.FcaAuto = { UNITS, PACOTES, vigLbl, vigDeLbl, vigIdx, vigAnt, vigSeg, projKey, unidadeDoNv3, rs, br, pct, sinalPct, impFmt, NK,
+  OFICIAL_INICIO, OFICIAL_FORA, oficialElegivel, chaveAcao, linhasDoFato, causaTexto, textoCausa, textoAcao, GESTOR_FROTA, gestorDe, nomeCurto, respDe, fidDe, tocada, escritaAMao, planoOficial, aplicaOficial,
   indexaDRE, fatos, desvioTxt, desvioCurto, contaCurta, getPacote, pacDoFato, EXCL_FCA, indexaSeara, acumuladoAno, redeFala, unidadeDoDRE, indexaDisp, indexaDispTudo, indexaAbertura, indexaPlacas, indexaPreco, indexaKml, combBases, rede, redeLeitura, forcaTxt, aprendizado, temasDe, TEMAS,
   diagnostico, TOL, naTolerancia, indicadores, indexaGinfo, EXTRA, montaCatalogo, CAT: () => CAT, resumoProlog, contexto, carregar, carregarProlog, ROT, METAS, fmtInd, placaKey };
 })(typeof window !== 'undefined' ? window : globalThis);

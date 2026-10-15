@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610151400">
+<meta name="build" content="202610160200">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -760,6 +760,16 @@ body.light-mode .kcard-fato{color:#000000!important;}
 }
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
+<!-- O MOTOR DO FCA AUTOMÁTICO (Renan, 15/10/2026: "Quero que já seja direto o oficial quando for gerar FCA custos"):
+     a geração de Custos (?gen=all) grava causa, ação e dono em cada fato de set/26 em diante. Só a geração usa. -->
+<script src="../assets/estatistica.js"></script>
+<script src="../assets/correlacoes-dados.js?v=202610140300"></script>
+<script src="../assets/carta-calc.js"></script>
+<script src="../assets/arvore-impacto.js"></script>
+<script src="../assets/seara-bench-modelo.js"></script>
+<script src="../assets/dispersao-km.js?v=202610152330"></script>
+<script src="../assets/balanco-massa.js"></script>
+<script src="../assets/fca-auto.js?v=202610160200"></script>
 </head>
 <body>
 <div class="app">
@@ -1289,10 +1299,44 @@ async function gerarTodas(){
     log.push(`<tr><td>${esc(u)}</td><td class="num">${novos}</td><td>${err?'<span style="color:var(--red)">'+esc(err)+'</span>':'<span style="color:var(--green)">ok</span>'}</td></tr>`);
     list.innerHTML=`<div class="loading">Gerando… ${log.length}/${units.length} unidades</div>`;
   }
+  // ── OFICIAL: causa, ação e dono do motor do FCA Automático, direto na fca (Renan, 15/10/2026: "Não quero enviar.
+  // Quero que já seja direto o oficial quando for gerar FCA custos"). Roda DEPOIS de os fatos do mês existirem,
+  // porque a 1ª ação de cada fato reusa a linha vazia criada acima. Falha aqui não desfaz os fatos: eles ficam
+  // vazios, como antes, e a próxima geração preenche (o plano é idempotente).
+  let ofi=null, ofiErr='';
+  try{ ofi=await oficialNaGeracao(t=>{list.innerHTML=`<div class="loading">Causas e ações automáticas… ${esc(t)}</div>`;}); }
+  catch(e){ ofiErr=e.message||String(e); console.error('oficial',e); }
   try{Object.keys(localStorage).filter(k=>k.indexOf('fca_cache_')===0).forEach(k=>localStorage.removeItem(k));}catch(e){}  // força revalidação
-  list.innerHTML=`<div class="genres"><h2 class="genres-h">Geração concluída — ${tot} fato(s) novo(s)</h2>
-    <table class="gentbl"><thead><tr><th>Unidade</th><th class="num">Novos</th><th>Status</th></tr></thead><tbody>${log.join('')}</tbody></table>
+  const acoesUni=u=>ofi?ofi.P.upd.filter(x=>x.f.uni===u).length+ofi.P.ins.filter(r=>r.unidade===u).length:0;
+  const logO=log.map((h,i)=>h.replace('</td><td>',`</td><td class="num">${ofi?acoesUni(units[i]):'—'}</td><td>`));
+  const F=window.FcaAuto;
+  const sub=ofi?`${ofi.r.upd+ofi.r.ins} ação(ões) gravada(s) em ${ofi.fatosN} fato(s) de ${F.vigLbl(F.OFICIAL_INICIO)} em diante`
+      +(ofi.P.pulados.length?` · ${ofi.P.pulados.length} fato(s) já preenchido(s) à mão ficaram como estavam: ${esc(ofi.P.pulados.map(f=>f.uni+' '+f.proj+' '+f.pac+' '+f.vigLbl).join('; '))}`:'')
+      +(ofi.P.semAcao.length?` · ${ofi.P.semAcao.length} sem ação (tolerância ou sem evidência)`:'')
+      +(F.OFICIAL_FORA.size?` · fora: ${esc([...F.OFICIAL_FORA].map(k=>k.split('|')[0]+' '+F.vigLbl(k.split('|')[1])).join(', '))}`:'')
+    :`<span style="color:var(--vermelho)">Causas e ações automáticas NÃO gravadas: ${esc(ofiErr)}. Os fatos ficaram vazios; gerar de novo preenche.</span>`;
+  list.innerHTML=`<div class="genres"><h2 class="genres-h">Geração concluída — ${tot} fato(s) novo(s)${ofi?` · ${ofi.r.upd+ofi.r.ins} ação(ões) automática(s)`:''}</h2>
+    <div class="genres-sub">${sub}</div>
+    <table class="gentbl"><thead><tr><th>Unidade</th><th class="num">Novos</th><th class="num">Ações automáticas</th><th>Status</th></tr></thead><tbody>${logO.join('')}</tbody></table>
     <a class="btn" style="display:inline-block;margin-top:14px;text-decoration:none" href="../fca-consolidado/">← Voltar ao Admin</a></div>`;
+}
+// Lê as bases com o motor do FCA Automático (assets/fca-auto.js), monta o plano oficial contra a fca já com os
+// fatos do mês e grava: 1ª ação de cada fato na linha vazia (update), as demais como linhas novas; fato escrito à
+// mão é pulado; reenviar não duplica. Devolve {P (plano), r (gravado), fatosN}.
+async function oficialNaGeracao(etapa){
+  const F=window.FcaAuto; if(!F) throw new Error('o motor do FCA Automático (assets/fca-auto.js) não carregou');
+  const L=await F.carregar(sb,{etapa});
+  if(!L.dre) throw new Error('o DRE (aba Frota) não respondeu ao motor');
+  if(!L.fcaAutoCol) throw new Error('a tabela fca não tem a coluna auto_chave (rodar scripts/fca-auto-oficial.sql no Supabase)');
+  etapa('Prolog de hoje (pneus)');
+  try{ L.prolog=await F.carregarProlog(sb); }catch(e){ console.warn('prolog',e); L.prolog={}; }
+  etapa('diagnóstico');
+  const CTX=F.contexto(L,{}), fatos=CTX.todos.filter(f=>f.estourou);
+  const P=F.planoOficial(fatos,L.fca||[],CTX);
+  const fatosN=new Set(P.ins.map(r=>r.unidade+'|'+r.vigencia+'|'+r.projeto+'|'+r.fato).concat(P.upd.map(x=>x.f.id))).size;
+  etapa(`gravando ${P.upd.length+P.ins.length} ação(ões)`);
+  const r=await F.aplicaOficial(sb,P,L.fca);
+  return {P,r,fatosN};
 }
 // Importação ÚNICA do FCA Total (histórico preenchido de Custos + RPM). Substitui a base (cutover). Só admin.
 async function importarFCATotal(){
@@ -2225,6 +2269,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610151400"></script>
+<script src="../assets/build-check.js?v=202610160200"></script>
 </body>
 </html>
