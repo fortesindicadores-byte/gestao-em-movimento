@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610142215">
+<meta name="build" content="202610151800">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -427,6 +427,7 @@ body.claro .kpi-card{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../");}catch(e){}</script>
 <script src="../../assets/gviz-cache.js?v=202609050530"></script>
 <script src="../../assets/balanco-massa.js?v=202610131400"></script>
+<script src="../../assets/dispersao-km.js?v=202610151800"></script>
 </head>
 <body>
 
@@ -851,7 +852,8 @@ const getNv3Prefix = v => v ? VAN_ALIAS(v.split('-')[0].trim()) : v;
 // Unidade = sufixo do nível 3, com "(INATIVO)" removido — mescla "MCC (INATIVO)" em "MCC"
 // (mesma regra da Visão Financeira). Sem isso, o filtro lista unidades duplicadas e a
 // agregação por unidade perde as linhas marcadas como inativas.
-const getNv3Suffix = v => { const s = v && v.includes('-') ? v.split('-').slice(1).join('-').trim() : (v||''); return s.replace(/\s*\(INATIVO\)\s*/i,'').trim(); };
+// Goiânia: o DRE e a aba Km/L escrevem "AUTO SERVIÇO - GOI"; a Dispersão do banco e o portal usam GNA.
+const getNv3Suffix = v => { const s = (v && v.includes('-') ? v.split('-').slice(1).join('-').trim() : (v||'')).replace(/\s*\(INATIVO\)\s*/i,'').trim(); return s.toUpperCase()==='GOI' ? 'GNA' : s; };
 function getMsValues(id){ const w=document.getElementById(id); return w&&w._sel?[...w._sel]:[]; }
 function getFilters(){ return { ano:getMsValues('ms-ano'), vigencia:getMsValues('ms-vig'), unidade:getMsValues('ms-uni'), nivel3:getMsValues('ms-nv3') }; }
 function filtrarRows(rows) {
@@ -1135,6 +1137,51 @@ async function fetchBalancoBancoSeguro(){
       if(c&&c.out&&Object.keys(c.out).length){ BM_FONTE={fonte:'copia', quando:c.t}; return c.out; } }catch(_){}
     BM_FONTE={fonte:'erro'}; return null; }
 }
+/* DISPERSÃO DE KM DO BANCO, SET/26 EM DIANTE (Renan, 15/10/2026: "suba na árvore a dispersão").
+   O MESMO motor do Painel KM (assets/dispersao-km.js): dispersao_km + dispersao_placa + aba Km/L
+   (sh_consumo_km_litro) para completar o km rodado. Só ACRESCENTA ao S_DP os meses que a aba
+   Dispersão de km não tem, como linhas no formato da aba, com o projeto na convenção dela
+   (Van = ROTA (VAN), Insumos dentro de EMPURRADA). Assim KM Rodado, Decomposição, R$/km e o
+   balanço de massa (recompoeTudo lê o S_DP) enxergam o mês, como no Painel KM. */
+const DISP_PROJ_BANCO={'Rota':'ROTA','Auto Serviço':'AUTO SERVIÇO','Van':'ROTA (VAN)',
+  'Empurrada - 28 Palets':'EMPURRADA','Empurrada - 42 Palets':'EMPURRADA','Empurrada - Insumos':'EMPURRADA'};
+let DISP_BANCO_INFO={vigs:[], sem:[], erro:null};
+async function fetchDispBanco(){
+  if(!window.DispersaoKm) throw new Error('assets/dispersao-km.js não carregou');
+  const h={apikey:SUPA_KEY, Authorization:'Bearer '+supaAuth()};
+  const todas=async(tab,cols)=>{ const out=[]; const passo=1000;
+    for(let i=0;;i+=passo){ const r=await fetch(`${SUPA_URL}/rest/v1/${tab}?select=${cols}&limit=${passo}&offset=${i}`,{headers:h});
+      if(!r.ok) throw new Error(tab+' HTTP '+r.status); const rows=await r.json(); out.push(...rows); if(rows.length<passo)break; }
+    return out; };
+  const [linhas,placas,kml]=await Promise.all([
+    todas('dispersao_km','*'),
+    todas('dispersao_placa','vigencia,unidade,projeto,placa,placa_origem,km_rem'),
+    todas('sh_consumo_km_litro','vigencia,projeto,placa,km_rodado_horas_trabalhadas')]);
+  if(!linhas.length) return [];
+  const D=window.DispersaoKm;
+  const kmlRows=kml.map(r=>{ const m=String(r.vigencia||'').match(/^(\d{2})\/(\d{4})$/);
+    return {vigencia:m?m[2]+'-'+m[1]:'', projeto:r.projeto, placa:r.placa, km:+r.km_rodado_horas_trabalhadas||0}; })
+    .filter(r=>r.vigencia>=D.INICIO);
+  return D.monta(linhas, D.kmRodado(placas,kmlRows));
+}
+// acrescenta ao S_DP, no formato da aba, as linhas do banco dos meses que a aba não tem
+function juntaDispBanco(linhas){
+  const vigAba=new Set(); S_DP.forEach(r=>{ const d=kParseVig(r[DP.vig]); if(d)vigAba.add(vigBR(d)); });
+  const n=Math.max(DP.vig,DP.proj,DP.kmRem,DP.kmReal,DP.vgTot,DP.vgRec,DP.vgNot,DP.vgMap)+1;
+  const vigs=new Set(), sem=[];
+  (linhas||[]).forEach(l=>{ const m=String(l.vigencia||'').match(/^(\d{4})-(\d{2})$/); if(!m)return;
+    const vig=m[2]+'/'+m[1]; if(vigAba.has(vig))return;
+    if(l.km_rodado==null){ sem.push(l.unidade+' '+l.projeto+' '+vig); return; }
+    const proj=(DISP_PROJ_BANCO[l.projeto]||String(l.projeto||'').toUpperCase())+' - '+l.unidade;
+    const r=Array(n).fill(null);
+    const vR=+l.viagens_rec||0, vN=+l.viagens_not||0, vM=+l.viagens_mapa_aberto||0;
+    r[DP.vig]=vig; r[DP.proj]=proj; r[DP.kmRem]=+l.km_rem||0; r[DP.kmReal]=+l.km_rodado||0;
+    if(DP.vgTot>=0)r[DP.vgTot]=(+l.viagens_prim||0)+vR+vN+vM; if(DP.vgRec>=0)r[DP.vgRec]=vR; if(DP.vgNot>=0)r[DP.vgNot]=vN; if(DP.vgMap>=0)r[DP.vgMap]=vM;
+    r._fonte='banco'; S_DP.push(r); vigs.add(vig); });
+  if(vigs.size) console.info('Dispersão de km do banco (set/26+):', [...vigs].join(', '));
+  if(sem.length) console.warn('Dispersão de km do banco sem km rodado (nem na planilha, nem na aba Km/L) — fora da árvore:', sem);
+  return {vigs:[...vigs], sem};
+}
 // roda o motor nas DUAS regras, com km0 (Dispersão) e remunerado da Frota por chave vig|n3:
 //  · ago/26+: por conta, líquido do balanço, trimestre;
 //  · jan→jul/26 (regra antiga, Valor 85% da aba): bloco único rateado pelo remunerado,
@@ -1280,16 +1327,18 @@ function rslAgg(f){ // R$/L: real = ΣTotalR$/ΣLitros; rem = Σ(preço×litros)
 
 // Carrega as 4 abas-fonte e monta as opções de filtro (union project-unit-vigência)
 async function fetchAll(){
-  const [fr,dp,km,rs,bm,bmBanco]=await Promise.all([
+  const [fr,dp,km,rs,bm,bmBanco,dispBanco]=await Promise.all([
     gvFetchSheet(VF_ID,'Frota'),
     gvFetchSheet(GV_ID,'Dispersão de km'),
     gvFetchSheet(KML_ID,KML_TAB),
     gvFetchSheet(KML_ID,'R$/L'),   // MESMO workbook do painel Preço R$/L — a aba "R$/L" do workbook GV_ID (Base Dispersão de km) é uma cópia velha/incompleta (não tem GRL, por ex.)
     gvFetchSheet(GV_ID,'Balanço de Massa').catch(e=>{ console.warn('Balanço de Massa (aba, até jul/26) indisponível:', e); return {cols:[],rows:[]}; }),
     fetchBalancoBancoSeguro(),
+    (window.__dispBanco===false ? Promise.resolve([]) : fetchDispBanco()).catch(e=>{ console.warn('Dispersão de km (banco, set/26+) indisponível:', e); DISP_BANCO_INFO.erro=String(e.message||e); return []; }),
   ]);
   FR=detFrota(fr.cols); S_FR=fr.rows;
-  DP=detDisp(dp.cols);  S_DP=dp.rows;
+  DP=detDisp(dp.cols);  S_DP=dp.rows.slice();
+  Object.assign(DISP_BANCO_INFO, juntaDispBanco(dispBanco));
   KM=detKmlSrc(km.cols);S_KM=km.rows;
   buildRemLookup(rs.cols,rs.rows);
   S_BM=parseBalanco(bm.cols,bm.rows);
@@ -1543,6 +1592,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610142215"></script>
+<script src="../../assets/build-check.js?v=202610151800"></script>
 </body>
 </html>

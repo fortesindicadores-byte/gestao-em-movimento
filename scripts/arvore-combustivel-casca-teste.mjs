@@ -84,7 +84,7 @@ const CMH = (() => { const s = fs.readFileSync(RAIZ + '/check-metas/index.html',
   return eval('`' + s.slice(i, j) + '`'); })();
 const H2C_SRC = H2C && fs.existsSync(H2C) ? fs.readFileSync(H2C, 'utf8') : null;
 
-async function abre(browser, pagina, { w = 1600, h = 900, tema = 'dark', mini = false, semBM = false } = {}) {
+async function abre(browser, pagina, { w = 1600, h = 900, tema = 'dark', mini = false, semBM = false, dispBanco = [] } = {}) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h } });
   const page = await ctx.newPage();
   const errs = [];
@@ -116,6 +116,11 @@ async function abre(browser, pagina, { w = 1600, h = 900, tema = 'dark', mini = 
     };
   }, { ABAS, tema, mini });
   await page.route('**/rest/v1/balanco_massa*', r => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(semBM ? [] : BMB) }));
+  // Dispersão de km do banco (set/26+): vazia por padrão, para o antigo × novo seguir igual
+  const JS = b => r => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(b) });
+  await page.route('**/rest/v1/dispersao_km*', JS(dispBanco));
+  await page.route('**/rest/v1/dispersao_placa*', JS([]));
+  await page.route('**/rest/v1/sh_consumo_km_litro*', JS([]));
   await page.route('**/assets/gviz-cache.js*', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: '/*gviz-cache fora do teste*/' }));
   await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await page.route('**/cdn.jsdelivr.net/**', r => {
@@ -201,6 +206,32 @@ await n.ctx.close();
   const k = await c.page.evaluate(LER);
   af('banco sem resposta com leitura anterior: vale a última leitura boa, igual à do banco', k.km === num(N.r[1][1]['v-bmKm']) && /última leitura boa/.test(k.t) && !/sem resposta/.test(k.lb), JSON.stringify(k));
   await c.ctx.close(); }
+
+/* ── 1b. Dispersão de km do banco (Renan, 15/10/2026: "suba na árvore a dispersão") ── */
+console.log('\n══ 1b · set/26 da Dispersão do banco entra na árvore; ago/26 continua da aba');
+{ const BL = (vigencia, unidade, projeto, km_rem, km_real) => ({ vigencia, unidade, projeto, km_rem, km_real, frota_ativa: 10, viagens_prim: 300, viagens_rec: 20, viagens_not: 10, viagens_mapa_aberto: 5 });
+  const DB = [BL('2026-08', 'GRL', 'Rota', 999999, 999999), BL('2026-09', 'GRL', 'Rota', 57838, 62416),
+    BL('2026-09', 'PIR', 'Empurrada - 28 Palets', 150000, 160000), BL('2026-09', 'PIR', 'Empurrada - Insumos', 10000, 12000)];
+  const b = await abre(browser, 'index.html', { dispBanco: DB });
+  af('com o banco: zero erro de página', b.errs.length === 0, b.errs[0] || '');
+  const vigs = await b.page.evaluate(() => [...document.querySelectorAll('#ms-vig [data-v]')].map(e => e.dataset.v));
+  af('09/2026 aparece no filtro de vigência', vigs.includes('09/2026'), vigs.join(' '));
+  await b.page.evaluate(SEL, { id: 'ms-vig', v: ['09/2026'] });
+  await b.page.evaluate(SEL, { id: 'ms-uni', v: ['GRL'] });
+  await b.page.waitForTimeout(150);
+  const g = await b.page.evaluate(VALS);
+  af('GRL set/26: km rem e real do banco', num(g['v-kmRem']) === '57.838' && num(g['v-kmReal']) === '62.416', num(g['v-kmRem']) + ' · ' + num(g['v-kmReal']));
+  await b.page.evaluate(SEL, { id: 'ms-vig', v: ['08/2026'] });
+  await b.page.waitForTimeout(150);
+  const a8 = await b.page.evaluate(VALS);
+  af('GRL ago/26 continua o da aba (o banco não passa por cima)', num(a8['v-kmRem']) !== '999.999' && num(a8['v-kmRem']) !== '—', num(a8['v-kmRem']));
+  await b.page.evaluate(SEL, { id: 'ms-uni', v: ['PIR'] });
+  await b.page.evaluate(SEL, { id: 'ms-vig', v: ['09/2026'] });
+  await b.page.waitForTimeout(150);
+  const p = await b.page.evaluate(VALS);
+  af('PIR set/26: Empurrada junta 28 Palets + Insumos no real', num(p['v-kmReal']) === '172.0k', num(p['v-kmReal']));
+  af('PIR set/26: o km rem. inclui o balanço de massa do mês', num(p['v-bmKm']).startsWith('+'), num(p['v-bmKm']) + ' · rem ' + num(p['v-kmRem']));
+  await b.ctx.close(); }
 
 /* ── 2. a casca nova ── */
 const medeCasca = () => {
