@@ -31,6 +31,8 @@ create table if not exists public.fca_resp_depara (
   manual      boolean not null default false,   -- true quando você corrigiu `novo` à mão
   primary key (unidade, antigo)
 );
+-- só o editor SQL (postgres) usa a tabela: RLS ligada e sem policy = anon e logados não enxergam
+alter table public.fca_resp_depara enable row level security;
 
 -- ---------------------------------------------------------------------------
 -- 1. PROPOSTA
