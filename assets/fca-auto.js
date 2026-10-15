@@ -624,6 +624,8 @@ function diagnostico(f, ctx) {
   D.acoes.forEach(a => { let ci = D.causas.findIndex((c, i) => !usadas.has(i) && c.tema === a.tema); if (ci >= 0) usadas.add(ci); else ci = D.causas.findIndex(c => c.tema === a.tema);
     a.ci = ci; a.num = ci >= 0 ? `${ci + 1}.${(nPorCausa[ci] = (nPorCausa[ci] || 0) + 1)}` : null;
     if (ci >= 0) a.ofens.forEach(o => { if (!D.causas[ci].ofens.includes(o)) D.causas[ci].ofens.push(o); }); });
+  // ações na ordem das causas (1.1, 1.2, 2.1…), a sem causa no fim
+  D.acoes = D.acoes.map((a, i) => [a, i]).sort((x, y) => ((x[0].ci < 0 ? 99 : x[0].ci) - (y[0].ci < 0 ? 99 : y[0].ci)) || (x[1] - y[1])).map(x => x[0]);
   D.historico = histDoFato(f, ctx);
   D.causaTxt = D.causas.map((c, i) => `${i + 1}. ${c.txt}${c.ofens.length ? '\n' + c.ofens.map(o => '   - ' + o).join('\n') : ''}`).join('\n') + (D.ano ? (D.causas.length ? '\n' : '') + 'YTD: ' + D.ano.txt : '');
   D.acaoTxt = D.acoes.map((a, i) => `${a.num || i + 1}. ${a.txt}`).join('\n');
