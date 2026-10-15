@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610152300">
+<meta name="build" content="202610152330">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -960,7 +960,7 @@ body.claro table.rel.fa-rel.din tbody.fg tr+tr td.ln{border-top-color:rgba(15,23
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610152300"></script>
+<script src="../assets/fca-auto.js?v=202610152330"></script>
 </head>
 <body>
 <div class="app">
@@ -1307,9 +1307,17 @@ async function carregaAcoes(){
     if(ACOES_ERR==='PREVIA'){ ACOES=lePrevia(); ACOES_OK=true; ACOES_LOCAL=true; } }
   // RESPONSÁVEL É ESCOLHIDO, NÃO DIGITADO (Renan, 15/10/2026): a lista é TODO usuário do portal (fca_profiles),
   // com a unidade ao lado do nome; o valor gravado continua sendo o nome, como na tabela fca.
+  // Renan, 15/10/2026: "nome maiúsculo, apenas primeiro e último nome" e, por fato, "outra pessoa cadastrada na
+  // unidade ou algum admin" — o nome gravado é o curto (MÁRCIO PRIETO); a lista da caixa sai de `perfisDe(unidade)`.
   try{ const {data}=await sb.from('fca_profiles').select('nome,unidade,is_admin');
-    const m=new Map(); (data||[]).forEach(p=>{ const n=String(p.nome||'').trim(); if(!n) return; const us=p.is_admin?['admin']:String(p.unidade||'').split(',').map(x=>x.trim()).filter(Boolean); const c=m.get(n)||{nome:n,uni:new Set()}; us.forEach(u=>c.uni.add(u)); m.set(n,c); });
-    PERFIS=[...m.values()].map(p=>({nome:p.nome,uni:[...p.uni].join(', ')})).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR')); NOMES=PERFIS.map(p=>p.nome); }catch(e){ NOMES=[]; PERFIS=[]; }
+    const m=new Map(); (data||[]).forEach(p=>{ const n=nomeCurto(p.nome); if(!n) return; const us=String(p.unidade||'').split(',').map(x=>x.trim()).filter(Boolean); const c=m.get(n)||{nome:n,uni:new Set(),admin:false}; us.forEach(u=>c.uni.add(u)); if(p.is_admin) c.admin=true; m.set(n,c); });
+    PERFIS=[...m.values()].map(p=>({nome:p.nome,admin:p.admin,unis:[...p.uni],uni:p.admin?'admin':[...p.uni].join(', ')})).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR')); NOMES=PERFIS.map(p=>p.nome); }catch(e){ NOMES=[]; PERFIS=[]; }
+}
+// primeiro + último nome, em maiúsculo: "Márcio Rodrigues Prieto" → "MÁRCIO PRIETO"
+function nomeCurto(n){ const p=String(n||'').trim().split(/\s+/).filter(Boolean); if(!p.length) return ''; return (p.length>1?p[0]+' '+p[p.length-1]:p[0]).toUpperCase(); }
+// quem pode ser dono de um fato da unidade: cadastrados nela (com ou sem tier) + admins
+function perfisDe(uni){ const u=String(uni||'').trim(), base=u.split(' ')[0];
+  return PERFIS.filter(p=>p.admin||p.unis.some(x=>x===u||x.split(' ')[0]===base));
 }
 /* ── KANBAN — o do FCA · Admin (Renan, 15/10/2026: "não parece ser possível arrastar, e não está por Não iniciada,
    Em andamento e Concluída. Está dividido pelos pacotes. E não tem as regras de arrastar que já existem"):
@@ -1542,8 +1550,8 @@ function abreAcao(fid,k){
   g('ac-causa').value=l.c?causaTexto(l.c):'';
   g('ac-acao').value=l.a.txt;
   // o seletor lista os usuários do portal; um nome já gravado que não é usuário entra como opção para não se perder
-  { const sel=g('ac-resp'), atual=String(r.responsavel||'').trim(), tem=PERFIS.some(p=>p.nome===atual);
-    sel.innerHTML='<option value="">—</option>'+(atual&&!tem?`<option value="${esc(atual)}">${esc(atual)} (não é usuário)</option>`:'')+PERFIS.map(p=>`<option value="${esc(p.nome)}">${esc(p.nome)}${p.uni?' · '+esc(p.uni):''}</option>`).join('');
+  { const sel=g('ac-resp'), atual=String(r.responsavel||'').trim(), lista=perfisDe(f.uni), tem=lista.some(p=>p.nome===atual);
+    sel.innerHTML='<option value="">—</option>'+(atual&&!tem?`<option value="${esc(atual)}">${esc(atual)} (não é usuário da unidade)</option>`:'')+lista.map(p=>`<option value="${esc(p.nome)}">${esc(p.nome)}${p.uni?' · '+esc(p.uni):''}</option>`).join('');
     sel.value=atual; }
   g('ac-prazo').value=r.prazo||'';
   const st0=r.status||'Não iniciada'; g('ac-status').value=st0;
@@ -1659,6 +1667,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610152300"></script>
+<script src="../assets/build-check.js?v=202610152330"></script>
 </body>
 </html>
