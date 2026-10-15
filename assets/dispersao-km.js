@@ -97,7 +97,8 @@
       return vig(d.getUTCFullYear(), d.getUTCMonth() + 1);
     }
     const t = String(c == null ? '' : c).trim();
-    let m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (m) return vig(+m[3], +m[2]);
+    let m = t.match(/^Date\((\d{4}),(\d{1,2})/); if (m) return vig(+m[1], +m[2] + 1);   // gviz: "Date(2026,8,1)" = set/26
+    m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (m) return vig(+m[3], +m[2]);
     m = t.match(/^(\d{4})-(\d{2})/); if (m) return vig(+m[1], +m[2]);
     m = t.match(/^(\d{1,2})\/(\d{4})$/); if (m) return vig(+m[2], +m[1]);
     m = t.match(/^([A-Za-zçÇ]{3})[a-zçÇ]*\/(\d{2,4})$/); if (m && mesDe(m[1])) return vig(m[2].length === 2 ? 2000 + +m[2] : +m[2], mesDe(m[1]));
@@ -294,5 +295,28 @@
     return out;
   }
 
-  raiz.DispersaoKm = { merc, unidadeDe, projetoDe, projetoKml, lePlanilha, kmRodado, monta, vigCel, PROJ, AS_PELA_PLANILHA, INICIO };
+  /* ── O KM REMUNERADO POR PLACA DA ABA ABERTURA, DE SET/26 EM DIANTE (Renan, 15/10/2026:
+     "a partir de setembro você consegue ler apenas essas colunas para subir remunerado por
+     placa? Realizado e R$/km por placa já estão no banco"). Da aba Abertura (Base Dispersão
+     de km) valem só UNIDADE · MÊS · PROJETO · Placa · Remunerado; o realizado sai da aba
+     Km/L (kmRodado) e o R$/km da chave. A tabela vem como { cols:[rótulos], rows:[[valores]] }.
+     → a lista de placas no formato da dispersao_placa, só dos meses ≥ INICIO. */
+  function placasAbertura(tab) {
+    const cols = ((tab && tab.cols) || []).map(c => NK(c));
+    const ac = (...t) => { for (const x of t) { const i = cols.findIndex(c => c === x); if (i >= 0) return i; }
+      for (const x of t) { const i = cols.findIndex(c => c.includes(x)); if (i >= 0) return i; } return -1; };
+    const C = { uni: ac('UNIDADE'), mes: ac('MES'), proj: ac('PROJETO'), pl: ac('PLACA'), rem: ac('REMUNERADO') };
+    if (Object.values(C).some(i => i < 0)) return [];
+    const P = new Map();
+    ((tab && tab.rows) || []).forEach(l => {
+      const vg = vigCel(l[C.mes]); if (!vg || vg < INICIO) return;
+      const u = unidadeDe(l[C.uni]), p = projetoDe(l[C.proj]), pm = merc(l[C.pl]);
+      if (!u || !p || !pm) return;
+      const k = vg + '|' + u + '|' + p + '|' + pm;
+      const a = P.get(k) || { vigencia: vg, unidade: u, projeto: p, placa: pm, placa_origem: String(l[C.pl]).trim(), km_rem: 0, fonte: 'Abertura' };
+      a.km_rem = r2(a.km_rem + numero(l[C.rem])); P.set(k, a);
+    });
+    return [...P.values()];
+  }
+  raiz.DispersaoKm = { merc, unidadeDe, projetoDe, projetoKml, lePlanilha, kmRodado, monta, vigCel, placasAbertura, PROJ, AS_PELA_PLANILHA, INICIO };
 })(typeof window !== 'undefined' ? window : globalThis);

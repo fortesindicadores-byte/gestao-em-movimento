@@ -74,5 +74,22 @@ af('sem banco: só a aba', !so.acc['GRL|ROTA|2026-09'] && so.acc['GRL|ROTA|2026-
 const semBM = FA.indexaDispTudo(L, idx.acc, DK, null);
 af('sem o motor do balanço: Empurrada com km bruto', semBM.acc['PIR|EMPURRADA|2026-09'].rem === 360000 && !semBM.acc['PIR|EMPURRADA|2026-09'].bmKm);
 
+console.log('\n══ 4 · aba Abertura de set/26: só o remunerado por placa; o realizado vem da aba Km/L');
+const AB = { cols: ['UNIDADE', 'MÊS', 'PROJETO', 'Placa', 'Remunerado', 'Real'], rows: [
+  ['Guarulhos-SP', 'Date(2026,8,1)', 'ROTA', 'ABC1234', 5000, null],
+  ['Balneário-SC', 'Date(2026,8,1)', 'AUTO SERVIÇO', 'ELQ8654', 315.17, null],
+  ['Piraí -RJ', 'Date(2026,7,1)', 'EMPURRADA', 'CUK9G80', 6594, 4632],
+] };
+const abPl = DK.placasAbertura(AB);
+af('placasAbertura: só set/26 em diante, placa em Mercosul, unidade e projeto no padrão do banco',
+  abPl.length === 2 && abPl.some(p => p.placa === 'ABC1C34' && p.unidade === 'GRL' && p.projeto === 'Rota' && p.km_rem === 5000)
+  && abPl.some(p => p.unidade === 'BLC' && p.projeto === 'Auto Serviço'), JSON.stringify(abPl));
+const L2 = Object.assign({}, L, { abertura: AB, dispBanco: Object.assign({}, dispBanco, { kml: [{ vigencia: '09/2026', projeto: 'ROTA - GRL', placa: 'ABC1234', km_rodado_horas_trabalhadas: 6200 }] }) });
+const t2 = FA.indexaDispTudo(L2, idx.acc, DK, BM);
+af('km rodado por placa e mês sai da aba Km/L', t2.info.kmPlaca && t2.info.kmPlaca['2026-09|ABC1C34'] === 6200, JSON.stringify(t2.info.kmPlaca));
+af('o total por unidade × projeto não muda com a Abertura', t2.acc['GRL|ROTA|2026-09'].rem === 57838, JSON.stringify(t2.acc['GRL|ROTA|2026-09']));
+const ia = FA.indexaAbertura(AB);
+af('linha da Abertura sem Real fica marcada para receber o km da Km/L', (ia['GRL|2026-09'] || [])[0] && ia['GRL|2026-09'][0].semReal === true && !ia['PIR|2026-08'][0].semReal, JSON.stringify(ia));
+
 console.log(`\n${ok} ok · ${falha} falha(s)`);
 process.exit(falha ? 1 : 0);

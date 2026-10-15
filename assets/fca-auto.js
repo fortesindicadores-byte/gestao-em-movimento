@@ -246,14 +246,18 @@ const ctaBM = c => { const n = NK(c).replace(/\s+/g, ' ').trim(); return CTA_ALI
 const vigBM = v => v.slice(5) + '/' + v.slice(0, 4);   // 'AAAA-MM' → 'MM/AAAA' (formato do motor do balanço)
 function indexaDispTudo(L, dreAcc, DK, BM) {
   const acc = indexaDisp(L.disp), vigsAba = new Set(Object.keys(acc).map(k => k.split('|').pop()));
-  const info = { banco: [], semKm: [], bm: null, bmAvisos: [] };
+  const info = { banco: [], semKm: [], bm: null, bmAvisos: [], kmPlaca: null };
   // 1) set/26 em diante, do banco: só os meses que a aba não tem
   const db = L.dispBanco;
   if (db && DK && (db.linhas || []).length) {
     const kmlRows = (db.kml || []).map(r => { const m = String(r.vigencia || '').match(/^(\d{2})\/(\d{4})$/);
       return { vigencia: m ? m[2] + '-' + m[1] : '', projeto: r.projeto, placa: r.placa, km: +r.km_rodado_horas_trabalhadas || 0 }; })
       .filter(r => r.vigencia >= DK.INICIO);
-    DK.monta(db.linhas, DK.kmRodado(db.placas || [], kmlRows)).forEach(l => {
+    const kmR = DK.kmRodado(db.placas || [], kmlRows);
+    // km rodado por placa e mês (aba Km/L): é o realizado da placa nas linhas da aba Abertura que só
+    // trazem o remunerado (set/26 em diante)
+    info.kmPlaca = {}; kmR.det.forEach(d => { const k = d.vigencia + '|' + d.placa; info.kmPlaca[k] = (info.kmPlaca[k] || 0) + (+d.km || 0); });
+    DK.monta(db.linhas, kmR).forEach(l => {
       const vig = l.vigencia; if (!vig || vigsAba.has(vig)) return;
       const n3 = (DISP_PROJ_BANCO[l.projeto] || l.projeto) + ' - ' + l.unidade;
       const uni = unidadeDoNv3(n3); if (!uni) return;
@@ -298,7 +302,7 @@ function indexaDispTudo(L, dreAcc, DK, BM) {
    projeto como AS / VAN / ROTA / EMPURRADA. Índice: unidade|AAAA-MM → [{placa, proj,
    rem, real, delta}]. */
 const AB_PROJ = { 'AS': 'AUTO SERVICO', 'VAN': 'VAN', 'ROTA (VAN)': 'VAN' };
-const AB_CIDADE = Object.assign({ 'RIO DE JANEIRO': 'CGR', 'CAMBORIU': 'BLC' }, CIDADE_DRE);
+const AB_CIDADE = Object.assign({ 'RIO DE JANEIRO': 'CGR', 'CAMBORIU': 'BLC', 'BALNEARIO': 'BLC', 'FLORIPA': 'FLP' }, CIDADE_DRE);
 function abUnidade(unidade, proj) {
   const n = NK(unidade).replace(/^CDD\s+/, '').replace(/\s*-\s*[A-Z]{2}$/, '').trim();
   const base = AB_CIDADE[n] || AB_CIDADE[n.split(' ').pop()]; if (!base) return null;
@@ -313,8 +317,8 @@ function indexaAbertura(ab) {
   rows.forEach(r => {
     const vig = vigDe(r[c.vig]), placa = placaKey(r[c.placa]); if (!vig || !placa) return;
     const pj = NK(r[c.proj]), proj = AB_PROJ[pj] || pj, uni = abUnidade(r[c.uni], proj); if (!uni) return;
-    const rem = num(r[c.rem]) || 0, real = num(r[c.real]) || 0;
-    (out[uni + '|' + vig] = out[uni + '|' + vig] || []).push({ placa, proj, rem, real, delta: real - rem });
+    const rem = num(r[c.rem]) || 0, real = num(r[c.real]) || 0, semReal = r[c.real] == null || r[c.real] === '';
+    (out[uni + '|' + vig] = out[uni + '|' + vig] || []).push({ placa, proj, rem, real, delta: real - rem, semReal, vig });
   });
   return out;
 }
@@ -778,7 +782,12 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
       const como = b.volBases ? ` · ${rs(b.vol)}` : ` · ${rs(b.vol)} (pelo custo rem. da DRE)`;
       causa('Km / rota', `Dispersão de km: +${br(dkm, 0)} km (${sinalPct(dpct, 1)})${como}${extra}`, b.vol);
       const vg = []; if (dp.vgRec) vg.push(br(dp.vgRec, 0) + ' recs'); if (dp.vgNot) vg.push(br(dp.vgNot, 0) + ' noturnas'); if (dp.vgMap) vg.push(br(dp.vgMap, 0) + ' com mapa aberto');
-      acao('Km / rota', `Conferir as viagens que não remuneram e a roteirização no ${painelKm}${vg.length ? ' (no mês: ' + vg.join(', ') + ' de ' + br(dp.vgTot, 0) + ' viagens)' : ''}`);
+      // DISPERSÃO POR PLACA (Renan, 15/10/2026): as placas que mais rodaram acima do km remunerado no mês,
+      // da aba Abertura (remunerado) × aba Km/L (realizado, de set/26 em diante); do projeto, senão da unidade
+      const abT = (ctx.abertura || {})[f.uni + '|' + f.vig] || [], abP = abT.filter(r => r.proj === f.proj), abU = abP.length ? abP : abT;
+      const ofPl = top(abU.filter(r => r.delta > 0), 5, r => r.delta)
+        .map(r => `${r.placa} +${br(r.delta, 0)} km (${r.rem >= 500 ? sinalPct(r.delta / r.rem * 100, 0) : 'só ' + br(r.rem, 0) + ' km rem.'})`);
+      acao('Km / rota', `Conferir as viagens que não remuneram e a roteirização no ${painelKm}${vg.length ? ' (no mês: ' + vg.join(', ') + ' de ' + br(dp.vgTot, 0) + ' viagens)' : ''}`, ofPl);
     } else if (Math.abs(b.vol) >= D.minimo) D.obs.push(`Dispersão de km: −${br(-dkm, 0)} km (${sinalPct(dpct, 1)}) · economizou ${rs(-b.vol)}`);
   }
   // Eficiência
@@ -1235,7 +1244,17 @@ function contexto(L, deps) {
   Object.entries(porVig).forEach(([vg, vs]) => { const q = {}; Object.keys(CAT).forEach(k => { q[k] = quartis(vs.map(v => v[k])); }); quartisRede[vg] = q; });
   const prolog = {}; Object.entries(L.prolog || {}).forEach(([u, t]) => { prolog[u] = resumoProlog(t); });
   const dispT = indexaDispTudo(L, dreIdx.acc, deps.DispersaoKm || global.DispersaoKm, deps.BalancoMassa || global.BalancoMassa);
-  const ctx = { dreAcc: dreIdx.acc, maxVig: dreIdx.maxReal, todos, disp: dispT.acc, dispInfo: dispT.info, abertura: indexaAbertura(L.abertura), kml: kmlIdx, cat: CAT, fatoRede: FU,
+  // ABERTURA DE SET/26 EM DIANTE (Renan, 15/10/2026: "ler apenas essas colunas para subir remunerado por
+  // placa? Realizado e R$/km por placa já estão no banco" → "Já temos o total. É só para mensurar por placa"):
+  // a aba traz só UNIDADE · MÊS · PROJETO · Placa · Remunerado; o realizado da placa é o km dela na aba Km/L
+  // no mês (o mesmo da Dispersão do banco). Placa em dois projetos: o km entra uma vez, no de mais km rem.
+  const abertura = indexaAbertura(L.abertura), kmPl = dispT.info.kmPlaca;
+  if (kmPl) Object.values(abertura).forEach(lst => {
+    const visto = new Set();
+    lst.slice().sort((a, b) => b.rem - a.rem).forEach(r => { if (!r.semReal) return;
+      const k = r.vig + '|' + r.placa; r.real = visto.has(k) ? 0 : (kmPl[k] || 0); visto.add(k); r.delta = r.real - r.rem; r.realKml = true; });
+  });
+  const ctx = { dreAcc: dreIdx.acc, maxVig: dreIdx.maxReal, todos, disp: dispT.acc, dispInfo: dispT.info, abertura, kml: kmlIdx, cat: CAT, fatoRede: FU,
     fatoUni, quartisRede, fatoPlaca, fatoMot, carta, seara: searaIdx, ginfo: indexaGinfo(L.ginfo || {}, deps.hoje), prolog, ArvImpacto: deps.ArvImpacto || global.ArvImpacto };
   ctx.rede = rede(FU, deps.Estat || global.Estat);
   ctx.aprend = aprendizado(L.fca, todos, dreIdx.maxReal);
