@@ -207,8 +207,8 @@ console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor pre
 
   await pg.click('.s-item[data-vw="pedido"]'); await pg.waitForTimeout(200);
   // o filtro do padrão: botão "Unidade" + contagem, Todos, only, busca (Renan: "Totalmente fora do padrão o filtro")
-  af('admin em Pedidos: filtro do padrão com Todos + as 14', await pg.$$eval('#ms-uped .ms-opt', o => o.length) === 15 && !!(await pg.$('#ms-uped .ms-all'))
-    && await pg.$$eval('#ms-uped .ms-only', o => o.length) === 14 && await pg.$eval('#ms-uped .ms-btn', b => [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('')).then(t => t.replace(/\s+/g, '') === 'Unidade') && !(await pg.$('#ms-uped input[type=radio]')));
+  af('admin em Pedidos: filtro do padrão com Todos + as 15 (com Goiânia)', await pg.$$eval('#ms-uped .ms-opt', o => o.length) === 16 && !!(await pg.$('#ms-uped .ms-opt input[data-v="GNA"]')) && !!(await pg.$('#ms-uped .ms-all'))
+    && await pg.$$eval('#ms-uped .ms-only', o => o.length) === 15 && await pg.$eval('#ms-uped .ms-btn', b => [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('')).then(t => t.replace(/\s+/g, '') === 'Unidade') && !(await pg.$('#ms-uped input[type=radio]')));
   af('nada marcado = pedidos de todas as unidades, com a coluna Unidade', await pg.$$eval('#tb-meus tbody tr', t => t.length) === 5 && /Unidade/.test(await txt(pg, '#tb-meus thead')) && await txt(pg, '#tit-meus') === 'Pedidos das unidades');
   await pg.click('#ms-uped .ms-btn'); await pg.fill('#ms-uped .ms-search input', 'cba'); await pg.waitForTimeout(100);
   af('busca do filtro acha as 3 de CBA', await pg.$$eval('#ms-uped .ms-opt', o => o.length) === 3);
@@ -222,7 +222,9 @@ console.log('\n1 · Admin — Resumo Gerencial, Necessidade, Estoque e valor pre
   await pg.keyboard.press('Escape');
   await pg.evaluate(() => { const w = document.getElementById('ms-uped'); w._sel.clear(); w._render(''); renderMeus(); });
   await pg.click('#bt-novo'); await pg.waitForTimeout(100);
-  af('sem filtro, a caixa oferece as 14 (+ Selecione…) e guarda a última escolhida', await pg.$eval('#f-uni', e => e.options.length + '|' + e.value + '|' + e.disabled) === '15|CBA T2|false');
+  af('sem filtro, a caixa oferece as 15 (+ Selecione…) e guarda a última escolhida', await pg.$eval('#f-uni', e => e.options.length + '|' + e.value + '|' + e.disabled) === '16|CBA T2|false');
+  await pg.selectOption('#f-uni', 'GNA'); await pg.waitForTimeout(50);
+  af('Goiânia na caixa: projeto AUTO SERVIÇO', JSON.stringify(await pg.$$eval('#f-proj option', o => o.map(x => x.value).filter(Boolean))) === '["AUTO SERVIÇO"]');
   await pg.selectOption('#f-uni', ''); await pg.waitForTimeout(50);
   af('sem unidade, o projeto espera por ela', await pg.$$eval('#f-proj option', o => o.length) === 1 && /Escolha a unidade/.test(await txt(pg, '#f-proj')));
   await pg.selectOption('#f-uni', 'CGR'); await pg.waitForTimeout(50);

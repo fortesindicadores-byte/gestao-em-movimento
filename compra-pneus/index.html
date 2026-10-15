@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610151100">
+<meta name="build" content="202610151230">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -515,7 +515,7 @@ let sb=null, ADMIN=false, PERFIL_UNIS=[], NOME='';
 /* ── listas do pedido (as mesmas da planilha que a unidade usava) ── */
 const BANDAS=['Tração/Borrachudo','Liso/Direcional','Leve','Empilhadeira'];
 const MEDIDAS=['5.00-8','6.00-9','7.00-12','8.25-15','28x9-15','205','215','225','235','275','295'];
-const UNIDADES=['ANG','BLC','CBA T1','CBA T1 WH','CBA T2','CGR','FLP','GRL','MCC T1','MCC T2','NFR','PIR','PLT','RON'];
+const UNIDADES=['ANG','BLC','CBA T1','CBA T1 WH','CBA T2','CGR','FLP','GNA','GRL','MCC T1','MCC T2','NFR','PIR','PLT','RON'];
 /* Projetos de cada unidade = Nível 3 da aba Frota do DRE (05/10/2026), sem os
    inativos e sem os de estrutura (Administrativo, Terceiros, Mobilização,
    Corporativo). CBA e MCC separados por tier: EMPURRADA→T1 · APOIO→T1 WH (só
@@ -528,6 +528,7 @@ const PROJETOS={
   'CBA T2':['ROTA','VAN','AUTO SERVIÇO','INSUMOS'],
   'CGR':['ROTA','VAN','AUTO SERVIÇO'],
   'FLP':['ROTA','VAN','AUTO SERVIÇO','APOIO'],
+  'GNA':['AUTO SERVIÇO'],   // Goiânia (Renan, 15/10/2026): no DRE só AUTO SERVIÇO - GOI; sem branch no Prolog ainda
   'GRL':['ROTA','VAN','APOIO','UDC'],
   'MCC T1':['EMPURRADA'],
   'MCC T2':['ROTA','VAN','PA PETRÓPOLIS'],
@@ -1027,6 +1028,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610151100"></script>
+<script src="../assets/build-check.js?v=202610151230"></script>
 </body>
 </html>
