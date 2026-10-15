@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610152100">
+<meta name="build" content="202610152200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -377,7 +377,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
 <script src="../assets/balanco-massa.js?v=202610131400"></script>
-<script src="../assets/dispersao-km.js?v=202610152100"></script>
+<script src="../assets/dispersao-km.js?v=202610152200"></script>
 </head>
 <body>
 <div class="app">
@@ -1851,7 +1851,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_km_v15';  // v15: placas de set/26+ pela planilha de viagens, T1 fora · v14: placas de set/26+ pela aba Abertura · v13: set/26 do banco ligado (com o balanço dele) · v12: balanço sem resposta do banco não cai na aba · v11: set/26 do banco desligado até validar · v10: set/26 em diante do banco (Dispersão de km importada) · v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
+const CACHE_KEY='bi_cache_km_v16';  // v16: placa T1 pela Km/L fora das placas de T2 · v15: placas de set/26+ pela planilha de viagens, T1 fora · v14: placas de set/26+ pela aba Abertura · v13: set/26 do banco ligado (com o balanço dele) · v12: balanço sem resposta do banco não cai na aba · v11: set/26 do banco desligado até validar · v10: set/26 em diante do banco (Dispersão de km importada) · v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
@@ -1999,6 +1999,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610152100"></script>
+<script src="../assets/build-check.js?v=202610152200"></script>
 </body>
 </html>

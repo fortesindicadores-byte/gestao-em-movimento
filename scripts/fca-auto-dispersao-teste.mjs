@@ -150,6 +150,12 @@ console.log('\n══ 5 · planilha de viagens: remunerado por placa de Rota, AS
   af('placa só de Rota leva o km inteiro da Km/L', pr('XYZ9A99').km_real === 300);
   af('placa da Km/L na Rota sem viagem na planilha entra com remunerado 0', pr('NOV0A00') && pr('NOV0A00').km_rem === 0 && pr('NOV0A00').km_real === 500 && pr('NOV0A00').semViagem);
   af('nenhuma linha T1 no resultado', !rr.some(x => /^Empurrada/.test(x.projeto)));
+  // placa que a Km/L põe na Empurrada, sem a parte T1 na lista do banco (set/26): fora da análise de T2
+  const rrT1 = DK.realPlacas([{ vigencia: '2026-09', unidade: 'MCC', projeto: 'Rota', placa: 'JBL5H95', km_rem: 138 },
+    { vigencia: '2026-09', unidade: 'MCC', projeto: 'Rota', placa: 'RYY3F71', km_rem: 1500 }],
+    [{ vigencia: '2026-09', unidade: 'MCC', projeto: 'Rota', placa: 'JBL5H95', placa_origem: 'JBL5H95', km: 11254, projeto_kml: 'EMPURRADA - MCC' },
+     { vigencia: '2026-09', unidade: 'MCC', projeto: 'Rota', placa: 'RYY3F71', placa_origem: 'RYY3F71', km: 2707, projeto_kml: 'ROTA - MCC' }], []);
+  af('placa T1 pela Km/L (JBL5H95, 138 km rem. na Rota) fica fora da análise de T2', !rrT1.some(x => x.placa === 'JBL5H95') && rrT1.t1Fora.length === 1 && rrT1.find(x => x.placa === 'RYY3F71').km_real === 2707, JSON.stringify(rrT1));
 
   // FCA: T1 fora em todos os meses; Abertura só com Real; set/26 pela planilha de viagens (CBA Rota = CBA T2)
   const AB5 = { cols: ['UNIDADE', 'MÊS', 'PROJETO', 'Placa', 'Remunerado', 'Real'], rows: [

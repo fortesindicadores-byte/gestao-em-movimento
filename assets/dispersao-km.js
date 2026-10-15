@@ -420,14 +420,19 @@
   function realPlacas(rem, det, lista) {
     const kmPl = new Map(); (det || []).forEach(d => { const k = d.vigencia + '|' + d.placa; kmPl.set(k, (kmPl.get(k) || 0) + (+d.km || 0)); });
     const t1 = new Map(); (lista || []).forEach(p => { if (!/^Empurrada/.test(p.projeto)) return; const k = p.vigencia + '|' + p.placa; t1.set(k, (t1.get(k) || 0) + (+p.km_rem || 0)); });
+    // placa que a aba Km/L põe na Empurrada (T1) e fez umas viagens de Rota: a lista de placas do banco
+    // pode não ter a parte T1 dela (set/26 não tem), e ela levaria o mês inteiro para a Rota (JBL5H95 em
+    // MCC: +11.116 km sobre 138 remunerados). É placa T1: fica fora da análise por placa de T2.
+    const t1Kml = new Set(); (det || []).forEach(d => { const pk = projetoKml(d.projeto_kml); if (pk && /^Empurrada/.test(pk.proj)) t1Kml.add(d.vigencia + '|' + d.placa); });
     const porPl = new Map(); (rem || []).forEach(r => { const k = r.vigencia + '|' + r.placa; (porPl.get(k) || porPl.set(k, []).get(k)).push(r); });
-    const out = [];
+    const out = []; out.t1Fora = [];
     porPl.forEach((rs, k) => {
+      if (t1Kml.has(k) && !t1.has(k)) { rs.forEach(r => out.t1Fora.push(r)); return; }
       const km = kmPl.get(k) || 0, w1 = t1.get(k) || 0, wT = rs.reduce((s, r) => s + (+r.km_rem || 0), 0) + w1;
       rs.forEach(r => out.push({ ...r, km_real: r2(wT > 0 ? km * (+r.km_rem || 0) / wT : (w1 > 0 ? 0 : km / rs.length)), t1: w1 > 0 }));
     });
     const vigs = new Set((rem || []).map(r => r.vigencia));
-    (det || []).forEach(d => { if (!vigs.has(d.vigencia) || /^Empurrada/.test(d.projeto) || porPl.has(d.vigencia + '|' + d.placa)) return;
+    (det || []).forEach(d => { if (!vigs.has(d.vigencia) || /^Empurrada/.test(d.projeto) || t1Kml.has(d.vigencia + '|' + d.placa) || porPl.has(d.vigencia + '|' + d.placa)) return;
       out.push({ vigencia: d.vigencia, unidade: d.unidade, projeto: d.projeto, placa: d.placa, placa_origem: d.placa_origem,
         viagens_prim: 0, viagens_rec: 0, viagens_not: 0, km_rem: 0, km_real: r2(+d.km || 0), semViagem: true }); });
     return out;

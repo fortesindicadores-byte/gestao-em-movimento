@@ -913,7 +913,7 @@ A conta (`remPlacas`): 1ª viagem = km da 1ª ÷ viagens da 1ª da 01-BD (`dispe
 - **GNA:** 80 viagens contra 106 na 01-BD. As 106 são todas as linhas de Goiânia, com as 18 Spot e as 4 MKT; o print da 01-BD contou tudo.
 - **PLT Rota:** 459 contra 456, por causa das 3 AS que viraram Rota.
 
-O realizado (`realPlacas`) = km da placa na aba Km/L, repartido pelas linhas dela na proporção do remunerado. A parte T1 (Empurrada da `dispersao_placa`) entra no peso e fica fora, senão a placa de Empurrada com algumas viagens de Rota levaria o mês inteiro para a Rota. Placa da Km/L num projeto T2 sem viagem na planilha entra com remunerado 0.
+O realizado (`realPlacas`) = km da placa na aba Km/L, repartido pelas linhas dela na proporção do remunerado. A parte T1 (Empurrada da `dispersao_placa`) entra no peso e fica fora, senão a placa de Empurrada com algumas viagens de Rota levaria o mês inteiro para a Rota. Placa da Km/L num projeto T2 sem viagem na planilha entra com remunerado 0 ("sem viagem remunerada"). **Placa que a aba Km/L põe na Empurrada fica fora da análise de T2** quando a lista do banco não tem a parte T1 dela (set/26 não tem). Achado na 1ª conferência real: na MCC T2 Rota, JBL5H95 aparecia com +11.116 km sobre 138 remunerados e JDF1E79 com +7.402 km. Regra do Renan (15/10/2026): **placas só T2 em setembro**; FCA T2 com dispersão na árvore usa a dispersão por placa nas causas e ações; **FCA T1 com dispersão é causa a analisar, sem nível de placa**; contratos T2 usam a dispersão por placa.
 
 **O total por unidade × projeto não muda:** segue a `dispersao_placa` no `kmRodado`, e a Árvore não lê nada disso.
 

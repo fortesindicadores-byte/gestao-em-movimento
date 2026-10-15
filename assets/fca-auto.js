@@ -804,7 +804,7 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
       // (indexaPlacas: aba Abertura até ago/26, planilha de viagens de set/26 em diante, T1 fora); do projeto, senão da unidade
       const abT = (ctx.abertura || {})[f.uni + '|' + f.vig] || [], abP = abT.filter(r => r.proj === f.proj), abU = abP.length ? abP : abT;
       const ofPl = top(abU.filter(r => r.delta > 0), 5, r => r.delta)
-        .map(r => `${r.placa} +${br(r.delta, 0)} km (${r.rem >= 500 ? sinalPct(r.delta / r.rem * 100, 0) : 'só ' + br(r.rem, 0) + ' km rem.'})`);
+        .map(r => `${r.placa} +${br(r.delta, 0)} km (${r.rem >= 500 ? sinalPct(r.delta / r.rem * 100, 0) : r.rem > 0 ? 'só ' + br(r.rem, 0) + ' km rem.' : 'sem viagem remunerada'})`);
       acao('Km / rota', `Conferir as viagens que não remuneram e a roteirização no ${painelKm}${vg.length ? ' (no mês: ' + vg.join(', ') + ' de ' + br(dp.vgTot, 0) + ' viagens)' : ''}`, ofPl);
     } else if (Math.abs(b.vol) >= D.minimo) D.obs.push(`Dispersão de km: −${br(-dkm, 0)} km (${sinalPct(dpct, 1)}) · economizou ${rs(-b.vol)}`);
   }
@@ -1071,7 +1071,7 @@ function diagManut(f, ctx, D, causa, acao, base) {
         : cruz.length ? `placas variáveis no km rem.: não é km a mais` : `${ct.length} placas faturadas (${rs(tc)}) pelo km de ${vigLbl(kmMes)}`)
       + (fx2.length ? ` · ${fx2.length} na faixa 2` : ''), cContr.ov, { prio: 2 });
     if (kmPesa) { acao('Contrato', `Rever as viagens que não remuneram e a roteirização das placas listadas`,
-      top(acima, 5, x => x.rsDelta || x.delta).map(x => `${x.placa} +${br(x.delta, 0)} km (${x.rem >= 500 ? sinalPct(x.delta / x.rem * 100, 0) : 'só ' + br(x.rem, 0) + ' km remunerados'})${x.rsDelta != null ? ', ' + rs(x.rsDelta) : ''}`));
+      top(acima, 5, x => x.rsDelta || x.delta).map(x => `${x.placa} +${br(x.delta, 0)} km (${x.rem >= 500 ? sinalPct(x.delta / x.rem * 100, 0) : x.rem > 0 ? 'só ' + br(x.rem, 0) + ' km remunerados' : 'sem viagem remunerada'})${x.rsDelta != null ? ', ' + rs(x.rsDelta) : ''}`));
       acao('Contrato', `Usar placa de contrato fixo nas rotas mais longas`); }
     else acao('Contrato', `Conferir a fatura do contrato nas placas listadas: km cobrado × km rodado${fx2.length ? ' e as que foram para a faixa 2' : ''}`,
       top(ct, 5, p => p.v.custo_mes).map(p => `${p.ent} ${rs(p.v.custo_mes)}${fin(p.v.km_mes) ? ', ' + br(p.v.km_mes, 0) + ' km' : ''}${(p.v.faixas || 0) >= 2 ? ', faixa 2' : ''}`));
