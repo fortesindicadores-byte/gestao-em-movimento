@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610152000">
+<meta name="build" content="202610152100">
 <title>FCA Automático</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -885,12 +885,11 @@ table.rel.fa-rel th:nth-child(4){width:16%;}table.rel.fa-rel th:nth-child(5){wid
 .fa-kc .kcard-fato{padding:0 15px;font-size:15.5px!important;margin-top:6px;}
 .fa-kc .kcard-desvio{padding:0 15px;font-size:11.5px;margin-top:6px;line-height:1.45;}
 .fa-kc .fk-ytd{margin-top:3px;font-weight:600;color:var(--txt3);}
-.fa-kc .fk-in{margin:10px 15px 0;padding:10px 12px;border-radius:4px;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.05);}
-body.claro .fa-kc .fk-in{background:rgba(15,23,42,.05);border-color:rgba(15,23,42,.07);}
+.fa-kc .fk-in{margin:11px 15px 0;padding:11px 0 0;border-top:1px solid var(--linha);}
 .fa-kc .kcard-causa{padding:0;margin:0 0 7px;font-size:11.5px;font-weight:700;color:var(--txt2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .fa-kc .kcard-ac{padding:0;margin:0!important;font-size:12.5px!important;color:var(--txt)!important;line-height:1.45;min-height:0;}
 .fa-kc .fk-n{color:var(--laranja);font-weight:800;}
-.fa-kc .kcard-meta{padding:0 15px;margin-top:11px!important;}
+.fa-kc .kcard-meta{padding:11px 15px 0;margin-top:11px!important;border-top:1px solid var(--linha);}
 .kcol-head .ktot{margin-left:auto;font-weight:700;color:var(--txt3);letter-spacing:.3px;text-transform:none;}
 .kmodal{width:min(980px,96vw)!important;}
 .fm-sec{margin-top:16px;}
@@ -957,7 +956,7 @@ body.claro table.rel.fa-rel.din tbody.fg tr+tr td.ln{border-top-color:rgba(15,23
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/arvore-impacto.js"></script>
 <script src="../assets/seara-bench-modelo.js"></script>
-<script src="../assets/fca-auto.js?v=202610152000"></script>
+<script src="../assets/fca-auto.js?v=202610152100"></script>
 </head>
 <body>
 <div class="app">
@@ -1328,7 +1327,7 @@ function kcardHTML(x){ const {f,d,l,r}=x;
   return `<div class="kcard fa-kc"${ACOES_OK?' draggable="true"':''} data-id="${esc(f.id)}" data-k="${esc(l.k)}">
     <div class="kcard-top"><span class="korg cst">Custos</span> ${esc(f.uni)} · ${esc(f.proj)} · ${esc(f.vigLbl.toUpperCase())}</div>
     <div class="kcard-fato">${esc(f.pac)}</div>
-    <div class="kcard-desvio"><span class="kl">Fato:</span> ${nl(FA.desvioCurto(f))}${d.ano?`<div class="fk-ytd"><span class="kl">YTD</span> ${tri(esc(d.ano.txt))}</div>`:''}</div>
+    <div class="kcard-desvio"><span class="kl">Fato:</span> ${nl(String(FA.desvioCurto(f)).split('\n')[0])}${d.ano?`<div class="fk-ytd"><span class="kl">YTD</span> ${tri(esc(d.ano.txt))}</div>`:''}</div>
     <div class="fk-in">
       ${cz?`<div class="kcard-causa"><span class="kl">Causa ${l.ci+1}:</span> ${esc(cz)}</div>`:''}
       <div class="kcard-ac">${l.a.num?`<b class="fk-n">${esc(l.a.num)}</b> `:''}${esc(l.a.txt)}</div>
@@ -1647,6 +1646,6 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610152000"></script>
+<script src="../assets/build-check.js?v=202610152100"></script>
 </body>
 </html>
