@@ -1249,11 +1249,11 @@ function contexto(L, deps) {
   // a aba traz só UNIDADE · MÊS · PROJETO · Placa · Remunerado; o realizado da placa é o km dela na aba Km/L
   // no mês (o mesmo da Dispersão do banco). Placa em dois projetos: o km entra uma vez, no de mais km rem.
   const abertura = indexaAbertura(L.abertura), kmPl = dispT.info.kmPlaca;
-  if (kmPl) Object.values(abertura).forEach(lst => {
+  if (kmPl) {   // entre TODAS as unidades/tiers: a placa em Empurrada (T1) e Rota (T2) leva o km uma vez só
     const visto = new Set();
-    lst.slice().sort((a, b) => b.rem - a.rem).forEach(r => { if (!r.semReal) return;
+    Object.values(abertura).flat().sort((a, b) => b.rem - a.rem).forEach(r => { if (!r.semReal) return;
       const k = r.vig + '|' + r.placa; r.real = visto.has(k) ? 0 : (kmPl[k] || 0); visto.add(k); r.delta = r.real - r.rem; r.realKml = true; });
-  });
+  }
   const ctx = { dreAcc: dreIdx.acc, maxVig: dreIdx.maxReal, todos, disp: dispT.acc, dispInfo: dispT.info, abertura, kml: kmlIdx, cat: CAT, fatoRede: FU,
     fatoUni, quartisRede, fatoPlaca, fatoMot, carta, seara: searaIdx, ginfo: indexaGinfo(L.ginfo || {}, deps.hoje), prolog, ArvImpacto: deps.ArvImpacto || global.ArvImpacto };
   ctx.rede = rede(FU, deps.Estat || global.Estat);
