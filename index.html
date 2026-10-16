@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610161900">
+<meta name="build" content="202610161930">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -498,6 +498,37 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11.
 .bt-run{border:0;border-radius:8px;padding:8px 14px;font-family:inherit;font-size:11px;font-weight:700;
   background:var(--laranja);color:#2A1405;cursor:pointer;white-space:nowrap;}
 .bt-run:hover{filter:brightness(1.08);}
+/* ── Master: acesso total aos cadastros ─────────────────────────────────── */
+.mst-bar{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-size:11px;color:var(--txt3);font-weight:600;}
+.mst-bar span{flex:1;min-width:0;}
+.mst-chip{display:inline-block;border-radius:10px;padding:2px 8px;font-size:9.5px;font-weight:800;margin:1px 4px 1px 0;white-space:nowrap;
+  border:1px solid currentColor;}
+.mst-chip.ok{color:var(--verde);} .mst-chip.at{color:var(--ambar);} .mst-chip.er{color:var(--vermelho);} .mst-chip.nt{color:var(--txt3);}
+.mst-chip.ms{color:var(--laranja);}
+.acc-tbl td.mst-dt{color:var(--txt3);white-space:nowrap;font-variant-numeric:tabular-nums;}
+.mst-cx{width:min(620px,100%);max-height:min(90vh,760px);}
+.mst-corpo{flex:1;min-height:0;overflow:auto;padding:0 16px 10px;}
+.mst-form{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;}
+.mst-form label{display:flex;flex-direction:column;gap:4px;font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;}
+.mst-form label.mst-w{grid-column:1/-1;}
+.mst-form input[type=text],.mst-form input[type=email],.mst-form select{font-family:inherit;font-size:12px;color:var(--txt);text-transform:none;letter-spacing:0;
+  background:var(--side);border:1px solid var(--card-brd);border-radius:8px;padding:8px 10px;outline:none;}
+.mst-form input:focus,.mst-form select:focus{border-color:color-mix(in srgb,var(--laranja) 55%,transparent);}
+.mst-form label.mst-ck{flex-direction:row;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:11.5px;color:var(--txt2);}
+.mst-form label.mst-ck input{accent-color:var(--laranja);width:15px;height:15px;}
+.mst-sec{margin:14px 0 6px;font-size:9.5px;font-weight:800;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;}
+.mst-acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.mst-acoes input{flex:1;min-width:150px;font-family:inherit;font-size:12px;color:var(--txt);background:var(--side);
+  border:1px solid var(--card-brd);border-radius:8px;padding:7px 10px;outline:none;}
+.mst-acoes button{border-radius:8px;padding:7px 12px;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;
+  background:transparent;color:var(--txt2);border:1px solid var(--card-brd);white-space:nowrap;}
+.mst-acoes button:hover{color:var(--txt);border-color:var(--laranja);}
+.mst-senha{margin-top:12px;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:color-mix(in srgb,var(--verde) 12%,transparent);border:1px solid color-mix(in srgb,var(--verde) 40%,transparent);font-size:11.5px;color:var(--txt);}
+.mst-senha code{font-size:15px;font-weight:800;letter-spacing:1px;user-select:all;}
+.mst-senha i{flex:1 1 100%;font-style:normal;font-size:10px;color:var(--txt3);}
+#mst-st.err{color:var(--vermelho);}
+@media(max-width:760px){ .acc-tbl.mst-tbl .mst-hide{display:none;} .mst-form{grid-template-columns:1fr;} }
 .bt-run:disabled{opacity:.45;cursor:default;filter:none;}
 </style>
 <script src="assets/gviz-cache.js?v=202609050530"></script>
@@ -610,6 +641,7 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11.
     <button class="s-item active" id="atab-pending" onclick="switchAdminTab('pending')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Pendentes<span class="admin-cnt" id="admin-cnt-pending">0</span></button>
     <button class="s-item" id="atab-approved" onclick="switchAdminTab('approved')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Usuários<span class="admin-cnt" id="admin-cnt-approved">0</span></button>
     <button class="s-item" id="atab-blocked" onclick="switchAdminTab('blocked')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="5.5" y1="5.5" x2="18.5" y2="18.5"/></svg> Bloqueados<span class="admin-cnt" id="admin-cnt-blocked">0</span></button>
+    <button class="s-item" id="atab-master" style="display:none" onclick="switchAdminTab('master')" title="Todos os cadastros, com acesso total"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="10" r="2.5"/><path d="M8.5 16a4 4 0 0 1 7 0"/></svg> Master<span class="admin-cnt" id="admin-cnt-master">0</span></button>
 
     <div class="s-sec">Atalhos</div>
     <button class="s-item" onclick="exportUsersExcel()" title="Exportar nome, e-mail, telefone e filial de todos os usuários">
@@ -659,6 +691,50 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11.
     <div class="mdl-pe">
       <span class="bs-st" id="bases-st"></span>
       <button class="bt-run" id="bases-run" onclick="pedeCarga()">Atualizar agora</button>
+    </div>
+  </div>
+</div>
+
+<!-- Master: editar qualquer cadastro, liberar, senha nova, criar usuário -->
+<div class="mdl" id="mdl-master" style="display:none" onclick="if(event.target===this)fechaMaster()">
+  <div class="mdl-cx mst-cx">
+    <div class="mdl-top"><b id="mst-tit">Editar cadastro</b>
+      <button class="mdl-x" onclick="fechaMaster()" title="Fechar">×</button></div>
+    <p class="mdl-sub" id="mst-sub"></p>
+    <div class="mst-corpo">
+      <div class="mst-form">
+        <label>Nome<input type="text" id="mst-nome" autocomplete="off"></label>
+        <label>E-mail<input type="email" id="mst-email" autocomplete="off"></label>
+        <label>Telefone<input type="text" id="mst-tel" autocomplete="off"></label>
+        <label>Situação<select id="mst-status">
+          <option value="approved">Ativo</option><option value="pending">Pendente</option><option value="blocked">Bloqueado</option>
+        </select></label>
+        <label class="mst-w">Unidades do FCA (separadas por vírgula)<input type="text" id="mst-uni" placeholder="ex.: CBA T1,MCC T2" autocomplete="off"></label>
+        <label class="mst-ck"><input type="checkbox" id="mst-admin"> Admin (todas as unidades)</label>
+        <label class="mst-ck"><input type="checkbox" id="mst-master"> Master (acesso total)</label>
+        <label class="mst-w" id="mst-senha-nova">Senha (em branco = gerar uma)<input type="text" id="mst-pass-novo" autocomplete="off"></label>
+      </div>
+      <div id="mst-ops">
+        <div class="mst-sec">Acesso</div>
+        <div class="mst-acoes">
+          <button onclick="masterLiberar()" title="Confirma o e-mail e aprova o cadastro">Liberar cadastro</button>
+          <button onclick="masterSenha(true)">Gerar senha nova</button>
+          <button onclick="masterEncerrar()" title="Derruba as sessões abertas; a pessoa precisa entrar de novo">Encerrar sessões</button>
+        </div>
+        <div class="mst-acoes" style="margin-top:8px">
+          <input type="text" id="mst-pass" placeholder="Definir uma senha (mín. 6 caracteres)" autocomplete="off">
+          <button onclick="masterSenha(false)">Definir senha</button>
+        </div>
+      </div>
+      <div class="mst-senha" id="mst-senha" style="display:none">
+        Senha: <code id="mst-senha-v"></code>
+        <button class="btn-approve" onclick="masterCopia()">Copiar e-mail e senha</button>
+        <i>Ela aparece só agora. Mande à pessoa por um canal privado.</i>
+      </div>
+    </div>
+    <div class="mdl-pe">
+      <span class="bs-st" id="mst-st"></span>
+      <button class="bt-run" id="mst-salvar" onclick="masterSalva()">Salvar</button>
     </div>
   </div>
 </div>
@@ -940,7 +1016,7 @@ function showAdmin() {
   const name = currentUser?.user_metadata?.name || currentUser?.email?.split('@')[0] || '';
   setQuem('admin', name);
   adminTabActive = 'pending';
-  ['pending','approved','blocked'].forEach(t =>
+  ['pending','approved','blocked','master'].forEach(t =>
     document.getElementById(`atab-${t}`).classList.toggle('active', t === 'pending'));
   loadAdminData();
 }
@@ -1240,6 +1316,7 @@ async function loadAdminData() {
     if (res.error) res = await sb.from('fca_profiles').select('user_id,unidade,is_admin');
     _fcaProf = {}; (res.data || []).forEach(p => { _fcaProf[p.user_id] = p; });
   } catch (e) { _fcaProf = {}; }
+  await loadMaster();
   renderAdminUsers();
   updateAdminCounts();
 }
@@ -1390,7 +1467,7 @@ function updateAdminCounts() {
 
 function switchAdminTab(tab) {
   adminTabActive = tab;
-  ['pending','approved','blocked'].forEach(t =>
+  ['pending','approved','blocked','master'].forEach(t =>
     document.getElementById(`atab-${t}`).classList.toggle('active', t === tab));
   renderAdminUsers();
 }
@@ -1414,6 +1491,7 @@ function trocaAccModo() {
 }
 function renderAdminUsers() {
   syncAccModoBtn();
+  if (adminTabActive === 'master') { renderMaster(); return; }
   let filtered = allApprovals.filter(u => u.status === adminTabActive);
   if (adminSearch) filtered = filtered.filter(u => ((u.name || '') + ' ' + (u.email || '')).toLowerCase().includes(adminSearch));
   const list = document.getElementById('admin-users-list');
@@ -1552,6 +1630,169 @@ async function removeUser(idx) {
   await loadAdminData();
 }
 
+/* ── Administrador Master ────────────────────────────────────────────────────
+   Acesso total aos cadastros (Renan, 16/10/2026). Tudo passa pelas funções
+   master_* do banco (scripts/portal-master.sql), que conferem se quem chama
+   é Master; a aba só aparece quando master_eu() responde true. Lista TODOS os
+   cadastros de auth.users, inclusive os que travaram no e-mail e nunca
+   chegaram à aprovação.                                                     */
+let _master = false, masterUsers = [], _mstAtual = null;
+async function loadMaster() {
+  try { const { data, error } = await sb.rpc('master_eu'); _master = !error && data === true; }
+  catch (e) { _master = false; }
+  const tab = document.getElementById('atab-master');
+  if (tab) tab.style.display = _master ? '' : 'none';
+  if (!_master) { masterUsers = []; if (adminTabActive === 'master') switchAdminTab('pending'); return; }
+  try { const { data, error } = await sb.rpc('master_usuarios'); masterUsers = error ? [] : (data || []); }
+  catch (e) { masterUsers = []; }
+  const c = document.getElementById('admin-cnt-master'); if (c) c.textContent = masterUsers.length;
+}
+const _mstEsc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const _mstDt = t => t ? new Date(t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+function _mstSituacao(u) {
+  const st = {approved:['ok','Ativo'],pending:['at','Pendente'],blocked:['er','Bloqueado']}[u.status] || ['at','Sem aprovação'];
+  let h = `<span class="mst-chip ${st[0]}">${st[1]}</span>`;
+  if (!u.confirmado) h += '<span class="mst-chip er">E-mail não confirmado</span>';
+  return h;
+}
+function _mstPerfil(u) {
+  let h = u.master ? '<span class="mst-chip ms">Master</span>' : '';
+  if (u.admin) h += '<span class="mst-chip nt">Admin</span>';
+  else if (u.unidade) h += `<span class="mst-chip nt">${_mstEsc(u.unidade)}</span>`;
+  return h || '—';
+}
+function renderMaster() {
+  const list = document.getElementById('admin-users-list');
+  list.classList.add('lista');
+  let rows = masterUsers.slice();
+  if (adminSearch) rows = rows.filter(u => ((u.nome || '') + ' ' + (u.email || '')).toLowerCase().includes(adminSearch));
+  const semConf = masterUsers.filter(u => !u.confirmado).length, semApr = masterUsers.filter(u => !u.status).length;
+  const bar = `<div class="mst-bar"><span>${masterUsers.length} cadastros · ${semConf} sem e-mail confirmado · ${semApr} sem aprovação</span>
+    <button class="btn-approve" onclick="abreMaster(null)">+ Novo usuário</button></div>`;
+  if (!rows.length) { list.innerHTML = bar + `<div class="admin-empty">Nenhum cadastro encontrado.</div>`; return; }
+  list.innerHTML = bar + `<div class="acc-card" data-mt-wrap><table class="acc-tbl mst-tbl"><thead><tr>
+    <th>Usuário</th><th>Situação</th><th class="mst-hide">Perfil</th><th class="mst-hide">Último acesso</th><th></th></tr></thead><tbody>${
+    rows.map(u => `<tr data-id="${u.id}">
+      <td><div class="acc-u"><div class="user-avatar">${_mstEsc((u.nome || u.email || '?')[0].toUpperCase())}</div>
+        <div class="user-info"><div class="user-name">${_mstEsc(u.nome || '—')}</div><div class="user-email">${_mstEsc(u.email)}</div></div></div></td>
+      <td>${_mstSituacao(u)}</td>
+      <td class="mst-hide">${_mstPerfil(u)}</td>
+      <td class="mst-dt mst-hide">${_mstDt(u.ultimo)}</td>
+      <td class="acc-act"><button class="btn-unblock" onclick="abreMaster('${u.id}')">Editar</button></td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+function _mstMsg(t, err) { const e = document.getElementById('mst-st'); e.textContent = t || ''; e.classList.toggle('err', !!err); }
+function _mstErro(e) { return (e && (e.message || e.details)) || String(e); }
+function abreMaster(id) {
+  const u = id ? masterUsers.find(x => x.id === id) : null;
+  _mstAtual = u;
+  const v = (k, x) => { document.getElementById(k).value = x == null ? '' : x; };
+  document.getElementById('mst-tit').textContent = u ? 'Editar cadastro' : 'Novo usuário';
+  document.getElementById('mst-sub').innerHTML = u
+    ? `Cadastro em ${_mstDt(u.criado)} · último acesso ${_mstDt(u.ultimo)} · ${u.sessoes || 0} sessão(ões) aberta(s) · ${_mstSituacao(u)}`
+    : 'Cria o acesso já confirmado e aprovado, sem depender do e-mail.';
+  v('mst-nome', u ? u.nome : ''); v('mst-email', u ? u.email : ''); v('mst-tel', u ? u.telefone : '');
+  v('mst-status', u ? (u.status || 'pending') : 'approved'); v('mst-uni', u ? u.unidade : '');
+  v('mst-pass', ''); v('mst-pass-novo', '');
+  document.getElementById('mst-status').disabled = !u;
+  document.getElementById('mst-admin').checked = !!(u && u.admin);
+  document.getElementById('mst-master').checked = !!(u && u.master);
+  document.getElementById('mst-ops').style.display = u ? '' : 'none';
+  document.getElementById('mst-senha-nova').style.display = u ? 'none' : '';
+  document.getElementById('mst-senha').style.display = 'none';
+  document.getElementById('mst-salvar').textContent = u ? 'Salvar' : 'Criar usuário';
+  _mstMsg('');
+  document.getElementById('mdl-master').style.display = 'flex';
+  setTimeout(() => document.getElementById('mst-nome').focus(), 30);
+}
+function fechaMaster() { document.getElementById('mdl-master').style.display = 'none'; _mstAtual = null; }
+function _mstMostraSenha(senha) {
+  document.getElementById('mst-senha-v').textContent = senha;
+  document.getElementById('mst-senha').style.display = '';
+}
+function masterCopia() {
+  const email = (document.getElementById('mst-email').value || '').trim().toLowerCase();
+  const txt = `Gestão em Movimento\nE-mail: ${email}\nSenha: ${document.getElementById('mst-senha-v').textContent}\n${location.origin}${location.pathname}`;
+  (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(
+    () => _mstMsg('Copiado.'), () => _mstMsg('Não deu para copiar; selecione a senha na tela.', true));
+}
+async function _mstRecarrega() {
+  const id = _mstAtual && _mstAtual.id;
+  await loadAdminData();
+  if (id) _mstAtual = masterUsers.find(x => x.id === id) || _mstAtual;
+}
+async function masterSalva() {
+  const nome = document.getElementById('mst-nome').value.trim(), email = document.getElementById('mst-email').value.trim(),
+        tel = document.getElementById('mst-tel').value.trim(), uni = document.getElementById('mst-uni').value.trim(),
+        adm = document.getElementById('mst-admin').checked, mst = document.getElementById('mst-master').checked;
+  const bt = document.getElementById('mst-salvar'); bt.disabled = true; _mstMsg('Gravando…');
+  try {
+    let id;
+    if (!_mstAtual) {
+      if (!nome || !email) throw new Error('Informe nome e e-mail.');
+      const { data, error } = await sb.rpc('master_criar', { p_email: email, p_nome: nome, p_telefone: tel || null,
+        p_senha: document.getElementById('mst-pass-novo').value.trim() || null, p_unidade: adm ? null : (uni || null) });
+      if (error) throw error;
+      id = data.id;
+      if (adm) { const r = await sb.rpc('master_altera', { p_user: id, p_dados: { admin: true } }); if (r.error) throw r.error; }
+      if (mst) { const r = await sb.rpc('master_define', { p_user: id, p_master: true }); if (r.error) throw r.error; }
+      _mstMostraSenha(data.senha);
+      await loadAdminData();
+      _mstAtual = masterUsers.find(x => x.id === id) || { id };
+      document.getElementById('mst-tit').textContent = 'Editar cadastro';
+      document.getElementById('mst-ops').style.display = '';
+      document.getElementById('mst-senha-nova').style.display = 'none';
+      document.getElementById('mst-status').disabled = false;
+      document.getElementById('mst-salvar').textContent = 'Salvar';
+      _mstMsg('Usuário criado, já confirmado e aprovado.');
+      return;
+    }
+    const u = _mstAtual, d = {};
+    id = u.id;
+    if (nome && nome.toUpperCase() !== String(u.nome || '').toUpperCase()) d.nome = nome;
+    if (email && email.toLowerCase() !== String(u.email || '').toLowerCase()) d.email = email;
+    if (tel !== String(u.telefone || '')) d.telefone = tel;
+    const st = document.getElementById('mst-status').value;
+    if (st !== (u.status || '')) d.status = st;
+    if (uni.toUpperCase().replace(/\s*,\s*/g, ',') !== String(u.unidade || '').toUpperCase()) d.unidade = uni;
+    if (adm !== !!u.admin) d.admin = adm;
+    if (Object.keys(d).length) { const { error } = await sb.rpc('master_altera', { p_user: id, p_dados: d }); if (error) throw error; }
+    if (mst !== !!u.master) { const { error } = await sb.rpc('master_define', { p_user: id, p_master: mst }); if (error) throw error; }
+    await _mstRecarrega();
+    _mstMsg(Object.keys(d).length || mst !== !!u.master ? 'Salvo ✓' : 'Nada mudou.');
+  } catch (e) { _mstMsg(_mstErro(e), true); }
+  finally { bt.disabled = false; }
+}
+async function masterLiberar() {
+  if (!_mstAtual) return;
+  _mstMsg('Liberando…');
+  const { error } = await sb.rpc('master_liberar', { p_user: _mstAtual.id });
+  if (error) { _mstMsg(_mstErro(error), true); return; }
+  await _mstRecarrega();
+  document.getElementById('mst-status').value = 'approved';
+  _mstMsg('Cadastro liberado: e-mail confirmado e acesso aprovado.');
+}
+async function masterSenha(gerar) {
+  if (!_mstAtual) return;
+  const s = gerar ? null : document.getElementById('mst-pass').value.trim();
+  if (!gerar && s.length < 6) { _mstMsg('A senha precisa de pelo menos 6 caracteres.', true); return; }
+  _mstMsg('Gravando a senha…');
+  const { data, error } = await sb.rpc('master_senha', { p_user: _mstAtual.id, p_senha: s });
+  if (error) { _mstMsg(_mstErro(error), true); return; }
+  document.getElementById('mst-pass').value = '';
+  _mstMostraSenha(data);
+  await _mstRecarrega();
+  _mstMsg('Senha trocada. O e-mail também ficou confirmado.');
+}
+async function masterEncerrar() {
+  if (!_mstAtual) return;
+  if (!confirm(`Encerrar as sessões de ${_mstAtual.nome || _mstAtual.email}? A pessoa terá de entrar de novo.`)) return;
+  const { data, error } = await sb.rpc('master_encerrar', { p_user: _mstAtual.id });
+  if (error) { _mstMsg(_mstErro(error), true); return; }
+  await _mstRecarrega();
+  _mstMsg(`${data || 0} sessão(ões) encerrada(s).`);
+}
+
 function traduzirErro(msg) {
   if (!msg) return 'Erro desconhecido.';
   const m = msg.toLowerCase();
@@ -1589,6 +1830,6 @@ init();
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/modo-tv.js?v=202610111500"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202610161900"></script>
+<script src="assets/build-check.js?v=202610161930"></script>
 </body>
 </html>
