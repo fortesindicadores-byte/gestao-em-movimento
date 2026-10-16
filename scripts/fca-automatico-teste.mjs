@@ -586,6 +586,37 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   if (SHOT) await pg.screenshot({ path: `${SHOT}/fca-unidade-tabela.png` });
   await ctx.close();
 }
+/* ══ 2f · a caixa da ação no formato novo, no FCA · Admin e no da unidade ══ */
+{
+  console.log('\n══ 2f · caixa da ação no formato novo (Admin e unidade)');
+  for (const [pagina, w, h] of [['fca-consolidado/index.html', 1366, 768], ['fca-preenchimento/index.html?u=GRL&vig=ago/26', 1600, 900]]) {
+    const adm = pagina.startsWith('fca-consolidado');
+    const { pg, ctx, errs } = await abre({ acErr: true, t: T2D, pagina, w, h, espera: adm ? '.s-item' : '#list' });
+    await pg.waitForTimeout(2500);
+    const R = await pg.evaluate(async (adm) => {
+      const id = (window.__T.fca.find(r => r.unidade === 'GRL' && /^1\.1\. /.test(r.acao || '') && r.auto_chave) || {}).id;
+      openKModal(id); await new Promise(r => setTimeout(r, 300));
+      const m = document.querySelector('.kmodal.kac'), sel = document.getElementById('km-resp');
+      const c = document.getElementById('km-causa').getBoundingClientRect(), a = document.getElementById('km-acao').getBoundingClientRect(), mb = m ? m.getBoundingClientRect() : {};
+      const antes = (window.__upd || []).length;
+      const bt = [...document.querySelectorAll('#km-seg button')].find(b => b.dataset.st === 'Em andamento'); bt.click();
+      await new Promise(r => setTimeout(r, 400));
+      const up = (window.__upd || []).slice(antes).find(x => x.tabela === 'fca' && x.p.status === 'Em andamento');
+      return { kac: !!m, w: Math.round(mb.width), hOk: mb.height <= innerHeight, ladoALado: Math.abs(c.top - a.top) < 2 && a.left > c.right,
+        tag: sel.tagName, opt0: sel.options[0] && sel.options[0].value, val: sel.value, seg: document.querySelectorAll('#km-seg button').length,
+        on: (document.querySelector('#km-seg button.on') || {}).textContent, up: !!up, ok: document.getElementById('km-ok').textContent,
+        fatoEd: !!document.getElementById('km-fato-ed') };
+    }, adm);
+    const nome = adm ? 'Admin' : 'unidade';
+    af(`${nome}: a caixa abre no formato novo (larga, Causa e Ação lado a lado, cabe em ${w}×${h})`, R.kac && R.w > 1000 && R.ladoALado && R.hOk, JSON.stringify(R));
+    af(`${nome}: Responsável é lista com o gestor de frota primeiro (JOSE SANTOS) e já selecionado`, R.tag === 'SELECT' && R.opt0 === 'JOSE SANTOS' && R.val === 'JOSE SANTOS', JSON.stringify({ opt0: R.opt0, val: R.val }));
+    af(`${nome}: status em botões; clicar grava na fca e o rodapé diz Salvo ✓`, R.seg === 4 && /Em andamento/.test(R.on || '') && R.up && /Salvo/.test(R.ok), JSON.stringify({ on: R.on, up: R.up, ok: R.ok }));
+    af(`${nome}: ${adm ? 'o admin edita o fato e o desvio' : 'a unidade vê o fato sem editar'}`, adm ? R.fatoEd : !R.fatoEd, '');
+    af(`${nome}: sem erro de página`, !errs.length, errs.join(' | ').slice(0, 300));
+    if (SHOT) await pg.screenshot({ path: `${SHOT}/fca-caixa-${nome}.png` });
+    await ctx.close();
+  }
+}
 /* ══ 3 · sem admin ══ */
 {
   console.log('\n══ 3 · sem admin');
