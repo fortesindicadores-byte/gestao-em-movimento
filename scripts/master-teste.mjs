@@ -9,7 +9,7 @@ const U = [
   { id:'g1', email:'gestor@conlogsa.com.br', nome:'GESTOR PIR', telefone:null, criado:'2026-03-01T12:00:00Z', confirmado:'2026-03-01T12:00:00Z', ultimo:'2026-10-10T12:00:00Z', status:'approved', unidade:'PIR', admin:false, master:false, sessoes:1 },
 ];
 const mock = master => `window.__rpc=[];window.supabase={createClient(){
- const D={user_approvals:[],fca_profiles:[]};
+ const D={user_approvals:[{id:7,user_id:'g1',name:'GESTOR PIR',email:'gestor@conlogsa.com.br',phone:'21999990000',status:'approved',created_at:'2026-03-01T12:00:00Z'}],fca_profiles:[{user_id:'g1',unidade:'PIR',is_admin:false}]};
  const q=t=>{const o={_d:(D[t]||[]).slice(),select(){return o},order(){return o},eq(){return o},in(){return o},limit(){return o},
   update(){return o},upsert(){return o},single(){return o},maybeSingle(){return o},then(r,j){return Promise.resolve({data:o._d,error:null}).then(r,j)}};return o};
  const R={master_eu:()=>${master},master_usuarios:()=>${JSON.stringify(U)},master_senha:a=>a.p_senha||'Gx7kPq2mZr',
@@ -42,6 +42,9 @@ const ultimo = (pg, n) => pg.evaluate(n => { const a = window.__rpc.filter(x => 
 
 // 1. quem não é Master não vê a aba e nem chama a lista
 { const pg = await abre(false);
+  await pg.evaluate(()=>{localStorage.setItem('gem_acessos_modo','lista');switchAdminTab('approved');});
+  await pg.click('#admin-users-list tbody tr td.acc-dt');
+  ck(await pg.evaluate(()=>document.getElementById('mdl-master').style.display)==='none', 'sem Master: clicar na linha não abre nada');
   const vis = await pg.evaluate(() => getComputedStyle(document.getElementById('atab-master')).display);
   ck(vis === 'none', `sem Master: aba escondida (${vis})`);
   ck(!(await rpcs(pg)).includes('master_usuarios'), 'sem Master: não pede master_usuarios');
@@ -122,6 +125,16 @@ for (const [W, H, tema] of [[1366, 768, 'escuro'], [1920, 1080, 'claro']]) {
   ck(cr && cr.p_email === 'joao@conlogsa.com.br' && cr.p_nome === 'João Silva' && cr.p_unidade === 'PIR' && cr.p_senha === null, `${W}: master_criar com os campos`);
   ck(sv.v === 'Nv4bTt9wQe' && sv.st.includes('criado') && sv.ops === '', `${W}: senha do novo aparece e a caixa vira edição`);
   await pg.evaluate(() => fechaMaster());
+  // Master edita direto da lista de Usuários: clicar na linha abre a caixa
+  await pg.evaluate(()=>{localStorage.setItem('gem_acessos_modo','lista');switchAdminTab('approved');});
+  await pg.click('#admin-users-list tbody tr td.acc-dt');
+  const ed = await pg.evaluate(()=>({v:document.getElementById('mdl-master').style.display,n:document.getElementById('mst-nome').value,
+    cur:getComputedStyle(document.querySelector('#admin-users-list tbody tr')).cursor}));
+  ck(ed.v==='flex' && ed.n==='GESTOR PIR' && ed.cur==='pointer', `${W}: clicar na linha de Usuários abre a edição do Master (${ed.n})`);
+  await pg.evaluate(()=>fechaMaster());
+  await pg.click('#admin-users-list tbody tr .user-fca .farol-btn');
+  ck(await pg.evaluate(()=>document.getElementById('mdl-master').style.display)==='none', `${W}: o seletor de acesso na linha não abre a edição`);
+  await pg.mouse.click(5,H-5);
   // volta para Pendentes sem quebrar a grade
   await pg.click('#atab-pending');
   ck(await pg.evaluate(() => !document.querySelector('.mst-tbl')), `${W}: outra aba some com a lista Master`);

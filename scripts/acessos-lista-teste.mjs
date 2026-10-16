@@ -52,6 +52,25 @@ for (const [W,H,tema] of [[1366,768,'escuro'],[1600,900,'claro'],[1920,1080,'esc
   ck(pe.length===4 && !pe.includes('Acesso FCA'), `${W}: pendentes sem colunas de acesso (${pe.join('|')})`);
   const btns = await pg.evaluate(()=>[...document.querySelectorAll('#admin-users-list tbody tr:first-child button')].map(b=>b.textContent.trim()));
   ck(btns.includes('Aprovar')&&btns.includes('Rejeitar'), `${W}: pendente com Aprovar/Rejeitar`);
+  // ordenação pelo cabeçalho e sem a inicial na lista
+  await pg.evaluate(()=>switchAdminTab('approved'));
+  const semAv = await pg.evaluate(()=>document.querySelectorAll('#admin-users-list .acc-tbl .user-avatar').length);
+  ck(semAv===0, `${W}: lista sem a bolinha da inicial (${semAv})`);
+  const nomes = ()=>pg.evaluate(()=>[...document.querySelectorAll('#admin-users-list tbody .user-name')].map(e=>e.textContent.replace('✎','').trim()));
+  await pg.click('#admin-users-list thead th:nth-child(1)');
+  const asc = await nomes();
+  ck(JSON.stringify(asc)===JSON.stringify([...asc].sort((a,b)=>a.localeCompare(b,'pt-BR'))) && asc[0]==='ANA PAULA SOUZA', `${W}: Usuário ordena A→Z (${asc[0]})`);
+  await pg.click('#admin-users-list thead th:nth-child(1)');
+  const desc = await nomes();
+  ck(desc[0]===asc[asc.length-1], `${W}: 2º clique inverte (${desc[0]})`);
+  const seta = await pg.evaluate(()=>getComputedStyle(document.querySelector('#admin-users-list thead th.desc'),'::after').content);
+  ck(seta.includes('▼'), `${W}: seta ▼ no cabeçalho ativo`);
+  await pg.click('#admin-users-list thead th:nth-child(3)');
+  const cad = await nomes();
+  ck(cad[0]==='ANA PAULA SOUZA' && cad[8]==='IGOR TAVARES', `${W}: Cadastro ordena pela data (${cad[0]} … ${cad[8]})`);
+  // a ordem sobrevive ao redesenho (mudança de acesso refaz a lista)
+  await pg.evaluate(()=>renderAdminUsers());
+  ck(JSON.stringify(await nomes())===JSON.stringify(cad), `${W}: ordem continua depois de redesenhar`);
   // busca
   await pg.evaluate(()=>{switchAdminTab('approved');onAdminSearch('bruno');});
   const nb = await pg.evaluate(()=>document.querySelectorAll('#admin-users-list tbody tr').length);
