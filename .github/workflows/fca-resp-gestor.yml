@@ -1,0 +1,27 @@
+name: FCA Resp Gestor
+
+# O responsável das ações antigas da tabela fca vira o gestor de frota da unidade
+# (a mesma tabela que a geração do FCA de Custos usa). Ensaio só mostra; gravar grava
+# e imprime a cópia (id → nome antigo) para desfazer.
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: 'ensaio (só mostra) ou gravar'
+        required: true
+        default: 'ensaio'
+
+jobs:
+  roda:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Rodar
+        run: node scripts/fca-resp-gestor.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          MODO: ${{ github.event.inputs.modo }}
