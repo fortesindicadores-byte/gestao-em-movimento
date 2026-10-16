@@ -226,12 +226,21 @@ body:not(.claro):not(.light-mode) .kcard.fa-kc{background:var(--brilho), rgba(30
         qtd++;
         String(r.acao).replace(/(\d+)\.(\d+)\./g, (m, a, b) => { if (+a === k && +b > max) max = +b; return m; });
       });
-      return { acao: `${k}.${Math.max(max, qtd) + 1}. ` };
+      return { acao: `${k}.${(max || qtd) + 1}. ` };
     }
-    const maxC = causas.reduce((m, c) => Math.max(m, numDe(c)), 0);
-    const k = Math.max(maxC, causas.length) + 1;
+    // o próximo número sai do MAIOR número já escrito; a contagem só vale quando nada tem número
+    // (antes era o maior dos dois, e duas causas com o mesmo número faziam o "+" pular um: Piraí, 16/10/2026)
+    const maxC = causas.reduce((m, c) => Math.max(m, numCausa(c) || 0), 0);
+    const k = (maxC || causas.length) + 1;
     return { causa: `${k}. `, acao: `${k}.1. ` };
   }
 
-  g.FcaTabela = { html, card, desvioCurto, causaHTML, acaoHTML, fatoHTML, contaCurta, numeracao };
+  // as outras linhas do mesmo fato com a MESMA causa: a causa é uma só para as ações dela, então mudar o texto
+  // numa linha muda em todas (Renan, 16/10/2026: unidade criava ação nova e a causa não juntava)
+  function irmasDaCausa(rows, row) {
+    const c = String((row && row.causa) || '').trim(); if (!c) return [];
+    return (rows || []).filter(x => x !== row && x.id !== row.id && String(x.causa || '').trim() === c);
+  }
+
+  g.FcaTabela = { html, card, desvioCurto, causaHTML, acaoHTML, fatoHTML, contaCurta, numeracao, irmasDaCausa };
 })(typeof window !== 'undefined' ? window : globalThis);

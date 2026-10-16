@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610161800">
+<meta name="build" content="202610162300">
 <title>FCA · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -833,8 +833,8 @@ table.adv-table tr.pre-total td{background:var(--cabec);font-weight:800;border-t
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
 <script src="../assets/fca-auto.js?v=202610161400"></script>
-<script src="../assets/fca-tabela.js?v=202610161800"></script>
-<script src="../assets/fca-caixa.js?v=202610161800"></script>
+<script src="../assets/fca-tabela.js?v=202610162300"></script>
+<script src="../assets/fca-caixa.js?v=202610162300"></script>
 </head>
 <body>
 <div class="app">
@@ -1083,14 +1083,18 @@ async function toggleLock(btn,id){
 let _flashT=null;
 function flash(msg,err){const m=document.getElementById('savedMsg');m.textContent=msg;m.classList.toggle('err',!!err);m.classList.add('show');clearTimeout(_flashT);_flashT=setTimeout(()=>m.classList.remove('show'),2000);}
 // Adiciona nova linha (ação ou causa) para o mesmo fato. comCausa=true → repete a causa (nova ação); false → causa em branco (nova causa).
+// as linhas do MESMO fato (unidade · vigência · projeto · origem · 1ª linha do fato)
+function linhasDoFatoAdm(src){
+  const p1=s=>String(s||'').split('\n')[0].trim();
+  return _ROWS.filter(r=>r.unidade===src.unidade&&r.vigencia===src.vigencia&&(r.projeto||'')===(src.projeto||'')&&r.origem===src.origem&&p1(r.fato)===p1(src.fato));
+}
 async function addRow(srcId,comCausa){
   const src=_ROWS.find(r=>r.id===srcId); if(!src)return;
   const novo={unidade:src.unidade,vigencia:src.vigencia,origem:src.origem,fato:src.fato,projeto:src.projeto||null,fato_desvio:src.fato_desvio||null,
     causa:comCausa?(src.causa||null):null,acao:null,responsavel:(window.FcaAuto&&FcaAuto.gestorDe(src.unidade))||src.responsavel||null,prazo:null,status:DEFAULT_STATUS,acompanhamento:null,locked:false};
   // número automático: + ação → "2.3. ", + causa → "4. " e "4.1. " (a pessoa só escreve o texto)
   if(window.FcaTabela&&FcaTabela.numeracao){
-    const p1=s=>String(s||'').split('\n')[0].trim();
-    const doFato=_ROWS.filter(r=>r.unidade===src.unidade&&r.vigencia===src.vigencia&&(r.projeto||'')===(src.projeto||'')&&r.origem===src.origem&&p1(r.fato)===p1(src.fato));
+    const doFato=linhasDoFatoAdm(src);
     const nu=FcaTabela.numeracao(doFato,novo.causa,comCausa?'acao':'causa');
     if(nu.causa) novo.causa=nu.causa;
     novo.acao=nu.acao||null;
@@ -1495,7 +1499,8 @@ function openKModal(id){
   document.getElementById('km-acao').value=r.acao||'';
   document.getElementById('km-prazo').value=r.prazo?String(r.prazo).slice(0,10):'';
   document.getElementById('km-acomp').value=r.acompanhamento||'';
-  FcaCaixa.abre({unidade:r.unidade,responsavel:r.responsavel,perfis:PERFIS,status:r.status||DEFAULT_STATUS});
+  FcaCaixa.abre({unidade:r.unidade,responsavel:r.responsavel,perfis:PERFIS,status:r.status||DEFAULT_STATUS,
+    irmas:FcaTabela.irmasDaCausa(linhasDoFatoAdm(r),r).length});
 }
 function closeKModal(){const m=document.getElementById('kmodal-ov');if(m)m.style.display='none';_kmId=null;}
 async function persistKModal(){
@@ -1505,9 +1510,12 @@ async function persistKModal(){
     causa:document.getElementById('km-causa').value||null,acao:document.getElementById('km-acao').value||null,
     responsavel:document.getElementById('km-resp').value||null,prazo:document.getElementById('km-prazo').value||null,
     status:document.getElementById('km-status').value,acompanhamento:document.getElementById('km-acomp').value||null};
-  Object.assign(r,upd);render();
+  // a causa é uma só para as ações dela: o texto novo vai para as outras linhas da mesma causa
+  const irmas=String(upd.causa||'').trim()!==String(r.causa||'').trim()?FcaTabela.irmasDaCausa(linhasDoFatoAdm(r),r):[];
+  Object.assign(r,upd);irmas.forEach(x=>{x.causa=upd.causa;});render();
   const {error}=await sb.from('fca').update(upd).eq('id',id);
   if(error){flash('Erro ao salvar',true);return;}
+  if(irmas.length){const e2=(await sb.from('fca').update({causa:upd.causa}).in('id',irmas.map(x=>x.id))).error;if(e2){flash('Erro ao salvar a causa nas outras ações',true);return;}}
   writeCache(CACHE_KEY,_ROWS);flash('Salvo ✓');FcaCaixa.salvo();
 }
 
@@ -1646,6 +1654,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610161800"></script>
+<script src="../assets/build-check.js?v=202610162300"></script>
 </body>
 </html>

@@ -70,7 +70,7 @@ body.claro .kac textarea,body.claro .kac input,body.claro .kac select,body.light
       '<div class="ac-hd"><div class="t"><b id="km-fato"></b><div class="kmodal-sub" id="km-ctx"></div></div><button class="kmodal-x" onclick="' + (o.fechar || 'closeKModal') + '()">✕</button></div>' +
       '<div class="ac-bd">' +
         '<div class="cheio"><label>Fato <span class="dica">desvio do pacote e YTD</span></label>' + fato + '</div>' +
-        '<div><label>Causa</label><textarea id="km-causa"></textarea></div>' +
+        '<div><label>Causa <span class="dica" id="km-causa-dica"></span></label><textarea id="km-causa"></textarea></div>' +
         '<div><label>Ação</label><textarea id="km-acao"></textarea></div>' +
         '<div><label>Responsável <span class="dica">quem fecha a ação</span></label><select id="km-resp"></select></div>' +
         '<div><label>Prazo <span class="dica" id="km-prazo-dica"></span></label><input id="km-prazo" type="date"></div>' +
@@ -162,6 +162,7 @@ body.claro .kac textarea,body.claro .kac input,body.claro .kac select,body.light
       lista.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
     sel.value = atual;
     ['km-causa', 'km-acao'].forEach(id => { const el = $(id); if (el) prefixo(el); });
+    const ir = +o.irmas || 0; $('km-causa-dica').textContent = ir > 0 ? `vale para as ${ir + 1} ações desta causa` : '';
     const st = o.status || ST[0]; $('km-status').value = st; marca(st); dica();
     $('km-ok').textContent = '';
     $('kmodal-ov').style.display = 'flex';

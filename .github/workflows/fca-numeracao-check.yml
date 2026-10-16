@@ -1,0 +1,25 @@
+name: FCA Numeracao Check
+
+# Fatos do FCA com a numeração de causa/ação quebrada (causa repetida com textos
+# diferentes, número pulado, ação com o número de outra causa). Só leitura.
+on:
+  workflow_dispatch:
+    inputs:
+      vig:
+        description: 'vigência como no FCA (ex.: set/26); vazio = todas'
+        required: false
+        default: ''
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          VIG: ${{ inputs.vig }}
+        run: node scripts/fca-numeracao-check.mjs
