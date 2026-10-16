@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610132300">
+<meta name="build" content="202610161800">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Scorecard · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -473,6 +473,8 @@ table.meto td.peso{color:var(--laranja);font-weight:800;}
               <div>Melhor<b id="h-melhor">—</b></div>
               <div>A recuperar<b id="h-pior">—</b></div>
               <div>Indicadores críticos<b id="h-crit">—</b></div>
+              <div>Maior evolução T1<b id="h-evo1">—</b></div>
+              <div>Maior evolução T2<b id="h-evo2">—</b></div>
             </div>
           </div>
         </div>
@@ -928,6 +930,7 @@ function atualizar(){
   const rk=UNI_LIST.map(uni=>{const notes=unitScores(uni,perKeys,yr,mi);return {uni,notes,score:scoreFromNotes(notes)};})
     .filter(x=>x.score!=null).sort((a,b)=>b.score-a.score);
   heroDeltas(rk,CV);
+  heroEvolucao(rk,cands);
   renderDestaques(rk);
   renderRanking(rk,periodo);
   renderCards(cards);
@@ -1231,6 +1234,31 @@ function heroDeltas(rk,CV){
   set('h-crit',   crit);
   const eC=document.getElementById('h-crit'); if(eC) eC.style.color=crit?'var(--vermelho)':'var(--verde)';
 }
+// maior evolução T1 e T2 (Renan, 16/10/2026): pontuação do período filtrado
+// menos a do período anterior com o mesmo nº de meses, unidade a unidade
+const UNI_T1=new Set(['CUIABA','CUIABA EMPURRADA','MACACU EMPURRADA','PIRAI EMPURRADA']);
+function heroEvolucao(rk,cands){
+  const n=cands.length; let prev=null;
+  if(n){
+    const k0=vigKeyN(cands[0]); let y=Math.floor(k0/100),m=k0%100; const ks=[];
+    for(let i=0;i<n;i++){ m--; if(m<0){m=11;y--;} ks.push(y*100+m); }
+    if(ICS.some(o=>ks.includes(vigKeyN(o.vigD)))) prev={keys:new Set(ks),yr:Math.floor(ks[0]/100),mi:ks[0]%100};
+  }
+  const evo=rk.map(x=>{
+    if(!prev) return null;
+    const ant=scoreFromNotes(unitScores(x.uni,prev.keys,prev.yr,prev.mi));
+    return ant==null?null:{uni:x.uni,d:x.score-ant};
+  }).filter(Boolean);
+  const poe=(id,lista)=>{
+    const el=document.getElementById(id); if(!el) return;
+    const b=lista.sort((a,c)=>c.d-a.d)[0];
+    el.textContent=b?`${b.uni} · ${b.d>=0?'+':''}${n1(b.d)}`:'—';
+    el.style.color=b?(b.d>0?'var(--verde)':b.d<0?'var(--vermelho)':''):'';
+    el.title=b?'Pontuação do período contra o período anterior (mesmo nº de meses)':'Sem período anterior para comparar';
+  };
+  poe('h-evo1',evo.filter(e=>UNI_T1.has(e.uni)));
+  poe('h-evo2',evo.filter(e=>!UNI_T1.has(e.uni)));
+}
 // os 20 cards da visão Indicadores
 function renderCards(cards){
   const box=document.getElementById('cards'); if(!box)return;
@@ -1334,6 +1362,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610132300"></script>
+<script src="../assets/build-check.js?v=202610161800"></script>
 </body>
 </html>

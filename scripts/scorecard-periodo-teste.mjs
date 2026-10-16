@@ -68,5 +68,27 @@ const wh = T.fcaSplitP(recs, new Set([vk(2026, 6)]), ['CUIABA']);
 conf('FCA CUIABA (WH) jul: casa CBA T1 WH do banco e CBA da aba antiga', wh.concl === 50, JSON.stringify(wh));
 const emp = T.fcaSplitP(recs, new Set([vk(2026, 6)]), ['CUIABA EMPURRADA']);
 conf('FCA CUIABA EMPURRADA jul: não pega o CBA T1 WH', emp.concl === 0, JSON.stringify(emp));
+
+// ── maior evolução T1 e T2: período filtrado contra o anterior com o mesmo nº de meses ──
+{
+  const els = {};
+  const SC = { 'PIRAI EMPURRADA': { 202607: 80, 202608: 90 }, 'MACACU EMPURRADA': { 202607: 85, 202608: 87 },
+    'CDD PELOTAS': { 202607: 70, 202608: 75 }, 'CDD GUARULHOS': { 202607: 92, 202608: 90 }, 'CUIABA': { 202608: 60 } };
+  const c2 = { console, Set, Math, Number, isFinite,
+    document: { getElementById: id => (els[id] = els[id] || { textContent: '', style: {}, title: '' }) } };
+  vm.createContext(c2);
+  vm.runInContext([fn('n1'), html.match(/const UNI_T1=[^\n]+/)[0], fn('heroEvolucao'),
+    'globalThis.H={heroEvolucao,setT:(o,f)=>{globalThis.ICS=o;globalThis.SC=f;}};',
+    'function vigKeyN(d){return d.k;}',
+    'function unitScores(u,keys){const ks=[...keys];const v=ks.map(k=>(SC[u]||{})[k]).filter(x=>x!=null);return {v:v.length?v.reduce((a,b)=>a+b,0)/v.length:null};}',
+    'function scoreFromNotes(n){return n.v;}'].join('\n'), c2);
+  c2.H.setT([{ vigD: { k: 202607 } }, { vigD: { k: 202608 } }], SC);
+  const rk = Object.keys(SC).map(uni => ({ uni, score: SC[uni][202608] }));
+  c2.H.heroEvolucao(rk, [{ k: 202608 }]);
+  conf('T1: Piraí +10,0 (Cuiabá sem ago-1 fica fora)', els['h-evo1'].textContent === 'PIRAI EMPURRADA · +10,0', els['h-evo1'].textContent);
+  conf('T2: Pelotas +5,0 (Guarulhos caiu)', els['h-evo2'].textContent === 'CDD PELOTAS · +5,0', els['h-evo2'].textContent);
+  c2.H.heroEvolucao(rk, [{ k: 202607 }]);
+  conf('sem mês anterior com dado → traço', els['h-evo1'].textContent === '—' && els['h-evo2'].textContent === '—', els['h-evo1'].textContent);
+}
 console.log(`\n${ok} ok · ${falha} falha(s)`);
 process.exit(falha ? 1 : 0);
