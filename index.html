@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610140310">
+<meta name="build" content="202610161900">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1561,6 +1561,7 @@ function traduzirErro(msg) {
   if (m.includes('rate limit') || m.includes('too many')) return 'Muitas tentativas. Aguarde alguns minutos.';
   if (m.includes('user not found')) return 'E-mail não encontrado.';
   if (m.includes('weak password') || m.includes('should be at least')) return 'Senha muito fraca. Use pelo menos 6 caracteres.';
+  if (m.includes('error sending') || m.includes('sending email') || m.includes('smtp')) return 'Não conseguimos enviar o e-mail agora. Avise o administrador do portal para liberar seu acesso.';
   if (m.includes('network') || m.includes('fetch')) return 'Erro de conexão. Verifique sua internet.';
   return msg;
 }
@@ -1588,6 +1589,6 @@ init();
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/modo-tv.js?v=202610111500"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202610140310"></script>
+<script src="assets/build-check.js?v=202610161900"></script>
 </body>
 </html>

@@ -80,6 +80,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 4. Redefinir senha (`sb.auth.updateUser({ password })`) — ativado pelo evento `PASSWORD_RECOVERY`
 5. Logout (`sb.auth.signOut`)
 
+**E-MAIL DE RECUPERAÇÃO QUE NÃO SAI (16/10/2026, André Pompeu):** "Esqueci a senha" mostrava `Error sending recovery email` em inglês e o código não chegava. É o GoTrue dizendo que o SMTP (Resend) recusou o envio — a mesma Resend sem domínio verificado do alarme de 27/08, que só entrega para o e-mail dono da conta. Vale também para a confirmação do cadastro. A tela agora traduz (`error sending`/`smtp` → "Não conseguimos enviar o e-mail agora. Avise o administrador…"). O conserto de verdade é verificar um domínio na Resend e pôr o remetente dele em Supabase → Authentication → SMTP. Enquanto isso, senha provisória por SQL (`update auth.users set encrypted_password = crypt('<senha>', gen_salt('bf'))…`), colado no chat.
+
 **Erros traduzidos para PT-BR via `traduzirErro(msg)`:**
 ```javascript
 function traduzirErro(msg) {
