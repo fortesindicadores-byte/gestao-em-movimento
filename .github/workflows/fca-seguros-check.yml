@@ -1,0 +1,19 @@
+name: FCA Seguros Check
+
+# Ainda há fato de Seguros e licenças na tabela fca? Quais contas do DRE Frota caem nesse pacote
+# e se a exclusão do FCA pega todas. Só leitura.
+on:
+  workflow_dispatch:
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/fca-seguros-check.mjs
