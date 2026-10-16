@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610161500">
+<meta name="build" content="202610161600">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -770,6 +770,8 @@ body.light-mode .kcard-fato{color:#000000!important;}
 <script src="../assets/dispersao-km.js?v=202610152330"></script>
 <script src="../assets/balanco-massa.js"></script>
 <script src="../assets/fca-auto.js?v=202610161400"></script>
+<script src="../assets/fca-tabela.js?v=202610161600"></script>
+<script src="../assets/fca-caixa.js?v=202610161400"></script>
 </head>
 <body>
 <div class="app">
@@ -783,6 +785,10 @@ body.light-mode .kcard-fato{color:#000000!important;}
     </div>
 
     <div class="s-sec"><b>Visões</b></div>
+    <button class="s-item" data-v="resumo" title="Resumo Gerencial">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+      Resumo Gerencial
+    </button>
     <button class="s-item on" data-v="kanban" title="Kanban">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 4h5v16H4zM10 4h5v11h-5zM16 4h4v7h-4z"/></svg>
       Kanban
@@ -794,10 +800,6 @@ body.light-mode .kcard-fato{color:#000000!important;}
     <button class="s-item" data-v="gantt" title="Gantt">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M4 12h14M4 18h7"/></svg>
       Gantt
-    </button>
-    <button class="s-item" data-v="resumo" title="Resumo">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
-      Resumo
     </button>
 
     <div class="s-volta">
@@ -1661,7 +1663,7 @@ function iniciaisK(n){
 const tri=h=>String(h==null?'':h).replace(/▲/g,'<span style="color:var(--red)">▲</span>').replace(/▼/g,'<span style="color:var(--green)">▼</span>');
 
 function updateViewBtnsPre(){const b=document.getElementById('viewBtn');if(b)b.textContent=VIEW==='kanban'?'Fatos':'Kanban';const f=document.getElementById('flatBtn');if(f)f.classList.toggle('active',VIEW==='flat');const g=document.getElementById('ganttBtn');if(g)g.classList.toggle('active',VIEW==='gantt');}
-const TIT={kanban:'Kanban',flat:'Tabela',gantt:'Gantt',resumo:'Resumo',tabela:'Fatos'};   // 'tabela' (Fatos) não está mais no menu
+const TIT={kanban:'Kanban',flat:'Tabela',gantt:'Gantt',resumo:'Resumo Gerencial',tabela:'Fatos'};   // 'tabela' (Fatos) não está mais no menu
 function vaiPara(v){
   VIEW=v; updateViewBtnsPre();
   const t=document.getElementById('tituloVista'); if(t) t.textContent=TIT[v]||'';
@@ -1752,22 +1754,11 @@ function showTabelaPre(){VIEW=VIEW==='flat'?'tabela':'flat';updateViewBtnsPre();
 function _firstLine(s){return String(s==null?'':s).split('\n')[0].trim();}
 // FCA automático = ação ainda não preenchida (gerado do Gerot/DRE e não tratado)
 const isAutoAcao=r=>!String((r&&r.acao)||'').trim();
-function kcardHTMLpre(x){const r=x.r,f=x.f,org=String(f.origem||'').toUpperCase()==='RPM'?'rpm':'cst',lk=false;
-  return `<div class="kcard${lk?' klock':''}"${lk?'':' draggable="true"'} data-id="${esc(r.id||'')}">
-    <div class="kcard-top"><span class="korg ${org}">${esc(f.origem||'')}</span> ${esc(UNIDADE_COD)} · ${esc(projLabel(f.proj))} · ${esc(f.vig)}${r.locked?' 🔒':''}</div>
-    <div class="kcard-fato">${esc(_firstLine(f.nome||f.fato))}</div>
-    <div class="kcard-desvio"><span class="kl">Fato:</span> ${(()=>{const d=stripTags(f.desvio||'').trim();return d&&d!=='—'?tri(esc(d).replace(/\n/g,'<br>')):'<i>sem desvio</i>';})()}</div>
-    <div class="kcard-causa"><span class="kl">Causa:</span> ${r.causa?esc(_firstLine(r.causa)):'<i>não preenchida</i>'}</div>
-    <div class="kcard-ac">${r.acao?esc(r.acao):'<i>ação não preenchida</i>'}</div>
-    <div class="kcard-meta">
-      <span>${prazoTextoK(r)}</span>
-      <span class="kmais">
-        <button class="kadd" data-add="acao" data-id="${esc(r.id||'')}" title="Mais uma ação para ESTA causa">+ ação</button>
-        <button class="kadd" data-add="causa" data-id="${esc(r.id||'')}" title="Mais uma causa para ESTE fato">+ causa</button>
-      </span>
-      ${r.responsavel?`<span class="kav" title="${esc(r.responsavel)}">${esc(iniciaisK(r.responsavel))}</span>`:'<span></span>'}
-    </div>
-  </div>`;}
+function kcardHTMLpre(x){const r=x.r,f=x.f;
+  // o card do FCA Automático (assets/fca-tabela.js, o mesmo do Admin)
+  return FcaTabela.card({id:r.id||'',origem:f.origem,uni:UNIDADE_COD,proj:projLabel(f.proj),vig:f.vig,fato:f.nome||f.fato,
+    desvio:r.fato_desvio||stripTags(f.desvio||'').trim(),causa:r.causa,acao:r.acao,resp:r.responsavel,prazoHTML:prazoTextoK(r),
+    extra:`<span class="kmais"><button class="kadd" data-add="acao" data-id="${esc(r.id||'')}" title="Mais uma ação para ESTA causa">+ ação</button><button class="kadd" data-add="causa" data-id="${esc(r.id||'')}" title="Mais uma causa para ESTE fato">+ causa</button></span>`},{tri});}
 
 // ── Resumo: a MESMA visão do FCA Gerencial (assets/aderencia-view.js) ──
 // A unidade enxerga a aderência dela por Conta/Indicador — que é o "fato".
@@ -2200,10 +2191,8 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/fca-tabela.js?v=202610161500"></script>
-<script src="../assets/fca-caixa.js?v=202610161400"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610161500"></script>
+<script src="../assets/build-check.js?v=202610161600"></script>
 </body>
 </html>

@@ -135,6 +135,29 @@
     return h + '</table></div></div>';
   }
 
+  /* CARD DO KANBAN no desenho do FCA Automático (Renan, 16/10/2026: "As unidades precisam ver no mesmo formato
+     e visão. É a nova visão!"): origem · unidade · projeto · mês, o pacote, só o desvio do pacote e o YTD, e embaixo
+     de um filete a causa (com o número) e a ação inteira (número em laranja); rodapé com prazo e iniciais.
+     x: {id, origem, uni, proj, vig, fato, desvio, causa, acao, resp, prazoHTML, arrasta, extra (html dos atalhos)} */
+  function card(x, o) {
+    o = o || {}; estilo(); const tri = o.tri || (h => h);
+    const d = desvioCurto(x.desvio), org = /rpm/i.test(x.origem || '') ? 'rpm' : 'cst';
+    const linha1 = d.tot || d.resto[0] || '';
+    const c = String(x.causa || '').trim(), cm = c.match(/^(\d+)\.\s+/), c1 = (cm ? c.slice(cm[0].length) : c).split('\n')[0];
+    const a = String(x.acao || '').trim(), am = a.match(/^(\d+\.\d+)\.\s+/), at = am ? a.slice(am[0].length) : a;
+    const ini = n => { const p = String(n || '').trim().split(/\s+/).filter(Boolean); return !p.length ? '?' : (p.length > 1 ? p[0][0] + p[p.length - 1][0] : p[0].slice(0, 2)).toUpperCase(); };
+    return `<div class="kcard fa-kc"${x.arrasta === false ? '' : ' draggable="true"'} data-id="${esc(x.id)}">
+    <div class="kcard-top"><span class="korg ${org}">${esc(x.origem || '')}</span> ${esc(x.uni || '')} · ${esc(x.proj || '')} · ${esc(String(x.vig || '').toUpperCase())}</div>
+    <div class="kcard-fato">${esc(primeira(x.fato)) || '—'}</div>
+    <div class="kcard-desvio">${linha1 ? '<span class="kl">Fato:</span> ' + tri(esc(linha1)) : '<i>sem desvio</i>'}${d.ytd ? `<div class="fk-ytd"><span class="kl">YTD</span> ${tri(esc(d.ytd))}</div>` : ''}</div>
+    <div class="fk-in">
+      <div class="kcard-causa">${c ? `<span class="kl">Causa${cm ? ' ' + cm[1] : ''}:</span> ${tri(esc(c1))}` : '<i>causa não preenchida</i>'}</div>
+      <div class="kcard-ac">${a ? (am ? `<b class="fk-n">${esc(am[1])}</b> ` : '') + tri(esc(at)).replace(/\n/g, '<br>') : '<i>ação não preenchida</i>'}</div>
+    </div>
+    <div class="kcard-meta"><span>${x.prazoHTML || ''}</span>${x.extra || ''}${x.resp ? `<span class="kav" title="${esc(x.resp)}">${esc(ini(x.resp))}</span>` : '<span></span>'}</div>
+  </div>`;
+  }
+
   // o CSS do desenho mora aqui, para as duas páginas ficarem iguais
   let _est = false;
   function estilo() {
@@ -169,12 +192,23 @@ table.rel.fg-rel .fa-of li::before{content:'';position:absolute;left:2px;top:.62
 table.rel.fg-rel .fa-obs{margin-top:6px;}
 table.rel.fg-rel .fg-vazio{color:var(--txt3,var(--text3));}
 table.rel.fg-rel td.tem-add{position:relative;padding-bottom:28px!important;}
-table.rel.fg-rel .fg-add{position:absolute;right:8px;bottom:6px;width:20px;height:20px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;line-height:1;background:transparent;border:1px solid var(--card-brd);color:var(--txt3,var(--text3));cursor:pointer;opacity:.45;transition:opacity .15s,border-color .15s,color .15s;}
+table.rel.fg-rel .fg-add{position:absolute;right:8px;bottom:4px;padding:0 2px;background:none!important;border:0!important;box-shadow:none!important;font-family:inherit;font-size:17px;font-weight:700;line-height:1;color:var(--orange,#F97316)!important;cursor:pointer;opacity:.6;transition:opacity .15s,transform .15s;}
 table.rel.fg-rel tbody.fg:hover .fg-add{opacity:1;}
-table.rel.fg-rel .fg-add:hover{border-color:var(--orange,#F97316);color:var(--orange,#F97316);}
+table.rel.fg-rel .fg-add:hover{transform:scale(1.2);}
+.kcard.fa-kc{padding:0 0 13px!important;}
+body:not(.claro):not(.light-mode) .kcard.fa-kc{background:var(--brilho), rgba(30,30,32,.88)!important;box-shadow:0 3px 10px rgba(0,0,0,.22), var(--luz-card)!important;}
+.fa-kc .kcard-top{padding:13px 15px 0!important;font-size:10px!important;}
+.fa-kc .kcard-fato{padding:0 15px;font-size:15.5px!important;margin-top:6px;}
+.fa-kc .kcard-desvio{padding:0 15px;font-size:11.5px;margin-top:6px;line-height:1.45;}
+.fa-kc .fk-ytd{margin-top:3px;font-weight:600;color:var(--txt3,var(--text3));}
+.fa-kc .fk-in{margin:11px 15px 0;padding:11px 0 0;border-top:1px solid var(--linha);}
+.fa-kc .kcard-causa{padding:0;margin:0 0 7px;font-size:11.5px;font-weight:700;color:var(--txt2,var(--text2));line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.fa-kc .kcard-ac{padding:0;margin:0!important;font-size:12.5px!important;color:var(--txt,var(--text))!important;line-height:1.45;min-height:0;}
+.fa-kc .fk-n{color:var(--laranja,var(--orange,#F97316));font-weight:800;}
+.fa-kc .kcard-meta{padding:11px 15px 0;margin-top:11px!important;border-top:1px solid var(--linha);}
 @media(max-width:860px){table.rel.fg-rel td.fato .fa-ano-res{display:none;}table.rel.fg-rel td.fato .fa-ano-pe{position:static;}}`;
     document.head.appendChild(s);
   }
 
-  g.FcaTabela = { html, desvioCurto, causaHTML, acaoHTML, fatoHTML, contaCurta };
+  g.FcaTabela = { html, card, desvioCurto, causaHTML, acaoHTML, fatoHTML, contaCurta };
 })(typeof window !== 'undefined' ? window : globalThis);

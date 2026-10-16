@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610161500">
+<meta name="build" content="202610161600">
 <title>FCA · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -832,6 +832,9 @@ table.adv-table tr.pre-total td{background:var(--cabec);font-weight:800;border-t
 }
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
+<script src="../assets/fca-auto.js?v=202610161400"></script>
+<script src="../assets/fca-tabela.js?v=202610161600"></script>
+<script src="../assets/fca-caixa.js?v=202610161400"></script>
 </head>
 <body>
 <div class="app">
@@ -1408,22 +1411,10 @@ function iniciaisK(n){
   return (p.length>1?p[0][0]+p[p.length-1][0]:p[0].slice(0,2)).toUpperCase();
 }
 function kcardHTML(r){
-  const org=String(r.origem||'').toUpperCase()==='RPM'?'rpm':'cst';
-  return `<div class="kcard" draggable="true" data-id="${esc(r.id)}">
-    <div class="kcard-top"><span class="korg ${org}">${esc(r.origem||'')}</span> ${esc(r.unidade)} · ${esc(projLabel(r.projeto))} · ${esc(r.vigencia)}</div>
-    <div class="kcard-fato">${esc(_firstLine(r.fato))}</div>
-    <div class="kcard-desvio"><span class="kl">Fato:</span> ${r.fato_desvio?tri(esc(r.fato_desvio).replace(/\n/g,'<br>')):'<i>sem desvio</i>'}</div>
-    <div class="kcard-causa"><span class="kl">Causa:</span> ${r.causa?esc(_firstLine(r.causa)):'<i>não preenchida</i>'}</div>
-    <div class="kcard-ac">${r.acao?esc(r.acao):'<i>ação não preenchida</i>'}</div>
-    <div class="kcard-meta">
-      <span>${prazoTextoK(r)}</span>
-      <span class="kmais">
-        <button class="kadd" data-add="acao" data-id="${esc(r.id)}" title="Mais uma ação para ESTA causa">+ ação</button>
-        <button class="kadd" data-add="causa" data-id="${esc(r.id)}" title="Mais uma causa para ESTE fato">+ causa</button>
-      </span>
-      ${r.responsavel?`<span class="kav" title="${esc(r.responsavel)}">${esc(iniciaisK(r.responsavel))}</span>`:'<span></span>'}
-    </div>
-  </div>`;
+  // o card do FCA Automático (assets/fca-tabela.js, o mesmo da unidade); + ação / + causa continuam no hover
+  return FcaTabela.card({id:r.id,origem:r.origem,uni:r.unidade,proj:projLabel(r.projeto),vig:r.vigencia,fato:r.fato,desvio:r.fato_desvio,
+    causa:r.causa,acao:r.acao,resp:r.responsavel,prazoHTML:prazoTextoK(r),
+    extra:`<span class="kmais"><button class="kadd" data-add="acao" data-id="${esc(r.id)}" title="Mais uma ação para ESTA causa">+ ação</button><button class="kadd" data-add="causa" data-id="${esc(r.id)}" title="Mais uma causa para ESTE fato">+ causa</button></span>`},{tri});
 }
 // FCA automático = ação ainda não preenchida (gerado do Gerot/DRE e não tratado) — vai primeiro no Kanban
 const isAutoAcao=r=>!String((r&&r.acao)||'').trim();
@@ -1645,11 +1636,8 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/fca-auto.js?v=202610161400"></script>
-<script src="../assets/fca-tabela.js?v=202610161500"></script>
-<script src="../assets/fca-caixa.js?v=202610161400"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610161500"></script>
+<script src="../assets/build-check.js?v=202610161600"></script>
 </body>
 </html>
