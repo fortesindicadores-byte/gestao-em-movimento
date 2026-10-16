@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610162200">
+<meta name="build" content="202610162230">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -264,6 +264,12 @@ body.claro .auth-card{box-shadow:0 28px 70px rgba(15,23,42,.16), var(--luz-card)
 .field input:focus{border-color:color-mix(in srgb,var(--laranja) 50%,transparent);}
 .field input::placeholder{color:var(--txt4);}
 .pass-wrap{position:relative;} .pass-wrap input{padding-right:40px;}
+/* e-mail da empresa: só a 1ª parte é digitada, o domínio vem pronto */
+.mail-wrap{display:flex;align-items:stretch;}
+.mail-wrap input{flex:1;min-width:0;border-top-right-radius:0!important;border-bottom-right-radius:0!important;}
+.mail-dom{display:flex;align-items:center;padding:0 12px;border:1px solid var(--card-brd);border-left:0;border-radius:0 10px 10px 0;
+  background:var(--hover);color:var(--txt2);font-size:12.5px;font-weight:600;white-space:nowrap;}
+.uc-cx .mail-dom{border-radius:0 8px 8px 0;}
 .eye-btn{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;
   color:var(--txt3);display:flex;padding:2px;}
 .eye-btn:hover{color:var(--txt2);}
@@ -594,14 +600,14 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11p
       <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Criar conta</button>
     </div>
     <div id="form-login">
-      <div class="field"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email"></div>
+      <div class="field"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email" oninput="limpaCampo(this, emailLimpo)"></div>
       <div class="field"><label>Senha</label><div class="pass-wrap"><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"><button type="button" class="eye-btn" onclick="togglePass('login-pass',this)" tabindex="-1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <div class="forgot-wrap"><button type="button" class="forgot-link" onclick="showForgot()">Esqueceu sua senha?</button></div>
       <button class="auth-btn" id="btn-login" onclick="doLogin()">Entrar</button>
     </div>
     <div id="form-forgot" style="display:none;">
       <p class="form-hint">Informe seu e-mail e enviaremos um link para redefinir sua senha.</p>
-      <div class="field"><label>E-mail</label><input type="email" id="forgot-email" placeholder="seu@email.com" autocomplete="email"></div>
+      <div class="field"><label>E-mail</label><input type="email" id="forgot-email" placeholder="seu@email.com" autocomplete="email" oninput="limpaCampo(this, emailLimpo)"></div>
       <button class="auth-btn" id="btn-forgot" onclick="doForgotPassword()">Enviar link</button>
       <button type="button" class="back-link" onclick="showLogin()">← Voltar ao login</button>
     </div>
@@ -612,7 +618,7 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11p
     </div>
     <div id="form-register" style="display:none;">
       <div class="field"><label>Nome completo</label><input type="text" id="reg-name" placeholder="Seu nome completo" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
-      <div class="field"><label>E-mail</label><input type="email" id="reg-email" placeholder="seu@email.com" autocomplete="email"></div>
+      <div class="field"><label>E-mail da empresa</label><div class="mail-wrap"><input type="text" id="reg-email" placeholder="nome.sobrenome" autocomplete="off" autocapitalize="none" spellcheck="false" oninput="limpaCampo(this, localLimpo)"><span class="mail-dom">@conlogsa.com.br</span></div></div>
       <div class="field"><label>Celular (WhatsApp)</label><input type="tel" id="reg-phone" placeholder="(51) 99999-9999"></div>
       <div class="field"><label>Senha</label><div class="pass-wrap"><input type="password" id="reg-pass" placeholder="mínimo 6 caracteres" autocomplete="new-password"><button type="button" class="eye-btn" onclick="togglePass('reg-pass',this)" tabindex="-1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <button class="auth-btn" id="btn-register" onclick="doRegister()">Criar conta</button>
@@ -752,7 +758,7 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11p
             <div class="fld"><label>Nome</label><input class="inp" id="uc-nome" autocomplete="off" style="text-transform:uppercase" oninput="const c=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(c,c)"></div>
             <div class="fld"><label>Telefone</label><input class="inp" id="uc-tel" autocomplete="off"></div>
           </div>
-          <div class="fld"><label>E-mail <span class="ctx" id="uc-email-ctx"></span></label><input class="inp" id="uc-email" type="email" autocomplete="off"></div>
+          <div class="fld"><label>E-mail <span class="ctx" id="uc-email-ctx"></span></label><div class="mail-wrap"><input class="inp" id="uc-email" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" oninput="limpaCampo(this, UC && UC.novo ? localLimpo : emailLimpo)"><span class="mail-dom" id="uc-email-dom">@conlogsa.com.br</span></div></div>
           <div class="fld" id="uc-st-fld"><label>Situação</label><div class="seg" id="uc-st"></div></div>
           <div class="fld" id="uc-pf-fld"><label>Perfil <span class="ctx" id="uc-pf-ctx"></span></label><div class="seg" id="uc-pf"></div></div>
           <div class="fld" id="uc-pass-fld"><label>Senha <span class="ctx">· provisória: no 1º acesso a pessoa cria a dela</span></label>
@@ -1279,8 +1285,26 @@ function setMsg(text, type) {
   el.className = 'auth-msg' + (type ? ' ' + type : '');
 }
 
+// E-mail sempre minúsculo, sem acento nem caractere que e-mail não aceita (Renan, 16/10/2026).
+// Cadastro novo digita só a 1ª parte: o domínio da empresa é obrigatório e vem pronto.
+const MAIL_DOM = '@conlogsa.com.br';
+const semAcento = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function emailLimpo(v) {
+  v = semAcento(v).toLowerCase().replace(/[^a-z0-9._%+\-@]/g, '');
+  const i = v.indexOf('@');
+  return i < 0 ? v : v.slice(0, i + 1) + v.slice(i + 1).replace(/@/g, '').replace(/[^a-z0-9.\-]/g, '');
+}
+const localLimpo = v => emailLimpo(String(v || '').split('@')[0]).replace(/@/g, '');
+const localValido = l => /^[a-z0-9_%+\-]+(\.[a-z0-9_%+\-]+)*$/.test(l || '');
+const emailValido = e => { const [l, d] = String(e || '').split('@'); return localValido(l) && /^[a-z0-9\-]+(\.[a-z0-9\-]+)*\.[a-z]{2,}$/.test(d || ''); };
+function limpaCampo(el, fn) {
+  const a = el.value, b = fn(a); if (a === b) return;
+  const c = Math.max(0, (el.selectionStart || 0) - (a.length - b.length));
+  el.value = b; try { el.setSelectionRange(c, c); } catch (e) {}
+}
+
 async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
+  const email = emailLimpo(document.getElementById('login-email').value.trim());
   const pass  = document.getElementById('login-pass').value;
   if (!email || !pass) { setMsg('Preencha e-mail e senha.', 'error'); return; }
   const btn = document.getElementById('btn-login');
@@ -1300,10 +1324,12 @@ async function doLogin() {
 
 async function doRegister() {
   const name  = document.getElementById('reg-name').value.trim().toUpperCase();
-  const email = document.getElementById('reg-email').value.trim();
+  const local = localLimpo(document.getElementById('reg-email').value.trim());
+  const email = local ? local + MAIL_DOM : '';
   const phone = document.getElementById('reg-phone').value.trim();
   const pass  = document.getElementById('reg-pass').value;
   if (!name || !email || !phone || !pass) { setMsg('Preencha todos os campos.', 'error'); return; }
+  if (!localValido(local)) { setMsg('E-mail inválido. Digite só a primeira parte (ex.: nome.sobrenome).', 'error'); return; }
   if (pass.length < 6) { setMsg('Senha deve ter pelo menos 6 caracteres.', 'error'); return; }
   const btn = document.getElementById('btn-register');
   btn.disabled = true; btn.textContent = 'Criando conta…';
@@ -1351,7 +1377,7 @@ function showLogin() {
 }
 
 async function doForgotPassword() {
-  const email = document.getElementById('forgot-email').value.trim();
+  const email = emailLimpo(document.getElementById('forgot-email').value.trim());
   if (!email) { setMsg('Informe o e-mail.', 'error'); return; }
   const btn = document.getElementById('btn-forgot');
   btn.disabled = true; btn.textContent = 'Enviando…';
@@ -1609,11 +1635,11 @@ const accChefe = id => !!((_fcaProf[id] || {}).is_admin || (_mu[id] || {}).maste
 const accPode = id => _master || id === meuId() || !accChefe(id);
 const farolTxt = v => { v = String(v || ''); return v === 'TODAS' ? 'Todas' : v.split(',').map(x => x.trim()).filter(Boolean).join(', '); };
 function accLinhas(tab) {
-  const rows = allApprovals.filter(a => a.status === tab).map(a => ({ id: a.user_id, ap: a, nome: String(a.name || '').toUpperCase(), email: a.email || '',
+  const rows = allApprovals.filter(a => a.status === tab).map(a => ({ id: a.user_id, ap: a, nome: String(a.name || '').toUpperCase(), email: String(a.email || '').toLowerCase(),
     tel: a.phone || '', cad: a.created_at, status: a.status }));
   // o Master enxerga também quem travou fora da aprovação (cadastro que parou no e-mail)
   if (_master && tab === 'pending') masterUsers.filter(m => !m.status).forEach(m => rows.push({ id: m.id, ap: null,
-    nome: String(m.nome || '').toUpperCase(), email: m.email || '', tel: m.telefone || '', cad: m.criado, status: 'pending', semAprov: true }));
+    nome: String(m.nome || '').toUpperCase(), email: String(m.email || '').toLowerCase(), tel: m.telefone || '', cad: m.criado, status: 'pending', semAprov: true }));
   return rows;
 }
 function accChave(r, k) {
@@ -1699,7 +1725,7 @@ function renderAdminUsers() {
         <div class="user-avatar">${initial}</div>
         <div class="user-info">
           <div class="user-name">${String(u.name || '—').toUpperCase()}</div>
-          <div class="user-email">${u.email}</div>
+          <div class="user-email">${String(u.email || '').toLowerCase()}</div>
           <div class="user-meta"><span class="user-phone">${phoneHtml}</span><span class="user-date">${dt}</span></div>
         </div>
       </div>
@@ -1854,7 +1880,7 @@ function abreUsuario(id) {
   UC = { id, novo: !id, pode: !id || accPode(id), eu: id === meuId(),
     st: ap ? ap.status : (m ? (m.status || 'pending') : 'approved'), pf, pf0: pf,
     fca: new Set(fcaUnitsOf(p)), far: new Set(far === 'TODAS' ? ucUnidades() : far.split(',').map(x => x.trim().toUpperCase()).filter(Boolean)),
-    o: { nome: String((ap && ap.name) || (m && m.nome) || '').toUpperCase(), email: (ap && ap.email) || (m && m.email) || '', tel: (ap && ap.phone) || (m && m.telefone) || '',
+    o: { nome: String((ap && ap.name) || (m && m.nome) || '').toUpperCase(), email: String((ap && ap.email) || (m && m.email) || '').toLowerCase(), tel: (ap && ap.phone) || (m && m.telefone) || '',
       st: ap ? ap.status : (m ? (m.status || '') : ''), fca: fcaUnitsOf(p).join(','), far, adm: !!p.is_admin, mst: !!(m && m.master), tf: !!p.time_frota } };
   const v = (k, x) => { document.getElementById(k).value = x == null ? '' : x; };
   v('uc-nome', UC.o.nome); v('uc-email', UC.o.email); v('uc-tel', UC.o.tel); v('uc-pass', '');
@@ -1877,6 +1903,8 @@ function ucPinta() {
   const ed = UC.pode, mst = _master, novo = UC.novo;
   ['uc-nome', 'uc-tel'].forEach(i => document.getElementById(i).readOnly = !ed);
   document.getElementById('uc-email').readOnly = !(mst && ed);
+  document.getElementById('uc-email-dom').style.display = novo ? '' : 'none';
+  document.getElementById('uc-email').placeholder = novo ? 'nome.sobrenome' : '';
   document.getElementById('uc-email-ctx').textContent = mst ? '' : '· só o Master muda';
   // situação
   document.getElementById('uc-st-fld').style.display = novo || UC.eu ? 'none' : '';
@@ -1916,12 +1944,14 @@ function ucFarVal() { const un = ucUnidades(); return UC.far.size === 0 ? null :
 async function ucSalvar() {
   if (!UC || !UC.pode) return;
   const nome = document.getElementById('uc-nome').value.trim().replace(/\s+/g, ' ').toUpperCase();
-  const email = document.getElementById('uc-email').value.trim(), tel = document.getElementById('uc-tel').value.trim();
+  const emailIn = document.getElementById('uc-email').value.trim(), tel = document.getElementById('uc-tel').value.trim();
+  const email = UC.novo ? (localLimpo(emailIn) ? localLimpo(emailIn) + MAIL_DOM : '') : emailLimpo(emailIn);
   const bt = document.getElementById('uc-salvar'); bt.disabled = true; ucMsg('Gravando…');
   try {
     const csv = [...UC.fca].join(','), far = ucFarVal();
     if (UC.novo) {
       if (!nome || !email) throw new Error('Informe nome e e-mail.');
+      if (!emailValido(email)) throw new Error('E-mail inválido. Digite só a primeira parte (ex.: nome.sobrenome).');
       const { data, error } = await sb.rpc('master_criar', { p_email: email, p_nome: nome, p_telefone: tel || null,
         p_senha: document.getElementById('uc-pass').value.trim() || null, p_unidade: (UC.pf === 'gestor' || UC.pf === 'frota') ? (csv || null) : null });
       if (error) throw error;
@@ -1942,7 +1972,7 @@ async function ucSalvar() {
     if (_master) {
       const d = {};
       if (nome && nome !== String(o.nome || '').toUpperCase()) d.nome = nome;
-      if (email && email.toLowerCase() !== String(o.email || '').toLowerCase()) d.email = email;
+      if (email && email !== String(o.email || '').toLowerCase()) { if (!emailValido(email)) throw new Error('E-mail inválido.'); d.email = email; }
       if (tel !== String(o.tel || '')) d.telefone = tel;
       if (!UC.eu && UC.st !== o.st) d.status = UC.st;
       if (!admNovo && csv !== o.fca) d.unidade = csv;
@@ -2057,6 +2087,6 @@ init();
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/modo-tv.js?v=202610111500"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202610162200"></script>
+<script src="assets/build-check.js?v=202610162230"></script>
 </body>
 </html>

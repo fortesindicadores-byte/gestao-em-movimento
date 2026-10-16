@@ -93,6 +93,8 @@ for (const [W, H, tema] of [[1366, 768, 'escuro'], [1920, 1080, 'claro']]) {
       far: [...document.querySelectorAll('#uc-far .uc-it.on')].map(b => b.textContent), cabe: c.bottom <= innerHeight + 1 && c.top >= -1,
       pass: getComputedStyle(document.getElementById('uc-pass-fld')).display, ops: getComputedStyle(document.getElementById('uc-ops')).display }; });
   ck(cx.v === 'flex' && cx.nome === 'GESTOR PIR' && !cx.email, `${W}: clicar na linha abre a caixa (e-mail editável pelo Master)`);
+  ck(await pg.evaluate(() => getComputedStyle(document.getElementById('uc-email-dom')).display) === 'none', `${W}: cadastro existente edita o e-mail inteiro`);
+  ck(await pg.evaluate(() => [emailLimpo('Bruno.Alves@CONLOGSA.COM.BR'), emailLimpo('jõão silva@conlog@sa.com'), localLimpo('Ana.Rocha@gmail.com')].join('|')) === 'bruno.alves@conlogsa.com.br|joaosilva@conlogsa.com|ana.rocha', `${W}: limpeza do e-mail`);
   ck(cx.pf === 'Gestor de Frota' && cx.fca.join() === 'PIR' && cx.far.join() === 'PIR', `${W}: perfil e unidades marcadas`);
   ck(cx.pass !== 'none' && cx.ops !== 'none', `${W}: senha, liberar e sessões para o Master`);
   ck(cx.cabe, `${W}: caixa cabe na tela`);
@@ -137,10 +139,15 @@ for (const [W, H, tema] of [[1366, 768, 'escuro'], [1920, 1080, 'claro']]) {
   // novo usuário
   await pg.click('.acc-head .ubtn.pri');
   ck(await pg.evaluate(() => document.getElementById('uc-tit').textContent) === 'Novo usuário', `${W}: Novo usuário abre a caixa vazia`);
-  await pg.fill('#uc-nome', 'João Silva'); await pg.fill('#uc-email', 'joao@conlogsa.com.br');
+  ck(await pg.evaluate(() => getComputedStyle(document.getElementById('uc-email-dom')).display) !== 'none', `${W}: novo usuário com @conlogsa.com.br pronto`);
+  await pg.fill('#uc-nome', 'João Silva'); await pg.click('#uc-email'); await pg.keyboard.type('João.Silva ');
+  ck(await pg.evaluate(() => document.getElementById('uc-email').value) === 'joao.silva', `${W}: digitando: minúsculo, sem acento nem espaço`);
+  await pg.fill('#uc-email', 'Joao.Silva@gmail.com');
+  ck(await pg.evaluate(() => document.getElementById('uc-email').value) === 'joao.silva', `${W}: e-mail novo só com a 1ª parte, minúsculo e sem acento (${await pg.evaluate(() => document.getElementById('uc-email').value)})`);
   await pg.click('#uc-fca .uc-it:has-text("CGR")');
   await pg.click('#uc-salvar'); await pg.waitForTimeout(200);
   const cr = await ultimo(pg, 'master_criar');
+  ck(cr && cr.p_email === 'joao.silva@conlogsa.com.br', `${W}: master_criar com o domínio da empresa (${cr && cr.p_email})`);
   ck(cr && cr.p_nome === 'JOÃO SILVA' && cr.p_unidade === 'CGR' && cr.p_senha === null, `${W}: master_criar com unidade (${cr && cr.p_unidade})`);
   ck(await pg.evaluate(() => document.getElementById('uc-senha-v').textContent) === 'Nv4bTt9wQe', `${W}: senha do novo aparece`);
   await pg.evaluate(() => fechaUsuario());
