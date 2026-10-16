@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610161730">
+<meta name="build" content="202610161800">
 <title>FCA · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -833,8 +833,8 @@ table.adv-table tr.pre-total td{background:var(--cabec);font-weight:800;border-t
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
 <script src="../assets/fca-auto.js?v=202610161400"></script>
-<script src="../assets/fca-tabela.js?v=202610161730"></script>
-<script src="../assets/fca-caixa.js?v=202610161730"></script>
+<script src="../assets/fca-tabela.js?v=202610161800"></script>
+<script src="../assets/fca-caixa.js?v=202610161800"></script>
 </head>
 <body>
 <div class="app">
@@ -860,11 +860,11 @@ table.adv-table tr.pre-total td{background:var(--cabec);font-weight:800;border-t
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
       Preenchimento FCA
     </button>
-    <button class="s-item" data-v="tabela" title="Tabela">
+    <button class="s-item on" data-v="tabela" title="Tabela">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 5h18v14H3zM3 10h18M9 10v9"/></svg>
       Tabela
     </button>
-    <button class="s-item on" data-v="kanban" title="Kanban">
+    <button class="s-item" data-v="kanban" title="Kanban">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 4h5v16H4zM10 4h5v11h-5zM16 4h4v7h-4z"/></svg>
       Kanban
     </button>
@@ -901,7 +901,7 @@ table.adv-table tr.pre-total td{background:var(--cabec);font-weight:800;border-t
 
   <main class="board">
     <div class="top">
-      <div class="tit-wrap"><h1 id="tituloVista">Kanban</h1><div class="tit-sub" id="subVista"></div></div>
+      <div class="tit-wrap"><h1 id="tituloVista">Tabela</h1><div class="tit-sub" id="subVista"></div></div>
       <div class="hfilter"><label>Unidade</label><div class="ms-wrap" id="ms-uni"><button class="ms-btn" onclick="toggleMs('ms-uni')"><span class="ms-lbl">Unidade</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
       <div class="hfilter"><label>Vigência</label><div class="ms-wrap" id="ms-vig"><button class="ms-btn" onclick="toggleMs('ms-vig')"><span class="ms-lbl">Vigência</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
       <div class="hfilter"><label>Projeto</label><div class="ms-wrap" id="ms-proj"><button class="ms-btn" onclick="toggleMs('ms-proj')"><span class="ms-lbl">Projeto</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
@@ -1386,7 +1386,7 @@ function ganttHTML(vis){
   </div></div>`;
 }
 // ── Kanban (3 buckets) — visão padrão ──
-let VIEW='kanban';
+let VIEW='tabela';   // abre SEMPRE na Tabela (Renan, 16/10/2026)
 // prazo no card do Kanban (padrão do Planner): data + status + dias p/ vencer ou vencida
 function diasVenc(iso){const h=new Date();h.setHours(0,0,0,0);const p=new Date(String(iso).slice(0,10)+'T00:00:00');return Math.round((p-h)/864e5);}
 function prazoBadgeK(r){
@@ -1646,6 +1646,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610161730"></script>
+<script src="../assets/build-check.js?v=202610161800"></script>
 </body>
 </html>

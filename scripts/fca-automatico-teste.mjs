@@ -575,8 +575,8 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   console.log('\n══ 2e · Tabela do FCA da unidade (GRL)');
   const { pg, ctx, errs } = await abre({ acErr: true, t: T2D, pagina: 'fca-preenchimento/index.html?u=GRL&vig=ago/26', espera: '#list' });
   await pg.waitForTimeout(2500);
-  await pg.evaluate(() => { VIEW = 'flat'; if (typeof updateViewBtnsPre === 'function') updateViewBtnsPre(); aplicar(); });
-  await pg.waitForTimeout(600);
+  const AB = await pg.evaluate(() => ({ tit: document.getElementById('tituloVista').textContent, tab: !!document.querySelector('table.rel.fg-rel'), on: (document.querySelector('.s-item.on[data-v]') || {}).dataset.v }));
+  af('o FCA da unidade abre direto na Tabela (sem clicar)', AB.tit === 'Tabela' && AB.tab && AB.on === 'flat', JSON.stringify(AB));
   const R = await pg.evaluate(() => { const t = document.querySelector('table.rel.fg-rel'); if (!t) return { sem: true, html: (document.getElementById('list') || document.body).innerText.slice(0, 200) };
     const b = [...t.querySelectorAll('tbody.fg')].find(x => /Manuten/.test(x.textContent));
     return { nfg: t.querySelectorAll('tbody.fg').length, uniCol: [...t.querySelectorAll('th')].some(th => /Unid/.test(th.textContent)),
@@ -622,6 +622,8 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   console.log('\n══ 2g · "+" ágil na Tabela do FCA · Admin');
   const { pg, ctx, errs } = await abre({ acErr: true, t: T2D, pagina: 'fca-consolidado/index.html', w: 1600, h: 900, espera: '.s-item' });
   await pg.waitForTimeout(2000);
+  const AB = await pg.evaluate(() => ({ tit: document.getElementById('tituloVista').textContent, tab: !!document.querySelector('table.rel.fg-rel'), on: (document.querySelector('.s-item.on[data-v]') || {}).dataset.v }));
+  af('o FCA · Admin abre direto na Tabela', AB.tit === 'Tabela' && AB.tab && AB.on === 'tabela', JSON.stringify(AB));
   await pg.evaluate(() => { const b = document.querySelector('.s-item[data-v="tabela"]'); if (b) b.click(); });
   await pg.waitForTimeout(500);
   const grlBloco = () => [...document.querySelectorAll('tbody.fg')].find(x => /^GRL/.test((x.querySelector('td.id') || {}).textContent || '') && /Manuten/.test(x.textContent));

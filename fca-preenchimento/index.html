@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610161730">
+<meta name="build" content="202610161800">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -770,8 +770,8 @@ body.light-mode .kcard-fato{color:#000000!important;}
 <script src="../assets/dispersao-km.js?v=202610152330"></script>
 <script src="../assets/balanco-massa.js"></script>
 <script src="../assets/fca-auto.js?v=202610161400"></script>
-<script src="../assets/fca-tabela.js?v=202610161730"></script>
-<script src="../assets/fca-caixa.js?v=202610161730"></script>
+<script src="../assets/fca-tabela.js?v=202610161800"></script>
+<script src="../assets/fca-caixa.js?v=202610161800"></script>
 </head>
 <body>
 <div class="app">
@@ -789,11 +789,11 @@ body.light-mode .kcard-fato{color:#000000!important;}
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
       Resumo Gerencial
     </button>
-    <button class="s-item" data-v="flat" title="Tabela">
+    <button class="s-item on" data-v="flat" title="Tabela">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 5h18v14H3zM3 10h18M9 10v9"/></svg>
       Tabela
     </button>
-    <button class="s-item on" data-v="kanban" title="Kanban">
+    <button class="s-item" data-v="kanban" title="Kanban">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 4h5v16H4zM10 4h5v11h-5zM16 4h4v7h-4z"/></svg>
       Kanban
     </button>
@@ -819,7 +819,7 @@ body.light-mode .kcard-fato{color:#000000!important;}
 
   <main class="board">
     <div class="top">
-      <h1 id="tituloVista">Kanban</h1>
+      <h1 id="tituloVista">Tabela</h1>
       <div class="hfilter"><label>Vigência</label><div class="ms-wrap" id="ms-vig"><button class="ms-btn" onclick="toggleMs('ms-vig')"><span class="ms-lbl">Vigência</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
       <div class="hfilter"><label>Projeto</label><div class="ms-wrap" id="ms-proj"><button class="ms-btn" onclick="toggleMs('ms-proj')"><span class="ms-lbl">Projeto</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
       <div class="hfilter"><label>Origem</label><div class="ms-wrap" id="ms-org"><button class="ms-btn" onclick="toggleMs('ms-org')"><span class="ms-lbl">Origem</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
@@ -1632,7 +1632,7 @@ function aplicar(){
 }
 
 // ── Views: 'kanban' (padrão) · 'tabela' (fatos em blocos) · 'flat' (tabela/relatório) ──
-let VIEW='kanban';   // a tela de Fatos saiu do menu: o Kanban faz tudo o que ela fazia
+let VIEW='flat';   // abre SEMPRE na Tabela (Renan, 16/10/2026)
 // prazo no card do Kanban (padrão do Planner): data + status + dias p/ vencer ou vencida
 function diasVenc(iso){const h=new Date();h.setHours(0,0,0,0);const p=new Date(String(iso).slice(0,10)+'T00:00:00');return Math.round((p-h)/864e5);}
 function prazoBadgeK(r){
@@ -2199,6 +2199,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610161730"></script>
+<script src="../assets/build-check.js?v=202610161800"></script>
 </body>
 </html>
