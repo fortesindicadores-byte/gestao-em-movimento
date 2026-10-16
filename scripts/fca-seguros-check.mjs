@@ -10,7 +10,7 @@ async function tudo(q) { const out = [];
     if (!Array.isArray(j)) { console.error('erro', r.status, JSON.stringify(j).slice(0, 200)); process.exit(1); }
     out.push(...j); if (j.length < 1000) break; } return out; }
 const NK = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
-const ehSeg = s => /SEGUR|LICEN|IPVA/.test(NK(s));
+const ehSeg = s => /SEGURO|LICEN|IPVA/.test(NK(s));
 
 const fca = await tudo('/rest/v1/fca?select=id,unidade,vigencia,projeto,origem,fato,fato_desvio,causa,acao,created_at,updated_at,auto_chave&order=id');
 console.log(`fca: ${fca.length} linhas`);
