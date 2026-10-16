@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610161400">
+<meta name="build" content="202610161500">
 <title>FCA · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1087,6 +1087,8 @@ async function addRow(srcId,comCausa){
   const {data,error}=await sb.from('fca').insert(novo).select('*').single();
   if(error){flash('Erro ao adicionar',true);console.error('insert add',error);return;}
   _ROWS.push(data); writeCache(CACHE_KEY,_ROWS); flash('Adicionado ✓'); render();
+  // a linha nova abre na caixa, pronta para digitar (o "+" da Tabela, do card e da própria caixa)
+  openKModal(data.id); const ta=document.getElementById(comCausa?'km-acao':'km-causa'); if(ta) ta.focus();
 }
 async function delRow(id){
   if(!id)return;
@@ -1308,7 +1310,7 @@ function relatorioHTML(vis){
   // mesclada sobre as ações dela e o YTD no pé do fato (assets/fca-tabela.js, o mesmo do FCA da unidade).
   return FcaTabela.html(vis.map(r=>({id:r.id,uni:r.unidade,proj:projLabel(r.projeto),vig:r.vigencia,fato:r.fato,desvio:r.fato_desvio,
     causa:r.causa,acao:r.acao,resp:r.responsavel,prazo:r.prazo,status:r.status||DEFAULT_STATUS})),
-    {uni:true,tri,chip:chipStatusRel,prazoState,diasVenc,defaultStatus:DEFAULT_STATUS});
+    {uni:true,add:true,tri,chip:chipStatusRel,prazoState,diasVenc,defaultStatus:DEFAULT_STATUS});
 }
 // ── Gantt: barra de cada ação, da criação até o prazo ──
 // verde no prazo, vermelha vencida (com rastro do prazo até hoje), tracejada sem prazo.
@@ -1644,10 +1646,10 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/fca-auto.js?v=202610161400"></script>
-<script src="../assets/fca-tabela.js?v=202610161400"></script>
+<script src="../assets/fca-tabela.js?v=202610161500"></script>
 <script src="../assets/fca-caixa.js?v=202610161400"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610161400"></script>
+<script src="../assets/build-check.js?v=202610161500"></script>
 </body>
 </html>

@@ -94,27 +94,38 @@
       '<th class="c-resp" title="Responsável">Resp.</th><th class="c-prazo">Prazo</th><th class="c-st">Status</th></tr></thead>';
     if (!grupos.length) return h + `<tbody><tr><td colspan="${nCol}" class="center">${esc(o.vazio || 'Nenhuma ação com os filtros selecionados.')}</td></tr></tbody></table></div></div>`;
     grupos.forEach(G => {
-      // dentro do fato: as ações numeradas na ordem da causa (1.1, 1.2, 2.1…); as escritas à mão depois, na ordem da página
+      // dentro do fato: as linhas da MESMA causa ficam juntas; as causas na ordem do número (1., 2., 3.) e, sem número,
+      // na ordem em que aparecem; dentro da causa, as ações numeradas (1.1, 1.2…) e depois as sem número (ex.: a nova)
+      const ck = r => String(r.causa || '').trim(), ordC = {};
+      G.rows.forEach(x => { const k = ck(x.r); if (k && !(k in ordC)) { const nc = numCausa(k); ordC[k] = nc != null ? nc : 1000 + x.i; } });
       const rows = G.rows.slice().sort((a, b) => {
-        const na = numAcao(a.r.acao) || (numCausa(a.r.causa) != null ? [numCausa(a.r.causa), 0] : null),
-          nb = numAcao(b.r.acao) || (numCausa(b.r.causa) != null ? [numCausa(b.r.causa), 0] : null);
+        const ca = ck(a.r) ? ordC[ck(a.r)] : 5000 + a.i, cb = ck(b.r) ? ordC[ck(b.r)] : 5000 + b.i;
+        if (ca !== cb) return ca - cb;
+        const na = numAcao(a.r.acao), nb = numAcao(b.r.acao);
         if (na && nb) return na[0] - nb[0] || na[1] - nb[1] || a.i - b.i;
         if (na) return -1; if (nb) return 1; return a.i - b.i; }).map(x => x.r);
       const n = rows.length, f0 = rows[0];
       // a causa repetida nas linhas seguidas vira UMA célula (rowspan) sobre as ações dela
-      const span = rows.map(() => 1);
-      for (let i = 0; i < n; i++) { if (!span[i]) continue; const c = String(rows[i].causa || '').trim(); if (!c) continue;
-        let j = i + 1; while (j < n && String(rows[j].causa || '').trim() === c) { span[i]++; span[j] = 0; j++; } }
+      const span = rows.map(() => 1), dono = rows.map((_, i) => i);
+      for (let i = 0; i < n; i++) { if (!span[i]) continue; const c = ck(rows[i]); if (!c) continue;
+        let j = i + 1; while (j < n && ck(rows[j]) === c) { span[i]++; span[j] = 0; dono[j] = i; j++; } }
+      // "+" ÁGIL (Renan, 16/10/2026: "Aqui pode ter um +, para adicionar mais uma causa ou mais uma ação de forma ágil"):
+      // no pé da última causa do fato, + causa; no pé da última ação de cada causa, + ação para ESSA causa
+      const temTxt = r => !!(ck(r) || String(r.acao || '').trim());
+      const ultCausa = (() => { for (let i = n - 1; i >= 0; i--) if (span[i] && temTxt(rows[i])) return i; return -1; })();
+      const add = (tipo, id, t) => o.add ? `<button type="button" class="kadd fg-add" data-add="${tipo}" data-id="${esc(id)}" title="${t}">+</button>` : '';
       h += '<tbody class="fg">';
       rows.forEach((r, i) => {
         const st = r.status || DEF, sp = ps(r), cor = sp === 'Vencida' ? 'var(--vermelho,#FF5252)' : 'var(--verde,#3BB33B)';
         const feita = /conclu|cancel/i.test(st);
+        const fimDaCausa = i === n - 1 || dono[i + 1] !== dono[i];
         h += `<tr data-id="${esc(r.id)}" title="Clique para abrir a ação"${feita ? ' class="feita"' : ''}>`;
         if (i === 0) h += (o.uni ? `<td class="center id" rowspan="${n}">${esc(f0.uni || '—')}</td>` : '') +
           `<td class="center id" rowspan="${n}">${esc(f0.proj || '—')}</td><td class="center id vig" rowspan="${n}">${esc(String(f0.vig || '').toUpperCase())}</td>` +
           `<td class="txt fato id" rowspan="${n}">${fatoHTML(primeira(f0.fato), f0.desvio, tri)}</td>`;
-        if (span[i]) h += `<td class="txt ln cz"${span[i] > 1 ? ` rowspan="${span[i]}"` : ''}>${causaHTML(r.causa, tri)}</td>`;
-        h += `<td class="txt ln">${acaoHTML(r.acao, tri)}</td>` +
+        if (span[i]) h += `<td class="txt ln cz${i === ultCausa && o.add ? ' tem-add' : ''}"${span[i] > 1 ? ` rowspan="${span[i]}"` : ''}>${causaHTML(r.causa, tri)}${i === ultCausa ? add('causa', r.id, 'Mais uma causa para este fato') : ''}</td>`;
+        const addA = fimDaCausa && temTxt(r) ? add('acao', r.id, 'Mais uma ação para esta causa') : '';
+        h += `<td class="txt ln${addA ? ' tem-add' : ''}">${acaoHTML(r.acao, tri)}${addA}</td>` +
           `<td class="center ln">${esc(r.resp) || '<span class="fg-vazio">—</span>'}</td>` +
           `<td class="center ln prazo" title="${esc(sp)}"><span class="dot" style="background:${cor}"></span>${prazoBR(r.prazo)}</td>` +
           `<td class="center ln">${chip(st)}</td></tr>`;
@@ -157,6 +168,10 @@ table.rel.fg-rel .fa-of li{padding-left:10px;position:relative;white-space:norma
 table.rel.fg-rel .fa-of li::before{content:'';position:absolute;left:2px;top:.62em;width:4px;height:4px;border-radius:50%;background:var(--orange,#F97316);}
 table.rel.fg-rel .fa-obs{margin-top:6px;}
 table.rel.fg-rel .fg-vazio{color:var(--txt3,var(--text3));}
+table.rel.fg-rel td.tem-add{position:relative;padding-bottom:28px!important;}
+table.rel.fg-rel .fg-add{position:absolute;right:8px;bottom:6px;width:20px;height:20px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;line-height:1;background:transparent;border:1px solid var(--card-brd);color:var(--txt3,var(--text3));cursor:pointer;opacity:.45;transition:opacity .15s,border-color .15s,color .15s;}
+table.rel.fg-rel tbody.fg:hover .fg-add{opacity:1;}
+table.rel.fg-rel .fg-add:hover{border-color:var(--orange,#F97316);color:var(--orange,#F97316);}
 @media(max-width:860px){table.rel.fg-rel td.fato .fa-ano-res{display:none;}table.rel.fg-rel td.fato .fa-ano-pe{position:static;}}`;
     document.head.appendChild(s);
   }

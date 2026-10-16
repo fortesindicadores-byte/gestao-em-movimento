@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610161400">
+<meta name="build" content="202610161500">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1841,7 +1841,7 @@ function relatorioHTMLpre(vis){
   // uma linha por ação na ordem da causa e a causa mesclada sobre as ações dela — assets/fca-tabela.js, o mesmo do Admin.
   return FcaTabela.html(rows.map(({f,a})=>({id:a.id||'',proj:projLabel(f.proj),vig:f.vig,fato:f.nome||f.fato,desvio:a.fdesv||stripTags(f.desvio||'').trim(),
     causa:a.causa,acao:a.acao,resp:a.resp,prazo:a.prazo,status:a.status||DEFAULT_STATUS})),
-    {uni:false,tri,chip:chipStatusRel,prazoState:x=>prazoState({status:x.status,prazo:x.prazo}),diasVenc,defaultStatus:DEFAULT_STATUS});
+    {uni:false,add:true,tri,chip:chipStatusRel,prazoState:x=>prazoState({status:x.status,prazo:x.prazo}),diasVenc,defaultStatus:DEFAULT_STATUS});
 }
 async function moveCardPre(id,status){
   if(!id||PREVIEW||!sb)return;
@@ -2200,10 +2200,10 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/fca-tabela.js?v=202610161400"></script>
+<script src="../assets/fca-tabela.js?v=202610161500"></script>
 <script src="../assets/fca-caixa.js?v=202610161400"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610161400"></script>
+<script src="../assets/build-check.js?v=202610161500"></script>
 </body>
 </html>

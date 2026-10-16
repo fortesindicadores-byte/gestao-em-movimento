@@ -171,7 +171,7 @@ const SHIM_SB = (admin, acErr) => `window.__ups=[];window.__T=window.__T||${JSON
       maybeSingle:async()=>({data:rows[0]||null,error:null}),
       range:async(a,b)=>(tabela==='fca_auto_acao'&&${!!acErr}?{data:null,error:{message:'relation "public.fca_auto_acao" does not exist'}}:{data:rows.slice(a,b+1),error:null,count:rows.length}),
       upsert:async(row)=>{ if(${!!acErr}) return {data:null,error:{message:'relation "public.fca_auto_acao" does not exist'}}; window.__ups.push(row); return {data:null,error:null}; },
-      insert:(rs)=>{ window.__ins=window.__ins||[]; const data=rs.map((r,i)=>Object.assign({id:'ins'+(window.__ins.length+i)},r)); window.__ins.push(...rs); (T[tabela]=T[tabela]||[]).push(...data.map(r=>Object.assign({},r))); const q2={select:()=>q2,then:(r,j)=>Promise.resolve({data,error:null}).then(r,j)}; return q2; },
+      insert:(rs0)=>{ window.__ins=window.__ins||[]; const rs=Array.isArray(rs0)?rs0:[rs0]; const data=rs.map((r,i)=>Object.assign({id:'ins'+(window.__ins.length+i)},r)); window.__ins.push(...rs); (T[tabela]=T[tabela]||[]).push(...data.map(r=>Object.assign({},r))); const q2={select:()=>q2,single:async()=>({data:Object.assign({},data[0]),error:null}),then:(r,j)=>Promise.resolve({data,error:null}).then(r,j)}; return q2; },
       update:(p)=>{ window.__upd=window.__upd||[]; const rec={tabela,p}; window.__upd.push(rec); const q2={eq:(c,v)=>{rec.eq=[c,v];(T[tabela]||[]).filter(r=>r[c]===v).forEach(r=>Object.assign(r,p));return q2;},then:(r,j)=>Promise.resolve({data:null,error:null}).then(r,j)}; return q2; },
       then(res,rej){return Promise.resolve({data:rows,error:null}).then(res,rej);}};
     return q;}})};`;
@@ -616,6 +616,37 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     if (SHOT) await pg.screenshot({ path: `${SHOT}/fca-caixa-${nome}.png` });
     await ctx.close();
   }
+}
+/* ══ 2g · o "+" da Tabela: + ação na causa, + causa no fato, e a caixa abre na linha nova ══ */
+{
+  console.log('\n══ 2g · "+" ágil na Tabela do FCA · Admin');
+  const { pg, ctx, errs } = await abre({ acErr: true, t: T2D, pagina: 'fca-consolidado/index.html', w: 1600, h: 900, espera: '.s-item' });
+  await pg.waitForTimeout(2000);
+  await pg.evaluate(() => { const b = document.querySelector('.s-item[data-v="tabela"]'); if (b) b.click(); });
+  await pg.waitForTimeout(500);
+  const grlBloco = () => [...document.querySelectorAll('tbody.fg')].find(x => /^GRL/.test((x.querySelector('td.id') || {}).textContent || '') && /Manuten/.test(x.textContent));
+  const R0 = await pg.evaluate(f => { const b = (0, eval)('(' + f + ')')(); return { causa: b.querySelectorAll('.fg-add[data-add="causa"]').length, acao: b.querySelectorAll('.fg-add[data-add="acao"]').length, ncz: b.querySelectorAll('td.cz').length, n: b.rows.length }; }, grlBloco.toString());
+  af('o bloco tem UM "+ causa" (na última causa) e um "+ ação" por causa', R0.causa === 1 && R0.acao === R0.ncz, JSON.stringify(R0));
+  // + ação na 1ª causa
+  await pg.evaluate(f => { const b = (0, eval)('(' + f + ')')(); b.querySelector('.fg-add[data-add="acao"]').click(); }, grlBloco.toString());
+  await pg.waitForTimeout(700);
+  const R1 = await pg.evaluate(f => { const b = (0, eval)('(' + f + ')')(); const ov = document.getElementById('kmodal-ov');
+    const ins = (window.__ins || []).slice(-1)[0] || {};
+    const cz = [...b.querySelectorAll('td.cz')].map(td => td.rowSpan);
+    return { aberta: !!ov && ov.style.display === 'flex', causaIns: (ins.causa || '').slice(0, 2), acaoIns: ins.acao, resp: ins.responsavel, n: b.rows.length, cz, foco: document.activeElement && document.activeElement.id }; }, grlBloco.toString());
+  af('"+ ação" cria a linha com a MESMA causa e o gestor como dono, abre a caixa com o cursor na Ação', R1.aberta && R1.causaIns === '1.' && !R1.acaoIns && R1.resp === 'JOSE SANTOS' && R1.foco === 'km-acao', JSON.stringify(R1));
+  af('a linha nova entra dentro da causa 1 (a causa mescla mais uma linha), não no fim do fato', R1.n === R0.n + 1 && R1.cz[0] === 3, JSON.stringify({ n0: R0.n, n1: R1.n, cz: R1.cz }));
+  await pg.evaluate(() => closeKModal());
+  // + causa
+  await pg.evaluate(f => { const b = (0, eval)('(' + f + ')')(); b.querySelector('.fg-add[data-add="causa"]').click(); }, grlBloco.toString());
+  await pg.waitForTimeout(700);
+  const R2 = await pg.evaluate(f => { const b = (0, eval)('(' + f + ')')(); const ins = (window.__ins || []).slice(-1)[0] || {};
+    return { aberta: document.getElementById('kmodal-ov').style.display === 'flex', causa: ins.causa, n: b.rows.length, foco: document.activeElement && document.activeElement.id,
+      ultima: (b.rows[b.rows.length - 1].querySelector('td.cz') || {}).textContent }; }, grlBloco.toString());
+  af('"+ causa" cria uma linha vazia no mesmo fato, no fim do bloco, e abre a caixa com o cursor na Causa', R2.aberta && !R2.causa && R2.n === R1.n + 1 && R2.foco === 'km-causa' && /—/.test(R2.ultima || ''), JSON.stringify(R2));
+  af('sem erro de página', !errs.length, errs.join(' | ').slice(0, 300));
+  if (SHOT) { await pg.evaluate(() => closeKModal()); await pg.evaluate(f => { const b = (0, eval)('(' + f + ')')(); b.scrollIntoView(); b.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })); }, grlBloco.toString()); await pg.hover('tbody.fg td.cz'); await pg.screenshot({ path: `${SHOT}/fca-add.png` }); }
+  await ctx.close();
 }
 /* ══ 3 · sem admin ══ */
 {
