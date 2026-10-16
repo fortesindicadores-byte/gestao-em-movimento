@@ -93,6 +93,37 @@ body.claro .kac textarea,body.claro .kac input,body.claro .kac select,body.light
     $('km-seg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
       const s = $('km-status'); if (s.value === b.dataset.st) return; s.value = b.dataset.st; marca(b.dataset.st); dica(); s.dispatchEvent(new Event('change')); }));
     $('km-prazo').addEventListener('change', dica);
+    ['km-causa', 'km-acao'].forEach(id => travaNumero($(id)));
+  }
+  // o número da causa ("2. ") e da ação ("2.3. ") é fixo: dá para escrever depois dele, nunca apagar nem sobrescrever
+  const RE_NUM = { 'km-causa': /^\s*\d+\.\s/, 'km-acao': /^\s*\d+\.\d+\.\s/ };
+  function prefixo(el) { el.dataset.pref = ((el.value || '').match(RE_NUM[el.id]) || [''])[0]; }
+  function travaNumero(el) {
+    if (!el) return;
+    const L = () => (el.dataset.pref || '').length;
+    const poe = (v, c) => { el.value = v; el.setSelectionRange(c, c); el._sujo = true; el.dispatchEvent(new Event('input')); };
+    const prende = () => { const n = L(); if (!n || document.activeElement !== el) return;
+      if (el.selectionStart < n) el.setSelectionRange(n, Math.max(n, el.selectionEnd)); };
+    el.addEventListener('beforeinput', e => {
+      const n = L(); if (!n) return;
+      const a = el.selectionStart, b = el.selectionEnd, v = el.value, t = e.inputType || '';
+      if (a === b) {
+        if ((/^delete.*Backward/.test(t) && a <= n) || (/^delete.*Forward/.test(t) && a < n)) e.preventDefault();
+        else if (a < n && !/^delete/.test(t)) { e.preventDefault(); const d = e.data || (e.dataTransfer && e.dataTransfer.getData('text/plain')) || (t === 'insertLineBreak' ? '\n' : '');
+          poe(v.slice(0, n) + d + v.slice(n), n + d.length); }
+        return;
+      }
+      if (a >= n) return;
+      e.preventDefault();
+      const d = /^delete/.test(t) ? '' : (e.data || (e.dataTransfer && e.dataTransfer.getData('text/plain')) || (t === 'insertLineBreak' ? '\n' : ''));
+      poe(v.slice(0, n) + d + v.slice(Math.max(b, n)), n + d.length);
+    });
+    // rede: se algo passou (arrastar, corretor), o número volta e o texto fica
+    el.addEventListener('input', () => { const p = el.dataset.pref || ''; if (!p || el.value.startsWith(p)) return;
+      poe(p + el.value.replace(/^\s*\d*(\.\d*)*\.?\s?/, ''), p.length); });
+    ['focus', 'click', 'keyup', 'select'].forEach(ev => el.addEventListener(ev, () => setTimeout(prende, 0)));
+    el.addEventListener('blur', () => { if (el._sujo) { el._sujo = false; el.dispatchEvent(new Event('change')); } });
+    el.addEventListener('change', () => { el._sujo = false; });
   }
   function marca(v) { const s = $('km-seg'); if (s) s.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.st === v)); }
   // quanto falta ou há quanto venceu (ação fechada não vence)
@@ -130,6 +161,7 @@ body.claro .kac textarea,body.claro .kac input,body.claro .kac select,body.light
       (atual && !lista.includes(atual) ? `<option value="${esc(atual)}">${esc(atual)}</option>` : '') +
       lista.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
     sel.value = atual;
+    ['km-causa', 'km-acao'].forEach(id => { const el = $(id); if (el) prefixo(el); });
     const st = o.status || ST[0]; $('km-status').value = st; marca(st); dica();
     $('km-ok').textContent = '';
     $('kmodal-ov').style.display = 'flex';

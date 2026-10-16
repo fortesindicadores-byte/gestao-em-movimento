@@ -637,6 +637,20 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   af('"+ ação" cria a linha com a MESMA causa e o gestor como dono, abre a caixa com o cursor na Ação', R1.aberta && R1.causaIns === '1.' && R1.resp === 'JOSE SANTOS' && R1.foco === 'km-acao', JSON.stringify(R1));
   af('"+ ação" já vem com o próximo número da causa (1.N. )', /^1\.\d+\. $/.test(R1.acaoIns || ''), JSON.stringify(R1.acaoIns));
   af('a linha nova entra dentro da causa 1 (a causa mescla mais uma linha), não no fim do fato', R1.n === R0.n + 1 && R1.cz[0] === 3, JSON.stringify({ n0: R0.n, n1: R1.n, cz: R1.cz }));
+  // o número não sai: Backspace no começo, Home + Delete, Ctrl+A + digitar e colar por cima mantêm "1.N. "
+  const pref = R1.acaoIns;
+  await pg.focus('#km-acao'); await pg.keyboard.press('End');
+  for (let i = 0; i < 8; i++) await pg.keyboard.press('Backspace');
+  const T1 = await pg.$eval('#km-acao', e => e.value);
+  await pg.keyboard.press('Home'); await pg.keyboard.press('Delete'); await pg.keyboard.type('Ok');
+  const T2 = await pg.$eval('#km-acao', e => e.value);
+  await pg.keyboard.press('Control+A'); await pg.keyboard.type('Nova ação');
+  const T3 = await pg.$eval('#km-acao', e => e.value);
+  await pg.$eval('#km-acao', e => { e.value = 'sem número'; e.dispatchEvent(new Event('input')); });
+  const T4 = await pg.$eval('#km-acao', e => e.value);
+  await pg.click('#km-acomp'); await pg.waitForTimeout(300);
+  const T5 = await pg.evaluate(() => { const ins = (window.__ins || []).slice(-1)[0] || {}; const r = _ROWS.find(x => x.acao && x.causa === ins.causa && x.acao.startsWith(ins.acao)); return r && r.acao; });
+  af('o número da ação não se apaga (Backspace, Home+Delete, Ctrl+A, troca do texto) e grava com ele', T1 === pref && T2 === pref + 'Ok' && T3 === pref + 'Nova ação' && T4 === pref + 'sem número' && T5 === pref + 'sem número', JSON.stringify({ pref, T1, T2, T3, T4, T5 }));
   await pg.evaluate(() => closeKModal());
   // + causa
   await pg.evaluate(f => { const b = (0, eval)('(' + f + ')')(); b.querySelector('.fg-add[data-add="causa"]').click(); }, grlBloco.toString());
