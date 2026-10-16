@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610161930">
+<meta name="build" content="202610162000">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -561,7 +561,7 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11.
       <button type="button" class="back-link" onclick="showLogin()">← Voltar ao login</button>
     </div>
     <div id="form-recovery" style="display:none;">
-      <p class="form-hint">Defina sua nova senha.</p>
+      <p class="form-hint" id="recovery-hint">Defina sua nova senha.</p>
       <div class="field"><label>Nova senha</label><div class="pass-wrap"><input type="password" id="new-pass" placeholder="mínimo 6 caracteres" autocomplete="new-password"><button type="button" class="eye-btn" onclick="togglePass('new-pass',this)" tabindex="-1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <button class="auth-btn" id="btn-recovery" onclick="doUpdatePassword()">Salvar nova senha</button>
     </div>
@@ -729,7 +729,7 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11.
       <div class="mst-senha" id="mst-senha" style="display:none">
         Senha: <code id="mst-senha-v"></code>
         <button class="btn-approve" onclick="masterCopia()">Copiar e-mail e senha</button>
-        <i>Ela aparece só agora. Mande à pessoa por um canal privado.</i>
+        <i>Ela aparece só agora e é provisória: no primeiro acesso a pessoa cria a senha dela. Mande por um canal privado.</i>
       </div>
     </div>
     <div class="mdl-pe">
@@ -1147,7 +1147,26 @@ function stopPolling() {
   if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
 }
 
+/* Senha provisória dada pelo Master (master_senha / master_criar marcam
+   app_metadata.troca_senha): antes de qualquer tela, a pessoa cria a dela. */
+let _trocaObrig = null, _senhaTrocada = false;
+function mostraTrocaObrig(user) {
+  _trocaObrig = user;
+  stopPolling();
+  hideAll();
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.querySelector('.auth-tabs').style.display = 'none';
+  ['form-login','form-forgot','form-register'].forEach(id => document.getElementById(id).style.display = 'none');
+  document.getElementById('form-recovery').style.display = '';
+  document.getElementById('recovery-hint').textContent = 'Você entrou com uma senha provisória. Crie a sua senha para continuar.';
+  document.getElementById('btn-recovery').textContent = 'Salvar e entrar';
+  document.getElementById('new-pass').value = '';
+  setMsg('', '');
+  setTimeout(() => document.getElementById('new-pass').focus(), 30);
+}
+
 async function checkApproval(user) {
+  if (!_senhaTrocada && user.app_metadata && user.app_metadata.troca_senha) { mostraTrocaObrig(user); return; }
   if (user.email === ADMIN_EMAIL) { showHub(user); return; }
   const cached = localStorage.getItem('bi_approved_' + user.id);
   if (cached) showHub(user);
@@ -1300,8 +1319,24 @@ async function doUpdatePassword() {
   const btn = document.getElementById('btn-recovery');
   btn.disabled = true; btn.textContent = 'Salvando…';
   const { error } = await sb.auth.updateUser({ password: pass });
-  btn.disabled = false; btn.textContent = 'Salvar nova senha';
+  btn.disabled = false; btn.textContent = _trocaObrig ? 'Salvar e entrar' : 'Salvar nova senha';
   if (error) { setMsg(traduzirErro(error.message), 'error'); return; }
+  if (_trocaObrig) {
+    // tira a marca de provisória e segue logado (não sai, como na recuperação)
+    _senhaTrocada = true;
+    try { await sb.rpc('portal_senha_trocada'); } catch (e) {}
+    let u = _trocaObrig;
+    try { const r = await sb.auth.refreshSession(); if (r && r.data && r.data.user) u = r.data.user; } catch (e) {}
+    _trocaObrig = null;
+    document.querySelector('.auth-tabs').style.display = '';
+    document.getElementById('form-recovery').style.display = 'none';
+    document.getElementById('form-login').style.display = '';
+    document.getElementById('recovery-hint').textContent = 'Defina sua nova senha.';
+    document.getElementById('btn-recovery').textContent = 'Salvar nova senha';
+    setMsg('', '');
+    await checkApproval(u);
+    return;
+  }
   setMsg('Senha atualizada! Faça login para continuar.', 'success');
   setTimeout(() => { sb.auth.signOut(); showLogin(); }, 2000);
 }
@@ -1653,6 +1688,7 @@ function _mstSituacao(u) {
   const st = {approved:['ok','Ativo'],pending:['at','Pendente'],blocked:['er','Bloqueado']}[u.status] || ['at','Sem aprovação'];
   let h = `<span class="mst-chip ${st[0]}">${st[1]}</span>`;
   if (!u.confirmado) h += '<span class="mst-chip er">E-mail não confirmado</span>';
+  if (u.troca_senha) h += '<span class="mst-chip at">Senha provisória</span>';
   return h;
 }
 function _mstPerfil(u) {
@@ -1782,7 +1818,7 @@ async function masterSenha(gerar) {
   document.getElementById('mst-pass').value = '';
   _mstMostraSenha(data);
   await _mstRecarrega();
-  _mstMsg('Senha trocada. O e-mail também ficou confirmado.');
+  _mstMsg('Senha provisória gravada (e-mail confirmado). No primeiro acesso a pessoa cria a dela.');
 }
 async function masterEncerrar() {
   if (!_mstAtual) return;
@@ -1830,6 +1866,6 @@ init();
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/modo-tv.js?v=202610111500"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202610161930"></script>
+<script src="assets/build-check.js?v=202610162000"></script>
 </body>
 </html>

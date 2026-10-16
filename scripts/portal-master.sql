@@ -113,6 +113,7 @@ begin
            coalesce(a.phone, u.raw_user_meta_data->>'phone') as telefone,
            a.status, p.unidade, coalesce(p.is_admin, false) as admin,
            (m.user_id is not null) as master,
+           coalesce((u.raw_app_meta_data->>'troca_senha')::boolean, false) as troca_senha,
            (select count(*) from auth.sessions s where s.user_id = u.id) as sessoes
       from auth.users u
       left join public.user_approvals a on a.user_id = u.id
@@ -134,7 +135,9 @@ begin
   perform public._master_log('liberar', p_user);
 end $$;
 
--- senha nova: sem p_senha gera uma; devolve a senha UMA vez para mostrar na tela
+-- senha nova: sem p_senha gera uma; devolve a senha UMA vez para mostrar na tela.
+-- É PROVISÓRIA (Renan, 16/10/2026: "eu libero senha nova e ele só refaz a senha"):
+-- marca troca_senha no app_metadata e, no 1º acesso, o hub pede a senha dele.
 create or replace function public.master_senha(p_user uuid, p_senha text default null) returns text
   language plpgsql security definer set search_path = public as $$
 declare s text := nullif(btrim(coalesce(p_senha, '')), '');
@@ -145,6 +148,7 @@ begin
   update auth.users
      set encrypted_password = public._master_hash(s),
          email_confirmed_at = coalesce(email_confirmed_at, now()),
+         raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"troca_senha":true}'::jsonb,
          updated_at = now()
    where id = p_user;
   if not found then raise exception 'Usuário não encontrado.'; end if;
@@ -243,7 +247,7 @@ begin
                           confirmation_token, recovery_token, email_change_token_new, email_change)
   values ('00000000-0000-0000-0000-000000000000', uid, 'authenticated', 'authenticated', em,
           public._master_hash(s), now(),
-          '{"provider":"email","providers":["email"]}'::jsonb,
+          '{"provider":"email","providers":["email"],"troca_senha":true}'::jsonb,
           jsonb_build_object('name', nm, 'phone', tel, 'email', em, 'email_verified', true),
           now(), now(), '', '', '', '');
 
@@ -265,6 +269,13 @@ begin
   perform public._master_log('criar', uid, jsonb_build_object('email', em, 'nome', nm, 'unidade', p_unidade));
   return jsonb_build_object('id', uid, 'senha', s);
 end $$;
+
+-- a própria pessoa, depois de criar a senha dela, tira a marca de senha provisória
+create or replace function public.portal_senha_trocada() returns void
+  language sql security definer set search_path = public as $$
+  update auth.users set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) - 'troca_senha', updated_at = now()
+   where id = auth.uid();
+$$;
 
 -- derrubar as sessões abertas (o usuário precisa entrar de novo)
 create or replace function public.master_encerrar(p_user uuid) returns integer
@@ -310,6 +321,8 @@ revoke all on function public.master_altera(uuid, jsonb)            from public,
 revoke all on function public.master_criar(text, text, text, text, text) from public, anon;
 revoke all on function public.master_encerrar(uuid)                 from public, anon;
 revoke all on function public.master_define(uuid, boolean)          from public, anon;
+revoke all on function public.portal_senha_trocada()                from public, anon;
+grant execute on function public.portal_senha_trocada()             to authenticated;
 grant execute on function public.master_eu()                        to authenticated;
 grant execute on function public.master_usuarios()                  to authenticated;
 grant execute on function public.master_liberar(uuid)               to authenticated;

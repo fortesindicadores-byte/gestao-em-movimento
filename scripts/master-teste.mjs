@@ -128,7 +128,32 @@ for (const [W, H, tema] of [[1366, 768, 'escuro'], [1920, 1080, 'claro']]) {
   await pg.close();
 }
 
-// 3. celular: lista sem colunas extras
+// 3. senha provisória: no 1º acesso a pessoa cria a dela e segue logada
+{ const pg = await abre(false);
+  await pg.evaluate(() => { window.__upd = null;
+    sb.auth.updateUser = async a => { window.__upd = a; return { data: {}, error: null }; };
+    sb.auth.refreshSession = async () => ({ data: { user: { id: 'a1', email: 'andre@x', app_metadata: {}, user_metadata: { name: 'André' } } }, error: null });
+    window.__chk = []; const orig = checkApproval; checkApproval = async u => { window.__chk.push(u); return orig(u); };
+    checkApproval({ id: 'a1', email: 'andre@x', app_metadata: { troca_senha: true }, user_metadata: { name: 'André' } }); });
+  await pg.waitForTimeout(150);
+  const t = await pg.evaluate(() => ({ auth: document.getElementById('auth-screen').style.display, rec: document.getElementById('form-recovery').style.display,
+    login: document.getElementById('form-login').style.display, tabs: document.querySelector('.auth-tabs').style.display,
+    hint: document.getElementById('recovery-hint').textContent, bt: document.getElementById('btn-recovery').textContent }));
+  ck(t.auth === 'flex' && t.rec === '' && t.login === 'none' && t.tabs === 'none', 'provisória: abre só o "crie sua senha"');
+  ck(t.hint.includes('senha provisória') && t.bt === 'Salvar e entrar', `provisória: texto certo (${t.bt})`);
+  await pg.fill('#new-pass', '12'); await pg.click('#btn-recovery');
+  ck((await pg.evaluate(() => document.getElementById('auth-msg').textContent)).includes('6 caracteres'), 'provisória: senha curta recusada');
+  await pg.fill('#new-pass', 'MinhaSenha1'); await pg.click('#btn-recovery'); await pg.waitForTimeout(250);
+  const d = await pg.evaluate(() => ({ upd: window.__upd, rpc: window.__rpc.map(x => x[0]), n: window.__chk.length,
+    ultimo: window.__chk[window.__chk.length - 1].app_metadata, tabs: document.querySelector('.auth-tabs').style.display,
+    hint: document.getElementById('recovery-hint').textContent }));
+  ck(d.upd && d.upd.password === 'MinhaSenha1', 'provisória: grava a senha nova');
+  ck(d.rpc.includes('portal_senha_trocada'), 'provisória: tira a marca no banco');
+  ck(d.n === 2 && !d.ultimo.troca_senha, 'provisória: segue para a aprovação com o usuário sem a marca');
+  ck(d.tabs === '' && d.hint === 'Defina sua nova senha.', 'provisória: tela de login volta ao normal');
+  await pg.close(); }
+
+// 4. celular: lista sem colunas extras
 { const pg = await abre(true, 390, 800);
   await pg.evaluate(() => switchAdminTab('master'));
   const r = await pg.evaluate(() => { const m = document.querySelector('.adm-main');
