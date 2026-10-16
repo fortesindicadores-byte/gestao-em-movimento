@@ -93,7 +93,7 @@ for (const [W, H, tema] of [[1366, 768, 'escuro'], [1920, 1080, 'claro']]) {
       far: [...document.querySelectorAll('#uc-far .uc-it.on')].map(b => b.textContent), cabe: c.bottom <= innerHeight + 1 && c.top >= -1,
       pass: getComputedStyle(document.getElementById('uc-pass-fld')).display, ops: getComputedStyle(document.getElementById('uc-ops')).display }; });
   ck(cx.v === 'flex' && cx.nome === 'GESTOR PIR' && !cx.email, `${W}: clicar na linha abre a caixa (e-mail editável pelo Master)`);
-  ck(cx.pf === 'Gestor de unidade' && cx.fca.join() === 'PIR' && cx.far.join() === 'PIR', `${W}: perfil e unidades marcadas`);
+  ck(cx.pf === 'Gestor de Frota' && cx.fca.join() === 'PIR' && cx.far.join() === 'PIR', `${W}: perfil e unidades marcadas`);
   ck(cx.pass !== 'none' && cx.ops !== 'none', `${W}: senha, liberar e sessões para o Master`);
   ck(cx.cabe, `${W}: caixa cabe na tela`);
   if (SHOTS) await pg.screenshot({ path: `${SHOTS}/acc-caixa-${W}-${tema}.png` });
@@ -106,6 +106,15 @@ for (const [W, H, tema] of [[1366, 768, 'escuro'], [1920, 1080, 'claro']]) {
   ck(alt && alt.p_user === 'g1' && alt.p_dados.telefone === '21988887777' && /PIR/.test(alt.p_dados.unidade) && /GRL/.test(alt.p_dados.unidade) && !('nome' in alt.p_dados), `${W}: Salvar manda só o que mudou (${JSON.stringify(alt && alt.p_dados)})`);
   ck((await ops(pg)).some(o => o[0] === 'upsert' && o[1] === 'fca_profiles' && o[2].farol_unidades === 'TODAS'), `${W}: Farol "Todas" gravado`);
   ck(await pg.evaluate(() => document.getElementById('uc-msg').textContent) === 'Salvo ✓', `${W}: "Salvo ✓"`);
+  // perfil Time Frota: mesmo acesso do gestor, grava time_frota
+  ck(await pg.evaluate(() => [...document.querySelectorAll('#uc-pf button')].map(b => b.textContent).join('|')) === 'Gestor de Frota|Time Frota|Admin|Master', `${W}: perfis Gestor de Frota · Time Frota · Admin · Master`);
+  await pg.click('#uc-pf button:has-text("Time Frota")');
+  ck(await pg.evaluate(() => document.querySelectorAll('#uc-fca .uc-it:not(:disabled)').length > 0), `${W}: Time Frota escolhe as unidades como o gestor`);
+  await pg.click('#uc-salvar'); await pg.waitForTimeout(150);
+  ck((await ops(pg)).some(o => o[0] === 'upsert' && o[1] === 'fca_profiles' && o[2].time_frota === true && o[2].user_id === 'g1'), `${W}: Time Frota gravado (time_frota = true)`);
+  // nome digitado em minúsculo vira maiúsculo
+  await pg.fill('#uc-nome', ''); await pg.type('#uc-nome', 'gestor pir');
+  ck(await pg.evaluate(() => document.getElementById('uc-nome').value) === 'GESTOR PIR', `${W}: nome digitado sai em maiúsculo`);
   // perfil Admin / Master
   await pg.click('#uc-pf button:has-text("Master")');
   ck(await pg.evaluate(() => document.querySelectorAll('#uc-fca .uc-it:disabled').length > 0), `${W}: com Admin/Master as unidades do FCA ficam todas`);
@@ -144,11 +153,13 @@ for (const [W, H, tema] of [[1366, 768, 'escuro'], [1920, 1080, 'claro']]) {
   ck(!t.ths.includes('Último acesso') && !t.novo, 'admin: sem Último acesso e sem Novo usuário');
   ck(await linha(pg, 'ADMIN DOIS').locator('button').count() === 0, 'admin: linha de outro Admin sem botões');
   await linha(pg, 'GESTOR PIR').locator('td').nth(1).click();
-  const cx = await pg.evaluate(() => ({ email: document.getElementById('uc-email').readOnly, pf: [...document.querySelectorAll('#uc-pf button')].every(b => b.disabled),
+  const cx = await pg.evaluate(() => ({ email: document.getElementById('uc-email').readOnly, pf: [...document.querySelectorAll('#uc-pf button')].map(b => b.disabled).join() === 'false,false,true,true',
     pass: getComputedStyle(document.getElementById('uc-pass-fld')).display, salvar: getComputedStyle(document.getElementById('uc-salvar')).display }));
-  ck(cx.email && cx.pf && cx.pass === 'none' && cx.salvar !== 'none', 'admin: caixa do gestor editável, sem e-mail/perfil/senha');
+  ck(cx.email && cx.pf && cx.pass === 'none' && cx.salvar !== 'none', 'admin: caixa do gestor editável, sem e-mail/senha, perfil só Gestor ↔ Time Frota');
   await pg.click('#uc-fca .uc-it:has-text("GRL")'); await pg.click('#uc-salvar'); await pg.waitForTimeout(150);
   ck((await ops(pg)).some(o => o[0] === 'upsert' && o[1] === 'fca_profiles' && o[2].unidade === 'PIR,GRL' && o[2].is_admin === false), 'admin: unidades gravadas no fca_profiles');
+  await pg.click('#uc-pf button:has-text("Time Frota")'); await pg.click('#uc-salvar'); await pg.waitForTimeout(150);
+  ck((await ops(pg)).some(o => o[0] === 'upsert' && o[1] === 'fca_profiles' && o[2].time_frota === true), 'admin: passa o gestor para Time Frota');
   await pg.evaluate(() => fechaUsuario());
   await linha(pg, 'ADMIN DOIS').locator('td').nth(1).click();
   const ad = await pg.evaluate(() => ({ salvar: getComputedStyle(document.getElementById('uc-salvar')).display, nota: document.getElementById('uc-nota').textContent }));
