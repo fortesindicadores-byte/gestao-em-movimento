@@ -377,7 +377,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
         grl: noCol('GRL|ROTA|Manutenções|2026-08', a), top: c.querySelector('.kcard-top').innerText.replace(/\s+/g, ' '), fato: c.querySelector('.kcard-fato').innerText, ac: c.querySelector('.kcard-ac').innerText, causa: (c.querySelector('.kcard-causa') || {}).innerText || '', desv: c.querySelector('.kcard-desvio').innerText,
         drag: c.getAttribute('draggable'), raio: cs.borderTopLeftRadius, inBg: inn.backgroundColor, inTop: inn.borderTopWidth, k: c.dataset.k }; }, alvo);
     af('KANBAN como o do FCA · Admin: colunas Não iniciada · Em andamento · Concluída, um card por ação, e a ação que foi para "Em andamento" está nessa coluna', kc && kc.heads.join() === 'Não iniciada,Em andamento,Concluída' && kc.cols.join() === kc.heads.join() && kc.cards === kc.nAc && kc.cards > 0 && kc.grl === 'Em andamento', JSON.stringify(kc && [kc.heads, kc.cards, kc.nAc, kc.grl]));
-    af('…o card: Custos · unidade · projeto · mês, o pacote, só o desvio do pacote (sem as contas), a causa numerada e a ação inteira num bloco separado por filete, sem caixa; arrastável, cantos de 4px', kc && /^Custos CGR · ROTA · AGO\/26$/.test(kc.top) && kc.fato === 'Combustíveis' && /^causa 1:/i.test(kc.causa) && /^1\.1 \S/.test(kc.ac) && kc.drag === 'true' && kc.raio === '4px' && /rgba\(0, 0, 0, 0\)|transparent/.test(kc.inBg) && kc.inTop === '1px' && !/Combustíveis ▲ 30K/.test(kc.desv) && /▲ R\$ 31\.000/.test(kc.desv), JSON.stringify(kc));
+    af('…o card: Custos · unidade · projeto · mês, o pacote, só o desvio do pacote (sem as contas), a causa numerada e a ação inteira num bloco separado por filete, sem caixa; arrastável, cantos de 4px', kc && /^Custos CGR · ROTA · AGO\/26$/.test(kc.top) && kc.fato === 'Combustíveis' && /^causa 1:/i.test(kc.causa) && /^1(\.\d+)?\. \S/.test(kc.ac) && kc.drag === 'true' && kc.raio === '4px' && /rgba\(0, 0, 0, 0\)|transparent/.test(kc.inBg) && kc.inTop === '1px' && !/Combustíveis ▲ 30K/.test(kc.desv) && /▲ R\$ 31\.000/.test(kc.desv), JSON.stringify(kc));
     if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'fa-kanban.png') });
     const caber = await pg.evaluate(() => { const ws = [...document.querySelectorAll('.top .ms-wrap')], r = ws[ws.length - 1].getBoundingClientRect(), t = document.getElementById('themeBtn').getBoundingClientRect(); return { dir: Math.round(r.right), tema: Math.round(t.right), w: innerWidth }; });
     af('…em 1366 px os 11 filtros e o botão de tema cabem no topo', caber.tema <= caber.w - 8, JSON.stringify(caber));
@@ -404,12 +404,16 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     af('PLACAS OFENSORAS EMBAIXO DA CAUSA (uma por linha) e a ação só com o que fazer, vistoria · rota · motoristas em três linhas', of.lis && of.lis.length === 1 && /^CGR0A01/.test(of.lis[0]) && !of.placaNaAcao && !of.small && of.acs.some(a => /^\d\.1\.\s*Vistoriar as placas listadas/.test(a)) && of.acs.some(a => /^\d\.2\.\s*Validar o perfil de rota/.test(a)) && of.acs.some(a => /^\d\.3\.\s*Acompanhar os motoristas/.test(a)), JSON.stringify(of));
     // a ação começa com o número da causa (2.1., 2.2., 2.3.)
     const nums = await pg.evaluate(() => { const erros = []; let n = 0;
-      document.querySelectorAll('tbody.fg').forEach(tb => { let causa = null, j = 0;
-        tb.querySelectorAll('tr').forEach(tr => { const cz = tr.querySelector('td.cz .ln-n'); if (cz) { causa = cz.textContent.replace('.', ''); j = 0; }
-          if (!tr.dataset.k) return; const an = tr.querySelector('td.ln:not(.cz):not(.ac-c) .ln-n'); j++; n++;
-          const quer = causa + '.' + j + '.'; if (!an || an.textContent !== quer) erros.push(tr.dataset.id + ': ' + (an ? an.textContent : '—') + ' ≠ ' + quer); }); });
-      return { n, erros: erros.slice(0, 5) }; });
-    af('AÇÃO NUMERADA PELA CAUSA: toda ação da Tabela começa com <causa>.<ordem> (2.1., 2.2., 2.3.)', nums.n > 0 && !nums.erros.length, JSON.stringify(nums));
+      let sos = 0, varias = 0;
+      document.querySelectorAll('tbody.fg').forEach(tb => { const grupos = []; let g = null;
+        tb.querySelectorAll('tr').forEach(tr => { const cz = tr.querySelector('td.cz .ln-n'); if (cz) { g = { causa: cz.textContent.replace('.', ''), acs: [] }; grupos.push(g); }
+          if (!tr.dataset.k || !g) return; g.acs.push([tr.dataset.id, tr.querySelector('td.ln:not(.cz):not(.ac-c) .ln-n')]); });
+        grupos.forEach(G => G.acs.forEach(([id, an], j) => { n++; if (G.acs.length === 1) sos++; else varias++;
+          // uma ação só na causa: "1." (Renan, 16/10/2026); da 2ª em diante, "1.1.", "1.2."
+          const quer = G.acs.length === 1 ? G.causa + '.' : G.causa + '.' + (j + 1) + '.';
+          if (!an || an.textContent !== quer) erros.push(id + ': ' + (an ? an.textContent : '—') + ' ≠ ' + quer); })); });
+      return { n, sos, varias, erros: erros.slice(0, 5) }; });
+    af('AÇÃO NUMERADA PELA CAUSA: <causa>.<ordem> (2.1., 2.2., 2.3.) e, sozinha na causa, só <causa>. (1.)', nums.n > 0 && nums.sos > 0 && nums.varias > 0 && !nums.erros.length, JSON.stringify(nums));
     // clicar na AÇÃO abre a caixa dela, no desenho da caixa do FCA · Admin (prévia, nada grava)
     await pg.click('tr[data-id="CGR|ROTA|Combustíveis|2026-08"][data-k] td.ln:not(.ac-c):not(.cz)'); await pg.waitForTimeout(150);
     const ac = await pg.evaluate(() => { const g = id => document.getElementById(id); return { vis: getComputedStyle(g('ac-ov')).display, tit: g('ac-tit').textContent, ctx: g('ac-ctx').textContent, fato: g('ac-fato').value, desv: g('ac-desv').value, causa: g('ac-causa').value, acao: g('ac-acao').value, st: g('ac-status').value, campos: ['ac-resp','ac-prazo','ac-acomp'].every(i => g(i)), dir: [...document.querySelectorAll('#ac-ov .btn')].some(b => /Direcionar à unidade/.test(b.textContent) && b.disabled), previa: /^Sugestão automática\. .*FCA oficial/.test(document.querySelector('#ac-ov .ac-previa').textContent), diag: getComputedStyle(g('fm-ov') || document.body).display }; });
@@ -694,6 +698,30 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
       ultima: (b.rows[b.rows.length - 1].querySelector('td.cz') || {}).textContent }; }, grlBloco.toString());
   af('"+ causa" cria uma linha no mesmo fato, no fim do bloco, e abre a caixa com o cursor na Causa', R2.aberta && R2.n === R1.n + 1 && R2.foco === 'km-causa', JSON.stringify(R2));
   af('"+ causa" já vem com a próxima causa ("k. ") e a ação "k.1. "', /^(\d+)\. $/.test(R2.causa || '') && R2.acao === R2.causa.trim() + '1. ' && R2.caret === R2.causa.length, JSON.stringify(R2));
+  // A ÚNICA AÇÃO DA CAUSA APARECE "k." (Renan, 16/10/2026), mas grava "k.1.": caixa, Tabela e card do Kanban
+  const k = (R2.causa || '').trim();
+  const S0 = await pg.$eval('#km-acao', e => e.value);
+  await pg.focus('#km-acao'); await pg.keyboard.press('End');
+  for (let i = 0; i < 4; i++) await pg.keyboard.press('Backspace');
+  await pg.keyboard.type('Trocar o óleo');
+  await pg.click('#km-acomp'); await pg.waitForTimeout(400);
+  const S1 = await pg.evaluate(({ k, f }) => { const r = _ROWS.find(x => x.causa === (window.__ins || []).slice(-1)[0].causa && /Trocar o óleo/.test(x.acao || ''));
+    const b = (0, eval)('(' + f + ')')(); const tr = r && b.querySelector(`tr[data-id="${r.id}"]`);
+    const card = r ? new DOMParser().parseFromString(kcardHTML(r), 'text/html').querySelector('.fk-n') : null;
+    return { acao: r && r.acao, banco: r && (window.__T.fca.find(x => x.id === r.id) || {}).acao, campo: document.getElementById('km-acao').value,
+      tab: tr ? (tr.querySelector('td.ln:not(.cz) .ln-n') || {}).textContent : null, card: card && card.textContent }; }, { k, f: grlBloco.toString() });
+  af('ação sozinha na causa: a caixa mostra "k. ", o número não se apaga, e grava "k.1. texto" (tela e banco)', S0 === k + ' ' && S1.campo === k + ' Trocar o óleo' && S1.acao === k + '1. Trocar o óleo' && S1.banco === S1.acao, JSON.stringify({ S0, ...S1 }));
+  af('ação sozinha na causa: a Tabela e o card do Kanban mostram "k." e não "k.1."', S1.tab === k && S1.card === k, JSON.stringify({ tab: S1.tab, card: S1.card, k }));
+  // com a 2ª ação na mesma causa, as duas voltam a "k.1." e "k.2." sozinhas, sem regravar a 1ª
+  await pg.evaluate(() => closeKModal());
+  await pg.evaluate(({ f, k }) => { const b = (0, eval)('(' + f + ')')(); const r = _ROWS.find(x => (x.causa || '').trim() === k && /Trocar o óleo/.test(x.acao || ''));
+    b.querySelector(`.fg-add[data-add="acao"][data-id="${r.id}"]`).click(); }, { f: grlBloco.toString(), k });
+  await pg.waitForTimeout(700);
+  const S2 = await pg.evaluate(({ f, k }) => { const b = (0, eval)('(' + f + ')')(); const rs = _ROWS.filter(x => (x.causa || '').trim() === k);
+    return { campo: document.getElementById('km-acao').value, tab: rs.map(r => { const tr = b.querySelector(`tr[data-id="${r.id}"]`); return tr ? (tr.querySelector('td.ln:not(.cz) .ln-n') || {}).textContent : null; }),
+      gravadas: rs.map(r => r.acao) }; }, { f: grlBloco.toString(), k });
+  af('2ª ação na causa: a caixa mostra "k.2. ", a Tabela "k.1." e "k.2.", e a 1ª continua gravada igual', S2.campo === k + '2. ' && S2.tab.join() === [k + '1.', k + '2.'].join() && S2.gravadas[0] === k + '1. Trocar o óleo', JSON.stringify(S2));
+  await pg.evaluate(() => closeKModal());
   const NU = await pg.evaluate(() => {
     const rows = [{ causa: '1. A', acao: '1.1. x' }, { causa: '1. A', acao: '1.2. y' }, { causa: '2. B', acao: '2.1. z' }, { causa: '3. C', acao: '' }];
     return [FcaTabela.numeracao(rows, '1. A', 'acao').acao, FcaTabela.numeracao(rows, '2. B', 'acao').acao, FcaTabela.numeracao(rows, '3. C', 'acao').acao,

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610162330">
+<meta name="build" content="202610170015">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -769,9 +769,9 @@ body.light-mode .kcard-fato{color:#000000!important;}
 <script src="../assets/seara-bench-modelo.js"></script>
 <script src="../assets/dispersao-km.js?v=202610152330"></script>
 <script src="../assets/balanco-massa.js"></script>
-<script src="../assets/fca-auto.js?v=202610161400"></script>
-<script src="../assets/fca-tabela.js?v=202610162330"></script>
-<script src="../assets/fca-caixa.js?v=202610162330"></script>
+<script src="../assets/fca-auto.js?v=202610170015"></script>
+<script src="../assets/fca-tabela.js?v=202610170015"></script>
+<script src="../assets/fca-caixa.js?v=202610170015"></script>
 </head>
 <body>
 <div class="app">
@@ -1757,7 +1757,7 @@ const isAutoAcao=r=>!String((r&&r.acao)||'').trim();
 function kcardHTMLpre(x){const r=x.r,f=x.f;
   // o card do FCA Automático (assets/fca-tabela.js, o mesmo do Admin)
   return FcaTabela.card({id:r.id||'',origem:f.origem,uni:UNIDADE_COD,proj:projLabel(f.proj),vig:f.vig,fato:f.nome||f.fato,
-    desvio:r.fato_desvio||stripTags(f.desvio||'').trim(),causa:r.causa,acao:r.acao,resp:r.responsavel,prazoHTML:prazoTextoK(r),
+    desvio:r.fato_desvio||stripTags(f.desvio||'').trim(),causa:r.causa,acao:r.acao,resp:r.responsavel,prazoHTML:prazoTextoK(r),sozinha:FcaTabela.sozinha(_DBROWS[x.key]||[],r),
     extra:`<span class="kmais"><button class="kadd" data-add="acao" data-id="${esc(r.id||'')}" title="Mais uma ação para ESTA causa">+ ação</button><button class="kadd" data-add="causa" data-id="${esc(r.id||'')}" title="Mais uma causa para ESTE fato">+ causa</button></span>`},{tri});}
 
 // ── Resumo: a MESMA visão do FCA Gerencial (assets/aderencia-view.js) ──
@@ -1790,7 +1790,7 @@ function pintaResumoFCA(vis,visSemVig,vigsSel){
 function kanbanHTMLpre(vis){
   const fs=getMsValues('ms-st'), fpz=getMsValues('ms-prazo'), fr=respFiltro();
   const acMatch=r=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr);
-  const cards=[]; vis.forEach(f=>{const key=keyOf(f);(_DBROWS[key]||[]).forEach(r=>{if(acMatch(r))cards.push({r,f});});});
+  const cards=[]; vis.forEach(f=>{const key=keyOf(f);(_DBROWS[key]||[]).forEach(r=>{if(acMatch(r))cards.push({r,f,key});});});
   const COLS=[{k:'Não iniciada',cls:'nao'},{k:'Em andamento',cls:'and'},{k:'Concluída',cls:'con'}];
   // Os títulos ficam numa faixa FORA da área que rola — o quadro continua com
   // UMA barra de rolagem só, e o nome da etapa nunca sai da tela.
@@ -1882,12 +1882,12 @@ function openKModal(id){
   document.getElementById('km-prazo').value=r.prazo?String(r.prazo).slice(0,10):'';
   document.getElementById('km-acomp').value=r.acompanhamento||'';
   FcaCaixa.abre({unidade:UNIDADE_COD,responsavel:r.responsavel,perfis:PERFIS,status:r.status||DEFAULT_STATUS,
-    irmas:FcaTabela.irmasDaCausa(_DBROWS[hit.key]||[],r).length});
+    irmas:FcaTabela.irmasDaCausa(_DBROWS[hit.key]||[],r).length,sozinha:FcaTabela.sozinha(_DBROWS[hit.key]||[],r)});
 }
 function closeKModal(){const m=document.getElementById('kmodal-ov');if(m)m.style.display='none';_kmId=null;_kmKey=null;}
 async function persistKModal(){
   const hit=_findDbRow(_kmId);if(!hit)return;const r=hit.r;
-  const upd={causa:document.getElementById('km-causa').value||null,acao:document.getElementById('km-acao').value||null,
+  const upd={causa:document.getElementById('km-causa').value||null,acao:FcaCaixa.acao()||null,
     responsavel:document.getElementById('km-resp').value||null,prazo:document.getElementById('km-prazo').value||null,
     status:document.getElementById('km-status').value,acompanhamento:document.getElementById('km-acomp').value||null};
   // a causa é uma só para as ações dela: mudou numa linha que divide a causa → a pessoa escolhe entre levar o texto
@@ -2209,6 +2209,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610162330"></script>
+<script src="../assets/build-check.js?v=202610170015"></script>
 </body>
 </html>

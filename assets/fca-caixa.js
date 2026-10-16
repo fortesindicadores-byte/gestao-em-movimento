@@ -97,7 +97,13 @@ body.claro .kac textarea,body.claro .kac input,body.claro .kac select,body.light
   }
   // o número da causa ("2. ") e da ação ("2.3. ") é fixo: dá para escrever depois dele, nunca apagar nem sobrescrever
   const RE_NUM = { 'km-causa': /^\s*\d+\.\s/, 'km-acao': /^\s*\d+\.\d+\.\s/ };
-  function prefixo(el) { el.dataset.pref = ((el.value || '').match(RE_NUM[el.id]) || [''])[0]; }
+  function prefixo(el) { const re = el.dataset.real ? RE_NUM['km-causa'] : RE_NUM[el.id]; el.dataset.pref = ((el.value || '').match(re) || [''])[0]; }
+  // a única ação da causa aparece como "1." (Renan, 16/10/2026), mas o texto gravado continua "1.1.": a página
+  // lê o campo por acao(), que devolve o número de verdade na frente do que a pessoa escreveu
+  function acao() {
+    const el = $('km-acao'); if (!el) return ''; const v = el.value, p = el.dataset.pref || '', r = el.dataset.real || '';
+    return r && p && v.startsWith(p) ? r + v.slice(p.length) : v;
+  }
   function travaNumero(el) {
     if (!el) return;
     const L = () => (el.dataset.pref || '').length;
@@ -153,7 +159,8 @@ body.claro .kac textarea,body.claro .kac input,body.claro .kac select,body.light
       if (p.is_admin) c.admin = true; m.set(n, c); });
     return [...m.values()];
   }
-  /* abre(o): o.unidade, o.responsavel (gravado), o.perfis (de perfisDe), o.status, o.prazo — os textos a página já pôs nos campos */
+  /* abre(o): o.unidade, o.responsavel (gravado), o.perfis (de perfisDe), o.status, o.prazo, o.irmas, o.sozinha
+     (a única ação da causa) — os textos a página já pôs nos campos */
   function abre(o) {
     o = o || {};
     const sel = $('km-resp'), atual = String(o.responsavel || '').trim(), lista = nomesDe(o.unidade, o.perfis);
@@ -161,6 +168,9 @@ body.claro .kac textarea,body.claro .kac input,body.claro .kac select,body.light
       (atual && !lista.includes(atual) ? `<option value="${esc(atual)}">${esc(atual)}</option>` : '') +
       lista.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
     sel.value = atual;
+    const ac = $('km-acao'); if (ac) { delete ac.dataset.real;
+      const m = o.sozinha ? ac.value.match(/^\s*(\d+)\.\d+\.\s/) : null;
+      if (m) { ac.dataset.real = m[0]; ac.value = m[1] + '. ' + ac.value.slice(m[0].length); } }
     ['km-causa', 'km-acao'].forEach(id => { const el = $(id); if (el) prefixo(el); });
     const ir = +o.irmas || 0; $('km-causa-dica').textContent = ir > 0 ? `vale para as ${ir + 1} ações desta causa` : '';
     const st = o.status || ST[0]; $('km-status').value = st; marca(st); dica();
@@ -178,5 +188,5 @@ body.claro .kac textarea,body.claro .kac input,body.claro .kac select,body.light
   let _t = null;
   function salvo(txt) { const el = $('km-ok'); if (!el) return; el.textContent = txt || 'Salvo ✓'; clearTimeout(_t); _t = setTimeout(() => { el.textContent = ''; }, 2200); }
 
-  g.FcaCaixa = { monta, abre, salvo, ajusta, perfisDe, nomesDe };
+  g.FcaCaixa = { monta, abre, salvo, ajusta, perfisDe, nomesDe, acao };
 })(typeof window !== 'undefined' ? window : globalThis);

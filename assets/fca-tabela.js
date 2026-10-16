@@ -60,9 +60,15 @@
       (of.length ? `<ul class="fa-of">${of.map(o => `<li>${tri(esc(o))}</li>`).join('')}</ul>` : '') +
       (obs ? `<div class="fa-obs">${tri(esc(obs).replace(/\n/g, '<br>'))}</div>` : '');
   }
-  function acaoHTML(t, tri) {
+  // CAUSA COM UMA AÇÃO SÓ MOSTRA "1." (Renan, 16/10/2026: "Quando só tem uma ação a causa é apenas 1., não 1.1. Vira
+  // 1.1. se tiver da segunda em diante"): só o RÓTULO da tela muda; o texto gravado continua "k.n." (a geração, o "+",
+  // o número travado e o FCA Numeracao Check dependem dele, e nada retroativo é regravado)
+  const rotAcao = (n, sozinha) => sozinha ? n.split('.')[0] : n;
+  // a ação está sozinha na causa: nenhuma outra linha do fato com a mesma causa tem ação escrita
+  function sozinha(rows, row) { return !irmasDaCausa(rows, row).some(x => String(x.acao || '').trim()); }
+  function acaoHTML(t, tri, so) {
     let s = String(t || '').trim(); if (!s) return '<span class="fg-vazio">—</span>';
-    let num = ''; const m = s.match(/^(\d+\.\d+)\.\s+/); if (m) { num = `<span class="ln-n">${m[1]}.</span>`; s = s.slice(m[0].length); }
+    let num = ''; const m = s.match(/^(\d+\.\d+)\.(\s+|$)/); if (m) { num = `<span class="ln-n">${rotAcao(m[1], so)}.</span>`; s = s.slice(m[0].length); }
     return num + tri(esc(s).replace(/\n/g, '<br>'));
   }
   function fatoHTML(fato, desvio, tri) {
@@ -112,6 +118,7 @@
       // "+" ÁGIL (Renan, 16/10/2026: "Aqui pode ter um +, para adicionar mais uma causa ou mais uma ação de forma ágil"):
       // no pé da última causa do fato, + causa; no pé da última ação de cada causa, + ação para ESSA causa
       const temTxt = r => !!(ck(r) || String(r.acao || '').trim());
+      const acoesNaCausa = i => { const d = dono[i]; let q = 0; for (let j = 0; j < n; j++) if (dono[j] === d && String(rows[j].acao || '').trim()) q++; return q; };
       const ultCausa = (() => { for (let i = n - 1; i >= 0; i--) if (span[i] && temTxt(rows[i])) return i; return -1; })();
       const add = (tipo, id, t) => o.add ? `<button type="button" class="kadd fg-add" data-add="${tipo}" data-id="${esc(id)}" title="${t}">+</button>` : '';
       h += '<tbody class="fg">';
@@ -125,7 +132,7 @@
           `<td class="txt fato id" rowspan="${n}">${fatoHTML(primeira(f0.fato), f0.desvio, tri)}</td>`;
         if (span[i]) h += `<td class="txt ln cz${i === ultCausa && o.add ? ' tem-add' : ''}"${span[i] > 1 ? ` rowspan="${span[i]}"` : ''}>${causaHTML(r.causa, tri)}${i === ultCausa ? add('causa', r.id, 'Mais uma causa para este fato') : ''}</td>`;
         const addA = fimDaCausa && temTxt(r) ? add('acao', r.id, 'Mais uma ação para esta causa') : '';
-        h += `<td class="txt ln${addA ? ' tem-add' : ''}">${acaoHTML(r.acao, tri)}${addA}</td>` +
+        h += `<td class="txt ln${addA ? ' tem-add' : ''}">${acaoHTML(r.acao, tri, !ck(r) || acoesNaCausa(i) <= 1)}${addA}</td>` +
           `<td class="center ln">${esc(r.resp) || '<span class="fg-vazio">—</span>'}</td>` +
           `<td class="center ln prazo" title="${esc(sp)}"><span class="dot" style="background:${cor}"></span>${prazoBR(r.prazo)}</td>` +
           `<td class="center ln">${chip(st)}</td></tr>`;
@@ -138,7 +145,8 @@
   /* CARD DO KANBAN no desenho do FCA Automático (Renan, 16/10/2026: "As unidades precisam ver no mesmo formato
      e visão. É a nova visão!"): origem · unidade · projeto · mês, o pacote, só o desvio do pacote e o YTD, e embaixo
      de um filete a causa (com o número) e a ação inteira (número em laranja); rodapé com prazo e iniciais.
-     x: {id, origem, uni, proj, vig, fato, desvio, causa, acao, resp, prazoHTML, arrasta, extra (html dos atalhos)} */
+     x: {id, origem, uni, proj, vig, fato, desvio, causa, acao, resp, prazoHTML, arrasta, extra (html dos atalhos),
+        sozinha (a única ação da causa: o número sai "1." e não "1.1.")} */
   function card(x, o) {
     o = o || {}; estilo(); const tri = o.tri || (h => h);
     const d = desvioCurto(x.desvio), org = /rpm/i.test(x.origem || '') ? 'rpm' : 'cst';
@@ -152,7 +160,7 @@
     <div class="kcard-desvio">${linha1 ? '<span class="kl">Fato:</span> ' + tri(esc(linha1)) : '<i>sem desvio</i>'}${d.ytd ? `<div class="fk-ytd"><span class="kl">YTD</span> ${tri(esc(d.ytd))}</div>` : ''}</div>
     <div class="fk-in">
       <div class="kcard-causa">${c ? `<span class="kl">Causa${cm ? ' ' + cm[1] : ''}:</span> ${tri(esc(c1))}` : '<i>causa não preenchida</i>'}</div>
-      <div class="kcard-ac">${a ? (am ? `<b class="fk-n">${esc(am[1])}</b> ` : '') + tri(esc(at)).replace(/\n/g, '<br>') : '<i>ação não preenchida</i>'}</div>
+      <div class="kcard-ac">${a ? (am ? `<b class="fk-n">${esc(rotAcao(am[1], x.sozinha))}.</b> ` : '') + tri(esc(at)).replace(/\n/g, '<br>') : '<i>ação não preenchida</i>'}</div>
     </div>
     <div class="kcard-meta"><span>${x.prazoHTML || ''}</span>${x.extra || ''}${x.resp ? `<span class="kav" title="${esc(x.resp)}">${esc(ini(x.resp))}</span>` : '<span></span>'}</div>
   </div>`;
@@ -258,5 +266,5 @@ body:not(.claro):not(.light-mode) .kcard.fa-kc{background:var(--brilho), rgba(30
     return { todas: false, irmas: [], causa: `${k}. ` + tira(causaNova, /^\s*\d+\.\s*/), acao: `${k}.1. ` + tira(acaoAtual, /^\s*\d+\.\d+\.\s*/) };
   }
 
-  g.FcaTabela = { html, card, desvioCurto, causaHTML, acaoHTML, fatoHTML, contaCurta, numeracao, irmasDaCausa, separaOuTodas, normCausa };
+  g.FcaTabela = { html, card, desvioCurto, causaHTML, acaoHTML, fatoHTML, contaCurta, numeracao, irmasDaCausa, separaOuTodas, normCausa, sozinha, rotAcao };
 })(typeof window !== 'undefined' ? window : globalThis);

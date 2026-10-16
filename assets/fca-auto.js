@@ -726,6 +726,9 @@ function diagnostico(f, ctx) {
   D.acoes.forEach(a => { let ci = D.causas.findIndex((c, i) => !usadas.has(i) && c.tema === a.tema); if (ci >= 0) usadas.add(ci); else ci = D.causas.findIndex(c => c.tema === a.tema);
     a.ci = ci; a.num = ci >= 0 ? `${ci + 1}.${(nPorCausa[ci] = (nPorCausa[ci] || 0) + 1)}` : null;
     if (ci >= 0) a.ofens.forEach(o => { if (!D.causas[ci].ofens.includes(o)) D.causas[ci].ofens.push(o); }); });
+  // CAUSA COM UMA AÇÃO SÓ MOSTRA "1." (Renan, 16/10/2026: "Quando só tem uma ação a causa é apenas 1., não 1.1."):
+  // a.rot é só o rótulo da tela; o número gravado (a.num, "k.n.") não muda
+  D.acoes.forEach(a => { a.rot = a.ci >= 0 && nPorCausa[a.ci] === 1 ? String(a.ci + 1) : a.num; });
   // ações na ordem das causas (1.1, 1.2, 2.1…), a sem causa no fim
   D.acoes = D.acoes.map((a, i) => [a, i]).sort((x, y) => ((x[0].ci < 0 ? 99 : x[0].ci) - (y[0].ci < 0 ? 99 : y[0].ci)) || (x[1] - y[1])).map(x => x[0]);
   D.historico = histDoFato(f, ctx);
