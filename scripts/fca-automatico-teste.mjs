@@ -171,7 +171,7 @@ const SHIM_SB = (admin, acErr) => `window.__ups=[];window.__T=window.__T||${JSON
       maybeSingle:async()=>({data:rows[0]||null,error:null}),
       range:async(a,b)=>(tabela==='fca_auto_acao'&&${!!acErr}?{data:null,error:{message:'relation "public.fca_auto_acao" does not exist'}}:{data:rows.slice(a,b+1),error:null,count:rows.length}),
       upsert:async(row)=>{ if(${!!acErr}) return {data:null,error:{message:'relation "public.fca_auto_acao" does not exist'}}; window.__ups.push(row); return {data:null,error:null}; },
-      insert:(rs0)=>{ window.__ins=window.__ins||[]; const rs=Array.isArray(rs0)?rs0:[rs0]; const data=rs.map((r,i)=>Object.assign({id:'ins'+(window.__ins.length+i)},r)); window.__ins.push(...rs); (T[tabela]=T[tabela]||[]).push(...data.map(r=>Object.assign({},r))); const q2={select:()=>q2,single:async()=>({data:Object.assign({},data[0]),error:null}),then:(r,j)=>Promise.resolve({data,error:null}).then(r,j)}; return q2; },
+      insert:(rs0)=>{ window.__ins=window.__ins||[]; const rs=Array.isArray(rs0)?rs0:[rs0]; const data=rs.map((r,i)=>Object.assign({id:'ins'+(window.__ins.length+i)+'_'+Math.random().toString(36).slice(2,7)},r)); window.__ins.push(...rs); (T[tabela]=T[tabela]||[]).push(...data.map(r=>Object.assign({},r))); const q2={select:()=>q2,single:async()=>({data:Object.assign({},data[0]),error:null}),then:(r,j)=>Promise.resolve({data,error:null}).then(r,j)}; return q2; },
       update:(p)=>{ window.__upd=window.__upd||[]; const rec={tabela,p}; window.__upd.push(rec); const q2={eq:(c,v)=>{rec.eq=[c,v];(T[tabela]||[]).filter(r=>r[c]===v).forEach(r=>Object.assign(r,p));return q2;},then:(r,j)=>Promise.resolve({data:null,error:null}).then(r,j)}; return q2; },
       then(res,rej){return Promise.resolve({data:rows,error:null}).then(res,rej);}};
     return q;}})};`;
@@ -634,16 +634,25 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     const ins = (window.__ins || []).slice(-1)[0] || {};
     const cz = [...b.querySelectorAll('td.cz')].map(td => td.rowSpan);
     return { aberta: !!ov && ov.style.display === 'flex', causaIns: (ins.causa || '').slice(0, 2), acaoIns: ins.acao, resp: ins.responsavel, n: b.rows.length, cz, foco: document.activeElement && document.activeElement.id }; }, grlBloco.toString());
-  af('"+ ação" cria a linha com a MESMA causa e o gestor como dono, abre a caixa com o cursor na Ação', R1.aberta && R1.causaIns === '1.' && !R1.acaoIns && R1.resp === 'JOSE SANTOS' && R1.foco === 'km-acao', JSON.stringify(R1));
+  af('"+ ação" cria a linha com a MESMA causa e o gestor como dono, abre a caixa com o cursor na Ação', R1.aberta && R1.causaIns === '1.' && R1.resp === 'JOSE SANTOS' && R1.foco === 'km-acao', JSON.stringify(R1));
+  af('"+ ação" já vem com o próximo número da causa (1.N. )', /^1\.\d+\. $/.test(R1.acaoIns || ''), JSON.stringify(R1.acaoIns));
   af('a linha nova entra dentro da causa 1 (a causa mescla mais uma linha), não no fim do fato', R1.n === R0.n + 1 && R1.cz[0] === 3, JSON.stringify({ n0: R0.n, n1: R1.n, cz: R1.cz }));
   await pg.evaluate(() => closeKModal());
   // + causa
   await pg.evaluate(f => { const b = (0, eval)('(' + f + ')')(); b.querySelector('.fg-add[data-add="causa"]').click(); }, grlBloco.toString());
   await pg.waitForTimeout(700);
   const R2 = await pg.evaluate(f => { const b = (0, eval)('(' + f + ')')(); const ins = (window.__ins || []).slice(-1)[0] || {};
-    return { aberta: document.getElementById('kmodal-ov').style.display === 'flex', causa: ins.causa, n: b.rows.length, foco: document.activeElement && document.activeElement.id,
+    return { aberta: document.getElementById('kmodal-ov').style.display === 'flex', causa: ins.causa, acao: ins.acao, n: b.rows.length, foco: document.activeElement && document.activeElement.id,
+      caret: document.activeElement && document.activeElement.selectionStart, vlen: document.activeElement && document.activeElement.value.length,
       ultima: (b.rows[b.rows.length - 1].querySelector('td.cz') || {}).textContent }; }, grlBloco.toString());
-  af('"+ causa" cria uma linha vazia no mesmo fato, no fim do bloco, e abre a caixa com o cursor na Causa', R2.aberta && !R2.causa && R2.n === R1.n + 1 && R2.foco === 'km-causa' && /—/.test(R2.ultima || ''), JSON.stringify(R2));
+  af('"+ causa" cria uma linha no mesmo fato, no fim do bloco, e abre a caixa com o cursor na Causa', R2.aberta && R2.n === R1.n + 1 && R2.foco === 'km-causa', JSON.stringify(R2));
+  af('"+ causa" já vem com a próxima causa ("k. ") e a ação "k.1. "', /^(\d+)\. $/.test(R2.causa || '') && R2.acao === R2.causa.trim() + '1. ' && R2.caret === R2.causa.length, JSON.stringify(R2));
+  const NU = await pg.evaluate(() => {
+    const rows = [{ causa: '1. A', acao: '1.1. x' }, { causa: '1. A', acao: '1.2. y' }, { causa: '2. B', acao: '2.1. z' }, { causa: '3. C', acao: '' }];
+    return [FcaTabela.numeracao(rows, '1. A', 'acao').acao, FcaTabela.numeracao(rows, '2. B', 'acao').acao, FcaTabela.numeracao(rows, '3. C', 'acao').acao,
+      FcaTabela.numeracao(rows, '', 'causa').causa, FcaTabela.numeracao([], '', 'causa').acao, FcaTabela.numeracao([{ causa: '4. ', acao: '4.1. ' }], '4. ', 'acao').acao];
+  });
+  af('numeração: 1.3 · 2.2 · 3.1 · causa 4 · 1.1 num fato vazio · 4.2 depois de "4.1. " sem texto', JSON.stringify(NU) === JSON.stringify(['1.3. ', '2.2. ', '3.1. ', '4. ', '1.1. ', '4.2. ']), JSON.stringify(NU));
   af('sem erro de página', !errs.length, errs.join(' | ').slice(0, 300));
   if (SHOT) { await pg.evaluate(() => closeKModal()); await pg.evaluate(f => { const b = (0, eval)('(' + f + ')')(); b.scrollIntoView(); b.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })); }, grlBloco.toString()); await pg.hover('tbody.fg td.cz'); await pg.screenshot({ path: `${SHOT}/fca-add.png` }); }
   await ctx.close();

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610161600">
+<meta name="build" content="202610161700">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -770,7 +770,7 @@ body.light-mode .kcard-fato{color:#000000!important;}
 <script src="../assets/dispersao-km.js?v=202610152330"></script>
 <script src="../assets/balanco-massa.js"></script>
 <script src="../assets/fca-auto.js?v=202610161400"></script>
-<script src="../assets/fca-tabela.js?v=202610161600"></script>
+<script src="../assets/fca-tabela.js?v=202610161700"></script>
 <script src="../assets/fca-caixa.js?v=202610161400"></script>
 </head>
 <body>
@@ -1913,6 +1913,12 @@ async function _novaLinhaFCA(key,causa){
     causa:causa||null, acao:null, responsavel:(window.FcaAuto&&FcaAuto.gestorDe(UNIDADE_COD))||null, prazo:null,
     status:DEFAULT_STATUS, acompanhamento:null, locked:false,
   };
+  // número automático: + ação → "2.3. ", + causa → "4. " e "4.1. " (a pessoa só escreve o texto)
+  if(window.FcaTabela&&FcaTabela.numeracao){
+    const nu=FcaTabela.numeracao(_DBROWS[key]||[],causa,causa?'acao':'causa');
+    if(nu.causa) nova.causa=nu.causa;
+    nova.acao=nu.acao||null;
+  }
   if(PREVIEW||!sb){ alert('Sem conexão com a base — não dá para criar agora.'); return; }
   const {data,error}=await sb.from('fca').insert(nova).select('*').single();
   if(error){console.error('insert modal',error);alert('Erro ao criar: '+error.message);return;}
@@ -1920,7 +1926,7 @@ async function _novaLinhaFCA(key,causa){
   const all=[];for(const k in _DBROWS)all.push(..._DBROWS[k]);writeCache('fca_cache_'+UNIDADE_COD,all);
   flashSavedPre(); aplicar();
   openKModal(data.id);
-  const ta=document.getElementById(causa?'km-acao':'km-causa'); if(ta) ta.focus();
+  const ta=document.getElementById(causa?'km-acao':'km-causa'); if(ta){ ta.focus(); const n=ta.value.length; try{ta.setSelectionRange(n,n);}catch(e){} }
 }
 async function novaAcaoDoModal(){
   const key=_kmKey, c=document.getElementById('km-causa'), causa=c?c.value:'';
@@ -2193,6 +2199,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610161600"></script>
+<script src="../assets/build-check.js?v=202610161700"></script>
 </body>
 </html>

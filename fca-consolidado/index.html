@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610161600">
+<meta name="build" content="202610161700">
 <title>FCA · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -833,7 +833,7 @@ table.adv-table tr.pre-total td{background:var(--cabec);font-weight:800;border-t
 </style>
 <script src="../assets/gviz-cache.js?v=202609050530"></script>
 <script src="../assets/fca-auto.js?v=202610161400"></script>
-<script src="../assets/fca-tabela.js?v=202610161600"></script>
+<script src="../assets/fca-tabela.js?v=202610161700"></script>
 <script src="../assets/fca-caixa.js?v=202610161400"></script>
 </head>
 <body>
@@ -1087,11 +1087,19 @@ async function addRow(srcId,comCausa){
   const src=_ROWS.find(r=>r.id===srcId); if(!src)return;
   const novo={unidade:src.unidade,vigencia:src.vigencia,origem:src.origem,fato:src.fato,projeto:src.projeto||null,fato_desvio:src.fato_desvio||null,
     causa:comCausa?(src.causa||null):null,acao:null,responsavel:(window.FcaAuto&&FcaAuto.gestorDe(src.unidade))||src.responsavel||null,prazo:null,status:DEFAULT_STATUS,acompanhamento:null,locked:false};
+  // número automático: + ação → "2.3. ", + causa → "4. " e "4.1. " (a pessoa só escreve o texto)
+  if(window.FcaTabela&&FcaTabela.numeracao){
+    const p1=s=>String(s||'').split('\n')[0].trim();
+    const doFato=_ROWS.filter(r=>r.unidade===src.unidade&&r.vigencia===src.vigencia&&(r.projeto||'')===(src.projeto||'')&&r.origem===src.origem&&p1(r.fato)===p1(src.fato));
+    const nu=FcaTabela.numeracao(doFato,novo.causa,comCausa?'acao':'causa');
+    if(nu.causa) novo.causa=nu.causa;
+    novo.acao=nu.acao||null;
+  }
   const {data,error}=await sb.from('fca').insert(novo).select('*').single();
   if(error){flash('Erro ao adicionar',true);console.error('insert add',error);return;}
   _ROWS.push(data); writeCache(CACHE_KEY,_ROWS); flash('Adicionado ✓'); render();
   // a linha nova abre na caixa, pronta para digitar (o "+" da Tabela, do card e da própria caixa)
-  openKModal(data.id); const ta=document.getElementById(comCausa?'km-acao':'km-causa'); if(ta) ta.focus();
+  openKModal(data.id); const ta=document.getElementById(comCausa?'km-acao':'km-causa'); if(ta){ ta.focus(); const n=ta.value.length; try{ta.setSelectionRange(n,n);}catch(e){} }
 }
 async function delRow(id){
   if(!id)return;
@@ -1638,6 +1646,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610161600"></script>
+<script src="../assets/build-check.js?v=202610161700"></script>
 </body>
 </html>

@@ -47,8 +47,8 @@
   }
 
   // número da ação ("2.1.") e da causa ("2.") que a geração grava no início do texto
-  const numAcao = t => { const m = String(t || '').match(/^\s*(\d+)\.(\d+)\.\s/); return m ? [+m[1], +m[2]] : null; };
-  const numCausa = t => { const m = String(t || '').match(/^\s*(\d+)\.\s/); return m ? +m[1] : null; };
+  const numAcao = t => { const m = String(t || '').match(/^\s*(\d+)\.(\d+)\.(\s|$)/); return m ? [+m[1], +m[2]] : null; };
+  const numCausa = t => { const m = String(t || '').match(/^\s*(\d+)\.(\s|$)/); return m ? +m[1] : null; };
 
   function causaHTML(t, tri) {
     let s = String(t || '').trim(); if (!s) return '<span class="fg-vazio">—</span>';
@@ -210,5 +210,28 @@ body:not(.claro):not(.light-mode) .kcard.fa-kc{background:var(--brilho), rgba(30
     document.head.appendChild(s);
   }
 
-  g.FcaTabela = { html, card, desvioCurto, causaHTML, acaoHTML, fatoHTML, contaCurta };
+  // número automático do "+": rows = as linhas do MESMO fato; tipo 'acao' (com a causa de origem) ou 'causa'.
+  // + ação → "k.n. " (n = próxima ação da causa k); + causa → causa "k. " e ação "k.1. " (k = próxima causa).
+  function numeracao(rows, causaSrc, tipo) {
+    const ck = t => String(t || '').trim();
+    const causas = [];
+    (rows || []).forEach(r => { const c = ck(r.causa); if (c && !causas.includes(c)) causas.push(c); });
+    const numDe = c => { const n = numCausa(c); return n != null ? n : causas.indexOf(c) + 1; };
+    const src = ck(causaSrc);
+    if (tipo === 'acao' && src) {
+      const k = numDe(src);
+      let max = 0, qtd = 0;
+      (rows || []).forEach(r => {
+        if (ck(r.causa) !== src || !ck(r.acao)) return;
+        qtd++;
+        String(r.acao).replace(/(\d+)\.(\d+)\./g, (m, a, b) => { if (+a === k && +b > max) max = +b; return m; });
+      });
+      return { acao: `${k}.${Math.max(max, qtd) + 1}. ` };
+    }
+    const maxC = causas.reduce((m, c) => Math.max(m, numDe(c)), 0);
+    const k = Math.max(maxC, causas.length) + 1;
+    return { causa: `${k}. `, acao: `${k}.1. ` };
+  }
+
+  g.FcaTabela = { html, card, desvioCurto, causaHTML, acaoHTML, fatoHTML, contaCurta, numeracao };
 })(typeof window !== 'undefined' ? window : globalThis);
