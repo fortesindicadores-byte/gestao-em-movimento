@@ -308,6 +308,63 @@ begin
   perform public._master_log(case when p_master then 'master_on' else 'master_off' end, p_user);
 end $$;
 
+-- ── HIERARQUIA (Renan, 16/10/2026, do app de checklist: "2. SQL novo") ──────
+-- Só o Master dá ou tira Admin e mexe no cadastro de um Admin ou de outro
+-- Master (aprovação, bloqueio, unidades, remoção). O Admin comum continua
+-- cuidando dos gestores de unidade. Sem login (SQL Editor, service role,
+-- robôs) passa; a própria pessoa mexe no próprio perfil, menos no is_admin.
+create or replace function public.portal_e_chefe(p_user uuid) returns boolean
+  language sql stable security definer set search_path = public as $$
+  select coalesce((select is_admin from public.fca_profiles where user_id = p_user), false)
+      or exists (select 1 from public.portal_master where user_id = p_user);
+$$;
+
+create or replace function public.portal_guarda_perfil() returns trigger
+  language plpgsql security definer set search_path = public as $$
+declare alvo uuid := coalesce(new.user_id, old.user_id);
+begin
+  if auth.uid() is null or public.portal_is_master() then return coalesce(new, old); end if;
+  if tg_op = 'INSERT' then
+    if coalesce(new.is_admin, false) then raise exception 'Só o Master pode dar acesso de Admin.'; end if;
+    return new;
+  end if;
+  if tg_op = 'UPDATE' and coalesce(new.is_admin, false) <> coalesce(old.is_admin, false) then
+    raise exception 'Só o Master pode dar ou tirar Admin.';
+  end if;
+  if alvo <> auth.uid() and public.portal_e_chefe(alvo) then
+    raise exception 'Só o Master pode alterar ou remover um Admin.';
+  end if;
+  return coalesce(new, old);
+end $$;
+drop trigger if exists portal_guarda_perfil on public.fca_profiles;
+create trigger portal_guarda_perfil before insert or update or delete on public.fca_profiles
+  for each row execute function public.portal_guarda_perfil();
+
+create or replace function public.portal_guarda_aprovacao() returns trigger
+  language plpgsql security definer set search_path = public as $$
+declare alvo uuid := coalesce(new.user_id, old.user_id);
+begin
+  if auth.uid() is null or public.portal_is_master() or alvo = auth.uid() then return coalesce(new, old); end if;
+  if public.portal_e_chefe(alvo) then
+    raise exception 'Só o Master pode alterar, bloquear ou remover um Admin.';
+  end if;
+  return coalesce(new, old);
+end $$;
+drop trigger if exists portal_guarda_aprovacao on public.user_approvals;
+create trigger portal_guarda_aprovacao before update or delete on public.user_approvals
+  for each row execute function public.portal_guarda_aprovacao();
+
+-- remover o cadastro de um Master (o delete de auth.users chega aqui em cascata)
+create or replace function public.portal_guarda_master() returns trigger
+  language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null or public.portal_is_master() then return old; end if;
+  raise exception 'Só o Master pode remover outro Master.';
+end $$;
+drop trigger if exists portal_guarda_master on public.portal_master;
+create trigger portal_guarda_master before delete on public.portal_master
+  for each row execute function public.portal_guarda_master();
+
 -- só usuário logado chama; as peças internas não ficam expostas na API
 revoke all on function public._master_exige()                       from public, anon, authenticated;
 revoke all on function public._master_log(text, uuid, jsonb)        from public, anon, authenticated;

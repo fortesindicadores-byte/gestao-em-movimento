@@ -32,31 +32,25 @@ for (const [W,H,tema] of [[1366,768,'escuro'],[1600,900,'claro'],[1920,1080,'esc
     const m=document.querySelector('.adm-main');
     return {tbl:!!t,linhas:t?t.tBodies[0].rows.length:0,ths:t?[...t.tHead.rows[0].cells].map(c=>c.textContent):[],
       scrollX:m.scrollWidth>m.clientWidth+1, pagina:document.documentElement.scrollHeight>innerHeight+1,
-      btn:document.getElementById('btAccModo').title, fca:t?t.querySelectorAll('.user-fca').length:0, farol:t?t.querySelectorAll('.user-farol').length:0}});
+      btn:document.getElementById('btAccModo').title, pick:t?t.querySelectorAll('.user-fca,.user-farol,.farol-btn').length:0}});
   ck(r.tbl && r.linhas===9, `${W}×${H} ${tema}: lista com 9 ativos (${r.linhas})`);
-  ck(JSON.stringify(r.ths)===JSON.stringify(['Usuário','Telefone','Cadastro','Acesso FCA','Recebe Farol','']), `${W}: cabeçalhos ${r.ths.join('|')}`);
-  ck(r.fca===9 && r.farol===9, `${W}: seletores FCA/Farol em cada linha`);
+  ck(JSON.stringify(r.ths)===JSON.stringify(['Nome','E-mail','Telefone','Acesso FCA','Recebe Farol','Cadastro','']), `${W}: cabeçalhos ${r.ths.join('|')}`);
+  ck(r.pick===0, `${W}: linha em texto, sem seletores coloridos (${r.pick})`);
   ck(!r.scrollX, `${W}: sem rolagem horizontal`); ck(!r.pagina, `${W}: página não rola`);
   ck(r.btn==='Ver em cards', `${W}: botão diz ${r.btn}`);
-  // abre o seletor FCA da 1ª linha
-  await pg.click('#admin-users-list tbody tr:first-child .user-fca .farol-btn');
-  const ab = await pg.evaluate(()=>{const p=document.querySelector('#admin-users-list tbody tr:first-child .farol-panel');const r=p.getBoundingClientRect();
-    const tr=p.closest('tr'); const el=document.elementFromPoint(r.left+20,r.top+30);
-    return {open:p.classList.contains('open'),tr:tr.classList.contains('farol-open'),topo:p.contains(el)}});
-  ck(ab.open && ab.tr && ab.topo, `${W}: menu FCA abre por cima das outras linhas`);
   if (SHOTS) await pg.screenshot({path:`${SHOTS}/acc-lista-${W}-${tema}.png`});
   await pg.mouse.click(5,H-5);
   // pendentes: sem colunas de acesso
   await pg.evaluate(()=>switchAdminTab('pending'));
   const pe = await pg.evaluate(()=>[...document.querySelectorAll('#admin-users-list thead th')].map(c=>c.textContent));
-  ck(pe.length===4 && !pe.includes('Acesso FCA'), `${W}: pendentes sem colunas de acesso (${pe.join('|')})`);
+  ck(pe.length===7, `${W}: pendentes com as mesmas colunas (${pe.join('|')})`);
   const btns = await pg.evaluate(()=>[...document.querySelectorAll('#admin-users-list tbody tr:first-child button')].map(b=>b.textContent.trim()));
-  ck(btns.includes('Aprovar')&&btns.includes('Rejeitar'), `${W}: pendente com Aprovar/Rejeitar`);
+  ck(btns.includes('Aprovar')&&btns.includes('Recusar'), `${W}: pendente com Aprovar/Recusar`);
   // ordenação pelo cabeçalho e sem a inicial na lista
   await pg.evaluate(()=>switchAdminTab('approved'));
   const semAv = await pg.evaluate(()=>document.querySelectorAll('#admin-users-list .acc-tbl .user-avatar').length);
   ck(semAv===0, `${W}: lista sem a bolinha da inicial (${semAv})`);
-  const nomes = ()=>pg.evaluate(()=>[...document.querySelectorAll('#admin-users-list tbody .user-name')].map(e=>e.textContent.replace('✎','').trim()));
+  const nomes = ()=>pg.evaluate(()=>[...document.querySelectorAll('#admin-users-list tbody td.conta .acc-nm>span:first-child')].map(e=>e.textContent.trim()));
   await pg.click('#admin-users-list thead th:nth-child(1)');
   const asc = await nomes();
   ck(JSON.stringify(asc)===JSON.stringify([...asc].sort((a,b)=>a.localeCompare(b,'pt-BR'))) && asc[0]==='ANA PAULA SOUZA', `${W}: Usuário ordena A→Z (${asc[0]})`);
@@ -65,7 +59,7 @@ for (const [W,H,tema] of [[1366,768,'escuro'],[1600,900,'claro'],[1920,1080,'esc
   ck(desc[0]===asc[asc.length-1], `${W}: 2º clique inverte (${desc[0]})`);
   const seta = await pg.evaluate(()=>getComputedStyle(document.querySelector('#admin-users-list thead th.desc'),'::after').content);
   ck(seta.includes('▼'), `${W}: seta ▼ no cabeçalho ativo`);
-  await pg.click('#admin-users-list thead th:nth-child(3)');
+  await pg.click('#admin-users-list thead th:nth-child(6)');
   const cad = await nomes();
   ck(cad[0]==='ANA PAULA SOUZA' && cad[8]==='IGOR TAVARES', `${W}: Cadastro ordena pela data (${cad[0]} … ${cad[8]})`);
   // a ordem sobrevive ao redesenho (mudança de acesso refaz a lista)

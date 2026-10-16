@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610162030">
+<meta name="build" content="202610162130">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -462,7 +462,6 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11p
 .acc-tbl tbody tr:hover td{background:var(--hover);}
 /* ordenação pelo cabeçalho, no mesmo desenho do sortable-table dos painéis */
 .acc-tbl th.ord{cursor:pointer;user-select:none;}
-#admin-users-list.mst-on .acc-tbl tbody tr,#admin-users-list.mst-on .user-topo{cursor:pointer;}
 .acc-tbl th.ord::after{content:'';font-size:.82em;}
 .acc-tbl th.ord:hover::after{content:'↕';margin-left:5px;opacity:.45;}
 .acc-tbl th.ord.asc::after{content:'▲';margin-left:5px;opacity:1;color:var(--laranja);}
@@ -508,37 +507,73 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11p
 .bt-run{border:0;border-radius:8px;padding:8px 14px;font-family:inherit;font-size:11px;font-weight:700;
   background:var(--laranja);color:#2A1405;cursor:pointer;white-space:nowrap;}
 .bt-run:hover{filter:brightness(1.08);}
-/* ── Master: acesso total aos cadastros ─────────────────────────────────── */
-.mst-bar{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-size:11px;color:var(--txt3);font-weight:600;}
-.mst-bar span{flex:1;min-width:0;}
-.mst-chip{display:inline-block;border-radius:10px;padding:2px 8px;font-size:9.5px;font-weight:800;margin:1px 4px 1px 0;white-space:nowrap;
-  border:1px solid currentColor;}
-.mst-chip.ok{color:var(--verde);} .mst-chip.at{color:var(--ambar);} .mst-chip.er{color:var(--vermelho);} .mst-chip.nt{color:var(--txt3);}
-.mst-chip.ms{color:var(--laranja);}
-.acc-tbl td.mst-dt{white-space:nowrap;}
-.mst-cx{width:min(620px,100%);max-height:min(90vh,760px);}
-.mst-corpo{flex:1;min-height:0;overflow:auto;padding:0 16px 10px;}
-.mst-form{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;}
-.mst-form label{display:flex;flex-direction:column;gap:4px;font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;}
-.mst-form label.mst-w{grid-column:1/-1;}
-.mst-form input[type=text],.mst-form input[type=email],.mst-form select{font-family:inherit;font-size:12px;color:var(--txt);text-transform:none;letter-spacing:0;
-  background:var(--side);border:1px solid var(--card-brd);border-radius:8px;padding:8px 10px;outline:none;}
-.mst-form input:focus,.mst-form select:focus{border-color:color-mix(in srgb,var(--laranja) 55%,transparent);}
-.mst-form label.mst-ck{flex-direction:row;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:11.5px;color:var(--txt2);}
-.mst-form label.mst-ck input{accent-color:var(--laranja);width:15px;height:15px;}
-.mst-sec{margin:14px 0 6px;font-size:9.5px;font-weight:800;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;}
-.mst-acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-.mst-acoes input{flex:1;min-width:150px;font-family:inherit;font-size:12px;color:var(--txt);background:var(--side);
-  border:1px solid var(--card-brd);border-radius:8px;padding:7px 10px;outline:none;}
-.mst-acoes button{border-radius:8px;padding:7px 12px;font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;
-  background:transparent;color:var(--txt2);border:1px solid var(--card-brd);white-space:nowrap;}
-.mst-acoes button:hover{color:var(--txt);border-color:var(--laranja);}
-.mst-senha{margin-top:12px;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+/* ── Gerenciar Acessos: lista e caixa de alterações no desenho do app de checklist
+   (Renan, 16/10/2026: "achei feio esse layout da tabela, com os flags com duas cores…
+   Quero clicar na linha e abrir caixa de alterações") ── */
+.acc-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.acc-sub{flex:1;min-width:0;font-size:10px;color:var(--txt3);}
+.acc-tbl tbody tr.lk{cursor:pointer;}
+.acc-tbl td.conta{color:var(--txt);font-weight:600;}
+.acc-tbl td .acc-nm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.acc-tbl td .acc-em{max-width:240px;overflow:hidden;text-overflow:ellipsis;display:block;}
+.acc-tbl .muted{color:var(--txt4);}
+.utg{display:inline-flex;align-items:center;border:1px solid var(--card-brd);border-radius:20px;padding:2px 8px;
+  font-size:8.5px;font-weight:800;color:var(--txt2);letter-spacing:.6px;text-transform:uppercase;white-space:nowrap;}
+.ubtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--card-brd);border-radius:8px;padding:4px 9px;
+  font-family:inherit;font-size:10.5px;font-weight:700;color:var(--txt2);background:transparent;cursor:pointer;white-space:nowrap;}
+.ubtn:hover{background:var(--hover);color:var(--txt);}
+.ubtn.ok{color:var(--verde);} .ubtn.warn{color:var(--vermelho);}
+.ubtn.pri{background:var(--laranja);border-color:transparent;color:#fff;} .ubtn.pri:hover{filter:brightness(1.1);color:#fff;}
+.ubtn.lg{padding:7px 13px;font-size:11.5px;}
+.ubtn:disabled{opacity:.5;cursor:not-allowed;}
+.acc-act .ubtn+.ubtn{margin-left:4px;}
+/* a caixa: duas colunas, dados à esquerda e as listas de unidades à direita */
+.uc-cx{width:min(980px,100%);max-height:min(90vh,780px);}
+.uc-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--linha);}
+.uc-head h2{font-size:15px;font-weight:800;color:var(--txt);}
+.uc-head small{display:block;font-size:10.5px;color:var(--txt3);margin-top:2px;}
+.uc-head>div{flex:1;min-width:0;}
+.uc-body{flex:1;min-height:0;overflow:auto;padding:16px 20px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px;}
+.uc-col{display:flex;flex-direction:column;min-height:0;border:1px solid var(--card-brd);border-radius:10px;background:var(--side);overflow:hidden;}
+.uc-ch{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--card-brd);background:var(--cabec);}
+.uc-ch b{font-size:12.5px;font-weight:800;color:var(--txt);}
+.uc-ch small{display:block;font-size:10px;color:var(--txt3);font-weight:600;margin-top:1px;}
+.uc-ch2{border-top:1px solid var(--card-brd);}
+.uc-dados{padding:12px;}
+.uc-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:6px;}
+.uc-it{display:flex;align-items:center;gap:8px;padding:6px 8px;border:0;border-radius:7px;background:transparent;cursor:pointer;
+  font-family:inherit;font-size:11.5px;font-weight:600;color:var(--txt);text-align:left;}
+.uc-it:hover{background:var(--hover);}
+.uc-it:disabled{cursor:not-allowed;opacity:.45;}
+.uc-ck{width:15px;height:15px;flex:0 0 15px;border:1.5px solid var(--txt4);border-radius:4px;display:flex;align-items:center;justify-content:center;color:transparent;}
+.uc-ck svg{width:10px;height:10px;}
+.uc-it.on .uc-ck{background:var(--laranja);border-color:var(--laranja);color:#fff;}
+.uc-cx .fld{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.uc-cx .fld label{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;}
+.uc-cx .fld label .ctx{text-transform:none;letter-spacing:0;font-weight:600;}
+.uc-cx .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.uc-cx .inp{background:var(--pop);border:1px solid var(--card-brd);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:12.5px;color:var(--txt);outline:0;width:100%;}
+.uc-cx .inp:focus{border-color:var(--laranja);}
+.uc-cx .inp[readonly],.uc-cx .inp:disabled{opacity:.6;cursor:not-allowed;}
+.uc-cx .seg{display:inline-flex;align-self:flex-start;gap:2px;padding:3px;border:1px solid var(--card-brd);border-radius:9px;background:var(--pop);}
+.uc-cx .seg button{border:0;background:transparent;border-radius:6px;padding:6px 16px;font-family:inherit;font-size:12px;font-weight:700;color:var(--txt2);cursor:pointer;}
+.uc-cx .seg button:hover{color:var(--txt);background:var(--hover);}
+.uc-cx .seg button.on{background:var(--laranja);color:#fff;}
+.uc-cx .seg button:disabled{cursor:not-allowed;}
+.uc-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.uc-row .inp{flex:1;min-width:150px;width:auto;}
+.uc-senha{margin-top:4px;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   background:color-mix(in srgb,var(--verde) 12%,transparent);border:1px solid color-mix(in srgb,var(--verde) 40%,transparent);font-size:11.5px;color:var(--txt);}
-.mst-senha code{font-size:15px;font-weight:800;letter-spacing:1px;user-select:all;}
-.mst-senha i{flex:1 1 100%;font-style:normal;font-size:10px;color:var(--txt3);}
-#mst-st.err{color:var(--vermelho);}
-@media(max-width:760px){ .acc-tbl.mst-tbl .mst-hide{display:none;} .mst-form{grid-template-columns:1fr;} }
+.uc-senha code{font-size:15px;font-weight:800;letter-spacing:1px;user-select:all;}
+.uc-senha i{flex:1 1 100%;font-style:normal;font-size:10px;color:var(--txt3);}
+.uc-nota{font-size:10.5px;color:var(--txt3);line-height:1.5;margin-top:2px;}
+.uc-foot{display:flex;align-items:center;gap:8px;padding:12px 20px 16px;border-top:1px solid var(--linha);}
+.uc-msg{flex:1;min-width:0;font-size:11px;font-weight:600;color:var(--txt3);}
+.uc-msg.err{color:var(--vermelho);} .uc-msg.ok{color:var(--verde);}
+@media(max-width:760px){
+  .uc-body{grid-template-columns:1fr;} .uc-cx .frow{grid-template-columns:1fr;} .uc-list{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .acc-tbl .acc-hide{display:none;}
+}
 .bt-run:disabled{opacity:.45;cursor:default;filter:none;}
 </style>
 <script src="assets/gviz-cache.js?v=202609050530"></script>
@@ -651,7 +686,6 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11p
     <button class="s-item active" id="atab-pending" onclick="switchAdminTab('pending')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Pendentes<span class="admin-cnt" id="admin-cnt-pending">0</span></button>
     <button class="s-item" id="atab-approved" onclick="switchAdminTab('approved')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Usuários<span class="admin-cnt" id="admin-cnt-approved">0</span></button>
     <button class="s-item" id="atab-blocked" onclick="switchAdminTab('blocked')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="5.5" y1="5.5" x2="18.5" y2="18.5"/></svg> Bloqueados<span class="admin-cnt" id="admin-cnt-blocked">0</span></button>
-    <button class="s-item" id="atab-master" style="display:none" onclick="switchAdminTab('master')" title="Todos os cadastros, com acesso total"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="10" r="2.5"/><path d="M8.5 16a4 4 0 0 1 7 0"/></svg> Master<span class="admin-cnt" id="admin-cnt-master">0</span></button>
 
     <div class="s-sec">Atalhos</div>
     <button class="s-item" onclick="exportUsersExcel()" title="Exportar nome, e-mail, telefone e filial de todos os usuários">
@@ -705,46 +739,50 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11p
   </div>
 </div>
 
-<!-- Master: editar qualquer cadastro, liberar, senha nova, criar usuário -->
-<div class="mdl" id="mdl-master" style="display:none" onclick="if(event.target===this)fechaMaster()">
-  <div class="mdl-cx mst-cx">
-    <div class="mdl-top"><b id="mst-tit">Editar cadastro</b>
-      <button class="mdl-x" onclick="fechaMaster()" title="Fechar">×</button></div>
-    <p class="mdl-sub" id="mst-sub"></p>
-    <div class="mst-corpo">
-      <div class="mst-form">
-        <label>Nome<input type="text" id="mst-nome" autocomplete="off"></label>
-        <label>E-mail<input type="email" id="mst-email" autocomplete="off"></label>
-        <label>Telefone<input type="text" id="mst-tel" autocomplete="off"></label>
-        <label>Situação<select id="mst-status">
-          <option value="approved">Ativo</option><option value="pending">Pendente</option><option value="blocked">Bloqueado</option>
-        </select></label>
-        <label class="mst-w">Unidades do FCA (separadas por vírgula)<input type="text" id="mst-uni" placeholder="ex.: CBA T1,MCC T2" autocomplete="off"></label>
-        <label class="mst-ck"><input type="checkbox" id="mst-admin"> Admin (todas as unidades)</label>
-        <label class="mst-ck"><input type="checkbox" id="mst-master"> Master (acesso total)</label>
-        <label class="mst-w" id="mst-senha-nova">Senha (em branco = gerar uma)<input type="text" id="mst-pass-novo" autocomplete="off"></label>
-      </div>
-      <div id="mst-ops">
-        <div class="mst-sec">Acesso</div>
-        <div class="mst-acoes">
-          <button onclick="masterLiberar()" title="Confirma o e-mail e aprova o cadastro">Liberar cadastro</button>
-          <button onclick="masterSenha(true)">Gerar senha nova</button>
-          <button onclick="masterEncerrar()" title="Derruba as sessões abertas; a pessoa precisa entrar de novo">Encerrar sessões</button>
+<!-- Caixa de alterações do usuário: abre ao clicar na linha (desenho do app de checklist) -->
+<div class="mdl" id="mdl-usr" style="display:none" onclick="if(event.target===this)fechaUsuario()">
+  <div class="mdl-cx uc-cx">
+    <div class="uc-head"><div><h2 id="uc-tit">Usuário</h2><small id="uc-sub"></small></div>
+      <button class="mdl-x" onclick="fechaUsuario()" title="Fechar">×</button></div>
+    <div class="uc-body">
+      <div class="uc-col">
+        <div class="uc-ch"><div><b>Dados do usuário</b><small id="uc-ch-sub"></small></div></div>
+        <div class="uc-dados">
+          <div class="frow">
+            <div class="fld"><label>Nome</label><input class="inp" id="uc-nome" autocomplete="off"></div>
+            <div class="fld"><label>Telefone</label><input class="inp" id="uc-tel" autocomplete="off"></div>
+          </div>
+          <div class="fld"><label>E-mail <span class="ctx" id="uc-email-ctx"></span></label><input class="inp" id="uc-email" type="email" autocomplete="off"></div>
+          <div class="fld" id="uc-st-fld"><label>Situação</label><div class="seg" id="uc-st"></div></div>
+          <div class="fld" id="uc-pf-fld"><label>Perfil <span class="ctx" id="uc-pf-ctx"></span></label><div class="seg" id="uc-pf"></div></div>
+          <div class="fld" id="uc-pass-fld"><label>Senha <span class="ctx">· provisória: no 1º acesso a pessoa cria a dela</span></label>
+            <div class="uc-row"><input class="inp" id="uc-pass" placeholder="em branco = gerar uma" autocomplete="off">
+              <button class="ubtn lg" id="uc-pass-bt" onclick="ucSenha()">Trocar senha</button></div></div>
+          <div class="uc-row" id="uc-ops">
+            <button class="ubtn lg" id="uc-lib" onclick="ucLiberar()" title="Confirma o e-mail e aprova o cadastro">Liberar cadastro</button>
+            <button class="ubtn lg" onclick="ucEncerrar()" title="Derruba as sessões abertas; a pessoa precisa entrar de novo">Encerrar sessões</button>
+          </div>
+          <div class="uc-senha" id="uc-senha" style="display:none">
+            Senha: <code id="uc-senha-v"></code>
+            <button class="ubtn" onclick="ucCopia()">Copiar e-mail e senha</button>
+            <i>Aparece só agora e é provisória: no primeiro acesso a pessoa cria a senha dela. Mande por um canal privado.</i>
+          </div>
+          <div class="uc-nota" id="uc-nota"></div>
         </div>
-        <div class="mst-acoes" style="margin-top:8px">
-          <input type="text" id="mst-pass" placeholder="Definir uma senha (mín. 6 caracteres)" autocomplete="off">
-          <button onclick="masterSenha(false)">Definir senha</button>
-        </div>
       </div>
-      <div class="mst-senha" id="mst-senha" style="display:none">
-        Senha: <code id="mst-senha-v"></code>
-        <button class="btn-approve" onclick="masterCopia()">Copiar e-mail e senha</button>
-        <i>Ela aparece só agora e é provisória: no primeiro acesso a pessoa cria a senha dela. Mande por um canal privado.</i>
+      <div class="uc-col">
+        <div class="uc-ch"><div><b id="uc-fca-tit">Acesso FCA</b><small id="uc-fca-sub">unidades que a pessoa vê no FCA e nos painéis</small></div></div>
+        <div class="uc-list" id="uc-fca"></div>
+        <div class="uc-ch uc-ch2"><div><b id="uc-far-tit">Recebe Farol</b><small>unidades do farol semanal por e-mail</small></div>
+          <button class="ubtn" style="margin-left:auto" id="uc-far-todas" onclick="ucFarolTodas()">Todas</button></div>
+        <div class="uc-list" id="uc-far"></div>
       </div>
     </div>
-    <div class="mdl-pe">
-      <span class="bs-st" id="mst-st"></span>
-      <button class="bt-run" id="mst-salvar" onclick="masterSalva()">Salvar</button>
+    <div class="uc-foot">
+      <button class="ubtn warn lg" id="uc-rem" onclick="ucRemover()">Remover usuário</button>
+      <span class="uc-msg" id="uc-msg"></span>
+      <button class="ubtn lg" onclick="fechaUsuario()">Fechar</button>
+      <button class="ubtn pri lg" id="uc-salvar" onclick="ucSalvar()">Salvar</button>
     </div>
   </div>
 </div>
@@ -1026,7 +1064,7 @@ function showAdmin() {
   const name = currentUser?.user_metadata?.name || currentUser?.email?.split('@')[0] || '';
   setQuem('admin', name);
   adminTabActive = 'pending';
-  ['pending','approved','blocked','master'].forEach(t =>
+  ['pending','approved','blocked'].forEach(t =>
     document.getElementById(`atab-${t}`).classList.toggle('active', t === 'pending'));
   loadAdminData();
 }
@@ -1505,14 +1543,14 @@ async function loadAdminBadge() {
 }
 
 function updateAdminCounts() {
-  document.getElementById('admin-cnt-pending').textContent  = allApprovals.filter(u => u.status === 'pending').length;
+  document.getElementById('admin-cnt-pending').textContent  = accLinhas('pending').length;   // com Master, inclui quem travou fora da aprovação
   document.getElementById('admin-cnt-approved').textContent = allApprovals.filter(u => u.status === 'approved').length;
   document.getElementById('admin-cnt-blocked').textContent  = allApprovals.filter(u => u.status === 'blocked').length;
 }
 
 function switchAdminTab(tab) {
   adminTabActive = tab;
-  ['pending','approved','blocked','master'].forEach(t =>
+  ['pending','approved','blocked'].forEach(t =>
     document.getElementById(`atab-${t}`).classList.toggle('active', t === tab));
   renderAdminUsers();
 }
@@ -1534,13 +1572,15 @@ function trocaAccModo() {
   try { localStorage.setItem('gem_acessos_modo', accModo() === 'lista' ? 'grade' : 'lista'); } catch (e) {}
   syncAccModoBtn(); renderAdminUsers();
 }
-/* Ordenação da lista (Renan, 16/10/2026: "Aqui gostaria de ordenar"). Mora no
-   estado da tela, não no DOM: a lista é redesenhada a cada mudança de acesso e a
-   ordem escolhida tem de continuar. 1º clique crescente, 2º decrescente. */
+/* ── Gerenciar Acessos (Renan, 16/10/2026) ─────────────────────────────────
+   No desenho do app de checklist: tabela limpa (texto, sem seletores coloridos),
+   chips neutros, Aprovar/Recusar/Bloquear/Desbloquear pequenos na linha e o
+   clique na linha abrindo a caixa de alterações. A ordem escolhida pelo
+   cabeçalho mora no estado da tela e sobrevive ao redesenho. */
 const accOrd = {};
-function accTh(tab, k, rot) {
-  const o = accOrd[tab], cls = o && o.k === k ? (o.dir > 0 ? ' asc' : ' desc') : '';
-  return `<th class="ord${cls}" onclick="accOrdena('${tab}','${k}')">${rot}</th>`;
+function accTh(tab, k, rot, cls) {
+  const o = accOrd[tab], at = o && o.k === k ? (o.dir > 0 ? ' asc' : ' desc') : '';
+  return `<th class="ord${at}${cls ? ' ' + cls : ''}" onclick="accOrdena('${tab}','${k}')">${rot}</th>`;
 }
 function accOrdena(tab, k) {
   const o = accOrd[tab];
@@ -1557,37 +1597,65 @@ function accSort(tab, rows, chave) {
       : String(x).localeCompare(String(y), 'pt-BR', { sensitivity: 'base', numeric: true })) * o.dir;
   });
 }
-/* Master edita direto da lista (Renan, 16/10/2026: "Queria conseguir clicar e
-   alterar os campos… eu com master quero poder fazer tudo"): clicar na linha
-   (ou no topo do card) abre a caixa do Master daquele cadastro. Seletores de
-   acesso, botões e o link do WhatsApp continuam fazendo o deles. */
-function accEditar(ev, idx) {
-  if (!_master) return;
-  if (ev.target.closest('button, a, input, label, .user-fca, .user-farol, .farol-panel')) return;
-  const u = allApprovals[idx]; if (!u || !u.user_id) return;
-  if (!masterUsers.some(x => x.id === u.user_id)) { alert('Cadastro não encontrado na lista do Master. Atualize a página.'); return; }
-  abreMaster(u.user_id);
+const accEsc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const accDt = t => t ? new Date(t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+const meuId = () => (currentUser && currentUser.id) || '';
+// Admin e Master só o Master altera (hierarquia do checklist, garantida também no banco)
+const accChefe = id => !!((_fcaProf[id] || {}).is_admin || (_mu[id] || {}).master);
+const accPode = id => _master || id === meuId() || !accChefe(id);
+const farolTxt = v => { v = String(v || ''); return v === 'TODAS' ? 'Todas' : v.split(',').map(x => x.trim()).filter(Boolean).join(', '); };
+function accLinhas(tab) {
+  const rows = allApprovals.filter(a => a.status === tab).map(a => ({ id: a.user_id, ap: a, nome: a.name || '', email: a.email || '',
+    tel: a.phone || '', cad: a.created_at, status: a.status }));
+  // o Master enxerga também quem travou fora da aprovação (cadastro que parou no e-mail)
+  if (_master && tab === 'pending') masterUsers.filter(m => !m.status).forEach(m => rows.push({ id: m.id, ap: null,
+    nome: m.nome || '', email: m.email || '', tel: m.telefone || '', cad: m.criado, status: 'pending', semAprov: true }));
+  return rows;
 }
-function accChave(u, k) {
-  const p = _fcaProf[u.user_id] || {};
-  if (k === 'nome') return u.name || u.email || '';
-  if (k === 'tel') return phoneDigits(u.phone);
-  if (k === 'cad') return u.created_at ? new Date(u.created_at).getTime() : '';
+function accChave(r, k) {
+  const p = _fcaProf[r.id] || {}, m = _mu[r.id] || {};
+  if (k === 'nome') return r.nome || r.email;
+  if (k === 'email') return r.email;
+  if (k === 'tel') return phoneDigits(r.tel);
+  if (k === 'cad') return r.cad ? new Date(r.cad).getTime() : '';
+  if (k === 'ult') return m.ultimo ? new Date(m.ultimo).getTime() : '';
   if (k === 'fca') return p.is_admin ? '0' : fcaUnitsOf(p).join(', ');
-  if (k === 'farol') { const f = String(p.farol_unidades || ''); return f === 'TODAS' ? '0' : f; }
+  if (k === 'farol') return p.farol_unidades === 'TODAS' ? '0' : farolTxt(p.farol_unidades);
   return '';
+}
+function accChips(r) {
+  const p = _fcaProf[r.id] || {}, m = _mu[r.id], c = [];
+  if (r.id === meuId()) c.push('você');
+  if (m && m.master) c.push('master'); else if (p.is_admin) c.push('admin');
+  if (r.semAprov) c.push('sem aprovação');
+  if (m && !m.confirmado) c.push('e-mail não confirmado');
+  if (m && m.troca_senha) c.push('senha provisória');
+  return c.map(x => `<span class="utg">${x}</span>`).join('');
+}
+function accAcoes(r) {
+  if (r.id === meuId() || !accPode(r.id)) return '';
+  if (r.status === 'pending') return `<button class="ubtn ok" onclick="accAprovar('${r.id}')">Aprovar</button><button class="ubtn" onclick="accRecusar('${r.id}')">Recusar</button>`;
+  if (r.status === 'approved') return `<button class="ubtn warn" onclick="accSituacao('${r.id}','blocked')">Bloquear</button>`;
+  return `<button class="ubtn ok" onclick="accSituacao('${r.id}','approved')">Desbloquear</button>`;
+}
+function accLinhaClick(ev, id) {
+  if (ev.target.closest('button, a, input, label')) return;
+  abreUsuario(id);
+}
+/* card (visão em grade): o topo abre a mesma caixa */
+function accEditar(ev, idx) {
+  if (ev.target.closest('button, a, input, label, .user-fca, .user-farol, .farol-panel')) return;
+  const u = allApprovals[idx]; if (u && u.user_id) abreUsuario(u.user_id);
 }
 
 function renderAdminUsers() {
   syncAccModoBtn();
-  if (adminTabActive === 'master') { renderMaster(); return; }
-  let filtered = allApprovals.filter(u => u.status === adminTabActive);
-  if (adminSearch) filtered = filtered.filter(u => ((u.name || '') + ' ' + (u.email || '')).toLowerCase().includes(adminSearch));
   const list = document.getElementById('admin-users-list');
   const lista = accEmLista();
   list.classList.toggle('lista', lista);
-  list.classList.toggle('mst-on', _master);
-  if (lista) filtered = accSort(adminTabActive, filtered, accChave);
+  if (lista) { renderAccTabela(list); return; }
+  let filtered = allApprovals.filter(u => u.status === adminTabActive);
+  if (adminSearch) filtered = filtered.filter(u => ((u.name || '') + ' ' + (u.email || '')).toLowerCase().includes(adminSearch));
   if (filtered.length === 0) {
     const msg = adminSearch
       ? `Nenhum usuário encontrado para “${adminSearch.replace(/[<>&]/g, '')}”.`
@@ -1595,9 +1663,9 @@ function renderAdminUsers() {
     list.innerHTML = `<div class="admin-empty">${msg}</div>`;
     return;
   }
-  const linhas = filtered.map(u => {
+  list.innerHTML = filtered.map(u => {
     const initial = (u.name || u.email)[0].toUpperCase();
-    const dt = new Date(u.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const dt = accDt(u.created_at);
     const idx = allApprovals.indexOf(u);
     let actions = '';
     if (u.status === 'pending') {
@@ -1622,22 +1690,11 @@ function renderAdminUsers() {
     const phoneHtml = waHref
       ? `<a href="${waHref}" target="_blank" rel="noopener" title="Abrir no WhatsApp"><svg class="wa-ico" viewBox="0 0 24 24" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>${phoneFmt}</a>`
       : (phoneFmt || '—');
-    if (lista) return `<tr class="st-${u.status}" onclick="accEditar(event,${idx})">
-      <td><div class="acc-u">
-        <div class="user-info">
-          <div class="user-name">${u.name || '—'}<button class="edit-name" title="Editar nome" onclick="editUserName(${idx})">✎</button></div>
-          <div class="user-email">${u.email}</div>
-        </div></div></td>
-      <td class="acc-tel"><span class="user-phone">${phoneHtml}</span></td>
-      <td class="acc-dt">${dt}</td>
-      ${u.status === 'approved' ? `<td class="acc-perm">${fcaSel}</td><td class="acc-perm">${farolSel}</td>` : ''}
-      <td class="acc-act">${actions}</td>
-    </tr>`;
     return `<div class="user-card st-${u.status}">
-      <div class="user-topo" onclick="accEditar(event,${idx})">
+      <div class="user-topo" onclick="accEditar(event,${idx})" style="cursor:pointer">
         <div class="user-avatar">${initial}</div>
         <div class="user-info">
-          <div class="user-name">${u.name || '—'}<button class="edit-name" title="Editar nome" onclick="editUserName(${idx})">✎</button></div>
+          <div class="user-name">${u.name || '—'}</div>
           <div class="user-email">${u.email}</div>
           <div class="user-meta"><span class="user-phone">${phoneHtml}</span><span class="user-date">${dt}</span></div>
         </div>
@@ -1645,13 +1702,42 @@ function renderAdminUsers() {
       ${fcaSel || farolSel ? `<div class="user-perms">${fcaSel}${farolSel}</div>` : ''}
       <div class="user-actions">${actions}</div>
     </div>`;
-  });
-  if (!lista) { list.innerHTML = linhas.join(''); return; }
+  }).join('');
+}
+
+function renderAccTabela(list) {
   const t = adminTabActive;
-  const perm = t === 'approved' ? accTh(t, 'fca', 'Acesso FCA') + accTh(t, 'farol', 'Recebe Farol') : '';
-  list.innerHTML = `<div class="acc-card"><table class="acc-tbl" data-no-sort><thead><tr>
-    ${accTh(t, 'nome', 'Usuário')}${accTh(t, 'tel', 'Telefone')}${accTh(t, 'cad', 'Cadastro')}${perm}<th></th></tr></thead>
-    <tbody>${linhas.join('')}</tbody></table></div>`;
+  let rows = accLinhas(t);
+  if (adminSearch) rows = rows.filter(r => (r.nome + ' ' + r.email).toLowerCase().includes(adminSearch));
+  rows = accSort(t, rows, accChave);
+  const nA = allApprovals.filter(u => u.status === 'approved').length, nB = allApprovals.filter(u => u.status === 'blocked').length;
+  const nP = accLinhas('pending').length;
+  const head = `<div class="acc-head"><span class="acc-sub">${nA} ativos · ${nP} aguardando aprovação · ${nB} bloqueados${_master ? ' · clique na linha para alterar' : ' · clique na linha para ver e alterar'}</span>
+    ${_master ? '<button class="ubtn pri lg" onclick="abreUsuario(null)">+ Novo usuário</button>' : ''}</div>`;
+  if (!rows.length) {
+    const msg = adminSearch ? `Nenhum usuário encontrado para “${accEsc(adminSearch)}”.`
+      : {pending:'Nenhum cadastro aguardando aprovação.',approved:'Nenhum usuário ativo.',blocked:'Nenhum usuário bloqueado.'}[t];
+    list.innerHTML = `<div class="acc-card">${head}<div class="admin-empty">${msg}</div></div>`;
+    return;
+  }
+  const corpo = rows.map(r => {
+    const p = _fcaProf[r.id] || {}, m = _mu[r.id];
+    const fca = p.is_admin ? 'Todas (admin)' : fcaUnitsOf(p).join(', ');
+    const far = farolTxt(p.farol_unidades);
+    return `<tr class="lk" onclick="accLinhaClick(event,'${r.id}')">
+      <td class="conta"><div class="acc-nm"><span>${accEsc(r.nome || '—')}</span>${accChips(r)}</div></td>
+      <td><span class="acc-em" title="${accEsc(r.email)}">${accEsc(r.email)}</span></td>
+      <td class="acc-hide">${accEsc(fmtPhone(r.tel)) || '<span class="muted">—</span>'}</td>
+      <td>${fca ? accEsc(fca) : '<span class="muted">sem acesso</span>'}</td>
+      <td class="acc-hide">${far ? accEsc(far) : '<span class="muted">não recebe</span>'}</td>
+      <td class="acc-dt acc-hide">${accDt(r.cad)}</td>
+      ${_master ? `<td class="acc-dt acc-hide">${m && m.ultimo ? accDt(m.ultimo) : '<span class="muted">nunca</span>'}</td>` : ''}
+      <td class="acc-act">${accAcoes(r)}</td>
+    </tr>`;
+  }).join('');
+  list.innerHTML = `<div class="acc-card" data-mt-wrap>${head}<table class="acc-tbl" data-no-sort><thead><tr>
+    ${accTh(t, 'nome', 'Nome')}${accTh(t, 'email', 'E-mail')}${accTh(t, 'tel', 'Telefone', 'acc-hide')}${accTh(t, 'fca', 'Acesso FCA')}${accTh(t, 'farol', 'Recebe Farol', 'acc-hide')}${accTh(t, 'cad', 'Cadastro', 'acc-hide')}${_master ? accTh(t, 'ult', 'Último acesso', 'acc-hide') : ''}<th></th>
+    </tr></thead><tbody>${corpo}</tbody></table></div>`;
 }
 
 async function editUserName(idx) {
@@ -1685,209 +1771,240 @@ function exportUsersExcel() {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-async function approveUser(idx) {
-  const u = allApprovals[idx];
-  await sb.from('user_approvals').update({ status: 'approved', approval_token: null }).eq('id', u.id);
-  fnCall('notify-user', { email: u.email, name: u.name }).catch(() => {});
+async function accSt(id, status, extra) {
+  const { error } = await sb.from('user_approvals').update({ status, ...(extra || {}) }).eq('user_id', id);
+  if (error) { alert(traduzirErro(error.message)); return false; }
+  return true;
+}
+async function approveUser(idx) { const u = allApprovals[idx]; if (u) await accAprovar(u.user_id); }
+async function rejectUser(idx) { const u = allApprovals[idx]; if (u) await accRecusar(u.user_id); }
+async function blockUser(idx) { const u = allApprovals[idx]; if (u) await accSituacao(u.user_id, 'blocked'); }
+async function unblockUser(idx) { const u = allApprovals[idx]; if (u) await accSituacao(u.user_id, 'approved'); }
+async function removeUser(idx) { const u = allApprovals[idx]; if (u) await accRemover(u.user_id); }
+const accAp = id => allApprovals.find(a => a.user_id === id);
+async function accAprovar(id) {
+  const a = accAp(id);
+  if (!a) {                                      // travou fora da aprovação: só o Master libera
+    const { error } = await sb.rpc('master_liberar', { p_user: id });
+    if (error) { alert(traduzirErro(error.message)); return; }
+  } else {
+    if (!await accSt(id, 'approved', { approval_token: null })) return;
+    fnCall('notify-user', { email: a.email, name: a.name }).catch(() => {});
+  }
   await loadAdminData();
 }
-
-async function rejectUser(idx) {
-  const u = allApprovals[idx];
-  if (!confirm(`Rejeitar cadastro de ${u.name || u.email}?\nO cadastro será removido.`)) return;
-  await sb.rpc('delete_user_by_id', { p_user_id: u.user_id });
+async function accRecusar(id) {
+  const a = accAp(id) || {}, m = _mu[id] || {};
+  if (!confirm(`Recusar o cadastro de ${a.name || m.nome || a.email || m.email}?\nO cadastro será removido.`)) return;
+  const { error } = await sb.rpc('delete_user_by_id', { p_user_id: id });
+  if (error) { alert(traduzirErro(error.message)); return; }
   await loadAdminData();
 }
-
-async function blockUser(idx) {
-  const u = allApprovals[idx];
-  if (!confirm(`Bloquear acesso de ${u.name || u.email}?`)) return;
-  await sb.from('user_approvals').update({ status: 'blocked' }).eq('id', u.id);
+async function accSituacao(id, st) {
+  const a = accAp(id) || {};
+  if (st === 'blocked' && !confirm(`Bloquear o acesso de ${a.name || a.email}?`)) return;
+  if (!await accSt(id, st)) return;
+  if (st === 'approved') fnCall('notify-user', { email: a.email, name: a.name }).catch(() => {});
   await loadAdminData();
 }
-
-async function unblockUser(idx) {
-  const u = allApprovals[idx];
-  await sb.from('user_approvals').update({ status: 'approved' }).eq('id', u.id);
-  fnCall('notify-user', { email: u.email, name: u.name }).catch(() => {});
+async function accRemover(id) {
+  const a = accAp(id) || {}, m = _mu[id] || {};
+  if (!confirm(`Remover completamente ${a.name || m.nome || a.email || m.email}?\n\nO usuário terá que se cadastrar novamente.`)) return false;
+  const { error } = await sb.rpc('delete_user_by_id', { p_user_id: id });
+  if (error) { alert('Erro ao remover: ' + traduzirErro(error.message)); return false; }
   await loadAdminData();
+  return true;
 }
 
-async function removeUser(idx) {
-  const u = allApprovals[idx];
-  if (!confirm(`Remover completamente ${u.name || u.email}?\n\nO usuário terá que se cadastrar novamente.`)) return;
-  const { error } = await sb.rpc('delete_user_by_id', { p_user_id: u.user_id });
-  if (error) { alert('Erro ao remover: ' + error.message); return; }
-  await loadAdminData();
-}
-
-/* ── Administrador Master ────────────────────────────────────────────────────
-   Acesso total aos cadastros (Renan, 16/10/2026). Tudo passa pelas funções
-   master_* do banco (scripts/portal-master.sql), que conferem se quem chama
-   é Master; a aba só aparece quando master_eu() responde true. Lista TODOS os
-   cadastros de auth.users, inclusive os que travaram no e-mail e nunca
-   chegaram à aprovação.                                                     */
-let _master = false, masterUsers = [], _mstAtual = null;
+/* ── Caixa de alterações do usuário ─────────────────────────────────────────
+   Abre ao clicar na linha (Renan, 16/10/2026: "Quero clicar na linha e abrir
+   caixa de alterações… eu com master quero poder fazer tudo"). Duas colunas,
+   como a caixa do ativo no app de checklist: dados à esquerda, as unidades do
+   FCA e do Farol para marcar à direita. Admin altera os gestores de unidade;
+   o Master altera tudo (e-mail, perfil, senha, liberar, sessões, remover),
+   pelas funções master_* do banco (scripts/portal-master.sql). */
+let _master = false, masterUsers = [], _mu = {}, UC = null;
 async function loadMaster() {
   try { const { data, error } = await sb.rpc('master_eu'); _master = !error && data === true; }
   catch (e) { _master = false; }
-  const tab = document.getElementById('atab-master');
-  if (tab) tab.style.display = _master ? '' : 'none';
-  if (!_master) { masterUsers = []; if (adminTabActive === 'master') switchAdminTab('pending'); return; }
+  masterUsers = []; _mu = {};
+  if (!_master) return;
   try { const { data, error } = await sb.rpc('master_usuarios'); masterUsers = error ? [] : (data || []); }
   catch (e) { masterUsers = []; }
-  const c = document.getElementById('admin-cnt-master'); if (c) c.textContent = masterUsers.length;
+  masterUsers.forEach(m => _mu[m.id] = m);
 }
-const _mstEsc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const _mstDt = t => t ? new Date(t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
-function _mstSituacao(u) {
-  const st = {approved:['ok','Ativo'],pending:['at','Pendente'],blocked:['er','Bloqueado']}[u.status] || ['at','Sem aprovação'];
-  let h = `<span class="mst-chip ${st[0]}">${st[1]}</span>`;
-  if (!u.confirmado) h += '<span class="mst-chip er">E-mail não confirmado</span>';
-  if (u.troca_senha) h += '<span class="mst-chip at">Senha provisória</span>';
-  return h;
+const UC_CHK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const ucMsg = (t, cls) => { const e = document.getElementById('uc-msg'); e.textContent = t || ''; e.className = 'uc-msg' + (cls ? ' ' + cls : ''); };
+const ucErro = e => traduzirErro((e && (e.message || e.details)) || String(e));
+function ucUnidades() {
+  const s = new Set(FCA_UNITS);
+  Object.values(_fcaProf).forEach(p => { fcaUnitsOf(p).forEach(u => s.add(u)); String(p.farol_unidades || '').split(',').forEach(u => { u = u.trim().toUpperCase(); if (u && u !== 'TODAS') s.add(u); }); });
+  return [...s];
 }
-function _mstPerfil(u) {
-  let h = u.master ? '<span class="mst-chip ms">Master</span>' : '';
-  if (u.admin) h += '<span class="mst-chip nt">Admin</span>';
-  else if (u.unidade) h += `<span class="mst-chip nt">${_mstEsc(u.unidade)}</span>`;
-  return h || '—';
-}
-function renderMaster() {
-  const list = document.getElementById('admin-users-list');
-  list.classList.add('lista');
-  let rows = masterUsers.slice();
-  if (adminSearch) rows = rows.filter(u => ((u.nome || '') + ' ' + (u.email || '')).toLowerCase().includes(adminSearch));
-  rows = accSort('master', rows, (u, k) => k === 'nome' ? (u.nome || u.email || '')
-    : k === 'sit' ? ({ approved: 'Ativo', pending: 'Pendente', blocked: 'Bloqueado' }[u.status] || 'Sem aprovação')
-    : k === 'perfil' ? (u.master ? '0' : u.admin ? '1' : (u.unidade || ''))
-    : k === 'ult' ? (u.ultimo ? new Date(u.ultimo).getTime() : '') : '');
-  const semConf = masterUsers.filter(u => !u.confirmado).length, semApr = masterUsers.filter(u => !u.status).length;
-  const bar = `<div class="mst-bar"><span>${masterUsers.length} cadastros · ${semConf} sem e-mail confirmado · ${semApr} sem aprovação</span>
-    <button class="btn-approve" onclick="abreMaster(null)">+ Novo usuário</button></div>`;
-  if (!rows.length) { list.innerHTML = bar + `<div class="admin-empty">Nenhum cadastro encontrado.</div>`; return; }
-  const thM = (k, rot, c) => accTh('master', k, rot).replace('<th class="ord', `<th class="ord${c ? ' ' + c : ''}`);
-  list.innerHTML = bar + `<div class="acc-card" data-mt-wrap><table class="acc-tbl mst-tbl" data-no-sort><thead><tr>
-    ${thM('nome', 'Usuário')}${thM('sit', 'Situação')}${thM('perfil', 'Perfil', 'mst-hide')}${thM('ult', 'Último acesso', 'mst-hide')}<th></th></tr></thead><tbody>${
-    rows.map(u => `<tr data-id="${u.id}">
-      <td><div class="acc-u">
-        <div class="user-info"><div class="user-name">${_mstEsc(u.nome || '—')}</div><div class="user-email">${_mstEsc(u.email)}</div></div></div></td>
-      <td>${_mstSituacao(u)}</td>
-      <td class="mst-hide">${_mstPerfil(u)}</td>
-      <td class="mst-dt mst-hide">${_mstDt(u.ultimo)}</td>
-      <td class="acc-act"><button class="btn-unblock" onclick="abreMaster('${u.id}')">Editar</button></td>
-    </tr>`).join('')}</tbody></table></div>`;
-}
-function _mstMsg(t, err) { const e = document.getElementById('mst-st'); e.textContent = t || ''; e.classList.toggle('err', !!err); }
-function _mstErro(e) { return (e && (e.message || e.details)) || String(e); }
-function abreMaster(id) {
-  const u = id ? masterUsers.find(x => x.id === id) : null;
-  _mstAtual = u;
+function abreUsuario(id) {
+  const ap = id ? accAp(id) : null, m = id ? _mu[id] : null, p = id ? (_fcaProf[id] || {}) : {};
+  if (id && !ap && !m) return;
+  if (!id && !_master) return;
+  const pf = m && m.master ? 'master' : (p.is_admin ? 'admin' : 'gestor');
+  const far = String(p.farol_unidades || '');
+  UC = { id, novo: !id, pode: !id || accPode(id), eu: id === meuId(),
+    st: ap ? ap.status : (m ? (m.status || 'pending') : 'approved'), pf, pf0: pf,
+    fca: new Set(fcaUnitsOf(p)), far: new Set(far === 'TODAS' ? ucUnidades() : far.split(',').map(x => x.trim().toUpperCase()).filter(Boolean)),
+    o: { nome: (ap && ap.name) || (m && m.nome) || '', email: (ap && ap.email) || (m && m.email) || '', tel: (ap && ap.phone) || (m && m.telefone) || '',
+      st: ap ? ap.status : (m ? (m.status || '') : ''), fca: fcaUnitsOf(p).join(','), far, adm: !!p.is_admin, mst: !!(m && m.master) } };
   const v = (k, x) => { document.getElementById(k).value = x == null ? '' : x; };
-  document.getElementById('mst-tit').textContent = u ? 'Editar cadastro' : 'Novo usuário';
-  document.getElementById('mst-sub').innerHTML = u
-    ? `Cadastro em ${_mstDt(u.criado)} · último acesso ${_mstDt(u.ultimo)} · ${u.sessoes || 0} sessão(ões) aberta(s) · ${_mstSituacao(u)}`
-    : 'Cria o acesso já confirmado e aprovado, sem depender do e-mail.';
-  v('mst-nome', u ? u.nome : ''); v('mst-email', u ? u.email : ''); v('mst-tel', u ? u.telefone : '');
-  v('mst-status', u ? (u.status || 'pending') : 'approved'); v('mst-uni', u ? u.unidade : '');
-  v('mst-pass', ''); v('mst-pass-novo', '');
-  document.getElementById('mst-status').disabled = !u;
-  document.getElementById('mst-admin').checked = !!(u && u.admin);
-  document.getElementById('mst-master').checked = !!(u && u.master);
-  document.getElementById('mst-ops').style.display = u ? '' : 'none';
-  document.getElementById('mst-senha-nova').style.display = u ? 'none' : '';
-  document.getElementById('mst-senha').style.display = 'none';
-  document.getElementById('mst-salvar').textContent = u ? 'Salvar' : 'Criar usuário';
-  _mstMsg('');
-  document.getElementById('mdl-master').style.display = 'flex';
-  setTimeout(() => document.getElementById('mst-nome').focus(), 30);
+  v('uc-nome', UC.o.nome); v('uc-email', UC.o.email); v('uc-tel', UC.o.tel); v('uc-pass', '');
+  document.getElementById('uc-tit').textContent = UC.novo ? 'Novo usuário' : (UC.o.nome || UC.o.email);
+  document.getElementById('uc-sub').textContent = UC.novo ? 'Nasce confirmado e aprovado, sem depender do e-mail.'
+    : [UC.o.email, ap && ap.created_at ? 'cadastro ' + accDt(ap.created_at) : (m && m.criado ? 'cadastro ' + accDt(m.criado) : ''),
+       m ? (m.ultimo ? 'último acesso ' + accDt(m.ultimo) : 'nunca entrou') : ''].filter(Boolean).join(' · ');
+  const chips = [];
+  if (m && !m.confirmado) chips.push('e-mail não confirmado');
+  if (m && m.troca_senha) chips.push('senha provisória');
+  if (m && m.sessoes) chips.push(m.sessoes + ' sessão(ões) aberta(s)');
+  document.getElementById('uc-ch-sub').textContent = UC.novo ? 'preencha e escolha as unidades ao lado' : (chips.join(' · ') || (UC.pode ? 'altere e salve' : 'somente leitura'));
+  ucPinta();
+  document.getElementById('uc-senha').style.display = 'none';
+  ucMsg('');
+  document.getElementById('mdl-usr').style.display = 'flex';
+  if (UC.novo) setTimeout(() => document.getElementById('uc-nome').focus(), 30);
 }
-function fechaMaster() { document.getElementById('mdl-master').style.display = 'none'; _mstAtual = null; }
-function _mstMostraSenha(senha) {
-  document.getElementById('mst-senha-v').textContent = senha;
-  document.getElementById('mst-senha').style.display = '';
+function ucPinta() {
+  const ed = UC.pode, mst = _master, novo = UC.novo;
+  ['uc-nome', 'uc-tel'].forEach(i => document.getElementById(i).readOnly = !ed);
+  document.getElementById('uc-email').readOnly = !(mst && ed);
+  document.getElementById('uc-email-ctx').textContent = mst ? '' : '· só o Master muda';
+  // situação
+  document.getElementById('uc-st-fld').style.display = novo || UC.eu ? 'none' : '';
+  document.getElementById('uc-st').innerHTML = [['approved', 'Ativo'], ['pending', 'Pendente'], ['blocked', 'Bloqueado']]
+    .map(([k, r]) => `<button type="button" class="${UC.st === k ? 'on' : ''}" ${ed ? '' : 'disabled'} onclick="UC.st='${k}';ucPinta()">${r}</button>`).join('');
+  // perfil (só o Master muda; ninguém mexe no próprio)
+  const pfEd = mst && !UC.eu;
+  document.getElementById('uc-pf-ctx').textContent = mst ? (UC.eu ? '· o seu não muda aqui' : '') : '· só o Master muda';
+  document.getElementById('uc-pf').innerHTML = [['gestor', 'Gestor de unidade'], ['admin', 'Admin'], ['master', 'Master']]
+    .map(([k, r]) => `<button type="button" class="${UC.pf === k ? 'on' : ''}" ${pfEd ? '' : 'disabled'} onclick="UC.pf='${k}';ucPinta()">${r}</button>`).join('');
+  // senha e acesso: só o Master
+  document.getElementById('uc-pass-fld').style.display = mst ? '' : 'none';
+  document.getElementById('uc-pass-bt').style.display = novo ? 'none' : '';
+  document.getElementById('uc-ops').style.display = mst && !novo ? '' : 'none';
+  const m = UC.id ? _mu[UC.id] : null;
+  document.getElementById('uc-lib').style.display = m && (!m.confirmado || m.status !== 'approved') ? '' : 'none';
+  document.getElementById('uc-rem').style.display = !novo && ed && !UC.eu ? '' : 'none';
+  document.getElementById('uc-salvar').style.display = ed ? '' : 'none';
+  document.getElementById('uc-salvar').textContent = novo ? 'Criar usuário' : 'Salvar';
+  document.getElementById('uc-nota').textContent = ed ? '' : 'Só o Master altera o cadastro de um Admin ou de um Master.';
+  // listas de unidades
+  const un = ucUnidades(), adm = UC.pf !== 'gestor';
+  const fcaEd = ed && !adm;
+  document.getElementById('uc-fca-tit').textContent = adm ? 'Acesso FCA · todas (admin)' : `Acesso FCA · ${UC.fca.size} de ${un.length}`;
+  document.getElementById('uc-fca').innerHTML = un.map(u => `<button type="button" class="uc-it ${adm || UC.fca.has(u) ? 'on' : ''}" ${fcaEd ? '' : 'disabled'} onclick="ucTog('fca','${u}')"><span class="uc-ck">${UC_CHK}</span>${u}</button>`).join('');
+  document.getElementById('uc-far-tit').textContent = `Recebe Farol · ${UC.far.size ? (UC.far.size >= un.length ? 'todas' : UC.far.size + ' de ' + un.length) : 'não recebe'}`;
+  document.getElementById('uc-far').innerHTML = un.map(u => `<button type="button" class="uc-it ${UC.far.has(u) ? 'on' : ''}" ${ed ? '' : 'disabled'} onclick="ucTog('far','${u}')"><span class="uc-ck">${UC_CHK}</span>${u}</button>`).join('');
+  document.getElementById('uc-far-todas').style.display = ed ? '' : 'none';
+  document.getElementById('uc-far-todas').textContent = UC.far.size >= un.length ? 'Nenhuma' : 'Todas';
 }
-function masterCopia() {
-  const email = (document.getElementById('mst-email').value || '').trim().toLowerCase();
-  const txt = `Gestão em Movimento\nE-mail: ${email}\nSenha: ${document.getElementById('mst-senha-v').textContent}\n${location.origin}${location.pathname}`;
-  (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(
-    () => _mstMsg('Copiado.'), () => _mstMsg('Não deu para copiar; selecione a senha na tela.', true));
-}
-async function _mstRecarrega() {
-  const id = _mstAtual && _mstAtual.id;
-  await loadAdminData();
-  if (id) _mstAtual = masterUsers.find(x => x.id === id) || _mstAtual;
-}
-async function masterSalva() {
-  const nome = document.getElementById('mst-nome').value.trim(), email = document.getElementById('mst-email').value.trim(),
-        tel = document.getElementById('mst-tel').value.trim(), uni = document.getElementById('mst-uni').value.trim(),
-        adm = document.getElementById('mst-admin').checked, mst = document.getElementById('mst-master').checked;
-  const bt = document.getElementById('mst-salvar'); bt.disabled = true; _mstMsg('Gravando…');
+function ucTog(lista, u) { const s = UC[lista]; if (s.has(u)) s.delete(u); else s.add(u); ucPinta(); }
+function ucFarolTodas() { const un = ucUnidades(); UC.far = UC.far.size >= un.length ? new Set() : new Set(un); ucPinta(); }
+function fechaUsuario() { document.getElementById('mdl-usr').style.display = 'none'; UC = null; }
+function ucFarVal() { const un = ucUnidades(); return UC.far.size === 0 ? null : (UC.far.size >= un.length ? 'TODAS' : [...UC.far].join(',')); }
+async function ucSalvar() {
+  if (!UC || !UC.pode) return;
+  const nome = document.getElementById('uc-nome').value.trim().replace(/\s+/g, ' ').toUpperCase();
+  const email = document.getElementById('uc-email').value.trim(), tel = document.getElementById('uc-tel').value.trim();
+  const bt = document.getElementById('uc-salvar'); bt.disabled = true; ucMsg('Gravando…');
   try {
-    let id;
-    if (!_mstAtual) {
+    const csv = [...UC.fca].join(','), far = ucFarVal();
+    if (UC.novo) {
       if (!nome || !email) throw new Error('Informe nome e e-mail.');
       const { data, error } = await sb.rpc('master_criar', { p_email: email, p_nome: nome, p_telefone: tel || null,
-        p_senha: document.getElementById('mst-pass-novo').value.trim() || null, p_unidade: adm ? null : (uni || null) });
+        p_senha: document.getElementById('uc-pass').value.trim() || null, p_unidade: UC.pf === 'gestor' ? (csv || null) : null });
       if (error) throw error;
-      id = data.id;
-      if (adm) { const r = await sb.rpc('master_altera', { p_user: id, p_dados: { admin: true } }); if (r.error) throw r.error; }
-      if (mst) { const r = await sb.rpc('master_define', { p_user: id, p_master: true }); if (r.error) throw r.error; }
-      _mstMostraSenha(data.senha);
+      const id = data.id;
+      if (UC.pf !== 'gestor') { const r = await sb.rpc('master_altera', { p_user: id, p_dados: { admin: true } }); if (r.error) throw r.error; }
+      if (UC.pf === 'master') { const r = await sb.rpc('master_define', { p_user: id, p_master: true }); if (r.error) throw r.error; }
+      if (far) { const r = await sb.from('fca_profiles').upsert({ user_id: id, nome, farol_unidades: far }, { onConflict: 'user_id' }); if (r.error) throw r.error; }
       await loadAdminData();
-      _mstAtual = masterUsers.find(x => x.id === id) || { id };
-      document.getElementById('mst-tit').textContent = 'Editar cadastro';
-      document.getElementById('mst-ops').style.display = '';
-      document.getElementById('mst-senha-nova').style.display = 'none';
-      document.getElementById('mst-status').disabled = false;
-      document.getElementById('mst-salvar').textContent = 'Salvar';
-      _mstMsg('Usuário criado, já confirmado e aprovado.');
+      abreUsuario(id);
+      document.getElementById('uc-senha-v').textContent = data.senha;
+      document.getElementById('uc-senha').style.display = '';
+      ucMsg('Usuário criado, já confirmado e aprovado.', 'ok');
       return;
     }
-    const u = _mstAtual, d = {};
-    id = u.id;
-    if (nome && nome.toUpperCase() !== String(u.nome || '').toUpperCase()) d.nome = nome;
-    if (email && email.toLowerCase() !== String(u.email || '').toLowerCase()) d.email = email;
-    if (tel !== String(u.telefone || '')) d.telefone = tel;
-    const st = document.getElementById('mst-status').value;
-    if (st !== (u.status || '')) d.status = st;
-    if (uni.toUpperCase().replace(/\s*,\s*/g, ',') !== String(u.unidade || '').toUpperCase()) d.unidade = uni;
-    if (adm !== !!u.admin) d.admin = adm;
-    if (Object.keys(d).length) { const { error } = await sb.rpc('master_altera', { p_user: id, p_dados: d }); if (error) throw error; }
-    if (mst !== !!u.master) { const { error } = await sb.rpc('master_define', { p_user: id, p_master: mst }); if (error) throw error; }
-    await _mstRecarrega();
-    _mstMsg(Object.keys(d).length || mst !== !!u.master ? 'Salvo ✓' : 'Nada mudou.');
-  } catch (e) { _mstMsg(_mstErro(e), true); }
+    const o = UC.o, id = UC.id, mudou = [];
+    const admNovo = UC.pf !== 'gestor';
+    if (_master) {
+      const d = {};
+      if (nome && nome !== String(o.nome || '').toUpperCase()) d.nome = nome;
+      if (email && email.toLowerCase() !== String(o.email || '').toLowerCase()) d.email = email;
+      if (tel !== String(o.tel || '')) d.telefone = tel;
+      if (!UC.eu && UC.st !== o.st) d.status = UC.st;
+      if (!admNovo && csv !== o.fca) d.unidade = csv;
+      if (!UC.eu && admNovo !== o.adm) d.admin = admNovo;
+      if (Object.keys(d).length) { const { error } = await sb.rpc('master_altera', { p_user: id, p_dados: d }); if (error) throw error; mudou.push(...Object.keys(d)); }
+      const mstNovo = UC.pf === 'master';
+      if (!UC.eu && mstNovo !== o.mst) { const { error } = await sb.rpc('master_define', { p_user: id, p_master: mstNovo }); if (error) throw error; mudou.push('perfil'); }
+    } else {
+      const ap = {};
+      if (nome && nome !== String(o.nome || '').toUpperCase()) ap.name = nome;
+      if (tel !== String(o.tel || '')) ap.phone = tel || null;
+      if (!UC.eu && UC.st !== o.st) ap.status = UC.st;
+      if (Object.keys(ap).length) {
+        const { error } = await sb.from('user_approvals').update(ap).eq('user_id', id); if (error) throw error;
+        if (ap.name) await sb.from('fca_profiles').update({ nome }).eq('user_id', id);
+        mudou.push(...Object.keys(ap));
+      }
+      if (csv !== o.fca) {
+        const { error } = await sb.from('fca_profiles').upsert({ user_id: id, nome: nome || null, unidade: csv || null, is_admin: false }, { onConflict: 'user_id' });
+        if (error) throw error; mudou.push('unidades');
+      }
+    }
+    if ((far || '') !== (o.far || '')) {
+      const { error } = await sb.from('fca_profiles').upsert({ user_id: id, nome: nome || null, farol_unidades: far }, { onConflict: 'user_id' });
+      if (error) throw error; mudou.push('farol');
+    }
+    if (UC.st === 'approved' && o.st !== 'approved' && !UC.eu) fnCall('notify-user', { email: email || o.email, name: nome }).catch(() => {});
+    await loadAdminData();
+    abreUsuario(id);
+    ucMsg(mudou.length ? 'Salvo ✓' : 'Nada mudou.', mudou.length ? 'ok' : '');
+  } catch (e) { ucMsg(ucErro(e), 'err'); }
   finally { bt.disabled = false; }
 }
-async function masterLiberar() {
-  if (!_mstAtual) return;
-  _mstMsg('Liberando…');
-  const { error } = await sb.rpc('master_liberar', { p_user: _mstAtual.id });
-  if (error) { _mstMsg(_mstErro(error), true); return; }
-  await _mstRecarrega();
-  document.getElementById('mst-status').value = 'approved';
-  _mstMsg('Cadastro liberado: e-mail confirmado e acesso aprovado.');
+async function ucSenha() {
+  if (!UC || !_master || UC.novo) return;
+  const s = document.getElementById('uc-pass').value.trim();
+  if (s && s.length < 6) { ucMsg('A senha precisa de pelo menos 6 caracteres.', 'err'); return; }
+  ucMsg('Gravando a senha…');
+  const { data, error } = await sb.rpc('master_senha', { p_user: UC.id, p_senha: s || null });
+  if (error) { ucMsg(ucErro(error), 'err'); return; }
+  document.getElementById('uc-pass').value = '';
+  document.getElementById('uc-senha-v').textContent = data;
+  document.getElementById('uc-senha').style.display = '';
+  const id = UC.id; await loadAdminData(); const sv = document.getElementById('uc-senha').style.display;
+  abreUsuario(id); document.getElementById('uc-senha-v').textContent = data; document.getElementById('uc-senha').style.display = sv;
+  ucMsg('Senha provisória gravada (e-mail confirmado). No primeiro acesso a pessoa cria a dela.', 'ok');
 }
-async function masterSenha(gerar) {
-  if (!_mstAtual) return;
-  const s = gerar ? null : document.getElementById('mst-pass').value.trim();
-  if (!gerar && s.length < 6) { _mstMsg('A senha precisa de pelo menos 6 caracteres.', true); return; }
-  _mstMsg('Gravando a senha…');
-  const { data, error } = await sb.rpc('master_senha', { p_user: _mstAtual.id, p_senha: s });
-  if (error) { _mstMsg(_mstErro(error), true); return; }
-  document.getElementById('mst-pass').value = '';
-  _mstMostraSenha(data);
-  await _mstRecarrega();
-  _mstMsg('Senha provisória gravada (e-mail confirmado). No primeiro acesso a pessoa cria a dela.');
+async function ucLiberar() {
+  if (!UC || !_master) return;
+  ucMsg('Liberando…');
+  const { error } = await sb.rpc('master_liberar', { p_user: UC.id });
+  if (error) { ucMsg(ucErro(error), 'err'); return; }
+  const id = UC.id; await loadAdminData(); abreUsuario(id);
+  ucMsg('Cadastro liberado: e-mail confirmado e acesso aprovado.', 'ok');
 }
-async function masterEncerrar() {
-  if (!_mstAtual) return;
-  if (!confirm(`Encerrar as sessões de ${_mstAtual.nome || _mstAtual.email}? A pessoa terá de entrar de novo.`)) return;
-  const { data, error } = await sb.rpc('master_encerrar', { p_user: _mstAtual.id });
-  if (error) { _mstMsg(_mstErro(error), true); return; }
-  await _mstRecarrega();
-  _mstMsg(`${data || 0} sessão(ões) encerrada(s).`);
+async function ucEncerrar() {
+  if (!UC || !_master) return;
+  if (!confirm('Encerrar as sessões abertas? A pessoa terá de entrar de novo.')) return;
+  const { data, error } = await sb.rpc('master_encerrar', { p_user: UC.id });
+  if (error) { ucMsg(ucErro(error), 'err'); return; }
+  const id = UC.id; await loadAdminData(); abreUsuario(id);
+  ucMsg(`${data || 0} sessão(ões) encerrada(s).`, 'ok');
+}
+async function ucRemover() { if (UC && await accRemover(UC.id)) fechaUsuario(); }
+function ucCopia() {
+  const email = (document.getElementById('uc-email').value || '').trim().toLowerCase();
+  const txt = `Gestão em Movimento\nE-mail: ${email}\nSenha: ${document.getElementById('uc-senha-v').textContent}\n${location.origin}${location.pathname}`;
+  (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(
+    () => ucMsg('Copiado.', 'ok'), () => ucMsg('Não deu para copiar; selecione a senha na tela.', 'err'));
 }
 
 function traduzirErro(msg) {
@@ -1927,6 +2044,6 @@ init();
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/modo-tv.js?v=202610111500"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202610162030"></script>
+<script src="assets/build-check.js?v=202610162130"></script>
 </body>
 </html>

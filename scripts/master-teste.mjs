@@ -1,21 +1,36 @@
-// Gerenciar Acessos · aba Master (hub): roda o index.html com o Supabase dublado e confere
-// a aba, a lista e as chamadas master_* que cada botão manda. node scripts/master-teste.mjs (SHOTS=<pasta>)
+// Gerenciar Acessos · lista e caixa de alterações (desenho do app de checklist) + Master.
+// Roda o index.html com o Supabase dublado. node scripts/master-teste.mjs (SHOTS=<pasta> salva prints)
 import { chromium } from 'playwright';
 import path from 'path';
 const RAIZ = process.cwd(), SHOTS = process.env.SHOTS;
-const U = [
-  { id:'a1', email:'andre.pompeu@conlogsa.com.br', nome:'ANDRÉ POMPEU', telefone:'21999990000', criado:'2026-10-15T12:00:00Z', confirmado:null, ultimo:null, status:null, unidade:null, admin:false, master:false, sessoes:0 },
-  { id:'r1', email:'fortesindicadores@gmail.com', nome:'RENAN', telefone:null, criado:'2026-01-01T12:00:00Z', confirmado:'2026-01-01T12:00:00Z', ultimo:'2026-10-16T12:00:00Z', status:'approved', unidade:null, admin:true, master:true, sessoes:2 },
-  { id:'g1', email:'gestor@conlogsa.com.br', nome:'GESTOR PIR', telefone:null, criado:'2026-03-01T12:00:00Z', confirmado:'2026-03-01T12:00:00Z', ultimo:'2026-10-10T12:00:00Z', status:'approved', unidade:'PIR', admin:false, master:false, sessoes:1 },
+const AP = [
+  { id:1, user_id:'g1', name:'GESTOR PIR', email:'gestor@conlogsa.com.br', phone:'21999990000', status:'approved', created_at:'2026-03-01T12:00:00Z' },
+  { id:2, user_id:'a2', name:'ADMIN DOIS', email:'admin2@conlogsa.com.br', phone:'', status:'approved', created_at:'2026-02-01T12:00:00Z' },
+  { id:3, user_id:'p3', name:'NOVO PENDENTE', email:'pend@conlogsa.com.br', phone:'', status:'pending', created_at:'2026-10-10T12:00:00Z' },
+  { id:4, user_id:'r1', name:'RENAN FORTES', email:'fortesindicadores@gmail.com', phone:'', status:'approved', created_at:'2026-01-01T12:00:00Z' },
 ];
-const mock = master => `window.__rpc=[];window.supabase={createClient(){
- const D={user_approvals:[{id:7,user_id:'g1',name:'GESTOR PIR',email:'gestor@conlogsa.com.br',phone:'21999990000',status:'approved',created_at:'2026-03-01T12:00:00Z'}],fca_profiles:[{user_id:'g1',unidade:'PIR',is_admin:false}]};
- const q=t=>{const o={_d:(D[t]||[]).slice(),select(){return o},order(){return o},eq(){return o},in(){return o},limit(){return o},
-  update(){return o},upsert(){return o},single(){return o},maybeSingle(){return o},then(r,j){return Promise.resolve({data:o._d,error:null}).then(r,j)}};return o};
- const R={master_eu:()=>${master},master_usuarios:()=>${JSON.stringify(U)},master_senha:a=>a.p_senha||'Gx7kPq2mZr',
-  master_criar:a=>({id:'n1',senha:a.p_senha||'Nv4bTt9wQe'}),master_encerrar:()=>2,
+const PROF = [ { user_id:'g1', unidade:'PIR', is_admin:false, farol_unidades:'PIR' }, { user_id:'a2', unidade:null, is_admin:true, farol_unidades:null },
+  { user_id:'r1', unidade:null, is_admin:true, farol_unidades:'TODAS' } ];
+const MU = [
+  { id:'a1', email:'andre.pompeu@conlogsa.com.br', nome:'ANDRÉ POMPEU', telefone:'21999990000', criado:'2026-10-15T12:00:00Z', confirmado:null, ultimo:null, status:null, unidade:null, admin:false, master:false, troca_senha:false, sessoes:0 },
+  { id:'g1', email:'gestor@conlogsa.com.br', nome:'GESTOR PIR', telefone:'21999990000', criado:'2026-03-01T12:00:00Z', confirmado:'2026-03-01T12:00:00Z', ultimo:'2026-10-10T12:00:00Z', status:'approved', unidade:'PIR', admin:false, master:false, troca_senha:true, sessoes:1 },
+  { id:'a2', email:'admin2@conlogsa.com.br', nome:'ADMIN DOIS', criado:'2026-02-01T12:00:00Z', confirmado:'2026-02-01T12:00:00Z', ultimo:null, status:'approved', admin:true, master:false, sessoes:0 },
+  { id:'p3', email:'pend@conlogsa.com.br', nome:'NOVO PENDENTE', criado:'2026-10-10T12:00:00Z', confirmado:'2026-10-10T12:00:00Z', ultimo:null, status:'pending', admin:false, master:false, sessoes:0 },
+  { id:'r1', email:'fortesindicadores@gmail.com', nome:'RENAN FORTES', criado:'2026-01-01T12:00:00Z', confirmado:'2026-01-01T12:00:00Z', ultimo:'2026-10-16T12:00:00Z', status:'approved', admin:true, master:true, sessoes:2 },
+];
+const mock = master => `window.__ops=[];window.supabase={createClient(){
+ const D=${JSON.stringify({user_approvals:AP,fca_profiles:PROF})}, M=${master};
+ const q=t=>{const o={_d:(D[t]||[]).slice(),_op:null,select(){return o},order(){return o},in(){return o},limit(){return o},
+  eq(k,v){o._f=[k,v];if(!o._op)o._d=o._d.filter(r=>r[k]===v);return o},
+  update(x){o._op=['update',t,x];return o},upsert(x){o._op=['upsert',t,x];return o},single(){return o},maybeSingle(){return o},
+  then(r,j){let res={data:o._d,error:null};if(o._op){const op=[...o._op,o._f];window.__ops.push(op);
+    const alvo=(o._f&&o._f[1])||(o._op[2]&&o._op[2].user_id);
+    if(!M&&(alvo==='a2'||alvo==='r1'))res={data:null,error:{message:'Só o Master pode alterar, bloquear ou remover um Admin.'}};}
+    return Promise.resolve(res).then(r,j)}};return o};
+ const R={master_eu:()=>M,master_usuarios:()=>M?${JSON.stringify(MU)}:{__err:'Só o administrador Master pode fazer isso.'},
+  master_senha:a=>a.p_senha||'Gx7kPq2mZr',master_criar:a=>({id:'n1',senha:a.p_senha||'Nv4bTt9wQe'}),master_encerrar:()=>2,
   master_altera:a=>a.p_dados.email==='gestor@conlogsa.com.br'?{__err:'Já existe um cadastro com o e-mail gestor@conlogsa.com.br.'}:null};
- return {from:q,rpc:async(n,a)=>{window.__rpc.push([n,a]);const f=R[n];const v=f?f(a||{}):null;
+ return {from:q,rpc:async(n,a)=>{window.__ops.push(['rpc',n,a]);const f=R[n];const v=f?f(a||{}):null;
    if(v&&v.__err) return {data:null,error:{message:v.__err}}; return {data:v,error:null}},
   channel(){return{on(){return this},subscribe(){return this}}},removeChannel(){},
   auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange(){return{data:{subscription:{unsubscribe(){}}}}},getUser:async()=>({data:{user:null}})},
@@ -26,152 +41,125 @@ const ck = (c, m) => { if (c) { ok++; console.log('ok  ', m); } else { falha++; 
 async function abre(master, W = 1366, H = 768, tema = 'escuro') {
   const pg = await b.newPage({ viewport: { width: W, height: H } });
   pg.on('pageerror', e => console.log('pageerror', e.message));
+  pg.on('dialog', d => d.accept());
   await pg.route('**/*', r => { const u = r.request().url();
     if (u.includes('supabase-js')) return r.fulfill({ body: mock(master), contentType: 'text/javascript' });
     if (u.startsWith('file:')) return r.continue();
     return r.fulfill({ status: 404, body: '' }); });
-  await pg.addInitScript(t => localStorage.setItem('bi_theme', t === 'claro' ? 'light' : 'dark'), tema);
+  await pg.addInitScript(t => { localStorage.setItem('bi_theme', t === 'claro' ? 'light' : 'dark'); localStorage.setItem('gem_acessos_modo', 'lista'); }, tema);
   await pg.goto('file://' + path.join(RAIZ, 'index.html'));
   await pg.waitForTimeout(300);
-  await pg.evaluate(() => { currentUser = { email: 'renan@x', user_metadata: { name: 'Renan' } }; showAdmin(); });
+  await pg.evaluate(() => { currentUser = { id: 'r1', email: 'fortesindicadores@gmail.com', user_metadata: { name: 'Renan' } }; showAdmin(); switchAdminTab('approved'); });
   await pg.waitForTimeout(300);
   return pg;
 }
-const rpcs = pg => pg.evaluate(() => window.__rpc.map(x => x[0]));
-const ultimo = (pg, n) => pg.evaluate(n => { const a = window.__rpc.filter(x => x[0] === n); return a.length ? a[a.length - 1][1] : null; }, n);
+const ops = pg => pg.evaluate(() => window.__ops);
+const ultimo = async (pg, n) => (await ops(pg)).filter(o => o[0] === 'rpc' && o[1] === n).pop()?.[2];
+const linha = (pg, nome) => pg.locator('#admin-users-list tbody tr', { hasText: nome });
 
-// 1. quem não é Master não vê a aba e nem chama a lista
-{ const pg = await abre(false);
-  await pg.evaluate(()=>{localStorage.setItem('gem_acessos_modo','lista');switchAdminTab('approved');});
-  await pg.click('#admin-users-list tbody tr td.acc-dt');
-  ck(await pg.evaluate(()=>document.getElementById('mdl-master').style.display)==='none', 'sem Master: clicar na linha não abre nada');
-  const vis = await pg.evaluate(() => getComputedStyle(document.getElementById('atab-master')).display);
-  ck(vis === 'none', `sem Master: aba escondida (${vis})`);
-  ck(!(await rpcs(pg)).includes('master_usuarios'), 'sem Master: não pede master_usuarios');
-  await pg.close(); }
-
-// 2. Master: aba, lista, novo, editar, senha, liberar, encerrar
 for (const [W, H, tema] of [[1366, 768, 'escuro'], [1920, 1080, 'claro']]) {
   const pg = await abre(true, W, H, tema);
-  const vis = await pg.evaluate(() => getComputedStyle(document.getElementById('atab-master')).display);
-  ck(vis !== 'none', `${W}: Master vê a aba`);
-  await pg.click('#atab-master');
-  const l = await pg.evaluate(() => { const t = document.querySelector('#admin-users-list table.mst-tbl'); const m = document.querySelector('.adm-main');
-    return { n: t ? t.tBodies[0].rows.length : 0, cnt: document.getElementById('admin-cnt-master').textContent,
-      bar: document.querySelector('.mst-bar span').textContent, sx: m.scrollWidth > m.clientWidth + 1,
-      andre: t ? t.tBodies[0].rows[0].cells[1].textContent : '' }; });
-  ck(l.n === 3 && l.cnt === '3', `${W}: lista com os 3 cadastros (${l.n}, contagem ${l.cnt})`);
-  ck(l.bar.includes('1 sem e-mail confirmado') && l.bar.includes('1 sem aprovação'), `${W}: resumo ${l.bar}`);
-  ck(l.andre.includes('Sem aprovação') && l.andre.includes('E-mail não confirmado'), `${W}: André aparece travado (${l.andre})`);
-  ck(!l.sx, `${W}: sem rolagem horizontal`);
-  if (SHOTS) await pg.screenshot({ path: `${SHOTS}/master-lista-${W}-${tema}.png` });
-  // busca
-  await pg.evaluate(() => onAdminSearch('andre'));
-  ck(await pg.evaluate(() => document.querySelectorAll('.mst-tbl tbody tr').length) === 1, `${W}: busca filtra`);
-  await pg.evaluate(() => onAdminSearch(''));
-
-  // editar o André
-  await pg.click('.mst-tbl tbody tr[data-id="a1"] button');
-  const m = await pg.evaluate(() => { const c = document.querySelector('#mdl-master .mdl-cx').getBoundingClientRect();
-    return { vis: document.getElementById('mdl-master').style.display, nome: document.getElementById('mst-nome').value,
-      ops: document.getElementById('mst-ops').style.display, cabe: c.bottom <= innerHeight && c.top >= 0 }; });
-  ck(m.vis === 'flex' && m.nome === 'ANDRÉ POMPEU' && m.ops === '', `${W}: Editar abre com os dados`);
-  ck(m.cabe, `${W}: caixa cabe na tela`);
-  if (SHOTS) await pg.screenshot({ path: `${SHOTS}/master-caixa-${W}-${tema}.png` });
-  await pg.click('text=Liberar cadastro');
-  await pg.waitForTimeout(100);
-  ck((await ultimo(pg, 'master_liberar'))?.p_user === 'a1', `${W}: Liberar chama master_liberar(a1)`);
-  await pg.click('text=Gerar senha nova');
-  await pg.waitForTimeout(100);
-  const g = await pg.evaluate(() => ({ v: document.getElementById('mst-senha-v').textContent, d: document.getElementById('mst-senha').style.display }));
-  ck((await ultimo(pg, 'master_senha'))?.p_senha === null && g.v === 'Gx7kPq2mZr' && g.d === '', `${W}: Gerar senha mostra a senha nova (${g.v})`);
-  await pg.fill('#mst-pass', '123');
-  await pg.click('text=Definir senha');
-  ck((await pg.evaluate(() => document.getElementById('mst-st').textContent)).includes('6 caracteres'), `${W}: senha curta recusada na tela`);
-  await pg.fill('#mst-pass', 'Conlog2026');
-  await pg.click('text=Definir senha');
-  await pg.waitForTimeout(100);
-  ck((await ultimo(pg, 'master_senha'))?.p_senha === 'Conlog2026', `${W}: Definir senha manda a digitada`);
-  // salvar: só o que mudou
-  await pg.fill('#mst-tel', '21988887777'); await pg.fill('#mst-uni', 'cba t1, mcc t2'); await pg.check('#mst-master');
-  await pg.click('#mst-salvar'); await pg.waitForTimeout(100);
-  const alt = await ultimo(pg, 'master_altera'), def = await ultimo(pg, 'master_define');
-  ck(alt && alt.p_dados.telefone === '21988887777' && alt.p_dados.unidade === 'cba t1, mcc t2' && !('nome' in alt.p_dados) && !('email' in alt.p_dados),
-    `${W}: Salvar manda só o que mudou (${JSON.stringify(alt && alt.p_dados)})`);
-  ck(alt && alt.p_dados.status === 'approved', `${W}: depois de Liberar a situação vai como Ativo`);
-  ck(def && def.p_user === 'a1' && def.p_master === true, `${W}: Master marcado chama master_define`);
-  // e-mail repetido: erro do banco aparece
-  await pg.fill('#mst-email', 'gestor@conlogsa.com.br'); await pg.click('#mst-salvar'); await pg.waitForTimeout(100);
-  const st = await pg.evaluate(() => ({ t: document.getElementById('mst-st').textContent, e: document.getElementById('mst-st').classList.contains('err') }));
-  ck(st.e && st.t.includes('Já existe'), `${W}: erro do banco aparece (${st.t})`);
-  // encerrar
-  pg.once('dialog', d => d.accept());
-  await pg.click('text=Encerrar sessões'); await pg.waitForTimeout(150);
-  ck((await ultimo(pg, 'master_encerrar'))?.p_user === 'a1', `${W}: Encerrar chama master_encerrar`);
-  await pg.evaluate(() => fechaMaster());
-
-  // novo usuário
-  await pg.click('text=+ Novo usuário');
-  const nv = await pg.evaluate(() => ({ t: document.getElementById('mst-tit').textContent, ops: document.getElementById('mst-ops').style.display,
-    sn: document.getElementById('mst-senha-nova').style.display }));
-  ck(nv.t === 'Novo usuário' && nv.ops === 'none' && nv.sn === '', `${W}: Novo usuário abre limpo`);
-  await pg.click('#mst-salvar'); await pg.waitForTimeout(80);
-  ck((await pg.evaluate(() => document.getElementById('mst-st').textContent)).includes('nome e e-mail'), `${W}: novo sem nome/e-mail recusado`);
-  await pg.fill('#mst-nome', 'João Silva'); await pg.fill('#mst-email', 'joao@conlogsa.com.br'); await pg.fill('#mst-uni', 'PIR');
-  await pg.click('#mst-salvar'); await pg.waitForTimeout(150);
-  const cr = await ultimo(pg, 'master_criar');
-  const sv = await pg.evaluate(() => ({ v: document.getElementById('mst-senha-v').textContent, st: document.getElementById('mst-st').textContent,
-    ops: document.getElementById('mst-ops').style.display }));
-  ck(cr && cr.p_email === 'joao@conlogsa.com.br' && cr.p_nome === 'João Silva' && cr.p_unidade === 'PIR' && cr.p_senha === null, `${W}: master_criar com os campos`);
-  ck(sv.v === 'Nv4bTt9wQe' && sv.st.includes('criado') && sv.ops === '', `${W}: senha do novo aparece e a caixa vira edição`);
-  await pg.evaluate(() => fechaMaster());
-  // Master edita direto da lista de Usuários: clicar na linha abre a caixa
-  await pg.evaluate(()=>{localStorage.setItem('gem_acessos_modo','lista');switchAdminTab('approved');});
-  await pg.click('#admin-users-list tbody tr td.acc-dt');
-  const ed = await pg.evaluate(()=>({v:document.getElementById('mdl-master').style.display,n:document.getElementById('mst-nome').value,
-    cur:getComputedStyle(document.querySelector('#admin-users-list tbody tr')).cursor}));
-  ck(ed.v==='flex' && ed.n==='GESTOR PIR' && ed.cur==='pointer', `${W}: clicar na linha de Usuários abre a edição do Master (${ed.n})`);
-  await pg.evaluate(()=>fechaMaster());
-  await pg.click('#admin-users-list tbody tr .user-fca .farol-btn');
-  ck(await pg.evaluate(()=>document.getElementById('mdl-master').style.display)==='none', `${W}: o seletor de acesso na linha não abre a edição`);
-  await pg.mouse.click(5,H-5);
-  // volta para Pendentes sem quebrar a grade
+  const t = await pg.evaluate(() => { const T = document.querySelector('#admin-users-list table.acc-tbl'), m = document.querySelector('.adm-main');
+    return { ths: [...T.tHead.rows[0].cells].map(c => c.textContent), n: T.tBodies[0].rows.length, pick: T.querySelectorAll('.farol-btn,.fcnt,select').length,
+      av: T.querySelectorAll('.user-avatar').length, sub: document.querySelector('.acc-sub').textContent, sx: m.scrollWidth > m.clientWidth + 1,
+      novo: !!document.querySelector('.acc-head .ubtn.pri'), masterTab: !!document.getElementById('atab-master') }; });
+  ck(JSON.stringify(t.ths) === JSON.stringify(['Nome','E-mail','Telefone','Acesso FCA','Recebe Farol','Cadastro','Último acesso','']), `${W}: colunas ${t.ths.join('|')}`);
+  ck(t.n === 3 && t.pick === 0 && t.av === 0, `${W}: 3 ativos, sem seletores coloridos nem inicial na linha`);
+  ck(t.sub.startsWith('3 ativos · 2 aguardando aprovação · 0 bloqueados'), `${W}: resumo ${t.sub}`);
+  ck(t.novo && !t.masterTab, `${W}: "+ Novo usuário" no card e sem aba Master separada`);
+  ck(!t.sx, `${W}: sem rolagem horizontal`);
+  const gl = await linha(pg, 'GESTOR PIR').innerText();
+  ck(/PIR/.test(gl) && /senha provisória/i.test(gl), `${W}: linha do gestor em texto (PIR) com chip`);
+  ck(/master/i.test(await linha(pg, 'RENAN').innerText()) && /você/i.test(await linha(pg, 'RENAN').innerText()), `${W}: chips "você" e "master"`);
+  if (SHOTS) await pg.screenshot({ path: `${SHOTS}/acc-lista-${W}-${tema}.png` });
+  // ordenação
+  await pg.click('#admin-users-list thead th:nth-child(1)');
+  const nomes = await pg.evaluate(() => [...document.querySelectorAll('#admin-users-list tbody td.conta span:first-child')].map(e => e.textContent));
+  ck(JSON.stringify(nomes) === JSON.stringify(['ADMIN DOIS', 'GESTOR PIR', 'RENAN FORTES']), `${W}: Nome ordena (${nomes.join(', ')})`);
+  // pendentes: o Master vê quem travou fora da aprovação
   await pg.click('#atab-pending');
-  ck(await pg.evaluate(() => !document.querySelector('.mst-tbl')), `${W}: outra aba some com a lista Master`);
+  const pend = await pg.evaluate(() => [...document.querySelectorAll('#admin-users-list tbody tr')].map(r => r.innerText.replace(/\s+/g, ' ')));
+  ck(pend.length === 2 && pend.some(x => /ANDRÉ POMPEU.*sem aprovação/i.test(x)), `${W}: Pendentes com o André (sem aprovação)`);
+  await linha(pg, 'ANDRÉ POMPEU').locator('button', { hasText: 'Aprovar' }).click(); await pg.waitForTimeout(100);
+  ck((await ultimo(pg, 'master_liberar'))?.p_user === 'a1', `${W}: Aprovar o travado chama master_liberar`);
+  await linha(pg, 'NOVO PENDENTE').locator('button', { hasText: 'Aprovar' }).click(); await pg.waitForTimeout(100);
+  ck((await ops(pg)).some(o => o[0] === 'update' && o[1] === 'user_approvals' && o[2].status === 'approved' && o[3][1] === 'p3'), `${W}: Aprovar pendente grava approved`);
+  await pg.click('#atab-approved');
+  // clicar na linha abre a caixa
+  await linha(pg, 'GESTOR PIR').locator('td').nth(2).click();
+  const cx = await pg.evaluate(() => { const c = document.querySelector('#mdl-usr .mdl-cx').getBoundingClientRect();
+    return { v: document.getElementById('mdl-usr').style.display, nome: document.getElementById('uc-nome').value, email: document.getElementById('uc-email').readOnly,
+      pf: document.querySelector('#uc-pf button.on').textContent, fca: [...document.querySelectorAll('#uc-fca .uc-it.on')].map(b => b.textContent),
+      far: [...document.querySelectorAll('#uc-far .uc-it.on')].map(b => b.textContent), cabe: c.bottom <= innerHeight + 1 && c.top >= -1,
+      pass: getComputedStyle(document.getElementById('uc-pass-fld')).display, ops: getComputedStyle(document.getElementById('uc-ops')).display }; });
+  ck(cx.v === 'flex' && cx.nome === 'GESTOR PIR' && !cx.email, `${W}: clicar na linha abre a caixa (e-mail editável pelo Master)`);
+  ck(cx.pf === 'Gestor de unidade' && cx.fca.join() === 'PIR' && cx.far.join() === 'PIR', `${W}: perfil e unidades marcadas`);
+  ck(cx.pass !== 'none' && cx.ops !== 'none', `${W}: senha, liberar e sessões para o Master`);
+  ck(cx.cabe, `${W}: caixa cabe na tela`);
+  if (SHOTS) await pg.screenshot({ path: `${SHOTS}/acc-caixa-${W}-${tema}.png` });
+  // altera tudo e salva
+  await pg.fill('#uc-tel', '21988887777');
+  await pg.click('#uc-fca .uc-it:has-text("GRL")');
+  await pg.click('#uc-far-todas');
+  await pg.click('#uc-salvar'); await pg.waitForTimeout(150);
+  const alt = await ultimo(pg, 'master_altera');
+  ck(alt && alt.p_user === 'g1' && alt.p_dados.telefone === '21988887777' && /PIR/.test(alt.p_dados.unidade) && /GRL/.test(alt.p_dados.unidade) && !('nome' in alt.p_dados), `${W}: Salvar manda só o que mudou (${JSON.stringify(alt && alt.p_dados)})`);
+  ck((await ops(pg)).some(o => o[0] === 'upsert' && o[1] === 'fca_profiles' && o[2].farol_unidades === 'TODAS'), `${W}: Farol "Todas" gravado`);
+  ck(await pg.evaluate(() => document.getElementById('uc-msg').textContent) === 'Salvo ✓', `${W}: "Salvo ✓"`);
+  // perfil Admin / Master
+  await pg.click('#uc-pf button:has-text("Master")');
+  ck(await pg.evaluate(() => document.querySelectorAll('#uc-fca .uc-it:disabled').length > 0), `${W}: com Admin/Master as unidades do FCA ficam todas`);
+  await pg.click('#uc-salvar'); await pg.waitForTimeout(150);
+  ck((await ultimo(pg, 'master_altera'))?.p_dados.admin === true && (await ultimo(pg, 'master_define'))?.p_master === true, `${W}: Master marcado vira admin + master_define`);
+  // senha
+  await pg.click('#uc-pass-bt'); await pg.waitForTimeout(150);
+  ck((await ultimo(pg, 'master_senha'))?.p_senha === null && await pg.evaluate(() => document.getElementById('uc-senha-v').textContent) === 'Gx7kPq2mZr', `${W}: Trocar senha em branco gera uma e mostra`);
+  await pg.fill('#uc-pass', '123'); await pg.click('#uc-pass-bt');
+  ck(/6 caracteres/.test(await pg.evaluate(() => document.getElementById('uc-msg').textContent)), `${W}: senha curta recusada`);
+  await pg.fill('#uc-pass', 'Conlog2026'); await pg.click('#uc-pass-bt'); await pg.waitForTimeout(150);
+  ck((await ultimo(pg, 'master_senha'))?.p_senha === 'Conlog2026', `${W}: senha digitada vai para master_senha`);
+  await pg.click('#uc-ops button:has-text("Encerrar")'); await pg.waitForTimeout(150);
+  ck((await ultimo(pg, 'master_encerrar'))?.p_user === 'g1', `${W}: Encerrar sessões`);
+  // e-mail repetido: erro do banco na caixa
+  await pg.fill('#uc-email', 'gestor@conlogsa.com.br'); await pg.evaluate(() => { UC.o.email = 'outro@x'; });
+  await pg.click('#uc-salvar'); await pg.waitForTimeout(150);
+  ck(/Já existe/.test(await pg.evaluate(() => document.getElementById('uc-msg').textContent)), `${W}: erro do banco aparece na caixa`);
+  await pg.evaluate(() => fechaUsuario());
+  // novo usuário
+  await pg.click('.acc-head .ubtn.pri');
+  ck(await pg.evaluate(() => document.getElementById('uc-tit').textContent) === 'Novo usuário', `${W}: Novo usuário abre a caixa vazia`);
+  await pg.fill('#uc-nome', 'João Silva'); await pg.fill('#uc-email', 'joao@conlogsa.com.br');
+  await pg.click('#uc-fca .uc-it:has-text("CGR")');
+  await pg.click('#uc-salvar'); await pg.waitForTimeout(200);
+  const cr = await ultimo(pg, 'master_criar');
+  ck(cr && cr.p_nome === 'JOÃO SILVA' && cr.p_unidade === 'CGR' && cr.p_senha === null, `${W}: master_criar com unidade (${cr && cr.p_unidade})`);
+  ck(await pg.evaluate(() => document.getElementById('uc-senha-v').textContent) === 'Nv4bTt9wQe', `${W}: senha do novo aparece`);
+  await pg.evaluate(() => fechaUsuario());
   await pg.close();
 }
 
-// 3. senha provisória: no 1º acesso a pessoa cria a dela e segue logada
+// Admin comum (não Master): vê, altera gestor, não mexe em Admin
 { const pg = await abre(false);
-  await pg.evaluate(() => { window.__upd = null;
-    sb.auth.updateUser = async a => { window.__upd = a; return { data: {}, error: null }; };
-    sb.auth.refreshSession = async () => ({ data: { user: { id: 'a1', email: 'andre@x', app_metadata: {}, user_metadata: { name: 'André' } } }, error: null });
-    window.__chk = []; const orig = checkApproval; checkApproval = async u => { window.__chk.push(u); return orig(u); };
-    checkApproval({ id: 'a1', email: 'andre@x', app_metadata: { troca_senha: true }, user_metadata: { name: 'André' } }); });
-  await pg.waitForTimeout(150);
-  const t = await pg.evaluate(() => ({ auth: document.getElementById('auth-screen').style.display, rec: document.getElementById('form-recovery').style.display,
-    login: document.getElementById('form-login').style.display, tabs: document.querySelector('.auth-tabs').style.display,
-    hint: document.getElementById('recovery-hint').textContent, bt: document.getElementById('btn-recovery').textContent }));
-  ck(t.auth === 'flex' && t.rec === '' && t.login === 'none' && t.tabs === 'none', 'provisória: abre só o "crie sua senha"');
-  ck(t.hint.includes('senha provisória') && t.bt === 'Salvar e entrar', `provisória: texto certo (${t.bt})`);
-  await pg.fill('#new-pass', '12'); await pg.click('#btn-recovery');
-  ck((await pg.evaluate(() => document.getElementById('auth-msg').textContent)).includes('6 caracteres'), 'provisória: senha curta recusada');
-  await pg.fill('#new-pass', 'MinhaSenha1'); await pg.click('#btn-recovery'); await pg.waitForTimeout(250);
-  const d = await pg.evaluate(() => ({ upd: window.__upd, rpc: window.__rpc.map(x => x[0]), n: window.__chk.length,
-    ultimo: window.__chk[window.__chk.length - 1].app_metadata, tabs: document.querySelector('.auth-tabs').style.display,
-    hint: document.getElementById('recovery-hint').textContent }));
-  ck(d.upd && d.upd.password === 'MinhaSenha1', 'provisória: grava a senha nova');
-  ck(d.rpc.includes('portal_senha_trocada'), 'provisória: tira a marca no banco');
-  ck(d.n === 2 && !d.ultimo.troca_senha, 'provisória: segue para a aprovação com o usuário sem a marca');
-  ck(d.tabs === '' && d.hint === 'Defina sua nova senha.', 'provisória: tela de login volta ao normal');
+  const t = await pg.evaluate(() => ({ ths: [...document.querySelectorAll('#admin-users-list thead th')].map(c => c.textContent), novo: !!document.querySelector('.acc-head .ubtn.pri') }));
+  ck(!t.ths.includes('Último acesso') && !t.novo, 'admin: sem Último acesso e sem Novo usuário');
+  ck(await linha(pg, 'ADMIN DOIS').locator('button').count() === 0, 'admin: linha de outro Admin sem botões');
+  await linha(pg, 'GESTOR PIR').locator('td').nth(1).click();
+  const cx = await pg.evaluate(() => ({ email: document.getElementById('uc-email').readOnly, pf: [...document.querySelectorAll('#uc-pf button')].every(b => b.disabled),
+    pass: getComputedStyle(document.getElementById('uc-pass-fld')).display, salvar: getComputedStyle(document.getElementById('uc-salvar')).display }));
+  ck(cx.email && cx.pf && cx.pass === 'none' && cx.salvar !== 'none', 'admin: caixa do gestor editável, sem e-mail/perfil/senha');
+  await pg.click('#uc-fca .uc-it:has-text("GRL")'); await pg.click('#uc-salvar'); await pg.waitForTimeout(150);
+  ck((await ops(pg)).some(o => o[0] === 'upsert' && o[1] === 'fca_profiles' && o[2].unidade === 'PIR,GRL' && o[2].is_admin === false), 'admin: unidades gravadas no fca_profiles');
+  await pg.evaluate(() => fechaUsuario());
+  await linha(pg, 'ADMIN DOIS').locator('td').nth(1).click();
+  const ad = await pg.evaluate(() => ({ salvar: getComputedStyle(document.getElementById('uc-salvar')).display, nota: document.getElementById('uc-nota').textContent }));
+  ck(ad.salvar === 'none' && /Só o Master/.test(ad.nota), 'admin: Admin abre só leitura');
   await pg.close(); }
 
-// 4. celular: lista sem colunas extras
+// celular
 { const pg = await abre(true, 390, 800);
-  await pg.evaluate(() => switchAdminTab('master'));
-  const r = await pg.evaluate(() => { const m = document.querySelector('.adm-main');
-    return { sx: m.scrollWidth > m.clientWidth + 1, hide: getComputedStyle(document.querySelector('.mst-tbl th.mst-hide')).display }; });
-  ck(!r.sx && r.hide === 'none', `celular: cabe sem rolagem lateral (${r.hide})`);
+  await pg.evaluate(() => { localStorage.setItem('gem_acessos_modo', 'lista'); renderAdminUsers(); });
+  const r = await pg.evaluate(() => { const m = document.querySelector('.adm-main'); return { sx: m.scrollWidth > m.clientWidth + 1, cards: document.querySelectorAll('.user-card').length }; });
+  ck(!r.sx && r.cards === 3, `celular: cards, sem rolagem lateral (${r.cards})`);
   await pg.close(); }
 
 await b.close();
