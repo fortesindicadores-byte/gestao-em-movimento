@@ -1436,15 +1436,17 @@ function planoOficial(fatos, fcaRows, ctx, o) {
     const rows = porFid[f.id] || [];
     if (rows.some(escritaAMao)) { pulados.push(f); return; }
     const vazias = rows.filter(r => !r.auto_chave);
+    // o desvio do FCA + o YTD na última linha (a Tabela do FCA o mostra no pé do fato; o R$ do mês continua o 1º do texto)
+    const fdv = desvioTxt(f) + (d.ano && d.ano.txt ? '\nYTD: ' + d.ano.txt : '');
     ls.forEach(l => { const causa = textoCausa(l) || null, acao = textoAcao(l), resp = String(respAt(f, l.k) || '').trim() || gestorDe(f.uni) || null;
       const ja = rows.find(r => r.auto_chave === l.k);
       if (ja) { if (tocada(ja)) { iguais.push(ja); return; }
-        const u = {}; if (ja.causa !== causa) u.causa = causa; if (ja.acao !== acao) u.acao = acao; if (!ja.responsavel && resp) u.responsavel = resp;
+        const u = {}; if (ja.causa !== causa) u.causa = causa; if (ja.acao !== acao) u.acao = acao; if (!ja.responsavel && resp) u.responsavel = resp; if (ja.fato_desvio !== fdv) u.fato_desvio = fdv;
         if (Object.keys(u).length) { u.auto_em = agora; upd.push({ id: ja.id, f, u }); } else iguais.push(ja); return; }
       const base = vazias.shift();
       const campos = { causa, acao, responsavel: resp, status: 'Não iniciada', auto_chave: l.k, auto_em: agora };
-      if (base) { if (!base.fato_desvio) campos.fato_desvio = desvioTxt(f); upd.push({ id: base.id, f, u: campos }); }
-      else ins.push(Object.assign({ unidade: f.uni, vigencia: f.vigLbl, origem: 'Custos', fato: f.pac, projeto: f.nv3 || f.proj || null, fato_desvio: desvioTxt(f), prazo: null, acompanhamento: null, locked: false }, campos)); });
+      if (base) { if (base.fato_desvio !== fdv) campos.fato_desvio = fdv; upd.push({ id: base.id, f, u: campos }); }
+      else ins.push(Object.assign({ unidade: f.uni, vigencia: f.vigLbl, origem: 'Custos', fato: f.pac, projeto: f.nv3 || f.proj || null, fato_desvio: fdv, prazo: null, acompanhamento: null, locked: false }, campos)); });
   });
   return { ins, upd, pulados, semAcao, iguais };
 }

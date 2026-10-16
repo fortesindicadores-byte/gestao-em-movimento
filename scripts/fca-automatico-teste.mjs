@@ -41,7 +41,7 @@ const srv = createServer((req, res) => {
 });
 await new Promise(r => srv.listen(0, '127.0.0.1', r));
 const BASE = 'http://127.0.0.1:' + srv.address().port;
-let ok = 0, falhas = 0;
+let ok = 0, falhas = 0, T2D = null;
 const af = (t, v, e = '') => { console.log(`   ${v ? '✓' : '✗'} ${t}${e ? '  (' + e + ')' : ''}`); if (v) ok++; else falhas++; };
 
 /* ── fixtures ── */
@@ -177,7 +177,7 @@ const SHIM_SB = (admin, acErr) => `window.__ups=[];window.__T=window.__T||${JSON
     return q;}})};`;
 
 const nav = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium' });
-async function abre({ admin = true, w = 1600, h = 900, tema = 'dark', acErr = false, oficial = null, pagina = 'fca-automatico/index.html', espera = null } = {}) {
+async function abre({ admin = true, w = 1600, h = 900, tema = 'dark', acErr = false, oficial = null, pagina = 'fca-automatico/index.html', espera = null, t = null } = {}) {
   const ctx = await nav.newContext({ viewport: { width: w, height: h }, serviceWorkers: 'block' });
   await ctx.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await ctx.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
@@ -196,6 +196,7 @@ async function abre({ admin = true, w = 1600, h = 900, tema = 'dark', acErr = fa
   const errs = []; pg.on('pageerror', e => errs.push(e.message));
   await pg.addInitScript(t => { try { localStorage.setItem('bi_theme', t); localStorage.removeItem('fcaauto_mini'); } catch (e) {} }, tema);
   // a prévia guardada no navegador só é limpa no cenário oficial (o cenário da prévia depende dela sobreviver ao F5)
+  if (t) await pg.addInitScript(x => { window.__T = x; }, t);
   if (oficial) await pg.addInitScript(o => { window.__oficialInicio = o.inicio; window.__oficialFora = o.fora; try { localStorage.removeItem('fcaauto_previa_v1'); } catch (e) {} }, oficial);
   await pg.goto(BASE + '/' + pagina, { waitUntil: 'domcontentloaded' });
   if (espera) await pg.waitForSelector(espera, { timeout: 120000 }).catch(() => {});
@@ -521,7 +522,68 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   await pg.evaluate(() => gerarTodas());
   const depois = await pg.evaluate(() => ({ ins: (window.__ins || []).length, upd: (window.__upd || []).length, h: (document.querySelector('.genres-h') || {}).textContent || '' }));
   af('gerar de novo é idempotente: 0 fato novo e 0 ação (nada inserido nem atualizado)', depois.ins === antes.ins && depois.upd === antes.upd && /— 0 fato\(s\) novo\(s\) · 0 ação/.test(depois.h), JSON.stringify({ antes, depois }));
+  const ytd = await pg.evaluate(() => window.__T.fca.filter(r => r.auto_chave).map(r => r.fato_desvio || ''));
+  af('o desvio gravado leva o YTD na última linha (e o R$ do mês continua o 1º R$ do texto, que o Check de Metas lê)', ytd.length && ytd.every(t => /^Desvio: ▲ R\$/.test(t) && /\nYTD: [▲▼n]/.test(t)), ytd[0]);
   af('sem erro de página', !errs.length, errs.join(' | ').slice(0, 300));
+  T2D = await pg.evaluate(() => window.__T);
+  await ctx.close();
+}
+/* ══ 2d · A TABELA DO FCA · ADMIN NO DESENHO DO AUTOMÁTICO (Renan, 16/10/2026: "O layout não está como desenhamos") ══ */
+{
+  console.log('\n══ 2d · Tabela do FCA · Admin com as linhas da geração');
+  for (const [w, h, tema] of [[1600, 900, 'dark'], [1366, 768, 'light'], [1920, 1000, 'dark']]) {
+    const ctx = await nav.newContext({ viewport: { width: w, height: h }, serviceWorkers: 'block' });
+    await ctx.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+    await ctx.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
+    await ctx.route('**/assets/gviz-cache.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
+    await ctx.route('**/cdn.jsdelivr.net/**', r => { const u = r.request().url(); r.fulfill({ status: 200, contentType: 'application/javascript', body: u.includes('supabase') ? SHIM_SB(true, true) : '' }); });
+    await ctx.route('**/lozwipoeacpvplgkrxkq.supabase.co/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+    await ctx.route('**/docs.google.com/**', r => r.fulfill({ status: 200, contentType: 'text/plain', body: '' }));
+    const pg = await ctx.newPage(); const errs = []; pg.on('pageerror', e => errs.push(e.message));
+    await pg.addInitScript(({ t, tema }) => { window.__T = t; try { localStorage.clear(); localStorage.setItem('bi_theme', tema); } catch (e) {} }, { t: T2D, tema });
+    await pg.goto(BASE + '/fca-consolidado/index.html', { waitUntil: 'domcontentloaded' });
+    await pg.waitForTimeout(1500);
+    await pg.evaluate(() => { const b = document.querySelector('.s-item[data-v="tabela"]'); if (b) b.click(); });
+    await pg.waitForTimeout(600);
+    const R = await pg.evaluate(() => {
+      const t = document.querySelector('table.rel.fg-rel'); if (!t) return { sem: true };
+      const fg = [...t.querySelectorAll('tbody.fg')].map(b => ({ txt: b.querySelector('td.id') ? [...b.querySelectorAll('td.id')].map(x => x.textContent.trim().slice(0, 40)) : [],
+        rs: (b.querySelector('td.id') || {}).rowSpan, n: b.rows.length,
+        acoes: [...b.querySelectorAll('tr')].map(tr => { const c = tr.querySelectorAll('td.ln'); const a = [...c].find(x => !x.classList.contains('cz') && x.classList.contains('txt')); return a ? (a.querySelector('.ln-n') || {}).textContent || '' : ''; }),
+        causas: [...b.querySelectorAll('td.cz')].map(x => ({ n: (x.querySelector('.ln-n') || {}).textContent || '', rs: x.rowSpan, of: x.querySelectorAll('.fa-of li').length })),
+        ytd: !!b.querySelector('.fa-ano-pe'), tot: (b.querySelector('.fa-tot') || {}).textContent || '' }));
+      const w = document.querySelector('.rel-wrap');
+      return { fg, barra: w ? w.scrollWidth > w.clientWidth + 1 : null, pag: document.documentElement.scrollWidth > innerWidth + 1, ns: t.hasAttribute('data-no-sort') };
+    });
+    const grl = (R.fg || []).find(b => b.txt[0] === 'GRL' && /Manuten/.test(b.txt[3] || ''));
+    if (w === 1600) {
+      af('a Tabela do Admin desenha um bloco por fato (tbody.fg) com Unidade · Projeto · Vigência · Fato mesclados', !R.sem && R.fg.length > 0 && R.fg.every(b => b.rs === b.n), JSON.stringify((R.fg || []).slice(0, 2)).slice(0, 300));
+      af('GRL Manutenções: ações na ordem da causa (1.1, 1.2, 2.1…), causa numerada e mesclada sobre as ações dela, placas embaixo da causa', !!grl && grl.acoes.join(' ') === grl.acoes.slice().sort((a, b) => { const p = s => s.split('.').filter(Boolean).map(Number); const x = p(a), y = p(b); return x[0] - y[0] || x[1] - y[1]; }).join(' ') && grl.causas[0].n === '1.' && grl.causas.reduce((s, c) => s + c.rs, 0) === grl.n && grl.causas[0].of > 0, JSON.stringify(grl).slice(0, 300));
+      af('o fato vem curto ("▲ R$ X (Y%)") e com o YTD no pé', !!grl && /^▲ R\$ [\d.]+ \(\d+%\)$/.test(grl.tot) && grl.ytd, JSON.stringify({ tot: grl && grl.tot, ytd: grl && grl.ytd }));
+      af('a tabela não é reordenada pelo cabeçalho (rowspan), o fato escrito à mão continua com o bloco dele', R.ns && R.fg.some(b => b.txt[0] === 'CGR' && b.n === 1), '');
+    }
+    af(`${w}×${h} ${tema}: sem barra horizontal na tabela nem na página`, R.barra === false && !R.pag, JSON.stringify({ barra: R.barra, pag: R.pag }));
+    af(`${w}×${h} ${tema}: sem erro de página`, !errs.length, errs.join(' | ').slice(0, 300));
+    if (SHOT) { await pg.screenshot({ path: `${SHOT}/fca-admin-tabela-${w}-${tema}.png` });
+      await pg.evaluate(() => { const b = [...document.querySelectorAll('tbody.fg')].find(x => /GRL/.test(x.textContent) && /Manuten/.test(x.textContent)); if (b) b.scrollIntoView(); });
+      await pg.screenshot({ path: `${SHOT}/fca-admin-tabela-${w}-${tema}-grl.png` }); }
+    await ctx.close();
+  }
+}
+/* ══ 2e · a Tabela do FCA da unidade no mesmo desenho ══ */
+{
+  console.log('\n══ 2e · Tabela do FCA da unidade (GRL)');
+  const { pg, ctx, errs } = await abre({ acErr: true, t: T2D, pagina: 'fca-preenchimento/index.html?u=GRL&vig=ago/26', espera: '#list' });
+  await pg.waitForTimeout(2500);
+  await pg.evaluate(() => { VIEW = 'flat'; if (typeof updateViewBtnsPre === 'function') updateViewBtnsPre(); aplicar(); });
+  await pg.waitForTimeout(600);
+  const R = await pg.evaluate(() => { const t = document.querySelector('table.rel.fg-rel'); if (!t) return { sem: true, html: (document.getElementById('list') || document.body).innerText.slice(0, 200) };
+    const b = [...t.querySelectorAll('tbody.fg')].find(x => /Manuten/.test(x.textContent));
+    return { nfg: t.querySelectorAll('tbody.fg').length, uniCol: [...t.querySelectorAll('th')].some(th => /Unid/.test(th.textContent)),
+      acoes: b ? [...b.querySelectorAll('.ln-n')].map(x => x.textContent).filter(x => /\d\.\d/.test(x)) : [], ytd: !!(b && b.querySelector('.fa-ano-pe')) }; });
+  af('a Tabela da unidade usa o mesmo desenho: bloco por fato, ações em ordem, YTD no pé, sem a coluna Unidade', !R.sem && R.nfg > 0 && !R.uniCol && R.acoes.length > 1 && R.acoes[0] === '1.1.' && R.ytd, JSON.stringify(R).slice(0, 300));
+  af('sem erro de página', !errs.length, errs.join(' | ').slice(0, 300));
+  if (SHOT) await pg.screenshot({ path: `${SHOT}/fca-unidade-tabela.png` });
   await ctx.close();
 }
 /* ══ 3 · sem admin ══ */

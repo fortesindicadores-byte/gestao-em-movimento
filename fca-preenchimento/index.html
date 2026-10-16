@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610160200">
+<meta name="build" content="202610161300">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -769,7 +769,7 @@ body.light-mode .kcard-fato{color:#000000!important;}
 <script src="../assets/seara-bench-modelo.js"></script>
 <script src="../assets/dispersao-km.js?v=202610152330"></script>
 <script src="../assets/balanco-massa.js"></script>
-<script src="../assets/fca-auto.js?v=202610160200"></script>
+<script src="../assets/fca-auto.js?v=202610161300"></script>
 </head>
 <body>
 <div class="app">
@@ -1459,7 +1459,7 @@ const stripTags=h=>String(h||'').replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]*>/g
 function loadAcoes(key,causaAuto){
   if(PREVIEW){ try{const v=JSON.parse(localStorage.getItem('fca_prev_'+key));if(Array.isArray(v)&&v.length)return v;}catch(e){} return [{id:'',causa:causaAuto||'',acao:'',resp:'',prazo:'',status:DEFAULT_STATUS,obs:'',locked:false}]; }
   const rows=_DBROWS[key];
-  if(rows&&rows.length)return rows.map(r=>({id:r.id,causa:r.causa||'',acao:r.acao||'',resp:r.responsavel||'',prazo:r.prazo||'',status:r.status||DEFAULT_STATUS,obs:r.acompanhamento||'',locked:!!r.locked}));
+  if(rows&&rows.length)return rows.map(r=>({id:r.id,causa:r.causa||'',acao:r.acao||'',resp:r.responsavel||'',prazo:r.prazo||'',status:r.status||DEFAULT_STATUS,obs:r.acompanhamento||'',locked:!!r.locked,fdesv:r.fato_desvio||''}));
   return [{id:'',causa:causaAuto||'',acao:'',resp:'',prazo:'',status:DEFAULT_STATUS,obs:'',locked:false}];
 }
 function blankAcao(){return {id:'',causa:'',acao:'',resp:'',prazo:'',status:DEFAULT_STATUS,obs:'',locked:false};}
@@ -1837,34 +1837,11 @@ function relatorioHTMLpre(vis){
     ((prazoState(x.a)==='Vencida'?0:1)-(prazoState(y.a)==='Vencida'?0:1))
     ||String(x.a.prazo||'9999').localeCompare(String(y.a.prazo||'9999'))
     ||((isAutoAcao(x.a)?0:1)-(isAutoAcao(y.a)?0:1)));
-  const prazoBR=p=>p?String(p).slice(0,10).split('-').reverse().join('/'):'—';
-  // Origem e Acompanhamento ficam só no modal; a conta e o desvio moram os dois
-  // na coluna Fato (conta em negrito, desvio embaixo, menor) — igual ao Admin.
-  let h='<div class="rel-section"><div class="rel-wrap"><table class="rel"><thead><tr>'+
-    '<th class="c-proj">Projeto</th><th class="c-vig">Vigência</th><th class="c-fato">Fato</th>'+
-    '<th class="c-txt">Causa</th><th class="c-txt">Ação</th>'+
-    '<th class="c-resp">Responsável</th><th class="c-prazo">Prazo</th><th class="c-st">Status</th>'+
-    '</tr></thead><tbody>';
-  rows.forEach(({f,a})=>{
-    const sp=prazoState({status:a.status,prazo:a.prazo}), spCor=sp==='Vencida'?'var(--red)':'var(--green)';
-    // a linha abre o mesmo modal do Kanban — daí dá para editar, adicionar causa/ação e excluir
-    const desv=stripTags(f.desvio||'').trim();
-    h+=`<tr data-id="${esc(a.id||'')}" title="Clique para editar">`+
-      `<td class="center">${esc(projLabel(f.proj))}</td>`+
-      `<td class="center">${esc((f.vig||'').toUpperCase())}</td>`+
-      `<td class="txt fato"><b>${esc(_firstLine(f.nome||f.fato))}</b>`+
-        `${desv&&desv!=='—'?`<small>${tri(esc(desv).replace(/\n/g,'<br>'))}</small>`:''}</td>`+
-      `<td class="txt">${tri((esc(a.causa)||'—').replace(/\n/g,'<br>'))}</td>`+
-      `<td class="txt">${tri((esc(a.acao)||'—').replace(/\n/g,'<br>'))}</td>`+
-      `<td class="center">${esc(a.resp)||'—'}</td>`+
-      // FAROL + data na MESMA célula (a coluna Status Prazo saiu); o texto do
-      // status fica no title e data-sort mantém a ordenação por dias de atraso.
-      `<td class="center prazo" title="${esc(sp)}" data-sort="${a.prazo&&sp!=='Sem prazo'?(sp==='Vencida'?-1e6:0)+diasVenc(a.prazo):''}">`+
-        `<span class="dot" style="background:${spCor}"></span>${prazoBR(a.prazo)}</td>`+
-      `<td class="center">${chipStatusRel(a.status||DEFAULT_STATUS)}</td>`+
-    '</tr>';
-  });
-  return h+'</tbody></table></div></div>';
+  // NO DESENHO DO FCA AUTOMÁTICO (Renan, 16/10/2026): um bloco por fato (Projeto · Vigência · Fato mesclados),
+  // uma linha por ação na ordem da causa e a causa mesclada sobre as ações dela — assets/fca-tabela.js, o mesmo do Admin.
+  return FcaTabela.html(rows.map(({f,a})=>({id:a.id||'',proj:projLabel(f.proj),vig:f.vig,fato:f.nome||f.fato,desvio:a.fdesv||stripTags(f.desvio||'').trim(),
+    causa:a.causa,acao:a.acao,resp:a.resp,prazo:a.prazo,status:a.status||DEFAULT_STATUS})),
+    {uni:false,tri,chip:chipStatusRel,prazoState:x=>prazoState({status:x.status,prazo:x.prazo}),diasVenc,defaultStatus:DEFAULT_STATUS});
 }
 async function moveCardPre(id,status){
   if(!id||PREVIEW||!sb)return;
@@ -2267,8 +2244,9 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610132200"></script>
 <script src="../assets/ctrlk.js"></script>
+<script src="../assets/fca-tabela.js?v=202610161300"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610160200"></script>
+<script src="../assets/build-check.js?v=202610161300"></script>
 </body>
 </html>
