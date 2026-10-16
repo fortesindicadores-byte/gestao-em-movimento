@@ -583,6 +583,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
       acoes: b ? [...b.querySelectorAll('.ln-n')].map(x => x.textContent).filter(x => /\d\.\d/.test(x)) : [], ytd: !!(b && b.querySelector('.fa-ano-pe')) }; });
   af('a Tabela da unidade usa o mesmo desenho: bloco por fato, ações em ordem, YTD no pé, sem a coluna Unidade', !R.sem && R.nfg > 0 && !R.uniCol && R.acoes.length > 1 && R.acoes[0] === '1.1.' && R.ytd, JSON.stringify(R).slice(0, 300));
   // unidade: "+ ação" na causa 1 e depois mudar a causa na linha nova → a causa muda nas duas
+  pg.once('dialog', d => d.accept());
   const U1 = await pg.evaluate(async () => {
     const key = Object.keys(_DBROWS).find(k => (_DBROWS[k] || []).some(r => /^1\. /.test(r.causa || '') && /Manuten/.test(r.fato || '')));
     const r0 = _DBROWS[key].find(r => /^1\. /.test(r.causa || ''));
@@ -595,6 +596,23 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   });
   af('unidade: "+ ação" vem na mesma causa e mudar a causa na ação nova muda nas duas (tela e banco)',
     /vale para as \d+ ações/.test(U1.dica) && U1.a === '1. Motor fundido' && U1.b === '1. Motor fundido' && U1.banco.every(c => c === '1. Motor fundido') && /^1\.\d+\. $/.test(U1.numNova || ''), JSON.stringify(U1));
+  // o caso de GRL: "+ ação" para escrever uma causa NOVA → Cancelar separa a ação numa causa nova com o próximo número
+  pg.once('dialog', d => d.dismiss());
+  const U2 = await pg.evaluate(async () => {
+    const key = Object.keys(_DBROWS).find(k => (_DBROWS[k] || []).some(r => r.causa === '1. Motor fundido'));
+    const r0 = _DBROWS[key].find(r => r.causa === '1. Motor fundido');
+    const maxC = Math.max(...(_DBROWS[key] || []).map(r => +((String(r.causa || '').match(/^(\d+)\./) || [])[1] || 0)));
+    const antes = _DBROWS[key].filter(r => r.causa === '1. Motor fundido').length;
+    await _novaLinhaFCA(key, r0.causa);
+    const nova = _DBROWS[key][_DBROWS[key].length - 1];
+    document.getElementById('km-acao').value = nova.acao + 'Trocar o motor';
+    const ta = document.getElementById('km-causa'); ta.value = '1. Embreagem'; ta.dispatchEvent(new Event('change'));
+    await new Promise(r => setTimeout(r, 300));
+    return { maxC, causa: nova.causa, acao: nova.acao, banco: (window.__T.fca.find(x => x.id === nova.id) || {}).causa,
+      irmas: _DBROWS[key].filter(r => r.causa === '1. Motor fundido').length, antes, campo: document.getElementById('km-causa').value };
+  });
+  af('Cancelar separa só esta ação numa causa nova (próximo número, ação k.1) e não mexe nas outras',
+    U2.causa === `${U2.maxC + 1}. Embreagem` && U2.acao === `${U2.maxC + 1}.1. Trocar o motor` && U2.banco === U2.causa && U2.irmas === U2.antes && U2.campo === U2.causa, JSON.stringify(U2));
   af('sem erro de página', !errs.length, errs.join(' | ').slice(0, 300));
   if (SHOT) await pg.screenshot({ path: `${SHOT}/fca-unidade-tabela.png` });
   await ctx.close();
@@ -689,6 +707,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   af('numeração não pula: causa 3 com "1." repetido · ação 1.2 com uma ação sem número', JSON.stringify(NU2) === JSON.stringify(['3. ', '1.2. ']), JSON.stringify(NU2));
   // mudar o texto da causa numa linha leva para as outras ações da mesma causa (Guarulhos, 16/10/2026)
   await pg.evaluate(() => closeKModal());
+  let msgC = ''; pg.once('dialog', d => { msgC = d.message(); d.accept(); });
   const C1 = await pg.evaluate(() => {
     const doGrl = _ROWS.filter(r => r.unidade === 'GRL' && /Manuten/.test(r.fato || '') && /^1\. /.test(r.causa || ''));
     const velha = doGrl[0].causa, irmas = doGrl.filter(r => r.causa === velha);
@@ -701,6 +720,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   const C2 = await pg.evaluate(ids => ({ tela: ids.map(id => (_ROWS.find(r => r.id === id) || {}).causa), banco: ids.map(id => (window.__T.fca.find(r => r.id === id) || {}).causa),
     blocos: [...document.querySelectorAll('tbody.fg')].filter(b => /^GRL/.test((b.querySelector('td.id') || {}).textContent || '') && /Manuten/.test(b.textContent)).map(b => [...b.querySelectorAll('td.cz')].filter(td => /^1\./.test(td.textContent.trim())).length) }), C1.ids);
   af('a caixa avisa que a causa vale para as N ações dela', C1.n >= 2 && C1.dica === `vale para as ${C1.n} ações desta causa`, JSON.stringify(C1));
+  af('mudar a causa pergunta: todas as ações ou separar numa causa nova', /vale para \d+ ações/.test(msgC) && /causa nova \(\d+\.\)/.test(msgC), msgC);
   af('mudar a causa numa ação muda em todas as ações dela (tela e banco), e continua UMA causa 1 na Tabela',
     C2.tela.every(c => c === '1. Diferencial quebrado') && C2.banco.every(c => c === '1. Diferencial quebrado') && C2.blocos[0] === 1, JSON.stringify(C2));
   af('sem erro de página', !errs.length, errs.join(' | ').slice(0, 300));

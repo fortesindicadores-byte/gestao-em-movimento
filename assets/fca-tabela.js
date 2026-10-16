@@ -96,7 +96,7 @@
     grupos.forEach(G => {
       // dentro do fato: as linhas da MESMA causa ficam juntas; as causas na ordem do número (1., 2., 3.) e, sem número,
       // na ordem em que aparecem; dentro da causa, as ações numeradas (1.1, 1.2…) e depois as sem número (ex.: a nova)
-      const ck = r => String(r.causa || '').trim(), ordC = {};
+      const ck = r => normCausa(r.causa), ordC = {};
       G.rows.forEach(x => { const k = ck(x.r); if (k && !(k in ordC)) { const nc = numCausa(k); ordC[k] = nc != null ? nc : 1000 + x.i; } });
       const rows = G.rows.slice().sort((a, b) => {
         const ca = ck(a.r) ? ordC[ck(a.r)] : 5000 + a.i, cb = ck(b.r) ? ordC[ck(b.r)] : 5000 + b.i;
@@ -213,7 +213,7 @@ body:not(.claro):not(.light-mode) .kcard.fa-kc{background:var(--brilho), rgba(30
   // número automático do "+": rows = as linhas do MESMO fato; tipo 'acao' (com a causa de origem) ou 'causa'.
   // + ação → "k.n. " (n = próxima ação da causa k); + causa → causa "k. " e ação "k.1. " (k = próxima causa).
   function numeracao(rows, causaSrc, tipo) {
-    const ck = t => String(t || '').trim();
+    const ck = t => normCausa(t);
     const causas = [];
     (rows || []).forEach(r => { const c = ck(r.causa); if (c && !causas.includes(c)) causas.push(c); });
     const numDe = c => { const n = numCausa(c); return n != null ? n : causas.indexOf(c) + 1; };
@@ -237,10 +237,26 @@ body:not(.claro):not(.light-mode) .kcard.fa-kc{background:var(--brilho), rgba(30
 
   // as outras linhas do mesmo fato com a MESMA causa: a causa é uma só para as ações dela, então mudar o texto
   // numa linha muda em todas (Renan, 16/10/2026: unidade criava ação nova e a causa não juntava)
+  // espaço a mais não faz duas causas (BLC/CBA T1 WH tinham "Custos:  Preventiva" × "Custos: Preventiva")
+  function normCausa(t) { return String(t || '').replace(/\s+/g, ' ').trim(); }
   function irmasDaCausa(rows, row) {
-    const c = String((row && row.causa) || '').trim(); if (!c) return [];
-    return (rows || []).filter(x => x !== row && x.id !== row.id && String(x.causa || '').trim() === c);
+    const c = normCausa(row && row.causa); if (!c) return [];
+    return (rows || []).filter(x => x !== row && x.id !== row.id && normCausa(x.causa) === c);
+  }
+  /* a causa mudou numa linha que divide a causa com outras: a pessoa escolhe (Renan, 16/10/2026 — em GRL a unidade
+     usou "+ ação" para escrever uma causa nova e ficou "1. 2Motor" porque o número é travado).
+     Devolve {todas:true} ou, para separar, {causa, acao} já com o próximo número de causa do fato. */
+  function separaOuTodas(rows, row, causaNova, acaoAtual) {
+    const ir = irmasDaCausa(rows, row); if (!ir.length) return { todas: false, irmas: [] };
+    const tot = ir.length + 1;
+    const outros = (rows || []).filter(x => x !== row && x.id !== row.id);
+    const k = numeracao(outros, '', 'causa').causa.trim().replace(/\.$/, '');
+    const ok = typeof confirm === 'function' ? confirm(`Esta causa vale para ${tot} ações deste fato.\n\n` +
+      `OK: mudar a causa nas ${tot} ações.\nCancelar: separar só esta ação numa causa nova (${k}.)`) : true;
+    if (ok) return { todas: true, irmas: ir };
+    const tira = (t, re) => String(t || '').replace(re, '');
+    return { todas: false, irmas: [], causa: `${k}. ` + tira(causaNova, /^\s*\d+\.\s*/), acao: `${k}.1. ` + tira(acaoAtual, /^\s*\d+\.\d+\.\s*/) };
   }
 
-  g.FcaTabela = { html, card, desvioCurto, causaHTML, acaoHTML, fatoHTML, contaCurta, numeracao, irmasDaCausa };
+  g.FcaTabela = { html, card, desvioCurto, causaHTML, acaoHTML, fatoHTML, contaCurta, numeracao, irmasDaCausa, separaOuTodas, normCausa };
 })(typeof window !== 'undefined' ? window : globalThis);

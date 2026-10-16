@@ -26,14 +26,15 @@ let ruins = 0; const porUni = {};
 for (const [k, rs] of fatos) {
   const prob = [];
   const causas = new Map();   // texto → número
-  rs.forEach(r => { const c = String(r.causa || '').trim(); if (c && !causas.has(c)) causas.set(c, nC(c)); });
+  const nz = t => String(t || '').replace(/\s+/g, ' ').trim();   // espaço a mais não faz outra causa (como a tela)
+  rs.forEach(r => { const c = nz(r.causa); if (c && !causas.has(c)) causas.set(c, nC(c)); });
   const porNum = {}; for (const [c, n] of causas) if (n != null) (porNum[n] = porNum[n] || []).push(c);
   Object.entries(porNum).forEach(([n, cs]) => { if (cs.length > 1) prob.push(`causa ${n} repetida em ${cs.length} textos diferentes`); });
   const nums = Object.keys(porNum).map(Number).sort((a, b) => a - b);
   for (let i = 1; i <= (nums[nums.length - 1] || 0); i++) if (!nums.includes(i)) prob.push(`causa ${i} pulada`);
   for (const [c, n] of causas) {
     if (n == null) continue;
-    const ac = rs.filter(r => String(r.causa || '').trim() === c).map(r => nA(r.acao)).filter(Boolean);
+    const ac = rs.filter(r => nz(r.causa) === c).map(r => nA(r.acao)).filter(Boolean);
     ac.forEach(a => { if (a[0] !== n) prob.push(`ação ${a[0]}.${a[1]} na causa ${n}`); });
     const sub = ac.filter(a => a[0] === n).map(a => a[1]).sort((a, b) => a - b);
     for (let i = 1; i <= (sub[sub.length - 1] || 0); i++) if (!sub.includes(i)) prob.push(`ação ${n}.${i} pulada`);

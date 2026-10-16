@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610162300">
+<meta name="build" content="202610162330">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -770,8 +770,8 @@ body.light-mode .kcard-fato{color:#000000!important;}
 <script src="../assets/dispersao-km.js?v=202610152330"></script>
 <script src="../assets/balanco-massa.js"></script>
 <script src="../assets/fca-auto.js?v=202610161400"></script>
-<script src="../assets/fca-tabela.js?v=202610162300"></script>
-<script src="../assets/fca-caixa.js?v=202610162300"></script>
+<script src="../assets/fca-tabela.js?v=202610162330"></script>
+<script src="../assets/fca-caixa.js?v=202610162330"></script>
 </head>
 <body>
 <div class="app">
@@ -1890,12 +1890,18 @@ async function persistKModal(){
   const upd={causa:document.getElementById('km-causa').value||null,acao:document.getElementById('km-acao').value||null,
     responsavel:document.getElementById('km-resp').value||null,prazo:document.getElementById('km-prazo').value||null,
     status:document.getElementById('km-status').value,acompanhamento:document.getElementById('km-acomp').value||null};
-  // a causa é uma só para as ações dela: o texto novo vai para as outras linhas da mesma causa
-  const irmas=String(upd.causa||'').trim()!==String(r.causa||'').trim()?FcaTabela.irmasDaCausa(_DBROWS[hit.key]||[],r):[];
+  // a causa é uma só para as ações dela: mudou numa linha que divide a causa → a pessoa escolhe entre levar o texto
+  // para todas as ações dela ou separar só esta numa causa nova, já com o próximo número
+  let irmas=[],separou=false;
+  if(FcaTabela.normCausa(upd.causa)!==FcaTabela.normCausa(r.causa)){
+    const d=FcaTabela.separaOuTodas(_DBROWS[hit.key]||[],r,upd.causa,upd.acao);
+    if(d.todas) irmas=d.irmas; else if(d.causa){upd.causa=d.causa;upd.acao=d.acao;separou=true;}
+  }
   Object.assign(r,upd);irmas.forEach(x=>{x.causa=upd.causa;});aplicar();
   if(PREVIEW||!sb)return;
   const {error}=await sb.from('fca').update(upd).eq('id',r.id);if(error){console.error('update modal',error);return;}
   if(irmas.length){const e2=(await sb.from('fca').update({causa:upd.causa}).in('id',irmas.map(x=>x.id))).error;if(e2){console.error('update causa irmãs',e2);alert('Erro ao levar a causa para as outras ações: '+e2.message);return;}}
+  if(separou&&_kmId===r.id) openKModal(r.id);   // a caixa mostra o número novo
   const all=[];for(const k in _DBROWS)all.push(..._DBROWS[k]);writeCache('fca_cache_'+UNIDADE_COD,all);
   flashSavedPre(); FcaCaixa.salvo();
 }
@@ -2203,6 +2209,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610162300"></script>
+<script src="../assets/build-check.js?v=202610162330"></script>
 </body>
 </html>
