@@ -111,4 +111,20 @@ console.log(`   → nos dois ${so.ambos} · só na fca ${so.fca} · só no Autom
 console.log('\n══ APRENDIZADO', JSON.stringify(R.aprend.porRes), R.aprend.casos, 'casos'); R.aprend.temas.forEach(t => console.log('  ' + t));
 console.log('\n══ GINFO HOJE · amostra OS', JSON.stringify(R.amostraOS), '· preventivas', JSON.stringify(R.amostraPrev)); Object.entries(R.ginfo).forEach(([u, t]) => console.log(`  ${u}: ${t}`));
 console.log('\n══ PROLOG HOJE'); Object.entries(R.prologU).forEach(([u, t]) => console.log(`  ${u}: ${t}`));
+// ENSAIO DA GERAÇÃO OFICIAL: o mesmo planoOficial que o ?gen=all do fca-preenchimento grava, sem gravar
+const P = await pg.evaluate(() => {
+  const p = planoOficial(), por = {}, add = (u, k) => { por[u] = por[u] || { upd: 0, ins: 0, pulados: [], semAcao: [], iguais: 0 }; por[u][k] = (por[u][k] || 0) + 1; };
+  p.upd.forEach(x => add(x.f.uni, 'upd')); p.ins.forEach(x => add(x.unidade, 'ins'));
+  p.pulados.forEach(f => { add(f.uni, 'n'); por[f.uni].pulados.push(f.proj + ' · ' + f.pac + ' · ' + f.vig); });
+  p.semAcao.forEach(f => { add(f.uni, 'n'); por[f.uni].semAcao.push(f.proj + ' · ' + f.pac + ' · ' + f.vig); });
+  const fora = FATOS.filter(f => f.vig >= FcaAuto.OFICIAL_INICIO && !FcaAuto.oficialElegivel(f)).map(f => f.id);
+  const amostra = p.upd.concat(p.ins.map(x => ({ f: { id: x.unidade + '|' + x.projeto + '|' + x.fato }, u: x }))).slice(0, 4).map(x => ({ id: x.f.id, causa: x.u.causa, acao: x.u.acao, resp: x.u.responsavel }));
+  return { upd: p.upd.length, ins: p.ins.length, pulados: p.pulados.length, semAcao: p.semAcao.length, iguais: p.iguais.length, por, fora, amostra, autoCol: !!LIDO.fcaAutoCol };
+});
+console.log(`\n══ ENSAIO DA GERAÇÃO OFICIAL (nada gravado) · colunas auto no banco: ${P.autoCol ? 'sim' : 'NÃO'}`);
+console.log(`   preencheria ${P.upd} linha(s) vazia(s) · criaria ${P.ins} linha(s) · já iguais ${P.iguais} · fatos pulados (escritos à mão) ${P.pulados} · sem ação ${P.semAcao}`);
+console.log(`   fora do automático: ${P.fora.join(', ') || '—'}`);
+Object.entries(P.por).sort().forEach(([u, x]) => {
+  console.log(`   ${u.padEnd(10)} preenche ${x.upd || 0} · cria ${x.ins || 0}${x.pulados.length ? ' · PULADOS: ' + x.pulados.join(' | ') : ''}${x.semAcao.length ? ' · sem ação: ' + x.semAcao.join(' | ') : ''}`); });
+P.amostra.forEach(a => console.log(`\n   ◆ ${a.id} · dono ${a.resp}\n     causa: ${String(a.causa || '').split('\n').join(' / ').slice(0, 220)}\n     ação: ${a.acao.slice(0, 200)}`));
 await nav.close(); srv.close();
