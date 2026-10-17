@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610111500">
+<meta name="build" content="202610171000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Auditorias · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -208,6 +208,32 @@ table.dre.aud-tab tbody tr:last-child td{padding-bottom:6px;}
 .niv.empty-niv{background:rgba(255,255,255,.05);color:var(--txt3);box-shadow:none;}
 body.claro .uni-card{background:rgba(0,0,0,.05);}
 body.claro .niv.empty-niv{background:rgba(0,0,0,.05);color:#999;}
+/* ── filtro Tier (multi-select do padrão) ── */
+.filtros{display:flex;align-items:center;gap:4px;min-width:0;}
+.ms-wrap{position:relative;}
+.ms-btn{display:flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:7px;
+  padding:6px 10px;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;}
+.ms-btn:hover{background:var(--hover);color:var(--txt);}
+.ms-wrap.ativo .ms-btn{background:var(--hover);color:var(--txt);}
+.ms-cnt{display:none;min-width:16px;height:16px;padding:0 5px;border-radius:9px;background:var(--laranja);
+  color:#2A1405;font-size:9.5px;font-weight:800;line-height:16px;text-align:center;}
+.ms-panel{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:60;min-width:200px;
+  background:var(--pop);border:1px solid var(--card-brd);border-radius:10px;padding:6px;
+  box-shadow:0 18px 44px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.35);}
+body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(15,23,42,.10);}
+.ms-panel.open{display:block;}
+.ms-search{display:flex;align-items:center;gap:7px;padding:6px 8px;margin-bottom:4px;border-bottom:1px solid var(--linha);}
+.ms-search input{flex:1;min-width:0;background:transparent;border:0;outline:0;font-family:inherit;font-size:12px;color:var(--txt);}
+.ms-list{max-height:262px;overflow:auto;}
+.ms-opt{display:flex;align-items:center;gap:9px;min-height:31px;padding:7px 9px;border-radius:7px;
+  color:var(--txt);font-size:12.5px;cursor:pointer;white-space:nowrap;}
+.ms-opt:hover{background:var(--hover);}
+.ms-opt input[type=checkbox]{accent-color:var(--azul);width:14px;height:14px;flex:0 0 14px;cursor:pointer;}
+.ms-opt.all-opt{font-weight:700;border-bottom:1px solid var(--linha);margin-bottom:4px;border-radius:0;}
+.ms-only{margin-left:auto;font-size:9px;font-weight:700;color:var(--laranja);padding:1px 7px;border-radius:4px;opacity:0;flex:0 0 auto;}
+.ms-opt:hover .ms-only{opacity:1;}
+.ms-only:hover{background:rgba(249,115,22,.2);}
+@media(max-width:860px){ .ms-panel{right:auto;left:0;} }
 .loading{text-align:center;color:var(--txt4);padding:26px;font-size:11px;}
 /* ── celular: nada de altura por flex (colapsava gráfico e tabela para 0);
       a página rola e cada bloco tem altura própria ── */
@@ -299,6 +325,10 @@ body.claro .niv.empty-niv{background:rgba(0,0,0,.05);color:#999;}
         <h1 id="tit">Resumo Gerencial</h1>
         <div class="tit-sub" id="titSub">Carregando…</div>
       </div>
+      <div class="filtros">
+        <div class="ms-wrap" id="ms-tier"><button class="ms-btn" onclick="toggleMs('ms-tier')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>Tier<span class="ms-cnt"></span></button>
+        <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
+      </div>
       <button class="tool ico" id="btTema" onclick="trocaTema()" title="Claro / escuro"></button>
     </div>
 
@@ -358,10 +388,41 @@ function fetchTab(tab){
   });
 }
 
+/* ── TIER (Renan, 17/10/2026: "crie um filtro T1 e T2 para separar"): T1 = as Empurradas e o
+   armazém de Cuiabá (a linha "CUIABA", a mesma régua do UNI_T1 do Scorecard); T2 = os CDDs e o CDI ── */
+const _nk=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+function tierDe(nome){const n=_nk(nome);return /EMPURRADA|ARMAZEM/.test(n)||n==='CUIABA'?'T1':'T2';}
+const DADOS={};
+function _buildMs(wrap,renderFn,getAllFn){
+  if(!(wrap._sel instanceof Set))wrap._sel=new Set();
+  const sel=wrap._sel,list=wrap.querySelector('.ms-list'),srch=wrap.querySelector('.ms-search input');
+  const render=(q)=>{renderFn(list,sel,q!==undefined?q:(srch.value||''));syncBadge(wrap);};
+  wrap._render=render;
+  if(!wrap._wired){
+    wrap._wired=true;
+    list.addEventListener('change',e=>{const box=e.target;if(box.classList.contains('ms-all')){sel.clear();}else if(sel.size===0){if(!box.checked){const all=getAllFn?getAllFn():[];all.forEach(v=>{if(v!==box.dataset.v)sel.add(v);});}}else{if(box.checked)sel.add(box.dataset.v);else sel.delete(box.dataset.v);if(getAllFn){const all=getAllFn();if(all.length>0&&all.every(v=>sel.has(v)))sel.clear();}}render(srch.value);redesenha();});
+    list.addEventListener('click',e=>{const only=e.target.closest('.ms-only');if(!only)return;e.preventDefault();e.stopPropagation();sel.clear();sel.add(only.dataset.v);render(srch.value);redesenha();});
+    srch.addEventListener('input',()=>render(srch.value));srch.addEventListener('click',e=>e.stopPropagation());
+  }
+  render();
+}
+function buildMsFilter(id,items){const wrap=document.getElementById(id);if(!wrap)return;wrap._items=items;_buildMs(wrap,(list,sel,q)=>{const it=wrap._items||[],f=q.toLowerCase(),shown=it.filter(v=>String(v).toLowerCase().includes(f)),allChk=sel.size===0;list.innerHTML=(!q?`<label class="ms-opt all-opt"><input type="checkbox" class="ms-all" ${allChk?'checked':''}> Todos</label>`:'')+shown.map(v=>{const ve=String(v).replace(/"/g,'&quot;');return `<label class="ms-opt"><input type="checkbox" data-v="${ve}" ${allChk||sel.has(v)?'checked':''}> ${v}<span class="ms-only" data-v="${ve}">only</span></label>`;}).join('');},()=>wrap._items||[]);}
+function syncBadge(wrap){const cnt=wrap.querySelector('.ms-cnt'),n=wrap._sel?wrap._sel.size:0;if(cnt){cnt.textContent=n;cnt.style.display=n?'inline-block':'none';}wrap.classList.toggle('ativo',n>0);}
+function toggleMs(id){document.querySelectorAll('.ms-panel.open').forEach(p=>{if(p.closest('.ms-wrap').id!==id)p.classList.remove('open');});const panel=document.querySelector(`#${id} .ms-panel`);panel.classList.toggle('open');if(panel.classList.contains('open')){const inp=panel.querySelector('input[type=text]');if(inp)setTimeout(()=>inp.focus(),50);}}
+document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrap'))document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open'));});
+buildMsFilter('ms-tier',['T1','T2']);
+const tiersSel=()=>{const w=document.getElementById('ms-tier');return w&&w._sel&&w._sel.size?w._sel:null;};
+function redesenha(){
+  if(DADOS.dem)render('Demarco',DADOS.dem,'tbl-demarco','leg-demarco');
+  if(DADOS.dpo)render('DPO',DADOS.dpo,'tbl-dpo','leg-dpo');
+}
+
 function render(tab,rows,elId,legId){
   if(!rows.length){document.getElementById(elId).innerHTML='<div class="loading">Sem dados</div>';return;}
   const head=rows[0];                 // UNIDADE | 1H25 | 2H25 | 1H26 | 2H26
-  const body=rows.slice(1).filter(r=>r[0]);
+  const ts=tiersSel();
+  const body=rows.slice(1).filter(r=>r[0]&&(!ts||ts.has(tierDe(r[0]))));
+  if(!body.length){document.getElementById(elId).innerHTML='<div class="loading">Nenhuma unidade no tier escolhido</div>';return;}
   const mapa=CORES[tab]||{};
   // mantém a coluna UNIDADE + só os períodos que têm ao menos um dado
   const keep=head.map((_,i)=>i).filter(i=>i===0||body.some(r=>{const v=(r[i]||'').trim();return v&&v!=='—';}));
@@ -387,8 +448,8 @@ async function carregar(){
   setSub('Carregando…');
   try{
     const [dem,dpo]=await Promise.all([fetchTab('Demarco'),fetchTab('DPO')]);
-    render('Demarco',dem,'tbl-demarco','leg-demarco');
-    render('DPO',dpo,'tbl-dpo','leg-dpo');
+    DADOS.dem=dem; DADOS.dpo=dpo;
+    redesenha();
     const now=new Date();
     setSub(`${SUB_FIXO} · Atualizado ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
   }catch(e){console.error(e);setSub('Erro ao carregar');}
@@ -456,6 +517,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610111500"></script>
+<script src="../assets/build-check.js?v=202610171000"></script>
 </body>
 </html>

@@ -229,6 +229,23 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       await page.click('.side .s-item[onclick="carregar()"]'); await page.waitForTimeout(700);
       const n1 = await page.evaluate(() => [performance.getEntriesByType('resource').filter(e => e.name.includes('docs.google.com')).length, document.getElementById('titSub').textContent]);
       ok('"Atualizar dados" relê as abas e escreve no subtítulo', n1[0] >= n0 + 2 && /Atualizado/.test(n1[1]), `${n0} → ${n1[0]} · ${n1[1]}`);
+      // FILTRO TIER (Renan, 17/10/2026): T1 = Empurradas + armazém de Cuiabá; T2 = CDDs e CDI
+      const tierDe = () => ['#tbl-demarco', '#tbl-dpo'].map(s => [...document.querySelectorAll(s + ' tbody tr')].map(tr => tr.cells[0].textContent.trim()));
+      await page.click('#ms-tier .ms-btn'); await page.waitForTimeout(150);
+      await page.evaluate(() => { const o = [...document.querySelectorAll('#ms-tier .ms-only')].find(x => x.dataset.v === 'T1'); o.click(); });
+      await page.waitForTimeout(200);
+      const t1 = await page.evaluate(tierDe);
+      await page.evaluate(() => { const o = [...document.querySelectorAll('#ms-tier .ms-only')].find(x => x.dataset.v === 'T2'); o.click(); });
+      await page.waitForTimeout(200);
+      const t2 = await page.evaluate(tierDe);
+      const cnt = await page.evaluate(() => document.querySelector('#ms-tier .ms-cnt').textContent);
+      await page.evaluate(() => document.querySelector('#ms-tier .ms-all').click()); await page.waitForTimeout(200);
+      const todos = await page.evaluate(tierDe);
+      await page.mouse.click(5, 5);
+      const T1 = ['CUIABA EMPURRADA', 'MACACU EMPURRADA', 'PIRAI EMPURRADA'];
+      ok('filtro Tier = T1: só as Empurradas nas duas tabelas', t1.every(l => l.length === 3 && l.every(u => T1.includes(u))), JSON.stringify(t1));
+      ok('filtro Tier = T2: CDDs e CDI, sem Empurrada', t2.every(l => l.length === 10 && l.every(u => !/EMPURRADA/.test(u))) && cnt === '1', JSON.stringify(t2[0]));
+      ok('filtro Tier "Todos" volta às 13 unidades', todos.every(l => l.length === 13), todos.map(l => l.length).join('/'));
       await page.click('#btMini'); await page.waitForTimeout(300);
       ok('lateral recolhe (chave auditorias_mini)', await page.evaluate(() => document.querySelector('.side').classList.contains('mini') && localStorage.getItem('auditorias_mini') === '1'));
       await page.hover('.s-item[data-vw="resumo"]'); await page.waitForTimeout(200);
