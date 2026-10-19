@@ -33,9 +33,11 @@ const BUILD = '202610070100';
 const UNIS = ['CDD CUIABA', 'CUIABA EMPURRADA', 'CDD RIO DE JANEIRO', 'CDI MACACU', 'MACACU EMPURRADA', 'PIRAI EMPURRADA',
   'CDD GOIANIA', 'CDD GRAVATAI', 'CDD FLORIANOPOLIS', 'CDD NOVA FRIBURGO', 'CDD PELOTAS', 'CDD BALNEARIO CAMBORIU', 'CDD RONDONOPOLIS'];
 let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-const aba = (niveis) => {
+// a aba DPO real escreve a unidade pelo CÓDIGO (MCC T1, CBA T2, PIR…), medido em 19/10/2026 (Aba Inspect)
+const UNIS_COD = ['CGR', 'MCC T2', 'MCC T1', 'NFR', 'GRL', 'BLC', 'FLP', 'PLT', 'CBA T2', 'CBA T1', 'PIR', 'RON', 'GNA'];
+const aba = (niveis, unis = UNIS) => {
   const rows = [['UNIDADE', '1H25', '2H25', '1H26', '2H26']];          // 2H26 vazio em toda linha → some
-  UNIS.forEach((u, i) => {
+  unis.forEach((u, i) => {
     const r = [u];
     for (let p = 0; p < 3; p++) {
       const x = rnd();
@@ -48,7 +50,7 @@ const aba = (niveis) => {
   return rows;
 };
 const DEM = aba(['Nível 1', 'Nível 2', 'Nível 3', 'Nível 4', 'Nível 5']);
-const DPO = aba(['Nível 0', 'Nível 1', 'Nível 2', 'Nível 3', 'Nível 4']);
+const DPO = aba(['Nível 0', 'Nível 1', 'Nível 2', 'Nível 3', 'Nível 4'], UNIS_COD);
 const pack = rows => ({ version: '0.6', status: 'ok', table: { cols: rows[0].map((_, i) => ({ id: String.fromCharCode(65 + i), label: '', type: 'string' })),
   rows: rows.map(r => ({ c: r.map(v => v === '' ? null : { v }) })) } });
 const GVIZ = { Demarco: pack(DEM), DPO: pack(DPO) };
@@ -242,9 +244,9 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       await page.evaluate(() => document.querySelector('#ms-tier .ms-all').click()); await page.waitForTimeout(200);
       const todos = await page.evaluate(tierDe);
       await page.mouse.click(5, 5);
-      const T1 = ['CUIABA EMPURRADA', 'MACACU EMPURRADA', 'PIRAI EMPURRADA'];
+      const T1 = ['CUIABA EMPURRADA', 'MACACU EMPURRADA', 'PIRAI EMPURRADA', 'MCC T1', 'CBA T1', 'PIR'];
       ok('filtro Tier = T1: só as Empurradas nas duas tabelas', t1.every(l => l.length === 3 && l.every(u => T1.includes(u))), JSON.stringify(t1));
-      ok('filtro Tier = T2: CDDs e CDI, sem Empurrada', t2.every(l => l.length === 10 && l.every(u => !/EMPURRADA/.test(u))) && cnt === '1', JSON.stringify(t2[0]));
+      ok('filtro Tier = T2: CDDs e CDI, sem Empurrada', t2.every(l => l.length === 10 && l.every(u => !/EMPURRADA| T1$|^PIR$/.test(u))) && cnt === '1', JSON.stringify(t2[0]));
       ok('filtro Tier "Todos" volta às 13 unidades', todos.every(l => l.length === 13), todos.map(l => l.length).join('/'));
       await page.click('#btMini'); await page.waitForTimeout(300);
       ok('lateral recolhe (chave auditorias_mini)', await page.evaluate(() => document.querySelector('.side').classList.contains('mini') && localStorage.getItem('auditorias_mini') === '1'));

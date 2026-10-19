@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610171000">
+<meta name="build" content="202610191600">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Auditorias · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -389,9 +389,13 @@ function fetchTab(tab){
 }
 
 /* ── TIER (Renan, 17/10/2026: "crie um filtro T1 e T2 para separar"): T1 = as Empurradas e o
-   armazém de Cuiabá (a linha "CUIABA", a mesma régua do UNI_T1 do Scorecard); T2 = os CDDs e o CDI ── */
+   armazém de Cuiabá; T2 = os CDDs e o CDI. As abas escrevem a unidade pelo CÓDIGO
+   (MCC T1, CBA T2, PIR, CGR…), então o tier sai do sufixo; PIR é só Empurrada (T1).
+   Nomes longos (MACACU EMPURRADA, CDD CUIABA) continuam valendo. ── */
 const _nk=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
-function tierDe(nome){const n=_nk(nome);return /EMPURRADA|ARMAZEM/.test(n)||n==='CUIABA'?'T1':'T2';}
+function tierDe(nome){const n=_nk(nome);
+  if(/ T1( WH)?$/.test(n)||n==='PIR'||/EMPURRADA|ARMAZEM/.test(n)||n==='CUIABA')return 'T1';
+  return 'T2';}
 const DADOS={};
 function _buildMs(wrap,renderFn,getAllFn){
   if(!(wrap._sel instanceof Set))wrap._sel=new Set();
@@ -517,6 +521,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610171000"></script>
+<script src="../assets/build-check.js?v=202610191600"></script>
 </body>
 </html>
