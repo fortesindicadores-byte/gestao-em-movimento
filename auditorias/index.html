@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610191600">
+<meta name="build" content="202610191700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Auditorias · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -208,6 +208,23 @@ table.dre.aud-tab tbody tr:last-child td{padding-bottom:6px;}
 .niv.empty-niv{background:rgba(255,255,255,.05);color:var(--txt3);box-shadow:none;}
 body.claro .uni-card{background:rgba(0,0,0,.05);}
 body.claro .niv.empty-niv{background:rgba(0,0,0,.05);color:#999;}
+/* ── SELOS DO DPO (Renan, 19/10/2026: "Consegue criar esses selos como uma logo… e eles substituírem
+   os níveis 1 a 4 (1 é cinza e é básico)"): Nível 1 Básico (cinza) · 2 Intermediário (dourado) ·
+   3 Sustentável (verde) · 4 Top Performance (azul). O selo é um <img> em SVG, sem nome de unidade,
+   com o ano da coluna embaixo; o texto "Nível N" fica escondido na célula (Excel, ordenação e o
+   /check-metas/, que lê a cor de data-bg). Nível 0 não tem selo e continua no chip. ── */
+.selo{display:flex;align-items:center;justify-content:center;gap:9px;}
+.selo img{width:34px;height:34px;flex:0 0 34px;display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));}
+.selo .sl-nm{font-size:11px;font-weight:700;color:var(--txt);text-align:left;white-space:nowrap;}
+.selo .sl-nm i{display:block;font-style:normal;font-size:9.5px;font-weight:600;color:var(--txt3);}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+/* visão Resultado: só unidade e resultado do semestre escolhido */
+.res-tab th:first-child,.res-tab td:first-child{width:52%;}
+table.dre.res-tab td .selo{justify-content:flex-start;padding-left:10%;}
+table.dre.res-tab td .selo img{width:34px;height:34px;flex:0 0 34px;}
+.ms-opt input[type=radio]{accent-color:var(--azul);width:14px;height:14px;flex:0 0 14px;cursor:pointer;}
+.vw-resultado-only{display:none;}
+body.vw-resultado .vw-resultado-only{display:block;}
 /* ── filtro Tier (multi-select do padrão) ── */
 .filtros{display:flex;align-items:center;gap:4px;min-width:0;}
 .ms-wrap{position:relative;}
@@ -298,6 +315,7 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
 
     <div class="s-sec">Visões</div>
     <button class="s-item on" data-vw="resumo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Resumo Gerencial</button>
+    <button class="s-item" data-vw="resultado"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/></svg> Resultado</button>
 
     <div class="s-sec">Atalhos</div>
     <div id="pdf-slot"></div>
@@ -326,6 +344,10 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
         <div class="tit-sub" id="titSub">Carregando…</div>
       </div>
       <div class="filtros">
+        <div class="ms-wrap vw-resultado-only" id="ms-ano"><button class="ms-btn" onclick="toggleMs('ms-ano')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="ms-lbl">Ano</span><span class="ms-cnt"></span></button>
+        <div class="ms-panel"><div class="ms-list"></div></div></div>
+        <div class="ms-wrap vw-resultado-only" id="ms-h"><button class="ms-btn" onclick="toggleMs('ms-h')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="ms-lbl">Semestre</span><span class="ms-cnt"></span></button>
+        <div class="ms-panel"><div class="ms-list"></div></div></div>
         <div class="ms-wrap" id="ms-tier"><button class="ms-btn" onclick="toggleMs('ms-tier')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>Tier<span class="ms-cnt"></span></button>
         <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
       </div>
@@ -343,6 +365,20 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
           <div class="card tsec">
             <div class="thead-row"><div class="ttit">DPO/VPO</div></div>
             <div class="twrap" id="tbl-dpo"><div class="loading">Carregando…</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ 2 · RESULTADO — só unidade e resultado do ano e semestre escolhidos ══ -->
+      <section class="vw" id="vw-resultado">
+        <div class="aud-grid">
+          <div class="card tsec">
+            <div class="thead-row"><div class="ttit">Demarco</div></div>
+            <div class="twrap" id="res-demarco"><div class="loading">Carregando…</div></div>
+          </div>
+          <div class="card tsec">
+            <div class="thead-row"><div class="ttit">DPO/VPO</div></div>
+            <div class="twrap" id="res-dpo"><div class="loading">Carregando…</div></div>
           </div>
         </div>
       </section>
@@ -419,6 +455,117 @@ const tiersSel=()=>{const w=document.getElementById('ms-tier');return w&&w._sel&
 function redesenha(){
   if(DADOS.dem)render('Demarco',DADOS.dem,'tbl-demarco','leg-demarco');
   if(DADOS.dpo)render('DPO',DADOS.dpo,'tbl-dpo','leg-dpo');
+  renderResultado();
+}
+
+/* ── RESULTADO (Renan, 19/10/2026: "mais uma tela em auditorias, que eu consiga trazer apenas
+   unidade e resultado, com filtro de ano e H"): Ano e Semestre são de escolha única e abrem no
+   semestre mais recente que tem resultado; o filtro Tier também vale aqui. ── */
+const perDe=lbl=>{const m=String(lbl||'').trim().match(/^([12])\s*H\s*(\d{2,4})$/i);
+  if(!m) return null; return {h:m[1]+'H', ano:anoDe(lbl)};};
+function periodos(){
+  const out=[];
+  for(const rows of [DADOS.dem,DADOS.dpo]){
+    if(!rows||!rows.length) continue;
+    rows[0].forEach((lbl,i)=>{ const p=perDe(lbl); if(!p) return;
+      const tem=rows.slice(1).some(r=>r[0]&&(r[i]||'').trim()&&(r[i]||'').trim()!=='—'&&(r[i]||'').trim()!=='-');
+      let o=out.find(x=>x.ano===p.ano&&x.h===p.h); if(!o) out.push(o={ano:p.ano,h:p.h,tem:false});
+      o.tem=o.tem||tem; });
+  }
+  return out.sort((a,b)=>(a.ano+a.h).localeCompare(b.ano+b.h));
+}
+function buildUnico(id,base,items,padrao){
+  const w=document.getElementById(id); if(!w) return;
+  if(!items.includes(w._val)) w._val=padrao;
+  w._items=items;
+  const list=w.querySelector('.ms-list');
+  list.innerHTML=items.map(v=>`<label class="ms-opt"><input type="radio" name="${id}" data-v="${v}" ${v===w._val?'checked':''}> ${v}</label>`).join('');
+  w.querySelector('.ms-lbl').textContent=base+(w._val?' '+w._val:'');
+  if(!w._wired){ w._wired=true;
+    list.addEventListener('change',e=>{ const b=e.target; if(!b.dataset.v) return;
+      w._val=b.dataset.v; w.querySelector('.ms-lbl').textContent=base+' '+w._val;
+      w.querySelector('.ms-panel').classList.remove('open'); renderResultado(); });
+  }
+}
+function resTab(tab,rows,elId,ano,h){
+  const el=document.getElementById(elId); if(!el) return;
+  if(!rows||!rows.length){ el.innerHTML='<div class="loading">Sem dados</div>'; return; }
+  const i=rows[0].findIndex(l=>{const p=perDe(l); return p&&p.ano===ano&&p.h===h;});
+  if(i<0){ el.innerHTML=`<div class="loading">Sem ${h} ${ano} na aba ${tab==='DPO'?'DPO/VPO':tab}</div>`; return; }
+  const ts=tiersSel();
+  const body=rows.slice(1).filter(r=>r[0]&&(!ts||ts.has(tierDe(r[0]))));
+  if(!body.length){ el.innerHTML='<div class="loading">Nenhuma unidade no tier escolhido</div>'; return; }
+  const mapa=CORES[tab]||{};
+  let html=`<table class="dre aud-tab res-tab"><thead><tr><th class="uni">Unidade</th><th>Resultado · ${h}${String(ano).slice(-2)}</th></tr></thead><tbody>`;
+  body.forEach(r=>{
+    const v=(r[i]||'').trim();
+    let cel;
+    const sl=tab==='DPO'?seloCel(v,ano,true):null;
+    if(sl) cel=sl;
+    else if(mapa[v]) cel=`<span class="niv" style="background:${mapa[v].bg};color:${mapa[v].fg}">${v}</span>`;
+    else cel=`<span class="niv empty-niv">${v||'—'}</span>`;
+    html+=`<tr><td class="uni"><span class="uni-card">${r[0]}</span></td><td>${cel}</td></tr>`;
+  });
+  el.innerHTML=html+'</tbody></table>';
+}
+function renderResultado(){
+  const ps=periodos(); if(!ps.length) return;
+  const ult=[...ps].reverse().find(p=>p.tem)||ps[ps.length-1];
+  const anos=[...new Set(ps.map(p=>p.ano))].sort().reverse();
+  buildUnico('ms-ano','Ano',anos,ult.ano);
+  buildUnico('ms-h','Semestre',['1H','2H'],ult.h);
+  const ano=document.getElementById('ms-ano')._val, h=document.getElementById('ms-h')._val;
+  resTab('Demarco',DADOS.dem,'res-demarco',ano,h);
+  resTab('DPO',DADOS.dpo,'res-dpo',ano,h);
+}
+
+/* ── SELO DO DPO (SVG desenhado aqui, no formato dos selos oficiais: aro branco, disco na cor do
+   nível, nome do nível no arco de cima, ramos dos lados, "DPO <ano>" no arco de baixo) ── */
+const SELO={
+  'Nível 1':{nome:'Básico',         cor:'#8E959E', esc:'#6F767F'},
+  'Nível 2':{nome:'Intermediário',  cor:'#C9A45E', esc:'#A8843F'},
+  'Nível 3':{nome:'Sustentável',    cor:'#6B9A3A', esc:'#557D2C'},
+  'Nível 4':{nome:'Top Performance',cor:'#2F5DA8', esc:'#244A88'},
+};
+const _seloCache={};
+function seloSrc(niv,ano){
+  const k=niv+'|'+ano; if(_seloCache[k]) return _seloCache[k];
+  const S=SELO[niv]; if(!S) return null;
+  const c=S.cor, e=S.esc;
+  let fol='';                                     // folhas dos dois ramos, no aro
+  for(const lado of [-1,1]){
+    for(let i=0;i<8;i++){
+      const ang=(lado>0?62:242)+i*7.2, rad=ang*Math.PI/180, rr=85+(i%2?3:-3);
+      const x=100+rr*Math.sin(rad), y=100-rr*Math.cos(rad), rot=ang+(i%2?35:-35)*lado;
+      fol+=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="6.2" ry="2.5" transform="rotate(${(rot-90).toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${c}"/>`;
+    }
+  }
+  const tam=S.nome.length>12?13:16;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">`
+   +`<defs><path id="t" d="M22,100 A78,78 0 0 1 178,100"/><path id="b" d="M10,100 A90,90 0 0 0 190,100"/></defs>`
+   +`<circle cx="100" cy="100" r="97" fill="#fff" stroke="${c}" stroke-width="4"/>`
+   +`<circle cx="100" cy="100" r="71" fill="${c}"/>`
+   +fol
+   +`<g font-family="Montserrat,Arial,Helvetica,sans-serif" font-weight="800" fill="${e}" text-anchor="middle">`
+   +`<text font-size="${tam}" letter-spacing="1"><textPath href="#t" startOffset="50%">${S.nome}</textPath></text>`
+   +`<text font-size="15" letter-spacing="3"><textPath href="#b" startOffset="50%">DPO ${ano||''}</textPath></text></g>`
+   +`<g fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round">`
+   +`<circle cx="58" cy="66" r="7"/><path d="M53 66a5 5 0 0 1 10 0"/>`
+   +`<path d="M52 79H148M52 133H148"/>`
+   +`<circle cx="66" cy="106" r="16"/><circle cx="66" cy="99" r="3.6"/><path d="M59 117c1-7 4-10 7-10s6 3 7 10"/></g>`
+   +`<g font-family="Montserrat,Arial,Helvetica,sans-serif" fill="#fff" text-anchor="middle">`
+   +`<text x="108" y="71" font-size="16" font-weight="800">ABInBev</text>`
+   +`<text x="125" y="118" font-size="33" font-weight="400">DPO</text></g></svg>`;
+  return _seloCache[k]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+const anoDe=lbl=>{const m=String(lbl||'').match(/([12])\s*H\s*(\d{2,4})|H([12])\s*(\d{2,4})/i);
+  if(!m) return ''; const a=m[2]||m[4]; return a.length===2?'20'+a:a;};
+/* célula do DPO: o selo (com o nome do nível ao lado quando pedido); sem selo, o chip de sempre */
+function seloCel(v,ano,comNome){
+  const S=SELO[v], src=S&&seloSrc(v,ano);
+  if(!src) return null;
+  return `<span class="selo" data-bg="${S.cor}" data-fg="#fff" title="${v} · ${S.nome}"><img alt="" src="${src}">`
+    +(comNome?`<span class="sl-nm">${S.nome}<i>${v}</i></span>`:`<span class="vh">${v}</span>`)+`</span>`;
 }
 
 function render(tab,rows,elId,legId){
@@ -438,6 +585,8 @@ function render(tab,rows,elId,legId){
     keep.forEach(i=>{
       const v=r[i]||'';
       if(i===0){html+=`<td class="uni"><span class="uni-card">${v}</span></td>`;return;}
+      const sl=tab==='DPO'?seloCel(v,anoDe(head[i]),false):null;
+      if(sl){html+=`<td>${sl}</td>`;return;}
       const c=mapa[v];
       if(c)html+=`<td><span class="niv" style="background:${c.bg};color:${c.fg}">${v}</span></td>`;
       else html+=`<td><span class="niv empty-niv">${v||'—'}</span></td>`;
@@ -460,13 +609,14 @@ async function carregar(){
 }
 
 /* ── navegação entre as visões ────────────────────────────────────────────── */
-const TIT={resumo:'Resumo Gerencial'};
+const TIT={resumo:'Resumo Gerencial',resultado:'Resultado'};
 let VW='resumo';
 function setVw(v){
   VW=v;
   document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===v));
   document.querySelectorAll('.vw').forEach(x=>x.classList.toggle('on', x.id==='vw-'+v));
   const t=document.getElementById('tit'); if(t) t.textContent=TIT[v]||'';
+  document.body.classList.toggle('vw-resultado', v==='resultado');
 }
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
 
@@ -521,6 +671,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610191600"></script>
+<script src="../assets/build-check.js?v=202610191700"></script>
 </body>
 </html>

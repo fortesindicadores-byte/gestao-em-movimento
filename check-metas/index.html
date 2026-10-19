@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610132300">
+<meta name="build" content="202610191700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1116,13 +1116,17 @@ const CM_HELPER=`window.__cm={
         var f=st.backgroundColor;
         if(alfa(f)>=0.5){ bg=f; bloco=/^(block|flex|grid)$/.test(st.display); }
       }
+      /* O SELO DO DPO (19/10/2026) é uma imagem: a cor do nível vem do data-bg
+         do .selo, e o texto "Nível N" está escondido dentro dele. */
+      var corTx=st.color, sl=!bg&&c.querySelector?c.querySelector('[data-bg]'):null;
+      if(sl){ bg=sl.getAttribute('data-bg'); corTx=sl.getAttribute('data-fg')||corTx; bloco=true; }
       /* PRESERVA A QUEBRA DE LINHA: o Fato do FCA é "Pneus" + o desvio +
          as Contas, uma por linha (o fca-preenchimento grava \\n de propósito).
          Achatar tudo num parágrafo é o que fazia o slide dele ficar ilegível. */
       return { t:(c.innerText||'').replace(/[ \\t]+/g,' ').replace(/\\n{2,}/g,'\\n')
                  .split('\\n').map(function(x){return x.trim();}).filter(function(x,i,a){
                    return x||(i>0&&i<a.length-1); }).join('\\n').trim(),
-               cor:st.color, bg:bg, bloco:bloco, trechos:tr,
+               cor:corTx, bg:bg, bloco:bloco, trechos:tr,
                neg:(parseInt(st.fontWeight,10)||400)>=700,
                dir:st.textAlign==='right'||c.classList.contains('num'),
                span:+(c.getAttribute('colspan')||1) };
@@ -1961,6 +1965,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="slides.js?v=202609250600"></script>
-<script src="../assets/build-check.js?v=202610132300"></script>
+<script src="../assets/build-check.js?v=202610191700"></script>
 </body>
 </html>

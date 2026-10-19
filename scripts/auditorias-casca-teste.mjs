@@ -146,7 +146,9 @@ for (const tema of ['dark', 'light']) for (const tb of ['demarco', 'dpo']) {
   const a = res.antigo[tema].t[tb], b = res.novo[tema].t[tb];
   ok(`igual antes × depois (${tema === 'light' ? 'claro' : 'escuro'}) · ${tb}: cabeçalho`, JSON.stringify(a.head) === JSON.stringify(b.head));
   const dif = [];
-  a.cels.forEach((r, i) => r.forEach((c, j) => { if (c !== (b.cels[i] || [])[j]) dif.push(`${i},${j}: ${c} × ${(b.cels[i] || [])[j]}`); }));
+  // SELOS DO DPO (Renan, 19/10/2026): Nível 1 a 4 do DPO viram o selo (texto "Nível N" escondido na célula)
+  const esperado = c => tb === 'dpo' && /^Nível [1-4] ¦ niv ¦/.test(c) ? c.split(' ¦ ')[0] + ' ¦ selo ¦  ¦ ' : c;
+  a.cels.forEach((r, i) => r.forEach((c, j) => { if (esperado(c) !== (b.cels[i] || [])[j]) dif.push(`${i},${j}: ${esperado(c)} × ${(b.cels[i] || [])[j]}`); }));
   ok(`igual antes × depois (${tema === 'light' ? 'claro' : 'escuro'}) · ${tb}: ${a.cels.length}×${a.cels[0].length} células (texto, classe e cor do chip)`,
     a.cels.length === b.cels.length && !dif.length, dif.slice(0, 2).join(' / '));
 }
@@ -193,6 +195,41 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     ok(`${tag}: espelho atrás da tabela (card com borda e fundo — Renan, 06/10/2026)`, /^1px \| rgba?\(/.test(m.moldura) && !/rgba\(0, 0, 0, 0\)/.test(m.moldura), `${m.moldura} · twrap ${m.twBorda}`);
     ok(`${tag}: títulos das tabelas (não repetem a visão) visíveis`, JSON.stringify(m.ttits) === '["Demarco","DPO/VPO"]', JSON.stringify(m.ttits));
     ok(`${tag}: subtítulo com a fonte e a hora da carga`, /^Consolidado Geral — Demarco & DPO\/VPO · Atualizado \d\d\/\d\d\/\d{4} \d\d:\d\d$/.test(m.sub), m.sub);
+    // VISÃO RESULTADO (Renan, 19/10/2026): só unidade e resultado, com Ano e Semestre
+    const filtrosResumo = await page.evaluate(() => ['ms-ano', 'ms-h'].map(i => getComputedStyle(document.getElementById(i)).display));
+    ok(`${tag}: Ano e Semestre escondidos no Resumo`, filtrosResumo.every(d => d === 'none'), filtrosResumo.join(','));
+    await page.click('.s-item[data-vw="resultado"]'); await page.waitForTimeout(250);
+    const lr = () => page.evaluate(() => {
+      const t = id => { const tb = document.querySelector(`#${id} table`); if (!tb) return document.querySelector('#' + id).textContent.trim();
+        return { head: [...tb.querySelectorAll('thead th')].map(th => th.textContent.trim()),
+          rows: [...tb.querySelectorAll('tbody tr')].map(tr => [...tr.cells].map(td => td.textContent.trim().replace(/\s+/g, ' '))),
+          selos: tb.querySelectorAll('.selo img').length }; };
+      const vw = document.querySelector('.vw.on'), tw = [...vw.querySelectorAll('.twrap')];
+      return { tit: document.getElementById('tit').textContent, ano: document.getElementById('ms-ano')._val, h: document.getElementById('ms-h')._val,
+        lbl: [...document.querySelectorAll('#ms-ano .ms-lbl, #ms-h .ms-lbl')].map(e => e.textContent).join(' | '),
+        vis: ['ms-ano', 'ms-h'].map(i => getComputedStyle(document.getElementById(i)).display),
+        dem: t('res-demarco'), dpo: t('res-dpo'),
+        vert: tw.some(x => x.scrollHeight > x.clientHeight + 1), horiz: tw.some(x => x.scrollWidth > x.clientWidth + 1),
+        pagRola: document.scrollingElement.scrollHeight > document.scrollingElement.clientHeight + 1 };
+    });
+    let r = await lr();
+    ok(`${tag}: Resultado abre no último semestre com dado (1H26) e mostra os dois filtros`, r.tit === 'Resultado' && r.ano === '2026' && r.h === '1H' && r.vis.every(d => d !== 'none'), `${r.tit} ${r.ano} ${r.h} ${r.vis}`);
+    ok(`${tag}: Resultado = só Unidade e Resultado, 13 unidades nas duas tabelas`, r.dem.head && r.dem.head.length === 2 && r.dpo.head.length === 2 && r.dem.rows.length === 13 && r.dpo.rows.length === 13 && /1H26/.test(r.dpo.head[1]), JSON.stringify(r.dpo.head));
+    const espDpo = DPO.slice(1).filter(x => x[0]).map(x => x[3] || '—');
+    ok(`${tag}: Resultado do DPO = a coluna 1H26 da aba, com selo e nome do nível`, r.dpo.rows.every((c, i) => c[1].includes(espDpo[i])) && r.dpo.selos === espDpo.filter(v => /^Nível [1-4]$/.test(v)).length && r.dpo.rows.some(c => /Sustentável|Básico|Intermediário|Top Performance/.test(c[1])), JSON.stringify(r.dpo.rows.slice(0, 3)));
+    ok(`${tag}: Resultado cabe sem rolagem`, !r.vert && !r.horiz && !r.pagRola, `${r.vert} ${r.horiz} ${r.pagRola}`);
+    if (SHOTS) { const dir = path.join(SHOTS, PASTA); fs.mkdirSync(dir, { recursive: true });
+      await page.screenshot({ path: path.join(dir, `resultado-${vp.width}-${tema === 'light' ? 'claro' : 'escuro'}.png`) }); }
+    await page.click('#ms-ano .ms-btn'); await page.click('#ms-ano input[data-v="2025"]'); await page.waitForTimeout(100);
+    await page.click('#ms-h .ms-btn'); await page.click('#ms-h input[data-v="2H"]'); await page.waitForTimeout(150);
+    r = await lr();
+    const esp2 = DEM.slice(1).filter(x => x[0]).map(x => x[2] || '—');
+    ok(`${tag}: Ano 2025 + 2H troca a coluna (2H25) nas duas tabelas`, /2H25/.test(r.dem.head[1]) && r.dem.rows.every((c, i) => c[1] === esp2[i]) && r.lbl === 'Ano 2025 | Semestre 2H', `${r.dem.head} · ${r.lbl}`);
+    await page.click('#ms-h .ms-btn'); await page.click('#ms-h input[data-v="2H"]'); await page.waitForTimeout(80);
+    await page.click('#ms-ano .ms-btn'); await page.click('#ms-ano input[data-v="2026"]'); await page.waitForTimeout(150);
+    r = await lr();
+    ok(`${tag}: semestre sem coluna na aba (2H26 vazio) avisa em vez de tabela vazia`, typeof r.dpo === 'string' && /Sem 2H 2026|Nenhuma|—/.test(r.dpo) || (r.dpo.rows && r.dpo.rows.every(c => c[1] === '—')), JSON.stringify(r.dpo).slice(0, 80));
+    await page.click('.s-item[data-vw="resumo"]'); await page.waitForTimeout(150);
     if (SHOTS && vp.width === 1600) {
       const dir = path.join(SHOTS, PASTA); fs.mkdirSync(dir, { recursive: true });
       await page.screenshot({ path: path.join(dir, `resumo-${tema === 'light' ? 'claro' : 'escuro'}.png`) });
@@ -204,7 +241,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     if (vp.width === 1600 && tema === 'dark') {
       // contrato do /check-metas/: prep vazio, alvo = a tabela de cada aba, chips com cor
       const cm = await page.evaluate(() => ['#tbl-demarco table', '#tbl-dpo table'].map(s => { const t = document.querySelector(s);
-        return t ? t.querySelectorAll('tbody tr').length + ':' + t.querySelectorAll('.niv[style*="background"]').length : null; }));
+        return t ? t.querySelectorAll('tbody tr').length + ':' + t.querySelectorAll('.niv[style*="background"], .selo[data-bg] img').length : null; }));
       ok('check-metas: #tbl-demarco table e #tbl-dpo table na 1ª visão, com chips pintados', cm.every(x => x && +x.split(':')[0] === 13 && +x.split(':')[1] > 20), cm.join(' / '));
       await page.click('#btTema'); await page.waitForTimeout(200);
       const depois = await page.evaluate(() => [document.body.classList.contains('claro'), localStorage.getItem('bi_theme'), document.getElementById('btTema').innerHTML.includes('M21 12.79')]);
