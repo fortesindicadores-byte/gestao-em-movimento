@@ -219,6 +219,8 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
         lbl: [...document.querySelectorAll('#ms-ano .ms-lbl, #ms-h .ms-lbl')].map(e => e.textContent).join(' | '),
         vis: ['ms-ano', 'ms-h'].map(i => getComputedStyle(document.getElementById(i)).display),
         dem: t('res-demarco'), dpo: t('res-dpo'),
+        centro: [...document.querySelectorAll('#res-dpo td .selo')].map(sl => { const a = sl.getBoundingClientRect(), c = sl.closest('td').getBoundingClientRect(); return Math.round(Math.abs((a.left + a.right) / 2 - (c.left + c.right) / 2)); }),
+        esq: [...new Set([...document.querySelectorAll('#res-dpo td .selo img')].map(i => Math.round(i.getBoundingClientRect().left)))],
         vert: tw.some(x => x.scrollHeight > x.clientHeight + 1), horiz: tw.some(x => x.scrollWidth > x.clientWidth + 1),
         pagRola: document.scrollingElement.scrollHeight > document.scrollingElement.clientHeight + 1 };
     });
@@ -227,6 +229,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     ok(`${tag}: Resultado = só Unidade e Resultado, 13 unidades nas duas tabelas`, r.dem.head && r.dem.head.length === 2 && r.dpo.head.length === 2 && r.dem.rows.length === 13 && r.dpo.rows.length === 13 && /1H26/.test(r.dpo.head[1]), JSON.stringify(r.dpo.head));
     const espDpo = DPO.slice(1).filter(x => x[0]).map(x => x[3] || '—');
     ok(`${tag}: Resultado do DPO = a coluna 1H26 da aba, com selo e nome do nível`, r.dpo.rows.every((c, i) => c[1].includes(espDpo[i])) && r.dpo.selos === espDpo.filter(v => /^Nível [1-4]$/.test(v)).length && r.dpo.rows.some(c => /Sustentável|Básico|Intermediário|Top Performance/.test(c[1])), JSON.stringify(r.dpo.rows.slice(0, 3)));
+    ok(`${tag}: Resultado do DPO centrado na coluna, selos alinhados entre si`, r.centro.length && Math.max(...r.centro) <= 3 && r.esq.length === 1, `${Math.max(...r.centro)} px · ${r.esq.length} alinhamento(s)`);
     ok(`${tag}: Resultado cabe sem rolagem`, !r.vert && !r.horiz && !r.pagRola, `${r.vert} ${r.horiz} ${r.pagRola}`);
     if (SHOTS) { const dir = path.join(SHOTS, PASTA); fs.mkdirSync(dir, { recursive: true });
       await page.screenshot({ path: path.join(dir, `resultado-${vp.width}-${tema === 'light' ? 'claro' : 'escuro'}.png`) }); }

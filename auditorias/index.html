@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610191730">
+<meta name="build" content="202610191745">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Auditorias · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -220,7 +220,9 @@ body.claro .niv.empty-niv{background:rgba(0,0,0,.05);color:#999;}
 .vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 /* visão Resultado: só unidade e resultado do semestre escolhido */
 .res-tab th:first-child,.res-tab td:first-child{width:52%;}
-table.dre.res-tab td .selo{justify-content:flex-start;padding-left:10%;}
+/* selo + nome num bloco de largura fixa, centrado sob o título: os selos ficam alinhados entre si
+   e o conjunto no meio da coluna (Renan, 19/10/2026: "Meio descentralizado") */
+table.dre.res-tab td .selo{display:inline-flex;width:170px;max-width:100%;justify-content:flex-start;vertical-align:middle;}
 table.dre.res-tab td .selo img{width:34px;height:34px;flex:0 0 34px;}
 .ms-opt input[type=radio]{accent-color:var(--azul);width:14px;height:14px;flex:0 0 14px;cursor:pointer;}
 .vw-resultado-only{display:none;}
@@ -687,6 +689,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610191730"></script>
+<script src="../assets/build-check.js?v=202610191745"></script>
 </body>
 </html>
