@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610191900">
+<meta name="build" content="202610191915">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Auditorias · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -452,6 +452,22 @@ const _nk=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpp
 function tierDe(nome){const n=_nk(nome);
   if(/ T1( WH)?$/.test(n)||n==='PIR'||/EMPURRADA|ARMAZEM/.test(n)||n==='CUIABA')return 'T1';
   return 'T2';}
+/* NOME DA UNIDADE NA TELA (Renan, 19/10/2026: "Nomes, mude para: CGR: CD Rio de Janeiro. Restante
+   você já sabe"): as abas escrevem código (CGR, MCC T1…) ou nome longo (CDD CUIABA); a tela mostra o
+   nome. O tier e o filtro continuam lendo o texto da aba (data-u na célula guarda o original). */
+const NOME_UNI={
+  'CGR':'CD Rio de Janeiro','BLC':'CD Balneário Camboriú','FLP':'CD Florianópolis','GRL':'CD Guarulhos',
+  'NFR':'CD Nova Friburgo','PLT':'CD Pelotas','RON':'CD Rondonópolis','GNA':'CD Goiânia',
+  'CBA':'CD Cuiabá','CBA T2':'CD Cuiabá','CBA T1':'Cuiabá Empurrada','CBA T1 WH':'Cuiabá Armazém',
+  'MCC':'CDI Macacu','MCC T2':'CDI Macacu','MCC T1':'Macacu Empurrada','PIR':'Piraí Empurrada',
+  'CDD RIO DE JANEIRO':'CD Rio de Janeiro','CDD CAMBORIU':'CD Balneário Camboriú','CDD BALNEARIO CAMBORIU':'CD Balneário Camboriú',
+  'CDD FLORIANOPOLIS':'CD Florianópolis','CDD GUARULHOS':'CD Guarulhos','CDD NOVA FRIBURGO':'CD Nova Friburgo',
+  'CDD PELOTAS':'CD Pelotas','CDD RONDONOPOLIS':'CD Rondonópolis','CDD GOIANIA':'CD Goiânia','CDD CUIABA':'CD Cuiabá',
+  'CUIABA':'Cuiabá Armazém','CUIABA EMPURRADA':'Cuiabá Empurrada','CDI MACACU':'CDI Macacu',
+  'MACACU EMPURRADA':'Macacu Empurrada','PIRAI EMPURRADA':'Piraí Empurrada'
+};
+const nomeUni=v=>NOME_UNI[_nk(v)]||v;
+const celUni=v=>`<td class="uni" data-u="${String(v).replace(/"/g,'&quot;')}" title="${nomeUni(v)}">${nomeUni(v)}</td>`;
 const DADOS={};
 function _buildMs(wrap,renderFn,getAllFn){
   if(!(wrap._sel instanceof Set))wrap._sel=new Set();
@@ -546,7 +562,7 @@ function resTab(tab,rows,elId,ano,h){
     if(sl) cel=sl;
     else if(mapa[v]) cel=`<span class="niv" style="background:${mapa[v].bg};color:${mapa[v].fg}">${v}</span>`;
     else cel=`<span class="vazio">${v||'—'}</span>`;
-    html+=`<tr><td class="uni">${r[0]}</td><td>${cel}</td></tr>`;
+    html+=`<tr>${celUni(r[0])}<td>${cel}</td></tr>`;
   });
   el.innerHTML=html+'</tbody></table>';
 }
@@ -633,7 +649,7 @@ function render(tab,rows,elId,legId){
     html+='<tr>';
     keep.forEach(i=>{
       const v=r[i]||'';
-      if(i===0){html+=`<td class="uni" title="${v}">${v}</td>`;return;}
+      if(i===0){html+=celUni(v);return;}
       const sl=tab==='DPO'?seloCel(v,anoDe(head[i]),false):null;
       if(sl){html+=`<td>${sl}</td>`;return;}
       const c=mapa[v];
@@ -721,6 +737,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610191900"></script>
+<script src="../assets/build-check.js?v=202610191915"></script>
 </body>
 </html>

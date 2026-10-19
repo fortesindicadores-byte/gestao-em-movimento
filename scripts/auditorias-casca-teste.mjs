@@ -104,7 +104,7 @@ const leTabelas = () => {
       cels: [...tb.querySelectorAll('tbody tr')].map(tr => [...tr.cells].map(td => {
         const s = td.querySelector('span');
         const cs = s ? getComputedStyle(s) : null;
-        return [td.textContent.trim(), s ? s.className : '', s ? s.getAttribute('style') || '' : '',
+        return [td.dataset.u || td.textContent.trim(), s ? s.className : '', s ? s.getAttribute('style') || '' : '',
           s && /niv/.test(s.className) && !/empty/.test(s.className) ? cs.backgroundColor + '/' + cs.color : ''].join(' ¦ ');
       })),
     };
@@ -134,6 +134,13 @@ ok('antigo abre sem erro de página', !res.antigo.dark.errs.length && !res.antig
 ok('novo abre sem erro de página', !res.novo.dark.errs.length && !res.novo.light.errs.length, [...res.novo.dark.errs, ...res.novo.light.errs].join(' / '));
 ok('novo leu as duas abas (Demarco e DPO)', ['Demarco', 'DPO'].every(a => res.novo.dark.gviz.includes(a)), res.novo.dark.gviz.join(','));
 ok('Demarco com as 13 unidades', N.demarco && N.demarco.cels.length === 13, String(N.demarco && N.demarco.cels.length));
+{
+  // NOMES (Renan, 19/10/2026: "CGR: CD Rio de Janeiro. Restante você já sabe")
+  const nomes = await (async () => { const { ctx, page } = await abre(browser, null, { width: 1600, height: 900 }, 'dark');
+    const r = await page.evaluate(() => [...document.querySelectorAll('#tbl-dpo tbody td.uni')].map(td => td.dataset.u + '=' + td.textContent.trim())); await ctx.close(); return r; })();
+  const esp = { 'CGR': 'CD Rio de Janeiro', 'MCC T2': 'CDI Macacu', 'MCC T1': 'Macacu Empurrada', 'CBA T2': 'CD Cuiabá', 'CBA T1': 'Cuiabá Empurrada', 'PIR': 'Piraí Empurrada', 'GNA': 'CD Goiânia' };
+  ok('unidade aparece pelo nome (CGR = CD Rio de Janeiro…), código guardado em data-u', nomes.length === 13 && Object.entries(esp).every(([k, v]) => nomes.includes(k + '=' + v)) && nomes.every(x => !/^(.+)=\1$/.test(x)), nomes.join(' · '));
+}
 ok('DPO/VPO com as 13 unidades', N.dpo && N.dpo.cels.length === 13, String(N.dpo && N.dpo.cels.length));
 ok('período sem dado (2H26) some do cabeçalho', N.demarco && JSON.stringify(N.demarco.head) === '["UNIDADE","1H25","2H25","1H26"]', JSON.stringify(N.demarco && N.demarco.head));
 {
@@ -289,7 +296,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       const n1 = await page.evaluate(() => [performance.getEntriesByType('resource').filter(e => e.name.includes('docs.google.com')).length, document.getElementById('titSub').textContent]);
       ok('"Atualizar dados" relê as abas e escreve no subtítulo', n1[0] >= n0 + 2 && /Atualizado/.test(n1[1]), `${n0} → ${n1[0]} · ${n1[1]}`);
       // FILTRO TIER (Renan, 17/10/2026): T1 = Empurradas + armazém de Cuiabá; T2 = CDDs e CDI
-      const tierDe = () => ['#tbl-demarco', '#tbl-dpo'].map(s => [...document.querySelectorAll(s + ' tbody tr')].map(tr => tr.cells[0].textContent.trim()));
+      const tierDe = () => ['#tbl-demarco', '#tbl-dpo'].map(s => [...document.querySelectorAll(s + ' tbody tr')].map(tr => tr.cells[0].dataset.u || tr.cells[0].textContent.trim()));
       await page.click('#ms-tier .ms-btn'); await page.waitForTimeout(150);
       await page.evaluate(() => { const o = [...document.querySelectorAll('#ms-tier .ms-only')].find(x => x.dataset.v === 'T1'); o.click(); });
       await page.waitForTimeout(200);
