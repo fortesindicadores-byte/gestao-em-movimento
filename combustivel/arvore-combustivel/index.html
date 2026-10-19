@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610151800">
+<meta name="build" content="202610192250">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -917,7 +917,7 @@ function kmlCard(){
   const f=getFilters();
   let sumRem=0,cntRem=0,sumKm=0,sumLit=0;
   for(const r of KML_ROWS){
-    const d=kParseVig(r[KCL.vig]);if(!d)continue;
+    const d=kParseVig(r[KCL.vig]);if(!d||d.getFullYear()<ANO_MIN)continue;
     if(f.ano.length      && !f.ano.includes(String(d.getFullYear())))continue;
     if(f.vigencia.length && !f.vigencia.includes(String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()))continue;
     if(f.unidade.length  && !f.unidade.includes(kGetUni(r)))continue;
@@ -1235,7 +1235,12 @@ function bmAgg(f){ let km=0,valor=0;
   return {km, valor, taxa: km?valor/km:0}; }
 
 // Passa uma linha pelos filtros atuais (vigStr='MM/YYYY', n3='PROJETO - CODE')
+// ANO ANTES DO ANO_MIN NUNCA ENTRA NA CONTA (bug real, 19/10/2026, Renan: "Filtrei Cuiabá e na
+// árvore dispersão não bate com painel de km"): o filtro só LISTA 2026, mas com "Todas as
+// vigências" a soma pegava ago/24 → dez/25 da aba Dispersão de km (CBA: 2,47 mi de km rem contra
+// 779 mil só de 2026). O Painel KM lista os anos no filtro; aqui a régua é o ANO_MIN.
 function _match(f, vigStr, n3){
+  if(+vigStr.slice(-4) < ANO_MIN)                                        return false;
   if(f.ano.length      && !f.ano.includes(vigStr.slice(-4)))              return false;
   if(f.vigencia.length && !f.vigencia.includes(vigStr))                  return false;
   if(f.unidade.length  && !f.unidade.includes(getNv3Suffix(n3)))         return false;
@@ -1592,6 +1597,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610151800"></script>
+<script src="../../assets/build-check.js?v=202610192250"></script>
 </body>
 </html>

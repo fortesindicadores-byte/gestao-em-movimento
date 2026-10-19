@@ -74,9 +74,9 @@ const A = await ar.evaluate(({ UNI, PROJS }) => {
   const porMes = {}; vigs.forEach(v => { porMes[v] = kmAgg({ ...f0, vigencia: [v] }); });
   const sel = { uni: getMsValues('ms-uni'), nv3: getMsValues('ms-nv3'), vig: getMsValues('ms-vig'), ano: getMsValues('ms-ano') };
   const opcoes = { uni: (document.getElementById('ms-uni')._items || []), nv3: (document.getElementById('ms-nv3')._items || []) };
-  return { anos, projsUni, fontes, tudo, porMes, sel, opcoes, bmFonte: typeof BM_FONTE !== 'undefined' ? BM_FONTE : null, bmChaves: Object.keys((typeof BM_NOVO !== 'undefined' && BM_NOVO.porChave) || {}).filter(k => k.includes(UNI)).length };
+  return { anos, projsUni, fontes, tudo, porMes, sel, opcoes, anoMin: typeof ANO_MIN !== 'undefined' ? ANO_MIN : 0, bmFonte: typeof BM_FONTE !== 'undefined' ? BM_FONTE : null, bmChaves: Object.keys((typeof BM_NOVO !== 'undefined' && BM_NOVO.porChave) || {}).filter(k => k.includes(UNI)).length };
 }, { UNI, PROJS });
-console.log('S_DP por ano:', JSON.stringify(A.anos), '· fonte:', JSON.stringify(A.fontes));
+console.log('S_DP por ano:', JSON.stringify(A.anos), '· fonte:', JSON.stringify(A.fontes), '· ANO_MIN da Árvore:', A.anoMin, '(anos antes dele ficam fora da conta da Árvore; no Painel KM o filtro Ano lista todos)');
 console.log(`projetos de ${UNI} no S_DP (prefixo lido → nível 3 cru):`, JSON.stringify(A.projsUni));
 console.log('filtros ao abrir:', JSON.stringify(A.sel), '· opções unidade:', A.opcoes.uni.join(' '), '· projeto:', A.opcoes.nv3.join(' | '));
 console.log('balanço:', JSON.stringify(A.bmFonte), '· chaves do BM com', UNI + ':', A.bmChaves);
@@ -88,19 +88,19 @@ await km.goto(BASE + '/painel-km/index.html', { waitUntil: 'domcontentloaded' })
 await km.waitForFunction(() => typeof ALL !== 'undefined' && ALL.length && ALL.some(r => 'rem0' in r), { timeout: 300000 });
 await km.waitForTimeout(3000);
 console.log(`Painel KM carregou em ${((Date.now() - t0) / 1000).toFixed(0)} s · build ${await km.evaluate(() => document.querySelector('meta[name=build]').content)}`);
-const K = await km.evaluate(({ UNI, PROJS }) => {
+const K = await km.evaluate(({ UNI, PROJS, ANO_MIN }) => {
   const VAN = p => /^ROTA\s*\(VAN\)$/i.test(p) ? 'VAN' : p;
   const anos = {}, projsUni = {}, porMes = {}, unds = new Set();
   let tudo = { rem: 0, real: 0, rem0: 0, bm: 0 };
   ALL.forEach(r => { anos[r.ano] = (anos[r.ano] || 0) + 1; unds.add(r.und);
     if (r.und !== UNI) return; const p = VAN(String(r.proj || '').toUpperCase()); projsUni[p + ' (' + r.proj + ')'] = (projsUni[p + ' (' + r.proj + ')'] || 0) + 1;
-    if (!PROJS.map(x => x.toUpperCase()).includes(p)) return;
+    if (!PROJS.map(x => x.toUpperCase()).includes(p) || +r.ano < ANO_MIN) return;   // o mesmo recorte de anos da Árvore
     const m = porMes[r.vig] = porMes[r.vig] || { rem: 0, real: 0, rem0: 0, bm: 0 };
     const rem = (r.rem0 != null ? r.rem0 : r.rem) + (r.recomp || 0);
     m.rem += rem; m.real += r.real || 0; m.rem0 += r.rem0 != null ? r.rem0 : r.rem; m.bm += r.recomp || 0;
     tudo.rem += rem; tudo.real += r.real || 0; tudo.rem0 += r.rem0 != null ? r.rem0 : r.rem; tudo.bm += r.recomp || 0; });
   return { anos, projsUni, porMes, tudo, unds: [...unds].sort(), bmModo: typeof BM_MODO !== 'undefined' ? BM_MODO : null };
-}, { UNI, PROJS });
+}, { UNI, PROJS, ANO_MIN: A.anoMin });
 console.log('ALL por ano:', JSON.stringify(K.anos), '· unidades:', K.unds.join(' '), '· modo BM:', K.bmModo);
 console.log(`projetos de ${UNI} no Painel KM:`, JSON.stringify(K.projsUni));
 

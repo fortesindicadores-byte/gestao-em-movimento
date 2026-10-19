@@ -84,7 +84,7 @@ const CMH = (() => { const s = fs.readFileSync(RAIZ + '/check-metas/index.html',
   return eval('`' + s.slice(i, j) + '`'); })();
 const H2C_SRC = H2C && fs.existsSync(H2C) ? fs.readFileSync(H2C, 'utf8') : null;
 
-async function abre(browser, pagina, { w = 1600, h = 900, tema = 'dark', mini = false, semBM = false, dispBanco = [] } = {}) {
+async function abre(browser, pagina, { w = 1600, h = 900, tema = 'dark', mini = false, semBM = false, dispBanco = [], abas = ABAS } = {}) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h } });
   const page = await ctx.newPage();
   const errs = [];
@@ -114,7 +114,7 @@ async function abre(browser, pagina, { w = 1600, h = 900, tema = 'dark', mini = 
       }
       return ap.call(this, n);
     };
-  }, { ABAS, tema, mini });
+  }, { ABAS: abas, tema, mini });
   await page.route('**/rest/v1/balanco_massa*', r => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(semBM ? [] : BMB) }));
   // Dispersão de km do banco (set/26+): vazia por padrão, para o antigo × novo seguir igual
   const JS = b => r => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(b) });
@@ -232,6 +232,29 @@ console.log('\n══ 1b · set/26 da Dispersão do banco entra na árvore; ago/
   af('PIR set/26: Empurrada junta 28 Palets + Insumos no real', num(p['v-kmReal']) === '172.0k', num(p['v-kmReal']));
   af('PIR set/26: o km rem. inclui o balanço de massa do mês', num(p['v-bmKm']).startsWith('+'), num(p['v-bmKm']) + ' · rem ' + num(p['v-kmRem']));
   await b.ctx.close(); }
+
+/* ── 1c. ano antes do ANO_MIN fica fora da conta (bug real, 19/10/2026: "Filtrei Cuiabá e na
+   árvore dispersão não bate com painel de km" — com "Todas as vigências" a soma pegava 2024 e 2025) ── */
+console.log('\n══ 1c · "Todas as vigências" soma só os anos que o filtro lista (ANO_MIN)');
+{ const A25 = { Frota: { cols: FROTA.cols, rows: FROTA.rows.slice() }, 'Dispersão de km': { cols: DISP.cols, rows: DISP.rows.slice() },
+    'Km/L': { cols: KML.cols, rows: KML.rows.slice() }, 'R$/L': RSL, 'Balanço de Massa': BM };
+  [[2024, 11], [2025, 3], [2025, 10]].forEach(([y, m]) => {
+    A25['Dispersão de km'].rows.push([D(y, m), 'CBA', 'ROTA - CBA', 500000, 600000, 100, 8, 5, 3]);
+    A25.Frota.rows.push([D(y, m), -900000, -880000, -950000, 'ROTA - CBA', 'Combustíveis Veiculos e Equipamentos']);
+    A25['Km/L'].rows.push([D(y, m), 'AMBEV', 'ROTA - CBA', 3.3, 2.0, 600000, 300000, 2000000, 'DIESEL S10']); });
+  const c = await abre(browser, 'index.html', { abas: A25 });
+  af('com linhas de 2024/2025 na aba: zero erro de página', c.errs.length === 0, c.errs[0] || '');
+  const anos = await c.page.evaluate(() => [...new Set([...document.querySelectorAll('#ms-ano [data-v]')].map(e => e.dataset.v))]);
+  af('o filtro de ano lista só 2026', anos.join(',') === '2026', anos.join(','));
+  for (const p of [{ id: 'ms-vig', v: [] }, { id: 'ms-ano', v: [] }, { id: 'ms-uni', v: ['CBA'] }, { id: 'ms-nv3', v: ['ROTA'] }]) await c.page.evaluate(SEL, p);
+  await c.page.waitForTimeout(150);
+  const t = await c.page.evaluate(VALS);
+  const esp = DISP.rows.filter(r => r[2] === 'ROTA - CBA').reduce((s, r) => [s[0] + r[3], s[1] + r[4]], [0, 0]);
+  af('CBA · ROTA · todas as vigências = só 2026 (jul + ago)', num(t['v-kmRem']) === esp[0].toLocaleString('pt-BR') && num(t['v-kmReal']) === esp[1].toLocaleString('pt-BR'),
+    num(t['v-kmRem']) + ' · ' + num(t['v-kmReal']) + ' (esperado ' + esp.join(' · ') + ')');
+  af('o custo também fica só com 2026 (sem os R$ 2,8 mi de 2024/25)', !/mi/.test(num(t['v-custoReal'])), num(t['v-custoReal']));
+  af('o Km/L não vê o 2,0 km/L de 2025', num(t['v-kmLReal']) !== '2,00', num(t['v-kmLReal']));
+  await c.ctx.close(); }
 
 /* ── 2. a casca nova ── */
 const medeCasca = () => {
