@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610191730">
+<meta name="build" content="202610191930">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1085,7 +1085,7 @@ const CM_HELPER=`window.__cm={
         if(n.nodeType===3){ var tx=n.nodeValue; if(!tx||!tx.trim()&&!/\\n/.test(tx)){ if(tx&&/\\s/.test(tx)) out.push({t:' '}); return; }
           var col=cs(n.parentNode).color; cores[col]=1; out.push({t:tx.replace(/\\s+/g,' '),cor:col}); return; }
         if(n.nodeType!==1) return;
-        var d=cs(n); if(d.display==='none') return;
+        var d=cs(n); if(d.display==='none'||d.visibility!=='visible') return;
         if(n.tagName==='BR'){ out.push({t:'\\n'}); return; }
         var bloco=/block|list-item|table|flex|grid/.test(d.display);
         if(bloco&&out.length) out.push({t:'\\n'});
@@ -1103,7 +1103,11 @@ const CM_HELPER=`window.__cm={
       });
       while(r.length&&r[0].t==='\\n') r.shift();
       while(r.length&&r[r.length-1].t==='\\n') r.pop();
-      r.forEach(function(x){ if(x.t!=='\\n') x.t=x.t.replace(/^ +| +$/g,''); });
+      /* só apara na ponta da LINHA: aparar cada trecho comia o espaço entre o
+         texto e a seta colorida ("Equip.▲18K") */
+      r.forEach(function(x,i){ if(x.t==='\\n') return;
+        if(i===0||r[i-1].t==='\\n') x.t=x.t.replace(/^ +/,'');
+        if(i===r.length-1||r[i+1].t==='\\n') x.t=x.t.replace(/ +$/,''); });
       return r.filter(function(x){ return x.t; });
     }
     function cel(c){
@@ -1134,19 +1138,47 @@ const CM_HELPER=`window.__cm={
                span:+(c.getAttribute('colspan')||1) };
     }
     var vis=function(n){ return cs(n).display!=='none'; };
+    /* O "+" DE ADICIONAR CAUSA/AÇÃO NÃO É DADO (Renan, 19/10/2026, slide do FCA
+       com "+" vermelho no meio do texto): os botões ficam escondidos durante a
+       leitura e voltam depois. */
+    var botoes=[].slice.call(t.querySelectorAll('button,.kadd'));
+    botoes.forEach(function(b){ b.__cmD=b.style.display; b.style.display='none'; });
+    /* o número da causa/ação e o rótulo "YTD" ficam separados do texto por
+       margem, não por espaço: sem isto o slide dizia "1.2.Reciclar" */
+    var vaos=[].slice.call(t.querySelectorAll('.ln-n,.kl')).map(function(e){
+      var sp=document.createTextNode(' '); e.parentNode.insertBefore(sp,e.nextSibling); return sp; });
     var cab=[].slice.call(t.querySelectorAll('thead tr')).filter(vis)
       .map(function(tr){ return [].slice.call(tr.children).filter(vis).map(cel); });
-    var lin=[].slice.call(t.querySelectorAll('tbody tr')).filter(vis).map(function(tr){
-      return { cels:[].slice.call(tr.children).filter(vis).map(cel),
-               total:/total|ebitda|ref-row/i.test(tr.className) };
+    /* CÉLULA MESCLADA (rowspan) VIRA GRADE COMPLETA (bug real, 19/10/2026: "Está
+       tudo errado quando gero o material do check de metas, no FCA"). A Tabela
+       do FCA mescla Unidade · Projeto · Vigência · Fato e a causa sobre as ações
+       dela; lendo td por td, a 2ª linha do fato começava na coluna Unidade com a
+       AÇÃO, e tudo escorregava. Aqui cada linha sai com todas as colunas: a
+       célula mesclada vai na 1ª linha com rs = nº de linhas, e nas seguintes como
+       cópia marcada cont:true — o slide refaz o rowspan na página. */
+    var ocup=[];
+    var lin=[].slice.call(t.querySelectorAll('tbody tr')).filter(vis).map(function(tr,ri){
+      var cels=[], col=0;
+      [].slice.call(tr.children).filter(vis).forEach(function(td){
+        while(ocup[ri]&&ocup[ri][col]){ cels[col]=ocup[ri][col]; col++; }
+        var c=cel(td), rs=+(td.getAttribute('rowspan')||1);
+        if(rs>1){ c.rs=rs; for(var k=1;k<rs;k++){ (ocup[ri+k]=ocup[ri+k]||[])[col]=
+          { t:c.t, cor:c.cor, bg:c.bg, bloco:c.bloco, trechos:c.trechos, neg:c.neg, dir:c.dir, cont:true }; } }
+        cels[col]=c; col+=c.span||1;
+      });
+      while(ocup[ri]&&ocup[ri][col]){ cels[col]=ocup[ri][col]; col++; }
+      for(var q=0;q<cels.length;q++) if(!cels[q]) cels[q]={t:''};
+      return { cels:cels, total:/total|ebitda|ref-row/i.test(tr.className) };
     }).filter(function(l){ return l.cels.length && l.cels.some(function(c){ return c.t; }); });
+    botoes.forEach(function(b){ b.style.display=b.__cmD||''; delete b.__cmD; });
+    vaos.forEach(function(sp){ if(sp.parentNode) sp.parentNode.removeChild(sp); });
     if(!cab.length||!lin.length) return null;
     return { tipo:'tabela', cab:cab[cab.length-1].map(function(c){ return c.t; }),
              dir:cab[cab.length-1].map(function(c){ return c.dir; }),
              linhas:lin.map(function(l){
                return { total:l.total, cels:l.cels.map(function(c){
                  return { t:c.t, cor:c.cor, bg:c.bg, bloco:c.bloco, trechos:c.trechos,
-                          neg:c.neg||l.total, dir:c.dir }; }) };
+                          neg:c.neg||l.total, dir:c.dir, rs:c.rs, cont:c.cont }; }) };
              }) };
   },
   /* ── O PÓDIO SAI DO PÓDIO, não do ranking ──
@@ -1966,7 +1998,7 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202609250600"></script>
-<script src="../assets/build-check.js?v=202610191730"></script>
+<script src="slides.js?v=202610191930"></script>
+<script src="../assets/build-check.js?v=202610191930"></script>
 </body>
 </html>

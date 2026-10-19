@@ -377,17 +377,14 @@ function slTabela(tit, sub, dados, opt){
     for (;;) {
       t.style.fontSize = fs + 'px';
       tb.innerHTML = ''; entraram = 0;
+      const abertas = [];
       for (const l of corpo) {
         const tr = document.createElement('tr');
         if (l.total) tr.className = 'tot';
-        tr.innerHTML = l.cels.map((c,i)=>
-          `<td class="${c.dir||(dados.dir&&dados.dir[i])?'sl-n ':''}${curta[i]?kls:''}"></td>`).join('');
-        [...tr.children].forEach((td,i)=>{
-          const c = l.cels[i]; if (!c) return;
-          slCelula(td, c);
-        });
+        const desfaz = slPintaLinha(tr, l, abertas,
+          (c,i) => `${c.dir||(dados.dir&&dados.dir[i])?'sl-n ':''}${curta[i]?kls:''}`);
         tb.appendChild(tr);
-        if (t.offsetHeight > wrap.clientHeight + 2 && entraram > 0) { tb.removeChild(tr); break; }
+        if (t.offsetHeight > wrap.clientHeight + 2 && entraram > 0) { tb.removeChild(tr); desfaz(); break; }
         entraram++;
       }
       if (entraram === corpo.length || fs <= 10) break;
@@ -407,6 +404,28 @@ function slTabela(tit, sub, dados, opt){
     if (pag > 12) break;                     // trava contra laço infinito
   }
   return paginas;
+}
+
+/* ── LINHA COM CÉLULA MESCLADA ─────────────────────────────────────────────
+   O __cm.extrai entrega a grade completa: a célula mesclada (rowspan) vem na
+   1ª linha com `rs` e repetida nas seguintes com `cont:true`. Aqui o rowspan é
+   refeito NA PÁGINA: a cópia só some quando a célula de origem está no mesmo
+   slide; numa quebra de página ela é desenhada de novo, para a continuação não
+   ficar sem unidade e sem fato. `abertas[i]` é o td que está crescendo na
+   coluna i. Devolve o que desfazer se a linha não couber. */
+function slPintaLinha(tr, l, abertas, classe){
+  const ant = abertas.slice(), cresceu = [];
+  l.cels.forEach((c, i) => {
+    if (!c) return;
+    if (c.cont && abertas[i]) { abertas[i].rowSpan++; cresceu.push(abertas[i]); return; }
+    const td = document.createElement('td');
+    td.className = classe(c, i);
+    slCelula(td, c);
+    if (c.rs > 1 || c.cont) { td.style.verticalAlign = 'top'; abertas[i] = td; }
+    else abertas[i] = null;
+    tr.appendChild(td);
+  });
+  return () => { cresceu.forEach(td => td.rowSpan--); ant.forEach((x, i) => { abertas[i] = x; }); abertas.length = ant.length; };
 }
 
 /* ── KPIs + gráfico (o desenho do Scorecard) ───────────────────────────── */
@@ -872,15 +891,11 @@ function slMonta(tit, sub, blocos){
         + '</tr></thead><tbody></tbody>';
       [...t.querySelectorAll('th')].forEach((th,i)=>{ th.textContent = cab[i]; });
       const tb = t.querySelector('tbody');
+      const abertas = [];
       lin.forEach(l => {
         const tr = document.createElement('tr');
         if (l.total) tr.className = 'tot';
-        tr.innerHTML = l.cels.map((c,i)=>
-          `<td class="${c.dir||dir[i]?'sl-n ':''}${curta[i]?kls:''}"></td>`).join('');
-        [...tr.children].forEach((td,j)=>{
-          const c = l.cels[j]; if (!c) return;
-          slCelula(td, c);
-        });
+        slPintaLinha(tr, l, abertas, (c,i) => `${c.dir||dir[i]?'sl-n ':''}${curta[i]?kls:''}`);
         tb.appendChild(tr);
       });
       slLarguras(t, wrap);
