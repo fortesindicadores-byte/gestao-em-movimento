@@ -217,7 +217,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     }
     // VISÃO RESULTADO (Renan, 19/10/2026): só unidade e resultado, com Ano e Semestre
     const filtrosResumo = await page.evaluate(() => ['ms-ano', 'ms-h'].map(i => getComputedStyle(document.getElementById(i)).display));
-    ok(`${tag}: Ano e Semestre escondidos nas visões DPO/VPO e Demarco`, filtrosResumo.every(d => d === 'none'), filtrosResumo.join(','));
+    ok(`${tag}: Ano e Semestre do Resultado (escolha única) escondidos nas visões DPO/VPO e Demarco`, filtrosResumo.every(d => d === 'none'), filtrosResumo.join(','));
     await page.click('.s-item[data-vw="resultado"]'); await page.waitForTimeout(250);
     const lr = () => page.evaluate(() => {
       const t = id => { const tb = document.querySelector(`#${id} table`); if (!tb) return document.querySelector('#' + id).textContent.trim();
@@ -295,6 +295,30 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       await page.click('.side .s-item[onclick="carregar()"]'); await page.waitForTimeout(700);
       const n1 = await page.evaluate(() => [performance.getEntriesByType('resource').filter(e => e.name.includes('docs.google.com')).length, document.getElementById('titSub').textContent]);
       ok('"Atualizar dados" relê as abas e escreve no subtítulo', n1[0] >= n0 + 2 && /Atualizado/.test(n1[1]), `${n0} → ${n1[0]} · ${n1[1]}`);
+      // ANO E SEMESTRE NAS VISÕES DPO/VPO E DEMARCO (Renan, 19/10/2026: "Aqui também filtro de ano e semestre")
+      await page.click('.s-item[data-vw="dpo"]'); await page.waitForTimeout(150);
+      const vis = id => page.evaluate(i => getComputedStyle(document.getElementById(i)).display, id);
+      ok('Ano e Semestre (múltiplos) aparecem no DPO/VPO', (await vis('ms-anos')) !== 'none' && (await vis('ms-sems')) !== 'none');
+      const cabs = () => page.evaluate(() => ['#tbl-demarco', '#tbl-dpo'].map(s => { const t = document.querySelector(s + ' table');
+        return t ? [...t.querySelectorAll('thead th')].map(th => th.textContent.trim()).slice(1).join(',') : document.querySelector(s).textContent.trim(); }));
+      const so = async (id, v) => { await page.click(`#${id} .ms-btn`); await page.waitForTimeout(100);
+        await page.evaluate(([i, x]) => [...document.querySelectorAll(`#${i} .ms-only`)].find(o => o.dataset.v === x).click(), [id, v]);
+        await page.waitForTimeout(150); await page.mouse.click(5, 5); };
+      await so('ms-anos', '2025');
+      const c25 = await cabs();
+      ok('Ano = 2025: só 1H25 e 2H25 nas duas tabelas', c25.every(c => c === '1H25,2H25'), JSON.stringify(c25));
+      await so('ms-sems', '2H');
+      const c2h = await cabs();
+      ok('Ano 2025 + Semestre 2H: só 2H25', c2h.every(c => c === '2H25'), JSON.stringify(c2h));
+      await so('ms-anos', '2026');
+      const c26 = await cabs();
+      ok('2H de 2026 sem resultado: aviso em vez de tabela vazia', c26.every(c => /Nenhum semestre/.test(c)), JSON.stringify(c26));
+      await page.evaluate(() => ['ms-anos', 'ms-sems'].forEach(i => document.querySelector(`#${i} .ms-all`).click())); await page.waitForTimeout(150);
+      const call = await cabs();
+      ok('Todos volta às colunas de sempre', call.every(c => c === '1H25,2H25,1H26'), JSON.stringify(call));
+      await page.click('.s-item[data-vw="resultado"]'); await page.waitForTimeout(150);
+      ok('no Resultado ficam só os filtros de escolha única', (await vis('ms-anos')) === 'none' && (await vis('ms-ano')) !== 'none');
+      await page.click('.s-item[data-vw="dpo"]'); await page.waitForTimeout(150);
       // FILTRO TIER (Renan, 17/10/2026): T1 = Empurradas + armazém de Cuiabá; T2 = CDDs e CDI
       const tierDe = () => ['#tbl-demarco', '#tbl-dpo'].map(s => [...document.querySelectorAll(s + ' tbody tr')].map(tr => tr.cells[0].dataset.u || tr.cells[0].textContent.trim()));
       await page.click('#ms-tier .ms-btn'); await page.waitForTimeout(150);
