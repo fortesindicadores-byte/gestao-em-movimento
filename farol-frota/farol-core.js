@@ -265,6 +265,36 @@ async function farolLoad(opts){
     const gb=G['blitz-seguranca'];
     DATA.fonte.blitz={src:'ginfo',att:gb.updated_at?new Date(gb.updated_at):null};
   }
+  // ── DOCUMENTOS (Ginfo → FROTA → 1.1 - DOCUMENTOS, 19/10/2026) ──
+  /* Dois drills da página: "Detalhes Vencimento" (card VENCENDO 30 DIAS; o
+     drill herda o filtro do card, então são só os que vencem em até 30 dias)
+     e "Detalhes Documentos Pendentes" (card DOC. PENDENTE: documento que nem
+     foi vinculado à placa). Colunas: Filial · Projeto · Documento · Placa ·
+     Último Evento · Próximo Evento · Status / Filial · Projeto · Placa ·
+     Tipo Veículo · Documento Não Vinculado. A data chega como serial de xlsx
+     e vira data LOCAL (o parseFlex monta à meia-noite UTC, que no Brasil cai
+     no dia anterior). */
+  const dLocal=v=>typeof v==='number'&&v>20000&&v<80000?new Date(1899,11,30+Math.floor(v)):parseFlex(v);
+  if(G['documentos-vencimento']){
+    const hoje=new Date(); hoje.setHours(0,0,0,0);
+    DATA.docs=G['documentos-vencimento'].data.map(o=>{
+      const fil=String(o['Filial']||'').trim(), proj=String(o['Projeto']||'').trim();
+      const prox=dLocal(o['Próximo Evento']);
+      return {cod:refineCod(codDe(fil),proj),fil,proj,placa:String(o['Placa']||'').trim(),
+        doc:String(o['Documento']||'').trim(),ult:dLocal(o['Último Evento']),prox,
+        st:String(o['Status']||'').trim(),dias:prox?Math.round((prox-hoje)/864e5):null};
+    }).filter(r=>r.placa);
+    const g=G['documentos-vencimento'];
+    DATA.fonte.docs={src:'ginfo',att:g.updated_at?new Date(g.updated_at):null};
+  }
+  if(G['documentos-pendentes']){
+    DATA.docsPend=G['documentos-pendentes'].data.map(o=>{
+      const fil=String(o['Filial']||'').trim(), proj=String(o['Projeto']||'').trim();
+      return {cod:refineCod(codDe(fil),proj),fil,proj,placa:String(o['Placa']||'').trim(),
+        tipo:String(o['Tipo Veículo']||o['Tipo Veiculo']||'').trim(),
+        doc:String(o['Documento Não Vinculado']||o['Documento Nao Vinculado']||'').trim()};
+    }).filter(r=>r.placa);
+  }
   await loadDisp();
   // A carga de pneus (snapshot do Prolog + Km/L) é a mais pesada da abertura.
   // Quem passa {semPneus:true} (Gestão à Vista) busca sob demanda, ao abrir a

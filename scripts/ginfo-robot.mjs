@@ -69,11 +69,13 @@ const ABAS = [
     menu: ['FROTA', '1.1 - DOCUMENTOS'], mapear: true, opcional: true,
     sondaDrill: ['VENCIDOS', 'VENCENDO 30 DIAS', 'DOC. PENDENTE', 'CONFORMES'] },
   // Os dois drills que a sonda achou (19/10/2026): VENCIDOS e CONFORMES não têm.
+  // Alimentam a visão Documentos do Gestão à Vista. "Detalhes Vencimento" herda
+  // o filtro do card (Prazo Vencimento = Vencendo 30 Dias).
   { chave: 'documentos-vencimento', reportId: '99029b42-f690-451b-95b1-9fad2c9b670d',
-    menu: ['FROTA', '1.1 - DOCUMENTOS'], mapear: true, opcional: true,
+    menu: ['FROTA', '1.1 - DOCUMENTOS'], opcional: true,
     drill: { card: 'VENCENDO 30 DIAS', item: 'Detalhes Vencimento' } },
   { chave: 'documentos-pendentes', reportId: '99029b42-f690-451b-95b1-9fad2c9b670d',
-    menu: ['FROTA', '1.1 - DOCUMENTOS'], mapear: true, opcional: true,
+    menu: ['FROTA', '1.1 - DOCUMENTOS'], opcional: true,
     drill: { card: 'DOC. PENDENTE', item: 'Detalhes Documentos Pendentes' } },
   // STRESS TEST FROTA → tabela detalhada por placa (a de mais colunas da página).
   // Regra de período: até o dia 10, Mês = mês anterior e Quinzena = Segunda.
