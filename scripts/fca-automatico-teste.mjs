@@ -164,7 +164,7 @@ G.forEach((x, i) => { const dc = x.combReal / x.combRem - 1; const nota = Math.m
 // pelo id — assim a geração do FCA de Custos (?gen=all) cria o fato vazio e, na mesma rodada, o motor o relê e o
 // reusa, como no banco de verdade. __ins/__upd/__ups continuam sendo o diário do que foi pedido.
 const SHIM_SB = (admin, acErr) => `window.__ups=[];window.__T=window.__T||${JSON.stringify(T)};window.supabase={createClient:()=>({
-  auth:{getSession:async()=>({data:{session:{user:{id:'u1',email:'renan@x.com'}}}})},
+  auth:{getSession:async()=>({data:{session:{user:{id:'u1',email:(window.__email||'fortesindicadores@gmail.com')}}}})},
   from:(tabela)=>{const T=window.__T;let rows=(T[tabela]||[]).slice();
     const q={select(){return q;},order(){return q;},eq(c,v){if(tabela==='fca_profiles')rows=[{is_admin:${admin},nome:'Renan Teste'}];else rows=rows.filter(r=>r[c]===v);return q;},
       in(c,vs){rows=rows.filter(r=>!(c in r)||vs.includes(r[c]));return q;},gte(){return q;},lt(){return q;},
@@ -177,7 +177,7 @@ const SHIM_SB = (admin, acErr) => `window.__ups=[];window.__T=window.__T||${JSON
     return q;}})};`;
 
 const nav = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium' });
-async function abre({ admin = true, w = 1600, h = 900, tema = 'dark', acErr = false, oficial = null, pagina = 'fca-automatico/index.html', espera = null, t = null } = {}) {
+async function abre({ admin = true, w = 1600, h = 900, tema = 'dark', acErr = false, oficial = null, pagina = 'fca-automatico/index.html', espera = null, t = null, email = null } = {}) {
   const ctx = await nav.newContext({ viewport: { width: w, height: h }, serviceWorkers: 'block' });
   await ctx.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await ctx.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
@@ -197,6 +197,7 @@ async function abre({ admin = true, w = 1600, h = 900, tema = 'dark', acErr = fa
   await pg.addInitScript(t => { try { localStorage.setItem('bi_theme', t); localStorage.removeItem('fcaauto_mini'); } catch (e) {} }, tema);
   // a prévia guardada no navegador só é limpa no cenário oficial (o cenário da prévia depende dela sobreviver ao F5)
   if (t) await pg.addInitScript(x => { window.__T = x; }, t);
+  if (email) await pg.addInitScript(e => { window.__email = e; }, email);
   if (oficial) await pg.addInitScript(o => { window.__oficialInicio = o.inicio; window.__oficialFora = o.fora; try { localStorage.removeItem('fcaauto_previa_v1'); } catch (e) {} }, oficial);
   await pg.goto(BASE + '/' + pagina, { waitUntil: 'domcontentloaded' });
   if (espera) await pg.waitForSelector(espera, { timeout: 120000 }).catch(() => {});
@@ -761,6 +762,14 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   const { pg, ctx } = await abre({ admin: false });
   const gt = await pg.evaluate(() => (document.querySelector('.gate h2') || {}).textContent || '');
   af('cai no gate de admin', /somente admin/.test(gt), gt);
+  await ctx.close();
+}
+/* ══ 3b · admin que não é o dono do portal (Renan, 17/10/2026: só ele) ══ */
+{
+  console.log('\n══ 3b · outro admin');
+  const { pg, ctx } = await abre({ admin: true, email: 'outro.admin@conlogsa.com.br' });
+  const gt = await pg.evaluate(() => (document.querySelector('.gate h2') || {}).textContent || '');
+  af('admin que não é o dono cai no gate', /somente o dono/i.test(gt), gt);
   await ctx.close();
 }
 await nav.close(); srv.close();

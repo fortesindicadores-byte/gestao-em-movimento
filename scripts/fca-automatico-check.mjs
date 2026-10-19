@@ -27,7 +27,7 @@ await ctx.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, conte
 await ctx.route('https://lozwipoeacpvplgkrxkq.supabase.co/**', async r => {
   const u = r.request().url();
   if (/\/rest\/v1\/fca_profiles/.test(u)) return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(/vnd\.pgrst\.object/.test(r.request().headers()['accept'] || '') ? { is_admin: true, nome: 'Check' } : [{ is_admin: true, nome: 'Check' }]) });
-  if (/\/auth\/v1\//.test(u)) return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ id: 'check', email: 'check@local' }) });
+  if (/\/auth\/v1\//.test(u)) return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ id: 'check', email: 'fortesindicadores@gmail.com' }) });
   // o Supabase recusa a service key vinda de navegador ("Forbidden use of secret API key in browser"):
   // o pedido sai do Node, com a chave, e a resposta volta para a página
   const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS', 'access-control-expose-headers': 'content-range,content-profile' };
@@ -49,7 +49,7 @@ pg.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') cons
 await pg.addInitScript(() => {
   const exp = Math.floor(Date.now() / 1000) + 86400 * 30;
   localStorage.setItem('sb-lozwipoeacpvplgkrxkq-auth-token', JSON.stringify({ access_token: 'x.eyJzdWIiOiJjaGVjayJ9.x', refresh_token: 'r', token_type: 'bearer', expires_in: 86400 * 30, expires_at: exp,
-    user: { id: 'check', email: 'check@local', aud: 'authenticated', role: 'authenticated' } }));
+    user: { id: 'check', email: 'fortesindicadores@gmail.com', aud: 'authenticated', role: 'authenticated' } }));
 });
 const t0 = Date.now();
 await pg.goto(BASE + '/fca-automatico/index.html', { waitUntil: 'domcontentloaded' });
