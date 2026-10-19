@@ -79,7 +79,7 @@ conf('FCA CUIABA EMPURRADA jul: não pega o CBA T1 WH', emp.concl === 0, JSON.st
   vm.createContext(c2);
   vm.runInContext([fn('n1'), html.match(/const UNI_T1=[^\n]+/)[0], fn('heroEvolucao'),
     'globalThis.H={heroEvolucao,setT:(o,f)=>{globalThis.ICS=o;globalThis.SC=f;}};',
-    'function vigKeyN(d){return d.k;}',
+    'function vigKeyN(d){return d.k;}', 'function vigLbl(d){return String(d.k);}',
     'function unitScores(u,keys){const ks=[...keys];const v=ks.map(k=>(SC[u]||{})[k]).filter(x=>x!=null);return {v:v.length?v.reduce((a,b)=>a+b,0)/v.length:null};}',
     'function scoreFromNotes(n){return n.v;}'].join('\n'), c2);
   c2.H.setT([{ vigD: { k: 202607 } }, { vigD: { k: 202608 } }], SC);
@@ -89,6 +89,12 @@ conf('FCA CUIABA EMPURRADA jul: não pega o CBA T1 WH', emp.concl === 0, JSON.st
   conf('T2: Pelotas +5,0 (Guarulhos caiu)', els['h-evo2'].textContent === 'CDD PELOTAS · +5,0', els['h-evo2'].textContent);
   c2.H.heroEvolucao(rk, [{ k: 202607 }]);
   conf('sem mês anterior com dado → traço', els['h-evo1'].textContent === '—' && els['h-evo2'].textContent === '—', els['h-evo1'].textContent);
+  // todas as vigências marcadas (sem período anterior): último mês contra o primeiro
+  const rkJan = Object.keys(SC).map(uni => ({ uni, score: 0 }));
+  c2.H.heroEvolucao(rkJan, [{ k: 202607 }, { k: 202608 }]);
+  conf('janela inteira: T1 Piraí +10,0 (ago contra jul)', els['h-evo1'].textContent === 'PIRAI EMPURRADA · +10,0', els['h-evo1'].textContent);
+  conf('janela inteira: T2 Pelotas +5,0', els['h-evo2'].textContent === 'CDD PELOTAS · +5,0', els['h-evo2'].textContent);
+  conf('janela inteira: a dica diz o que comparou', /202608 contra 202607/.test(els['h-evo1'].title), els['h-evo1'].title);
 }
 console.log(`\n${ok} ok · ${falha} falha(s)`);
 process.exit(falha ? 1 : 0);
