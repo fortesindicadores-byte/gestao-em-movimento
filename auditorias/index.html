@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610191745">
+<meta name="build" content="202610191830">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Auditorias · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -137,9 +137,9 @@ body{font-family:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;font-s
 /* ── quadro ── */
 .board{flex:1;min-width:0;display:flex;flex-direction:column;}
 .top{display:flex;align-items:center;gap:6px;padding:12px 24px 10px;flex-wrap:wrap;}
-.tit-wrap{flex:1;min-width:0;}
+.tit-wrap{flex:1 1 0;min-width:0;}
 .top h1{font-size:21px;font-weight:600;letter-spacing:-.3px;}
-.tit-sub{font-size:11px;color:var(--txt3);font-weight:600;margin-top:2px;letter-spacing:.2px;}
+.tit-sub{font-size:11px;color:var(--txt3);font-weight:600;margin-top:2px;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tool{display:flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:7px;
   padding:6px 10px;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;}
 .tool:hover{background:var(--hover);color:var(--txt);}
@@ -196,25 +196,24 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 .aud-tab{table-layout:fixed;}
 /* a lateral tira largura das tabelas: a unidade ganha mais espaço que os 26% do painel antigo, para o nome não cortar */
 .aud-tab th:first-child,.aud-tab td:first-child{width:36%;}
+/* NO PADRÃO DE TABELA, NAS TRÊS VISÕES (Renan, 19/10/2026: "mais tabela no nosso padrão e menos esse
+   card dentro" → "em todas visões"): unidade em texto simples, filete entre as linhas, o nível do
+   Demarco (e o Nível 0 do DPO) em pílula, vazio/N/A em texto apagado. */
 table.dre.aud-tab thead th{text-align:center;padding:10px 8px;}
-table.dre.aud-tab thead th.uni{text-align:left;padding-left:12px;}
-table.dre.aud-tab td{text-align:center;font-size:11px;font-weight:700;padding:3px;border-bottom:0;}
+table.dre.aud-tab thead th.uni{text-align:left;padding-left:14px;}
+table.dre.aud-tab td{text-align:center;font-size:11px;font-weight:700;padding:6px 8px;border-bottom:1px solid var(--linha);}
 /* a coluna da unidade é texto: célula à esquerda (o sortable-table alinha o th pela célula) */
-table.dre.aud-tab td.uni{text-align:left;}
-table.dre.aud-tab tbody tr:first-child td{padding-top:6px;}
-table.dre.aud-tab tbody tr:last-child td{padding-bottom:6px;}
-.niv{display:block;border-radius:7px;padding:10px 6px;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,.25);}
-.uni-card{display:block;border-radius:7px;padding:10px 12px;background:rgba(255,255,255,.05);color:var(--txt);font-weight:700;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.niv.empty-niv{background:rgba(255,255,255,.05);color:var(--txt3);box-shadow:none;}
-body.claro .uni-card{background:rgba(0,0,0,.05);}
-body.claro .niv.empty-niv{background:rgba(0,0,0,.05);color:#999;}
+table.dre.aud-tab td.uni{text-align:left;color:var(--txt);padding-left:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+table.dre.aud-tab tbody tr:last-child td{border-bottom:0;}
+.niv{display:inline-block;min-width:min(110px,100%);max-width:100%;border-radius:999px;padding:6px 14px;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;}
+table.dre.aud-tab td .vazio{color:var(--txt3);font-weight:600;}
 /* ── SELOS DO DPO (Renan, 19/10/2026: "Consegue criar esses selos como uma logo… e eles substituírem
    os níveis 1 a 4 (1 é cinza e é básico)"): Nível 1 Básico (cinza) · 2 Intermediário (dourado) ·
    3 Sustentável (verde) · 4 Top Performance (azul). O selo é um <img> em SVG, sem nome de unidade,
    com o ano da coluna embaixo; o texto "Nível N" fica escondido na célula (Excel, ordenação e o
    /check-metas/, que lê a cor de data-bg). Nível 0 não tem selo e continua no chip. ── */
 .selo{display:flex;align-items:center;justify-content:center;gap:9px;}
-.selo img{width:34px;height:34px;flex:0 0 34px;display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));}
+.selo img{width:var(--selo,34px);height:var(--selo,34px);flex:0 0 var(--selo,34px);display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));}
 .selo .sl-nm{font-size:11px;font-weight:700;color:var(--txt);text-align:left;white-space:nowrap;}
 .selo .sl-nm i{display:block;font-style:normal;font-size:9.5px;font-weight:600;color:var(--txt3);}
 .vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
@@ -222,8 +221,8 @@ body.claro .niv.empty-niv{background:rgba(0,0,0,.05);color:#999;}
 .res-tab th:first-child,.res-tab td:first-child{width:52%;}
 /* selo + nome num bloco de largura fixa, centrado sob o título: os selos ficam alinhados entre si
    e o conjunto no meio da coluna (Renan, 19/10/2026: "Meio descentralizado") */
-table.dre.res-tab td .selo{display:inline-flex;width:170px;max-width:100%;justify-content:flex-start;vertical-align:middle;}
-table.dre.res-tab td .selo img{width:34px;height:34px;flex:0 0 34px;}
+table.dre.res-tab td .selo{display:inline-flex;width:calc(var(--selo,34px) + 140px);max-width:100%;justify-content:flex-start;vertical-align:middle;}
+table.dre.res-tab td{font-size:12px;}
 .ms-opt input[type=radio]{accent-color:var(--azul);width:14px;height:14px;flex:0 0 14px;cursor:pointer;}
 .vw-resultado-only{display:none;}
 body.vw-resultado .vw-resultado-only{display:block;}
@@ -232,17 +231,20 @@ body.vw-resultado .vw-resultado-only{display:block;}
    altura e chip, selo e letra crescem com a tela. ── */
 @media(min-width:861px){
 .aud-cheia .tsec{flex:1;min-height:0;}
-.aud-cheia .twrap{flex:1 1 auto;}
-.aud-cheia table.dre.aud-tab{height:100%;}
+.aud-cheia .twrap,#vw-resultado .twrap{flex:1 1 auto;}
+.aud-cheia table.dre.aud-tab,#vw-resultado table.dre.aud-tab{height:100%;}
+#vw-resultado .aud-grid{align-items:stretch;}
+#vw-resultado table.dre.aud-tab td{padding-top:2px;padding-bottom:2px;}
+.aud-cheia table.dre.aud-tab tbody td,#vw-resultado table.dre.aud-tab tbody td{height:calc(var(--selo,34px) + var(--folga,14px));}
 .aud-cheia .aud-tab th:first-child,.aud-cheia .aud-tab td:first-child{width:24%;}
 .aud-cheia table.dre.aud-tab thead th{font-size:clamp(10.5px,1.45vh,14px);padding:clamp(9px,1.4vh,14px) 8px;}
-.aud-cheia table.dre.aud-tab td{padding:clamp(3px,.45vh,6px) 6px;}
-.aud-cheia .niv,.aud-cheia .uni-card{font-size:clamp(11.5px,1.65vh,16px);padding:clamp(9px,1.45vh,15px) 10px;}
-.aud-cheia .uni-card{padding-left:16px;}
-.aud-cheia .selo img{width:clamp(30px,4.5vh,50px);height:clamp(30px,4.5vh,50px);flex-basis:clamp(30px,4.5vh,50px);}
+.aud-cheia table.dre.aud-tab td{padding:2px 8px;font-size:clamp(11.5px,1.65vh,16px);}
+.aud-cheia table.dre.aud-tab td.uni{font-size:clamp(12px,1.9vh,18px);padding-left:16px;}
+.aud-cheia .niv{font-size:clamp(11.5px,1.65vh,16px);padding:clamp(6px,1vh,10px) 18px;min-width:min(170px,90%);}
 }
+/* o selo cresce até a altura que a linha tem (ajustaSelos: altura livre ÷ nº de linhas) — Renan, 19/10/2026: "Maior os selos" */
 /* ── filtro Tier (multi-select do padrão) ── */
-.filtros{display:flex;align-items:center;gap:4px;min-width:0;}
+.filtros{display:flex;align-items:center;gap:4px;min-width:0;flex-wrap:nowrap;flex-shrink:0;}
 .ms-wrap{position:relative;}
 .ms-btn{display:flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:7px;
   padding:6px 10px;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;}
@@ -357,7 +359,7 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
   <main class="board">
     <div class="top">
       <div class="tit-wrap">
-        <h1 id="tit">Resumo Gerencial</h1>
+        <h1 id="tit">DPO/VPO</h1>
         <div class="tit-sub" id="titSub">Carregando…</div>
       </div>
       <div class="filtros">
@@ -470,10 +472,32 @@ function toggleMs(id){document.querySelectorAll('.ms-panel.open').forEach(p=>{if
 document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrap'))document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open'));});
 buildMsFilter('ms-tier',['T1','T2']);
 const tiersSel=()=>{const w=document.getElementById('ms-tier');return w&&w._sel&&w._sel.size?w._sel:null;};
+/* SELOS DO TAMANHO DA LINHA (Renan, 19/10/2026: "Maior os selos"): em tela grande a tabela ocupa a
+   altura toda, então o selo cresce até a altura de cada linha (altura livre ÷ nº de linhas, menos
+   uma folga), entre 30 e 76 px. No celular volta ao tamanho fixo. */
+function ajustaSelos(){
+  const cel=innerWidth<=860;
+  document.querySelectorAll('table.aud-tab').forEach(tb=>{
+    if(cel){tb.style.removeProperty('--selo');return;}
+    const tw=tb.closest('.twrap'); if(!tw||!tw.offsetParent) return;
+    const n=tb.tBodies[0]?tb.tBodies[0].rows.length:0; if(!n) return;
+    const th=tb.tHead?tb.tHead.offsetHeight:0;
+    const h=(tw.clientHeight-th)/n;
+    const td=tb.tBodies[0].rows[0].cells[0], cs=getComputedStyle(td);
+    const folga=Math.ceil(parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom))+2;
+    tb.style.setProperty('--folga',folga+'px');
+    tb.style.setProperty('--selo',Math.max(26,Math.min(76,Math.floor(h-folga-1)))+'px');
+  });
+}
+let _ajSel=0;
+const pedeSelos=()=>{cancelAnimationFrame(_ajSel);_ajSel=requestAnimationFrame(ajustaSelos);};
+addEventListener('resize',pedeSelos);
+if(window.ResizeObserver) new ResizeObserver(pedeSelos).observe(document.getElementById('cols'));
 function redesenha(){
   if(DADOS.dem)render('Demarco',DADOS.dem,'tbl-demarco','leg-demarco');
   if(DADOS.dpo)render('DPO',DADOS.dpo,'tbl-dpo','leg-dpo');
   renderResultado();
+  pedeSelos();
 }
 
 /* ── RESULTADO (Renan, 19/10/2026: "mais uma tela em auditorias, que eu consiga trazer apenas
@@ -521,8 +545,8 @@ function resTab(tab,rows,elId,ano,h){
     const sl=tab==='DPO'?seloCel(v,ano,true):null;
     if(sl) cel=sl;
     else if(mapa[v]) cel=`<span class="niv" style="background:${mapa[v].bg};color:${mapa[v].fg}">${v}</span>`;
-    else cel=`<span class="niv empty-niv">${v||'—'}</span>`;
-    html+=`<tr><td class="uni"><span class="uni-card">${r[0]}</span></td><td>${cel}</td></tr>`;
+    else cel=`<span class="vazio">${v||'—'}</span>`;
+    html+=`<tr><td class="uni">${r[0]}</td><td>${cel}</td></tr>`;
   });
   el.innerHTML=html+'</tbody></table>';
 }
@@ -535,6 +559,7 @@ function renderResultado(){
   const ano=document.getElementById('ms-ano')._val, h=document.getElementById('ms-h')._val;
   resTab('Demarco',DADOS.dem,'res-demarco',ano,h);
   resTab('DPO',DADOS.dpo,'res-dpo',ano,h);
+  if(typeof pedeSelos==='function') pedeSelos();
 }
 
 /* ── SELO DO DPO (SVG desenhado aqui, no formato dos selos oficiais: aro branco, disco na cor do
@@ -602,12 +627,12 @@ function render(tab,rows,elId,legId){
     html+='<tr>';
     keep.forEach(i=>{
       const v=r[i]||'';
-      if(i===0){html+=`<td class="uni"><span class="uni-card">${v}</span></td>`;return;}
+      if(i===0){html+=`<td class="uni" title="${v}">${v}</td>`;return;}
       const sl=tab==='DPO'?seloCel(v,anoDe(head[i]),false):null;
       if(sl){html+=`<td>${sl}</td>`;return;}
       const c=mapa[v];
       if(c)html+=`<td><span class="niv" style="background:${c.bg};color:${c.fg}">${v}</span></td>`;
-      else html+=`<td><span class="niv empty-niv">${v||'—'}</span></td>`;
+      else html+=`<td><span class="vazio">${v||'—'}</span></td>`;
     });
     html+='</tr>';
   });
@@ -635,6 +660,7 @@ function setVw(v){
   document.querySelectorAll('.vw').forEach(x=>x.classList.toggle('on', x.id==='vw-'+v));
   const t=document.getElementById('tit'); if(t) t.textContent=TIT[v]||'';
   document.body.classList.toggle('vw-resultado', v==='resultado');
+  if(typeof pedeSelos==='function') pedeSelos();
 }
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
 
@@ -689,6 +715,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610191745"></script>
+<script src="../assets/build-check.js?v=202610191830"></script>
 </body>
 </html>

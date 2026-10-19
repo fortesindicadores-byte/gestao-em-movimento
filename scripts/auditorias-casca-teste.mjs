@@ -139,7 +139,7 @@ ok('período sem dado (2H26) some do cabeçalho', N.demarco && JSON.stringify(N.
 {
   const todas = [...N.demarco.cels, ...N.dpo.cels].flat();
   ok('células de nível pintadas pelo mapa (chip com fundo inline)', todas.filter(c => /background:/.test(c)).length > 40, String(todas.filter(c => /background:/.test(c)).length));
-  ok('valor fora do mapa / vazio vira chip cinza (empty-niv)', todas.some(c => /^N\/A ¦ niv empty-niv/.test(c)) && todas.some(c => /^— ¦ niv empty-niv/.test(c)));
+  ok('valor fora do mapa / vazio vira texto apagado (.vazio)', todas.some(c => /^N\/A ¦ vazio/.test(c)) && todas.some(c => /^— ¦ vazio/.test(c)));
   ok('Demarco Nível 1 = azul #1565C0 e DPO Nível 0 = #404040', todas.some(c => /^Nível 1 ¦ niv ¦ background:#1565C0/.test(c)) && N.dpo.cels.flat().some(c => /^Nível 0 ¦ niv ¦ background:#404040/.test(c)));
 }
 for (const tema of ['dark', 'light']) for (const tb of ['demarco', 'dpo']) {
@@ -147,7 +147,10 @@ for (const tema of ['dark', 'light']) for (const tb of ['demarco', 'dpo']) {
   ok(`igual antes × depois (${tema === 'light' ? 'claro' : 'escuro'}) · ${tb}: cabeçalho`, JSON.stringify(a.head) === JSON.stringify(b.head));
   const dif = [];
   // SELOS DO DPO (Renan, 19/10/2026): Nível 1 a 4 do DPO viram o selo (texto "Nível N" escondido na célula)
-  const esperado = c => tb === 'dpo' && /^Nível [1-4] ¦ niv ¦/.test(c) ? c.split(' ¦ ')[0] + ' ¦ selo ¦  ¦ ' : c;
+  // PADRÃO DE TABELA (19/10/2026): unidade em texto simples e vazio/N/A em texto apagado (span .vazio)
+  const esperado = c => tb === 'dpo' && /^Nível [1-4] ¦ niv ¦/.test(c) ? c.split(' ¦ ')[0] + ' ¦ selo ¦  ¦ '
+    : / ¦ uni-card ¦ /.test(c) ? c.split(' ¦ ')[0] + ' ¦  ¦  ¦ '
+    : / ¦ niv empty-niv ¦ /.test(c) ? c.split(' ¦ ')[0] + ' ¦ vazio ¦  ¦ ' : c;
   a.cels.forEach((r, i) => r.forEach((c, j) => { if (esperado(c) !== (b.cels[i] || [])[j]) dif.push(`${i},${j}: ${esperado(c)} × ${(b.cels[i] || [])[j]}`); }));
   ok(`igual antes × depois (${tema === 'light' ? 'claro' : 'escuro'}) · ${tb}: ${a.cels.length}×${a.cels[0].length} células (texto, classe e cor do chip)`,
     a.cels.length === b.cels.length && !dif.length, dif.slice(0, 2).join(' / '));
@@ -219,6 +222,8 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
         lbl: [...document.querySelectorAll('#ms-ano .ms-lbl, #ms-h .ms-lbl')].map(e => e.textContent).join(' | '),
         vis: ['ms-ano', 'ms-h'].map(i => getComputedStyle(document.getElementById(i)).display),
         dem: t('res-demarco'), dpo: t('res-dpo'),
+        topo: Math.round(document.querySelector('.top').getBoundingClientRect().height),
+        alturas: [...new Set([...document.querySelectorAll('#res-dpo tbody tr')].map(tr => Math.round(tr.getBoundingClientRect().height)))],
         centro: [...document.querySelectorAll('#res-dpo td .selo')].map(sl => { const a = sl.getBoundingClientRect(), c = sl.closest('td').getBoundingClientRect(); return Math.round(Math.abs((a.left + a.right) / 2 - (c.left + c.right) / 2)); }),
         esq: [...new Set([...document.querySelectorAll('#res-dpo td .selo img')].map(i => Math.round(i.getBoundingClientRect().left)))],
         vert: tw.some(x => x.scrollHeight > x.clientHeight + 1), horiz: tw.some(x => x.scrollWidth > x.clientWidth + 1),
@@ -229,6 +234,8 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     ok(`${tag}: Resultado = só Unidade e Resultado, 13 unidades nas duas tabelas`, r.dem.head && r.dem.head.length === 2 && r.dpo.head.length === 2 && r.dem.rows.length === 13 && r.dpo.rows.length === 13 && /1H26/.test(r.dpo.head[1]), JSON.stringify(r.dpo.head));
     const espDpo = DPO.slice(1).filter(x => x[0]).map(x => x[3] || '—');
     ok(`${tag}: Resultado do DPO = a coluna 1H26 da aba, com selo e nome do nível`, r.dpo.rows.every((c, i) => c[1].includes(espDpo[i])) && r.dpo.selos === espDpo.filter(v => /^Nível [1-4]$/.test(v)).length && r.dpo.rows.some(c => /Sustentável|Básico|Intermediário|Top Performance/.test(c[1])), JSON.stringify(r.dpo.rows.slice(0, 3)));
+    ok(`${tag}: Resultado: filtros numa linha só no topo`, r.topo <= 70, `${r.topo} px`);
+    ok(`${tag}: Resultado: linhas do DPO da mesma altura`, Math.max(...r.alturas) - Math.min(...r.alturas) <= 2, r.alturas.join(','));
     ok(`${tag}: Resultado do DPO centrado na coluna, selos alinhados entre si`, r.centro.length && Math.max(...r.centro) <= 3 && r.esq.length === 1, `${Math.max(...r.centro)} px · ${r.esq.length} alinhamento(s)`);
     ok(`${tag}: Resultado cabe sem rolagem`, !r.vert && !r.horiz && !r.pagRola, `${r.vert} ${r.horiz} ${r.pagRola}`);
     if (SHOTS) { const dir = path.join(SHOTS, PASTA); fs.mkdirSync(dir, { recursive: true });
