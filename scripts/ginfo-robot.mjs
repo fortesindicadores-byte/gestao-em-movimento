@@ -61,6 +61,12 @@ const ABAS = [
   // (Filial | Projeto | Placa | Marca | Modelo | Tipo Veículo | Estado | Ano Fabricação)
   { chave: 'ativos', reportId: '99029b42-f690-451b-95b1-9fad2c9b670d',
     menu: ['FROTA', '1.1 - DOCUMENTOS'], drill: { card: 'VEÍCULOS', item: 'Detalhes Veículos' } },
+  // 1.1 DOCUMENTOS → a página principal (sem o drill dos veículos), para a
+  // visão Documentos do Gestão à Vista (Renan, 19/10/2026). `mapear` = ainda
+  // em reconhecimento pelo modo `tabelas`: fica FORA do run diário até a
+  // tabela certa ser escolhida (rodar só ela com GINFO_ABA=documentos).
+  { chave: 'documentos', reportId: '99029b42-f690-451b-95b1-9fad2c9b670d',
+    menu: ['FROTA', '1.1 - DOCUMENTOS'], mapear: true, opcional: true },
   // STRESS TEST FROTA → tabela detalhada por placa (a de mais colunas da página).
   // Regra de período: até o dia 10, Mês = mês anterior e Quinzena = Segunda.
   // (Do dia 11 em diante: regra a confirmar com o Renan — por ora fica o padrão da página.)
@@ -814,7 +820,7 @@ async function main() {
     if (MODE === 'tabelas') { await tabelas(page); return; }
     if (!ABAS.length) { log('nenhuma aba configurada ainda em ABAS — mapeie as abas no scripts/ginfo-robot.mjs.'); return; }
     let erros = 0;
-    const alvos = SO_ABA ? ABAS.filter(a => a.chave === SO_ABA) : ABAS;
+    const alvos = SO_ABA ? ABAS.filter(a => a.chave === SO_ABA) : ABAS.filter(a => !a.mapear);
     if (SO_ABA && !alvos.length) { console.error(`GINFO_ABA="${SO_ABA}" não existe em ABAS`); process.exit(1); }
     if (SO_ABA) log(`rodando só a aba ${SO_ABA}`);
     for (const aba of alvos) {
