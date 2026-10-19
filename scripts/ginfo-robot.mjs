@@ -66,7 +66,8 @@ const ABAS = [
   // em reconhecimento pelo modo `tabelas`: fica FORA do run diário até a
   // tabela certa ser escolhida (rodar só ela com GINFO_ABA=documentos).
   { chave: 'documentos', reportId: '99029b42-f690-451b-95b1-9fad2c9b670d',
-    menu: ['FROTA', '1.1 - DOCUMENTOS'], mapear: true, opcional: true },
+    menu: ['FROTA', '1.1 - DOCUMENTOS'], mapear: true, opcional: true,
+    sondaDrill: ['VENCIDOS', 'VENCENDO 30 DIAS', 'DOC. PENDENTE', 'CONFORMES'] },
   // STRESS TEST FROTA → tabela detalhada por placa (a de mais colunas da página).
   // Regra de período: até o dia 10, Mês = mês anterior e Quinzena = Segunda.
   // (Do dia 11 em diante: regra a confirmar com o Renan — por ora fica o padrão da página.)
@@ -802,6 +803,17 @@ async function tabelas(page) {
   }
   log(`cards da página (${cards.length}):`);
   [...new Set(cards)].slice(0, 30).forEach(c => log(`   "${c}"`));
+
+  /* SONDA DO DRILL (19/10/2026): a 1.1 - DOCUMENTOS não tem tabela solta — o
+     detalhe por placa mora num drill-through de card. Pedir um destino que não
+     existe faz o drillThrough imprimir o menu do botão direito (com o submenu
+     do Drill aberto), que é a lista de destinos possíveis. */
+  for (const card of (aba.sondaDrill || [])) {
+    log(`sonda do drill no card "${card}":`);
+    try { await drillThrough(page, card, '__sonda__'); } catch (e) { log('   ' + e.message); }
+    try { await page.keyboard.press('Escape'); } catch (e) {}
+    await page.waitForTimeout(1500);
+  }
 }
 
 /* resumo de conferência: quantas linhas e como se distribuem. Só colunas que
