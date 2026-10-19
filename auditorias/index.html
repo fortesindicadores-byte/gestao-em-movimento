@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610191830">
+<meta name="build" content="202610191900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Auditorias · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -565,40 +565,46 @@ function renderResultado(){
 /* ── SELO DO DPO (SVG desenhado aqui, no formato dos selos oficiais: aro branco, disco na cor do
    nível, nome do nível no arco de cima, ramos dos lados, "DPO <ano>" no arco de baixo) ── */
 const SELO={
-  'Nível 1':{nome:'Básico',         cor:'#8E959E', esc:'#6F767F'},
-  'Nível 2':{nome:'Intermediário',  cor:'#C9A45E', esc:'#A8843F'},
-  'Nível 3':{nome:'Sustentável',    cor:'#6B9A3A', esc:'#557D2C'},
-  'Nível 4':{nome:'Top Performance',cor:'#2F5DA8', esc:'#244A88'},
+  /* cores mais vivas e um tom claro (luz do disco) e um escuro (texto do aro e borda) por nível —
+     Renan, 19/10/2026: "Amarelo pode ser mais amarelo… pode melhorar a qualidade em geral dos selos" */
+  'Nível 1':{nome:'Básico',         cor:'#8F99A6', clr:'#C3CAD3', esc:'#56606D'},
+  'Nível 2':{nome:'Intermediário',  cor:'#E9A800', clr:'#FFD54A', esc:'#9C6B00'},
+  'Nível 3':{nome:'Sustentável',    cor:'#4E9A2A', clr:'#8FCB5C', esc:'#2F6B14'},
+  'Nível 4':{nome:'Top Performance',cor:'#1F57C3', clr:'#5C8FE6', esc:'#143C8C'},
 };
 const _seloCache={};
 function seloSrc(niv,ano){
   const k=niv+'|'+ano; if(_seloCache[k]) return _seloCache[k];
   const S=SELO[niv]; if(!S) return null;
-  const c=S.cor, e=S.esc;
+  const c=S.cor, e=S.esc, l=S.clr, id=niv.slice(-1);
   let fol='';                                     // folhas dos dois ramos, no aro
   for(const lado of [-1,1]){
     for(let i=0;i<8;i++){
-      const ang=(lado>0?62:242)+i*7.2, rad=ang*Math.PI/180, rr=85+(i%2?3:-3);
+      const ang=(lado>0?62:242)+i*7.2, rad=ang*Math.PI/180, rr=85+(i%2?3.2:-3.2);
       const x=100+rr*Math.sin(rad), y=100-rr*Math.cos(rad), rot=ang+(i%2?35:-35)*lado;
-      fol+=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="6.2" ry="2.5" transform="rotate(${(rot-90).toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${c}"/>`;
+      fol+=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="6.6" ry="2.7" transform="rotate(${(rot-90).toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${c}"/>`;
     }
   }
-  const tam=S.nome.length>12?13:16;
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">`
-   +`<defs><path id="t" d="M22,100 A78,78 0 0 1 178,100"/><path id="b" d="M10,100 A90,90 0 0 0 190,100"/></defs>`
-   +`<circle cx="100" cy="100" r="97" fill="#fff" stroke="${c}" stroke-width="4"/>`
-   +`<circle cx="100" cy="100" r="71" fill="${c}"/>`
+  const tam=S.nome.length>12?13.5:16.5;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">`
+   +`<defs><path id="t" d="M22,100 A78,78 0 0 1 178,100"/><path id="b" d="M10,100 A90,90 0 0 0 190,100"/>`
+   +`<radialGradient id="g${id}" cx="38%" cy="32%" r="78%"><stop offset="0" stop-color="${l}"/><stop offset=".55" stop-color="${c}"/><stop offset="1" stop-color="${e}"/></radialGradient>`
+   +`<linearGradient id="a${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#EEF0F3"/></linearGradient></defs>`
+   +`<circle cx="100" cy="100" r="97" fill="url(#a${id})" stroke="${e}" stroke-width="4"/>`
+   +`<circle cx="100" cy="100" r="91.5" fill="none" stroke="${c}" stroke-width="1.4" opacity=".55"/>`
+   +`<circle cx="100" cy="100" r="72" fill="url(#g${id})" stroke="${e}" stroke-width="2.5"/>`
+   +`<circle cx="100" cy="100" r="66" fill="none" stroke="#fff" stroke-width="1.3" opacity=".7"/>`
    +fol
    +`<g font-family="Montserrat,Arial,Helvetica,sans-serif" font-weight="800" fill="${e}" text-anchor="middle">`
    +`<text font-size="${tam}" letter-spacing="1"><textPath href="#t" startOffset="50%">${S.nome}</textPath></text>`
-   +`<text font-size="15" letter-spacing="3"><textPath href="#b" startOffset="50%">DPO ${ano||''}</textPath></text></g>`
-   +`<g fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round">`
+   +`<text font-size="15.5" letter-spacing="3"><textPath href="#b" startOffset="50%">DPO ${ano||''}</textPath></text></g>`
+   +`<g fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round">`
    +`<circle cx="58" cy="66" r="7"/><path d="M53 66a5 5 0 0 1 10 0"/>`
    +`<path d="M52 79H148M52 133H148"/>`
-   +`<circle cx="66" cy="106" r="16"/><circle cx="66" cy="99" r="3.6"/><path d="M59 117c1-7 4-10 7-10s6 3 7 10"/></g>`
+   +`<circle cx="66" cy="106" r="16"/><circle cx="66" cy="99" r="3.8"/><path d="M59 117c1-7 4-10 7-10s6 3 7 10"/></g>`
    +`<g font-family="Montserrat,Arial,Helvetica,sans-serif" fill="#fff" text-anchor="middle">`
-   +`<text x="108" y="71" font-size="16" font-weight="800">ABInBev</text>`
-   +`<text x="125" y="118" font-size="33" font-weight="400">DPO</text></g></svg>`;
+   +`<text x="108" y="71" font-size="16.5" font-weight="800">ABInBev</text>`
+   +`<text x="122" y="118" font-size="30" font-weight="700" letter-spacing=".5">DPO</text></g></svg>`;
   return _seloCache[k]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 const anoDe=lbl=>{const m=String(lbl||'').match(/([12])\s*H\s*(\d{2,4})|H([12])\s*(\d{2,4})/i);
@@ -715,6 +721,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610191830"></script>
+<script src="../assets/build-check.js?v=202610191900"></script>
 </body>
 </html>
