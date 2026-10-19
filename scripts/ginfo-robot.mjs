@@ -732,7 +732,20 @@ async function tabelas(page) {
   await page.waitForTimeout(8000);
   await clicarMenu(page, aba.menu[0], aba.menu[1]);
   if (aba.drill) { await drillThrough(page, aba.drill.card, aba.drill.item); }
-  await page.waitForTimeout(8000);
+  /* ESPERA O RELATÓRIO DESENHAR (19/10/2026): com 8 s fixos a 1.1 - DOCUMENTOS
+     voltou "nenhuma tabela, 0 cards" — o portal ainda não tinha pintado nada.
+     Espera até 2 min por algum visual no iframe da aba e diz em qual procurou. */
+  const visuais = async () => {
+    let n = 0;
+    for (const fr of framesDaAba(page, aba)) {
+      try { n += await fr.locator('visual-container, [class*="visualContainer"]').count(); } catch (e) {}
+    }
+    return n;
+  };
+  for (let t = 0; t < 24 && !(await visuais()); t++) await page.waitForTimeout(5000);
+  await page.waitForTimeout(6000);
+  const pbi = page.frames().filter(f => /app\.powerbi\.com\/reportEmbed/.test(f.url()));
+  log(`iframes do Power BI: ${pbi.length} · reportIds: ${JSON.stringify(pbi.map(f => (f.url().match(/reportId=([\w-]+)/) || [])[1] || '?'))} · visuais na aba: ${await visuais()}`);
   await shot(page, '20-tabelas-' + aba.chave);
 
   let n = 0;
