@@ -50,9 +50,19 @@ window.html2canvas = function(el, o){
   if (window.top !== window) {
     try {
       if (o && typeof o.onclone === 'function') o.onclone(document);
+      var rr = el.getBoundingClientRect();
       (window.top.__fotos = window.top.__fotos || []).push({
-        alvo: el.id || el.className, bg: o && o.backgroundColor,
-        alvoBg: el.style.backgroundColor, temMarca: el.hasAttribute('data-cm-alvo') });
+        alvo: el.id || el.className, bg: o && o.backgroundColor, url: location.pathname,
+        alvoBg: el.style.backgroundColor, temMarca: el.hasAttribute('data-cm-alvo'),
+        tela: el.hasAttribute('data-cm-tela'), rect: { w: Math.round(rr.width), h: Math.round(rr.height) },
+        janela: { w: window.innerWidth, h: window.innerHeight } });
+      /* FOTO DA TELA (Resumo Executivo): a captura tem a proporção do alvo, como
+         o html2canvas de verdade — é ela que o slide encaixa */
+      if (el.hasAttribute('data-cm-tela')) {
+        var ct = document.createElement('canvas'); ct.width = Math.round(rr.width * 2); ct.height = Math.round(rr.height * 2);
+        var xt = ct.getContext('2d'); xt.fillStyle = '#EAEAEA'; xt.fillRect(0, 0, ct.width, ct.height);
+        return Promise.resolve(ct);
+      }
     } catch (e) {}
   }
   try{
@@ -348,7 +358,7 @@ const CHART_NO_PAINEL = `
    DECODIFIQUE, senão o teste não prova nada sobre o boneco. */
 const PX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGP6zwAAAgUBAScLLXcAAAAASUVORK5CYII=';
 
-function painelDuble(chaves, dialeto, comGate) {
+function painelDuble(chaves, dialeto, comGate, tela) {
   if (comGate) return `<!doctype html><html><body><div class="app"><div class="cols">
     <div class="gate"><h2>Apenas administradores</h2><p>restrito</p></div></div></div></body></html>`;
   const vigs = chaves.map(DIALETO[dialeto || 'chave']);
@@ -393,6 +403,7 @@ function painelDuble(chaves, dialeto, comGate) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>
   .vw{display:none} .vw.on{display:block} .card,.tbl-section,.chart-card{min-height:220px;background:#eee}
   body{margin:0;min-height:700px}
+  ${tela ? '.vw.on{height:calc(100vh - 80px);overflow:hidden}' : ''}
   /* a cor do nível da Auditoria é um span de BLOCO preenchendo a célula —
      sem esta regra o teste mediria o CSS do dublê, não o do painel */
   .niv{display:block;border-radius:7px;padding:10px 6px;font-weight:700}
@@ -600,7 +611,7 @@ async function abre({ semJunEm = null, gateEm = null } = {}) {
                    'seara-km','fca-consolidado','combustivel/arvore-combustivel','combustivel/seara/arvore','auditorias',
                    'programa-reconhecimento','painel-metas']) {
     await ctx.route(BASE + '/' + p + '/', r => r.fulfill({ status: 200, contentType: 'text/html;charset=utf-8',
-      body: painelDuble(p === semJunEm ? VIGS_SEM_JUN : VIGS_OK, DIAL_DE[p], p === gateEm) }));
+      body: painelDuble(p === semJunEm ? VIGS_SEM_JUN : VIGS_OK, DIAL_DE[p], p === gateEm, p === 'resumo-executivo') }));
   }
   const pg = await ctx.newPage();
   /* A PROVA SAI DO __cm.extrai, não do html2canvas: a tabela deixou de ser
@@ -1114,9 +1125,24 @@ let provas1 = [];
      imagem tem de nascer em px na proporção da captura (o dublê devolve
      1200×700). */
   const razao = 1200 / 700;
-  af(fotos.every(x => x.fotoEsc && Math.abs(x.fotoEsc.w / x.fotoEsc.h - razao) < 0.03),
+  const ehTela = x => /Resumo Executivo/.test(x.tit);
+  af(fotos.filter(x => !ehTela(x)).every(x => x.fotoEsc && Math.abs(x.fotoEsc.w / x.fotoEsc.h - razao) < 0.03),
      'a imagem da foto guarda a proporção da captura — nada esticado',
      JSON.stringify(fotos.map(x => x.tit + '=' + (x.fotoEsc && (x.fotoEsc.w / x.fotoEsc.h).toFixed(2)))));
+  /* FOTO DA TELA NA PROPORÇÃO DO SLIDE (Renan, 19/10/2026: "Isso ficar assim ao
+     invés do tamanho do slide, se no painel está bem distribuído" · "Porque ficam
+     no meio ali"): o Resumo Executivo é fotografado como na tela, com o iframe na
+     altura que dá à visão a proporção da caixa, e preenche a caixa inteira. */
+  const reF = fotos.find(ehTela);
+  af(!!reF && reF.fotoEsc && reF.fotoEsc.w >= reF.fotoEsc.bw * 0.98 && reF.fotoEsc.h >= reF.fotoEsc.bh * 0.98,
+     'o Resumo Executivo preenche a caixa inteira do slide (largura E altura)', JSON.stringify(reF && reF.fotoEsc));
+  const ftTela = (await pg.evaluate(() => window.__fotos || [])).filter(f => f.tela);
+  af(ftTela.length === 1 && /resumo-executivo/.test(ftTela[0].url), 'a foto da tela é a do Resumo Executivo', JSON.stringify(ftTela.map(f => f.url)));
+  af(ftTela.length === 1 && reF && Math.abs(ftTela[0].rect.w / ftTela[0].rect.h - reF.fotoEsc.bw / reF.fotoEsc.bh) < 0.02,
+     'o painel foi fotografado na proporção da caixa do slide (o iframe ganhou a altura certa)',
+     JSON.stringify(ftTela.map(f => ({ rect: f.rect, janela: f.janela, caixa: reF && [reF.fotoEsc.bw, reF.fotoEsc.bh] }))));
+  af(ftTela.length === 1 && ftTela[0].rect.h === ftTela[0].janela.h - 80,
+     'sem soltar a altura do painel: a visão continua do tamanho da janela, não do texto', JSON.stringify(ftTela.map(f => [f.rect.h, f.janela.h])));
   /* e a árvore "achatadinha de leve": 94% da caixa */
   const arvF = fotos.filter(x => /Combustíveis – /.test(x.tit));
   af(arvF.length >= 1 && arvF.every(x => x.fotoEsc.w <= x.fotoEsc.bw * 0.94 + 1

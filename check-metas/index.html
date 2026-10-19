@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610192140">
+<meta name="build" content="202610192320">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -554,7 +554,7 @@ const ALVO_PADRAO="(document.querySelector('.vw.on')||document.querySelector('.c
 
 function P(tit,sub,url,prep,opt){ opt=opt||{};
   return {t:'p',tit,sub,url,podio:opt.podio,
-          caps:[{prep,alvo:opt.alvo,esp:opt.esp,rot:opt.rot,foto:opt.foto,semCols:opt.semCols,
+          caps:[{prep,alvo:opt.alvo,esp:opt.esp,rot:opt.rot,foto:opt.foto,tela:opt.tela,semCols:opt.semCols,
                 semTab:opt.semTab,nGraf:opt.nGraf,agrupa:opt.agrupa,juntar:opt.juntar,escala:opt.escala}]}; }
 /* UNIDADE, PROJETO e VIGÊNCIA do FCA já estão no TÍTULO do slide
    ("Manutenções – PIR · EMPURRADA" / "FCA · ago/2026") e são iguais em toda
@@ -642,8 +642,12 @@ function montaRoteiro(avisa){
   /* FOTO, não dados (casca padrão, 07/10/2026): o hero do Resumo Executivo agora é
      o .fin-hero do padrão, que o leitor de dados enxerga — sem isto o slide sairia
      só com a Pontuação Geral, sem os quatro quadrantes (que são texto, não KPI). */
+  /* FOTO DA TELA, NA PROPORÇÃO DO SLIDE (Renan, 19/10/2026: "Isso ficar assim ao
+     invés do tamanho do slide, se no painel está bem distribuído" · "Porque ficam
+     no meio ali"): `tela` — o painel é fotografado como se vê, com a altura que dá
+     ao .vw.on a proporção da caixa da foto, e preenche o slide. */
   R.push(P('Resumo Executivo',vX,'../resumo-executivo/',
-    `__cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`,{foto:true}));
+    `__cm.sel('ms-vig',${JSON.stringify([V])}); atualizar();`,{foto:true,tela:true}));
   R.push(P('Scorecard Financeiro','Acum/'+ano+' · Ambev + Seara','../visao-financeira/',
     `__cm.vw('resumo'); __cm.sel('ms-vig',${JSON.stringify(ACUM)}); atualizar();`));
   R.push(P('Scorecard Financeiro',vX+' · Ambev + Seara','../visao-financeira/',
@@ -1537,6 +1541,21 @@ async function esperaPronto(win,doc,teto){
 
 const escuro=c=>{ const m=String(c||'').match(/(\d+)[,\s]+(\d+)[,\s]+(\d+)/);
   return m ? (+m[1]+ +m[2]+ +m[3])/3 < 110 : false; };
+/* A CAIXA QUE O SLIDE DÁ À FOTO, medida num slide de verdade (título + subtítulo
+   + o miolo com o respiro de 64px), para o iframe nascer nessa proporção. */
+let _caixaFoto=null;
+function medeCaixaFoto(){
+  if(_caixaFoto) return _caixaFoto;
+  try{
+    const {el,mio}=window.SlidePadrao.slNovo('Medida','x');
+    const box=document.createElement('div'); box.style.cssText='flex:1;min-height:0;';   // a mesma caixa do slMonta
+    mio.appendChild(box);
+    _caixaFoto={w:box.clientWidth,h:box.clientHeight};
+    el.remove();
+    if(!(_caixaFoto.w>0&&_caixaFoto.h>0)) throw new Error('caixa sem medida');
+  }catch(e){ _caixaFoto={w:1472,h:706}; }
+  return _caixaFoto;
+}
 async function tiraFoto(win,el){
   const prep=win.H2CPrep||null;
   const h2c=win.html2canvas;
@@ -1628,7 +1647,7 @@ async function capturaSlide(s){
       const el=win.eval('(function(){try{return '+(c.alvo||ALVO_PADRAO)+';}catch(e){return null;}})()')||doc.body;
       if(!el||!el.offsetHeight) msgs.push('alvo vazio — usei a página inteira');
       let alvo=(el&&el.offsetHeight)?el:doc.body;
-      let alvoCheio=alvo, abriu=false;
+      let alvoCheio=alvo, abriu=false, redim=false;
       try{
         win.__cm.topo(alvo);
         /* o tabela() REDUZ o alvo ao <table> (é o que tira a moldura do card
@@ -1646,17 +1665,35 @@ async function capturaSlide(s){
            esticava para a página inteira. Slide de foto quer o desenho
            INTEIRO. */
         if(!c.semTab && c.foto!==true) alvo=win.__cm.tabela(alvo);
-        const h=win.__cm.abre(alvo);
-        const hh=Math.max(tam.h,Math.ceil(h)+40);
-        if(hh>tam.h){
-          /* cresce nos DOIS eixos: só na altura, a foto vira um retrato e
-             as faixas brancas nas laterais voltam */
-          const ww=Math.min(IFR_MAX,Math.round(hh*tam.r));
-          ifr.style.height=hh+'px'; ifr.style.width=ww+'px';
-          $('palco').style.width=Math.max(1600,ww)+'px';
+        if(c.tela){
+          /* FOTO DA TELA, NA PROPORÇÃO DA CAIXA DO SLIDE (Renan, 19/10/2026, no
+             Resumo Executivo: "Isso ficar assim ao invés do tamanho do slide, se
+             no painel está bem distribuído" · "Porque ficam no meio ali"). O
+             abre() solta a altura de todo ancestral — o .app deixa de ser fixo —
+             e um painel que na tela DIVIDE a altura entre os quadrantes vira o
+             tamanho natural do texto: a foto saía mais alta que larga (1,62),
+             cabia pela altura e ficava no meio do slide, com faixas dos lados.
+             Aqui o painel fica como na tela: o iframe ganha a altura que dá ao
+             alvo a MESMA proporção da caixa da foto, o painel redistribui no
+             resize, e a foto preenche a caixa inteira. */
+          const cx=medeCaixaFoto(), r0=alvo.getBoundingClientRect();
+          const hh=Math.max(300,Math.round(tam.h-r0.height+r0.width*cx.h/cx.w));
+          ifr.style.height=hh+'px'; redim=true;
+          await espera(T.abre||420);
+          alvo.setAttribute('data-cm-tela','1');
+        } else {
+          const h=win.__cm.abre(alvo);
+          const hh=Math.max(tam.h,Math.ceil(h)+40);
+          if(hh>tam.h){
+            /* cresce nos DOIS eixos: só na altura, a foto vira um retrato e
+               as faixas brancas nas laterais voltam */
+            const ww=Math.min(IFR_MAX,Math.round(hh*tam.r));
+            ifr.style.height=hh+'px'; ifr.style.width=ww+'px';
+            $('palco').style.width=Math.max(1600,ww)+'px';
+          }
+          abriu=true;
+          await espera(T.abre||420);
         }
-        abriu=true;
-        await espera(T.abre||420);
       }catch(e){ msgs.push('não consegui abrir o conteúdo: '+(e&&e.message||e)); }
       try{
         /* O PAINEL ENTREGA DADOS, NÃO PIXEL (Renan, 19/09/2026: "criar mesmo
@@ -1694,8 +1731,9 @@ async function capturaSlide(s){
         else { const foto=await tiraFoto(win,alvo); fotos.push({rot:c.rot,foto:true,escala:c.escala,...foto}); }
         crono('ler',Date.now()-tL);
       } finally {
-        if(abriu){ try{ win.__cm.fecha(); }catch(e){}
-          ifr.style.height=tam.h+'px'; ifr.style.width=tam.w+'px'; await espera(120); }
+        if(abriu){ try{ win.__cm.fecha(); }catch(e){} }
+        try{ alvo.removeAttribute('data-cm-tela'); }catch(e){}
+        if(abriu||redim){ ifr.style.height=tam.h+'px'; ifr.style.width=tam.w+'px'; await espera(120); }
       }
     }
   } finally { fecha(); }
@@ -2003,7 +2041,7 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202610192140"></script>
-<script src="../assets/build-check.js?v=202610192140"></script>
+<script src="slides.js?v=202610192320"></script>
+<script src="../assets/build-check.js?v=202610192320"></script>
 </body>
 </html>
