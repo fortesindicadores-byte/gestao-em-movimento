@@ -408,6 +408,8 @@ function painelDuble(chaves, dialeto, comGate) {
   <div class="app"><div class="side"></div><main class="board"><div class="top">
     <div class="tit-sub" id="titSub">pronto</div>
     <div class="ms-wrap" id="ms-vig"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">${ops('ms-vig')}</div></div></div>
+    <div class="ms-wrap" id="ms-anos"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
+      ${['2026','2025'].map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-uni"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
       ${(dialeto === 'mm' ? ['CGR','CBA','GRL','PIR','FLP'] : ['CGR','CBA T1','GRL','PIR','FLP','ANG']).map(u=>`<label class="ms-opt"><input type="checkbox" data-v="${u}"> ${u}</label>`).join('')}</div></div></div>
     <div class="ms-wrap" id="ms-proj"><span class="ms-cnt"></span><div class="ms-panel"><div class="ms-list">
@@ -498,7 +500,7 @@ function painelDuble(chaves, dialeto, comGate) {
   function setVw(v){ EST.vw = v;
     document.querySelectorAll('.vw').forEach(function(s){ s.classList.toggle('on', s.id === 'vw-' + v); }); grava(); }
   function leFiltros(){
-    ['ms-vig','ms-uni','ms-proj','ms-nv3','ms-fato','ms-pac','ms-org'].forEach(function(id){
+    ['ms-vig','ms-anos','ms-uni','ms-proj','ms-nv3','ms-fato','ms-pac','ms-org'].forEach(function(id){
       var w = document.getElementById(id); if (!w) return;
       EST.filtros[id] = w._sel ? Array.from(w._sel) : [];
     });
@@ -964,13 +966,12 @@ let provas1 = [];
      devolvia a herdada. Estas duas provas falham no código antigo. */
   const aud = ins.filter(x => /Auditorias/.test(x.tit));
   af(aud.length === 2, 'as DUAS tabelas de auditoria viram slide (Demarco e DPO/VPO)', aud.length);
-  const chAud = aud.flatMap(x => x.chips);
-  af(chAud.length >= 4, 'a cor do nível chega ao slide como chip', chAud.length);
-  af(chAud.some(c => c.bg === 'rgb(59, 179, 59)') && chAud.some(c => c.bg === 'rgb(234, 67, 53)'),
-     'com o fundo que o painel escolheu para cada nível',
-     JSON.stringify(chAud.map(c => c.t + '=' + c.bg)));
-  af(chAud.every(c => c.bloco), 'preenchendo a célula, como o .niv do painel',
-     JSON.stringify(chAud.map(c => c.bloco)));
+  /* Desde 19/10/2026 as Auditorias saem como FOTO da tela (selos e pílulas do
+     painel, Renan: "pode gerar nessa linha"), com o filtro Ano no ano do fechamento. */
+  af(aud.every(x => x.img), 'as auditorias saem como foto da tela (com os selos)', JSON.stringify(aud.map(x => !!x.img)));
+  const capAud = provas1.filter(p => /auditorias/.test(p.pag) && p.estado);
+  af(capAud.length >= 2 && capAud.every(p => JSON.stringify(p.estado.filtros['ms-anos']) === '["2026"]'),
+     'com o filtro Ano no ano do fechamento', JSON.stringify(capAud.map(p => p.estado && p.estado.filtros)));
   const rk = ins.filter(x => x.nLin && x.cels.includes('CDI MACACU'));
   af(rk.length >= 1, 'o ranking do Frota de Elite saiu como tabela', rk.length);
   const chRk = rk.flatMap(x => x.chips);

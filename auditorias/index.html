@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610192010">
+<meta name="build" content="202610192130">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Auditorias · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -216,7 +216,7 @@ table.dre.aud-tab td .vazio{color:var(--txt3);font-weight:600;}
 .selo img{width:var(--selo,34px);height:var(--selo,34px);flex:0 0 var(--selo,34px);display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));}
 .selo .sl-nm{font-size:11px;font-weight:700;color:var(--txt);text-align:left;white-space:nowrap;}
 .selo .sl-nm i{display:block;font-style:normal;font-size:9.5px;font-weight:600;color:var(--txt3);}
-.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;opacity:0;color:transparent;pointer-events:none;}
 /* visão Resultado: só unidade e resultado do semestre escolhido */
 .res-tab th:first-child,.res-tab td:first-child{width:52%;}
 /* selo + nome num bloco de largura fixa, centrado sob o título: os selos ficam alinhados entre si
@@ -781,6 +781,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610192010"></script>
+<script src="../assets/build-check.js?v=202610192130"></script>
 </body>
 </html>

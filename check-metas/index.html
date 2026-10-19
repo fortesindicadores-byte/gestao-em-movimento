@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610191930">
+<meta name="build" content="202610192140">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Check de Metas · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -735,10 +735,15 @@ function montaRoteiro(avisa){
      slide vai pelo paginador e a cor do nível vem do chip de cada célula. */
   /* Desde 19/10/2026 cada tabela é uma visão (DPO/VPO abre primeiro): abrir a
      visão antes de fotografar, senão o elemento escondido sai vazio. */
-  R.push(P('Auditorias','Demarco · '+ano,'../auditorias/',`__cm.vw('demarco');`,
-    {alvo:"document.querySelector('#tbl-demarco table')"}));
-  R.push(P('Auditorias','DPO/VPO · '+ano,'../auditorias/',`__cm.vw('dpo');`,
-    {alvo:"document.querySelector('#tbl-dpo table')"}));
+  /* FOTO DA TELA, COM OS SELOS (Renan, 19/10/2026, com os prints da DPO/VPO e do
+     Demarco: "Quando gerar o Check de metas, pode gerar nessa linha"). Lendo como
+     dado, o slide perdia o selo e a pílula; agora é a foto da tabela da visão, com
+     o filtro Ano no ano do fechamento (só os semestres dele), e o selo sai porque
+     a página já o guarda em PNG (o html2canvas não desenha o SVG). */
+  R.push(P('Auditorias','DPO/VPO · '+ano,'../auditorias/',`__cm.vw('dpo'); __cm.sel('ms-anos',${JSON.stringify([ano])}); __cm.redesenha('redesenha');`,
+    {foto:true,alvo:"document.querySelector('#tbl-dpo')"}));
+  R.push(P('Auditorias','Demarco · '+ano,'../auditorias/',`__cm.vw('demarco'); __cm.sel('ms-anos',${JSON.stringify([ano])}); __cm.redesenha('redesenha');`,
+    {foto:true,alvo:"document.querySelector('#tbl-demarco')"}));
   /* O Frota de Elite está na casca padrão (07/10/2026): ranking e Evolução
      Temporal moram em visões próprias e a foto de elemento escondido sai
      vazia — por isso o __cm.vw() antes do recorte. O pódio é lido do DOM
@@ -1998,7 +2003,7 @@ initApp();
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="slides.js?v=202610191930"></script>
-<script src="../assets/build-check.js?v=202610191930"></script>
+<script src="slides.js?v=202610192140"></script>
+<script src="../assets/build-check.js?v=202610192140"></script>
 </body>
 </html>
