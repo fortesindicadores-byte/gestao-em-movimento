@@ -11,7 +11,7 @@
 // O MESMO roteiro roda no HTML antigo (git show HEAD:…) e no novo, e as duas
 // tabelas têm de sair IGUAIS célula a célula: texto, classe e cor do chip.
 // Também confere o contrato do /check-metas/: `#tbl-demarco table` e
-// `#tbl-dpo table` existem na visão que abre primeiro (o prep é vazio).
+// `#tbl-dpo table` existem (o prep do check-metas abre a visão de cada uma).
 //
 // Uso (Playwright só importa de dentro de docs/driverpro-apresentacao/):
 //   git show HEAD:auditorias/index.html > /tmp/aud-antigo.html
@@ -159,45 +159,55 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     const { ctx, page, errs } = await abre(browser, null, vp, tema);
     const tag = `${vp.width}×${vp.height} ${tema === 'light' ? 'claro' : 'escuro'}`;
     ok(`${tag}: body.claro = tema`, await page.evaluate(t => document.body.classList.contains('claro') === (t === 'light'), tema));
-    await page.click('.s-item[data-vw="resumo"]'); await page.waitForTimeout(250);
-    const m = await page.evaluate(() => {
+    // DPO/VPO e Demarco em visões próprias, tabela na tela toda (Renan, 19/10/2026)
+    for (const [v, idT, nome] of [['dpo', 'tbl-dpo', 'DPO/VPO'], ['demarco', 'tbl-demarco', 'Demarco']]) {
+    await page.click(`.s-item[data-vw="${v}"]`); await page.waitForTimeout(250);
+    const m = await page.evaluate(idT => {
       const se = document.scrollingElement, vw = document.querySelector('.vw.on');
       const tw = [...vw.querySelectorAll('.twrap')];
       const blocos = [...vw.querySelectorAll('.tsec,.twrap')].map(c => c.getBoundingClientRect());
-      const card = document.querySelector('#tbl-demarco').closest('.card');
-      const cs = getComputedStyle(card);
+      const card = document.querySelector('#' + idT).closest('.card');
+      const cs = getComputedStyle(card), co = document.getElementById('cols'), cc = getComputedStyle(co), cb = co.getBoundingClientRect(), cr = card.getBoundingClientRect();
+      const cols = { width: cb.width - parseFloat(cc.paddingLeft) - parseFloat(cc.paddingRight), height: cb.height - parseFloat(cc.paddingTop) - parseFloat(cc.paddingBottom) };
+      const tb = document.querySelector('#' + idT + ' table'), twr = document.querySelector('#' + idT).getBoundingClientRect();
+      const img = vw.querySelector('.selo img'), niv = vw.querySelector('.niv:not(.empty-niv)');
       return { id: vw.id, tit: document.getElementById('tit').textContent,
         pagRola: se.scrollHeight > se.clientHeight + 1 || se.scrollWidth > se.clientWidth + 1,
         vwRola: vw.scrollHeight > vw.clientHeight + 1,
         horiz: tw.some(t => t.scrollWidth > t.clientWidth + 1),
         vert: tw.some(t => t.scrollHeight > t.clientHeight + 1),
         foraTela: blocos.some(r => r.bottom > innerHeight + 1 || r.right > innerWidth + 1),
-        lado: (() => { const a = document.querySelector('#tbl-demarco').getBoundingClientRect(), b = document.querySelector('#tbl-dpo').getBoundingClientRect(); return Math.abs(a.top - b.top) < 2 && b.left > a.right; })(),
+        cheia: [Math.round(cr.width / cols.width * 100), Math.round(cr.height / cols.height * 100), Math.round(tb.getBoundingClientRect().height / twr.height * 100)],
+        grande: img ? Math.round(img.getBoundingClientRect().height) : niv ? parseFloat(getComputedStyle(niv).fontSize) : 0,
         thAlto: [...vw.querySelectorAll('thead tr')].map(tr => Math.round(tr.getBoundingClientRect().height)).filter(h => h > 60),
-        thAlin: [...document.querySelectorAll('#tbl-demarco thead th')].map(th => getComputedStyle(th).textAlign).join(','),
-        cabBg: getComputedStyle(document.querySelector('#tbl-demarco thead th')).backgroundColor,
-        cabSticky: getComputedStyle(document.querySelector('#tbl-demarco thead th')).position,
+        thAlin: [...document.querySelectorAll('#' + idT + ' thead th')].map(th => getComputedStyle(th).textAlign).join(','),
+        cabBg: getComputedStyle(document.querySelector('#' + idT + ' thead th')).backgroundColor,
+        cabSticky: getComputedStyle(document.querySelector('#' + idT + ' thead th')).position,
         moldura: [cs.borderTopWidth, cs.backgroundColor, cs.boxShadow].join(' | '),
-        twBorda: getComputedStyle(document.querySelector('#tbl-demarco')).borderTopWidth,
-        ttits: [...vw.querySelectorAll('.ttit')].map(e => e.textContent + (getComputedStyle(e).display === 'none' ? '(oculto)' : '')),
+        twBorda: getComputedStyle(document.querySelector('#' + idT)).borderTopWidth,
+        ttits: [...vw.querySelectorAll('.ttit')].map(e => e.offsetParent ? e.textContent : '(oculto)'),
         sub: document.getElementById('titSub').textContent };
-    });
-    ok(`${tag}: visão abre (${m.tit})`, m.id === 'vw-resumo' && m.tit === 'Resumo Gerencial');
-    ok(`${tag}: página não rola`, !m.pagRola);
-    ok(`${tag}: a visão não transborda`, !m.vwRola);
-    ok(`${tag}: tabela sem barra horizontal`, !m.horiz);
-    ok(`${tag}: todas as unidades à vista, sem barra vertical`, !m.vert);
-    ok(`${tag}: nada fora da tela`, !m.foraTela);
-    ok(`${tag}: Demarco e DPO/VPO lado a lado`, m.lado);
-    ok(`${tag}: cabeçalho numa linha só`, !m.thAlto.length, m.thAlto.join(','));
-    ok(`${tag}: cabeçalho alinhado ao conteúdo (unidade à esq., chips centralizados)`, m.thAlin === 'left,center,center,center', m.thAlin);
-    ok(`${tag}: cabeçalho sticky no tom --cabec`, m.cabSticky === 'sticky' && m.cabBg !== 'rgba(0, 0, 0, 0)', `${m.cabSticky} ${m.cabBg}`);
-    ok(`${tag}: espelho atrás da tabela (card com borda e fundo — Renan, 06/10/2026)`, /^1px \| rgba?\(/.test(m.moldura) && !/rgba\(0, 0, 0, 0\)/.test(m.moldura), `${m.moldura} · twrap ${m.twBorda}`);
-    ok(`${tag}: títulos das tabelas (não repetem a visão) visíveis`, JSON.stringify(m.ttits) === '["Demarco","DPO/VPO"]', JSON.stringify(m.ttits));
-    ok(`${tag}: subtítulo com a fonte e a hora da carga`, /^Consolidado Geral — Demarco & DPO\/VPO · Atualizado \d\d\/\d\d\/\d{4} \d\d:\d\d$/.test(m.sub), m.sub);
+    }, idT);
+    ok(`${tag} · ${nome}: visão abre (${m.tit})`, m.id === 'vw-' + v && m.tit === nome);
+    ok(`${tag} · ${nome}: página não rola`, !m.pagRola);
+    ok(`${tag} · ${nome}: a visão não transborda`, !m.vwRola);
+    ok(`${tag} · ${nome}: tabela sem barra horizontal`, !m.horiz);
+    ok(`${tag} · ${nome}: todas as unidades à vista, sem barra vertical`, !m.vert);
+    ok(`${tag} · ${nome}: nada fora da tela`, !m.foraTela);
+    ok(`${tag} · ${nome}: tabela na tela toda (largura · altura do card · tabela no card, %)`, m.cheia[0] >= 99 && m.cheia[1] >= 99 && m.cheia[2] >= 97, m.cheia.join(' · '));
+    ok(`${tag} · ${nome}: grande (selo ≥ 34 px ou letra do chip ≥ 12 px)`, v === 'dpo' ? m.grande >= 34 : m.grande >= 12, String(m.grande));
+    ok(`${tag} · ${nome}: cabeçalho numa linha só`, !m.thAlto.length, m.thAlto.join(','));
+    ok(`${tag} · ${nome}: cabeçalho alinhado ao conteúdo`, /^left(,center)+$/.test(m.thAlin), m.thAlin);
+    ok(`${tag} · ${nome}: cabeçalho sticky no tom --cabec`, m.cabSticky === 'sticky' && m.cabBg !== 'rgba(0, 0, 0, 0)', `${m.cabSticky} ${m.cabBg}`);
+    ok(`${tag} · ${nome}: espelho atrás da tabela`, /^1px \| rgba?\(/.test(m.moldura) && !/rgba\(0, 0, 0, 0\)/.test(m.moldura), `${m.moldura} · twrap ${m.twBorda}`);
+    ok(`${tag} · ${nome}: título que repete a visão escondido`, m.ttits.every(t => t === '(oculto)'), JSON.stringify(m.ttits));
+    ok(`${tag} · ${nome}: subtítulo com a fonte e a hora da carga`, /^Consolidado Geral — Demarco & DPO\/VPO · Atualizado \d\d\/\d\d\/\d{4} \d\d:\d\d$/.test(m.sub), m.sub);
+    if (SHOTS) { const dir = path.join(SHOTS, PASTA); fs.mkdirSync(dir, { recursive: true });
+      await page.screenshot({ path: path.join(dir, `${v}-${vp.width}-${tema === 'light' ? 'claro' : 'escuro'}.png`) }); }
+    }
     // VISÃO RESULTADO (Renan, 19/10/2026): só unidade e resultado, com Ano e Semestre
     const filtrosResumo = await page.evaluate(() => ['ms-ano', 'ms-h'].map(i => getComputedStyle(document.getElementById(i)).display));
-    ok(`${tag}: Ano e Semestre escondidos no Resumo`, filtrosResumo.every(d => d === 'none'), filtrosResumo.join(','));
+    ok(`${tag}: Ano e Semestre escondidos nas visões DPO/VPO e Demarco`, filtrosResumo.every(d => d === 'none'), filtrosResumo.join(','));
     await page.click('.s-item[data-vw="resultado"]'); await page.waitForTimeout(250);
     const lr = () => page.evaluate(() => {
       const t = id => { const tb = document.querySelector(`#${id} table`); if (!tb) return document.querySelector('#' + id).textContent.trim();
@@ -229,7 +239,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     await page.click('#ms-ano .ms-btn'); await page.click('#ms-ano input[data-v="2026"]'); await page.waitForTimeout(150);
     r = await lr();
     ok(`${tag}: semestre sem coluna na aba (2H26 vazio) avisa em vez de tabela vazia`, typeof r.dpo === 'string' && /Sem 2H 2026|Nenhuma|—/.test(r.dpo) || (r.dpo.rows && r.dpo.rows.every(c => c[1] === '—')), JSON.stringify(r.dpo).slice(0, 80));
-    await page.click('.s-item[data-vw="resumo"]'); await page.waitForTimeout(150);
+    await page.click('.s-item[data-vw="demarco"]'); await page.waitForTimeout(150);
     if (SHOTS && vp.width === 1600) {
       const dir = path.join(SHOTS, PASTA); fs.mkdirSync(dir, { recursive: true });
       await page.screenshot({ path: path.join(dir, `resumo-${tema === 'light' ? 'claro' : 'escuro'}.png`) });
@@ -242,7 +252,7 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       // contrato do /check-metas/: prep vazio, alvo = a tabela de cada aba, chips com cor
       const cm = await page.evaluate(() => ['#tbl-demarco table', '#tbl-dpo table'].map(s => { const t = document.querySelector(s);
         return t ? t.querySelectorAll('tbody tr').length + ':' + t.querySelectorAll('.niv[style*="background"], .selo[data-bg] img').length : null; }));
-      ok('check-metas: #tbl-demarco table e #tbl-dpo table na 1ª visão, com chips pintados', cm.every(x => x && +x.split(':')[0] === 13 && +x.split(':')[1] > 20), cm.join(' / '));
+      ok('check-metas: #tbl-demarco table e #tbl-dpo table existem, com chips pintados', cm.every(x => x && +x.split(':')[0] === 13 && +x.split(':')[1] > 20), cm.join(' / '));
       await page.click('#btTema'); await page.waitForTimeout(200);
       const depois = await page.evaluate(() => [document.body.classList.contains('claro'), localStorage.getItem('bi_theme'), document.getElementById('btTema').innerHTML.includes('M21 12.79')]);
       ok('troca de tema: body.claro + bi_theme + ícone', depois[0] && depois[1] === 'light' && depois[2], JSON.stringify(depois));
@@ -287,8 +297,8 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       ok('filtro Tier "Todos" volta às 13 unidades', todos.every(l => l.length === 13), todos.map(l => l.length).join('/'));
       await page.click('#btMini'); await page.waitForTimeout(300);
       ok('lateral recolhe (chave auditorias_mini)', await page.evaluate(() => document.querySelector('.side').classList.contains('mini') && localStorage.getItem('auditorias_mini') === '1'));
-      await page.hover('.s-item[data-vw="resumo"]'); await page.waitForTimeout(200);
-      ok('dica na lateral recolhida', await page.evaluate(() => { const d = document.querySelector('.dica.on'); return d && d.textContent === 'Resumo Gerencial'; }));
+      await page.hover('.s-item[data-vw="demarco"]'); await page.waitForTimeout(200);
+      ok('dica na lateral recolhida', await page.evaluate(() => { const d = document.querySelector('.dica.on'); return d && d.textContent === 'Demarco'; }));
       if (SHOTS) await page.screenshot({ path: path.join(SHOTS, PASTA, 'resumo-mini-escuro.png') });
       const mini = await page.evaluate(() => { const tw = [...document.querySelectorAll('.twrap')]; return tw.some(t => t.scrollWidth > t.clientWidth + 1); });
       ok('lateral recolhida: tabela sem barra horizontal', !mini);
@@ -297,16 +307,15 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     await ctx.close();
   }
 }
-// 3 · celular: a página volta a rolar e as tabelas empilham
+// 3 · celular: a tabela da visão aberta aparece inteira
 {
   const { ctx, page, errs } = await abre(browser, null, { width: 390, height: 844 }, 'dark');
   const m = await page.evaluate(() => {
-    const a = document.querySelector('#tbl-demarco').getBoundingClientRect(), b = document.querySelector('#tbl-dpo').getBoundingClientRect();
-    return { rola: document.scrollingElement.scrollHeight > innerHeight || document.body.scrollHeight > document.body.clientHeight + 1,
-      empilha: b.top >= a.bottom - 1, alt: [Math.round(a.height), Math.round(b.height)],
+    const b = document.querySelector('#tbl-dpo').getBoundingClientRect();
+    return { vis: document.querySelector('.vw.on').id, alt: Math.round(b.height),
       larg: document.scrollingElement.scrollWidth <= innerWidth + 1 };
   });
-  ok('celular: página rola e as tabelas empilham, com altura', m.rola && m.empilha && m.alt.every(h => h > 200), JSON.stringify(m));
+  ok('celular: abre no DPO/VPO com a tabela inteira (altura)', m.vis === 'vw-dpo' && m.alt > 200, JSON.stringify(m));
   ok('celular: página sem rolagem lateral', m.larg);
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, PASTA, 'celular-resumo.png'), fullPage: true });
   ok('celular: zero erro de página', errs.length === 0, errs.join(' / '));

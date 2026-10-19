@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610191700">
+<meta name="build" content="202610191730">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Auditorias · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -225,6 +225,20 @@ table.dre.res-tab td .selo img{width:34px;height:34px;flex:0 0 34px;}
 .ms-opt input[type=radio]{accent-color:var(--azul);width:14px;height:14px;flex:0 0 14px;cursor:pointer;}
 .vw-resultado-only{display:none;}
 body.vw-resultado .vw-resultado-only{display:block;}
+/* ── DPO/VPO e Demarco em visões próprias, tabela ocupando a tela toda (Renan, 19/10/2026:
+   "divida em DPO/VPO e Demarco as visões, e deixe grande, tela toda"). As linhas dividem a
+   altura e chip, selo e letra crescem com a tela. ── */
+@media(min-width:861px){
+.aud-cheia .tsec{flex:1;min-height:0;}
+.aud-cheia .twrap{flex:1 1 auto;}
+.aud-cheia table.dre.aud-tab{height:100%;}
+.aud-cheia .aud-tab th:first-child,.aud-cheia .aud-tab td:first-child{width:24%;}
+.aud-cheia table.dre.aud-tab thead th{font-size:clamp(10.5px,1.45vh,14px);padding:clamp(9px,1.4vh,14px) 8px;}
+.aud-cheia table.dre.aud-tab td{padding:clamp(3px,.45vh,6px) 6px;}
+.aud-cheia .niv,.aud-cheia .uni-card{font-size:clamp(11.5px,1.65vh,16px);padding:clamp(9px,1.45vh,15px) 10px;}
+.aud-cheia .uni-card{padding-left:16px;}
+.aud-cheia .selo img{width:clamp(30px,4.5vh,50px);height:clamp(30px,4.5vh,50px);flex-basis:clamp(30px,4.5vh,50px);}
+}
 /* ── filtro Tier (multi-select do padrão) ── */
 .filtros{display:flex;align-items:center;gap:4px;min-width:0;}
 .ms-wrap{position:relative;}
@@ -314,7 +328,8 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
     </div>
 
     <div class="s-sec">Visões</div>
-    <button class="s-item on" data-vw="resumo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Resumo Gerencial</button>
+    <button class="s-item on" data-vw="dpo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/></svg> DPO/VPO</button>
+    <button class="s-item" data-vw="demarco"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Demarco</button>
     <button class="s-item" data-vw="resultado"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/></svg> Resultado</button>
 
     <div class="s-sec">Atalhos</div>
@@ -355,17 +370,18 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
     </div>
 
     <div class="cols" id="cols">
-      <!-- ══ 1 · RESUMO GERENCIAL — Demarco e DPO/VPO lado a lado ══ -->
-      <section class="vw on" id="vw-resumo">
-        <div class="aud-grid">
-          <div class="card tsec">
-            <div class="thead-row"><div class="ttit">Demarco</div></div>
-            <div class="twrap" id="tbl-demarco"><div class="loading">Carregando…</div></div>
-          </div>
-          <div class="card tsec">
-            <div class="thead-row"><div class="ttit">DPO/VPO</div></div>
-            <div class="twrap" id="tbl-dpo"><div class="loading">Carregando…</div></div>
-          </div>
+      <!-- ══ 1 · DPO/VPO e 2 · DEMARCO — uma visão cada, tabela na tela toda (Renan, 19/10/2026).
+           O título da tabela repetia a visão e ficou escondido. ══ -->
+      <section class="vw on aud-cheia" id="vw-dpo">
+        <div class="card tsec">
+          <div class="thead-row" style="display:none"><div class="ttit">DPO/VPO</div></div>
+          <div class="twrap" id="tbl-dpo"><div class="loading">Carregando…</div></div>
+        </div>
+      </section>
+      <section class="vw aud-cheia" id="vw-demarco">
+        <div class="card tsec">
+          <div class="thead-row" style="display:none"><div class="ttit">Demarco</div></div>
+          <div class="twrap" id="tbl-demarco"><div class="loading">Carregando…</div></div>
         </div>
       </section>
 
@@ -609,8 +625,8 @@ async function carregar(){
 }
 
 /* ── navegação entre as visões ────────────────────────────────────────────── */
-const TIT={resumo:'Resumo Gerencial',resultado:'Resultado'};
-let VW='resumo';
+const TIT={dpo:'DPO/VPO',demarco:'Demarco',resultado:'Resultado'};
+let VW='dpo';
 function setVw(v){
   VW=v;
   document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===v));
@@ -671,6 +687,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610191700"></script>
+<script src="../assets/build-check.js?v=202610191730"></script>
 </body>
 </html>
