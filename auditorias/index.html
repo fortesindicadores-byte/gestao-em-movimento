@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610191945">
+<meta name="build" content="202610192010">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Auditorias · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -644,15 +644,34 @@ function seloSrc(niv,ano){
    +`<g font-family="Montserrat,Arial,Helvetica,sans-serif" fill="#fff" text-anchor="middle">`
    +`<text x="108" y="71" font-size="16.5" font-weight="800">ABInBev</text>`
    +`<text x="122" y="118" font-size="30" font-weight="700" letter-spacing=".5">DPO</text></g></svg>`;
-  return _seloCache[k]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+  const url=_seloCache[k]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+  seloRaster(k,url);
+  return url;
+}
+/* O html2canvas 1.4.1 (PNG e PDF do portal) não desenha <img> de SVG com textPath
+   e degradê: o selo saía em branco no PNG (Renan, 19/10/2026, exportando para o
+   LinkedIn). Cada selo vira também um PNG de 400 px, desenhado num canvas a partir
+   do mesmo SVG, e é ele que fica no src. Se o navegador recusar o canvas, fica o SVG. */
+const _seloPng={};
+function seloRaster(k,url){
+  if(_seloPng[k]!==undefined) return; _seloPng[k]=null;
+  const im=new Image();
+  im.onload=()=>{ try{
+      const cv=document.createElement('canvas'); cv.width=cv.height=400;
+      cv.getContext('2d').drawImage(im,0,0,400,400);
+      const png=_seloPng[k]=cv.toDataURL('image/png');
+      document.querySelectorAll('img[data-selo]').forEach(i=>{ if(i.getAttribute('data-selo')===k) i.src=png; });
+    }catch(e){ console.warn('selo em PNG',e); } };
+  im.src=url;
 }
 const anoDe=lbl=>{const m=String(lbl||'').match(/([12])\s*H\s*(\d{2,4})|H([12])\s*(\d{2,4})/i);
   if(!m) return ''; const a=m[2]||m[4]; return a.length===2?'20'+a:a;};
 /* célula do DPO: o selo (com o nome do nível ao lado quando pedido); sem selo, o chip de sempre */
 function seloCel(v,ano,comNome){
-  const S=SELO[v], src=S&&seloSrc(v,ano);
-  if(!src) return null;
-  return `<span class="selo" data-bg="${S.cor}" data-fg="#fff" title="${v} · ${S.nome}"><img alt="" src="${src}">`
+  const S=SELO[v], svg=S&&seloSrc(v,ano);
+  if(!svg) return null;
+  const k=v+'|'+ano, src=_seloPng[k]||svg;
+  return `<span class="selo" data-bg="${S.cor}" data-fg="#fff" title="${v} · ${S.nome}"><img alt="" data-selo="${k}" src="${src}">`
     +(comNome?`<span class="sl-nm">${S.nome}<i>${v}</i></span>`:`<span class="vh">${v}</span>`)+`</span>`;
 }
 
@@ -762,6 +781,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610191945"></script>
+<script src="../assets/build-check.js?v=202610192010"></script>
 </body>
 </html>
