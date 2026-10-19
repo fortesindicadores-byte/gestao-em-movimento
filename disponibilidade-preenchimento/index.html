@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610132300">
+<meta name="build" content="202610191400">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Disponibilidade · Frota do Dia</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -627,6 +627,20 @@ function unitCod(nome,projeto){
   }
   return cod;
 }
+/* Unidade na TELA é só a sigla (Renan, 19/10/2026: "Só MCC e o projeto que
+   separa"), como na Carta de Custos: o filtro mostra CBA e MCC, e o tier
+   (T1 · T1 WH · T2) continua no banco e na RLS, decidido pelo PROJETO do
+   veículo. O evento era gravado com a unidade do filtro da tela, então uma van
+   lançada com o filtro em MCC T1 ficava no T1; agora o tier do evento sai do
+   ativo pela placa (mesma sigla, e só se o acesso cobre o código).          */
+const baseU=c=>String(c||'').replace(/\s+T(1( WH)?|2)$/,'');
+const basesDe=l=>[...new Set(l.map(baseU))];
+function codDoAtivo(placa,base){
+  const a=ATIVO_POR[normP(placa)];
+  if(!a||!a.cod||!MY_UNITS.includes(a.cod)) return null;
+  return (base==null||baseU(a.cod)===baseU(base))?a.cod:null;
+}
+const uniEv=e=>(e&&codDoAtivo(e.placa,e.unidade))||(e&&e.unidade);
 
 let sb=null, PROFILE=null, ADMIN=false, MY_UNITS=[], UNIT=null, USER=null, EU='';
 let ATIVOS=[], ATIVO_POR={}, EVENTS=[], ABERTAS_POR={};
@@ -752,9 +766,10 @@ async function contaAbertas(){
   }catch(e){}
 }
 // unidades em foco: nenhuma marcada = todas as liberadas
-const unisSel=()=>FUNI.size?[...FUNI]:MY_UNITS;
+// (FUNI guarda a SIGLA; unisSel devolve os códigos com tier que ela cobre)
+const unisSel=()=>FUNI.size?MY_UNITS.filter(u=>FUNI.has(baseU(u))):MY_UNITS;
 const frota=()=>{const S=new Set(unisSel());return ATIVOS.filter(a=>S.has(a.cod));};
-const abertos=()=>{const S=new Set(unisSel());return EVENTS.filter(e=>!e.data_retorno&&S.has(e.unidade));};
+const abertos=()=>{const S=new Set(unisSel());return EVENTS.filter(e=>!e.data_retorno&&S.has(uniEv(e)));};
 
 /* ── filtros ── */
 // ── PROJETO: de-para de exibição e os que não entram (Renan, 14/08/2026) ──
@@ -777,7 +792,7 @@ function daVisao(e,v){
 }
 function passa(e,exceto){
   if(projFora(projDe(e))) return false;                      // FREITEIRO/ADM fora
-  if(exceto!=='uni'  && FUNI.size  && !FUNI.has(e.unidade)) return false;
+  if(exceto!=='uni'  && FUNI.size  && !FUNI.has(baseU(uniEv(e)))) return false;
   // vigência e data deixaram de ser a data de PARADA: elas escolhem o DIA da
   // foto (ver diaFoco). Só o Histórico ainda recorta o evento por elas.
   const porTempo=(VER==='historico'||!DIAS.length);
@@ -841,7 +856,7 @@ async function renderListaDia(d){
     if(VISAO==='semrcoc')  return !r.rc_oc;
     return true;
   };
-  const rows=linhas.filter(r=>S.has(r.unidade)&&!projFora(projDe(r))
+  const rows=linhas.filter(r=>S.has(uniEv(r))&&!projFora(projDe(r))
       &&(!FPROJ.size||FPROJ.has(projLbl(projDe(r))))
       &&(!FGRUPO.size||FGRUPO.has(r.grupo||'—'))
       &&(!BUSCA||[r.placa,r.descricao_problema,projDe(r),r.rc_oc,r.status,r.observacao]
@@ -1008,7 +1023,7 @@ async function renderResumo(){
     const base=campo==='modelo'?rows.filter(r=>String(r.modelo||'').trim()):rows;
     const nD=new Set(base.map(r=>r.data)).size||1;
     const m=new Map();
-    base.forEach(r=>{const k=campo==='projeto'?projLbl(r.projeto):(r[campo]||'—'); if(!m.has(k))m.set(k,{a:0,i:0});
+    base.forEach(r=>{const k=campo==='projeto'?projLbl(r.projeto):campo==='unidade'?(baseU(r.unidade)||'—'):(r[campo]||'—'); if(!m.has(k))m.set(k,{a:0,i:0});
       const g=m.get(k); g.a+=r.ativos||0; g.i+=r.indisponiveis||0;});
     return [...m.entries()].map(([k,g])=>({k,a:g.a/nD,i:g.i/nD,p:dispPct(g.a,g.i)}))
       .sort((x,y)=>(x.p??101)-(y.p??101));   // pior primeiro, como no painel antigo
@@ -1165,7 +1180,7 @@ async function renderEstrat(){
   const base=DIM_EST==='modelo'?rows.filter(r=>String(r.modelo||'').trim()):rows;
   const nD=new Set(base.map(r=>r.data)).size||1;
   const m=new Map();
-  base.forEach(r=>{const k=DIM_EST==='projeto'?projLbl(r.projeto):(r[DIM_EST]||'—');
+  base.forEach(r=>{const k=DIM_EST==='projeto'?projLbl(r.projeto):DIM_EST==='unidade'?(baseU(r.unidade)||'—'):(r[DIM_EST]||'—');
     if(!m.has(k))m.set(k,{a:0,i:0}); const g=m.get(k); g.a+=r.ativos||0; g.i+=r.indisponiveis||0;});
   const itens=[...m.entries()].map(([k,g])=>({k,a:g.a/nD,i:g.i/nD,p:dispPct(g.a,g.i)}))
     .sort((x,y)=>(x.p??101)-(y.p??101));
@@ -1252,14 +1267,15 @@ async function renderAderencia(){
     [[e.created_at,e.created_by],[e.updated_at,e.updated_by]].forEach(([t,quem])=>{
       if(!t)return;
       const d=diaDe(t); if(!d||d<ADER_INICIO)return;
-      const u=e.unidade; if(!u)return;
+      const u=baseU(e.unidade); if(!u)return;          // por sigla (MCC, CBA), como o filtro
       ((toques[u]=toques[u]||{})[d]=toques[u][d]||new Set()).add(quem||'—');
       if(!ultimo[u]||t>ultimo[u].t) ultimo[u]={t,quem};
     });
   });
   // "Sem alterações hoje" conta como preenchimento do dia: dia em que a frota
   // não muda não gera evento, e sem isso a unidade caía como não aderente.
-  Object.entries(CHECKS).forEach(([u,dd])=>{
+  Object.entries(CHECKS).forEach(([uc,dd])=>{
+    const u=baseU(uc);
     Object.entries(dd).forEach(([d,cs])=>{
       if(d<ADER_INICIO)return;
       const set=((toques[u]=toques[u]||{})[d]=toques[u][d]||new Set());
@@ -1268,7 +1284,7 @@ async function renderAderencia(){
     });
   });
   const nome=id=>(perfis[id]&&perfis[id].nome)||(id?'—':'—');
-  const linhas=unisSel().map(u=>{
+  const linhas=basesDe(unisSel()).map(u=>{
     const dd=toques[u]||{};
     const feitos=dias.filter(d=>dd[d]).length;
     const pct=dias.length?feitos/dias.length*100:null;
@@ -1276,7 +1292,7 @@ async function renderAderencia(){
     // o check-in já guarda o NOME de quem confirmou; o evento guarda o user_id
     const pessoas=[...new Set(dias.flatMap(d=>dd[d]?[...dd[d]]:[]))]
       .map(v=>(perfis[v]&&perfis[v].nome)||v).filter(n=>n&&n!=='—');
-    const hj=!!dd[ref], soCheck=checouEm(u,ref)&&!EVENTS.some(e=>e.unidade===u&&
+    const hj=!!dd[ref], soCheck=Object.keys(CHECKS).some(k=>baseU(k)===u&&checouEm(k,ref))&&!EVENTS.some(e=>baseU(e.unidade)===u&&
       [e.created_at,e.updated_at].some(t=>t&&diaDe(t)===ref));
     return {u,feitos,total:dias.length,pct,ult,pessoas,hj,soCheck};
   }).sort((a,b)=>(a.pct??-1)-(b.pct??-1));
@@ -1340,7 +1356,7 @@ function pintaLateral(){
   // já preencheu — assim ninguém clica achando que faltou fazer.
   const btC=$('itCheck'), txC=$('itCheckTxt');
   if(btC&&txC){
-    const ok=tocaramHoje(), falta=unisSel().filter(u=>!ok.has(u));
+    const ok=new Set([...tocaramHoje()].map(baseU)), falta=basesDe(unisSel()).filter(u=>!ok.has(u));
     txC.textContent=falta.length?'Sem alterações hoje':'Hoje já confirmado';
     btC.classList.toggle('on',!falta.length);
   }
@@ -1355,15 +1371,16 @@ function pintaLateral(){
   $('btUni').classList.toggle('on',FUNI.size>0);
   $('btVig').classList.toggle('on',FVIG.size>0);
   $('btData').classList.toggle('on',FDATA.size>0);
-  $('btUni').style.display=(MY_UNITS.length>1)?'':'none';                      // 1 unidade: filtro não faz sentido
-  $('euUni').textContent=(FUNI.size?[...FUNI].join(', '):(MY_UNITS.length>1?'todas':UNIT))||'—';
+  const nB=basesDe(MY_UNITS).length;
+  $('btUni').style.display=(nB>1)?'':'none';                                   // 1 unidade: filtro não faz sentido
+  $('euUni').textContent=(FUNI.size?[...FUNI].join(', '):(nB>1?'todas':baseU(UNIT)))||'—';
 }
 // as unidades viraram FILTRO no topo (Renan, 14/08/2026)
 function montaUnidades(){
   const el=$('lstUni'); if(!el) return;
   const all=FUNI.size===0;
   el.innerHTML=`<label class="mall"><input type="checkbox" data-all="u" ${all?'checked':''}> Todas</label>`+
-    [...MY_UNITS].sort((a,b)=>a.localeCompare(b,'pt')).map(u=>`<label><input type="checkbox" data-u="${esc(u)}" ${all||FUNI.has(u)?'checked':''}>
+    basesDe(MY_UNITS).sort((a,b)=>a.localeCompare(b,'pt')).map(u=>`<label><input type="checkbox" data-u="${esc(u)}" ${all||FUNI.has(u)?'checked':''}>
       <span class="mtx">${esc(u)}</span>
       <span class="so" data-so="${esc(u)}">só</span></label>`).join('');
 }
@@ -1653,8 +1670,11 @@ async function salvar(){
   const retISO=$('mRetorno').value;
   if(retISO&&retISO<parada){alert('O retorno não pode ser antes da parada.');return;}
   const a=ATIVOS.find(x=>x.placa===placa);
+  // editar: placa fora da base mantém a unidade gravada; nova: a do recorte
+  const ev=ID?EVENTS.find(x=>x.id===ID):null;
+  const uni=codDoAtivo(placa)||(ev&&ev.unidade)||unitEscrita();
   const dados={
-    unidade:unitEscrita(), unidade_nome:a?normU(a.filial):null,
+    unidade:uni, unidade_nome:a?normU(a.filial):null,
     projeto:a?a.projeto:null, placa,
     modelo:a?a.modelo:null, tipo_veiculo:a?a.tipo:null,
     grupo:$('mGrupo2').value, local_manutencao:$('mLocal').value,
@@ -1693,12 +1713,15 @@ async function excluir(){
   contaAbertas(); render(); fechaModal();
 }
 /* ── unidade ── */
-// Com o filtro multi, a unidade de ESCRITA (novo evento / novo veículo) é a
-// única selecionada; se houver várias (ou nenhuma), o modal pergunta.
-function unitEscrita(){
-  if(FUNI.size===1) return [...FUNI][0];
+// Unidade de ESCRITA (novo evento / novo veículo): com a placa na base de
+// ativos, o código com tier sai do projeto do veículo (codDoAtivo); senão é o
+// único código do recorte, ou a última unidade usada.
+function unitEscrita(placa){
+  const c=placa?codDoAtivo(placa):null; if(c) return c;
+  const cand=unisSel();
+  if(cand.length===1) return cand[0];
   if(MY_UNITS.length===1) return MY_UNITS[0];
-  return UNIT||MY_UNITS[0];
+  return cand.includes(UNIT)?UNIT:(cand[0]||UNIT||MY_UNITS[0]);
 }
 function setUnit(u){ UNIT=u; try{localStorage.setItem('disp_unit',u);}catch(e){} }
 
@@ -1739,9 +1762,10 @@ async function refazerFoto(){
 // evento ou por check anterior) é PULADO — o botão não serve para carimbar por
 // cima de quem trabalhou, só para fechar o dia de quem não teve o que lançar.
 async function confirmarSemAlteracao(){
-  const hoje=hojeBRT(), ok=tocaramHoje();
-  const alvo=unisSel().filter(u=>!ok.has(u));
-  const jaOk=unisSel().filter(u=>ok.has(u));
+  // por sigla: MCC já preenchida (em qualquer tier) não pede confirmação
+  const hoje=hojeBRT(), ok=new Set([...tocaramHoje()].map(baseU));
+  const alvo=basesDe(unisSel()).filter(u=>!ok.has(u));
+  const jaOk=basesDe(unisSel()).filter(u=>ok.has(u));
   if(!alvo.length){
     alert('Nada a confirmar: '+(jaOk.length===1?'a unidade '+jaOk[0]+' já consta como preenchida hoje.'
       :'as unidades do recorte atual ('+jaOk.join(', ')+') já constam como preenchidas hoje.'));
@@ -1754,8 +1778,9 @@ async function confirmarSemAlteracao(){
     +(jaOk.length?'\n\n(Já preenchidas hoje, fora desta confirmação: '+jaOk.join(', ')+')':''))) return;
   const bt=$('itCheck'); bt.disabled=true;
   try{
-    const linhas=alvo.map(u=>({unidade:u,data:hoje,user_id:USER.id,nome:EU,
-      n_indisponiveis:abertos().filter(e=>e.unidade===u).length}));
+    // o check-in segue gravado por código com tier (é o que a RLS cobre)
+    const linhas=unisSel().filter(u=>alvo.includes(baseU(u))).map(u=>({unidade:u,data:hoje,user_id:USER.id,nome:EU,
+      n_indisponiveis:abertos().filter(e=>uniEv(e)===u).length}));
     const {error}=await sb.from('disp_checkins').insert(linhas);
     if(error)throw error;
     await loadChecks();
@@ -1788,7 +1813,7 @@ async function iniciar(){
   const salva=localStorage.getItem('disp_unit');
   setUnit(MY_UNITS.includes(salva)?salva:MY_UNITS[0]);
   // uma unidade só: já entra filtrada nela (não faz sentido escolher)
-  if(MY_UNITS.length===1) FUNI.add(MY_UNITS[0]);
+  if(basesDe(MY_UNITS).length===1) FUNI.add(baseU(MY_UNITS[0]));
   try{ await loadEvents(); }catch(e){ semAcesso('Erro ao carregar os eventos: '+(e.message||e)); return; }
   await loadChecks();
   // a tela abre com o MÊS ATUAL marcado na Vigência; o dia quem escolhe é o
@@ -1806,6 +1831,6 @@ iniciar();
 <!-- exportação padrão do Gestão em Movimento: botão direito na tabela, no
      gráfico ou no card → Excel · PNG · PNG com fundo transparente -->
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202610132300"></script>
+<script src="../assets/build-check.js?v=202610191400"></script>
 </body>
 </html>
