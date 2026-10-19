@@ -1,0 +1,25 @@
+name: Metas Dispersao Check
+
+# Abre o /painel-metas/ e o /painel-km/ com os dados REAIS e compara a Dispersão de km
+# (ROTA + AS + Empurrada com balanço de massa) mês a mês. Só leitura.
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Rodar
+        run: node scripts/metas-dispersao-check.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
