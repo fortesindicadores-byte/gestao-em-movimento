@@ -9,6 +9,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/gerot-base.js?v=202610071900"></script>
+<script src="../assets/dispersao-km.js?v=202610152330"></script>
+<script src="../assets/balanco-massa.js"></script>
+<script src="../assets/fca-auto.js?v=202610191200"></script>
 <style>
 /* ============================================================
    PAINEL DE METAS — pontuação do Gerente de Frota, no layout padrão do portal.
@@ -562,7 +565,54 @@ function compCusto(frota,receita){
   return out;
 }
 // Dispersão = Δ% acumulado (YTD no ano) dos projetos ROTA + Auto Serviço · Painel KM
-function compDisp(rows){const mo={};rows.forEach(r=>{const d=parseD(r[0]);if(!d)return;const proj=String(r[14]||'').split('-')[0].trim().toUpperCase();if(!(proj==='ROTA'||proj==='AUTO SERVIÇO'||proj==='AUTO SERVICO'))return;const k=vigKeyN(d);const rem=r[31]!=null?+r[31]:0,real=r[32]!=null?+r[32]:0;const o=mo[k]=mo[k]||{rem:0,real:0};o.rem+=rem;o.real+=real;});const out={},acc={};Object.keys(mo).map(Number).sort((a,b)=>a-b).forEach(k=>{const y=Math.floor(k/100);acc[y]=acc[y]||{rem:0,real:0};acc[y].rem+=mo[k].rem;acc[y].real+=mo[k].real;out[k]=acc[y].rem?((acc[y].real-acc[y].rem)/acc[y].rem*100):null;});return out;}
+// RESERVA: a conta antiga, só da aba (sem o banco nem a Empurrada). Vale quando o motor não carregou.
+function compDispAba(rows){const mo={};rows.forEach(r=>{const d=parseD(r[0]);if(!d)return;const proj=String(r[14]||'').split('-')[0].trim().toUpperCase();if(!(proj==='ROTA'||proj==='AUTO SERVIÇO'||proj==='AUTO SERVICO'))return;const k=vigKeyN(d);const rem=r[31]!=null?+r[31]:0,real=r[32]!=null?+r[32]:0;const o=mo[k]=mo[k]||{rem:0,real:0};o.rem+=rem;o.real+=real;});const out={},acc={};Object.keys(mo).map(Number).sort((a,b)=>a-b).forEach(k=>{const y=Math.floor(k/100);acc[y]=acc[y]||{rem:0,real:0};acc[y].rem+=mo[k].rem;acc[y].real+=mo[k].real;out[k]=acc[y].rem?((acc[y].real-acc[y].rem)/acc[y].rem*100):null;});return out;}
+/* DISPERSÃO COM SETEMBRO E COM A EMPURRADA (Renan, 19/10/2026: "Dispersão de km está assim… nem quando
+   gero check de metas, nem quando gero painel. Ajuste e considere empurrada junto. Não mude o texto lá nas
+   metas, apenas considere"). A aba Dispersão de km vai até ago/26; set/26 em diante mora no banco
+   (dispersao_km), e a Empurrada leva o balanço de massa. A conta é a do FCA Automático e do Painel KM
+   (FcaAuto.indexaDispTudo: aba + banco nos meses que a aba não tem + balanço de massa das Empurradas),
+   somando ROTA, Auto Serviço e Empurrada (Insumos dentro dela); Van fica fora, como sempre ficou.
+   Sem o balanço de massa no banco a Empurrada sai da conta (sem ele o km dela fica inflado). */
+const DISP_PROJ_META=new Set(['ROTA','AUTO SERVICO','EMPURRADA','INSUMOS']);
+let DISP_FONTE='';
+async function _todas(sb,tab,cols){
+  const out=[];
+  for(let de=0;;){ const {data,error}=await sb.from(tab).select(cols).range(de,de+999);
+    if(error) throw new Error(tab+': '+error.message); const v=data||[]; out.push(...v); if(v.length<1000) break; de+=v.length; }
+  return out;
+}
+async function carregaDispBanco(){
+  const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY), r={disp:null,bal:null};
+  await Promise.all([
+    (async()=>{ try{ const [linhas,placas,kml]=await Promise.all([_todas(sb,'dispersao_km','*'),
+        _todas(sb,'dispersao_placa','vigencia,unidade,projeto,placa,placa_origem,km_rem'),
+        _todas(sb,'sh_consumo_km_litro','vigencia,projeto,placa,km_rodado_horas_trabalhadas')]);
+      if(linhas.length) r.disp={linhas,placas,kml}; }catch(e){ console.warn('[metas] dispersão do banco',e); } })(),
+    (async()=>{ try{ const b=await _todas(sb,'balanco_massa','unidade,projeto,vigencia,conta,valor'); if(b.length) r.bal=b; }
+      catch(e){ console.warn('[metas] balanço de massa',e); } })()
+  ]);
+  return r;
+}
+function compDisp(rows,frotaTab,banco){
+  const F=window.FcaAuto;
+  if(!F||!window.DispersaoKm||!window.BalancoMassa){ DISP_FONTE='planilha (sem o motor)'; return compDispAba(rows); }
+  try{
+    const bal=banco&&banco.bal, L={disp:{cols:[],rows},dispBanco:banco&&banco.disp,balanco:bal||[]};
+    const dre=F.indexaDRE(frotaTab);
+    const {acc}=F.indexaDispTudo(L,dre.acc,window.DispersaoKm,window.BalancoMassa);
+    const mo={};
+    Object.entries(acc).forEach(([k,a])=>{ const [,p,v]=k.split('|'); if(!DISP_PROJ_META.has(p))return;
+      if(!bal&&(p==='EMPURRADA'||p==='INSUMOS'))return;
+      const m=v.match(/^(\d{4})-(\d{2})$/); if(!m)return; const kk=+m[1]*100+(+m[2]-1);
+      const o=mo[kk]=mo[kk]||{rem:0,real:0}; o.rem+=a.rem||0; o.real+=a.real||0; });
+    const out={},acc2={};
+    Object.keys(mo).map(Number).sort((a,b)=>a-b).forEach(k=>{const y=Math.floor(k/100);acc2[y]=acc2[y]||{rem:0,real:0};acc2[y].rem+=mo[k].rem;acc2[y].real+=mo[k].real;out[k]=acc2[y].rem?((acc2[y].real-acc2[y].rem)/acc2[y].rem*100):null;});
+    DISP_FONTE=bal?'':'sem o balanço de massa do banco: Empurrada fora';
+    if(!(banco&&banco.disp)) DISP_FONTE=(DISP_FONTE?DISP_FONTE+'; ':'')+'sem a dispersão do banco (set/26 em diante)';
+    return out;
+  }catch(e){ console.warn('[metas] dispersão pelo motor',e); DISP_FONTE='planilha (o motor falhou)'; return compDispAba(rows); }
+}
 // DPO/VPO = auditoria por SEMESTRE (colunas 1H25 · 2H25 · 1H26 · 2H26 da aba DPO). Conta unidades abaixo de
 // Nível 3 → 0=100% / 1=50% / 2+=0%. Cada mês vale a coluna do SEU semestre (jan–jun → 1H, jul–dez → 2H), e o
 // semestre passa a valer assim que tiver a 1ª unidade auditada — unidade ainda em branco não conta (Renan,
@@ -725,14 +775,15 @@ function renderTable(){
 // A tela abre na hora com o resultado da última visita e a leitura nova roda por trás,
 // redesenhando quando chega (a vigência escolhida é mantida). Dentro do Check de Metas
 // (iframe) não usa a memória: o deck tem de sair com a leitura do momento.
-const PM_CACHE='pm_cache_v1', PM_CACHE_MAX=24*3600e3;
+const PM_CACHE='pm_cache_v2', PM_CACHE_MAX=24*3600e3;
 function salvaCache(){try{localStorage.setItem(PM_CACHE,JSON.stringify({ts:Date.now(),herd:VIG_HERDADAS,fca:FCA_FONTE,
+  disp:DISP_FONTE,
   all:ALL.map(o=>({...o,vigD:[o.vigD.getFullYear(),o.vigD.getMonth()]}))}));}catch(e){}}
 function leCache(){
   try{ if(window.top!==window) return 0; }catch(e){ return 0; }
   try{const c=JSON.parse(localStorage.getItem(PM_CACHE)||'null');
     if(!c||!Array.isArray(c.all)||!c.all.length||Date.now()-c.ts>PM_CACHE_MAX) return 0;
-    ALL=c.all.map(o=>({...o,vigD:new Date(o.vigD[0],o.vigD[1],1)})); VIG_HERDADAS=c.herd||[]; FCA_FONTE=c.fca||''; return c.ts;
+    ALL=c.all.map(o=>({...o,vigD:new Date(o.vigD[0],o.vigD[1],1)})); VIG_HERDADAS=c.herd||[]; FCA_FONTE=c.fca||''; DISP_FONTE=c.disp||''; return c.ts;
   }catch(e){ return 0; }
 }
 const hhmm=d=>`${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
@@ -750,7 +801,8 @@ function montaTela(manter){
 function rodapeCarga(d){
   // mês herdado não é mês cadastrado: quem lê tem de saber de onde veio a estrutura
   const herd=(VIG_HERDADAS.length?` · ${VIG_HERDADAS.join(', ')} com a estrutura do último mês da aba`:'')
-    + (FCA_FONTE==='planilha'?' · FCA da planilha (o banco não respondeu)':'');
+    + (FCA_FONTE==='planilha'?' · FCA da planilha (o banco não respondeu)':'')
+    + (DISP_FONTE?' · Dispersão: '+DISP_FONTE:'');
   return hhmm(d)+herd;
 }
 async function carregar(semCache){
@@ -762,12 +814,13 @@ async function carregar(semCache){
   try{
     // A aba Painel de Metas dá só a ESTRUTURA (indicador, peso, descrição, regra, un) — todo o
     // Meta/Real de cada indicador é calculado a partir do painel de origem correspondente.
-    const [mRows,kmRows,dpoRows,fcaRecs,frotaTab,receitaTab,eliteRecords]=await Promise.all([
+    const [mRows,kmRows,dpoRows,fcaRecs,frotaTab,receitaTab,eliteRecords,dispBanco]=await Promise.all([
       gviz(SRC.metas),gviz(SRC.km),gviz(SRC.dpo),carregaFCA(),
       fetchDreTab(DRE_TAB_FROTA),fetchDreTab(DRE_TAB_RECEITA),
-      window.GerotBase.load({soChave:true})   // só os indicadores-chave: a pontuação do Frota de Elite
+      window.GerotBase.load({soChave:true}),  // só os indicadores-chave: a pontuação do Frota de Elite
+      carregaDispBanco()                       // dispersão de set/26 em diante + balanço de massa da Empurrada
     ]);
-    const rankMap=compRankingElite(eliteRecords), dispMap=compDisp(kmRows), dpo=compDPO(dpoRows), custoMap=compCusto(frotaTab,receitaTab);
+    const rankMap=compRankingElite(eliteRecords), dispMap=compDisp(kmRows,frotaTab,dispBanco), dpo=compDPO(dpoRows), custoMap=compCusto(frotaTab,receitaTab);
 
     ALL=herdaMeses(mRows).filter(r=>r[1]&&r[0]&&parseD(r[0])).map(r=>{
       const vigD=parseD(r[0]);const k=vigKeyN(vigD);const mIdx=vigD.getMonth(),yr=vigD.getFullYear();
