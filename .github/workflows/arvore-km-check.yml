@@ -1,0 +1,34 @@
+name: Arvore KM Check
+
+# Abre a Árvore de Combustível e o Painel KM com os dados REAIS e compara o KM Rodado
+# (rem · real · balanço de massa) mês a mês, no mesmo recorte. Só leitura.
+on:
+  workflow_dispatch:
+    inputs:
+      uni:
+        description: 'Unidade (sigla, ex.: CBA)'
+        default: 'CBA'
+      projs:
+        description: 'Projetos, na grafia da Árvore, separados por vírgula'
+        default: 'AUTO SERVIÇO,ROTA,VAN'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Rodar
+        run: node scripts/arvore-km-check.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          UNI: ${{ inputs.uni }}
+          PROJS: ${{ inputs.projs }}
