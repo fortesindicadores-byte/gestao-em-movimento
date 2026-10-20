@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610192130">
+<meta name="build" content="202610200720">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Auditorias · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -217,8 +217,16 @@ table.dre.aud-tab td .vazio{color:var(--txt3);font-weight:600;}
 .selo .sl-nm{font-size:11px;font-weight:700;color:var(--txt);text-align:left;white-space:nowrap;}
 .selo .sl-nm i{display:block;font-style:normal;font-size:9.5px;font-weight:600;color:var(--txt3);}
 .vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;opacity:0;color:transparent;pointer-events:none;}
-/* visão Resultado: só unidade e resultado do semestre escolhido */
-.res-tab th:first-child,.res-tab td:first-child{width:52%;}
+/* visão Resultado: UMA tabela, Unidade · Demarco · DPO/VPO (Renan, 20/10/2026: "pode ser uma
+   planilha só… uma coluna escrito Demarco e outra escrito DPO/VPO") */
+#vw-resultado .res-grid{grid-template-columns:1fr;}
+.res-tab th:first-child,.res-tab td:first-child{width:40%;}
+.res-tab th .res-sem{font-style:normal;font-weight:600;color:var(--txt4);text-transform:none;}
+/* a bolinha do Demarco: disco na cor do nível com luz em cima e aro branco, como o selo do DPO */
+.selo .bola{width:var(--selo,34px);height:var(--selo,34px);flex:0 0 var(--selo,34px);border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 28%,rgba(255,255,255,.42),var(--c) 48%,rgba(0,0,0,.28) 100%);
+  box-shadow:0 0 0 2px #fff,0 0 0 3px rgba(0,0,0,.18),0 1px 3px rgba(0,0,0,.35);color:var(--cf,#fff);font-weight:800;line-height:1;}
+.selo .bola::after{content:attr(data-n);font-size:calc(var(--selo,34px)*.46);text-shadow:0 1px 1px rgba(0,0,0,.25);}
 /* selo + nome num bloco de largura fixa, centrado sob o título: os selos ficam alinhados entre si
    e o conjunto no meio da coluna (Renan, 19/10/2026: "Meio descentralizado") */
 table.dre.res-tab td .selo{display:inline-flex;width:calc(var(--selo,34px) + 140px);max-width:100%;justify-content:flex-start;vertical-align:middle;}
@@ -396,16 +404,12 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
         </div>
       </section>
 
-      <!-- ══ 2 · RESULTADO — só unidade e resultado do ano e semestre escolhidos ══ -->
+      <!-- ══ 2 · RESULTADO — uma tabela só: Unidade · Demarco · DPO/VPO do ano e semestre
+           escolhidos (Renan, 20/10/2026: "Acho que aqui pode ser uma planilha só") ══ -->
       <section class="vw" id="vw-resultado">
-        <div class="aud-grid">
+        <div class="aud-grid res-grid">
           <div class="card tsec">
-            <div class="thead-row"><div class="ttit">Demarco</div></div>
-            <div class="twrap" id="res-demarco"><div class="loading">Carregando…</div></div>
-          </div>
-          <div class="card tsec">
-            <div class="thead-row"><div class="ttit">DPO/VPO</div></div>
-            <div class="twrap" id="res-dpo"><div class="loading">Carregando…</div></div>
+            <div class="twrap" id="res-tab"><div class="loading">Carregando…</div></div>
           </div>
         </div>
       </section>
@@ -568,24 +572,41 @@ function buildUnico(id,base,items,padrao){
       w.querySelector('.ms-panel').classList.remove('open'); renderResultado(); });
   }
 }
-function resTab(tab,rows,elId,ano,h){
-  const el=document.getElementById(elId); if(!el) return;
-  if(!rows||!rows.length){ el.innerHTML='<div class="loading">Sem dados</div>'; return; }
-  const i=rows[0].findIndex(l=>{const p=perDe(l); return p&&p.ano===ano&&p.h===h;});
-  if(i<0){ el.innerHTML=`<div class="loading">Sem ${h} ${ano} na aba ${tab==='DPO'?'DPO/VPO':tab}</div>`; return; }
-  const ts=tiersSel();
-  const body=rows.slice(1).filter(r=>r[0]&&(!ts||ts.has(tierDe(r[0]))));
-  if(!body.length){ el.innerHTML='<div class="loading">Nenhuma unidade no tier escolhido</div>'; return; }
+/* a coluna do período em cada aba (índice) ou -1 quando a aba não tem o semestre */
+const colPer=(rows,ano,h)=>rows&&rows.length?rows[0].findIndex(l=>{const p=perDe(l); return p&&p.ano===ano&&p.h===h;}):-1;
+/* o Demarco no Resultado é uma BOLINHA na cor do nível, do tamanho do selo, com o nível ao lado
+   (Renan, 20/10/2026: "Acho que demarco pode ser bolinha. Para combinar com selo"); o número
+   dentro vem do CSS (data-n), então o texto da célula continua "Nível N" (Excel, ordenação) */
+function celRes(tab,v,ano){
   const mapa=CORES[tab]||{};
-  let html=`<table class="dre aud-tab res-tab"><thead><tr><th class="uni">Unidade</th><th>Resultado · ${h}${String(ano).slice(-2)}</th></tr></thead><tbody>`;
-  body.forEach(r=>{
-    const v=(r[i]||'').trim();
-    let cel;
-    const sl=tab==='DPO'?seloCel(v,ano,true):null;
-    if(sl) cel=sl;
-    else if(mapa[v]) cel=`<span class="niv" style="background:${mapa[v].bg};color:${mapa[v].fg}">${v}</span>`;
-    else cel=`<span class="vazio">${v||'—'}</span>`;
-    html+=`<tr>${celUni(r[0])}<td>${cel}</td></tr>`;
+  const sl=tab==='DPO'?seloCel(v,ano,true):null;
+  if(sl) return sl;
+  if(mapa[v]){
+    if(tab==='Demarco'){ const n=(v.match(/\d+/)||[''])[0];
+      return `<span class="selo" data-bg="${mapa[v].bg}" data-fg="${mapa[v].fg}" title="${v}"><span class="bola" data-n="${n}" style="--c:${mapa[v].bg};--cf:${mapa[v].fg}"></span><span class="sl-nm">${v}<i>Demarco</i></span></span>`; }
+    return `<span class="niv" style="background:${mapa[v].bg};color:${mapa[v].fg}">${v}</span>`;
+  }
+  return `<span class="vazio">${v||'—'}</span>`;
+}
+/* UMA TABELA (Renan, 20/10/2026): a unidade é casada pelo NOME da tela (nomeUni), porque a DPO
+   escreve o código (CGR, MCC T1…) e o Demarco o nome longo; a ordem é a da DPO, e a unidade que só
+   existe numa aba entra com "—" na outra. Aba sem o semestre: a coluna avisa no cabeçalho. */
+function renderResTab(ano,h){
+  const el=document.getElementById('res-tab'); if(!el) return;
+  const iDem=colPer(DADOS.dem,ano,h), iDpo=colPer(DADOS.dpo,ano,h);
+  if(iDem<0&&iDpo<0){ el.innerHTML=`<div class="loading">Sem ${h} ${ano} nas abas Demarco e DPO/VPO</div>`; return; }
+  const ts=tiersSel(), unis=[], porNome={};
+  const junta=(rows,i,campo)=>{ if(!rows||!rows.length) return;
+    rows.slice(1).forEach(r=>{ if(!r[0]||(ts&&!ts.has(tierDe(r[0])))) return;
+      const k=_nk(nomeUni(r[0])); let u=porNome[k]; if(!u){ u=porNome[k]={raw:r[0]}; unis.push(u); }
+      u[campo]=i>=0?(r[i]||'').trim():null; }); };
+  junta(DADOS.dpo,iDpo,'dpo'); junta(DADOS.dem,iDem,'dem');
+  if(!unis.length){ el.innerHTML='<div class="loading">Nenhuma unidade no tier escolhido</div>'; return; }
+  const per=h+String(ano).slice(-2);
+  const th=(t,i)=>`<th>${t}${i<0?`<i class="res-sem"> · sem ${per}</i>`:''}</th>`;
+  let html=`<table class="dre aud-tab res-tab"><thead><tr><th class="uni">Unidade</th>${th('Demarco',iDem)}${th('DPO/VPO',iDpo)}</tr></thead><tbody>`;
+  unis.forEach(u=>{
+    html+=`<tr>${celUni(u.raw)}<td>${u.dem==null?'<span class="vazio">—</span>':celRes('Demarco',u.dem,ano)}</td><td>${u.dpo==null?'<span class="vazio">—</span>':celRes('DPO',u.dpo,ano)}</td></tr>`;
   });
   el.innerHTML=html+'</tbody></table>';
 }
@@ -596,8 +617,7 @@ function renderResultado(){
   buildUnico('ms-ano','Ano',anos,ult.ano);
   buildUnico('ms-h','Semestre',['1H','2H'],ult.h);
   const ano=document.getElementById('ms-ano')._val, h=document.getElementById('ms-h')._val;
-  resTab('Demarco',DADOS.dem,'res-demarco',ano,h);
-  resTab('DPO',DADOS.dpo,'res-dpo',ano,h);
+  renderResTab(ano,h);
   if(typeof pedeSelos==='function') pedeSelos();
 }
 
@@ -781,6 +801,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610192130"></script>
+<script src="../assets/build-check.js?v=202610200720"></script>
 </body>
 </html>

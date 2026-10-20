@@ -50,6 +50,13 @@ const aba = (niveis, unis = UNIS) => {
   return rows;
 };
 const DEM = aba(['Nível 1', 'Nível 2', 'Nível 3', 'Nível 4', 'Nível 5']);
+// o Resultado casa as duas abas pelo NOME da tela: a ordem é a da DPO (códigos) e Gravataí, que só
+// existe no Demarco do dublê, entra no fim; Guarulhos (GRL) só existe na DPO
+const DEM_COD = { 'CDD CUIABA': 'CBA T2', 'CUIABA EMPURRADA': 'CBA T1', 'CDD RIO DE JANEIRO': 'CGR', 'CDI MACACU': 'MCC T2', 'MACACU EMPURRADA': 'MCC T1',
+  'PIRAI EMPURRADA': 'PIR', 'CDD GOIANIA': 'GNA', 'CDD FLORIANOPOLIS': 'FLP', 'CDD NOVA FRIBURGO': 'NFR', 'CDD PELOTAS': 'PLT', 'CDD BALNEARIO CAMBORIU': 'BLC', 'CDD RONDONOPOLIS': 'RON' };
+const demEsp = col => { const porCod = {}; DEM.slice(1).filter(x => x[0]).forEach(x => { if (DEM_COD[x[0]]) porCod[DEM_COD[x[0]]] = x[col] || '—'; });
+  const extra = DEM.slice(1).filter(x => x[0] && !DEM_COD[x[0]]).map(x => x[col] || '—');
+  return UNIS_COD.map(c => porCod[c] || '—').concat(extra); };
 const DPO = aba(['Nível 0', 'Nível 1', 'Nível 2', 'Nível 3', 'Nível 4'], UNIS_COD);
 const pack = rows => ({ version: '0.6', status: 'ok', table: { cols: rows[0].map((_, i) => ({ id: String.fromCharCode(65 + i), label: '', type: 'string' })),
   rows: rows.map(r => ({ c: r.map(v => v === '' ? null : { v }) })) } });
@@ -228,21 +235,25 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
       return { tit: document.getElementById('tit').textContent, ano: document.getElementById('ms-ano')._val, h: document.getElementById('ms-h')._val,
         lbl: [...document.querySelectorAll('#ms-ano .ms-lbl, #ms-h .ms-lbl')].map(e => e.textContent).join(' | '),
         vis: ['ms-ano', 'ms-h'].map(i => getComputedStyle(document.getElementById(i)).display),
-        dem: t('res-demarco'), dpo: t('res-dpo'),
+        tab: t('res-tab'), nTab: document.querySelectorAll('#vw-resultado table').length,
         topo: Math.round(document.querySelector('.top').getBoundingClientRect().height),
-        alturas: [...new Set([...document.querySelectorAll('#res-dpo tbody tr')].map(tr => Math.round(tr.getBoundingClientRect().height)))],
-        centro: [...document.querySelectorAll('#res-dpo td .selo')].map(sl => { const a = sl.getBoundingClientRect(), c = sl.closest('td').getBoundingClientRect(); return Math.round(Math.abs((a.left + a.right) / 2 - (c.left + c.right) / 2)); }),
-        esq: [...new Set([...document.querySelectorAll('#res-dpo td .selo img')].map(i => Math.round(i.getBoundingClientRect().left)))],
+        alturas: [...new Set([...document.querySelectorAll('#res-tab tbody tr')].map(tr => Math.round(tr.getBoundingClientRect().height)))],
+        centro: [...document.querySelectorAll('#res-tab td .selo')].map(sl => { const a = sl.getBoundingClientRect(), c = sl.closest('td').getBoundingClientRect(); return Math.round(Math.abs((a.left + a.right) / 2 - (c.left + c.right) / 2)); }),
+        esq: [...new Set([...document.querySelectorAll('#res-tab td .selo img')].map(i => Math.round(i.getBoundingClientRect().left)))],
         vert: tw.some(x => x.scrollHeight > x.clientHeight + 1), horiz: tw.some(x => x.scrollWidth > x.clientWidth + 1),
         pagRola: document.scrollingElement.scrollHeight > document.scrollingElement.clientHeight + 1 };
     });
     let r = await lr();
     ok(`${tag}: Resultado abre no último semestre com dado (1H26) e mostra os dois filtros`, r.tit === 'Resultado' && r.ano === '2026' && r.h === '1H' && r.vis.every(d => d !== 'none'), `${r.tit} ${r.ano} ${r.h} ${r.vis}`);
-    ok(`${tag}: Resultado = só Unidade e Resultado, 13 unidades nas duas tabelas`, r.dem.head && r.dem.head.length === 2 && r.dpo.head.length === 2 && r.dem.rows.length === 13 && r.dpo.rows.length === 13 && /1H26/.test(r.dpo.head[1]), JSON.stringify(r.dpo.head));
-    const espDpo = DPO.slice(1).filter(x => x[0]).map(x => x[3] || '—');
-    ok(`${tag}: Resultado do DPO = a coluna 1H26 da aba, com selo e nome do nível`, r.dpo.rows.every((c, i) => c[1].includes(espDpo[i])) && r.dpo.selos === espDpo.filter(v => /^Nível [1-4]$/.test(v)).length && r.dpo.rows.some(c => /Sustentável|Básico|Intermediário|Top Performance/.test(c[1])), JSON.stringify(r.dpo.rows.slice(0, 3)));
+    /* UMA TABELA SÓ (Renan, 20/10/2026: "pode ser uma planilha só… uma coluna escrito Demarco e
+       outra escrito DPO/VPO"): Unidade · Demarco · DPO/VPO, 13 unidades casadas pelo nome */
+    ok(`${tag}: Resultado = UMA tabela, Unidade · Demarco · DPO/VPO, 13 unidades`, r.nTab === 1 && r.tab.head && r.tab.head.length === 3 && r.tab.head[1] === 'Demarco' && r.tab.head[2] === 'DPO/VPO' && r.tab.rows.length === 14, JSON.stringify(r.tab.head) + ' · ' + (r.tab.rows || []).length);
+    const espDpo = DPO.slice(1).filter(x => x[0]).map(x => x[3] || '—').concat(['—']);   // Gravataí só no Demarco
+    const espDem1 = demEsp(3);
+    ok(`${tag}: coluna DPO/VPO = a coluna 1H26 da aba, com selo e nome do nível`, r.tab.rows.every((c, i) => c[2].includes(espDpo[i])) && r.tab.selos === espDpo.filter(v => /^Nível [1-4]$/.test(v)).length && r.tab.rows.some(c => /Sustentável|Básico|Intermediário|Top Performance/.test(c[2])), JSON.stringify(r.tab.rows.slice(0, 3)));
+    ok(`${tag}: coluna Demarco = a coluna 1H26 da aba Demarco, na linha da MESMA unidade (Guarulhos "—", Gravataí no fim)`, r.tab.rows.every((c, i) => c[1].replace(/Demarco$/, '') === espDem1[i]) && r.tab.rows[4][1] === '—' && /GRAVATAI/i.test(r.tab.rows[13][0]), JSON.stringify(r.tab.rows.slice(0, 3).map(c => c[1])) + ' × ' + JSON.stringify(espDem1.slice(0, 3)));
     ok(`${tag}: Resultado: filtros numa linha só no topo`, r.topo <= 70, `${r.topo} px`);
-    ok(`${tag}: Resultado: linhas do DPO da mesma altura`, Math.max(...r.alturas) - Math.min(...r.alturas) <= 2, r.alturas.join(','));
+    ok(`${tag}: Resultado: linhas da mesma altura`, Math.max(...r.alturas) - Math.min(...r.alturas) <= 2, r.alturas.join(','));
     ok(`${tag}: Resultado do DPO centrado na coluna, selos alinhados entre si`, r.centro.length && Math.max(...r.centro) <= 3 && r.esq.length === 1, `${Math.max(...r.centro)} px · ${r.esq.length} alinhamento(s)`);
     ok(`${tag}: Resultado cabe sem rolagem`, !r.vert && !r.horiz && !r.pagRola, `${r.vert} ${r.horiz} ${r.pagRola}`);
     if (SHOTS) { const dir = path.join(SHOTS, PASTA); fs.mkdirSync(dir, { recursive: true });
@@ -250,12 +261,12 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     await page.click('#ms-ano .ms-btn'); await page.click('#ms-ano input[data-v="2025"]'); await page.waitForTimeout(100);
     await page.click('#ms-h .ms-btn'); await page.click('#ms-h input[data-v="2H"]'); await page.waitForTimeout(150);
     r = await lr();
-    const esp2 = DEM.slice(1).filter(x => x[0]).map(x => x[2] || '—');
-    ok(`${tag}: Ano 2025 + 2H troca a coluna (2H25) nas duas tabelas`, /2H25/.test(r.dem.head[1]) && r.dem.rows.every((c, i) => c[1] === esp2[i]) && r.lbl === 'Ano 2025 | Semestre 2H', `${r.dem.head} · ${r.lbl}`);
+    const esp2 = demEsp(2);
+    ok(`${tag}: Ano 2025 + 2H troca o semestre nas duas colunas`, r.tab.rows.every((c, i) => c[1].replace(/Demarco$/, '') === esp2[i]) && r.lbl === 'Ano 2025 | Semestre 2H', `${r.tab.head} · ${r.lbl}`);
     await page.click('#ms-h .ms-btn'); await page.click('#ms-h input[data-v="2H"]'); await page.waitForTimeout(80);
     await page.click('#ms-ano .ms-btn'); await page.click('#ms-ano input[data-v="2026"]'); await page.waitForTimeout(150);
     r = await lr();
-    ok(`${tag}: semestre sem coluna na aba (2H26 vazio) avisa em vez de tabela vazia`, typeof r.dpo === 'string' && /Sem 2H 2026|Nenhuma|—/.test(r.dpo) || (r.dpo.rows && r.dpo.rows.every(c => c[1] === '—')), JSON.stringify(r.dpo).slice(0, 80));
+    ok(`${tag}: semestre sem coluna na aba (2H26 vazio) avisa em vez de tabela vazia`, typeof r.tab === 'string' && /Sem 2H 2026|Nenhuma/.test(r.tab) || (r.tab.rows && r.tab.rows.every(c => c[1] === '—' && c[2] === '—')), JSON.stringify(r.tab).slice(0, 80));
     await page.click('.s-item[data-vw="demarco"]'); await page.waitForTimeout(150);
     if (SHOTS && vp.width === 1600) {
       const dir = path.join(SHOTS, PASTA); fs.mkdirSync(dir, { recursive: true });
