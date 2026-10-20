@@ -268,11 +268,125 @@
     return out.join('\n');
   }
 
+  // ── DISPERSÃO DE KM: OS MESES QUE A ABA NÃO TEM VÊM DO BANCO (Renan, 20/10/2026:
+  // "Porra cara. Sempre precisa estar atualizado", vendo a Ativação de Frota parada em
+  // ago/26). A aba Dispersão de km do Sheets acabou em ago/26; de set/26 em diante a
+  // 01-BD mora na tabela dispersao_km (importada em /painel-km/dispersao/), com o km
+  // rodado completado pela aba Km/L placa a placa (assets/dispersao-km.js). Só o Painel
+  // KM e a Árvore de Combustível juntavam o banco — os outros leitores da aba (Ativação,
+  // Scorecard, Resumo Executivo, R$/KM, Árvore da Frota, Correlações…) paravam em agosto.
+  // Aqui a aba reconstruída GANHA, no formato dela (mesmas colunas, pelo rótulo), as linhas
+  // do banco dos meses que ela não tem — e todo painel que a lê enxerga o mês novo sem
+  // mudar uma linha. Quem já junta o banco por conta própria (Painel KM, Árvore de
+  // Combustível, FCA · Admin, FCA Automático, Painel de Metas) desliga isto com
+  // window.__gvizDispBanco = false antes de ler, senão o mês entraria duas vezes ou
+  // perderia o detalhe por placa que esses painéis montam.
+  var DISP_KEY = '1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM|s=Dispersão de km|g=|q=|h=';
+  var DISP_PROJ = { 'Rota': 'ROTA', 'Auto Serviço': 'AUTO SERVIÇO', 'Van': 'ROTA (VAN)',
+    'Empurrada - 28 Palets': 'EMPURRADA', 'Empurrada - 42 Palets': 'EMPURRADA', 'Empurrada - Insumos': 'EMPURRADA' };
+  var SELF = (function () { try { return (document.currentScript && document.currentScript.src) || ''; } catch (e) { return ''; } })();
+  function dispLigado(key) { return key === DISP_KEY && window.__gvizDispBanco !== false && window.__dispBanco !== false; }
+  // o motor do km rodado (assets/dispersao-km.js): carregado na hora se a página não o incluiu
+  var motorP = null;
+  function motor() {
+    if (window.DispersaoKm) return Promise.resolve(window.DispersaoKm);
+    if (!SELF || !/gviz-cache\.js/.test(SELF)) return Promise.resolve(null);
+    if (!motorP) motorP = new Promise(function (res) {
+      var s = document.createElement('script');
+      s.src = SELF.replace(/gviz-cache\.js[^/]*$/, 'dispersao-km.js?v=202610201800');
+      s.onload = function () { res(window.DispersaoKm || null); };
+      s.onerror = function () { res(null); };
+      appendOrig.call(document.head || document.documentElement, s);
+    });
+    return motorP;
+  }
+  // lê uma tabela inteira do REST, em páginas do tamanho que o servidor devolve
+  function todas(path) {
+    var out = [];
+    function pag(de) {
+      return rest(path, { Range: de + '-' + (de + PAG_MAX - 1) }).then(function (r) {
+        if (!r.ok) throw new Error(path.split('?')[0] + ' HTTP ' + r.status);
+        return r.json();
+      }).then(function (rows) {
+        rows = rows || []; out = out.concat(rows);
+        return rows.length && rows.length >= 1000 ? pag(de + rows.length) : out;
+      });
+    }
+    return pag(0);
+  }
+  function diasUteis(ano, mes) { var n = 0, d = new Date(ano, mes - 1, 1); while (d.getMonth() === mes - 1) { if (d.getDay() !== 0) n++; d.setDate(d.getDate() + 1); } return n; }
+  function nrm(s) { return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim(); }
+  // acrescenta ao obj (payload reconstruído) as linhas do banco; devolve o obj
+  function complementaDisp(b, linhas, obj) {
+    var cols = b.colunas.slice().sort(function (x, y) { return x.i - y.i; });
+    var c0 = cols[0] && cols[0].col;
+    var mesesAba = {};
+    linhas.forEach(function (l) { var m = String(l[c0] || '').match(/^(\d{4})-(\d{2})/); if (m) mesesAba[m[1] + '-' + m[2]] = 1; });
+    var porRot = {}; cols.forEach(function (c) { var k = nrm(c.label); if (!(k in porRot)) porRot[k] = c; });
+    var porIdx = {}; cols.forEach(function (c) { porIdx[c.i] = c; });
+    function pos(rotulo, idx) { return porRot[nrm(rotulo)] || porIdx[idx] || null; }
+    var info = { vigs: [], sem: [] };
+    return Promise.all([motor(), todas('dispersao_km?select=*'),
+      todas('dispersao_placa?select=vigencia,unidade,projeto,placa,placa_origem,km_rem'),
+      todas('sh_consumo_km_litro?select=vigencia,projeto,placa,km_rodado_horas_trabalhadas')
+    ]).then(function (r) {
+      var D = r[0], bd = r[1], placas = r[2], kml = r[3];
+      if (!bd.length) { try { console.info('gviz-cache: dispersao_km vazia — a Dispersão de km fica só com a aba'); } catch (_) {} return obj; }
+      var finais;
+      if (D) {
+        var kmlRows = kml.map(function (x) { var m = String(x.vigencia || '').match(/^(\d{2})\/(\d{4})$/);
+          return { vigencia: m ? m[2] + '-' + m[1] : '', projeto: x.projeto, placa: x.placa, km: +x.km_rodado_horas_trabalhadas || 0 }; })
+          .filter(function (x) { return x.vigencia >= D.INICIO; });
+        finais = D.monta(bd, D.kmRodado(placas, kmlRows));
+      } else {
+        try { console.warn('gviz-cache: assets/dispersao-km.js não carregou — só o km rodado que a planilha trouxe'); } catch (_) {}
+        finais = bd.map(function (l) { return Object.assign({}, l, { km_rodado: l.km_real != null ? +l.km_real : null }); });
+      }
+      var ini = (D && D.INICIO) || '2026-09';
+      finais.forEach(function (l) {
+        var vig = String(l.vigencia || ''); if (!/^\d{4}-\d{2}$/.test(vig) || vig < ini || mesesAba[vig]) return;
+        if (l.km_rodado == null) { info.sem.push(l.unidade + ' ' + l.projeto + ' ' + vig); return; }
+        var ano = +vig.slice(0, 4), mes = +vig.slice(5), du = diasUteis(ano, mes);
+        var rem = +l.km_rem || 0, real = +l.km_rodado || 0, frota = +l.frota_ativa || 0, fator = +l.fator_rskm || 0;
+        var vp = +l.viagens_prim || 0, vr = +l.viagens_rec || 0, vn = +l.viagens_not || 0, vm = +l.viagens_mapa_aberto || 0;
+        var vTot = vp + vr + vn + vm, dk = real - rem;
+        var projCod = (DISP_PROJ[l.projeto] || String(l.projeto || '').toUpperCase()) + ' - ' + l.unidade;
+        var vals = [
+          [pos('Vigência', 0), vig + '-01'], [pos('Ano', 1), ano], [pos('Dias Úteis', 2), du],
+          [pos('Km/Frota Ativa Rem.', 4), frota ? rem / frota : null], [pos('Km/Frota Ativa Real', 5), frota ? real / frota : null],
+          [pos('Δ (km/Frota Ativa)', 6), frota ? dk / frota : null],
+          [pos('UNID.', 13), l.unidade], [pos('PROJ.', 14), projCod], [pos('Unidade', 17), l.unidade_orig || l.unidade], [pos('Projeto', 19), l.projeto],
+          [pos('Frota Ativa', 21), frota], [pos('Viagens - Real', 22), vTot], [pos('Km/Viagem Real', 23), vTot ? real / vTot : null],
+          [pos('Km Rem. Mês', 24), l.km_rem_prim != null ? +l.km_rem_prim : null], [pos('Viagens Rec. Real', 25), vr],
+          [pos('Km Rec. Mês Real', 27), l.km_rem_rec != null ? +l.km_rem_rec : null], [pos('Viagens Noturnas Real', 28), vn],
+          [pos('Km Rem. Noturna', 30), l.km_rem_not != null ? +l.km_rem_not : null],
+          [pos('Km Rem. TT', 31), rem], [pos('Km Rodado TT', 32), real], [pos('Δ (km)', 33), dk], [pos('%', 34), rem ? dk / rem : null],
+          [pos('R$/km', 35), fator || null], [pos('Impacto (BRL)', 36), fator ? dk * fator : null],
+          [pos('Impacto (BRL / Frota Ativa', 37), fator && frota ? dk * fator / frota : null], [pos('Viagens Mapa Aberto', 38), vm]
+        ];
+        var row = { c: cols.map(function () { return null; }) };
+        vals.forEach(function (p) { var c = p[0]; if (!c) return; var j = cols.indexOf(c); if (j >= 0) row.c[j] = cel(p[1], c.tipo); });
+        obj.table.rows.push(row);
+        if (info.vigs.indexOf(vig) < 0) info.vigs.push(vig);
+      });
+      info.vigs.sort();
+      window.GvizCache.dispBanco = info;
+      try {
+        if (info.vigs.length) console.info('gviz-cache: Dispersão de km + banco (dispersao_km):', info.vigs.join(', '));
+        if (info.sem.length) console.warn('gviz-cache: Dispersão de km do banco sem km rodado (nem na planilha, nem na aba Km/L) — fora:', info.sem);
+      } catch (_) {}
+      return obj;
+    }).catch(function (e) {
+      try { console.warn('gviz-cache: complemento da Dispersão de km pelo banco falhou —', e && e.message); } catch (_) {}
+      return obj;
+    });
+  }
+
   // devolve {obj, corpo} ou null; anota a fonte. csv=true responde texto CSV.
   // Na memória da mãe fica só o CORPO (texto): o obj é reconstruído a cada
   // hit, porque o painel recebe o objeto por referência (JSONP) e pode mexer nele.
   function resolve(key, csv) {
-    var mk = key + (csv ? '|csv' : '');
+    var mk = key + (csv ? '|csv' : '') + (dispLigado(key) ? '|+banco' : '');
     if (MEM && MEM[mk]) {
       var g = MEM[mk]; memConta('hit');
       window.GvizCache.hits++; window.GvizCache.fontes[key] = g.fonte + ' (memória)';
@@ -291,13 +405,19 @@
         if (!linhas) return null;
         if (csv) return { corpo: csvDe(b.colunas, linhas) };
         var obj = payload(b.colunas, linhas);
-        return { obj: obj, corpo: corpo(obj) };
+        var p = dispLigado(key) ? complementaDisp(b, linhas, obj) : Promise.resolve(obj);
+        return p.then(function (o) { return { obj: o, corpo: corpo(o), disp: dispLigado(key) }; });
       });
     }).catch(function (e) {
       try { console.warn('gviz-cache: banco falhou p/', key, e && e.message); } catch (_) {}
       return null;
     }).then(function (r) {
-      if (r) { window.GvizCache.hits++; window.GvizCache.banco++; window.GvizCache.fontes[key] = 'banco'; return r; }
+      if (r) {
+        window.GvizCache.hits++; window.GvizCache.banco++;
+        var d = r.disp && window.GvizCache.dispBanco;
+        window.GvizCache.fontes[key] = d && d.vigs.length ? 'banco + dispersao_km (' + d.vigs.join(', ') + ')' : 'banco';
+        return r;
+      }
       return buscaSnapshot(key).then(function (body) {
         if (body != null) {
           var o = null; try { o = parseGviz(body); } catch (e) { o = null; }
