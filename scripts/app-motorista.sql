@@ -1481,3 +1481,60 @@ notify pgrst, 'reload schema';
 --   select f.motorista, mo.cpf, f.unidade, f.nota, f.km, f.posicao, f.carteira, f.podio, f.carteira + f.podio as total
 --     from public.ce_app_fechamento f left join public.ce_motoristas mo on mo.chave = f.chave
 --    where f.competencia = '2026-12-01' and f.elegivel order by total desc;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 18) FECHAMENTO AUTOMÁTICO (Renan, 20/10/2026: "Não dá para deixar isso
+--     automático?"). O pg_cron chama ce_app_fechar_auto() todo dia 22 a 28,
+--     às 09:10 de Brasília. Ela fecha o período que terminou no dia 20 se:
+--     (1) ele vale dinheiro (competência >= ce_app_regras.inicio — os meses de
+--     teste nunca são fechados); (2) ainda não foi fechado; (3) a coleta do dia
+--     20 já está gravada (ce_diario). Senão, tenta de novo no dia seguinte.
+--     Cada tentativa vai para ce_app_fechamento_log. Para refazer um mês já
+--     fechado continua sendo à mão: ce_app_fechar('AAAA-MM-01', true).
+-- ═══════════════════════════════════════════════════════════════════════════
+create table if not exists public.ce_app_fechamento_log (
+  id           bigserial primary key,
+  quando       timestamptz not null default now(),
+  competencia  date,
+  resultado    jsonb
+);
+alter table public.ce_app_fechamento_log enable row level security;
+drop policy if exists ce_app_fechamento_log_sel on public.ce_app_fechamento_log;
+create policy ce_app_fechamento_log_sel on public.ce_app_fechamento_log for select to authenticated using (true);
+
+create or replace function public.ce_app_fechar_auto()
+returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+declare v_comp date := (ce_app_comp(now()) - interval '1 month')::date;   -- o período que terminou no dia 20
+        v_fim date := (v_comp + interval '19 days')::date;                -- dia 20 do mês da competência
+        v_ini date; r jsonb;
+begin
+  select inicio into v_ini from ce_app_regras where id = 1;
+  if v_comp < coalesce(v_ini, '2026-12-01') then
+    r := jsonb_build_object('ok', false, 'motivo', 'período de teste, não fecha');
+  elsif exists (select 1 from ce_app_fechamento where competencia = v_comp) then
+    r := jsonb_build_object('ok', false, 'motivo', 'já fechado');
+  elsif not exists (select 1 from ce_diario where dia = v_fim) then
+    r := jsonb_build_object('ok', false, 'motivo', 'coleta do dia ' || to_char(v_fim, 'DD/MM') || ' ainda não gravada; tenta amanhã');
+  else
+    r := ce_app_fechar(v_comp);
+    if (r->>'ok')::boolean then
+      update ce_app_fechamento set fechado_por = 'automático' where competencia = v_comp;
+    end if;
+  end if;
+  insert into ce_app_fechamento_log (competencia, resultado) values (v_comp, r);
+  return r;
+end $$;
+revoke all on function public.ce_app_fechar_auto() from public;
+
+-- agenda (só onde o pg_cron existe — no Supabase existe)
+do $$
+begin
+  if exists (select 1 from pg_extension where extname = 'pg_cron') then
+    perform cron.unschedule('driverpro-fechamento') where exists (select 1 from cron.job where jobname = 'driverpro-fechamento');
+    perform cron.schedule('driverpro-fechamento', '10 12 22-28 * *', 'select public.ce_app_fechar_auto()');
+  end if;
+end $$;
+
+-- Conferir:
+--   select jobname, schedule, active from cron.job where jobname = 'driverpro-fechamento';
+--   select quando, competencia, resultado from public.ce_app_fechamento_log order by id desc limit 10;
