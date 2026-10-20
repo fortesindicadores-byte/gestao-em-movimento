@@ -1022,6 +1022,21 @@ async function sbTodos(caminho) {
     }
   }
 }
+/* FORA DO PROGRAMA (Renan, 20/10/2026: instrutores e time de frota ficam fora).
+   ce_motoristas.fora_programa (seção 16 do app-motorista.sql). O robô continua
+   MEDINDO e gravando a nota deles (o km é real); só não entram em carteira,
+   pódio, ranking e nas simulações. Sem a coluna no banco, ninguém está fora. */
+let _FORA = null;
+async function foraPrograma() {
+  if (_FORA) return _FORA;
+  try { _FORA = new Set((await sbTodos('ce_motoristas?select=id,chave&fora_programa=eq.true')).map(m => m.chave)); }
+  catch (e) { console.log('fora_programa:', e.message.slice(0, 80), '— ninguém marcado como fora'); _FORA = new Set(); }
+  if (_FORA.size) console.log(`fora do programa: ${_FORA.size} motorista(s) (não entram em carteira, pódio nem ranking)`);
+  return _FORA;
+}
+// linha que NÃO é pessoa do programa: Sem Login, motorista de teste ou marcado como fora
+const naoConta = (chave, fora) => /^(semlogin|teste):/.test(String(chave || '')) || !!(fora && fora.has(chave));
+
 // dias JÁ gravados no intervalo — é o que permite retomar um backfill.
 // O dia só conta como pronto quando TODAS as fontes ligadas já gravaram nele:
 // senão, ligar o Geotab depois de um backfill de vFleets nunca coletaria nada,
@@ -1508,8 +1523,9 @@ if (MODE === 'carteira') {
 
   const mens = await sbTodos('ce_scores_mensais?select=chave,unidade,km,dias,viagens,'
     + `rpm_pontos,idle_pontos,acel_pontos,vel_pontos,pontuacao&competencia=eq.${MES}-01`);
+  const FORA = await foraPrograma();
   const todos = mens.filter(m => String(m.unidade || '').toUpperCase() === UNI
-    && !String(m.chave || '').startsWith('semlogin:')   // não é pessoa
+    && !naoConta(m.chave, FORA)   // não é pessoa do programa (Sem Login, teste, fora)
     && m.pontuacao != null);
   if (!todos.length) { console.log('sem gente na unidade neste mês.'); process.exit(0); }
 
@@ -1681,7 +1697,8 @@ if (MODE === 'programa') {
     + `rpm_pontos,idle_pontos,acel_pontos,pontuacao&competencia=gte.${MESES[0]}-01`
     + `&competencia=lte.${MES}-01`);
   const porMes = new Map();
-  mens.filter(m => !String(m.chave || '').startsWith('semlogin:') && m.pontuacao != null)
+  const FORA = await foraPrograma();
+  mens.filter(m => !naoConta(m.chave, FORA) && m.pontuacao != null)
     .forEach(m => {
       const k = String(m.competencia).slice(0, 7);
       if (!MESES.includes(k)) return;
@@ -1862,8 +1879,9 @@ if (MODE === 'premio') {
   console.log(`simulação de premiação · ${UNI} · ${MES} · teto R$ ${TETO.toLocaleString('pt-BR')}`);
 
   const mens = await sbTodos(`ce_scores_mensais?select=chave,unidade,km,dias,pontuacao&competencia=eq.${MES}-01`);
+  const FORA = await foraPrograma();
   const elig = mens.filter(m => String(m.unidade || '').toUpperCase() === UNI
-    && !String(m.chave || '').startsWith('semlogin:')     // não é pessoa
+    && !naoConta(m.chave, FORA)     // não é pessoa do programa
     && m.pontuacao != null);
   const comBase = elig.filter(m => (+m.dias || 0) >= BASE_MIN);
   console.log(`\nmotoristas da unidade com nota no mês: ${elig.length}`);
@@ -1979,9 +1997,10 @@ if (MODE === 'semrpm') {
   console.log(`sem Faixa Verde · ${de} → ${ate}`);
 
   const dias = await sbTodos(`ce_diario?select=dia,chave,km,rpm_verde_pct,bruto&dia=gte.${de}&dia=lte.${ate}`);
+  const FORA = await foraPrograma();
   const por = new Map();
   for (const l of dias) {
-    if (String(l.chave || '').startsWith('semlogin:')) continue;
+    if (naoConta(l.chave, FORA)) continue;
     const e = por.get(l.chave) || { dias: 0, comRpm: 0, km: 0, seg: 0, segZero: 0 };
     e.dias++; e.km += +l.km || 0;
     if (l.rpm_verde_pct != null) e.comRpm++;
@@ -2028,7 +2047,7 @@ if (MODE === 'semrpm') {
     + `rpm_pontos,idle_pontos,acel_pontos,pontuacao&competencia=gte.${de}&competencia=lte.${M2}-01`);
   // agrega como a TELA agrega: km somado, notas em média das vigências
   const ag = new Map();
-  mens.filter(m => !String(m.chave || '').startsWith('semlogin:') && m.pontuacao != null)
+  mens.filter(m => !naoConta(m.chave, FORA) && m.pontuacao != null)
     .forEach(m => {
       const e = ag.get(m.chave) || { km: 0, pont: [], rpm: [] };
       e.km += +m.km || 0; e.pont.push(m.pontuacao);
@@ -2068,10 +2087,11 @@ if (MODE === 'base') {
   const dias = await sbTodos(`ce_diario?select=dia,chave,km,rpm_verde_pct,bruto&dia=gte.${de}&dia=lte.${ate}`);
   const cad = await sbTodos('ce_motoristas?select=chave,unidade');
   const uniDe = new Map(cad.map(c => [c.chave, c.unidade || '(sem unidade)']));
+  const FORA = await foraPrograma();
 
   const por = new Map();   // chave → {dias, diasRpm, km, segRpm}
   for (const l of dias) {
-    if (String(l.chave || '').startsWith('semlogin:')) continue;   // não é pessoa
+    if (naoConta(l.chave, FORA)) continue;   // não é pessoa do programa
     const e = por.get(l.chave) || { dias: 0, diasRpm: 0, km: 0, segRpm: 0 };
     e.dias++;
     e.km += +l.km || 0;
@@ -3551,8 +3571,9 @@ if (MODE === 'declivesim') {
   const COMP = compDe(ATE);
   const dias = []; for (let d = new Date(DE + 'T12:00:00Z'); iso(d) <= ATE; d = new Date(d.getTime() + 864e5)) dias.push(iso(d));
   console.log(`simulação da amarela em descida · ${DE} → ${ATE} (competência ${COMP}) · ${UNI} · km mínimo ${KM_MIN}`);
+  const FORA = await foraPrograma();
   const mens = (await sbTodos(`ce_scores_mensais?select=id,chave,unidade,km,pontuacao,rpm_pontos,idle_pontos,acel_pontos&competencia=eq.${COMP}`))
-    .filter(m => String(m.unidade || '').toUpperCase() === UNI && !/^(semlogin|teste):/.test(m.chave) && m.pontuacao != null);
+    .filter(m => String(m.unidade || '').toUpperCase() === UNI && !naoConta(m.chave, FORA) && m.pontuacao != null);
   const ALVO = new Set(mens.map(m => m.chave));
   console.log(`motoristas da unidade com nota na competência: ${ALVO.size}`);
   const regras = (await sbTodos('ce_app_regras?select=id,saldo_inicial,piso_nota,podio&id=eq.1'))[0] || {};

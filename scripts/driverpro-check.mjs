@@ -70,6 +70,12 @@ if (r.j.token) {
   const c = await rpc('ce_app_cadastro', { p_cpf: '11111111111', p_pin: '1234', p_chave: 'teste:driverpro' });
   ok(c.status === 200 && c.j.ok === false, 'ce_app_cadastro recusa CPF inválido');
 }
+// fora do programa (seção 16 do app-motorista.sql, 20/10/2026): a função existe
+// no banco e o motorista de teste NÃO está marcado como fora
+{
+  const f = await rpc('ce_app_no_programa', { p_chave: 'teste:driverpro' });
+  ok(f.status === 200 && f.j === true, 'ce_app_no_programa existe e o teste:driverpro está no programa (' + f.status + ')');
+}
 // as tabelas fechadas não abrem para o anon
 for (const t of ['ce_app_acesso', 'ce_app_sessao', 'ce_motoristas']) {
   const x = await fetch(U + '/rest/v1/' + t + '?select=*&limit=1', { headers: { apikey: K, Authorization: 'Bearer ' + K } });

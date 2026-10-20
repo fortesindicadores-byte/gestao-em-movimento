@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610142030">
+<meta name="build" content="202610201040">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1026,12 +1026,19 @@ async function fetchAtivos(){
 
 /* ── Acessos do DriverPro (ce_app_log) ── */
 let LOG = [], MOT = {};                     // MOT: chave → {nome, cod}
+/* FORA DO PROGRAMA (Renan, 20/10/2026, lista do Jean Carlo: "São do time de
+   frota, instrutores"): ce_motoristas.fora_programa. O robô segue medindo, mas
+   quem está fora não entra em NADA do painel (ranking, carteira, km/L,
+   acessos) — a mesma regra do ce_app_dados. Sem a coluna no banco, ninguém. */
+let FORA = new Set();
 const diaKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 async function fetchAcessos(){
-  LOG = []; MOT = {};
+  LOG = []; MOT = {}; FORA = new Set();
   try {
     await sbClient().auth.getSession();
-    const { data: ms } = await sbClient().from('ce_motoristas').select('chave,nome,unidade');
+    let { data: ms, error: em } = await sbClient().from('ce_motoristas').select('chave,nome,unidade,fora_programa');
+    if (em) { console.warn('fora_programa:', em.message); ({ data: ms } = await sbClient().from('ce_motoristas').select('chave,nome,unidade')); }
+    FORA = new Set((ms || []).filter(m => m.fora_programa).map(m => m.chave));
     (ms || []).forEach(m => { MOT[m.chave] = { nome: m.nome || m.chave, cod: deParaGeo(m.unidade).cod }; });
     const PASSO = 1000, out = [];
     for (let de = 0; ; de += PASSO) {
@@ -1040,8 +1047,8 @@ async function fetchAcessos(){
       if (error) { console.warn('ce_app_log:', error.message); break; }
       out.push(...(data || [])); if (!data || data.length < PASSO) break;
     }
-    // admin não gera linha; o motorista de teste do DriverPro Check e o Sem Login ficam fora
-    LOG = out.filter(r => !/^(teste:|semlogin:)/.test(r.chave)).map(r => { const dt = new Date(r.quando); return { chave: r.chave, evento: r.evento, dt, dia: diaKey(dt) }; });
+    // admin não gera linha; o motorista de teste do DriverPro Check, o Sem Login e quem está fora do programa ficam fora
+    LOG = out.filter(r => !/^(teste:|semlogin:)/.test(r.chave) && !FORA.has(r.chave)).map(r => { const dt = new Date(r.quando); return { chave: r.chave, evento: r.evento, dt, dia: diaKey(dt) }; });
   } catch (e) { console.warn('acessos:', e.message); }
 }
 
@@ -1086,16 +1093,19 @@ async function fetchFromSupabase() {
     if (!lote || lote.length < PASSO) break;
   }
   if (!data.length) return [];
+  // quem está fora do programa (instrutores, time de frota) sai antes de qualquer conta
+  const linhas = data.filter(r => !FORA.has(r.chave));
+  if (linhas.length < data.length) console.info(`fora do programa: ${data.length - linhas.length} linha(s) de ${FORA.size} motorista(s) ficaram fora`);
 
   // o de-para vem das próprias linhas: os DRIVERS de exemplo saem de cena
   Object.keys(COD_OF).forEach(k => { delete COD_OF[k]; delete SRC_OF[k]; });
-  data.forEach(r => {
+  linhas.forEach(r => {
     const dp = deParaGeo(r.unidade);
     COD_OF[r.motorista] = dp.cod; SRC_OF[r.motorista] = r.fonte; UNI_OF[r.motorista] = r.unidade;
   });
   ULT_COLETA = data.reduce((m, r) => (r.atualizado_em > m ? r.atualizado_em : m), '');
 
-  return data.map(r => ({
+  return linhas.map(r => ({
     vig:  String(r.competencia).slice(0,10).replace(/-/g, '/'),   // '2026-07-01' -> '2026/07/01'
     unit: r.motorista,
     // a linha "Sem Login" da unidade fica no ranking (o km é cobrado lá), mas
@@ -2179,6 +2189,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610142030"></script>
+<script src="../../assets/build-check.js?v=202610201040"></script>
 </body>
 </html>

@@ -932,3 +932,268 @@ insert into ce_app_log (chave, evento, quando)
     and not exists (select 1 from ce_app_log l where l.chave = a.chave and l.evento = 'login'
                     and abs(extract(epoch from (l.quando - a.ultimo_acesso))) < 60);
 notify pgrst, 'reload schema';
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 16) FORA DO PROGRAMA (Renan, 20/10/2026, com a lista do Jean Carlo, Piraí:
+--     "Esses colaboradores precisam ficar fora do programa. São do time de
+--     frota, instrutores"). O `ativo` só barrava o login; o ranking, o pódio,
+--     a carteira, as listas do admin e do autocadastro leem a ce_scores_mensais
+--     direto, então um instrutor com nota alta ocupava o pódio dos motoristas.
+--     A marca é `ce_motoristas.fora_programa` (+ motivo e data). O robô
+--     continua medindo e gravando a nota (o km dele é real), mas quem está
+--     fora: não cria senha, não entra, não se autocadastra, não aparece na
+--     lista do admin, não ocupa posição no ranking nem pódio, não recebe
+--     carteira, e o painel do portal e os modos carteira/programa do robô o
+--     deixam de fora. Reexecutável. Para tirar alguém do programa, só o
+--     UPDATE no fim (o CPF NUNCA vai para o repositório — a lista é colada
+--     só no SQL Editor). Para voltar: fora_programa = false.
+-- ═══════════════════════════════════════════════════════════════════════════
+alter table public.ce_motoristas add column if not exists fora_programa boolean not null default false;
+alter table public.ce_motoristas add column if not exists fora_motivo   text;
+alter table public.ce_motoristas add column if not exists fora_em       timestamptz;
+comment on column public.ce_motoristas.fora_programa is
+  'true = fora do DriverPro (time de frota, instrutor…): sem login, sem ranking, sem carteira. O robô segue medindo.';
+
+-- true quando a chave pode competir (não está marcada como fora)
+create or replace function public.ce_app_no_programa(p_chave text)
+returns boolean language sql stable security definer set search_path = public, extensions as $$
+  select not coalesce((select fora_programa from ce_motoristas where chave = p_chave), false)
+$$;
+
+-- criar PIN: fora do programa não cria senha
+create or replace function public.ce_app_criar_pin(p_cpf text, p_pin text)
+returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+declare v_cpf text := ce_app_so_digitos(p_cpf); v_pin text := ce_app_so_digitos(p_pin); m record;
+begin
+  if length(v_cpf) <> 11 then return jsonb_build_object('ok', false, 'erro', 'CPF precisa ter 11 números.'); end if;
+  if length(v_pin) <> 4  then return jsonb_build_object('ok', false, 'erro', 'A senha são 4 números.'); end if;
+  select chave, unidade, fora_programa into m from ce_motoristas where cpf = v_cpf and ativo;
+  if m is null then return jsonb_build_object('ok', false, 'erro', 'CPF não está no programa. Fale com o seu gestor.'); end if;
+  if m.fora_programa then return jsonb_build_object('ok', false, 'erro', 'Este CPF está fora do programa (time de frota). Fale com o seu gestor.'); end if;
+  if not ce_app_unidade_ativa(m.unidade) then return jsonb_build_object('ok', false, 'erro', 'O DriverPro ainda não chegou na sua unidade. Em breve!'); end if;
+  if exists (select 1 from ce_app_acesso where chave = m.chave) then
+    return jsonb_build_object('ok', false, 'erro', 'Este CPF já tem senha. Se esqueceu, fale com o seu gestor.');
+  end if;
+  insert into ce_app_acesso (chave, pin_hash) values (m.chave, crypt(v_pin, gen_salt('bf')));
+  return ce_app_login(v_cpf, v_pin);
+end $$;
+
+-- login: admin sempre; motorista só se está no programa e em unidade liberada
+create or replace function public.ce_app_login(p_cpf text, p_pin text)
+returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+declare v_cpf text := ce_app_so_digitos(p_cpf); v_pin text := ce_app_so_digitos(p_pin);
+        m record; a record; adm record; v_token uuid;
+begin
+  select * into adm from ce_app_admins where cpf = v_cpf;
+  if adm is not null then
+    if adm.pin_hash <> crypt(v_pin, adm.pin_hash) then return jsonb_build_object('ok', false, 'erro', 'Senha errada.'); end if;
+    insert into ce_app_sessao (admin_cpf) values (v_cpf) returning token into v_token;
+    return jsonb_build_object('ok', true, 'token', v_token, 'nome', adm.nome, 'admin', true);
+  end if;
+  select * into m from ce_motoristas where cpf = v_cpf and ativo;
+  if m is null then return jsonb_build_object('ok', false, 'erro', 'CPF não está no programa.'); end if;
+  if m.fora_programa then return jsonb_build_object('ok', false, 'erro', 'Este CPF está fora do programa (time de frota). Fale com o seu gestor.'); end if;
+  if not ce_app_unidade_ativa(m.unidade) then return jsonb_build_object('ok', false, 'erro', 'O DriverPro ainda não chegou na sua unidade. Em breve!'); end if;
+  select * into a from ce_app_acesso where chave = m.chave;
+  if a is null then return jsonb_build_object('ok', false, 'erro', 'Primeira vez? Crie sua senha.', 'primeira_vez', true); end if;
+  if a.bloqueado_ate is not null and a.bloqueado_ate > now() then
+    return jsonb_build_object('ok', false, 'erro', 'Muitas tentativas. Espere ' ||
+      ceil(extract(epoch from (a.bloqueado_ate - now())) / 60) || ' min.');
+  end if;
+  if a.pin_hash <> crypt(v_pin, a.pin_hash) then
+    update ce_app_acesso set
+      bloqueado_ate = case when tentativas + 1 >= 5 then now() + interval '15 minutes' else null end,
+      tentativas = case when tentativas + 1 >= 5 then 0 else tentativas + 1 end
+      where chave = m.chave;
+    return jsonb_build_object('ok', false, 'erro', 'Senha errada.');
+  end if;
+  update ce_app_acesso set tentativas = 0, bloqueado_ate = null, ultimo_acesso = now() where chave = m.chave;
+  delete from ce_app_sessao where chave = m.chave and expira_em < now();
+  insert into ce_app_sessao (chave) values (m.chave) returning token into v_token;
+  return jsonb_build_object('ok', true, 'token', v_token, 'nome', m.nome, 'unidade', m.unidade);
+end $$;
+
+-- autocadastro: quem está fora não aparece na lista de nomes nem se cadastra
+create or replace function public.ce_app_cadastro_lista(p_unidade text default null)
+returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+begin
+  if p_unidade is null then
+    return jsonb_build_object('ok', true, 'unidades', coalesce((
+      select jsonb_agg(u order by u) from (select distinct unidade as u from ce_scores_mensais
+        where pontuacao is not null and chave not like 'semlogin:%' and unidade is not null) z
+      where ce_app_unidade_ativa(u)), '[]'::jsonb));
+  end if;
+  if not ce_app_unidade_ativa(p_unidade) then return jsonb_build_object('ok', true, 'motoristas', '[]'::jsonb); end if;
+  return jsonb_build_object('ok', true, 'motoristas', coalesce((
+    select jsonb_agg(jsonb_build_object('chave', x.chave, 'nome', x.motorista) order by x.motorista)
+    from (select distinct on (s.chave) s.chave, s.motorista from ce_scores_mensais s
+          where s.unidade = p_unidade and s.pontuacao is not null and s.chave not like 'semlogin:%'
+          order by s.chave, s.competencia desc) x
+    left join ce_motoristas mo on mo.chave = x.chave
+    where mo.cpf is null and not coalesce(mo.fora_programa, false)), '[]'::jsonb));
+end $$;
+
+create or replace function public.ce_app_cadastro(p_cpf text, p_pin text, p_chave text)
+returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+declare v_cpf text := ce_app_so_digitos(p_cpf); v_pin text := ce_app_so_digitos(p_pin); sc record;
+begin
+  if length(v_cpf) <> 11 or v_cpf ~ '^(\d)\1{10}$' then return jsonb_build_object('ok', false, 'erro', 'CPF inválido.'); end if;
+  if length(v_pin) <> 4 then return jsonb_build_object('ok', false, 'erro', 'A senha são 4 números.'); end if;
+  if exists (select 1 from ce_motoristas where cpf = v_cpf) then
+    return jsonb_build_object('ok', false, 'erro', 'Este CPF já tem cadastro. Entre com a sua senha.');
+  end if;
+  if exists (select 1 from ce_motoristas where chave = p_chave and cpf is not null) then
+    return jsonb_build_object('ok', false, 'erro', 'Este motorista já foi cadastrado. Se é você, fale com o seu gestor.');
+  end if;
+  if not ce_app_no_programa(p_chave) then
+    return jsonb_build_object('ok', false, 'erro', 'Este motorista está fora do programa (time de frota). Fale com o seu gestor.');
+  end if;
+  select motorista, unidade, fonte into sc from ce_scores_mensais where chave = p_chave and pontuacao is not null order by competencia desc limit 1;
+  if sc is null then return jsonb_build_object('ok', false, 'erro', 'Motorista não encontrado.'); end if;
+  if not ce_app_unidade_ativa(sc.unidade) then return jsonb_build_object('ok', false, 'erro', 'O DriverPro ainda não chegou na sua unidade. Em breve!'); end if;
+  insert into ce_motoristas (chave, nome, unidade, fonte, ativo, cpf) values (p_chave, sc.motorista, sc.unidade, sc.fonte, true, v_cpf)
+    on conflict (chave) do update set cpf = excluded.cpf, ativo = true;
+  delete from ce_app_acesso where chave = p_chave;
+  insert into ce_app_acesso (chave, pin_hash) values (p_chave, crypt(v_pin, gen_salt('bf')));
+  return ce_app_login(v_cpf, v_pin);
+end $$;
+
+-- lista de motoristas para o admin escolher: quem está fora não aparece
+create or replace function public.ce_app_motoristas(p_token uuid)
+returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+declare s record;
+begin
+  select * into s from ce_app_sessao where token = p_token and expira_em > now();
+  if s is null or s.admin_cpf is null then return jsonb_build_object('ok', false, 'erro', 'Só administrador.'); end if;
+  return jsonb_build_object('ok', true, 'motoristas', coalesce((
+    select jsonb_agg(jsonb_build_object('chave', x.chave, 'nome', x.motorista, 'unidade', x.unidade) order by x.unidade, x.motorista)
+    from (select distinct on (chave) chave, motorista, unidade from ce_scores_mensais
+          where pontuacao is not null and chave not like 'semlogin:%' order by chave, competencia desc) x
+    where ce_app_no_programa(x.chave)), '[]'::jsonb));
+end $$;
+
+-- dados: a MESMA função da seção 14, com quem está fora do programa fora da
+-- base (não ocupa posição, pódio nem carteira; o ranking renumera sem ele)
+create or replace function public.ce_app_dados(p_token uuid, p_chave text default null)
+returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+declare s record; m record; R record; v_vig date := public.ce_app_comp(now());
+        v_chave text; v_meses jsonb; v_rank jsonb; v_pos int; v_pos_ger int;
+        v_top int; v_km int; v_grupo text;
+begin
+  select * into s from ce_app_sessao where token = p_token and expira_em > now();
+  if s is null then return jsonb_build_object('ok', false, 'erro', 'Sessão expirada. Entre de novo.'); end if;
+  v_chave := case when s.admin_cpf is not null then p_chave else s.chave end;
+  if v_chave is null then return jsonb_build_object('ok', false, 'erro', 'Escolha um motorista.', 'admin', true); end if;
+  if not ce_app_no_programa(v_chave) then
+    return jsonb_build_object('ok', false, 'erro', 'Este motorista está fora do programa (time de frota).', 'fora_programa', true);
+  end if;
+  select coalesce(mo.nome, sc.motorista) as nome, coalesce(mo.unidade, sc.unidade) as unidade into m
+    from (select 1) z
+    left join ce_motoristas mo on mo.chave = v_chave
+    left join lateral (select motorista, unidade from ce_scores_mensais where chave = v_chave order by competencia desc limit 1) sc on true;
+  if m.nome is null then return jsonb_build_object('ok', false, 'erro', 'Motorista sem dados.'); end if;
+  select * into R from ce_app_regras where id = 1;
+  v_top := coalesce(ce_app_top_n(m.unidade), R.top_n);
+  v_km  := coalesce(ce_app_km_min(m.unidade), R.km_min);
+  v_grupo := ce_app_grupo(m.unidade);
+
+  with base as (
+    select x.*,
+           (coalesce(x.km,0)        >= coalesce(ce_app_km_min(x.unidade), R.km_min)
+            and coalesce(x.viagens,0)   >= R.viagens_min
+            and coalesce(x.dias,0)      >= R.dias_min
+            and coalesce(x.pontuacao,0) >= R.score_min) as disputa
+    from ce_scores_mensais x
+    where x.competencia <= v_vig and ce_app_grupo(x.unidade) = v_grupo
+      and x.pontuacao is not null and x.chave not like 'semlogin:%'
+      and ce_app_no_programa(x.chave)
+  ), h as (
+    select b.*,
+           case when b.disputa then row_number() over (partition by b.competencia, b.disputa
+                  order by b.pontuacao desc nulls last, b.km desc nulls last) end as pos,
+           case when b.disputa then row_number() over (partition by b.competencia, b.unidade, b.disputa
+                  order by b.pontuacao desc nulls last, b.km desc nulls last) end as pos_uni,
+           row_number() over (partition by b.competencia
+                  order by b.pontuacao desc nulls last, b.km desc nulls last) as pos_ger,
+           row_number() over (partition by b.competencia, b.unidade
+                  order by b.pontuacao desc nulls last, b.km desc nulls last) as pos_uni_ger
+    from base b
+  ), meu as (
+    select h.*, h.disputa and (v_top = 0 or h.pos_uni <= v_top) as elegivel from h where h.chave = v_chave
+  )
+  select
+    (select coalesce(jsonb_agg(jsonb_build_object('pos', pos, 'pos_geral', pos_ger, 'disputa', disputa,
+              'nome', ce_app_abrevia(motorista), 'pontuacao', round(pontuacao::numeric, 1),
+              'eu', chave = v_chave) order by pos nulls last, pos_ger), '[]'::jsonb)
+       from h where competencia = v_vig),
+    (select pos     from h where competencia = v_vig and chave = v_chave),
+    (select pos_ger from h where competencia = v_vig and chave = v_chave),
+    (select coalesce(jsonb_agg(jsonb_build_object(
+        'competencia', to_char(competencia, 'YYYY-MM'),
+        'nota', round(pontuacao::numeric, 1), 'km', round(coalesce(km,0)::numeric), 'dias', dias, 'viagens', viagens,
+        'posicao', pos, 'posicao_unidade', pos_uni,
+        'posicao_geral', pos_ger, 'posicao_unidade_geral', pos_uni_ger, 'disputa', disputa,
+        'elegivel', elegivel,
+        'carteira', case when elegivel then ce_app_carteira(pontuacao, R.saldo_inicial, R.piso_nota) else 0 end,
+        'podio',    case when elegivel and pos <= coalesce(array_length(R.podio,1),0) then R.podio[pos] else 0 end,
+        'rpm', round(rpm_pontos::numeric,1), 'idle', round(idle_pontos::numeric,1), 'acel', round(acel_pontos::numeric,1),
+        'vel', round(vel_pontos::numeric,1),
+        'motivo', case when elegivel then null
+                       when coalesce(km,0) < v_km then 'não bateu os ' || v_km || ' km'
+                       when coalesce(viagens,0) < R.viagens_min then 'não bateu as ' || R.viagens_min || ' viagens'
+                       when coalesce(dias,0) < R.dias_min then 'menos de ' || R.dias_min || ' dias medidos'
+                       when coalesce(pontuacao,0) < R.score_min then 'nota abaixo de ' || R.score_min
+                       else 'fora dos ' || v_top || ' primeiros' end
+      ) order by competencia desc), '[]'::jsonb) from meu)
+  into v_rank, v_pos, v_pos_ger, v_meses;
+
+  return jsonb_build_object(
+    'ok', true, 'admin', s.admin_cpf is not null,
+    'nome', m.nome, 'unidade', v_grupo, 'unidade_real', m.unidade, 'chave', v_chave,
+    'vigente', to_char(v_vig, 'YYYY-MM'),
+    'regras', jsonb_build_object('saldo_inicial', R.saldo_inicial, 'km_min', v_km, 'viagens_min', R.viagens_min,
+       'dias_min', R.dias_min, 'score_min', R.score_min, 'top_n', v_top, 'podio', to_jsonb(R.podio),
+       'piso_nota', R.piso_nota,
+       'pesos', jsonb_build_object('rpm', R.peso_rpm, 'idle', R.peso_idle, 'acel', R.peso_acel)),
+    'posicao', v_pos,
+    'posicao_geral', v_pos_ger,
+    'ranking', v_rank,
+    'meses', v_meses
+  );
+end $$;
+
+-- admin: a contagem "com nota" da unidade não conta quem está fora
+create or replace function public.ce_app_unidades(p_token uuid)
+returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+declare s record; v_vig date := public.ce_app_comp(now());
+begin
+  select * into s from ce_app_sessao where token = p_token and expira_em > now();
+  if s is null or s.admin_cpf is null then return jsonb_build_object('ok', false, 'erro', 'Só administrador.'); end if;
+  return jsonb_build_object('ok', true, 'todas', coalesce((select cardinality(unidades) = 0 or unidades is null from ce_app_regras where id = 1), true),
+    'top_pct', (select top_pct from ce_app_regras where id = 1),
+    'unidades', coalesce((
+    select jsonb_agg(jsonb_build_object('unidade', u.unidade, 'ativa', ce_app_unidade_ativa(u.unidade),
+             'com_nota', u.n, 'com_senha', coalesce(a.n, 0),
+             'grupo', c.grupo, 'qlp', c.qlp, 'top_n', ce_app_top_n(u.unidade), 'km_min', ce_app_km_min(u.unidade),
+             'top_fixo', c.top_n is not null, 'km_fixo', c.km_min is not null) order by u.unidade)
+    from (select unidade, count(distinct chave) as n from ce_scores_mensais
+          where pontuacao is not null and chave not like 'semlogin:%' and unidade is not null and competencia >= v_vig - interval '1 month'
+            and ce_app_no_programa(chave)
+          group by unidade) u
+    left join (select mo.unidade, count(*) as n from ce_app_acesso ac join ce_motoristas mo on mo.chave = ac.chave
+               where not mo.fora_programa group by mo.unidade) a
+      on a.unidade = u.unidade
+    left join ce_app_unidade_cfg c on c.unidade = u.unidade), '[]'::jsonb));
+end $$;
+
+revoke all on function public.ce_app_no_programa(text) from public;
+grant execute on function public.ce_app_no_programa(text) to anon, authenticated;
+notify pgrst, 'reload schema';
+
+-- Marcar quem fica fora (rodar À PARTE, com os CPFs reais — NÃO versionar):
+--   update public.ce_motoristas
+--      set fora_programa = true, fora_motivo = 'Time de frota / instrutor', fora_em = now()
+--    where cpf in ('<cpf só dígitos>', '<cpf só dígitos>');
+--   delete from public.ce_app_sessao where chave in (select chave from public.ce_motoristas where fora_programa);
+--   -- conferir: quem ficou marcado e qual CPF da lista não achou cadastro
+--   select chave, nome, unidade, fora_motivo, fora_em from public.ce_motoristas where fora_programa order by nome;

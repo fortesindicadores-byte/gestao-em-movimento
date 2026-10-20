@@ -44,18 +44,24 @@ console.log(`recorte: ${UNIS.join(' + ')} · km mínimo ${KM_MIN} · meses ${MES
 const carteira = nota => Math.round(Math.min(SALDO, Math.max(0, nota - PISO) * SALDO / (100 - PISO)) * 100) / 100;
 
 // cadastro (o que o robô viu do Geotab)
-const mot = await todos('ce_motoristas?select=id,chave,unidade,ativo');
+// fora_programa (20/10/2026): instrutores e time de frota — medidos, mas fora
+// de carteira, pódio e ranking. Sem a coluna no banco, ninguém está fora.
+let mot;
+try { mot = await todos('ce_motoristas?select=id,chave,unidade,ativo,fora_programa'); }
+catch (e) { console.log('fora_programa:', e.message.slice(0, 80)); mot = (await todos('ce_motoristas?select=id,chave,unidade,ativo')).map(m => ({ ...m, fora_programa: false })); }
+const FORA = new Set(mot.filter(m => m.fora_programa).map(m => m.chave));
+const naoConta = ch => /^(semlogin|teste):/.test(String(ch)) || FORA.has(ch);
 const uniMot = {}; mot.forEach(m => { const u = String(m.unidade || '').toUpperCase(); if (/PIRAI/.test(u)) uniMot[u] = (uniMot[u] || 0) + 1; });
 console.log('cadastro com PIRAI na unidade:', JSON.stringify(uniMot));
-const cad = mot.filter(m => UNIS.includes(String(m.unidade || '').toUpperCase()) && !String(m.chave).startsWith('semlogin:') && !String(m.chave).startsWith('teste:'));
-console.log(`cadastrados no recorte: ${cad.length}\n`);
+const cad = mot.filter(m => UNIS.includes(String(m.unidade || '').toUpperCase()) && !naoConta(m.chave));
+console.log(`cadastrados no recorte: ${cad.length} · fora do programa (instrutores/time de frota): ${FORA.size}\n`);
 
 const resumo = [];
 for (const mes of MESES) {
   const sc = await todos(`ce_scores_mensais?select=id,chave,unidade,km,pontuacao,rpm_pontos,idle_pontos,acel_pontos,litros,km_litros&competencia=eq.${mes}-01`);
   const doRec = sc.filter(s => UNIS.includes(String(s.unidade || '').toUpperCase()));
   const sem = doRec.filter(s => String(s.chave).startsWith('semlogin:'));
-  const pes = doRec.filter(s => !String(s.chave).startsWith('semlogin:') && !String(s.chave).startsWith('teste:') && s.pontuacao != null);
+  const pes = doRec.filter(s => !naoConta(s.chave) && s.pontuacao != null);
   const kmTot = doRec.reduce((a, s) => a + (+s.km || 0), 0), kmSem = sem.reduce((a, s) => a + (+s.km || 0), 0);
   const eleg = pes.filter(s => (+s.km || 0) >= KM_MIN).sort((a, b) => b.pontuacao - a.pontuacao || (+b.km || 0) - (+a.km || 0));
   const carts = eleg.map(s => carteira(+s.pontuacao));
