@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DriverPro">
-<meta name="build" content="202610082130">
+<meta name="build" content="202610201420">
 <title>DriverPro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -268,6 +268,7 @@ body.claro .nav button.on{color:#fff;}
   <div class="menu" id="menu">
     <button id="btInstalar" onclick="instalar();fechaMenu()" style="display:none">Instalar no celular</button>
     <button id="btTrocar" onclick="escolheMotorista()" style="display:none">Trocar motorista</button>
+    <button id="btZerar" onclick="zerarSenha()" style="display:none">Zerar senha deste motorista</button>
     <button onclick="sair()">Sair</button>
   </div>
 
@@ -329,7 +330,7 @@ body.claro .nav button.on{color:#fff;}
 
     <!-- ── RANKING ── -->
     <section class="tela" id="v-ranking">
-      <div class="sec" style="margin-top:20px">Os 15 de Piraí · setembro</div>
+      <div class="sec" style="margin-top:20px" id="rankTit">Ranking</div>
       <div id="ranking"></div>
     </section>
 
@@ -381,7 +382,7 @@ function rpc(fn, args){
 
 /* ── dados de exemplo (?demo=1): o mesmo formato que ce_app_dados devolve ── */
 var DEMO_DADOS = { ok:true, nome:'Marcio Andre', unidade:'EMP PIRAI', vigente:'2026-09', posicao:7, posicao_geral:12,
-  regras:{ saldo_inicial:200, piso_nota:60, km_min:1000, viagens_min:0, dias_min:0, score_min:0, top_n:0, podio:[300,150,100], pesos:{rpm:50,idle:30,acel:20} },
+  regras:{ saldo_inicial:200, piso_nota:60, inicio:'2025-01', km_min:1000, viagens_min:0, dias_min:0, score_min:0, top_n:0, podio:[300,150,100], pesos:{rpm:50,idle:30,acel:20} },
   ranking:[['Marcio A.',90.5],['Anderson M.',89.3],['Wanderson P.',88.4],['Mario Sergio D.',86.4],['Breno E.',86.4],['Lucas C.',85.8],['Willian A.',84.1],
     ['Luiz Carlos S.',83.8],['Thiago A.',83.7],['Paulo Roberto A.',83.6],['Wandiney T.',83.6],['Carlos Roberto C.',83.4],['Dalisvan S.',83.4],['Luiz Carlos B.',83.3],['Natanael S.',83.3]]
     .map(function(r,i){ return { pos:i+1, pos_geral:i+1+(i<6?3:5), disputa:true, nome:r[0], pontuacao:r[1], eu:i===6 }; }),
@@ -460,6 +461,20 @@ function mesDe(comp){ var y = +comp.slice(0,4), mo = +comp.slice(5,7) - 1, ma = 
    a diferença entre dirigir bem e dirigir mal quase não aparecia. Com piso 60,
    cada ponto vale R$ 5 e abaixo de 60 não paga. O piso vem do banco
    (ce_app_regras.piso_nota), não é constante aqui. */
+/* LANÇAMENTO (Renan, 20/10/2026: "Estou correndo para começar o DriverPro em
+   21/11/2026"): o programa vale dinheiro a partir da competência
+   ce_app_regras.inicio (dez/2026 = 21/11 a 20/12/2026). Antes dela é TESTE: o
+   app mostra quanto o motorista teria, e o valor fica fora do total de Ganhos. */
+function inicioDe(R){ return (R && R.inicio) || '2026-12'; }
+function emTeste(comp, R){ return String(comp || '') < inicioDe(R); }
+function textoTeste(R){
+  var ini = mesDe(inicioDe(R)), folha = MESES_N[(ini.mes + 1) % 12];
+  return 'Período de teste. O DriverPro passa a valer no período de <b>' + ini.per + '/' + ini.ano
+    + '</b>, pago na folha de ' + folha + '. Até lá, o valor mostra quanto você teria, mas não é pago.';
+}
+/* nome do grupo no título do ranking ("PIRAI" → "Piraí") */
+var NOME_GRUPO = { 'PIRAI':'Piraí', 'EMP PIRAI':'Piraí' };
+function nomeGrupo(g){ g = String(g || ''); return NOME_GRUPO[g] || g.toLowerCase().replace(/(^|\s)\S/g, function(c){ return c.toUpperCase(); }); }
 function pisoDe(R){ var v = +(R && R.piso_nota); return isFinite(v) && v > 0 && v < 100 ? v : 0; }
 function carteiraDe(nota, R){
   var piso = pisoDe(R), n = Math.min(100, Math.max(0, +nota || 0));
@@ -486,7 +501,7 @@ function perdas(mes, R){
 }
 
 function pinta(){
-  var R = D.regras, vig = mesDe(D.vigente), atual = null;
+  var R = D.regras, vig = mesDe(D.vigente), atual = null, teste = emTeste(D.vigente, R);
   D.meses.forEach(function(x){ if (x.competencia === D.vigente) atual = x; });
   var nota = atual ? +atual.nota : null, eleg = atual ? !!atual.elegivel : false;
   // A CARTEIRA é o que a barra mede (R$ 200 menos o que os pilares tiraram).
@@ -504,7 +519,7 @@ function pinta(){
   $('av').textContent = D.nome.split(' ').map(function(p){return p[0];}).join('').slice(0,2).toUpperCase();
 
   // ── saldo + meta do mês ──
-  $('rotSaldo').textContent = !atual ? 'Saldo de partida' : eleg ? 'Saldo atual' : 'Você teria';
+  $('rotSaldo').textContent = !atual ? 'Saldo de partida' : (eleg && !teste) ? 'Saldo atual' : 'Você teria';
   $('saldo').innerHTML = fmtVal(saldo);
   $('barraSaldo').style.width = pct + '%';
   $('metaTxt').innerHTML = '<b>' + brl(carteira) + '</b> / ' + brl(R.saldo_inicial);
@@ -524,9 +539,11 @@ function pinta(){
       + '<span><b>+ ' + brl(premio) + '</b></span>';
   } else mp.style.display = 'none';
   var av = $('avisoEleg');
-  if (!atual) { av.style.display = ''; av.innerHTML = 'O mês ainda não tem dados de condução. O saldo começa cheio e vai sendo apurado conforme você roda.'; }
-  else if (eleg) av.style.display = 'none';
-  else { av.style.display = ''; av.innerHTML = 'Para receber, ainda falta: <b>' + (atual.motivo || 'entrar na regra') + '</b>.'; }
+  var msgs = [];
+  if (teste) msgs.push(textoTeste(R));
+  if (!atual) msgs.push('O mês ainda não tem dados de condução. O saldo começa cheio e vai sendo apurado conforme você roda.');
+  else if (!eleg) msgs.push('Para receber, ainda falta: <b>' + (atual.motivo || 'entrar na regra') + '</b>.');
+  av.style.display = msgs.length ? '' : 'none'; av.innerHTML = msgs.join('<br><br>');
 
   // ── onde o dinheiro foi ──
   var pd = perdas(atual, R);
@@ -594,6 +611,8 @@ function pinta(){
     return (w.length > 1 ? [w[0], w[w.length - 1]] : w)
       .map(function(p){ return p.charAt(0).toUpperCase() + '.'; }).join(' ') || '—';
   };
+  var rt = $('rankTit');
+  if (rt) rt.textContent = (R.top_n > 0 ? 'Os ' + R.top_n + ' de ' : 'Ranking · ') + nomeGrupo(D.unidade) + ' · ' + vig.nome;
   $('ranking').innerHTML = (D.ranking || []).map(function(r){
     var ini = iniciaisDe(r.nome).replace(/[.\s]/g, '');   // o círculo bate com o texto ("M. D." → MD)
     // quem não disputa vem depois dos que disputam, com a posição contando todo mundo
@@ -639,17 +658,24 @@ function renderGanhos(){
   var lista = Object.keys(anos).map(Number).sort(function(a,b){ return b-a; });
   if (ANO_SEL == null || !anos[ANO_SEL]) ANO_SEL = vig.ano;
   $('anoSel').innerHTML = lista.map(function(a){ return '<option value="' + a + '"' + (a === ANO_SEL ? ' selected' : '') + '>' + a + '</option>'; }).join('');
-  var H = anos[ANO_SEL], tot = H.reduce(function(a, x){ return a + (+x.carteira || 0) + (+x.podio || 0); }, 0);
+  // mês de teste (antes do início do programa) não é dinheiro: fica fora do total
+  var R = D.regras;
+  var H = anos[ANO_SEL], tot = H.reduce(function(a, x){ return emTeste(x.competencia, R) ? a : a + (+x.carteira || 0) + (+x.podio || 0); }, 0);
   $('anoTit').textContent = H.length ? 'Você ganhou em ' + ANO_SEL : ANO_SEL + ' ainda não fechou nenhum mês';
   $('ganhoAno').innerHTML = fmtVal(tot);
   var atual = null; D.meses.forEach(function(x){ if (x.competencia === D.vigente) atual = x; });
   // mês fechado conta carteira + pódio; o em andamento tem de contar igual,
   // senão o prêmio do mês corrente não aparece como dinheiro em lugar nenhum
   var saldoVig = atual && atual.elegivel ? (+atual.carteira || 0) + (+atual.podio || 0) : 0;
-  var top = linha(ICO.cal, vig.rot, 'em andamento<i>prévia</i>', brl(saldoVig), '', '', ' vig');
+  var top = emTeste(D.vigente, R)
+    ? linha(ICO.cal, vig.rot, 'período de teste · não é pago<i>prévia</i>', 'teria ' + brl(saldoVig), '', '', ' vig')
+    : linha(ICO.cal, vig.rot, 'em andamento<i>prévia</i>', brl(saldoVig), '', '', ' vig');
   var fech = H.map(function(x){
     var v = (+x.carteira || 0) + (+x.podio || 0), m = mesDe(x.competencia);
-    return linha(ICO.cal, m.rot, v === 0 ? (x.motivo || 'sem ganho') : 'nota ' + (+x.nota).toFixed(1).replace('.', ',') + (+x.podio ? ' · pódio + R$ ' + x.podio : ''),
+    if (emTeste(x.competencia, R))
+      return linha(ICO.cal, m.rot, 'período de teste · não foi pago', v ? 'teria ' + brl(v) : brl(0), '');
+    // mês fechado: é o valor que foi para a folha (ce_app_fechamento)
+    return linha(ICO.cal, m.rot, (v === 0 ? (x.motivo || 'sem ganho') : 'nota ' + (+x.nota).toFixed(1).replace('.', ',') + (+x.podio ? ' · pódio + R$ ' + x.podio : '')) + (x.fechado ? ' · fechado' : ''),
       (v ? '+ ' : '') + brl(v), v ? 'pos' : 'neg');
   }).join('');
   $('meses').innerHTML = top + (fech || '<div class="li"><div class="tx"><span>Nenhum mês fechado em ' + ANO_SEL + ' ainda.</span></div></div>');
@@ -866,7 +892,17 @@ $('selLista').addEventListener('click', function(e){
   var t = null; try { t = localStorage.getItem('app4_token'); localStorage.setItem('app4_chave', li.dataset.chave); } catch(e){}
   $('tela-sel').classList.remove('on'); carrega(t, li.dataset.chave);
 });
-function abre(){ $('tela-login').classList.remove('on'); $('tela-sel').classList.remove('on'); $('app').style.display = 'flex'; $('pin').value = ''; ANO_SEL = null; $('btTrocar').style.display = D.admin ? '' : 'none'; pinta(); }
+function abre(){ $('tela-login').classList.remove('on'); $('tela-sel').classList.remove('on'); $('app').style.display = 'flex'; $('pin').value = ''; ANO_SEL = null; $('btTrocar').style.display = D.admin ? '' : 'none'; $('btZerar').style.display = D.admin ? '' : 'none'; pinta(); }
+/* admin zera a senha do motorista que está vendo (Renan, 20/10/2026): ele cria
+   outra no próximo acesso, com o CPF. Antes só dava por SQL. */
+function zerarSenha(){
+  fechaMenu(); if (!D || !D.admin || DEMO) return;
+  var t = null; try { t = localStorage.getItem('app4_token'); } catch(e){}
+  if (!confirm('Zerar a senha de ' + D.nome + '?\nNo próximo acesso ele toca em "Criar senha", digita o CPF e escolhe outra.')) return;
+  rpc('ce_app_zerar_pin', { p_token: t, p_chave: D.chave }).then(function(r){
+    alert(r.ok ? 'Senha de ' + (r.nome || D.nome) + ' zerada. Ele cria uma nova no próximo acesso.' : (r.erro || 'Não deu certo.'));
+  }).catch(function(e){ alert(/function|schema/i.test(e.message || '') ? 'Falta rodar o SQL da seção 17 no banco.' : 'Sem conexão. Tente de novo.'); });
+}
 function sair(){
   var t = null; try { t = localStorage.getItem('app4_token'); localStorage.removeItem('app4_token'); localStorage.removeItem('app4_admin'); localStorage.removeItem('app4_chave'); } catch(e){}
   if (t && !DEMO) rpc('ce_app_sair', { p_token: t }).catch(function(){});

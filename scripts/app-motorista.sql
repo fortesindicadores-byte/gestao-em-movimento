@@ -1197,3 +1197,287 @@ notify pgrst, 'reload schema';
 --   delete from public.ce_app_sessao where chave in (select chave from public.ce_motoristas where fora_programa);
 --   -- conferir: quem ficou marcado e qual CPF da lista não achou cadastro
 --   select chave, nome, unidade, fora_motivo, fora_em from public.ce_motoristas where fora_programa order by nome;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 17) LANÇAMENTO, SENHA ZERADA PELO ADMIN E FECHAMENTO DO MÊS (Renan,
+--     20/10/2026: "Estou correndo para começar o DriverPro em 21/11/2026" →
+--     "Pode fazer os cinco"). Três peças:
+--     (a) ce_app_regras.inicio = 1ª competência que vale dinheiro (dez/2026 =
+--         21/11 a 20/12/2026). Antes dela o app mostra o valor como TESTE
+--         ("você teria"), fora do total da aba Ganhos. O banco continua
+--         calculando, para o treinamento mostrar o que o motorista levaria.
+--     (b) ce_app_zerar_pin: o admin do app apaga a senha de um motorista, que
+--         cria outra no próximo acesso com o CPF. Antes só dava por SQL.
+--     (c) ce_app_fechamento: a FOTO do mês que vai para a folha. O robô
+--         recalcula os meses (reprocessa o Geotab, refaz faixa e régua) e o
+--         mês pago mudava depois no app. ce_app_fechar(competência) grava a
+--         apuração de todos os motoristas (a mesma conta do ce_app_dados) e,
+--         daí em diante, o app mostra o que foi fechado, não o que o robô
+--         recalculou. Só fecha período que já terminou; refazer exige
+--         p_refazer => true. Reexecutável.
+-- ═══════════════════════════════════════════════════════════════════════════
+alter table public.ce_app_regras add column if not exists inicio date not null default '2026-12-01';
+comment on column public.ce_app_regras.inicio is
+  '1ª competência que vale dinheiro (dez/2026 = 21/11 a 20/12/2026). Antes dela o app mostra como teste.';
+
+-- (b) senha zerada pelo admin (auditoria à parte: o ce_app_log é lido como acesso)
+create table if not exists public.ce_app_senha_zerada (
+  id         bigserial primary key,
+  chave      text not null,
+  admin_cpf  text,
+  quando     timestamptz not null default now()
+);
+alter table public.ce_app_senha_zerada enable row level security;
+
+create or replace function public.ce_app_zerar_pin(p_token uuid, p_chave text)
+returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+declare s record; v_nome text;
+begin
+  select * into s from ce_app_sessao where token = p_token and expira_em > now();
+  if s is null or s.admin_cpf is null then return jsonb_build_object('ok', false, 'erro', 'Só administrador.'); end if;
+  select nome into v_nome from ce_motoristas where chave = p_chave;
+  if v_nome is null then return jsonb_build_object('ok', false, 'erro', 'Motorista não encontrado.'); end if;
+  delete from ce_app_acesso where chave = p_chave;
+  delete from ce_app_sessao where chave = p_chave;
+  insert into ce_app_senha_zerada (chave, admin_cpf) values (p_chave, s.admin_cpf);
+  return jsonb_build_object('ok', true, 'nome', v_nome);
+end $$;
+revoke all on function public.ce_app_zerar_pin(uuid, text) from public;
+grant execute on function public.ce_app_zerar_pin(uuid, text) to anon, authenticated;
+
+-- (c) fechamento do mês
+create table if not exists public.ce_app_fechamento (
+  competencia      date not null,
+  chave            text not null,
+  motorista        text,
+  unidade          text,
+  grupo            text,
+  nota             numeric,
+  km               numeric,
+  rpm              numeric,
+  idle             numeric,
+  acel             numeric,
+  disputa          boolean,
+  posicao          int,
+  posicao_unidade  int,
+  elegivel         boolean not null default false,
+  motivo           text,
+  carteira         numeric not null default 0,
+  podio            numeric not null default 0,
+  fechado_em       timestamptz not null default now(),
+  fechado_por      text,
+  primary key (competencia, chave)
+);
+alter table public.ce_app_fechamento enable row level security;
+drop policy if exists ce_app_fechamento_sel on public.ce_app_fechamento;
+create policy ce_app_fechamento_sel on public.ce_app_fechamento for select to authenticated using (true);
+comment on table public.ce_app_fechamento is
+  'Foto do mês que vai para a folha (ce_app_fechar). Depois de fechado, o app mostra estes valores, não o recalculado.';
+
+-- a apuração de UMA competência para todos os motoristas: a mesma conta do
+-- ce_app_dados (ranking por grupo entre quem disputa, cota e km da unidade,
+-- carteira pela rampa do piso, pódio dos 3 primeiros do grupo)
+create or replace function public.ce_app_apuracao(p_comp date)
+returns table (competencia date, chave text, motorista text, unidade text, grupo text,
+               nota numeric, km numeric, rpm numeric, idle numeric, acel numeric,
+               disputa boolean, posicao int, posicao_unidade int, elegivel boolean,
+               motivo text, carteira numeric, podio numeric)
+language plpgsql stable security definer set search_path = public, extensions as $$
+#variable_conflict use_column
+declare R record;
+begin
+  select * into R from ce_app_regras where id = 1;
+  return query
+  with base as (
+    select x.competencia as comp, x.chave as ch, x.motorista as mot, x.unidade as uni,
+           ce_app_grupo(x.unidade) as grp, x.pontuacao as pont, coalesce(x.km,0) as kms,
+           x.rpm_pontos as r1, x.idle_pontos as r2, x.acel_pontos as r3,
+           coalesce(ce_app_km_min(x.unidade), R.km_min) as kmmin,
+           coalesce(ce_app_top_n(x.unidade), R.top_n) as topn,
+           (coalesce(x.km,0)        >= coalesce(ce_app_km_min(x.unidade), R.km_min)
+            and coalesce(x.viagens,0)   >= R.viagens_min
+            and coalesce(x.dias,0)      >= R.dias_min
+            and coalesce(x.pontuacao,0) >= R.score_min) as disp,
+           coalesce(x.viagens,0) as via, coalesce(x.dias,0) as dd
+    from ce_scores_mensais x
+    where x.competencia = p_comp and x.pontuacao is not null and x.chave not like 'semlogin:%'
+      and ce_app_no_programa(x.chave)
+  ), h as (
+    select b.*,
+           case when b.disp then row_number() over (partition by b.grp, b.disp
+                  order by b.pont desc nulls last, b.kms desc nulls last) end as pos,
+           case when b.disp then row_number() over (partition by b.uni, b.disp
+                  order by b.pont desc nulls last, b.kms desc nulls last) end as pos_uni
+    from base b
+  ), e as (
+    select h.*, (h.disp and (h.topn = 0 or h.pos_uni <= h.topn)) as eleg from h
+  )
+  select e.comp, e.ch, e.mot, e.uni, e.grp,
+         round(e.pont::numeric, 1), round(e.kms::numeric),
+         round(e.r1::numeric, 1), round(e.r2::numeric, 1), round(e.r3::numeric, 1),
+         e.disp, e.pos::int, e.pos_uni::int, e.eleg,
+         case when e.eleg then null
+              when e.kms < e.kmmin then 'não bateu os ' || e.kmmin || ' km'
+              when e.via < R.viagens_min then 'não bateu as ' || R.viagens_min || ' viagens'
+              when e.dd < R.dias_min then 'menos de ' || R.dias_min || ' dias medidos'
+              when coalesce(e.pont,0) < R.score_min then 'nota abaixo de ' || R.score_min
+              else 'fora dos ' || e.topn || ' primeiros' end,
+         case when e.eleg then ce_app_carteira(e.pont, R.saldo_inicial, R.piso_nota) else 0 end,
+         case when e.eleg and e.pos <= coalesce(array_length(R.podio,1),0) then R.podio[e.pos] else 0 end
+  from e;
+end $$;
+revoke all on function public.ce_app_apuracao(date) from public;
+
+-- fecha a competência (só admin do portal, ou o SQL Editor). Refazer um mês
+-- já fechado exige p_refazer => true — depois da folha, não refazer.
+create or replace function public.ce_app_fechar(p_comp date, p_refazer boolean default false)
+returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+declare v_comp date := date_trunc('month', p_comp)::date; v_ja timestamptz; v_n int; v_quem text; t record;
+begin
+  if auth.uid() is not null and not public.fca_is_admin() then
+    return jsonb_build_object('ok', false, 'erro', 'Só administrador.');
+  end if;
+  if v_comp >= ce_app_comp(now()) then
+    return jsonb_build_object('ok', false, 'erro', 'O período de ' || to_char(v_comp, 'MM/YYYY') || ' ainda não terminou (fecha no dia 20).');
+  end if;
+  select max(fechado_em) into v_ja from ce_app_fechamento where competencia = v_comp;
+  if v_ja is not null and not p_refazer then
+    return jsonb_build_object('ok', false, 'erro', 'Já fechado em ' || to_char(v_ja at time zone 'America/Sao_Paulo', 'DD/MM/YYYY HH24:MI')
+      || '. Para refazer: ce_app_fechar(''' || v_comp || ''', true).');
+  end if;
+  v_quem := coalesce((select email from auth.users where id = auth.uid()), current_user);
+  delete from ce_app_fechamento where competencia = v_comp;
+  insert into ce_app_fechamento (competencia, chave, motorista, unidade, grupo, nota, km, rpm, idle, acel,
+                                 disputa, posicao, posicao_unidade, elegivel, motivo, carteira, podio, fechado_por)
+    select a.competencia, a.chave, a.motorista, a.unidade, a.grupo, a.nota, a.km, a.rpm, a.idle, a.acel,
+           a.disputa, a.posicao, a.posicao_unidade, a.elegivel, a.motivo, a.carteira, a.podio, v_quem
+    from ce_app_apuracao(v_comp) a where ce_app_unidade_ativa(a.unidade);
+  get diagnostics v_n = row_count;
+  select count(*) filter (where elegivel) as recebem, coalesce(sum(carteira),0) as cart, coalesce(sum(podio),0) as pod
+    into t from ce_app_fechamento where competencia = v_comp;
+  return jsonb_build_object('ok', true, 'competencia', to_char(v_comp, 'YYYY-MM'), 'motoristas', v_n,
+    'recebem', t.recebem, 'carteiras', t.cart, 'podios', t.pod, 'total', t.cart + t.pod);
+end $$;
+revoke all on function public.ce_app_fechar(date, boolean) from public;
+grant execute on function public.ce_app_fechar(date, boolean) to authenticated;
+
+-- dados: a mesma função da seção 16, agora com o início do programa (teste)
+-- e o mês fechado vindo do fechamento. A versão antiga (uuid) sai de novo:
+-- se ela voltar, o PostgREST recusa o motorista com PGRST203.
+drop function if exists public.ce_app_dados(uuid);
+create or replace function public.ce_app_dados(p_token uuid, p_chave text default null)
+returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+declare s record; m record; R record; v_vig date := public.ce_app_comp(now());
+        v_chave text; v_meses jsonb; v_rank jsonb; v_pos int; v_pos_ger int;
+        v_top int; v_km int; v_grupo text;
+begin
+  select * into s from ce_app_sessao where token = p_token and expira_em > now();
+  if s is null then return jsonb_build_object('ok', false, 'erro', 'Sessão expirada. Entre de novo.'); end if;
+  v_chave := case when s.admin_cpf is not null then p_chave else s.chave end;
+  if v_chave is null then return jsonb_build_object('ok', false, 'erro', 'Escolha um motorista.', 'admin', true); end if;
+  if not ce_app_no_programa(v_chave) then
+    return jsonb_build_object('ok', false, 'erro', 'Este motorista está fora do programa (time de frota).', 'fora_programa', true);
+  end if;
+  select coalesce(mo.nome, sc.motorista) as nome, coalesce(mo.unidade, sc.unidade) as unidade into m
+    from (select 1) z
+    left join ce_motoristas mo on mo.chave = v_chave
+    left join lateral (select motorista, unidade from ce_scores_mensais where chave = v_chave order by competencia desc limit 1) sc on true;
+  if m.nome is null then return jsonb_build_object('ok', false, 'erro', 'Motorista sem dados.'); end if;
+  select * into R from ce_app_regras where id = 1;
+  v_top := coalesce(ce_app_top_n(m.unidade), R.top_n);
+  v_km  := coalesce(ce_app_km_min(m.unidade), R.km_min);
+  v_grupo := ce_app_grupo(m.unidade);
+
+  with base as (
+    select x.*,
+           (coalesce(x.km,0)        >= coalesce(ce_app_km_min(x.unidade), R.km_min)
+            and coalesce(x.viagens,0)   >= R.viagens_min
+            and coalesce(x.dias,0)      >= R.dias_min
+            and coalesce(x.pontuacao,0) >= R.score_min) as disputa
+    from ce_scores_mensais x
+    where x.competencia <= v_vig and ce_app_grupo(x.unidade) = v_grupo
+      and x.pontuacao is not null and x.chave not like 'semlogin:%'
+      and ce_app_no_programa(x.chave)
+  ), h as (
+    select b.*,
+           case when b.disputa then row_number() over (partition by b.competencia, b.disputa
+                  order by b.pontuacao desc nulls last, b.km desc nulls last) end as pos,
+           case when b.disputa then row_number() over (partition by b.competencia, b.unidade, b.disputa
+                  order by b.pontuacao desc nulls last, b.km desc nulls last) end as pos_uni,
+           row_number() over (partition by b.competencia
+                  order by b.pontuacao desc nulls last, b.km desc nulls last) as pos_ger,
+           row_number() over (partition by b.competencia, b.unidade
+                  order by b.pontuacao desc nulls last, b.km desc nulls last) as pos_uni_ger
+    from base b
+  ), meu as (
+    select h.*, h.disputa and (v_top = 0 or h.pos_uni <= v_top) as elegivel,
+           exists (select 1 from ce_app_fechamento ff where ff.competencia = h.competencia) as fech,
+           f.chave as f_chave, f.nota as f_nota, f.km as f_km, f.rpm as f_rpm, f.idle as f_idle, f.acel as f_acel,
+           f.disputa as f_disputa, f.posicao as f_pos, f.posicao_unidade as f_pos_uni, f.elegivel as f_eleg,
+           f.motivo as f_motivo, f.carteira as f_cart, f.podio as f_podio, f.fechado_em as f_em
+    from h left join ce_app_fechamento f on f.competencia = h.competencia and f.chave = h.chave
+    where h.chave = v_chave
+  )
+  select
+    (select coalesce(jsonb_agg(jsonb_build_object('pos', pos, 'pos_geral', pos_ger, 'disputa', disputa,
+              'nome', ce_app_abrevia(motorista), 'pontuacao', round(pontuacao::numeric, 1),
+              'eu', chave = v_chave) order by pos nulls last, pos_ger), '[]'::jsonb)
+       from h where competencia = v_vig),
+    (select pos     from h where competencia = v_vig and chave = v_chave),
+    (select pos_ger from h where competencia = v_vig and chave = v_chave),
+    (select coalesce(jsonb_agg(case when fech then jsonb_build_object(
+        'competencia', to_char(competencia, 'YYYY-MM'),
+        'nota', coalesce(f_nota, round(pontuacao::numeric, 1)), 'km', coalesce(f_km, round(coalesce(km,0)::numeric)),
+        'dias', dias, 'viagens', viagens,
+        'posicao', f_pos, 'posicao_unidade', f_pos_uni,
+        'posicao_geral', pos_ger, 'posicao_unidade_geral', pos_uni_ger, 'disputa', coalesce(f_disputa, false),
+        'elegivel', coalesce(f_eleg, false),
+        'carteira', coalesce(f_cart, 0), 'podio', coalesce(f_podio, 0),
+        'rpm', coalesce(f_rpm, round(rpm_pontos::numeric,1)), 'idle', coalesce(f_idle, round(idle_pontos::numeric,1)),
+        'acel', coalesce(f_acel, round(acel_pontos::numeric,1)), 'vel', round(vel_pontos::numeric,1),
+        'motivo', case when f_chave is null then 'fora do fechamento do mês' else f_motivo end,
+        'fechado', true, 'fechado_em', f_em, 'teste', competencia < R.inicio)
+      else jsonb_build_object(
+        'competencia', to_char(competencia, 'YYYY-MM'),
+        'nota', round(pontuacao::numeric, 1), 'km', round(coalesce(km,0)::numeric), 'dias', dias, 'viagens', viagens,
+        'posicao', pos, 'posicao_unidade', pos_uni,
+        'posicao_geral', pos_ger, 'posicao_unidade_geral', pos_uni_ger, 'disputa', disputa,
+        'elegivel', elegivel,
+        'carteira', case when elegivel then ce_app_carteira(pontuacao, R.saldo_inicial, R.piso_nota) else 0 end,
+        'podio',    case when elegivel and pos <= coalesce(array_length(R.podio,1),0) then R.podio[pos] else 0 end,
+        'rpm', round(rpm_pontos::numeric,1), 'idle', round(idle_pontos::numeric,1), 'acel', round(acel_pontos::numeric,1),
+        'vel', round(vel_pontos::numeric,1),
+        'motivo', case when elegivel then null
+                       when coalesce(km,0) < v_km then 'não bateu os ' || v_km || ' km'
+                       when coalesce(viagens,0) < R.viagens_min then 'não bateu as ' || R.viagens_min || ' viagens'
+                       when coalesce(dias,0) < R.dias_min then 'menos de ' || R.dias_min || ' dias medidos'
+                       when coalesce(pontuacao,0) < R.score_min then 'nota abaixo de ' || R.score_min
+                       else 'fora dos ' || v_top || ' primeiros' end,
+        'fechado', false, 'teste', competencia < R.inicio) end
+      order by competencia desc), '[]'::jsonb) from meu)
+  into v_rank, v_pos, v_pos_ger, v_meses;
+
+  return jsonb_build_object(
+    'ok', true, 'admin', s.admin_cpf is not null,
+    'nome', m.nome, 'unidade', v_grupo, 'unidade_real', m.unidade, 'chave', v_chave,
+    'vigente', to_char(v_vig, 'YYYY-MM'),
+    'regras', jsonb_build_object('saldo_inicial', R.saldo_inicial, 'km_min', v_km, 'viagens_min', R.viagens_min,
+       'dias_min', R.dias_min, 'score_min', R.score_min, 'top_n', v_top, 'podio', to_jsonb(R.podio),
+       'piso_nota', R.piso_nota, 'inicio', to_char(R.inicio, 'YYYY-MM'),
+       'pesos', jsonb_build_object('rpm', R.peso_rpm, 'idle', R.peso_idle, 'acel', R.peso_acel)),
+    'posicao', v_pos,
+    'posicao_geral', v_pos_ger,
+    'ranking', v_rank,
+    'meses', v_meses
+  );
+end $$;
+revoke all on function public.ce_app_dados(uuid, text) from public;
+grant execute on function public.ce_app_dados(uuid, text) to anon, authenticated;
+notify pgrst, 'reload schema';
+
+-- Fechar o mês que vai para a folha (depois do dia 21, com a coleta do dia 20 já gravada):
+--   select public.ce_app_fechar('2026-12-01');
+-- A lista para a folha:
+--   select f.motorista, mo.cpf, f.unidade, f.nota, f.km, f.posicao, f.carteira, f.podio, f.carteira + f.podio as total
+--     from public.ce_app_fechamento f left join public.ce_motoristas mo on mo.chave = f.chave
+--    where f.competencia = '2026-12-01' and f.elegivel order by total desc;

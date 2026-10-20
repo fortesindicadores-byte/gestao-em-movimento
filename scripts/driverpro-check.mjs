@@ -51,6 +51,8 @@ if (r.j.token) {
   const disp = rk.filter(x => x.disputa !== false).length;
   console.log('ranking: ' + rk.length + ' linha(s) · ' + disp + ' na disputa · ' + (rk.length - disp) + ' fora');
   console.log('regras:', JSON.stringify(j.regras));
+  // lançamento (seção 17, 20/10/2026): o início do programa vem do banco
+  ok(j.regras && /^\d{4}-\d{2}$/.test(j.regras.inicio || ''), 'ce_app_dados devolve regras.inicio (' + (j.regras && j.regras.inicio) + ')');
   (j.meses || []).forEach(m => console.log('  ', m.competencia, 'nota', m.nota, 'km', m.km, 'dias', m.dias, 'viagens', m.viagens,
     'pos', m.posicao, 'pos_uni', m.posicao_unidade, 'geral', m.posicao_unidade_geral,
     'eleg', m.elegivel, 'carteira', m.carteira, 'podio', m.podio, 'rpm/idle/acel', m.rpm, m.idle, m.acel, m.motivo || ''));
@@ -75,6 +77,13 @@ if (r.j.token) {
 {
   const f = await rpc('ce_app_no_programa', { p_chave: 'teste:driverpro' });
   ok(f.status === 200 && f.j === true, 'ce_app_no_programa existe e o teste:driverpro está no programa (' + f.status + ')');
+}
+// seção 17 (20/10/2026): zerar senha só para admin e a tabela do fechamento existe
+{
+  const z = await rpc('ce_app_zerar_pin', { p_token: '00000000-0000-0000-0000-000000000000', p_chave: 'teste:driverpro' });
+  ok(z.status === 200 && z.j.ok === false, 'ce_app_zerar_pin existe e recusa quem não é admin (' + z.status + ')');
+  const x = await fetch(U + '/rest/v1/ce_app_fechamento?select=competencia&limit=1', { headers: { apikey: K, Authorization: 'Bearer ' + K } });
+  ok(x.status !== 404, 'ce_app_fechamento existe no banco (' + x.status + ')');
 }
 // as tabelas fechadas não abrem para o anon
 for (const t of ['ce_app_acesso', 'ce_app_sessao', 'ce_motoristas']) {

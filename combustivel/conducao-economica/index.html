@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610201040">
+<meta name="build" content="202610201420">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Condução Econômica · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1052,6 +1052,26 @@ async function fetchAcessos(){
   } catch (e) { console.warn('acessos:', e.message); }
 }
 
+/* FECHAMENTO DO MÊS (Renan, 20/10/2026): o mês que vai para a folha é a FOTO
+   gravada em ce_app_fechamento (ce_app_fechar). Mês fechado sai dela, não do
+   recálculo do robô — senão a carteira mudaria depois de paga. */
+let FECH = {};            // vig ('2026/12/01') → motorista → linha do fechamento
+async function fetchFechamento(){
+  FECH = {};
+  try {
+    await sbClient().auth.getSession();
+    const PASSO = 1000;
+    for (let de = 0; ; de += PASSO) {
+      const { data, error } = await sbClient().from('ce_app_fechamento')
+        .select('competencia,chave,motorista,elegivel,carteira,podio,fechado_em')
+        .order('competencia', { ascending: true }).order('chave', { ascending: true }).range(de, de + PASSO - 1);
+      if (error) { console.warn('ce_app_fechamento:', error.message); break; }
+      (data || []).forEach(f => { if (FORA.has(f.chave)) return; const v = String(f.competencia).slice(0,10).replace(/-/g, '/'); (FECH[v] = FECH[v] || {})[f.motorista] = f; });
+      if (!data || data.length < PASSO) break;
+    }
+  } catch (e) { console.warn('fechamento:', e.message); }
+}
+
 /* ── Estado ── */
 let RAW = [], ORIGEM = 'exemplo', ULT_COLETA = null, VW = 'resumo';
 let chartTemporal = null, activeInd = 'media_geral';
@@ -1467,16 +1487,21 @@ function carteiraDe(data){
       const a = porMot[r.unit] || (porMot[r.unit] = { unit:r.unit, km:0, pts:[], uni: UNI_OF[r.unit] || COD_OF[r.unit] || '—' });
       a.km += +r.km||0; if(r.pont!=null) a.pts.push(r.pont); });
     const lista = Object.values(porMot).filter(a=>a.pts.length).map(a=>({ ...a, pont: a.pts.reduce((x,y)=>x+y,0)/a.pts.length, crit: critDe(a.uni) }));
-    // posição dentro da unidade (cota) e dentro do grupo (pódio)
+    // posição dentro da unidade (cota) e dentro do grupo (pódio) SÓ ENTRE QUEM
+    // DISPUTA (bateu o km mínimo da própria unidade), como o ce_app_dados: com
+    // todo mundo no ranking, o 1º de pouco km tomava o lugar do pódio
     const porUni = {}, porGrp = {};
-    lista.forEach(a=>{ (porUni[a.uni] = porUni[a.uni] || []).push(a); (porGrp[a.crit.grupo] = porGrp[a.crit.grupo] || []).push(a); });
+    lista.forEach(a=>{ a.disp = a.km >= a.crit.km_min; if(!a.disp) return; (porUni[a.uni] = porUni[a.uni] || []).push(a); (porGrp[a.crit.grupo] = porGrp[a.crit.grupo] || []).push(a); });
     Object.values(porUni).forEach(l=>l.sort((x,y)=>y.pont-x.pont || y.km-x.km).forEach((a,i)=>a.posUni=i+1));
     Object.values(porGrp).forEach(l=>l.sort((x,y)=>y.pont-x.pont || y.km-x.km).forEach((a,i)=>a.posGrp=i+1));
+    const fech = FECH[rows[0].vig];
     lista.forEach(a=>{
-      const eleg = a.km >= a.crit.km_min && (a.crit.top_n <= 0 || a.posUni <= a.crit.top_n);
+      let eleg = a.disp && (a.crit.top_n <= 0 || a.posUni <= a.crit.top_n);
       // mesma rampa do app: começa no piso (ce_app_regras.piso_nota), não no zero
-      const cart = eleg ? Math.min(saldo, Math.max(0, Math.min(100, a.pont) - PISO) * saldo / (100 - PISO)) : 0;
-      const pod  = eleg && a.posGrp <= podio.length ? +podio[a.posGrp-1] : 0;
+      let cart = eleg ? Math.min(saldo, Math.max(0, Math.min(100, a.pont) - PISO) * saldo / (100 - PISO)) : 0;
+      let pod  = eleg && a.posGrp <= podio.length ? +podio[a.posGrp-1] : 0;
+      // mês fechado: vale o que foi para a folha
+      if (fech) { const f = fech[a.unit]; eleg = !!(f && f.elegivel); cart = f ? +f.carteira || 0 : 0; pod = f ? +f.podio || 0 : 0; }
       const t = acc[a.unit] || (acc[a.unit] = { unit:a.unit, uni:a.uni, km:0, pts:[], meses:0, eleg:0, cart:0, pod:0, semKm:0, zero:0 });
       t.km += a.km; t.pts.push(a.pont); t.meses++; if(eleg) t.eleg++; t.cart += cart; t.pod += pod;
       if(a.km < a.crit.km_min) t.semKm++; if(eleg && !cart) t.zero++;
@@ -1489,7 +1514,9 @@ function renderCarteira(data){
   const rows = carteiraDe(data);
   const tot = rows.reduce((s,r)=>({ cart:s.cart+r.cart, pod:s.pod+r.pod, eleg:s.eleg+r.eleg, meses:s.meses+r.meses, semKm:s.semKm+r.semKm, zero:s.zero+r.zero }), { cart:0, pod:0, eleg:0, meses:0, semKm:0, zero:0 });
   const nv = new Set(data.map(r=>r.vig)).size;
-  set('cg-lbl', nv===1 ? 'Custo do programa no mês' : 'Custo do programa no recorte');
+  const vigs = [...new Set(data.map(r=>r.vig))], nFech = vigs.filter(v=>FECH[v]).length;
+  set('cg-lbl', (nv===1 ? 'Custo do programa no mês' : 'Custo do programa no recorte')
+    + (nFech ? (nFech===nv ? ' · fechado' : ` · ${nFech} de ${nv} mês(es) fechado(s)`) : ''));
   set('cg-tot', rows.length ? brl(tot.cart+tot.pod) : '—');
   set('cg-cart', brl(tot.cart));
   set('cg-pod', brl(tot.pod));
@@ -2089,6 +2116,7 @@ function semRpmFora(linhas){
 let SUB_BASE = '';        // "N motorista(s) · coleta dd/mm/aaaa"
 async function recarregar(){
   await Promise.all([fetchCriterios(), fetchAtivos(), fetchAcessos()]);
+  await fetchFechamento();   // depois do fetchAcessos, que monta o FORA
   set('titSub','Carregando…');
   try{
     let linhas=[];
@@ -2189,6 +2217,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610201040"></script>
+<script src="../../assets/build-check.js?v=202610201420"></script>
 </body>
 </html>
