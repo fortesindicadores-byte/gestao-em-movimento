@@ -137,17 +137,13 @@ body.claro .nav button.on{color:#fff;}
 .anel .dentro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .anel .n{font-size:28px;font-weight:500;line-height:1;}
 .anel .l{font-size:10px;color:var(--txt2);margin-top:3px;}
-/* a nota na tela inicial, ao lado do saldo (Renan, 20/10/2026) — mesmo anel da
-   visão Nota, menor, e o arco na cor da faixa da nota (85+ verde · 75 a 84,9
-   amarelo · abaixo de 75 vermelho), nas duas telas */
-.saldo-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
-.saldo-row .saldo{flex:1;min-width:0;}
-.score-ini{flex:0 0 auto;margin:22px 0 0;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
-.anel.mini{width:92px;height:92px;}
-.anel.mini > svg circle{stroke-width:9;}
-.anel.mini .n{font-size:26px;font-weight:600;}
-.anel.mini .l{font-size:9px;margin-top:2px;}
-.score-ini .fx{font-size:10.5px;font-weight:600;line-height:1;padding:5px 10px;border-radius:999px;background:var(--linha);border:1px solid var(--brd);color:var(--txt2);white-space:nowrap;}
+/* a nota na tela inicial, embaixo do saldo (Renan, 20/10/2026): só o texto, na
+   cor do texto, e a bolinha na cor da faixa da nota (85+ verde · 75 a 84,9
+   amarelo · abaixo de 75 vermelho); o anel da aba Nota também vai na cor */
+.nota-ini{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:24px;font-weight:600;line-height:1.1;color:var(--txt);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.nota-ini span{font-weight:500;}
+.nota-ini .pt{width:16px;height:16px;border-radius:50%;background:var(--txt3);flex:0 0 auto;}
+.pt.f-eli{background:var(--verde);} .pt.f-bom{background:var(--ambar);} .pt.f-ruim{background:var(--vermelho);}
 .arco.f-eli{stroke:var(--verde);} .arco.f-bom{stroke:var(--ambar);} .arco.f-ruim{stroke:var(--vermelho);}
 .fx.f-eli,#faixaTxt.f-eli{color:var(--verde);} .fx.f-bom,#faixaTxt.f-bom{color:var(--ambar);} .fx.f-ruim,#faixaTxt.f-ruim{color:var(--vermelho);}
 .anelwrap .tx b{display:block;font-size:15px;font-weight:600;}
@@ -281,21 +277,15 @@ body.claro .nav button.on{color:#fff;}
     <!-- ── INÍCIO ── -->
     <section class="tela on" id="v-inicio">
       <!-- A NOTA NA CARA DO MOTORISTA (Renan, 20/10/2026: "fica pouco evidente o
-           Score. Deve aparecer melhor"): o anel da nota ao lado do saldo, na cor da
-           faixa (verde 85+, amarelo 75 a 84,9, vermelho abaixo), tocável → Nota. -->
-      <div class="saldo-row">
-        <div class="saldo">
-          <div class="rot" id="rotSaldo">Saldo atual</div>
-          <div class="val" id="saldo"><small>R$</small>179,00</div>
-          <div class="aviso" id="avisoEleg" style="display:none"></div>
-        </div>
-        <div class="score-ini" id="scoreIni" onclick="irPara('nota')" role="button" tabindex="0" aria-label="Ver a nota">
-          <div class="anel mini">
-            <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="trilho" cx="50" cy="50" r="42"/><circle class="arco" id="arcoIni" cx="50" cy="50" r="42"/></svg>
-            <div class="dentro"><div class="n" id="scoreIniN">—</div><div class="l">sua nota</div></div>
-          </div>
-          <div class="fx" id="faixaIni">—</div>
-        </div>
+           Score. Deve aparecer melhor" → "abaixo do saldo, um pouco menor que o saldo,
+           apenas o texto, fonte branca, e a bolinha colorida de acordo com a nota"):
+           bolinha na cor da faixa (verde 85+, amarelo 75 a 84,9, vermelho abaixo),
+           tocável → Nota. -->
+      <div class="saldo">
+        <div class="rot" id="rotSaldo">Saldo atual</div>
+        <div class="val" id="saldo"><small>R$</small>179,00</div>
+        <div class="nota-ini" id="scoreIni" onclick="irPara('nota')" role="button" tabindex="0" aria-label="Ver a nota"><span>Nota</span><b id="scoreIniN">—</b><i class="pt" id="ptIni"></i></div>
+        <div class="aviso" id="avisoEleg" style="display:none"></div>
       </div>
 
       <div class="card meta">
@@ -579,14 +569,14 @@ function pinta(){
   var fx = nota == null ? '' : nota >= 85 ? 'f-eli' : nota >= 75 ? 'f-bom' : 'f-ruim';
   var fxTxt = nota == null ? 'Sem nota ainda' : nota >= 85 ? 'Elite' : nota >= 75 ? 'Bom' : 'Precisa melhorar';
   var notaTxt = nota != null ? nota.toFixed(1).replace('.', ',') : '—';
-  ['arco', 'arcoIni'].forEach(function(id){
+  ['arco'].forEach(function(id){
     var a = $(id); if (!a) return;
     a.style.strokeDasharray = VOLTA; a.style.strokeDashoffset = VOLTA * (1 - (nota || 0) / 100);
     a.setAttribute('class', 'arco ' + fx);
   });
   $('score').textContent = notaTxt;
   $('faixaTxt').textContent = fxTxt; $('faixaTxt').className = fx;
-  if ($('scoreIniN')) { $('scoreIniN').textContent = notaTxt; $('faixaIni').textContent = fxTxt; $('faixaIni').className = 'fx ' + fx; }
+  if ($('scoreIniN')) { $('scoreIniN').textContent = notaTxt; $('ptIni').className = 'pt ' + fx; $('scoreIni').title = fxTxt; }
   $('pilares').innerHTML = PILARES.map(function(p){
     var n = atual ? atual[p.k] : null;
     return '<div class="pilar"><div class="cab"><b>' + nomeCheio(p) + '</b><div class="nota">' + (n != null ? Math.round(n) : '—') + '</div></div>'
