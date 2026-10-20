@@ -36,7 +36,10 @@ jobs:
           rm -rf /tmp/portal
           git clone --depth 1 --filter=blob:none --sparse https://github.com/fortesindicadores-byte/gestao-em-movimento /tmp/portal
           git -C /tmp/portal sparse-checkout set app-motorista-4
-          rsync -a --delete --exclude .git --exclude .github --exclude CNAME --exclude README.md /tmp/portal/app-motorista-4/ ./
+          # --ignore-times: o rsync compara tamanho + hora e pulava o sw.js quando a troca
+          # de cache (v29 → v30) mantinha o tamanho e o clone saía no mesmo segundo do
+          # checkout (20/10/2026: index.html novo com sw.js velho). Compara o conteúdo.
+          rsync -a --ignore-times --delete --exclude .git --exclude .github --exclude CNAME --exclude README.md /tmp/portal/app-motorista-4/ ./
           touch .nojekyll
           echo "PORTAL_SHA=$(git -C /tmp/portal rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
