@@ -30,12 +30,12 @@
   /* cores MEDIDAS nos pixels da imagem (05/09/2026) */
   --bg:#0F1A20; --card:#464B4F; --card2:#E5E6E8; --brd:#273035; --linha:#0F1A20;
   --txt:#F4F5F7; --txt2:#979C9F; --txt3:#6B7276;
-  --acc:#F22C05; --verde:#4CD964; --vermelho:#F0483C; --nav:#464B4F;
+  --acc:#F22C05; --verde:#4CD964; --ambar:#F4B400; --vermelho:#F0483C; --nav:#464B4F;
   --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px);
 }
 body.claro{
   --bg:#EEF0F3; --card:#FFFFFF; --card2:#D9DDE3; --brd:rgba(20,24,32,.12); --linha:#F6F7F9;
-  --txt:#181C24; --txt2:#5E6674; --txt3:#9AA2AE; --verde:#1E9E52; --vermelho:#D93A2E; --nav:#FFFFFF;
+  --txt:#181C24; --txt2:#5E6674; --txt3:#9AA2AE; --verde:#1E9E52; --ambar:#C7890A; --vermelho:#D93A2E; --nav:#FFFFFF;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
@@ -139,6 +139,19 @@ body.claro .nav button.on{color:#fff;}
 .anel .dentro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .anel .n{font-size:28px;font-weight:500;line-height:1;}
 .anel .l{font-size:10px;color:var(--txt2);margin-top:3px;}
+/* a nota na tela inicial, ao lado do saldo (Renan, 20/10/2026) — mesmo anel da
+   visão Nota, menor, e o arco na cor da faixa da nota (85+ verde · 75 a 84,9
+   amarelo · abaixo de 75 vermelho), nas duas telas */
+.saldo-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.saldo-row .saldo{flex:1;min-width:0;}
+.score-ini{flex:0 0 auto;margin:22px 0 0;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.anel.mini{width:92px;height:92px;}
+.anel.mini > svg circle{stroke-width:9;}
+.anel.mini .n{font-size:26px;font-weight:600;}
+.anel.mini .l{font-size:9px;margin-top:2px;}
+.score-ini .fx{font-size:10.5px;font-weight:600;line-height:1;padding:5px 10px;border-radius:999px;background:var(--linha);border:1px solid var(--brd);color:var(--txt2);white-space:nowrap;}
+.arco.f-eli{stroke:var(--verde);} .arco.f-bom{stroke:var(--ambar);} .arco.f-ruim{stroke:var(--vermelho);}
+.fx.f-eli,#faixaTxt.f-eli{color:var(--verde);} .fx.f-bom,#faixaTxt.f-bom{color:var(--ambar);} .fx.f-ruim,#faixaTxt.f-ruim{color:var(--vermelho);}
 .anelwrap .tx b{display:block;font-size:15px;font-weight:600;}
 .anelwrap .tx span{display:block;font-size:11.5px;color:var(--txt2);margin-top:4px;line-height:1.45;}
 .pilar{padding:12px 14px;background:var(--linha);border:1px solid var(--brd);border-radius:9px;margin-bottom:10px;}
@@ -269,10 +282,22 @@ body.claro .nav button.on{color:#fff;}
 
     <!-- ── INÍCIO ── -->
     <section class="tela on" id="v-inicio">
-      <div class="saldo">
-        <div class="rot" id="rotSaldo">Saldo atual</div>
-        <div class="val" id="saldo"><small>R$</small>179,00</div>
-        <div class="aviso" id="avisoEleg" style="display:none"></div>
+      <!-- A NOTA NA CARA DO MOTORISTA (Renan, 20/10/2026: "fica pouco evidente o
+           Score. Deve aparecer melhor"): o anel da nota ao lado do saldo, na cor da
+           faixa (verde 85+, amarelo 75 a 84,9, vermelho abaixo), tocável → Nota. -->
+      <div class="saldo-row">
+        <div class="saldo">
+          <div class="rot" id="rotSaldo">Saldo atual</div>
+          <div class="val" id="saldo"><small>R$</small>179,00</div>
+          <div class="aviso" id="avisoEleg" style="display:none"></div>
+        </div>
+        <div class="score-ini" id="scoreIni" onclick="irPara('nota')" role="button" tabindex="0" aria-label="Ver a nota">
+          <div class="anel mini">
+            <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="trilho" cx="50" cy="50" r="42"/><circle class="arco" id="arcoIni" cx="50" cy="50" r="42"/></svg>
+            <div class="dentro"><div class="n" id="scoreIniN">—</div><div class="l">sua nota</div></div>
+          </div>
+          <div class="fx" id="faixaIni">—</div>
+        </div>
       </div>
 
       <div class="card meta">
@@ -550,10 +575,20 @@ function pinta(){
 
   // ── ganhos, nota, ranking, regras ──
   renderGanhos();
+  // o mesmo anel na tela inicial e na visão Nota, com o arco e o rótulo na
+  // cor da faixa (85+ verde · 75 a 84,9 amarelo · abaixo de 75 vermelho)
   var VOLTA = 2 * Math.PI * 42;
-  $('arco').style.strokeDasharray = VOLTA; $('arco').style.strokeDashoffset = VOLTA * (1 - (nota || 0) / 100);
-  $('score').textContent = nota != null ? nota.toFixed(1).replace('.', ',') : '—';
-  $('faixaTxt').textContent = nota == null ? 'Sem nota ainda' : nota >= 85 ? 'Elite' : nota >= 75 ? 'Bom' : 'Precisa melhorar';
+  var fx = nota == null ? '' : nota >= 85 ? 'f-eli' : nota >= 75 ? 'f-bom' : 'f-ruim';
+  var fxTxt = nota == null ? 'Sem nota ainda' : nota >= 85 ? 'Elite' : nota >= 75 ? 'Bom' : 'Precisa melhorar';
+  var notaTxt = nota != null ? nota.toFixed(1).replace('.', ',') : '—';
+  ['arco', 'arcoIni'].forEach(function(id){
+    var a = $(id); if (!a) return;
+    a.style.strokeDasharray = VOLTA; a.style.strokeDashoffset = VOLTA * (1 - (nota || 0) / 100);
+    a.setAttribute('class', 'arco ' + fx);
+  });
+  $('score').textContent = notaTxt;
+  $('faixaTxt').textContent = fxTxt; $('faixaTxt').className = fx;
+  if ($('scoreIniN')) { $('scoreIniN').textContent = notaTxt; $('faixaIni').textContent = fxTxt; $('faixaIni').className = 'fx ' + fx; }
   $('pilares').innerHTML = PILARES.map(function(p){
     var n = atual ? atual[p.k] : null;
     return '<div class="pilar"><div class="cab"><b>' + nomeCheio(p) + '</b><div class="nota">' + (n != null ? Math.round(n) : '—') + '</div></div>'
