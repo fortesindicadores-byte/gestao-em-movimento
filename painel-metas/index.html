@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610192140">
+<meta name="build" content="202610201221">
 <title>Painel de Metas</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -645,10 +645,13 @@ const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
 let FCA_FONTE='';
 function vigToDate(vig){const m=String(vig||'').match(/^([a-zç]{3})\/(\d{2})$/i);if(!m)return null;const mi=MESES.indexOf(m[1].toLowerCase());return mi<0?null:new Date(2000+ +m[2],mi,1);}
+// Lê a tabela inteira em blocos de 1.000: o PostgREST corta cada leitura em 1.000 linhas
+// (bug real, 20/10/2026: a fca passou de 1.000 linhas e RON, a última no alfabeto, sumiu do FCA · Admin).
+async function fcaTudo(cli,sel,ajuste){const out=[];for(let off=0;off<200000;off+=1000){let q=cli.from('fca').select(sel);if(ajuste)q=ajuste(q);const {data,error}=await q.order('id',{ascending:true}).range(off,off+999);if(error)return {data:null,error};out.push(...(data||[]));if(!data||data.length<1000)break;}return {data:out,error:null};}
 async function carregaFCA(){
   try{
     const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-    const {data,error}=await sb.from('fca').select('vigencia,status');
+    const {data,error}=await fcaTudo(sb,'vigencia,status');
     if(error)throw error;
     const recs=(data||[]).map(r=>{
       const d=vigToDate(r.vigencia); if(!d)return null;
@@ -936,6 +939,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610192140"></script>
+<script src="../assets/build-check.js?v=202610201221"></script>
 </body>
 </html>

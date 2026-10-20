@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610170015">
+<meta name="build" content="202610201221">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1190,9 +1190,12 @@ function frotaAtivaPorProj(disp){
 // Indexa as linhas da base por chave de fato
 function indexDB(rows){_DBROWS={};(rows||[]).forEach(r=>{const k=fkey(r.vigencia,r.origem,r.projeto,r.fato);(_DBROWS[k]=_DBROWS[k]||[]).push(r);});}
 // Carrega as ações já salvas (Supabase) da unidade. Retorna o array (ou null em erro de rede). Só atualiza _DBROWS no sucesso.
+// Lê a tabela inteira em blocos de 1.000: o PostgREST corta cada leitura em 1.000 linhas
+// (bug real, 20/10/2026: a fca passou de 1.000 linhas e RON, a última no alfabeto, sumiu do FCA · Admin).
+async function fcaTudo(cli,sel,ajuste){const out=[];for(let off=0;off<200000;off+=1000){let q=cli.from('fca').select(sel);if(ajuste)q=ajuste(q);const {data,error}=await q.order('id',{ascending:true}).range(off,off+999);if(error)return {data:null,error};out.push(...(data||[]));if(!data||data.length<1000)break;}return {data:out,error:null};}
 async function fetchDB(){
   if(!sb||PREVIEW){_DBROWS={};return [];}
-  const {data,error}=await sb.from('fca').select('*').eq('unidade',UNIDADE_COD).order('created_at',{ascending:true});
+  const {data,error}=await fcaTudo(sb,'*',q=>q.eq('unidade',UNIDADE_COD).order('created_at',{ascending:true}));
   if(error){console.error('fca select',error);return null;}
   indexDB(data||[]); return data||[];
 }
@@ -1384,7 +1387,7 @@ async function sincronizarRPM(){
   let novos=0;
   try{
     // aditivo: só insere o que ainda não existe (chave = vig+RPM+projeto+fato). Não apaga nem sobrescreve.
-    const {data:cur}=await sb.from('fca').select('vigencia,projeto,fato').eq('origem','RPM');
+    const {data:cur,error:eCur}=await fcaTudo(sb,'vigencia,projeto,fato',q=>q.eq('origem','RPM'));if(eCur)throw eCur;
     const have=new Set((cur||[]).map(r=>fkey(r.vigencia,'RPM',r.projeto,r.fato)));
     const ins=payload.filter(p=>!have.has(fkey(p.vigencia,'RPM',p.projeto,p.fato)));
     novos=ins.length;
@@ -2209,6 +2212,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610170015"></script>
+<script src="../assets/build-check.js?v=202610201221"></script>
 </body>
 </html>

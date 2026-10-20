@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610191300">
+<meta name="build" content="202610201221">
 <title>Gestão à Vista</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1176,9 +1176,12 @@ function fcaMetrics(rows){
     pPrazo:tt?noP/tt*100:null, pConcl:tt?concl/tt*100:null,
     total:tt?(concl*100+andam*50)/tt:null};
 }
+// Lê a tabela inteira em blocos de 1.000: o PostgREST corta cada leitura em 1.000 linhas
+// (bug real, 20/10/2026: a fca passou de 1.000 linhas e RON, a última no alfabeto, sumiu do FCA · Admin).
+async function fcaTudo(cli,sel,ajuste){const out=[];for(let off=0;off<200000;off+=1000){let q=cli.from('fca').select(sel);if(ajuste)q=ajuste(q);const {data,error}=await q.order('id',{ascending:true}).range(off,off+999);if(error)return {data:null,error};out.push(...(data||[]));if(!data||data.length<1000)break;}return {data:out,error:null};}
 async function loadFCA(){
   try{
-    const {data}=await SB.from('fca').select('unidade,vigencia,origem,fato,prazo,status');
+    const {data}=await fcaTudo(SB,'unidade,vigencia,origem,fato,prazo,status');
     FCAR=(data||[]).filter(r=>!isDriverCombust(r.fato)).map(r=>{
       const o={cod:String(r.unidade||'').trim().toUpperCase(), vig:r.vigencia||'', origem:String(r.origem||'').trim(),
         fato:String(r.fato||'').split('\n')[0].trim(), prazoD:dateOnly(r.prazo), status:String(r.status||'').trim()};
@@ -1547,6 +1550,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:t=>aplicaTema(t==='light'?'light':'dark')
 });
 </script>
-<script src="../assets/build-check.js?v=202610191300"></script>
+<script src="../assets/build-check.js?v=202610201221"></script>
 </body>
 </html>

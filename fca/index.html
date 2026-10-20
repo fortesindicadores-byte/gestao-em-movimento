@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202608192100">
+<meta name="build" content="202610201221">
 <title>FCAs</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -263,11 +263,14 @@ function render(){
   document.getElementById('tbl').innerHTML=html;
 }
 
+// Lê a tabela inteira em blocos de 1.000: o PostgREST corta cada leitura em 1.000 linhas
+// (bug real, 20/10/2026: a fca passou de 1.000 linhas e RON, a última no alfabeto, sumiu do FCA · Admin).
+async function fcaTudo(cli,sel,ajuste){const out=[];for(let off=0;off<200000;off+=1000){let q=cli.from('fca').select(sel);if(ajuste)q=ajuste(q);const {data,error}=await q.order('id',{ascending:true}).range(off,off+999);if(error)return {data:null,error};out.push(...(data||[]));if(!data||data.length<1000)break;}return {data:out,error:null};}
 async function carregar(){
   document.getElementById('status').textContent='Carregando…';
   try{
     if(!sb)sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-    const {data,error}=await sb.from('fca').select('*');
+    const {data,error}=await fcaTudo(sb,'*');
     if(error)throw error;
     ALL=(data||[]).filter(r=>!isDriverCombust(r.fato)).map(r=>{
       const vigD=vigToDate(r.vigencia),prazoD=dateOnly(r.prazo);
@@ -304,6 +307,6 @@ carregar();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202608192100"></script>
+<script src="../assets/build-check.js?v=202610201221"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610170015">
+<meta name="build" content="202610201221">
 <title>FCA · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1576,13 +1576,16 @@ function wireDelegation(){
 // ── Carregar TODOS os registros (RLS devolve tudo p/ admin) ──
 // mescla unidades "(INATIVO)" na unidade base — nunca aparecem em painel/filtro
 const _fixInativo=r=>{r.unidade=String(r.unidade||'').replace(/\s*\(INATIVO\)\s*/gi,' ').replace(/\s+/g,' ').trim();return r;};
+// Lê a tabela inteira em blocos de 1.000: o PostgREST corta cada leitura em 1.000 linhas
+// (bug real, 20/10/2026: a fca passou de 1.000 linhas e RON, a última no alfabeto, sumiu do FCA · Admin).
+async function fcaTudo(cli,sel,ajuste){const out=[];for(let off=0;off<200000;off+=1000){let q=cli.from('fca').select(sel);if(ajuste)q=ajuste(q);const {data,error}=await q.order('id',{ascending:true}).range(off,off+999);if(error)return {data:null,error};out.push(...(data||[]));if(!data||data.length<1000)break;}return {data:out,error:null};}
 async function carregar(){
   // 1) pinta na hora com o cache (se houver) — stale-while-revalidate
   const cached=readCache(CACHE_KEY);
   if(cached&&cached.length){ _ROWS=cached.filter(r=>!isDriverCombust(r.fato)).map(_fixInativo); popFiltros(); render(); }
   else document.getElementById('content').innerHTML='<div class="loading">Carregando ações de todas as unidades…</div>';
   // 2) revalida do Supabase em segundo plano
-  const {data,error}=await sb.from('fca').select('*').order('unidade',{ascending:true}).order('vigencia',{ascending:false}).order('created_at',{ascending:true});
+  const {data,error}=await fcaTudo(sb,'*',q=>q.order('unidade',{ascending:true}).order('vigencia',{ascending:false}).order('created_at',{ascending:true}));
   if(error){
     if(cached&&cached.length) return;   // já tem cache na tela: ignora erro de rede
     if(/relation .*fca.* does not exist|could not find the table|schema cache/i.test(error.message||'')) gateSetup();
@@ -1660,6 +1663,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610170015"></script>
+<script src="../assets/build-check.js?v=202610201221"></script>
 </body>
 </html>

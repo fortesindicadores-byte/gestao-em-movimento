@@ -281,9 +281,12 @@ window.supabase = { createClient: function(){
     ['select','eq','limit','order','in'].forEach(function(m){
       q[m] = function(a,b){ if (m === 'eq') q._f[a] = b; return q; };
     });
+    // a página lê a fca em blocos (range), como o servidor de verdade, que corta em 1.000
+    q.range = function(a,b){ q._r = [a,b]; return q; };
     q.maybeSingle = function(){ return Promise.resolve({ data: { is_admin: true }, error: null }); };
     q.then = function(res){
       var d = tab === 'fca' ? ${JSON.stringify(FCAS)} : [];
+      if (q._r) d = d.slice(q._r[0], q._r[1] + 1);
       return Promise.resolve({ data: d, error: null }).then(res);
     };
     return q;
