@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DriverPro">
-<meta name="build" content="202610201420">
+<meta name="build" content="202610201510">
 <title>DriverPro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -660,7 +660,11 @@ function renderGanhos(){
   $('anoSel').innerHTML = lista.map(function(a){ return '<option value="' + a + '"' + (a === ANO_SEL ? ' selected' : '') + '>' + a + '</option>'; }).join('');
   // mês de teste (antes do início do programa) não é dinheiro: fica fora do total
   var R = D.regras;
-  var H = anos[ANO_SEL], tot = H.reduce(function(a, x){ return emTeste(x.competencia, R) ? a : a + (+x.carteira || 0) + (+x.podio || 0); }, 0);
+  // CONGELA NO DIA 21 (Renan, 20/10/2026: "Motorista não pode ver dia 22 e estar
+  // diferente"): período que já terminou e ainda não foi congelado não mostra
+  // valor ("em fechamento"); o número só aparece depois de congelado, e não muda mais
+  var emFech = function(x){ return !emTeste(x.competencia, R) && !x.fechado; };
+  var H = anos[ANO_SEL], tot = H.reduce(function(a, x){ return (emTeste(x.competencia, R) || emFech(x)) ? a : a + (+x.carteira || 0) + (+x.podio || 0); }, 0);
   $('anoTit').textContent = H.length ? 'Você ganhou em ' + ANO_SEL : ANO_SEL + ' ainda não fechou nenhum mês';
   $('ganhoAno').innerHTML = fmtVal(tot);
   var atual = null; D.meses.forEach(function(x){ if (x.competencia === D.vigente) atual = x; });
@@ -674,6 +678,8 @@ function renderGanhos(){
     var v = (+x.carteira || 0) + (+x.podio || 0), m = mesDe(x.competencia);
     if (emTeste(x.competencia, R))
       return linha(ICO.cal, m.rot, 'período de teste · não foi pago', v ? 'teria ' + brl(v) : brl(0), '');
+    if (emFech(x))
+      return linha(ICO.cal, m.rot, 'em fechamento · o valor final sai no dia 21', '—', '');
     // mês fechado: é o valor que foi para a folha (ce_app_fechamento)
     return linha(ICO.cal, m.rot, (v === 0 ? (x.motivo || 'sem ganho') : 'nota ' + (+x.nota).toFixed(1).replace('.', ',') + (+x.podio ? ' · pódio + R$ ' + x.podio : '')) + (x.fechado ? ' · fechado' : ''),
       (v ? '+ ' : '') + brl(v), v ? 'pos' : 'neg');

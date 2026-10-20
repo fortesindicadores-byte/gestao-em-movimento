@@ -7,6 +7,8 @@
       dinheiro dos meses de teste no total;
    2. sem `inicio` no banco (SQL antigo) vale dez/2026;
    3. mês fechado (ce_app_fechamento) aparece como "fechado" e entra no total;
+      período que terminou e ainda não foi congelado fica "em fechamento", sem
+      valor (o motorista não vê um número que mudaria depois);
    4. o título do Ranking sai do grupo e do mês (não mais "Os 15 de Piraí ·
       setembro" fixo);
    5. o admin vê "Zerar senha deste motorista" e o botão chama ce_app_zerar_pin
@@ -41,7 +43,7 @@ function dados({ inicio, admin = false, fechado = false } = {}) {
     meses: [
       { competencia: '2026-10', nota: 85, km: 1200, posicao: 1, posicao_unidade: 1, disputa: true, elegivel: true, carteira: 125, podio: 300, rpm: 85, idle: 85, acel: 85, motivo: null, fechado: false },
       { competencia: '2026-09', nota: 90, km: 1500, posicao: 1, posicao_unidade: 1, disputa: true, elegivel: true, carteira: 150, podio: 300, rpm: 90, idle: 90, acel: 90, motivo: null, fechado },
-      { competencia: '2026-08', nota: 70, km: 1100, posicao: 3, posicao_unidade: 3, disputa: true, elegivel: true, carteira: 50, podio: 100, rpm: 70, idle: 70, acel: 70, motivo: null, fechado: false },
+      { competencia: '2026-08', nota: 70, km: 1100, posicao: 3, posicao_unidade: 3, disputa: true, elegivel: true, carteira: 50, podio: 100, rpm: 70, idle: 70, acel: 70, motivo: null, fechado },
     ] };
 }
 
@@ -108,6 +110,14 @@ for (const app of ['app-motorista-4', 'app-motorista-5']) {
     const tot = await tx(pg, 'ganhoAno');
     t(/600,00/.test(tot), 'Ganhos: total = set (150+300) + ago (50+100)', tot);
     t(/· fechado/.test(await tx(pg, 'meses')), 'mês fechado marcado como "fechado"', await tx(pg, 'meses'));
+    await ctx.close();
+  }
+  // 3b · período que já terminou e não foi congelado: sem valor, fora do total
+  {
+    const { ctx, pg } = await abre(app, { inicio: '2026-01', fechado: false });
+    await pg.evaluate(() => irPara('ganhos'));
+    const tot = await tx(pg, 'ganhoAno'), ms = await tx(pg, 'meses');
+    t(/R\$\s*0,00/.test(tot) && (ms.match(/em fechamento/g) || []).length === 2, 'não congelado: "em fechamento", sem valor e fora do total', [tot, ms]);
     await ctx.close();
   }
   // 4 · admin zera a senha

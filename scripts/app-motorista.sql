@@ -1483,14 +1483,23 @@ notify pgrst, 'reload schema';
 --    where f.competencia = '2026-12-01' and f.elegivel order by total desc;
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- 18) FECHAMENTO AUTOMÁTICO (Renan, 20/10/2026: "Não dá para deixar isso
---     automático?"). O pg_cron chama ce_app_fechar_auto() todo dia 22 a 28,
---     às 09:10 de Brasília. Ela fecha o período que terminou no dia 20 se:
---     (1) ele vale dinheiro (competência >= ce_app_regras.inicio — os meses de
---     teste nunca são fechados); (2) ainda não foi fechado; (3) a coleta do dia
---     20 já está gravada (ce_diario). Senão, tenta de novo no dia seguinte.
---     Cada tentativa vai para ce_app_fechamento_log. Para refazer um mês já
---     fechado continua sendo à mão: ce_app_fechar('AAAA-MM-01', true).
+-- 18) CONGELA NO DIA 21 (Renan, 20/10/2026: "Não dá para deixar isso
+--     automático?" → "Eu quero que no dia 21 sempre congele o resultado do 21
+--     a 20 anterior e não mude mais. Motorista não pode ver dia 22 e estar
+--     diferente"). Dois relógios no pg_cron, os dois no dia 21:
+--     (1) driverpro-coleta-21: dispara o Conducao Robot (modo `ano`, que coleta
+--         até ontem = dia 20) às 02:00 e de novo às 09:00 de Brasília, sem
+--         esperar o agendador do GitHub (que atrasa horas);
+--     (2) driverpro-congela: de hora em hora, de 21 a 28, chama
+--         ce_app_fechar_auto(). Ela congela o período que terminou no dia 20
+--         assim que a coleta do dia 20 está no ce_diario; às 23h do dia 21 (ou
+--         depois) congela de qualquer jeito, com o que tiver, e registra o
+--         motivo. Período de teste (antes de ce_app_regras.inicio) nunca
+--         congela; período já congelado não é tocado.
+--     Depois de congelado, o app e o painel mostram o congelado, para sempre.
+--     Refazer é só à mão: ce_app_fechar('AAAA-MM-01', true). Cada tentativa
+--     vai para ce_app_fechamento_log. Pré-requisito do (1): o token do GitHub
+--     em public.portal_segredo (chave 'github_token'), o mesmo do Ginfo.
 -- ═══════════════════════════════════════════════════════════════════════════
 create table if not exists public.ce_app_fechamento_log (
   id           bigserial primary key,
@@ -1502,23 +1511,43 @@ alter table public.ce_app_fechamento_log enable row level security;
 drop policy if exists ce_app_fechamento_log_sel on public.ce_app_fechamento_log;
 create policy ce_app_fechamento_log_sel on public.ce_app_fechamento_log for select to authenticated using (true);
 
+-- dispara o Conducao Robot agora (modo `ano` explícito: o default do workflow é "sonda")
+create or replace function public.ce_app_dispara_coleta()
+returns void language plpgsql security definer set search_path = public, net, extensions as $$
+declare tok text;
+begin
+  select valor into tok from public.portal_segredo where chave = 'github_token';
+  if tok is null or length(tok) < 30 then raise notice 'sem token em portal_segredo - nada disparado'; return; end if;
+  perform net.http_post(
+    url     := 'https://api.github.com/repos/fortesindicadores-byte/gestao-em-movimento/actions/workflows/conducao-robot.yml/dispatches',
+    headers := jsonb_build_object('Authorization', 'Bearer ' || tok, 'Accept', 'application/vnd.github+json',
+                 'X-GitHub-Api-Version', '2022-11-28', 'Content-Type', 'application/json', 'User-Agent', 'gestao-em-movimento'),
+    body    := jsonb_build_object('ref', 'main', 'inputs', jsonb_build_object('modo', 'ano')));
+end $$;
+revoke all on function public.ce_app_dispara_coleta() from public;
+
 create or replace function public.ce_app_fechar_auto()
 returns jsonb language plpgsql security definer set search_path = public, extensions as $$
-declare v_comp date := (ce_app_comp(now()) - interval '1 month')::date;   -- o período que terminou no dia 20
+declare v_agora timestamp := now() at time zone 'America/Sao_Paulo';
+        v_comp date := (ce_app_comp(now()) - interval '1 month')::date;   -- o período que terminou no dia 20
         v_fim date := (v_comp + interval '19 days')::date;                -- dia 20 do mês da competência
-        v_ini date; r jsonb;
+        v_prazo timestamp := (v_fim + interval '1 day 23 hours');         -- 23:00 do dia 21
+        v_ini date; r jsonb; v_tem boolean;
 begin
   select inicio into v_ini from ce_app_regras where id = 1;
+  v_tem := exists (select 1 from ce_diario where dia = v_fim);
   if v_comp < coalesce(v_ini, '2026-12-01') then
-    r := jsonb_build_object('ok', false, 'motivo', 'período de teste, não fecha');
+    r := jsonb_build_object('ok', false, 'motivo', 'período de teste, não congela');
   elsif exists (select 1 from ce_app_fechamento where competencia = v_comp) then
-    r := jsonb_build_object('ok', false, 'motivo', 'já fechado');
-  elsif not exists (select 1 from ce_diario where dia = v_fim) then
-    r := jsonb_build_object('ok', false, 'motivo', 'coleta do dia ' || to_char(v_fim, 'DD/MM') || ' ainda não gravada; tenta amanhã');
+    return jsonb_build_object('ok', false, 'motivo', 'já congelado');   -- não polui o log de hora em hora
+  elsif not v_tem and v_agora < v_prazo then
+    r := jsonb_build_object('ok', false, 'motivo', 'coleta do dia ' || to_char(v_fim, 'DD/MM') || ' ainda não gravada; tenta na próxima hora');
   else
     r := ce_app_fechar(v_comp);
     if (r->>'ok')::boolean then
-      update ce_app_fechamento set fechado_por = 'automático' where competencia = v_comp;
+      update ce_app_fechamento set fechado_por = 'automático' || case when v_tem then '' else ' (sem a coleta do dia 20)' end
+       where competencia = v_comp;
+      r := r || jsonb_build_object('coleta_dia_20', v_tem);
     end if;
   end if;
   insert into ce_app_fechamento_log (competencia, resultado) values (v_comp, r);
@@ -1526,15 +1555,20 @@ begin
 end $$;
 revoke all on function public.ce_app_fechar_auto() from public;
 
--- agenda (só onde o pg_cron existe — no Supabase existe)
+-- agenda (só onde o pg_cron existe — no Supabase existe). Horas em UTC.
 do $$
 begin
   if exists (select 1 from pg_extension where extname = 'pg_cron') then
     perform cron.unschedule('driverpro-fechamento') where exists (select 1 from cron.job where jobname = 'driverpro-fechamento');
-    perform cron.schedule('driverpro-fechamento', '10 12 22-28 * *', 'select public.ce_app_fechar_auto()');
+    perform cron.unschedule('driverpro-coleta-21')  where exists (select 1 from cron.job where jobname = 'driverpro-coleta-21');
+    perform cron.unschedule('driverpro-congela')    where exists (select 1 from cron.job where jobname = 'driverpro-congela');
+    -- 02:00 e 09:00 de Brasília do dia 21
+    perform cron.schedule('driverpro-coleta-21', '0 5,12 21 * *', 'select public.ce_app_dispara_coleta()');
+    -- de hora em hora, dias 21 a 28 (sai na hora quando o período já está congelado)
+    perform cron.schedule('driverpro-congela', '15 * 21-28 * *', 'select public.ce_app_fechar_auto()');
   end if;
 end $$;
 
 -- Conferir:
---   select jobname, schedule, active from cron.job where jobname = 'driverpro-fechamento';
+--   select jobname, schedule, active from cron.job where jobname like 'driverpro-%';
 --   select quando, competencia, resultado from public.ce_app_fechamento_log order by id desc limit 10;
