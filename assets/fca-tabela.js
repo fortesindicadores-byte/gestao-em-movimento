@@ -184,7 +184,6 @@ table.rel.fg-rel tbody.fg tr+tr td.ln{border-top:1px dashed rgba(255,255,255,.26
 body.claro table.rel.fg-rel tbody.fg tr+tr td.ln,body.light-mode table.rel.fg-rel tbody.fg tr+tr td.ln{border-top-color:rgba(15,23,42,.30)!important;}
 table.rel.fg-rel tbody.fg:hover td{background:var(--hover)!important;}
 table.rel.fg-rel tbody tr:hover{background:none!important;}
-table.rel.fg-rel tr.feita td.ln:not(.cz){opacity:.5;}
 table.rel.fg-rel .ln-n{font-weight:700;margin-right:4px;color:inherit;}
 table.rel.fg-rel td.fato{position:relative;}
 table.rel.fg-rel td.fato .fa-pac{font-size:13px;color:var(--txt,var(--text));}
