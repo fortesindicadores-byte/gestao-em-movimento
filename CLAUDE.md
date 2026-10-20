@@ -1898,6 +1898,20 @@ Workbook `1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE`, abas no rodapé: **Base
 
 **ACHADO À PARTE, ANTERIOR À TROCA:** na **`visao-financeira-arvore`** a função **`gvizFetch` NÃO EXISTE** — é chamada em 4 lugares e não está definida no arquivo nem nos assets. O `arvCarregaFontes()` lança `ReferenceError` na primeira linha, o `catch` engole, e **a visão Árvore dela nunca carregou a Seara**. Não é regressão desta troca (o `sum(Z)` de antes nem chegava a ser enviado) e **não foi consertada por conta própria** — está reportada para o Renan decidir.
 
+## Freightech — a remuneração da Ambev, inteira (Renan, 20/10/2026) — contextualização em andamento
+
+Pedido dele: *"Você já sabe que somos remunerados pelo Freightech. Esse sistema consolida toda remuneração que recebemos da Ambev. R$/km, Custo fixo, R$/Hectolitro vendido, finame, etc. Tudo… Quero te enviar relatórios que te façam entender a lógica e te façam conseguir calcular tudo que preciso de forma automática. Vou te mandar relatórios de uma quinzena e quero que estude e entenda"* → *"Vá apenas salvando as informações"*. **Nada implementado — ir anotando aqui relatório a relatório, e só construir quando ele mandar.** Hoje o portal lê PEDAÇOS do FT por caminhos diferentes (km remunerado da Dispersão de km, R$/L remunerado da aba `R$/L`, arquivos `WH/Empurrada/AS/Rota/Van/Lata - MM_AAAA` na Conferência de Locação); ninguém monta a remuneração inteira a partir das premissas.
+
+**O que ele explicou antes dos relatórios (20/10/2026):**
+- **Só recebemos se viajamos.** Para saber o que de fato entrou, precisa das VIAGENS. O custo variável do **T2 (Rota, AS e Van)** é recebido **no mapa do 2art**.
+- **O km rodado é revisado por QUINZENA**, com premissas para validar o km. Toda quinzena nasce um **km remunerado novo**, que é a base do custo variável.
+- **Km por mapa = conta simples e "burra":** km remunerado por placa ativa ÷ **25 dias úteis**.
+- **Combustível:** o preço também é revisado por quinzena. Subimos no FT as NFs que estamos pagando; **se o nosso preço ≥ ANP, pagam a ANP; senão, pagam o nosso valor**.
+- Daí chega no R$/km etc. **Tudo tem variáveis**: o R$/km de pneus, por exemplo, sai da quantidade de recapagens que consideram, do custo do pneu novo que consideram etc. **Está tudo no FT.**
+
+**Relatórios da quinzena (anotar cada um: o que é, chave, premissas × resultado, quem puxa quem):**
+- _(aguardando o 1º relatório)_
+
 ## Automação do Combustível — contextualização em andamento (13/08/2026)
 
 O Renan quer automatizar o combustível **em partes**, ele contextualizando aba a aba (mesmo método do robô Ginfo). **Nada implementado — aguardar ele mandar fazer.**
