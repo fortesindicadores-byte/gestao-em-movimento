@@ -1,0 +1,42 @@
+# DriverPro Site Dispatch — avisa o repositório `driverpro` (que serve
+# driverpro.onespot.com.br) toda vez que a pasta app-motorista-4/ muda.
+#
+# Por quê: o sync de lá é um cron "*/5", mas o agendador do GitHub o roda a cada
+# 3 a 8 horas na prática (20/10/2026: 07:28, 02:05, 23:38, 20:07 UTC). Sem este
+# disparo, o app publicado aqui demora horas para chegar ao celular.
+#
+# Precisa do segredo DRIVERPRO_DISPATCH_TOKEN neste repositório: um token
+# fine-grained da conta fortesindicadores-byte, só para o repositório `driverpro`,
+# com permissão Actions: Read and write (o GITHUB_TOKEN padrão não alcança outro
+# repositório). Sem o segredo, o passo só avisa e o cron de lá continua valendo.
+name: DriverPro Site Dispatch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app-motorista-4/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispara o DriverPro Site Sync no repositório driverpro
+        env:
+          TOKEN: ${{ secrets.DRIVERPRO_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::DRIVERPRO_DISPATCH_TOKEN não configurado — o site só atualiza quando o cron do repositório driverpro rodar"
+            exit 0
+          fi
+          code=$(curl -sS -o /tmp/resp.txt -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/fortesindicadores-byte/driverpro/actions/workflows/driverpro-site-sync.yml/dispatches \
+            -d '{"ref":"main"}')
+          echo "HTTP $code"; cat /tmp/resp.txt || true
+          if [ "$code" != "204" ]; then echo "::error::o disparo do sync falhou (HTTP $code)"; exit 1; fi
+          echo "sync disparado — o site atualiza em ~1 min"
