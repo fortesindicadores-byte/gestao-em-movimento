@@ -1911,6 +1911,10 @@ Pedido dele: *"Você já sabe que somos remunerados pelo Freightech. Esse sistem
 - **Combustível:** o preço também é revisado por quinzena. Subimos no FT as NFs que estamos pagando; **se o nosso preço ≥ ANP, pagam a ANP; senão, pagam o nosso valor**.
 - Daí chega no R$/km etc. **Tudo tem variáveis**: o R$/km de pneus, por exemplo, sai da quantidade de recapagens que consideram, do custo do pneu novo que consideram etc. **Está tudo no FT.**
 
+- **A REVISÃO DO REMUNERADO É TRIMESTRAL, E NESTE TRIMESTRE NÃO HOUVE (Renan, 20/10/2026: *"a revisão é trimestral e esse trimestre não teve revisão. Mudou especialista da Ambev. Quero ver se o consumo remunerado não teve nenhuma anomalia por falta de revisão"*).** Ou seja: o km rodado e o preço mudam por quinzena, mas as PREMISSAS (Km/L remunerado etc.) são revistas por trimestre — e o trimestre corrente ficou sem revisão pela troca do especialista. Suspeita a conferir: o Km/L remunerado (aba `Km/L` do Consumo, `KM/l Rem Médio` por projeto × mês) pode ter ficado parado/inconsistente de jul→set/26 em relação aos trimestres anteriores.
+
+**Agenda combinada para 21/10/2026:** (1) **Análise do FT** — os relatórios da quinzena (abaixo); (2) **Análise do consumo Km/L** — o remunerado mês a mês por unidade × projeto, procurando anomalia pela falta da revisão trimestral (comparar o Km/L rem. de jul/ago/set com o do trimestre anterior e com o realizado; apontar onde o remunerado não acompanhou).
+
 **Relatórios da quinzena (anotar cada um: o que é, chave, premissas × resultado, quem puxa quem):**
 - _(aguardando o 1º relatório)_
 
