@@ -140,9 +140,9 @@ body.claro .nav button.on{color:#fff;}
 /* a nota na tela inicial, embaixo do saldo (Renan, 20/10/2026): só o texto, na
    cor do texto, e a bolinha na cor da faixa da nota (85+ verde · 75 a 84,9
    amarelo · abaixo de 75 vermelho); o anel da aba Nota também vai na cor */
-.nota-ini{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:20px;font-weight:600;line-height:1.1;color:var(--txt);cursor:pointer;-webkit-tap-highlight-color:transparent;}
-.nota-ini .pt{width:14px;height:14px;border-radius:50%;background:var(--txt3);flex:0 0 auto;}
-.pt.f-eli{background:var(--verde);} .pt.f-bom{background:var(--ambar);} .pt.f-ruim{background:var(--vermelho);}
+.saldo-cols{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;}
+.score-col{text-align:right;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.score-col .val.f-eli{color:var(--verde);} .score-col .val.f-bom{color:var(--ambar);} .score-col .val.f-ruim{color:var(--vermelho);}
 .arco.f-eli{stroke:var(--verde);} .arco.f-bom{stroke:var(--ambar);} .arco.f-ruim{stroke:var(--vermelho);}
 .fx.f-eli,#faixaTxt.f-eli{color:var(--verde);} .fx.f-bom,#faixaTxt.f-bom{color:var(--ambar);} .fx.f-ruim,#faixaTxt.f-ruim{color:var(--vermelho);}
 .anelwrap .tx b{display:block;font-size:15px;font-weight:600;}
@@ -281,9 +281,16 @@ body.claro .nav button.on{color:#fff;}
            bolinha na cor da faixa (verde 85+, amarelo 75 a 84,9, vermelho abaixo),
            tocável → Nota. -->
       <div class="saldo">
-        <div class="rot" id="rotSaldo">Saldo atual</div>
-        <div class="val" id="saldo"><small>R$</small>179,00</div>
-        <div class="nota-ini" id="scoreIni" onclick="irPara('nota')" role="button" tabindex="0" aria-label="Nota: ver detalhes"><b id="scoreIniN">—</b><i class="pt" id="ptIni"></i></div>
+        <div class="saldo-cols">
+          <div>
+            <div class="rot" id="rotSaldo">Saldo atual</div>
+            <div class="val" id="saldo"><small>R$</small>179,00</div>
+          </div>
+          <div class="score-col" id="scoreIni" onclick="irPara('nota')" role="button" tabindex="0" aria-label="Score: ver detalhes">
+            <div class="rot">Score</div>
+            <div class="val" id="scoreIniN">—</div>
+          </div>
+        </div>
         <div class="aviso" id="avisoEleg" style="display:none"></div>
       </div>
 
@@ -575,7 +582,7 @@ function pinta(){
   });
   $('score').textContent = notaTxt;
   $('faixaTxt').textContent = fxTxt; $('faixaTxt').className = fx;
-  if ($('scoreIniN')) { $('scoreIniN').textContent = notaTxt; $('ptIni').className = 'pt ' + fx; $('scoreIni').title = fxTxt; }
+  if ($('scoreIniN')) { $('scoreIniN').textContent = notaTxt; $('scoreIniN').className = 'val ' + fx; $('scoreIni').title = fxTxt; }
   $('pilares').innerHTML = PILARES.map(function(p){
     var n = atual ? atual[p.k] : null;
     return '<div class="pilar"><div class="cab"><b>' + nomeCheio(p) + '</b><div class="nota">' + (n != null ? Math.round(n) : '—') + '</div></div>'
