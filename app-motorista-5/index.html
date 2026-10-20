@@ -140,9 +140,8 @@ body.claro .nav button.on{color:#fff;}
 /* a nota na tela inicial, embaixo do saldo (Renan, 20/10/2026): só o texto, na
    cor do texto, e a bolinha na cor da faixa da nota (85+ verde · 75 a 84,9
    amarelo · abaixo de 75 vermelho); o anel da aba Nota também vai na cor */
-.nota-ini{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:24px;font-weight:600;line-height:1.1;color:var(--txt);cursor:pointer;-webkit-tap-highlight-color:transparent;}
-.nota-ini span{font-weight:500;}
-.nota-ini .pt{width:16px;height:16px;border-radius:50%;background:var(--txt3);flex:0 0 auto;}
+.nota-ini{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:20px;font-weight:600;line-height:1.1;color:var(--txt);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.nota-ini .pt{width:14px;height:14px;border-radius:50%;background:var(--txt3);flex:0 0 auto;}
 .pt.f-eli{background:var(--verde);} .pt.f-bom{background:var(--ambar);} .pt.f-ruim{background:var(--vermelho);}
 .arco.f-eli{stroke:var(--verde);} .arco.f-bom{stroke:var(--ambar);} .arco.f-ruim{stroke:var(--vermelho);}
 .fx.f-eli,#faixaTxt.f-eli{color:var(--verde);} .fx.f-bom,#faixaTxt.f-bom{color:var(--ambar);} .fx.f-ruim,#faixaTxt.f-ruim{color:var(--vermelho);}
@@ -284,7 +283,7 @@ body.claro .nav button.on{color:#fff;}
       <div class="saldo">
         <div class="rot" id="rotSaldo">Saldo atual</div>
         <div class="val" id="saldo"><small>R$</small>179,00</div>
-        <div class="nota-ini" id="scoreIni" onclick="irPara('nota')" role="button" tabindex="0" aria-label="Ver a nota"><span>Nota</span><b id="scoreIniN">—</b><i class="pt" id="ptIni"></i></div>
+        <div class="nota-ini" id="scoreIni" onclick="irPara('nota')" role="button" tabindex="0" aria-label="Nota: ver detalhes"><b id="scoreIniN">—</b><i class="pt" id="ptIni"></i></div>
         <div class="aviso" id="avisoEleg" style="display:none"></div>
       </div>
 
