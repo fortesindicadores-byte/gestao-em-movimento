@@ -347,6 +347,38 @@ const ftMes = new Set(FT.map(r => r.placa + '|' + r.mes));
 const foraFT = KML.filter(r => r.km > 500 && !ftMes.has(r.placa + '|' + r.mes));
 erros.foraFT = { linhas: foraFT.length, placas: new Set(foraFT.map(r => r.placa)).size, km: sum(foraFT.map(r => r.km)), porUp: Object.fromEntries([...groupBy(foraFT, r => r.up)].map(([k, g]) => [k, { placas: new Set(g.map(r => r.placa)).size, km: sum(g.map(r => r.km)) }])) };
 
+// ═══ mudanças de valor placa a placa (Renan, 21/10/2026: "Essas precisam vir a nível de placa… Todos esses gaps
+// precisam vir detalhados no excel"). Mudança = valor diferente do da última quinzena em que a placa esteve ATIVA
+// com valor: na quinzena seguida ou na volta do inativo. Revisão = a mudança cai na 1ª quinzena do trimestre, ou a
+// placa estava inativa quando a revisão passou (é o caso das 4 de RON que voltaram a 3,85 na 2ª ago).
+// Litros = km da placa (aba Km/L, meio mês por quinzena, até set) enquanto o valor novo valeu × (1/antes − 1/depois):
+// positivo = remunerado com MENOS litros que o valor antigo pagaria (contra nós).
+const qzMes = t => Math.floor(t / 2) + 1;
+const mudancas = [];
+for (const [k, g0] of groupBy(ativasComValor, r => r.up + '|' + r.placa)) {
+  const g = [...new Map(g0.map(r => [r.t, r])).values()].sort((a, b) => a.t - b.t);
+  const [up, placa] = k.split('|');
+  const ch = []; for (let i = 1; i < g.length; i++) if (Math.abs(g[i].v - g[i - 1].v) > 0.005) ch.push(i);
+  ch.forEach((i, n) => {
+    const prev = g[i - 1], cur = g[i], seguida = cur.t === prev.t + 1;
+    const revT = seguida ? (FRONT.has(cur.t) ? cur.t : null) : ([...FRONT].filter(f => f > prev.t && f <= cur.t).pop() ?? null);
+    const fim = n + 1 < ch.length ? ch[n + 1] : g.length;
+    let km = 0; for (let j = i; j < fim; j++) { const m = qzMes(g[j].t); if (m <= 9) km += ((kmlDe(up, placa, m) || {}).km || 0) / 2; }
+    mudancas.push({ up, placa, modelo: modeloDe[placa] || '(sem modelo)', t: cur.t, quinzena: qzLabel(cur.t), quinzenaDe: qzLabel(prev.t), ate: qzLabel(g[fim - 1].t),
+      tipo: seguida ? 'quinzena seguida' : 'volta do inativo', revisao: revT != null, revQ: revT == null ? null : 'Q' + (revT / 6 + 1), de: prev.v, para: cur.v, km: Math.round(km), litros: km * (1 / prev.v - 1 / cur.v) });
+  });
+}
+const mudRes = { fora: mudancas.filter(m => !m.revisao).length, foraSeguida: mudancas.filter(m => !m.revisao && m.tipo === 'quinzena seguida').length, foraVolta: mudancas.filter(m => !m.revisao && m.tipo !== 'quinzena seguida').length,
+  foraLitros: sum(mudancas.filter(m => !m.revisao).map(m => m.litros)),
+  julLitrosUp: Object.fromEntries([...groupBy(mudancas.filter(m => m.revQ === 'Q3'), m => m.up)].map(([u, g]) => [u, { placas: g.length, litros: sum(g.map(m => m.litros)), km: sum(g.map(m => m.km)) }])),
+  julModUp: Object.fromEntries([...groupBy(mudancas.filter(m => m.revQ === 'Q3'), m => m.modelo + '|' + m.up)].map(([k, g]) => [k, { placas: g.length, litros: sum(g.map(m => m.litros)), km: sum(g.map(m => m.km)), volta: g.filter(m => m.tipo !== 'quinzena seguida').map(m => ({ placa: m.placa, para: m.para, quinzena: m.quinzena })) }])),
+  foraPorQz: Object.fromEntries([...groupBy(mudancas.filter(m => !m.revisao), m => m.t)].map(([t, g]) => [t, { n: g.length, litros: sum(g.map(m => m.litros)), ups: [...new Set(g.map(m => m.up))] }])),
+  julLitros: sum(mudancas.filter(m => m.revQ === 'Q3').map(m => m.litros)), julPlacas: mudancas.filter(m => m.revQ === 'Q3').length };
+// o mesmo modelo entre unidades (média do trimestre por unidade-projeto): VW 26.260 em Rota vai de 2,64 a 4,45 no Q3
+const modEntreUps = {};
+for (const up of UPS) for (const m of modelosQ[up] || []) { if (!m.placas) continue; (modEntreUps[m.modelo] = modEntreUps[m.modelo] || []).push({ up, q: Object.fromEntries([1, 2, 3, 4].map(k => [k, m.q[k] ? { media: m.q[k].media, min: m.q[k].min, max: m.q[k].max, placas: m.q[k].placas } : null])) }); }
+for (const k of Object.keys(modEntreUps)) if (modEntreUps[k].length < 2) delete modEntreUps[k];
+
 // ═══ 5 · a premissa da revisão: rem Q(n) × realizado Q(n−1), por unidade-projeto ═══
 const premissa = {};
 for (const up of UPS) {
@@ -373,20 +405,18 @@ const dados = {
   geradoEm: new Date().toISOString(), NOME, MESES, QZ: QZ.map(t => ({ t, label: qzLabel(t), q: QDE(Math.floor(t / 2) + 1) })), MES_IDX,
   totais: { linhas: FT.length, placas: placasFT.length, ups: UPS.length, fonteModelo, kmlLinhas: KML.length },
   frota, realMes, mediaUP, movUP, realUP, realUPq, modelosQ, q3q4: { ...q3q4, lista: q3q4.lista.slice(0, 60) }, q4in: { iguais: q4in.iguais, mudaram: q4in.mudaram, lista: q4in.lista.slice(0, 40) }, fronteiras,
-  dispersao, dispRes, impDisp, placaRes, ativacao, evRes, eventos: eventos.slice(0, 400), kmInativas, kmInatTot, kmInatFT, kmInatFTTot, realMesSimples, realModQ, realAtInat, realAtInatTot, mudancasCiclo: Object.values(fronteiras).filter(f => !f.fronteiraQ).reduce((s, f) => s + f.mudaram, 0), erros, premissa, rankUP, UPS,
+  dispersao, dispRes, impDisp, placaRes, ativacao, evRes, eventos: eventos.slice(0, 400), kmInativas, kmInatTot, kmInatFT, kmInatFTTot, realMesSimples, realModQ, realAtInat, realAtInatTot, mudRes, modEntreUps, mudancasCiclo: Object.values(fronteiras).filter(f => !f.fronteiraQ).reduce((s, f) => s + f.mudaram, 0), erros, premissa, rankUP, UPS,
 };
 writeFileSync(OUT, JSON.stringify(dados));
 // ── apoio para o Excel (KML_REM_GAPS): a base inteira com colunas derivadas + listas placa a placa ──
 if (process.env.KML_REM_GAPS) {
-  const mudancas = []; // toda mudança de valor de uma placa entre quinzenas seguidas (ativa com valor nas duas)
-  for (let t = 1; t < 20; t++) for (const m of compQz(t - 1, t).lista) { const [up, placa] = m.k.split('|'); mudancas.push({ up, placa, modelo: modeloDe[placa] || '(sem modelo)', t, quinzena: qzLabel(t), revisao: FRONT.has(t), de: m.de, para: m.para }); }
   const dispPlacas = []; // placa × mês contra a mediana do modelo na operação
   for (const up of UPS) for (const o of dispersao[up] || []) for (const x of o.placas) { const kmP = (kmlDe(up, x.placa, o.mes) || {}).km || 0; const lit = kmP * (1 / o.mediana - 1 / x.v); dispPlacas.push({ up, mes: o.mes, modelo: o.modelo, placa: x.placa, v: x.v, mediana: o.mediana, min: o.min, max: o.max, n: o.n, desvioPct: (x.v / o.mediana - 1) * 100, km: kmP, litros: lit }); }
   const q3q4Placas = []; // 2ª set × 1ª out, placa a placa
   { const A = new Map(ativasComValor.filter(r => r.t === 17).map(r => [r.up + '|' + r.placa, r])), B = new Map(ativasComValor.filter(r => r.t === 18).map(r => [r.up + '|' + r.placa, r]));
     for (const k of new Set([...A.keys(), ...B.keys()])) { const a = A.get(k), b = B.get(k); const [up, placa] = k.split('|'); q3q4Placas.push({ up, placa, modelo: modeloDe[placa] || '(sem modelo)', set2: a ? a.v : null, out1: b ? b.v : null, situacao: a && b ? (Math.abs(a.v - b.v) < 0.005 ? 'mesmo valor' : 'mudou') : a ? 'saiu do ativo' : 'entrou no ativo' }); } }
   const kmInatLinhas = KML.filter(r => inatFT[r.placa + '|' + r.mes] && r.km > 0).map(r => ({ up: inatFT[r.placa + '|' + r.mes], mes: r.mes, placa: r.placa, modelo: modeloDe[r.placa] || '(sem modelo)', km: r.km, lit: r.lit }));
-  writeFileSync(process.env.KML_REM_GAPS, JSON.stringify({ base: FT0, mudancas, dispPlacas, q3q4Placas, eventos, kmInatLinhas, ativacao, rankUP, mediaUP, modelosQ, movUP, erros: { ativasZeroDet: erros.ativasZeroDet, placaTeste: erros.placaTeste, duplaGrafia: erros.duplaGrafia, upSemAtivas: erros.upSemAtivas, eletricasFora: erros.eletricasFora, outliers: erros.outliers }, fronteiras, QZ: QZ.map(t => ({ t, label: qzLabel(t) })), MESES, UPS, NOME }));
+  writeFileSync(process.env.KML_REM_GAPS, JSON.stringify({ base: FT0, mudancas, modEntreUps, dispPlacas, q3q4Placas, eventos, kmInatLinhas, ativacao, rankUP, mediaUP, modelosQ, movUP, erros: { ativasZeroDet: erros.ativasZeroDet, placaTeste: erros.placaTeste, duplaGrafia: erros.duplaGrafia, upSemAtivas: erros.upSemAtivas, eletricasFora: erros.eletricasFora, outliers: erros.outliers }, fronteiras, QZ: QZ.map(t => ({ t, label: qzLabel(t) })), MESES, UPS, NOME }));
   console.log('gaps gravado:', process.env.KML_REM_GAPS);
 }
 console.log('gravado', OUT);

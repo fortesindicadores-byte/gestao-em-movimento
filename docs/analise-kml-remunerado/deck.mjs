@@ -69,6 +69,7 @@ const kmInatPct = D.kmInatFTTot.km / D.kmInatTot.total * 100;
 const fr = D.fronteiras;
 const mudQz = D.QZ.map(z => fr[z.t] ? fr[z.t].mudaram : 0);
 const dQ1Q3 = (q[3].media / q[1].media - 1) * 100, dQ3Q4 = (q[4].media / q[3].media - 1) * 100;
+const foraQzTxt = Object.entries(D.mudRes.foraPorQz).sort((a, b) => a[0] - b[0]).map(([t, o]) => `${D.QZ.find(z => z.t === +t)?.label || t} ${o.n}`).join(' · ');
 const UNIS = [...new Set(UPS.map(up => up.split(' · ')[0].replace(/ UDC| LATA/, '')))].sort();
 const upsDe = u => UPS.filter(up => up.split(' · ')[0].replace(/ UDC| LATA/, '') === u);
 const nomeU = u => D.NOME[u] || u;
@@ -108,7 +109,7 @@ S.push(slide(`
     <div class="box"><div class="lbl">2 · Mesmo modelo, valores diferentes</div><div class="num">${D.dispRes.comDif} <small style="font-size:20px">de ${D.dispRes.grupos}</small></div><p>grupos modelo-mês com placas do mesmo modelo recebendo valores diferentes na mesma operação. Saldo contra nós: ${f0(dispTot.perde - dispTot.ganha)} L em 9 meses.</p></div>
     <div class="box"><div class="lbl">3 · Efeito da ativação</div><div class="num">+${f2(ativOrd[0].ativMed)}</div><p>km/L é o quanto a ativação sobe a média, no máximo (${esc(ativOrd[0].up)}). Na maioria das operações o efeito é zero. Não há padrão de ativar as melhores placas.</p></div>
   </div>
-  ${`<div style="margin-top:22px">${escuro(`<b>4 · Erros do cadastro:</b> ${D.erros.ativasZero.length} linhas de placa ativa com consumo zero (todas na 1ª quinzena de abril, nas Empurradas), uma placa a 0,67 km/L em Piraí, placa "TESTE" ativa o ano inteiro, ${D.erros.duplaGrafia.length} placas em duas grafias e ${D.mudancasCiclo} mudanças de valor fora da revisão.`)}</div>`}`));
+  ${`<div style="margin-top:22px">${escuro(`<b>4 · Erros do cadastro:</b> ${D.erros.ativasZero.length} linhas de placa ativa com consumo zero (todas na 1ª quinzena de abril, nas Empurradas), uma placa a 0,67 km/L em Piraí, placa "TESTE" ativa o ano inteiro e ${D.mudRes.fora} mudanças de valor fora da revisão.`)}</div>`}`));
 
 // ── 3 · VISÃO GERAL DO ANO ──
 S.push(slide(`
@@ -140,7 +141,7 @@ S.push(slide(`
     </div>
     <div>
       <div class="box" style="margin-bottom:16px"><h3>As últimas mudanças: 2ª set, Cuiabá</h3><p>ROTA: 8 placas (RAZ3F18/28/38/68/88, RRP5C22/32, RRR8A49) caíram de 3,27–4,09 para 2,31, a favor. AS: RRT3H09 e RRT1D26 subiram de 2,21 para 3,36 (+52%), contra. É ajuste de placa no meio do ciclo, não revisão.</p></div>
-      <div class="box"><h3>${D.mudancasCiclo} mudanças fora da revisão no ano</h3><p>2ª jan ${fr[1].mudaram} · 2ª fev ${fr[3].mudaram} · 2ª mar ${fr[5].mudaram} · 2ª abr ${fr[7].mudaram} · 1ª mai ${fr[8].mudaram} · 2ª set ${fr[17].mudaram}. Ajustes pontuais de placa, sem regra visível.</p></div>
+      <div class="box"><h3>${D.mudRes.fora} mudanças fora da revisão no ano</h3><p>${foraQzTxt}. Ajustes pontuais de placa, sem regra visível (Excel: G5).</p></div>
     </div>
   </div>`));
 }
@@ -200,6 +201,34 @@ for (const u of UNIS) {
   <table class="clean ${dens}" style="margin-top:${dens === 'densa' ? 8 : 14}px"><thead><tr><th style="width:96px">Projeto</th><th>Modelo</th><th class="r">Placas</th><th class="r">Q1</th><th class="r">Q2</th><th class="r">Q3</th><th class="r">Q4</th><th class="r">Δ Q3→Q4</th><th class="r">Faixa no Q3</th><th style="width:34%">O que explica o Δ Q3→Q4</th></tr></thead><tbody>${corpo}</tbody></table>
   <div style="margin-top:${dens === 'densa' ? 10 : 16}px">${escuro(`<b>Resumo:</b> ${ups.map(explicaUp).filter(Boolean).join(' ')} ${difs.length ? `Mesmo modelo com valores diferentes no Q3: ${difs.join(', ')}.` : 'No Q3 cada modelo tem um valor só.'}`)}</div>
   <p class="note" style="margin-top:8px">Q1 jan–mar · Q2 abr–jun · Q3 jul–set · Q4 outubro (sem revisão). Média simples das linhas placa-quinzena ativas, a régua do FT: placa que sai ou entra do ativo muda a média sem nenhum valor mudar. Faixa no Q3 = menor e maior valor pago a placas do mesmo modelo.</p>`, dens === 'densa' ? { cls: 'densa', style: 'padding-top:34px' } : {}));
+}
+
+// ── O MESMO MODELO ENTRE UNIDADES: VW 26.260 (Renan, 21/10/2026: "Isso de Rondo precisa ser questionado. É um truck
+// com média incompatível. Foi via revisão?"). Só remunerado: média do modelo por operação e o que a revisão de julho mudou.
+{
+  const MOD = 'VW 26.260';
+  const linhas = (D.modEntreUps[MOD] || []).slice().sort((a, b) => (b.q['3']?.media || 0) - (a.q['3']?.media || 0));
+  const v3 = linhas.map(x => x.q['3']?.media).filter(v => v != null), mn = Math.min(...v3), mx = Math.max(...v3);
+  const ron = D.mudRes.julModUp[MOD + '|RON · ROTA'] || { placas: 0, litros: 0, volta: [] };
+  const v385 = ron.volta.filter(x => Math.abs(x.para - 3.85) < 0.005);
+  const mcc = linhas.find(x => x.up === 'MCC · ROTA');
+  const tr = linhas.map(x => {
+    const q = k => x.q[k] ? f2(x.q[k].media) : '—';
+    const d = x.q['2'] && x.q['3'] ? (x.q['3'].media / x.q['2'].media - 1) * 100 : null;
+    const fx = x.q['3'] ? (x.q['3'].max - x.q['3'].min > 0.005 ? `${f2(x.q['3'].min)} – ${f2(x.q['3'].max)}` : 'iguais') : '—';
+    const j = D.mudRes.julModUp[MOD + '|' + x.up];
+    const dest = x.up === 'RON · ROTA' || x.up === 'MCC · ROTA';
+    return `<tr><td style="white-space:nowrap">${dest ? '<b>' : ''}${esc(nomeU(x.up.split(' · ')[0]))} · ${esc(x.up.split(' · ')[1])}${dest ? '</b>' : ''}</td><td class="r">${x.q['3']?.placas ?? '—'}</td><td class="r">${q('1')}</td><td class="r">${q('2')}</td><td class="r"><b>${q('3')}</b></td><td class="r">${q('4')}</td><td class="r">${sinalPct(d)}</td><td class="r" style="${fx.includes('–') ? `color:${ACC};font-weight:600` : `color:${INK3}`}">${fx}</td><td class="r">${j ? j.placas : 0}</td><td class="r" style="color:${j && j.litros > 50 ? ACC : j && j.litros < -50 ? AZUL : INK3};font-weight:600">${j ? (j.litros > 0 ? '+' : '') + f0(j.litros) : '0'}</td></tr>`;
+  }).join('');
+  S.push(slide(`
+  <div class="kicker">O mesmo modelo entre unidades · VW 26.260 (baú roll-up, 10 pallets)</div>
+  <h2 style="font-size:28px">O mesmo caminhão: régua de ${f2(mn)} a ${f2(mx)} depois da revisão de julho</h2>
+  <table class="clean media" style="margin-top:12px"><thead><tr><th>Rota</th><th class="r">Placas ativas no Q3</th><th class="r">Q1</th><th class="r">Q2</th><th class="r">Q3</th><th class="r">Q4</th><th class="r">Δ Q2→Q3</th><th class="r">Faixa no Q3</th><th class="r">Placas mudadas em jul</th><th class="r">Litros até set (+ contra nós)</th></tr></thead><tbody>${tr}</tbody></table>
+  <div class="grid g2" style="gap:18px;margin-top:14px">
+    <div class="box" style="padding:14px 18px"><h3>Rondonópolis: veio da revisão</h3><p>As placas do 26.260 foram de 2,70 para 3,43 na 1ª jul, a quinzena da revisão. ${v385.map(x => x.placa).join(', ')} estavam inativas quando a revisão passou e voltaram na ${v385[0]?.quinzena || '1ª ago'} a 3,85, acima das irmãs. ${f0(ron.litros)} L a menos até setembro.</p></div>
+    <div class="box" style="padding:14px 18px"><h3>Macacu: uma placa a ${f2(mcc?.q['4']?.media)}</h3><p>Só ${mcc?.q['3']?.placas ?? 1} placas ativas no Q3. UFA5H96 foi de 3,12 para 4,64 na 1ª jul (+49%) e segue assim em outubro. É a maior régua do modelo na frota, com uma placa só.</p></div>
+  </div>
+  <div style="margin-top:12px">${escuro(`<b>Resumo:</b> no Q2 o VW 26.260 estava a 2,70 em quase toda a Rota; a revisão de julho espalhou o mesmo caminhão de ${f2(mn)} a ${f2(mx)}. Pedir à Ambev o critério de cada operação, em especial Rondonópolis (3,43 e 3,85 nas 4 que voltaram do inativo) e a placa de Macacu a 4,64. Excel: G7 Revisão julho e G8 Modelo entre unidades.`)}</div>`, { style: 'padding-top:40px' }));
 }
 
 // ── PERGUNTA 2 · dispersão: MATRIZ up·modelo × mês, saldo em litros ──
@@ -291,19 +320,20 @@ for (const u of UNIS) {
 
 // ── PERGUNTA 4 · erros ──
 {
-  const dup = D.erros.duplaGrafia.map(x => x.grafias.join('/')).join(', ');
+  const fq = Object.entries(D.mudRes.foraPorQz).sort((a, b) => b[1].n - a[1].n);
+  const fqTxt = fq.slice(0, 3).map(([t, o]) => `${o.n} em ${D.QZ.find(z => z.t === +t)?.label}`).join(', ') + (fq.length > 3 ? ` e mais ${fq.slice(3).reduce((s, x) => s + x[1].n, 0)} espalhadas` : '');
+  const lit = D.mudRes.foraLitros;
   S.push(slide(`
   <div class="kicker">4 · Outros erros encontrados</div>
-  <h2 style="font-size:28px">Seis achados para levar à Ambev, do maior para o menor</h2>
+  <h2 style="font-size:28px">Cinco achados para levar à Ambev, do maior para o menor</h2>
   <div class="grid g2" style="gap:22px 30px;margin-top:14px">
-    <div class="step"><div class="n">1</div><div><b>${D.erros.ativasZero.length} placas ativas com consumo zero na 1ª abr (matriz anterior)</b><span>Todas nas Empurradas, na quinzena da revisão do Q2: o valor novo entrou com uma quinzena de atraso. Em Piraí, 8 Actros 2548 zeradas enquanto 12 irmãs seguiam com valor.</span></div></div>
-    <div class="step"><div class="n">2</div><div><b>Piraí Empurrada: UGU5D17 a 0,67 km/L</b><span>Em jul, set e out, contra 2,2 das irmãs Actros 2548 (a faixa do modelo no Q3 vai de 0,67 a 2,22 só por ela). É 3× mais litros remunerados para uma placa; vai ser corrigido na próxima revisão e vale saber o quanto entrou.</span></div></div>
-    <div class="step"><div class="n">3</div><div><b>Cuiabá AS subiu 52% fora da revisão</b><span>RRT3H09 e RRT1D26 (VW 30.280) passaram de 2,21 para 3,36 na 2ª set, sem revisão e sem outra placa do modelo na operação para comparar.</span></div></div>
-    <div class="step"><div class="n">4</div><div><b>Placa "TESTE" ativa o ano inteiro</b><span>${D.erros.placaTeste.length} quinzenas em ${esc(D.erros.placaTeste[0]?.up || '')}, a única placa dessa operação, com consumo ${f2(D.erros.placaTeste[0]?.v)} e depois 4,59. Entra na média como se fosse caminhão.</span></div></div>
-    <div class="step"><div class="n">5</div><div><b>${D.erros.duplaGrafia.length} placas em duas grafias</b><span>${dup}. A mesma placa no formato antigo e no Mercosul; em FLP e PLT a mesma placa está em duas operações.</span></div></div>
-    <div class="step"><div class="n">6</div><div><b>${D.mudancasCiclo} mudanças de valor fora da revisão</b><span>21 placas em 2ª jan, 22 em 2ª abr, 10 em 2ª set (Cuiabá) e mais 7 espalhadas. Ajuste de placa no meio do ciclo não está na regra; vale pedir a trilha de cada um.</span></div></div>
+    <div class="step"><div class="n">1</div><div><b>${D.erros.ativasZero.length} placas ativas com consumo zero na 1ª abr (matriz anterior)</b><span>Todas nas Empurradas, na quinzena da revisão do Q2: o valor novo entrou com uma quinzena de atraso. Em Piraí, 8 Actros 2548 zeradas enquanto 12 irmãs seguiam com valor. Excel: G4 Ativas zeradas.</span></div></div>
+    <div class="step"><div class="n">2</div><div><b>Piraí Empurrada: UGU5D17 a 0,67 km/L</b><span>Em jul, set e out, contra 2,2 das irmãs Actros 2548. É 3× mais litros remunerados para uma placa (a favor); vai ser corrigido na próxima revisão e vale saber o quanto entrou. Excel: G6 Cadastro, mês a mês.</span></div></div>
+    <div class="step"><div class="n">3</div><div><b>Cuiabá AS subiu 52% fora da revisão</b><span>RRT3H09 e RRT1D26 (VW 30.280) passaram de 2,21 para 3,36 na 2ª set, sem revisão e sem outra placa do modelo na operação para comparar. Excel: G5 Fora da revisão.</span></div></div>
+    <div class="step"><div class="n">4</div><div><b>Placa "TESTE" ativa o ano inteiro</b><span>${D.erros.placaTeste.length} quinzenas em ${esc(D.erros.placaTeste[0]?.up || '')}, a única placa dessa operação, com consumo ${f2(D.erros.placaTeste[0]?.v)} e depois 4,59. Entra na média como se fosse caminhão. Excel: G6 Cadastro, quinzena a quinzena.</span></div></div>
+    <div class="step" style="grid-column:1/3"><div class="n">5</div><div><b>${D.mudRes.fora} mudanças de valor fora da revisão</b><span>${fqTxt}. Saldo até setembro: ${f0(Math.abs(lit))} L ${lit > 0 ? 'contra nós' : 'a favor'}, puxado pela queda dos Actros de Piraí Empurrada na 2ª jan (2,39 para 2,12). Ajuste de placa no meio do ciclo não está na regra; vale pedir a trilha de cada um. Excel: G5 Fora da revisão, com os litros de cada mudança.</span></div></div>
   </div>
-  <div style="margin-top:18px">${escuro(`<b>Resumo:</b> nenhum desses erros é grande em litros; são erros de cadastro e de processo no FT. Corrigir antes da próxima revisão custa pouco e evita que a base do Q1/27 nasça com placa de teste, grafia dupla e valor atrasado.`)}</div>`, { cls: 'erros', style: 'padding-top:40px' }));
+  <div style="margin-top:18px">${escuro(`<b>Resumo:</b> nenhum desses erros é grande em litros; são erros de cadastro e de processo no FT, e cada um está placa a placa na planilha de cobrança. Corrigir antes da próxima revisão custa pouco e evita que a base do Q1/27 nasça com placa de teste e valor atrasado.`)}</div>`, { cls: 'erros', style: 'padding-top:40px' }));
 }
 
 // ── PRÓXIMOS PASSOS ──
@@ -313,7 +343,7 @@ S.push(slide(`
   <div class="grid g2" style="gap:16px 30px;margin-top:16px">
     <div class="box"><h3>1 · Rodar a revisão do Q4 agora</h3><p>Nenhuma das ${D.q3q4.iguais} placas mudou em outubro: o trimestre inteiro está rodando com a régua de julho. A revisão é trimestral por contrato e a troca do especialista não pode parar o ciclo.</p></div>
     <div class="box"><h3>2 · Uma régua por modelo dentro da operação</h3><p>${D.dispRes.comDif} grupos modelo-mês com valores diferentes para o mesmo modelo, ${D.placaRes.dentroTri} placas mudando fora da revisão. Saldo de ${f0(dispTot.perde - dispTot.ganha)} L contra nós em 9 meses.</p></div>
-    <div class="box"><h3>3 · Limpeza do cadastro no FT</h3><p>Placa TESTE, ${D.erros.duplaGrafia.length} grafias duplas, UGU5D17 a 0,67, valor da revisão entrando com uma quinzena de atraso nas Empurradas. Corrigir antes da próxima revisão, para a base do Q1/27 nascer limpa.</p></div>
+    <div class="box"><h3>3 · Limpeza do cadastro no FT</h3><p>Placa TESTE, UGU5D17 a 0,67, valor da revisão entrando com uma quinzena de atraso nas Empurradas. Corrigir antes da próxima revisão, para a base do Q1/27 nascer limpa.</p></div>
     <div class="box" style="grid-column:1/3"><h3>4 · Ativação: monitorar, não brigar</h3><p>O efeito na média é pequeno (até +${f2(ativOrd[0].ativMed)} km/L em ${esc(ativOrd[0].up)}) e sem padrão de escolher as melhores. O ponto é outro: ${f1(kmInatPct)}% do km do ano foi rodado por placas inativas no FT, sem régua remunerada. Pedir o critério de ativação por escrito e acompanhar mês a mês com esta mesma matriz.</p></div>
   </div>`));
 

@@ -184,49 +184,89 @@ tabela(ws, 'G4_AtivasZeradas', r0, ['Unidade · Projeto', 'Unidade', 'Projeto', 
 # ───────────────────── G5 · Mudanças fora da revisão ─────────────────────
 ws = wb.create_sheet('G5 Fora da revisão')
 r0 = titulo(ws, '5 · MUDANÇAS DE VALOR FORA DA REVISÃO', 'Placa ativa cujo consumo remunerado mudou fora da 1ª quinzena do trimestre',
-            'A régua só deveria mudar na revisão trimestral. Subir o km/L = menos litros remunerados (contra nós).')
+            'A régua só deveria mudar na revisão trimestral. Litros = km da placa (aba Km/L) enquanto o valor novo valeu, até set, × (1/antes − 1/depois). Positivo = menos litros remunerados (contra nós).')
 lin = []
 for x in sorted([m for m in G['mudancas'] if not m['revisao']], key=lambda x: (x['t'], x['up'], x['placa'])):
     u, p = up_split(x['up'])
     lin.append([x['up'], u, p, x['placa'], x['modelo'], x['t'], x['quinzena'], x['de'], x['para'],
-                '=IF(H{r}=0,"",I{r}/H{r}-1)', '=IF(I{r}>H{r},"subiu (contra nós)","caiu (a favor)")'])
-tabela(ws, 'G5_ForaRevisao', r0, ['Unidade · Projeto', 'Unidade', 'Projeto', 'Placa', 'Modelo', 'Quinzena nº', 'Quinzena', 'Km/L antes', 'Km/L depois', 'Variação', 'Sentido'],
-       lin, fmts=[None, None, None, None, None, '0', None, FMT_KML, FMT_KML, FMT_PCT, None], larg=[18, 10, 12, 11, 20, 10, 10, 11, 11, 10, 18])
+                '=IF(H{r}=0,"",I{r}/H{r}-1)', '=IF(I{r}>H{r},"subiu (contra nós)","caiu (a favor)")',
+                x['tipo'], x['quinzenaDe'], x['ate'], x['km'], '=IF(OR(H{r}=0,I{r}=0),0,O{r}*(1/H{r}-1/I{r}))'])
+tabela(ws, 'G5_ForaRevisao', r0, ['Unidade · Projeto', 'Unidade', 'Projeto', 'Placa', 'Modelo', 'Quinzena nº', 'Quinzena', 'Km/L antes', 'Km/L depois', 'Variação', 'Sentido',
+                                  'Tipo', 'Valor antigo da', 'Valor novo valeu até', 'Km com o valor novo (até set)', 'Litros (+ contra nós)'],
+       lin, fmts=[None, None, None, None, None, '0', None, FMT_KML, FMT_KML, FMT_PCT, None, None, None, None, FMT_INT, FMT_INT],
+       larg=[18, 10, 12, 11, 20, 10, 10, 11, 11, 10, 18, 16, 12, 14, 14, 14])
 
-# ───────────────────── G6 · Cadastro ─────────────────────
+# ───────────────────── G6 · Cadastro e valores incompatíveis ─────────────────────
 ws = wb.create_sheet('G6 Cadastro')
-r0 = titulo(ws, '6 · ERROS DE CADASTRO NO FT', 'Placa de teste, a mesma placa em duas grafias e operação sem placa ativa',
-            'Erros que não mudam muitos litros, mas contaminam a média e a próxima revisão. Corrigir antes da base do Q1/27.')
+r0 = titulo(ws, '6 · ERROS DE CADASTRO E VALORES INCOMPATÍVEIS', 'Placa de teste, placa com valor fora do modelo e operação sem placa ativa',
+            'Valor incompatível = placa a mais de 25% da mediana do próprio modelo na operação, no mês. Litros = km da placa no mês × (1/mediana − 1/valor): positivo = contra nós.')
 lin = []
-teste = {}
 for x in G['erros']['placaTeste']:
-    teste.setdefault(x['up'], []).append(x)
-for up, xs in teste.items():
-    u, p = up_split(up)
-    vals = sorted({x['v'] for x in xs})
-    lin.append(['Placa "TESTE" ativa', up, u, p, 'TESTE', f"{len(xs)} quinzenas, consumo {' / '.join(f'{v:.2f}'.replace('.', ',') for v in vals)}"])
-for x in G['erros']['duplaGrafia']:
-    for up in x['ups']:
-        if up.startswith('CGR') or up == 'PLT · AS':
-            continue
-        u, p = up_split(up)
-        lin.append(['Mesma placa em duas grafias', up, u, p, x['placa'], ' e '.join(x['grafias'])])
+    u, p = up_split(x['up'])
+    lin.append(['Placa "TESTE" ativa', x['up'], u, p, 'TESTE', x['t'], x['v'], None, f"ativo: {x['ativo']}", 0])
+disp_lit = {(d['up'], d['placa'], d['mes']): d for d in G['dispPlacas']}
+for x in sorted(G['erros']['outliers'], key=lambda x: (x['up'], x['placa'], x['mes'])):
+    u, p = up_split(x['up'])
+    d = disp_lit.get((x['up'], x['placa'], x['mes']), {})
+    lin.append(['Valor incompatível com o modelo', x['up'], u, p, x['placa'], MES[x['mes'] - 1], x['v'], x['mediana'],
+                f"{x['modelo']}: {x['pct']:+.0f}% da mediana (faixa {d.get('min', 0):.2f}–{d.get('max', 0):.2f})".replace('.', ','), round(d.get('litros', 0))])
 for x in G['erros']['upSemAtivas']:
     if x['up'].startswith('CGR') or x['up'] == 'PLT · AS':
         continue
     u, p = up_split(x['up'])
-    lin.append(['Operação sem placa ativa com consumo', x['up'], u, p, '', f"{x['t']}: {x['nAt']} ativas, {x['nInat']} inativas"])
-tabela(ws, 'G6_Cadastro', r0, ['Tipo', 'Unidade · Projeto', 'Unidade', 'Projeto', 'Placa', 'Detalhe'], lin, larg=[34, 18, 10, 12, 12, 48])
+    lin.append(['Operação sem placa ativa com consumo', x['up'], u, p, '', x['t'], None, None, f"{x['nAt']} ativas, {x['nInat']} inativas", 0])
+tabela(ws, 'G6_Cadastro', r0, ['Tipo', 'Unidade · Projeto', 'Unidade', 'Projeto', 'Placa', 'Quando', 'Km/L', 'Mediana do modelo', 'Detalhe', 'Litros (+ contra nós)'], lin,
+       fmts=[None, None, None, None, None, None, FMT_KML, FMT_KML, None, FMT_INT], larg=[32, 18, 10, 12, 11, 10, 9, 12, 48, 14])
+
+# ───────────────────── G7 · Revisão de julho placa a placa ─────────────────────
+ws = wb.create_sheet('G7 Revisão julho')
+r0 = titulo(ws, '7 · REVISÃO DE JULHO (Q3), PLACA A PLACA', 'O valor antes e depois da revisão, os litros que ela tirou ou deu até setembro e a régua do mesmo modelo nas outras operações',
+            'Inclui a placa que estava inativa quando a revisão passou e voltou com valor novo (tipo "volta do inativo"). Litros = km da placa (aba Km/L) até set × (1/antes − 1/depois): positivo = contra nós. Faixa da frota = menor e maior média do modelo entre as operações no Q3.')
+faixa = {}
+for mo, xs in G['modEntreUps'].items():
+    v3 = [x['q']['3']['media'] for x in xs if x['q'].get('3')]
+    if v3:
+        faixa[mo] = (min(v3), max(v3), len(v3))
+lin = []
+for x in sorted([m for m in G['mudancas'] if m['revQ'] == 'Q3'], key=lambda x: (x['up'], x['modelo'], x['placa'])):
+    u, p = up_split(x['up'])
+    f = faixa.get(x['modelo'])
+    lin.append([x['up'], u, p, x['placa'], x['modelo'], x['tipo'], x['quinzenaDe'], x['quinzena'], x['de'], x['para'],
+                '=IF(I{r}=0,"",J{r}/I{r}-1)', x['ate'], x['km'], '=IF(OR(I{r}=0,J{r}=0),0,M{r}*(1/I{r}-1/J{r}))',
+                f[0] if f else None, f[1] if f else None, '=IF(J{r}>I{r},"subiu (contra nós)","caiu (a favor)")'])
+tabela(ws, 'G7_RevisaoJulho', r0, ['Unidade · Projeto', 'Unidade', 'Projeto', 'Placa', 'Modelo', 'Tipo', 'Valor antigo da', 'Valor novo desde', 'Km/L antes', 'Km/L depois',
+                                   'Variação', 'Valor novo valeu até', 'Km com o valor novo (até set)', 'Litros (+ contra nós)', 'Menor média do modelo na frota (Q3)', 'Maior média do modelo na frota (Q3)', 'Sentido'],
+       lin, fmts=[None, None, None, None, None, None, None, None, FMT_KML, FMT_KML, FMT_PCT, None, FMT_INT, FMT_INT, FMT_KML, FMT_KML, None],
+       larg=[18, 10, 12, 11, 20, 16, 12, 12, 10, 10, 10, 14, 14, 14, 14, 14, 18])
+
+# ───────────────────── G8 · O mesmo modelo entre unidades ─────────────────────
+ws = wb.create_sheet('G8 Modelo entre unidades')
+r0 = titulo(ws, '8 · O MESMO MODELO ENTRE UNIDADES', 'Média do consumo remunerado do modelo em cada operação, trimestre a trimestre',
+            'O mesmo caminhão recebendo réguas diferentes em operações diferentes. Ex.: VW 26.260 (baú roll-up 10 pallets) estava a 2,70 em quase toda a Rota no Q2 e foi de 2,64 a 4,45 na revisão de julho.')
+lin = []
+for mo in sorted(G['modEntreUps']):
+    for x in sorted(G['modEntreUps'][mo], key=lambda x: x['up']):
+        u, p = up_split(x['up'])
+        q = x['q']
+        g = lambda k, c: (q.get(k) or {}).get(c)
+        lin.append([mo, x['up'], u, p, g('1', 'media'), g('2', 'media'), g('3', 'media'), g('4', 'media'),
+                    '=IF(OR(F{r}="",G{r}=""),"",G{r}/F{r}-1)', g('3', 'min'), g('3', 'max'),
+                    '=IF(G{r}="","",_xlfn.MINIFS(G:G,A:A,A{r}))', '=IF(G{r}="","",_xlfn.MAXIFS(G:G,A:A,A{r}))',
+                    '=IF(OR(G{r}="",L{r}=""),"",G{r}/L{r}-1)'])
+tabela(ws, 'G8_ModeloEntreUnidades', r0, ['Modelo', 'Unidade · Projeto', 'Unidade', 'Projeto', 'Q1', 'Q2', 'Q3', 'Q4', 'Variação Q2→Q3', 'Menor placa no Q3', 'Maior placa no Q3',
+                                          'Menor média do modelo na frota (Q3)', 'Maior média do modelo na frota (Q3)', 'Acima da menor da frota'],
+       lin, fmts=[None, None, None, None, FMT_KML, FMT_KML, FMT_KML, FMT_KML, FMT_PCT, FMT_KML, FMT_KML, FMT_KML, FMT_KML, FMT_PCT],
+       larg=[20, 18, 10, 12, 8, 8, 8, 8, 12, 12, 12, 14, 14, 14])
 
 # ───────────────────── Estratificação ─────────────────────
 UPS = [up for up in G['UPS'] if not up.startswith('CGR') and up != 'PLT · AS']
 ws = wb.create_sheet('Estratificação', 0)
 r0 = titulo(ws, 'ESTRATIFICAÇÃO DOS GAPS', 'Por unidade · projeto, por modelo e por mês',
-            'Tudo aqui é fórmula sobre as abas G1 a G6: filtrar ou corrigir uma linha do detalhe muda o total. Campo Grande fica fora (outra pauta), assim como as elétricas e Pelotas AS.')
+            'Tudo aqui é fórmula sobre as abas G1 a G7: filtrar ou corrigir uma linha do detalhe muda o total. Campo Grande fica fora (outra pauta), assim como as elétricas e Pelotas AS.')
 q = lambda s: "'" + s + "'"
-G1, G2, G3, G3b, G4, G5, G6 = (q(s) for s in ['G1 Revisão Q4', 'G2 Mesmo modelo', 'G3 Ativação', 'G3b Km inativas', 'G4 Ativas zeradas', 'G5 Fora da revisão', 'G6 Cadastro'])
+G1, G2, G3, G3b, G4, G5, G6, G7 = (q(s) for s in ['G1 Revisão Q4', 'G2 Mesmo modelo', 'G3 Ativação', 'G3b Km inativas', 'G4 Ativas zeradas', 'G5 Fora da revisão', 'G6 Cadastro', 'G7 Revisão julho'])
 cab = ['Unidade · Projeto', 'G1 · Placas sem revisão em out', 'G2 · Placa-mês com valor ≠ do modelo', 'G2 · Litros contra nós', 'G2 · Litros a favor', 'G2 · Saldo (L)',
-       'G3 · Desativações abaixo da média', 'G3 · Ativações acima da média', 'G3b · Km de placas inativas', 'G4 · Placas ativas zeradas', 'G5 · Mudanças fora da revisão', 'G5 · Das quais subiram', 'G6 · Erros de cadastro']
+       'G3 · Desativações abaixo da média', 'G3 · Ativações acima da média', 'G3b · Km de placas inativas', 'G4 · Placas ativas zeradas', 'G5 · Mudanças fora da revisão', 'G5 · Das quais subiram', 'G6 · Erros de cadastro e valores incompatíveis', 'G5 · Litros (+ contra nós)', 'G7 · Placas mudadas na revisão de julho', 'G7 · Litros (+ contra nós)']
 for j, h in enumerate(cab, 1):
     c = ws.cell(r0, j, h); c.font = f_hdr; c.fill = fill_hdr; c.alignment = Alignment(wrap_text=True, vertical='center')
 ws.row_dimensions[r0].height = 42
@@ -245,8 +285,11 @@ def bloco_up(r, chave_col, chave):
         f'=COUNTIFS({G5}!$A:$A,{chave_col}{r})',
         f'=COUNTIFS({G5}!$A:$A,{chave_col}{r},{G5}!$K:$K,"subiu (contra nós)")',
         f'=COUNTIFS({G6}!$B:$B,{chave_col}{r})',
+        f'=SUMIFS({G5}!$P:$P,{G5}!$A:$A,{chave_col}{r})',
+        f'=COUNTIFS({G7}!$A:$A,{chave_col}{r})',
+        f'=SUMIFS({G7}!$N:$N,{G7}!$A:$A,{chave_col}{r})',
     ]
-fmts_e = [None, FMT_INT, FMT_INT, FMT_INT, FMT_INT, FMT_INT, FMT_INT, FMT_INT, FMT_INT, FMT_INT, FMT_INT, FMT_INT, FMT_INT]
+fmts_e = [None] + [FMT_INT] * 15
 r = r0 + 1
 for up in UPS:
     for j, v in enumerate(bloco_up(r, '$A', up), 1):
@@ -349,9 +392,15 @@ gaps = [
     ('6', 'Mudanças fora da revisão', 'Consumo remunerado de placa mudando fora da 1ª quinzena do trimestre.',
      f'={E}!K{T}', 'mudanças no ano', 'CBA · ROTA e CBA · AS (2ª set)',
      'A trilha de cada mudança fora da revisão (quem, quando, por quê).', 'G5 Fora da revisão'),
-    ('7', 'Erros de cadastro', 'Placa "TESTE" ativa, a mesma placa em duas grafias, operação sem placa ativa.',
-     f'={E}!M{T}', 'ocorrências', 'GRL UDC · ROTA (placa TESTE)',
-     'Limpar o cadastro antes da base do Q1/27.', 'G6 Cadastro'),
+    ('7', 'Cadastro e valores incompatíveis', 'Placa "TESTE" ativa o ano inteiro, placa com valor a mais de 25% da mediana do modelo (UGU5D17 a 0,67 km/L), operação sem placa ativa.',
+     f'={E}!M{T}', 'ocorrências', 'PIR · EMPURRADA (UGU5D17) · GRL UDC · ROTA (TESTE)',
+     'Corrigir o valor das placas fora do modelo e limpar o cadastro antes da base do Q1/27.', 'G6 Cadastro'),
+    ('8', 'Revisão de julho', 'O que a revisão do Q3 mudou placa a placa e os litros que tirou ou deu até setembro.',
+     f'={E}!P{T}', 'litros (saldo; + = contra nós)', 'PLT · ROTA e RON · ROTA (contra nós)',
+     'O critério de cada valor novo do Q3; por que RON ROTA foi a 3,43/3,85 e MCC ROTA a 4,45 no VW 26.260.', 'G7 Revisão julho'),
+    ('9', 'O mesmo modelo entre unidades', 'O mesmo caminhão com régua diferente em cada operação (VW 26.260 em Rota: 2,64 a 4,45 no Q3).',
+     "=COUNTA('G8 Modelo entre unidades'!A:A)-4", 'linhas modelo × operação', 'VW 26.260 em Rota (RON, MCC, PLT)',
+     'Justificar a régua de cada operação para o mesmo modelo, ou alinhar à da frota.', 'G8 Modelo entre unidades'),
 ]
 for i, g in enumerate(gaps, rr + 1):
     for j, v in enumerate(g, 1):
@@ -379,16 +428,16 @@ linhas_l = [
     ('COMO LER ESTA PLANILHA', f_kick),
     ('Consumo remunerado Km/L · Freightech · 2026', f_tit),
     ('', f_txt),
-    ('Resumo: os sete gaps para cobrar a Ambev, com o tamanho de cada um (fórmula) e as colunas amarelas para acompanhar a cobrança.', f_txt),
+    ('Resumo: os nove gaps para cobrar a Ambev, com o tamanho de cada um (fórmula) e as colunas amarelas para acompanhar a cobrança.', f_txt),
     ('Estratificação: os mesmos gaps por unidade · projeto, por modelo e por mês, todos em fórmula sobre as abas de detalhe.', f_txt),
-    ('G1 a G6: o detalhe placa a placa de cada gap, como Tabela do Excel (filtro em cada coluna, pronta para tabela dinâmica).', f_txt),
+    ('G1 a G8: o detalhe placa a placa de cada gap, como Tabela do Excel (filtro em cada coluna, pronta para tabela dinâmica).', f_txt),
     ('Base FT: a planilha que você mandou, com as seis colunas como vieram, e ao lado as colunas derivadas (unidade, quinzena, trimestre, placa em Mercosul, modelo e o motivo de estar fora da análise).', f_txt),
     ('', f_txt),
     ('Regras usadas', f_b),
     ('A média do FT é a média simples das placas ativas com consumo, por unidade · projeto e quinzena.', f_txt),
     ('A revisão trimestral entra na 1ª quinzena do trimestre: 1ª jan (Q1), 1ª abr (Q2), 1ª jul (Q3), 1ª out (Q4).', f_txt),
     ('O modelo da placa não está na planilha do FT: vem da aba Km/L do Consumo (modelo mais frequente da placa) e, na falta, da base de ativos do Ginfo.', f_txt),
-    ('Litros (aba G2) usam só o km rodado da placa no mês, da aba Km/L, como peso. Nenhum gap compara com o consumo realizado.', f_txt),
+    ('Litros (abas G2, G5, G6 e G7) usam só o km rodado da placa, da aba Km/L, como peso. Nenhum gap compara com o consumo realizado.', f_txt),
     ('Fora das abas de gap: Campo Grande (tanque interno, tratado em outra pauta), as 8 VW Delivery elétricas e Pelotas AS (entra em Rota). Continuam na Base FT, marcados.', f_txt),
     ('', f_txt),
     ('Cores: fundo amarelo = preencher · vermelho em número = contra nós · linha cinza = total.', f_nota),
@@ -397,8 +446,8 @@ for i, (t, fnt) in enumerate(linhas_l, 1):
     c = ws.cell(i, 1, t); c.font = fnt; c.alignment = Alignment(wrap_text=True, vertical='top')
 ws.column_dimensions['A'].width = 130
 
-# ordem das abas: Resumo, Estratificação, G1…G6, Base FT, Leia-me
-ordem = ['Resumo', 'Estratificação', 'G1 Revisão Q4', 'G2 Mesmo modelo', 'G3 Ativação', 'G3b Km inativas', 'G4 Ativas zeradas', 'G5 Fora da revisão', 'G6 Cadastro', 'Base FT', 'Leia-me']
+# ordem das abas: Resumo, Estratificação, G1…G8, Base FT, Leia-me
+ordem = ['Resumo', 'Estratificação', 'G1 Revisão Q4', 'G2 Mesmo modelo', 'G3 Ativação', 'G3b Km inativas', 'G4 Ativas zeradas', 'G5 Fora da revisão', 'G6 Cadastro', 'G7 Revisão julho', 'G8 Modelo entre unidades', 'Base FT', 'Leia-me']
 wb._sheets = [wb[n] for n in ordem]
 for n, cor in [('Resumo', 'F22C05'), ('Estratificação', 'F22C05'), ('Base FT', '0F1A20'), ('Leia-me', '8A94A2')]:
     wb[n].sheet_properties.tabColor = cor
