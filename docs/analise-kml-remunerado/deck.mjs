@@ -356,6 +356,31 @@ capaSec('Parte 3 de 4', 'A ativação mexe<br>pouco na média.', `Quem entra e q
   </div>`, { style: 'padding-top:40px' }));
 }
 
+// ── PLACAS INATIVAS NO FT QUE RODAM (Renan, 21/10/2026: "explore mais o rodar com placas inativas") ──
+{
+  const K = D.kmInatRes, T = D.kmInatFTTot;
+  const ops = K.porUp.slice(0, 11), resto = K.porUp.slice(11);
+  const opTr = ops.map(x => `<tr><td style="white-space:nowrap"><b>${esc(x.up)}</b></td><td class="r">${f0(x.km)}</td><td class="r" style="${x.pct >= 30 ? `color:${ACC};font-weight:700` : ''}">${f1(x.pct)}%</td><td class="r">${x.placas}</td></tr>`).join('')
+    + (resto.length ? `<tr><td style="color:${INK3}">Outras ${resto.length}</td><td class="r" style="color:${INK3}">${f0(resto.reduce((a, x) => a + x.km, 0))}</td><td></td><td class="r" style="color:${INK3}">${resto.reduce((a, x) => a + x.placas, 0)}</td></tr>` : '');
+  const mesTxt = m => MES[m - 1];
+  const plTr = K.placas.slice(0, 11).map(x => `<tr><td><b>${esc(x.placa)}</b></td><td style="white-space:nowrap">${esc(x.up)}</td><td style="white-space:nowrap;font-size:10px">${esc(x.modelo)}</td><td class="r">${x.meses.length === 9 ? '<b style="color:' + ACC + '">jan–set</b>' : x.meses.map(mesTxt).join(', ')}</td><td class="r">${f0(x.km)}</td></tr>`).join('');
+  const p79 = K.placas79;
+  S.push(slide(`
+  <div class="kicker">3 · Placas marcadas inativas no FT que rodaram no mês</div>
+  <h2 style="font-size:24px;margin-bottom:4px">${f1(kmInatPct)}% do km do ano (${f0(T.km)} km) foi rodado por ${T.placas} placas inativas no FT o mês inteiro</h2>
+  <div class="grid" style="grid-template-columns:1fr 1.25fr;gap:26px;margin-top:10px;align-items:start">
+    <div>
+      <table class="clean compacta"><thead><tr><th>Operação</th><th class="r">Km inativas</th><th class="r">% do km</th><th class="r">Placas</th></tr></thead><tbody>${opTr}</tbody></table>
+    </div>
+    <div>
+      <table class="clean compacta"><thead><tr><th>Placa</th><th>Operação</th><th>Modelo</th><th class="r">Meses inativa rodando</th><th class="r">Km</th></tr></thead><tbody>${plTr}</tbody></table>
+      <div class="grid g4" style="gap:10px;margin-top:10px">${Object.entries(K.faixas).map(([f, n]) => `<div class="box" style="padding:10px 12px"><div class="lbl">${f} ${f === '1' ? 'mês' : 'meses'}</div><div class="num" style="font-size:24px">${n}</div><p style="font-size:11.5px">placas</p></div>`).join('')}</div>
+    </div>
+  </div>
+  <p class="note" style="margin-top:6px">Inativa = as duas quinzenas do mês inativas na planilha do FT. Km da aba Km/L (jan a set), placa a placa. % do km = parte do km rodado da operação no ano. Excel: G3b Km inativas.</p>
+  <div style="margin-top:8px">${escuro(`<b>Resumo:</b> não é ocasional: ${K.n79} placas rodaram inativas em 7 a 9 dos 9 meses, como ${p79.slice(0, 2).map(x => `${x.placa} (${esc(x.modelo)}, ${esc(x.up)}, ${f0(x.km)} km)`).join(' e ')}. Em todo mês, de ${f0(Math.min(...Object.values(K.mes).map(x => x.pct)))}% a ${f0(Math.max(...Object.values(K.mes).map(x => x.pct)))}% do km sai de placa fora do ativo, e esse km não entra na régua do FT. Pedir o critério de ativação por escrito e a ativação das placas que rodam todo mês.`)}</div>`, { style: 'padding-top:34px' }));
+}
+
 capaSec('Parte 4 de 4', 'Erros do cadastro.', `Placas ativas com consumo zero na revisão de abril, valores fora do modelo, a placa TESTE e o que levar à Ambev.`);
 // ── 4a · ATIVAS SEM CONSUMO: MATRIZ 2ª mar · 1ª abr · 2ª abr ──
 {
@@ -395,25 +420,25 @@ capaSec('Parte 4 de 4', 'Erros do cadastro.', `Placas ativas com consumo zero na
   S.push(slide(`
   <div class="kicker">4 · Outros erros encontrados</div>
   <h2 style="font-size:28px">Cinco achados para levar à Ambev</h2>
-  <div class="grid g2" style="gap:22px 30px;margin-top:14px">
-    <div class="step"><div class="n">1</div><div><b>${D.erros.ativasZero.length} placas ativas com consumo zero na 1ª abr (matriz anterior)</b><span>Todas nas Empurradas, na quinzena da revisão do Q2: o valor novo entrou com uma quinzena de atraso. Em Piraí, 8 Actros 2548 zeradas enquanto 12 irmãs seguiam com valor. Excel: G4 Ativas zeradas.</span></div></div>
-    <div class="step"><div class="n">2</div><div><b>Piraí Empurrada: UGU5D17 a 0,67 km/L</b><span>Em jul, set e out, contra 2,2 das irmãs Actros 2548. O valor entrou na revisão de julho (1ª jul) e segue em outubro: 3× mais litros remunerados para essa placa, ${f0(Math.abs(ugLit))} L a favor até setembro. Excel: G6 Cadastro, mês a mês.</span></div></div>
-    <div class="step"><div class="n">3</div><div><b>Cuiabá AS subiu 52% fora da revisão</b><span>RRT3H09 e RRT1D26 (VW 30.280) passaram de 2,21 para 3,36 na 2ª set, sem revisão e sem outra placa do modelo na operação para comparar. Excel: G5 Fora da revisão.</span></div></div>
-    <div class="step"><div class="n">4</div><div><b>Placa "TESTE" ativa no FT</b><span>${testeTot} quinzenas em ${esc(D.erros.placaTeste[0]?.up || '')}, a única placa dessa operação, ativa em ${testeAt} delas: ${f2(D.erros.placaTeste[0]?.v)} até a 2ª abr, 3,59 da 2ª mai à 2ª jun e 4,59 da revisão de julho em diante. Entra na média como se fosse caminhão. Excel: G6 Cadastro, quinzena a quinzena.</span></div></div>
-    <div class="step" style="grid-column:1/3"><div class="n">5</div><div><b>${D.mudRes.fora} mudanças de valor fora da revisão</b><span>${fqTxt}. Saldo até setembro: ${f0(Math.abs(lit))} L ${lit > 0 ? 'contra nós' : 'a favor'}, puxado pela queda dos Actros de Piraí Empurrada na 2ª jan (2,39 para 2,12). Ajuste de placa no meio do ciclo não está na regra; vale pedir a trilha de cada um. Excel: G5 Fora da revisão, com os litros de cada mudança.</span></div></div>
-  </div>
-  <div style="margin-top:18px">${escuro(`<b>Resumo:</b> são erros de cadastro e de processo no FT, cada um placa a placa e com os litros na planilha de cobrança. Corrigir antes da próxima revisão custa pouco e evita que a base do Q1/27 nasça com placa de teste e valor atrasado.`)}</div>`, { cls: 'erros', style: 'padding-top:40px' }));
+  <div class="grid g3 cx" style="margin-top:16px">
+    <div class="box"><h3>1 · ${D.erros.ativasZero.length} placas ativas com consumo zero na 1ª abr (matriz anterior)</h3><p>Todas nas Empurradas, na quinzena da revisão do Q2: o valor novo entrou com uma quinzena de atraso. Em Piraí, 8 Actros 2548 zeradas enquanto 12 irmãs seguiam com valor. Excel: G4 Ativas zeradas.</p></div>
+    <div class="box"><h3>2 · Piraí Empurrada: UGU5D17 a 0,67 km/L</h3><p>Em jul, set e out, contra 2,2 das irmãs Actros 2548. O valor entrou na revisão de julho (1ª jul) e segue em outubro: 3× mais litros remunerados para essa placa, ${f0(Math.abs(ugLit))} L a favor até setembro. Excel: G6 Cadastro, mês a mês.</p></div>
+    <div class="box"><h3>3 · Cuiabá AS subiu 52% fora da revisão</h3><p>RRT3H09 e RRT1D26 (VW 30.280) passaram de 2,21 para 3,36 na 2ª set, sem revisão e sem outra placa do modelo na operação para comparar. Excel: G5 Fora da revisão.</p></div>
+    <div class="box"><h3>4 · Placa "TESTE" ativa no FT</h3><p>${testeTot} quinzenas em ${esc(D.erros.placaTeste[0]?.up || '')}, a única placa dessa operação, ativa em ${testeAt} delas: ${f2(D.erros.placaTeste[0]?.v)} até a 2ª abr, 3,59 da 2ª mai à 2ª jun e 4,59 da revisão de julho em diante. Entra na média como se fosse caminhão. Excel: G6 Cadastro, quinzena a quinzena.</p></div>
+    <div class="box"><h3>5 · ${D.mudRes.fora} mudanças de valor fora da revisão</h3><p>${fqTxt}. Saldo até setembro: ${f0(Math.abs(lit))} L ${lit > 0 ? 'contra nós' : 'a favor'}, puxado pela queda dos Actros de Piraí Empurrada na 2ª jan (2,39 para 2,12). Ajuste de placa no meio do ciclo não está na regra; vale pedir a trilha de cada um. Excel: G5 Fora da revisão, com os litros de cada mudança.</p></div>
+    <div class="box res" style="background:#0F1A20"><p style="color:#F4F5F7"><b>Resumo:</b> são erros de cadastro e de processo no FT, cada um placa a placa e com os litros na planilha de cobrança. Corrigir antes da próxima revisão custa pouco e evita que a base do Q1/27 nasça com placa de teste e valor atrasado.</p></div>
+  </div>`, { cls: 'erros', style: 'padding-top:40px' }));
 }
 
 // ── PRÓXIMOS PASSOS ──
 S.push(slide(`
   <div class="kicker">O que levar à Ambev</div>
   <h2>Quatro pontos, na ordem de importância</h2>
-  <div class="grid g2" style="gap:16px 30px;margin-top:16px">
+  <div class="grid g2 cx" style="margin-top:18px">
     <div class="box"><h3>1 · Rodar a revisão do Q4 agora</h3><p>Nenhuma das ${D.q3q4.iguais} placas mudou em outubro: o 4º trimestre está rodando com a régua do 3º. A revisão é trimestral e a troca do especialista não pode parar o ciclo.</p></div>
     <div class="box"><h3>2 · Uma régua por modelo dentro da operação</h3><p>${D.dispRes.comDif} grupos modelo-mês com valores diferentes para o mesmo modelo, ${D.mudRes.fora} mudanças de valor fora da revisão em ${D.foraMatriz.length} placas. Saldo de ${f0(dispTot.perde - dispTot.ganha)} L contra nós em 9 meses.</p></div>
     <div class="box"><h3>3 · Limpeza do cadastro no FT</h3><p>Placa TESTE, UGU5D17 a 0,67, valor da revisão entrando com uma quinzena de atraso nas Empurradas. Corrigir antes da próxima revisão, para a base do Q1/27 nascer limpa.</p></div>
-    <div class="box" style="grid-column:1/3"><h3>4 · Ativação: monitorar, não brigar</h3><p>O efeito na média é pequeno (até +${f2(ativOrd[0].ativMed)} km/L em ${esc(ativOrd[0].up)}) e sem padrão de escolher as melhores. O ponto é outro: ${f1(kmInatPct)}% do km do ano foi rodado por placas inativas no FT, sem régua remunerada. Pedir o critério de ativação por escrito e acompanhar mês a mês com esta mesma matriz.</p></div>
+    <div class="box"><h3>4 · Placas que rodam inativas no FT</h3><p>${f1(kmInatPct)}% do km do ano (${f0(D.kmInatFTTot.km)} km) veio de ${D.kmInatFTTot.placas} placas inativas no mês inteiro; ${D.kmInatRes.n79} delas em 7 a 9 dos 9 meses, como ${D.kmInatRes.placas.slice(0, 1).map(x => `${x.placa} (${esc(x.up)}, ${f0(x.km)} km, inativa de jan a set)`).join('')}. A ativação em si mexe pouco na média (até +${f2(ativOrd[0].ativMed)} km/L). Pedir o critério de ativação por escrito e ativar as placas que rodam todo mês.</p></div>
   </div>`));
 
 const html = `<!DOCTYPE html>
@@ -440,6 +465,8 @@ const html = `<!DOCTYPE html>
   .bloco{margin-bottom:8px} .bloco h3{font-size:15px} .slide.densa .bloco{margin-bottom:5px} .slide.densa .bloco h3{font-size:13.5px} .slide.densa .box.res p{font-size:12.5px;line-height:1.4} .slide.densa .box.res{padding:10px 16px} .slide.densa .note{margin-top:4px;font-size:11.5px}
   .slide .box.res{padding:12px 18px} .slide .box.res p{font-size:13.5px;line-height:1.45}
   .step{margin-bottom:0}
+  /* caixas cinza de mesmo tamanho, em grade uniforme */
+  .grid.cx{gap:18px;grid-auto-rows:1fr} .grid.cx .box{padding:18px 22px;display:flex;flex-direction:column} .grid.cx .box h3{font-size:15.5px;margin-bottom:8px} .grid.cx .box p{font-size:13.5px;line-height:1.5} .grid.cx .box.res{justify-content:center} .grid.cx .box.res p{font-size:13.5px}
   .slide.erros .step b{font-size:15px} .slide.erros .step span{font-size:13.5px;line-height:1.45} .slide.erros .step .n{flex:0 0 36px;width:36px;height:36px;font-size:15px}
 </style></head>
 <body>

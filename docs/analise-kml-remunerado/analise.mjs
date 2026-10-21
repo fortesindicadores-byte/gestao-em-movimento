@@ -290,6 +290,16 @@ const inatFT = {}; for (const [k, g] of groupBy(FT, r => r.placa + '|' + r.mes))
 const kmInatFT = {}; const kmInatFTTot = { km: 0, lit: 0, placas: new Set() };
 for (const r of KML) { const up = inatFT[r.placa + '|' + r.mes]; if (!up || !(r.km > 0)) continue; kmInatFT[up] = kmInatFT[up] || {}; kmInatFT[up][r.mes] = (kmInatFT[up][r.mes] || 0) + r.km; kmInatFTTot.km += r.km; kmInatFTTot.lit += r.lit; kmInatFTTot.placas.add(r.placa); }
 kmInatFTTot.placas = kmInatFTTot.placas.size;
+// detalhe das inativas que rodam: por operação (% do km dela), por placa (meses inativa rodando) e por mês
+const kmInatRes = (() => {
+  const kmUp = {}, kmMes = {}; for (const r of KML) if (r.km > 0) { kmUp[r.up] = (kmUp[r.up] || 0) + r.km; kmMes[r.mes] = (kmMes[r.mes] || 0) + r.km; }
+  const pl = {}, mes = {};
+  for (const r of KML) { const up = inatFT[r.placa + '|' + r.mes]; if (!up || !(r.km > 0)) continue; const k = up + '|' + r.placa; pl[k] = pl[k] || { up, placa: r.placa, modelo: modeloDe[r.placa] || '(sem modelo)', meses: new Set(), km: 0 }; pl[k].meses.add(r.mes); pl[k].km += r.km; mes[r.mes] = (mes[r.mes] || 0) + r.km; }
+  const placas = Object.values(pl).map(x => ({ ...x, meses: [...x.meses].sort((a, b) => a - b) })).sort((a, b) => b.km - a.km);
+  const porUp = Object.entries(kmInatFT).map(([up, m]) => { const km = Object.values(m).reduce((a, b) => a + b, 0); return { up, km, pct: km / (kmUp[up] || 1) * 100, placas: placas.filter(x => x.up === up).length }; }).sort((a, b) => b.km - a.km);
+  const faixas = { '1': 0, '2–3': 0, '4–6': 0, '7–9': 0 }; for (const x of placas) { const n = x.meses.length; faixas[n === 1 ? '1' : n <= 3 ? '2–3' : n <= 6 ? '4–6' : '7–9']++; }
+  return { porUp, placas: placas.slice(0, 40), placas79: placas.filter(x => x.meses.length >= 7).slice(0, 10), n79: placas.filter(x => x.meses.length >= 7).length, nPlacas: placas.length, faixas, mes: Object.fromEntries(Object.entries(mes).map(([m, km]) => [m, { km, pct: km / kmMes[m] * 100 }])) };
+})();
 // km rodado por placa inativa/parada no FT (aba Km/L), por unidade-projeto e mês
 const kmInativas = {}; const kmInatTot = { km: 0, lit: 0, placas: new Set(), total: 0 };
 for (const r of KML) { if (!(r.km > 0)) continue; kmInatTot.total += r.km; if (r.ativo === 'FALSO' || r.ativo === 'PARADO' || r.ativo === '0') { kmInativas[r.up] = kmInativas[r.up] || {}; kmInativas[r.up][r.mes] = (kmInativas[r.up][r.mes] || 0) + r.km; kmInatTot.km += r.km; kmInatTot.lit += r.lit; kmInatTot.placas.add(r.placa); } }
@@ -416,7 +426,7 @@ const dados = {
   geradoEm: new Date().toISOString(), NOME, MESES, QZ: QZ.map(t => ({ t, label: qzLabel(t), q: QDE(Math.floor(t / 2) + 1) })), MES_IDX,
   totais: { linhas: FT.length, placas: placasFT.length, ups: UPS.length, fonteModelo, kmlLinhas: KML.length },
   frota, realMes, mediaUP, movUP, realUP, realUPq, modelosQ, q3q4: { ...q3q4, lista: q3q4.lista.slice(0, 60) }, q4in: { iguais: q4in.iguais, mudaram: q4in.mudaram, lista: q4in.lista.slice(0, 40) }, fronteiras,
-  dispersao, dispRes, impDisp, placaRes, ativacao, evRes, eventos: eventos.slice(0, 400), kmInativas, kmInatTot, kmInatFT, kmInatFTTot, realMesSimples, realModQ, realAtInat, realAtInatTot, mudRes, modEntreUps, foraMatriz, mudancasCiclo: Object.values(fronteiras).filter(f => !f.fronteiraQ).reduce((s, f) => s + f.mudaram, 0), erros, premissa, rankUP, UPS,
+  dispersao, dispRes, impDisp, placaRes, ativacao, evRes, eventos: eventos.slice(0, 400), kmInativas, kmInatTot, kmInatFT, kmInatFTTot, kmInatRes, realMesSimples, realModQ, realAtInat, realAtInatTot, mudRes, modEntreUps, foraMatriz, mudancasCiclo: Object.values(fronteiras).filter(f => !f.fronteiraQ).reduce((s, f) => s + f.mudaram, 0), erros, premissa, rankUP, UPS,
 };
 writeFileSync(OUT, JSON.stringify(dados));
 // ── apoio para o Excel (KML_REM_GAPS): a base inteira com colunas derivadas + listas placa a placa ──
