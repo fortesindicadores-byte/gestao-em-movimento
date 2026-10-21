@@ -44,13 +44,13 @@ const linhas = await tudo('sh_consumo_km_litro', 'linha.asc');
 console.log(`linhas lidas: ${linhas.length}`);
 // posições da aba conferidas no KmL Aba Inspect (05/10/2026):
 // A vig · E rem médio · F rem modelo · G real · L ativo · O projeto-unidade · P unidade · Q placa · T modelo · V tipo · W km · X litros
-const IDX = { vig: 0, remM: 4, remMod: 5, real: 6, ativo: 11, projUni: 14, uni: 15, placa: 16, modelo: 19, tipo: 21, km: 22, lit: 23 };
+const IDX = { vig: 0, remM: 4, remMod: 5, real: 6, rsLRem: 8, rsLReal: 9, ativo: 11, projUni: 14, uni: 15, placa: 16, modelo: 19, tipo: 21, km: 22, lit: 23 };
 const colDe = i => (cols.find(c => c.i === i) || {}).col;
 log('#### KML ####');
-log('vig|projUni|uni|placa|modelo|tipo|km|lit|remM|remMod|real|ativo');
+log('vig|projUni|uni|placa|modelo|tipo|km|lit|remM|remMod|real|ativo|rsLRem|rsLReal');
 for (const r of linhas) {
   const g = k => r[colDe(IDX[k])];
-  log([g('vig'), g('projUni'), g('uni'), g('placa'), g('modelo'), g('tipo'), g('km'), g('lit'), g('remM'), g('remMod'), g('real'), g('ativo')].map(lim).join('|'));
+  log([g('vig'), g('projUni'), g('uni'), g('placa'), g('modelo'), g('tipo'), g('km'), g('lit'), g('remM'), g('remMod'), g('real'), g('ativo'), g('rsLRem'), g('rsLReal')].map(lim).join('|'));
 }
 log('#### FIM KML ####');
 
