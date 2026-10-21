@@ -1,0 +1,20 @@
+name: KmL Rem Dump (apoio à análise do remunerado)
+
+# Imprime no log a aba Km/L do Consumo (do banco) e a base Ativos do Ginfo,
+# por placa, para cruzar com a planilha do consumo remunerado do FT.
+# Só leitura; nada é gravado.
+on:
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Ler Km/L e Ativos
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/kml-rem-dump.mjs
