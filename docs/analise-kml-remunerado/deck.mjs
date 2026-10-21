@@ -111,19 +111,25 @@ S.push(slide(`
   </div>`));
 
 // ── 4 · PERGUNTA 1 ──
-S.push(slide(`
+{
+  const lin = (nome, t, cor) => { const f = fr[t]; const tot = f.iguais + f.mudaram; return `<tr><td><b>${nome}</b></td><td>${D.QZ.find(z => z.t === t).label}</td><td class="r">${tot}</td><td class="r"><b style="color:${cor}">${f.mudaram}</b></td><td class="r">${f.iguais}</td><td class="r">${pct(f.mudaram / tot * 100, 0).replace('+', '')}</td></tr>`; };
+  S.push(slide(`
   <div class="kicker">1 · Revisão do 3º para o 4º trimestre</div>
   <h2>Não houve revisão: as ${D.q3q4.iguais} placas presentes em 2ª set e 1ª out entraram em outubro com o mesmo valor.</h2>
-  <div class="grid" style="grid-template-columns:1fr 360px;gap:30px;margin-top:14px;align-items:start">
+  <div class="grid" style="grid-template-columns:1.15fr 1fr;gap:34px;margin-top:18px;align-items:start">
     <div>
-      ${barChart({ data: mudQz, labels: D.QZ.map(z => z.label), corFn: i => [6, 12].includes(D.QZ[i].t) ? INK : D.QZ[i].t >= 18 ? ACC : INK3, destaque: [18, 19] })}
-      <p class="note">Placas ativas cujo consumo remunerado mudou em relação à quinzena anterior. As revisões entram na <b>1ª quinzena</b> do trimestre: 1ª abr (${fr[6].mudaram} placas) e 1ª jul (${fr[12].mudaram}). Em 1ª out mudaram ${fr[18].mudaram}; em 2ª out, ${fr[19].mudaram}.</p>
+      <table><thead><tr><th>Revisão</th><th>Quinzena</th><th class="r">Placas ativas</th><th class="r">Mudaram de valor</th><th class="r">Mesmo valor</th><th class="r">% mudou</th></tr></thead><tbody>
+        ${lin('Q2', 6, INK)}${lin('Q3', 12, INK)}${lin('Q4', 18, ACC)}
+      </tbody></table>
+      <p class="note">Placas ativas na quinzena, comparadas com o valor que tinham na quinzena anterior. A revisão entra sempre na <b>1ª quinzena</b> do trimestre: em abril e em julho ela aconteceu; em outubro, nenhuma placa mudou (em 2ª out, ${fr[19].mudaram}).</p>
+      ${escuro('<b>O 4º trimestre está rodando com a régua do 3º.</b> O consumo remunerado de cada placa em outubro é o mesmo de julho, agosto e setembro.')}
     </div>
     <div>
       <div class="box" style="margin-bottom:16px"><h3>As últimas mudanças: 2ª set, Cuiabá</h3><p>ROTA: 8 placas (RAZ3F18/28/38/68/88, RRP5C22/32, RRR8A49) caíram de 3,27–4,09 para 2,31, a favor. AS: RRT3H09 e RRT1D26 subiram de 2,21 para 3,36 (+52%), contra. É ajuste de placa no meio do ciclo, não revisão.</p></div>
-      <div class="box"><h3>${D.mudancasCiclo} mudanças fora da revisão</h3><p>2ª jan ${fr[1].mudaram} · 2ª fev ${fr[3].mudaram} · 2ª mar ${fr[5].mudaram} · 2ª abr ${fr[7].mudaram} · 1ª mai ${fr[8].mudaram} · 2ª set ${fr[17].mudaram}. Ajustes pontuais de placa, sem regra visível.</p></div>
+      <div class="box"><h3>${D.mudancasCiclo} mudanças fora da revisão no ano</h3><p>2ª jan ${fr[1].mudaram} · 2ª fev ${fr[3].mudaram} · 2ª mar ${fr[5].mudaram} · 2ª abr ${fr[7].mudaram} · 1ª mai ${fr[8].mudaram} · 2ª set ${fr[17].mudaram}. Ajustes pontuais de placa, sem regra visível.</p></div>
     </div>
   </div>`));
+}
 
 // ── 5 · MATRIZ unidade-projeto × ciclo ──
 {
