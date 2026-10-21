@@ -31,16 +31,16 @@ function lineChart({ w = 1136, h = 330, series, labels, bands = [], marks = [], 
   const step = (w - pad.l - pad.r) / (labels.length - 1);
   const X = i => pad.l + step * i;
   const Y = v => pad.t + (h - pad.t - pad.b) * (1 - (v - y0) / (y1 - y0));
-  let s = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" font-family="Montserrat,Arial" font-size="13">`;
-  bands.forEach(b => { const x0 = X(b.de) - step / 2, x1 = X(b.ate) + step / 2; s += `<rect x="${x0}" y="${pad.t - 12}" width="${x1 - x0}" height="${h - pad.t - pad.b + 12}" fill="${b.fill || PALE}"/><text x="${(x0 + x1) / 2}" y="${pad.t - 18}" text-anchor="middle" font-size="12" font-weight="700" fill="${INK3}" letter-spacing="1.5">${b.label}</text>`; });
+  let s = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" font-family="Montserrat,Arial" font-size="12">`;
+  bands.forEach(b => { const x0 = X(b.de) - step / 2, x1 = X(b.ate) + step / 2; s += `<rect x="${x0}" y="${pad.t - 12}" width="${x1 - x0}" height="${h - pad.t - pad.b + 12}" fill="${b.fill || PALE}"/><text x="${(x0 + x1) / 2 > w - 70 ? Math.min(x1, w) - 2 : (x0 + x1) / 2}" y="${pad.t - 18}" text-anchor="${(x0 + x1) / 2 > w - 70 ? 'end' : 'middle'}" font-size="11" font-weight="700" fill="${INK3}" letter-spacing="1.5">${b.label}</text>`; });
   for (let i = 0; i <= 4; i++) { const v = y0 + (y1 - y0) * i / 4; s += `<line x1="${pad.l}" x2="${w - pad.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="${LINE}"/><text x="${pad.l - 10}" y="${Y(v) + 4}" text-anchor="end" fill="${INK3}">${yfmt(v)}</text>`; }
   labels.forEach((l, i) => { s += `<text x="${X(i)}" y="${h - 12}" text-anchor="middle" fill="${INK2}" font-weight="600">${l}</text>`; });
-  marks.forEach(m => { const dir = X(m.i) > w * .8 ? -1 : 1; s += `<line x1="${X(m.i)}" x2="${X(m.i)}" y1="${pad.t}" y2="${h - pad.b}" stroke="${m.cor || INK3}" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${X(m.i) + 7 * dir}" y="${pad.t + 10}" text-anchor="${dir < 0 ? 'end' : 'start'}" fill="${m.cor || INK3}" font-size="12" font-weight="700">${m.label}</text>`; });
+  marks.forEach(m => { const dir = X(m.i) > w * .8 ? -1 : 1; s += `<line x1="${X(m.i)}" x2="${X(m.i)}" y1="${pad.t}" y2="${h - pad.b}" stroke="${m.cor || INK3}" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${X(m.i) + 7 * dir}" y="${pad.t + 10}" text-anchor="${dir < 0 ? 'end' : 'start'}" fill="${m.cor || INK3}" font-size="11" font-weight="700">${m.label}</text>`; });
   series.forEach(sr => {
     const pts = sr.data.map((v, i) => v == null ? null : [X(i), Y(v)]);
     let dpath = '', open = false; pts.forEach(p => { if (!p) { open = false; return; } dpath += (open ? 'L' : 'M') + p[0] + ' ' + p[1] + ' '; open = true; });
     s += `<path d="${dpath}" fill="none" stroke="${sr.cor}" stroke-width="3" stroke-linejoin="round"/>`;
-    pts.forEach((p, i) => { if (!p) return; s += `<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="#fff" stroke="${sr.cor}" stroke-width="2.5"/><text x="${p[0]}" y="${p[1] - 13}" text-anchor="middle" font-size="13" font-weight="700" fill="${INK}">${yfmt(sr.data[i])}</text>`; });
+    pts.forEach((p, i) => { if (!p) return; s += `<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="#fff" stroke="${sr.cor}" stroke-width="2.5"/><text x="${p[0]}" y="${p[1] - 13}" text-anchor="middle" font-size="12" font-weight="700" fill="${INK}">${yfmt(sr.data[i])}</text>`; });
   });
   return s + '</svg>';
 }
@@ -49,9 +49,9 @@ function barChart({ w = 760, h = 300, data, labels, corFn, pad = { l: 44, r: 16,
   const max = Math.max(...data, 1);
   const bw = (w - pad.l - pad.r) / data.length;
   const Y = v => pad.t + (h - pad.t - pad.b) * (1 - v / max);
-  let s = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" font-family="Montserrat,Arial" font-size="12">`;
+  let s = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" font-family="Montserrat,Arial" font-size="11">`;
   s += `<line x1="${pad.l}" x2="${w - pad.r}" y1="${h - pad.b}" y2="${h - pad.b}" stroke="${LINE}"/>`;
-  data.forEach((v, i) => { const x = pad.l + bw * i + bw * .15; s += `<rect x="${x}" y="${Y(v)}" width="${bw * .7}" height="${h - pad.b - Y(v)}" fill="${corFn(i, v)}" rx="3"/>`; if (v > 0) s += `<text x="${x + bw * .35}" y="${Y(v) - 6}" text-anchor="middle" font-weight="700" fill="${INK}">${fmt(v)}</text>`; s += `<text x="${x + bw * .35}" y="${h - 14}" text-anchor="middle" fill="${destaque.includes(i) ? ACC : INK2}" font-weight="${destaque.includes(i) ? 800 : 500}" font-size="11">${labels[i]}</text>`; });
+  data.forEach((v, i) => { const x = pad.l + bw * i + bw * .15; s += `<rect x="${x}" y="${Y(v)}" width="${bw * .7}" height="${h - pad.b - Y(v)}" fill="${corFn(i, v)}" rx="3"/>`; if (v > 0) s += `<text x="${x + bw * .35}" y="${Y(v) - 6}" text-anchor="middle" font-weight="700" fill="${INK}">${fmt(v)}</text>`; s += `<text x="${x + bw * .35}" y="${h - 14}" text-anchor="middle" fill="${destaque.includes(i) ? ACC : INK2}" font-weight="${destaque.includes(i) ? 800 : 500}" font-size="10">${labels[i]}</text>`; });
   return s + '</svg>';
 }
 const escuro = txt => `<div class="box res" style="background:#0F1A20"><p style="color:#F4F5F7">${txt}</p></div>`;
@@ -102,7 +102,7 @@ S.push(`<section class="slide dark" style="display:flex;flex-direction:column;ju
   <div class="logo" style="margin-bottom:38px"><div class="ic"><svg viewBox="0 0 48 48" fill="none"><path d="M12 30a12 12 0 1 1 24 0" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><path d="M24 30l7-8" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><circle cx="24" cy="30" r="2.4" fill="#fff"/></svg></div><div class="nm">Km/L <b>Remunerado</b></div></div>
   <div class="kicker">Freightech · consumo remunerado · 2026</div>
   <h1 style="max-width:980px">O consumo remunerado de Km/L<br>em 2026: duas revisões, uma<br>que não aconteceu.</h1>
-  <p style="margin-top:26px;font-size:18px;max-width:820px">Planilha do FT: ${f0(D.totais.linhas)} linhas, ${D.totais.placas} placas, ${UPS.length} unidade-projeto, 1ª quinzena de janeiro a 2ª de outubro. Quatro perguntas, na ordem de importância: a revisão do 4º trimestre, placas do mesmo modelo com valores diferentes, o efeito da ativação na média e os demais erros do cadastro. Campo Grande (tanque interno/SUMA) fica fora: é assunto do limpa-pauta.</p>
+  <p style="margin-top:26px;font-size:16.5px;max-width:820px">Planilha do FT: ${f0(D.totais.linhas)} linhas, ${D.totais.placas} placas, ${UPS.length} unidade-projeto, 1ª quinzena de janeiro a 2ª de outubro. Quatro perguntas, na ordem de importância: a revisão do 4º trimestre, placas do mesmo modelo com valores diferentes, o efeito da ativação na média e os demais erros do cadastro. Campo Grande (tanque interno/SUMA) fica fora: é assunto do limpa-pauta.</p>
   <div class="foot"><span>Gestão em Movimento · Fortes Indicadores</span><span>Outubro de 2026</span></div>
 </section>`);
 N = 2;
@@ -113,7 +113,7 @@ const capaSec = (kicker, titulo, texto) => S.push(`<section class="slide dark" s
   ${LOGO}
   <div class="kicker">${kicker}</div>
   <h1 style="max-width:980px">${titulo}</h1>
-  <p style="margin-top:26px;font-size:18px;max-width:820px">${texto}</p>
+  <p style="margin-top:26px;font-size:16.5px;max-width:820px">${texto}</p>
   <div class="foot"><span>${RODAPE}</span><span>${N++}</span></div>
 </section>`);
 
@@ -122,9 +122,9 @@ S.push(slide(`
   <div class="kicker">Resumo</div>
   <h2>O ano em quatro números</h2>
   <div class="grid g4" style="margin-top:28px;gap:18px">
-    <div class="box"><div class="lbl">1 · Revisão do 4º tri</div><div class="num">0 <small style="font-size:20px">de ${D.q3q4.iguais}</small></div><p>placas mudaram de valor na 1ª quinzena de outubro. Nas duas revisões do ano mudaram ${fr[6].mudaram} (1ª abr) e ${fr[12].mudaram} (1ª jul). O 4º tri roda com a régua do 3º.</p></div>
+    <div class="box"><div class="lbl">1 · Revisão do 4º tri</div><div class="num">0 <small style="font-size:18px">de ${D.q3q4.iguais}</small></div><p>placas mudaram de valor na 1ª quinzena de outubro. Nas duas revisões do ano mudaram ${fr[6].mudaram} (1ª abr) e ${fr[12].mudaram} (1ª jul). O 4º tri roda com a régua do 3º.</p></div>
     <div class="box"><div class="lbl">Remunerado da frota · Q1 → Q3</div><div class="num" style="color:${dQ1Q3 > 0.5 ? ACC : dQ1Q3 < -0.5 ? AZUL : INK}">${pct(dQ1Q3)}</div><p>${f2(q[1].media)} → ${f2(q[3].media)} km/L, média simples das placas ativas. No total quase nada mudou; nas operações vai de ${pct(maiorQueda.dQ1Q3, 0)} (${esc(maiorQueda.up)}) a ${pct(maiorAlta.dQ1Q3, 0)} (${esc(maiorAlta.up)}).</p></div>
-    <div class="box"><div class="lbl">2 · Mesmo modelo, valores diferentes</div><div class="num">${D.dispRes.comDif} <small style="font-size:20px">de ${D.dispRes.grupos}</small></div><p>grupos modelo-mês com placas do mesmo modelo recebendo valores diferentes na mesma operação. Saldo contra nós: ${f0(dispTot.perde - dispTot.ganha)} L em 9 meses.</p></div>
+    <div class="box"><div class="lbl">2 · Mesmo modelo, valores diferentes</div><div class="num">${D.dispRes.comDif} <small style="font-size:18px">de ${D.dispRes.grupos}</small></div><p>grupos modelo-mês com placas do mesmo modelo recebendo valores diferentes na mesma operação. Saldo contra nós: ${f0(dispTot.perde - dispTot.ganha)} L em 9 meses.</p></div>
     <div class="box"><div class="lbl">3 · Efeito da ativação</div><div class="num">+${f2(ativOrd[0].ativMed)}</div><p>km/L é o quanto a ativação sobe a média, no máximo (${esc(ativOrd[0].up)}). Em ${ativZeroN} de ${ativZero.length} operações o efeito médio fica abaixo de 0,03. Não há padrão de ativar as melhores placas.</p></div>
   </div>
   ${`<div style="margin-top:22px">${escuro(`<b>4 · Erros do cadastro:</b> ${D.erros.ativasZero.length} linhas de placa ativa com consumo zero (todas na 1ª quinzena de abril, nas Empurradas), uma placa a 0,67 km/L em Piraí, placa "TESTE" ativa em ${testeAt} das ${testeTot} quinzenas e ${D.mudRes.fora} mudanças de valor fora da revisão, em ${D.foraMatriz.length} placas.`)}</div>`}`));
@@ -132,16 +132,15 @@ S.push(slide(`
 // ── 3 · VISÃO GERAL DO ANO ──
 S.push(slide(`
   <div class="kicker">Visão geral do ano · média simples das placas ativas no FT</div>
-  <h2>Duas revisões no ano, em abril e em julho. Em outubro, nenhuma.</h2>
-  ${lineChart({ h: 222, labels: MES.slice(0, 10).map(m => m.toUpperCase()), series: [{ data: frotaMes, cor: ACC }],
-    bands: [{ de: 0, ate: 2, label: 'Q1' }, { de: 3, ate: 5, label: 'Q2', fill: '#fff' }, { de: 6, ate: 8, label: 'Q3' }, { de: 9, ate: 9, label: 'Q4', fill: '#fff' }],
-    marks: [{ i: 3, label: `revisão · 1ª abr · ${fr[6].mudaram} placas` }, { i: 6, label: `revisão · 1ª jul · ${fr[12].mudaram} placas` }, { i: 9, label: 'sem revisão', cor: ACC }] })}
-  <div class="grid g3" style="margin-top:10px;gap:18px">
-    <div class="box" style="padding:12px 18px"><div class="lbl">Frota · Q1 → Q2 → Q3 → Q4</div><div class="num" style="font-size:26px">${f2(q[1].media)} · ${f2(q[2].media)} · ${f2(q[3].media)} · ${f2(q[4].media)}</div><p style="font-size:13.5px">Q1→Q3 ${pct(dQ1Q3)}: no total a régua quase não mudou; o movimento está nas operações. Q3→Q4 ${pct(dQ3Q4)}: troca de placas ativas e o ajuste de Cuiabá na 2ª set.</p></div>
-    <div class="box" style="padding:12px 18px"><div class="lbl">Maior alta Q1 → Q3 (pior para nós)</div><div class="num" style="font-size:22px;color:${ACC};letter-spacing:0">${esc(maiorAlta.up)}</div><p>${f2(maiorAlta.q1)} → ${f2(maiorAlta.q3)} km/L (${pct(maiorAlta.dQ1Q3)}).<br>Depois: ${esc([...rank].sort((a, b) => b.dQ1Q3 - a.dQ1Q3)[1].up)} ${pct([...rank].sort((a, b) => b.dQ1Q3 - a.dQ1Q3)[1].dQ1Q3)}.</p></div>
-    <div class="box" style="padding:12px 18px"><div class="lbl">Maior queda Q1 → Q3 (a favor)</div><div class="num" style="font-size:22px;color:${AZUL};letter-spacing:0">${esc(maiorQueda.up)}</div><p>${f2(maiorQueda.q1)} → ${f2(maiorQueda.q3)} km/L (${pct(maiorQueda.dQ1Q3)}).<br>Depois: ${esc([...rank].sort((a, b) => a.dQ1Q3 - b.dQ1Q3)[1].up)} ${pct([...rank].sort((a, b) => a.dQ1Q3 - b.dQ1Q3)[1].dQ1Q3)}.</p></div>
+  <h2>Na média da frota, a régua quase não mudou no ano</h2>
+  ${lineChart({ h: 310, labels: MES.slice(0, 10).map(m => m.toUpperCase()), series: [{ data: frotaMes, cor: ACC }],
+    bands: [{ de: 0, ate: 2, label: `Q1 · ${f2(q[1].media)}` }, { de: 3, ate: 5, label: `Q2 · ${f2(q[2].media)}`, fill: '#fff' }, { de: 6, ate: 8, label: `Q3 · ${f2(q[3].media)}` }, { de: 9, ate: 9, label: `Q4 · ${f2(q[4].media)}`, fill: '#fff' }] })}
+  <div class="grid g3" style="margin-top:12px;gap:18px">
+    <div class="box" style="padding:12px 18px"><div class="lbl">Revisões no ano</div><div class="num" style="font-size:22px">1ª abr e 1ª jul</div><p>${fr[6].mudaram} e ${fr[12].mudaram} placas mudaram de valor. Em outubro, nenhuma.</p></div>
+    <div class="box" style="padding:12px 18px"><div class="lbl">Maior alta Q1 → Q3 (pior para nós)</div><div class="num" style="font-size:22px;color:${ACC};letter-spacing:0">${esc(maiorAlta.up)}</div><p>${f2(maiorAlta.q1)} → ${f2(maiorAlta.q3)} km/L (${pct(maiorAlta.dQ1Q3)})</p></div>
+    <div class="box" style="padding:12px 18px"><div class="lbl">Maior queda Q1 → Q3 (a favor)</div><div class="num" style="font-size:22px;color:${AZUL};letter-spacing:0">${esc(maiorQueda.up)}</div><p>${f2(maiorQueda.q1)} → ${f2(maiorQueda.q3)} km/L (${pct(maiorQueda.dQ1Q3)})</p></div>
   </div>
-  <div style="margin-top:12px">${escuro(`<b>Resumo:</b> a régua muda em massa só nas revisões, na 1ª quinzena de abril (${fr[6].mudaram} placas) e de julho (${fr[12].mudaram}). Fora delas mudaram ${D.mudRes.fora} valores em ${D.foraMatriz.length} placas (${foraQzTxt}). Em outubro nenhum valor mudou: a queda de ${f2(q[3].media)} para ${f2(q[4].media)} vem de placas que entraram ou saíram do ativo e do ajuste de ${fr[17].mudaram} placas de Cuiabá na 2ª set, que no Q3 pesa uma quinzena e no Q4 o mês inteiro.`)}</div>`));
+  <div style="margin-top:12px">${escuro(`<b>Resumo:</b> na frota a régua vai de ${f2(q[1].media)} no Q1 a ${f2(q[3].media)} no Q3 (${pct(dQ1Q3)}); o movimento está nas operações, no próximo slide. A queda de outubro para ${f2(q[4].media)} não é revisão: vem de placas que entraram ou saíram do ativo e do ajuste de ${fr[17].mudaram} placas de Cuiabá na 2ª set.`)}</div>`));
 
 // ── 4 · PERGUNTA 1 ──
 capaSec('Parte 1 de 4', 'A revisão do 4º trimestre<br>não aconteceu.', `Em outubro nenhuma das ${D.q3q4.iguais} placas mudou de valor. A revisão, como ela entrou em abril e julho, a régua de cada operação por trimestre e os modelos de cada unidade.`);
@@ -242,7 +241,7 @@ capaSec('Parte 2 de 4', 'O mesmo modelo,<br>valores diferentes.', `O mesmo camin
   }).join('');
   S.push(slide(`
   <div class="kicker">O mesmo modelo entre unidades · VW 26.260 (baú roll-up, 10 pallets)</div>
-  <h2 style="font-size:28px">O mesmo caminhão: régua de ${f2(mn)} a ${f2(mx)} depois da revisão de julho</h2>
+  <h2 style="font-size:26px">O mesmo caminhão: régua de ${f2(mn)} a ${f2(mx)} depois da revisão de julho</h2>
   <table class="clean media" style="margin-top:12px"><thead><tr><th>Rota</th><th class="r">Placas ativas no Q3</th><th class="r">Q1</th><th class="r">Q2</th><th class="r">Q3</th><th class="r">Q4</th><th class="r">Δ Q2→Q3</th><th class="r">Faixa no Q3</th><th class="r">Placas mudadas em jul</th><th class="r">Litros até set (+ contra nós)</th></tr></thead><tbody>${tr}</tbody></table>
   <div class="grid g2" style="gap:18px;margin-top:14px">
     <div class="box" style="padding:14px 18px"><h3>Rondonópolis: veio da revisão</h3><p>As placas do 26.260 foram de 2,70 para 3,43 na 1ª jul, a quinzena da revisão. ${v385.map(x => x.placa).join(', ')} estavam inativas quando a revisão passou e voltaram na ${v385[0]?.quinzena || '1ª ago'} a 3,85, acima das irmãs. ${f0(ron.litros)} L a menos até setembro.</p></div>
@@ -263,7 +262,7 @@ capaSec('Parte 2 de 4', 'O mesmo modelo,<br>valores diferentes.', `O mesmo camin
   const tot = m => vis.reduce((s, r) => s + (r.meses[m] ? r.meses[m].perde - r.meses[m].ganha : 0), 0);
   S.push(slide(`
   <div class="kicker">2 · Mesmo modelo, valores diferentes · litros a mais ou a menos por mês</div>
-  <h2 style="font-size:23px;margin-bottom:6px">Em ${D.dispRes.comDif} de ${D.dispRes.grupos} grupos modelo-mês há placas do mesmo modelo com valores diferentes. Saldo: ${f0(dispTot.perde - dispTot.ganha)} litros contra nós.</h2>
+  <h2 style="font-size:21px;margin-bottom:6px">Em ${D.dispRes.comDif} de ${D.dispRes.grupos} grupos modelo-mês há placas do mesmo modelo com valores diferentes. Saldo: ${f0(dispTot.perde - dispTot.ganha)} litros contra nós.</h2>
   <div class="grid" style="grid-template-columns:1fr 236px;gap:22px;margin-top:8px;align-items:start">
     <div>
       <table class="densa ativ"><thead><tr><th>Operação · modelo</th><th class="r">Placas</th>${meses.map(m => `<th class="r">${MES[m - 1]}</th>`).join('')}<th class="r">Saldo</th></tr></thead><tbody>${tr}
@@ -271,9 +270,9 @@ capaSec('Parte 2 de 4', 'O mesmo modelo,<br>valores diferentes.', `O mesmo camin
       <p class="note" style="margin-top:8px">Célula = litros que a operação deixa de receber (vermelho) ou recebe a mais (azul) no mês por placas do mesmo modelo terem valores diferentes: referência = mediana do modelo na operação; litros = km da placa × (1/mediana − 1/valor). Fora: ${resto.length} linhas com menos de ${MIN} L no ano.</p>
     </div>
     <div>
-      <div class="box" style="padding:14px 16px;margin-bottom:10px"><div class="lbl">Valor constante</div><div class="num" style="font-size:30px">${D.placaRes.constantes}</div><p style="font-size:12.5px">placas com o mesmo valor o ano todo</p></div>
-      <div class="box" style="padding:14px 16px;margin-bottom:10px"><div class="lbl">Mudam só na revisão</div><div class="num" style="font-size:30px">${D.placaRes.soFronteira}</div><p style="font-size:12.5px">1ª abr e 1ª jul, como esperado</p></div>
-      <div class="box" style="padding:14px 16px;margin-bottom:10px"><div class="lbl">Mudam fora dela</div><div class="num" style="font-size:30px;color:${ACC}">${D.foraMatriz.length}</div><p style="font-size:12.5px">de ${D.placaRes.total} placas-operação; abertas a seguir</p></div>
+      <div class="box" style="padding:14px 16px;margin-bottom:10px"><div class="lbl">Valor constante</div><div class="num" style="font-size:28px">${D.placaRes.constantes}</div><p style="font-size:11.5px">placas com o mesmo valor o ano todo</p></div>
+      <div class="box" style="padding:14px 16px;margin-bottom:10px"><div class="lbl">Mudam só na revisão</div><div class="num" style="font-size:28px">${D.placaRes.soFronteira}</div><p style="font-size:11.5px">1ª abr e 1ª jul, como esperado</p></div>
+      <div class="box" style="padding:14px 16px;margin-bottom:10px"><div class="lbl">Mudam fora dela</div><div class="num" style="font-size:28px;color:${ACC}">${D.foraMatriz.length}</div><p style="font-size:11.5px">de ${D.placaRes.total} placas-operação; abertas a seguir</p></div>
       ${escuro(`<b>Resumo:</b> concentrado em Piraí Empurrada: Actros 2651 +${f0(vis[0].saldo)} L, Actros 2548 −${f0(Math.abs(vis[1].saldo))} L. No resto, +${f0(arr.slice(2).filter(r => r.saldo > 0).reduce((a, r) => a + r.saldo, 0))} e −${f0(Math.abs(arr.slice(2).filter(r => r.saldo < 0).reduce((a, r) => a + r.saldo, 0)))} L quase se compensam.`)}
     </div>
   </div>`, { style: 'padding-top:40px' }));
@@ -341,7 +340,7 @@ capaSec('Parte 3 de 4', 'A ativação mexe<br>pouco na média.', `Quem entra e q
   const ev = D.evRes;
   S.push(slide(`
   <div class="kicker">3 · Efeito da ativação na média</div>
-  <h2 style="font-size:23px;margin-bottom:6px">A ativação mexe pouco na média: no máximo +${f2(ativOrd[0].ativMed)} km/L, em ${esc(ativOrd[0].up)}.</h2>
+  <h2 style="font-size:21px;margin-bottom:6px">A ativação mexe pouco na média: no máximo +${f2(ativOrd[0].ativMed)} km/L, em ${esc(ativOrd[0].up)}.</h2>
   <div class="grid" style="grid-template-columns:1fr 250px;gap:24px;margin-top:8px;align-items:start">
     <div>
       <table class="densa ativ"><thead><tr><th>Unidade · projeto</th>${meses.map(m => `<th class="r">${MES[m - 1]}</th>`).join('')}<th class="r">Média</th></tr></thead><tbody>${rows}</tbody></table>
@@ -349,9 +348,9 @@ capaSec('Parte 3 de 4', 'A ativação mexe<br>pouco na média.', `Quem entra e q
       ${escuro(`<b>Resumo:</b> a ativação não explica o remunerado: o efeito passa de 0,10 km/L em ${acima10.length} operações, quase sempre em 1 a 3 meses; o único caso persistente é ${esc(acima10[0].up)} (${acima10[0].n} meses, até ${f2(acima10[0].max)}). O que pesa: ${f1(kmInatPct)}% do km do ano rodado por placas fora do ativo, sem régua.`)}
     </div>
     <div>
-      <div class="box" style="padding:16px 18px;margin-bottom:12px"><div class="lbl">Desativações</div><div class="num" style="font-size:32px">${Math.round(ev.desat.abaixo / ev.desat.n * 100)}%</div><p style="font-size:13px">das ${ev.desat.n} desativações do ano tiraram uma placa <b>abaixo</b> da média da operação (acaso = 50%).</p></div>
-      <div class="box" style="padding:16px 18px;margin-bottom:12px"><div class="lbl">Ativações</div><div class="num" style="font-size:32px">${Math.round(ev.ativ.abaixo / ev.ativ.n * 100)}%</div><p style="font-size:13px">das ${ev.ativ.n} ativações trouxeram uma placa abaixo da média. Sem padrão de escolher as melhores.</p></div>
-      <div class="box" style="padding:16px 18px"><div class="lbl">Km de placas inativas</div><div class="num" style="font-size:32px;color:${ACC}">${f1(kmInatPct)}%</div><p style="font-size:13px">do km do ano (aba Km/L, jan a set) foi rodado por ${D.kmInatFTTot.placas} placas marcadas inativas no FT: km sem régua remunerada.</p></div>
+      <div class="box" style="padding:16px 18px;margin-bottom:12px"><div class="lbl">Desativações</div><div class="num" style="font-size:30px">${Math.round(ev.desat.abaixo / ev.desat.n * 100)}%</div><p style="font-size:12px">das ${ev.desat.n} desativações do ano tiraram uma placa <b>abaixo</b> da média da operação (acaso = 50%).</p></div>
+      <div class="box" style="padding:16px 18px;margin-bottom:12px"><div class="lbl">Ativações</div><div class="num" style="font-size:30px">${Math.round(ev.ativ.abaixo / ev.ativ.n * 100)}%</div><p style="font-size:12px">das ${ev.ativ.n} ativações trouxeram uma placa abaixo da média. Sem padrão de escolher as melhores.</p></div>
+      <div class="box" style="padding:16px 18px"><div class="lbl">Km de placas inativas</div><div class="num" style="font-size:30px;color:${ACC}">${f1(kmInatPct)}%</div><p style="font-size:12px">do km do ano (aba Km/L, jan a set) foi rodado por ${D.kmInatFTTot.placas} placas marcadas inativas no FT: km sem régua remunerada.</p></div>
     </div>
   </div>`, { style: 'padding-top:40px' }));
 }
@@ -367,14 +366,14 @@ capaSec('Parte 3 de 4', 'A ativação mexe<br>pouco na média.', `Quem entra e q
   const p79 = K.placas79;
   S.push(slide(`
   <div class="kicker">3 · Placas marcadas inativas no FT que rodaram no mês</div>
-  <h2 style="font-size:24px;margin-bottom:4px">${f1(kmInatPct)}% do km do ano (${f0(T.km)} km) foi rodado por ${T.placas} placas inativas no FT o mês inteiro</h2>
+  <h2 style="font-size:22px;margin-bottom:4px">${f1(kmInatPct)}% do km do ano (${f0(T.km)} km) foi rodado por ${T.placas} placas inativas no FT o mês inteiro</h2>
   <div class="grid" style="grid-template-columns:1fr 1.25fr;gap:26px;margin-top:10px;align-items:start">
     <div>
       <table class="clean compacta"><thead><tr><th>Operação</th><th class="r">Km inativas</th><th class="r">% do km</th><th class="r">Placas</th></tr></thead><tbody>${opTr}</tbody></table>
     </div>
     <div>
       <table class="clean compacta"><thead><tr><th>Placa</th><th>Operação</th><th>Modelo</th><th class="r">Meses inativa rodando</th><th class="r">Km</th></tr></thead><tbody>${plTr}</tbody></table>
-      <div class="grid g4" style="gap:10px;margin-top:10px">${Object.entries(K.faixas).map(([f, n]) => `<div class="box" style="padding:10px 12px"><div class="lbl">${f} ${f === '1' ? 'mês' : 'meses'}</div><div class="num" style="font-size:24px">${n}</div><p style="font-size:11.5px">placas</p></div>`).join('')}</div>
+      <div class="grid g4" style="gap:10px;margin-top:10px">${Object.entries(K.faixas).map(([f, n]) => `<div class="box" style="padding:10px 12px"><div class="lbl">${f} ${f === '1' ? 'mês' : 'meses'}</div><div class="num" style="font-size:22px">${n}</div><p style="font-size:10.5px">placas</p></div>`).join('')}</div>
     </div>
   </div>
   <p class="note" style="margin-top:6px">Inativa = as duas quinzenas do mês inativas na planilha do FT. Km da aba Km/L (jan a set), placa a placa. % do km = parte do km rodado da operação no ano. Excel: G3b Km inativas.</p>
@@ -403,11 +402,11 @@ capaSec('Parte 4 de 4', 'Erros do cadastro.', `Placas ativas com consumo zero na
   }
   S.push(slide(`
   <div class="kicker">4 · Placas ativas com consumo zero · todas na 1ª quinzena de abril, nas Empurradas</div>
-  <h2 style="font-size:28px">${D.erros.ativasZero.length} placas entraram na revisão do Q2 com consumo zero: o valor novo só chegou na quinzena seguinte.</h2>
+  <h2 style="font-size:26px">${D.erros.ativasZero.length} placas entraram na revisão do Q2 com consumo zero: o valor novo só chegou na quinzena seguinte.</h2>
   <table class="compacta" style="margin-top:6px"><thead><tr><th>Operação · modelo</th><th class="r">2ª mar · ativas · valor</th><th class="r">1ª abr · ativas</th><th class="r">zeradas</th><th class="r">1ª abr · valor das demais</th><th class="r">média se o zero contar</th><th class="r">2ª abr · ativas · valor</th></tr></thead><tbody>${linhas.join('')}</tbody></table>
   <div class="grid g2" style="gap:18px;margin-top:12px">
-    <div class="box" style="padding:14px 18px"><h3 style="font-size:15px">O que isso significa</h3><p style="font-size:13px">${(() => { const g = {}; det.forEach(d => { const k = d.up + '|' + d.modelo; g[k] = g[k] || { up: d.up, mod: d.modelo, n: 0, irmas: d.irmas }; g[k].n++; }); const gs = Object.values(g), inteiro = gs.filter(x => !x.irmas), parc = gs.filter(x => x.irmas); return `Em ${inteiro.length} dos ${gs.length} grupos o modelo inteiro ficou sem valor na 1ª abr (${inteiro.map(x => `${esc(modCurto(x.mod))} em ${esc(nomeU(x.up.split(' · ')[0]))}`).join(', ')}).${parc.map(x => ` Em ${esc(nomeU(x.up.split(' · ')[0]))}, ${x.n} ${esc(modCurto(x.mod))} ficaram zeradas com ${x.irmas} irmãs ativas com valor.`).join('')}`; })()} Se o FT conta o zero na média simples, a operação cai o que está em vermelho; se ignora, a placa rodou uma quinzena sem régua.</p></div>
-    <div class="box" style="padding:14px 18px"><h3 style="font-size:15px">O que pedir à Ambev</h3><p style="font-size:13px">Qual regra o FT aplica ao zero na quinzena da revisão e o valor que efetivamente valeu para essas ${D.erros.ativasZero.length} placas na 1ª abr. Na próxima revisão (Q4 atrasado e Q1/27), o valor novo tem de entrar junto com a 1ª quinzena.</p></div>
+    <div class="box" style="padding:14px 18px"><h3 style="font-size:13.5px">O que isso significa</h3><p style="font-size:12px">${(() => { const g = {}; det.forEach(d => { const k = d.up + '|' + d.modelo; g[k] = g[k] || { up: d.up, mod: d.modelo, n: 0, irmas: d.irmas }; g[k].n++; }); const gs = Object.values(g), inteiro = gs.filter(x => !x.irmas), parc = gs.filter(x => x.irmas); return `Em ${inteiro.length} dos ${gs.length} grupos o modelo inteiro ficou sem valor na 1ª abr (${inteiro.map(x => `${esc(modCurto(x.mod))} em ${esc(nomeU(x.up.split(' · ')[0]))}`).join(', ')}).${parc.map(x => ` Em ${esc(nomeU(x.up.split(' · ')[0]))}, ${x.n} ${esc(modCurto(x.mod))} ficaram zeradas com ${x.irmas} irmãs ativas com valor.`).join('')}`; })()} Se o FT conta o zero na média simples, a operação cai o que está em vermelho; se ignora, a placa rodou uma quinzena sem régua.</p></div>
+    <div class="box" style="padding:14px 18px"><h3 style="font-size:13.5px">O que pedir à Ambev</h3><p style="font-size:12px">Qual regra o FT aplica ao zero na quinzena da revisão e o valor que efetivamente valeu para essas ${D.erros.ativasZero.length} placas na 1ª abr. Na próxima revisão (Q4 atrasado e Q1/27), o valor novo tem de entrar junto com a 1ª quinzena.</p></div>
   </div>`, { style: 'padding-top:40px' }));
 }
 
@@ -419,7 +418,7 @@ capaSec('Parte 4 de 4', 'Erros do cadastro.', `Placas ativas com consumo zero na
   const ugLit = D.erros.outliers.filter(x => x.placa === 'UGU5D17').reduce((a, x) => a + (x.litros || 0), 0);
   S.push(slide(`
   <div class="kicker">4 · Outros erros encontrados</div>
-  <h2 style="font-size:28px">Cinco achados para levar à Ambev</h2>
+  <h2 style="font-size:26px">Cinco achados para levar à Ambev</h2>
   <div class="grid g3 cx" style="margin-top:16px">
     <div class="box"><h3>1 · ${D.erros.ativasZero.length} placas ativas com consumo zero na 1ª abr (matriz anterior)</h3><p>Todas nas Empurradas, na quinzena da revisão do Q2: o valor novo entrou com uma quinzena de atraso. Em Piraí, 8 Actros 2548 zeradas enquanto 12 irmãs seguiam com valor. Excel: G4 Ativas zeradas.</p></div>
     <div class="box"><h3>2 · Piraí Empurrada: UGU5D17 a 0,67 km/L</h3><p>Em jul, set e out, contra 2,2 das irmãs Actros 2548. O valor entrou na revisão de julho (1ª jul) e segue em outubro: 3× mais litros remunerados para essa placa, ${f0(Math.abs(ugLit))} L a favor até setembro. Excel: G6 Cadastro, mês a mês.</p></div>
@@ -445,6 +444,10 @@ const html = `<!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="UTF-8"><title>Consumo remunerado Km/L · 2026</title>
 <link rel="stylesheet" href="../driverpro-apresentacao/base.css">
 <style>
+  /* tudo 1 a 2 px menor que o base.css do DriverPro (Renan, 21/10/2026: "Diminua em tudo") */
+  .kicker{font-size:11px} h1{font-size:42px} h2{font-size:32px} h3{font-size:16.5px} p{font-size:15.5px}
+  .box h3{font-size:15.5px} .box p{font-size:13.5px} .num{font-size:37px} .num small{font-size:16.5px} .lbl{font-size:11px}
+  .step b{font-size:15.5px} .step span{font-size:13.5px} .note{font-size:11.5px} .foot{font-size:10.5px}
   /* só a densidade das tabelas muda; o resto é o base.css do DriverPro */
   table{font-size:13.5px}
   table.media{font-size:12px} table.media th{padding:7px 9px} table.media td{padding:6px 9px}
@@ -462,12 +465,12 @@ const html = `<!DOCTYPE html>
   table.mfr th.q,table.mfr td.q{text-align:center;padding-left:2px;padding-right:2px;font-variant-numeric:tabular-nums} table.mfr td.q{font-size:9.5px} table.mfr td.proj{font-size:10px} table.mfr td,table.mfr th{overflow:hidden} table.mfr th.q{font-size:8.5px;letter-spacing:.3px}
   table.clean td.exp{font-size:10.5px;color:var(--ink2);line-height:1.3}
   table.clean.media td{padding:6px 9px} table.clean.compacta td{padding:4px 8px} table.clean.densa td{padding:3px 7px}
-  .bloco{margin-bottom:8px} .bloco h3{font-size:15px} .slide.densa .bloco{margin-bottom:5px} .slide.densa .bloco h3{font-size:13.5px} .slide.densa .box.res p{font-size:12.5px;line-height:1.4} .slide.densa .box.res{padding:10px 16px} .slide.densa .note{margin-top:4px;font-size:11.5px}
-  .slide .box.res{padding:12px 18px} .slide .box.res p{font-size:13.5px;line-height:1.45}
+  .bloco{margin-bottom:8px} .bloco h3{font-size:13.5px} .slide.densa .bloco{margin-bottom:5px} .slide.densa .bloco h3{font-size:12.5px} .slide.densa .box.res p{font-size:11.5px;line-height:1.4} .slide.densa .box.res{padding:10px 16px} .slide.densa .note{margin-top:4px;font-size:10.5px}
+  .slide .box.res{padding:12px 18px} .slide .box.res p{font-size:12.5px;line-height:1.45}
   .step{margin-bottom:0}
   /* caixas cinza de mesmo tamanho, em grade uniforme */
-  .grid.cx{gap:18px;grid-auto-rows:1fr} .grid.cx .box{padding:18px 22px;display:flex;flex-direction:column} .grid.cx .box h3{font-size:15.5px;margin-bottom:8px} .grid.cx .box p{font-size:13.5px;line-height:1.5} .grid.cx .box.res{justify-content:center} .grid.cx .box.res p{font-size:13.5px}
-  .slide.erros .step b{font-size:15px} .slide.erros .step span{font-size:13.5px;line-height:1.45} .slide.erros .step .n{flex:0 0 36px;width:36px;height:36px;font-size:15px}
+  .grid.cx{gap:18px;grid-auto-rows:1fr} .grid.cx .box{padding:18px 22px;display:flex;flex-direction:column} .grid.cx .box h3{font-size:14px;margin-bottom:8px} .grid.cx .box p{font-size:12.5px;line-height:1.5} .grid.cx .box.res{justify-content:center} .grid.cx .box.res p{font-size:12.5px}
+  .slide.erros .step b{font-size:13.5px} .slide.erros .step span{font-size:12.5px;line-height:1.45} .slide.erros .step .n{flex:0 0 36px;width:36px;height:36px;font-size:13.5px}
 </style></head>
 <body>
 ${S.join('\n')}
