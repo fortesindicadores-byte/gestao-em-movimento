@@ -186,12 +186,16 @@ for (const up of UPS) {
 // só se o valor mudou dentro do Q3, porque em outubro nenhum valor mudou)
 function movQ3Q4(g) {
   const porPlaca = groupBy(g.filter(r => r.q === 3 || r.q === 4), r => r.placa);
-  const ent = [], sai = [], ficQ3 = [], ficQ4 = [];
+  const ent = [], sai = [], ficQ3 = [], ficQ4 = [], mudou = [];
+  const ultT = gg => Math.max(...gg.map(r => r.t)), priT = gg => Math.min(...gg.map(r => r.t));
   for (const [p, gg] of porPlaca) {
     const q3 = gg.filter(r => r.q === 3).map(r => r.v), q4 = gg.filter(r => r.q === 4).map(r => r.v);
-    if (q3.length && q4.length) { ficQ3.push(mean(q3)); ficQ4.push(mean(q4)); } else if (q4.length) ent.push(mean(q4)); else sai.push(mean(q3));
+    const vs = gg.map(r => r.v); if (Math.max(...vs) - Math.min(...vs) > 0.005) mudou.push({ placa: p, de: gg.find(r => r.t === priT(gg)).v, para: gg.find(r => r.t === ultT(gg)).v });
+    if (q3.length && q4.length) { ficQ3.push(mean(q3)); ficQ4.push(mean(q4)); }
+    else if (q4.length) ent.push({ placa: p, v: mean(q4), t: priT(gg) });
+    else sai.push({ placa: p, v: mean(q3), t: ultT(gg), qz: q3.length });
   }
-  return { ent: { n: ent.length, media: mean(ent) }, sai: { n: sai.length, media: mean(sai) }, fic: { n: ficQ3.length, q3: mean(ficQ3), q4: mean(ficQ4) } };
+  return { ent: { n: ent.length, media: mean(ent.map(x => x.v)), lista: ent }, sai: { n: sai.length, media: mean(sai.map(x => x.v)), lista: sai }, fic: { n: ficQ3.length, q3: mean(ficQ3), q4: mean(ficQ4) }, mudou };
 }
 // resumo global Q3→Q4 por placa (2ª set × 1ª out) e dentro do Q4 (1ª out × 2ª out)
 function compQz(tA, tB) {

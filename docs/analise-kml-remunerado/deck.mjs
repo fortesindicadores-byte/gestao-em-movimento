@@ -77,8 +77,8 @@ const nomeU = u => D.NOME[u] || u;
 function explicaUp(up) {
   const r = D.rankUP.find(x => x.up === up), m = D.movUP[up]; if (!r || r.dQ3Q4 == null || !m) return '';
   const d = r.dQ3Q4; const partes = [];
-  if (m.sai.n) partes.push(`${m.sai.n} placa${m.sai.n > 1 ? 's' : ''} saíra${m.sai.n > 1 ? 'm' : ''} do ativo (média ${f2(m.sai.media)})`);
-  if (m.ent.n) partes.push(`${m.ent.n} entrara${m.ent.n > 1 ? 'm' : ''} (média ${f2(m.ent.media)})`);
+  if (m.sai.n) partes.push(m.sai.n <= 3 ? `saiu do ativo ${m.sai.lista.map(x => `${x.placa} (${f2(x.v)})`).join(', ')}` : `${m.sai.n} placas saíram do ativo (média ${f2(m.sai.media)})`);
+  if (m.ent.n) partes.push(m.ent.n <= 3 ? `entrou ${m.ent.lista.map(x => `${x.placa} (${f2(x.v)})`).join(', ')}` : `${m.ent.n} entraram (média ${f2(m.ent.media)})`);
   const ficMudou = m.fic.n && Math.abs(m.fic.q4 - m.fic.q3) > 0.005;
   if (ficMudou) partes.push(`as ${m.fic.n} que ficaram passaram de ${f2(m.fic.q3)} para ${f2(m.fic.q4)} (valor mudado dentro do Q3)`);
   else if (m.fic.n) partes.push(`as ${m.fic.n} que ficaram seguem a ${f2(m.fic.q4)}`);
@@ -159,29 +159,47 @@ S.push(slide(`
   <div style="margin-top:8px">${escuro(`<b>Resumo:</b> as revisões de abril e julho mexeram em ${rank.filter(r => Math.abs(r.dQ1Q3) >= 5).length} das ${rank.length} operações em 5% ou mais. O Δ Q3→Q4 é só ativação (nenhum valor mudou em outubro): ${esc(maiorAlta.up)} e ${esc(rank.filter(r => Math.abs(r.dQ3Q4) >= 5).map(r => r.up).join(', '))} são os únicos acima de 5%.`)}</div>`));
 }
 
-// ── 6… · UM SLIDE POR UNIDADE ──
+// ── 6… · UM SLIDE POR UNIDADE-PROJETO ──
+// o Δ Q3→Q4 de um modelo é a média simples das linhas placa-quinzena ativas: em outubro nenhum valor mudou, então o Δ vem de
+// placa que saiu/entrou do ativo (ou de valor mudado dentro do Q3). A coluna "O que explica" diz qual.
+const qzL = t => D.QZ.find(z => z.t === t)?.label || '';
+const nomesPl = (l, n = 3) => l.length <= n ? l.map(x => `${x.placa} (${f2(x.v)})`).join(', ') : `${l.length} placas (média ${f2(l.reduce((s, x) => s + x.v, 0) / l.length)})`;
+function explicaModelo(m) {
+  if (!m.q[3] && !m.q[4]) return 'sem placa ativa no Q3 e no Q4';
+  if (!m.q[4]) return 'nenhuma placa ativa no Q4';
+  if (!m.q[3]) return 'só tem placa ativa no Q4';
+  const d = (m.q[4].media / m.q[3].media - 1) * 100, mv = m.mov, partes = [];
+  if (mv.mudou.length) partes.push(`valor mudou: ${mv.mudou.slice(0, 2).map(x => `${x.placa} ${f2(x.de)}→${f2(x.para)}`).join(', ')}${mv.mudou.length > 2 ? ` e mais ${mv.mudou.length - 2}` : ''}`);
+  if (Math.abs(d) < 0.05 && !mv.mudou.length) return 'sem mudança';
+  if (mv.sai.n) partes.push(`saiu do ativo: ${nomesPl(mv.sai.lista)}${mv.sai.n === 1 ? `, última ${qzL(mv.sai.lista[0].t)}` : ''}`);
+  if (mv.ent.n) partes.push(`entrou: ${nomesPl(mv.ent.lista)}`);
+  if (!partes.length) partes.push('placas ativas em menos quinzenas');
+  return (mv.mudou.length ? '' : 'nenhum valor mudou · ') + partes.join(' · ');
+}
 for (const u of UNIS) {
   const ups = upsDe(u).filter(up => (D.modelosQ[up] || []).some(m => m.placas > 0));
-  const nRows = ups.reduce((s, up) => s + D.modelosQ[up].filter(m => m.placas > 0).length, 0);
-  const dens = nRows <= 7 ? 'media' : nRows <= 10 ? 'compacta' : 'densa';
-  const blocos = ups.map(up => {
-    const lista = D.modelosQ[up].filter(m => m.placas > 0);
-    const tr = lista.map(m => {
+  const nRows = ups.reduce((s, up) => s + D.modelosQ[up].filter(m => m.placas > 0).length + 1, 0);
+  const dens = nRows <= 9 ? 'media' : nRows <= 13 ? 'compacta' : 'densa';
+  const corpo = ups.map(up => {
+    const lista = D.modelosQ[up].filter(m => m.placas > 0), mu = D.mediaUP[up], proj = up.split(' · ')[1], uc = up.split(' · ')[0];
+    const rot = `${esc(proj)}${uc !== u ? `<br><span style="font-weight:500;color:${INK3}">${esc(uc.replace(u + ' ', ''))}</span>` : ''}`;
+    const linhas = lista.map((m, i) => {
       const c = k => m.q[k] ? f2(m.q[k].media) : '—';
       const d34 = m.q[3] && m.q[4] ? (m.q[4].media / m.q[3].media - 1) * 100 : null;
-      const faixa = m.q[3] ? (m.q[3].max - m.q[3].min > 0.005 ? `${f2(m.q[3].min)} – ${f2(m.q[3].max)}` : 'todas iguais') : '—';
-      return `<tr><td><b>${esc(m.modelo)}</b></td><td class="r">${m.placas}</td><td class="r">${c(1)}</td><td class="r">${c(2)}</td><td class="r">${c(3)}</td><td class="r">${c(4)}</td><td class="r">${sinalPct(d34)}</td><td class="r" style="color:${m.q[3] && m.q[3].max - m.q[3].min > 0.005 ? ACC : INK2}">${faixa}</td></tr>`;
+      const dif = m.q[3] && m.q[3].max - m.q[3].min > 0.005;
+      const faixa = m.q[3] ? (dif ? `${f2(m.q[3].min)} – ${f2(m.q[3].max)}` : 'iguais') : '—';
+      return `<tr${i === 0 ? ' class="g0"' : ''}>${i === 0 ? `<td rowspan="${lista.length + 1}" class="proj">${rot}</td>` : ''}<td style="white-space:nowrap">${esc(m.modelo)}</td><td class="r">${m.placas}</td><td class="r">${c(1)}</td><td class="r">${c(2)}</td><td class="r">${c(3)}</td><td class="r">${c(4)}</td><td class="r">${sinalPct(d34)}</td><td class="r" style="${dif ? `color:${ACC};font-weight:600` : `color:${INK3}`}">${faixa}</td><td class="exp">${esc(explicaModelo(m))}</td></tr>`;
     }).join('');
-    const mu = D.mediaUP[up];
-    return `<div class="bloco"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px"><h3 style="margin:0">${esc(up)}</h3><span style="font-size:12px;color:${INK2}">média da operação · Q1 <b>${f2(mu.q[1]?.media)}</b> · Q2 <b>${f2(mu.q[2]?.media)}</b> · Q3 <b>${f2(mu.q[3]?.media)}</b> · Q4 <b>${f2(mu.q[4]?.media)}</b></span></div>
-      <table class="${dens}"><thead><tr><th>Modelo</th><th class="r">Placas</th><th class="r">Q1</th><th class="r">Q2</th><th class="r">Q3</th><th class="r">Q4</th><th class="r">Δ Q3→Q4</th><th class="r">Faixa no Q3</th></tr></thead><tbody>${tr}</tbody></table></div>`;
+    const d = mu.q[3]?.media && mu.q[4]?.media ? (mu.q[4].media / mu.q[3].media - 1) * 100 : null;
+    return linhas + `<tr class="med"><td>Média da operação</td><td></td><td class="r">${f2(mu.q[1]?.media)}</td><td class="r">${f2(mu.q[2]?.media)}</td><td class="r">${f2(mu.q[3]?.media)}</td><td class="r">${f2(mu.q[4]?.media)}</td><td class="r">${sinalPct(d)}</td><td></td><td></td></tr>`;
   }).join('');
+  const difs = ups.flatMap(up => D.modelosQ[up].filter(m => m.placas > 1 && m.q[3] && m.q[3].max - m.q[3].min > 0.005).map(m => `${esc(m.modelo)} em ${esc(up.split(' · ')[1])} (${f2(m.q[3].min)}–${f2(m.q[3].max)})`));
   S.push(slide(`
   <div class="kicker">Modelos × trimestre · ${esc(nomeU(u))}</div>
-  <h2 style="font-size:${dens === 'media' ? 28 : 24}px;margin-bottom:${dens === 'media' ? 10 : 4}px">${esc(nomeU(u))}: consumo remunerado por modelo em cada ciclo</h2>
-  ${blocos}
-  <div style="margin-top:${dens === 'densa' ? 4 : 10}px">${escuro(`<b>Resumo:</b> ${ups.map(explicaUp).filter(Boolean).join(' ')} ${(() => { const dif = ups.flatMap(up => D.modelosQ[up].filter(m => m.placas > 1 && m.q[3] && m.q[3].max - m.q[3].min > 0.005).map(m => `${esc(m.modelo)} (${f2(m.q[3].min)}–${f2(m.q[3].max)})`)); return dif.length ? `Mesmo modelo com valores diferentes no Q3: ${dif.join(', ')}.` : 'No Q3 cada modelo tem um valor só.'; })()}`)}</div>
-  <p class="note" style="margin-top:${dens === 'densa' ? 4 : 8}px">Média simples das placas ativas do modelo. Faixa no Q3 = menor e maior valor pago a placas do mesmo modelo no 3º tri (vermelho = valores diferentes).</p>`, { cls: dens === 'media' ? '' : 'densa', style: dens === 'media' ? '' : 'padding-top:34px' }));
+  <h2 style="font-size:${dens === 'densa' ? 26 : 30}px">${esc(nomeU(u))}: consumo remunerado por projeto e modelo</h2>
+  <table class="clean ${dens}" style="margin-top:${dens === 'densa' ? 8 : 14}px"><thead><tr><th style="width:96px">Projeto</th><th>Modelo</th><th class="r">Placas</th><th class="r">Q1</th><th class="r">Q2</th><th class="r">Q3</th><th class="r">Q4</th><th class="r">Δ Q3→Q4</th><th class="r">Faixa no Q3</th><th style="width:34%">O que explica o Δ Q3→Q4</th></tr></thead><tbody>${corpo}</tbody></table>
+  <div style="margin-top:${dens === 'densa' ? 10 : 16}px">${escuro(`<b>Resumo:</b> ${ups.map(explicaUp).filter(Boolean).join(' ')} ${difs.length ? `Mesmo modelo com valores diferentes no Q3: ${difs.join(', ')}.` : 'No Q3 cada modelo tem um valor só.'}`)}</div>
+  <p class="note" style="margin-top:8px">Q1 jan–mar · Q2 abr–jun · Q3 jul–set · Q4 outubro (sem revisão). Média simples das linhas placa-quinzena ativas, a régua do FT: placa que sai ou entra do ativo muda a média sem nenhum valor mudar. Faixa no Q3 = menor e maior valor pago a placas do mesmo modelo.</p>`, dens === 'densa' ? { cls: 'densa', style: 'padding-top:34px' } : {}));
 }
 
 // ── PERGUNTA 2 · dispersão: MATRIZ up·modelo × mês, saldo em litros ──
@@ -308,6 +326,16 @@ const html = `<!DOCTYPE html>
   table.compacta{font-size:12.5px} table.compacta th{padding:6px 8px} table.compacta td{padding:5px 8px}
   table.densa{font-size:11.5px} table.densa th{padding:4px 7px} table.densa td{padding:2.5px 7px}
   table.ativ td{padding:2.5px 7px}
+  /* padrão clean: cabeçalho com fundo, filete fino, pouca cor */
+  table th{background:#EEF0F3;color:var(--ink2);border-bottom:0;font-size:10.5px;letter-spacing:.8px}
+  table th:first-child{border-radius:8px 0 0 8px} table th:last-child{border-radius:0 8px 8px 0}
+  table td{border-bottom:1px solid #EDEFF2}
+  table.clean td.proj{font-weight:700;vertical-align:top;border-right:1px solid #EDEFF2;line-height:1.3}
+  table.clean tr.g0 td{border-top:1px solid #D5D9DF}
+  table.clean tbody tr.g0:first-child td{border-top:0}
+  table.clean tr.med td{font-weight:700;color:var(--ink2);background:#F7F8FA}
+  table.clean td.exp{font-size:11.5px;color:var(--ink2);line-height:1.3}
+  table.clean.media td{padding:6px 9px} table.clean.compacta td{padding:4px 8px} table.clean.densa td{padding:3px 7px}
   .bloco{margin-bottom:8px} .bloco h3{font-size:15px} .slide.densa .bloco{margin-bottom:5px} .slide.densa .bloco h3{font-size:13.5px} .slide.densa .box.res p{font-size:12.5px;line-height:1.4} .slide.densa .box.res{padding:10px 16px} .slide.densa .note{margin-top:4px;font-size:11.5px}
   .slide .box.res{padding:12px 18px} .slide .box.res p{font-size:13.5px;line-height:1.45}
   .step{margin-bottom:0}
