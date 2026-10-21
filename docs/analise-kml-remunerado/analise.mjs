@@ -374,6 +374,17 @@ const mudRes = { fora: mudancas.filter(m => !m.revisao).length, foraSeguida: mud
   julModUp: Object.fromEntries([...groupBy(mudancas.filter(m => m.revQ === 'Q3'), m => m.modelo + '|' + m.up)].map(([k, g]) => [k, { placas: g.length, litros: sum(g.map(m => m.litros)), km: sum(g.map(m => m.km)), volta: g.filter(m => m.tipo !== 'quinzena seguida').map(m => ({ placa: m.placa, para: m.para, quinzena: m.quinzena })) }])),
   foraPorQz: Object.fromEntries([...groupBy(mudancas.filter(m => !m.revisao), m => m.t)].map(([t, g]) => [t, { n: g.length, litros: sum(g.map(m => m.litros)), ups: [...new Set(g.map(m => m.up))] }])),
   julLitros: sum(mudancas.filter(m => m.revQ === 'Q3').map(m => m.litros)), julPlacas: mudancas.filter(m => m.revQ === 'Q3').length };
+// matriz das placas que mudaram FORA da revisão (Renan, 21/10/2026: "Quero isso aberto no material, por unidade/projeto.
+// Placa, consumo mês a mês e quando mudou fora de revisão, em matriz"): a série inteira da placa, quinzena a quinzena,
+// com a marca de cada mudança (fora ou na revisão).
+const foraMatriz = [];
+for (const k of new Set(mudancas.filter(m => !m.revisao).map(m => m.up + '|' + m.placa))) {
+  const [up, placa] = k.split('|');
+  const serie = {};
+  for (const r of FT.filter(r => r.up === up && r.placa === placa)) { const o = serie[r.t]; if (!o || (r.ativo && !o.a)) serie[r.t] = { v: r.v, a: !!r.ativo }; }
+  const marcas = Object.fromEntries(mudancas.filter(m => m.up === up && m.placa === placa).map(m => [m.t, { fora: !m.revisao, de: m.de, para: m.para, litros: m.litros }]));
+  foraMatriz.push({ up, placa, modelo: modeloDe[placa] || '(sem modelo)', serie, marcas, litros: sum(mudancas.filter(m => m.up === up && m.placa === placa && !m.revisao).map(m => m.litros)) });
+}
 // o mesmo modelo entre unidades (média do trimestre por unidade-projeto): VW 26.260 em Rota vai de 2,64 a 4,45 no Q3
 const modEntreUps = {};
 for (const up of UPS) for (const m of modelosQ[up] || []) { if (!m.placas) continue; (modEntreUps[m.modelo] = modEntreUps[m.modelo] || []).push({ up, q: Object.fromEntries([1, 2, 3, 4].map(k => [k, m.q[k] ? { media: m.q[k].media, min: m.q[k].min, max: m.q[k].max, placas: m.q[k].placas } : null])) }); }
@@ -405,7 +416,7 @@ const dados = {
   geradoEm: new Date().toISOString(), NOME, MESES, QZ: QZ.map(t => ({ t, label: qzLabel(t), q: QDE(Math.floor(t / 2) + 1) })), MES_IDX,
   totais: { linhas: FT.length, placas: placasFT.length, ups: UPS.length, fonteModelo, kmlLinhas: KML.length },
   frota, realMes, mediaUP, movUP, realUP, realUPq, modelosQ, q3q4: { ...q3q4, lista: q3q4.lista.slice(0, 60) }, q4in: { iguais: q4in.iguais, mudaram: q4in.mudaram, lista: q4in.lista.slice(0, 40) }, fronteiras,
-  dispersao, dispRes, impDisp, placaRes, ativacao, evRes, eventos: eventos.slice(0, 400), kmInativas, kmInatTot, kmInatFT, kmInatFTTot, realMesSimples, realModQ, realAtInat, realAtInatTot, mudRes, modEntreUps, mudancasCiclo: Object.values(fronteiras).filter(f => !f.fronteiraQ).reduce((s, f) => s + f.mudaram, 0), erros, premissa, rankUP, UPS,
+  dispersao, dispRes, impDisp, placaRes, ativacao, evRes, eventos: eventos.slice(0, 400), kmInativas, kmInatTot, kmInatFT, kmInatFTTot, realMesSimples, realModQ, realAtInat, realAtInatTot, mudRes, modEntreUps, foraMatriz, mudancasCiclo: Object.values(fronteiras).filter(f => !f.fronteiraQ).reduce((s, f) => s + f.mudaram, 0), erros, premissa, rankUP, UPS,
 };
 writeFileSync(OUT, JSON.stringify(dados));
 // ── apoio para o Excel (KML_REM_GAPS): a base inteira com colunas derivadas + listas placa a placa ──

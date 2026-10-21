@@ -99,6 +99,16 @@ S.push(`<section class="slide dark" style="display:flex;flex-direction:column;ju
 </section>`);
 N = 2;
 
+// capa de seção no fundo da capa (Renan, 21/10/2026: "Separe os assuntos trazendo capas com esse fundo")
+const LOGO = `<div class="logo" style="margin-bottom:38px"><div class="ic"><svg viewBox="0 0 48 48" fill="none"><path d="M12 30a12 12 0 1 1 24 0" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><path d="M24 30l7-8" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><circle cx="24" cy="30" r="2.4" fill="#fff"/></svg></div><div class="nm">Km/L <b>Remunerado</b></div></div>`;
+const capaSec = (kicker, titulo, texto) => S.push(`<section class="slide dark" style="display:flex;flex-direction:column;justify-content:center;">
+  ${LOGO}
+  <div class="kicker">${kicker}</div>
+  <h1 style="max-width:980px">${titulo}</h1>
+  <p style="margin-top:26px;font-size:18px;max-width:820px">${texto}</p>
+  <div class="foot"><span>${RODAPE}</span><span>${N++}</span></div>
+</section>`);
+
 // ── 2 · RESUMO EM QUATRO NÚMEROS ──
 S.push(slide(`
   <div class="kicker">Resumo</div>
@@ -126,6 +136,7 @@ S.push(slide(`
   <div style="margin-top:12px">${escuro(`<b>Resumo:</b> a régua da frota só muda na 1ª quinzena de abril e de julho; o resto do ano é troca de placas ativas. Em outubro não houve revisão, e a queda de ${f2(q[3].media)} para ${f2(q[4].media)} é só ativação: nenhum valor mudou.`)}</div>`));
 
 // ── 4 · PERGUNTA 1 ──
+capaSec('Parte 1 de 4', 'A revisão do 4º trimestre<br>não aconteceu.', `Em outubro nenhuma das ${D.q3q4.iguais} placas mudou de valor. A revisão, como ela entrou em abril e julho, a régua de cada operação por trimestre e os modelos de cada unidade.`);
 {
   const lin = (nome, t, cor) => { const f = fr[t]; const tot = f.iguais + f.mudaram; return `<tr><td><b>${nome}</b></td><td>${D.QZ.find(z => z.t === t).label}</td><td class="r">${tot}</td><td class="r"><b style="color:${cor}">${f.mudaram}</b></td><td class="r">${f.iguais}</td><td class="r">${pct(f.mudaram / tot * 100, 0).replace('+', '')}</td></tr>`; };
   S.push(slide(`
@@ -203,6 +214,7 @@ for (const u of UNIS) {
   <p class="note" style="margin-top:8px">Q1 jan–mar · Q2 abr–jun · Q3 jul–set · Q4 outubro (sem revisão). Média simples das linhas placa-quinzena ativas, a régua do FT: placa que sai ou entra do ativo muda a média sem nenhum valor mudar. Faixa no Q3 = menor e maior valor pago a placas do mesmo modelo.</p>`, dens === 'densa' ? { cls: 'densa', style: 'padding-top:34px' } : {}));
 }
 
+capaSec('Parte 2 de 4', 'O mesmo modelo,<br>valores diferentes.', `O mesmo caminhão com régua diferente entre unidades e dentro da mesma operação, e as placas que mudaram de valor fora da revisão.`);
 // ── O MESMO MODELO ENTRE UNIDADES: VW 26.260 (Renan, 21/10/2026: "Isso de Rondo precisa ser questionado. É um truck
 // com média incompatível. Foi via revisão?"). Só remunerado: média do modelo por operação e o que a revisão de julho mudou.
 {
@@ -253,41 +265,58 @@ for (const u of UNIS) {
     <div>
       <div class="box" style="padding:14px 16px;margin-bottom:10px"><div class="lbl">Valor constante</div><div class="num" style="font-size:30px">${D.placaRes.constantes}</div><p style="font-size:12.5px">placas com o mesmo valor o ano todo</p></div>
       <div class="box" style="padding:14px 16px;margin-bottom:10px"><div class="lbl">Mudam só na revisão</div><div class="num" style="font-size:30px">${D.placaRes.soFronteira}</div><p style="font-size:12.5px">1ª abr e 1ª jul, como esperado</p></div>
-      <div class="box" style="padding:14px 16px;margin-bottom:10px"><div class="lbl">Mudam fora dela</div><div class="num" style="font-size:30px;color:${ACC}">${D.placaRes.dentroTri}</div><p style="font-size:12.5px">de ${D.placaRes.total} placas-operação</p></div>
-      ${escuro(`<b>Resumo:</b> o problema está concentrado em Piraí Empurrada: os Actros 2651 custam ${f0(vis[0].saldo)} L (UGU5D17 a 0,67 km/L) e os 2548 devolvem ${f0(Math.abs(vis[1].saldo))} L. No resto da frota o saldo é pequeno e dos dois lados.`)}
+      <div class="box" style="padding:14px 16px;margin-bottom:10px"><div class="lbl">Mudam fora dela</div><div class="num" style="font-size:30px;color:${ACC}">${D.foraMatriz.length}</div><p style="font-size:12.5px">de ${D.placaRes.total} placas-operação; abertas a seguir</p></div>
+      ${escuro(`<b>Resumo:</b> o problema está concentrado em Piraí Empurrada: os Actros 2651 custam ${f0(vis[0].saldo)} L e os 2548 devolvem ${f0(Math.abs(vis[1].saldo))} L. No resto da frota o saldo é pequeno e dos dois lados.`)}
     </div>
   </div>`, { style: 'padding-top:40px' }));
 }
 
-// ── 4a · ATIVAS SEM CONSUMO: MATRIZ 2ª mar · 1ª abr · 2ª abr ──
+// ── MUDARAM FORA DA REVISÃO: placa × quinzena, por unidade (Renan, 21/10/2026: "Quero isso aberto no material, por
+// unidade/projeto. Placa, consumo mês a mês e quando mudou fora de revisão, em matriz") ──
 {
-  const det = D.erros.ativasZeroDet;
-  const ups = [...new Set(det.map(d => d.up))];
-  const T = { '2ª mar': 5, '1ª abr': 6, '2ª abr': 7 };
-  const linhas = [];
-  for (const up of ups) {
-    const z = D.mediaUP[up].qz;
-    const q6 = z[6], q5 = z[5], q7 = z[7];
-    const comZero = q6.n ? q6.media * q6.n / q6.nAt : 0; // se o FT contar o zero na média simples
-    const comZeroTxt = q6.n ? `${f2(comZero)} (${pct((comZero / q6.media - 1) * 100, 0)})` : '0,00 (todas zeradas)';
-    linhas.push(`<tr style="background:${PALE}"><td style="white-space:nowrap"><b>${esc(up)}</b> · operação</td><td class="r">${q5.nAt} · <b>${f2(q5.media)}</b></td><td class="r">${q6.nAt}</td><td class="r" style="color:${ACC};font-weight:800">${q6.zeros}</td><td class="r"><b>${f2(q6.media)}</b></td><td class="r" style="color:${ACC};font-weight:700">${comZeroTxt}</td><td class="r">${q7.nAt} · <b>${f2(q7.media)}</b></td></tr>`);
-    const grupos = {}; det.filter(d => d.up === up).forEach(d => (grupos[d.modelo] = grupos[d.modelo] || []).push(d));
-    for (const [mod, a] of Object.entries(grupos)) {
-      const d = a[0];
-      const vals = f => [...new Set(a.map(x => f(x) ? f2(f(x).v) : '—'))].join(' / ');
-      linhas.push(`<tr><td style="padding-left:28px;white-space:nowrap">${esc(mod)} · ${a.length} zeradas</td><td class="r">${vals(x => x.ant)}</td><td class="r">${d.irmas ? `${a.length + d.irmas}` : a.length}</td><td class="r" style="color:${ACC};font-weight:700">${a.length}</td><td class="r">${d.irmas ? `${f2(d.irmasMin)}–${f2(d.irmasMax)} <span style="color:${INK3}">(${d.irmas} irmãs)</span>` : '<span style="color:' + INK3 + '">modelo inteiro zerado</span>'}</td><td class="r" style="color:${INK3}">—</td><td class="r">${vals(x => x.prox)}</td></tr>`);
-    }
+  const porU = {};
+  for (const x of D.foraMatriz) { const u = x.up.split(' · ')[0].replace(/ UDC| LATA/, ''); (porU[u] = porU[u] || []).push(x); }
+  // unidade com poucas placas divide o slide com a seguinte
+  const grupos = []; let acc = [];
+  for (const u of Object.keys(porU).sort((a, b) => porU[b].length - porU[a].length)) {
+    if (porU[u].length >= 8) grupos.push([u]); else { acc.push(u); if (acc.reduce((s, x) => s + porU[x].length, 0) >= 8) { grupos.push(acc); acc = []; } }
   }
-  S.push(slide(`
-  <div class="kicker">4 · Placas ativas com consumo zero · todas na 1ª quinzena de abril, nas Empurradas</div>
-  <h2 style="font-size:28px">${D.erros.ativasZero.length} placas entraram na revisão do Q2 com consumo zero: o valor novo só chegou na quinzena seguinte.</h2>
-  <table class="compacta" style="margin-top:6px"><thead><tr><th>Operação · modelo</th><th class="r">2ª mar · ativas · valor</th><th class="r">1ª abr · ativas</th><th class="r">zeradas</th><th class="r">1ª abr · valor das demais</th><th class="r">média se o zero contar</th><th class="r">2ª abr · ativas · valor</th></tr></thead><tbody>${linhas.join('')}</tbody></table>
-  <div class="grid g2" style="gap:18px;margin-top:12px">
-    <div class="box" style="padding:14px 18px"><h3 style="font-size:15px">O que isso significa</h3><p style="font-size:13px">Em três dos quatro grupos o modelo inteiro ficou sem valor na 1ª abr (Actros 2548 em Cuiabá e Macacu, Actros 2651 em Piraí). Só em Piraí 8 Actros 2548 ficaram zeradas com 12 irmãs ativas com valor. Se o FT conta o zero na média simples, a operação cai o que está em vermelho; se ignora, a placa rodou uma quinzena sem régua.</p></div>
-    <div class="box" style="padding:14px 18px"><h3 style="font-size:15px">O que pedir à Ambev</h3><p style="font-size:13px">Qual regra o FT aplica ao zero na quinzena da revisão e o valor que efetivamente valeu para essas ${D.erros.ativasZero.length} placas na 1ª abr. Na próxima revisão (Q4 atrasado e Q1/27), o valor novo tem de entrar junto com a 1ª quinzena.</p></div>
-  </div>`, { style: 'padding-top:40px' }));
+  if (acc.length) grupos.push(acc);
+  const QZS = Array.from({ length: 20 }, (_, t) => t), REV = new Set([6, 12, 18]);
+  const qzMesN = t => Math.floor(t / 2);
+  for (const us of grupos) {
+    const lista = us.flatMap(u => porU[u]).sort((a, b) => a.up.localeCompare(b.up) || a.modelo.localeCompare(b.modelo) || a.placa.localeCompare(b.placa));
+    const multiU = us.length > 1;
+    const porUp = {}; lista.forEach(x => (porUp[x.up] = porUp[x.up] || []).push(x));
+    const cel = (x, t) => {
+      const o = x.serie[t], m = x.marcas[t];
+      const sep = t % 2 === 0 ? 'border-left:1px solid #E3E6EA;' : '';
+      if (!o || !o.a) return `<td class="q" style="${sep}color:#C3C8CF">·</td>`;
+      const txt = o.v > 0 ? f2(o.v) : '0';
+      if (m && m.fora) return `<td class="q" style="${sep}background:rgba(242,44,5,.16);color:${ACC};font-weight:800">${txt}</td>`;
+      if (m) return `<td class="q" style="${sep}background:#E3E6EA;font-weight:700">${txt}</td>`;
+      return `<td class="q" style="${sep}${o.v > 0 ? '' : `color:${ACC};`}">${txt}</td>`;
+    };
+    const corpo = Object.entries(porUp).map(([up, xs]) => xs.map((x, i) => `<tr${i === 0 ? ' class="g0"' : ''}>${i === 0 ? `<td rowspan="${xs.length}" class="proj">${multiU ? esc(nomeU(up.split(' · ')[0].replace(/ UDC| LATA/, ''))) + '<br>' : ''}${esc(up.split(' · ')[1])}${/UDC/.test(up) ? ' UDC' : ''}</td>` : ''}<td><b>${esc(x.placa)}</b></td><td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px">${esc(x.modelo)}</td>${QZS.map(t => cel(x, t)).join('')}<td class="r" style="color:${x.litros > 50 ? ACC : x.litros < -50 ? AZUL : INK3};font-weight:700">${Math.abs(x.litros) < 0.5 ? '0' : (x.litros > 0 ? '+' : '') + f0(x.litros)}</td></tr>`).join('')).join('');
+    // resumo: as transições fora da revisão mais repetidas
+    const trans = {};
+    for (const x of lista) for (const [t, m] of Object.entries(x.marcas)) if (m.fora) { const k = `${t}|${f2(m.de)}|${f2(m.para)}|${x.modelo}`; trans[k] = (trans[k] || 0) + 1; }
+    const top = Object.entries(trans).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => { const [t, de, para, mo] = k.split('|'); return `${n} ${mo === '(sem modelo)' ? 'placa sem modelo' : mo} de ${de} para ${para} na ${D.QZ.find(z => z.t === +t)?.label}`; });
+    const nMud = lista.reduce((s, x) => s + Object.values(x.marcas).filter(m => m.fora).length, 0), lit = lista.reduce((s, x) => s + x.litros, 0);
+    const nome = us.map(u => nomeU(u)).join(' e ');
+    const dens = lista.length > 14 ? 'densa' : 'compacta';
+    S.push(slide(`
+  <div class="kicker">2 · Mudaram fora da revisão · ${esc(nome)} · consumo remunerado quinzena a quinzena</div>
+  <h2 style="font-size:${dens === 'densa' ? 24 : 27}px;margin-bottom:6px">${esc(nome)}: ${lista.length} ${lista.length > 1 ? 'placas mudaram' : 'placa mudou'} de valor fora da revisão</h2>
+  <table class="clean ${dens} mfr" style="margin-top:8px;table-layout:fixed"><colgroup><col style="width:90px"><col style="width:72px"><col style="width:114px">${QZS.map(() => '<col>').join('')}<col style="width:62px"></colgroup><thead>
+    <tr><th rowspan="2" style="width:76px">Projeto</th><th rowspan="2">Placa</th><th rowspan="2">Modelo</th>${MES.slice(0, 10).map(m => `<th colspan="2" class="q" style="border-left:1px solid #fff">${m}</th>`).join('')}<th rowspan="2" class="r">Litros</th></tr>
+    <tr>${QZS.map(t => `<th class="q" style="${REV.has(t) ? `color:${ACC};` : ''}">${t % 2 ? '2ª' : '1ª'}</th>`).join('')}</tr></thead><tbody>${corpo}</tbody></table>
+  <p class="note" style="margin-top:6px"><span style="background:rgba(242,44,5,.16);color:${ACC};font-weight:800;padding:1px 5px;border-radius:3px">2,12</span> mudou fora da revisão · <span style="background:#E3E6EA;font-weight:700;padding:1px 5px;border-radius:3px">2,70</span> mudou na revisão · <b style="color:${ACC}">1ª</b> em laranja = quinzena da revisão · ponto = inativa. Litros (+ contra nós) = km da placa até set × (1/antes − 1/depois). Excel: G5.</p>
+  <div style="margin-top:8px">${escuro(`<b>Resumo:</b> ${nMud} mudança${nMud > 1 ? 's' : ''} fora da revisão em ${lista.length} placa${lista.length > 1 ? 's' : ''}${top.length ? `, a maioria em bloco: ${top.join('; ')}` : ''}. Saldo até setembro: ${f0(Math.abs(lit))} L ${lit > 50 ? 'contra nós' : lit < -50 ? 'a favor' : '(neutro)'}. Pedir à Ambev a trilha de cada uma: quem mudou, quando e com base em quê.`)}</div>`, { cls: dens === 'densa' ? 'densa' : '', style: 'padding-top:34px' }));
+  }
 }
 
+capaSec('Parte 3 de 4', 'A ativação mexe<br>pouco na média.', `Quem entra e quem sai do ativo, e o quanto isso move a régua de cada operação. E o km rodado por placas que estavam inativas no FT.`);
 // ── PERGUNTA 3 · ativação ──
 {
   const meses = D.MES_IDX;
@@ -315,6 +344,36 @@ for (const u of UNIS) {
       <div class="box" style="padding:16px 18px;margin-bottom:12px"><div class="lbl">Ativações</div><div class="num" style="font-size:32px">${Math.round(ev.ativ.abaixo / ev.ativ.n * 100)}%</div><p style="font-size:13px">das ${ev.ativ.n} ativações trouxeram uma placa abaixo da média. Sem padrão de escolher as melhores.</p></div>
       <div class="box" style="padding:16px 18px"><div class="lbl">Km de placas inativas</div><div class="num" style="font-size:32px;color:${ACC}">${f1(kmInatPct)}%</div><p style="font-size:13px">do km do ano (aba Km/L, jan a set) foi rodado por ${D.kmInatFTTot.placas} placas marcadas inativas no FT: km sem régua remunerada.</p></div>
     </div>
+  </div>`, { style: 'padding-top:40px' }));
+}
+
+capaSec('Parte 4 de 4', 'Erros do cadastro.', `Placas ativas com consumo zero na revisão de abril, valores fora do modelo, a placa TESTE e o que levar à Ambev.`);
+// ── 4a · ATIVAS SEM CONSUMO: MATRIZ 2ª mar · 1ª abr · 2ª abr ──
+{
+  const det = D.erros.ativasZeroDet;
+  const ups = [...new Set(det.map(d => d.up))];
+  const T = { '2ª mar': 5, '1ª abr': 6, '2ª abr': 7 };
+  const linhas = [];
+  for (const up of ups) {
+    const z = D.mediaUP[up].qz;
+    const q6 = z[6], q5 = z[5], q7 = z[7];
+    const comZero = q6.n ? q6.media * q6.n / q6.nAt : 0; // se o FT contar o zero na média simples
+    const comZeroTxt = q6.n ? `${f2(comZero)} (${pct((comZero / q6.media - 1) * 100, 0)})` : '0,00 (todas zeradas)';
+    linhas.push(`<tr style="background:${PALE}"><td style="white-space:nowrap"><b>${esc(up)}</b> · operação</td><td class="r">${q5.nAt} · <b>${f2(q5.media)}</b></td><td class="r">${q6.nAt}</td><td class="r" style="color:${ACC};font-weight:800">${q6.zeros}</td><td class="r"><b>${f2(q6.media)}</b></td><td class="r" style="color:${ACC};font-weight:700">${comZeroTxt}</td><td class="r">${q7.nAt} · <b>${f2(q7.media)}</b></td></tr>`);
+    const grupos = {}; det.filter(d => d.up === up).forEach(d => (grupos[d.modelo] = grupos[d.modelo] || []).push(d));
+    for (const [mod, a] of Object.entries(grupos)) {
+      const d = a[0];
+      const vals = f => [...new Set(a.map(x => f(x) ? f2(f(x).v) : '—'))].join(' / ');
+      linhas.push(`<tr><td style="padding-left:28px;white-space:nowrap">${esc(mod)} · ${a.length} zeradas</td><td class="r">${vals(x => x.ant)}</td><td class="r">${d.irmas ? `${a.length + d.irmas}` : a.length}</td><td class="r" style="color:${ACC};font-weight:700">${a.length}</td><td class="r">${d.irmas ? `${f2(d.irmasMin)}–${f2(d.irmasMax)} <span style="color:${INK3}">(${d.irmas} irmãs)</span>` : '<span style="color:' + INK3 + '">modelo inteiro zerado</span>'}</td><td class="r" style="color:${INK3}">—</td><td class="r">${vals(x => x.prox)}</td></tr>`);
+    }
+  }
+  S.push(slide(`
+  <div class="kicker">4 · Placas ativas com consumo zero · todas na 1ª quinzena de abril, nas Empurradas</div>
+  <h2 style="font-size:28px">${D.erros.ativasZero.length} placas entraram na revisão do Q2 com consumo zero: o valor novo só chegou na quinzena seguinte.</h2>
+  <table class="compacta" style="margin-top:6px"><thead><tr><th>Operação · modelo</th><th class="r">2ª mar · ativas · valor</th><th class="r">1ª abr · ativas</th><th class="r">zeradas</th><th class="r">1ª abr · valor das demais</th><th class="r">média se o zero contar</th><th class="r">2ª abr · ativas · valor</th></tr></thead><tbody>${linhas.join('')}</tbody></table>
+  <div class="grid g2" style="gap:18px;margin-top:12px">
+    <div class="box" style="padding:14px 18px"><h3 style="font-size:15px">O que isso significa</h3><p style="font-size:13px">Em três dos quatro grupos o modelo inteiro ficou sem valor na 1ª abr (Actros 2548 em Cuiabá e Macacu, Actros 2651 em Piraí). Só em Piraí 8 Actros 2548 ficaram zeradas com 12 irmãs ativas com valor. Se o FT conta o zero na média simples, a operação cai o que está em vermelho; se ignora, a placa rodou uma quinzena sem régua.</p></div>
+    <div class="box" style="padding:14px 18px"><h3 style="font-size:15px">O que pedir à Ambev</h3><p style="font-size:13px">Qual regra o FT aplica ao zero na quinzena da revisão e o valor que efetivamente valeu para essas ${D.erros.ativasZero.length} placas na 1ª abr. Na próxima revisão (Q4 atrasado e Q1/27), o valor novo tem de entrar junto com a 1ª quinzena.</p></div>
   </div>`, { style: 'padding-top:40px' }));
 }
 
@@ -364,6 +423,7 @@ const html = `<!DOCTYPE html>
   table.clean tr.g0 td{border-top:1px solid #D5D9DF}
   table.clean tbody tr.g0:first-child td{border-top:0}
   table.clean tr.med td{font-weight:700;color:var(--ink2);background:#F7F8FA}
+  table.mfr th.q,table.mfr td.q{text-align:center;padding-left:2px;padding-right:2px;font-variant-numeric:tabular-nums} table.mfr td.q{font-size:10px} table.mfr td.proj{font-size:11px} table.mfr td,table.mfr th{overflow:hidden} table.mfr th.q{font-size:9.5px;letter-spacing:.3px}
   table.clean td.exp{font-size:11.5px;color:var(--ink2);line-height:1.3}
   table.clean.media td{padding:6px 9px} table.clean.compacta td{padding:4px 8px} table.clean.densa td{padding:3px 7px}
   .bloco{margin-bottom:8px} .bloco h3{font-size:15px} .slide.densa .bloco{margin-bottom:5px} .slide.densa .bloco h3{font-size:13.5px} .slide.densa .box.res p{font-size:12.5px;line-height:1.4} .slide.densa .box.res{padding:10px 16px} .slide.densa .note{margin-top:4px;font-size:11.5px}
