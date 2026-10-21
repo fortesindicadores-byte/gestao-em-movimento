@@ -6,6 +6,11 @@ name: KmL Rem Dump (apoio à análise do remunerado)
 # depois de lido. Nada é gravado no banco.
 on:
   workflow_dispatch:
+    inputs:
+      so_apagar:
+        description: 'true = só apaga o branch temporário tmp-kml-rem-dump (não lê nada)'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write
@@ -18,12 +23,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
+      - name: Apagar o branch temporário
+        if: ${{ github.event.inputs.so_apagar == 'true' }}
+        run: git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete tmp-kml-rem-dump || echo "branch já não existia"
       - name: Ler Km/L e Ativos
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
         env:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           DUMP_OUT: /tmp/kml-rem-dump.txt
         run: node scripts/kml-rem-dump.mjs
       - name: Publicar no branch temporário
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
         run: |
           set -e
           rm -rf /tmp/pub && mkdir -p /tmp/pub && cd /tmp/pub
