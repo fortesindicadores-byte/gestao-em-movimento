@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610201800">
+<meta name="build" content="202610211100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -231,6 +231,8 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
 .thead-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:2px;}
 .ttit{font-size:14px;font-weight:800;}
 .tsub{font-size:10px;color:var(--txt3);margin-bottom:8px;}
+/* texto explicativo de tabela vai SEMPRE embaixo dela (Renan, 21/10/2026: "aquele texto em cima da tabela, nunca") */
+.tsub.tpe{margin:8px 0 0;flex:0 0 auto;}
 .twrap{flex:1;min-height:0;overflow:auto;border:1px solid var(--card-brd);border-radius:10px;background:var(--side);}
 /* O ESPELHO ATRÁS DA TABELA FICA SEMPRE (Renan, 06/10/2026: "algumas ficaram estranhas sem o
    espelho no fundo, pois como as bordas são arredondadas, fica comendo as bordas. Pode manter
@@ -458,8 +460,8 @@ tr.vazio:hover td{color:var(--laranja);}
         </div>
         <div class="card tsec">
           <div class="thead-row"><div class="ttit">Pedidos das unidades</div></div>
-          <div class="tsub" id="sub-ped">—</div>
           <div class="twrap"><table class="dre" id="tb-ped"></table></div>
+          <div class="tsub tpe" id="sub-ped">—</div>
         </div>
       </section>
 
@@ -470,9 +472,9 @@ tr.vazio:hover td{color:var(--laranja);}
         <div class="card tsec">
           <div class="thead-row"><div class="ttit" id="tit-meus" style="display:none">Pedidos da unidade</div>
             <button class="btn" id="bt-novo" style="margin-left:auto" onclick="abrePedido()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Novo pedido</button></div>
-          <div class="tsub" id="sub-meus">—</div>
           <div class="fmsg" id="f-ok"></div>
           <div class="twrap"><table class="dre" id="tb-meus"></table></div>
+          <div class="tsub tpe" id="sub-meus">—</div>
         </div>
       </section>
 
@@ -480,8 +482,8 @@ tr.vazio:hover td{color:var(--laranja);}
       <section class="vw" id="vw-precos">
         <div class="card tsec">
           <div class="thead-row" style="display:none"><div class="ttit">Tabela de preços</div></div>
-          <div class="tsub">Valor unitário de cada produto, por medida. É daqui que sai o valor previsto dos pedidos. Alterou, salvou: vale na hora para todos os pedidos que usam o produto.</div>
           <div class="twrap"><table class="dre" id="tb-preco"></table></div>
+          <div class="tsub tpe">Valor unitário de cada produto, por medida. É daqui que sai o valor previsto dos pedidos. Alterou, salvou: vale na hora para todos os pedidos que usam o produto.</div>
         </div>
       </section>
     </div>
@@ -537,6 +539,14 @@ const PROJETOS={
   'PLT':['ROTA','VAN','APOIO'],
   'RON':['ROTA','APOIO'],
 };
+/* UNIDADE NA TELA = SÓ A SIGLA (Renan, 21/10/2026: "Aqui Unidade pode ser CBA,
+   já que tem projeto… todas unidades"). O tier (CBA T1/T1 WH/T2, MCC T1/T2)
+   continua no banco, na RLS, no Prolog e no estoque; a tela mostra e filtra pela
+   sigla, e o código gravado sai do PROJETO escolhido (EMPURRADA → T1, APOIO →
+   T1 WH, resto → T2), que é como o PROJETOS já está separado. */
+const SIGLA=u=>String(u||'').split(' ')[0];
+const siglas=l=>[...new Set(l.map(SIGLA))];
+const codsDaSigla=(sig,l)=>l.filter(u=>SIGLA(u)===sig);
 /* branch_id do Prolog → unidade (o mesmo mapa do painel de Pneus) */
 const BRANCH={1676:'MCC T1',1677:'MCC T2',37:'CGR',1906:'CBA T1 WH',1907:'CBA T1',1878:'CBA T2',20:'FLP',30:'GRL',24:'BLC',2517:'NFR',26:'PLT',38:'PIR',2277:'RON',2550:'ANG'};
 
@@ -742,18 +752,18 @@ document.addEventListener('click',e=>{ if(!e.target.closest('.ms-wrap')) documen
 function montaFiltros(){
   const vigs=[...new Set(PEDIDOS.map(r=>r.vigencia).concat([vigAgora()]))].sort().reverse();
   buildMs('ms-vig',vigs,render,vigRot);
-  buildMs('ms-uni',UNIDADES,render);
+  buildMs('ms-uni',siglas(UNIDADES),render);
 }
 const recorteAdm=()=>{ const vs=getSel('ms-vig'), us=getSel('ms-uni');
-  return PEDIDOS.filter(r=>(!vs.length||vs.includes(r.vigencia))&&(!us.length||us.includes(r.unidade))); };
+  return PEDIDOS.filter(r=>(!vs.length||vs.includes(r.vigencia))&&(!us.length||us.includes(SIGLA(r.unidade)))); };
 
 /* ── unidade da tela Pedidos: o filtro do padrão (buildMs). A unidade vê as do
    perfil, o admin as 14; nada marcado = todas as permitidas ── */
 const unisPerm=()=>ADMIN?UNIDADES:PERFIL_UNIS;
-const unisVistas=()=>{ const l=unisPerm(), s=getSel('ms-uped').filter(u=>l.includes(u)); return s.length?s:l; };
+const unisVistas=()=>{ const l=unisPerm(), s=getSel('ms-uped'); const v=l.filter(u=>s.includes(SIGLA(u))); return v.length?v:l; };
 function montaUnidade(){
-  const w=document.getElementById('ms-uped'), l=unisPerm();
-  if(w._itens!==l) buildMs('ms-uped',l,()=>{ const m=document.getElementById('f-ok'); m.className='fmsg'; m.textContent=''; renderMeus(); });
+  const w=document.getElementById('ms-uped'), l=siglas(unisPerm());
+  if(String(w._itens)!==String(l)) buildMs('ms-uped',l,()=>{ const m=document.getElementById('f-ok'); m.className='fmsg'; m.textContent=''; renderMeus(); });
   w.style.display=VW==='pedido'&&l.length>1?'':'none';
 }
 /* o pedido é de UMA unidade: a caixa oferece as que estão na tela; com uma só,
@@ -763,7 +773,7 @@ function montaForm(){
   set('form-sub','A vigência é o mês do pedido · o corporativo avalia e aprova');
   const opt=(l,ph)=>`<option value="">${ph}</option>`+l.map(x=>`<option>${esc(x)}</option>`).join('');
   const fu=document.getElementById('f-uni'), fb=document.getElementById('f-banda'), fm=document.getElementById('f-med');
-  const us=unisVistas(), keepU=fu.value, keep=[fb.value,fm.value];
+  const us=siglas(unisVistas()), keepU=fu.value, keep=[fb.value,fm.value];
   fu.innerHTML=us.length===1?`<option>${esc(us[0])}</option>`:opt(us,'Selecione…');
   if(us.length===1) fu.value=us[0]; else if(us.includes(keepU)) fu.value=keepU;
   fu.disabled=us.length===1;
@@ -773,7 +783,8 @@ function montaForm(){
   montaProjetos();
 }
 function montaProjetos(){
-  const u=document.getElementById('f-uni').value, fp=document.getElementById('f-proj'), keep=fp.value, l=PROJETOS[u]||[];
+  const u=document.getElementById('f-uni').value, fp=document.getElementById('f-proj'), keep=fp.value,
+        l=[].concat(...codsDaSigla(u,unisVistas()).map(c=>PROJETOS[c]||[]));
   fp.innerHTML=`<option value="">${u?'Selecione…':'Escolha a unidade'}</option>`+l.map(x=>`<option>${esc(x)}</option>`).join('');
   if(l.includes(keep)) fp.value=keep;
 }
@@ -785,15 +796,17 @@ function fechaPedido(){ document.getElementById('mbg').classList.remove('open');
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') fechaPedido(); });
 async function enviaPedido(){
   const msg=document.getElementById('f-msg'), bt=document.getElementById('f-env');
-  const unidade=document.getElementById('f-uni').value, banda=document.getElementById('f-banda').value, projeto=document.getElementById('f-proj').value,
+  const sig=document.getElementById('f-uni').value, banda=document.getElementById('f-banda').value, projeto=document.getElementById('f-proj').value,
         medida=document.getElementById('f-med').value, qtd=parseInt(document.getElementById('f-qtd').value,10);
-  const falta=[!unidade&&'unidade',!banda&&'banda de rodagem',!projeto&&'projeto',!medida&&'medida',!(qtd>0)&&'quantidade'].filter(Boolean);
+  // o código com tier sai do projeto: é o PROJETOS que separa CBA T1/T1 WH/T2 e MCC T1/T2
+  const unidade=codsDaSigla(sig,unisVistas()).find(c=>(PROJETOS[c]||[]).includes(projeto))||'';
+  const falta=[!sig&&'unidade',!banda&&'banda de rodagem',!projeto&&'projeto',!medida&&'medida',!(qtd>0)&&'quantidade'].filter(Boolean);
   if(falta.length){ msg.className='fmsg erro'; msg.textContent='Falta preencher: '+falta.join(', ')+'.'; return; }
   bt.disabled=true; msg.className='fmsg'; msg.textContent='Enviando…';
   const {data,error}=await sb.from('pneu_pedido').insert({unidade,projeto,banda,medida,qtd,criado_nome:NOME,vigencia:vigAgora()}).select('id');
   bt.disabled=false;
   if(error||!data||!data.length){ msg.className='fmsg erro'; msg.textContent='O banco recusou o pedido: '+((error&&error.message)||'nenhuma linha gravada'); return; }
-  const ok=document.getElementById('f-ok'); ok.className='fmsg ok'; ok.textContent=`Pedido enviado: ${unidade} · ${qtd} pneu(s) ${medida} · ${banda} · ${projeto}.`;
+  const ok=document.getElementById('f-ok'); ok.className='fmsg ok'; ok.textContent=`Pedido enviado: ${SIGLA(unidade)} · ${qtd} pneu(s) ${medida} · ${banda} · ${projeto}.`;
   document.getElementById('f-qtd').value=''; fechaPedido();
   await lePedidos(); montaFiltros(); render();
 }
@@ -807,14 +820,14 @@ async function apagaPedido(id){
 
 /* ═════════════ RENDER ═════════════ */
 function renderMeus(){
-  const us=unisVistas(), varias=us.length>1;
+  const us=unisVistas(), varias=siglas(us).length>1;
   const linhas=PEDIDOS.filter(r=>us.includes(r.unidade));
-  set('tit-meus',varias?'Pedidos das unidades':`Pedidos da unidade · ${us[0]||'—'}`);
+  set('tit-meus',varias?'Pedidos das unidades':`Pedidos da unidade · ${SIGLA(us[0])||'—'}`);
   set('sub-meus',linhas.length?`${linhas.length} pedido(s) · do mais recente para o mais antigo · ${ADMIN?'o admin pode apagar qualquer pedido':'pedido ainda não avaliado pode ser apagado'}`:'Nenhum pedido lançado ainda.');
   const tb=document.getElementById('tb-meus'), nc=varias?10:9;
   tb.innerHTML=`<thead><tr><th>Vigência</th>${varias?'<th>Unidade</th>':''}<th>Projeto</th><th>Banda de rodagem</th><th>Medida</th><th class="num">Quantidade</th><th class="num">Aprovado</th><th>Situação</th><th>Lançado em</th><th></th></tr></thead><tbody>`+
     (linhas.map(r=>{ const [s,c]=situacao(r);
-      return `<tr><td>${vigRot(r.vigencia)}</td>${varias?`<td class="nome">${esc(r.unidade)}</td>`:''}<td${varias?'':' class="nome"'}>${esc(r.projeto)}</td><td>${esc(r.banda)}</td><td>${esc(r.medida)}</td>
+      return `<tr><td>${vigRot(r.vigencia)}</td>${varias?`<td class="nome">${esc(SIGLA(r.unidade))}</td>`:''}<td${varias?'':' class="nome"'}>${esc(r.projeto)}</td><td>${esc(r.banda)}</td><td>${esc(r.medida)}</td>
         <td class="num">${br(r.qtd)}</td><td class="num">${r.qtd_aprovada==null?'—':br(r.qtd_aprovada)}</td><td><span class="pill ${c}">${s}</span></td>
         <td>${fmtDT(r.created_at)}<span class="lin2">${esc(r.criado_nome||'')}</span></td>
         <td>${ADMIN||r.qtd_aprovada==null?`<button class="ico-bt" title="Apagar pedido" onclick="apagaPedido(${r.id})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:''}</td></tr>`; }).join('')
@@ -851,10 +864,10 @@ function renderResumo(){
   const av=rows.filter(r=>r.qtd_aprovada!=null), apr=av.reduce((a,r)=>a+(+r.qtd_aprovada||0),0);
   const pend=rows.filter(r=>r.qtd_aprovada==null);
   let val=0, semPreco=0; rows.forEach(r=>{ const {p}=precoDe(r); if(p) val+=qtdBase(r)*(+p.valor||0); else semPreco++; });
-  set('k-ped',br(rows.length)); set('k-ped-m',`${new Set(rows.map(r=>r.unidade)).size} unidade(s)`);
+  set('k-ped',br(rows.length)); set('k-ped-m',`${new Set(rows.map(r=>SIGLA(r.unidade))).size} unidade(s)`);
   set('k-qtd',br(qtd)); set('k-qtd-m',`${br(pend.reduce((a,r)=>a+(+r.qtd||0),0))} aguardando`);
   set('k-apr',br(apr)); set('k-apr-m',`${av.length} pedido(s) avaliado(s)`);
-  set('k-pend',br(pend.length)); set('k-pend-m',pend.length?`${new Set(pend.map(r=>r.unidade)).size} unidade(s)`:'nada pendente');
+  set('k-pend',br(pend.length)); set('k-pend-m',pend.length?`${new Set(pend.map(r=>SIGLA(r.unidade))).size} unidade(s)`:'nada pendente');
   set('k-val','R$ '+br(val,0)); set('k-val-m',semPreco?`${semPreco} pedido(s) sem preço da medida`:'aprovado; não avaliado = pedido');
   const pr=PROLOG.estado==='ok'?`Prolog ${fmtDT(PROLOG.em)}`:PROLOG.estado==='lendo'?'lendo o Prolog…':'Prolog sem resposta';
   set('sub-ped',`Estoque Vida 0 e Estoque Recapado = preenchidos à mão (o número do Prolog fica na dica do campo) · Necessidade = instalados com até ${MM_LIM} mm (${MM_LIM_EMP} mm na Empurrada e Insumos) que pedem pneu novo (1ª vida no dianteiro · 4ª recapagem · último eixo da carreta depois da 1ª recapagem) · ${pr}`);
@@ -865,7 +878,7 @@ function renderResumo(){
     tq+=+r.qtd||0; ta+=+r.qtd_aprovada||0; if(v!=null) tv+=v; te0+=+r.est_vida0||0; ter+=+r.est_recap||0; tn+=necNum(r);
     const ops=precosDa(r.medida).map(x=>`<option value="${x.id}"${p&&x.id===p.id?' selected':''} title="${esc(x.produto)}">${esc(prodCurto(x.produto))} · ${brl(x.valor)}</option>`).join('');
     return `<tr data-id="${r.id}">
-      <td>${vigRot(r.vigencia)}</td><td class="nome">${esc(r.unidade)}</td><td>${esc(r.projeto)}</td><td>${esc(r.banda).replace('/','/<wbr>')}</td><td>${esc(r.medida)}</td>
+      <td>${vigRot(r.vigencia)}</td><td class="nome" title="${esc(r.unidade)}">${esc(SIGLA(r.unidade))}</td><td>${esc(r.projeto)}</td><td>${esc(r.banda).replace('/','/<wbr>')}</td><td>${esc(r.medida)}</td>
       <td class="num">${br(r.qtd)}</td>
       <td class="num">${celEst(r,'v0')}</td>
       <td class="num">${celEst(r,'rc')}</td>
@@ -1028,6 +1041,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610151230"></script>
+<script src="../assets/build-check.js?v=202610211100"></script>
 </body>
 </html>
