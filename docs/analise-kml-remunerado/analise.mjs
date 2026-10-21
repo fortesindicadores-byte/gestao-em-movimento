@@ -69,6 +69,7 @@ function modeloCanon(s) {
 // ── 1) planilha do FT ──
 const wb = XLSX.readFile(XLSX_PATH);
 const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { raw: true });
+let FT0 = null;
 let FT = raw.map(r => {
   const m = String(r.Vigencia).match(/_(\d)_(\d+)_(\d{4})$/);
   const qz = +m[1], mes = +m[2], ano = +m[3];
@@ -104,6 +105,7 @@ const eletricasFT = [...new Set(FT.filter(r => ELETRICAS.has(r.placa)).map(r => 
 // desta análise inteira (Renan, 21/10/2026: "Falei que CGR está sendo tratado em outra pauta"). Pelotas AS
 // não existe como operação (entra em Rota): também fora.
 const FORA_UNI = new Set(['CGR']), FORA_UP = new Set(['PLT · AS']);
+FT0 = FT.map(r => ({ ...r, fora: ELETRICAS.has(r.placa) ? 'elétrica' : FORA_UNI.has(r.uni) ? 'Campo Grande (outra pauta)' : FORA_UP.has(r.up) ? 'Pelotas AS (entra em Rota)' : '' }));
 FT = FT.filter(r => !ELETRICAS.has(r.placa) && !FORA_UNI.has(r.uni) && !FORA_UP.has(r.up));
 const KML = KML0.filter(r => !ELETRICAS.has(r.placa) && !FORA_UNI.has(r.uni) && !FORA_UP.has(r.up));
 
@@ -119,6 +121,7 @@ const fonteModelo = { kml: 0, ginfo: 0, sem: 0 };
 const placasFT = [...new Set(FT.map(r => r.placa))];
 placasFT.forEach(p => { if (KML.some(r => r.placa === p && r.modelo)) fonteModelo.kml++; else if (modeloDe[p]) fonteModelo.ginfo++; else fonteModelo.sem++; });
 FT.forEach(r => { r.modelo = modeloDe[r.placa] || '(sem modelo)'; });
+FT0.forEach(r => { r.modelo = modeloDe[r.placa] || '(sem modelo)'; });
 
 // ── grupos ──
 const groupBy = (arr, fn) => { const m = new Map(); arr.forEach(x => { const k = fn(x); if (!m.has(k)) m.set(k, []); m.get(k).push(x); }); return m; };
@@ -204,6 +207,9 @@ const fronteiras = {}; for (let t = 1; t < 20; t++) { const c = compQz(t - 1, t)
 // ═══ 2 · mesmo modelo, médias diferentes (ano inteiro, visão mensal) ═══
 const dispersao = {}; const dispRes = { grupos: 0, comDif: 0, placasMes: 0, placasMesAcimaMin: 0 };
 const impDisp = {}; // up → {litros, rs, km}
+// a linha da placa no mês na aba Km/L: a do mesmo projeto; se a aba a lança noutro projeto, a de qualquer um.
+// É o MESMO km no deck e na planilha de cobrança (kmlDe), senão os litros não batem.
+const kmlDe = (up, placa, mes) => KML.find(r => r.up === up && r.placa === placa && r.mes === mes) || KML.find(r => r.placa === placa && r.mes === mes);
 for (const up of UPS) {
   const rows = ativasComValor.filter(r => r.up === up);
   const out = [];
@@ -221,7 +227,7 @@ for (const up of UPS) {
     // menos litros (perde); abaixo recebe mais (ganha). litros = km da placa no mês (aba Km/L)
     let perde = 0, ganha = 0, rsPerde = 0, rsGanha = 0, km = 0;
     vals.forEach(x => {
-      const kr = KML.find(r => r.up === up && r.placa === x.placa && r.mes === +mes) || KML.find(r => r.placa === x.placa && r.mes === +mes);
+      const kr = kmlDe(up, x.placa, +mes);
       if (!kr || !(kr.km > 0)) return;
       const d = kr.km / mediana - kr.km / x.v; const p = kr.rsLRem || kr.rsLReal || 0; km += kr.km;
       if (d > 0) { perde += d; rsPerde += d * p; } else { ganha += -d; rsGanha += -d * p; }
@@ -366,6 +372,19 @@ const dados = {
   dispersao, dispRes, impDisp, placaRes, ativacao, evRes, eventos: eventos.slice(0, 400), kmInativas, kmInatTot, kmInatFT, kmInatFTTot, realMesSimples, realModQ, realAtInat, realAtInatTot, mudancasCiclo: Object.values(fronteiras).filter(f => !f.fronteiraQ).reduce((s, f) => s + f.mudaram, 0), erros, premissa, rankUP, UPS,
 };
 writeFileSync(OUT, JSON.stringify(dados));
+// ── apoio para o Excel (KML_REM_GAPS): a base inteira com colunas derivadas + listas placa a placa ──
+if (process.env.KML_REM_GAPS) {
+  const mudancas = []; // toda mudança de valor de uma placa entre quinzenas seguidas (ativa com valor nas duas)
+  for (let t = 1; t < 20; t++) for (const m of compQz(t - 1, t).lista) { const [up, placa] = m.k.split('|'); mudancas.push({ up, placa, modelo: modeloDe[placa] || '(sem modelo)', t, quinzena: qzLabel(t), revisao: FRONT.has(t), de: m.de, para: m.para }); }
+  const dispPlacas = []; // placa × mês contra a mediana do modelo na operação
+  for (const up of UPS) for (const o of dispersao[up] || []) for (const x of o.placas) { const kmP = (kmlDe(up, x.placa, o.mes) || {}).km || 0; const lit = kmP * (1 / o.mediana - 1 / x.v); dispPlacas.push({ up, mes: o.mes, modelo: o.modelo, placa: x.placa, v: x.v, mediana: o.mediana, min: o.min, max: o.max, n: o.n, desvioPct: (x.v / o.mediana - 1) * 100, km: kmP, litros: lit }); }
+  const q3q4Placas = []; // 2ª set × 1ª out, placa a placa
+  { const A = new Map(ativasComValor.filter(r => r.t === 17).map(r => [r.up + '|' + r.placa, r])), B = new Map(ativasComValor.filter(r => r.t === 18).map(r => [r.up + '|' + r.placa, r]));
+    for (const k of new Set([...A.keys(), ...B.keys()])) { const a = A.get(k), b = B.get(k); const [up, placa] = k.split('|'); q3q4Placas.push({ up, placa, modelo: modeloDe[placa] || '(sem modelo)', set2: a ? a.v : null, out1: b ? b.v : null, situacao: a && b ? (Math.abs(a.v - b.v) < 0.005 ? 'mesmo valor' : 'mudou') : a ? 'saiu do ativo' : 'entrou no ativo' }); } }
+  const kmInatLinhas = KML.filter(r => inatFT[r.placa + '|' + r.mes] && r.km > 0).map(r => ({ up: inatFT[r.placa + '|' + r.mes], mes: r.mes, placa: r.placa, modelo: modeloDe[r.placa] || '(sem modelo)', km: r.km, lit: r.lit }));
+  writeFileSync(process.env.KML_REM_GAPS, JSON.stringify({ base: FT0, mudancas, dispPlacas, q3q4Placas, eventos, kmInatLinhas, ativacao, rankUP, mediaUP, modelosQ, movUP, erros: { ativasZeroDet: erros.ativasZeroDet, placaTeste: erros.placaTeste, duplaGrafia: erros.duplaGrafia, upSemAtivas: erros.upSemAtivas, eletricasFora: erros.eletricasFora, outliers: erros.outliers }, fronteiras, QZ: QZ.map(t => ({ t, label: qzLabel(t) })), MESES, UPS, NOME }));
+  console.log('gaps gravado:', process.env.KML_REM_GAPS);
+}
 console.log('gravado', OUT);
 console.log('FT', FT.length, 'linhas ·', placasFT.length, 'placas ·', UPS.length, 'unidade-projeto · modelo:', fonteModelo);
 console.log('frota por trimestre', Object.entries(frota.q).map(([q, o]) => `Q${q} ${r2(o.media)} (${o.n} placas)`).join(' · '));
