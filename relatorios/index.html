@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610132300">
+<meta name="build" content="202610210800">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Relatórios · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -572,7 +572,6 @@ const REL=[
   // Processos
   {cl:'proc',t:'Gerot',h:'gerot/',d:'Indicadores do Frota de Elite, Km/L, aferições do Elite e o termômetro (OS vencida, blitz).',
     f:[ELITE(null),S('consumo_km_litro'),S('elite_pneus')].concat(TERM4)},
-  {cl:'proc',t:'Auditorias',h:'auditorias/',d:'Demarco e DPO/VPO por unidade e semestre.',f:[S('demarco'),S('dpo')]},
   {cl:'proc',t:'FCA',h:'fca-preenchimento/',d:'Todos os FCAs (fato, desvio, causa, ação, prazo, status) e o histórico da planilha FCA Total.',
     f:[T('fca','FCA',{ordem:'id'}),S('fca_total')]},
   {cl:'proc',t:'Indisponibilidade',h:'disponibilidade-preenchimento/',d:'Eventos de parada, fotos diárias, resumo por dia, check-ins e a frota (Ginfo + manual).',
@@ -591,6 +590,7 @@ const REL=[
   {cl:'res',t:'Painel de Metas',h:'painel-metas/',d:'Indicadores, FCA, metas, DPO, DRE, dispersão, Km/L, aferições e termômetro.',
     f:[ELITE(null),T('fca','FCA',{ordem:'id'}),S('metas'),S('dpo'),S('fca_total'),S('dispersao_km'),S('dre_frota'),S('dre_receita'),
        S('consumo_km_litro'),S('elite_pneus')].concat(TERM4)},
+  {cl:'res',t:'Auditorias',h:'auditorias/',d:'Demarco e DPO/VPO por unidade e semestre.',f:[S('demarco'),S('dpo')]},
   // Administração (só admin)
   {cl:'adm',adm:1,t:'Acessos',h:'acessos/',d:'Cada abertura de painel: quem, qual painel e quando.',
     f:[T('access_log','Acessos',{ordem:'id',manter:['email']})]},

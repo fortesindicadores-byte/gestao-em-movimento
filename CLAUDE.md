@@ -145,6 +145,8 @@ RESULTADOS
   └── Painel de Metas      → /painel-metas/     (Em breve)
 ```
 
+**AUDITORIAS MORA EM RESULTADOS (Renan, 21/10/2026: *"jogue auditoria para o cluster de resultado"*):** o card saiu de Processos e foi para o fim de Resultados no `CLUSTERS` do hub, e o relatório dele nos Relatórios mudou de área junto (`cl:'res'`).
+
 **Financeiro Pessoal (`/financeiro-pessoal/`) NÃO aparece no hub** — é acesso direto pela URL.
 
 ### Layout do hub
