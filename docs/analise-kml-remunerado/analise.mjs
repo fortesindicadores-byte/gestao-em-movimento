@@ -334,7 +334,7 @@ erros.placaDoisUps = [...groupBy(FT, r => r.placa + '|' + r.t)].filter(([k, g]) 
 erros.placaDoisUpsRes = { pares: erros.placaDoisUps.length, placas: new Set(erros.placaDoisUps.map(x => x.placa)).size };
 // outlier contra o modelo (dentro do up-mês): |v − mediana| > 25%
 erros.outliers = [];
-for (const up of UPS) for (const o of dispersao[up] || []) { const med = o.mediana; o.placas.forEach(x => { if (Math.abs(x.v / med - 1) > 0.25) erros.outliers.push({ up, mes: o.mes, modelo: o.modelo, placa: x.placa, v: x.v, mediana: med, pct: (x.v / med - 1) * 100 }); }); }
+for (const up of UPS) for (const o of dispersao[up] || []) { const med = o.mediana; o.placas.forEach(x => { if (Math.abs(x.v / med - 1) > 0.25) { const km = (kmlDe(up, x.placa, o.mes) || {}).km || 0; erros.outliers.push({ up, mes: o.mes, modelo: o.modelo, placa: x.placa, v: x.v, mediana: med, pct: (x.v / med - 1) * 100, km, litros: km * (1 / med - 1 / x.v) }); } }); }
 erros.outliersRes = { n: erros.outliers.length, placas: new Set(erros.outliers.map(x => x.up + '|' + x.placa)).size };
 // valores mudando dentro do trimestre (sem revisão)
 erros.mudDentroTri = Object.values(fronteiras).filter(f => !f.fronteiraQ).reduce((s, f) => s + f.mudaram, 0);

@@ -242,7 +242,7 @@ tabela(ws, 'G7_RevisaoJulho', r0, ['Unidade · Projeto', 'Unidade', 'Projeto', '
 # ───────────────────── G8 · O mesmo modelo entre unidades ─────────────────────
 ws = wb.create_sheet('G8 Modelo entre unidades')
 r0 = titulo(ws, '8 · O MESMO MODELO ENTRE UNIDADES', 'Média do consumo remunerado do modelo em cada operação, trimestre a trimestre',
-            'O mesmo caminhão recebendo réguas diferentes em operações diferentes. Ex.: VW 26.260 (baú roll-up 10 pallets) estava a 2,70 em quase toda a Rota no Q2 e foi de 2,64 a 4,45 na revisão de julho.')
+            'O mesmo caminhão recebendo réguas diferentes em operações diferentes. Ex.: VW 26.260 (baú roll-up 10 pallets) estava a 2,70 em 5 das 7 operações de Rota no Q2 (Macacu 3,21, Florianópolis 2,96) e foi de 2,64 a 4,45 (média do modelo na operação) depois da revisão de julho.')
 lin = []
 for mo in sorted(G['modEntreUps']):
     for x in sorted(G['modEntreUps'][mo], key=lambda x: x['up']):
@@ -378,8 +378,8 @@ gaps = [
      f'={E}!B{T}', 'placas sem revisão em out', 'Todas as operações',
      'Rodar a revisão do Q4 já, com o mesmo método trimestral; confirmar a data de entrada do valor novo.', 'G1 Revisão Q4'),
     ('2', 'Mesmo modelo com valores diferentes', 'Placas do mesmo modelo, na mesma operação e mês, recebendo consumo remunerado diferente.',
-     f'={E}!F{T}', 'litros contra nós (saldo, jan a set)', 'PIR · EMPURRADA (Actros 2651; UGU5D17 a 0,67 km/L)',
-     'Uma régua por modelo dentro da operação; corrigir UGU5D17 e explicar cada placa fora da mediana.', 'G2 Mesmo modelo'),
+     f'={E}!F{T}', 'litros contra nós (saldo, jan a set)', 'PIR · EMPURRADA (Actros 2651)',
+     'Uma régua por modelo dentro da operação; explicar cada placa fora da mediana (inclusive UGU5D17 a 0,67, que é a favor).', 'G2 Mesmo modelo'),
     ('3', 'Km de placas inativas', 'Placas que rodaram num mês em que estavam inativas no FT: consumo sem régua remunerada.',
      f'={E}!I{T}', 'km rodados (jan a set)', 'Ver Estratificação, coluna G3b',
      'Critério de ativação por escrito; reativar as placas que rodam.', 'G3b Km inativas'),
@@ -390,14 +390,14 @@ gaps = [
      f'={E}!J{T}', 'placas', 'PIR · EMPURRADA',
      'Qual regra o FT aplicou ao zero e qual valor valeu na 1ª abr; valor novo junto com a 1ª quinzena.', 'G4 Ativas zeradas'),
     ('6', 'Mudanças fora da revisão', 'Consumo remunerado de placa mudando fora da 1ª quinzena do trimestre.',
-     f'={E}!K{T}', 'mudanças no ano', 'CBA · ROTA e CBA · AS (2ª set)',
+     f'={E}!K{T}', 'mudanças no ano', 'PIR · EMPURRADA e INSUMOS (2ª jan e 2ª abr) · CBA · ROTA e CBA · AS (2ª set)',
      'A trilha de cada mudança fora da revisão (quem, quando, por quê).', 'G5 Fora da revisão'),
-    ('7', 'Cadastro e valores incompatíveis', 'Placa "TESTE" ativa o ano inteiro, placa com valor a mais de 25% da mediana do modelo (UGU5D17 a 0,67 km/L), operação sem placa ativa.',
+    ('7', 'Cadastro e valores incompatíveis', 'Placa "TESTE" ativa em 19 das 20 quinzenas, placa com valor a mais de 25% da mediana do modelo (UGU5D17 a 0,67 km/L), operação sem placa ativa.',
      f'={E}!M{T}', 'ocorrências', 'PIR · EMPURRADA (UGU5D17) · GRL UDC · ROTA (TESTE)',
      'Corrigir o valor das placas fora do modelo e limpar o cadastro antes da base do Q1/27.', 'G6 Cadastro'),
     ('8', 'Revisão de julho', 'O que a revisão do Q3 mudou placa a placa e os litros que tirou ou deu até setembro.',
      f'={E}!P{T}', 'litros (saldo; + = contra nós)', 'PLT · ROTA e RON · ROTA (contra nós)',
-     'O critério de cada valor novo do Q3; por que RON ROTA foi a 3,43/3,85 e MCC ROTA a 4,45 no VW 26.260.', 'G7 Revisão julho'),
+     'O critério de cada valor novo do Q3; por que RON ROTA foi a 3,43/3,85 e a UFA5H96 de MCC ROTA a 4,64 no VW 26.260.', 'G7 Revisão julho'),
     ('9', 'O mesmo modelo entre unidades', 'O mesmo caminhão com régua diferente em cada operação (VW 26.260 em Rota: 2,64 a 4,45 no Q3).',
      "=COUNTA('G8 Modelo entre unidades'!A:A)-4", 'linhas modelo × operação', 'VW 26.260 em Rota (RON, MCC, PLT)',
      'Justificar a régua de cada operação para o mesmo modelo, ou alinhar à da frota.', 'G8 Modelo entre unidades'),
