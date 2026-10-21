@@ -182,7 +182,16 @@ for (const P of PAINEIS) {
   af('hero preenchido (não é "—")', N.a.real && N.a.real !== '—' && N.a.imp !== '—', N.a.real);
   af('números iguais no padrão (hero + totais + tabelas)', JSON.stringify(A.a) === JSON.stringify(N.a), JSON.stringify(N.a).slice(0, 160));
   af('números iguais com Unidade = GRL', JSON.stringify(A.b) === JSON.stringify(N.b));
-  af('números iguais no benchmark Rem modelo', JSON.stringify(A.c) === JSON.stringify(N.c));
+  // Consumo por Veículo: em Rem modelo o Δ da placa passou a ser contra o Rem modelo
+  // (Renan, 21/10/2026); o resto tem de seguir igual ao antigo.
+  const semVei = o => ({ ...o, vei1: null });
+  af('números iguais no benchmark Rem modelo (fora a linha de veículo)', JSON.stringify(semVei(A.c)) === JSON.stringify(semVei(N.c)));
+  if (N.c.vei1) {
+    const cel = N.c.vei1.split('|'), num = x => +String(x).replace(/[^\d,+-]/g, '').replace(',', '.');
+    const remM = num(cel[6]), real = num(cel[8]), d = num(cel[9]);
+    af('veículo em Rem modelo: Δ = Real − Rem modelo', cel[9] === '—' ? !(remM > 0) : Math.abs(d - (real - remM)) < 0.015, N.c.vei1);
+    af('veículo: o Δ muda ao trocar para Rem modelo', N.a.vei1 && N.b.vei1 !== N.c.vei1, N.b.vei1 + ' → ' + N.c.vei1);
+  }
   af('filtro de unidade muda os números', N.a.real !== N.b.real || N.a.imp !== N.b.imp);
   af('Rem modelo muda o remunerado', N.b.rem !== N.c.rem);
 
