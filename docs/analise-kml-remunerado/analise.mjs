@@ -69,7 +69,7 @@ function modeloCanon(s) {
 // ── 1) planilha do FT ──
 const wb = XLSX.readFile(XLSX_PATH);
 const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { raw: true });
-const FT = raw.map(r => {
+let FT = raw.map(r => {
   const m = String(r.Vigencia).match(/_(\d)_(\d+)_(\d{4})$/);
   const qz = +m[1], mes = +m[2], ano = +m[3];
   const at = String(r.Ativo);
@@ -88,7 +88,7 @@ const MES_IDX = [...new Set(FT.map(r => r.mes))].sort((a, b) => a - b);
 // ── 2) dump: aba Km/L + ativos ──
 const dump = readFileSync(DUMP_PATH, 'utf8').split('\n');
 const seg = (a, b) => { const i0 = dump.indexOf(a), i1 = dump.indexOf(b); return dump.slice(i0 + 2, i1).map(l => l.split('|')); };
-const KML = seg('#### KML ####', '#### FIM KML ####').map(c => {
+const KML0 = seg('#### KML ####', '#### FIM KML ####').map(c => {
   const sufx = (c[1].match(/-\s*([A-Z]{3})\s*$/) || [])[1];
   const projRaw = c[1].replace(/\s*-\s*[A-Z]{3}\s*$/, '').trim();
   const proj = /EMPURRADA/.test(projRaw) ? 'EMPURRADA' : /INSUMOS/.test(projRaw) ? 'INSUMOS' : /VAN/.test(projRaw) ? 'VAN' : /AUTO/.test(projRaw) ? 'AS' : 'ROTA';
@@ -96,6 +96,16 @@ const KML = seg('#### KML ####', '#### FIM KML ####').map(c => {
     km: +c[6] || 0, lit: +c[7] || 0, remM: +c[8] || 0, remMod: +c[9] || 0, real: +c[10] || 0, ativo: c[11], rsLRem: +c[12] || 0, rsLReal: +c[13] || 0 };
 });
 const ATIVOS = seg('#### ATIVOS ####', '#### FIM ATIVOS ####').map(c => ({ placa: merc(c[0]), filial: c[1], proj: c[2], marca: c[3], modelo: c[4], tipo: c[5], ano: +c[6] || null }));
+// Elétricas ficam FORA da análise (Renan, 21/10/2026: "CGR são as elétricas, tire"): não têm Km/L e
+// aparecem no FT como ativas com consumo zero (as 8 VW Delivery 14 VUC ELÉTRICO de Campo Grande).
+const ELETRICAS = new Set(ATIVOS.filter(a => /EL[ÉE]TRIC/i.test(`${a.tipo} ${a.modelo}`)).map(a => a.placa));
+const eletricasFT = [...new Set(FT.filter(r => ELETRICAS.has(r.placa)).map(r => `${r.up}|${r.placa}`))].map(k => { const [up, placa] = k.split('|'); const a = ATIVOS.find(x => x.placa === placa); return { up, placa, modelo: `${a.marca} ${a.modelo}`, tipo: a.tipo }; });
+// Campo Grande (CGR) é tratada em OUTRA pauta (tanque interno/SUMA, benchmark da montadora) e fica fora
+// desta análise inteira (Renan, 21/10/2026: "Falei que CGR está sendo tratado em outra pauta"). Pelotas AS
+// não existe como operação (entra em Rota): também fora.
+const FORA_UNI = new Set(['CGR']), FORA_UP = new Set(['PLT · AS']);
+FT = FT.filter(r => !ELETRICAS.has(r.placa) && !FORA_UNI.has(r.uni) && !FORA_UP.has(r.up));
+const KML = KML0.filter(r => !ELETRICAS.has(r.placa) && !FORA_UNI.has(r.uni) && !FORA_UP.has(r.up));
 
 // modelo por placa: moda na aba Km/L → Ginfo → "(sem modelo)"
 const modeloDe = {};
@@ -284,6 +294,17 @@ const realAtInatTot = { ativas: simplesG(todasA), inativas: simplesG(todasI), nA
 const erros = {};
 erros.ativasZero = FT.filter(r => r.ativo && !(r.v > 0));
 erros.ativasZeroPorUp = Object.fromEntries([...groupBy(erros.ativasZero, r => r.up)].map(([k, g]) => [k, { linhas: g.length, placas: [...new Set(g.map(r => r.placa))], quinzenas: [...new Set(g.map(r => qzLabel(r.t)))] }]));
+// detalhe de cada zero: o modelo da placa, se há irmãs do mesmo modelo ativas com valor na mesma quinzena e
+// o que a placa tinha na quinzena anterior / recebeu na seguinte (Renan, 21/10/2026: "As placas zeradas, tem
+// consumo no modelo delas? tem outras placas do mesmo modelo com consumo remunerado ativas?")
+erros.ativasZeroDet = erros.ativasZero.map(r => {
+  const irmas = FT.filter(x => x.up === r.up && x.t === r.t && x.modelo === r.modelo && x.placa !== r.placa && x.ativo && x.v > 0);
+  const ant = FT.find(x => x.placa === r.placa && x.up === r.up && x.t === r.t - 1);
+  const prox = FT.find(x => x.placa === r.placa && x.up === r.up && x.t === r.t + 1);
+  return { up: r.up, t: qzLabel(r.t), placa: r.placa, modelo: r.modelo, irmas: irmas.length, irmasMedia: mean(irmas.map(x => x.v)), irmasMin: irmas.length ? Math.min(...irmas.map(x => x.v)) : null, irmasMax: irmas.length ? Math.max(...irmas.map(x => x.v)) : null,
+    ant: ant ? { v: ant.v, ativo: ant.ativo } : null, prox: prox ? { v: prox.v, ativo: prox.ativo } : null };
+});
+erros.eletricasFora = eletricasFT;
 erros.placaTeste = FT.filter(r => /TESTE/.test(r.placa)).map(r => ({ up: r.up, t: qzLabel(r.t), v: r.v, ativo: r.ativoTxt }));
 const porMerc = groupBy(FT, r => r.placa); erros.duplaGrafia = [...porMerc].filter(([p, g]) => new Set(g.map(r => r.placaOrig)).size > 1).map(([p, g]) => ({ placa: p, grafias: [...new Set(g.map(r => r.placaOrig))], ups: [...new Set(g.map(r => r.up))] }));
 erros.placaDoisUps = [...groupBy(FT, r => r.placa + '|' + r.t)].filter(([k, g]) => new Set(g.map(r => r.up)).size > 1).map(([k, g]) => ({ placa: k.split('|')[0], t: qzLabel(+k.split('|')[1]), ups: [...new Set(g.map(r => r.up + (r.ativo ? '' : ' (inativa)')))] }));
