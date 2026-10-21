@@ -1,10 +1,14 @@
 name: KmL Rem Dump (apoio à análise do remunerado)
 
-# Imprime no log a aba Km/L do Consumo (do banco) e a base Ativos do Ginfo,
-# por placa, para cruzar com a planilha do consumo remunerado do FT.
-# Só leitura; nada é gravado.
+# Lê a aba Km/L do Consumo (do banco) e a base Ativos do Ginfo, por placa, e
+# grava o dump num branch TEMPORÁRIO (tmp-kml-rem-dump, órfão, forçado) para o
+# cruzamento com a planilha do consumo remunerado do FT. O branch é apagado
+# depois de lido. Nada é gravado no banco.
 on:
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   dump:
@@ -17,4 +21,14 @@ jobs:
       - name: Ler Km/L e Ativos
         env:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          DUMP_OUT: /tmp/kml-rem-dump.txt
         run: node scripts/kml-rem-dump.mjs
+      - name: Publicar no branch temporário
+        run: |
+          set -e
+          rm -rf /tmp/pub && mkdir -p /tmp/pub && cd /tmp/pub
+          git init -q -b tmp-kml-rem-dump
+          git config user.email "actions@github.com" && git config user.name "github-actions"
+          cp /tmp/kml-rem-dump.txt dump.txt
+          git add dump.txt && git commit -qm "dump temporário (apagar depois de ler)"
+          git push -f -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" tmp-kml-rem-dump

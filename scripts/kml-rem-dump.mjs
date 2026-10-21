@@ -30,6 +30,10 @@ async function tudo(tabela, order) {
   return out;
 }
 const lim = s => String(s ?? '').replace(/[|\r\n]+/g, ' ').trim();
+import { writeFileSync } from 'node:fs';
+const OUT = process.env.DUMP_OUT || '';
+const buf = [];
+const log = (...a) => { const t = a.join(' '); if (OUT) buf.push(t); else console.log(t); };
 
 // ── 1) aba Km/L ──
 const [base] = await rest('sh_base?select=slug,colunas,linhas,erro,carregado_em&slug=eq.consumo_km_litro');
@@ -42,20 +46,21 @@ console.log(`linhas lidas: ${linhas.length}`);
 // A vig · E rem médio · F rem modelo · G real · L ativo · O projeto-unidade · P unidade · Q placa · T modelo · V tipo · W km · X litros
 const IDX = { vig: 0, remM: 4, remMod: 5, real: 6, ativo: 11, projUni: 14, uni: 15, placa: 16, modelo: 19, tipo: 21, km: 22, lit: 23 };
 const colDe = i => (cols.find(c => c.i === i) || {}).col;
-console.log('#### KML ####');
-console.log('vig|projUni|uni|placa|modelo|tipo|km|lit|remM|remMod|real|ativo');
+log('#### KML ####');
+log('vig|projUni|uni|placa|modelo|tipo|km|lit|remM|remMod|real|ativo');
 for (const r of linhas) {
   const g = k => r[colDe(IDX[k])];
-  console.log([g('vig'), g('projUni'), g('uni'), g('placa'), g('modelo'), g('tipo'), g('km'), g('lit'), g('remM'), g('remMod'), g('real'), g('ativo')].map(lim).join('|'));
+  log([g('vig'), g('projUni'), g('uni'), g('placa'), g('modelo'), g('tipo'), g('km'), g('lit'), g('remM'), g('remMod'), g('real'), g('ativo')].map(lim).join('|'));
 }
-console.log('#### FIM KML ####');
+log('#### FIM KML ####');
 
 // ── 2) ativos do Ginfo ──
 const [gs] = await rest('ginfo_snapshot?chave=eq.ativos&select=data,updated_at');
 console.log(`ginfo ativos: ${gs.data.length} linhas · ${gs.updated_at}`);
-console.log('#### ATIVOS ####');
-console.log('placa|filial|projeto|marca|modelo|tipo|ano');
+log('#### ATIVOS ####');
+log('placa|filial|projeto|marca|modelo|tipo|ano');
 for (const a of gs.data) {
-  console.log([a['Placa'], a['Filial'], a['Projeto'], a['Marca'], a['Modelo'], a['Tipo Veículo'], a['Ano Fabricação']].map(lim).join('|'));
+  log([a['Placa'], a['Filial'], a['Projeto'], a['Marca'], a['Modelo'], a['Tipo Veículo'], a['Ano Fabricação']].map(lim).join('|'));
 }
-console.log('#### FIM ATIVOS ####');
+log('#### FIM ATIVOS ####');
+if (OUT) { writeFileSync(OUT, buf.join('\n') + '\n'); console.log(`gravado ${OUT}: ${buf.length} linhas`); }
