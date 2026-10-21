@@ -160,7 +160,7 @@ const realMesSimples = {}; for (const [m, g] of groupBy(KML.filter(r => r.km > 3
 for (const up in realUP) for (const m in realUP[up]) { const g = KML.filter(r => r.up === up && r.mes === +m && r.km > 0 && r.lit > 0); realUP[up][m].simples = mean([...groupBy(g, r => r.placa)].map(([p, gg]) => sum(gg.map(r => r.km)) / sum(gg.map(r => r.lit)))); }
 
 // ═══ 1 · modelos × trimestre, por unidade-projeto ═══
-const modelosQ = {};
+const modelosQ = {}, movUP = {};
 for (const up of UPS) {
   const rows = ativasComValor.filter(r => r.up === up);
   const porMod = groupBy(rows, r => r.modelo);
@@ -172,10 +172,23 @@ for (const up of UPS) {
     const set2 = new Map(g.filter(r => r.t === 17).map(r => [r.placa, r.v])), out1 = new Map(g.filter(r => r.t === 18).map(r => [r.placa, r.v]));
     let iguais = 0, mudaram = [];
     for (const [p, v] of out1) if (set2.has(p)) { if (Math.abs(set2.get(p) - v) < 0.005) iguais++; else mudaram.push({ placa: p, de: set2.get(p), para: v }); }
-    lista.push({ modelo: mod, q, placas: new Set(g.map(r => r.placa)).size, q3q4: { iguais, mudaram, novas: [...out1.keys()].filter(p => !set2.has(p)).length, sairam: [...set2.keys()].filter(p => !out1.has(p)).length } });
+    lista.push({ modelo: mod, q, placas: new Set(g.map(r => r.placa)).size, q3q4: { iguais, mudaram, novas: [...out1.keys()].filter(p => !set2.has(p)).length, sairam: [...set2.keys()].filter(p => !out1.has(p)).length }, mov: movQ3Q4(g) });
   }
   lista.sort((a, b) => b.placas - a.placas);
   modelosQ[up] = lista;
+  movUP[up] = movQ3Q4(rows);
+}
+// o que explica o Δ Q3→Q4 de um conjunto de linhas ativas com valor: placas que ENTRARAM no ativo em
+// outubro (média delas no Q4), que SAÍRAM (média no Q3) e as que FICARAM (média Q3 × Q4; diferença
+// só se o valor mudou dentro do Q3, porque em outubro nenhum valor mudou)
+function movQ3Q4(g) {
+  const porPlaca = groupBy(g.filter(r => r.q === 3 || r.q === 4), r => r.placa);
+  const ent = [], sai = [], ficQ3 = [], ficQ4 = [];
+  for (const [p, gg] of porPlaca) {
+    const q3 = gg.filter(r => r.q === 3).map(r => r.v), q4 = gg.filter(r => r.q === 4).map(r => r.v);
+    if (q3.length && q4.length) { ficQ3.push(mean(q3)); ficQ4.push(mean(q4)); } else if (q4.length) ent.push(mean(q4)); else sai.push(mean(q3));
+  }
+  return { ent: { n: ent.length, media: mean(ent) }, sai: { n: sai.length, media: mean(sai) }, fic: { n: ficQ3.length, q3: mean(ficQ3), q4: mean(ficQ4) } };
 }
 // resumo global Q3→Q4 por placa (2ª set × 1ª out) e dentro do Q4 (1ª out × 2ª out)
 function compQz(tA, tB) {
@@ -349,7 +362,7 @@ const rankUP = UPS.map(up => {
 const dados = {
   geradoEm: new Date().toISOString(), NOME, MESES, QZ: QZ.map(t => ({ t, label: qzLabel(t), q: QDE(Math.floor(t / 2) + 1) })), MES_IDX,
   totais: { linhas: FT.length, placas: placasFT.length, ups: UPS.length, fonteModelo, kmlLinhas: KML.length },
-  frota, realMes, mediaUP, realUP, realUPq, modelosQ, q3q4: { ...q3q4, lista: q3q4.lista.slice(0, 60) }, q4in: { iguais: q4in.iguais, mudaram: q4in.mudaram, lista: q4in.lista.slice(0, 40) }, fronteiras,
+  frota, realMes, mediaUP, movUP, realUP, realUPq, modelosQ, q3q4: { ...q3q4, lista: q3q4.lista.slice(0, 60) }, q4in: { iguais: q4in.iguais, mudaram: q4in.mudaram, lista: q4in.lista.slice(0, 40) }, fronteiras,
   dispersao, dispRes, impDisp, placaRes, ativacao, evRes, eventos: eventos.slice(0, 400), kmInativas, kmInatTot, kmInatFT, kmInatFTTot, realMesSimples, realModQ, realAtInat, realAtInatTot, mudancasCiclo: Object.values(fronteiras).filter(f => !f.fronteiraQ).reduce((s, f) => s + f.mudaram, 0), erros, premissa, rankUP, UPS,
 };
 writeFileSync(OUT, JSON.stringify(dados));
