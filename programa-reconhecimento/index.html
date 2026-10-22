@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610201800">
+<meta name="build" content="202610221530">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Frota de Elite · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -398,28 +398,28 @@ body.claro .ind-yellow{color:#b45309;}
 .podio-slot.segundo{order:1;z-index:2;}
 .podio-slot.terceiro{order:3;z-index:1;}
 .avatar-wrap{position:relative;margin-bottom:-2px;z-index:2;}
-.avatar-img{width:200px;height:min(240px,30vh);object-fit:contain;object-position:bottom center;mix-blend-mode:multiply;filter:drop-shadow(0 16px 40px rgba(0,0,0,.9));transition:transform .25s;background:transparent;}
-.podio-slot.segundo .avatar-img,.podio-slot.terceiro .avatar-img{width:170px;height:min(200px,25vh);}
+.avatar-img{width:260px;height:min(340px,38vh);object-fit:contain;object-position:bottom center;mix-blend-mode:multiply;filter:drop-shadow(0 16px 40px rgba(0,0,0,.9));transition:transform .25s;background:transparent;}
+.podio-slot.segundo .avatar-img,.podio-slot.terceiro .avatar-img{width:220px;height:min(290px,32vh);}
 .avatar-wrap:hover .avatar-img{transform:translateY(-8px);}
 .crown{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:26px;z-index:3;}
 .pedestal{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-  padding:18px 16px 20px;cursor:default;width:220px;
+  padding:20px 18px 22px;cursor:default;width:280px;
   background:linear-gradient(180deg,#1c1c1e 0%,#0d0d0f 100%);
   border-top:3px solid rgba(255,255,255,.12);border-left:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06);
   box-shadow:inset 0 2px 0 rgba(255,255,255,.07), 0 -2px 20px rgba(0,0,0,.6);}
-.podio-slot.segundo .pedestal,.podio-slot.terceiro .pedestal{width:185px;}
-.podio-slot.primeiro .pedestal{min-height:140px;border-top-color:rgba(196,145,26,.5);
+.podio-slot.segundo .pedestal,.podio-slot.terceiro .pedestal{width:240px;}
+.podio-slot.primeiro .pedestal{min-height:clamp(150px,20vh,190px);border-top-color:rgba(196,145,26,.5);
   box-shadow:inset 0 2px 0 rgba(196,145,26,.2), 0 -4px 30px rgba(196,145,26,.15);}
-.podio-slot.segundo .pedestal{min-height:105px;}
-.podio-slot.terceiro .pedestal{min-height:85px;}
-.pedestal-place{font-size:11px;font-weight:800;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;
+.podio-slot.segundo .pedestal{min-height:clamp(120px,15.5vh,150px);}
+.podio-slot.terceiro .pedestal{min-height:clamp(100px,13vh,125px);}
+.pedestal-place{font-size:13px;font-weight:800;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;
   border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:6px;width:100%;text-align:center;}
 .podio-slot.primeiro .pedestal-place{color:rgba(196,145,26,.9);border-bottom-color:rgba(196,145,26,.25);}
-.pedestal-name{font-size:16px;font-weight:800;color:#fff;text-align:center;line-height:1.2;margin-top:2px;}
-.podio-slot.primeiro .pedestal-name{font-size:20px;}
-.pedestal-unit{font-size:10px;font-weight:600;color:rgba(255,255,255,.45);text-align:center;margin-top:5px;text-transform:uppercase;letter-spacing:.5px;}
-.pedestal-score{font-size:13px;font-weight:800;color:rgba(255,255,255,.7);margin-top:8px;}
-.podio-slot.primeiro .pedestal-score{font-size:16px;color:rgba(196,145,26,.9);}
+.pedestal-name{font-size:21px;font-weight:800;color:#fff;text-align:center;line-height:1.2;margin-top:2px;}
+.podio-slot.primeiro .pedestal-name{font-size:27px;}
+.pedestal-unit{font-size:12px;font-weight:600;color:rgba(255,255,255,.45);text-align:center;margin-top:5px;text-transform:uppercase;letter-spacing:.5px;}
+.pedestal-score{font-size:18px;font-weight:800;color:rgba(255,255,255,.7);margin-top:10px;}
+.podio-slot.primeiro .pedestal-score{font-size:23px;color:rgba(196,145,26,.9);}
 .podio-floor{height:5px;background:rgba(255,255,255,.04);width:100%;}
 body.claro .podio-slot.primeiro .pedestal{box-shadow:0 -4px 24px rgba(196,145,26,.25);}
 
@@ -1593,6 +1593,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610142230"></script>
+<script src="../assets/build-check.js?v=202610221530"></script>
 </body>
 </html>
