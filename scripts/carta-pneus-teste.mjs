@@ -98,7 +98,7 @@ const tabela=pg=>pg.evaluate(()=>[...document.querySelectorAll('#tbl-conta tbody
   t(JSON.stringify(m.gr)===JSON.stringify(['Manutenção','Pneus'])&&m.conta==='Manutenção de Veículos e Equip.'&&!m.fixo,'sem filtro: contas agrupadas Manutenção · Pneus, nasce na 1ª de Manutenção');
   await pg.click('#f-grupo'); await pg.waitForTimeout(120);
   m=await pg.evaluate(()=>[...document.querySelectorAll('#ac-grupo .ac-opt')].map(o=>o.textContent));
-  t(m.length===39&&m.includes('Motor')&&!m.includes('Recapagens'),'conta de Manutenção: os 39 grupos de Manutenção, nenhum de pneus');
+  t(m.length===40&&m.includes('Motor')&&!m.includes('Recapagens'),'conta de Manutenção: os 40 grupos (com Revitalização) de Manutenção, nenhum de pneus');
   await pg.keyboard.type('frio'); await pg.waitForTimeout(80);
   m=await pg.evaluate(()=>[...document.querySelectorAll('#ac-grupo .ac-opt')].length);
   t(m===5,'busca "frio" → 5 grupos');

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610212100">
+<meta name="build" content="202610221400">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -154,6 +154,17 @@ body{font-family:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;font-s
 .tool:hover{background:var(--hover);color:var(--txt);}
 .tool.ico{padding:7px 9px;}
 .filtros{display:flex;align-items:center;gap:4px;min-width:0;}
+/* com RC, OC e NF são 12 filtros: no notebook eles apertam para o título não
+   ser espremido (Renan, 22/10/2026) */
+@media(min-width:861px) and (max-width:1750px){
+  .filtros{gap:0;}
+  .ms-btn{padding:6px 6px;gap:5px;font-size:12px;}
+  .ms-btn>svg{display:none;}
+}
+@media(min-width:861px) and (max-width:1500px){
+  .ms-btn{padding:6px 4px;font-size:11px;}
+  .top{padding-left:20px;padding-right:18px;}
+}
 
 /* ── filtros multi-select (mesma mecânica do painel original, visual do app) ── */
 .ms-wrap{position:relative;}
@@ -615,6 +626,21 @@ body.claro input[type=date]{color-scheme:light;}
           Fornecedor<span class="ms-cnt"></span></button>
           <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
         </div>
+        <div class="ms-wrap" id="ms-rc"><button class="ms-btn" onclick="toggleMs('ms-rc')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg>
+          RC<span class="ms-cnt"></span></button>
+          <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
+        </div>
+        <div class="ms-wrap" id="ms-oc"><button class="ms-btn" onclick="toggleMs('ms-oc')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg>
+          OC<span class="ms-cnt"></span></button>
+          <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
+        </div>
+        <div class="ms-wrap" id="ms-nf"><button class="ms-btn" onclick="toggleMs('ms-nf')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg>
+          NF<span class="ms-cnt"></span></button>
+          <div class="ms-panel"><div class="ms-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div>
+        </div>
         <div class="ms-wrap" id="ms-pac"><button class="ms-btn" onclick="toggleMs('ms-pac')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>
           Pacote<span class="ms-cnt"></span></button>
@@ -894,6 +920,21 @@ const selUni=new Set(), selVig=new Set(), selProj=new Set(), selAno=new Set();
    do lançamento. Recortam NO CLIENTE — as opções nascem do que já foi lido
    para o filtro de unidade/vigência, então não há nova consulta ao banco. */
 const selGrupo=new Set(), selForn=new Set(), selConta=new Set(), selData=new Set();
+/* FILTROS DE RC, OC E NF (Renan, 22/10/2026: "Coloque filtros de RC, OC e NF").
+   Pela situação de cada documento, a mesma dos faróis da tabela. Só os custos
+   lançados à mão passam pelo processo: com um destes filtros ligado, o
+   combustível do ERP, a prévia do contrato e as linhas de robô saem da tela. */
+const selRC=new Set(), selOC=new Set(), selNF=new Set();
+const OPS_RC=['Aprovada','Aguardando aprovação','N/A (sem RC)','Em branco'],
+      OPS_OC=['Aprovada','Aguardando aprovação','Em branco'],
+      OPS_NF=['Lançada','Em branco'];
+const manual=r=>!!r.id&&!r.origem;
+const stRC=r=>{ if(!manual(r)) return null; const v=String(r.rc||'').trim();
+  if(v.toUpperCase()==='N/A') return 'N/A (sem RC)'; if(!v) return 'Em branco';
+  return r.aprovado?'Aprovada':'Aguardando aprovação'; };
+const stOC=r=>manual(r)?(String(r.oc||'').trim()?(r.aprovado_oc?'Aprovada':'Aguardando aprovação'):'Em branco'):null;
+const stNF=r=>manual(r)?(String(r.nf||'').trim()?'Lançada':'Em branco'):null;
+const filtroDoc=()=>!!(selRC.size||selOC.size||selNF.size);
 /* PACOTE (Renan, 07/10/2026: "Caso filtre o pacote pneus ou conta relacionada a
    pneus devem aparecer apenas os grupos de pneus para lançar"): Manutenção e
    Pneus. As opções são fixas (não saem das linhas), senão o primeiro pneu nunca
@@ -914,7 +955,10 @@ const passaExtras=r=>(!selPac.size||selPac.has(pacDe(r)))
   && (!selGrupo.size||selGrupo.has(r.grupo||'—'))
   && (!selForn.size||selForn.has(r.fornecedor||'—'))
   && (!selConta.size||selConta.has(r.conta||'—'))
-  && (!selData.size||selData.has(String(r.data||'').slice(0,10)||'—'));
+  && (!selData.size||selData.has(String(r.data||'').slice(0,10)||'—'))
+  && (!selRC.size||selRC.has(stRC(r)))
+  && (!selOC.size||selOC.has(stOC(r)))
+  && (!selNF.size||selNF.has(stNF(r)));
 let VIG_OPTS=[], ROWS=[];
 // selUni guarda a unidade sem tier (MCC); um código com tier (MCC T1) também vale
 const curUnits =()=> ALLOWED.filter(c=>!selUni.size||selUni.has(c)||selUni.has(UNIT_BASE(c)));
@@ -1067,6 +1111,9 @@ function buildExtras(){
   limpa(selGrupo,g); limpa(selForn,f); limpa(selConta,c); limpa(selData,d);
   buildMs('ms-grupo', ()=>g, v=>v, selGrupo, render, 'Todos');
   buildMs('ms-forn',  ()=>f, v=>v, selForn,  render, 'Todos');
+  buildMs('ms-rc',    ()=>OPS_RC, v=>v, selRC, render, 'Todas');
+  buildMs('ms-oc',    ()=>OPS_OC, v=>v, selOC, render, 'Todas');
+  buildMs('ms-nf',    ()=>OPS_NF, v=>v, selNF, render, 'Todas');
   buildMs('ms-pac',   ()=>PACOTES, v=>v, selPac, render, 'Todos');
   buildMs('ms-conta', ()=>c, v=>v, selConta, render, 'Todas');
   buildMs('ms-data',  ()=>d, v=>v==='—'?v:dataBR(v), selData, render, 'Todas');
@@ -1429,7 +1476,7 @@ function renderAcomp(){
   let h=`<thead><tr><th>Conta</th><th class="num">Orç</th><th class="num">Rem (tend.)</th><th class="num">Real</th><th class="num">▲ Orç</th><th class="num">▲ Rem</th><th class="num">Ating. Orç %</th><th class="num">Ating. Rem %</th></tr></thead><tbody>`;
   let gR=0,gO=0,gRe=0,gHas=false;
   // a conta é a CC.resumoPacotes — a mesma que o Gestão à Vista mostra
-  CC.resumoPacotes({pacs,rows:curRows(),comb:curComb(),previa:pacs.includes('Manutenção')?contratoPrevia():0,dre:DRE}).forEach(({pac,contas,tot})=>{
+  CC.resumoPacotes({pacs,rows:curRows(),comb:curComb(),previa:pacs.includes('Manutenção')&&!filtroDoc()?contratoPrevia():0,dre:DRE}).forEach(({pac,contas,tot})=>{
     contas.forEach(({conta,orc,rem,real})=>{
       h+=`<tr><td class="conta">${esc(conta)}</td>${acompCells(orc,rem,real)}</tr>`;
     });
@@ -1991,6 +2038,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610132300"></script>
+<script src="../assets/build-check.js?v=202610221400"></script>
 </body>
 </html>
