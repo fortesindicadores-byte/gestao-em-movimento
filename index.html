@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610221100">
+<meta name="build" content="202610221200">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -568,6 +568,8 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11p
 .uc-cx .seg button:hover{color:var(--txt);background:var(--hover);}
 .uc-cx .seg button.on{background:var(--laranja);color:#fff;}
 .uc-cx .seg button:disabled{cursor:not-allowed;}
+.uc-cx #uc-pf{flex-wrap:wrap;align-self:stretch;}
+.uc-cx #uc-pf button{padding:6px 11px;}
 .uc-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .uc-row .inp{flex:1;min-width:150px;width:auto;}
 .uc-senha{margin-top:4px;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
@@ -1424,7 +1426,7 @@ async function doUpdatePassword() {
   setTimeout(() => { sb.auth.signOut(); showLogin(); }, 2000);
 }
 
-let _timeFrotaCol = true;
+let _timeFrotaCol = true, _cargoCol = true;
 async function loadAdminData() {
   const { data } = await sb.from('user_approvals').select('*').order('created_at', { ascending: false });
   allApprovals = data || [];
@@ -1432,7 +1434,10 @@ async function loadAdminData() {
     // farol_unidades pode ainda não existir (migração farol-acessos.sql não rodada) —
     // se o select falhar por causa dela, cai no select sem a coluna p/ não zerar os acessos.
     // time_frota (portal-time-frota.sql) e farol_unidades (farol-acessos.sql) podem faltar: cai no select sem elas
-    let res = await sb.from('fca_profiles').select('user_id,unidade,is_admin,farol_unidades,time_frota');
+    // cargo (portal-cargos.sql) também pode faltar: sem ela, Time Frota segue pelo time_frota
+    let res = await sb.from('fca_profiles').select('user_id,unidade,is_admin,farol_unidades,time_frota,cargo');
+    _cargoCol = !res.error;
+    if (res.error) res = await sb.from('fca_profiles').select('user_id,unidade,is_admin,farol_unidades,time_frota');
     _timeFrotaCol = !res.error;
     if (res.error) res = await sb.from('fca_profiles').select('user_id,unidade,is_admin,farol_unidades');
     if (res.error) res = await sb.from('fca_profiles').select('user_id,unidade,is_admin');
@@ -1679,11 +1684,21 @@ function accChave(r, k) {
   return '';
 }
 /* Perfil e observações são COLUNAS, nunca etiquetas coladas no nome (Renan, 22/10/2026) */
-function accPerfil(r) {
-  const p = _fcaProf[r.id] || {}, m = _mu[r.id];
-  return m && m.master ? 'Master' : p.is_admin ? 'Admin' : p.time_frota ? 'Time Frota' : 'Gestor de Frota';
+/* Perfis (Renan, 22/10/2026): Gestor de Frota (padrão), Gestor de Unidade, Gestor Regional, Gestor e Time Frota
+   têm o mesmo acesso (as unidades marcadas) e só mudam o nome do cargo (fca_profiles.cargo);
+   Admin e Master são os de acesso total. */
+const UC_PERFIS = [['gestor', 'Gestor de Frota'], ['unidade', 'Gestor de Unidade'], ['regional', 'Gestor Regional'], ['gest', 'Gestor'],
+  ['frota', 'Time Frota'], ['admin', 'Admin'], ['master', 'Master']];
+const pfNome = k => (UC_PERFIS.find(x => x[0] === k) || UC_PERFIS[0])[1];
+const pfComum = k => k !== 'admin' && k !== 'master';
+const cargoDe = p => { const c = p && p.cargo; return c && UC_PERFIS.some(x => x[1] === c) ? c : (p && p.time_frota ? 'Time Frota' : 'Gestor de Frota'); };
+function pfDe(p, m) {
+  if (m && m.master) return 'master';
+  if (p.is_admin) return 'admin';
+  const c = cargoDe(p); return (UC_PERFIS.find(x => x[1] === c) || UC_PERFIS[0])[0];
 }
-const ACC_PERFIL_ORD = { 'Master': 0, 'Admin': 1, 'Time Frota': 2, 'Gestor de Frota': 3 };
+function accPerfil(r) { return pfNome(pfDe(_fcaProf[r.id] || {}, _mu[r.id])); }
+const ACC_PERFIL_ORD = Object.fromEntries(['Master', 'Admin', 'Gestor Regional', 'Gestor', 'Gestor de Unidade', 'Gestor de Frota', 'Time Frota'].map((n, i) => [n, i]));
 function accObs(r) {
   const m = _mu[r.id], c = [];
   if (r.semAprov) c.push('Sem aprovação');
@@ -1907,13 +1922,13 @@ function abreUsuario(id) {
   const ap = id ? accAp(id) : null, m = id ? _mu[id] : null, p = id ? (_fcaProf[id] || {}) : {};
   if (id && !ap && !m) return;
   if (!id && !_master) return;
-  const pf = m && m.master ? 'master' : (p.is_admin ? 'admin' : (p.time_frota ? 'frota' : 'gestor'));
+  const pf = pfDe(p, m);
   const far = String(p.farol_unidades || '');
   UC = { id, novo: !id, pode: !id || accPode(id), eu: id === meuId(),
     st: ap ? ap.status : (m ? (m.status || 'pending') : 'approved'), pf, pf0: pf,
     fca: new Set(fcaUnitsOf(p)), far: new Set(far === 'TODAS' ? ucUnidades() : far.split(',').map(x => x.trim().toUpperCase()).filter(Boolean)),
     o: { nome: String((ap && ap.name) || (m && m.nome) || '').toUpperCase(), email: String((ap && ap.email) || (m && m.email) || '').toLowerCase(), tel: (ap && ap.phone) || (m && m.telefone) || '',
-      st: ap ? ap.status : (m ? (m.status || '') : ''), fca: fcaUnitsOf(p).join(','), far, adm: !!p.is_admin, mst: !!(m && m.master), tf: !!p.time_frota } };
+      st: ap ? ap.status : (m ? (m.status || '') : ''), fca: fcaUnitsOf(p).join(','), far, adm: !!p.is_admin, mst: !!(m && m.master), cargo: cargoDe(p) } };
   const v = (k, x) => { document.getElementById(k).value = x == null ? '' : x; };
   v('uc-nome', UC.o.nome); v('uc-email', UC.o.email); v('uc-tel', UC.o.tel); v('uc-pass', '');
   document.getElementById('uc-tit').textContent = UC.novo ? 'Novo usuário' : (UC.o.nome || UC.o.email);
@@ -1942,12 +1957,11 @@ function ucPinta() {
   document.getElementById('uc-st-fld').style.display = novo || UC.eu ? 'none' : '';
   document.getElementById('uc-st').innerHTML = [['approved', 'Ativo'], ['pending', 'Pendente'], ['blocked', 'Bloqueado']]
     .map(([k, r]) => `<button type="button" class="${UC.st === k ? 'on' : ''}" ${ed ? '' : 'disabled'} onclick="UC.st='${k}';ucPinta()">${r}</button>`).join('');
-  // perfil: Gestor de Frota e Time Frota têm o mesmo acesso (as unidades marcadas) e quem edita troca entre os
-  // dois; Admin e Master só o Master dá ou tira. Ninguém mexe no próprio.
-  const comum = k => k === 'gestor' || k === 'frota';
-  const pfOk = k => !UC.eu && ed && (mst || (comum(k) && comum(UC.pf)));
+  // perfil: os gestores e o Time Frota têm o mesmo acesso (as unidades marcadas) e quem edita troca entre eles;
+  // Admin e Master só o Master dá ou tira. Ninguém mexe no próprio.
+  const pfOk = k => !UC.eu && ed && (mst || (pfComum(k) && pfComum(UC.pf)));
   document.getElementById('uc-pf-ctx').textContent = UC.eu ? '· o seu não muda aqui' : (mst ? '' : '· Admin e Master só o Master dá');
-  document.getElementById('uc-pf').innerHTML = [['gestor', 'Gestor de Frota'], ['frota', 'Time Frota'], ['admin', 'Admin'], ['master', 'Master']]
+  document.getElementById('uc-pf').innerHTML = UC_PERFIS
     .map(([k, r]) => `<button type="button" class="${UC.pf === k ? 'on' : ''}" ${pfOk(k) ? '' : 'disabled'} onclick="UC.pf='${k}';ucPinta()">${r}</button>`).join('');
   // senha e acesso: só o Master
   document.getElementById('uc-pass-fld').style.display = mst ? '' : 'none';
@@ -1985,11 +1999,11 @@ async function ucSalvar() {
       if (!nome || !email) throw new Error('Informe nome e e-mail.');
       if (!emailValido(email)) throw new Error('E-mail inválido. Digite só a primeira parte (ex.: nome.sobrenome).');
       const { data, error } = await sb.rpc('master_criar', { p_email: email, p_nome: nome, p_telefone: tel || null,
-        p_senha: document.getElementById('uc-pass').value.trim() || null, p_unidade: (UC.pf === 'gestor' || UC.pf === 'frota') ? (csv || null) : null });
+        p_senha: document.getElementById('uc-pass').value.trim() || null, p_unidade: pfComum(UC.pf) ? (csv || null) : null });
       if (error) throw error;
       const id = data.id;
       if (UC.pf === 'admin' || UC.pf === 'master') { const r = await sb.rpc('master_altera', { p_user: id, p_dados: { admin: true } }); if (r.error) throw r.error; }
-      if (UC.pf === 'frota') { const r = await sb.from('fca_profiles').upsert({ user_id: id, nome, time_frota: true }, { onConflict: 'user_id' }); if (r.error) throw r.error; }
+      if (pfComum(UC.pf) && UC.pf !== 'gestor') await ucGravaCargo(id, nome, pfNome(UC.pf));
       if (UC.pf === 'master') { const r = await sb.rpc('master_define', { p_user: id, p_master: true }); if (r.error) throw r.error; }
       if (far) { const r = await sb.from('fca_profiles').upsert({ user_id: id, nome, farol_unidades: far }, { onConflict: 'user_id' }); if (r.error) throw r.error; }
       await loadAdminData();
@@ -2027,12 +2041,7 @@ async function ucSalvar() {
         if (error) throw error; mudou.push('unidades');
       }
     }
-    const tfNovo = UC.pf === 'frota';
-    if (!UC.eu && tfNovo !== o.tf) {
-      if (!_timeFrotaCol) throw new Error('O banco ainda não tem o perfil Time Frota (rodar o SQL portal-time-frota).');
-      const { error } = await sb.from('fca_profiles').upsert({ user_id: id, nome: nome || null, time_frota: tfNovo }, { onConflict: 'user_id' });
-      if (error) throw error; mudou.push('perfil');
-    }
+    if (!UC.eu && pfComum(UC.pf) && pfNome(UC.pf) !== o.cargo) { await ucGravaCargo(id, nome, pfNome(UC.pf)); mudou.push('perfil'); }
     if ((far || '') !== (o.far || '')) {
       const { error } = await sb.from('fca_profiles').upsert({ user_id: id, nome: nome || null, farol_unidades: far }, { onConflict: 'user_id' });
       if (error) throw error; mudou.push('farol');
@@ -2043,6 +2052,17 @@ async function ucSalvar() {
     ucMsg(mudou.length ? 'Salvo ✓' : 'Nada mudou.', mudou.length ? 'ok' : '');
   } catch (e) { ucMsg(ucErro(e), 'err'); }
   finally { bt.disabled = false; }
+}
+// grava o cargo (e o time_frota junto, que é como as telas antigas leem o Time Frota)
+async function ucGravaCargo(id, nome, cargo) {
+  const tf = cargo === 'Time Frota';
+  if (!_cargoCol && !(cargo === 'Gestor de Frota' || tf))
+    throw new Error('O banco ainda não tem os cargos Gestor de Unidade, Gestor Regional e Gestor (rodar o SQL portal-cargos).');
+  if (!_cargoCol && !_timeFrotaCol) throw new Error('O banco ainda não tem o perfil Time Frota (rodar o SQL portal-time-frota).');
+  const d = { user_id: id, nome: nome || null, time_frota: tf };
+  if (_cargoCol) d.cargo = cargo === 'Gestor de Frota' ? null : cargo;
+  const { error } = await sb.from('fca_profiles').upsert(d, { onConflict: 'user_id' });
+  if (error) throw error;
 }
 async function ucSenha() {
   if (!UC || !_master || UC.novo) return;
