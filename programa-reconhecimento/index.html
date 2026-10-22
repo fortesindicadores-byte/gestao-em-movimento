@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610221530">
+<meta name="build" content="202610221600">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Frota de Elite · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -420,6 +420,8 @@ body.claro .ind-yellow{color:#b45309;}
 .pedestal-unit{font-size:12px;font-weight:600;color:rgba(255,255,255,.45);text-align:center;margin-top:5px;text-transform:uppercase;letter-spacing:.5px;}
 .pedestal-score{font-size:18px;font-weight:800;color:rgba(255,255,255,.7);margin-top:10px;}
 .podio-slot.primeiro .pedestal-score{font-size:23px;color:rgba(196,145,26,.9);}
+.pedestal-premio{font-size:22px;font-weight:800;color:#fff;margin-top:8px;letter-spacing:.3px;white-space:nowrap;}
+.podio-slot.primeiro .pedestal-premio{font-size:29px;color:rgba(196,145,26,1);}
 .podio-floor{height:5px;background:rgba(255,255,255,.04);width:100%;}
 body.claro .podio-slot.primeiro .pedestal{box-shadow:0 -4px 24px rgba(196,145,26,.25);}
 
@@ -502,6 +504,8 @@ body.claro .podio-slot.primeiro .pedestal{box-shadow:0 -4px 24px rgba(196,145,26
   .pedestal-unit{font-size:7px;}
   .pedestal-score{font-size:10px;}
   .podio-slot.primeiro .pedestal-score{font-size:12px;}
+  .pedestal-premio{font-size:12px;margin-top:4px;}
+  .podio-slot.primeiro .pedestal-premio{font-size:14px;}
   /* Ranking: colunas de indicadores escondidas por padrão; o botão as abre */
   #ranking-table{table-layout:auto;}
   .ind-col{display:none;}
@@ -1144,6 +1148,8 @@ function renderPodio(data) {
   const crowns = ['👑','🥈','🥉'];
   const places = ['1º LUGAR','2º LUGAR','3º LUGAR'];
   const classes = ['primeiro','segundo','terceiro'];
+  // premiação por lugar (Renan, 22/10/2026)
+  const PREMIO = {primeiro:3000, segundo:1600, terceiro:1000};
 
   // ordem visual: 2º | 1º | 3º
   const order = top3.length >= 3 ? [top3[1],top3[0],top3[2]] : top3.length===2 ? [top3[1],top3[0]] : [top3[0]];
@@ -1167,6 +1173,7 @@ function renderPodio(data) {
         <div class="pedestal-name">${nome}</div>
         <div class="pedestal-unit">${unit}</div>
         <div class="pedestal-score">${sc} pts</div>
+        <div class="pedestal-premio">R$ ${PREMIO[cl].toLocaleString('pt-BR')}</div>
       </div>
       <div class="podio-floor"></div>
     </div>`;
@@ -1593,6 +1600,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221530"></script>
+<script src="../assets/build-check.js?v=202610221600"></script>
 </body>
 </html>
