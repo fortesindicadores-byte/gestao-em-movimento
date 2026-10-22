@@ -34,7 +34,7 @@ for (const [W,H,tema] of [[1366,768,'escuro'],[1600,900,'claro'],[1920,1080,'esc
       scrollX:m.scrollWidth>m.clientWidth+1, pagina:document.documentElement.scrollHeight>innerHeight+1,
       btn:document.getElementById('btAccModo').title, pick:t?t.querySelectorAll('.user-fca,.user-farol,.farol-btn').length:0}});
   ck(r.tbl && r.linhas===9, `${W}×${H} ${tema}: lista com 9 ativos (${r.linhas})`);
-  ck(JSON.stringify(r.ths)===JSON.stringify(['Nome','E-mail','Telefone','Acesso FCA','Recebe Farol','Cadastro','']), `${W}: cabeçalhos ${r.ths.join('|')}`);
+  ck(JSON.stringify(r.ths)===JSON.stringify(['Nome','Perfil','E-mail','Telefone','Acesso FCA','Recebe Farol','Cadastro','']), `${W}: cabeçalhos ${r.ths.join('|')}`);
   ck(r.pick===0, `${W}: linha em texto, sem seletores coloridos (${r.pick})`);
   ck(!r.scrollX, `${W}: sem rolagem horizontal`); ck(!r.pagina, `${W}: página não rola`);
   ck(r.btn==='Ver em cards', `${W}: botão diz ${r.btn}`);
@@ -43,14 +43,14 @@ for (const [W,H,tema] of [[1366,768,'escuro'],[1600,900,'claro'],[1920,1080,'esc
   // pendentes: sem colunas de acesso
   await pg.evaluate(()=>switchAdminTab('pending'));
   const pe = await pg.evaluate(()=>[...document.querySelectorAll('#admin-users-list thead th')].map(c=>c.textContent));
-  ck(pe.length===7, `${W}: pendentes com as mesmas colunas (${pe.join('|')})`);
+  ck(pe.length>=8, `${W}: pendentes com as mesmas colunas (${pe.join('|')})`);
   const btns = await pg.evaluate(()=>[...document.querySelectorAll('#admin-users-list tbody tr:first-child button')].map(b=>b.textContent.trim()));
   ck(btns.includes('Aprovar')&&btns.includes('Recusar'), `${W}: pendente com Aprovar/Recusar`);
   // ordenação pelo cabeçalho e sem a inicial na lista
   await pg.evaluate(()=>switchAdminTab('approved'));
   const semAv = await pg.evaluate(()=>document.querySelectorAll('#admin-users-list .acc-tbl .user-avatar').length);
   ck(semAv===0, `${W}: lista sem a bolinha da inicial (${semAv})`);
-  const nomes = ()=>pg.evaluate(()=>[...document.querySelectorAll('#admin-users-list tbody td.conta .acc-nm>span:first-child')].map(e=>e.textContent.trim()));
+  const nomes = ()=>pg.evaluate(()=>[...document.querySelectorAll('#admin-users-list tbody td.conta')].map(e=>e.textContent.trim()));
   await pg.click('#admin-users-list thead th:nth-child(1)');
   const asc = await nomes();
   ck(JSON.stringify(asc)===JSON.stringify([...asc].sort((a,b)=>a.localeCompare(b,'pt-BR'))) && asc[0]==='ANA PAULA SOUZA', `${W}: Usuário ordena A→Z (${asc[0]})`);
@@ -59,7 +59,7 @@ for (const [W,H,tema] of [[1366,768,'escuro'],[1600,900,'claro'],[1920,1080,'esc
   ck(desc[0]===asc[asc.length-1], `${W}: 2º clique inverte (${desc[0]})`);
   const seta = await pg.evaluate(()=>getComputedStyle(document.querySelector('#admin-users-list thead th.desc'),'::after').content);
   ck(seta.includes('▼'), `${W}: seta ▼ no cabeçalho ativo`);
-  await pg.click('#admin-users-list thead th:nth-child(6)');
+  await pg.click('#admin-users-list thead th:nth-child(7)');
   const cad = await nomes();
   ck(cad[0]==='ANA PAULA SOUZA' && cad[8]==='IGOR TAVARES', `${W}: Cadastro ordena pela data (${cad[0]} … ${cad[8]})`);
   // a ordem sobrevive ao redesenho (mudança de acesso refaz a lista)

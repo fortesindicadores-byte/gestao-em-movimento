@@ -63,18 +63,20 @@ for (const [W, H, tema] of [[1366, 768, 'escuro'], [1920, 1080, 'claro']]) {
     return { ths: [...T.tHead.rows[0].cells].map(c => c.textContent), n: T.tBodies[0].rows.length, pick: T.querySelectorAll('.farol-btn,.fcnt,select').length,
       av: T.querySelectorAll('.user-avatar').length, sub: document.querySelector('.acc-sub').textContent, sx: m.scrollWidth > m.clientWidth + 1,
       novo: !!document.querySelector('.acc-head .ubtn.pri'), masterTab: !!document.getElementById('atab-master') }; });
-  ck(JSON.stringify(t.ths) === JSON.stringify(['Nome','E-mail','Telefone','Acesso FCA','Recebe Farol','Cadastro','Último acesso','']), `${W}: colunas ${t.ths.join('|')}`);
+  ck(JSON.stringify(t.ths) === JSON.stringify(['Nome','Perfil','E-mail','Telefone','Acesso FCA','Recebe Farol','Cadastro','Último acesso','Observação','']), `${W}: colunas ${t.ths.join('|')}`);
   ck(t.n === 3 && t.pick === 0 && t.av === 0, `${W}: 3 ativos, sem seletores coloridos nem inicial na linha`);
   ck(t.sub.startsWith('3 ativos · 2 aguardando aprovação · 0 bloqueados'), `${W}: resumo ${t.sub}`);
   ck(t.novo && !t.masterTab, `${W}: "+ Novo usuário" no card e sem aba Master separada`);
   ck(!t.sx, `${W}: sem rolagem horizontal`);
   const gl = await linha(pg, 'GESTOR PIR').innerText();
   ck(/PIR/.test(gl) && /senha provisória/i.test(gl), `${W}: linha do gestor em texto (PIR) com chip`);
-  ck(/master/i.test(await linha(pg, 'RENAN').innerText()) && /você/i.test(await linha(pg, 'RENAN').innerText()), `${W}: chips "você" e "master"`);
+  const pf = await pg.evaluate(() => Object.fromEntries([...document.querySelectorAll('#admin-users-list tbody tr')].map(r => [r.querySelector('td.conta').textContent.trim(), r.querySelector('td.acc-pf').textContent.trim()])));
+  ck(pf['RENAN FORTES'] === 'Master' && pf['GESTOR PIR'] === 'Gestor de Frota' && pf['ADMIN DOIS'] === 'Admin', `${W}: coluna Perfil (${JSON.stringify(pf)})`);
+  ck(await pg.evaluate(() => !document.querySelector('#admin-users-list td.conta .utg, #admin-users-list td.conta span')), `${W}: nome sem etiqueta colada`);
   if (SHOTS) await pg.screenshot({ path: `${SHOTS}/acc-lista-${W}-${tema}.png` });
   // ordenação
   await pg.click('#admin-users-list thead th:nth-child(1)');
-  const nomes = await pg.evaluate(() => [...document.querySelectorAll('#admin-users-list tbody td.conta span:first-child')].map(e => e.textContent));
+  const nomes = await pg.evaluate(() => [...document.querySelectorAll('#admin-users-list tbody td.conta')].map(e => e.textContent.trim()));
   ck(JSON.stringify(nomes) === JSON.stringify(['ADMIN DOIS', 'GESTOR PIR', 'RENAN FORTES']), `${W}: Nome ordena (${nomes.join(', ')})`);
   // pendentes: o Master vê quem travou fora da aprovação
   await pg.click('#atab-pending');

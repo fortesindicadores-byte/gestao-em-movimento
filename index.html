@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610221030">
+<meta name="build" content="202610221100">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -520,7 +520,9 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11p
 .acc-sub{flex:1;min-width:0;font-size:10px;color:var(--txt3);}
 .acc-tbl tbody tr.lk{cursor:pointer;}
 .acc-tbl td.conta{color:var(--txt);font-weight:600;}
-.acc-tbl td .acc-nm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.acc-tbl td.acc-pf{white-space:nowrap;}
+.acc-tbl td.acc-obs{font-size:10.5px;color:var(--txt3);}
+@media(max-width:1500px){.acc-tbl thead th,.acc-tbl td{padding-left:8px;padding-right:8px;}.acc-tbl thead th{letter-spacing:.4px;}}
 .acc-tbl td .acc-em{max-width:240px;overflow:hidden;text-overflow:ellipsis;display:block;}
 .acc-tbl .muted{color:var(--txt4);}
 .utg{display:inline-flex;align-items:center;border:1px solid var(--card-brd);border-radius:20px;padding:2px 8px;
@@ -1672,16 +1674,22 @@ function accChave(r, k) {
   if (k === 'ult') return m.ultimo ? new Date(m.ultimo).getTime() : '';
   if (k === 'fca') return p.is_admin ? '0' : fcaUnitsOf(p).join(', ');
   if (k === 'farol') return p.farol_unidades === 'TODAS' ? '0' : farolTxt(p.farol_unidades);
+  if (k === 'perfil') return ACC_PERFIL_ORD[accPerfil(r)];
+  if (k === 'obs') return accObs(r);
   return '';
 }
-function accChips(r) {
-  const p = _fcaProf[r.id] || {}, m = _mu[r.id], c = [];
-  if (r.id === meuId()) c.push('você');
-  if (m && m.master) c.push('master'); else if (p.is_admin) c.push('admin'); else if (p.time_frota) c.push('time frota');
-  if (r.semAprov) c.push('sem aprovação');
-  if (m && !m.confirmado) c.push('e-mail não confirmado');
-  if (m && m.troca_senha) c.push('senha provisória');
-  return c.map(x => `<span class="utg">${x}</span>`).join('');
+/* Perfil e observações são COLUNAS, nunca etiquetas coladas no nome (Renan, 22/10/2026) */
+function accPerfil(r) {
+  const p = _fcaProf[r.id] || {}, m = _mu[r.id];
+  return m && m.master ? 'Master' : p.is_admin ? 'Admin' : p.time_frota ? 'Time Frota' : 'Gestor de Frota';
+}
+const ACC_PERFIL_ORD = { 'Master': 0, 'Admin': 1, 'Time Frota': 2, 'Gestor de Frota': 3 };
+function accObs(r) {
+  const m = _mu[r.id], c = [];
+  if (r.semAprov) c.push('Sem aprovação');
+  if (m && !m.confirmado) c.push('E-mail não confirmado');
+  if (m && m.troca_senha) c.push('Senha provisória');
+  return c.join(' · ');
 }
 function accAcoes(r) {
   if (r.id === meuId() || !accPode(r.id)) return '';
@@ -1771,23 +1779,26 @@ function renderAccTabela(list) {
     list.innerHTML = `<div class="acc-card">${head}<div class="admin-empty">${msg}</div></div>`;
     return;
   }
+  const temObs = rows.some(r => accObs(r));
   const corpo = rows.map(r => {
-    const p = _fcaProf[r.id] || {}, m = _mu[r.id];
+    const p = _fcaProf[r.id] || {}, m = _mu[r.id], obs = accObs(r);
     const fca = p.is_admin ? 'Todas (admin)' : fcaUnitsOf(p).join(', ');
     const far = farolTxt(p.farol_unidades);
     return `<tr class="lk" onclick="accLinhaClick(event,'${r.id}')">
-      <td class="conta"><div class="acc-nm"><span>${accEsc(r.nome || '—')}</span>${accChips(r)}</div></td>
+      <td class="conta">${accEsc(r.nome || '—')}</td>
+      <td class="acc-pf">${accPerfil(r)}</td>
       <td><span class="acc-em" title="${accEsc(r.email)}">${accEsc(r.email)}</span></td>
-      <td class="acc-hide">${accEsc(fmtPhone(r.tel)) || '<span class="muted">—</span>'}</td>
+      <td class="acc-tel acc-hide">${accEsc(fmtPhone(r.tel)) || '<span class="muted">—</span>'}</td>
       <td>${fca ? accEsc(fca) : '<span class="muted">sem acesso</span>'}</td>
       <td class="acc-hide">${far ? accEsc(far) : '<span class="muted">não recebe</span>'}</td>
       <td class="acc-dt acc-hide">${accDt(r.cad)}</td>
       ${_master ? `<td class="acc-dt acc-hide">${m && m.ultimo ? accDt(m.ultimo) : '<span class="muted">nunca</span>'}</td>` : ''}
+      ${temObs ? `<td class="acc-obs">${obs ? accEsc(obs) : ''}</td>` : ''}
       <td class="acc-act">${accAcoes(r)}</td>
     </tr>`;
   }).join('');
   list.innerHTML = `<div class="acc-card" data-mt-wrap>${head}<table class="acc-tbl" data-no-sort><thead><tr>
-    ${accTh(t, 'nome', 'Nome')}${accTh(t, 'email', 'E-mail')}${accTh(t, 'tel', 'Telefone', 'acc-hide')}${accTh(t, 'fca', 'Acesso FCA')}${accTh(t, 'farol', 'Recebe Farol', 'acc-hide')}${accTh(t, 'cad', 'Cadastro', 'acc-hide')}${_master ? accTh(t, 'ult', 'Último acesso', 'acc-hide') : ''}<th></th>
+    ${accTh(t, 'nome', 'Nome')}${accTh(t, 'perfil', 'Perfil')}${accTh(t, 'email', 'E-mail')}${accTh(t, 'tel', 'Telefone', 'acc-hide')}${accTh(t, 'fca', 'Acesso FCA')}${accTh(t, 'farol', 'Recebe Farol', 'acc-hide')}${accTh(t, 'cad', 'Cadastro', 'acc-hide')}${_master ? accTh(t, 'ult', 'Último acesso', 'acc-hide') : ''}${temObs ? accTh(t, 'obs', 'Observação') : ''}<th></th>
     </tr></thead><tbody>${corpo}</tbody></table></div>`;
 }
 
