@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221930">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1496,7 +1496,7 @@ const _PROJ_SET=new Set(PROJ_CANON.map(_pn));
 const projCanon=v=>_PROJ_SET.has(_pn(v));
 // mantém a ORDEM da Visão Financeira
 const projFiltra=arr=>PROJ_CANON.filter(c=>arr.some(v=>_pn(v)===_pn(c)));
-let PROJ_OPTS=[],IND_OPTS=[],VIG_OPTS=[],ORG_OPTS=[],CONTA_OPTS=[],_vigInit=false;
+let PROJ_OPTS=[],IND_OPTS=[],VIG_OPTS=[],ORG_OPTS=[],CONTA_OPTS=[],_vigInit=false,_vigAuto='';
 // nome limpo do fato: 1ª linha, sem o "Desvio de R$ …" dos fatos antigos e
 // sem o prefixo "Pacote " (formato anterior) — o filtro lista indicador/conta,
 // nunca o valor do desvio.
@@ -1554,7 +1554,10 @@ function popFiltros(){
   CONTA_OPTS=[...new Set(_FATOS.flatMap(contasDeF).filter(Boolean))].sort();
   // 1ª carga: já abre na vigência mais recente (as outras ficam no filtro)
   const wv=document.getElementById('ms-vig');
-  if(wv && wv._sel && !_vigInit && VIG_OPTS.length){ wv._sel.clear(); wv._sel.add(VIG_OPTS[0]); _vigInit=true; }  // muta o Set (não substitui) p/ o dropdown refletir
+  if(wv && wv._sel && !_vigInit && VIG_OPTS.length){ wv._sel.clear(); wv._sel.add(VIG_OPTS[0]); _vigInit=true; _vigAuto=VIG_OPTS[0]; }  // muta o Set (não substitui) p/ o dropdown refletir
+  // a escolha AUTOMÁTICA acompanha o dado novo (Renan, 22/10/2026): a tela pinta o cache e relê;
+  // se o cache era de antes de set/26 entrar, o filtro ficava em ago/26. Escolha à mão não muda.
+  else if(wv && wv._sel && _vigAuto && VIG_OPTS.length && wv._sel.size===1 && wv._sel.has(_vigAuto) && VIG_OPTS[0]!==_vigAuto){ wv._sel.clear(); wv._sel.add(VIG_OPTS[0]); _vigAuto=VIG_OPTS[0]; }
   ['ms-vig','ms-org','ms-proj','ms-ind','ms-conta','ms-st','ms-prazo'].forEach(id=>{const w=document.getElementById(id);if(w&&w._render)w._render('');});
 }
 // largura da barra de rolagem do quadro → alinha a faixa de títulos com as colunas
@@ -2076,6 +2079,7 @@ document.getElementById('themeBtn').addEventListener('click',()=>applyTheme(docu
 applyTheme(localStorage.getItem('bi_theme')||'dark');
 
 _buildMs(document.getElementById('ms-vig'),()=>VIG_OPTS);
+document.querySelector('#ms-vig .ms-list').addEventListener('click',()=>{_vigAuto='';}); // mexeu no filtro = escolha à mão
 _buildMs(document.getElementById('ms-org'),()=>ORG_OPTS);
 _buildMs(document.getElementById('ms-proj'),()=>PROJ_OPTS);
 _buildMs(document.getElementById('ms-ind'),indItems);
@@ -2213,6 +2217,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221930"></script>
 </body>
 </html>

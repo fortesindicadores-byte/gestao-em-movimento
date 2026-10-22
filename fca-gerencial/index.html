@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221930">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>FCA Gerencial · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -729,8 +729,10 @@ async function carregar(){
     const uniq=k=>[...new Set(ALL.map(o=>o[k]).filter(v=>v!==''&&v!=null))].sort();
     buildMsFilter('ms-unidade',uniq('unidade'));
     buildMsFilter('ms-origem',uniq('origem'));
-    const vigItems=PRESENT.map(d=>vigLbl(d));
-    const vw=document.getElementById('ms-vig');if(vigItems.length)vw._sel=new Set([vigItems[vigItems.length-1]]); // auto último mês (padrão)
+    // lista do filtro do mais recente para o mais antigo (Renan, 22/10/2026: "vigência…
+    // deve sempre começar da mais recente"); o PRESENT segue crescente para o gráfico
+    const vigItems=PRESENT.map(d=>vigLbl(d)).reverse();
+    const vw=document.getElementById('ms-vig');if(vigItems.length)vw._sel=new Set([vigItems[0]]); // auto último mês (padrão)
     buildMsFilter('ms-vig',vigItems);
     buildMsFilter('ms-projeto',uniq('projeto'));
     buildMsFilter('ms-sprazo',uniq('sprazo'));
@@ -812,6 +814,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221930"></script>
 </body>
 </html>

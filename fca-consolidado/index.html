@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221930">
 <title>FCA · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -992,7 +992,7 @@ const respLabel=v=>{const t=String(v==null?'':v).trim();return t||'(Em branco)';
 function respFiltro(){return getMsValues('ms-resp');}
 function respOk(v,fr){return !fr.length||fr.includes(respLabel(v));}
 
-let UNI_OPTS=[],VIG_OPTS=[],ORG_OPTS=[],ST_OPTS=[],FATO_OPTS=[],CONTA_OPTS=[],RESP_OPTS=[],_vigInit=false;
+let UNI_OPTS=[],VIG_OPTS=[],ORG_OPTS=[],ST_OPTS=[],FATO_OPTS=[],CONTA_OPTS=[],RESP_OPTS=[],_vigInit=false,_vigAuto='';
 // nome limpo do fato: 1ª linha, sem o "Desvio de R$ …" dos fatos antigos e
 // sem o prefixo "Pacote " (formato anterior) — o filtro lista indicador/conta,
 // nunca o valor do desvio.
@@ -1046,7 +1046,10 @@ function popFiltros(){
     .sort((a,b)=>(a==='(Em branco)')-(b==='(Em branco)')||a.localeCompare(b,'pt'));
   // 1ª carga: abre já na vigência mais recente (menos linhas = mais rápido); admin pode trocar
   const wv=document.getElementById('ms-vig');
-  if(wv && wv._sel && !_vigInit && VIG_OPTS.length){ wv._sel.clear(); wv._sel.add(VIG_OPTS[0]); _vigInit=true; }  // muta o Set (não substitui) p/ o dropdown refletir
+  if(wv && wv._sel && !_vigInit && VIG_OPTS.length){ wv._sel.clear(); wv._sel.add(VIG_OPTS[0]); _vigInit=true; _vigAuto=VIG_OPTS[0]; }  // muta o Set (não substitui) p/ o dropdown refletir
+  // a escolha AUTOMÁTICA acompanha o dado novo (Renan, 22/10/2026): a tela pinta o cache e relê;
+  // se o cache era de antes de set/26 entrar, o filtro ficava em ago/26. Escolha à mão não muda.
+  else if(wv && wv._sel && _vigAuto && VIG_OPTS.length && wv._sel.size===1 && wv._sel.has(_vigAuto) && VIG_OPTS[0]!==_vigAuto){ wv._sel.clear(); wv._sel.add(VIG_OPTS[0]); _vigAuto=VIG_OPTS[0]; }
   ['ms-uni','ms-vig','ms-org','ms-st','ms-proj','ms-fato','ms-conta','ms-prazo','ms-resp'].forEach(id=>{const w=document.getElementById(id);if(w&&w._render)w._render('');});
 }
 
@@ -1613,6 +1616,7 @@ wireDelegation();
 function _onUniChange(){const p=document.getElementById('ms-proj');if(p&&p._sel){p._sel.clear();if(p._render)p._render('');}render();}
 _buildMs(document.getElementById('ms-uni'),()=>UNI_OPTS,_onUniChange);
 _buildMs(document.getElementById('ms-vig'),()=>VIG_OPTS);
+document.querySelector('#ms-vig .ms-list').addEventListener('click',()=>{_vigAuto='';}); // mexeu no filtro = escolha à mão
 _buildMs(document.getElementById('ms-org'),()=>ORG_OPTS);
 _buildMs(document.getElementById('ms-st'),()=>ST_OPTS);
 _buildMs(document.getElementById('ms-fato'),fatoItems);
@@ -1663,6 +1667,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221930"></script>
 </body>
 </html>

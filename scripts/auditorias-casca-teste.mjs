@@ -266,7 +266,10 @@ for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }]) {
     await page.click('#ms-h .ms-btn'); await page.click('#ms-h input[data-v="2H"]'); await page.waitForTimeout(80);
     await page.click('#ms-ano .ms-btn'); await page.click('#ms-ano input[data-v="2026"]'); await page.waitForTimeout(150);
     r = await lr();
-    ok(`${tag}: semestre sem coluna na aba (2H26 vazio) avisa em vez de tabela vazia`, typeof r.tab === 'string' && /Sem 2H 2026|Nenhuma/.test(r.tab) || (r.tab.rows && r.tab.rows.every(c => c[1] === '—' && c[2] === '—')), JSON.stringify(r.tab).slice(0, 80));
+    /* SÓ PERÍODO COM RESULTADO, DO MAIS RECENTE PARA O MAIS ANTIGO (Renan, 22/10/2026): o 2H26 sem
+       resultado não aparece no Semestre de 2026, e o filtro volta ao 1H26 */
+    const opsRes = await page.evaluate(() => ['ms-ano', 'ms-h'].map(i => [...document.querySelectorAll(`#${i} input[data-v]`)].map(x => x.dataset.v).join(',')));
+    ok(`${tag}: Resultado: Ano do mais recente ao mais antigo e Semestre de 2026 só com o 1H (2H26 sem resultado fora)`, opsRes[0] === '2026,2025' && opsRes[1] === '1H' && r.ano === '2026' && r.h === '1H' && r.tab.rows && r.tab.rows.length === 14, `${opsRes.join(' | ')} · ${r.ano} ${r.h}`);
     await page.click('.s-item[data-vw="demarco"]'); await page.waitForTimeout(150);
     if (SHOTS && vp.width === 1600) {
       const dir = path.join(SHOTS, PASTA); fs.mkdirSync(dir, { recursive: true });

@@ -59,8 +59,10 @@ let falhas = 0, oks = 0;
 const ok = (t, v, extra = '') => { console.log(`  ${v ? '✓' : '✗'} ${t}${extra ? '  (' + extra + ')' : ''}`); v ? oks++ : falhas++; };
 const MIME = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.jpg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json' };
 
-const sbDuble = (rows, erro) => `window.supabase={createClient:()=>({from:t=>({select:async()=>{await new Promise(r=>setTimeout(r,20));
-  ${erro ? "return {data:null,error:{message:'banco fora'}};" : "return t==='fca'?{data:JSON.parse(JSON.stringify(window.__FCA)),error:null}:{data:[],error:null};"}}})})};`;
+// a leitura pagina (fcaTudo: .select().order().range(), 20/10/2026): o dublê aceita a corrente e devolve a fatia
+const sbDuble = (rows, erro) => `window.supabase={createClient:()=>({from:t=>({select:()=>{const q={_a:0,_b:1e9,order:()=>q,range:(a,b)=>{q._a=a;q._b=b;return q;},
+  then:(ok,ko)=>new Promise(r=>setTimeout(r,20)).then(()=>{
+  ${erro ? "return {data:null,error:{message:'banco fora'}};" : "const d=t==='fca'?JSON.parse(JSON.stringify(window.__FCA)):[];return {data:d.slice(q._a,q._b+1),error:null};"}}).then(ok,ko)};return q;}})})};`;
 
 async function abre(browser, htmlAntigo, vp, tema, { erro = false } = {}) {
   const ctx = await browser.newContext({ viewport: vp, locale: 'pt-BR' });

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221930">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Auditorias · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -525,8 +525,11 @@ if(window.ResizeObserver) new ResizeObserver(pedeSelos).observe(document.getElem
    que não passam; o Resultado continua com os seus, de escolha única. */
 function montaFiltrosTab(){
   const ps=periodos(); if(!ps.length) return;
-  buildMsFilter('ms-anos',[...new Set(ps.map(p=>p.ano))].sort().reverse());
-  buildMsFilter('ms-sems',['1H','2H']);
+  // só período com resultado, do mais recente para o mais antigo (Renan, 22/10/2026:
+  // "vigência… deve sempre começar da mais recente… e ter apenas dados de realizado")
+  const cr=ps.filter(p=>p.tem), base=cr.length?cr:ps;
+  buildMsFilter('ms-anos',[...new Set(base.map(p=>p.ano))].sort().reverse());
+  buildMsFilter('ms-sems',['2H','1H'].filter(h=>base.some(p=>p.h===h)));
 }
 function periodoPassa(lbl){
   const p=perDe(lbl); if(!p) return true;
@@ -613,9 +616,14 @@ function renderResTab(ano,h){
 function renderResultado(){
   const ps=periodos(); if(!ps.length) return;
   const ult=[...ps].reverse().find(p=>p.tem)||ps[ps.length-1];
-  const anos=[...new Set(ps.map(p=>p.ano))].sort().reverse();
+  // só ano e semestre com resultado, do mais recente para o mais antigo (Renan, 22/10/2026):
+  // o Semestre lista o que o ano escolhido tem; abre no último semestre com resultado
+  const cr=ps.filter(p=>p.tem), base=cr.length?cr:ps;
+  const anos=[...new Set(base.map(p=>p.ano))].sort().reverse();
   buildUnico('ms-ano','Ano',anos,ult.ano);
-  buildUnico('ms-h','Semestre',['1H','2H'],ult.h);
+  const anoSel=document.getElementById('ms-ano')._val;
+  const hs=['2H','1H'].filter(h=>base.some(p=>p.ano===anoSel&&p.h===h));
+  buildUnico('ms-h','Semestre',hs.length?hs:['2H','1H'],anoSel===ult.ano?ult.h:(hs[0]||ult.h));
   const ano=document.getElementById('ms-ano')._val, h=document.getElementById('ms-h')._val;
   renderResTab(ano,h);
   if(typeof pedeSelos==='function') pedeSelos();
@@ -801,6 +809,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221930"></script>
 </body>
 </html>
