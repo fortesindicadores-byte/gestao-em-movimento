@@ -46,6 +46,24 @@
   })();
   function memConta(campo) { if (!MEM) return; MEM.__n = MEM.__n || { hit: 0, miss: 0 }; MEM.__n[campo]++; }
 
+  // NO DECK, O PAINEL NÃO ABRE DO PRÓPRIO CACHE DO NAVEGADOR (Renan, 22/10/2026: o
+  // slide R$/Km Pacotes Frota saiu com R$/km 15× maior em set/26). Os painéis pintam o
+  // cache do localStorage na hora e relêem em segundo plano; o Check de Metas fotografa
+  // quando a tela para de mudar — o cache — e fecha o iframe antes da releitura. Um cache
+  // de antes de set/26 entrar na Dispersão trazia o custo de setembro com o km só da
+  // Seara. Dentro do deck, as chaves de cache dos painéis voltam vazias e cada painel lê
+  // o dado do momento (o banco é lido uma vez só, pela memória da mãe).
+  var CACHE_PAINEL = /^(bi_cache_|bipneus_cache|pm_cache_|fca_cache)/;
+  if (MEM) {
+    try {
+      var giOrig = Storage.prototype.getItem;
+      Storage.prototype.getItem = function (k) {
+        if (this === window.localStorage && CACHE_PAINEL.test(String(k))) return null;
+        return giOrig.call(this, k);
+      };
+    } catch (e) { /* sem Storage: nada a fazer */ }
+  }
+
   // ── reconstrução do payload gviz a partir das linhas tipadas ────────────
   // Exposta em window.GvizRebuild porque o Sheets Gviz Check roda ESTE mesmo
   // código em node:vm contra o banco real — conferir com outra cópia mediria
@@ -331,7 +349,7 @@
       todas('sh_consumo_km_litro?select=vigencia,projeto,placa,km_rodado_horas_trabalhadas')
     ]).then(function (r) {
       var D = r[0], bd = r[1], placas = r[2], kml = r[3];
-      if (!bd.length) { try { console.info('gviz-cache: dispersao_km vazia — a Dispersão de km fica só com a aba'); } catch (_) {} return obj; }
+      if (!bd.length) { obj.__dispFalhou = true; try { console.info('gviz-cache: dispersao_km vazia — a Dispersão de km fica só com a aba'); } catch (_) {} return obj; }
       var finais;
       if (D) {
         var kmlRows = kml.map(function (x) { var m = String(x.vigencia || '').match(/^(\d{2})\/(\d{4})$/);
@@ -378,6 +396,7 @@
       return obj;
     }).catch(function (e) {
       try { console.warn('gviz-cache: complemento da Dispersão de km pelo banco falhou —', e && e.message); } catch (_) {}
+      obj.__dispFalhou = true;
       return obj;
     });
   }
@@ -393,7 +412,9 @@
       return Promise.resolve(csv ? { corpo: g.corpo } : { obj: parseGviz(g.corpo), corpo: g.corpo });
     }
     return resolveBanco(key, csv).then(function (r) {
-      if (r && MEM) { memConta('miss'); MEM[mk] = { corpo: r.corpo, fonte: window.GvizCache.fontes[key] }; }
+      // complemento do banco que falhou NÃO vai para a memória: os slides seguintes
+      // relêem, em vez de herdar uma Dispersão sem o mês do banco
+      if (r && MEM && !r.parcial) { memConta('miss'); MEM[mk] = { corpo: r.corpo, fonte: window.GvizCache.fontes[key] }; }
       return r;
     });
   }
@@ -406,7 +427,8 @@
         if (csv) return { corpo: csvDe(b.colunas, linhas) };
         var obj = payload(b.colunas, linhas);
         var p = dispLigado(key) ? complementaDisp(b, linhas, obj) : Promise.resolve(obj);
-        return p.then(function (o) { return { obj: o, corpo: corpo(o), disp: dispLigado(key) }; });
+        return p.then(function (o) { var falhou = !!o.__dispFalhou; delete o.__dispFalhou;
+          return { obj: o, corpo: corpo(o), disp: dispLigado(key), parcial: falhou }; });
       });
     }).catch(function (e) {
       try { console.warn('gviz-cache: banco falhou p/', key, e && e.message); } catch (_) {}

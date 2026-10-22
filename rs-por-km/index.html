@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610201800">
+<meta name="build" content="202610221800">
 <title>R$/KM — Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -385,7 +385,7 @@ table.dre tr.total td.sep-l,table.dre .sep-l{border-left:1px solid var(--card-br
 }
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
-<script src="../assets/gviz-cache.js?v=202610201800"></script>
+<script src="../assets/gviz-cache.js?v=202610221800"></script>
 </head>
 <body>
 <div class="app">
@@ -597,7 +597,7 @@ const set     = (id,val) => { const e=document.getElementById(id); if(e) e.textC
 const colI    = (el,bad) => { if(el) el.style.color=bad?'var(--red)':'var(--green)'; };
 
 let allRows=[], allKmRows=[], vigs=[], chRsKm=null, chImp=null, lastF=null, tableDim='pacote';
-let _vigM1Done=false, _lastAnoKey='';
+let _vigM1Done=false, _vigAuto='', _lastAnoKey='';
 
 // ── MULTI-SELECT ──
 function _buildMs(wrap,renderFn,getAllItemsFn){
@@ -638,16 +638,22 @@ function setMsOptions(id,items){
 }
 function buildVigMsFilter(vigList){
   const wrap=document.getElementById('ms-vig');if(!wrap)return;
+  /* SÓ MÊS COM REALIZADO, DO MAIS RECENTE PARA O MAIS ANTIGO, e o filtro abre no
+     último mês com realizado (regra do portal, PADROES.md §6; Renan, 22/10/2026:
+     "vigência… deve sempre começar da mais recente… e ter apenas dados de realizado").
+     A escolha AUTOMÁTICA acompanha o dado novo: o painel pinta o cache e relê; se o
+     cache era de antes de set/26 entrar, o filtro ficava em ago/26 para sempre. */
+  const comReal=new Set();
+  (allRows||[]).forEach(r=>{if(Math.abs(+(r[C.real]||0))>0){const d=parseVig(r[C.vig]);if(d)comReal.add(vigKey(d));}});
+  if(comReal.size)vigList=vigList.filter(d=>comReal.has(vigKey(d)));
+  vigList=vigList.slice().sort((a,b)=>b-a);
   if(!(wrap._sel instanceof Set))wrap._sel=new Set();
   const sel=wrap._sel;
   const validKeys=new Set(vigList.map(d=>vigKey(d)));
   [...sel].forEach(vk=>{if(!validKeys.has(vk))sel.delete(vk);});
-  if(!_vigM1Done&&sel.size===0&&vigList.length){
-    const now=new Date(),m=now.getMonth()===0?12:now.getMonth(),y=now.getMonth()===0?now.getFullYear()-1:now.getFullYear();
-    const m1Key=`${y}-${String(m).padStart(2,'0')}`;
-    sel.add(validKeys.has(m1Key)?m1Key:vigKey(vigList[vigList.length-1]));
-    _vigM1Done=true;
-  }
+  const ultimo=vigList.length?vigKey(vigList[0]):'';
+  if(_vigAuto&&sel.size===1&&sel.has(_vigAuto)&&ultimo&&ultimo!==_vigAuto){sel.clear();sel.add(ultimo);_vigAuto=ultimo;}
+  if(!_vigM1Done&&sel.size===0&&ultimo){sel.add(ultimo);_vigAuto=ultimo;_vigM1Done=true;}
   const newList=wrap.querySelector('.ms-list').cloneNode(false);
   wrap.querySelector('.ms-list').parentNode.replaceChild(newList,wrap.querySelector('.ms-list'));
   const newSrch=wrap.querySelector('.ms-search input').cloneNode(true);
@@ -663,9 +669,9 @@ function buildVigMsFilter(vigList){
     if(box.classList.contains('ms-all')){sel.clear();}
     else if(sel.size===0){if(!box.checked){vigList.map(d=>vigKey(d)).forEach(vk=>{if(vk!==box.dataset.v)sel.add(vk);});}}
     else{const vk=box.dataset.v;if(box.checked)sel.add(vk);else sel.delete(vk);const all=vigList.map(d=>vigKey(d));if(all.length>0&&all.every(k=>sel.has(k)))sel.clear();}
-    rerender(src.value);atualizar();
+    _vigAuto='';rerender(src.value);atualizar();
   });
-  lst.addEventListener('click',e=>{const only=e.target.closest('.ms-only');if(!only)return;e.preventDefault();e.stopPropagation();sel.clear();sel.add(only.dataset.v);rerender(src.value);atualizar();});
+  lst.addEventListener('click',e=>{const only=e.target.closest('.ms-only');if(!only)return;e.preventDefault();e.stopPropagation();sel.clear();sel.add(only.dataset.v);_vigAuto='';rerender(src.value);atualizar();});
   src.addEventListener('input',()=>rerender(src.value));
   src.addEventListener('click',e=>e.stopPropagation());
   rerender();
@@ -1295,6 +1301,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610142030"></script>
+<script src="../assets/build-check.js?v=202610221800"></script>
 </body>
 </html>
