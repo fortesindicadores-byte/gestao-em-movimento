@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610220800">
+<meta name="build" content="202610221000">
 <title>Gestão à Vista</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -441,6 +441,8 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 /* ── pré-hub de unidades (mesma lógica do FCA, nos tokens do padrão) ── */
 body.prehub .s-sec,body.prehub .s-item,body.prehub #pdf-slot,body.prehub .ms-wrap,
 body.prehub .s-uni{display:none;}   /* já está nas unidades — a seta de voltar p/ elas some */
+/* …mas o "Voltar ao Hub" do rodapé fica (Renan, 22/10/2026: "Não tem voltar pro HUB?") */
+body.prehub .s-volta .s-item{display:flex;}
 /* respiro no topo: sem ele o hover (borda laranja + translateY) era cortado
    pelo overflow do container na primeira fileira */
 .uhub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));grid-auto-rows:1fr;
