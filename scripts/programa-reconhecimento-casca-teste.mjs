@@ -128,7 +128,8 @@ const leNumeros = () => {
   const t = id => (document.getElementById(id) || {}).textContent?.replace(/\s+/g, ' ').trim();
   const out = {};
   ['hero-score', 'hero-period', 'podio-period', 'ranking-sub', 'ms-vig-lbl', 'ms-vig-cnt'].forEach(id => out[id] = t(id));
-  out.cards = [...document.querySelectorAll('#ind-cards .kpi-card')].map(c => c.textContent.replace(/\s+/g, ' ').trim() + '@' + c.querySelector('.ind-farol').style.background).join(' ;; ');
+  // um indicador por farol (Check T1/T2 e Check WH dividem um card desde 22/10/2026)
+  out.cards = [...document.querySelectorAll('#ind-cards .ind-farol')].map(f => f.nextElementSibling.textContent.replace(/\s+/g, ' ').trim() + '@' + f.style.background).join(' ;; ');
   out.ranking = [...document.querySelectorAll('#ranking-tbody tr')].map(tr => tr.className + ':' + [...tr.cells].map(c => c.textContent.replace(/\s+/g, ' ').trim() + (c.querySelector('span') ? '[' + c.querySelector('span').className + ']' : '')).join(' | ')).join(' ;; ');
   out.podio = [...document.querySelectorAll('.podio-slot')].map(s => [s.className, s.querySelector('.pedestal-place')?.textContent, s.querySelector('.pedestal-name')?.textContent,
     s.querySelector('.pedestal-unit')?.textContent, s.querySelector('.pedestal-score')?.textContent, s.querySelector('img')?.getAttribute('src')].join('|')).join(' ;; ');
