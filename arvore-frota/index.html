@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvore de Custo da Frota · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -652,8 +652,9 @@ function _buildMs(wrap,renderFn,getAll){
       if(box.classList.contains('ms-all')){ sel.clear(); }
       else if(sel.size===0){ if(!box.checked){ const all=getAll?getAll():[]; all.forEach(v=>{ if(v!==box.dataset.v)sel.add(v);}); } }
       else { box.checked?sel.add(box.dataset.v):sel.delete(box.dataset.v); if(getAll){ const all=getAll(); if(all.length>0&&all.every(v=>sel.has(v)))sel.clear(); } }
+      if(wrap.id==='ms-vig')_vigAuto='';   // escolheu à mão: a releitura não mexe mais
       render(srch.value); onFilterChange(); });
-    list.addEventListener('click',e=>{ const only=e.target.closest('.ms-only'); if(!only)return; e.preventDefault(); e.stopPropagation(); sel.clear(); sel.add(only.dataset.v); render(srch.value); onFilterChange(); });
+    list.addEventListener('click',e=>{ const only=e.target.closest('.ms-only'); if(!only)return; e.preventDefault(); e.stopPropagation(); sel.clear(); sel.add(only.dataset.v); if(wrap.id==='ms-vig')_vigAuto=''; render(srch.value); onFilterChange(); });
     srch.addEventListener('input',()=>render(srch.value));
     srch.addEventListener('click',e=>e.stopPropagation());
   }
@@ -665,7 +666,22 @@ function buildMsFilter(i,items){ const wrap=id(i); if(!wrap)return; wrap._items=
   },()=>wrap._items||[]);
 }
 function setMsOptions(i,items){ const wrap=id(i); if(!wrap)return; wrap._items=items; if(wrap._sel&&wrap._sel.size){ [...wrap._sel].forEach(v=>{ if(!items.includes(v))wrap._sel.delete(v); }); } if(wrap._render)wrap._render(); }
-function buildVigMsFilter(items){ const wrap=id('ms-vig'); if(!wrap)return; if(!(wrap._sel instanceof Set)){ wrap._sel=new Set(); if(items.length)wrap._sel.add(items[items.length-1]); } buildMsFilter('ms-vig',items); }
+/* VIGÊNCIA: SÓ MÊS COM REALIZADO, DO MAIS RECENTE PARA O MAIS ANTIGO, e o filtro abre
+   no último mês com realizado (regra do portal, PADROES.md §6; Renan, 22/10/2026).
+   Realizado = custo realizado ≠ 0 nas contas dos pacotes da aba Frota do DRE (a raiz
+   da árvore); mês só com remunerado ou só com km da Dispersão fica fora da LISTA, mas
+   continua nos dados. A escolha automática acompanha o dado novo: o "Atualizar" e a
+   releitura de hora em hora trazem set/26 e o filtro sai de ago/26 sozinho, a não ser
+   que a pessoa tenha escolhido à mão. */
+let _vigAuto='', _vigReal=new Set();
+const _vigDesc=(a,b)=>{const[ma,ya]=a.split('/'),[mb,yb]=b.split('/');return(yb-ya)||(mb-ma);};
+function vigsFiltro(list){ const l=_vigReal.size?list.filter(v=>_vigReal.has(v)):list; return l.slice().sort(_vigDesc); }
+function _vigAutoSegue(items){ const wrap=id('ms-vig'); if(!wrap||!(wrap._sel instanceof Set))return; const sel=wrap._sel, ultimo=items[0]||'';
+  if(_vigAuto&&sel.size===1&&sel.has(_vigAuto)&&ultimo&&ultimo!==_vigAuto){ sel.clear(); sel.add(ultimo); _vigAuto=ultimo; } }
+function buildVigMsFilter(items){ const wrap=id('ms-vig'); if(!wrap)return; items=vigsFiltro(items);
+  if(!(wrap._sel instanceof Set)){ wrap._sel=new Set(); if(items.length){ wrap._sel.add(items[0]); _vigAuto=items[0]; } }
+  else { [...wrap._sel].forEach(v=>{ if(!items.includes(v))wrap._sel.delete(v); }); _vigAutoSegue(items); }
+  buildMsFilter('ms-vig',items); }
 function syncBadge(wrap){ const cnt=wrap.querySelector('.ms-cnt'),n=wrap._sel?wrap._sel.size:0; if(cnt){cnt.textContent=n;cnt.style.display=n?'inline-block':'none';} }
 function toggleMs(i){ document.querySelectorAll('.ms-panel.open').forEach(p=>{ if(p.closest('.ms-wrap').id!==i)p.classList.remove('open'); }); const panel=document.querySelector(`#${i} .ms-panel`); panel.classList.toggle('open'); if(panel.classList.contains('open')){ const inp=panel.querySelector('input[type=text]'); if(inp)setTimeout(()=>inp.focus(),50); } }
 document.addEventListener('click',e=>{ if(!e.target.closest('.ms-wrap'))document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open')); });
@@ -687,8 +703,8 @@ function refreshCascade(){
   setMsOptions('ms-uni',unis);
   const nv3s=[...new Set(allRows.filter(r=>rowPassesExcept(r,f,'nivel3')).map(r=>getNv3Prefix(String(r.nivel3))).filter(Boolean))].sort();
   setMsOptions('ms-nv3',nv3s);
-  const vigs=[...new Set(allRows.filter(r=>rowPassesExcept(r,f,'vigencia')).map(r=>String(r.vigencia)).filter(Boolean))].sort((a,b)=>{const[ma,ya]=a.split('/'),[mb,yb]=b.split('/');return(ya-yb)||(ma-mb);});
-  const vkey=vigs.join(','); if(vkey!==_cascVigKey){ _cascVigKey=vkey; setMsOptions('ms-vig',vigs); }
+  const vigs=vigsFiltro([...new Set(allRows.filter(r=>rowPassesExcept(r,f,'vigencia')).map(r=>String(r.vigencia)).filter(Boolean))]);
+  const vkey=vigs.join(','); if(vkey!==_cascVigKey){ _cascVigKey=vkey; const w=id('ms-vig'); if(w&&w._sel&&w._sel.size){ [...w._sel].forEach(v=>{ if(!vigs.includes(v))w._sel.delete(v); }); } _vigAutoSegue(vigs); setMsOptions('ms-vig',vigs); }
   atualizaSub();           // o recorte no subtítulo do topo
 }
 function onFilterChange(){ refreshCascade(); if(allRows.length){ renderTree(compute(getFilters())); setTimeout(fitAndDraw,60); } }
@@ -891,6 +907,8 @@ async function fetchAll(){
   const add=(vig,n3)=>{ if(!vig||!n3||isApoio(n3))return; const k=vig+'|'+n3; if(seen.has(k))return; seen.add(k); allRows.push({vigencia:vig,nivel3:n3}); };
   S_FR.forEach(r=>{ const cta=String(r[FR.cta]||''); if(!PACOTES_MAP[cta])return; if((+r[FR.real]||0)===0&&(+r[FR.rem]||0)===0)return; const d=kParseVig(r[FR.vig]); if(d)add(vigBR(d),String(r[FR.n3]||'')); });
   S_DP.forEach(r=>{ if((+r[DP.kmReal]||0)===0&&(+r[DP.kmRem]||0)===0&&(+r[DP.ativa]||0)===0)return; const d=kParseVig(r[DP.vig]); if(d)add(vigBR(d),String(r[DP.proj]||'')); });
+  // meses com custo REALIZADO no DRE (só eles entram na lista do filtro de vigência)
+  _vigReal=new Set(); S_FR.forEach(r=>{ const cta=String(r[FR.cta]||''); if(!PACOTES_MAP[cta]||isApoio(String(r[FR.n3]||'')))return; if((+r[FR.real]||0)===0)return; const d=kParseVig(r[FR.vig]); if(d)_vigReal.add(vigBR(d)); });
 
   const vigs=[...new Set(allRows.map(r=>r.vigencia))].sort((a,b)=>{const[ma,ya]=a.split('/'),[mb,yb]=b.split('/');return(ya-yb)||(ma-mb);});
   const anos=[...new Set(allRows.map(r=>r.vigencia.slice(-4)))].sort().reverse();
@@ -993,6 +1011,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221900"></script>
 </body>
 </html>

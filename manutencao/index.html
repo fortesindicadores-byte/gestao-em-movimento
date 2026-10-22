@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Manutenção — Detalhamento por NF</title>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
@@ -663,10 +663,13 @@ function mapFooter(){
 // ── filtros (multi-select padrão) ──
 const FILT={vig:'ms-vig',data:'ms-data',uni:'ms-uni',proj:'ms-proj',cc:'ms-cc',forn:'ms-forn',conta:'ms-conta',doc:'ms-doc'};
 const dataSort=a=>{const[d,m,y]=String(a).split('/');return(+y||0)*10000+(+m||0)*100+(+d||0);};   // dd/mm/aaaa → aaaammdd
-const vigSort=a=>{const[m,y]=String(a).split('/');return(+y||0)*100+(+m||0);};                      // mm/aaaa → aaaamm
+const vigSort=a=>{const s=String(a),g=s.match(/^Date\((\d+),(\d+)/)||s.match(/^(\d{4})-(\d{2})/);if(g)return +g[1]*100+(+g[2]+(s[0]==='D'?1:0));
+  const[m,y]=s.split('/');return(+y||0)*100+(+m||0);};                                                // mm/aaaa (ou Date(a,m)/aaaa-mm) → aaaamm
 function buildFilters(){
   document.getElementById('filters').style.display='';
-  mkFilter('ms-vig','Vigência',uniq(ROWS.map(r=>r.vig)).sort((a,b)=>vigSort(a)-vigSort(b)));
+  // vigência: só mês com realizado (lançamento com valor ≠ 0), do mais recente para o
+  // mais antigo (regra do portal, PADROES.md §6; Renan, 22/10/2026). Abre em "Todas", como sempre
+  mkFilter('ms-vig','Vigência',uniq(ROWS.filter(r=>r.real).map(r=>r.vig)).sort((a,b)=>vigSort(b)-vigSort(a)));
   mkFilter('ms-data','Data',uniq(ROWS.map(r=>r.data)).sort((a,b)=>dataSort(a)-dataSort(b)));
   mkFilter('ms-uni','Unidade',uniq(ROWS.map(r=>r.uni)));
   mkFilter('ms-proj','Projeto',uniq(ROWS.map(r=>r.proj)));
@@ -906,6 +909,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221900"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Visão Financeira · DRE Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -825,7 +825,7 @@ function setMsOptions(id, items){
   if(wrap._sel&&wrap._sel.size){ [...wrap._sel].forEach(v=>{ if(!items.includes(v)) wrap._sel.delete(v); }); }
   if(wrap._render) wrap._render();
 }
-let _vigM1Done=false;
+let _vigM1Done=false, _vigAuto='';
 function buildVigMsFilter(vigList){
   const wrap=$('ms-vig'); if(!wrap) return;
   /* SÓ MÊS COM REALIZADO, DO MAIS RECENTE PARA O MAIS ANTIGO (Renan,
@@ -842,7 +842,14 @@ function buildVigMsFilter(vigList){
   const sel=wrap._sel;
   const validKeys=new Set(vigList.map(d=>vigKey(d)));
   [...sel].forEach(vk=>{ if(!validKeys.has(vk)) sel.delete(vk); });
-  if(!_vigM1Done&&sel.size===0&&vigList.length){const lr=lastRealVigKey();sel.add((lr&&validKeys.has(lr))?lr:vigKey(vigList[vigList.length-1]));_vigM1Done=true;}
+  /* Abre no último mês COM REALIZADO = vigList[0] (a lista já vem filtrada e do
+     mais recente para o mais antigo; o vigList[length-1] de antes pegava o mais
+     ANTIGO). E a escolha automática acompanha o dado novo: o painel pinta o cache
+     e relê; se a releitura traz set/26, o filtro sai de ago/26 sozinho — a não ser
+     que a pessoa tenha escolhido à mão (Renan, 22/10/2026). */
+  const ultimo=vigList.length?vigKey(vigList[0]):'';
+  if(_vigAuto&&sel.size===1&&sel.has(_vigAuto)&&ultimo&&ultimo!==_vigAuto){ sel.clear(); sel.add(ultimo); _vigAuto=ultimo; }
+  if(!_vigM1Done&&sel.size===0&&ultimo){ sel.add(ultimo); _vigAuto=ultimo; _vigM1Done=true; }
   const list=wrap.querySelector('.ms-list'), srch=wrap.querySelector('.ms-search input');
   const allVigKeys=()=>vigList.map(d=>vigKey(d));
   const newList=list.cloneNode(false); list.parentNode.replaceChild(newList,list);
@@ -866,13 +873,13 @@ function buildVigMsFilter(vigList){
       if(box.checked) sel.add(vk); else sel.delete(vk);
       const all=allVigKeys(); if(all.length>0&&all.every(k=>sel.has(k))) sel.clear();
     }
-    rerender(src.value); atualizar();
+    _vigAuto=''; rerender(src.value); atualizar();
   });
   lst.addEventListener('click',e=>{
     const only=e.target.closest('.ms-only'); if(!only) return;
     e.preventDefault(); e.stopPropagation();
     sel.clear(); sel.add(only.dataset.v);
-    rerender(src.value); atualizar();
+    _vigAuto=''; rerender(src.value); atualizar();
   });
   src.addEventListener('input',()=>rerender(src.value));
   src.addEventListener('click',e=>e.stopPropagation());
@@ -2225,6 +2232,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221900"></script>
 </body>
 </html>

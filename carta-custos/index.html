@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221900">
 <title>Carta de Custos</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1100,7 +1100,10 @@ function buildVigFilter(){
   VIG_OPTS=[...new Set(VIG_OPTS.concat(base))].sort();
   const mesAtual=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   if(!selVig.size) selVig.add(VIG_OPTS.includes(mesAtual)?mesAtual:VIG_OPTS[0]);
-  buildMs('ms-vig', vigsDoAno, vigLabel, selVig, onFiltroUniVig, 'Todas');
+  // a LISTA do filtro vai do mês mais recente para o mais antigo (regra do portal,
+  // PADROES.md §6; Renan, 22/10/2026). Só a cópia do filtro inverte: VIG_OPTS e
+  // curVigs() seguem crescentes (a caixa de lançamento e o curVigs()[0] dependem disso)
+  buildMs('ms-vig', ()=>vigsDoAno().reverse(), vigLabel, selVig, onFiltroUniVig, 'Todas');
 }
 function buildAnoFilter(){ buildMs('ms-ano', ANO_OPTS, a=>a, selAno, onFiltroAno, 'Todos'); }
 function onFiltroAno(){
@@ -2054,6 +2057,6 @@ initPdfExport({ btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221900"></script>
 </body>
 </html>

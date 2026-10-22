@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Compra de Pneus · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -750,7 +750,10 @@ function toggleMs(id){ const w=document.getElementById(id); if(!w) return; const
 document.addEventListener('click',e=>{ if(!e.target.closest('.ms-wrap')) document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open')); });
 
 function montaFiltros(){
-  const vigs=[...new Set(PEDIDOS.map(r=>r.vigencia).concat([vigAgora()]))].sort().reverse();
+  // vigência: só mês com pedido, do mais recente para o mais antigo (regra do portal,
+  // PADROES.md §6; Renan, 22/10/2026). O mês corrente só entra sozinho quando não há pedido nenhum
+  const comPed=[...new Set(PEDIDOS.map(r=>r.vigencia).filter(Boolean))];
+  const vigs=(comPed.length?comPed:[vigAgora()]).sort().reverse();
   buildMs('ms-vig',vigs,render,vigRot);
   buildMs('ms-uni',siglas(UNIDADES),render);
 }
@@ -1041,6 +1044,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221900"></script>
 </body>
 </html>
