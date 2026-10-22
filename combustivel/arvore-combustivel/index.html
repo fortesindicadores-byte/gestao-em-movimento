@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221915">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -953,6 +953,7 @@ function _buildMs(wrap, renderFn, getAllItemsFn){
           if(all.length>0&&all.every(v=>sel.has(v))) sel.clear();
         }
       }
+      if(wrap.id==='ms-vig') _vigAuto='';
       render(srch.value); onFilterChange();
     });
     list.addEventListener('click',e=>{
@@ -960,6 +961,7 @@ function _buildMs(wrap, renderFn, getAllItemsFn){
       if(!only) return;
       e.preventDefault(); e.stopPropagation();
       sel.clear(); sel.add(only.dataset.v);
+      if(wrap.id==='ms-vig') _vigAuto='';
       render(srch.value); onFilterChange();
     });
     srch.addEventListener('input',()=>render(srch.value));
@@ -987,11 +989,24 @@ function setMsOptions(id, items){
   if(wrap._sel&&wrap._sel.size){ [...wrap._sel].forEach(v=>{ if(!items.includes(v)) wrap._sel.delete(v); }); }
   if(wrap._render) wrap._render();
 }
+// Vigência do MAIS RECENTE para o mais antigo, só mês com realizado, abrindo no último
+// (PADROES.md §6; Renan, 22/10/2026: "vigência… deve sempre começar da mais recente… e ter
+// apenas dados de realizado"). `items` chega em ordem crescente; a lista do filtro é uma cópia
+// invertida. A escolha AUTOMÁTICA acompanha o dado novo: no "Atualizar dados" (ou na releitura
+// do Check de Metas), se entrou um mês mais novo, o filtro passa para ele; escolha feita à mão
+// não é tocada.
+let _vigAuto='';
+const vigDesc = items => items.slice().sort((a,b)=>cmpVigBR(b,a));
 function buildVigMsFilter(items){
   const wrap=document.getElementById('ms-vig'); if(!wrap) return;
+  items=vigDesc(items);
+  const ultimo=items[0]||'';
   if(!(wrap._sel instanceof Set)){
     wrap._sel=new Set();
-    if(items.length) wrap._sel.add(items[items.length-1]);
+    if(ultimo){ wrap._sel.add(ultimo); _vigAuto=ultimo; }
+  } else {
+    const sel=wrap._sel;
+    if(_vigAuto&&sel.size===1&&sel.has(_vigAuto)&&ultimo&&ultimo!==_vigAuto){ sel.clear(); sel.add(ultimo); _vigAuto=ultimo; }
   }
   buildMsFilter('ms-vig', items);
 }
@@ -1038,7 +1053,7 @@ function refreshCascade(){
   // VIGÊNCIA (rebuild só quando a lista muda, p/ não resetar o dropdown à toa)
   const vigs=[...new Set(allRows.filter(r=>rowPassesExcept(r,f,'vigencia')).map(r=>String(r.vigencia)).filter(Boolean))].sort(cmpVigBR);
   const vkey=vigs.join(',');
-  if(vkey!==_cascVigKey){ _cascVigKey=vkey; setMsOptions('ms-vig',vigs); }
+  if(vkey!==_cascVigKey){ _cascVigKey=vkey; setMsOptions('ms-vig',vigDesc(vigs)); }
 }
 
 function onFilterChange(){
@@ -1360,7 +1375,9 @@ async function fetchAll(){
   // litro para dividir, e a árvore abria vazia neles. O filtro passa a listar
   // só os meses com consumo, que é o que a árvore sabe explicar.
   const VIG_CONS=new Set();
-  S_DP.forEach(r=>{ if((+r[DP.kmReal]||0)===0&&(+r[DP.kmRem]||0)===0)return; const d=kParseVig(r[DP.vig]); if(d)VIG_CONS.add(vigBR(d)); });
+  // Só REALIZADO conta (Renan, 22/10/2026): mês da Dispersão com km remunerado e sem km rodado
+  // não abre o filtro (a árvore ficaria sem o realizado).
+  S_DP.forEach(r=>{ if((+r[DP.kmReal]||0)===0)return; const d=kParseVig(r[DP.vig]); if(d)VIG_CONS.add(vigBR(d)); });
   S_KM.forEach(r=>{ if((+r[KM.kmRod]||0)===0&&(+r[KM.litros]||0)===0)return; const d=kParseVig(r[KM.vig]); if(d)VIG_CONS.add(vigBR(d)); });
   S_FR.forEach(r=>{ if(!COMB.has(_nk(r[FR.cta])))return; if((+r[FR.real]||0)===0&&(+r[FR.rem]||0)===0)return; const d=kParseVig(r[FR.vig]); if(d)add(vigBR(d),String(r[FR.n3]||'')); });
   S_DP.forEach(r=>{ if((+r[DP.kmReal]||0)===0&&(+r[DP.kmRem]||0)===0)return; const d=kParseVig(r[DP.vig]); if(d)add(vigBR(d),String(r[DP.proj]||'')); });
@@ -1598,6 +1615,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610221800"></script>
+<script src="../../assets/build-check.js?v=202610221915"></script>
 </body>
 </html>

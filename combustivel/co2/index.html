@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221915">
 <title>CO² — Emissões da Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -646,7 +646,7 @@ const set     = (id,val) => { const e=document.getElementById(id);if(e)e.textCon
 const colI    = (el,bad) => { if(el)el.style.color=bad?'var(--red)':'var(--green)'; };
 
 let allRows=[], vigs=[], chKml=null, chProj=null, lastF=null, tableDim='uni';
-let _vigM1Done=false, _lastAnoKey='';
+let _vigM1Done=false, _vigAuto='', _lastAnoKey='';
 let veiSort={col:'delta',asc:false}, veiCache=[];
 
 // ── MULTI-SELECT ──
@@ -714,16 +714,23 @@ function refreshCascade(){
 }
 function buildVigMsFilter(vigList){
   const wrap=document.getElementById('ms-vig');if(!wrap)return;
+  /* SÓ MÊS COM REALIZADO (km rodado ou litros abastecidos), DO MAIS RECENTE PARA O MAIS ANTIGO, e o
+     filtro abre no último mês com realizado (PADROES.md §6; Renan, 22/10/2026: "vigência…
+     deve sempre começar da mais recente… e ter apenas dados de realizado"). A lista do
+     filtro é uma cópia: `vigs` segue em ordem crescente para os gráficos. A escolha
+     AUTOMÁTICA acompanha o dado novo: o painel pinta o cache e relê; se a releitura trouxe
+     um mês mais novo, o filtro passa para ele (escolha feita à mão não é tocada). */
+  const comReal=new Set();
+  (allRows||[]).forEach(r=>{if(+(r[CL.kmRod]||0)>0||+(r[CL.litros]||0)>0){const d=parseVig(r[CL.vig]);if(d)comReal.add(vigKey(d));}});
+  if(comReal.size)vigList=vigList.filter(d=>comReal.has(vigKey(d)));
+  vigList=vigList.slice().sort((a,b)=>b-a);
   if(!(wrap._sel instanceof Set))wrap._sel=new Set();
   const sel=wrap._sel;
   const validKeys=new Set(vigList.map(d=>vigKey(d)));
   [...sel].forEach(vk=>{if(!validKeys.has(vk))sel.delete(vk);});
-  if(!_vigM1Done&&sel.size===0&&vigList.length){
-    const now=new Date(),m=now.getMonth()===0?12:now.getMonth(),y=now.getMonth()===0?now.getFullYear()-1:now.getFullYear();
-    const m1Key=`${y}-${String(m).padStart(2,'0')}`;
-    sel.add(validKeys.has(m1Key)?m1Key:vigKey(vigList[vigList.length-1]));
-    _vigM1Done=true;
-  }
+  const ultimo=vigList.length?vigKey(vigList[0]):'';
+  if(_vigAuto&&sel.size===1&&sel.has(_vigAuto)&&ultimo&&ultimo!==_vigAuto){sel.clear();sel.add(ultimo);_vigAuto=ultimo;}
+  if(!_vigM1Done&&sel.size===0&&ultimo){sel.add(ultimo);_vigAuto=ultimo;_vigM1Done=true;}
   const lst=wrap.querySelector('.ms-list'),src=wrap.querySelector('.ms-search input');
   const newLst=lst.cloneNode(false);lst.parentNode.replaceChild(newLst,lst);
   const newSrc=src.cloneNode(true);src.parentNode.replaceChild(newSrc,src);
@@ -738,9 +745,9 @@ function buildVigMsFilter(vigList){
     if(box.classList.contains('ms-all')){sel.clear();}
     else if(sel.size===0){if(!box.checked){vigList.map(d=>vigKey(d)).forEach(vk=>{if(vk!==box.dataset.v)sel.add(vk);});}}
     else{const vk=box.dataset.v;if(box.checked)sel.add(vk);else sel.delete(vk);const all=vigList.map(d=>vigKey(d));if(all.length>0&&all.every(k=>sel.has(k)))sel.clear();}
-    rerender(s2.value);atualizar();
+    _vigAuto='';rerender(s2.value);atualizar();
   });
-  l2.addEventListener('click',e=>{const only=e.target.closest('.ms-only');if(!only)return;e.preventDefault();e.stopPropagation();sel.clear();sel.add(only.dataset.v);rerender(s2.value);atualizar();});
+  l2.addEventListener('click',e=>{const only=e.target.closest('.ms-only');if(!only)return;e.preventDefault();e.stopPropagation();sel.clear();sel.add(only.dataset.v);_vigAuto='';rerender(s2.value);atualizar();});
   s2.addEventListener('input',()=>rerender(s2.value));
   s2.addEventListener('click',e=>e.stopPropagation());
   rerender();
@@ -1224,6 +1231,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610221800"></script>
+<script src="../../assets/build-check.js?v=202610221915"></script>
 </body>
 </html>

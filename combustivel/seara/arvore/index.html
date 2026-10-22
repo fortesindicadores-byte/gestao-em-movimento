@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221915">
 <title>Árvore de Combustível Seara · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -747,6 +747,7 @@ function _buildMs(wrap, renderFn, getAllItemsFn){
           if(all.length>0&&all.every(v=>sel.has(v))) sel.clear();
         }
       }
+      if(wrap.id==='ms-vig') _vigAuto='';
       render(srch.value); onFilterChange();
     });
     list.addEventListener('click',e=>{
@@ -754,6 +755,7 @@ function _buildMs(wrap, renderFn, getAllItemsFn){
       if(!only) return;
       e.preventDefault(); e.stopPropagation();
       sel.clear(); sel.add(only.dataset.v);
+      if(wrap.id==='ms-vig') _vigAuto='';
       render(srch.value); onFilterChange();
     });
     srch.addEventListener('input',()=>render(srch.value));
@@ -781,11 +783,23 @@ function setMsOptions(id, items){
   if(wrap._sel&&wrap._sel.size){ [...wrap._sel].forEach(v=>{ if(!items.includes(v)) wrap._sel.delete(v); }); }
   if(wrap._render) wrap._render();
 }
+// Vigência do MAIS RECENTE para o mais antigo, abrindo no último mês com realizado
+// (PADROES.md §6; Renan, 22/10/2026: "vigência… deve sempre começar da mais recente… e ter
+// apenas dados de realizado"). Os meses já são só os com km rodado na aba Combustível; `items`
+// chega crescente e a lista do filtro é uma cópia invertida. A escolha AUTOMÁTICA acompanha o
+// dado novo (releitura de 30 min, "Atualizar dados"); escolha feita à mão não é tocada.
+let _vigAuto='';
+const vigDesc = items => items.slice().sort((a,b)=>{ const [ma,ya]=a.split('/'), [mb,yb]=b.split('/'); return (yb-ya)||(mb-ma); });
 function buildVigMsFilter(items){
   const wrap=document.getElementById('ms-vig'); if(!wrap) return;
+  items=vigDesc(items);
+  const ultimo=items[0]||'';
   if(!(wrap._sel instanceof Set)){
     wrap._sel=new Set();
-    if(items.length) wrap._sel.add(items[items.length-1]);
+    if(ultimo){ wrap._sel.add(ultimo); _vigAuto=ultimo; }
+  } else {
+    const sel=wrap._sel;
+    if(_vigAuto&&sel.size===1&&sel.has(_vigAuto)&&ultimo&&ultimo!==_vigAuto){ sel.clear(); sel.add(ultimo); _vigAuto=ultimo; }
   }
   buildMsFilter('ms-vig', items);
 }
@@ -825,7 +839,7 @@ function refreshCascade(){
   const vigs=[...new Set(allRows.filter(r=>rowPassesExcept(r,f,'vigencia')).map(r=>String(r.vigencia)).filter(Boolean))]
     .sort((a,b)=>{ const [ma,ya]=a.split('/'), [mb,yb]=b.split('/'); return (ya-yb)||(ma-mb); });
   const vkey=vigs.join(',');
-  if(vkey!==_cascVigKey){ _cascVigKey=vkey; setMsOptions('ms-vig',vigs); }
+  if(vkey!==_cascVigKey){ _cascVigKey=vkey; setMsOptions('ms-vig',vigDesc(vigs)); }
 }
 
 function onFilterChange(){
@@ -1211,6 +1225,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../../assets/build-check.js?v=202610221800"></script>
+<script src="../../../assets/build-check.js?v=202610221915"></script>
 </body>
 </html>
