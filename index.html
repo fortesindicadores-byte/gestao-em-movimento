@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610221200">
+<meta name="build" content="202610221400">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1684,10 +1684,10 @@ function accChave(r, k) {
   return '';
 }
 /* Perfil e observações são COLUNAS, nunca etiquetas coladas no nome (Renan, 22/10/2026) */
-/* Perfis (Renan, 22/10/2026): Gestor de Frota (padrão), Gestor de Unidade, Gestor Regional, Gestor e Time Frota
+/* Perfis (Renan, 22/10/2026): Gestor de Frota (padrão), Gestor de Unidade, Gestor de Área, Gestor Regional, Gestor e Time Frota
    têm o mesmo acesso (as unidades marcadas) e só mudam o nome do cargo (fca_profiles.cargo);
    Admin e Master são os de acesso total. */
-const UC_PERFIS = [['gestor', 'Gestor de Frota'], ['unidade', 'Gestor de Unidade'], ['regional', 'Gestor Regional'], ['gest', 'Gestor'],
+const UC_PERFIS = [['gestor', 'Gestor de Frota'], ['unidade', 'Gestor de Unidade'], ['area', 'Gestor de Área'], ['regional', 'Gestor Regional'], ['gest', 'Gestor'],
   ['frota', 'Time Frota'], ['admin', 'Admin'], ['master', 'Master']];
 const pfNome = k => (UC_PERFIS.find(x => x[0] === k) || UC_PERFIS[0])[1];
 const pfComum = k => k !== 'admin' && k !== 'master';
@@ -1698,7 +1698,7 @@ function pfDe(p, m) {
   const c = cargoDe(p); return (UC_PERFIS.find(x => x[1] === c) || UC_PERFIS[0])[0];
 }
 function accPerfil(r) { return pfNome(pfDe(_fcaProf[r.id] || {}, _mu[r.id])); }
-const ACC_PERFIL_ORD = Object.fromEntries(['Master', 'Admin', 'Gestor Regional', 'Gestor', 'Gestor de Unidade', 'Gestor de Frota', 'Time Frota'].map((n, i) => [n, i]));
+const ACC_PERFIL_ORD = Object.fromEntries(['Master', 'Admin', 'Gestor Regional', 'Gestor', 'Gestor de Área', 'Gestor de Unidade', 'Gestor de Frota', 'Time Frota'].map((n, i) => [n, i]));
 function accObs(r) {
   const m = _mu[r.id], c = [];
   if (r.semAprov) c.push('Sem aprovação');
@@ -2057,11 +2057,13 @@ async function ucSalvar() {
 async function ucGravaCargo(id, nome, cargo) {
   const tf = cargo === 'Time Frota';
   if (!_cargoCol && !(cargo === 'Gestor de Frota' || tf))
-    throw new Error('O banco ainda não tem os cargos Gestor de Unidade, Gestor Regional e Gestor (rodar o SQL portal-cargos).');
+    throw new Error('O banco ainda não tem os cargos Gestor de Unidade, Gestor de Área, Gestor Regional e Gestor (rodar o SQL portal-cargos).');
   if (!_cargoCol && !_timeFrotaCol) throw new Error('O banco ainda não tem o perfil Time Frota (rodar o SQL portal-time-frota).');
   const d = { user_id: id, nome: nome || null, time_frota: tf };
   if (_cargoCol) d.cargo = cargo === 'Gestor de Frota' ? null : cargo;
   const { error } = await sb.from('fca_profiles').upsert(d, { onConflict: 'user_id' });
+  if (error && /fca_profiles_cargo_ck/.test(error.message || ''))
+    throw new Error('O banco ainda não aceita o cargo ' + cargo + ' (rodar de novo o SQL portal-cargos).');
   if (error) throw error;
 }
 async function ucSenha() {
@@ -2139,6 +2141,6 @@ init();
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/modo-tv.js?v=202610111500"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202610210800"></script>
+<script src="assets/build-check.js?v=202610221400"></script>
 </body>
 </html>

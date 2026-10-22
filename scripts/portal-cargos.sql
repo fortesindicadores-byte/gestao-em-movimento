@@ -1,15 +1,13 @@
 -- Cargos no Gerenciar Acessos (Renan, 22/10/2026: "Além de Gestor de Frota, coloque Gestor de Unidade,
--- Gestor Regional e Gestor"). Todos têm o MESMO acesso do Gestor de Frota (as unidades marcadas);
--- a coluna só diz o cargo. Vazio = Gestor de Frota. Time Frota continua também no time_frota. Reexecutável.
+-- Gestor Regional e Gestor" → "Adicionar Gestor de Área também"). Todos têm o MESMO acesso do Gestor
+-- de Frota (as unidades marcadas); a coluna só diz o cargo. Vazio = Gestor de Frota. Time Frota continua
+-- também no time_frota. Reexecutável: a regra é recriada com a lista atual de cargos.
 
 alter table public.fca_profiles add column if not exists cargo text;
 
-do $$ begin
-  if not exists (select 1 from pg_constraint where conname = 'fca_profiles_cargo_ck') then
-    alter table public.fca_profiles add constraint fca_profiles_cargo_ck
-      check (cargo is null or cargo in ('Gestor de Unidade', 'Gestor Regional', 'Gestor', 'Time Frota'));
-  end if;
-end $$;
+alter table public.fca_profiles drop constraint if exists fca_profiles_cargo_ck;
+alter table public.fca_profiles add constraint fca_profiles_cargo_ck
+  check (cargo is null or cargo in ('Gestor de Unidade', 'Gestor de Área', 'Gestor Regional', 'Gestor', 'Time Frota'));
 
 -- quem já era Time Frota ganha o cargo
 update public.fca_profiles set cargo = 'Time Frota'
