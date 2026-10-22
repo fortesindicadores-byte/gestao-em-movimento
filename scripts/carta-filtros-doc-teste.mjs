@@ -15,7 +15,7 @@ const ROWS=[
   L('a2',{valor:200,rc:'24298',aprovado:false,aprovado_oc:false,oc:'',nf:''}),   // RC aguardando
   L('a3',{valor:300,rc:'N/A',aprovado:true,aprovado_oc:false,nf:''}),            // sem RC, OC aguardando
   L('a4',{valor:400,rc:'',aprovado:false,aprovado_oc:false,oc:'',nf:''}),        // tudo em branco
-  L('a5',{valor:500,nf:''}),                                         // OC aprovada, sem NF
+  L('a5',{valor:500,nf:'',oc:'4500-771'}),                                         // OC aprovada, sem NF
   L('r1',{valor:900,origem:'contratos-robot'}),                      // linha de robô
 ];
 const init=`(()=>{const R=${JSON.stringify(ROWS)}; window.__ins=[];
@@ -61,6 +61,15 @@ const opsMs=(pg,id)=>pg.evaluate(id=>[...document.querySelectorAll('#'+id+' .ms-
   await marca(pg,'ms-nf',['Lançada']); n=await lanc(pg); t(n===1,'NF lançada: 1 linha, robô fora → '+n);
   const c=await pg.evaluate(()=>$('ms-nf').querySelector('.ms-cnt').textContent); t(c==='1','contagem laranja no botão NF → '+c);
   await marca(pg,'ms-nf',[]);
+  // busca pelo número (RC, OC ou NF), no cabeçalho dos lançamentos
+  const busca=v=>pg.evaluate(v=>{const i=$('lanc-busca');i.value=v;i.dispatchEvent(new Event('input'));
+    return {n:[...document.querySelectorAll('#tbl-lanc tbody tr')].filter(tr=>/Manuten/.test(tr.textContent)).length,sub:$('lanc-sub').textContent,
+      vazio:(document.querySelector('#tbl-lanc .vazio')||{}).textContent||'',tot:$('lanc-total').textContent};},v);
+  let s=await busca('24298'); t(s.n===1&&/^1 de 6/.test(s.sub),'busca RC 24298: 1 linha, "1 de 6" → '+JSON.stringify(s));
+  s=await busca('4500771'); t(s.n===1,'busca OC sem o traço acha 4500-771 → '+s.n);
+  s=await busca(' 3 '); t(s.n===2,'busca NF 3: as 2 linhas com NF 3 (a1 e o robô) → '+s.n);
+  s=await busca('99999'); t(s.n===0&&/Nenhum lançamento com RC, OC ou NF/.test(s.vazio)&&!/lançar custo/.test(s.vazio),'sem resultado: aviso da busca → '+s.vazio);
+  s=await busca(''); t(s.n===6&&/^6 lançamento/.test(s.sub),'busca vazia volta tudo → '+s.n);
   await pg.close();
 }
 for(const [w,h] of [[1366,768],[1600,900],[1920,1080]]) for(const tema of ['escuro','claro']){
@@ -70,8 +79,8 @@ for(const [w,h] of [[1366,768],[1600,900],[1920,1080]]) for(const tema of ['escu
   const m=await pg.evaluate(()=>{const f=document.querySelector('.filtros'),tp=document.querySelector('.top'),r=f.getBoundingClientRect(),b=document.querySelector('.board').getBoundingClientRect();
     const btns=[...f.querySelectorAll('.ms-wrap')].filter(x=>x.offsetParent);const last=btns[btns.length-1].getBoundingClientRect();
     return {sw:f.scrollWidth,cw:f.clientWidth,right:last.right,bright:b.right,top:tp.scrollWidth<=tp.clientWidth+1,linhas:new Set(btns.map(x=>Math.round(x.getBoundingClientRect().top))).size,
-      pg:document.documentElement.scrollWidth<=innerWidth,tw:Math.round(document.querySelector('.tit-wrap').getBoundingClientRect().width),th:Math.round(document.querySelector('.tit-wrap').getBoundingClientRect().height),topH:Math.round(tp.getBoundingClientRect().height)};});
-  t(m.sw<=m.cw+1&&m.right<=m.bright&&m.top&&m.linhas===1&&m.pg&&m.th<=60&&m.topH<=80,`${w}×${h} ${tema}: filtros numa linha, sem estourar → `+JSON.stringify(m));
+      pg:document.documentElement.scrollWidth<=innerWidth,cab:(()=>{setVw('lanc');const c=$('lanc-busca').closest('.thead-row')||$('lanc-busca').closest('.card');const bt=$('add-lanc-btn').getBoundingClientRect(),bs=$('lanc-busca').closest('.busca-doc').getBoundingClientRect();return c.scrollWidth<=c.clientWidth+1&&Math.abs(bt.top-bs.top)<8&&bs.right<=bt.left;})(),tw:Math.round(document.querySelector('.tit-wrap').getBoundingClientRect().width),th:Math.round(document.querySelector('.tit-wrap').getBoundingClientRect().height),topH:Math.round(tp.getBoundingClientRect().height)};});
+  t(m.sw<=m.cw+1&&m.right<=m.bright&&m.top&&m.linhas===1&&m.pg&&m.th<=60&&m.topH<=80&&m.cab,`${w}×${h} ${tema}: filtros numa linha, busca ao lado do botão, sem estourar → `+JSON.stringify(m));
   if(SHOT) await pg.screenshot({path:`${SHOT}/carta-filtros-${w}-${tema}.png`});
   await pg.close();
 }
