@@ -954,7 +954,7 @@ function renderRanking(el,extras){
   // Cortes de cor de cada coluna — a MESMA fonte alimenta o tooltip do cabeçalho
   // e a legenda abaixo da tabela, para os dois nunca divergirem do código.
   const RK_CORTES={
-    'Média':`≥ 97% verde · 90–96,9% amarelo · < 90% vermelho`,
+    'Média':`≥ 90% verde · 80–89,9% amarelo · < 80% vermelho`,
     'Stress Veíc.':'100% verde · 95–99,9% amarelo · < 95% vermelho',
     'Stress Emp.':'100% verde · 95–99,9% amarelo · < 95% vermelho',
     'CIFV':'100% verde · 95–99,9% amarelo · < 95% vermelho',
@@ -985,7 +985,8 @@ function renderRanking(el,extras){
   </div>`;
   el.innerHTML=wrapT('<table>'+rkHead+'<tbody>'+
     list.map((u,i)=>{
-      const sc=u.score==null?'mut':u.score>=97?'#3BB33B':u.score>=90?'#EAB308':'#FF6666';
+      // faixas da Média (Renan, 21/10/2026): 90–100 verde · 80–89,9 amarelo · < 80 vermelho
+      const sc=u.score==null?'mut':u.score>=90?'#3BB33B':u.score>=80?'#EAB308':'#FF6666';
       return `<tr><td class="mut">${i+1}</td><td><b>${u.cod}</b></td>
       <td class="num">${u.score==null?'—':`<span class="pill" style="background:${sc}">${pct1(u.score)}</span>`}</td>
       ${cell(u.sv,clsPctMeta(u.sv))}${cell(u.se,clsPctMeta(u.se))}${cell(u.cf,clsPctMeta(u.cf))}${cell(u.pv,clsPctMeta(u.pv))}
