@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221945">
 <title>Gerot</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -348,7 +348,7 @@ function _titSub(){ const e=document.getElementById('titSub'); if(e) e.textConte
 function setRecorte(t){ _recorte=t||''; _titSub(); }
 function setCarga(t){ _carga=t||''; _titSub(); }
 
-let RECORDS=[], VIGS=[];
+let RECORDS=[], VIGS=[], VIGS_FILTRO=[];
 const FILTROS=['unidade','vig'];
 
 // vig helpers: chave interna 'YYYY-MM' ↔ exibição 'MM/YYYY'
@@ -418,7 +418,7 @@ function atualizar(){
   const selUnits=getMsValues('ms-unidade');
   const selVigDisp=getMsValues('ms-vig');
   // período = vigências selecionadas (média delas); padrão: última com dados
-  const perVigs=(selVigDisp.length?selVigDisp.map(vigKeyFromDisp).filter(v=>VIGS.includes(v)):[VIGS[VIGS.length-1]]).sort();
+  const perVigs=(selVigDisp.length?selVigDisp.map(vigKeyFromDisp).filter(v=>VIGS.includes(v)):[VIGS_FILTRO[0]||VIGS[VIGS.length-1]]).sort();
   const selK=perVigs[perVigs.length-1];
   if(!selK){tbl.innerHTML='<div class="loading">Sem dados</div>';return;}
   const ytdVigs=VIGS.filter(k=>vigYear(k)===vigYear(selK)&&vigMonth(k)<=vigMonth(selK));
@@ -472,7 +472,12 @@ async function carregar(){
     const units=[...new Set(RECORDS.map(r=>r.unit))].sort();
     VIGS=[...new Set(RECORDS.map(r=>r.vig))].sort();
     buildMsFilter('ms-unidade',units);
-    buildMsFilter('ms-vig',VIGS.slice().reverse().map(vigDisp));
+    /* Filtro Vigência: só mês com valor realizado, do mais recente para o mais
+       antigo (regra do portal, PADROES.md §6; Renan, 22/10/2026). VIGS segue
+       cronológico (YTD). Sem seleção, o período é o último mês da lista. */
+    const comReal=new Set(RECORDS.filter(r=>r.real!=null&&isFinite(r.real)).map(r=>r.vig));
+    VIGS_FILTRO=(comReal.size?VIGS.filter(v=>comReal.has(v)):VIGS.slice()).reverse();
+    buildMsFilter('ms-vig',VIGS_FILTRO.map(vigDisp));
     atualizar();
     const now=new Date();setCarga(`Atualizado ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
   }catch(e){console.error(e);setCarga('Erro ao carregar');}
@@ -541,6 +546,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221945"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221945">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Termômetro — BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -616,6 +616,7 @@ const monthLabel=mm=>`${_VIG_MESES[+mm]||mm}/2026`;
 
 // ════════ ESTADO ════════
 let allRows=[], EFFROWS=[], ACUMROWS=[], chLine=null, activeInd='__total__';
+let _vigAuto='';
 // abas de acumulado do ano (mesma estrutura das quinzenais, M_Q = ACUM)
 const ACUM_TIERS=TIERS.map(t=>t+' - Acum');
 // Linha efetiva por (tier|unidade|mês) = a Q2 (mês fechado); se não houver Q2, a Q1. Rege hero/cards/ranking.
@@ -766,11 +767,17 @@ function uniq(arr){return [...new Set(arr)];}
 function buildFilters(){
   const unis=uniq(allRows.map(r=>r.raw[COL.uni])).filter(Boolean).sort();
   const tiers=TIERS.filter(t=>allRows.some(r=>r.tier===t));
-  const vmeses=uniq(allRows.map(r=>vmonth(r.raw[COL.vig]))).filter(Boolean).sort();
+  // Vigência: do mais recente para o mais antigo (só existe linha com Total Pontos,
+  // então todo mês listado tem realizado) — regra do portal, PADROES.md §6; Renan, 22/10/2026.
+  const vmeses=uniq(allRows.map(r=>vmonth(r.raw[COL.vig]))).filter(Boolean).sort().reverse();
   const geos=uniq(allRows.map(r=>r.raw[COL.geo])).filter(Boolean).sort();
-  // Vigência (por MÊS) inicia com o ÚLTIMO mês marcado (só na 1ª carga; refresh preserva a seleção)
+  // Vigência (por MÊS) inicia com o ÚLTIMO mês; a escolha AUTOMÁTICA acompanha o dado
+  // novo (cache com ago + releitura com set passa para set), a escolha à mão fica.
   const vw=document.getElementById('ms-vig');
-  if(!vw._init){vw._init=true;if(vmeses.length){vw._sel=new Set([vmeses[vmeses.length-1]]);}}
+  const ultimo=vmeses[0];
+  if(!vw._init){vw._init=true;if(ultimo){vw._sel=new Set([ultimo]);_vigAuto=ultimo;}
+    vw.addEventListener('click',e=>{if(e.target.closest('.ms-list'))_vigAuto='';});}
+  else if(_vigAuto&&ultimo&&vw._sel instanceof Set&&vw._sel.size===1&&vw._sel.has(_vigAuto)){vw._sel=new Set([ultimo]);_vigAuto=ultimo;}
   _buildMs(document.getElementById('ms-uni'),unis);
   _buildMs(document.getElementById('ms-tier'),tiers);
   _buildMs(vw,vmeses,monthLabel);
@@ -806,7 +813,7 @@ function rowPassExcept(r,except){
 function refreshFilters(){
   const unis=uniq(allRows.filter(r=>rowPassExcept(r,'uni')).map(r=>r.raw[COL.uni])).filter(Boolean).sort();
   const tiers=TIERS.filter(t=>allRows.some(r=>r.tier===t&&rowPassExcept(r,'tier')));
-  const vmeses=uniq(allRows.filter(r=>rowPassExcept(r,'vig')).map(r=>vmonth(r.raw[COL.vig]))).filter(Boolean).sort();
+  const vmeses=uniq(allRows.filter(r=>rowPassExcept(r,'vig')).map(r=>vmonth(r.raw[COL.vig]))).filter(Boolean).sort().reverse();
   const geos=uniq(allRows.filter(r=>rowPassExcept(r,'geo')).map(r=>r.raw[COL.geo])).filter(Boolean).sort();
   _buildMs(document.getElementById('ms-uni'),unis);
   _buildMs(document.getElementById('ms-tier'),tiers);
@@ -1232,6 +1239,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221945"></script>
 </body>
 </html>

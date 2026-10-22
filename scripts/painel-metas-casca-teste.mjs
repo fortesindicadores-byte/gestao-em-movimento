@@ -214,13 +214,17 @@ ok('novo abre sem erro de página', res.novo.errs.length === 0, res.novo.errs.jo
 const b = res.novo.base;
 console.log(`  novo base: hero ${b.hero} · ${b.heroSub} · ${b.tblSub}\n    ` + b.linhas.join('\n    '));
 ok('tabela com os 6 indicadores', b.linhas.length === 6, b.linhas.length + ' linhas');
-ok('mês herdado (set/26) aparece no filtro, e o último vem marcado', /set\/26\*$/.test(b.vigs), b.vigs);
+// Vigência do mais recente para o mais antigo, abrindo no último mês com realizado
+// (regra do portal, PADROES.md §6; Renan, 22/10/2026): o último vem marcado e é o 1º da lista.
+ok('mês herdado (set/26) aparece no filtro, e o último vem marcado (1º da lista)', /^set\/26\*(,|$)/.test(b.vigs), b.vigs);
+ok('vigência do mais recente para o mais antigo', b.vigs.split(',').pop().startsWith('jan/26'), b.vigs);
 ok('gráfico mensal com a linha de meta 80', b.chMensal && b.chMensal.data[1].every(v => v === 80));
 for (const nome of Object.keys(passos)) {
   const A = res.antigo[nome], N = res.novo[nome];
   for (const k of Object.keys(A)) {
     if (k === 'vigs' && nome !== 'base') continue;   // o antigo não redesenha a lista ao filtrar por script
-    const igual = JSON.stringify(A[k]) === JSON.stringify(N[k]);
+    // a lista de vigências agora vem invertida: compara o CONJUNTO (e o que vem marcado)
+    const igual = k === 'vigs' ? A[k].split(',').sort().join(',') === N[k].split(',').sort().join(',') : JSON.stringify(A[k]) === JSON.stringify(N[k]);
     ok(`igual antes × depois [${nome}]: ${k}`, igual, igual ? '' : `${JSON.stringify(A[k]).slice(0, 200)} × ${JSON.stringify(N[k]).slice(0, 200)}`);
   }
 }

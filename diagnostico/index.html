@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221945">
 <title>Diagnóstico</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -459,6 +459,12 @@ const IC=[
   {c:9,l:'Stress Cam.'},{c:10,l:'Stress Emp.'},{c:11,l:'SLA'},{c:12,l:'CIVF'}
 ];
 let ICS=[],VIGS=[],DPO={},FCAREC=[];
+let _vigAuto='',_vigAutoFeito=false;
+function vigFiltro(){
+  const todas=VIGS.map(d=>vigLbl(d));
+  const com=todas.filter(v=>ICS.some(o=>o.pont!=null&&vigLbl(o.vigD)===v));
+  return (com.length?com:todas).slice().reverse();
+}
 
 function parseD(v){if(v==null)return null;const m=String(v).match(/Date\((\d+),(\d+),(\d+)/);return m?new Date(+m[1],+m[2],+m[3]):null;}
 function vigKeyN(d){return d?d.getFullYear()*100+d.getMonth():0;}
@@ -483,7 +489,8 @@ function refreshCascade(){
   const sv=getMsValues('ms-vig'),su=getMsValues('ms-uni');
   const vigs=[...new Set(ICS.filter(o=>rowPassesExcept(o,sv,su,'vig')).map(o=>o.vigD?vigKeyN(o.vigD):0).filter(Boolean))]
     .sort((a,b)=>a-b).map(k=>{const o=ICS.find(x=>x.vigD&&vigKeyN(x.vigD)===k);return vigLbl(o.vigD);});
-  setMsOptions('ms-vig',vigs);
+  const lista=vigFiltro();   // só mês com pontuação, do mais recente para o mais antigo
+  setMsOptions('ms-vig',lista.filter(v=>vigs.includes(v)));
   const unis=[...new Set(ICS.filter(o=>rowPassesExcept(o,sv,su,'uni')).map(o=>o.unidade).filter(Boolean))].sort();
   setMsOptions('ms-uni',unis);
 }
@@ -504,11 +511,21 @@ function aplicaPacote(ic,dp,fc){
   ICS=(ic||[]).filter(o=>o&&o.vigD).map(o=>{const vigD=new Date(o.vigD);return{vigD,vk:vigKeyN(vigD),unidade:o.unidade,ic:o.ic,pont:o.pont};});
   DPO=dp?compDPO(dp):{};FCAREC=fc?compFCA(fc):[];
   const vm=new Map();ICS.forEach(o=>vm.set(o.vk,o.vigD));VIGS=[...vm.values()].sort((a,b)=>vigKeyN(a)-vigKeyN(b));
-  const vigItems=VIGS.map(d=>vigLbl(d));
-  const comDados=vigItems.filter(v=>ICS.some(o=>vigLbl(o.vigD)===v&&o.pont!=null));
-  const base=comDados.length?comDados:vigItems;
-  const vw=document.getElementById('ms-vig');if(base.length)vw._sel=new Set([base[base.length-1]]);
+  /* Filtro Vigência: só mês com pontuação, do mais recente para o mais antigo,
+     abrindo no último; a escolha AUTOMÁTICA acompanha o dado novo (cache de ago/26
+     + releitura com set/26 passa para set/26) e a escolha à mão fica (regra do
+     portal, PADROES.md §6; Renan, 22/10/2026). VIGS segue cronológico. */
+  const vigItems=vigFiltro();
+  const ultimo=vigItems[0]||'';
+  const vw=document.getElementById('ms-vig');
+  const selV=vw._sel instanceof Set?[...vw._sel]:[];
+  // Muda o Set NO LUGAR: os listeners do _buildMs guardam o Set da 1ª montagem.
+  const poe=a=>{if(!(vw._sel instanceof Set))vw._sel=new Set();vw._sel.clear();a.forEach(v=>vw._sel.add(v));};
+  if(!_vigAutoFeito||(_vigAuto&&selV.length===1&&selV[0]===_vigAuto)){if(ultimo){poe([ultimo]);_vigAuto=ultimo;}}
+  else poe(selV.filter(v=>vigItems.includes(v)));
+  _vigAutoFeito=true;
   buildMsFilter('ms-vig',vigItems);
+  if(!vw._manual){vw._manual=true;vw.querySelector('.ms-list').addEventListener('click',()=>{_vigAuto='';});}
   buildMsFilter('ms-uni',[...new Set(ICS.map(o=>o.unidade))].sort());
   atualizar();
 }
@@ -674,6 +691,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221945"></script>
 </body>
 </html>

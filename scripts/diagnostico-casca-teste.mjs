@@ -182,11 +182,16 @@ console.log('  novo base: ' + b.resumo.join(' · ') + '\n    ' + b.cards.map(c =
 ok('13 unidades com card, piores primeiro', b.cards.length === 13 && b.cards.every((c, i, a) => i === 0 || parseFloat(a[i - 1].pont.replace(',', '.')) <= parseFloat(c.pont.replace(',', '.'))));
 ok('as quatro faixas aparecem no recorte', ['g', 'y', 'o', 'r'].every(f => b.cards.some(c => c.faixa === f)), b.cards.map(c => c.faixa).join(''));
 ok('cruzamentos DPO e FCA aparecem nos cards', b.cards.some(c => /DPO/.test(c.diag.join(' ') + c.n4)) && b.cards.some(c => /FCA/.test(c.diag.join(' '))));
-ok('a última vigência com dado vem marcada', /ago\/26\*$/.test(b.vigs), b.vigs);
+// Vigência do mais recente para o mais antigo, abrindo no último mês com pontuação
+// (regra do portal, PADROES.md §6; Renan, 22/10/2026): no novo a lista vem invertida,
+// então o antes × depois compara o CONJUNTO (e o que vem marcado), não a ordem.
+ok('a última vigência com dado vem marcada (1ª da lista)', /^ago\/26\*(,|$)/.test(b.vigs), b.vigs);
+ok('vigência do mais recente para o mais antigo', b.vigs.split(',')[0].startsWith('ago/26') && b.vigs.split(',').pop().startsWith('jan/26'), b.vigs);
+const conj = v => v.split(',').sort().join(',');
 for (const nome of Object.keys(passos)) {
   const A = res.antigo[nome], N = res.novo[nome];
   for (const k of Object.keys(A)) {
-    const igual = JSON.stringify(A[k]) === JSON.stringify(N[k]);
+    const igual = k === 'vigs' ? conj(A[k]) === conj(N[k]) : JSON.stringify(A[k]) === JSON.stringify(N[k]);
     ok(`igual antes × depois [${nome}]: ${k}`, igual, igual ? '' : `${JSON.stringify(A[k]).slice(0, 300)} × ${JSON.stringify(N[k]).slice(0, 300)}`);
   }
 }
@@ -202,7 +207,15 @@ ok('filtro de unidade deixa só as duas', res.novo['Unidade PELOTAS + MACACU (ag
     await ctx.close();
   }
   ok('elite vazio: os dois lados caem na Base RPM (CSV)', r.antigo.csv && r.novo.csv);
-  ok('elite vazio: mesmos números antes × depois', JSON.stringify(r.antigo.n) === JSON.stringify(r.novo.n) && r.novo.n.cards.length === 13, r.novo.n.resumo.join(' · '));
+  // a lista de vigências fica fora: no novo ela só traz mês com pontuação (o mês da Base
+  // RPM sem "% de Ating." sai da lista) e vem do mais recente para o mais antigo
+  const semVigs = n => JSON.stringify({ ...n, vigs: undefined });
+  ok('elite vazio: mesmos números antes × depois', semVigs(r.antigo.n) === semVigs(r.novo.n) && r.novo.n.cards.length === 13, r.novo.n.resumo.join(' · '));
+  console.log('    vigs antigo: ' + r.antigo.n.vigs + '\n    vigs novo:   ' + r.novo.n.vigs);
+  const marcadas = v => v.split(',').filter(x => x.endsWith('*')).join(',');
+  ok('elite vazio: mesma vigência marcada e a lista é a do antigo menos os meses sem pontuação, invertida',
+    marcadas(r.antigo.n.vigs) === marcadas(r.novo.n.vigs) && r.antigo.n.vigs.split(',').map(x => x.replace('*', '')).filter(x => r.novo.n.vigs.split(',').map(y => y.replace('*', '')).includes(x)).reverse().join(',') === r.novo.n.vigs.replace(/\*/g, ''),
+    r.novo.n.vigs);
   ok('elite vazio: zero erro de página', !r.novo.errs.length, r.novo.errs.join(' / '));
 }
 

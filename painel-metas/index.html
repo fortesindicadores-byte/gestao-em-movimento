@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221945">
 <title>Painel de Metas</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -780,6 +780,7 @@ function renderTable(){
 // redesenhando quando chega (a vigência escolhida é mantida). Dentro do Check de Metas
 // (iframe) não usa a memória: o deck tem de sair com a leitura do momento.
 const PM_CACHE='pm_cache_v2', PM_CACHE_MAX=24*3600e3;
+let _vigAuto='',_vigAutoFeito=false;
 function salvaCache(){try{localStorage.setItem(PM_CACHE,JSON.stringify({ts:Date.now(),herd:VIG_HERDADAS,fca:FCA_FONTE,
   disp:DISP_FONTE,
   all:ALL.map(o=>({...o,vigD:[o.vigD.getFullYear(),o.vigD.getMonth()]}))}));}catch(e){}}
@@ -795,11 +796,26 @@ const hhmm=d=>`${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR',{
 function montaTela(manter){
   const vm=new Map();ALL.forEach(o=>{if(o.vigD)vm.set(vigKeyN(o.vigD),o.vigD);});
   VIGS=[...vm.values()].sort((a,b)=>vigKeyN(a)-vigKeyN(b));
-  const vigItems=VIGS.map(d=>vigLbl(d));
+  /* Filtro Vigência: só mês com realizado (Ranking do Frota de Elite, Dispersão,
+     Custo da DRE ou Real colado na aba — DPO e FCA não contam, porque existem em
+     todo mês), do mais recente para o mais antigo, abrindo no último. A escolha
+     AUTOMÁTICA acompanha o dado novo (memória com ago/26 + leitura nova com set/26
+     passa para set/26); a escolha à mão fica (regra do portal, PADROES.md §6;
+     Renan, 22/10/2026). VIGS segue cronológico (gráfico mensal, YTD). */
+  const comReal=new Set(ALL.filter(o=>o.vigD&&o.real!=null&&isFinite(o.real)&&!/^(dpo|fca)$/.test(classify(o.indicador))).map(o=>vigLbl(o.vigD)));
+  const todas=VIGS.map(d=>vigLbl(d));
+  const vigItems=(comReal.size?todas.filter(v=>comReal.has(v)):todas).slice().reverse();
+  const ultimo=vigItems[0]||'';
   const vw=document.getElementById('ms-vig'); const ant=vw._sel?[...vw._sel]:[];
-  if(manter&&ant.length&&ant.every(v=>vigItems.includes(v))) vw._sel=new Set(ant);
-  else if(vigItems.length) vw._sel=new Set([vigItems[vigItems.length-1]]); // auto último mês
+  // Muda o Set NO LUGAR: os listeners do _buildMs guardam o Set da 1ª montagem.
+  const poe=a=>{if(!(vw._sel instanceof Set))vw._sel=new Set();vw._sel.clear();a.forEach(v=>vw._sel.add(v));};
+  if(_vigAuto&&ant.length===1&&ant[0]===_vigAuto&&ultimo){poe([ultimo]);_vigAuto=ultimo;}
+  else if(manter&&ant.length&&ant.every(v=>vigItems.includes(v))) poe(ant);
+  else if(manter&&!ant.length&&_vigAutoFeito) poe([]);                   // "Todas" escolhida à mão
+  else if(ultimo){poe([ultimo]);_vigAuto=ultimo;}                         // auto último mês
+  _vigAutoFeito=true;
   buildMsFilter('ms-vig',vigItems);
+  if(!vw._manual){vw._manual=true;vw.querySelector('.ms-list').addEventListener('click',()=>{_vigAuto='';});}
   atualizar();
 }
 function rodapeCarga(d){
@@ -940,6 +956,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221945"></script>
 </body>
 </html>

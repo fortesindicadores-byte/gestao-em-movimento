@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221945">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Correlações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -698,9 +698,13 @@ function toggleMs(id){ const w=document.getElementById(id); if(!w) return; const
   document.querySelectorAll('.ms-panel.open').forEach(x=>x.classList.remove('open')); if(!ab){ p.classList.add('open'); const i=w.querySelector('.ms-search input'); if(i) setTimeout(()=>i.focus(),30); } }
 document.addEventListener('click',e=>{ if(!e.target.closest('.ms-wrap')) document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open')); });
 
+const temRealizado=r=>Object.keys(r.v||{}).some(k=>!/_rem$/.test(k)&&fin(r.v[k]));
 function montaFiltros(){
   const rows=FATO[GRAO];
-  const vigs=[...new Set(rows.map(r=>r.vig))].sort().reverse();
+  /* só mês com algum valor realizado (mês da DRE só com orçado/remunerado fica fora), do mais
+     recente para o mais antigo (regra do portal, PADROES.md §6; Renan, 22/10/2026). O recorte
+     continua abrindo em "Todos" (a conta precisa de vários meses). */
+  const vigs=[...new Set(rows.filter(temRealizado).map(r=>r.vig))].sort().reverse();
   const unis=[...new Set(rows.map(r=>r.uni))].sort();
   const wv=document.getElementById('ms-vig'), wu=document.getElementById('ms-uni');
   if(wv._sel) wv._sel=new Set([...wv._sel].filter(v=>vigs.includes(v)));
@@ -1068,6 +1072,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221945"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221945">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Correlações da Operação · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -653,8 +653,12 @@ function montaUnidade(){
   }
   set('quemUni',ADMIN?'Admin · vendo '+nomeUni(UNI):(PERFIL_UNIS.join(' · ')||'sem unidade'));
 }
+const temRealizado=r=>Object.keys(r.v||{}).some(k=>!/_rem$/.test(k)&&fin(r.v[k]));
 function montaVigs(){
-  const vigs=[...new Set(FATO.uni.map(r=>r.vig))].sort().reverse();
+  /* só mês com algum valor realizado (mês da DRE só com orçado/remunerado fica fora), do mais
+     recente para o mais antigo (regra do portal, PADROES.md §6; Renan, 22/10/2026). O recorte
+     continua abrindo em "Todos" (a conta precisa de vários meses). */
+  const vigs=[...new Set(FATO.uni.filter(temRealizado).map(r=>r.vig))].sort().reverse();
   const w=document.getElementById('ms-vig'); if(w._sel) w._sel=new Set([...w._sel].filter(v=>vigs.includes(v)));
   buildMs('ms-vig',vigs,render,vigRot);
 }
@@ -1032,6 +1036,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221945"></script>
 </body>
 </html>

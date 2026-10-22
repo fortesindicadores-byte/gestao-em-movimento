@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610221800">
+<meta name="build" content="202610221945">
 <title>Ativação de Frota · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -653,14 +653,17 @@ async function fetchData() {
     .filter(r => r.vig && (r.rem > 0 || r.real_km > 0));
   try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(),rows:ALL})); }catch(e){}
   const savedVig = getSel('ms-vig');
+  const eraAuto = _vigAuto && savedVig.length===1 && savedVig[0]===_vigAuto;
   populateFilters();
   if (savedVig.length > 0) {
     const vigWrap = document.getElementById('ms-vig');
     if (vigWrap) {
-      vigWrap._sel = new Set(savedVig);
       const selAnos = getSel('ms-ano');
       const src = selAnos.length ? ALL.filter(r => selAnos.includes(r.ano)) : ALL;
-      const vigs = [...new Set(src.map(r => r.vig))].filter(Boolean).sort(sortVig).reverse();
+      const vigs = vigsComReal(src);
+      // escolha AUTOMÁTICA acompanha o dado novo; a escolha à mão fica (Renan, 22/10/2026)
+      if (eraAuto) { const d=vigDefault(vigs); vigWrap._sel=new Set([d].filter(Boolean)); _vigAuto=d||''; }
+      else vigWrap._sel = new Set(savedVig);
       buildMsFilter('ms-vig', vigs, 'Vigência', vigLabel);
     }
   }
@@ -755,19 +758,33 @@ document.addEventListener('click', e => {
   if(!e.target.closest('.ms-wrap')) document.querySelectorAll('.ms-panel.open').forEach(p => p.classList.remove('open'));
 });
 
-let _vigM1Done=false;
+let _vigM1Done=false, _vigAuto='';
+/* Lista do filtro Vigência: só mês com realizado (km rodado ou frota realizada),
+   do mais recente para o mais antigo (regra do portal, PADROES.md §6; Renan,
+   22/10/2026). Mês só com km remunerado fica fora da lista. */
+function vigsComReal(src){
+  return [...new Set(src.filter(r=>r.real_km>0||r.frota_real>0).map(r => r.vig))].filter(Boolean).sort(sortVig).reverse();
+}
+// padrão: o mês anterior (fechamento) se tiver realizado; senão o mais recente da lista
+function vigDefault(vigs){
+  const now=new Date(),m=now.getMonth()===0?12:now.getMonth(),y=now.getMonth()===0?now.getFullYear()-1:now.getFullYear();
+  const m1=String(m).padStart(2,'0')+'/'+y;
+  return vigs.includes(m1)?m1:vigs[0];
+}
 function repopulateVig() {
   const selAnos = getSel('ms-ano');
   const src = selAnos.length ? ALL.filter(r => selAnos.includes(r.ano)) : ALL;
-  const vigs = [...new Set(src.map(r => r.vig))].filter(Boolean).sort(sortVig).reverse();
+  const vigs = vigsComReal(src);
   const vigWrap=document.getElementById('ms-vig');
   if(!_vigM1Done){
-    const now=new Date(),m=now.getMonth()===0?12:now.getMonth(),y=now.getMonth()===0?now.getFullYear()-1:now.getFullYear();
-    const m1=String(m).padStart(2,'0')+'/'+y;
-    if(vigWrap) vigWrap._sel=new Set([vigs.includes(m1)?m1:vigs[0]].filter(Boolean));
+    const d=vigDefault(vigs);
+    if(vigWrap) vigWrap._sel=new Set([d].filter(Boolean));
+    _vigAuto=d||'';
     _vigM1Done=true;
+    if(vigWrap) vigWrap.addEventListener('click',e=>{ if(e.target.closest('.ms-list')) _vigAuto=''; });
   } else {
     if(vigWrap) vigWrap._sel=new Set();
+    _vigAuto='';
   }
   buildMsFilter('ms-vig', vigs, 'Vigência', vigLabel);
   render();
@@ -808,7 +825,7 @@ function refreshCascade(){
   const projs=[...new Set(ALL.filter(r=>rowPassesExcept(r,'proj')).map(r=>r.proj).filter(Boolean))].sort();
   setMsOptions('ms-proj', projs);
   // VIGÊNCIA (rebuild só quando a lista muda, p/ não resetar o dropdown à toa)
-  const vigs=[...new Set(ALL.filter(r=>rowPassesExcept(r,'vig')).map(r=>r.vig).filter(Boolean))].sort(sortVig).reverse();
+  const vigs=vigsComReal(ALL.filter(r=>rowPassesExcept(r,'vig')));
   const vkey=vigs.join(',');
   if(vkey!==_cascVigKey){
     _cascVigKey=vkey;
@@ -1542,6 +1559,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221800"></script>
+<script src="../assets/build-check.js?v=202610221945"></script>
 </body>
 </html>
