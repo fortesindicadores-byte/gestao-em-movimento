@@ -10,6 +10,10 @@
 // MODOS (env FT_MODE):
 //   sonda (padrão) — alcança o portal? o login passa? como é o menu e que API
 //                    a página chama? Não coleta nada.
+//   mapa           — a sonda + percorre a Exportação (Criar Novo Modelo →
+//                    Padrão → ROTA → vigência → Marcar todos → 1 aba → 1
+//                    tabela) e lista o que cada passo oferece e chama. Não
+//                    salva modelo nem exporta.
 //
 // LOGIN (prints do Renan, 23/10/2026): freightech.ambev.com.br/#/login →
 // "Sou Fornecedor - Externo" → Keycloak da Ambev (auth.ambevdevs.com.br,
@@ -86,6 +90,116 @@ page.on('response', async res => {
   c.bearer = c.bearer || /^bearer\s/i.test(req.headers().authorization || '');
   chamadas.set(k, c);
 });
+
+// forma da resposta JSON da API (chaves e tamanhos, nunca valores): é o que
+// diz se o robô pode pedir lista de tabelas, campos, vigências e unidades direto
+const formas = new Map();
+page.on('response', async res => {
+  const u = res.url();
+  if (!/apim\.ambevdevs\.com\.br/.test(u)) return;
+  if (!/json/.test(res.headers()['content-type'] || '')) return;
+  try {
+    const j = await res.json();
+    const forma = v => Array.isArray(v)
+      ? `[${v.length}]${v.length && v[0] && typeof v[0] === 'object' ? '{' + Object.keys(v[0]).slice(0, 25).join(',') + '}' : ''}`
+      : (v && typeof v === 'object')
+        ? '{' + Object.entries(v).slice(0, 25).map(([k, x]) => Array.isArray(x) ? `${k}[${x.length}]` : k).join(',') + '}'
+        : typeof v;
+    formas.set(`${res.request().method()} ${semValores(u)}`, forma(j));
+  } catch (e) {}
+});
+
+// ── modo mapa: percorre a Exportação (ROTA) SEM exportar ─────────────
+// Cada passo escolhe uma opção, fotografa e lista o que a tela oferece. As
+// chamadas que a tela fizer em cada passo (vigências do canal, unidades,
+// tabelas, campos) ficam no relatório de API do fim.
+const sel = s => page.locator(s).first();
+async function opcoes() {
+  return page.$$eval('ng-dropdown-panel .ng-option', els => els.map(e => (e.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean));
+}
+async function abre(loc, nome) {
+  await loc.locator('.ng-select-container').first().click({ timeout: 15000 });
+  await page.waitForSelector('ng-dropdown-panel .ng-option', { timeout: 20000 });
+  await page.waitForTimeout(800);
+  const o = await opcoes();
+  log(`${nome}: ${o.length} opção(ões)`, o.length > 40 ? `· primeiras: ${o.slice(0, 12).join(' | ')} · últimas: ${o.slice(-6).join(' | ')}` : `· ${o.join(' | ')}`);
+  return o;
+}
+async function escolhe(txt) {
+  await page.locator('ng-dropdown-panel .ng-option', { hasText: txt }).first().click({ timeout: 10000 });
+  await page.waitForTimeout(2500);
+}
+async function fecha() { await page.keyboard.press('Escape').catch(() => {}); await page.waitForTimeout(500); }
+async function rotulosDosSelects() {
+  return page.$$eval('ng-select', els => els.map((e, i) => {
+    let p = e, txt = '';
+    for (let k = 0; k < 5 && p && !txt; k++) { p = p.parentElement; const l = p && p.querySelector('label, p.text'); if (l) txt = l.innerText.trim(); }
+    return `${i}:${txt || '?'}${e.classList.contains('ng-select-disabled') ? ' (travado)' : ''}${e.classList.contains('ng-select-multiple') ? ' (múltipla)' : ''}`;
+  }));
+}
+
+async function mapa() {
+  log('── MAPA: Criar Novo Modelo → Padrão → ROTA → vigência → unidades → 1 aba');
+  const passo = async (nome, fn) => {
+    try { await fn(); } catch (e) { log(`passo "${nome}" falhou:`, e.message.split('\n')[0]); await foto(page, 'falha-' + nome.replace(/\W/g, '')); }
+  };
+  await passo('modelo', async () => {
+    await abre(sel('wac-select[bindlabel="modelo"] ng-select'), 'Modelo');
+    await escolhe('Criar Novo Modelo');
+    await foto(page, 'mapa-modelo');
+    log('selects na tela:', (await rotulosDosSelects()).join(' · '));
+  });
+  await passo('tipo', async () => {
+    // o Tipo de exportação é o select logo antes do Canal/Segmento
+    const idx = await page.$$eval('ng-select', els => els.findIndex(e => {
+      let p = e; for (let k = 0; k < 6 && p; k++) { p = p.parentElement; if (p && /tipo de exporta/i.test(p.querySelector('label, p')?.innerText || '')) return true; } return false;
+    }));
+    log('índice do select Tipo de exportação:', idx);
+    if (idx >= 0) { await abre(page.locator('ng-select').nth(idx), 'Tipo de exportação'); await escolhe('Padrão'); }
+  });
+  await passo('canal', async () => { await abre(sel('#segmento ng-select'), 'Canal/Segmento'); await escolhe('ROTA'); });
+  await passo('vigencia', async () => {
+    const o = await abre(sel('#vigencia ng-select'), 'Vigência');
+    if (o.length) await escolhe(o[0]);
+    await fecha();
+    await foto(page, 'mapa-vigencia');
+  });
+  await passo('unidade', async () => {
+    await abre(sel('#unidade ng-select'), 'Unidade');
+    const mt = page.getByText(/Marcar todos/i).first();
+    if (await mt.count()) { await mt.click(); await page.waitForTimeout(1500); log('Marcar todos: clicado'); }
+    else log('botão "Marcar todos" não achado');
+    await fecha();
+    const v = await sel('#unidade').innerText().catch(() => '');
+    log('campo Unidade depois:', v.replace(/\s+/g, ' ').slice(0, 120));
+    await foto(page, 'mapa-unidade');
+  });
+  await passo('aba', async () => {
+    await page.getByText(/Adicionar nova aba/i).first().click({ timeout: 10000 });
+    await page.waitForTimeout(3000);
+    await foto(page, 'mapa-aba');
+    // o painel "Tabelas": lista o texto do bloco que contém "Selecione uma tabela"
+    const tabelas = await page.evaluate(() => {
+      const ancora = [...document.querySelectorAll('*')].find(e => e.children.length === 0 && /Selecione uma tabela/i.test(e.textContent));
+      let box = ancora; for (let k = 0; k < 6 && box; k++) { box = box.parentElement; if (box && box.innerText.split('\n').length > 10) break; }
+      return box ? box.innerText.split('\n').map(s => s.trim()).filter(Boolean) : [];
+    });
+    log(`painel Tabelas (${tabelas.length} linhas):`, tabelas.join(' | ').slice(0, 4000));
+    const primeira = tabelas.find(t => /^[A-ZÀ-Ú0-9 ()\/\-.]{4,}$/.test(t) && !/SELECIONE|PESQUIS|TABELAS|CAMPOS/i.test(t));
+    if (primeira) {
+      await page.getByText(primeira, { exact: true }).first().click({ timeout: 10000 });
+      await page.waitForTimeout(3000);
+      const campos = await page.evaluate(() => {
+        const ancora = [...document.querySelectorAll('*')].find(e => e.children.length === 0 && /Selecione um ou mais campos/i.test(e.textContent));
+        let box = ancora; for (let k = 0; k < 6 && box; k++) { box = box.parentElement; if (box && box.innerText.split('\n').length > 5) break; }
+        return box ? box.innerText.split('\n').map(s => s.trim()).filter(Boolean) : [];
+      });
+      log(`tabela "${primeira}" → painel Campos (${campos.length} linhas):`, campos.join(' | ').slice(0, 2500));
+      await foto(page, 'mapa-campos');
+    } else log('nenhuma tabela reconhecida no painel');
+  });
+  log('── MAPA: fim (nada foi salvo nem exportado)');
+}
 
 async function textosVisiveis(sel) {
   return page.$$eval(sel, els => [...new Set(els
@@ -179,6 +293,8 @@ try {
   });
   campos.forEach(c => log('campo', c));
 
+  if (MODE === 'mapa') await mapa();
+
   // ── 5) onde mora a sessão (só os NOMES) ─────────────────────
   const armaz = await page.evaluate(() => ({
     local: Object.keys(localStorage), sessao: Object.keys(sessionStorage),
@@ -193,7 +309,7 @@ try {
   // ── 6) a API que a página chamou ────────────────────────────
   log(`chamadas XHR/fetch: ${chamadas.size} caminhos · com Bearer: ${comBearer}`);
   [...chamadas.entries()].sort((a, b) => a[0].localeCompare(b[0])).forEach(([k, c]) =>
-    log(`   ${k} · ${c.n}× · HTTP ${[...c.status].join('/')} · ${[...c.ct].join('/') || '?'} · até ${c.bytes} B${c.bearer ? ' · Bearer' : ''}`));
+    log(`   ${k} · ${c.n}× · HTTP ${[...c.status].join('/')} · ${[...c.ct].join('/') || '?'} · até ${c.bytes} B${c.bearer ? ' · Bearer' : ''}${formas.has(k) ? ' · forma ' + formas.get(k) : ''}`));
   await browser.close();
   log('modo', MODE, '· fim');
 }

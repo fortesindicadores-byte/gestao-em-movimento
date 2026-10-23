@@ -11,11 +11,11 @@ on:
   workflow_dispatch:
     inputs:
       modo:
-        description: "sonda"
+        description: "sonda | mapa (percorre a Exportação sem exportar)"
         required: true
         default: "sonda"
         type: choice
-        options: [sonda]
+        options: [sonda, mapa]
 
 jobs:
   robo:
