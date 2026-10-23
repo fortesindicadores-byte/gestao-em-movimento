@@ -118,7 +118,9 @@ async function opcoes() {
   return page.$$eval('ng-dropdown-panel .ng-option', els => els.map(e => (e.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean));
 }
 async function abre(loc, nome) {
-  await loc.locator('.ng-select-container').first().click({ timeout: 15000 });
+  await loc.scrollIntoViewIfNeeded().catch(() => {});
+  try { await loc.locator('.ng-select-container').first().click({ timeout: 15000 }); }
+  catch (e) { log(`${nome}: clique normal falhou (${e.message.split('\n')[0]}), tentando forçado`); await loc.locator('.ng-select-container').first().click({ force: true, timeout: 5000 }); }
   await page.waitForSelector('ng-dropdown-panel .ng-option', { timeout: 20000 });
   await page.waitForTimeout(800);
   const o = await opcoes();
@@ -130,6 +132,31 @@ async function escolhe(txt) {
   await page.waitForTimeout(2500);
 }
 async function fecha() { await page.keyboard.press('Escape').catch(() => {}); await page.waitForTimeout(500); }
+// índice do ÚLTIMO ng-select cujo rótulo casa: a página tem um conjunto
+// escondido (Seleção de Unidades) antes do formulário de Exportação
+async function idxDe(rx) {
+  return page.$$eval('ng-select', (els, src) => {
+    const r = new RegExp(src, 'i'); let achou = -1;
+    els.forEach((e, i) => {
+      let p = e, txt = '';
+      for (let k = 0; k < 5 && p && !txt; k++) { p = p.parentElement; const l = p && p.querySelector('label, p.text'); if (l) txt = l.innerText.trim(); }
+      if (r.test(txt)) achou = i;
+    });
+    return achou;
+  }, rx.source);
+}
+async function selDe(rx) {
+  const i = await idxDe(rx);
+  if (i < 0) throw new Error('select não achado: ' + rx.source);
+  const loc = page.locator('ng-select').nth(i);
+  const info = await loc.evaluate(e => {
+    const r = e.getBoundingClientRect();
+    const topo = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+    return `idx visível=${r.width > 0 && r.height > 0} caixa=${Math.round(r.x)},${Math.round(r.y)},${Math.round(r.width)}x${Math.round(r.height)} travado=${e.classList.contains('ng-select-disabled')} por cima=${topo ? topo.tagName + '.' + String(topo.className).slice(0, 60) : '-'}`;
+  });
+  log(`select ${rx.source} → nº ${i} · ${info}`);
+  return loc;
+}
 async function rotulosDosSelects() {
   return page.$$eval('ng-select', els => els.map((e, i) => {
     let p = e, txt = '';
@@ -150,22 +177,17 @@ async function mapa() {
     log('selects na tela:', (await rotulosDosSelects()).join(' · '));
   });
   await passo('tipo', async () => {
-    // o Tipo de exportação é o select logo antes do Canal/Segmento
-    const idx = await page.$$eval('ng-select', els => els.findIndex(e => {
-      let p = e; for (let k = 0; k < 6 && p; k++) { p = p.parentElement; if (p && /tipo de exporta/i.test(p.querySelector('label, p')?.innerText || '')) return true; } return false;
-    }));
-    log('índice do select Tipo de exportação:', idx);
-    if (idx >= 0) { await abre(page.locator('ng-select').nth(idx), 'Tipo de exportação'); await escolhe('Padrão'); }
+    await abre(await selDe(/tipo de exporta/), 'Tipo de exportação'); await escolhe('Padrão'); await fecha();
   });
-  await passo('canal', async () => { await abre(page.locator('#segmento ng-select').last(), 'Canal/Segmento'); await escolhe('ROTA'); });
+  await passo('canal', async () => { await abre(await selDe(/canal/), 'Canal/Segmento'); await escolhe('ROTA'); });
   await passo('vigencia', async () => {
-    const o = await abre(page.locator('#vigencia ng-select').last(), 'Vigência');
+    const o = await abre(await selDe(/vig/), 'Vigência');
     if (o.length) await escolhe(o[0]);
     await fecha();
     await foto(page, 'mapa-vigencia');
   });
   await passo('unidade', async () => {
-    await abre(page.locator('#unidade ng-select').last(), 'Unidade');
+    await abre(await selDe(/unidade/), 'Unidade');
     const mt = page.getByText(/Marcar todos/i).first();
     if (await mt.count()) { await mt.click(); await page.waitForTimeout(1500); log('Marcar todos: clicado'); }
     else log('botão "Marcar todos" não achado');
