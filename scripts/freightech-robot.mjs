@@ -94,6 +94,7 @@ page.on('response', async res => {
 // forma da resposta JSON da API (chaves e tamanhos, nunca valores): é o que
 // diz se o robô pode pedir lista de tabelas, campos, vigências e unidades direto
 const formas = new Map();
+let TABELAS = [];   // a lista de tabelas do canal, como a API devolve (só nomes)
 page.on('response', async res => {
   const u = res.url();
   if (!/apim\.ambevdevs\.com\.br/.test(u)) return;
@@ -106,6 +107,7 @@ page.on('response', async res => {
         ? '{' + Object.entries(v).slice(0, 25).map(([k, x]) => Array.isArray(x) ? `${k}[${x.length}]` : k).join(',') + '}'
         : typeof v;
     formas.set(`${res.request().method()} ${semValores(u)}`, forma(j));
+    if (/\/export\/tables\//.test(u) && Array.isArray(j)) TABELAS = j;
   } catch (e) {}
 });
 
@@ -200,25 +202,17 @@ async function mapa() {
     await page.getByText(/Adicionar nova aba/i).first().click({ timeout: 10000 });
     await page.waitForTimeout(3000);
     await foto(page, 'mapa-aba');
-    // o painel "Tabelas": lista o texto do bloco que contém "Selecione uma tabela"
-    const tabelas = await page.evaluate(() => {
-      const ancora = [...document.querySelectorAll('*')].find(e => e.children.length === 0 && /Selecione uma tabela/i.test(e.textContent));
-      let box = ancora; for (let k = 0; k < 6 && box; k++) { box = box.parentElement; if (box && box.innerText.split('\n').length > 10) break; }
-      return box ? box.innerText.split('\n').map(s => s.trim()).filter(Boolean) : [];
-    });
-    log(`painel Tabelas (${tabelas.length} linhas):`, tabelas.join(' | ').slice(0, 4000));
-    const primeira = tabelas.find(t => /^[A-ZÀ-Ú0-9 ()\/\-.]{4,}$/.test(t) && !/SELECIONE|PESQUIS|TABELAS|CAMPOS/i.test(t));
+    log(`tabelas do canal pela API (${TABELAS.length}):`, TABELAS.map(t => t.comFormatacao || t.semFormatacao).join(' | '));
+    log('nomes sem formatação:', TABELAS.map(t => t.semFormatacao).join(' | '));
+    const primeira = TABELAS[0] && (TABELAS[0].comFormatacao || TABELAS[0].semFormatacao);
     if (primeira) {
       await page.getByText(primeira, { exact: true }).first().click({ timeout: 10000 });
-      await page.waitForTimeout(3000);
-      const campos = await page.evaluate(() => {
-        const ancora = [...document.querySelectorAll('*')].find(e => e.children.length === 0 && /Selecione um ou mais campos/i.test(e.textContent));
-        let box = ancora; for (let k = 0; k < 6 && box; k++) { box = box.parentElement; if (box && box.innerText.split('\n').length > 5) break; }
-        return box ? box.innerText.split('\n').map(s => s.trim()).filter(Boolean) : [];
-      });
-      log(`tabela "${primeira}" → painel Campos (${campos.length} linhas):`, campos.join(' | ').slice(0, 2500));
+      await page.waitForTimeout(3500);
+      const corpo = await page.locator('body').innerText();
+      const i = corpo.search(/Total campos selecionados/i);
+      log(`tabela "${primeira}" → trecho dos campos:`, i >= 0 ? corpo.slice(i, i + 1500).replace(/\s*\n\s*/g, ' | ') : '(texto "Total campos selecionados" não achado)');
       await foto(page, 'mapa-campos');
-    } else log('nenhuma tabela reconhecida no painel');
+    } else log('a API não devolveu tabela nenhuma')
   });
   log('── MAPA: fim (nada foi salvo nem exportado)');
 }
