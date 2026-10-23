@@ -157,20 +157,20 @@ async function mapa() {
     log('índice do select Tipo de exportação:', idx);
     if (idx >= 0) { await abre(page.locator('ng-select').nth(idx), 'Tipo de exportação'); await escolhe('Padrão'); }
   });
-  await passo('canal', async () => { await abre(sel('#segmento ng-select'), 'Canal/Segmento'); await escolhe('ROTA'); });
+  await passo('canal', async () => { await abre(page.locator('#segmento ng-select').last(), 'Canal/Segmento'); await escolhe('ROTA'); });
   await passo('vigencia', async () => {
-    const o = await abre(sel('#vigencia ng-select'), 'Vigência');
+    const o = await abre(page.locator('#vigencia ng-select').last(), 'Vigência');
     if (o.length) await escolhe(o[0]);
     await fecha();
     await foto(page, 'mapa-vigencia');
   });
   await passo('unidade', async () => {
-    await abre(sel('#unidade ng-select'), 'Unidade');
+    await abre(page.locator('#unidade ng-select').last(), 'Unidade');
     const mt = page.getByText(/Marcar todos/i).first();
     if (await mt.count()) { await mt.click(); await page.waitForTimeout(1500); log('Marcar todos: clicado'); }
     else log('botão "Marcar todos" não achado');
     await fecha();
-    const v = await sel('#unidade').innerText().catch(() => '');
+    const v = await page.locator('#unidade').last().innerText().catch(() => '');
     log('campo Unidade depois:', v.replace(/\s+/g, ' ').slice(0, 120));
     await foto(page, 'mapa-unidade');
   });
