@@ -160,6 +160,25 @@ try {
     } else log(`nada com "${rx}" na tela`);
   }
 
+  // ── 4b) a tela de Exportação: como são os campos (para o robô saber clicar) ──
+  await page.goto(BASE + '/#/exportacao-dados', { waitUntil: 'domcontentloaded' }).catch(() => {});
+  await page.waitForTimeout(5000);
+  await foto(page, 'exportacao');
+  const campos = await page.evaluate(() => {
+    const rot = ['Modelo', 'Tipo de exportação', 'Canal/Segmento', 'Vigência', 'Unidade'];
+    const out = [];
+    for (const r of rot) {
+      const lab = [...document.querySelectorAll('label, span, div, p')].find(e => e.children.length === 0 && e.textContent.trim() === r);
+      if (!lab) { out.push(`${r}: (rótulo não achado)`); continue; }
+      let box = lab.parentElement;
+      for (let i = 0; i < 4 && box && !box.querySelector('input, select, [role="combobox"], ng-select, mat-select, p-dropdown, p-multiselect'); i++) box = box.parentElement;
+      const html = box ? box.outerHTML.replace(/\s+/g, ' ').replace(/>[^<]{1,60}</g, '>…<').slice(0, 700) : '(sem campo)';
+      out.push(`${r}: ${html}`);
+    }
+    return out;
+  });
+  campos.forEach(c => log('campo', c));
+
   // ── 5) onde mora a sessão (só os NOMES) ─────────────────────
   const armaz = await page.evaluate(() => ({
     local: Object.keys(localStorage), sessao: Object.keys(sessionStorage),
