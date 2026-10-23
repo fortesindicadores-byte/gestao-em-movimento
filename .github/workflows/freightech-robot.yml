@@ -1,0 +1,46 @@
+name: Freightech Robot (Ambev -> Supabase)
+
+# A remuneração da Ambev, do Freightech (freightech.ambev.com.br).
+#
+#  sonda — alcança o portal? o login passa? como é o menu e que API a
+#          página chama? Não coleta nada.
+#
+# Os prints sobem como artefato por 1 dia só: as telas do Freightech têm
+# valores de remuneração, e o repositório é público.
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "sonda"
+        required: true
+        default: "sonda"
+        type: choice
+        options: [sonda]
+
+jobs:
+  robo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency: freightech
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Instalar Playwright
+        run: npm i -D playwright@1.47.2 && npx playwright install --with-deps chromium
+      - name: Rodar
+        env:
+          FT_MODE: ${{ github.event.inputs.modo || 'sonda' }}
+          FREIGHTECH_USER: ${{ secrets.FREIGHTECH_USER }}
+          FREIGHTECH_PASS: ${{ secrets.FREIGHTECH_PASS }}
+        run: |
+          echo "modo=$FT_MODE"
+          node scripts/freightech-robot.mjs
+      - name: Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: freightech-shots
+          path: freightech-shots/
+          if-no-files-found: ignore
+          retention-days: 1
