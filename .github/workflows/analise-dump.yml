@@ -1,0 +1,56 @@
+name: Analise Dump (FT + DRE, cifrado)
+
+# Lê do banco o Freightech (ft_linha/ft_layout) e as bases que a análise cruza
+# (DRE Frota/Receita, Dispersão de km, Km/L, R$/L, balanço de massa, Ativos),
+# CIFRA tudo com a chave pública scripts/analise-dump.pub.pem (AES-256 com uma
+# chave aleatória, e a chave aleatória cifrada em RSA-OAEP) e publica num
+# branch TEMPORÁRIO (tmp-analise-dump, órfão, forçado). O repositório é
+# público: sem a chave privada o conteúdo não se lê. Apagar o branch depois.
+on:
+  workflow_dispatch:
+    inputs:
+      so_apagar:
+        description: 'true = só apaga o branch temporário tmp-analise-dump'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Apagar o branch temporário
+        if: ${{ github.event.inputs.so_apagar == 'true' }}
+        run: git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete tmp-analise-dump || echo "branch já não existia"
+      - name: Ler do banco
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          DUMP_DIR: /tmp/analise-dump
+        run: node scripts/analise-dump.mjs
+      - name: Cifrar e publicar no branch temporário
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+        run: |
+          set -e
+          rm -rf /tmp/pub && mkdir -p /tmp/pub
+          cd /tmp/analise-dump
+          tar -cf /tmp/dump.tar *.ndjson.gz
+          rm -f *.ndjson.gz
+          openssl rand -out /tmp/k.bin 32
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in /tmp/dump.tar -out /tmp/dump.tar.enc -pass file:/tmp/k.bin
+          openssl pkeyutl -encrypt -pubin -inkey "$GITHUB_WORKSPACE/scripts/analise-dump.pub.pem" \
+            -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in /tmp/k.bin -out /tmp/pub/chave.enc
+          rm -f /tmp/k.bin /tmp/dump.tar
+          cd /tmp/pub
+          split -b 90m -d -a 2 /tmp/dump.tar.enc dump.enc.
+          ls -la
+          git init -q -b tmp-analise-dump
+          git config user.email "actions@github.com" && git config user.name "github-actions"
+          git add . && git commit -qm "dump cifrado temporário (apagar depois de ler)"
+          git push -f -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" tmp-analise-dump
