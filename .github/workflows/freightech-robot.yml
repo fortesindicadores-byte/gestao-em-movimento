@@ -5,9 +5,18 @@ name: Freightech Robot (Ambev -> Supabase)
 #  sonda — alcança o portal? o login passa? como é o menu e que API a
 #          página chama? Não coleta nada.
 #
+#  carga — exporta pela API do FT e grava em ft_linha/ft_layout.
+#
+# AGENDADO todo dia às 06:20 BRT: carga das 4 últimas quinzenas, refazendo o
+# que já está no banco (a quinzena corrente muda até fechar, e o FT revisa a
+# anterior). No `schedule` não existe `inputs`, então os valores do agendado
+# vêm dos `||` abaixo — sem isso o robô rodaria em modo sonda todo dia.
+#
 # Os prints sobem como artefato por 1 dia só: as telas do Freightech têm
 # valores de remuneração, e o repositório é público.
 on:
+  schedule:
+    - cron: '20 9 * * *'
   workflow_dispatch:
     inputs:
       modo:
@@ -58,20 +67,29 @@ jobs:
         run: npm i -D playwright@1.47.2 xlsx@0.18.5 && npx playwright install --with-deps chromium
       - name: Rodar
         env:
-          FT_MODE: ${{ github.event.inputs.modo || 'sonda' }}
+          FT_MODE: ${{ github.event_name == 'schedule' && 'carga' || github.event.inputs.modo || 'sonda' }}
           FT_CANAIS: ${{ github.event.inputs.canais }}
           FT_TABS: ${{ github.event.inputs.tabs }}
           FT_API_TABS: ${{ github.event.inputs.api_tabs }}
           FT_DESDE: ${{ github.event.inputs.desde || '2022' }}
-          FT_ULTIMAS: ${{ github.event.inputs.ultimas }}
-          FT_REFAZER: ${{ github.event.inputs.refazer }}
+          FT_ULTIMAS: ${{ github.event_name == 'schedule' && '4' || github.event.inputs.ultimas }}
+          FT_REFAZER: ${{ github.event_name == 'schedule' && '1' || github.event.inputs.refazer }}
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           FT_VIGS: ${{ github.event.inputs.vigs || '1' }}
           FREIGHTECH_USER: ${{ secrets.FREIGHTECH_USER }}
           FREIGHTECH_PASS: ${{ secrets.FREIGHTECH_PASS }}
         run: |
-          echo "modo=$FT_MODE"
+          echo "evento=${{ github.event_name }} · modo=$FT_MODE · desde=$FT_DESDE · ultimas=${FT_ULTIMAS:-todas} · refazer=${FT_REFAZER:-0}"
           node scripts/freightech-robot.mjs
+      - name: Avisar por e-mail se falhar
+        if: failure()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          MAIL_FROM:      ${{ vars.MAIL_FROM }}
+          MAIL_TO:        ${{ vars.MAIL_TO }}
+          WORKFLOW:       ${{ github.workflow }}
+          RUN_URL:        ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash scripts/avisa-falha.sh
       - name: Screenshots
         if: always()
         uses: actions/upload-artifact@v4
