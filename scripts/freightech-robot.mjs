@@ -226,8 +226,15 @@ async function mapa() {
 
 
 // ── modo exportar ──────────────────────────────────────────────────
-const RODADA1 = { ROTA: ['Caminhão', 'Van'], AS: ['Caminhão'], ARMAZEM: ['Equipamento Armazém'], EMPURRADA: ['Cavalo', 'Carreta'], INSUMOS: ['Cavalo', 'Carreta'] };
-const norm = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+// 1ª e 2ª rodada (Renan, 24/10/2026)
+const RODADA1 = {
+  ROTA: ['Caminhão', 'Van', 'Resumo - SRTrans', 'Resumo - SRTrans Van', 'Resumo Rota', 'Resumo Van'],
+  AS: ['Caminhão'],
+  ARMAZEM: ['Equipamento Armazém', 'Faturamento'],
+  EMPURRADA: ['Cavalo', 'Carreta', 'Trechos', 'Faturamento'],
+  INSUMOS: ['Cavalo', 'Carreta', 'Trechos', 'Faturamento'],
+};
+const norm = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
 const CANAIS = (process.env.FT_CANAIS || Object.keys(RODADA1).join(',')).split(',').map(x => x.trim().toUpperCase()).filter(Boolean);
 const NVIG = Math.max(1, Math.min(8, Number(process.env.FT_VIGS || 1)));
 const DL = 'freightech-dl';
@@ -244,7 +251,7 @@ function achaTabela(alvo) {
 // dentro do painel que contém o rótulo `ancora` (ou na página inteira)
 async function clicaTexto(alvo, ancora) {
   const id = await page.evaluate(({ alvo, ancora }) => {
-    const nz = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+    const nz = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
     let raiz = document.body;
     if (ancora) {
       const a = [...document.querySelectorAll('body *')].filter(e => e.children.length === 0 && nz(e.textContent).includes(nz(ancora))).pop();
@@ -269,13 +276,19 @@ async function clicaTexto(alvo, ancora) {
 // dentro do painel "Selecione uma tabela": digita na busca e clica no nome
 async function escolheTabela(nome) {
   const busca = await page.evaluate(() => {
-    const nz = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+    const nz = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
     const a = [...document.querySelectorAll('body *')].filter(e => e.children.length === 0 && nz(e.textContent).includes('SELECIONE UMA TABELA')).pop();
     if (!a) return null;
     let p = a; for (let i = 0; i < 6 && p; i++) { p = p.parentElement; const inp = p && [...p.querySelectorAll('input')].filter(x => x.getBoundingClientRect().width > 0).pop(); if (inp) { const k = 'ftb' + Math.random().toString(36).slice(2, 8); inp.setAttribute('data-ft', k); return k; } }
     return null;
   });
-  if (busca) { await page.locator(`[data-ft="${busca}"]`).fill(''); await page.locator(`[data-ft="${busca}"]`).fill(nome.slice(0, 40)); await page.waitForTimeout(1500); }
+  let b2 = busca;
+  if (!b2) {
+    const ph = page.locator('input[placeholder*="tabela" i]:visible').last();
+    if (await ph.count()) b2 = await ph.evaluate(e => { const k = 'ftb' + Math.random().toString(36).slice(2, 8); e.setAttribute('data-ft', k); return k; });
+  }
+  const busca2 = b2;
+  if (busca2) { await page.locator(`[data-ft="${busca2}"]`).fill(''); await page.locator(`[data-ft="${busca2}"]`).fill(nome.slice(0, 40)); await page.waitForTimeout(1500); }
   else log('   busca do painel de tabelas não achada; procurando o nome na lista');
   for (const t of [nome, nome.toUpperCase()]) if (await clicaTexto(t, 'Selecione uma tabela')) return true;
   return false;
@@ -376,6 +389,21 @@ page.on('request', req => {
   log(`   → ${req.method()} ${semValores(req.url())} · corpo ${forma}`);
 });
 
+async function semSpinner() {
+  await page.waitForFunction(() => ![...document.querySelectorAll('.ngx-spinner-overlay')].some(e => e.getBoundingClientRect().width > 0), null, { timeout: 60000 }).catch(() => log('   (spinner ainda na tela depois de 60 s)'));
+}
+let dumpFeito = false;
+async function dumpAba() {
+  if (dumpFeito) return; dumpFeito = true;
+  const d = await page.evaluate(() => {
+    const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+    const inputs = [...document.querySelectorAll('input, textarea')].filter(vis).map(e => `${e.tagName.toLowerCase()}[${e.type}] ph="${e.placeholder || ''}" fc="${e.getAttribute('formcontrolname') || ''}"`);
+    const t = document.body.innerText; const i = t.search(/Adicionar nova aba/i);
+    return { inputs, texto: i >= 0 ? t.slice(i, i + 2500) : t.slice(0, 1500) };
+  });
+  log('   inputs visíveis:', d.inputs.join(' · '));
+  log('   texto depois de "Adicionar nova aba":', d.texto.replace(/\s*\n\s*/g, ' | '));
+}
 async function exportar() {
   log(`── EXPORTAR: canais ${CANAIS.join(', ')} · ${NVIG} vigência(s) mais recente(s) · tabelas da 1ª rodada`);
   const resumo = [];
@@ -403,14 +431,17 @@ async function exportar() {
       log('   unidades:', (await (await selDe(/unidade/)).innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
       let nAbas = 0;
       for (const alvo of alvos) {
-        await page.getByText(/Adicionar nova aba/i).first().click({ timeout: 10000 }); await page.waitForTimeout(2500);
+        await semSpinner();
+        await page.getByText(/Adicionar nova aba/i).first().click({ timeout: 15000 }); await page.waitForTimeout(2500);
+        await semSpinner();
         for (let i = 0; i < 20 && !TABELAS.length; i++) await page.waitForTimeout(500);
+        await dumpAba();
         const t = achaTabela(alvo);
         if (!t) { log(`   tabela "${alvo}" NÃO está na lista do ${canal} (${TABELAS.length}): ${TABELAS.map(x => x.comFormatacao || x.semFormatacao).join(' | ')}`); continue; }
         const nome = t.comFormatacao || t.semFormatacao;
         const ren = await renomeiaAba(nome);
         log(`   aba nova · renomear: ${ren || 'não deu (fica o nome padrão)'}`);
-        if (!(await escolheTabela(nome))) { log(`   NÃO consegui clicar na tabela "${nome}"`); await foto(page, `sem-tabela-${canal}`); continue; }
+        if (!(await escolheTabela(nome))) { log(`   NÃO consegui clicar na tabela "${nome}"`); await foto(page, `sem-tabela-${canal}`); dumpFeito = false; await dumpAba(); break; }
         await page.waitForTimeout(2500);
         const n = await selecionaTodosCampos();
         log(`   tabela "${nome}" (${t.semFormatacao}) · campos selecionados: ${n ?? '?'}`);
