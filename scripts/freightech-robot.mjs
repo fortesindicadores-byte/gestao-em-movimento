@@ -312,7 +312,9 @@ function achaTabela(alvo) {
   const n = norm(alvo);
   const nome = t => t.comFormatacao || t.semFormatacao;
   return TABELAS.find(t => norm(nome(t)) === n) || TABELAS.find(t => norm(t.semFormatacao) === n.replace(/ /g, ''))
-    || TABELAS.find(t => norm(nome(t)).startsWith(n)) || null;
+    || TABELAS.find(t => norm(nome(t)).startsWith(n))
+    || TABELAS.find(t => norm(nome(t)).replace(/S\b/g, '') === n.replace(/S\b/g, ''))
+    || TABELAS.find(t => norm(nome(t)).includes(n) || norm(t.semFormatacao).includes(n.replace(/ /g, ''))) || null;
 }
 
 // clica no elemento visível cujo texto (sem acento/caixa) é exatamente o alvo,
@@ -762,7 +764,7 @@ async function carga() {
     const lista = [], vistos = new Set();
     for (const alvo of (alvos.length ? alvos : RODADA1[canal] || [])) {
       const ts = alvo instanceof RegExp ? TABELAS.filter(x => alvo.test(x.comFormatacao || '') || alvo.test(x.semFormatacao || '')) : [achaTabela(alvo)].filter(Boolean);
-      if (!ts.length) log(`   ${canal}: "${alvo}" não está na lista (${TABELAS.length})`);
+      if (!ts.length) log(`   ${canal}: "${alvo}" não está na lista (${TABELAS.length}): ${TABELAS.map(x => x.comFormatacao || x.semFormatacao).join(' | ')}`);
       for (const t of ts) if (!vistos.has(t.semFormatacao)) { vistos.add(t.semFormatacao); lista.push(t); }
     }
     const vr = await ftApiOk(`${API_BACK}/selecao-da-unidade/buscar/vigencias?segmento=${canal}`);
@@ -775,8 +777,9 @@ async function carga() {
       const bloco = vigs.slice(i, i + 8);
       const faltam = lista.filter(t => REFAZER || bloco.some(v => !feitas.has(`${canal}|${t.semFormatacao}|${v}`)));
       if (!faltam.length) { log(`   ${bloco[0]}…: já carregado`); continue; }
-      const ub = CORPO_UNID ? { ...CORPO_UNID } : {};
-      for (const k of Object.keys(ub)) { if (Array.isArray(ub[k]) && ub[k].every(x => /_\d_\d{1,2}_\d{4}$/.test(String(x)))) ub[k] = bloco; else if (ub[k] === 'ROTA') ub[k] = canal; }
+      // o buscar/unidades recebe a lista de vigências (como a tela manda)
+      let ub = bloco;
+      if (CORPO_UNID && !Array.isArray(CORPO_UNID)) { ub = { ...CORPO_UNID }; for (const k of Object.keys(ub)) { if (Array.isArray(ub[k])) ub[k] = bloco; else if (ub[k] === 'ROTA') ub[k] = canal; } }
       const un = await ftApiOk(`${API_BACK}/selecao-da-unidade/buscar/unidades`, { method: 'POST', body: JSON.stringify(ub) });
       const unidades = [...new Set((Array.isArray(un.v) ? un.v : []).map(x => x.cnpjUnidade).filter(Boolean))];
       if (!unidades.length) { log(`   ${bloco[0]}…: nenhuma unidade (HTTP ${un.st})`); err++; continue; }
