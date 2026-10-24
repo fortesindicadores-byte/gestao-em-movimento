@@ -14,6 +14,8 @@
 //                    Padrão → ROTA → vigência → Marcar todos → 1 aba → 1
 //                    tabela) e lista o que cada passo oferece e chama. Não
 //                    salva modelo nem exporta.
+//   carga          — tudo pela API, desde FT_DESDE (2022), gravando em ft_linha/ft_layout
+//                    (scripts/freightech-supabase.sql). FT_ULTIMAS=n limita às n últimas quinzenas.
 //   exportar       — exporta de verdade, canal a canal, as tabelas da 1ª rodada
 //                    (Renan, 24/10/2026): ROTA Caminhão + Van · AS Caminhão ·
 //                    ARMAZEM Equipamento Armazém · EMPURRADA e INSUMOS Cavalo +
@@ -476,11 +478,12 @@ page.on('request', req => {
 });
 let CORPO_EXPORT = null;
 let HEAD_API = null;           // cabeçalhos do pedido de exportação (só em memória, nunca no log)
-let RESP_EXPORT = null, CORPO_BYID = null, RESP_ULTIMO = null;
+let RESP_EXPORT = null, CORPO_BYID = null, RESP_ULTIMO = null, CORPO_UNID = null;
 const DL_REQ = []; let ESPIA_DL = false;
 page.on('request', req => {
   const u = req.url();
   if (/\/request\/export\/generic/.test(u) && req.method() === 'POST') HEAD_API = req.headers();
+  if (/buscar\/unidades/.test(u) && req.method() === 'POST') { try { CORPO_UNID = JSON.parse(req.postData()); } catch (e) {} }
   if (/request-export-import\/by-id/.test(u) && !CORPO_BYID) { try { CORPO_BYID = JSON.parse(req.postData()); } catch (e) {} }
   if (ESPIA_DL && !/datadoghq|\.(png|svg|woff2?|css|js)(\?|$)/.test(u)) DL_REQ.push({ method: req.method(), url: u, req });
 });
@@ -610,6 +613,193 @@ async function exportar() {
   log('── EXPORTAR: resumo'); resumo.forEach(r => log('   ' + r));
 }
 
+// ── modo carga: tudo pela API, desde FT_DESDE (padrão 2022), gravando no banco ──
+// 1) uma exportação pela tela (ROTA, Caminhão, última quinzena) ensina o
+//    pedido: cabeçalhos, corpo, corpo do buscar/unidades (só em memória);
+// 2) por canal: lista de tabelas, vigências desde FT_DESDE, de 8 em 8:
+//    unidades → pedido com uma aba por tabela → espera → baixa → grava;
+// 3) vigência já em ft_layout é pulada (FT_REFAZER=1 refaz).
+const SB_URL = 'https://lozwipoeacpvplgkrxkq.supabase.co';
+const SB_KEY = process.env.GEM_SUPABASE_SERVICE_KEY || '';
+const DESDE = Number(process.env.FT_DESDE || 2022);
+const REFAZER = process.env.FT_REFAZER === '1';
+const sbH = extra => ({ apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', ...extra });
+async function sb(path, o = {}) {
+  for (let t = 1; ; t++) {
+    const r = await fetch(`${SB_URL}/rest/v1/${path}`, { ...o, headers: sbH(o.headers) });
+    if (r.ok || t >= 4 || r.status < 500) return r;
+    await new Promise(x => setTimeout(x, 3000 * t));
+  }
+}
+
+// chamada à API do FT de dentro da página (cookies do Incapsula + token novo)
+async function ftApi(url, opt = {}) {
+  const head = Object.fromEntries(Object.entries(HEAD_API || {}).filter(([k]) => !/^(host|content-length|sec-|accept-encoding|connection|origin|referer|user-agent|cookie)/i.test(k)));
+  return page.evaluate(async ({ url, opt, head }) => {
+    let tok = localStorage.getItem('kc_freightech_token') || '';
+    try { const j = JSON.parse(tok); tok = j.token || j.access_token || tok; } catch (e) {}
+    if (tok.split('.').length === 3) head.authorization = 'Bearer ' + tok;
+    const r = await fetch(url, { ...opt, headers: head });
+    if (opt.bin) {
+      const buf = new Uint8Array(await r.arrayBuffer()); let bin = '';
+      for (let i = 0; i < buf.length; i += 32768) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 32768));
+      return { st: r.status, b64: btoa(bin) };
+    }
+    const t = await r.text(); let v = null; try { v = JSON.parse(t); } catch (e) {}
+    return { st: r.status, v };
+  }, { url, opt, head });
+}
+async function ftApiOk(url, opt) {
+  let r = await ftApi(url, opt);
+  if (r.st === 401 || r.st === 403) {
+    log(`   API ${r.st}: renovando a sessão`);
+    await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {}); await page.waitForTimeout(8000);
+    r = await ftApi(url, opt);
+  }
+  return r;
+}
+
+// exporta (canal, vigências, tabelas) e devolve o caminho do xlsx, ou {erro}
+async function exportaApi(canal, vigs, tabs, unidades, rotulo) {
+  const abas = [];
+  for (const t of tabs) {
+    const f = await ftApiOk(`${API_BACK}/export/tables/fields/${encodeURIComponent(t.semFormatacao)}?onlyExportAllowed=true`);
+    if (!Array.isArray(f.v) || !f.v.length) { log(`   campos de ${t.semFormatacao}: HTTP ${f.st}, nenhum`); continue; }
+    abas.push({ nome: (t.comFormatacao || t.semFormatacao).slice(0, 31), tabela: { campos: f.v, nome: { semFormatacao: t.semFormatacao, comFormatacao: t.comFormatacao } } });
+  }
+  if (!abas.length) return { erro: 'nenhuma aba' };
+  const body = { ...CORPO_EXPORT, abas, tipoCanal: canal, unidades, vigencias: vigs, comparacoesBenchmark: [], exportarFormulas: false };
+  const p = await ftApiOk(`${API_EXP}/request/export/generic`, { method: 'POST', body: JSON.stringify(body) });
+  if (!p.v || !p.v.id) return { erro: `pedido HTTP ${p.st}` };
+  const chave = CORPO_BYID && RESP_EXPORT && CORPO_BYID[0] === RESP_EXPORT.solicitacaoId ? 'solicitacaoId' : 'id';
+  let st = p.v; const t0 = Date.now();
+  while (!/DISPONIVEL|ERRO/i.test(st.status || '') && Date.now() - t0 < 15 * 60 * 1000) {
+    await page.waitForTimeout(4000);
+    const b = await ftApiOk(`${API_EXP}/request-export-import/by-id`, { method: 'POST', body: JSON.stringify([p.v[chave]]) });
+    st = (Array.isArray(b.v) ? b.v[0] : b.v) || st;
+  }
+  if (!/DISPONIVEL/i.test(st.status || '') || !st.arquivo) {
+    const h = (st.historico || []).slice(-1)[0] || {};
+    return { erro: `${st.status} · ${h.mensagemUsuario || ''} ${h.mensagemInterna ? '(' + String(h.mensagemInterna).replace(/Placa:\s*\S+/g, 'Placa: …') + ')' : ''}` };
+  }
+  const d = await ftApiOk(`https://apim.ambevdevs.com.br/freightech-integracao-externa-prod/v1/storage/${st.arquivo.idStorage}`, { bin: true });
+  if (d.st !== 200 || !d.b64) return { erro: `download HTTP ${d.st}` };
+  fs.mkdirSync(DL, { recursive: true });
+  const f = `${DL}/${rotulo}.xlsx`; fs.writeFileSync(f, Buffer.from(d.b64, 'base64'));
+  log(`   arquivo em ${Math.round((Date.now() - t0) / 1000)} s · ${(st.arquivo.tamanhoBytes / 1024).toFixed(0)} KB · ${abas.length} aba(s)`);
+  return { f, abas };
+}
+
+// grava o xlsx: cada aba = uma tabela; as linhas vão por vigência (coluna Vigencia)
+async function grava(f, canal, abas, vigsPedidas, temBanco) {
+  const XLSX = (await import('xlsx')).default;
+  const wb = XLSX.read(fs.readFileSync(f), { type: 'buffer', dense: true });
+  const res = [];
+  for (const nomeAba of wb.SheetNames) {
+    const ab = abas.find(a => a.nome === nomeAba) || abas[wb.SheetNames.indexOf(nomeAba)];
+    const tabela = ab ? ab.tabela.nome.semFormatacao : nomeAba;
+    const m = XLSX.utils.sheet_to_json(wb.Sheets[nomeAba], { header: 1, blankrows: false, defval: null, raw: true });
+    const cab = (m[0] || []).map(x => String(x ?? ''));
+    const iV = cab.findIndex(c => /^vig/i.test(c));
+    const iU = cab.findIndex(c => /^unidade - nome$/i.test(c));
+    const iP = cab.findIndex(c => /^placa$/i.test(c));
+    const porVig = new Map(vigsPedidas.map(v => [v, []]));
+    for (const row of m.slice(1)) {
+      const v = iV >= 0 ? String(row[iV] ?? '') : vigsPedidas[0];
+      if (!porVig.has(v)) porVig.set(v, []);
+      porVig.get(v).push(row);
+    }
+    for (const [vig, rows] of porVig) {
+      const mm = vig.match(/_(\d)_(\d{1,2})_(\d{4})$/) || [];
+      const per = { ano: +mm[3] || null, mes: +mm[2] || null, quinzena: +mm[1] || null };
+      res.push(`${tabela} ${vig}: ${rows.length}`);
+      if (!temBanco) continue;
+      const k = `canal=eq.${encodeURIComponent(canal)}&tabela=eq.${encodeURIComponent(tabela)}&vigencia=eq.${encodeURIComponent(vig)}`;
+      let r = await sb(`ft_linha?${k}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error(`apagar ${tabela} ${vig}: HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
+      for (let i = 0; i < rows.length; i += 500) {
+        const lote = rows.slice(i, i + 500).map((row, j) => ({
+          canal, tabela, vigencia: vig, linha: i + j + 1, ...per,
+          unidade: iU >= 0 && row[iU] != null ? String(row[iU]) : null,
+          placa: iP >= 0 && row[iP] != null ? String(row[iP]).toUpperCase().replace(/[^A-Z0-9]/g, '') : null,
+          dados: row.map(x => x === undefined ? null : x),
+        }));
+        r = await sb('ft_linha', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(lote) });
+        if (!r.ok) throw new Error(`gravar ${tabela} ${vig}: HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
+      }
+      r = await sb('ft_layout?on_conflict=canal,tabela,vigencia', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify([{ canal, tabela, vigencia: vig, tabela_nome: ab ? ab.tabela.nome.comFormatacao : nomeAba, ...per, colunas: cab, linhas: rows.length, carregado_em: new Date().toISOString() }]) });
+      if (!r.ok) throw new Error(`layout ${tabela} ${vig}: HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
+    }
+  }
+  fs.rmSync(f, { force: true });
+  return res;
+}
+
+async function carga() {
+  // 1) ensina o pedido pela tela
+  const so = process.env.FT_TABS; process.env.FT_TABS = 'Caminhão';
+  const canaisAntes = CANAIS.splice(0, CANAIS.length, 'ROTA');
+  await exportar();
+  CANAIS.splice(0, CANAIS.length, ...canaisAntes); process.env.FT_TABS = so || '';
+  if (!CORPO_EXPORT || !HEAD_API) { console.error('::error::a exportação pela tela não ensinou o pedido'); process.exitCode = 1; return; }
+  log('   corpo do buscar/unidades: ' + (CORPO_UNID ? JSON.stringify(Object.fromEntries(Object.entries(CORPO_UNID).map(([k, v]) => [k, Array.isArray(v) ? `[${v.length}] ${String(v[0]).slice(0, 20)}` : typeof v === 'string' && v.length < 20 ? v : typeof v]))) : '(não capturado)'));
+  log(`── CARGA desde ${DESDE} · canais ${CANAIS.join(', ')}${REFAZER ? ' · refazendo o que já existe' : ''}`);
+
+  let temBanco = false, feitas = new Set();
+  if (SB_KEY) {
+    const r = await sb('ft_layout?select=canal,tabela,vigencia&limit=100000');
+    if (r.ok) { temBanco = true; (await r.json()).forEach(x => feitas.add(`${x.canal}|${x.tabela}|${x.vigencia}`)); log(`   banco: ${feitas.size} vigência(s)×tabela já carregadas`); }
+    else log(`   banco sem as tabelas ft_* (HTTP ${r.status}): só mede, não grava`);
+  } else log('   sem GEM_SUPABASE_SERVICE_KEY: só mede, não grava');
+
+  const resumo = [];
+  for (const canal of CANAIS) {
+    await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {}); await page.waitForTimeout(6000);
+    const tl = await ftApiOk(`${API_BACK}/export/tables/${canal}`);
+    TABELAS = Array.isArray(tl.v) ? tl.v : [];
+    const alvos = (process.env.FT_TABS || '').split(',').map(x => x.trim()).filter(Boolean);
+    const lista = [], vistos = new Set();
+    for (const alvo of (alvos.length ? alvos : RODADA1[canal] || [])) {
+      const ts = alvo instanceof RegExp ? TABELAS.filter(x => alvo.test(x.comFormatacao || '') || alvo.test(x.semFormatacao || '')) : [achaTabela(alvo)].filter(Boolean);
+      if (!ts.length) log(`   ${canal}: "${alvo}" não está na lista (${TABELAS.length})`);
+      for (const t of ts) if (!vistos.has(t.semFormatacao)) { vistos.add(t.semFormatacao); lista.push(t); }
+    }
+    const vr = await ftApiOk(`${API_BACK}/selecao-da-unidade/buscar/vigencias?segmento=${canal}`);
+    let vigs = (Array.isArray(vr.v) ? vr.v : []).map(v => v.id).filter(v => { const m = String(v).match(/_(\d)_(\d{1,2})_(\d{4})$/); return m && +m[3] >= DESDE; });
+    vigs.sort((a, b) => { const f = v => { const m = v.match(/_(\d)_(\d{1,2})_(\d{4})$/); return +m[3] * 100 + +m[2] * 2 + +m[1]; }; return f(a) - f(b); });
+    if (Number(process.env.FT_ULTIMAS) > 0) vigs = vigs.slice(-Number(process.env.FT_ULTIMAS));
+    log(`── ${canal}: ${lista.length} tabela(s) (${lista.map(t => t.comFormatacao).join(' | ')}) · ${vigs.length} vigência(s) ${vigs[0] || ''} → ${vigs.slice(-1)[0] || ''}`);
+    let lin = 0, err = 0;
+    for (let i = 0; i < vigs.length; i += 8) {
+      const bloco = vigs.slice(i, i + 8);
+      const faltam = lista.filter(t => REFAZER || bloco.some(v => !feitas.has(`${canal}|${t.semFormatacao}|${v}`)));
+      if (!faltam.length) { log(`   ${bloco[0]}…: já carregado`); continue; }
+      const ub = CORPO_UNID ? { ...CORPO_UNID } : {};
+      for (const k of Object.keys(ub)) { if (Array.isArray(ub[k]) && ub[k].every(x => /_\d_\d{1,2}_\d{4}$/.test(String(x)))) ub[k] = bloco; else if (ub[k] === 'ROTA') ub[k] = canal; }
+      const un = await ftApiOk(`${API_BACK}/selecao-da-unidade/buscar/unidades`, { method: 'POST', body: JSON.stringify(ub) });
+      const unidades = [...new Set((Array.isArray(un.v) ? un.v : []).map(x => x.cnpjUnidade).filter(Boolean))];
+      if (!unidades.length) { log(`   ${bloco[0]}…: nenhuma unidade (HTTP ${un.st})`); err++; continue; }
+      let r = await exportaApi(canal, bloco, faltam, unidades, `${canal}-${i}`);
+      let partes = r.f ? [r] : [];
+      if (r.erro) {   // um pedido com várias abas falhou: tenta tabela a tabela
+        log(`   ${bloco[0]}…: ${r.erro} · tentando tabela a tabela`);
+        for (const t of faltam) {
+          const r1 = await exportaApi(canal, bloco, [t], unidades, `${canal}-${i}-${t.semFormatacao}`);
+          if (r1.f) partes.push(r1); else { log(`   ${t.comFormatacao} ${bloco[0]}…: ${r1.erro}`); err++; }
+        }
+      }
+      for (const pt of partes) {
+        try { const g = await grava(pt.f, canal, pt.abas, bloco, temBanco); lin += g.reduce((s, x) => s + Number(x.split(': ')[1] || 0), 0); log(`   ${temBanco ? 'gravado' : 'lido'}: ${g.join(' · ')}`); }
+        catch (e) { log(`   falha ao gravar: ${e.message}`); err++; }
+      }
+    }
+    resumo.push(`${canal}: ${lin} linhas${err ? ` · ${err} falha(s)` : ''}`);
+  }
+  log('── CARGA: resumo'); resumo.forEach(r => log('   ' + r));
+  if (resumo.some(r => /falha/.test(r))) process.exitCode = 1;
+}
+
 async function textosVisiveis(sel) {
   return page.$$eval(sel, els => [...new Set(els
     .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; })
@@ -669,7 +859,7 @@ try {
   log(`botões/abas visíveis (${botoes.length}):`, botoes.slice(0, 60).join(' | '));
 
   // abre o que parecer relatório, para listar o submenu (sem exportar nada)
-  for (const rx of (MODE === 'exportar' ? [] : [/relat/i, /caminh/i])) {
+  for (const rx of (MODE === 'exportar' || MODE === 'carga' ? [] : [/relat/i, /caminh/i])) {
     const el = page.getByText(rx).first();
     if (await el.count()) {
       try {
@@ -704,6 +894,7 @@ try {
 
   if (MODE === 'mapa') await mapa();
   if (MODE === 'exportar') await exportar();
+  if (MODE === 'carga') await carga();
 
   // ── 5) onde mora a sessão (só os NOMES) ─────────────────────
   const armaz = await page.evaluate(() => ({

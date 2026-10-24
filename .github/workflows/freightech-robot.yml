@@ -11,11 +11,11 @@ on:
   workflow_dispatch:
     inputs:
       modo:
-        description: "sonda | mapa (percorre sem exportar) | exportar (1ª rodada: mede e apaga, não grava)"
+        description: "sonda | mapa | exportar (teste, não grava) | carga (API, grava no banco)"
         required: true
         default: "sonda"
         type: choice
-        options: [sonda, mapa, exportar]
+        options: [sonda, mapa, exportar, carga]
       canais:
         description: "exportar: canais separados por vírgula (vazio = ROTA,AS,ARMAZEM,EMPURRADA,INSUMOS)"
         required: false
@@ -28,6 +28,18 @@ on:
         description: "exportar (teste): depois do 1º arquivo, pedir estas tabelas direto pela API"
         required: false
         default: ""
+      desde:
+        description: "carga: desde que ano"
+        required: false
+        default: "2022"
+      ultimas:
+        description: "carga: só as N últimas quinzenas (vazio = todas desde o ano)"
+        required: false
+        default: ""
+      refazer:
+        description: "carga: 1 = refaz o que já está no banco"
+        required: false
+        default: ""
       vigs:
         description: "exportar: nº de vigências mais recentes (1 a 8)"
         required: false
@@ -36,7 +48,7 @@ on:
 jobs:
   robo:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 340
     concurrency: freightech
     steps:
       - uses: actions/checkout@v4
@@ -50,6 +62,10 @@ jobs:
           FT_CANAIS: ${{ github.event.inputs.canais }}
           FT_TABS: ${{ github.event.inputs.tabs }}
           FT_API_TABS: ${{ github.event.inputs.api_tabs }}
+          FT_DESDE: ${{ github.event.inputs.desde || '2022' }}
+          FT_ULTIMAS: ${{ github.event.inputs.ultimas }}
+          FT_REFAZER: ${{ github.event.inputs.refazer }}
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           FT_VIGS: ${{ github.event.inputs.vigs || '1' }}
           FREIGHTECH_USER: ${{ secrets.FREIGHTECH_USER }}
           FREIGHTECH_PASS: ${{ secrets.FREIGHTECH_PASS }}
