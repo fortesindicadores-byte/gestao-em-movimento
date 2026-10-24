@@ -226,12 +226,13 @@ async function mapa() {
 
 
 // ── modo exportar ──────────────────────────────────────────────────
-// 1ª e 2ª rodada (Renan, 24/10/2026)
+// 1ª rodada (Renan, 24/10/2026). Texto = nome exato da tabela; regex = todas
+// as tabelas do canal cujo nome casa ("tudo que tiver pneus escrito", "tudo que tiver manutenção")
 const RODADA1 = {
-  ROTA: ['Caminhão', 'Van', 'Resumo - SRTrans', 'Resumo - SRTrans Van', 'Resumo Rota', 'Resumo Van'],
-  AS: ['Caminhão'],
+  ROTA: ['Caminhão', 'Van', 'Resumo - SRTrans', 'Resumo - SRTrans Van', 'Resumo Rota', 'Resumo Van', 'Combustível', /pneu/i, /manuten/i],
+  AS: ['Caminhão', 'Combustível', /pneu/i, /manuten/i],
   ARMAZEM: ['Equipamento Armazém', 'Faturamento'],
-  EMPURRADA: ['Cavalo', 'Carreta', 'Trechos', 'Faturamento'],
+  EMPURRADA: ['Cavalo', 'Carreta', 'Trechos', 'Faturamento', 'Combustível', /pneu/i, /manuten/i],
   INSUMOS: ['Cavalo', 'Carreta', 'Trechos', 'Faturamento'],
 };
 const norm = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
@@ -430,14 +431,25 @@ async function exportar() {
       await page.getByText(/Marcar todos/i).last().click({ timeout: 10000 }); await page.waitForTimeout(1500); await fecha();
       log('   unidades:', (await (await selDe(/unidade/)).innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
       let nAbas = 0;
+      // a lista de tabelas do canal chega quando a 1ª aba abre
+      await semSpinner();
+      await page.getByText(/Adicionar nova aba/i).first().click({ timeout: 15000 }); await page.waitForTimeout(2500);
+      await semSpinner();
+      for (let i = 0; i < 20 && !TABELAS.length; i++) await page.waitForTimeout(500);
+      await dumpAba();
+      const lista = [], vistos = new Set();
       for (const alvo of alvos) {
-        await semSpinner();
-        await page.getByText(/Adicionar nova aba/i).first().click({ timeout: 15000 }); await page.waitForTimeout(2500);
-        await semSpinner();
-        for (let i = 0; i < 20 && !TABELAS.length; i++) await page.waitForTimeout(500);
-        await dumpAba();
-        const t = achaTabela(alvo);
-        if (!t) { log(`   tabela "${alvo}" NÃO está na lista do ${canal} (${TABELAS.length}): ${TABELAS.map(x => x.comFormatacao || x.semFormatacao).join(' | ')}`); continue; }
+        const ts = alvo instanceof RegExp ? TABELAS.filter(x => alvo.test(x.comFormatacao || '') || alvo.test(x.semFormatacao || '')) : [achaTabela(alvo)].filter(Boolean);
+        if (!ts.length) log(`   "${alvo}" NÃO está na lista do ${canal} (${TABELAS.length}): ${TABELAS.map(x => x.comFormatacao || x.semFormatacao).join(' | ')}`);
+        for (const t of ts) { const k = norm(t.semFormatacao); if (!vistos.has(k)) { vistos.add(k); lista.push(t); } }
+      }
+      log(`   tabelas a exportar (${lista.length}): ${lista.map(t => t.comFormatacao || t.semFormatacao).join(' | ')}`);
+      for (const [i, t] of lista.entries()) {
+        if (i > 0) {
+          await semSpinner();
+          await page.getByText(/Adicionar nova aba/i).first().click({ timeout: 15000 }); await page.waitForTimeout(2500);
+          await semSpinner();
+        }
         const nome = t.comFormatacao || t.semFormatacao;
         const ren = await renomeiaAba(nome);
         log(`   aba nova · renomear: ${ren || 'não deu (fica o nome padrão)'}`);
