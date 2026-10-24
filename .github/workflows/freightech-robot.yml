@@ -11,26 +11,36 @@ on:
   workflow_dispatch:
     inputs:
       modo:
-        description: "sonda | mapa (percorre a Exportação sem exportar)"
+        description: "sonda | mapa (percorre sem exportar) | exportar (1ª rodada: mede e apaga, não grava)"
         required: true
         default: "sonda"
         type: choice
-        options: [sonda, mapa]
+        options: [sonda, mapa, exportar]
+      canais:
+        description: "exportar: canais separados por vírgula (vazio = ROTA,AS,ARMAZEM,EMPURRADA,INSUMOS)"
+        required: false
+        default: ""
+      vigs:
+        description: "exportar: nº de vigências mais recentes (1 a 8)"
+        required: false
+        default: "1"
 
 jobs:
   robo:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 120
     concurrency: freightech
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - name: Instalar Playwright
-        run: npm i -D playwright@1.47.2 && npx playwright install --with-deps chromium
+        run: npm i -D playwright@1.47.2 xlsx@0.18.5 && npx playwright install --with-deps chromium
       - name: Rodar
         env:
           FT_MODE: ${{ github.event.inputs.modo || 'sonda' }}
+          FT_CANAIS: ${{ github.event.inputs.canais }}
+          FT_VIGS: ${{ github.event.inputs.vigs || '1' }}
           FREIGHTECH_USER: ${{ secrets.FREIGHTECH_USER }}
           FREIGHTECH_PASS: ${{ secrets.FREIGHTECH_PASS }}
         run: |

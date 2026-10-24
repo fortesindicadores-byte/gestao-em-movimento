@@ -14,6 +14,13 @@
 //                    Padrão → ROTA → vigência → Marcar todos → 1 aba → 1
 //                    tabela) e lista o que cada passo oferece e chama. Não
 //                    salva modelo nem exporta.
+//   exportar       — exporta de verdade, canal a canal, as tabelas da 1ª rodada
+//                    (Renan, 24/10/2026): ROTA Caminhão + Van · AS Caminhão ·
+//                    ARMAZEM Equipamento Armazém · EMPURRADA e INSUMOS Cavalo +
+//                    Carreta. Uma aba por tabela, com o nome da tabela; vigências
+//                    pelo FT_VIGS (nº das mais recentes, padrão 1, no máximo 8).
+//                    Baixa o xlsx, mede (abas, linhas, colunas, tamanho) e
+//                    APAGA. Ainda não grava no banco: a forma real decide o SQL.
 //
 // LOGIN (prints do Renan, 23/10/2026): freightech.ambev.com.br/#/login →
 // "Sou Fornecedor - Externo" → Keycloak da Ambev (auth.ambevdevs.com.br,
@@ -217,6 +224,214 @@ async function mapa() {
   log('── MAPA: fim (nada foi salvo nem exportado)');
 }
 
+
+// ── modo exportar ──────────────────────────────────────────────────
+const RODADA1 = { ROTA: ['Caminhão', 'Van'], AS: ['Caminhão'], ARMAZEM: ['Equipamento Armazém'], EMPURRADA: ['Cavalo', 'Carreta'], INSUMOS: ['Cavalo', 'Carreta'] };
+const norm = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+const CANAIS = (process.env.FT_CANAIS || Object.keys(RODADA1).join(',')).split(',').map(x => x.trim().toUpperCase()).filter(Boolean);
+const NVIG = Math.max(1, Math.min(8, Number(process.env.FT_VIGS || 1)));
+const DL = 'freightech-dl';
+
+// o nome da tabela como a API devolve: igual (sem acento/caixa) primeiro, senão o que começa igual
+function achaTabela(alvo) {
+  const n = norm(alvo);
+  const nome = t => t.comFormatacao || t.semFormatacao;
+  return TABELAS.find(t => norm(nome(t)) === n) || TABELAS.find(t => norm(t.semFormatacao) === n.replace(/ /g, ''))
+    || TABELAS.find(t => norm(nome(t)).startsWith(n)) || null;
+}
+
+// clica no elemento visível cujo texto (sem acento/caixa) é exatamente o alvo,
+// dentro do painel que contém o rótulo `ancora` (ou na página inteira)
+async function clicaTexto(alvo, ancora) {
+  const id = await page.evaluate(({ alvo, ancora }) => {
+    const nz = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toUpperCase();
+    let raiz = document.body;
+    if (ancora) {
+      const a = [...document.querySelectorAll('body *')].filter(e => e.children.length === 0 && nz(e.textContent).includes(nz(ancora))).pop();
+      if (a) { raiz = a; for (let i = 0; i < 6 && raiz.parentElement; i++) { raiz = raiz.parentElement; if (raiz.innerText.length > 200) break; } }
+    }
+    const cand = [...raiz.querySelectorAll('*')].filter(e => {
+      const r = e.getBoundingClientRect();
+      return nz(e.innerText) === nz(alvo) && [...e.children].every(c => nz(c.innerText) !== nz(alvo));
+    });
+    if (!cand.length) return null;
+    const k = 'ft' + Math.random().toString(36).slice(2, 8);
+    cand[cand.length - 1].setAttribute('data-ft', k);
+    return k;
+  }, { alvo, ancora });
+  if (!id) return false;
+  const loc = page.locator(`[data-ft="${id}"]`);
+  await loc.scrollIntoViewIfNeeded().catch(() => {});
+  await loc.click({ timeout: 10000 }).catch(async () => loc.click({ force: true, timeout: 5000 }));
+  return true;
+}
+
+// dentro do painel "Selecione uma tabela": digita na busca e clica no nome
+async function escolheTabela(nome) {
+  const busca = await page.evaluate(() => {
+    const nz = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+    const a = [...document.querySelectorAll('body *')].filter(e => e.children.length === 0 && nz(e.textContent).includes('SELECIONE UMA TABELA')).pop();
+    if (!a) return null;
+    let p = a; for (let i = 0; i < 6 && p; i++) { p = p.parentElement; const inp = p && [...p.querySelectorAll('input')].filter(x => x.getBoundingClientRect().width > 0).pop(); if (inp) { const k = 'ftb' + Math.random().toString(36).slice(2, 8); inp.setAttribute('data-ft', k); return k; } }
+    return null;
+  });
+  if (busca) { await page.locator(`[data-ft="${busca}"]`).fill(''); await page.locator(`[data-ft="${busca}"]`).fill(nome.slice(0, 40)); await page.waitForTimeout(1500); }
+  else log('   busca do painel de tabelas não achada; procurando o nome na lista');
+  for (const t of [nome, nome.toUpperCase()]) if (await clicaTexto(t, 'Selecione uma tabela')) return true;
+  return false;
+}
+
+async function selecionaTodosCampos() {
+  const b = page.getByText(/^\s*Selecionar todos\s*$/i).last();
+  if (await b.count()) { await b.click({ timeout: 10000 }).catch(() => b.click({ force: true })); await page.waitForTimeout(1500); }
+  const corpo = await page.locator('body').innerText();
+  const m = corpo.match(/Total campos selecionados:?\s*(\d+)/i);
+  return m ? Number(m[1]) : null;
+}
+
+// renomeia a aba ativa: tenta duplo clique no nome e, se aparecer um campo, escreve
+async function renomeiaAba(nome) {
+  const info = await page.evaluate(() => {
+    const nz = t => String(t || '').toUpperCase();
+    const add = [...document.querySelectorAll('body *')].filter(e => e.children.length === 0 && /ADICIONAR NOVA ABA/.test(nz(e.textContent))).pop();
+    if (!add) return null;
+    let barra = add; for (let i = 0; i < 4 && barra.parentElement; i++) barra = barra.parentElement;
+    return barra.outerHTML.replace(/\s+/g, ' ').replace(/>[^<]{1,40}</g, '>…<').slice(0, 900);
+  });
+  log('   barra de abas (estrutura):', info || '(não achada)');
+  const inp = page.locator('input[placeholder*="aba" i], input[formcontrolname*="aba" i], input[formcontrolname*="nome" i]').last();
+  if (await inp.count() && await inp.isVisible().catch(() => false)) { await inp.fill(nome); await inp.press('Enter').catch(() => {}); return 'campo'; }
+  return null;
+}
+
+// espera o 2º aviso (arquivo pronto), clica e pega o download; reserva: a nuvem
+async function esperaArquivo(rotulo, limiteMs) {
+  fs.mkdirSync(DL, { recursive: true });
+  const t0 = Date.now();
+  const vistos = new Set();
+  while (Date.now() - t0 < limiteMs) {
+    const avisos = await page.$$eval('.toast, .toast-container *, [class*="toast"], [class*="snack"], [class*="notification"], [role="alert"], [class*="swal"]',
+      els => [...new Set(els.map(e => (e.innerText || '').replace(/\s+/g, ' ').trim()).filter(t => t && t.length < 300))]).catch(() => []);
+    for (const a of avisos) if (!vistos.has(a)) { vistos.add(a); log(`   aviso (${Math.round((Date.now() - t0) / 1000)} s): ${a}`); }
+    const pronto = avisos.find(a => /dispon|pronto|conclu|clique|download|baixar/i.test(a) && !/processando|solicitada/i.test(a));
+    if (pronto) {
+      const alvo = page.locator('.toast, [class*="toast"], [class*="snack"], [class*="notification"], [role="alert"], [class*="swal"]').filter({ hasText: pronto.slice(0, 40) }).last();
+      const link = alvo.locator('a, button').first();
+      const [dl] = await Promise.all([
+        page.waitForEvent('download', { timeout: 60000 }).catch(() => null),
+        (await link.count() ? link : alvo).click({ timeout: 10000 }).catch(e => log('   clique no aviso falhou:', e.message.split('\n')[0])),
+      ]);
+      if (dl) { const f = `${DL}/${rotulo}.xlsx`; await dl.saveAs(f); log(`   download pelo aviso em ${Math.round((Date.now() - t0) / 1000)} s · nome do FT: ${dl.suggestedFilename()}`); return f; }
+      log('   o clique no aviso não gerou download');
+    }
+    await page.waitForTimeout(5000);
+  }
+  log(`   nenhum aviso de arquivo pronto em ${Math.round(limiteMs / 1000)} s; tentando pela nuvem (Acompanhamento)`);
+  await foto(page, 'sem-aviso-' + rotulo);
+  return await pelaNuvem(rotulo);
+}
+
+async function pelaNuvem(rotulo) {
+  const nuvem = page.locator('[class*="cloud"], [mattooltip*="xport" i], [title*="xport" i], [aria-label*="xport" i]').first();
+  if (!(await nuvem.count())) { log('   ícone da nuvem não achado'); return null; }
+  await nuvem.click({ timeout: 10000 }).catch(e => log('   clique na nuvem falhou:', e.message.split('\n')[0]));
+  await page.waitForTimeout(4000);
+  await foto(page, 'nuvem-' + rotulo);
+  const linha = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll('tr, [role="row"], mat-row')].filter(r => /dispon/i.test(r.innerText));
+    return rows.length ? rows[0].outerHTML.replace(/\s+/g, ' ').replace(/>[^<]{1,40}</g, '>…<').slice(0, 800) : null;
+  });
+  log('   1ª linha disponível na nuvem (estrutura):', linha || '(nenhuma)');
+  const botao = page.locator('tr, [role="row"], mat-row').filter({ hasText: /dispon/i }).first().locator('button, a, i, mat-icon, svg').first();
+  if (!(await botao.count())) return null;
+  const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 60000 }).catch(() => null), botao.click({ timeout: 10000 }).catch(() => {})]);
+  if (!dl) { log('   o 1º ícone da linha não baixou nada'); return null; }
+  const f = `${DL}/${rotulo}.xlsx`; await dl.saveAs(f); log('   download pela nuvem · nome do FT:', dl.suggestedFilename()); return f;
+}
+
+// mede o xlsx (abas, linhas, colunas, nomes das colunas) e apaga: nada de valor no log
+async function mede(f) {
+  const XLSX = (await import('xlsx')).default;
+  const tam = fs.statSync(f).size;
+  const wb = XLSX.read(fs.readFileSync(f), { type: 'buffer', dense: true });
+  log(`   arquivo: ${(tam / 1024).toFixed(0)} KB · ${wb.SheetNames.length} aba(s)`);
+  for (const n of wb.SheetNames) {
+    const m = XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, blankrows: false });
+    const cab = (m[0] || []).map(String);
+    log(`   · aba "${n}": ${Math.max(0, m.length - 1)} linhas × ${cab.length} colunas · colunas: ${cab.join(' | ').slice(0, 1500)}`);
+  }
+  fs.rmSync(f, { force: true });
+  log('   arquivo apagado');
+}
+
+// pedidos que a tela manda ao serviço de exportação: só as CHAVES do corpo
+page.on('request', req => {
+  if (req.method() === 'GET' || !/exportacao-importacao|\/export/.test(req.url())) return;
+  let forma = '(sem corpo)';
+  try {
+    const j = JSON.parse(req.postData() || 'null');
+    const f = (v, d) => Array.isArray(v) ? `[${v.length}]${v.length ? f(v[0], d + 1) : ''}` : (v && typeof v === 'object' && d < 3) ? '{' + Object.entries(v).map(([k, x]) => k + (x && typeof x === 'object' ? f(x, d + 1) : '')).join(',') + '}' : '';
+    if (j) forma = f(j, 0);
+  } catch (e) { forma = '(corpo não-JSON, ' + (req.postData() || '').length + ' B)'; }
+  log(`   → ${req.method()} ${semValores(req.url())} · corpo ${forma}`);
+});
+
+async function exportar() {
+  log(`── EXPORTAR: canais ${CANAIS.join(', ')} · ${NVIG} vigência(s) mais recente(s) · tabelas da 1ª rodada`);
+  const resumo = [];
+  for (const canal of CANAIS) {
+    const alvos = RODADA1[canal] || [];
+    log(`── ${canal}: ${alvos.join(', ')}`);
+    try {
+      await page.goto(BASE + '/#/home', { waitUntil: 'domcontentloaded' }).catch(() => {});
+      await page.waitForTimeout(1500);
+      await page.goto(BASE + '/#/exportacao-dados', { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(5000);
+      TABELAS = [];
+      await abre(sel('wac-select[bindlabel="modelo"] ng-select'), 'Modelo'); await escolhe('Criar Novo Modelo');
+      await abre(await selDe(/tipo de exporta/), 'Tipo'); await escolhe('Padrão'); await fecha();
+      await abre(await selDe(/canal/), 'Canal'); await page.locator('ng-dropdown-panel .ng-option').filter({ hasText: new RegExp(`^\\s*${canal}\\s*$`) }).first().click({ timeout: 10000 }); await page.waitForTimeout(2500);
+      const vs = (await abre(await selDe(/vig/), 'Vigência')).filter(v => /_\d_\d{1,2}_\d{4}$/.test(v)).slice(0, NVIG);
+      for (const v of vs) {
+        if (!(await page.locator('ng-dropdown-panel .ng-option').count())) await abre(await selDe(/vig/), 'Vigência');
+        await page.locator('ng-dropdown-panel .ng-option').filter({ hasText: new RegExp(`^\\s*${v}\\s*$`) }).first().click({ timeout: 10000 });
+        await page.waitForTimeout(800);
+      }
+      await fecha(); log(`   vigências: ${vs.join(', ')}`);
+      await abre(await selDe(/unidade/), 'Unidade');
+      await page.getByText(/Marcar todos/i).last().click({ timeout: 10000 }); await page.waitForTimeout(1500); await fecha();
+      log('   unidades:', (await (await selDe(/unidade/)).innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
+      let nAbas = 0;
+      for (const alvo of alvos) {
+        await page.getByText(/Adicionar nova aba/i).first().click({ timeout: 10000 }); await page.waitForTimeout(2500);
+        for (let i = 0; i < 20 && !TABELAS.length; i++) await page.waitForTimeout(500);
+        const t = achaTabela(alvo);
+        if (!t) { log(`   tabela "${alvo}" NÃO está na lista do ${canal} (${TABELAS.length}): ${TABELAS.map(x => x.comFormatacao || x.semFormatacao).join(' | ')}`); continue; }
+        const nome = t.comFormatacao || t.semFormatacao;
+        const ren = await renomeiaAba(nome);
+        log(`   aba nova · renomear: ${ren || 'não deu (fica o nome padrão)'}`);
+        if (!(await escolheTabela(nome))) { log(`   NÃO consegui clicar na tabela "${nome}"`); await foto(page, `sem-tabela-${canal}`); continue; }
+        await page.waitForTimeout(2500);
+        const n = await selecionaTodosCampos();
+        log(`   tabela "${nome}" (${t.semFormatacao}) · campos selecionados: ${n ?? '?'}`);
+        nAbas++;
+      }
+      await foto(page, `pronto-${canal}`);
+      if (!nAbas) { resumo.push(`${canal}: nenhuma aba montada`); continue; }
+      const t0 = Date.now();
+      await page.getByText(/^\s*Exportar valores\s*$/i).last().click({ timeout: 15000 });
+      log('   "Exportar valores" clicado');
+      const f = await esperaArquivo(`${canal}-valores`, 15 * 60 * 1000);
+      if (f) { await mede(f); resumo.push(`${canal}: ${nAbas} aba(s), arquivo em ${Math.round((Date.now() - t0) / 1000)} s`); }
+      else resumo.push(`${canal}: ${nAbas} aba(s), arquivo NÃO baixou`);
+    } catch (e) {
+      log(`   ${canal} falhou:`, e.message.split('\n')[0]); await foto(page, `falha-${canal}`);
+      resumo.push(`${canal}: falhou (${e.message.split('\n')[0].slice(0, 80)})`);
+    }
+  }
+  log('── EXPORTAR: resumo'); resumo.forEach(r => log('   ' + r));
+}
+
 async function textosVisiveis(sel) {
   return page.$$eval(sel, els => [...new Set(els
     .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; })
@@ -276,7 +491,7 @@ try {
   log(`botões/abas visíveis (${botoes.length}):`, botoes.slice(0, 60).join(' | '));
 
   // abre o que parecer relatório, para listar o submenu (sem exportar nada)
-  for (const rx of [/relat/i, /caminh/i]) {
+  for (const rx of (MODE === 'exportar' ? [] : [/relat/i, /caminh/i])) {
     const el = page.getByText(rx).first();
     if (await el.count()) {
       try {
@@ -310,6 +525,7 @@ try {
   campos.forEach(c => log('campo', c));
 
   if (MODE === 'mapa') await mapa();
+  if (MODE === 'exportar') await exportar();
 
   // ── 5) onde mora a sessão (só os NOMES) ─────────────────────
   const armaz = await page.evaluate(() => ({
