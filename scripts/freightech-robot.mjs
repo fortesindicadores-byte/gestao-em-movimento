@@ -651,11 +651,26 @@ async function ftApi(url, opt = {}) {
     return { st: r.status, v };
   }, { url, opt, head });
 }
+// sessão vencida: o FT responde 401/403 e, no download e nos campos, 400.
+// Recarrega a página (o Keycloak renova o token) e tenta de novo, até 3 vezes.
+let _ultimaRenov = 0;
+async function renova(st) {
+  log(`   API ${st}: renovando a sessão`);
+  const antes = await page.evaluate(() => localStorage.getItem('kc_freightech_token') || '').catch(() => '');
+  await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+  for (let k = 0; k < 15; k++) {
+    await page.waitForTimeout(2000);
+    const agora = await page.evaluate(() => localStorage.getItem('kc_freightech_token') || '').catch(() => '');
+    if (agora && agora !== antes && k >= 2) break;
+  }
+  _ultimaRenov = Date.now();
+}
 async function ftApiOk(url, opt) {
+  // renova de tempos em tempos, antes de o token vencer no meio de um bloco
+  if (Date.now() - _ultimaRenov > 12 * 60 * 1000) { if (_ultimaRenov) await renova('preventivo'); else _ultimaRenov = Date.now(); }
   let r = await ftApi(url, opt);
-  if (r.st === 401 || r.st === 403) {
-    log(`   API ${r.st}: renovando a sessão`);
-    await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {}); await page.waitForTimeout(8000);
+  for (let n = 0; n < 3 && [400, 401, 403].includes(r.st); n++) {
+    await renova(r.st);
     r = await ftApi(url, opt);
   }
   return r;
