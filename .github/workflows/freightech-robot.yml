@@ -7,10 +7,12 @@ name: Freightech Robot (Ambev -> Supabase)
 #
 #  carga — exporta pela API do FT e grava em ft_linha/ft_layout.
 #
-# AGENDADO todo dia às 06:20 BRT: carga das 4 últimas quinzenas, refazendo o
-# que já está no banco (a quinzena corrente muda até fechar, e o FT revisa a
-# anterior). No `schedule` não existe `inputs`, então os valores do agendado
-# vêm dos `||` abaixo — sem isso o robô rodaria em modo sonda todo dia.
+# TODO DIA às 05:00 BRT pelo pg_cron do Supabase (scripts/freightech-dispara.sql,
+# workflow_dispatch com modo=carga, ultimas=4, refazer=1): carga das 4 últimas
+# quinzenas, refazendo o que já está no banco (a quinzena corrente muda até
+# fechar, e o FT revisa a anterior). O cron abaixo é só REDE: o agendador do
+# GitHub atrasa horas. No `schedule` não existe `inputs`, então os valores dele
+# vêm dos `||` abaixo — sem isso o robô rodaria em modo sonda.
 #
 # Os prints sobem como artefato por 1 dia só: as telas do Freightech têm
 # valores de remuneração, e o repositório é público.
