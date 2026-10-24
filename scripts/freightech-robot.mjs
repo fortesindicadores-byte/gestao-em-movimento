@@ -765,9 +765,15 @@ async function carga() {
 
   let temBanco = false, feitas = new Set();
   if (SB_KEY) {
-    const r = await sb('ft_layout?select=canal,tabela,vigencia&limit=100000');
-    if (r.ok) { temBanco = true; (await r.json()).forEach(x => feitas.add(`${x.canal}|${x.tabela}|${x.vigencia}`)); log(`   banco: ${feitas.size} vigência(s)×tabela já carregadas`); }
-    else log(`   banco sem as tabelas ft_* (HTTP ${r.status}): só mede, não grava`);
+    // o PostgREST devolve no máximo 1.000 por leitura: pagina até acabar
+    for (let off = 0; ; off += 1000) {
+      const r = await sb(`ft_layout?select=canal,tabela,vigencia&order=canal,tabela,vigencia&limit=1000&offset=${off}`);
+      if (!r.ok) { if (!off) log(`   banco sem as tabelas ft_* (HTTP ${r.status}): só mede, não grava`); break; }
+      temBanco = true;
+      const pg = await r.json(); pg.forEach(x => feitas.add(`${x.canal}|${x.tabela}|${x.vigencia}`));
+      if (pg.length < 1000) break;
+    }
+    if (temBanco) log(`   banco: ${feitas.size} vigência(s)×tabela já carregadas`);
   } else log('   sem GEM_SUPABASE_SERVICE_KEY: só mede, não grava');
 
   const resumo = [];
