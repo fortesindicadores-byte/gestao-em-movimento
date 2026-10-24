@@ -24,6 +24,10 @@ on:
         description: "exportar: só estas tabelas (vírgula; vazio = a lista da rodada)"
         required: false
         default: ""
+      api_tabs:
+        description: "exportar (teste): depois do 1º arquivo, pedir estas tabelas direto pela API"
+        required: false
+        default: ""
       vigs:
         description: "exportar: nº de vigências mais recentes (1 a 8)"
         required: false
@@ -45,6 +49,7 @@ jobs:
           FT_MODE: ${{ github.event.inputs.modo || 'sonda' }}
           FT_CANAIS: ${{ github.event.inputs.canais }}
           FT_TABS: ${{ github.event.inputs.tabs }}
+          FT_API_TABS: ${{ github.event.inputs.api_tabs }}
           FT_VIGS: ${{ github.event.inputs.vigs || '1' }}
           FREIGHTECH_USER: ${{ secrets.FREIGHTECH_USER }}
           FREIGHTECH_PASS: ${{ secrets.FREIGHTECH_PASS }}

@@ -101,7 +101,8 @@ page.on('response', async res => {
 // forma da resposta JSON da API (chaves e tamanhos, nunca valores): é o que
 // diz se o robô pode pedir lista de tabelas, campos, vigências e unidades direto
 const formas = new Map();
-let TABELAS = [];   // a lista de tabelas do canal, como a API devolve (só nomes)
+let TABELAS = [];
+let UNIDADES_API = [];   // a lista de tabelas do canal, como a API devolve (só nomes)
 page.on('response', async res => {
   const u = res.url();
   if (!/apim\.ambevdevs\.com\.br/.test(u)) return;
@@ -114,7 +115,8 @@ page.on('response', async res => {
         ? '{' + Object.entries(v).slice(0, 25).map(([k, x]) => Array.isArray(x) ? `${k}[${x.length}]` : k).join(',') + '}'
         : typeof v;
     formas.set(`${res.request().method()} ${semValores(u)}`, forma(j));
-    if (/\/export\/tables\//.test(u) && Array.isArray(j)) TABELAS = j;
+    if (/\/export\/tables\/(?!fields)/.test(u) && Array.isArray(j)) TABELAS = j;
+    if (/buscar\/unidades/.test(u) && Array.isArray(j)) UNIDADES_API = j;
   } catch (e) {}
 });
 
@@ -225,6 +227,69 @@ async function mapa() {
 }
 
 
+
+// ── pedido direto pela API (sem clicar na tela) ─────────────────────
+// Reaproveita o pedido que a tela acabou de mandar (cabeçalhos e corpo, só em
+// memória) e troca a aba. Devolve o caminho do arquivo baixado, ou null.
+const API_EXP = 'https://apim.ambevdevs.com.br/freightech-exportacao-importacao-prod/v1';
+const API_BACK = 'https://apim.ambevdevs.com.br/freightech-backend-prod/v1';
+async function apiExporta(tabela, rotulo) {
+  if (!CORPO_EXPORT || !HEAD_API) { log('   API: sem o pedido da tela para reaproveitar'); return null; }
+  const head = Object.fromEntries(Object.entries(HEAD_API).filter(([k]) => !/^(host|content-length|sec-|accept-encoding|connection|origin|referer|user-agent|cookie)/i.test(k)));
+  const r = await page.evaluate(async ({ API_EXP, API_BACK, head, corpo, tabela, byid, respId, dlTpl }) => {
+    const out = { passos: [] };
+    const j = async (u, o) => { const x = await fetch(u, { headers: head, ...o }); const t = await x.text(); let v = null; try { v = JSON.parse(t); } catch (e) {} return { st: x.status, v, t }; };
+    const f = await j(`${API_BACK}/export/tables/fields/${encodeURIComponent(tabela.semFormatacao)}?onlyExportAllowed=true`);
+    out.passos.push(`campos ${f.st} (${Array.isArray(f.v) ? f.v.length : '?'})`);
+    if (!Array.isArray(f.v)) return out;
+    const tb0 = corpo.abas[0].tabela;
+    const tb = { ...tb0, campos: f.v };
+    for (const k of Object.keys(tb0)) if (k !== 'campos' && typeof tb0[k] === 'string') { if (tb0[k] === corpo.abas[0].tabela.semFormatacao || /semFormat/i.test(k)) tb[k] = tabela.semFormatacao; if (/comFormat/i.test(k)) tb[k] = tabela.comFormatacao; }
+    const body = { ...corpo, abas: [{ nome: tabela.comFormatacao, tabela: tb }] };
+    const p = await j(`${API_EXP}/request/export/generic`, { method: 'POST', body: JSON.stringify(body) });
+    out.passos.push(`pedido ${p.st} · status ${p.v && p.v.status}`);
+    if (!p.v) return out;
+    const chave = byid && byid[0] === respId.solicitacaoId ? 'solicitacaoId' : 'id';
+    let st = p.v;
+    for (let i = 0; i < 60 && st && !/DISPONIVEL|ERRO/i.test(st.status || ''); i++) {
+      await new Promise(rr => setTimeout(rr, 3000));
+      const b = await j(`${API_EXP}/request-export-import/by-id`, { method: 'POST', body: JSON.stringify([p.v[chave]]) });
+      st = Array.isArray(b.v) ? b.v[0] : b.v;
+    }
+    out.passos.push(`situação ${st && st.status} (by-id por ${chave})`);
+    if (st && st.historico) out.erro = st.historico.map(h => h.mensagemUsuario).join(' / ');
+    if (!st || !/DISPONIVEL/i.test(st.status || '') || !st.arquivo) return out;
+    out.tam = st.arquivo.tamanhoBytes; out.nome = st.arquivo.nomeArquivo;
+    if (!dlTpl) { out.passos.push('sem o endereço de download'); return out; }
+    const url = dlTpl.url.split(dlTpl.idAntigo).join(st.arquivo.idStorage);
+    const d = await fetch(url, { method: dlTpl.method, headers: head });
+    out.passos.push(`download ${d.status} · ${(d.headers.get('content-type') || '').split(';')[0]}`);
+    let buf = new Uint8Array(await d.arrayBuffer());
+    if (/json/.test(d.headers.get('content-type') || '')) {
+      const v = JSON.parse(new TextDecoder().decode(buf)); const link = typeof v === 'string' ? v : (v.url || v.link || v.sasUrl || Object.values(v).find(x => typeof x === 'string' && /^https?:/.test(x)));
+      if (!link) { out.passos.push('download devolveu JSON sem link: {' + Object.keys(v).join(',') + '}'); return out; }
+      const d2 = await fetch(link); buf = new Uint8Array(await d2.arrayBuffer()); out.passos.push(`download pelo link ${d2.status}`);
+    }
+    let bin = ''; for (let i = 0; i < buf.length; i += 32768) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 32768));
+    out.b64 = btoa(bin);
+    return out;
+  }, { API_EXP, API_BACK, head, corpo: CORPO_EXPORT, tabela, byid: CORPO_BYID, respId: RESP_EXPORT || {}, dlTpl: DL_TPL });
+  log(`   API ${tabela.comFormatacao}: ${r.passos.join(' → ')}${r.erro ? ' · histórico: ' + r.erro.slice(0, 300) : ''}${r.tam ? ` · ${r.nome} ${r.tam} B` : ''}`);
+  if (!r.b64) return null;
+  fs.mkdirSync(DL, { recursive: true });
+  const fArq = `${DL}/${rotulo}.xlsx`; fs.writeFileSync(fArq, Buffer.from(r.b64, 'base64'));
+  return fArq;
+}
+// o endereço de download: o pedido feito depois do clique que leva o idStorage
+let DL_TPL = null;
+function aprendeDownload() {
+  const id = RESP_ULTIMO && RESP_ULTIMO.arquivo && RESP_ULTIMO.arquivo.idStorage;
+  if (!id) return;
+  const r = DL_REQ.find(x => x.url.includes(id));
+  if (r) { DL_TPL = { method: r.method, url: r.url, idAntigo: id }; log('   endereço de download aprendido: ' + r.method + ' ' + semValores(r.url.split(id).join('{idStorage}'))); }
+  else log('   nenhum pedido depois do clique leva o idStorage');
+}
+
 // ── modo exportar ──────────────────────────────────────────────────
 // 1ª rodada (Renan, 24/10/2026). Texto = nome exato da tabela; regex = todas
 // as tabelas do canal cujo nome casa ("tudo que tiver pneus escrito", "tudo que tiver manutenção")
@@ -323,22 +388,30 @@ async function esperaArquivo(rotulo, limiteMs) {
   fs.mkdirSync(DL, { recursive: true });
   const t0 = Date.now();
   const vistos = new Set();
+  let tentativas = 0;
   while (Date.now() - t0 < limiteMs) {
     const avisos = await page.$$eval('.toast, .toast-container *, [class*="toast"], [class*="snack"], [class*="notification"], [role="alert"], [class*="swal"]',
       els => [...new Set(els.map(e => (e.innerText || '').replace(/\s+/g, ' ').trim()).filter(t => t && t.length < 300))]).catch(() => []);
     for (const a of avisos) if (!vistos.has(a)) { vistos.add(a); log(`   aviso (${Math.round((Date.now() - t0) / 1000)} s): ${a}`); }
     if (avisos.some(a => /com erro|n[aã]o conseguimos/i.test(a))) { log('   o FT recusou a exportação (aviso de erro)'); return null; }
     const pronto = avisos.find(a => /dispon|pronto|conclu|clique|download|baixar/i.test(a) && !/processando|solicitada/i.test(a));
-    if (pronto) {
-      const alvo = page.locator('.toast, [class*="toast"], [class*="snack"], [class*="notification"], [role="alert"], [class*="swal"]').filter({ hasText: pronto.slice(0, 40) }).last();
-      const link = alvo.locator('a, button').first();
+    if (pronto && tentativas < 2) {
+      tentativas++;
+      const baixar = page.getByText(/^\s*Baixar\s+.+\.xlsx\s*$/i).last();
+      const est = await baixar.evaluate(e => { let x = e, out = []; for (let i = 0; i < 3 && x; i++) { out.push(x.tagName.toLowerCase() + (x.getAttribute('href') != null ? '[href]' : '') + (x.getAttribute('download') != null ? '[download]' : '') + '.' + String(x.className).slice(0, 40)); x = x.parentElement; } return out.join(' < '); }).catch(() => '(não achado)');
+      log('   link "Baixar …": ' + est);
+      DL_REQ.length = 0; ESPIA_DL = true;
       const [dl] = await Promise.all([
-        page.waitForEvent('download', { timeout: 60000 }).catch(() => null),
-        (await link.count() ? link : alvo).click({ timeout: 10000 }).catch(e => log('   clique no aviso falhou:', e.message.split('\n')[0])),
+        page.waitForEvent('download', { timeout: 30000 }).catch(() => null),
+        baixar.click({ timeout: 10000 }).catch(() => baixar.click({ force: true, timeout: 5000 })).catch(e => log('   clique no "Baixar" falhou:', e.message.split('\n')[0])),
       ]);
+      await page.waitForTimeout(2000); ESPIA_DL = false;
+      aprendeDownload();
+      DL_REQ.forEach(r => log(`   pedido depois do clique: ${r.method} ${semValores(r.url)} · ${r.status ?? '?'} · ${r.ct || ''}`));
       if (dl) { const f = `${DL}/${rotulo}.xlsx`; await dl.saveAs(f); log(`   download pelo aviso em ${Math.round((Date.now() - t0) / 1000)} s · nome do FT: ${dl.suggestedFilename()}`); return f; }
-      log('   o clique no aviso não gerou download');
+      log('   o clique no "Baixar" não gerou download');
     }
+    if (pronto && tentativas >= 2) break;
     await page.waitForTimeout(5000);
   }
   log(`   nenhum aviso de arquivo pronto em ${Math.round(limiteMs / 1000)} s; tentando pela nuvem (Acompanhamento)`);
@@ -394,16 +467,34 @@ page.on('request', req => {
       const j = JSON.parse(req.postData()); CORPO_EXPORT = j;
       const u0 = (j.unidades || [])[0];
       log(`   corpo do pedido: id=${typeof j.id}${j.id == null ? '(vazio)' : ''} · modelo=${JSON.stringify(j.modelo)} · tipoExportacao=${JSON.stringify(j.tipoExportacao)} · tipoCanal=${JSON.stringify(j.tipoCanal)} · vigencias=${JSON.stringify(j.vigencias)} · exportarFormulas=${j.exportarFormulas} · abas=${JSON.stringify(j.abas).slice(0, 900)} · unidade[0]: ${typeof u0}${u0 && typeof u0 === 'object' ? ' {' + Object.keys(u0).join(',') + '}' : typeof u0 === 'string' ? ' com ' + u0.length + ' caracteres' + (/^\d+$/.test(u0) ? ' (só dígitos)' : '') : ''}`);
+      const tb = (j.abas || [])[0] && j.abas[0].tabela;
+      if (tb) log('   tabela da aba (sem os campos): ' + JSON.stringify(Object.fromEntries(Object.entries(tb).filter(([k]) => k !== 'campos'))).slice(0, 400) + ` · ${(tb.campos || []).length} campos`);
+      const uni = UNIDADES_API.length ? Object.keys(UNIDADES_API[0]).filter(k => UNIDADES_API.some(x => (j.unidades || []).includes(x[k]))) : [];
+      log('   unidades[] = campo do buscar/unidades: ' + (uni.join(', ') || '(nenhum casou)'));
     } catch (e) {}
   }
 });
 let CORPO_EXPORT = null;
+let HEAD_API = null;           // cabeçalhos do pedido de exportação (só em memória, nunca no log)
+let RESP_EXPORT = null, CORPO_BYID = null, RESP_ULTIMO = null;
+const DL_REQ = []; let ESPIA_DL = false;
+page.on('request', req => {
+  const u = req.url();
+  if (/\/request\/export\/generic/.test(u) && req.method() === 'POST') HEAD_API = req.headers();
+  if (/request-export-import\/by-id/.test(u) && !CORPO_BYID) { try { CORPO_BYID = JSON.parse(req.postData()); } catch (e) {} }
+  if (ESPIA_DL && !/datadoghq|\.(png|svg|woff2?|css|js)(\?|$)/.test(u)) DL_REQ.push({ method: req.method(), url: u, req });
+});
+page.on('response', res => {
+  const r = DL_REQ.find(x => x.req === res.request()); if (r) { r.status = res.status(); r.ct = (res.headers()['content-type'] || '').split(';')[0]; }
+});
 // a situação do pedido (status, histórico com a mensagem de erro, onde fica o arquivo)
 page.on('response', async res => {
   if (!/request-export-import\/by-id|request\/export\/generic/.test(res.url())) return;
   try {
     let j = await res.json(); if (Array.isArray(j)) j = j[0];
     if (!j) return;
+    if (/request\/export\/generic/.test(res.url())) RESP_EXPORT = j;
+    if (j.arquivo) RESP_ULTIMO = j;
     const arq = j.arquivo;
     const arqTxt = arq == null ? 'vazio' : typeof arq === 'string' ? (/^https?:/.test(arq) ? 'URL ' + semValores(arq) : `texto ${arq.length} car.: ${arq.replace(/[?#].*$/, '').slice(0, 120)}`) : 'objeto {' + Object.keys(arq).join(',') + '}';
     log(`   ← ${semValores(res.url())} · status=${JSON.stringify(j.status)} · inicio=${j.inicioProcessamento || '-'} · fim=${j.fimProcessamento || '-'} · envioArquivoParaStorage=${JSON.stringify(j.envioArquivoParaStorage)} · arquivo=${arqTxt} · histórico=${JSON.stringify(j.historico).slice(0, 700)}`);
@@ -501,7 +592,15 @@ async function exportar() {
       await page.getByText(/^\s*Exportar valores\s*$/i).last().click({ timeout: 15000 });
       log('   "Exportar valores" clicado');
       const f = await esperaArquivo(`${canal}-valores`, 15 * 60 * 1000);
-      if (f) { await mede(f); resumo.push(`${canal}: ${nAbas} aba(s), arquivo em ${Math.round((Date.now() - t0) / 1000)} s`); }
+      if (f) {
+        await mede(f); resumo.push(`${canal}: ${nAbas} aba(s), arquivo em ${Math.round((Date.now() - t0) / 1000)} s`);
+        const outras = (process.env.FT_API_TABS || '').split(',').map(x => x.trim()).filter(Boolean);
+        for (const nome of outras) {
+          const t = achaTabela(nome); if (!t) { log(`   API: "${nome}" não está na lista`); continue; }
+          const g = await apiExporta(t, `${canal}-api-${t.semFormatacao}`);
+          if (g) { await mede(g); resumo.push(`${canal}: ${t.comFormatacao} pela API OK`); } else resumo.push(`${canal}: ${t.comFormatacao} pela API falhou`);
+        }
+      }
       else resumo.push(`${canal}: ${nAbas} aba(s), arquivo NÃO baixou`);
     } catch (e) {
       log(`   ${canal} falhou:`, e.message.split('\n')[0]); await foto(page, `falha-${canal}`);
