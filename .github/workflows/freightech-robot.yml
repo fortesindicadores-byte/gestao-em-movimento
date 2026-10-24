@@ -20,6 +20,10 @@ on:
         description: "exportar: canais separados por vírgula (vazio = ROTA,AS,ARMAZEM,EMPURRADA,INSUMOS)"
         required: false
         default: ""
+      tabs:
+        description: "exportar: só estas tabelas (vírgula; vazio = a lista da rodada)"
+        required: false
+        default: ""
       vigs:
         description: "exportar: nº de vigências mais recentes (1 a 8)"
         required: false
@@ -40,6 +44,7 @@ jobs:
         env:
           FT_MODE: ${{ github.event.inputs.modo || 'sonda' }}
           FT_CANAIS: ${{ github.event.inputs.canais }}
+          FT_TABS: ${{ github.event.inputs.tabs }}
           FT_VIGS: ${{ github.event.inputs.vigs || '1' }}
           FREIGHTECH_USER: ${{ secrets.FREIGHTECH_USER }}
           FREIGHTECH_PASS: ${{ secrets.FREIGHTECH_PASS }}

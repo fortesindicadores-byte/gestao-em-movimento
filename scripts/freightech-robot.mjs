@@ -327,6 +327,7 @@ async function esperaArquivo(rotulo, limiteMs) {
     const avisos = await page.$$eval('.toast, .toast-container *, [class*="toast"], [class*="snack"], [class*="notification"], [role="alert"], [class*="swal"]',
       els => [...new Set(els.map(e => (e.innerText || '').replace(/\s+/g, ' ').trim()).filter(t => t && t.length < 300))]).catch(() => []);
     for (const a of avisos) if (!vistos.has(a)) { vistos.add(a); log(`   aviso (${Math.round((Date.now() - t0) / 1000)} s): ${a}`); }
+    if (avisos.some(a => /com erro|n[aã]o conseguimos/i.test(a))) { log('   o FT recusou a exportação (aviso de erro)'); return null; }
     const pronto = avisos.find(a => /dispon|pronto|conclu|clique|download|baixar/i.test(a) && !/processando|solicitada/i.test(a));
     if (pronto) {
       const alvo = page.locator('.toast, [class*="toast"], [class*="snack"], [class*="notification"], [role="alert"], [class*="swal"]').filter({ hasText: pronto.slice(0, 40) }).last();
@@ -388,6 +389,25 @@ page.on('request', req => {
     if (j) forma = f(j, 0);
   } catch (e) { forma = '(corpo não-JSON, ' + (req.postData() || '').length + ' B)'; }
   log(`   → ${req.method()} ${semValores(req.url())} · corpo ${forma}`);
+  if (/\/request\/export\/generic/.test(req.url())) {
+    try {
+      const j = JSON.parse(req.postData()); CORPO_EXPORT = j;
+      const u0 = (j.unidades || [])[0];
+      log(`   corpo do pedido: id=${typeof j.id}${j.id == null ? '(vazio)' : ''} · modelo=${JSON.stringify(j.modelo)} · tipoExportacao=${JSON.stringify(j.tipoExportacao)} · tipoCanal=${JSON.stringify(j.tipoCanal)} · vigencias=${JSON.stringify(j.vigencias)} · exportarFormulas=${j.exportarFormulas} · abas=${JSON.stringify(j.abas).slice(0, 900)} · unidade[0]: ${typeof u0}${u0 && typeof u0 === 'object' ? ' {' + Object.keys(u0).join(',') + '}' : typeof u0 === 'string' ? ' com ' + u0.length + ' caracteres' + (/^\d+$/.test(u0) ? ' (só dígitos)' : '') : ''}`);
+    } catch (e) {}
+  }
+});
+let CORPO_EXPORT = null;
+// a situação do pedido (status, histórico com a mensagem de erro, onde fica o arquivo)
+page.on('response', async res => {
+  if (!/request-export-import\/by-id|request\/export\/generic/.test(res.url())) return;
+  try {
+    let j = await res.json(); if (Array.isArray(j)) j = j[0];
+    if (!j) return;
+    const arq = j.arquivo;
+    const arqTxt = arq == null ? 'vazio' : typeof arq === 'string' ? (/^https?:/.test(arq) ? 'URL ' + semValores(arq) : `texto ${arq.length} car.: ${arq.replace(/[?#].*$/, '').slice(0, 120)}`) : 'objeto {' + Object.keys(arq).join(',') + '}';
+    log(`   ← ${semValores(res.url())} · status=${JSON.stringify(j.status)} · inicio=${j.inicioProcessamento || '-'} · fim=${j.fimProcessamento || '-'} · envioArquivoParaStorage=${JSON.stringify(j.envioArquivoParaStorage)} · arquivo=${arqTxt} · histórico=${JSON.stringify(j.historico).slice(0, 700)}`);
+  } catch (e) {}
 });
 
 // "Adicionar nova aba" abre a caixa NOVA ABA (Nome da aba · SALVAR · CANCELAR):
@@ -433,7 +453,8 @@ async function exportar() {
   log(`── EXPORTAR: canais ${CANAIS.join(', ')} · ${NVIG} vigência(s) mais recente(s) · tabelas da 1ª rodada`);
   const resumo = [];
   for (const canal of CANAIS) {
-    const alvos = RODADA1[canal] || [];
+    const SO = (process.env.FT_TABS || '').split(',').map(x => x.trim()).filter(Boolean);
+    const alvos = SO.length ? SO : (RODADA1[canal] || []);
     log(`── ${canal}: ${alvos.join(', ')}`);
     try {
       await page.goto(BASE + '/#/home', { waitUntil: 'domcontentloaded' }).catch(() => {});
