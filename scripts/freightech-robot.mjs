@@ -39,6 +39,7 @@
 //
 // Segredos: FREIGHTECH_USER · FREIGHTECH_PASS (Secrets do Actions).
 // ============================================================
+import { randomUUID } from 'node:crypto';
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 
@@ -480,11 +481,14 @@ page.on('request', req => {
 });
 let CORPO_EXPORT = null;
 let HEAD_API = null;           // cabeçalhos do pedido de exportação (só em memória, nunca no log)
+let HEAD_ANY = null;           // idem, de qualquer chamada da página à API com o token
 let RESP_EXPORT = null, CORPO_BYID = null, RESP_ULTIMO = null, CORPO_UNID = null;
 const DL_REQ = []; let ESPIA_DL = false;
 page.on('request', req => {
   const u = req.url();
   if (/\/request\/export\/generic/.test(u) && req.method() === 'POST') HEAD_API = req.headers();
+  // qualquer chamada da página à API com o token serve de molde dos cabeçalhos
+  if (/apim\.ambevdevs\.com\.br/.test(u) && req.headers().authorization) HEAD_ANY = req.headers();
   if (/buscar\/unidades/.test(u) && req.method() === 'POST') { try { CORPO_UNID = JSON.parse(req.postData()); } catch (e) {} }
   if (/request-export-import\/by-id/.test(u) && !CORPO_BYID) { try { CORPO_BYID = JSON.parse(req.postData()); } catch (e) {} }
   if (ESPIA_DL && !/datadoghq|\.(png|svg|woff2?|css|js)(\?|$)/.test(u)) DL_REQ.push({ method: req.method(), url: u, req });
@@ -636,7 +640,8 @@ async function sb(path, o = {}) {
 
 // chamada à API do FT de dentro da página (cookies do Incapsula + token novo)
 async function ftApi(url, opt = {}) {
-  const head = Object.fromEntries(Object.entries(HEAD_API || {}).filter(([k]) => !/^(host|content-length|sec-|accept-encoding|connection|origin|referer|user-agent|cookie)/i.test(k)));
+  const head = Object.fromEntries(Object.entries(HEAD_API || HEAD_ANY || {}).filter(([k]) => !/^(host|content-length|sec-|accept-encoding|connection|origin|referer|user-agent|cookie)/i.test(k)));
+  if (opt.body && !Object.keys(head).some(k => /^content-type$/i.test(k))) head['content-type'] = 'application/json';
   return page.evaluate(async ({ url, opt, head }) => {
     let tok = localStorage.getItem('kc_freightech_token') || '';
     try { const j = JSON.parse(tok); tok = j.token || j.access_token || tok; } catch (e) {}
@@ -685,8 +690,15 @@ async function exportaApi(canal, vigs, tabs, unidades, rotulo) {
     abas.push({ nome: (t.comFormatacao || t.semFormatacao).slice(0, 31), tabela: { campos: f.v, nome: { semFormatacao: t.semFormatacao, comFormatacao: t.comFormatacao } } });
   }
   if (!abas.length) return { erro: 'nenhuma aba' };
-  const body = { ...CORPO_EXPORT, abas, tipoCanal: canal, unidades, vigencias: vigs, comparacoesBenchmark: [], exportarFormulas: false };
-  const p = await ftApiOk(`${API_EXP}/request/export/generic`, { method: 'POST', body: JSON.stringify(body) });
+  const { _sintetico, _idNovo, ...molde } = CORPO_EXPORT;
+  const body = { ...molde, ...(_idNovo ? { id: randomUUID() } : {}), abas, tipoCanal: canal, unidades, vigencias: vigs, comparacoesBenchmark: [], exportarFormulas: false };
+  let p = await ftApiOk(`${API_EXP}/request/export/generic`, { method: 'POST', body: JSON.stringify(body) });
+  if ((!p.v || !p.v.id) && CORPO_EXPORT._sintetico && body.id === '') {
+    // o molde sem a tela não aceitou id vazio: tenta com um id novo e guarda o que funcionou
+    body.id = randomUUID();
+    p = await ftApiOk(`${API_EXP}/request/export/generic`, { method: 'POST', body: JSON.stringify(body) });
+    if (p.v && p.v.id) { CORPO_EXPORT._idNovo = true; log('   pedido aceito com id novo'); }
+  } else if (CORPO_EXPORT._idNovo) body.id = randomUUID();
   if (!p.v || !p.v.id) return { erro: `pedido HTTP ${p.st}` };
   const chave = CORPO_BYID && RESP_EXPORT && CORPO_BYID[0] === RESP_EXPORT.solicitacaoId ? 'solicitacaoId' : 'id';
   let st = p.v; const t0 = Date.now();
@@ -754,12 +766,21 @@ async function grava(f, canal, abas, vigsPedidas, temBanco) {
 }
 
 async function carga() {
-  // 1) ensina o pedido pela tela
-  const so = process.env.FT_TABS; process.env.FT_TABS = 'Caminhão';
-  const canaisAntes = CANAIS.splice(0, CANAIS.length, 'ROTA');
-  await exportar();
-  CANAIS.splice(0, CANAIS.length, ...canaisAntes); process.env.FT_TABS = so || '';
-  if (!CORPO_EXPORT || !HEAD_API) { console.error('::error::a exportação pela tela não ensinou o pedido'); process.exitCode = 1; return; }
+  // 1) o pedido já é conhecido (medido em 24/10/2026): vai direto pela API,
+  //    com os cabeçalhos de qualquer chamada da página. A tela (exportar uma
+  //    tabela à mão) só entra se a API recusar — ela falha quando o FT demora
+  //    a desenhar (24/10/2026, 18:43: menu vazio e a rodada inteira perdida).
+  if (!HEAD_ANY) { await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {}); await page.waitForTimeout(8000); }
+  if (HEAD_ANY && process.env.FT_TELA !== '1') {
+    CORPO_EXPORT = { id: '', modelo: 'Criar Novo Modelo', tipoExportacao: 'PADRAO', _sintetico: true };
+    log('   pedido montado sem a tela (molde conhecido)');
+  } else {
+    const so = process.env.FT_TABS; process.env.FT_TABS = 'Caminhão';
+    const canaisAntes = CANAIS.splice(0, CANAIS.length, 'ROTA');
+    await exportar();
+    CANAIS.splice(0, CANAIS.length, ...canaisAntes); process.env.FT_TABS = so || '';
+  }
+  if (!CORPO_EXPORT || !(HEAD_API || HEAD_ANY)) { console.error('::error::sem o molde do pedido (nem pela API, nem pela tela)'); process.exitCode = 1; return; }
   log('   corpo do buscar/unidades: ' + (CORPO_UNID ? JSON.stringify(Object.fromEntries(Object.entries(CORPO_UNID).map(([k, v]) => [k, Array.isArray(v) ? `[${v.length}] ${String(v[0]).slice(0, 20)}` : typeof v === 'string' && v.length < 20 ? v : typeof v]))) : '(não capturado)'));
   log(`── CARGA desde ${DESDE} · canais ${CANAIS.join(', ')}${REFAZER ? ' · refazendo o que já existe' : ''}`);
 
