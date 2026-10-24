@@ -390,6 +390,30 @@ page.on('request', req => {
   log(`   → ${req.method()} ${semValores(req.url())} · corpo ${forma}`);
 });
 
+// "Adicionar nova aba" abre a caixa NOVA ABA (Nome da aba · SALVAR · CANCELAR):
+// escreve o nome da tabela e salva SÓ nessa caixa (o outro SALVAR grava o modelo)
+async function criaAba(nome) {
+  await semSpinner();
+  await page.getByText(/Adicionar nova aba/i).first().click({ timeout: 15000 });
+  await page.waitForTimeout(1500);
+  const k = await page.evaluate(() => {
+    const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+    const lab = [...document.querySelectorAll('body *')].filter(e => e.children.length === 0 && /^\s*Nome da aba\s*$/i.test(e.textContent) && vis(e)).pop();
+    if (!lab) return null;
+    let box = lab; for (let i = 0; i < 8 && box; i++) { box = box.parentElement; if (box && /CANCELAR/i.test(box.innerText) && box.querySelector('input')) break; }
+    if (!box) return null;
+    const id = 'ftc' + Math.random().toString(36).slice(2, 8);
+    box.setAttribute('data-ft', id);
+    return id;
+  });
+  if (!k) { log('   caixa "Nova aba" não achada'); return false; }
+  const caixa = page.locator(`[data-ft="${k}"]`);
+  await caixa.locator('input:visible').first().fill(nome.slice(0, 60));
+  await caixa.getByText(/^\s*Salvar\s*$/i).last().click({ timeout: 10000 });
+  await page.waitForTimeout(2000);
+  await semSpinner();
+  return true;
+}
 async function semSpinner() {
   await page.waitForFunction(() => ![...document.querySelectorAll('.ngx-spinner-overlay')].some(e => e.getBoundingClientRect().width > 0), null, { timeout: 60000 }).catch(() => log('   (spinner ainda na tela depois de 60 s)'));
 }
@@ -431,12 +455,8 @@ async function exportar() {
       await page.getByText(/Marcar todos/i).last().click({ timeout: 10000 }); await page.waitForTimeout(1500); await fecha();
       log('   unidades:', (await (await selDe(/unidade/)).innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 120));
       let nAbas = 0;
-      // a lista de tabelas do canal chega quando a 1ª aba abre
-      await semSpinner();
-      await page.getByText(/Adicionar nova aba/i).first().click({ timeout: 15000 }); await page.waitForTimeout(2500);
-      await semSpinner();
-      for (let i = 0; i < 20 && !TABELAS.length; i++) await page.waitForTimeout(500);
-      await dumpAba();
+      // a lista de tabelas do canal: já vem quando o canal é escolhido; senão, espera
+      for (let i = 0; i < 30 && !TABELAS.length; i++) await page.waitForTimeout(500);
       const lista = [], vistos = new Set();
       for (const alvo of alvos) {
         const ts = alvo instanceof RegExp ? TABELAS.filter(x => alvo.test(x.comFormatacao || '') || alvo.test(x.semFormatacao || '')) : [achaTabela(alvo)].filter(Boolean);
@@ -444,15 +464,10 @@ async function exportar() {
         for (const t of ts) { const k = norm(t.semFormatacao); if (!vistos.has(k)) { vistos.add(k); lista.push(t); } }
       }
       log(`   tabelas a exportar (${lista.length}): ${lista.map(t => t.comFormatacao || t.semFormatacao).join(' | ')}`);
-      for (const [i, t] of lista.entries()) {
-        if (i > 0) {
-          await semSpinner();
-          await page.getByText(/Adicionar nova aba/i).first().click({ timeout: 15000 }); await page.waitForTimeout(2500);
-          await semSpinner();
-        }
+      for (const t of lista) {
         const nome = t.comFormatacao || t.semFormatacao;
-        const ren = await renomeiaAba(nome);
-        log(`   aba nova · renomear: ${ren || 'não deu (fica o nome padrão)'}`);
+        if (!(await criaAba(nome))) { dumpFeito = false; await dumpAba(); break; }
+        if (!nAbas) { dumpFeito = false; await dumpAba(); await foto(page, `aba-${canal}`); }
         if (!(await escolheTabela(nome))) { log(`   NÃO consegui clicar na tabela "${nome}"`); await foto(page, `sem-tabela-${canal}`); dumpFeito = false; await dumpAba(); break; }
         await page.waitForTimeout(2500);
         const n = await selecionaTodosCampos();
