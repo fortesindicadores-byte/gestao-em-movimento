@@ -67,7 +67,7 @@ for (const canal of canais) {
 }
 
 // ── 2) abas do Sheets no banco ──
-for (const slug of ['dre_frota', 'dre_receita', 'dispersao_km', 'consumo_km_litro', 'consumo_rs_litro', 'consumo_rem_modelo']) {
+for (const slug of ['dre_frota', 'dre_receita', 'dre_ebitda', 'dispersao_km', 'consumo_km_litro', 'consumo_rs_litro', 'consumo_rem_modelo']) {
   try {
     const [b] = await rest(`sh_base?select=slug,colunas,linhas,carregado_em,erro&slug=eq.${slug}`);
     const rows = await tudo(`sh_${slug}`, 'linha.asc');
@@ -83,8 +83,8 @@ for (const [t, o] of [['dispersao_km', 'vigencia'], ['balanco_massa', 'vigencia'
 // (ERP, só encerradas) e as paradas por placa, para cruzar com o FT em 2026
 const EXTRA = [
   ['vw_contrato_km', 'vigencia,contrato,chassi', '&vigencia=gte.2025-01', 'contrato,vigencia,chassi,placa,km_anterior,km_atual,faixa,km_rodado,valor'],
-  ['custo_vigencia_mv', 'placa', '&vig_km=gte.2025-11', '*'],
-  ['erp_abastecimentos', 'data,ordem_servico', '&encerrada=eq.S&data=gte.2025-12-01', 'data,placa,filial,projeto_os,litros,valor,tipo_combustivel'],
+  ['custo_vigencia_mv', 'placa', '&vig_km=gte.2025-01', '*'],
+  ['erp_abastecimentos', 'data,ordem_servico', '&encerrada=eq.S&data=gte.2025-01-01', 'data,placa,filial,projeto_os,litros,valor,tipo_combustivel'],
   ['indisponibilidade', 'data_parada', '&or=(data_retorno.is.null,data_retorno.gte.2025-12-01)', 'unidade,projeto,placa,modelo,grupo,local_manutencao,data_parada,previsao_retorno,data_retorno,status'],
   ['pneu_preco', 'medida', '', '*'],
 ];

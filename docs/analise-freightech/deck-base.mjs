@@ -69,3 +69,32 @@ export function lines({ w = 1136, h = 280, labels, series, yfmt = f0, tick = 1, 
   });
   return s + '</svg>';
 }
+
+// ponte (cascata): itens [{rot, v, tot?}] — tot=true desenha a barra cheia a partir do zero
+export function ponte({ w = 1136, h = 300, itens, fmt = v => f0(v), corPos = ACC, corNeg = VERDE, corTot = INK, pad = { l: 16, r: 16, t: 30, b: 46 } }) {
+  let acc = 0; const bars = itens.map(it => { if (it.tot) { const b = { ...it, y0: 0, y1: it.v }; acc = it.v; return b; } const b = { ...it, y0: acc, y1: acc + it.v }; acc += it.v; return b; });
+  const lo = Math.min(0, ...bars.map(b => Math.min(b.y0, b.y1))), hi = Math.max(...bars.map(b => Math.max(b.y0, b.y1))) * 1.08;
+  const bw = (w - pad.l - pad.r) / bars.length, Y = v => pad.t + (h - pad.t - pad.b) * (1 - (v - lo) / (hi - lo));
+  let s = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" font-family="Montserrat,Arial" font-size="11">`;
+  s += `<line x1="${pad.l}" x2="${w - pad.r}" y1="${Y(0)}" y2="${Y(0)}" stroke="${LINE}"/>`;
+  bars.forEach((b, i) => {
+    const x = pad.l + bw * i + bw * .16, ww = bw * .68, top = Y(Math.max(b.y0, b.y1)), hh = Math.max(Math.abs(Y(b.y0) - Y(b.y1)), 1.5);
+    const cor = b.tot ? corTot : b.v >= 0 ? corPos : corNeg;
+    s += `<rect x="${x}" y="${top}" width="${ww}" height="${hh}" rx="2" fill="${b.cor || cor}"/>`;
+    if (i < bars.length - 1 && !bars[i + 1].tot) s += `<line x1="${x + ww}" x2="${x + bw}" y1="${Y(b.y1)}" y2="${Y(b.y1)}" stroke="${INK3}" stroke-dasharray="3 3"/>`;
+    s += `<text x="${x + ww / 2}" y="${top - 6}" text-anchor="middle" font-weight="700" fill="${INK}">${b.tot ? '' : b.v > 0 ? '+' : ''}${fmt(b.v)}</text>`;
+    String(b.rot).split('\n').forEach((t, k) => { s += `<text x="${x + ww / 2}" y="${h - pad.b + 16 + k * 13}" text-anchor="middle" fill="${INK2}" font-weight="600">${t}</text>`; });
+  });
+  return s + '</svg>';
+}
+// barras horizontais agrupadas (até 3 séries) com rótulo à direita
+export function hbars({ w = 560, linhas, series, fmt = v => f0(v), lh = 26, lw = 130 }) {
+  const max = Math.max(...linhas.flatMap(l => series.map(s => Math.abs(l[s.k] || 0))), 1), bh = (lh - 8) / series.length, W = w - lw - 70;
+  let s = `<svg viewBox="0 0 ${w} ${linhas.length * lh + 22}" width="${w}" height="${linhas.length * lh + 22}" font-family="Montserrat,Arial" font-size="10.5">`;
+  series.forEach((se, k) => { s += `<rect x="${lw + k * 110}" y="2" width="10" height="10" rx="2" fill="${se.cor}"/><text x="${lw + k * 110 + 14}" y="11" fill="${INK2}">${se.rot}</text>`; });
+  linhas.forEach((l, i) => {
+    const y = 20 + i * lh; s += `<text x="${lw - 8}" y="${y + lh / 2}" text-anchor="end" fill="${INK}" font-weight="600">${l.rot}</text>`;
+    series.forEach((se, k) => { const v = l[se.k] || 0, ww = W * Math.abs(v) / max; s += `<rect x="${lw}" y="${y + 2 + k * bh}" width="${ww}" height="${bh - 1}" rx="2" fill="${se.cor}"/><text x="${lw + ww + 4}" y="${y + 1 + (k + 1) * bh - 1}" fill="${INK2}" font-size="9.5">${fmt(v)}</text>`; });
+  });
+  return s + '</svg>';
+}
