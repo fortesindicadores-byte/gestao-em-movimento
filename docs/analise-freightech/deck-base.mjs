@@ -22,6 +22,7 @@ export function deck({ rodape, marca, titulo }) {
     LOGO,
     slide: (inner, extra = '') => S.push(`<section class="slide"${extra}>${inner}${foot()}</section>`),
     capa: (kicker, h1, texto) => S.push(`<section class="slide dark">${LOGO}<div class="kicker">${kicker}</div><h1 style="max-width:1000px">${h1}</h1><p style="margin-top:26px;font-size:16.5px;max-width:860px">${texto}</p>${foot()}</section>`),
+    conc: txt => `<div class="conc"><div class="lbl">Conclusão</div><p>${txt}</p></div>`,
     escuro: txt => `<div class="box res" style="background:${INK}"><p style="color:#F4F5F7">${txt}</p></div>`,
     write: out => {
       writeFileSync(out, `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${titulo}</title>
@@ -30,10 +31,13 @@ export function deck({ rodape, marca, titulo }) {
   .box h3{font-size:15px} .box p{font-size:13px} .num{font-size:34px} .num small{font-size:15px} .lbl{font-size:10.5px}
   .step{margin-bottom:12px;flex-direction:column;gap:0} .step b{font-size:14.5px} .step span{font-size:12.5px} .step span b{display:inline;font-size:inherit;margin:0;color:var(--ink)} .note{font-size:11px;color:var(--ink3);line-height:1.4} .foot{font-size:10.5px}
   table{font-size:12.5px} table th{padding:7px 9px} table td{padding:6px 9px}
-  table.compacta{font-size:11.5px} table.compacta th{padding:6px 8px} table.compacta td{padding:5px 8px}
-  table th{background:#EEF0F3;color:var(--ink2);border-bottom:0;font-size:9.5px;letter-spacing:.8px}
+  table.compacta{font-size:12px} table.compacta th{padding:6px 8px} table.compacta td{padding:5px 8px}
+  table th{background:#E4E7EC;color:${INK};border-bottom:0;font-size:10px;font-weight:700;letter-spacing:.7px}
   table th:first-child{border-radius:8px 0 0 8px} table th:last-child{border-radius:0 8px 8px 0}
-  table td{border-bottom:1px solid #EDEFF2} td.n,th.n{text-align:right}
+  table td{border-bottom:1px solid #D9DDE3;color:${INK};font-weight:500} td.n,th.n{text-align:right}
+  table.compacta{font-size:12px}
+  .conc{margin-top:12px;border-left:4px solid ${ACC};background:${PALE};border-radius:0 10px 10px 0;padding:10px 18px}
+  .conc .lbl{color:${ACC};margin-bottom:3px} .conc p{font-size:13px;line-height:1.48;color:${INK}} .conc p b{color:${INK}}
   .slide .box.res{padding:12px 18px} .slide .box.res p{font-size:12.5px;line-height:1.45}
   .ficha{display:grid;grid-template-columns:150px 1fr;gap:6px 14px;font-size:13px;line-height:1.42}
   .ficha dt{font-weight:700;color:var(--ink2);font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;padding-top:2px}

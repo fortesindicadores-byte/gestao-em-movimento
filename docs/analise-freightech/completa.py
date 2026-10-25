@@ -59,6 +59,9 @@ dp = sh('dispersao_km'); dp['vig'] = pd.to_datetime(dp['Vigência'], errors='coe
 dp['proj'] = dp['PROJ.'].astype(str).str.split(' - ').str[0].str.strip(); dp['cod'] = dp['PROJ.'].astype(str).str.split(' - ').str[-1].str.strip()
 dk = dp.groupby(['proj', 'cod', 'vig'])[['Km Rem. TT', 'Km Rodado TT', 'Frota Ativa', 'Viagens - Real']].sum().reset_index()
 F = F.merge(dk, on=['proj', 'cod', 'vig'], how='left')
+# o pago só existe nos meses com Dispersão: o período de todas as comparações para no último mês dela
+FIMD = dk.loc[dk['Km Rem. TT'] > 0, 'vig'].max()
+if FIMD and FIMD < FIM: FIM = FIMD; out['FIM'] = FIM
 F['rat'] = (F['Km Rem. TT'] / F.kmtot).where(F.kmtot > 0)
 VAR = ['comb', 'manut', 'carr', 'pneu']
 for c in VAR: F[c + '_pago'] = F[c] * F.rat

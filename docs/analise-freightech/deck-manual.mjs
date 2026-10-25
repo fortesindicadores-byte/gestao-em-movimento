@@ -12,11 +12,11 @@ const P = M.placa, R = M.resumo, T = M.trecho, C = M.conf, CV = M.cavalo, CR = M
 const rs = v => 'R$ ' + f2(v), rk = v => 'R$ ' + f2(v) + '/km';
 
 // tira de memória de cálculo: [{l, v}] e operadores em texto
-const caixa = (l, v, d = false) => `<div style="flex:1;min-width:0;background:${d ? INK : PALE};color:${d ? '#fff' : INK};border-radius:12px;padding:14px 10px;text-align:center">
-  <div style="font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:${d ? '#C9CED6' : INK2}">${l}</div>
-  <div style="font-size:24px;font-weight:800;margin-top:6px;white-space:nowrap">${v}</div></div>`;
-const op = s => `<div style="font-size:26px;font-weight:800;color:${ACC};padding:0 4px">${s}</div>`;
-const fita = itens => `<div style="display:flex;align-items:center;gap:6px;margin-top:18px">${itens.map(x => typeof x === 'string' ? op(x) : caixa(x.l, x.v, x.d)).join('')}</div>`;
+const caixa = (l, v, d = false) => `<div style="flex:1;min-width:0;background:${d ? INK : '#fff'};color:${d ? '#fff' : INK};border:1px solid ${d ? INK : '#D9DDE3'};border-radius:12px;padding:20px 10px;text-align:center">
+  <div style="font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:${d ? '#C9CED6' : INK2}">${l}</div>
+  <div style="font-size:27px;font-weight:800;margin-top:8px;white-space:nowrap">${v}</div></div>`;
+const op = s => `<div style="font-size:28px;font-weight:800;color:${ACC};padding:0 4px">${s}</div>`;
+const fita = itens => `<div style="background:${PALE};border-radius:14px;padding:14px 16px 16px;margin-top:18px"><div class="lbl" style="color:${ACC};margin-bottom:10px">Memória de cálculo</div><div style="display:flex;align-items:center;gap:8px">${itens.map(x => typeof x === 'string' ? op(x) : caixa(x.l, x.v, x.d)).join('')}</div></div>`;
 const origem = linhas => `<table class="compacta" style="margin-top:16px"><tr><th>Relatório (tabela FT)</th><th>Campo</th><th>O que é</th><th class="n">No exemplo</th></tr>
   ${linhas.map(([t, c, o, v]) => `<tr><td>${t}</td><td><b>${c}</b></td><td>${o}</td><td class="n">${v}</td></tr>`).join('')}</table>`;
 const nota = t => `<p class="note" style="margin-top:10px">${t}</p>`;
@@ -38,12 +38,22 @@ slide(`<div class="kicker">Mapa</div><h2>Três modelos de remuneração de frota
   </div>
   ${nota('* Lavagem: fixa por mês na Rota e na Van; por km no AS. Equipe, QLP e outras despesas não são custos de frota e ficam fora deste manual.')}`);
 
-slide(`<div class="kicker">T2 · como o pagamento se forma</div><h2>Do caminhão à unidade: o Resumo soma tudo</h2>
-  ${fita([{ l: 'Fixo médio por ativo', v: rs(R['Total por Caminhão Frota Ativa']) }, '×', { l: 'Caminhões ativos', v: f0(R['Total Caminhão Ativo']) }, '+', { l: 'Fixo médio por parado', v: rs(R['Total por Caminhão Frota Parada']) }, '×', { l: 'Parados', v: f0(R['Total Caminhão Parado']) }])}
-  ${fita(['+', { l: 'R$/km médio', v: rk(R['Total R$/KM']) }, '×', { l: 'Km da placa no mês', v: f0(R['KM Remunerado']) + ' km' }, '×', { l: 'Ativos', v: f0(R['Total Caminhão Ativo']) }, '=', { l: 'Variável (teto)', v: 'R$ ' + mil(R['Total Viagens']), d: true }])}
-  ${origem([['Resumo', 'Total por Caminhão Frota Ativa', 'média do fixo das placas ativas', rs(R['Total por Caminhão Frota Ativa'])], ['Resumo', 'Total por Caminhão Frota Parada', 'média do fixo de parado', rs(R['Total por Caminhão Frota Parada'])],
-    ['Resumo', 'Total R$/KM', 'combustível + manutenção + carroceria + pneu, média simples das placas', rk(R['Total R$/KM'])], ['Resumo', 'KM Remunerado', 'km do mês por caminhão (revisão)', f0(R['KM Remunerado'])], ['Resumo', 'Total Viagens', 'variável no teto de mapas (25 por mês)', 'R$ ' + mil(R['Total Viagens'])]])}
-  ${nota(`Cuiabá, ${M.vig}. O Resumo usa a MÉDIA SIMPLES das placas: o R$/km da unidade não é o de cada caminhão. O pago de verdade é o R$/km × km dos mapas que rodaram (Dispersão de km).`)}`);
+{
+  const at = R['Total Caminhão Ativo'], fa = R['Total por Caminhão Frota Ativa'] * at, fp = R['Total por Caminhão Frota Parada'] * R['Total Caminhão Parado'], vv = R['Total Viagens'];
+  const cx = (l, v, d) => `<div style="background:${d ? INK : PALE};color:${d ? '#fff' : INK};border-radius:10px;padding:10px 8px;text-align:center;height:66px;display:flex;flex-direction:column;justify-content:center"><div class="lbl" style="${d ? 'color:#C9CED6' : ''}">${l}</div><div style="font-size:21px;font-weight:800;margin-top:3px">${v}</div></div>`;
+  const o = t => `<div style="font-size:22px;font-weight:800;color:${ACC};text-align:center">${t}</div>`;
+  const lin = (nome, a, b, c, res, d) => `<div style="display:grid;grid-template-columns:130px 1fr 26px 1fr 26px 1fr 26px 1.15fr;align-items:center;gap:6px;margin-top:10px">
+    <div style="font-size:12.5px;font-weight:800;color:${INK}">${nome}</div>${cx(...a)}${o('×')}${cx(...b)}${c ? o('×') + cx(...c) : '<div></div><div></div>'}${o('=')}${cx(...res, d)}</div>`;
+  slide(`<div class="kicker">T2 · como o pagamento se forma</div><h2>Do caminhão à unidade: três contas no Resumo</h2>
+  ${lin('Fixo das ativas', ['Fixo médio por ativo', rs(R['Total por Caminhão Frota Ativa'])], ['Caminhões ativos', f0(at)], null, ['Fixo das ativas', 'R$ ' + mil(fa)])}
+  ${lin('Fixo das paradas', ['Fixo médio por parado', rs(R['Total por Caminhão Frota Parada'])], ['Caminhões parados', f0(R['Total Caminhão Parado'])], null, ['Fixo das paradas', 'R$ ' + mil(fp)])}
+  ${lin('Variável (teto)', ['R$/km médio', rk(R['Total R$/KM'])], ['Km por caminhão no mês', f0(R['KM Remunerado'])], ['Caminhões ativos', f0(at)], ['Variável (teto)', 'R$ ' + mil(vv)])}
+  <div style="display:grid;grid-template-columns:130px 1fr 26px 1fr 26px 1fr 26px 1.15fr;align-items:center;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid #D9DDE3">
+    <div style="font-size:12.5px;font-weight:800;color:${INK}">Frota da unidade</div>${cx('Fixo das ativas', 'R$ ' + mil(fa))}${o('+')}${cx('Fixo das paradas', 'R$ ' + mil(fp))}${o('+')}${cx('Variável (teto)', 'R$ ' + mil(vv))}${o('=')}${cx('Frota no mês', 'R$ ' + mil(fa + fp + vv), true)}</div>
+  ${origem([['Resumo', 'Total por Caminhão Frota Ativa · Total Caminhão Ativo', 'fixo médio das placas ativas × quantas estão ativas', rs(R['Total por Caminhão Frota Ativa']) + ' × ' + f0(at)], ['Resumo', 'Total por Caminhão Frota Parada · Total Caminhão Parado', 'fixo de parado × quantas estão paradas', rs(R['Total por Caminhão Frota Parada']) + ' × ' + f0(R['Total Caminhão Parado'])],
+    ['Resumo', 'Total R$/KM · KM Remunerado', 'combustível + manutenção + carroceria + pneu (média das placas) × km por caminhão', rk(R['Total R$/KM']) + ' × ' + f0(R['KM Remunerado'])], ['Resumo', 'Total Viagens', 'variável no teto (25 mapas por caminhão ativo)', 'R$ ' + mil(vv)]])}
+  ${nota(`Cuiabá, ${M.vig}. Os ${f0(at)} ativos entram duas vezes porque cada caminhão ativo recebe o fixo e gera o variável. O pago de verdade do variável é o R$/km × km dos mapas que rodaram (Dispersão de km). Equipe de entrega, QLP e outras despesas são pagas à parte, no mesmo Resumo.`)}`);
+}
 
 // ═══ T2 · fixo ═══
 const FE = M.finame_ex;

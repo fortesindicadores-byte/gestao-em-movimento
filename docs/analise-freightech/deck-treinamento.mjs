@@ -29,7 +29,7 @@ slide(`
     <div class="box" style="border-top:5px solid ${ACC}"><h3>Custo VARIÁVEL: o caminhão rodar</h3><p style="margin-top:6px">Diesel, manutenção, pneu e carroceria. É pago por km, e só nos mapas que de fato rodaram.</p>
       <div class="num" style="margin-top:12px">R$ ${f2(E.var)}<small> por km</small></div><p class="note">≈ R$ ${f0(varMes)} por mês, se o caminhão rodar todos os mapas</p></div>
   </div>
-  <div style="margin-top:18px">${escuro('<b>O que isso quer dizer para a operação:</b> o fixo depende pouco de nós. O variável depende muito: cada mapa que não roda, cada km a mais, cada litro a mais e cada real acima do preço da régua é dinheiro que não volta.')}</div>`);
+  <div style="margin-top:18px">${escuro('<b>O que isso quer dizer para a operação:</b> o variável só repõe o custo do km, sem margem. O resultado vem de gastar dentro da régua: cada km a mais que o pago, cada litro a mais e cada real acima do preço da régua sai do nosso resultado.')}</div>`);
 
 // 3
 slide(`
@@ -42,7 +42,7 @@ slide(`
     ${big(f0(KE.viagens), `<b>4. Mapas rodados.</b> Só esses são pagos (mais recargas e noturnas).`, ACC)}
   </div>
   <div class="formula" style="margin-top:20px;font-size:18px;text-align:center">Variável do mês = R$/km do caminhão × km por mapa × mapas rodados<small>No caminhão mediano: R$ ${f2(E.var)} × ${f1(kmMapa)} km = <b>R$ ${f0(varMapa)} por mapa rodado</b></small></div>
-  <p style="margin-top:14px;text-align:center">Cuiabá, ago/26: ${f0(KE.mapas_pos - KE.viagens)} mapas possíveis não viraram viagem. Cada um é cerca de R$ ${f0(varMapa)} que não entrou.</p>`);
+  <p style="margin-top:14px;text-align:center">O variável vem do km pago: mapas rodados × km por mapa.</p>`);
 
 // 4
 slide(`
@@ -59,7 +59,6 @@ slide(`
 // 5
 {
   const L = [
-    ['Mapa que não roda', `um caminhão ativo que fica sem viagem num dia`, `R$ ${f0(varMapa)} a menos por mapa`],
     ['Km acima do pago', `rodar mais km do que o km por mapa remunera (rota longa, desvio, ida ao posto)`, `~R$ ${f0(E.var * 100)} a cada 100 km a mais`],
     ['Consumo pior que a régua', `fazer 0,1 km/L abaixo do Km/L remunerado`, `${f0(litros01 - litros)} L ≈ R$ ${f0((litros01 - litros) * preco)} por caminhão por mês`],
     ['Diesel acima da ANP', `pagar R$ 0,10/L acima do preço da ANP`, `≈ R$ ${f0(litros * 0.1)} por caminhão por mês`],
@@ -68,11 +67,11 @@ slide(`
   ];
   slide(`
   <div class="kicker">Onde perdemos dinheiro</div>
-  <h2>Seis alavancas da operação, cada uma com o seu valor</h2>
+  <h2>Cinco alavancas da operação, cada uma com o seu valor</h2>
   <table style="margin-top:16px"><tr><th>Alavanca</th><th>O que é</th><th class="n">Quanto custa</th></tr>
   ${L.map(([a, b, c]) => `<tr><td><b>${a}</b></td><td>${b}</td><td class="n"><b>${c}</b></td></tr>`).join('')}</table>
   <p class="note" style="margin-top:10px">Valores do caminhão mediano da Rota em 2026: ${f0(E.km_mes)} km/mês, Km/L remunerado ${f2(E.kml)}, R$ ${f2(preco)} por litro com Arla, R$ ${f2(E.var)}/km de variável.</p>
-  <div style="margin-top:12px">${escuro(`<b>Em 2026 (jan–ago),</b> os mapas que não rodaram somaram R$ ${mi(O.km['2026'].rs_nao)} de variável que não entrou. É a maior alavanca da operação.`)}</div>`);
+  <div style="margin-top:12px">${escuro(`<b>Em 2026,</b> o km abastecido nos caminhões T2 ficou 13% acima do km pago, e o consumo 9% pior que a régua. São as duas maiores alavancas.`)}</div>`);
 }
 
 // 6
@@ -82,10 +81,10 @@ slide(`
   <div class="grid g2" style="margin-top:20px;gap:24px;align-items:start">
     <div>
       <div class="step"><b>1. Parado no FT continua recebendo o fixo de parado.</b><span>Capital do caminhão, seguro, IPVA e rastreador. Em 2026, ~${f0(Object.values(O.parado).reduce((s, x) => s + x.parados, 0))} caminhões parados por mês na Rota.</span></div>
-      <div class="step"><b>2. O variável vem só dos mapas.</b><span>Se o caminhão ativo para na oficina e ninguém cobre o mapa, o mapa não roda e o variável não entra.</span></div>
-      <div class="step"><b>3. Por isso a manutenção longa pesa duas vezes.</b><span>Custa a oficina e tira o mapa. O stress test exige ao menos uma viagem por mês de cada caminhão ativo.</span></div>
+      <div class="step"><b>2. O variável vem só dos mapas.</b><span>Caminhão ativo sem mapa não gera variável. O custo da oficina acima do pago sai do nosso resultado.</span></div>
+      <div class="step"><b>3. O stress test exige ao menos uma viagem por mês de cada caminhão ativo.</b><span>Caminhão ativo parado o mês inteiro na oficina fere a regra.</span></div>
     </div>
-    ${escuro(`<b>O que fazer:</b> caminhão ativo na oficina por mais de um dia precisa de um reserva cobrindo o mapa. Acompanhar no portal a Indisponibilidade (dias parado por placa) e o Painel KM (frota ativa × viagens).`)}
+    ${escuro(`<b>O que acompanhar:</b> a Indisponibilidade (dias parado por placa) e a Carta de Custos (manutenção por placa contra o R$/km pago).`)}
   </div>`);
 
 // 7
@@ -108,7 +107,7 @@ slide(`
   <div class="kicker">A rotina do gestor</div>
   <h2>O que olhar toda semana, e onde está no portal</h2>
   <table style="margin-top:16px"><tr><th>O que olhar</th><th>Por quê</th><th>Onde</th></tr>
-    <tr><td><b>Frota ativa × viagens</b></td><td>mapa que não roda é variável que não entra</td><td>Painel KM · Indisponibilidade</td></tr>
+    <tr><td><b>Frota ativa × viagens</b></td><td>uso da frota ativa e stress test</td><td>Painel KM · Indisponibilidade</td></tr>
     <tr><td><b>Dispersão de km</b> (rodado × pago)</td><td>km acima do pago é custo nosso; meta 5%</td><td>Painel KM</td></tr>
     <tr><td><b>Km/L real × remunerado</b>, por placa</td><td>consumo pior que a régua é diesel a mais</td><td>Eficiência Km/L · Árvore de Combustível</td></tr>
     <tr><td><b>R$/L real × ANP</b></td><td>o FT paga até a ANP; o que passar disso é nosso</td><td>Preço R$/L</td></tr>
@@ -123,7 +122,7 @@ slide(`
   <div style="margin-top:18px">
     <div class="step"><b>1. O FT é a régua: a remuneração cobre o custo de um caminhão bem gerido.</b><span></span></div>
     <div class="step"><b>2. Fixo é o caminhão existir; variável é o caminhão rodar, por km e por mapa rodado.</b><span></span></div>
-    <div class="step"><b>3. Mapa que não roda é dinheiro perdido: ~R$ ${f0(varMapa)} cada.</b><span></span></div>
+    <div class="step"><b>3. Km acima do pago é custo nosso: ~R$ ${f0(E.var * 100)} a cada 100 km.</b><span></span></div>
     <div class="step"><b>4. Diesel é ${f0(E.comb / E.var * 100)}% do variável: consumo e preço do litro valem mais que qualquer outra coisa.</b><span></span></div>
     <div class="step"><b>5. Todo desvio vira FCA, com causa e ação, e o portal mostra onde está cada um.</b><span></span></div>
   </div>`);
