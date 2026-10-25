@@ -68,13 +68,18 @@ const part = k => media(L[k]) / media(totMes) * 100;
 const FD = D.ftdre_mes, nFD = FD.vig.length;
 const soma = k => FD[k].reduce((s, x) => s + x, 0);
 const dif = k => (soma(k + '_dre') / soma(k) - 1) * 100;
-const K26 = D.km_tot26, K25 = D.km_tot25, KM = D.km_mes;
-const i26 = KM.vig.findIndex(v => v >= '2026-01');
-const MZ = D.manut_zero_free, MZM = D.manut_zero_mes;
+const KM = D.km_mes, KD = D.km_dec, KC = D.km_canal, KU = D.km_uni;
+const kmS = k => KM[k].reduce((s, x) => s + x, 0);
+const kmTeto = kmS('km'), kmPago = kmS('Km Rem. TT');
+const ultKm = KM.vig[KM.vig.length - 1];
+const aprov = o => o['Viagens - Real'] / o['Viagens Rem.'] * 100;
+const tudo = Object.values(KC).reduce((a, x) => ({ 'Viagens Rem.': a['Viagens Rem.'] + x['Viagens Rem.'], 'Viagens - Real': a['Viagens - Real'] + x['Viagens - Real'] }), { 'Viagens Rem.': 0, 'Viagens - Real': 0 });
+const PG = D.ftdre_pago, pg = k => (PG[k].dre / PG[k].pago - 1) * 100;
+const manutSemContr = (PG.manut.dre - PG.contrato_fab) / PG.manut.pago * 100 - 100;
+const MZ = D.manut_zero_free, MF = D.manut_faixa, MV = D.manut_velha_uni;
 const contr26 = Object.entries(D.dre_contrato).filter(([v]) => v >= '2026-01').reduce((s, [, x]) => s + x, 0);
 const mccBaixo = D.comb_baixo.find(x => x.cod === 'MCC');
-const AS = D.as_uni, asTot = Object.values(AS).reduce((a, x) => ({ km: a.km + x.km, rem: a.rem + x['Km Rem. TT'], comb: a.comb + x.comb, cd: a.cd + x.comb_dre }), { km: 0, rem: 0, comb: 0, cd: 0 });
-const ultKm = KM.vig[KM.vig.length - 1];
+const AC = D.comb_acima;
 
 // ── 1 · CAPA ──
 S.push(`<section class="slide dark">${LOGO}
@@ -90,11 +95,11 @@ S.push(slide(`
   <h2>Quatro achados, do mais seguro ao mais aberto</h2>
   <div class="grid g4" style="margin-top:22px;gap:16px">
     <div class="box"><div class="lbl">1 · A conta do FT fecha</div><div class="num">100%</div><p>dos ${f0(D.comb_regra.diesel_regs)} preços de diesel pagos pela regra (o menor entre o nosso e a ANP), R$/km = soma dos componentes, e lavagem e IPVA do FT batem com o remunerado da DRE a ±1%.</p></div>
-    <div class="box"><div class="lbl">2 · Km previsto × km pago (Rota)</div><div class="num">R$ ${mi(K26.gap_rs)}</div><p>${f0(K26.gap_km)} km que o FT prevê e a Dispersão não remunerou, jan–${vl(ultKm)}, ao R$/km do FT. Em 2025 foram R$ ${mi(K25.gap_rs)}. A frota ativa bate (±2%): a diferença está nas viagens.</p></div>
-    <div class="box"><div class="lbl">3 · Manutenção zerada (Rota)</div><div class="num">${MZ.placas26} <small>placas</small></div><p>ativas, já fora do free maintenance, com R$/km de manutenção zero em 2026. Ao valor do BID delas: até R$ ${mil(MZ.pot26)} (jan–out). E a DRE passou a ter "Contratos de Manutenção Fabricante" em jan/26.</p></div>
-    <div class="box"><div class="lbl">4 · Erros de cadastro</div><div class="num">R$ ${mil(mccBaixo.dif)}</div><p>Macacu, 1ª quinzena de ago/25: diesel lançado a R$ ${f2(mccBaixo.precoOperadora)}/L (ANP R$ ${f2(mccBaixo.precoAnp)}). E ${D.eletricos.placas} elétricos no Rio sem nenhum R$/km de energia.</p></div>
+    <div class="box"><div class="lbl">2 · O km do FT é o teto</div><div class="num">${aprov(tudo).toFixed(0)}%</div><p>dos mapas possíveis (frota ativa × dias úteis) viraram viagem em jan–${vl(ultKm)}, somando Rota, Van e AS. O FT calcula o variável no teto; o que entra é o mapa rodado. Ao km pago, o combustível da DRE fica ${pct(pg('comb'), 0)} do FT.</p></div>
+    <div class="box"><div class="lbl">3 · Manutenção zerada fora da carência</div><div class="num">${MF.mais24.placas} <small>placas</small></div><p>ativas na Rota com mais de 24 meses de vida (mediana ${String(MF.mais24.vida).replace('.', ',')} meses) e R$/km de manutenção zero em 2026. Ao valor do BID: R$ ${mil(MF.mais24.pot)} (jan–out). As ${MF.ate12.placas + MF['12a24'].placas} placas mais novas estão na carência.</p></div>
+    <div class="box"><div class="lbl">4 · Preço do diesel</div><div class="num">R$ ${mil(mccBaixo.dif)}</div><p>Macacu, 1ª quinzena de ago/25: diesel lançado a R$ ${f2(mccBaixo.precoOperadora)}/L (ANP R$ ${f2(mccBaixo.precoAnp)}). E quando o nosso preço passa da ANP, a diferença fica conosco: R$ ${mil(AC['2025'].dif)} em 2025.</p></div>
   </div>
-  <div style="margin-top:18px">${escuro(`<b>Onde está o dinheiro:</b> na Rota (caminhão + van) o FT paga ~R$ ${mi(media(totMes))} por mês. Só ${part('Total Viagens').toFixed(0)}% disso é o variável por km; ${part('Total Equipe Entrega').toFixed(0)}% é equipe, ${(part('Total Frota Ativa') + part('Total Frota Parada')).toFixed(0)}% é frota (ativa + parada), ${part('Total QLP ADM').toFixed(0)}% QLP e ${part('Total Outras Despesas').toFixed(0)}% outras despesas. Os achados 2 e 3 estão no variável; o maior volume está no fixo, que bate.`)}</div>`));
+  <div style="margin-top:18px">${escuro(`<b>Onde está o dinheiro:</b> na Rota (caminhão + van) o FT paga ~R$ ${mi(media(totMes))} por mês. Só ${part('Total Viagens').toFixed(0)}% disso é o variável por km; ${part('Total Equipe Entrega').toFixed(0)}% é equipe, ${(part('Total Frota Ativa') + part('Total Frota Parada')).toFixed(0)}% é frota (ativa + parada), ${part('Total QLP ADM').toFixed(0)}% QLP e ${part('Total Outras Despesas').toFixed(0)}% outras despesas. O fixo bate; o que ainda não fecha é a manutenção e os pneus da DRE, que ficam acima do FT (${pct(pg('manut'), 0)} e ${pct(pg('pneu'), 0)} ao km pago).`)}</div>`));
 
 // ── PARTE 1 ──
 capaSec('Parte 1 de 4', 'Como o FT monta<br>a remuneração.', 'Placa a placa, unidade a unidade, quinzena a quinzena. O que cada tabela faz e as contas que conferimos.');
@@ -106,7 +111,7 @@ S.push(slide(`
     <div>
       <div class="step"><div class="n">1</div><div><b>Placa (tabela Caminhão)</b><span>Fixo: FINAME ou quitado, lucro, IPVA, seguro, rastreador, faixa. Variável por km: <b>combustível</b> = (preço do diesel + Arla) ÷ Km/L da placa · <b>manutenção</b> = R$/km do contrato (zero no free maintenance) · <b>carroceria</b> = tabela por tipo · <b>pneu</b> = (pneus × preço + recapagens × preço) ÷ vida em km.</span></div></div>
       <div class="step"><div class="n">2</div><div><b>Preço (tabela Combustível)</b><span>Por unidade e quinzena: o nosso preço (das NFs) e o da ANP. O FT paga o menor dos dois.</span></div></div>
-      <div class="step"><div class="n">3</div><div><b>Unidade (Resumo Rota / Van)</b><span>Frota ativa + frota parada + equipe de entrega + QLP ADM + outras despesas + <b>viagens</b> (R$/km × km remunerado por caminhão × caminhões ativos). Os valores são mensais; a quinzena repete o mês.</span></div></div>
+      <div class="step"><div class="n">3</div><div><b>Unidade (Resumo Rota / Van)</b><span>Frota ativa + frota parada + equipe de entrega + QLP ADM + outras despesas + <b>viagens</b> (R$/km × km remunerado por caminhão × caminhões ativos). O km remunerado do caminhão é o km por mapa × 25 dias úteis: as viagens do Resumo são o teto. Os valores são mensais; a quinzena repete o mês.</span></div></div>
     </div>
     <div>
       <table class="media"><thead><tr><th>Conta conferida</th><th class="r">Resultado</th></tr></thead><tbody>
@@ -134,121 +139,139 @@ S.push(slide(`
   <div style="margin-top:14px">${escuro(`<b>Resumo:</b> R$ ${mi(media(totMes))} por mês em média de jan a ${vl(C.meses[ult])} (soma das 10 unidades, caminhão + van, pelo Resumo do FT). A frota parada recebe ~R$ ${mil(media(L['Total Frota Parada']))} por mês. Nota: a Rota é a parte que o FT entrega já somada por unidade; AS, Empurrada e Armazém aparecem na Parte 4.`)}</div>`));
 
 // ── PARTE 2 ──
-capaSec('Parte 2 de 4', 'FT × DRE:<br>o que bate e o que não bate.', 'O remunerado da DRE Frota (combustível, manutenção, pneus, lavagem, IPVA) contra o que o FT calcula, mês a mês e por unidade. E o km que o FT prevê contra o que a Dispersão remunerou.');
+capaSec('Parte 2 de 4', 'Km e DRE:<br>o que bate e o que não bate.', 'Como o km remunerado do FT vira o km pago da Dispersão, e o remunerado da DRE Frota (combustível, manutenção, pneus) contra o FT ao km pago. Rota, Van e AS juntos, porque placa de AS roda mapa de Rota e vice-versa.');
 
 {
-  const row = k => `<tr><td><b>${{ comb: 'Combustível + Arla', manut: 'Manutenção', pneu: 'Pneus', lav: 'Lavagem', ipva: 'IPVA e licenciamento' }[k]}</b></td><td class="r">R$ ${mi(soma(k))}</td><td class="r">R$ ${mi(soma(k + '_dre'))}</td><td class="r"><b style="color:${Math.abs(dif(k)) < 3 ? INK3 : dif(k) > 0 ? AZUL : ACC}">${pct(dif(k))}</b></td></tr>`;
-  const uni = Object.entries(D.ftdre_uni).sort((a, b) => a[0].localeCompare(b[0]));
-  const c = (u, k) => pct((u[k + '_dre'] / u[k] - 1) * 100, 0);
-  const cExt = uni.map(([k, u]) => [k, (u.comb_dre / u.comb - 1) * 100]).sort((a, b) => a[1] - b[1]); cExt.splice(1, cExt.length - 2);
+  const uni = Object.entries(KU).sort((a, b) => aprov(a[1]) - aprov(b[1]));
+  const canal = [['ROTA', 'Rota'], ['ROTA (VAN)', 'Van'], ['AUTO SERVIÇO', 'Auto Serviço']].filter(([k]) => KC[k]);
+  const fk = KD.frota + KD.kmmapa;
   S.push(slide(`
-  <div class="kicker">3 · Remunerado da DRE Frota × FT, Rota (caminhão + van), jan–${vl(FD.vig[nFD - 1])}</div>
-  <h2>Lavagem, IPVA e combustível batem no ano; manutenção e pneu da DRE ficam acima do FT</h2>
-  <div class="grid" style="grid-template-columns:1fr 1.15fr;gap:28px;margin-top:14px;align-items:start">
+  <div class="kicker">3 · Km remunerado: do FT à Dispersão de km (Rota + Van + AS), jan–${vl(ultKm)}</div>
+  <h2>O FT calcula o variável no teto, um mapa por dia útil; o que entra é o mapa rodado</h2>
+  <div class="grid" style="grid-template-columns:1fr 1.05fr;gap:26px;margin-top:12px;align-items:start">
     <div>
-      <table class="media"><thead><tr><th>Conta</th><th class="r">FT</th><th class="r">DRE rem.</th><th class="r">DRE ÷ FT</th></tr></thead><tbody>
-        ${['comb', 'manut', 'pneu', 'lav', 'ipva'].map(row).join('')}
+      <table class="media"><thead><tr><th>Do km do FT ao km pago</th><th class="r">Km</th></tr></thead><tbody>
+        <tr><td><b>FT:</b> km remunerado do caminhão (km por mapa × 25 dias úteis) × caminhões ativos</td><td class="r"><b>${f0(kmTeto)}</b></td></tr>
+        <tr><td>− mapas que não viraram viagem (caminhão ativo sem mapa no dia)</td><td class="r">${f0(-KD.mapas)}</td></tr>
+        <tr><td>+ recargas e noturnas (pagas além do mapa)</td><td class="r">+${f0(-KD.recarga)}</td></tr>
+        <tr><td>± frota ativa e km por mapa diferentes entre FT e Dispersão</td><td class="r">${fk > 0 ? '' : '+'}${f0(-fk)}</td></tr>
+        <tr class="tot"><td><b>Dispersão:</b> km/viagem × viagens realizadas + recargas e noturnas</td><td class="r">${f0(kmPago)}</td></tr>
       </tbody></table>
-      <p class="note" style="margin-top:8px">FT = componentes do Resumo (R$/km × km × ativos; lavagem e IPVA por caminhão), média das duas quinzenas de cada mês.</p>
+      <p class="note" style="margin-top:6px">O km por mapa do FT (km remunerado ÷ 25) é o km/viagem da Dispersão: mediana ${(D.km_kmv.mediana * 100).toFixed(0)}% em ${D.km_kmv.n} unidade-projeto-mês. A diferença de frota ativa entre os dois pesa ${pct((KD.frota / kmTeto) * 100)} do km. Os mapas possíveis da tabela usam os dias úteis da Dispersão.</p>
+      <table class="compacta" style="margin-top:10px"><thead><tr><th>Canal</th><th class="r">Mapas possíveis</th><th class="r">Viagens</th><th class="r">Aproveitamento</th></tr></thead><tbody>
+        ${canal.map(([k, t]) => `<tr><td>${t}</td><td class="r">${f0(KC[k]['Viagens Rem.'])}</td><td class="r">${f0(KC[k]['Viagens - Real'])}</td><td class="r">${aprov(KC[k]).toFixed(0)}%</td></tr>`).join('')}
+        <tr class="tot"><td>Juntos (com UDC)</td><td class="r">${f0(tudo['Viagens Rem.'])}</td><td class="r">${f0(tudo['Viagens - Real'])}</td><td class="r">${aprov(tudo).toFixed(0)}%</td></tr>
+      </tbody></table>
     </div>
     <div>
-      <table class="compacta"><thead><tr><th>Unidade</th><th class="r">Combustível</th><th class="r">Manutenção</th><th class="r">Pneus</th><th class="r">Lavagem</th></tr></thead><tbody>
-        ${uni.map(([k, u]) => `<tr><td>${NOME[k] || k}</td><td class="r">${c(u, 'comb')}</td><td class="r">${c(u, 'manut')}</td><td class="r">${c(u, 'pneu')}</td><td class="r">${c(u, 'lav')}</td></tr>`).join('')}
+      <table class="compacta"><thead><tr><th>Unidade</th><th class="r">Km FT (teto)</th><th class="r">Km pago</th><th class="r">Mapas possíveis</th><th class="r">Viagens</th><th class="r">Aprov.</th></tr></thead><tbody>
+        ${uni.map(([k, u]) => `<tr><td>${NOME[k] || k}</td><td class="r">${mil(u.km)}</td><td class="r">${mil(u['Km Rem. TT'])}</td><td class="r">${f0(u['Viagens Rem.'])}</td><td class="r">${f0(u['Viagens - Real'])}</td><td class="r"><b style="color:${aprov(u) < 80 ? ACC : INK}">${aprov(u).toFixed(0)}%</b></td></tr>`).join('')}
       </tbody></table>
+      <p class="note" style="margin-top:6px">Mapas possíveis = frota ativa × dias úteis do mês, como a Dispersão calcula. Rota, Van, UDC e AS somados por unidade.</p>
     </div>
   </div>
-  <div style="margin-top:12px">${escuro(`<b>Leitura:</b> lavagem e IPVA são fixos por caminhão e batem, então o mapa de unidades e a forma de ler o FT estão certos. O combustível da DRE fica ${pct(dif('comb'), 0)} do FT no ano, mas vai de ${pct(cExt[0][1], 0)} (${NOME[cExt[0][0]]}) a ${pct(cExt[1][1], 0)} (${NOME[cExt[1][0]]}) por unidade. A manutenção da DRE fica ${pct(dif('manut'), 0)} acima, e desde jan/26 a DRE tem a conta "Contratos de Manutenção Fabricante" (R$ ${mi(contr26)} no ano), que não existe no R$/km do FT. <b>Pergunta:</b> como o remunerado da DRE é lançado (pelo FT ou pelo que entrou) e de onde saem o contrato do fabricante e os pneus?`)}</div>`));
+  <div style="margin-top:10px">${escuro(`<b>Não é erro do FT.</b> O caminhão ativo recebe o fixo inteiro; o variável só entra com viagem. O AS sozinho faz ${aprov(KC['AUTO SERVIÇO']).toFixed(0)}% dos próprios mapas, em parte porque a placa de AS roda mapa de Rota, por isso os canais estão juntos. A frota ativa sem mapa é o que mais pesa: ${uni.slice(0, 3).map(([k, u]) => `${NOME[k]} ${aprov(u).toFixed(0)}%`).join(', ')}. Vale conferir com as unidades se é caminhão sobrando no ativo do FT ou viagem que não entrou no 2art.`)}</div>`));
 }
 
 {
-  const v = KM.vig.slice(i26), lab = v.map(vl);
-  const uni = Object.entries(D.km_uni).sort((a, b) => b[1].gap_rs - a[1].gap_rs);
+  const lin = k => `<tr><td><b>${{ comb: 'Combustível + Arla', manut: 'Manutenção', pneu: 'Pneus' }[k]}</b></td><td class="r">R$ ${mi(PG[k].teto)}</td><td class="r">R$ ${mi(PG[k].pago)}</td><td class="r">R$ ${mi(PG[k].dre)}</td><td class="r"><b style="color:${Math.abs(pg(k)) < 5 ? INK3 : pg(k) > 0 ? AZUL : ACC}">${pct(pg(k))}</b></td></tr>`;
+  const uni = Object.entries(D.ftdre_pago_uni).sort((a, b) => a[0].localeCompare(b[0]));
+  const cExt = uni.map(([k, u]) => [k, u.comb]).sort((a, b) => b[1] - a[1]).filter(x => x[1] >= 10);
   S.push(slide(`
-  <div class="kicker">4 · Km remunerado: o que o FT prevê × o que a Dispersão de km remunerou (Rota + Van)</div>
-  <h2>A frota ativa bate; o km não: ${f0(K26.gap_km)} km a menos em 2026, R$ ${mi(K26.gap_rs)}</h2>
-  <div class="grid" style="grid-template-columns:1.25fr 1fr;gap:26px;margin-top:10px;align-items:start">
+  <div class="kicker">4 · Remunerado da DRE Frota × FT ao km pago (Rota + Van + AS), jan–${vl(ultKm)}</div>
+  <h2>O combustível fecha; a manutenção e os pneus da DRE ficam acima do FT</h2>
+  <div class="grid" style="grid-template-columns:1.2fr 1fr;gap:28px;margin-top:14px;align-items:start">
     <div>
-      ${lines({ w: 640, h: 250, labels: lab, series: [{ data: KM.kmtot.slice(i26), cor: INK }, { data: KM['Km Rem. TT'].slice(i26), cor: ACC }], yfmt: v => mil(v) })}
-      <div style="display:flex;gap:20px;font-size:12px;color:${INK2};margin:2px 0 0 70px"><span><b style="color:${INK}">━</b> FT: km remunerado por caminhão × ativos</span><span><b style="color:${ACC}">━</b> Dispersão: km remunerado</span></div>
-      <p class="note" style="margin-top:6px">Frota ativa no ano: FT ${f0(KM['Total Caminhão Ativo'].slice(i26).reduce((s, x) => s + x, 0))} caminhão-mês × Dispersão ${f0(KM['Frota Ativa'].slice(i26).reduce((s, x) => s + x, 0))}. Maior mês: jun/26, ${pct((KM['Km Rem. TT'][i26 + 5] / KM.kmtot[i26 + 5] - 1) * 100, 0)}.</p>
+      <table class="media"><thead><tr><th>Conta</th><th class="r">FT no teto</th><th class="r">FT ao km pago</th><th class="r">DRE rem.</th><th class="r">DRE ÷ FT pago</th></tr></thead><tbody>
+        ${['comb', 'manut', 'pneu'].map(lin).join('')}
+        <tr><td>Manutenção sem "Contratos de Manutenção Fabricante"</td><td></td><td class="r">R$ ${mi(PG.manut.pago)}</td><td class="r">R$ ${mi(PG.manut.dre - PG.contrato_fab)}</td><td class="r">${pct(manutSemContr)}</td></tr>
+      </tbody></table>
+      <p class="note" style="margin-top:8px">FT ao km pago = componentes do FT (Resumo Rota/Van e Caminhão AS) × km da Dispersão ÷ km do FT, unidade a unidade e mês a mês. Lavagem e IPVA, fixos por caminhão, batem a ${pct(dif('lav'))} e ${pct(dif('ipva'))} (jan–${vl(FD.vig[nFD - 1])}).</p>
     </div>
     <div>
-      <table class="compacta"><thead><tr><th>Unidade</th><th class="r">Km FT</th><th class="r">Km Disp.</th><th class="r">Δ</th><th class="r">R$ ao R$/km FT</th></tr></thead><tbody>
-        ${uni.map(([k, u]) => `<tr><td>${NOME[k] || k}</td><td class="r">${mil(u.kmtot)}</td><td class="r">${mil(u['Km Rem. TT'])}</td><td class="r">${pct((u['Km Rem. TT'] / u.kmtot - 1) * 100, 0)}</td><td class="r"><b style="color:${u.gap_rs > 0 ? ACC : AZUL}">${f0(u.gap_rs)}</b></td></tr>`).join('')}
-        <tr class="tot"><td>Total</td><td class="r">${mil(K26.kmtot)}</td><td class="r">${mil(K26['Km Rem. TT'])}</td><td class="r">${pct((K26['Km Rem. TT'] / K26.kmtot - 1) * 100, 0)}</td><td class="r">${f0(K26.gap_rs)}</td></tr>
+      <table class="compacta"><thead><tr><th>Unidade</th><th class="r">Combustível</th><th class="r">Manutenção</th><th class="r">Pneus</th></tr></thead><tbody>
+        ${uni.map(([k, u]) => `<tr><td>${NOME[k] || k}</td><td class="r">${pct(u.comb, 0)}</td><td class="r">${pct(u.manut, 0)}</td><td class="r">${pct(u.pneu, 0)}</td></tr>`).join('')}
       </tbody></table>
+      <p class="note" style="margin-top:6px">DRE ÷ FT ao km pago, por unidade.</p>
     </div>
   </div>
-  <div style="margin-top:10px">${escuro(`<b>O que isso quer dizer:</b> o FT calcula o variável como se cada caminhão ativo rodasse o km remunerado do mês. Pela regra do mapa (só recebemos se viajamos; km por mapa = km remunerado ÷ 25 dias úteis), dia sem viagem é variável que não entra. Em jan–${vl(ultKm)}/26 isso dá R$ ${mi(K26.gap_rs)}; em 2025, R$ ${mi(K25.gap_rs)}. Rio, Cuiabá e Rondonópolis respondem por ~${Math.round((D.km_uni.CGR.gap_rs + D.km_uni.CBA.gap_rs + D.km_uni.RON.gap_rs) / K26.gap_rs * 100)}%. A DRE não mostra essa diferença (o combustível remunerado dela fica perto do FT), então o próximo passo é conferir no faturamento real e, nas unidades, caminhão ativo sem viagem e viagem que não entrou no 2art.`)}</div>`));
+  <div style="margin-top:12px">${escuro(`<b>Leitura:</b> ao km que foi pago, o combustível da DRE fica ${pct(pg('comb'), 0)} do FT${cExt.length ? `; fora da curva, ${cExt.map(([k, v]) => `${NOME[k]} (${pct(v, 0)})`).join(' e ')}` : ''}. A manutenção da DRE fica ${pct(pg('manut'), 0)} acima, e a diferença é a conta "Contratos de Manutenção Fabricante" (R$ ${mi(PG.contrato_fab)} em jan–${vl(ultKm)}): sem ela, a DRE fica ${Math.abs(manutSemContr).toFixed(0)}% abaixo do FT. Os pneus ficam ${pg('pneu').toFixed(0)}% acima, e acima em todas as unidades. <b>Pergunta:</b> de onde sai o remunerado do contrato do fabricante e dos pneus na DRE?`)}</div>`));
 }
 
 // ── PARTE 3 ──
-capaSec('Parte 3 de 4', 'Manutenção e combustível:<br>o que está no cadastro.', 'Placas que já passaram do free maintenance e seguem com R$/km zero; o preço do diesel que entrou errado; os elétricos sem energia.');
+capaSec('Parte 3 de 4', 'Manutenção e combustível:<br>o que está no cadastro.', 'Placas que já passaram da carência da montadora e seguem com R$/km de manutenção zero, e o preço do diesel que entrou errado.');
 
 {
-  const uni = Object.entries(D.manut_zero_uni).sort((a, b) => b[1].pot - a[1].pot);
-  const iz = MZM.vig.findIndex(v => v >= '2026-01');
+  const uni = Object.entries(MV).sort((a, b) => b[1].pot - a[1].pot);
+  const vd = v => String(v).replace('.', ',');
+  const fx = [['ate12', 'Até 12 meses', 'carência da montadora'], ['12a24', '12 a 24 meses', 'carência da montadora'], ['mais24', 'Mais de 24 meses', 'a conferir']];
   S.push(slide(`
-  <div class="kicker">5 · Manutenção R$/km = 0 em placa ativa depois do free maintenance (Rota)</div>
-  <h2>${MZ.placas26} placas em 2026 seguem sem R$/km de manutenção depois dos 6 meses de free maintenance</h2>
-  <div class="grid" style="grid-template-columns:1.1fr 1fr;gap:26px;margin-top:10px;align-items:start">
+  <div class="kicker">5 · Manutenção R$/km = 0 em placa ativa da Rota, 2026</div>
+  <h2>Placa nova vem zerada pela carência; ${MF.mais24.placas} placas com mais de 24 meses seguem zeradas</h2>
+  <div class="grid" style="grid-template-columns:1fr 1.05fr;gap:26px;margin-top:12px;align-items:start">
     <div>
-      <div class="lbl" style="margin-bottom:4px">Placas por mês nessa situação</div>
-      ${bars({ w: 580, h: 210, labels: MZM.vig.slice(iz).map(vl), data: MZM.placas.slice(iz), cor: i => i >= 5 ? ACC : INK })}
-      <p class="note">Regra conferida: o R$/km de manutenção da placa é o valor do contrato (manutencaoContrato). Nessas placas o contrato está zero, o BID tem valor (mediana R$ 0,42/km) e a vida já passou do free maintenance. Outros ${f0(MZ.dentro)} registros de 2026 estão zerados dentro do free maintenance, o que é correto.</p>
+      <table class="media"><thead><tr><th>Vida da placa</th><th class="r">Placas</th><th class="r">Vida mediana</th><th class="r">Ao valor do BID, jan–out</th><th>Leitura</th></tr></thead><tbody>
+        ${fx.map(([k, t, l]) => `<tr${k === 'mais24' ? ' style="font-weight:700"' : ''}><td>${t}</td><td class="r">${MF[k].placas}</td><td class="r">${vd(MF[k].vida)} m</td><td class="r">${f0(MF[k].pot)}</td><td>${l}</td></tr>`).join('')}
+        <tr class="tot"><td>Total</td><td class="r">${MZ.placas26}</td><td></td><td class="r">${f0(MZ.pot26)}</td><td></td></tr>
+      </tbody></table>
+      <p class="note" style="margin-top:8px">Regra conferida: o R$/km de manutenção da placa é o valor do contrato (manutencaoContrato). Nessas placas o contrato está zero e o BID tem valor (mediana R$ ${f2(D.manut_velha_bid)}/km nas de mais de 24 meses). O campo free maintenance do FT diz 6 meses, mas a carência da montadora é maior, por isso as placas até 24 meses ficam de fora do achado. Ao valor do BID = BID × km do mês da placa.</p>
     </div>
     <div>
-      <table class="compacta"><thead><tr><th>Unidade</th><th class="r">Placas</th><th class="r">Vida (meses, mediana)</th><th class="r">Ao valor do BID, jan–out</th></tr></thead><tbody>
-        ${uni.map(([k, u]) => `<tr><td>${NOME[k] || k}</td><td class="r">${u.placas}</td><td class="r">${String(u.vida).replace('.', ',')}</td><td class="r"><b>${f0(u.pot)}</b></td></tr>`).join('')}
-        <tr class="tot"><td>Total</td><td class="r">${MZ.placas26}</td><td></td><td class="r">${f0(MZ.pot26)}</td></tr>
+      <table class="compacta"><thead><tr><th>Unidade · mais de 24 meses</th><th class="r">Placas</th><th class="r">Vida mediana</th><th class="r">Ao valor do BID</th></tr></thead><tbody>
+        ${uni.map(([k, u]) => `<tr><td>${NOME[k] || k}</td><td class="r">${u.placas}</td><td class="r">${vd(u.vida)} m</td><td class="r"><b>${f0(u.pot)}</b></td></tr>`).join('')}
+        <tr class="tot"><td>Total</td><td class="r">${MF.mais24.placas}</td><td class="r">${vd(MF.mais24.vida)} m</td><td class="r">${f0(MF.mais24.pot)}</td></tr>
       </tbody></table>
-      <p class="note" style="margin-top:6px">Modelos mais frequentes: ${Object.entries(D.manut_zero_mod).slice(0, 3).map(([m, q]) => `${m.replace(/ /g, ' ')} (${q})`).join(', ')}.</p>
+      <p class="note" style="margin-top:6px">Modelos: ${Object.entries(D.manut_velha_mod).map(([m, q]) => `${m} (${q})`).join(', ')}.</p>
     </div>
   </div>
-  <div style="margin-top:10px">${escuro(`<b>Duas leituras possíveis:</b> (a) esses caminhões estão num contrato do fabricante (VW) pago por fora do R$/km, o que explicaria a conta "Contratos de Manutenção Fabricante" de R$ ${mi(contr26)} no remunerado da DRE em 2026; ou (b) o contrato da placa não foi cadastrado no FT e a manutenção não está sendo remunerada. Cuiabá (32 placas, vida mediana de 47 meses) e Nova Friburgo pesam mais. <b>Pergunta para você:</b> esses ${MZ.placas26} estão no contrato VW?`)}</div>`));
+  <div style="margin-top:10px">${escuro(`<b>Duas leituras possíveis para as ${MF.mais24.placas}:</b> (a) estão num contrato do fabricante pago por fora do R$/km, o que conversa com a conta "Contratos de Manutenção Fabricante" no remunerado da DRE (R$ ${mi(contr26)} em 2026); ou (b) o contrato da placa não foi cadastrado no FT e a manutenção delas não está sendo remunerada. Cuiabá e Nova Friburgo concentram ${Math.round((MV.CBA.pot + MV.NFR.pot) / MF.mais24.pot * 100)}% do valor. <b>Pergunta:</b> essas ${MF.mais24.placas} estão no contrato do fabricante?`)}</div>`));
 }
 
 S.push(slide(`
   <div class="kicker">6 · Combustível</div>
   <h2>A regra do preço é aplicada à risca; o problema é o preço que entra</h2>
   <div class="grid g3" style="margin-top:18px;gap:18px">
-    <div class="box"><div class="lbl">Regra</div><div class="num">${(D.comb_regra.igual_min * 100).toFixed(0)}%</div><p>dos ${f0(D.comb_regra.diesel_regs)} preços de diesel (Rota, 2022–2026) pagos pelo menor entre o nosso e a ANP. Em 2026, ${D.comb_regra.acima26} quinzenas com o nosso diesel comum acima da ANP: ali o FT pagou a ANP. O R$/km da placa embute a Arla (~R$ 0,20/L a mais).</p></div>
+    <div class="box"><div class="lbl">Regra</div><div class="num">${(D.comb_regra.igual_min * 100).toFixed(0)}%</div><p>dos ${f0(D.comb_regra.diesel_regs)} preços de diesel (Rota, 2022–2026) pagos pelo menor entre o nosso e a ANP. O R$/km da placa embute a Arla (~R$ 0,20/L a mais). Ao km pago, o combustível da DRE fica ${pct(pg('comb'), 0)} do FT.</p></div>
     <div class="box"><div class="lbl">Preço errado · Macacu</div><div class="num">R$ ${f2(mccBaixo.precoOperadora)}<small>/L</small></div><p>1ª quinzena de ago/25: o diesel S10 de Macacu entrou a R$ ${f2(mccBaixo.precoOperadora)} (ANP R$ ${f2(mccBaixo.precoAnp)}). O FT pagou R$ ${f2(mccBaixo.pago)}/L em ${mccBaixo.placas} placas, ~${f0(mccBaixo.lit)} L: <b>R$ ${f0(mccBaixo.dif)}</b> a menos se o preço real era o da ANP. Conferir se houve retroativo.</p></div>
-    <div class="box"><div class="lbl">Elétricos · Rio de Janeiro</div><div class="num">${D.eletricos.placas} <small>placas</small></div><p>VW elétricos ativos em 2026 com combustível R$/km = 0 e Km/L = 0. Rodam ~${mil(D.eletricos.km_mes)} km/mês em 2026 e não aparece nenhum R$/km de energia. <b>Pergunta:</b> a energia é remunerada por outro caminho?</p></div>
+    <div class="box"><div class="lbl">Nosso preço acima da ANP</div><div class="num">R$ ${mil(AC['2025'].dif)}</div><p>em 2025 (${AC['2025'].quinzenas} quinzenas, ${AC['2025'].uni.map(u => NOME[u]).join(', ')}): quando o nosso diesel passa da ANP, o FT paga a ANP e a diferença fica conosco. Em 2024 foram R$ ${mil(AC['2024'].dif)}; em 2026, nenhuma quinzena até aqui.</p></div>
   </div>
-  <div style="margin-top:18px">${escuro(`<b>Resumo:</b> o FT não erra a regra do preço; erra quando o preço lançado está errado. Os preços muito abaixo da ANP de Florianópolis em 2022–2023 são do tanque interno (preço real) e não entram como erro. A conferência quinzenal do nosso preço contra a ANP pode ser automática a partir desta base.`)}</div>`));
+  <div style="margin-top:18px">${escuro(`<b>Resumo:</b> o FT não erra a regra do preço; erra quando o preço lançado está errado, e cobra de nós quando compramos acima da ANP. Os preços muito abaixo da ANP de Florianópolis em 2022–2023 são do tanque interno (preço real) e não entram como erro. Os VW elétricos do Rio ficam fora: a energia entra na conta de luz do CD, paga pela Ambev. A conferência quinzenal do nosso preço contra a ANP pode ser automática a partir desta base.`)}</div>`));
 
 // ── PARTE 4 ──
 capaSec('Parte 4 de 4', 'AS, Empurrada e Armazém,<br>e o que levar.', 'Os outros canais têm outra estrutura. O que já dá para afirmar e as perguntas que destravam a próxima etapa.');
 
 {
-  const lin = Object.entries(AS).map(([k, u]) => `<tr><td>${NOME[k] || k}</td><td class="r">${mil(u.km)}</td><td class="r">${mil(u['Km Rem. TT'])}</td><td class="r">${pct((u['Km Rem. TT'] / u.km - 1) * 100, 0)}</td><td class="r">${pct((u.comb_dre / u.comb - 1) * 100, 0)}</td><td class="r">${u.n} · ${u['Frota Ativa']}</td></tr>`).join('');
+  const A = D.km_canal_uni['AUTO SERVIÇO'] || {};
+  const lin = Object.entries(A).map(([k, u]) => `<tr><td>${NOME[k] || k}</td><td class="r">${f0(u['Frota Ativa'])}</td><td class="r">${f0(u['Viagens Rem.'])}</td><td class="r">${f0(u['Viagens - Real'])}</td><td class="r">${aprov(u).toFixed(0)}%</td><td class="r">${KU[k] ? aprov(KU[k]).toFixed(0) + '%' : '—'}</td></tr>`).join('');
   S.push(slide(`
   <div class="kicker">7 · Os outros canais</div>
-  <h2>AS: o km do FT é ~2× o remunerado. Empurrada: tudo por trecho. Armazém: por equipamento.</h2>
+  <h2>AS: mesma conta da Rota, placa a placa. Empurrada: por trecho. Armazém: por equipamento.</h2>
   <div class="grid" style="grid-template-columns:1.2fr 1fr;gap:26px;margin-top:12px;align-items:start">
     <div>
-      <h3>Auto Serviço · jan–set/26 (placa a placa, tabela Caminhão AS)</h3>
-      <table class="compacta"><thead><tr><th>Unidade</th><th class="r">Km FT</th><th class="r">Km Disp.</th><th class="r">Δ km</th><th class="r">Comb. DRE ÷ FT</th><th class="r">Ativos FT · Disp.</th></tr></thead><tbody>${lin}
-        <tr class="tot"><td>Total</td><td class="r">${mil(asTot.km)}</td><td class="r">${mil(asTot.rem)}</td><td class="r">${pct((asTot.rem / asTot.km - 1) * 100, 0)}</td><td class="r">${pct((asTot.cd / asTot.comb - 1) * 100, 0)}</td><td></td></tr></tbody></table>
-      <p class="note" style="margin-top:6px">A DRE e a Dispersão concordam entre si e as duas ficam em ~metade do km mensal do cadastro do FT. Parece definição (o "KM Mês" do AS não é o km remunerado do mês), não erro. A confirmar antes de tirar conclusão.</p>
+      <h3>Auto Serviço · jan–${vl(ultKm)}</h3>
+      <table class="compacta"><thead><tr><th>Unidade</th><th class="r">Frota ativa (cam.-mês)</th><th class="r">Mapas AS possíveis</th><th class="r">Viagens AS</th><th class="r">Aprov. AS</th><th class="r">Aprov. da unidade</th></tr></thead><tbody>${lin}
+        <tr class="tot"><td>Total</td><td class="r">${f0(KC['AUTO SERVIÇO']['Frota Ativa'])}</td><td class="r">${f0(KC['AUTO SERVIÇO']['Viagens Rem.'])}</td><td class="r">${f0(KC['AUTO SERVIÇO']['Viagens - Real'])}</td><td class="r">${aprov(KC['AUTO SERVIÇO']).toFixed(0)}%</td><td class="r">${aprov(tudo).toFixed(0)}%</td></tr></tbody></table>
+      <p class="note" style="margin-top:6px">O km do AS no FT também é o teto (km por mapa × 25 dias úteis, por placa ativa). A placa de AS roda mapa de Rota e vice-versa: no AS sozinho o aproveitamento parece baixo, mas a viagem aparece na Rota. Por isso o km e a DRE estão comparados com os canais juntos (slides 3 e 4). Pelotas AS entra na Rota na DRE.</p>
     </div>
     <div>
-      <div class="box" style="padding:16px 20px;margin-bottom:12px"><h3>Empurrada e Insumos</h3><p>Fixo por unidade (equipamento ativo e parado, equipe, QLP, outras; em 2026, ~R$ ${mi(D.emp_fixo.PIRAI)}/mês em Piraí, R$ ${mi(D.emp_fixo.MACACU)} em Macacu, R$ ${mi(D.emp_fixo.CUIABA)} em Cuiabá, valor de CTRC) + variável por trecho: ${D.emp_trechos.MACACU + D.emp_trechos.PIRAI + D.emp_trechos.CUIABA} trechos por quinzena, cada um com R$/km de diesel (pelo Km/L do trecho), pneu, manutenção, salário variável, pedágio e lucro. Manutenção dos cavalos: só ${D.emp_manut.zero_depois} de ${f0(D.emp_manut.regs)} registros zerados fora do free maintenance.</p></div>
+      <div class="box" style="padding:16px 20px;margin-bottom:12px"><h3>Empurrada e Insumos</h3><p>Fixo por unidade (equipamento ativo e parado, equipe, QLP, outras; em 2026, ~R$ ${mi(D.emp_fixo.PIRAI)}/mês em Piraí, R$ ${mi(D.emp_fixo.MACACU)} em Macacu, R$ ${mi(D.emp_fixo.CUIABA)} em Cuiabá, valor de CTRC) + variável por trecho: ${f0(D.emp_trechos.MACACU + D.emp_trechos.PIRAI + D.emp_trechos.CUIABA)} trechos por quinzena, cada um com R$/km de diesel (pelo Km/L do trecho), pneu, manutenção, salário variável, pedágio e lucro. Manutenção dos cavalos: só ${D.emp_manut.zero_depois} de ${f0(D.emp_manut.regs)} registros zerados fora do free maintenance.</p></div>
       <div class="box" style="padding:16px 20px"><h3>Armazém</h3><p>Mensal (a 1ª quinzena só): empilhadeira, operador, ajudante, amarrador, gás, gestão e variável por horímetro, com valor faturado, líquido e SAP por item.</p></div>
     </div>
   </div>`));
 }
 
-S.push(slide(`
+{
+  const piores = Object.entries(KU).sort((a, b) => aprov(a[1]) - aprov(b[1])).slice(0, 3).map(([k]) => NOME[k]);
+  S.push(slide(`
   <div class="kicker">8 · Próximos passos</div>
   <h2>O que levar, o que perguntar e o que vem depois</h2>
   <div class="grid g3" style="margin-top:16px;gap:18px">
-    <div class="box"><h3>Levar à Ambev</h3><p>1. Diesel de Macacu na 1ª quinzena de ago/25 (R$ ${f2(mccBaixo.precoOperadora)}/L): retroativo de ~R$ ${mil(mccBaixo.dif)}.<br>2. Energia dos ${D.eletricos.placas} elétricos do Rio, se não for paga por outro caminho.<br>3. Contrato de manutenção das ${MZ.placas26} placas zeradas, se não estiverem no contrato VW.</p></div>
-    <div class="box"><h3>Conferir aqui dentro</h3><p>1. Caminhão ativo sem viagem (R$ ${mi(K26.gap_rs)} em 2026): Rio, Cuiabá e Rondonópolis primeiro, dia a dia contra o 2art.<br>2. Como o remunerado da DRE é montado para manutenção (contrato do fabricante) e pneus.<br>3. A definição do km do AS no FT.</p></div>
-    <div class="box"><h3>Depois deste PDF</h3><p>1. Painel <b>Remuneração</b> com essa base, atualizada todo dia às 05:00.<br>2. Alertas automáticos: preço fora da ANP, placa ativa sem viagem, manutenção zerada fora do free maintenance.<br>3. Orçamento da próxima semana a partir do histórico do FT.</p></div>
+    <div class="box"><h3>Levar à Ambev</h3><p>1. Diesel de Macacu na 1ª quinzena de ago/25 (R$ ${f2(mccBaixo.precoOperadora)}/L): retroativo de ~R$ ${mil(mccBaixo.dif)}.<br>2. Contrato de manutenção das ${MF.mais24.placas} placas com mais de 24 meses e R$/km zero, se não estiverem no contrato do fabricante (até R$ ${mil(MF.mais24.pot)} em 2026).</p></div>
+    <div class="box"><h3>Conferir aqui dentro</h3><p>1. Frota ativa sem mapa (${(100 - aprov(tudo)).toFixed(0)}% dos mapas possíveis): ${piores.join(', ')} primeiro. É caminhão sobrando no ativo do FT ou viagem que não entrou no 2art?<br>2. Como o remunerado da DRE é montado para o contrato do fabricante e para pneus (${pg('pneu').toFixed(0)}% acima do FT).<br>3. Compra acima da ANP: a diferença é nossa.</p></div>
+    <div class="box"><h3>Depois deste PDF</h3><p>1. Painel <b>Remuneração</b> com essa base, atualizada todo dia às 05:00.<br>2. Alertas automáticos: preço fora da ANP, caminhão ativo sem mapa, manutenção zerada fora da carência.<br>3. Orçamento da próxima semana a partir do histórico do FT.</p></div>
   </div>
   <div style="margin-top:18px">${escuro('<b>Base desta análise:</b> robô do Freightech (todas as quinzenas desde jan/2022, 5 canais, 38 tabelas) × DRE Frota, Dispersão de km e abas de consumo, todos lidos do banco do portal. Os números são reproduzíveis e passam a se atualizar sozinhos.')}</div>`));
+}
 
 writeFileSync(OUT, `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Remuneração Freightech · análise inicial</title>
 <style>${CSS}

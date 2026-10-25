@@ -53,33 +53,69 @@ out['comp'] = {'meses': list(mes26.index), 'linhas': {c: [round(float(z), 0) for
 
 f = x.groupby(['cod','vig','_qz'])[['comb','manut','pneu','lav','ipva','kmtot','rskm_w','Total Caminhão Ativo']].sum().groupby(['cod','vig']).mean()
 f['rskm'] = f.rskm_w/f.kmtot
-d = dre(); dr = d[d.proj.isin(['ROTA','ROTA (VAN)','UDC'])]
-g = dr.pivot_table(index=['cod','vig'], columns='pac', values='rem', aggfunc='sum').fillna(0)
-j = f.merge(g, left_index=True, right_index=True, suffixes=('', '_dre'))
-jj = j[(j.index.get_level_values('vig') >= '2025-01') & (j.index.get_level_values('vig') <= FIM)]
-tm = jj.groupby(level='vig')[['comb','comb_dre','manut','manut_dre','pneu','pneu_dre','lav','lav_dre','ipva','ipva_dre']].sum()
+def per(df, a, b): return df[(df.index.get_level_values('vig') >= a) & (df.index.get_level_values('vig') <= b)]
+# AS placa a placa (tabela Caminhão AS): o variável é R$/km × KM Mês da placa ativa
+s = ft('AS', 'CaminhaoAS'); s['cod'] = s['Unidade - Nome'].map(FTU).fillna('GNA'); s['vig'] = vigcol(s)
+sa = s[s.Ativo == True].copy(); kmc = 'KM Mês Roadshow'
+sa['comb'] = sa['Consumo R$/KM']*sa[kmc]; sa['manut'] = (sa['R$/KM']+sa['Manutenção Carroceria R$/KM'])*sa[kmc]; sa['pneu'] = sa['Pneu por KM']*sa[kmc]; sa['kmtot'] = sa[kmc]
+fa = sa.groupby(['cod','vig','_qz'])[['comb','manut','pneu','kmtot']].sum().groupby(['cod','vig']).mean()
+# placa AS roda mapa de Rota e vice-versa: a comparação é Rota + Van + UDC + AS juntos
+d = dre(); dr = d[d.proj.isin(['ROTA','ROTA (VAN)','UDC','AUTO SERVIÇO'])]
+g = per(dr.pivot_table(index=['cod','vig'], columns='pac', values='rem', aggfunc='sum').fillna(0), INI, FIM)
+# lavagem e IPVA são por caminhão: o FT só os traz no Resumo da Rota, então a DRE delas é só a da Rota
+gr = per(dr[dr.proj != 'AUTO SERVIÇO'].pivot_table(index=['cod','vig'], columns='pac', values='rem', aggfunc='sum').fillna(0), INI, FIM)
+V = ['comb','manut','pneu']
+F = per(f[V+['lav','ipva']], INI, FIM).add(per(fa[V], INI, FIM), fill_value=0)
+G = g[V].join(gr[['lav','ipva']], how='left').fillna(0)
+j = F.join(G.add_suffix('_dre'), how='inner')
+tm = j.groupby(level='vig').sum()
 out['ftdre_mes'] = {k: [round(float(z), 0) for z in tm[k]] for k in tm.columns}; out['ftdre_mes']['vig'] = list(tm.index)
-yu = jj[jj.index.get_level_values('vig') >= INI].groupby(level='cod')[['comb','comb_dre','manut','manut_dre','pneu','pneu_dre','lav','lav_dre','ipva','ipva_dre']].sum()
+yu = j.groupby(level='cod').sum()
 out['ftdre_uni'] = {c: {k: round(float(yu.loc[c, k]), 0) for k in yu.columns} for c in yu.index}
-# contratos de manutenção do fabricante no remunerado da DRE
+out['ftdre_canal'] = {nm: {k: round(float(per(FF, INI, FIM)[k].sum()), 0) for k in V} | {k+'_dre': round(float(per(GG, INI, FIM)[k].sum()), 0) for k in V}
+                      for nm, FF, GG in [('rota', f, d[d.proj.isin(['ROTA','ROTA (VAN)','UDC'])].pivot_table(index=['cod','vig'], columns='pac', values='rem', aggfunc='sum').fillna(0)),
+                                         ('as', fa, d[d.proj == 'AUTO SERVIÇO'].pivot_table(index=['cod','vig'], columns='pac', values='rem', aggfunc='sum').fillna(0))]}
 cm = dr[(dr['CONTA GERENCIAL'] == 'Contratos de Manutenção Fabricante') & (dr.vig >= '2025-01') & (dr.vig <= FIM)].groupby('vig').rem.sum()
 out['dre_contrato'] = {k: round(float(z), 0) for k, z in cm.items()}
 
-# ── 2) km: o que o FT prevê × o km remunerado da Dispersão ──
+# ── 2) km: o km remunerado do FT × o da Dispersão ──
+# FT: KM Remunerado (por caminhão, mês) = km por mapa × 25 dias úteis; × caminhões ativos = o teto (1 mapa por dia útil)
+# Dispersão: Km Rem. TT = km/viagem × viagens realizadas (+ recargas e noturnas) = o que foi pago
 dp = sh('dispersao_km'); dp['vig'] = pd.to_datetime(dp['Vigência'], errors='coerce').dt.strftime('%Y-%m')
 dp['proj'] = dp['PROJ.'].astype(str).str.split(' - ').str[0].str.strip(); dp['cod'] = dp['PROJ.'].astype(str).str.split(' - ').str[-1].str.strip()
-gk = dp[dp.proj.str.startswith('ROTA') | (dp.proj == 'UDC')].groupby(['cod','vig'])[['Km Rem. TT','Km Rodado TT','Frota Ativa']].sum()
-k = f[['kmtot','Total Caminhão Ativo','rskm']].merge(gk, left_index=True, right_index=True)
-k['gap_km'] = k.kmtot - k['Km Rem. TT']; k['gap_rs'] = k.gap_km*k.rskm
-def per(df, a, b): return df[(df.index.get_level_values('vig') >= a) & (df.index.get_level_values('vig') <= b)]
-k26 = per(k, INI, FIM); k25 = per(k, '2025-01', '2025-12')
-tmk = per(k, '2025-01', FIM).groupby(level='vig')[['kmtot','Km Rem. TT','Total Caminhão Ativo','Frota Ativa','gap_rs']].sum()
-out['km_mes'] = {c: [round(float(z), 0) for z in tmk[c]] for c in tmk.columns}; out['km_mes']['vig'] = list(tmk.index)
-uk = k26.groupby(level='cod')[['kmtot','Km Rem. TT','gap_km','gap_rs','Total Caminhão Ativo','Frota Ativa']].sum()
-out['km_uni'] = {c: {kk: round(float(uk.loc[c, kk]), 0) for kk in uk.columns} for c in uk.index}
-out['km_tot26'] = {kk: round(float(k26[kk].sum()), 0) for kk in ['kmtot','Km Rem. TT','gap_km','gap_rs']}
-out['km_tot25'] = {kk: round(float(k25[kk].sum()), 0) for kk in ['kmtot','Km Rem. TT','gap_km','gap_rs']}
-out['km_meses26'] = sorted(set(k26.index.get_level_values('vig')))
+x['dproj'] = np.where(x.tipo == 'VAN', 'ROTA (VAN)', np.where(x['Unidade - Nome'] == 'UDC GUARULHOS', 'UDC', 'ROTA'))
+gp = x.groupby(['dproj','cod','vig','_qz']).agg(n=('Total Caminhão Ativo','sum'), km=('kmtot','sum')).groupby(['dproj','cod','vig']).mean()
+sa['dproj'] = 'AUTO SERVIÇO'
+ga2 = sa.groupby(['dproj','cod','vig','_qz']).agg(n=('Placa','nunique'), km=('kmtot','sum')).groupby(['dproj','cod','vig']).mean()
+DC = ['Frota Ativa','Dias Úteis','Viagens Rem.','Viagens - Real','Km/Viagem Real','Km Rem. Mês','Km Rem. TT']
+dd = dp[dp.proj.isin(['ROTA','ROTA (VAN)','UDC','AUTO SERVIÇO'])].rename(columns={'proj':'dproj'}).groupby(['dproj','cod','vig'])[DC].sum()
+kk = pd.concat([gp, ga2]).join(dd, how='outer')
+kk = kk[(kk.index.get_level_values('vig') >= INI) & (kk.index.get_level_values('vig') <= FIM) & kk['Frota Ativa'].notna()].fillna(0)
+# decomposição do Δ km: frota, km por mapa, mapas não feitos (25 dias úteis), recargas/noturnas
+w = kk[kk.n > 0]; kv = (w.km/w.n)/25
+dec = pd.DataFrame({'frota': (w.n-w['Frota Ativa'])*kv*25, 'kmmapa': w['Frota Ativa']*25*(kv-w['Km/Viagem Real']),
+                    'mapas': w['Km/Viagem Real']*(w['Frota Ativa']*25-w['Viagens - Real']), 'recarga': -(w['Km Rem. TT']-w['Km Rem. Mês'])})
+out['km_meses'] = sorted(set(kk.index.get_level_values('vig')))
+out['km_kmv'] = {'mediana': float((kv/w['Km/Viagem Real']).replace([np.inf,-np.inf], np.nan).median()), 'n': int(len(w))}
+out['km_dec'] = {c: round(float(dec[c].sum()), 0) for c in dec.columns}
+cn = kk.groupby(level='dproj')[['n','Frota Ativa','km','Km Rem. TT','Viagens Rem.','Viagens - Real']].sum()
+out['km_canal'] = {c: {q: round(float(cn.loc[c, q]), 0) for q in cn.columns} for c in cn.index}
+cu = kk.groupby(level=['dproj','cod'])[['Frota Ativa','Viagens Rem.','Viagens - Real']].sum()
+out['km_canal_uni'] = {c: {u: {q: round(float(cu.loc[(c, u), q]), 0) for q in cu.columns} for u in cu.loc[c].index} for c in cu.index.get_level_values(0).unique()}
+un = kk.groupby(level='cod')[['n','Frota Ativa','km','Km Rem. TT','Viagens Rem.','Viagens - Real']].sum()
+out['km_uni'] = {c: {q: round(float(un.loc[c, q]), 0) for q in un.columns} for c in un.index}
+mm = kk.groupby(level='vig')[['km','Km Rem. TT','Viagens Rem.','Viagens - Real']].sum()
+out['km_mes'] = {c: [round(float(z), 0) for z in mm[c]] for c in mm.columns}; out['km_mes']['vig'] = list(mm.index)
+# o FT ao km PAGO: componentes × (km da Dispersão ÷ km teto do FT), por unidade e mês
+rt = kk.groupby(level=['cod','vig'])[['km','Km Rem. TT']].sum(); rt['rat'] = rt['Km Rem. TT']/rt.km
+jp = j.join(rt[['rat']], how='inner')
+for c in V: jp[c+'_pago'] = jp[c]*jp.rat
+tp = jp.sum()
+cf = dr[(dr['CONTA GERENCIAL'] == 'Contratos de Manutenção Fabricante') & (dr.vig >= INI) & (dr.vig <= max(out['km_meses']))].rem.sum()
+out['ftdre_pago'] = {c: {'teto': round(float(tp[c]), 0), 'pago': round(float(tp[c+'_pago']), 0), 'dre': round(float(tp[c+'_dre']), 0)} for c in V}
+out['ftdre_pago']['contrato_fab'] = round(float(cf), 0)
+up = jp.groupby(level='cod').sum()
+out['ftdre_pago_uni'] = {u: {c: round(float((up.loc[u, c+'_dre']/up.loc[u, c+'_pago']-1)*100), 0) for c in V} for u in up.index}
 
 # ── 3) manutenção R$/km zerada depois do free maintenance (placa a placa) ──
 c = ft('ROTA', 'Caminhao'); c['vig'] = vigcol(c)
@@ -97,6 +133,17 @@ out['manut_zero_uni'] = {FTU[u]: {'placas': int(zu.loc[u,'placas']), 'pot': roun
 zmod = z26.assign(mod=z26['Modelo do Cavalo'].astype(str).str.replace('\u00a0',' ').str.replace(r'\.0$','',regex=True).str.strip()).groupby('mod').Placa.nunique().sort_values(ascending=False).head(5)
 out['manut_zero_mod'] = {kk: int(q) for kk, q in zmod.items()}
 out['manut_zero_free'] = {'dentro': int((~z[(z.vig >= INI)].apos).sum()), 'depois': int(z26.shape[0]), 'placas26': int(z26.Placa.nunique()), 'pot26': round(float(z26.pot.sum()), 0)}
+# carência da montadora: placa nova vem zerada; o que sobra para conferir é a placa velha
+zp = z26.sort_values(['vig','_qz']).groupby('Placa').agg(vida=('manutencaoVidaMeses','last'), pot=('pot','sum'), uni=('Unidade - Nome','last'),
+        mod=('Modelo do Cavalo', 'last'), bid=('manutencaoBid','median'))
+zp['mod'] = zp['mod'].astype(str).str.replace('\u00a0',' ').str.replace(r'\.0$','',regex=True).str.strip()
+zp['faixa'] = pd.cut(zp.vida, [-1, 12, 24, 1e9], labels=['ate12','12a24','mais24'])
+out['manut_faixa'] = {str(fx): {'placas': int(q.shape[0]), 'pot': round(float(q.pot.sum()), 0), 'vida': round(float(q.vida.median()), 1) if len(q) else 0}
+                      for fx, q in zp.groupby('faixa', observed=False)}
+v24 = zp[zp.faixa == 'mais24']
+out['manut_velha_uni'] = {FTU[u]: {'placas': int(q.shape[0]), 'pot': round(float(q.pot.sum()), 0), 'vida': round(float(q.vida.median()), 1)} for u, q in v24.groupby('uni')}
+out['manut_velha_mod'] = {k2: int(q) for k2, q in v24['mod'].value_counts().head(5).items()}
+out['manut_velha_bid'] = round(float(v24.bid.median()), 2)
 
 # ── 4) combustível: regra do preço e o preço que destoa ──
 cb = ft('ROTA', 'CombustivelRota'); cb['tipo'] = cb.tipoCombustivelShared.str.replace('Descrição: ', '')
@@ -111,21 +158,13 @@ L = a2.groupby(['Unidade - Nome','_vig','tipo','precoOperadora','precoAnp']).agg
 bx = L[(L.precoOperadora < 0.88*L.precoAnp) & L.tipo.str.startswith('DIESEL')].copy()
 bx['dif'] = (bx.precoAnp - bx.precoOperadora)*bx.lit
 out['comb_baixo'] = bx.assign(cod=bx['Unidade - Nome'].map(FTU)).drop(columns=['Unidade - Nome']).round(2).to_dict('records')
+ac = L[(L.precoOperadora > L.precoAnp + 0.0005) & L.tipo.str.startswith('DIESEL')].copy(); ac['dif'] = (ac.precoOperadora - ac.precoAnp)*ac.lit
+ac['ano'] = ac._vig.astype(str).str[-4:]
+out['comb_acima'] = {an: {'quinzenas': int(len(q)), 'dif': round(float(q.dif.sum()), 0), 'uni': sorted(q['Unidade - Nome'].map(FTU).unique().tolist())} for an, q in ac.groupby('ano')}
 ele = a[a.tipo.str.contains('ELETRICO')]
 out['eletricos'] = {'placas': int(ele[ele._ano == 2026].Placa.nunique()), 'placas_hist': int(ele.Placa.nunique()), 'unidade': sorted(ele['Unidade - Nome'].map(FTU).unique().tolist()), 'consumo_rs': float(ele['Consumo R$/KM'].max()),
                     'km_mes': round(float(ele[ele._ano == 2026].groupby('vig')['KM Mês Roadshow'].sum().div(2).mean()), 0) if len(ele) else 0}
 out['pneu_formula'] = float(((a['Quantidade de Pneus']*a['Preço Liso'] + a['Quantidade de Pneus']*a['Quantidade de Recapagem']*a['Preço Recapagem'])/a['Vida Pneus KM'] - a['Pneu por KM']).abs().quantile(.9))
-
-# ── 5) AS: km do FT × DRE e Dispersão ──
-s = ft('AS', 'CaminhaoAS'); s['cod'] = s['Unidade - Nome'].map(FTU); s['vig'] = vigcol(s)
-sa = s[s.Ativo == True].copy(); kmc = 'KM Mês Roadshow'
-sa['comb'] = sa['Consumo R$/KM']*sa[kmc]; sa['manut'] = (sa['R$/KM']+sa['Manutenção Carroceria R$/KM'])*sa[kmc]; sa['pneu'] = sa['Pneu por KM']*sa[kmc]; sa['km'] = sa[kmc]; sa['n'] = 1
-fa = sa.groupby(['cod','vig','_qz'])[['comb','manut','pneu','km','n']].sum().groupby(['cod','vig']).mean()
-ga = d[d.proj == 'AUTO SERVIÇO'].pivot_table(index=['cod','vig'], columns='pac', values='rem', aggfunc='sum').fillna(0)
-ka = dp[dp.proj.str.startswith('AUTO')].groupby(['cod','vig'])[['Km Rem. TT','Frota Ativa']].sum()
-ja = per(fa.merge(ga, left_index=True, right_index=True, suffixes=('', '_dre')).merge(ka, left_index=True, right_index=True), INI, FIM)
-ta = ja.groupby(level='cod')[['comb','comb_dre','km','Km Rem. TT','n','Frota Ativa']].sum()
-out['as_uni'] = {cc: {kk: round(float(ta.loc[cc, kk]), 0) for kk in ta.columns} for cc in ta.index}
 
 # ── 6) Empurrada / Armazém: estrutura e tamanho ──
 fe = ft('EMPURRADA', 'FaturamentoEmpurrada')
