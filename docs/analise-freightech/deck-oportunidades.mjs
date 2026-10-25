@@ -34,9 +34,9 @@ slide(`
   <h2>Como a Ambev nos paga, em três frases, e como ler cada oportunidade</h2>
   <div class="grid g2" style="margin-top:16px;gap:22px;align-items:start">
     <div>
-      <div class="step"><b>1. A Ambev paga por MAPA RODADO.</b><span>Cada caminhão ativo tem um km por mapa. O teto do mês é esse km × 25 dias úteis; o que entra é o km dos mapas que rodaram de fato.</span></div>
+      <div class="step"><b>1. A Ambev define o km de cada caminhão e paga por MAPA RODADO.</b><span>Na revisão, cada placa ganha um km remunerado no FT (mediana de 2026: ${f0(O.ex.km_mes)} km/mês). Km por mapa = km da placa ÷ 25 dias úteis (${f1(O.ex.km_mes / 25)} km). Com 10 caminhões ativos, o teto do mês é 10 × ${f0(O.ex.km_mes)} = ${f0(10 * O.ex.km_mes)} km; o que entra é o km dos mapas que rodaram de fato.</span></div>
       <div class="step"><b>2. Cada km vale o R$/km do caminhão.</b><span>R$/km = combustível + manutenção + carroceria + pneu. Cada parcela tem a sua conta e as suas premissas, todas no Freightech (FT), placa a placa e quinzena a quinzena.</span></div>
-      <div class="step"><b>3. O fixo vem à parte.</b><span>Depreciação, finame, equipe, seguro, IPVA: pagos pelo caminhão ativo, rode ou não rode. Este material olha o VARIÁVEL, que é onde as premissas mudam.</span></div>
+      <div class="step"><b>3. O fixo vem à parte.</b><span>Depreciação, finame, equipe, seguro, IPVA: pagos pelo caminhão ativo, rode ou não rode; o caminhão parado recebe o fixo de parado (capital, seguro, IPVA). Este material olha o VARIÁVEL, que é onde as premissas mudam.</span></div>
     </div>
     <div class="box">
       <h3>Cada oportunidade tem a mesma ficha</h3>
@@ -52,7 +52,7 @@ slide(`
 // ═══ 3 · resumo ═══
 slide(`
   <div class="kicker">Resumo</div>
-  <h2>Seis oportunidades, R$ ${mi(ALTA_MEDIA + fTot)} na mesa, R$ ${mi(ALTA_MEDIA)} com confiança alta ou média</h2>
+  <h2>Cinco oportunidades, R$ ${mi(ALTA_MEDIA + fTot)} na mesa, R$ ${mi(ALTA_MEDIA)} com confiança alta ou média</h2>
   <table style="margin-top:14px">
     <tr><th>#</th><th>Oportunidade</th><th>Período</th><th class="n">Ordem de grandeza</th><th>Confiança</th></tr>
     <tr><td>1</td><td><b>Contrato da montadora acima do que o FT paga de manutenção</b><br><span class="note">fatura VW × R$/km de manutenção do FT, placa a placa e mês a mês</span></td><td>2025–2026</td><td class="n"><b>R$ ${mil(vwTot)}</b></td><td>${tag('media')}</td></tr>
@@ -60,7 +60,6 @@ slide(`
     <tr><td>3</td><td><b>Preço do diesel lançado errado</b> (Macacu, 1ª quinzena de ago/25)</td><td>2025</td><td class="n"><b>R$ ${mil(pRota)}</b> Rota<br>+ ~R$ ${mil(pEmp)} Empurrada</td><td>${tag('alta')}</td></tr>
     <tr><td>4</td><td><b>Fator de crédito de imposto no diesel da Empurrada</b><br><span class="note">Cuiabá caiu de ${f2(O.fator.ano.CBA['2025'])} para ${f2(O.fator.ano.CBA['2026'])} em jan/26; Macacu abaixo de Piraí (mesmo estado)</span></td><td>2025–2026</td><td class="n"><b>~R$ ${mi(fTot)}</b></td><td>${tag('baixa')}</td></tr>
     <tr><td>5</td><td><b>Km/L remunerado</b>: revisão do 4º trimestre não feita, valores mudados fora da revisão, placas ativas zeradas</td><td>2026</td><td class="n">régua do Q3 congelada<br><span class="note">${f0(K.disp_lit)} L só na dispersão</span></td><td>${tag('alta')}</td></tr>
-    <tr><td>6</td><td><b>Caminhão que roda sem estar ativo no FT</b></td><td>2026</td><td class="n">${mi(K.km_inat).replace(' mi', ' mi km')}<br><span class="note">${f1(K.km_inat_pct)}% do km rodado</span></td><td>${tag('baixa')}</td></tr>
   </table>
   <div style="margin-top:12px">${escuro(`<b>Leitura:</b> os itens 1 e 2 são o mesmo assunto visto de dois lados (manutenção que pagamos e o FT não reconhece) e somam R$ ${mi(vwTot + zTot)}; não há dupla contagem, porque o item 2 tira as placas que têm fatura VW no mês. O item 4 é grande e o mais incerto: começa no fiscal, não na Ambev.`)}</div>`);
 
@@ -194,6 +193,22 @@ capa('Parte 2', 'Combustível: preço, crédito de imposto e Km/L', 'O FT paga o
   </div>`);
 }
 
+// O4 · matriz
+{
+  const F = O.fator.mes, vs = Object.keys(F.PIR).sort(), FA = O.fator.ano, an = ['2022', '2023', '2024', '2025', '2026'];
+  const heat = d => d > 0.02 ? `background:rgba(242,44,5,${Math.min(.08 + .62 * d / 0.2, .7).toFixed(2)})` : '';
+  const cel = (u, f, p) => `<td class="n" style="padding:5px 3px;${u !== 'PIR' && f != null ? heat(p - f) : ''}">${f == null ? '·' : f2(f)}</td>`;
+  slide(`
+  <div class="kicker">Oportunidade 4 · a mudança no detalhe</div>
+  <h2>Matriz do fator de crédito: Cuiabá cai em jan/26, Macacu sobe, Piraí não muda</h2>
+  <table class="compacta" style="margin-top:14px;max-width:560px"><tr><th>Fator · ano</th>${an.map(a => `<th class="n">${a}</th>`).join('')}</tr>
+  ${['CBA', 'MCC', 'PIR'].map(u => `<tr><td><b>${NOME[u]}</b></td>${an.map(a => cel(u, FA[u][a], FA.PIR[a])).join('')}</tr>`).join('')}</table>
+  <table class="compacta" style="margin-top:14px;font-size:10.5px"><tr><th>Fator · mês</th>${vs.map(v => `<th class="n" style="padding:6px 3px${v === '2026-01' ? `;color:${ACC}` : ''}">${MES[+v.slice(5) - 1]}/${v.slice(2, 4)}</th>`).join('')}</tr>
+  ${['CBA', 'MCC', 'PIR'].map(u => `<tr><td style="white-space:nowrap"><b>${NOME[u]}</b></td>${vs.map(v => cel(u, F[u][v], F.PIR[v])).join('')}</tr>`).join('')}</table>
+  <p class="note" style="margin-top:6px">Fator = preço do diesel com crédito ÷ preço pago (mediana). Vermelho = abaixo de Piraí, mais forte quanto mais abaixo. Em ago/25, Macacu usa só a 2ª quinzena: a 1ª, com o preço lançado a R$ 1,85, ficou fora.</p>
+  <div style="margin-top:12px">${escuro(`<b>O que a matriz mostra:</b> Cuiabá ficou em ${f2(FA.CBA['2025'])} até dez/25 e caiu para ${f2(F.CBA['2026-01'])} em jan/26; Macacu esteve abaixo de Piraí desde ${Object.keys(FA.MCC).sort()[0]} (${f2(FA.MCC['2025'])} em 2025) e subiu para ${f2(F.MCC['2026-01'])} na mesma virada. Piraí, no mesmo estado de Macacu, ficou em ~${f2(FA.PIR['2026'])} o tempo todo.`)}</div>`);
+}
+
 // O5
 slide(`
   <div class="kicker">Oportunidade 5 · combustível · Km/L</div>
@@ -216,22 +231,25 @@ slide(`
     </div>
   </div>`);
 
-// ═══ Parte 3 · frota ═══
+// ═══ conferimos e não é oportunidade ═══
 {
   const KMa = O.km;
+  const PAR = Object.entries(O.parado).sort((a, b) => b[1].fixo_parado_ano - a[1].fixo_parado_ano), pT = PAR.reduce((s, [, x]) => s + x.fixo_parado_ano, 0), pN = PAR.reduce((s, [, x]) => s + x.parados, 0);
   slide(`
-  <div class="kicker">Oportunidade 6 · frota</div>
-  <h2>Um quarto do km de 2026 foi rodado por caminhão inativo no FT</h2>
+  <div class="kicker">Conferimos e não vai para a mesa</div>
+  <h2>Caminhão inativo que roda e km do FT maior que o pago: não são perda</h2>
   <div class="grid g2" style="margin-top:14px;gap:22px;align-items:start">
-    ${ficha({ oque: 'Placas que abasteceram e rodaram no mês, mas estavam <b>inativas</b> no FT nas duas quinzenas.',
-      como: 'A Ambev paga o fixo e o km por mapa só do caminhão ativo. O caminhão inativo que roda costuma estar substituindo um ativo parado; aí não há perda.',
-      achado: `${mi(K.km_inat).replace(' mi', ' milhões de km')} (${f1(K.km_inat_pct)}% do km do ano) em ${K.pl_inat} placas. 32 placas rodaram de 7 a 9 meses inativas: a maior é a RXQ9A16 (Volvo FH 460, Piraí Empurrada, 157 mil km de jan a set), e seis VW 26.260 da Rota de Macacu rodaram inativas o ano todo.`,
-      vale: 'Não dá para pôr um valor sem saber se cada uma substituiu um ativo. Se a frota ativa do FT for menor do que a operação precisa, o fixo de um caminhão fica de fora todo mês.',
-      pergunta: 'A frota ativa do FT reflete o dimensionamento da operação? Placas que rodam o ano inteiro inativas deveriam estar ativas?',
-      conf: 'baixa', porque: 'pede o cruzamento com as paradas (indisponibilidade) placa a placa antes de virar pedido.' })}
     <div>
-      <h3>Não é oportunidade: o km do FT é um TETO</h3>
-      <p style="font-size:13px;margin-top:4px">O km remunerado do FT (km por mapa × 25 × caminhões ativos) é o máximo. O que a Ambev paga é o km dos mapas que rodaram. A diferença é mapa que não rodou, e isso é gestão nossa (próxima seção).</p>
+      <h3>Caminhão que roda sem estar ativo no FT</h3>
+      <p style="font-size:13px;margin-top:4px">${mi(K.km_inat).replace(' mi', ' milhões de km')} (${f1(K.km_inat_pct)}% do km de 2026) foram rodados por ${K.pl_inat} placas inativas no FT. Parece perda, mas <b>no T2 o caminhão parado recebe o fixo de parado</b> (capital, seguro, IPVA, rastreador) e o variável sai dos caminhões ativos × mapas rodados. O inativo que roda está, em regra, cobrindo um ativo parado: o mapa é pago do mesmo jeito.</p>
+      <table class="compacta" style="margin-top:8px"><tr><th>2026 · unidade</th><th class="n">Ativos/mês</th><th class="n">Parados/mês</th><th class="n">Fixo de parado no ano</th></tr>
+      ${PAR.map(([u, x]) => `<tr><td>${NOME[u]}</td><td class="n">${f1(x.ativos)}</td><td class="n">${f1(x.parados)}</td><td class="n">R$ ${mil(x.fixo_parado_ano)}</td></tr>`).join('')}
+      <tr><td><b>Total</b></td><td></td><td class="n"><b>${f0(pN)}</b></td><td class="n"><b>R$ ${mi(pT)}</b></td></tr></table>
+      <p class="note" style="margin-top:6px">Resumo do FT, jan–out/26. Na Empurrada o pagamento é por trecho; esse caso não foi analisado aqui.</p>
+    </div>
+    <div>
+      <h3>O km do FT é um TETO</h3>
+      <p style="font-size:13px;margin-top:4px">O km remunerado do FT (km da placa × caminhões ativos) é o máximo. O que a Ambev paga é o km dos mapas que rodaram. A diferença é mapa que não rodou, e isso é gestão nossa (próxima seção).</p>
       <table class="compacta" style="margin-top:8px"><tr><th>Ano</th><th class="n">Teto FT</th><th class="n">Pago (Dispersão)</th><th class="n">Mapas rodados</th></tr>
       ${Object.entries(KMa).map(([a, x]) => `<tr><td>${a}${x.meses < 12 ? ` <span class="note">(${x.meses} meses)</span>` : ''}</td><td class="n">${mi(x.teto).replace(' mi', ' mi km')}</td><td class="n">${mi(x.pago).replace(' mi', ' mi km')}</td><td class="n">${f1(x.aprov)}%</td></tr>`).join('')}
       </table>
@@ -263,7 +281,7 @@ slide(`
   <div class="kicker">Próximos passos</div>
   <h2>Como levar: validar dentro, confirmar o fiscal, depois a reunião</h2>
   <div class="grid g3" style="margin-top:16px;gap:18px">
-    <div class="box"><h3>1. Validar com as unidades (1 semana)</h3><p>Planilha anexa, aba por oportunidade. As unidades confirmam as placas zeradas (quem pagou a manutenção?) e as placas que rodaram inativas (substituíam quem?).</p></div>
+    <div class="box"><h3>1. Validar com as unidades (1 semana)</h3><p>Planilha anexa, aba por oportunidade. As unidades confirmam as placas zeradas (quem pagou a manutenção?) e conferem as placas com fatura VW.</p></div>
     <div class="box"><h3>2. Fiscal e planejamento</h3><p>Fiscal: o crédito de imposto do diesel que recuperamos em Cuiabá, Macacu e Piraí (oportunidade 4). Planejamento: o que a Ambev pagou nos trechos de Macacu da 1ª ago/25 e como o remunerado da DRE é montado.</p></div>
     <div class="box"><h3>3. Pauta com a Ambev, por confiança</h3><p>Primeiro o que é fato no FT: diesel de ago/25, revisão do Km/L do Q4, Km/L zerado e mudado fora da revisão. Depois manutenção (contrato VW e placas zeradas), com a fatura na mão. Por último o fator de crédito, se o fiscal confirmar.</p></div>
   </div>

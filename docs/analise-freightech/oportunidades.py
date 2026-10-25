@@ -178,6 +178,42 @@ TC = {'diesel': 'freteReaisKMDiesel', 'manut_cav': 'freteReaisKMManutencaoCavalo
 out['trecho'] = {FTU.get(u, {'CUIABA': 'CBA', 'PIRAI': 'PIR', 'MACACU': 'MCC'}.get(u)): {k: round(float((q[c] * q.w).sum() / q.w.sum()), 3) for k, c in TC.items()}
                  for u, q in tr.groupby('Unidade - Nome')}
 
+# ── peças do material de 2026 ──
+out['vw']['mat26'] = {u: {v: R(x) for v, x in r.dropna().items()} for u, r in
+                      j[j.ano == '2026'].pivot_table(index='cod', columns='vigencia', values='gap', aggfunc='sum').iterrows()}
+pe = out['vw']['top26'][0]['pl']
+out['vw']['ex'] = [{'vig': r['vigencia'], 'km': R(r['km']), 'fat': round(float(r['valor']), 2), 'rk_vw': round(float(r['rk_vw']), 3),
+                    'rk_ft': round(float(r['rk_ft'] or 0), 3), 'bid': round(float(r['bid'] or 0), 2), 'vida': round(float(r['vida'] or 0), 1),
+                    'gap': R(r['gap'])} for r in j[(j.pl == pe) & (j.ano == '2026')].sort_values('vigencia').to_dict('records')]
+z26 = zz[zz._ano == 2026].groupby('pl').agg(cod=('cod', 'last'), mod=('mod', 'last'), vida=('manutencaoVidaMeses', 'last'), bid=('manutencaoBid', 'median'),
+        km=('km_q', 'sum'), pot=('pot', 'sum'), irm=('irm', 'max'), rk_irm=('rk_irm', 'median'), qz=('vig', 'count')).sort_values('pot', ascending=False)
+out['zero']['top26'] = [{'pl': p, 'cod': r['cod'], 'mod': r['mod'], 'vida': round(float(r['vida']), 1), 'bid': round(float(r['bid'] or 0), 2), 'km': R(r['km']),
+                         'pot': R(r['pot']), 'irm': int(r['irm']) if pd.notna(r['irm']) else 0, 'rk_irm': round(float(r['rk_irm']), 2) if pd.notna(r['rk_irm']) else None,
+                         'qz': int(r['qz'])} for p, r in z26.head(8).iterrows()]
+fmm = fm[(fm.vig >= '2025-01') & fm.cod.isin(['CBA', 'MCC', 'PIR'])]
+out['fator']['mes'] = {c: {v: round(float(f), 3) for v, f in zip(g.vig, g.f)} for c, g in fmm.groupby('cod')}
+ex = e[(e.cod == 'CBA') & (e._ano == 2026)].sort_values(['_mes', '_qz']).iloc[-1]
+pago = min(ex.precoOperadora, ex.precoAnp)
+out['fator']['ex'] = {'mes': int(ex._mes), 'qz': int(ex._qz), 'op': round(float(ex.precoOperadora), 2), 'anp': round(float(ex.precoAnp), 2),
+                      'pago': round(float(pago), 2), 'cred': round(float(ex.precoCreditoImpostos), 2), 'f': round(float(ex.f), 3)}
+out['fator']['imp26_mes'] = {f'{c}|{v}': R(i) for c, v, i in zip(em.cod, em.vig, em.imp) if v >= '2026' and c in ('CBA', 'MCC')}
+# caminhão parado no T2: o FT paga o fixo dele (Total Frota Parada) e o variável sai só dos ativos × mapas
+rr = ft('ROTA', 'Resumo'); rr = rr[rr._ano == 2026].copy(); rr['cod'] = rr['Unidade - Nome'].map(FTU)
+cc = ['Total Caminhão Ativo', 'Total Caminhão Parado', 'Total Frota Ativa', 'Total Frota Parada']
+gm = rr.groupby(['cod', '_mes', '_qz'])[cc].sum().groupby(['cod', '_mes']).mean()   # a quinzena repete o mês
+out['parado'] = {u: {'ativos': round(float(q['Total Caminhão Ativo'].mean()), 1), 'parados': round(float(q['Total Caminhão Parado'].mean()), 1),
+                     'fixo_parado_mes': R(q['Total Frota Parada'].mean()), 'fixo_parado_ano': R(q['Total Frota Parada'].sum()),
+                     'por_parado': R(q['Total Frota Parada'].sum() / q['Total Caminhão Parado'].sum()) if q['Total Caminhão Parado'].sum() else 0,
+                     'por_ativo': R(q['Total Frota Ativa'].sum() / q['Total Caminhão Ativo'].sum())} for u, q in gm.groupby(level='cod')}
+out['parado_meses'] = int(gm.index.get_level_values('_mes').nunique())
+# exemplo do km: uma unidade × mês, Resumo do FT × Dispersão
+xe = x[(x.cod == 'CBA') & (x.tipo == 'CAMINHAO') & (x.vig == '2026-08')].groupby('_qz')[['KM Remunerado', 'Total Caminhão Ativo', 'kmtot']].sum().mean()
+de = dd.loc[('ROTA', 'CBA', '2026-08')]
+out['km_ex'] = {'uni': 'CBA', 'vig': '2026-08', 'km_placa': R(xe['KM Remunerado']), 'ativos': R(xe['Total Caminhão Ativo']), 'teto': R(xe.kmtot),
+                'km_mapa': round(float(xe['KM Remunerado'] / 25), 1), 'mapas_pos': R(xe['Total Caminhão Ativo'] * 25),
+                'viagens': R(de['Viagens - Real']), 'km_viagem': round(float(de['Km/Viagem Real']), 1), 'pago': R(de['Km Rem. TT']),
+                'frota_disp': R(de['Frota Ativa'])}
+
 # ── conferências que mostram que o FT está certo (credibilidade) ──
 dj = json.load(open(os.environ.get('DADOS', 'dados.json')))
 out['ok'] = {'ident': dj['ident'], 'km_kmv': dj['km_kmv'], 'comb_regra': dj.get('comb_regra'), 'ftdre_mes': None}
