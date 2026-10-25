@@ -1,13 +1,13 @@
 // ============================================================
-// Treinamento "Como a Ambev nos paga" para gestores de operação: simples e
+// Treinamento "Como a remuneração funciona" para gestores de operação: simples e
 // didático, com o caminhão mediano da Rota de 2026 como exemplo.
 //   OPO=…/opo.json FT_HTML=…/treinamento.html node deck-treinamento.mjs
-// O HTML e o PDF NÃO vão para o repositório (remuneração da Ambev).
+// O HTML e o PDF NÃO vão para o repositório.
 // ============================================================
 import { readFileSync } from 'node:fs';
 import { deck, f0, f1, f2, mi, mil, NOME, ACC, AZUL, VERDE, AMB, INK, INK2, INK3, PALE } from './deck-base.mjs';
 const O = JSON.parse(readFileSync(process.env.OPO || 'opo.json', 'utf8'));
-const { slide, capa, escuro, write } = deck({ rodape: 'Treinamento · Como a Ambev nos paga · Conlog', marca: 'Remuneração <b>Freightech</b>', titulo: 'Como a Ambev nos paga' });
+const { slide, capa, escuro, write } = deck({ rodape: 'Treinamento · Como a remuneração funciona · Conlog', marca: 'Remuneração <b>Freightech</b>', titulo: 'Como a remuneração funciona' });
 const E = O.ex, KE = O.km_ex;
 const kmMapa = E.km_mes / 25, varMapa = E.var * kmMapa, varMes = E.var * E.km_mes;
 const preco = E.comb * E.kml;                                  // R$ por litro (diesel + Arla) embutido no R$/km
@@ -16,13 +16,13 @@ const big = (n, t, cor = INK) => `<div class="box" style="text-align:center"><di
 const peca = (nome, rk, cor, como, regua) => `<div class="box" style="border-top:5px solid ${cor}"><div class="lbl">${nome}</div><div class="num">R$ ${f2(rk)}<small>/km</small></div><p><b>Como sai:</b> ${como}</p><p style="margin-top:6px"><b>A régua:</b> ${regua}</p></div>`;
 
 // 1
-capa('Treinamento para gestores de operação', 'Como a Ambev nos paga, e onde a operação ganha ou perde dinheiro',
-  'O Freightech (FT) é o sistema em que a Ambev calcula quanto nos paga. Ele monta o custo de um caminhão bem gerido. Se gastamos mais do que essa régua, a diferença sai do nosso resultado; se gastamos menos, fica com a gente.');
+capa('Treinamento para gestores de operação', 'Como a remuneração funciona, e onde a operação ganha ou perde dinheiro',
+  'O Freightech (FT) calcula a nossa remuneração. Ele monta o custo de um caminhão bem gerido. Se gastamos mais do que essa régua, a diferença sai do nosso resultado; se gastamos menos, fica com a gente.');
 
 // 2
 slide(`
   <div class="kicker">A ideia em uma frase</div>
-  <h2>A Ambev paga o custo de um caminhão bem gerido. A régua é o Freightech.</h2>
+  <h2>A remuneração paga o custo de um caminhão bem gerido. A régua é o Freightech.</h2>
   <div class="grid g2" style="margin-top:22px;gap:24px">
     <div class="box" style="border-top:5px solid ${AZUL}"><h3>Custo FIXO: o caminhão existir</h3><p style="margin-top:6px">Parcela do financiamento (FINAME), seguro, IPVA, rastreador, faixa refletiva e lavagem. É pago todo mês por caminhão ativo, rode ou não rode.</p>
       <div class="num" style="margin-top:12px">R$ ${f0(E.fixo)}<small> por mês</small></div><p class="note">caminhão mediano da Rota em 2026</p></div>
@@ -36,10 +36,10 @@ slide(`
   <div class="kicker">O variável, passo a passo</div>
   <h2>Do km do caminhão ao dinheiro do mês</h2>
   <div class="grid g4" style="margin-top:20px;gap:14px">
-    ${big(f0(KE.km_placa) + ' km', `<b>1. Km do caminhão no mês.</b> A Ambev define em cada revisão. Exemplo: Cuiabá, ago/26.`)}
+    ${big(f0(KE.km_placa) + ' km', `<b>1. Km do caminhão no mês.</b> Definido em cada revisão. Exemplo: Cuiabá, ago/26.`)}
     ${big(f1(KE.km_mapa) + ' km', `<b>2. Km por mapa.</b> ${f0(KE.km_placa)} ÷ 25 dias úteis. É o que cada viagem do dia vale em km.`)}
     ${big(f0(KE.mapas_pos), `<b>3. Mapas possíveis.</b> ${KE.ativos} caminhões ativos × 25 dias.`)}
-    ${big(f0(KE.viagens), `<b>4. Mapas rodados.</b> A Ambev paga só esses (mais recargas e noturnas).`, ACC)}
+    ${big(f0(KE.viagens), `<b>4. Mapas rodados.</b> Só esses são pagos (mais recargas e noturnas).`, ACC)}
   </div>
   <div class="formula" style="margin-top:20px;font-size:18px;text-align:center">Variável do mês = R$/km do caminhão × km por mapa × mapas rodados<small>No caminhão mediano: R$ ${f2(E.var)} × ${f1(kmMapa)} km = <b>R$ ${f0(varMapa)} por mapa rodado</b></small></div>
   <p style="margin-top:14px;text-align:center">Cuiabá, ago/26: ${f0(KE.mapas_pos - KE.viagens)} mapas possíveis não viraram viagem. Cada um é cerca de R$ ${f0(varMapa)} que não entrou.</p>`);
@@ -49,10 +49,10 @@ slide(`
   <div class="kicker">As quatro peças do R$/km</div>
   <h2>Cada peça tem a sua régua. É nela que a operação ganha ou perde.</h2>
   <div class="grid g4" style="margin-top:18px;gap:14px">
-    ${peca('Diesel', E.comb, ACC, `(preço do litro + Arla) ÷ Km/L remunerado da placa.`, `Km/L remunerado ${f2(E.kml)} e preço da ANP (a Ambev paga o menor entre o nosso preço e a ANP).`)}
-    ${peca('Manutenção', E.manut, AZUL, 'contrato de manutenção da placa (R$/km). Zero na carência do caminhão novo.', 'o contrato ou o BID da Ambev para o modelo.')}
+    ${peca('Diesel', E.comb, ACC, `(preço do litro + Arla) ÷ Km/L remunerado da placa.`, `Km/L remunerado ${f2(E.kml)} e preço da ANP (vale o menor entre o nosso preço e a ANP).`)}
+    ${peca('Manutenção', E.manut, AZUL, '90% do BID da montadora para o modelo e a faixa de km; sem BID, tabela por idade. Zero na carência.', 'o BID do modelo ou a tabela por idade, com ou sem contrato.')}
     ${peca('Pneu', E.pneu, VERDE, `(${f0(E.qpneu)} pneus × R$ ${f0(E.preco_pneu)} + recapagens) ÷ vida de ${f0(E.vida_pneu)} km.`, 'a vida em km do pneu e as recapagens previstas.')}
-    ${peca('Carroceria', E.carr, AMB, 'valor por ano da manutenção da carroceria, por tipo.', 'a tabela da Ambev por tipo de carroceria.')}
+    ${peca('Carroceria', E.carr, AMB, 'valor por ano da manutenção da carroceria, por tipo.', 'a tabela por tipo de carroceria.')}
   </div>
   <div style="margin-top:16px">${escuro(`<b>Diesel é ${f0(E.comb / E.var * 100)}% do variável.</b> É a peça em que um pequeno desvio vira mais dinheiro: consumo e preço do litro.`)}</div>`);
 
@@ -63,7 +63,7 @@ slide(`
     ['Km acima do pago', `rodar mais km do que o km por mapa remunera (rota longa, desvio, ida ao posto)`, `~R$ ${f0(E.var * 100)} a cada 100 km a mais`],
     ['Consumo pior que a régua', `fazer 0,1 km/L abaixo do Km/L remunerado`, `${f0(litros01 - litros)} L ≈ R$ ${f0((litros01 - litros) * preco)} por caminhão por mês`],
     ['Diesel acima da ANP', `pagar R$ 0,10/L acima do preço da ANP`, `≈ R$ ${f0(litros * 0.1)} por caminhão por mês`],
-    ['Manutenção acima do contrato', `gastar na oficina mais do que o R$/km de manutenção da placa`, `cada R$ 0,10/km = R$ ${f0(E.km_mes * 0.1)} por caminhão por mês`],
+    ['Manutenção acima do pago', `gastar na oficina mais do que o R$/km de manutenção da placa no FT`, `cada R$ 0,10/km = R$ ${f0(E.km_mes * 0.1)} por caminhão por mês`],
     ['Pneu que não chega à vida', `trocar ou perder o pneu antes da vida em km prevista`, 'o pneu a mais sai do nosso resultado'],
   ];
   slide(`
@@ -91,7 +91,7 @@ slide(`
 // 7
 slide(`
   <div class="kicker">Empurrada (T1)</div>
-  <h2>Na Empurrada, a Ambev paga por trecho</h2>
+  <h2>Na Empurrada, a remuneração é por trecho</h2>
   <div class="grid g2" style="margin-top:20px;gap:24px;align-items:start">
     <div>
       <div class="step"><b>Cada trecho (origem → destino) tem o seu R$ por viagem.</b><span>Ele já traz o diesel, a manutenção do cavalo e da carreta, o pneu, a lavagem, o pedágio, o seguro e o salário variável daquele caminho.</span></div>
@@ -111,7 +111,7 @@ slide(`
     <tr><td><b>Frota ativa × viagens</b></td><td>mapa que não roda é variável que não entra</td><td>Painel KM · Indisponibilidade</td></tr>
     <tr><td><b>Dispersão de km</b> (rodado × pago)</td><td>km acima do pago é custo nosso; meta 5%</td><td>Painel KM</td></tr>
     <tr><td><b>Km/L real × remunerado</b>, por placa</td><td>consumo pior que a régua é diesel a mais</td><td>Eficiência Km/L · Árvore de Combustível</td></tr>
-    <tr><td><b>R$/L real × ANP</b></td><td>a Ambev paga a ANP; o que passar disso é nosso</td><td>Preço R$/L</td></tr>
+    <tr><td><b>R$/L real × ANP</b></td><td>o FT paga até a ANP; o que passar disso é nosso</td><td>Preço R$/L</td></tr>
     <tr><td><b>Gasto de manutenção e pneu</b></td><td>acima do R$/km da placa é perda</td><td>Carta de Custos · Pneus</td></tr>
     <tr><td><b>FCA de custos</b></td><td>causa e ação de cada desvio do mês</td><td>FCA</td></tr>
   </table>`);
@@ -121,7 +121,7 @@ slide(`
   <div class="kicker">Para levar</div>
   <h2>Cinco frases para lembrar</h2>
   <div style="margin-top:18px">
-    <div class="step"><b>1. O FT é a régua: a Ambev paga o custo de um caminhão bem gerido.</b><span></span></div>
+    <div class="step"><b>1. O FT é a régua: a remuneração cobre o custo de um caminhão bem gerido.</b><span></span></div>
     <div class="step"><b>2. Fixo é o caminhão existir; variável é o caminhão rodar, por km e por mapa rodado.</b><span></span></div>
     <div class="step"><b>3. Mapa que não roda é dinheiro perdido: ~R$ ${f0(varMapa)} cada.</b><span></span></div>
     <div class="step"><b>4. Diesel é ${f0(E.comb / E.var * 100)}% do variável: consumo e preço do litro valem mais que qualquer outra coisa.</b><span></span></div>

@@ -29,6 +29,11 @@ rs = resumo_rota()
 rs['proj'] = np.where(rs.tipo == 'VAN', 'ROTA (VAN)', np.where(rs['Unidade - Nome'] == 'UDC GUARULHOS', 'UDC', 'ROTA'))
 v = ft('ROTA', 'ResumoVan').rename(columns={'seguro': 'Seguro', 'seguroParado': 'Seguro Parado', 'finameModeloNovo': 'FINAME Modelo Novo',
      'finameModeloNovoParado': 'FINAME Modelo Novo Parado', 'rastreador': 'Rastreador', 'totalFrotaAtiva': 'Total Frota Ativa', 'totalFrotaParada': 'Total Frota Parada'})
+# erro de cadastro no FT (UDC5B42, 2ª nov/25 em Cuiabá: carroceria de R$ 9,5 bi → seguro de R$ 5,96 mi): não foi faturado; sai da soma
+mseg = rs.groupby('Unidade - Nome').Seguro.transform('median'); bad = rs.Seguro > 5000
+out['cadastro_seguro'] = [{'uni': r['Unidade - Nome'], 'vig': r.vig, 'qz': int(r._qz), 'seguro': R0(r.Seguro), 'excesso': R0((r.Seguro - mseg[i]) * r['Total Caminhão Ativo'])} for i, r in rs[bad].iterrows() if INI <= r.vig <= FIM]
+rs.loc[bad, 'Total Frota Ativa'] = rs.loc[bad, 'Total Frota Ativa'] - (rs.loc[bad, 'Seguro'] - mseg[bad]) * rs.loc[bad, 'Total Caminhão Ativo']
+rs.loc[bad, 'Seguro'] = mseg[bad]
 n, np_ = rs['Total Caminhão Ativo'], rs['Total Caminhão Parado']
 rs['carr'] = rs['Manutenção Carroceria R$/KM'] * rs['KM Remunerado'] * n
 rs['manut'] = rs['Manutenção Caminhão R$/KM'] * rs['KM Remunerado'] * n          # resumo_rota() juntava a carroceria
@@ -65,7 +70,8 @@ out['t2_frota'] = {'ativos_mes': round(float(Fp.groupby('vig').ativos.sum().mean
 
 # ── 2) DRE do T2 (remunerado do planejamento e realizado), por peça ──
 d = dre()
-PAC2 = {'Combustíveis': 'comb', 'Arla': 'comb', 'Manutenção de Veículos e Equipamentos': 'manut', 'Contratos de Manutenção Fabricante': 'manut',
+PAC2 = {'Combustíveis': 'comb', 'Arla': 'comb', 'Combustíveis Veiculos e Equipamentos': 'comb', 'Fluídos (Arla)': 'comb', 'Consertos e Recapagens de Pneus': 'pneu',
+        'Personalização/Padronização de Veículos': 'manut', 'Manutenção de Veículos e Equipamentos': 'manut', 'Contratos de Manutenção Fabricante': 'manut',
         'Materiais e Ferramentas de Oficina': 'manut', 'Personalização e Padronização de Veículos': 'manut', 'Manutenção de Carrocerias': 'carr',
         'Pneus Novos': 'pneu', 'Recapagens e Outros Serviços': 'pneu', 'Lavação de Veículos': 'lav', 'IPVA e Licenciamento de Veículos': 'ipva',
         'Seguro de Veículos e Equipamentos': 'seguro', 'ICMS Crédito Presumido': 'icms', 'Estorno de ICMS não Aproveitado': 'icms'}
@@ -93,14 +99,26 @@ kl['lit_esp'] = (kl.km / kl.kmlr).where(kl.kmlr > 0, kl.lit)
 kl['ef'] = (kl.lit - kl.lit_esp) * kl.plr.fillna(kl.rs / kl.lit.replace(0, np.nan))
 kl['pr'] = (kl.rs / kl.lit.replace(0, np.nan) - kl.plr).fillna(0) * kl.lit
 kc = kl.groupby(['cod', 'vig'])[['km', 'lit', 'rs', 'lit_esp', 'ef', 'pr']].sum()
-B = Fp.groupby(['cod', 'vig'])[['comb_pago', 'comb', 'Km Rem. TT', 'Km Rodado TT', 'kmtot']].sum().join(kc, how='inner')
-B['rk'] = B.comb / B.kmtot
-B['km_ef'] = (B['Km Rodado TT'] - B['Km Rem. TT']) * B.rk
-B = B.join(G['real']['comb'].rename('dre_real'), how='left').fillna(0)
-B['base'] = B.dre_real - (B.comb_pago + B.km_ef + B.ef + B.pr)
-out['comb_ponte'] = {k: R0(B[k].sum()) for k in ['comb_pago', 'km_ef', 'ef', 'pr', 'base', 'dre_real', 'rs', 'lit', 'lit_esp', 'km']}
-bu = B.groupby(level='cod').sum()
-out['comb_ponte_uni'] = {u: {k: R0(bu.loc[u, k]) for k in ['comb_pago', 'km_ef', 'ef', 'pr', 'base', 'dre_real', 'lit', 'lit_esp', 'km', 'Km Rem. TT', 'Km Rodado TT']} for u in bu.index}
+if len(kl):
+    # ponte que fecha ao centavo: régua = R$/L rem ÷ Km/L rem da placa (o que o FT prevê por km abastecido)
+    kl['esp_rs'] = kl.lit_esp * kl.plr.fillna(kl.rs / kl.lit.replace(0, np.nan))
+    kc = kl.groupby(['cod', 'vig'])[['km', 'lit', 'rs', 'lit_esp', 'esp_rs', 'ef', 'pr']].sum()
+    B = Fp.groupby(['cod', 'vig'])[['comb_pago', 'Km Rem. TT', 'Km Rodado TT']].sum().join(kc, how='inner')
+    B['regua'] = B.esp_rs / B.km.replace(0, np.nan)
+    B['ft_regua'] = B['Km Rem. TT'] * B.regua - B.comb_pago      # FT pago (média da unidade, Resumo) × régua das placas
+    B['km_disp'] = (B['Km Rodado TT'] - B['Km Rem. TT']) * B.regua  # dispersão: km rodado acima do pago
+    B['km_fora'] = (B.km - B['Km Rodado TT']) * B.regua            # km abastecido que a Dispersão não conta (substitutos, inativos)
+    B['km_ef'] = B.km_disp + B.km_fora
+    B = B.join(G['real']['comb'].rename('dre_real'), how='left').fillna(0)
+    B['contabil'] = B.dre_real - B.rs                             # DRE × abastecimentos (ICMS, Arla, competência)
+    K3 = ['comb_pago', 'ft_regua', 'km_disp', 'km_fora', 'km_ef', 'Km Rodado TT', 'ef', 'pr', 'rs', 'contabil', 'dre_real', 'lit', 'lit_esp', 'km', 'Km Rem. TT']
+    out['comb_ponte'] = {k: R0(B[k].sum()) for k in K3}
+    out['comb_ponte']['fecha'] = R0((B.comb_pago + B.ft_regua + B.km_ef + B.ef + B.pr - B.rs).abs().sum())
+    bu = B.groupby(level='cod').sum()
+    out['comb_ponte_uni'] = {u: {k: R0(bu.loc[u, k]) for k in K3} for u in bu.index}
+
+else:
+    out['comb_ponte'] = None; out['comb_ponte_uni'] = {}; B = pd.DataFrame()
 
 # ── 4) manutenção: o que o FT paga, por regra, e o que gastamos ──
 cam = ft('ROTA', 'Caminhao'); cam['vig'] = vigcol(cam); cam = per(cam[cam.Ativo == True]).copy(); cam['cod'] = cam['Unidade - Nome'].map(FTU)
@@ -136,7 +154,7 @@ ul['st'] = ul.statusFinanciamentoShared.astype(str).str.replace('Descrição: ',
 out['frota_status'] = {s: {'placas': int(len(g)), 'fixo_med': R0(g['Total Custo Fixo'].median()), 'finame_med': R0(g['FINAME Modelo Novo'].median()), 'idade': round(float(g.manutencaoVidaMeses.median()), 0)}
                       for s, g in ul.groupby('st')}
 ul['par_rest'] = (ul['Período FINAME'].fillna(0) - ul['Mês da Parcela'].fillna(0)).clip(lower=0)
-fn = ul[(ul['FINAME Modelo Novo'] > 0)]
+fn = ul[(ul['FINAME Modelo Novo'] > 0) & (ul['Período FINAME'] > 0) & ul.st.isin(['FINANCIADO', 'FINAME'])]
 out['finame_fim'] = {k: {'placas': int(len(g)), 'finame_mes': R0(g['FINAME Modelo Novo'].sum())} for k, g in fn.groupby(pd.cut(fn.par_rest, [-1, 6, 12, 24, 36, 1e9], labels=['até 6', '7–12', '13–24', '25–36', '37+']), observed=False)}
 out['locadora'] = {str(k).replace('EmpresaLocadora: ', ''): int(g) for k, g in ul['Empresa locadora'].value_counts().items()}
 
@@ -149,6 +167,37 @@ if len(mm) > 1:
     out['ponte_var'] = {'de': mm.index[0], 'ate': mm.index[-1], 'ini': R0(va), 'fim': R0(vb), 'frota': R0((b.ativos - a.ativos) * kpa * rka),
                         'kmplaca': R0(b.ativos * (kpb - kpa) * rka), 'rskm': R0(b.kmtot * (rkb - rka)),
                         'pecas': {c: R0(b.kmtot * (b[c] / b.kmtot - a[c] / a.kmtot)) for c in VAR}}
+
+# ── 8) T1 · Empurrada e Insumos: trecho (R$/km por componente), fixo e DRE ──
+TC = {'diesel': 'freteReaisKMDiesel', 'manut_cav': 'freteReaisKMManutencaoCavalo', 'manut_carr': 'freteReaisKMManutencaoCarreta', 'pneu': 'freteReaisKMPneu',
+      'lav': 'freteReaisKMLavagem', 'pedagio': 'freteReaisKMPedagio', 'seguro': 'freteReaisKMSeguro', 'salario': 'freteReaisKMSalarioVariavel', 'lucro': 'freteReaisKMLucroVariavel'}
+U1 = {'CUIABA': 'CBA', 'PIRAI': 'PIR', 'MACACU': 'MCC'}
+t1 = []
+for canal, tab in [('EMPURRADA', 'TrechoEmpurrada'), ('INSUMOS', 'TrechoInsumos')]:
+    t = ft(canal, tab); t['vig'] = vigcol(t); t = per(t[t.previsaoViagens > 0]).copy(); t['canal'] = canal
+    t['cod'] = t['Unidade - Nome'].map(U1).fillna(t['Unidade - Nome']); t['w'] = t.kmRodado * t.previsaoViagens; t1.append(t)
+t1 = pd.concat(t1, ignore_index=True)
+def wav(g): return pd.Series({k: (g[c] * g.w).sum() / g.w.sum() for k, c in TC.items()} | {'kml': (g.dieselConsumoKmL * g.w).sum() / g.w.sum(), 'trechos': g.chaveTrecho.nunique(), 'km_prev': g.w.sum()})
+tu = t1.groupby(['canal', 'cod']).apply(wav)
+out['t1_trecho'] = {f'{c}|{u}': {k: round(float(v), 3) for k, v in r.items()} for (c, u), r in tu.iterrows()}
+tm = t1[t1.canal == 'EMPURRADA'].groupby(['cod', 'vig']).apply(wav)
+out['t1_mes'] = {u: {v: {k: round(float(tm.loc[(u, v), k]), 3) for k in ['diesel', 'manut_cav', 'manut_carr', 'pneu', 'salario', 'lucro', 'kml']} for v in tm.loc[u].index} for u in tm.index.get_level_values(0).unique()}
+d1 = per(d[d.proj.isin(['EMPURRADA', 'INSUMOS', 'EMPURRADA BITREM'])])
+g1 = d1.groupby(['cod', 'p2'])[['rem', 'real']].sum()
+out['t1_dre'] = {u: {pc: {'rem': R0(g1.loc[(u, pc), 'rem']), 'real': R0(g1.loc[(u, pc), 'real'])} for pc in g1.loc[u].index} for u in g1.index.get_level_values(0).unique()}
+fe = []
+for canal, tab in [('EMPURRADA', 'FaturamentoEmpurrada'), ('INSUMOS', 'FaturamentoInsumos')]:
+    f_ = ft(canal, tab); f_['vig'] = vigcol(f_); f_ = per(f_).copy(); f_['canal'] = canal; f_['cod'] = f_['Unidade - Nome'].map(U1).fillna(f_['Unidade - Nome']); fe.append(f_)
+fe = pd.concat(fe, ignore_index=True)
+FC = ['equipamentoAtivo', 'equipamentoParado', 'equipeAtiva', 'estacionariaAtivo', 'outraDespesa', 'qlpAdm']
+fm = fe.groupby(['canal', 'cod', 'vig', '_qz'])[[c + 'FreteLiquido' for c in FC] + [c + 'Quantidade' for c in FC[:2]]].sum().groupby(['canal', 'cod', 'vig']).mean()
+fs = fm.groupby(level=['canal', 'cod']).sum()
+out['t1_fixo'] = {f'{c}|{u}': {k.replace('FreteLiquido', ''): R0(v) for k, v in r.items() if k.endswith('FreteLiquido')} | {'ativos': round(float(fm.loc[(c, u)].equipamentoAtivoQuantidade.mean()), 1), 'parados': round(float(fm.loc[(c, u)].equipamentoParadoQuantidade.mean()), 1)} for (c, u), r in fs.iterrows()}
+rc = sh('dre_receita'); rc['vig'] = pd.to_datetime(rc['VIGÊNCIA']).dt.strftime('%Y-%m')
+n3 = rc['NÍVEL 3'].str.replace(r'\s*\(INATIVO\)', '', regex=True); rc['proj'] = n3.str.split(' - ').str[0].str.strip(); rc['cod'] = n3.str.split(' - ').str[-1].str.strip()
+rc = per(rc); rr = rc.groupby('proj')[['REMUNERADO', 'REALIZADO']].sum()
+out['receita'] = {p: {'rem': R0(r.REMUNERADO), 'real': R0(r.REALIZADO)} for p, r in rr.iterrows() if abs(r.REALIZADO) > 1e5}
+out['t1_fixo_total'] = R0(fs.values.sum())
 
 json.dump(out, open(f'completa-{ROT}.json', 'w'), ensure_ascii=False, indent=1, default=float)
 pd.to_pickle({'F': F, 'J': J, 'B': B, 'cam': cam, 'jv': jv}, f'completa-{ROT}.pkl')

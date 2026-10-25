@@ -54,7 +54,7 @@ export function bars({ w = 560, h = 240, labels, data, cor = INK, fmt = f0, pad 
   data.forEach((v, i) => { const x = pad.l + bw * i + bw * .14; s += `<rect x="${x}" y="${Y(Math.max(v, 0))}" width="${bw * .72}" height="${Math.max(h - pad.b - Y(Math.max(v, 0)), 0)}" rx="2" fill="${typeof cor === 'function' ? cor(i) : cor}"/><text x="${x + bw * .36}" y="${Y(Math.max(v, 0)) - 5}" text-anchor="middle" font-weight="700" fill="${INK}">${fmt(v)}</text><text x="${x + bw * .36}" y="${h - 12}" text-anchor="middle" fill="${INK2}">${labels[i]}</text>`; });
   return s + '</svg>';
 }
-export function lines({ w = 1136, h = 280, labels, series, yfmt = f0, tick = 1, y0, y1, pad = { l: 60, r: 20, t: 24, b: 34 } }) {
+export function lines({ w = 1136, h = 280, labels, series, yfmt = f0, tick = 1, y0, y1, pad = { l: 60, r: 70, t: 24, b: 34 } }) {
   const all = series.flatMap(x => x.data).filter(v => v != null); let a0 = y0 ?? Math.min(...all), a1 = y1 ?? Math.max(...all);
   if (y0 == null || y1 == null) { const a = a1 - a0 || 1; a0 -= a * .15; a1 += a * .15; }
   const step = (w - pad.l - pad.r) / (labels.length - 1), X = i => pad.l + step * i, Y = v => pad.t + (h - pad.t - pad.b) * (1 - (v - a0) / (a1 - a0));
@@ -82,7 +82,7 @@ export function ponte({ w = 1136, h = 300, itens, fmt = v => f0(v), corPos = ACC
     const cor = b.tot ? corTot : b.v >= 0 ? corPos : corNeg;
     s += `<rect x="${x}" y="${top}" width="${ww}" height="${hh}" rx="2" fill="${b.cor || cor}"/>`;
     if (i < bars.length - 1 && !bars[i + 1].tot) s += `<line x1="${x + ww}" x2="${x + bw}" y1="${Y(b.y1)}" y2="${Y(b.y1)}" stroke="${INK3}" stroke-dasharray="3 3"/>`;
-    s += `<text x="${x + ww / 2}" y="${top - 6}" text-anchor="middle" font-weight="700" fill="${INK}">${b.tot ? '' : b.v > 0 ? '+' : ''}${fmt(b.v)}</text>`;
+    s += `<text x="${x + ww / 2}" y="${top - 6}" text-anchor="middle" font-weight="700" fill="${INK}">${b.tot ? '' : b.v > 0 ? '+' : '−'}${fmt(b.tot ? b.v : Math.abs(b.v))}</text>`;
     String(b.rot).split('\n').forEach((t, k) => { s += `<text x="${x + ww / 2}" y="${h - pad.b + 16 + k * 13}" text-anchor="middle" fill="${INK2}" font-weight="600">${t}</text>`; });
   });
   return s + '</svg>';
