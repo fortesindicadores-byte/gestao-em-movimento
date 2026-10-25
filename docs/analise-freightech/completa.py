@@ -69,6 +69,13 @@ Fp = per(F)
 out['t2_teto'] = {c: R0(Fp[c].sum()) for c in VAR + ['kmtot']}
 out['t2_pago'] = {c: R0(Fp[c + '_pago'].sum()) for c in VAR} | {'km': R0(Fp['Km Rem. TT'].sum()), 'rodado': R0(Fp['Km Rodado TT'].sum())}
 out['t2_fixo'] = {c: R0(Fp[c].sum()) for c in ['lav', 'ipva', 'seguro', 'finame', 'fixo_at', 'fixo_par', 'Total Equipe Entrega', 'Total QLP ADM', 'Total Outras Despesas']}
+# teto × pago por unidade: onde o variável de teto não virou pagamento
+Fp2 = Fp.assign(var_teto=Fp[VAR].sum(axis=1), var_pago=Fp[[c + '_pago' for c in VAR]].sum(axis=1))
+tu = Fp2.groupby('cod')[['kmtot', 'Km Rem. TT', 'Km Rodado TT', 'var_teto', 'var_pago', 'Viagens - Real']].sum()
+nm = Fp2.vig.nunique()
+out['teto_uni'] = {u: {'teto': R0(r.kmtot), 'pago': R0(r['Km Rem. TT']), 'rodado': R0(r['Km Rodado TT']), 'var_teto': R0(r.var_teto), 'var_pago': R0(r.var_pago),
+                       'ativos_mes': round(float(Fp2[Fp2.cod == u].groupby('vig').ativos.sum().mean()), 1), 'viagens': R0(r['Viagens - Real'])} for u, r in tu.iterrows()}
+out['n_meses'] = int(nm)
 out['t2_frota'] = {'ativos_mes': round(float(Fp.groupby('vig').ativos.sum().mean()), 1), 'parados_mes': round(float(Fp.groupby('vig').parados.sum().mean()), 1)}
 
 # ── 2) DRE do T2 (remunerado do planejamento e realizado), por peça ──

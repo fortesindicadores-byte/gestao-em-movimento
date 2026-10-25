@@ -41,12 +41,25 @@ slide(`${head('Números-chave', `Frota T2 · ${PER}`)}
   </div>
   ${conc(`Em ${PER}, as contas de frota do T2 custaram <b>R$ ${M(soma('real'))} mi</b> contra R$ ${M(soma('ft'))} mi pagos pelo FT: <b>déficit de R$ ${M(dfrota)} mi</b>, R$ ${K(dfrota / NMES)} mil por mês. Rodamos ${M(CP.km)} mi km (abastecimentos), praticamente o teto de ${M(X.t2_teto.kmtot)} mi, mas o FT pagou ${M(X.t2_pago.km)} mi km. O déficit está em três lugares: km rodado sem pagamento, consumo acima do previsto e manutenção acima do pago.`)}`);
 
-// 3 · ponte do variável: teto → pago
-slide(`${head('Variável', `O FT pagou ${f0(varP / varT * 100)}% do variável de teto; o km que rodamos chegou a ${f0(CP.km / X.t2_teto.kmtot * 100)}% do teto`)}
-  <div style="margin-top:10px">${ponte({ h: 250, itens: [{ rot: 'Teto\n(25 mapas/mês)', v: varT, tot: true }, ...['comb', 'manut', 'carr', 'pneu'].map(c => ({ rot: NM[c] + '\nkm não rodado', v: X.t2_pago[c] - X.t2_teto[c], cor: INK3 })), { rot: 'Variável\npago', v: varP, tot: true }], fmt: v => 'R$ ' + M(Math.abs(v)) + ' mi' })}</div>
-  <table class="compacta" style="margin-top:8px"><tr><th>Km</th><th class="n">Teto</th><th class="n">Pago</th><th class="n">Rodado (Dispersão)</th><th class="n">Abastecido (base Km/L)</th></tr>
-  <tr><td>milhões de km</td><td class="n">${M(X.t2_teto.kmtot)}</td><td class="n">${M(X.t2_pago.km)}</td><td class="n">${M(X.t2_pago.rodado)}</td><td class="n">${M(X.comb_ponte.km)}</td></tr></table>
-  ${conc(`O teto é o variável de 25 mapas por caminhão ativo no mês: R$ ${M(varT)} mi. O FT pagou pelo km dos mapas rodados: <b>R$ ${M(varP)} mi (${f0(varP / varT * 100)}%)</b>. O km que de fato rodamos (${M(CP.km)} mi, abastecimentos) ficou perto do teto; ${M(CP.km - X.t2_pago.km)} mi km foram rodados sem pagamento, com diesel, pneu e manutenção por nossa conta. Este slide mostra só o variável: o fixo, a equipe e os indiretos ficam fora da conta.`)}`);
+// 3 · teto → pago, por unidade: onde o variável não virou pagamento e por quê
+{
+  const TU = X.teto_uni || {}, NM_ = X.n_meses || 1, CU = X.comb_ponte_uni || {};
+  const us = Object.keys(TU).sort((a, b) => (TU[b].var_pago - TU[b].var_teto) - (TU[a].var_pago - TU[a].var_teto)).reverse();
+  const L = us.map(u => { const t = TU[u], c = CU[u] || {}; return { u, n: NOME[u] || u, gap: t.var_pago - t.var_teto, pt: t.pago / t.teto, vc: t.viagens / (t.ativos_mes * NM_), rp: t.rodado / t.pago - 1, ar: c.km && t.rodado ? c.km / t.rodado - 1 : null }; });
+  const gapT = varP - varT, piores = L.filter(x => x.gap < 0).slice(0, 4), cg = L[0];
+  const bons = L.filter(x => x.pt >= 0.98).map(x => x.n);
+  const abs = L.filter(x => x.ar != null && x.ar > 0.15).sort((a, b) => b.ar - a.ar)[0];
+  const vcRede = us.reduce((s, u) => s + TU[u].viagens, 0) / us.reduce((s, u) => s + TU[u].ativos_mes * NM_, 0);
+  const c = v => v < 0 ? ACC : VERDE, pc = v => (v >= 0 ? '+' : '') + f0(v * 100) + '%';
+  slide(`${head('Variável', `R$ ${M(-gapT)} mi do variável de teto não viraram pagamento; ${f0(piores.reduce((s, x) => s + x.gap, 0) / gapT * 100)}% em ${piores.map(x => x.n).join(', ')}`)}
+  <div style="margin-top:8px"><div class="lbl">Variável de teto que não virou pagamento, por unidade (${PER})</div>${bars({ w: 1136, h: 190, labels: L.map(x => x.n), data: L.map(x => -x.gap), cor: i => L[i].gap < 0 ? ACC : VERDE, fmt: v => v > 0 ? 'R$ ' + K(v) + ' mil' : '+R$ ' + K(-v) + ' mil' })}</div>
+  <table class="compacta" style="margin-top:4px"><tr><th></th>${L.map(x => `<th class="n">${x.n}</th>`).join('')}</tr>
+    <tr><td>Viagens por caminhão ativo/mês (teto 25)</td>${L.map(x => `<td class="n" style="color:${x.vc < 21.5 ? ACC : INK}">${f1(x.vc)}</td>`).join('')}</tr>
+    <tr><td>Km pago ÷ km teto</td>${L.map(x => `<td class="n" style="color:${x.pt < 0.9 ? ACC : INK}">${f0(x.pt * 100)}%</td>`).join('')}</tr>
+    <tr><td>Km rodado acima do pago (Dispersão)</td>${L.map(x => `<td class="n" style="color:${x.rp > 0.08 ? ACC : INK}">${pc(x.rp)}</td>`).join('')}</tr>
+    <tr><td>Km abastecido acima do rodado</td>${L.map(x => `<td class="n" style="color:${x.ar > 0.08 ? ACC : INK}">${x.ar == null ? '—' : pc(x.ar)}</td>`).join('')}</tr></table>
+  ${conc(`O teto paga 25 mapas por caminhão ativo; a rede fez <b>${f1(vcRede)} viagens por ativo/mês</b> e recebeu ${f0(varP / varT * 100)}% do variável. <b>${cg.n} sozinho responde por ${f0(cg.gap / gapT * 100)}% da perda</b> (R$ ${M(-cg.gap)} mi): ${f1(cg.vc)} viagens por ativo e ${pc(cg.rp)} de km acima do pago. ${piores.slice(1).map(x => `${x.n} (${f1(x.vc)} viagens, ${pc(x.rp)} de km)`).join(', ')} repetem o padrão: <b>frota ativa maior do que os mapas usam, e cada mapa rodando mais km do que paga</b>. ${bons.length ? bons.join(' e ') + ' recebem o teto inteiro. ' : ''}${abs ? `Em ${abs.n} o km abastecido nos projetos T2 fica ${pc(abs.ar)} acima do rodado da Dispersão: placa inativa no FT ou placa da Empurrada abastecendo no projeto da Rota (conferir placa a placa).` : ''}`)}`);
+}
 
 // 4 · ponte FT pago → custo real, por conta
 {
