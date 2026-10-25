@@ -12,11 +12,29 @@ const P = M.placa, R = M.resumo, T = M.trecho, C = M.conf, CV = M.cavalo, CR = M
 const rs = v => 'R$ ' + f2(v), rk = v => 'R$ ' + f2(v) + '/km';
 
 // tira de memória de cálculo: [{l, v}] e operadores em texto
-const caixa = (l, v, d = false) => `<div style="flex:1;min-width:0;background:${d ? INK : '#fff'};color:${d ? '#fff' : INK};border:1px solid ${d ? INK : '#D9DDE3'};border-radius:12px;padding:20px 10px;text-align:center">
-  <div style="font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:${d ? '#C9CED6' : INK2}">${l}</div>
-  <div style="font-size:27px;font-weight:800;margin-top:8px;white-space:nowrap">${v}</div></div>`;
-const op = s => `<div style="font-size:28px;font-weight:800;color:${ACC};padding:0 4px">${s}</div>`;
-const fita = itens => `<div style="background:${PALE};border-radius:14px;padding:14px 16px 16px;margin-top:18px"><div class="lbl" style="color:${ACC};margin-bottom:10px">Memória de cálculo</div><div style="display:flex;align-items:center;gap:8px">${itens.map(x => typeof x === 'string' ? op(x) : caixa(x.l, x.v, x.d)).join('')}</div></div>`;
+// o valor encolhe para caber na caixa (Montserrat 800: ~0,64 em por caractere)
+const cabe = (v, w) => Math.max(14, Math.min(27, Math.floor((w - 24) / (String(v).replace(/<[^>]+>/g, '').length * 0.64))));
+const caixa = (l, v, d = false, w = 200, fs = null) => `<div style="flex:1;min-width:0;background:${d ? INK : '#fff'};color:${d ? '#fff' : INK};border:1px solid ${d ? INK : '#D9DDE3'};border-radius:12px;padding:18px 10px;text-align:center;overflow:hidden">
+  <div style="font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:${d ? '#C9CED6' : INK2};line-height:1.3">${l}</div>
+  <div style="font-size:${fs || cabe(v, w)}px;font-weight:800;margin-top:8px;white-space:nowrap">${v}</div></div>`;
+const op = s => `<div style="font-size:26px;font-weight:800;color:${ACC};padding:0 2px;flex:0 0 auto">${s}</div>`;
+// soma de muitas parcelas: vira uma conta em coluna (parcelas empilhadas + total grande), em vez de seis caixas espremidas
+const contaColuna = itens => {
+  const bx = itens.filter(x => typeof x !== 'string'), tot = bx[bx.length - 1], parc = bx.slice(0, -1);
+  return `<div style="background:${PALE};border-radius:14px;padding:14px 16px 16px;margin-top:18px"><div class="lbl" style="color:${ACC};margin-bottom:10px">Memória de cálculo</div>
+  <div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px;align-items:center">
+    <div style="background:#fff;border:1px solid #D9DDE3;border-radius:12px;padding:6px 18px">
+      ${parc.map((x, i) => `<div style="display:flex;align-items:baseline;gap:10px;padding:4px 0;${i ? 'border-top:1px solid #EDEFF2' : ''}"><span style="font-size:18px;font-weight:800;color:${ACC};width:16px">${i ? '+' : ''}</span><span style="flex:1;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:${INK2}">${x.l}</span><span style="font-size:19px;font-weight:800;color:${INK};white-space:nowrap">${x.v}</span></div>`).join('')}
+    </div>
+    <div style="background:${INK};color:#fff;border-radius:12px;padding:26px 16px;text-align:center"><div class="lbl" style="color:#C9CED6">${tot.l}</div><div style="font-size:${Math.min(34, cabe(tot.v, 420))}px;font-weight:800;margin-top:10px;white-space:nowrap">= ${tot.v}</div></div>
+  </div></div>`;
+};
+const fita = itens => {
+  if (itens.filter(x => typeof x !== 'string').length >= 6 && itens.every(x => typeof x !== 'string' || true) && itens.filter(x => typeof x === 'string').every(o => o === '+' || o === '=')) return contaColuna(itens);
+  const bx = itens.filter(x => typeof x !== 'string'), nb = bx.length, no = itens.length - nb, w = (1104 - no * 34 - (itens.length - 1) * 8) / nb;
+  const fs = Math.min(...bx.map(x => cabe(x.v, w)));   // a fita inteira no mesmo tamanho
+  return `<div style="background:${PALE};border-radius:14px;padding:14px 16px 16px;margin-top:18px"><div class="lbl" style="color:${ACC};margin-bottom:10px">Memória de cálculo</div><div style="display:flex;align-items:center;gap:8px">${itens.map(x => typeof x === 'string' ? op(x) : caixa(x.l, x.v, x.d, w, fs)).join('')}</div></div>`;
+};
 const origem = linhas => `<table class="compacta" style="margin-top:16px"><tr><th>Relatório (tabela FT)</th><th>Campo</th><th>O que é</th><th class="n">No exemplo</th></tr>
   ${linhas.map(([t, c, o, v]) => `<tr><td>${t}</td><td><b>${c}</b></td><td>${o}</td><td class="n">${v}</td></tr>`).join('')}</table>`;
 const nota = t => `<p class="note" style="margin-top:10px">${t}</p>`;
@@ -40,7 +58,7 @@ slide(`<div class="kicker">Mapa</div><h2>Três modelos de remuneração de frota
 
 {
   const at = R['Total Caminhão Ativo'], fa = R['Total por Caminhão Frota Ativa'] * at, fp = R['Total por Caminhão Frota Parada'] * R['Total Caminhão Parado'], vv = R['Total Viagens'];
-  const cx = (l, v, d) => `<div style="background:${d ? INK : PALE};color:${d ? '#fff' : INK};border-radius:10px;padding:10px 8px;text-align:center;height:66px;display:flex;flex-direction:column;justify-content:center"><div class="lbl" style="${d ? 'color:#C9CED6' : ''}">${l}</div><div style="font-size:21px;font-weight:800;margin-top:3px">${v}</div></div>`;
+  const cx = (l, v, d) => `<div style="background:${d ? INK : PALE};color:${d ? '#fff' : INK};border-radius:10px;padding:10px 8px;text-align:center;height:66px;display:flex;flex-direction:column;justify-content:center"><div class="lbl" style="${d ? 'color:#C9CED6' : ''}">${l}</div><div style="font-size:${Math.min(21, cabe(v, 190))}px;font-weight:800;margin-top:3px;white-space:nowrap">${v}</div></div>`;
   const o = t => `<div style="font-size:22px;font-weight:800;color:${ACC};text-align:center">${t}</div>`;
   const lin = (nome, a, b, c, res, d) => `<div style="display:grid;grid-template-columns:130px 1fr 26px 1fr 26px 1fr 26px 1.15fr;align-items:center;gap:6px;margin-top:10px">
     <div style="font-size:12.5px;font-weight:800;color:${INK}">${nome}</div>${cx(...a)}${o('×')}${cx(...b)}${c ? o('×') + cx(...c) : '<div></div><div></div>'}${o('=')}${cx(...res, d)}</div>`;
@@ -157,12 +175,12 @@ custo({ k: 'T1 · Variável · Lavagem, pedágio, seguro, salário e lucro', h: 
   org: origem([['Trecho', 'lavagemReaisKm', 'lavagem por km (na Empurrada é variável)', rk(T.lavagemReaisKm)], ['Trecho', 'pedagioPorEixoIdaVolta · pedagio', 'pedágio por eixo, ida e volta', 'R$ ' + f0(TV.Pedagio || 0)], ['Trecho', 'seguroReaiskm', 'seguro da carga por km', rk(T.seguroReaiskm)],
     ['Trecho', 'premioProdutividade…', 'salário variável do motorista (fator ' + f1(T.premioProdutividadeFatorMotorista) + ')', 'R$ ' + f0(TV.SalarioVariavel || 0)], ['Trecho', 'lucroVariavelReaisKm', 'margem por km', rk(T.lucroVariavelReaisKm)]]) });
 
-custo({ k: 'T1 · Fixo', h: 'Fixo do cavalo e da carreta: FINAME e custos do equipamento',
+custo({ k: `T1 · Fixo · cavalo ${CV.Placa} e carreta ${CR.Placa} (${CR.modelo}), Piraí`, h: 'Fixo do cavalo e da carreta: FINAME e custos do equipamento',
   fit: fita([{ l: 'FINAME cavalo', v: rs(CV.finameCavalo) }, '=', { l: 'Amortização', v: rs(CV.amortizacaoCavalo) }, '+', { l: 'Juros', v: rs(CV.jurosFinameCavalo) }]) +
-    fita([{ l: 'FINAME carreta', v: rs(CR.finame) }, '+', { l: 'Seguro', v: rs(CR.seguro) }, '+', { l: 'IPVA / mês', v: rs(CR.ipvaLicenciamentoMensal) }, '+', { l: 'Tacógrafo + faixa', v: rs(CR.tacografo + CR.faixaReflexiva) }, '…', { l: 'Custo fixo carreta', v: rs(CR.custoFixo), d: true }]),
+    fita([{ l: 'FINAME carreta', v: rs(CR.finame) }, '+', { l: 'Seguro', v: rs(CR.seguro) }, '+', { l: 'IPVA / mês', v: rs(CR.ipvaLicenciamentoMensal) }, '+', { l: 'Tacógrafo + faixa', v: rs(CR.tacografo + CR.faixaReflexiva) }, '+', { l: 'Demais (campo não exportado)', v: rs(CR.custoFixo - CR.finame - CR.seguro - CR.ipvaLicenciamentoMensal - CR.tacografo - CR.faixaReflexiva - (CR.rastreador || 0)) }, '=', { l: 'Custo fixo carreta', v: rs(CR.custoFixo), d: true }]),
   org: origem([['Cavalo Empurrada', 'valorNfCompra · percentualEntrada · Taxa Finame · periodoFiname · carencia', 'premissas do financiamento', 'R$ ' + mil(CV.valorNfCompra) + ' · ' + f2(CV['Taxa Finame (%)']) + '%'], ['Cavalo Empurrada', 'finameCavalo = amortizacaoCavalo + jurosFinameCavalo', 'parcela do cavalo', rs(CV.finameCavalo)],
     ['Carreta Empurrada', 'finame · seguro · ipvaLicenciamentoMensal · rastreador · tacografo · faixaReflexiva · custoFixo', 'parcelas da carreta', rs(CR.custoFixo)], ['Faturamento Empurrada', 'equipamentoAtivo / equipamentoParado (Quantidade × ValorUnitario)', 'fixo pago por equipamento', '—']]),
-  n: `Cavalo ${CV.Placa} e carreta ${CR.Placa} (${CR.modelo}), Piraí.` });
+  n: '' });
 
 // ═══ Armazém ═══
 if (E.custoFixoCustoFixo != null) custo({ k: 'Armazém · Empilhadeira', h: 'Empilhadeira: financiamento + lucro fixo; variável por hora',
