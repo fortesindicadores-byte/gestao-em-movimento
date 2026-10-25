@@ -5,7 +5,10 @@ name: Freightech Robot (Ambev -> Supabase)
 #  sonda — alcança o portal? o login passa? como é o menu e que API a
 #          página chama? Não coleta nada.
 #
-#  carga — exporta pela API do FT e grava em ft_linha/ft_layout.
+#  carga — exporta pela API do FT e grava em ft_linha/ft_layout (todas=1: todas as tabelas).
+#
+#  formulas — a última quinzena fechada de cada canal com "Exportar fórmulas":
+#             cabeçalho + 5 linhas com a fórmula de cada célula (tabela FORMULA:<x>).
 #
 # TODO DIA às 05:00 BRT pelo pg_cron do Supabase (scripts/freightech-dispara.sql,
 # workflow_dispatch com modo=carga, ultimas=4, refazer=1): carga das 4 últimas
@@ -26,7 +29,7 @@ on:
         required: true
         default: "sonda"
         type: choice
-        options: [sonda, mapa, exportar, carga]
+        options: [sonda, mapa, exportar, carga, formulas]
       canais:
         description: "exportar: canais separados por vírgula (vazio = ROTA,AS,ARMAZEM,EMPURRADA,INSUMOS)"
         required: false
@@ -49,6 +52,10 @@ on:
         default: ""
       refazer:
         description: "carga: 1 = refaz o que já está no banco"
+        required: false
+        default: ""
+      todas:
+        description: "carga: 1 = todas as tabelas de cada canal (não só as da 1ª rodada)"
         required: false
         default: ""
       vigs:
@@ -78,6 +85,7 @@ jobs:
           FT_REFAZER: ${{ github.event_name == 'schedule' && '1' || github.event.inputs.refazer }}
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           FT_VIGS: ${{ github.event.inputs.vigs || '1' }}
+          FT_TODAS: ${{ github.event.inputs.todas }}
           FREIGHTECH_USER: ${{ secrets.FREIGHTECH_USER }}
           FREIGHTECH_PASS: ${{ secrets.FREIGHTECH_PASS }}
         run: |

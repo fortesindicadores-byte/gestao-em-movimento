@@ -629,6 +629,10 @@ const SB_URL = 'https://lozwipoeacpvplgkrxkq.supabase.co';
 const SB_KEY = process.env.GEM_SUPABASE_SERVICE_KEY || '';
 const DESDE = Number(process.env.FT_DESDE || 2022);
 const REFAZER = process.env.FT_REFAZER === '1';
+// FT_TODAS=1: todas as tabelas do canal, não só as da 1ª rodada (Renan, 25/10/2026:
+// manual completo de frota e análise histórica de tudo). Pedido em grupos de 12 abas.
+const TODAS = process.env.FT_TODAS === '1';
+const GRUPO = Number(process.env.FT_GRUPO || 12);
 const sbH = extra => ({ apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', ...extra });
 async function sb(path, o = {}) {
   for (let t = 1; ; t++) {
@@ -682,7 +686,7 @@ async function ftApiOk(url, opt) {
 }
 
 // exporta (canal, vigências, tabelas) e devolve o caminho do xlsx, ou {erro}
-async function exportaApi(canal, vigs, tabs, unidades, rotulo) {
+async function exportaApi(canal, vigs, tabs, unidades, rotulo, formulas = false) {
   const abas = [];
   for (const t of tabs) {
     const f = await ftApiOk(`${API_BACK}/export/tables/fields/${encodeURIComponent(t.semFormatacao)}?onlyExportAllowed=true`);
@@ -691,7 +695,7 @@ async function exportaApi(canal, vigs, tabs, unidades, rotulo) {
   }
   if (!abas.length) return { erro: 'nenhuma aba' };
   const { _sintetico, _idNovo, ...molde } = CORPO_EXPORT;
-  const body = { ...molde, ...(_idNovo ? { id: randomUUID() } : {}), abas, tipoCanal: canal, unidades, vigencias: vigs, comparacoesBenchmark: [], exportarFormulas: false };
+  const body = { ...molde, ...(_idNovo ? { id: randomUUID() } : {}), abas, tipoCanal: canal, unidades, vigencias: vigs, comparacoesBenchmark: [], exportarFormulas: !!formulas };
   let p = await ftApiOk(`${API_EXP}/request/export/generic`, { method: 'POST', body: JSON.stringify(body) });
   if ((!p.v || !p.v.id) && CORPO_EXPORT._sintetico && body.id === '') {
     // o molde sem a tela não aceitou id vazio: tenta com um id novo e guarda o que funcionou
@@ -804,7 +808,7 @@ async function carga() {
     TABELAS = Array.isArray(tl.v) ? tl.v : [];
     const alvos = (process.env.FT_TABS || '').split(',').map(x => x.trim()).filter(Boolean);
     const lista = [], vistos = new Set();
-    for (const alvo of (alvos.length ? alvos : RODADA1[canal] || [])) {
+    for (const alvo of (alvos.length ? alvos : TODAS ? [/./] : RODADA1[canal] || [])) {
       const ts = alvo instanceof RegExp ? TABELAS.filter(x => alvo.test(x.comFormatacao || '') || alvo.test(x.semFormatacao || '')) : [achaTabela(alvo)].filter(Boolean);
       if (!ts.length) log(`   ${canal}: "${alvo}" não está na lista (${TABELAS.length}): ${TABELAS.map(x => x.comFormatacao || x.semFormatacao).join(' | ')}`);
       for (const t of ts) if (!vistos.has(t.semFormatacao)) { vistos.add(t.semFormatacao); lista.push(t); }
@@ -825,14 +829,18 @@ async function carga() {
       const un = await ftApiOk(`${API_BACK}/selecao-da-unidade/buscar/unidades`, { method: 'POST', body: JSON.stringify(ub) });
       const unidades = [...new Set((Array.isArray(un.v) ? un.v : []).map(x => x.cnpjUnidade).filter(Boolean))];
       if (!unidades.length) { log(`   ${bloco[0]}…: nenhuma unidade (HTTP ${un.st})`); err++; continue; }
-      let r = await exportaApi(canal, bloco, faltam, unidades, `${canal}-${i}`);
-      let partes = r.f ? [r] : [];
+      let partes = [];
+      for (let g = 0; g < faltam.length; g += GRUPO) {
+      const grupo = faltam.slice(g, g + GRUPO);
+      let r = await exportaApi(canal, bloco, grupo, unidades, `${canal}-${i}-${g}`);
+      if (r.f) partes.push(r);
       if (r.erro) {   // um pedido com várias abas falhou: tenta tabela a tabela
         log(`   ${bloco[0]}…: ${r.erro} · tentando tabela a tabela`);
-        for (const t of faltam) {
+        for (const t of grupo) {
           const r1 = await exportaApi(canal, bloco, [t], unidades, `${canal}-${i}-${t.semFormatacao}`);
           if (r1.f) partes.push(r1); else { log(`   ${t.comFormatacao} ${bloco[0]}…: ${r1.erro}`); err++; }
         }
+      }
       }
       for (const pt of partes) {
         try { const g = await grava(pt.f, canal, pt.abas, bloco, temBanco); lin += g.reduce((s, x) => s + Number(x.split(': ')[1] || 0), 0); log(`   ${temBanco ? 'gravado' : 'lido'}: ${g.join(' · ')}`); }
@@ -843,6 +851,71 @@ async function carga() {
   }
   log('── CARGA: resumo'); resumo.forEach(r => log('   ' + r));
   if (resumo.some(r => /falha/.test(r))) process.exitCode = 1;
+}
+
+// ── modo formulas: a memória de cálculo do FT ──
+// Exporta a última quinzena de cada canal com "Exportar fórmulas" (todas as
+// tabelas, em grupos) e grava, por tabela, o cabeçalho e as 5 primeiras linhas
+// com a FÓRMULA de cada célula ('=…') no lugar do valor quando ela existe:
+// ft_linha/ft_layout com tabela = 'FORMULA:<tabela>'. O log diz só quantas
+// colunas têm fórmula, nunca valor nem fórmula.
+async function formulas() {
+  if (!HEAD_ANY) { await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {}); await page.waitForTimeout(8000); }
+  CORPO_EXPORT = { id: '', modelo: 'Criar Novo Modelo', tipoExportacao: 'PADRAO', _sintetico: true };
+  if (!SB_KEY) { console.error('::error::sem GEM_SUPABASE_SERVICE_KEY'); process.exitCode = 1; return; }
+  const XLSX = (await import('xlsx')).default;
+  const resumo = [];
+  for (const canal of CANAIS) {
+    await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {}); await page.waitForTimeout(6000);
+    const tl = await ftApiOk(`${API_BACK}/export/tables/${canal}`);
+    const lista = Array.isArray(tl.v) ? tl.v : [];
+    const vr = await ftApiOk(`${API_BACK}/selecao-da-unidade/buscar/vigencias?segmento=${canal}`);
+    const f = v => { const m = String(v).match(/_(\d)_(\d{1,2})_(\d{4})$/); return m ? +m[3] * 100 + +m[2] * 2 + +m[1] : 0; };
+    const vigs = (Array.isArray(vr.v) ? vr.v : []).map(v => v.id).filter(f).sort((a, b) => f(a) - f(b));
+    const vig = process.env.FT_VIG || vigs[vigs.length - 2] || vigs[vigs.length - 1];   // a penúltima: a corrente ainda muda
+    const un = await ftApiOk(`${API_BACK}/selecao-da-unidade/buscar/unidades`, { method: 'POST', body: JSON.stringify([vig]) });
+    const unidades = [...new Set((Array.isArray(un.v) ? un.v : []).map(x => x.cnpjUnidade).filter(Boolean))];
+    log(`── FÓRMULAS ${canal}: ${lista.length} tabela(s) · ${vig} · ${unidades.length} unidade(s)`);
+    let ok = 0, comF = 0;
+    for (let g = 0; g < lista.length; g += GRUPO) {
+      let partes = [];
+      const grupo = lista.slice(g, g + GRUPO);
+      const r = await exportaApi(canal, [vig], grupo, unidades, `F-${canal}-${g}`, true);
+      if (r.f) partes.push(r);
+      else for (const t of grupo) { const r1 = await exportaApi(canal, [vig], [t], unidades, `F-${canal}-${t.semFormatacao}`, true); if (r1.f) partes.push(r1); else log(`   ${t.comFormatacao}: ${r1.erro}`); }
+      for (const pt of partes) {
+        const wb = XLSX.read(fs.readFileSync(pt.f), { type: 'buffer', cellFormula: true, dense: false });
+        for (const nome of wb.SheetNames) {
+          const ab = pt.abas.find(a => a.nome === nome) || pt.abas[wb.SheetNames.indexOf(nome)];
+          const tabela = 'FORMULA:' + (ab ? ab.tabela.nome.semFormatacao : nome);
+          const ws = wb.Sheets[nome]; if (!ws['!ref']) continue;
+          const rg = XLSX.utils.decode_range(ws['!ref']);
+          const linhas = [];
+          for (let R = rg.s.r; R <= Math.min(rg.e.r, rg.s.r + 5); R++) {
+            const row = [];
+            for (let C = rg.s.c; C <= rg.e.c; C++) { const c = ws[XLSX.utils.encode_cell({ r: R, c: C })]; row.push(!c ? null : c.f ? '=' + c.f : (c.v ?? null)); }
+            linhas.push(row);
+          }
+          const cab = (linhas.shift() || []).map(x => String(x ?? ''));
+          const nf = cab.filter((_, c) => linhas.some(l => typeof l[c] === 'string' && l[c].startsWith('='))).length;
+          comF += nf ? 1 : 0; ok++;
+          const k = `canal=eq.${encodeURIComponent(canal)}&tabela=eq.${encodeURIComponent(tabela)}`;
+          await sb(`ft_linha?${k}`, { method: 'DELETE' });
+          await sb(`ft_layout?${k}`, { method: 'DELETE' });
+          const mm = vig.match(/_(\d)_(\d{1,2})_(\d{4})$/) || [];
+          const per = { ano: +mm[3] || null, mes: +mm[2] || null, quinzena: +mm[1] || null };
+          let w = await sb('ft_linha', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(linhas.map((d, j) => ({ canal, tabela, vigencia: vig, linha: j + 1, ...per, unidade: null, placa: null, dados: d }))) });
+          if (!w.ok) log(`   gravar ${tabela}: HTTP ${w.status}`);
+          w = await sb('ft_layout?on_conflict=canal,tabela,vigencia', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify([{ canal, tabela, vigencia: vig, tabela_nome: ab ? ab.tabela.nome.comFormatacao : nome, ...per, colunas: cab, linhas: linhas.length, carregado_em: new Date().toISOString() }]) });
+          log(`   ${ab ? ab.tabela.nome.comFormatacao : nome}: ${cab.length} colunas · ${nf} com fórmula`);
+        }
+        fs.rmSync(pt.f, { force: true });
+      }
+    }
+    resumo.push(`${canal}: ${ok} tabela(s), ${comF} com fórmula`);
+  }
+  log('── FÓRMULAS: resumo'); resumo.forEach(r => log('   ' + r));
 }
 
 async function textosVisiveis(sel) {
@@ -904,7 +977,7 @@ try {
   log(`botões/abas visíveis (${botoes.length}):`, botoes.slice(0, 60).join(' | '));
 
   // abre o que parecer relatório, para listar o submenu (sem exportar nada)
-  for (const rx of (MODE === 'exportar' || MODE === 'carga' ? [] : [/relat/i, /caminh/i])) {
+  for (const rx of (['exportar', 'carga', 'formulas'].includes(MODE) ? [] : [/relat/i, /caminh/i])) {
     const el = page.getByText(rx).first();
     if (await el.count()) {
       try {
@@ -940,6 +1013,7 @@ try {
   if (MODE === 'mapa') await mapa();
   if (MODE === 'exportar') await exportar();
   if (MODE === 'carga') await carga();
+  if (MODE === 'formulas') await formulas();
 
   // ── 5) onde mora a sessão (só os NOMES) ─────────────────────
   const armaz = await page.evaluate(() => ({
