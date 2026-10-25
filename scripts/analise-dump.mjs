@@ -31,10 +31,10 @@ async function rest(q) {
     await new Promise(x => setTimeout(x, 3000 * t));
   }
 }
-async function tudo(tabela, order, filtro = '') {
+async function tudo(tabela, order, filtro = '', sel = '*') {
   const out = [];
   for (let off = 0; ; off += 1000) {
-    const p = await rest(`${tabela}?select=*${filtro}&order=${order}&offset=${off}&limit=1000`);
+    const p = await rest(`${tabela}?select=${sel}${filtro}&order=${order}&offset=${off}&limit=1000`);
     out.push(...p);
     if (p.length < 1000) break;
   }
@@ -78,6 +78,18 @@ for (const slug of ['dre_frota', 'dre_receita', 'dispersao_km', 'consumo_km_litr
 // ── 3) tabelas do portal ──
 for (const [t, o] of [['dispersao_km', 'vigencia'], ['balanco_massa', 'vigencia'], ['dispersao_placa_viagem', 'vigencia']]) {
   try { grava(`tb-${t}`, await tudo(t, o)); } catch (e) { console.log(`${t}: falhou (${e.message})`); }
+}
+// o que a VW cobra por placa, o contrato por placa da Carta, o diesel que pagamos
+// (ERP, só encerradas) e as paradas por placa, para cruzar com o FT em 2026
+const EXTRA = [
+  ['vw_contrato_km', 'vigencia,contrato,chassi', '&vigencia=gte.2025-10', 'contrato,vigencia,chassi,placa,km_anterior,km_atual,faixa,km_rodado,valor'],
+  ['custo_vigencia_mv', 'placa', '&vig_km=gte.2025-11', '*'],
+  ['erp_abastecimentos', 'data,ordem_servico', '&encerrada=eq.S&data=gte.2025-12-01', 'data,placa,filial,projeto_os,litros,valor,tipo_combustivel'],
+  ['indisponibilidade', 'data_parada', '&or=(data_retorno.is.null,data_retorno.gte.2025-12-01)', 'unidade,projeto,placa,modelo,grupo,local_manutencao,data_parada,previsao_retorno,data_retorno,status'],
+  ['pneu_preco', 'medida', '', '*'],
+];
+for (const [t, o, f, s] of EXTRA) {
+  try { grava(`tb-${t}`, await tudo(t, o, f, s)); } catch (e) { console.log(`${t}: falhou (${e.message})`); }
 }
 try {
   const [gs] = await rest('ginfo_snapshot?chave=eq.ativos&select=data,updated_at');
