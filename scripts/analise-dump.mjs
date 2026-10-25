@@ -82,7 +82,7 @@ for (const [t, o] of [['dispersao_km', 'vigencia'], ['balanco_massa', 'vigencia'
 // o que a VW cobra por placa, o contrato por placa da Carta, o diesel que pagamos
 // (ERP, só encerradas) e as paradas por placa, para cruzar com o FT em 2026
 const EXTRA = [
-  ['vw_contrato_km', 'vigencia,contrato,chassi', '&vigencia=gte.2025-10', 'contrato,vigencia,chassi,placa,km_anterior,km_atual,faixa,km_rodado,valor'],
+  ['vw_contrato_km', 'vigencia,contrato,chassi', '&vigencia=gte.2025-01', 'contrato,vigencia,chassi,placa,km_anterior,km_atual,faixa,km_rodado,valor'],
   ['custo_vigencia_mv', 'placa', '&vig_km=gte.2025-11', '*'],
   ['erp_abastecimentos', 'data,ordem_servico', '&encerrada=eq.S&data=gte.2025-12-01', 'data,placa,filial,projeto_os,litros,valor,tipo_combustivel'],
   ['indisponibilidade', 'data_parada', '&or=(data_retorno.is.null,data_retorno.gte.2025-12-01)', 'unidade,projeto,placa,modelo,grupo,local_manutencao,data_parada,previsao_retorno,data_retorno,status'],
