@@ -16,6 +16,9 @@
 //                    salva modelo nem exporta.
 //   carga          — tudo pela API, desde FT_DESDE (2022), gravando em ft_linha/ft_layout
 //                    (scripts/freightech-supabase.sql). FT_ULTIMAS=n limita às n últimas quinzenas.
+//   booksonda      — como o Book do Operador (central-ajuda) é montado; não grava.
+//   book           — o Book inteiro → ft_book / ft_book_anexo (scripts/freightech-book.sql);
+//                    FT_BOOK_DUMP=<dir> escreve também o ndjson que o workflow cifra.
 //   exportar       — exporta de verdade, canal a canal, as tabelas da 1ª rodada
 //                    (Renan, 24/10/2026): ROTA Caminhão + Van · AS Caminhão ·
 //                    ARMAZEM Equipamento Armazém · EMPURRADA e INSUMOS Cavalo +
@@ -1005,6 +1008,129 @@ async function bookSonda() {
   page.off('response', ouve);
 }
 
+// ── modo book: o Book do Operador inteiro → ft_book / ft_book_anexo ───────
+// O que a sonda mediu (26/10/2026): a tela é a "central-ajuda" da API —
+// GET central-ajuda/listar?_page&_size&search&filtro&categoria&tipoCategoria
+// → {content:[{uuid,titulo,subtitulo,categoria}], totalElements, last…} e
+// GET central-ajuda/<uuid> → {categorias[], titulo, subtitulo, blocos:[{
+// subtitulo, texto (HTML), perfil, anexos:[…]}], usuarioCriou, dataCriacao…};
+// cada anexo baixa de integracao-externa/v1/storage/<id> (Bearer). Grava
+// tudo no banco e, com FT_BOOK_DUMP, escreve o mesmo em ndjson para o
+// workflow cifrar e publicar (a análise e o PDF são montados fora daqui).
+// No log só contagens: título e texto são regra de remuneração da Ambev.
+const API_EXT = 'https://apim.ambevdevs.com.br/freightech-integracao-externa-prod/v1';
+const semHtml = h => String(h || '')
+  .replace(/<img[^>]*>/gi, ' ').replace(/<br\s*\/?>|<\/p>|<\/div>|<\/li>|<\/h\d>|<\/tr>/gi, '\n').replace(/<[^>]+>/g, ' ')
+  .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
+  .replace(/[ \t]+/g, ' ').replace(/\s*\n\s*/g, '\n').trim();
+async function textoDoAnexo(buf, tipo, libs) {
+  try {
+    if (/^(xlsx|xlsm|xls|csv)$/.test(tipo)) {
+      const wb = libs.XLSX.read(buf, { type: 'buffer' });
+      return wb.SheetNames.map(n => `## ${n}\n` + libs.XLSX.utils.sheet_to_csv(wb.Sheets[n], { FS: '\t', blankrows: false })).join('\n\n').slice(0, 2e6);
+    }
+    if (tipo === 'pdf' && libs.pdf) return (await libs.pdf(buf)).text.slice(0, 2e6);
+    if (tipo === 'docx' && libs.mammoth) return (await libs.mammoth.extractRawText({ buffer: buf })).value.slice(0, 2e6);
+    if (/^(txt|md|csv|json)$/.test(tipo)) return buf.toString('utf8').slice(0, 2e6);
+  } catch (e) { return null; }
+  return null;
+}
+async function book() {
+  if (!SB_KEY) { console.error('::error::sem GEM_SUPABASE_SERVICE_KEY'); process.exitCode = 1; return; }
+  const crypto = await import('node:crypto');
+  const libs = { XLSX: (await import('xlsx')).default };
+  try { libs.pdf = (await import('pdf-parse')).default; } catch (e) { log('pdf-parse ausente: PDF fica sem texto'); }
+  try { libs.mammoth = (await import('mammoth')).default; } catch (e) { log('mammoth ausente: docx fica sem texto'); }
+  const DUMP = process.env.FT_BOOK_DUMP || '';
+  if (DUMP) { fs.mkdirSync(DUMP, { recursive: true }); fs.writeFileSync(`${DUMP}/book.ndjson`, ''); }
+  const TETO = 25 * 1024 * 1024;   // anexo acima disso vai sem base64
+  // a página precisa estar com o token vivo
+  await page.goto(BASE + '/#/central-ajuda', { waitUntil: 'domcontentloaded' }).catch(() => {});
+  await page.waitForTimeout(6000);
+  // 1) lista inteira (tenta páginas grandes; cai em 6, como a tela)
+  const lista = []; let total = null;
+  for (const size of [100, 6]) {
+    lista.length = 0;
+    for (let p = 0; p < 200; p++) {
+      const r = await ftApiOk(`${API_BACK}/central-ajuda/listar?_page=${p}&_size=${size}&search=&filtro=&categoria=&tipoCategoria=`);
+      const j = (r.v && typeof r.v === 'object') ? r.v : {};
+      const c = Array.isArray(j.content) ? j.content : [];
+      if (!c.length) break;
+      c.forEach(x => lista.push(x)); total = j.totalElements ?? total;
+      if (j.last === true || (total != null && lista.length >= total)) break;
+    }
+    if (lista.length && (total == null || lista.length >= total)) break;
+    log(`   lista com _size=${size}: ${lista.length} de ${total ?? '?'} — tentando o outro tamanho`);
+  }
+  const vistos = new Set(); const regs = lista.filter(x => x && x.uuid && !vistos.has(x.uuid) && vistos.add(x.uuid));
+  log(`── BOOK: ${regs.length} registro(s) na lista (total declarado ${total ?? '?'})`);
+  if (!regs.length) { console.error('::error::a lista do Book veio vazia'); process.exitCode = 1; return; }
+  const porCat = {}; let okReg = 0, okAn = 0, falhaAn = 0, semTexto = 0, bytes = 0, blocos = 0, imgs = 0, mudou = 0, igual = 0;
+  const formaAnexo = new Set();
+  const antes = new Map();
+  { const r = await sb('ft_book?select=uuid,hash'); if (r.ok) (await r.json()).forEach(x => antes.set(x.uuid, x.hash)); }
+  for (let i = 0; i < regs.length; i++) {
+    const it = regs[i];
+    const r = await ftApiOk(`${API_BACK}/central-ajuda/${it.uuid}`);
+    const d = r.v && typeof r.v === 'object' ? r.v : null;
+    if (!d || !d.uuid) { log(`   registro ${i + 1}: HTTP ${r.st}, sem corpo`); continue; }
+    const bl = Array.isArray(d.blocos) ? d.blocos : [];
+    const texto = [d.titulo, d.subtitulo, ...bl.flatMap(b => [b.subtitulo, semHtml(b.texto)])].filter(Boolean).join('\n\n');
+    const nImg = bl.reduce((s, b) => s + (String(b.texto || '').match(/<img/gi) || []).length, 0);
+    const hash = crypto.createHash('md5').update(JSON.stringify(d)).digest('hex');
+    const cat = (d.categorias && d.categorias[0] && d.categorias[0].nome) || it.categoria || null;
+    porCat[cat || '(sem)'] = (porCat[cat || '(sem)'] || 0) + 1; blocos += bl.length; imgs += nImg;
+    if (antes.get(d.uuid) === hash) igual++; else mudou++;
+    // anexos: a forma do objeto é lida nos dados (chaves só no log)
+    const anexos = [];
+    bl.forEach((b, bi) => (Array.isArray(b.anexos) ? b.anexos : []).forEach(a => {
+      if (!a || typeof a !== 'object') return;
+      formaAnexo.add(Object.keys(a).join(','));
+      const id = a.idStorage || a.storageId || a.idArquivo || a.id || a.uuid || null;
+      const nome = a.nomeArquivo || a.nome || a.fileName || a.filename || a.name || '';
+      if (id) anexos.push({ id: String(id), bloco: bi, nome: String(nome), tam: a.tamanhoBytes || a.tamanho || null });
+    }));
+    const linhasAnexo = [];
+    for (const a of anexos) {
+      const dl = await ftApiOk(`${API_EXT}/storage/${a.id}`, { bin: true });
+      if (dl.st !== 200 || !dl.b64) { falhaAn++; linhasAnexo.push({ id_storage: a.id, registro: d.uuid, bloco: a.bloco, nome: a.nome, tipo: (a.nome.match(/\.(\w+)$/) || [])[1]?.toLowerCase() || null, tamanho: null, sha256: null, texto: null, base64: null }); continue; }
+      const buf = Buffer.from(dl.b64, 'base64'); bytes += buf.length;
+      const tipo = ((a.nome.match(/\.(\w+)$/) || [])[1] || '').toLowerCase() || null;
+      const tx = await textoDoAnexo(buf, tipo, libs); if (tx == null) semTexto++;
+      linhasAnexo.push({ id_storage: a.id, registro: d.uuid, bloco: a.bloco, nome: a.nome, tipo, tamanho: buf.length, sha256: crypto.createHash('sha256').update(buf).digest('hex'), texto: tx, base64: buf.length <= TETO ? dl.b64 : null });
+      okAn++;
+    }
+    const linha = { uuid: d.uuid, titulo: d.titulo || it.titulo || '', subtitulo: d.subtitulo || it.subtitulo || null, categoria: cat, categorias: d.categorias || null, ordem: i + 1,
+      blocos: bl, texto, n_blocos: bl.length, n_anexos: anexos.length, n_imagens: nImg, usuario_criou: d.usuarioCriou || null, usuario_atual: d.usuarioAtualizou || null,
+      criado_em: d.dataCriacao || null, atualizado_em: d.dataAtualizacao || null, cliques: d.quantidadeClicada ?? null, hash, coletado_em: new Date().toISOString() };
+    let w = await sb('ft_book?on_conflict=uuid', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify([linha]) });
+    if (!w.ok) { log(`   registro ${i + 1}: gravar HTTP ${w.status} ${(await w.text()).slice(0, 160)}`); continue; }
+    await sb(`ft_book_anexo?registro=eq.${encodeURIComponent(d.uuid)}`, { method: 'DELETE' });
+    if (linhasAnexo.length) {
+      // um por vez: um anexo grande não pode derrubar os outros
+      for (const la of linhasAnexo) {
+        const w2 = await sb('ft_book_anexo?on_conflict=id_storage', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify([la]) });
+        if (!w2.ok) log(`   registro ${i + 1} anexo ${la.bloco}: gravar HTTP ${w2.status} ${(await w2.text()).slice(0, 120)}`);
+      }
+    }
+    okReg++;
+    if (DUMP) fs.appendFileSync(`${DUMP}/book.ndjson`, JSON.stringify({ ...linha, anexos: linhasAnexo }) + '\n');
+    if ((i + 1) % 10 === 0) log(`   ${i + 1}/${regs.length} · anexos ok ${okAn} · falha ${falhaAn}`);
+  }
+  // 2) validação: o que a lista tinha × o que está no banco
+  const noBanco = await sb('ft_book?select=uuid,n_anexos').then(r => r.ok ? r.json() : []);
+  const nAnBanco = await sb('ft_book_anexo?select=id_storage,tamanho,texto', { headers: { Prefer: 'count=exact', Range: '0-0' } });
+  const cr = nAnBanco.headers.get('content-range') || '';
+  const sumiu = noBanco.filter(x => !vistos.has(x.uuid)).length;
+  log('── BOOK: validação');
+  log(`   lista ${regs.length} · gravados agora ${okReg} · no banco ${noBanco.length} (${sumiu} que não estão mais na lista do FT) · mudaram ${mudou} · iguais ${igual}`);
+  log(`   blocos ${blocos} · imagens embutidas ${imgs} · anexos ${okAn + falhaAn} (ok ${okAn}, falha ${falhaAn}, sem texto extraído ${semTexto}) · ${(bytes / 1048576).toFixed(1)} MB · anexos no banco ${cr.split('/')[1] || '?'}`);
+  log('   por categoria: ' + Object.entries(porCat).map(([k, v]) => `${k} ${v}`).join(' · '));
+  log('   forma do anexo (chaves): ' + ([...formaAnexo].join(' | ') || '(nenhum)'));
+  if (okReg < regs.length || falhaAn) { console.error(`::warning::Book: ${regs.length - okReg} registro(s) e ${falhaAn} anexo(s) não gravados`); }
+  if (!okReg) process.exitCode = 1;
+}
+
 async function textosVisiveis(sel) {
   return page.$$eval(sel, els => [...new Set(els
     .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; })
@@ -1099,6 +1225,7 @@ try {
   campos.forEach(c => log('campo', c));
   }
   if (MODE === 'booksonda') await bookSonda();
+  if (MODE === 'book') await book();
 
   if (MODE === 'mapa') await mapa();
   if (MODE === 'exportar') await exportar();

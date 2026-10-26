@@ -1,0 +1,88 @@
+name: Freightech Book (Book do Operador -> Supabase)
+
+# O Book do Operador do Freightech (a Central de Ajuda com as regras de
+# remuneração: QLP, Book do operador, dimensionamento, manutenção, preço de
+# combustível, lucro…). O robô lê os registros e os anexos pela API, grava em
+# ft_book / ft_book_anexo (scripts/freightech-book.sql) e, se pedido, publica
+# uma cópia CIFRADA num branch temporário (tmp-book-dump) para a análise e o
+# PDF "Book do Operador Frota" serem montados fora do Actions — o repositório
+# é público, então sem a chave privada (scripts/analise-dump.pub.pem é só a
+# pública) nada se lê. Apagar o branch depois (so_apagar=true).
+on:
+  workflow_dispatch:
+    inputs:
+      publicar:
+        description: 'true = publica a cópia cifrada em tmp-book-dump'
+        required: false
+        default: 'true'
+      so_apagar:
+        description: 'true = só apaga o branch temporário tmp-book-dump'
+        required: false
+        default: 'false'
+  schedule:
+    - cron: '40 9 * * 1'   # segunda, 06:40 BRT: o Book muda pouco
+
+permissions:
+  contents: write
+
+jobs:
+  book:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    concurrency: freightech
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Apagar o branch temporário
+        if: ${{ github.event.inputs.so_apagar == 'true' }}
+        run: git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete tmp-book-dump || echo "branch já não existia"
+      - name: Instalar Playwright e leitores de anexo
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+        run: npm i -D playwright@1.47.2 xlsx@0.18.5 pdf-parse@1.1.1 mammoth@1.8.0 && npx playwright install --with-deps chromium
+      - name: Rodar
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+        env:
+          FT_MODE: book
+          FT_BOOK_DUMP: /tmp/book-dump
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          FREIGHTECH_USER: ${{ secrets.FREIGHTECH_USER }}
+          FREIGHTECH_PASS: ${{ secrets.FREIGHTECH_PASS }}
+        run: node scripts/freightech-robot.mjs
+      - name: Cifrar e publicar no branch temporário
+        if: ${{ github.event.inputs.so_apagar != 'true' && github.event.inputs.publicar != 'false' && github.event_name == 'workflow_dispatch' }}
+        run: |
+          set -e
+          test -s /tmp/book-dump/book.ndjson || { echo "::error::sem dump do Book"; exit 1; }
+          rm -rf /tmp/pub && mkdir -p /tmp/pub
+          cd /tmp/book-dump
+          gzip -f book.ndjson
+          openssl rand -out /tmp/k.bin 32
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in book.ndjson.gz -out /tmp/book.enc -pass file:/tmp/k.bin
+          openssl pkeyutl -encrypt -pubin -inkey "$GITHUB_WORKSPACE/scripts/analise-dump.pub.pem" \
+            -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in /tmp/k.bin -out /tmp/pub/chave.enc
+          rm -f /tmp/k.bin book.ndjson.gz
+          cd /tmp/pub
+          split -b 90m -d -a 2 /tmp/book.enc book.enc.
+          ls -la
+          git init -q -b tmp-book-dump
+          git config user.email "actions@github.com" && git config user.name "github-actions"
+          git add . && git commit -qm "book cifrado temporário (apagar depois de ler)"
+          git push -f -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" tmp-book-dump
+      - name: Avisar por e-mail se falhar
+        if: failure()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          MAIL_FROM:      ${{ vars.MAIL_FROM }}
+          MAIL_TO:        ${{ vars.MAIL_TO }}
+          WORKFLOW:       ${{ github.workflow }}
+          RUN_URL:        ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash scripts/avisa-falha.sh
+      - name: Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: freightech-shots
+          path: freightech-shots/
+          if-no-files-found: ignore
+          retention-days: 1
