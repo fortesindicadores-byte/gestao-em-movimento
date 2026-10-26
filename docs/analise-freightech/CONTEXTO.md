@@ -70,6 +70,22 @@ Pasta de trabalho dos dados: `$A = <scratchpad>/ana` (hoje `/tmp/claude-0/-home-
 - Puxar os dados da carga "todas 2026" (`todas=1`, já rodada) e as fórmulas (`modo formulas`) → Analise Dump → decifrar → `load.py`/`sh.py` → completar o manual (fixo da carreta, Armazém, AS/Van) → ligar Faturamento à receita da DRE → versão final dos PDFs. Depois, a carga desde 2022. Apagar `tmp-analise-dump` depois de ler.
 - Etapas seguintes do pedido original: painel **Remuneração** (Resumo Gerencial, tabela analítica, gráficos, histórico) → IA só para o dono (Edge Function com a chave) → orçamento (planilhas dele + base histórica + previsões + aprendizado dos FCAs) → robô de insights (backlog).
 
+## 6b. Feedback visual pendente (Renan, 26/10/2026) — aplicar em TODOS os materiais de uma vez
+
+Renan, vendo os slides 3 (três contas no Resumo) e 4 (FINAME) do Manual: *"Você considera essa visão clean? Você considera que está bem distribuído? textos com quebra na tabela?"* e *"Aqui também. Não está moderno e clean"* → *"olhe geral nisso. Guarde para ajustar em tudo. Vou mandar mais infos."* **Nada foi alterado ainda; ele vai mandar mais orientações antes.** O que está errado e o que foi proposto:
+
+- **Quebra de linha em célula de tabela é proibida.** No slide 3 quebram o cabeçalho "Relatório (tabela FT)", o campo "Total por Caminhão Frota Parada · Total Caminhão Parado", o "O que é" do R$/km e até o exemplo "R$ 2,91/km × 2.369". Causa: a coluna "Relatório" (que repete "Resumo"/"Caminhão" em toda linha) rouba largura das outras.
+- **Coluna "Relatório" sai da tabela de origem**; o nome do relatório vai para o cabeçalho ou para a nota. Tabela fica Campo · O que é · No exemplo, cada célula numa linha.
+- **Nome de campo em português**, com o nome técnico do FT (`statusFinanciamentoShared`) só em cinza pequeno ao lado, para quem for ao FT.
+- **A fita de memória de cálculo não é fórmula**: mistura `×`, `→`, `·`, `=` e no FINAME finge ser produto (é PMT). Escrever a conta como fórmula de verdade, numa linha (`PMT(1,479% ao mês; 60 parcelas; R$ 407 mil)`), ou como livro-razão vertical (uma linha por parcela, valor à direita, operador na margem, resultado na última linha).
+- **Caixa dentro de caixa é pesado** (painel cinza com caixas brancas de borda dentro). Moderno = sem painel, sem borda em caixa, filetes finos, um acento vermelho só, mais espaço em branco, o número grande solto.
+- **Buraco na grade** quando a linha tem dois fatores e a grade reserva três (slide 3): o `=` fica longe. Fechar o `=` depois do último fator ou alinhar todas as linhas.
+- **Rótulos de caixas com alturas diferentes** ("Compra cavalo + carroceria" em duas linhas, os outros em uma).
+- **Informação importante não pode ficar na nota cinza de 11 px** (regra do FINAME BNDES; quitado/leasing/alugado sem parcela): vira cartão curto visível.
+- **Distribuição vertical**: título alto, bloco no meio, um terço vazio embaixo. O conteúdo tem de ocupar a página.
+- **Densidade**: slide 3 tem quatro fileiras de caixas + tabela + nota de duas linhas; se não couber limpo, a tabela vai para slide próprio.
+- Diagnóstico geral: o desenho do DriverPro (narrativa) foi aplicado a um manual de referência e não serve para isso. Proposta: **padrão novo de slide de custo em duas colunas** (esquerda a conta em livro-razão, direita o número final grande com uma frase), montar em dois slides (FINAME e Combustível) para ele aprovar, só depois aplicar nos 21 do Manual e revisar Análise, Histórico e Treinamento com a mesma régua.
+
 ## 7. Segurança (não negociável)
 
 Credenciais só em GitHub Secrets; CPFs nunca no repositório; nada com placas ou remuneração vai para o repositório (exports, xlsx, dumps, parquet, json/pkl, PDFs, HTML): tudo vai pelo chat; logs do Actions são públicos (nunca imprimir corpo, token ou valor); nunca rodar `scripts/fca-auto-acao.sql`; tokens moram em `portal_segredo`; a chave privada do dump fica só em `scratchpad/ftkey/priv.pem`.
