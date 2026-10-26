@@ -1,160 +1,325 @@
 // ============================================================
-// Análise histórica do Freightech × DRE (2022→2026), visual e executiva.
-//   HIS=…/historico.json OPO=…/opo.json FT_HTML=…/historico.html node deck-historico.mjs
+// Histórico Freightech × DRE de frota, 2022→2026 (versão 26/10/2026).
+// Estrutura (CONTEXTO.md, 6b): definições → Receita e frota → Contexto de
+// mercado 2019→2026 (pandemia, inflação, juros) → Premissas (o caminhão; × IPCA,
+// IGP-M e IPA-M base 2022 = 100; diesel × ANP; fixo × preço × juros; o PORQUÊ:
+// mesmas placas × troca de frota, coorte de idade, modelo) → Resultado (pago ×
+// remunerado DRE × realizado por ano; manutenção; financiamento; pneu) → T1 →
+// Divergências → fechamento. O teto aparece só como informação.
+//   HIS=historico.json H2=historico2.json OPO=opo.json FT_HTML=historico.html node deck-historico.mjs
 // O HTML e o PDF NÃO vão para o repositório.
 // ============================================================
 import { readFileSync } from 'node:fs';
-import { deck, ponte, hbars, bars, lines, f0, f1, f2, f3, mi, mil, pct, MES, NOME, ACC, AZUL, VERDE, AMB, INK, INK2, INK3, PALE } from './deck-base.mjs';
+import { deck, cartoes, tabela, ponte, hbars, gbars, bars, lines, f0, f1, f2, f3, pct, MES, mv, NOME, lista, ACC, AZUL, VERDE, AMB, INK, INK2, INK3, PALE } from './deck-base.mjs';
 const H = JSON.parse(readFileSync(process.env.HIS || 'historico.json', 'utf8'));
+const H2 = JSON.parse(readFileSync(process.env.H2 || 'historico2.json', 'utf8'));
 const O = JSON.parse(readFileSync(process.env.OPO || 'opo.json', 'utf8'));
-const { slide, capa, escuro, conc, write } = deck({ rodape: 'Remuneração Freightech · Histórico 2022–2026 · Conlog', marca: 'Remuneração <b>Freightech</b>', titulo: 'Freightech 2022–2026' });
-const A = H.anos.map(String), Y = H.ano, PR = H.premissas;
-const M = v => f1(v / 1e6), K = v => f0(v / 1e3), sg = v => (v > 0 ? '+' : '') + f1(v / 1e6);
-const head = (k, h) => `<div class="kicker">${k}</div><h2>${h}</h2>`;
-const tile = (l, v, s, cor = INK) => `<div class="box"><div class="lbl">${l}</div><div class="num" style="color:${cor}">${v}</div><p>${s}</p></div>`;
+const { slide, capa, capaSec, conc, concBlocos, write } = deck({ rodape: 'Remuneração Freightech · Histórico 2022–2026 · Conlog', marca: 'Remuneração <b>Freightech</b>', titulo: 'Freightech 2022–2026' });
+const A = H.anos.map(String), Y = H.ano, PR = H.premissas, MA = H2.macro || {};
+const M = v => f1(Math.abs(v) < 5e4 ? 0 : v / 1e6), K = v => f0(Math.abs(v) < 500 ? 0 : v / 1e3), sM = v => Math.abs(v) < 5e4 ? '0,0' : (v >= 0 ? '+' : '−') + M(Math.abs(v)), sK = v => Math.abs(v) < 500 ? '0' : (v >= 0 ? '+' : '−') + K(Math.abs(v));
+const head = (k, h, sub = '') => `<div class="kicker">${k}</div><h2>${h}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}`;
+const cor = v => v > 0 ? ACC : VERDE, red = v => `color:${cor(v)};font-weight:700`;
+const tag = c => `<span class="tag ${c === 'alta' ? 'alta' : c === 'média' ? 'media' : c === 'erro' ? 'erro' : 'baixa'}">${c}</span>`;
 const lab = a => a === '2026' ? '2026*' : a;
 const NM = { comb: 'Combustível', manut: 'Manutenção', carr: 'Carroceria', pneu: 'Pneu', lav: 'Lavagem', ipva: 'IPVA', seguro: 'Seguro' };
-const PC = ['comb', 'manut', 'carr', 'pneu', 'lav', 'ipva'];
-const cor = v => v > 0 ? ACC : VERDE;
-const mv = v => MES[+v.slice(5) - 1] + '/' + v.slice(2, 4);
+const C7 = ['comb', 'manut', 'carr', 'pneu', 'lav', 'ipva', 'seguro'], C4 = ['comb', 'manut', 'carr', 'pneu'];
 const FIM26 = mv(Y['2026'].FIM), N26 = +Y['2026'].FIM.slice(5), AA = A.filter(a => Y[a].peca.comb.ft > 0);
-const tot = (a, k) => PC.reduce((s, c) => s + Y[a].peca[c][k], 0);
-const lista = a => a.length <= 1 ? a.join('') : a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1];
+const tot = (a, k) => C7.reduce((s, c) => s + Y[a].peca[c][k], 0);
+const idx = (k, a) => (((MA[k] || {}).idx22 || {})[a]);
+const var22 = (k, a) => PR[a][k] / PR['2022'][k] * 100;
 
-capa(`2022 a 2026 (2026 até ${FIM26})`, 'Remuneração Freightech: cinco anos de premissas, frota e resultado', `Todas as quinzenas do FT desde jan/2022, cruzadas com a DRE de frota e a receita. Os valores de 2026 vão de janeiro a ${FIM26}.`);
+// ═══ capa ═══
+capa(`2022 a 2026 (2026 até ${FIM26})`, 'Remuneração Freightech, 2022 a 2026: o que mudou nas premissas, por quê, e o que isso fez com o resultado', `Todas as quinzenas do FT desde jan/2022, cruzadas com a DRE de frota, a receita e os índices de mercado. Cada premissa do caminhão é lida contra a inflação e contra a troca de frota. Os valores de 2026 vão de janeiro a ${FIM26}.`);
 
-// receita
+// ═══ definições ═══
 {
-  const P = ['ROTA', 'EMPURRADA', 'APOIO', 'TERCEIROS', 'AUTO SERVIÇO', 'DISTRIBUIÇÃO URBANA', 'EMPURRADA BITREM', 'INSUMOS', 'ROTA (VAN)'];
+  const a = '2025', s = { ft: tot(a, 'ft'), rem: tot(a, 'rem'), real: tot(a, 'real') }, vt = C4.reduce((x, c) => x + Y[a].t2_teto[c], 0), vp = C4.reduce((x, c) => x + Y[a].t2_pago[c], 0);
+  slide(`${head('Antes de começar', 'Quatro termos que aparecem em toda tabela deste histórico', `Exemplo: frota T2 em ${a}, as sete contas de frota (combustível, manutenção, carroceria, pneu, lavagem, IPVA, seguro)`)}
+  ${cartoes([
+    { k: 'Pago FT', n: 'R$ ' + M(s.ft) + ' mi', p: 'O que o Freightech paga pela frota: R$/km do caminhão (premissas do FT) × km remunerado dos mapas rodados, mais o fixo por caminhão. O km dos mapas vem da <b>nossa Dispersão de km</b>; não é a fatura.', o: 'Caminhão e Resumo do FT × Dispersão de km (desde 2023)' },
+    { k: 'Remunerado DRE', n: 'R$ ' + M(s.rem) + ' mi', p: 'O que o planejamento lançou na DRE como receita de frota esperada, conta a conta. Deveria ser igual ao pago FT.', o: 'DRE de frota · Remunerado' },
+    { k: 'Realizado DRE', n: 'R$ ' + M(s.real) + ' mi', p: 'O que de fato gastamos, por conta. <b>Pago − realizado = resultado da frota.</b>', o: 'DRE de frota · Realizado', acc: true },
+    { k: 'Teto (informativo)', n: 'R$ ' + M(vt) + ' mi', p: `R$/km × km da placa × ativos × 25 mapas: o variável se todos os ativos rodassem todos os dias. Em ${a} o variável pago foi R$ ${M(vp)} mi. Não é meta nem base de comparação.`, o: 'Resumo do FT · Total Viagens' },
+  ])}
+  ${conc(`As premissas (R$/km, Km/L, fixo) são medianas das placas ativas da Rota em cada ano, lidas da tabela Caminhão do FT. 2022 não tem km pago porque a Dispersão de km começa em 2023; nesse ano o pago FT das contas variáveis fica em branco.`, 'Como ler')}`);
+}
+
+// ═══ Parte 1 · Receita e frota ═══
+capaSec(1, 'Receita e frota', 'Quanto a operação faturou e com quantos caminhões, ano a ano.');
+{
+  const P = ['ROTA', 'EMPURRADA', 'APOIO', 'TERCEIROS', 'AUTO SERVIÇO', 'DISTRIBUIÇÃO URBANA', 'INSUMOS', 'ROTA (VAN)', 'EMPURRADA BITREM'];
   const v = (a, p) => ((Y[a].receita || {})[p] || {}).real || 0, tot_ = a => Object.values(Y[a].receita || {}).reduce((s, x) => s + x.real, 0);
-  slide(`${head('Receita', 'Receita líquida por projeto (DRE)')}
-  <div class="grid g2" style="margin-top:14px;gap:22px;align-items:start">
-    ${bars({ w: 520, h: 260, labels: A.map(lab), data: A.map(tot_), cor: i => i === 4 ? INK3 : INK, fmt: v => 'R$ ' + M(v) + ' mi' })}
-    <table class="compacta"><tr><th>R$ mi</th>${A.map(a => `<th class="n">${lab(a)}</th>`).join('')}</tr>
-    ${P.filter(p => A.some(a => v(a, p) > 1e5)).map(p => `<tr><td>${p}</td>${A.map(a => `<td class="n">${v(a, p) ? M(v(a, p)) : '—'}</td>`).join('')}</tr>`).join('')}
-    <tr><td><b>Total</b></td>${A.map(a => `<td class="n"><b>${M(tot_(a))}</b></td>`).join('')}</tr></table>
-  </div><p class="note">* 2026 = jan a ${FIM26}.</p>
-  ${(() => { const t22 = tot_('2022'), t25 = tot_('2025'), t26 = tot_('2026'); const r = a => v(a, 'ROTA'), e = a => v(a, 'EMPURRADA'); const an26 = t26 / N26 * 12;
-  return conc(`A receita líquida cresceu <b>${f0((t25 / t22 - 1) * 100)}% de 2022 a 2025</b> (R$ ${M(t22)} → ${M(t25)} mi), e 2026 anualizado dá R$ ${M(an26)} mi (${(an26 / t25 - 1) >= 0 ? '+' : ''}${f0((an26 / t25 - 1) * 100)}% sobre 2025). A Rota puxa: R$ ${M(r('2022'))} → ${M(r('2025'))} mi (${f0((r('2025') / r('2022') - 1) * 100)}%), ${f0(r('2025') / t25 * 100)}% do total em 2025; a Empurrada cresceu ${f0((e('2025') / e('2022') - 1) * 100)}%. Distribuição Urbana (Anhanguera) entrou em 2025 e já é R$ ${M(v('2026', 'DISTRIBUIÇÃO URBANA'))} mi em ${N26} meses. O crescimento veio de frota e km, não de preço: o R$/km variável da Rota ficou em ~R$ 3,0 desde 2023 (próximo slide).`); })()}`);
-}
-
-// frota e km
-{
-  const F = H.frota_mes, idx = F.v.map((x, i) => i).filter(i => i % 3 === 0);
-  slide(`${head('Frota T2 (Rota)', 'Caminhões ativos e parados por mês')}
-  <div style="margin-top:10px">${lines({ w: 1136, h: 205, labels: F.v.map((x, i) => i % 6 === 0 ? mv(x) : ''), series: [{ data: F.at, cor: INK, rotulo: 'ativos' }, { data: F.par, cor: ACC, rotulo: 'parados' }], y0: 0, y1: Math.max(...F.at) * 1.15 })}</div>
-  <table class="compacta" style="margin-top:8px"><tr><th></th>${A.map(a => `<th class="n">${lab(a)}</th>`).join('')}</tr>
-  <tr><td>Ativos / mês (Rota + Van)</td>${A.map(a => `<td class="n">${f0(Y[a].t2_frota.ativos_mes)}</td>`).join('')}</tr>
-  <tr><td>Parados / mês</td>${A.map(a => `<td class="n">${f0(Y[a].t2_frota.parados_mes)}</td>`).join('')}</tr>
-  <tr><td>Km teto (mi)</td>${A.map(a => `<td class="n">${M(Y[a].t2_teto.kmtot)}</td>`).join('')}</tr>
-  <tr><td>Km pago (mi)</td>${A.map(a => `<td class="n">${Y[a].t2_pago.km ? M(Y[a].t2_pago.km) : '—'}</td>`).join('')}</tr>
-  <tr><td>Pago ÷ teto</td>${A.map(a => `<td class="n">${Y[a].t2_pago.km ? f0(Y[a].t2_pago.km / Y[a].t2_teto.kmtot * 100) + '%' : '—'}</td>`).join('')}</tr></table>
-  <p class="note">A Dispersão de km (km pago) começa em 2023.</p>
-  ${(() => { const fr = a => Y[a].t2_frota, pt = a => Y[a].t2_pago.km / Y[a].t2_teto.kmtot; const best = AA.slice().sort((a, b) => pt(b) - pt(a))[0];
-  return conc(`A frota ativa cresceu de ${f0(fr('2022').ativos_mes)} para ${f0(fr('2025').ativos_mes)} caminhões por mês (+${f0((fr('2025').ativos_mes / fr('2022').ativos_mes - 1) * 100)}%), mas os <b>parados foram de ${f0(fr('2022').parados_mes)} para ${f0(fr('2026').parados_mes)}</b>: a frota parada passou de ${f0(fr('2022').parados_mes / (fr('2022').ativos_mes + fr('2022').parados_mes) * 100)}% para ${f0(fr('2026').parados_mes / (fr('2026').ativos_mes + fr('2026').parados_mes) * 100)}% do total, e o parado recebe só o fixo de capital, seguro e IPVA (R$ ${M(Y['2026'].t2_fixo.fixo_par)} mi em ${N26} meses de 2026). O km pago ficou em ${f0(Math.min(...AA.map(pt)) * 100)}% a ${f0(Math.max(...AA.map(pt)) * 100)}% do teto: o melhor ano foi ${lab(best)} (${f0(pt(best) * 100)}%), e 2026 recuou para ${f0(pt('2026') * 100)}%. Cada ponto do teto que não vira mapa em 2026 vale R$ ${K(['comb', 'manut', 'carr', 'pneu'].reduce((s, c) => s + Y['2026'].t2_teto[c], 0) / 100)} mil no período.`); })()}`);
-}
-
-// premissas do caminhão
-{
-  const row = (n, k, f = f2) => `<tr><td>${n}</td>${A.map(a => `<td class="n">${PR[a][k] == null ? '—' : f(PR[a][k])}</td>`).join('')}</tr>`;
-  slide(`${head('Premissas do caminhão (Rota)', 'Como o R$/km e o fixo de um caminhão mudaram em cinco anos')}
-  <div class="grid g2" style="margin-top:14px;gap:22px;align-items:start">
-    <table class="compacta"><tr><th>Mediana das placas ativas</th>${A.map(a => `<th class="n">${lab(a)}</th>`).join('')}</tr>
-    ${row('Combustível R$/km', 'comb')}${row('Manutenção R$/km', 'manut')}${row('Carroceria R$/km', 'carr')}${row('Pneu R$/km', 'pneu')}${row('<b>Variável R$/km</b>', 'var')}
-    ${row('Km/L remunerado (ponderado)', 'kml')}${row('Km da placa / mês', 'km_placa', f0)}${row('Fixo / mês (R$)', 'fixo', f0)}${row('FINAME / mês (R$)', 'finame', f0)}
-    ${row('Valor de compra (R$ mil)', 'compra', v => f0(v / 1e3))}${row('Taxa FINAME (% a.a.)', 'taxa', f1)}${row('Vida mediana (meses)', 'vida', f0)}</table>
-    <div>${lines({ w: 520, h: 230, pad: { l: 50, r: 70, t: 20, b: 30 }, labels: A.map(lab), series: [{ data: A.map(a => PR[a].comb), cor: ACC, rotulo: 'comb.' }, { data: A.map(a => PR[a].manut), cor: AZUL, rotulo: 'manut.' }, { data: A.map(a => PR[a].pneu), cor: VERDE, rotulo: 'pneu' }], yfmt: v => f2(v) })}</div>
+  const t22 = tot_('2022'), t25 = tot_('2025'), t26 = tot_('2026'), an26 = t26 / N26 * 12, r = a => v(a, 'ROTA'), e = a => v(a, 'EMPURRADA');
+  slide(`${head('Receita líquida por projeto', `A receita cresceu ${f0((t25 / t22 - 1) * 100)}% de 2022 a 2025, de R$ ${M(t22)} mi para R$ ${M(t25)} mi`, `DRE · R$ mi por ano · realizado · * 2026 = jan a ${FIM26}`)}
+  <div class="duas" style="grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)">
+    ${bars({ w: 480, h: 230, labels: A.map(lab), data: A.map(tot_), cor: i => i === 4 ? INK3 : INK, fmt: v => 'R$ ' + M(v) + ' mi' })}
+    ${tabela({ classe: 'compacta', cols: [{ t: 'R$ mi' }, ...A.map(a => ({ t: lab(a), n: true }))], rows: P.filter(p => A.some(a => v(a, p) > 1e5)).map(p => [p, ...A.map(a => v(a, p) ? M(v(a, p)) : '—')]), tot: ['Total', ...A.map(a => M(tot_(a)))] })}
   </div>
-  ${conc(`O variável por km <b>caiu de R$ ${f2(PR['2022'].var)} para R$ ${f2(PR['2023'].var)} em 2023 e parou em ~R$ 3,0</b>: a manutenção paga caiu ${f0((1 - PR['2026'].manut / PR['2022'].manut) * 100)}% (R$ ${f2(PR['2022'].manut)} → ${f2(PR['2026'].manut)}/km) enquanto o custo real subiu, e o Km/L remunerado subiu de ${f2(PR['2022'].kml)} para ${f2(PR['2026'].kml)}, o que reduz o combustível pago por km mesmo com diesel mais caro (R$ ${f2(PR['2022'].comb)} → ${f2(PR['2026'].comb)}/km). O fixo por caminhão subiu ${f0((PR['2026'].fixo / PR['2022'].fixo - 1) * 100)}% (R$ ${f0(PR['2022'].fixo)} → ${f0(PR['2026'].fixo)}/mês) com a frota nova: valor de compra R$ ${K(PR['2022'].compra)} → ${K(PR['2026'].compra)} mil, taxa ${f1(PR['2022'].taxa)}% → ${f1(PR['2026'].taxa)}% a.a. A remuneração migrou do variável para o fixo: paga-se mais pelo caminhão existir e menos pelo km que ele roda.`)}`);
+  ${concBlocos([
+    { t: 'Crescimento', v: '+' + f0((t25 / t22 - 1) * 100) + '% em 3 anos', s: `2026 anualizado dá R$ ${M(an26)} mi (${pct((an26 / t25 - 1) * 100, 0)} sobre 2025).` },
+    { t: 'Quem puxa', v: 'Rota', s: `R$ ${M(r('2022'))} → ${M(r('2025'))} mi (+${f0((r('2025') / r('2022') - 1) * 100)}%), ${f0(r('2025') / t25 * 100)}% do total em 2025; Empurrada +${f0((e('2025') / e('2022') - 1) * 100)}%.` },
+    { t: 'Entrou', v: 'Distribuição Urbana', s: `Anhanguera em 2025; R$ ${M(v('2026', 'DISTRIBUIÇÃO URBANA'))} mi em ${N26} meses de 2026.` },
+    { t: 'Volume, não preço', v: 'R$/km parado', s: `o variável por km da Rota ficou em ~R$ ${f2(PR['2024'].var)} desde 2023 (próxima parte): o crescimento é frota e km.` },
+  ])}`);
 }
-
-// diesel
 {
-  const D = H.diesel_mes;
-  slide(`${head('Diesel S10 (Rota)', 'Nosso preço, ANP e o preço pago pelo FT, mês a mês')}
-  <div style="margin-top:10px">${lines({ w: 1136, h: 270, labels: D.v.map((x, i) => i % 6 === 0 ? mv(x) : ''), series: [{ data: D.anp, cor: INK3, rotulo: '', dash: true }, { data: D.op, cor: AZUL, rotulo: '' }, { data: D.pago, cor: ACC, rotulo: 'pago' }], yfmt: v => f2(v) })}</div>
-  <table class="compacta" style="margin-top:6px"><tr><th>Mediana R$/L</th>${A.map(a => `<th class="n">${lab(a)}</th>`).join('')}</tr>
-  ${['op', 'anp', 'pago'].map(k => `<tr><td>${{ op: 'Nosso preço', anp: 'ANP', pago: 'Pago' }[k]}</td>${A.map(a => `<td class="n">${f2(H.diesel[a][k])}</td>`).join('')}</tr>`).join('')}</table>
-  <p class="note">Cinza tracejado = ANP · azul = nosso preço · vermelho = pago pelo FT. O pago é sempre o menor entre o nosso e a ANP (100% dos registros). A queda pontual de Macacu em ago/25 (R$ 1,85) aparece na série.</p>
-  ${(() => { const D_ = H.diesel; const dif = A.map(a => [a, D_[a].anp - D_[a].op]); const maior = dif.slice().sort((a, b) => b[1] - a[1])[0];
-  return conc(`O diesel pago seguiu o nosso preço nos cinco anos (mediana R$ ${f2(D_['2022'].pago)} em 2022, R$ ${f2(D_['2023'].pago)} em 2023, R$ ${f2(D_['2026'].pago)} em 2026), porque compramos abaixo da ANP em todos eles: a maior folga foi em ${lab(maior[0])}, R$ ${f2(maior[1])}/L. Isso significa que <b>a regra do menor preço nunca nos favoreceu</b>: o FT paga o que pagamos, e o ganho de preço só existe no tanque interno (Rio, Florianópolis), onde a nota de compra fica abaixo do remunerado da placa. A alta de 2026 (R$ ${f2(D_['2025'].pago)} → ${f2(D_['2026'].pago)}, +${f0((D_['2026'].pago / D_['2025'].pago - 1) * 100)}%) entrou no pago e no custo ao mesmo tempo; o déficit de combustível de 2026 não vem do preço, vem do km e do consumo.`); })()}`);
+  const F = H.frota_mes, fr = a => Y[a].t2_frota;
+  slide(`${head('Frota T2 (Rota e Van)', `A frota ativa cresceu ${f0((fr('2025').ativos_mes / fr('2022').ativos_mes - 1) * 100)}% e a parada triplicou: ${f0(fr('2022').parados_mes)} → ${f0(fr('2026').parados_mes)} caminhões por mês`, 'Caminhões por mês (média das duas quinzenas) · km em mi por ano · * 2026 = jan a ' + FIM26)}
+  ${lines({ w: 1136, h: 175, labels: F.v.map((x, i) => i % 6 === 0 ? mv(x) : ''), series: [{ data: F.at, cor: INK, rotulo: 'ativos' }, { data: F.par, cor: ACC, rotulo: 'parados' }], y0: 0, y1: Math.max(...F.at) * 1.15, pad: { l: 50, r: 70, t: 14, b: 30 } })}
+  ${tabela({ classe: 'compacta', style: 'margin-top:6px', cols: [{ t: 'Por ano' }, ...A.map(a => ({ t: lab(a), n: true }))], rows: [
+    ['Caminhões ativos por mês', ...A.map(a => f0(fr(a).ativos_mes))],
+    ['Caminhões parados por mês', ...A.map(a => f0(fr(a).parados_mes))],
+    ['Parados em % da frota', ...A.map(a => f0(fr(a).parados_mes / (fr(a).ativos_mes + fr(a).parados_mes) * 100) + '%')],
+    ['Km pago (mi, mapas rodados)', ...A.map(a => Y[a].t2_pago.km ? M(Y[a].t2_pago.km) : '—')],
+    ['Km rodado (mi, Dispersão)', ...A.map(a => Y[a].t2_pago.rodado ? M(Y[a].t2_pago.rodado) : '—')],
+    ['Km dimensionado pelo FT (mi, informativo)', ...A.map(a => M(Y[a].t2_teto.kmtot))],
+  ] })}
+  ${concBlocos([
+    { t: 'Frota', v: f0(fr('2022').ativos_mes) + ' → ' + f0(fr('2025').ativos_mes) + ' ativos', s: `2026 recuou para ${f0(fr('2026').ativos_mes)} por mês com a saída de placas antigas.` },
+    { t: 'Parados', v: f0(fr('2022').parados_mes / (fr('2022').ativos_mes + fr('2022').parados_mes) * 100) + '% → ' + f0(fr('2026').parados_mes / (fr('2026').ativos_mes + fr('2026').parados_mes) * 100) + '% da frota', s: `o parado recebe o fixo inteiro (FINAME, seguro, IPVA, rastreador, faixa): R$ ${M(Y['2026'].t2_fixo.fixo_par)} mi em ${N26} meses de 2026, contra R$ ${M(Y['2022'].t2_fixo.fixo_par)} mi em 2022 inteiro.` },
+    { t: 'Km pago', v: M(Y['2023'].t2_pago.km) + ' → ' + M(Y['2025'].t2_pago.km) + ' mi', s: 'cresce com a frota; o km rodado fica 2% a 4% acima do pago em todos os anos (dispersão).' },
+    { t: 'Dimensionamento', v: 'só informação', s: 'o FT dimensiona 25 mapas por ativo; a rede rodou de 21 a 22,5. Não é meta nem base de comparação.' },
+  ])}`);
 }
 
-// pago × DRE por ano
+// ═══ Parte 2 · Contexto de mercado ═══
+capaSec(2, 'Contexto de mercado, 2019 a 2026', 'Pandemia, inflação, juros e demanda: a base 2022 é uma base distorcida, e é contra ela que as premissas do FT são lidas.');
 {
-  const t = (a, k) => PC.reduce((s, c) => s + Y[a].peca[c][k], 0);
-  const AA = A.filter(a => Y[a].peca.comb.ft > 0);
-  slide(`${head('Resultado de frota por ano', 'Pago pelo FT × remunerado e realizado na DRE (T2)')}
-  <table class="compacta" style="margin-top:14px"><tr><th>R$ mi</th>${AA.map(a => `<th class="n" colspan="3">${lab(a)}</th>`).join('')}</tr>
-  <tr><td></td>${AA.map(() => '<td class="n note">FT</td><td class="n note">rem.</td><td class="n note">real</td>').join('')}</tr>
-  ${PC.map(c => `<tr><td>${NM[c]}</td>${AA.map(a => { const x = Y[a].peca[c]; return `<td class="n">${M(x.ft)}</td><td class="n">${M(x.rem)}</td><td class="n" style="color:${cor(x.real - x.ft)}">${M(x.real)}</td>`; }).join('')}</tr>`).join('')}
-  <tr><td><b>Total</b></td>${AA.map(a => `<td class="n"><b>${M(t(a, 'ft'))}</b></td><td class="n"><b>${M(t(a, 'rem'))}</b></td><td class="n" style="color:${cor(t(a, 'real') - t(a, 'ft'))}"><b>${M(t(a, 'real'))}</b></td>`).join('')}</tr></table>
-  <div style="margin-top:8px">${bars({ w: 1136, h: 105, labels: AA.map(lab), data: AA.map(a => t(a, 'real') - t(a, 'ft')), cor: ACC, fmt: v => 'R$ ' + sg(v) + ' mi' })}</div>
-  <p class="note">Barra = realizado − pago FT nas contas de frota (combustível, manutenção, carroceria, pneu, lavagem, IPVA). Vermelho no real = custou acima do pago.</p>
-  ${(() => { const d = a => tot(a, 'real') - tot(a, 'ft'); const best = AA.slice().sort((a, b) => d(a) - d(b))[0]; const m = a => Y[a].peca.manut, c = a => Y[a].peca.comb; const an26 = d('2026') / N26 * 12;
-  return conc(`O custo de frota ficou <b>acima do pago em todos os anos</b>: R$ ${M(d('2023'))} mi em 2023, R$ ${M(d('2024'))} mi em 2024 (o melhor ano, ${f0((tot('2024', 'real') / tot('2024', 'ft') - 1) * 100)}% acima), R$ ${M(d('2025'))} mi em 2025 e R$ ${M(d('2026'))} mi em ${N26} meses de 2026 (R$ ${M(an26)} mi anualizado, o pior). A manutenção explica a piora: custou ${f1(m('2024').real / m('2024').ft)}× o pago em 2024, ${f1(m('2025').real / m('2025').ft)}× em 2025 e ${f1(m('2026').real / m('2026').ft)}× em 2026, porque o FT baixou o R$/km pago (R$ ${f2(PR['2024'].manut)} → ${f2(PR['2026'].manut)}) e o custo subiu com a frota envelhecendo (vida mediana ${f0(PR['2024'].vida)} → ${f0(PR['2026'].vida)} meses). O combustível ficou entre ${f0((Math.min(...AA.map(a => c(a).real / c(a).ft)) - 1) * 100)}% e ${f0((Math.max(...AA.map(a => c(a).real / c(a).ft)) - 1) * 100)}% acima do pago, estável. O remunerado da DRE ficou entre o pago e o realizado em todos os anos: o planejamento lança mais do que o FT paga, e ainda assim menos do que custa.`); })()}`);
+  const anos = ['2019', '2020', '2021', '2022', '2023', '2024', '2025', '2026'], m = k => (MA[k] || {}).ano || {};
+  const row = (n, k, f = v => pct(v, 1)) => [n, ...anos.map(a => m(k)[a] == null ? '—' : f(m(k)[a]))];
+  const tj = H2.tjlp || {}, tf = H2.taxa_finame || {};
+  slide(`${head('Contexto de mercado', 'De 2019 a 2026: a inflação de atacado dobrou na pandemia, a Selic foi de 2% a 14%, e 2023 normalizou os preços', 'Séries anuais do Banco Central (SGS) · IPCA, IGP-M e IPA-M = variação no ano · Selic = média do ano · TJLP e taxa FINAME = mediana nas placas do FT · * 2026 parcial')}
+  ${tabela({ classe: 'compacta', cols: [{ t: 'Indicador' }, ...anos.map(a => ({ t: a === '2026' ? '2026*' : a, n: true }))], rows: [
+    row('IPCA (varejo), % no ano', 'ipca'), row('IGP-M (geral), % no ano', 'igpm'), row('IPA-M (atacado: peças, caminhão), % no ano', 'ipa_m'),
+    row('Selic meta, % a.a. (média)', 'selic_meta', v => f1(v) + '%'),
+    ['TJLP nas placas do FT, % a.a.', ...anos.map(a => tj[a] == null ? '—' : f1(tj[a]) + '%')],
+    ['Taxa FINAME nas placas do FT, % a.a.', ...anos.map(a => tf[a] == null ? '—' : f1(tf[a]) + '%')],
+    row('Desemprego PNAD, %', 'desemprego', v => f1(v) + '%'), row('IBC-Br (atividade, 2022 = 100)', 'ibc_br', v => f1(v)),
+    ['IPCA acumulado (2019 = 100)', ...anos.map(a => f1((MA.ipca || {}).idx19?.[a]))], ['IGP-M acumulado (2019 = 100)', ...anos.map(a => f1((MA.igpm || {}).idx19?.[a]))], ['IPA-M acumulado (2019 = 100)', ...anos.map(a => f1((MA.ipa_m || {}).idx19?.[a]))],
+  ] })}
+  ${concBlocos([
+    { t: 'Pandemia', v: '2020–2021', s: `IGP-M +${f1(m('igpm')['2020'])}% e +${f1(m('igpm')['2021'])}%, IPA-M +${f1(m('ipa_m')['2020'])}% e +${f1(m('ipa_m')['2021'])}%: peça, pneu e caminhão novo subiram o dobro do varejo; Selic de ${f1(m('selic_meta')['2020'])}% para ${f1(m('selic_meta')['2022'])}% em dois anos.` },
+    { t: '2022 é base distorcida', v: 'atacado +' + f0(((MA.ipa_m || {}).idx19?.['2022'] || 100) - 100) + '% sobre 2019', s: 'o ano de partida deste histórico carrega o pico do diesel (guerra), fila das montadoras e juros em alta. Premissa que cai em 2023 pode ser normalização, não corte.' },
+    { t: '2023–2026', v: 'varejo sobe, atacado para', s: `IPCA +${f0((idx('ipca', '2026') || 100) - 100)}% de 2022 a 2026; IGP-M +${f0((idx('igpm', '2026') || 100) - 100)}% e IPA-M +${f0((idx('ipa_m', '2026') || 100) - 100)}%: peça e caminhão ficaram quase parados em preço, o custo de gente e serviço não.` },
+    { t: 'Juros', v: 'TJLP ' + f1(tj['2022']) + '% → ' + f1(tj['2026']) + '%', s: `a taxa do FINAME nas placas foi de ${f1(tf['2022'])}% a ${f1(tf['2026'])}% a.a.: cada caminhão novo entra com parcela maior, e o FT remunera a parcela.` },
+  ])}`);
 }
 
+// ═══ Parte 3 · Premissas ═══
+capaSec(3, 'As premissas do caminhão', 'O R$/km e o fixo de um caminhão da Rota em cinco anos, contra a inflação e explicados pela troca de frota.');
+{
+  const row = (n, k, f = f2) => [n, ...A.map(a => PR[a][k] == null ? '—' : f(PR[a][k]))];
+  slide(`${head('Premissas do caminhão (Rota)', `O variável caiu de R$ ${f2(PR['2022'].var)} para R$ ${f2(PR['2026'].var)}/km e o fixo subiu ${f0((PR['2026'].fixo / PR['2022'].fixo - 1) * 100)}%: a remuneração migrou do km para o caminhão`, 'Mediana das placas ativas da Rota em cada ano · tabela Caminhão do FT · unidade em cada linha')}
+  <div class="duas" style="grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)">
+    ${tabela({ classe: 'compacta', cols: [{ t: 'Premissa (mediana das placas)' }, ...A.map(a => ({ t: lab(a), n: true }))], rows: [
+      row('Combustível, R$/km', 'comb'), row('Manutenção, R$/km', 'manut'), row('Carroceria, R$/km', 'carr'), row('Pneu, R$/km', 'pneu'), { c: row('<b>Variável, R$/km</b>', 'var'), cls: 'sep' },
+      row('Km/L remunerado', 'kml'), row('Km da placa por mês', 'km_placa', f0), row('Fixo por mês, R$', 'fixo', f0), row('FINAME por mês, R$', 'finame', f0), row('Valor de compra, R$ mil', 'compra', v => f0(v / 1e3)), row('Taxa FINAME, % a.a.', 'taxa', f1), row('Vida, meses', 'vida', f0), row('Placas ativas no ano (distintas)', 'placas', f0)] })}
+    <div>${lines({ w: 480, h: 230, pad: { l: 40, r: 104, t: 16, b: 30 }, labels: A.map(lab), series: [{ data: A.map(a => PR[a].comb), cor: ACC, rotulo: 'combustível', pontos: true }, { data: A.map(a => PR[a].manut), cor: AZUL, rotulo: 'manutenção', pontos: true }, { data: A.map(a => PR[a].pneu), cor: VERDE, rotulo: 'pneu', pontos: true }], yfmt: v => f2(v) })}
+    <p class="note">R$/km por peça, mediana das placas ativas. Placas distintas no ano ≠ frota média por mês (${f0(Y['2025'].t2_frota.ativos_mes)} ativos/mês em 2025).</p></div>
+  </div>
+  ${concBlocos([
+    { t: 'Variável', v: 'R$ ' + f2(PR['2022'].var) + ' → ' + f2(PR['2026'].var) + '/km', s: `cai em 2023 (diesel R$ ${f2(H.diesel['2022'].pago)} → ${f2(H.diesel['2023'].pago)}) e para em ~R$ 3,0; o IPCA subiu ${f0((idx('ipca', '2026') || 100) - 100)}% no mesmo período.` },
+    { t: 'Manutenção', v: '−' + f0((1 - PR['2026'].manut / PR['2022'].manut) * 100) + '%', s: 'o porquê está na troca de frota (placas velhas na tabela por idade saíram, novas em carência e BID baixo entraram), não na mesma placa: slide do porquê.' },
+    { t: 'Km/L', v: f2(PR['2022'].kml) + ' → ' + f2(PR['2026'].kml), s: 'subiu com a frota mais velha (vida 42 → 50 meses), o que não é o esperado: parte é revisão do validado, parte é a saída das placas piores.' },
+    { t: 'Fixo', v: 'R$ ' + f0(PR['2022'].fixo) + ' → ' + f0(PR['2026'].fixo) + '/mês', s: `caminhão ${f0((PR['2026'].compra / PR['2022'].compra - 1) * 100)}% mais caro e taxa ${f1(PR['2026'].taxa - PR['2022'].taxa)} pontos maior: o FT remunera a parcela, então o fixo acompanha.` },
+  ])}`);
+}
+// premissas × inflação
+{
+  const km26 = Y['2026'].t2_pago.km, L = [
+    ['Variável, R$/km', 'var', f2, true], ['Combustível, R$/km', 'comb', f2, true], ['Manutenção, R$/km', 'manut', f2, true], ['Pneu, R$/km', 'pneu', f2, true], ['Carroceria, R$/km', 'carr', f2, true],
+    ['Km/L remunerado', 'kml', f2, false], ['Km da placa por mês', 'km_placa', f0, false], ['Fixo por mês, R$', 'fixo', f0, false], ['FINAME por mês, R$', 'finame', f0, false], ['Valor de compra, R$ mil', 'compra', v => f0(v / 1e3), false],
+  ];
+  const ip = idx('ipca', '2026'), ig = idx('igpm', '2026'), ipa = idx('ipa_m', '2026');
+  const leitura = (k) => { const v = var22(k, '2026'); if (k === 'kml') return 'não é preço; subiu ' + pct(v - 100, 0); if (v < ipa - 3) return 'ficou atrás do atacado (IPA-M)'; if (v < ip - 3) return 'acompanhou o atacado, ficou atrás do IPCA'; if (v <= ip + 3) return 'acompanhou o IPCA'; return 'passou o IPCA'; };
+  const valor = k => (PR['2022'][k] * ip / 100 - PR['2026'][k]) * km26;
+  slide(`${head('Premissas × inflação', `Se o R$/km de 2022 tivesse seguido o IPCA, o variável de 2026 seria R$ ${f2(PR['2022'].var * ip / 100)}/km, não R$ ${f2(PR['2026'].var)}: R$ ${M(valor('var'))} mi a menos no km pago de ${N26} meses`, 'Base 2022 = 100 · premissa = mediana das placas ativas da Rota · índices acumulados do BCB (2022 → 2026) · leitura: o que a premissa fez contra o índice')}
+  ${tabela({ classe: 'compacta', cols: [{ t: 'Premissa' }, { t: '2022', n: true }, { t: '2026', n: true }, { t: '2026 (2022 = 100)', n: true }, { t: 'IPCA', n: true }, { t: 'IGP-M', n: true }, { t: 'IPA-M', n: true }, { t: 'Leitura' }, { t: 'Vale em 2026', n: true }],
+    rows: L.map(([n, k, f, km]) => { const v = var22(k, '2026'); return [n, f(PR['2022'][k]), f(PR['2026'][k]), { v: f0(v), style: v < ip - 3 && k !== 'kml' ? red(1) : '' }, f0(ip), f0(ig), f0(ipa), leitura(k), km ? { v: 'R$ ' + M(valor(k)) + ' mi', style: red(valor(k)) } : '—']; }) })}
+  <p class="note">"Vale em 2026" = (premissa de 2022 corrigida pelo IPCA − premissa de 2026) × km pago de ${N26} meses de 2026 (${M(km26)} mi km). Positivo = o FT paga menos do que pagaria se a premissa tivesse acompanhado o IPCA. Km/L não é preço e não entra na conta.</p>
+  ${concBlocos([
+    { t: 'Variável', v: var22('var', '2026') < 100 ? '−' + f0(100 - var22('var', '2026')) + '% nominal' : '+' + f0(var22('var', '2026') - 100) + '%', s: `contra IPCA +${f0(ip - 100)}%: em termos reais o km da Rota paga ${f0((1 - PR['2026'].var / (PR['2022'].var * ip / 100)) * 100)}% menos do que em 2022.` },
+    { t: 'Manutenção', v: 'R$ ' + M(valor('manut')) + ' mi', s: `a premissa caiu ${f0(100 - var22('manut', '2026'))}% enquanto peça e serviço subiram: é a linha que mais pesa, e o porquê é a troca de frota (slide seguinte).` },
+    { t: 'Pneu e carroceria', v: 'acompanharam', s: `pneu +${f0(var22('pneu', '2026') - 100)}% (IPA-M ${pct(ipa - 100, 0)}): o preço de tabela do 275 subiu em 2023 e recuou; carroceria +${f0(var22('carr', '2026') - 100)}%.` },
+    { t: 'Fixo e compra', v: '+' + f0(var22('fixo', '2026') - 100) + '% e +' + f0(var22('compra', '2026') - 100) + '%', s: `muito acima de qualquer índice: não é inflação, é frota nova financiada a juros maiores (slide do fixo).` },
+  ])}`);
+}
+// diesel × ANP × IPCA
+{
+  const D = H.diesel_mes, D_ = H.diesel, dif = A.map(a => [a, D_[a].anp - D_[a].op]), maior = dif.slice().sort((a, b) => b[1] - a[1])[0];
+  slide(`${head('Diesel S10 (Rota)', `O diesel pago seguiu o nosso preço nos cinco anos; a regra do menor preço nunca nos favoreceu`, 'Mediana R$/L por quinzena nas unidades da Rota · tabela Combustível do FT · cinza tracejado = ANP · azul = nosso preço · vermelho = pago')}
+  ${lines({ w: 1136, h: 210, labels: D.v.map((x, i) => i % 6 === 0 ? mv(x) : ''), series: [{ data: D.anp, cor: INK3, rotulo: '', dash: true }, { data: D.op, cor: AZUL, rotulo: '' }, { data: D.pago, cor: ACC, rotulo: 'pago' }], yfmt: v => f2(v), pad: { l: 50, r: 70, t: 14, b: 30 } })}
+  ${tabela({ classe: 'compacta', style: 'margin-top:6px', cols: [{ t: 'Mediana do ano, R$/L' }, ...A.map(a => ({ t: lab(a), n: true })), { t: '2026 (2022 = 100)', n: true }], rows: [
+    ['Nosso preço (NF subida ao FT)', ...A.map(a => f2(D_[a].op)), f0(D_['2026'].op / D_['2022'].op * 100)],
+    ['ANP da unidade', ...A.map(a => f2(D_[a].anp)), f0(D_['2026'].anp / D_['2022'].anp * 100)],
+    ['Pago pelo FT (o menor dos dois)', ...A.map(a => f2(D_[a].pago)), f0(D_['2026'].pago / D_['2022'].pago * 100)],
+    ['IPCA acumulado', ...A.map(a => f0(idx('ipca', a))), f0(idx('ipca', '2026'))],
+  ] })}
+  ${concBlocos([
+    { t: 'Pago = nosso preço', v: '100% dos registros', s: `compramos abaixo da ANP em todos os anos (maior folga em ${lab(maior[0])}, R$ ${f2(maior[1])}/L): o FT paga o que pagamos, e o ganho de preço só existe no tanque interno (Rio, Florianópolis).` },
+    { t: 'Preço real caiu', v: f0(D_['2026'].pago / D_['2022'].pago * 100) + ' contra IPCA ' + f0(idx('ipca', '2026')), s: `2022 era o pico da guerra (R$ ${f2(D_['2022'].pago)}); 2023 normalizou (R$ ${f2(D_['2023'].pago)}) e 2026 voltou a R$ ${f2(D_['2026'].pago)}: abaixo da inflação, como a ANP.` },
+    { t: 'Então', v: 'déficit não é preço', s: 'a alta de 2026 entrou no pago e no custo ao mesmo tempo; o combustível acima do pago vem do km e do consumo (Análise 2026).' },
+    { t: 'Exceção', v: 'Macacu, 1ª ago/25', s: `R$ ${f2(O.preco.baixo[0].op)}/L digitado contra ANP ${f2(O.preco.baixo[0].anp)}: R$ ${K(O.preco.valor)} mil na Rota e ~R$ ${K(O.preco.emp.perda)} mil na Empurrada.` },
+  ])}`);
+}
+// fixo × preço × juros
+{
+  const S = H2.status, FS = H2.fixo_status, tj = H2.tjlp, tf = H2.taxa_finame, sel = (MA.selic_meta || {}).ano || {};
+  const fin = a => (S[a].FINANCIADO || 0) + (S[a].FINAME || 0) + (S[a].LEASING || 0), q = a => S[a].QUITADO || 0, tot_ = a => Object.values(S[a]).reduce((s, x) => s + x, 0);
+  slide(`${head('Fixo × preço do caminhão × juros', `O FINAME mediano subiu ${f0((PR['2026'].finame / PR['2022'].finame - 1) * 100)}%: caminhão ${f0((PR['2026'].compra / PR['2022'].compra - 1) * 100)}% mais caro e taxa ${f1(PR['2026'].taxa - PR['2022'].taxa)} pontos maior`, 'Mediana das placas ativas da Rota · nº de placas distintas ativas no ano por tipo de financiamento · fixo mediano por mês e tipo (R$)')}
+  ${tabela({ classe: 'compacta', cols: [{ t: 'Por ano' }, ...A.map(a => ({ t: lab(a), n: true }))], rows: [
+      ['Fixo por mês, R$ (mediana de todas)', ...A.map(a => f0(PR[a].fixo))], ['· financiada', ...A.map(a => f0(FS[a].FINANCIADO))], ['· leasing', ...A.map(a => f0(FS[a].LEASING))], ['· quitada', ...A.map(a => f0(FS[a].QUITADO))],
+      ['FINAME por mês, R$ (mediana)', ...A.map(a => f0(PR[a].finame))], ['Valor de compra, R$ mil (mediana)', ...A.map(a => f0(PR[a].compra / 1e3))],
+      ['Taxa FINAME nas placas, % a.a.', ...A.map(a => f1(tf[a]) + '%')], ['TJLP nas placas, % a.a.', ...A.map(a => f1(tj[a]) + '%')], ['Selic média, % a.a.', ...A.map(a => sel[a] == null ? '—' : f1(sel[a]) + '%')],
+      { c: ['Placas financiadas (FINAME, financiado, leasing)', ...A.map(a => f0(fin(a)) + ' de ' + f0(tot_(a)))], cls: 'sep' }, ['Placas quitadas', ...A.map(a => f0(q(a)) + ' de ' + f0(tot_(a)))]] })}
+  ${concBlocos([
+    { t: 'Preço do caminhão', v: 'R$ ' + K(PR['2022'].compra) + ' → ' + K(PR['2026'].compra) + ' mil', s: `+${f0((PR['2026'].compra / PR['2022'].compra - 1) * 100)}% na mediana, acima do IPA-M (${pct((idx('ipa_m', '2026') || 100) - 100, 0)}): não é só inflação, é mix (26.260 e Constellation no lugar de 1719/1718).` },
+    { t: 'Juros', v: f1(tf['2022']) + '% → ' + f1(tf['2026']) + '% a.a.', s: `TJLP ${f1(tj['2022'])}% → ${f1(tj['2026'])}% e spreads: a parcela do mesmo caminhão sobe ~${f0(((1 + tf['2026'] / 100) ** (1 / 12) - 1) / ((1 + tf['2022'] / 100) ** (1 / 12) - 1) * 100 - 100)}% só pela taxa.` },
+    { t: 'Frota financiada', v: f0(fin('2022') / tot_('2022') * 100) + '% → ' + f0(fin('2025') / tot_('2025') * 100) + '%', s: `leasing de ${S['2022'].LEASING} para ${S['2025'].LEASING} placas; o quitado recebe R$ ${f0(FS['2026'].QUITADO)}/mês e o financiado R$ ${f0(FS['2026'].FINANCIADO)}.` },
+    { t: 'O risco', v: 'fim das parcelas', s: 'o FT remunera a parcela: quando ela acaba, o fixo cai para o do quitado e a manutenção paga não sobe. A renovação se planeja pelo fim das parcelas.' },
+  ])}`);
+}
+// o porquê: mesmas placas × troca de frota
+{
+  const D = H2.decomp['2022-2026'], L = [['Manutenção, R$/km', 'manut', f2], ['Km/L remunerado', 'kml', f2], ['Combustível, R$/km', 'comb', f2], ['Pneu, R$/km', 'pneu', f2], ['Variável, R$/km', 'var', f2], ['Fixo por mês, R$', 'fixo', f0], ['FINAME por mês, R$', 'finame', f0], ['Vida, meses', 'vida', f0], ['Valor de compra, R$ mil', 'compra', v => f0(v / 1e3)]];
+  slide(`${head('O porquê: mesmas placas × troca de frota', `Das ${D.placas_a} placas de 2022, ${D.saiu} saíram e ${D.entrou} entraram até 2026: a mudança das premissas é troca de frota, não revisão da mesma placa`, 'Mediana por placa (cada placa pesa 1) · "mesmas" = as ' + D.comum + ' placas ativas nos dois anos · "saíram" = valor delas em 2022 · "entraram" = valor delas em 2026')}
+  ${tabela({ classe: 'compacta', cols: [{ t: 'Premissa' }, { t: 'Todas 2022', n: true }, { t: 'Todas 2026', n: true }, { t: 'Mesmas placas 2022', n: true }, { t: 'Mesmas placas 2026', n: true }, { t: 'Saíram (2022)', n: true }, { t: 'Entraram (2026)', n: true }, { t: 'Leitura' }],
+    rows: L.map(([n, k, f]) => { const x = D[k], mesmas = x.mesmas_para - x.mesmas_de, troca = (x.para - x.de) - mesmas; const le = Math.abs(mesmas) > Math.abs(troca) ? 'mesma placa mudou' : 'troca de frota'; return [n, f(x.de), f(x.para), f(x.mesmas_de), f(x.mesmas_para), f(x.saiu), f(x.entrou), le]; }) })}
+  ${concBlocos([
+    { t: 'Manutenção', v: f2(D.manut.de) + ' → ' + f2(D.manut.para), s: `a mesma placa ficou parada (${f2(D.manut.mesmas_de)} → ${f2(D.manut.mesmas_para)}); as que saíram pagavam R$ ${f2(D.manut.saiu)}/km (tabela por idade, ${f0(D.vida.saiu)} meses) e as que entraram R$ ${f2(D.manut.entrou)} (BID novo, ${f0(D.carencia_entrou_pct)}% em carência). A queda é 100% troca de frota.` },
+    { t: 'Km/L', v: f2(D.kml.de) + ' → ' + f2(D.kml.para), s: `dois efeitos: a mesma placa subiu ${f2(D.kml.mesmas_de)} → ${f2(D.kml.mesmas_para)} (revisão do validado) e as que saíram faziam ${f2(D.kml.saiu)} contra ${f2(D.kml.entrou)} das que entraram.` },
+    { t: 'Fixo', v: 'R$ ' + f0(D.fixo.de) + ' → ' + f0(D.fixo.para), s: `as mesmas placas CAÍRAM de R$ ${f0(D.fixo.mesmas_de)} para R$ ${f0(D.fixo.mesmas_para)} (parcelas acabaram, viraram quitadas); as que entraram chegam a R$ ${f0(D.fixo.entrou)} (compra R$ ${K(D.compra.entrou)} mil a ${f1(H2.taxa_finame['2026'])}% a.a.).` },
+    { t: 'Combustível e pneu', v: 'mesma placa', s: `combustível caiu na mesma placa (${f2(D.comb.mesmas_de)} → ${f2(D.comb.mesmas_para)}, Km/L revisado); pneu subiu na mesma placa (${f2(D.pneu.mesmas_de)} → ${f2(D.pneu.mesmas_para)}, preço de tabela do 275).` },
+  ])}`);
+}
+// coorte de idade e modelo
+{
+  const CO = H2.coorte, fx = ['0–12', '13–36', '37–60', '61–84', '85+'], MO = H2.modelos, KM = H2.kml_modelo, MM = H2.manut_modelo;
+  const top26 = Object.entries(MO['2026']).slice(0, 5), top22 = Object.entries(MO['2022']).slice(0, 5);
+  slide(`${head('Idade e modelo', 'A frota de 2026 é mais velha na mediana e mais nova nas pontas: 60 placas de até um ano e 158 de 3 a 5 anos', 'Placas ativas da Rota · coorte = vida em meses · manutenção R$/km (fora da carência) e Km/L = mediana da coorte · modelo = os cinco mais frequentes')}
+  <div class="duas">
+    ${tabela({ classe: 'compacta', cols: [{ t: 'Coorte (meses)' }, { t: 'Placas 22', n: true }, { t: 'Placas 26', n: true }, { t: 'Manut. 22', n: true }, { t: 'Manut. 26', n: true }, { t: 'Km/L 22', n: true }, { t: 'Km/L 26', n: true }, { t: 'Fixo 26', n: true }],
+      rows: fx.map(f => [f, f0(CO['2022'][f].placas), f0(CO['2026'][f].placas), f2(CO['2022'][f].manut), f2(CO['2026'][f].manut), f2(CO['2022'][f].kml), f2(CO['2026'][f].kml), 'R$ ' + f0(CO['2026'][f].fixo)]) })}
+    ${tabela({ classe: 'compacta', cols: [{ t: 'Modelo' }, { t: 'Placas 22', n: true }, { t: 'Placas 26', n: true }, { t: 'Km/L 22', n: true }, { t: 'Km/L 26', n: true }, { t: 'Manut. 22', n: true }, { t: 'Manut. 26', n: true }],
+      rows: [...new Set([...top22.map(x => x[0]), ...top26.map(x => x[0])])].slice(0, 8).map(m => [m, f0(MO['2022'][m] || 0), f0(MO['2026'][m] || 0), KM['2022'][m] == null ? '—' : f2(KM['2022'][m]), KM['2026'][m] == null ? '—' : f2(KM['2026'][m]), MM['2022'][m] == null ? '—' : f2(MM['2022'][m]), MM['2026'][m] == null || isNaN(MM['2026'][m]) ? '—' : f2(MM['2026'][m])]) })}
+  </div>
+  ${concBlocos([
+    { t: 'Velhas saíram', v: f0(CO['2022']['85+'].placas) + ' → ' + f0(CO['2026']['85+'].placas) + ' placas com 85+ meses', s: `pagavam R$ ${f2(CO['2022']['85+'].manut)}/km em 2022; as que ficaram pagam R$ ${f2(CO['2026']['85+'].manut)} e fazem ${f2(CO['2026']['85+'].kml)} km/L (as piores saíram).` },
+    { t: 'Novas em carência', v: f0(CO['2026']['0–12'].placas) + ' placas', s: `manutenção paga R$ ${f2(CO['2026']['0–12'].manut)}/km e fixo de R$ ${f0(CO['2026']['0–12'].fixo)}/mês: é onde o fixo sobe e o variável cai ao mesmo tempo.` },
+    { t: 'Modelo', v: '1719/1718 → 13.180 e 26.260', s: `o 1719 (${f0(MO['2022']['1719'])} placas em 2022, Km/L ${f2(KM['2022']['1719'])}) deu lugar ao 13.180 (${f2(KM['2026']['13180'])} km/L) e ao Constellation 26.260 (${f2(KM['2026']['Constellation 26.260'] || KM['2026']['26260'])} km/L, truck): o mix explica parte do Km/L e do R$/km.` },
+    { t: 'Então', v: 'premissa segue a frota', s: 'o FT paga o caminhão cadastrado: renovar baixa a manutenção paga (carência e BID) e sobe o fixo (parcela). Nenhum dos dois é revisão de regra.' },
+  ])}`);
+}
+
+// ═══ Parte 4 · Resultado ═══
+capaSec(4, 'Resultado', 'Pago pelo FT × remunerado DRE × realizado, ano a ano; a manutenção; o pneu.');
+{
+  const d = a => tot(a, 'real') - tot(a, 'ft'), best = AA.slice().sort((a, b) => d(a) - d(b))[0], m = a => Y[a].peca.manut, c = a => Y[a].peca.comb, an26 = d('2026') / N26 * 12;
+  slide(`${head('Resultado de frota por ano', `O custo ficou acima do pago em todos os anos: R$ ${M(d('2023'))} mi em 2023, R$ ${M(d('2024'))} mi em 2024, R$ ${M(d('2025'))} mi em 2025 e R$ ${M(d('2026'))} mi em ${N26} meses de 2026`, 'R$ mi · as sete contas de frota do T2 · pago FT = R$/km × km dos mapas rodados (Dispersão, desde 2023) + lavagem, IPVA e seguro · vermelho = custou acima do pago')}
+  ${tabela({ classe: 'compacta', cols: [{ t: 'R$ mi' }, ...AA.flatMap(a => [{ t: lab(a) + ' FT', n: true }, { t: 'rem.', n: true }, { t: 'real', n: true }])],
+    rows: [...C7.map(c => [NM[c], ...AA.flatMap(a => { const x = Y[a].peca[c]; return [M(x.ft), M(x.rem), { v: M(x.real), style: x.real > x.ft * 1.05 ? red(1) : '' }]; })]), { c: ['<b>Total</b>', ...AA.flatMap(a => [{ v: '<b>' + M(tot(a, 'ft')) + '</b>' }, { v: '<b>' + M(tot(a, 'rem')) + '</b>' }, { v: '<b>' + M(tot(a, 'real')) + '</b>', style: red(1) }])], cls: 'sep' }, ['Realizado − pago FT', ...AA.flatMap(a => ['', '', { v: sM(d(a)), style: red(d(a)) }])], ['Remunerado DRE − pago FT', ...AA.flatMap(a => ['', '', { v: sM(tot(a, 'rem') - tot(a, 'ft')) }])]] })}
+  ${concBlocos([
+    { t: 'Todo ano', v: 'acima do pago', s: `o melhor foi ${lab(best)} (${f0((tot(best, 'real') / tot(best, 'ft') - 1) * 100)}% acima); 2026 anualizado dá R$ ${M(an26)} mi, o pior.` },
+    { t: 'Manutenção', v: f1(m('2024').real / m('2024').ft) + '× → ' + f1(m('2026').real / m('2026').ft) + '× o pago', s: `o R$/km pago caiu (R$ ${f2(PR['2024'].manut)} → ${f2(PR['2026'].manut)}) pela troca de frota e a oficina da frota que ficou não caiu junto.` },
+    { t: 'Combustível', v: f0((Math.min(...AA.map(a => c(a).real / c(a).ft)) - 1) * 100) + '% a ' + f0((Math.max(...AA.map(a => c(a).real / c(a).ft)) - 1) * 100) + '% acima', s: 'estável: km além do pago e consumo acima do Km/L remunerado, todo ano.' },
+    { t: 'Remunerado DRE', v: 'entre os dois', s: `o planejamento lança mais do que o FT paga em todos os anos (${AA.map(a => `${sM(tot(a, 'rem') - tot(a, 'ft'))} mi em ${lab(a)}`).join(', ')}) e ainda assim menos do que custa.` },
+  ])}`);
+}
 // manutenção ao longo do tempo
 {
-  const AA = A.filter(a => Y[a].peca.manut.ft > 0);
-  slide(`${head('Manutenção', 'O custo ficou acima do pago em todos os anos; em 2026 é o dobro')}
-  <div class="grid g2" style="margin-top:14px;gap:22px;align-items:start">
-    ${hbars({ w: 560, lw: 70, lh: 40, linhas: AA.map(a => ({ rot: lab(a), ft: Y[a].peca.manut.ft, real: Y[a].peca.manut.real })), series: [{ k: 'ft', rot: 'Pago FT', cor: INK }, { k: 'real', rot: 'Realizado DRE', cor: ACC }], fmt: v => 'R$ ' + M(v) + ' mi' })}
-    <table class="compacta"><tr><th>Rota</th>${A.map(a => `<th class="n">${lab(a)}</th>`).join('')}</tr>
-      <tr><td>R$/km pago (mediana)</td>${A.map(a => `<td class="n">${f2(PR[a].manut)}</td>`).join('')}</tr>
-      <tr><td>Placas em carência</td>${A.map(a => `<td class="n">${PR[a].carencia_pl}</td>`).join('')}</tr>
-      <tr><td>Placas ativas</td>${A.map(a => `<td class="n">${PR[a].placas}</td>`).join('')}</tr></table>
+  const m = a => Y[a].peca.manut, fa = a => Y[a].t2_frota.ativos_mes, D = H2.decomp;
+  slide(`${head('Manutenção', `O R$/km pago caiu ${f0((1 - PR['2026'].manut / PR['2022'].manut) * 100)}% em cinco anos e o custo por caminhão foi na direção contrária`, 'R$ mi por ano · R$/km = mediana das placas ativas · placas em carência = distintas no ano · custo por caminhão ativo = realizado ÷ ativos por mês ÷ 12')}
+  <div class="duas">
+    ${hbars({ w: 540, lw: 70, lh: 36, linhas: AA.map(a => ({ rot: lab(a), ft: m(a).ft, rem: m(a).rem, real: m(a).real })), series: [{ k: 'ft', rot: 'Pago FT', cor: INK }, { k: 'rem', rot: 'Remunerado DRE', cor: AZUL }, { k: 'real', rot: 'Realizado', cor: ACC }], fmt: v => 'R$ ' + M(v) + ' mi' })}
+    ${tabela({ classe: 'compacta', cols: [{ t: 'Rota' }, ...A.map(a => ({ t: lab(a), n: true }))], rows: [
+      ['R$/km pago (mediana)', ...A.map(a => f2(PR[a].manut))], ['Placas em carência (zero)', ...A.map(a => f0(PR[a].carencia_pl))], ['Placas ativas no ano (distintas)', ...A.map(a => f0(PR[a].placas))],
+      ['Custo por caminhão ativo, R$ mil/ano', ...A.map(a => m(a).ft ? K(m(a).real / fa(a) / (a === '2026' ? N26 : 12) * 12) : '—')], ['Realizado ÷ pago FT', ...A.map(a => m(a).ft ? f1(m(a).real / m(a).ft) + '×' : '—')]] })}
   </div>
-  <p class="note">O FT paga 90% do BID da montadora (ou a tabela por idade sem BID) e zero na carência.</p>
-  ${(() => { const m = a => Y[a].peca.manut; const pl = a => PR[a].placas, ca = a => PR[a].carencia_pl, fa = a => Y[a].t2_frota.ativos_mes;
-  return conc(`O R$/km pago pela manutenção caiu ${f0((1 - PR['2026'].manut / PR['2022'].manut) * 100)}% em cinco anos (R$ ${f2(PR['2022'].manut)} → ${f2(PR['2026'].manut)}) e o custo por caminhão foi na direção contrária: o realizado por caminhão ativo subiu de R$ ${K(m('2023').real / fa('2023'))} mil por ano (2023) para R$ ${K(m('2025').real / fa('2025'))} mil (2025) e R$ ${K(m('2026').real / fa('2026') / N26 * 12)} mil anualizado em 2026. A carência explica parte: ${ca('2026')} das ${pl('2026')} placas de 2026 recebem zero, mas a oficina dessas placas novas não é zero (Rondonópolis, 9 meses de idade, gasta R$ 120 mil de oficina). O resto é a tabela do FT: BID da montadora com 10% de desconto num contrato que, na VW, já custa R$ 0,76/km contra R$ 0,61 pagos. <b>A manutenção virou a maior fonte de déficit da frota</b>: R$ ${M(m('2026').real - m('2026').ft)} mi em ${N26} meses de 2026, contra R$ ${M(m('2024').real - m('2024').ft)} mi em 2024 inteiro.`); })()}`);
+  ${concBlocos([
+    { t: 'Por quê o pago caiu', v: 'troca de frota', s: `de 2022 a 2026 a mesma placa ficou em R$ ${f2(D['2022-2026'].manut.mesmas_de)} → ${f2(D['2022-2026'].manut.mesmas_para)}/km; saíram placas a R$ ${f2(D['2022-2026'].manut.saiu)} e entraram a R$ ${f2(D['2022-2026'].manut.entrou)}.` },
+    { t: 'Por quê o custo subiu', v: 'R$ ' + K(m('2023').real / fa('2023')) + ' → ' + K(m('2026').real / fa('2026') / N26 * 12) + ' mil/caminhão', s: 'a frota que ficou envelheceu (vida 42 → 50 meses) e a oficina das placas novas não é zero (Rondonópolis).' },
+    { t: 'O contrato', v: 'VW R$ ' + f2(Y['2026'].vw.rk_vw) + ' × FT ' + f2(Y['2026'].vw.rk_ft) + '/km', s: `em 2025 a fatura VW ficou R$ ${K(Y['2025'].vw.fatura - Y['2025'].vw.ft)} mil acima do pago; em ${N26} meses de 2026, R$ ${K(Y['2026'].vw.fatura - Y['2026'].vw.ft)} mil.` },
+    { t: 'Resultado', v: 'R$ ' + M(m('2026').real - m('2026').ft) + ' mi em ' + N26 + ' meses', s: `contra R$ ${M(m('2024').real - m('2024').ft)} mi em 2024 inteiro: a manutenção virou a maior fonte de déficit da frota.` },
+  ])}`);
+}
+// pneu
+{
+  const PN = H2.pneu, p275 = a => (Y[a].pneu || {})['275'] || {};
+  slide(`${head('Pneu', `O preço de tabela do 275 no FT subiu ${f0((PN['2023'].preco_275 / PN['2022'].preco_275 - 1) * 100)}% em 2023 e recuou; compramos abaixo da tabela em todos os anos`, 'Placas ativas da Rota · medida dominante e preço de tabela do FT (mediana) · R$/km = Pneu por KM · realizado = pneus novos + recapagens na DRE')}
+  ${tabela({ classe: 'compacta', cols: [{ t: 'Por ano' }, ...A.map(a => ({ t: lab(a), n: true })), { t: '2026 (2022 = 100)', n: true }], rows: [
+    ['Placas com 275 / 235 / 215', ...A.map(a => Object.entries(PN[a].medidas).map(([m, n]) => n).join(' / ')), '—'],
+    ['Preço de tabela do 275, R$', ...A.map(a => f0(PN[a].preco_275)), f0(PN['2026'].preco_275 / PN['2022'].preco_275 * 100)],
+    ['Recapagem, R$', ...A.map(a => f0(PN[a].recap)), f0(PN['2026'].recap / PN['2022'].recap * 100)],
+    ['Vida, km', ...A.map(a => f0(PN[a].vida)), f0(PN['2026'].vida / PN['2022'].vida * 100)],
+    ['R$/km pago (mediana)', ...A.map(a => f2(PN[a].rk)), f0(PN['2026'].rk / PN['2022'].rk * 100)],
+    ['IPCA acumulado', ...A.map(a => f0(idx('ipca', a))), f0(idx('ipca', '2026'))],
+    { c: ['Pago FT, R$ mi', ...A.map(a => Y[a].peca.pneu.ft ? M(Y[a].peca.pneu.ft) : '—'), ''], cls: 'sep' }, ['Remunerado DRE, R$ mi', ...A.map(a => M(Y[a].peca.pneu.rem)), ''], ['Realizado, R$ mi', ...A.map(a => ({ v: M(Y[a].peca.pneu.real), style: Y[a].peca.pneu.ft && Y[a].peca.pneu.real > Y[a].peca.pneu.ft ? red(1) : '' })), ''],
+  ] })}
+  ${concBlocos([
+    { t: 'Preço de tabela', v: 'R$ ' + f0(PN['2022'].preco_275) + ' → ' + f0(PN['2026'].preco_275), s: `+${f0((PN['2026'].preco_275 / PN['2022'].preco_275 - 1) * 100)}% em quatro anos, acima do IPA-M; o pico foi 2023 (R$ ${f0(PN['2023'].preco_275)}).` },
+    { t: 'Nossa compra', v: 'abaixo da tabela', s: `o 275 sai a R$ ${f0(p275('2026').compra_med)} contra R$ ${f0(p275('2026').tracao)}: a sobra de pneu (${AA.map(a => `R$ ${M(Y[a].peca.pneu.ft - Y[a].peca.pneu.real)} mi em ${lab(a)}`).join(', ')}) é preço de compra.` },
+    { t: 'Remunerado DRE', v: 'acima do pago', s: `${AA.map(a => `${sM(Y[a].peca.pneu.rem - Y[a].peca.pneu.ft)} mi em ${lab(a)}`).join(', ')}: a DRE mostra o pneu melhor do que o FT paga, todo ano.` },
+    { t: 'Vida', v: f0(PN['2026'].vida) + ' km · 2 recapagens', s: 'a premissa não mudou em cinco anos; pneu descartado antes disso come a sobra.' },
+  ])}`);
 }
 
-// status da frota
+// ═══ Parte 5 · T1 ═══
+capaSec(5, 'Empurrada (T1)', 'O R$/km de frota do trecho ano a ano, e o Km/L do trecho que o explica.');
 {
-  const S = ['QUITADO', 'FINANCIADO', 'LEASING', 'FINAME', 'ALUGADO'];
-  slide(`${head('Frota por financiamento', 'A frota financiada cresceu e o caminhão ficou mais caro')}
-  <table class="compacta" style="margin-top:14px"><tr><th>Placas ativas (Rota)</th>${A.map(a => `<th class="n">${lab(a)}</th>`).join('')}</tr>
-  ${S.map(s => `<tr><td>${s}</td>${A.map(a => `<td class="n">${PR[a].status[s] || 0}</td>`).join('')}</tr>`).join('')}</table>
-  <div class="grid g3" style="margin-top:14px;gap:14px">
-    ${tile('Valor de compra', 'R$ ' + K(PR['2022'].compra) + ' → ' + K(PR['2026'].compra) + ' mil', 'mediana cavalo + carroceria')}
-    ${tile('FINAME mediano', 'R$ ' + f0(PR['2022'].finame) + ' → ' + f0(PR['2026'].finame), 'por mês')}
-    ${tile('Taxa do financiamento', f1(PR['2022'].taxa) + '% → ' + f1(PR['2026'].taxa) + '%', 'a.a., mediana')}
-  </div>
-  ${(() => { const st = a => PR[a].status, fin = a => (st(a).FINANCIADO || 0) + (st(a).FINAME || 0) + (st(a).LEASING || 0), q = a => st(a).QUITADO || 0;
-  return conc(`Em 2022, ${f0(q('2022') / PR['2022'].placas * 100)}% das placas ativas da Rota eram quitadas; em 2025 a frota financiada (FINAME, financiado e leasing) chegou a ${fin('2025')} placas, ${f0(fin('2025') / PR['2025'].placas * 100)}% do total, e o leasing saiu de ${st('2022').LEASING} para ${st('2025').LEASING} placas. <b>O FINAME mediano por caminhão subiu ${f0((PR['2026'].finame / PR['2022'].finame - 1) * 100)}%</b> (R$ ${f0(PR['2022'].finame)} → ${f0(PR['2026'].finame)}/mês) por dois motivos somados: caminhão ${f0((PR['2026'].compra / PR['2022'].compra - 1) * 100)}% mais caro e taxa ${f1(PR['2026'].taxa - PR['2022'].taxa)} pontos maior. O FT remunera o capital pela parcela, então o fixo acompanha; o risco é o fim das parcelas: o caminhão quitado recebe ~R$ 900/mês de fixo (Análise 2026) e continua custando manutenção de frota velha.`); })()}`);
+  const us = ['PIR', 'CBA', 'MCC'], FR = ['diesel', 'manut_cav', 'manut_carr', 'pneu', 'lav', 'pedagio', 'seguro'], tt = (u, a) => (Y[a].t1_trecho || {})['EMPURRADA|' + u];
+  const fr = (u, a) => { const t = tt(u, a); return t ? FR.reduce((s, k) => s + (t[k] || 0), 0) : null; };
+  const anosU = u => A.filter(a => tt(u, a));
+  const p = H.t1.PIR, a0 = Object.keys(p)[0];
+  slide(`${head('T1 · R$/km de frota do trecho', `Em Piraí o diesel do trecho foi de R$ ${f2(p[a0].diesel)} para R$ ${f2(p['2026'].diesel)}/km porque o Km/L do trecho caiu de ${f2(p[a0].kml)} para ${f2(p['2026'].kml)}`, 'Média ponderada pela previsão de km dos trechos ativos · só as peças de frota (salário variável e lucro variável são equipe e margem) · diesel = preço com crédito ÷ Km/L do trecho')}
+  ${tabela({ classe: 'compacta', cols: [{ t: 'R$/km do trecho' }, ...us.flatMap(u => anosU(u).map(a => ({ t: NOME[u].slice(0, 3) + ' ' + lab(a).slice(2), n: true })))],
+    rows: [['Diesel', ...us.flatMap(u => anosU(u).map(a => f2(tt(u, a).diesel)))], ['Manutenção do cavalo', ...us.flatMap(u => anosU(u).map(a => f2(tt(u, a).manut_cav)))], ['Manutenção da carreta', ...us.flatMap(u => anosU(u).map(a => f2(tt(u, a).manut_carr)))], ['Pneu', ...us.flatMap(u => anosU(u).map(a => f2(tt(u, a).pneu)))], ['Lavagem e pedágio', ...us.flatMap(u => anosU(u).map(a => f2((tt(u, a).lav || 0) + (tt(u, a).pedagio || 0))))],
+      { c: ['<b>R$/km de frota</b>', ...us.flatMap(u => anosU(u).map(a => ({ v: '<b>' + f2(fr(u, a)) + '</b>' })))], cls: 'sep' }, ['Km/L do trecho', ...us.flatMap(u => anosU(u).map(a => f2(tt(u, a).kml)))], ['Trechos ativos', ...us.flatMap(u => anosU(u).map(a => f0(tt(u, a).trechos)))]] })}
+  <p class="note">Colunas: Pir = Piraí, Cui = Cuiabá, Mac = Macacu; o número é o ano (26 = jan a ${FIM26}). Cuiabá e Macacu entram no FT em 2024.</p>
+  ${concBlocos([
+    { t: 'Diesel é o frete', v: f0(p['2026'].diesel / fr('PIR', '2026') * 100) + '% em Piraí', s: `o Km/L do trecho caiu ${f0((1 - p['2026'].kml / p[a0].kml) * 100)}%: a frota nova (Actros 2651) tem Km/L remunerado menor que a antiga, e o FT paga mais litros por km.` },
+    { t: 'Manutenção', v: 'R$ ' + f2(p['2025'].manut) + ' → ' + f2(p['2026'].manut) + '/km', s: 'carência da renovação (~50% dos cavalos de nov/25 a mai/26); volta a ~R$ 0,22/km quando ela acaba, e o frete de 2027 cai por aí.' },
+    { t: 'Cuiabá e Macacu', v: 'R$ ' + f2(fr('CBA', '2026')) + ' e ' + f2(fr('MCC', '2026')) + '/km', s: 'mesmo desenho em 2026: diesel 79% a 84% do R$/km de frota, Km/L do trecho de 1,99 a 2,07.' },
+    { t: 'Resultado', v: 'Km/L real × do trecho', s: `um décimo abaixo do remunerado em Piraí custa ~${f0((p['2026'].kml / (p['2026'].kml - 0.1) - 1) * 100)}% a mais de diesel sem pagamento.` },
+  ])}`);
 }
 
-// T1
+// ═══ Parte 6 · Divergências ═══
+capaSec(6, 'Divergências de remuneração', 'O que esteve fora da regra ou da base em cinco anos, com valor e confiança.');
 {
-  const T = H.t1, us = Object.keys(T);
-  const C = [['diesel', 'Diesel'], ['manut', 'Manut. cavalo'], ['carr', 'Manut. carreta'], ['pneu', 'Pneu'], ['salario', 'Salário var.'], ['lucro', 'Lucro var.'], ['kml', 'Km/L do trecho']];
-  slide(`${head('T1 · Empurrada', 'R$ por km do trecho, por ano (média ponderada pela previsão de km)')}
-  <table class="compacta" style="margin-top:14px;font-size:11px"><tr><th></th>${us.map(u => `<th class="n" colspan="${Object.keys(T[u]).length}">${NOME[u]}</th>`).join('')}</tr>
-  <tr><td></td>${us.map(u => Object.keys(T[u]).map(a => `<td class="n note">${lab(a)}</td>`).join('')).join('')}</tr>
-  ${C.map(([k, n]) => `<tr><td>${n}</td>${us.map(u => Object.keys(T[u]).map(a => `<td class="n">${f2(T[u][a][k])}</td>`).join('')).join('')}</tr>`).join('')}</table>
-  <p class="note" style="margin-top:8px">Diesel do trecho = preço com crédito de imposto ÷ Km/L do trecho.</p>
-  ${(() => { const p = H.t1.PIR, a0 = Object.keys(p)[0], a1 = '2026'; const tt = (u, a) => ['diesel', 'manut', 'carr', 'pneu', 'salario', 'lucro'].reduce((s, k) => s + H.t1[u][a][k], 0);
-  return conc(`Na Empurrada o diesel é o frete: em Piraí foi de R$ ${f2(p[a0].diesel)} para R$ ${f2(p[a1].diesel)}/km (+${f0((p[a1].diesel / p[a0].diesel - 1) * 100)}%), e a causa não é só o preço: <b>o Km/L do trecho caiu de ${f2(p[a0].kml)} para ${f2(p[a1].kml)}</b>, porque a frota nova de Piraí (Actros 2651) tem Km/L remunerado menor que a antiga, e o FT paga mais litros por km. A manutenção do cavalo caiu de R$ ${f2(p['2025'].manut)} para R$ ${f2(p[a1].manut)}/km com a carência da renovação (~50% dos cavalos de nov/25 a mai/26), e volta a R$ 0,22/km quando ela acaba: o frete de 2027 cai por aí. Cuiabá e Macacu seguem o mesmo desenho em 2026 (R$ ${f2(tt('CBA', '2026'))} e R$ ${f2(tt('MCC', '2026'))}/km). O resultado do T1 depende do Km/L real contra o do trecho: um décimo de Km/L abaixo do remunerado em Piraí custa ~${f0(1 / (p[a1].kml - 0.1) * 100 / (1 / p[a1].kml) - 100)}% a mais de diesel sem pagamento.`); })()}`);
-}
-
-// divergências históricas
-{
-  const Y25 = Y['2025'], cad = (Y25.cadastro_seguro || [])[0];
+  const Y25 = Y['2025'], cad = (Y25.cadastro_seguro || [])[0], F = O.fator;
   const D = [
-    ['Diesel de Macacu lançado a R$ 1,85 (1ª ago/25)', `R$ ${K(O.preco.valor)} mil Rota + ~R$ ${K(O.preco.emp.perda)} mil Empurrada`, '2025', 'alta'],
-    ['Crédito de imposto do diesel: Macacu abaixo de Piraí', `R$ ${K(O.fator.impacto['MCC|2025'].imp)} mil (2025) · R$ ${K(O.fator.impacto['MCC|2026'].imp)} mil (2026)`, '2024–2026', 'baixa (fiscal)'],
-    ['Crédito de imposto do diesel: Cuiabá 0,94 → 0,78', `R$ ${K(O.fator.impacto['CBA|2026'].imp)} mil`, '2026', 'baixa (fiscal)'],
-    ['Contrato VW acima da manutenção paga', 'ver Análise 2026', '2025–2026', 'média'],
-    ['Km/L: 4º trimestre sem revisão, mudanças fora da revisão, ativas zeradas', `R$ ${K(O.kml.disp_rs)} mil + revisão`, '2026', 'alta'],
-    cad ? ['Cadastro: carroceria de R$ 9,5 bi (UDC5B42, Cuiabá)', `seguro de R$ ${K(cad.excesso)} mil no Resumo`, '2ª nov/25 · não faturado', 'cadastro'] : null,
+    ['Diesel de Macacu lançado a R$ 1,85/L', '1ª ago/25, Rota e Empurrada; ANP R$ 6,16', `R$ ${K(O.preco.valor)} mil + ~R$ ${K(O.preco.emp.perda)} mil`, 'alta', 'conferir se a fatura da quinzena foi corrigida'],
+    ['Crédito de imposto do diesel: Macacu abaixo de Piraí', `fator ${f2(F.ano.MCC['2024'])} (2024), ${f2(F.ano.MCC['2025'])} (2025), ${f2(F.ano.MCC['2026'])} (2026) contra ${f2(F.ano.PIR['2026'])} em Piraí`, `R$ ${K(F.impacto['MCC|2025'].imp)} mil (2025) · R$ ${K(F.impacto['MCC|2026'].imp)} mil (2026)`, 'baixa', 'fiscal confirma o crédito recuperado'],
+    ['Crédito de imposto do diesel: Cuiabá caiu', `fator ${f2(F.ano.CBA['2025'])} → ${f2(F.ano.CBA['2026'])} em jan/26`, `R$ ${K(F.impacto['CBA|2026'].imp)} mil (2026)`, 'baixa', 'idem'],
+    ['Contrato VW acima da manutenção paga', `${Y25.vw.placas} placas em 2025, ${Y['2026'].vw.placas} em 2026; fatura R$ ${f3(Y['2026'].vw.rk_vw)} × FT ${f3(Y['2026'].vw.rk_ft)}/km`, `R$ ${K(Y25.vw.fatura - Y25.vw.ft)} mil (2025) · R$ ${K(Y['2026'].vw.fatura - Y['2026'].vw.ft)} mil (2026)`, 'alta', 'cotar contrato × BID placa a placa'],
+    ['Km/L: Q4/26 sem revisão, valores diferentes no mesmo modelo, ativas zeradas', `${O.kml.q3q4_iguais} placas com o Km/L do Q3; ${O.kml.comDif} de ${O.kml.grupos} grupos; ${O.kml.zeradas} zeradas`, `R$ ${K(O.kml.disp_rs)} mil + revisão`, 'alta', 'crítica do consumo por placa antes da 1ª quinzena'],
+    ['Remunerado DRE acima do pago FT', `manutenção e pneu, todos os anos (${AA.map(a => `${sM(tot(a, 'rem') - tot(a, 'ft'))} mi ${lab(a)}`).join(', ')})`, 'R$ ' + M(AA.reduce((s, a) => s + tot(a, 'rem') - tot(a, 'ft'), 0)) + ' mi acumulado', 'alta', 'planejamento lança o remunerado = pago FT'],
+    cad ? ['Cadastro: carroceria de R$ 9,5 bi (Cuiabá)', `2ª nov/25; seguro de R$ ${K(cad.seguro)} mil na quinzena; não faturado`, 'R$ 0', 'erro', 'corrigido no cadastro; vale como prova de leitura placa a placa'] : null,
+    ['Diesel comprado acima da ANP', `Rota, ano a ano: ${Object.entries(O.preco.acima_ano).map(([a, v]) => `${a} R$ ${K(v)} mil`).join(' · ')}`, 'R$ ' + K(Object.values(O.preco.acima_ano).reduce((s, v) => s + v, 0)) + ' mil (2022–25)', 'alta', 'posto com preço negociado'],
   ].filter(Boolean);
-  slide(`${head('Divergências de remuneração', '2022 a 2026')}
-  <table style="margin-top:14px"><tr><th>Divergência</th><th class="n">Valor</th><th>Período</th><th>Confiança</th></tr>
-  ${D.map(r => `<tr><td><b>${r[0]}</b></td><td class="n">${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</table>
-  <p class="note" style="margin-top:8px">Corrigido: as "placas com manutenção zero fora da carência" das versões anteriores não existem; o FT paga a manutenção pelo campo Manutenção R$/KM (BID ou tabela por idade), também sem contrato.</p>
-  ${conc(`Em cinco anos de FT, os erros de remuneração encontrados são <b>poucos e pontuais</b>: um preço de diesel digitado errado (Macacu, ago/25), um cadastro de carroceria absurdo que não chegou a ser faturado, e o crédito de imposto do diesel da Empurrada que precisa de confirmação do fiscal. O que pesa de verdade não é erro: é <b>premissa</b>. A manutenção paga caiu ${f0((1 - PR['2026'].manut / PR['2022'].manut) * 100)}% por km enquanto a frota envelheceu, o Km/L remunerado parou de ser revisado em 2026, e o km do teto só vira pagamento quando o mapa roda. São esses três pontos, com os números das páginas anteriores, que sustentam a revisão de premissas; os erros entram como prova de que a base é lida placa a placa.`)}`);
+  slide(`${head('Divergências de remuneração, 2022 a 2026', 'Os erros são poucos e pontuais; o que pesa é premissa e composição', 'Confiança: alta = medido na base; baixa = depende de confirmação de terceiro (fiscal); erro = cadastro')}
+  ${tabela({ classe: 'compacta', cols: [{ t: 'Divergência' }, { t: 'Base', w: true }, { t: 'Valor', n: true }, { t: 'Confiança' }, { t: 'Próximo passo', w: true }], rows: D.map(r => [{ v: '<b>' + r[0] + '</b>' }, r[1], { v: '<b>' + r[2] + '</b>' }, tag(r[3]), r[4]]) })}
+  ${concBlocos([
+    { t: 'Erros', v: 'três, pontuais', s: 'um preço digitado errado, um cadastro absurdo que não faturou, e o crédito do diesel que o fiscal confirma.' },
+    { t: 'Premissa', v: 'manutenção e Km/L', s: `a manutenção paga caiu ${f0((1 - PR['2026'].manut / PR['2022'].manut) * 100)}% por km pela troca de frota; o Km/L parou de ser revisado em out/26.` },
+    { t: 'Composição', v: 'remunerado DRE', s: 'o planejamento lança acima do FT todos os anos: a DRE mostra a frota melhor do que o FT paga.' },
+  ])}`);
+}
+
+// ═══ fechamento ═══
+{
+  const d = a => tot(a, 'real') - tot(a, 'ft'), D = H2.decomp['2022-2026'];
+  slide(`${head('Para levar', 'Cinco anos de FT: a receita cresceu por frota e km, o R$/km real caiu, o fixo subiu com a frota nova, e o custo ficou acima do pago todo ano', 'O que o histórico sustenta, com o número')}
+  ${cartoes([
+    { k: '1 · Receita', n: '+' + f0((Object.values(Y['2025'].receita).reduce((s, x) => s + x.real, 0) / Object.values(Y['2022'].receita).reduce((s, x) => s + x.real, 0) - 1) * 100) + '%', p: `2022 → 2025, por frota (+${f0((Y['2025'].t2_frota.ativos_mes / Y['2022'].t2_frota.ativos_mes - 1) * 100)}% de ativos) e km; o variável por km ficou parado em ~R$ 3,0.` },
+    { k: '2 · Premissas × inflação', n: '−' + f0((1 - PR['2026'].var / (PR['2022'].var * (idx('ipca', '2026') || 100) / 100)) * 100) + '% real', p: `o variável por km perdeu para o IPCA; a manutenção paga caiu ${f0((1 - PR['2026'].manut / PR['2022'].manut) * 100)}% pela troca de frota (${D.saiu} placas saíram a R$ ${f2(D.manut.saiu)}, ${D.entrou} entraram a R$ ${f2(D.manut.entrou)}).`, acc: true },
+    { k: '3 · Fixo', n: '+' + f0((PR['2026'].fixo / PR['2022'].fixo - 1) * 100) + '%', p: `caminhão +${f0((PR['2026'].compra / PR['2022'].compra - 1) * 100)}%, taxa ${f1(PR['2022'].taxa)}% → ${f1(PR['2026'].taxa)}%: o FT remunera a parcela. As parcelas das mesmas placas acabaram (R$ ${f0(D.fixo.mesmas_de)} → ${f0(D.fixo.mesmas_para)}).` },
+    { k: '4 · Resultado', n: 'R$ ' + M(d('2026')) + ' mi em ' + N26 + ' meses', p: `acima do pago em todos os anos (2024 o melhor, R$ ${M(d('2024'))} mi); manutenção e combustível explicam; o remunerado DRE fica entre os dois.` },
+  ])}
+  ${concBlocos([
+    { t: 'O que pedir', s: 'Revisão do Km/L do Q4 com a crítica por placa · regra da manutenção para placas fora da carência com oficina (garantia) · composição do remunerado da DRE igual ao pago FT · índice de reajuste do contrato (qual?) contra o IPCA.' },
+    { t: 'O que planejar', s: 'Renovação pelo fim das parcelas (quitado recebe ~R$ 600/mês) · contratos de manutenção cotados contra o BID · consumo validado preparado a cada trimestre.' },
+  ], 'Próximos passos', 2)}`);
 }
 
 console.log('ok', write(process.env.FT_HTML || 'historico.html'), 'slides');

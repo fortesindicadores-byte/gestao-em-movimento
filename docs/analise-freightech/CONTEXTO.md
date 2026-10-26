@@ -1,17 +1,19 @@
-# Materiais do Freightech — contexto da sessão (até 26/10/2026)
+# Materiais do Freightech — contexto da sessão (até 26/10/2026, tarde)
 
 Arquivo de retomada: o que existe, como regerar, o que foi decidido e o que falta. O diário completo (porquês, falas do Renan) está no `CLAUDE.md`, seção "Freightech". Este arquivo é o resumo operacional.
 
 ## 1. O que existe hoje
 
-Quatro materiais em PDF, todos revisados em 26/10/2026 de manhã e enviados pelo chat (nunca pelo repositório, porque trazem remuneração da Ambev e placas):
+Quatro materiais em PDF, **refeitos do zero em 26/10/2026 à tarde** com toda a seção 6b aplicada (Renan: *"aplique tudo que anotei em todos os materiais… revise TUDO"*) e enviados pelo chat (nunca pelo repositório, porque trazem remuneração da Ambev e placas):
 
 | Material | Arquivo | Slides | Gerador |
 |---|---|---|---|
-| Análise completa 2026 (jan–ago, T2) | `Analise_Freightech_2026.pdf` | 19 | `deck-analise.mjs` |
-| Histórico 2022–2026 × DRE | `Analise_Freightech_Historico_2022-2026.pdf` | 10 | `deck-historico.mjs` |
-| Treinamento para gestores | `Treinamento_Remuneracao_Gestores.pdf` | 9 | `deck-treinamento.mjs` |
-| Manual de frota (cada custo, memória de cálculo, origem) | `Manual_Freightech_Frota.pdf` | 21 | `deck-manual.mjs` |
+| Manual de frota (cada custo como fórmula, origem dos campos, rodapé didático) | `Manual_Freightech_de_Frota.pdf` | 34 | `deck-manual.mjs` |
+| Treinamento para gestores (do mapa à DRE do mapa, alavancas, rotina em 3 slides) | `Treinamento_Remuneracao_Gestores.pdf` | 21 | `deck-treinamento.mjs` |
+| Análise 2026 estrutural (jan–ago, T2: definições → resultado → combustível → manutenção → pneu e fixo → erros/gaps/oportunidades/discrepantes → T1 → receita) | `Analise_Freightech_2026.pdf` | 37 | `deck-analise.mjs` |
+| Histórico 2022–2026 (receita e frota → mercado 2019–26 → premissas × inflação e o porquê → resultado → T1 → divergências) | `Historico_Freightech_2022_2026.pdf` | 23 | `deck-historico.mjs` |
+
+Todos usam o `deck-base.mjs` v2 (capas de seção escuras, `cartoes`, `fx`/`formula`/`livro` para fórmula em texto, `tabela` sem quebra, `origem`, `concBlocos`, `didat`, `gbars`). O teto (25 mapas por ativo) aparece uma vez por material, como informação; "Pago FT" vem sempre com a origem (R$/km × km da Dispersão; não é a fatura).
 
 Decks anteriores (`deck-2026.mjs`, `deck-oportunidades.mjs`, `deck-unidades.mjs`, `deck.mjs`) são de 24–25/10 e foram superados pelos quatro acima. As oportunidades 1 e 2 deles (fatura VW × FT e manutenção zero) estavam calculadas sobre o campo errado (`R$/KM` em vez de `Manutenção R$/KM`) e não valem.
 
@@ -19,20 +21,21 @@ Código no repositório: `docs/analise-freightech/`. Dados (dump decifrado, parq
 
 ## 2. Pipeline e comandos
 
-Pasta de trabalho dos dados: `$A = <scratchpad>/ana` (hoje `/tmp/claude-0/-home-user-gestao-em-movimento/df61d1fb-06c6-51a4-9fae-692ed62b893f/scratchpad/ana`). Os `.py` e `.mjs` de lá são cópias dos do repositório; o repositório é a fonte.
+Pasta de trabalho dos dados: `$A = <scratchpad>/ana2` (hoje `/tmp/claude-0/-home-user-gestao-em-movimento/df61d1fb-06c6-51a4-9fae-692ed62b893f/scratchpad/ana2`; a `ana` é a rodada anterior, com o dump de 25/10). Os `.py` e `.mjs` de lá são cópias dos do repositório; o repositório é a fonte. O dump da tarde de 26/10 (`$A/../dump3`, carga `todas=1` + 222 tabelas `FORMULA:<tabela>`) está decifrado; `load.py` lê `DUMP=` e troca `:` por `_` no nome do parquet; `sh.py` traz também `dre_ebitda`.
 
 1. **Dados:** workflow **Analise Dump** (`scripts/analise-dump.mjs`) publica o dump cifrado no branch `tmp-analise-dump`; a chave privada mora só em `scratchpad/ftkey/priv.pem`. Decifrar, rodar `load.py` + `sh.py` (parquet em `$A/pq`), e apagar o branch com `so_apagar=true`.
 2. **Análise por período:** `cd $A && INI=2026-01 FIM=2026-08 ROTULO=2026 python3 completa.py` grava `completa-2026.json` e `completa-2026.pkl` (um por ano para o histórico: 2022–2026). O período é cortado no último mês com `Km Rem. TT` na Dispersão (`FIMD`); setembro fica fora porque a aba acaba em ago/26.
 3. **Cruzamentos por unidade:** `cd $A && INI=2026-01 FIM=2026-08 ROTULO=2026 python3 extra.py` lê o pkl e grava `extra-2026.json` (`manut_uni`, `manut_contas`, `saldo_uni`, `saldo_mes`, `comb_uni_placa`, `pneu_uni`, `fixo_uni`).
-4. **Histórico:** `python3 historico.py` junta os `completa-<ano>.json` em `historico.json`.
-5. **Manual:** `python3 manual.py` grava `manual.json` (campos, fórmulas e exemplos lidos das tabelas e das fórmulas exportadas do FT).
-6. **Decks** (na pasta `docs/analise-freightech`):
-   - `CMP=$A/completa-2026.json OPO=$A/opo.json EXTRA=$A/extra-2026.json FT_HTML=$A/analise26.html node deck-analise.mjs`
-   - `HIS=$A/historico.json OPO=$A/opo.json FT_HTML=$A/historico.html node deck-historico.mjs`
-   - `OPO=$A/opo.json FT_HTML=$A/treinamento.html node deck-treinamento.mjs`
-   - `MAN=$A/manual.json FT_HTML=$A/manual.html node deck-manual.mjs`
-7. **Conferência visual antes de mandar:** copiar `$A/vaza.mjs` → `docs/driverpro-apresentacao/_vaza.mjs` e `$A/shots.mjs` → `_shots.mjs`, rodar (prints em `$A/sh_<deck>`), apagar as cópias. O `vaza.mjs` pega texto fora da caixa, mas ignora `.foot`: conclusão encostando no rodapé só aparece na altura (`shots.mjs`; cabe quando o conteúdo fica em até ~620 px).
-8. **Render:** `cd docs/driverpro-apresentacao && PW_CHROME=/opt/pw-browsers/chromium node render.mjs <html> <pdf>`; PDFs em `$A/out/`. Enviar pelo `SendUserFile`.
+4. **Histórico:** `python3 historico.py` junta os `completa-<ano>.json` em `historico.json`; `MACRO=../macro/macro.json python3 historico2.py` grava `historico2.json` (decomposição mesmas placas × saíram × entraram por par de anos, coorte de idade, modelos, status, TJLP e taxa FINAME das placas, pneu por ano, índices do BCB em base 2022 e 2019; NaN vira null).
+5. **Manual:** `MES=9 python3 manual.py` → `manual.json`; `python3 manual2.py` → `manual2.json`; `python3 manual3.py` → `manual3.json` (parâmetros da unidade, SRTrans, lucro por HL, Faturamento, recarga, Van, AS, conferência exata de carroceria/pneu/manutenção, tabela por idade, BID, FINAME). **Análise estrutural:** `python3 analise2.py` → `analise2-2026.json` (km pago × rodado × abastecido por unidade, placas inativas que rodam, ANP por unidade, VW por placa, DRE por conta e mês, o porquê do remunerado de manutenção, meses fora da curva, placas 15% abaixo do Km/L, quitadas, fixo de parado por unidade). `oportunidades.py` precisa dos pkl da rodada `ana` e do `dados.json` do Km/L remunerado; sem eles, reaproveitar `../ana/opo.json` (mesmos dados de 2026).
+6. **Índices macro:** workflow **Macro Indices** (`scripts/macro-indices.mjs`, BCB SGS) publica `macro.json` no branch `tmp-macro` (ipca, igpm, ipa_m, selic_meta, desemprego, ibc_br funcionam; tjlp, cambio, sal_minimo e inpc voltam XML do SGS e ficam vazios: a TJLP vem da tabela Caminhão do FT). Apagar o branch com `so_apagar=true` depois de ler.
+7. **Decks** (na pasta `docs/analise-freightech`, com `$A` = pasta dos json):
+   - `MAN=$A/manual.json MAN2=$A/manual2.json MAN3=$A/manual3.json OPO=$A/opo.json FT_HTML=$A/manual.html node deck-manual.mjs`
+   - `OPO=$A/opo.json MAN3=$A/manual3.json MAN=$A/manual.json A2=$A/analise2-2026.json CMP=$A/completa-2026.json FT_HTML=$A/treinamento.html node deck-treinamento.mjs`
+   - `CMP=$A/completa-2026.json EXTRA=$A/extra-2026.json A2=$A/analise2-2026.json OPO=$A/opo.json FT_HTML=$A/analise.html node deck-analise.mjs`
+   - `HIS=$A/historico.json H2=$A/historico2.json OPO=$A/opo.json FT_HTML=$A/historico.html node deck-historico.mjs`
+8. **Conferência visual antes de mandar:** `$A/vaza.mjs <html…>` (texto fora da caixa) e, numa subpasta, `node ../shots.mjs <html>` (altura do conteúdo por slide + um png por slide; cabe quando fica em até ~640 px). Os dois precisam do `playwright` do repositório: `ln -s /home/user/gestao-em-movimento/node_modules $A/node_modules`.
+9. **Render:** `node docs/driverpro-apresentacao/render.mjs <html absoluto> <pdf absoluto>` (`PW_CHROME=/opt/pw-browsers/chromium`); PDFs em `$A/pdf/`. Enviar pelo `SendUserFile`.
 
 ## 3. Regras de cálculo confirmadas nos dados
 
@@ -44,13 +47,25 @@ Pasta de trabalho dos dados: `$A = <scratchpad>/ana` (hoje `/tmp/claude-0/-home-
 - **Resumo do FT é mensal e cada quinzena repete o mês** (mês = média das duas quinzenas).
 - **DRE × FT compara-se ao km pago** (componentes do FT × km da Dispersão ÷ km do FT, por unidade × mês), com Rota + Van + UDC + AS juntos.
 
+### 3b. Confirmado pelas fórmulas exportadas do FT (26/10/2026, 222 tabelas `FORMULA:*` da 1ª out/26)
+
+- **Combustível (T2):** `Consumo R$/KM = (preço do S10 pago + 0,05 × preço do Arla) ÷ Km/L da placa`; pago = min(ANP, nosso). O Km/L da placa é literal na fórmula (`return 4.059`): é o consumo validado, não benchmark × ajustes. `KM Mês Roadshow` = parâmetro da unidade `kmMensalPrimeiraViagem` (igual para todas as placas); KM Total = Roadshow + ELD.
+- **Manutenção R$/KM:** carência (ano ≥ 2018 e vida ≤ freeMaintenance) → 0; ano do veículo > 10 → tabela(capacidade, 10, km); `manutencaoReaisKm` = contrato se (compra fora do BID autorizada ou contrato < BID), senão BID; sem contrato: BID × 0,9 se ano do BID ≥ 2019, senão BID; sem BID → tabela por idade × km/mês. O `R$/KM` (contrato por faixa de odômetro) é informativo.
+- **Carroceria:** `Valor por Mês ÷ km total + 0,02` (fecha em 100%; era o "ajuste 1,15" das versões anteriores). **Pneu:** `(qtd × 0,8 × liso + qtd × 0,2 × tração + qtd × 2 × recap + qtd × (câmara + protetor + montagem)) ÷ vida` (100%).
+- **Fixo:** seguro = seguroFixo ÷ 12 + compra × risco (0,75%) ÷ 12; IPVA = anual ÷ 12 (0 em LEASING/ALUGADO); faixa = param × 2 ÷ 60; rastreador = parâmetro da unidade (RJ R$ 106,36; outras 0); lavagem = tabela por capacidade, só ativo; FINAME: FINANCIADO = PMT((1 + taxa)^(1/12) − 1, período − carência, compra × (1 + r)^carência × (1 − entrada)); FINAME/SAC = amortização + juros; LEASING = custoAluguelLeasing; QUITADO/ALUGADO 0; taxa = (1 + TJLP)(1 + spread BNDES)(1 + spread banco) − 1. `Total Custo Fixo` = seguro + rastreador + faixa + IPVA + FINAME + depreciação + lucro fixo + lucro FINAME + lavagem; no Resumo a lavagem vai para Outras Despesas.
+- **Resumo:** Total Viagens = R$/km × KM Remunerado × ativos (o teto); recarga = R$/km × kmRecarga + lucro ÷ 25 + prêmio da equipe; `LucroNovo.Lucro` = volume × R$/HL.
+- **Faturamento (export):** `Custo Variável Líquido` == Total Viagens, ou seja, **o export Faturamento é o dimensionamento quinzenal com impostos, NÃO a fatura com os mapas rodados.** Por isso "pago FT" continua reconstruído com R$/km × Km Rem. TT da Dispersão, e todo material diz isso. A fatura por mapa (2art) é pergunta aberta ao Renan.
+- **T1:** diesel do trecho = (min(ANP, nosso) + 0,05 × Arla) ÷ Km/L do trecho (perdas zeradas); freteLiquido = Σ nove componentes; pneu = (preço + carcaça + recap × n) × pneus ÷ vida; custo fixo da carreta = FINAME + lucro fixo do ciclo (o "demais, campo não exportado" de antes).
+
 ## 4. Achados que estão nos materiais (2026, jan–ago, T2)
 
 - Déficit R$ 3,4 mi (R$ 190 mil em jan a R$ 815 mil em jun). Rio 43%; Guarulhos + Cuiabá 31%; Nova Friburgo, Macacu, Rondonópolis e Pelotas fecham perto do pago. Frota parada e viagens por ativo não separam quem fecha; o custo por km rodado separa.
 - Manutenção: FT paga R$ 3,1 mi; a DRE lança R$ 2,8 mi de contrato do fabricante e R$ 3,0 mi de oficina. No Rio o contrato sozinho passa o pago. Idade não explica (Guarulhos, 78 meses, recebe o maior R$/km; Rondonópolis, 9 meses, gasta R$ 120 mil de oficina).
 - Combustível +23% constante nos 8 meses. No Rio 72 das 139 placas rodam 15% ou mais abaixo do Km/L previsto (42% do km, 100 mil L a mais); o tanque interno cobre parte. Em Cuiabá a causa é km, não consumo.
 - Histórico: receita +73% de 2022 a 2025 por frota e km, não por preço; variável parado em ~R$ 3,0/km; manutenção paga −32%/km; Km/L rem 2,92 → 3,31; fixo +259% por caminhão; déficit em todos os anos (2024 o melhor, 2026 o pior); Piraí T1 Km/L do trecho 2,37 → 1,99.
-- 71 placas ativas com manutenção zerada fora da carência (mais de 24 meses): precisam de validação uma a uma (planilha `placas_xlsx.py`, já enviada).
+- 71 placas ativas com manutenção zerada fora da carência (mais de 24 meses): precisam de validação uma a uma (planilha `placas_xlsx.py`, já enviada). **Obs.:** esse achado foi calculado sobre o `R$/KM` (contrato), não sobre o `Manutenção R$/KM` que o FT paga; na Análise 2026 estrutural ele não entra.
+- **Análise 2026 estrutural (26/10, tarde):** sete contas: pago FT R$ 16,9 mi · remunerado DRE R$ 18,4 mi · realizado R$ 20,3 mi · déficit R$ 3,4 mi; remuneração de frota inteira R$ 36,5 mi (fixo ativas 15,7 + paradas 6,2 + variável 14,6). Km: pago 5,55 mi · rodado 5,90 · abastecido 6,26; dispersão R$ 921 mil; km abastecido acima do rodado R$ 799 mil; 215 placas inativas no FT abasteceram 1,33 mi km. Remunerado DRE de manutenção = 1,51× o pago com correlação 0,98 (é o pago com um fator; nenhuma das quatro composições reproduz); pneu bate a partir de jul/26; seguro FT R$ 793 mil sem conta na DRE. Manutenção: contrato R$ 2,76 mi + oficina R$ 3,04 mi contra pago R$ 3,09 mi; VW acima do pago em 200 de 206 placas (R$ 274 mil); Rondonópolis 9,5× em jan/26; 149 placas 15% abaixo do Km/L (R$ 1,18 mi, Rio 52%); diesel acima da ANP R$ 146 mil (Cuiabá 50 mil). Síntese: gaps R$ 4,9 mi (menos sobras R$ 1,5 mi), oportunidades R$ 2,6 mi, erros R$ 3,2 mi.
+- **Histórico (26/10, tarde):** decomposição 2022→2026 (169 placas comuns, 168 saíram, 200 entraram): manutenção 0,78 → 0,60 é 100% troca de frota (mesmas placas 0,60 → 0,61; saíram a 1,05; entraram a 0,52); Km/L 3,08 → 3,33 é metade revisão da mesma placa (3,33 → 3,49) e metade saída das piores (2,50); fixo das mesmas placas caiu de R$ 5.183 para R$ 649 (parcelas acabaram) e as que entraram chegam a R$ 8.739. Premissas × IPCA (2022 = 100, IPCA 119, IGP-M 106, IPA-M 101): variável 88, manutenção 68, combustível 94, pneu 127, fixo 359, compra 143; se o variável tivesse seguido o IPCA, 2026 pagaria R$ 5,9 mi a mais em 8 meses (manutenção R$ 2,4 mi).
 
 ## 5. Regras de escrita (feedback acumulado do Renan)
 
@@ -66,13 +81,14 @@ Pasta de trabalho dos dados: `$A = <scratchpad>/ana` (hoje `/tmp/claude-0/-home-
 
 - **Confirmar com o Renan** como o pacote do SRTrans é pago por mapa ("cada mapa é uma DRE"): se o mapa não rodado tira também fixo, equipe e indiretos. Até lá, nada afirma que mapa não rodado é ou não é perda.
 - **Resto do fixo da carreta** não exportado (linha "Demais (campo não exportado)" no manual).
-- Se o Renan aprovar o padrão das conclusões novas, levar o mesmo nível (unidade/causa/contra-prova) aos slides da Análise 2026 ainda não refeitos: pneu, fixo, evolução, Km/L, divergências, T1, receita.
-- Puxar os dados da carga "todas 2026" (`todas=1`, já rodada) e as fórmulas (`modo formulas`) → Analise Dump → decifrar → `load.py`/`sh.py` → completar o manual (fixo da carreta, Armazém, AS/Van) → ligar Faturamento à receita da DRE → versão final dos PDFs. Depois, a carga desde 2022. Apagar `tmp-analise-dump` depois de ler.
+- **Perguntas abertas (estão no último slide da Análise 2026):** como o remunerado de manutenção e pneu é montado na DRE e o que mudou em jul/26 no pneu; se o rastreador só no RJ é regra; se o pacote do SRTrans é pago por mapa ou por caminhão ativo; onde o seguro é lançado; como o Km/L validado sai do real do trimestre; qual índice reajusta o contrato da Ambev; se existe export da fatura por mapa (o Faturamento exportado é o dimensionamento).
+- **Renan vai ler os quatro PDFs novos** (26/10 à tarde) e mandar o próximo lote de ajustes. A seção 6b abaixo está APLICADA; fica como registro do que ele pediu e de como foi resolvido.
+- Dados macro que faltam (TJLP, câmbio, salário mínimo, INPC do SGS voltam XML): tentar outro endpoint do BCB ou o Renan cola; hoje a TJLP vem do FT. FIPE caminhões, ANP por UF e NTC não foram coletados.
 - Etapas seguintes do pedido original: painel **Remuneração** (Resumo Gerencial, tabela analítica, gráficos, histórico) → IA só para o dono (Edge Function com a chave) → orçamento (planilhas dele + base histórica + previsões + aprendizado dos FCAs) → robô de insights (backlog).
 
-## 6b. Feedback visual pendente (Renan, 26/10/2026) — aplicar em TODOS os materiais de uma vez
+## 6b. Feedback visual de 26/10/2026 (Renan) — APLICADO nos quatro materiais em 26/10 à tarde
 
-Renan, vendo os slides 3 (três contas no Resumo) e 4 (FINAME) do Manual: *"Você considera essa visão clean? Você considera que está bem distribuído? textos com quebra na tabela?"* e *"Aqui também. Não está moderno e clean"* → *"olhe geral nisso. Guarde para ajustar em tudo. Vou mandar mais infos."* **Nada foi alterado ainda; ele vai mandar mais orientações antes.** O que está errado e o que foi proposto:
+Renan, vendo os slides 3 (três contas no Resumo) e 4 (FINAME) do Manual: *"Você considera essa visão clean? Você considera que está bem distribuído? textos com quebra na tabela?"* e *"Aqui também. Não está moderno e clean"* → *"olhe geral nisso. Guarde para ajustar em tudo. Vou mandar mais infos."* → à tarde: *"Agora pode aplicar tudo que anotei em todos os materiais. Você já entendeu minha linha de raciocínio, aplique ela e revise TUDO."* **Tudo abaixo está aplicado** (deck-base v2 + os quatro decks reescritos; `vaza.mjs` e `shots.mjs` verdes; PDFs enviados). Onde o pedido dependia de resposta dele (pacote por mapa, fatura por mapa), o material diz na cara o que assumiu. O registro original, item a item:
 
 - **Quebra de linha em célula de tabela é proibida.** No slide 3 quebram o cabeçalho "Relatório (tabela FT)", o campo "Total por Caminhão Frota Parada · Total Caminhão Parado", o "O que é" do R$/km e até o exemplo "R$ 2,91/km × 2.369". Causa: a coluna "Relatório" (que repete "Resumo"/"Caminhão" em toda linha) rouba largura das outras.
 - **Coluna "Relatório" sai da tabela de origem**; o nome do relatório vai para o cabeçalho ou para a nota. Tabela fica Campo · O que é · No exemplo, cada célula numa linha.

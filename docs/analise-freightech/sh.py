@@ -1,6 +1,7 @@
-import gzip,json,pandas as pd
+import gzip,json,os,pandas as pd
+D=os.environ.get('DUMP','../dump')
 def sh(slug):
-    it=[json.loads(x) for x in gzip.open(f'../dump/sh-{slug}.ndjson.gz')]
+    it=[json.loads(x) for x in gzip.open(f'{D}/sh-{slug}.ndjson.gz')]
     b=it[0]['_base']; cols=sorted(b['colunas'],key=lambda c:c['i'])
     df=pd.DataFrame(it[1:])
     keep=[];names=[];seen={}
@@ -10,5 +11,5 @@ def sh(slug):
     out=df[keep].copy(); out.columns=names
     out['_vigdb']=df['vigencia']
     return out
-for s in ['dre_frota','dre_receita','dispersao_km','consumo_km_litro','consumo_rs_litro','consumo_rem_modelo']:
+for s in ['dre_frota','dre_receita','dispersao_km','consumo_km_litro','consumo_rs_litro','consumo_rem_modelo','dre_ebitda']:
     sh(s).to_parquet(f'pq/sh_{s}.parquet')

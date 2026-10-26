@@ -1,5 +1,5 @@
 import gzip,json,collections,pandas as pd,os,re
-D='../dump'
+D=os.environ.get('DUMP','../dump')
 L=[json.loads(x) for x in gzip.open(f'{D}/ft-layout.ndjson.gz')]
 lay={(l['canal'],l['tabela'],l['vigencia']):l['colunas'] for l in L}
 os.makedirs('pq',exist_ok=True)
@@ -25,5 +25,5 @@ for canal in sorted({l['canal'] for l in L}):
                 s=pd.to_numeric(df[c],errors='coerce')
                 if s.notna().sum()>=0.9*df[c].notna().sum() and df[c].notna().sum()>0: df[c]=s
                 else: df[c]=df[c].astype(str).where(df[c].notna(),None)
-        df.to_parquet(f'pq/{canal}__{t}.parquet')
+        df.to_parquet(f'pq/{canal}__{t.replace(":","_")}.parquet')
         print(canal,t,df.shape)
