@@ -115,7 +115,7 @@ custo({ k: 'T2 · Variável · 1', h: 'Combustível: (preço do diesel + Arla) �
     ['Caminhão', 'Consumo KM/L', 'Km/L remunerado da placa (revisão trimestral)', f2(P['Consumo KM/L'])], ['Caminhão', 'Consumo R$/KM', 'resultado, 2 casas', rk(P['Consumo R$/KM'])]]),
   n: `Preço implícito na conta: R$ ${f2(P['Consumo R$/KM'] * P['Consumo KM/L'])}/L. Placa "S10 S/ ARLA" usa só o diesel. Em 100% dos preços de diesel desde 2022 o pago é o menor entre o nosso e a ANP.` });
 
-custo({ k: 'T2 · Variável · 2', h: 'Km/L remunerado: a régua do consumo',
+custo({ k: 'T2 · Variável · 2', h: 'Km/L remunerado: o consumo previsto da placa',
   fit: fita([{ l: 'Benchmark do modelo', v: f2(P['Benchmark Consumo']) }, '→', { l: 'Revisão trimestral', v: 'consumo validado' }, '→', { l: 'Km/L da placa', v: f2(P['Consumo KM/L']), d: true }]),
   org: origem([['Caminhão', 'Benchmark Consumo', 'referência do modelo', f2(P['Benchmark Consumo'])], ['Caminhão', 'Fator Correção Região', 'ajuste por região (%)', f1(P['Fator Correção Região'])], ['Caminhão', 'Perda Ano Veículo', 'ajuste por idade (%)', f1(P['Perda Ano Veículo'])], ['Caminhão', 'Consumo KM/L', 'valor que entra na conta', f2(P['Consumo KM/L'])]]),
   n: 'A revisão entra na 1ª quinzena de cada trimestre: o consumo validado do trimestre anterior, com penalidades. Em out/26 a revisão do 4º trimestre não foi feita (nenhuma placa mudou).' });
