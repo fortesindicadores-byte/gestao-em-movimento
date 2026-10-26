@@ -1035,6 +1035,8 @@ async function textoDoAnexo(buf, tipo, libs) {
   } catch (e) { return null; }
   return null;
 }
+let LISTAR_URL = null;   // a URL exata que a tela do Book manda (os valores de filtro/tipoCategoria são enums da tela)
+page.on('request', req => { if (/central-ajuda\/listar/.test(req.url()) && !LISTAR_URL) LISTAR_URL = req.url(); });
 async function book() {
   if (!SB_KEY) { console.error('::error::sem GEM_SUPABASE_SERVICE_KEY'); process.exitCode = 1; return; }
   const crypto = await import('node:crypto');
@@ -1047,13 +1049,19 @@ async function book() {
   // a página precisa estar com o token vivo
   await page.goto(BASE + '/#/central-ajuda', { waitUntil: 'domcontentloaded' }).catch(() => {});
   await page.waitForTimeout(6000);
-  // 1) lista inteira (tenta páginas grandes; cai em 6, como a tela)
+  if (!LISTAR_URL) { await clicaJs(/^BOOK OPERADOR$/i); await page.waitForTimeout(8000); }
+  if (!LISTAR_URL) { console.error('::error::a tela do Book não chamou central-ajuda/listar (não dá para copiar os parâmetros)'); process.exitCode = 1; return; }
+  const LU = new URL(LISTAR_URL);
+  log('parâmetros da lista (da tela): ' + [...LU.searchParams.entries()].filter(([k]) => k !== 'search').map(([k, v]) => `${k}=${v}`).join('&'));
+  // 1) lista inteira (tenta páginas grandes; cai em 6, como a tela), com os MESMOS parâmetros da tela
   const lista = []; let total = null;
   for (const size of [100, 6]) {
     lista.length = 0;
     for (let p = 0; p < 200; p++) {
-      const r = await ftApiOk(`${API_BACK}/central-ajuda/listar?_page=${p}&_size=${size}&search=&filtro=&categoria=&tipoCategoria=`);
+      const u = new URL(LISTAR_URL); u.searchParams.set('_page', String(p)); u.searchParams.set('_size', String(size));
+      const r = await ftApiOk(u.toString());
       const j = (r.v && typeof r.v === 'object') ? r.v : {};
+      if (r.st !== 200) { log(`   lista HTTP ${r.st}: ${String(j.mensagemDesenvolvedor || j.mensagemUsuario || '').slice(0, 160)}`); break; }
       const c = Array.isArray(j.content) ? j.content : [];
       if (!c.length) break;
       c.forEach(x => lista.push(x)); total = j.totalElements ?? total;
