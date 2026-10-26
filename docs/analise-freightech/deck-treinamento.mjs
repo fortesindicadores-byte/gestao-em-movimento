@@ -141,7 +141,7 @@ slide(`${head('O variável, passo a passo', 'Do km do caminhão ao dinheiro do m
 slide(`${head('Vocabulário', 'Quatro termos que aparecem em todo material de remuneração')}
   ${cartoes([
     { k: 'Pago FT', n: 'o que entra', p: 'R$/km do caminhão (premissas do FT) × km remunerado dos mapas rodados, mais o fixo por caminhão ativo e parado. Nos painéis, o km dos mapas vem da nossa Dispersão de km (o FT exporta o dimensionamento, não a fatura do mapa).', o: `${NOME.CBA}, ago/26: ${f0(KE.pago)} km pagos × R$/km` },
-    { k: 'Remunerado DRE', n: 'o que o planejamento lançou', p: 'A receita de frota esperada da Ambev, lançada na DRE por conta (combustível, manutenção, pneu…). Deveria ser igual ao pago FT; quando não é, ou a DRE engana ou estamos sendo pagos a menos.' },
+    { k: 'Remunerado DRE', n: 'o que o planejamento lançou', p: 'A receita de frota esperada da Ambev, lançada na DRE por conta (combustível, manutenção, pneu…). Pode diferir do pago FT por imposto (regime tributário) e pela composição; a diferença é conferida com os relatórios oficiais do FT, não tratada como erro.' },
     { k: 'Realizado DRE', n: 'o que gastamos', p: 'O custo de verdade, lançado na DRE por conta. É contra o pago FT que ele se compara: pago − realizado = resultado da frota.' },
     { k: 'Teto', n: 'informativo', p: 'R$/km × km da placa × ativos × 25 mapas: o dimensionamento do FT se todos os ativos rodassem todos os dias. Não é meta nem base de comparação.', o: `2026: a rede rodou ${f1(KT.viag_ativo_mes)} mapas por ativo por mês` },
   ])}

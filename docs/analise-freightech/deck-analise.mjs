@@ -34,7 +34,7 @@ const porDif = US.slice().sort((a, b) => SU[b].dif - SU[a].dif);
 
 // ═══ capa ═══
 capa(`T2 · Rota, AS e Van · ${PER}`, `Remuneração Freightech ${X.ROT}: o que o FT pagou, o que a frota custou e o que explica a diferença`,
-  'Freightech placa a placa e quinzena a quinzena, cruzado com a Dispersão de km, os abastecimentos do ERP, a fatura do contrato VW e a DRE de frota. Cada achado é classificado (erro, gap, oportunidade ou custo discrepante) e tem valor.');
+  'Freightech placa a placa e quinzena a quinzena, cruzado com a Dispersão de km, os abastecimentos do ERP, a fatura do contrato VW e a DRE de frota. Cada achado é classificado (a confirmar, gap, oportunidade ou custo discrepante) e tem valor. Os valores são reconstruídos com as premissas do FT; os relatórios oficiais ainda estão sendo liberados pela TI.');
 
 // ═══ definições ═══
 {
@@ -42,11 +42,11 @@ capa(`T2 · Rota, AS e Van · ${PER}`, `Remuneração Freightech ${X.ROT}: o que
   slide(`${head('Antes de começar', 'Quatro termos que aparecem em toda tabela desta análise', `Exemplo: ${nm(u)}, ${PER}, as sete contas de frota (combustível, manutenção, carroceria, pneu, lavagem, IPVA, seguro)`)}
   ${cartoes([
     { k: 'Pago FT', n: 'R$ ' + M(s.ft) + ' mi', p: 'O que o Freightech paga pela frota: R$/km do caminhão (premissas do FT) × km remunerado dos mapas rodados, mais o fixo por caminhão. O km dos mapas vem da <b>nossa Dispersão de km</b> (viagens realizadas × km por mapa, mais recargas e noturnas); não é a fatura.', o: 'Tabelas Caminhão e Resumo do FT × Dispersão de km' },
-    { k: 'Remunerado DRE', n: 'R$ ' + M(s.rem) + ' mi', p: 'O que o planejamento lançou na DRE como receita de frota esperada, conta a conta. Deveria ser igual ao pago FT; quando não é, ou a DRE engana, ou estamos sendo pagos a menos.', o: 'DRE de frota · coluna Remunerado' },
+    { k: 'Remunerado DRE', n: 'R$ ' + M(s.rem) + ' mi', p: 'O que o planejamento lançou na DRE como receita de frota esperada, conta a conta. Pode diferir do pago FT por imposto (regime tributário: lucro real × crédito presumido) e pela composição do planejamento; a diferença fica em aberto até os relatórios oficiais do FT.', o: 'DRE de frota · coluna Remunerado' },
     { k: 'Realizado DRE', n: 'R$ ' + M(s.real) + ' mi', p: 'O que de fato gastamos, lançado na DRE por conta. É contra o pago FT que ele se compara: <b>pago − realizado = resultado da frota</b>.', o: 'DRE de frota · coluna Realizado', acc: true },
     { k: 'Teto (informativo)', n: 'R$ ' + M(t.var_teto) + ' mi', p: `R$/km × km da placa × ativos × 25 mapas: o variável se todos os ativos rodassem todos os dias. Em ${nm(u)} o variável pago foi R$ ${M(t.var_pago)} mi. <b>Não é meta nem base de comparação</b>; aparece só aqui.`, o: 'Resumo do FT · Total Viagens' },
   ])}
-  ${conc(`Toda ponte e tabela desta análise traz as três colunas: pago FT, remunerado DRE e realizado. A diferença <b>realizado − pago FT</b> é o resultado da frota; a diferença <b>remunerado DRE − pago FT</b> é um achado próprio, porque pode significar planejamento lançando a mais ou remuneração a menos.`, 'Como ler')}`);
+  ${conc(`Toda ponte e tabela desta análise traz as três colunas: pago FT, remunerado DRE e realizado. A diferença <b>realizado − pago FT</b> é o resultado da frota; a diferença <b>remunerado DRE − pago FT</b> fica só registrada: pode ser imposto (regime tributário) ou composição do planejamento, e não é tratada como erro até os relatórios oficiais do FT.`, 'Como ler')}`);
 }
 
 // ═══ Parte 1 · Resultado ═══
@@ -80,7 +80,7 @@ slide(`${head('Quanto custou, nas contas que dá para comparar', `Sete contas: o
   ${concBlocos([
     { t: 'Déficit', v: 'R$ ' + M(DEF) + ' mi', s: `em ${N} meses; a frota custou ${f0(REAL7 / FT7 * 100)}% do que o FT pagou nas sete contas.` },
     { t: 'Em que contas', v: 'manutenção e combustível', s: `manutenção ${sM(P.manut.real - P.manut.ft)} mi (${f1(P.manut.real / P.manut.ft)}× o pago) e combustível ${sM(P.comb.real - P.comb.ft)} mi (+${f0((P.comb.real / P.comb.ft - 1) * 100)}%); as outras cinco dão sobra de R$ ${M(-(DEF - (P.manut.real - P.manut.ft) - (P.comb.real - P.comb.ft)))} mi.` },
-    { t: 'Seguro é sobra aparente', v: 'R$ ' + K(P.seguro.ft) + ' mil', s: 'o FT paga seguro e a DRE de frota do T2 não tem custo nem remunerado lançado: o custo está em outra conta. Entra nos erros.' },
+    { t: 'Seguro é sobra aparente', v: 'R$ ' + K(P.seguro.ft) + ' mil', s: 'o FT paga seguro e a DRE de frota do T2 não tem custo nem remunerado lançado: o custo está em outra conta. Fica nos pontos a confirmar.' },
   ])}`);
 
 // 1c · mês a mês
@@ -123,7 +123,7 @@ slide(`${head('Quanto custou, nas contas que dá para comparar', `Sete contas: o
   const RQ = A.rem_manut_porque, RM = A.rem_manut_mes, RP = A.rem_pneu_mes, vs = RM.vig;
   const cand = Object.entries(RQ).filter(([k]) => !k.startsWith('re'));
   const pneuBate = vs.filter((v, i) => RP.rem[i] / RP.pago[i] < 1.1).map(mv);
-  slide(`${head('Remunerado DRE × pago FT', `O planejamento lança R$ ${M(REM7 - FT7)} mi a mais do que o FT paga, em manutenção e pneu, e nenhuma composição do FT reproduz o número`, 'R$ por mês · manutenção do T2')}
+  slide(`${head('Remunerado DRE × pago FT', `O remunerado da DRE fica R$ ${M(REM7 - FT7)} mi acima do pago reconstruído, em manutenção e pneu; a diferença fica em aberto até os relatórios oficiais`, 'R$ por mês · manutenção do T2')}
   <div class="duas">
     <div>${lines({ w: 600, h: 190, labels: vs.map(mv), series: [{ data: RM.pago, cor: INK, rotulo: 'pago FT', pontos: true }, { data: RM.rem, cor: AZUL, rotulo: 'remun. DRE', pontos: true }, { data: RM.real, cor: ACC, rotulo: 'realizado', pontos: true }], yfmt: v => K(v) + ' mil', y0: 2e5, y1: 9.5e5, pad: { l: 56, r: 92, t: 20, b: 30 } })}</div>
     <div>${tabela({ classe: 'mini', cols: [{ t: 'Composição testada · manutenção' }, { t: 'Soma R$ mi', n: true }, { t: 'Rem. DRE ÷', n: true }, { t: 'Correlação', n: true }, { t: 'Erro mediano', n: true }], rows: cand.map(([k, x]) => [k, M(x.soma), f2(x.razao) + '×', f2(x.r), f0(x.erro_med_pct) + '%']) })}
@@ -133,9 +133,9 @@ slide(`${head('Quanto custou, nas contas que dá para comparar', `Sete contas: o
     { t: 'Manutenção', v: sM(P.manut.rem - P.manut.ft) + ' mi (+' + f0((P.manut.rem / P.manut.ft - 1) * 100) + '%)', s: `o remunerado segue o desenho mensal do pago (correlação ${f2(cand[0][1].r)}), mas fica ${f2(cand[0][1].razao)}× acima: é o pago FT com um fator, não outra conta. Com o contrato da placa em vez do Manutenção R$/KM a razão sobe para ${f2(cand[2][1].razao)}×.` },
     { t: 'Pneu', v: sM(P.pneu.rem - P.pneu.ft) + ' mi', s: `acima do pago de ${mv(vs[0])} a ${mv(vs[vs.findIndex((v, i) => RP.rem[i] / RP.pago[i] < 1.1) - 1] || vs[0])}; em ${lista(pneuBate)} passa a bater (${f2(RP.rem[vs.length - 1] / RP.pago[vs.length - 1])}×). Algo mudou na composição em jul/26.` },
     { t: 'Seguro', v: 'R$ ' + K(P.seguro.ft) + ' mil sem conta', s: 'o FT paga seguro por placa e a DRE de frota dos projetos T2 não tem remunerado nem realizado: a linha mora em outra conta ou não é lançada.' },
-    { t: 'Contra-prova', v: 'as outras batem', s: `combustível +${f0((P.comb.rem / P.comb.ft - 1) * 100)}%, lavagem, IPVA e carroceria a menos de 3% do pago FT. O desvio é só manutenção e pneu, e por isso a DRE mostra a frota R$ ${M(REM7 - FT7)} mi melhor do que o FT paga.` },
+    { t: 'Contra-prova', v: 'as outras batem', s: `combustível +${f0((P.comb.rem / P.comb.ft - 1) * 100)}%, lavagem, IPVA e carroceria a menos de 3% do pago FT. A diferença está só em manutenção e pneu, e é ela que separa as duas colunas.` },
   ])}
-  <p class="note">Perguntas ao planejamento: como o remunerado de manutenção e pneu é montado desde jan/26, e o que mudou em jul/26 no pneu. Recomendação: lançar o remunerado igual ao pago FT (Manutenção R$/KM × km dos mapas) e tratar a diferença como achado, não como receita.</p>`);
+  <p class="note">Não é erro afirmado: o pago FT aqui é reconstruído com as premissas do FT, e uma hipótese é imposto (a Ambev não paga como lucro real e nós estamos no crédito presumido). Pendências: os relatórios oficiais do FT (a TI está liberando os endpoints) e como o planejamento monta o remunerado de manutenção e pneu, e o que mudou em jul/26 no pneu.</p>`);
 }
 
 // ═══ Parte 2 · Combustível ═══
@@ -376,21 +376,21 @@ capaSec(4, 'Pneu e fixo', 'As contas que dão sobra, a diferença do remunerado 
 }
 
 // ═══ Parte 5 · Erros, gaps, oportunidades, discrepantes ═══
-capaSec(5, 'Erros, gaps, oportunidades e custos discrepantes', 'Cada achado classificado, com o que é, o que medimos, quanto vale, a confiança e o próximo passo. O detalhe por placa e mês está na planilha de apoio.');
+capaSec(5, 'A confirmar, gaps, oportunidades e custos discrepantes', 'Cada achado classificado, com o que é, o que medimos, quanto vale, a confiança e o próximo passo. O detalhe por placa e mês está na planilha de apoio.');
 const ficha = (kicker, titulo, sub, rows, c) => slide(`${head(kicker, titulo, sub)}
   ${tabela({ classe: 'compacta', cols: [{ t: 'Achado' }, { t: 'O que medimos', w: true }, { t: 'Quanto vale', n: true }, { t: 'Confiança' }, { t: 'Próximo passo', w: true }], rows: rows.map(r => [{ v: '<b>' + r[0] + '</b>' }, r[1], { v: '<b>' + r[2] + '</b>' }, tag(r[3]), r[4]]) })}
   ${c}`);
 {
   const F = O.fator, cad = ((O.cadastro_seguro || []))[0];
-  ficha('Erros', 'Erros: cadastro ou regra aplicada errado, de qualquer lado', 'Erro = o número está errado na origem; corrigir é cadastro ou composição, não operação', [
-    ['Placa inativa no FT que roda', `${A.inativas.placas} placas inativas abasteceram ${M(A.inativas.km)} mi km (${f0(A.inativas.km_pct_abast)}% do km abastecido); ${A.inativas.fora_ft.placas} fora do cadastro`, 'R$ ' + K(KT.inat_rs) + ' mil', 'alta', 'abrir placa a placa: ativação errada da unidade ou Empurrada abastecendo na Rota (Macacu)'],
-    ['Remunerado DRE acima do FT', `manutenção ${f2(A.rem_manut_porque['pago FT (Manutenção R$/KM × km pago)'].razao)}× o pago; pneu acima até jun/26`, 'R$ ' + M(REM7 - FT7) + ' mi', 'alta', 'planejamento lança o remunerado = pago FT; tratar a diferença como achado'],
+  ficha('A confirmar', 'A confirmar: diferenças que dependem de relatório oficial, cadastro ou fiscal', 'Nada aqui é erro afirmado: são diferenças medidas na base, a conferir com os relatórios oficiais do FT, o planejamento e o fiscal', [
+    ['Placa inativa no FT que roda', `${A.inativas.placas} placas inativas abasteceram ${M(A.inativas.km)} mi km (${f0(A.inativas.km_pct_abast)}% do km abastecido); ${A.inativas.fora_ft.placas} fora do cadastro`, 'R$ ' + K(KT.inat_rs) + ' mil', 'alta', 'abrir placa a placa: ativação da unidade ou Empurrada abastecendo na Rota (Macacu)'],
+    ['Remunerado DRE acima do pago reconstruído', `manutenção ${f2(A.rem_manut_porque['pago FT (Manutenção R$/KM × km pago)'].razao)}× o pago; pneu acima até jun/26`, 'R$ ' + M(REM7 - FT7) + ' mi', 'baixa', 'aguardar os relatórios oficiais do FT; hipótese de imposto (lucro real × crédito presumido); fica fora das somas'],
     ['Seguro pago sem conta na DRE', `FT paga R$ ${K(P.seguro.ft)} mil; DRE de frota do T2 com R$ ${K(P.seguro.real)} mil`, 'R$ ' + K(P.seguro.ft) + ' mil', 'média', 'achar onde o seguro é lançado; se não é, a sobra é real'],
     ['Km/L: ativas com consumo zero', `${O.kml.zeradas} placas ativas com Km/L zero na 1ª abr/26 (Empurradas)`, 'cadastro', 'alta', 'corrigir na quinzena; pedir a regra da média (o zero conta?)'],
     ['Km/L: mesmo modelo, valores diferentes', `${O.kml.comDif} de ${O.kml.grupos} grupos; ${O.kml.fora} placas mudaram fora da revisão`, 'R$ ' + K(O.kml.disp_rs) + ' mil', 'alta', 'lista por placa na planilha; levar à revisão do Q4'],
     ['Rastreador pago só no RJ', '156 de 159 placas do RJ com R$ 106/mês; zero nas outras seis unidades, desde 2022', 'regra?', 'média', 'confirmar com o planejamento se é regra ou cadastro'],
-    ['Diesel digitado errado', 'Macacu, 1ª ago/25: R$ 1,85/L contra ANP 6,16 (Rota e Empurrada)', 'R$ ' + K(O.preco.valor + O.preco.emp.perda) + ' mil (2025)', 'alta', 'histórico; conferir se foi corrigido na fatura'],
-  ], concBlocos([{ t: 'Soma dos erros com valor', v: 'R$ ' + M(KT.inat_rs + (REM7 - FT7) + P.seguro.ft + O.kml.disp_rs) + ' mi', s: 'placas inativas, remunerado DRE, seguro e Km/L. O maior é interno (a DRE), o segundo é cadastro da unidade.' }, { t: 'Quem corrige', v: 'unidade e planejamento', s: 'ativação e Km/L na quinzena (unidade); remunerado e seguro na composição da DRE (planejamento).' }], 'Síntese', 2));
+    ['Diesel de Macacu a R$ 1,85/L', 'Macacu, 1ª ago/25: R$ 1,85/L contra ANP 6,16 (Rota e Empurrada)', 'R$ ' + K(O.preco.valor + O.preco.emp.perda) + ' mil (2025)', 'alta', 'histórico; conferir se foi corrigido na fatura'],
+  ], concBlocos([{ t: 'Soma com valor', v: 'R$ ' + M(KT.inat_rs + P.seguro.ft + O.kml.disp_rs) + ' mi', s: 'placas inativas, seguro e Km/L. A diferença do remunerado DRE fica fora da soma até os relatórios oficiais.' }, { t: 'Quem confere', v: 'unidade, planejamento e fiscal', s: 'ativação e Km/L na quinzena (unidade); remunerado e seguro com o planejamento; imposto com o fiscal.' }], 'Síntese', 2));
 }
 {
   const ofi = MC.oficina.real + MC.materiais.real + MC.personaliz.real;
@@ -429,11 +429,11 @@ const ficha = (kicker, titulo, sub, rows, c) => slide(`${head(kicker, titulo, su
 // síntese
 {
   const ofi = MC.oficina.real + MC.materiais.real + MC.personaliz.real, F = O.fator, imp = F.impacto['CBA|2026'].imp + F.impacto['MCC|2026'].imp;
-  const erros = KT.inat_rs + (REM7 - FT7) + P.seguro.ft + O.kml.disp_rs, gaps = (ofi - (P.manut.ft - MC.contrato.real)) + A.vw_placa.dif_total + CP.ef + KT.disp_rs, opo = KT.disp_rs + KT.inat_rs + O.kml.disp_rs + imp + A.anp._tot;
+  const erros = KT.inat_rs + P.seguro.ft + O.kml.disp_rs, gaps = (ofi - (P.manut.ft - MC.contrato.real)) + A.vw_placa.dif_total + CP.ef + KT.disp_rs, opo = KT.disp_rs + KT.inat_rs + O.kml.disp_rs + imp + A.anp._tot;
   const sobras = -C7.reduce((s, c) => s + Math.min(P[c].real - P[c].ft, 0), 0);
-  slide(`${head('Síntese', `Déficit de R$ ${M(DEF)} mi: gaps de R$ ${M(gaps)} mi menos R$ ${M(sobras)} mi de sobras; R$ ${M(opo)} mi têm ação nossa e R$ ${M(erros)} mi são erros de cadastro ou composição`, `${PER} · T2 · sobras = pneu, carroceria, lavagem e seguro · os valores se sobrepõem em parte (a dispersão é gap e oportunidade); a conta de cada um está nas fichas`)}
+  slide(`${head('Síntese', `Déficit de R$ ${M(DEF)} mi: gaps de R$ ${M(gaps)} mi menos R$ ${M(sobras)} mi de sobras; R$ ${M(opo)} mi têm ação nossa e R$ ${M(erros)} mi estão a confirmar`, `${PER} · T2 · sobras = pneu, carroceria, lavagem e seguro · os valores se sobrepõem em parte (a dispersão é gap e oportunidade); a conta de cada um está nas fichas`)}
   ${cartoes([
-    { k: 'Erros', n: 'R$ ' + M(erros) + ' mi', p: `remunerado DRE acima do FT (R$ ${M(REM7 - FT7)} mi), placas inativas rodando (R$ ${K(KT.inat_rs)} mil), seguro sem conta (R$ ${K(P.seguro.ft)} mil), Km/L por modelo (R$ ${K(O.kml.disp_rs)} mil).`, o: 'corrige: planejamento e cadastro da unidade' },
+    { k: 'A confirmar', n: 'R$ ' + M(erros) + ' mi', p: `placas inativas rodando (R$ ${K(KT.inat_rs)} mil), seguro sem conta (R$ ${K(P.seguro.ft)} mil), Km/L por modelo (R$ ${K(O.kml.disp_rs)} mil). O remunerado DRE acima do pago (R$ ${M(REM7 - FT7)} mi) fica fora até os relatórios oficiais.`, o: 'confere: unidade, planejamento e fiscal' },
     { k: 'Gaps', n: 'R$ ' + M(gaps) + ' mi', p: `oficina descoberta (R$ ${M(ofi - (P.manut.ft - MC.contrato.real))} mi), consumo (R$ ${M(CP.ef)} mi), dispersão (R$ ${K(KT.disp_rs)} mil), contrato VW (R$ ${K(A.vw_placa.dif_total)} mil).`, o: 'é o déficit de verdade', acc: true },
     { k: 'Oportunidades', n: 'R$ ' + M(opo) + ' mi', p: `km validado e ativação na quinzena (R$ ${M(KT.disp_rs + KT.inat_rs)} mi), Km/L do Q4, crédito do diesel (R$ ${K(imp)} mil), preço × ANP (R$ ${K(A.anp._tot)} mil).`, o: 'ação nossa, com prazo' },
     { k: 'Discrepantes', n: f0(A.kml_ruim.placas) + ' placas', p: `R$ ${M(A.kml_ruim.rs)} mi de consumo em placas 15% abaixo do Km/L; três meses de oficina acima de 2,5×; Rondonópolis a ${f1(A.manut_ratio.uni.RON[0])}× em janeiro.`, o: 'causa raiz placa a placa' },
@@ -505,11 +505,11 @@ capaSec(7, 'Receita', 'A receita líquida por projeto na DRE, remunerado × real
   ${cartoes([
     { k: '1 · Oficina', n: 'R$ ' + M(ofi - (P.manut.ft - MC.contrato.real)) + ' mi', p: 'descobertos pelo pago FT. Carta de Custos por grupo, placa e fornecedor; contrato × BID placa a placa; garantia nas placas em carência.', o: 'unidades + corporativo' },
     { k: '2 · Consumo e km', n: 'R$ ' + M(CP.ef + KT.disp_rs + KT.inat_rs) + ' mi', p: `vistoria das ${A.kml_ruim.placas} placas abaixo do Km/L; km validado e lista de ativos na revisão quinzenal.`, o: 'unidades, na quinzena' },
-    { k: '3 · Remunerado DRE', n: sM(REM7 - FT7) + ' mi', p: 'lançar o remunerado igual ao pago FT (manutenção e pneu) e tratar a diferença como achado; achar a conta do seguro.', o: 'planejamento' },
+    { k: '3 · Remunerado DRE', n: sM(REM7 - FT7) + ' mi', p: 'diferença em aberto: conferir com os relatórios oficiais do FT e com o planejamento (imposto, composição de manutenção e pneu); achar a conta do seguro.', o: 'planejamento + fiscal' },
     { k: '4 · Km/L e crédito', n: 'Q4 + R$ ' + K(O.fator.impacto['CBA|2026'].imp + O.fator.impacto['MCC|2026'].imp) + ' mil', p: 'pedir a revisão do Q4 com a crítica por placa; fiscal confirma o crédito do diesel da Empurrada.', o: 'corporativo' },
   ])}
   ${concBlocos([
-    { t: 'Perguntas abertas', s: 'Como o remunerado de manutenção e pneu é montado na DRE e o que mudou em jul/26 · se o rastreador só no RJ é regra · se o pacote do SRTrans é pago por mapa ou por caminhão ativo · onde o seguro é lançado · como o Km/L validado sai do real do trimestre.' },
+    { t: 'Perguntas abertas', s: 'Relatórios oficiais do FT (endpoints em liberação pela TI) · efeito do imposto (lucro real × crédito presumido) · como o remunerado de manutenção e pneu é montado na DRE e o que mudou em jul/26 · se o rastreador só no RJ é regra · se o pacote do SRTrans é pago por mapa ou por caminhão ativo · onde o seguro é lançado · como o Km/L validado sai do real do trimestre.' },
     { t: 'O que esta análise não usa', s: 'O teto do FT (25 mapas por ativo) aparece uma vez, como informação. "Pago FT" é reconstruído com o km da nossa Dispersão; passa a ser o faturado quando o export de faturamento por mapa existir. O Faturamento exportado hoje é o dimensionamento quinzenal, não a fatura.' },
   ], 'Pendências', 2)}`);
 }

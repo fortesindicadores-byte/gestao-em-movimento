@@ -37,7 +37,7 @@ capa(`2022 a 2026 (2026 até ${FIM26})`, 'Remuneração Freightech, 2022 a 2026:
   slide(`${head('Antes de começar', 'Quatro termos que aparecem em toda tabela deste histórico', `Exemplo: frota T2 em ${a}, as sete contas de frota (combustível, manutenção, carroceria, pneu, lavagem, IPVA, seguro)`)}
   ${cartoes([
     { k: 'Pago FT', n: 'R$ ' + M(s.ft) + ' mi', p: 'O que o Freightech paga pela frota: R$/km do caminhão (premissas do FT) × km remunerado dos mapas rodados, mais o fixo por caminhão. O km dos mapas vem da <b>nossa Dispersão de km</b>; não é a fatura.', o: 'Caminhão e Resumo do FT × Dispersão de km (desde 2023)' },
-    { k: 'Remunerado DRE', n: 'R$ ' + M(s.rem) + ' mi', p: 'O que o planejamento lançou na DRE como receita de frota esperada, conta a conta. Deveria ser igual ao pago FT.', o: 'DRE de frota · Remunerado' },
+    { k: 'Remunerado DRE', n: 'R$ ' + M(s.rem) + ' mi', p: 'O que o planejamento lançou na DRE como receita de frota esperada, conta a conta. Pode diferir do pago FT por imposto (regime tributário: lucro real × crédito presumido) e pela composição do planejamento; a diferença fica em aberto até os relatórios oficiais do FT.', o: 'DRE de frota · Remunerado' },
     { k: 'Realizado DRE', n: 'R$ ' + M(s.real) + ' mi', p: 'O que de fato gastamos, por conta. <b>Pago − realizado = resultado da frota.</b>', o: 'DRE de frota · Realizado', acc: true },
     { k: 'Teto (informativo)', n: 'R$ ' + M(vt) + ' mi', p: `R$/km × km da placa × ativos × 25 mapas: o variável se todos os ativos rodassem todos os dias. Em ${a} o variável pago foi R$ ${M(vp)} mi. Não é meta nem base de comparação.`, o: 'Resumo do FT · Total Viagens' },
   ])}
@@ -222,7 +222,7 @@ capaSec(4, 'Resultado', 'Pago pelo FT × remunerado DRE × realizado, ano a ano;
     { t: 'Todo ano', v: 'acima do pago', s: `o melhor foi ${lab(best)} (${f0((tot(best, 'real') / tot(best, 'ft') - 1) * 100)}% acima); 2026 anualizado dá R$ ${M(an26)} mi, o pior.` },
     { t: 'Manutenção', v: f1(m('2024').real / m('2024').ft) + '× → ' + f1(m('2026').real / m('2026').ft) + '× o pago', s: `o R$/km pago caiu (R$ ${f2(PR['2024'].manut)} → ${f2(PR['2026'].manut)}) pela troca de frota e a oficina da frota que ficou não caiu junto.` },
     { t: 'Combustível', v: f0((Math.min(...AA.map(a => c(a).real / c(a).ft)) - 1) * 100) + '% a ' + f0((Math.max(...AA.map(a => c(a).real / c(a).ft)) - 1) * 100) + '% acima', s: 'estável: km além do pago e consumo acima do Km/L remunerado, todo ano.' },
-    { t: 'Remunerado DRE', v: 'entre os dois', s: `o planejamento lança mais do que o FT paga em todos os anos (${AA.map(a => `${sM(tot(a, 'rem') - tot(a, 'ft'))} mi em ${lab(a)}`).join(', ')}) e ainda assim menos do que custa.` },
+    { t: 'Remunerado DRE', v: 'entre os dois', s: `o remunerado da DRE fica acima do pago reconstruído em todos os anos (${AA.map(a => `${sM(tot(a, 'rem') - tot(a, 'ft'))} mi em ${lab(a)}`).join(', ')}) e ainda assim abaixo do realizado. A diferença para o pago fica em aberto (imposto ou composição) até os relatórios oficiais.` },
   ])}`);
 }
 // manutenção ao longo do tempo
@@ -258,7 +258,7 @@ capaSec(4, 'Resultado', 'Pago pelo FT × remunerado DRE × realizado, ano a ano;
   ${concBlocos([
     { t: 'Preço de tabela', v: 'R$ ' + f0(PN['2022'].preco_275) + ' → ' + f0(PN['2026'].preco_275), s: `+${f0((PN['2026'].preco_275 / PN['2022'].preco_275 - 1) * 100)}% em quatro anos, acima do IPA-M; o pico foi 2023 (R$ ${f0(PN['2023'].preco_275)}).` },
     { t: 'Nossa compra', v: 'abaixo da tabela', s: `o 275 sai a R$ ${f0(p275('2026').compra_med)} contra R$ ${f0(p275('2026').tracao)}: a sobra de pneu (${AA.map(a => `R$ ${M(Y[a].peca.pneu.ft - Y[a].peca.pneu.real)} mi em ${lab(a)}`).join(', ')}) é preço de compra.` },
-    { t: 'Remunerado DRE', v: 'acima do pago', s: `${AA.map(a => `${sM(Y[a].peca.pneu.rem - Y[a].peca.pneu.ft)} mi em ${lab(a)}`).join(', ')}: a DRE mostra o pneu melhor do que o FT paga, todo ano.` },
+    { t: 'Remunerado DRE', v: 'acima do pago', s: `${AA.map(a => `${sM(Y[a].peca.pneu.rem - Y[a].peca.pneu.ft)} mi em ${lab(a)}`).join(', ')}: diferença em aberto, a conferir com os relatórios oficiais do FT.` },
     { t: 'Vida', v: f0(PN['2026'].vida) + ' km · 2 recapagens', s: 'a premissa não mudou em cinco anos; pneu descartado antes disso come a sobra.' },
   ])}`);
 }
@@ -293,16 +293,16 @@ capaSec(6, 'Divergências de remuneração', 'O que esteve fora da regra ou da b
     ['Crédito de imposto do diesel: Cuiabá caiu', `fator ${f2(F.ano.CBA['2025'])} → ${f2(F.ano.CBA['2026'])} em jan/26`, `R$ ${K(F.impacto['CBA|2026'].imp)} mil (2026)`, 'baixa', 'idem'],
     ['Contrato VW acima da manutenção paga', `${Y25.vw.placas} placas em 2025, ${Y['2026'].vw.placas} em 2026; fatura R$ ${f3(Y['2026'].vw.rk_vw)} × FT ${f3(Y['2026'].vw.rk_ft)}/km`, `R$ ${K(Y25.vw.fatura - Y25.vw.ft)} mil (2025) · R$ ${K(Y['2026'].vw.fatura - Y['2026'].vw.ft)} mil (2026)`, 'alta', 'cotar contrato × BID placa a placa'],
     ['Km/L: Q4/26 sem revisão, valores diferentes no mesmo modelo, ativas zeradas', `${O.kml.q3q4_iguais} placas com o Km/L do Q3; ${O.kml.comDif} de ${O.kml.grupos} grupos; ${O.kml.zeradas} zeradas`, `R$ ${K(O.kml.disp_rs)} mil + revisão`, 'alta', 'crítica do consumo por placa antes da 1ª quinzena'],
-    ['Remunerado DRE acima do pago FT', `manutenção e pneu, todos os anos (${AA.map(a => `${sM(tot(a, 'rem') - tot(a, 'ft'))} mi ${lab(a)}`).join(', ')})`, 'R$ ' + M(AA.reduce((s, a) => s + tot(a, 'rem') - tot(a, 'ft'), 0)) + ' mi acumulado', 'alta', 'planejamento lança o remunerado = pago FT'],
-    cad ? ['Cadastro: carroceria de R$ 9,5 bi (Cuiabá)', `2ª nov/25; seguro de R$ ${K(cad.seguro)} mil na quinzena; não faturado`, 'R$ 0', 'erro', 'corrigido no cadastro; vale como prova de leitura placa a placa'] : null,
+    ['Remunerado DRE acima do pago reconstruído', `manutenção e pneu, todos os anos (${AA.map(a => `${sM(tot(a, 'rem') - tot(a, 'ft'))} mi ${lab(a)}`).join(', ')})`, 'R$ ' + M(AA.reduce((s, a) => s + tot(a, 'rem') - tot(a, 'ft'), 0)) + ' mi acumulado', 'baixa', 'aguardar os relatórios oficiais; hipótese de imposto (lucro real × crédito presumido)'],
+    cad ? ['Cadastro: carroceria de R$ 9,5 bi (Cuiabá)', `2ª nov/25; seguro de R$ ${K(cad.seguro)} mil na quinzena; não faturado`, 'R$ 0', 'cadastro', 'corrigido no cadastro; vale como prova de leitura placa a placa'] : null,
     ['Diesel comprado acima da ANP', `Rota, ano a ano: ${Object.entries(O.preco.acima_ano).map(([a, v]) => `${a} R$ ${K(v)} mil`).join(' · ')}`, 'R$ ' + K(Object.values(O.preco.acima_ano).reduce((s, v) => s + v, 0)) + ' mil (2022–25)', 'alta', 'posto com preço negociado'],
   ].filter(Boolean);
-  slide(`${head('Divergências de remuneração, 2022 a 2026', 'Os erros são poucos e pontuais; o que pesa é premissa e composição', 'Confiança: alta = medido na base; baixa = depende de confirmação de terceiro (fiscal); erro = cadastro')}
+  slide(`${head('Divergências de remuneração, 2022 a 2026', 'As divergências pontuais são poucas; o que pesa é premissa, e as diferenças da DRE ficam em aberto', 'Confiança: alta = medido na base; baixa = depende de confirmação de terceiro (relatório oficial do FT, fiscal); cadastro = valor do cadastro')}
   ${tabela({ classe: 'compacta', cols: [{ t: 'Divergência' }, { t: 'Base', w: true }, { t: 'Valor', n: true }, { t: 'Confiança' }, { t: 'Próximo passo', w: true }], rows: D.map(r => [{ v: '<b>' + r[0] + '</b>' }, r[1], { v: '<b>' + r[2] + '</b>' }, tag(r[3]), r[4]]) })}
   ${concBlocos([
-    { t: 'Erros', v: 'três, pontuais', s: 'um preço digitado errado, um cadastro absurdo que não faturou, e o crédito do diesel que o fiscal confirma.' },
+    { t: 'Pontuais', v: 'três', s: 'um preço de diesel fora da curva, um cadastro absurdo que não faturou, e o crédito do diesel que o fiscal confirma.' },
     { t: 'Premissa', v: 'manutenção e Km/L', s: `a manutenção paga caiu ${f0((1 - PR['2026'].manut / PR['2022'].manut) * 100)}% por km pela troca de frota; o Km/L parou de ser revisado em out/26.` },
-    { t: 'Composição', v: 'remunerado DRE', s: 'o planejamento lança acima do FT todos os anos: a DRE mostra a frota melhor do que o FT paga.' },
+    { t: 'Em aberto', v: 'remunerado DRE', s: 'fica acima do pago reconstruído todos os anos; pode ser imposto ou composição, e não é tratado como erro até os relatórios oficiais do FT.' },
   ])}`);
 }
 
@@ -317,7 +317,7 @@ capaSec(6, 'Divergências de remuneração', 'O que esteve fora da regra ou da b
     { k: '4 · Resultado', n: 'R$ ' + M(d('2026')) + ' mi em ' + N26 + ' meses', p: `acima do pago em todos os anos (2024 o melhor, R$ ${M(d('2024'))} mi); manutenção e combustível explicam; o remunerado DRE fica entre os dois.` },
   ])}
   ${concBlocos([
-    { t: 'O que pedir', s: 'Revisão do Km/L do Q4 com a crítica por placa · regra da manutenção para placas fora da carência com oficina (garantia) · composição do remunerado da DRE igual ao pago FT · índice de reajuste do contrato (qual?) contra o IPCA.' },
+    { t: 'O que pedir', s: 'Revisão do Km/L do Q4 com a crítica por placa · regra da manutenção para placas fora da carência com oficina (garantia) · composição do remunerado da DRE e efeito do imposto, com os relatórios oficiais do FT · índice de reajuste do contrato (qual?) contra o IPCA.' },
     { t: 'O que planejar', s: 'Renovação pelo fim das parcelas (quitado recebe ~R$ 600/mês) · contratos de manutenção cotados contra o BID · consumo validado preparado a cada trimestre.' },
   ], 'Próximos passos', 2)}`);
 }
