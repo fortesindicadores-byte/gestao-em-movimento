@@ -931,6 +931,16 @@ function formaFunda(v, nivel = 0) {
     (x && typeof x === 'object') ? `${k}:${formaFunda(x, nivel + 1)}` : `${k}:${x === null ? 'null' : typeof x}${typeof x === 'string' ? '(' + x.length + ')' : ''}`).join(',') + '}';
   return typeof v;
 }
+// clica no elemento mais interno visível cujo texto bate (o getByText falhou no menu do FT)
+async function clicaJs(rx) {
+  return page.evaluate(src => {
+    const r = new RegExp(src, 'i');
+    const els = [...document.querySelectorAll('body *')].filter(e => r.test((e.innerText || '').replace(/\s+/g, ' ').trim()));
+    const alvo = els.filter(e => ![...e.children].some(c => r.test((c.innerText || '').replace(/\s+/g, ' ').trim()))).find(e => { const b = e.getBoundingClientRect(); return b.width > 0 && b.height > 0; }) || els[els.length - 1];
+    if (!alvo) return false;
+    (alvo.closest('a, button, [role="button"], li') || alvo).click(); return true;
+  }, rx.source);
+}
 async function bookSonda() {
   const novas = [];
   const ouve = async res => {
@@ -942,9 +952,13 @@ async function bookSonda() {
   };
   page.on('response', ouve);
   const despeja = rot => { log(`── BOOK ${rot}: ${novas.length} chamada(s)`); novas.splice(0).forEach(x => log('   ' + x)); };
-  const item = page.getByText(/^\s*BOOK OPERADOR\s*$/i).first();
-  if (await item.count()) { await item.click({ timeout: 10000 }).catch(e => log('clique Book:', e.message.split('\n')[0])); }
-  else log('item "BOOK OPERADOR" não achado no menu');
+  // a rota sai dos cards da página inicial (titulo → rota); senão, clique por JS no menu
+  const cards = await ftApi(`${API_BACK}/pagina-inicial/cards?role=${encodeURIComponent((await page.evaluate(() => { try { return JSON.parse(localStorage.getItem('usuario') || '{}').authorities || ''; } catch (e) { return ''; } })) || '')}`).catch(() => ({}));
+  const lista = Array.isArray(cards.v) ? cards.v : [];
+  log('cards da home:', lista.map(c => `${c.titulo} → ${c.rota}`).join(' | ') || '(nenhum)');
+  const cb = lista.find(c => /book/i.test(c.titulo + ' ' + c.rota));
+  if (cb && cb.rota) await page.goto(BASE + '/#' + (cb.rota.startsWith('/') ? cb.rota : '/' + cb.rota), { waitUntil: 'domcontentloaded' }).catch(() => {});
+  else log('clique por JS no menu:', await clicaJs(/^BOOK OPERADOR$/i));
   await page.waitForTimeout(8000);
   log('URL do Book:', semValores(page.url()), '·', page.url().split('#')[1] || '');
   await foto(page, 'book-home');
@@ -959,9 +973,9 @@ async function bookSonda() {
   log('paginação:', dom.pag, '· blocos com descrição:', dom.cards);
   log('itens clicáveis:', dom.menu.join(' | '));
   // abre o 1º card
-  const card = page.getByText(/^\s*QLP ADM\s*$/i).first();
-  if (await card.count()) {
-    await card.click({ timeout: 10000 }).catch(e => log('clique card:', e.message.split('\n')[0]));
+  const okCard = await clicaJs(/^QLP ADM$/i);
+  log('clique no card QLP ADM:', okCard);
+  if (okCard) {
     await page.waitForTimeout(8000);
     log('URL do registro:', page.url().split('#')[1] || '');
     await foto(page, 'book-registro');
@@ -987,8 +1001,7 @@ async function bookSonda() {
   } else log('card "QLP ADM" não achado');
   // a 2ª página da lista, para ver a paginação na API
   await page.goBack().catch(() => {}); await page.waitForTimeout(5000); novas.splice(0);
-  const p2 = page.locator('text=/^\\s*2\\s*$/').last();
-  if (await p2.count()) { await p2.click().catch(() => {}); await page.waitForTimeout(5000); despeja('página 2'); }
+  log('clique na página 2:', await clicaJs(/^2$/)); await page.waitForTimeout(5000); despeja('página 2');
   page.off('response', ouve);
 }
 
