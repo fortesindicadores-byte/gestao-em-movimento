@@ -84,6 +84,7 @@ Renan, vendo os slides 3 (três contas no Resumo) e 4 (FINAME) do Manual: *"Voc�
 - **Informação importante não pode ficar na nota cinza de 11 px** (regra do FINAME BNDES; quitado/leasing/alugado sem parcela): vira cartão curto visível.
 - **Distribuição vertical**: título alto, bloco no meio, um terço vazio embaixo. O conteúdo tem de ocupar a página.
 - **Densidade**: slide 3 tem quatro fileiras de caixas + tabela + nota de duas linhas; se não couber limpo, a tabela vai para slide próprio.
+- **Renan, na sequência: *"Quero fórmulas em formato de fórmula. Sem esse quadrados pintados com fundo etc. Feio pra cacete."*** Regra fechada: a memória de cálculo é escrita como equação (notação matemática, numerador ÷ denominador, parênteses, o resultado depois do `=`), em texto, sem caixa, sem fundo, sem fita de quadrados. A fita (`fita()`/`caixa()`/`contaColuna()` do `deck-manual.mjs`) e o slide 3 em grade de caixas saem inteiros.
 - Diagnóstico geral: o desenho do DriverPro (narrativa) foi aplicado a um manual de referência e não serve para isso. Proposta: **padrão novo de slide de custo em duas colunas** (esquerda a conta em livro-razão, direita o número final grande com uma frase), montar em dois slides (FINAME e Combustível) para ele aprovar, só depois aplicar nos 21 do Manual e revisar Análise, Histórico e Treinamento com a mesma régua.
 
 ## 7. Segurança (não negociável)
