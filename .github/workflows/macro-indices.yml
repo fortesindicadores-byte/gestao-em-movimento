@@ -1,0 +1,43 @@
+name: Macro Indices (BCB SGS)
+
+# Séries públicas do Banco Central (IPCA, IGP-M, IPA, Selic, TJLP, câmbio,
+# salário mínimo, INPC, desemprego, IBC-Br) desde 2019, para os comparativos de
+# mercado da análise do Freightech. Nada sensível: publica macro.json no branch
+# temporário tmp-macro (órfão, forçado). O sandbox da sessão não alcança a API.
+on:
+  workflow_dispatch:
+    inputs:
+      so_apagar:
+        description: 'true = só apaga o branch temporário tmp-macro'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  macro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Apagar o branch temporário
+        if: ${{ github.event.inputs.so_apagar == 'true' }}
+        run: git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete tmp-macro || echo "branch já não existia"
+      - name: Ler o SGS
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+        env:
+          MACRO_OUT: /tmp/macro.json
+        run: node scripts/macro-indices.mjs
+      - name: Publicar no branch temporário
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+        run: |
+          set -e
+          rm -rf /tmp/pub && mkdir -p /tmp/pub && cp /tmp/macro.json /tmp/pub/
+          cd /tmp/pub
+          git init -q -b tmp-macro
+          git config user.email "actions@github.com" && git config user.name "github-actions"
+          git add . && git commit -qm "índices macro (BCB SGS)"
+          git push -f -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" tmp-macro
