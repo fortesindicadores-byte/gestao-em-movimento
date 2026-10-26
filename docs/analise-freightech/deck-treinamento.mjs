@@ -27,7 +27,7 @@ capa('Treinamento para gestores de operação', 'Como a remuneração funciona, 
 slide(`${head('Começando do começo', 'Tudo começa no mapa: a viagem do dia que a Ambev monta e o caminhão roda')}
   ${cartoes([
     { k: '1 · A Ambev monta o mapa', n: '1 mapa', p: 'O mapa é a rota de entrega de um dia: clientes, sequência, carga. É a unidade de tudo. Um caminhão ativo faz um mapa por dia útil.', o: 'Até 25 mapas por caminhão por mês.' },
-    { k: '2 · O caminhão roda o mapa', n: f1(KE.km_mapa) + ' km', p: `Cada mapa vale um km fixo, definido por unidade na revisão quinzenal: o km do caminhão no mês ÷ 25. Em ${NOME[KE.uni]}, ago/26: ${f0(KE.km_placa)} ÷ 25.`, o: 'Rodar mais do que isso não paga mais.' },
+    { k: '2 · O caminhão roda o mapa', n: f1(KE.km_mapa) + ' km', p: `Cada mapa vale um km fixo, definido por unidade e revisto uma vez por mês (Book do Operador: até o 18º dia útil, com o dimensionamento da 2ª quinzena): o km do caminhão no mês ÷ 25. Em ${NOME[KE.uni]}, ago/26: ${f0(KE.km_placa)} ÷ 25.`, o: 'Rodar mais do que isso não paga mais.' },
     { k: '3 · Cada mapa rodado é pago', n: 'R$ ' + f0(KE.km_mapa * E.var), p: `km do mapa × R$/km do caminhão (${rk(E.var)} no caminhão mediano). Mais as recargas e as noturnas, que são mapas a mais.`, o: 'Mapa não rodado não paga.' },
     { k: '4 · O fixo não depende do mapa', n: rs(E.fixo) + '/mês', p: 'Todo caminhão cadastrado recebe o fixo (financiamento, seguro, IPVA, rastreador, faixa), ativo ou parado. Só a lavagem exige o caminhão ativo.', o: 'É o caminhão existir.' },
   ])}
@@ -36,7 +36,7 @@ slide(`${head('Começando do começo', 'Tudo começa no mapa: a viagem do dia qu
 slide(`${head('Começando do começo', 'Quem calcula é o Freightech, a partir do cadastro de cada placa')}
   ${cartoes([
     { k: 'Cadastro da placa', n: '1 ficha', p: 'Modelo, ano, financiamento, tipo de carroceria, medida do pneu, Km/L validado, contrato de manutenção. É dessa ficha que saem o fixo e o R$/km de cada caminhão.', o: 'Relatório Caminhão (ROTA)' },
-    { k: 'Revisão quinzenal', n: '2× por mês', p: 'Preço do diesel (a nota que subimos × a ANP), km do caminhão no mês, placas ativas e paradas. A cada quinzena nasce um km e um preço novos.', o: 'Vigência ROTA_1_9_2026 = 1ª quinzena de set/26' },
+    { k: 'Revisão quinzenal e mensal', n: '2× e 1× por mês', p: 'A cada quinzena: preço do diesel (a nota que subimos × a ANP) e placas ativas e paradas. Uma vez por mês: o km do caminhão (Book do Operador: alteração de km até o 18º dia útil, junto com o dimensionamento da 2ª quinzena).', o: 'Vigência ROTA_1_9_2026 = 1ª quinzena de set/26' },
     { k: 'Revisão trimestral', n: '4× por ano', p: 'O Km/L remunerado de cada placa: o consumo validado do trimestre anterior. É o número que mais pesa no variável.', o: '1ª quinzena de jan, abr, jul e out' },
     { k: 'O resultado', n: 'gastar dentro', p: 'O variável só repõe o custo de um caminhão bem gerido: não tem margem. Cada km a mais, cada litro a mais e cada real acima do preço previsto sai do nosso resultado.', o: 'A margem vem do lucro por hectolitro.', acc: true },
   ])}
@@ -55,7 +55,7 @@ slide(`${head('A ideia em uma frase', 'A remuneração paga o custo de um caminh
 
 slide(`${head('O variável, passo a passo', 'Do km do caminhão ao dinheiro do mês', `${NOME[KE.uni]}, ago/26`)}
   ${cartoes([
-    { k: '1 · Km do caminhão no mês', n: f0(KE.km_placa) + ' km', p: 'Definido pela Ambev em cada revisão quinzenal, por unidade. Todas as placas ativas da unidade têm o mesmo km.', o: 'Caminhão · KM Mês Roadshow (= KM Remunerado do Resumo)' },
+    { k: '1 · Km do caminhão no mês', n: f0(KE.km_placa) + ' km', p: 'Definido pela Ambev por unidade, revisto uma vez por mês (Book: até o 18º dia útil). Todas as placas ativas da unidade têm o mesmo km.', o: 'Caminhão · KM Mês Roadshow (= KM Remunerado do Resumo)' },
     { k: '2 · Km por mapa', n: f1(KE.km_mapa) + ' km', p: `${f0(KE.km_placa)} ÷ 25 dias úteis. É o que cada viagem do dia vale em km.`, o: `Conferido com o Km/Viagem Real da Dispersão de km (${f1(KE.km_viagem)} km)` },
     { k: '3 · Mapas possíveis', n: f0(KE.mapas_pos), p: `${f0(KE.ativos)} caminhões ativos × 25 dias. É o dimensionamento do FT, não uma meta.`, o: 'Resumo · Total Caminhão Ativo × 25' },
     { k: '4 · Mapas rodados', n: f0(KE.viagens), p: 'Só esses são pagos, mais recargas e noturnas.', o: 'Dispersão de km · Viagens - Real (base nossa, não do FT)', acc: true },
@@ -152,7 +152,7 @@ capaSec(2, 'Onde a operação ganha ou perde', 'As alavancas, com o valor de cad
 
 {
   const L = [
-    ['Km acima do pago', `rodar mais km do que o mapa remunera (rota longa, desvio, ida ao posto)`, `R$ ${f0(E.var * 100)} a cada 100 km`, `validar o km legítimo na revisão quinzenal; o resto é roteirização`],
+    ['Km acima do pago', `rodar mais km do que o mapa remunera (rota longa, desvio, ida ao posto)`, `R$ ${f0(E.var * 100)} a cada 100 km`, `validar o km legítimo na revisão mensal do km; o resto é roteirização`],
     ['Consumo pior que o previsto', `fazer 0,1 km/L abaixo do Km/L remunerado da placa`, `${f0(litros01 - litros)} L ≈ R$ ${f0((litros01 - litros) * preco)} por caminhão por mês`, `vistoria, perfil de rota, feedback ao motorista (DriverPro)`],
     ['Diesel acima da ANP', `pagar R$ 0,10/L acima do preço que o FT remunera`, `R$ ${f0(litros * 0.1)} por caminhão por mês`, `posto com preço negociado; no tanque interno, compra abaixo do remunerado`],
     ['Manutenção acima do pago', `gastar na oficina mais do que o R$/km de manutenção da placa no FT`, `cada R$ 0,10/km = R$ ${f0(E.km_mes * 0.1)} por caminhão por mês`, `causa raiz por placa e grupo; cotação; conferir a fatura do contrato × BID`],
@@ -162,7 +162,7 @@ capaSec(2, 'Onde a operação ganha ou perde', 'As alavancas, com o valor de cad
   ${tabela({ cols: [{ t: 'Alavanca' }, { t: 'O que é', w: true }, { t: 'Quanto custa', n: true }, { t: 'O que fazer', w: true }], rows: L.map(([a, b, c, d]) => [{ v: '<b>' + a + '</b>' }, b, { v: '<b>' + c + '</b>' }, d]) })}
   ${concBlocos([
     { t: 'Em 2026', v: `+${f0((CP.lit / CP.lit_esp - 1) * 100)}% de litros`, s: `o consumo da frota T2 ficou ${f0((CP.lit / CP.lit_esp - 1) * 100)}% acima do previsto pelo FT, e o km abastecido ${f0((CP.km / CP['Km Rem. TT'] - 1) * 100)}% acima do km pago. São as duas maiores alavancas.` },
-    { t: 'Km a mais tem conserto', v: 'validar', s: 'o km rodado de verdade entra na revisão quinzenal do km da placa. Se o km a mais é legítimo (rota mudou, cliente novo), a unidade tem de registrar e validar na revisão. Km a mais é perda só enquanto não é validado.' },
+    { t: 'Km a mais tem conserto', v: 'validar', s: 'o km rodado de verdade entra na revisão mensal do km da placa (Book: uma vez por mês, até o 18º dia útil). Se o km a mais é legítimo (rota mudou, cliente novo), a unidade tem de registrar e validar na revisão. Km a mais é perda só enquanto não é validado.' },
     { t: 'Onde está', v: '4 painéis', s: 'Painel KM (dispersão), Eficiência Km/L (consumo por placa), Preço R$/L (× ANP), Carta de Custos (manutenção e pneu por placa).' },
   ], 'Leitura')}`);
 }
@@ -174,11 +174,11 @@ capaSec(2, 'Onde a operação ganha ou perde', 'As alavancas, com o valor de cad
     { k: 'Km pago', n: f1(KT.pago / 1e6) + ' mi km', p: 'mapas rodados × km por mapa, mais recargas e noturnas (Dispersão de km).', o: `${f1(KT.viag_ativo_mes)} mapas por ativo por mês` },
     { k: 'Km rodado acima do pago', n: '+' + f0((KT.rodado / KT.pago - 1) * 100) + '%', p: `${f1((KT.rodado - KT.pago) / 1e3)} mil km (dispersão). Ao R$/km pago: <b>${rs(KT.disp_rs)}</b> de variável que o FT não pagou.`, acc: true },
     { k: 'Km de placa inativa no FT', n: f0(I.km_pct_abast) + '% do km', p: `${f0(I.placas)} placas marcadas como inativas no FT abasteceram ${f1(I.km / 1e6)} mi km. Elas não geram variável nem lavagem: ou a ficha está errada, ou o mapa foi rodado por quem não devia.`, acc: true },
-    { k: 'Validar na quinzena', n: '2× por mês', p: 'O km legítimo a mais e a lista de ativos certa entram na revisão quinzenal. Depois dela, viram remuneração; antes, são dispersão.' },
+    { k: 'Validar no ciclo do FT', n: 'ativos 2× · km 1× por mês', p: 'A lista de ativos entra a cada quinzena (pedido até o dia 02 e até o dia 17); o km da placa, uma vez por mês (até o 18º dia útil). Depois, viram remuneração; antes, são dispersão.' },
   ])}
   ${tabela({ classe: 'mini', cols: [{ t: 'Unidade' }, ...Object.keys(A2.km_uni).map(u => ({ t: NOME[u] || u, n: true }))],
     rows: [['Km rodado acima do pago', ...Object.values(A2.km_uni).map(x => pct(x.disp_km / x.pago * 100, 0))], ['R$ da dispersão (mil)', ...Object.values(A2.km_uni).map(x => f0(x.disp_rs / 1e3))], ['Placas inativas que rodaram', ...Object.keys(A2.km_uni).map(u => IU[u] ? f0(IU[u].placas) : '0')], ['Km delas (mil)', ...Object.keys(A2.km_uni).map(u => IU[u] ? f0(IU[u].km / 1e3) : '0')]] })}
-  ${conc(`Dois cadastros decidem o que vira pagamento: o km da placa na revisão quinzenal e a lista de ativos. Rodar mais que o mapa custa ${rk(E.var)}; placa inativa rodando não gera variável e ainda recebe o fixo de parado sem lavagem. As duas correções são da unidade e cabem na quinzena.`)}`);
+  ${conc(`Dois cadastros decidem o que vira pagamento: a lista de ativos, na quinzena, e o km da placa, na revisão mensal. Rodar mais que o mapa custa ${rk(E.var)}; placa inativa rodando não gera variável e ainda recebe o fixo de parado sem lavagem. As duas correções são da unidade e cabem na quinzena.`)}`);
 }
 
 // ═══ parte 3 ═══
@@ -199,15 +199,15 @@ slide(`${head('A rotina por frequência', 'O que olhar todo dia, toda semana, to
   ${tabela({ classe: 'compacta', cols: [{ t: 'Quando' }, { t: 'O que olhar', w: true }, { t: 'Por quê', w: true }, { t: 'Onde' }], rows: [
     [{ v: '<b>Diário</b>' }, 'frota ativa × mapas do dia; placas paradas e previsão de retorno; abastecimentos do dia e preço × ANP', 'ativo sem mapa não paga e fere o stress test; preço acima da ANP é nosso', 'Painel KM · Indisponibilidade · Preço R$/L'],
     [{ v: '<b>Semanal</b>' }, 'dispersão de km por placa (meta 5%); Km/L real × remunerado por placa, com as piores; OS abertas e preventivas vencidas; calibragem e milimetragem', 'km a mais e consumo pior são as duas maiores alavancas; pneu descalibrado não chega à vida', 'Painel KM · Eficiência Km/L · Gestão à Vista · Pneus'],
-    [{ v: '<b>Quinzenal</b>' }, 'o ciclo do FT: conferir o km da placa e o preço do diesel que entraram na revisão; validar km legítimo a mais; ativar e inativar as placas certas; conferir ativas com consumo zero', 'é a revisão que transforma km em remuneração; a ficha errada paga errado', 'FT (Caminhão, Combustível) · Painel KM'],
-    [{ v: '<b>Mensal</b>' }, 'FCA de custos com causa e ação; DRE de frota × pago FT por conta; pneus descartados antes da vida; fatura do contrato × BID', 'o desvio do mês tem dono e ação; a fatura acima do BID é nossa', 'FCA · Carta de Custos · Pneus'],
+    [{ v: '<b>Quinzenal</b>' }, 'o ciclo do FT: subir a NF do diesel (chamado até o dia 15 vale na 2ª quinzena; até o dia 31, na 1ª do mês seguinte); ativar e inativar as placas certas (pedido até o dia 02 e o dia 17); conferir ativas com consumo zero', 'é a quinzena que transforma preço e ativos em remuneração; a ficha errada paga errado', 'FT (Caminhão, Combustível) · Painel KM'],
+    [{ v: '<b>Mensal</b>' }, 'km da placa validado (até o 18º dia útil); fotos do CIVF até o dia 20; justificativa do stress test em 7 dias; FCA de custos com causa e ação; DRE de frota × pago FT por conta; fatura do contrato × BID', 'o km só vira remuneração na revisão mensal; CIVF e stress test sem tratativa viram desconto; o desvio do mês tem dono e ação', 'FT · Ginfo · FCA · Carta de Custos'],
     [{ v: '<b>Trimestral</b>' }, 'a revisão do Km/L: preparar a crítica do consumo validado com o Km/L real por placa, modelos iguais com valores diferentes, placas novas sem histórico', 'o Km/L é 66% do variável e fica congelado três meses', 'Eficiência Km/L · FT (Caminhão)'],
   ] })}
-  ${conc(`A quinzena é a rotina que mais vale dinheiro: é nela que o km, o preço e a lista de ativos viram remuneração. A trimestral é a que mais pesa: o Km/L validado decide dois terços do variável até a próxima revisão.`)}`);
+  ${conc(`A quinzena e o mês são as rotinas que mais valem dinheiro: na quinzena o preço e a lista de ativos viram remuneração; no mês, o km da placa. A trimestral é a que mais pesa: o Km/L validado decide dois terços do variável até a próxima revisão.`)}`);
 
 slide(`${head('A rotina por alavanca', 'Indicador, régua, onde olhar e o que fazer quando estoura', 'Valores do caminhão mediano da Rota em 2026')}
   ${tabela({ classe: 'compacta', cols: [{ t: 'Alavanca' }, { t: 'Indicador' }, { t: 'Régua', n: true }, { t: 'Onde' }, { t: 'O que fazer quando estoura', w: true }], rows: [
-    [{ v: '<b>Km</b>' }, 'km rodado ÷ km pago (dispersão)', '≤ 5%', 'Painel KM', 'validar o km legítimo na quinzena; roteirização; viagens que não remuneram; placa de contrato fixo nas rotas longas'],
+    [{ v: '<b>Km</b>' }, 'km rodado ÷ km pago (dispersão)', '≤ 5%', 'Painel KM', 'validar o km legítimo na revisão mensal; roteirização; viagens que não remuneram; placa de contrato fixo nas rotas longas'],
     [{ v: '<b>Consumo</b>' }, 'Km/L real × remunerado, por placa', `≥ ${f2(E.kml)} (a placa)`, 'Eficiência Km/L', 'vistoriar as piores placas (vazamento, injeção, filtro, pneu murcho, motor ligado parado); perfil de rota; feedback DriverPro'],
     [{ v: '<b>Preço</b>' }, 'R$/L pago × ANP', '≤ ANP', 'Preço R$/L', 'posto com preço negociado; cobrar o posto que cobrou acima; tanque interno abaixo do remunerado'],
     [{ v: '<b>Manutenção</b>' }, 'R$/km gasto × R$/km pago (BID)', `≤ ${rk(E.manut)}`, 'Carta de Custos', 'causa raiz por grupo e placa; cotação; conferir fatura do contrato × BID; preventivas em dia'],
@@ -217,26 +217,26 @@ slide(`${head('A rotina por alavanca', 'Indicador, régua, onde olhar e o que fa
   ${conc(`Toda alavanca tem um número do FT como régua. A ação boa é a que fecha a distância entre o real e essa régua, placa a placa; a ação ruim é a que trata a média da unidade.`)}`);
 
 slide(`${head('O calendário do FT', 'O que a unidade manda ou valida, quando, e o que acontece se não mandar')}
-  ${tabela({ classe: 'compacta', cols: [{ t: 'Quando' }, { t: 'O que' }, { t: 'Quem' }, { t: 'Se não fizer', w: true }], rows: [
-    [{ v: '<b>Toda quinzena</b>' }, 'NF do diesel (o nosso preço); km da placa validado; lista de placas ativas e paradas; ativas com consumo', 'unidade + planejamento', 'preço fica no valor anterior; km a mais vira dispersão para sempre; placa ativa sem mapa fere o stress test; inativa que roda não gera variável'],
-    [{ v: '<b>Todo trimestre</b>', }, 'crítica do consumo validado (Km/L por placa) antes da 1ª quinzena de jan, abr, jul e out', 'unidade + corporativo', 'o Km/L fica três meses errado; em out/26 a revisão não aconteceu e o Q4 roda com o Q3'],
-    [{ v: '<b>Todo mês</b>' }, 'FCA de custos; fatura do contrato × BID; pneus descartados', 'unidade', 'desvio sem causa e sem ação; fatura acima do BID sem cobrança'],
-    [{ v: '<b>Na entrada de placa</b>' }, 'ficha completa: modelo, ano, financiamento, carroceria, pneu, contrato', 'corporativo', 'placa nova com Km/L do benchmark e sem contrato: paga errado até a próxima revisão'],
-    [{ v: '<b>Na saída de placa</b>' }, 'inativar no FT e na Dispersão', 'unidade', 'placa fantasma recebe fixo de parado; se roda, não recebe variável'],
+  ${tabela({ classe: 'compacta', cols: [{ t: 'Quando' }, { t: 'O que', w: true }, { t: 'Quem' }, { t: 'Se não fizer', w: true }], rows: [
+    [{ v: '<b>Toda quinzena</b>' }, 'NF do diesel (chamado até o dia 15 vale na 2ª quinzena; até o 31, na 1ª do mês seguinte); ativar e inativar placas (pedido até o dia 02 e o 17)', 'unidade + planejamento', 'preço fica no anterior e, sem NF por 45 dias, cai a 90% da ANP; ativa sem mapa fere o stress test'],
+    [{ v: '<b>Todo mês</b>' }, 'km da placa (até o 18º dia útil); fotos do CIVF até o dia 20; justificativa do stress test (7 dias após o dia 02); FCA de custos; fatura do contrato × BID', 'unidade', 'km a mais vira dispersão; CIVF e stress test sem tratativa viram desconto (dobra se repetir); desvio sem ação'],
+    [{ v: '<b>Todo trimestre</b>', }, 'crítica do Km/L por placa antes da 1ª quinzena de jan, abr, jul e out', 'unidade + corporativo', 'o Km/L fica três meses errado; em out/26 não houve revisão e o Q4 roda com o Q3'],
+    [{ v: '<b>Entrada de placa</b>' }, 'ficha completa: modelo, ano, financiamento, carroceria, pneu, contrato', 'corporativo', 'placa nova paga pelo benchmark e sem contrato até a próxima revisão'],
+    [{ v: '<b>Saída de placa</b>' }, 'inativar no FT e na Dispersão', 'unidade', 'placa fantasma recebe fixo de parado; se roda, não recebe variável'],
   ] })}
-  ${conc(`O FT paga pelo cadastro e pela revisão. O que a unidade não manda na quinzena não entra; o que não critica no trimestre fica três meses. O calendário é a lista do que mandar, não uma sugestão.`)}`);
+  ${conc(`O FT paga pelo cadastro e pela revisão: o que não entra na quinzena (preço, ativos) e no mês (km) não é pago, e o que não é criticado no trimestre fica três meses. Os prazos são os do Book do Operador.`)}`);
 
 // fechamento
 slide(`${head('Para levar', 'O que lembrar, com o número e a ação')}
   ${cartoes([
     { k: '1 · O mapa é a unidade', n: 'R$ ' + f0(varMapa) + '/mapa', p: 'Mapa rodado paga km por mapa × R$/km. Mapa não rodado não paga; km além do mapa também não.', o: 'Ação: ativos certos, viagens certas, km validado.' },
-    { k: '2 · Km a mais custa', n: 'R$ ' + f0(E.var * 100) + '/100 km', p: `${rs(KT.disp_rs)} de dispersão em 2026. Só vira remuneração se for validado na quinzena.`, o: 'Ação: validar o km legítimo; roteirizar o resto.' },
+    { k: '2 · Km a mais custa', n: 'R$ ' + f0(E.var * 100) + '/100 km', p: `${rs(KT.disp_rs)} de dispersão em 2026. Só vira remuneração se for validado na revisão mensal do km.`, o: 'Ação: validar o km legítimo; roteirizar o resto.' },
     { k: '3 · Diesel decide', n: f0(E.comb / E.var * 100) + '% do variável', p: `0,1 km/L abaixo do remunerado = R$ ${f0((litros01 - litros) * preco)} por caminhão por mês; R$ 0,10/L acima da ANP = R$ ${f0(litros * 0.1)}.`, o: 'Ação: piores placas, posto, DriverPro, crítica trimestral.' },
     { k: '4 · Manutenção paga o BID', n: rk(E.manut), p: 'Contrato acima do BID recebe o BID; fatura acima é nossa. Placa quitada parada quase não recebe fixo.', o: 'Ação: causa raiz por placa; fatura × BID; renovação pelo fim das parcelas.' },
   ])}
   ${concBlocos([
-    { t: 'O que muda na sua semana', s: 'segunda: dispersão e Km/L por placa com as piores; quarta: paradas e previsão de retorno; sexta: OS, preventivas e calibragem. Na quinzena, a lista de ativos e o km validado. No fechamento, o FCA com causa e ação.' },
-    { t: 'Onde tirar dúvida', s: 'Manual Freightech de frota (fórmula e origem de cada custo), Painel KM, Eficiência Km/L, Preço R$/L, Carta de Custos, Pneus, Indisponibilidade e FCA, no portal Gestão em Movimento.' },
+    { t: 'O que muda na sua semana', s: 'segunda: dispersão e Km/L por placa com as piores; quarta: paradas e previsão de retorno; sexta: OS, preventivas e calibragem. Na quinzena, a lista de ativos e a NF do diesel; no mês, o km validado. No fechamento, o FCA com causa e ação.' },
+    { t: 'Onde tirar dúvida', s: 'Book do Operador Frota (as regras da Ambev, do próprio FT), Manual Freightech de frota (fórmula e origem de cada custo), Painel KM, Eficiência Km/L, Preço R$/L, Carta de Custos, Pneus, Indisponibilidade e FCA, no portal Gestão em Movimento.' },
   ], 'A partir de amanhã', 2)}`);
 
 console.log('ok', write(process.env.FT_HTML || 'treinamento.html'), 'slides');

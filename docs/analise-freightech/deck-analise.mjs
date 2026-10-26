@@ -16,6 +16,7 @@ const X = JSON.parse(readFileSync(process.env.CMP || 'completa-2026.json', 'utf8
 const E = JSON.parse(readFileSync(process.env.EXTRA || 'extra-2026.json', 'utf8'));
 const A = JSON.parse(readFileSync(process.env.A2 || 'analise2-2026.json', 'utf8'));
 const O = JSON.parse(readFileSync(process.env.OPO || 'opo.json', 'utf8'));
+const BK = JSON.parse(readFileSync(process.env.BOOK || 'book.json', 'utf8'));   // Book do Operador (book.py): inventário + dimensionamento oficial × ativos
 const PER = `${mv(X.INI)} a ${mv(X.FIM)}`, N = X.n_meses;
 const { slide, capa, capaSec, conc, concBlocos, write } = deck({ rodape: `Remuneração Freightech · Análise ${X.ROT} · Conlog`, marca: 'Remuneração <b>Freightech</b>', titulo: `Análise Freightech ${X.ROT}` });
 const M = v => f1(Math.abs(v) < 5e4 ? 0 : v / 1e6), K = v => f0(Math.abs(v) < 500 ? 0 : v / 1e3), sM = v => Math.abs(v) < 5e4 ? '0,0' : (v >= 0 ? '+' : '−') + M(Math.abs(v)), sK = v => Math.abs(v) < 500 ? '0' : (v >= 0 ? '+' : '−') + K(Math.abs(v));
@@ -498,18 +499,51 @@ capaSec(7, 'Receita', 'A receita líquida por projeto na DRE, remunerado × real
   ])}`);
 }
 
+// ═══ Parte 8 · O Book do Operador ═══
+capaSec(8, 'O que o Book do Operador diz', 'As regras contratuais do FT (Central de Ajuda, 66 registros) lidas contra cada achado desta análise, e o dimensionamento oficial contra os ativos.');
+{
+  const RB = Object.fromEntries(BK.regras.map(r => [r.t, r]));
+  slide(`${head('Regra do Book × achado', 'Onde o Book confirma o achado, onde corrige a leitura e onde não alcança', 'Fonte: Book do Operador do Freightech, registros de Equipamentos, Lucro e Geral (atualizados entre ' + RB['MANUTENÇÃO'].atual.slice(0, 4) + ' e ' + BK.inv.mais_novo.slice(0, 4) + ')')}
+  ${tabela({ classe: 'compacta', cols: [{ t: 'Achado' }, { t: 'O que o Book diz', w: true }, { t: 'O que muda na leitura', w: true }], rows: [
+    [{ v: '<b>Dispersão de km</b>' }, 'o km do caminhão é revisto uma vez por mês (alteração de km até o 18º dia útil, com o dimensionamento da 2ª quinzena); o que muda por quinzena é o preço do diesel e a lista de ativos', 'a crítica do km legítimo tem uma janela por mês, não duas; o km a mais de um mês só entra no seguinte'],
+    [{ v: '<b>Diesel acima da ANP</b>' }, 'posto comum e tanque externo: o menor entre o preço operadora e a ANP; tanque interno e cartão: o preço operadora real; sem NF por 45 dias, 90% da ANP', 'no Rio e em Florianópolis (tanque interno) comprar acima da ANP não é perda contra o FT; nas outras unidades é, e a NF tem de subir na quinzena certa'],
+    [{ v: '<b>Km/L sem revisão no Q4</b>' }, 'as leituras do trimestre anterior entram no trimestre vigente; a placa é paga pela média do modelo na unidade (cluster 1) ou pelo 3º quartil de clusters mais largos', 'o Q4 rodando com o Q3 é desvio do processo do Book; a crítica por placa se faz com a regra dos clusters na mão'],
+    [{ v: '<b>Manutenção: oficina acima do pago</b>' }, 'na carência paga zero; com contrato, o menor entre contrato e BID por faixa de km; sem contrato, BID com 10% de desconto; reajuste em julho pelo IGP-M', 'o BID é o teto por regra, não por cadastro: a fatura acima do BID é nossa por contrato. A carência é a negociada com a montadora e cadastrada na inclusão'],
+    [{ v: '<b>Contrato VW acima do pago</b>' }, 'o valor cadastrado é o menor entre contrato e BID; contrato só vale cheio em compra fora do BID autorizada pelo RPO', 'cotar contrato × BID antes de assinar; contrato acima do BID nunca é pago'],
+    [{ v: '<b>Placas inativas rodando</b>' }, 'stress test: ativo sem viagem no mês perde custo e lucro fixo; viagens fora da unidade por dois meses, idem; três meses sem viagem tiram a placa do FT (80% da FIPE)', 'a lista de ativos é obrigação com desconto, não só cadastro; movimentação de placa tem data (dia 02 e dia 17)'],
+    [{ v: '<b>Rastreador só no Rio</b>' }, 'custo mensal negociado pelo RPO "para as operações em que seja aprovado este custo"', 'é regra, não cadastro: sai das perguntas abertas'],
+    [{ v: '<b>Seguro sem conta na DRE</b>' }, 'seguro contra terceiros anual em parcelas + 0,8% de risco sobre a NF; reajuste em julho pelo IPCA', 'o FT paga; onde a DRE lança continua pergunta ao planejamento'],
+    [{ v: '<b>Remunerado DRE × pago FT</b>' }, 'o Book não trata do remunerado da nossa DRE; diz que o FT trabalha com valores líquidos de PIS/COFINS e que OCs levam ICMS/ISS, PIS e COFINS', 'a diferença segue em aberto até os relatórios oficiais e o fiscal'],
+  ] })}
+  ${conc('O Book fecha quatro das sete perguntas abertas (rastreador, índice de reajuste, ciclo do km, Km/L validado) e dá a regra do pacote: variável por km do mapa, equipe por frota ativa × fatores, fixo por cadastro, lucro por hectolitro. Ficam com o planejamento e o fiscal: remunerado da DRE, imposto e seguro.', 'Leitura')}`);
+}
+{
+  const Q = Object.keys(BK.comp).sort((a, b) => { const f = v => { const m = v.match(/_(\d)_(\d{1,2})_(\d{4})$/); return +m[3] * 100 + +m[2] * 2 + +m[1]; }; return f(a) - f(b); });
+  const rot = v => { const m = v.match(/_(\d)_(\d{1,2})_(\d{4})$/); return `${m[1]}ª ${MES[+m[2] - 1]}/${m[3].slice(2)}`; };
+  const ult = Q[Q.length - 1], S = BK.sizing[ult], us = ['CGR', 'CBA', 'GRL', 'PLT', 'FLP', 'BLC', 'MCC'].filter(u => BK.comp[ult][u]);
+  const cel = Q.flatMap(q => us.map(u => BK.comp[q][u])).filter(Boolean), dif = cel.filter(x => x.siz_cam !== x.ft_cam || x.siz_van !== x.ft_van).length;
+  slide(`${head('Dimensionamento oficial × ativos no FT', `Nas ${Q.length} últimas quinzenas, os caminhões e vans ativos no FT batem com o dimensionamento oficial do Book em ${cel.length - dif} de ${cel.length} casos`, 'Arquivo oficial da quinzena (registro "Dimensionamento 2nd Tier e 3rd Tier" do Book) × placas ativas nos relatórios Caminhão e Van do FT · caminhões + vans')}
+  ${tabela({ classe: 'compacta', cols: [{ t: 'Unidade' }, ...Q.map(q => ({ t: rot(q), n: true })), { t: 'Volume ' + rot(ult) + ' (HL)', n: true }], rows: us.map(u => [nm(u), ...Q.map(q => { const x = BK.comp[q][u]; if (!x) return '—'; const ok = x.siz_cam === x.ft_cam && x.siz_van === x.ft_van; return { v: `${f0(x.siz_cam)}+${f0(x.siz_van)} · FT ${f0(x.ft_cam)}+${f0(x.ft_van)}`, style: ok ? '' : red(1) }; }), f0(S[u].vol)]) })}
+  <p class="note">Célula: caminhões + vans dimensionados · caminhões + vans ativos no FT; em vermelho a quinzena em que não batem. Nova Friburgo e Rondonópolis não estão na aba ROTA desse arquivo. O volume é o do dimensionamento (VOL SIZ-AC), base do lucro por hectolitro.</p>
+  ${concBlocos([
+    { t: 'Ativos', v: `${cel.length - dif} de ${cel.length}`, s: 'o FT acompanha o dimensionamento: quem define quantos caminhões estão ativos é o arquivo oficial da quinzena, e a lista de ativos do FT reflete isso. Placa inativa que roda é placa fora do dimensionamento.' },
+    { t: 'Rio de Janeiro', v: `${f0(BK.comp[Q[0]].CGR.siz_cam)} → ${f0(S.CGR.cam)}`, s: `caminhões dimensionados de ${rot(Q[0])} a ${rot(ult)}: o teto de mapas e a equipe sobem com o dimensionamento, não com a frota cadastrada.` },
+    { t: 'Uso', v: 'crítica do dimensionamento', s: 'o arquivo da quinzena está no banco (ft_book_anexo, com o texto extraído): a crítica de ativos, noturna, reserva e spot se faz contra ele, no prazo do fechamento (até o dia 09).' },
+  ])}`);
+}
+
 // ═══ fechamento ═══
 {
   const ofi = MC.oficina.real + MC.materiais.real + MC.personaliz.real;
   slide(`${head('Para levar', `Frota T2 em ${PER}: R$ ${M(DEF)} mi acima do pago, em manutenção e combustível, concentrados em três unidades`, 'O que fazer, quem faz e o que ainda depende de resposta')}
   ${cartoes([
     { k: '1 · Oficina', n: 'R$ ' + M(ofi - (P.manut.ft - MC.contrato.real)) + ' mi', p: 'descobertos pelo pago FT. Carta de Custos por grupo, placa e fornecedor; contrato × BID placa a placa; garantia nas placas em carência.', o: 'unidades + corporativo' },
-    { k: '2 · Consumo e km', n: 'R$ ' + M(CP.ef + KT.disp_rs + KT.inat_rs) + ' mi', p: `vistoria das ${A.kml_ruim.placas} placas abaixo do Km/L; km validado e lista de ativos na revisão quinzenal.`, o: 'unidades, na quinzena' },
+    { k: '2 · Consumo e km', n: 'R$ ' + M(CP.ef + KT.disp_rs + KT.inat_rs) + ' mi', p: `vistoria das ${A.kml_ruim.placas} placas abaixo do Km/L; lista de ativos na quinzena e km validado na revisão mensal (Book: até o 18º dia útil).`, o: 'unidades, na quinzena e no mês' },
     { k: '3 · Remunerado DRE', n: sM(REM7 - FT7) + ' mi', p: 'diferença em aberto: conferir com os relatórios oficiais do FT e com o planejamento (imposto, composição de manutenção e pneu); achar a conta do seguro.', o: 'planejamento + fiscal' },
     { k: '4 · Km/L e crédito', n: 'Q4 + R$ ' + K(O.fator.impacto['CBA|2026'].imp + O.fator.impacto['MCC|2026'].imp) + ' mil', p: 'pedir a revisão do Q4 com a crítica por placa; fiscal confirma o crédito do diesel da Empurrada.', o: 'corporativo' },
   ])}
   ${concBlocos([
-    { t: 'Perguntas abertas', s: 'Relatórios oficiais do FT (endpoints em liberação pela TI) · efeito do imposto (lucro real × crédito presumido) · como o remunerado de manutenção e pneu é montado na DRE e o que mudou em jul/26 · se o rastreador só no RJ é regra · se o pacote do SRTrans é pago por mapa ou por caminhão ativo · onde o seguro é lançado · como o Km/L validado sai do real do trimestre.' },
+    { t: 'Perguntas abertas', s: 'Relatórios oficiais do FT (endpoints em liberação pela TI) · efeito do imposto (lucro real × crédito presumido) · como o remunerado de manutenção e pneu é montado na DRE e o que mudou em jul/26 · onde o seguro é lançado. O Book respondeu: rastreador só no RJ é regra (custo aprovado por operação); o km é revisto uma vez por mês; o Km/L validado é a média do modelo na unidade das leituras do trimestre; o pacote paga o variável por km do mapa, a equipe por frota ativa, o fixo por cadastro e o lucro por hectolitro.' },
     { t: 'O que esta análise não usa', s: 'O teto do FT (25 mapas por ativo) aparece uma vez, como informação. "Pago FT" é reconstruído com o km da nossa Dispersão; passa a ser o faturado quando o export de faturamento por mapa existir. O Faturamento exportado hoje é o dimensionamento quinzenal, não a fatura.' },
   ], 'Pendências', 2)}`);
 }

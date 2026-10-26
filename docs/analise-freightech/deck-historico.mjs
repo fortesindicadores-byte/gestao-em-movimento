@@ -136,7 +136,7 @@ capaSec(3, 'As premissas do caminhão', 'O R$/km e o fixo de um caminhão da Rot
   slide(`${head('Premissas × inflação', `Se o R$/km de 2022 tivesse seguido o IPCA, o variável de 2026 seria R$ ${f2(PR['2022'].var * ip / 100)}/km, não R$ ${f2(PR['2026'].var)}: R$ ${M(valor('var'))} mi a menos no km pago de ${N26} meses`, 'Base 2022 = 100 · premissa = mediana das placas ativas da Rota · índices acumulados do BCB (2022 → 2026) · leitura: o que a premissa fez contra o índice')}
   ${tabela({ classe: 'compacta', cols: [{ t: 'Premissa' }, { t: '2022', n: true }, { t: '2026', n: true }, { t: '2026 (2022 = 100)', n: true }, { t: 'IPCA', n: true }, { t: 'IGP-M', n: true }, { t: 'IPA-M', n: true }, { t: 'Leitura' }, { t: 'Vale em 2026', n: true }],
     rows: L.map(([n, k, f, km]) => { const v = var22(k, '2026'); return [n, f(PR['2022'][k]), f(PR['2026'][k]), { v: f0(v), style: v < ip - 3 && k !== 'kml' ? red(1) : '' }, f0(ip), f0(ig), f0(ipa), leitura(k), km ? { v: 'R$ ' + M(valor(k)) + ' mi', style: red(valor(k)) } : '—']; }) })}
-  <p class="note">"Vale em 2026" = (premissa de 2022 corrigida pelo IPCA − premissa de 2026) × km pago de ${N26} meses de 2026 (${M(km26)} mi km). Positivo = o FT paga menos do que pagaria se a premissa tivesse acompanhado o IPCA. Km/L não é preço e não entra na conta.</p>
+  <p class="note">"Vale em 2026" = (premissa de 2022 corrigida pelo IPCA − premissa de 2026) × km pago de ${N26} meses de 2026 (${M(km26)} mi km). Positivo = o FT paga menos do que pagaria se a premissa tivesse acompanhado o IPCA. Km/L não é preço e não entra na conta. Pelo Book do Operador, o reajuste é em julho: manutenção pelo IGP-M ou valor negociado com as montadoras; faixa, seguro, IPVA, rastreador e tacógrafo pelo IPCA ou valor negociado; o lucro R$/HL pela performance contra o IPCA.</p>
   ${concBlocos([
     { t: 'Variável', v: var22('var', '2026') < 100 ? '−' + f0(100 - var22('var', '2026')) + '% nominal' : '+' + f0(var22('var', '2026') - 100) + '%', s: `contra IPCA +${f0(ip - 100)}%: em termos reais o km da Rota paga ${f0((1 - PR['2026'].var / (PR['2022'].var * ip / 100)) * 100)}% menos do que em 2022.` },
     { t: 'Manutenção', v: 'R$ ' + M(valor('manut')) + ' mi', s: `a premissa caiu ${f0(100 - var22('manut', '2026'))}% enquanto peça e serviço subiram: é a linha que mais pesa, e o porquê é a troca de frota (slide seguinte).` },
@@ -293,16 +293,16 @@ capaSec(6, 'Divergências de remuneração', 'O que esteve fora da regra ou da b
     ['Crédito de imposto do diesel: Cuiabá caiu', `fator ${f2(F.ano.CBA['2025'])} → ${f2(F.ano.CBA['2026'])} em jan/26`, `R$ ${K(F.impacto['CBA|2026'].imp)} mil (2026)`, 'baixa', 'idem'],
     ['Contrato VW acima da manutenção paga', `${Y25.vw.placas} placas em 2025, ${Y['2026'].vw.placas} em 2026; fatura R$ ${f3(Y['2026'].vw.rk_vw)} × FT ${f3(Y['2026'].vw.rk_ft)}/km`, `R$ ${K(Y25.vw.fatura - Y25.vw.ft)} mil (2025) · R$ ${K(Y['2026'].vw.fatura - Y['2026'].vw.ft)} mil (2026)`, 'alta', 'cotar contrato × BID placa a placa'],
     ['Km/L: Q4/26 sem revisão, valores diferentes no mesmo modelo, ativas zeradas', `${O.kml.q3q4_iguais} placas com o Km/L do Q3; ${O.kml.comDif} de ${O.kml.grupos} grupos; ${O.kml.zeradas} zeradas`, `R$ ${K(O.kml.disp_rs)} mil + revisão`, 'alta', 'crítica do consumo por placa antes da 1ª quinzena'],
-    ['Remunerado DRE acima do pago reconstruído', `manutenção e pneu, todos os anos (${AA.map(a => `${sM(tot(a, 'rem') - tot(a, 'ft'))} mi ${lab(a)}`).join(', ')})`, 'R$ ' + M(AA.reduce((s, a) => s + tot(a, 'rem') - tot(a, 'ft'), 0)) + ' mi acumulado', 'baixa', 'aguardar os relatórios oficiais; hipótese de imposto (lucro real × crédito presumido)'],
-    cad ? ['Cadastro: carroceria de R$ 9,5 bi (Cuiabá)', `2ª nov/25; seguro de R$ ${K(cad.seguro)} mil na quinzena; não faturado`, 'R$ 0', 'cadastro', 'corrigido no cadastro; vale como prova de leitura placa a placa'] : null,
-    ['Diesel comprado acima da ANP', `Rota, ano a ano: ${Object.entries(O.preco.acima_ano).map(([a, v]) => `${a} R$ ${K(v)} mil`).join(' · ')}`, 'R$ ' + K(Object.values(O.preco.acima_ano).reduce((s, v) => s + v, 0)) + ' mil (2022–25)', 'alta', 'posto com preço negociado'],
+    ['Remunerado DRE acima do pago reconstruído', `manutenção e pneu, todos os anos (${AA.map(a => `${sM(tot(a, 'rem') - tot(a, 'ft'))} mi ${lab(a)}`).join(', ')})`, 'R$ ' + M(AA.reduce((s, a) => s + tot(a, 'rem') - tot(a, 'ft'), 0)) + ' mi acumulado', 'baixa', 'aguardar os relatórios oficiais; hipótese de imposto'],
+    cad ? ['Cadastro: carroceria de R$ 9,5 bi (Cuiabá)', `2ª nov/25; seguro de R$ ${K(cad.seguro)} mil na quinzena; não faturado`, 'R$ 0', 'cadastro', 'corrigido; prova de leitura placa a placa'] : null,
+    ['Diesel comprado acima da ANP', `Rota: ${Object.entries(O.preco.acima_ano).map(([a, v]) => `${a} R$ ${K(v)} mil`).join(' · ')}`, 'R$ ' + K(Object.values(O.preco.acima_ano).reduce((s, v) => s + v, 0)) + ' mil (2022–25)', 'alta', 'posto com preço negociado'],
   ].filter(Boolean);
-  slide(`${head('Divergências de remuneração, 2022 a 2026', 'As divergências pontuais são poucas; o que pesa é premissa, e as diferenças da DRE ficam em aberto', 'Confiança: alta = medido na base; baixa = depende de confirmação de terceiro (relatório oficial do FT, fiscal); cadastro = valor do cadastro')}
-  ${tabela({ classe: 'compacta', cols: [{ t: 'Divergência' }, { t: 'Base', w: true }, { t: 'Valor', n: true }, { t: 'Confiança' }, { t: 'Próximo passo', w: true }], rows: D.map(r => [{ v: '<b>' + r[0] + '</b>' }, r[1], { v: '<b>' + r[2] + '</b>' }, tag(r[3]), r[4]]) })}
+  slide(`${head('Divergências de remuneração, 2022 a 2026', 'As divergências pontuais são poucas; o que pesa é premissa, e as diferenças da DRE ficam em aberto', 'Confiança: alta = medido na base; baixa = depende de terceiro (relatório oficial do FT, fiscal); cadastro = valor do cadastro')}
+  ${tabela({ classe: 'compacta', style: 'font-size:10.5px', cols: [{ t: 'Divergência' }, { t: 'Base', w: true }, { t: 'Valor', n: true }, { t: 'Confiança' }, { t: 'Próximo passo', w: true }], rows: D.map(r => [{ v: '<b>' + r[0] + '</b>' }, r[1], { v: '<b>' + r[2] + '</b>' }, tag(r[3]), r[4]]) })}
   ${concBlocos([
-    { t: 'Pontuais', v: 'três', s: 'um preço de diesel fora da curva, um cadastro absurdo que não faturou, e o crédito do diesel que o fiscal confirma.' },
-    { t: 'Premissa', v: 'manutenção e Km/L', s: `a manutenção paga caiu ${f0((1 - PR['2026'].manut / PR['2022'].manut) * 100)}% por km pela troca de frota; o Km/L parou de ser revisado em out/26.` },
-    { t: 'Em aberto', v: 'remunerado DRE', s: 'fica acima do pago reconstruído todos os anos; pode ser imposto ou composição, e não é tratado como erro até os relatórios oficiais do FT.' },
+    { t: 'Pontuais', v: 'três', s: 'um preço de diesel fora da curva, um cadastro que não faturou, e o crédito do diesel que o fiscal confirma.' },
+    { t: 'Premissa', v: 'manutenção e Km/L', s: `manutenção paga ${f0((1 - PR['2026'].manut / PR['2022'].manut) * 100)}% menor por km pela troca de frota; Km/L sem revisão em out/26.` },
+    { t: 'Em aberto', v: 'remunerado DRE', s: 'acima do pago reconstruído todos os anos; imposto ou composição, não é erro até os relatórios oficiais.' },
   ])}`);
 }
 
@@ -317,7 +317,7 @@ capaSec(6, 'Divergências de remuneração', 'O que esteve fora da regra ou da b
     { k: '4 · Resultado', n: 'R$ ' + M(d('2026')) + ' mi em ' + N26 + ' meses', p: `acima do pago em todos os anos (2024 o melhor, R$ ${M(d('2024'))} mi); manutenção e combustível explicam; o remunerado DRE fica entre os dois.` },
   ])}
   ${concBlocos([
-    { t: 'O que pedir', s: 'Revisão do Km/L do Q4 com a crítica por placa · regra da manutenção para placas fora da carência com oficina (garantia) · composição do remunerado da DRE e efeito do imposto, com os relatórios oficiais do FT · índice de reajuste do contrato (qual?) contra o IPCA.' },
+    { t: 'O que pedir', s: 'Revisão do Km/L do Q4 com a crítica por placa · regra da manutenção para placas fora da carência com oficina (garantia) · composição do remunerado da DRE e efeito do imposto, com os relatórios oficiais do FT · conferir nos dados o reajuste de julho que o Book prevê (manutenção pelo IGP-M, fixo pelo IPCA).' },
     { t: 'O que planejar', s: 'Renovação pelo fim das parcelas (quitado recebe ~R$ 600/mês) · contratos de manutenção cotados contra o BID · consumo validado preparado a cada trimestre.' },
   ], 'Próximos passos', 2)}`);
 }

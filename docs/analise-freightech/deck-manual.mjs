@@ -114,7 +114,7 @@ ex('T2 · Fixo · IPVA', 'IPVA e licenciamento: o valor anual do cavalo dividido
       { c: 'Lavagem', tec: 'Parâmetros Gerais · custoLavagem4p…28p', o: 'valor por mês pela capacidade; só o ativo recebe', v: rs2(P.Lavagem) },
       { c: 'Lavagem no AS', tec: 'Caminhão AS · Lavagem por KM', o: 'no AS a lavagem é por km, dentro do variável (custo × lavagens ÷ km)', v: M3.as ? rk(M3.as['Lavagem por KM']) : '—' },
     ])}`,
-    `Três valores de tabela por unidade. O rastreador é pago só nas unidades do Rio de Janeiro (${lista_(com.map(([u]) => NOME[u]))}, ${rs2(com[0][1])} por caminhão, ativo ou parado); nas outras o parâmetro é zero, e o motivo é pergunta aberta ao planejamento. A faixa vale ${rs2(P['Faixa Reflexiva'])} em toda placa. A lavagem é fixa por mês na Rota e na Van e por km no AS.`);
+    `Três valores de tabela por unidade. O rastreador é pago só nas unidades do Rio de Janeiro (${lista_(com.map(([u]) => NOME[u]))}, ${rs2(com[0][1])} por caminhão, ativo ou parado); nas outras o parâmetro é zero, porque o custo só é pago nas operações em que o RPO o aprovou. A faixa vale ${rs2(P['Faixa Reflexiva'])} em toda placa. A lavagem é fixa por mês na Rota e na Van e por km no AS. <b>Book do Operador</b> (Custo fixo de equipamentos): o rastreador é "o custo mensal negociado pelo RPO para as operações em que seja aprovado este custo", ou seja, pago só onde a Ambev aprovou; faixa (5 anos), seguro (terceiros + 0,8% da NF) e rastreador reajustam em julho pelo IPCA ou pelo valor negociado.`);
 }
 function lista_(a) { return a.length <= 1 ? a.join('') : a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1]; }
 
@@ -167,7 +167,7 @@ capaSec(2, 'T2 · Custo variável', 'O que o caminhão recebe por km: combustív
       { c: 'Preço pago', tec: 'precoCreditoImpostos', o: 'o menor dos dois (100% dos registros desde 2022)', v: rs2(D.pago) },
       { c: 'Km/L remunerado', tec: 'Consumo KM/L', o: 'o consumo validado da placa (próximos slides)', v: f2(P['Consumo KM/L']) },
     ])}`,
-    `O FT paga, por km, o preço do diesel mais 5% do preço do Arla, dividido pelo Km/L remunerado da placa. O preço é o menor entre o nosso e a ANP, revisto a cada quinzena; o Km/L é o consumo validado no trimestre anterior. Sobe quando o diesel sobe; cai quando o Km/L remunerado da placa sobe.`);
+    `O FT paga, por km, o preço do diesel mais 5% do preço do Arla, dividido pelo Km/L remunerado da placa. O preço é o menor entre o nosso e a ANP, revisto a cada quinzena; o Km/L é o consumo validado no trimestre anterior. <b>Book do Operador</b> (Preço combustíveis): no posto comum e no tanque externo paga o menor entre o preço operadora (R$/L ponderado das NFs, por chamado: de 01 a 15 vale na 2ª quinzena, de 16 a 31 na 1ª do mês seguinte) e a ANP (média dos 2 últimos relatórios antes da quinzena); no tanque interno (Rio, Florianópolis) e no cartão paga o preço operadora real. Sem NF por 45 dias, o preço cai para 90% da ANP.`);
 }
 
 // Km/L (a) o que é e por que pesa
@@ -197,7 +197,7 @@ capaSec(2, 'T2 · Custo variável', 'O que o caminhão recebe por km: combustív
     ], 1)}</div>
     <div>${tabela({ cols: [{ t: 'Modelo' }, { t: 'Benchmark', n: true }, { t: 'Km/L mediano das placas', n: true }, { t: 'Placas', n: true }], rows: Object.entries(K.modelos).map(([m, x]) => [m, f2(x.benchmark), f2(x.kml_mediana), f0(x.placas)]) })}
     <p class="note">Rota, 2026. O mesmo modelo pode ter placas com Km/L remunerado diferente: o número é por placa, validado pelo histórico dela.</p></div></div>`,
-    `O Km/L remunerado da placa não sai de uma fórmula: é o consumo validado do trimestre anterior, gravado placa a placa. O benchmark do modelo e os ajustes por idade e região servem para a placa nova, antes de ter histórico. Como a Ambev chega do real ao validado (média, corte de outliers, penalidades) é pergunta aberta ao especialista.`);
+    `O Km/L remunerado da placa não sai de uma fórmula: é o consumo validado do trimestre anterior, gravado placa a placa. O benchmark do modelo e os ajustes por idade e região servem para a placa nova, antes de ter histórico. <b>Book do Operador</b> (Consumo): a leitura é diária, da telemetria (BID 2019+) ou do cartão de abastecimento; consumo abaixo de 0,1 ou acima de 20 km/L sai, placa com 4 dias ou menos sai; o número da placa é a média do modelo na unidade (cluster 1) ou, sem leitura, o 3º quartil de clusters mais largos (transportadora, regional, Brasil) até o benchmark; vans ficam em 7,8 km/L fixo.`);
 }
 // Km/L (c) ciclo de revisão
 {
@@ -215,7 +215,7 @@ capaSec(2, 'T2 · Custo variável', 'O que o caminhão recebe por km: combustív
       { k: 'Exceções', n: '3', p: 'abr/25 sem revisão (0% mudaram) · jul/25 entrou na 2ª quinzena · out/26 não houve (0 de ' + f0(cal['2026-10-1'].placas) + ').', acc: true },
       { k: 'Sentido das revisões', n: 'out/25 −7%', p: 'mediana por placa: out/25 −7,3% (184 desceram, 72 subiram) · jan/26 −0,3% · abr/26 +1,1% · jul/26 +3,3%.' },
     ])}`,
-    `A revisão é trimestral: na 1ª quinzena de janeiro, abril, julho e outubro o FT grava o consumo validado do trimestre anterior em quase todas as placas. Entre revisões o Km/L fica congelado, mude o que mudar na operação. O 4º trimestre de 2026 roda com os valores do 3º porque a revisão de outubro não foi feita (troca do especialista da Ambev).`);
+    `A revisão é trimestral: na 1ª quinzena de janeiro, abril, julho e outubro o FT grava o consumo validado do trimestre anterior em quase todas as placas. Entre revisões o Km/L fica congelado, mude o que mudar na operação. O 4º trimestre de 2026 roda com os valores do 3º porque a revisão de outubro não foi feita (troca do especialista da Ambev). <b>Book do Operador</b>: "as informações do trimestre anterior são recebidas e atualizadas no trimestre vigente"; modelo novo roda no benchmark com deflatores até a virada do trimestre.`);
 }
 // Km/L (d) média da unidade e (e) 2026
 {
@@ -251,7 +251,7 @@ capaSec(2, 'T2 · Custo variável', 'O que o caminhão recebe por km: combustív
     ])}
     ${fx(['Pago no mês', { op: '=' }, 'Manutenção R$/km', { op: '×' }, 'km dos mapas rodados', '<small>· o campo R$/KM (contrato por faixa de odômetro) é informativo; o pago sai do Manutenção R$/KM</small>'], { lab: 'Resumo' })}
     <p class="note">A regra reproduz o Manutenção R$/KM em ${f0(M3.manut_check.bate_pct)}% das placas com BID; o resto cai na tabela por idade (mais de 10 anos de vida) ou leva o reajuste anual do contrato. Percentuais e medianas medidos nos dados, não são campo do FT.</p>`,
-    `O FT testa a regra nesta ordem: na carência paga zero; com contrato cadastrado, paga o contrato se ele for menor que o BID (ou se a compra fora do BID foi autorizada), senão paga o BID; sem contrato, 90% do BID; sem BID, a tabela por idade. O pago do mês é esse R$/km vezes o km dos mapas rodados. Contrato acima do BID não entra: a diferença é nossa.`);
+    `O FT testa a regra nesta ordem: na carência paga zero; com contrato cadastrado, paga o contrato se ele for menor que o BID (ou se a compra fora do BID foi autorizada), senão paga o BID; sem contrato, 90% do BID; sem BID, a tabela por idade. O pago do mês é esse R$/km vezes o km dos mapas rodados. Contrato acima do BID não entra: a diferença é nossa. <b>Book do Operador</b> (Manutenção) confirma a ordem e acrescenta: a carência é a cadastrada na inclusão, em meses, negociada com a montadora; os 10% de desconto valem para placa do BID 2019 em diante sem contrato; o reajuste é anual, em julho, pelo IGP-M ou pelo valor negociado pelo RPO.`);
 }
 // manutenção (b) BID
 {
@@ -447,10 +447,10 @@ if (E.custoFixoCustoFixo != null) ex('Armazém · Empilhadeira', 'Empilhadeira: 
 slide(`${head('Para usar o manual', 'Quatro regras que resolvem a maior parte das dúvidas')}
   ${cartoes([
     { k: '1 · O fixo é do cadastro', n: 'ativo ou parado', p: 'FINAME, seguro, IPVA, rastreador e faixa seguem a placa cadastrada; só a lavagem exige o caminhão ativo. Placa quitada recebe quase nada: a renovação se planeja pelo fim das parcelas.' },
-    { k: '2 · O variável é do mapa', n: 'R$/km × km rodado', p: 'Combustível, manutenção, carroceria e pneu são pagos pelo km dos mapas rodados. Km a mais só vira remuneração se for validado na revisão quinzenal.' },
+    { k: '2 · O variável é do mapa', n: 'R$/km × km rodado', p: 'Combustível, manutenção, carroceria e pneu são pagos pelo km dos mapas rodados. Km a mais só vira remuneração se for validado na revisão mensal do km (Book: até o 18º dia útil, com o dimensionamento da 2ª quinzena).' },
     { k: '3 · O Km/L decide o combustível', n: '66% do variável', p: 'É o consumo validado por placa no trimestre; a média das ativas paga a unidade. Antes de cada revisão, criticar placa a placa: novas, iguais com valores diferentes, zeradas.' },
     { k: '4 · Manutenção paga o BID', n: 'contrato só se menor', p: 'Contrato acima do BID recebe o BID; sem contrato, 90% do BID; sem BID, tabela por idade; zero na carência. A fatura acima disso é nossa.' },
   ])}
-  ${conc(`As fórmulas deste manual são as exportadas do Freightech em out/26 e foram conferidas placa a placa: combustível (99,7%), carroceria (100%), pneu (100%), fixo (ao centavo), frete do trecho (ao centavo), manutenção (75% das placas com BID; o resto pela tabela por idade e pelo reajuste). Perguntas abertas ao planejamento e à Ambev: como o real vira o Km/L validado; por que o rastreador só é pago no Rio; como a fatura do mapa (2art) se liga ao Faturamento do FT.`, 'Conferência')}`);
+  ${conc(`As fórmulas deste manual são as exportadas do Freightech em out/26 e foram conferidas placa a placa: combustível (99,7%), carroceria (100%), pneu (100%), fixo (ao centavo), frete do trecho (ao centavo), manutenção (75% das placas com BID; o resto pela tabela por idade e pelo reajuste). O Book do Operador do FT (material "Book do Operador Frota") responde como o real vira o Km/L validado (leituras diárias sem outliers, média do modelo na unidade, por trimestre) e por que o rastreador só é pago no Rio (custo aprovado por operação). Pergunta aberta: como a fatura do mapa (2art) se liga ao Faturamento do FT.`, 'Conferência')}`);
 
 console.log('ok', write(process.env.FT_HTML || 'manual.html'), 'slides');
