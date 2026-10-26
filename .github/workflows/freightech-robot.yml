@@ -29,7 +29,7 @@ on:
         required: true
         default: "sonda"
         type: choice
-        options: [sonda, mapa, exportar, carga, formulas]
+        options: [sonda, mapa, exportar, carga, formulas, booksonda, book]
       canais:
         description: "exportar: canais separados por vírgula (vazio = ROTA,AS,ARMAZEM,EMPURRADA,INSUMOS)"
         required: false

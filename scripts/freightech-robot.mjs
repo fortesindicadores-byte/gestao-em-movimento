@@ -918,6 +918,80 @@ async function formulas() {
   log('── FÓRMULAS: resumo'); resumo.forEach(r => log('   ' + r));
 }
 
+// ── modo booksonda: o Book do Operador (as regras de tudo do FT) ─────────
+// Renan, 26/10/2026: "No FT tem esse book do operador, que tem todas as regras
+// de tudo. Quero que valide tudo e jogue tudo pro banco de dados". Antes de
+// gravar, descobrir como a tela é montada: a API que lista os registros
+// (66, em páginas de 6), a que abre cada um, e onde moram os anexos. Só a
+// FORMA vai para o log (chaves e tamanhos), nunca o conteúdo.
+function formaFunda(v, nivel = 0) {
+  if (nivel > 3) return typeof v;
+  if (Array.isArray(v)) return `[${v.length}]` + (v.length ? formaFunda(v[0], nivel + 1) : '');
+  if (v && typeof v === 'object') return '{' + Object.entries(v).slice(0, 40).map(([k, x]) =>
+    (x && typeof x === 'object') ? `${k}:${formaFunda(x, nivel + 1)}` : `${k}:${x === null ? 'null' : typeof x}${typeof x === 'string' ? '(' + x.length + ')' : ''}`).join(',') + '}';
+  return typeof v;
+}
+async function bookSonda() {
+  const novas = [];
+  const ouve = async res => {
+    const u = res.url(); if (!/apim\.ambevdevs\.com\.br|freightech\.ambev\.com\.br\/api/.test(u)) return;
+    const ct = res.headers()['content-type'] || '';
+    let forma = ct.split(';')[0];
+    if (/json/.test(ct)) { try { forma = formaFunda(await res.json()); } catch (e) {} }
+    novas.push(`${res.request().method()} ${semValores(u)} · HTTP ${res.status()} · ${forma.slice(0, 1500)}`);
+  };
+  page.on('response', ouve);
+  const despeja = rot => { log(`── BOOK ${rot}: ${novas.length} chamada(s)`); novas.splice(0).forEach(x => log('   ' + x)); };
+  const item = page.getByText(/^\s*BOOK OPERADOR\s*$/i).first();
+  if (await item.count()) { await item.click({ timeout: 10000 }).catch(e => log('clique Book:', e.message.split('\n')[0])); }
+  else log('item "BOOK OPERADOR" não achado no menu');
+  await page.waitForTimeout(8000);
+  log('URL do Book:', semValores(page.url()), '·', page.url().split('#')[1] || '');
+  await foto(page, 'book-home');
+  despeja('abertura');
+  const dom = await page.evaluate(() => {
+    const txt = document.body.innerText;
+    const m = txt.match(/Mostrando[^\n]{0,60}/);
+    const cards = [...document.querySelectorAll('*')].filter(e => e.children.length > 1 && /Detalhamento|Divulga/.test(e.innerText || '') && (e.innerText || '').length < 600);
+    return { pag: m ? m[0] : '(sem paginação)', cards: cards.length,
+      menu: [...document.querySelectorAll('a, button, li')].map(e => (e.innerText || '').trim()).filter(t => t && t.length < 60).slice(0, 120) };
+  });
+  log('paginação:', dom.pag, '· blocos com descrição:', dom.cards);
+  log('itens clicáveis:', dom.menu.join(' | '));
+  // abre o 1º card
+  const card = page.getByText(/^\s*QLP ADM\s*$/i).first();
+  if (await card.count()) {
+    await card.click({ timeout: 10000 }).catch(e => log('clique card:', e.message.split('\n')[0]));
+    await page.waitForTimeout(8000);
+    log('URL do registro:', page.url().split('#')[1] || '');
+    await foto(page, 'book-registro');
+    despeja('registro');
+    const det = await page.evaluate(() => ({
+      chars: document.body.innerText.length,
+      links: [...document.querySelectorAll('a[href]')].map(a => { try { const x = new URL(a.href); return x.host + x.pathname; } catch (e) { return ''; } }).filter(h => !/freightech\.ambev\.com\.br\/?$/.test(h)).slice(0, 40),
+      iframes: [...document.querySelectorAll('iframe')].map(f => { try { const x = new URL(f.src); return x.host + x.pathname; } catch (e) { return f.src.slice(0, 60); } }),
+      imgs: document.querySelectorAll('img').length,
+      botoes: [...document.querySelectorAll('button, a')].map(e => (e.innerText || e.title || '').trim()).filter(t => t && t.length < 50).slice(0, 60),
+    }));
+    log('registro: texto', det.chars, 'chars · imgs', det.imgs, '· iframes', det.iframes.join(' ') || '0');
+    log('links:', det.links.join(' | ') || '(nenhum)');
+    log('botões:', det.botoes.join(' | '));
+    // se houver anexo/botão de download, clica no 1º e vê o que vem
+    const dl = page.locator('a[download], a[href$=".pdf"], button:has-text("Download"), a:has-text("Download"), button:has-text("Baixar"), a:has-text("Baixar"), [class*="anexo"] a, [class*="attach"] a').first();
+    if (await dl.count()) {
+      const [d] = await Promise.all([page.waitForEvent('download', { timeout: 20000 }).catch(() => null), dl.click().catch(() => null)]);
+      await page.waitForTimeout(4000);
+      log('anexo:', d ? `download ${d.suggestedFilename().replace(/.*\./, '*.')}` : '(sem download)');
+      despeja('anexo');
+    } else log('sem botão de anexo visível');
+  } else log('card "QLP ADM" não achado');
+  // a 2ª página da lista, para ver a paginação na API
+  await page.goBack().catch(() => {}); await page.waitForTimeout(5000); novas.splice(0);
+  const p2 = page.locator('text=/^\\s*2\\s*$/').last();
+  if (await p2.count()) { await p2.click().catch(() => {}); await page.waitForTimeout(5000); despeja('página 2'); }
+  page.off('response', ouve);
+}
+
 async function textosVisiveis(sel) {
   return page.$$eval(sel, els => [...new Set(els
     .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; })
@@ -977,7 +1051,7 @@ try {
   log(`botões/abas visíveis (${botoes.length}):`, botoes.slice(0, 60).join(' | '));
 
   // abre o que parecer relatório, para listar o submenu (sem exportar nada)
-  for (const rx of (['exportar', 'carga', 'formulas'].includes(MODE) ? [] : [/relat/i, /caminh/i])) {
+  for (const rx of (['exportar', 'carga', 'formulas', 'booksonda', 'book'].includes(MODE) ? [] : [/relat/i, /caminh/i])) {
     const el = page.getByText(rx).first();
     if (await el.count()) {
       try {
@@ -992,6 +1066,7 @@ try {
   }
 
   // ── 4b) a tela de Exportação: como são os campos (para o robô saber clicar) ──
+  if (!/^book/.test(MODE)) {
   await page.goto(BASE + '/#/exportacao-dados', { waitUntil: 'domcontentloaded' }).catch(() => {});
   await page.waitForTimeout(5000);
   await foto(page, 'exportacao');
@@ -1009,6 +1084,8 @@ try {
     return out;
   });
   campos.forEach(c => log('campo', c));
+  }
+  if (MODE === 'booksonda') await bookSonda();
 
   if (MODE === 'mapa') await mapa();
   if (MODE === 'exportar') await exportar();
