@@ -27,9 +27,11 @@ async function sgs(id) {
   const u = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.${id}/dados?formato=json&dataInicial=${INI}&dataFinal=${FIM}`;
   for (let t = 1; ; t++) {
     const r = await fetch(u, { headers: { Accept: 'application/json' } });
-    if (r.ok) return r.json();
-    if (t >= 4) throw new Error(`${r.status} série ${id}`);
-    await new Promise(x => setTimeout(x, 2000 * t));
+    const txt = await r.text();
+    // o SGS devolve XML (erro/limite) com HTTP 200 em algumas séries: tratar como falha e tentar de novo
+    if (r.ok && txt.trim().startsWith('[')) return JSON.parse(txt);
+    if (t >= 6) throw new Error(`${r.status} série ${id}: ${txt.slice(0, 60).replace(/\s+/g, ' ')}`);
+    await new Promise(x => setTimeout(x, 3000 * t));
   }
 }
 const out = { gerado_em: new Date().toISOString(), inicio: INI, series: {} };
