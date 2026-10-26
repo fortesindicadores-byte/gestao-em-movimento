@@ -72,10 +72,10 @@ capa(`2022 a 2026 (2026 até ${FIM26})`, 'Remuneração Freightech: cinco anos d
 {
   const D = H.diesel_mes;
   slide(`${head('Diesel S10 (Rota)', 'Nosso preço, ANP e o preço pago pelo FT, mês a mês')}
-  <div style="margin-top:10px">${lines({ w: 1136, h: 270, labels: D.v.map((x, i) => i % 6 === 0 ? mv(x) : ''), series: [{ data: D.anp, cor: INK3, rotulo: 'ANP', dash: true }, { data: D.op, cor: AZUL, rotulo: 'nosso' }, { data: D.pago, cor: ACC, rotulo: 'pago' }], yfmt: v => f2(v) })}</div>
+  <div style="margin-top:10px">${lines({ w: 1136, h: 270, labels: D.v.map((x, i) => i % 6 === 0 ? mv(x) : ''), series: [{ data: D.anp, cor: INK3, rotulo: '', dash: true }, { data: D.op, cor: AZUL, rotulo: '' }, { data: D.pago, cor: ACC, rotulo: 'pago' }], yfmt: v => f2(v) })}</div>
   <table class="compacta" style="margin-top:6px"><tr><th>Mediana R$/L</th>${A.map(a => `<th class="n">${lab(a)}</th>`).join('')}</tr>
   ${['op', 'anp', 'pago'].map(k => `<tr><td>${{ op: 'Nosso preço', anp: 'ANP', pago: 'Pago' }[k]}</td>${A.map(a => `<td class="n">${f2(H.diesel[a][k])}</td>`).join('')}</tr>`).join('')}</table>
-  <p class="note">O pago é sempre o menor entre o nosso e a ANP (100% dos registros). A queda pontual de Macacu em ago/25 (R$ 1,85) aparece na série.</p>
+  <p class="note">Cinza tracejado = ANP · azul = nosso preço · vermelho = pago pelo FT. O pago é sempre o menor entre o nosso e a ANP (100% dos registros). A queda pontual de Macacu em ago/25 (R$ 1,85) aparece na série.</p>
   ${(() => { const D_ = H.diesel; const dif = A.map(a => [a, D_[a].anp - D_[a].op]); const maior = dif.slice().sort((a, b) => b[1] - a[1])[0];
   return conc(`O diesel pago seguiu o nosso preço nos cinco anos (mediana R$ ${f2(D_['2022'].pago)} em 2022, R$ ${f2(D_['2023'].pago)} em 2023, R$ ${f2(D_['2026'].pago)} em 2026), porque compramos abaixo da ANP em todos eles: a maior folga foi em ${lab(maior[0])}, R$ ${f2(maior[1])}/L. Isso significa que <b>a regra do menor preço nunca nos favoreceu</b>: o FT paga o que pagamos, e o ganho de preço só existe no tanque interno (Rio, Florianópolis), onde a nota de compra fica abaixo do remunerado da placa. A alta de 2026 (R$ ${f2(D_['2025'].pago)} → ${f2(D_['2026'].pago)}, +${f0((D_['2026'].pago / D_['2025'].pago - 1) * 100)}%) entrou no pago e no custo ao mesmo tempo; o déficit de combustível de 2026 não vem do preço, vem do km e do consumo.`); })()}`);
 }
