@@ -1103,8 +1103,9 @@ async function book() {
     const linha = { uuid: d.uuid, titulo: d.titulo || it.titulo || '', subtitulo: d.subtitulo || it.subtitulo || null, categoria: cat, categorias: d.categorias || null, ordem: i + 1,
       blocos: bl, texto, n_blocos: bl.length, n_anexos: anexos.length, n_imagens: nImg, usuario_criou: d.usuarioCriou || null, usuario_atual: d.usuarioAtualizou || null,
       criado_em: d.dataCriacao || null, atualizado_em: d.dataAtualizacao || null, cliques: d.quantidadeClicada ?? null, hash, coletado_em: new Date().toISOString() };
+    if (DUMP) fs.appendFileSync(`${DUMP}/book.ndjson`, JSON.stringify({ ...linha, anexos: linhasAnexo }) + '\n');
     let w = await sb('ft_book?on_conflict=uuid', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify([linha]) });
-    if (!w.ok) { log(`   registro ${i + 1}: gravar HTTP ${w.status} ${(await w.text()).slice(0, 160)}`); continue; }
+    if (!w.ok) { if (i < 3 || (i + 1) % 10 === 0) log(`   registro ${i + 1}: gravar HTTP ${w.status} ${(await w.text()).slice(0, 160)}`); continue; }
     await sb(`ft_book_anexo?registro=eq.${encodeURIComponent(d.uuid)}`, { method: 'DELETE' });
     if (linhasAnexo.length) {
       // um por vez: um anexo grande não pode derrubar os outros
@@ -1114,7 +1115,6 @@ async function book() {
       }
     }
     okReg++;
-    if (DUMP) fs.appendFileSync(`${DUMP}/book.ndjson`, JSON.stringify({ ...linha, anexos: linhasAnexo }) + '\n');
     if ((i + 1) % 10 === 0) log(`   ${i + 1}/${regs.length} · anexos ok ${okAn} · falha ${falhaAn}`);
   }
   // 2) validação: o que a lista tinha × o que está no banco
@@ -1128,7 +1128,8 @@ async function book() {
   log('   por categoria: ' + Object.entries(porCat).map(([k, v]) => `${k} ${v}`).join(' · '));
   log('   forma do anexo (chaves): ' + ([...formaAnexo].join(' | ') || '(nenhum)'));
   if (okReg < regs.length || falhaAn) { console.error(`::warning::Book: ${regs.length - okReg} registro(s) e ${falhaAn} anexo(s) não gravados`); }
-  if (!okReg) process.exitCode = 1;
+  if (!okReg && !DUMP) process.exitCode = 1;
+  if (!okReg) console.error('::warning::nada gravado no banco (a tabela ft_book existe? rodar scripts/freightech-book.sql); o dump foi escrito mesmo assim');
 }
 
 async function textosVisiveis(sel) {
