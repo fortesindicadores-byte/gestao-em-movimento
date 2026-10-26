@@ -103,5 +103,6 @@ console.log(`\n── ${ult} · pontuação por unidade (o que o Scorecard mostr
 linhas.filter(l => l.vig === ult).sort((a, b) => (b.pont ?? -1) - (a.pont ?? -1)).forEach(l => {
   const faltam = IC_ORDEM.filter(k => l.f[k] == null);
   console.log(' ', l.unidade.padEnd(20), l.pont == null ? '—' : l.pont.toFixed(1).padStart(6),
+              '· disp', l.f.disp == null ? '—' : l.f.disp.toFixed(2) + '%',
               faltam.length ? '· sem: ' + faltam.join(',') : '');
 });
