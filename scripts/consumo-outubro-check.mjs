@@ -214,4 +214,29 @@ log('\n── 8. Abastecimento por abastecimento das placas que mais puxaram (e 
   }
 }
 
+log('\n── 9. Paradas (placa + hodômetro) com OS de Arla SEM a OS de diesel, por mês e unidade ──');
+{
+  // Mesma parada = mesma placa e mesmo hodômetro. O ERP põe o km rodado na 1ª OS da parada
+  // (menor nº de OS) e zera nas outras; se só a OS de Arla existe, o km entra sem litro de diesel.
+  for (const m of [ANT, MES]) {
+    const rows = erp.filter(r => String(r.data).slice(0, 7) === m && num(r.hodometro) != null);
+    const par = {};
+    rows.forEach(r => {
+      const k = `${placaKey(r.placa)}|${Math.round(num(r.hodometro))}`;
+      const p = par[k] || (par[k] = { d: 0, a: 0, km: 0, uni: String(r.projeto_os || '').replace(/^.*- /, '') || '?', os: [] });
+      if (ehDiesel(r)) p.d++; else if (/ARLA/.test(norm(r.tipo_combustivel))) p.a++;
+      p.km += num(r.km_rodado) || 0; p.os.push(num(r.ordem_servico));
+    });
+    const tot = Object.values(par), semD = tot.filter(p => p.a && !p.d), comD = tot.filter(p => p.a && p.d);
+    const kmTot = tot.reduce((s, p) => s + p.km, 0), kmSem = semD.reduce((s, p) => s + p.km, 0);
+    log(`${m}: ${tot.length} paradas · ${comD.length} com Arla e diesel · ${semD.length} com Arla e SEM diesel (${f0(kmSem)} km, ${(100 * kmSem / (kmTot || 1)).toFixed(1)}% do km do mês)`);
+    const porU = {};
+    semD.forEach(p => { const u = porU[p.uni] || (porU[p.uni] = { n: 0, km: 0 }); u.n++; u.km += p.km; });
+    Object.entries(porU).sort((a, b) => b[1].km - a[1].km).forEach(([u, v]) => log(`  ${pad(u, 10)} ${padL(v.n, 4)} paradas sem diesel · ${padL(f0(v.km), 8)} km`));
+    // Diferença de nº de OS entre a de Arla e a de diesel da MESMA parada (proxy da ordem de criação)
+    const gaps = comD.map(p => Math.max(...p.os) - Math.min(...p.os)).filter(g => g > 0).sort((a, b) => a - b);
+    if (gaps.length) log(`  nº de OS: diferença Arla × diesel na mesma parada: p50 ${gaps[Math.floor(gaps.length / 2)]} · p90 ${gaps[Math.floor(gaps.length * 0.9)]} (${gaps.length} paradas)`);
+  }
+}
+
 log('\nLeitura: se "mix do mês anterior" já devolve o Km/L para perto do mês anterior, é composição (quem ainda não abasteceu/encerrou); se o mês anterior nos mesmos dias também sai alto, é o começo do mês; se a razão placa a placa tem mediana perto de 1 e poucas acima de 1,3×, o dado por placa está estável e o salto vem de poucas placas (lista do item 4).');
