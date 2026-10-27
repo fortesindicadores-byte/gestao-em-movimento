@@ -1,0 +1,64 @@
+name: Consumo Auto (ERP + Freightech -> Km/L, R$/L, Seara)
+
+# Monta as abas Km/L, R$/L e Base Remunerado Modelo (workbook Consumo) e
+# Combustível / Base Remunerado (Seara) a partir do banco — erp_abastecimentos
+# (realizado) e ft_linha (remunerado do FT) — e grava em ca_<slug>, no layout
+# das sh_<slug>. A chave portal_flags.consumo_auto decide se os painéis leem
+# daqui (ver scripts/consumo-auto.sql e scripts/consumo-auto.mjs).
+#
+#  ensaio — só lê e imprime a comparação aba × automático. Não grava.
+#  gravar — grava as ca_* e o registro consumo_auto_base (e a semente de
+#           seara_param, se ela estiver vazia).
+#
+# TODO DIA às 06:00 BRT pelo pg_cron do Supabase (consumo-auto-6h em
+# scripts/consumo-auto.sql, workflow_dispatch com modo=gravar), depois do ERP
+# (PowerShell do Renan, 05:00) e do Freightech (05:00). O cron abaixo é só
+# REDE: o agendador do GitHub atrasa horas. No `schedule` não existe `inputs`,
+# por isso o modo vem do event_name.
+on:
+  schedule:
+    - cron: '30 9 * * *'
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "ensaio (só compara) | gravar"
+        required: true
+        default: "ensaio"
+        type: choice
+        options: [ensaio, gravar]
+      desde:
+        description: "1º mês montado (AAAA-MM)"
+        required: false
+        default: "2026-01"
+      encerradas:
+        description: "S = só OS encerradas do ERP (vazio = todas)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  consumo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Rodar
+        env:
+          CONSUMO_MODO: ${{ github.event_name == 'schedule' && 'gravar' || github.event.inputs.modo }}
+          CONSUMO_DESDE: ${{ github.event.inputs.desde || '2026-01' }}
+          CONSUMO_ENCERRADA: ${{ github.event.inputs.encerradas || '' }}
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/consumo-auto.mjs
+      - name: Avisar por e-mail se falhar
+        if: failure()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          MAIL_FROM:      ${{ vars.MAIL_FROM }}
+          MAIL_TO:        ${{ vars.MAIL_TO }}
+          WORKFLOW:       ${{ github.workflow }}
+          RUN_URL:        ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash scripts/avisa-falha.sh
