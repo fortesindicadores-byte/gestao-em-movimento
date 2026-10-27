@@ -263,9 +263,12 @@ function projetoAba(r) {
 //          errado vira 2 milhões de km num mês — GOI set/26 no 1º ensaio);
 //   hodo   hodômetro máximo − mínimo do mês;
 //   media  Σ (litros × media_km_l do abastecimento).
-// O ensaio imprime quanto cada um bate com a aba; CONSUMO_KM escolhe (padrão: soma
-// com guarda — abastecimento com km_rodado acima de KM_MAX_FILL ou negativo fica fora).
-const KM_MODO = process.env.CONSUMO_KM || 'soma';
+//   todos  Σ km_rodado de TODOS os abastecimentos da placa (diesel + Arla + outros).
+// O ensaio imprime quanto cada um bate com a aba. Medido em 27/10/2026 (4.525
+// placa-mês): todos 56% iguais / 61% a ±2%; soma do diesel 48% / 52%; Σ litros×média
+// 47%; hodômetro 3%. CONSUMO_KM escolhe (padrão: todos, com guarda — abastecimento com
+// km_rodado acima de KM_MAX_FILL ou negativo fica fora).
+const KM_MODO = process.env.CONSUMO_KM || 'todos';
 const KM_MAX_FILL = +(process.env.CONSUMO_KM_MAX || 3000);
 function somaKm(a, r) {
   const kr = num(r.km_rodado); const mk = num(r.media_km_l); const lt = num(r.litros) || 0;
