@@ -363,8 +363,8 @@ erp.forEach(r => {
 [...real.keys()].forEach(k => { if (!real.get(k).n) real.delete(k); });   // só Arla no mês: não é linha da aba
 real.forEach(a => { a.km = kmDe(a); });
 { // simulação mês a mês: km de todos os abastecimentos × só das paradas que já têm diesel
-  const m = new Map(); real.forEach(a => { const x = m.get(a.ym) || { lit: 0, todos: 0, parada: 0, sem: 0 }; x.lit += a.litros; x.todos += a.kmTodos || 0; x.parada += a.kmParada || 0; x.sem += a.kmSemDiesel || 0; m.set(a.ym, x); });
-  log('km "todos" × "parada" (Ambev, por mês): ' + [...m.entries()].sort().map(([ym, x]) => `${ym} ${(x.todos / (x.lit || 1)).toFixed(2)}→${(x.parada / (x.lit || 1)).toFixed(2)} km/L (${Math.round(x.sem).toLocaleString('pt-BR')} km em parada sem diesel, ${(100 * x.sem / (x.todos || 1)).toFixed(1)}%)`).join(' · '));
+  const m = new Map(); real.forEach(a => { const x = m.get(a.ym) || { lit: 0, todos: 0, parada: 0, sem: 0, diesel: 0 }; x.lit += a.litros; x.todos += a.kmTodos || 0; x.parada += a.kmParada || 0; x.sem += a.kmSemDiesel || 0; x.diesel += a.kmGuard || 0; m.set(a.ym, x); });
+  log('Km/L por mês (Ambev) — km de todas as OS · só paradas com diesel · só OS de diesel: ' + [...m.entries()].sort().map(([ym, x]) => `${ym} ${(x.todos / (x.lit || 1)).toFixed(2)} · ${(x.parada / (x.lit || 1)).toFixed(2)} · ${(x.diesel / (x.lit || 1)).toFixed(2)} (km só no Arla: ${(100 * (x.todos - x.diesel) / (x.todos || 1)).toFixed(1)}%)`).join(' | '));
 }
 log(`realizado Ambev: ${real.size} placa-mês em ${new Set([...real.values()].map(a => a.proj)).size} projetos · Seara (ANG): ${angRows.length} abastecimentos · km pelo modo "${KM_MODO}"`);
 if (foraProj.size) log('  fora da Km/L (projeto sem lugar na aba): ' + [...foraProj.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '));
