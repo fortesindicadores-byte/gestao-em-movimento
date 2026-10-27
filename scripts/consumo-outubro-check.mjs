@@ -179,4 +179,27 @@ for (const c of ['INSUMOS', 'VAN', 'EMPURRADA']) {
   });
 }
 
+log('\n── 7. Dia a dia: OS de diesel por dia (mês corrente × anterior) e quando cada OS entrou no banco ──');
+{
+  const porDia = ym => { const o = {}; linhas.forEach(r => { if (r.ym !== ym || !r.diesel) return; o[r.dia] = (o[r.dia] || 0) + 1; }); return o; };
+  const dA = porDia(ANT), dM = porDia(MES);
+  const linha = [];
+  for (let d = 1; d <= 31; d++) linha.push(`${padL(d, 2)}: ${padL(dM[d] || 0, 3)}/${padL(dA[d] || 0, 3)}`);
+  log('  dia: out/set →');
+  for (let i = 0; i < 31; i += 8) log('  ' + linha.slice(i, i + 8).join('   '));
+  // carregado_em: se for a 1ª aparição, dá o atraso entre abastecer e entrar no banco
+  const car = await tudo(`erp_abastecimentos?select=data,carregado_em,tipo_combustivel,filial,projeto_os&data=gte.${ANT}-01&order=data.asc`);
+  const dias = car.map(r => ({ d: r.data, c: String(r.carregado_em || '').slice(0, 10) })).filter(r => r.c);
+  const distintos = new Set(dias.map(r => r.c));
+  log(`  carregado_em: ${distintos.size} data(s) distinta(s) desde ${ANT}: ${[...distintos].sort().slice(-8).join(' · ')}${distintos.size > 8 ? ' (…)' : ''}`);
+  if (distintos.size > 3) {
+    const lag = dias.map(r => Math.round((Date.parse(r.c) - Date.parse(r.d)) / 86400000)).filter(x => x >= 0);
+    log(`  atraso abastecer → entrar (dias): p50 ${quant(lag, .5)} · p75 ${quant(lag, .75)} · p90 ${quant(lag, .9)} · p95 ${quant(lag, .95)} · máx ${Math.max(...lag)} (vale se carregado_em for a 1ª aparição)`);
+    const ult = [...distintos].sort().slice(-1)[0];
+    const hojeC = car.filter(r => String(r.carregado_em || '').slice(0, 10) === ult);
+    const porD = {}; hojeC.forEach(r => { porD[r.data] = (porD[r.data] || 0) + 1; });
+    log(`  a carga de ${ult} trouxe ${hojeC.length} OS, com data de abastecimento: ${Object.entries(porD).sort().map(([d, n]) => `${d.slice(5)} ${n}`).join(' · ')}`);
+  } else log('  carregado_em é reescrito a cada carga (não serve para medir atraso)');
+}
+
 log('\nLeitura: se "mix do mês anterior" já devolve o Km/L para perto do mês anterior, é composição (quem ainda não abasteceu/encerrou); se o mês anterior nos mesmos dias também sai alto, é o começo do mês; se a razão placa a placa tem mediana perto de 1 e poucas acima de 1,3×, o dado por placa está estável e o salto vem de poucas placas (lista do item 4).');
