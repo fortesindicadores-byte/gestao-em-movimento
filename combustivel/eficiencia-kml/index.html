@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610271300">
+<meta name="build" content="202610271500">
 <title>Km/L · Eficiência de Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -401,7 +401,7 @@ table.dre tr.total td.imp-cell{font-size:12px;}
 }
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../");}catch(e){}</script>
-<script src="../../assets/gviz-cache.js?v=202610271300"></script>
+<script src="../../assets/gviz-cache.js?v=202610271500"></script>
 </head>
 <body>
 <div class="app">
@@ -881,18 +881,17 @@ async function fetchBanco(){
   // forma, o robô não grava e a tabela fica no último conteúdo bom — o painel
   // mostrava jan→ago enquanto a planilha já tinha setembro. Mesma regra do
   // gviz-cache: erro "FALHOU" no sh_base manda para a planilha.
-  // CONSUMO AUTOMÁTICO (Renan, 27/10/2026): com a chave portal_flags.consumo_auto
-  // ligada, a aba Km/L é a que o robô scripts/consumo-auto.mjs monta do ERP +
-  // Freightech (ca_consumo_km_litro, mesmo layout). É o mesmo desvio que o
-  // gviz-cache.js faz para os outros painéis; base automática com erro cai na sh_.
+  // CONSUMO AUTOMÁTICO (Renan, 27/10/2026, "automatiza tudo daí" e "Não sei se
+  // precisa ter ligar"): a aba Km/L é, por padrão, a que o robô
+  // scripts/consumo-auto.mjs monta do ERP + Freightech (ca_consumo_km_litro,
+  // mesmo layout). É o mesmo desvio que o gviz-cache.js faz para os outros
+  // painéis; base automática com erro (ou ainda não gravada) cai na sh_.
+  // window.__consumoAuto = false desliga (testes).
   let tabela='sh_consumo_km_litro'; FONTE_AUTO=false;
-  try{
-    const {data:f}=await sb.from('portal_flags').select('ligado').eq('chave','consumo_auto').maybeSingle();
-    if(f&&f.ligado){
-      const {data:c}=await sb.from('consumo_auto_base').select('tabela,linhas,erro').eq('slug','consumo_km_litro').maybeSingle();
-      if(c&&!c.erro&&c.linhas>0){ tabela=c.tabela||'ca_consumo_km_litro'; FONTE_AUTO=true; }
-      else console.warn('consumo automático fora:',c?c.erro:'sem registro','— lendo a sh_');
-    }
+  if(window.__consumoAuto!==false) try{
+    const {data:c}=await sb.from('consumo_auto_base').select('tabela,linhas,erro').eq('slug','consumo_km_litro').maybeSingle();
+    if(c&&!c.erro&&c.linhas>0){ tabela=c.tabela||'ca_consumo_km_litro'; FONTE_AUTO=true; }
+    else console.warn('consumo automático fora:',c?c.erro:'sem registro','— lendo a sh_');
   }catch(e){}
   let st=null;
   if(!FONTE_AUTO){ try{ ({data:st}=await sb.from('sh_base').select('erro').eq('slug','consumo_km_litro').maybeSingle()); }catch(e){} }
@@ -1758,6 +1757,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610271300"></script>
+<script src="../../assets/build-check.js?v=202610271500"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610271300">
+<meta name="build" content="202610271500">
 <title>Parâmetros Seara · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -62,9 +62,6 @@ td input.err{border-color:var(--vermelho);}
 .bt.mini{padding:4px 9px;font-size:9.5px;letter-spacing:.3px;}
 .aviso-topo{border:1px solid rgba(244,161,0,.35);background:rgba(244,161,0,.1);border-radius:10px;
   padding:11px 14px;font-size:11.5px;color:var(--txt2);line-height:1.65;margin-bottom:14px;}
-.chave{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
-.chave .st{font-size:12px;font-weight:700;}
-.chave .st.on{color:var(--verde);} .chave .st.off{color:var(--txt3);}
 .pill{display:inline-block;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;border:1px solid var(--card-brd);color:var(--txt2);}
 .pill.ok{color:var(--verde);border-color:rgba(59,179,59,.4);} .pill.err{color:var(--vermelho);border-color:rgba(255,82,82,.4);}
 .mono{font-family:ui-monospace,Menlo,monospace;font-size:11px;}
@@ -101,12 +98,8 @@ td input.err{border-color:var(--vermelho);}
       <div class="ccab">
         <div>
           <div class="ctit">Consumo automático</div>
-          <div class="csub">Com a chave ligada, os painéis de combustível (Ambev e Seara) leem as abas montadas pelo robô
-            a partir do ERP e do Freightech, em vez do Sheets. Desligada, nada muda — o robô segue gravando e comparando no log.</div>
-        </div>
-        <div class="chave">
-          <span class="st" id="chave-st">—</span>
-          <button class="bt" id="bt-chave" onclick="trocaChave()" style="display:none">Ligar</button>
+          <div class="csub">Os painéis de combustível (Ambev e Seara) leem as abas montadas pelo robô a partir do ERP e do Freightech,
+            todo dia às 06:00. A Ambev não tem parâmetro: o remunerado vem do Freightech. Base que falhou na carga cai sozinha na aba do Sheets.</div>
         </div>
       </div>
       <div id="bases" class="vazio">Lendo…</div>
@@ -165,7 +158,7 @@ td input.err{border-color:var(--vermelho);}
    ══════════════════════════════════════════════════════════════ */
 const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
-let sb=null, ADMIN=false, ROWS=[], CHAVE=null;
+let sb=null, ADMIN=false, ROWS=[];
 const $=i=>document.getElementById(i);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt=(v,d=2)=>v==null||v===''?'—':(+v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -249,13 +242,8 @@ async function salvaNova(){
   if(error){ alert('O banco recusou: '+error.message); return; }
   fechaNova(); carrega();
 }
-// ── a chave e o estado das bases automáticas ──────────────────────────────
-async function leChave(){
-  const {data:f}=await sb.from('portal_flags').select('ligado,updated_at').eq('chave','consumo_auto').maybeSingle();
-  CHAVE=f||null;
-  const st=$('chave-st'); if(!f){ st.textContent='chave consumo_auto não existe — rode o scripts/consumo-auto.sql'; st.className='st off'; }
-  else { st.textContent=f.ligado?'LIGADA · painéis lendo o automático':'desligada · painéis no Sheets'; st.className='st '+(f.ligado?'on':'off'); }
-  const b=$('bt-chave'); b.style.display=ADMIN&&f?'':'none'; b.textContent=f&&f.ligado?'Desligar':'Ligar';
+// ── o estado das bases automáticas (o automático é o padrão; não há chave) ──
+async function leBases(){
   const {data:cs,error}=await sb.from('consumo_auto_base').select('slug,tabela,linhas,carregado_em,erro,resumo').order('slug');
   if(error){ $('bases').innerHTML=`<div class="vazio">consumo_auto_base: ${esc(error.message)}</div>`; return; }
   if(!cs||!cs.length){ $('bases').innerHTML='<div class="vazio">O robô ainda não gravou nada (workflow Consumo Auto, modo gravar).</div>'; return; }
@@ -263,15 +251,8 @@ async function leChave(){
   const res=c=>{ const r=c.resumo||{}; if(r.comum!=null) return `${r.comum} placa-mês em comum com a aba · litros iguais ${Math.round(100*r.litOk/r.comum)}% · km ${Math.round(100*r.kmOk/r.comum)}% · R$ ${Math.round(100*r.rsOk/r.comum)}%`; if(r.aba!=null) return `aba ${r.aba} linhas · automático ${r.auto}`; return ''; };
   $('bases').innerHTML='<table><thead><tr><th>Aba</th><th>Tabela</th><th class="num">Linhas</th><th>Última carga</th><th>Situação</th><th>Comparação com a aba do Sheets</th></tr></thead><tbody>'
     + cs.map(c=>`<tr><td><b>${esc(c.slug)}</b></td><td class="mono">${esc(c.tabela)}</td><td class="num">${(c.linhas||0).toLocaleString('pt-BR')}</td><td>${esc(dt(c.carregado_em))}</td>`
-      + `<td>${c.erro?`<span class="pill err" title="${esc(c.erro)}">falhou</span>`:'<span class="pill ok">ok</span>'}</td><td style="white-space:normal;font-size:10.5px;color:var(--txt3)">${esc(res(c))}</td></tr>`).join('')
+      + `<td>${c.erro?`<span class="pill err" title="${esc(c.erro)}">falhou · painéis na aba do Sheets</span>`:'<span class="pill ok">ok · painéis lendo o automático</span>'}</td><td style="white-space:normal;font-size:10.5px;color:var(--txt3)">${esc(res(c))}</td></tr>`).join('')
     + '</tbody></table>';
-}
-async function trocaChave(){
-  if(!CHAVE) return;
-  const ligar=!CHAVE.ligado;
-  if(!confirm(ligar?'Ligar o consumo automático? Os painéis de combustível (Km/L, R$/L, CO², Árvore, Seara…) passam a ler as abas montadas pelo robô.':'Desligar? Os painéis voltam a ler as abas do Sheets.')) return;
-  const {error}=await sb.from('portal_flags').update({ligado:ligar,updated_at:new Date().toISOString()}).eq('chave','consumo_auto');
-  if(error) alert('O banco recusou: '+error.message); leChave();
 }
 // ── entrada ───────────────────────────────────────────────────────────────
 (async function(){
@@ -288,11 +269,11 @@ async function trocaChave(){
   const aplicaTema=t=>{ document.body.classList.toggle('claro',t==='light'); try{localStorage.setItem('bi_theme',t);}catch(e){} };
   try{ aplicaTema(localStorage.getItem('bi_theme')||'dark'); }catch(e){}
   $('themeBtn').addEventListener('click',()=>aplicaTema(document.body.classList.contains('claro')?'dark':'light'));
-  leChave(); carrega();
+  leBases(); carrega();
 })();
 </script>
 <script src="../assets/mobile.js"></script>
-<script src="../assets/modo-tv.js?v=202610271300"></script>
-<script src="../assets/build-check.js?v=202610271300"></script>
+<script src="../assets/modo-tv.js?v=202610271500"></script>
+<script src="../assets/build-check.js?v=202610271500"></script>
 </body>
 </html>

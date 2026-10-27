@@ -3,8 +3,8 @@ name: Consumo Auto (ERP + Freightech -> Km/L, R$/L, Seara)
 # Monta as abas Km/L, R$/L e Base Remunerado Modelo (workbook Consumo) e
 # Combustível / Base Remunerado (Seara) a partir do banco — erp_abastecimentos
 # (realizado) e ft_linha (remunerado do FT) — e grava em ca_<slug>, no layout
-# das sh_<slug>. A chave portal_flags.consumo_auto decide se os painéis leem
-# daqui (ver scripts/consumo-auto.sql e scripts/consumo-auto.mjs).
+# das sh_<slug>. Os painéis leem daqui por padrão; base com erro de carga cai
+# na sh_* do Sheets (ver scripts/consumo-auto.sql e scripts/consumo-auto.mjs).
 #
 #  ensaio — só lê e imprime a comparação aba × automático. Não grava.
 #  gravar — grava as ca_* e o registro consumo_auto_base (e a semente de

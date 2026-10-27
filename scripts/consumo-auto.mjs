@@ -38,9 +38,9 @@
 //     colunas que a planilha acrescenta (Unidade Benner, Concat, Vigência Data).
 //
 // Modos: ensaio (padrão: só lê e imprime a comparação aba × automático) e
-// gravar (escreve em ca_<slug> e no registro consumo_auto_base). A CHAVE
-// portal_flags.consumo_auto decide se os painéis leem as ca_* — o robô grava
-// todo dia mesmo com ela desligada, para a comparação ficar no log.
+// gravar (escreve em ca_<slug> e no registro consumo_auto_base). O automático
+// é o PADRÃO nos painéis (gviz-cache.js e Eficiência Km/L): toda base gravada
+// sem erro é servida no lugar da sh_*; base com erro cai no Sheets.
 // ============================================================
 const SUPA = 'https://lozwipoeacpvplgkrxkq.supabase.co';
 const KEY = process.env.GEM_SUPABASE_SERVICE_KEY || '';
@@ -537,6 +537,5 @@ for (const s of ALVOS) {
     try { await api('consumo_auto_base?on_conflict=slug', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify([{ slug: s, tabela: t, erro: 'FALHOU: ' + e.message.slice(0, 300), carregado_em: new Date().toISOString() }]) }); } catch (_) { /* nada */ }
   }
 }
-let flag = null; try { flag = await api('portal_flags?chave=eq.consumo_auto&select=ligado'); } catch (_) { /* sem a tabela */ }
-log(`\nchave consumo_auto: ${flag && flag[0] ? (flag[0].ligado ? 'LIGADA — os painéis leem as ca_*' : 'desligada — os painéis seguem no Sheets') : 'não existe (rodar scripts/consumo-auto.sql)'}`);
+log('\nos painéis leem as ca_* gravadas sem erro (o automático é o padrão); base com erro cai na sh_* do Sheets');
 if (falhas) process.exit(1);

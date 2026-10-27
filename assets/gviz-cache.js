@@ -231,27 +231,24 @@
   // ── CONSUMO AUTOMÁTICO (Renan, 27/10/2026: "automatiza tudo daí") ──────
   // As abas Km/L, R$/L e Base Remunerado Modelo (Consumo) e Combustível / Base
   // Remunerado (Seara) também existem montadas pelo robô scripts/consumo-auto.mjs
-  // (ERP + Freightech), em ca_<slug>, no MESMO layout das sh_<slug>. Com a chave
-  // portal_flags.consumo_auto LIGADA, a chave do gviz dessas abas passa a apontar
-  // para a ca_* — o painel recebe o mesmo payload e não sabe a diferença. Base
-  // automática com erro de carga (consumo_auto_base.erro) não é servida: cai na
-  // sh_* de sempre. Desligada, nada muda.
+  // (ERP + Freightech), em ca_<slug>, no MESMO layout das sh_<slug>. O automático
+  // É O PADRÃO (Renan, 27/10/2026: "Não sei se precisa ter ligar"): a chave do
+  // gviz dessas abas aponta para a ca_* sempre que o registro consumo_auto_base
+  // tem a base sem erro e com linhas — o painel recebe o mesmo payload e não
+  // sabe a diferença. Base automática com erro de carga (ou ainda não gravada)
+  // cai na sh_* de sempre. window.__consumoAuto = false desliga (testes).
   function consumoAuto(rows, m) {
-    return rest('portal_flags?chave=eq.consumo_auto&select=ligado')
+    if (window.__consumoAuto === false) return Promise.resolve(m);
+    return rest('consumo_auto_base?select=slug,tabela,colunas,linhas,erro,carregado_em')
       .then(function (r) { return r.ok ? r.json() : []; })
-      .then(function (f) {
-        if (!f || !f[0] || !f[0].ligado) return m;
-        return rest('consumo_auto_base?select=slug,tabela,colunas,linhas,erro,carregado_em')
-          .then(function (r) { return r.ok ? r.json() : []; })
-          .then(function (cs) {
-            (cs || []).forEach(function (c) {
-              var base = rows.filter(function (b) { return b.slug === c.slug; })[0];
-              if (!base || !base.gviz_chave) return;
-              if (c.erro || !(c.linhas > 0) || !c.colunas) { try { console.warn('gviz-cache: consumo automático', c.slug, 'fora —', c.erro || 'sem linhas'); } catch (_) {} return; }
-              m[base.gviz_chave] = { slug: c.slug, gviz_chave: base.gviz_chave, colunas: c.colunas, linhas: c.linhas, tabela: c.tabela || ('ca_' + c.slug), auto: true, carregado_em: c.carregado_em };
-            });
-            return m;
-          });
+      .then(function (cs) {
+        (cs || []).forEach(function (c) {
+          var base = rows.filter(function (b) { return b.slug === c.slug; })[0];
+          if (!base || !base.gviz_chave) return;
+          if (c.erro || !(c.linhas > 0) || !c.colunas) { try { console.warn('gviz-cache: consumo automático', c.slug, 'fora —', c.erro || 'sem linhas'); } catch (_) {} return; }
+          m[base.gviz_chave] = { slug: c.slug, gviz_chave: base.gviz_chave, colunas: c.colunas, linhas: c.linhas, tabela: c.tabela || ('ca_' + c.slug), auto: true, carregado_em: c.carregado_em };
+        });
+        return m;
       })
       .catch(function () { return m; });
   }

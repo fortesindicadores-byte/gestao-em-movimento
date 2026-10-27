@@ -1,6 +1,6 @@
 // Parâmetros Seara (/parametros-seara/): abre a tela no Chromium com o banco
 // dublado e confere o gate, a tabela de modelos, a edição em linha, a nova
-// vigência e a chave do consumo automático. Uso: node scripts/parametros-seara-teste.mjs
+// vigência e o estado das bases automáticas (o automático é o padrão, sem chave). Uso: node scripts/parametros-seara-teste.mjs
 import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -14,10 +14,9 @@ const PARAMS = [
   { id: 1, modelo: 'VW 11.180', vigencia_inicio: '2026-09', kmporlitro: 4.0, precodiesel: 7.58, precoarla: 3.2, reaisporkm: 3.1, totalreaisporkm: 5.2, campos: { reaisporkmmanutecao: 0.4, reaisporkmpneu: 0.2, reaisporkmdiesel: 1.895 }, ativo: true, obs: 'semente' },
   { id: 2, modelo: 'VW 17.190', vigencia_inicio: '2026-09', kmporlitro: 2.99, precodiesel: 7.58, precoarla: 3.2, reaisporkm: 3.6, totalreaisporkm: 6.1, campos: { reaisporkmmanutecao: 0.5 }, ativo: true, obs: 'semente' },
 ];
-let flag = { ligado: false, updated_at: '2026-10-27T10:00:00Z' };
 const BASES = [{ slug: 'consumo_km_litro', tabela: 'ca_consumo_km_litro', linhas: 4700, carregado_em: '2026-10-27T09:05:00Z', erro: null, resumo: { comum: 4000, litOk: 3600, kmOk: 3500, rsOk: 3400 } },
   { slug: 'seara_remunerado', tabela: 'ca_seara_remunerado', linhas: 60, carregado_em: '2026-10-27T09:05:00Z', erro: 'FALHOU: teste', resumo: null }];
-const updates = [], inserts = [];
+const updates = [], inserts = [], flags = [];
 
 async function cenario(admin) {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
@@ -31,7 +30,7 @@ async function cenario(admin) {
     if (m === 'OPTIONS') return r.fulfill({ status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*' } });
     if (p.endsWith('/auth/v1/user')) return json({ id: 'u1', email: 'x@conlogsa.com.br' });
     if (p.includes('/rest/v1/fca_profiles')) return json({ is_admin: admin });
-    if (p.includes('/rest/v1/portal_flags')) { if (m === 'PATCH') { flag.ligado = JSON.parse(r.request().postData()).ligado; return json([flag]); } return json(flag); }
+    if (p.includes('/rest/v1/portal_flags')) { flags.push(m); return json([]); }
     if (p.includes('/rest/v1/consumo_auto_base')) return json(BASES);
     if (p.includes('/rest/v1/seara_param')) {
       if (m === 'PATCH') { const body = JSON.parse(r.request().postData()); const id = +u.searchParams.get('id').replace('eq.', ''); updates.push({ id, body }); const row = PARAMS.find(x => x.id === id); Object.assign(row, body); return json([row]); }
@@ -57,7 +56,8 @@ async function cenario(admin) {
   t('admin: miolo aberto', await pg.locator('#miolo').isVisible());
   t('admin: 2 modelos na tabela', await pg.locator('#tab tbody tr').count() === 2);
   t('admin: campos editáveis', await pg.locator('#tab input[data-c="kmporlitro"]').count() === 2);
-  t('admin: chave desligada', /desligada/.test(await pg.locator('#chave-st').textContent()));
+  t('admin: sem chave: nenhum pedido ao portal_flags', flags.length === 0);
+  t('admin: base ok diz que os painéis leem o automático', /lendo o automático/.test(await pg.locator('#bases .pill.ok').first().textContent()));
   t('admin: bases do robô na tabela', await pg.locator('#bases tbody tr').count() === 2);
   t('admin: base com erro marcada', await pg.locator('#bases .pill.err').count() === 1);
   // editar km/L da 1ª linha → PATCH com o R$/km do diesel recalculado
@@ -76,10 +76,7 @@ async function cenario(admin) {
   t('admin: nova vigência gravada por upsert', !!ins && ins.vigencia_inicio === '2026-11' && ins.kmporlitro === 4.5 && ins.modelo === 'VW 11.180', JSON.stringify(ins));
   t('admin: campos copiados da vigência anterior', !!ins && ins.campos && ins.campos.reaisporkmmanutecao === 0.4);
   t('admin: tabela relida com 3 linhas', await pg.locator('#tab tbody tr').count() === 3);
-  // ligar a chave
-  pg.once('dialog', d => d.accept());
-  await pg.click('#bt-chave'); await pg.waitForTimeout(500);
-  t('admin: chave ligada', flag.ligado === true && /LIGADA/.test(await pg.locator('#chave-st').textContent()));
+  t('admin: não existe botão Ligar/Desligar', await pg.locator('#bt-chave').count() === 0);
   t('admin: cabe em 1366×768 sem rolagem lateral', await pg.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
   await b.close();
 }

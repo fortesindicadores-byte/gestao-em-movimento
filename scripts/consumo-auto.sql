@@ -7,11 +7,12 @@
 -- O robô scripts/consumo-auto.mjs (workflow Consumo Auto, todo dia 06:00 BRT)
 -- monta, a partir de erp_abastecimentos (realizado) e de ft_linha (remunerado
 -- do Freightech), as MESMAS abas que hoje são coladas à mão no Sheets, no
--- MESMO layout das tabelas sh_* — e grava em ca_<slug>. Enquanto a chave
--- portal_flags.consumo_auto estiver DESLIGADA, nada muda nos painéis: as
--- abas continuam saindo do Sheets e o robô só compara (aba × automático, no
--- log). Ligada a chave, o gviz-cache.js e o Eficiência Km/L passam a servir
--- as ca_* no lugar das sh_*.
+-- MESMO layout das tabelas sh_* — e grava em ca_<slug>. O AUTOMÁTICO É O
+-- PADRÃO (Renan, 27/10/2026: "Não sei se precisa ter ligar"): o gviz-cache.js
+-- e o Eficiência Km/L servem a ca_* de toda base que o registro
+-- consumo_auto_base mostra sem erro e com linhas; base que falhou (ou que
+-- ainda não foi gravada) cai na sh_* do Sheets. A chave portal_flags.consumo_auto
+-- abaixo ficou só como registro — ninguém a lê mais.
 -- ============================================================
 
 -- ── 1) as cópias automáticas, com o layout das sh_* ───────────────────────
@@ -102,9 +103,7 @@ drop trigger if exists seara_param_touch on public.seara_param;
 create trigger seara_param_touch before insert or update on public.seara_param
   for each row execute function public.seara_param_touch();
 
--- ── 4) a chave: começa DESLIGADA ──────────────────────────────────────────
--- Ligar = a tela Parâmetros Seara (hub › Administração) ou:
---   update public.portal_flags set ligado = true where chave = 'consumo_auto';
+-- ── 4) a chave (SEM USO desde 27/10/2026: o automático é o padrão) ────────
 insert into public.portal_flags (chave, ligado, mensagem)
 values ('consumo_auto', false, 'Km/L, R$/L e Seara servidos pelo robô (ERP + Freightech) em vez do Sheets')
 on conflict (chave) do nothing;
