@@ -35,7 +35,7 @@ on:
         required: false
         default: ""
       km:
-        description: "Modo do km rodado: todos (padrão) | parada | guarda | hodo | media"
+        description: "Modo do km rodado: todos (padrão) | hododiesel | parada | guarda | hodo | media"
         required: false
         default: ""
       corte:
