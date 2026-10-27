@@ -100,8 +100,11 @@ async function abre(browser, url, { vp = { width: 1600, height: 900 }, banco = t
       let de = 0, ate = 999;
       const q = { select() { return q; }, order() { return q; }, range(a, b) { de = a; ate = b; return q; }, eq() { return q; },
         // sh_base: com banco='falhou' a carga da aba deu erro e a tabela ficou congelada
-        maybeSingle() { return Promise.resolve({ data: t === 'sh_base' && banco === 'falhou' ? { erro: 'FALHOU: HTTP 400 PGRST204' } : null, error: null }); },
-        then(r, j) { const data = (banco && t === 'sh_consumo_km_litro') ? KML_DB.slice(de, ate + 1) : [];
+        // sh_base: com banco='falhou' a carga da aba deu erro e a tabela ficou congelada
+        // consumo_auto_base: com banco='auto' o robô gravou a ca_ com o corte do ERP em 08/10 (resumo.dados_ate)
+        maybeSingle() { return Promise.resolve({ data: t === 'sh_base' && banco === 'falhou' ? { erro: 'FALHOU: HTTP 400 PGRST204' }
+          : (t === 'consumo_auto_base' && banco === 'auto') ? { tabela: 'ca_consumo_km_litro', linhas: 4700, erro: null, carregado_em: '2026-10-27T09:05:00Z', resumo: { dados_ate: '2026-10-08' } } : null, error: null }); },
+        then(r, j) { const data = ((banco === true && t === 'sh_consumo_km_litro') || (banco === 'auto' && t === 'ca_consumo_km_litro')) ? KML_DB.slice(de, ate + 1) : [];
           return Promise.resolve({ data, error: null }).then(r, j); } };
       return q; } }) };
     const corpo = u => { const s = decodeURIComponent(u);
@@ -197,13 +200,15 @@ for (const P of PAINEIS) {
 
   // ── 2. selo de fonte ──
   if (P.banco) {
-    for (const banco of [true, false, 'falhou']) {
+    for (const banco of [true, false, 'falhou', 'auto']) {
       const { page } = await abre(browser, `/${P.pasta}/index.html`, { banco });
       const sub = await page.evaluate(() => document.getElementById('titSub').textContent);
       const nums = await page.evaluate(NUMS);
-      const esp = banco === true ? 'banco' : 'planilha';
-      af(`selo no subtítulo com o banco ${banco === true ? 'respondendo' : banco === 'falhou' ? 'com a carga FALHOU (tabela congelada)' : 'vazio'}: "· ${esp}"`, sub.endsWith('· ' + esp), sub);
-      if (banco !== true) af('planilha (reserva) dá o mesmo número do banco', nums.real === N.a.real && nums.imp === N.a.imp, nums.real + ' · ' + nums.imp);
+      const esp = banco === true ? 'banco' : banco === 'auto' ? 'banco · automático' : 'planilha';
+      af(`selo no subtítulo com o banco ${banco === true ? 'respondendo' : banco === 'auto' ? 'automático (ca_)' : banco === 'falhou' ? 'com a carga FALHOU (tabela congelada)' : 'vazio'}: "· ${esp}"`, sub.endsWith('· ' + esp), sub);
+      if (banco === 'auto') af('automático: o topo diz até que dia o ERP está completo e quando a carga rodou', /Dados até 08\/10\/2026 · carga 27\/10 \d\d:\d\d/.test(sub), sub);
+      if (banco !== true && banco !== 'auto') af('planilha (reserva) dá o mesmo número do banco', nums.real === N.a.real && nums.imp === N.a.imp, nums.real + ' · ' + nums.imp);
+      if (banco === 'auto') af('automático dá o mesmo número do banco (mesmas linhas)', nums.real === N.a.real && nums.imp === N.a.imp, nums.real + ' · ' + nums.imp);
       await page.close();
     }
   }

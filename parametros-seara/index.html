@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610271500">
+<meta name="build" content="202610271730">
 <title>Parâmetros Seara · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -249,8 +249,10 @@ async function leBases(){
   if(!cs||!cs.length){ $('bases').innerHTML='<div class="vazio">O robô ainda não gravou nada (workflow Consumo Auto, modo gravar).</div>'; return; }
   const dt=s=>{ const d=new Date(s); return isNaN(d)?'—':d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
   const res=c=>{ const r=c.resumo||{}; if(r.comum!=null) return `${r.comum} placa-mês em comum com a aba · litros iguais ${Math.round(100*r.litOk/r.comum)}% · km ${Math.round(100*r.kmOk/r.comum)}% · R$ ${Math.round(100*r.rsOk/r.comum)}%`; if(r.aba!=null) return `aba ${r.aba} linhas · automático ${r.auto}`; return ''; };
-  $('bases').innerHTML='<table><thead><tr><th>Aba</th><th>Tabela</th><th class="num">Linhas</th><th>Última carga</th><th>Situação</th><th>Comparação com a aba do Sheets</th></tr></thead><tbody>'
-    + cs.map(c=>`<tr><td><b>${esc(c.slug)}</b></td><td class="mono">${esc(c.tabela)}</td><td class="num">${(c.linhas||0).toLocaleString('pt-BR')}</td><td>${esc(dt(c.carregado_em))}</td>`
+  // "Dados até" = o último dia COMPLETO do ERP, onde o robô corta (resumo.dados_ate)
+  const ate=c=>{ const m=String((c.resumo||{}).dados_ate||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1]}`:'—'; };
+  $('bases').innerHTML='<table><thead><tr><th>Aba</th><th>Tabela</th><th class="num">Linhas</th><th>Dados até</th><th>Última carga</th><th>Situação</th><th>Comparação com a aba do Sheets</th></tr></thead><tbody>'
+    + cs.map(c=>`<tr><td><b>${esc(c.slug)}</b></td><td class="mono">${esc(c.tabela)}</td><td class="num">${(c.linhas||0).toLocaleString('pt-BR')}</td><td>${ate(c)}</td><td>${esc(dt(c.carregado_em))}</td>`
       + `<td>${c.erro?`<span class="pill err" title="${esc(c.erro)}">falhou · painéis na aba do Sheets</span>`:'<span class="pill ok">ok · painéis lendo o automático</span>'}</td><td style="white-space:normal;font-size:10.5px;color:var(--txt3)">${esc(res(c))}</td></tr>`).join('')
     + '</tbody></table>';
 }
@@ -274,6 +276,6 @@ async function leBases(){
 </script>
 <script src="../assets/mobile.js"></script>
 <script src="../assets/modo-tv.js?v=202610271500"></script>
-<script src="../assets/build-check.js?v=202610271500"></script>
+<script src="../assets/build-check.js?v=202610271730"></script>
 </body>
 </html>

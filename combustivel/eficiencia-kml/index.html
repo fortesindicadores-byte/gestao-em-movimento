@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610271500">
+<meta name="build" content="202610271730">
 <title>Km/L · Eficiência de Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -853,7 +853,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrap'))document.
 // por unidade. A planilha continua como reserva.
 const SB_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SB_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
-let _sb=null, FONTE_AUTO=false;
+let _sb=null, FONTE_AUTO=false, DADOS_ATE=null, CARGA_EM=null;
 const sbCli=()=>{ if(!_sb&&window.supabase)_sb=window.supabase.createClient(SB_URL,SB_KEY); return _sb; };
 
 // rótulo da aba → coluna da tabela, NA ORDEM das colunas da aba
@@ -875,6 +875,8 @@ function _vigDoBanco(l){
   if(m)return new Date(+m[1],+m[2]-1,1);
   return l.vigencia||null;                       // reserva: o texto MM/AAAA
 }
+// 'AAAA-MM-DD' → Date local (mesma armadilha do UTC acima); outro formato → null
+function _dLocal(s){ const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?new Date(+m[1],+m[2]-1,+m[3]):null; }
 async function fetchBanco(){
   const sb=sbCli(); if(!sb)throw new Error('supabase-js não carregou');
   // CARGA QUE FALHOU = TABELA CONGELADA (13/10/2026): quando a aba muda de
@@ -889,8 +891,10 @@ async function fetchBanco(){
   // window.__consumoAuto = false desliga (testes).
   let tabela='sh_consumo_km_litro'; FONTE_AUTO=false;
   if(window.__consumoAuto!==false) try{
-    const {data:c}=await sb.from('consumo_auto_base').select('tabela,linhas,erro').eq('slug','consumo_km_litro').maybeSingle();
-    if(c&&!c.erro&&c.linhas>0){ tabela=c.tabela||'ca_consumo_km_litro'; FONTE_AUTO=true; }
+    const {data:c}=await sb.from('consumo_auto_base').select('tabela,linhas,erro,carregado_em,resumo').eq('slug','consumo_km_litro').maybeSingle();
+    if(c&&!c.erro&&c.linhas>0){ tabela=c.tabela||'ca_consumo_km_litro'; FONTE_AUTO=true;
+      // o robô corta o ERP no último dia COMPLETO (resumo.dados_ate) — é isso que o topo mostra
+      DADOS_ATE=(c.resumo&&c.resumo.dados_ate)||null; CARGA_EM=c.carregado_em||null; }
     else console.warn('consumo automático fora:',c?c.erro:'sem registro','— lendo a sh_');
   }catch(e){}
   let st=null;
@@ -1626,7 +1630,17 @@ function atualizar(){
   // O selo é a idade do DADO, não a hora do desenho. Trocar de filtro chama
   // esta função e antes ela carimbava a hora corrente, então "Atualizado
   // 14:20" aparecia por cima de um dado de horas atrás (Renan, 10/09/2026).
-  setStatus( lidoEm
+  // Automático: o robô só entra com o que o ERP já tem completo (as OS chegam
+  // com semanas de atraso), então o topo diz até QUE DIA o dado vai e quando a
+  // carga rodou (Renan, 27/10/2026: "nunca deixa essa discrepância. Nem que
+  // fique D-2, D-3… só deixa uma mensagem lá em cima de qual última
+  // atualização, último dia que subiu").
+  const dAte=DADOS_ATE?_dLocal(DADOS_ATE):null, dCarga=CARGA_EM?new Date(CARGA_EM):null;
+  setStatus( dAte
+    ? `Dados até ${dAte.toLocaleDateString('pt-BR')}`
+      + (dCarga?` · carga ${dCarga.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})} ${dCarga.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`:'')
+      + (fonte?` · ${fonte}`:'')
+    : lidoEm
     ? `Dados de ${lidoEm.toLocaleDateString('pt-BR')} ${lidoEm.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`
       + (fonte?` · ${fonte}`:'')
     : 'Carregando…');
@@ -1654,7 +1668,7 @@ async function buscaDados(){
   detectCols(kml.cols);allRows=kml.rows;canonicalizeModels(allRows);
   if(rsl&&rsl.rows)buildRemLookup(rsl.cols,rsl.rows);
   lidoEm=new Date();
-  try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({cols:kml.cols,rows:kml.rows,em:lidoEm.getTime(),fonte}));}catch(e){}
+  try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({cols:kml.cols,rows:kml.rows,em:lidoEm.getTime(),fonte,dadosAte:DADOS_ATE,cargaEm:CARGA_EM}));}catch(e){}
   if(base instanceof Map){baseRemRaw=base;try{sessionStorage.setItem(BASE_KEY,JSON.stringify([...base]));}catch(e){}}
   buildRemModIndex();computeDivergencias();
   populateFilters(allRows);atualizar();
@@ -1672,7 +1686,7 @@ async function init(){
     const cached=sessionStorage.getItem(CACHE_KEY);
     if(cached){
       const obj=JSON.parse(cached);detectCols(obj.cols);allRows=obj.rows;canonicalizeModels(allRows);
-      lidoEm=obj.em?new Date(obj.em):null;fonte=obj.fonte||'';
+      lidoEm=obj.em?new Date(obj.em):null;fonte=obj.fonte||'';DADOS_ATE=obj.dadosAte||null;CARGA_EM=obj.cargaEm||null;
       try{const bc=sessionStorage.getItem(BASE_KEY);if(bc)baseRemRaw=new Map(JSON.parse(bc));}catch(e){}
       buildRemModIndex();computeDivergencias();populateFilters(allRows);atualizar();
     }
@@ -1757,6 +1771,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610271500"></script>
+<script src="../../assets/build-check.js?v=202610271730"></script>
 </body>
 </html>

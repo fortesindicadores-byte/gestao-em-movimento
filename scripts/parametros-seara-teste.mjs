@@ -14,7 +14,7 @@ const PARAMS = [
   { id: 1, modelo: 'VW 11.180', vigencia_inicio: '2026-09', kmporlitro: 4.0, precodiesel: 7.58, precoarla: 3.2, reaisporkm: 3.1, totalreaisporkm: 5.2, campos: { reaisporkmmanutecao: 0.4, reaisporkmpneu: 0.2, reaisporkmdiesel: 1.895 }, ativo: true, obs: 'semente' },
   { id: 2, modelo: 'VW 17.190', vigencia_inicio: '2026-09', kmporlitro: 2.99, precodiesel: 7.58, precoarla: 3.2, reaisporkm: 3.6, totalreaisporkm: 6.1, campos: { reaisporkmmanutecao: 0.5 }, ativo: true, obs: 'semente' },
 ];
-const BASES = [{ slug: 'consumo_km_litro', tabela: 'ca_consumo_km_litro', linhas: 4700, carregado_em: '2026-10-27T09:05:00Z', erro: null, resumo: { comum: 4000, litOk: 3600, kmOk: 3500, rsOk: 3400 } },
+const BASES = [{ slug: 'consumo_km_litro', tabela: 'ca_consumo_km_litro', linhas: 4700, carregado_em: '2026-10-27T09:05:00Z', erro: null, resumo: { comum: 4000, litOk: 3600, kmOk: 3500, rsOk: 3400, dados_ate: '2026-10-08' } },
   { slug: 'seara_remunerado', tabela: 'ca_seara_remunerado', linhas: 60, carregado_em: '2026-10-27T09:05:00Z', erro: 'FALHOU: teste', resumo: null }];
 const updates = [], inserts = [], flags = [];
 
@@ -58,6 +58,7 @@ async function cenario(admin) {
   t('admin: campos editáveis', await pg.locator('#tab input[data-c="kmporlitro"]').count() === 2);
   t('admin: sem chave: nenhum pedido ao portal_flags', flags.length === 0);
   t('admin: base ok diz que os painéis leem o automático', /lendo o automático/.test(await pg.locator('#bases .pill.ok').first().textContent()));
+  t('admin: a coluna Dados até mostra o corte do robô (08/10/2026)', /08\/10\/2026/.test(await pg.locator('#bases tbody tr').first().textContent()));
   t('admin: bases do robô na tabela', await pg.locator('#bases tbody tr').count() === 2);
   t('admin: base com erro marcada', await pg.locator('#bases .pill.err').count() === 1);
   // editar km/L da 1ª linha → PATCH com o R$/km do diesel recalculado

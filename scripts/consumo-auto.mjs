@@ -131,7 +131,55 @@ log(`ERP: ${erp.length} abastecimentos desde ${ini}`);
 const semTipo = erp.filter(r => !r.tipo_combustivel).length;
 if (semTipo) log(`  ${semTipo} sem tipo de combustível (entram como diesel)`);
 if (ENCERRADA) { const n = erp.length; erp = erp.filter(r => r.encerrada === ENCERRADA); log(`  só encerradas: ${erp.length} de ${n}`); }
-const diesel = erp.filter(r => !r.tipo_combustivel || (/DIESEL/.test(norm(r.tipo_combustivel)) && !/ARLA/.test(norm(r.tipo_combustivel))));
+const ehDiesel = r => !r.tipo_combustivel || (/DIESEL/.test(norm(r.tipo_combustivel)) && !/ARLA/.test(norm(r.tipo_combustivel)));
+
+// ── CORTE: só entra o que o ERP já tem COMPLETO (Renan, 27/10/2026: "nunca
+// deixa essa discrepância. Nem que fique D-2, D-3, etc. Aí só deixa uma
+// mensagem lá em cima de qual última atualização, último dia que subiu").
+// As OS entram no ERP com semanas de atraso e não por igual: em 27/10 outubro
+// tinha ~100 OS de diesel por dia até o dia 8, de 4 a 60 do dia 9 ao 19 e zero
+// do 20 em diante — e o km chegava pela OS do Arla antes da OS do diesel, então
+// o Km/L do mês saía 10% acima (2,74 × 2,48). Régua: OS de diesel por dia contra
+// a mediana do MESMO DIA DA SEMANA nos dois meses cheios anteriores (domingo
+// tem ~40% de um dia útil); o 1º par de dias seguidos abaixo de CORTE_MIN
+// (50%) marca o fim do completo — um dia só abaixo (feriado) passa. Vale para
+// Ambev e Seara (é o atraso do ERP, não da unidade). CONSUMO_CORTE=AAAA-MM-DD
+// força a data; CONSUMO_CORTE=off desliga.
+const CORTE_MIN = +(process.env.CONSUMO_CORTE_MIN || 0.5);
+const diaISO = d => d.toISOString().slice(0, 10);
+const CORTE = (() => {
+  const forcado = process.env.CONSUMO_CORTE || '';
+  if (forcado === 'off') return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(forcado)) return forcado;
+  const porDia = {}; erp.forEach(r => { if (ehDiesel(r)) porDia[String(r.data).slice(0, 10)] = (porDia[String(r.data).slice(0, 10)] || 0) + 1; });
+  // referência: os 2 meses cheios que terminaram há 30 dias ou mais (os últimos ~30 dias ainda estão entrando)
+  const lim = new Date(hoje); lim.setUTCDate(lim.getUTCDate() - 30);
+  const fimRef = new Date(Date.UTC(lim.getUTCFullYear(), lim.getUTCMonth(), 0));             // último dia do mês anterior ao de `lim`
+  const iniRef = new Date(Date.UTC(fimRef.getUTCFullYear(), fimRef.getUTCMonth() - 1, 1));
+  const porSemana = [[], [], [], [], [], [], []];
+  for (let d = new Date(iniRef); d <= fimRef; d.setUTCDate(d.getUTCDate() + 1)) porSemana[d.getUTCDay()].push(porDia[diaISO(d)] || 0);
+  const mediana = a => { const s = a.slice().sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; };
+  const ref = porSemana.map(mediana);
+  const ultimo = Object.keys(porDia).sort().pop();
+  if (!ultimo || ref.every(x => !x)) return ultimo || null;
+  const ini = new Date(fimRef); ini.setUTCDate(ini.getUTCDate() + 1);
+  const ontem = new Date(hoje); ontem.setUTCDate(ontem.getUTCDate() - 1);
+  const razao = d => { const w = d.getUTCDay(); return ref[w] ? (porDia[diaISO(d)] || 0) / ref[w] : 1; };
+  let corte = diaISO(ontem) < ultimo ? diaISO(ontem) : ultimo;
+  for (let d = new Date(ini); diaISO(d) <= corte; d.setUTCDate(d.getUTCDate() + 1)) {
+    const d2 = new Date(d); d2.setUTCDate(d2.getUTCDate() + 1);
+    if (razao(d) < CORTE_MIN && razao(d2) < CORTE_MIN) {
+      const ant = new Date(d); ant.setUTCDate(ant.getUTCDate() - 1); corte = diaISO(ant);
+      log(`corte: dados até ${corte} — ${diaISO(d)} tem ${porDia[diaISO(d)] || 0} OS de diesel (referência ${ref[d.getUTCDay()]}) e ${diaISO(d2)} tem ${porDia[diaISO(d2)] || 0} (ref. ${ref[d2.getUTCDay()]}); referência = mediana por dia da semana de ${diaISO(iniRef)} a ${diaISO(fimRef)}`);
+      break;
+    }
+  }
+  return corte;
+})();
+if (CORTE) { const n = erp.length; erp = erp.filter(r => String(r.data).slice(0, 10) <= CORTE); log(`corte: dados até ${CORTE} · ${erp.length} abastecimentos ficam, ${n - erp.length} depois do corte saem`); }
+else log('corte: desligado — entra tudo que o ERP tem');
+const DADOS_ATE = CORTE || (erp.length ? erp.map(r => String(r.data).slice(0, 10)).sort().pop() : null);
+const diesel = erp.filter(ehDiesel);
 log(`  diesel: ${diesel.length} (fora: ${erp.length - diesel.length} de Arla/gasolina/outros)`);
 const tipoAba = t => { const n = norm(t); if (!n) return 'DIESEL S10'; if (/ADIT/.test(n)) return 'DIESEL ADITIVADO'; if (/S10/.test(n)) return 'DIESEL S10'; return 'DIESEL'; };
 
@@ -530,7 +578,7 @@ for (const s of ALVOS) {
     }
     await api(`${t}?linha=gt.${linhas.length}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
     await api('consumo_auto_base?on_conflict=slug', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify([{ slug: s, tabela: t, colunas: shBase[s].colunas, linhas: linhas.length, carregado_em: new Date().toISOString(), erro: null, resumo: resumo[s] || null }]) });
+      body: JSON.stringify([{ slug: s, tabela: t, colunas: shBase[s].colunas, linhas: linhas.length, carregado_em: new Date().toISOString(), erro: null, resumo: { ...(resumo[s] || {}), dados_ate: DADOS_ATE } }]) });
     log(`ok  ${t.padEnd(26)} ${linhas.length} linha(s)`);
   } catch (e) {
     falhas++; console.error(`::error::${t}: ${e.message}`);
