@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610221945">
+<meta name="build" content="202610271100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Scorecard · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -302,14 +302,14 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 #ch-ind:hover{color:var(--txt);}
 
 /* destaques do resumo: melhores e piores unidades */
-.dstq{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:hidden;}
-.dstq-sec{font-size:9px;font-weight:800;color:var(--txt3);text-transform:uppercase;letter-spacing:1px;}
-.dstq-l{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--linha);}
+/* todas as unidades, melhor → pior, dividindo a altura do card (Renan, 27/10/2026) */
+.dstq{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden;}
+.dstq-l{display:flex;align-items:center;gap:9px;flex:1 1 0;min-height:0;padding:2px 0;border-bottom:1px solid var(--linha);}
 .dstq-l:last-child{border-bottom:0;}
-.dstq-p{font-size:10px;font-weight:800;color:var(--txt4);width:16px;flex:0 0 16px;}
-.dstq-u{flex:1;min-width:0;font-size:11.5px;font-weight:700;color:var(--txt);
+.dstq-p{font-size:.77em;font-weight:800;color:var(--txt4);width:18px;flex:0 0 18px;}
+.dstq-u{flex:1;min-width:0;font-size:.88em;font-weight:700;color:var(--txt);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.dstq-s{font-size:12px;font-weight:800;}
+.dstq-s{font-size:.92em;font-weight:800;}
 
 /* ranking: 20 colunas de indicador cabem sem barra de rolagem lateral */
 #rk-table{font-size:11px;table-layout:fixed;}
@@ -501,7 +501,7 @@ table.meto td.peso{color:var(--laranja);font-weight:800;}
           </div>
           <div class="card gcard">
             <div class="gtit">Destaques</div>
-            <div class="gsub">Score ponderado por unidade</div>
+            <div class="gsub">Score ponderado por unidade · melhor → pior</div>
             <div class="dstq" id="dstq"><div class="loading">Carregando…</div></div>
           </div>
         </div>
@@ -1293,25 +1293,20 @@ function renderCards(cards){
            `<div class="kv ${cls}">${disp}</div><div class="km">${c.peso!=null?'peso '+c.peso:''}${c.meta==='Real / Remunerado'?' · R/Rem':''}</div></div>`;
   }).join('')||'<div class="loading">Sem dados</div>';
 }
-// destaques do resumo: três melhores e três piores
+// destaques do resumo: TODAS as unidades, da melhor para a pior, dividindo a altura do card
+// (Renan, 27/10/2026: "Aqui não caberiam todas unidades, ao invés de ficar melhores e a recuperar?")
 let _lastRk=[];
 function renderDestaques(rk){
   const box=document.getElementById('dstq'); if(!box)return;
   _lastRk=rk;
   if(!rk.length){ box.innerHTML='<div class="loading">Sem dados</div>'; return; }
-  const linha=(x,i)=>`<div class="dstq-l"><span class="dstq-p">${i}º</span>`+
+  box.innerHTML=rk.map((x,i)=>`<div class="dstq-l"><span class="dstq-p">${i+1}º</span>`+
     `<span class="dstq-u">${x.uni}</span>`+
-    `<span class="dstq-s" style="color:${cellFg(band(x.score))}">${Math.round(x.score)}</span></div>`;
-  const monta=n=>{
-    const top=rk.slice(0,n).map((x,i)=>linha(x,i+1));
-    const bot=rk.slice(-n).reverse().map(x=>linha(x,rk.indexOf(x)+1));
-    return '<div class="dstq-sec">Melhores</div>'+top.join('')+
-      (rk.length>n?'<div class="dstq-sec" style="margin-top:6px">A recuperar</div>'+bot.join(''):'');
-  };
-  // sem barra de rolagem: começa com 5 de cada lado e encolhe até caber na caixa
-  let n=rk.length>=10?5:3;
-  box.innerHTML=monta(n);
-  while(n>2&&box.clientHeight>0&&box.scrollHeight>box.clientHeight){ n--; box.innerHTML=monta(n); }
+    `<span class="dstq-s" style="color:${cellFg(band(x.score))}">${Math.round(x.score)}</span></div>`).join('');
+  // sem barra de rolagem: se as linhas não couberem na altura do card, a letra encolhe
+  box.style.fontSize='';
+  let f=1;
+  while(f>0.7&&box.clientHeight>0&&box.scrollHeight>box.clientHeight){ f-=0.05; box.style.fontSize=f+'em'; }
 }
 // a caixa muda de altura com a janela — refaz a conta de quantos cabem
 addEventListener('resize',()=>{ clearTimeout(renderDestaques._t);
@@ -1386,6 +1381,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610221945"></script>
+<script src="../assets/build-check.js?v=202610271100"></script>
 </body>
 </html>
