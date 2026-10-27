@@ -202,4 +202,16 @@ log('\n── 7. Dia a dia: OS de diesel por dia (mês corrente × anterior) e q
   } else log('  carregado_em é reescrito a cada carga (não serve para medir atraso)');
 }
 
+log('\n── 8. Abastecimento por abastecimento das placas que mais puxaram (e CONSUMO_PLACAS, se dado) ──');
+{
+  const alvo = (process.env.CONSUMO_PLACAS || '').split(/[,\s]+/).filter(Boolean).map(placaKey);
+  const lista = alvo.length ? alvo : puxa.slice(0, 4).map(p => p.placa);
+  for (const pl of lista) {
+    const rs = erp.filter(r => placaKey(r.placa) === pl && String(r.data).slice(0, 7) >= ANT).sort((a, b) => String(a.data).localeCompare(String(b.data)) || String(a.ordem_servico).localeCompare(String(b.ordem_servico)));
+    log(`${pl}: ${rs.length} OS desde ${ANT}`);
+    log(`  ${pad('data', 10)} ${pad('OS', 9)} ${pad('produto', 16)} ${padL('litros', 7)} ${padL('hodômetro', 10)} ${padL('km_rod', 7)} ${padL('média', 6)} enc st  projeto`);
+    rs.forEach(r => log(`  ${pad(String(r.data).slice(0, 10), 10)} ${pad(r.ordem_servico ?? '', 9)} ${pad(String(r.tipo_combustivel || '(vazio)').slice(0, 16), 16)} ${padL(f0(num(r.litros)), 7)} ${padL(f0(num(r.hodometro)), 10)} ${padL(f0(num(r.km_rodado)), 7)} ${padL(f2(num(r.media_km_l)), 6)} ${pad(r.encerrada || '-', 3)} ${pad(r.status_os ?? '-', 3)} ${String(r.projeto_os || '').slice(0, 20)}`));
+  }
+}
+
 log('\nLeitura: se "mix do mês anterior" já devolve o Km/L para perto do mês anterior, é composição (quem ainda não abasteceu/encerrou); se o mês anterior nos mesmos dias também sai alto, é o começo do mês; se a razão placa a placa tem mediana perto de 1 e poucas acima de 1,3×, o dado por placa está estável e o salto vem de poucas placas (lista do item 4).');

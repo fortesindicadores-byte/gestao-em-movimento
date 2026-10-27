@@ -11,6 +11,10 @@ on:
         description: "Mês a explicar (AAAA-MM; vazio = mês corrente)"
         required: false
         default: ""
+      placas:
+        description: "Placas para listar OS a OS (vírgula; vazio = as 4 que mais puxaram)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -26,5 +30,6 @@ jobs:
       - name: Rodar
         env:
           CONSUMO_MES: ${{ github.event.inputs.mes || '' }}
+          CONSUMO_PLACAS: ${{ github.event.inputs.placas || '' }}
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
         run: node scripts/consumo-outubro-check.mjs
