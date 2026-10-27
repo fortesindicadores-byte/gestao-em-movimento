@@ -34,6 +34,14 @@ on:
         description: "S = só OS encerradas do ERP (vazio = todas)"
         required: false
         default: ""
+      km:
+        description: "Modo do km rodado: todos (padrão) | parada | guarda | hodo | media"
+        required: false
+        default: ""
+      corte:
+        description: "Corte do último dia completo: vazio = automático | off | AAAA-MM-DD"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -51,6 +59,8 @@ jobs:
           CONSUMO_MODO: ${{ github.event_name == 'schedule' && 'gravar' || github.event.inputs.modo }}
           CONSUMO_DESDE: ${{ github.event.inputs.desde || '2026-01' }}
           CONSUMO_ENCERRADA: ${{ github.event.inputs.encerradas || '' }}
+          CONSUMO_KM: ${{ github.event.inputs.km || '' }}
+          CONSUMO_CORTE: ${{ github.event.inputs.corte || '' }}
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
         run: node scripts/consumo-auto.mjs
       - name: Avisar por e-mail se falhar

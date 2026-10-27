@@ -180,6 +180,11 @@ if (CORTE) { const n = erp.length; erp = erp.filter(r => String(r.data).slice(0,
 else log('corte: desligado — entra tudo que o ERP tem');
 const DADOS_ATE = CORTE || (erp.length ? erp.map(r => String(r.data).slice(0, 10)).sort().pop() : null);
 const diesel = erp.filter(ehDiesel);
+// Parada = placa + hodômetro. O ERP põe o km rodado na 1ª OS da parada e zera nas outras;
+// quando a OS de diesel da parada ainda não entrou, o km fica na OS de Arla e entra sem litro.
+// O candidato "parada" só soma km de parada que já tem OS de diesel.
+const paradaDe = r => { const h = num(r.hodometro); return h == null ? null : placaKey(r.placa) + '|' + Math.round(h); };
+const paradaComDiesel = new Set(diesel.map(paradaDe).filter(Boolean));
 log(`  diesel: ${diesel.length} (fora: ${erp.length - diesel.length} de Arla/gasolina/outros)`);
 const tipoAba = t => { const n = norm(t); if (!n) return 'DIESEL S10'; if (/ADIT/.test(n)) return 'DIESEL ADITIVADO'; if (/S10/.test(n)) return 'DIESEL S10'; return 'DIESEL'; };
 
@@ -331,6 +336,7 @@ function kmDe(a) {
   if (KM_MODO === 'media') return a.kmMedia ?? a.kmGuard ?? 0;
   if (KM_MODO === 'soma-crua') return a.kmSoma || 0;
   if (KM_MODO === 'todos') return a.kmTodos ?? a.kmGuard ?? 0;
+  if (KM_MODO === 'parada') return a.kmParada ?? a.kmGuard ?? 0;
   return a.kmGuard || 0;
 }
 const real = new Map();           // proj|ym|placa → agregado
@@ -347,7 +353,7 @@ erp.forEach(r => {
   const placa = placaKey(r.placa); const k = pj.proj + '|' + ym + '|' + placa;
   if (!real.has(k)) real.set(k, { proj: pj.proj, cod: pj.cod, ym, placa, placaOrig: r.placa_origem || r.placa, litros: 0, valor: 0, n: 0, tipos: {}, modelos: {}, hodoMin: null, hodoMax: null });
   const a = real.get(k);
-  const kr = num(r.km_rodado); if (kr != null && kr >= 0 && kr <= KM_MAX_FILL) a.kmTodos = (a.kmTodos || 0) + kr;
+  const kr = num(r.km_rodado); if (kr != null && kr >= 0 && kr <= KM_MAX_FILL) { a.kmTodos = (a.kmTodos || 0) + kr; if (paradaComDiesel.has(paradaDe(r))) a.kmParada = (a.kmParada || 0) + kr; else if (kr) a.kmSemDiesel = (a.kmSemDiesel || 0) + kr; }
   const h = num(r.hodometro); if (h != null && h > 0) { a.hodoMin = a.hodoMin == null ? h : Math.min(a.hodoMin, h); a.hodoMax = a.hodoMax == null ? h : Math.max(a.hodoMax, h); }
   if (!ehDiesel) return;
   somaKm(a, r); a.litros += num(r.litros) || 0; a.valor += num(r.valor) || 0; a.n++;
@@ -356,6 +362,10 @@ erp.forEach(r => {
 });
 [...real.keys()].forEach(k => { if (!real.get(k).n) real.delete(k); });   // só Arla no mês: não é linha da aba
 real.forEach(a => { a.km = kmDe(a); });
+{ // simulação mês a mês: km de todos os abastecimentos × só das paradas que já têm diesel
+  const m = new Map(); real.forEach(a => { const x = m.get(a.ym) || { lit: 0, todos: 0, parada: 0, sem: 0 }; x.lit += a.litros; x.todos += a.kmTodos || 0; x.parada += a.kmParada || 0; x.sem += a.kmSemDiesel || 0; m.set(a.ym, x); });
+  log('km "todos" × "parada" (Ambev, por mês): ' + [...m.entries()].sort().map(([ym, x]) => `${ym} ${(x.todos / (x.lit || 1)).toFixed(2)}→${(x.parada / (x.lit || 1)).toFixed(2)} km/L (${Math.round(x.sem).toLocaleString('pt-BR')} km em parada sem diesel, ${(100 * x.sem / (x.todos || 1)).toFixed(1)}%)`).join(' · '));
+}
 log(`realizado Ambev: ${real.size} placa-mês em ${new Set([...real.values()].map(a => a.proj)).size} projetos · Seara (ANG): ${angRows.length} abastecimentos · km pelo modo "${KM_MODO}"`);
 if (foraProj.size) log('  fora da Km/L (projeto sem lugar na aba): ' + [...foraProj.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '));
 const maisFreq = o => { let b = null, bn = -1; Object.entries(o).forEach(([k, n]) => { if (n > bn) { b = k; bn = n; } }); return b; };
@@ -423,7 +433,7 @@ angRows.forEach(r => {
   const ym = String(r.data).slice(0, 7); const placa = placaKey(r.placa); const k = ym + '|' + placa; const ehDiesel = dieselSet.has(r);
   if (!searaReal.has(k)) searaReal.set(k, { ym, placa, placaOrig: r.placa_origem || r.placa, litros: 0, valor: 0, n: 0, tipos: {}, modelos: {}, hodoMin: null, hodoMax: null });
   const a = searaReal.get(k);
-  const kr = num(r.km_rodado); if (kr != null && kr >= 0 && kr <= KM_MAX_FILL) a.kmTodos = (a.kmTodos || 0) + kr;
+  const kr = num(r.km_rodado); if (kr != null && kr >= 0 && kr <= KM_MAX_FILL) { a.kmTodos = (a.kmTodos || 0) + kr; if (paradaComDiesel.has(paradaDe(r))) a.kmParada = (a.kmParada || 0) + kr; else if (kr) a.kmSemDiesel = (a.kmSemDiesel || 0) + kr; }
   const h = num(r.hodometro); if (h != null && h > 0) { a.hodoMin = a.hodoMin == null ? h : Math.min(a.hodoMin, h); a.hodoMax = a.hodoMax == null ? h : Math.max(a.hodoMax, h); }
   if (!ehDiesel) return;
   somaKm(a, r); a.litros += num(r.litros) || 0; a.valor += num(r.valor) || 0; a.n++;
@@ -532,12 +542,12 @@ function comparaKml() {
   const pct = (x, n) => n ? (100 * x / n).toFixed(1) + '%' : '—';
   log(`placa-mês em comum ${comum}: litros iguais ${pct(litOk, comum)} · km iguais ${pct(kmOk, comum)} · R$ iguais ${pct(rsOk, comum)} · só no automático ${soAuto} · só na aba ${soAba.size}`);
   // os candidatos de km, placa a placa contra a aba (dentro de 1 km e de 2%)
-  const cand = { soma: 0, guard: 0, hodo: 0, media: 0, todos: 0 }, cand2 = { soma: 0, guard: 0, hodo: 0, media: 0, todos: 0 }; let nk = 0, fora = 0;
+  const cand = { soma: 0, guard: 0, hodo: 0, media: 0, todos: 0, parada: 0 }, cand2 = { soma: 0, guard: 0, hodo: 0, media: 0, todos: 0, parada: 0 }; let nk = 0, fora = 0;
   real.forEach(a => { const r = pa.get(a.placa + '|' + a.ym); if (!r) return; const alvo = num(r.km_rodado_horas_trabalhadas); if (alvo == null) return; nk++; fora += a.kmFora || 0;
-    const c = { soma: a.kmSoma, guard: a.kmGuard, hodo: a.kmHodo, media: a.kmMedia, todos: a.kmTodos };
+    const c = { soma: a.kmSoma, guard: a.kmGuard, hodo: a.kmHodo, media: a.kmMedia, todos: a.kmTodos, parada: a.kmParada };
     Object.keys(c).forEach(k => { if (c[k] == null) return; if (Math.abs(c[k] - alvo) < 1) cand[k]++; if (Math.abs(c[k] - alvo) <= 0.02 * Math.max(alvo, 1)) cand2[k]++; }); });
-  log(`km da aba × candidatos (${nk} placa-mês): iguais — soma ${pct(cand.soma, nk)} · soma com guarda ${pct(cand.guard, nk)} · hodômetro máx−mín ${pct(cand.hodo, nk)} · Σ litros×média ${pct(cand.media, nk)} · Σ km de todos os abastecimentos ${pct(cand.todos, nk)}`
-    + ` | a ±2% — soma ${pct(cand2.soma, nk)} · guarda ${pct(cand2.guard, nk)} · hodo ${pct(cand2.hodo, nk)} · média ${pct(cand2.media, nk)} · todos ${pct(cand2.todos, nk)} · abastecimentos fora da guarda ${fora}`);
+  log(`km da aba × candidatos (${nk} placa-mês): iguais — soma ${pct(cand.soma, nk)} · soma com guarda ${pct(cand.guard, nk)} · hodômetro máx−mín ${pct(cand.hodo, nk)} · Σ litros×média ${pct(cand.media, nk)} · Σ km de todos os abastecimentos ${pct(cand.todos, nk)} · só paradas com diesel ${pct(cand.parada, nk)}`
+    + ` | a ±2% — soma ${pct(cand2.soma, nk)} · guarda ${pct(cand2.guard, nk)} · hodo ${pct(cand2.hodo, nk)} · média ${pct(cand2.media, nk)} · todos ${pct(cand2.todos, nk)} · parada ${pct(cand2.parada, nk)} · abastecimentos fora da guarda ${fora}`);
   // onde a aba fica acima/abaixo da soma do diesel: um exemplo por sinal
   const ex = []; real.forEach(a => { const r = pa.get(a.placa + '|' + a.ym); if (!r || ex.length > 5) return; const alvo = num(r.km_rodado_horas_trabalhadas); if (alvo == null || Math.abs(alvo - (a.kmGuard || 0)) < 1) return; ex.push(`${a.placa} ${a.ym}: aba ${fmt(alvo, 0)} · diesel ${fmt(a.kmGuard, 0)} · todos ${fmt(a.kmTodos, 0)} · hodo ${fmt(a.kmHodo, 0)} · média ${fmt(a.kmMedia, 0)} (${a.n} abast.)`); });
   if (ex.length) log('  exemplos que não batem: ' + ex.join(' | '));
