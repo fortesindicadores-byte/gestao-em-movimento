@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610221915">
+<meta name="build" content="202610271300">
 <title>Km/L · Eficiência de Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -401,7 +401,7 @@ table.dre tr.total td.imp-cell{font-size:12px;}
 }
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../");}catch(e){}</script>
-<script src="../../assets/gviz-cache.js?v=202610221800"></script>
+<script src="../../assets/gviz-cache.js?v=202610271300"></script>
 </head>
 <body>
 <div class="app">
@@ -853,7 +853,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrap'))document.
 // por unidade. A planilha continua como reserva.
 const SB_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SB_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
-let _sb=null;
+let _sb=null, FONTE_AUTO=false;
 const sbCli=()=>{ if(!_sb&&window.supabase)_sb=window.supabase.createClient(SB_URL,SB_KEY); return _sb; };
 
 // rótulo da aba → coluna da tabela, NA ORDEM das colunas da aba
@@ -881,12 +881,25 @@ async function fetchBanco(){
   // forma, o robô não grava e a tabela fica no último conteúdo bom — o painel
   // mostrava jan→ago enquanto a planilha já tinha setembro. Mesma regra do
   // gviz-cache: erro "FALHOU" no sh_base manda para a planilha.
+  // CONSUMO AUTOMÁTICO (Renan, 27/10/2026): com a chave portal_flags.consumo_auto
+  // ligada, a aba Km/L é a que o robô scripts/consumo-auto.mjs monta do ERP +
+  // Freightech (ca_consumo_km_litro, mesmo layout). É o mesmo desvio que o
+  // gviz-cache.js faz para os outros painéis; base automática com erro cai na sh_.
+  let tabela='sh_consumo_km_litro'; FONTE_AUTO=false;
+  try{
+    const {data:f}=await sb.from('portal_flags').select('ligado').eq('chave','consumo_auto').maybeSingle();
+    if(f&&f.ligado){
+      const {data:c}=await sb.from('consumo_auto_base').select('tabela,linhas,erro').eq('slug','consumo_km_litro').maybeSingle();
+      if(c&&!c.erro&&c.linhas>0){ tabela=c.tabela||'ca_consumo_km_litro'; FONTE_AUTO=true; }
+      else console.warn('consumo automático fora:',c?c.erro:'sem registro','— lendo a sh_');
+    }
+  }catch(e){}
   let st=null;
-  try{ ({data:st}=await sb.from('sh_base').select('erro').eq('slug','consumo_km_litro').maybeSingle()); }catch(e){}
+  if(!FONTE_AUTO){ try{ ({data:st}=await sb.from('sh_base').select('erro').eq('slug','consumo_km_litro').maybeSingle()); }catch(e){} }
   if(st&&/^FALHOU/i.test(String(st.erro||'')))throw new Error('carga do banco falhou: '+String(st.erro).slice(0,80));
   const linhas=[];
   for(let de=0;;de+=1000){                       // o PostgREST corta em 1000
-    const {data,error}=await sb.from('sh_consumo_km_litro').select('*')
+    const {data,error}=await sb.from(tabela).select('*')
       .order('linha',{ascending:true}).range(de,de+999);
     if(error)throw new Error(error.message);
     linhas.push(...(data||[]));
@@ -1631,7 +1644,7 @@ async function buscaDados(){
   setStatus('Atualizando…');
   // banco primeiro; a planilha é a reserva enquanto a migração não fecha
   let kml=null;
-  try{ kml=await fetchBanco(); fonte='banco'; }
+  try{ kml=await fetchBanco(); fonte=FONTE_AUTO?'banco · automático':'banco'; }
   catch(e){ console.warn('sh_consumo_km_litro:',e.message,'— caindo para a planilha'); fonte='planilha'; }
   const [kmlSheet,base,rsl]=await Promise.all([
     kml?Promise.resolve(null):fetchSheet(KML_ID,KML_TAB),
@@ -1745,6 +1758,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610221915"></script>
+<script src="../../assets/build-check.js?v=202610271300"></script>
 </body>
 </html>

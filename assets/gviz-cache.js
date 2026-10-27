@@ -218,15 +218,45 @@
             if (b.gviz_chave && b.colunas && b.linhas > 0 && confiavel(b)) m[b.gviz_chave] = b;
             else if (b.gviz_chave && b.erro) { try { console.warn('gviz-cache: base', b.slug, 'fora do banco —', b.erro.slice(0, 120)); } catch (_) {} }
           });
-          if (MEM && rows && rows.length) { memConta('miss'); MEM.__bases = m; }
+          return consumoAuto(rows || [], m);
+        })
+        .then(function (m) {
+          if (MEM && Object.keys(m).length) { memConta('miss'); MEM.__bases = m; }
           return m;
         })
         .catch(function () { return {}; });
     }
     return basesP;
   }
+  // ── CONSUMO AUTOMÁTICO (Renan, 27/10/2026: "automatiza tudo daí") ──────
+  // As abas Km/L, R$/L e Base Remunerado Modelo (Consumo) e Combustível / Base
+  // Remunerado (Seara) também existem montadas pelo robô scripts/consumo-auto.mjs
+  // (ERP + Freightech), em ca_<slug>, no MESMO layout das sh_<slug>. Com a chave
+  // portal_flags.consumo_auto LIGADA, a chave do gviz dessas abas passa a apontar
+  // para a ca_* — o painel recebe o mesmo payload e não sabe a diferença. Base
+  // automática com erro de carga (consumo_auto_base.erro) não é servida: cai na
+  // sh_* de sempre. Desligada, nada muda.
+  function consumoAuto(rows, m) {
+    return rest('portal_flags?chave=eq.consumo_auto&select=ligado')
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (f) {
+        if (!f || !f[0] || !f[0].ligado) return m;
+        return rest('consumo_auto_base?select=slug,tabela,colunas,linhas,erro,carregado_em')
+          .then(function (r) { return r.ok ? r.json() : []; })
+          .then(function (cs) {
+            (cs || []).forEach(function (c) {
+              var base = rows.filter(function (b) { return b.slug === c.slug; })[0];
+              if (!base || !base.gviz_chave) return;
+              if (c.erro || !(c.linhas > 0) || !c.colunas) { try { console.warn('gviz-cache: consumo automático', c.slug, 'fora —', c.erro || 'sem linhas'); } catch (_) {} return; }
+              m[base.gviz_chave] = { slug: c.slug, gviz_chave: base.gviz_chave, colunas: c.colunas, linhas: c.linhas, tabela: c.tabela || ('ca_' + c.slug), auto: true, carregado_em: c.carregado_em };
+            });
+            return m;
+          });
+      })
+      .catch(function () { return m; });
+  }
   function pagina(b, de, ate) {
-    return rest('sh_' + b.slug + '?select=*&order=linha.asc', { Range: de + '-' + ate })
+    return rest((b.tabela || ('sh_' + b.slug)) + '?select=*&order=linha.asc', { Range: de + '-' + ate })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
   }
   // as linhas de sh_<slug>, em ordem. A 1ª leitura pede PAG_MAX; o tamanho do
@@ -428,7 +458,7 @@
         var obj = payload(b.colunas, linhas);
         var p = dispLigado(key) ? complementaDisp(b, linhas, obj) : Promise.resolve(obj);
         return p.then(function (o) { var falhou = !!o.__dispFalhou; delete o.__dispFalhou;
-          return { obj: o, corpo: corpo(o), disp: dispLigado(key), parcial: falhou }; });
+          return { obj: o, corpo: corpo(o), disp: dispLigado(key), parcial: falhou, auto: !!b.auto }; });
       });
     }).catch(function (e) {
       try { console.warn('gviz-cache: banco falhou p/', key, e && e.message); } catch (_) {}
@@ -437,7 +467,7 @@
       if (r) {
         window.GvizCache.hits++; window.GvizCache.banco++;
         var d = r.disp && window.GvizCache.dispBanco;
-        window.GvizCache.fontes[key] = d && d.vigs.length ? 'banco + dispersao_km (' + d.vigs.join(', ') + ')' : 'banco';
+        window.GvizCache.fontes[key] = d && d.vigs.length ? 'banco + dispersao_km (' + d.vigs.join(', ') + ')' : (r.auto ? 'banco (consumo automático)' : 'banco');
         return r;
       }
       return buscaSnapshot(key).then(function (body) {

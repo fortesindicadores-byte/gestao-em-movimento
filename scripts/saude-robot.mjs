@@ -41,7 +41,7 @@ const br = n => (+n || 0).toLocaleString('pt-BR');
 // também usam, só para ler. Por isso a lista é explícita; o que não está
 // aqui é auditoria/inspeção, e o pages-build-deployment é o deploy do Pages.
 const CARGA = new Set([
-  'abastecimentos-robot.yml', 'ce-coletor.yml', 'conducao-robot.yml', 'conf-detalhe.yml',
+  'abastecimentos-robot.yml', 'ce-coletor.yml', 'conducao-robot.yml', 'conf-detalhe.yml', 'consumo-auto.yml',
   'conformidade-termometro.yml', 'contratos-robot.yml', 'disp-migracao.yml', 'elite-robot.yml', 'freightech-robot.yml',
   'ginfo-robot.yml', 'gviz-robot.yml', 'locacao-modelos-backfill.yml', 'pneus-loader.yml',
   'pneus-unifica-migra.yml', 'profrotas-robot.yml', 'qlik-robot.yml', 'ramos-build.yml',

@@ -93,7 +93,10 @@ function chaveModelo(s) {
 }
 
 // ── de-para de unidades ──────────────────────────────────────────────────
-const FT_UNI = { 'CDD CAMBORIU': 'BLC', 'CDD CUIABA': 'CBA', 'CDD FLORIANOPOLIS': 'FLP', 'CDD GUARULHOS': 'GRL', 'UDC GUARULHOS': 'GRL',
+// UDC GUARULHOS fica FORA: é outra unidade do FT (preço e placas próprios) e o
+// projeto UDC está inativo no ERP; somá-la ao ROTA - GRL puxava o preço de GRL
+// para 5,49 (medido no 1º ensaio, 27/10/2026).
+const FT_UNI = { 'CDD CAMBORIU': 'BLC', 'CDD CUIABA': 'CBA', 'CDD FLORIANOPOLIS': 'FLP', 'CDD GUARULHOS': 'GRL',
   'CDD NOVA FRIBURGO': 'NFR', 'CDD PELOTAS': 'PLT', 'CDD RIO DE JANEIRO': 'CGR', 'CDD RONDONOPOLIS': 'RON', 'MACACU': 'MCC',
   'CDD GOIANIA': 'GNA', 'CUIABA': 'CBA', 'PIRAI': 'PIR', 'LATA PIRAI': 'PIR' };
 // como a aba Km/L escreve a unidade e o sufixo do projeto (GOI, não GNA)
@@ -136,7 +139,7 @@ const tipoAba = t => { const n = norm(t); if (!n) return 'DIESEL S10'; if (/ADIT
 const ativosManual = Object.fromEntries((await tudo('ativos_manual?select=placa,modelo,filial,projeto,tipo_veiculo')).map(a => [placaKey(a.placa), a]));
 const ginfo = {};
 try {
-  const g = await api('ginfo_snapshot?key=eq.ativos&select=data');
+  const g = await api('ginfo_snapshot?chave=eq.ativos&select=data');
   ((g && g[0] && g[0].data) || []).forEach(a => { const k = placaKey(a.Placa || a.placa); if (k) ginfo[k] = { tipo: a['Tipo Veículo'] || a['Tipo Veiculo'] || null, modelo: a.Modelo || null, marca: a.Marca || null }; });
 } catch (e) { log('::warning::ginfo_snapshot ativos: ' + e.message); }
 log(`ativos: Ginfo ${Object.keys(ginfo).length} placas · manuais (Seara) ${Object.keys(ativosManual).length}`);
@@ -211,31 +214,36 @@ const remMedio = (proj, ym, placa) => {
   if (proj.startsWith('VAN')) { const p = g.placas.get(placa); return p && p.consumos.length ? r2(media(p.consumos)) : null; }
   return g.consumos.length ? r2(media(g.consumos)) : null;
 };
-// Km/L Rem Modelo: média das placas ativas do mesmo modelo no projeto × mês (cluster 1 do Book)
+// Km/L Rem Modelo: média das placas ativas do mesmo modelo no CANAL × mês, em todas
+// as unidades (é assim que a aba Base Remunerado Modelo faz: "Projeto c/ Van" é o
+// canal — AS, ROTA, VAN, EMPURRADA, INSUMOS — e a média do ATEGO em BLC é a mesma de CGR).
+// Medido no 1º ensaio: por projeto a média saía 2,93 onde a aba diz 3,32.
+const porCanalMes = new Map();    // canal|ym → Map(chaveModelo → [médias das placas])
+porProjMes.forEach((g, k) => {
+  const [proj, ym] = k.split('|'); const canal = proj.split(' - ')[0]; const kk = canal + '|' + ym;
+  if (!porCanalMes.has(kk)) porCanalMes.set(kk, new Map());
+  const m = porCanalMes.get(kk);
+  g.placas.forEach(x => { if (!x.consumos.length) return; const ch = chaveModelo(x.modelo); if (!ch) return; if (!m.has(ch)) m.set(ch, []); m.get(ch).push(media(x.consumos)); });
+});
 const remModelo = (proj, ym, placa, modeloErp) => {
-  const g = porProjMes.get(proj + '|' + ym); if (!g) return null;
-  const p = g.placas.get(placa);
+  const g = porProjMes.get(proj + '|' + ym); const p = g && g.placas.get(placa);
   const ch = chaveModelo(p ? p.modelo : modeloErp); if (!ch) return null;
-  const vals = []; g.placas.forEach(x => { if (x.consumos.length && chaveModelo(x.modelo) === ch) vals.push(media(x.consumos)); });
-  return vals.length ? r2(media(vals)) : null;
+  const m = porCanalMes.get(proj.split(' - ')[0] + '|' + ym); const vals = m && m.get(ch);
+  return vals && vals.length ? r2(media(vals)) : null;
 };
 const ativoAba = (proj, ym, placa) => {
   const g = porProjMes.get(proj + '|' + ym); const p = g && g.placas.get(placa);
   if (!p) return 'Fora FT';
   return p.ativo ? 'VERDADEIRO' : 'FALSO';
 };
-// R$/L remunerado (regra do Book): min(ANP, operadora) do DIESEL S10 + 5% do ARLA, média das quinzenas; VAN = ROTA da unidade
+// R$/L remunerado da aba Km/L = precoOperadora do DIESEL S10, média das quinzenas do
+// mês (é a MESMA coluna W que o painel R$/L lê na aba R$/L como preço remunerado — assim
+// Km/L e R$/L falam o mesmo número). VAN = ROTA da unidade. A regra do Book (min(ANP,
+// operadora) + 5% de Arla) foi testada e fica mais longe da aba do que a operadora pura.
 const precoProjMes = new Map();
 {
-  const tmp = new Map();
-  precos.forEach(p => {
-    const k = p.proj + '|' + p.ym + '|' + p.q; if (!tmp.has(k)) tmp.set(k, {});
-    const o = tmp.get(k);
-    if (/S10/.test(p.tipo)) o.s10 = (p.anp != null && p.op != null) ? Math.min(p.anp, p.op) : (p.anp ?? p.op);
-    else if (/ARLA/.test(p.tipo)) o.arla = p.anp ?? p.op ?? 0;
-  });
   const acc = new Map();
-  tmp.forEach((o, k) => { if (o.s10 == null) return; const [proj, ym] = k.split('|'); const kk = proj + '|' + ym; if (!acc.has(kk)) acc.set(kk, []); acc.get(kk).push(o.s10 + 0.05 * (o.arla || 0)); });
+  precos.forEach(p => { if (!/S10/.test(p.tipo)) return; const v = p.op ?? p.anp; if (v == null) return; const k = p.proj + '|' + p.ym; if (!acc.has(k)) acc.set(k, []); acc.get(k).push(v); });
   acc.forEach((v, k) => precoProjMes.set(k, r4(media(v))));
 }
 const precoRem = (proj, ym) => precoProjMes.get(proj + '|' + ym) ?? (proj.startsWith('VAN') ? precoProjMes.get(proj.replace(/^VAN/, 'ROTA') + '|' + ym) : null) ?? null;
@@ -250,6 +258,29 @@ function projetoAba(r) {
   if (pref === 'ROTA' && vanPlacas.has(placaKey(r.placa))) return { proj: 'VAN - ' + cod, cod };
   return { proj: pref + ' - ' + cod, cod };
 }
+// ── KM RODADO: três candidatos, porque o ERP não tem um só ──────────────
+//   soma   Σ km_rodado (mf.DESGASTE de cada abastecimento; um hodômetro digitado
+//          errado vira 2 milhões de km num mês — GOI set/26 no 1º ensaio);
+//   hodo   hodômetro máximo − mínimo do mês;
+//   media  Σ (litros × media_km_l do abastecimento).
+// O ensaio imprime quanto cada um bate com a aba; CONSUMO_KM escolhe (padrão: soma
+// com guarda — abastecimento com km_rodado acima de KM_MAX_FILL ou negativo fica fora).
+const KM_MODO = process.env.CONSUMO_KM || 'soma';
+const KM_MAX_FILL = +(process.env.CONSUMO_KM_MAX || 3000);
+function somaKm(a, r) {
+  const kr = num(r.km_rodado); const mk = num(r.media_km_l); const lt = num(r.litros) || 0;
+  a.kmSoma = (a.kmSoma || 0) + (kr || 0);
+  if (kr != null && kr >= 0 && kr <= KM_MAX_FILL) a.kmGuard = (a.kmGuard || 0) + kr; else if (kr) a.kmFora = (a.kmFora || 0) + 1;
+  if (mk != null && mk > 0 && mk < 30) a.kmMedia = (a.kmMedia || 0) + lt * mk;
+}
+function kmDe(a) {
+  const hodo = (a.hodoMax != null && a.hodoMin != null) ? a.hodoMax - a.hodoMin : null;
+  a.kmHodo = hodo;
+  if (KM_MODO === 'hodo') return hodo ?? a.kmGuard ?? 0;
+  if (KM_MODO === 'media') return a.kmMedia ?? a.kmGuard ?? 0;
+  if (KM_MODO === 'soma-crua') return a.kmSoma || 0;
+  return a.kmGuard || 0;
+}
 const real = new Map();           // proj|ym|placa → agregado
 const foraProj = new Map();
 const angRows = [];
@@ -258,14 +289,15 @@ diesel.forEach(r => {
   if (ANG(r)) { angRows.push(r); return; }
   const pj = projetoAba(r); if (!pj) { const k = norm(r.projeto_os) || '(vazio)'; foraProj.set(k, (foraProj.get(k) || 0) + 1); return; }
   const placa = placaKey(r.placa); const k = pj.proj + '|' + ym + '|' + placa;
-  if (!real.has(k)) real.set(k, { proj: pj.proj, cod: pj.cod, ym, placa, placaOrig: r.placa_origem || r.placa, km: 0, litros: 0, valor: 0, n: 0, tipos: {}, modelos: {}, hodoMin: null, hodoMax: null });
+  if (!real.has(k)) real.set(k, { proj: pj.proj, cod: pj.cod, ym, placa, placaOrig: r.placa_origem || r.placa, litros: 0, valor: 0, n: 0, tipos: {}, modelos: {}, hodoMin: null, hodoMax: null });
   const a = real.get(k);
-  a.km += num(r.km_rodado) || 0; a.litros += num(r.litros) || 0; a.valor += num(r.valor) || 0; a.n++;
+  somaKm(a, r); a.litros += num(r.litros) || 0; a.valor += num(r.valor) || 0; a.n++;
   const t = tipoAba(r.tipo_combustivel); a.tipos[t] = (a.tipos[t] || 0) + (num(r.litros) || 0);
   if (r.modelo) a.modelos[r.modelo] = (a.modelos[r.modelo] || 0) + 1;
   const h = num(r.hodometro); if (h != null && h > 0) { a.hodoMin = a.hodoMin == null ? h : Math.min(a.hodoMin, h); a.hodoMax = a.hodoMax == null ? h : Math.max(a.hodoMax, h); }
 });
-log(`realizado Ambev: ${real.size} placa-mês em ${new Set([...real.values()].map(a => a.proj)).size} projetos · Seara (ANG): ${angRows.length} abastecimentos`);
+real.forEach(a => { a.km = kmDe(a); });
+log(`realizado Ambev: ${real.size} placa-mês em ${new Set([...real.values()].map(a => a.proj)).size} projetos · Seara (ANG): ${angRows.length} abastecimentos · km pelo modo "${KM_MODO}"`);
 if (foraProj.size) log('  fora da Km/L (projeto sem lugar na aba): ' + [...foraProj.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '));
 const maisFreq = o => { let b = null, bn = -1; Object.entries(o).forEach(([k, n]) => { if (n > bn) { b = k; bn = n; } }); return b; };
 
@@ -294,10 +326,12 @@ const nova = {};
   });
   nova.consumo_km_litro = soColunas(linhas, L);
 }
-// 5b) R$/L = cópia do export Combustível do FT (+ Unidade Benner, Concat, Vigência Data)
+// 5b) R$/L = cópia do export Combustível do FT (+ Unidade Benner, Concat, Vigência Data),
+// SÓ as linhas de DIESEL S10 — a aba tem 2 linhas por unidade × mês (as duas quinzenas),
+// e o painel R$/L tira a média do precoOperadora delas
 {
   const L = colsDe('consumo_rs_litro'); const linhas = [];
-  precos.slice().sort((a, b) => (a.ym + a.q + a.proj + a.tipo).localeCompare(b.ym + b.q + b.proj + b.tipo)).forEach(p => {
+  precos.filter(p => /S10/.test(p.tipo)).sort((a, b) => (a.ym + a.q + a.proj + a.tipo).localeCompare(b.ym + b.q + b.proj + b.tipo)).forEach(p => {
     const r = p.row; const o = { vigencia: mmaaaa(p.ym), unidade_benner: p.proj, concat: p.proj + '|' + mmaaaa(p.ym), vigencia_data: mmaaaa(p.ym), vigencia_data_3: `${p.ym}-01`, vigencia_orig: r.vigencia };
     // as demais colunas pelo rótulo do próprio FT (as sh_ foram geradas do export dele)
     L.forEach(c => { if (o[c.col] !== undefined) return; const v = r.g(c.label); if (v !== undefined) o[c.col] = c.tipo === 'number' ? num(v) : (v == null ? null : String(v)); });
@@ -308,13 +342,13 @@ const nova = {};
   });
   nova.consumo_rs_litro = soColunas(linhas, L);
 }
-// 5c) Base Remunerado Modelo: uma linha por placa × quinzena com a média do modelo
+// 5c) Base Remunerado Modelo: uma linha por placa × quinzena com a média do modelo no
+// canal ("Projeto c/ Van" = AS, ROTA, VAN, EMPURRADA, INSUMOS, como na aba)
 {
   const L = colsDe('consumo_rem_modelo'); const linhas = [];
   frota.slice().sort((a, b) => (a.ym + a.q + a.proj + a.placa).localeCompare(b.ym + b.q + b.proj + b.placa)).forEach(f => {
-    if (f.canal === 'VAN') return;                       // a aba só tem os caminhões (VAN tem o próprio valor)
-    linhas.push({ vigencia: mmaaaa(f.ym), projeto_c_van: f.proj, unidade_benner: f.proj, concat: f.proj + '|' + mmaaaa(f.ym), vigencia_data: mmaaaa(f.ym), vigencia_data_4: `${f.ym}-01`,
-      modelo: f.modelo || null, vigencia_orig: `${f.canal}_${f.q}_${+f.ym.slice(5, 7)}_${f.ym.slice(0, 4)}`, unidade_cnpj: null, unidade_nome: null, placa: f.placa,
+    linhas.push({ vigencia: mmaaaa(f.ym), projeto_c_van: f.canal, unidade_benner: f.proj, concat: f.proj + '|' + mmaaaa(f.ym), vigencia_data: mmaaaa(f.ym), vigencia_data_4: `${f.ym}-01`,
+      modelo: f.modelo || null, vigencia_orig: `${f.canal === 'VAN' ? 'ROTA' : f.canal}_${f.q}_${+f.ym.slice(5, 7)}_${f.ym.slice(0, 4)}`, unidade_cnpj: null, unidade_nome: null, placa: f.placa,
       media_modelo: remModelo(f.proj, f.ym, f.placa, f.modelo) });
   });
   nova.consumo_rem_modelo = soColunas(linhas, L);
@@ -328,10 +362,12 @@ const defSeara = { empresa: moda(searaCombAba, 'empresa') || 'SEARA', projeto: m
 const searaReal = new Map(); let searaSemModelo = 0;
 angRows.forEach(r => {
   const ym = String(r.data).slice(0, 7); const placa = placaKey(r.placa); const k = ym + '|' + placa;
-  if (!searaReal.has(k)) searaReal.set(k, { ym, placa, placaOrig: r.placa_origem || r.placa, km: 0, litros: 0, valor: 0, tipos: {}, modelos: {} });
-  const a = searaReal.get(k); a.km += num(r.km_rodado) || 0; a.litros += num(r.litros) || 0; a.valor += num(r.valor) || 0;
+  if (!searaReal.has(k)) searaReal.set(k, { ym, placa, placaOrig: r.placa_origem || r.placa, litros: 0, valor: 0, tipos: {}, modelos: {}, hodoMin: null, hodoMax: null });
+  const a = searaReal.get(k); somaKm(a, r); a.litros += num(r.litros) || 0; a.valor += num(r.valor) || 0;
+  const h = num(r.hodometro); if (h != null && h > 0) { a.hodoMin = a.hodoMin == null ? h : Math.min(a.hodoMin, h); a.hodoMax = a.hodoMax == null ? h : Math.max(a.hodoMax, h); }
   const t = tipoAba(r.tipo_combustivel); a.tipos[t] = (a.tipos[t] || 0) + (num(r.litros) || 0); if (r.modelo) a.modelos[r.modelo] = (a.modelos[r.modelo] || 0) + 1;
 });
+searaReal.forEach(a => { a.km = kmDe(a); });
 const modeloSeara = a => (ativosManual[a.placa] && ativosManual[a.placa].modelo) || (ultimaDaPlaca.get(a.placa) || {}).modelo || maisFreq(a.modelos) || null;
 {
   const L = colsDe('seara_combustivel'); const linhas = [];
@@ -369,10 +405,14 @@ if (!params.length && SEMEAR && searaRemAba.length) {
   if (GRAVA && temParam && semente.length) { await api('seara_param', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(semente) }); params = await tudo('seara_param?select=*&order=modelo,vigencia_inicio'); log('  gravada'); }
   else params = semente;
 }
+// vale a vigência mais recente que não passa do mês; mês ANTERIOR à 1ª vigência do
+// modelo usa a 1ª (a semente nasce do último mês da aba e tem de cobrir o histórico)
 const paramDe = (modelo, ym) => {
-  const ch = chaveModelo(modelo); let best = null;
-  params.forEach(p => { if (p.ativo === false) return; if (chaveModelo(p.modelo) !== ch) return; if (p.vigencia_inicio > ym) return; if (!best || p.vigencia_inicio > best.vigencia_inicio) best = p; });
-  return best;
+  const ch = chaveModelo(modelo); let best = null, primeira = null;
+  params.forEach(p => { if (p.ativo === false || chaveModelo(p.modelo) !== ch) return;
+    if (!primeira || p.vigencia_inicio < primeira.vigencia_inicio) primeira = p;
+    if (p.vigencia_inicio > ym) return; if (!best || p.vigencia_inicio > best.vigencia_inicio) best = p; });
+  return best || primeira;
 };
 {
   const L = colsDe('seara_remunerado'); const linhas = []; const semParam = new Map();
@@ -428,7 +468,14 @@ function comparaKml() {
     if (Math.abs((num(a.totas_rs) || 0) - (r.totas_rs || 0)) < 1) rsOk++; });
   const pct = (x, n) => n ? (100 * x / n).toFixed(1) + '%' : '—';
   log(`placa-mês em comum ${comum}: litros iguais ${pct(litOk, comum)} · km iguais ${pct(kmOk, comum)} · R$ iguais ${pct(rsOk, comum)} · só no automático ${soAuto} · só na aba ${soAba.size}`);
-  resumo.consumo_km_litro = { comum, litOk, kmOk, rsOk, soAuto, soAba: soAba.size, meses: ult };
+  // os candidatos de km, placa a placa contra a aba (dentro de 1 km e de 2%)
+  const cand = { soma: 0, guard: 0, hodo: 0, media: 0 }, cand2 = { soma: 0, guard: 0, hodo: 0, media: 0 }; let nk = 0, fora = 0;
+  real.forEach(a => { const r = pa.get(a.placa + '|' + a.ym); if (!r) return; const alvo = num(r.km_rodado_horas_trabalhadas); if (alvo == null) return; nk++; fora += a.kmFora || 0;
+    const c = { soma: a.kmSoma, guard: a.kmGuard, hodo: a.kmHodo, media: a.kmMedia };
+    Object.keys(c).forEach(k => { if (c[k] == null) return; if (Math.abs(c[k] - alvo) < 1) cand[k]++; if (Math.abs(c[k] - alvo) <= 0.02 * Math.max(alvo, 1)) cand2[k]++; }); });
+  log(`km da aba × candidatos (${nk} placa-mês): iguais — soma ${pct(cand.soma, nk)} · soma com guarda ${pct(cand.guard, nk)} · hodômetro máx−mín ${pct(cand.hodo, nk)} · Σ litros×média ${pct(cand.media, nk)}`
+    + ` | a ±2% — soma ${pct(cand2.soma, nk)} · guarda ${pct(cand2.guard, nk)} · hodo ${pct(cand2.hodo, nk)} · média ${pct(cand2.media, nk)} · abastecimentos fora da guarda ${fora}`);
+  resumo.consumo_km_litro = { comum, litOk, kmOk, rsOk, soAuto, soAba: soAba.size, meses: ult, km: { modo: KM_MODO, nk, iguais: cand, a2pct: cand2 } };
 }
 function comparaSimples(slug, chaveFn, valFn, rot) {
   const g = rows => { const m = new Map(); rows.forEach(r => { const k = chaveFn(r); if (!k) return; if (!m.has(k)) m.set(k, { n: 0, v: [] }); const a = m.get(k); a.n++; const v = valFn(r); if (v != null) a.v.push(v); }); return m; };
@@ -443,9 +490,13 @@ function comparaSimples(slug, chaveFn, valFn, rot) {
 comparaKml();
 comparaSimples('consumo_rs_litro', r => r.unidade_benner + '|' + (r.vigencia_data_3 || '').slice(0, 7), r => num(r.precooperadora), 'linhas e preço operadora médio');
 comparaSimples('consumo_rem_modelo', r => (r.projeto_c_van || r.unidade_benner) + '|' + (r.vigencia_data_4 || '').slice(0, 7), r => num(r.media_modelo), 'linhas e média do modelo');
-comparaSimples('seara_combustivel', r => 'ANG|' + (r.vigencia_orig ? String(r.vigencia_orig).slice(0, 7) : (r.vigencia ? r.vigencia.slice(3) + '-' + r.vigencia.slice(0, 2) : '')), r => num(r.km_rodado_horas_trabalhadas), 'placas e km médio');
+// a aba Combustível da Seara não tem coluna de data: o mês sai do texto (set) + ano
+const ymSeara = r => { const m = String(r.mes_inicio_os || '').toLowerCase().slice(0, 3); const i = MESES.indexOf(m); const y = num(r.ano_inicio_os); return (i >= 0 && y) ? `${y}-${String(i + 1).padStart(2, '0')}` : (r.vigencia ? r.vigencia.slice(3) + '-' + r.vigencia.slice(0, 2) : ''); };
+comparaSimples('seara_combustivel', r => 'ANG|' + ymSeara(r), r => num(r.km_rodado_horas_trabalhadas), 'placas e km médio');
+log('  projeto_c_van na aba Base Remunerado Modelo: ' + [...new Set(aba.consumo_rem_modelo.map(r => r.projeto_c_van))].join(' · ') + ' | unidade_benner (3): ' + [...new Set(aba.consumo_rem_modelo.map(r => r.unidade_benner))].slice(0, 3).join(' · '));
+log('  Seara Combustível: empresa/projeto/unidade/mês da aba: ' + ['empresa', 'projeto', 'unidade', 'mes_inicio_os'].map(c => [...new Set(aba.seara_combustivel.map(r => r[c]))].slice(0, 3).join('/')).join(' · '));
 comparaSimples('seara_remunerado', r => 'ANG|' + String(r.vigencia_orig || '').slice(0, 7), r => num(r.kmporlitro), 'placas e Km/L médio');
-comparaSimples('seara_comb_vig', r => String(r.vigencia || ''), r => num(r[(colsDe('seara_comb_vig')[2] || {}).col]), 'Σkm');
+comparaSimples('seara_comb_vig', r => { const L = colsDe('seara_comb_vig'); const m = MESES.indexOf(String(r[(L[0] || {}).col] || '').toLowerCase().slice(0, 3)); const y = num(r[(L[1] || {}).col]); return m >= 0 && y ? `${y}-${String(m + 1).padStart(2, '0')}` : String(r.vigencia || ''); }, r => num(r[(colsDe('seara_comb_vig')[2] || {}).col]), 'Σkm');
 log('\nlinhas montadas: ' + ALVOS.map(s => `${s} ${nova[s].length}`).join(' · '));
 
 // ── 7) grava ──────────────────────────────────────────────────────────────
