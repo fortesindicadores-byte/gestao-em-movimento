@@ -13,6 +13,12 @@
 -- Carta de Custos (CartaCalc.lerComb), o Analise Dump e os checks leem
 -- encerrada = 'S'. Como o WHERE já traz só encerradas, a coluna fica fixa
 -- em 'S' — sem ela o combustível sumiria da Carta.
+--
+-- DATA >= 2026: a query da TI veio sem data e lia o ERP inteiro (926.804
+-- linhas na 1ª rodada, 27/10/2026); os painéis usam só 2026 (63.947 na carga
+-- antiga). No servidor novo o histórico todo está com STATUS 6.
+-- DATEFROMPARTS em vez de '2026-01-01' para não ter aspas: a query mora numa
+-- string do PowerShell.
 -- ============================================================
 
 SELECT
@@ -50,4 +56,5 @@ LEFT JOIN PD_PRODUTOS pd
     ON pd.HANDLE = mf.PRODUTO
 WHERE os.EMPRESA = 12
   AND mf.STATUS = 6
+  AND mf.DATA >= DATEFROMPARTS(2026,1,1)
 ORDER BY rc.CODIGO, os.DATAINICIAL;
