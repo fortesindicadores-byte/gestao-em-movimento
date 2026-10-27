@@ -1077,6 +1077,13 @@ async function book() {
   const formaAnexo = new Set();
   const antes = new Map();
   { const r = await sb('ft_book?select=uuid,hash'); if (r.ok) (await r.json()).forEach(x => antes.set(x.uuid, x.hash)); }
+  // anexos já gravados por registro: registro igual (mesmo hash) com todos os anexos no banco é pulado,
+  // e registro igual com anexo faltando regrava só os que faltam (a 1ª carga perdeu 2 por timeout/disco)
+  const anexosNoBanco = new Map();
+  { const r = await sb('ft_book_anexo?select=registro,id_storage,sha256&limit=10000'); if (r.ok) (await r.json()).forEach(x => { if (!anexosNoBanco.has(x.registro)) anexosNoBanco.set(x.registro, new Set()); if (x.sha256) anexosNoBanco.get(x.registro).add(x.id_storage); }); }
+  let pulados = 0;
+  // gravação com nova tentativa: o Postgres do Micro já recusou anexo por timeout (57014) e por disco temporário (53100)
+  const grava = async (path, body) => { let w; for (let t = 0; t < 3; t++) { w = await sb(path, { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body }); if (w.ok) return w; await new Promise(r => setTimeout(r, 4000 * (t + 1))); } return w; };
   for (let i = 0; i < regs.length; i++) {
     const it = regs[i];
     const r = await ftApiOk(`${API_BACK}/central-ajuda/${it.uuid}`);
@@ -1088,7 +1095,8 @@ async function book() {
     const hash = crypto.createHash('md5').update(JSON.stringify(d)).digest('hex');
     const cat = (d.categorias && d.categorias[0] && d.categorias[0].nome) || it.categoria || null;
     porCat[cat || '(sem)'] = (porCat[cat || '(sem)'] || 0) + 1; blocos += bl.length; imgs += nImg;
-    if (antes.get(d.uuid) === hash) igual++; else mudou++;
+    const mesmo = antes.get(d.uuid) === hash;
+    if (mesmo) igual++; else mudou++;
     // anexos: a forma do objeto é lida nos dados (chaves só no log)
     const anexos = [];
     bl.forEach((b, bi) => (Array.isArray(b.anexos) ? b.anexos : []).forEach(a => {
@@ -1098,8 +1106,11 @@ async function book() {
       const nome = a.nomeArquivo || a.nome || a.fileName || a.filename || a.name || '';
       if (id) anexos.push({ id: String(id), bloco: bi, nome: String(nome), tam: a.tamanhoBytes || a.tamanho || null });
     }));
+    const jaTem = anexosNoBanco.get(d.uuid) || new Set();
+    if (mesmo && !DUMP && anexos.every(a => jaTem.has(a.id))) { pulados++; okReg++; okAn += anexos.length; continue; }
     const linhasAnexo = [];
     for (const a of anexos) {
+      if (mesmo && !DUMP && jaTem.has(a.id)) { okAn++; continue; }   // só o que falta
       const dl = await ftApiOk(`${API_EXT}/storage/${a.id}`, { bin: true });
       if (dl.st !== 200 || !dl.b64) { falhaAn++; linhasAnexo.push({ id_storage: a.id, registro: d.uuid, bloco: a.bloco, nome: a.nome, tipo: (a.nome.match(/\.(\w+)$/) || [])[1]?.toLowerCase() || null, tamanho: null, sha256: null, texto: null, base64: null }); continue; }
       const buf = Buffer.from(dl.b64, 'base64'); bytes += buf.length;
@@ -1112,14 +1123,14 @@ async function book() {
       blocos: bl, texto, n_blocos: bl.length, n_anexos: anexos.length, n_imagens: nImg, usuario_criou: d.usuarioCriou || null, usuario_atual: d.usuarioAtualizou || null,
       criado_em: d.dataCriacao || null, atualizado_em: d.dataAtualizacao || null, cliques: d.quantidadeClicada ?? null, hash, coletado_em: new Date().toISOString() };
     if (DUMP) fs.appendFileSync(`${DUMP}/book.ndjson`, JSON.stringify({ ...linha, anexos: linhasAnexo }) + '\n');
-    let w = await sb('ft_book?on_conflict=uuid', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify([linha]) });
+    let w = await grava('ft_book?on_conflict=uuid', JSON.stringify([linha]));
     if (!w.ok) { if (i < 3 || (i + 1) % 10 === 0) log(`   registro ${i + 1}: gravar HTTP ${w.status} ${(await w.text()).slice(0, 160)}`); continue; }
-    await sb(`ft_book_anexo?registro=eq.${encodeURIComponent(d.uuid)}`, { method: 'DELETE' });
+    if (!mesmo) await sb(`ft_book_anexo?registro=eq.${encodeURIComponent(d.uuid)}`, { method: 'DELETE' });   // registro que mudou: anexos refeitos do zero
     if (linhasAnexo.length) {
       // um por vez: um anexo grande não pode derrubar os outros
       for (const la of linhasAnexo) {
-        const w2 = await sb('ft_book_anexo?on_conflict=id_storage', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify([la]) });
-        if (!w2.ok) log(`   registro ${i + 1} anexo ${la.bloco}: gravar HTTP ${w2.status} ${(await w2.text()).slice(0, 120)}`);
+        const w2 = await grava('ft_book_anexo?on_conflict=id_storage', JSON.stringify([la]));
+        if (!w2.ok) { falhaAn++; log(`   registro ${i + 1} anexo ${la.bloco}: gravar HTTP ${w2.status} ${(await w2.text()).slice(0, 120)}`); }
       }
     }
     okReg++;
@@ -1131,7 +1142,7 @@ async function book() {
   const cr = nAnBanco.headers.get('content-range') || '';
   const sumiu = noBanco.filter(x => !vistos.has(x.uuid)).length;
   log('── BOOK: validação');
-  log(`   lista ${regs.length} · gravados agora ${okReg} · no banco ${noBanco.length} (${sumiu} que não estão mais na lista do FT) · mudaram ${mudou} · iguais ${igual}`);
+  log(`   lista ${regs.length} · gravados agora ${okReg} (${pulados} iguais e completos, pulados) · no banco ${noBanco.length} (${sumiu} que não estão mais na lista do FT) · mudaram ${mudou} · iguais ${igual}`);
   log(`   blocos ${blocos} · imagens embutidas ${imgs} · anexos ${okAn + falhaAn} (ok ${okAn}, falha ${falhaAn}, sem texto extraído ${semTexto}) · ${(bytes / 1048576).toFixed(1)} MB · anexos no banco ${cr.split('/')[1] || '?'}`);
   log('   por categoria: ' + Object.entries(porCat).map(([k, v]) => `${k} ${v}`).join(' · '));
   log('   forma do anexo (chaves): ' + ([...formaAnexo].join(' | ') || '(nenhum)'));
