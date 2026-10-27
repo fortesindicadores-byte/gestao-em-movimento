@@ -1,0 +1,30 @@
+name: Consumo Outubro Check
+
+# Só leitura. Explica por que o Km/L realizado do mês corrente (automático,
+# ERP) saiu diferente do mês anterior: mix por canal, mês parcial (mesmos
+# dias do mês anterior), por projeto, placa a placa e o dado cru por
+# abastecimento. Ver scripts/consumo-outubro-check.mjs.
+on:
+  workflow_dispatch:
+    inputs:
+      mes:
+        description: "Mês a explicar (AAAA-MM; vazio = mês corrente)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Rodar
+        env:
+          CONSUMO_MES: ${{ github.event.inputs.mes || '' }}
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/consumo-outubro-check.mjs
