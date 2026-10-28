@@ -59,8 +59,8 @@ async function imprime(id, nivel, fundo) {
   const p = b.properties || {};
   const ind = '  '.repeat(nivel);
   const antes = ligado;
-  if (SO && b.type === 'page' && nivel > 0 && txt(p.title).toLowerCase().includes(SO)) ligado = true;
-  if (b.type === 'page' && nivel > 0) {
+  if (SO && b.type === 'page' && id !== raiz && txt(p.title).toLowerCase().includes(SO)) ligado = true;
+  if (b.type === 'page' && id !== raiz) {
     out(`\n${'='.repeat(70)}\nSUBPÁGINA: ${txt(p.title)}\n${'='.repeat(70)}`);
     if (fundo >= FUNDO) return;
   } else if (b.type === 'code') {
@@ -74,7 +74,7 @@ async function imprime(id, nivel, fundo) {
   else if (['image', 'file', 'bookmark', 'embed'].includes(b.type)) out(ind + `[${b.type}] ${(p.source && txt(p.source)) || ''}`);
   const filhos = b.content || [];
   await faltantes(filhos);
-  for (const f of filhos) await imprime(f, b.type === 'page' ? nivel : nivel + 1, b.type === 'page' && nivel > 0 ? fundo + 1 : fundo);
+  for (const f of filhos) await imprime(f, b.type === 'page' ? nivel : nivel + 1, b.type === 'page' && id !== raiz ? fundo + 1 : fundo);
   ligado = antes;
 }
 
