@@ -1346,7 +1346,7 @@ async function carregar(sb, o) {
     passo('Dispersão de km do banco (set/26 em diante)', async () => {
       const [linhas, placas, kml] = await Promise.all([todasLinhas(sb, 'dispersao_km', '*'),
         todasLinhas(sb, 'dispersao_placa', 'vigencia,unidade,projeto,placa,placa_origem,km_rem'),
-        todasLinhas(sb, 'sh_consumo_km_litro', 'vigencia,projeto,placa,km_rodado_horas_trabalhadas')]);
+        todasLinhas(sb, (G.GvizCache&&G.GvizCache.tabelaConsumo?await G.GvizCache.tabelaConsumo('consumo_km_litro'):'sh_consumo_km_litro'), 'vigencia,projeto,placa,km_rodado_horas_trabalhadas')]);
       if (!linhas.length) throw new Error('a tabela dispersao_km veio vazia'); return { linhas, placas, kml }; }, v => v.linhas.length),
     passo('Viagens por placa (remunerado por placa de Rota, AS e Van)', async () => {
       const r = await todasLinhas(sb, 'dispersao_placa_viagem', 'vigencia,unidade,projeto,placa,placa_origem,viagens_prim,viagens_rec,viagens_not');

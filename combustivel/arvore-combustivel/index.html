@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610271500">
+<meta name="build" content="202610281200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvore de Combustível · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -426,7 +426,7 @@ body.claro .kpi-card{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../");}catch(e){}</script>
 <script>window.__gvizDispBanco=false;/* este painel junta set/26+ da dispersao_km por conta própria (fetchDispBanco/indexaDispTudo): sem isto o shim poria o mês na aba e ele entraria duas vezes ou sem o detalhe por placa */</script>
-<script src="../../assets/gviz-cache.js?v=202610271500"></script>
+<script src="../../assets/gviz-cache.js?v=202610281200"></script>
 <script src="../../assets/balanco-massa.js?v=202610131400"></script>
 <script src="../../assets/dispersao-km.js?v=202610151800"></script>
 </head>
@@ -1172,7 +1172,7 @@ async function fetchDispBanco(){
   const [linhas,placas,kml]=await Promise.all([
     todas('dispersao_km','*'),
     todas('dispersao_placa','vigencia,unidade,projeto,placa,placa_origem,km_rem'),
-    todas('sh_consumo_km_litro','vigencia,projeto,placa,km_rodado_horas_trabalhadas')]);
+    todas((window.GvizCache&&GvizCache.tabelaConsumo?await GvizCache.tabelaConsumo('consumo_km_litro'):'sh_consumo_km_litro'),'vigencia,projeto,placa,km_rodado_horas_trabalhadas')]);
   if(!linhas.length) return [];
   const D=window.DispersaoKm;
   const kmlRows=kml.map(r=>{ const m=String(r.vigencia||'').match(/^(\d{2})\/(\d{4})$/);
@@ -1615,6 +1615,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610221915"></script>
+<script src="../../assets/build-check.js?v=202610281200"></script>
 </body>
 </html>

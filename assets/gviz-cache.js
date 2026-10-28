@@ -252,6 +252,22 @@
       })
       .catch(function () { return m; });
   }
+  // Quem lê a aba Km/L DIRETO do banco (sem o gviz: o complemento da Dispersão de km
+  // aqui embaixo, Painel KM, Árvore, Painel de Metas, FCA Automático, importação da
+  // Dispersão) pergunta a tabela por aqui: ca_<slug> quando o consumo automático está
+  // sem erro e com linhas, senão sh_<slug> (Renan, 28/10/2026: "Macacu pode substituir
+  // pelo automático"). Mesmas colunas nas duas.
+  var tabP = {};
+  function tabelaConsumo(slug) {
+    var sh = 'sh_' + slug;
+    if (window.__consumoAuto === false) return Promise.resolve(sh);
+    if (!tabP[slug]) tabP[slug] = rest('consumo_auto_base?select=tabela,linhas,erro&slug=eq.' + encodeURIComponent(slug))
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (cs) { var c = cs && cs[0]; return (c && !c.erro && c.linhas > 0) ? (c.tabela || ('ca_' + slug)) : sh; })
+      .catch(function () { return sh; });
+    return tabP[slug];
+  }
+  window.GvizCache.tabelaConsumo = tabelaConsumo;
   function pagina(b, de, ate) {
     return rest((b.tabela || ('sh_' + b.slug)) + '?select=*&order=linha.asc', { Range: de + '-' + ate })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
@@ -373,7 +389,7 @@
     var info = { vigs: [], sem: [] };
     return Promise.all([motor(), todas('dispersao_km?select=*'),
       todas('dispersao_placa?select=vigencia,unidade,projeto,placa,placa_origem,km_rem'),
-      todas('sh_consumo_km_litro?select=vigencia,projeto,placa,km_rodado_horas_trabalhadas')
+      tabelaConsumo('consumo_km_litro').then(function (t) { return todas(t + '?select=vigencia,projeto,placa,km_rodado_horas_trabalhadas'); })
     ]).then(function (r) {
       var D = r[0], bd = r[1], placas = r[2], kml = r[3];
       if (!bd.length) { obj.__dispFalhou = true; try { console.info('gviz-cache: dispersao_km vazia — a Dispersão de km fica só com a aba'); } catch (_) {} return obj; }

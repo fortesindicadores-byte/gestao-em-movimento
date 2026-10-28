@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610271500">
+<meta name="build" content="202610281200">
 <title>Dispersão de km · Importar · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="../../assets/gviz-cache.js?v=202610271500"></script>
+<script src="../../assets/gviz-cache.js?v=202610281200"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <script src="../../assets/dispersao-km.js?v=202610152330"></script>
@@ -270,13 +270,14 @@ async function carrega(){
   $('tab').innerHTML='<div class="vazio">Lendo…</div>'; $('tabPl').innerHTML='';
   try{
     VIAG_ERR=null;
+    const KMLTAB=(window.GvizCache&&GvizCache.tabelaConsumo?await GvizCache.tabelaConsumo('consumo_km_litro'):'sh_consumo_km_litro');
     if(!ABA) ABA=leAbaDisp().catch(e=>{ console.warn('aba Dispersão de km indisponível:', e); return []; });
     const viagP=todas('dispersao_placa_viagem','vigencia,unidade,projeto,placa,placa_origem,viagens_prim,viagens_rec,viagens_not,updated_at','vigencia')
       .catch(e=>{ VIAG_ERR=e.message||String(e); return []; });
     const [lin, pls, kml, base, viag] = await Promise.all([
       todas('dispersao_km','*','vigencia'),
       todas('dispersao_placa','vigencia,unidade,projeto,placa,placa_origem,km_rem','vigencia'),
-      todas('sh_consumo_km_litro','vigencia,projeto,placa,km_rodado_horas_trabalhadas','linha'),
+      todas(KMLTAB,'vigencia,projeto,placa,km_rodado_horas_trabalhadas','linha'),
       sb.from('sh_base').select('carregado_em,erro').eq('slug','consumo_km_litro').maybeSingle().then(r=>r.data).catch(()=>null),
       viagP
     ]);
@@ -415,6 +416,6 @@ function desenhaPlacas(v){
 </script>
 <script src="../../assets/mobile.js"></script>
 <script src="../../assets/modo-tv.js?v=202610152330"></script>
-<script src="../../assets/build-check.js?v=202610221800"></script>
+<script src="../../assets/build-check.js?v=202610281200"></script>
 </body>
 </html>
