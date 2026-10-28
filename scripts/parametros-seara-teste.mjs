@@ -18,9 +18,9 @@ const BASES = [{ slug: 'consumo_km_litro', tabela: 'ca_consumo_km_litro', linhas
   { slug: 'seara_remunerado', tabela: 'ca_seara_remunerado', linhas: 60, carregado_em: '2026-10-27T09:05:00Z', erro: 'FALHOU: teste', resumo: null }];
 const updates = [], inserts = [], flags = [];
 
-async function cenario(admin) {
+async function cenario(admin, vp = { width: 1366, height: 768 }, tema = 'dark') {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
-  const ctx = await b.newContext({ viewport: { width: 1366, height: 768 }, serviceWorkers: 'block' });
+  const ctx = await b.newContext({ viewport: vp, serviceWorkers: 'block' });
   const pg = await ctx.newPage();
   await pg.route(/fonts\.g/, r => r.fulfill({ status: 200, body: '', contentType: 'text/css' }));
   if (SBJS) await pg.route(/supabase-js@2/, r => r.fulfill({ status: 200, body: readFileSync(SBJS, 'utf8'), contentType: 'application/javascript' }));
@@ -40,8 +40,9 @@ async function cenario(admin) {
     }
     return json([]);
   });
+  await pg.addInitScript(t => { window.__tema = t; }, tema);
   await pg.addInitScript(() => {
-    sessionStorage.setItem('gem_hub', '1');
+    sessionStorage.setItem('gem_hub', '1'); localStorage.setItem('bi_theme', window.__tema || 'dark');
     localStorage.setItem('sb-lozwipoeacpvplgkrxkq-auth-token', JSON.stringify({ access_token: 'tok', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, token_type: 'bearer', user: { id: 'u1', email: 'x@conlogsa.com.br', aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {} } }));
   });
   const erros = []; pg.on('pageerror', e => erros.push(String(e)));
@@ -61,6 +62,13 @@ async function cenario(admin) {
   t('admin: a coluna Dados até mostra o corte do robô (08/10/2026)', /08\/10\/2026/.test(await pg.locator('#bases tbody tr').first().textContent()));
   t('admin: bases do robô na tabela', await pg.locator('#bases tbody tr').count() === 2);
   t('admin: base com erro marcada', await pg.locator('#bases .pill.err').count() === 1);
+  t('admin: casca padrão (lateral, Voltar ao Hub no rodapé, abre no Resumo Gerencial)', await pg.evaluate(() => !!document.querySelector('.app .side .s-volta') && document.getElementById('tit').textContent === 'Resumo Gerencial' && document.querySelector('#vw-resumo').classList.contains('on')));
+  t('admin: hero com o corte do robô', /08\/10\/2026/.test(await pg.locator('#h-ate').textContent()));
+  t('admin: KPIs dos modelos vigentes', (await pg.locator('#k-mod').textContent()) === '2' && /2,99 a 4,00/.test(await pg.locator('#k-kml-m').textContent()));
+  t('admin: nenhum texto acima das tabelas', await pg.evaluate(() => [...document.querySelectorAll('.tsec')].every(c => !c.firstElementChild || c.firstElementChild.classList.contains('twrap'))));
+  await pg.click('.s-item[data-vw="param"]'); await pg.waitForTimeout(200);
+  t('admin: visão Parâmetros por modelo', await pg.locator('#vw-param').isVisible() && (await pg.locator('#tit').textContent()) === 'Parâmetros por modelo');
+  t('admin: modelo vigente marcado como coluna Situação', await pg.locator('#tab .chip.at').count() === 2);
   // editar km/L da 1ª linha → PATCH com o R$/km do diesel recalculado
   const inp = pg.locator('#tab input[data-c="kmporlitro"]').first();
   await inp.fill('4,20'); await inp.dispatchEvent('change'); await pg.waitForTimeout(400);
@@ -79,6 +87,18 @@ async function cenario(admin) {
   t('admin: tabela relida com 3 linhas', await pg.locator('#tab tbody tr').count() === 3);
   t('admin: não existe botão Ligar/Desligar', await pg.locator('#bt-chave').count() === 0);
   t('admin: cabe em 1366×768 sem rolagem lateral', await pg.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+  await b.close();
+}
+for (const [w, h] of [[1366, 768], [1600, 900], [1920, 1000]]) for (const tema of ['dark', 'light']) {
+  const { b, pg, erros } = await cenario(true, { width: w, height: h }, tema);
+  const med = async () => pg.evaluate(() => {
+    const d = document.documentElement, tw = [...document.querySelectorAll('.vw.on .twrap')];
+    return { pag: d.scrollHeight <= innerHeight + 1 && d.scrollWidth <= innerWidth + 1, lat: tw.every(x => x.scrollWidth <= x.clientWidth + 1), vrola: tw.every(x => x.scrollHeight <= x.clientHeight + 1) };
+  });
+  const r1 = await med(); await pg.click('.s-item[data-vw="param"]'); await pg.waitForTimeout(200); const r2 = await med();
+  t(`${w}×${h} ${tema}: sem rolagem de página nem barra lateral nas tabelas`, r1.pag && r1.lat && r2.pag && r2.lat && !erros.length, JSON.stringify({ r1, r2, erros }));
+  t(`${w}×${h} ${tema}: tabelas inteiras sem rolar`, r1.vrola && r2.vrola, JSON.stringify({ r1, r2 }));
+  if (process.env.SHOT) { await pg.screenshot({ path: `${process.env.SHOT}/ps-${w}-${tema}-param.png` }); await pg.click('.s-item[data-vw="resumo"]'); await pg.waitForTimeout(150); await pg.screenshot({ path: `${process.env.SHOT}/ps-${w}-${tema}-resumo.png` }); }
   await b.close();
 }
 { // não admin
