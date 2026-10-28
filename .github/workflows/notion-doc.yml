@@ -1,0 +1,28 @@
+name: Notion Doc
+
+# Imprime no log o texto de uma página PÚBLICA do Notion (documentação de API).
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Link da página pública do Notion"
+        required: true
+      fundo:
+        description: "Níveis de subpágina para abrir"
+        required: false
+        default: "2"
+
+jobs:
+  ler:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Ler a página
+        env:
+          NOTION_URL:   ${{ github.event.inputs.url }}
+          NOTION_FUNDO: ${{ github.event.inputs.fundo }}
+        run: node scripts/notion-doc.mjs
