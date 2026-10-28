@@ -1,0 +1,39 @@
+name: Consumo Aba Auto Check
+
+# Só leitura. A aba Km/L colada (sh_consumo_km_litro) contra o consumo
+# automático (ca_consumo_km_litro), mês a mês, no total e por unidade.
+# Ver scripts/consumo-aba-auto-check.mjs.
+on:
+  workflow_dispatch:
+    inputs:
+      de:
+        description: "Primeiro mês (AAAA-MM)"
+        required: false
+        default: "2026-01"
+      ate:
+        description: "Último mês (AAAA-MM)"
+        required: false
+        default: "2026-09"
+      uni:
+        description: "Unidades à parte (código, vírgula)"
+        required: false
+        default: "CGR"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Rodar
+        env:
+          CHECK_DE: ${{ github.event.inputs.de || '2026-01' }}
+          CHECK_ATE: ${{ github.event.inputs.ate || '2026-09' }}
+          CHECK_UNI: ${{ github.event.inputs.uni || 'CGR' }}
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/consumo-aba-auto-check.mjs
