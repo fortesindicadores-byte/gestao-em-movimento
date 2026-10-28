@@ -260,6 +260,22 @@ for (const P of PAINEIS) {
         await page.evaluate(() => setVw('veiculo'));
         const ord = await page.evaluate(() => { sortVei('km'); const a = [...document.querySelectorAll('#body-vei tr')].slice(0, 3).map(r => r.cells[5].textContent); sortVei('km'); const b = [...document.querySelectorAll('#body-vei tr')].slice(0, 3).map(r => r.cells[5].textContent); return { a, b, seta: document.getElementById('sort-km').textContent }; });
         af('ordenação de Consumo por Veículo continua (clique inverte)', JSON.stringify(ord.a) !== JSON.stringify(ord.b) && /▼|▲/.test(ord.seta), JSON.stringify(ord));
+        if (await page.evaluate(() => typeof setVeiDim === 'function')) {
+          const pm = await page.evaluate(() => {
+            const kmDe = () => [...document.querySelectorAll('#body-vei tr')].reduce((s, r) => s + (+r.cells[5].textContent.replace(/\./g, '').replace(',', '.') || 0), 0);
+            const kmPlaca = kmDe(), nPlaca = document.querySelectorAll('#body-vei tr').length;
+            setVeiDim('modelo');
+            const linhas = [...document.querySelectorAll('#body-vei tr')];
+            const modelos = new Set(veiCache.map(x => x.modelo)).size;
+            const r = { kmPlaca, nPlaca, n: linhas.length, modelos, kmMod: kmDe(), uniOculta: getComputedStyle(linhas[0].cells[0]).display === 'none',
+              th: document.getElementById('th-vei-placa').textContent.trim(), placas: veiCache.reduce((s, x) => s + x.nplac, 0),
+              horiz: document.querySelector('#vw-veiculo .twrap').scrollWidth - document.querySelector('#vw-veiculo .twrap').clientWidth };
+            sortVei('nplac'); r.seta = document.getElementById('sort-nplac').textContent;
+            setVeiDim('placa'); r.volta = document.querySelectorAll('#body-vei tr').length; r.uniVolta = getComputedStyle(document.querySelector('#body-vei tr').cells[0]).display;
+            return r; });
+          af('Consumo por Veículo alterna Placa ⇄ Modelo (uma linha por modelo, km soma igual, Unidade/Projeto somem, volta para placa)',
+            pm.n === pm.modelos && pm.n < pm.nPlaca && Math.abs(pm.kmMod - pm.kmPlaca) < 2 && pm.uniOculta && /PLACAS/.test(pm.th) && pm.placas <= pm.nPlaca && pm.horiz <= 1 && /▼|▲/.test(pm.seta) && pm.volta === pm.nPlaca && pm.uniVolta !== 'none', JSON.stringify(pm));
+        }
         if (P.totId === 'kml') {
           const dim = await page.evaluate(() => { setDim('proj'); const th = document.getElementById('th-dim').textContent; const n = document.querySelectorAll('#body-kml tr').length;
             const remOn = document.querySelector('.dimb[data-remmode].on')?.dataset.remmode; setDim('uni'); return { th, n, remOn }; });

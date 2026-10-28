@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610281200">
+<meta name="build" content="202610281430">
 <title>Km/L · Eficiência de Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -218,6 +218,8 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
 .rt .l{color:var(--txt3);font-weight:600;}
 .rt.abs{position:absolute;top:10px;right:12px;z-index:3;}
 .dims{display:flex;gap:4px;flex-wrap:wrap;}
+.dims-sep{width:1px;align-self:stretch;margin:2px 6px;background:var(--linha);}
+#tbl-vei.por-modelo .c-ped{display:none;}
 .dimb{background:transparent;border:1px solid var(--card-brd);border-radius:7px;padding:4px 10px;cursor:pointer;
   font-family:inherit;font-size:10.5px;font-weight:700;color:var(--txt2);}
 .dimb:hover{background:var(--hover);color:var(--txt);}
@@ -401,7 +403,7 @@ table.dre tr.total td.imp-cell{font-size:12px;}
 }
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../");}catch(e){}</script>
-<script src="../../assets/gviz-cache.js?v=202610281200"></script>
+<script src="../../assets/gviz-cache.js?v=202610281430"></script>
 </head>
 <body>
 <div class="app">
@@ -542,16 +544,19 @@ table.dre tr.total td.imp-cell{font-size:12px;}
           <div class="thead-row"><div><div class="ttit" style="display:none">Consumo por Veículo</div>
             <div class="tsub" id="sub-vei" style="display:none">Ordenado por impacto financeiro</div></div>
             <div class="dims">
+              <button class="dimb on" data-veidim="placa" onclick="setVeiDim('placa')">Placa</button>
+              <button class="dimb" data-veidim="modelo" onclick="setVeiDim('modelo')">Modelo</button>
+              <span class="dims-sep"></span>
               <button class="dimb on" data-remmode="medio" onclick="setRemMode('medio')">Rem médio</button>
               <button class="dimb" data-remmode="modelo" onclick="setRemMode('modelo')">Rem modelo (km)</button>
             </div></div>
           <div class="twrap"><table class="dre" id="tbl-vei">
             <thead><tr>
-              <th class="sortable" onclick="sortVei('uni')" id="th-vei-uni">UNIDADE <span id="sort-uni"></span></th>
-              <th class="sortable" onclick="sortVei('proj')" id="th-vei-proj">PROJ. <span id="sort-proj"></span></th>
+              <th class="sortable c-ped" onclick="sortVei('uni')" id="th-vei-uni">UNIDADE <span id="sort-uni"></span></th>
+              <th class="sortable c-ped" onclick="sortVei('proj')" id="th-vei-proj">PROJ. <span id="sort-proj"></span></th>
               <th class="sortable" onclick="sortVei('modelo')">MODELO <span id="sort-modelo"></span></th>
               <th class="sortable" onclick="sortVei('tipo')">TIPO VEÍC. <span id="sort-tipo"></span></th>
-              <th>PLACA</th>
+              <th id="th-vei-placa">PLACA</th>
               <th class="num sortable" onclick="sortVei('km')">KM ROD. <span id="sort-km"></span></th>
               <th class="num sortable" onclick="sortVei('remM')">REM MOD. <span id="sort-remM"></span></th>
               <th class="num sortable" onclick="sortVei('rem')">REM <span id="sort-rem"></span></th>
@@ -728,7 +733,7 @@ const colI    = (el,bad) => { if(el)el.style.color=bad?'var(--red)':'var(--green
 let lidoEm=null, fonte='';
 let allRows=[], vigs=[], chKml=null, chProj=null, lastF=null, tableDim='uni', remMode='medio';
 let _vigM1Done=false, _vigAuto='', _lastAnoKey='';
-let veiSort={col:'imp',asc:true}, veiCache=[];
+let veiSort={col:'imp',asc:true}, veiCache=[], veiDim='placa';
 
 // ── MULTI-SELECT ──
 function _buildMs(wrap,renderFn,getAllFn){
@@ -1226,7 +1231,7 @@ function aggRows(rows){
   const realWt=sumLitros>0?sumKm/sumLitros:null;
   const rsLAvg=rows.length>0?sumRsL/rows.length:null;
   const rsLRem=sumKmP>0?sumPKm/sumKmP:null;
-  return{remAvg,realWt,sumKm,sumLitros,rsLAvg,rsLRem};
+  return{remAvg,remMedio,remModelo,realWt,sumKm,sumLitros,rsLAvg,rsLRem};
 }
 // IMPACTO = o próprio ▲ da linha, virado em litros e depois em R$.
 //
@@ -1542,7 +1547,43 @@ const TIPO_ABBR={
 const normTipo=s=>String(s).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
 const abbrTipo=t=>{if(!t)return'—';const k=normTipo(t);return TIPO_ABBR[k]||String(t).trim();};
 const placaKey=r=>r[CL.placa]?String(r[CL.placa]).trim():'';
+// Por modelo (Renan, 28/10/2026: "Aqui quero ver por modelo também"): as placas
+// do recorte agrupadas pelo modelo, com a MESMA aggRows do Resumo (Rem = régua
+// por litros esperados, Rem mod. = Km/L Rem Modelo ponderado pelo km, Real =
+// Σkm ÷ Σlitros) e o impacto do Resumo (calcImpacto). Unidade e Projeto somem;
+// a coluna Placa vira a contagem de placas.
+const modeloKey=r=>r[CL.modelo]?String(r[CL.modelo]).trim():'—';
+function renderVeiModelo(active,ytd){
+  const ytdMap=Object.fromEntries(aggByKey(ytd||[],modeloKey).map(({k,agg})=>[k,agg]));
+  const grupos={};
+  active.forEach(r=>{const k=modeloKey(r);(grupos[k]=grupos[k]||[]).push(r);});
+  veiCache=Object.entries(grupos).map(([modelo,rows])=>{
+    const agg=aggRows(rows);
+    const rb=agg.remAvg,real=agg.realWt;
+    const delta=(rb!=null&&real!=null)?real-rb:null,deltaP=(delta!=null&&rb)?delta/Math.abs(rb)*100:null;
+    const imp=calcImpacto(agg);
+    const tc={};rows.forEach(r=>{const t=abbrTipo(r[CL.tipoVei]);tc[t]=(tc[t]||0)+(+(r[CL.kmRod]||0))+1e-9;});
+    const tipo=Object.entries(tc).sort((a,b)=>b[1]-a[1])[0][0];
+    const nplac=new Set(rows.map(placaKey).filter(Boolean)).size;
+    const yagg=ytdMap[modelo];
+    let deltaY=null,deltaPY=null,impY=null;
+    if(yagg){const{remAvg:ry,realWt:rly}=yagg;deltaY=(ry!=null&&rly!=null)?rly-ry:null;deltaPY=(deltaY!=null&&ry)?deltaY/Math.abs(ry)*100:null;impY=calcImpacto(yagg);}
+    return{uni:'',proj:'',modelo,tipo,placa:String(nplac),nplac,km:agg.sumKm,remM:agg.remModelo||0,rem:agg.remMedio||0,real:real||0,delta,deltaP,imp,deltaY,deltaPY,impY};
+  }).filter(x=>x.km>0||x.real>0);
+  renderVeiSorted();
+}
+function setVeiDim(d){
+  veiDim=d;
+  document.querySelectorAll('.dimb[data-veidim]').forEach(b=>b.classList.toggle('on',b.dataset.veidim===d));
+  const tb=document.getElementById('tbl-vei');tb.classList.toggle('por-modelo',d==='modelo');
+  const th=document.getElementById('th-vei-placa');
+  th.innerHTML=d==='modelo'?'PLACAS <span id="sort-nplac"></span>':'PLACA';
+  th.className=d==='modelo'?'num sortable':'';th.onclick=d==='modelo'?()=>sortVei('nplac'):null;
+  if(d==='placa'&&veiSort.col==='nplac')veiSort={col:'imp',asc:true};
+  if(lastF){const a=filterRows(allRows,lastF),yv=getYtdVigs(lastF),y=filterRows(allRows,{...lastF,vig:yv});renderVeiTable(a,y);}
+}
 function renderVeiTable(active,ytd){
+  if(veiDim==='modelo')return renderVeiModelo(active,ytd);
   // Agrega YTD por placa (soma do veículo na janela YTD)
   const ytdByPlaca=Object.fromEntries(aggByKey(ytd||[],placaKey).map(({k,agg})=>[k,agg]));
   veiCache=active.map(r=>{
@@ -1573,14 +1614,15 @@ function renderVeiTable(active,ytd){
   renderVeiSorted();
 }
 function renderVeiSorted(){
-  const sortFns={uni:(a,b)=>a.uni.localeCompare(b.uni),proj:(a,b)=>a.proj.localeCompare(b.proj),modelo:(a,b)=>a.modelo.localeCompare(b.modelo),tipo:(a,b)=>a.tipo.localeCompare(b.tipo),km:(a,b)=>a.km-b.km,remM:(a,b)=>a.remM-b.remM,rem:(a,b)=>a.rem-b.rem,real:(a,b)=>a.real-b.real,delta:(a,b)=>(a.delta||0)-(b.delta||0),pct:(a,b)=>(a.deltaP||0)-(b.deltaP||0),imp:(a,b)=>(a.imp||0)-(b.imp||0),deltaY:(a,b)=>(a.deltaY||0)-(b.deltaY||0),pctY:(a,b)=>(a.deltaPY||0)-(b.deltaPY||0),impY:(a,b)=>(a.impY||0)-(b.impY||0)};
+  const sortFns={uni:(a,b)=>a.uni.localeCompare(b.uni),proj:(a,b)=>a.proj.localeCompare(b.proj),modelo:(a,b)=>a.modelo.localeCompare(b.modelo),tipo:(a,b)=>a.tipo.localeCompare(b.tipo),km:(a,b)=>a.km-b.km,remM:(a,b)=>a.remM-b.remM,rem:(a,b)=>a.rem-b.rem,real:(a,b)=>a.real-b.real,delta:(a,b)=>(a.delta||0)-(b.delta||0),pct:(a,b)=>(a.deltaP||0)-(b.deltaP||0),imp:(a,b)=>(a.imp||0)-(b.imp||0),deltaY:(a,b)=>(a.deltaY||0)-(b.deltaY||0),pctY:(a,b)=>(a.deltaPY||0)-(b.deltaPY||0),impY:(a,b)=>(a.impY||0)-(b.impY||0),nplac:(a,b)=>(a.nplac||0)-(b.nplac||0)};
   const arr=[...veiCache].sort((a,b)=>{const r=(sortFns[veiSort.col]||sortFns.imp)(a,b);return veiSort.asc?r:-r;});
   document.querySelectorAll('[id^=sort-]').forEach(e=>e.textContent='');
   const sortEl=document.getElementById('sort-'+veiSort.col);if(sortEl)sortEl.textContent=veiSort.asc?' ▲':' ▼';
   let html='';
   arr.forEach(({uni,proj,modelo,tipo,placa,km,remM,rem,real,delta,deltaP,imp,deltaY,deltaPY,impY})=>{
     const bad=delta!=null&&delta<0,badY=deltaY!=null&&deltaY<0;
-    html+=`<tr><td class="conta">${uni}</td><td>${proj}</td><td>${modelo}</td><td>${tipo}</td><td>${placa}</td><td class="num">${fmtKm(km)}</td><td class="num">${kml(remM)}</td><td class="num">${kml(rem)}</td><td class="num">${kml(real)}</td><td class="num ${bad?'cr':'cg'}">${kmlD(delta)}</td><td class="num ${bad?'cr-t':'cg-t'}">${pctInt(deltaP)}</td><td class="num imp-cell" style="color:${imp<0?'var(--red)':'var(--green)'}">${imp!=null?fmtBrlD(imp):'—'}</td><td class="num sep-l ${badY?'cr':'cg'}">${deltaY!=null?kmlD(deltaY):'—'}</td><td class="num ${badY?'cr-t':'cg-t'}">${deltaPY!=null?pctInt(deltaPY):'—'}</td><td class="num imp-cell" style="color:${impY<0?'var(--red)':'var(--green)'}">${impY!=null?fmtBrlD(impY):'—'}</td></tr>`;
+    const pm=veiDim==='modelo';
+    html+=`<tr><td class="conta c-ped">${uni}</td><td class="c-ped">${proj}</td><td${pm?' class="conta"':''}>${modelo}</td><td>${tipo}</td><td${pm?' class="num"':''}>${placa}</td><td class="num">${fmtKm(km)}</td><td class="num">${kml(remM)}</td><td class="num">${kml(rem)}</td><td class="num">${kml(real)}</td><td class="num ${bad?'cr':'cg'}">${kmlD(delta)}</td><td class="num ${bad?'cr-t':'cg-t'}">${pctInt(deltaP)}</td><td class="num imp-cell" style="color:${imp<0?'var(--red)':'var(--green)'}">${imp!=null?fmtBrlD(imp):'—'}</td><td class="num sep-l ${badY?'cr':'cg'}">${deltaY!=null?kmlD(deltaY):'—'}</td><td class="num ${badY?'cr-t':'cg-t'}">${deltaPY!=null?pctInt(deltaPY):'—'}</td><td class="num imp-cell" style="color:${impY<0?'var(--red)':'var(--green)'}">${impY!=null?fmtBrlD(impY):'—'}</td></tr>`;
   });
   document.getElementById('body-vei').innerHTML=html||'<tr><td colspan="15" style="text-align:center;padding:20px;color:var(--text3)">Sem dados</td></tr>';
 }
@@ -1771,6 +1813,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610281200"></script>
+<script src="../../assets/build-check.js?v=202610281430"></script>
 </body>
 </html>
