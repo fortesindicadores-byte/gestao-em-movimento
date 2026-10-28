@@ -200,6 +200,26 @@ const KM_HD = new Map();   // OS de diesel → km até a OS de diesel anterior
     });
   });
 }
+// PRIMEIRO TANQUE DE PLACA NOVA FICA FORA (Renan, 28/10/2026: "Primeiro tanque de
+// placa nova não"). A placa que entra na frota abastece o tanque cheio antes de rodar
+// (UPY7C43 em out/26: 118 km para 615 L). Placa nova = 1º abastecimento de diesel
+// depois do 1º mês que o ERP traz; a OS sai de litros, R$ e km. O hodômetro dela
+// continua servindo de ponto de partida para o km da OS seguinte (KM_HD já calculado).
+// CONSUMO_PRIMEIRO_TANQUE=entra desliga.
+{
+  const mes0 = erp.length ? erp.map(r => String(r.data).slice(0, 7)).sort()[0] : null;
+  const primeira = new Map();
+  diesel.forEach(r => { const k = placaKey(r.placa); const p = primeira.get(k);
+    if (!p || String(r.data).localeCompare(String(p.data)) < 0 || (String(r.data) === String(p.data) && (num(r.hodometro) || 0) < (num(p.hodometro) || 0))) primeira.set(k, r); });
+  const fora = new Set([...primeira.values()].filter(r => String(r.data).slice(0, 7) > mes0));
+  if (process.env.CONSUMO_PRIMEIRO_TANQUE === 'entra') log(`primeiro tanque: entra (${fora.size} placas novas desde ${mes0})`);
+  else if (fora.size) {
+    const lit = [...fora].reduce((s, r) => s + (num(r.litros) || 0), 0);
+    erp = erp.filter(r => !fora.has(r));
+    for (let i = diesel.length - 1; i >= 0; i--) if (fora.has(diesel[i])) diesel.splice(i, 1);
+    log(`primeiro tanque de placa nova: ${fora.size} abastecimento(s) fora (${Math.round(lit)} L) — placas que começam a abastecer depois de ${mes0}`);
+  }
+}
 // Parada = placa + hodômetro. O ERP põe o km rodado na 1ª OS da parada e zera nas outras;
 // quando a OS de diesel da parada ainda não entrou, o km fica na OS de Arla e entra sem litro.
 // O candidato "parada" só soma km de parada que já tem OS de diesel.

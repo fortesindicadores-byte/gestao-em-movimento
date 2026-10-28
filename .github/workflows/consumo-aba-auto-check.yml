@@ -18,6 +18,10 @@ on:
         description: "Unidades à parte (código, vírgula)"
         required: false
         default: "CGR"
+      diag:
+        description: "Projeto para abrir placa a placa (ex.: EMPURRADA - MCC); vazio = não"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -35,5 +39,6 @@ jobs:
           CHECK_DE: ${{ github.event.inputs.de || '2026-01' }}
           CHECK_ATE: ${{ github.event.inputs.ate || '2026-09' }}
           CHECK_UNI: ${{ github.event.inputs.uni || 'CGR' }}
+          CHECK_DIAG: ${{ github.event.inputs.diag }}
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
         run: node scripts/consumo-aba-auto-check.mjs
