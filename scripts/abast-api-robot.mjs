@@ -173,7 +173,8 @@ function pfLinhas(regs, u) {
         posto: primeiro(r, ['pontoVenda.razaoSocial', 'pontoVenda.nome', 'posto.razaoSocial', 'posto.nome', 'estabelecimento.nome']),
         cnpj_posto: (c => c ? cnpjDig(c) : null)(primeiro(r, ['pontoVenda.cnpj', 'posto.cnpj', 'estabelecimento.cnpj', 'cnpjPosto'])),
         hodometro: num(primeiro(r, ['odometro', 'hodometro', 'quilometragem', 'veiculo.odometro'])),
-        valido: st === '1', status_origem: st || null, modo: null, bomba: null, editado_origem: null,
+        valido: st === '1' && !r.abastecimentoEstornado && litros > 0 && valor > 0, status_origem: (r.abastecimentoEstornado ? 'estornado' : st) || null,
+        modo: r.pontoVenda && r.pontoVenda.postoInterno ? 'POSTO INTERNO' : null, bomba: null, editado_origem: r.dataAtualizacao ? new Date(r.dataAtualizacao).toISOString() : null,
       });
     });
   }
@@ -235,7 +236,7 @@ async function suma(base) {
           produto: produto(r.nomeProduto || r.codigoProduto), produto_origem: r.nomeProduto ?? r.codigoProduto ?? null,
           litros, preco: num(r.valorUnitario) ?? (litros ? valor / litros : null), valor,
           posto: null, cnpj_posto: r.cnpjPosto ? cnpjDig(r.cnpjPosto) : null,
-          hodometro: num(r.hodometro), valido: r.ativo !== false, status_origem: r.ativo === false ? 'inativo' : 'ativo',
+          hodometro: num(r.hodometro), valido: r.ativo !== false && litros > 0 && valor > 0, status_origem: r.ativo === false ? 'inativo' : 'ativo',
           modo: r.modo ?? null, bomba: r.bomba ?? null, editado_origem: dataBR(r.dataEdicao)?.toISOString() ?? null,
         });
       }
@@ -285,7 +286,7 @@ async function gasola() {
         produto: produto(r.combustivel), produto_origem: r.combustivel ?? null,
         litros, preco: num(r.precoCobrado) ?? num(r.valorLitroPago) ?? (litros ? valor / litros : null), valor,
         posto: r.posto ?? null, cnpj_posto: r.cnpj ? cnpjDig(r.cnpj) : null,
-        hodometro: num(r.km), valido: /CONCLU/i.test(st), status_origem: st || null,
+        hodometro: num(r.km), valido: /CONCLU/i.test(st) && litros > 0 && valor > 0, status_origem: st || null,
         modo: r.categoria ?? null, bomba: null, editado_origem: null,
       });
     }
