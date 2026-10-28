@@ -1,7 +1,8 @@
 // Postos (/combustivel/postos/): abre o painel no Chromium com o banco dublado
-// (erp_abastecimentos com teto de 1.000 linhas por leitura) e confere cards,
-// gráfico dia a dia com o toggle, tabela por posto ordenada pelo R$/L, filtros,
-// preço absurdo pelo mediano, unidades fora do portal e telas sem rolagem.
+// (abast_api, as APIs Pró-Frotas · SUMA · Gasola, com teto de 1.000 linhas por
+// leitura) e confere cards, gráfico dia a dia com o toggle, tabela por posto
+// ordenada pelo R$/L, filtros (Sistema incluso), preço absurdo pelo mediano,
+// abastecimento inválido fora, projeto pela placa (Ginfo) e telas sem rolagem.
 // Uso: SBJS=<supabase UMD> CHART_JS=<chart.umd.js> DATALABELS=<…> [SHOT_DIR=…] node scripts/postos-teste.mjs
 import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
@@ -33,6 +34,21 @@ L.push({ ordem_servico: 'x1', data: '2026-10-05', placa: 'CAL0001', filial: 'CAL
 L.push({ ordem_servico: 'x2', data: '2026-10-05', placa: 'TER0001', filial: 'CDD PELOTAS', projeto_os: 'TERCEIROS - PLT', litros: 500, valor: 3000, tipo_combustivel: 'DIESEL S10', posto: 'X', cnpj_posto: '99', encerrada: 'S' });
 L.push({ ordem_servico: 'x3', data: '2026-10-06', placa: 'GOI0001', filial: 'CDD GOIANIA', projeto_os: 'AUTO SERVIÇO - GOI', litros: 100, valor: 640, tipo_combustivel: 'DIESEL S10', posto: 'POSTO GOIAS', cnpj_posto: '44444444000104', encerrada: 'S' });
 L.push({ ordem_servico: 'x4', data: '2026-10-07', placa: 'ABC0000', filial: 'CDD CUIABA', projeto_os: 'ROTA - CBA', litros: 100, valor: 1490000000, tipo_combustivel: 'DIESEL S10', posto: 'POSTO BARATO LTDA', cnpj_posto: '11111111000101', encerrada: 'S' });
+// ERP de antes → linhas da abast_api (a mesma conta). Inválidos: CAL/TER (o servidor filtra valido=true).
+const SIS = ['PROFROTAS', 'GASOLA'];
+const A = L.map((x, i) => {
+  const suf = (x.projeto_os.match(/-\s*([A-Z]+)$/) || [])[1];
+  const uni = suf === 'GOI' ? 'GNA' : suf;
+  return { sistema: SIS[i % 2], id_origem: x.ordem_servico, item: 1, dia: x.data, unidade: uni, placa: x.placa, placa_origem: x.placa,
+    produto: x.tipo_combustivel, litros: x.litros, valor: x.valor, posto: x.posto, cnpj_posto: x.cnpj_posto,
+    valido: !/^(OPERACIONAL|TERCEIROS)/.test(x.projeto_os) };
+});
+// tanque interno (SUMA) sem nome de posto, em CGR
+for (let d = 1; d <= 3; d++) A.push({ sistema: 'SUMA', id_origem: 'AB' + d, item: 1, dia: `2026-10-0${d}`, unidade: 'CGR', placa: 'SUM0001', placa_origem: 'SUM0001',
+  produto: 'DIESEL S10', litros: 200, valor: 200 * 5.5, posto: null, cnpj_posto: '55555555000155', valido: true });
+const AV = A.filter(x => x.valido);
+// Ginfo: placa → projeto
+const GINFO = [...new Set(L.map(x => x.placa))].map(pl => ({ Placa: pl, Projeto: (L.find(x => x.placa === pl).projeto_os || '').split(' - ')[0] }));
 const TETO = 1000;
 let leituras = 0;
 
@@ -50,17 +66,19 @@ async function cenario({ vp = { width: 1366, height: 768 }, tema = 'dark', semPo
     const hd = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'Content-Range' };
     if (m === 'OPTIONS') return r.fulfill({ status: 204, headers: { ...hd, 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*' } });
     if (p.endsWith('/auth/v1/user')) return r.fulfill({ status: 200, body: JSON.stringify({ id: 'u1', email: 'x@conlogsa.com.br' }), contentType: 'application/json', headers: hd });
-    if (p.includes('/rest/v1/erp_abastecimentos')) {
+    if (p.includes('/rest/v1/ginfo_snapshot')) return r.fulfill({ status: 200, body: JSON.stringify({ data: GINFO }), contentType: 'application/json', headers: hd });
+    if (p.includes('/rest/v1/abast_api_base')) return r.fulfill({ status: 200, body: JSON.stringify([{ sistema: 'PROFROTAS', carregado_em: '2026-10-28T09:10:00Z', erro: null }, { sistema: 'SUMA', carregado_em: '2026-10-28T09:12:00Z', erro: null }]), contentType: 'application/json', headers: hd });
+    if (p.includes('/rest/v1/abast_api')) {
       const sel = u.searchParams.get('select') || '';
-      if (semPosto && /posto/.test(sel)) return r.fulfill({ status: 400, body: JSON.stringify({ code: '42703', message: 'column erp_abastecimentos.posto does not exist' }), contentType: 'application/json', headers: hd });
-      if (/atualizado_em/.test(sel) && !/litros/.test(sel)) return r.fulfill({ status: 200, body: JSON.stringify([{ atualizado_em: '2026-10-28T08:00:00Z' }]), contentType: 'application/json', headers: hd });
+      if (semPosto) return r.fulfill({ status: 404, body: JSON.stringify({ code: 'PGRST205', message: "Could not find the table 'public.abast_api' in the schema cache" }), contentType: 'application/json', headers: hd });
+      if (u.searchParams.get('valido') !== 'eq.true') return r.fulfill({ status: 400, body: '{"message":"sem filtro valido"}', contentType: 'application/json', headers: hd });
       leituras++;
       let off = +(u.searchParams.get('offset') || 0), lim = +(u.searchParams.get('limit') || TETO);
       const rg = h['range']; if (rg) { const mm = rg.match(/(\d+)-(\d+)/); if (mm) { off = +mm[1]; lim = +mm[2] - off + 1; } }
       lim = Math.min(lim, TETO);
       const cols = sel.split(',');
-      const fatia = L.slice(off, off + lim).map(x => Object.fromEntries(cols.map(c => [c, x[c] ?? null])));
-      return r.fulfill({ status: 200, body: JSON.stringify(fatia), contentType: 'application/json', headers: { ...hd, 'Content-Range': `${off}-${off + fatia.length - 1}/${L.length}` } });
+      const fatia = AV.slice(off, off + lim).map(x => Object.fromEntries(cols.map(c => [c, x[c] ?? null])));
+      return r.fulfill({ status: 200, body: JSON.stringify(fatia), contentType: 'application/json', headers: { ...hd, 'Content-Range': `${off}-${off + fatia.length - 1}/${AV.length}` } });
     }
     return r.fulfill({ status: 200, body: '[]', contentType: 'application/json', headers: hd });
   });
@@ -71,7 +89,7 @@ async function cenario({ vp = { width: 1366, height: 768 }, tema = 'dark', semPo
   });
   const erros = []; pg.on('pageerror', e => erros.push(String(e)));
   await pg.goto('file://' + join(RAIZ, 'combustivel/postos/index.html'), { waitUntil: 'domcontentloaded' });
-  await pg.waitForFunction(() => /ERP/.test(document.getElementById('titSub').textContent) || /Erro/.test(document.getElementById('titSub').textContent), null, { timeout: 15000 });
+  await pg.waitForFunction(() => /APIs/.test(document.getElementById('titSub').textContent) || /Erro|não existe/.test(document.getElementById('titSub').textContent), null, { timeout: 15000 });
   await pg.waitForTimeout(400);
   return { b, pg, erros };
 }
@@ -81,15 +99,22 @@ const num = s => +String(s).replace(/[^\d,-]/g, '').replace(',', '.');
 {
   const { b, pg, erros } = await cenario();
   t('sem erro de página', !erros.length, erros.join(' | '));
-  t('leu tudo em páginas de 1.000', leituras >= Math.ceil(L.length / TETO), `${leituras} leituras`);
+  t('leu tudo em páginas de 1.000', leituras >= Math.ceil(AV.length / TETO), `${leituras} leituras`);
+  t('subtítulo diz APIs e a hora de cada carga', /APIs · Pró-Frotas 28\/10 06:10 · SUMA 28\/10 06:12/.test(await txt(pg, '#titSub')), await txt(pg, '#titSub'));
   t('abre em OUT/26 (último mês com abastecimento)', /^OUT\/26/.test(await txt(pg, '#titSub')), await txt(pg, '#titSub'));
   t('combustível abre só nos diesel', await pg.evaluate(() => [...document.getElementById('ms-comb')._sel].join() === 'DIESEL S10'));
-  // out/26: 20 dias × 27 abast. × 100 L + GNA 100 L + preço absurdo 100 L
+  // out/26: 20 dias × 27 abast. × 100 L + GNA 100 L + preço absurdo 100 L + SUMA 3 × 200 L
   const lit = num(await txt(pg, '#k-lit'));
-  t('litros de out/26 (54.000 + GNA + o absurdo)', lit === 54200, String(lit));
+  t('litros de out/26 (54.000 + GNA + o absurdo + SUMA)', lit === 54800, String(lit));
   const val = num(await txt(pg, '#k-val'));
-  t('valor sem o R$ 1,49 bi (preço absurdo pelo mediano)', val > 340000 && val < 360000, String(val));
-  t('fora do portal e terceiros não entram', !(await pg.evaluate(() => ROWS.some(r => r.placa === 'CAL0001' || r.placa === 'TER0001'))));
+  t('valor sem o R$ 1,49 bi (preço absurdo pelo mediano)', val > 340000 && val < 365000, String(val));
+  t('abastecimento inválido não entra', !(await pg.evaluate(() => ROWS.some(r => r.placa === 'CAL0001' || r.placa === 'TER0001'))));
+  t('projeto pela placa (Ginfo)', await pg.evaluate(() => ROWS.some(r => r.proj === 'ROTA') && ROWS.some(r => r.proj === 'EMPURRADA')));
+  t('SUMA sem nome vira Tanque interno · CGR', await pg.evaluate(() => ROWS.some(r => r.sis === 'SUMA' && r.posto === 'Tanque interno · CGR')));
+  t('filtro Sistema lista os três', await pg.evaluate(() => document.getElementById('ms-sis')._itens.join() === 'GASOLA,PROFROTAS,SUMA'));
+  await pg.evaluate(() => { const w = document.getElementById('ms-sis'); w._sel = new Set(['SUMA']); render(); });
+  t('filtro Sistema = SUMA', num(await txt(pg, '#k-lit')) === 600, await txt(pg, '#k-lit'));
+  await pg.evaluate(() => { document.getElementById('ms-sis')._sel = new Set(); render(); });
   t('GOI vira GNA', await pg.evaluate(() => ROWS.some(r => r.uni === 'GNA')));
   t('três cards: Valor, Litros, Preço', await pg.locator('.kpi').count() === 3);
   t('MoM do R$/L em vermelho quando sobe', await pg.locator('#k-rl-m b.cr').count() === 1, await txt(pg, '#k-rl-m'));
@@ -97,7 +122,7 @@ const num = s => +String(s).replace(/[^\d,-]/g, '').replace(',', '.');
   const cab = await pg.locator('#tb-postos thead th').allTextContents();
   t('colunas na ordem pedida', cab.join('|') === 'Posto|Valor abastecido|Litros|R$/L', cab.join('|'));
   const nomes = await pg.locator('#tb-postos tbody td.posto').allTextContents();
-  t('do menor para o maior R$/L', nomes[0] === 'POSTO BARATO LTDA' && nomes.indexOf('POSTO CARO') === nomes.length - 1, nomes.join(' · '));
+  t('do menor para o maior R$/L (tanque interno a 5,50 primeiro)', nomes[0] === 'Tanque interno · CGR' && nomes[1] === 'POSTO BARATO LTDA' && nomes.indexOf('POSTO CARO') === nomes.length - 1, nomes.join(' · '));
   t('linha Total', await pg.locator('#tb-postos tr.total').count() === 1);
   t('tabela em visão própria (Por Posto), fora do Resumo', await pg.evaluate(() => !!document.querySelector('#vw-postos #tab-postos') && !document.querySelector('#vw-resumo table') && TIT.postos === 'Por Posto'));
   t('gráfico no padrão: eixo de valor escondido, sem grade, rótulo em cima, barra translúcida com contorno', await pg.evaluate(() => { const o = charts.dia.options, d = charts.dia.data.datasets[0];
@@ -135,8 +160,7 @@ for (const [w, h] of [[1366, 768], [1600, 900], [1920, 1080]]) for (const tema o
 }
 {
   const { b, pg, erros } = await cenario({ semPosto: true });
-  t('sem as colunas de posto: abre igual', !erros.length && num(await txt(pg, '#k-lit')) === 54200);
-  t('sem as colunas: tabela com "Posto não informado" e o aviso', /Posto não informado/.test(await txt(pg, '#tb-postos tbody')) && /colunas novas/.test(await txt(pg, '#tab-pe')));
+  t('sem a tabela abast_api: avisa para rodar o SQL', !erros.length && /abast_api ainda não existe/.test(await txt(pg, '#titSub')), await txt(pg, '#titSub'));
   await b.close();
 }
 console.log(`\n${ok} ok · ${falha} falha(s)`);

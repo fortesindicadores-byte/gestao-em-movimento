@@ -1,0 +1,67 @@
+name: Abast API Robot (Pró-Frotas, SUMA, Gasola -> Supabase)
+
+# Lê os abastecimentos das APIs dos sistemas de abastecimento e grava em
+# abast_api (uma linha por item abastecido). É a fonte do painel Postos.
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "sonda = testa e mostra os nomes dos campos · ensaio = coleta sem gravar · gravar"
+        required: true
+        default: "ensaio"
+        type: choice
+        options: [sonda, ensaio, gravar]
+      sistemas:
+        description: "PROFROTAS,SUMA,GASOLA (vazio = todos)"
+        required: false
+        default: ""
+      dias:
+        description: "janela em dias até hoje (padrão 10)"
+        required: false
+        default: "10"
+      de:
+        description: "início AAAA-MM-DD (vazio = hoje − dias)"
+        required: false
+        default: ""
+      ate:
+        description: "fim AAAA-MM-DD (vazio = hoje)"
+        required: false
+        default: ""
+  # todo dia às 06:10 BRT, os últimos 10 dias (corrige o que mudou na origem)
+  schedule:
+    - cron: '10 9 * * *'
+
+concurrency:
+  group: abast-api-robot
+  cancel-in-progress: false
+
+jobs:
+  robo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Rodar robô
+        run: node scripts/abast-api-robot.mjs
+        env:
+          ABAST_MODO:     ${{ github.event_name == 'schedule' && 'gravar' || github.event.inputs.modo }}
+          ABAST_SISTEMAS: ${{ github.event.inputs.sistemas }}
+          ABAST_DIAS:     ${{ github.event.inputs.dias || '10' }}
+          ABAST_DE:       ${{ github.event.inputs.de }}
+          ABAST_ATE:      ${{ github.event.inputs.ate }}
+          SUMA_USER_TOKEN: ${{ secrets.SUMA_USER_TOKEN }}
+          SUMA_CNPJS:      ${{ vars.SUMA_CNPJS }}
+          GASOLA_TOKEN:    ${{ secrets.GASOLA_TOKEN }}
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+      - name: Avisar por e-mail se falhar
+        if: failure()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          MAIL_FROM:      ${{ vars.MAIL_FROM }}
+          MAIL_TO:        ${{ vars.MAIL_TO }}
+          WORKFLOW:       ${{ github.workflow }}
+          RUN_URL:        ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash scripts/avisa-falha.sh

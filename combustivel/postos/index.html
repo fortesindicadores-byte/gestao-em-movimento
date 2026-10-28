@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610282300">
+<meta name="build" content="202610281800">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Postos · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
    abastecidos… Valor total, Litros e Preço em cards. Abaixo um gráfico dia a
    dia com Valor, podendo mudar com toggle para Litro e R$/L. E do lado uma
    tabela por posto, ordenada por preço").
-   Fonte: erp_abastecimentos (query do ERP com o posto, scripts/erp-abastecimentos-query.sql).
+   Fonte: abast_api — as APIs do Pró-Frotas, SUMA e Gasola (scripts/abast-api-robot.mjs).
    Casca extraída por script do Parâmetros Seara.
    ============================================================ */
 :root{
@@ -433,6 +433,8 @@ table.dre td.posto .lin2{font-weight:500;}
           <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
         <div class="ms-wrap" id="ms-posto"><button class="ms-btn" onclick="toggleMs('ms-posto')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Posto<span class="ms-cnt"></span></button>
           <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
+        <div class="ms-wrap" id="ms-sis"><button class="ms-btn" onclick="toggleMs('ms-sis')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Sistema<span class="ms-cnt"></span></button>
+          <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
       </div>
       <button class="tool ico" id="btTema" onclick="trocaTema()" title="Claro / escuro"></button>
     </div>
@@ -473,20 +475,23 @@ table.dre td.posto .lin2{font-weight:500;}
 </div>
 <script>
 /* ══════════════════════════════════════════════════════════════
-   POSTOS (Renan, 28/10/2026)
-   Lê os abastecimentos do ERP (erp_abastecimentos, só OS encerradas, 2026) e
-   mostra valor, litros e R$/L: cards, um gráfico dia a dia (toggle Valor ·
-   Litros · R$/L) e a tabela por posto, do menor para o maior R$/L.
-   · unidade e projeto pelo PROJETO DA OS ('ROTA - CBA'), sigla sem tier;
-     GOI vira GNA e a Anhanguera (filial) vira ANG; filiais fora do portal
-     (CAL, GLD, UTS, CVD) e os projetos Operacional/Terceiros/Parados ficam fora;
+   POSTOS (Renan, 28/10/2026) — lê as APIs dos sistemas de abastecimento
+   ("Quero essa visão lendo as APIs"): tabela abast_api, gravada pelo robô
+   scripts/abast-api-robot.mjs (Pró-Frotas · SUMA · Gasola), uma linha por
+   item abastecido. Entram só os abastecimentos válidos (autorizado / ativo /
+   concluído). Cards, gráfico dia a dia (toggle Valor · Litros · R$/L) e a
+   tabela por posto, do menor para o maior R$/L.
+   · unidade: a do sistema (Base CNPJ do Pró-Frotas, CNPJ da filial no SUMA,
+     unidade do Gasola), em sigla do portal;
+   · projeto: pela placa, na base Ativos do Ginfo (+ ativos_manual da ANG);
+   · posto: nome do sistema; sem nome, o mais usado para o mesmo CNPJ; SUMA sem
+     nome = "Tanque interno · <unidade>";
    · preço absurdo (R$/L fora de 1,50 a 12) entra por litros × preço mediano do
-     mesmo combustível na mesma filial e mês — a mesma regra da Carta de Custos;
-   · valor como está no ERP (com impostos), sem tirar PIS/COFINS.
+     mesmo combustível na mesma unidade e mês — a mesma regra da Carta de Custos.
    ══════════════════════════════════════════════════════════════ */
 const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
-let sb=null, ROWS=[], CARGA=null, SEM_POSTO_COL=false, MODO='valor';
+let sb=null, ROWS=[], MODO='valor';
 const charts={};
 const $=i=>document.getElementById(i);
 const set=(i,v)=>{ const e=$(i); if(e) e.textContent=v; };
@@ -499,61 +504,61 @@ const vigRot=v=>{ const m=String(v||'').match(/^(\d{4})-(\d{2})$/); return m?`${
 const diaRot=d=>d.slice(8,10)+'/'+d.slice(5,7);
 const addMes=(v,n)=>{ let [a,m]=v.split('-').map(Number); m+=n; while(m<1){m+=12;a--;} while(m>12){m-=12;a++;} return a+'-'+String(m).padStart(2,'0'); };
 
-/* ── unidade e projeto ── */
-const PORTAL=new Set(['BLC','CBA','CGR','FLP','GNA','GRL','MCC','NFR','PIR','PLT','RON','ANG']);
-const FORA_PROJ=/^(TERCEIROS|OPERACIONAL|PARADOS|VEICULOS|VEÍCULOS)/;
-function uniProj(r){
-  const p=String(r.projeto_os||'').toUpperCase().replace(/\s+/g,' ').trim();
-  const m=p.match(/^(.*?)\s*-\s*([A-Z]{2,4})$/);
-  let pre=m?m[1].trim():p, suf=m?m[2]:'';
-  if(suf==='GOI') suf='GNA';
-  if(/ANHANGUERA/i.test(r.filial||'')) suf='ANG';
-  if(!PORTAL.has(suf)||FORA_PROJ.test(pre)) return null;
-  if(pre==='ROTA (VAN)') pre='VAN';
-  return {uni:suf, proj:pre||'—'};
+/* ── projeto pela placa (Ginfo + ativos_manual) ── */
+const MERC='ABCDEFGHIJ';
+const placaKey=p=>{ const x=String(p||'').toUpperCase().replace(/[^A-Z0-9]/g,''); return /^[A-Z]{3}\d{4}$/.test(x)?x.slice(0,4)+MERC[+x[4]]+x.slice(5):x; };
+const nrm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+const projNome=p=>{ let x=nrm(p); if(!x) return ''; if(/VAN/.test(x)) return 'VAN'; if(/AUTO ?SERVI/.test(x)||x==='AS') return 'AUTO SERVIÇO'; return x; };
+async function leProjetos(){
+  const m={};
+  try{ const {data}=await sb.from('ginfo_snapshot').select('data').eq('chave','ativos').maybeSingle();
+    const a=data&&Array.isArray(data.data)?data.data:[]; const ks=a.length?Object.keys(a[0]):[];
+    const kP=ks.find(k=>nrm(k)==='PLACA'), kJ=ks.find(k=>nrm(k)==='PROJETO');
+    if(kP&&kJ) a.forEach(r=>{ const k=placaKey(r[kP]); if(k&&r[kJ]) m[k]=projNome(r[kJ]); }); }catch(e){}
+  try{ const {data}=await sb.from('ativos_manual').select('placa,projeto');
+    (data||[]).forEach(r=>{ const k=placaKey(r.placa); if(k&&r.projeto) m[k]=projNome(r.projeto); }); }catch(e){}
+  return m;
 }
 const produto=t=>String(t||'').toUpperCase().replace(/\s+/g,' ').trim()||'(sem produto)';
+const SISTEMA={PROFROTAS:'Pró-Frotas',SUMA:'SUMA',GASOLA:'Gasola'};
 
 /* ── leitura: páginas em paralelo, passo = o que o servidor devolveu ── */
-const COLS_POSTO='ordem_servico,data,placa,filial,projeto_os,litros,valor,tipo_combustivel,posto,cnpj_posto';
-const COLS_SEM='ordem_servico,data,placa,filial,projeto_os,litros,valor,tipo_combustivel';
-function consulta(cols,cont){ return sb.from('erp_abastecimentos').select(cols,cont?{count:'exact'}:undefined)
-  .eq('encerrada','S').gte('data','2026-01-01').order('ordem_servico'); }
-async function leTudo(cols){
-  const r0=await consulta(cols,true).range(0,9999);
+const COLS='sistema,id_origem,item,dia,unidade,placa,placa_origem,produto,litros,valor,posto,cnpj_posto';
+function consulta(cont){ return sb.from('abast_api').select(COLS,cont?{count:'exact'}:undefined)
+  .eq('valido',true).gte('dia','2026-01-01').order('sistema').order('id_origem').order('item'); }
+async function leTudo(){
+  const r0=await consulta(true).range(0,9999);
   if(r0.error) throw r0.error;
   const out=[...(r0.data||[])], total=r0.count||out.length, passo=Math.max(out.length,1);
   const ini=[]; for(let a=out.length;a<total;a+=passo) ini.push(a);
   for(let i=0;i<ini.length;i+=6){
-    const lote=await Promise.all(ini.slice(i,i+6).map(a=>consulta(cols).range(a,a+passo-1)));
+    const lote=await Promise.all(ini.slice(i,i+6).map(a=>consulta().range(a,a+passo-1)));
     lote.forEach(r=>{ if(r.error) throw r.error; out.push(...(r.data||[])); });
   }
   return out;
 }
+let BASES=[];
 async function carrega(){
-  let lin;
-  try{ lin=await leTudo(COLS_POSTO); SEM_POSTO_COL=false; }
-  catch(e){ if(e&&(e.code==='42703'||/posto/i.test(e.message||''))){ lin=await leTudo(COLS_SEM); SEM_POSTO_COL=true; } else throw e; }
-  try{ const {data}=await sb.from('erp_abastecimentos').select('atualizado_em').order('atualizado_em',{ascending:false}).limit(1); CARGA=data&&data[0]?data[0].atualizado_em:null; }catch(e){ CARGA=null; }
-  // linhas que entram + preço absurdo pelo mediano (combustível × filial × mês)
+  const [lin,proj]=await Promise.all([leTudo(),leProjetos()]);
+  try{ const {data}=await sb.from('abast_api_base').select('sistema,carregado_em,erro,ate'); BASES=data||[]; }catch(e){ BASES=[]; }
   const base=[];
   (lin||[]).forEach(r=>{
-    const up=uniProj(r); if(!up) return;
-    const data=String(r.data||'').slice(0,10); if(!/^\d{4}-\d{2}-\d{2}$/.test(data)) return;
+    const data=String(r.dia||'').slice(0,10); if(!/^\d{4}-\d{2}-\d{2}$/.test(data)) return;
     const litros=+r.litros||0, valor=+r.valor||0; if(!(litros>0)) return;
-    base.push({os:r.ordem_servico,data,vig:data.slice(0,7),placa:String(r.placa||'').toUpperCase(),filial:r.filial||'',
-      uni:up.uni,proj:up.proj,prod:produto(r.tipo_combustivel),litros,valor,rl:valor/litros,
-      posto:String(r.posto||'').trim(),cnpj:String(r.cnpj_posto||'').replace(/\D/g,'')});
+    const uni=r.unidade||'(sem unidade)', placa=placaKey(r.placa);
+    base.push({os:r.sistema+'|'+r.id_origem+'|'+r.item,sis:r.sistema,data,vig:data.slice(0,7),placa:String(r.placa_origem||r.placa||'').toUpperCase(),
+      uni,proj:proj[placa]||'(sem projeto)',prod:produto(r.produto),litros,valor,rl:valor/litros,
+      posto:String(r.posto||'').trim()||(r.sistema==='SUMA'?'Tanque interno · '+uni:''),cnpj:String(r.cnpj_posto||'').replace(/\D/g,'')});
   });
   const fora=b=>!(b.rl>=1.5&&b.rl<=12);
   const med=xs=>{ if(!xs.length) return null; const s=xs.slice().sort((a,b)=>a-b); return s[Math.floor(s.length/2)]; };
   const pf=new Map(), pg=new Map();
-  base.forEach(b=>{ if(fora(b)) return; const k1=b.prod+'|'+b.filial+'|'+b.vig, k2=b.prod+'|'+b.vig;
+  base.forEach(b=>{ if(fora(b)) return; const k1=b.prod+'|'+b.uni+'|'+b.vig, k2=b.prod+'|'+b.vig;
     (pf.get(k1)||pf.set(k1,[]).get(k1)).push(b.rl); (pg.get(k2)||pg.set(k2,[]).get(k2)).push(b.rl); });
   ROWS=[];
   base.forEach(b=>{
-    if(fora(b)){ const p=med(pf.get(b.prod+'|'+b.filial+'|'+b.vig)||[])||med(pg.get(b.prod+'|'+b.vig)||[]); if(p==null) return;
-      b.valorErp=b.valor; b.valor=b.litros*p; b.corrigido=true; }
+    if(fora(b)){ const p=med(pf.get(b.prod+'|'+b.uni+'|'+b.vig)||[])||med(pg.get(b.prod+'|'+b.vig)||[]); if(p==null) return;
+      b.valorOrig=b.valor; b.valor=b.litros*p; b.corrigido=true; }
     ROWS.push(b);
   });
 }
@@ -619,7 +624,7 @@ const fmtCnpj=c=>/^\d{14}$/.test(c)?c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{
 
 function passa(r,ignora){
   const t=(id,v)=>ignora===id||!getSel(id).length||getSel(id).includes(v);
-  return t('ms-ano',r.vig.slice(0,4))&&t('ms-vig',r.vig)&&t('ms-uni',r.uni)&&t('ms-proj',r.proj)&&t('ms-comb',r.prod)&&t('ms-posto',chavePosto(r));
+  return t('ms-sis',r.sis)&&t('ms-ano',r.vig.slice(0,4))&&t('ms-vig',r.vig)&&t('ms-uni',r.uni)&&t('ms-proj',r.proj)&&t('ms-comb',r.prod)&&t('ms-posto',chavePosto(r));
 }
 // cada filtro lista o que existe nos outros filtros (o que já está marcado continua na lista)
 function opcoes(id,f){ const s=new Set(getSel(id)); ROWS.forEach(r=>{ if(passa(r,id)) s.add(f(r)); }); return [...s]; }
@@ -637,6 +642,7 @@ function montaFiltros(){
 function refazFiltros(anos,vigs){
   anos=anos||[...new Set(ROWS.map(r=>r.vig.slice(0,4)))].sort().reverse();
   vigs=vigs||[...new Set(ROWS.map(r=>r.vig))].sort().reverse();
+  buildMs('ms-sis',opcoes('ms-sis',r=>r.sis).sort(),render,v=>SISTEMA[v]||v);
   buildMs('ms-ano',anos,render);
   buildMs('ms-vig',opcoes('ms-vig',r=>r.vig).sort().reverse(),render,vigRot);
   buildMs('ms-uni',opcoes('ms-uni',r=>r.uni).sort(),render);
@@ -716,11 +722,12 @@ function render(){
     + lin.map(x=>`<tr><td class="posto"${x.k&&/^\d{14}$/.test(x.k)?` title="CNPJ ${fmtCnpj(x.k)} · ${x.n} abastecimento${x.n===1?'':'s'}"`:''}>${esc(x.nome)}</td><td class="num">R$ ${br(x.v,0)}</td><td class="num">${br(x.l,0)}</td><td class="num">${x.rl==null?'—':'R$ '+br(x.rl,4)}</td></tr>`).join('')
     + `</tbody><tfoot><tr class="total"><td>Total</td><td class="num">R$ ${br(V,0)}</td><td class="num">${br(L,0)}</td><td class="num">${RL==null?'—':'R$ '+br(RL,4)}</td></tr></tfoot></table>`;
   const corr=R.filter(r=>r.corrigido).length;
-  $('tab-pe').textContent='Do menor para o maior R$/L. Valor e litros como estão no ERP (OS encerradas, com impostos).'
-    +(corr?` ${corr} abastecimento${corr===1?'':'s'} com preço fora de R$ 1,50 a R$ 12,00 por litro entra${corr===1?'':'m'} pelo preço mediano do mesmo combustível, filial e mês.`:'')
-    +(SEM_POSTO_COL||!R.some(r=>chavePosto(r))?' O posto aparece quando a carga do ERP trouxer as colunas novas (código, nome e CNPJ do posto).':'');
+  $('tab-pe').textContent='Do menor para o maior R$/L. Valor e litros como estão nas APIs dos sistemas de abastecimento (só abastecimentos válidos).'
+    +(corr?` ${corr} abastecimento${corr===1?'':'s'} com preço fora de R$ 1,50 a R$ 12,00 por litro entra${corr===1?'':'m'} pelo preço mediano do mesmo combustível, unidade e mês.`:'');
   const vsel=getSel('ms-vig');
-  set('titSub',`${vsel.length===1?vigRot(vsel[0]).toUpperCase():vsel.length?vsel.length+' vigências':'2026'} · ERP, OS encerradas${CARGA?' · carga '+new Date(CARGA).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+new Date(CARGA).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):''}`);
+  const fmtH=d=>new Date(d).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const cargas=BASES.filter(b=>b.carregado_em).map(b=>`${SISTEMA[b.sistema]||b.sistema} ${fmtH(b.carregado_em)}${b.erro?' (erro)':''}`).join(' · ');
+  set('titSub',`${vsel.length===1?vigRot(vsel[0]).toUpperCase():vsel.length?vsel.length+' vigências':'2026'} · APIs${cargas?' · '+cargas:''}`);
 }
 document.querySelectorAll('#dims-dia .dimb').forEach(b=>b.addEventListener('click',()=>{
   MODO=b.dataset.m; document.querySelectorAll('#dims-dia .dimb').forEach(x=>x.classList.toggle('on',x===b)); render(); }));
@@ -728,7 +735,9 @@ document.querySelectorAll('#dims-dia .dimb').forEach(b=>b.addEventListener('clic
 async function recarregar(){
   set('titSub','Carregando…');
   try{ await carrega(); montaNomes(); montaFiltros(); render(); }
-  catch(e){ set('titSub','Erro ao ler os abastecimentos: '+((e&&e.message)||e)); $('tab-postos').innerHTML=`<div class="vazio-l">Não consegui ler erp_abastecimentos: ${esc((e&&e.message)||e)}</div>`; }
+  catch(e){ const m=(e&&e.message)||String(e); const falta=/abast_api|does not exist|PGRST205|42P01/.test(m);
+    set('titSub',falta?'A tabela abast_api ainda não existe no banco (rodar scripts/abast-api.sql)':'Erro ao ler os abastecimentos: '+m);
+    $('tab-postos').innerHTML=`<div class="vazio-l">${falta?'A tabela abast_api ainda não existe no banco.':'Não consegui ler os abastecimentos: '+esc(m)}</div>`; }
 }
 function gate(titulo,msg){ $('gate').innerHTML=`<div class="gate"><h2>${esc(titulo)}</h2><p>${msg}</p></div>`; $('miolo').style.display='none'; set('titSub','—'); }
 async function initApp(){
@@ -791,6 +800,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610282300"></script>
+<script src="../../assets/build-check.js?v=202610281800"></script>
 </body>
 </html>
