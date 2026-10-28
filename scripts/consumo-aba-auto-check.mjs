@@ -62,3 +62,15 @@ function tabela(rot, filtro) {
 }
 tabela('TODAS AS UNIDADES', () => true);
 UNIS.forEach(u => tabela(u, r => new RegExp(`- ${u}$`).test(String(r.projeto || '').toUpperCase().trim())));
+
+// onde a diferença de litros passa de 2% no mês: projeto a projeto
+{
+  const g = rows => { const m = new Map(); rows.forEach(r => { const ym = ymDe(r); if (ym < DE || ym > ATE) return; const k = ym + '|' + r.projeto; if (!m.has(k)) m.set(k, { n: 0, km: 0, lit: 0 }); const a = m.get(k); a.n++; a.km += num(r.km_rodado_horas_trabalhadas) || 0; a.lit += num(r.qtd_total_de_litros) || 0; }); return m; };
+  const A = g(aba), N = g(auto); const tot = new Map();
+  [...A.entries()].forEach(([k, a]) => { const ym = k.split('|')[0]; tot.set(ym, (tot.get(ym) || 0) + a.lit); });
+  console.log('\n── projetos com |Δ litros| > 1.000 L (aba × automático) ──');
+  console.log('mês | projeto | placas A×N | km A | km N | litros A | litros N | Δ litros');
+  [...new Set([...A.keys(), ...N.keys()])].sort().forEach(k => { const a = A.get(k) || { n: 0, km: 0, lit: 0 }, n = N.get(k) || { n: 0, km: 0, lit: 0 };
+    if (Math.abs(n.lit - a.lit) < 1000) return; const [ym, proj] = k.split('|');
+    console.log([ym, proj, `${a.n}×${n.n}`, f0(a.km), f0(n.km), f0(a.lit), f0(n.lit), f0(n.lit - a.lit)].join(' | ')); });
+}
