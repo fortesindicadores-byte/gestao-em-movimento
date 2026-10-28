@@ -1,16 +1,18 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// Assistente do painel Remuneração (Edge Function do Supabase)
+// Assistente do portal Gestão em Movimento (Edge Function do Supabase)
+// Usado na página /assistente/ e na visão Assistente do painel Remuneração.
 //
 // O painel /remuneracao/ manda a pergunta com o login do hub. A função:
 //   1. confere o login e se o e-mail é de quem pode usar (ASSISTENTE_DONOS);
-//   2. conversa com o Claude, que consulta o banco pela porta
+//   2. conversa com o Claude, que pesquisa na web e consulta o banco pela porta
 //      public.assistente_sql (só SELECT, só as tabelas liberadas,
 //      transação somente leitura — scripts/assistente-ft.sql);
 //   3. devolve o andamento em NDJSON, uma linha por evento:
 //        {"t":"txt","d":"…"}            trecho da resposta
 //        {"t":"sql","sql":"…","motivo":"…"}  consulta que vai rodar
 //        {"t":"res","linhas":N,"truncado":bool} | {"t":"res","erro":"…"}
-//        {"t":"fim","consultas":N,"custo":0.12,"seg":31}
+//        {"t":"web","q":"…"}            pesquisa na web
+//        {"t":"fim","consultas":N,"web":N,"custo":0.12,"seg":31}
 //        {"t":"erro","msg":"…"}
 //   4. grava a pergunta em assistente_log (tokens, custo, consultas).
 //
@@ -39,8 +41,8 @@ const DONOS = (Deno.env.get("ASSISTENTE_DONOS") ?? "fortesindicadores@gmail.com"
 const MODELO = Deno.env.get("ASSISTENTE_MODELO") ?? "claude-opus-5-5";
 const MAX_CONSULTAS = 25;
 const MAX_RESULTADO = 60000; // caracteres do resultado de uma consulta que voltam ao modelo
-// US$ por milhão de tokens (Claude Opus 5.5): entrada, gravação de cache, leitura de cache, saída
-const PRECO = { in: 4, cacheW: 5, cacheR: 0.2, out: 20 };
+// US$ por milhão de tokens do modelo padrão: entrada, gravação de cache, leitura de cache, saída
+const PRECO = { in: 4, cacheW: 5, cacheR: 0.2, out: 20, busca: 0.01 }; // busca na web: US$ 10 por mil
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -48,29 +50,32 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SISTEMA = `Você é o analista de remuneração da frota da Conlog (transportadora que opera para a Ambev), dentro do painel Remuneração do portal Gestão em Movimento. Quem pergunta é o Renan, gestor de indicadores da frota.
+const SISTEMA = `Você é o analista do portal Gestão em Movimento, o BI da frota da Conlog (transportadora que opera para a Ambev e para a Seara). Quem pergunta é o Renan, gestor de indicadores da frota. Você enxerga o banco inteiro do portal (só leitura) e pode pesquisar na web.
 
 Como responder
 - Português do Brasil, direto e executivo. Comece pela resposta e pelo número; depois o porquê, em poucas linhas ou numa tabela curta em Markdown.
-- Números no formato brasileiro (R$ 1.234.567; 3,21 km/L; 12,5%). Diga sempre o período e o recorte (unidade, operação) de cada número.
-- Só afirme o que as consultas mostraram. Se o dado não existe no banco, diga isso e o que faltaria. Não invente valor, regra nem explicação.
-- Quando cruzar duas fontes, diga quais foram. Diferença entre o previsto do FT e o remunerado da DRE fica "a confirmar" (pode ser imposto, regime tributário ou composição do planejamento); nunca a chame de erro.
+- Números no formato brasileiro (R$ 1.234.567; 3,21 km/L; 12,5%). Diga sempre o período e o recorte (unidade, projeto, operação) de cada número.
+- Só afirme o que as consultas ou as fontes da web mostraram. Se o dado não existe no banco, diga isso e o que faltaria. Não invente valor, regra nem explicação.
+- Quando cruzar duas fontes, diga quais foram. Diferença entre o previsto do Freightech e o remunerado da DRE fica "a confirmar" (imposto, regime tributário ou composição do planejamento); nunca a chame de erro.
+- Dado externo (inflação, diesel da ANP, juros, câmbio, clima, notícia): pesquise na web, cite a fonte e o período, e deixe claro o que é do portal e o que é de fora. O foco é o dado do portal; o externo serve de contexto e comparação.
 - Não exponha SQL na resposta, a menos que ele peça.
 
-Como consultar
-- Use a ferramenta consultar_banco (só SELECT/WITH, uma consulta por vez, até 2.000 linhas). Agregue no SQL (sum, avg, group by) em vez de trazer linhas cruas.
-- Descubra colunas antes de supor: information_schema.columns (table_schema = 'public') ou, no FT, ft_layout.colunas.
-- Valores do FT dentro de ft_obj vêm em jsonb: use (r->>'Nome da coluna')::numeric. Alguns números vêm como texto; trate com nullif/replace quando preciso.
+Como consultar o banco
+- Ferramenta consultar_banco: só SELECT/WITH, uma consulta por vez, até 2.000 linhas. Agregue no SQL (sum, avg, group by) em vez de trazer linhas cruas.
+- Você só enxerga o que tem permissão de ler; para descobrir o que existe: select table_name from information_schema.tables where table_schema = 'public' order by 1, e as colunas em information_schema.columns. Descubra colunas antes de supor.
+- Tabelas sh_<slug> são abas do Google Sheets copiadas para o banco, com colunas de nome técnico; os rótulos originais estão em sh_base (slug, colunas jsonb com label e nome da coluna). Leia sh_base antes de usar uma sh_.
+- Despesa na DRE (sh_dre_frota) vem NEGATIVA. Placa: compare sempre em Mercosul (o 5º caractere dígito vira letra: 0=A … 9=J). Unidades do portal: BLC Camboriú, CBA Cuiabá (T1 Empurrada, T1 WH Armazém, T2 CDD), CGR Rio de Janeiro, FLP Florianópolis, GRL Guarulhos, MCC Macacu (T1 Empurrada, T2 CDI), NFR Nova Friburgo, PIR Piraí, PLT Pelotas, RON Rondonópolis, ANG Anhanguera (Seara), GNA Goiânia.
 
-O que existe no banco
-1. ft_rem_mes — a remuneração do Freightech já consolidada: uma linha por operacao × unidade × vigencia (AAAA-MM). operacao: ROTA, VAN, UDC, AS (T2 = distribuição); EMPURRADA, INSUMOS (T1); ARMAZEM (empilhadeiras, mensal). unidade = sigla do portal (BLC Camboriú, CBA Cuiabá, CGR Rio de Janeiro, FLP Florianópolis, GRL Guarulhos, MCC Macacu, NFR Nova Friburgo, PIR Piraí, PLT Pelotas, RON Rondonópolis, ANG Anhanguera, GNA Goiânia). Colunas: ativos, parados, km_teto (km remunerado do mês = 25 mapas por ativo; no T1 o km previsto dos trechos), comb, manut, carroc, pneu, lavagem_var, outros_var, pedagio, seguro_var, salario_var, lucro_var, variavel, fixo_ativo, fixo_parado, seguro, finame, ipva, lavagem, rastreador, deprec, rem_k, equipe, qlp_adm, outras, total, quinzenas. É o PREVISTO pelo FT (dimensionamento), não a fatura. Mês = média das duas quinzenas. R$/km do variável de frota = (comb+manut+carroc+pneu+lavagem_var+pedagio+seguro_var) ÷ km_teto.
-2. ft_layout (canal, tabela, vigencia, tabela_nome, ano, mes, quinzena, colunas, linhas) e ft_linha (o FT cru, quinzena a quinzena, desde jan/2022). Leia pelo atalho ft_obj(canal, tabela, ano, mes) → (vigencia, ano, mes, quinzena, unidade, placa, r jsonb). Canais: ROTA, AS, ARMAZEM, EMPURRADA, INSUMOS. Vigência no formato do FT: ROTA_1_9_2026 (1ª quinzena de set/2026). Liste as tabelas com: select canal, tabela, tabela_nome, count(*) from ft_layout group by 1,2,3. Tabelas centrais: Caminhao, Van (placa a placa: Consumo KM/L, Consumo R$/KM, Manutenção R$/KM, Pneu por KM, Total Custo Fixo, Total Custo Variável, KM Remunerado, Ativo, Modelo do Cavalo…), ResumoSrtrans (o pacote mensal por unidade), CombustivelRota (preço operadora × ANP), CaminhaoAS, TrechoEmpurrada, Cavalo, Carreta, EmpilhadeiraApoio, FechamentoApoio. Na Rota o manutenção que o FT paga é o campo "Manutenção R$/KM" (o "R$/KM" é o contrato e não entra no pagamento); combustível = (S10 + 5% de Arla) ÷ Km/L da placa; o preço pago é o menor entre o nosso e a ANP.
-3. ft_book (uuid, titulo, subtitulo, categoria, texto) e ft_book_anexo (registro, nome, tipo, texto): o Book do Operador do FT, com as regras oficiais. Busque com ilike em texto (ex.: texto ilike '%stress test%').
-4. DRE e operação (bases coladas do Sheets, colunas com nomes técnicos; os rótulos ficam em sh_base.colunas, por slug): sh_dre_frota (remunerado e realizado por conta, unidade, nível 3 e vigência — despesa vem NEGATIVA), sh_dre_receita, sh_dre_ebitda, sh_dispersao_km (km remunerado × rodado por projeto até ago/26) e dispersao_km (o mesmo de set/26 em diante), balanco_massa (balanço de massa das Empurradas, por conta), dispersao_placa, dispersao_placa_viagem.
-5. Combustível: ca_consumo_km_litro (Km/L remunerado e realizado por placa × mês, automático do ERP + FT), ca_consumo_rs_litro, ca_consumo_rem_modelo, erp_abastecimentos (abastecimentos do ERP), abast_api (abastecimentos das APIs Pró-Frotas/SUMA/Gasola), comb_anomalia, comb_correcao.
-6. Manutenção e contratos: vw_contrato_km (nota da VW por placa, contrato, vigência e faixa), custo_vigencia_mv (contrato de manutenção por placa e mês), carta_custos (lançamentos da Carta de Custos), sh_manutencao.
-
-Placa: compare sempre em Mercosul (o 5º caractere dígito vira letra: 0=A … 9=J).`;
+Mapa do banco (o que cada painel lê)
+- Remuneração Freightech: ft_rem_mes (operacao × unidade × vigência AAAA-MM; previsto pelo FT, não a fatura; colunas ativos, parados, km_teto, comb, manut, carroc, pneu, variavel, fixo_ativo, fixo_parado, equipe, total…); ft_layout + ft_linha (o FT cru desde 2022; leia por ft_obj(canal, tabela, ano, mes) → r jsonb, use (r->>'Coluna')::numeric); ft_book e ft_book_anexo (Book do Operador, regras oficiais; busque com ilike em texto).
+- Financeiro: sh_dre_frota (orçado, remunerado e realizado por conta, unidade, nível 3, vigência), sh_dre_receita, sh_dre_ebitda.
+- Km: sh_dispersao_km (km remunerado × rodado por projeto até ago/26), dispersao_km (set/26 em diante), dispersao_placa, dispersao_placa_viagem, balanco_massa, sh_dispersao_abertura.
+- Combustível: ca_consumo_km_litro, ca_consumo_rs_litro, ca_consumo_rem_modelo (Km/L e R$/L remunerado × realizado, automáticos do ERP + FT), erp_abastecimentos (ERP), abast_api (Pró-Frotas, SUMA, Gasola), comb_anomalia, comb_correcao, seara_param, sh_seara_*.
+- Manutenção, contratos e custos: carta_custos (Carta de Custos), vw_contrato_km (nota da VW por placa e faixa), custo_vigencia_mv, sh_manutencao, contratos_placa, locacao_* (Conferência de Locação Vamos).
+- Operação e indicadores: elite_snapshot (Frota de Elite: indicadores do Ginfo por filial, vigência e escopo mes/ano), ginfo_snapshot (exports do Ginfo em JSON: ativos, preventivas, OS em aberto, checklist, blitz, documentos), indisponibilidade e indisp_snapshot/disp_snapshot (disponibilidade), snapshot (pneus do Prolog), pneu_pedido, sh_rpm_*, sh_term_* (Termômetro), sh_dpo, sh_demarco (auditorias), sh_metas, sh_mtdir_* (metas do diretor).
+- Processos: fca (FCA: fato, causa, ação, responsável, prazo, status por unidade e vigência), planner (Planner Corporativo).
+- Condução econômica (DriverPro): ce_scores_mensais, ce_diario (motorista identificado só por chave, sem nome nem CPF).
+- Saúde dos robôs: saude_wf, saude_dia, saude_base.`;
 
 const FERRAMENTAS = [
   {
@@ -88,6 +93,8 @@ const FERRAMENTAS = [
     },
     strict: true,
   },
+  // pesquisa na web (servidor da Anthropic): inflação, ANP, juros, notícias…
+  { type: "web_search_20260209", name: "web_search", max_uses: 5 },
 ];
 
 async function usuarioDe(req: Request) {
@@ -167,7 +174,7 @@ Deno.serve(async (req: Request) => {
 
   const cliente = new Anthropic();
   const t0 = Date.now();
-  const uso = { in: 0, cacheW: 0, cacheR: 0, out: 0 };
+  const uso = { in: 0, cacheW: 0, cacheR: 0, out: 0, web: 0 };
   let consultas = 0;
   const enc = new TextEncoder();
 
@@ -197,6 +204,11 @@ Deno.serve(async (req: Request) => {
           const u = msg.usage ?? {};
           uso.in += u.input_tokens ?? 0; uso.out += u.output_tokens ?? 0;
           uso.cacheW += u.cache_creation_input_tokens ?? 0; uso.cacheR += u.cache_read_input_tokens ?? 0;
+          uso.web += (u.server_tool_use && u.server_tool_use.web_search_requests) ?? 0;
+          // deno-lint-ignore no-explicit-any
+          for (const b of msg.content as any[]) {
+            if (b.type === "server_tool_use" && b.name === "web_search") envia({ t: "web", q: b.input && b.input.query ? String(b.input.query) : "" });
+          }
 
           if (msg.stop_reason === "refusal") { envia({ t: "txt", d: "\n\n(O modelo não respondeu a esta pergunta.)" }); break; }
           if (msg.stop_reason === "pause_turn") { messages.push({ role: "assistant", content: msg.content }); continue; }
@@ -240,9 +252,9 @@ Deno.serve(async (req: Request) => {
         envia({ t: "erro", msg: erro });
       } finally {
         clearInterval(vivo);
-        const custo = (uso.in * PRECO.in + uso.cacheW * PRECO.cacheW + uso.cacheR * PRECO.cacheR + uso.out * PRECO.out) / 1e6;
+        const custo = (uso.in * PRECO.in + uso.cacheW * PRECO.cacheW + uso.cacheR * PRECO.cacheR + uso.out * PRECO.out) / 1e6 + uso.web * PRECO.busca;
         const seg = Math.round((Date.now() - t0) / 1000);
-        if (!erro) envia({ t: "fim", consultas, custo: Math.round(custo * 1000) / 1000, seg });
+        if (!erro) envia({ t: "fim", consultas, web: uso.web, custo: Math.round(custo * 1000) / 1000, seg });
         await registra({
           email, pergunta: pergunta.slice(0, 4000), consultas, modelo: MODELO,
           tok_in: uso.in, tok_out: uso.out, tok_cache: uso.cacheR, custo_usd: Math.round(custo * 10000) / 10000, segundos: seg, erro,

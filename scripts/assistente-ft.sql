@@ -1,12 +1,14 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- Assistente do painel Remuneração (Renan, 28/10/2026 — etapa 3 do Freightech)
+-- Assistente do portal Gestão em Movimento (Renan, 28/10/2026 — etapa 3 do Freightech,
+-- ampliado no mesmo dia para o banco inteiro)
 --
 -- A IA roda numa Edge Function do Supabase (supabase/functions/assistente-ft),
 -- que guarda a chave do modelo. Para responder, ela consulta o banco por UMA
 -- porta só: public.assistente_sql(p_sql), que
 --   · aceita só SELECT/WITH (uma consulta por vez);
---   · roda como o papel assistente_leitor, que só enxerga as tabelas da lista
---     abaixo (nada de auth.users, portal_segredo, perfis, CPF…);
+--   · roda como o papel assistente_leitor, que lê todo o schema public menos o
+--     que é sensível (nada de auth.users, portal_segredo, master, CPF, e-mail,
+--     telefone, senha, token, nome de motorista…);
 --   · trava a transação em somente leitura (escrita nenhuma passa, nem por função);
 --   · devolve no máximo 2.000 linhas.
 -- Só a service_role (a Edge Function) chama a porta.
@@ -25,51 +27,60 @@ end $$;
 grant assistente_leitor to postgres;          -- para o postgres poder passar a função a ele
 grant usage on schema public to assistente_leitor;
 
--- 2 · o que ele pode ler (só as tabelas que existirem) ------------------------
+-- 2 · o que ele pode ler: TODO o schema public, menos o que é sensível ----------
+-- (Renan, 28/10/2026: "Quero para tudo do Gestão em Movimento. Banco, tudo".)
+-- Fora por inteiro: segredos, master, cadastro e log de acesso de usuários,
+-- senha e sessão do app do motorista, o próprio log do assistente.
+-- Fora por coluna, em toda tabela: CPF, CNH, e-mail, telefone, senha, token,
+-- segredo, chave de API, arquivo em base64/bytea, nome de motorista; e o nome
+-- nas tabelas do DriverPro (ce_*). Tabela com coluna cortada ganha grant por
+-- coluna; a sem nada sensível ganha a tabela inteira.
+-- Rode de novo quando entrar tabela nova: ela passa a ser lida também.
 do $$
 declare
-  t text;
-  lista text[] := array[
-    -- Freightech
-    'ft_rem_mes','ft_linha','ft_layout',
-    -- DRE e operação
-    'sh_dre_frota','sh_dre_receita','sh_dre_ebitda','sh_dispersao_km','sh_balanco_massa',
-    'sh_dispersao_abertura','dispersao_km','dispersao_placa','dispersao_placa_viagem','balanco_massa',
-    -- combustível
-    'ca_consumo_km_litro','ca_consumo_rs_litro','ca_consumo_rem_modelo',
-    'sh_consumo_km_litro','sh_consumo_rs_litro','sh_consumo_rem_modelo',
-    'erp_abastecimentos','abast_api','comb_anomalia','comb_correcao',
-    -- manutenção, contratos, carta
-    'sh_manutencao','vw_contrato_km','carta_custos',
-    -- metadados das bases do Sheets (rótulos das colunas)
-    'sh_base','consumo_auto_base','abast_api_base'
-  ];
+  r record; cols text; cortadas int; n_tab int := 0; n_parc int := 0;
+  fora text[] := array['portal_segredo','portal_master','portal_master_log','user_approvals',
+    'access_log','ce_app_acesso','ce_app_sessao','ce_app_senha_zerada','ce_app_log',
+    'ce_app_admins','assistente_log','fca_resp_depara'];
+  sens text := '(cpf|cnh|e_?mail|telefone|fone|phone|celular|whatsapp|senha|password|token|secret|segredo|api_?key|base64|motorista)';
 begin
-  foreach t in array lista loop
-    if to_regclass('public.'||t) is null then continue; end if;
-    execute format('grant select on public.%I to assistente_leitor', t);
-    if exists (select 1 from pg_class where oid = ('public.'||t)::regclass and relrowsecurity) then
-      execute format('drop policy if exists assistente_le on public.%I', t);
-      execute format('create policy assistente_le on public.%I for select to assistente_leitor using (true)', t);
-    end if;
+  -- limpa o que foi liberado antes (inclusive a lista da 1ª versão)
+  for r in select c.oid, c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+            where n.nspname = 'public' and c.relkind in ('r','p','v','m') loop
+    execute format('revoke all on public.%I from assistente_leitor', r.relname);
   end loop;
-  -- visões materializadas não têm RLS
-  if to_regclass('public.custo_vigencia_mv') is not null then
-    execute 'grant select on public.custo_vigencia_mv to assistente_leitor';
-  end if;
-  -- Book do Operador: sem as imagens embutidas (blocos) e sem o arquivo (base64)
-  if to_regclass('public.ft_book') is not null then
-    execute 'revoke select on public.ft_book from assistente_leitor';
-    execute 'grant select (uuid, titulo, subtitulo, categoria, categorias, ordem, texto, n_blocos, n_anexos, criado_em, atualizado_em) on public.ft_book to assistente_leitor';
-    execute 'drop policy if exists assistente_le on public.ft_book';
-    execute 'create policy assistente_le on public.ft_book for select to assistente_leitor using (true)';
-  end if;
-  if to_regclass('public.ft_book_anexo') is not null then
-    execute 'revoke select on public.ft_book_anexo from assistente_leitor';
-    execute 'grant select (id_storage, registro, bloco, nome, tipo, tamanho, texto) on public.ft_book_anexo to assistente_leitor';
-    execute 'drop policy if exists assistente_le on public.ft_book_anexo';
-    execute 'create policy assistente_le on public.ft_book_anexo for select to assistente_leitor using (true)';
-  end if;
+  for r in select c.oid, c.relname, c.relkind, c.relrowsecurity from pg_class c join pg_namespace n on n.oid = c.relnamespace
+            where n.nspname = 'public' and c.relkind in ('r','p','v','m') and not c.relispartition
+              and c.relname <> all(fora) loop
+    select string_agg(quote_ident(a.attname), ', ' order by a.attnum)
+      into cols
+      from pg_attribute a
+     where a.attrelid = r.oid and a.attnum > 0 and not a.attisdropped
+       and a.attname !~* sens
+       and a.atttypid <> 'bytea'::regtype
+       and not (r.relname like 'ce\_%' and a.attname ~* '^nome')
+       and not (r.relname = 'ft_book' and a.attname = 'blocos');
+    select count(*) into cortadas from pg_attribute a
+     where a.attrelid = r.oid and a.attnum > 0 and not a.attisdropped
+       and (a.attname ~* sens or a.atttypid = 'bytea'::regtype
+            or (r.relname like 'ce\_%' and a.attname ~* '^nome')
+            or (r.relname = 'ft_book' and a.attname = 'blocos'));
+    if cols is null then continue; end if;
+    begin
+      if cortadas = 0 then
+        execute format('grant select on public.%I to assistente_leitor', r.relname); n_tab := n_tab + 1;
+      else
+        execute format('grant select (%s) on public.%I to assistente_leitor', cols, r.relname); n_parc := n_parc + 1;
+      end if;
+      if r.relkind in ('r','p') and r.relrowsecurity then
+        execute format('drop policy if exists assistente_le on public.%I', r.relname);
+        execute format('create policy assistente_le on public.%I for select to assistente_leitor using (true)', r.relname);
+      end if;
+    exception when others then
+      raise notice 'assistente: % ficou de fora (%)', r.relname, sqlerrm;
+    end;
+  end loop;
+  raise notice 'assistente: % tabela(s) inteiras e % com colunas cortadas', n_tab, n_parc;
 end $$;
 
 -- 3 · FT com o nome das colunas ----------------------------------------------
@@ -141,10 +152,11 @@ drop policy if exists assistente_log_le on public.assistente_log;
 create policy assistente_log_le on public.assistente_log for select to authenticated using (public.fca_is_admin());
 grant select on public.assistente_log to authenticated;
 
--- conferência: as tabelas que o assistente enxerga
-select table_name from information_schema.role_table_grants
- where grantee = 'assistente_leitor' and table_schema = 'public'
-union
-select table_name from information_schema.column_privileges
- where grantee = 'assistente_leitor' and table_schema = 'public'
-order by 1;
+-- conferência: o que o assistente enxerga (inteira = todas as colunas; parcial = sem as sensíveis)
+select c.relname as tabela,
+       case when has_table_privilege('assistente_leitor', c.oid, 'select') then 'inteira' else 'parcial' end as acesso
+  from pg_class c join pg_namespace n on n.oid = c.relnamespace
+ where n.nspname = 'public' and c.relkind in ('r','p','v','m')
+   and (has_table_privilege('assistente_leitor', c.oid, 'select')
+        or has_any_column_privilege('assistente_leitor', c.oid, 'select'))
+ order by 1;

@@ -68,6 +68,7 @@ chk(p3.messages.at(-1).content[0].is_error===true,'erro do banco volta como is_e
 chk(logs.length===1&&logs[0].email==='fortesindicadores@gmail.com'&&logs[0].consultas===2&&!logs[0].erro,'log gravado (sem chave, com custo '+(logs[0]&&logs[0].custo_usd)+')');
 chk(!JSON.stringify(logs).includes('sk-teste'),'chave não vai para o log');
 chk(JSON.stringify(p1.tools[0]).includes('"strict":true'),'ferramenta strict');
+chk(p1.tools.some(t=>t.type==='web_search_20260209'&&t.name==='web_search'),'pesquisa na web ligada');
 
 // 3 · histórico: começa sempre pelo usuário e corta o que não é texto
 roteiro=[{stop:'end_turn',blocos:[{type:'text',text:'ok'}]}];
