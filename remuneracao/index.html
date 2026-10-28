@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610282100">
+<meta name="build" content="202610290100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Remuneração · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -412,6 +412,45 @@ body.vw-evo .ms-wrap.so-evo,body.vw-pl .ms-wrap.so-pl{display:block;}
 @media(max-width:1760px){ #t-var table.dre td,#t-var table.dre thead th,#t-fix table.dre td,#t-fix table.dre thead th{padding:8px 6px;} #t-var table.dre,#t-fix table.dre{font-size:10.5px;} }
 @media(max-width:1500px){ table.dre td,table.dre thead th{padding:8px 7px;} table.dre{font-size:10.5px;} table.dre thead th{font-size:8.5px;letter-spacing:.4px;} }
 @media(max-width:860px){ .kpis{height:auto;} .twrap table.dre{min-width:1000px;} .g3,.rel{display:block;} .g3 .gcard{height:300px;margin-bottom:12px;} .rel .card{margin-bottom:12px;max-height:none;} }
+/* Tabelas do FT e Consulta: filtros do topo de cada visão */
+.ms-wrap.so-ft{display:none;} body.vw-ft .ms-wrap.so-ft{display:block;}
+body.vw-ft .ms-wrap.nao-ft,body.vw-cs .ms-wrap.nao-cs{display:none;}
+#ms-ftt .ms-panel{min-width:320px;} #ms-ftt .ms-list{max-height:360px;}
+.pick .ft-pg{display:flex;align-items:center;gap:6px;margin:14px 0 4px;border-bottom:1px solid var(--linha);padding-bottom:3px;}
+.pick .ft-pg:first-child{margin-top:0;}
+.pick .ft-pg label{flex:1;min-width:0;padding:3px 6px;font-size:10px;font-weight:800;color:var(--txt);text-transform:uppercase;letter-spacing:.6px;}
+.pick .ft-pg .mut{font-size:10px;white-space:nowrap;}
+.chk-l{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;color:var(--txt2);cursor:pointer;}
+.chk-l input{accent-color:var(--laranja);}
+.rel-niv{margin-bottom:4px;}
+table.dre tfoot tr.total td{position:sticky;bottom:0;}
+/* Consulta */
+.cons{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(270px,330px) minmax(0,1fr);gap:12px;}
+.cons>.card{min-height:0;display:flex;flex-direction:column;padding:14px 16px 12px;}
+.cs-st{font-size:10.5px;color:var(--txt3);font-weight:600;margin-top:8px;}
+.cs-list{flex:1 1 auto;min-height:0;overflow:auto;margin-top:6px;}
+.cs-it{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--linha);padding:8px 8px;cursor:pointer;color:var(--txt);font-family:inherit;}
+.cs-it:hover{background:var(--hover);}
+.cs-it.on{background:var(--hover);box-shadow:inset 3px 0 0 var(--laranja);}
+.cs-it .lin{display:flex;gap:8px;align-items:baseline;}
+.cs-it b{font-size:12.5px;font-weight:700;}
+.cs-it .dir{margin-left:auto;font-size:10.5px;color:var(--txt2);font-weight:600;white-space:nowrap;}
+.cs-it .l2{font-size:10.5px;color:var(--txt3);margin-top:2px;}
+.cs-vazio{margin:auto;font-size:12px;text-align:center;}
+.cs-cab{display:flex;align-items:flex-start;gap:18px;flex:0 0 auto;margin-bottom:10px;}
+.cs-cab h2{font-size:22px;font-weight:800;letter-spacing:.4px;white-space:nowrap;line-height:1.1;}
+.cs-fx{flex:1;min-width:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:6px 16px;}
+.cs-fx div{font-size:12px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cs-fx span{display:block;font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;}
+.cs-corpo{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+.cs-kpis{height:auto!important;min-height:clamp(96px,14vh,140px)!important;flex:0 0 auto;}
+.cs-kpis .kpi{padding:12px 14px;}
+.cs-kpis .kpi .kv{font-size:clamp(18px,min(2.6vh,1.5vw),25px);white-space:nowrap;}
+.cs-kpis .kpi .km{font-size:10px;margin-top:6px;}
+.cs-g{flex:1 1 auto;min-height:200px;}
+tr.cs-lnk{cursor:pointer;}
+table.cs-campos tr.mud td{color:var(--laranja);font-weight:700;}
+@media(max-width:860px){ .cons{display:block;} .cons>.card{margin-bottom:12px;} .cs-list{max-height:50vh;} .cs-fx{grid-template-columns:repeat(2,1fr);} .cs-g{height:300px;} }
 </style>
 </head>
 <body>
@@ -435,6 +474,7 @@ body.vw-evo .ms-wrap.so-evo,body.vw-pl .ms-wrap.so-pl{display:block;}
     <button class="s-item" data-vw="fixtab"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg> Fixo e Frota · Tabela</button>
     <button class="s-item" data-vw="analitica"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg> Analítica</button>
     <button class="s-item" data-vw="placas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h.01M10 12h8"/></svg> Placas</button>
+    <button class="s-item" data-vw="consulta"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="M8 11h6M11 8v6"/></svg> Consulta</button>
 
     <div class="s-sec">Exportar</div>
     <button class="s-item" data-vw="relat"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13l4 5M12 13l-4 5"/></svg> Relatório Excel</button>
@@ -470,13 +510,19 @@ body.vw-evo .ms-wrap.so-evo,body.vw-pl .ms-wrap.so-pl{display:block;}
       <div class="filtros">
         <div class="ms-wrap so-evo unico" id="ms-ind"><button class="ms-btn" onclick="toggleMs('ms-ind')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Indicador<span class="ms-cnt"></span></button>
           <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
-        <div class="ms-wrap" id="ms-ano"><button class="ms-btn" onclick="toggleMs('ms-ano')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Ano<span class="ms-cnt"></span></button>
+        <div class="ms-wrap nao-ft nao-cs" id="ms-ano"><button class="ms-btn" onclick="toggleMs('ms-ano')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Ano<span class="ms-cnt"></span></button>
           <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
-        <div class="ms-wrap" id="ms-vig"><button class="ms-btn" onclick="toggleMs('ms-vig')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Vigência<span class="ms-cnt"></span></button>
+        <div class="ms-wrap nao-ft nao-cs" id="ms-vig"><button class="ms-btn" onclick="toggleMs('ms-vig')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Vigência<span class="ms-cnt"></span></button>
           <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
-        <div class="ms-wrap" id="ms-tier"><button class="ms-btn" onclick="toggleMs('ms-tier')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Tier<span class="ms-cnt"></span></button>
+        <div class="ms-wrap nao-ft" id="ms-tier"><button class="ms-btn" onclick="toggleMs('ms-tier')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Tier<span class="ms-cnt"></span></button>
           <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
-        <div class="ms-wrap" id="ms-op"><button class="ms-btn" onclick="toggleMs('ms-op')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Operação<span class="ms-cnt"></span></button>
+        <div class="ms-wrap nao-ft" id="ms-op"><button class="ms-btn" onclick="toggleMs('ms-op')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Operação<span class="ms-cnt"></span></button>
+          <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
+        <div class="ms-wrap so-ft" id="ms-ftc"><button class="ms-btn" onclick="toggleMs('ms-ftc')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Canal<span class="ms-cnt"></span></button>
+          <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
+        <div class="ms-wrap so-ft" id="ms-ftt"><button class="ms-btn" onclick="toggleMs('ms-ftt')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Tabela<span class="ms-cnt"></span></button>
+          <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
+        <div class="ms-wrap so-ft" id="ms-ftq"><button class="ms-btn" onclick="toggleMs('ms-ftq')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Quinzena<span class="ms-cnt"></span></button>
           <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
         <div class="ms-wrap" id="ms-uni"><button class="ms-btn" onclick="toggleMs('ms-uni')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Unidade<span class="ms-cnt"></span></button>
           <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
@@ -683,7 +729,7 @@ body.vw-evo .ms-wrap.so-evo,body.vw-pl .ms-wrap.so-pl{display:block;}
               <button class="bt" id="rel-bt" onclick="relExporta()">Exportar Excel</button>
             </div>
             <div class="twrap" id="rel-prev"></div>
-            <div class="tsub tpe">Uma linha por grupo marcado em "Agrupar por", no recorte dos filtros do topo (Ano, Vigência, Tier, Operação, Unidade). A prévia mostra até 60 linhas; o Excel sai com todas, como Tabela do Excel. As colunas marcadas ficam guardadas neste navegador.</div>
+            <div class="tsub tpe" id="rel-pe">—</div>
           </div>
         </div>
       </section>
@@ -692,23 +738,33 @@ body.vw-evo .ms-wrap.so-evo,body.vw-pl .ms-wrap.so-pl{display:block;}
       <section class="vw" id="vw-expft">
         <div class="rel">
           <div class="card">
-            <div class="gtit" style="margin-bottom:8px">Canal</div>
-            <div class="dims" id="dims-canal" style="margin-bottom:10px"></div>
-            <div class="gtit" style="margin-bottom:6px">Tabelas</div>
-            <label class="busca-l"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="ft-q" placeholder="Pesquisar tabela…" autocomplete="off"></label>
-            <div class="pick" id="ft-tabs"></div>
-            <label style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--txt2);margin-top:8px;cursor:pointer"><input type="checkbox" id="ft-form" style="accent-color:var(--laranja)"> Mostrar as tabelas de fórmulas</label>
+            <div class="gtit" style="margin-bottom:8px">Campos</div>
+            <div class="lin-bt"><button class="bt ghost" onclick="ftMarca(true)">Marcar todos</button><button class="bt ghost" onclick="ftMarca(false)">Limpar</button></div>
+            <label class="busca-l"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="ft-cq" name="ft-campo-busca" placeholder="Pesquisar campo…" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other"></label>
+            <div class="pick" id="ft-campos"></div>
           </div>
           <div class="card tsec">
             <div class="rel-cab">
               <span class="st" id="ft-st">—</span>
-              <button class="bt ghost" onclick="ftVigs(2)">Últimas 2 quinzenas</button>
-              <button class="bt ghost" onclick="ftVigs(8)">Últimas 8</button>
+              <label class="chk-l"><input type="checkbox" id="ft-form"> Incluir as tabelas de fórmulas</label>
               <button class="bt" id="ft-bt" onclick="ftExporta()">Exportar Excel</button>
             </div>
-            <div class="twrap" id="ft-vigs"></div>
-            <div class="tsub tpe">Igual à Exportação do FT: uma aba por tabela marcada, com todas as colunas e todas as linhas das vigências marcadas, do jeito que o robô baixou. O filtro Unidade do topo vale; os demais não se aplicam aqui.</div>
+            <div class="twrap" id="ft-res"></div>
+            <div class="tsub tpe">Uma aba por tabela, com os campos marcados e todas as linhas das quinzenas do filtro Quinzena, do jeito que o robô baixou do FT. Sem limite de quinzenas: "Todos" no filtro Quinzena leva o histórico inteiro. O filtro Unidade também vale.</div>
           </div>
+        </div>
+      </section>
+
+      <!-- ══ CONSULTA ══ -->
+      <section class="vw" id="vw-consulta">
+        <div class="cons">
+          <div class="card cs-l">
+            <label class="busca-l"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="cs-q" name="cs-consulta-busca" placeholder="Placa, chassi, modelo ou unidade…" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other"></label>
+            <div class="dims" id="dims-cs"><button class="dimb on" data-cs="eq">Equipamentos</button><button class="dimb" data-cs="mod">Modelos</button></div>
+            <div class="cs-st" id="cs-st">—</div>
+            <div class="cs-list" id="cs-list"></div>
+          </div>
+          <div class="card cs-r" id="cs-ficha"><div class="mut cs-vazio">Escolha uma placa, um equipamento ou um modelo à esquerda</div></div>
         </div>
       </section>
     </div>
@@ -1214,36 +1270,79 @@ function renderAnalitica(vigs){
 </script>
 <script>
 /* ══ PLACAS (lê ft_linha na hora, uma quinzena) ══ */
-const PL_TAB=[['ROTA','Caminhao','ROTA'],['ROTA','Van','VAN'],['AS','CaminhaoAS','AS']];
+/* ══ EQUIPAMENTOS DO FT: os cadastros por placa ou chassi (Placas, Consulta e o Relatório por equipamento) ══
+   Caminhão (Rota e AS), Van, Cavalo e Carreta (Empurrada e Insumos) e Empilhadeira (Armazém, sem placa: a chave é o chassi).
+   O Armazém é mensal (só a 1ª quinzena). No T1 o variável é pago por trecho: a placa não tem R$/km próprio. */
+const EQ_TAB=[
+  {c:'ROTA',t:'Caminhao',op:'ROTA',tipo:'Caminhão'},{c:'ROTA',t:'Van',op:'VAN',tipo:'Van'},{c:'AS',t:'CaminhaoAS',op:'AS',tipo:'Caminhão'},
+  {c:'EMPURRADA',t:'CavaloEmpurrada',op:'EMPURRADA',tipo:'Cavalo'},{c:'EMPURRADA',t:'CarretaEmpurrada',op:'EMPURRADA',tipo:'Carreta'},
+  {c:'INSUMOS',t:'CavaloInsumos',op:'INSUMOS',tipo:'Cavalo'},{c:'INSUMOS',t:'CarretaInsumos',op:'INSUMOS',tipo:'Carreta'},
+  {c:'ARMAZEM',t:'EmpilhadeiraApoio',op:'ARMAZEM',tipo:'Empilhadeira'}];
+const EQ_T2=EQ_TAB.slice(0,3);
+const TIPOS=['Caminhão','Van','Cavalo','Carreta','Empilhadeira'];
 const UNI_FT={'CDD CAMBORIU':'BLC','CDD CUIABA':'CBA','CDD FLORIANOPOLIS':'FLP','CDD GUARULHOS':'GRL','UDC GUARULHOS':'GRL','CDD NOVA FRIBURGO':'NFR','CDD PELOTAS':'PLT',
   'CDD RIO DE JANEIRO':'CGR','CDD RONDONOPOLIS':'RON','MACACU':'MCC','CDD GOIANIA':'GNA','CUIABA':'CBA','CUIABA INTEGRALIZACAO':'CBA','PIRAI':'PIR','LATA PIRAI':'PIR'};
 const normU=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
-const PL_CACHE={};
-async function todasF(q){ const out=[]; for(let off=0;off<60000;off+=1000){ const {data,error}=await q.range(off,off+999); if(error) throw error; out.push(...(data||[])); if(!data||data.length<1000) break; } return out; }
-async function lePlacas(vig){
-  const ch=vig+'|'+QZ; if(PL_CACHE[ch]) return PL_CACHE[ch];
-  const a=+vig.slice(0,4), m=+vig.slice(5); const out=[];
-  for(const [canal,tab,op] of PL_TAB){
-    const vg=`${canal}_${QZ}_${m}_${a}`;
-    const {data:lay,error:e1}=await sb.from('ft_layout').select('colunas').eq('canal',canal).eq('tabela',tab).eq('vigencia',vg).maybeSingle();
-    if(e1) throw e1; if(!lay) continue;
-    const ix={}; (lay.colunas||[]).forEach((c,i)=>{ const k=normU(c); if(!(k in ix)) ix[k]=i; });
-    const rows=await todasF(sb.from('ft_linha').select('unidade,placa,dados').eq('canal',canal).eq('tabela',tab).eq('vigencia',vg).order('linha'));
-    rows.forEach(r=>{ const g=(...ls)=>{ for(const l of ls){ const i=ix[normU(l)]; if(i!=null) return r.dados[i]; } return null; };
-      const opR=op==='ROTA'&&normU(r.unidade)==='UDC GUARULHOS'?'UDC':op;
-      const ativo=/^(TRUE|ATIVO|SIM|VERDADEIRO|1)$/.test(normU(g('Ativo','ativo')));
-      const km=+(op==='AS'?g('KM Mês Roadshow'):g('KM Total','kmTotal'))||0;
-      const n=v=>{ const x=typeof v==='number'?v:parseFloat(String(v??'').replace(/^[^:]*:\s*/,'').replace(',','.')); return isFinite(x)?x:null; };
-      out.push({op:opR,uni:UNI_FT[normU(r.unidade)]||r.unidade,placa:r.placa||g('Placa','placa'),modelo:String(g('Modelo','modelo')||'').replace(/^[^:]*:\s*/,''),
-        ano:g('Ano Veículo','anoVeiculo'),ativo,kml:n(g('Consumo KM/L','consumoKMPorLitro')),
-        comb:n(g('Consumo R$/KM','consumoReaisPorKm')),manut:n(g('Manutenção R$/KM','manutencaoReaisPorKm','manutencaoReaisKm')),
-        carroc:n(g('Manutenção Carroceria R$/KM','manutencaoCarroceriaReaisPorKm')),pneu:n(g('Pneu por KM','pneuPorKm')),lav:op==='AS'?n(g('Lavagem por KM')):null,
-        km,fixo:n(g('Total Custo Fixo','totalCustoFixo')),vida:n(g('manutencaoVidaMeses')),carencia:n(g('freeMaintenance'))});
-    });
-  }
-  out.forEach(p=>{ p.rskm=(p.comb||0)+(p.manut||0)+(p.carroc||0)+(p.pneu||0)+(p.lav||0); p.var=p.ativo?p.rskm*p.km:0; });
-  PL_CACHE[ch]=out; return out;
+const EQ_CACHE={};
+async function todasF(q){ const out=[]; for(let off=0;off<200000;off+=1000){ const {data,error}=await q.range(off,off+999); if(error) throw error; out.push(...(data||[])); if(!data||data.length<1000) break; } return out; }
+async function emLotes(jobs,n,prog){ const out=new Array(jobs.length); let i=0, feitos=0;
+  await Promise.all(Array.from({length:Math.min(n,jobs.length)},async()=>{ while(i<jobs.length){ const k=i++; out[k]=await jobs[k](); feitos++; if(prog) prog(feitos,jobs.length); } }));
+  return out; }
+/* o FT escreve "Descrição: VOLKS", "Modelo: Actros 2651": fica só o valor */
+const tiraRot=v=>v==null?'':String(v).replace(/^[A-Za-zÀ-ÿ ]{2,30}:\s*/,'').trim();
+function numFT(v){ if(v==null||v===''||typeof v==='boolean') return null; const x=typeof v==='number'?v:parseFloat(String(v).replace(/^[^:]*:\s*/,'').replace(',','.')); return isFinite(x)?x:null; }
+/* ano: número (2025) ou data serial do Excel (44281 = 2021) */
+function anoDe(v){ const x=numFT(v); if(x==null) return null; if(x>20000&&x<80000) return new Date(Date.UTC(1899,11,30)+Math.round(x)*864e5).getUTCFullYear(); return x>1900&&x<2100?Math.floor(x):null; }
+const simFT=v=>v===true||/^(TRUE|ATIVO|SIM|VERDADEIRO|1)$/.test(normU(v));
+function idxCols(cols){ const ix={}; (cols||[]).forEach((c,i)=>{ const k=normU(c); if(!(k in ix)) ix[k]=i; }); return ix; }
+const perOrd=(a,m,q)=>a*1000+m*10+q;
+const perTxt=(a,m,q,c)=>`${MES[m-1]}/${String(a).slice(2)}`+(c==='ARMAZEM'?'':` · ${q}ª`);
+function eqDe(d,ix,r,per){
+  const g=(...ls)=>{ for(const l of ls){ const i=ix[normU(l)]; if(i!=null){ const v=r.dados[i]; if(v!=null&&v!=='') return v; } } return null; };
+  const n=(...ls)=>numFT(g(...ls));
+  const uFT=normU(r.unidade||g('Unidade - Nome'));
+  const op=d.op==='ROTA'&&uFT==='UDC GUARULHOS'?'UDC':d.op;
+  const t2=d.tipo==='Caminhão'||d.tipo==='Van';
+  let modelo, marca;
+  if(d.tipo==='Empilhadeira'){ const s=String(g('modeloApoio')||''); modelo=((s.match(/Modelo:\s*([^|]+)/)||[])[1]||'').trim(); marca=((s.match(/Marca:\s*([^|]+)/)||[])[1]||'').trim(); }
+  else { modelo=tiraRot(g('Modelo do Cavalo','modeloCavalo','modeloEmpurrada','modelo','Modelo')); marca=tiraRot(g('Montadora','montadora','implemento')); }
+  const at=g('Ativo','ativo'), ap=g('ativoParado');
+  const o={tab:d.t,canal:d.c,tipo:d.tipo,op,uni:UNI_FT[uFT]||r.unidade||'',uniFT:r.unidade||'',
+    placa:String(r.placa||g('Placa','placa')||'').toUpperCase().replace(/[^A-Z0-9]/g,''),chassi:String(g('chassi')||'').trim(),
+    modelo,marca,ano:anoDe(g('Ano Cavalo','anoCavalo','ano','anoEmpilhadeira','Ano')),idade:n('Ano Veículo','anoVeiculo'),
+    ativo:at!=null?simFT(at):ap!=null?!simFT(ap):null,
+    kml:n('Consumo KM/L','consumoKMPorLitro','combustivelConsumoNeg'),
+    comb:t2?n('Consumo R$/KM','consumoReaisPorKm'):null,
+    manut:d.tipo==='Cavalo'?n('reaiskm','manutencaoReaisKm'):t2?n('Manutenção R$/KM','manutencaoReaisPorKm','manutencaoReaisKm'):null,
+    carroc:t2?n('Manutenção Carroceria R$/KM','manutencaoCarroceriaReaisPorKm'):null,
+    pneu:t2?n('Pneu por KM','pneuPorKm'):null, lav:op==='AS'?n('Lavagem por KM'):null,
+    km:t2?(n(op==='AS'?'KM Mês Roadshow':'KM Total','kmTotal')||0):null,
+    fixo:n('Total Custo Fixo','totalCustoFixo','custoFixo','custoFixoCustoFixo'),
+    vida:n('manutencaoVidaMeses'),carencia:n('freeMaintenance'),placaCarreta:tiraRot(g('Placa Carreta')),horim:n('horimetroMedio'),
+    vg:per.vg,a:per.a,m:per.m,q:per.q,ord:perOrd(per.a,per.m,per.q),per:perTxt(per.a,per.m,per.q,d.c)};
+  o.id=o.placa||o.chassi;
+  if(t2){ o.rskm=(o.comb||0)+(o.manut||0)+(o.carroc||0)+(o.pneu||0)+(o.lav||0); o.var=o.ativo?o.rskm*o.km:0; }
+  else { o.rskm=null; o.var=d.tipo==='Empilhadeira'?n('custoVariavelTotal'):null; }
+  return o;
 }
+/* uma tabela de equipamento numa quinzena (com cache; o Armazém é mensal e lê sempre a 1ª) */
+function leTabEq(d,a,m,q){
+  const qq=d.c==='ARMAZEM'?1:q, vg=`${d.c}_${qq}_${m}_${a}`, ch=d.t+'|'+vg;
+  if(!EQ_CACHE[ch]){
+    EQ_CACHE[ch]=(async()=>{
+      const {data:lay,error}=await sb.from('ft_layout').select('colunas').eq('canal',d.c).eq('tabela',d.t).eq('vigencia',vg).maybeSingle();
+      if(error) throw error; if(!lay) return [];
+      const ix=idxCols(lay.colunas);
+      const rows=await todasF(sb.from('ft_linha').select('unidade,placa,dados').eq('canal',d.c).eq('tabela',d.t).eq('vigencia',vg).order('linha'));
+      return rows.map(r=>eqDe(d,ix,r,{vg,a,m,q:qq}));
+    })();
+    EQ_CACHE[ch].catch(()=>{ delete EQ_CACHE[ch]; });
+  }
+  return EQ_CACHE[ch];
+}
+async function lePlacas(vig){ const a=+vig.slice(0,4), m=+vig.slice(5); return (await Promise.all(EQ_T2.map(d=>leTabEq(d,a,m,QZ)))).flat(); }
+const passaEq=p=>{ const u=getSel('ms-uni'), o=getSel('ms-op'), t=getSel('ms-tier');
+  return (!u.length||u.includes(p.uni))&&(!o.length||o.includes(OPS[p.op]||p.op))&&(!t.length||t.includes(TIER[p.op])); };
 async function renderPlacas(){
   const vigs=vigsSel(), vig=vigs[vigs.length-1];
   const el=$('t-placas'); el.innerHTML='<div class="mut" style="padding:24px;text-align:center">Carregando as placas…</div>';
@@ -1260,32 +1359,62 @@ async function renderPlacas(){
   el.innerHTML=`<table class="dre"><thead><tr><th>Placa</th><th>Unidade</th><th>Operação</th><th>Modelo</th><th class="num">Ano</th><th>Situação</th>
     <th class="num sep-l">Km/L rem.</th><th class="num">Comb. (R$/km)</th><th class="num">Manut. (R$/km)</th><th class="num">Carroc. (R$/km)</th><th class="num">Pneu (R$/km)</th><th class="num">Lavagem (R$/km)</th><th class="num">Total (R$/km)</th>
     <th class="num sep-l">Km do mês</th><th class="num">Variável (R$)</th><th class="num">Fixo (R$/mês)</th><th class="num">Vida (meses)</th></tr></thead>
-    <tbody>${ps.map(p=>`<tr><td class="conta">${esc(p.placa)}</td><td>${esc(p.uni)}</td><td>${esc(OPS[p.op]||p.op)}</td><td>${esc(p.modelo)}</td><td class="num">${esc(p.ano??'—')}</td>
+    <tbody>${ps.map(p=>`<tr class="cs-lnk" data-id="${esc(p.id)}" data-cstab="${esc(p.tab)}" title="Abrir a ficha na Consulta"><td class="conta">${esc(p.placa)}</td><td>${esc(p.uni)}</td><td>${esc(OPS[p.op]||p.op)}</td><td>${esc(p.modelo)}</td><td class="num">${esc(p.ano??'—')}</td>
       <td><span class="chip ${p.ativo?'at':'in'}">${p.ativo?'ATIVO':'INATIVO'}</span></td>
       <td class="num sep-l">${p.kml==null?'—':br(p.kml,2)}</td><td class="num">${r3(p.comb)}</td><td class="num">${p.manut===0&&p.vida!=null&&p.carencia!=null&&p.vida<=p.carencia?'<span class="mut" title="carência">0</span>':r3(p.manut)}</td><td class="num">${r3(p.carroc)}</td><td class="num">${r3(p.pneu)}</td><td class="num">${p.lav==null?'—':r3(p.lav)}</td><td class="num"><b>${br(p.rskm,3)}</b></td>
       <td class="num sep-l">${br(p.km)}</td><td class="num">${p.ativo?br(p.var):'—'}</td><td class="num">${p.fixo==null?'—':br(p.fixo)}</td><td class="num">${p.vida==null?'—':br(p.vida,1)}</td></tr>`).join('')
       ||'<tr><td colspan="17" class="mut" style="text-align:center;padding:24px">Sem placas nesta quinzena</td></tr>'}</tbody></table>`;
   const at=ps.filter(p=>p.ativo).length;
-  set('sub-placas',`${QZ}ª quinzena de ${rotVig(vig)} · Rota, Van, UDC e AS · ${ps.length} placas (${at} ativas) · variável da placa = R$/km × km do mês (teto) · lavagem por km só no AS · manutenção 0 em cinza = carência da montadora · Empurrada e Insumos são por trecho e ficam fora`);
+  el.querySelectorAll('tr.cs-lnk').forEach(tr=>tr.addEventListener('click',()=>{ CS_SEL={id:tr.dataset.id,tab:tr.dataset.cstab}; CS_ABA='resumo'; setVw('consulta'); fichaEq(); }));
+  set('sub-placas',`${QZ}ª quinzena de ${rotVig(vig)} · Rota, Van, UDC e AS · ${ps.length} placas · clique numa placa para abrir a ficha (${at} ativas) · variável da placa = R$/km × km do mês (teto) · lavagem por km só no AS · manutenção 0 em cinza = carência da montadora · Empurrada e Insumos são por trecho e ficam fora`);
 }
 
-/* ══ RELATÓRIO EXCEL: o usuário marca as colunas e o agrupamento ══ */
+/* ══ RELATÓRIO EXCEL: nível Operação e unidade (ft_rem_mes) ou Placa e equipamento (cadastros do FT); o usuário marca as colunas ══ */
 const REL_AGR=[['ano','Ano'],['mes','Mês'],['tier','Tier'],['operacao','Operação'],['unidade','Unidade']];
 const REL_COL=IND.map(i=>({v:i.v,rot:i.rot,grp:i.grp,un:i.un,ind:i}));
-let REL={agr:['mes','operacao','unidade'],cols:['total','variavel','fixo','equipe','qlp_adm','outras','rskm','comb','manut','carroc','pneu','fcam','ativos','parados','km']};
+const REL_EQ_COL=[
+  {v:'tipo',rot:'Tipo',grp:'Identificação',f:'texto'},{v:'op',rot:'Operação',grp:'Identificação',f:'texto'},{v:'uni',rot:'Unidade',grp:'Identificação',f:'texto'},
+  {v:'placa',rot:'Placa',grp:'Identificação',f:'texto'},{v:'chassi',rot:'Chassi',grp:'Identificação',f:'texto'},{v:'modelo',rot:'Modelo',grp:'Identificação',f:'texto'},
+  {v:'marca',rot:'Montadora',grp:'Identificação',f:'texto'},{v:'ano',rot:'Ano',grp:'Identificação',f:'int'},{v:'ativo',rot:'Situação',grp:'Identificação',f:'texto'},
+  {v:'placaCarreta',rot:'Placa da carreta',grp:'Identificação',f:'texto'},
+  {v:'kml',rot:'Km/L remunerado',grp:'Variável',un:'km/L',f:'dec',d:2},{v:'comb',rot:'Combustível',grp:'Variável',un:'R$/km',f:'dec',d:3},
+  {v:'manut',rot:'Manutenção',grp:'Variável',un:'R$/km',f:'dec',d:3},{v:'carroc',rot:'Carroceria',grp:'Variável',un:'R$/km',f:'dec',d:3},
+  {v:'pneu',rot:'Pneu',grp:'Variável',un:'R$/km',f:'dec',d:3},{v:'lav',rot:'Lavagem por km (AS)',grp:'Variável',un:'R$/km',f:'dec',d:3},
+  {v:'rskm',rot:'Total do variável',grp:'Variável',un:'R$/km',f:'dec',d:3},
+  {v:'km',rot:'Km remunerado do mês',grp:'Valores',un:'km',f:'int'},{v:'var',rot:'Variável do mês',grp:'Valores',un:'R$',f:'int'},
+  {v:'fixo',rot:'Fixo',grp:'Valores',un:'R$/mês',f:'int'},
+  {v:'vida',rot:'Vida',grp:'Manutenção e uso',un:'meses',f:'dec',d:1},{v:'carencia',rot:'Carência',grp:'Manutenção e uso',un:'meses',f:'int'},
+  {v:'horim',rot:'Horímetro médio',grp:'Manutenção e uso',un:'h',f:'dec',d:1}];
+const REL_EQ_PAD=['tipo','op','uni','placa','modelo','marca','ano','ativo','kml','comb','manut','carroc','pneu','lav','rskm','km','var','fixo','vida'];
+let REL={nivel:'grupo',agr:['mes','operacao','unidade'],cols:['total','variavel','fixo','equipe','qlp_adm','outras','rskm','comb','manut','carroc','pneu','fcam','ativos','parados','km']};
 try{ const g=JSON.parse(localStorage.getItem('remuneracao_rel')||'null'); if(g&&Array.isArray(g.cols)) REL=g; }catch(e){}
+if(!REL.nivel) REL.nivel='grupo'; if(!Array.isArray(REL.tipos)) REL.tipos=TIPOS.slice(); if(!Array.isArray(REL.qz)) REL.qz=[1,2]; if(!Array.isArray(REL.ecols)) REL.ecols=REL_EQ_PAD.slice();
 const relGuarda=()=>{ try{ localStorage.setItem('remuneracao_rel',JSON.stringify(REL)); }catch(e){} };
+const relRotEq=c=>c.rot+(c.un?` (${c.un})`:'');
 function relPick(){
-  let h='<div class="pg">Agrupar por</div>'+REL_AGR.map(([v,r])=>`<label><input type="checkbox" data-agr="${v}" ${REL.agr.includes(v)?'checked':''}> ${r}</label>`).join('');
-  let g0=null; REL_COL.forEach(c=>{ if(c.grp!==g0){ h+=`<div class="pg">${esc(c.grp)}</div>`; g0=c.grp; }
-    h+=`<label><input type="checkbox" data-col="${c.v}" ${REL.cols.includes(c.v)?'checked':''}> ${esc(c.rot)}<span class="mut">${c.un==='qtd'?'qtd':c.un}</span></label>`; });
+  let h=`<div class="pg">Nível</div><div class="dims rel-niv"><button class="dimb${REL.nivel!=='eq'?' on':''}" data-niv="grupo">Operação e unidade</button><button class="dimb${REL.nivel==='eq'?' on':''}" data-niv="eq">Placa e equipamento</button></div>`;
+  if(REL.nivel==='eq'){
+    h+='<div class="pg">Equipamentos</div>'+TIPOS.map(t=>`<label><input type="checkbox" data-tipo="${t}" ${REL.tipos.includes(t)?'checked':''}> ${t}</label>`).join('');
+    h+='<div class="pg">Quinzenas</div>'+[1,2].map(q=>`<label><input type="checkbox" data-relqz="${q}" ${REL.qz.includes(q)?'checked':''}> ${q}ª quinzena</label>`).join('');
+    let g0=null; REL_EQ_COL.forEach(c=>{ if(c.grp!==g0){ h+=`<div class="pg">${esc(c.grp)}</div>`; g0=c.grp; }
+      h+=`<label><input type="checkbox" data-ecol="${c.v}" ${REL.ecols.includes(c.v)?'checked':''}> ${esc(c.rot)}${c.un?`<span class="mut">${c.un}</span>`:''}</label>`; });
+  } else {
+    h+='<div class="pg">Agrupar por</div>'+REL_AGR.map(([v,r])=>`<label><input type="checkbox" data-agr="${v}" ${REL.agr.includes(v)?'checked':''}> ${r}</label>`).join('');
+    let g0=null; REL_COL.forEach(c=>{ if(c.grp!==g0){ h+=`<div class="pg">${esc(c.grp)}</div>`; g0=c.grp; }
+      h+=`<label><input type="checkbox" data-col="${c.v}" ${REL.cols.includes(c.v)?'checked':''}> ${esc(c.rot)}<span class="mut">${c.un==='qtd'?'qtd':c.un}</span></label>`; });
+  }
   $('rel-pick').innerHTML=h;
 }
-$('rel-pick')&&$('rel-pick').addEventListener('change',e=>{ const b=e.target;
-  if(b.dataset.agr){ REL.agr=REL_AGR.map(x=>x[0]).filter(v=>$('rel-pick').querySelector(`[data-agr="${v}"]`).checked); }
-  if(b.dataset.col){ REL.cols=REL_COL.map(x=>x.v).filter(v=>$('rel-pick').querySelector(`[data-col="${v}"]`).checked); }
+$('rel-pick')&&$('rel-pick').addEventListener('click',e=>{ const b=e.target.closest('[data-niv]'); if(!b) return;
+  REL.nivel=b.dataset.niv; relGuarda(); relPick(); renderRel(); });
+$('rel-pick')&&$('rel-pick').addEventListener('change',e=>{ const b=e.target, P=$('rel-pick');
+  if(b.dataset.agr){ REL.agr=REL_AGR.map(x=>x[0]).filter(v=>P.querySelector(`[data-agr="${v}"]`).checked); }
+  if(b.dataset.col){ REL.cols=REL_COL.map(x=>x.v).filter(v=>P.querySelector(`[data-col="${v}"]`).checked); }
+  if(b.dataset.tipo){ REL.tipos=TIPOS.filter(v=>P.querySelector(`[data-tipo="${v}"]`).checked); }
+  if(b.dataset.relqz){ REL.qz=[1,2].filter(v=>P.querySelector(`[data-relqz="${v}"]`).checked); }
+  if(b.dataset.ecol){ REL.ecols=REL_EQ_COL.map(x=>x.v).filter(v=>P.querySelector(`[data-ecol="${v}"]`).checked); }
   relGuarda(); renderRel(); });
-function relMarca(t){ REL.cols=t?REL_COL.map(x=>x.v):[]; relGuarda(); relPick(); renderRel(); }
+function relMarca(t){ if(REL.nivel==='eq') REL.ecols=t?REL_EQ_COL.map(x=>x.v):[]; else REL.cols=t?REL_COL.map(x=>x.v):[]; relGuarda(); relPick(); renderRel(); }
 function relLinhas(){
   const R=recorte(vigsSel());
   const ch=r=>REL.agr.map(a=>a==='mes'?r.vigencia:a==='ano'?r.vigencia.slice(0,4):chaveDe(r,a)).join('¦');
@@ -1295,20 +1424,49 @@ function relLinhas(){
   out.sort((a,b)=>{ for(let i=0;i<a.id.length;i++){ const x=a.id[i], y=b.id[i]; if(x!==y){ const ag=REL.agr[i]; return (ag==='mes'||ag==='ano')?(x<y?1:-1):String(x).localeCompare(String(y),'pt-BR'); } } return 0; });
   return {cols,out};
 }
+/* esconde as colunas da prévia que não cabem (nada de barra lateral); o Excel sai com todas */
+function relCorta(nfix){ const tw=$('rel-prev'), tb=tw.querySelector('table'); if(!tb) return 0;
+  let vis=tb.querySelectorAll('thead th').length; const nth=i=>tb.querySelectorAll(`tr>*:nth-child(${i})`);
+  while(vis>nfix+1&&tw.scrollWidth>tw.clientWidth+1){ nth(vis).forEach(c=>c.style.display='none'); vis--; }
+  return vis; }
 function renderRel(){
   if(!ROWS.length) return;
+  if(REL.nivel==='eq') return renderRelEq();
+  _relTok++;
   const {cols,out}=relLinhas();
   const idRot=a=>REL_AGR.find(x=>x[0]===a)[1];
   const cel=(v,un)=>v==null?'—':un==='R$/km'?br(v,v<1?3:2):un==='qtd'?br(v,1):br(v,0);
   $('rel-prev').innerHTML=`<table class="dre" data-no-sort><thead><tr>${REL.agr.map(a=>`<th>${idRot(a)}</th>`).join('')}${cols.map(c=>`<th class="num">${esc(c.rot)} (${c.un==='qtd'?'qtd':c.un})</th>`).join('')}</tr></thead>
     <tbody>${out.slice(0,60).map(l=>`<tr>${l.id.map((x,i)=>`<td class="${i?'':'conta uni'}">${esc(REL.agr[i]==='mes'?rotVig(x):x)}</td>`).join('')}${l.vals.map((v,i)=>`<td class="num">${cel(v,cols[i].un)}</td>`).join('')}</tr>`).join('')
       ||'<tr><td class="mut" style="padding:24px;text-align:center">Marque ao menos uma coluna e um agrupamento</td></tr>'}</tbody></table>`;
-  // a prévia mostra só as colunas que cabem (nada de barra lateral); o Excel sai com todas
-  const tw=$('rel-prev'), tb=tw.querySelector('table'); let vis=REL.agr.length+cols.length;
-  if(tb){ const nth=i=>tb.querySelectorAll(`tr>*:nth-child(${i})`);
-    while(vis>REL.agr.length+1&&tw.scrollWidth>tw.clientWidth+1){ nth(vis).forEach(c=>c.style.display='none'); vis--; } }
+  const vis=relCorta(REL.agr.length);
   const vs=vigsSel(), tc=REL.agr.length+cols.length;
   set('rel-st',`${br(out.length)} linhas × ${tc} colunas${vis<tc?` · a prévia mostra ${vis} de ${tc}`:''} · ${vs.length===1?rotVig(vs[0]):rotVig(vs[0])+' a '+rotVig(vs[vs.length-1])}`);
+  set('rel-pe','Uma linha por grupo marcado em "Agrupar por", no recorte dos filtros do topo (Ano, Vigência, Tier, Operação, Unidade). A prévia mostra até 60 linhas; o Excel sai com todas, como Tabela do Excel. As colunas marcadas ficam guardadas neste navegador.');
+}
+/* nível equipamento: uma linha por placa (ou chassi) e quinzena, dos meses do filtro Vigência */
+let _relTok=0;
+async function relDadosEq(prog){
+  const vigs=vigsSel(), defs=EQ_TAB.filter(d=>REL.tipos.includes(d.tipo)), qs=REL.qz.length?REL.qz:[1,2], jobs=[];
+  vigs.forEach(v=>{ const a=+v.slice(0,4), m=+v.slice(5); defs.forEach(d=>(d.c==='ARMAZEM'?[1]:qs).forEach(q=>jobs.push(()=>leTabEq(d,a,m,q)))); });
+  const ps=(await emLotes(jobs,6,prog)).flat().filter(passaEq);
+  return ps.sort((x,y)=>y.ord-x.ord||TIPOS.indexOf(x.tipo)-TIPOS.indexOf(y.tipo)||String(x.uni).localeCompare(y.uni)||String(x.id).localeCompare(y.id));
+}
+const valEq=(p,c)=>c.v==='op'?(OPS[p.op]||p.op):c.v==='ativo'?(p.ativo==null?'':p.ativo?'Ativo':'Inativo'):p[c.v];
+const celEq=(p,c)=>{ const v=valEq(p,c); if(v==null||v==='') return '—'; return c.f==='texto'?esc(v):c.v==='ano'?String(v):br(v,c.d||0); };
+async function renderRelEq(){
+  const tok=++_relTok, cols=REL_EQ_COL.filter(c=>REL.ecols.includes(c.v));
+  set('rel-pe','Uma linha por equipamento e quinzena, dos meses do filtro Vigência (Tier, Operação e Unidade também valem). Caminhão e Van têm o R$/km da placa; no T1 o variável é pago por trecho (Cavalo leva só Km/L e manutenção), a Carreta só o fixo e a Empilhadeira é mensal, com fixo e variável do mês. A prévia mostra até 60 linhas; o Excel sai com todas.');
+  if(!REL.tipos.length){ $('rel-prev').innerHTML='<div class="mut" style="padding:24px;text-align:center">Marque ao menos um tipo de equipamento</div>'; set('rel-st','—'); return; }
+  $('rel-prev').innerHTML='<div class="mut" style="padding:24px;text-align:center">Lendo os cadastros do FT…</div>';
+  let ps; try{ ps=await relDadosEq((f,t)=>{ if(tok===_relTok) set('rel-st',`lendo ${f} de ${t} tabelas do FT…`); }); }
+  catch(e){ if(tok===_relTok){ $('rel-prev').innerHTML=`<div class="aviso err" style="margin:12px">Não consegui ler o FT: ${esc(e.message||e)}</div>`; set('rel-st','—'); } return; }
+  if(tok!==_relTok) return;
+  $('rel-prev').innerHTML=`<table class="dre" data-no-sort><thead><tr><th>Quinzena</th>${cols.map(c=>`<th class="${c.f==='texto'?'':'num'}">${esc(relRotEq(c))}</th>`).join('')}</tr></thead>
+    <tbody>${ps.slice(0,60).map(p=>`<tr><td class="conta uni">${esc(p.per)}</td>${cols.map(c=>`<td class="${c.f==='texto'?'':'num'}">${celEq(p,c)}</td>`).join('')}</tr>`).join('')
+      ||'<tr><td class="mut" style="padding:24px;text-align:center">Nenhum equipamento no recorte</td></tr>'}</tbody></table>`;
+  const vis=relCorta(1), tc=1+cols.length, vs=vigsSel();
+  set('rel-st',`${br(ps.length)} linhas (equipamento × quinzena) × ${tc} colunas${vis<tc?` · a prévia mostra ${vis} de ${tc}`:''} · ${vs.length===1?rotVig(vs[0]):rotVig(vs[0])+' a '+rotVig(vs[vs.length-1])}`);
 }
 function baixaBlob(blob,nome){ const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
 const hojeArq=()=>{ const d=new Date(); return `${d.getFullYear()}-${d2(d.getMonth()+1)}-${d2(d.getDate())}`; };
@@ -1316,90 +1474,340 @@ async function relExporta(){
   const bt=$('rel-bt'); bt.disabled=true; const st=$('rel-st'); st.className='st';
   try{
     if(typeof XlsxTabela==='undefined'||typeof fflate==='undefined') throw new Error('a biblioteca do Excel não carregou');
-    const {cols,out}=relLinhas();
-    const colunas=REL.agr.map(a=>({nome:REL_AGR.find(x=>x[0]===a)[1],fmt:a==='mes'?'mes':'texto',larg:a==='mes'?10:16}))
-      .concat(cols.map(c=>({nome:`${c.rot} (${c.un==='qtd'?'qtd':c.un})`,fmt:c.un==='qtd'?'dec':c.un==='km'?'int':'dec',larg:18})));
-    const linhas=out.map(l=>l.id.map((x,i)=>REL.agr[i]==='mes'?new Date(+x.slice(0,4),+x.slice(5)-1,1):x).concat(l.vals.map(v=>v==null||!isFinite(v)?null:v)));
     const vs=vigsSel(), f=id=>getSel(id).join(', ')||'todas';
-    const abas=[{nome:'Remuneração FT',colunas,linhas},{nome:'Fonte',topo:[['Relatório · Remuneração prevista pelo Freightech'],['Gerado em',new Date()],
-      ['Vigências',vs.length===1?rotVig(vs[0]):rotVig(vs[0])+' a '+rotVig(vs[vs.length-1])],['Tier',f('ms-tier')],['Operação',f('ms-op')],['Unidade',f('ms-uni')],
-      ['Observação','É o previsto do FT (dimensionamento), não a fatura. R$/km = componente ÷ km remunerado; fixo por caminhão = fixo ÷ caminhões (por mês).']],
-      colunas:[{nome:'Coluna',fmt:'texto',larg:40},{nome:'Grupo',fmt:'texto',larg:24},{nome:'Medida',fmt:'texto',larg:12}],
-      linhas:cols.map(c=>[c.rot,c.grp,c.un==='qtd'?'quantidade':c.un])}];
+    const per=vs.length===1?rotVig(vs[0]):rotVig(vs[0])+' a '+rotVig(vs[vs.length-1]);
+    let abas, nlin;
+    if(REL.nivel==='eq'){
+      const cols=REL_EQ_COL.filter(c=>REL.ecols.includes(c.v));
+      const ps=await relDadosEq((a,b)=>{ st.textContent=`lendo ${a} de ${b} tabelas do FT…`; });
+      const colunas=[{nome:'Mês',fmt:'mes',larg:10},{nome:'Quinzena',fmt:'int',larg:10}]
+        .concat(cols.map(c=>({nome:relRotEq(c),fmt:c.f==='texto'?'texto':c.f==='int'?'int':'dec',larg:c.f==='texto'?16:14})));
+      const linhas=ps.map(p=>[new Date(p.a,p.m-1,1),p.canal==='ARMAZEM'?null:p.q].concat(cols.map(c=>{ const v=valEq(p,c); return v==null||v===''?null:typeof v==='number'&&!isFinite(v)?null:v; })));
+      nlin=linhas.length;
+      abas=[{nome:'Equipamentos FT',colunas,linhas},{nome:'Fonte',topo:[['Relatório · Equipamentos do Freightech (placa e quinzena)'],['Gerado em',new Date()],
+        ['Vigências',per],['Quinzenas',REL.qz.map(q=>q+'ª').join(' e ')||'1ª e 2ª'],['Equipamentos',REL.tipos.join(', ')],['Tier',f('ms-tier')],['Operação',f('ms-op')],['Unidade',f('ms-uni')],
+        ['Observação','É o cadastro do FT (previsto, não a fatura). R$/km por placa só em Caminhão e Van; no T1 o variável é pago por trecho. Empilhadeira é mensal (quinzena vazia). Variável do mês = R$/km × km remunerado do mês nas placas ativas.']],
+        colunas:[{nome:'Coluna',fmt:'texto',larg:40},{nome:'Grupo',fmt:'texto',larg:24}],linhas:cols.map(c=>[relRotEq(c),c.grp])}];
+    } else {
+      const {cols,out}=relLinhas();
+      const colunas=REL.agr.map(a=>({nome:REL_AGR.find(x=>x[0]===a)[1],fmt:a==='mes'?'mes':'texto',larg:a==='mes'?10:16}))
+        .concat(cols.map(c=>({nome:`${c.rot} (${c.un==='qtd'?'qtd':c.un})`,fmt:c.un==='qtd'?'dec':c.un==='km'?'int':'dec',larg:18})));
+      const linhas=out.map(l=>l.id.map((x,i)=>REL.agr[i]==='mes'?new Date(+x.slice(0,4),+x.slice(5)-1,1):x).concat(l.vals.map(v=>v==null||!isFinite(v)?null:v)));
+      nlin=linhas.length;
+      abas=[{nome:'Remuneração FT',colunas,linhas},{nome:'Fonte',topo:[['Relatório · Remuneração prevista pelo Freightech'],['Gerado em',new Date()],
+        ['Vigências',per],['Tier',f('ms-tier')],['Operação',f('ms-op')],['Unidade',f('ms-uni')],
+        ['Observação','É o previsto do FT (dimensionamento), não a fatura. R$/km = componente ÷ km remunerado; fixo por caminhão = fixo ÷ caminhões (por mês).']],
+        colunas:[{nome:'Coluna',fmt:'texto',larg:40},{nome:'Grupo',fmt:'texto',larg:24},{nome:'Medida',fmt:'texto',larg:12}],
+        linhas:cols.map(c=>[c.rot,c.grp,c.un==='qtd'?'quantidade':c.un])}];
+    }
+    st.textContent='gravando o Excel…';
     const blob=await XlsxTabela.monta(abas,{});
-    baixaBlob(blob,`remuneracao-ft-${hojeArq()}.xlsx`); st.textContent=`${br(out.length)} linhas exportadas`;
+    baixaBlob(blob,`remuneracao-ft-${REL.nivel==='eq'?'equipamentos-':''}${hojeArq()}.xlsx`); st.textContent=`${br(nlin)} linhas exportadas`;
   }catch(e){ st.className='st err'; st.textContent='Erro: '+String((e&&e.message)||e).slice(0,140); }
   finally{ bt.disabled=false; }
 }
 
-/* ══ TABELAS DO FT: igual à Exportação do FT (uma aba por tabela, vigências marcadas) ══ */
-let FTL=null, FT_CANAL='ROTA', FT_TABS=new Set(), FT_VIGS=new Set();
+/* ══ TABELAS DO FT: Canal, Tabela e Quinzena são filtros do topo; os campos são escolhidos à esquerda;
+   quinzenas sem limite (o "Todos" do filtro Quinzena leva o histórico inteiro) ══ */
+let FTL=null; const FT_COLS={}, FT_SEL={};
 const CANAIS=['ROTA','AS','EMPURRADA','INSUMOS','ARMAZEM'];
+const CANAL_ROT={ROTA:'Rota',AS:'AS',EMPURRADA:'Empurrada',INSUMOS:'Insumos',ARMAZEM:'Armazém'};
 async function ftCarrega(){
-  if(FTL) return; $('ft-vigs').innerHTML='<div class="mut" style="padding:24px;text-align:center">Lendo a lista de tabelas do FT…</div>';
+  if(FTL) return;
   FTL=await todasF(sb.from('ft_layout').select('canal,tabela,tabela_nome,vigencia,ano,mes,quinzena,linhas').order('canal').order('tabela').order('vigencia'));
 }
-const ftNome=t=>{ const x=FTL.find(l=>l.tabela===t&&l.tabela_nome); const f=/^FORMULA:/.test(t); const n=x?x.tabela_nome:t.replace(/^FORMULA:/,''); return (f?'Fórmulas · ':'')+n; };
-const vigOrd=l=>l.ano*1000+l.mes*10+(l.quinzena||0);
-async function renderFT(){
-  try{ await ftCarrega(); }catch(e){ $('ft-vigs').innerHTML=`<div class="aviso err" style="margin:12px">Não consegui ler ft_layout: ${esc(e.message||e)}</div>`; return; }
-  const canais=CANAIS.filter(c=>FTL.some(l=>l.canal===c));
-  $('dims-canal').innerHTML=canais.map(c=>`<button class="dimb${c===FT_CANAL?' on':''}" data-canal="${c}">${c==='AS'?'AS':c.charAt(0)+c.slice(1).toLowerCase()}</button>`).join('');
-  const form=$('ft-form').checked, q=normU($('ft-q').value);
-  const tabs=[...new Set(FTL.filter(l=>l.canal===FT_CANAL&&(form||!/^FORMULA:/.test(l.tabela))).map(l=>l.tabela))]
-    .map(t=>({t,n:ftNome(t),q:FTL.filter(l=>l.canal===FT_CANAL&&l.tabela===t).length})).filter(x=>!q||normU(x.n+' '+x.t).includes(q)).sort((a,b)=>a.n.localeCompare(b.n,'pt-BR'));
-  $('ft-tabs').innerHTML=tabs.map(x=>`<label title="${esc(x.t)}"><input type="checkbox" data-tab="${esc(x.t)}" ${FT_TABS.has(x.t)?'checked':''}> ${esc(x.n)}<span class="mut">${x.q} vig.</span></label>`).join('')||'<div class="mut" style="padding:10px">Nenhuma tabela</div>';
-  const sel=[...FT_TABS].filter(t=>FTL.some(l=>l.canal===FT_CANAL&&l.tabela===t));
-  const vigs=[...new Map(FTL.filter(l=>l.canal===FT_CANAL&&sel.includes(l.tabela)).map(l=>[l.vigencia,l])).values()].sort((a,b)=>vigOrd(b)-vigOrd(a));
-  if(!sel.length){ $('ft-vigs').innerHTML='<div class="mut" style="padding:24px;text-align:center">Marque uma ou mais tabelas à esquerda</div>'; set('ft-st','—'); return; }
-  const lin=(t,v)=>{ const l=FTL.find(x=>x.canal===FT_CANAL&&x.tabela===t&&x.vigencia===v); return l?l.linhas:null; };
-  $('ft-vigs').innerHTML=`<table class="dre" data-no-sort><thead><tr><th style="width:34px"></th><th>Vigência</th>${sel.map(t=>`<th class="num">${esc(ftNome(t))} (linhas)</th>`).join('')}</tr></thead><tbody>${
-    vigs.map(l=>`<tr><td><input type="checkbox" data-vig="${esc(l.vigencia)}" ${FT_VIGS.has(l.vigencia)?'checked':''} style="accent-color:var(--laranja)"></td><td class="conta uni">${esc(l.vigencia)}</td>${sel.map(t=>`<td class="num">${lin(t,l.vigencia)==null?'—':br(lin(t,l.vigencia))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
-  const nv=vigs.filter(l=>FT_VIGS.has(l.vigencia)).length, tot=sel.reduce((s,t)=>s+vigs.filter(l=>FT_VIGS.has(l.vigencia)).reduce((a,l)=>a+(lin(t,l.vigencia)||0),0),0);
-  set('ft-st',`${sel.length} tabela(s) · ${nv} vigência(s) · ${br(tot)} linhas`);
+const ftNome=(c,t)=>{ const x=FTL.find(l=>l.canal===c&&l.tabela===t&&l.tabela_nome); const n=x?x.tabela_nome:t.replace(/^FORMULA:/,''); return (/^FORMULA:/.test(t)?'Fórmulas · ':'')+n; };
+const vigOrd=l=>perOrd(l.ano,l.mes,l.quinzena||1);
+const perK=l=>`${l.ano}-${d2(l.mes)}-${l.quinzena||1}`;
+const perRot=k=>{ const [a,m,q]=k.split('-'); return `${MES[+m-1]}/${a.slice(2)} · ${q}ª quinzena`; };
+function ftCanais(){ const s=getSel('ms-ftc'); return s.length?s:CANAIS.filter(c=>FTL.some(l=>l.canal===c)); }
+function ftTabsDisp(){
+  const form=$('ft-form').checked, cs=ftCanais(), m=new Map();
+  FTL.forEach(l=>{ if(!cs.includes(l.canal)||(!form&&/^FORMULA:/.test(l.tabela))) return; const k=l.canal+'|'+l.tabela;
+    if(!m.has(k)) m.set(k,{k,c:l.canal,t:l.tabela,n:ftNome(l.canal,l.tabela),vigs:[]}); m.get(k).vigs.push(l); });
+  return [...m.values()].sort((a,b)=>CANAIS.indexOf(a.c)-CANAIS.indexOf(b.c)||a.n.localeCompare(b.n,'pt-BR'));
 }
-function ftVigs(n){ if(!FTL) return; const sel=[...FT_TABS];
-  const vigs=[...new Map(FTL.filter(l=>l.canal===FT_CANAL&&sel.includes(l.tabela)).map(l=>[l.vigencia,l])).values()].sort((a,b)=>vigOrd(b)-vigOrd(a));
-  FT_VIGS=new Set(vigs.slice(0,n).map(l=>l.vigencia)); renderFT(); }
-document.addEventListener('click',e=>{ const c=e.target.closest('[data-canal]'); if(!c) return; FT_CANAL=c.dataset.canal; FT_TABS=new Set(); FT_VIGS=new Set(); renderFT(); });
-document.addEventListener('change',e=>{ const t=e.target;
-  if(t.dataset&&t.dataset.tab){ t.checked?FT_TABS.add(t.dataset.tab):FT_TABS.delete(t.dataset.tab); if(FT_TABS.size&&!FT_VIGS.size) return ftVigs(2); renderFT(); }
-  else if(t.dataset&&t.dataset.vig){ t.checked?FT_VIGS.add(t.dataset.vig):FT_VIGS.delete(t.dataset.vig); renderFT(); }
-  else if(t.id==='ft-form') renderFT(); });
-let _ftq; $('ft-q')&&$('ft-q').addEventListener('input',()=>{ clearTimeout(_ftq); _ftq=setTimeout(renderFT,200); });
+function ftTabsSel(){ const d=ftTabsDisp(), s=getSel('ms-ftt'); return s.length?d.filter(x=>s.includes(x.k)):d; }
+function ftPers(tabs){ return [...new Set(tabs.flatMap(x=>x.vigs.map(perK)))].sort().reverse(); }
+function ftPersSel(tabs){ const s=getSel('ms-ftq'), all=ftPers(tabs); return s.length?all.filter(p=>s.includes(p)):all; }
+async function renderFT(){
+  if(!FTL) $('ft-res').innerHTML='<div class="mut" style="padding:24px;text-align:center">Lendo a lista de tabelas do FT…</div>';
+  try{ await ftCarrega(); }catch(e){ $('ft-res').innerHTML=`<div class="aviso err" style="margin:12px">Não consegui ler ft_layout: ${esc(e.message||e)}</div>`; return; }
+  buildMs('ms-ftc',CANAIS.filter(c=>FTL.some(l=>l.canal===c)),ftMontaTab,c=>CANAL_ROT[c]||c);
+  ftMontaTab();
+}
+/* a Tabela começa no Caminhão da Rota; "Todos" = todas as tabelas dos canais do filtro */
+function ftMontaTab(){
+  const disp=ftTabsDisp(), w=$('ms-ftt'), multi=ftCanais().length>1;
+  if(!w._ini){ w._ini=true; if(disp.some(x=>x.k==='ROTA|Caminhao')) w._sel=new Set(['ROTA|Caminhao']); }
+  buildMs('ms-ftt',disp.map(x=>({v:x.k,rot:(multi?CANAL_ROT[x.c]+' · ':'')+x.n})),ftMontaPer);
+  ftMontaPer();
+}
+/* a Quinzena abre na última com dado e acompanha a tabela enquanto não for mexida; "Todos" = o histórico inteiro */
+function ftMontaPer(){
+  const w=$('ms-ftq'), pers=ftPers(ftTabsSel()); if(w._auto===undefined) w._auto=true;
+  buildMs('ms-ftq',pers,ftPinta,perRot);
+  if(w._auto&&pers.length){ w._sel=new Set([pers[0]]); w._render(''); }
+  ftPinta();
+}
+async function ftColunas(x){
+  if(FT_COLS[x.k]) return FT_COLS[x.k];
+  const ult=x.vigs.reduce((a,b)=>vigOrd(b)>vigOrd(a)?b:a);
+  const {data,error}=await sb.from('ft_layout').select('colunas').eq('canal',x.c).eq('tabela',x.t).eq('vigencia',ult.vigencia).maybeSingle();
+  if(error) throw error;
+  return FT_COLS[x.k]=((data&&data.colunas)||[]).filter(c=>c!=='_id');
+}
+const ftMarcado=(k,c)=>!FT_SEL[k]||FT_SEL[k].has(c);
+let _ftTok=0;
+async function ftPinta(){
+  const tok=++_ftTok, tabs=ftTabsSel(), pers=ftPersSel(tabs), ps=new Set(pers);
+  if(!tabs.length){ $('ft-campos').innerHTML='<div class="mut" style="padding:10px">Nenhuma tabela no filtro</div>'; $('ft-res').innerHTML=''; set('ft-st','—'); return; }
+  if(tabs.some(x=>!FT_COLS[x.k])) $('ft-campos').innerHTML='<div class="mut" style="padding:10px">Lendo os campos…</div>';
+  let cols; try{ cols=await emLotes(tabs.map(x=>()=>ftColunas(x)),6); }
+  catch(e){ if(tok===_ftTok) $('ft-campos').innerHTML=`<div class="aviso err">Não consegui ler os campos: ${esc(e.message||e)}</div>`; return; }
+  if(tok!==_ftTok) return;
+  const q=normU($('ft-cq').value), multi=new Set(tabs.map(x=>x.c)).size>1;
+  $('ft-campos').innerHTML=tabs.map((x,i)=>{ const cs=cols[i], vis=cs.filter(c=>!q||normU(c).includes(q)); if(q&&!vis.length) return '';
+    const nm=cs.filter(c=>ftMarcado(x.k,c)).length;
+    return `<div class="ft-pg"><label><input type="checkbox" data-ftall="${esc(x.k)}" ${nm===cs.length?'checked':''}> ${esc((multi?CANAL_ROT[x.c]+' · ':'')+x.n)}</label><span class="mut">${nm} de ${cs.length}</span></div>`
+      +vis.map(c=>`<label><input type="checkbox" data-ftk="${esc(x.k)}" data-campo="${esc(c)}" ${ftMarcado(x.k,c)?'checked':''}> ${esc(c)}</label>`).join(''); }).join('')
+    ||'<div class="mut" style="padding:10px">Nenhum campo com esse nome</div>';
+  let tl=0, tc=0;
+  const linhas=tabs.map((x,i)=>{ const vv=x.vigs.filter(l=>ps.has(perK(l))), lin=vv.reduce((s,l)=>s+(l.linhas||0),0), nm=cols[i].filter(c=>ftMarcado(x.k,c)).length;
+    if(nm){ tl+=lin; tc+=nm; }
+    return `<tr><td class="conta uni">${esc(CANAL_ROT[x.c]||x.c)}</td><td>${esc(x.n)}</td><td class="num">${br(vv.length)}</td><td class="num">${br(lin)}</td><td class="num">${br(nm)} de ${br(cols[i].length)}</td></tr>`; });
+  $('ft-res').innerHTML=`<table class="dre" data-no-sort><thead><tr><th>Canal</th><th>Tabela</th><th class="num">Quinzenas com dado</th><th class="num">Linhas</th><th class="num">Campos</th></tr></thead>
+    <tbody>${linhas.join('')}</tbody><tfoot><tr class="total"><td class="conta uni">Total</td><td>${br(tabs.length)} tabela(s)</td><td class="num">${br(pers.length)}</td><td class="num">${br(tl)}</td><td class="num">${br(tc)}</td></tr></tfoot></table>`;
+  set('ft-st',`${tabs.length} tabela(s) · ${pers.length} quinzena(s) · ${br(tl)} linhas`);
+}
+$('ft-campos')&&$('ft-campos').addEventListener('change',e=>{ const b=e.target;
+  if(b.dataset.ftall){ FT_SEL[b.dataset.ftall]=b.checked?null:new Set(); }
+  else if(b.dataset.ftk){ const k=b.dataset.ftk, all=FT_COLS[k]||[]; const s=FT_SEL[k]?new Set(FT_SEL[k]):new Set(all);
+    b.checked?s.add(b.dataset.campo):s.delete(b.dataset.campo); FT_SEL[k]=all.every(c=>s.has(c))?null:s; }
+  else return;
+  ftPinta(); });
+function ftMarca(t){ ftTabsSel().forEach(x=>{ FT_SEL[x.k]=t?null:new Set(); }); ftPinta(); }
+let _ftq; $('ft-cq')&&$('ft-cq').addEventListener('input',()=>{ clearTimeout(_ftq); _ftq=setTimeout(ftPinta,200); });
+$('ft-form')&&$('ft-form').addEventListener('change',()=>{ if(FTL) ftMontaTab(); });
 async function ftExporta(){
   const bt=$('ft-bt'), st=$('ft-st'); st.className='st';
-  const tabs=[...FT_TABS], vigs=[...FT_VIGS];
-  if(!tabs.length||!vigs.length){ st.className='st err'; st.textContent='Marque ao menos uma tabela e uma vigência'; return; }
+  const tabs=ftTabsSel(), pers=new Set(ftPersSel(tabs));
+  const alvo=tabs.map(x=>({x,vigs:x.vigs.filter(l=>pers.has(perK(l))).sort((a,b)=>vigOrd(b)-vigOrd(a))})).filter(y=>y.vigs.length&&!(FT_SEL[y.x.k]&&!FT_SEL[y.x.k].size));
+  if(!alvo.length){ st.className='st err'; st.textContent='Marque ao menos uma tabela, uma quinzena e um campo'; return; }
   bt.disabled=true;
   try{
     if(typeof XlsxTabela==='undefined'||typeof fflate==='undefined') throw new Error('a biblioteca do Excel não carregou');
-    const uSel=getSel('ms-uni'); const abas=[], usados=new Set();
-    for(const t of tabs){
-      st.textContent=`lendo ${ftNome(t)}…`;
-      const {data:lays,error}=await sb.from('ft_layout').select('vigencia,colunas,ano,mes,quinzena').eq('canal',FT_CANAL).eq('tabela',t).in('vigencia',vigs);
-      if(error) throw error; if(!lays||!lays.length) continue;
-      lays.sort((a,b)=>vigOrd(b)-vigOrd(a));
-      const cols=[]; lays.forEach(l=>(l.colunas||[]).forEach(c=>{ if(c!=='_id'&&!cols.includes(c)) cols.push(c); }));
-      const linhas=[];
-      for(const l of lays){
-        const rows=await todasF(sb.from('ft_linha').select('unidade,dados').eq('canal',FT_CANAL).eq('tabela',t).eq('vigencia',l.vigencia).order('linha'));
+    const uSel=getSel('ms-uni'), abas=[], usados=new Set(), multi=new Set(alvo.map(y=>y.x.c)).size>1;
+    for(const {x,vigs} of alvo){
+      st.textContent=`${x.n}: lendo as colunas…`;
+      const lays=[];
+      for(let i=0;i<vigs.length;i+=60){ const {data,error}=await sb.from('ft_layout').select('vigencia,colunas').eq('canal',x.c).eq('tabela',x.t).in('vigencia',vigs.slice(i,i+60).map(l=>l.vigencia));
+        if(error) throw error; lays.push(...(data||[])); }
+      const ordV=new Map(vigs.map((l,i)=>[l.vigencia,i])); lays.sort((a,b)=>ordV.get(a.vigencia)-ordV.get(b.vigencia));
+      let cols=[]; lays.forEach(l=>(l.colunas||[]).forEach(c=>{ if(c!=='_id'&&!cols.includes(c)) cols.push(c); }));
+      if(FT_SEL[x.k]) cols=cols.filter(c=>FT_SEL[x.k].has(c));
+      const blocos=await emLotes(lays.map(l=>async()=>{
+        const rows=await todasF(sb.from('ft_linha').select('unidade,dados').eq('canal',x.c).eq('tabela',x.t).eq('vigencia',l.vigencia).order('linha'));
         const ix=cols.map(c=>(l.colunas||[]).indexOf(c));
-        rows.forEach(r=>{ if(uSel.length&&!uSel.includes(UNI_FT[normU(r.unidade)]||r.unidade)) return;
-          linhas.push(ix.map(i=>{ const v=i<0?null:r.dados[i]; return v==null?null:typeof v==='boolean'?(v?'VERDADEIRO':'FALSO'):typeof v==='object'?JSON.stringify(v):v; })); });
-        st.textContent=`lendo ${ftNome(t)} · ${br(linhas.length)} linhas`;
-      }
+        return rows.filter(r=>!uSel.length||uSel.includes(UNI_FT[normU(r.unidade)]||r.unidade))
+          .map(r=>ix.map(i=>{ const v=i<0?null:r.dados[i]; return v==null?null:typeof v==='boolean'?(v?'VERDADEIRO':'FALSO'):typeof v==='object'?JSON.stringify(v):v; }));
+      }),4,(f,t)=>{ st.textContent=`${x.n}: ${f} de ${t} quinzena(s)…`; });
+      const linhas=blocos.flat();
       const fmt=cols.map((c,j)=>{ let num=0,txt=0; for(const ln of linhas){ const v=ln[j]; if(v==null||v==='') continue; if(typeof v==='number') num++; else txt++; if(num+txt>200) break; } return num&&!txt?'dec':'texto'; });
-      let nome=ftNome(t).replace(/[\\/?*\[\]:]/g,' ').slice(0,31).trim(); let k=2; while(usados.has(nome)) nome=nome.slice(0,28)+' '+(k++); usados.add(nome);
+      let nome=((multi?CANAL_ROT[x.c]+' · ':'')+x.n).replace(/[\\/?*\[\]:]/g,' ').slice(0,31).trim(); let k=2; while(usados.has(nome)) nome=nome.slice(0,28)+' '+(k++); usados.add(nome);
       abas.push({nome,colunas:cols.map((c,j)=>({nome:c,fmt:fmt[j],larg:Math.min(36,Math.max(10,c.length+2))})),linhas});
     }
-    if(!abas.length) throw new Error('nenhuma linha para as vigências marcadas');
-    st.textContent='gravando o Excel…';
+    const tot=abas.reduce((s,a)=>s+a.linhas.length,0);
+    if(!tot) throw new Error('nenhuma linha para as quinzenas marcadas');
+    st.textContent=`gravando o Excel (${br(tot)} linhas)…`;
     const blob=await XlsxTabela.monta(abas,{});
-    baixaBlob(blob,`FT_${FT_CANAL}_${vigs.length===1?vigs[0]:vigs.length+'vig'}_${hojeArq()}.xlsx`);
-    st.textContent=`${abas.length} aba(s) · ${br(abas.reduce((s,a)=>s+a.linhas.length,0))} linhas exportadas`;
+    const y=alvo[0];
+    baixaBlob(blob,`FT_${alvo.length===1?y.x.c+'_'+y.x.t.replace(/^FORMULA:/,'Formula_'):alvo.length+'tabelas'}_${pers.size}q_${hojeArq()}.xlsx`);
+    st.textContent=`${abas.length} aba(s) · ${br(tot)} linhas exportadas`;
   }catch(e){ st.className='st err'; st.textContent='Erro: '+String((e&&e.message)||e).slice(0,160); }
   finally{ bt.disabled=false; }
+}
+
+/* ══ CONSULTA: uma placa, um chassi ou um modelo, com tudo que o FT tem (cadastro, histórico e todos os campos) ══ */
+let CS_CAT=null, CS_MODO='eq', CS_SEL=null, CS_HIST=null, CS_ABA='resumo', CS_TABK=null;
+async function csCatalogo(){
+  if(CS_CAT) return CS_CAT;
+  await ftCarrega();
+  const jobs=EQ_TAB.map(d=>()=>{ const ls=FTL.filter(l=>l.canal===d.c&&l.tabela===d.t); if(!ls.length) return Promise.resolve([]);
+    const u=ls.reduce((a,b)=>vigOrd(b)>vigOrd(a)?b:a); return leTabEq(d,u.ano,u.mes,u.quinzena||1); });
+  CS_CAT=(await emLotes(jobs,4)).flat(); return CS_CAT;
+}
+const csTxt=p=>normU([p.placa,p.chassi,p.modelo,p.marca,p.uni,p.uniFT,p.tipo,OPS[p.op],p.placaCarreta].join(' '));
+const modKey=p=>(p.marca?p.marca+' ':'')+(p.modelo||'(sem modelo)');
+const sitTxt=a=>a==null?'—':a?'Ativo':'Inativo';
+async function renderConsulta(){
+  const el=$('cs-list');
+  if(!CS_CAT) el.innerHTML='<div class="mut" style="padding:18px;text-align:center">Lendo os cadastros do FT…</div>';
+  let cat; try{ cat=await csCatalogo(); }catch(e){ el.innerHTML=`<div class="aviso err">Não consegui ler o FT: ${esc(e.message||e)}</div>`; return; }
+  const q=normU($('cs-q').value), ws=q.split(' ').filter(Boolean);
+  const base=cat.filter(passaEq).filter(p=>!ws.length||ws.every(w=>csTxt(p).includes(w)));
+  if(CS_MODO==='mod'){
+    const m=new Map(); base.forEach(p=>{ const k=modKey(p)+'¦'+p.tipo; if(!m.has(k)) m.set(k,[]); m.get(k).push(p); });
+    const gs=[...m.entries()].map(([k,ps])=>({k,ps,at:ps.filter(p=>p.ativo).length})).sort((a,b)=>b.ps.length-a.ps.length||a.k.localeCompare(b.k,'pt-BR'));
+    el.innerHTML=gs.map(g=>{ const [mod,tipo]=g.k.split('¦'), unis=[...new Set(g.ps.map(p=>p.uni))].sort();
+      return `<button class="cs-it${CS_SEL&&CS_SEL.mod===g.k?' on':''}" data-mod="${esc(g.k)}"><div class="lin"><b>${esc(mod)}</b><span class="dir">${g.ps.length}</span></div><div class="l2">${esc(tipo)} · ${g.at} ativo(s) · ${esc(unis.join(', '))}</div></button>`; }).join('')
+      ||'<div class="mut" style="padding:18px;text-align:center">Nenhum modelo</div>';
+    set('cs-st',`${br(gs.length)} modelo(s) · ${br(base.length)} equipamento(s) · cadastro da última quinzena de cada canal`);
+    return;
+  }
+  const lim=300, ord=base.slice().sort((a,b)=>(b.ativo===true)-(a.ativo===true)||TIPOS.indexOf(a.tipo)-TIPOS.indexOf(b.tipo)||String(a.uni).localeCompare(b.uni)||String(a.id).localeCompare(b.id));
+  const qp=q.replace(/[^A-Z0-9]/g,'');
+  el.innerHTML=ord.slice(0,lim).map(p=>`<button class="cs-it${CS_SEL&&CS_SEL.id===p.id&&CS_SEL.tab===p.tab?' on':''}" data-id="${esc(p.id)}" data-cstab="${esc(p.tab)}"><div class="lin"><b>${esc(p.id||'(sem placa)')}</b><span class="dir">${esc(p.uni)} · ${esc(OPS[p.op]||p.op)}</span></div><div class="l2">${esc(p.tipo)} · ${esc(modKey(p))}${p.ano?' · '+p.ano:''} · ${sitTxt(p.ativo)}</div></button>`).join('')
+    ||(/^[A-Z0-9]{7}$/.test(qp)?`<button class="cs-it" data-id="${esc(qp)}" data-cstab=""><div class="lin"><b>Procurar ${esc(qp)} no histórico do FT</b></div><div class="l2">fora do cadastro da última quinzena</div></button>`:'<div class="mut" style="padding:18px;text-align:center">Nada encontrado</div>');
+  set('cs-st',`${br(base.length)} equipamento(s)${base.length>lim?` · mostrando ${lim}, refine a busca`:''} · cadastro da última quinzena de cada canal`);
+}
+$('cs-list')&&$('cs-list').addEventListener('click',e=>{ const b=e.target.closest('.cs-it'); if(!b) return;
+  document.querySelectorAll('#cs-list .cs-it').forEach(x=>x.classList.toggle('on',x===b));
+  if(b.dataset.mod){ CS_SEL={mod:b.dataset.mod}; fichaModelo(); } else { CS_SEL={id:b.dataset.id,tab:b.dataset.cstab}; fichaEq(); } });
+let _csq; $('cs-q')&&$('cs-q').addEventListener('input',()=>{ clearTimeout(_csq); _csq=setTimeout(renderConsulta,200); });
+document.querySelectorAll('#dims-cs .dimb').forEach(b=>b.addEventListener('click',()=>{ CS_MODO=b.dataset.cs;
+  document.querySelectorAll('#dims-cs .dimb').forEach(x=>x.classList.toggle('on',x===b)); renderConsulta(); }));
+/* valor cru do FT para a tela: data serial vira dd/mm/aaaa nos campos de data; booleano vira Sim/Não */
+function valFT(c,v){
+  if(v==null||v==='') return '—';
+  if(typeof v==='boolean') return v?'Sim':'Não';
+  if(typeof v==='number'){
+    if(/data|entrada|^ano|ano (cavalo|carroceria)|mesano|alteracao|limite/i.test(normU(c).replace(/[^A-Z ]/g,' '))&&v>20000&&v<80000){ const d=new Date(Date.UTC(1899,11,30)+Math.round(v)*864e5); return `${d2(d.getUTCDate())}/${d2(d.getUTCMonth()+1)}/${d.getUTCFullYear()}`; }
+    if(Number.isInteger(v)&&v>=1900&&v<=2100&&/ANO/.test(normU(c))) return String(v);
+    return v.toLocaleString('pt-BR',{maximumFractionDigits:4});
+  }
+  if(typeof v==='object') return JSON.stringify(v);
+  return String(v);
+}
+async function fichaEq(){
+  const {id,tab}=CS_SEL, el=$('cs-ficha'); CS_HIST=null; CS_TABK=null;
+  el.innerHTML='<div class="mut cs-vazio">Lendo o histórico no FT…</div>';
+  const d=EQ_TAB.find(x=>x.t===tab);
+  try{
+    const sel='canal,tabela,vigencia,ano,mes,quinzena,unidade,placa,dados';
+    const rows=d&&d.tipo==='Empilhadeira'
+      ?await todasF(sb.from('ft_linha').select(sel).eq('canal',d.c).eq('tabela',d.t).filter('dados','cs',JSON.stringify([id])).order('vigencia').order('linha'))
+      :await todasF(sb.from('ft_linha').select(sel).eq('placa',id).order('tabela').order('vigencia').order('linha'));
+    if(CS_SEL.id!==id) return;
+    if(!rows.length){ el.innerHTML=`<div class="mut cs-vazio">Nenhum registro de ${esc(id)} no FT</div>`; return; }
+    const gr=new Map(); rows.forEach(r=>{ const k=r.canal+'|'+r.tabela; if(!gr.has(k)) gr.set(k,[]); gr.get(k).push(r); });
+    const lays={};
+    await emLotes([...gr.entries()].map(([k,rs])=>async()=>{ const [c,t]=k.split('|'), vs=[...new Set(rs.map(r=>r.vigencia))];
+      for(let i=0;i<vs.length;i+=60){ const {data,error}=await sb.from('ft_layout').select('vigencia,colunas,tabela_nome').eq('canal',c).eq('tabela',t).in('vigencia',vs.slice(i,i+60));
+        if(error) throw error; (data||[]).forEach(l=>{ lays[k+'|'+l.vigencia]=l; }); } }),4);
+    if(CS_SEL.id!==id) return;
+    const raws=[], eqs=[];
+    rows.forEach(r=>{ const k=r.canal+'|'+r.tabela, l=lays[k+'|'+r.vigencia]; if(!l) return;
+      const q=r.quinzena||1, ord=perOrd(r.ano,r.mes,q);
+      raws.push({k,c:r.canal,t:r.tabela,nome:(l.tabela_nome||r.tabela),vg:r.vigencia,ord,per:perTxt(r.ano,r.mes,q,r.canal),cols:l.colunas||[],dados:r.dados});
+      const dd=EQ_TAB.find(x=>x.c===r.canal&&x.t===r.tabela); if(dd) eqs.push(eqDe(dd,idxCols(l.colunas),r,{vg:r.vigencia,a:r.ano,m:r.mes,q})); });
+    eqs.sort((a,b)=>a.ord-b.ord); raws.sort((a,b)=>b.ord-a.ord);
+    CS_HIST={id,eqs,raws}; CS_TABK=raws[0]&&raws[0].k;
+    pintaFicha();
+  }catch(e){ el.innerHTML=`<div class="aviso err" style="margin:12px">Não consegui ler o histórico: ${esc(e.message||e)}</div>`; }
+}
+const cmp=(rot,v)=>`<div><span>${esc(rot)}</span>${v==null||v===''?'—':esc(v)}</div>`;
+function pintaFicha(){
+  const H=CS_HIST, el=$('cs-ficha'); if(!H) return;
+  const ult=H.eqs[H.eqs.length-1]||null, ant=H.eqs[H.eqs.length-2]||null, r0=H.raws[0];
+  const tit=ult?ult.id:H.id;
+  const fx=ult?[cmp('Tipo',ult.tipo),cmp('Operação',OPS[ult.op]||ult.op),cmp('Unidade',ult.uni),cmp('Modelo',ult.modelo),cmp('Montadora',ult.marca),cmp('Ano',ult.ano),
+      cmp('Chassi',ult.chassi),cmp('Situação',sitTxt(ult.ativo)),cmp('Vida',ult.vida==null?null:br(ult.vida,1)+' meses'),cmp('Carência',ult.carencia==null?null:br(ult.carencia)+' meses'),
+      ult.placaCarreta?cmp('Placa da carreta',ult.placaCarreta):'',cmp('No FT',`${H.eqs[0].per} a ${ult.per}`)].join('')
+    :cmp('Tabela',r0.nome)+cmp('Quinzena',r0.per);
+  const abas=[['resumo','Resumo'],['hist','Histórico'],['campos','Todos os campos']].filter(([k])=>ult||k==='campos');
+  if(!ult) CS_ABA='campos';
+  el.innerHTML=`<div class="cs-cab"><h2>${esc(tit)}</h2><div class="cs-fx">${fx}</div></div>
+    <div class="thead-row"><div class="dims" id="dims-csa">${abas.map(([k,r])=>`<button class="dimb${CS_ABA===k?' on':''}" data-csa="${k}">${r}</button>`).join('')}</div>
+      <button class="bt ghost" onclick="csExporta()">Exportar ficha</button></div>
+    <div class="cs-corpo" id="cs-corpo"></div>`;
+  el.querySelectorAll('[data-csa]').forEach(b=>b.addEventListener('click',()=>{ CS_ABA=b.dataset.csa; pintaFicha(); }));
+  const C=$('cs-corpo');
+  if(CS_ABA==='resumo'){
+    const t2=ult.rskm!=null, dd=(a,b)=>{ const x=dlt(a,b); return ant?`vs ${ant.per}: <b class="${x.c}">${x.t}</b>`:'&nbsp;'; };
+    const cards=[];
+    if(t2) cards.push(kpi('Variável (R$/km)',br(ult.rskm,3),dd(ult.rskm,ant&&ant.rskm)));
+    if(ult.kml!=null) cards.push(kpi('Km/L remunerado',br(ult.kml,2),dd(ult.kml,ant&&ant.kml)));
+    if(ult.manut!=null) cards.push(kpi('Manutenção (R$/km)',br(ult.manut,3),ult.manut===0&&ult.vida!=null&&ult.carencia!=null&&ult.vida<=ult.carencia?'em carência da montadora':dd(ult.manut,ant&&ant.manut)));
+    if(t2) cards.push(kpi('Km remunerado do mês',br(ult.km),ult.ativo?'variável do mês '+fmtR(ult.var):'placa inativa: sem variável'));
+    if(ult.fixo!=null) cards.push(kpi('Fixo (R$/mês)',br(ult.fixo),dd(ult.fixo,ant&&ant.fixo)));
+    if(ult.var!=null&&!t2) cards.push(kpi('Variável do mês (R$)',br(ult.var),dd(ult.var,ant&&ant.var)));
+    if(ult.horim!=null) cards.push(kpi('Horímetro médio (h)',br(ult.horim,1),dd(ult.horim,ant&&ant.horim)));
+    if(ult.ano!=null&&cards.length<5) cards.push(kpi('Ano',String(ult.ano),ult.idade!=null?br(ult.idade)+' ano(s) de uso no FT':'&nbsp;'));
+    const E=H.eqs, labels=E.map(p=>p.per);
+    const temFixo=E.some(p=>p.fixo!=null);
+    const gt=t2?'Variável da placa por quinzena':temFixo?'Fixo por quinzena':'Km/L remunerado por quinzena';
+    const gs=t2?'R$/km por componente, como o FT remunera a placa':temFixo?'R$ por mês':'km/L';
+    C.innerHTML=`<div class="kpis cs-kpis" style="grid-template-columns:repeat(${Math.max(cards.length,1)},minmax(0,1fr))">${cards.slice(0,5).join('')}</div>
+      <div class="card gcard cs-g"><div class="gtit">${gt}</div><div class="gsub">${gs} · ${labels.length} quinzena(s)</div><div class="gleg" id="cs-leg"></div><div class="gcv"><canvas id="ch-cs"></canvas></div></div>`;
+    if(t2){ const se=[['Combustível','comb'],['Manutenção','manut'],['Carroceria','carroc'],['Pneu','pneu'],['Lavagem','lav']].filter(([,c])=>E.some(p=>p[c]))
+        .map(([rot,c])=>({rot,data:E.map(p=>p[c])}));
+      empilhado('ch-cs',labels,se,{fmt:(v,c)=>c?br(v,2):'R$ '+br(v,3)+'/km',mostraTot:labels.length<=30});
+      legenda('cs-leg',se.map(s=>[s.rot,s.cor])); }
+    else if(temFixo){ const se=[{rot:'Fixo',data:E.map(p=>p.fixo)}]; empilhado('ch-cs',labels,se,{fmt:(v,c)=>c?fmtK(v):'R$ '+br(v),mostraTot:labels.length<=30}); legenda('cs-leg',[['Fixo',COR.lar]]); }
+    else { linhas('ch-cs',labels,[{rot:'Km/L',data:E.map(p=>p.kml),cor:COR.lar}],{fmt:v=>br(v,2)}); legenda('cs-leg',[['Km/L remunerado',COR.lar]],true); }
+  } else if(CS_ABA==='hist'){
+    const E=H.eqs.slice().reverse();
+    const cs=[['uni','Unidade','t'],['op','Operação','t'],['ativo','Situação','t'],['kml','Km/L',2],['comb','Comb. (R$/km)',3],['manut','Manut. (R$/km)',3],['carroc','Carroc. (R$/km)',3],
+      ['pneu','Pneu (R$/km)',3],['lav','Lavagem (R$/km)',3],['rskm','Total (R$/km)',3],['km','Km do mês',0],['var','Variável (R$)',0],['fixo','Fixo (R$/mês)',0],['horim','Horímetro (h)',1],['vida','Vida (meses)',1]]
+      .filter(([c,,f])=>f==='t'||E.some(p=>p[c]!=null));
+    const cel=(p,[c,,f])=>f==='t'?esc(c==='op'?(OPS[p.op]||p.op):c==='ativo'?sitTxt(p.ativo):p[c]):p[c]==null?'—':br(p[c],f);
+    C.innerHTML=`<div class="twrap"><table class="dre"><thead><tr><th>Quinzena</th>${cs.map(([,r,f])=>`<th class="${f==='t'?'':'num'}">${r}</th>`).join('')}</tr></thead>
+      <tbody>${E.map(p=>`<tr><td class="conta uni">${esc(p.per)}</td>${cs.map(x=>`<td class="${x[2]==='t'?'':'num'}">${cel(p,x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  } else {
+    const ks=[...new Set(H.raws.map(r=>r.k))]; if(!ks.includes(CS_TABK)) CS_TABK=ks[0];
+    const rs=H.raws.filter(r=>r.k===CS_TABK), a=rs[0], b=rs[1];
+    const mudou=c=>{ const v0=a.dados[a.cols.indexOf(c)]; for(let i=1;i<rs.length;i++){ const j=rs[i].cols.indexOf(c), v=j<0?undefined:rs[i].dados[j]; if(JSON.stringify(v)!==JSON.stringify(v0)) return rs[i-1].per; } return rs[rs.length-1].per; };
+    const vb=c=>{ if(!b) return '—'; const j=b.cols.indexOf(c); return j<0?'—':valFT(c,b.dados[j]); };
+    const cols=a.cols.filter(c=>c!=='_id');
+    C.innerHTML=`${ks.length>1?`<div class="dims">${ks.map(k=>{ const r=H.raws.find(x=>x.k===k); return `<button class="dimb${k===CS_TABK?' on':''}" data-cstk="${esc(k)}">${esc(CANAL_ROT[r.c]+' · '+r.nome)}</button>`; }).join('')}</div>`:''}
+      <div class="twrap"><table class="dre cs-campos"><thead><tr><th>Campo</th><th>${esc(a.per)}</th><th>${b?esc(b.per):'Quinzena anterior'}</th><th>Valor atual desde</th></tr></thead>
+      <tbody>${cols.map(c=>{ const v=valFT(c,a.dados[a.cols.indexOf(c)]), w=vb(c), mud=b&&v!==w&&normU(c)!=='VIGENCIA';
+        return `<tr${mud?' class="mud"':''}><td class="conta">${esc(c)}</td><td>${esc(v)}</td><td>${esc(w)}</td><td>${esc(mudou(c))}</td></tr>`; }).join('')}</tbody></table></div>
+      <div class="tsub tpe">${esc(CANAL_ROT[a.c]+' · '+a.nome)} · ${cols.length} campos como o FT exporta · em laranja, o que mudou da quinzena anterior para a última</div>`;
+    C.querySelectorAll('[data-cstk]').forEach(x=>x.addEventListener('click',()=>{ CS_TABK=x.dataset.cstk; pintaFicha(); }));
+  }
+}
+function fichaModelo(){
+  const k=CS_SEL.mod, [mod,tipo]=k.split('¦'), el=$('cs-ficha'); CS_HIST=null;
+  const ps=(CS_CAT||[]).filter(passaEq).filter(p=>modKey(p)===mod&&p.tipo===tipo).sort((a,b)=>(b.ativo===true)-(a.ativo===true)||String(a.uni).localeCompare(b.uni)||String(a.id).localeCompare(b.id));
+  const at=ps.filter(p=>p.ativo!==false);
+  const med=(arr,f)=>{ const v=arr.map(f).filter(x=>x!=null&&isFinite(x)); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; };
+  const anos=ps.map(p=>p.ano).filter(Boolean), unis=[...new Set(ps.map(p=>p.uni))].sort();
+  const cards=[kpi('Equipamentos',br(ps.length),`${ps.filter(p=>p.ativo).length} ativo(s) · ${unis.length} unidade(s)`)];
+  const kml=med(at,p=>p.kml), rk=med(at,p=>p.rskm), mn=med(at,p=>p.manut), fx=med(ps,p=>p.fixo);
+  if(kml!=null) cards.push(kpi('Km/L remunerado médio',br(kml,2),'média simples das ativas'));
+  if(rk!=null) cards.push(kpi('Variável médio (R$/km)',br(rk,3),'média simples das ativas'));
+  if(mn!=null) cards.push(kpi('Manutenção média (R$/km)',br(mn,3),'média simples das ativas'));
+  if(fx!=null) cards.push(kpi('Fixo médio (R$/mês)',br(fx),'média simples'));
+  if(anos.length&&cards.length<5) cards.push(kpi('Ano',Math.min(...anos)===Math.max(...anos)?String(anos[0]):`${Math.min(...anos)} a ${Math.max(...anos)}`,'faixa de anos do modelo'));
+  const cs=[['uni','Unidade','t'],['op','Operação','t'],['ano','Ano','a'],['ativo','Situação','t'],['kml','Km/L',2],['rskm','Total (R$/km)',3],['manut','Manut. (R$/km)',3],['km','Km do mês',0],['fixo','Fixo (R$/mês)',0],['vida','Vida (meses)',1]]
+    .filter(([c,,f])=>f==='t'||ps.some(p=>p[c]!=null));
+  const cel=(p,[c,,f])=>f==='t'?esc(c==='op'?(OPS[p.op]||p.op):c==='ativo'?sitTxt(p.ativo):p[c]):p[c]==null?'—':f==='a'?String(p[c]):br(p[c],f);
+  el.innerHTML=`<div class="cs-cab"><h2>${esc(mod)}</h2><div class="cs-fx">${cmp('Tipo',tipo)}${cmp('Unidades',unis.join(', '))}${cmp('Cadastro',ps[0]?ps[0].per:'—')}</div></div>
+    <div class="cs-corpo"><div class="kpis cs-kpis" style="grid-template-columns:repeat(${cards.length},minmax(0,1fr))">${cards.slice(0,5).join('')}</div>
+    <div class="twrap"><table class="dre"><thead><tr><th>Placa</th>${cs.map(([,r,f])=>`<th class="${f==='t'?'':'num'}">${r}</th>`).join('')}</tr></thead>
+    <tbody>${ps.map(p=>`<tr class="cs-lnk" data-id="${esc(p.id)}" data-cstab="${esc(p.tab)}"><td class="conta">${esc(p.id)}</td>${cs.map(x=>`<td class="${x[2]==='t'?'':'num'}">${cel(p,x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <div class="tsub tpe">Clique numa placa para abrir a ficha dela</div></div>`;
+  el.querySelectorAll('tr.cs-lnk').forEach(tr=>tr.addEventListener('click',()=>{ CS_SEL={id:tr.dataset.id,tab:tr.dataset.cstab}; CS_ABA='resumo'; fichaEq(); }));
+}
+async function csExporta(){
+  const H=CS_HIST; if(!H) return;
+  try{
+    if(typeof XlsxTabela==='undefined'||typeof fflate==='undefined') throw new Error('a biblioteca do Excel não carregou');
+    const abas=[];
+    if(H.eqs.length){ const cs=REL_EQ_COL;
+      abas.push({nome:'Resumo',colunas:[{nome:'Mês',fmt:'mes',larg:10},{nome:'Quinzena',fmt:'int',larg:10}].concat(cs.map(c=>({nome:relRotEq(c),fmt:c.f==='texto'?'texto':c.f==='int'?'int':'dec',larg:14}))),
+        linhas:H.eqs.slice().reverse().map(p=>[new Date(p.a,p.m-1,1),p.canal==='ARMAZEM'?null:p.q].concat(cs.map(c=>{ const v=valEq(p,c); return v==null||v===''?null:v; })))}); }
+    const ks=[...new Set(H.raws.map(r=>r.k))], usados=new Set(['Resumo']);
+    ks.forEach(k=>{ const rs=H.raws.filter(r=>r.k===k); const cols=[]; rs.forEach(r=>r.cols.forEach(c=>{ if(c!=='_id'&&!cols.includes(c)) cols.push(c); }));
+      const linhas=rs.map(r=>cols.map(c=>{ const j=r.cols.indexOf(c), v=j<0?null:r.dados[j]; return v==null?null:typeof v==='boolean'?(v?'VERDADEIRO':'FALSO'):typeof v==='object'?JSON.stringify(v):v; }));
+      const fmt=cols.map((c,j)=>linhas.some(l=>typeof l[j]==='string'&&l[j]!=='')?'texto':'dec');
+      let nome=(CANAL_ROT[rs[0].c]+' · '+rs[0].nome).replace(/[\\/?*\[\]:]/g,' ').slice(0,31).trim(); let n=2; while(usados.has(nome)) nome=nome.slice(0,28)+' '+(n++); usados.add(nome);
+      abas.push({nome,colunas:cols.map((c,j)=>({nome:c,fmt:fmt[j],larg:Math.min(36,Math.max(10,c.length+2))})),linhas}); });
+    const blob=await XlsxTabela.monta(abas,{});
+    baixaBlob(blob,`ficha-${H.id}-${hojeArq()}.xlsx`);
+  }catch(e){ alert('Não consegui exportar: '+((e&&e.message)||e)); }
 }
 
 /* ══ LEITURA, FILTROS E RENDER ══ */
@@ -1442,7 +1850,8 @@ function render(){
   const ult=vigs[vigs.length-1];
   set('titSub',`Freightech · ${vigs.length===1?rotVig(ult):rotVig(vigs[0])+' a '+rotVig(ult)} · previsto, não é a fatura · base de ${fmtDT(CARREGADO)}`);
   const f={resumo:()=>renderResumo(vigs),hist:renderHist,vargraf:()=>renderVarGraf(vigs),vartab:()=>renderVarTab(vigs),
-    fixgraf:()=>renderFixGraf(vigs),fixtab:()=>renderFixTab(vigs),analitica:()=>renderAnalitica(vigs),placas:renderPlacas,relat:()=>{ relPick(); renderRel(); },expft:renderFT}[VW];
+    fixgraf:()=>renderFixGraf(vigs),fixtab:()=>renderFixTab(vigs),analitica:()=>renderAnalitica(vigs),placas:renderPlacas,relat:()=>{ relPick(); renderRel(); },expft:renderFT,
+    consulta:()=>{ renderConsulta(); if(CS_SEL&&CS_SEL.mod) fichaModelo(); else if(CS_HIST) pintaFicha(); }}[VW];
   if(f) f();
 }
 function gate(titulo,msg){ $('cols').innerHTML=`<div class="gate"><h2>${esc(titulo)}</h2><p>${msg}</p></div>`; set('titSub','—'); }
@@ -1461,7 +1870,7 @@ async function initApp(){
     else gate('Erro ao carregar',esc(m)); return; }
   montaFiltros(); render();
 }
-async function recarregar(){ set('titSub','Carregando…'); Object.keys(PL_CACHE).forEach(k=>delete PL_CACHE[k]); FTL=null;
+async function recarregar(){ set('titSub','Carregando…'); Object.keys(EQ_CACHE).forEach(k=>delete EQ_CACHE[k]); FTL=null; CS_CAT=null; Object.keys(FT_COLS).forEach(k=>delete FT_COLS[k]);
   try{ await carregar(); montaFiltros(); render(); }catch(e){ set('titSub','Erro ao recarregar: '+((e&&e.message)||e)); } }
 
 /* ── botões de troca ── */
@@ -1476,13 +1885,14 @@ document.querySelectorAll('#dims-qz .dimb').forEach(b=>b.addEventListener('click
 
 /* ── navegação entre as visões ── */
 const TIT={resumo:'Resumo Gerencial',hist:'Análise Histórica',vargraf:'Variável · Gráficos',vartab:'Variável · Tabela',
-  fixgraf:'Fixo e Frota · Gráficos',fixtab:'Fixo e Frota · Tabela',analitica:'Analítica',placas:'Placas',relat:'Relatório Excel',expft:'Tabelas do FT'};
+  fixgraf:'Fixo e Frota · Gráficos',fixtab:'Fixo e Frota · Tabela',analitica:'Analítica',placas:'Placas',consulta:'Consulta',relat:'Relatório Excel',expft:'Tabelas do FT'};
 let VW='resumo';
 function setVw(v){
   VW=v;
   document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===v));
   document.querySelectorAll('.vw').forEach(x=>x.classList.toggle('on',x.id==='vw-'+v));
   document.body.classList.toggle('vw-evo',v==='hist'); document.body.classList.toggle('vw-pl',v==='placas');
+  document.body.classList.toggle('vw-ft',v==='expft'); document.body.classList.toggle('vw-cs',v==='consulta');
   set('tit',TIT[v]||'');
   if(ROWS.length) setTimeout(render,30);
 }
@@ -1500,17 +1910,17 @@ document.querySelectorAll('.side .s-item, .side .s-sair').forEach(b=>{
 });
 function trocaMini(){ escondeDica(); const l=document.querySelector('.side').classList.toggle('mini');
   try{ localStorage.setItem('remuneracao_mini',l?'1':'0'); }catch(e){} const b=$('btMini'); if(b) b.title=l?'Expandir menu':'Recolher menu';
-  setTimeout(()=>{ if(ROWS.length&&VW!=='placas') render(); },260); }
+  setTimeout(()=>{ if(ROWS.length&&!['placas','expft','relat','consulta'].includes(VW)) render(); },260); }
 try{ if(localStorage.getItem('remuneracao_mini')==='1'){ document.querySelector('.side').classList.add('mini'); $('btMini').title='Expandir menu'; } }catch(e){}
 
 /* ── tema (mesma chave do hub) ── */
 const _SOL=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2M12 20.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1.5 12h2M20.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>`;
 const _LUA=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
 function aplicaTema(t){ document.body.classList.toggle('claro',t==='light'); try{ localStorage.setItem('bi_theme',t); }catch(e){}
-  const b=$('btTema'); if(b) b.innerHTML=t==='light'?_LUA:_SOL; if(ROWS.length&&VW!=='placas'&&VW!=='expft') render(); }
+  const b=$('btTema'); if(b) b.innerHTML=t==='light'?_LUA:_SOL; if(ROWS.length&&VW!=='placas'&&VW!=='expft'&&VW!=='relat') render(); }
 function trocaTema(){ aplicaTema(ehLight()?'dark':'light'); }
 try{ aplicaTema(localStorage.getItem('bi_theme')||'dark'); }catch(e){ aplicaTema('dark'); }
-let _rt; window.addEventListener('resize',()=>{ clearTimeout(_rt); _rt=setTimeout(()=>{ if(ROWS.length&&!['placas','expft','relat'].includes(VW)) render(); },400); });
+let _rt; window.addEventListener('resize',()=>{ clearTimeout(_rt); _rt=setTimeout(()=>{ if(ROWS.length&&!['placas','expft','relat','consulta'].includes(VW)) render(); },400); });
 
 initApp();
 </script>
@@ -1526,11 +1936,11 @@ initPdfExport({
   btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   title:'Remuneração', subtitle:()=>document.getElementById('titSub').textContent,
   fileBase:'remuneracao', main:()=>document.querySelector('.vw.on'),
-  views:()=>Object.keys(TIT).filter(k=>!['relat','expft','placas'].includes(k)).map(k=>({label:TIT[k], ativar:()=>setVw(k)})),
+  views:()=>Object.keys(TIT).filter(k=>!['relat','expft','placas','consulta'].includes(k)).map(k=>({label:TIT[k], ativar:()=>setVw(k)})),
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610282100"></script>
+<script src="../assets/build-check.js?v=202610290100"></script>
 </body>
 </html>

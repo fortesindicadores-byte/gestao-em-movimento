@@ -36,19 +36,30 @@ function sintetico() {
   return out;
 }
 const ROWS = process.env.FT_REM_JSON ? JSON.parse(readFileSync(process.env.FT_REM_JSON, 'utf8')).map(r => ({ ...r, atualizado_em: '2026-10-28T09:00:00Z' })) : sintetico();
-// placas e tabelas do FT sintéticas
-const COLS = ['Vigencia', 'Unidade - Nome', 'Placa', 'Modelo', 'Ano Veículo', 'Ativo', 'Consumo KM/L', 'Consumo R$/KM', 'Manutenção R$/KM', 'Manutenção Carroceria R$/KM', 'Pneu por KM', 'KM Total', 'Total Custo Fixo', 'manutencaoVidaMeses', 'freeMaintenance'];
-const PLACAS = [['ROTA_2_10_2026', 'CDD CAMBORIU', 'AAA1A11', 'Descrição: ATEGO 1719', 2022, true, 3.4, 1.9, .55, .15, .2, 2300, 7100, 40, 6],
-  ['ROTA_2_10_2026', 'CDD CAMBORIU', 'BBB2B22', 'Descrição: DELIVERY 11.180', 2026, true, 3.8, 1.7, 0, .15, .2, 2300, 8200, 3, 6],
-  ['ROTA_2_10_2026', 'CDD RIO DE JANEIRO', 'CCC3C33', 'Descrição: ACCELO 1316', 2019, false, 3.1, 2.0, .6, .15, .25, 0, 2500, 80, 6]];
-const FTL = [];
-for (const v of ['ROTA_1_9_2026', 'ROTA_2_9_2026', 'ROTA_1_10_2026', 'ROTA_2_10_2026']) {
-  const [, q, m, a] = v.split('_');
-  FTL.push({ canal: 'ROTA', tabela: 'Caminhao', tabela_nome: 'Caminhão', vigencia: v, ano: +a, mes: +m, quinzena: +q, linhas: 3 });
-  FTL.push({ canal: 'ROTA', tabela: 'Resumo', tabela_nome: 'Resumo Rota', vigencia: v, ano: +a, mes: +m, quinzena: +q, linhas: 2 });
-  FTL.push({ canal: 'ROTA', tabela: 'FORMULA:Resumo', tabela_nome: null, vigencia: v, ano: +a, mes: +m, quinzena: +q, linhas: 5 });
-}
-FTL.push({ canal: 'EMPURRADA', tabela: 'TrechoEmpurrada', tabela_nome: 'Trechos', vigencia: 'EMPURRADA_2_10_2026', ano: 2026, mes: 10, quinzena: 2, linhas: 4 });
+// cadastros e tabelas do FT sintéticos: Caminhão da Rota (4 quinzenas), Resumo, Cavalo da Empurrada, Empilhadeira do Armazém
+const COLS = ['Vigencia', 'Unidade - Nome', 'Placa', 'Modelo do Cavalo', 'Montadora', 'Ano Cavalo', 'Ativo', 'Consumo KM/L', 'Consumo R$/KM', 'Manutenção R$/KM', 'Manutenção Carroceria R$/KM', 'Pneu por KM', 'KM Total', 'Total Custo Fixo', 'manutencaoVidaMeses', 'freeMaintenance', 'chassi'];
+const PLACAS = [['CDD CAMBORIU', 'AAA1A11', 'ATEGO 1719', 'Descrição: MERCEDES', 2022, true, 3.4, 1.9, .55, .15, .2, 2300, 7100, 40, 6, '9BM111'],
+  ['CDD CAMBORIU', 'BBB2B22', 'DELIVERY 11.180', 'Descrição: VOLKS', 2026, true, 3.8, 1.7, 0, .15, .2, 2300, 8200, 3, 6, '9BW222'],
+  ['CDD RIO DE JANEIRO', 'CCC3C33', 'ACCELO 1316', 'Descrição: MERCEDES', 2019, false, 3.1, 2.0, .6, .15, .25, 0, 2500, 80, 6, '9BM333']];
+const LAY = { 'ROTA|Caminhao': COLS, 'ROTA|Resumo': ['Vigencia', 'Unidade - Nome', 'Total Frota'], 'ROTA|FORMULA:Resumo': ['Vigencia', 'Total Frota'],
+  'EMPURRADA|TrechoEmpurrada': ['Vigencia', 'Unidade - Nome', 'kmRodado'],
+  'EMPURRADA|CavaloEmpurrada': ['Vigencia', 'Unidade - Nome', 'Placa', 'modeloEmpurrada', 'montadora', 'ano', 'ativo', 'combustivelConsumoNeg', 'reaiskm', 'manutencaoVidaMeses', 'freeMaintenance', 'chassi'],
+  'ARMAZEM|EmpilhadeiraApoio': ['Vigencia', 'Unidade - Nome', 'chassi', 'modeloApoio', 'anoEmpilhadeira', 'ativoParado', 'custoFixoCustoFixo', 'custoVariavelTotal', 'horimetroMedio', '_id'] };
+const NOME = { Caminhao: 'Caminhão', Resumo: 'Resumo Rota', TrechoEmpurrada: 'Trechos', CavaloEmpurrada: 'Cavalo', EmpilhadeiraApoio: 'Equipamentos Armazém' };
+const LIN = [];
+const per = v => { const [, q, m, a] = v.split('_'); return { ano: +a, mes: +m, quinzena: +q }; };
+['ROTA_1_9_2026', 'ROTA_2_9_2026', 'ROTA_1_10_2026', 'ROTA_2_10_2026'].forEach((v, vi) => {
+  PLACAS.forEach(d => LIN.push({ canal: 'ROTA', tabela: 'Caminhao', vigencia: v, ...per(v), unidade: d[0], placa: d[1], dados: [v, ...d.slice(0, 7), +(d[7] + vi * .01).toFixed(2), ...d.slice(8)] }));
+  ['CDD CAMBORIU', 'CDD RIO DE JANEIRO'].forEach(u => LIN.push({ canal: 'ROTA', tabela: 'Resumo', vigencia: v, ...per(v), unidade: u, placa: null, dados: [v, u, 10] }));
+  LIN.push({ canal: 'ROTA', tabela: 'FORMULA:Resumo', vigencia: v, ...per(v), unidade: null, placa: null, dados: [v, '=A1'] });
+});
+LIN.push({ canal: 'EMPURRADA', tabela: 'TrechoEmpurrada', vigencia: 'EMPURRADA_2_10_2026', ...per('EMPURRADA_2_10_2026'), unidade: 'PIRAI', placa: null, dados: ['EMPURRADA_2_10_2026', 'PIRAI', 1200] });
+LIN.push({ canal: 'EMPURRADA', tabela: 'CavaloEmpurrada', vigencia: 'EMPURRADA_2_10_2026', ...per('EMPURRADA_2_10_2026'), unidade: 'PIRAI', placa: 'PIR1A11',
+  dados: ['EMPURRADA_2_10_2026', 'PIRAI', 'PIR1A11', 'Modelo: Actros 2651', 'Descrição: MERCEDES', 2025, 'ATIVO', 1.72, .31, 9.1, 6, '9BM963'] });
+LIN.push({ canal: 'ARMAZEM', tabela: 'EmpilhadeiraApoio', vigencia: 'ARMAZEM_1_10_2026', ...per('ARMAZEM_1_10_2026'), unidade: 'CUIABA', placa: null,
+  dados: ['ARMAZEM_1_10_2026', 'CUIABA', 'EMP123X', 'Modelo: CPD38 | Marca: HELI | Pallets: 2', 2022, false, 22855.69, 0, 266.9, 'uuid'] });
+const FTL = [...new Map(LIN.map(l => [l.canal + '|' + l.tabela + '|' + l.vigencia, l])).values()].map(l => ({ canal: l.canal, tabela: l.tabela, tabela_nome: NOME[l.tabela] || null,
+  vigencia: l.vigencia, ano: l.ano, mes: l.mes, quinzena: l.quinzena, linhas: LIN.filter(x => x.canal === l.canal && x.tabela === l.tabela && x.vigencia === l.vigencia).length }));
 
 async function abre(admin, { w = 1366, h = 768, tema = 'dark', vazio = false } = {}) {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
@@ -70,15 +81,17 @@ async function abre(admin, { w = 1366, h = 768, tema = 'dark', vazio = false } =
     if (p.includes('/rest/v1/ft_rem_mes')) return json(vazio ? [] : ROWS.slice(off, off + lim));
     const eq = k => (u.searchParams.get(k) || '').replace(/^eq\./, '');
     if (p.includes('/rest/v1/ft_layout')) {
-      if (sel === 'colunas') return json(eq('tabela') === 'Caminhao' && eq('vigencia') === 'ROTA_2_10_2026' ? { colunas: COLS } : null);
       if (sel.startsWith('canal')) return json(FTL.slice(off, off + lim));
-      const vs = (u.searchParams.get('vigencia') || '').replace(/^in\.\(|\)$/g, '').split(',').map(x => x.replace(/"/g, ''));
-      return json(FTL.filter(l => l.canal === eq('canal') && l.tabela === eq('tabela') && vs.includes(l.vigencia)).map(l => ({ ...l, colunas: COLS })));
+      const vin = u.searchParams.get('vigencia') || '';
+      const vs = vin.startsWith('in.') ? vin.replace(/^in\.\(|\)$/g, '').split(',').map(x => x.replace(/"/g, '')) : [vin.replace(/^eq\./, '')];
+      return json(FTL.filter(l => l.canal === eq('canal') && l.tabela === eq('tabela') && vs.includes(l.vigencia)).map(l => ({ vigencia: l.vigencia, tabela_nome: l.tabela_nome, colunas: LAY[l.canal + '|' + l.tabela] })));
     }
     if (p.includes('/rest/v1/ft_linha')) {
       if (off) return json([]);
-      if (sel.includes('placa')) return json(eq('tabela') === 'Caminhao' ? PLACAS.map(d => ({ unidade: d[1], placa: d[2], dados: d })) : []);
-      return json(PLACAS.map(d => ({ unidade: d[1], dados: [eq('vigencia'), ...d.slice(1)] })));
+      let rs = LIN;
+      for (const k of ['canal', 'tabela', 'vigencia', 'placa']) { const v = u.searchParams.get(k); if (v && v.startsWith('eq.')) rs = rs.filter(r => String(r[k]) === v.slice(3)); }
+      const cs = u.searchParams.get('dados'); if (cs && cs.startsWith('cs.')) { const arr = JSON.parse(cs.slice(3)); rs = rs.filter(r => arr.every(x => r.dados.includes(x))); }
+      return json(rs);
     }
     return json([]);
   });
@@ -168,18 +181,74 @@ const semRolagem = pg => pg.evaluate(() => { const d = document.documentElement;
     t('Relatório: baixa o Excel', /^remuneracao-ft-.*\.xlsx$/.test(dl.suggestedFilename()), dl.suggestedFilename());
   }
   if (SHOT) await pg.screenshot({ path: `${SHOT}/rem-relat.png` });
+  // relatório no nível equipamento: 3 caminhões × 2 quinzenas + 1 cavalo + 1 empilhadeira (out/26)
+  await pg.click('#rel-pick [data-niv="eq"]'); await pg.waitForTimeout(900);
+  t('Relatório por equipamento: tipos de equipamento e quinzenas', await pg.locator('#rel-pick input[data-tipo]').count() === 5 && await pg.locator('#rel-pick input[data-relqz]').count() === 2);
+  const neq = await pg.locator('#rel-prev tbody tr').count();
+  const tipos = await pg.evaluate(() => [...document.querySelectorAll('#rel-prev tbody tr')].map(tr => tr.children[1].textContent));
+  t('Relatório por equipamento: Caminhão, Cavalo e Empilhadeira (8 linhas)', neq === 8 && tipos.includes('Cavalo') && tipos.includes('Empilhadeira'), `${neq} · ${[...new Set(tipos)].join(',')}`);
+  t('Relatório por equipamento: modelo do veículo, não o "FIXO"', await pg.evaluate(() => [...document.querySelectorAll('#rel-prev td')].some(td => td.textContent === 'ATEGO 1719')));
+  t('Relatório por equipamento sem barra lateral', (await semRolagem(pg)).lat);
+  if (SHOT) await pg.screenshot({ path: `${SHOT}/rem-relat-eq.png` });
+  if (FFL) {
+    const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 15000 }), pg.click('#rel-bt')]);
+    t('Relatório por equipamento: baixa o Excel', /^remuneracao-ft-equipamentos-.*\.xlsx$/.test(dl.suggestedFilename()), dl.suggestedFilename());
+  }
+  await pg.click('#rel-pick [data-niv="grupo"]'); await pg.waitForTimeout(300);
+
   await vai(pg, 'expft');
-  await pg.waitForTimeout(400);
-  t('Tabelas do FT: canais e tabelas (sem fórmulas)', await pg.locator('#dims-canal .dimb').count() === 2 && await pg.locator('#ft-tabs input[data-tab]').count() === 2);
-  await pg.click('#ft-tabs input[data-tab="Caminhao"]'); await pg.waitForTimeout(300);
-  t('Tabelas do FT: marca as 2 últimas quinzenas sozinho', await pg.locator('#ft-vigs input[data-vig]:checked').count() === 2);
+  await pg.waitForTimeout(700);
+  t('Tabelas do FT: Canal, Tabela e Quinzena no topo; Ano, Vigência, Tier e Operação somem', await pg.locator('#ms-ftc').isVisible() && await pg.locator('#ms-ftt').isVisible() && await pg.locator('#ms-ftq').isVisible()
+    && !(await pg.locator('#ms-vig').isVisible()) && !(await pg.locator('#ms-op').isVisible()));
+  const nTab = await pg.evaluate(() => document.getElementById('ms-ftt')._itens.length);
+  t('Tabelas do FT: todos os canais, sem as de fórmulas', nTab === 5, `${nTab}`);
+  t('Tabelas do FT: abre no Caminhão da Rota, última quinzena', await pg.locator('#ft-res tbody tr').count() === 1 && /1 tabela\(s\) · 1 quinzena\(s\) · 3 linhas/.test(await pg.locator('#ft-st').textContent()), await pg.locator('#ft-st').textContent());
+  t('Tabelas do FT: todos os campos da tabela para escolher', await pg.locator('#ft-campos input[data-campo]').count() === COLS.length);
+  await pg.uncheck('#ft-campos input[data-campo="chassi"]'); await pg.waitForTimeout(300);
+  t('Tabelas do FT: desmarcar um campo', /16 de 17/.test(await pg.locator('#ft-res tbody').innerText()), await pg.locator('#ft-res tbody').innerText());
+  await pg.evaluate(() => { const w = document.getElementById('ms-ftq'); w._sel = new Set(); w._auto = false; w._render(''); ftPinta(); }); await pg.waitForTimeout(400);
+  t('Tabelas do FT: Quinzena "Todos" = histórico inteiro, sem limite', /4 quinzena\(s\) · 12 linhas/.test(await pg.locator('#ft-st').textContent()), await pg.locator('#ft-st').textContent());
   if (FFL) {
     const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 15000 }), pg.click('#ft-bt')]);
-    t('Tabelas do FT: baixa o Excel', /^FT_ROTA_.*\.xlsx$/.test(dl.suggestedFilename()), dl.suggestedFilename());
+    t('Tabelas do FT: baixa o Excel com as 12 linhas', /^FT_ROTA_Caminhao_4q_.*\.xlsx$/.test(dl.suggestedFilename()) && /12 linhas/.test(await pg.locator('#ft-st').textContent()), dl.suggestedFilename() + ' · ' + await pg.locator('#ft-st').textContent());
   }
-  await pg.check('#ft-form'); await pg.waitForTimeout(200);
-  t('Tabelas do FT: mostra as de fórmulas quando marcado', await pg.locator('#ft-tabs input[data-tab]').count() === 3);
+  await pg.evaluate(() => { const w = document.getElementById('ms-ftt'); w._sel = new Set(['ROTA|Caminhao', 'EMPURRADA|CavaloEmpurrada', 'ARMAZEM|EmpilhadeiraApoio']); w._render(''); ftMontaPer(); }); await pg.waitForTimeout(500);
+  t('Tabelas do FT: várias tabelas de canais diferentes', await pg.locator('#ft-res tbody tr').count() === 3 && await pg.locator('#ft-campos .ft-pg').count() === 3);
+  await pg.check('#ft-form'); await pg.waitForTimeout(300);
+  t('Tabelas do FT: mostra as de fórmulas quando marcado', await pg.evaluate(() => document.getElementById('ms-ftt')._itens.length) === 6);
+  t('Tabelas do FT sem barra lateral', (await semRolagem(pg)).lat);
   if (SHOT) await pg.screenshot({ path: `${SHOT}/rem-expft.png` });
+
+  await vai(pg, 'consulta'); await pg.waitForTimeout(900);
+  t('Consulta: Ano e Vigência somem do topo', !(await pg.locator('#ms-vig').isVisible()) && await pg.locator('#ms-uni').isVisible());
+  t('Consulta: cadastro da última quinzena (3 caminhões, 1 cavalo, 1 empilhadeira)', await pg.locator('#cs-list .cs-it').count() === 5, `${await pg.locator('#cs-list .cs-it').count()}`);
+  await pg.fill('#cs-q', 'ccc3'); await pg.waitForTimeout(500);
+  t('Consulta: busca pela placa', await pg.locator('#cs-list .cs-it').count() === 1);
+  await pg.click('#cs-list .cs-it'); await pg.waitForTimeout(900);
+  t('Consulta: ficha da placa com cadastro e gráfico', (await pg.locator('#cs-ficha h2').textContent()) === 'CCC3C33' && /ACCELO 1316/.test(await pg.locator('.cs-fx').innerText()) && await pg.locator('#ch-cs').count() === 1,
+    await pg.locator('#cs-ficha').innerText().then(x => x.slice(0, 160)));
+  t('Consulta: o histórico tem as 4 quinzenas', await pg.evaluate(() => CS_HIST.eqs.length) === 4);
+  if (SHOT) await pg.screenshot({ path: `${SHOT}/rem-consulta.png` });
+  t('Consulta sem rolagem', Object.values(await semRolagem(pg)).every(Boolean), JSON.stringify(await semRolagem(pg)));
+  await pg.click('#dims-csa [data-csa="hist"]'); await pg.waitForTimeout(300);
+  t('Consulta: aba Histórico, uma linha por quinzena', await pg.locator('#cs-corpo tbody tr').count() === 4);
+  await pg.click('#dims-csa [data-csa="campos"]'); await pg.waitForTimeout(300);
+  t('Consulta: todos os campos do FT, com o que mudou em laranja', await pg.locator('#cs-corpo tbody tr').count() === COLS.length && await pg.locator('#cs-corpo tr.mud').count() >= 1, `${await pg.locator('#cs-corpo tbody tr').count()}`);
+  if (SHOT) await pg.screenshot({ path: `${SHOT}/rem-consulta-campos.png` });
+  if (FFL) {
+    const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 15000 }), pg.click('#cs-ficha button.bt.ghost')]);
+    t('Consulta: exporta a ficha', /^ficha-CCC3C33-.*\.xlsx$/.test(dl.suggestedFilename()), dl.suggestedFilename());
+  }
+  await pg.fill('#cs-q', 'heli'); await pg.waitForTimeout(500);
+  await pg.click('#cs-list .cs-it'); await pg.waitForTimeout(900);
+  t('Consulta: empilhadeira pelo chassi', (await pg.locator('#cs-ficha h2').textContent()) === 'EMP123X' && /HELI/.test(await pg.locator('.cs-fx').innerText()) && /Fixo/.test(await pg.locator('#cs-corpo').innerText()));
+  await pg.fill('#cs-q', ''); await pg.click('#dims-cs [data-cs="mod"]'); await pg.waitForTimeout(500);
+  t('Consulta: modelos', await pg.locator('#cs-list .cs-it').count() === 5);
+  await pg.click('#cs-list .cs-it[data-mod="MERCEDES ATEGO 1719¦Caminhão"]'); await pg.waitForTimeout(400);
+  t('Consulta: ficha do modelo lista as placas', await pg.locator('#cs-ficha tbody tr').count() === 1);
+  await pg.click('#cs-ficha tr.cs-lnk'); await pg.waitForTimeout(900);
+  t('Consulta: da ficha do modelo para a placa', (await pg.locator('#cs-ficha h2').textContent()) === 'AAA1A11');
+  await pg.click('#dims-cs [data-cs="eq"]');
 
   await pg.evaluate(() => { const w = document.getElementById('ms-vig'); w._sel = new Set(['2026-10']); w._auto = false; w._render(''); });
   await vai(pg, 'placas'); await pg.waitForTimeout(600);
@@ -187,14 +256,21 @@ const semRolagem = pg => pg.evaluate(() => { const d = document.documentElement;
   t('Placas: 3 placas da quinzena', await pg.locator('#t-placas tbody tr').count() === 3);
   await pg.evaluate(() => { const w = document.getElementById('ms-sit'); w._sel = new Set(['Ativo']); w._render(''); renderPlacas(); }); await pg.waitForTimeout(500);
   t('Placas: Situação = Ativo deixa 2', await pg.locator('#t-placas tbody tr').count() === 2);
+  t('Placas: modelo do veículo e ano', /ATEGO 1719/.test(await pg.locator('#t-placas').innerText()) && /2022/.test(await pg.locator('#t-placas').innerText()));
+  await pg.click('#t-placas tr.cs-lnk'); await pg.waitForTimeout(900);
+  t('Placas: clicar abre a ficha na Consulta', await pg.locator('#vw-consulta').isVisible() && (await pg.locator('#cs-ficha h2').textContent()) === 'AAA1A11');
   t('sem erro de página no fim', !erros.length, erros.join(' | '));
   await b.close();
 }
 for (const [w, h] of [[1366, 768], [1600, 900], [1920, 1000]]) for (const tema of ['dark', 'light']) {
   const { b, pg, erros } = await abre(true, { w, h, tema });
   const r = {};
-  for (const v of ['resumo', 'hist', 'vargraf', 'vartab', 'fixgraf', 'fixtab', 'analitica', 'relat']) { await vai(pg, v); const s = await semRolagem(pg); if (!s.pag || !s.lat) r[v] = s; }
-  t(`${w}×${h} ${tema}: nenhuma visão rola a página nem tem barra lateral`, !Object.keys(r).length && !erros.length, JSON.stringify(r) + erros.join(' | '));
+  for (const v of ['resumo', 'hist', 'vargraf', 'vartab', 'fixgraf', 'fixtab', 'analitica', 'relat', 'expft', 'consulta']) { await vai(pg, v); const s = await semRolagem(pg); if (!s.pag || !s.lat) r[v] = s; }
+  t(`${w}×${h} ${tema}: nenhuma visão rola a página nem tem barra lateral`, !Object.keys(r).filter(k => k !== 'ficha').length && !erros.length, JSON.stringify(r) + erros.join(' | '));
+  await vai(pg, 'consulta'); await pg.waitForTimeout(600); await pg.click('#cs-list .cs-it'); await pg.waitForTimeout(900);
+  { const s = await semRolagem(pg); if (!s.pag || !s.vw) r.ficha = s; }
+  t(`${w}×${h} ${tema}: ficha da Consulta sem rolagem`, !r.ficha, JSON.stringify(r.ficha || ''));
+  if (SHOT && tema === 'dark') await pg.screenshot({ path: `${SHOT}/rem-consulta-${w}.png` });
   if (SHOT && w === 1920 && tema === 'light') { await vai(pg, 'resumo'); await pg.screenshot({ path: `${SHOT}/rem-1920-claro.png` }); }
   await b.close();
 }
