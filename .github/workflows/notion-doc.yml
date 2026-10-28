@@ -11,6 +11,10 @@ on:
         description: "Níveis de subpágina para abrir"
         required: false
         default: "2"
+      so:
+        description: "Só as subpáginas cujo título contém este texto"
+        required: false
+        default: ""
 
 jobs:
   ler:
@@ -25,4 +29,5 @@ jobs:
         env:
           NOTION_URL:   ${{ github.event.inputs.url }}
           NOTION_FUNDO: ${{ github.event.inputs.fundo }}
+          NOTION_SO:    ${{ github.event.inputs.so }}
         run: node scripts/notion-doc.mjs

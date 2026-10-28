@@ -10,6 +10,9 @@
 
 const URL_PG = (process.env.NOTION_URL || '').trim();
 const FUNDO = Number(process.env.NOTION_FUNDO || 2);
+// só imprime as subpáginas cujo título contém este texto (e o que está dentro delas)
+const SO = (process.env.NOTION_SO || '').trim().toLowerCase();
+let ligado = !SO;
 if (!URL_PG) { console.error('NOTION_URL vazio'); process.exit(1); }
 
 const host = new URL(URL_PG).origin;
@@ -50,25 +53,29 @@ const txt = t => (t || []).map(s => {
 }).join('');
 
 const PRE = { header: '# ', sub_header: '## ', sub_sub_header: '### ', bulleted_list: '- ', numbered_list: '1. ', to_do: '[ ] ', toggle: '▸ ', quote: '> ', callout: '💡 ' };
+const out = (...a) => { if (ligado) console.log(...a); };
 async function imprime(id, nivel, fundo) {
   const b = BLOCOS[id]; if (!b) return;
   const p = b.properties || {};
   const ind = '  '.repeat(nivel);
+  const antes = ligado;
+  if (SO && b.type === 'page' && nivel > 0 && txt(p.title).toLowerCase().includes(SO)) ligado = true;
   if (b.type === 'page' && nivel > 0) {
-    console.log(`\n${'='.repeat(70)}\nSUBPÁGINA: ${txt(p.title)}\n${'='.repeat(70)}`);
+    out(`\n${'='.repeat(70)}\nSUBPÁGINA: ${txt(p.title)}\n${'='.repeat(70)}`);
     if (fundo >= FUNDO) return;
   } else if (b.type === 'code') {
-    console.log(`${ind}\`\`\`${(p.language && txt(p.language)) || ''}\n${txt(p.title)}\n${ind}\`\`\``);
+    out(`${ind}\`\`\`${(p.language && txt(p.language)) || ''}\n${txt(p.title)}\n${ind}\`\`\``);
   } else if (b.type === 'table_row') {
     const fmt = (BLOCOS[b.parent_id] && BLOCOS[b.parent_id].format && BLOCOS[b.parent_id].format.table_block_column_order) || Object.keys(p);
-    console.log(ind + '| ' + fmt.map(c => txt(p[c])).join(' | ') + ' |');
+    out(ind + '| ' + fmt.map(c => txt(p[c])).join(' | ') + ' |');
   } else if (p.title) {
-    console.log(ind + (PRE[b.type] || '') + txt(p.title));
-  } else if (b.type === 'divider') console.log(ind + '---');
-  else if (['image', 'file', 'bookmark', 'embed'].includes(b.type)) console.log(ind + `[${b.type}] ${(p.source && txt(p.source)) || ''}`);
+    out(ind + (PRE[b.type] || '') + txt(p.title));
+  } else if (b.type === 'divider') out(ind + '---');
+  else if (['image', 'file', 'bookmark', 'embed'].includes(b.type)) out(ind + `[${b.type}] ${(p.source && txt(p.source)) || ''}`);
   const filhos = b.content || [];
   await faltantes(filhos);
   for (const f of filhos) await imprime(f, b.type === 'page' ? nivel : nivel + 1, b.type === 'page' && nivel > 0 ? fundo + 1 : fundo);
+  ligado = antes;
 }
 
 const raiz = uid(hex);
