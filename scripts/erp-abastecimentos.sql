@@ -310,3 +310,12 @@ select cron.schedule('custo-vigencia-refresh', '*/10 * * * *',
 -- (as mesmas contas do pacote na Visão Financeira). Coluna nula não quebra
 -- nada: as linhas antigas ficam sem tipo até a carga as reenviar.
 alter table public.erp_abastecimentos add column if not exists tipo_combustivel text;
+
+-- ── 7) posto do abastecimento (TI, 28/10/2026) ────────────────────────────
+-- A query passou a trazer o fornecedor da OS (os.FORNECEDOR → GN_PESSOAS):
+-- código, nome e CNPJ do posto. Coluna nula não quebra nada: as linhas antigas
+-- ganham o posto na próxima carga (o PowerShell recarrega 2026 inteiro).
+alter table public.erp_abastecimentos add column if not exists cod_posto  text;
+alter table public.erp_abastecimentos add column if not exists posto      text;
+alter table public.erp_abastecimentos add column if not exists cnpj_posto text;
+create index if not exists erp_abast_cnpj_posto_idx on public.erp_abastecimentos (cnpj_posto);

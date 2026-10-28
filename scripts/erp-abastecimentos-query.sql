@@ -19,6 +19,11 @@
 -- antiga). No servidor novo o histórico todo está com STATUS 6.
 -- DATEFROMPARTS em vez de '2026-01-01' para não ter aspas: a query mora numa
 -- string do PowerShell.
+--
+-- POSTO (TI, 28/10/2026): os.FORNECEDOR é o posto onde a OS foi abastecida,
+-- com nome e CNPJ em GN_PESSOAS (HANDLE é chave, o LEFT JOIN não duplica
+-- linha). A TI mandou junto filtros comentados por CNPJ/código/raiz da rede:
+-- ficam FORA, porque o portal quer todos os postos.
 -- ============================================================
 
 SELECT
@@ -38,6 +43,9 @@ SELECT
     pd.NOME              AS TIPO_COMBUSTIVEL,
     'S'                  AS ENCERRADA,
     mf.STATUS            AS STATUS,
+    os.FORNECEDOR        AS COD_POSTO,
+    fo.NOME              AS POSTO,
+    fo.CGCCPF            AS CNPJ_POSTO,
     mf.DATA              AS DATA
 FROM MF_ORDEMSERVICOCOMBUSTIVEIS mf
 INNER JOIN MF_ORDEMSERVICOS os
@@ -54,6 +62,8 @@ LEFT JOIN GN_PROJETOS pv
     ON pv.HANDLE = rc.PROJETO
 LEFT JOIN PD_PRODUTOS pd
     ON pd.HANDLE = mf.PRODUTO
+LEFT JOIN GN_PESSOAS fo
+    ON fo.HANDLE = os.FORNECEDOR
 WHERE os.EMPRESA = 12
   AND mf.STATUS = 6
   AND mf.DATA >= DATEFROMPARTS(2026,1,1)
