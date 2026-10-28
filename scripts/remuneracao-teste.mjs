@@ -76,7 +76,7 @@ async function abre(admin, { w = 1366, h = 768, tema = 'dark', vazio = false, em
     const json = (o, st = 200) => r.fulfill({ status: st, body: JSON.stringify(o), contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'Content-Range' } });
     if (m === 'OPTIONS') return r.fulfill({ status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*' } });
     if (p.endsWith('/auth/v1/user')) return json({ id: 'u1', email });
-    if (p.endsWith('/functions/v1/assistente-ft')) {
+    if (p.endsWith('/functions/v1/rapid-processor')) {
       PEDIDOS_IA.push({ auth: r.request().headers().authorization, corpo: JSON.parse(r.request().postData() || '{}') });
       if (fn === '404') return json({ msg: 'Requested function was not found' }, 404);
       const ev = [{ t: 'txt', d: 'Em **set/26** o FT ' }, { t: 'txt', d: 'previu:\n\n' }, { t: 'sql', sql: 'select unidade, sum(total) from ft_rem_mes group by 1', motivo: 'total por unidade' },

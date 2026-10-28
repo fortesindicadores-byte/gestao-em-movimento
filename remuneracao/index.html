@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610290300">
+<meta name="build" content="202610290400">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Remuneração · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1971,7 +1971,8 @@ try{ aplicaTema(localStorage.getItem('bi_theme')||'dark'); }catch(e){ aplicaTema
 let _rt; window.addEventListener('resize',()=>{ clearTimeout(_rt); _rt=setTimeout(()=>{ if(ROWS.length&&!['placas','expft','relat','consulta','ia'].includes(VW)) render(); },400); });
 
 /* ══ ASSISTENTE: pergunta → Edge Function assistente-ft (Claude + consultas só de leitura) ══ */
-const IA_FN=SUPABASE_URL+'/functions/v1/assistente-ft';
+// o editor do Supabase deu à função o endereço rapid-processor (o nome não muda o endereço)
+const IA_FN=SUPABASE_URL+'/functions/v1/rapid-processor';
 const IA_EX=['Quanto o FT remunerou por unidade em set/26, e o que mudou contra ago/26?',
   'Qual o R$/km do variável de frota da Rota por unidade em 2026?',
   'O que o Book do Operador diz sobre o preço do diesel?',
@@ -2025,7 +2026,7 @@ async function iaEnvia(){
     const resp=await fetch(IA_FN,{method:'POST',headers:{Authorization:'Bearer '+session.access_token,apikey:SUPABASE_KEY,'Content-Type':'application/json'},
       body:JSON.stringify({mensagens:hist,contexto:ctx})});
     if(!resp.ok||!/ndjson/.test(resp.headers.get('content-type')||'')){ let m=''; try{ const j=await resp.json(); m=j.erro||j.message||j.msg||''; }catch(e){}
-      if(resp.status===404) m='a função assistente-ft ainda não foi publicada no Supabase';
+      if(resp.status===404) m='a função do assistente (rapid-processor) ainda não foi publicada no Supabase';
       throw new Error(m||('HTTP '+resp.status)); }
     const rd=resp.body.getReader(), dec=new TextDecoder(); let buf='', pend=0;
     const linha=l=>{ if(!l.trim()) return; let e; try{ e=JSON.parse(l); }catch(_){ return; }
@@ -2065,6 +2066,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610290300"></script>
+<script src="../assets/build-check.js?v=202610290400"></script>
 </body>
 </html>
