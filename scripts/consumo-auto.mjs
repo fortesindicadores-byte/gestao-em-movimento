@@ -585,7 +585,7 @@ function soColunas(linhas, L) {
 // (3+ placas), senão a do projeto no mês. Fora de ±ANOM_DESVIO vira anomalia; litros
 // sem km também; e R$/L fora de 1,50–12. Só placa-mês com ANOM_LIT_MIN litros ou
 // mais. A correção não apaga a anomalia (a tela mostra "corrigida").
-const ANOM_DESVIO = +(process.env.CONSUMO_ANOM_DESVIO || 0.35), ANOM_LIT_MIN = +(process.env.CONSUMO_ANOM_LIT || 50);
+const ANOM_DESVIO = +(process.env.CONSUMO_ANOM_DESVIO || 0.35), ANOM_LIT_MIN = +(process.env.CONSUMO_ANOM_LIT || 200);
 const mediana = xs => { if (!xs.length) return null; const t = xs.slice().sort((a, b) => a - b), m = t.length >> 1; return t.length % 2 ? t[m] : (t[m - 1] + t[m]) / 2; };
 const anomIt = [];
 real.forEach(a => anomIt.push({ a, proj: a.proj, uni: a.cod === 'GOI' ? 'GNA' : a.cod, modelo: maisFreq(a.modelos) || (ginfo[a.placa] && ginfo[a.placa].modelo) || null }));
@@ -605,9 +605,11 @@ anomIt.forEach(x => {
   const hist = (porPlacaH.get(a.placa) || []).filter(h => h.ym !== a.ym).map(h => h.k);
   const mod = porModMes.get(chaveModelo(x.modelo || '') + '|' + x.proj.split(' - ')[0] + '|' + a.ym) || [], pj = porProjMesK.get(x.proj + '|' + a.ym) || [];
   let ref = null, fonte = null;
-  if (hist.length >= 3) { ref = mediana(hist); fonte = `placa em ${hist.length} outros meses`; }
-  else if (mod.length >= 3) { ref = mediana(mod); fonte = `modelo no mês (${mod.length} placas)`; }
-  else if (pj.length >= 3) { ref = mediana(pj); fonte = `projeto no mês (${pj.length} placas)`; }
+  // o MODELO no mês vem primeiro: placa errada em quase todo mês (Empurrada de Piraí
+  // com 0,67 km/L em 9 meses, 1º ensaio) faria o mês certo parecer anomalia
+  if (mod.length >= 4) { ref = mediana(mod); fonte = `modelo no mês (${mod.length} placas)`; }
+  else if (pj.length >= 4) { ref = mediana(pj); fonte = `projeto no mês (${pj.length} placas)`; }
+  else if (hist.length >= 3) { ref = mediana(hist); fonte = `placa em ${hist.length} outros meses`; }
   const tipos = [];
   if (!(a.kmErp > 0)) tipos.push('km_zero');
   else if (ref && kml < ref * (1 - ANOM_DESVIO)) tipos.push('kml_baixo');
@@ -623,8 +625,10 @@ anomIt.forEach(x => {
 });
 { const c = {}; anomalias.forEach(x => x.tipos.split(',').forEach(t => { c[t] = (c[t] || 0) + 1; }));
   const ab = anomalias.filter(x => !CORR.has(x.chave)).length;
-  log(`\nanomalias (±${Math.round(ANOM_DESVIO * 100)}%, ${ANOM_LIT_MIN} L ou mais): ${anomalias.length} placa-mês — ` + Object.entries(c).map(([t, n]) => `${t} ${n}`).join(' · ') + ` · em aberto ${ab} · correções aplicadas ${nCorr}`);
+  log(`\nanomalias (±${Math.round(ANOM_DESVIO * 100)}%, ${ANOM_LIT_MIN} L ou mais; de ${anomIt.filter(x => x.a.litErp >= ANOM_LIT_MIN).length} placa-mês): ${anomalias.length} placa-mês — ` + Object.entries(c).map(([t, n]) => `${t} ${n}`).join(' · ') + ` · em aberto ${ab} · correções aplicadas ${nCorr}`);
   const pm = new Map(); anomalias.forEach(x => pm.set(x.ym, (pm.get(x.ym) || 0) + 1)); log('  por mês: ' + [...pm.entries()].sort().map(([m, n]) => `${m} ${n}`).join(' · '));
+  const fx = {}; anomalias.forEach(x => { const d = x.desvio == null ? 'sem km' : Math.abs(x.desvio) < 0.5 ? '35–50%' : Math.abs(x.desvio) < 1 ? '50–100%' : '100%+'; fx[d] = (fx[d] || 0) + 1; });
+  log('  por tamanho do desvio: ' + Object.entries(fx).map(([k, n]) => `${k} ${n}`).join(' · ') + ' | por projeto: ' + Object.entries(anomalias.reduce((o, x) => { o[x.projeto] = (o[x.projeto] || 0) + 1; return o; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k, n]) => `${k} ${n}`).join(' · '));
   anomalias.slice().sort((p, q) => Math.abs(q.impacto_l || 0) - Math.abs(p.impacto_l || 0)).slice(0, 12).forEach(x => log(`  ${x.ym} ${x.projeto.padEnd(20)} ${x.tipos.padEnd(10)} km ${fmt0(x.km)} · ${fmt0(x.litros)} L · ${x.kml?.toFixed(2)} km/L × ref ${x.ref_kml?.toFixed(2) ?? '—'} (${x.ref_fonte || '—'}) · ${fmt0(x.impacto_l)} L`)); }
 function fmt0(v) { return v == null ? '—' : Math.round(v).toLocaleString('pt-BR'); }
 
