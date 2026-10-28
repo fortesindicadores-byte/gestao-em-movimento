@@ -1,6 +1,6 @@
 // Remuneração (/remuneracao/): abre o painel no Chromium com o banco dublado e confere
 // o gate, o Resumo (R$ e unitário, MoM/YoY inteiros e coloridos), as visões de gráfico e
-// de tabela separadas (Unidade e Operação em duas colunas), a Evolução Mensal e Anual
+// de tabela separadas (Unidade e Operação em duas colunas), a Análise Histórica (mês a mês + ano a ano)
 // por indicador, o Relatório Excel (colunas escolhidas) e as Tabelas do FT (export igual
 // ao FT), a visão Placas e o layout sem rolagem em 1366/1600/1920 nos dois temas.
 // Uso: SBJS=<supabase UMD> CHART_JS=<chart.umd.js> DATALABELS=<…> FFLATE=<fflate UMD>
@@ -137,19 +137,21 @@ const semRolagem = pg => pg.evaluate(() => { const d = document.documentElement;
   t('Fixo · Tabela sem barra lateral', (await semRolagem(pg)).lat);
   if (SHOT) await pg.screenshot({ path: `${SHOT}/rem-fixtab.png` });
 
-  await vai(pg, 'evomes');
-  t('Evolução Mensal: filtro Indicador aparece só nela', await pg.locator('#ms-ind').isVisible());
+  await vai(pg, 'hist');
+  t('Análise Histórica: filtro Indicador aparece só nela', await pg.locator('#ms-ind').isVisible());
   const nb = await pg.evaluate(() => Chart.getChart(document.getElementById('ch-em')).data.labels.length);
-  t('Evolução Mensal: todos os meses da base', nb === vigs.length, `${nb} × ${vigs.length}`);
+  t('Análise Histórica: todos os meses da base', nb === vigs.length, `${nb} × ${vigs.length}`);
+  const na = await pg.evaluate(() => { const c = Chart.getChart(document.getElementById('ch-ea')); return { n: c.data.labels.length, tipo: c.config.type }; });
+  t('Análise Histórica: barras por ano ao lado', na.n === new Set(vigs.map(v => v.slice(0, 4))).size && na.tipo === 'bar', JSON.stringify(na));
+  t('Análise Histórica: cinco cards', await pg.locator('#kpis-hist .kpi').count() === 5);
   await pg.click('#ms-ind .ms-btn'); await pg.click('#ms-ind .ms-opt[data-u="manut"]'); await pg.waitForTimeout(400);
   t('Indicador Manutenção troca o gráfico', /Manutenção/.test(await pg.locator('#em-tit').textContent()), await pg.locator('#em-tit').textContent());
+  t('Indicador de taxa: ano em barras lado a lado', await pg.evaluate(() => { const c = Chart.getChart(document.getElementById('ch-ea')); return c.config.type === 'bar' && !c.options.scales.x.stacked; }));
   await pg.click('#dims-em .dimb[data-g="tier"]'); await pg.waitForTimeout(300);
-  t('Evolução por tier: uma série por tier', await pg.evaluate(() => Chart.getChart(document.getElementById('ch-em')).data.datasets.length) >= 1);
-  if (SHOT) await pg.screenshot({ path: `${SHOT}/rem-evomes.png` });
-  await vai(pg, 'evoano');
-  const na = await pg.evaluate(() => Chart.getChart(document.getElementById('ch-ea')).data.labels.length);
-  t('Evolução Anual: um ponto por ano', na === new Set(vigs.map(v => v.slice(0, 4))).size, `${na}`);
-  if (SHOT) await pg.screenshot({ path: `${SHOT}/rem-evoano.png` });
+  t('Por tier: uma série por tier nos dois gráficos', await pg.evaluate(() => Chart.getChart(document.getElementById('ch-em')).data.datasets.length === Chart.getChart(document.getElementById('ch-ea')).data.datasets.length));
+  if (SHOT) await pg.screenshot({ path: `${SHOT}/rem-hist.png` });
+  await pg.click('#dims-em .dimb[data-g="total"]'); await pg.click('#ms-ind .ms-btn'); await pg.click('#ms-ind .ms-opt[data-u="total"]'); await pg.waitForTimeout(400);
+  if (SHOT) await pg.screenshot({ path: `${SHOT}/rem-hist-rs.png` });
   await vai(pg, 'analitica');
   t('Analítica sem barra lateral', (await semRolagem(pg)).lat);
   await pg.click('#dims-an .dimb[data-g="uniop"]'); await pg.waitForTimeout(300);
@@ -191,7 +193,7 @@ const semRolagem = pg => pg.evaluate(() => { const d = document.documentElement;
 for (const [w, h] of [[1366, 768], [1600, 900], [1920, 1000]]) for (const tema of ['dark', 'light']) {
   const { b, pg, erros } = await abre(true, { w, h, tema });
   const r = {};
-  for (const v of ['resumo', 'evomes', 'evoano', 'vargraf', 'vartab', 'fixgraf', 'fixtab', 'analitica', 'relat']) { await vai(pg, v); const s = await semRolagem(pg); if (!s.pag || !s.lat) r[v] = s; }
+  for (const v of ['resumo', 'hist', 'vargraf', 'vartab', 'fixgraf', 'fixtab', 'analitica', 'relat']) { await vai(pg, v); const s = await semRolagem(pg); if (!s.pag || !s.lat) r[v] = s; }
   t(`${w}×${h} ${tema}: nenhuma visão rola a página nem tem barra lateral`, !Object.keys(r).length && !erros.length, JSON.stringify(r) + erros.join(' | '));
   if (SHOT && w === 1920 && tema === 'light') { await vai(pg, 'resumo'); await pg.screenshot({ path: `${SHOT}/rem-1920-claro.png` }); }
   await b.close();
