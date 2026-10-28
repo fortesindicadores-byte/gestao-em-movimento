@@ -27,6 +27,11 @@ on:
         description: "fim AAAA-MM-DD (vazio = hoje)"
         required: false
         default: ""
+      suma_hml:
+        description: "SUMA em homologação (ambiente de testes, CNPJ de teste, não grava)"
+        required: false
+        default: false
+        type: boolean
   # todo dia às 06:10 BRT, os últimos 10 dias (corrige o que mudou na origem)
   schedule:
     - cron: '10 9 * * *'
@@ -54,6 +59,8 @@ jobs:
           ABAST_ATE:      ${{ github.event.inputs.ate }}
           SUMA_USER_TOKEN: ${{ secrets.SUMA_USER_TOKEN }}
           SUMA_CNPJS:      ${{ vars.SUMA_CNPJS }}
+          SUMA_HML:        ${{ github.event.inputs.suma_hml }}
+          SUMA_HML_TOKEN:  ${{ secrets.SUMA_HML_TOKEN }}
           GASOLA_TOKEN:    ${{ secrets.GASOLA_TOKEN }}
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
       - name: Avisar por e-mail se falhar

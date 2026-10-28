@@ -198,14 +198,19 @@ async function proFrotas(base) {
 }
 
 /* ════════════════════════ SUMA ════════════════════════ */
-const SUMA_URL = 'https://pitstop.sumaconnect.com/api/integrate_systems/shipper/';
+// homologação (SUMA_HML=1): ambiente de testes da SUMA, só com o CNPJ de teste deles e sem gravar
+const SUMA_HML = process.env.SUMA_HML === '1' || process.env.SUMA_HML === 'true';
+const SUMA_URL = SUMA_HML
+  ? 'https://pitstop-qa.sumaconnect.com/api/integrate_systems/shipper/'
+  : 'https://pitstop.sumaconnect.com/api/integrate_systems/shipper/';
+const SUMA_CNPJ_HML = '71864203000174';
 async function suma(base) {
-  const tok = (process.env.SUMA_USER_TOKEN || '').trim();
-  if (!tok) throw new Error('SUMA_USER_TOKEN não configurado (GitHub Secrets)');
+  const tok = ((SUMA_HML ? process.env.SUMA_HML_TOKEN : process.env.SUMA_USER_TOKEN) || '').trim();
+  if (!tok) throw new Error((SUMA_HML ? 'SUMA_HML_TOKEN' : 'SUMA_USER_TOKEN') + ' não configurado (GitHub Secrets)');
   const extra = (process.env.SUMA_CNPJS || '').split(/[,;\s]+/).map(x => x.replace(/\D/g, '')).filter(x => x.length >= 11).map(cnpjDig);
   const porCnpj = new Map(base.filter(u => u.cnpj).map(u => [u.cnpj, u.unidade]));
-  const cnpjs = [...new Set([...porCnpj.keys(), ...extra])];
-  log(`SUMA: ${cnpjs.length} CNPJ(s) de filial no pedido`);
+  const cnpjs = SUMA_HML ? [SUMA_CNPJ_HML] : [...new Set([...porCnpj.keys(), ...extra])];
+  log(`SUMA${SUMA_HML ? ' (HOMOLOGAÇÃO)' : ''}: ${cnpjs.length} CNPJ(s) de filial no pedido`);
   const brd = s => s.split('-').reverse().join('/');
   const linhas = [], vistosCli = new Map();
   for (const per of fatias(15)) {
@@ -333,6 +338,7 @@ function resumo(nome, ls) {
 async function main() {
   log(`modo ${MODO} · janela ${iso(DE)} → ${iso(ATE)} · sistemas ${SIS.join(', ')}`);
   if (MODO === 'gravar' && !SB_KEY) throw new Error('GEM_SUPABASE_SERVICE_KEY ausente');
+  if (MODO === 'gravar' && SUMA_HML) throw new Error('homologação da SUMA não grava: rode em sonda ou ensaio');
   const base = await lerBaseCnpj();
   log(`Base CNPJ: ${base.length} unidade(s) · ` + base.map(u => `${u.unidade}=${sigla(u.unidade) || '?'}`).join(' · '));
   const FN = { PROFROTAS: () => proFrotas(base), SUMA: () => suma(base), GASOLA: () => gasola() };
