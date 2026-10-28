@@ -37,7 +37,7 @@ import zlib from 'node:zlib';
 const SUPA = 'https://lozwipoeacpvplgkrxkq.supabase.co';
 const KEY = process.env.GEM_SUPABASE_SERVICE_KEY || '';
 const DUMP = process.env.FT_DUMP || '';
-const SECO = !!process.env.FT_REM_SECO || !!DUMP && !KEY;
+const SECO = /^(1|true|sim|s)$/i.test(String(process.env.FT_REM_SECO || '').trim()) || !!DUMP && !KEY;
 if (!DUMP && !KEY) { console.error('::error::GEM_SUPABASE_SERVICE_KEY ausente'); process.exit(1); }
 const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
 const log = (...a) => console.log(...a);
