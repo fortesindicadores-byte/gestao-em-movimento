@@ -99,6 +99,9 @@ const num = s => +String(s).replace(/[^\d,-]/g, '').replace(',', '.');
   const nomes = await pg.locator('#tb-postos tbody td.posto').allTextContents();
   t('do menor para o maior R$/L', nomes[0] === 'POSTO BARATO LTDA' && nomes.indexOf('POSTO CARO') === nomes.length - 1, nomes.join(' · '));
   t('linha Total', await pg.locator('#tb-postos tr.total').count() === 1);
+  t('tabela em visão própria (Por Posto), fora do Resumo', await pg.evaluate(() => !!document.querySelector('#vw-postos #tab-postos') && !document.querySelector('#vw-resumo table') && TIT.postos === 'Por Posto'));
+  t('gráfico no padrão: eixo de valor escondido, sem grade, rótulo em cima, barra translúcida com contorno', await pg.evaluate(() => { const o = charts.dia.options, d = charts.dia.data.datasets[0];
+    return o.scales.y.display === false && o.scales.x.grid.display === false && o.plugins.datalabels.anchor === 'end' && /,\.65\)/.test(d.backgroundColor) && d.borderWidth === 1 && d.borderRadius === 3; }));
   t('texto explicativo embaixo da tabela', await pg.evaluate(() => { const c = document.getElementById('tab-pe'); return c.previousElementSibling.classList.contains('twrap') && /menor para o maior/.test(c.textContent); }));
   // gráfico dia a dia + toggle
   const n0 = await pg.evaluate(() => charts.dia ? charts.dia.data.labels.length : -1);
@@ -117,12 +120,17 @@ const num = s => +String(s).replace(/[^\d,-]/g, '').replace(',', '.');
 }
 for (const [w, h] of [[1366, 768], [1600, 900], [1920, 1080]]) for (const tema of ['dark', 'light']) {
   const { b, pg, erros } = await cenario({ vp: { width: w, height: h }, tema });
-  const m = await pg.evaluate(() => ({ pag: document.documentElement.scrollHeight > innerHeight + 1, vw: document.querySelector('.vw.on').scrollHeight > document.querySelector('.vw.on').clientHeight + 1,
-    hx: document.querySelector('.twrap').scrollWidth > document.querySelector('.twrap').clientWidth + 1, top: document.querySelector('.top').scrollHeight > 90 }));
-  t(`${w}×${h} ${tema}: sem rolagem de página nem da visão`, !erros.length && !m.pag && !m.vw, JSON.stringify(m) + erros.join('|'));
-  t(`${w}×${h} ${tema}: tabela sem barra lateral`, !m.hx);
+  const mede = () => pg.evaluate(() => ({ pag: document.documentElement.scrollHeight > innerHeight + 1, vw: document.querySelector('.vw.on').scrollHeight > document.querySelector('.vw.on').clientHeight + 1,
+    hx: document.querySelector('#tab-postos').scrollWidth > document.querySelector('#tab-postos').clientWidth + 1, top: document.querySelector('.top').scrollHeight > 90,
+    gh: Math.round(document.getElementById('ch-dia').getBoundingClientRect().height) }));
+  const m = await mede();
+  t(`${w}×${h} ${tema}: Resumo sem rolagem de página nem da visão, gráfico com altura`, !erros.length && !m.pag && !m.vw && m.gh > 250, JSON.stringify(m) + erros.join('|'));
   t(`${w}×${h} ${tema}: topo numa linha`, !m.top);
-  if (SHOT && w === 1920) await pg.screenshot({ path: join(SHOT, `postos-${w}-${tema}.png`) });
+  if (SHOT && w === 1920) { await pg.waitForTimeout(1200); await pg.screenshot({ path: join(SHOT, `postos-${w}-${tema}.png`) }); }
+  await pg.evaluate(() => setVw('postos')); await pg.waitForTimeout(150);
+  const m2 = await mede();
+  t(`${w}×${h} ${tema}: Por Posto sem rolagem de página nem da visão, tabela sem barra lateral`, !m2.pag && !m2.vw && !m2.hx, JSON.stringify(m2));
+  if (SHOT && w === 1920) await pg.screenshot({ path: join(SHOT, `postos-tab-${w}-${tema}.png`) });
   await b.close();
 }
 {

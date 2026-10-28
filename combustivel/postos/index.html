@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610282230">
+<meta name="build" content="202610282300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Postos · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -351,8 +351,10 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .kpis{grid-template-columns:repeat(3,minmax(0,1fr));height:clamp(112px,16.5vh,170px);min-height:0;}
 .kpi{padding:clamp(12px,2.2vh,22px) 18px;}
 .kpi .km{line-height:1.45;}
-.gr-p{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px;}
-.gr-p .gcard{min-height:0;}
+.gr-p{flex:1 1 auto;min-height:0;display:flex;}
+.gr-p .gcard{flex:1;min-height:0;min-width:0;}
+#vw-postos .tsec{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
+#vw-postos .twrap{flex:1 1 auto;min-height:0;overflow-y:auto;}
 .ghd{display:flex;align-items:flex-start;gap:10px;}
 .ghd>div:first-child{flex:1;min-width:0;}
 .tsec{padding:12px 14px 10px;}
@@ -368,7 +370,7 @@ table.dre td.posto .lin2{font-weight:500;}
 .vazio-l{padding:26px;text-align:center;color:var(--txt3);font-size:11.5px;}
 .tpe{margin:8px 0 0;flex:0 0 auto;}
 @media(max-width:1500px){ table.dre td,table.dre thead th{padding:8px 6px;} table.dre{font-size:10.5px;} table.dre thead th{font-size:8.5px;letter-spacing:.4px;} }
-@media(max-width:860px){ #miolo{display:block;} .kpis{grid-template-columns:1fr;height:auto;} .gr-p{display:block;}
+@media(max-width:860px){ #miolo{display:block;} .kpis{grid-template-columns:1fr;height:auto;} .gr-p{display:block;} #vw-postos .twrap{overflow-y:visible;}
   .gr-p .gcard{height:320px;margin-bottom:12px;} .gr-p .tsec{height:auto;} .twrap{overflow-x:auto;} }
 </style>
 </head>
@@ -386,6 +388,7 @@ table.dre td.posto .lin2{font-weight:500;}
 
     <div class="s-sec">Visões</div>
     <button class="s-item on" data-vw="resumo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Resumo Gerencial</button>
+    <button class="s-item" data-vw="postos"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17"/><path d="M2 22h13"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/><path d="M6 7h5"/></svg> Por Posto</button>
 
     <div class="s-sec">Atalhos</div>
     <div id="pdf-slot"></div>
@@ -453,12 +456,15 @@ table.dre td.posto .lin2{font-weight:500;}
                   <button class="dimb" data-m="rl">R$/L</button>
                 </div>
               </div>
+              <div class="gleg"><span style="color:#F97316"><i class="sq"></i><b id="g-leg" style="color:var(--txt3);font-weight:700">VALOR ABASTECIDO (R$)</b></span></div>
               <div class="gcv"><canvas id="ch-dia"></canvas></div>
             </div>
-            <div class="card tsec">
-              <div class="twrap" id="tab-postos"><div class="vazio-l">Lendo…</div></div>
-              <div class="tsub tpe" id="tab-pe"></div>
-            </div>
+          </div>
+        </section>
+        <section class="vw" id="vw-postos">
+          <div class="card tsec">
+            <div class="twrap" id="tab-postos"><div class="vazio-l">Lendo…</div></div>
+            <div class="tsub tpe" id="tab-pe"></div>
           </div>
         </section>
       </div>
@@ -651,24 +657,28 @@ function chartBase(){
 }
 const MODOS={valor:{tit:'Valor abastecido por dia',f:d=>d.v,fmt:(v,c)=>c?curto(v):'R$ '+br(v,2)},
   litros:{tit:'Litros abastecidos por dia',f:d=>d.l,fmt:(v,c)=>c?curto(v):br(v,0)+' L'},
-  rl:{tit:'Preço R$/L por dia',f:d=>d.l>0?d.v/d.l:null,fmt:(v,c)=>'R$ '+br(v,c?2:4)}};
+  rl:{tit:'Preço R$/L por dia',f:d=>d.l>0?d.v/d.l:null,fmt:(v,c)=>c?br(v,2):'R$ '+br(v,4)}};
+// Gráfico no desenho do Painel KM (Renan, 28/10/2026: "esse gráfico está totalmente
+// fora do nosso padrão"): barra translúcida .65 com contorno de 1 px e cantos de 3 px,
+// rótulo de dados em cima de cada barra, eixo de valor escondido, sem grade, legenda no card.
+const LEG={valor:'VALOR ABASTECIDO (R$)',litros:'LITROS ABASTECIDOS',rl:'PREÇO R$/L'};
 function grafico(dias){
   const M=MODOS[MODO], B=chartBase(), lab=dias.map(d=>diaRot(d.d)), data=dias.map(M.f);
-  const vals=data.filter(v=>v!=null&&isFinite(v)); const mx=Math.max(...vals,0), mn=Math.min(...vals,0);
-  const cor='#F97316', n=lab.length;
-  let y;
-  if(MODO==='rl'){ const lo=Math.min(...vals), amp=(mx-lo)||mx*.05||1;
-    y={beginAtZero:false,min:Math.max(0,Math.floor((lo-amp*.45)*10)/10),suggestedMax:mx+amp*.18}; }
-  else y={beginAtZero:true,suggestedMax:mx*1.12||1};
+  const vals=data.filter(v=>v!=null&&isFinite(v)); const mx=Math.max(...vals,0);
+  const n=lab.length, larg=($('ch-dia').parentElement.clientWidth||1000)/Math.max(n,1);
+  set('g-leg',LEG[MODO]);
+  let y={display:false,beginAtZero:true,max:mx*1.08||1};
+  if(MODO==='rl'&&vals.length){ const lo=Math.min(...vals), amp=(mx-lo)||mx*.05||1;
+    y={display:false,beginAtZero:false,min:Math.max(0,lo-amp*1.2),max:mx+amp*.25}; }
   if(charts.dia) charts.dia.destroy();
-  charts.dia=new Chart($('ch-dia'),{type:'bar',data:{labels:lab,datasets:[{data,backgroundColor:cor+'A6',borderColor:cor,borderWidth:1,borderRadius:3,borderSkipped:false}]},
-    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22,right:10,left:4}},
+  charts.dia=new Chart($('ch-dia'),{type:'bar',data:{labels:lab,datasets:[{data,backgroundColor:'rgba(249,115,22,.65)',borderColor:'#F97316',borderWidth:1,borderRadius:3,barPercentage:.9,categoryPercentage:.92}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:30}},
       plugins:{legend:{display:false},
         tooltip:{...B.tooltip,callbacks:{title:it=>dias[it[0].dataIndex].d.split('-').reverse().join('/'),label:c=>' '+M.fmt(c.raw,false),
           footer:it=>{ const d=dias[it[0].dataIndex]; return [`Valor: R$ ${br(d.v,2)}`,`Litros: ${br(d.l,0)} L`,`R$/L: R$ ${br(d.l>0?d.v/d.l:null,4)}`,`${d.n} abastecimento${d.n===1?'':'s'}`]; }}},
-        datalabels:{display:n<=16,anchor:'end',align:'top',offset:2,color:B.dl,font:{family:'Montserrat',size:10,weight:'700'},formatter:v=>M.fmt(v,true)}},
-      scales:{x:{ticks:{...B.tick,maxRotation:0,autoSkip:true,autoSkipPadding:6},grid:{display:false},border:{display:false}},
-        y:{...y,grid:B.grid,border:{display:false},ticks:{...B.tickY,maxTicksLimit:6,callback:v=>MODO==='rl'?br(v,2):curto(v)}}}},
+        datalabels:{display:c=>c.dataset.data[c.dataIndex]!=null,anchor:'end',align:'top',offset:2,color:B.dl,clip:false,
+          font:{family:'Montserrat',size:larg>=56?13:larg>=42?11:larg>=32?10:9,weight:'700'},formatter:v=>M.fmt(v,true)}},
+      scales:{x:{grid:{display:false},border:{display:false},ticks:{...B.tick,maxRotation:0,autoSkip:false}},y}},
     plugins:typeof ChartDataLabels!=='undefined'?[ChartDataLabels]:[]});
 }
 
@@ -732,11 +742,12 @@ async function initApp(){
 }
 
 /* ── navegação ── */
-const TIT={resumo:'Resumo Gerencial'};
+const TIT={resumo:'Resumo Gerencial',postos:'Por Posto'};
 let VW='resumo';
 function setVw(v){ VW=v;
   document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===v));
-  document.querySelectorAll('.vw').forEach(x=>x.classList.toggle('on',x.id==='vw-'+v)); set('tit',TIT[v]||''); }
+  document.querySelectorAll('.vw').forEach(x=>x.classList.toggle('on',x.id==='vw-'+v)); set('tit',TIT[v]||'');
+  if(v==='resumo'&&charts.dia) setTimeout(()=>charts.dia.resize(),30); }
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
 
 /* ── lateral recolhida + dicas ── */
@@ -780,6 +791,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610282230"></script>
+<script src="../../assets/build-check.js?v=202610282300"></script>
 </body>
 </html>
