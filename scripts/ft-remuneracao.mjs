@@ -14,7 +14,11 @@
 //    do mês: 25 mapas por ativo; o pago depende dos mapas rodados, que estão na
 //    Dispersão de km, não no FT).
 //  · AS: não tem Resumo; sai placa a placa do Caminhão AS (ativas): variável =
-//    R$/km de cada peça × KM Mês Roadshow, fixo = Total Custo Fixo da placa.
+//    R$/km de cada peça × KM Mês Roadshow (a lavagem por km é variável no AS:
+//    Total Custo Variável = consumo + manutenção + carroceria + pneu + lavagem),
+//    fixo = Total Custo Fixo da placa.
+//  · Rota, Van e UDC: a lavagem é fixa por caminhão ativo e no Resumo entra em
+//    Outras Despesas (não no Total Frota Ativa); vai em `lavagem` só como peça.
 //  · EMPURRADA e INSUMOS: variável = R$/km de cada componente do trecho × km
 //    previsto (kmRodado × previsaoViagens); fixo, equipe, QLP e outras despesas
 //    vêm do Faturamento (frete líquido de cada bloco).
@@ -97,7 +101,11 @@ async function tabela(canal, tab) {
 
 // ── acumulador: operação × unidade × mês × quinzena ───────────────────────
 const CAMPOS = ['ativos', 'parados', 'km_teto', 'comb', 'manut', 'carroc', 'pneu', 'lavagem_var', 'outros_var', 'variavel',
-  'fixo_ativo', 'fixo_parado', 'seguro', 'finame', 'ipva', 'lavagem', 'rastreador', 'equipe', 'qlp_adm', 'outras', 'total'];
+  'fixo_ativo', 'fixo_parado', 'seguro', 'finame', 'ipva', 'lavagem', 'rastreador', 'equipe', 'qlp_adm', 'outras', 'total',
+  // peças a mais (scripts/ft-remuneracao.sql, 2ª parte): faixa refletiva, depreciação e remuneração K do fixo;
+  // pedágio, seguro, salário e lucro variáveis do trecho do T1 (estavam juntos em outros_var)
+  'faixa', 'deprec', 'rem_k', 'pedagio', 'seguro_var', 'salario_var', 'lucro_var'];
+const NOVOS = ['faixa', 'deprec', 'rem_k', 'pedagio', 'seguro_var', 'salario_var', 'lucro_var'];
 const Q = new Map();   // op|cod|ym|q → {campos}
 function acc(op, cod, uni, ym, q) {
   const k = `${op}|${cod}|${ym}|${q}`;
@@ -134,6 +142,11 @@ for (const [tab, van] of [['Resumo', false], ['ResumoVan', true]]) {
     a.ipva += z(r.g('IPVA Licen. Mensal', 'ipvaLicencMensal')) * n + z(r.g('IPVA Licenc. Mensal Parado', 'ipvaLicencMensalParado')) * np;
     a.lavagem += z(r.g('Lavagem', 'lavagem')) * n;
     a.rastreador += z(r.g('Rastreador', 'rastreador')) * n + z(r.g('Rastreador Parado', 'rastreadorParado')) * np;
+    a.faixa += z(r.g('Faixa Reflexiva', 'faixaReflexiva')) * n + z(r.g('Faixa Reflexiva Parado', 'faixaRefletivaParado', 'faixaReflexivaParado')) * np;
+    a.deprec += (z(r.g('Depreciação Caminhão', 'depreciacaoCaminhao')) + z(r.g('Depreciação Carroceria', 'depreciacaoCarroceria'))) * n
+      + (z(r.g('Depreciação Caminhão Parado', 'depreciacaoCaminhaoParado')) + z(r.g('Depreciação Carroceria Parado', 'depreciacaoCarroceriaParado'))) * np;
+    a.rem_k += (z(r.g('Remuneração K', 'remuneracaoK')) + z(r.g('Remuneração K Impostos', 'remuneracaoKImpostos'))) * n
+      + (z(r.g('Remuneração K Parado', 'remuneracaoKParado')) + z(r.g('Remuneração K Impostos Parado', 'remuneracaoKImpostosParado'))) * np;
     a.equipe += z(r.g('Total Equipe Entrega', 'totalEquipeEntrega'));
     a.qlp_adm += z(r.g('Total QLP ADM', 'totalQlpAdm'));
     a.outras += z(r.g('Total Outras Despesas', 'totalOutrasDespesas'));
@@ -150,9 +163,13 @@ for (const [tab, van] of [['Resumo', false], ['ResumoVan', true]]) {
     if (!ativoFT(r.g('Ativo'))) { a.parados += 1; return; }
     const km = z(r.g('KM Mês Roadshow'));
     a.ativos += 1; a.km_teto += km;
+    // Total Custo Variável da placa AS = consumo + manutenção + carroceria + pneu + lavagem por km (conferido no FT)
     const c = z(r.g('Consumo R$/KM')) * km, m = z(r.g('Manutenção R$/KM')) * km, cr = z(r.g('Manutenção Carroceria R$/KM')) * km, p = z(r.g('Pneu por KM')) * km;
-    a.comb += c; a.manut += m; a.carroc += cr; a.pneu += p; a.variavel += c + m + cr + p;
-    a.lavagem_var += z(r.g('Lavagem por KM')) * km;
+    const lv = z(r.g('Lavagem por KM')) * km;
+    a.comb += c; a.manut += m; a.carroc += cr; a.pneu += p; a.lavagem_var += lv; a.variavel += c + m + cr + p + lv;
+    a.faixa += z(r.g('Faixa Reflexiva'));
+    a.deprec += z(r.g('Depreciação Cavalo')) + z(r.g('Depreciação Carroceria'));
+    a.rem_k += z(r.g('Remuneração K')) + z(r.g('Remuneração K Impostos'));
     a.fixo_ativo += z(r.g('Total Custo Fixo'));
     a.seguro += z(r.g('Seguro')); a.finame += z(r.g('FINAME Modelo Novo')); a.ipva += z(r.g('IPVA Licenciamento')); a.rastreador += z(r.g('Rastreador'));
   });
@@ -161,7 +178,7 @@ for (const [tab, van] of [['Resumo', false], ['ResumoVan', true]]) {
 
 // 3) EMPURRADA e INSUMOS — trecho (variável) + Faturamento (fixo, equipe, QLP, outras)
 const TC_FROTA = { comb: ['freteReaisKMDiesel'], manut: ['freteReaisKMManutencaoCavalo'], carroc: ['freteReaisKMManutencaoCarreta'], pneu: ['freteReaisKMPneu'], lavagem_var: ['freteReaisKMLavagem'] };
-const TC_OUTROS = ['freteReaisKMPedagio', 'freteReaisKMSeguro', 'freteReaisKMSalarioVariavel', 'freteReaisKMLucroVariavel'];
+const TC_OUTROS = { pedagio: 'freteReaisKMPedagio', seguro_var: 'freteReaisKMSeguro', salario_var: 'freteReaisKMSalarioVariavel', lucro_var: 'freteReaisKMLucroVariavel' };
 for (const [canal, trecho, fat] of [['EMPURRADA', 'TrechoEmpurrada', 'FaturamentoEmpurrada'], ['INSUMOS', 'TrechoInsumos', 'FaturamentoInsumos']]) {
   const tr = await tabela(canal, trecho);
   tr.forEach(r => {
@@ -171,7 +188,7 @@ for (const [canal, trecho, fat] of [['EMPURRADA', 'TrechoEmpurrada', 'Faturament
     const w = z(r.g('kmRodado')) * prev;
     a.km_teto += w;
     for (const [campo, cols] of Object.entries(TC_FROTA)) a[campo] += cols.reduce((s, c) => s + z(r.g(c)), 0) * w;
-    a.outros_var += TC_OUTROS.reduce((s, c) => s + z(r.g(c)), 0) * w;
+    for (const [campo, col] of Object.entries(TC_OUTROS)) { const v = z(r.g(col)) * w; a[campo] += v; a.outros_var += v; }
   });
   const fa = await tabela(canal, fat);
   fa.forEach(r => {
@@ -233,6 +250,11 @@ linhas.sort((a, b) => a.vigencia.localeCompare(b.vigencia) || a.operacao.localeC
 if (SECO) { if (process.env.FT_REM_OUT) fs.writeFileSync(process.env.FT_REM_OUT, JSON.stringify(linhas)); log('\n(seco: nada gravado)'); process.exit(0); }
 
 // ── grava: apaga os meses recalculados e insere ───────────────────────────
+// sem as colunas novas no banco (SQL da 2ª parte ainda não rodado), grava sem elas e avisa
+let semNovos = false;
+try { await api('ft_rem_mes?select=faixa,pedagio,salario_var&limit=1'); }
+catch (e) { semNovos = true; console.log('::warning::ft_rem_mes sem as colunas novas (faixa, deprec, rem_k, pedagio, seguro_var, salario_var, lucro_var): rode a 2ª parte do scripts/ft-remuneracao.sql. Gravando sem elas.'); }
 await api(`ft_rem_mes?vigencia=gte.${DESDE}`, { method: 'DELETE' });
-for (let i = 0; i < linhas.length; i += 500) await api('ft_rem_mes', { method: 'POST', body: JSON.stringify(linhas.slice(i, i + 500).map(l => ({ ...l, atualizado_em: new Date().toISOString() }))), headers: { Prefer: 'return=minimal' } });
+const gravavel = l => { const o = { ...l, atualizado_em: new Date().toISOString() }; if (semNovos) NOVOS.forEach(c => delete o[c]); return o; };
+for (let i = 0; i < linhas.length; i += 500) await api('ft_rem_mes', { method: 'POST', body: JSON.stringify(linhas.slice(i, i + 500).map(gravavel)), headers: { Prefer: 'return=minimal' } });
 log(`\nft_rem_mes: ${linhas.length} linha(s) gravada(s) de ${DESDE} em diante`);

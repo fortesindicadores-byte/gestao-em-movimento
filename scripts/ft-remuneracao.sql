@@ -46,5 +46,14 @@ drop policy if exists ft_rem_mes_le on public.ft_rem_mes;
 create policy ft_rem_mes_le on public.ft_rem_mes for select to authenticated using (public.fca_is_admin());
 grant select on public.ft_rem_mes to authenticated;
 
+-- 2ª parte (28/10/2026): peças a mais, para o painel abrir o fixo e o variável do T1
+alter table public.ft_rem_mes add column if not exists faixa       numeric;   -- faixa refletiva (fixo)
+alter table public.ft_rem_mes add column if not exists deprec      numeric;   -- depreciação caminhão + carroceria (fixo, modelo antigo)
+alter table public.ft_rem_mes add column if not exists rem_k       numeric;   -- remuneração K + impostos (fixo, modelo antigo)
+alter table public.ft_rem_mes add column if not exists pedagio     numeric;   -- T1: pedágio do trecho (variável)
+alter table public.ft_rem_mes add column if not exists seguro_var  numeric;   -- T1: seguro do trecho (variável)
+alter table public.ft_rem_mes add column if not exists salario_var numeric;   -- T1: salário variável do motorista (não é frota)
+alter table public.ft_rem_mes add column if not exists lucro_var   numeric;   -- T1: lucro variável (não é frota)
+
 -- conferência
 select count(*) as linhas, min(vigencia) as de, max(vigencia) as ate from public.ft_rem_mes;
