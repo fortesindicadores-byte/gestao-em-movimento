@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SBJS = process.env.SBJS || '', CHART = process.env.CHART_JS || '', DL = process.env.DATALABELS || '', FFL = process.env.FFLATE || '', SHOT = process.env.SHOT_DIR || '';
-let ok = 0, falha = 0;
+let ok = 0, falha = 0; const PEDIDOS_IA = [];
 const t = (nome, cond, extra = '') => { if (cond) ok++; else falha++; console.log(`${cond ? 'ok ' : 'FALHA'} ${nome}${extra ? ' — ' + extra : ''}`); };
 
 function sintetico() {
@@ -61,7 +61,7 @@ LIN.push({ canal: 'ARMAZEM', tabela: 'EmpilhadeiraApoio', vigencia: 'ARMAZEM_1_1
 const FTL = [...new Map(LIN.map(l => [l.canal + '|' + l.tabela + '|' + l.vigencia, l])).values()].map(l => ({ canal: l.canal, tabela: l.tabela, tabela_nome: NOME[l.tabela] || null,
   vigencia: l.vigencia, ano: l.ano, mes: l.mes, quinzena: l.quinzena, linhas: LIN.filter(x => x.canal === l.canal && x.tabela === l.tabela && x.vigencia === l.vigencia).length }));
 
-async function abre(admin, { w = 1366, h = 768, tema = 'dark', vazio = false } = {}) {
+async function abre(admin, { w = 1366, h = 768, tema = 'dark', vazio = false, email = 'x@conlogsa.com.br', fn = 'ok' } = {}) {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   const ctx = await b.newContext({ viewport: { width: w, height: h }, serviceWorkers: 'block', acceptDownloads: true });
   const pg = await ctx.newPage();
@@ -75,7 +75,15 @@ async function abre(admin, { w = 1366, h = 768, tema = 'dark', vazio = false } =
     const u = new URL(r.request().url()); const p = u.pathname; const m = r.request().method(); const sel = u.searchParams.get('select') || '';
     const json = (o, st = 200) => r.fulfill({ status: st, body: JSON.stringify(o), contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'Content-Range' } });
     if (m === 'OPTIONS') return r.fulfill({ status: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*' } });
-    if (p.endsWith('/auth/v1/user')) return json({ id: 'u1', email: 'x@conlogsa.com.br' });
+    if (p.endsWith('/auth/v1/user')) return json({ id: 'u1', email });
+    if (p.endsWith('/functions/v1/assistente-ft')) {
+      PEDIDOS_IA.push({ auth: r.request().headers().authorization, corpo: JSON.parse(r.request().postData() || '{}') });
+      if (fn === '404') return json({ msg: 'Requested function was not found' }, 404);
+      const ev = [{ t: 'txt', d: 'Em **set/26** o FT ' }, { t: 'txt', d: 'previu:\n\n' }, { t: 'sql', sql: 'select unidade, sum(total) from ft_rem_mes group by 1', motivo: 'total por unidade' },
+        { t: 'res', linhas: 2 }, { t: 'sql', sql: 'select 1', motivo: 'teste recusado' }, { t: 'res', erro: 'permission denied for table portal_segredo' },
+        { t: 'txt', d: '| Unidade | Total |\n|---|---|\n| CGR | R$ 200 |\n| CBA | R$ 100 |\n\n- CGR lidera' }, { t: 'fim', consultas: 2, custo: 0.12, seg: 9 }];
+      return r.fulfill({ status: 200, body: ev.map(e => JSON.stringify(e)).join('\n') + '\n', contentType: 'application/x-ndjson', headers: { 'Access-Control-Allow-Origin': '*' } });
+    }
     if (p.includes('/rest/v1/fca_profiles')) return json({ is_admin: admin });
     const off = +(u.searchParams.get('offset') || 0), lim = Math.min(+(u.searchParams.get('limit') || 1000), 1000);
     if (p.includes('/rest/v1/ft_rem_mes')) return json(vazio ? [] : ROWS.slice(off, off + lim));
@@ -95,10 +103,10 @@ async function abre(admin, { w = 1366, h = 768, tema = 'dark', vazio = false } =
     }
     return json([]);
   });
-  await pg.addInitScript(t0 => {
+  await pg.addInitScript(([t0, e0]) => {
     sessionStorage.setItem('gem_hub', '1'); localStorage.setItem('bi_theme', t0); localStorage.removeItem('remuneracao_res'); localStorage.removeItem('remuneracao_mini');
-    localStorage.setItem('sb-lozwipoeacpvplgkrxkq-auth-token', JSON.stringify({ access_token: 'tok', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, token_type: 'bearer', user: { id: 'u1', email: 'x@conlogsa.com.br', aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {} } }));
-  }, tema);
+    localStorage.setItem('sb-lozwipoeacpvplgkrxkq-auth-token', JSON.stringify({ access_token: 'tok', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, token_type: 'bearer', user: { id: 'u1', email: e0, aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {} } }));
+  }, [tema, email]);
   const erros = []; pg.on('pageerror', e => erros.push(String(e)));
   await pg.goto('file://' + join(RAIZ, 'remuneracao/index.html'), { waitUntil: 'domcontentloaded' });
   await pg.waitForTimeout(1800);
@@ -274,6 +282,37 @@ for (const [w, h] of [[1366, 768], [1600, 900], [1920, 1000]]) for (const tema o
   if (SHOT && w === 1920 && tema === 'light') { await vai(pg, 'resumo'); await pg.screenshot({ path: `${SHOT}/rem-1920-claro.png` }); }
   await b.close();
 }
+{ // Assistente: só o dono vê; pergunta, resposta em tabela, consultas e custo
+  const { b, pg, erros } = await abre(true);
+  t('Assistente escondido para outro admin', !(await pg.locator('#it-ia').isVisible()));
+  await b.close();
+}
+for (const [w, h] of [[1366, 768], [1920, 1000]]) {
+  const { b, pg, erros } = await abre(true, { w, h, email: 'fortesindicadores@gmail.com' });
+  t(`${w}: Assistente aparece para o dono`, await pg.locator('#it-ia').isVisible());
+  await vai(pg, 'ia');
+  t(`${w}: filtros escondidos e exemplos na tela vazia`, !(await pg.locator('.filtros').isVisible()) && await pg.locator('.ia-ex .dimb').count() === 4);
+  await pg.fill('#ia-txt', 'Quem recebe mais?'); await pg.press('#ia-txt', 'Enter'); await pg.waitForTimeout(900);
+  const ped = PEDIDOS_IA.at(-1);
+  t(`${w}: manda o login do hub e a pergunta`, ped && ped.auth === 'Bearer tok' && ped.corpo.mensagens.at(-1).content === 'Quem recebe mais?' && /Resumo Gerencial/.test(ped.corpo.contexto), JSON.stringify(ped && ped.corpo).slice(0, 160));
+  const resp = await pg.locator('.ia-m.ele').last();
+  t(`${w}: resposta com negrito, tabela e lista`, await resp.locator('b').count() >= 1 && await resp.locator('table tbody tr').count() === 2 && await resp.locator('li').count() >= 1);
+  t(`${w}: coluna de número alinhada à direita`, (await resp.locator('td').nth(1).getAttribute('class')) === 'n');
+  t(`${w}: consultas listadas, a recusada em vermelho`, /2 consultas/.test(await resp.locator('summary').textContent()) && await resp.locator('.ia-q .er').count() === 1);
+  t(`${w}: rodapé com consultas, tempo e custo`, /2 consultas · 9 s · US\$ 0,12/.test(await resp.locator('.ia-pe').textContent()));
+  const s = await semRolagem(pg); t(`${w}: Assistente sem rolagem de página`, s.pag, JSON.stringify(s));
+  if (SHOT) await pg.screenshot({ path: `${SHOT}/rem-ia-${w}.png` });
+  await pg.fill('#ia-txt', 'E em ago/26?'); await pg.click('#ia-env'); await pg.waitForTimeout(900);
+  t(`${w}: 2ª pergunta leva o histórico`, PEDIDOS_IA.at(-1).corpo.mensagens.length === 3 && PEDIDOS_IA.at(-1).corpo.mensagens[1].role === 'assistant');
+  await pg.reload({ waitUntil: 'domcontentloaded' }); await pg.waitForTimeout(1800); await vai(pg, 'ia');
+  t(`${w}: conversa volta depois do F5`, await pg.locator('.ia-m.eu').count() === 2);
+  await pg.click('#ia-nova'); t(`${w}: Nova limpa`, await pg.locator('.ia-m').count() === 0);
+  t(`${w}: sem erro de página`, !erros.length, erros.join(' | '));
+  await b.close();
+}
+{ const { b, pg } = await abre(true, { email: 'fortesindicadores@gmail.com', fn: '404' }); await vai(pg, 'ia');
+  await pg.fill('#ia-txt', 'oi'); await pg.press('#ia-txt', 'Enter'); await pg.waitForTimeout(700);
+  t('função não publicada: avisa', /ainda não foi publicada/.test(await pg.locator('.ia-m.ele').last().textContent())); await b.close(); }
 { const { b, pg } = await abre(false); t('sem admin: gate', /Apenas administradores/.test(await pg.locator('.gate').textContent())); await b.close(); }
 { const { b, pg } = await abre(true, { vazio: true }); t('base vazia: gate', /Base ainda vazia/.test(await pg.locator('.gate').textContent())); await b.close(); }
 console.log(`\n${ok} ok · ${falha} falha(s)`);
