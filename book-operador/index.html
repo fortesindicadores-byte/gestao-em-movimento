@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610281000">
+<meta name="build" content="202610281700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Book do Operador · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<script src="../assets/gviz-cache.js?v=202610281000"></script>
+<script src="../assets/gviz-cache.js?v=202610281700"></script>
 <style>
 /* ============================================================
    BOOK DO OPERADOR — as regras da remuneração da Ambev, como estão no
@@ -358,6 +358,8 @@ table.dre td{white-space:nowrap;}
 table.dre thead th{white-space:normal;overflow-wrap:normal;word-break:normal;}
 table.dre td.quebra{white-space:normal;}
 table.dre tbody tr.clica{cursor:pointer;}
+.kpi.clica{cursor:pointer;transition:border-color .15s;}
+.kpi.clica:hover{border-color:color-mix(in srgb,var(--laranja) 55%,transparent);}
 .tpe{margin:8px 0 0;flex:0 0 auto;}
 .tsec.cheia{flex:1 1 auto;}
 /* leitor: lista à esquerda, registro à direita */
@@ -442,6 +444,8 @@ mark{background:color-mix(in srgb,var(--laranja) 35%,transparent);color:inherit;
         <div class="tit-sub" id="titSub">Carregando…</div>
       </div>
       <div class="filtros">
+        <div class="ms-wrap" id="ms-ass"><button class="ms-btn" onclick="toggleMs('ms-ass')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Assunto<span class="ms-cnt"></span></button>
+          <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
         <div class="ms-wrap" id="ms-cat"><button class="ms-btn" onclick="toggleMs('ms-cat')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Categoria<span class="ms-cnt"></span></button>
           <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div>
       </div>
@@ -469,9 +473,9 @@ mark{background:color-mix(in srgb,var(--laranja) 35%,transparent);color:inherit;
         </div>
         <div class="kpis">
           <div class="kpi"><div class="kl">Anexos</div><div class="kv" id="k-anx">—</div><div class="km" id="k-anx-m">—</div></div>
-          <div class="kpi"><div class="kl">Regras de frota</div><div class="kv" id="k-eq">—</div><div class="km">registros de Equipamentos</div></div>
-          <div class="kpi"><div class="kl">Gente</div><div class="kv" id="k-gente">—</div><div class="km">equipe, salários e benefícios</div></div>
-          <div class="kpi"><div class="kl">Lucro</div><div class="kv" id="k-lucro">—</div><div class="km">modelo de lucro e performance</div></div>
+          <div class="kpi clica" data-ass="Frota" title="Filtrar frota"><div class="kl">Regras de frota</div><div class="kv" id="k-eq">—</div><div class="km">equipamentos, combustível, manutenção, pneu, stress test, CIVF</div></div>
+          <div class="kpi clica" data-ass="Gente" title="Filtrar gente"><div class="kl">Gente</div><div class="kv" id="k-gente">—</div><div class="km">equipe, salários e benefícios</div></div>
+          <div class="kpi clica" data-ass="Lucro" title="Filtrar lucro"><div class="kl">Lucro</div><div class="kv" id="k-lucro">—</div><div class="km">modelo de lucro e performance</div></div>
           <div class="kpi"><div class="kl">Mais consultado</div><div class="kv" id="k-top" style="font-size:clamp(13px,1.6vh,17px)">—</div><div class="km" id="k-top-m">—</div></div>
         </div>
         <div class="gr2">
@@ -573,14 +577,24 @@ function buildMs(id,itens,onChange){
 function toggleMs(id){ const w=document.getElementById(id); if(!w) return; const p=w.querySelector('.ms-panel'), aberto=p.classList.contains('open');
   document.querySelectorAll('.ms-panel.open').forEach(x=>x.classList.remove('open')); if(!aberto){ p.classList.add('open'); const i=w.querySelector('.ms-search input'); if(i) setTimeout(()=>i.focus(),30); } }
 document.addEventListener('click',e=>{ if(!e.target.closest('.ms-wrap')) document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open')); });
-const passaCat=r=>{ const c=getSel('ms-cat'); return !c.length||c.includes(r.categoria||'Sem categoria'); };
+/* Assunto (Renan, 28/10/2026: "Quero conseguir filtrar frota"): agrupa as categorias do Book.
+   Frota = Equipamentos e Vale Pedágio, mais os registros de outras categorias que tratam de frota pelo título */
+const ASSUNTOS=['Frota','Gente','Lucro','Custos e geral','Sistema','Histórico'];
+const FROTA_TIT=/FROTA|PNEU|COMBUST|MANUTEN|STRESS|CIVF|EMPILHADEIRA|EQUIPAMENTO|RECARGA|PEDAGIO/;
+function assuntoDe(r){ const c=r.categoria||'Sem categoria', t=semAc(r.titulo).toUpperCase();
+  if(c==='Equipamentos'||c==='Vale Pedágio'||FROTA_TIT.test(t)) return 'Frota';
+  if(c==='Gente') return 'Gente'; if(c==='Lucro') return 'Lucro';
+  if(c==='Histórico') return 'Histórico';
+  if(['Menu','Funcionalidades do sistema','Acompanhamento de Chamados','Sem categoria','Freightech'].includes(c)) return 'Sistema';
+  return 'Custos e geral'; }
+const passaCat=r=>{ const c=getSel('ms-cat'), a=getSel('ms-ass'); return (!c.length||c.includes(r.categoria||'Sem categoria'))&&(!a.length||a.includes(r.assunto)); };
 
 /* ── leitura ── */
 async function todas(q){ const out=[]; for(let off=0;off<5000;off+=1000){ const {data,error}=await q().range(off,off+999); if(error) throw error; out.push(...(data||[])); if(!data||data.length<1000) break; } return out; }
 async function carregar(){
   REG=await todas(()=>sb.from('ft_book').select('uuid,titulo,subtitulo,categoria,ordem,texto,n_blocos,n_anexos,n_imagens,criado_em,atualizado_em,cliques,coletado_em').order('ordem'));
   if(!REG.length) throw new Error('VAZIA');
-  REG.forEach(r=>{ r.categoria=r.categoria||'Sem categoria'; r._busca=semAc(r.titulo+' '+(r.subtitulo||'')+' '+textoDe(r.texto)); });
+  REG.forEach(r=>{ r.categoria=r.categoria||'Sem categoria'; r.assunto=assuntoDe(r); r._busca=semAc(r.titulo+' '+(r.subtitulo||'')+' '+textoDe(r.texto)); });
   ANX=await todas(()=>sb.from('ft_book_anexo').select('id_storage,registro,bloco,nome,tipo,tamanho').order('nome'));
 }
 
@@ -594,7 +608,8 @@ function renderResumo(){
   const col=REG.reduce((m,r)=>r.coletado_em&&(!m||r.coletado_em>m)?r.coletado_em:m,null); set('h-col',fmtDT(col));
   set('k-anx',br(A.length)); set('k-anx-m',`${tam(A.reduce((s,a)=>s+(+a.tamanho||0),0))} · ${[...new Set(A.map(a=>a.tipo).filter(Boolean))].join(', ')}`);
   const n=c=>R.filter(r=>r.categoria===c).length;
-  set('k-eq',br(n('Equipamentos'))); set('k-gente',br(n('Gente'))); set('k-lucro',br(n('Lucro')));
+  const na=a=>R.filter(r=>r.assunto===a).length;
+  set('k-eq',br(na('Frota'))); set('k-gente',br(na('Gente'))); set('k-lucro',br(na('Lucro')));
   const top=R.slice().sort((a,b)=>(+b.cliques||0)-(+a.cliques||0))[0];
   set('k-top',top?top.titulo:'—'); set('k-top-m',top?`${br(top.cliques)} acessos no FT · ${top.categoria}`:'—');
   document.getElementById('t-ult').innerHTML=`<table class="dre"><thead><tr><th>Registro</th><th>Categoria</th><th>Atualizado</th><th class="num">Anexos</th></tr></thead><tbody>${
@@ -704,7 +719,9 @@ async function initApp(){
     if(/VAZIA/.test(m)) gate('Book ainda vazio','A tabela <code>ft_book</code> não tem registros. Rode o workflow <code>Freightech Book</code> no Actions.');
     else if(/does not exist|could not find the table|schema cache/i.test(m)) gate('Tabelas ainda não criadas','Rode o SQL de <code>scripts/freightech-book.sql</code> e depois o workflow <code>Freightech Book</code>.');
     else gate('Erro ao carregar',esc(m)); return; }
+  buildMs('ms-ass',ASSUNTOS.filter(a=>REG.some(r=>r.assunto===a)),render);
   buildMs('ms-cat',[...new Set(REG.map(r=>r.categoria))].sort((a,b)=>a.localeCompare(b,'pt-BR')),render);
+  document.querySelectorAll('.kpi[data-ass]').forEach(k=>k.addEventListener('click',()=>{ const w=document.getElementById('ms-ass'); w._sel=new Set([k.dataset.ass]); w._render(''); render(); setVw('registros'); }));
   render();
 }
 async function recarregar(){ set('titSub','Carregando…'); Object.keys(BLOCOS).forEach(k=>delete BLOCOS[k]);
@@ -761,6 +778,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610281000"></script>
+<script src="../assets/build-check.js?v=202610281700"></script>
 </body>
 </html>

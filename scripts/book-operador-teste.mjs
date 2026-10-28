@@ -60,6 +60,12 @@ async function abre(admin, { w = 1366, h = 768, tema = 'dark' } = {}) {
 { const { b, pg, erros } = await abre(true);
   t('sem erro de página', !erros.length, erros.join(' | '));
   t('hero = nº de registros', (await pg.locator('#h-reg').textContent()) === String(REG.length));
+  // filtro Assunto (Renan, 28/10/2026: "Quero conseguir filtrar frota"): o card Regras de frota filtra
+  { const nf = +(await pg.locator('#k-eq').textContent()).replace(/\D/g, '');
+    await pg.click('.kpi[data-ass="Frota"]'); await pg.waitForTimeout(300);
+    const nl = await pg.locator('#itens .it').count();
+    t('Assunto: o card Regras de frota filtra a lista só com frota', nf > 0 && nl === nf && (await pg.locator('#ms-ass .ms-cnt').textContent()) === '1', `${nf} no card · ${nl} na lista`);
+    await pg.evaluate(() => { const w = document.getElementById('ms-ass'); w._sel.clear(); w._render(''); render(); setVw('resumo'); }); await pg.waitForTimeout(200); }
   t('resumo sem rolagem (1366)', await pg.evaluate(() => { const a = document.querySelector('#vw-resumo'); return a.scrollHeight <= a.clientHeight + 2; }));
   if (SHOT) await pg.screenshot({ path: SHOT + '/book-resumo-1366.png' });
   await pg.click('.s-item[data-vw="registros"]'); await pg.waitForTimeout(800);
