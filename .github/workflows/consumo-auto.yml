@@ -46,6 +46,12 @@ on:
 permissions:
   contents: read
 
+# A tela de anomalias dispara uma rodada a cada correção salva: só uma fica na fila
+# (a mais nova, que já lê todas as correções) e a que está rodando termina.
+concurrency:
+  group: consumo-auto
+  cancel-in-progress: false
+
 jobs:
   consumo:
     runs-on: ubuntu-latest
