@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610281200">
+<meta name="build" content="202610281300">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1538,6 +1538,11 @@ function toggleMs(id){
 }
 function getMsValues(id){const w=document.getElementById(id);return w&&w._sel?[...w._sel]:[];}
 function respFiltro(){const e=document.getElementById('f-resp');return e?e.value.trim().toLowerCase():'';}
+// pesquisa por palavra-chave (assets/fca-busca.js): fato e ação juntos, todas as palavras.
+// r é linha do banco (responsavel, acompanhamento) ou ação do loadAcoes (resp, obs)
+function buscaAc(r,f){ if(!window.FcaBusca||!FcaBusca.ativa()) return true; f=f||{};
+  return FcaBusca.ok(UNIDADE_COD,f.proj,projLabel(f.proj),f.vig,f.origem,f.fato,f.nome,stripTags(f.desvio||''),
+    r.causa,r.acao,r.responsavel,r.resp,r.acompanhamento,r.obs,r.status||DEFAULT_STATUS,r.fato_desvio,r.fdesv); }
 function respOk(v,fr){return !fr||String(v||'').toLowerCase().includes(fr);}
 // INDICADOR E INDICADOR/CONTA EM CASCATA (Renan, 13/10/2026): as opções saem só
 // dos fatos que passam em Vigência, Origem e Projeto; o já marcado fica na lista.
@@ -1598,15 +1603,15 @@ function aplicar(){
   setTimeout(function(){alinhaCabecalhos();focaQuadro();},0);
   if(!_FATOS.length){list.innerHTML='<div class="empty">✓ Nenhum desvio encontrado para esta unidade na vigência mais recente — sem fatos a tratar.</div>';return;}
   const fv=getMsValues('ms-vig'), fo=getMsValues('ms-org'), fp=getMsValues('ms-proj'), fi=getMsValues('ms-ind'), fct=getMsValues('ms-conta'), fs=getMsValues('ms-st'), fpz=getMsValues('ms-prazo'), fr=respFiltro();
-  const acMatch=r=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr);
+  const acMatch=(r,f)=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr)&&buscaAc(r,f);
   const vis=_FATOS.filter(f=>(!fv.length||fv.includes(f.vig))&&(!fo.length||fo.includes(f.origem))&&(!fp.length||fp.includes(projLabel(f.proj)))&&(!fi.length||fi.includes(f.fato))&&(!fct.length||contasDeF(f).some(c=>fct.includes(c)))
-    &&(!(fs.length||fpz.length||fr) || (_DBROWS[keyOf(f)]||[]).some(acMatch)));
+    &&(!(fs.length||fpz.length||fr||(window.FcaBusca&&FcaBusca.ativa())) || loadAcoes(keyOf(f),f.causaAuto).some(r=>acMatch(r,f))));
   if(!vis.length){list.innerHTML='<div class="empty">Nenhum fato para o filtro selecionado.</div>';return;}
   if(VIEW==='resumo'){
     // a série mensal ignora o filtro de VIGÊNCIA: os outros meses continuam
     // no gráfico, apagados, como no Painel KM e na Visão Financeira
     const visSemVig=_FATOS.filter(f=>(!fo.length||fo.includes(f.origem))&&(!fp.length||fp.includes(projLabel(f.proj)))&&(!fi.length||fi.includes(f.fato))&&(!fct.length||contasDeF(f).some(c=>fct.includes(c)))
-      &&(!(fs.length||fpz.length||fr) || (_DBROWS[keyOf(f)]||[]).some(acMatch)));
+      &&(!(fs.length||fpz.length||fr||(window.FcaBusca&&FcaBusca.ativa())) || loadAcoes(keyOf(f),f.causaAuto).some(r=>acMatch(r,f))));
     list.innerHTML=AderenciaView.html({dims:DIMS_ADER}); pintaResumoFCA(vis,visSemVig,fv); return; }
   if(VIEW==='kanban'){ list.innerHTML=kanbanHTMLpre(vis); return; }
   if(VIEW==='gantt'){ list.innerHTML=ganttHTMLpre(vis); return; }
@@ -1696,9 +1701,9 @@ function showGantt(){VIEW=VIEW==='gantt'?'kanban':'gantt';updateViewBtnsPre();ap
 // Mesmo desenho do Planner — o texto da ação quebra em vez de ser cortado.
 function ganttHTMLpre(vis){
   const fs=getMsValues('ms-st'), fpz=getMsValues('ms-prazo'), fr=respFiltro();
-  const acMatch=r=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr);
+  const acMatch=(r,f)=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr)&&buscaAc(r,f);
   const itens=[]; vis.forEach(f=>{const key=keyOf(f);(_DBROWS[key]||[]).forEach(r=>{
-    if(acMatch(r)&&r.id) itens.push({r,f});});});
+    if(acMatch(r,f)&&r.id) itens.push({r,f});});});
   if(!itens.length) return '<div class="cvazia">Nenhuma ação com os filtros atuais</div>';
   itens.sort((a,b)=>String(a.r.prazo||'9999').localeCompare(String(b.r.prazo||'9999')));
   const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -1772,10 +1777,10 @@ function kcardHTMLpre(x){const r=x.r,f=x.f;
 const DIMS_ADER=[{k:'conta',rot:'Conta / Indicador'}];
 function linhasAderenciaFCA(vis){
   const fs=getMsValues('ms-st'), fpz=getMsValues('ms-prazo'), fr=respFiltro();
-  const acMatch=r=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr);
+  const acMatch=(r,f)=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr)&&buscaAc(r,f);
   const out=[];
   vis.forEach(f=>{const key=keyOf(f);(_DBROWS[key]||[]).forEach(r=>{
-    if(!acMatch(r))return;
+    if(!acMatch(r,f))return;
     const st=String(r.status||DEFAULT_STATUS);
     out.push({
       vig:f.vig||r.vigencia||'', ord:vigNum(f.vig||r.vigencia||''),
@@ -1796,8 +1801,8 @@ function pintaResumoFCA(vis,visSemVig,vigsSel){
 }
 function kanbanHTMLpre(vis){
   const fs=getMsValues('ms-st'), fpz=getMsValues('ms-prazo'), fr=respFiltro();
-  const acMatch=r=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr);
-  const cards=[]; vis.forEach(f=>{const key=keyOf(f);(_DBROWS[key]||[]).forEach(r=>{if(acMatch(r))cards.push({r,f,key});});});
+  const acMatch=(r,f)=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr)&&buscaAc(r,f);
+  const cards=[]; vis.forEach(f=>{const key=keyOf(f);(_DBROWS[key]||[]).forEach(r=>{if(acMatch(r,f))cards.push({r,f,key});});});
   const COLS=[{k:'Não iniciada',cls:'nao'},{k:'Em andamento',cls:'and'},{k:'Concluída',cls:'con'}];
   // Os títulos ficam numa faixa FORA da área que rola — o quadro continua com
   // UMA barra de rolagem só, e o nome da etapa nunca sai da tela.
@@ -1823,8 +1828,8 @@ function chipStatusRel(st){
 }
 function relatorioHTMLpre(vis){
   const fs=getMsValues('ms-st'), fpz=getMsValues('ms-prazo'), fr=respFiltro();
-  const acMatch=r=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr);
-  const rows=[]; vis.forEach(f=>{const key=keyOf(f);loadAcoes(key,f.causaAuto).forEach(a=>{if(acMatch(a))rows.push({f,a});});});
+  const acMatch=(r,f)=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr)&&buscaAc(r,f);
+  const rows=[]; vis.forEach(f=>{const key=keyOf(f);loadAcoes(key,f.causaAuto).forEach(a=>{if(acMatch(a,f))rows.push({f,a});});});
   if(!rows.length)return '<div class="empty">Nenhuma ação com os filtros selecionados.</div>';
   // A situação manda primeiro: as vencidas encabeçam a tabela, da mais
   // vencida para a menos (prazo mais antigo = mais dias de atraso). Depois
@@ -2214,9 +2219,11 @@ initApp();
 </script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610132200"></script>
+<script src="../assets/fca-busca.js?v=202610281300"></script>
+<script>FcaBusca.init(function(){ if(typeof aplicar==='function'&&_FATOS) aplicar(); });</script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610281200"></script>
+<script src="../assets/build-check.js?v=202610281300"></script>
 </body>
 </html>

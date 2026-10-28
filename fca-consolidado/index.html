@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610281200">
+<meta name="build" content="202610281300">
 <title>FCA · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1187,6 +1187,8 @@ function focaQuadro(){
   if(!ae||ae===document.body) k.focus({preventScroll:true});
 }
 
+// pesquisa por palavra-chave (assets/fca-busca.js): fato e ação juntos, todas as palavras
+function buscaRow(r){ return !window.FcaBusca||FcaBusca.ok(r.unidade,r.projeto,projLabel(r.projeto),r.vigencia,r.origem,r.fato,r.fato_desvio,r.causa,r.acao,r.responsavel,r.acompanhamento,r.status||DEFAULT_STATUS); }
 function render(){
   const c=document.getElementById('content');
   if(!_ROWS.length){c.innerHTML='<div class="tbl-section"><div class="empty">Nenhuma ação cadastrada ainda. Assim que as unidades preencherem o FCA, os registros aparecem aqui.</div></div>';return;}
@@ -1194,7 +1196,7 @@ function render(){
   const fillState=v=>String(v||'').trim()?'Preenchida':'Em branco';
   // um filtro só, com as exceções passadas por fora — antes a mesma expressão
   // estava escrita duas vezes e qualquer filtro novo tinha de entrar nas duas
-  const filtra=(pula={})=>_ROWS.filter(r=>(!fu.length||fu.includes(r.unidade))&&(pula.vig||!fv.length||fv.includes(r.vigencia))&&(pula.origem||!fo.length||fo.includes(r.origem))&&(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fp.length||fp.includes(projLabel(r.projeto)))&&(!fc.length||fc.includes(fillState(r.causa)))&&(!fa.length||fa.includes(fillState(r.acao)))&&(!ff.length||ff.includes(r.fato))&&(!fct.length||contasDe(r).some(c=>fct.includes(c)))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.responsavel,fr));
+  const filtra=(pula={})=>_ROWS.filter(r=>(!fu.length||fu.includes(r.unidade))&&(pula.vig||!fv.length||fv.includes(r.vigencia))&&(pula.origem||!fo.length||fo.includes(r.origem))&&(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fp.length||fp.includes(projLabel(r.projeto)))&&(!fc.length||fc.includes(fillState(r.causa)))&&(!fa.length||fa.includes(fillState(r.acao)))&&(!ff.length||ff.includes(r.fato))&&(!fct.length||contasDe(r).some(c=>fct.includes(c)))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.responsavel,fr)&&buscaRow(r));
   const vis=filtra();
   vis.sort((a,b)=>String(a.unidade||'').localeCompare(String(b.unidade||''))||(vigNum(b.vigencia)-vigNum(a.vigencia))||String(a.projeto||'').localeCompare(String(b.projeto||''))||String(a.fato||'').localeCompare(String(b.fato||'')));  // unidade A→Z, vigência recente, projeto, fato
   let body;
@@ -1664,9 +1666,11 @@ initApp();
 </script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610132200"></script>
+<script src="../assets/fca-busca.js?v=202610281300"></script>
+<script>FcaBusca.init(function(){ if(typeof render==='function') render(); });</script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610281200"></script>
+<script src="../assets/build-check.js?v=202610281300"></script>
 </body>
 </html>

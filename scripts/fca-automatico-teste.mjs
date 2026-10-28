@@ -622,6 +622,53 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   if (SHOT) await pg.screenshot({ path: `${SHOT}/fca-unidade-tabela.png` });
   await ctx.close();
 }
+/* ══ 2h · pesquisa por palavra-chave (Renan, 28/10/2026: "campo de pesquisa em todos os FCAs") ══ */
+{
+  console.log('\n══ 2h · pesquisa por palavra-chave no FCA · Admin e no da unidade');
+  for (const [pagina, w, h] of [['fca-consolidado/index.html', 1366, 768], ['fca-preenchimento/index.html?u=GRL&vig=ago/26', 1600, 900]]) {
+    const adm = pagina.startsWith('fca-consolidado'), nome = adm ? 'Admin' : 'unidade';
+    const { pg, ctx, errs } = await abre({ acErr: true, t: T2D, pagina, w, h, espera: adm ? '.s-item' : '#list' });
+    await pg.waitForTimeout(2500);
+    if (adm) { await pg.evaluate(() => { const b = document.querySelector('.s-item[data-v="tabela"]'); if (b) b.click(); }); await pg.waitForTimeout(500); }
+    const conta = () => pg.evaluate(() => { const t = document.querySelector('table.rel.fg-rel'); if (!t) return { n: 0, txt: [] };
+      const bs = [...t.querySelectorAll('tbody.fg')]; return { n: bs.length, linhas: bs.reduce((s, b) => s + b.rows.length, 0), txt: bs.map(b => b.textContent) }; });
+    const P = await pg.evaluate(() => { const i = document.getElementById('fcaBusca'), w = i && i.closest('.s-busca'), v = document.querySelector('.side .s-volta');
+      return { tem: !!i, tipo: i && i.type, antesVolta: !!(w && v && w.nextElementSibling === v), vis: !!(i && i.getBoundingClientRect().width > 60) }; });
+    af(`${nome}: campo Pesquisar na lateral, logo acima do Voltar ao Hub`, P.tem && P.tipo === 'search' && P.antesVolta && P.vis, JSON.stringify(P));
+    const A = await conta();
+    // o gerenciador de senhas preenche sem tecla: não filtra e o campo é limpo
+    await pg.evaluate(() => { const i = document.getElementById('fcaBusca'); i.value = 'renan@empresa.com.br'; i.dispatchEvent(new Event('input', { bubbles: true })); });
+    await pg.waitForTimeout(400);
+    const AF = await conta(); const vAF = await pg.$eval('#fcaBusca', i => i.value);
+    af(`${nome}: valor posto pelo navegador (sem digitar) é apagado e não filtra`, vAF === '' && AF.linhas === A.linhas, JSON.stringify({ v: vAF, l: AF.linhas }));
+    // palavra que existe só em parte dos fatos: "Embreagem" se houver, senão a 1ª palavra longa da 1ª ação
+    const alvo = await pg.evaluate(() => { const t = document.querySelector('table.rel.fg-rel'); const tx = t ? t.textContent : '';
+      if (/embreagem/i.test(tx)) return 'embreagem';
+      const a = (t.querySelector('td.ln.txt') || {}).textContent || ''; return (a.match(/[A-Za-zÀ-ú]{7,}/) || ['motor'])[0]; });
+    await pg.click('#fcaBusca'); await pg.keyboard.type(alvo.toUpperCase()); await pg.waitForTimeout(500);
+    const B = await conta();
+    const norm = x => x.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    af(`${nome}: digitar "${alvo}" deixa só os fatos/ações com a palavra (sem acento e sem maiúscula)`, B.n > 0 && B.linhas < A.linhas && B.txt.every(t => norm(t).includes(norm(alvo))), JSON.stringify({ antes: A.linhas, depois: B.linhas, n: B.n }));
+    await pg.keyboard.type(' zzqqxx'); await pg.waitForTimeout(500);
+    const C = await conta();
+    af(`${nome}: duas palavras = as duas têm de aparecer (nada casa "zzqqxx")`, C.n === 0, JSON.stringify(C.n));
+    await pg.keyboard.press('Escape'); await pg.waitForTimeout(500);
+    const D = await conta();
+    af(`${nome}: Esc limpa e a tabela volta inteira`, D.linhas === A.linhas, JSON.stringify({ A: A.linhas, D: D.linhas }));
+    af(`${nome}: sem erro de página`, !errs.length, errs.join(' | ').slice(0, 300));
+    if (adm) {
+      await pg.evaluate(() => { const b = document.getElementById('btMini'); if (b) b.click(); }); await pg.waitForTimeout(300);
+      const M = await pg.evaluate(() => { const l = document.querySelector('.s-busca .sb-lupa'), b = document.querySelector('.s-busca .sb-box');
+        return { lupa: !!l && getComputedStyle(l).display !== 'none', box: !!b && getComputedStyle(b).display === 'none' }; });
+      af('Admin: com a lateral recolhida fica só a lupa', M.lupa && M.box, JSON.stringify(M));
+      await pg.click('.s-busca .sb-lupa'); await pg.waitForTimeout(400);
+      const M2 = await pg.evaluate(() => ({ mini: document.querySelector('.side').classList.contains('mini'), foco: document.activeElement && document.activeElement.id }));
+      af('Admin: a lupa abre a lateral e põe o cursor no campo', !M2.mini && M2.foco === 'fcaBusca', JSON.stringify(M2));
+    }
+    if (SHOT) { await pg.click('#fcaBusca'); await pg.keyboard.type(alvo); await pg.waitForTimeout(400); await pg.screenshot({ path: `${SHOT}/fca-busca-${nome}.png` }); }
+    await ctx.close();
+  }
+}
 /* ══ 2f · a caixa da ação no formato novo, no FCA · Admin e no da unidade ══ */
 {
   console.log('\n══ 2f · caixa da ação no formato novo (Admin e unidade)');
