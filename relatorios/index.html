@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610281000">
+<meta name="build" content="202610282200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Relatórios · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -553,6 +553,7 @@ const REL=[
   {cl:'op',t:'Combustível · Árvore de Combustível',h:'combustivel/arvore-combustivel/',d:'DRE Frota, dispersão de km, Km/L, R$/L e balanço de massa.',
     f:[S('dre_frota'),S('dispersao_km'),S('consumo_km_litro'),S('consumo_rs_litro'),S('balanco_massa'),T('balanco_massa','Balanço de massa · por conta',{ordem:'unidade,projeto,vigencia,conta'})]},
   {cl:'op',t:'Combustível · Preço R$/L',h:'combustivel/preco-litro/',d:'Km/L (litros e gasto por placa) e o R$/L remunerado.',f:[S('consumo_km_litro'),S('consumo_rs_litro')]},
+  {cl:'op',t:'Combustível · Postos',h:'combustivel/postos/',d:'Os abastecimentos do ERP, com o posto, o valor e os litros de cada um.',f:[T('erp_abastecimentos','Abastecimentos do ERP',{ordem:'ordem_servico'})]},
   {cl:'op',t:'Combustível · Consumo CO²',h:'combustivel/co2/',d:'A aba Km/L, de onde saem litros e emissões.',f:[S('consumo_km_litro')]},
   {cl:'op',t:'Combustível · Condução Econômica',h:'combustivel/conducao-economica/',adm:1,d:'Notas mensais e diárias por motorista, cadastro (sem CPF) e acessos ao DriverPro.',
     f:[T('ce_scores_mensais','Condução · mensal',{ordem:'id'}),T('ce_diario','Condução · diário',{ordem:'id'}),
@@ -1097,6 +1098,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202610281000"></script>
+<script src="../assets/build-check.js?v=202610282200"></script>
 </body>
 </html>
