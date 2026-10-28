@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610282200">
+<meta name="build" content="202610282230">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Postos · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -357,7 +357,9 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ghd>div:first-child{flex:1;min-width:0;}
 .tsec{padding:12px 14px 10px;}
 .twrap{overflow-x:hidden;}
-.twrap table.dre{width:100%;table-layout:auto;}
+.twrap table.dre{width:100%;table-layout:fixed;}
+#tb-postos th:nth-child(1){width:40%;} #tb-postos th:nth-child(n+2){width:20%;}
+table.dre td.num,table.dre th.num{overflow:hidden;text-overflow:ellipsis;}
 table.dre td{white-space:nowrap;}
 table.dre thead th{cursor:pointer;}
 table.dre td.num,table.dre th.num{text-align:right;}
@@ -778,6 +780,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610282200"></script>
+<script src="../../assets/build-check.js?v=202610282230"></script>
 </body>
 </html>
