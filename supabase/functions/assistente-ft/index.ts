@@ -18,13 +18,22 @@
 //   ANTHROPIC_API_KEY   obrigatório
 //   ASSISTENTE_DONOS    opcional, e-mails separados por vírgula (padrão: o dono do portal)
 //   ASSISTENTE_MODELO   opcional (padrão claude-opus-5-5)
-// SUPABASE_URL, SUPABASE_ANON_KEY e SUPABASE_SERVICE_ROLE_KEY o Supabase já põe.
+// SUPABASE_URL e as chaves do projeto o Supabase já põe (as novas, SUPABASE_PUBLISHABLE_KEYS
+// e SUPABASE_SECRET_KEYS, ou as antigas, SUPABASE_ANON_KEY e SUPABASE_SERVICE_ROLE_KEY).
 // ═══════════════════════════════════════════════════════════════════════════
 import Anthropic from "npm:@anthropic-ai/sdk@1.3.0";
 
 const SB_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SB_ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SB_SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+// chaves novas (sb_publishable_/sb_secret_, em JSON) ou as antigas (anon/service_role, JWT)
+function chaveDe(json: string, antiga: string) {
+  try { const d = JSON.parse(Deno.env.get(json) ?? "{}"); const v = d.default ?? Object.values(d)[0]; if (v) return String(v); } catch (_) { /* sem a variável nova */ }
+  return Deno.env.get(antiga) ?? "";
+}
+const SB_ANON = chaveDe("SUPABASE_PUBLISHABLE_KEYS", "SUPABASE_ANON_KEY");
+const SB_SERVICE = chaveDe("SUPABASE_SECRET_KEYS", "SUPABASE_SERVICE_ROLE_KEY");
+// chave sb_secret_ não é JWT: vai só no apikey; a antiga (JWT) vai também no Authorization
+const CAB_SERVICE: Record<string, string> = SB_SERVICE.startsWith("sb_")
+  ? { apikey: SB_SERVICE } : { apikey: SB_SERVICE, Authorization: `Bearer ${SB_SERVICE}` };
 const DONOS = (Deno.env.get("ASSISTENTE_DONOS") ?? "fortesindicadores@gmail.com")
   .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
 const MODELO = Deno.env.get("ASSISTENTE_MODELO") ?? "claude-opus-5-5";
@@ -93,7 +102,7 @@ async function usuarioDe(req: Request) {
 async function consultar(sql: string) {
   const r = await fetch(`${SB_URL}/rest/v1/rpc/assistente_sql`, {
     method: "POST",
-    headers: { apikey: SB_SERVICE, Authorization: `Bearer ${SB_SERVICE}`, "Content-Type": "application/json" },
+    headers: { ...CAB_SERVICE, "Content-Type": "application/json" },
     body: JSON.stringify({ p_sql: sql, p_max: 2000 }),
     signal: AbortSignal.timeout(60000),
   });
@@ -110,7 +119,7 @@ async function registra(linha: Record<string, unknown>) {
   try {
     await fetch(`${SB_URL}/rest/v1/assistente_log`, {
       method: "POST",
-      headers: { apikey: SB_SERVICE, Authorization: `Bearer ${SB_SERVICE}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+      headers: { ...CAB_SERVICE, "Content-Type": "application/json", Prefer: "return=minimal" },
       body: JSON.stringify(linha),
     });
   } catch (_) { /* o registro não pode derrubar a resposta */ }
