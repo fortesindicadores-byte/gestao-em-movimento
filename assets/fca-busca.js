@@ -69,9 +69,7 @@
     var volta = side.querySelector('.s-volta');
     if (volta) side.insertBefore(w, volta); else side.appendChild(w);
     w.querySelector('.sb-lupa').addEventListener('click', function () {
-      var bt = document.getElementById('btMini');
-      if (side.classList.contains('mini') && bt) bt.click();
-      setTimeout(function () { inp.focus(); }, 60);
+      foca();
     });
     return w.querySelector('input');
   }
@@ -95,5 +93,9 @@
     inp.addEventListener('keydown', function (e) { if (e.key === 'Escape') { inp.value = ''; aplica(); } });
     [300, 1200, 3000].forEach(function (ms) { setTimeout(function () { if (!digitou && inp.value) inp.value = ''; }, ms); });
   }
-  global.FcaBusca = { init: init, ok: ok, ativa: ativa, norm: norm };
+  // limpa sem redesenhar (quem chama redesenha), e foca o campo (atalho Ctrl+K do Planner)
+  function limpa() { if (inp) { inp.value = ''; inp.closest('.s-busca').classList.remove('on'); } Q = []; }
+  function foca() { var side = document.querySelector('.side'), bt = document.getElementById('btMini');
+    if (side && side.classList.contains('mini') && bt) bt.click(); setTimeout(function () { if (inp) inp.focus(); }, 60); }
+  global.FcaBusca = { init: init, ok: ok, ativa: ativa, norm: norm, limpa: limpa, foca: foca };
 })(typeof window !== 'undefined' ? window : globalThis);

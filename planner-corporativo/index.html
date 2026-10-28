@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610281200">
+<meta name="build" content="202610281400">
 <title>Planner Corporativo</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -465,11 +465,6 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;}
       </button>
     </div>
 
-    <label class="s-search">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".8"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
-      <input type="text" id="busca" placeholder="Pesquisar" autocomplete="off">
-      <span class="s-kbd">Ctrl + K</span>
-    </label>
 
     <div class="s-sec"><b>Visões</b></div>
     <button class="s-item on" data-ver="resumo" title="Resumo Gerencial">
@@ -665,7 +660,7 @@ const ASSUNTOS=['Governança','Custos','Projetos','Disponibilidade','Xadrez de F
   'Blitz de Segurança','Checklist','Viagens','Processos','Ativação de Frota'];
 
 let sb=null, LINHAS=[], NOMES=[], EU='';
-let BUSCA='', VISAO='', VER='resumo', RESUMO_POR='assunto', RESP=new Set(), ASS=new Set();
+let VISAO='', VER='resumo', RESUMO_POR='assunto', RESP=new Set(), ASS=new Set();
 let DT_DE='', DT_ATE='';
 const VIG=new Set();
 const ETA=new Set();   // filtro de Etapa (o "Status" do painel antigo)
@@ -800,7 +795,7 @@ function passa(r){
   if(VIG.size && !VIG.has(vigDe(r))) return false;
   if(ETA.size && !ETA.has(ROTULO[r.status]||r.status)) return false;
   if(SIT.size && !SIT.has(sitDe(r))) return false;
-  if(BUSCA && ![r.acao,r.assunto,r.resp,r.obs].some(x=>String(x||'').toLowerCase().includes(BUSCA))) return false;
+  if(window.FcaBusca && FcaBusca.ativa() && !FcaBusca.ok(r.assunto,r.acao,r.resp,r.obs,ROTULO[r.status]||r.status,sitDe(r),vigDe(r))) return false;
   if(RESP.size && !RESP.has(r.resp)) return false;
   if(ASS.size && !ASS.has(r.assunto)) return false;
   return daVisao(r,VISAO);
@@ -1007,7 +1002,7 @@ function passaExceto(r,qual){
   if(qual!=='vig' && VIG.size && !VIG.has(vigDe(r))) return false;
   if(qual!=='eta' && ETA.size && !ETA.has(ROTULO[r.status]||r.status)) return false;
   if(qual!=='sit' && SIT.size && !SIT.has(sitDe(r))) return false;
-  if(BUSCA && ![r.acao,r.assunto,r.resp,r.obs].some(x=>String(x||'').toLowerCase().includes(BUSCA))) return false;
+  if(window.FcaBusca && FcaBusca.ativa() && !FcaBusca.ok(r.assunto,r.acao,r.resp,r.obs,ROTULO[r.status]||r.status,sitDe(r),vigDe(r))) return false;
   if(qual!=='resp' && RESP.size && !RESP.has(r.resp)) return false;
   if(qual!=='ass'  && ASS.size  && !ASS.has(r.assunto)) return false;
   return daVisao(r,VISAO);
@@ -1068,7 +1063,7 @@ ligaMenu($('lstSit'),SIT,'s');
 function mudaData(){ DT_DE=$('dtDe').value||''; DT_ATE=$('dtAte').value||''; montaMenus(); render(); }
 function limpaData(){ $('dtDe').value=''; $('dtAte').value=''; mudaData(); }
 function limpaFiltros(){
-  RESP.clear(); ASS.clear(); VIG.clear(); ETA.clear(); SIT.clear(); VISAO=''; BUSCA=''; $('busca').value='';
+  RESP.clear(); ASS.clear(); VIG.clear(); ETA.clear(); SIT.clear(); VISAO=''; if(window.FcaBusca) FcaBusca.limpa();
   DT_DE=''; DT_ATE=''; $('dtDe').value=''; $('dtAte').value='';
   document.querySelectorAll('.menu.open').forEach(m=>m.classList.remove('open'));
   montaMenus(); render();
@@ -1088,9 +1083,8 @@ document.querySelectorAll('.s-item[data-ver]').forEach(b=>b.addEventListener('cl
   document.querySelector('.top h1').textContent=TIT[VER];
   render();
 }));
-$('busca').addEventListener('input',()=>{ BUSCA=$('busca').value.trim().toLowerCase(); render(); });
 document.addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); $('busca').focus(); }
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); if(window.FcaBusca) FcaBusca.foca(); }
   if(e.key==='Escape'){ fechaModal(); document.querySelectorAll('.menu.open').forEach(m=>m.classList.remove('open')); }
 });
 
@@ -1262,8 +1256,10 @@ iniciar();
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
+<script src="../assets/fca-busca.js?v=202610281400"></script>
+<script>FcaBusca.init(function(){ if(typeof render==='function') render(); });</script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202610281200"></script>
+<script src="../assets/build-check.js?v=202610281400"></script>
 </body>
 </html>
