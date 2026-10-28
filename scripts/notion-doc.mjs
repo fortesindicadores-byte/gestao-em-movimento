@@ -37,10 +37,9 @@ async function carregaPagina(id) {
   } while (cursor && cursor.stack && cursor.stack.length && n < 50);
 }
 async function faltantes(ids) {
-  const f = ids.filter(i => !BLOCOS[i]);
-  for (let k = 0; k < f.length; k += 50) {
-    const j = await api('syncRecordValues', { requests: f.slice(k, k + 50).map(i => ({ pointer: { table: 'block', id: i }, version: -1 })) });
-    guarda(j.recordMap);
+  // o syncRecordValues dá 403 em site público; bloco que faltou (subpágina) se lê pelo loadPageChunk dele
+  for (const i of ids.filter(x => !BLOCOS[x])) {
+    try { await carregaPagina(i); } catch (e) { console.error(`bloco ${i}: ${e.message}`); }
   }
 }
 
@@ -58,7 +57,6 @@ async function imprime(id, nivel, fundo) {
   if (b.type === 'page' && nivel > 0) {
     console.log(`\n${'='.repeat(70)}\nSUBPÁGINA: ${txt(p.title)}\n${'='.repeat(70)}`);
     if (fundo >= FUNDO) return;
-    await carregaPagina(id);
   } else if (b.type === 'code') {
     console.log(`${ind}\`\`\`${(p.language && txt(p.language)) || ''}\n${txt(p.title)}\n${ind}\`\`\``);
   } else if (b.type === 'table_row') {
