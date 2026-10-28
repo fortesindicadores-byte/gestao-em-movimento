@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610281800">
+<meta name="build" content="202610281930">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Remuneração · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
-<script src="../assets/gviz-cache.js?v=202610281800"></script>
+<script src="../assets/gviz-cache.js?v=202610281930"></script>
 <style>
 /* ============================================================
    REMUNERAÇÃO — o que o Freightech remunera, por operação, unidade e mês
@@ -531,6 +531,7 @@ body.vw-evo .ms-wrap.so-evo,body.vw-pl .ms-wrap.so-pl{display:block;}
 
       <!-- ══ EVOLUÇÃO MENSAL ══ -->
       <section class="vw" id="vw-evomes">
+        <div class="kpis" id="kpis-em"></div>
         <div class="card gcard cheia">
           <div class="gtit" id="em-tit">—</div>
           <div class="dims rt abs" style="border:0;padding:0" id="dims-em">
@@ -547,6 +548,7 @@ body.vw-evo .ms-wrap.so-evo,body.vw-pl .ms-wrap.so-pl{display:block;}
 
       <!-- ══ EVOLUÇÃO ANUAL ══ -->
       <section class="vw" id="vw-evoano">
+        <div class="kpis" id="kpis-ea"></div>
         <div class="card gcard cheia">
           <div class="gtit" id="ea-tit">—</div>
           <div class="dims rt abs" style="border:0;padding:0" id="dims-ea">
@@ -566,6 +568,7 @@ body.vw-evo .ms-wrap.so-evo,body.vw-pl .ms-wrap.so-pl{display:block;}
 
       <!-- ══ VARIÁVEL · GRÁFICOS ══ -->
       <section class="vw" id="vw-vargraf">
+        <div class="kpis" id="kpis-var"></div>
         <div class="gr2 igual">
           <div class="card gcard">
             <div class="gtit">R$/km do variável por mês</div>
@@ -604,6 +607,7 @@ body.vw-evo .ms-wrap.so-evo,body.vw-pl .ms-wrap.so-pl{display:block;}
 
       <!-- ══ FIXO E FROTA · GRÁFICOS ══ -->
       <section class="vw" id="vw-fixgraf">
+        <div class="kpis" id="kpis-fix"></div>
         <div class="g3">
           <div class="card gcard">
             <div class="gtit">Frota ativa e parada por mês</div>
@@ -899,28 +903,41 @@ const indAtual=()=>{ const v=getSel('ms-ind')[0]; return IND.find(i=>i.v===v)||I
 /* ── gráficos ── */
 function chartBase(){
   const isLight=ehLight();
-  return { isLight, tick:{color:isLight?'#444444':'#B2BCD2',font:{family:'Montserrat',size:window.innerWidth<1500?10:12}},
+  return { isLight, tick:{color:isLight?'#444444':'#94A3B8',font:{family:'Montserrat',size:window.innerWidth<1500?10:11}},
+    tickY:{color:isLight?'#444444':'#94A3B8',font:{family:'Montserrat',size:9}},
+    grid:{color:isLight?'rgba(0,0,0,.08)':'rgba(255,255,255,.06)'},
     tooltip:{backgroundColor:isLight?'#FFFFFF':'#1B1B1E',titleColor:'#F97316',bodyColor:isLight?'#161D2B':'#EEF2FA',
       borderColor:isLight?'#d7dce4':'#33343A',borderWidth:1,titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'},footerFont:{family:'Montserrat'}},
-    dl:isLight?'#222222':'#F1F5F9' };
+    dl:isLight?'#000000':'#F1F5F9' };
 }
+/* barras empilhadas em tons neutros: a 1ª série em laranja, as demais numa escala de cinza (clara no escuro, escura no claro) */
+function tons(se){ const n=se.length; if(n<=1) return se; const L=ehLight();
+  const de=L?[51,65,85]:[226,232,240], ate=L?[203,213,225]:[92,99,112];
+  se.forEach((x,k)=>{ if(!k){ x.cor=COR.lar; return; } const t=n===2?0:(k-1)/(n-2);
+    x.cor='#'+de.map((a,i)=>Math.round(a+(ate[i]-a)*t).toString(16).padStart(2,'0')).join(''); });
+  return se; }
 const DLP=()=>typeof ChartDataLabels!=='undefined'?[ChartDataLabels]:[];
 function novo(id,cfg){ if(charts[id]) charts[id].destroy(); const cv=$(id); if(!cv) return; charts[id]=new Chart(cv,cfg); }
 function legenda(id,itens,linha){ const e=$(id); if(e) e.innerHTML=itens.map(([r,c])=>`<span><i class="${linha?'':'sq'}" style="color:${c}"></i>${esc(r)}</span>`).join(''); }
 const meses12=ult=>Array.from({length:12},(_,i)=>addMes(ult,i-11)).filter(v=>ROWS.some(r=>r.vigencia===v));
-/* barras empilhadas por mês: cor cheia (laranja de verdade), foco nos meses selecionados */
-function empilhado(id,labels,series,{fmt,foco,mostraTot=true}={}){
-  const B=chartBase(); const n=labels.length;
+/* padrão das barras do portal (Km/L, Painel KM): preenchimento translúcido com contorno sólido de 1px e cantos de 3px;
+   com foco, os meses do filtro ficam fortes (.85) e os outros apagados (.2); sem foco, todos em .65. Rótulo só no foco. */
+const ALFA=(foco,i)=>foco&&foco.size?(foco.has(i)?'D9':'33'):'A6';
+function escalaY(B,fmt,max,extra){ return {stacked:true,beginAtZero:true,suggestedMax:max*1.12||1,grid:B.grid,border:{display:false},
+  ticks:{...B.tickY,maxTicksLimit:6,callback:v=>fmt(v,true)},...(extra||{})}; }
+function empilhado(id,labels,series,{fmt,foco,mostraTot=true,semSkip=false}={}){
+  tons(series); const B=chartBase(); const n=labels.length;
   const tot=labels.map((_,i)=>series.reduce((s,x)=>s+(+x.data[i]||0),0));
-  const al=()=>'F2';   // cor cheia em todos os meses (o tom apagado virava marrom no escuro)
-  const ds=series.map((s,k)=>({label:s.rot,data:s.data,backgroundColor:labels.map((_,i)=>s.cor+al(i)),borderColor:s.cor,borderWidth:0,borderRadius:k===series.length-1?{topLeft:3,topRight:3}:0,stack:'s',barPercentage:.82,categoryPercentage:.9}));
+  const temFoco=foco&&foco.size;
+  const ds=series.map((s,k)=>({label:s.rot,data:s.data,backgroundColor:labels.map((_,i)=>s.cor+ALFA(foco,i)),borderColor:s.cor,borderWidth:1,
+    borderRadius:k===series.length-1?{topLeft:3,topRight:3}:0,borderSkipped:false,stack:'s'}));
   novo(id,{type:'bar',data:{labels,datasets:ds},
-    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:mostraTot?24:6}},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:mostraTot?26:6}},
       plugins:{legend:{display:false},tooltip:{...B.tooltip,callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw,false)}`,footer:it=>series.length>1?'Total: '+fmt(tot[it[0].dataIndex],false):''}},
-        datalabels:{display:c=>mostraTot&&c.datasetIndex===series.length-1&&(n<=26||(foco&&foco.has(c.dataIndex))||c.dataIndex===n-1),anchor:'end',align:'top',offset:2,
-          color:B.dl,font:{family:'Montserrat',size:n>18?9:11,weight:'700'},formatter:(v,c)=>fmt(tot[c.dataIndex],true)}},
-      scales:{x:{stacked:true,ticks:{...B.tick,maxRotation:0,autoSkip:true,autoSkipPadding:8},grid:{display:false},border:{display:false}},
-        y:{stacked:true,display:false,beginAtZero:true,suggestedMax:Math.max(...tot,0)*1.12||1}}},
+        datalabels:{display:c=>mostraTot&&c.datasetIndex===series.length-1&&(temFoco?foco.has(c.dataIndex):n<=26),anchor:'end',align:'top',offset:2,
+          color:B.dl,font:{family:'Montserrat',size:11,weight:'700'},formatter:(v,c)=>fmt(tot[c.dataIndex],true)}},
+      scales:{x:{stacked:true,ticks:{...B.tick,maxRotation:0,autoSkip:!semSkip,autoSkipPadding:8,...(semSkip?{font:{family:'Montserrat',size:window.innerWidth<1500?9:10}}:{})},grid:{display:false},border:{display:false}},
+        y:escalaY(B,fmt,Math.max(...tot,0))}},
     plugins:DLP()});
 }
 /* linhas (indicador de taxa por grupo) */
@@ -929,31 +946,23 @@ function linhas(id,labels,series,{fmt,foco}={}){
   const mn=Math.min(...vals), mx=Math.max(...vals), amp=(mx-mn)||Math.abs(mx)*.1||1;
   const so=series.length===1;
   novo(id,{type:'line',data:{labels,datasets:series.map(s=>({label:s.rot,data:s.data,borderColor:s.cor,backgroundColor:s.cor,borderWidth:so?3:2,tension:.3,spanGaps:true,
-      pointRadius:labels.map((_,i)=>foco&&foco.has(i)?5:(labels.length>30?0:2.5)),pointHoverRadius:6}))},
-    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24,left:10,right:so?14:44}},interaction:{mode:'index',intersect:false},
+      pointRadius:labels.map((_,i)=>foco&&foco.has(i)?6:(labels.length>30?0:3)),pointBorderWidth:labels.map((_,i)=>foco&&foco.has(i)?2:0),pointBorderColor:'#fff',pointHoverRadius:6}))},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:26,left:4,right:so?14:44}},interaction:{mode:'index',intersect:false},
       plugins:{legend:{display:false},tooltip:{...B.tooltip,callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw,false)}`}},
-        datalabels:{display:c=>c.raw!=null&&(c.dataIndex===labels.length-1||(so&&(labels.length<=26||(foco&&foco.has(c.dataIndex))))),align:c=>so?'top':'right',offset:4,color:c=>so?B.dl:c.dataset.borderColor,font:{family:'Montserrat',size:10,weight:'700'},formatter:v=>fmt(v,true)}},
-      scales:{x:{ticks:{...B.tick,maxRotation:0,autoSkip:true,autoSkipPadding:8},grid:{display:false},border:{display:false}},y:{display:false,suggestedMin:mn-amp*.35,suggestedMax:mx+amp*.2}}},
+        datalabels:{display:c=>c.raw!=null&&(so?(foco&&foco.size?foco.has(c.dataIndex):labels.length<=13):c.dataIndex===labels.length-1),align:c=>so?'top':'right',offset:5,color:c=>so?B.dl:c.dataset.borderColor,font:{family:'Montserrat',size:11,weight:'700'},formatter:v=>fmt(v,true)}},
+      scales:{x:{ticks:{...B.tick,maxRotation:0,autoSkip:true,autoSkipPadding:8},grid:{display:false},border:{display:false}},
+        y:{suggestedMin:Math.max(mn>=0?0:-Infinity,mn-amp*.45),suggestedMax:mx+amp*.18,grid:B.grid,border:{display:false},ticks:{...B.tickY,maxTicksLimit:6,callback:v=>fmt(v,true)}}}},
     plugins:DLP()});
 }
-/* barras horizontais (ranking) */
+/* barras horizontais (ranking): mesmo desenho, valor na ponta de cada barra */
 function barrasH(id,labels,data,fmt,cor=COR.lar){
   const B=chartBase();
-  novo(id,{type:'bar',data:{labels,datasets:[{data,backgroundColor:cor+'F2',borderWidth:0,borderRadius:3,barPercentage:.78,categoryPercentage:.9}]},
+  novo(id,{type:'bar',data:{labels,datasets:[{data,backgroundColor:cor+'A6',borderColor:cor,borderWidth:1,borderRadius:3,borderSkipped:false,barPercentage:.75,categoryPercentage:.9}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{right:62}},
       plugins:{legend:{display:false},tooltip:{...B.tooltip,callbacks:{label:c=>' '+fmt(c.raw,false)}},
         datalabels:{anchor:'end',align:'right',offset:4,color:B.dl,font:{family:'Montserrat',size:labels.length>14?9.5:11,weight:'700'},formatter:v=>fmt(v,true)}},
-      scales:{x:{display:false,beginAtZero:true},y:{ticks:{...B.tick,font:{family:'Montserrat',size:labels.length>14?10:11.5},autoSkip:false},grid:{display:false},border:{display:false}}}},
-    plugins:DLP()});
-}
-/* barras horizontais empilhadas (composição por grupo) */
-function empilhadoH(id,labels,series,fmt){
-  const B=chartBase(); const tot=labels.map((_,i)=>series.reduce((s,x)=>s+(+x.data[i]||0),0));
-  novo(id,{type:'bar',data:{labels,datasets:series.map((s,k)=>({label:s.rot,data:s.data,backgroundColor:s.cor+'F2',borderWidth:0,stack:'s',borderRadius:k===series.length-1?{topRight:3,bottomRight:3}:0,barPercentage:.8,categoryPercentage:.9}))},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{right:62}},
-      plugins:{legend:{display:false},tooltip:{...B.tooltip,callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw,false)}`,footer:it=>'Total: '+fmt(tot[it[0].dataIndex],false)}},
-        datalabels:{display:c=>c.datasetIndex===series.length-1,anchor:'end',align:'right',offset:4,color:B.dl,font:{family:'Montserrat',size:10.5,weight:'700'},formatter:(v,c)=>fmt(tot[c.dataIndex],true)}},
-      scales:{x:{stacked:true,display:false,beginAtZero:true},y:{stacked:true,ticks:{...B.tick,font:{family:'Montserrat',size:10.5},autoSkip:false},grid:{display:false},border:{display:false}}}},
+      scales:{x:{beginAtZero:true,grid:B.grid,border:{display:false},ticks:{...B.tickY,maxTicksLimit:6,callback:v=>fmt(v,true)}},
+        y:{ticks:{...B.tick,font:{family:'Montserrat',size:labels.length>14?10:11},autoSkip:false},grid:{display:false},border:{display:false}}}},
     plugins:DLP()});
 }
 
@@ -1002,7 +1011,7 @@ function renderResumo(vigs){
     const SS=vs.map(v=>soma(ROWS.filter(r=>r.vigencia===v&&passaUO(r))));
     const se=[{rot:'Variável',cor:COR.lar,data:SS.map(s=>s.variavel)},{rot:'Fixo da frota',cor:COR.azul,data:SS.map(s=>s.fixo_ativo+s.fixo_parado)},
       {rot:'Equipe',cor:COR.amb,data:SS.map(s=>s.equipe)},{rot:'QLP adm. e outras',cor:COR.azc,data:SS.map(s=>s.qlp_adm+s.outras)}];
-    legenda('r1-leg',se.map(s=>[s.rot,s.cor]));
+    legenda('r1-leg',tons(se).map(s=>[s.rot,s.cor]));
     empilhado('ch-r1',vs.map(rotVig),se,{fmt:(v,c)=>fmtU(v,'R$',c),foco});
     set('r2-tit',ESCOLHA.r2==='unidade'?'Remuneração por unidade':'Remuneração por operação'); set('r2-sub','No recorte, do maior para o menor');
     const gs=grupos(R,ESCOLHA.r2).sort((a,b)=>b.s.total-a.s.total);
@@ -1033,7 +1042,7 @@ function graficoComp(id,leg,ult,vigs){
   const vs=meses12(ult), foco=new Set(vs.map((v,i)=>vigs.includes(v)?i:-1).filter(i=>i>=0));
   const SS=vs.map(v=>{ const s=soma(porKm(ROWS.filter(r=>r.vigencia===v&&passaUO(r)))); s.pedseg=s.pedagio+s.seguro_var; return s; });
   const se=COMP().map(([rot,c,cor])=>({rot,cor,data:SS.map(s=>div(s[c],s.km_teto))})).filter(s=>s.data.some(v=>v>0));
-  legenda(leg,se.map(s=>[s.rot,s.cor]));
+  legenda(leg,tons(se).map(s=>[s.rot,s.cor]));
   empilhado(id,vs.map(rotVig),se,{fmt:(v,c)=>c?br(v,2):'R$ '+br(v,3)+'/km',foco});
 }
 
@@ -1066,15 +1075,60 @@ function renderEvo(anual){
   set(p+'-tit',`${ind.rot} · ${un==='qtd'?'quantidade':un}${medida}`);
   set(p+'-sub',(anual?`${chaves[0]} a ${chaves[chaves.length-1]}`:`${rotVig(meses[0])} a ${rotVig(meses[meses.length-1])} · desde o início da base`)+
     ` · ${ind.grp}${ind.novo&&!NOVOS?' · campo novo ainda não carregado no banco':''} · destaque = vigências do filtro`);
-  legenda(p+'-leg',g==='total'?[]:se.map(s=>[s.rot,s.cor]),!ind.soma);
+  legenda(p+'-leg',g==='total'?[]:(ind.soma?tons(se):se).map(s=>[s.rot,s.cor]),!ind.soma);
   const fmt=(v,c)=>fmtU(v,un,c);
   if(ind.soma) empilhado('ch-'+p,labels,se,{fmt,foco,mostraTot:true});
   else linhas('ch-'+p,labels,se,{fmt,foco});
+  cardsEvo(ind,anual,meses,sel);
+}
+function cardsEvo(ind,anual,meses,sel){
+  const base=ROWS.filter(passaUO), fmt=v=>fmtU(v,ind.un,false);
+  const vDe=vs=>{ const S=new Set(vs), rs=ind.rows(base.filter(r=>S.has(r.vigencia))); return rs.length?ind.val(soma(rs)):null; };
+  const dd=(a,b,rot)=>{ const d=dlt(a,b); return `${rot} <b class="${d.c}">${d.t}</b>`; };
+  const ult=[...sel].sort().pop()||meses[meses.length-1], ano=ult.slice(0,4), mes=+ult.slice(5);
+  const vm=meses.map(v=>({v,x:vDe([v])})).filter(o=>o.x!=null);
+  const max=vm.reduce((a,o)=>!a||o.x>a.x?o:a,null), min=vm.reduce((a,o)=>!a||o.x<a.x?o:a,null);
+  const ytd=a=>meses.filter(v=>v.slice(0,4)===a&&+v.slice(5)<=mes);
+  const medMes=vs=>{ const x=vDe(vs); return x==null?null:ind.soma?x/(vs.length||1):x; };
+  let h;
+  if(!anual){
+    const u12=meses.filter(v=>v<=ult).slice(-12), a12=meses.filter(v=>v<u12[0]).slice(-12);
+    h=kpi(`Último mês · ${rotVig(ult)}`,fmt(vDe([ult])),`${dd(vDe([ult]),vDe([addMes(ult,-1)]),'MoM')} · ${dd(vDe([ult]),vDe([addMes(ult,-12)]),'YoY')}`)
+     +kpi(ind.soma?'Média por mês · 12 meses':'Últimos 12 meses',fmt(medMes(u12)),`vs 12 meses anteriores ${dd(medMes(u12),medMes(a12),'').trim()}`)
+     +kpi(ind.soma?`Acumulado ${ano} · até ${MES[mes-1]}`:`${ano} · até ${MES[mes-1]}`,fmt(vDe(ytd(ano))),`${dd(vDe(ytd(ano)),vDe(ytd(String(+ano-1))),'YoY')} · mesmo período de ${+ano-1}`)
+     +kpi('Maior mês',fmt(max&&max.x),max?`${rotVig(max.v)} · desde ${rotVig(meses[0])}`:'—')
+     +kpi('Menor mês',fmt(min&&min.x),min?`${rotVig(min.v)} · desde ${rotVig(meses[0])}`:'—');
+  } else {
+    const am=ind.soma&&ESCOLHA.am==='media', vAno=vs=>am?medMes(vs):vDe(vs);
+    const anos=[...new Set(meses.map(v=>v.slice(0,4)))];
+    const fech=anos.filter(a=>meses.filter(v=>v.slice(0,4)===a).length===12||(ind.soma&&!am?false:true));
+    const va=anos.map(a=>({a,x:vAno(meses.filter(v=>v.slice(0,4)===a))})).filter(o=>o.x!=null&&(!ind.soma||am||meses.filter(v=>v.slice(0,4)===o.a).length===12));
+    const mx=va.reduce((a,o)=>!a||o.x>a.x?o:a,null), mn=va.reduce((a,o)=>!a||o.x<a.x?o:a,null);
+    const ant=String(+ano-1), ant2=String(+ano-2), todo=a=>meses.filter(v=>v.slice(0,4)===a);
+    const rotM=am?' · média por mês':'';
+    h=kpi(`${ano} · até ${MES[mes-1]}${rotM}`,fmt(vAno(ytd(ano))),`${dd(vAno(ytd(ano)),vAno(ytd(ant)),'YoY')} · mesmo período de ${ant}`)
+     +kpi(`${ant} · ano inteiro${rotM}`,fmt(vAno(todo(ant))),`${dd(vAno(todo(ant)),vAno(todo(ant2)),'YoY')} · vs ${ant2}`)
+     +kpi(`Último mês · ${rotVig(ult)}`,fmt(vDe([ult])),`${dd(vDe([ult]),vDe([addMes(ult,-1)]),'MoM')} · ${dd(vDe([ult]),vDe([addMes(ult,-12)]),'YoY')}`)
+     +kpi('Maior ano'+(ind.soma&&!am?' fechado':''),fmt(mx&&mx.x),mx?`${mx.a}${rotM}`:'—')
+     +kpi('Menor ano'+(ind.soma&&!am?' fechado':''),fmt(mn&&mn.x),mn?`${mn.a}${rotM}`:'—');
+  }
+  $(anual?'kpis-ea':'kpis-em').innerHTML=h;
 }
 
 /* ══ VARIÁVEL ══ */
 function renderVarGraf(vigs){
-  const ult=vigs[vigs.length-1];
+  const ult=vigs[vigs.length-1], n=vigs.length;
+  const K=soma(porKm(recorte(vigs))), KA=soma(porKm(recorte(vigs.map(v=>addMes(v,-n))))), KY=soma(porKm(recorte(vigs.map(v=>addMes(v,-12)))));
+  [K,KA,KY].forEach(s=>{ s.pedseg=s.pedagio+s.seguro_var; s.outros=s.carroc+s.lavagem_var+(NOVOS?s.pedseg:0); });
+  const u=(s,c)=>div(s[c],s.km_teto), rk=v=>v==null?'—':'R$ '+br(v,v<1?3:2);
+  const dd=(a,b,rot)=>{ const d=dlt(a,b); return `${rot} <b class="${d.c}">${d.t}</b>`; };
+  const pv=c=>K.frotaVar?br(K[c]/K.frotaVar*100,0)+'% do variável':'';
+  const card=(rot,c,extra)=>kpi(rot,rk(u(K,c)),`${dd(u(K,c),u(KA,c),'MoM')} · ${dd(u(K,c),u(KY,c),'YoY')}<br>${extra||pv(c)}`);
+  const r3=c=>br(u(K,c)||0,3);
+  $('kpis-var').innerHTML=card('Variável da frota','frotaVar',`${fmtK(K.km_teto)} km remunerados`)
+    +card('Combustível','comb')+card('Manutenção','manut')+card('Pneu','pneu')
+    +card('Carroceria e lavagem','outros');
+  const ul=$('kpis-var').lastElementChild; if(ul) ul.title=`R$/km: carroceria ${r3('carroc')} · lavagem ${r3('lavagem_var')}${NOVOS?' · pedágio e seguro do T1 '+r3('pedseg'):''}`;
   set('v1-sub','12 meses até o último selecionado · componente ÷ km remunerado');
   graficoComp('ch-v1','v1-leg',ult,vigs);
   const R=porKm(recorte(vigs)), g=ESCOLHA.v2;
@@ -1104,9 +1158,20 @@ function renderVarTab(vigs){
 /* ══ FIXO E FROTA ══ */
 function renderFixGraf(vigs){
   const ult=vigs[vigs.length-1], vs=meses12(ult), foco=new Set(vs.map((v,i)=>vigs.includes(v)?i:-1).filter(i=>i>=0));
+  { const n=vigs.length, Rc=recorte(vigs), Ra=recorte(vigs.map(v=>addMes(v,-n))), Ry=recorte(vigs.map(v=>addMes(v,-12)));
+    const dd=(a,b,rot)=>{ const d=dlt(a,b); return `${rot} <b class="${d.c}">${d.t}</b>`; };
+    const pc=s=>div(s.fixo_ativo,s.at), rm=v=>v==null?'—':'R$ '+br(v,0);
+    const card=(rot,f,meta)=>{ const a=soma(f(Rc)), b=soma(f(Ra)), c=soma(f(Ry));
+      return kpi(rot,rm(pc(a)),`${dd(pc(a),pc(b),'MoM')} · ${dd(pc(a),pc(c),'YoY')}<br>${meta(a)}`); };
+    const T=soma(Rc.filter(r=>r.operacao!=='ARMAZEM')), TA=soma(Ra.filter(r=>r.operacao!=='ARMAZEM')), TY=soma(Ry.filter(r=>r.operacao!=='ARMAZEM'));
+    $('kpis-fix').innerHTML=card('Fixo por caminhão · T2',t2,s=>`${br(s.ativos,0)} ativos · R$/mês`)
+      +card('Fixo por equipamento · T1',t1,s=>`${br(s.ativos,0)} ativos · R$/mês`)
+      +card('Fixo por empilhadeira',arm,s=>`${br(s.ativos,0)} empilhadeiras · R$/mês`)
+      +kpi('Frota ativa',br(T.ativos,0),`${dd(T.ativos,TA.ativos,'MoM')} · ${dd(T.ativos,TY.ativos,'YoY')}<br>${br(T.parados,0)} parados (${T.ativos+T.parados?br(T.parados/(T.ativos+T.parados)*100,0):0}%)`)
+      +kpi('Fixo da frota parada',fmtR(T.fixo_parado),`${dd(T.fixo_parado,TA.fixo_parado,'MoM')} · ${dd(T.fixo_parado,TY.fixo_parado,'YoY')}<br>${T.fixo_ativo+T.fixo_parado?br(T.fixo_parado/(T.fixo_ativo+T.fixo_parado)*100,0):0}% do fixo da frota`); }
   const SS=vs.map(v=>soma(ROWS.filter(r=>r.vigencia===v&&passaUO(r)&&r.operacao!=='ARMAZEM')));
-  const se=[{rot:'Ativa',cor:COR.azul,data:SS.map(s=>s.ativos)},{rot:'Parada',cor:COR.cin,data:SS.map(s=>s.parados)}];
-  legenda('f1-leg',se.map(s=>[s.rot,s.cor]));
+  const se=[{rot:'Ativa',cor:COR.lar,data:SS.map(s=>s.ativos)},{rot:'Parada',cor:COR.cin,data:SS.map(s=>s.parados)}];
+  legenda('f1-leg',tons(se).map(s=>[s.rot,s.cor]));
   empilhado('ch-f1',vs.map(rotVig),se,{fmt:(v)=>br(v,0),foco});
   const S2=vs.map(v=>soma(t2(ROWS.filter(r=>r.vigencia===v&&passaUO(r)))));
   set('f2-tit','Fixo por caminhão ativo (T2) · R$/mês'); set('f2-sub','Fixo da frota ativa ÷ caminhões ativos, por mês · 12 meses');
@@ -1117,8 +1182,8 @@ function renderFixGraf(vigs){
   const pc=c=>gs.map(x=>div(x.s[c],x.s.at+x.s.pa));
   const se3=[{rot:'FINAME',cor:COR.lar,data:pc('finame')},{rot:'Seguro',cor:COR.azul,data:pc('seguro')},{rot:'IPVA',cor:COR.amb,data:pc('ipva')},{rot:'Rastreador',cor:COR.azc,data:pc('rastreador')}]
     .concat(NOVOS?[{rot:'Faixa refletiva',cor:COR.cin,data:pc('faixa')},{rot:'Depreciação e remuneração K',cor:COR.roxo,data:gs.map(x=>div(x.s.deprec+x.s.rem_k,x.s.at+x.s.pa))}]:[]).filter(s=>s.data.some(v=>v>0));
-  legenda('f3-leg',se3.map(s=>[s.rot,s.cor]));
-  empilhadoH('ch-f3',gs.map(x=>x.k.replace('|',' - ')),se3,(v,c)=>fmtU(v,'R$/mês',c));
+  legenda('f3-leg',tons(se3).map(s=>[s.rot,s.cor]));
+  empilhado('ch-f3',gs.map(x=>{ const [u,o]=x.k.split('|'); return [u,o]; }),se3,{fmt:(v,c)=>fmtU(v,'R$/mês',c),semSkip:true});
 }
 function renderFixTab(vigs){
   const R=recorte(vigs), g=ESCOLHA.ft;
@@ -1478,6 +1543,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610281800"></script>
+<script src="../assets/build-check.js?v=202610281930"></script>
 </body>
 </html>
