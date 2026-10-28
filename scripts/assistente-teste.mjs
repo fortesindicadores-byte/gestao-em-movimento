@@ -26,7 +26,7 @@ async function abre(email, w, h, tema) {
         { t: 'fim', consultas: 1, web: 1, custo: 0.31, seg: 22 }];
       return r.fulfill({ status: 200, contentType: 'application/x-ndjson', body: ev.map(e => JSON.stringify(e)).join('\n') + '\n' }); }
     return r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }); });
-  await pg.addInitScript(([t0, e0]) => { sessionStorage.setItem('gem_hub', '1'); localStorage.setItem('bi_theme', t0); if (!sessionStorage.getItem('t_ia')) { localStorage.removeItem('gem_assistente'); sessionStorage.setItem('t_ia', '1'); }
+  await pg.addInitScript(([t0, e0]) => { sessionStorage.setItem('gem_hub', '1'); localStorage.setItem('bi_theme', t0); if (!sessionStorage.getItem('t_ia')) { ['gem_assistente','gem_assistente_conv','gem_assistente_atual'].forEach(x => localStorage.removeItem(x)); sessionStorage.setItem('t_ia', '1'); }
     localStorage.setItem('sb-lozwipoeacpvplgkrxkq-auth-token', JSON.stringify({ access_token: 'tok', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, token_type: 'bearer', user: { id: 'u1', email: e0, aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {} } })); }, [tema, email]);
   await pg.goto(BASE + '/assistente/'); await pg.waitForTimeout(700);
   return { pg, ctx, erros, pedidos };
@@ -34,7 +34,7 @@ async function abre(email, w, h, tema) {
 for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'light']) {
   const k = `${w} ${tema}`; const { pg, ctx, erros, pedidos } = await abre('fortesindicadores@gmail.com', w, h, tema);
   t(await pg.locator('#miolo').isVisible(), k + ': dono vê a conversa');
-  t((await pg.locator('.ia-ex .dimb').count()) === 4, k + ': exemplos na tela vazia');
+  t((await pg.locator('.ia-cards .ia-card').count()) === 4 && /Olá, Fortesindicadores/.test(await pg.locator('.ia-ola h2').textContent()), k + ': saudação e sugestões em cartões');
   await pg.fill('#ia-txt', 'Como o custo por km evoluiu contra o IPCA?'); await pg.click('#ia-env'); await pg.waitForTimeout(600);
   t(pedidos.length === 1 && pedidos[0].h.authorization === 'Bearer tok' && pedidos[0].b.mensagens.at(-1).content.includes('IPCA'), k + ': manda o login e a pergunta');
   const ele = pg.locator('.ia-m.ele').last();
@@ -47,6 +47,12 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   if (SHOT) await pg.screenshot({ path: `${SHOT}/assistente-${w}-${tema}.png` });
   await pg.reload(); await pg.waitForTimeout(700);
   t((await pg.locator('.ia-m').count()) === 2, k + ': conversa volta depois do F5');
+  t((await pg.locator('#ia-lista .ia-cv').count()) === 1 && /custo por km/.test(await pg.locator('#ia-lista .ia-cv').first().textContent()), k + ': conversa na lista da lateral com o título da pergunta');
+  t((await pg.locator('.ia-av').count()) === 1 && (await pg.locator('.ia-copia').count()) === 1, k + ': resposta com o ícone do assistente e Copiar');
+  await pg.click('.ia-nova-l'); await pg.waitForTimeout(200);
+  t((await pg.locator('.ia-ola').count()) === 1 && (await pg.locator('#ia-lista .ia-cv').count()) === 1, k + ': Nova conversa abre tela vazia e guarda a anterior');
+  await pg.locator('#ia-lista .ia-cv').first().click(); await pg.waitForTimeout(200);
+  t((await pg.locator('.ia-m').count()) === 2, k + ': clicar na conversa da lista volta a ela');
   t(!erros.length, k + ': sem erro de página ' + erros.join(' | '));
   await ctx.close();
 }

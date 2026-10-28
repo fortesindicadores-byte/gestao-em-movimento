@@ -18,6 +18,15 @@
 (function () {
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const br = n => Number(n || 0).toLocaleString('pt-BR');
+  // erro da API em português (o do crédito é o que mais vai aparecer)
+  function traduz(m) {
+    const t = String(m || '');
+    if (/credit balance|insufficient.*credit|billing/i.test(t)) return 'Os créditos da API acabaram. O assistente volta a responder quando entrar crédito (o do plano renova todo mês) ou com saldo em Billing no Console da Anthropic. Nada é cobrado a mais.';
+    if (/rate.?limit|429/i.test(t)) return 'Muitas perguntas seguidas: o limite da API foi atingido. Espere um minuto e tente de novo.';
+    if (/overloaded|529/i.test(t)) return 'A API está sobrecarregada agora. Tente de novo em alguns minutos.';
+    if (/invalid.*api.?key|authentication|401/i.test(t)) return 'A chave da API não foi aceita. Confira o segredo ANTHROPIC_API_KEY da função no Supabase.';
+    return t;
+  }
 
   // Markdown mínimo: tabelas (coluna numérica à direita), listas, negrito, código, títulos
   function md(t) {
@@ -64,31 +73,96 @@
       '</ul></details>';
   }
 
+  const SVG_IA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.4z"/><path d="M19 15l.8 1.9 1.9.8-1.9.8L19 20.5l-.8-1.9-1.9-.8 1.9-.8z"/></svg>';
+  const SVG_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+
   function monta(cfg) {
     const $ = id => document.getElementById(id);
     const ids = Object.assign({ msgs: 'ia-msgs', txt: 'ia-txt', env: 'ia-env' }, cfg.ids || {});
-    let MSG = [], OCUP = false;
-    try { const g = JSON.parse(localStorage.getItem(cfg.chave) || '[]'); if (Array.isArray(g)) MSG = g.slice(-40); } catch (e) { /* sem armazenamento */ }
-    const guarda = () => { try { localStorage.setItem(cfg.chave, JSON.stringify(MSG.slice(-40))); } catch (e) { /* sem armazenamento */ } };
+    const CHAT = !!cfg.chat;            // desenho de chat (página /assistente/)
+    const MULTI = !!cfg.lista;          // várias conversas guardadas, com a lista na lateral
+    let MSG = [], OCUP = false, CONV = [], ATUAL = null;
+    const novoId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
+    if (MULTI) {
+      try { const g = JSON.parse(localStorage.getItem(cfg.chave + '_conv') || '[]'); if (Array.isArray(g)) CONV = g; } catch (e) { /* sem armazenamento */ }
+      // a conversa única da 1ª versão vira a 1ª conversa da lista
+      try { const v = JSON.parse(localStorage.getItem(cfg.chave) || 'null');
+        if (Array.isArray(v) && v.length && !CONV.length) CONV.push({ id: novoId(), titulo: tituloDe(v), em: Date.now(), msgs: v.slice(-40) });
+        localStorage.removeItem(cfg.chave); } catch (e) { /* sem armazenamento */ }
+      try { ATUAL = localStorage.getItem(cfg.chave + '_atual'); } catch (e) { /* sem armazenamento */ }
+      const c = CONV.find(x => x.id === ATUAL);
+      if (c) MSG = c.msgs; else ATUAL = null;
+    } else {
+      try { const g = JSON.parse(localStorage.getItem(cfg.chave) || '[]'); if (Array.isArray(g)) MSG = g.slice(-40); } catch (e) { /* sem armazenamento */ }
+    }
+    function tituloDe(msgs) { const u = msgs.find(m => m.role === 'user'); const t = u ? String(u.content).replace(/\s+/g, ' ').trim() : 'Conversa'; return t.length > 60 ? t.slice(0, 58) + '…' : t; }
+    const guarda = () => {
+      try {
+        if (!MULTI) { localStorage.setItem(cfg.chave, JSON.stringify(MSG.slice(-40))); return; }
+        if (MSG.length) {
+          let c = CONV.find(x => x.id === ATUAL);
+          if (!c) { ATUAL = novoId(); c = { id: ATUAL, titulo: '', em: 0, msgs: [] }; CONV.unshift(c); }
+          c.msgs = MSG.slice(-40); c.titulo = tituloDe(MSG); c.em = Date.now();
+          CONV.sort((x, y) => y.em - x.em);
+        }
+        CONV = CONV.slice(0, 60);
+        localStorage.setItem(cfg.chave + '_conv', JSON.stringify(CONV));
+        localStorage.setItem(cfg.chave + '_atual', ATUAL || '');
+      } catch (e) { /* sem armazenamento */ }
+    };
+
+    function lista() {
+      const el = MULTI && $(cfg.lista); if (!el) return;
+      if (!CONV.length) { el.innerHTML = '<div class="ia-cv-vazio">As conversas aparecem aqui.</div>'; return; }
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0); const h = hoje.getTime();
+      const grupos = [['Hoje', c => c.em >= h], ['Últimos 7 dias', c => c.em < h && c.em >= h - 6 * 864e5], ['Anteriores', c => c.em < h - 6 * 864e5]];
+      el.innerHTML = grupos.map(([rot, f]) => { const cs = CONV.filter(f); if (!cs.length) return '';
+        return `<div class="ia-cv-g">${rot}</div>` + cs.map(c => `<div class="ia-cv${c.id === ATUAL ? ' on' : ''}" data-cv="${c.id}" title="${esc(c.titulo)}"><span>${esc(c.titulo)}</span><button class="ia-cv-x" data-cvx="${c.id}" title="Apagar conversa">${SVG_X}</button></div>`).join(''); }).join('');
+      el.querySelectorAll('[data-cv]').forEach(d => d.addEventListener('click', e => { if (e.target.closest('[data-cvx]')) return; abreConv(d.dataset.cv); }));
+      el.querySelectorAll('[data-cvx]').forEach(b => b.addEventListener('click', () => apagaConv(b.dataset.cvx)));
+    }
+    function abreConv(id) { if (OCUP) return; const c = CONV.find(x => x.id === id); if (!c) return; ATUAL = id; MSG = c.msgs; guarda(); lista(); abre(); }
+    function apagaConv(id) {
+      if (OCUP && id === ATUAL) return;
+      if (!confirm('Apagar esta conversa?')) return;
+      CONV = CONV.filter(x => x.id !== id); if (id === ATUAL) { ATUAL = null; MSG = []; }
+      guarda(); lista(); pinta();
+    }
+
+    const pensando = m => `<span class="ia-pensa"><span class="ia-dots"><i></i><i></i><i></i></span>${esc(m.estado || 'Pensando…')}</span>`;
     function pinta() {
       const el = $(ids.msgs); if (!el) return;
       if (!MSG.length) {
-        el.innerHTML = `<div class="ia-vazio"><b>${esc(cfg.titulo || 'Assistente')}</b>${esc(cfg.texto || '')}<div class="ia-ex">${(cfg.exemplos || []).map(x => `<button class="dimb" data-ex="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`;
+        el.innerHTML = CHAT
+          ? `<div class="ia-ola"><div class="ia-logo">${SVG_IA}</div><h2>${esc(cfg.saudacao || cfg.titulo || 'Assistente')}</h2><p>${esc(cfg.texto || '')}</p><div class="ia-cards">${(cfg.exemplos || []).map(x => `<button class="ia-card" data-ex="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`
+          : `<div class="ia-vazio"><b>${esc(cfg.titulo || 'Assistente')}</b>${esc(cfg.texto || '')}<div class="ia-ex">${(cfg.exemplos || []).map(x => `<button class="dimb" data-ex="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`;
         el.querySelectorAll('[data-ex]').forEach(b => b.addEventListener('click', () => { $(ids.txt).value = b.dataset.ex; envia(); }));
         return;
       }
-      el.innerHTML = MSG.map(m => m.role === 'user' ? `<div class="ia-m eu">${esc(m.content)}</div>` :
-        `<div class="ia-m ele">${m.content ? md(m.content) : `<span class="ia-pensa">${esc(m.estado || 'Pensando…')}</span>`}${m.estado && m.content ? `<div class="ia-pensa">${esc(m.estado)}</div>` : ''}${consultas(m.q)}${m.pe ? `<div class="ia-pe">${esc(m.pe)}</div>` : ''}</div>`).join('');
+      const corpo = (m, i) => `${m.content ? md(m.content) : pensando(m)}${m.estado && m.content ? pensando(m) : ''}${consultas(m.q)}${m.pe ? `<div class="ia-pe">${esc(m.pe)}</div>` : ''}`;
+      if (!CHAT) {
+        el.innerHTML = MSG.map(m => m.role === 'user' ? `<div class="ia-m eu">${esc(m.content)}</div>` : `<div class="ia-m ele">${corpo(m)}</div>`).join('');
+      } else {
+        el.innerHTML = '<div class="ia-col">' + MSG.map((m, i) => m.role === 'user'
+          ? `<div class="ia-l eu"><div class="ia-m eu">${esc(m.content)}</div></div>`
+          : `<div class="ia-l ele"><span class="ia-av">${SVG_IA}</span><div class="ia-m ele">${corpo(m)}${m.content && !m.estado ? `<div class="ia-acoes"><button class="ia-copia" data-cp="${i}">Copiar</button></div>` : ''}</div></div>`).join('') + '</div>';
+        el.querySelectorAll('[data-cp]').forEach(b => b.addEventListener('click', () => {
+          const t = (MSG[+b.dataset.cp] || {}).content || '';
+          (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { b.textContent = 'Copiado'; setTimeout(() => { b.textContent = 'Copiar'; }, 1500); }).catch(() => {});
+        }));
+      }
       el.scrollTop = el.scrollHeight;
     }
-    function abre() { pinta(); setTimeout(() => { const t = $(ids.txt); if (t) t.focus(); }, 50); }
-    function nova() { if (OCUP) return; MSG = []; guarda(); pinta(); }
+    function abre() { pinta(); lista(); setTimeout(() => { const t = $(ids.txt); if (t) t.focus(); }, 50); }
+    function nova() { if (OCUP) return; if (MULTI) { ATUAL = null; MSG = []; guarda(); lista(); abre(); return; } MSG = []; guarda(); pinta(); }
 
     async function envia() {
       const t = $(ids.txt); const txt = (t.value || '').trim(); if (!txt || OCUP) return;
       OCUP = true; $(ids.env).disabled = true; t.value = ''; t.style.height = '';
-      MSG.push({ role: 'user', content: txt }); const r = { role: 'assistant', content: '', q: [], estado: 'Pensando…' }; MSG.push(r); pinta();
+      MSG.push({ role: 'user', content: txt }); const r = { role: 'assistant', content: '', q: [], estado: 'Pensando…' }; MSG.push(r);
+      if (MULTI) { guarda(); lista(); }
+      pinta();
       const hist = MSG.filter(m => m !== r && m.content).map(m => ({ role: m.role, content: m.content }));
       let ctx = ''; try { ctx = cfg.contexto ? String(cfg.contexto() || '') : ''; } catch (e) { /* sem contexto */ }
       try {
@@ -117,7 +191,7 @@
             partes.push(`${e.seg} s`, `US$ ${String(e.custo).replace('.', ',')}`);
             r.pe = partes.join(' · ');
           }
-          else if (e.t === 'erro') { r.estado = ''; r.content += (r.content ? '\n\n' : '') + 'Erro: ' + e.msg; }
+          else if (e.t === 'erro') { r.estado = ''; r.content += (r.content ? '\n\n' : '') + 'Erro: ' + traduz(e.msg); }
         };
         for (;;) {
           const { done, value } = await rd.read(); if (done) break; buf += dec.decode(value, { stream: true });
@@ -125,17 +199,17 @@
           if (!pend) pend = requestAnimationFrame(() => { pend = 0; pinta(); });
         }
         linha(buf);
-      } catch (err) { r.estado = ''; r.content += (r.content ? '\n\n' : '') + 'Erro: ' + ((err && err.message) || err); }
+      } catch (err) { r.estado = ''; r.content += (r.content ? '\n\n' : '') + 'Erro: ' + traduz((err && err.message) || err); }
       if (!r.content) r.content = '(sem resposta)'; r.estado = '';
-      OCUP = false; $(ids.env).disabled = false; guarda(); pinta();
+      OCUP = false; $(ids.env).disabled = false; guarda(); lista(); pinta();
     }
 
     const t = $(ids.txt);
     if (t) {
       t.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); envia(); } });
-      t.addEventListener('input', () => { t.style.height = 'auto'; t.style.height = Math.min(160, t.scrollHeight) + 'px'; });
+      t.addEventListener('input', () => { t.style.height = 'auto'; t.style.height = Math.min(200, t.scrollHeight) + 'px'; });
     }
-    return { envia, nova, abre, pinta, md };
+    return { envia, nova, abre, pinta, md, abreConv, apagaConv };
   }
 
   window.Assistente = { monta, md };
