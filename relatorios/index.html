@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610210800">
+<meta name="build" content="202610281000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Relatórios · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -527,6 +527,11 @@ const REL=[
   {cl:'ger',t:'Correlações da Operação',h:'correlacoes-operacao/',d:'A tabela-fato das correlações: DRE, dispersão, Frota de Elite, disponibilidade, contrato e condução.',
     f:[S('dre_frota'),S('dre_receita'),S('dispersao_km'),ELITE(null),T('disp_resumo','Disponibilidade por dia e unidade',{ordem:'data,unidade'}),
        CUSTO_PLACA,T('ce_scores_mensais','Condução econômica · mensal',{ordem:'id'})]},
+  {cl:'ger',adm:1,t:'Remuneração',h:'remuneracao/',d:'A remuneração prevista pelo Freightech por operação, unidade e mês (variável por componente, fixo, equipe, QLP, outras).',
+    f:[T('ft_rem_mes','Remuneração por mês',{ordem:'vigencia,operacao,unidade'})]},
+  {cl:'ger',adm:1,t:'Book do Operador',h:'book-operador/',d:'Os registros do Book do Freightech (título, categoria, texto) e a lista de anexos com o texto extraído (sem os arquivos).',
+    f:[T('ft_book','Registros',{sel:'uuid,titulo,subtitulo,categoria,ordem,texto,n_blocos,n_anexos,n_imagens,criado_em,atualizado_em,cliques',ordem:'ordem'}),
+       T('ft_book_anexo','Anexos',{sel:'id_storage,registro,bloco,nome,tipo,tamanho,texto',ordem:'nome',pag:50})]},
   // Financeiro
   {cl:'fin',t:'Visão Financeira',h:'visao-financeira/',d:'O DRE inteiro, conta a conta: Frota, EBITDA e Receita Líquida, mais os cenários de forecast salvos.',
     f:[S('dre_frota'),S('dre_ebitda'),S('dre_receita'),T('forecast_scenarios','Cenários de forecast',{ordem:'id'})]},
@@ -1092,6 +1097,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202610210800"></script>
+<script src="../assets/build-check.js?v=202610281000"></script>
 </body>
 </html>

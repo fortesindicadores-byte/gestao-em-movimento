@@ -1,0 +1,36 @@
+name: FT Remuneracao
+
+# Monta ft_rem_mes (a base do painel /remuneracao/) a partir do que o robô do
+# Freightech gravou em ft_linha/ft_layout. Roda sozinho depois da carga diária
+# do Freightech Robot (só os 4 últimos meses); aqui é para refazer o histórico.
+# Ver scripts/ft-remuneracao.mjs. O log mostra só totais por mês e operação.
+on:
+  workflow_dispatch:
+    inputs:
+      desde:
+        description: "Recalcular desde o mês (AAAA-MM); vazio = 4 últimos meses"
+        required: false
+        default: "2022-01"
+      seco:
+        description: "1 = não grava, só imprime"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  rem:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency: freightech
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Rodar
+        env:
+          FT_REM_DESDE: ${{ github.event.inputs.desde }}
+          FT_REM_SECO: ${{ github.event.inputs.seco }}
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/ft-remuneracao.mjs
