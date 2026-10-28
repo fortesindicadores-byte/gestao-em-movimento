@@ -67,7 +67,7 @@ function produto(s) {
 const UNI_REGRAS = [
   [/ANHANGUERA|SEARA/, 'ANG'], [/FRIBURGO/, 'NFR'], [/ITAJAI|CAMBORIU/, 'BLC'], [/PELOTAS/, 'PLT'],
   [/CAMPO GRANDE|RIO DE JANEIRO/, 'CGR'], [/RONDONOPOLIS/, 'RON'], [/CUIABA/, 'CBA'], [/GUARULHOS/, 'GRL'],
-  [/PIRAI/, 'PIR'], [/MACACU/, 'MCC'], [/GOIANIA/, 'GNA'], [/FLORIANOPOLIS|FLORIPA|SAO JOSE/, 'FLP'],
+  [/PIRAI/, 'PIR'], [/MACACU/, 'MCC'], [/GOIANIA/, 'GNA'], [/FLORIANOPOLIS|FLORIPA|SAO JOSE|PALHOCA/, 'FLP'],
 ];
 const sigla = nome => { const n = semAc(nome); for (const [re, s] of UNI_REGRAS) if (re.test(n)) return s; return null; };
 // número: 1234.5 · "120.000" (SUMA: ponto é decimal) · "1.234,56" (BR, com vírgula)
@@ -156,7 +156,7 @@ async function pfUnidade(u) {
 function pfLinhas(regs, u) {
   const out = [];
   for (const r of regs) {
-    const id = primeiro(r, ['id', 'codigoAutorizacao', 'numCupom', 'numeroCupom', 'identificador', 'numeroTransacao']);
+    const id = primeiro(r, ['identificador', 'id', 'codigoAutorizacao', 'numCupom', 'numeroCupom', 'identificador', 'numeroTransacao']);
     const dt = new Date(primeiro(r, ['data', 'dataHora', 'dataAbastecimento', 'dataTransacao', 'dataCriacao']));
     if (id == null || isNaN(dt)) continue;
     const st = String(primeiro(r, ['statusAutorizacao', 'statusAutorizacao.codigo']) ?? '');
