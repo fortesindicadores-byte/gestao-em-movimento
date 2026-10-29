@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610281200">
+<meta name="build" content="202610291700">
 <title>Preventivas Seara · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -374,7 +374,7 @@ table.tab th.gapL,table.tab td.gapL{padding-left:34px;}
 </style>
 </head>
 <body>
-<script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../");}catch(e){}</script>
+<script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../?volta="+encodeURIComponent(location.pathname+location.search));}catch(e){}</script>
 
 <div class="app">
   <aside class="side" id="side">
@@ -933,7 +933,7 @@ async function iniciar(){
   if(localStorage.getItem('seara_prev_mini')==='1')$('side').classList.add('mini');
   sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   const {data:{session}}=await sb.auth.getSession();
-  if(!session){location.replace('../');return;}
+  if(!session){ location.replace('../?volta='+encodeURIComponent(location.pathname+location.search)); return; }
   USER=session.user;
   let prof=null;
   try{const r=await sb.from('fca_profiles').select('nome,unidade,is_admin').eq('user_id',USER.id).maybeSingle();prof=r.data;}catch(e){}
@@ -960,6 +960,6 @@ iniciar();
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202610281200"></script>
+<script src="../assets/build-check.js?v=202610291700"></script>
 </body>
 </html>

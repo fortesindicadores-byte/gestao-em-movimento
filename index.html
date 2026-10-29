@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610291130">
+<meta name="build" content="202610291700">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1017,6 +1017,7 @@ async function showHub(user) {
   localStorage.setItem('bi_approved_' + user.id, '1');
   sessionStorage.setItem('gem_hub', '1');   // libera o acesso aos painéis nesta sessão (gate via hub)
   stopPolling();
+  if (_volta) { location.replace(_volta); return; }   // veio de um painel: volta para ele
   const podeRotear = !sessionStorage.getItem('gem_routed');
   const cache = perfilCache(user.id);
   // Roteamento por papel: gestor (perfil com unidade e não-admin) vai direto
@@ -1266,7 +1267,13 @@ function entra(user) {
   if (!_checando) _checando = checkApproval(user).finally(() => { _checando = null; });
   return _checando;
 }
+// SESSÃO QUE CAIU: aviso claro, limpeza da sessão inválida e volta ao painel (29/10/2026).
+// O painel que manda para o hub passa ?volta=<caminho>; depois do login o hub devolve para lá.
+const AUTH_KEY = 'sb-lozwipoeacpvplgkrxkq-auth-token';
+const _volta = (() => { try { const v = new URLSearchParams(location.search).get('volta'); const base = location.pathname.replace(/[^/]*$/, '');
+  return v && v.startsWith(base) && v !== base && !v.includes('//') && !/[<>"']/.test(v) ? v : null; } catch (e) { return null; } })();
 async function init() {
+  let _tinhaSessao = false; try { _tinhaSessao = !!localStorage.getItem(AUTH_KEY); } catch (e) {}
   let r = null;
   try { r = await Promise.race([sb.auth.getSession(), new Promise(res => setTimeout(() => res('demora'), 5000))]); } catch (e) { r = null; }
   if (r === 'demora') {
@@ -1281,7 +1288,13 @@ async function init() {
   }
   const session = r && r.data && r.data.session;
   if (session) { setMsg('', ''); await entra(session.user); }
-  else if (!isApproved) { showAuth(); if (!(r && r.error)) setMsg('', ''); }
+  else if (!isApproved) {
+    if (r && r.error) { showAuth(); return; }
+    // sessão guardada que o Supabase não aceita mais: apaga do navegador (senão ela fica presa ali)
+    if (_tinhaSessao) { try { await sb.auth.signOut({ scope: 'local' }); } catch (e) {} try { localStorage.removeItem(AUTH_KEY); } catch (e) {} }
+    showAuth();
+    setMsg(_tinhaSessao ? 'Sua sessão expirou. Entre de novo.' : (_volta ? 'Entre para abrir o painel.' : ''), _tinhaSessao ? 'error' : '');
+  }
 }
 
 sb.auth.onAuthStateChange(async (event, session) => {
@@ -2157,6 +2170,6 @@ init();
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/modo-tv.js?v=202610111500"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202610291130"></script>
+<script src="assets/build-check.js?v=202610291700"></script>
 </body>
 </html>

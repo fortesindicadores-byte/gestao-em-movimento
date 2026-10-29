@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610281200">
+<meta name="build" content="202610291700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Disponibilidade · Frota do Dia</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1799,7 +1799,7 @@ function semAcesso(msg){
 async function iniciar(){
   sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   const {data:{session}}=await sb.auth.getSession();
-  if(!session){ location.replace('../'); return; }
+  if(!session){ location.replace('../?volta='+encodeURIComponent(location.pathname+location.search)); return; }
   USER=session.user;
   let prof=null;
   try{const r=await sb.from('fca_profiles').select('nome,unidade,is_admin').eq('user_id',USER.id).maybeSingle();prof=r.data;}catch(e){}
@@ -1831,6 +1831,6 @@ iniciar();
 <!-- exportação padrão do Gestão em Movimento: botão direito na tabela, no
      gráfico ou no card → Excel · PNG · PNG com fundo transparente -->
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202610281200"></script>
+<script src="../assets/build-check.js?v=202610291700"></script>
 </body>
 </html>

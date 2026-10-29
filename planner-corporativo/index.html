@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610281400">
+<meta name="build" content="202610291700">
 <title>Planner Corporativo</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1226,7 +1226,7 @@ function semAcesso(msg){
 async function iniciar(){
   sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   const {data:{session}}=await sb.auth.getSession();
-  if(!session){ location.replace('../'); return; }
+  if(!session){ location.replace('../?volta='+encodeURIComponent(location.pathname+location.search)); return; }
   let prof=null;
   try{ const r=await sb.from('fca_profiles').select('is_admin').eq('user_id',session.user.id).maybeSingle(); prof=r.data; }catch(e){}
   if(!((prof&&prof.is_admin)||session.user.email===ADMIN_EMAIL)){
@@ -1260,6 +1260,6 @@ iniciar();
 <script>FcaBusca.init(function(){ if(typeof render==='function') render(); });</script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
-<script src="../assets/build-check.js?v=202610281400"></script>
+<script src="../assets/build-check.js?v=202610291700"></script>
 </body>
 </html>
