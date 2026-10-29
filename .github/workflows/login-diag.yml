@@ -1,0 +1,21 @@
+name: Login Diag (entra no portal com usuário de teste e mostra onde a sessão cai)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Playwright
+        run: |
+          npm i --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Diagnóstico
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/login-diag.mjs
