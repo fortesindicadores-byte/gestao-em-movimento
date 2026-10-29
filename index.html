@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610290500">
+<meta name="build" content="202610291130">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1256,20 +1256,36 @@ async function checkApproval(user) {
   }
 }
 
+// SESSÃO LENTA NÃO É SESSÃO PERDIDA (bug real, 29/10/2026): com o token vencido, o
+// getSession renova a sessão no Supabase; se a renovação passava de 5 s o hub mostrava o
+// login e não voltava mais, e os painéis (sem o gem_hub) mandavam de volta para o login.
+// Agora a demora vira "Conectando…" e o hub espera a renovação terminar.
+let _checando = null;
+function entra(user) {
+  if (isApproved || isRegistering) return _checando;
+  if (!_checando) _checando = checkApproval(user).finally(() => { _checando = null; });
+  return _checando;
+}
 async function init() {
-  try {
-    const result = await Promise.race([
-      sb.auth.getSession(),
-      new Promise(res => setTimeout(() => res({ data: { session: null } }), 5000))
-    ]);
-    const session = result?.data?.session;
-    if (session) await checkApproval(session.user);
-    else showAuth();
-  } catch(e) { showAuth(); }
+  let r = null;
+  try { r = await Promise.race([sb.auth.getSession(), new Promise(res => setTimeout(() => res('demora'), 5000))]); } catch (e) { r = null; }
+  if (r === 'demora') {
+    if (!isApproved) { showAuth(); setMsg('Conectando ao banco… sua sessão está sendo renovada.', ''); }
+    try { r = await Promise.race([sb.auth.getSession(), new Promise(res => setTimeout(() => res(null), 30000))]); } catch (e) { r = null; }
+  }
+  // Supabase fora do ar na renovação: a sessão continua guardada; tenta de novo em vez de pedir login
+  for (let i = 0; i < 4 && r && r.error && !(r.data && r.data.session) && !isApproved; i++) {
+    showAuth(); setMsg('O servidor de login não respondeu (' + (r.error.message || 'erro') + '). Tentando de novo…', 'error');
+    await new Promise(res => setTimeout(res, 8000));
+    try { r = await sb.auth.getSession(); } catch (e) { r = { error: e }; }
+  }
+  const session = r && r.data && r.data.session;
+  if (session) { setMsg('', ''); await entra(session.user); }
+  else if (!isApproved) { showAuth(); if (!(r && r.error)) setMsg('', ''); }
 }
 
 sb.auth.onAuthStateChange(async (event, session) => {
-  if (event === 'SIGNED_IN' && session && !isRegistering && !isApproved) await checkApproval(session.user);
+  if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session && !isRegistering && !isApproved) await entra(session.user);
   if (event === 'SIGNED_OUT' && !isRegistering) showAuth();
   if (event === 'PASSWORD_RECOVERY') {
     hideAll();
@@ -2141,6 +2157,6 @@ init();
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/modo-tv.js?v=202610111500"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202610290500"></script>
+<script src="assets/build-check.js?v=202610291130"></script>
 </body>
 </html>
