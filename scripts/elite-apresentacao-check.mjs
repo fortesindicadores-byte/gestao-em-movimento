@@ -62,6 +62,7 @@ console.log(`coleta em ${((Date.now() - t0) / 1000).toFixed(0)} s · vigências 
 const VU = D.vigs[D.vigs.length - 1];
 console.log('pontuação por unidade em', VU, D.mes.filter(r => r.vig === VU).map(r => r.unit + ' ' + (r.pont || 0).toFixed(2)).join(' · '));
 console.log('ELITE_GAV_JSON ' + JSON.stringify(D.gav));
+console.log('ELITE_D_JSON ' + JSON.stringify({ vigs: D.vigs, mes: D.mes, acum: D.acum }));
 
 // o botão de verdade: baixa o PDF
 const t1 = Date.now();
