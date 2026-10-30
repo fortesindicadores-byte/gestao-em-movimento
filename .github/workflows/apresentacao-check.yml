@@ -1,0 +1,78 @@
+name: Apresentacao Check
+
+# Só leitura. Abre um painel com os dados reais e clica no "Gerar apresentação".
+# Com publicar=true, os PDFs saem CIFRADOS (chave pública
+# scripts/analise-dump.pub.pem) num branch temporário (tmp-apres-pdf); o
+# repositório é público e os PDFs trazem placas e valores. Apagar depois.
+on:
+  workflow_dispatch:
+    inputs:
+      painel:
+        description: 'caminhos separados por vírgula (ex.: gestao-a-vista/index.html?u=admin)'
+        required: false
+        default: 'gestao-a-vista/index.html?u=admin'
+      pronto:
+        description: 'expressão JS que diz que o painel carregou'
+        required: false
+        default: 'true'
+      botao:
+        description: 'seletor do botão'
+        required: false
+        default: '#btApres'
+      publicar:
+        description: 'true = publica os PDFs cifrados em tmp-apres-pdf'
+        required: false
+        default: 'false'
+      so_apagar:
+        description: 'true = só apaga o branch tmp-apres-pdf'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Apagar o branch temporário
+        if: ${{ github.event.inputs.so_apagar == 'true' }}
+        run: git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete tmp-apres-pdf || echo "branch já não existia"
+      - uses: actions/checkout@v4
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+      - uses: actions/setup-node@v4
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+        with:
+          node-version: '20'
+      - name: Playwright
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Rodar
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+        run: node scripts/apresentacao-check.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          APRES_PAINEL: ${{ github.event.inputs.painel }}
+          APRES_PRONTO: ${{ github.event.inputs.pronto }}
+          APRES_BOTAO: ${{ github.event.inputs.botao }}
+          APRES_DIR: /tmp/apres
+      - name: Cifrar e publicar
+        if: ${{ github.event.inputs.so_apagar != 'true' && github.event.inputs.publicar == 'true' }}
+        run: |
+          set -e
+          mkdir -p /tmp/pub
+          cd /tmp/apres && tar -cf /tmp/a.tar *.pdf && rm -f *.pdf
+          openssl rand -out /tmp/k.bin 32
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in /tmp/a.tar -out /tmp/pub/apres.tar.enc -pass file:/tmp/k.bin
+          openssl pkeyutl -encrypt -pubin -inkey "$GITHUB_WORKSPACE/scripts/analise-dump.pub.pem" \
+            -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in /tmp/k.bin -out /tmp/pub/chave.enc
+          rm -f /tmp/k.bin /tmp/a.tar
+          cd /tmp/pub
+          git init -q -b tmp-apres-pdf
+          git config user.email "actions@github.com" && git config user.name "github-actions"
+          git add . && git commit -qm "PDFs cifrados temporários (apagar depois de ler)"
+          git push -f -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" tmp-apres-pdf

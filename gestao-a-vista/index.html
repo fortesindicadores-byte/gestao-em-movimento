@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610291700">
+<meta name="build" content="202610301900">
 <title>Gestão à Vista</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -498,6 +498,9 @@ body.prehub .s-volta .s-item{display:flex;}
     <div class="s-sec">Indicadores</div>
     <div id="navInd"></div>
     <div class="s-sec">Atalhos</div>
+    <button class="s-item" id="btApres" onclick="gerarApresentacao()" title="Apresentação em PDF do recorte da tela: ranking, frota parada, descontos, pneus, documentos, FCA, custos e prioridades">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M12 17v4M8 21h8"/><path d="M7 13l3-3 2 2 4-4"/></svg>
+      <span class="n">Gerar apresentação</span></button>
     <div id="pdf-slot"></div>
     <a class="s-item" href="./" style="text-decoration:none" id="btUnidades">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -1620,6 +1623,13 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:t=>aplicaTema(t==='light'?'light':'dark')
 });
 </script>
-<script src="../assets/build-check.js?v=202610291700"></script>
+<script src="../assets/apresentacao-base.js?v=202610301900"></script>
+<script src="../assets/gav-apresentacao.js?v=202610301900"></script>
+<script>
+function gerarApresentacao(){
+  ApresBase.botao(document.getElementById('btApres'),aviso=>GavApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
+}
+</script>
+<script src="../assets/build-check.js?v=202610301900"></script>
 </body>
 </html>
