@@ -279,8 +279,10 @@ let GAS_FIX = 0, GAS_HDR = false, GAS_GRAV = 0;
 async function gasola() {
   const contas = gasolaContas();
   const linhas = [], porUni = new Map(), vistos = new Set();
+  let bloqSeguidas = 0;   // contas seguidas recusadas já no 1º pedido = o Gasola está bloqueando tudo
   for (const ct of contas) {
-    let auth = ct.tok, n = 0, ok = true, limite = false; const ini = linhas.length;   // a doc manda o token cru; se der 401, tenta com Bearer
+    if (bloqSeguidas >= 2) { log(`   ${ct.nome}: pulada (o Gasola está recusando todos os pedidos; fica para a próxima rodada)`); continue; }
+    let auth = ct.tok, n = 0, ok = true, limite = false, pedidos = 0; const ini = linhas.length;   // a doc manda o token cru; se der 401, tenta com Bearer
     // fatias de 30 dias (o máximo da API): metade dos pedidos das de 15
     for (const per of fatias(30)) {
       const q = new URLSearchParams({ startDate: per[0] + 'T00:00:00-03:00', endDate: per[1] + 'T23:59:59-03:00' });
@@ -302,7 +304,8 @@ async function gasola() {
           lista = Array.isArray(j) ? j : (j.data || j.itens || j.items || []);
         } catch (e) { ult = e.message; if (t < 3) await esperar(/429/.test(ult) ? ra : t * 3000); }
       }
-      if (!lista && /429/.test(ult)) { log(`   ${ct.nome}: limite de pedidos do Gasola a partir de ${per[0]} — a conta para nesta rodada`); ok = false; limite = true; break; }
+      if (!lista && /429/.test(ult)) { log(`   ${ct.nome}: limite de pedidos do Gasola a partir de ${per[0]} — a conta para nesta rodada`); ok = false; limite = true; if (!pedidos) bloqSeguidas++; break; }
+      pedidos++; bloqSeguidas = 0;
       // uma fatia que falha por outro motivo não derruba a conta: fica no log e segue
       if (!lista) { log(`   ${ct.nome}: fatia ${per[0]}→${per[1]} falhou (${ult})`); ok = false; continue; }
       if (MODO === 'sonda') { log(`   ${ct.nome} · ${per[0]}→${per[1]}: ${lista.length} abastecimento(s)`); if (lista[0]) log('   campos:', [...campos(lista[0])].join(' · ')); break; }
