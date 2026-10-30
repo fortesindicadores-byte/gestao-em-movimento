@@ -32,9 +32,10 @@ on:
         required: false
         default: false
         type: boolean
-  # todo dia às 06:10 BRT, os últimos 10 dias (corrige o que mudou na origem)
+  # Quem dá a hora é o pg_cron (scripts/abast-api-dispara.sql, 05:00 BRT, os
+  # últimos 10 dias). Este cron é a rede: o agendador do GitHub atrasa horas.
   schedule:
-    - cron: '10 9 * * *'
+    - cron: '0 8 * * *'
 
 concurrency:
   group: abast-api-robot
