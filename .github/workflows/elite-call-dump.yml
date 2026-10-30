@@ -1,0 +1,25 @@
+name: Elite Call Dump
+
+# Só leitura. Os números da Call de Resultados do Frota de Elite (pontuação por
+# unidade e indicador, mês a mês e acumulado), pela mesma conta do painel.
+on:
+  workflow_dispatch:
+    inputs:
+      ate:
+        description: "Último mês (AAAA-MM)"
+        required: false
+        default: ""
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Rodar
+        env:
+          ATE: ${{ github.event.inputs.ate || '2026-09' }}
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/elite-call-dump.mjs
