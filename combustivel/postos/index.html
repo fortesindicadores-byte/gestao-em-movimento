@@ -726,7 +726,7 @@ function render(){
     +(corr?` ${corr} abastecimento${corr===1?'':'s'} com preço fora de R$ 1,50 a R$ 12,00 por litro entra${corr===1?'':'m'} pelo preço mediano do mesmo combustível, unidade e mês.`:'');
   const vsel=getSel('ms-vig');
   const fmtH=d=>new Date(d).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  const cargas=BASES.filter(b=>b.carregado_em).map(b=>`${SISTEMA[b.sistema]||b.sistema} ${fmtH(b.carregado_em)}${b.erro?' (erro)':''}`).join(' · ');
+  const cargas=BASES.filter(b=>b.carregado_em&&SISTEMA[b.sistema]).map(b=>`${SISTEMA[b.sistema]||b.sistema} ${fmtH(b.carregado_em)}${b.erro?' (erro)':''}`).join(' · ');
   set('titSub',`${vsel.length===1?vigRot(vsel[0]).toUpperCase():vsel.length?vsel.length+' vigências':'2026'} · APIs${cargas?' · '+cargas:''}`);
 }
 document.querySelectorAll('#dims-dia .dimb').forEach(b=>b.addEventListener('click',()=>{

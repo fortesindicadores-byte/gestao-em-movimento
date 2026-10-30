@@ -275,74 +275,109 @@ function gasolaContas() {
   if (!tok) throw new Error('GASOLA_TOKENS (ou GASOLA_TOKEN) não configurado (GitHub Secrets)');
   return [{ nome: 'Gasola', uni: null, tok, matriz: false }];
 }
-let GAS_FIX = 0, GAS_HDR = false, GAS_GRAV = 0;
+let GAS_FIX = 0, GAS_GRAV = 0;
+/* UMA CONSULTA POR DIA POR CONTA (Renan, 30/10/2026: "Gasola aceita uma consulta por dia
+   apenas"). Cada conta faz no máximo UM pedido por dia (de no máximo 30 dias, o teto da
+   API) e o robô lembra, por conta, o que já veio: linha GASOLA:<conta> em abast_api_base
+   (resumo = {ok_de, ok_ate, ultimo_pedido}). Regra do pedido do dia:
+   · conta nova → os últimos 30 dias;
+   · o recente está velho (ok_ate há 7 dias ou mais) ou o ano já está completo → o recente
+     (continua de ok_ate − 2 dias, até 30 dias; sem buraco);
+   · senão → 30 dias para trás de ok_de, até GASOLA_DESDE (2026-01-01).
+   Assim 2026 inteiro entra em ~10 dias e o recente nunca fica mais de uma semana sem
+   atualizar. Conta que já pediu hoje é pulada (rodar de novo à mão não queima a cota de
+   amanhã nem estoura a de hoje); GASOLA_FORCAR=1 ignora isso. ABAST_DE/ABAST_ATE não
+   valem para o Gasola. */
+const GAS_DESDE = process.env.GASOLA_DESDE || '2026-01-01';
+const GAS_FORCAR = process.env.GASOLA_FORCAR === '1';
+const somaDias = (d, n) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+async function gasEstado() {
+  if (!SB_KEY) return new Map();
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/abast_api_base?select=sistema,resumo&sistema=like.GASOLA:*`, { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY } });
+    if (!r.ok) return new Map();
+    return new Map((await r.json()).map(x => [x.sistema.slice(7), x.resumo || {}]));
+  } catch (e) { return new Map(); }
+}
+function janelaDoDia(est, hoje) {
+  const recente = () => {
+    let ini = somaDias(hoje, -29);
+    if (est.ok_ate && somaDias(est.ok_ate, -2) < ini) ini = somaDias(est.ok_ate, -2);    // buraco: anda a partir de ok_ate
+    const fim = somaDias(ini, 29) < hoje ? somaDias(ini, 29) : hoje;
+    return { tipo: 'recente', de: ini, ate: fim };
+  };
+  if (!est.ok_ate || !est.ok_de) return recente();
+  if (est.ok_ate <= somaDias(hoje, -7) || est.ok_de <= GAS_DESDE) return recente();
+  const fim = somaDias(est.ok_de, -1), ini = somaDias(fim, -29) < GAS_DESDE ? GAS_DESDE : somaDias(fim, -29);
+  return { tipo: 'histórico', de: ini, ate: fim };
+}
 async function gasola() {
   const contas = gasolaContas();
   const linhas = [], porUni = new Map(), vistos = new Set();
-  let bloqSeguidas = 0;   // contas seguidas recusadas já no 1º pedido = o Gasola está bloqueando tudo
+  const hoje = iso(hojeBR()), EST = await gasEstado();
   for (const ct of contas) {
-    if (bloqSeguidas >= 2) { log(`   ${ct.nome}: pulada (o Gasola está recusando todos os pedidos; fica para a próxima rodada)`); continue; }
-    let auth = ct.tok, n = 0, ok = true, limite = false, pedidos = 0; const ini = linhas.length;   // a doc manda o token cru; se der 401, tenta com Bearer
-    // fatias de 30 dias (o máximo da API): metade dos pedidos das de 15
-    for (const per of fatias(30)) {
-      const q = new URLSearchParams({ startDate: per[0] + 'T00:00:00-03:00', endDate: per[1] + 'T23:59:59-03:00' });
-      let lista = null, ult = '';
-      // o Gasola limita pedidos (HTTP 429). Espera o Retry-After (até 2 min) e tenta mais
-      // uma vez; se continuar no limite, a conta para nesta rodada e a próxima recomeça
-      // (o que já veio fica gravado). Os cabeçalhos de limite saem no log uma vez.
-      for (let t = 1; t <= 3 && !lista; t++) {
-        let ra = 0;
-        try {
-          let r = await fetch(`${GASOLA_URL}/v1/integration/report/supply?${q}`, { headers: { Authorization: auth, 'Content-Type': 'application/json' } });
-          if (r.status === 401 && !/^Bearer /i.test(auth)) { auth = 'Bearer ' + ct.tok; r = await fetch(`${GASOLA_URL}/v1/integration/report/supply?${q}`, { headers: { Authorization: auth, 'Content-Type': 'application/json' } }); }
-          if (r.status === 429) {
-            ra = Math.min(120, +r.headers.get('retry-after') || 60) * 1000;
-            if (!GAS_HDR) { GAS_HDR = true; const h = [...r.headers.entries()].filter(([k]) => /rate|limit|retry|reset/i.test(k)).map(([k, v]) => `${k}=${v}`).join(' · '); log(`   429 do Gasola · cabeçalhos: ${h || '(nenhum de limite)'}`); }
-          }
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          const j = await r.json();
-          lista = Array.isArray(j) ? j : (j.data || j.itens || j.items || []);
-        } catch (e) { ult = e.message; if (t < 3) await esperar(/429/.test(ult) ? ra : t * 3000); }
-      }
-      if (!lista && /429/.test(ult)) { log(`   ${ct.nome}: limite de pedidos do Gasola a partir de ${per[0]} — a conta para nesta rodada`); ok = false; limite = true; if (!pedidos) bloqSeguidas++; break; }
-      pedidos++; bloqSeguidas = 0;
-      // uma fatia que falha por outro motivo não derruba a conta: fica no log e segue
-      if (!lista) { log(`   ${ct.nome}: fatia ${per[0]}→${per[1]} falhou (${ult})`); ok = false; continue; }
-      if (MODO === 'sonda') { log(`   ${ct.nome} · ${per[0]}→${per[1]}: ${lista.length} abastecimento(s)`); if (lista[0]) log('   campos:', [...campos(lista[0])].join(' · ')); break; }
-      for (const r of lista) {
-        const dt = dataBR(r.dataConclusao) || (r.emitidoEm ? new Date(r.emitidoEm) : null);
-        if (!r.id || !dt || isNaN(dt) || vistos.has(String(r.id))) continue;
-        vistos.add(String(r.id)); n++;
-        const nome = r.unidade || ct.nome || null;
-        const sg = ct.uni || sigla(r.unidade) || sigla(ct.nome);
-        porUni.set(sg || nome, (porUni.get(sg || nome) || 0) + 1);
-        const litros = num(r.totalLitros);
-        let valor = num(r.valor);
-        // valor que não bate com litros × preço cobrado (ex.: R$ 141 mi num tanque de 300 L): vale a conta
-        const pc = num(r.precoCobrado) ?? num(r.valorLitroPago);
-        if (litros > 0 && pc > 0 && !(valor > 0 && Math.abs(valor / (litros * pc) - 1) <= 0.2)) { valor = Math.round(litros * pc * 100) / 100; GAS_FIX++; }
-        const st = String(r.status || '');
-        linhas.push({
-          sistema: 'GASOLA', id_origem: String(r.id), item: 1, data: dt.toISOString(), dia: diaBR(dt),
-          unidade: sg, unidade_origem: nome,
-          placa: placaKey(r.placa), placa_origem: r.placa ?? null,
-          produto: produto(r.combustivel), produto_origem: r.combustivel ?? null,
-          litros, preco: num(r.precoCobrado) ?? num(r.valorLitroPago) ?? (litros ? valor / litros : null), valor,
-          posto: r.posto ?? null, cnpj_posto: r.cnpj ? cnpjDig(r.cnpj) : null,
-          hodometro: num(r.km), valido: /CONCLU/i.test(st) && litros > 0 && valor > 0, status_origem: st || null,
-          modo: r.categoria ?? null, bomba: null, editado_origem: null,
-        });
-      }
-      await esperar(1500);
+    const est = { ...(EST.get(ct.nome) || {}) };
+    if (est.ultimo_pedido === hoje && !GAS_FORCAR) { log(`   ${ct.nome}: já usou a consulta de hoje (Gasola aceita uma por dia) — fica para amanhã`); continue; }
+    const jan = MODO === 'sonda' ? { tipo: 'sonda', de: somaDias(hoje, -9), ate: hoje } : janelaDoDia(est, hoje);
+    let auth = ct.tok, n = 0, lista = null, ult = '';
+    const q = new URLSearchParams({ startDate: jan.de + 'T00:00:00-03:00', endDate: jan.ate + 'T23:59:59-03:00' });
+    try {
+      let r = await fetch(`${GASOLA_URL}/v1/integration/report/supply?${q}`, { headers: { Authorization: auth, 'Content-Type': 'application/json' } });
+      if (r.status === 401 && !/^Bearer /i.test(auth)) { auth = 'Bearer ' + ct.tok; r = await fetch(`${GASOLA_URL}/v1/integration/report/supply?${q}`, { headers: { Authorization: auth, 'Content-Type': 'application/json' } }); }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      lista = Array.isArray(j) ? j : (j.data || j.itens || j.items || []);
+    } catch (e) { ult = e.message; }
+    // a consulta foi feita (deu certo ou não): o dia está gasto para esta conta
+    est.ultimo_pedido = hoje;
+    if (!lista) {
+      log(`   ${ct.nome}: ${jan.tipo} ${jan.de}→${jan.ate} falhou (${ult})${/429/.test(ult) ? ' — consulta do dia já usada' : ''}`);
+      await gasSalvaEstado(ct.nome, est, ult); continue;
     }
-    if (MODO !== 'sonda') log(`   conta ${ct.nome}${ct.uni ? ' (' + ct.uni + ')' : ''}: ${n} abastecimento(s) novo(s)${ok ? '' : limite ? ' · parou no limite' : ' · com falha'}`);
-    // gravar conta a conta: se a próxima bater no limite ou o job cair, o que já veio fica
-    if (MODO === 'gravar' && linhas.length > ini) { const g = await grava(linhas.slice(ini)); GAS_GRAV += g; log(`   gravado: ${g} linha(s)`); }
+    if (MODO === 'sonda') { log(`   ${ct.nome} · ${jan.de}→${jan.ate}: ${lista.length} abastecimento(s)`); if (lista[0]) log('   campos:', [...campos(lista[0])].join(' · ')); await gasSalvaEstado(ct.nome, est, null); continue; }
+    const ini = linhas.length;
+    for (const r of lista) {
+      const dt = dataBR(r.dataConclusao) || (r.emitidoEm ? new Date(r.emitidoEm) : null);
+      if (!r.id || !dt || isNaN(dt) || vistos.has(String(r.id))) continue;
+      vistos.add(String(r.id)); n++;
+      const nome = r.unidade || ct.nome || null;
+      const sg = ct.uni || sigla(r.unidade) || sigla(ct.nome);
+      porUni.set(sg || nome, (porUni.get(sg || nome) || 0) + 1);
+      const litros = num(r.totalLitros);
+      let valor = num(r.valor);
+      // valor que não bate com litros × preço cobrado (ex.: R$ 141 mi num tanque de 300 L): vale a conta
+      const pc = num(r.precoCobrado) ?? num(r.valorLitroPago);
+      if (litros > 0 && pc > 0 && !(valor > 0 && Math.abs(valor / (litros * pc) - 1) <= 0.2)) { valor = Math.round(litros * pc * 100) / 100; GAS_FIX++; }
+      const st = String(r.status || '');
+      linhas.push({
+        sistema: 'GASOLA', id_origem: String(r.id), item: 1, data: dt.toISOString(), dia: diaBR(dt),
+        unidade: sg, unidade_origem: nome,
+        placa: placaKey(r.placa), placa_origem: r.placa ?? null,
+        produto: produto(r.combustivel), produto_origem: r.combustivel ?? null,
+        litros, preco: num(r.precoCobrado) ?? num(r.valorLitroPago) ?? (litros ? valor / litros : null), valor,
+        posto: r.posto ?? null, cnpj_posto: r.cnpj ? cnpjDig(r.cnpj) : null,
+        hodometro: num(r.km), valido: /CONCLU/i.test(st) && litros > 0 && valor > 0, status_origem: st || null,
+        modo: r.categoria ?? null, bomba: null, editado_origem: null,
+      });
+    }
+    // gravar conta a conta e só então avançar o que a conta já tem
+    if (MODO === 'gravar') {
+      if (linhas.length > ini) GAS_GRAV += await grava(linhas.slice(ini));
+      est.ok_de = !est.ok_de || jan.de < est.ok_de ? jan.de : est.ok_de;
+      est.ok_ate = !est.ok_ate || jan.ate > est.ok_ate ? jan.ate : est.ok_ate;
+    }
+    await gasSalvaEstado(ct.nome, est, null);
+    log(`   conta ${ct.nome}${ct.uni ? ' (' + ct.uni + ')' : ''}: ${jan.tipo} ${jan.de}→${jan.ate} · ${n} abastecimento(s)${est.ok_de ? ` · tem ${est.ok_de}→${est.ok_ate}` : ''}`);
   }
   const res = [...porUni].map(([u, n]) => ({ unidade: u, sigla: u, itens: n }));
   res.forEach(x => log(`   ${x.unidade}: ${x.itens} abastecimento(s)`));
   if (GAS_FIX) log(`   ${GAS_FIX} abastecimento(s) com valor fora de litros × preço cobrado: gravados pela conta`);
   return { linhas, res };
+}
+async function gasSalvaEstado(nome, est, erro) {
+  if (!SB_KEY) return;
+  try { await sb('abast_api_base?on_conflict=sistema', 'POST', [{ sistema: 'GASOLA:' + nome, carregado_em: new Date().toISOString(), de: est.ok_de || null, ate: est.ok_ate || null, erro: erro || null, resumo: est }], 'resolution=merge-duplicates'); }
+  catch (e) { log(`   ${nome}: não gravei o controle da conta (${e.message.slice(0, 80)})`); }
 }
 
 /* ════════════════════════ Supabase ════════════════════════ */
