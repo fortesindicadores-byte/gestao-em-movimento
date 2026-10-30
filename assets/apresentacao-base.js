@@ -128,9 +128,12 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
         const nums = vals.filter(ok), mx = oo.max != null ? oo.max : Math.max(...nums, oo.meta || 0) * 1.1, lo = oo.lo != null ? oo.lo : 0;
         const bw = (w - pad.l - pad.r) / Math.max(cats.length, 1), H = h - pad.t - pad.b, Y = v => pad.t + H * (1 - (Math.max(Math.min(v, mx), lo) - lo) / ((mx - lo) || 1));
         let s = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" font-family="Montserrat,Arial" font-size="11">`;
+        if (lo < 0) s += `<line x1="${pad.l}" x2="${w - pad.r}" y1="${Y(0)}" y2="${Y(0)}" stroke="${INK3}"/>`;
         if (oo.meta != null) s += `<line x1="${pad.l}" x2="${w - pad.r}" y1="${Y(oo.meta)}" y2="${Y(oo.meta)}" stroke="${INK3}" stroke-dasharray="5 4"/><text x="${w - pad.r}" y="${Y(oo.meta) - 5}" text-anchor="end" fill="${INK2}" font-weight="700" font-size="10">${oo.metaTxt || 'Meta'}</text>`;
         cats.forEach((c, i) => { const v = vals[i], x = pad.l + bw * i + bw * .18;
-          if (ok(v)) s += `<rect x="${x}" y="${Y(v)}" width="${bw * .64}" height="${Math.max(0, h - pad.b - Y(v))}" rx="3" fill="${(oo.cor && oo.cor(v, i)) || acc}" fill-opacity=".85"/><text x="${x + bw * .32}" y="${Y(v) - 6}" text-anchor="middle" font-weight="800" fill="${INK}">${oo.fmt ? oo.fmt(v) : f.f1(v)}</text>`;
+          // a barra sai do zero (ou do piso, quando ele é positivo): negativo desce
+          const y0 = Y(lo > 0 ? lo : 0);
+          if (ok(v)) s += `<rect x="${x}" y="${Math.min(Y(v), y0)}" width="${bw * .64}" height="${Math.max(1, Math.abs(y0 - Y(v)))}" rx="3" fill="${(oo.cor && oo.cor(v, i)) || acc}" fill-opacity=".85"/><text x="${x + bw * .32}" y="${v < 0 ? Y(v) + 14 : Y(v) - 6}" text-anchor="middle" font-weight="800" fill="${INK}">${oo.fmt ? oo.fmt(v) : f.f1(v)}</text>`;
           s += `<text x="${x + bw * .32}" y="${h - 10}" text-anchor="middle" fill="${INK2}" font-weight="600">${f.esc(c)}</text>`; });
         return s + '</svg>';
       },
