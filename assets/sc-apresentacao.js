@@ -21,7 +21,9 @@
     o = o || {};
     const F = ApresBase.f;
     if (!ICS.length) throw new Error('o Scorecard ainda está carregando');
-    const selVig = getMsValues('ms-vig'), selUni = getMsValues('ms-uni');
+    let selVig = getMsValues('ms-vig'); const selUni = getMsValues('ms-uni');
+    // a vigência que o painel marcou sozinho ao abrir (a última) não é escolha de quem gera
+    if (typeof _vigAuto !== 'undefined' && _vigAuto && selVig.length === 1 && selVig[0] === _vigAuto) selVig = [];
     const unis0 = selUni.length ? selUni.filter(u => UNI_LIST.includes(u)) : UNI_LIST.slice();
     // sem vigência marcada: o último mês FECHADO (12 dos 20 indicadores apurados).
     // O mês corrente abre com poucos indicadores e a pontuação dele não diz nada ainda.
