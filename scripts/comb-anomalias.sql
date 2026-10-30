@@ -107,6 +107,58 @@ drop trigger if exists comb_correcao_dispara on public.comb_correcao;
 create trigger comb_correcao_dispara after insert or update or delete on public.comb_correcao
   for each statement execute function public.comb_correcao_dispara();
 
+-- ── Ajuste pelas APIs e correção por abastecimento (Renan, 30/10/2026: "os erros do
+-- benner quero o script olhe os abastecimentos e ajuste. Só fique como erro o que não
+-- achar nem em um nem em outro. E o que for para ajustar se clicar na placa com erro deve
+-- abrir todo o histórico de abastecimentos, com opção de alterar km e litros")
+-- situacao: 'ajustado' (o robô fechou com os abastecimentos das APIs e usou esses números),
+-- 'erro' (não fecha nem com o ERP nem com as APIs), 'corrigido_os' (placa-mês que só está
+-- na lista porque tem abastecimento corrigido na tela).
+alter table public.comb_anomalia add column if not exists situacao    text;
+alter table public.comb_anomalia add column if not exists auto_km     numeric;
+alter table public.comb_anomalia add column if not exists auto_litros numeric;
+alter table public.comb_anomalia add column if not exists auto_valor  numeric;
+alter table public.comb_anomalia add column if not exists auto_fonte  text;
+alter table public.comb_anomalia add column if not exists auto_obs    text;
+alter table public.comb_anomalia add column if not exists api_litros  numeric;
+alter table public.comb_anomalia add column if not exists api_km      numeric;
+alter table public.comb_anomalia add column if not exists api_n       int;
+
+-- comb_correcao_os: km e litros corrigidos de UM abastecimento do ERP (ordem_servico de
+-- erp_abastecimentos). Campo vazio = fica o do ERP. O robô Consumo Auto troca os litros da
+-- OS (o valor acompanha, mesmo R$/L) e o km dela no hododiesel.
+create table if not exists public.comb_correcao_os (
+  ordem_servico text primary key,
+  placa         text,
+  data          date,
+  km            numeric,
+  litros        numeric,
+  km_erp        numeric,
+  litros_erp    numeric,
+  motivo        text,
+  autor         text,
+  created_by    uuid default auth.uid() references auth.users(id) on delete set null,
+  updated_by    uuid references auth.users(id) on delete set null,
+  created_at    timestamptz default now(),
+  updated_at    timestamptz default now()
+);
+alter table public.comb_correcao_os enable row level security;
+drop policy if exists comb_correcao_os_le on public.comb_correcao_os;
+create policy comb_correcao_os_le on public.comb_correcao_os for select to authenticated using (public.fca_is_admin());
+drop policy if exists comb_correcao_os_ins on public.comb_correcao_os;
+create policy comb_correcao_os_ins on public.comb_correcao_os for insert to authenticated with check (public.fca_is_admin());
+drop policy if exists comb_correcao_os_upd on public.comb_correcao_os;
+create policy comb_correcao_os_upd on public.comb_correcao_os for update to authenticated using (public.fca_is_admin()) with check (public.fca_is_admin());
+drop policy if exists comb_correcao_os_del on public.comb_correcao_os;
+create policy comb_correcao_os_del on public.comb_correcao_os for delete to authenticated using (public.fca_is_admin());
+drop trigger if exists comb_correcao_os_touch on public.comb_correcao_os;
+create trigger comb_correcao_os_touch before update on public.comb_correcao_os
+  for each row execute function public.comb_correcao_touch();
+drop trigger if exists comb_correcao_os_dispara on public.comb_correcao_os;
+create trigger comb_correcao_os_dispara after insert or update or delete on public.comb_correcao_os
+  for each statement execute function public.comb_correcao_dispara();
+
 -- conferência
 select (select count(*) from public.comb_anomalia) as anomalias,
-       (select count(*) from public.comb_correcao) as correcoes;
+       (select count(*) from public.comb_correcao) as correcoes,
+       (select count(*) from public.comb_correcao_os) as correcoes_por_abastecimento;

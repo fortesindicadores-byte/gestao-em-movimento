@@ -133,6 +133,18 @@ if (semTipo) log(`  ${semTipo} sem tipo de combustível (entram como diesel)`);
 if (ENCERRADA) { const n = erp.length; erp = erp.filter(r => r.encerrada === ENCERRADA); log(`  só encerradas: ${erp.length} de ${n}`); }
 const ehDiesel = r => !r.tipo_combustivel || (/DIESEL/.test(norm(r.tipo_combustivel)) && !/ARLA/.test(norm(r.tipo_combustivel)));
 
+// CORREÇÃO POR ABASTECIMENTO (Renan, 30/10/2026: "se clicar na placa com erro deve abrir
+// todo o histórico de abastecimentos, com opção de alterar km e litros"). comb_correcao_os
+// guarda o km e os litros corrigidos de uma OS do ERP (ordem_servico); campo vazio = fica o
+// do ERP. Os litros trocam aqui (o valor acompanha, mesmo R$/L); o km troca o km da OS
+// no hododiesel (KM_HD, logo abaixo). Sem a tabela, nada muda.
+const CORR_OS = new Map(); let temCorrOs = true;
+try { (await tudo('comb_correcao_os?select=ordem_servico,km,litros')).forEach(c => CORR_OS.set(String(c.ordem_servico), c)); }
+catch (e) { temCorrOs = false; log('::warning::comb_correcao_os não existe no banco (rodar scripts/comb-anomalias.sql): ' + e.message.slice(0, 80)); }
+{ let n = 0; erp.forEach(r => { const c = CORR_OS.get(String(r.ordem_servico)); if (!c) return; r.corrOs = true; n++;
+    const nl = num(c.litros), l0 = num(r.litros); if (nl != null) { if (l0 > 0 && num(r.valor) != null) r.valor = num(r.valor) * nl / l0; r.litros = nl; } });
+  if (CORR_OS.size) log(`correções por abastecimento: ${CORR_OS.size} lançada(s) · ${n} OS no período`); }
+
 // ── CORTE: só entra o que o ERP já tem COMPLETO (Renan, 27/10/2026: "nunca
 // deixa essa discrepância. Nem que fique D-2, D-3, etc. Aí só deixa uma
 // mensagem lá em cima de qual última atualização, último dia que subiu").
@@ -195,6 +207,8 @@ const KM_HD = new Map();   // OS de diesel → km até a OS de diesel anterior
       let km = null;
       if (h != null && h > 0 && hAnt != null) { const d = h - hAnt; if (d >= 0 && d <= 3000) km = d; }
       if (km == null) km = (kr != null && kr >= 0 && kr <= 3000) ? kr : 0;
+      const c = r.corrOs && CORR_OS.get(String(r.ordem_servico));
+      if (c && num(c.km) != null) km = num(c.km);          // km corrigido na tela vale para esta OS
       KM_HD.set(r, km);
       if (h != null && h > 0) hAnt = h;
     });
@@ -416,7 +430,7 @@ erp.forEach(r => {
   const kr = num(r.km_rodado); if (kr != null && kr >= 0 && kr <= KM_MAX_FILL) { a.kmTodos = (a.kmTodos || 0) + kr; if (paradaComDiesel.has(paradaDe(r))) a.kmParada = (a.kmParada || 0) + kr; else if (kr) a.kmSemDiesel = (a.kmSemDiesel || 0) + kr; }
   const h = num(r.hodometro); if (h != null && h > 0) { a.hodoMin = a.hodoMin == null ? h : Math.min(a.hodoMin, h); a.hodoMax = a.hodoMax == null ? h : Math.max(a.hodoMax, h); }
   if (!ehDiesel) return;
-  somaKm(a, r); a.kmHD = (a.kmHD || 0) + (KM_HD.get(r) || 0); a.litros += num(r.litros) || 0; a.valor += num(r.valor) || 0; a.n++;
+  somaKm(a, r); a.kmHD = (a.kmHD || 0) + (KM_HD.get(r) || 0); a.litros += num(r.litros) || 0; a.valor += num(r.valor) || 0; a.n++; if (r.corrOs) a.corrOs = (a.corrOs || 0) + 1;
   const t = tipoAba(r.tipo_combustivel); a.tipos[t] = (a.tipos[t] || 0) + (num(r.litros) || 0);
   if (r.modelo) a.modelos[r.modelo] = (a.modelos[r.modelo] || 0) + 1;
 });
@@ -429,6 +443,144 @@ real.forEach(a => { a.km = kmDe(a); aplicaCorr(a, a.proj); });
 log(`realizado Ambev: ${real.size} placa-mês em ${new Set([...real.values()].map(a => a.proj)).size} projetos · Seara (ANG): ${angRows.length} abastecimentos · km pelo modo "${KM_MODO}"`);
 if (foraProj.size) log('  fora da Km/L (projeto sem lugar na aba): ' + [...foraProj.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '));
 const maisFreq = o => { let b = null, bn = -1; Object.entries(o).forEach(([k, n]) => { if (n > bn) { b = k; bn = n; } }); return b; };
+
+// 5d) Seara · Combustível (realizado da Anhanguera no ERP)
+const searaCombAba = aba.seara_combustivel;
+const ultimaDaPlaca = new Map(); searaCombAba.forEach(r => { const k = placaKey(r.placa); if (!ultimaDaPlaca.has(k) || (r.vigencia_orig || r.vigencia || '') >= (ultimaDaPlaca.get(k).vigencia_orig || '')) ultimaDaPlaca.set(k, r); });
+const moda = (rows, col) => maisFreq(rows.reduce((o, r) => { if (r[col] != null && r[col] !== '') o[r[col]] = (o[r[col]] || 0) + 1; return o; }, {}));
+const mesLongo = searaCombAba.some(r => /^[a-zç]{5,}$/i.test(String(r.mes_inicio_os || '')));
+const defSeara = { empresa: moda(searaCombAba, 'empresa') || 'SEARA', projeto: moda(searaCombAba, 'projeto') || 'DISTRIBUIÇÃO URBANA - ANG', unidade: moda(searaCombAba, 'unidade') || 'ANHANGUERA', pode_comeca: moda(searaCombAba, 'pode_comeca') };
+const searaReal = new Map(); let searaSemModelo = 0;
+angRows.forEach(r => {
+  const ym = String(r.data).slice(0, 7); const placa = placaKey(r.placa); const k = ym + '|' + placa; const ehDiesel = dieselSet.has(r);
+  if (!searaReal.has(k)) searaReal.set(k, { ym, placa, placaOrig: r.placa_origem || r.placa, litros: 0, valor: 0, n: 0, tipos: {}, modelos: {}, hodoMin: null, hodoMax: null });
+  const a = searaReal.get(k);
+  const kr = num(r.km_rodado); if (kr != null && kr >= 0 && kr <= KM_MAX_FILL) { a.kmTodos = (a.kmTodos || 0) + kr; if (paradaComDiesel.has(paradaDe(r))) a.kmParada = (a.kmParada || 0) + kr; else if (kr) a.kmSemDiesel = (a.kmSemDiesel || 0) + kr; }
+  const h = num(r.hodometro); if (h != null && h > 0) { a.hodoMin = a.hodoMin == null ? h : Math.min(a.hodoMin, h); a.hodoMax = a.hodoMax == null ? h : Math.max(a.hodoMax, h); }
+  if (!ehDiesel) return;
+  somaKm(a, r); a.kmHD = (a.kmHD || 0) + (KM_HD.get(r) || 0); a.litros += num(r.litros) || 0; a.valor += num(r.valor) || 0; a.n++; if (r.corrOs) a.corrOs = (a.corrOs || 0) + 1;
+  const t = tipoAba(r.tipo_combustivel); a.tipos[t] = (a.tipos[t] || 0) + (num(r.litros) || 0); if (r.modelo) a.modelos[r.modelo] = (a.modelos[r.modelo] || 0) + 1;
+});
+[...searaReal.keys()].forEach(k => { if (!searaReal.get(k).n) searaReal.delete(k); });
+searaReal.forEach(a => { a.km = kmDe(a); aplicaCorr(a, 'SEARA'); });
+const modeloSeara = a => (ativosManual[a.placa] && ativosManual[a.placa].modelo) || (ultimaDaPlaca.get(a.placa) || {}).modelo || maisFreq(a.modelos) || null;
+
+// ── 5g) ANOMALIAS por placa × mês, sobre os números CRUS do ERP ───────────
+// Km/L do mês comparado com uma referência, nesta ordem: a mediana da própria placa
+// nos outros meses (3 ou mais meses com 200 L+), senão a mediana do modelo no mês
+// (3+ placas), senão a do projeto no mês. Fora de ±ANOM_DESVIO vira anomalia; litros
+// sem km também; e R$/L fora de 1,50–12. Só placa-mês com ANOM_LIT_MIN litros ou
+// mais. A correção não apaga a anomalia (a tela mostra "corrigida").
+const ANOM_DESVIO = +(process.env.CONSUMO_ANOM_DESVIO || 0.35), ANOM_LIT_MIN = +(process.env.CONSUMO_ANOM_LIT || 200);
+const mediana = xs => { if (!xs.length) return null; const t = xs.slice().sort((a, b) => a - b), m = t.length >> 1; return t.length % 2 ? t[m] : (t[m - 1] + t[m]) / 2; };
+const anomIt = [];
+real.forEach(a => anomIt.push({ a, proj: a.proj, uni: a.cod === 'GOI' ? 'GNA' : a.cod, modelo: maisFreq(a.modelos) || (ginfo[a.placa] && ginfo[a.placa].modelo) || null }));
+searaReal.forEach(a => anomIt.push({ a, proj: 'SEARA', uni: 'ANG', modelo: modeloSeara(a) }));
+const kmlOk = x => x.a.litErp >= 200 && x.a.kmErp > 0 && x.a.kmErp / x.a.litErp > 0.5 && x.a.kmErp / x.a.litErp < 20;
+const porPlacaH = new Map(), porModMes = new Map(), porProjMesK = new Map(), precoProj = new Map();
+anomIt.forEach(x => { const k = x.a.kmErp / x.a.litErp;
+  if (x.a.litErp > 0 && x.a.valErp > 0) { const rl = x.a.valErp / x.a.litErp; if (rl >= 1.5 && rl <= 12) { const kp = x.proj + '|' + x.a.ym; (precoProj.get(kp) || precoProj.set(kp, []).get(kp)).push(rl); } }
+  if (!kmlOk(x)) return;
+  (porPlacaH.get(x.a.placa) || porPlacaH.set(x.a.placa, []).get(x.a.placa)).push({ ym: x.a.ym, k });
+  const km = chaveModelo(x.modelo || '') + '|' + x.proj.split(' - ')[0] + '|' + x.a.ym; (porModMes.get(km) || porModMes.set(km, []).get(km)).push(k);
+  const kp = x.proj + '|' + x.a.ym; (porProjMesK.get(kp) || porProjMesK.set(kp, []).get(kp)).push(k); });
+// AJUSTE PELAS APIs (Renan, 30/10/2026: "os erros do benner quero o script olhe os
+// abastecimentos e ajuste. Só fique como erro o que não achar nem em um nem em outro").
+// Para cada placa-mês com anomalia, os abastecimentos de diesel da mesma placa e mês nas
+// APIs (abast_api: Pró-Frotas, Gasola, SUMA; só válidos). Km da API = hodômetro de cada
+// abastecimento − o do anterior da placa nas APIs (0 a 3.000, como o hododiesel). Testa,
+// nesta ordem: litros do ERP + km da API (hodômetro digitado errado no ERP), litros e km
+// da API, litros da API + km do ERP; vale o primeiro que cai dentro da faixa da
+// referência. R$/L fora do normal: valor = litros × preço médio da placa nas APIs no mês.
+// Ajustada = os números entram no consumo; o que não fecha nem com o ERP nem com as APIs
+// fica como erro. Correção manual na tela vence sempre.
+const API = new Map(); let temApi = true;
+try {
+  const desdeApi = antesDe(DESDE + '-01', 40);
+  (await tudo(`abast_api?select=sistema,placa,data,litros,valor,preco,hodometro&valido=eq.true&produto=like.DIESEL*&dia=gte.${desdeApi}&order=data.asc`))
+    .forEach(r => { const k = placaKey(r.placa); if (!k) return; (API.get(k) || API.set(k, []).get(k)).push({ ...r, ym: brYm(r.data), lit: num(r.litros), val: num(r.valor), h: num(r.hodometro) }); });
+} catch (e) { temApi = false; log('::warning::abast_api não lida: ' + e.message.slice(0, 80)); }
+function antesDe(iso, dias) { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - dias); return d.toISOString().slice(0, 10); }
+function brYm(iso) { const d = new Date(new Date(iso).getTime() - 3 * 3600e3); return d.toISOString().slice(0, 7); }
+function apiMes(placa, ym) {
+  const rs = API.get(placa); if (!rs) return null;
+  let hAnt = null, km = 0, comKm = 0, lit = 0, val = 0, n = 0; const sis = new Set();
+  rs.forEach(r => {
+    if (r.ym === ym) { n++; lit += r.lit || 0; val += r.val || 0; sis.add(r.sistema);
+      if (r.h > 0 && hAnt != null && r.h - hAnt >= 0 && r.h - hAnt <= KM_MAX_FILL) { km += r.h - hAnt; comKm++; } }
+    if (r.h > 0) hAnt = r.h;
+  });
+  if (!n) return null;
+  return { n, lit, val, km: comKm >= Math.max(1, n * 0.8) ? km : null, preco: lit > 0 && val > 0 ? val / lit : null, sis: [...sis] };
+}
+const SISNOME = { PROFROTAS: 'Pró-Frotas', GASOLA: 'Gasola', SUMA: 'SUMA' };
+let nAjust = 0, nErroSemApi = 0, nErroNaoFecha = 0;
+const anomalias = [];
+anomIt.forEach(x => {
+  const a = x.a; if (!(a.litErp >= ANOM_LIT_MIN)) return;
+  const kml = a.kmErp > 0 ? a.kmErp / a.litErp : 0, rl = a.valErp > 0 ? a.valErp / a.litErp : null;
+  const hist = (porPlacaH.get(a.placa) || []).filter(h => h.ym !== a.ym).map(h => h.k);
+  const mod = porModMes.get(chaveModelo(x.modelo || '') + '|' + x.proj.split(' - ')[0] + '|' + a.ym) || [], pj = porProjMesK.get(x.proj + '|' + a.ym) || [];
+  let ref = null, fonte = null;
+  // o MODELO no mês vem primeiro: placa errada em quase todo mês (Empurrada de Piraí
+  // com 0,67 km/L em 9 meses, 1º ensaio) faria o mês certo parecer anomalia
+  if (mod.length >= 4) { ref = mediana(mod); fonte = `modelo no mês (${mod.length} placas)`; }
+  else if (pj.length >= 4) { ref = mediana(pj); fonte = `projeto no mês (${pj.length} placas)`; }
+  else if (hist.length >= 3) { ref = mediana(hist); fonte = `placa em ${hist.length} outros meses`; }
+  const tipos = [];
+  if (!(a.kmErp > 0)) tipos.push('km_zero');
+  else if (ref && kml < ref * (1 - ANOM_DESVIO)) tipos.push('kml_baixo');
+  else if (ref && kml > ref * (1 + ANOM_DESVIO)) tipos.push('kml_alto');
+  if (rl != null && (rl < 1.5 || rl > 12)) tipos.push('preco');
+  if (!tipos.length) {
+    if (a.corrOs) anomalias.push({ chave: chaveAnom(x.proj, a.ym, a.placa), ym: a.ym, unidade: x.uni, projeto: x.proj, placa: a.placa, placa_origem: a.placaOrig || a.placa, modelo: x.modelo,
+      tipo: 'corrigido_os', tipos: 'corrigido_os', km: r2(a.kmErp), litros: r2(a.litErp), valor: r2(a.valErp), kml: r4(kml), ref_kml: r4(ref), ref_fonte: fonte,
+      desvio: ref && a.kmErp > 0 ? r4(kml / ref - 1) : null, situacao: 'corrigido_os', n_abast: a.n, hodo_min: a.hodoMin, hodo_max: a.hodoMax, dados_ate: DADOS_ATE, gerado_em: new Date().toISOString() });
+    return;
+  }
+  // ajuste pelas APIs
+  let situacao = 'erro', auto = null, obs = null;
+  const ap = temApi ? apiMes(a.placa, a.ym) : null;
+  const dentro = (km, l) => km > 0 && l > 0 && ref && Math.abs((km / l) / ref - 1) <= ANOM_DESVIO;
+  if (!ap) { obs = 'sem abastecimento desta placa no mês nas APIs'; nErroSemApi++; }
+  else {
+    let km = a.kmErp, lit = a.litErp, val = a.valErp, ok = true; const feito = [];
+    if (tipos.some(t => t !== 'preco')) {
+      const cands = [];
+      if (ap.km > 0) cands.push({ km: ap.km, lit: a.litErp, val: a.valErp, o: 'km pelos hodômetros das APIs' });
+      if (ap.km > 0 && ap.lit > 0) cands.push({ km: ap.km, lit: ap.lit, val: ap.val, o: 'km e litros das APIs' });
+      if (a.kmErp > 0 && ap.lit > 0) cands.push({ km: a.kmErp, lit: ap.lit, val: ap.val, o: 'litros das APIs' });
+      const c = cands.find(c => dentro(c.km, c.lit));
+      if (c) { km = c.km; lit = c.lit; val = c.val; feito.push(c.o); } else ok = false;
+    }
+    if (ok && tipos.includes('preco')) {
+      if (ap.preco >= 1.5 && ap.preco <= 12) { val = lit * ap.preco; feito.push('R$/L das APIs'); } else ok = false;
+    }
+    if (ok) {
+      situacao = 'ajustado'; auto = { km: r2(km), litros: r2(lit), valor: r2(val) }; obs = feito.join(' · '); nAjust++;
+      const c = CORR.get(chaveAnom(x.proj, a.ym, a.placa));
+      if (!c) { a.km = km; a.litros = lit; a.valor = val; a.ajustadoApi = true; }
+    } else { obs = `nas APIs: ${ap.n} abastecimento(s), ${fmt0(ap.lit)} L${ap.km != null ? `, ${fmt0(ap.km)} km` : ', sem hodômetro'} — não fecha com a referência`; nErroNaoFecha++; }
+  }
+  const pm = mediana(precoProj.get(x.proj + '|' + a.ym) || []);
+  anomalias.push({ chave: chaveAnom(x.proj, a.ym, a.placa), ym: a.ym, unidade: x.uni, projeto: x.proj, placa: a.placa, placa_origem: a.placaOrig || a.placa, modelo: x.modelo,
+    tipo: tipos[0], tipos: tipos.join(','), km: r2(a.kmErp), litros: r2(a.litErp), valor: r2(a.valErp), kml: r4(kml), ref_kml: r4(ref), ref_fonte: fonte,
+    desvio: ref && a.kmErp > 0 ? r4(kml / ref - 1) : null, impacto_l: ref ? r2(a.litErp - a.kmErp / ref) : null,
+    preco_ref: r4(pm), impacto_rs: (tipos.includes('preco') && pm) ? r2(a.valErp - a.litErp * pm) : null,
+    n_abast: a.n, hodo_min: a.hodoMin, hodo_max: a.hodoMax, dados_ate: DADOS_ATE, gerado_em: new Date().toISOString(),
+    situacao, auto_km: auto && auto.km, auto_litros: auto && auto.litros, auto_valor: auto && auto.valor,
+    auto_fonte: ap ? ap.sis.map(k => SISNOME[k] || k).join(', ') : null, auto_obs: obs,
+    api_litros: ap ? r2(ap.lit) : null, api_km: ap && ap.km != null ? r2(ap.km) : null, api_n: ap ? ap.n : null });
+});
+log(`\najuste pelas APIs (${temApi ? API.size + ' placas com abastecimento nas APIs' : 'abast_api não lida'}): ${nAjust} ajustada(s) · ${nErroSemApi} sem abastecimento nas APIs · ${nErroNaoFecha} não fecham nem com as APIs`);
+{ const c = {}; anomalias.forEach(x => x.tipos.split(',').forEach(t => { c[t] = (c[t] || 0) + 1; }));
+  const ab = anomalias.filter(x => !CORR.has(x.chave)).length;
+  log(`\nanomalias (±${Math.round(ANOM_DESVIO * 100)}%, ${ANOM_LIT_MIN} L ou mais; de ${anomIt.filter(x => x.a.litErp >= ANOM_LIT_MIN).length} placa-mês): ${anomalias.length} placa-mês — ` + Object.entries(c).map(([t, n]) => `${t} ${n}`).join(' · ') + ` · em aberto ${ab} · correções aplicadas ${nCorr}`);
+  const pm = new Map(); anomalias.forEach(x => pm.set(x.ym, (pm.get(x.ym) || 0) + 1)); log('  por mês: ' + [...pm.entries()].sort().map(([m, n]) => `${m} ${n}`).join(' · '));
+  const fx = {}; anomalias.forEach(x => { const d = x.desvio == null ? 'sem km' : Math.abs(x.desvio) < 0.5 ? '35–50%' : Math.abs(x.desvio) < 1 ? '50–100%' : '100%+'; fx[d] = (fx[d] || 0) + 1; });
+  log('  por tamanho do desvio: ' + Object.entries(fx).map(([k, n]) => `${k} ${n}`).join(' · ') + ' | por projeto: ' + Object.entries(anomalias.reduce((o, x) => { o[x.projeto] = (o[x.projeto] || 0) + 1; return o; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k, n]) => `${k} ${n}`).join(' · '));
+  anomalias.slice().sort((p, q) => Math.abs(q.impacto_l || 0) - Math.abs(p.impacto_l || 0)).slice(0, 12).forEach(x => log(`  ${x.ym} ${x.projeto.padEnd(20)} ${x.tipos.padEnd(10)} km ${fmt0(x.km)} · ${fmt0(x.litros)} L · ${x.kml?.toFixed(2)} km/L × ref ${x.ref_kml?.toFixed(2) ?? '—'} (${x.ref_fonte || '—'}) · ${fmt0(x.impacto_l)} L`)); }
+function fmt0(v) { return v == null ? '—' : Math.round(v).toLocaleString('pt-BR'); }
 
 // ── 5) as abas montadas ───────────────────────────────────────────────────
 const nova = {};
@@ -482,26 +634,7 @@ const nova = {};
   });
   nova.consumo_rem_modelo = soColunas(linhas, L);
 }
-// 5d) Seara · Combustível (realizado da Anhanguera no ERP)
-const searaCombAba = aba.seara_combustivel;
-const ultimaDaPlaca = new Map(); searaCombAba.forEach(r => { const k = placaKey(r.placa); if (!ultimaDaPlaca.has(k) || (r.vigencia_orig || r.vigencia || '') >= (ultimaDaPlaca.get(k).vigencia_orig || '')) ultimaDaPlaca.set(k, r); });
-const moda = (rows, col) => maisFreq(rows.reduce((o, r) => { if (r[col] != null && r[col] !== '') o[r[col]] = (o[r[col]] || 0) + 1; return o; }, {}));
-const mesLongo = searaCombAba.some(r => /^[a-zç]{5,}$/i.test(String(r.mes_inicio_os || '')));
-const defSeara = { empresa: moda(searaCombAba, 'empresa') || 'SEARA', projeto: moda(searaCombAba, 'projeto') || 'DISTRIBUIÇÃO URBANA - ANG', unidade: moda(searaCombAba, 'unidade') || 'ANHANGUERA', pode_comeca: moda(searaCombAba, 'pode_comeca') };
-const searaReal = new Map(); let searaSemModelo = 0;
-angRows.forEach(r => {
-  const ym = String(r.data).slice(0, 7); const placa = placaKey(r.placa); const k = ym + '|' + placa; const ehDiesel = dieselSet.has(r);
-  if (!searaReal.has(k)) searaReal.set(k, { ym, placa, placaOrig: r.placa_origem || r.placa, litros: 0, valor: 0, n: 0, tipos: {}, modelos: {}, hodoMin: null, hodoMax: null });
-  const a = searaReal.get(k);
-  const kr = num(r.km_rodado); if (kr != null && kr >= 0 && kr <= KM_MAX_FILL) { a.kmTodos = (a.kmTodos || 0) + kr; if (paradaComDiesel.has(paradaDe(r))) a.kmParada = (a.kmParada || 0) + kr; else if (kr) a.kmSemDiesel = (a.kmSemDiesel || 0) + kr; }
-  const h = num(r.hodometro); if (h != null && h > 0) { a.hodoMin = a.hodoMin == null ? h : Math.min(a.hodoMin, h); a.hodoMax = a.hodoMax == null ? h : Math.max(a.hodoMax, h); }
-  if (!ehDiesel) return;
-  somaKm(a, r); a.kmHD = (a.kmHD || 0) + (KM_HD.get(r) || 0); a.litros += num(r.litros) || 0; a.valor += num(r.valor) || 0; a.n++;
-  const t = tipoAba(r.tipo_combustivel); a.tipos[t] = (a.tipos[t] || 0) + (num(r.litros) || 0); if (r.modelo) a.modelos[r.modelo] = (a.modelos[r.modelo] || 0) + 1;
-});
-[...searaReal.keys()].forEach(k => { if (!searaReal.get(k).n) searaReal.delete(k); });
-searaReal.forEach(a => { a.km = kmDe(a); aplicaCorr(a, 'SEARA'); });
-const modeloSeara = a => (ativosManual[a.placa] && ativosManual[a.placa].modelo) || (ultimaDaPlaca.get(a.placa) || {}).modelo || maisFreq(a.modelos) || null;
+// 5d) Seara · Combustível (realizado da Anhanguera no ERP; a agregação está antes do 5)
 {
   const L = colsDe('seara_combustivel'); const linhas = [];
   [...searaReal.values()].sort((a, b) => (a.ym + a.placa).localeCompare(b.ym + b.placa)).forEach(a => {
@@ -579,58 +712,6 @@ function soColunas(linhas, L) {
   return linhas.map((o, i) => { const r = { linha: i + 1, atualizado_em: new Date().toISOString() }; Object.keys(o).forEach(k => { if (ok.has(k)) r[k] = o[k]; }); return r; });
 }
 
-// ── 5g) ANOMALIAS por placa × mês, sobre os números CRUS do ERP ───────────
-// Km/L do mês comparado com uma referência, nesta ordem: a mediana da própria placa
-// nos outros meses (3 ou mais meses com 200 L+), senão a mediana do modelo no mês
-// (3+ placas), senão a do projeto no mês. Fora de ±ANOM_DESVIO vira anomalia; litros
-// sem km também; e R$/L fora de 1,50–12. Só placa-mês com ANOM_LIT_MIN litros ou
-// mais. A correção não apaga a anomalia (a tela mostra "corrigida").
-const ANOM_DESVIO = +(process.env.CONSUMO_ANOM_DESVIO || 0.35), ANOM_LIT_MIN = +(process.env.CONSUMO_ANOM_LIT || 200);
-const mediana = xs => { if (!xs.length) return null; const t = xs.slice().sort((a, b) => a - b), m = t.length >> 1; return t.length % 2 ? t[m] : (t[m - 1] + t[m]) / 2; };
-const anomIt = [];
-real.forEach(a => anomIt.push({ a, proj: a.proj, uni: a.cod === 'GOI' ? 'GNA' : a.cod, modelo: maisFreq(a.modelos) || (ginfo[a.placa] && ginfo[a.placa].modelo) || null }));
-searaReal.forEach(a => anomIt.push({ a, proj: 'SEARA', uni: 'ANG', modelo: modeloSeara(a) }));
-const kmlOk = x => x.a.litErp >= 200 && x.a.kmErp > 0 && x.a.kmErp / x.a.litErp > 0.5 && x.a.kmErp / x.a.litErp < 20;
-const porPlacaH = new Map(), porModMes = new Map(), porProjMesK = new Map(), precoProj = new Map();
-anomIt.forEach(x => { const k = x.a.kmErp / x.a.litErp;
-  if (x.a.litErp > 0 && x.a.valErp > 0) { const rl = x.a.valErp / x.a.litErp; if (rl >= 1.5 && rl <= 12) { const kp = x.proj + '|' + x.a.ym; (precoProj.get(kp) || precoProj.set(kp, []).get(kp)).push(rl); } }
-  if (!kmlOk(x)) return;
-  (porPlacaH.get(x.a.placa) || porPlacaH.set(x.a.placa, []).get(x.a.placa)).push({ ym: x.a.ym, k });
-  const km = chaveModelo(x.modelo || '') + '|' + x.proj.split(' - ')[0] + '|' + x.a.ym; (porModMes.get(km) || porModMes.set(km, []).get(km)).push(k);
-  const kp = x.proj + '|' + x.a.ym; (porProjMesK.get(kp) || porProjMesK.set(kp, []).get(kp)).push(k); });
-const anomalias = [];
-anomIt.forEach(x => {
-  const a = x.a; if (!(a.litErp >= ANOM_LIT_MIN)) return;
-  const kml = a.kmErp > 0 ? a.kmErp / a.litErp : 0, rl = a.valErp > 0 ? a.valErp / a.litErp : null;
-  const hist = (porPlacaH.get(a.placa) || []).filter(h => h.ym !== a.ym).map(h => h.k);
-  const mod = porModMes.get(chaveModelo(x.modelo || '') + '|' + x.proj.split(' - ')[0] + '|' + a.ym) || [], pj = porProjMesK.get(x.proj + '|' + a.ym) || [];
-  let ref = null, fonte = null;
-  // o MODELO no mês vem primeiro: placa errada em quase todo mês (Empurrada de Piraí
-  // com 0,67 km/L em 9 meses, 1º ensaio) faria o mês certo parecer anomalia
-  if (mod.length >= 4) { ref = mediana(mod); fonte = `modelo no mês (${mod.length} placas)`; }
-  else if (pj.length >= 4) { ref = mediana(pj); fonte = `projeto no mês (${pj.length} placas)`; }
-  else if (hist.length >= 3) { ref = mediana(hist); fonte = `placa em ${hist.length} outros meses`; }
-  const tipos = [];
-  if (!(a.kmErp > 0)) tipos.push('km_zero');
-  else if (ref && kml < ref * (1 - ANOM_DESVIO)) tipos.push('kml_baixo');
-  else if (ref && kml > ref * (1 + ANOM_DESVIO)) tipos.push('kml_alto');
-  if (rl != null && (rl < 1.5 || rl > 12)) tipos.push('preco');
-  if (!tipos.length) return;
-  const pm = mediana(precoProj.get(x.proj + '|' + a.ym) || []);
-  anomalias.push({ chave: chaveAnom(x.proj, a.ym, a.placa), ym: a.ym, unidade: x.uni, projeto: x.proj, placa: a.placa, placa_origem: a.placaOrig || a.placa, modelo: x.modelo,
-    tipo: tipos[0], tipos: tipos.join(','), km: r2(a.kmErp), litros: r2(a.litErp), valor: r2(a.valErp), kml: r4(kml), ref_kml: r4(ref), ref_fonte: fonte,
-    desvio: ref && a.kmErp > 0 ? r4(kml / ref - 1) : null, impacto_l: ref ? r2(a.litErp - a.kmErp / ref) : null,
-    preco_ref: r4(pm), impacto_rs: (tipos.includes('preco') && pm) ? r2(a.valErp - a.litErp * pm) : null,
-    n_abast: a.n, hodo_min: a.hodoMin, hodo_max: a.hodoMax, dados_ate: DADOS_ATE, gerado_em: new Date().toISOString() });
-});
-{ const c = {}; anomalias.forEach(x => x.tipos.split(',').forEach(t => { c[t] = (c[t] || 0) + 1; }));
-  const ab = anomalias.filter(x => !CORR.has(x.chave)).length;
-  log(`\nanomalias (±${Math.round(ANOM_DESVIO * 100)}%, ${ANOM_LIT_MIN} L ou mais; de ${anomIt.filter(x => x.a.litErp >= ANOM_LIT_MIN).length} placa-mês): ${anomalias.length} placa-mês — ` + Object.entries(c).map(([t, n]) => `${t} ${n}`).join(' · ') + ` · em aberto ${ab} · correções aplicadas ${nCorr}`);
-  const pm = new Map(); anomalias.forEach(x => pm.set(x.ym, (pm.get(x.ym) || 0) + 1)); log('  por mês: ' + [...pm.entries()].sort().map(([m, n]) => `${m} ${n}`).join(' · '));
-  const fx = {}; anomalias.forEach(x => { const d = x.desvio == null ? 'sem km' : Math.abs(x.desvio) < 0.5 ? '35–50%' : Math.abs(x.desvio) < 1 ? '50–100%' : '100%+'; fx[d] = (fx[d] || 0) + 1; });
-  log('  por tamanho do desvio: ' + Object.entries(fx).map(([k, n]) => `${k} ${n}`).join(' · ') + ' | por projeto: ' + Object.entries(anomalias.reduce((o, x) => { o[x.projeto] = (o[x.projeto] || 0) + 1; return o; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k, n]) => `${k} ${n}`).join(' · '));
-  anomalias.slice().sort((p, q) => Math.abs(q.impacto_l || 0) - Math.abs(p.impacto_l || 0)).slice(0, 12).forEach(x => log(`  ${x.ym} ${x.projeto.padEnd(20)} ${x.tipos.padEnd(10)} km ${fmt0(x.km)} · ${fmt0(x.litros)} L · ${x.kml?.toFixed(2)} km/L × ref ${x.ref_kml?.toFixed(2) ?? '—'} (${x.ref_fonte || '—'}) · ${fmt0(x.impacto_l)} L`)); }
-function fmt0(v) { return v == null ? '—' : Math.round(v).toLocaleString('pt-BR'); }
 
 // ── 6) comparação aba × automático ────────────────────────────────────────
 const resumo = {};
@@ -711,8 +792,12 @@ for (const s of ALVOS) {
 if (temCorr) {
   try {
     await api('comb_anomalia?chave=neq.__', { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
-    for (let i = 0; i < anomalias.length; i += 500) await api('comb_anomalia', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(anomalias.slice(i, i + 500)) });
-    log(`ok  comb_anomalia               ${anomalias.length} linha(s)`);
+    const NOVAS = ['situacao', 'auto_km', 'auto_litros', 'auto_valor', 'auto_fonte', 'auto_obs', 'api_litros', 'api_km', 'api_n'];
+    let lin = anomalias;
+    try { await api('comb_anomalia?select=situacao,auto_obs,api_n&limit=1'); }
+    catch (e) { log('::warning::comb_anomalia sem as colunas do ajuste pelas APIs (rodar scripts/comb-anomalias.sql): grava sem elas'); lin = anomalias.map(o => { const r = { ...o }; NOVAS.forEach(k => delete r[k]); return r; }).filter(o => o.tipo !== 'corrigido_os'); }
+    for (let i = 0; i < lin.length; i += 500) await api('comb_anomalia', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(lin.slice(i, i + 500)) });
+    log(`ok  comb_anomalia               ${lin.length} linha(s)`);
   } catch (e) { console.error('::warning::comb_anomalia: ' + e.message.slice(0, 200)); }
 }
 log('\nos painéis leem as ca_* gravadas sem erro (o automático é o padrão); base com erro cai na sh_* do Sheets');

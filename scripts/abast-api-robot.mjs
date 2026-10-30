@@ -275,28 +275,35 @@ function gasolaContas() {
   if (!tok) throw new Error('GASOLA_TOKENS (ou GASOLA_TOKEN) não configurado (GitHub Secrets)');
   return [{ nome: 'Gasola', uni: null, tok, matriz: false }];
 }
-let GAS_FIX = 0;
+let GAS_FIX = 0, GAS_HDR = false, GAS_GRAV = 0;
 async function gasola() {
   const contas = gasolaContas();
   const linhas = [], porUni = new Map(), vistos = new Set();
   for (const ct of contas) {
-    let auth = ct.tok, n = 0, ok = true;                  // a doc manda o token cru; se der 401, tenta com Bearer
-    for (const per of fatias(15)) {
+    let auth = ct.tok, n = 0, ok = true, limite = false; const ini = linhas.length;   // a doc manda o token cru; se der 401, tenta com Bearer
+    // fatias de 30 dias (o máximo da API): metade dos pedidos das de 15
+    for (const per of fatias(30)) {
       const q = new URLSearchParams({ startDate: per[0] + 'T00:00:00-03:00', endDate: per[1] + 'T23:59:59-03:00' });
       let lista = null, ult = '';
-      // o Gasola limita pedidos (HTTP 429): espera o Retry-After (ou 30 s, 60 s, 90 s…) e tenta de novo
-      for (let t = 1; t <= 6 && !lista; t++) {
+      // o Gasola limita pedidos (HTTP 429). Espera o Retry-After (até 2 min) e tenta mais
+      // uma vez; se continuar no limite, a conta para nesta rodada e a próxima recomeça
+      // (o que já veio fica gravado). Os cabeçalhos de limite saem no log uma vez.
+      for (let t = 1; t <= 3 && !lista; t++) {
         let ra = 0;
         try {
           let r = await fetch(`${GASOLA_URL}/v1/integration/report/supply?${q}`, { headers: { Authorization: auth, 'Content-Type': 'application/json' } });
           if (r.status === 401 && !/^Bearer /i.test(auth)) { auth = 'Bearer ' + ct.tok; r = await fetch(`${GASOLA_URL}/v1/integration/report/supply?${q}`, { headers: { Authorization: auth, 'Content-Type': 'application/json' } }); }
-          if (r.status === 429) ra = (+r.headers.get('retry-after') || 0) * 1000;
+          if (r.status === 429) {
+            ra = Math.min(120, +r.headers.get('retry-after') || 60) * 1000;
+            if (!GAS_HDR) { GAS_HDR = true; const h = [...r.headers.entries()].filter(([k]) => /rate|limit|retry|reset/i.test(k)).map(([k, v]) => `${k}=${v}`).join(' · '); log(`   429 do Gasola · cabeçalhos: ${h || '(nenhum de limite)'}`); }
+          }
           if (!r.ok) throw new Error('HTTP ' + r.status);
           const j = await r.json();
           lista = Array.isArray(j) ? j : (j.data || j.itens || j.items || []);
-        } catch (e) { ult = e.message; if (t < 6) await esperar(/429/.test(ult) ? Math.max(ra, t * 30000) : t * 3000); }
+        } catch (e) { ult = e.message; if (t < 3) await esperar(/429/.test(ult) ? ra : t * 3000); }
       }
-      // uma conta que falha não derruba as outras: fica no log e segue
+      if (!lista && /429/.test(ult)) { log(`   ${ct.nome}: limite de pedidos do Gasola a partir de ${per[0]} — a conta para nesta rodada`); ok = false; limite = true; break; }
+      // uma fatia que falha por outro motivo não derruba a conta: fica no log e segue
       if (!lista) { log(`   ${ct.nome}: fatia ${per[0]}→${per[1]} falhou (${ult})`); ok = false; continue; }
       if (MODO === 'sonda') { log(`   ${ct.nome} · ${per[0]}→${per[1]}: ${lista.length} abastecimento(s)`); if (lista[0]) log('   campos:', [...campos(lista[0])].join(' · ')); break; }
       for (const r of lista) {
@@ -325,7 +332,9 @@ async function gasola() {
       }
       await esperar(1500);
     }
-    if (MODO !== 'sonda') log(`   conta ${ct.nome}${ct.uni ? ' (' + ct.uni + ')' : ''}: ${n} abastecimento(s) novo(s)${ok ? '' : ' · com falha'}`);
+    if (MODO !== 'sonda') log(`   conta ${ct.nome}${ct.uni ? ' (' + ct.uni + ')' : ''}: ${n} abastecimento(s) novo(s)${ok ? '' : limite ? ' · parou no limite' : ' · com falha'}`);
+    // gravar conta a conta: se a próxima bater no limite ou o job cair, o que já veio fica
+    if (MODO === 'gravar' && linhas.length > ini) { const g = await grava(linhas.slice(ini)); GAS_GRAV += g; log(`   gravado: ${g} linha(s)`); }
   }
   const res = [...porUni].map(([u, n]) => ({ unidade: u, sigla: u, itens: n }));
   res.forEach(x => log(`   ${x.unidade}: ${x.itens} abastecimento(s)`));
@@ -383,7 +392,7 @@ async function main() {
     if (r) resumo(s, ls);
     if (MODO === 'gravar') {
       let n = 0;
-      if (ls.length) n = await grava(ls);
+      if (s === 'GASOLA') n = GAS_GRAV; else if (ls.length) n = await grava(ls);
       await sb('abast_api_base?on_conflict=sistema', 'POST', [{ sistema: s, carregado_em: new Date().toISOString(), de: iso(DE), ate: iso(ATE), linhas: n, erro: erro, resumo: r ? r.res : null }], 'resolution=merge-duplicates');
       log(`${s}: ${n} linha(s) gravadas em abast_api`);
     }
