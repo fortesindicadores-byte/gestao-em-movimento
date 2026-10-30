@@ -22,11 +22,16 @@
     const F = ApresBase.f;
     if (!ICS.length) throw new Error('o Scorecard ainda está carregando');
     const selVig = getMsValues('ms-vig'), selUni = getMsValues('ms-uni');
-    const cands = (selVig.length ? VIGS.filter(d => selVig.includes(vigLbl(d))) : VIGS.slice()).sort((a, b) => vigKeyN(a) - vigKeyN(b));
+    const unis0 = selUni.length ? selUni.filter(u => UNI_LIST.includes(u)) : UNI_LIST.slice();
+    // sem vigência marcada: o último mês FECHADO (12 dos 20 indicadores apurados).
+    // O mês corrente abre com poucos indicadores e a pontuação dele não diz nada ainda.
+    const apurados = d => { const v = cardVals(new Set([vigKeyN(d)]), d.getFullYear(), d.getMonth(), unis0); return Object.keys(SCORE_PESOS).filter(k => v[k] != null).length; };
+    let cands = (selVig.length ? VIGS.filter(d => selVig.includes(vigLbl(d))) : VIGS.slice()).sort((a, b) => vigKeyN(a) - vigKeyN(b));
+    if (!selVig.length) { const fech = cands.filter(d => apurados(d) >= 12); cands = fech.length ? [fech[fech.length - 1]] : cands.slice(-1); }
     const selD = cands[cands.length - 1] || VIGS[VIGS.length - 1];
     const perKeys = new Set(cands.map(vigKeyN));
     const yr = selD.getFullYear(), mi = selD.getMonth();
-    const unis = selUni.length ? selUni.filter(u => UNI_LIST.includes(u)) : UNI_LIST.slice();
+    const unis = unis0;
     const periodo = cands.length <= 1 ? vigLbl(selD) : `${vigLbl(cands[0])} a ${vigLbl(selD)}`;
     const Mes = F.MESN[mi][0].toUpperCase() + F.MESN[mi].slice(1);
     const B = ApresBase.deck({ acc: ACC, rodape: `Scorecard · ${periodo}${selUni.length ? ' · ' + selUni.length + ' unidade(s)' : ''}`, titulo: `Scorecard · ${periodo}`, img: o.img });
@@ -34,7 +39,11 @@
     const CV = cardVals(perKeys, yr, mi, unis);
     const rk = unis.map(u => { const notes = unitScores(u, perKeys, yr, mi); return { u, notes, score: scoreFromNotes(notes) }; }).filter(x => x.score != null).sort((a, b) => b.score - a.score);
     const rede = scoreFromNotes(CV);
-    const txt = id => { const e = document.getElementById(id); return e ? e.textContent.trim() : '—'; };
+    // maior evolução T1/T2: o período contra o anterior com o mesmo nº de meses (regra do painel)
+    const evol = (() => { const n = cands.length, k0 = vigKeyN(cands[0]); let y = Math.floor(k0 / 100), m = k0 % 100; const kk = []; for (let i = 0; i < n; i++) { m--; if (m < 0) { m = 11; y--; } kk.push(y * 100 + m); }
+      if (!ICS.some(o => kk.includes(vigKeyN(o.vigD)))) return null; const ant = new Set(kk), ay = Math.floor(kk[0] / 100), am = kk[0] % 100;
+      return rk.map(x => { const a = scoreFromNotes(unitScores(x.u, ant, ay, am)); return a == null ? null : { u: x.u, d: x.score - a }; }).filter(Boolean); })();
+    const melhorEv = t1 => { const l = (evol || []).filter(e => UNI_T1.has(e.u) === t1).sort((a, b) => b.d - a.d); return l[0] ? `${nm(l[0].u)} ${l[0].d >= 0 ? '+' : '−'}${F.f1(Math.abs(l[0].d))}` : '—'; };
     const ks = Object.keys(SCORE_PESOS);
     const crit = ks.filter(k => CV[k] != null && CV[k] < 70);
     const sc = (v, c) => F.cel(v == null ? '—' : Math.round(v), c);
@@ -51,8 +60,8 @@
         { k: 'Indicadores críticos (< 70)', n: crit.length, cor: crit.length ? F.VERM : F.VERDE, p: crit.length ? F.lista(crit.map(k => `${LBL[k]} ${Math.round(CV[k])}`)) + '.' : 'Nenhum indicador da rede abaixo de 70.' },
       ], 4)}
       ${B.concBlocos([
-        { t: 'Maior evolução T1', v: txt('h-evo1'), s: 'Armazém e Empurradas: pontuação do período contra o período anterior.' },
-        { t: 'Maior evolução T2', v: txt('h-evo2'), s: 'CDDs e CDI: pontuação do período contra o período anterior.' },
+        { t: 'Maior evolução T1', v: melhorEv(true), s: 'Armazém e Empurradas: pontuação do período contra o período anterior.' },
+        { t: 'Maior evolução T2', v: melhorEv(false), s: 'CDDs e CDI: pontuação do período contra o período anterior.' },
         { t: 'Mais pesa', s: (() => { const l = ks.filter(k => CV[k] != null).map(k => ({ k, g: SCORE_PESOS[k] * (100 - CV[k]) })).sort((a, b) => b.g - a.g).slice(0, 3); return l.length ? `Os indicadores que mais tiram pontos da rede (peso × distância de 100): ${F.lista(l.map(x => `${LBL[x.k]} (${Math.round(CV[x.k])}, peso ${SCORE_PESOS[x.k]})`))}.` : '—'; })() },
       ], 'Leitura', 3)}`);
 
