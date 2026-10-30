@@ -101,7 +101,7 @@
       ], 'Leitura', 2) : ''}`, { top: true }));
 
     // ═══ um slide por pacote principal: unidade × desvio ═══
-    ['Combustíveis', 'Manutenção', 'Pneus'].forEach(p => {
+    ['Combustíveis', 'Manutenções', 'Pneus'].forEach(p => {
       const pu = dimTab(r => getPac(r) === p ? getUniLabel(r[C.nv3]) : null, [VU], ytd).sort((a, b) => (b.m.real - b.m.rem) - (a.m.real - a.m.rem));
       if (!pu.length) return;
       const T = pac.find(x => x.k === p) || { m: { rem: 0, real: 0, orc: 0 }, y: { rem: 0, real: 0 } };
