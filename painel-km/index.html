@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610291700">
+<meta name="build" content="202610302130">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -399,6 +399,9 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
     <button class="s-item" data-vw="balanco"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7h14"/><path d="M3 15l2.5-8 2.5 8a2.5 2.5 0 0 1-5 0z"/><path d="M16 15l2.5-8 2.5 8a2.5 2.5 0 0 1-5 0z"/></svg> Balanço de Massa</button>
 
     <div class="s-sec">Atalhos</div>
+    <button class="s-item" id="btApres" onclick="gerarApresentacao()" title="Apresentação em PDF da dispersão de km: resumo, mês a mês, operações, placas e balanço de massa">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M12 17v4M8 21h8"/><path d="M7 13l3-3 2 2 4-4"/></svg>
+      <span class="n">Gerar apresentação</span></button>
     <div id="pdf-slot"></div>
     <button class="s-item" onclick="atualizar()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
@@ -2022,6 +2025,14 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610291700"></script>
+<script src="../assets/apresentacao-base.js?v=202610302130"></script>
+<script src="../assets/km-apresentacao.js?v=202610302130"></script>
+<script>
+function gerarApresentacao(){
+  if(!ALL.length){ alert('Os dados ainda estão carregando.'); return; }
+  ApresBase.botao(document.getElementById('btApres'),aviso=>KmApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
+}
+</script>
+<script src="../assets/build-check.js?v=202610302130"></script>
 </body>
 </html>
