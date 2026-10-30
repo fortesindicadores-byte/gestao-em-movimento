@@ -345,21 +345,26 @@ tr.sep td{border-top:2px solid ${INK3}}
       const soma = k => U.reduce((s, u) => s + n(u, k), 0);
       const R = [];
       const indisp = soma('indisp'), ativos = soma('ativos');
-      if (ativos) R.push({ t: 'Disponibilidade · peso 20', v: `${indisp} ${pl(indisp, 'veículo parado', 'veículos parados')}`, s: indisp ? `${f1((ativos - indisp) / ativos * 100)}% da frota disponível agora. Mais parados: ${topo('indisp').join(' · ')}.` : 'Nenhum veículo indisponível agora.' });
+      if (ativos) R.push({ ok: !indisp, t: 'Disponibilidade · peso 20', v: `${indisp} ${pl(indisp, 'veículo parado', 'veículos parados')}`, s: indisp ? `${f1((ativos - indisp) / ativos * 100)}% da frota disponível agora. Mais parados: ${topo('indisp').join(' · ')}.` : 'Nenhum veículo indisponível agora.' });
       const pv = soma('prevVenc');
-      if (U.some(u => n(u, 'prevTot'))) R.push({ t: 'Preventivas · peso 15', v: `${pv} ${pl(pv, 'placa vencida', 'placas vencidas')}`, s: pv ? `Cada placa vencida tira ponto do mês. ${topo('prevVenc').join(' · ')}.` : 'Nenhuma preventiva vencida.' });
+      if (U.some(u => n(u, 'prevTot'))) R.push({ ok: !pv, t: 'Preventivas · peso 15', v: `${pv} ${pl(pv, 'placa vencida', 'placas vencidas')}`, s: pv ? `Cada placa vencida tira ponto do mês. ${topo('prevVenc').join(' · ')}.` : 'Nenhuma preventiva vencida.' });
       const af = U.reduce((s, u) => s + ((u.n && u.n.afTot) || 0) - ((u.n && u.n.afOk) || 0), 0);
-      if (U.some(u => u.n && u.n.afTot)) R.push({ t: 'Pneus · peso 10', v: `${af} ${pl(af, 'placa sem aferição', 'placas sem aferição')}`, s: af ? `Placas sem aferição nos últimos 30 dias. ${U.filter(u => u.n && u.n.afTot > u.n.afOk).sort((a, b) => (b.n.afTot - b.n.afOk) - (a.n.afTot - a.n.afOk)).slice(0, 3).map(u => `${GAV_UN[u.cod] || u.cod} ${u.n.afTot - u.n.afOk}`).join(' · ')}.` : 'Todas as placas aferidas nos últimos 30 dias.' });
+      if (U.some(u => u.n && u.n.afTot)) R.push({ ok: !af, t: 'Pneus · peso 10', v: `${af} ${pl(af, 'placa sem aferição', 'placas sem aferição')}`, s: af ? `Placas sem aferição nos últimos 30 dias. ${U.filter(u => u.n && u.n.afTot > u.n.afOk).sort((a, b) => (b.n.afTot - b.n.afOk) - (a.n.afTot - a.n.afOk)).slice(0, 3).map(u => `${GAV_UN[u.cod] || u.cod} ${u.n.afTot - u.n.afOk}`).join(' · ')}.` : 'Todas as placas aferidas nos últimos 30 dias.' });
       const sv = soma('svDesc'), se = soma('seDesc');
-      if (U.some(u => n(u, 'svTot') || n(u, 'seTot'))) R.push({ t: 'Stress Test · peso 5 + 5', v: `${sv + se} com desconto`, s: sv + se ? `${sv} ${pl(sv, 'veículo')} e ${se} ${pl(se, 'empilhadeira')} com desconto no período. ${topo('svDesc').concat(topo('seDesc')).slice(0, 3).join(' · ')}.` : 'Nenhum desconto no período.' });
+      const stTop = U.map(u => ({ u, q: n(u, 'svDesc') + n(u, 'seDesc') })).filter(x => x.q > 0).sort((a, b) => b.q - a.q).slice(0, 3).map(x => `${GAV_UN[x.u.cod] || x.u.cod} ${x.q}`);
+      if (U.some(u => n(u, 'svTot') || n(u, 'seTot'))) R.push({ ok: !(sv + se), t: 'Stress Test · peso 5 + 5', v: `${sv + se} com desconto`, s: sv + se ? `${sv} ${pl(sv, 'veículo')} e ${se} ${pl(se, 'empilhadeira')} com desconto no período. ${stTop.join(' · ')}.` : 'Nenhum desconto no período.' });
       const cf = soma('cfDesc');
-      if (U.some(u => n(u, 'cfTot'))) R.push({ t: 'CIVF · peso 5', v: `${cf} com desconto`, s: cf ? `${topo('cfDesc').join(' · ')}.` : 'Nenhum desconto de CIVF.' });
+      if (U.some(u => n(u, 'cfTot'))) R.push({ ok: !cf, t: 'CIVF · peso 5', v: `${cf} com desconto`, s: cf ? `${topo('cfDesc').join(' · ')}.` : 'Nenhum desconto de CIVF.' });
       const os = soma('osAtr');
-      if (U.some(u => n(u, 'osTot'))) R.push({ t: 'SLA de Manutenção · peso 5', v: `${os} OS fora do prazo`, s: os ? `Abertas há mais de ${G.osMeta || 8} dias, de ${soma('osTot')} em aberto. ${topo('osAtr').join(' · ')}.` : `Nenhuma OS aberta há mais de ${G.osMeta || 8} dias.` });
+      if (U.some(u => n(u, 'osTot'))) R.push({ ok: !os, t: 'SLA de Manutenção · peso 5', v: `${os} OS fora do prazo`, s: os ? `Abertas há mais de ${G.osMeta || 8} dias, de ${soma('osTot')} em aberto. ${topo('osAtr').join(' · ')}.` : `Nenhuma OS aberta há mais de ${G.osMeta || 8} dias.` });
       const ck = soma('chk');
-      if (U.some(u => u.ck != null)) R.push({ t: 'Checklist', v: `${ck} ${pl(ck, 'saída', 'saídas')} com OS crítica`, s: ck ? `${topo('chk').join(' · ')}.` : 'Nenhuma saída com OS crítica no mês.' });
-      if (R.length) slide(`${head('Recados', `O que fazer em ${mesGav} para não perder ponto`, `Contagens do Gestão à Vista em ${quando(dt)}, por indicador do Frota de Elite.`)}
-        ${concBlocos(R.slice(0, 6), `Recados de ${mesGav}`, R.length > 4 ? 3 : 2)}`);
+      if (U.some(u => u.ck != null)) R.push({ ok: !ck, t: 'Checklist', v: `${ck} ${pl(ck, 'saída', 'saídas')} com OS crítica`, s: ck ? `${topo('chk').join(' · ')}.` : 'Nenhuma saída com OS crítica no mês.' });
+      // primeiro o que pede ação; o que está em dia vira um bloco só no fim
+      const prob = R.filter(r => !r.ok), emDia = R.filter(r => r.ok);
+      const B = prob.slice(0, emDia.length ? 5 : 6);
+      if (emDia.length) B.push({ t: 'Em dia', v: lista(emDia.map(r => r.t.split(' · ')[0])), s: emDia.map(r => r.s).join(' ') });
+      if (B.length) slide(`${head('Recados', `O que fazer em ${mesGav} para não perder ponto`, `Contagens do Gestão à Vista em ${quando(dt)}, por indicador do Frota de Elite.`)}
+        ${concBlocos(B, `Recados de ${mesGav}`, B.length > 4 ? 3 : 2)}`);
     }
 
     // ═══ conclusão ═══
