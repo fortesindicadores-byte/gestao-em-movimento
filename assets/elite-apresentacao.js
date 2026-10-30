@@ -214,22 +214,50 @@ tr.sep td{border-top:2px solid ${INK3}}
 
     // evoluções do ano (Conformidade fica fora em 2026: mudou de régua no meio do ano)
     const evo = F.map(f => ({ f, a: indMes(f, V[0]), b: indU[f] })).filter(x => x.a != null && x.b != null && !(ANO === '2026' && x.f === 'conf')).map(x => Object.assign(x, { d: x.b - x.a })).sort((a, b) => b.d - a.d);
-    function linhaInd(f, rot) {
+    function linhaInd(f, rot, queda) {
       const s = Array.from({ length: 12 }, (_, i) => { const v = V.find(x => mI(x) === i); return v ? indMes(f, v) : null; });
       const vs = V.map(v => indMes(f, v)), a = vs[0], b = vs[vs.length - 1], mx = Math.max(...vs.filter(x => x != null)), mn = Math.min(...vs.filter(x => x != null));
+      const vPico = V[vs.indexOf(mx)];
       const cruza = V.findIndex((v, i) => vs[i] >= 85 && vs.slice(i).every(x => x >= 85));
       const lo = Math.max(0, Math.floor((mn - 8) / 10) * 10);
       const ur = rows(VU).filter(r => r[f] != null), abaixo = ur.filter(r => r[f] < 95);
+      if (queda) {
+        // quem puxou a queda: unidades que mais caíram do mês do pico até agora
+        const rp = rows(vPico), qq = ur.map(r => { const x = rp.find(y => y.unit === r.unit); return x && x[f] != null ? { u: r.unit, a: x[f], b: r[f], d: r[f] - x[f] } : null; }).filter(x => x && x.d < -0.5).sort((x, y) => x.d - y.d);
+        slide(`${head(rot, `${LAB[f]}: ${sgn(b - mx)} pontos contra o melhor mês do ano`, `Média das unidades no indicador, mês a mês · peso ${PESO[f]} na pontuação · pico de ${f1(mx)} em ${mN(vPico)}.`)}
+          ${colunas(s, { lo, h: 290 })}
+          ${concBlocos([
+            { t: 'Do pico até agora', s: `De ${f1(mx)} em ${mN(vPico)} para ${f1(b)} em ${mN(VU)}. ${b >= a ? `No ano ainda está ${sgn(b - a)} contra ${mN(V[0])}.` : `Já está ${sgn(b - a)} abaixo de ${mN(V[0])}.`}` },
+            { t: 'Quem puxou', s: qq.length ? `${lista(qq.slice(0, 3).map(x => `${UN[x.u]} (${pct0(x.a)} → ${pct0(x.b)})`))}.` : 'Queda espalhada, sem unidade isolada.' },
+            { t: `Em ${mN(VU)}`, s: abaixo.length ? `${ur.length - abaixo.length} de ${ur.length} unidades no verde; abaixo de 95: ${abaixo.map(r => `${UN[r.unit]} (${pct0(r[f])})`).join(', ')}.` : `Todas as ${ur.length} unidades com o indicador no verde.` },
+          ], 'Destaques', 3)}`);
+        return;
+      }
       slide(`${head(rot, `${LAB[f]}: ${sgn(b - a)} pontos de ${mN(V[0])} a ${mN(VU)} (${sgn((b / a - 1) * 100)}%)`, `Média das unidades no indicador, mês a mês · peso ${PESO[f]} na pontuação.`)}
         ${colunas(s, { lo, h: 290 })}
         ${concBlocos([
-          { t: 'Evolução', s: `De ${f1(a)} (${MES3[mI(V[0])]}) a ${f1(b)} (${MES3[mI(VU)]}). Pico de ${f1(mx)} em ${mN(V[vs.indexOf(mx)])}.` },
+          { t: 'Evolução', s: `De ${f1(a)} (${MES3[mI(V[0])]}) a ${f1(b)} (${MES3[mI(VU)]}). Pico de ${f1(mx)} em ${mN(vPico)}.` },
           { t: 'Virada', s: cruza > 0 ? `Acima de 85 desde ${mN(V[cruza])}${vs.slice(cruza).every(x => x >= 95) ? ' e acima de 95 desde então' : ''}.` : cruza === 0 ? 'Acima de 85 em todos os meses.' : `Ainda abaixo de 85 em ${vs.filter(x => x < 85).length} meses.` },
           { t: `Em ${mN(VU)}`, s: abaixo.length ? `${ur.length - abaixo.length} de ${ur.length} unidades no verde; abaixo de 95: ${abaixo.map(r => `${UN[r.unit]} (${pct0(r[f])})`).join(', ')}.` : `Todas as ${ur.length} unidades com o indicador no verde.` },
         ], 'Destaques', 3)}`);
     }
+    // evolução × involução: cada indicador contra janeiro e contra o melhor mês do ano
+    // (Renan, 30/10/2026: "Faltaram indicadores que involuíram")
+    const tabEvo = F.map(f => { const vs = V.map(v => indMes(f, v)); const nn = vs.filter(x => x != null); if (!nn.length) return null; const mx = Math.max(...nn); return { f, a: vs[0], b: vs[vs.length - 1], mx, vp: V[vs.indexOf(mx)], dA: vs[vs.length - 1] - vs[0], dP: vs[vs.length - 1] - mx }; }).filter(x => x && x.a != null && x.b != null);
+    const invo = tabEvo.filter(x => x.dP < -0.95 && !(ANO === '2026' && x.f === 'conf')).sort((a, b) => a.dP - b.dP);
+    const caiuAno = tabEvo.filter(x => x.dA < -0.05);
+    slide(`${head('Evolução e involução no ano', `${tabEvo.filter(x => x.dA > 0.05).length} ${pl(tabEvo.filter(x => x.dA > 0.05).length, 'indicador subiu', 'indicadores subiram')} desde ${mN(V[0])} · ${invo.length} ${pl(invo.length, 'está', 'estão')} abaixo do melhor mês do ano`, `Média das unidades em ${m3(V[0])}, no melhor mês e em ${m3(VU)}, do que mais caiu contra o pico para o que mais subiu.`)}
+      ${tabela({ cols: [{ t: 'Indicador' }, { t: m3(V[0]), n: 1 }, { t: 'Melhor mês', n: 1 }, { t: m3(VU), n: 1 }, { t: `Δ desde ${MES3[mI(V[0])]}`, n: 1 }, { t: 'Δ contra o melhor mês', n: 1 }],
+        rows: tabEvo.slice().sort((a, b) => a.dP - b.dP || a.dA - b.dA).map(x => [`<b>${LAB[x.f]}</b>`, f1(x.a), `${f1(x.mx)} <span style="color:${INK3}">${MES3[mI(x.vp)]}</span>`, { v: `<b>${f1(x.b)}</b>`, style: fundo(x.b) }, seta(x.dA), x.dP < -0.05 ? seta(x.dP) : `<span style="color:${INK3}">no pico</span>`]) })}
+      ${concBlocos([
+        { t: 'Mais evoluíram', s: lista(evo.filter(x => x.d > 0.05).slice(0, 3).map(x => `${LAB[x.f]} ${sgn(x.d)}`)) + '.' },
+        { t: 'Involuíram', s: invo.length ? `Abaixo do melhor mês: ${lista(invo.slice(0, 4).map(x => `${LAB[x.f]} ${sgn(x.dP)} (pico em ${mN(x.vp)})`))}.` : 'Nenhum indicador abaixo do melhor mês do ano.' },
+        { t: 'Contra janeiro', s: caiuAno.length ? `${lista(caiuAno.map(x => `${LAB[x.f]} ${sgn(x.dA)}`))}${caiuAno.some(x => x.f === 'conf') && ANO === '2026' ? ' (Conformidade mudou de régua em agosto e as Empurradas entram em abril; não compara com janeiro)' : ''}.` : `Todos os indicadores acima de ${mN(V[0])}.` },
+      ], 'Leitura', 3)}`, { top: true });
     if (evo[0] && evo[0].d > 0) linhaInd(evo[0].f, 'Indicador que mais evoluiu no ano');
     if (evo[1] && evo[1].d > 0) linhaInd(evo[1].f, '2º indicador que mais evoluiu no ano');
+    if (invo[0]) linhaInd(invo[0].f, 'Indicador que mais involuiu no ano', true);
+    if (invo[1]) linhaInd(invo[1].f, '2º indicador que mais involuiu no ano', true);
 
     // o que piorou no mês
     const quem = f => rows(VU).map(r => { const a = RA.find(x => x.unit === r.unit); return a && a[f] != null && r[f] != null ? { u: r.unit, a: a[f], b: r[f], d: r[f] - a[f] } : null; }).filter(x => x && x.d < -0.5).sort((x, y) => x.d - y.d);
