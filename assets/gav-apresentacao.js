@@ -188,20 +188,23 @@
       }
 
       // ═══ custos do mês (Carta de Custos) ═══
+      // o mês está em lançamento: o realizado é comparado com o quanto do mês já passou
       if (DATA.custos && DATA.custos.length) {
         const vigTx = DATA.custosVigTxt || '';
         const lc = S.map(s => { const a = DATA.custos.filter(r => r.cod === s.cod); return { s, orc: F.sum(a.map(r => r.orc)), rem: F.sum(a.map(r => r.rem)), rea: F.sum(a.map(r => r.rea)) }; }).filter(x => x.rea || x.rem || x.orc);
-        const dR = x => Math.abs(x.rea) - Math.abs(x.rem), pR = x => Math.abs(x.rem) > 0 ? dR(x) / Math.abs(x.rem) * 100 : null, pO = x => Math.abs(x.orc) > 0 ? (Math.abs(x.rea) - Math.abs(x.orc)) / Math.abs(x.orc) * 100 : null;
-        lc.sort((a, b) => (pR(b) == null ? -999 : pR(b)) - (pR(a) == null ? -999 : pR(a)));
+        const cons = x => Math.abs(x.rem) > 0 ? Math.abs(x.rea) / Math.abs(x.rem) * 100 : null;
+        lc.sort((a, b) => (cons(b) == null ? -1 : cons(b)) - (cons(a) == null ? -1 : cons(a)));
         const T = { orc: F.sum(lc.map(x => x.orc)), rem: F.sum(lc.map(x => x.rem)), rea: F.sum(lc.map(x => x.rea)) };
-        const cd = v => v == null ? '' : `color:${v > 0 ? F.VERM : F.VERDE};font-weight:700`;
+        const corr = H.getDate() / new Date(H.getFullYear(), H.getMonth() + 1, 0).getDate() * 100;
+        const cd = v => v == null ? '' : `color:${v > corr + 0.5 ? F.VERM : F.INK};font-weight:700`;
         const pacs = [...new Set(DATA.custos.map(r => r.pac).filter(Boolean))];
-        const pacB = pacs.map(p => { const a = DATA.custos.filter(r => r.pac === p && cods.includes(r.cod)); const x = { rem: F.sum(a.map(r => r.rem)), rea: F.sum(a.map(r => r.rea)) }; return { t: p, v: F.brl(Math.abs(x.rea)), s: `Remunerado ${F.brl(Math.abs(x.rem))} · ${Math.abs(x.rem) > 0 ? F.sgnPct((Math.abs(x.rea) - Math.abs(x.rem)) / Math.abs(x.rem) * 100) + ' contra o remunerado' : 'sem remunerado'}.` }; });
-        B.slide(`${B.head('Custos do mês', `Realizado de ${F.brl(Math.abs(T.rea))} em ${vigTx || 'o mês corrente'} · ${F.sgnPct(pR(T))} contra o remunerado`, 'Carta de Custos do mês corrente (Combustíveis, Manutenção e Pneus): lançamentos com NF, prévia do contrato e combustível do ERP. O remunerado é a tendência do mês.')}
-          ${B.tabela({ cols: [{ t: 'Unidade' }, { t: 'Orçado', n: 1 }, { t: 'Remunerado', n: 1 }, { t: 'Realizado', n: 1 }, { t: 'Δ vs Rem.', n: 1 }, { t: 'Δ Rem. %', n: 1 }, { t: 'Δ Orç. %', n: 1 }],
-            rows: lc.map(x => [`<b>${nm(x.s.cod)}</b>`, F.brlInt(Math.abs(x.orc)), F.brlInt(Math.abs(x.rem)), F.brlInt(Math.abs(x.rea)), { v: F.brlInt(dR(x)), style: cd(dR(x)) }, { v: F.sgnPct(pR(x)), style: cd(pR(x)) }, { v: F.sgnPct(pO(x)), style: cd(pO(x)) }])
-              .concat([{ cls: 'sep', c: ['Total', F.brlInt(Math.abs(T.orc)), F.brlInt(Math.abs(T.rem)), F.brlInt(Math.abs(T.rea)), { v: F.brlInt(dR(T)), style: cd(dR(T)) }, { v: F.sgnPct(pR(T)), style: cd(pR(T)) }, { v: F.sgnPct(pO(T)), style: cd(pO(T)) }] }]) })}
-          ${pacB.length ? B.concBlocos(pacB, 'Por pacote', pacB.length) : ''}`, { top: true });
+        const pacB = pacs.map(p => { const a = DATA.custos.filter(r => r.pac === p && cods.includes(r.cod)); const x = { rem: F.sum(a.map(r => r.rem)), rea: F.sum(a.map(r => r.rea)) }; return { t: p, v: F.brl(Math.abs(x.rea)), s: `${F.pct0(cons(x))} do remunerado do mês (${F.brl(Math.abs(x.rem))}).` }; });
+        const acima = lc.filter(x => cons(x) != null && cons(x) > corr + 0.5);
+        B.slide(`${B.head('Custos do mês', `${F.brl(Math.abs(T.rea))} lançados em ${vigTx || 'o mês corrente'}: ${F.pct0(cons(T))} do remunerado, com ${F.pct0(corr)} do mês corrido`, 'Carta de Custos do mês corrente (Combustíveis, Manutenção e Pneus): lançamentos com NF, prévia do contrato e combustível do ERP. O mês ainda está em lançamento; o remunerado é a tendência do mês inteiro.')}
+          ${B.tabela({ cols: [{ t: 'Unidade' }, { t: 'Orçado', n: 1 }, { t: 'Remunerado', n: 1 }, { t: 'Lançado até agora', n: 1 }, { t: '% do remunerado', n: 1 }],
+            rows: lc.map(x => [`<b>${nm(x.s.cod)}</b>`, F.brlInt(Math.abs(x.orc)), F.brlInt(Math.abs(x.rem)), F.brlInt(Math.abs(x.rea)), { v: F.pct0(cons(x)), style: cd(cons(x)) }])
+              .concat([{ cls: 'sep', c: ['Total', F.brlInt(Math.abs(T.orc)), F.brlInt(Math.abs(T.rem)), F.brlInt(Math.abs(T.rea)), { v: F.pct0(cons(T)), style: cd(cons(T)) }] }]) })}
+          ${B.concBlocos((acima.length ? [{ t: 'Acima do ritmo do mês', v: `${acima.length} ${F.pl(acima.length, 'unidade')}`, s: `Já consumiram mais do remunerado do que o mês corrido (${F.pct0(corr)}): ${F.lista(acima.slice(0, 4).map(x => `${nm(x.s.cod)} ${F.pct0(cons(x))}`))}.` }] : []).concat(pacB), 'Por pacote', (acima.length ? 1 : 0) + pacB.length)}`, { top: true });
       }
 
       // ═══ prioridades ═══
@@ -239,11 +242,15 @@
         .sort((a, b) => (a.pior == null ? 9999 : a.pior) - (b.pior == null ? 9999 : b.pior) || b.nok - a.nok);
       if (PL.length) {
         const pend = a => PL_COLS.filter(c => a.cel[c.k] && a.cel[c.k].ok === false).map(c => { const x = a.cel[c.k]; const d = c.k === 'disp' ? (x.dias != null ? ` ${x.dias} d` : '') : (c.prazo && x.dias != null && x.dias < 0 ? ` ${-x.dias} d` : ''); return `${PLR[c.k] || c.t}${d}`; });
+        // placa só com calibragem/milimetragem fora (foto do Prolog) vira um resumo; o resto vai na tabela
+        const soPneu = a => PL_COLS.filter(c => a.cel[c.k] && a.cel[c.k].ok === false).every(c => c.k === 'mm' || c.k === 'ca');
+        const PLp = PL.filter(soPneu); PL.splice(0, PL.length, ...PL.filter(a => !soPneu(a)));
+        const resumoPneu = PLp.length ? `<p class="note" style="font-size:11.5px;color:${F.INK2}"><b>${PLp.length} ${F.pl(PLp.length, 'placa', 'placas')} só com pneu fora</b> (calibragem ou milimetragem, foto do Prolog): ${PLp.slice(0, 40).map(a => F.esc(a.placa)).join(', ')}${PLp.length > 40 ? ` e mais ${PLp.length - 40}` : ''}.</p>` : '';
         const pgs = B.paginas(PL, 15).slice(0, 3);
-        pgs.forEach((pg, ix) => B.slide(`${B.head('Placas', ix ? `Placas com pendência (${ix + 1}/${pgs.length})` : `${PL.length} ${F.pl(PL.length, 'placa', 'placas')} com pendência`, ix ? '' : 'Da mais vencida para a menos. Entre parênteses, os dias de atraso (ou parada).')}
+        pgs.forEach((pg, ix) => B.slide(`${B.head('Placas', ix ? `Placas com pendência (${ix + 1}/${pgs.length})` : `${PL.length + PLp.length} ${F.pl(PL.length + PLp.length, 'placa', 'placas')} com pendência`, ix ? '' : 'Da mais vencida para a menos. Entre parênteses, os dias de atraso (ou parada).')}
           ${B.tabela({ cols: [{ t: 'Placa' }, { t: 'Projeto' }, { t: 'Pendências', n: 1 }, { t: 'O que está fora', w: 1 }],
             rows: pg.map(a => [`<b>${F.esc(a.placa)}</b>`, F.esc(a.proj || '—'), a.nok, pend(a).join(' · ')]) })}
-          ${ix === pgs.length - 1 && PL.length > pgs.length * 15 ? `<p class="note">+ ${PL.length - pgs.length * 15} placas na visão Placas do Gestão à Vista.</p>` : ''}`, { top: true }));
+          ${ix === pgs.length - 1 && PL.length > pgs.length * 15 ? `<p class="note">+ ${PL.length - pgs.length * 15} placas na visão Placas do Gestão à Vista.</p>` : ''}${ix === pgs.length - 1 ? resumoPneu : ''}`, { top: true }));
       }
 
       // frota parada e manutenção
@@ -279,12 +286,14 @@
       if (cp.length) {
         const g = {}; cp.forEach(r => { const a = g[r.n3] = g[r.n3] || { orc: 0, rem: 0, rea: 0 }; a.orc += r.orc; a.rem += r.rem; a.rea += r.rea; });
         const cu = (DATA.custos || []).filter(r => r.cod === cod), T = { orc: F.sum(cu.map(r => r.orc)), rem: F.sum(cu.map(r => r.rem)), rea: F.sum(cu.map(r => r.rea)) };
-        const pR = x => Math.abs(x.rem) > 0 ? (Math.abs(x.rea) - Math.abs(x.rem)) / Math.abs(x.rem) * 100 : null;
-        const cd = v => v == null ? '' : `color:${v > 0 ? F.VERM : F.VERDE};font-weight:700`;
-        B.slide(`${B.head('Custos do mês', `Realizado de ${F.brl(Math.abs(T.rea))} · ${F.sgnPct(pR(T))} contra o remunerado`, `Carta de Custos do mês corrente${DATA.custosVigTxt ? ` (${DATA.custosVigTxt})` : ''}, por projeto. A soma dos projetos pode não bater com a unidade: o remunerado usa a proporção de cada recorte.`)}
-          ${B.tabela({ cols: [{ t: 'Projeto' }, { t: 'Orçado', n: 1 }, { t: 'Remunerado', n: 1 }, { t: 'Realizado', n: 1 }, { t: 'Δ vs Rem.', n: 1 }, { t: 'Δ Rem. %', n: 1 }],
-            rows: Object.entries(g).sort().map(([p, x]) => [`<b>${F.esc(p)}</b>`, F.brlInt(Math.abs(x.orc)), F.brlInt(Math.abs(x.rem)), F.brlInt(Math.abs(x.rea)), { v: F.brlInt(Math.abs(x.rea) - Math.abs(x.rem)), style: cd(pR(x)) }, { v: F.sgnPct(pR(x)), style: cd(pR(x)) }])
-              .concat([{ cls: 'sep', c: ['Unidade', F.brlInt(Math.abs(T.orc)), F.brlInt(Math.abs(T.rem)), F.brlInt(Math.abs(T.rea)), { v: F.brlInt(Math.abs(T.rea) - Math.abs(T.rem)), style: cd(pR(T)) }, { v: F.sgnPct(pR(T)), style: cd(pR(T)) }] }]) })}`, { top: true });
+        const cons = x => Math.abs(x.rem) > 0 ? Math.abs(x.rea) / Math.abs(x.rem) * 100 : null;
+        const corr = H.getDate() / new Date(H.getFullYear(), H.getMonth() + 1, 0).getDate() * 100;
+        const cd = v => v == null ? '' : `color:${v > corr + 0.5 ? F.VERM : F.INK};font-weight:700`;
+        B.slide(`${B.head('Custos do mês', `${F.brl(Math.abs(T.rea))} lançados: ${F.pct0(cons(T))} do remunerado, com ${F.pct0(corr)} do mês corrido`, `Carta de Custos do mês corrente${DATA.custosVigTxt ? ` (${DATA.custosVigTxt})` : ''}, por projeto, ainda em lançamento. A soma dos projetos pode não bater com a unidade: o remunerado usa a proporção de cada recorte.`)}
+          ${B.tabela({ cols: [{ t: 'Projeto' }, { t: 'Orçado', n: 1 }, { t: 'Remunerado', n: 1 }, { t: 'Lançado até agora', n: 1 }, { t: '% do remunerado', n: 1 }],
+            rows: Object.entries(g).sort().map(([p, x]) => [`<b>${F.esc(p)}</b>`, F.brlInt(Math.abs(x.orc)), F.brlInt(Math.abs(x.rem)), F.brlInt(Math.abs(x.rea)), { v: F.pct0(cons(x)), style: cd(cons(x)) }])
+              .concat([{ cls: 'sep', c: ['Unidade', F.brlInt(Math.abs(T.orc)), F.brlInt(Math.abs(T.rem)), F.brlInt(Math.abs(T.rea)), { v: F.pct0(cons(T)), style: cd(cons(T)) }] }]) })}
+          <p class="note">Em vermelho, o que já consumiu mais do remunerado do que o mês corrido.</p>`, { top: true });
       }
 
       // prioridades da unidade
