@@ -295,7 +295,9 @@ tr.sep td{border-top:2px solid ${INK3}}
     }
 
     // ═══ Parte 2 · premiações do mês ═══
-    capaSec(2, `Premiações de ${mN(VU)}`, `Quem subiu e quem caiu contra ${mN(VA)}, o ranking das ${RU.length} unidades e o pódio do mês.`);
+    capaSec(2, `Premiações de ${mN(VU)}`, `O pódio do mês, o ranking das ${RU.length} unidades e quem subiu ou caiu contra ${mN(VA)}.`);
+    podio(rows(VU), 'Pódio Frota de Elite', `${Mes}/${ANO}`);
+    slide(ranking(rows(VU), RA, `Ranking de ${mN(VU)}`, `Frota de Elite · ${m3(VU)}`, `vs ${MES3[mI(VA)]}`), { top: true });
     const mov = RU.map(r => ({ u: r.unit, d: r.pont - ((RA.find(x => x.unit === r.unit) || {}).pont), p0: PA[r.unit], p1: PU[r.unit] })).filter(m => isFinite(m.d)).sort((a, b) => b.d - a.d);
     const sobe = mov.filter(m => m.p1 < m.p0).sort((a, b) => (b.p0 - b.p1) - (a.p0 - a.p1)), cai = mov.filter(m => m.p1 > m.p0).sort((a, b) => (b.p1 - b.p0) - (a.p1 - a.p0));
     const motivo = u => { const a = RA.find(x => x.unit === u), b = rows(VU).find(x => x.unit === u); if (!a || !b) return ''; return F.filter(f => a[f] != null && b[f] != null).map(f => ({ f, d: Math.min(b[f], 100) - Math.min(a[f], 100) })).sort((x, y) => Math.abs(y.d) - Math.abs(x.d)).slice(0, 2).filter(x => Math.abs(x.d) >= 1).map(x => `${LAB[x.f]} ${sgn(x.d)}`).join(', '); };
@@ -305,14 +307,12 @@ tr.sep td{border-top:2px solid ${INK3}}
       ${concBlocos([{ t: 'Maior alta', v: `${UN[mov[0].u]} ${sgn(mov[0].d)}`, s: `${motivo(mov[0].u) || 'Sem indicador isolado'}.` }]
         .concat(sobe[0] ? [{ t: 'Maior subida de posição', v: `${UN[sobe[0].u]} ${sobe[0].p0}º → ${sobe[0].p1}º`, s: `${motivo(sobe[0].u) || 'Sem indicador isolado'}.` }] : [])
         .concat(cai[0] ? [{ t: 'Maior queda de posição', v: `${UN[cai[0].u]} ${cai[0].p0}º → ${cai[0].p1}º`, s: `${motivo(cai[0].u) || 'Sem indicador isolado'}.` }] : []), 'Destaques', 3)}`);
-    slide(ranking(rows(VU), RA, `Ranking de ${mN(VU)}`, `Frota de Elite · ${m3(VU)}`, `vs ${MES3[mI(VA)]}`), { top: true });
-    podio(rows(VU), 'Pódio Frota de Elite', `${Mes}/${ANO}`);
 
     // ═══ Parte 3 · premiação do acumulado ═══
     if (acum.length) {
-      capaSec(3, `Acumulado de ${mN(V[0])} a ${mN(VU)}`, 'O ranking do ano e o pódio do acumulado.');
-      slide(ranking(acum, acumA, `Ranking acumulado ${m3(V[0])}–${m3(VU)}`, 'Frota de Elite · acumulado do ano', `vs ${MES3[mI(VA)]}`), { top: true });
+      capaSec(3, `Acumulado de ${mN(V[0])} a ${mN(VU)}`, 'O pódio do acumulado e o ranking do ano.');
       podio(acum, 'Pódio Frota de Elite', `Acumulado ${m3(V[0])}–${m3(VU)} · ${V.length} períodos`);
+      slide(ranking(acum, acumA, `Ranking acumulado ${m3(V[0])}–${m3(VU)}`, 'Frota de Elite · acumulado do ano', `vs ${MES3[mI(VA)]}`), { top: true });
     }
 
     // ═══ Parte 4 · recados do mês vigente (Gestão à Vista) ═══
