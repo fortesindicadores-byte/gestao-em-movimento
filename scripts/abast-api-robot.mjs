@@ -13,7 +13,7 @@
  * Credenciais:
  *   Pró-Frotas  chaves na aba "Base CNPJ" da planilha do time (como o robô do hodômetro)
  *   SUMA        secret SUMA_USER_TOKEN · CNPJs = os da Base CNPJ + SUMA_CNPJS (CSV opcional)
- *   Gasola      secret GASOLA_TOKEN (vai no header Authorization)
+ *   Gasola      secret GASOLA_TOKENS (JSON, um token por conta) ou GASOLA_TOKEN (vai no header Authorization)
  *
  * Modos (ABAST_MODO):
  *   sonda   testa cada sistema e imprime os NOMES dos campos do 1º registro
@@ -258,47 +258,69 @@ async function suma(base) {
 // GET api.gasola.net/v1/integration/report/supply?startDate&endDate (≤ 30 dias), header Authorization: {TOKEN}
 // Resposta = lista; status CONCLUDED = concluído. dataConclusao "11/01/2024 03:40" (hora de Brasília).
 const GASOLA_URL = 'https://api.gasola.net';
-async function gasola() {
-  const tok = (process.env.GASOLA_TOKEN || '').trim();
-  if (!tok) throw new Error('GASOLA_TOKEN não configurado (GitHub Secrets)');
-  const linhas = [], porUni = new Map();
-  let auth = tok;                                          // a doc manda o token cru; se der 401, tenta com Bearer
-  for (const per of fatias(15)) {
-    const q = new URLSearchParams({ startDate: per[0] + 'T00:00:00-03:00', endDate: per[1] + 'T23:59:59-03:00' });
-    let lista = null, ult = '';
-    for (let t = 1; t <= 3 && !lista; t++) {
-      try {
-        let r = await fetch(`${GASOLA_URL}/v1/integration/report/supply?${q}`, { headers: { Authorization: auth, 'Content-Type': 'application/json' } });
-        if (r.status === 401 && !/^Bearer /i.test(auth)) { auth = 'Bearer ' + tok; r = await fetch(`${GASOLA_URL}/v1/integration/report/supply?${q}`, { headers: { Authorization: auth, 'Content-Type': 'application/json' } }); }
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        const j = await r.json();
-        lista = Array.isArray(j) ? j : (j.data || j.itens || j.items || []);
-      } catch (e) { ult = e.message; if (t < 3) await esperar(t * 3000); }
-    }
-    if (!lista) throw new Error(`fatia ${per[0]}→${per[1]}: ${ult}`);
-    if (MODO === 'sonda') { log(`   ${per[0]}→${per[1]}: ${lista.length} abastecimento(s)`); if (lista[0]) { log('   campos:', [...campos(lista[0])].join(' · ')); return { linhas: [], res: [] }; } continue; }
-    for (const r of lista) {
-      const dt = dataBR(r.dataConclusao) || (r.emitidoEm ? new Date(r.emitidoEm) : null);
-      if (!r.id || !dt || isNaN(dt)) continue;
-      const nome = r.unidade || null;
-      porUni.set(nome, (porUni.get(nome) || 0) + 1);
-      const litros = num(r.totalLitros), valor = num(r.valor);
-      const st = String(r.status || '');
-      linhas.push({
-        sistema: 'GASOLA', id_origem: String(r.id), item: 1, data: dt.toISOString(), dia: diaBR(dt),
-        unidade: sigla(nome), unidade_origem: nome,
-        placa: placaKey(r.placa), placa_origem: r.placa ?? null,
-        produto: produto(r.combustivel), produto_origem: r.combustivel ?? null,
-        litros, preco: num(r.precoCobrado) ?? num(r.valorLitroPago) ?? (litros ? valor / litros : null), valor,
-        posto: r.posto ?? null, cnpj_posto: r.cnpj ? cnpjDig(r.cnpj) : null,
-        hodometro: num(r.km), valido: /CONCLU/i.test(st) && litros > 0 && valor > 0, status_origem: st || null,
-        modo: r.categoria ?? null, bomba: null, editado_origem: null,
-      });
-    }
-    await esperar(500);
+/* Vários tokens (Renan, 30/10/2026): o Gasola dá UM token de abastecimentos
+   por conta (unidade), e Cuiabá e Macacu têm uma "Matriz" que enxerga as
+   filiais. Secret GASOLA_TOKENS = JSON [{"nome","uni","abast"}] (o "nf" das
+   notas fiscais fica guardado para depois). As contas de filial são lidas
+   primeiro e dão a unidade; a Matriz só acrescenta o id que ninguém trouxe.
+   Sem GASOLA_TOKENS, vale o GASOLA_TOKEN único de antes. */
+function gasolaContas() {
+  const raw = (process.env.GASOLA_TOKENS || '').trim();
+  if (raw) {
+    let l; try { l = JSON.parse(raw); } catch (e) { throw new Error('GASOLA_TOKENS não é um JSON válido'); }
+    return l.filter(c => c && c.abast).map(c => ({ nome: String(c.nome || ''), uni: c.uni || null, tok: String(c.abast).trim(), matriz: /matriz/i.test(c.nome || '') }))
+      .sort((x, y) => x.matriz - y.matriz);
   }
-  const res = [...porUni].map(([u, n]) => ({ unidade: u, sigla: sigla(u), itens: n }));
-  res.forEach(x => log(`   ${x.unidade} (${x.sigla || 'sem sigla'}): ${x.itens} abastecimento(s)`));
+  const tok = (process.env.GASOLA_TOKEN || '').trim();
+  if (!tok) throw new Error('GASOLA_TOKENS (ou GASOLA_TOKEN) não configurado (GitHub Secrets)');
+  return [{ nome: 'Gasola', uni: null, tok, matriz: false }];
+}
+async function gasola() {
+  const contas = gasolaContas();
+  const linhas = [], porUni = new Map(), vistos = new Set();
+  for (const ct of contas) {
+    let auth = ct.tok, n = 0, ok = true;                  // a doc manda o token cru; se der 401, tenta com Bearer
+    for (const per of fatias(15)) {
+      const q = new URLSearchParams({ startDate: per[0] + 'T00:00:00-03:00', endDate: per[1] + 'T23:59:59-03:00' });
+      let lista = null, ult = '';
+      for (let t = 1; t <= 3 && !lista; t++) {
+        try {
+          let r = await fetch(`${GASOLA_URL}/v1/integration/report/supply?${q}`, { headers: { Authorization: auth, 'Content-Type': 'application/json' } });
+          if (r.status === 401 && !/^Bearer /i.test(auth)) { auth = 'Bearer ' + ct.tok; r = await fetch(`${GASOLA_URL}/v1/integration/report/supply?${q}`, { headers: { Authorization: auth, 'Content-Type': 'application/json' } }); }
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const j = await r.json();
+          lista = Array.isArray(j) ? j : (j.data || j.itens || j.items || []);
+        } catch (e) { ult = e.message; if (t < 3) await esperar(t * 3000); }
+      }
+      // uma conta que falha não derruba as outras: fica no log e segue
+      if (!lista) { log(`   ${ct.nome}: fatia ${per[0]}→${per[1]} falhou (${ult})`); ok = false; break; }
+      if (MODO === 'sonda') { log(`   ${ct.nome} · ${per[0]}→${per[1]}: ${lista.length} abastecimento(s)`); if (lista[0]) log('   campos:', [...campos(lista[0])].join(' · ')); break; }
+      for (const r of lista) {
+        const dt = dataBR(r.dataConclusao) || (r.emitidoEm ? new Date(r.emitidoEm) : null);
+        if (!r.id || !dt || isNaN(dt) || vistos.has(String(r.id))) continue;
+        vistos.add(String(r.id)); n++;
+        const nome = r.unidade || ct.nome || null;
+        const sg = ct.uni || sigla(r.unidade) || sigla(ct.nome);
+        porUni.set(sg || nome, (porUni.get(sg || nome) || 0) + 1);
+        const litros = num(r.totalLitros), valor = num(r.valor);
+        const st = String(r.status || '');
+        linhas.push({
+          sistema: 'GASOLA', id_origem: String(r.id), item: 1, data: dt.toISOString(), dia: diaBR(dt),
+          unidade: sg, unidade_origem: nome,
+          placa: placaKey(r.placa), placa_origem: r.placa ?? null,
+          produto: produto(r.combustivel), produto_origem: r.combustivel ?? null,
+          litros, preco: num(r.precoCobrado) ?? num(r.valorLitroPago) ?? (litros ? valor / litros : null), valor,
+          posto: r.posto ?? null, cnpj_posto: r.cnpj ? cnpjDig(r.cnpj) : null,
+          hodometro: num(r.km), valido: /CONCLU/i.test(st) && litros > 0 && valor > 0, status_origem: st || null,
+          modo: r.categoria ?? null, bomba: null, editado_origem: null,
+        });
+      }
+      await esperar(500);
+    }
+    if (MODO !== 'sonda') log(`   conta ${ct.nome}${ct.uni ? ' (' + ct.uni + ')' : ''}: ${n} abastecimento(s) novo(s)${ok ? '' : ' · com falha'}`);
+  }
+  const res = [...porUni].map(([u, n]) => ({ unidade: u, sigla: u, itens: n }));
+  res.forEach(x => log(`   ${x.unidade}: ${x.itens} abastecimento(s)`));
   return { linhas, res };
 }
 
