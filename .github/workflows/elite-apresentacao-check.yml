@@ -1,0 +1,26 @@
+name: Elite Apresentacao Check
+
+# Só leitura. Abre o Frota de Elite com os dados reais, roda a coleta do
+# "Gerar apresentação" (Frota de Elite + Gestão à Vista) e clica no botão para
+# conferir o PDF. No log saem só números por unidade; o PDF fica no runner.
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Rodar
+        run: node scripts/elite-apresentacao-check.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}

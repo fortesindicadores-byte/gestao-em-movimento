@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610291700">
+<meta name="build" content="202610301500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Frota de Elite · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -296,7 +296,7 @@ body.claro{--green:#0E8C0E;--red:#ff0000;}
 /* com o resultado fechado não há o que ver, filtrar, atualizar nem exportar */
 body.oculto .cols,body.oculto .filtros,body.oculto #tit,
 body.oculto .side .s-item[data-vw],body.oculto .s-sec.s-vis,
-body.oculto #pdf-slot,body.oculto #btAtualizar,body.oculto .pdf-wrap,body.oculto .pdf-btn{display:none!important;}
+body.oculto #pdf-slot,body.oculto #btAtualizar,body.oculto #btApres,body.oculto .pdf-wrap,body.oculto .pdf-btn{display:none!important;}
 
 /* ── 1 · Resumo Gerencial: hero + 11 cards + indicadores ── */
 #vw-resumo .fin-hero{padding:4px 0 2px;}
@@ -561,6 +561,10 @@ body.claro .podio-slot.primeiro .pedestal{box-shadow:0 -4px 24px rgba(196,145,26
     <button class="s-item" data-vw="podio"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="7" width="6" height="14"/><rect x="2" y="12" width="7" height="9"/><rect x="15" y="14" width="7" height="7"/></svg> Pódio</button>
 
     <div class="s-sec">Atalhos</div>
+    <button class="s-item" id="btApres" onclick="gerarApresentacao()" title="Call de Resultados em PDF: indicadores, premiações e recados do mês">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 12l3-3 3 2 4-4"/></svg>
+      <span class="n-txt">Gerar apresentação</span>
+    </button>
     <div id="pdf-slot"></div>
     <button class="s-item" id="btAtualizar" onclick="atualizar()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
@@ -1622,6 +1626,29 @@ document.addEventListener('DOMContentLoaded',()=>{ initAccessLog(); cortinaInit(
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
+<script src="../assets/elite-apresentacao.js?v=202610301500"></script>
+<script>
+// Call de Resultados (Renan, 30/10/2026): indicadores gerais → premiações do
+// mês e do acumulado → recados do mês vigente pelo Gestão à Vista. A conta é
+// a mesma do painel (assets/elite-apresentacao.js).
+async function gerarApresentacao(){
+  const bt=document.getElementById('btApres'), tx=bt.querySelector('.n-txt'), orig=tx.textContent;
+  if(bt.disabled)return;
+  bt.disabled=true;
+  const aviso=m=>{tx.textContent=m;bt.title=m;};
+  try{
+    const abs=p=>new URL(p,location.href).href;
+    const r=await EliteApresentacao.gerar({aviso,av:abs('avatares/'),
+      avatares:Object.fromEntries(Object.entries(AVATARES).map(([k,v])=>[k,abs(v)])),nomes:NOMES});
+    aviso(r.gav?'PDF gerado':'PDF gerado, sem os recados do Gestão à Vista');
+  }catch(e){
+    console.error('apresentação',e);
+    alert('Não consegui gerar a apresentação: '+(e&&e.message||e));
+  }finally{
+    setTimeout(()=>{tx.textContent=orig;bt.title='Call de Resultados em PDF: indicadores, premiações e recados do mês';bt.disabled=false;},2500);
+  }
+}
+</script>
 <script>
 initPdfExport({
   btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
@@ -1632,6 +1659,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610291700"></script>
+<script src="../assets/build-check.js?v=202610301500"></script>
 </body>
 </html>
