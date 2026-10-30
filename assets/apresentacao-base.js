@@ -16,8 +16,8 @@
 (function () {
   const INK = '#0F1A20', INK2 = '#4A5563', INK3 = '#8A94A2', PALE = '#F3F4F6';
   const VERDE = '#1E8E5A', AMAR = '#D9A400', VERM = '#D83A2E';
-  const FUNDO = { g: 'background:rgba(30,142,90,.13)', y: 'background:rgba(217,164,0,.16)', r: 'background:rgba(216,58,46,.14)', m: '' };
-  const COR = { g: VERDE, y: '#A87D00', r: VERM, m: INK3 };
+  const FUNDO = { g: 'background:rgba(30,142,90,.13)', y: 'background:rgba(217,164,0,.16)', o: 'background:rgba(249,115,22,.17)', r: 'background:rgba(216,58,46,.14)', m: '' };
+  const COR = { g: VERDE, y: '#A87D00', o: '#C2570C', r: VERM, m: INK3 };
   const MESN = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
   const MES3 = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
