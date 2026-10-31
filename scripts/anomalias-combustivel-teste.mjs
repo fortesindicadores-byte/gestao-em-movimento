@@ -100,7 +100,8 @@ const txt = (pg, s) => pg.locator(s).first().textContent();
     return tr && /Gasola · 820 L/.test(tr.textContent) && /Ajustada pelas APIs/.test(tr.textContent); }));
   // histórico da placa: clique na placa
   await pg.locator('#tb-anom tbody td.pl', { hasText: 'ABC1323' }).click(); await pg.waitForTimeout(500);
-  t('clique na placa abre o histórico', await pg.evaluate(() => document.getElementById('ovh').classList.contains('on') && !document.getElementById('ov').classList.contains('on')));
+  t('clique na placa abre a visão da placa (tabela, sem janela)', await pg.evaluate(() => VW === 'placa' && document.getElementById('vw-placa').classList.contains('on') && !document.getElementById('ov').classList.contains('on') && document.querySelector('#h-tab table.dre.hist') != null && document.querySelector('.s-item[data-vw="anomalias"]').classList.contains('on')));
+  t('visão da placa sem rolagem lateral', await pg.evaluate(() => { const w = document.getElementById('h-tab'); return w.scrollWidth <= w.clientWidth + 1; }));
   t('histórico com os meses e as OS', await pg.evaluate(() => document.querySelectorAll('#h-tab tr.mes').length === 2 && document.querySelectorAll('#h-tab tr[data-os]').length === 5), await pg.evaluate(() => document.getElementById('h-tab').innerText.slice(0, 300)));
   t('km da OS com hodômetro errado cai no km da OS (300)', await pg.evaluate(() => { const tr = document.querySelector('#h-tab tr[data-os="OS4"]'); return tr && tr.children[5].textContent.trim() === '300'; }));
   t('API casada no mesmo dia e só-API em itálico', await pg.evaluate(() => /Gasola · 450,0 L · hod\. 100\.500/.test(document.querySelector('#h-tab tr[data-os="OS4"]').textContent) && document.querySelectorAll('#h-tab tr.so-api').length === 1));
@@ -113,10 +114,13 @@ const txt = (pg, s) => pg.locator(s).first().textContent();
   t('campo vazio apaga a correção', gravacoes.some(x => x[0] === 'os-del' && x[1] === 'OS4'));
   if (SHOT) await pg.screenshot({ path: join(SHOT, 'anom-historico.png') });
   await pg.keyboard.press('Escape'); await pg.waitForTimeout(200);
-  t('Esc fecha o histórico', await pg.evaluate(() => !document.getElementById('ovh').classList.contains('on')));
+  t('Esc volta para Anomalias', await pg.evaluate(() => VW === 'anomalias' && document.getElementById('vw-anomalias').classList.contains('on')));
+  await pg.click('#tb-anom tbody tr:nth-child(2) td:nth-child(5)'); await pg.waitForTimeout(500);
+  t('clique no resto da linha também abre a placa', await pg.evaluate(() => VW === 'placa'));
+  t('mês com anomalia tem "Corrigir o mês"', await pg.evaluate(() => document.querySelector('#hm-2026-06 [data-mes]') != null));
+  await pg.click('#hm-2026-06 [data-mes]'); await pg.waitForTimeout(400);
   t('texto explicativo embaixo da tabela', await pg.evaluate(() => { const c = document.getElementById('pe-anom'); return c.previousElementSibling.id === 'tab-anom' && /35%/.test(c.textContent); }));
-  // caixa
-  await pg.click('#tb-anom tbody tr:nth-child(2)'); await pg.waitForTimeout(400);
+  // caixa (pelo "Corrigir o mês" da visão da placa)
   t('caixa abre com a placa e o mês', /ABC1323 · jun\/26/.test(await txt(pg, '#m-tit')), await txt(pg, '#m-tit'));
   const ab = await pg.evaluate(() => [...document.querySelectorAll('#m-ab tbody tr')].map(r => [r.className, r.cells[4].textContent, r.cells[4].className]));
   t('abastecimentos do mês + o último do mês anterior', ab.length === 5 && ab[0][0] === 'ant', JSON.stringify(ab));

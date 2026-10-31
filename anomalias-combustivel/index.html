@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610301800">
+<meta name="build" content="202610311300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Anomalias de Combustível · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -408,19 +408,25 @@ body.claro .mdl{box-shadow:0 24px 60px rgba(15,23,42,.22), 0 3px 10px rgba(15,23
 .bt.ghost{background:transparent;border-color:var(--card-brd);color:var(--txt2);}
 .bt.ghost:hover{background:var(--hover);color:var(--txt);filter:none;}
 /* histórico da placa (Renan, 30/10/2026: "se clicar na placa com erro deve abrir todo o histórico de abastecimentos, com opção de alterar km e litros") */
-.mdl.hist{width:min(1320px,97vw);height:94vh;}
-.mdl.hist .mb{display:block;flex:1;min-height:0;overflow:auto;padding:0;}
-.mdl.hist table.ab{font-size:11px;}
-.mdl.hist table.ab th{z-index:2;}
-.mdl.hist table.ab tr.mes td{background:var(--cabec);font-weight:700;color:var(--txt);border-top:1px solid var(--card-brd);position:sticky;top:25px;z-index:1;white-space:normal;}
-.mdl.hist table.ab tr.mes td span{font-weight:600;color:var(--txt2);margin-left:10px;}
-.mdl.hist table.ab tr.so-api td{color:var(--txt3);font-style:italic;}
-.mdl.hist table.ab td.ed{padding:2px 6px;}
-.mdl.hist table.ab td.ed input{width:86px;text-align:right;padding:4px 7px;font-size:11px;border-radius:6px;margin:0;}
-.mdl.hist table.ab td.ed input.mud{border-color:var(--laranja);background:rgba(249,115,22,.10);color:var(--txt);font-weight:700;}
-.mdl.hist table.ab td.api{color:var(--txt2);}
-.mdl.hist table.ab td.api b{color:var(--txt);}
-.mdl.hist table.ab td.dif{color:var(--ambar);font-weight:700;}
+.pl-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex:0 0 auto;min-width:0;}
+.pl-top b{font-size:14px;font-weight:800;color:var(--txt);white-space:nowrap;}
+.pl-top span{font-size:11px;color:var(--txt3);font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pl-top .bt{padding:5px 12px;font-size:11px;white-space:nowrap;}
+table.dre.hist tbody tr{cursor:default;}
+table.dre.hist thead th{white-space:normal;vertical-align:bottom;}
+table.dre.hist tr.mes td{background:var(--cabec);font-weight:700;color:var(--txt);border-top:1px solid var(--card-brd);position:sticky;top:var(--thh,33px);z-index:1;white-space:normal;overflow:visible;}
+table.dre.hist tr.mes td span{font-weight:600;color:var(--txt2);margin-left:10px;}
+table.dre.hist tr.mes .bt{padding:3px 10px;font-size:10px;margin-left:10px;}
+table.dre.hist tr.so-api td{color:var(--txt3);font-style:italic;}
+table.dre.hist tr.fora td{color:var(--txt4);}
+table.dre.hist tr.foco td{background:rgba(249,115,22,.05);}
+table.dre.hist td.ed{padding:3px 6px;}
+table.dre.hist td.ed input{width:100%;text-align:right;padding:4px 7px;font-size:11px;border-radius:6px;margin:0;background:var(--side);border:1px solid var(--card-brd);color:var(--txt);font-family:inherit;}
+table.dre.hist td.ed input:focus{outline:none;border-color:var(--laranja);}
+table.dre.hist td.ed input.mud{border-color:var(--laranja);background:rgba(249,115,22,.10);color:var(--txt);font-weight:700;}
+table.dre.hist td.api{color:var(--txt2);}
+table.dre.hist td.api b{color:var(--txt);}
+table.dre.hist td.dif{color:var(--ambar)!important;font-weight:700;}
 @media(max-width:1500px){ table.dre td,table.dre thead th{padding:8px 6px;} table.dre{font-size:10.5px;} table.dre thead th{font-size:8.5px;letter-spacing:.4px;} }
 @media(max-width:860px){ #miolo{display:block;} .kpis{grid-template-columns:1fr 1fr;height:auto;} .gr2a{display:block;} .gr2a .gcard{height:300px;margin-bottom:12px;}
   .twrap{overflow-x:auto;} .twrap table.dre{min-width:1000px;} .mdl .mb{grid-template-columns:1fr;} }
@@ -517,6 +523,13 @@ body.claro .mdl{box-shadow:0 24px 60px rgba(15,23,42,.22), 0 3px 10px rgba(15,23
             <div class="tsub tpe" id="pe-anom"></div>
           </div>
         </section>
+        <section class="vw" id="vw-placa">
+          <div class="card tsec">
+            <div class="pl-top"><button class="bt ghost" onclick="fechaHist()">← Voltar</button><b id="h-tit">—</b><span id="h-sub">—</span></div>
+            <div class="twrap" id="h-tab"><div class="vazio-l">Lendo o histórico…</div></div>
+            <div class="tsub tpe" id="h-msg">Km e litros corrigidos gravam ao sair do campo; campo vazio volta ao número do ERP. A correção entra no consumo em alguns minutos. Em cinza, o Arla; em itálico, o que está só nas APIs; em âmbar, hodômetro ou litros diferentes da API do mesmo dia.</div>
+          </div>
+        </section>
         <section class="vw" id="vw-correcoes">
           <div class="card tsec">
             <div class="twrap" id="tab-corr"><div class="vazio-l">Lendo…</div></div>
@@ -559,21 +572,11 @@ body.claro .mdl{box-shadow:0 24px 60px rgba(15,23,42,.22), 0 3px 10px rgba(15,23
     </div>
     <div class="pe">
       <span class="msg" id="m-msg"></span>
-      <button class="bt ghost" onclick="ATUAL&&abreHist(ATUAL.placa,ATUAL.placa_origem,ATUAL.ym)">Histórico da placa</button>
+      <button class="bt ghost" onclick="if(ATUAL){const b=ATUAL;fechaCaixa();if(VW!=='placa')abreHist(b.placa,b.placa_origem,b.ym);}">Histórico da placa</button>
       <button class="bt ghost" id="b-desf" onclick="desfaz()">Desfazer correção</button>
       <button class="bt ghost" id="b-ok" onclick="salva('correto')">Está correto</button>
       <button class="bt ghost" onclick="fechaCaixa()">Fechar</button>
       <button class="bt" id="b-salva" onclick="salva('corrigido')">Salvar correção</button>
-    </div>
-  </div>
-</div>
-<div class="ov" id="ovh" onclick="if(event.target===this)fechaHist()">
-  <div class="mdl hist" role="dialog" aria-modal="true">
-    <div class="mh"><b id="h-tit">—</b><span id="h-sub">—</span></div>
-    <div class="mb" id="h-tab"><div class="vazio-l">Lendo o histórico…</div></div>
-    <div class="pe">
-      <span class="msg" id="h-msg">Km e litros corrigidos gravam ao sair do campo; campo vazio volta ao número do ERP. A correção entra no consumo em alguns minutos.</span>
-      <button class="bt ghost" onclick="fechaHist()">Fechar</button>
     </div>
   </div>
 </div>
@@ -742,7 +745,7 @@ function render(){
         +`<td class="num">${br(+a.km)}</td><td class="num">${br(+a.litros)}</td><td class="num ${a.tipo==='kml_baixo'||a.tipo==='km_zero'?'cr':a.tipo==='kml_alto'?'ca':''}">${br(+a.kml,2)}</td>`
         +`<td class="num" title="${esc(a.ref_fonte||'')}">${a.ref_kml==null?'—':br(+a.ref_kml,2)}</td><td class="num">${d==null?'—':(d>0?'+':'')+br(d,0)+'%'}</td>`
         +`<td class="num">${a.impacto_l==null?'—':br(+a.impacto_l)}</td><td title="${esc(a.auto_obs||'')}">${a.api_n?`${esc(a.auto_fonte||'')} · ${br(+a.api_litros)} L`:'—'}</td><td title="${esc(a.auto_obs||'')}">${sitHtml(s)}</td></tr>`; }).join('')+'</tbody></table>';
-  set('pe-anom','Placa-mês com Km/L fora de 35% para mais ou para menos da referência (o mesmo modelo no mês; sem modelo, o projeto no mês; sem os dois, a própria placa nos outros meses), litros sem km ou R$/L fora de R$ 1,50 a R$ 12,00, com 200 L ou mais no mês. Números do ERP (com as correções por abastecimento). Ajustada pelas APIs: o robô achou os abastecimentos da placa no Pró-Frotas, Gasola ou SUMA e eles fecham com a referência; esses números entram no consumo. Em aberto: não fecha nem no ERP nem nas APIs. Clique na placa para ver todo o histórico de abastecimentos e corrigir km e litros; no resto da linha, a placa-mês.');
+  set('pe-anom','Placa-mês com Km/L fora de 35% para mais ou para menos da referência (o mesmo modelo no mês; sem modelo, o projeto no mês; sem os dois, a própria placa nos outros meses), litros sem km ou R$/L fora de R$ 1,50 a R$ 12,00, com 200 L ou mais no mês. Números do ERP (com as correções por abastecimento). Ajustada pelas APIs: o robô achou os abastecimentos da placa no Pró-Frotas, Gasola ou SUMA e eles fecham com a referência; esses números entram no consumo. Em aberto: não fecha nem no ERP nem nas APIs. Clique na linha para abrir o histórico de abastecimentos da placa e corrigir km e litros.');
   // correções
   const C=[...CORR.values()].map(c=>({...c,a:ANOM.find(a=>a.chave===c.chave)})).filter(c=>{ const a=c.a||{vig:c.ym,uni:'—',pre:projPre(c.projeto),tiposL:[]}; const ss=getSel('ms-sit').filter(x=>x!=='aberto'); return passa(a,'ms-sit')&&(!ss.length||ss.includes(c.status)); })
     .sort((x,y)=>String(y.updated_at||'').localeCompare(String(x.updated_at||'')));
@@ -756,8 +759,7 @@ function render(){
   const g=ANOM[0]; set('titSub',`${br(ANOM.length)} placa-mês com anomalia · ERP até ${g&&g.dados_ate?new Date(g.dados_ate+'T12:00').toLocaleDateString('pt-BR'):'—'}${g&&g.gerado_em?' · conferido '+new Date(g.gerado_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+new Date(g.gerado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):''}`);
 }
 document.addEventListener('click',e=>{ const tr=e.target.closest('#tb-anom tbody tr, #tb-corr tbody tr'); if(!tr||!tr.dataset.k) return;
-  if(e.target.closest('td.pl')){ const a=ANOM.find(x=>x.chave===tr.dataset.k)||CORR.get(tr.dataset.k); if(a){ abreHist(a.placa,a.placa_origem,a.ym||a.vig); return; } }
-  abreCaixa(tr.dataset.k); });
+  const a=ANOM.find(x=>x.chave===tr.dataset.k)||CORR.get(tr.dataset.k); if(a) abreHist(a.placa,a.placa_origem,a.ym||a.vig); });
 
 /* ── caixa da placa-mês ── */
 const MERC='ABCDEFGHIJ';
@@ -825,14 +827,14 @@ async function salva(status){
   set('m-msg','Gravando…');
   const {data,error}=await sb.from('comb_correcao').upsert(reg,{onConflict:'chave'}).select().maybeSingle();
   if(error){ set('m-msg','Erro ao gravar: '+error.message); return; }
-  CORR.set(b.chave,data||reg); fechaCaixa(); render();
+  CORR.set(b.chave,data||reg); fechaCaixa(); render(); if(HIST&&VW==='placa') desenhaHist();
 }
 async function desfaz(){
   const b=ATUAL; if(!b||!CORR.has(b.chave)) return;
   set('m-msg','Desfazendo…');
   const {error}=await sb.from('comb_correcao').delete().eq('chave',b.chave);
   if(error){ set('m-msg','Erro: '+error.message); return; }
-  CORR.delete(b.chave); fechaCaixa(); render();
+  CORR.delete(b.chave); fechaCaixa(); render(); if(HIST&&VW==='placa') desenhaHist();
 }
 
 /* ── histórico da placa: todos os abastecimentos de 2026, km e litros editáveis ── */
@@ -842,8 +844,9 @@ const ehDieselT=t=>/DIESEL/i.test(t||'')&&!/ARLA/i.test(t||'');
 async function leTodos(q){ const out=[]; for(let a=0;;a+=1000){ const {data,error}=await q().range(a,a+999); if(error) throw error; out.push(...(data||[])); if(!data||data.length<1000) break; } return out; }
 async function abreHist(placa,orig,ymFoco){
   HIST={placa,orig,ymFoco,erp:[],api:[],cor:new Map()};
-  set('h-tit',`${orig||placa} · histórico de abastecimentos`); set('h-sub','lendo…');
-  $('h-tab').innerHTML='<div class="vazio-l">Lendo o histórico…</div>'; $('ovh').classList.add('on');
+  set('h-tit',orig||placa); set('h-sub','lendo…');
+  $('h-tab').innerHTML='<div class="vazio-l">Lendo o histórico…</div>';
+  if(VW!=='placa') VW_ANT=VW; setVw('placa'); set('tit','Histórico da placa');
   const h=HIST;
   try{
     const ps=[...new Set([placa,antiga(placa),orig].filter(Boolean))];
@@ -878,31 +881,33 @@ function desenhaHist(){
   const meses=[...new Set([...h.erp.map(r=>r.d.slice(0,7)),...h.soApi.map(a=>a.d.slice(0,7))])].sort();
   const anoms=new Map(ANOM.filter(a=>a.placa===h.placa).map(a=>[a.ym,a]));
   const nApi=h.api.filter(a=>a.diesel).length, sis=[...new Set(h.api.map(a=>a.sistema))].map(s=>({PROFROTAS:'Pró-Frotas',GASOLA:'Gasola',SUMA:'SUMA'}[s]||s));
-  set('h-sub',`${br(h.erp.length)} abastecimento(s) no ERP em 2026 · ${br(nApi)} de diesel nas APIs${sis.length?' ('+sis.join(', ')+')':''}${h.semTabOs?' · falta rodar o SQL das correções por abastecimento':''}`);
+  const a0=ANOM.find(a=>a.placa===h.placa);
+  set('h-sub',`${a0?`${a0.uni} · ${a0.projeto==='SEARA'?'Seara (Anhanguera)':a0.projeto}${a0.modelo?' · '+a0.modelo:''} · `:''}${br(h.erp.length)} abastecimento(s) no ERP em 2026 · ${br(nApi)} de diesel nas APIs${sis.length?' ('+sis.join(', ')+')':''}${h.semTabOs?' · falta rodar o SQL das correções por abastecimento':''}`);
   if(!meses.length){ $('h-tab').innerHTML='<div class="vazio-l">Nenhum abastecimento desta placa em 2026.</div>'; return; }
-  let html='<table class="ab"><thead><tr><th>Data</th><th>OS</th><th>Combustível</th><th>Posto</th><th class="num">Hodômetro</th><th class="num">Km (ERP)</th><th class="num">Km corrigido</th><th class="num">Litros (ERP)</th><th class="num">Litros corrigidos</th><th class="num">Valor</th><th>Nas APIs (mesmo dia)</th></tr></thead><tbody>';
+  let html='<table class="dre hist" id="tb-hist" data-no-sort><colgroup><col style="width:8.5%"><col style="width:7%"><col style="width:10%"><col style="width:14.5%"><col style="width:8%"><col style="width:6.5%"><col style="width:8%"><col style="width:7%"><col style="width:8%"><col style="width:7.5%"><col style="width:15%"></colgroup><thead><tr><th>Data</th><th>OS</th><th>Combustível</th><th>Posto</th><th class="num">Hodômetro</th><th class="num">Km (ERP)</th><th class="num">Km corrigido</th><th class="num">Litros (ERP)</th><th class="num">Litros corrigidos</th><th class="num">Valor (R$)</th><th>Nas APIs (mesmo dia)</th></tr></thead><tbody>';
   meses.forEach(ym=>{
     const rs=h.erp.filter(r=>r.d.slice(0,7)===ym), so=h.soApi.filter(a=>a.d.slice(0,7)===ym), ds=rs.filter(r=>r.diesel);
     const km=ds.reduce((s,r)=>s+r.kmEf,0), lit=ds.reduce((s,r)=>s+r.litEf,0), kmE=ds.reduce((s,r)=>s+r.kmCalc,0), litE=ds.reduce((s,r)=>s+(+r.litros||0),0);
     const la=h.api.filter(a=>a.diesel&&a.d.slice(0,7)===ym).reduce((s,a)=>s+(+a.litros||0),0);
     const an=anoms.get(ym), st=an?sitDe(an):null;
-    html+=`<tr class="mes" id="hm-${ym}"><td colspan="11">${vigRot(ym)}<span>${br(ds.length)} de diesel · ${br(km)} km · ${br(lit)} L · ${lit>0?br(km/lit,2):'—'} km/L${(km!==kmE||lit!==litE)?` (ERP ${br(kmE)} km · ${br(litE)} L · ${litE>0?br(kmE/litE,2):'—'} km/L)`:''}${la?` · APIs ${br(la)} L`:''}${an&&an.ref_kml?` · referência ${br(+an.ref_kml,2)}`:''}${an?` · ${SIT[st]}`:''}</span></td></tr>`;
+    html+=`<tr class="mes" id="hm-${ym}"><td colspan="11">${vigRot(ym)}<span>${br(ds.length)} de diesel · ${br(km)} km · ${br(lit)} L · ${lit>0?br(km/lit,2):'—'} km/L${(km!==kmE||lit!==litE)?` (ERP ${br(kmE)} km · ${br(litE)} L · ${litE>0?br(kmE/litE,2):'—'} km/L)`:''}${la?` · APIs ${br(la)} L`:''}${an&&an.ref_kml?` · referência ${br(+an.ref_kml,2)}`:''}${an?` · ${SIT[st]}`:''}</span>${an?`<button class="bt ghost" data-mes="${esc(an.chave)}">Corrigir o mês</button>`:''}</td></tr>`;
     const lin=[...rs.map(r=>({t:r.d,r})),...so.map(a=>({t:a.d,a}))].sort((x,y)=>x.t.localeCompare(y.t));
     lin.forEach(({r,a})=>{
-      if(a){ html+=`<tr class="so-api"><td>${a.d.split('-').reverse().join('/')}</td><td>—</td><td>${esc(a.produto||'—')}</td><td title="${esc(a.posto||'')}">${esc(a.posto||'—')}</td><td class="num">${a.hodometro==null?'—':br(+a.hodometro)}</td><td></td><td></td><td></td><td></td><td class="num">${br(+a.valor,2)}</td><td class="api">só nas APIs · ${esc({PROFROTAS:'Pró-Frotas',GASOLA:'Gasola',SUMA:'SUMA'}[a.sistema]||a.sistema)} · <b>${br(+a.litros,1)} L</b></td></tr>`; return; }
+      if(a){ html+=`<tr class="so-api"><td>${a.d.split('-').reverse().join('/')}</td><td>—</td><td title="${esc(a.produto||'')}">${esc(a.produto||'—')}</td><td title="${esc(a.posto||'')}">${esc(a.posto||'—')}</td><td class="num">${a.hodometro==null?'—':br(+a.hodometro)}</td><td></td><td></td><td></td><td></td><td class="num">${br(+a.valor,2)}</td><td class="api">só nas APIs · ${esc({PROFROTAS:'Pró-Frotas',GASOLA:'Gasola',SUMA:'SUMA'}[a.sistema]||a.sistema)} · <b>${br(+a.litros,1)} L</b></td></tr>`; return; }
       const c=h.cor.get(String(r.ordem_servico));
       const ap=r.api, apTxt=ap?`${esc({PROFROTAS:'Pró-Frotas',GASOLA:'Gasola',SUMA:'SUMA'}[ap.sistema]||ap.sistema)} · <b>${br(+ap.litros,1)} L</b>${ap.hodometro!=null?` · hod. <b>${br(+ap.hodometro)}</b>`:''}`:(r.diesel?'—':'');
       const difL=ap&&Math.abs((+ap.litros||0)-(+r.litros||0))>1, difH=ap&&ap.hodometro!=null&&r.hodometro!=null&&Math.abs(+ap.hodometro-+r.hodometro)>50;
-      html+=`<tr class="${r.diesel?'':'fora'}${r.d.slice(0,7)===h.ymFoco?' foco':''}" data-os="${esc(r.ordem_servico)}"><td>${r.d.split('-').reverse().join('/')}</td><td>${esc(r.ordem_servico)}</td><td>${esc(r.tipo_combustivel||'—')}</td><td title="${esc(r.posto||'')}">${esc(r.posto||'—')}</td>`
+      html+=`<tr class="${r.diesel?'':'fora'}${r.d.slice(0,7)===h.ymFoco?' foco':''}" data-os="${esc(r.ordem_servico)}"><td>${r.d.split('-').reverse().join('/')}</td><td>${esc(r.ordem_servico)}</td><td title="${esc(r.tipo_combustivel||'')}">${esc(r.tipo_combustivel||'—')}</td><td title="${esc(r.posto||'')}">${esc(r.posto||'—')}</td>`
         +`<td class="num ${difH?'dif':''}">${br(+r.hodometro)}</td><td class="num">${r.diesel?br(r.kmCalc):''}</td>`
         +`<td class="num ed">${r.diesel?`<input data-c="km" value="${c&&c.km!=null?br(+c.km):''}" placeholder="${br(r.kmCalc)}" class="${c&&c.km!=null?'mud':''}" inputmode="decimal"${h.semTabOs?' disabled':''}>`:''}</td>`
         +`<td class="num ${difL?'dif':''}">${br(+r.litros,1)}</td>`
         +`<td class="num ed">${r.diesel?`<input data-c="litros" value="${c&&c.litros!=null?br(+c.litros,1):''}" placeholder="${br(+r.litros,1)}" class="${c&&c.litros!=null?'mud':''}" inputmode="decimal"${h.semTabOs?' disabled':''}>`:''}</td>`
-        +`<td class="num">${br(+r.valor,2)}</td><td class="api">${apTxt}</td></tr>`;
+        +`<td class="num">${br(+r.valor,2)}</td><td class="api" title="${esc(apTxt.replace(/<[^>]+>/g,''))}">${apTxt}</td></tr>`;
     });
   });
   $('h-tab').innerHTML=html+'</tbody></table>';
-  const f=$('hm-'+h.ymFoco); if(f) f.scrollIntoView({block:'start'});
+  const th=$('h-tab').querySelector('thead'); if(th) $('h-tab').style.setProperty('--thh',th.offsetHeight+'px');
+  const f=$('hm-'+h.ymFoco); if(f&&!h.rolou){ h.rolou=true; $('h-tab').scrollTop=f.offsetTop-(th?th.offsetHeight:0); }
 }
 document.addEventListener('change',async e=>{
   const inp=e.target; if(!inp.matches||!inp.matches('#h-tab td.ed input')) return;
@@ -920,8 +925,9 @@ document.addEventListener('change',async e=>{
   const top=$('h-tab').scrollTop; desenhaHist(); $('h-tab').scrollTop=top;
   set('h-msg',`Salvo (OS ${os}). Entra no consumo em alguns minutos, na rodada que o salvar dispara.`);
 });
-function fechaHist(){ $('ovh').classList.remove('on'); HIST=null; }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('ovh').classList.contains('on')){ e.stopImmediatePropagation(); fechaHist(); } },true);
+function fechaHist(){ HIST=null; setVw(VW_ANT||'anomalias'); }
+document.addEventListener('click',e=>{ const b=e.target.closest('#h-tab [data-mes]'); if(b) abreCaixa(b.dataset.mes); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&VW==='placa'&&!$('ov').classList.contains('on')) fechaHist(); });
 
 async function recarregar(){
   set('titSub','Carregando…');
@@ -944,9 +950,9 @@ async function initApp(){
 
 /* ── navegação ── */
 const TIT={resumo:'Resumo Gerencial',anomalias:'Anomalias',correcoes:'Correções'};
-let VW='resumo';
-function setVw(v){ VW=v;
-  document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===v));
+let VW='resumo', VW_ANT='anomalias';
+function setVw(v){ if(VW==='placa'&&v!=='placa') HIST=null; VW=v;
+  document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===(v==='placa'?VW_ANT:v)));
   document.querySelectorAll('.vw').forEach(x=>x.classList.toggle('on',x.id==='vw-'+v)); set('tit',TIT[v]||'');
   if(v==='resumo') setTimeout(()=>Object.values(charts).forEach(c=>c&&c.resize()),30); }
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
@@ -992,6 +998,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610301800"></script>
+<script src="../assets/build-check.js?v=202610311300"></script>
 </body>
 </html>
