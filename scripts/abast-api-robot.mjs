@@ -328,8 +328,9 @@ async function gasola() {
       const j = await r.json();
       lista = Array.isArray(j) ? j : (j.data || j.itens || j.items || []);
     } catch (e) { ult = e.message; }
-    // a consulta foi feita (deu certo ou não): o dia está gasto para esta conta
-    est.ultimo_pedido = hoje;
+    // consulta respondida: o dia está gasto para esta conta. Recusada (429, limite ainda do dia
+    // anterior): não marca, para a rodada seguinte do mesmo dia (05:00) tentar de novo.
+    if (lista || !/429/.test(ult)) est.ultimo_pedido = hoje;
     if (!lista) {
       log(`   ${ct.nome}: ${jan.tipo} ${jan.de}→${jan.ate} falhou (${ult})${/429/.test(ult) ? ' — consulta do dia já usada' : ''}`);
       await gasSalvaEstado(ct.nome, est, ult); continue;
