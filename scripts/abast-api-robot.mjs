@@ -223,14 +223,25 @@ async function suma(base) {
   log(`SUMA${SUMA_HML ? ' (HOMOLOGAÇÃO)' : ''}: ${cnpjs.length} CNPJ(s) de filial no pedido`);
   const brd = s => s.split('-').reverse().join('/');
   const linhas = [], vistosCli = new Map();
+  if (SUMA_HML) {   // o exemplo do e-mail da SUMA, exatamente como veio (sem dataFim, sem page, CNPJ com máscara)
+    const q0 = new URLSearchParams({ DataInicio: '01/09/2026', cnpj: '71.864.203/0001-74' });
+    const t0 = Date.now();
+    try {
+      const r = await fetch(SUMA_URL + '?' + q0, { headers: { 'user-token': tok }, signal: AbortSignal.timeout(120000) });
+      const tx = await r.text();
+      let info = tx.replace(/\s+/g, ' ').slice(0, 300);
+      try { const j = JSON.parse(tx); info = `total ${j.total} · páginas ${j.pageSize} · itens nesta página ${(j.itens || []).length}` + (j.itens && j.itens[0] ? ' · campos: ' + Object.keys(j.itens[0]).join(', ') : ''); } catch (e) {}
+      log(`   exemplo do e-mail: HTTP ${r.status} em ${((Date.now() - t0) / 1000).toFixed(1)} s · ${info}`);
+    } catch (e) { log(`   exemplo do e-mail: falhou em ${((Date.now() - t0) / 1000).toFixed(1)} s · ${e.message}`); }
+  }
   for (const per of fatias(15)) {
     for (let page = 1; page <= 500; page++) {
       const q = new URLSearchParams({ DataInicio: brd(per[0]), dataFim: brd(per[1]), cnpj: cnpjs.join(','), page: String(page) });
       let j = null, ult = '';
       for (let t = 1; t <= 3 && !j; t++) {
         try {
-          const r = await fetch(SUMA_URL + '?' + q, { headers: { 'user-token': tok, Accept: 'application/json' } });
-          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const r = await fetch(SUMA_URL + '?' + q, { headers: { 'user-token': tok, Accept: 'application/json' }, signal: AbortSignal.timeout(90000) });
+          if (!r.ok) { const tx = (await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 300); throw new Error('HTTP ' + r.status + (tx ? ' · ' + tx : '')); }
           j = await r.json();
         } catch (e) { ult = e.message; if (t < 3) await esperar(t * 3000); }
       }
