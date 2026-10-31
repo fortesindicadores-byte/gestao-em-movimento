@@ -198,6 +198,14 @@ async function proFrotas(base) {
 }
 
 /* ════════════════════════ SUMA ════════════════════════ */
+async function segredo(chave) {
+  if (!SB_KEY) return '';
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/portal_segredo?select=valor&chave=eq.${encodeURIComponent(chave)}`, { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY } });
+    if (!r.ok) return '';
+    const j = await r.json(); return ((j[0] && j[0].valor) || '').trim();
+  } catch (e) { return ''; }
+}
 // homologação (SUMA_HML=1): ambiente de testes da SUMA, só com o CNPJ de teste deles e sem gravar
 const SUMA_HML = process.env.SUMA_HML === '1' || process.env.SUMA_HML === 'true';
 const SUMA_URL = SUMA_HML
@@ -205,8 +213,10 @@ const SUMA_URL = SUMA_HML
   : 'https://pitstop.sumaconnect.com/api/integrate_systems/shipper/';
 const SUMA_CNPJ_HML = '71864203000174';
 async function suma(base) {
-  const tok = ((SUMA_HML ? process.env.SUMA_HML_TOKEN : process.env.SUMA_USER_TOKEN) || '').trim();
-  if (!tok) throw semToken((SUMA_HML ? 'SUMA_HML_TOKEN' : 'SUMA_USER_TOKEN') + ' não configurado (GitHub Secrets)');
+  // token: do GitHub Secrets ou, sem ele, do banco (portal_segredo, só a service key lê)
+  const tok = ((SUMA_HML ? process.env.SUMA_HML_TOKEN : process.env.SUMA_USER_TOKEN) || '').trim()
+    || await segredo(SUMA_HML ? 'suma_hml_token' : 'suma_user_token');
+  if (!tok) throw semToken((SUMA_HML ? 'SUMA_HML_TOKEN' : 'SUMA_USER_TOKEN') + ' não configurado (GitHub Secrets ou portal_segredo)');
   const extra = (process.env.SUMA_CNPJS || '').split(/[,;\s]+/).map(x => x.replace(/\D/g, '')).filter(x => x.length >= 11).map(cnpjDig);
   const porCnpj = new Map(base.filter(u => u.cnpj).map(u => [u.cnpj, u.unidade]));
   const cnpjs = SUMA_HML ? [SUMA_CNPJ_HML] : [...new Set([...porCnpj.keys(), ...extra])];
