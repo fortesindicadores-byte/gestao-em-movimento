@@ -301,12 +301,12 @@ let GAS_FIX = 0, GAS_GRAV = 0;
    apenas"). Cada conta faz no máximo UM pedido por dia (de no máximo 30 dias, o teto da
    API) e o robô lembra, por conta, o que já veio: linha GASOLA:<conta> em abast_api_base
    (resumo = {ok_de, ok_ate, ultimo_pedido}). Regra do pedido do dia:
-   · conta nova → os últimos 30 dias;
+   · conta nova → GASOLA_DESDE (2026-01-01) até hoje, num pedido só;
    · o recente está velho (ok_ate há 7 dias ou mais) ou o ano já está completo → o recente
      (continua de ok_ate − 2 dias, até 30 dias; sem buraco);
-   · senão → 30 dias para trás de ok_de, até GASOLA_DESDE (2026-01-01).
-   Assim 2026 inteiro entra em ~10 dias e o recente nunca fica mais de uma semana sem
-   atualizar. Conta que já pediu hoje é pulada (rodar de novo à mão não queima a cota de
+   · senão → o histórico que falta inteiro (GASOLA_DESDE até ok_de − 1), num pedido só;
+     se o Gasola recusar o período grande, 30 dias para trás por dia (tudo_recusado).
+   O recente nunca fica mais de uma semana sem atualizar. Conta que já pediu hoje é pulada (rodar de novo à mão não queima a cota de
    amanhã nem estoura a de hoje); GASOLA_FORCAR=1 ignora isso. ABAST_DE/ABAST_ATE não
    valem para o Gasola. */
 const GAS_DESDE = process.env.GASOLA_DESDE || '2026-01-01';
@@ -320,6 +320,12 @@ async function gasEstado() {
     return new Map((await r.json()).map(x => [x.sistema.slice(7), x.resumo || {}]));
   } catch (e) { return new Map(); }
 }
+/* A PRIMEIRA TEM QUE SER TUDO (Renan, 31/10/2026): a consulta do histórico pede o ano
+   inteiro de uma vez (GASOLA_DESDE até o dia antes do que a conta já tem), e conta nova
+   pede GASOLA_DESDE até hoje. Se o Gasola recusar o intervalo grande (a doc fala em 30
+   dias), a conta guarda tudo_recusado e passa a andar 30 dias por dia; se ele responder
+   só um pedaço, ok_de fica no abastecimento mais antigo que veio e o resto é pedido no
+   dia seguinte. */
 function janelaDoDia(est, hoje) {
   const recente = () => {
     let ini = somaDias(hoje, -29);
@@ -327,9 +333,11 @@ function janelaDoDia(est, hoje) {
     const fim = somaDias(ini, 29) < hoje ? somaDias(ini, 29) : hoje;
     return { tipo: 'recente', de: ini, ate: fim };
   };
-  if (!est.ok_ate || !est.ok_de) return recente();
+  if (!est.ok_ate || !est.ok_de) return est.tudo_recusado ? recente() : { tipo: 'tudo', de: GAS_DESDE, ate: hoje };
   if (est.ok_ate <= somaDias(hoje, -7) || est.ok_de <= GAS_DESDE) return recente();
-  const fim = somaDias(est.ok_de, -1), ini = somaDias(fim, -29) < GAS_DESDE ? GAS_DESDE : somaDias(fim, -29);
+  const fim = somaDias(est.ok_de, -1);
+  if (!est.tudo_recusado) return { tipo: 'tudo', de: GAS_DESDE, ate: fim };
+  const ini = somaDias(fim, -29) < GAS_DESDE ? GAS_DESDE : somaDias(fim, -29);
   return { tipo: 'histórico', de: ini, ate: fim };
 }
 async function gasola() {
@@ -352,6 +360,7 @@ async function gasola() {
     // consulta respondida: o dia está gasto para esta conta. Recusada (429, limite ainda do dia
     // anterior): não marca, para a rodada seguinte do mesmo dia (05:00) tentar de novo.
     if (lista || !/429/.test(ult)) est.ultimo_pedido = hoje;
+    if (!lista && jan.tipo === 'tudo' && /HTTP 4(00|22)/.test(ult)) { est.tudo_recusado = hoje; log(`   ${ct.nome}: o Gasola recusou o período inteiro (${ult}) — a conta passa a buscar 30 dias por dia`); }
     if (!lista) {
       log(`   ${ct.nome}: ${jan.tipo} ${jan.de}→${jan.ate} falhou (${ult})${/429/.test(ult) ? ' — consulta do dia já usada' : ''}`);
       await gasSalvaEstado(ct.nome, est, ult); continue;
@@ -385,7 +394,11 @@ async function gasola() {
     // gravar conta a conta e só então avançar o que a conta já tem
     if (MODO === 'gravar') {
       if (linhas.length > ini) GAS_GRAV += await grava(linhas.slice(ini));
-      est.ok_de = !est.ok_de || jan.de < est.ok_de ? jan.de : est.ok_de;
+      // período grande que voltou só com o fim: vale a partir do mais antigo que veio
+      let de = jan.de;
+      if (jan.tipo === 'tudo' && lista.length) { const ds = lista.map(r => { const d = dataBR(r.dataConclusao) || (r.emitidoEm ? new Date(r.emitidoEm) : null); return d && !isNaN(d) ? diaBR(d) : null; }).filter(Boolean).sort();
+        if (ds.length && ds[0] > somaDias(jan.de, 35)) { de = ds[0]; log(`   ${ct.nome}: pedi ${jan.de}→${jan.ate}, o mais antigo que veio é ${ds[0]} — o resto fica para o próximo pedido`); } }
+      est.ok_de = !est.ok_de || de < est.ok_de ? de : est.ok_de;
       est.ok_ate = !est.ok_ate || jan.ate > est.ok_ate ? jan.ate : est.ok_ate;
     }
     await gasSalvaEstado(ct.nome, est, null);

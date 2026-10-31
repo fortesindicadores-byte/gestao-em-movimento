@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610291700">
+<meta name="build" content="202610311700">
 <title>R$/L — Preço do Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -393,6 +393,7 @@ table.dre tr.total td.sep-l,table.dre .sep-l{border-left:1px solid var(--card-br
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../?volta="+encodeURIComponent(location.pathname+location.search));}catch(e){}</script>
 <script src="../../assets/gviz-cache.js?v=202610281200"></script>
+<script src="../../assets/consumo-api.js?v=202610311700"></script>
 </head>
 <body>
 <div class="app">
@@ -561,7 +562,7 @@ table.dre tr.total td.sep-l,table.dre .sep-l{border-left:1px solid var(--card-br
 
 <script>
 // o status do painel antigo (status-badge) vira o subtítulo do topo, junto do recorte
-let _recorte='', _carga='';
+let _recorte='', _carga='', FONTE_API='';
 function setStatus(v){ _carga=v; const e=document.getElementById('titSub'); if(e) e.textContent=_recorte?_recorte+' · '+v:v; }
 
 const KML_ID  = '1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A';
@@ -1154,20 +1155,23 @@ function atualizar(){
 
   _recorte=vigLbl;
   const now=new Date();
-  setStatus(`Atualizado ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`);
+  setStatus(`Atualizado ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`+FONTE_API);
 }
 
 // ── INIT ──
 const RSL_TAB='R$/L';
 async function init(){
-  const CACHE_KEY='bi_cache_rsl_v2';
+  const API=!!(window.ConsumoApi&&ConsumoApi.ativo);
+  const CACHE_KEY='bi_cache_rsl_v2'+(API?'_api':'');
   let hasCached=false;
   try{
     const cached=sessionStorage.getItem(CACHE_KEY);
     if(cached){const o=JSON.parse(cached);detectCols(o.cols);allRows=o.rows;buildRemLookup(o.rslCols,o.rslRows);populateFilters(allRows);atualizar();setStatus('Atualizando…');hasCached=true;}
   }catch(e){sessionStorage.removeItem(CACHE_KEY);}
   try{
-    const [main,rsl]=await Promise.all([fetchSheet(KML_ID,KML_TAB),fetchSheet(KML_ID,RSL_TAB)]);
+    let [main,rsl]=await Promise.all([fetchSheet(KML_ID,KML_TAB),fetchSheet(KML_ID,RSL_TAB)]);
+    // ?fonte=api (Integração Abastecimentos): realizado das APIs, o resto da aba (assets/consumo-api.js)
+    if(API){ main=await ConsumoApi.monta(main,{modo:'preco'}); FONTE_API=` · APIs Pró-Frotas · SUMA · Gasola${main.info.ate?' até '+main.info.ate.split('-').reverse().join('/'):''}`; }
     detectCols(main.cols);allRows=main.rows;
     buildRemLookup(rsl.cols,rsl.rows);
     sessionStorage.setItem(CACHE_KEY,JSON.stringify({cols:main.cols,rows:main.rows,rslCols:rsl.cols,rslRows:rsl.rows}));
@@ -1250,6 +1254,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610291700"></script>
+<script src="../../assets/build-check.js?v=202610311700"></script>
 </body>
 </html>

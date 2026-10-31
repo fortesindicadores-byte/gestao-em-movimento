@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610291700">
+<meta name="build" content="202610311700">
 <title>Km/L · Eficiência de Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -404,6 +404,7 @@ table.dre tr.total td.imp-cell{font-size:12px;}
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../?volta="+encodeURIComponent(location.pathname+location.search));}catch(e){}</script>
 <script src="../../assets/gviz-cache.js?v=202610281430"></script>
+<script src="../../assets/consumo-api.js?v=202610311700"></script>
 </head>
 <body>
 <div class="app">
@@ -1689,7 +1690,7 @@ function atualizar(){
 }
 
 // ── INIT ──
-const CACHE_KEY='bi_cache_kml', BASE_KEY='bi_cache_kml_base';
+const CACHE_KEY='bi_cache_kml'+(window.ConsumoApi&&ConsumoApi.ativo?'_api':''), BASE_KEY='bi_cache_kml_base';
 
 // BUSCA de verdade. O botão de atualizar chamava `atualizar()`, que só
 // redesenha o que já está na memória — nunca ia buscar nada, e ainda
@@ -1707,6 +1708,10 @@ async function buscaDados(){
     fetchSheet(GV_RSL_ID,'R$/L').catch(e=>{console.error('R$/L (preço rem):',e);return null;})
   ]);
   if(!kml)kml=kmlSheet;
+  // ?fonte=api (Integração Abastecimentos): o realizado vem das APIs dos sistemas de
+  // abastecimento; remunerado, projeto e modelo continuam os da aba (assets/consumo-api.js)
+  if(window.ConsumoApi&&ConsumoApi.ativo){ kml=await ConsumoApi.monta(kml,{modo:'kml'});
+    fonte='APIs Pró-Frotas · SUMA · Gasola'+(kml.info.semProjeto?` · ${kml.info.semProjeto} placa(s) fora da aba`:''); DADOS_ATE=kml.info.ate||null; CARGA_EM=null; }
   detectCols(kml.cols);allRows=kml.rows;canonicalizeModels(allRows);
   if(rsl&&rsl.rows)buildRemLookup(rsl.cols,rsl.rows);
   lidoEm=new Date();
@@ -1813,6 +1818,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610291700"></script>
+<script src="../../assets/build-check.js?v=202610311700"></script>
 </body>
 </html>
