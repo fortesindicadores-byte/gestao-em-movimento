@@ -229,13 +229,13 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
         <div class="go">Abrir <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
       </a>
 
-      <a class="hcard" href="postos/">
+      <a class="hcard" href="postos/" id="integ-card" style="display:none">
         <div class="hcard-top">
           <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v17"/><path d="M2 22h14"/><path d="M5 8h8"/><path d="M15 10h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V9l-3-3"/></svg></span>
-          <span class="tit">Postos</span>
-          <span class="bdg on">Ativo</span>
+          <span class="tit">Integração Abastecimentos</span>
+          <span class="bdg adm">Só admin</span>
         </div>
-        <div class="dsc">Valor, litros e R$/L abastecidos — dia a dia e por posto, das APIs Pró-Frotas, SUMA e Gasola.</div>
+        <div class="dsc">Valor, litros, R$/L e Km/L dos abastecimentos das APIs Pró-Frotas, SUMA e Gasola — dia a dia, por posto, por unidade e por placa.</div>
         <div class="go">Abrir <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
       </a>
 
@@ -278,7 +278,7 @@ function aplicaTema(t){
 function trocaTema(){ aplicaTema(document.body.classList.contains('claro') ? 'dark' : 'light'); }
 aplicaTema((function(){ try{ return localStorage.getItem('bi_theme'); }catch(e){ return null; } })() || 'dark');
 
-// Card "Condução Econômica" visível apenas para admin (por enquanto)
+// Cards só admin: Condução Econômica e Integração Abastecimentos
 (async function(){
   try{
     const SB_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
@@ -290,7 +290,7 @@ aplicaTema((function(){ try{ return localStorage.getItem('bi_theme'); }catch(e){
     if(!session) return;
     let isAdmin = session.user.email===ADMIN_EMAIL;
     if(!isAdmin){ try{ const { data:prof }=await sb.from('fca_profiles').select('is_admin').eq('user_id',session.user.id).maybeSingle(); isAdmin=!!(prof&&prof.is_admin); }catch(e){} }
-    if(isAdmin){ const c=document.getElementById('cond-card'); if(c) c.style.display=''; }
+    if(isAdmin){ ['cond-card','integ-card'].forEach(id=>{ const c=document.getElementById(id); if(c) c.style.display=''; }); }
   }catch(e){}
 })();
 </script>

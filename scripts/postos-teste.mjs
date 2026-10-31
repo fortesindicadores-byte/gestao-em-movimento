@@ -36,11 +36,14 @@ L.push({ ordem_servico: 'x3', data: '2026-10-06', placa: 'GOI0001', filial: 'CDD
 L.push({ ordem_servico: 'x4', data: '2026-10-07', placa: 'ABC0000', filial: 'CDD CUIABA', projeto_os: 'ROTA - CBA', litros: 100, valor: 1490000000, tipo_combustivel: 'DIESEL S10', posto: 'POSTO BARATO LTDA', cnpj_posto: '11111111000101', encerrada: 'S' });
 // ERP de antes → linhas da abast_api (a mesma conta). Inválidos: CAL/TER (o servidor filtra valido=true).
 const SIS = ['PROFROTAS', 'GASOLA'];
+// hodômetro: +300 km por abastecimento de diesel de cada placa (100 L → 3,00 km/L); o absurdo sem hodômetro
+const HOD = {};
 const A = L.map((x, i) => {
+  const hod = /^x4$/.test(x.ordem_servico) ? null : x.tipo_combustivel === 'ARLA 32' ? 1 : (HOD[x.placa] = (HOD[x.placa] || 10000) + 300);
   const suf = (x.projeto_os.match(/-\s*([A-Z]+)$/) || [])[1];
   const uni = suf === 'GOI' ? 'GNA' : suf;
   return { sistema: SIS[i % 2], id_origem: x.ordem_servico, item: 1, dia: x.data, unidade: uni, placa: x.placa, placa_origem: x.placa,
-    produto: x.tipo_combustivel, litros: x.litros, valor: x.valor, posto: x.posto, cnpj_posto: x.cnpj_posto,
+    produto: x.tipo_combustivel, litros: x.litros, valor: x.valor, posto: x.posto, cnpj_posto: x.cnpj_posto, hodometro: hod,
     valido: !/^(OPERACIONAL|TERCEIROS)/.test(x.projeto_os) };
 });
 // tanque interno (SUMA) sem nome de posto, em CGR
@@ -52,7 +55,7 @@ const GINFO = [...new Set(L.map(x => x.placa))].map(pl => ({ Placa: pl, Projeto:
 const TETO = 1000;
 let leituras = 0;
 
-async function cenario({ vp = { width: 1366, height: 768 }, tema = 'dark', semPosto = false } = {}) {
+async function cenario({ vp = { width: 1366, height: 768 }, tema = 'dark', semPosto = false, admin = true } = {}) {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   const ctx = await b.newContext({ viewport: vp, serviceWorkers: 'block', timezoneId: 'America/Sao_Paulo' });
   const pg = await ctx.newPage();
@@ -66,6 +69,7 @@ async function cenario({ vp = { width: 1366, height: 768 }, tema = 'dark', semPo
     const hd = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'Content-Range' };
     if (m === 'OPTIONS') return r.fulfill({ status: 204, headers: { ...hd, 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*' } });
     if (p.endsWith('/auth/v1/user')) return r.fulfill({ status: 200, body: JSON.stringify({ id: 'u1', email: 'x@conlogsa.com.br' }), contentType: 'application/json', headers: hd });
+    if (p.includes('/rest/v1/fca_profiles')) return r.fulfill({ status: 200, body: JSON.stringify({ is_admin: admin }), contentType: 'application/json', headers: hd });
     if (p.includes('/rest/v1/ginfo_snapshot')) return r.fulfill({ status: 200, body: JSON.stringify({ data: GINFO }), contentType: 'application/json', headers: hd });
     if (p.includes('/rest/v1/abast_api_base')) return r.fulfill({ status: 200, body: JSON.stringify([{ sistema: 'PROFROTAS', carregado_em: '2026-10-28T09:10:00Z', erro: null }, { sistema: 'SUMA', carregado_em: '2026-10-28T09:12:00Z', erro: null }]), contentType: 'application/json', headers: hd });
     if (p.includes('/rest/v1/abast_api')) {
@@ -89,7 +93,7 @@ async function cenario({ vp = { width: 1366, height: 768 }, tema = 'dark', semPo
   });
   const erros = []; pg.on('pageerror', e => erros.push(String(e)));
   await pg.goto('file://' + join(RAIZ, 'combustivel/postos/index.html'), { waitUntil: 'domcontentloaded' });
-  await pg.waitForFunction(() => /APIs/.test(document.getElementById('titSub').textContent) || /Erro|não existe/.test(document.getElementById('titSub').textContent), null, { timeout: 15000 });
+  await pg.waitForFunction(() => /APIs/.test(document.getElementById('titSub').textContent) || /Erro|não existe/.test(document.getElementById('titSub').textContent) || document.querySelector('#gate .gate'), null, { timeout: 15000 });
   await pg.waitForTimeout(400);
   return { b, pg, erros };
 }
@@ -116,7 +120,7 @@ const num = s => +String(s).replace(/[^\d,-]/g, '').replace(',', '.');
   t('filtro Sistema = SUMA', num(await txt(pg, '#k-lit')) === 600, await txt(pg, '#k-lit'));
   await pg.evaluate(() => { document.getElementById('ms-sis')._sel = new Set(); render(); });
   t('GOI vira GNA', await pg.evaluate(() => ROWS.some(r => r.uni === 'GNA')));
-  t('três cards: Valor, Litros, Preço', await pg.locator('.kpi').count() === 3);
+  t('três cards: Valor, Litros, Preço', await pg.locator('#vw-resumo .kpi').count() === 3);
   t('MoM do R$/L em vermelho quando sobe', await pg.locator('#k-rl-m b.cr').count() === 1, await txt(pg, '#k-rl-m'));
   // tabela: ordem e colunas
   const cab = await pg.locator('#tb-postos thead th').allTextContents();
@@ -140,6 +144,30 @@ const num = s => +String(s).replace(/[^\d,-]/g, '').replace(',', '.');
   t('filtro Posto', (await pg.locator('#tb-postos tbody tr').count()) === 1 && /7,10/.test(await txt(pg, '#k-rl')), await txt(pg, '#k-rl'));
   await pg.evaluate(() => { document.getElementById('ms-posto')._sel = new Set(); document.getElementById('ms-comb')._sel = new Set(); document.getElementById('ms-comb')._auto = false; render(); });
   t('combustível Todos inclui o Arla', await pg.evaluate(() => ROWS.filter(r => passa(r)).some(r => r.prod === 'ARLA 32')));
+  await pg.evaluate(() => { document.getElementById('ms-comb')._auto = true; montaFiltros(); render(); });
+  // Km/L: out/26, cada abastecimento regular com o anterior da placa (setembro) → 54.000 L e 162.000 km
+  await pg.evaluate(() => setVw('kml')); await pg.waitForTimeout(200);
+  t('Km/L: km rodado de out/26', num(await txt(pg, '#k-km')) === 162000, await txt(pg, '#k-km'));
+  t('Km/L: litros com km (sem SUMA sem hodômetro, sem o 1º da GNA, sem o absurdo)', num(await txt(pg, '#k-kl')) === 54000, await txt(pg, '#k-kl'));
+  t('Km/L = 3,00', (await txt(pg, '#k-kml')) === '3,00', await txt(pg, '#k-kml'));
+  t('gráfico Km/L por mês com set e out (out em foco)', await pg.evaluate(() => charts.kml && charts.kml.data.labels.join() === 'set/26,out/26' && /,\.85\)/.test(charts.kml.data.datasets[0].backgroundColor[1]) && /,\.2\)/.test(charts.kml.data.datasets[0].backgroundColor[0])));
+  t('set/26: 1º abastecimento de cada placa fica fora', await pg.evaluate(() => { const d = charts.kml.data.datasets[0].data; return Math.abs(d[0] - 3) < 1e-9; }));
+  await pg.evaluate(() => setVw('kmld')); await pg.waitForTimeout(150);
+  const cabK = await pg.locator('#tb-kml thead th').allTextContents();
+  t('Km/L Detalhado: colunas', cabK.join('|') === 'Unidade|Projeto|Km rodado|Litros com km|Km/L|Abastec.|Litros sem km', cabK.join('|'));
+  t('Km/L Detalhado: linha Total e litros sem km da SUMA/GNA/absurdo', /^800$/.test((await pg.locator('#tb-kml tr.total td').nth(6).textContent()).replace(/\D/g, '')), await pg.locator('#tb-kml tr.total').textContent());
+  await pg.click('#dims-kml .dimb[data-q="placa"]'); await pg.waitForTimeout(150);
+  t('Km/L Detalhado por Placa', (await pg.locator('#tb-kml thead th').allTextContents()).includes('Placa') && await pg.locator('#tb-kml tbody tr').count() > 50);
+  t('Km/L sem gráfico na visão da tabela e sem tabela na do gráfico', await pg.evaluate(() => !document.querySelector('#vw-kmld canvas') && !document.querySelector('#vw-kml table')));
+  await pg.evaluate(() => setVw('preco')); await pg.waitForTimeout(150);
+  t('Preço: R$/L igual ao do Resumo', (await txt(pg, '#p-rl')) === (await txt(pg, '#k-rl')) && (await txt(pg, '#p-lit')) === (await txt(pg, '#k-lit')), await txt(pg, '#p-rl'));
+  t('Preço: gráfico por mês com set e out', await pg.evaluate(() => charts.preco && charts.preco.data.labels.join() === 'set/26,out/26'));
+  await pg.evaluate(() => setVw('precod')); await pg.waitForTimeout(150);
+  const cabP = await pg.locator('#tb-preco thead th').allTextContents();
+  t('Preço Detalhado: colunas', cabP.join('|') === 'Unidade|Projeto|Valor abastecido|Litros|R$/L|Abastec.|Postos', cabP.join('|'));
+  t('Preço Detalhado: total bate com o card', num(await pg.locator('#tb-preco tr.total td').nth(3).textContent()) === num(await txt(pg, '#k-lit')));
+  t('nome do painel', (await pg.title()) === 'Integração Abastecimentos · Gestão em Movimento' && /Integração Abastecimentos/.test(await txt(pg, '.s-top b')));
+  await pg.evaluate(() => setVw('resumo'));
   if (SHOT) await pg.screenshot({ path: join(SHOT, 'postos-1366.png') });
   await b.close();
 }
@@ -156,6 +184,30 @@ for (const [w, h] of [[1366, 768], [1600, 900], [1920, 1080]]) for (const tema o
   const m2 = await mede();
   t(`${w}×${h} ${tema}: Por Posto sem rolagem de página nem da visão, tabela sem barra lateral`, !m2.pag && !m2.vw && !m2.hx, JSON.stringify(m2));
   if (SHOT && w === 1920) await pg.screenshot({ path: join(SHOT, `postos-tab-${w}-${tema}.png`) });
+  await pg.evaluate(() => setVw('kml')); await pg.waitForTimeout(200);
+  const m3 = await pg.evaluate(() => ({ pag: document.documentElement.scrollHeight > innerHeight + 1, vw: document.querySelector('.vw.on').scrollHeight > document.querySelector('.vw.on').clientHeight + 1, gh: Math.round(document.getElementById('ch-kml').getBoundingClientRect().height) }));
+  t(`${w}×${h} ${tema}: Km/L sem rolagem, gráfico com altura`, !m3.pag && !m3.vw && m3.gh > 250, JSON.stringify(m3));
+  if (SHOT && w === 1920) { await pg.waitForTimeout(1200); await pg.screenshot({ path: join(SHOT, `kml-${w}-${tema}.png`) }); }
+  await pg.evaluate(() => setVw('preco')); await pg.waitForTimeout(200);
+  const m5 = await pg.evaluate(() => ({ pag: document.documentElement.scrollHeight > innerHeight + 1, vw: document.querySelector('.vw.on').scrollHeight > document.querySelector('.vw.on').clientHeight + 1, gh: Math.round(document.getElementById('ch-preco').getBoundingClientRect().height) }));
+  t(`${w}×${h} ${tema}: Preço sem rolagem, gráfico com altura`, !m5.pag && !m5.vw && m5.gh > 250, JSON.stringify(m5));
+  if (SHOT && w === 1920) { await pg.waitForTimeout(1200); await pg.screenshot({ path: join(SHOT, `preco-${w}-${tema}.png`) }); }
+  for (const q of ['up', 'placa']) {
+    await pg.evaluate(q => { setVw('precod'); document.querySelector(`#dims-preco .dimb[data-q="${q}"]`).click(); }, q); await pg.waitForTimeout(150);
+    const m6 = await pg.evaluate(() => ({ pag: document.documentElement.scrollHeight > innerHeight + 1, vw: document.querySelector('.vw.on').scrollHeight > document.querySelector('.vw.on').clientHeight + 1, hx: document.querySelector('#tab-preco').scrollWidth > document.querySelector('#tab-preco').clientWidth + 1 }));
+    t(`${w}×${h} ${tema}: Preço Detalhado (${q}) sem rolagem de página, tabela sem barra lateral`, !m6.pag && !m6.vw && !m6.hx, JSON.stringify(m6));
+  }
+  for (const q of ['up', 'placa']) {
+    await pg.evaluate(q => { setVw('kmld'); document.querySelector(`#dims-kml .dimb[data-q="${q}"]`).click(); }, q); await pg.waitForTimeout(150);
+    const m4 = await pg.evaluate(() => ({ pag: document.documentElement.scrollHeight > innerHeight + 1, vw: document.querySelector('.vw.on').scrollHeight > document.querySelector('.vw.on').clientHeight + 1, hx: document.querySelector('#tab-kml').scrollWidth > document.querySelector('#tab-kml').clientWidth + 1 }));
+    t(`${w}×${h} ${tema}: Km/L Detalhado (${q}) sem rolagem de página, tabela sem barra lateral`, !m4.pag && !m4.vw && !m4.hx, JSON.stringify(m4));
+    if (SHOT && w === 1920 && q === 'placa') await pg.screenshot({ path: join(SHOT, `kmld-${w}-${tema}.png`) });
+  }
+  await b.close();
+}
+{
+  const { b, pg, erros } = await cenario({ admin: false });
+  t('quem não é admin cai no gate', !erros.length && /só para administradores/.test(await txt(pg, '#gate')), await txt(pg, '#gate'));
   await b.close();
 }
 {

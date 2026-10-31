@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610291700">
+<meta name="build" content="202610311600">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Postos · Gestão em Movimento</title>
+<title>Integração Abastecimentos · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -353,14 +353,17 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .kpi .km{line-height:1.45;}
 .gr-p{flex:1 1 auto;min-height:0;display:flex;}
 .gr-p .gcard{flex:1;min-height:0;min-width:0;}
-#vw-postos .tsec{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
-#vw-postos .twrap{flex:1 1 auto;min-height:0;overflow-y:auto;}
+#vw-postos .tsec,#vw-kmld .tsec,#vw-precod .tsec{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
+#vw-postos .twrap,#vw-kmld .twrap,#vw-precod .twrap{flex:1 1 auto;min-height:0;overflow-y:auto;}
+.thead-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex:0 0 auto;}
+.thead-row>.dims{margin-left:auto;}
 .ghd{display:flex;align-items:flex-start;gap:10px;}
 .ghd>div:first-child{flex:1;min-width:0;}
 .tsec{padding:12px 14px 10px;}
 .twrap{overflow-x:hidden;}
 .twrap table.dre{width:100%;table-layout:fixed;}
 #tb-postos th:nth-child(1){width:40%;} #tb-postos th:nth-child(n+2){width:20%;}
+#tb-kml th,#tb-preco th{width:12%;} #tb-kml th.l2,#tb-preco th.l2{width:16%;}
 table.dre td.num,table.dre th.num{overflow:hidden;text-overflow:ellipsis;}
 table.dre td{white-space:nowrap;}
 table.dre thead th{cursor:pointer;}
@@ -370,7 +373,7 @@ table.dre td.posto .lin2{font-weight:500;}
 .vazio-l{padding:26px;text-align:center;color:var(--txt3);font-size:11.5px;}
 .tpe{margin:8px 0 0;flex:0 0 auto;}
 @media(max-width:1500px){ table.dre td,table.dre thead th{padding:8px 6px;} table.dre{font-size:10.5px;} table.dre thead th{font-size:8.5px;letter-spacing:.4px;} }
-@media(max-width:860px){ #miolo{display:block;} .kpis{grid-template-columns:1fr;height:auto;} .gr-p{display:block;} #vw-postos .twrap{overflow-y:visible;}
+@media(max-width:860px){ #miolo{display:block;} .kpis{grid-template-columns:1fr;height:auto;} .gr-p{display:block;} #vw-postos .twrap,#vw-kmld .twrap,#vw-precod .twrap{overflow-y:visible;}
   .gr-p .gcard{height:320px;margin-bottom:12px;} .gr-p .tsec{height:auto;} .twrap{overflow-x:auto;} }
 </style>
 </head>
@@ -380,7 +383,7 @@ table.dre td.posto .lin2{font-weight:500;}
   <aside class="side">
     <div class="s-top">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--laranja)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v17"/><path d="M2 22h14"/><path d="M5 8h8"/><path d="M15 10h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V9l-3-3"/></svg>
-      <b>Postos</b>
+      <b>Integração Abastecimentos</b>
       <button class="s-mini" id="btMini" onclick="trocaMini()" title="Recolher menu">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>
       </button>
@@ -389,6 +392,10 @@ table.dre td.posto .lin2{font-weight:500;}
     <div class="s-sec">Visões</div>
     <button class="s-item on" data-vw="resumo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Resumo Gerencial</button>
     <button class="s-item" data-vw="postos"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17"/><path d="M2 22h13"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/><path d="M6 7h5"/></svg> Por Posto</button>
+    <button class="s-item" data-vw="preco"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Preço</button>
+    <button class="s-item" data-vw="precod"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg> Preço Detalhado</button>
+    <button class="s-item" data-vw="kml"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14l4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg> Km/L</button>
+    <button class="s-item" data-vw="kmld"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg> Km/L Detalhado</button>
 
     <div class="s-sec">Atalhos</div>
     <div id="pdf-slot"></div>
@@ -410,7 +417,7 @@ table.dre td.posto .lin2{font-weight:500;}
 
     <div class="s-user">
       <span class="av" id="av">—</span>
-      <div><b id="quem">—</b><i>Combustível · Postos</i></div>
+      <div><b id="quem">—</b><i>Combustível · só admin</i></div>
     </div>
   </aside>
 
@@ -463,6 +470,54 @@ table.dre td.posto .lin2{font-weight:500;}
             </div>
           </div>
         </section>
+        <section class="vw" id="vw-preco">
+          <div class="kpis">
+            <div class="kpi"><div class="kl">Valor abastecido</div><div class="kv" id="p-val">—</div><div class="km" id="p-val-m">—</div></div>
+            <div class="kpi"><div class="kl">Litros</div><div class="kv" id="p-lit">—</div><div class="km" id="p-lit-m">—</div></div>
+            <div class="kpi"><div class="kl">Preço R$/L</div><div class="kv" id="p-rl">—</div><div class="km" id="p-rl-m">—</div></div>
+          </div>
+          <div class="gr-p">
+            <div class="card gcard">
+              <div class="ghd"><div><div class="gtit">Preço R$/L por mês</div><div class="gsub" id="gp-sub">—</div></div></div>
+              <div class="gleg"><span style="color:#F97316"><i class="sq"></i><b style="color:var(--txt3);font-weight:700">PREÇO R$/L (VALOR ÷ LITROS)</b></span></div>
+              <div class="gcv"><canvas id="ch-preco"></canvas></div>
+            </div>
+          </div>
+        </section>
+        <section class="vw" id="vw-precod">
+          <div class="card tsec">
+            <div class="thead-row"><div class="dims" id="dims-preco">
+              <button class="dimb on" data-q="up">Unidade · Projeto</button>
+              <button class="dimb" data-q="placa">Placa</button>
+            </div></div>
+            <div class="twrap" id="tab-preco"><div class="vazio-l">Lendo…</div></div>
+            <div class="tsub tpe" id="tab-preco-pe"></div>
+          </div>
+        </section>
+        <section class="vw" id="vw-kml">
+          <div class="kpis">
+            <div class="kpi"><div class="kl">Km rodado</div><div class="kv" id="k-km">—</div><div class="km" id="k-km-m">—</div></div>
+            <div class="kpi"><div class="kl">Litros de diesel</div><div class="kv" id="k-kl">—</div><div class="km" id="k-kl-m">—</div></div>
+            <div class="kpi"><div class="kl">Km/L</div><div class="kv" id="k-kml">—</div><div class="km" id="k-kml-m">—</div></div>
+          </div>
+          <div class="gr-p">
+            <div class="card gcard">
+              <div class="ghd"><div><div class="gtit">Km/L por mês</div><div class="gsub" id="gk-sub">—</div></div></div>
+              <div class="gleg"><span style="color:#F97316"><i class="sq"></i><b style="color:var(--txt3);font-weight:700">KM/L (KM RODADO ÷ LITROS DE DIESEL)</b></span></div>
+              <div class="gcv"><canvas id="ch-kml"></canvas></div>
+            </div>
+          </div>
+        </section>
+        <section class="vw" id="vw-kmld">
+          <div class="card tsec">
+            <div class="thead-row"><div class="dims" id="dims-kml">
+              <button class="dimb on" data-q="up">Unidade · Projeto</button>
+              <button class="dimb" data-q="placa">Placa</button>
+            </div></div>
+            <div class="twrap" id="tab-kml"><div class="vazio-l">Lendo…</div></div>
+            <div class="tsub tpe" id="tab-kml-pe"></div>
+          </div>
+        </section>
         <section class="vw" id="vw-postos">
           <div class="card tsec">
             <div class="twrap" id="tab-postos"><div class="vazio-l">Lendo…</div></div>
@@ -475,6 +530,7 @@ table.dre td.posto .lin2{font-weight:500;}
 </div>
 <script>
 /* ══════════════════════════════════════════════════════════════
+   INTEGRAÇÃO ABASTECIMENTOS (era "Postos"; renomeado e só admin em 31/10/2026)
    POSTOS (Renan, 28/10/2026) — lê as APIs dos sistemas de abastecimento
    ("Quero essa visão lendo as APIs"): tabela abast_api, gravada pelo robô
    scripts/abast-api-robot.mjs (Pró-Frotas · SUMA · Gasola), uma linha por
@@ -523,7 +579,7 @@ const produto=t=>String(t||'').toUpperCase().replace(/\s+/g,' ').trim()||'(sem p
 const SISTEMA={PROFROTAS:'Pró-Frotas',SUMA:'SUMA',GASOLA:'Gasola'};
 
 /* ── leitura: páginas em paralelo, passo = o que o servidor devolveu ── */
-const COLS='sistema,id_origem,item,dia,unidade,placa,placa_origem,produto,litros,valor,posto,cnpj_posto';
+const COLS='sistema,id_origem,item,dia,unidade,placa,placa_origem,produto,litros,valor,posto,cnpj_posto,hodometro';
 function consulta(cont){ return sb.from('abast_api').select(COLS,cont?{count:'exact'}:undefined)
   .eq('valido',true).gte('dia','2026-01-01').order('sistema').order('id_origem').order('item'); }
 async function leTudo(){
@@ -547,7 +603,7 @@ async function carrega(){
     const litros=+r.litros||0, valor=+r.valor||0; if(!(litros>0)) return;
     const uni=r.unidade||'(sem unidade)', placa=placaKey(r.placa);
     base.push({os:r.sistema+'|'+r.id_origem+'|'+r.item,sis:r.sistema,data,vig:data.slice(0,7),placa:String(r.placa_origem||r.placa||'').toUpperCase(),
-      uni,proj:proj[placa]||'(sem projeto)',prod:produto(r.produto),litros,valor,rl:valor/litros,
+      uni,proj:proj[placa]||'(sem projeto)',prod:produto(r.produto),litros,valor,rl:valor/litros,pk:placa,hod:+r.hodometro>0?+r.hodometro:null,km:null,
       posto:String(r.posto||'').trim()||(r.sistema==='SUMA'?'Tanque interno · '+uni:''),cnpj:String(r.cnpj_posto||'').replace(/\D/g,'')});
   });
   const fora=b=>!(b.rl>=1.5&&b.rl<=12);
@@ -561,6 +617,22 @@ async function carrega(){
       b.valorOrig=b.valor; b.valor=b.litros*p; b.corrigido=true; }
     ROWS.push(b);
   });
+  calcKm();
+}
+/* ── KM/L (Renan, 31/10/2026: "um painel Km/L ali também, igual o que vem do ERP"):
+   a mesma regra do consumo automático do ERP (hododiesel). Por placa, os
+   abastecimentos de DIESEL em ordem de dia e hodômetro, juntando os três
+   sistemas (a placa pode abastecer no posto e no tanque interno); km de cada
+   abastecimento = hodômetro dele − hodômetro do diesel anterior da placa, valendo
+   só entre 1 e 3.000 km. Sem hodômetro, sem anterior (1º abastecimento do ano)
+   ou fora da faixa: o abastecimento fica fora do Km/L (os litros também). Arla
+   não entra. Km/L = Σ km ÷ Σ litros dos abastecimentos com km. */
+const ehDiesel=p=>/DIESEL/.test(p);
+function calcKm(){
+  const por=new Map();
+  ROWS.forEach(r=>{ r.km=null; if(!ehDiesel(r.prod)||r.hod==null||!r.pk) return; (por.get(r.pk)||por.set(r.pk,[]).get(r.pk)).push(r); });
+  por.forEach(xs=>{ xs.sort((a,b)=>a.data.localeCompare(b.data)||a.hod-b.hod); let ant=null;
+    xs.forEach(r=>{ if(ant!=null){ const d=r.hod-ant; if(d>0&&d<=3000) r.km=d; } ant=r.hod; }); });
 }
 
 /* ── filtros ── */
@@ -728,7 +800,91 @@ function render(){
   const fmtH=d=>new Date(d).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   const cargas=BASES.filter(b=>b.carregado_em&&SISTEMA[b.sistema]).map(b=>`${SISTEMA[b.sistema]||b.sistema} ${fmtH(b.carregado_em)}${b.erro?' (erro)':''}`).join(' · ');
   set('titSub',`${vsel.length===1?vigRot(vsel[0]).toUpperCase():vsel.length?vsel.length+' vigências':'2026'} · APIs${cargas?' · '+cargas:''}`);
+  renderKm(R); renderPreco(R);
 }
+/* ── PREÇO (Renan, 31/10/2026: "um painel Preço e Km/L"): valor ÷ litros dos
+   abastecimentos do recorte (o filtro Combustível abre nos diesel), com o
+   preço absurdo já trocado pelo mediano. Gráfico por mês e tabela por
+   unidade · projeto ou por placa, do maior para o menor R$/L. ── */
+let QPR='up';
+function renderPreco(R){
+  const V=R.reduce((s,r)=>s+r.valor,0), L=R.reduce((s,r)=>s+r.litros,0), RL=L>0?V/L:null, pl=new Set(R.map(r=>r.pk)).size;
+  set('p-val',R.length?'R$ '+br(V,0):'—');
+  set('p-val-m',`${br(R.length)} abastecimento${R.length===1?'':'s'} · ${br(pl)} placa${pl===1?'':'s'}`);
+  set('p-lit',R.length?br(L,0)+' L':'—');
+  set('p-lit-m',R.length?`média de ${br(L/R.length,0)} L por abastecimento`:'—');
+  set('p-rl',RL==null?'—':'R$ '+br(RL,2));
+  const vs=getSel('ms-vig'); let mom='';
+  if(vs.length===1&&RL!=null){ const P=ROWS.filter(r=>r.vig===addMes(vs[0],-1)&&passa(r,'ms-vig')); const pv=P.reduce((s,r)=>s+r.valor,0), plt=P.reduce((s,r)=>s+r.litros,0);
+    if(plt>0){ const d=(RL/(pv/plt)-1)*100; mom=`MoM <b class="${d>0.05?'cr':d<-0.05?'cg':''}">${d>0?'+':''}${br(d,1)}%</b> · `; } }
+  const pu=new Map(); R.forEach(r=>{ const a=pu.get(r.uni)||{v:0,l:0}; a.v+=r.valor; a.l+=r.litros; pu.set(r.uni,a); });
+  const pr=[...pu.values()].filter(a=>a.l>0).map(a=>a.v/a.l);
+  $('p-rl-m').innerHTML=RL==null?'—':mom+(pr.length>1?`de R$ ${br(Math.min(...pr),2)} a R$ ${br(Math.max(...pr),2)} entre as unidades`:'média ponderada pelos litros');
+  const mm=new Map(); ROWS.filter(r=>passa(r,'ms-vig')).forEach(r=>{ const a=mm.get(r.vig)||{v:r.vig,val:0,l:0}; a.val+=r.valor; a.l+=r.litros; mm.set(r.vig,a); });
+  const meses=[...mm.values()].sort((a,b)=>a.v.localeCompare(b.v));
+  set('gp-sub',meses.length?`${meses.length} mês${meses.length===1?'':'es'} · média ponderada pelos litros`:'sem abastecimento no recorte');
+  graficoMes('preco','ch-preco',meses.map(m=>vigRot(m.v)),meses.map(m=>m.l>0?m.val/m.l:null),new Set(vs.map(vigRot)),v=>br(v,2),
+    i=>[`Valor: R$ ${br(meses[i].val,2)}`,`Litros: ${br(meses[i].l,0)} L`],'Preço R$ ');
+  const g=new Map();
+  R.forEach(r=>{ const k=QPR==='placa'?r.pk:r.uni+'|'+r.proj; const a=g.get(k)||{uni:r.uni,proj:r.proj,placa:r.placa,v:0,l:0,n:0,ps:new Set()}; a.v+=r.valor; a.l+=r.litros; a.n++; a.ps.add(chavePosto(r)); g.set(k,a); });
+  const lin=[...g.values()].map(a=>({...a,rl:a.l>0?a.v/a.l:null})).sort((a,b)=>(a.rl==null)-(b.rl==null)||b.rl-a.rl||b.l-a.l);
+  const pc=QPR==='placa';
+  $('tab-preco').innerHTML=!lin.length?'<div class="vazio-l">Nenhum abastecimento no recorte.</div>'
+    :`<table class="dre" id="tb-preco"><thead><tr><th class="l2">Unidade</th><th class="l2">Projeto</th>${pc?'<th class="l2">Placa</th>':''}<th class="num">Valor abastecido</th><th class="num">Litros</th><th class="num">R$/L</th><th class="num">Abastec.</th><th class="num">Postos</th></tr></thead><tbody>`
+    + lin.map(x=>`<tr><td>${esc(x.uni)}</td><td>${esc(x.proj)}</td>${pc?`<td>${esc(x.placa)}</td>`:''}<td class="num">R$ ${br(x.v,0)}</td><td class="num">${br(x.l,0)}</td><td class="num"><b>${x.rl==null?'—':'R$ '+br(x.rl,4)}</b></td><td class="num">${br(x.n)}</td><td class="num">${br(x.ps.size)}</td></tr>`).join('')
+    + `</tbody><tfoot><tr class="total"><td>Total</td><td></td>${pc?'<td></td>':''}<td class="num">R$ ${br(V,0)}</td><td class="num">${br(L,0)}</td><td class="num"><b>${RL==null?'—':'R$ '+br(RL,4)}</b></td><td class="num">${br(R.length)}</td><td class="num">${br(new Set(R.map(chavePosto)).size)}</td></tr></tfoot></table>`;
+  $('tab-preco-pe').textContent='Do maior para o menor R$/L. Valor e litros como estão nas APIs (só abastecimentos válidos); preço fora de R$ 1,50 a R$ 12,00 por litro entra pelo mediano do mesmo combustível, unidade e mês.';
+}
+document.querySelectorAll('#dims-preco .dimb').forEach(b=>b.addEventListener('click',()=>{
+  QPR=b.dataset.q; document.querySelectorAll('#dims-preco .dimb').forEach(x=>x.classList.toggle('on',x===b)); render(); }));
+let QKM='up';
+function aggKm(xs){ let km=0,l=0,n=0; xs.forEach(r=>{ if(r.km!=null){ km+=r.km; l+=r.litros; n++; } }); return {km,l,n,kml:l>0?km/l:null}; }
+function renderKm(R){
+  const D=R.filter(r=>ehDiesel(r.prod)), A=aggKm(D);
+  const ld=D.reduce((s,r)=>s+r.litros,0), pl=new Set(D.filter(r=>r.km!=null).map(r=>r.pk)).size;
+  set('k-km',A.n?br(A.km,0)+' km':'—');
+  set('k-km-m',A.n?`${br(pl)} placa${pl===1?'':'s'} · ${br(A.n)} abastecimento${A.n===1?'':'s'} com hodômetro`:'sem hodômetro no recorte');
+  set('k-kl',A.n?br(A.l,0)+' L':'—');
+  set('k-kl-m',ld>0?`${br(A.l/ld*100,0)}% dos ${br(ld,0)} L de diesel do recorte`:'sem diesel no recorte');
+  set('k-kml',A.kml==null?'—':br(A.kml,2));
+  // MoM do Km/L: subir é bom (verde)
+  const vs=getSel('ms-vig'); let mom='';
+  if(vs.length===1&&A.kml!=null){ const ant=addMes(vs[0],-1); const P=aggKm(ROWS.filter(r=>r.vig===ant&&ehDiesel(r.prod)&&passa(r,'ms-vig')));
+    if(P.kml){ const d=(A.kml/P.kml-1)*100; mom=`MoM <b class="${d>0.05?'cg':d<-0.05?'cr':''}">${d>0?'+':''}${br(d,1)}%</b> · `; } }
+  $('k-kml-m').innerHTML=A.kml==null?'—':mom+`${br(A.km/Math.max(A.n,1),0)} km por abastecimento`;
+  // por mês: todos os meses do recorte (menos o filtro de vigência), os marcados em foco
+  const mm=new Map(); ROWS.filter(r=>ehDiesel(r.prod)&&passa(r,'ms-vig')).forEach(r=>{ if(r.km==null) return; const a=mm.get(r.vig)||{v:r.vig,km:0,l:0}; a.km+=r.km; a.l+=r.litros; mm.set(r.vig,a); });
+  const meses=[...mm.values()].sort((a,b)=>a.v.localeCompare(b.v));
+  set('gk-sub',meses.length?`${meses.length} mês${meses.length===1?'':'es'} · abastecimentos de diesel com hodômetro`:'sem hodômetro no recorte');
+  graficoMes('kml','ch-kml',meses.map(m=>vigRot(m.v)),meses.map(m=>m.l>0?m.km/m.l:null),new Set(vs.map(vigRot)),v=>br(v,2),
+    i=>[`Km: ${br(meses[i].km,0)}`,`Litros: ${br(meses[i].l,0)} L`],'Km/L ');
+  // tabela
+  const g=new Map();
+  D.forEach(r=>{ const k=QKM==='placa'?r.pk:r.uni+'|'+r.proj; const a=g.get(k)||{uni:r.uni,proj:r.proj,placa:r.placa,xs:[]}; a.xs.push(r); g.set(k,a); });
+  const lin=[...g.values()].map(a=>{ const x=aggKm(a.xs); const lt=a.xs.reduce((s,r)=>s+r.litros,0); return {...a,...x,lt}; })
+    .sort((a,b)=>(a.kml==null)-(b.kml==null)||a.kml-b.kml||b.lt-a.lt);
+  const pc=QKM==='placa';
+  $('tab-kml').innerHTML=!lin.length?'<div class="vazio-l">Nenhum abastecimento de diesel no recorte.</div>'
+    :`<table class="dre" id="tb-kml"><thead><tr><th class="l2">Unidade</th><th class="l2">Projeto</th>${pc?'<th class="l2">Placa</th>':''}<th class="num">Km rodado</th><th class="num">Litros com km</th><th class="num">Km/L</th><th class="num">Abastec.</th><th class="num">Litros sem km</th></tr></thead><tbody>`
+    + lin.map(x=>`<tr><td>${esc(x.uni)}</td><td>${esc(x.proj)}</td>${pc?`<td>${esc(x.placa)}</td>`:''}<td class="num">${x.n?br(x.km,0):'—'}</td><td class="num">${x.n?br(x.l,0):'—'}</td><td class="num"><b>${x.kml==null?'—':br(x.kml,2)}</b></td><td class="num">${br(x.n)}</td><td class="num">${br(x.lt-x.l,0)}</td></tr>`).join('')
+    + `</tbody><tfoot><tr class="total"><td>Total</td><td></td>${pc?'<td></td>':''}<td class="num">${br(A.km,0)}</td><td class="num">${br(A.l,0)}</td><td class="num"><b>${A.kml==null?'—':br(A.kml,2)}</b></td><td class="num">${br(A.n)}</td><td class="num">${br(ld-A.l,0)}</td></tr></tfoot></table>`;
+  $('tab-kml-pe').textContent='Do menor para o maior Km/L. Km = hodômetro do abastecimento de diesel − hodômetro do anterior da mesma placa (nos três sistemas), entre 1 e 3.000 km, a mesma regra do consumo do ERP. "Litros sem km": abastecimento sem hodômetro, primeiro do ano ou com salto fora da faixa, que fica fora do Km/L.';
+}
+// barras por mês no padrão do portal; meses marcados em foco (.85), os outros .2
+function graficoMes(ch,id,lab,data,foco,fmt,rodape,pref){
+  const B=chartBase(), vals=data.filter(v=>v!=null); const mx=Math.max(...vals,0), lo=vals.length?Math.min(...vals):0, amp=(mx-lo)||mx*.05||1;
+  const em=i=>!foco.size||foco.has(lab[i]);
+  if(charts[ch]) charts[ch].destroy();
+  if(!$(id)) return;
+  charts[ch]=new Chart($(id),{type:'bar',data:{labels:lab,datasets:[{data,backgroundColor:data.map((_,i)=>em(i)?(foco.size?'rgba(249,115,22,.85)':'rgba(249,115,22,.65)'):'rgba(249,115,22,.2)'),borderColor:'#F97316',borderWidth:1,borderRadius:3,barPercentage:.9,categoryPercentage:.92,maxBarThickness:110}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:30}},
+      plugins:{legend:{display:false},tooltip:{...B.tooltip,callbacks:{label:c=>' '+pref+fmt(c.raw),footer:it=>rodape(it[0].dataIndex)}},
+        datalabels:{display:c=>c.dataset.data[c.dataIndex]!=null,anchor:'end',align:'top',offset:2,color:B.dl,clip:false,font:{family:'Montserrat',size:12,weight:'700'},formatter:v=>fmt(v)}},
+      scales:{x:{grid:{display:false},border:{display:false},ticks:{...B.tick,maxRotation:0,autoSkip:false}},y:{display:false,beginAtZero:false,min:Math.max(0,lo-amp*1.2),max:mx+amp*.25}}},
+    plugins:typeof ChartDataLabels!=='undefined'?[ChartDataLabels]:[]});
+}
+document.querySelectorAll('#dims-kml .dimb').forEach(b=>b.addEventListener('click',()=>{
+  QKM=b.dataset.q; document.querySelectorAll('#dims-kml .dimb').forEach(x=>x.classList.toggle('on',x===b)); render(); }));
 document.querySelectorAll('#dims-dia .dimb').forEach(b=>b.addEventListener('click',()=>{
   MODO=b.dataset.m; document.querySelectorAll('#dims-dia .dimb').forEach(x=>x.classList.toggle('on',x===b)); render(); }));
 
@@ -744,6 +900,10 @@ async function initApp(){
   try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }catch(e){ gate('Erro','Falha ao iniciar a conexão com o portal.'); return; }
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ gate('Login necessário','Entre pelo <b>hub</b> para acessar esta tela.'); return; }
+  // só admin (Renan, 31/10/2026: "deixe apenas admin com acesso")
+  let adm=session.user.email==='fortesindicadores@gmail.com';
+  if(!adm){ try{ const {data:pf}=await sb.from('fca_profiles').select('is_admin').eq('user_id',session.user.id).maybeSingle(); adm=!!(pf&&pf.is_admin); }catch(e){} }
+  if(!adm){ gate('Acesso restrito','A Integração Abastecimentos é só para administradores do portal.'); return; }
   const nome=(session.user.user_metadata&&session.user.user_metadata.name)||session.user.email.split('@')[0];
   set('quem',nome); set('av',String(nome).trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase());
   $('miolo').style.display='';
@@ -751,12 +911,12 @@ async function initApp(){
 }
 
 /* ── navegação ── */
-const TIT={resumo:'Resumo Gerencial',postos:'Por Posto'};
+const TIT={resumo:'Resumo Gerencial',postos:'Por Posto',preco:'Preço',precod:'Preço Detalhado',kml:'Km/L',kmld:'Km/L Detalhado'};
 let VW='resumo';
 function setVw(v){ VW=v;
   document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===v));
   document.querySelectorAll('.vw').forEach(x=>x.classList.toggle('on',x.id==='vw-'+v)); set('tit',TIT[v]||'');
-  if(v==='resumo'&&charts.dia) setTimeout(()=>charts.dia.resize(),30); }
+  if(v==='resumo'&&charts.dia) setTimeout(()=>charts.dia.resize(),30); if(charts[v]) setTimeout(()=>charts[v].resize(),30); }
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
 
 /* ── lateral recolhida + dicas ── */
@@ -771,7 +931,7 @@ function ligaDicas(){ document.querySelectorAll('.side .s-item, .side .s-sair').
 ligaDicas(); setTimeout(ligaDicas,800);
 function trocaMini(){ escondeDica(); const l=document.querySelector('.side').classList.toggle('mini');
   try{ localStorage.setItem('postos_mini',l?'1':'0'); }catch(e){} const b=$('btMini'); if(b) b.title=l?'Expandir menu':'Recolher menu';
-  setTimeout(()=>{ if(charts.dia) charts.dia.resize(); },60); }
+  setTimeout(()=>{ if(charts.dia) charts.dia.resize(); Object.values(charts).forEach(c=>c&&c.resize()); },60); }
 try{ if(localStorage.getItem('postos_mini')==='1'){ document.querySelector('.side').classList.add('mini'); $('btMini').title='Expandir menu'; } }catch(e){}
 
 /* ── tema (mesma chave do hub) ── */
@@ -793,13 +953,13 @@ initApp();
 <script>
 initPdfExport({
   btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
-  title:'Postos', subtitle:()=>document.getElementById('titSub').textContent,
-  fileBase:'postos', main:()=>document.querySelector('.vw.on'),
+  title:'Integração Abastecimentos', subtitle:()=>document.getElementById('titSub').textContent,
+  fileBase:'integracao-abastecimentos', main:()=>document.querySelector('.vw.on'),
   views:()=>Object.keys(TIT).map(k=>({label:TIT[k], ativar:()=>setVw(k)})),
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610291700"></script>
+<script src="../../assets/build-check.js?v=202610311600"></script>
 </body>
 </html>
