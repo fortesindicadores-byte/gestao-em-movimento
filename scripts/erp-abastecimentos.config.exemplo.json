@@ -1,0 +1,7 @@
+{
+  "ErpServidor": "ENDERECO_DO_SQL_SERVER",
+  "ErpBanco": "NOME_DO_BANCO_DO_ERP",
+  "ErpUsuario": "",
+  "ErpSenha": "",
+  "SupabaseChave": "COLE_AQUI_A_CHAVE_service_role"
+}
