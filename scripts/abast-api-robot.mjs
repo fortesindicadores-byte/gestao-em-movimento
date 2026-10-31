@@ -206,7 +206,7 @@ const SUMA_URL = SUMA_HML
 const SUMA_CNPJ_HML = '71864203000174';
 async function suma(base) {
   const tok = ((SUMA_HML ? process.env.SUMA_HML_TOKEN : process.env.SUMA_USER_TOKEN) || '').trim();
-  if (!tok) throw new Error((SUMA_HML ? 'SUMA_HML_TOKEN' : 'SUMA_USER_TOKEN') + ' não configurado (GitHub Secrets)');
+  if (!tok) throw semToken((SUMA_HML ? 'SUMA_HML_TOKEN' : 'SUMA_USER_TOKEN') + ' não configurado (GitHub Secrets)');
   const extra = (process.env.SUMA_CNPJS || '').split(/[,;\s]+/).map(x => x.replace(/\D/g, '')).filter(x => x.length >= 11).map(cnpjDig);
   const porCnpj = new Map(base.filter(u => u.cnpj).map(u => [u.cnpj, u.unidade]));
   const cnpjs = SUMA_HML ? [SUMA_CNPJ_HML] : [...new Set([...porCnpj.keys(), ...extra])];
@@ -272,7 +272,7 @@ function gasolaContas() {
       .sort((x, y) => x.matriz - y.matriz);
   }
   const tok = (process.env.GASOLA_TOKEN || '').trim();
-  if (!tok) throw new Error('GASOLA_TOKENS (ou GASOLA_TOKEN) não configurado (GitHub Secrets)');
+  if (!tok) throw semToken('GASOLA_TOKENS (ou GASOLA_TOKEN) não configurado (GitHub Secrets)');
   return [{ nome: 'Gasola', uni: null, tok, matriz: false }];
 }
 let GAS_FIX = 0, GAS_GRAV = 0;
@@ -399,6 +399,10 @@ async function grava(linhas) {
 }
 
 /* ════════════════════════ main ════════════════════════ */
+// Sistema ainda sem token (o SUMA espera a homologação): na rodada diária, que pede todos,
+// ele é pulado com aviso e não deixa o job vermelho; pedido explicitamente, continua sendo erro.
+function semToken(msg) { const e = new Error(msg); e.semToken = true; return e; }
+const SIS_EXPLICITO = !!(process.env.ABAST_SISTEMAS || '').trim();
 function resumo(nome, ls) {
   const g = new Map();
   for (const l of ls) {
@@ -424,7 +428,10 @@ async function main() {
   for (const s of SIS) {
     if (!FN[s]) { log(`sistema desconhecido: ${s}`); continue; }
     let r, erro = null;
-    try { r = await FN[s](); } catch (e) { erro = e.message; log(`ERRO ${s}: ${erro}`); erros++; }
+    try { r = await FN[s](); } catch (e) {
+      if (e.semToken && !SIS_EXPLICITO) { log(`${s}: pulado · ${e.message}`); continue; }
+      erro = e.message; log(`ERRO ${s}: ${erro}`); erros++;
+    }
     if (MODO === 'sonda') continue;
     const ls = r ? r.linhas : [];
     if (r) resumo(s, ls);
