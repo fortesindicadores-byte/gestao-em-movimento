@@ -1,0 +1,47 @@
+name: Abast API Gasola (rodada nas 24h)
+
+# Só o Gasola, gravando. O Gasola aceita um pedido a cada 24h por conta: esta rodada
+# espera (até `espera` minutos) as contas fecharem as 24h e pede na hora. Enquanto
+# alguma conta ainda deve o pedido do histórico inteiro, ela chama a próxima rodada
+# (GASOLA_ENCADEAR=1). Depois disso, quem segue é o Abast API Robot das 05:00.
+on:
+  workflow_dispatch:
+    inputs:
+      espera:
+        description: "minutos que a rodada espera uma conta fechar as 24h (até 340)"
+        required: false
+        default: "30"
+      inicio:
+        description: "dormir até esta hora antes de começar (ISO; a rodada encadeada preenche)"
+        required: false
+        default: ""
+
+concurrency:
+  group: abast-api-gasola
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  gasola:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Gasola nas 24h
+        run: node scripts/abast-api-robot.mjs
+        env:
+          ABAST_MODO: gravar
+          ABAST_SISTEMAS: GASOLA
+          GASOLA_ESPERA_MIN: ${{ github.event.inputs.espera || '30' }}
+          GASOLA_INICIO: ${{ github.event.inputs.inicio }}
+          GASOLA_ENCADEAR: '1'
+          GH_TOKEN: ${{ github.token }}
+          GASOLA_TOKEN:  ${{ secrets.GASOLA_TOKEN }}
+          GASOLA_TOKENS: ${{ secrets.GASOLA_TOKENS }}
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}

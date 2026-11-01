@@ -64,6 +64,7 @@ jobs:
           SUMA_HML_TOKEN:  ${{ secrets.SUMA_HML_TOKEN }}
           GASOLA_TOKEN:    ${{ secrets.GASOLA_TOKEN }}
           GASOLA_TOKENS:   ${{ secrets.GASOLA_TOKENS }}
+          GASOLA_ESPERA_MIN: '30'
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
       - name: Avisar por e-mail se falhar
         if: failure()
