@@ -384,7 +384,8 @@ async function gasola() {
     } catch (e) { ult = e.message; }
     // consulta respondida: o dia está gasto para esta conta. Recusada (429, limite ainda do dia
     // anterior): não marca, para a rodada seguinte do mesmo dia (05:00) tentar de novo.
-    if (lista || !/429/.test(ult)) { est.ultimo_pedido = hoje; est.ultimo_em = new Date().toISOString(); delete est.erro429_em; }
+    // recusa por pedido inválido (400) não gasta a cota (medido em 01/11/2026: Itajaí recusada às 00:08 pediu de novo às 10:19)
+    if (lista || !/HTTP (429|400)/.test(ult)) { est.ultimo_pedido = hoje; est.ultimo_em = new Date().toISOString(); delete est.erro429_em; }
     else est.erro429_em = new Date().toISOString();
     if (lista) delete est.ultimo_erro; else if (!/429/.test(ult)) est.ultimo_erro = ult;
     if (!lista) {
@@ -433,7 +434,7 @@ async function gasola() {
   const res = [...porUni].map(([u, n]) => ({ unidade: u, sigla: u, itens: n }));
   res.forEach(x => log(`   ${x.unidade}: ${x.itens} abastecimento(s)`));
   if (GAS_FIX) log(`   ${GAS_FIX} abastecimento(s) com valor fora de litros × preço cobrado: gravados pela conta`);
-  if (MODO === 'gravar' && process.env.GASOLA_ENCADEAR === '1') await gasEncadeia(contas);
+  if (MODO === 'gravar' && process.env.GASOLA_ENCADEAR === '1') await gasEncadeia(gasolaContas());
   return { linhas, res };
 }
 // chama a próxima rodada do Gasola enquanto alguma conta deve o pedido do histórico inteiro
