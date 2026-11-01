@@ -2,7 +2,7 @@ name: Abast API Gasola (rodada nas 24h)
 
 # Só o Gasola, gravando. O Gasola aceita um pedido a cada 24h por conta: esta rodada
 # espera (até `espera` minutos) as contas fecharem as 24h e pede na hora. Enquanto
-# alguma conta ainda deve o pedido do histórico inteiro, ela chama a próxima rodada
+# alguma conta ainda não tem o histórico até 01/01/2026, ela chama a próxima rodada
 # (GASOLA_ENCADEAR=1). Depois disso, quem segue é o Abast API Robot das 05:00.
 on:
   workflow_dispatch:
@@ -15,6 +15,20 @@ on:
         description: "dormir até esta hora antes de começar (ISO; a rodada encadeada preenche)"
         required: false
         default: ""
+      so:
+        description: "só as contas cujo nome contém o texto (teste)"
+        required: false
+        default: ""
+      forcar:
+        description: "ignorar as 24h (teste de uma conta)"
+        required: false
+        default: false
+        type: boolean
+      encadear:
+        description: "chamar a próxima rodada"
+        required: false
+        default: true
+        type: boolean
 
 concurrency:
   group: abast-api-gasola
@@ -40,7 +54,9 @@ jobs:
           ABAST_SISTEMAS: GASOLA
           GASOLA_ESPERA_MIN: ${{ github.event.inputs.espera || '30' }}
           GASOLA_INICIO: ${{ github.event.inputs.inicio }}
-          GASOLA_ENCADEAR: '1'
+          GASOLA_ENCADEAR: ${{ github.event.inputs.encadear == 'false' && '0' || '1' }}
+          GASOLA_SO: ${{ github.event.inputs.so }}
+          GASOLA_FORCAR: ${{ github.event.inputs.forcar == 'true' && '1' || '0' }}
           GH_TOKEN: ${{ github.token }}
           GASOLA_TOKEN:  ${{ secrets.GASOLA_TOKEN }}
           GASOLA_TOKENS: ${{ secrets.GASOLA_TOKENS }}

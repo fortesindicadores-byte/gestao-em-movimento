@@ -300,12 +300,13 @@ let GAS_FIX = 0, GAS_GRAV = 0;
 /* UMA CONSULTA POR DIA POR CONTA (Renan, 30/10/2026: "Gasola aceita uma consulta por dia
    apenas"). Cada conta faz no máximo UM pedido por dia (de no máximo 30 dias, o teto da
    API) e o robô lembra, por conta, o que já veio: linha GASOLA:<conta> em abast_api_base
-   (resumo = {ok_de, ok_ate, ultimo_pedido, tudo_feito}). Regra do pedido do dia:
+   (resumo = {ok_de, ok_ate, ultimo_pedido, ultimo_em}). Regra do pedido do dia:
    · conta nova → GASOLA_DESDE (2026-01-01) até hoje, num pedido só (uma vez);
    · o recente está velho (ok_ate há 7 dias ou mais) ou o ano já está completo → o recente
      (continua de ok_ate − 2 dias, até 30 dias; sem buraco);
-   · senão → o histórico que falta: inteiro num pedido só na PRIMEIRA vez (tudo_feito);
-     depois, ou se o Gasola recusar o período grande (tudo_recusado), 30 dias por dia.
+   · senão → o histórico que falta, 30 dias para trás de ok_de até GASOLA_DESDE.
+     O pedido do ano inteiro de uma vez foi tentado em 01/11/2026 e o Gasola recusou
+     (HTTP 400): a API não aceita mais de 30 dias por pedido.
    O recente nunca fica mais de uma semana sem atualizar. Conta que ainda não fechou 24h do
    último pedido é pulada (ou esperada, ver GASOLA_ESPERA_MIN abaixo); GASOLA_FORCAR=1 ignora isso. ABAST_DE/ABAST_ATE não
    valem para o Gasola. */
@@ -315,7 +316,7 @@ const GAS_FORCAR = process.env.GASOLA_FORCAR === '1';
    exigidas pelo gasola"). Cada conta só pede de novo 24h (+1 min) depois do último pedido
    respondido (ultimo_em). Conta que fecha as 24h dentro de GASOLA_ESPERA_MIN minutos é
    esperada (o robô dorme até a hora dela); as outras ficam para a próxima rodada.
-   Enquanto alguma conta ainda deve o pedido do histórico inteiro (tudo), a rodada que
+   Enquanto alguma conta ainda não tem o histórico até GASOLA_DESDE, a rodada que
    grava chama a próxima (workflow Abast API Gasola) para a hora em que a próxima conta
    fecha as 24h: GASOLA_ENCADEAR=1. */
 const GAS_ESPERA = Math.max(0, +(process.env.GASOLA_ESPERA_MIN || 0)) * 60e3;
@@ -334,13 +335,9 @@ async function gasEstado() {
     return new Map((await r.json()).map(x => { const e = x.resumo || {}; if (!e.ultimo_em && e.ultimo_pedido && x.carregado_em) e.ultimo_em = x.carregado_em; return [x.sistema.slice(7), e]; }));
   } catch (e) { return new Map(); }
 }
-/* TUDO UMA VEZ SÓ (Renan, 31/10/2026: "a primeira tem que ser tudo" → "Só amanhã tudo,
-   gasola. depois pode voltar ao normal"). Cada conta faz UM pedido grande na vida: o
-   histórico inteiro que falta (GASOLA_DESDE até o dia antes do que a conta já tem; conta
-   nova, até hoje). Respondido ou recusado, a conta marca tudo_feito (ou tudo_recusado) e
-   volta ao normal: o que ainda faltar do histórico vem 30 dias por dia, e depois só o
-   recente. Se ele responder só um pedaço, ok_de fica no abastecimento mais antigo que veio.
-   Ensaio e sonda não gastam o pedido grande (só a rodada que grava marca tudo_feito). */
+/* O HISTÓRICO É DE 30 EM 30 DIAS: o Gasola recusa (HTTP 400) período maior que 30 dias
+   (testado em 01/11/2026 com o ano inteiro). Enquanto o histórico não chega em
+   GASOLA_DESDE, o workflow Abast API Gasola pede cada conta assim que ela fecha as 24h. */
 function janelaDoDia(est, hoje) {
   const recente = () => {
     let ini = somaDias(hoje, -29);
@@ -348,16 +345,16 @@ function janelaDoDia(est, hoje) {
     const fim = somaDias(ini, 29) < hoje ? somaDias(ini, 29) : hoje;
     return { tipo: 'recente', de: ini, ate: fim };
   };
-  const tudoPendente = !est.tudo_feito && !est.tudo_recusado;
-  if (!est.ok_ate || !est.ok_de) return tudoPendente ? { tipo: 'tudo', de: GAS_DESDE, ate: hoje } : recente();
+  if (!est.ok_ate || !est.ok_de) return recente();
   if (est.ok_ate <= somaDias(hoje, -7) || est.ok_de <= GAS_DESDE) return recente();
   const fim = somaDias(est.ok_de, -1);
-  if (tudoPendente) return { tipo: 'tudo', de: GAS_DESDE, ate: fim };
   const ini = somaDias(fim, -29) < GAS_DESDE ? GAS_DESDE : somaDias(fim, -29);
   return { tipo: 'histórico', de: ini, ate: fim };
 }
 async function gasola() {
-  const contas = gasolaContas();
+  // GASOLA_SO: só as contas cujo nome contém o texto (separe por vírgula); para testar uma conta
+  const SO = (process.env.GASOLA_SO || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
+  const contas = gasolaContas().filter(c => !SO.length || SO.some(t => c.nome.toLowerCase().includes(t)));
   const linhas = [], porUni = new Map(), vistos = new Set();
   // rodada encadeada: dorme até perto da hora em que a próxima conta fecha as 24h
   const ini = Date.parse(process.env.GASOLA_INICIO || '');
@@ -389,9 +386,7 @@ async function gasola() {
     // anterior): não marca, para a rodada seguinte do mesmo dia (05:00) tentar de novo.
     if (lista || !/429/.test(ult)) { est.ultimo_pedido = hoje; est.ultimo_em = new Date().toISOString(); delete est.erro429_em; }
     else est.erro429_em = new Date().toISOString();
-    // o pedido grande é uma vez só: respondido (ou recusado de vez) na rodada que grava, volta ao normal
-    if (jan.tipo === 'tudo' && MODO === 'gravar' && (lista || !/429/.test(ult))) est.tudo_feito = hoje;
-    if (!lista && jan.tipo === 'tudo' && /HTTP 4(00|22)/.test(ult)) { est.tudo_recusado = hoje; log(`   ${ct.nome}: o Gasola recusou o período inteiro (${ult}) — a conta passa a buscar 30 dias por dia`); }
+    if (lista) delete est.ultimo_erro; else if (!/429/.test(ult)) est.ultimo_erro = ult;
     if (!lista) {
       log(`   ${ct.nome}: ${jan.tipo} ${jan.de}→${jan.ate} falhou (${ult})${/429/.test(ult) ? ' — consulta do dia já usada' : ''}`);
       await gasSalvaEstado(ct.nome, est, ult); continue;
@@ -444,8 +439,9 @@ async function gasola() {
 // chama a próxima rodada do Gasola enquanto alguma conta deve o pedido do histórico inteiro
 async function gasEncadeia(contas) {
   const EST = await gasEstado();
-  const devem = contas.filter(ct => { const e = EST.get(ct.nome) || {}; return !e.tudo_feito && !e.tudo_recusado; });
-  if (!devem.length) { log('   Gasola: todas as contas já fizeram o pedido do histórico inteiro — sem próxima rodada'); return; }
+  // devem: contas cujo histórico ainda não chegou em GASOLA_DESDE (conta com erro fixo, como token recusado, fica fora)
+  const devem = contas.filter(ct => { const e = EST.get(ct.nome) || {}; return !(e.ok_de && e.ok_de <= GAS_DESDE) && !(e.ultimo_erro && !/HTTP 400/.test(e.ultimo_erro)); });
+  if (!devem.length) { log('   Gasola: histórico completo em todas as contas — sem próxima rodada (segue a das 05:00)'); return; }
   let prox = Math.min(...devem.map(ct => gasProx(EST.get(ct.nome) || {}) || Date.now()));
   if (prox < Date.now() + 5 * 60e3) prox = Date.now() + 60 * 60e3;          // nada de rodada atrás de rodada
   const inicio = new Date(prox - 10 * 60e3).toISOString();
