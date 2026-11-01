@@ -300,12 +300,12 @@ let GAS_FIX = 0, GAS_GRAV = 0;
 /* UMA CONSULTA POR DIA POR CONTA (Renan, 30/10/2026: "Gasola aceita uma consulta por dia
    apenas"). Cada conta faz no máximo UM pedido por dia (de no máximo 30 dias, o teto da
    API) e o robô lembra, por conta, o que já veio: linha GASOLA:<conta> em abast_api_base
-   (resumo = {ok_de, ok_ate, ultimo_pedido}). Regra do pedido do dia:
-   · conta nova → GASOLA_DESDE (2026-01-01) até hoje, num pedido só;
+   (resumo = {ok_de, ok_ate, ultimo_pedido, tudo_feito}). Regra do pedido do dia:
+   · conta nova → GASOLA_DESDE (2026-01-01) até hoje, num pedido só (uma vez);
    · o recente está velho (ok_ate há 7 dias ou mais) ou o ano já está completo → o recente
      (continua de ok_ate − 2 dias, até 30 dias; sem buraco);
-   · senão → o histórico que falta inteiro (GASOLA_DESDE até ok_de − 1), num pedido só;
-     se o Gasola recusar o período grande, 30 dias para trás por dia (tudo_recusado).
+   · senão → o histórico que falta: inteiro num pedido só na PRIMEIRA vez (tudo_feito);
+     depois, ou se o Gasola recusar o período grande (tudo_recusado), 30 dias por dia.
    O recente nunca fica mais de uma semana sem atualizar. Conta que já pediu hoje é pulada (rodar de novo à mão não queima a cota de
    amanhã nem estoura a de hoje); GASOLA_FORCAR=1 ignora isso. ABAST_DE/ABAST_ATE não
    valem para o Gasola. */
@@ -320,12 +320,13 @@ async function gasEstado() {
     return new Map((await r.json()).map(x => [x.sistema.slice(7), x.resumo || {}]));
   } catch (e) { return new Map(); }
 }
-/* A PRIMEIRA TEM QUE SER TUDO (Renan, 31/10/2026): a consulta do histórico pede o ano
-   inteiro de uma vez (GASOLA_DESDE até o dia antes do que a conta já tem), e conta nova
-   pede GASOLA_DESDE até hoje. Se o Gasola recusar o intervalo grande (a doc fala em 30
-   dias), a conta guarda tudo_recusado e passa a andar 30 dias por dia; se ele responder
-   só um pedaço, ok_de fica no abastecimento mais antigo que veio e o resto é pedido no
-   dia seguinte. */
+/* TUDO UMA VEZ SÓ (Renan, 31/10/2026: "a primeira tem que ser tudo" → "Só amanhã tudo,
+   gasola. depois pode voltar ao normal"). Cada conta faz UM pedido grande na vida: o
+   histórico inteiro que falta (GASOLA_DESDE até o dia antes do que a conta já tem; conta
+   nova, até hoje). Respondido ou recusado, a conta marca tudo_feito (ou tudo_recusado) e
+   volta ao normal: o que ainda faltar do histórico vem 30 dias por dia, e depois só o
+   recente. Se ele responder só um pedaço, ok_de fica no abastecimento mais antigo que veio.
+   Ensaio e sonda não gastam o pedido grande (só a rodada que grava marca tudo_feito). */
 function janelaDoDia(est, hoje) {
   const recente = () => {
     let ini = somaDias(hoje, -29);
@@ -333,10 +334,11 @@ function janelaDoDia(est, hoje) {
     const fim = somaDias(ini, 29) < hoje ? somaDias(ini, 29) : hoje;
     return { tipo: 'recente', de: ini, ate: fim };
   };
-  if (!est.ok_ate || !est.ok_de) return est.tudo_recusado ? recente() : { tipo: 'tudo', de: GAS_DESDE, ate: hoje };
+  const tudoPendente = !est.tudo_feito && !est.tudo_recusado;
+  if (!est.ok_ate || !est.ok_de) return tudoPendente ? { tipo: 'tudo', de: GAS_DESDE, ate: hoje } : recente();
   if (est.ok_ate <= somaDias(hoje, -7) || est.ok_de <= GAS_DESDE) return recente();
   const fim = somaDias(est.ok_de, -1);
-  if (!est.tudo_recusado) return { tipo: 'tudo', de: GAS_DESDE, ate: fim };
+  if (tudoPendente) return { tipo: 'tudo', de: GAS_DESDE, ate: fim };
   const ini = somaDias(fim, -29) < GAS_DESDE ? GAS_DESDE : somaDias(fim, -29);
   return { tipo: 'histórico', de: ini, ate: fim };
 }
@@ -360,6 +362,8 @@ async function gasola() {
     // consulta respondida: o dia está gasto para esta conta. Recusada (429, limite ainda do dia
     // anterior): não marca, para a rodada seguinte do mesmo dia (05:00) tentar de novo.
     if (lista || !/429/.test(ult)) est.ultimo_pedido = hoje;
+    // o pedido grande é uma vez só: respondido (ou recusado de vez) na rodada que grava, volta ao normal
+    if (jan.tipo === 'tudo' && MODO === 'gravar' && (lista || !/429/.test(ult))) est.tudo_feito = hoje;
     if (!lista && jan.tipo === 'tudo' && /HTTP 4(00|22)/.test(ult)) { est.tudo_recusado = hoje; log(`   ${ct.nome}: o Gasola recusou o período inteiro (${ult}) — a conta passa a buscar 30 dias por dia`); }
     if (!lista) {
       log(`   ${ct.nome}: ${jan.tipo} ${jan.de}→${jan.ate} falhou (${ult})${/429/.test(ult) ? ' — consulta do dia já usada' : ''}`);
