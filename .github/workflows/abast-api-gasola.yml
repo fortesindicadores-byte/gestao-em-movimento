@@ -1,14 +1,14 @@
-name: Abast API Gasola (rodada nas 24h)
+name: Abast API Gasola (rodada na janela do Gasola)
 
-# Só o Gasola, gravando. O Gasola aceita um pedido a cada 24h por conta: esta rodada
-# espera (até `espera` minutos) as contas fecharem as 24h e pede na hora. Enquanto
+# Só o Gasola, gravando. O Gasola aceita um pedido a cada 6h por conta (o Gasola informou): esta rodada
+# espera (até `espera` minutos) as contas fecharem a janela e pede na hora. Enquanto
 # alguma conta ainda não tem o histórico até 01/01/2026, ela chama a próxima rodada
 # (GASOLA_ENCADEAR=1). Depois disso, quem segue é o Abast API Robot das 05:00.
 on:
   workflow_dispatch:
     inputs:
       espera:
-        description: "minutos que a rodada espera uma conta fechar as 24h (até 340)"
+        description: "minutos que a rodada espera uma conta fechar a janela (até 340)"
         required: false
         default: "30"
       inicio:
@@ -20,7 +20,7 @@ on:
         required: false
         default: ""
       forcar:
-        description: "ignorar as 24h (teste de uma conta)"
+        description: "ignorar a janela (teste de uma conta)"
         required: false
         default: false
         type: boolean
@@ -47,7 +47,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Gasola nas 24h
+      - name: Gasola na janela
         run: node scripts/abast-api-robot.mjs
         env:
           ABAST_MODO: gravar

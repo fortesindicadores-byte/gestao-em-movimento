@@ -307,20 +307,23 @@ let GAS_FIX = 0, GAS_GRAV = 0;
    · senão → o histórico que falta, 30 dias para trás de ok_de até GASOLA_DESDE.
      O pedido do ano inteiro de uma vez foi tentado em 01/11/2026 e o Gasola recusou
      (HTTP 400): a API não aceita mais de 30 dias por pedido.
-   O recente nunca fica mais de uma semana sem atualizar. Conta que ainda não fechou 24h do
+   O recente nunca fica mais de uma semana sem atualizar. Conta que ainda não fechou a janela do
    último pedido é pulada (ou esperada, ver GASOLA_ESPERA_MIN abaixo); GASOLA_FORCAR=1 ignora isso. ABAST_DE/ABAST_ATE não
    valem para o Gasola. */
 const GAS_DESDE = process.env.GASOLA_DESDE || '2026-01-01';
 const GAS_FORCAR = process.env.GASOLA_FORCAR === '1';
-/* 24 HORAS, NÃO DIA DO CALENDÁRIO (Renan, 01/11/2026: "rode quando completar as 24h
-   exigidas pelo gasola"). Cada conta só pede de novo 24h (+1 min) depois do último pedido
-   respondido (ultimo_em). Conta que fecha as 24h dentro de GASOLA_ESPERA_MIN minutos é
+/* JANELA DE 6 HORAS POR CONTA (Renan, 01/11/2026: "rode quando completar as 24h exigidas
+   pelo gasola" → "Me falaram lá no gasola que são 6h"). Cada conta só pede de novo
+   GASOLA_JANELA_H horas (+1 min) depois do último pedido respondido (ultimo_em). Recusa com
+   429 tenta 1 hora depois e não conta como pedido. Conta que fecha a janela dentro de
+   GASOLA_ESPERA_MIN minutos é
    esperada (o robô dorme até a hora dela); as outras ficam para a próxima rodada.
    Enquanto alguma conta ainda não tem o histórico até GASOLA_DESDE, a rodada que
    grava chama a próxima (workflow Abast API Gasola) para a hora em que a próxima conta
-   fecha as 24h: GASOLA_ENCADEAR=1. */
+   fecha a janela: GASOLA_ENCADEAR=1. */
 const GAS_ESPERA = Math.max(0, +(process.env.GASOLA_ESPERA_MIN || 0)) * 60e3;
-const GAS_24H = 24 * 3600e3 + 60e3;
+const GAS_JAN_H = Math.max(1, +(process.env.GASOLA_JANELA_H || 6));
+const GAS_24H = GAS_JAN_H * 3600e3 + 60e3;
 const dorme = ms => new Promise(r => setTimeout(r, ms));
 const horaBR = t => new Date(t - 3 * 3600e3).toISOString().replace('T', ' ').slice(5, 16).replace(/^(\d\d)-(\d\d)/, '$2/$1');
 // recusado com 429 (o Gasola ainda conta o pedido anterior): tenta de novo 1 hora depois
@@ -337,7 +340,7 @@ async function gasEstado() {
 }
 /* O HISTÓRICO É DE 30 EM 30 DIAS: o Gasola recusa (HTTP 400) período maior que 30 dias
    (testado em 01/11/2026 com o ano inteiro). Enquanto o histórico não chega em
-   GASOLA_DESDE, o workflow Abast API Gasola pede cada conta assim que ela fecha as 24h. */
+   GASOLA_DESDE, o workflow Abast API Gasola pede cada conta assim que ela fecha a janela. */
 function janelaDoDia(est, hoje) {
   const recente = () => {
     let ini = somaDias(hoje, -29);
@@ -356,19 +359,19 @@ async function gasola() {
   const SO = (process.env.GASOLA_SO || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
   const contas = gasolaContas().filter(c => !SO.length || SO.some(t => c.nome.toLowerCase().includes(t)));
   const linhas = [], porUni = new Map(), vistos = new Set();
-  // rodada encadeada: dorme até perto da hora em que a próxima conta fecha as 24h
+  // rodada encadeada: dorme até perto da hora em que a próxima conta fecha a janela
   const ini = Date.parse(process.env.GASOLA_INICIO || '');
-  if (ini > Date.now()) { const ms = Math.min(ini - Date.now(), 320 * 60e3); log(`   Gasola: dormindo até ${horaBR(Date.now() + ms)} (perto das 24h da próxima conta)`); await dorme(ms); }
+  if (ini > Date.now()) { const ms = Math.min(ini - Date.now(), 320 * 60e3); log(`   Gasola: dormindo até ${horaBR(Date.now() + ms)} (perto da janela da próxima conta)`); await dorme(ms); }
   const EST = await gasEstado();
-  // contas na ordem em que fecham as 24h (as liberadas primeiro)
+  // contas na ordem em que fecham a janela (as liberadas primeiro)
   const agora = Date.now(), quando = ct => Math.max(agora, gasProx(EST.get(ct.nome) || {}));
   contas.sort((a, b) => quando(a) - quando(b) || a.matriz - b.matriz);   // matriz por último entre as liberadas juntas
   for (const ct of contas) {
     const est = { ...(EST.get(ct.nome) || {}) };
     const prox = gasProx(est);
     if (prox > Date.now() && !GAS_FORCAR) {
-      if (prox - Date.now() > GAS_ESPERA) { log(`   ${ct.nome}: último pedido ${horaBR(Date.parse(est.ultimo_em))} — libera às ${horaBR(prox)} (24h do Gasola)`); continue; }
-      log(`   ${ct.nome}: esperando as 24h do Gasola fecharem (${horaBR(prox)})`);
+      if (prox - Date.now() > GAS_ESPERA) { log(`   ${ct.nome}: último pedido ${horaBR(Date.parse(est.ultimo_em))} — libera às ${horaBR(prox)} (janela de ${GAS_JAN_H}h do Gasola)`); continue; }
+      log(`   ${ct.nome}: esperando a janela de ${GAS_JAN_H}h do Gasola fechar (${horaBR(prox)})`);
       await dorme(prox - Date.now());
     }
     const hoje = iso(hojeBR());
