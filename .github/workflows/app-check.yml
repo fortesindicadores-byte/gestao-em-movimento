@@ -1,0 +1,42 @@
+name: App Check
+
+# Só leitura. Abre o app do celular (/app/) com os painéis REAIS (Supabase só
+# leitura com a service key) e imprime o que o app leu de cada painel: hero,
+# cards, gráficos e tabelas (contagens e rótulos). Prints como artefato de 1 dia.
+on:
+  workflow_dispatch:
+    inputs:
+      paineis:
+        description: 'ids do catálogo separados por vírgula (app/catalogo.js)'
+        required: false
+        default: 'visao-financeira,painel-km,programa-reconhecimento,scorecard,fca-gerencial'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Rodar
+        run: node scripts/app-check.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          APP_PAINEIS: ${{ github.event.inputs.paineis }}
+          APP_DIR: /tmp/app-check
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: app-prints
+          path: /tmp/app-check
+          retention-days: 1
