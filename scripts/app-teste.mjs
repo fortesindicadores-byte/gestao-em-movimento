@@ -67,7 +67,8 @@ table{border-collapse:collapse}td,th{padding:4px 8px}.s-item{display:block}.ms-p
     <div><div class="hlbl">EBITDA</div><div class="hval" id="h-eb">—</div></div></div>
   <div class="kpis"><div class="kpi"><div class="kl">Orçado</div><div class="kv" id="c1">—</div><div class="km">YoY: <b class="cg">+3%</b></div></div>
     <div class="kpi"><div class="kl">Remunerado</div><div class="kv" id="c2">—</div><div class="km">—</div></div>
-    <div class="kpi"><div class="kl">Δ Remunerado</div><div class="kv cg" id="c3">—</div><div class="km"><b id="c3p">—</b></div></div></div>
+    <div class="kpi"><div class="kl">Δ Remunerado</div><div class="kv cg" id="c3">—</div><div class="km"><b id="c3p">—</b></div></div>
+    <div class="kpi"><div class="klbl">Pontos</div><div class="kval">18,5<small>de 25,0</small></div><div class="kmeta">meta 80%</div></div></div>
   <div class="gr2"><div class="card gcard"><div class="gtit">Custo mensal</div><div class="gsub">Real × Rem</div><div class="gcv"><canvas id="g1"></canvas></div></div>
     <div class="card gcard"><div class="gtit">AV %</div><div class="gcv"><canvas id="g2"></canvas></div></div></div>
 </section>
@@ -209,7 +210,8 @@ console.log('1 · login');
   const delCor = await page.$eval('#pnCorpo .hero .dels div b', b => b.className);
   conf(delCor === 'neg', 'a cor do delta é a do painel (vermelho → neg): ' + delCor);
   const kp = await page.$$eval('#pnCorpo .kg .k', ks => ks.map(k => ({ l: k.querySelector('.l').textContent, v: k.querySelector('.v').textContent, c: k.querySelector('.v').className, m: (k.querySelector('.m') || {}).textContent })));
-  conf(kp.length === 3 && kp[0].l === 'Orçado' && kp[0].v === 'R$ 9,0 mi', '3 cards com rótulo e valor: ' + kp.map(k => k.l + '=' + k.v).join(', '));
+  conf(kp.length === 4 && kp[0].l === 'Orçado' && kp[0].v === 'R$ 9,0 mi', '4 cards com rótulo e valor: ' + kp.map(k => k.l + '=' + k.v).join(', '));
+  conf(kp[3].v === '18,5' && /^de 25,0 · meta 80%/.test(kp[3].m), 'valor com <small> (Painel de Metas): o número é o valor e o "de 25,0" vai para a nota: ' + kp[3].v + ' / ' + kp[3].m);
   conf(/pos/.test(kp[2].c), 'o card verde do painel sai verde no app');
   conf(/YoY: \+3%/.test(kp[0].m), 'a nota do card (YoY) vem junto: ' + kp[0].m);
   const gr = await page.$$eval('#pnCorpo .gc', gs => gs.map(g => ({ t: g.querySelector('.t').textContent, leg: [...g.querySelectorAll('.leg span')].map(s => s.textContent) })));

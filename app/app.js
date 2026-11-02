@@ -488,15 +488,19 @@ function __APP_HELPER() {
     });
     return itens.length ? { t: 'hero', itens: itens } : null;
   }
+  // o texto PRÓPRIO do elemento (os nós de texto dele, sem os filhos): é o que
+  // separa "18,5" do "<small>de 25,0</small>" dentro do mesmo valor
+  A.proprio = function (el) { var s = ''; for (var i = 0; i < el.childNodes.length; i++) { var n = el.childNodes[i]; if (n.nodeType === 3) s += n.nodeValue; } return s.replace(/\s+/g, ' ').trim(); };
   function leCard(c) {
-    var lab = c.querySelector('.kl,.card-label,.lbl,.kn,.k-l'), val = c.querySelector('.kv,.card-value,.val,.kvn,.k-v,.v'), met = c.querySelector('.km,.card-meta,.meta,.k-m,.sub');
-    var l = lab ? A.txt(lab) : '', v = val ? A.txt(val) : '', m = met ? A.txt(met) : '';
+    var lab = c.querySelector('.kl,.klbl,.card-label,.lbl,.kn,.k-l'), val = c.querySelector('.kv,.kval,.card-value,.val,.kvn,.k-v,.v'), met = c.querySelector('.km,.kmeta,.card-meta,.meta,.k-m,.sub');
+    var l = lab ? A.txt(lab) : '', v = '', m = met ? A.txt(met) : '';
+    if (val) { var sm = val.querySelector('small,.un,.unit'); if (sm && A.proprio(val)) { v = A.proprio(val); m = [A.txt(sm), m].filter(Boolean).join(' · '); } else v = A.txt(val); }
     if (!v) {   // sem as classes: o maior número é o valor, o que vem antes é o rótulo, o que vem depois é a nota
-      var els = [].slice.call(c.querySelectorAll('*')).filter(function (x) { return A.vis(x) && x.children.length === 0 && A.txt(x); });
+      var els = [].slice.call(c.querySelectorAll('*')).filter(function (x) { return A.vis(x) && A.proprio(x); });
       if (!els.length) { var t = A.txt(c); return t ? { l: '', v: t, m: '', cor: A.cor(c) } : null; }
       var mx = els.reduce(function (a, b) { return A.fs(b) > A.fs(a) ? b : a; }, els[0]);
-      val = mx; v = A.txt(mx); var i = els.indexOf(mx);
-      l = els.slice(0, i).map(A.txt).join(' · '); m = els.slice(i + 1).map(A.txt).join(' · ');
+      val = mx; v = A.proprio(mx); var i = els.indexOf(mx);
+      l = els.slice(0, i).map(A.proprio).join(' · '); m = els.slice(i + 1).map(A.proprio).join(' · ');
     }
     var mb = met && met.querySelector('b,strong,span'); var mcor = mb ? A.cor(mb) : (met ? A.cor(met) : '');
     var cor = val ? A.cor(val) : ''; if (!cor && val) { var vb = val.querySelector('b,span,i'); if (vb) cor = A.cor(vb); }
