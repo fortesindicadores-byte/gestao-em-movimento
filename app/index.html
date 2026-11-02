@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#17181B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gestão em Movimento">
+<meta name="build" content="202611021200">
+<title>Gestão em Movimento</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="img/icone-192.png">
+<link rel="icon" href="img/icone-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ============================================================
+   GESTÃO EM MOVIMENTO — APP DO CELULAR (Renan, 02/11/2026: "transforme todo o
+   painel em um app… visão limpa, só visões principais… exatamente mesmo estilo
+   DriverPro, só que cores do Gestão em Movimento").
+   A casca é a do DriverPro (app-motorista-4): grafite, Inter, rótulo pequeno +
+   número grande em fonte fina, cards com cantos de 10px, lista com ícone
+   quadrado, barra de baixo flutuante com a aba ativa preenchida. O laranja do
+   portal (#F97316) no lugar do vermelho; verde/vermelho/âmbar/azul do portal.
+   Cada painel abre POR DENTRO (iframe escondido, o mesmo mecanismo do Check de
+   Metas) e o app redesenha só o essencial: hero, cards, gráficos e tabelas,
+   com os MESMOS números do painel.
+   ============================================================ */
+:root{
+  --bg:#17181B; --card:#2A2B30; --card2:#3B3C43; --brd:#33343B; --linha:#1F2024;
+  --txt:#EEF2FA; --txt2:#C9D0DD; --txt3:#7D8596;
+  --acc:#F97316; --acc2:rgba(249,115,22,.16);
+  --verde:#3BB33B; --ambar:#F4A100; --vermelho:#FF5252; --azul:#2E90E8; --nav:#2A2B30;
+  --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px);
+}
+body.claro{
+  --bg:#E1E2E5; --card:#FFFFFF; --card2:#D9DDE3; --brd:rgba(15,23,42,.10); --linha:#F3F4F6;
+  --txt:#161D2B; --txt2:#4A5568; --txt3:#8B94A6; --acc2:rgba(249,115,22,.12);
+  --verde:#00A32E; --ambar:#D99300; --vermelho:#E53935; --azul:#1B6FC4; --nav:#FFFFFF;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--txt);font-family:'Inter',-apple-system,'Segoe UI',sans-serif;font-size:13px;overflow:hidden;overscroll-behavior:none;}
+svg{display:block;}
+button{font-family:inherit;}
+.app{height:100%;display:flex;flex-direction:column;position:relative;}
+.corpo{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 20px 100px;}
+.tela{display:none;} .tela.on{display:block;}
+.esc{display:none!important;}
+
+/* ── topo ── */
+.topo{padding:calc(var(--safe-top) + 16px) 20px 6px;display:flex;align-items:center;gap:10px;}
+.topo b{display:block;font-size:15px;font-weight:600;line-height:1.2;}
+.topo span{display:block;font-size:11px;color:var(--txt2);font-weight:400;margin-top:3px;}
+.topo .acoes{margin-left:auto;display:flex;align-items:center;gap:12px;}
+.tema{width:22px;height:22px;border-radius:50%;border:2px solid var(--txt);background:linear-gradient(90deg,var(--txt) 50%,transparent 50%);cursor:pointer;}
+.av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:#fff;
+  background:linear-gradient(145deg,#FB923C,#C2410C);cursor:pointer;border:0;font-family:inherit;flex:0 0 auto;}
+.menu{position:absolute;right:20px;top:calc(var(--safe-top) + 58px);z-index:30;background:var(--card);border:1px solid var(--brd);border-radius:12px;
+  padding:6px;min-width:210px;box-shadow:0 12px 30px rgba(0,0,0,.4);display:none;}
+.menu.on{display:block;}
+.menu button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--txt);font-size:12.5px;font-weight:500;padding:10px 12px;border-radius:8px;cursor:pointer;}
+.menu button:hover{background:var(--brd);}
+.logo-sm{width:34px;height:34px;flex:0 0 auto;margin-right:2px;}
+.logo-sm svg,.logo-lg svg{width:100%;height:100%;}
+.logo-lg{width:64px;height:64px;margin-bottom:16px;}
+.marca b{color:var(--acc);font-weight:700;}
+
+/* ── rótulo pequeno + número grande em fonte fina (o "saldo" do DriverPro) ── */
+.rot{font-size:10.5px;color:var(--txt2);font-weight:400;}
+.saldo{margin:22px 0 18px;}
+.saldo .val{font-size:33px;font-weight:600;letter-spacing:.4px;line-height:1.1;margin-top:8px;}
+.saldo .aviso{font-size:11px;color:var(--txt2);margin-top:8px;line-height:1.45;}
+.saldo .aviso b{color:var(--txt);font-weight:600;}
+
+.card{background:var(--card);border-radius:10px;padding:15px 16px;margin-bottom:14px;}
+.card.contorno{background:var(--linha);border:1px solid var(--brd);border-radius:9px;}
+.sec{font-size:10.5px;color:var(--txt2);font-weight:400;margin:4px 0 10px;display:flex;align-items:center;}
+.sec a{margin-left:auto;color:var(--acc);font-weight:600;cursor:pointer;font-size:11px;}
+
+/* ── lista: cards separados com ícone quadrado ── */
+.li{display:flex;align-items:center;gap:12px;background:var(--linha);border:1px solid var(--brd);border-radius:9px;padding:10px 12px;margin-bottom:10px;cursor:pointer;}
+.li:active{border-color:var(--acc);}
+.li .ic{width:32px;height:32px;border-radius:7px;background:none;border:1px solid var(--txt3);flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:var(--txt);}
+.li .ic svg{width:15px;height:15px;stroke:currentColor;}
+.li .tx{flex:1;min-width:0;}
+.li .tx b{display:block;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.li .tx span{display:block;font-size:10.5px;color:var(--txt2);font-weight:400;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.li .vl{flex:0 1 auto;min-width:0;max-width:44%;font-size:11.5px;font-weight:600;text-align:right;}
+.li .vl small{display:block;font-size:10px;color:var(--txt3);font-weight:400;margin-top:2px;white-space:normal;line-height:1.35;}
+.li .seta{color:var(--txt3);flex:0 0 auto;}
+.li .seta svg{width:14px;height:14px;}
+.li.fav .ic{border-color:var(--acc);color:var(--acc);}
+.pos{color:var(--verde);} .neg{color:var(--vermelho);} .amb{color:var(--ambar);} .azl{color:var(--azul);}
+
+/* ── busca ── */
+.busca{width:100%;background:var(--linha);border:1px solid var(--brd);border-radius:9px;padding:12px 14px;color:var(--txt);font-family:inherit;font-size:14px;margin:16px 0 14px;}
+.busca:focus{outline:none;border-color:var(--acc);}
+.busca::placeholder{color:var(--txt3);}
+
+/* ── barra de baixo: card FLUTUANTE, aba ativa preenchida de laranja ── */
+.nav{position:absolute;left:16px;right:16px;bottom:calc(var(--safe-bot) + 14px);display:flex;justify-content:space-between;align-items:center;
+  background:var(--nav);border-radius:18px;padding:8px 10px;box-shadow:0 14px 34px rgba(0,0,0,.45);z-index:10;}
+body.claro .nav{box-shadow:0 14px 34px rgba(20,24,32,.16);border:1px solid var(--brd);}
+.nav button{flex:1;background:none;border:0;color:var(--txt2);font-size:10px;font-weight:500;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px 0 3px;border-radius:12px;}
+.nav button svg{width:21px;height:21px;}
+.nav button.on{color:#fff;background:var(--acc);}
+
+/* ── destaques do início: o número do painel, grande ── */
+.dq{background:var(--card);border-radius:10px;padding:14px 16px;margin-bottom:12px;cursor:pointer;position:relative;}
+.dq .rot{display:flex;align-items:center;gap:6px;}
+.dq .rot i{font-style:normal;color:var(--txt3);}
+.dq .val{font-size:26px;font-weight:600;letter-spacing:.3px;line-height:1.1;margin-top:6px;}
+.dq .sub{font-size:10.5px;color:var(--txt2);margin-top:6px;line-height:1.45;}
+.dq .sub b{font-weight:600;}
+.dq .sk{height:26px;width:60%;border-radius:6px;background:var(--card2);margin-top:8px;animation:pulsa 1.2s infinite;}
+@keyframes pulsa{0%,100%{opacity:.45}50%{opacity:1}}
+.dq .seta{position:absolute;right:14px;top:14px;color:var(--txt3);}
+.dq .seta svg{width:14px;height:14px;}
+
+/* ── LOGIN ── */
+#tela-login{display:none;height:100%;flex-direction:column;justify-content:center;padding:0 28px;overflow-y:auto;}
+#tela-login.on{display:flex;}
+.lg-t{font-size:26px;font-weight:700;letter-spacing:-.6px;}
+.lg-s{font-size:12px;color:var(--txt2);margin:6px 0 28px;line-height:1.5;}
+.campo{margin-bottom:12px;}
+.campo label{display:block;font-size:10.5px;color:var(--txt2);margin-bottom:7px;}
+.campo input{width:100%;background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:15px 16px;color:var(--txt);font-family:inherit;font-size:15px;font-weight:500;}
+.campo input::placeholder{color:var(--txt3);font-weight:400;}
+.campo input:focus{outline:none;border-color:var(--acc);}
+.btn{width:100%;border:0;border-radius:12px;padding:16px;font-size:14.5px;font-weight:600;cursor:pointer;color:#fff;background:var(--acc);margin-top:10px;box-shadow:0 10px 24px rgba(249,115,22,.3);}
+.btn[disabled]{opacity:.6;cursor:default;}
+.btn.ghost{background:var(--linha);color:var(--txt);border:1px solid var(--brd);box-shadow:none;}
+.lg-rodape{text-align:center;font-size:12px;color:var(--txt2);margin-top:20px;line-height:1.6;}
+.lg-rodape a{color:var(--txt);font-weight:600;cursor:pointer;}
+.lg-erro{font-size:12px;color:var(--vermelho);font-weight:500;margin:2px 0 6px;line-height:1.4;}
+.inst-link{text-align:center;font-size:12px;margin-top:14px;}
+.inst-link a{color:var(--txt2);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+.inst{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;}
+.inst.on{display:flex;}
+.inst-box{width:100%;max-width:440px;background:var(--card);border:1px solid var(--brd);border-radius:18px 18px 0 0;padding:20px 22px calc(22px + var(--safe-bot,0px));}
+.inst-box b{display:block;font-size:15px;margin-bottom:6px;}
+.inst-box p{font-size:12.5px;color:var(--txt2);line-height:1.55;margin:0 0 6px;}
+.inst-box .btn{margin-top:14px;}
+
+/* ── PERFIL ── */
+.perfil-cab{display:flex;align-items:center;gap:14px;margin:22px 0 18px;}
+.perfil-cab .av{width:52px;height:52px;font-size:17px;}
+.perfil-cab b{display:block;font-size:16px;font-weight:600;}
+.perfil-cab > div span{display:block;font-size:11px;color:var(--txt2);margin-top:3px;}
+.opt{display:flex;align-items:center;gap:12px;background:var(--linha);border:1px solid var(--brd);border-radius:9px;padding:12px 12px;margin-bottom:10px;cursor:pointer;}
+.opt .ic{width:30px;height:30px;border-radius:7px;border:1px solid var(--txt3);display:flex;align-items:center;justify-content:center;color:var(--txt);flex:0 0 auto;}
+.opt .ic svg{width:14px;height:14px;}
+.opt b{display:block;font-size:13px;font-weight:500;}
+.opt span{display:block;font-size:10.5px;color:var(--txt2);margin-top:2px;}
+.opt .tx{flex:1;min-width:0;}
+.chave{width:40px;height:22px;border-radius:11px;background:var(--card2);position:relative;flex:0 0 auto;transition:background .2s;}
+.chave::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;}
+.chave.on{background:var(--acc);} .chave.on::after{left:21px;}
+.rodape{font-size:10px;color:var(--txt3);text-align:center;margin:14px 0 6px;line-height:1.6;}
+
+/* ══════════ TELA DO PAINEL (sobreposta) ══════════ */
+.sobre{position:absolute;inset:0;z-index:20;background:var(--bg);display:none;flex-direction:column;}
+.sobre.on{display:flex;}
+.pbar{padding:calc(var(--safe-top) + 12px) 14px 8px;display:flex;align-items:center;gap:8px;}
+.pbar .ib{width:36px;height:36px;border-radius:50%;border:1px solid var(--brd);background:var(--linha);color:var(--txt);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;}
+.pbar .ib svg{width:17px;height:17px;}
+.pbar .ib.on{color:var(--acc);border-color:var(--acc);}
+.pbar .tt{flex:1;min-width:0;}
+.pbar .tt b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pbar .tt span{display:block;font-size:10.5px;color:var(--txt2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pcorpo{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 20px calc(var(--safe-bot) + 28px);}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:6px 20px 4px;scrollbar-width:none;flex:0 0 auto;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{flex:0 0 auto;font-size:11px;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid var(--brd);color:var(--txt2);background:var(--linha);cursor:pointer;white-space:nowrap;}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff;}
+.chips.vig .chip{font-weight:500;padding:5px 10px;font-size:10.5px;}
+.chips.vig .chip.on{background:var(--acc2);color:var(--acc);border-color:transparent;}
+.estado{font-size:11px;color:var(--txt2);padding:8px 0 2px;display:flex;align-items:center;gap:8px;}
+.estado i{width:12px;height:12px;border-radius:50%;border:2px solid var(--brd);border-top-color:var(--acc);animation:gira .8s linear infinite;flex:0 0 auto;}
+@keyframes gira{to{transform:rotate(360deg)}}
+.estado.erro{color:var(--vermelho);}
+.estado.erro i{display:none;}
+
+/* hero: um ou mais números grandes, com os deltas em linha embaixo */
+.hero{margin:14px 0 16px;}
+.hero .hi{margin-bottom:14px;}
+.hero .rot{text-transform:none;}
+.hero .val{font-size:33px;font-weight:600;letter-spacing:.4px;line-height:1.1;margin-top:6px;word-break:break-word;}
+.hero .val.menor{font-size:24px;}
+.hero .extra{font-size:11px;color:var(--txt2);margin-top:6px;line-height:1.45;}
+.hero .extra b{color:var(--txt);font-weight:600;}
+.dels{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:10px;}
+.dels div{font-size:10px;color:var(--txt2);}
+.dels div b{display:block;font-size:14px;font-weight:600;color:var(--txt);margin-top:2px;}
+
+/* cards de KPI: dois por linha */
+.kg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.kg .k{background:var(--card);border-radius:10px;padding:12px 13px;min-width:0;}
+.kg .k.largo{grid-column:1/-1;}
+.kg .k .l{font-size:10px;color:var(--txt2);line-height:1.3;}
+.kg .k .v{font-size:19px;font-weight:600;letter-spacing:.2px;margin-top:5px;line-height:1.15;word-break:break-word;}
+.kg .k .m{font-size:10px;color:var(--txt3);margin-top:4px;line-height:1.35;}
+.kg .k .m b{font-weight:600;color:var(--txt2);}
+
+/* gráfico */
+.gc{background:var(--card);border-radius:10px;padding:13px 14px 10px;margin-bottom:14px;}
+.gc .t{font-size:13px;font-weight:600;}
+.gc .s{font-size:10.5px;color:var(--txt2);margin-top:2px;}
+.gc .leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10px;color:var(--txt2);margin:8px 0 4px;}
+.gc .leg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
+.gc .cv{position:relative;height:190px;margin-top:4px;}
+.gc .cv.alto{height:260px;}
+.gc .cv canvas{width:100%!important;height:100%!important;}
+
+/* tabela: cada linha vira um bloco (DriverPro), as colunas numéricas à direita */
+.tb{background:var(--card);border-radius:10px;padding:12px 14px;margin-bottom:14px;overflow:hidden;}
+.tb .t{font-size:13px;font-weight:600;margin-bottom:6px;}
+.tb .s{font-size:10.5px;color:var(--txt2);margin:-4px 0 8px;}
+.tb table{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed;}
+.tb th{font-size:9.5px;font-weight:500;color:var(--txt2);text-align:right;padding:4px 4px 7px;border-bottom:1px solid var(--brd);white-space:normal;line-height:1.2;vertical-align:bottom;}
+.tb th:first-child,.tb td:first-child{text-align:left;}
+.tb td{padding:8px 4px;border-bottom:1px solid var(--brd);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:top;}
+.tb td:first-child{font-weight:500;}
+.tb tr:last-child td{border-bottom:0;}
+.tb tr.total td{font-weight:600;color:var(--txt);background:var(--linha);}
+.tb .mais{display:block;text-align:center;font-size:11px;color:var(--acc);font-weight:600;padding:10px 0 2px;cursor:pointer;}
+.tb .colsel{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 8px;}
+.tb .colsel::-webkit-scrollbar{display:none;}
+.tb .colsel .chip{padding:4px 9px;font-size:10px;}
+.tb .n{font-variant-numeric:tabular-nums;}
+
+/* texto (quadrantes, diagnósticos) */
+.tx-card{background:var(--card);border-radius:10px;padding:13px 14px;margin-bottom:12px;}
+.tx-card .t{font-size:13px;font-weight:600;margin-bottom:6px;}
+.tx-card p{font-size:11.5px;color:var(--txt2);line-height:1.55;white-space:pre-line;}
+
+/* seção vazia / aviso */
+.vazio{background:var(--linha);border:1px dashed var(--brd);border-radius:10px;padding:18px 16px;font-size:12px;color:var(--txt2);line-height:1.55;text-align:center;margin:16px 0;}
+.vazio b{color:var(--txt);}
+.vazio .btn{margin-top:12px;padding:12px;}
+.pe-painel{font-size:10px;color:var(--txt3);text-align:center;margin-top:18px;line-height:1.6;}
+.pe-painel a{color:var(--acc);font-weight:600;cursor:pointer;}
+
+/* ══════════ TELA WEB (o painel inteiro) ══════════ */
+#tela-web iframe{flex:1;width:100%;border:0;background:#fff;}
+body.claro #tela-web iframe{background:#E1E2E5;}
+
+/* forno: os iframes escondidos que carregam os painéis (largura de desktop,
+   para o painel desenhar como no PC e o app ler os números de lá) */
+#forno{position:fixed;left:-6000px;top:0;width:1366px;height:900px;overflow:hidden;visibility:hidden;pointer-events:none;}
+#forno iframe{width:1366px;height:900px;border:0;}
+
+.toast{position:fixed;left:50%;bottom:calc(var(--safe-bot) + 96px);transform:translateX(-50%);background:var(--card);color:var(--txt);border:1px solid var(--brd);
+  border-radius:999px;padding:9px 16px;font-size:12px;font-weight:500;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:80;opacity:0;transition:opacity .25s;pointer-events:none;max-width:88vw;text-align:center;}
+.toast.on{opacity:1;}
+@media(min-width:720px){ .corpo,.pcorpo{max-width:640px;margin:0 auto;width:100%;} .topo,.pbar{max-width:640px;margin:0 auto;width:100%;} .nav{left:50%;right:auto;width:600px;transform:translateX(-50%);} .chips{max-width:640px;margin:0 auto;width:100%;} }
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="tela-login">
+  <div class="logo-lg"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="12" fill="#F97316"/><path d="M38 24h-6l-3 9-6-18-3 9h-6" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="lg-t marca">Gestão em <b>Movimento</b></div>
+  <div class="lg-s">Os painéis da frota no seu celular. Entre com o mesmo e-mail e senha do portal.</div>
+  <div class="campo"><label>E-mail</label><input id="lgEmail" type="email" inputmode="email" autocomplete="username" placeholder="nome@conlogsa.com.br" autocapitalize="none"></div>
+  <div class="campo"><label>Senha</label><input id="lgSenha" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+  <div class="lg-erro" id="lgErro" style="display:none"></div>
+  <button class="btn" id="btEntrar" onclick="entrar()">Entrar</button>
+  <div class="lg-rodape">Esqueceu a senha ou ainda não tem conta? <a onclick="abrePortal('')">Use o portal</a></div>
+  <div class="inst-link" id="lgInstalar" style="display:none"><a onclick="instalar()">Instalar o app no celular</a></div>
+</div>
+
+<!-- passo a passo de instalação, quando o navegador não oferece o botão -->
+<div class="inst" id="inst" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="inst-box">
+    <b>Instalar o Gestão em Movimento</b>
+    <div id="instTxt"></div>
+    <button class="btn" onclick="document.getElementById('inst').classList.remove('on')">Entendi</button>
+  </div>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div class="app" id="app" style="display:none">
+  <div class="topo">
+    <div class="logo-sm"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="12" fill="#F97316"/><path d="M38 24h-6l-3 9-6-18-3 9h-6" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div><b id="ola">Olá!</b><span id="sub">—</span></div>
+    <div class="acoes">
+      <div class="tema" id="btTema" role="button" aria-label="Tema"></div>
+      <button class="av" id="av" onclick="document.getElementById('menu').classList.toggle('on')">—</button>
+    </div>
+  </div>
+  <div class="menu" id="menu">
+    <button id="btInstalar" onclick="instalar();fechaMenu()" style="display:none">Instalar no celular</button>
+    <button onclick="atualizarTudo();fechaMenu()">Atualizar os dados</button>
+    <button onclick="abrePortal('');fechaMenu()">Abrir o portal completo</button>
+    <button onclick="sair()">Sair</button>
+  </div>
+
+  <div class="corpo" id="corpo">
+    <!-- ── INÍCIO ── -->
+    <section class="tela on" id="v-inicio">
+      <div class="saldo">
+        <div class="rot" id="iniRot">Resumo do mês</div>
+        <div class="val" id="iniVal">—</div>
+        <div class="aviso" id="iniAviso"></div>
+      </div>
+      <div class="sec">Destaques<a onclick="irPara('fav')">Editar</a></div>
+      <div id="destaques"></div>
+      <div class="sec" style="margin-top:14px">Abertos por último<a onclick="irPara('paineis')">Todos</a></div>
+      <div id="recentes"></div>
+    </section>
+
+    <!-- ── PAINÉIS ── -->
+    <section class="tela" id="v-paineis">
+      <input class="busca" id="busca" type="search" placeholder="Buscar painel" autocomplete="off" oninput="renderPaineis(this.value)">
+      <div id="lista"></div>
+    </section>
+
+    <!-- ── FAVORITOS ── -->
+    <section class="tela" id="v-fav">
+      <div class="saldo"><div class="rot">Favoritos</div><div class="aviso">Os painéis marcados com a estrela aparecem aqui e nos destaques do início. Toque na estrela dentro do painel para marcar ou tirar.</div></div>
+      <div id="favLista"></div>
+    </section>
+
+    <!-- ── PERFIL ── -->
+    <section class="tela" id="v-perfil">
+      <div class="perfil-cab"><span class="av" id="pfAv">—</span><div><b id="pfNome">—</b><span id="pfSub">—</span></div></div>
+      <div class="sec">Aparência</div>
+      <div class="opt" onclick="trocaTema()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span><div class="tx"><b>Tema escuro</b><span>Claro ou escuro, como no portal</span></div><span class="chave on" id="chTema"></span></div>
+      <div class="sec">App</div>
+      <div class="opt" id="optInstalar" onclick="instalar()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span><div class="tx"><b>Instalar no celular</b><span>Ícone na tela de início, abre em tela cheia</span></div></div>
+      <div class="opt" onclick="atualizarTudo()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg></span><div class="tx"><b>Atualizar os dados</b><span id="pfCache">Relê os painéis na próxima abertura</span></div></div>
+      <div class="opt" onclick="abrePortal('')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg></span><div class="tx"><b>Portal completo</b><span>Abre o Gestão em Movimento no navegador</span></div></div>
+      <div class="sec">Conta</div>
+      <div class="opt" onclick="sair()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span><div class="tx"><b>Sair</b><span id="pfEmail">—</span></div></div>
+      <div class="rodape">Gestão em Movimento · Fortes Indicadores<br><span data-build></span></div>
+    </section>
+  </div>
+
+  <nav class="nav" id="nav">
+    <button class="on" data-v="inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Início</button>
+    <button data-v="paineis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Painéis</button>
+    <button data-v="fav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>Favoritos</button>
+    <button data-v="perfil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Perfil</button>
+  </nav>
+
+  <!-- ══════════ PAINEL (resumo) ══════════ -->
+  <div class="sobre" id="tela-painel">
+    <div class="pbar">
+      <button class="ib" onclick="fechaPainel()" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="tt"><b id="pnTit">—</b><span id="pnSub">—</span></div>
+      <button class="ib" id="btFav" onclick="toggleFav()" aria-label="Favorito"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg></button>
+      <button class="ib" onclick="recarregaPainel()" aria-label="Atualizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg></button>
+      <button class="ib" onclick="abreWeb(PN)" aria-label="Painel completo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg></button>
+    </div>
+    <div class="chips" id="pnVistas"></div>
+    <div class="chips vig" id="pnVigs"></div>
+    <div class="pcorpo" id="pnCorpo"></div>
+  </div>
+
+  <!-- ══════════ PAINEL INTEIRO ══════════ -->
+  <div class="sobre" id="tela-web">
+    <div class="pbar">
+      <button class="ib" onclick="fechaWeb()" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="tt"><b id="wbTit">—</b><span id="wbSub">painel completo</span></div>
+      <button class="ib" id="wbAbrir" aria-label="Abrir no navegador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg></button>
+    </div>
+    <iframe id="wbFrame" title="Painel"></iframe>
+  </div>
+</div>
+
+<div id="forno"></div>
+<div class="toast" id="toast"></div>
+
+<script src="catalogo.js?v=202611021200"></script>
+<script src="app.js?v=202611021200"></script>
+</body>
+</html>

@@ -1,0 +1,810 @@
+/* ============================================================
+   GESTÃO EM MOVIMENTO — APP DO CELULAR (02/11/2026)
+   Login = o mesmo do portal (Supabase, mesma sessão guardada no navegador).
+   Cada painel abre POR DENTRO (iframe escondido no #forno, largura de desktop)
+   e o app lê os números que o painel desenhou — hero, cards, gráficos (pelo
+   Chart.js do painel) e tabelas — e redesenha no estilo DriverPro. Nada é
+   recalculado aqui: o número é o do painel. Modo "web" = o painel inteiro.
+   ============================================================ */
+'use strict';
+var SUPABASE_URL = 'https://lozwipoeacpvplgkrxkq.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+var ADMIN_EMAIL = 'fortesindicadores@gmail.com';
+var BUILD = (document.querySelector('meta[name="build"]') || {}).content || '';
+var PORTAL = location.pathname.replace(/app\/?(index\.html)?$/, '');   // raiz do portal (…/gestao-em-movimento/)
+var sb = window.supabase ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+var $ = function (id) { return document.getElementById(id); };
+var MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+var T = Object.assign({ passo: 400, quieto: 3, min: 2500, teto: 70000, pos: 900 }, window.APP_TEMPOS || {});
+var CACHE_FRESCO = 45 * 60e3;    // o resumo guardado vale 45 min; depois relê em segundo plano
+var FAV_PADRAO = ['visao-financeira', 'painel-km', 'programa-reconhecimento', 'scorecard', 'fca-gerencial'];
+
+var USER = null, PERFIL = { unidade: '', is_admin: false }, EH_DONO = false, EH_ADMIN = false;
+var PN = null, PN_DATA = null, PN_VW = '', PN_VIG = '';
+var V = 'inicio';
+window.__gvizMem = window.__gvizMem || {};   // os iframes dividem as abas já lidas (gviz-cache.js)
+
+/* ─────────────────────────── utilidades ─────────────────────────── */
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function espera(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+function inic(n) { var p = String(n || '').trim().split(/\s+/); return ((p[0] || '')[0] || '') + ((p.length > 1 ? p[p.length - 1][0] : '') || ''); }
+function titulo(s) { return String(s || '').toLowerCase().replace(/(^|\s)\S/g, function (c) { return c.toUpperCase(); }); }
+function primeiroNome(u) { var n = (u && u.user_metadata && u.user_metadata.name) || (u && u.email ? u.email.split('@')[0] : ''); return titulo(n.split(/[\s.]+/)[0]); }
+var _toastT = null;
+function toast(m, ms) { var t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(_toastT); _toastT = setTimeout(function () { t.classList.remove('on'); }, ms || 2200); }
+function lsGet(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+function fechaMenu() { $('menu').classList.remove('on'); }
+document.addEventListener('click', function (e) { if (!e.target.closest('#menu') && !e.target.closest('#av')) fechaMenu(); });
+function corCls(c) { return c === 'g' ? 'pos' : c === 'r' ? 'neg' : c === 'a' ? 'amb' : c === 'b' ? 'azl' : ''; }
+
+/* ─────────────────────────── tema ─────────────────────────── */
+function aplicaTema(t) {
+  document.body.classList.toggle('claro', t === 'light');
+  try { localStorage.setItem('bi_theme', t); } catch (e) {}   // a mesma chave do portal: os painéis abrem no mesmo tema
+  var m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t === 'light' ? '#E1E2E5' : '#17181B';
+  var ch = $('chTema'); if (ch) ch.classList.toggle('on', t !== 'light');
+  if (PN_DATA && $('tela-painel').classList.contains('on')) desenhaPainel(PN_DATA);
+}
+function trocaTema() { aplicaTema(document.body.classList.contains('claro') ? 'dark' : 'light'); }
+aplicaTema(localStorage.getItem('bi_theme') || 'dark');
+$('btTema').addEventListener('click', trocaTema);
+
+/* ─────────────────────────── instalar ─────────────────────────── */
+var _instEvt = null;
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); _instEvt = e; mostraInstalar(); });
+function emApp() { return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
+function mostraInstalar() {
+  var v = !emApp();
+  ['lgInstalar', 'btInstalar'].forEach(function (id) { var el = $(id); if (el) el.style.display = v ? '' : 'none'; });
+  var o = $('optInstalar'); if (o) o.style.display = v ? '' : 'none';
+}
+function instalar() {
+  if (_instEvt) { _instEvt.prompt(); _instEvt.userChoice.then(function () { _instEvt = null; mostraInstalar(); }); return; }
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  $('instTxt').innerHTML = ios
+    ? '<p>No Safari, toque no botão <b>Compartilhar</b> (o quadrado com a seta para cima) e depois em <b>Adicionar à Tela de Início</b>.</p><p>O app abre pelo ícone, em tela cheia, como qualquer outro.</p>'
+    : '<p>No Chrome, abra o menu <b>⋮</b> e toque em <b>Instalar aplicativo</b> (ou <b>Adicionar à tela inicial</b>).</p><p>O app abre pelo ícone, em tela cheia, como qualquer outro.</p>';
+  $('inst').classList.add('on');
+}
+mostraInstalar();
+
+/* ─────────────────────────── service worker ─────────────────────────── */
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js', { scope: './', updateViaCache: 'none' }).then(function (reg) {
+    try { reg.update(); } catch (e) {}
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) { try { reg.update(); } catch (e) {} } });
+  }).catch(function () {});
+  var _recarregou = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (_recarregou || !navigator.serviceWorker.controller) return;
+    if (!sessionStorage.getItem('gem_app_sw')) { sessionStorage.setItem('gem_app_sw', '1'); return; }   // 1ª instalação: não recarrega
+    _recarregou = true; location.reload();
+  });
+}
+document.querySelectorAll('[data-build]').forEach(function (el) { el.textContent = 'build ' + BUILD; });
+
+/* ─────────────────────────── login ─────────────────────────── */
+function lgErro(m) { var e = $('lgErro'); e.textContent = m || ''; e.style.display = m ? '' : 'none'; }
+function traduzirErro(msg) {
+  if (!msg) return 'Erro desconhecido.';
+  var m = String(msg).toLowerCase();
+  if (m.indexOf('invalid login') >= 0 || m.indexOf('invalid credentials') >= 0) return 'E-mail ou senha incorretos.';
+  if (m.indexOf('email not confirmed') >= 0) return 'Confirme seu e-mail antes de entrar.';
+  if (m.indexOf('rate limit') >= 0 || m.indexOf('too many') >= 0) return 'Muitas tentativas. Aguarde alguns minutos.';
+  if (m.indexOf('network') >= 0 || m.indexOf('fetch') >= 0) return 'Sem conexão. Verifique a internet.';
+  return msg;
+}
+async function entrar() {
+  var email = ($('lgEmail').value || '').trim().toLowerCase(), senha = $('lgSenha').value || '';
+  if (!email || !senha) { lgErro('Informe e-mail e senha.'); return; }
+  if (!sb) { lgErro('Sem conexão com o servidor.'); return; }
+  var b = $('btEntrar'); b.disabled = true; b.textContent = 'Entrando…'; lgErro('');
+  try {
+    var r = await sb.auth.signInWithPassword({ email: email, password: senha });
+    if (r.error) throw r.error;
+    await entra(r.data.user);
+  } catch (e) { lgErro(traduzirErro(e && e.message)); }
+  finally { b.disabled = false; b.textContent = 'Entrar'; }
+}
+$('lgSenha').addEventListener('keydown', function (e) { if (e.key === 'Enter') entrar(); });
+$('lgEmail').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('lgSenha').focus(); });
+
+function mostraLogin(msg) { $('app').style.display = 'none'; $('tela-login').classList.add('on'); if (msg) lgErro(msg); }
+function mostraApp() { $('tela-login').classList.remove('on'); $('app').style.display = ''; }
+
+async function lePerfil(user) {
+  var cache = lsGet('gem_perfil_' + user.id, null);
+  try {
+    var r = await Promise.race([
+      sb.from('fca_profiles').select('unidade,is_admin').eq('user_id', user.id).maybeSingle(),
+      new Promise(function (_, rej) { setTimeout(function () { rej(new Error('teto')); }, 6000); })
+    ]);
+    if (r && r.error) throw r.error;
+    var d = (r && r.data) || {};
+    var prof = { unidade: String(d.unidade || ''), is_admin: !!d.is_admin };
+    lsSet('gem_perfil_' + user.id, prof);
+    return prof;
+  } catch (e) { return cache || { unidade: '', is_admin: false }; }
+}
+async function aprovado(user) {
+  if (user.email === ADMIN_EMAIL) return 'approved';
+  var cached = localStorage.getItem('bi_approved_' + user.id);
+  try {
+    var r = await Promise.race([
+      sb.from('user_approvals').select('status').eq('user_id', user.id).single(),
+      new Promise(function (_, rej) { setTimeout(function () { rej(new Error('teto')); }, 6000); })
+    ]);
+    var st = r && r.data && r.data.status;
+    if (st === 'approved') localStorage.setItem('bi_approved_' + user.id, '1');
+    if (st === 'blocked') localStorage.removeItem('bi_approved_' + user.id);
+    return st || (cached ? 'approved' : 'pending');
+  } catch (e) { return cached ? 'approved' : 'erro'; }
+}
+var _entrando = null;
+function entra(user) { if (!_entrando) _entrando = _entra(user).finally(function () { _entrando = null; }); return _entrando; }
+async function _entra(user) {
+  if (user.app_metadata && user.app_metadata.troca_senha) {
+    await sb.auth.signOut({ scope: 'local' });
+    mostraLogin('Você entrou com uma senha provisória. Crie a sua senha no portal e volte ao app.'); return;
+  }
+  var st = await aprovado(user);
+  if (st === 'blocked') { await sb.auth.signOut(); mostraLogin('Seu acesso está bloqueado. Fale com o administrador.'); return; }
+  if (st === 'pending') { await sb.auth.signOut({ scope: 'local' }); mostraLogin('Seu cadastro ainda não foi aprovado. Peça a liberação ao administrador.'); return; }
+  if (st === 'erro') { mostraLogin('O servidor não respondeu. Tente de novo em instantes.'); return; }
+  USER = user;
+  EH_DONO = user.email === ADMIN_EMAIL;
+  PERFIL = await lePerfil(user);
+  EH_ADMIN = EH_DONO || PERFIL.is_admin;
+  sessionStorage.setItem('gem_hub', '1');   // os painéis (nos iframes) checam isto antes de abrir
+  var nome = primeiroNome(user);
+  $('ola').textContent = 'Olá, ' + nome + '!';
+  var hoje = new Date();
+  $('sub').textContent = MESES[hoje.getMonth()] + ', ' + hoje.getFullYear();
+  $('av').textContent = inic((user.user_metadata && user.user_metadata.name) || nome) || '•';
+  $('pfAv').textContent = $('av').textContent;
+  $('pfNome').textContent = titulo((user.user_metadata && user.user_metadata.name) || nome);
+  $('pfSub').textContent = EH_DONO ? 'Dono do portal' : EH_ADMIN ? 'Administrador' : (PERFIL.unidade ? 'Gestor · ' + PERFIL.unidade : 'Portal');
+  $('pfEmail').textContent = user.email;
+  mostraApp();
+  renderPaineis(''); renderFav(); renderInicio();
+  logAcesso('app');
+  setTimeout(filaDestaques, 800);
+}
+async function sair() {
+  fechaMenu();
+  try { await sb.auth.signOut({ scope: 'local' }); } catch (e) {}
+  sessionStorage.removeItem('gem_hub');
+  USER = null; mataForno();
+  mostraLogin('');
+}
+var _accTok = null;
+async function logAcesso(painel) {
+  try {
+    if (!_accTok) { var r = await sb.auth.getSession(); _accTok = r.data.session && r.data.session.access_token; }
+    if (!_accTok) return;
+    fetch(SUPABASE_URL + '/rest/v1/access_log', { method: 'POST', keepalive: true,
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + _accTok, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ email: USER && USER.email, painel: painel }) }).catch(function () {});
+  } catch (e) {}
+}
+// sessão: a mesma do portal (chave sb-<ref>-auth-token no localStorage desta origem)
+(async function () {
+  if (!sb) { mostraLogin('Não foi possível carregar o Supabase. Verifique a internet e abra de novo.'); return; }
+  var sessao = null;
+  try { var r = await Promise.race([sb.auth.getSession(), new Promise(function (res) { setTimeout(function () { res({ data: { session: null }, lenta: true }); }, 8000); })]); sessao = r.data && r.data.session; } catch (e) {}
+  if (sessao && sessao.user) entra(sessao.user); else mostraLogin('');
+  sb.auth.onAuthStateChange(function (ev, s) {
+    if ((ev === 'SIGNED_IN' || ev === 'TOKEN_REFRESHED' || ev === 'INITIAL_SESSION') && s && s.user && !USER) entra(s.user);
+    if (ev === 'SIGNED_OUT' && USER) { USER = null; mostraLogin(''); }
+    if (ev === 'TOKEN_REFRESHED') _accTok = null;
+  });
+})();
+
+/* ─────────────────────────── navegação ─────────────────────────── */
+function irPara(v) {
+  V = v;
+  document.querySelectorAll('#nav button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === v); });
+  document.querySelectorAll('.corpo > .tela').forEach(function (s) { s.classList.toggle('on', s.id === 'v-' + v); });
+  $('corpo').scrollTop = 0;
+  if (v === 'fav') renderFav();
+  if (v === 'inicio') renderInicio();
+}
+document.querySelectorAll('#nav button').forEach(function (b) { b.addEventListener('click', function () { irPara(b.dataset.v); }); });
+function abrePortal(caminho) { window.open(PORTAL + (caminho || ''), '_blank'); }
+
+/* ─────────────────────────── catálogo ─────────────────────────── */
+var CAT = (window.GEM_CATALOGO && window.GEM_CATALOGO.paineis) || [];
+var ORDEM = (window.GEM_CATALOGO && window.GEM_CATALOGO.ordem) || [];
+function podeVer(p) { return (!p.adm || EH_ADMIN) && (!p.dono || EH_DONO); }
+function painelPorId(id) { for (var i = 0; i < CAT.length; i++) if (CAT[i].id === id) return CAT[i]; return null; }
+function urlDe(p) {
+  var u = PORTAL + p.href;
+  if (p.gav) { var uni = (PERFIL.unidade || '').split(',')[0].trim(); u += (EH_ADMIN || !uni) ? '?u=admin' : '?u=' + encodeURIComponent(uni); }
+  return u;
+}
+function favs() { var f = lsGet('gem_app_fav', null); return Array.isArray(f) ? f : FAV_PADRAO.slice(); }
+function ehFav(id) { return favs().indexOf(id) >= 0; }
+function toggleFav() {
+  if (!PN) return;
+  var f = favs(), i = f.indexOf(PN.id);
+  if (i >= 0) f.splice(i, 1); else f.push(PN.id);
+  lsSet('gem_app_fav', f);
+  $('btFav').classList.toggle('on', i < 0);
+  toast(i < 0 ? 'Adicionado aos favoritos' : 'Tirado dos favoritos');
+  renderFav();
+}
+function recentes() { return lsGet('gem_app_rec', []); }
+function marcaRecente(id) { var r = recentes().filter(function (x) { return x !== id; }); r.unshift(id); lsSet('gem_app_rec', r.slice(0, 8)); }
+
+function liHtml(p, extra) {
+  return '<div class="li' + (ehFav(p.id) ? ' fav' : '') + '" data-id="' + esc(p.id) + '" onclick="abrePainel(\'' + esc(p.id) + '\')">' +
+    '<span class="ic">' + p.ico + '</span><div class="tx"><b>' + esc(p.nome) + '</b><span>' + esc(extra || p.desc) + '</span></div>' +
+    '<span class="seta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span></div>';
+}
+function normB(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+function renderPaineis(q) {
+  q = normB(q || '').trim();
+  var grupos = {}, h = '';
+  CAT.filter(podeVer).forEach(function (p) {
+    if (q && normB(p.nome + ' ' + p.desc + ' ' + p.cluster).indexOf(q) < 0) return;
+    (grupos[p.cluster] = grupos[p.cluster] || []).push(p);
+  });
+  var ordem = ORDEM.filter(function (c) { return grupos[c]; });
+  Object.keys(grupos).forEach(function (c) { if (ordem.indexOf(c) < 0) ordem.push(c); });
+  ordem.forEach(function (c) { h += '<div class="sec" style="margin-top:14px">' + esc(c) + '</div>' + grupos[c].map(function (p) { return liHtml(p); }).join(''); });
+  $('lista').innerHTML = h || '<div class="vazio">Nenhum painel com esse nome.</div>';
+}
+function renderFav() {
+  var f = favs().map(painelPorId).filter(function (p) { return p && podeVer(p); });
+  $('favLista').innerHTML = f.length ? f.map(function (p) { return liHtml(p); }).join('') : '<div class="vazio">Nenhum favorito ainda. Abra um painel e toque na estrela.</div>';
+}
+
+/* ─────────────────────────── início: destaques ─────────────────────────── */
+function cacheKey(p, vw, vig) { return 'gem_app_c_' + p.id + '|' + (vw || '') + '|' + (vig || ''); }
+function cacheLe(p, vw, vig) { return lsGet(cacheKey(p, vw, vig), null); }
+function cacheGrava(p, vw, vig, data) {
+  var ok = lsSet(cacheKey(p, vw, vig), { t: Date.now(), data: data });
+  if (!ok) { limpaCache(); lsSet(cacheKey(p, vw, vig), { t: Date.now(), data: data }); }
+}
+function limpaCache() { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('gem_app_c_') === 0) localStorage.removeItem(k); }); }
+function cachePadrao(p) {   // o resumo guardado da visão e vigência padrão do painel (o que o início mostra)
+  var ks = Object.keys(localStorage).filter(function (k) { return k.indexOf('gem_app_c_' + p.id + '|') === 0; });
+  var melhor = null;
+  ks.forEach(function (k) { var c = lsGet(k, null); if (c && c.data && c.data.padrao && (!melhor || c.t > melhor.t)) melhor = c; });
+  if (!melhor) ks.forEach(function (k) { var c = lsGet(k, null); if (c && (!melhor || c.t > melhor.t)) melhor = c; });
+  return melhor;
+}
+function heroDe(d) {   // o 1º número grande do resumo: hero; senão o 1º card
+  if (!d || !d.blocos) return null;
+  for (var i = 0; i < d.blocos.length; i++) {
+    var b = d.blocos[i];
+    if (b.t === 'hero' && b.itens.length && b.itens[0].v) return { l: b.itens[0].l, v: b.itens[0].v, cor: b.itens[0].cor, dels: b.itens[0].dels || [], extra: b.itens[0].extra };
+  }
+  for (var j = 0; j < d.blocos.length; j++) { var k = d.blocos[j]; if (k.t === 'kpis' && k.itens.length) return { l: k.itens[0].l, v: k.itens[0].v, cor: k.itens[0].cor, dels: [], extra: k.itens[0].m }; }
+  return null;
+}
+function horaDe(t) { var d = new Date(t); return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
+function renderInicio() {
+  var f = favs().map(painelPorId).filter(function (p) { return p && podeVer(p); });
+  var h = '', hero1 = null;
+  f.forEach(function (p) {
+    var c = cachePadrao(p), hr = c && heroDe(c.data);
+    if (hr && !hero1) hero1 = { p: p, hr: hr, c: c };
+    h += '<div class="dq" onclick="abrePainel(\'' + esc(p.id) + '\')"><span class="seta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span>' +
+      '<div class="rot">' + esc(p.nome) + (hr && hr.l ? ' <i>·</i> ' + esc(hr.l) : '') + '</div>' +
+      (hr ? '<div class="val ' + corCls(hr.cor) + '">' + esc(hr.v) + '</div>' + (hr.dels.length ? '<div class="sub">' + hr.dels.slice(0, 3).map(function (x) { return esc(x.l) + ' <b class="' + corCls(x.cor) + '">' + esc(x.v) + '</b>'; }).join(' &nbsp;·&nbsp; ') + '</div>' : (hr.extra ? '<div class="sub">' + esc(hr.extra) + '</div>' : ''))
+          : '<div class="sk"></div><div class="sub">carregando…</div>') +
+      '</div>';
+  });
+  $('destaques').innerHTML = h || '<div class="vazio">Marque painéis como favoritos para vê-los aqui.</div>';
+  if (hero1) {
+    $('iniRot').textContent = hero1.p.nome + ' · ' + (hero1.hr.l || '');
+    $('iniVal').textContent = hero1.hr.v; $('iniVal').className = 'val ' + corCls(hero1.hr.cor);
+    $('iniAviso').innerHTML = (hero1.c.data.sub ? esc(hero1.c.data.sub) : '') ;
+  } else { $('iniRot').textContent = 'Resumo do mês'; $('iniVal').textContent = '—'; $('iniAviso').textContent = 'Os destaques são lidos dos painéis favoritos, um a um. Toque num painel para abrir agora.'; }
+  var rec = recentes().map(painelPorId).filter(function (p) { return p && podeVer(p); }).slice(0, 5);
+  $('recentes').innerHTML = rec.length ? rec.map(function (p) { var c = cachePadrao(p); return liHtml(p, c ? 'lido ' + horaDe(c.t) : p.desc); }).join('') : '<div class="vazio">Os painéis que você abrir aparecem aqui.</div>';
+}
+var _fila = false;
+async function filaDestaques() {   // lê em segundo plano os favoritos sem resumo fresco, um por vez
+  if (_fila || !USER) return; _fila = true;
+  try {
+    var f = favs().map(painelPorId).filter(function (p) { return p && podeVer(p) && p.modo === 'resumo'; });
+    for (var i = 0; i < f.length; i++) {
+      var p = f[i], c = cachePadrao(p);
+      if (c && Date.now() - c.t < CACHE_FRESCO) continue;
+      if (PN) break;   // a pessoa abriu um painel: ele tem prioridade; a fila volta depois
+      try { await carrega(p, { fundo: true }); } catch (e) { console.warn('destaque ' + p.id + ':', e && e.message); }
+      renderInicio();
+      if (PN) break;
+    }
+  } finally { _fila = false; }
+}
+function atualizarTudo() {
+  limpaCache(); window.__gvizMem = {}; mataForno();
+  toast('Os painéis serão relidos na próxima abertura');
+  renderInicio(); setTimeout(filaDestaques, 300);
+}
+
+/* ─────────────────────────── o forno: iframe escondido com o painel ─────────────────────────── */
+var FORNO = { ifr: null, url: '', win: null, doc: null, pronto: false, t: 0 };
+var _abortaFundo = 0;
+function mataForno() { if (FORNO.ifr) { try { FORNO.ifr.remove(); } catch (e) {} } FORNO = { ifr: null, url: '', win: null, doc: null, pronto: false, t: 0 }; }
+async function abreForno(url) {
+  if (FORNO.ifr && FORNO.url === url && FORNO.pronto && Date.now() - FORNO.t < 20 * 60e3) {
+    try { if (FORNO.win.document && !FORNO.win.document.querySelector('.gate')) return FORNO; } catch (e) {}
+  }
+  mataForno();
+  var ifr = document.createElement('iframe');
+  ifr.setAttribute('title', 'painel'); ifr.setAttribute('aria-hidden', 'true');
+  $('forno').appendChild(ifr);
+  FORNO = { ifr: ifr, url: url, win: null, doc: null, pronto: false, t: Date.now() };
+  await new Promise(function (res, rej) {
+    var to = setTimeout(function () { rej(new Error('o painel não abriu em 60 s')); }, 60000);
+    ifr.onload = function () { clearTimeout(to); res(); };
+    ifr.onerror = function () { clearTimeout(to); rej(new Error('o painel não abriu')); };
+    ifr.src = url;
+  });
+  FORNO.win = ifr.contentWindow; FORNO.doc = ifr.contentDocument;
+  if (!FORNO.doc) throw new Error('o painel não abriu (origem diferente)');
+  return FORNO;
+}
+/* O painel está pronto quando TEM conteúdo (linha de tabela, gráfico com dados
+   ou texto) e o DOM parou de mudar — a mesma régua do Check de Metas. */
+async function esperaPronto(win, doc, opt) {
+  opt = opt || {};
+  var teto = opt.teto || T.teto, min = opt.min || T.min, t0 = Date.now(), ant = -1, quieto = 0;
+  var temConteudo = function () {
+    if (doc.querySelectorAll('tbody tr').length > 0) return true;
+    var C = win.Chart;
+    if (C && C.getChart) {
+      var cvs = doc.querySelectorAll('canvas');
+      for (var i = 0; i < cvs.length; i++) { var ch = null; try { ch = C.getChart(cvs[i]); } catch (e) {}
+        if (ch && ch.data && (ch.data.datasets || []).some(function (d) { return (d.data || []).length; })) return true; }
+    }
+    if (!doc.querySelector('table,canvas')) return (doc.body ? doc.body.innerText.length : 0) > 400;
+    return false;
+  };
+  while (Date.now() - t0 < teto) {
+    await espera(T.passo);
+    if (opt.fundo && _abortaFundo) return 'abortado';
+    try { doc = win.document; } catch (e) { return 'gate'; }   // o iframe pode ter navegado (painel → hub → painel)
+    if (!doc || !doc.body) continue;
+    if (doc.querySelector('.gate')) return 'gate';
+    try { if (/[?&]volta=/.test(win.location.search) || win.location.pathname.indexOf('/app/') < 0 && win.location.pathname.replace(/[^/]*$/, '') === PORTAL) return 'gate'; } catch (e) { return 'gate'; }
+    var txt = doc.body.innerText || '';
+    if (/carregando/i.test(txt)) { quieto = 0; continue; }
+    if (!temConteudo()) { quieto = 0; continue; }
+    var n = txt.length + doc.querySelectorAll('tbody tr').length * 7;
+    if (n === ant) quieto++; else { quieto = 0; ant = n; }
+    if (quieto >= T.quieto && Date.now() - t0 > min) return 'ok';
+  }
+  return (doc.querySelectorAll('tbody tr').length || doc.querySelector('canvas')) ? 'demorou' : 'vazio';
+}
+
+/* ═════════ o ajudante que roda DENTRO do painel (injetado por eval) ═════════ */
+function __APP_HELPER() {
+  var A = window.__app = {};
+  A.norm = function (s) { return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim(); };
+  A.txt = function (el) { return String(el ? (el.innerText != null ? el.innerText : el.textContent) : '').replace(/\s+/g, ' ').trim(); };
+  A.vis = function (el) { if (!el || el.nodeType !== 1) return false; if (el.closest && el.closest('[aria-hidden="true"]')) return false; var cs = getComputedStyle(el); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return false; if (cs.display === 'contents') return true; return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length); };
+  A.fs = function (el) { return parseFloat(getComputedStyle(el).fontSize) || 0; };
+  var rgbDe = function (s) { var m = String(s || '').match(/(\d+)[,\s]+(\d+)[,\s]+(\d+)/); return m ? [+m[1], +m[2], +m[3]] : null; };
+  var hsl = function (c) { var r = c[0] / 255, g = c[1] / 255, b = c[2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn, h = 0, s = 0;
+    if (d) { s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; } return [h, s, l]; };
+  A.classCor = function (rgb) { if (!rgb) return ''; var x = hsl(rgb); if (x[1] < .25 || x[2] > .93 || x[2] < .12) return ''; var h = x[0];
+    if (h >= 75 && h <= 165) return 'g'; if (h < 14 || h > 335) return 'r'; if (h >= 14 && h < 60) return 'a'; if (h >= 185 && h <= 262) return 'b'; return ''; };
+  A.cor = function (el) { if (!el) return ''; try { return A.classCor(rgbDe(getComputedStyle(el).color)); } catch (e) { return ''; } };
+  A.corCss = function (s) {   // cor de um dataset do Chart.js → string ou lista de strings
+    if (!s) return null; if (typeof s === 'string') return s;
+    if (Array.isArray(s)) return s.slice(0, 80).map(function (x) { return typeof x === 'string' ? x : null; });
+    if (typeof s === 'object' && s instanceof CanvasGradient) return null;
+    return null;
+  };
+  A.opts = function (w) {
+    return [].slice.call(w.querySelectorAll('.ms-list input[data-v], .ms-panel input[data-v]')).map(function (i) {
+      var lb = i.closest('label') || i.parentNode, c = lb.cloneNode(true), o = c.querySelector('.ms-only'); if (o) o.parentNode.removeChild(o);
+      return { v: i.dataset.v, t: (c.textContent || '').replace(/\s+/g, ' ').trim(), on: !!i.checked, el: i };
+    });
+  };
+  A.vigOpts = function (id) {
+    if (id === 'elite') {
+      var l = document.getElementById('ms-vig-list'); if (!l) return [];
+      var sel = (typeof selVig !== 'undefined' && Array.isArray(selVig)) ? selVig : [];
+      return [].slice.call(l.querySelectorAll('.ms-opt input')).map(function (i) { var lb = i.parentNode.querySelector('label'); return { v: i.value, t: (lb ? lb.textContent : i.value).replace(/\s+/g, ' ').trim(), on: sel.indexOf(i.value) >= 0 }; }).filter(function (o) { return o.v; });
+    }
+    var w = document.getElementById(id); if (!w) return [];
+    if (typeof w._render === 'function') { try { w._render(''); } catch (e) {} }
+    var os = A.opts(w), sel = w._sel instanceof Set ? w._sel : null;
+    return os.map(function (o) { return { v: o.v, t: o.t, on: sel && sel.size ? sel.has(o.v) : false }; });
+  };
+  A.sel = function (id, alvos) {
+    var w = document.getElementById(id); if (!w) return 'não existe o filtro ' + id;
+    if (typeof w._render === 'function') { try { w._render(''); } catch (e) {} }
+    var os = A.opts(w), achou = [];
+    (alvos || []).forEach(function (a) { var c = A.norm(a);
+      var o = os.filter(function (x) { return A.norm(x.v) === c; })[0] || os.filter(function (x) { return A.norm(x.t) === c; })[0];
+      if (o) achou.push(o); });
+    if (!achou.length) return 'não achei a vigência';
+    if (!(w._sel instanceof Set)) w._sel = new Set();
+    w._sel.clear(); achou.forEach(function (o) { w._sel.add(o.v); });
+    os.forEach(function (o) { o.el.checked = w._sel.has(o.v); });
+    var all = w.querySelector('.ms-all'); if (all) all.checked = false;
+    var cnt = w.querySelector('.ms-cnt'); if (cnt) { cnt.textContent = w._sel.size; cnt.style.display = 'inline-block'; }
+    w.classList.add('ativo');
+    if (typeof w._render === 'function') { try { w._render(''); } catch (e) {} }
+    return '';
+  };
+  A.elite = function (alvos) {
+    var l = document.getElementById('ms-vig-list'); if (!l) return 'sem lista';
+    var os = [].slice.call(l.querySelectorAll('.ms-opt input')).map(function (i) { return i.value; }).filter(Boolean);
+    var achou = (alvos || []).filter(function (a) { return os.indexOf(a) >= 0; });
+    if (alvos && alvos.length && !achou.length) return 'não achei a vigência';
+    if (typeof setSelArr === 'function') setSelArr('vig', achou);
+    if (typeof updateMsBtn === 'function') try { updateMsBtn('vig'); } catch (e) {}
+    if (typeof renderAll === 'function') renderAll();
+    return '';
+  };
+  A.vw = function (v) { var f = ['setVw', 'vaiPara', 'setView', 'irPara']; for (var i = 0; i < f.length; i++) if (typeof window[f[i]] === 'function') { window[f[i]](v); return ''; } return 'o painel não troca de visão'; };
+  A.redesenha = function (pref) {
+    var f = ['run', 'render', 'atualizar', 'onFilterChange', 'aplica', 'desenha', 'renderAll', 'pinta'];
+    if (pref) f = [pref].concat(f.filter(function (x) { return x !== pref; }));
+    for (var i = 0; i < f.length; i++) if (typeof window[f[i]] === 'function') { try { var r = window[f[i]](); if (r && r.catch) r.catch(function () {}); return ''; } catch (e) { return 'erro ao redesenhar: ' + e.message; } }
+    return 'o painel não tem função de redesenho';
+  };
+  A.tema = function (t) { ['aplicaTema', 'applyTheme', 'setTema'].forEach(function (f) { try { if (typeof window[f] === 'function') window[f](t); } catch (e) {} }); };
+  A.gate = function () { return !!document.querySelector('.gate'); };
+
+  /* ── a leitura ── */
+  var SEL_HERO = '.fin-hero,.hero,.hero-wrap,.mini-hero,.custos-hero,.hero-main,.hero-box';
+  var SEL_KPIS = '.kpis,.ind-cards,.cards-row,.kpi-row,.kgrid,.cards';
+  var SEL_KPI = '.kpi,.kpi-card,.card-kpi';
+  var SEL_GRAF = '.gcard,.chart-card,.chart-box';
+  var SEL_TIT = '.ttit,.tt,.gtit,.tbl-title,.chart-title,.rtit,.card-title,h2,h3';
+  function corDeTexto(el) { var c = A.cor(el); if (c) return c; var b = el.querySelector && el.querySelector('b,strong,span'); return b ? A.cor(b) : ''; }
+  function leHero(el) {
+    var itens = [];
+    var VALS = '.hval,.hero-value,.hv,.hn,.hero-val';
+    var vals = [].slice.call(el.querySelectorAll(VALS)).filter(A.vis);
+    if (!vals.length) vals = [].slice.call(el.querySelectorAll('*')).filter(function (x) { return A.vis(x) && A.fs(x) >= 24 && x.children.length <= 2 && A.txt(x).length && A.txt(x).length < 40; });
+    var usados = [], ehVal = function (x) { return vals.indexOf(x) >= 0; };
+    vals.forEach(function (v) {
+      if (usados.some(function (u) { return u.contains(v) || v.contains(u); })) return; usados.push(v);
+      // o "item" do hero é o maior bloco em volta do valor que não contém outro valor
+      var raiz = v.parentElement;
+      while (raiz && raiz.parentElement && raiz.parentElement !== el && [].slice.call(raiz.parentElement.querySelectorAll('*')).filter(ehVal).length <= 1) raiz = raiz.parentElement;
+      if (!raiz) raiz = v.parentElement;
+      var lab = raiz.querySelector('.hlbl,.hero-label,.hl,.hlab'); var l = lab ? A.txt(lab) : '';
+      if (!l) { var ants = [].slice.call(raiz.querySelectorAll('*')).filter(function (x) { return A.vis(x) && A.fs(x) <= 12.5 && x !== v && !v.contains(x) && !x.contains(v) && (x.compareDocumentPosition(v) & 4) && A.txt(x).length && A.txt(x).length < 60 && x.children.length === 0; }); l = ants.length ? A.txt(ants[0]) : ''; }
+      var dels = [];
+      [].slice.call(raiz.querySelectorAll('.hdel > *, .hero-deltas > *, .hero-delta, .hero-item, .hdeltas > *')).forEach(function (d) {
+        if (!A.vis(d) || d.contains(v)) return; var b = d.querySelector('b,.hv,.v,strong,span'); if (!b) return;
+        var vv = A.txt(b), ll = A.txt(d).replace(vv, '').trim(); if (!vv) return; dels.push({ l: ll, v: vv, cor: A.cor(b) });
+      });
+      var extra = [].slice.call(raiz.querySelectorAll('.hrem,.hero-sub,.hero-leg,.hero-period,.hsub,.hero-tag,.hnota')).filter(A.vis).map(A.txt).filter(Boolean).join(' · ');
+      var vt = A.txt(v); if (!vt || vt === '—') { if (!dels.length) return; }
+      itens.push({ l: l, v: vt, cor: A.cor(v), dels: dels, extra: extra });
+    });
+    return itens.length ? { t: 'hero', itens: itens } : null;
+  }
+  function leCard(c) {
+    var lab = c.querySelector('.kl,.card-label,.lbl,.kn,.k-l'), val = c.querySelector('.kv,.card-value,.val,.kvn,.k-v,.v'), met = c.querySelector('.km,.card-meta,.meta,.k-m,.sub');
+    var l = lab ? A.txt(lab) : '', v = val ? A.txt(val) : '', m = met ? A.txt(met) : '';
+    if (!v) {   // sem as classes: o maior número é o valor, o que vem antes é o rótulo, o que vem depois é a nota
+      var els = [].slice.call(c.querySelectorAll('*')).filter(function (x) { return A.vis(x) && x.children.length === 0 && A.txt(x); });
+      if (!els.length) { var t = A.txt(c); return t ? { l: '', v: t, m: '', cor: A.cor(c) } : null; }
+      var mx = els.reduce(function (a, b) { return A.fs(b) > A.fs(a) ? b : a; }, els[0]);
+      val = mx; v = A.txt(mx); var i = els.indexOf(mx);
+      l = els.slice(0, i).map(A.txt).join(' · '); m = els.slice(i + 1).map(A.txt).join(' · ');
+    }
+    var mb = met && met.querySelector('b,strong,span'); var mcor = mb ? A.cor(mb) : (met ? A.cor(met) : '');
+    var cor = val ? A.cor(val) : ''; if (!cor && val) { var vb = val.querySelector('b,span,i'); if (vb) cor = A.cor(vb); }
+    return { l: l, v: v, m: m, cor: cor, mcor: mcor };
+  }
+  function leKpis(el) {
+    var cards = [].slice.call(el.children).filter(A.vis);
+    if (cards.length === 1 && cards[0].children.length > 1 && !cards[0].matches(SEL_KPI)) cards = [].slice.call(cards[0].children).filter(A.vis);
+    var itens = cards.map(leCard).filter(function (x) { return x && (x.v || x.l); });
+    return itens.length ? { t: 'kpis', itens: itens } : null;
+  }
+  function leGrafico(el) {
+    var C = window.Chart, cv = el.querySelector('canvas'); if (!C || !C.getChart || !cv) return null;
+    var ch = null; try { ch = C.getChart(cv); } catch (e) {} if (!ch || !ch.data) return null;
+    var ds = (ch.data.datasets || []).filter(function (d) { return !d.hidden && (d.data || []).length; });
+    if (!ds.length) return null;
+    var o = ch.options || {}, sc = o.scales || {};
+    var tit = el.querySelector('.gtit,.chart-title,.gt,.ct'), sub = el.querySelector('.gsub,.chart-sub,.gs');
+    return { t: 'graf', tipo: ch.config.type || 'bar', tit: tit ? A.txt(tit) : '', sub: sub ? A.txt(sub) : '', horiz: o.indexAxis === 'y',
+      stacked: !!((sc.x || {}).stacked || (sc.y || {}).stacked),
+      labels: (ch.data.labels || []).map(function (x) { return x == null ? '' : Array.isArray(x) ? x.join(' ') : String(x); }).slice(0, 80),
+      ds: ds.slice(0, 8).map(function (d) { return { label: d.label || '', tipo: d.type || '', fill: !!d.fill, dash: !!(d.borderDash && d.borderDash.length),
+        cor: A.corCss(d.type === 'line' || ch.config.type === 'line' ? (d.borderColor || d.backgroundColor) : (d.backgroundColor || d.borderColor)),
+        borda: A.corCss(d.borderColor),
+        data: (d.data || []).slice(0, 80).map(function (v) { if (v && typeof v === 'object') v = v.y != null ? v.y : v.x; var n = typeof v === 'number' ? v : parseFloat(v); return isFinite(n) ? n : null; }) }; }) };
+  }
+  function leTabela(tab, card) {
+    var ths = [].slice.call(tab.querySelectorAll('thead th, thead td')).filter(A.vis);
+    if (!ths.length) { var r0 = tab.querySelector('tr'); if (r0) ths = [].slice.call(r0.children).filter(A.vis); }
+    var head = ths.map(A.txt);
+    var trs = [].slice.call(tab.querySelectorAll('tbody tr')).filter(function (tr) { return A.vis(tr) && !tr.closest('thead'); });
+    var rows = [], nTot = trs.length;
+    trs.slice(0, 80).forEach(function (tr) {
+      var tds = [].slice.call(tr.children).filter(A.vis); if (!tds.length) return;
+      var cls = tr.className || '';
+      rows.push({ tot: /\btotal\b|\btot\b|pre-total|rodape/.test(cls), c: tds.map(function (td) { var t = A.txt(td); var b = td.querySelector('b,span,i'); return { v: t, cor: A.cor(td) || (b ? A.cor(b) : '') }; }) });
+    });
+    rows = rows.filter(function (r) { return r.c.some(function (c) { return c.v; }); });
+    if (!rows.length) return null;
+    var titEl = null, cont = card || tab.parentElement;
+    for (var k = 0; k < 4 && cont && !titEl; k++) { titEl = [].slice.call(cont.querySelectorAll(SEL_TIT)).filter(function (x) { return A.vis(x) && !tab.contains(x); })[0] || null; cont = cont.parentElement; }
+    var sub = card ? card.querySelector('.tsub,.gsub,.tbl-sub') : null;
+    return { t: 'tab', tit: titEl ? A.txt(titEl) : '', sub: sub && A.vis(sub) ? A.txt(sub) : '', head: head, rows: rows, n: nTot };
+  }
+  function leTexto(el) {
+    var tit = el.querySelector(SEL_TIT), t = tit && A.vis(tit) ? A.txt(tit) : '';
+    var corpo = (el.innerText || '').replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '\n').trim();
+    if (t && corpo.indexOf(t) === 0) corpo = corpo.slice(t.length).trim();
+    if (corpo.length < 24) return null;
+    return { t: 'txt', tit: t, corpo: corpo.slice(0, 1200) };
+  }
+  function temFilho(el, s) { return !!el.querySelector(s); }
+  function varre(raiz, blocos, prof) {
+    if (prof > 14) return;
+    var fs = [].slice.call(raiz.children);
+    var soltos = [];
+    var fechaSoltos = function () { if (soltos.length) { var k = { t: 'kpis', itens: soltos.map(leCard).filter(function (x) { return x && (x.v || x.l); }) }; if (k.itens.length) blocos.push(k); soltos = []; } };
+    fs.forEach(function (el) {
+      if (!A.vis(el)) return;
+      var tag = el.tagName;
+      if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'CANVAS' || tag === 'BUTTON' || tag === 'NAV' || tag === 'ASIDE' || tag === 'HEADER' || el.matches('.side,.topo,.top,.pbar,.ms-wrap,.filtros,.s-volta,.dica,.chips,.hcab,.tit-wrap,.acoes')) return;
+      if (el.matches(SEL_KPI) && !el.matches(SEL_HERO)) { soltos.push(el); return; }
+      fechaSoltos();
+      if (el.matches(SEL_HERO)) { var h = leHero(el); if (h) blocos.push(h); return; }
+      if (el.matches(SEL_KPIS) || ([].slice.call(el.children).filter(function (x) { return x.matches && x.matches(SEL_KPI); }).length >= 2)) { var k = leKpis(el); if (k) blocos.push(k); return; }
+      if (el.matches(SEL_GRAF) || (temFilho(el, 'canvas') && !temFilho(el, SEL_GRAF) && !temFilho(el, 'table') && el.querySelectorAll('canvas').length === 1)) { var g = leGrafico(el); if (g) blocos.push(g); else varre(el, blocos, prof + 1); return; }
+      if (tag === 'TABLE') { var t = leTabela(el, null); if (t) blocos.push(t); return; }
+      var tabs = el.querySelectorAll('table');
+      if (tabs.length === 1 && !temFilho(el, 'canvas') && !temFilho(el, SEL_KPIS) && !temFilho(el, SEL_HERO)) { var t1 = leTabela(tabs[0], el); if (t1) blocos.push(t1); return; }
+      if (el.matches('.card,.quad,.quadrante,.diag-card,.bloco,.tx-card,.info,.passo,.regra') && !temFilho(el, 'canvas,table,' + SEL_KPIS + ',' + SEL_HERO + ',.card')) { var x = leTexto(el); if (x) blocos.push(x); return; }
+      if (el.children.length) varre(el, blocos, prof + 1);
+    });
+    fechaSoltos();
+  }
+  A.extrai = function (vigId) {
+    var raiz = document.querySelector('.vw.on') || document.querySelector('.cols,.vws,.conteudo,main,.hmio') || document.body;
+    var blocos = []; varre(raiz, blocos, 0);
+    // tira repetições (o mesmo card lido duas vezes por caminhos diferentes)
+    var vistos = {}; blocos = blocos.filter(function (b) { var k = JSON.stringify(b).slice(0, 400); if (vistos[k]) return false; vistos[k] = 1; return true; });
+    var vistas = [].slice.call(document.querySelectorAll('.s-item[data-vw]')).filter(A.vis).map(function (b) { var c = b.cloneNode(true); [].slice.call(c.querySelectorAll('svg')).forEach(function (s) { s.remove(); }); return { v: b.dataset.vw, t: A.txt(c) }; });
+    var on = document.querySelector('.vw.on'); var atual = on ? on.id.replace(/^vw-/, '') : '';
+    var tit = document.getElementById('tit') || document.querySelector('.tit-wrap h1,.tit h1,h1');
+    var sub = document.getElementById('titSub') || document.querySelector('.tit-sub');
+    var vig = vigId ? { id: vigId, opts: A.vigOpts(vigId).slice(0, 14) } : null;
+    return { tit: tit ? A.txt(tit) : '', sub: sub ? A.txt(sub) : '', vistas: vistas, atual: atual, vig: vig, blocos: blocos, lido: Date.now() };
+  };
+}
+var HELPER_SRC = '(' + __APP_HELPER.toString() + ')()';
+
+/* ═════════ carregar um painel: abrir, (visão, vigência), ler ═════════ */
+var _lendo = null;   // uma leitura por vez: o forno é um só
+async function carrega(p, opt) {
+  opt = opt || {};
+  while (_lendo) { if (!opt.fundo) _abortaFundo = Date.now(); try { await _lendo; } catch (e) {} }
+  if (!opt.fundo) _abortaFundo = 0;
+  var prom = _carrega(p, opt);
+  _lendo = prom.finally(function () { _lendo = null; });
+  return prom;
+}
+async function _carrega(p, opt) {
+  var url = urlDe(p);
+  var F = await abreForno(url);
+  var win = F.win, doc = F.doc;
+  if (!F.pronto) {
+    var st = await esperaPronto(win, doc, { fundo: !!opt.fundo });
+    if (st === 'abortado') throw new Error('abortado');
+    if (st === 'gate') throw new Error('o painel recusou o acesso: ' + (((doc.querySelector('.gate h2') || {}).textContent) || 'sem permissão'));
+    F.pronto = true; F.t = Date.now();
+  }
+  doc = F.doc = win.document;
+  if (!win.__app) win.eval(HELPER_SRC);
+  var tema = document.body.classList.contains('claro') ? 'light' : 'dark';
+  try { win.__app.tema(tema); } catch (e) {}
+  var msgs = [];
+  if (!F.vistas) { F.vistas = win.__app.extrai('').vistas.map(function (v) { return v.v; }); F.vw = F.vistas[0] || ''; F.vig = ''; }
+  // o iframe é reaproveitado: a visão volta à pedida (ou à 1ª) e a vigência só muda se for pedida
+  var vwAlvo = opt.vw || F.vistas[0] || '';
+  if (vwAlvo && vwAlvo !== F.vw) { var m1 = win.__app.vw(vwAlvo); if (m1) msgs.push(m1); else F.vw = vwAlvo; await espera(T.pos); await esperaPronto(win, doc, { teto: 12000, min: 600 }); }
+  if (opt.vig && opt.vig !== F.vig) {
+    var m2 = p.vig === 'elite' ? win.__app.elite([opt.vig]) : win.__app.sel(p.vig, [opt.vig]);
+    if (m2) msgs.push(m2);
+    else { F.vig = opt.vig; if (p.vig !== 'elite') { var m3 = win.__app.redesenha(p.rdz || ''); if (m3) msgs.push(m3); } }
+    await espera(T.pos); await esperaPronto(win, doc, { teto: 60000, min: 1500 });
+  }
+  await espera(250);
+  var data = win.__app.extrai(p.vig === '' ? '' : p.vig);
+  data.msgs = msgs; data.vw = F.vw || data.atual; data.vigSel = F.vig || '';
+  data.padrao = (!F.vistas[0] || data.vw === F.vistas[0]) && !data.vigSel;
+  if (!data.blocos.length && !opt.vw) throw new Error('sem-blocos');
+  cacheGrava(p, data.vw, data.vigSel, data);
+  return data;
+}
+
+/* ═════════ a tela do painel ═════════ */
+function abrePainel(id) {
+  var p = painelPorId(id); if (!p) return;
+  fechaMenu(); marcaRecente(id); logAcesso(p.href.replace(/\/?(index\.html)?(\?.*)?$/, ''));
+  if (p.modo === 'web') { abreWeb(p); return; }
+  PN = p; PN_VW = ''; PN_VIG = ''; PN_DATA = null;
+  $('pnTit').textContent = p.nome; $('pnSub').textContent = p.desc;
+  $('btFav').classList.toggle('on', ehFav(p.id));
+  $('pnVistas').innerHTML = ''; $('pnVigs').innerHTML = '';
+  $('pnCorpo').innerHTML = ''; $('pnCorpo').scrollTop = 0;
+  $('tela-painel').classList.add('on');
+  var c = cachePadrao(p);
+  if (c && c.data) { PN_DATA = c.data; PN_VW = c.data.vw || ''; PN_VIG = c.data.vigSel || ''; desenhaPainel(c.data, { lido: c.t }); }
+  else estado('Abrindo o painel…');
+  if (!c || Date.now() - c.t > CACHE_FRESCO) lePainel({});
+  else estado('');
+}
+function fechaPainel() { $('tela-painel').classList.remove('on'); PN = null; PN_DATA = null; mataGraficos(); renderInicio(); setTimeout(filaDestaques, 500); }
+function recarregaPainel() { if (!PN) return; mataForno(); window.__gvizMem = {}; lePainel({ vw: PN_VW, vig: PN_VIG, forca: true }); }
+function estado(msg, erro) {
+  var el = $('pnEstado');
+  if (!el) { el = document.createElement('div'); el.id = 'pnEstado'; el.className = 'estado'; $('pnCorpo').insertBefore(el, $('pnCorpo').firstChild); }
+  el.className = 'estado' + (erro ? ' erro' : ''); el.innerHTML = msg ? '<i></i><span>' + esc(msg) + '</span>' : ''; el.style.display = msg ? '' : 'none';
+}
+var _leSeq = 0;
+async function lePainel(o) {
+  var p = PN, seq = ++_leSeq; if (!p) return;
+  var vw = o.vw || PN_VW, vig = o.vig || PN_VIG;
+  if (!o.forca) { var c = cacheLe(p, vw, vig); if (c && c.data && Date.now() - c.t < CACHE_FRESCO) { PN_DATA = c.data; desenhaPainel(c.data, { lido: c.t }); estado(''); return; } }
+  estado(PN_DATA ? 'Atualizando…' : 'Abrindo o painel… (os números vêm do próprio painel)');
+  try {
+    var d = await carrega(p, { vw: vw || undefined, vig: vig || undefined });
+    if (seq !== _leSeq || PN !== p) return;
+    PN_DATA = d; PN_VW = d.vw || ''; PN_VIG = d.vigSel || '';
+    desenhaPainel(d, { lido: d.lido });
+    estado(d.msgs && d.msgs.length ? d.msgs.join(' · ') : '', !!(d.msgs && d.msgs.length));
+    if (!d.msgs || !d.msgs.length) estado('');
+  } catch (e) {
+    if (seq !== _leSeq || PN !== p) return;
+    var m = (e && e.message) || 'erro';
+    if (m === 'abortado') return;
+    if (m === 'sem-blocos') { $('pnCorpo').innerHTML = '<div class="vazio"><b>Este painel não tem resumo no app.</b><br>Abra o painel completo, que já funciona no celular.<button class="btn" onclick="abreWeb(PN)">Abrir o painel completo</button></div>'; estado(''); return; }
+    estado(m, true);
+    if (!PN_DATA) $('pnCorpo').innerHTML += '<div class="vazio">Não deu para ler o painel agora.<br><span style="color:var(--txt3)">' + esc(m) + '</span><button class="btn ghost" onclick="recarregaPainel()">Tentar de novo</button><button class="btn" onclick="abreWeb(PN)">Abrir o painel completo</button></div>';
+  }
+}
+function mudaVista(v) { if (!PN || v === PN_VW) return; PN_VW = v; marcaChips('pnVistas', v); lePainel({ vw: v, vig: PN_VIG }); }
+function mudaVig(v) { if (!PN) return; PN_VIG = v; marcaChips('pnVigs', v); lePainel({ vw: PN_VW, vig: v }); }
+function marcaChips(id, v) { document.querySelectorAll('#' + id + ' .chip').forEach(function (c) { c.classList.toggle('on', c.dataset.v === v); }); }
+
+/* ═════════ desenhar no estilo DriverPro ═════════ */
+var GRAFS = [];
+function mataGraficos() { GRAFS.forEach(function (g) { try { g.destroy(); } catch (e) {} }); GRAFS = []; }
+function desenhaPainel(d, o) {
+  o = o || {};
+  var titulo = d.tit && d.tit !== PN.nome ? d.tit : '';
+  $('pnSub').textContent = d.sub || PN.desc;
+  // visões
+  var vs = (d.vistas || []);
+  $('pnVistas').innerHTML = vs.length > 1 ? vs.map(function (v) { return '<span class="chip' + (v.v === (d.vw || d.atual) ? ' on' : '') + '" data-v="' + esc(v.v) + '" onclick="mudaVista(\'' + esc(v.v) + '\')">' + esc(v.t) + '</span>'; }).join('') : '';
+  // vigências
+  var vg = d.vig && d.vig.opts && d.vig.opts.length ? d.vig.opts : [];
+  var sel = d.vigSel || (vg.filter(function (x) { return x.on; }).map(function (x) { return x.v; })[0] || '');
+  $('pnVigs').innerHTML = vg.length > 1 ? vg.map(function (v) { return '<span class="chip' + (v.v === sel ? ' on' : '') + '" data-v="' + esc(v.v) + '" onclick="mudaVig(\'' + esc(v.v) + '\')">' + esc(v.t) + '</span>'; }).join('') : '';
+  mataGraficos(); TABS = {};
+  var h = '<div id="pnEstado" class="estado" style="display:none"></div>';
+  var nG = 0;
+  (d.blocos || []).forEach(function (b, i) {
+    if (b.t === 'hero') h += heroHtml(b);
+    else if (b.t === 'kpis') h += kpisHtml(b);
+    else if (b.t === 'graf') { h += grafHtml(b, 'g' + i); nG++; }
+    else if (b.t === 'tab') h += tabHtml(b, 'tb' + i);
+    else if (b.t === 'txt') h += '<div class="tx-card">' + (b.tit ? '<div class="t">' + esc(b.tit) + '</div>' : '') + '<p>' + esc(b.corpo) + '</p></div>';
+  });
+  if (!(d.blocos || []).length) h += '<div class="vazio">Esta visão não tem resumo. <a onclick="abreWeb(PN)" style="color:var(--acc);font-weight:600">Abrir o painel completo</a></div>';
+  h += '<div class="pe-painel">' + (titulo ? esc(titulo) + ' · ' : '') + (o.lido ? 'lido do painel em ' + horaDe(o.lido) : '') + '<br><a onclick="abreWeb(PN)">Abrir o painel completo</a> · <a onclick="recarregaPainel()">Atualizar</a></div>';
+  $('pnCorpo').innerHTML = h;
+  (d.blocos || []).forEach(function (b, i) { if (b.t === 'graf') desenhaGrafico(b, 'g' + i); });
+}
+function heroHtml(b) {
+  return '<div class="hero">' + b.itens.map(function (it) {
+    return '<div class="hi"><div class="rot">' + esc(it.l) + '</div><div class="val ' + corCls(it.cor) + (String(it.v).length > 14 ? ' menor' : '') + '">' + esc(it.v) + '</div>' +
+      (it.extra ? '<div class="extra">' + esc(it.extra) + '</div>' : '') +
+      (it.dels && it.dels.length ? '<div class="dels">' + it.dels.map(function (x) { return '<div>' + esc(x.l) + '<b class="' + corCls(x.cor) + '">' + esc(x.v) + '</b></div>'; }).join('') + '</div>' : '') + '</div>';
+  }).join('') + '</div>';
+}
+function kpisHtml(b) {
+  return '<div class="kg">' + b.itens.map(function (k) {
+    var largo = String(k.v).length > 16 || (k.l && k.l.length > 42);
+    return '<div class="k' + (largo ? ' largo' : '') + '"><div class="l">' + esc(k.l) + '</div><div class="v ' + corCls(k.cor) + '">' + esc(k.v) + '</div>' + (k.m ? '<div class="m ' + (k.mcor ? '' : '') + '">' + metaHtml(k) + '</div>' : '') + '</div>';
+  }).join('') + '</div>';
+}
+function metaHtml(k) { if (!k.mcor) return esc(k.m); var i = k.m.indexOf(':'); return i > 0 ? esc(k.m.slice(0, i + 1)) + ' <b class="' + corCls(k.mcor) + '">' + esc(k.m.slice(i + 1).trim()) + '</b>' : '<b class="' + corCls(k.mcor) + '">' + esc(k.m) + '</b>'; }
+var PAL = ['#F97316', '#94A3B8', '#2E90E8', '#3BB33B', '#FF5252', '#F4A100', '#A78BFA', '#22D3EE'];
+function corDs(c, i) {
+  if (Array.isArray(c)) return c;
+  if (typeof c === 'string' && c && !/transparent/.test(c)) {
+    if (/^rgba?\(/.test(c)) { var m = c.match(/[\d.]+/g); if (m && m.length >= 3 && (+m[0] + +m[1] + +m[2]) / 3 > 230 && !document.body.classList.contains('claro')) return '#C9D0DD'; if (m && (+m[0] + +m[1] + +m[2]) / 3 > 230 && document.body.classList.contains('claro')) return '#4A5568'; return c; }
+    if (/^#?(fff|ffffff|f1f5f9|eef2fa|eeeef0|e8ecf4)$/i.test(c)) return document.body.classList.contains('claro') ? '#4A5568' : '#C9D0DD';
+    if (/^#?(1a1a1a|000|000000|161d2b|0f172a)$/i.test(c)) return document.body.classList.contains('claro') ? '#161D2B' : '#C9D0DD';
+    return c;
+  }
+  return PAL[i % PAL.length];
+}
+function alfa(c, a) { if (Array.isArray(c)) return c.map(function (x) { return alfa(x, a); }); if (typeof c !== 'string') return c;
+  var m = c.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i); if (m) { var x = m[1]; if (x.length === 3) x = x.split('').map(function (q) { return q + q; }).join(''); return 'rgba(' + parseInt(x.slice(0, 2), 16) + ',' + parseInt(x.slice(2, 4), 16) + ',' + parseInt(x.slice(4, 6), 16) + ',' + a + ')'; }
+  var r = c.match(/^rgba?\(([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/); if (r) return 'rgba(' + r[1] + ',' + r[2] + ',' + r[3] + ',' + a + ')'; return c; }
+function grafHtml(b, id) {
+  var leg = b.ds.length > 1 ? '<div class="leg">' + b.ds.map(function (d, i) { var c = corDs(d.cor, i); return '<span><i style="background:' + esc(Array.isArray(c) ? c[0] || PAL[i] : c) + '"></i>' + esc(d.label || 'série ' + (i + 1)) + '</span>'; }).join('') + '</div>' : '';
+  return '<div class="gc">' + (b.tit ? '<div class="t">' + esc(b.tit) + '</div>' : '') + (b.sub ? '<div class="s">' + esc(b.sub) + '</div>' : '') + leg + '<div class="cv' + (b.horiz && b.labels.length > 8 ? ' alto' : '') + '"><canvas id="' + id + '"></canvas></div></div>';
+}
+function desenhaGrafico(b, id) {
+  var cv = $(id); if (!cv || !window.Chart) return;
+  var claro = document.body.classList.contains('claro');
+  var tick = claro ? '#4A5568' : '#C9D0DD', grade = claro ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.07)';
+  var tipo = b.tipo === 'horizontalBar' ? 'bar' : b.tipo;
+  var ds = b.ds.map(function (d, i) {
+    var t = d.tipo || tipo, c = corDs(d.cor, i), linha = t === 'line';
+    var o = { label: d.label, data: d.data, type: t === 'bar' || t === 'line' ? t : undefined };
+    if (linha) { o.borderColor = c; o.backgroundColor = alfa(c, .15); o.borderWidth = 2; o.tension = .3; o.pointRadius = b.labels.length > 20 ? 0 : 2.5; o.pointBackgroundColor = c; o.fill = !!d.fill; if (d.dash) o.borderDash = [5, 4]; }
+    else if (t === 'bar') { o.backgroundColor = alfa(c, .7); o.borderColor = c; o.borderWidth = 1; o.borderRadius = 3; o.borderSkipped = false; o.maxBarThickness = 36; }
+    else { o.backgroundColor = Array.isArray(c) ? c : b.ds.length === 1 ? d.data.map(function (_, j) { return PAL[j % PAL.length]; }) : c; o.borderWidth = 0; }
+    return o;
+  });
+  var circ = tipo === 'doughnut' || tipo === 'pie' || tipo === 'polarArea';
+  var opts = { responsive: true, maintainAspectRatio: false, animation: false, indexAxis: b.horiz ? 'y' : 'x',
+    plugins: { legend: { display: circ, position: 'bottom', labels: { color: tick, font: { family: 'Inter', size: 10 }, boxWidth: 10 } }, tooltip: { backgroundColor: claro ? '#fff' : '#2A2B30', titleColor: '#F97316', bodyColor: claro ? '#161D2B' : '#EEF2FA', borderColor: claro ? 'rgba(0,0,0,.1)' : '#33343B', borderWidth: 1 } },
+    scales: circ ? {} : {
+      x: { stacked: b.stacked, grid: { display: b.horiz, color: grade }, ticks: { color: tick, font: { family: 'Inter', size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: b.horiz ? 6 : 8 }, border: { display: false } },
+      y: { stacked: b.stacked, grid: { display: !b.horiz, color: grade }, ticks: { color: tick, font: { family: 'Inter', size: 9 }, maxTicksLimit: b.horiz ? 14 : 6, callback: function (v) { return b.horiz ? this.getLabelForValue(v) : fmtEixo(v); } }, border: { display: false } } } };
+  if (tipo === 'radar' || tipo === 'scatter' || tipo === 'bubble') { opts.scales = {}; }
+  try { GRAFS.push(new Chart(cv, { type: circ ? tipo : 'bar', data: { labels: b.labels, datasets: ds }, options: opts })); } catch (e) { console.warn('gráfico', e); }
+}
+function fmtEixo(v) { if (typeof v !== 'number') return v; var a = Math.abs(v); if (a >= 1e9) return (v / 1e9).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' bi'; if (a >= 1e6) return (v / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' mi'; if (a >= 1e4) return Math.round(v / 1e3).toLocaleString('pt-BR') + 'k'; return v.toLocaleString('pt-BR', { maximumFractionDigits: 2 }); }
+/* tabela: no celular cabem 3 colunas (a 1ª + duas); as outras entram por chips */
+var TABS = {};
+function tabHtml(b, id) {
+  var nCol = Math.max(b.head.length, b.rows[0] ? b.rows[0].c.length : 0);
+  var head = b.head.slice(); while (head.length < nCol) head.push('');
+  var ini = []; for (var i = 1; i < nCol && ini.length < 2; i++) ini.push(i);
+  TABS[id] = { b: b, head: head, cols: ini, n: nCol, mais: false };
+  return '<div class="tb" id="' + id + '">' + (b.tit ? '<div class="t">' + esc(b.tit) + '</div>' : '') + (b.sub ? '<div class="s">' + esc(b.sub) + '</div>' : '') + tabMiolo(id) + '</div>';
+}
+function tabMiolo(id) {
+  var T2 = TABS[id], b = T2.b, cols = [0].concat(T2.cols), max = T2.mais ? 80 : 12;
+  var h = '';
+  if (T2.n > 3) h += '<div class="colsel">' + T2.head.slice(1).map(function (c, i) { return c ? '<span class="chip' + (T2.cols.indexOf(i + 1) >= 0 ? ' on' : '') + '" onclick="tabCol(\'' + id + '\',' + (i + 1) + ')">' + esc(c) + '</span>' : ''; }).join('') + '</div>';
+  h += '<table><thead><tr>' + cols.map(function (c) { return '<th>' + esc(T2.head[c]) + '</th>'; }).join('') + '</tr></thead><tbody>';
+  b.rows.slice(0, max).forEach(function (r) { h += '<tr' + (r.tot ? ' class="total"' : '') + '>' + cols.map(function (c) { var x = r.c[c] || { v: '', cor: '' }; return '<td class="n ' + corCls(x.cor) + '" title="' + esc(x.v) + '">' + esc(x.v) + '</td>'; }).join('') + '</tr>'; });
+  h += '</tbody></table>';
+  if (b.rows.length > 12 && !T2.mais) h += '<span class="mais" onclick="tabMais(\'' + id + '\')">ver todas as ' + b.rows.length + ' linhas' + (b.n > b.rows.length ? ' (das ' + b.n + ')' : '') + '</span>';
+  else if (b.n > b.rows.length) h += '<span class="mais" style="color:var(--txt3)">mostrando ' + b.rows.length + ' de ' + b.n + ' linhas · o painel completo tem todas</span>';
+  return h;
+}
+function tabCol(id, c) { var T2 = TABS[id]; var i = T2.cols.indexOf(c); if (i >= 0) { if (T2.cols.length > 1) T2.cols.splice(i, 1); } else { T2.cols.push(c); if (T2.cols.length > 2) T2.cols.shift(); } redesenhaTab(id); }
+function tabMais(id) { TABS[id].mais = true; redesenhaTab(id); }
+function redesenhaTab(id) { var el = $(id); if (!el) return; var tit = el.querySelector('.t'), sub = el.querySelector('.s'); el.innerHTML = (tit ? tit.outerHTML : '') + (sub ? sub.outerHTML : '') + tabMiolo(id); }
+
+/* ═════════ o painel inteiro ═════════ */
+function abreWeb(p) {
+  if (!p) return;
+  var url = urlDe(p);
+  $('wbTit').textContent = p.nome; $('wbSub').textContent = p.modo === 'web' ? p.desc : 'painel completo';
+  $('wbAbrir').onclick = function () { window.open(url, '_blank'); };
+  $('wbFrame').src = url;
+  $('tela-web').classList.add('on');
+}
+function fechaWeb() { $('tela-web').classList.remove('on'); $('wbFrame').src = 'about:blank'; }
+
+/* botão "voltar" do celular fecha a tela de cima em vez de sair do app */
+history.replaceState({ gem: 'raiz' }, '');
+function empilha(t) { try { history.pushState({ gem: t }, ''); } catch (e) {} }
+var _abreWeb0 = abreWeb; abreWeb = function (p) { _abreWeb0(p); empilha('web'); };
+var _abrePainel0 = abrePainel; abrePainel = function (id) { var p = painelPorId(id); if (p && p.modo !== 'web') empilha('painel'); _abrePainel0(id); };
+window.addEventListener('popstate', function () {
+  if ($('tela-web').classList.contains('on')) { fechaWeb(); return; }
+  if ($('tela-painel').classList.contains('on')) { fechaPainel(); return; }
+});
