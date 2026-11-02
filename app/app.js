@@ -371,7 +371,8 @@ async function esperaPronto(win, doc, opt) {
     if (opt.fundo && _abortaFundo) return 'abortado';
     try { doc = win.document; } catch (e) { return 'gate'; }   // o iframe pode ter navegado (painel → hub → painel)
     if (!doc || !doc.body) continue;
-    if (doc.querySelector('.gate')) return 'gate';
+    // só conta o gate VISÍVEL: a Manutenção tem um .gate escondido no HTML (aparece com erro de carga)
+    var g = doc.querySelector('.gate'); if (g && g.getClientRects().length && getComputedStyle(g).display !== 'none') return 'gate';
     try { if (/[?&]volta=/.test(win.location.search) || win.location.pathname.indexOf('/app/') < 0 && win.location.pathname.replace(/[^/]*$/, '') === PORTAL) return 'gate'; } catch (e) { return 'gate'; }
     var txt = doc.body.innerText || '';
     if (/carregando/i.test(txt)) { quieto = 0; continue; }
@@ -457,15 +458,24 @@ function __APP_HELPER() {
   A.gate = function () { return !!document.querySelector('.gate'); };
 
   /* ── a leitura ── */
-  var SEL_HERO = '.fin-hero,.hero,.hero-wrap,.mini-hero,.custos-hero,.hero-main,.hero-box';
-  var SEL_KPIS = '.kpis,.ind-cards,.cards-row,.kpi-row,.kgrid,.cards';
-  var SEL_KPI = '.kpi,.kpi-card,.card-kpi';
+  var SEL_HERO = '.fin-hero,.hero,.hero-wrap,.mini-hero,.custos-hero,.hero-main,.hero-box,.adh-hero';
+  var SEL_KPIS = '.kpis,.ind-cards,.cards-row,.kpi-row,.kgrid,.cards,.saude-cards';
+  var SEL_KPI = '.kpi,.kpi-card,.card-kpi,.saude-card';
   var SEL_GRAF = '.gcard,.chart-card,.chart-box';
-  var SEL_TIT = '.ttit,.tt,.gtit,.tbl-title,.chart-title,.rtit,.card-title,h2,h3';
+  var SEL_TIT = '.ttit,.tt,.gtit,.tbl-title,.chart-title,.rtit,.card-title,.card-label,.kl,.lbl,.adh-label,h2,h3';
+  /* cada painel batiza os cards do seu jeito (kpi, kpi-card, saude-card, ind-card…):
+     além das classes conhecidas, vale o NOME: token que termina em -card / -cards /
+     -hero, fora os que são outra coisa (gráfico, texto, usuário) */
+  var EXC_CARD = { 'chart-card': 1, 'tx-card': 1, 'user-card': 1, 'hcard': 1, 'kcard': 1, 'gcard': 1, 'card': 1, 'uni-card': 1, 'diag-card': 1, 'card-link': 1, 'tsec': 1 };
+  A.tok = function (el) { return (el && typeof el.className === 'string' ? el.className : '').split(/\s+/).filter(Boolean); };
+  function ehHero(el) { return el.matches(SEL_HERO) || A.tok(el).some(function (t) { return /(^|-)hero$/.test(t); }); }
+  function ehKpi(el) { return el.matches(SEL_KPI) || A.tok(el).some(function (t) { return /-card$/.test(t) && !EXC_CARD[t]; }); }
+  function ehKpis(el) { return el.matches(SEL_KPIS) || A.tok(el).some(function (t) { return /(^|-)(cards|kpis)$/.test(t); }); }
+  function temKpi(el) { return [].slice.call(el.querySelectorAll('[class]')).some(ehKpi); }
   function corDeTexto(el) { var c = A.cor(el); if (c) return c; var b = el.querySelector && el.querySelector('b,strong,span'); return b ? A.cor(b) : ''; }
   function leHero(el) {
     var itens = [];
-    var VALS = '.hval,.hero-value,.hv,.hn,.hero-val';
+    var VALS = '.hval,.hero-value,.hv,.hn,.hero-val,.adh-value,[class$="-value"]';
     var vals = [].slice.call(el.querySelectorAll(VALS)).filter(A.vis);
     if (!vals.length) vals = [].slice.call(el.querySelectorAll('*')).filter(function (x) { return A.vis(x) && A.fs(x) >= 24 && x.children.length <= 2 && A.txt(x).length && A.txt(x).length < 40; });
     var usados = [], ehVal = function (x) { return vals.indexOf(x) >= 0; };
@@ -475,10 +485,10 @@ function __APP_HELPER() {
       var raiz = v.parentElement;
       while (raiz && raiz.parentElement && raiz.parentElement !== el && [].slice.call(raiz.parentElement.querySelectorAll('*')).filter(ehVal).length <= 1) raiz = raiz.parentElement;
       if (!raiz) raiz = v.parentElement;
-      var lab = raiz.querySelector('.hlbl,.hero-label,.hl,.hlab'); var l = lab ? A.txt(lab) : '';
+      var lab = raiz.querySelector('.hlbl,.hero-label,.hl,.hlab,.adh-label,[class$="-label"]'); var l = lab ? A.txt(lab) : '';
       if (!l) { var ants = [].slice.call(raiz.querySelectorAll('*')).filter(function (x) { return A.vis(x) && A.fs(x) <= 12.5 && x !== v && !v.contains(x) && !x.contains(v) && (x.compareDocumentPosition(v) & 4) && A.txt(x).length && A.txt(x).length < 60 && x.children.length === 0; }); l = ants.length ? A.txt(ants[0]) : ''; }
       var dels = [];
-      [].slice.call(raiz.querySelectorAll('.hdel > *, .hero-deltas > *, .hero-delta, .hero-item, .hdeltas > *')).forEach(function (d) {
+      [].slice.call(raiz.querySelectorAll('.hdel > *, .hero-deltas > *, .hero-delta, .hero-item, .hdeltas > *, .adh-deltas > *, [class$="-deltas"] > *')).forEach(function (d) {
         if (!A.vis(d) || d.contains(v)) return; var b = d.querySelector('b,.hv,.v,strong,span'); if (!b) return;
         var vv = A.txt(b), ll = A.txt(d).replace(vv, '').trim(); if (!vv) return; dels.push({ l: ll, v: vv, cor: A.cor(b) });
       });
@@ -492,8 +502,18 @@ function __APP_HELPER() {
   // separa "18,5" do "<small>de 25,0</small>" dentro do mesmo valor
   A.proprio = function (el) { var s = ''; for (var i = 0; i < el.childNodes.length; i++) { var n = el.childNodes[i]; if (n.nodeType === 3) s += n.nodeValue; } return s.replace(/\s+/g, ' ').trim(); };
   function leCard(c) {
-    var lab = c.querySelector('.kl,.klbl,.card-label,.lbl,.kn,.k-l'), val = c.querySelector('.kv,.kval,.card-value,.val,.kvn,.k-v,.v'), met = c.querySelector('.km,.kmeta,.card-meta,.meta,.k-m,.sub');
+    var lab = c.querySelector('.kl,.klbl,.card-label,.lbl,.kn,.k-l,[class$="-label"],[class$="-lbl"]'), val = c.querySelector('.kv,.kval,.card-value,.val,.kvn,.k-v,.v,[class$="-value"],[class$="-val"]'), met = c.querySelector('.km,.kmeta,.card-meta,.meta,.k-m,.sub,[class$="-sub"],[class$="-meta"]');
     var l = lab ? A.txt(lab) : '', v = '', m = met ? A.txt(met) : '';
+    // card que é uma MINI-TABELA de uma linha (a Árvore de Combustível: Rem · Real · Δ · Δ%):
+    // vira um grupo de cards com o rótulo do card como título
+    var tb = c.querySelector('table');
+    if (tb && !val) {
+      var ths = [].slice.call(tb.querySelectorAll('th')).filter(A.vis), tds = [].slice.call(tb.querySelectorAll('tbody td, tr:not(:first-child) td')).filter(A.vis);
+      if (ths.length && tds.length === ths.length) {
+        var it = tds.map(function (td, i) { var b = td.querySelector('b,span,i'); return { l: A.txt(ths[i]), v: A.txt(td), m: '', cor: A.cor(td) || (b ? A.cor(b) : ''), mcor: '' }; }).filter(function (x) { return x.v; });
+        if (it.length) return { multi: true, tit: l, itens: it };
+      }
+    }
     if (val) { var sm = val.querySelector('small,.un,.unit'); if (sm && A.proprio(val)) { v = A.proprio(val); m = [A.txt(sm), m].filter(Boolean).join(' · '); } else v = A.txt(val); }
     if (!v) {   // sem as classes: o maior número é o valor, o que vem antes é o rótulo, o que vem depois é a nota
       var els = [].slice.call(c.querySelectorAll('*')).filter(function (x) { return A.vis(x) && A.proprio(x); });
@@ -506,11 +526,17 @@ function __APP_HELPER() {
     var cor = val ? A.cor(val) : ''; if (!cor && val) { var vb = val.querySelector('b,span,i'); if (vb) cor = A.cor(vb); }
     return { l: l, v: v, m: m, cor: cor, mcor: mcor };
   }
-  function leKpis(el) {
+  function pushCards(cards, blocos) {
+    var itens = [];
+    cards.forEach(function (c) { var r = leCard(c); if (!r) return;
+      if (r.multi) { if (itens.length) { blocos.push({ t: 'kpis', itens: itens }); itens = []; } blocos.push({ t: 'kpis', tit: r.tit, itens: r.itens }); }
+      else if (r.v || r.l) itens.push(r); });
+    if (itens.length) blocos.push({ t: 'kpis', itens: itens });
+  }
+  function leKpis(el, blocos) {
     var cards = [].slice.call(el.children).filter(A.vis);
-    if (cards.length === 1 && cards[0].children.length > 1 && !cards[0].matches(SEL_KPI)) cards = [].slice.call(cards[0].children).filter(A.vis);
-    var itens = cards.map(leCard).filter(function (x) { return x && (x.v || x.l); });
-    return itens.length ? { t: 'kpis', itens: itens } : null;
+    if (cards.length === 1 && cards[0].children.length > 1 && !ehKpi(cards[0])) cards = [].slice.call(cards[0].children).filter(A.vis);
+    pushCards(cards, blocos);
   }
   function leGrafico(el) {
     var C = window.Chart, cv = el.querySelector('canvas'); if (!C || !C.getChart || !cv) return null;
@@ -557,19 +583,19 @@ function __APP_HELPER() {
     if (prof > 14) return;
     var fs = [].slice.call(raiz.children);
     var soltos = [];
-    var fechaSoltos = function () { if (soltos.length) { var k = { t: 'kpis', itens: soltos.map(leCard).filter(function (x) { return x && (x.v || x.l); }) }; if (k.itens.length) blocos.push(k); soltos = []; } };
+    var fechaSoltos = function () { if (soltos.length) { pushCards(soltos, blocos); soltos = []; } };
     fs.forEach(function (el) {
       if (!A.vis(el)) return;
       var tag = el.tagName;
-      if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'CANVAS' || tag === 'BUTTON' || tag === 'NAV' || tag === 'ASIDE' || tag === 'HEADER' || el.matches('.side,.topo,.top,.pbar,.ms-wrap,.filtros,.s-volta,.dica,.chips,.hcab,.tit-wrap,.acoes')) return;
-      if (el.matches(SEL_KPI) && !el.matches(SEL_HERO)) { soltos.push(el); return; }
+      if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'CANVAS' || tag === 'SVG' || tag === 'svg' || tag === 'BUTTON' || tag === 'NAV' || tag === 'ASIDE' || tag === 'HEADER' || el.matches('.side,.topo,.top,.pbar,.ms-wrap,.filtros,.s-volta,.dica,.chips,.hcab,.tit-wrap,.acoes,.gate')) return;
+      if (ehKpi(el) && !ehHero(el)) { soltos.push(el); return; }
       fechaSoltos();
-      if (el.matches(SEL_HERO)) { var h = leHero(el); if (h) blocos.push(h); return; }
-      if (el.matches(SEL_KPIS) || ([].slice.call(el.children).filter(function (x) { return x.matches && x.matches(SEL_KPI); }).length >= 2)) { var k = leKpis(el); if (k) blocos.push(k); return; }
+      if (ehHero(el)) { var h = leHero(el); if (h) blocos.push(h); return; }
+      if (ehKpis(el) || ([].slice.call(el.children).filter(function (x) { return x.matches && ehKpi(x); }).length >= 2)) { leKpis(el, blocos); return; }
       if (el.matches(SEL_GRAF) || (temFilho(el, 'canvas') && !temFilho(el, SEL_GRAF) && !temFilho(el, 'table') && el.querySelectorAll('canvas').length === 1)) { var g = leGrafico(el); if (g) blocos.push(g); else varre(el, blocos, prof + 1); return; }
       if (tag === 'TABLE') { var t = leTabela(el, null); if (t) blocos.push(t); return; }
       var tabs = el.querySelectorAll('table');
-      if (tabs.length === 1 && !temFilho(el, 'canvas') && !temFilho(el, SEL_KPIS) && !temFilho(el, SEL_HERO)) { var t1 = leTabela(tabs[0], el); if (t1) blocos.push(t1); return; }
+      if (tabs.length === 1 && !temFilho(el, 'canvas') && !temFilho(el, SEL_KPIS) && !temFilho(el, SEL_HERO) && !temKpi(el)) { var t1 = leTabela(tabs[0], el); if (t1) blocos.push(t1); return; }
       if (el.matches('.card,.quad,.quadrante,.diag-card,.bloco,.tx-card,.info,.passo,.regra') && !temFilho(el, 'canvas,table,' + SEL_KPIS + ',' + SEL_HERO + ',.card')) { var x = leTexto(el); if (x) blocos.push(x); return; }
       if (el.children.length) varre(el, blocos, prof + 1);
     });
@@ -597,7 +623,7 @@ async function carrega(p, opt) {
   while (_lendo) { if (!opt.fundo) _abortaFundo = Date.now(); try { await _lendo; } catch (e) {} }
   if (!opt.fundo) _abortaFundo = 0;
   var prom = _carrega(p, opt);
-  _lendo = prom.finally(function () { _lendo = null; });
+  _lendo = prom.then(null, function () {}).finally(function () { _lendo = null; });   // quem espera não herda a rejeição (o chamador já a trata)
   return prom;
 }
 async function _carrega(p, opt) {
@@ -721,7 +747,7 @@ function heroHtml(b) {
   }).join('') + '</div>';
 }
 function kpisHtml(b) {
-  return '<div class="kg">' + b.itens.map(function (k) {
+  return (b.tit ? '<div class="sec" style="margin-top:2px">' + esc(b.tit) + '</div>' : '') + '<div class="kg">' + b.itens.map(function (k) {
     var largo = String(k.v).length > 16 || (k.l && k.l.length > 42);
     return '<div class="k' + (largo ? ' largo' : '') + '"><div class="l">' + esc(k.l) + '</div><div class="v ' + corCls(k.cor) + '">' + esc(k.v) + '</div>' + (k.m ? '<div class="m ' + (k.mcor ? '' : '') + '">' + metaHtml(k) + '</div>' : '') + '</div>';
   }).join('') + '</div>';

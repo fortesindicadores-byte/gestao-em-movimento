@@ -71,6 +71,12 @@ table{border-collapse:collapse}td,th{padding:4px 8px}.s-item{display:block}.ms-p
     <div class="kpi"><div class="klbl">Pontos</div><div class="kval">18,5<small>de 25,0</small></div><div class="kmeta">meta 80%</div></div></div>
   <div class="gr2"><div class="card gcard"><div class="gtit">Custo mensal</div><div class="gsub">Real × Rem</div><div class="gcv"><canvas id="g1"></canvas></div></div>
     <div class="card gcard"><div class="gtit">AV %</div><div class="gcv"><canvas id="g2"></canvas></div></div></div>
+  <!-- o desenho da Árvore de Combustível: card com uma mini-tabela de uma linha -->
+  <div class="tree"><div id="pos-custo"><div class="kpi-card"><div class="card-label">Custo Combustível</div><table class="kpi-table"><thead><tr><th>Rem</th><th>Real</th><th>Δ</th><th>Δ%</th></tr></thead><tbody><tr><td>1,0 mi</td><td>1,1 mi</td><td class="cr">+0,1 mi</td><td class="cr">+10%</td></tr></tbody></table></div></div></div>
+  <!-- o desenho do painel de Pneus: adh-hero + saude-cards -->
+  <div class="adh-hero"><div class="adh-hero-left"><div class="adh-label">Saúde dos Pneus</div><div class="adh-value" style="font-size:40px">82</div><div class="adh-deltas"><div class="adh-delta">Pneus Avaliados<b>6.500</b></div></div></div></div>
+  <div class="saude-cards"><div class="saude-card"><div class="sc-label">MM Média</div><div class="sc-value" style="font-size:22px">7,1 mm</div><div class="sc-sub">menor sulco médio</div></div><div class="saude-card"><div class="sc-label">Vida Média</div><div class="sc-value" style="font-size:22px">1,8</div><div class="sc-sub">idade pelo DOT</div></div></div>
+  <div class="card gate" style="display:none"><h2>Erro ao carregar</h2></div>
 </section>
 <section class="vw" id="vw-detalhe"><div class="card tsec"><div class="ttit">Por conta</div><div class="twrap"><table class="dre"><thead><tr><th>Conta</th><th>Orçado</th><th>Remunerado</th><th>Realizado</th><th>Δ %</th></tr></thead><tbody id="tb"></tbody></table></div></div></section>
 </div>
@@ -205,12 +211,12 @@ console.log('1 · login');
   await page.waitForFunction(() => document.querySelector('#pnCorpo .hero .val'), null, { timeout: 30000 });
   await page.waitForFunction(() => document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
   const hero = await page.$$eval('#pnCorpo .hero .hi', hs => hs.map(h => ({ l: h.querySelector('.rot').textContent, v: h.querySelector('.val').textContent, dels: [...h.querySelectorAll('.dels div')].map(d => d.textContent) })));
-  conf(hero.length === 2 && hero[0].l === 'Custo realizado' && hero[0].v === 'R$ 11,0 mi' && hero[1].v === 'R$ 3,0 mi', 'hero: dois números com o rótulo e o valor do painel (' + JSON.stringify(hero.map(h => h.v)) + ')');
+  conf(hero.length === 3 && hero[0].l === 'Custo realizado' && hero[0].v === 'R$ 11,0 mi' && hero[1].v === 'R$ 3,0 mi', 'hero: dois números com o rótulo e o valor do painel (' + JSON.stringify(hero.map(h => h.v)) + ')');
   conf(hero[0].dels.length === 2 && /Δ Rem %\+10%/.test(hero[0].dels[0]), 'deltas do hero vêm junto: ' + hero[0].dels.join(' | '));
   const delCor = await page.$eval('#pnCorpo .hero .dels div b', b => b.className);
   conf(delCor === 'neg', 'a cor do delta é a do painel (vermelho → neg): ' + delCor);
   const kp = await page.$$eval('#pnCorpo .kg .k', ks => ks.map(k => ({ l: k.querySelector('.l').textContent, v: k.querySelector('.v').textContent, c: k.querySelector('.v').className, m: (k.querySelector('.m') || {}).textContent })));
-  conf(kp.length === 4 && kp[0].l === 'Orçado' && kp[0].v === 'R$ 9,0 mi', '4 cards com rótulo e valor: ' + kp.map(k => k.l + '=' + k.v).join(', '));
+  conf(kp.length === 10 && kp[0].l === 'Orçado' && kp[0].v === 'R$ 9,0 mi', '4 cards do 1º grupo com rótulo e valor: ' + kp.slice(0, 4).map(k => k.l + '=' + k.v).join(', '));
   conf(kp[3].v === '18,5' && /^de 25,0 · meta 80%/.test(kp[3].m), 'valor com <small> (Painel de Metas): o número é o valor e o "de 25,0" vai para a nota: ' + kp[3].v + ' / ' + kp[3].m);
   conf(/pos/.test(kp[2].c), 'o card verde do painel sai verde no app');
   conf(/YoY: \+3%/.test(kp[0].m), 'a nota do card (YoY) vem junto: ' + kp[0].m);
@@ -219,6 +225,13 @@ console.log('1 · login');
   const dados = await page.evaluate(() => { const c = document.querySelector('#pnCorpo .gc canvas'); const ch = Chart.getChart(c); return { tipos: ch.data.datasets.map(d => d.type), n: ch.data.labels.length, d0: ch.data.datasets[0].data.slice(0, 3), d1: ch.data.datasets[1].data.slice(0, 3), dash: ch.data.datasets[1].borderDash }; });
   conf(dados.n === 10 && dados.d0.join() === '10,11,12' && dados.d1.join() === '9.5,10.5,11.5' && dados.tipos[1] === 'line', 'os dados do gráfico são os do painel (barra + linha, 10 meses): ' + JSON.stringify(dados));
   conf(dados.dash && dados.dash.length === 2, 'linha tracejada do painel continua tracejada');
+  const bl = await page.evaluate(() => PN_DATA.blocos.map(b => b.t + (b.tit ? ':' + b.tit : '')));
+  conf(bl.join(',') === 'hero,kpis,graf:Custo mensal,graf:AV %,kpis:Custo Combustível,hero,kpis', 'blocos na ordem do painel (o .gate escondido não conta): ' + bl.join(','));
+  const arv = await page.evaluate(() => PN_DATA.blocos[4]);
+  conf(arv.itens.length === 4 && arv.itens[0].l === 'Rem' && arv.itens[0].v === '1,0 mi' && arv.itens[2].cor === 'r', 'card com mini-tabela (Árvore) vira grupo de 4 cards com o rótulo do card: ' + arv.itens.map(i => i.l + '=' + i.v).join(' · '));
+  const pn = await page.evaluate(() => ({ h: PN_DATA.blocos[5].itens[0], k: PN_DATA.blocos[6].itens }));
+  conf(pn.h.l === 'Saúde dos Pneus' && pn.h.v === '82' && pn.h.dels.length === 1 && pn.h.dels[0].v === '6.500', 'hero com classes próprias (adh-hero): ' + JSON.stringify(pn.h));
+  conf(pn.k.length === 2 && pn.k[0].l === 'MM Média' && pn.k[0].v === '7,1 mm' && pn.k[0].m === 'menor sulco médio', 'cards com classes próprias (saude-card): ' + pn.k.map(i => i.l + '=' + i.v).join(' · '));
   const vistas = await page.$$eval('#pnVistas .chip', cs => cs.map(c => c.textContent + (c.classList.contains('on') ? '*' : '')));
   conf(vistas.join('|') === 'Resumo Gerencial*|Detalhe', 'chips das visões, a 1ª marcada: ' + vistas.join(' | '));
   const vigs = await page.$$eval('#pnVigs .chip', cs => cs.map(c => c.textContent));
