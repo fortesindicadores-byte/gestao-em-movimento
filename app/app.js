@@ -530,7 +530,7 @@ function __APP_HELPER() {
     var itens = [];
     cards.forEach(function (c) { var r = leCard(c); if (!r) return;
       if (r.multi) { if (itens.length) { blocos.push({ t: 'kpis', itens: itens }); itens = []; } blocos.push({ t: 'kpis', tit: r.tit, itens: r.itens }); }
-      else if (r.v || r.l) itens.push(r); });
+      else if ((r.v || r.l) && String(r.v).length <= 60) itens.push(r); });   // "valor" longo é texto, não card
     if (itens.length) blocos.push({ t: 'kpis', itens: itens });
   }
   function leKpis(el, blocos) {
@@ -541,6 +541,7 @@ function __APP_HELPER() {
   function leGrafico(el) {
     var C = window.Chart, cv = el.querySelector('canvas'); if (!C || !C.getChart || !cv) return null;
     var ch = null; try { ch = C.getChart(cv); } catch (e) {} if (!ch || !ch.data) return null;
+    if (/scatter|bubble|radar/.test(ch.config.type || '')) return null;   // dispersão não cabe no app (fica no painel completo)
     var ds = (ch.data.datasets || []).filter(function (d) { return !d.hidden && (d.data || []).length; });
     if (!ds.length) return null;
     var o = ch.options || {}, sc = o.scales || {};
@@ -606,7 +607,7 @@ function __APP_HELPER() {
     var blocos = []; varre(raiz, blocos, 0);
     // tira repetições (o mesmo card lido duas vezes por caminhos diferentes)
     var vistos = {}; blocos = blocos.filter(function (b) { var k = JSON.stringify(b).slice(0, 400); if (vistos[k]) return false; vistos[k] = 1; return true; });
-    var vistas = [].slice.call(document.querySelectorAll('.s-item[data-vw]')).filter(A.vis).map(function (b) { var c = b.cloneNode(true); [].slice.call(c.querySelectorAll('svg')).forEach(function (s) { s.remove(); }); return { v: b.dataset.vw, t: A.txt(c) }; });
+    var vistas = [].slice.call(document.querySelectorAll('.s-item[data-vw]')).filter(A.vis).map(function (b) { var c = b.cloneNode(true); [].slice.call(c.querySelectorAll('svg,small,.cnt,.badge,.pnd,[class*="cnt"],[class*="badge"],[class*="pill"]')).forEach(function (s) { s.remove(); }); return { v: b.dataset.vw, t: A.txt(c) }; });
     var on = document.querySelector('.vw.on'); var atual = on ? on.id.replace(/^vw-/, '') : '';
     var tit = document.getElementById('tit') || document.querySelector('.tit-wrap h1,.tit h1,h1');
     var sub = document.getElementById('titSub') || document.querySelector('.tit-sub');
