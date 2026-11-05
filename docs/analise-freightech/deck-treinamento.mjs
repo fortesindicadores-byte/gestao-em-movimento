@@ -106,35 +106,61 @@ slide(`${head('O variável, passo a passo', 'Do km do caminhão ao dinheiro do m
   ])}`);
 }
 
-// DRE do mapa
+// DRE do mapa (Renan, 05/11/2026: "Seria legal se tivesse os AVs, e toda a receita lá em cima, bruta e líquida, com impostos")
 {
   const tot = FA.total_liq_cam, mp = v => v / 25, kmM = R['KM Remunerado'] / 25;
-  const comb = R['Combustível R$/KM'] * kmM, man = R['Manutenção Caminhão R$/KM'] * kmM, carr = R['Manutenção Carroceria R$/KM'] * kmM, pn = R['Pneu R$/KM'] * kmM;
-  const lucMes = LU.lucro * 2, lucCam = lucMes / FA.ativos, outras = FA.outras_cam - lucCam;
-  // cenário didático do realizado: rodou 110 km em vez de 95 (+15%), 3,0 km/L em vez do remunerado, R$ 0,10/L acima, pneu descartado aos 40 mil km, oficina acima do BID
-  const kmReal = kmM * 1.15, kmlRem = R['KM Remunerado'] > 0 ? (R['Combustível R$/KM'] ? (M.preco_implicito / R['Combustível R$/KM']) : E.kml) : E.kml, kmlReal = kmlRem - 0.33;
+  // receita: o Faturamento do FT calcula o bruto "por dentro": líquido × (parcela dentro do município ÷ (1 − imposto dentro) + parcela fora ÷ (1 − imposto fora));
+  // imposto dentro = ISS + PIS + COFINS + contribuição previdenciária; fora = ICMS + PIS + COFINS + contribuição previdenciária (fórmulas exportadas da tabela Faturamento)
+  const liq = mp(tot), pDen = FA.dentro / 100, pFor = FA.fora / 100, iDen = FA.imp_dentro / 100, iFor = FA.imp_fora / 100;
+  const bDen = liq * pDen / (1 - iDen), bFor = liq * pFor / (1 - iFor), bruta = bDen + bFor;
+  const cprb = +(FA.imp_dentro - PR.iss - PR.pis - PR.cofins).toFixed(2);
+  const tIcms = bFor * PR.icms / 100, tIss = bDen * PR.iss / 100, tPc = bruta * (PR.pis + PR.cofins) / 100, tCprb = bruta * cprb / 100, imp = tIcms + tIss + tPc + tCprb;
+  // custos: linhas do pacote líquido por caminhão ÷ 25 (as de frota pelo R$/km do Resumo, ajustadas ao Custo Variável Líquido do Faturamento)
+  const vk = [R['Combustível R$/KM'], R['Manutenção Caminhão R$/KM'], R['Manutenção Carroceria R$/KM'], R['Pneu R$/KM']], fVar = mp(FA.var_cam) / (vk.reduce((s, v) => s + v, 0) * kmM);
+  const comb = vk[0] * kmM * fVar, man = vk[1] * kmM * fVar, carr = vk[2] * kmM * fVar, pn = vk[3] * kmM * fVar, lav = mp(R.Lavagem);
+  const lucMes = LU.lucro * 2, lucCam = lucMes / FA.ativos, outras = FA.outras_cam - lucCam - R.Lavagem; // o Resumo põe a lavagem da Rota em Outras Despesas
+  // cenário didático do realizado: rodou 15% a mais, 0,33 km/L abaixo do remunerado, R$ 0,10/L acima, oficina 30% acima do BID, um pneu descartado aos 40 mil km
+  const kmReal = kmM * 1.15, kmlRem = R['Combustível R$/KM'] ? (M.preco_implicito / R['Combustível R$/KM']) : E.kml, kmlReal = kmlRem - 0.33;
   const precoL = M.preco_implicito, combReal = kmReal / kmlReal * (precoL + 0.10), manReal = R['Manutenção Caminhão R$/KM'] * kmReal * 1.3, carrReal = carr * 1.15, pnReal = R['Pneu R$/KM'] * kmReal + 1953 / 25 * 0.5;
-  const linhas = [
-    ['Fixo do caminhão', mp(FA.fixo_ativo_cam), mp(FA.fixo_ativo_cam), 'o mesmo, rode ou não rode', true],
-    ['Diesel', comb, combReal, `rodou ${f0(kmReal)} km em vez de ${f0(kmM)} · fez ${f2(kmlReal)} km/L em vez de ${f2(kmlRem)} · pagou R$ 0,10/L acima`, true],
-    ['Manutenção', man, manReal, 'oficina 30% acima do BID, e no km a mais', true],
-    ['Carroceria', carr, carrReal, 'no km a mais', true],
-    ['Pneu', pn, pnReal, 'um pneu descartado aos 40 mil km por falta de calibragem (metade de um pneu novo ÷ 25 mapas)', true],
-    ['Lavagem', mp(R.Lavagem), mp(R.Lavagem), 'fixa por mês', true],
-    ['Equipe de entrega', mp(FA.equipe_cam), mp(FA.equipe_cam), 'remuneração de pessoas: sem realizado por mapa aqui', false],
-    ['RV da equipe', mp(FA.rv_cam), mp(FA.rv_cam), 'prêmio variável da equipe', false],
-    ['QLP e administrativo', mp(FA.qlp_cam), mp(FA.qlp_cam), 'estrutura da unidade', false],
-    ['Outras despesas', mp(outras), mp(outras), 'FAD, incentivo, materiais', false],
-    ['Lucro por hectolitro', mp(lucCam), mp(lucCam), `R$ ${f2(LU.rshl)}/HL × volume vendido: a margem não vem do km`, false],
+  const frota = [
+    ['Fixo do caminhão', mp(FA.fixo_ativo_cam), mp(FA.fixo_ativo_cam), 'FINAME, seguro, IPVA, rastreador, faixa: rode ou não rode'],
+    ['Diesel', comb, combReal, `${f0(kmReal)} km em vez de ${f0(kmM)} · ${f2(kmlReal)} vs ${f2(kmlRem)} km/L · R$ 0,10/L acima`],
+    ['Manutenção', man, manReal, 'oficina 30% acima do BID, e no km a mais'],
+    ['Carroceria', carr, carrReal, 'no km a mais'],
+    ['Pneu', pn, pnReal, 'um pneu descartado aos 40 mil km (½ pneu novo ÷ 25 mapas)'],
+    ['Lavagem', lav, lav, 'fixa por mês'],
   ];
-  const sRem = linhas.reduce((s, l) => s + l[1], 0), sReal = linhas.reduce((s, l) => s + l[2], 0), fRem = linhas.filter(l => l[4]).reduce((s, l) => s + l[1], 0), fReal = linhas.filter(l => l[4]).reduce((s, l) => s + l[2], 0);
+  const pessoas = [
+    ['Equipe de entrega', mp(FA.equipe_cam), 'pessoas: sem realizado por mapa aqui'],
+    ['RV da equipe', mp(FA.rv_cam), 'prêmio variável da equipe'],
+    ['QLP e administrativo', mp(FA.qlp_cam), 'estrutura da unidade'],
+    ['Outras despesas', mp(outras), 'FAD, incentivo, materiais'],
+  ];
+  const fRem = frota.reduce((s, l) => s + l[1], 0), fReal = frota.reduce((s, l) => s + l[2], 0), pRem = pessoas.reduce((s, l) => s + l[1], 0);
+  const resRem = liq - fRem - pRem, resReal = liq - fReal - pRem; // = lucro por hectolitro no remunerado
+  const av = v => ({ v: (v / liq * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%', style: `color:${INK3}` });
   const cel = (a, b) => ({ v: (b - a > 0.5 ? '−' : b - a < -0.5 ? '+' : '') + f0(Math.abs(a - b)), style: `color:${b - a > 0.5 ? ACC : b - a < -0.5 ? VERDE : INK3};font-weight:700` });
-  slide(`${head('A DRE do mapa', 'Cada mapa é uma DRE: o que ele recebe, o que ele custa, e três desvios que viram o sinal', `${NOME.CBA}, ${M.vig} · pacote por caminhão ativo ÷ 25 mapas · R$ por mapa · frota em destaque`)}
-  ${tabela({ classe: 'compacta', cols: [{ t: 'Linha do mapa' }, { t: 'Remunerado (FT)', n: true }, { t: 'Realizado (cenário)', n: true }, { t: 'Resultado', n: true }, { t: 'O que aconteceu no cenário', w: true }],
-    rows: [...linhas.map(l => ({ c: [{ v: (l[4] ? '<b>' + l[0] + '</b>' : l[0]) }, f0(l[1]), f0(l[2]), cel(l[1], l[2]), { v: l[3], cls: l[4] ? '' : 'neutro' }], cls: l[4] ? 'fr' : '' })),
-      { c: ['<b>Frota (fixo + variável + lavagem)</b>', f0(fRem), f0(fReal), cel(fRem, fReal), 'o que este treinamento controla'], cls: 'sep' }],
-    tot: ['Mapa inteiro', f0(sRem), f0(sReal), cel(sRem, sReal), 'remunerado × realizado'] })}
-  <p class="note">Remunerado = pacote líquido por caminhão do Faturamento do FT (${rs2(tot)}) ÷ 25 mapas; a frota usa o R$/km e o km por mapa do Resumo (${f1(kmM)} km). O realizado das linhas de frota é um cenário didático com os preços do caminhão mediano; equipe, QLP, outras e lucro ficam no remunerado (sem realizado por mapa). Se o pacote for pago por mapa rodado, o mapa não rodado perde todas as linhas; se for por caminhão ativo, só o variável. A confirmar com o planejamento.</p>`);
+  const zero = { v: '0', style: `color:${INK3};font-weight:700` }, neg = v => '(' + f0(v) + ')';
+  const grp = t => ({ c: [{ v: `<span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:${INK3}">${t}</span>` }, '', '', '', '', '', ''], cls: 'grp' });
+  const rows = [
+    grp('Receita do mapa'),
+    { c: ['<b>Receita bruta</b>', f0(bruta), av(bruta), f0(bruta), av(bruta), zero, { v: 'pacote por caminhão ativo ÷ 25 mapas, impostos por dentro', cls: 'neutro' }] },
+    { c: [`(−) ICMS ${f1(PR.icms)}%`, neg(tIcms), av(-tIcms), neg(tIcms), av(-tIcms), zero, { v: `na parte fora do município (${f0(FA.fora)}% do faturamento)`, cls: 'neutro' }] },
+    { c: [`(−) ISS ${f1(PR.iss)}%`, neg(tIss), av(-tIss), neg(tIss), av(-tIss), zero, { v: `na parte dentro do município (${f0(FA.dentro)}%)`, cls: 'neutro' }] },
+    { c: [`(−) PIS ${f2(PR.pis)}% e COFINS ${f1(PR.cofins)}%`, neg(tPc), av(-tPc), neg(tPc), av(-tPc), zero, { v: 'lucro real, sobre todo o faturamento', cls: 'neutro' }] },
+    { c: [`(−) Contribuição previdenciária ${f1(cprb)}%`, neg(tCprb), av(-tCprb), neg(tCprb), av(-tCprb), zero, { v: 'sobre todo o faturamento', cls: 'neutro' }] },
+    { c: ['<b>Receita líquida</b>', f0(liq), av(liq), f0(liq), av(liq), zero, { v: `impostos = ${f1(imp / bruta * 100)}% do bruto (${f1(FA.imp_dentro)}% dentro · ${f1(FA.imp_fora)}% fora)`, cls: 'neutro' }], cls: 'sep' },
+    grp('Custos da frota · o que este treinamento controla'),
+    ...frota.map(l => ({ c: [{ v: '<b>' + l[0] + '</b>' }, neg(l[1]), av(-l[1]), neg(l[2]), av(-l[2]), cel(l[1], l[2]), l[3]], cls: 'fr' })),
+    { c: ['<b>Frota (fixo + variável + lavagem)</b>', neg(fRem), av(-fRem), neg(fReal), av(-fReal), cel(fRem, fReal), ''], cls: 'sep' },
+    grp('Pessoas e estrutura'),
+    ...pessoas.map(l => ({ c: [l[0], neg(l[1]), av(-l[1]), neg(l[1]), av(-l[1]), zero, { v: l[2], cls: 'neutro' }] })),
+  ];
+  slide(`${head('A DRE do mapa', 'Cada mapa é uma DRE: a receita, os impostos, os custos e o que sobra', `${NOME.CBA}, ${M.vig} · R$ por mapa · AV = % da receita líquida · frota em destaque`)}
+  ${tabela({ classe: 'compacta dre', cols: [{ t: 'Linha do mapa' }, { t: 'Remunerado (FT)', n: true }, { t: 'AV', n: true }, { t: 'Realizado (cenário)', n: true }, { t: 'AV', n: true }, { t: 'Resultado', n: true }, { t: 'O que é · o que aconteceu no cenário', w: true }],
+    rows, tot: ['Resultado do mapa (lucro por hectolitro)', f0(resRem), av(resRem), f0(resReal), av(resReal), cel(resReal, resRem), { v: `R$ ${f2(LU.rshl)}/HL × volume · três desvios levam ${f0((1 - resReal / resRem) * 100)}% do lucro`, cls: '' }] })}
+  <style>table.dre td,table.dre th{padding:3px 5px;font-size:10.5px} table.dre td.w{white-space:nowrap;font-size:10px} table.dre tr.grp td{padding:5px 6px 1px;border-bottom:0} .dre+.note{font-size:10px;margin-top:6px}</style>
+  <p class="note">Receita = pacote líquido por caminhão do Faturamento do FT (${rs2(tot)}) ÷ 25 mapas; o bruto é refeito pela fórmula do próprio Faturamento (imposto por dentro: ${f1(FA.dentro)}% do faturamento dentro do município a ${f1(FA.imp_dentro)}%, ${f1(FA.fora)}% fora a ${f1(FA.imp_fora)}%). Linhas de frota pelo R$/km e km por mapa do Resumo (${f1(kmM)} km); o realizado delas é um cenário didático com os preços do caminhão mediano. Se o pacote for pago por mapa rodado, o mapa não rodado perde todas as linhas; se for por caminhão ativo, só o variável. A confirmar com o planejamento.</p>`);
 }
 
 // definições
