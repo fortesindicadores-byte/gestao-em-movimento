@@ -266,15 +266,15 @@ function renderFav() {
 }
 
 /* ─────────────────────────── início: destaques ─────────────────────────── */
-function cacheKey(p, vw, vig) { return 'gem_app_c_' + p.id + '|' + (vw || '') + '|' + (vig || ''); }
+function cacheKey(p, vw, vig) { return 'gem_app_c2_' + p.id + '|' + (vw || '') + '|' + (vig || ''); }
 function cacheLe(p, vw, vig) { return lsGet(cacheKey(p, vw, vig), null); }
 function cacheGrava(p, vw, vig, data) {
   var ok = lsSet(cacheKey(p, vw, vig), { t: Date.now(), data: data });
   if (!ok) { limpaCache(); lsSet(cacheKey(p, vw, vig), { t: Date.now(), data: data }); }
 }
-function limpaCache() { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('gem_app_c_') === 0) localStorage.removeItem(k); }); }
+function limpaCache() { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('gem_app_c2_') === 0) localStorage.removeItem(k); }); }
 function cachePadrao(p) {   // o resumo guardado da visão e vigência padrão do painel (o que o início mostra)
-  var ks = Object.keys(localStorage).filter(function (k) { return k.indexOf('gem_app_c_' + p.id + '|') === 0; });
+  var ks = Object.keys(localStorage).filter(function (k) { return k.indexOf('gem_app_c2_' + p.id + '|') === 0; });
   var melhor = null;
   ks.forEach(function (k) { var c = lsGet(k, null); if (c && c.data && c.data.padrao && (!melhor || c.t > melhor.t)) melhor = c; });
   if (!melhor) ks.forEach(function (k) { var c = lsGet(k, null); if (c && (!melhor || c.t > melhor.t)) melhor = c; });
@@ -297,12 +297,13 @@ function renderInicio() {
   f.forEach(function (p) {
     var c = cachePadrao(p), hr = c && heroDe(c.data), sr = c && serieDe(c.data);
     if (hr && !hero1) hero1 = { p: p, hr: hr, c: c, sr: sr };
-    h += '<div class="dq" onclick="abrePainel(\'' + esc(p.id) + '\')">' +
+    h += '<div class="dq" onclick="abrePainel(\'' + esc(p.id) + '\')"><div class="dq-top">' +
       '<div class="dq-l"><div class="rot">' + esc(p.nome) + (hr && hr.l ? ' <i>·</i> ' + esc(suave(hr.l)) : '') + '</div>' +
       (hr ? '<div class="val ' + corCls(hr.cor) + (String(hr.v).length > 12 ? ' menor' : '') + '">' + esc(hr.v) + '</div>' +
-          (hr.dels.length ? pillsHtml(hr.dels.slice(0, 2)) : (hr.extra ? '<div class="sub">' + esc(hr.extra) + '</div>' : ''))
+          (!hr.dels.length && hr.extra ? '<div class="sub">' + esc(hr.extra) + '</div>' : '')
         : '<div class="sk"></div><div class="sub">carregando…</div>') + '</div>' +
-      '<div class="dq-r">' + (sr ? sparkSvg(sr.data, 88, 34, hr && hr.cor === 'r' ? '#FF5252' : '#F97316') : '') + '<span class="seta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span></div></div>';
+      '<div class="dq-r">' + (sr ? sparkSvg(sr.data, 88, 34, hr && hr.cor === 'r' ? '#FF5252' : '#F97316') : '') + '<span class="seta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span></div></div>' +
+      (hr && hr.dels.length ? pillsHtml(hr.dels.slice(0, 2)) : '') + '</div>';
   });
   $('destaques').innerHTML = h || '<div class="vazio">Marque painéis como favoritos para vê-los aqui.</div>';
   if (hero1) {
@@ -822,7 +823,11 @@ function vaiBloco(id) { var el = $(id); if (!el) return; if (id === 'pnCorpo') {
 
 /* hero: número grande + pílulas coloridas com os deltas */
 function pillsHtml(dels) {
-  return dels && dels.length ? '<div class="pills">' + dels.slice(0, 8).map(function (x) { return '<span class="pill ' + corCls(x.cor) + '"><span>' + esc(suave(x.l)) + '</span><b>' + esc(x.v) + '</b></span>'; }).join('') + '</div>' : '';
+  // valor longo (texto: "CDD RIO DE JANEIRO · 96") ocupa a linha inteira, senão come o rótulo
+  // quando um terço ou mais são largas, TODAS vão uma por linha (senão fica uma curta sozinha ao lado de uma linha inteira)
+  if (!dels || !dels.length) return '';
+  var ds = dels.slice(0, 8), nl = ds.filter(function (x) { return String(x.v == null ? '' : x.v).length > 11; }).length, todas = nl * 3 >= ds.length;
+  return '<div class="pills' + (todas ? ' lista' : '') + '">' + ds.map(function (x) { var v = String(x.v == null ? '' : x.v); return '<span class="pill ' + corCls(x.cor) + (v.length > 11 ? ' larga' : '') + '"><span>' + esc(suave(x.l)) + '</span><b>' + esc(v) + '</b></span>'; }).join('') + '</div>';
 }
 function heroHtml(b) {
   return '<div class="hero">' + b.itens.map(function (it, i) {

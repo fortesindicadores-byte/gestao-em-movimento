@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gestão em Movimento">
-<meta name="build" content="202611060045">
+<meta name="build" content="202611060130">
 <title>Gestão em Movimento</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -72,7 +72,7 @@ button{font-family:inherit;}
 /* ── rótulo pequeno + número grande em fonte fina (o "saldo" do DriverPro) ── */
 .rot{font-size:10.5px;color:var(--txt2);font-weight:400;}
 .saldo{margin:22px 0 18px;}
-.saldo .val{font-size:33px;font-weight:600;letter-spacing:.4px;line-height:1.1;margin-top:8px;}
+.saldo .val{font-size:30px;font-weight:600;letter-spacing:.3px;line-height:1.1;margin-top:6px;}
 .saldo .aviso{font-size:11px;color:var(--txt2);margin-top:8px;line-height:1.45;}
 .saldo .aviso b{color:var(--txt);font-weight:600;}
 
@@ -111,17 +111,18 @@ body.claro .nav{box-shadow:0 14px 34px rgba(20,24,32,.16);border:1px solid var(-
 .nav button.on{color:#fff;background:var(--acc);}
 
 /* ── destaques do início: o número do painel, grande, com o mini-gráfico ao lado ── */
-.dq{background:var(--card);border-radius:10px;padding:14px 14px 14px 16px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:10px;}
+.dq{background:var(--card);border-radius:10px;padding:14px 14px 14px 16px;margin-bottom:12px;cursor:pointer;}
+.dq .dq-top{display:flex;align-items:center;gap:10px;}
 .dq .dq-l{flex:1;min-width:0;}
 .dq .dq-r{flex:0 0 auto;display:flex;align-items:center;gap:8px;}
 .dq .rot{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .dq .rot i{font-style:normal;color:var(--txt3);}
-.dq .val{font-size:26px;font-weight:600;letter-spacing:.3px;line-height:1.1;margin-top:6px;}
+.dq .val{font-size:24px;font-weight:600;letter-spacing:.3px;line-height:1.1;margin-top:5px;}
 .dq .val.menor{font-size:19px;}
 .dq .sub{font-size:10.5px;color:var(--txt2);margin-top:6px;line-height:1.45;}
 .dq .sub b{font-weight:600;}
-.dq .pills{margin-top:8px;}
-.dq .pill{padding:4px 8px 4px 7px;font-size:9.5px;} .dq .pill b{font-size:10.5px;}
+.dq .pills{margin-top:10px;grid-template-columns:1fr 1fr;}
+.dq .pill{padding:5px 9px;font-size:9.5px;} .dq .pill b{font-size:10.5px;}
 .dq .sk{height:26px;width:60%;border-radius:6px;background:var(--card2);margin-top:8px;animation:pulsa 1.2s infinite;}
 @keyframes pulsa{0%,100%{opacity:.45}50%{opacity:1}}
 .dq .seta{color:var(--txt3);}
@@ -131,7 +132,7 @@ body.claro .nav{box-shadow:0 14px 34px rgba(20,24,32,.16);border:1px solid var(-
 .ini-spark .spark{width:100%;height:46px;}
 .ini-spark .leg{font-size:10px;color:var(--txt3);margin-top:4px;}
 .saldo .aviso .sub{margin-top:6px;}
-.saldo .aviso .pills{margin-top:8px;}
+.saldo .aviso .pills{margin-top:8px;grid-template-columns:1fr 1fr;}
 .chips.grupos{padding:0 0 4px;margin:-4px 0 6px;}
 .chips.grupos .chip{padding:6px 11px;font-size:10.5px;font-weight:500;}
 .sec .cnt{margin-left:6px;font-size:9.5px;color:var(--txt3);background:var(--linha);border:1px solid var(--brd);border-radius:999px;padding:1px 6px;}
@@ -188,11 +189,11 @@ body.claro .nav{box-shadow:0 14px 34px rgba(20,24,32,.16);border:1px solid var(-
 .pbar .tt b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .pbar .tt span{display:block;font-size:10.5px;color:var(--txt2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .pcorpo{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 20px calc(var(--safe-bot) + 28px);}
-.chips{display:flex;gap:6px;overflow-x:auto;padding:6px 20px 4px;scrollbar-width:none;flex:0 0 auto;}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:4px 20px 2px;scrollbar-width:none;flex:0 0 auto;}
 .chips::-webkit-scrollbar{display:none;}
-.chip{flex:0 0 auto;font-size:11px;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid var(--brd);color:var(--txt2);background:var(--linha);cursor:pointer;white-space:nowrap;}
+.chip{flex:0 0 auto;font-size:10.5px;font-weight:600;padding:6px 11px;border-radius:999px;border:1px solid var(--brd);color:var(--txt2);background:var(--linha);cursor:pointer;white-space:nowrap;}
 .chip.on{background:var(--acc);border-color:var(--acc);color:#fff;}
-.chips.vig .chip{font-weight:500;padding:5px 10px;font-size:10.5px;}
+.chips.vig .chip{font-weight:500;padding:4px 9px;font-size:10px;}
 .chips.vig .chip.on{background:var(--acc2);color:var(--acc);border-color:transparent;}
 .estado{font-size:11px;color:var(--txt2);padding:8px 0 2px;display:flex;align-items:center;gap:8px;}
 .estado i{width:12px;height:12px;border-radius:50%;border:2px solid var(--brd);border-top-color:var(--acc);animation:gira .8s linear infinite;flex:0 0 auto;}
@@ -207,19 +208,22 @@ body.claro .nav{box-shadow:0 14px 34px rgba(20,24,32,.16);border:1px solid var(-
 .idx .chip.on{background:var(--card2);border-color:transparent;color:var(--txt);}
 
 /* hero: número grande + pílulas coloridas com os deltas */
-.hero{margin:14px 0 16px;}
-.hero .hi{margin-bottom:16px;}
-.hero .hi.hi2{padding-top:14px;border-top:1px solid var(--brd);}
-.hero .hi.hi2 .val{font-size:24px;}
+.hero{margin:10px 0 12px;}
+.hero .hi{margin-bottom:12px;}
+.hero .hi.hi2{padding-top:12px;border-top:1px solid var(--brd);}
+.hero .hi.hi2 .val{font-size:22px;}
 .hero .rot{text-transform:none;}
-.hero .val{font-size:36px;font-weight:600;letter-spacing:.2px;line-height:1.1;margin-top:6px;word-break:break-word;}
-.hero .val.medio{font-size:28px;}
-.hero .val.menor{font-size:22px;}
-.hero .extra{font-size:11px;color:var(--txt2);margin-top:6px;line-height:1.45;}
+.hero .val{font-size:30px;font-weight:600;letter-spacing:.2px;line-height:1.1;margin-top:5px;word-break:break-word;}
+.hero .val.medio{font-size:24px;}
+.hero .val.menor{font-size:20px;}
+.hero .extra{font-size:10.5px;color:var(--txt2);margin-top:4px;line-height:1.4;}
 .hero .extra b{color:var(--txt);font-weight:600;}
-.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
-.pill{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:var(--txt2);background:var(--card);border-radius:999px;padding:5px 10px 5px 9px;line-height:1;}
-.pill b{font-size:11.5px;font-weight:600;color:var(--txt);}
+.pills{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+.pill{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;font-size:10px;color:var(--txt2);background:var(--card);border-radius:8px;padding:6px 10px;line-height:1.15;}
+.pill span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pill.larga,.pills .pill:last-child:nth-child(odd){grid-column:1/-1;}
+.pills.lista{grid-template-columns:1fr;}   /* valor em texto, e a pílula ímpar do fim, ocupam a linha toda */
+.pill b{font-size:11.5px;font-weight:600;color:var(--txt);flex:0 0 auto;font-variant-numeric:tabular-nums;}
 .pill.pos{background:rgba(59,179,59,.14);} .pill.pos b{color:var(--verde);}
 .pill.neg{background:rgba(255,82,82,.14);} .pill.neg b{color:var(--vermelho);}
 .pill.amb{background:rgba(244,161,0,.14);} .pill.amb b{color:var(--ambar);}
@@ -227,21 +231,23 @@ body.claro .nav{box-shadow:0 14px 34px rgba(20,24,32,.16);border:1px solid var(-
 body.claro .pill.pos{background:rgba(0,163,46,.12);} body.claro .pill.neg{background:rgba(229,57,53,.1);} body.claro .pill.amb{background:rgba(217,147,0,.12);} body.claro .pill.azl{background:rgba(27,111,196,.1);}
 
 /* cards de KPI: dois por linha; três quando são muitos e curtos */
-.kg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
-.kg.c3{grid-template-columns:1fr 1fr 1fr;gap:8px;}
-.kg .k{background:var(--card);border-radius:10px;padding:12px 13px;min-width:0;}
-.kg.c3 .k{padding:10px 10px;}
+.kg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.kg.c3{grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.kg .k{background:var(--card);border-radius:10px;padding:10px 12px;min-width:0;}
+.kg.c3 .k{padding:9px 9px;}
 .kg .k.largo{grid-column:1/-1;}
+.kg:not(.c3) .k:last-child:nth-child(odd){grid-column:1/-1;}
+.kg.c3 .k:last-child:nth-child(3n+1){grid-column:1/-1;}
 .kg .k .l{font-size:10px;color:var(--txt2);line-height:1.3;}
-.kg .k .v{font-size:20px;font-weight:600;letter-spacing:.2px;margin-top:5px;line-height:1.15;word-break:break-word;}
+.kg .k .v{font-size:18px;font-weight:600;letter-spacing:.2px;margin-top:4px;line-height:1.15;word-break:break-word;}
 .kg .k .v.menor{font-size:16px;}
 .kg.c3 .k .v{font-size:17px;}
 .kg.c3 .k .l{font-size:9.5px;}
 .kg.c3 .k .m{font-size:9px;}
-.kg .k .m{font-size:10px;color:var(--txt3);margin-top:4px;line-height:1.35;}
+.kg .k .m{font-size:10px;color:var(--txt3);margin-top:3px;line-height:1.35;}
 .kg .k .m b{font-weight:600;color:var(--txt2);}
 /* grupo de mini-tabela (Rem · Real · Δ · Δ%): um card, uma linha */
-.kgrp{background:var(--card);border-radius:10px;padding:11px 13px;margin-bottom:10px;}
+.kgrp{background:var(--card);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
 .kgrp .t{font-size:11.5px;font-weight:600;margin-bottom:8px;}
 .kgrp .row{display:flex;gap:6px;}
 .kgrp .row div{flex:1;min-width:0;}
@@ -249,7 +255,7 @@ body.claro .pill.pos{background:rgba(0,163,46,.12);} body.claro .pill.neg{backgr
 .kgrp .row b{display:block;font-size:14px;font-weight:600;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* gráfico */
-.gc{background:var(--card);border-radius:10px;padding:13px 14px 10px;margin-bottom:14px;}
+.gc{background:var(--card);border-radius:10px;padding:12px 13px 9px;margin-bottom:12px;}
 .gc .t{font-size:13px;font-weight:600;}
 .gc .s{font-size:10.5px;color:var(--txt2);margin-top:2px;}
 .gc .leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10px;color:var(--txt2);margin:8px 0 4px;}
@@ -274,7 +280,7 @@ body.claro .pill.pos{background:rgba(0,163,46,.12);} body.claro .pill.neg{backgr
 .gc .mais,.tb .mais{display:block;text-align:center;font-size:11px;color:var(--acc);font-weight:600;padding:10px 0 2px;cursor:pointer;}
 
 /* tabela → lista: nome à esquerda, o valor principal à direita, o 2º embaixo, barra proporcional */
-.tb{background:var(--card);border-radius:10px;padding:12px 14px;margin-bottom:14px;overflow:hidden;}
+.tb{background:var(--card);border-radius:10px;padding:11px 13px;margin-bottom:12px;overflow:hidden;}
 .tb .t{font-size:13px;font-weight:600;margin-bottom:6px;}
 .tb .s{font-size:10.5px;color:var(--txt2);margin:-4px 0 8px;}
 .tb .colsel{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 6px;}
@@ -282,9 +288,9 @@ body.claro .pill.pos{background:rgba(0,163,46,.12);} body.claro .pill.neg{backgr
 .tb .colsel .chip{padding:4px 9px;font-size:10px;font-weight:500;}
 .tb .lh{display:flex;justify-content:space-between;font-size:9.5px;color:var(--txt3);padding:6px 0 4px;border-bottom:1px solid var(--brd);text-transform:none;}
 .tb .lh i{font-style:normal;}
-.tb .lr{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--brd);}
+.tb .lr{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--brd);}
 .tb .lr:last-child{border-bottom:0;}
-.tb .lr.tot{background:var(--linha);margin:4px -14px -12px;padding:10px 14px 12px;border-bottom:0;}
+.tb .lr.tot{background:var(--linha);margin:4px -13px -11px;padding:9px 13px 11px;border-bottom:0;}
 .tb .lr.tot .ln b{font-weight:600;}
 .tb .rk{flex:0 0 22px;height:22px;border-radius:6px;background:var(--linha);border:1px solid var(--brd);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;color:var(--txt2);}
 .tb .ln{flex:1;min-width:0;}
@@ -445,7 +451,7 @@ body.claro #tela-web iframe{background:#E1E2E5;}
 <div id="forno"></div>
 <div class="toast" id="toast"></div>
 
-<script src="catalogo.js?v=202611060045"></script>
-<script src="app.js?v=202611060045"></script>
+<script src="catalogo.js?v=202611060110"></script>
+<script src="app.js?v=202611060110"></script>
 </body>
 </html>

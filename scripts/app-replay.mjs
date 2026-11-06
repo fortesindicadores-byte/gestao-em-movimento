@@ -52,7 +52,7 @@ await ctx.route('https://lozwipoeacpvplgkrxkq.supabase.co/**', r => {
 const pg = await ctx.newPage();
 pg.on('pageerror', e => console.log('  erro de página: ' + e.message.slice(0, 160)));
 const caches = {}, favs = [];
-for (const f of arqs) { const j = JSON.parse(fs.readFileSync(path.join(ENTRADA, f), 'utf8')); const id = j.id || f.replace(/\.json$/, ''); caches['gem_app_c_' + id + '|' + (j.data.vw || '') + '|' + (j.data.vigSel || '')] = { t: Date.now(), data: j.data }; favs.push(id); }
+for (const f of arqs) { const j = JSON.parse(fs.readFileSync(path.join(ENTRADA, f), 'utf8')); const id = j.id || f.replace(/\.json$/, ''); caches['gem_app_c2_' + id + '|' + (j.data.vw || '') + '|' + (j.data.vigSel || '')] = { t: Date.now(), data: j.data }; favs.push(id); }
 await pg.addInitScript(({ caches, favs, tema }) => {
   if (location.pathname.indexOf('/app/') < 0) return;
   const exp = Math.floor(Date.now() / 1000) + 86400 * 30;

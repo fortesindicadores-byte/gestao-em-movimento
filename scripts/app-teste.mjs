@@ -275,7 +275,7 @@ console.log('1 · login');
 
   /* ══════ 6 · cache e início ══════ */
   console.log('6 · cache, favoritos e início');
-  const chaves = await page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('gem_app_c_dub|')));
+  const chaves = await page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('gem_app_c2_dub|')));
   conf(chaves.length === 3, 'três resumos guardados (padrão, detalhe, 08/2026): ' + chaves.join(' '));
   conf(await page.$eval('#btFav', b => b.classList.contains('on')), 'o dublê é favorito (estrela acesa)');
   await page.click('button[onclick="fechaPainel()"]');
