@@ -826,7 +826,12 @@ function pillsHtml(dels) {
   // valor longo (texto: "CDD RIO DE JANEIRO · 96") ocupa a linha inteira, senão come o rótulo
   // quando um terço ou mais são largas, TODAS vão uma por linha (senão fica uma curta sozinha ao lado de uma linha inteira)
   if (!dels || !dels.length) return '';
-  var ds = dels.slice(0, 8), nl = ds.filter(function (x) { return String(x.v == null ? '' : x.v).length > 11; }).length, todas = nl * 3 >= ds.length;
+  // painel que escreve o número ANTES do rótulo ("+4%" / "MoM", Remuneração) chega trocado: destroca
+  var ds = dels.slice(0, 8).map(function (x) {
+    var l = String(x.l == null ? '' : x.l), v = String(x.v == null ? '' : x.v);
+    return (/^[+\-−▲▼]?\s*[\d.,]+\s*%?$/.test(l.trim()) && v && !/\d/.test(v)) ? { l: v, v: l, cor: x.cor } : x;
+  });
+  var nl = ds.filter(function (x) { return String(x.v == null ? '' : x.v).length > 11; }).length, todas = nl * 3 >= ds.length;
   return '<div class="pills' + (todas ? ' lista' : '') + '">' + ds.map(function (x) { var v = String(x.v == null ? '' : x.v); return '<span class="pill ' + corCls(x.cor) + (v.length > 11 ? ' larga' : '') + '"><span>' + esc(suave(x.l)) + '</span><b>' + esc(v) + '</b></span>'; }).join('') + '</div>';
 }
 function heroHtml(b) {
@@ -839,8 +844,11 @@ function heroHtml(b) {
 /* cards: 2 por linha; 3 quando são muitos e curtos (os faróis do Gestão à Vista);
    o grupo de mini-tabela (Rem · Real · Δ · Δ% da Árvore) vira UMA linha */
 function kpisHtml(b) {
-  var its = b.itens || [];
-  if (!its.length) return '';
+  var its = b.itens || [], longos = [];
+  // "card" com rótulo de parágrafo (a tabela de pesos da Saúde dos Pneus lida como card) vira texto recolhido
+  its = its.filter(function (k) { if (suave(k.l || '').length > 60) { longos.push(k); return false; } return true; });
+  var txt = longos.map(function (k, i) { return txtHtml({ t: 'txt', corpo: [suave(k.l), k.v, k.m].filter(Boolean).join(' · ') }, 'tx-k' + i); }).join('');
+  if (!its.length) return txt;
   if (b.tit && its.length <= 6 && its.every(function (k) { return String(k.v).length <= 10 && !k.m; })) {
     return '<div class="kgrp"><div class="t">' + esc(suave(b.tit)) + '</div><div class="row">' + its.map(function (k) { return '<div><span>' + esc(suave(k.l)) + '</span><b class="' + corCls(k.cor) + '">' + esc(k.v) + '</b></div>'; }).join('') + '</div></div>';
   }
@@ -850,7 +858,7 @@ function kpisHtml(b) {
     return '<div class="k' + (largo ? ' largo' : '') + '"><div class="l">' + esc(suave(k.l)) + '</div><div class="v ' + corCls(k.cor) + (v.length > 11 ? ' menor' : '') + '">' + esc(v) + '</div>' + (k.m ? '<div class="m">' + metaHtml(k) + '</div>' : '') + '</div>';
   }).join('') + '</div>';
 }
-function metaHtml(k) { if (!k.mcor) return esc(k.m); var i = k.m.indexOf(':'); return i > 0 ? esc(k.m.slice(0, i + 1)) + ' <b class="' + corCls(k.mcor) + '">' + esc(k.m.slice(i + 1).trim()) + '</b>' : '<b class="' + corCls(k.mcor) + '">' + esc(k.m) + '</b>'; }
+function metaHtml(k) { var m = suave(k.m); if (!k.mcor) return esc(m); var i = m.indexOf(':'); return i > 0 ? esc(m.slice(0, i + 1)) + ' <b class="' + corCls(k.mcor) + '">' + esc(m.slice(i + 1).trim()) + '</b>' : '<b class="' + corCls(k.mcor) + '">' + esc(m) + '</b>'; }
 
 /* ── gráficos ── */
 var PAL = ['#F97316', '#94A3B8', '#2E90E8', '#3BB33B', '#FF5252', '#F4A100', '#A78BFA', '#22D3EE'];
@@ -981,6 +989,9 @@ function redesenhaTab(id) { var el = $(id); if (!el) return; var tit = el.queryS
 
 /* texto (quadrantes, diagnósticos): recolhido, "ler mais" abre */
 function txtHtml(b, id) {
+  // marcador sozinho na linha ("+", "−", "!", "⇒", "★" do Resumo Executivo) junta com a linha de baixo
+  var corpo = String(b.corpo || '').replace(/(^|\n)\s*([+\-−!⇒→★•▲▼])\s*\n\s*/g, '$1$2 ');
+  b = { tit: b.tit, corpo: corpo };
   var longo = b.corpo.length > 220;
   return '<div class="tx-card' + (longo ? ' clamp' : '') + '" id="' + id + '"' + (longo ? ' onclick="this.classList.remove(\'clamp\')"' : '') + '>' + (b.tit ? '<div class="t">' + esc(b.tit) + '</div>' : '') + '<p>' + esc(b.corpo) + '</p>' + (longo ? '<span class="mais">ler mais</span>' : '') + '</div>';
 }
