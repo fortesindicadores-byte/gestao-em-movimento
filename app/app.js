@@ -760,8 +760,12 @@ var _leSeq = 0;
 async function lePainel(o) {
   var p = PN, seq = ++_leSeq; if (!p) return;
   var vw = o.vw || PN_VW, vig = o.vig || PN_VIG;
-  if (!o.forca) { var c = cacheLe(p, vw, vig); if (fresco(c)) { PN_DATA = c.data; desenhaPainel(c.data, { lido: c.t, robo: c.robo }); estado(''); return; } }
-  estado(PN_DATA ? 'Atualizando…' : 'Abrindo o painel… (os números vêm do próprio painel)');
+  if (!o.forca) {
+    var c = cacheLe(p, vw, vig);
+    if (!fresco(c) && vig && vig !== '*') { var c0 = cacheLe(p, vw, ''); if (fresco(c0) && c0.data && vigDe(c0.data) === vig) c = c0; }   // o mês clicado é o padrão do painel: o resumo já está aqui
+    if (fresco(c)) { PN_DATA = c.data; desenhaPainel(c.data, { lido: c.t, robo: c.robo }); estado(''); return; }
+  }
+  estado(PN_DATA ? (o.vig && o.vig !== PN_DATA.vigSel ? 'Lendo ' + (o.vig === '*' ? 'todas as vigências' : vigRotulo(o.vig)) + ' no painel… leva uns segundos' : 'Atualizando…') : 'Abrindo o painel… (os números vêm do próprio painel)');
   try {
     var d = await carrega(p, { vw: vw || undefined, vig: vig || undefined });
     if (seq !== _leSeq || PN !== p) return;
@@ -787,6 +791,8 @@ function mudaVig(v) { if (!PN) return; PN_VIG = v; VIG_SEL = v; marcaChips('pnVi
 var VIG_OPTS = [], VIG_SEL = '', VIG_ANO = null;
 var MES_ABR = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 var MES_IDX = { jan: 0, fev: 1, mar: 2, abr: 3, mai: 4, jun: 5, jul: 6, ago: 7, set: 8, out: 9, nov: 10, dez: 11 };
+function vigDe(d) { return d.vigSel || (((d.vig && d.vig.opts) || []).filter(function (x) { return x.on; }).map(function (x) { return x.v; })[0] || ''); }   // a vigência que o resumo mostra: a pedida ou a marcada no painel
+function vigRotulo(v) { var o = null; VIG_OPTS.forEach(function (x) { if (x.v === v) o = x; }); var l = o && vigLe(o); return l && l.mes != null ? MES_ABR[l.mes] + '/' + String(l.ano).slice(2) : (o ? o.t : v); }
 function vigLe(o) {
   var cands = [o.t, o.v].map(function (s) { return String(s == null ? '' : s).trim(); }).filter(Boolean);
   for (var i = 0; i < cands.length; i++) {
@@ -801,7 +807,7 @@ function vigLe(o) {
 function vigChipsHtml() {
   var vg = VIG_OPTS, sel = VIG_SEL;
   if (vg.length <= 1) return '';
-  var lidos = vg.map(vigLe), chip = function (v, t, on) { return '<span class="chip' + (on ? ' on' : '') + '" data-v="' + esc(v) + '" onclick="mudaVig(\'' + esc(v) + '\')">' + esc(t) + '</span>'; };
+  var lidos = vg.map(vigLe), chip = function (v, t, on, cls) { return '<span class="chip' + (on ? ' on' : '') + (cls ? ' ' + cls : '') + '" data-v="' + esc(v) + '" onclick="mudaVig(\'' + esc(v) + '\')">' + esc(t) + '</span>'; };
   if (lidos.some(function (x) { return !x; }) || !lidos.some(function (x) { return x && x.mes != null; }))
     return vg.map(function (v) { return chip(v.v, v.t, v.v === sel); }).join('');   // formato que não se lê: como veio
   var todosOpt = null, porAno = {};
@@ -811,14 +817,16 @@ function vigChipsHtml() {
   var ano = VIG_ANO != null && porAno[VIG_ANO] ? VIG_ANO : (selL && selL.ano && porAno[selL.ano] ? selL.ano : anos[0]);
   VIG_ANO = ano;
   var vTodos = todosOpt ? todosOpt.v : (PN && PN.vig && PN.vig !== 'elite' ? '*' : null);
-  var h = anos.length > 1 ? '<div class="chips vig anos">' + anos.map(function (a) { return '<span class="chip' + (a === ano ? ' on' : '') + '" onclick="mudaAno(' + a + ')">' + a + '</span>'; }).join('') + '</div>' : '';
-  var meses = porAno[ano].slice().sort(function (a, b) { return a.mes - b.mes; });
-  h += '<div class="chips vig meses">' + (vTodos != null ? chip(vTodos, 'Todos', sel === vTodos || !sel) : '') +   // nada marcado no painel = todas
-    meses.map(function (m) { return chip(m.o.v, MES_ABR[m.mes], m.o.v === sel); }).join('') + '</div>';
+  // linha de cima: os anos (sempre, mesmo um só) e "Todos" na ponta direita
+  var h = '<div class="chips vig anos">' + anos.map(function (a) { return '<span class="chip' + (a === ano ? ' on' : '') + '" onclick="mudaAno(' + a + ')">' + a + '</span>'; }).join('') +
+    (vTodos != null ? chip(vTodos, 'Todos', sel === vTodos || !sel, 'todos') : '') + '</div>';
+  // linha de baixo: os 12 meses em grade fixa; mês sem dado no ano fica apagado e não clica
+  var doAno = {}; porAno[ano].forEach(function (m) { doAno[m.mes] = m.o; });
+  h += '<div class="chips vig meses">' + MES_ABR.map(function (t, i) { var o = doAno[i]; return o ? chip(o.v, t, o.v === sel) : '<span class="chip off">' + t + '</span>'; }).join('') + '</div>';
   return h;
 }
 function mudaAno(a) { VIG_ANO = a; $('pnVigs').innerHTML = vigChipsHtml(); }
-function marcaChips(id, v) { document.querySelectorAll('#' + id + ' .chip').forEach(function (c) { c.classList.toggle('on', c.dataset.v === v); }); }
+function marcaChips(id, v) { document.querySelectorAll('#' + id + ' .chip[data-v]').forEach(function (c) { c.classList.toggle('on', c.dataset.v === v); }); }
 
 /* ═════════ desenhar no estilo DriverPro (v2, 06/11/2026) ═════════
    Renan: "a versão mobile hoje é muito ruim de usar… que caibam infos no
@@ -890,7 +898,7 @@ function desenhaPainel(d, o) {
   var vs = (d.vistas || []);
   $('pnVistas').innerHTML = vs.length > 1 ? vs.map(function (v) { return '<span class="chip' + (v.v === (d.vw || d.atual) ? ' on' : '') + '" data-v="' + esc(v.v) + '" onclick="mudaVista(\'' + esc(v.v) + '\')">' + esc(v.t) + '</span>'; }).join('') : '';
   var vg = d.vig && d.vig.opts && d.vig.opts.length ? d.vig.opts : [];
-  var sel = d.vigSel || (vg.filter(function (x) { return x.on; }).map(function (x) { return x.v; })[0] || '');
+  var sel = vigDe(d);
   VIG_OPTS = vg; VIG_SEL = sel; VIG_ANO = null;
   $('pnVigs').innerHTML = vigChipsHtml();
   mataGraficos(); TABS = {};

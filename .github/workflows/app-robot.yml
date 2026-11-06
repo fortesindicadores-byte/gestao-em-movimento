@@ -17,6 +17,10 @@ on:
         description: 'true = só mede, não grava'
         required: false
         default: 'false'
+      vigs:
+        description: 'meses anteriores à vigência padrão a ler na 1ª visão (0 = só a padrão)'
+        required: false
+        default: '5'
   schedule:
     - cron: '50 * * * *'
 
@@ -27,7 +31,7 @@ concurrency:
 jobs:
   robot:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,6 +48,7 @@ jobs:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           APP_PAINEIS: ${{ github.event.inputs.paineis }}
           APP_SECO: ${{ github.event.inputs.seco == 'true' && '1' || '' }}
+          APP_VIGS: ${{ github.event.inputs.vigs || '5' }}
       - name: Avisar falha
         if: failure()
         env:

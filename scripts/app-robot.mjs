@@ -7,6 +7,7 @@
 // O app lê a tabela em milissegundos e só abre o iframe no "Atualizar".
 //   APP_PAINEIS=visao-financeira,painel-km node scripts/app-robot.mjs   (vazio = todos os de modo resumo)
 //   APP_SECO=1  → não grava (só mede)
+//   APP_VIGS=5  → além da vigência padrão, lê os 5 meses anteriores da 1ª visão (0 desliga)
 // ============================================================================
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
@@ -17,6 +18,7 @@ const KEY = process.env.GEM_SUPABASE_SERVICE_KEY;
 if (!KEY) { console.error('sem GEM_SUPABASE_SERVICE_KEY'); process.exit(1); }
 const SB = 'https://lozwipoeacpvplgkrxkq.supabase.co';
 const SECO = process.env.APP_SECO === '1';
+const N_VIGS = process.env.APP_VIGS === undefined ? 5 : +process.env.APP_VIGS;   // quantas vigências além da padrão (só a 1ª visão)
 const RAIZ = path.resolve(new URL('..', import.meta.url).pathname);
 const BUILD = ((fs.readFileSync(path.join(RAIZ, 'app/index.html'), 'utf8').match(/name="build" content="(\d+)"/) || [])[1]) || '';
 const MIME = { '.html': 'text/html;charset=utf-8', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.jpg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
@@ -74,12 +76,12 @@ await pg.waitForSelector('#app:not([style*="none"])', { timeout: 60000 });
 console.log(`app aberto · build ${BUILD} · ${IDS.length} painel(is)${SECO ? ' · SECO (não grava)' : ''}`);
 
 // espera a leitura da visão pedida terminar (PN_DATA.vw = a visão, sem "Abrindo/Atualizando" no estado)
-const esperaLido = (vw) => pg.waitForFunction((vw) => {
+const esperaLido = (vw, vig) => pg.waitForFunction(({ vw, vig }) => {
   const e = document.getElementById('pnEstado'), c = document.getElementById('pnCorpo'), d = window.PN_DATA;
   const parado = !e || e.style.display === 'none' || e.classList.contains('erro');
   if (document.querySelector('#pnEstado.erro') || (c && c.querySelector('.vazio') && !d)) return true;
-  return parado && d && (!vw || d.vw === vw) && c && c.textContent.trim().length > 0;
-}, vw, { timeout: 180000, polling: 500 }).catch(() => {});
+  return parado && d && (!vw || d.vw === vw) && (!vig || d.vigSel === vig) && c && c.textContent.trim().length > 0;
+}, { vw, vig }, { timeout: 180000, polling: 500 }).catch(() => {});
 
 async function grava(linhas) {
   if (SECO || !linhas.length) return 0;
@@ -117,10 +119,27 @@ for (const id of IDS) {
       if (d) linhas.push({ id, vw, vig: '', unidade: '', adm: !!p.adm, dados: d, lido_em: new Date().toISOString(), build: BUILD });
       else console.log(`     ${vw}: sem resumo (${((Date.now() - t2) / 1000).toFixed(0)} s)`);
     }
+    // os meses anteriores da 1ª visão (trocar o mês no celular sem abrir o iframe)
+    const vigs = N_VIGS > 0 ? await pg.evaluate((n) => {
+      const vg = (window.PN_DATA && PN_DATA.vig && PN_DATA.vig.opts) || [], sel = PN_DATA.vigSel || (vg.filter(x => x.on)[0] || {}).v || '';
+      const lidos = vg.map(o => ({ o, l: vigLe(o) })).filter(x => x.l && x.l.mes != null && x.o.v !== sel);
+      lidos.sort((a, b) => (b.l.ano * 12 + b.l.mes) - (a.l.ano * 12 + a.l.mes));
+      const selL = vigLe({ v: sel, t: sel }); const ate = selL && selL.mes != null ? selL.ano * 12 + selL.mes : Infinity;
+      return lidos.filter(x => x.l.ano * 12 + x.l.mes < ate).slice(0, n).map(x => x.o.v);
+    }, N_VIGS) : [];
+    if (vigs.length && outras.length) { await pg.evaluate(vw => mudaVista(vw), primeiro.vw); await esperaLido(primeiro.vw); }
+    for (const vig of vigs) {
+      const t2 = Date.now();
+      await pg.evaluate(v => mudaVig(v), vig);
+      await esperaLido(primeiro.vw, vig);
+      const d = await pg.evaluate(v => (window.PN_DATA && PN_DATA.vigSel === v && PN_DATA.blocos.length) ? PN_DATA : null, vig);
+      if (d) linhas.push({ id, vw: primeiro.vw, vig, unidade: '', adm: !!p.adm, dados: d, lido_em: new Date().toISOString(), build: BUILD });
+      else console.log(`     ${vig}: sem resumo (${((Date.now() - t2) / 1000).toFixed(0)} s)`);
+    }
     const n = await grava(linhas);
     await apagaVelhos(id);
     linhasTot += n; ok++;
-    console.log(`ok ${id} (${((Date.now() - t1) / 1000).toFixed(0)} s): ${linhas.length} visão(ões) · ${(JSON.stringify(linhas).length / 1024).toFixed(0)} KB · ${primeiro.data.sub || ''}`);
+    console.log(`ok ${id} (${((Date.now() - t1) / 1000).toFixed(0)} s): ${1 + outras.length} visão(ões) · ${vigs.length} mês(es) a mais · ${(JSON.stringify(linhas).length / 1024).toFixed(0)} KB · ${primeiro.data.sub || ''}`);
   } catch (e) { falhas++; console.log(`✗ ${id} (${((Date.now() - t1) / 1000).toFixed(0)} s): ${(e && e.message || e).slice(0, 160)}`); }
   await pg.evaluate(() => { try { fechaPainel(); } catch (e) {} });
 }
