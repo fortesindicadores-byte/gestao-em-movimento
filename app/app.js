@@ -503,6 +503,7 @@ function __APP_HELPER() {
       var extra = [].slice.call(raiz.querySelectorAll('.hrem,.hero-sub,.hero-leg,.hero-period,.hsub,.hero-tag,.hnota')).filter(A.vis).map(A.txt).filter(Boolean).join(' · ');
       var vt = A.txt(v), filhos = [].slice.call(v.children).filter(function (x) { return A.vis(x) && A.txt(x); });
       if (filhos.length && A.proprio(v) && filhos.some(function (x) { return A.fs(x) < A.fs(v) * .8; })) { vt = A.proprio(v); extra = [filhos.map(A.txt).join(' '), extra].filter(Boolean).join(' · '); }
+      else if (filhos.length >= 2 && !A.proprio(v)) { vt = A.txt(filhos[0]); extra = [filhos.slice(1).map(A.txt).join(' '), extra].filter(Boolean).join(' · '); }
       if (!vt || vt === '—') { if (!dels.length) return; }
       itens.push({ l: l, v: vt, cor: A.cor(v), dels: dels, extra: extra });
     });
@@ -512,7 +513,7 @@ function __APP_HELPER() {
   // separa "18,5" do "<small>de 25,0</small>" dentro do mesmo valor
   A.proprio = function (el) { var s = ''; for (var i = 0; i < el.childNodes.length; i++) { var n = el.childNodes[i]; if (n.nodeType === 3) s += n.nodeValue; } return s.replace(/\s+/g, ' ').trim(); };
   function leCard(c) {
-    var lab = c.querySelector('.kl,.klbl,.card-label,.lbl,.kn,.k-l,[class$="-label"],[class$="-lbl"],[class$="-name"]'), val = c.querySelector('.kv,.kval,.card-value,.val,.kvn,.k-v,.v,[class$="-value"],[class$="-val"],[class$="-score"]'), met = c.querySelector('.km,.kmeta,.card-meta,.meta,.k-m,.sub,[class$="-sub"],[class$="-meta"],[class$="-code"]');
+    var lab = c.querySelector('.kl,.klbl,.card-label,.lbl,.kn,.k-l,[class$="-label"],[class$="-lbl"],[class$="-name"]'), val = c.querySelector('.kv,.kval,.card-value,.val,.kvn,.k-v,.v,[class$="-value"],[class$="-val"],.uc-score'), met = c.querySelector('.km,.kmeta,.card-meta,.meta,.k-m,.sub,[class$="-sub"],[class$="-meta"],.uc-code');
     var l = lab ? A.txt(lab) : '', v = '', m = met ? A.txt(met) : '';
     // card que é uma MINI-TABELA de uma linha (a Árvore de Combustível: Rem · Real · Δ · Δ%):
     // vira um grupo de cards com o rótulo do card como título
@@ -532,6 +533,7 @@ function __APP_HELPER() {
       val = mx; v = A.proprio(mx); var i = els.indexOf(mx);
       l = els.slice(0, i).map(A.proprio).join(' · '); m = els.slice(i + 1).map(A.proprio).join(' · ');
     }
+    if (m.length > 90) m = m.slice(0, 88).replace(/\s+\S*$/, '') + '…';   // nota comprida (o corpo inteiro de um card por unidade) não cabe no celular
     var mb = met && met.querySelector('b,strong,span'); var mcor = mb ? A.cor(mb) : (met ? A.cor(met) : '');
     var cor = val ? A.cor(val) : ''; if (!cor && val) { var vb = val.querySelector('b,span,i'); if (vb) cor = A.cor(vb); }
     return { l: l, v: v, m: m, cor: cor, mcor: mcor };
