@@ -437,6 +437,15 @@ function __APP_HELPER() {
   A.classCor = function (rgb) { if (!rgb) return ''; var x = hsl(rgb); if (x[1] < .35 || x[2] > .9 || x[2] < .22) return ''; var h = x[0];
     if (h >= 75 && h <= 165) return 'g'; if (h < 14 || h > 335) return 'r'; if (h >= 14 && h < 60) return 'a'; if (h >= 185 && h <= 262) return (x[1] >= .45 && x[2] >= .3) ? 'b' : ''; return ''; };
   A.cor = function (el) { if (!el) return ''; try { return A.classCor(rgbDe(getComputedStyle(el).color)); } catch (e) { return ''; } };
+  // a condicional pode estar no FUNDO (a pílula do Ranking do Gestão à Vista, o selo das Auditorias em data-bg), não no texto
+  var hexRgb = function (s) { var m = String(s || '').trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i); if (!m) return s; var x = m[1]; if (x.length === 3) x = x.split('').map(function (q) { return q + q; }).join(''); return 'rgb(' + parseInt(x.slice(0, 2), 16) + ',' + parseInt(x.slice(2, 4), 16) + ',' + parseInt(x.slice(4, 6), 16) + ')'; };
+  A.corFundo = function (el) { if (!el) return ''; try { var c = el.getAttribute && el.getAttribute('data-bg'); if (c) { var k = A.classCor(rgbDe(hexRgb(c))); if (k) return k; } var bg = getComputedStyle(el).backgroundColor; if (!bg || /rgba\(.*,\s*0\)$/.test(bg)) return ''; return A.classCor(rgbDe(bg)); } catch (e) { return ''; } };
+  A.corCel = function (td) {   // texto da célula → texto do filho → fundo do filho → fundo da célula
+    var c = A.cor(td); if (c) return c;
+    var b = td.querySelector && td.querySelector('b,span,i,em');
+    if (b) { c = A.cor(b); if (c) return c; c = A.corFundo(b); if (c) return c; }
+    return A.corFundo(td);
+  };
   A.corCss = function (s) {   // cor de um dataset do Chart.js → string ou lista de strings
     if (!s) return null; if (typeof s === 'string') return s;
     if (Array.isArray(s)) return s.slice(0, 80).map(function (x) { return typeof x === 'string' ? x : null; });
@@ -553,7 +562,7 @@ function __APP_HELPER() {
     if (tb && !val) {
       var ths = [].slice.call(tb.querySelectorAll('th')).filter(A.vis), tds = [].slice.call(tb.querySelectorAll('tbody td, tr:not(:first-child) td')).filter(A.vis);
       if (ths.length && tds.length === ths.length) {
-        var it = tds.map(function (td, i) { var b = td.querySelector('b,span,i'); return { l: A.txt(ths[i]), v: A.txt(td), m: '', cor: A.cor(td) || (b ? A.cor(b) : ''), mcor: '' }; }).filter(function (x) { return x.v; });
+        var it = tds.map(function (td, i) { return { l: A.txt(ths[i]), v: A.txt(td), m: '', cor: A.corCel(td), mcor: '' }; }).filter(function (x) { return x.v; });
         if (it.length) return { multi: true, tit: l, itens: it };
       }
     }
@@ -607,7 +616,7 @@ function __APP_HELPER() {
     trs.slice(0, 80).forEach(function (tr) {
       var tds = [].slice.call(tr.children).filter(A.vis); if (!tds.length) return;
       var cls = tr.className || '';
-      rows.push({ tot: /\btotal\b|\btot\b|pre-total|rodape/.test(cls), c: tds.map(function (td) { var t = A.txt(td); var b = td.querySelector('b,span,i'); return { v: t, cor: A.cor(td) || (b ? A.cor(b) : '') }; }) });
+      rows.push({ tot: /\btotal\b|\btot\b|pre-total|rodape/.test(cls), c: tds.map(function (td) { return { v: A.txt(td), cor: A.corCel(td) }; }) });
     });
     rows = rows.filter(function (r) { return r.c.some(function (c) { return c.v; }); });
     if (!rows.length) return null;
@@ -923,13 +932,14 @@ function legHtml(b) {
 }
 function grafHtml(b, id) {
   var circ = /doughnut|pie|polarArea/.test(b.tipo), temporal = ehTemporal(b.labels), n = b.labels.length;
-  var cab = (b.tit ? '<div class="t">' + esc(b.tit) + '</div>' : '') + (b.sub ? '<div class="s">' + esc(b.sub) + '</div>' : '');
+  // subtítulo curto fica sob o título; nota longa (explicação) vai embaixo do gráfico
+  var longo = b.sub && b.sub.length > 60, cab = (b.tit ? '<div class="t">' + esc(b.tit) + '</div>' : '') + (b.sub && !longo ? '<div class="s">' + esc(b.sub) + '</div>' : ''), pe = longo ? '<div class="s pe">' + esc(b.sub) + '</div>' : '';
   // categórico de uma série (ranking por unidade, impacto por projeto, rosca): lista de barras, sem canvas
-  if (circ || (b.ds.length === 1 && !temporal && n <= 30)) return '<div class="gc" id="' + id + '">' + cab + listaBarras(b, circ, id) + '</div>';
+  if (circ || (b.ds.length === 1 && !temporal && n <= 30)) return '<div class="gc" id="' + id + '">' + cab + listaBarras(b, circ, id) + pe + '</div>';
   GR[id] = { b: b, tudo: n <= 14 };
   return '<div class="gc" id="' + id + '">' + cab + legHtml(b) +
     (n > 14 ? '<div class="gtog"><span class="chip on" onclick="grafJanela(\'' + id + '\',false)">últimos 12</span><span class="chip" onclick="grafJanela(\'' + id + '\',true)">tudo (' + n + ')</span></div>' : '') +
-    '<div class="cv' + (n > 14 ? ' ' : '') + '"><canvas></canvas></div></div>';
+    '<div class="cv' + (n > 14 ? ' ' : '') + '"><canvas></canvas></div>' + pe + '</div>';
 }
 function grafJanela(id, tudo) { if (!GR[id]) return; GR[id].tudo = tudo; var g = $(id); g.querySelectorAll('.gtog .chip').forEach(function (c, i) { c.classList.toggle('on', (i === 1) === tudo); }); var old = GRAFS.filter(function (x) { return x.canvas && x.canvas.closest('#' + id); })[0]; if (old) { try { old.destroy(); } catch (e) {} GRAFS = GRAFS.filter(function (x) { return x !== old; }); } desenhaGrafico(id); }
 /* gráfico categórico de uma série → lista limpa: nome e valor, o valor na cor
@@ -987,12 +997,25 @@ function desenhaGrafico(id) {
     return o;
   });
   var rot = b.ds.length === 1 && labels.length <= 8 && !b.horiz && (b.ds[0].tipo || tipo) === 'bar';
+  // o eixo se ajusta aos dados como no hub (Renan, 06/11/2026: "Gráfico começando do zero? Não era
+  // melhor adaptar o eixo como no hub?"): a régua do FCA — piso = min(menor − 45% da amplitude,
+  // 82% do menor), teto = max(maior + 18% da amplitude, 104% do maior); só sem negativo e sem pilha
+  var eixo = null;
+  if (!b.stacked) {
+    var vs = []; ds.forEach(function (d) { d.data.forEach(function (v) { if (numOk(v)) vs.push(v); }); });
+    if (vs.length > 1) { var mn = Math.min.apply(null, vs), mxv = Math.max.apply(null, vs);
+      if (mn >= 0 && mxv > 0) { var amp = mxv - mn; eixo = { min: Math.max(0, amp ? Math.min(mn - .45 * amp, .82 * mn) : .9 * mn), max: amp ? Math.max(mxv + .18 * amp, 1.04 * mxv) : 1.1 * mxv };
+        // piso e teto em números redondos (passo 1·2·5 × 10ⁿ), senão o eixo mostra 70,2 e 8,31
+        var bruto = (eixo.max - eixo.min) / 5, p10 = Math.pow(10, Math.floor(Math.log10(bruto || 1))), f = bruto / p10, passo = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p10;
+        eixo.min = Math.max(0, Math.floor(eixo.min / passo) * passo); eixo.max = Math.ceil(eixo.max / passo) * passo; eixo.passo = passo; } }
+  }
   var opts = { responsive: true, maintainAspectRatio: false, animation: false, indexAxis: b.horiz ? 'y' : 'x', layout: { padding: { top: rot ? 14 : 4 } },
     plugins: { legend: { display: false }, rotulos: { on: rot, cor: tick }, tooltip: { backgroundColor: claro ? '#fff' : '#2A2B30', titleColor: '#F97316', bodyColor: claro ? '#161D2B' : '#EEF2FA', borderColor: claro ? 'rgba(0,0,0,.1)' : '#33343B', borderWidth: 1, callbacks: { label: function (c) { return (c.dataset.label ? c.dataset.label + ': ' : '') + (numOk(c.parsed[b.horiz ? 'x' : 'y']) ? c.parsed[b.horiz ? 'x' : 'y'].toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '—'); } } } },
     scales: {
       x: { stacked: b.stacked, grid: { display: false }, ticks: { color: tick, font: { family: 'Inter', size: temporal ? 9 : 8.5 }, maxRotation: temporal ? 0 : 50, minRotation: 0, autoSkip: temporal || labels.length > 14, maxTicksLimit: labels.length > 12 ? 6 : 12 }, border: { display: false } },
       y: { stacked: b.stacked, grid: { display: !b.horiz, color: grade }, ticks: { color: tick, font: { family: 'Inter', size: 9 }, maxTicksLimit: 5, callback: function (v) { return b.horiz ? this.getLabelForValue(v) : fmtEixo(v); } }, border: { display: false } } } };
   if (b.horiz) { opts.scales.x.grid.display = true; opts.scales.x.grid.color = grade; opts.scales.x.ticks.callback = fmtEixo; opts.scales.x.ticks.maxTicksLimit = 5; }
+  if (eixo) { var ev = opts.scales[b.horiz ? 'x' : 'y']; ev.min = eixo.min; ev.max = eixo.max; ev.ticks.stepSize = eixo.passo; ev.ticks.maxTicksLimit = Math.round((eixo.max - eixo.min) / eixo.passo) + 1; }
   try { var ch = new Chart(cv, { type: 'bar', data: { labels: labels, datasets: ds }, options: opts, plugins: [ROTULOS] }); GRAFS.push(ch); } catch (e) { console.warn('gráfico', e); }
 }
 
@@ -1015,7 +1038,8 @@ function tabHtml(b, id) {
   var cols = []; if (prim != null) cols.push(prim); else if (sec != null) cols.push(sec);
   if (!cols.length) { for (var k = 0; k < nCol && cols.length < 1; k++) if (k !== nome && !(nome === 1 && k === 0)) cols.push(k); }
   TABS[id] = { b: b, head: head, cols: cols, n: nCol, nome: nome, numCol: numCol, subCol: null, mais: false };
-  return '<div class="tb" id="' + id + '">' + (b.tit ? '<div class="t">' + esc(b.tit) + '</div>' : '') + (b.sub ? '<div class="s">' + esc(b.sub) + '</div>' : '') + tabMiolo(id) + '</div>';
+  // o subtítulo (a nota explicativa do painel) vai EMBAIXO da lista, nunca em cima
+  return '<div class="tb" id="' + id + '">' + (b.tit ? '<div class="t">' + esc(b.tit) + '</div>' : '') + tabMiolo(id) + (b.sub ? '<div class="s pe">' + esc(b.sub) + '</div>' : '') + '</div>';
 }
 function tabMiolo(id) {
   var T2 = TABS[id], b = T2.b, max = T2.mais ? 80 : 12, h = '';
@@ -1036,7 +1060,7 @@ function tabMiolo(id) {
 }
 function tabCol(id, c) { TABS[id].cols = [c]; redesenhaTab(id); }
 function tabMais(id) { TABS[id].mais = true; redesenhaTab(id); }
-function redesenhaTab(id) { var el = $(id); if (!el) return; var tit = el.querySelector('.t'), sub = el.querySelector('.s'); el.innerHTML = (tit ? tit.outerHTML : '') + (sub ? sub.outerHTML : '') + tabMiolo(id); }
+function redesenhaTab(id) { var el = $(id); if (!el) return; var tit = el.querySelector('.t'), sub = el.querySelector('.s.pe'); el.innerHTML = (tit ? tit.outerHTML : '') + tabMiolo(id) + (sub ? sub.outerHTML : ''); }
 
 /* texto (quadrantes, diagnósticos): recolhido, "ler mais" abre */
 function txtHtml(b, id) {

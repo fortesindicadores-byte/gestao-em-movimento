@@ -99,7 +99,7 @@ function atualizar(){
   var L=['jan','fev','mar','abr','mai','jun','jul','ago','set','out'].slice(0,m);
   if(CH1) CH1.destroy(); CH1=new Chart(document.getElementById('g1'),{type:'bar',data:{labels:L,datasets:[{label:'Realizado',data:L.map((_,i)=>10+i),backgroundColor:'rgba(249,115,22,.65)',borderColor:'#F97316'},{label:'Remunerado',type:'line',data:L.map((_,i)=>9.5+i),borderColor:'#F1F5F9',borderDash:[5,3]}]},options:{animation:false,responsive:true,maintainAspectRatio:false}});
   if(CH2) CH2.destroy(); CH2=new Chart(document.getElementById('g2'),{type:'line',data:{labels:L,datasets:[{label:'AV Real',data:L.map((_,i)=>80+i),borderColor:'#F97316'}]},options:{animation:false,responsive:true,maintainAspectRatio:false}});
-  var tb=document.getElementById('tb'),h='';for(var i=1;i<=20;i++)h+='<tr><td>Conta '+i+'</td><td class="num">'+(100*i)+'</td><td class="num">'+(110*i)+'</td><td class="num">'+(105*i)+'</td><td class="num '+(i%2?'cg':'cr')+'">'+(i%2?'-':'+')+i+'%</td></tr>';
+  var tb=document.getElementById('tb'),h='';for(var i=1;i<=20;i++)h+='<tr><td>Conta '+i+'</td><td class="num">'+(100*i)+'</td><td class="num">'+(110*i)+'</td><td class="num"><span style="background:'+(i%2?'#3BB33B':'#FF5252')+';color:#fff;border-radius:9px;padding:1px 6px">'+(105*i)+'</span></td><td class="num '+(i%2?'cg':'cr')+'">'+(i%2?'-':'+')+i+'%</td></tr>';
   h+='<tr class="total"><td>Total</td><td>21.000</td><td>23.100</td><td>22.050</td><td class="cr">+4%</td></tr>'; tb.innerHTML=h;
 }
 setTimeout(atualizar, 300);
@@ -259,6 +259,11 @@ console.log('1 · login');
   conf(v2 === '-1%/pos', 'escolher outra coluna troca o resultado, na cor do painel (cg → pos): ' + v2);
   await page.click('#pnCorpo .tb .colsel .chip:nth-child(2)');   // Remunerado
   conf((await page.$eval('#pnCorpo .tb .lr .lv b', b => b.textContent)) === '110', 'uma coluna por vez: Remunerado = 110');
+  await page.click('#pnCorpo .tb .colsel .chip:nth-child(3)');   // Realizado: pílula com FUNDO verde (a condicional do Gestão à Vista)
+  const v3 = await page.$$eval('#pnCorpo .tb .lr .lv b', bs => bs.slice(0, 2).map(b => b.textContent + '/' + b.className).join(' '));
+  conf(v3 === '105/pos 210/neg', 'a cor da condicional vem do FUNDO da pílula quando o texto é branco: ' + v3);
+  const subPos = await page.$eval('#pnCorpo .tb', t => { const k = [...t.children].map(c => c.className); return k.indexOf('lista') < k.indexOf('s pe') || !t.querySelector('.s.pe') ? 'embaixo' : 'em cima'; });
+  conf(subPos === 'embaixo', 'subtítulo/nota da tabela fica embaixo da lista, nunca em cima');
   await page.click('#pnCorpo .tb .mais');
   conf(await page.$$eval('#pnCorpo .tb .lr', l => l.length) === 21 && await page.$eval('#pnCorpo .tb .lr:last-child', tr => tr.classList.contains('tot')), 'ver todas → 21 linhas, a última é o Total');
   await shot(page, '05-painel-tabela');
