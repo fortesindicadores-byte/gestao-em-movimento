@@ -402,8 +402,10 @@ function __APP_HELPER() {
   var rgbDe = function (s) { var m = String(s || '').match(/(\d+)[,\s]+(\d+)[,\s]+(\d+)/); return m ? [+m[1], +m[2], +m[3]] : null; };
   var hsl = function (c) { var r = c[0] / 255, g = c[1] / 255, b = c[2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn, h = 0, s = 0;
     if (d) { s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; } return [h, s, l]; };
-  A.classCor = function (rgb) { if (!rgb) return ''; var x = hsl(rgb); if (x[1] < .25 || x[2] > .93 || x[2] < .12) return ''; var h = x[0];
-    if (h >= 75 && h <= 165) return 'g'; if (h < 14 || h > 335) return 'r'; if (h >= 14 && h < 60) return 'a'; if (h >= 185 && h <= 262) return 'b'; return ''; };
+  // só é cor de RESULTADO a cor saturada e nem escura nem clara demais: o texto comum do portal
+  // (#EEF2FA no escuro, #161D2B no claro — um azul-marinho quase preto) não é verde, vermelho nem azul
+  A.classCor = function (rgb) { if (!rgb) return ''; var x = hsl(rgb); if (x[1] < .35 || x[2] > .9 || x[2] < .22) return ''; var h = x[0];
+    if (h >= 75 && h <= 165) return 'g'; if (h < 14 || h > 335) return 'r'; if (h >= 14 && h < 60) return 'a'; if (h >= 185 && h <= 262) return (x[1] >= .45 && x[2] >= .3) ? 'b' : ''; return ''; };
   A.cor = function (el) { if (!el) return ''; try { return A.classCor(rgbDe(getComputedStyle(el).color)); } catch (e) { return ''; } };
   A.corCss = function (s) {   // cor de um dataset do Chart.js → string ou lista de strings
     if (!s) return null; if (typeof s === 'string') return s;
