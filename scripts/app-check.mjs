@@ -56,6 +56,7 @@ await pg.addInitScript(() => {
     localStorage.setItem('sb-lozwipoeacpvplgkrxkq-auth-token', JSON.stringify({ access_token: 'x.eyJzdWIiOiJjaGVjayJ9.x', refresh_token: 'r', token_type: 'bearer', expires_in: 86400 * 30, expires_at: exp,
       user: { id: 'check', email: 'fortesindicadores@gmail.com', aud: 'authenticated', role: 'authenticated', user_metadata: { name: 'Renan Fortes' }, app_metadata: {} } }));
     localStorage.setItem('gem_app_fav', '[]');
+    window.APP_SEM_BANCO = true;   // o check lê o painel de verdade, não o resumo que o App Robot gravou
   }
 });
 const t0 = Date.now();

@@ -62,6 +62,7 @@ await pg.addInitScript(({ caches, favs, tema }) => {
   localStorage.setItem('gem_app_fav', JSON.stringify(favs.slice(0, 6)));
   localStorage.setItem('bi_theme', tema);
   window.APP_TEMPOS = { teto: 1 };
+  window.APP_SEM_BANCO = true;
 }, { caches, favs, tema: process.env.TEMA || 'dark' });
 await pg.goto(BASE + '/app/', { waitUntil: 'domcontentloaded' });
 await pg.waitForSelector('#app:not([style*="none"])', { timeout: 30000 });

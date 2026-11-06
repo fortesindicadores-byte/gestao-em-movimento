@@ -145,6 +145,7 @@ async function rotas(ctx, opt = {}) {
     if (p === '/rest/v1/fca_profiles') { const d = { user_id: USER.id, unidade: adm ? '' : 'PIR', is_admin: adm }; return json(um ? d : [d]); }
     if (p === '/rest/v1/user_approvals') { const d = { status: opt.status || 'approved' }; return json(um ? d : [d]); }
     if (p === '/rest/v1/access_log') return json({}, 201);
+    if (p === '/rest/v1/app_resumo') return json(opt.resumo || []);
     if (p === '/rest/v1/sh_base') return json(shBase);
     if (p.startsWith('/rest/v1/sh_') || p.startsWith('/rest/v1/ca_')) return json(linhasDe());
     if (p.startsWith('/rest/v1/rpc/')) return json(null);
@@ -173,6 +174,7 @@ const novoCtx = async (opt = {}) => {
 };
 const shot = async (page, n) => { if (SHOT) { fs.mkdirSync(SHOT, { recursive: true }); await page.screenshot({ path: path.join(SHOT, n + '.png') }); } };
 
+let DADOS_DUB = null;   // o resumo do dublê lido no cenário 3, reaproveitado como "resumo do robô" no cenário 8b
 /* ══════ 1 · login ══════ */
 console.log('1 · login');
 {
@@ -240,22 +242,23 @@ console.log('1 · login');
   conf(vigs.length === 4 && vigs[0] === 'out/26', 'chips de vigência vindos do filtro do painel: ' + vigs.join(' '));
   conf(/Painel Dublê/.test(await page.textContent('#pnTit')) && /10\/2026 · atualizado/.test(await page.textContent('#pnSub')), 'título e subtítulo do painel: ' + await page.textContent('#pnSub'));
   conf(await page.$$eval('#forno iframe', l => l.length) === 1 && await page.$eval('#forno iframe', f => f.getBoundingClientRect().width) === 1366, 'o painel carregou num iframe escondido de 1366 px');
+  conf(pedidos.some(x => x === 'GET /rest/v1/app_resumo'), 'antes de abrir o iframe o app pediu os resumos do robô (app_resumo) ao banco');
+  DADOS_DUB = await page.evaluate(() => JSON.parse(JSON.stringify(PN_DATA)));
   await shot(page, '04-painel-resumo');
 
   /* ══════ 4 · troca de visão: tabela ══════ */
   console.log('4 · visão Detalhe (tabela)');
   await page.click('#pnVistas .chip[data-v="detalhe"]');
   await page.waitForFunction(() => document.querySelector('#pnCorpo .tb .lista') && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
-  const tb = await page.$eval('#pnCorpo .tb', t => ({ tit: t.querySelector('.t').textContent, lh: [...t.querySelectorAll('.lh span')].map(x => x.textContent), n: t.querySelectorAll('.lr').length, l1: { nome: t.querySelector('.lr .ln b').textContent, v: t.querySelector('.lr .lv b').textContent, s: t.querySelector('.lr .lv small').textContent, sc: t.querySelector('.lr .lv small').className, bar: !!t.querySelector('.lr .ln .bar i') }, chips: [...t.querySelectorAll('.colsel .chip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')), mais: (t.querySelector('.mais') || {}).textContent }));
-  conf(tb.tit === 'Por conta' && tb.lh.join('|') === 'Conta|Orçado · Δ %', 'tabela vira lista: nome + valor principal (1ª numérica) e o Δ % embaixo: ' + tb.lh.join(' | '));
+  const tb = await page.$eval('#pnCorpo .tb', t => ({ tit: t.querySelector('.t').textContent, n: t.querySelectorAll('.lr').length, l1: { nome: t.querySelector('.lr .ln b').textContent, v: t.querySelector('.lr .lv b').textContent, filhos: t.querySelector('.lr').children.length, extras: t.querySelectorAll('.lr .bar, .lr .rk, .lr small, .lr .ln span').length }, chips: [...t.querySelectorAll('.colsel .chip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')), mais: (t.querySelector('.mais') || {}).textContent }));
+  conf(tb.tit === 'Por conta' && tb.l1.nome === 'Conta 1' && tb.l1.v === '100' && tb.l1.filhos === 2 && tb.l1.extras === 0, 'tabela vira lista LIMPA: só nome e UM resultado (sem barra, badge ou 2º valor): ' + JSON.stringify(tb.l1));
   conf(tb.n === 12 && /ver todas as 21/.test(tb.mais), '12 linhas na tela e o "ver todas as 21 linhas"');
-  conf(tb.l1.nome === 'Conta 1' && tb.l1.v === '100' && tb.l1.s === '-1%' && /pos/.test(tb.l1.sc) && tb.l1.bar, 'a 1ª linha é a do painel, com a barra proporcional e o Δ verde (cg → pos): ' + JSON.stringify(tb.l1));
-  conf(tb.chips.join(',') === 'Orçado*,Remunerado,Realizado,Δ %*', 'chips de coluna, as duas da tela marcadas: ' + tb.chips.join(' '));
+  conf(tb.chips.join(',') === 'Orçado*,Remunerado,Realizado,Δ %', 'chips de coluna, só a da tela marcada: ' + tb.chips.join(' '));
+  await page.click('#pnCorpo .tb .colsel .chip:nth-child(4)');   // Δ %
+  const v2 = await page.$eval('#pnCorpo .tb .lr .lv b', b => b.textContent + '/' + b.className);
+  conf(v2 === '-1%/pos', 'escolher outra coluna troca o resultado, na cor do painel (cg → pos): ' + v2);
   await page.click('#pnCorpo .tb .colsel .chip:nth-child(2)');   // Remunerado
-  const lh2 = await page.$$eval('#pnCorpo .tb .lh span', l => l.map(x => x.textContent));
-  conf(lh2.join('|') === 'Conta|Δ % · Remunerado', 'escolher uma 3ª coluna tira a mais antiga: ' + lh2.join(' | '));
-  const v2 = await page.$eval('#pnCorpo .tb .lr .lv', lv => lv.querySelector('b').textContent + '/' + lv.querySelector('small').textContent);
-  conf(v2 === '-1%/110', 'a linha acompanha as colunas escolhidas: ' + v2);
+  conf((await page.$eval('#pnCorpo .tb .lr .lv b', b => b.textContent)) === '110', 'uma coluna por vez: Remunerado = 110');
   await page.click('#pnCorpo .tb .mais');
   conf(await page.$$eval('#pnCorpo .tb .lr', l => l.length) === 21 && await page.$eval('#pnCorpo .tb .lr:last-child', tr => tr.classList.contains('tot')), 'ver todas → 21 linhas, a última é o Total');
   await shot(page, '05-painel-tabela');
@@ -337,6 +340,30 @@ console.log('8 · gestor (não admin) e sem sessão');
   await page.fill('#lgEmail', 'novo@conlogsa.com.br'); await page.fill('#lgSenha', 'certa'); await page.click('#btEntrar');
   await page.waitForFunction(() => /aprovado/.test(document.getElementById('lgErro').textContent), null, { timeout: 15000 });
   conf(true, 'cadastro pendente fica no login com o aviso');
+  await ctx.close();
+}
+{
+  /* ══════ 8b · o resumo PRÉ-LIDO pelo robô (app_resumo): nada de iframe ══════ */
+  console.log('8b · resumos do robô (app_resumo)');
+  const robo = JSON.parse(JSON.stringify(DADOS_DUB)); robo.blocos[0].itens[0].v = 'R$ 77,7 mi';   // número que só o robô tem
+  const { ctx, page } = await novoCtx({ resumo: [{ id: 'dub', vw: robo.vw || 'resumo', vig: '', unidade: '', dados: robo, lido_em: new Date(Date.now() - 10 * 60e3).toISOString() }] });
+  await page.goto(BASE + '/app/');
+  await page.waitForSelector('#tela-login.on');
+  await page.fill('#lgEmail', 'renan@conlogsa.com.br'); await page.fill('#lgSenha', 'certa'); await page.click('#btEntrar');
+  await page.waitForSelector('#app:not([style*="none"])', { timeout: 15000 });
+  await page.waitForFunction(() => /77,7/.test(document.getElementById('iniVal').textContent), null, { timeout: 15000 }).catch(() => {});
+  conf((await page.textContent('#iniVal')) === 'R$ 77,7 mi', 'o início mostra o número do robô, lido do banco: ' + await page.textContent('#iniVal'));
+  await page.waitForTimeout(1500);
+  conf(await page.$$eval('#forno iframe', l => l.length) === 0, 'e NENHUM iframe foi aberto (a fila de destaques não roda quando o robô já leu)');
+  await page.evaluate(() => abrePainel('dub'));
+  await page.waitForFunction(() => document.querySelector('#pnCorpo .pe-painel'), null, { timeout: 10000 });
+  await page.waitForTimeout(800);
+  conf(/77,7/.test(await page.textContent('#pnCorpo .hero .val')) && /lido pelo robô/.test(await page.textContent('#pnCorpo .pe-painel')) && await page.$$eval('#forno iframe', l => l.length) === 0, 'abrir o painel desenha o resumo do robô na hora, sem iframe, e o rodapé diz "lido pelo robô"');
+  await page.evaluate(() => recarregaPainel());
+  await page.waitForFunction(() => document.querySelector('#forno iframe'), null, { timeout: 10000 }).catch(() => {});
+  await page.waitForFunction(() => /11,0/.test((document.querySelector('#pnCorpo .hero .val') || {}).textContent || ''), null, { timeout: 30000 }).catch(() => {});
+  conf(/11,0/.test(await page.textContent('#pnCorpo .hero .val')) && /lido do painel/.test(await page.textContent('#pnCorpo .pe-painel')), '"Atualizar" relê do painel de verdade (iframe) e passa a dizer "lido do painel": ' + await page.textContent('#pnCorpo .hero .val'));
+  conf(page.errs.length === 0, 'nenhum erro de página' + (page.errs.length ? ': ' + page.errs.join(' | ') : ''));
   await ctx.close();
 }
 {

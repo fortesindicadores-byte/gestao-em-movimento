@@ -1,0 +1,53 @@
+name: App Robot
+
+# Pré-lê os painéis para o app do celular: abre o /app/ num Chromium com a
+# service key, lê cada painel × visão como o app faria no celular e grava o
+# resumo em public.app_resumo (scripts/app-resumo.sql). O app lê a tabela em
+# milissegundos em vez de abrir o painel inteiro no telefone.
+# Quem dá a hora é o pg_cron (app-robot-h, de hora em hora aos 40 min); o cron
+# daqui é a rede de segurança, porque o agendador do GitHub atrasa.
+on:
+  workflow_dispatch:
+    inputs:
+      paineis:
+        description: 'ids do catálogo separados por vírgula (vazio = todos os de modo resumo)'
+        required: false
+        default: ''
+      seco:
+        description: 'true = só mede, não grava'
+        required: false
+        default: 'false'
+  schedule:
+    - cron: '50 * * * *'
+
+concurrency:
+  group: app-robot
+  cancel-in-progress: false
+
+jobs:
+  robot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Rodar
+        run: node scripts/app-robot.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          APP_PAINEIS: ${{ github.event.inputs.paineis }}
+          APP_SECO: ${{ github.event.inputs.seco == 'true' && '1' || '' }}
+      - name: Avisar falha
+        if: failure()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          MAIL_TO: ${{ vars.MAIL_TO }}
+          ROBO: App Robot
+        run: bash scripts/avisa-falha.sh

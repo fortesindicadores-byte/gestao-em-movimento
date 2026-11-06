@@ -16,7 +16,9 @@ var sb = window.supabase ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : n
 var $ = function (id) { return document.getElementById(id); };
 var MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 var T = Object.assign({ passo: 400, quieto: 3, min: 2500, teto: 70000, pos: 900 }, window.APP_TEMPOS || {});
-var CACHE_FRESCO = 45 * 60e3;    // o resumo guardado vale 45 min; depois relê em segundo plano
+var CACHE_FRESCO = 45 * 60e3;    // o resumo lido AQUI vale 45 min; depois relê em segundo plano
+var ROBO_FRESCO = 2 * 60 * 60e3; // o resumo do robô (app_resumo, de hora em hora) vale 2 h antes de o app reler sozinho
+var SEM_BANCO = !!window.APP_SEM_BANCO;   // o robô liga isto: ele lê os painéis de verdade, nunca o app_resumo
 var FAV_PADRAO = ['visao-financeira', 'painel-km', 'programa-reconhecimento', 'scorecard', 'fca-gerencial'];
 
 var USER = null, PERFIL = { unidade: '', is_admin: false }, EH_DONO = false, EH_ADMIN = false;
@@ -169,7 +171,8 @@ async function _entra(user) {
   mostraApp();
   renderPaineis(''); renderFav(); renderInicio();
   logAcesso('app');
-  setTimeout(filaDestaques, 800);
+  // 1º os resumos do robô (milissegundos), depois a fila só para o que ficou sem resumo fresco
+  preLe(favs()).then(function () { renderInicio(); setTimeout(filaDestaques, 300); });
 }
 async function sair() {
   fechaMenu();
@@ -280,6 +283,31 @@ function cachePadrao(p) {   // o resumo guardado da visão e vigência padrão d
   if (!melhor) ks.forEach(function (k) { var c = lsGet(k, null); if (c && (!melhor || c.t > melhor.t)) melhor = c; });
   return melhor;
 }
+function fresco(c) { return !!(c && c.data && Date.now() - c.t < (c.robo ? ROBO_FRESCO : CACHE_FRESCO)); }
+/* ── os resumos PRÉ-LIDOS pelo robô (Renan, 06/11/2026: "Bem demorado para
+   carregar no app visão mobile"): o App Robot lê os painéis no Actions de hora
+   em hora e grava public.app_resumo (painel × visão, 3 a 5 KB). O app baixa
+   essas linhas em milissegundos e só abre o iframe no "Atualizar", na troca de
+   vigência ou quando o robô está atrasado (ROBO_FRESCO). ── */
+async function preLe(ids) {
+  if (!sb || SEM_BANCO || !USER) return 0;
+  ids = (ids || []).filter(function (id) { var p = painelPorId(id); return p && podeVer(p) && p.modo === 'resumo' && (!p.gav || EH_ADMIN); });
+  if (!ids.length) return 0;
+  var n = 0;
+  try {
+    var r = await Promise.race([sb.from('app_resumo').select('id,vw,vig,unidade,dados,lido_em').in('id', ids), new Promise(function (res) { setTimeout(function () { res({ data: null, error: { message: 'tempo' } }); }, 8000); })]);
+    if (r.error || !Array.isArray(r.data)) { if (r.error && !/relation|does not exist|tempo/i.test(r.error.message || '')) console.warn('app_resumo:', r.error.message); return 0; }
+    r.data.forEach(function (row) {
+      var p = painelPorId(row.id); if (!p || row.unidade) return;
+      var t = Date.parse(row.lido_em) || 0, d = row.dados; if (!d || !d.blocos) return;
+      var atual = cacheLe(p, row.vw, row.vig);
+      if (atual && atual.t >= t) return;   // o que foi lido aqui depois do robô vale mais
+      d.lido = t;
+      if (lsSet(cacheKey(p, row.vw, row.vig), { t: t, data: d, robo: true })) n++;
+    });
+  } catch (e) { console.warn('app_resumo:', e && e.message); }
+  return n;
+}
 function heroDe(d) {   // o 1º número grande do resumo: hero; senão o 1º card
   if (!d || !d.blocos) return null;
   for (var i = 0; i < d.blocos.length; i++) {
@@ -322,7 +350,7 @@ async function filaDestaques() {   // lê em segundo plano os favoritos sem resu
     var f = favs().map(painelPorId).filter(function (p) { return p && podeVer(p) && p.modo === 'resumo'; });
     for (var i = 0; i < f.length; i++) {
       var p = f[i], c = cachePadrao(p);
-      if (c && Date.now() - c.t < CACHE_FRESCO) continue;
+      if (fresco(c)) continue;
       if (PN) break;   // a pessoa abriu um painel: ele tem prioridade; a fila volta depois
       try { await carrega(p, { fundo: true }); } catch (e) { console.warn('destaque ' + p.id + ':', e && e.message); }
       renderInicio();
@@ -333,7 +361,8 @@ async function filaDestaques() {   // lê em segundo plano os favoritos sem resu
 function atualizarTudo() {
   limpaCache(); window.__gvizMem = {}; mataForno();
   toast('Os painéis serão relidos na próxima abertura');
-  renderInicio(); setTimeout(filaDestaques, 300);
+  renderInicio();
+  preLe(favs()).then(function () { renderInicio(); setTimeout(filaDestaques, 300); });
 }
 
 /* ─────────────────────────── o forno: iframe escondido com o painel ─────────────────────────── */
@@ -689,10 +718,17 @@ function abrePainel(id) {
   $('pnCorpo').innerHTML = ''; $('pnCorpo').scrollTop = 0;
   $('tela-painel').classList.add('on');
   var c = cachePadrao(p);
-  if (c && c.data) { PN_DATA = c.data; PN_VW = c.data.vw || ''; PN_VIG = c.data.vigSel || ''; desenhaPainel(c.data, { lido: c.t }); }
+  if (c && c.data) { PN_DATA = c.data; PN_VW = c.data.vw || ''; PN_VIG = c.data.vigSel || ''; desenhaPainel(c.data, { lido: c.t, robo: c.robo }); }
   else estado('Abrindo o painel…');
-  if (!c || Date.now() - c.t > CACHE_FRESCO) lePainel({});
-  else estado('');
+  if (fresco(c)) { estado(''); return; }
+  // sem resumo fresco aqui: antes de abrir o iframe, pede ao banco o que o robô leu (todas as visões do painel)
+  var seq = ++_leSeq;
+  preLe([p.id]).then(function (n) {
+    if (PN !== p || seq !== _leSeq) return;
+    var c2 = n ? cachePadrao(p) : c;
+    if (c2 && c2.data && (!c || c2.t > c.t)) { PN_DATA = c2.data; PN_VW = c2.data.vw || ''; PN_VIG = c2.data.vigSel || ''; desenhaPainel(c2.data, { lido: c2.t, robo: c2.robo }); }
+    if (fresco(c2)) estado(''); else lePainel({});
+  });
 }
 function fechaPainel() { $('tela-painel').classList.remove('on'); PN = null; PN_DATA = null; mataGraficos(); renderInicio(); setTimeout(filaDestaques, 500); }
 function recarregaPainel() { if (!PN) return; mataForno(); window.__gvizMem = {}; lePainel({ vw: PN_VW, vig: PN_VIG, forca: true }); }
@@ -705,7 +741,7 @@ var _leSeq = 0;
 async function lePainel(o) {
   var p = PN, seq = ++_leSeq; if (!p) return;
   var vw = o.vw || PN_VW, vig = o.vig || PN_VIG;
-  if (!o.forca) { var c = cacheLe(p, vw, vig); if (c && c.data && Date.now() - c.t < CACHE_FRESCO) { PN_DATA = c.data; desenhaPainel(c.data, { lido: c.t }); estado(''); return; } }
+  if (!o.forca) { var c = cacheLe(p, vw, vig); if (fresco(c)) { PN_DATA = c.data; desenhaPainel(c.data, { lido: c.t, robo: c.robo }); estado(''); return; } }
   estado(PN_DATA ? 'Atualizando…' : 'Abrindo o painel… (os números vêm do próprio painel)');
   try {
     var d = await carrega(p, { vw: vw || undefined, vig: vig || undefined });
@@ -815,7 +851,7 @@ function desenhaPainel(d, o) {
     else if (b.t === 'txt') h += txtHtml(b, id);
   });
   if (!bl.length) h += '<div class="vazio">Esta visão não tem resumo. <a onclick="abreWeb(PN)" style="color:var(--acc);font-weight:600">Abrir o painel completo</a></div>';
-  h += '<div class="pe-painel">' + (titulo ? esc(titulo) + ' · ' : '') + (o.lido ? 'lido do painel em ' + horaDe(o.lido) : '') + '<br><a onclick="abreWeb(PN)">Abrir o painel completo</a> · <a onclick="recarregaPainel()">Atualizar</a></div>';
+  h += '<div class="pe-painel">' + (titulo ? esc(titulo) + ' · ' : '') + (o.lido ? (o.robo ? 'lido pelo robô em ' : 'lido do painel em ') + horaDe(o.lido) : '') + '<br><a onclick="abreWeb(PN)">Abrir o painel completo</a> · <a onclick="recarregaPainel()">Atualizar</a></div>';
   $('pnCorpo').innerHTML = h;
   bl.forEach(function (b, i) { if (b.t === 'graf' && GR['b' + i]) desenhaGrafico('b' + i); });
 }
@@ -893,18 +929,32 @@ function grafHtml(b, id) {
     '<div class="cv' + (n > 14 ? ' ' : '') + '"><canvas></canvas></div></div>';
 }
 function grafJanela(id, tudo) { if (!GR[id]) return; GR[id].tudo = tudo; var g = $(id); g.querySelectorAll('.gtog .chip').forEach(function (c, i) { c.classList.toggle('on', (i === 1) === tudo); }); var old = GRAFS.filter(function (x) { return x.canvas && x.canvas.closest('#' + id); })[0]; if (old) { try { old.destroy(); } catch (e) {} GRAFS = GRAFS.filter(function (x) { return x !== old; }); } desenhaGrafico(id); }
+/* gráfico categórico de uma série → lista limpa: nome e valor, o valor na cor
+   da barra do painel (verde/vermelho/âmbar; laranja e cinza ficam neutros).
+   Rosca: a bolinha da cor + o % do total. Sem barra (Renan, 06/11/2026). */
+function corClasse(c) {
+  if (typeof c !== 'string') return '';
+  var m = c.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i), rgb = null;
+  if (m) { var x = m[1]; if (x.length === 3) x = x.split('').map(function (q) { return q + q; }).join(''); rgb = [parseInt(x.slice(0, 2), 16), parseInt(x.slice(2, 4), 16), parseInt(x.slice(4, 6), 16)]; }
+  else if (/^rgba?\(/.test(c)) { var r = c.match(/[\d.]+/g); if (r && r.length >= 3) rgb = [+r[0], +r[1], +r[2]]; }
+  if (!rgb) return '';
+  var R = rgb[0] / 255, G = rgb[1] / 255, B = rgb[2] / 255, mx = Math.max(R, G, B), mn = Math.min(R, G, B), l = (mx + mn) / 2, d = mx - mn;
+  if (!d) return ''; var s = d / (1 - Math.abs(2 * l - 1)), h = mx === R ? ((G - B) / d) % 6 : mx === G ? (B - R) / d + 2 : (R - G) / d + 4; h = h * 60; if (h < 0) h += 360;
+  if (s < .35 || l > .9 || l < .22) return '';
+  if (h >= 75 && h <= 165) return 'g'; if (h < 14 || h > 335) return 'r'; if (h >= 38 && h < 60) return 'a'; return '';
+}
 function listaBarras(b, circ, id) {
-  var ds = b.ds[0], vals = ds.data, labels = b.labels, soma = 0, mx = 0, itens = [];
-  vals.forEach(function (v, j) { if (numOk(v)) { soma += Math.abs(v); mx = Math.max(mx, Math.abs(v)); } });
+  var ds = b.ds[0], vals = ds.data, labels = b.labels, soma = 0, itens = [];
+  vals.forEach(function (v, j) { if (numOk(v)) soma += Math.abs(v); });
   labels.forEach(function (l, j) { var v = vals[j]; if (!numOk(v) && !l) return; itens.push({ l: String(l == null ? '' : l), v: v, j: j }); });
   var h = '<div class="bl' + (circ ? ' rosca' : '') + '">';
   var lim = itens.length > 12 ? 12 : itens.length;
   itens.forEach(function (it, k) {
     var cor = circ ? (corUma(ds.cor, 0, it.j) || PAL[it.j % PAL.length]) : corUma(ds.cor, 0, it.j);
     if (circ && (cor === PAL[0]) && Array.isArray(ds.cor) === false) cor = PAL[it.j % PAL.length];
-    var w = mx && numOk(it.v) ? Math.max(2, Math.abs(it.v) / mx * 100) : 0;
     var pc = circ && soma ? ' · ' + (Math.abs(it.v) / soma * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%' : '';
-    h += '<div class="br' + (k >= lim ? ' esc' : '') + '">' + (circ ? '<i class="dot" style="background:' + esc(cor) + '"></i>' : '') + '<div class="bn"><span>' + esc(suave(it.l)) + '</span>' + (circ ? '' : '<div class="bar"><i style="width:' + w.toFixed(1) + '%;background:' + esc(cor) + '"></i></div>') + '</div><b class="bv' + (numOk(it.v) && it.v < 0 ? ' neg' : '') + '">' + esc(numOk(it.v) ? fmtEixo(it.v) : '—') + pc + '</b></div>';
+    var cls = circ ? '' : (Array.isArray(ds.cor) ? corCls(corClasse(cor)) : (numOk(it.v) && it.v < 0 ? 'neg' : ''));
+    h += '<div class="br' + (k >= lim ? ' esc' : '') + '">' + (circ ? '<i class="dot" style="background:' + esc(cor) + '"></i>' : '') + '<div class="bn"><span>' + esc(suave(it.l)) + '</span></div><b class="bv ' + cls + '">' + esc(numOk(it.v) ? fmtEixo(it.v) : '—') + pc + '</b></div>';
   });
   h += '</div>';
   if (itens.length > lim) h += '<span class="mais" onclick="var r=this.parentNode.querySelectorAll(\'.br.esc\');for(var i=0;i<r.length;i++)r[i].classList.remove(\'esc\');this.remove()">ver todas as ' + itens.length + ' linhas</span>';
@@ -943,8 +993,11 @@ function desenhaGrafico(id) {
   try { var ch = new Chart(cv, { type: 'bar', data: { labels: labels, datasets: ds }, options: opts, plugins: [ROTULOS] }); GRAFS.push(ch); } catch (e) { console.warn('gráfico', e); }
 }
 
-/* ── tabela → lista: nome à esquerda, o valor principal à direita e o segundo
-   embaixo; barra proporcional ao valor principal; chips trocam a coluna ── */
+/* ── tabela → lista LIMPA (Renan, 06/11/2026: "Essa barrinha e ranking
+   totalmente fora de padrão. Quero clean. Apenas nome e resultado. O resultado
+   percentual pode estar pintado de acordo com condicionais"): nome à esquerda,
+   UM resultado à direita na cor que o painel deu; chips trocam a coluna. Sem
+   barra, sem badge de posição, sem 2º valor. ── */
 function tabHtml(b, id) {
   var nCol = Math.max(b.head.length, b.rows[0] ? b.rows[0].c.length : 0);
   var head = b.head.slice(); while (head.length < nCol) head.push('');
@@ -956,34 +1009,29 @@ function tabHtml(b, id) {
   var nums = []; for (var j = 0; j < nCol; j++) if (j !== nome && j !== 0 - 0 + (nome === 1 ? 0 : -1) && numCol[j]) nums.push(j);
   var sec = nums.filter(function (j) { return /Δ|%|var|dif|desv/i.test(head[j]); })[0];
   var prim = nums.filter(function (j) { return j !== sec; })[0]; if (prim == null) prim = nums[0];
-  var cols = []; if (prim != null) cols.push(prim); if (sec != null && sec !== prim) cols.push(sec);
-  if (!cols.length) { for (var k = 0; k < nCol && cols.length < 2; k++) if (k !== nome) cols.push(k); }
-  var subCol = null; for (var k2 = 0; k2 < nCol; k2++) if (k2 !== nome && !numCol[k2] && cols.indexOf(k2) < 0 && head[k2] && !(nome === 1 && k2 === 0)) { subCol = k2; break; }
-  TABS[id] = { b: b, head: head, cols: cols, n: nCol, nome: nome, numCol: numCol, subCol: subCol, mais: false };
+  var cols = []; if (prim != null) cols.push(prim); else if (sec != null) cols.push(sec);
+  if (!cols.length) { for (var k = 0; k < nCol && cols.length < 1; k++) if (k !== nome && !(nome === 1 && k === 0)) cols.push(k); }
+  TABS[id] = { b: b, head: head, cols: cols, n: nCol, nome: nome, numCol: numCol, subCol: null, mais: false };
   return '<div class="tb" id="' + id + '">' + (b.tit ? '<div class="t">' + esc(b.tit) + '</div>' : '') + (b.sub ? '<div class="s">' + esc(b.sub) + '</div>' : '') + tabMiolo(id) + '</div>';
 }
 function tabMiolo(id) {
   var T2 = TABS[id], b = T2.b, max = T2.mais ? 80 : 12, h = '';
-  var sel = []; for (var i = 0; i < T2.n; i++) if (i !== T2.nome && i !== T2.subCol && !(T2.nome === 1 && i === 0) && T2.head[i]) sel.push(i);
-  if (sel.length > 2) h += '<div class="colsel">' + sel.map(function (i) { return '<span class="chip' + (T2.cols.indexOf(i) >= 0 ? ' on' : '') + '" onclick="tabCol(\'' + id + '\',' + i + ')">' + esc(T2.head[i]) + '</span>'; }).join('') + '</div>';
-  var p = T2.cols[0], s = T2.cols[1], mx = 0;
-  if (p != null && T2.numCol[p]) b.rows.forEach(function (r) { if (r.tot) return; var v = numDe((r.c[p] || {}).v); if (v != null) mx = Math.max(mx, Math.abs(v)); });
+  var sel = []; for (var i = 0; i < T2.n; i++) if (i !== T2.nome && !(T2.nome === 1 && i === 0) && T2.head[i]) sel.push(i);
+  if (sel.length > 1) h += '<div class="colsel">' + sel.map(function (i) { return '<span class="chip' + (T2.cols[0] === i ? ' on' : '') + '" onclick="tabCol(\'' + id + '\',' + i + ')">' + esc(suave(T2.head[i])) + '</span>'; }).join('') + '</div>';
+  var p = T2.cols[0];
   h += '<div class="lista">';
-  if (p != null) h += '<div class="lh"><span>' + esc(suave(T2.head[T2.nome] || '')) + '</span><span>' + esc(T2.head[p]) + (s != null ? ' <i>· ' + esc(T2.head[s]) + '</i>' : '') + '</span></div>';
+  if (p != null && sel.length <= 1) h += '<div class="lh"><span>' + esc(suave(T2.head[T2.nome] || '')) + '</span><span>' + esc(suave(T2.head[p])) + '</span></div>';
   b.rows.slice(0, max).forEach(function (r) {
-    var nm = r.c[T2.nome] || { v: '' }, pv = p != null ? (r.c[p] || { v: '' }) : null, sv = s != null ? (r.c[s] || { v: '' }) : null, sub = T2.subCol != null ? (r.c[T2.subCol] || {}).v : '';
-    var rk = T2.nome === 1 ? (r.c[0] || {}).v : '';
-    var w = (mx && pv && !r.tot && numDe(pv.v) != null) ? Math.max(1.5, Math.abs(numDe(pv.v)) / mx * 100) : 0;
-    h += '<div class="lr' + (r.tot ? ' tot' : '') + '">' + (rk ? '<span class="rk">' + esc(rk) + '</span>' : '') +
-      '<div class="ln"><b>' + esc(nm.v) + '</b>' + (sub ? '<span>' + esc(sub) + '</span>' : '') + (w ? '<div class="bar"><i style="width:' + w.toFixed(1) + '%"></i></div>' : '') + '</div>' +
-      (pv ? '<div class="lv"><b class="' + corCls(pv.cor) + '">' + esc(pv.v) + '</b>' + (sv && sv.v ? '<small class="' + corCls(sv.cor) + '">' + esc(sv.v) + '</small>' : '') + '</div>' : '') + '</div>';
+    var nm = r.c[T2.nome] || { v: '' }, pv = p != null ? (r.c[p] || { v: '' }) : null;
+    h += '<div class="lr' + (r.tot ? ' tot' : '') + '"><div class="ln"><b>' + esc(nm.v) + '</b></div>' +
+      (pv ? '<div class="lv"><b class="' + corCls(pv.cor) + '">' + esc(pv.v || '—') + '</b></div>' : '') + '</div>';
   });
   h += '</div>';
   if (b.rows.length > 12 && !T2.mais) h += '<span class="mais" onclick="tabMais(\'' + id + '\')">ver todas as ' + b.rows.length + ' linhas' + (b.n > b.rows.length ? ' (das ' + b.n + ')' : '') + '</span>';
   else if (b.n > b.rows.length) h += '<span class="mais" style="color:var(--txt3)">mostrando ' + b.rows.length + ' de ' + b.n + ' linhas · o painel completo tem todas</span>';
   return h;
 }
-function tabCol(id, c) { var T2 = TABS[id]; var i = T2.cols.indexOf(c); if (i >= 0) { if (T2.cols.length > 1) T2.cols.splice(i, 1); } else { T2.cols.push(c); if (T2.cols.length > 2) T2.cols.shift(); } redesenhaTab(id); }
+function tabCol(id, c) { TABS[id].cols = [c]; redesenhaTab(id); }
 function tabMais(id) { TABS[id].mais = true; redesenhaTab(id); }
 function redesenhaTab(id) { var el = $(id); if (!el) return; var tit = el.querySelector('.t'), sub = el.querySelector('.s'); el.innerHTML = (tit ? tit.outerHTML : '') + (sub ? sub.outerHTML : '') + tabMiolo(id); }
 

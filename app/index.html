@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gestão em Movimento">
-<meta name="build" content="202611060150">
+<meta name="build" content="202611060215">
 <title>Gestão em Movimento</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -31,6 +31,7 @@
    ============================================================ */
 :root{
   --bg:#17181B; --card:#2A2B30; --card2:#3B3C43; --brd:#33343B; --linha:#1F2024;
+  --plano:#1C1D21; --plano-brd:#26272C;   /* tabelas, gráficos e textos: quase o fundo (Renan, 06/11/2026: "esses cinzas de fundo ficaram feios") */
   --txt:#EEF2FA; --txt2:#C9D0DD; --txt3:#7D8596;
   --acc:#F97316; --acc2:rgba(249,115,22,.16);
   --verde:#3BB33B; --ambar:#F4A100; --vermelho:#FF5252; --azul:#2E90E8; --nav:#2A2B30;
@@ -38,6 +39,7 @@
 }
 body.claro{
   --bg:#E1E2E5; --card:#FFFFFF; --card2:#D9DDE3; --brd:rgba(15,23,42,.10); --linha:#F3F4F6;
+  --plano:#FFFFFF; --plano-brd:rgba(15,23,42,.08);
   --txt:#161D2B; --txt2:#4A5568; --txt3:#8B94A6; --acc2:rgba(249,115,22,.12);
   --verde:#00A32E; --ambar:#D99300; --vermelho:#E53935; --azul:#1B6FC4; --nav:#FFFFFF;
 }
@@ -255,7 +257,7 @@ body.claro .pill.pos{background:rgba(0,163,46,.12);} body.claro .pill.neg{backgr
 .kgrp .row b{display:block;font-size:14px;font-weight:600;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* gráfico */
-.gc{background:var(--card);border-radius:10px;padding:12px 13px 9px;margin-bottom:12px;}
+.gc{background:var(--plano);border-radius:10px;padding:12px 13px 9px;margin-bottom:12px;}
 .gc .t{font-size:13px;font-weight:600;}
 .gc .s{font-size:10.5px;color:var(--txt2);margin-top:2px;}
 .gc .leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10px;color:var(--txt2);margin:8px 0 4px;}
@@ -265,45 +267,37 @@ body.claro .pill.pos{background:rgba(0,163,46,.12);} body.claro .pill.neg{backgr
 .gc .cv{position:relative;height:180px;margin-top:6px;}
 .gc .cv canvas{width:100%!important;height:100%!important;}
 /* lista de barras (gráfico categórico de uma série / rosca) */
-.bl{margin-top:8px;}
-.bl .br{display:flex;align-items:center;gap:10px;padding:6px 0;}
+.bl{margin-top:6px;}
+.bl .br{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--plano-brd);}
+.bl .br:last-child{border-bottom:0;}
 .bl .br.esc{display:none;}
 .bl .bn{flex:1;min-width:0;}
-.bl .bn span{display:block;font-size:11.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.bl .bar{height:6px;border-radius:3px;background:var(--linha);margin-top:5px;overflow:hidden;}
-.bl .bar i{display:block;height:100%;border-radius:3px;background:var(--acc);}
-.bl .bv{flex:0 0 auto;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;min-width:48px;text-align:right;}
-.bl .bv.neg{color:var(--vermelho);}
+.bl .bn span{display:block;font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bl .bv{flex:0 0 auto;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;min-width:48px;text-align:right;}
+.bl .bv.neg{color:var(--vermelho);} .bl .bv.pos{color:var(--verde);} .bl .bv.amb{color:var(--ambar);}
 .bl .dot{width:10px;height:10px;border-radius:3px;flex:0 0 auto;}
-.bl.rosca .br{padding:7px 0;border-bottom:1px solid var(--brd);}
-.bl.rosca .br:last-child{border-bottom:0;}
 .gc .mais,.tb .mais{display:block;text-align:center;font-size:11px;color:var(--acc);font-weight:600;padding:10px 0 2px;cursor:pointer;}
 
 /* tabela → lista: nome à esquerda, o valor principal à direita, o 2º embaixo, barra proporcional */
-.tb{background:var(--card);border-radius:10px;padding:11px 13px;margin-bottom:12px;overflow:hidden;}
+.tb{background:var(--plano);border-radius:10px;padding:11px 13px;margin-bottom:12px;overflow:hidden;}
 .tb .t{font-size:13px;font-weight:600;margin-bottom:6px;}
 .tb .s{font-size:10.5px;color:var(--txt2);margin:-4px 0 8px;}
 .tb .colsel{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 6px;}
 .tb .colsel::-webkit-scrollbar{display:none;}
 .tb .colsel .chip{padding:4px 9px;font-size:10px;font-weight:500;}
-.tb .lh{display:flex;justify-content:space-between;font-size:9.5px;color:var(--txt3);padding:6px 0 4px;border-bottom:1px solid var(--brd);text-transform:none;}
-.tb .lh i{font-style:normal;}
-.tb .lr{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--brd);}
+/* a lista é LIMPA: nome e resultado, mais nada (Renan, 06/11/2026) */
+.tb .lh{display:flex;justify-content:space-between;font-size:9.5px;color:var(--txt3);padding:6px 0 4px;border-bottom:1px solid var(--plano-brd);text-transform:none;}
+.tb .lr{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--plano-brd);}
 .tb .lr:last-child{border-bottom:0;}
-.tb .lr.tot{background:var(--linha);margin:4px -13px -11px;padding:9px 13px 11px;border-bottom:0;}
+.tb .lr.tot{margin-top:2px;border-top:1px solid var(--brd);border-bottom:0;}
 .tb .lr.tot .ln b{font-weight:600;}
-.tb .rk{flex:0 0 22px;height:22px;border-radius:6px;background:var(--linha);border:1px solid var(--brd);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;color:var(--txt2);}
 .tb .ln{flex:1;min-width:0;}
 .tb .ln b{display:block;font-size:12px;font-weight:500;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-.tb .ln span{display:block;font-size:10px;color:var(--txt3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.tb .ln .bar{height:4px;border-radius:2px;background:var(--linha);margin-top:6px;max-width:150px;overflow:hidden;}
-.tb .ln .bar i{display:block;height:100%;border-radius:2px;background:var(--acc);opacity:.75;}
-.tb .lv{flex:0 0 auto;text-align:right;max-width:46%;}
+.tb .lv{flex:0 0 auto;text-align:right;max-width:50%;}
 .tb .lv b{display:block;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;}
-.tb .lv small{display:block;font-size:10.5px;color:var(--txt2);font-weight:500;margin-top:2px;white-space:nowrap;}
 
 /* texto (quadrantes, diagnósticos): recolhido, abre no toque */
-.tx-card{background:var(--card);border-radius:10px;padding:13px 14px;margin-bottom:12px;}
+.tx-card{background:var(--plano);border-radius:10px;padding:13px 14px;margin-bottom:12px;}
 .tx-card .t{font-size:13px;font-weight:600;margin-bottom:6px;}
 .tx-card p{font-size:11.5px;color:var(--txt2);line-height:1.55;white-space:pre-line;}
 .tx-card.clamp p{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
