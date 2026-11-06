@@ -194,7 +194,7 @@ console.log('1 · login');
   /* ══════ 2 · painéis ══════ */
   console.log('2 · a lista de painéis');
   await page.click('#nav button[data-v="paineis"]');
-  const grupos = await page.$$eval('#lista .sec', ls => ls.map(l => l.textContent.trim()));
+  const grupos = await page.$$eval('#lista .sec', ls => ls.map(l => l.firstChild.textContent.trim()));
   conf(grupos[0] === 'Visão Geral' && grupos.includes('Financeiro') && grupos.includes('Administração'), 'grupos na ordem do hub: ' + grupos.join(' · '));
   conf(await page.$('#lista .li[data-id="dub-adm"]') !== null, 'admin vê o painel de admin');
   const nLi = await page.$$eval('#lista .li', l => l.length);
@@ -210,13 +210,15 @@ console.log('1 · login');
   await page.waitForSelector('#tela-painel.on');
   await page.waitForFunction(() => document.querySelector('#pnCorpo .hero .val'), null, { timeout: 30000 });
   await page.waitForFunction(() => document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
-  const hero = await page.$$eval('#pnCorpo .hero .hi', hs => hs.map(h => ({ l: h.querySelector('.rot').textContent, v: h.querySelector('.val').textContent, dels: [...h.querySelectorAll('.dels div')].map(d => d.textContent) })));
+  const hero = await page.$$eval('#pnCorpo .hero .hi', hs => hs.map(h => ({ l: h.querySelector('.rot').textContent, v: h.querySelector('.val').textContent, dels: [...h.querySelectorAll('.pills .pill')].map(d => d.textContent) })));
   conf(hero.length === 3 && hero[0].l === 'Custo realizado' && hero[0].v === 'R$ 11,0 mi' && hero[1].v === 'R$ 3,0 mi', 'hero: dois números com o rótulo e o valor do painel (' + JSON.stringify(hero.map(h => h.v)) + ')');
-  conf(hero[0].dels.length === 2 && /Δ Rem %\+10%/.test(hero[0].dels[0]), 'deltas do hero vêm junto: ' + hero[0].dels.join(' | '));
-  const delCor = await page.$eval('#pnCorpo .hero .dels div b', b => b.className);
-  conf(delCor === 'neg', 'a cor do delta é a do painel (vermelho → neg): ' + delCor);
+  conf(hero[0].dels.length === 2 && /Δ Rem %\+10%/.test(hero[0].dels[0]), 'deltas do hero viram pílulas: ' + hero[0].dels.join(' | '));
+  const delCor = await page.$eval('#pnCorpo .hero .pills .pill', b => b.className);
+  conf(/\bneg\b/.test(delCor), 'a cor do delta é a do painel (vermelho → pílula neg): ' + delCor);
   const kp = await page.$$eval('#pnCorpo .kg .k', ks => ks.map(k => ({ l: k.querySelector('.l').textContent, v: k.querySelector('.v').textContent, c: k.querySelector('.v').className, m: (k.querySelector('.m') || {}).textContent })));
-  conf(kp.length === 10 && kp[0].l === 'Orçado' && kp[0].v === 'R$ 9,0 mi', '4 cards do 1º grupo com rótulo e valor: ' + kp.slice(0, 4).map(k => k.l + '=' + k.v).join(', '));
+  conf(kp.length === 6 && kp[0].l === 'Orçado' && kp[0].v === 'R$ 9,0 mi', '4 cards do 1º grupo com rótulo e valor: ' + kp.slice(0, 4).map(k => k.l + '=' + k.v).join(', '));
+  const grp = await page.$eval('#pnCorpo .kgrp', g => ({ t: g.querySelector('.t').textContent, n: g.querySelectorAll('.row div').length, v: [...g.querySelectorAll('.row b')].map(b => b.textContent + (b.className ? '(' + b.className + ')' : '')) }));
+  conf(grp.t === 'Custo Combustível' && grp.n === 4 && /1,0 mi/.test(grp.v[0]) && /\(neg\)/.test(grp.v[2]), 'o grupo de mini-tabela (Árvore) vira UM card de uma linha: ' + grp.t + ' · ' + grp.v.join(' '));
   conf(kp[3].v === '18,5' && /^de 25,0 · meta 80%/.test(kp[3].m), 'valor com <small> (Painel de Metas): o número é o valor e o "de 25,0" vai para a nota: ' + kp[3].v + ' / ' + kp[3].m);
   conf(/pos/.test(kp[2].c), 'o card verde do painel sai verde no app');
   conf(/YoY: \+3%/.test(kp[0].m), 'a nota do card (YoY) vem junto: ' + kp[0].m);
@@ -243,19 +245,19 @@ console.log('1 · login');
   /* ══════ 4 · troca de visão: tabela ══════ */
   console.log('4 · visão Detalhe (tabela)');
   await page.click('#pnVistas .chip[data-v="detalhe"]');
-  await page.waitForFunction(() => document.querySelector('#pnCorpo .tb table') && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
-  const tb = await page.$eval('#pnCorpo .tb', t => ({ tit: t.querySelector('.t').textContent, ths: [...t.querySelectorAll('th')].map(x => x.textContent), n: t.querySelectorAll('tbody tr').length, l1: [...t.querySelector('tbody tr').children].map(x => x.textContent), chips: [...t.querySelectorAll('.colsel .chip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')), mais: (t.querySelector('.mais') || {}).textContent }));
-  conf(tb.tit === 'Por conta' && tb.ths.join('|') === 'Conta|Orçado|Remunerado', 'tabela com o título e 3 colunas (a 1ª + duas): ' + tb.ths.join(' | '));
+  await page.waitForFunction(() => document.querySelector('#pnCorpo .tb .lista') && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
+  const tb = await page.$eval('#pnCorpo .tb', t => ({ tit: t.querySelector('.t').textContent, lh: [...t.querySelectorAll('.lh span')].map(x => x.textContent), n: t.querySelectorAll('.lr').length, l1: { nome: t.querySelector('.lr .ln b').textContent, v: t.querySelector('.lr .lv b').textContent, s: t.querySelector('.lr .lv small').textContent, sc: t.querySelector('.lr .lv small').className, bar: !!t.querySelector('.lr .ln .bar i') }, chips: [...t.querySelectorAll('.colsel .chip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')), mais: (t.querySelector('.mais') || {}).textContent }));
+  conf(tb.tit === 'Por conta' && tb.lh.join('|') === 'Conta|Orçado · Δ %', 'tabela vira lista: nome + valor principal (1ª numérica) e o Δ % embaixo: ' + tb.lh.join(' | '));
   conf(tb.n === 12 && /ver todas as 21/.test(tb.mais), '12 linhas na tela e o "ver todas as 21 linhas"');
-  conf(tb.l1.join('|') === 'Conta 1|100|110', 'a 1ª linha é a do painel: ' + tb.l1.join(' | '));
-  conf(tb.chips.join(',') === 'Orçado*,Remunerado*,Realizado,Δ %', 'chips de coluna: ' + tb.chips.join(' '));
-  await page.click('#pnCorpo .tb .colsel .chip:nth-child(4)');   // Δ %
-  const ths2 = await page.$$eval('#pnCorpo .tb th', l => l.map(x => x.textContent));
-  conf(ths2.join('|') === 'Conta|Remunerado|Δ %', 'escolher uma 3ª coluna tira a mais antiga: ' + ths2.join(' | '));
-  const corTd = await page.$eval('#pnCorpo .tb tbody tr td:last-child', td => td.className);
-  conf(/pos/.test(corTd), 'a célula verde do painel (linha 1, cg) sai verde: ' + corTd);
+  conf(tb.l1.nome === 'Conta 1' && tb.l1.v === '100' && tb.l1.s === '-1%' && /pos/.test(tb.l1.sc) && tb.l1.bar, 'a 1ª linha é a do painel, com a barra proporcional e o Δ verde (cg → pos): ' + JSON.stringify(tb.l1));
+  conf(tb.chips.join(',') === 'Orçado*,Remunerado,Realizado,Δ %*', 'chips de coluna, as duas da tela marcadas: ' + tb.chips.join(' '));
+  await page.click('#pnCorpo .tb .colsel .chip:nth-child(2)');   // Remunerado
+  const lh2 = await page.$$eval('#pnCorpo .tb .lh span', l => l.map(x => x.textContent));
+  conf(lh2.join('|') === 'Conta|Δ % · Remunerado', 'escolher uma 3ª coluna tira a mais antiga: ' + lh2.join(' | '));
+  const v2 = await page.$eval('#pnCorpo .tb .lr .lv', lv => lv.querySelector('b').textContent + '/' + lv.querySelector('small').textContent);
+  conf(v2 === '-1%/110', 'a linha acompanha as colunas escolhidas: ' + v2);
   await page.click('#pnCorpo .tb .mais');
-  conf(await page.$$eval('#pnCorpo .tb tbody tr', l => l.length) === 21 && await page.$eval('#pnCorpo .tb tbody tr:last-child', tr => tr.classList.contains('total')), 'ver todas → 21 linhas, a última é o Total');
+  conf(await page.$$eval('#pnCorpo .tb .lr', l => l.length) === 21 && await page.$eval('#pnCorpo .tb .lr:last-child', tr => tr.classList.contains('tot')), 'ver todas → 21 linhas, a última é o Total');
   await shot(page, '05-painel-tabela');
 
   /* ══════ 5 · troca de vigência ══════ */

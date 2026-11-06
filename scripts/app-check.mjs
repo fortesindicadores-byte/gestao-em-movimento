@@ -92,7 +92,16 @@ for (const id of IDS) {
     r.lin.forEach(l => console.log('     ' + l.slice(0, 400)));
     if (!r.lin.length) falhas++;
   }
-  await pg.screenshot({ path: path.join(DIR, id + '.png'), fullPage: true }).catch(() => {});
+  // o print da tela inteira do painel (o corpo rola por dentro: a janela cresce até o fim do conteúdo) + o resumo lido, para reproduzir o desenho fora do Actions
+  try {
+    const h = await pg.evaluate(() => Math.min(5000, document.getElementById('pnCorpo').scrollHeight + 130));
+    await pg.setViewportSize({ width: 390, height: Math.max(844, h) });
+    await pg.waitForTimeout(400);
+    await pg.screenshot({ path: path.join(DIR, id + '.png') });
+    await pg.setViewportSize({ width: 390, height: 844 });
+    const dados = await pg.evaluate(() => window.PN_DATA || null);
+    if (dados) fs.writeFileSync(path.join(DIR, id + '.json'), JSON.stringify({ id: window.PN && PN.id, nome: PN && PN.nome, desc: PN && PN.desc, data: dados }));
+  } catch (e) { console.log('     (print: ' + e.message.slice(0, 80) + ')'); }
   await pg.evaluate(() => fechaPainel());
 }
 await pg.evaluate(() => irPara('inicio'));
