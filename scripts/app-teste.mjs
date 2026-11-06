@@ -87,7 +87,7 @@ function setVw(v){VW=v;document.querySelectorAll('.s-item[data-vw]').forEach(b=>
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
 function aplicaTema(t){document.body.classList.toggle('claro',t==='light');}
 // o filtro no desenho dos painéis: wrap._sel (Set) + _render(q)
-(function(){var w=document.getElementById('ms-vig');w._sel=new Set();w._render=function(q){w.querySelector('.ms-list').innerHTML='<label class="ms-opt all-opt"><input type="checkbox" class="ms-all"> Todos</label>'+VIGS.map(v=>'<label class="ms-opt"><input type="checkbox" data-v="'+v+'"'+(w._sel.has(v)?' checked':'')+'> '+v.replace('/','/').replace(/^(\\d\\d)\\/(\\d{4})$/,(m,a,b)=>['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][+a-1]+'/'+b.slice(2))+'<span class="ms-only">só</span></label>').join('');};w._render('');})();
+(function(){var w=document.getElementById('ms-vig');w._sel=new Set([VIGS[0]]);w._render=function(q){w.querySelector('.ms-list').innerHTML='<label class="ms-opt all-opt"><input type="checkbox" class="ms-all"> Todos</label>'+VIGS.map(v=>'<label class="ms-opt"><input type="checkbox" data-v="'+v+'"'+(w._sel.has(v)?' checked':'')+'> '+v.replace('/','/').replace(/^(\\d\\d)\\/(\\d{4})$/,(m,a,b)=>['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][+a-1]+'/'+b.slice(2))+'<span class="ms-only">só</span></label>').join('');};w._render('');})();
 function getVig(){var w=document.getElementById('ms-vig');return w._sel.size?[...w._sel][0]:VIGS[0];}
 function atualizar(){
   var vig=getVig(); CHAM.push('atualizar:'+vig); var m=+vig.slice(0,2);
@@ -238,8 +238,8 @@ console.log('1 · login');
   conf(pn.k.length === 2 && pn.k[0].l === 'MM Média' && pn.k[0].v === '7,1 mm' && pn.k[0].m === 'menor sulco médio', 'cards com classes próprias (saude-card): ' + pn.k.map(i => i.l + '=' + i.v).join(' · '));
   const vistas = await page.$$eval('#pnVistas .chip', cs => cs.map(c => c.textContent + (c.classList.contains('on') ? '*' : '')));
   conf(vistas.join('|') === 'Resumo Gerencial*|Detalhe', 'chips das visões, a 1ª marcada: ' + vistas.join(' | '));
-  const vigs = await page.$$eval('#pnVigs .chip', cs => cs.map(c => c.textContent));
-  conf(vigs.length === 4 && vigs[0] === 'out/26', 'chips de vigência vindos do filtro do painel: ' + vigs.join(' '));
+  const vigs = await page.$$eval('#pnVigs .chips.meses .chip', cs => cs.map(c => c.textContent + (c.classList.contains('on') ? '*' : '') + '=' + c.dataset.v));
+  conf(vigs.join(' ') === 'Todos=* Jul=07/2026 Ago=08/2026 Set=09/2026 Out*=10/2026' && await page.$('#pnVigs .chips.anos') === null, 'vigências como meses lado a lado em ordem de calendário, com Todos na frente e a padrão marcada (um ano só: sem a linha do ano): ' + vigs.join(' '));
   conf(/Painel Dublê/.test(await page.textContent('#pnTit')) && /10\/2026 · atualizado/.test(await page.textContent('#pnSub')), 'título e subtítulo do painel: ' + await page.textContent('#pnSub'));
   conf(await page.$$eval('#forno iframe', l => l.length) === 1 && await page.$eval('#forno iframe', f => f.getBoundingClientRect().width) === 1366, 'o painel carregou num iframe escondido de 1366 px');
   conf(pedidos.some(x => x === 'GET /rest/v1/app_resumo'), 'antes de abrir o iframe o app pediu os resumos do robô (app_resumo) ao banco');
@@ -280,11 +280,17 @@ console.log('1 · login');
   const n8 = await page.evaluate(() => Chart.getChart(document.querySelector('#pnCorpo .gc canvas')).data.labels.length);
   conf(n8 === 8, 'o gráfico acompanha a vigência (8 meses)');
   conf(/08\/2026 · atualizado/.test(await page.textContent('#pnSub')), 'subtítulo acompanha: ' + await page.textContent('#pnSub'));
+  await page.click('#pnVigs .chip[data-v="*"]');   // Todos: nada marcado no filtro do painel
+  await page.waitForFunction(() => (document.querySelector('#pnVigs .chip.on') || {}).dataset?.v === '*' && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
+  const todos = await page.evaluate(() => { const w = document.querySelector('#forno iframe').contentWindow; return { sel: w.document.getElementById('ms-vig')._sel.size, cham: w.CHAM[w.CHAM.length - 1] }; });
+  conf(todos.sel === 0 && /^atualizar:/.test(todos.cham), '"Todos" limpa o filtro do painel (nada marcado = todas) e redesenha: ' + JSON.stringify(todos));
+  await page.click('#pnVigs .chip[data-v="10/2026"]');
+  await page.waitForFunction(() => (document.querySelector('#pnCorpo .hero .val') || {}).textContent === 'R$ 11,0 mi' && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
 
   /* ══════ 6 · cache e início ══════ */
   console.log('6 · cache, favoritos e início');
   const chaves = await page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('gem_app_c2_dub|')));
-  conf(chaves.length === 3, 'três resumos guardados (padrão, detalhe, 08/2026): ' + chaves.join(' '));
+  conf(chaves.length === 5, 'cinco resumos guardados (padrão, detalhe, 08/2026, Todos, 10/2026): ' + chaves.join(' '));
   conf(await page.$eval('#btFav', b => b.classList.contains('on')), 'o dublê é favorito (estrela acesa)');
   await page.click('button[onclick="fechaPainel()"]');
   await page.waitForFunction(() => !document.getElementById('tela-painel').classList.contains('on'));

@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gestão em Movimento">
-<meta name="build" content="202611060300">
+<meta name="build" content="202611060330">
 <title>Gestão em Movimento</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -197,6 +197,13 @@ body.claro .nav{box-shadow:0 14px 34px rgba(20,24,32,.16);border:1px solid var(-
 .chip.on{background:var(--acc);border-color:var(--acc);color:#fff;}
 .chips.vig .chip{font-weight:500;padding:4px 9px;font-size:10px;}
 .chips.vig .chip.on{background:var(--acc2);color:var(--acc);border-color:transparent;}
+/* vigência em duas linhas: anos em cima, meses do ano lado a lado embaixo */
+#pnVigs{display:block;padding:0;overflow:visible;}
+#pnVigs>.chip{display:inline-block;margin:4px 0 2px 6px;}
+#pnVigs .chips{padding:3px 20px 2px;}
+#pnVigs .chips.anos .chip{font-size:9.5px;padding:3px 8px;background:transparent;border-color:var(--plano-brd);color:var(--txt3);}
+#pnVigs .chips.anos .chip.on{color:var(--txt);border-color:var(--brd);background:var(--plano);}
+#pnVigs .chips.meses .chip{min-width:40px;text-align:center;}
 .estado{font-size:11px;color:var(--txt2);padding:8px 0 2px;display:flex;align-items:center;gap:8px;}
 .estado i{width:12px;height:12px;border-radius:50%;border:2px solid var(--brd);border-top-color:var(--acc);animation:gira .8s linear infinite;flex:0 0 auto;}
 @keyframes gira{to{transform:rotate(360deg)}}
