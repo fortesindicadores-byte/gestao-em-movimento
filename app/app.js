@@ -329,6 +329,7 @@ function renderInicio() {
       '<div class="dq-l"><div class="rot">' + esc(p.nome) + (hr && hr.l ? ' <i>·</i> ' + esc(suave(hr.l)) : '') + '</div>' +
       (hr ? '<div class="val ' + corCls(hr.cor) + (String(hr.v).length > 12 ? ' menor' : '') + '">' + esc(hr.v) + '</div>' +
           (!hr.dels.length && hr.extra ? '<div class="sub">' + esc(hr.extra) + '</div>' : '')
+        : FALHA[p.id] ? '<div class="val menor">—</div><div class="sub">não deu para ler agora · toque para abrir</div>'
         : '<div class="sk"></div><div class="sub">carregando…</div>') + '</div>' +
       '<div class="dq-r">' + (sr ? sparkSvg(sr.data, 88, 34, hr && hr.cor === 'r' ? '#FF5252' : '#F97316') : '') + '<span class="seta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span></div></div>' +
       (hr && hr.dels.length ? pillsHtml(hr.dels.slice(0, 2)) : '') + '</div>';
@@ -344,6 +345,8 @@ function renderInicio() {
   $('recentes').innerHTML = rec.length ? rec.map(function (p) { var c = cachePadrao(p); return liHtml(p, c ? 'lido ' + horaDe(c.t) : p.desc); }).join('') : '<div class="vazio">Os painéis que você abrir aparecem aqui.</div>';
 }
 var _fila = false;
+var FALHA = {};                    // painel → { t, msg } da última leitura em segundo plano que falhou (o início não fica em "carregando…" para sempre)
+var FALHA_ESPERA = 10 * 60e3;      // tenta de novo o que falhou depois de 10 min
 async function filaDestaques() {   // lê em segundo plano os favoritos sem resumo fresco, um por vez
   if (_fila || !USER) return; _fila = true;
   try {
@@ -351,13 +354,25 @@ async function filaDestaques() {   // lê em segundo plano os favoritos sem resu
     for (var i = 0; i < f.length; i++) {
       var p = f[i], c = cachePadrao(p);
       if (fresco(c)) continue;
+      if (FALHA[p.id] && Date.now() - FALHA[p.id].t < FALHA_ESPERA) continue;
       if (PN) break;   // a pessoa abriu um painel: ele tem prioridade; a fila volta depois
-      try { await carrega(p, { fundo: true }); } catch (e) { console.warn('destaque ' + p.id + ':', e && e.message); }
+      try { await carrega(p, { fundo: true }); delete FALHA[p.id]; }
+      catch (e) { var m = (e && e.message) || 'erro'; if (m !== 'abortado') FALHA[p.id] = { t: Date.now(), msg: m }; console.warn('destaque ' + p.id + ':', m); }
       renderInicio();
       if (PN) break;
     }
   } finally { _fila = false; }
 }
+/* De tempos em tempos (o app aberto o dia inteiro, instalado): baixa o que o robô gravou
+   desde a última vez e volta à fila do que ainda ficou sem resumo. */
+setInterval(function () {
+  if (!USER || PN || document.hidden) return;
+  preLe(favs()).then(function (n) { if (n) renderInicio(); filaDestaques(); });
+}, 5 * 60e3);
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden || !USER || PN) return;
+  preLe(favs()).then(function (n) { if (n) renderInicio(); filaDestaques(); });
+});
 function atualizarTudo() {
   limpaCache(); window.__gvizMem = {}; mataForno();
   toast('Os painéis serão relidos na próxima abertura');

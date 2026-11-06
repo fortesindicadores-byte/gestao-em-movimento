@@ -394,6 +394,26 @@ console.log('8 · gestor (não admin) e sem sessão');
   conf(/recusou|Não deu/.test(await page.textContent('#pnCorpo')), 'painel que recusa (gate) vira aviso com "abrir o painel completo", não tela em branco');
   await ctx.close();
 }
+{
+  /* ══════ 8c · o início NÃO fica em "carregando…" para sempre (Renan, 06/11/2026: "2h carregando essa pora?") ══════ */
+  console.log('8c · destaque que falha na leitura em segundo plano');
+  const { ctx, page } = await novoCtx();
+  await page.goto(BASE + '/app/');
+  await page.waitForSelector('#tela-login.on');
+  await page.fill('#lgEmail', 'renan@conlogsa.com.br'); await page.fill('#lgSenha', 'certa'); await page.click('#btEntrar');
+  await page.waitForSelector('#app:not([style*="none"])', { timeout: 15000 });
+  await page.evaluate(() => { sessionStorage.removeItem('gem_hub'); localStorage.setItem('gem_app_fav', '["dub"]'); limpaCache(); renderInicio(); filaDestaques(); });
+  conf(/carregando/.test(await page.textContent('#destaques .dq .sub')), 'enquanto a fila lê, o destaque diz "carregando…"');
+  await page.waitForFunction(() => /não deu para ler/.test((document.querySelector('#destaques .dq .sub') || {}).textContent || ''), null, { timeout: 60000 }).catch(() => {});
+  conf(/não deu para ler agora/.test(await page.textContent('#destaques .dq .sub')), 'a leitura falhou (gate): o destaque diz "não deu para ler agora · toque para abrir", não "carregando…" para sempre');
+  const falha = await page.evaluate(() => FALHA.dub && FALHA.dub.msg);
+  conf(/recusou/.test(falha || ''), 'o motivo fica guardado para a nova tentativa em 10 min: ' + falha);
+  const t1 = await page.evaluate(() => FORNO.t);
+  await page.evaluate(() => filaDestaques());
+  await page.waitForTimeout(800);
+  conf(await page.evaluate(() => FORNO.t) === t1 && await page.$$eval('#forno iframe', l => l.length) <= 1, 'chamar a fila de novo antes dos 10 min NÃO reabre o iframe do que acabou de falhar');
+  await ctx.close();
+}
 
 /* ══════ 9 · painéis reais (mecânica) ══════ */
 const PAINEIS = (process.env.PAINEIS || 'visao-financeira,painel-km,scorecard,fca-gerencial').split(',').filter(Boolean);
