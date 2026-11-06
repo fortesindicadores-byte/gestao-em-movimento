@@ -842,8 +842,11 @@ function desenhaPainel(d, o) {
   var idx = []; var nomeDe = function (b, i) { return b.tit || (b.t === 'graf' ? 'Gráfico ' + (i + 1) : b.t === 'tab' ? 'Tabela ' + (i + 1) : ''); };
   bl.forEach(function (b, i) { if (b.t === 'graf' || b.t === 'tab') idx.push({ i: i, n: nomeDe(b, i) }); });
   if (bl.length > 5 && idx.length >= 3) h += '<div class="idx"><span class="chip on" onclick="vaiBloco(\'pnCorpo\')">Resumo</span>' + idx.map(function (x) { return '<span class="chip" onclick="vaiBloco(\'b' + x.i + '\')">' + esc(x.n.length > 26 ? x.n.slice(0, 25) + '…' : x.n) + '</span>'; }).join('') + '</div>';
-  bl.forEach(function (b, i) {
-    var id = 'b' + i;
+  // texto explicativo vai EMBAIXO, nunca em cima (Renan, 06/11/2026: "Se quer colocar
+  // texto explicativo, coloque embaixo"): os blocos de texto saem depois dos números
+  var ordem = bl.map(function (b, i) { return i; }).filter(function (i) { return bl[i].t !== 'txt'; }).concat(bl.map(function (b, i) { return i; }).filter(function (i) { return bl[i].t === 'txt'; }));
+  ordem.forEach(function (i) {
+    var b = bl[i], id = 'b' + i;
     if (b.t === 'hero') h += heroHtml(b);
     else if (b.t === 'kpis') h += kpisHtml(b);
     else if (b.t === 'graf') h += grafHtml(b, id);
