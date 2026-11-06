@@ -21,6 +21,14 @@ on:
         description: 'true = só apaga o branch temporário tmp-app-prints'
         required: false
         default: 'false'
+      vw:
+        description: 'visão a abrir depois da padrão (ex.: ranking)'
+        required: false
+        default: ''
+      vig:
+        description: 'vigência a escolher, como está no chip (ex.: set/26)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -50,6 +58,8 @@ jobs:
         env:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           APP_PAINEIS: ${{ github.event.inputs.paineis }}
+          APP_VW: ${{ github.event.inputs.vw }}
+          APP_VIG: ${{ github.event.inputs.vig }}
           APP_DIR: /tmp/app-check
       - uses: actions/upload-artifact@v4
         if: ${{ always() && github.event.inputs.so_apagar != 'true' }}

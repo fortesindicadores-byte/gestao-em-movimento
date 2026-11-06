@@ -72,7 +72,11 @@ for (const id of IDS) {
   const existe = await pg.evaluate(id => !!painelPorId(id), id);
   if (!existe) { console.log(`✗ ${id}: não está no catálogo`); falhas++; continue; }
   await pg.evaluate(id => abrePainel(id), id);
-  await pg.waitForFunction(() => { const e = document.getElementById('pnEstado'); const c = document.getElementById('pnCorpo'); return (e && e.style.display === 'none' && c && c.textContent.trim().length > 0) || document.querySelector('#pnEstado.erro') || (c && c.querySelector('.vazio')); }, null, { timeout: 180000, polling: 500 }).catch(() => {});
+  const esperaOk = () => pg.waitForFunction(() => { const e = document.getElementById('pnEstado'); const c = document.getElementById('pnCorpo'); return (e && e.style.display === 'none' && c && c.textContent.trim().length > 0) || document.querySelector('#pnEstado.erro') || (c && c.querySelector('.vazio')); }, null, { timeout: 180000, polling: 500 }).catch(() => {});
+  await esperaOk();
+  // APP_VIG=set/26 (ou APP_VW=ranking): troca a vigência/visão como a pessoa faria no celular e lê de novo
+  if (process.env.APP_VW) { await pg.evaluate(v => mudaVista(v), process.env.APP_VW); await pg.waitForTimeout(800); await esperaOk(); }
+  if (process.env.APP_VIG) { const v = await pg.evaluate(t => { const c = [...document.querySelectorAll('#pnVigs .chip')].find(x => x.textContent.trim().toLowerCase() === t.toLowerCase()); if (!c) return null; mudaVig(c.dataset.v); return c.dataset.v; }, process.env.APP_VIG); console.log('     vigência pedida: ' + process.env.APP_VIG + ' → ' + v); await pg.waitForTimeout(800); await esperaOk(); }
   const r = await pg.evaluate(() => {
     const d = window.PN_DATA; const est = (document.getElementById('pnEstado') || {}).textContent || '';
     if (!d) return { est, vazio: !!document.querySelector('#pnCorpo .vazio') };
@@ -81,7 +85,7 @@ for (const id of IDS) {
       if (b.t === 'hero') lin.push('hero: ' + b.itens.map(i => i.l + ' = ' + i.v + (i.dels.length ? ' (' + i.dels.map(x => x.l + ' ' + x.v).join(' · ') + ')' : '')).join(' | '));
       if (b.t === 'kpis') lin.push('cards(' + b.itens.length + '): ' + b.itens.map(i => i.l + ' = ' + i.v).join(' · '));
       if (b.t === 'graf') lin.push('gráfico: ' + (b.tit || '(sem título)') + ' · ' + b.tipo + ' · ' + b.labels.length + ' rótulos · ' + b.ds.length + ' série(s): ' + b.ds.map(x => x.label || '?').join(', '));
-      if (b.t === 'tab') lin.push('tabela: ' + (b.tit || '(sem título)') + ' · ' + b.head.length + ' colunas · ' + b.rows.length + ' de ' + b.n + ' linhas · cabeçalho: ' + b.head.slice(0, 6).join(' | '));
+      if (b.t === 'tab') lin.push('tabela: ' + (b.tit || '(sem título)') + ' · ' + b.head.length + ' colunas · ' + b.rows.length + ' de ' + b.n + ' linhas · cabeçalho: ' + b.head.slice(0, 12).join(' | ') + (b.rows[0] ? ' · 1ª linha: ' + b.rows[0].c.map(c => c.v + (c.cor ? '(' + c.cor + ')' : '')).join(' | ') : ''));
       if (b.t === 'txt') lin.push('texto: ' + (b.tit || '(sem título)') + ' · ' + b.corpo.length + ' caracteres');
     });
     return { est, sub: d.sub, vistas: d.vistas.map(v => v.t).join(' / '), vigs: d.vig && d.vig.opts ? d.vig.opts.slice(0, 5).map(o => o.t).join(' ') : '', lin, msgs: d.msgs || [] };
@@ -90,7 +94,7 @@ for (const id of IDS) {
   if (!r.lin) { console.log(`✗ ${id} (${seg} s): ${r.vazio ? 'sem resumo' : r.est || 'sem dado'}`); falhas++; }
   else {
     console.log(`${r.lin.length ? 'ok' : '✗ '} ${id} (${seg} s): ${r.sub}\n     visões: ${r.vistas}${r.vigs ? '\n     vigências: ' + r.vigs : ''}${r.msgs.length ? '\n     avisos: ' + r.msgs.join(' · ') : ''}`);
-    r.lin.forEach(l => console.log('     ' + l.slice(0, 400)));
+    r.lin.forEach(l => console.log('     ' + l.slice(0, process.env.APP_VIG || process.env.APP_VW ? 2000 : 400)));
     if (!r.lin.length) falhas++;
   }
   // o print da tela inteira do painel (o corpo rola por dentro: a janela cresce até o fim do conteúdo) + o resumo lido, para reproduzir o desenho fora do Actions
