@@ -63,7 +63,7 @@ jobs:
           set -e
           rm -rf /tmp/pub && mkdir -p /tmp/pub
           cd /tmp/app-check
-          tar -cf /tmp/prints.tar *.png *.json
+          tar -cf /tmp/prints.tar --ignore-failed-read *.png *.json
           openssl rand -out /tmp/k.bin 32
           openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in /tmp/prints.tar -out /tmp/prints.tar.enc -pass file:/tmp/k.bin
           openssl pkeyutl -encrypt -pubin -inkey "$GITHUB_WORKSPACE/scripts/analise-dump.pub.pem" \

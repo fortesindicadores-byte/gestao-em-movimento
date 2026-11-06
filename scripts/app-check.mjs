@@ -99,8 +99,8 @@ for (const id of IDS) {
     await pg.waitForTimeout(400);
     await pg.screenshot({ path: path.join(DIR, id + '.png') });
     await pg.setViewportSize({ width: 390, height: 844 });
-    const dados = await pg.evaluate(() => window.PN_DATA || null);
-    if (dados) fs.writeFileSync(path.join(DIR, id + '.json'), JSON.stringify({ id: window.PN && PN.id, nome: PN && PN.nome, desc: PN && PN.desc, data: dados }));
+    const dados = await pg.evaluate(() => window.PN_DATA ? { id: PN.id, nome: PN.nome, desc: PN.desc, data: PN_DATA } : null);
+    if (dados) fs.writeFileSync(path.join(DIR, id + '.json'), JSON.stringify(dados));
   } catch (e) { console.log('     (print: ' + e.message.slice(0, 80) + ')'); }
   await pg.evaluate(() => fechaPainel());
 }
