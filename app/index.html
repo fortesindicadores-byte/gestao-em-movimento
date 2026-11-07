@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gestão em Movimento">
-<meta name="build" content="202611062030">
+<meta name="build" content="202611070010">
 <title>Gestão em Movimento</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -78,13 +78,13 @@ button{font-family:inherit;}
 .saldo .aviso{font-size:11px;color:var(--txt2);margin-top:8px;line-height:1.45;}
 .saldo .aviso b{color:var(--txt);font-weight:600;}
 
-.card{background:var(--card);border-radius:10px;padding:15px 16px;margin-bottom:14px;}
+.card{background:var(--plano);border:1px solid var(--plano-brd);border-radius:10px;padding:15px 16px;margin-bottom:14px;}
 .card.contorno{background:var(--linha);border:1px solid var(--brd);border-radius:9px;}
 .sec{font-size:10.5px;color:var(--txt2);font-weight:400;margin:4px 0 10px;display:flex;align-items:center;}
 .sec a{margin-left:auto;color:var(--acc);font-weight:600;cursor:pointer;font-size:11px;}
 
 /* ── lista: cards separados com ícone quadrado ── */
-.li{display:flex;align-items:center;gap:12px;background:var(--linha);border:1px solid var(--brd);border-radius:9px;padding:10px 12px;margin-bottom:10px;cursor:pointer;}
+.li{display:flex;align-items:center;gap:12px;background:var(--plano);border:1px solid var(--plano-brd);border-radius:9px;padding:10px 12px;margin-bottom:10px;cursor:pointer;}
 .li:active{border-color:var(--acc);}
 .li .ic{width:32px;height:32px;border-radius:7px;background:none;border:1px solid var(--txt3);flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:var(--txt);}
 .li .ic svg{width:15px;height:15px;stroke:currentColor;}
@@ -113,7 +113,7 @@ body.claro .nav{box-shadow:0 14px 34px rgba(20,24,32,.16);border:1px solid var(-
 .nav button.on{color:#fff;background:var(--acc);}
 
 /* ── destaques do início: o número do painel, grande, com o mini-gráfico ao lado ── */
-.dq{background:var(--card);border-radius:10px;padding:14px 14px 14px 16px;margin-bottom:12px;cursor:pointer;}
+.dq{background:var(--plano);border:1px solid var(--plano-brd);border-radius:10px;padding:14px 14px 14px 16px;margin-bottom:12px;cursor:pointer;}   /* quase o fundo, como tudo (Renan, 07/11/2026: "Ainda cards com fundo cinza?") */
 .dq .dq-top{display:flex;align-items:center;gap:10px;}
 .dq .dq-l{flex:1;min-width:0;}
 .dq .dq-r{flex:0 0 auto;display:flex;align-items:center;gap:8px;}
@@ -124,7 +124,7 @@ body.claro .nav{box-shadow:0 14px 34px rgba(20,24,32,.16);border:1px solid var(-
 .dq .sub{font-size:10.5px;color:var(--txt2);margin-top:6px;line-height:1.45;}
 .dq .sub b{font-weight:600;}
 .dq .pills{margin-top:10px;grid-template-columns:1fr 1fr;}
-.dq .pill{padding:5px 9px;font-size:9.5px;} .dq .pill b{font-size:10.5px;}
+.dq .pill{padding:5px 9px;font-size:9.5px;background:var(--bg);} .dq .pill b{font-size:10.5px;}   /* pílula neutra dentro do card: o próprio fundo (as coloridas vencem abaixo) */
 .dq .sk{height:26px;width:60%;border-radius:6px;background:var(--card2);margin-top:8px;animation:pulsa 1.2s infinite;}
 @keyframes pulsa{0%,100%{opacity:.45}50%{opacity:1}}
 .dq .seta{color:var(--txt3);}
