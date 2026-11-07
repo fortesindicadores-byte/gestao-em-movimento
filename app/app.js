@@ -172,7 +172,7 @@ async function _entra(user) {
   renderPaineis(''); renderFav(); renderInicio();
   logAcesso('app');
   // 1º os resumos do robô (milissegundos), depois a fila só para o que ficou sem resumo fresco
-  preLe(favs()).then(function () { renderInicio(); setTimeout(filaDestaques, 300); });
+  preLe(iniIds()).then(function () { renderInicio(); setTimeout(filaDestaques, 300); });
 }
 async function sair() {
   fechaMenu();
@@ -227,6 +227,7 @@ function urlDe(p) {
   return u;
 }
 function favs() { var f = lsGet('gem_app_fav', null); return Array.isArray(f) ? f : FAV_PADRAO.slice(); }
+function iniIds() { var f = favs().slice(); EXEC.forEach(function (d) { if (f.indexOf(d.id) < 0) f.push(d.id); }); return f; }   // o que o início precisa ler: os números executivos + os favoritos
 function ehFav(id) { return favs().indexOf(id) >= 0; }
 function toggleFav() {
   if (!PN) return;
@@ -319,12 +320,68 @@ function heroDe(d) {   // o 1º número grande do resumo: hero; senão o 1º car
   return null;
 }
 function horaDe(t) { var d = new Date(t); return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
+/* ── O INÍCIO É EXECUTIVO (Renan, 07/11/2026: "Pense em algo executivo mesmo, de fato.
+   Traga receita, custo frota, EBITDA, pontuação Scorecard, grandes números, apenas
+   resultados e deltas percentuais, talvez YoY também. Direto, objetivo"): quatro
+   números fixos, lidos dos resumos do robô (Visão Financeira · Resumo Gerencial e
+   Scorecard · Resumo Gerencial), cada um com os seus deltas em %. Nada de hero do 1º
+   favorito nem sparkline. Os destaques dos favoritos ficam embaixo, sem repetir esses. ── */
+var EXEC = window.APP_EXEC || [   // (o teste troca pelo dublê)
+  { id: 'visao-financeira', bloco: 'hero', l: '^receita', rot: 'Receita líquida', dels: [{ p: 'orç.*%', l: 'vs orçado' }, { p: 'rem.*%', l: 'vs remunerado' }, { p: 'yoy', l: 'YoY' }] },
+  { id: 'visao-financeira', bloco: 'custo', rot: 'Custo da frota' },
+  { id: 'visao-financeira', bloco: 'hero', l: '^ebitda', rot: 'EBITDA', dels: [{ p: 'orç.*%', l: 'vs orçado' }, { p: 'rem.*%', l: 'vs remunerado' }, { p: 'yoy', l: 'YoY' }] },
+  { id: 'scorecard', bloco: 'hero', l: 'pontua', rot: 'Scorecard · pontuação', dels: [{ p: '^melhor', l: 'Melhor' }, { p: 'recuperar', l: 'A recuperar' }] }
+];
+function cachesDe(p) {   // todos os resumos guardados do painel na vigência padrão, o padrão primeiro e depois o mais novo
+  var ks = Object.keys(localStorage).filter(function (k) { return k.indexOf('gem_app_c2_' + p.id + '|') === 0 && /\|$/.test(k); });
+  return ks.map(function (k) { return lsGet(k, null); }).filter(function (c) { return c && c.data && c.data.blocos; })
+    .sort(function (a, b) { return (b.data.padrao ? 1 : 0) - (a.data.padrao ? 1 : 0) || b.t - a.t; });
+}
+function execLe(def) {   // { v, cor, dels:[{l,v,cor}], vig, c } ou null
+  var p = painelPorId(def.id); if (!p || !podeVer(p)) return null;
+  var cs = cachesDe(p), re = function (s) { return new RegExp(s, 'i'); };
+  for (var i = 0; i < cs.length; i++) {
+    var d = cs[i].data, bl = d.blocos, r = null;
+    if (def.bloco === 'hero') {
+      for (var j = 0; j < bl.length && !r; j++) { var b = bl[j]; if (b.t !== 'hero') continue;
+        var it = (b.itens || []).filter(function (x) { return re(def.l).test(x.l || '') && x.v; })[0];
+        if (it) r = { v: it.v, cor: it.cor, dels: def.dels.map(function (dd) { var x = (it.dels || []).filter(function (y) { return re(dd.p).test(y.l || ''); })[0]; return x ? { l: dd.l, v: x.v, cor: x.cor } : null; }).filter(Boolean) }; }
+    } else if (def.bloco === 'custo') {   // os cards Orçado · Remunerado · Realizado · Δ Orçado · Δ Remunerado da Visão Financeira: o custo é o Realizado
+      for (var k = 0; k < bl.length && !r; k++) { var kb = bl[k]; if (kb.t !== 'kpis' || kb.tit) continue;
+        var its = kb.itens || [], real = its.filter(function (x) { return /^realizado/i.test(x.l || ''); })[0], dOrc = its.filter(function (x) { return /^Δ\s*orç/i.test(x.l || ''); })[0], dRem = its.filter(function (x) { return /^Δ\s*rem/i.test(x.l || ''); })[0];
+        if (!real || !dOrc) continue;
+        var pct = function (x) { return x && x.m ? { v: String(x.m).replace(/^.*?:\s*/, '').trim(), cor: x.mcor || '' } : null; };
+        r = { v: String(real.v).replace(/^[-−]\s*/, ''), cor: real.cor, dels: [] };   // a DRE guarda o custo negativo; no app o custo é um número positivo
+        var po = pct(dOrc), pr = pct(dRem), py = /yoy/i.test(real.m || '') ? pct(real) : null;
+        if (po) r.dels.push({ l: 'vs orçado', v: po.v, cor: po.cor }); if (pr) r.dels.push({ l: 'vs remunerado', v: pr.v, cor: pr.cor }); if (py) r.dels.push({ l: 'YoY', v: py.v, cor: py.cor }); }
+    }
+    if (r) { r.vig = vigDe(d); r.vigT = vigTexto(d, r.vig); r.c = cs[i]; return r; }
+  }
+  return null;
+}
+function vigTexto(d, v) { var o = ((d.vig && d.vig.opts) || []).filter(function (x) { return x.v === v; })[0]; var l = o && vigLe(o); return l && l.mes != null ? MES_ABR[l.mes] + '/' + String(l.ano).slice(2) : (o ? o.t : ''); }
+function execHtml() {
+  var defs = EXEC.filter(function (def) { var p = painelPorId(def.id); return p && podeVer(p); });
+  if (!defs.length) return '';
+  var vigs = {}, h = '';
+  defs.forEach(function (def) {
+    var r = execLe(def), p = painelPorId(def.id);
+    if (r && r.vigT) vigs[r.vigT] = (vigs[r.vigT] || 0) + 1;
+    h += '<div class="ex" onclick="abrePainel(\'' + esc(def.id) + '\')"><div class="rot">' + esc(def.rot) + '</div>' +
+      (r ? '<div class="val ' + corCls(r.cor) + (String(r.v).length > 11 ? ' menor' : '') + '">' + esc(r.v) + '</div>' +
+        (r.dels.length ? '<div class="dls">' + r.dels.map(function (x) { return '<div class="dl' + (String(x.v).length > 9 ? ' larga' : '') + '"><span>' + esc(x.l) + '</span><b class="' + corCls(x.cor) + '">' + esc(x.v) + '</b></div>'; }).join('') + '</div>' : '')
+        : '<div class="val menor">—</div><div class="dls"><div class="dl"><span>' + (FALHA[def.id] ? 'não deu para ler' : 'ainda sem leitura') + '</span><b>abrir</b></div></div>') + '</div>';
+  });
+  var vig = Object.keys(vigs).sort(function (a, b) { return vigs[b] - vigs[a]; })[0] || '';
+  return '<div class="sec">Resultado' + (vig ? '<span class="cnt">' + esc(vig) + '</span>' : '') + '<a onclick="atualizarTudo()">Atualizar</a></div><div class="exec">' + h + '</div>';
+}
 function renderInicio() {
-  var f = favs().map(painelPorId).filter(function (p) { return p && podeVer(p); });
-  var h = '', hero1 = null;
+  var noExec = {}; EXEC.forEach(function (d) { noExec[d.id] = 1; });
+  $('exec').innerHTML = execHtml();
+  var f = favs().map(painelPorId).filter(function (p) { return p && podeVer(p) && !noExec[p.id]; });
+  var h = '';
   f.forEach(function (p) {
     var c = cachePadrao(p), hr = c && heroDe(c.data), sr = c && serieDe(c.data);
-    if (hr && !hero1) hero1 = { p: p, hr: hr, c: c, sr: sr };
     h += '<div class="dq" onclick="abrePainel(\'' + esc(p.id) + '\')"><div class="dq-top">' +
       '<div class="dq-l"><div class="rot">' + esc(p.nome) + (hr && hr.l ? ' <i>·</i> ' + esc(suave(hr.l)) : '') + '</div>' +
       (hr ? '<div class="val ' + corCls(hr.cor) + (String(hr.v).length > 12 ? ' menor' : '') + '">' + esc(hr.v) + '</div>' +
@@ -335,12 +392,6 @@ function renderInicio() {
       (hr && hr.dels.length ? pillsHtml(hr.dels.slice(0, 2)) : '') + '</div>';
   });
   $('destaques').innerHTML = h || '<div class="vazio">Marque painéis como favoritos para vê-los aqui.</div>';
-  if (hero1) {
-    $('iniRot').textContent = hero1.p.nome + ' · ' + suave(hero1.hr.l || '');
-    $('iniVal').textContent = hero1.hr.v; $('iniVal').className = 'val ' + corCls(hero1.hr.cor) + (String(hero1.hr.v).length > 12 ? ' menor' : '');
-    $('iniAviso').innerHTML = (hero1.hr.dels && hero1.hr.dels.length ? pillsHtml(hero1.hr.dels.slice(0, 3)) : '') + (hero1.c.data.sub ? '<div class="sub">' + esc(hero1.c.data.sub) + '</div>' : '');
-    $('iniSpark').innerHTML = hero1.sr ? sparkSvg(hero1.sr.data, 320, 46, hero1.hr.cor === 'r' ? '#FF5252' : '#F97316') + '<div class="leg">' + esc(hero1.sr.tit || hero1.sr.label || '') + ' · ' + esc(rotuloCurto(hero1.sr.labels[0])) + ' → ' + esc(rotuloCurto(hero1.sr.labels[hero1.sr.labels.length - 1])) + '</div>' : '';
-  } else { $('iniRot').textContent = 'Resumo do mês'; $('iniVal').textContent = '—'; $('iniVal').className = 'val'; $('iniAviso').textContent = 'Os destaques são lidos dos painéis favoritos, um a um. Toque num painel para abrir agora.'; $('iniSpark').innerHTML = ''; }
   var rec = recentes().map(painelPorId).filter(function (p) { return p && podeVer(p); }).slice(0, 5);
   $('recentes').innerHTML = rec.length ? rec.map(function (p) { var c = cachePadrao(p); return liHtml(p, c ? 'lido ' + horaDe(c.t) : p.desc); }).join('') : '<div class="vazio">Os painéis que você abrir aparecem aqui.</div>';
 }
@@ -350,7 +401,7 @@ var FALHA_ESPERA = 10 * 60e3;      // tenta de novo o que falhou depois de 10 mi
 async function filaDestaques() {   // lê em segundo plano os favoritos sem resumo fresco, um por vez
   if (_fila || !USER) return; _fila = true;
   try {
-    var f = favs().map(painelPorId).filter(function (p) { return p && podeVer(p) && p.modo === 'resumo'; });
+    var f = iniIds().map(painelPorId).filter(function (p) { return p && podeVer(p) && p.modo === 'resumo'; });
     for (var i = 0; i < f.length; i++) {
       var p = f[i], c = cachePadrao(p);
       if (fresco(c)) continue;
@@ -367,17 +418,17 @@ async function filaDestaques() {   // lê em segundo plano os favoritos sem resu
    desde a última vez e volta à fila do que ainda ficou sem resumo. */
 setInterval(function () {
   if (!USER || PN || document.hidden) return;
-  preLe(favs()).then(function (n) { if (n) renderInicio(); filaDestaques(); });
+  preLe(iniIds()).then(function (n) { if (n) renderInicio(); filaDestaques(); });
 }, 5 * 60e3);
 document.addEventListener('visibilitychange', function () {
   if (document.hidden || !USER || PN) return;
-  preLe(favs()).then(function (n) { if (n) renderInicio(); filaDestaques(); });
+  preLe(iniIds()).then(function (n) { if (n) renderInicio(); filaDestaques(); });
 });
 function atualizarTudo() {
   limpaCache(); window.__gvizMem = {}; mataForno();
   toast('Os painéis serão relidos na próxima abertura');
   renderInicio();
-  preLe(favs()).then(function () { renderInicio(); setTimeout(filaDestaques, 300); });
+  preLe(iniIds()).then(function () { renderInicio(); setTimeout(filaDestaques, 300); });
 }
 
 /* ─────────────────────────── o forno: iframe escondido com o painel ─────────────────────────── */
@@ -798,7 +849,7 @@ async function lePainel(o) {
   }
 }
 function mudaVista(v) { if (!PN || v === PN_VW) return; PN_VW = v; marcaChips('pnVistas', v); lePainel({ vw: v, vig: PN_VIG }); }
-function mudaVig(v) { if (!PN) return; PN_VIG = v; VIG_SEL = v; marcaChips('pnVigs', v); lePainel({ vw: PN_VW, vig: v }); }
+function mudaVig(v) { if (!PN || !v) return; PN_VIG = v; VIG_SEL = v; vigMarca(v); lePainel({ vw: PN_VW, vig: v }); }
 /* ── vigência em DUAS linhas (Renan, 06/11/2026: "Poderia ter toggle de ano, e abaixo de mês só
    lado a lado: All, Jan, Fev, Mar…"): os anos em cima, os meses do ano em ordem de calendário
    embaixo, com "Todos" na frente. Cada painel escreve a vigência de um jeito (set/26, SET/2026,
@@ -819,28 +870,33 @@ function vigLe(o) {
   }
   return null;
 }
-function vigChipsHtml() {
+/* ── DUAS LISTAS SUSPENSAS, ANO E MÊS (Renan, 07/11/2026: "Poluído para cacete esses
+   toggles… não tem um all nos meses. Teria como ter lista suspensa de mês e ano?"):
+   a grade de 12 chips saiu. Fica o seletor nativo do celular: Ano (os anos com dado,
+   do mais novo) e Mês ("Todos" primeiro, depois só os meses do ano que têm dado, na
+   ordem do calendário). Painel cuja vigência não se lê como mês fica com UMA lista. ── */
+function vigSelHtml() {
   var vg = VIG_OPTS, sel = VIG_SEL;
   if (vg.length <= 1) return '';
-  var lidos = vg.map(vigLe), chip = function (v, t, on, cls) { return '<span class="chip' + (on ? ' on' : '') + (cls ? ' ' + cls : '') + '" data-v="' + esc(v) + '" onclick="mudaVig(\'' + esc(v) + '\')">' + esc(t) + '</span>'; };
+  var lidos = vg.map(vigLe), opt = function (v, t, on) { return '<option value="' + esc(v) + '"' + (on ? ' selected' : '') + '>' + esc(t) + '</option>'; };
+  var caixa = function (rot, id, mudo, opts) { return '<label class="vs"><span>' + rot + '</span><select id="' + id + '" onchange="' + mudo + '">' + opts + '</select></label>'; };
   if (lidos.some(function (x) { return !x; }) || !lidos.some(function (x) { return x && x.mes != null; }))
-    return vg.map(function (v) { return chip(v.v, v.t, v.v === sel); }).join('');   // formato que não se lê: como veio
+    return '<div class="vigsel">' + caixa('Vigência', 'vigMes', 'mudaVig(this.value)', vg.map(function (v) { return opt(v.v, v.t, v.v === sel); }).join('')) + '</div>';   // formato que não se lê: como veio
   var todosOpt = null, porAno = {};
   vg.forEach(function (o, i) { var l = lidos[i]; if (l.todos) { if (!todosOpt) todosOpt = o; return; } (porAno[l.ano] = porAno[l.ano] || []).push({ o: o, mes: l.mes }); });
   var anos = Object.keys(porAno).map(Number).sort(function (a, b) { return b - a; });
   var selL = null; vg.forEach(function (o, i) { if (o.v === sel) selL = lidos[i]; });
   var ano = VIG_ANO != null && porAno[VIG_ANO] ? VIG_ANO : (selL && selL.ano && porAno[selL.ano] ? selL.ano : anos[0]);
   VIG_ANO = ano;
-  var vTodos = todosOpt ? todosOpt.v : (PN && PN.vig && PN.vig !== 'elite' ? '*' : null);
-  // linha de cima: os anos (sempre, mesmo um só) e "Todos" na ponta direita
-  var h = '<div class="chips vig anos">' + anos.map(function (a) { return '<span class="chip' + (a === ano ? ' on' : '') + '" onclick="mudaAno(' + a + ')">' + a + '</span>'; }).join('') +
-    (vTodos != null ? chip(vTodos, 'Todos', sel === vTodos || !sel, 'todos') : '') + '</div>';
-  // linha de baixo: os 12 meses em grade fixa; mês sem dado no ano fica apagado e não clica
+  var vTodos = todosOpt ? todosOpt.v : (PN && PN.vig && PN.vig !== 'elite' ? '*' : null), ehTodos = vTodos != null && (sel === vTodos || !sel);
   var doAno = {}; porAno[ano].forEach(function (m) { doAno[m.mes] = m.o; });
-  h += '<div class="chips vig meses">' + MES_ABR.map(function (t, i) { var o = doAno[i]; return o ? chip(o.v, t, o.v === sel) : '<span class="chip off">' + t + '</span>'; }).join('') + '</div>';
-  return h;
+  var meses = (vTodos != null ? opt(vTodos, 'Todos', ehTodos) : '') + MES_ABR.map(function (t, i) { var o = doAno[i]; return o ? opt(o.v, t, o.v === sel) : ''; }).join('');
+  var nenhum = !ehTodos && !porAno[ano].some(function (m) { return m.o.v === sel; });   // trocou o ano e o mês marcado é de outro: a lista fica em "Mês"
+  return '<div class="vigsel">' + caixa('Ano', 'vigAno', 'mudaAno(+this.value)', anos.map(function (a) { return opt(a, a, a === ano); }).join('')) +
+    caixa('Mês', 'vigMes', 'mudaVig(this.value)', (nenhum ? '<option value="" disabled selected>Mês</option>' : '') + meses) + '</div>';
 }
-function mudaAno(a) { VIG_ANO = a; $('pnVigs').innerHTML = vigChipsHtml(); }
+function mudaAno(a) { VIG_ANO = a; $('pnVigs').innerHTML = vigSelHtml(); }
+function vigMarca(v) { VIG_ANO = null; $('pnVigs').innerHTML = vigSelHtml(); }
 function marcaChips(id, v) { document.querySelectorAll('#' + id + ' .chip[data-v]').forEach(function (c) { c.classList.toggle('on', c.dataset.v === v); }); }
 
 /* ═════════ desenhar no estilo DriverPro (v2, 06/11/2026) ═════════
@@ -915,7 +971,7 @@ function desenhaPainel(d, o) {
   var vg = d.vig && d.vig.opts && d.vig.opts.length ? d.vig.opts : [];
   var sel = vigDe(d);
   VIG_OPTS = vg; VIG_SEL = sel; VIG_ANO = null;
-  $('pnVigs').innerHTML = vigChipsHtml();
+  $('pnVigs').innerHTML = vigSelHtml();
   mataGraficos(); TABS = {};
   var bl = d.blocos || [];
   var h = '<div id="pnEstado" class="estado" style="display:none"></div>';
@@ -1104,33 +1160,42 @@ function tabHtml(b, id) {
   // a coluna do NOME: a 1ª; se a 1ª é posição (#, 1, 2, 3…) e a 2ª é texto, a 2ª
   var nome = 0;
   if (nCol > 2 && !numCol[1] && (/^#$|^pos|^rank|^nº$|^n°$/i.test(head[0].trim()) || (numCol[0] && b.rows.every(function (r) { var v = numDe((r.c[0] || {}).v); return r.tot || v == null || (v >= 1 && v <= 300 && v % 1 === 0); })))) nome = 1;
-  var nums = []; for (var j = 0; j < nCol; j++) if (j !== nome && j !== 0 - 0 + (nome === 1 ? 0 : -1) && numCol[j]) nums.push(j);
-  var sec = nums.filter(function (j) { return /Δ|%|var|dif|desv/i.test(head[j]); })[0];
-  var prim = nums.filter(function (j) { return j !== sec; })[0]; if (prim == null) prim = nums[0];
-  var cols = []; if (prim != null) cols.push(prim); else if (sec != null) cols.push(sec);
-  if (!cols.length) { for (var k = 0; k < nCol && cols.length < 1; k++) if (k !== nome && !(nome === 1 && k === 0)) cols.push(k); }
-  TABS[id] = { b: b, head: head, cols: cols, n: nCol, nome: nome, numCol: numCol, subCol: null, mais: false };
+  /* ── ATÉ TRÊS COLUNAS NA LINHA E UM "+" PARA O RESTO (Renan, 07/11/2026: "Essa tabela
+     que precisa ver rem, depois real, depois delta… Diminua e faça caber. Nem que tenha
+     só rem, real e delta % e um '+' para abrir detalhes"): os chips de "uma coluna por
+     vez" saíram. Na linha vão o Real e o Rem (ou as duas primeiras numéricas) e o
+     primeiro Δ em %; as outras colunas abrem embaixo da linha no toque ("+"). ── */
+  var sel = []; for (var s = 0; s < nCol; s++) if (s !== nome && !(nome === 1 && s === 0) && head[s]) sel.push(s);
+  var ehDelta = function (j) { return /Δ|%|var|dif|desv/i.test(head[j]); };
+  var prio = function (j) { var t = head[j]; return /real/i.test(t) ? 0 : /\brem/i.test(t) ? 1 : /orç|orc/i.test(t) ? 3 : 2; };
+  var base = sel.filter(function (j) { return numCol[j] && !ehDelta(j); }).sort(function (a, b) { return prio(a) - prio(b) || a - b; }).slice(0, 2);
+  var deltas = sel.filter(function (j) { return numCol[j] && ehDelta(j); }), d1 = deltas.filter(function (j) { return /%/.test(head[j]); })[0]; if (d1 == null) d1 = deltas[0];
+  var cols = base.slice(); if (d1 != null) cols.push(d1);
+  sel.forEach(function (j) { if (cols.length < 3 && cols.indexOf(j) < 0) cols.push(j); });
+  cols.sort(function (a, b) { return a - b; });   // na ordem em que o painel as mostra (Rem antes de Real, Δ no fim)
+  var resto = sel.filter(function (j) { return cols.indexOf(j) < 0; });
+  TABS[id] = { b: b, head: head, cols: cols, resto: resto, n: nCol, nome: nome, numCol: numCol, mais: false, ab: {} };
   // o subtítulo (a nota explicativa do painel) vai EMBAIXO da lista, nunca em cima
   return '<div class="tb" id="' + id + '">' + (b.tit ? '<div class="t">' + esc(b.tit) + '</div>' : '') + tabMiolo(id) + (b.sub ? '<div class="s pe">' + esc(b.sub) + '</div>' : '') + '</div>';
 }
 function tabMiolo(id) {
-  var T2 = TABS[id], b = T2.b, max = T2.mais ? 80 : 12, h = '';
-  var sel = []; for (var i = 0; i < T2.n; i++) if (i !== T2.nome && !(T2.nome === 1 && i === 0) && T2.head[i]) sel.push(i);
-  if (sel.length > 1) h += '<div class="colsel">' + sel.map(function (i) { return '<span class="chip' + (T2.cols[0] === i ? ' on' : '') + '" onclick="tabCol(\'' + id + '\',' + i + ')">' + esc(suave(T2.head[i])) + '</span>'; }).join('') + '</div>';
-  var p = T2.cols[0];
-  h += '<div class="lista">';
-  if (p != null && sel.length <= 1) h += '<div class="lh"><span>' + esc(suave(T2.head[T2.nome] || '')) + '</span><span>' + esc(suave(T2.head[p])) + '</span></div>';
-  b.rows.slice(0, max).forEach(function (r) {
-    var nm = r.c[T2.nome] || { v: '' }, pv = p != null ? (r.c[p] || { v: '' }) : null;
-    h += '<div class="lr' + (r.tot ? ' tot' : '') + '"><div class="ln"><b>' + esc(nm.v) + '</b></div>' +
-      (pv ? '<div class="lv"><b class="' + corCls(pv.cor) + '">' + esc(pv.v || '—') + '</b></div>' : '') + '</div>';
+  var T2 = TABS[id], b = T2.b, max = T2.mais ? 80 : 12, h = '', cols = T2.cols, resto = T2.resto;
+  var gc = 'grid-template-columns:minmax(0,1.45fr) repeat(' + cols.length + ',minmax(0,1fr))' + (resto.length ? ' 14px' : '');
+  var cel = function (r, j) { var c = r.c[j] || { v: '' }; return '<div class="lv"><b class="' + corCls(c.cor) + '">' + esc(c.v || '—') + '</b></div>'; };
+  h += '<div class="lista c' + cols.length + '">';
+  h += '<div class="lh" style="' + gc + '"><span>' + esc(suave(T2.head[T2.nome] || '')) + '</span>' + cols.map(function (j) { return '<span>' + esc(suave(T2.head[j])) + '</span>'; }).join('') + (resto.length ? '<span></span>' : '') + '</div>';
+  b.rows.slice(0, max).forEach(function (r, k) {
+    var nm = r.c[T2.nome] || { v: '' }, ab = resto.length && T2.ab[k];
+    h += '<div class="lr' + (r.tot ? ' tot' : '') + (resto.length ? ' tem' : '') + (ab ? ' ab' : '') + '" style="' + gc + '"' + (resto.length ? ' onclick="tabAbre(\'' + id + '\',' + k + ')"' : '') + '>' +
+      '<div class="ln"><b>' + esc(nm.v) + '</b></div>' + cols.map(function (j) { return cel(r, j); }).join('') + (resto.length ? '<i class="mi"></i>' : '') + '</div>';
+    if (ab) h += '<div class="ld">' + resto.map(function (j) { var c = r.c[j] || { v: '' }; return '<span><em>' + esc(suave(T2.head[j])) + '</em><b class="' + corCls(c.cor) + '">' + esc(c.v || '—') + '</b></span>'; }).join('') + '</div>';
   });
   h += '</div>';
   if (b.rows.length > 12 && !T2.mais) h += '<span class="mais" onclick="tabMais(\'' + id + '\')">ver todas as ' + b.rows.length + ' linhas' + (b.n > b.rows.length ? ' (das ' + b.n + ')' : '') + '</span>';
   else if (b.n > b.rows.length) h += '<span class="mais" style="color:var(--txt3)">mostrando ' + b.rows.length + ' de ' + b.n + ' linhas · o painel completo tem todas</span>';
   return h;
 }
-function tabCol(id, c) { TABS[id].cols = [c]; redesenhaTab(id); }
+function tabAbre(id, k) { var T2 = TABS[id]; T2.ab[k] = !T2.ab[k]; redesenhaTab(id); }
 function tabMais(id) { TABS[id].mais = true; redesenhaTab(id); }
 function redesenhaTab(id) { var el = $(id); if (!el) return; var tit = el.querySelector('.t'), sub = el.querySelector('.s.pe'); el.innerHTML = (tit ? tit.outerHTML : '') + tabMiolo(id) + (sub ? sub.outerHTML : ''); }
 

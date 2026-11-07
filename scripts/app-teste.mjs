@@ -167,7 +167,7 @@ const browser = await chromium.launch({ executablePath: process.env.PW_CHROME ||
 const novoCtx = async (opt = {}) => {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, serviceWorkers: 'block', locale: 'pt-BR', timezoneId: 'America/Sao_Paulo' });
   await rotas(ctx, opt);
-  await ctx.addInitScript(({ fav }) => { if (location.pathname.indexOf('/app/') >= 0 && !localStorage.getItem('gem_app_fav')) localStorage.setItem('gem_app_fav', JSON.stringify(fav)); window.APP_TEMPOS = { passo: 150, quieto: 2, min: 400, pos: 300 }; }, { fav: ['dub'] });
+  await ctx.addInitScript(({ fav }) => { if (location.pathname.indexOf('/app/') >= 0 && !localStorage.getItem('gem_app_fav')) localStorage.setItem('gem_app_fav', JSON.stringify(fav)); window.APP_TEMPOS = { passo: 150, quieto: 2, min: 400, pos: 300 }; window.APP_EXEC = []; }, { fav: ['dub'] });
   const page = await ctx.newPage();
   const errs = []; page.on('pageerror', e => errs.push(e.message)); page.errs = errs;
   return { ctx, page };
@@ -238,12 +238,11 @@ console.log('1 · login');
   conf(pn.k.length === 2 && pn.k[0].l === 'MM Média' && pn.k[0].v === '7,1 mm' && pn.k[0].m === 'menor sulco médio', 'cards com classes próprias (saude-card): ' + pn.k.map(i => i.l + '=' + i.v).join(' · '));
   const vistas = await page.$$eval('#pnVistas .chip', cs => cs.map(c => c.textContent + (c.classList.contains('on') ? '*' : '')));
   conf(vistas.join('|') === 'Resumo Gerencial*|Detalhe', 'chips das visões, a 1ª marcada: ' + vistas.join(' | '));
-  const vigs = await page.$$eval('#pnVigs .chips.meses .chip', cs => cs.map(c => c.textContent + (c.classList.contains('on') ? '*' : '') + (c.classList.contains('off') ? '' : '=' + c.dataset.v)));
-  conf(vigs.join(' ') === 'Jan Fev Mar Abr Mai Jun Jul=07/2026 Ago=08/2026 Set=09/2026 Out*=10/2026 Nov Dez', 'os 12 meses em grade, na ordem do calendário, os sem dado apagados e a padrão marcada: ' + vigs.join(' '));
-  const anos = await page.$$eval('#pnVigs .chips.anos .chip', cs => cs.map(c => c.textContent + (c.classList.contains('on') ? '*' : '') + (c.dataset.v ? '=' + c.dataset.v : '')));
-  conf(anos.join(' ') === '2026* Todos=*', 'linha do ano sempre (mesmo um ano só) com "Todos" na ponta: ' + anos.join(' '));
-  const offClica = await page.evaluate(() => { const c = document.querySelector('#pnVigs .chip.off'); return c && !c.getAttribute('onclick'); });
-  conf(offClica === true, 'mês sem dado não clica');
+  const vigs = await page.$$eval('#vigMes option', os => os.map(o => o.textContent + (o.selected ? '*' : '') + '=' + o.value));
+  conf(vigs.join(' ') === 'Todos=* Jul=07/2026 Ago=08/2026 Set=09/2026 Out*=10/2026', 'lista suspensa de MÊS: "Todos" primeiro, só os meses com dado, na ordem do calendário, a padrão marcada: ' + vigs.join(' '));
+  const anos = await page.$$eval('#vigAno option', os => os.map(o => o.textContent + (o.selected ? '*' : '')));
+  conf(anos.join(' ') === '2026*', 'lista suspensa de ANO (mesmo um ano só): ' + anos.join(' '));
+  conf(await page.$$eval('#pnVigs .chip', c => c.length) === 0, 'nenhum chip de vigência na tela (saiu a grade de 12 meses)');
   conf(/Painel Dublê/.test(await page.textContent('#pnTit')) && /10\/2026 · atualizado/.test(await page.textContent('#pnSub')), 'título e subtítulo do painel: ' + await page.textContent('#pnSub'));
   conf(await page.$$eval('#forno iframe', l => l.length) === 1 && await page.$eval('#forno iframe', f => f.getBoundingClientRect().width) === 1366, 'o painel carregou num iframe escondido de 1366 px');
   conf(pedidos.some(x => x === 'GET /rest/v1/app_resumo'), 'antes de abrir o iframe o app pediu os resumos do robô (app_resumo) ao banco');
@@ -254,17 +253,15 @@ console.log('1 · login');
   console.log('4 · visão Detalhe (tabela)');
   await page.click('#pnVistas .chip[data-v="detalhe"]');
   await page.waitForFunction(() => document.querySelector('#pnCorpo .tb .lista') && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
-  const tb = await page.$eval('#pnCorpo .tb', t => ({ tit: t.querySelector('.t').textContent, n: t.querySelectorAll('.lr').length, l1: { nome: t.querySelector('.lr .ln b').textContent, v: t.querySelector('.lr .lv b').textContent, filhos: t.querySelector('.lr').children.length, extras: t.querySelectorAll('.lr .bar, .lr .rk, .lr small, .lr .ln span').length }, chips: [...t.querySelectorAll('.colsel .chip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')), mais: (t.querySelector('.mais') || {}).textContent }));
-  conf(tb.tit === 'Por conta' && tb.l1.nome === 'Conta 1' && tb.l1.v === '100' && tb.l1.filhos === 2 && tb.l1.extras === 0, 'tabela vira lista LIMPA: só nome e UM resultado (sem barra, badge ou 2º valor): ' + JSON.stringify(tb.l1));
+  const tb = await page.$eval('#pnCorpo .tb', t => ({ tit: t.querySelector('.t').textContent, n: t.querySelectorAll('.lr').length, head: [...t.querySelectorAll('.lh span')].map(s => s.textContent), l1: { nome: t.querySelector('.lr .ln b').textContent, vals: [...t.querySelectorAll('.lr .lv b')].slice(0, 3).map(b => b.textContent + '/' + b.className), mais: !!t.querySelector('.lr .mi'), extras: t.querySelectorAll('.lr .bar, .lr .rk, .lr small').length }, chips: t.querySelectorAll('.colsel, .chip').length, mais: (t.querySelector('.mais') || {}).textContent }));
+  conf(tb.tit === 'Por conta' && tb.head.join('|') === 'Conta|Remunerado|Realizado|Δ %|' && tb.l1.nome === 'Conta 1' && tb.l1.vals.join(' ') === '110/ 105/pos -1%/pos' && tb.l1.mais && tb.l1.extras === 0 && tb.chips === 0, 'tabela compacta: Rem · Real · Δ % na linha, na cor do painel (fundo da pílula e cg → pos), com o "+" e sem chips de coluna: ' + JSON.stringify(tb));
   conf(tb.n === 12 && /ver todas as 21/.test(tb.mais), '12 linhas na tela e o "ver todas as 21 linhas"');
-  conf(tb.chips.join(',') === 'Orçado*,Remunerado,Realizado,Δ %', 'chips de coluna, só a da tela marcada: ' + tb.chips.join(' '));
-  await page.click('#pnCorpo .tb .colsel .chip:nth-child(4)');   // Δ %
-  const v2 = await page.$eval('#pnCorpo .tb .lr .lv b', b => b.textContent + '/' + b.className);
-  conf(v2 === '-1%/pos', 'escolher outra coluna troca o resultado, na cor do painel (cg → pos): ' + v2);
-  await page.click('#pnCorpo .tb .colsel .chip:nth-child(2)');   // Remunerado
-  conf((await page.$eval('#pnCorpo .tb .lr .lv b', b => b.textContent)) === '110', 'uma coluna por vez: Remunerado = 110');
-  await page.click('#pnCorpo .tb .colsel .chip:nth-child(3)');   // Realizado: pílula com FUNDO verde (a condicional do Gestão à Vista)
-  const v3 = await page.$$eval('#pnCorpo .tb .lr .lv b', bs => bs.slice(0, 2).map(b => b.textContent + '/' + b.className).join(' '));
+  await page.click('#pnCorpo .tb .lr');   // o "+": abre o resto das colunas embaixo da linha
+  const ld = await page.$eval('#pnCorpo .tb', t => ({ ab: t.querySelector('.lr').classList.contains('ab'), det: [...t.querySelectorAll('.ld span')].map(x => x.querySelector('em').textContent + '=' + x.querySelector('b').textContent) }));
+  conf(ld.ab && ld.det.join(' ') === 'Orçado=100', 'tocar na linha abre as colunas que não cabem (Orçado) embaixo dela: ' + JSON.stringify(ld));
+  await page.click('#pnCorpo .tb .lr');
+  conf(await page.$$eval('#pnCorpo .tb .ld', l => l.length) === 0, 'tocar de novo fecha');
+  const v3 = await page.$$eval('#pnCorpo .tb .lr', rs => rs.slice(0, 2).map(r => r.querySelectorAll('.lv b')[1]).map(b => b.textContent + '/' + b.className).join(' '));
   conf(v3 === '105/pos 210/neg', 'a cor da condicional vem do FUNDO da pílula quando o texto é branco: ' + v3);
   const subPos = await page.$eval('#pnCorpo .tb', t => { const k = [...t.children].map(c => c.className); return k.indexOf('lista') < k.indexOf('s pe') || !t.querySelector('.s.pe') ? 'embaixo' : 'em cima'; });
   conf(subPos === 'embaixo', 'subtítulo/nota da tabela fica embaixo da lista, nunca em cima');
@@ -276,19 +273,19 @@ console.log('1 · login');
   console.log('5 · vigência');
   await page.click('#pnVistas .chip[data-v="resumo"]');
   await page.waitForFunction(() => document.querySelector('#pnCorpo .hero') && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
-  await page.click('#pnVigs .chip[data-v="08/2026"]');
+  await page.selectOption('#vigMes', '08/2026');
   await page.waitForFunction(() => (document.querySelector('#pnCorpo .hero .val') || {}).textContent === 'R$ 10,8 mi' && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
   const cham = await page.evaluate(() => document.querySelector('#forno iframe').contentWindow.CHAM);
   conf(cham.includes('atualizar:08/2026'), 'o painel recebeu a vigência e redesenhou (atualizar com 08/2026): ' + cham.join(', '));
-  conf(await page.$eval('#pnVigs .chip.on[data-v]', c => c.dataset.v) === '08/2026', 'o chip da vigência fica marcado');
+  conf(await page.$eval('#vigMes', s => s.value) === '08/2026' && await page.$eval('#vigAno', s => s.value) === '2026', 'a lista de mês fica em Ago e a de ano em 2026');
   const n8 = await page.evaluate(() => Chart.getChart(document.querySelector('#pnCorpo .gc canvas')).data.labels.length);
   conf(n8 === 8, 'o gráfico acompanha a vigência (8 meses)');
   conf(/08\/2026 · atualizado/.test(await page.textContent('#pnSub')), 'subtítulo acompanha: ' + await page.textContent('#pnSub'));
-  await page.click('#pnVigs .chip[data-v="*"]');   // Todos: nada marcado no filtro do painel
-  await page.waitForFunction(() => (document.querySelector('#pnVigs .chip.on[data-v]') || {}).dataset?.v === '*' && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
+  await page.selectOption('#vigMes', '*');   // Todos: nada marcado no filtro do painel
+  await page.waitForFunction(() => (document.getElementById('vigMes') || {}).value === '*' && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
   const todos = await page.evaluate(() => { const w = document.querySelector('#forno iframe').contentWindow; return { sel: w.document.getElementById('ms-vig')._sel.size, cham: w.CHAM[w.CHAM.length - 1] }; });
   conf(todos.sel === 0 && /^atualizar:/.test(todos.cham), '"Todos" limpa o filtro do painel (nada marcado = todas) e redesenha: ' + JSON.stringify(todos));
-  await page.click('#pnVigs .chip[data-v="10/2026"]');
+  await page.selectOption('#vigMes', '10/2026');
   await page.waitForFunction(() => (document.querySelector('#pnCorpo .hero .val') || {}).textContent === 'R$ 11,0 mi' && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
 
   /* ══════ 6 · cache e início ══════ */
@@ -301,7 +298,7 @@ console.log('1 · login');
   await page.click('#nav button[data-v="inicio"]');
   const dq = await page.$eval('#destaques .dq', d => ({ rot: d.querySelector('.rot').textContent, val: d.querySelector('.val').textContent, sub: (d.querySelector('.sub') || {}).textContent }));
   conf(/Painel Dublê/.test(dq.rot) && dq.val === 'R$ 11,0 mi', 'o início mostra o destaque com o número da vigência PADRÃO do painel: ' + dq.val + ' · ' + dq.sub);
-  conf((await page.textContent('#iniVal')) === 'R$ 11,0 mi' && /Painel Dublê · Custo realizado/.test(await page.textContent('#iniRot')), 'o número grande do início é o hero do 1º favorito');
+  conf(await page.$$eval('#exec .ex', l => l.length) === 0 && await page.$$eval('#v-inicio .saldo, #iniVal', l => l.length) === 0, 'sem o hero do 1º favorito nem sparkline no início (o teste roda com o bloco executivo vazio)');
   conf(await page.$$eval('#recentes .li', l => l.length) === 1 && /lido/.test(await page.textContent('#recentes .li .tx span')), 'abertos por último: o dublê, com a hora da leitura');
   await shot(page, '06-inicio-com-dados');
   // reabrir: na hora, do cache, sem iframe novo
@@ -366,8 +363,11 @@ console.log('8 · gestor (não admin) e sem sessão');
   await page.waitForSelector('#tela-login.on');
   await page.fill('#lgEmail', 'renan@conlogsa.com.br'); await page.fill('#lgSenha', 'certa'); await page.click('#btEntrar');
   await page.waitForSelector('#app:not([style*="none"])', { timeout: 15000 });
-  await page.waitForFunction(() => /77,7/.test(document.getElementById('iniVal').textContent), null, { timeout: 15000 }).catch(() => {});
-  conf((await page.textContent('#iniVal')) === 'R$ 77,7 mi', 'o início mostra o número do robô, lido do banco: ' + await page.textContent('#iniVal'));
+  // o bloco EXECUTIVO do início (Renan, 07/11/2026): números fixos lidos do resumo do robô; aqui apontado para o dublê
+  await page.evaluate(() => { EXEC = [{ id: 'dub', bloco: 'hero', l: 'custo', rot: 'Custo (dublê)', dels: [{ p: 'rem.*%', l: 'vs remunerado' }, { p: 'yoy', l: 'YoY' }] }]; renderInicio(); });
+  const ex = await page.$eval('#exec', e => ({ sec: e.querySelector('.sec').textContent, rot: e.querySelector('.ex .rot').textContent, val: e.querySelector('.ex .val').textContent, dls: [...e.querySelectorAll('.ex .dl')].map(d => d.querySelector('span').textContent + '=' + d.querySelector('b').textContent + '/' + d.querySelector('b').className), dq: document.querySelectorAll('#destaques .dq').length }));
+  conf(/Resultado/.test(ex.sec) && /Out\/26/.test(ex.sec) && ex.rot === 'Custo (dublê)' && ex.val === 'R$ 77,7 mi', 'o início executivo mostra o número do robô, lido do banco, com a vigência: ' + JSON.stringify(ex));
+  conf(ex.dls.join(' ') === 'vs remunerado=+10%/neg YoY=-5%/pos' && ex.dq === 0, 'com o delta em % na cor do painel, e o painel do bloco executivo não repete nos destaques: ' + JSON.stringify(ex.dls));
   await page.waitForTimeout(1500);
   conf(await page.$$eval('#forno iframe', l => l.length) === 0, 'e NENHUM iframe foi aberto (a fila de destaques não roda quando o robô já leu)');
   await page.evaluate(() => abrePainel('dub'));
