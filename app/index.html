@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gestão em Movimento">
-<meta name="build" content="202611071130">
+<meta name="build" content="202611072350">
 <title>Gestão em Movimento</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -212,6 +212,7 @@ body.claro .nav{box-shadow:0 14px 34px rgba(20,24,32,.16);border:1px solid var(-
 /* vigência em DUAS LISTAS SUSPENSAS, Ano e Mês (Renan, 07/11/2026: "Teria como ter lista suspensa de mês e ano?") */
 #pnVigs{display:block;padding:0;overflow:visible;}
 .vigsel{display:flex;gap:8px;padding:4px 20px 6px;}
+.vigsel.ini{padding:0 0 12px;}   /* o mesmo filtro de ano e mês no Início (Renan, 07/11/2026) */
 .vigsel .vs{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:999px;background:var(--plano);border:1px solid var(--plano-brd);position:relative;}
 .vigsel .vs>span{font-size:10px;color:var(--txt3);flex:0 0 auto;}
 .vigsel select{flex:1;min-width:0;appearance:none;-webkit-appearance:none;background:transparent;border:0;color:var(--txt);font-family:inherit;font-size:12px;font-weight:600;padding:0 18px 0 0;height:34px;cursor:pointer;outline:none;}

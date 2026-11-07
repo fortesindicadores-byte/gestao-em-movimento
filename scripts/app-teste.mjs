@@ -239,7 +239,7 @@ console.log('1 · login');
   const vistas = await page.$$eval('#pnVistas .chip', cs => cs.map(c => c.textContent + (c.classList.contains('on') ? '*' : '')));
   conf(vistas.join('|') === 'Resumo Gerencial*|Detalhe', 'chips das visões, a 1ª marcada: ' + vistas.join(' | '));
   const vigs = await page.$$eval('#vigMes option', os => os.map(o => o.textContent + (o.selected ? '*' : '') + '=' + o.value));
-  conf(vigs.join(' ') === 'Todos=* Jul=07/2026 Ago=08/2026 Set=09/2026 Out*=10/2026', 'lista suspensa de MÊS: "Todos" primeiro, só os meses com dado, na ordem do calendário, a padrão marcada: ' + vigs.join(' '));
+  conf(vigs.join(' ') === 'Todos=*2026 Jul=07/2026 Ago=08/2026 Set=09/2026 Out*=10/2026', 'lista suspensa de MÊS: "Todos" (= os meses DO ANO) primeiro, só os meses com dado, na ordem do calendário, a padrão marcada: ' + vigs.join(' '));
   const anos = await page.$$eval('#vigAno option', os => os.map(o => o.textContent + (o.selected ? '*' : '')));
   conf(anos.join(' ') === '2026*', 'lista suspensa de ANO (mesmo um ano só): ' + anos.join(' '));
   conf(await page.$$eval('#pnVigs .chip', c => c.length) === 0, 'nenhum chip de vigência na tela (saiu a grade de 12 meses)');
@@ -281,10 +281,10 @@ console.log('1 · login');
   const n8 = await page.evaluate(() => Chart.getChart(document.querySelector('#pnCorpo .gc canvas')).data.labels.length);
   conf(n8 === 8, 'o gráfico acompanha a vigência (8 meses)');
   conf(/08\/2026 · atualizado/.test(await page.textContent('#pnSub')), 'subtítulo acompanha: ' + await page.textContent('#pnSub'));
-  await page.selectOption('#vigMes', '*');   // Todos: nada marcado no filtro do painel
-  await page.waitForFunction(() => (document.getElementById('vigMes') || {}).value === '*' && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
-  const todos = await page.evaluate(() => { const w = document.querySelector('#forno iframe').contentWindow; return { sel: w.document.getElementById('ms-vig')._sel.size, cham: w.CHAM[w.CHAM.length - 1] }; });
-  conf(todos.sel === 0 && /^atualizar:/.test(todos.cham), '"Todos" limpa o filtro do painel (nada marcado = todas) e redesenha: ' + JSON.stringify(todos));
+  await page.selectOption('#vigMes', '*2026');   // Todos: TODOS OS MESES DO ANO marcados no filtro do painel (o ano fica)
+  await page.waitForFunction(() => (document.getElementById('vigMes') || {}).value === '*2026' && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
+  const todos = await page.evaluate(() => { const w = document.querySelector('#forno iframe').contentWindow; return { sel: [...w.document.getElementById('ms-vig')._sel].sort().join(','), cham: w.CHAM[w.CHAM.length - 1] }; });
+  conf(todos.sel === '07/2026,08/2026,09/2026,10/2026' && /^atualizar:/.test(todos.cham), '"Todos" marca os quatro meses de 2026 no filtro do painel (nunca o filtro vazio, que somava os anos) e redesenha: ' + JSON.stringify(todos));
   await page.selectOption('#vigMes', '10/2026');
   await page.waitForFunction(() => (document.querySelector('#pnCorpo .hero .val') || {}).textContent === 'R$ 11,0 mi' && document.getElementById('pnEstado').style.display === 'none', null, { timeout: 30000 });
 
@@ -366,7 +366,9 @@ console.log('8 · gestor (não admin) e sem sessão');
   // o bloco EXECUTIVO do início (Renan, 07/11/2026): números fixos lidos do resumo do robô; aqui apontado para o dublê
   await page.evaluate(() => { EXEC = [{ id: 'dub', bloco: 'hero', l: 'custo', rot: 'Custo (dublê)', dels: [{ p: 'rem.*%', l: 'vs remunerado' }, { p: 'yoy', l: 'YoY' }] }]; renderInicio(); });
   const ex = await page.$eval('#exec', e => ({ sec: e.querySelector('.sec').textContent, rot: e.querySelector('.ex .rot').textContent, val: e.querySelector('.ex .val').textContent, dls: [...e.querySelectorAll('.ex .dl')].map(d => d.querySelector('span').textContent + '=' + d.querySelector('b').textContent + '/' + d.querySelector('b').className), dq: document.querySelectorAll('#destaques .dq').length }));
-  conf(/Resultado/.test(ex.sec) && /Out\/26/.test(ex.sec) && ex.rot === 'Custo (dublê)' && ex.val === 'R$ 77,7 mi', 'o início executivo mostra o número do robô, lido do banco, com a vigência: ' + JSON.stringify(ex));
+  const iniSel = await page.$eval('#exec', e => ({ ano: e.querySelector('#iniAno').value, mes: e.querySelector('#iniMes option:checked').textContent, meses: [...e.querySelectorAll('#iniMes option')].map(o => o.textContent).join(' ') }));
+  conf(/Resultado/.test(ex.sec) && ex.rot === 'Custo (dublê)' && ex.val === 'R$ 77,7 mi', 'o início executivo mostra o número do robô, lido do banco: ' + JSON.stringify(ex));
+  conf(iniSel.ano === '2026' && iniSel.mes === 'Out' && iniSel.meses === 'Todos Jul Ago Set Out', 'o início tem o filtro de Ano e Mês do painel, no mês padrão (Out) e com "Todos": ' + JSON.stringify(iniSel));
   conf(ex.dls.join(' ') === 'vs remunerado=+10%/neg YoY=-5%/pos' && ex.dq === 0, 'com o delta em % na cor do painel, e o painel do bloco executivo não repete nos destaques: ' + JSON.stringify(ex.dls));
   await page.waitForTimeout(1500);
   conf(await page.$$eval('#forno iframe', l => l.length) === 0, 'e NENHUM iframe foi aberto (a fila de destaques não roda quando o robô já leu)');
@@ -378,6 +380,35 @@ console.log('8 · gestor (não admin) e sem sessão');
   await page.waitForFunction(() => document.querySelector('#forno iframe'), null, { timeout: 10000 }).catch(() => {});
   await page.waitForFunction(() => /11,0/.test((document.querySelector('#pnCorpo .hero .val') || {}).textContent || ''), null, { timeout: 30000 }).catch(() => {});
   conf(/11,0/.test(await page.textContent('#pnCorpo .hero .val')) && /lido do painel/.test(await page.textContent('#pnCorpo .pe-painel')), '"Atualizar" relê do painel de verdade (iframe) e passa a dizer "lido do painel": ' + await page.textContent('#pnCorpo .hero .val'));
+  conf(page.errs.length === 0, 'nenhum erro de página' + (page.errs.length ? ': ' + page.errs.join(' | ') : ''));
+  await ctx.close();
+}
+{
+  /* ══════ 8d · o filtro do início: mês que o robô tem é na hora; "Todos" lê o ano no painel ══════ */
+  console.log('8d · filtro de ano e mês no início');
+  const r1 = JSON.parse(JSON.stringify(DADOS_DUB)); r1.blocos[0].itens[0].v = 'R$ 77,7 mi';
+  const r2 = JSON.parse(JSON.stringify(DADOS_DUB)); r2.blocos[0].itens[0].v = 'R$ 66,6 mi'; r2.vigSel = '08/2026';
+  const { ctx, page } = await novoCtx({ resumo: [
+    { id: 'dub', vw: r1.vw || 'resumo', vig: '', unidade: '', dados: r1, lido_em: new Date(Date.now() - 10 * 60e3).toISOString() },
+    { id: 'dub', vw: r2.vw || 'resumo', vig: '08/2026', unidade: '', dados: r2, lido_em: new Date(Date.now() - 10 * 60e3).toISOString() }] });
+  await page.goto(BASE + '/app/');
+  await page.waitForSelector('#tela-login.on');
+  await page.fill('#lgEmail', 'renan@conlogsa.com.br'); await page.fill('#lgSenha', 'certa'); await page.click('#btEntrar');
+  await page.waitForSelector('#app:not([style*="none"])', { timeout: 15000 });
+  await page.evaluate(() => { EXEC = [{ id: 'dub', bloco: 'hero', l: 'custo', rot: 'Custo (dublê)', dels: [] }]; renderInicio(); });
+  await page.selectOption('#iniMes', '7');   // Ago
+  await page.waitForTimeout(300);
+  const ago = await page.$eval('#exec', e => ({ val: e.querySelector('.ex .val').textContent, mes: e.querySelector('#iniMes option:checked').textContent, ifr: document.querySelectorAll('#forno iframe').length }));
+  conf(ago.val === 'R$ 66,6 mi' && ago.mes === 'Ago' && ago.ifr === 0, 'Ago: o número de 08/2026 que o robô gravou, na hora e sem iframe: ' + JSON.stringify(ago));
+  await page.selectOption('#iniMes', 'todos');
+  const lendo = await page.$eval('#exec .ex .dl span', e => e.textContent).catch(() => '');
+  conf(/lendo no painel/.test(lendo), '"Todos" (o ano) não está no robô: o tile diz "lendo no painel…" e lê em segundo plano: ' + lendo);
+  await page.waitForFunction(() => { const v = (document.querySelector('#exec .ex .val') || {}).textContent || ''; return v && v !== '…' && v !== '—'; }, null, { timeout: 40000 });
+  const todos = await page.evaluate(() => { const w = document.querySelector('#forno iframe').contentWindow; return { val: document.querySelector('#exec .ex .val').textContent, sel: [...w.document.getElementById('ms-vig')._sel].sort().join(','), mes: document.querySelector('#iniMes option:checked').textContent }; });
+  conf(/R\$/.test(todos.val) && todos.sel === '07/2026,08/2026,09/2026,10/2026' && todos.mes === 'Todos', 'o ano inteiro foi lido no painel com os quatro meses de 2026 marcados: ' + JSON.stringify(todos));
+  await page.reload(); await page.waitForSelector('#app:not([style*="none"])', { timeout: 15000 });
+  await page.evaluate(() => { EXEC = [{ id: 'dub', bloco: 'hero', l: 'custo', rot: 'Custo (dublê)', dels: [] }]; renderInicio(); });
+  conf(await page.$eval('#iniMes option:checked', o => o.textContent) === 'Todos', 'a escolha do filtro do início sobrevive ao F5');
   conf(page.errs.length === 0, 'nenhum erro de página' + (page.errs.length ? ': ' + page.errs.join(' | ') : ''));
   await ctx.close();
 }

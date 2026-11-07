@@ -172,7 +172,7 @@ async function _entra(user) {
   renderPaineis(''); renderFav(); renderInicio();
   logAcesso('app');
   // 1º os resumos do robô (milissegundos), depois a fila só para o que ficou sem resumo fresco
-  preLe(iniIds()).then(function () { renderInicio(); setTimeout(filaDestaques, 300); });
+  preLe(iniIds(), { cada: renderInicio }).then(function () { renderInicio(); setTimeout(filaDestaques, 300); });
 }
 async function sair() {
   fechaMenu();
@@ -274,7 +274,7 @@ function cacheKey(p, vw, vig) { return 'gem_app_c2_' + p.id + '|' + (vw || '') +
 function cacheLe(p, vw, vig) { return lsGet(cacheKey(p, vw, vig), null); }
 function cacheGrava(p, vw, vig, data) {
   var ok = lsSet(cacheKey(p, vw, vig), { t: Date.now(), data: data });
-  if (!ok) { limpaCache(); lsSet(cacheKey(p, vw, vig), { t: Date.now(), data: data }); }
+  if (!ok) { limpaCacheVelho(p.id); lsSet(cacheKey(p, vw, vig), { t: Date.now(), data: data }); }   // sem espaço: sai o mais velho dos outros painéis, nunca tudo
 }
 function limpaCache() { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('gem_app_c2_') === 0) localStorage.removeItem(k); }); }
 function cachePadrao(p) {   // o resumo guardado da visão e vigência padrão do painel (o que o início mostra)
@@ -284,30 +284,63 @@ function cachePadrao(p) {   // o resumo guardado da visão e vigência padrão d
   if (!melhor) ks.forEach(function (k) { var c = lsGet(k, null); if (c && (!melhor || c.t > melhor.t)) melhor = c; });
   return melhor;
 }
-function fresco(c) { return !!(c && c.data && Date.now() - c.t < (c.robo ? ROBO_FRESCO : CACHE_FRESCO)); }
+/* O CACHE NUNCA É APAGADO (Renan, 07/11/2026: "Não quero que trave o app nunca. Mantenha em
+   cache se precisar"): "Atualizar" só marca o que foi lido aqui como vencido (FORCA_T) e baixa
+   de novo o que o robô tem; a tela continua desenhando o último resumo guardado enquanto o novo
+   não chega. Resumo do robô não vence pelo "Atualizar" (o robô é a fonte; o app só o baixa de novo). */
+var FORCA_T = 0;
+function fresco(c) { return !!(c && c.data && (c.robo ? Date.now() - c.t < ROBO_FRESCO : c.t > FORCA_T && Date.now() - c.t < CACHE_FRESCO)); }
 /* ── os resumos PRÉ-LIDOS pelo robô (Renan, 06/11/2026: "Bem demorado para
    carregar no app visão mobile"): o App Robot lê os painéis no Actions de hora
    em hora e grava public.app_resumo (painel × visão, 3 a 5 KB). O app baixa
    essas linhas em milissegundos e só abre o iframe no "Atualizar", na troca de
    vigência ou quando o robô está atrasado (ROBO_FRESCO). ── */
-async function preLe(ids) {
+/* Um pedido POR PAINEL, em paralelo, e cada um entra no cache assim que chega (Renan,
+   07/11/2026, com a Visão Financeira em "ainda sem leitura" e o app lento: antes era UM
+   pedido com todos os painéis e um teto de 8 s; no celular a resposta inteira (a Visão
+   Financeira sozinha tem 13 resumos, 82 KB) passava do teto, NADA era guardado e a fila
+   abria cada painel num iframe no próprio telefone). PRELE guarda, por painel, se o banco
+   respondeu (ok) ou não (erro): a fila só abre o iframe de um painel do bloco executivo
+   quando o banco respondeu e não tinha o resumo, nunca quando foi a rede que falhou. */
+var PRELE = { ok: {}, erro: {} };
+var PRELE_TETO = 25000;
+async function preLe(ids, opt) {
+  opt = opt || {};
   if (!sb || SEM_BANCO || !USER) return 0;
-  ids = (ids || []).filter(function (id) { var p = painelPorId(id); return p && podeVer(p) && p.modo === 'resumo' && (!p.gav || EH_ADMIN); });
+  ids = (ids || []).filter(function (id, i, a) { var p = painelPorId(id); return a.indexOf(id) === i && p && podeVer(p) && p.modo === 'resumo' && (!p.gav || EH_ADMIN); });
   if (!ids.length) return 0;
   var n = 0;
-  try {
-    var r = await Promise.race([sb.from('app_resumo').select('id,vw,vig,unidade,dados,lido_em').in('id', ids), new Promise(function (res) { setTimeout(function () { res({ data: null, error: { message: 'tempo' } }); }, 8000); })]);
-    if (r.error || !Array.isArray(r.data)) { if (r.error && !/relation|does not exist|tempo/i.test(r.error.message || '')) console.warn('app_resumo:', r.error.message); return 0; }
-    r.data.forEach(function (row) {
-      var p = painelPorId(row.id); if (!p || row.unidade) return;
-      var t = Date.parse(row.lido_em) || 0, d = row.dados; if (!d || !d.blocos) return;
-      var atual = cacheLe(p, row.vw, row.vig);
-      if (atual && atual.t >= t) return;   // o que foi lido aqui depois do robô vale mais
-      d.lido = t;
-      if (lsSet(cacheKey(p, row.vw, row.vig), { t: t, data: d, robo: true })) n++;
-    });
-  } catch (e) { console.warn('app_resumo:', e && e.message); }
+  await Promise.all(ids.map(async function (id) {
+    var p = painelPorId(id), q = sb.from('app_resumo').select('id,vw,vig,unidade,dados,lido_em').eq('id', id);
+    if (opt.soPadrao) q = q.eq('vig', '');
+    try {
+      var r = await Promise.race([q, new Promise(function (res) { setTimeout(function () { res({ data: null, error: { message: 'tempo' } }); }, PRELE_TETO); })]);
+      if (r.error || !Array.isArray(r.data)) { PRELE.erro[id] = (r.error && r.error.message) || 'erro'; if (r.error && !/relation|does not exist|tempo/i.test(r.error.message || '')) console.warn('app_resumo ' + id + ':', r.error.message); return; }
+      delete PRELE.erro[id]; PRELE.ok[id] = Date.now();
+      var m = 0;
+      r.data.forEach(function (row) {
+        if (row.unidade) return;
+        var t = Date.parse(row.lido_em) || 0, d = row.dados; if (!d || !d.blocos || !d.blocos.length) return;
+        var atual = cacheLe(p, row.vw, row.vig);
+        if (atual && atual.t >= t && atual.data && atual.data.blocos && atual.data.blocos.length) return;   // o que foi lido aqui depois do robô vale mais
+        d.lido = t;
+        var k = cacheKey(p, row.vw, row.vig), ok = lsSet(k, { t: t, data: d, robo: true });
+        if (!ok) { limpaCacheVelho(id); ok = lsSet(k, { t: t, data: d, robo: true }); }
+        if (ok) m++;
+      });
+      n += m;
+      if (m && opt.cada) { try { opt.cada(id, m); } catch (e) {} }
+    } catch (e) { PRELE.erro[id] = (e && e.message) || 'erro'; console.warn('app_resumo ' + id + ':', e && e.message); }
+  }));
+  var errados = ids.filter(function (id) { return PRELE.erro[id]; });   // a rede falhou: tenta de novo em 30 s, em vez de abrir o painel no telefone
+  if (errados.length && !opt.retry && !_preLeRetry) _preLeRetry = setTimeout(function () { _preLeRetry = null; preLe(errados, { cada: opt.cada, retry: true }).then(function () { if (!PN && USER) { renderInicio(); filaDestaques(); } }); }, 30000);
   return n;
+}
+var _preLeRetry = null;
+function limpaCacheVelho(id) {   // sem espaço no localStorage: tira os resumos dos OUTROS painéis, dos mais velhos para os mais novos, até sobrar lugar
+  var ks = Object.keys(localStorage).filter(function (k) { return k.indexOf('gem_app_c2_') === 0 && k.indexOf('gem_app_c2_' + id + '|') !== 0; })
+    .map(function (k) { var c = lsGet(k, null); return { k: k, t: (c && c.t) || 0 }; }).sort(function (a, b) { return a.t - b.t; });
+  ks.slice(0, Math.max(1, Math.ceil(ks.length / 2))).forEach(function (x) { localStorage.removeItem(x.k); });
 }
 function heroDe(d) {   // o 1º número grande do resumo: hero; senão o 1º card
   if (!d || !d.blocos) return null;
@@ -332,14 +365,72 @@ var EXEC = window.APP_EXEC || [   // (o teste troca pelo dublê)
   { id: 'visao-financeira', bloco: 'hero', l: '^ebitda', rot: 'EBITDA', dels: [{ p: 'orç.*%', l: 'vs orçado' }, { p: 'rem.*%', l: 'vs remunerado' }, { p: 'yoy', l: 'YoY' }] },
   { id: 'scorecard', bloco: 'hero', l: 'pontua', rot: 'Scorecard · pontuação', dels: [{ p: '^melhor', l: 'Melhor' }, { p: 'recuperar', l: 'A recuperar' }] }
 ];
-function cachesDe(p) {   // todos os resumos guardados do painel na vigência padrão, o padrão primeiro e depois o mais novo
-  var ks = Object.keys(localStorage).filter(function (k) { return k.indexOf('gem_app_c2_' + p.id + '|') === 0 && /\|$/.test(k); });
-  return ks.map(function (k) { return lsGet(k, null); }).filter(function (c) { return c && c.data && c.data.blocos; })
+function cachesDe(p) {   // todos os resumos guardados do painel (com a vigência da chave em .vig), o padrão primeiro e depois o mais novo
+  var ks = Object.keys(localStorage).filter(function (k) { return k.indexOf('gem_app_c2_' + p.id + '|') === 0; });
+  return ks.map(function (k) { var c = lsGet(k, null); if (c) c.vig = k.slice(k.lastIndexOf('|') + 1); return c; }).filter(function (c) { return c && c.data && c.data.blocos && c.data.blocos.length; })
     .sort(function (a, b) { return (b.data.padrao ? 1 : 0) - (a.data.padrao ? 1 : 0) || b.t - a.t; });
 }
-function execLe(def) {   // { v, cor, dels:[{l,v,cor}], vig, c } ou null
+/* ── O INÍCIO TEM O MESMO FILTRO DE ANO E MÊS DO PAINEL (Renan, 07/11/2026: "Na página
+   inicial também deve ter aquele filtro de ano e mês"). INI_VIG = {ano, mes} ou {ano, todos}
+   ou null (= o mês padrão de cada painel). Cada painel escreve a vigência do seu jeito, então
+   o mês escolhido é traduzido para a opção do filtro de cada um (iniVigAlvo). O robô já grava
+   o padrão e os 5 meses anteriores; outro mês (ou o ano inteiro) é lido no painel em segundo
+   plano (execLeFundo) e o tile diz "lendo no painel…" enquanto isso. ── */
+var INI_VIG = lsGet('gem_app_ini_vig', null), INI_ANO = null, FALHA_EXEC = {}, _execLendo = {};
+function execIds() { var ids = []; EXEC.forEach(function (d) { if (ids.indexOf(d.id) < 0) ids.push(d.id); }); return ids; }
+function iniOpts() {   // os meses que os painéis do bloco executivo conhecem (das opções do filtro de cada um) e o mês padrão
+  var porAno = {}, pad = null;
+  execIds().forEach(function (id) {
+    var p = painelPorId(id); if (!p || !podeVer(p)) return;
+    var c = cachesDe(p).filter(function (x) { return x.vig === ''; })[0]; if (!c) return;
+    var d = c.data, opts = (d.vig && d.vig.opts) || [], sel = vigDe(d);
+    opts.forEach(function (o) { var l = vigLe(o); if (l && l.mes != null) (porAno[l.ano] = porAno[l.ano] || {})[l.mes] = 1; if (!pad && o.v === sel && l && l.mes != null) pad = { ano: l.ano, mes: l.mes }; });
+  });
+  return { porAno: porAno, pad: pad };
+}
+function iniVigAlvo(d) {   // a opção do filtro deste painel que corresponde ao mês do Início: '' = padrão · null = o painel não tem o mês
+  if (!INI_VIG) return '';
+  var opts = (d && d.vig && d.vig.opts) || [];
+  if (INI_VIG.todos) { var ot = opts.filter(function (x) { return (vigLe(x) || {}).todos; })[0]; return ot ? ot.v : '*' + INI_VIG.ano; }
+  var o = opts.filter(function (x) { var l = vigLe(x); return l && l.ano === INI_VIG.ano && l.mes === INI_VIG.mes; })[0];
+  return o ? o.v : null;
+}
+function iniSelHtml() {
+  var o = iniOpts(), anos = Object.keys(o.porAno).map(Number).sort(function (a, b) { return b - a; });
+  if (!anos.length) return '';
+  var cur = INI_VIG || o.pad, ano = INI_ANO != null && o.porAno[INI_ANO] ? INI_ANO : (cur && o.porAno[cur.ano] ? cur.ano : anos[0]);
+  INI_ANO = ano;
+  var opt = function (v, t, on) { return '<option value="' + esc(v) + '"' + (on ? ' selected' : '') + '>' + esc(t) + '</option>'; };
+  var caixa = function (rot, id, mudo, opts) { return '<label class="vs"><span>' + rot + '</span><select id="' + id + '" onchange="' + mudo + '">' + opts + '</select></label>'; };
+  var meses = opt('todos', 'Todos', !!(cur && cur.todos && cur.ano === ano)) + MES_ABR.map(function (t, i) { return o.porAno[ano][i] ? opt(i, t, !!(cur && !cur.todos && cur.ano === ano && cur.mes === i)) : ''; }).join('');
+  var nenhum = !cur || cur.ano !== ano;
+  return '<div class="vigsel ini">' + caixa('Ano', 'iniAno', 'mudaIniAno(+this.value)', anos.map(function (a) { return opt(a, a, a === ano); }).join('')) +
+    caixa('Mês', 'iniMes', 'mudaIniMes(this.value)', (nenhum ? '<option value="" disabled selected>Mês</option>' : '') + meses) + '</div>';
+}
+function mudaIniAno(a) { INI_ANO = a; var el = document.querySelector('#exec .vigsel'); if (el) el.outerHTML = iniSelHtml(); }
+function mudaIniMes(v) {
+  if (v === '') return;
+  INI_VIG = v === 'todos' ? { ano: INI_ANO, todos: true } : { ano: INI_ANO, mes: +v };
+  var pad = iniOpts().pad; if (pad && !INI_VIG.todos && pad.ano === INI_VIG.ano && pad.mes === INI_VIG.mes) INI_VIG = null;   // o mês padrão: o resumo de sempre
+  lsSet('gem_app_ini_vig', INI_VIG); FALHA_EXEC = {};
+  renderInicio();
+}
+function execLeFundo(p, alvo) {   // lê no painel (iframe), em segundo plano, o mês que o robô não tem; um por vez
+  var k = p.id + '|' + alvo;
+  if (_execLendo[k] || PN) return;
+  if (FALHA_EXEC[k] && Date.now() - FALHA_EXEC[k].t < FALHA_ESPERA) return;
+  _execLendo[k] = Date.now();
+  carrega(p, { vig: alvo, fundo: true }).then(function () { delete _execLendo[k]; if (!PN) renderInicio(); },
+    function (e) { delete _execLendo[k]; var m = (e && e.message) || 'erro'; if (m !== 'abortado') { FALHA_EXEC[k] = { t: Date.now(), msg: m }; if (!PN) renderInicio(); } });
+}
+function execLe(def) {   // { v, cor, dels:[{l,v,cor}], vig, c } · { lendo } · { semMes } · { falha } · null
   var p = painelPorId(def.id); if (!p || !podeVer(p)) return null;
-  var cs = cachesDe(p), re = function (s) { return new RegExp(s, 'i'); };
+  var todos = cachesDe(p), re = function (s) { return new RegExp(s, 'i'); };
+  var base = todos.filter(function (c) { return c.vig === ''; })[0];
+  var alvo = INI_VIG ? iniVigAlvo(base ? base.data : null) : '';
+  if (alvo === null) return base ? { semMes: true } : null;
+  var cs = todos.filter(function (c) { return c.vig === alvo || (alvo && c.vig === '' && vigDe(c.data) === alvo); });
+  if (!cs.length && alvo) { var fk = p.id + '|' + alvo; if (FALHA_EXEC[fk]) return { falha: FALHA_EXEC[fk].msg }; execLeFundo(p, alvo); return { lendo: true }; }
   for (var i = 0; i < cs.length; i++) {
     var d = cs[i].data, bl = d.blocos, r = null;
     if (def.bloco === 'hero') {
@@ -367,13 +458,14 @@ function execHtml() {
   defs.forEach(function (def) {
     var r = execLe(def), p = painelPorId(def.id);
     if (r && r.vigT) vigs[r.vigT] = (vigs[r.vigT] || 0) + 1;
+    var aviso = r && r.lendo ? 'lendo no painel…' : r && r.semMes ? 'o painel não tem esse mês' : r && r.falha ? 'não deu para ler' : FALHA[def.id] ? 'não deu para ler' : PRELE.erro[def.id] && !PRELE.ok[def.id] ? 'banco sem resposta' : 'ainda sem leitura';
     h += '<div class="ex" onclick="abrePainel(\'' + esc(def.id) + '\')"><div class="rot">' + esc(def.rot) + '</div>' +
-      (r ? '<div class="val ' + corCls(r.cor) + (String(r.v).length > 11 ? ' menor' : '') + '">' + esc(r.v) + '</div>' +
+      (r && r.v != null ? '<div class="val ' + corCls(r.cor) + (String(r.v).length > 11 ? ' menor' : '') + '">' + esc(r.v) + '</div>' +
         (r.dels.length ? '<div class="dls">' + r.dels.map(function (x) { return '<div class="dl' + (String(x.v).length > 9 ? ' larga' : '') + '"><span>' + esc(x.l) + '</span><b class="' + corCls(x.cor) + '">' + esc(x.v) + '</b></div>'; }).join('') + '</div>' : '')
-        : '<div class="val menor">—</div><div class="dls"><div class="dl"><span>' + (FALHA[def.id] ? 'não deu para ler' : 'ainda sem leitura') + '</span><b>abrir</b></div></div>') + '</div>';
+        : '<div class="val menor">' + (r && r.lendo ? '…' : '—') + '</div><div class="dls"><div class="dl"><span>' + aviso + '</span><b>abrir</b></div></div>') + '</div>';
   });
-  var vig = Object.keys(vigs).sort(function (a, b) { return vigs[b] - vigs[a]; })[0] || '';
-  return '<div class="sec">Resultado' + (vig ? '<span class="cnt">' + esc(vig) + '</span>' : '') + '<a onclick="atualizarTudo()">Atualizar</a></div><div class="exec">' + h + '</div>';
+  var selHtml = iniSelHtml(), vig = Object.keys(vigs).sort(function (a, b) { return vigs[b] - vigs[a]; })[0] || '';
+  return '<div class="sec">Resultado' + (vig && !selHtml ? '<span class="cnt">' + esc(vig) + '</span>' : '') + '<a onclick="atualizarTudo()">Atualizar</a></div>' + selHtml + '<div class="exec">' + h + '</div>';
 }
 function renderInicio() {
   var noExec = {}; EXEC.forEach(function (d) { noExec[d.id] = 1; });
@@ -406,6 +498,7 @@ async function filaDestaques() {   // lê em segundo plano os favoritos sem resu
       var p = f[i], c = cachePadrao(p);
       if (fresco(c)) continue;
       if (FALHA[p.id] && Date.now() - FALHA[p.id].t < FALHA_ESPERA) continue;
+      if (execIds().indexOf(p.id) >= 0 && PRELE.erro[p.id]) continue;   // foi a REDE que falhou: espera o robô, não abre a Visão Financeira inteira no telefone
       if (PN) break;   // a pessoa abriu um painel: ele tem prioridade; a fila volta depois
       try { await carrega(p, { fundo: true }); delete FALHA[p.id]; }
       catch (e) { var m = (e && e.message) || 'erro'; if (m !== 'abortado') FALHA[p.id] = { t: Date.now(), msg: m }; console.warn('destaque ' + p.id + ':', m); }
@@ -418,17 +511,17 @@ async function filaDestaques() {   // lê em segundo plano os favoritos sem resu
    desde a última vez e volta à fila do que ainda ficou sem resumo. */
 setInterval(function () {
   if (!USER || PN || document.hidden) return;
-  preLe(iniIds()).then(function (n) { if (n) renderInicio(); filaDestaques(); });
+  preLe(iniIds(), { cada: renderInicio }).then(function (n) { if (n) renderInicio(); filaDestaques(); });
 }, 5 * 60e3);
 document.addEventListener('visibilitychange', function () {
   if (document.hidden || !USER || PN) return;
-  preLe(iniIds()).then(function (n) { if (n) renderInicio(); filaDestaques(); });
+  preLe(iniIds(), { cada: renderInicio }).then(function (n) { if (n) renderInicio(); filaDestaques(); });
 });
 function atualizarTudo() {
-  limpaCache(); window.__gvizMem = {}; mataForno();
-  toast('Os painéis serão relidos na próxima abertura');
+  FORCA_T = Date.now(); FALHA = {}; FALHA_EXEC = {}; window.__gvizMem = {}; mataForno();   // nada é apagado: o que está na tela fica até o novo chegar
+  toast('Baixando o que o robô leu; os painéis serão relidos na próxima abertura');
   renderInicio();
-  preLe(iniIds()).then(function () { renderInicio(); setTimeout(filaDestaques, 300); });
+  preLe(iniIds(), { cada: renderInicio }).then(function () { renderInicio(); setTimeout(filaDestaques, 300); });
 }
 
 /* ─────────────────────────── o forno: iframe escondido com o painel ─────────────────────────── */
@@ -756,6 +849,10 @@ async function carrega(p, opt) {
   _lendo = prom.then(null, function () {}).finally(function () { _lendo = null; });   // quem espera não herda a rejeição (o chamador já a trata)
   return prom;
 }
+function anoAlvos(win, p, ano) {   // os valores das opções do filtro de vigência que caem no ano
+  var os = []; try { os = win.__app.vigOpts(p.vig) || []; } catch (e) {}
+  return os.filter(function (o) { var l = vigLe(o); return l && l.mes != null && l.ano === ano; }).map(function (o) { return o.v; });
+}
 async function _carrega(p, opt) {
   var url = urlDe(p);
   var F = await abreForno(url);
@@ -776,8 +873,10 @@ async function _carrega(p, opt) {
   var vwAlvo = opt.vw || F.vistas[0] || '';
   if (vwAlvo && vwAlvo !== F.vw) { var m1 = win.__app.vw(vwAlvo); if (m1) msgs.push(m1); else F.vw = vwAlvo; await espera(T.pos); await esperaPronto(win, doc, { teto: 12000, min: 600 }); }
   if (opt.vig && opt.vig !== F.vig) {
-    var alvos = opt.vig === '*' ? [] : [opt.vig];   // '*' = Todos (nada marcado no filtro do painel)
-    var m2 = p.vig === 'elite' ? win.__app.elite(alvos) : win.__app.sel(p.vig, alvos);
+    // '*' = nada marcado no filtro do painel; '*2026' = TODOS OS MESES DO ANO (Renan, 07/11/2026, com a
+    // Visão Financeira em "Todos" somando todos os anos: "Essa receita está errada"). O ano fica.
+    var alvos = opt.vig === '*' ? [] : /^\*\d{4}$/.test(opt.vig) ? anoAlvos(win, p, +opt.vig.slice(1)) : [opt.vig];
+    var m2 = /^\*\d{4}$/.test(opt.vig) && !alvos.length ? 'nenhum mês de ' + opt.vig.slice(1) + ' no filtro' : p.vig === 'elite' ? win.__app.elite(alvos) : win.__app.sel(p.vig, alvos);
     if (m2) msgs.push(m2);
     else { F.vig = opt.vig; if (p.vig !== 'elite') { var m3 = win.__app.redesenha(p.rdz || ''); if (m3) msgs.push(m3); } }
     await espera(T.pos); await esperaPronto(win, doc, { teto: 60000, min: 1500 });
@@ -831,7 +930,7 @@ async function lePainel(o) {
     if (!fresco(c) && vig && vig !== '*') { var c0 = cacheLe(p, vw, ''); if (fresco(c0) && c0.data && vigDe(c0.data) === vig) c = c0; }   // o mês clicado é o padrão do painel: o resumo já está aqui
     if (fresco(c)) { PN_DATA = c.data; desenhaPainel(c.data, { lido: c.t, robo: c.robo }); estado(''); return; }
   }
-  estado(PN_DATA ? (o.vig && o.vig !== PN_DATA.vigSel ? 'Lendo ' + (o.vig === '*' ? 'todas as vigências' : vigRotulo(o.vig)) + ' no painel… leva uns segundos' : 'Atualizando…') : 'Abrindo o painel… (os números vêm do próprio painel)');
+  estado(PN_DATA ? (o.vig && o.vig !== PN_DATA.vigSel ? 'Lendo ' + vigRotulo(o.vig) + ' no painel… leva uns segundos' : 'Atualizando…') : 'Abrindo o painel… (os números vêm do próprio painel)');
   try {
     var d = await carrega(p, { vw: vw || undefined, vig: vig || undefined });
     if (seq !== _leSeq || PN !== p) return;
@@ -858,7 +957,7 @@ var VIG_OPTS = [], VIG_SEL = '', VIG_ANO = null;
 var MES_ABR = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 var MES_IDX = { jan: 0, fev: 1, mar: 2, abr: 3, mai: 4, jun: 5, jul: 6, ago: 7, set: 8, out: 9, nov: 10, dez: 11 };
 function vigDe(d) { return d.vigSel || (((d.vig && d.vig.opts) || []).filter(function (x) { return x.on; }).map(function (x) { return x.v; })[0] || ''); }   // a vigência que o resumo mostra: a pedida ou a marcada no painel
-function vigRotulo(v) { var o = null; VIG_OPTS.forEach(function (x) { if (x.v === v) o = x; }); var l = o && vigLe(o); return l && l.mes != null ? MES_ABR[l.mes] + '/' + String(l.ano).slice(2) : (o ? o.t : v); }
+function vigRotulo(v) { if (v === '*') return 'todas as vigências'; if (/^\*\d{4}$/.test(v)) return 'todos os meses de ' + v.slice(1); var o = null; VIG_OPTS.forEach(function (x) { if (x.v === v) o = x; }); var l = o && vigLe(o); return l && l.mes != null ? MES_ABR[l.mes] + '/' + String(l.ano).slice(2) : (o ? o.t : v); }
 function vigLe(o) {
   var cands = [o.t, o.v].map(function (s) { return String(s == null ? '' : s).trim(); }).filter(Boolean);
   for (var i = 0; i < cands.length; i++) {
@@ -888,7 +987,8 @@ function vigSelHtml() {
   var selL = null; vg.forEach(function (o, i) { if (o.v === sel) selL = lidos[i]; });
   var ano = VIG_ANO != null && porAno[VIG_ANO] ? VIG_ANO : (selL && selL.ano && porAno[selL.ano] ? selL.ano : anos[0]);
   VIG_ANO = ano;
-  var vTodos = todosOpt ? todosOpt.v : (PN && PN.vig && PN.vig !== 'elite' ? '*' : null), ehTodos = vTodos != null && (sel === vTodos || !sel);
+  // "Todos" = todos os meses DO ANO escolhido ('*2026'), nunca o filtro vazio ('*', que somava os anos todos)
+  var vTodos = todosOpt ? todosOpt.v : (PN && PN.vig && PN.vig !== 'elite' ? '*' + ano : null), ehTodos = vTodos != null && (sel === vTodos || sel === '*' || !sel);
   var doAno = {}; porAno[ano].forEach(function (m) { doAno[m.mes] = m.o; });
   var meses = (vTodos != null ? opt(vTodos, 'Todos', ehTodos) : '') + MES_ABR.map(function (t, i) { var o = doAno[i]; return o ? opt(o.v, t, o.v === sel) : ''; }).join('');
   var nenhum = !ehTodos && !porAno[ano].some(function (m) { return m.o.v === sel; });   // trocou o ano e o mês marcado é de outro: a lista fica em "Mês"
@@ -1160,12 +1260,17 @@ function tabHtml(b, id) {
   // a coluna do NOME: a 1ª; se a 1ª é posição (#, 1, 2, 3…) e a 2ª é texto, a 2ª
   var nome = 0;
   if (nCol > 2 && !numCol[1] && (/^#$|^pos|^rank|^nº$|^n°$/i.test(head[0].trim()) || (numCol[0] && b.rows.every(function (r) { var v = numDe((r.c[0] || {}).v); return r.tot || v == null || (v >= 1 && v <= 300 && v % 1 === 0); })))) nome = 1;
+  // a linha é de uma PLACA (ou chassi, motorista, veículo) quando a tabela tem essa coluna, mesmo que ela não seja a 1ª
+  // (Renan, 07/11/2026, na lista de Ativos com Unidade na frente: "a placa precisa aparecer né")
+  var ident = -1; head.forEach(function (t, j) { if (ident < 0 && j > nome && !numCol[j] && /^placa|^chassi|^motorista|^ve[ií]culo|^equipamento$/i.test(t.trim())) ident = j; });
+  var posCol = nome === 1 ? 0 : -1;   // a coluna de posição (#), que fica fora da linha
+  if (ident > nome && !/^placa|^chassi|^motorista|^ve[ií]culo/i.test(head[nome].trim())) nome = ident;
   /* ── ATÉ TRÊS COLUNAS NA LINHA E UM "+" PARA O RESTO (Renan, 07/11/2026: "Essa tabela
      que precisa ver rem, depois real, depois delta… Diminua e faça caber. Nem que tenha
      só rem, real e delta % e um '+' para abrir detalhes"): os chips de "uma coluna por
      vez" saíram. Na linha vão o Real e o Rem (ou as duas primeiras numéricas) e o
      primeiro Δ em %; as outras colunas abrem embaixo da linha no toque ("+"). ── */
-  var sel = []; for (var s = 0; s < nCol; s++) if (s !== nome && !(nome === 1 && s === 0) && head[s]) sel.push(s);
+  var sel = []; for (var s = 0; s < nCol; s++) if (s !== nome && s !== posCol && head[s]) sel.push(s);
   var ehDelta = function (j) { return /Δ|%|var|dif|desv/i.test(head[j]); };
   var prio = function (j) { var t = head[j]; return /real/i.test(t) ? 0 : /\brem/i.test(t) ? 1 : /orç|orc/i.test(t) ? 3 : 2; };
   var base = sel.filter(function (j) { return numCol[j] && !ehDelta(j); }).sort(function (a, b) { return prio(a) - prio(b) || a - b; }).slice(0, 2);
