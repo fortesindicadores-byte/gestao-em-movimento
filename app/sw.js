@@ -4,7 +4,7 @@
    Estratégia: rede primeiro, cache como rede de segurança. As chamadas ao
    Supabase e os painéis (fora de /app/) NUNCA passam por aqui. Ao publicar,
    trocar CACHE. */
-const CACHE = 'gem-app-v17';
+const CACHE = 'gem-app-v18';
 const ESSENCIAIS = ['./', './index.html', './app.js', './catalogo.js', './manifest.json', './img/icone-192.png', './img/icone-512.png'];
 
 self.addEventListener('install', e => {

@@ -290,8 +290,11 @@ console.log('1 · login');
 
   /* ══════ 6 · cache e início ══════ */
   console.log('6 · cache, favoritos e início');
-  const chaves = await page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('gem_app_c2_dub|')));
+  const chaves = await page.evaluate(() => cKeys('gem_app_c2_dub|'));
   conf(chaves.length === 4, 'quatro resumos guardados (padrão, detalhe, 08/2026, Todos; 10/2026 é o padrão e reaproveita): ' + chaves.join(' '));
+  conf(await page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('gem_app_c2_')).length === 0 && !!IDB), 'nenhum resumo no localStorage: o cache mora na memória e no IndexedDB (o localStorage fica para os painéis)');
+  const idb = await page.evaluate(() => new Promise(res => { const rq = IDB.transaction('resumo', 'readonly').objectStore('resumo').getAllKeys(); rq.onsuccess = () => res(rq.result.filter(k => String(k).startsWith('gem_app_c2_dub|')).length); rq.onerror = () => res(-1); }));
+  conf(idb === 4, 'os quatro resumos estão gravados no IndexedDB: ' + idb);
   conf(await page.$eval('#btFav', b => b.classList.contains('on')), 'o dublê é favorito (estrela acesa)');
   await page.click('button[onclick="fechaPainel()"]');
   await page.waitForFunction(() => !document.getElementById('tela-painel').classList.contains('on'));
@@ -406,9 +409,13 @@ console.log('8 · gestor (não admin) e sem sessão');
   await page.waitForFunction(() => { const v = (document.querySelector('#exec .ex .val') || {}).textContent || ''; return v && v !== '…' && v !== '—'; }, null, { timeout: 40000 });
   const todos = await page.evaluate(() => { const w = document.querySelector('#forno iframe').contentWindow; return { val: document.querySelector('#exec .ex .val').textContent, sel: [...w.document.getElementById('ms-vig')._sel].sort().join(','), mes: document.querySelector('#iniMes option:checked').textContent }; });
   conf(/R\$/.test(todos.val) && todos.sel === '07/2026,08/2026,09/2026,10/2026' && todos.mes === 'Todos', 'o ano inteiro foi lido no painel com os quatro meses de 2026 marcados: ' + JSON.stringify(todos));
+  // uma versão anterior do app (ou o app-replay) deixou um resumo no localStorage: ele entra na memória e sai de lá
+  await page.evaluate(() => localStorage.setItem('gem_app_c2_dub|resumo|01/2026', JSON.stringify({ t: Date.now(), data: { vw: 'resumo', vigSel: '01/2026', blocos: [{ t: 'hero', itens: [{ l: 'Custo', v: 'R$ 1,0 mi' }] }] } })));
   await page.reload(); await page.waitForSelector('#app:not([style*="none"])', { timeout: 15000 });
   await page.evaluate(() => { EXEC = [{ id: 'dub', bloco: 'hero', l: 'custo', rot: 'Custo (dublê)', dels: [] }]; renderInicio(); });
   conf(await page.$eval('#iniMes option:checked', o => o.textContent) === 'Todos', 'a escolha do filtro do início sobrevive ao F5');
+  const mig = await page.evaluate(() => ({ mem: !!cGet('gem_app_c2_dub|resumo|01/2026'), ls: localStorage.getItem('gem_app_c2_dub|resumo|01/2026') === null, ano: cKeys('gem_app_c2_dub|').length }));
+  conf(mig.mem && mig.ls && mig.ano >= 2, 'o resumo que estava no localStorage migrou para a memória/IndexedDB e saiu do localStorage; os guardados antes do F5 continuam: ' + JSON.stringify(mig));
   conf(page.errs.length === 0, 'nenhum erro de página' + (page.errs.length ? ': ' + page.errs.join(' | ') : ''));
   await ctx.close();
 }

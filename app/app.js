@@ -168,6 +168,7 @@ async function _entra(user) {
   $('pfNome').textContent = titulo((user.user_metadata && user.user_metadata.name) || nome);
   $('pfSub').textContent = EH_DONO ? 'Dono do portal' : EH_ADMIN ? 'Administrador' : (PERFIL.unidade ? 'Gestor · ' + PERFIL.unidade : 'Portal');
   $('pfEmail').textContent = user.email;
+  await cacheAbre();   // os resumos guardados (IndexedDB) entram na memória antes de a tela desenhar
   mostraApp();
   renderPaineis(''); renderFav(); renderInicio();
   logAcesso('app');
@@ -270,18 +271,72 @@ function renderFav() {
 }
 
 /* ─────────────────────────── início: destaques ─────────────────────────── */
-function cacheKey(p, vw, vig) { return 'gem_app_c2_' + p.id + '|' + (vw || '') + '|' + (vig || ''); }
-function cacheLe(p, vw, vig) { return lsGet(cacheKey(p, vw, vig), null); }
-function cacheGrava(p, vw, vig, data) {
-  var ok = lsSet(cacheKey(p, vw, vig), { t: Date.now(), data: data });
-  if (!ok) { limpaCacheVelho(p.id); lsSet(cacheKey(p, vw, vig), { t: Date.now(), data: data }); }   // sem espaço: sai o mais velho dos outros painéis, nunca tudo
+/* ── O CACHE DOS RESUMOS MORA NA MEMÓRIA, COM CÓPIA NO IndexedDB (Renan, 07/11/2026, prints do
+   celular com os tiles ora cheios ora "ainda sem leitura" e os Destaques em "carregando…":
+   "Ainda demorando pra carregar. Aí carrega o scorecard não carrega os outros"). O localStorage
+   é UM só por origem (5 MB no celular) e o app o dividia com os caches dos próprios painéis
+   (bi_cache_vf_v8 guarda as 17 mil linhas da DRE; cada painel aberto no iframe gravava o seu):
+   quando enchia, o resumo que chegava expulsava o do outro painel, e a tela alternava entre
+   eles. Agora: CACHE (objeto em memória, leitura síncrona) é a verdade enquanto o app está
+   aberto, e cada gravação vai também ao IndexedDB (gem_app · resumo), que tem centenas de MB
+   e não briga com os painéis. cacheAbre() carrega o IndexedDB na memória antes do login e
+   migra o que ainda estava no localStorage (versões anteriores, o app-replay), tirando de lá.
+   Sem IndexedDB (navegador que recusa), fica a memória + o localStorage como antes. ── */
+var CACHE = {}, IDB = null, CACHE_PRONTO = null;
+function idbAbre() {
+  return new Promise(function (res) {
+    try {
+      if (!window.indexedDB) return res(null);
+      var rq = indexedDB.open('gem_app', 1);
+      rq.onupgradeneeded = function () { var db = rq.result; if (!db.objectStoreNames.contains('resumo')) db.createObjectStore('resumo'); };
+      rq.onsuccess = function () { res(rq.result); };
+      rq.onerror = function () { res(null); };
+      rq.onblocked = function () { res(null); };
+      setTimeout(function () { res(null); }, 4000);   // IndexedDB travado não pode segurar o login
+    } catch (e) { res(null); }
+  });
 }
-function limpaCache() { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('gem_app_c2_') === 0) localStorage.removeItem(k); }); }
+function idbPoe(k, v) { if (!IDB) return; try { IDB.transaction('resumo', 'readwrite').objectStore('resumo').put(v, k); } catch (e) {} }
+function idbTira(k) { if (!IDB) return; try { IDB.transaction('resumo', 'readwrite').objectStore('resumo').delete(k); } catch (e) {} }
+function cacheAbre() {
+  if (CACHE_PRONTO) return CACHE_PRONTO;
+  CACHE_PRONTO = (async function () {
+    var velhas = [];
+    try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('gem_app_c2_') === 0) { var c = lsGet(k, null); if (c && c.data) CACHE[k] = c; velhas.push(k); } }); } catch (e) {}
+    IDB = await idbAbre();
+    if (!IDB) return;
+    await new Promise(function (res) {
+      try {
+        var tx = IDB.transaction('resumo', 'readonly'), rq = tx.objectStore('resumo').openCursor();
+        rq.onsuccess = function () { var cur = rq.result; if (!cur) return res(); var c = cur.value, k = String(cur.key); if (c && c.data && (!CACHE[k] || (CACHE[k].t || 0) < (c.t || 0))) CACHE[k] = c; cur.continue(); };
+        rq.onerror = function () { res(); };
+        tx.onabort = function () { res(); };
+        setTimeout(res, 4000);
+      } catch (e) { res(); }
+    });
+    velhas.forEach(function (k) { if (CACHE[k]) idbPoe(k, CACHE[k]); try { localStorage.removeItem(k); } catch (e) {} });
+  })();
+  return CACHE_PRONTO;
+}
+cacheAbre();
+function cGet(k) { return CACHE[k] || null; }
+function cSet(k, v) {
+  try { v = JSON.parse(JSON.stringify(v)); } catch (e) { return false; }   // cópia própria (o dado vem do iframe, que fecha)
+  CACHE[k] = v;
+  if (IDB) idbPoe(k, v); else lsSet(k, v);
+  return true;
+}
+function cDel(k) { delete CACHE[k]; idbTira(k); try { localStorage.removeItem(k); } catch (e) {} }
+function cKeys(pref) { pref = pref || 'gem_app_c2_'; return Object.keys(CACHE).filter(function (k) { return k.indexOf(pref) === 0; }); }
+function cacheKey(p, vw, vig) { return 'gem_app_c2_' + p.id + '|' + (vw || '') + '|' + (vig || ''); }
+function cacheLe(p, vw, vig) { return cGet(cacheKey(p, vw, vig)); }
+function cacheGrava(p, vw, vig, data) { cSet(cacheKey(p, vw, vig), { t: Date.now(), data: data }); }
+function limpaCache() { cKeys().forEach(cDel); }
 function cachePadrao(p) {   // o resumo guardado da visão e vigência padrão do painel (o que o início mostra)
-  var ks = Object.keys(localStorage).filter(function (k) { return k.indexOf('gem_app_c2_' + p.id + '|') === 0; });
+  var ks = cKeys('gem_app_c2_' + p.id + '|');
   var melhor = null;
-  ks.forEach(function (k) { var c = lsGet(k, null); if (c && c.data && c.data.padrao && (!melhor || c.t > melhor.t)) melhor = c; });
-  if (!melhor) ks.forEach(function (k) { var c = lsGet(k, null); if (c && (!melhor || c.t > melhor.t)) melhor = c; });
+  ks.forEach(function (k) { var c = cGet(k); if (c && c.data && c.data.padrao && (!melhor || c.t > melhor.t)) melhor = c; });
+  if (!melhor) ks.forEach(function (k) { var c = cGet(k); if (c && (!melhor || c.t > melhor.t)) melhor = c; });
   return melhor;
 }
 /* O CACHE NUNCA É APAGADO (Renan, 07/11/2026: "Não quero que trave o app nunca. Mantenha em
@@ -324,9 +379,7 @@ async function preLe(ids, opt) {
         var atual = cacheLe(p, row.vw, row.vig);
         if (atual && atual.t >= t && atual.data && atual.data.blocos && atual.data.blocos.length) return;   // o que foi lido aqui depois do robô vale mais
         d.lido = t;
-        var k = cacheKey(p, row.vw, row.vig), ok = lsSet(k, { t: t, data: d, robo: true });
-        if (!ok) { limpaCacheVelho(id); ok = lsSet(k, { t: t, data: d, robo: true }); }
-        if (ok) m++;
+        if (cSet(cacheKey(p, row.vw, row.vig), { t: t, data: d, robo: true })) m++;
       });
       n += m;
       if (m && opt.cada) { try { opt.cada(id, m); } catch (e) {} }
@@ -337,11 +390,6 @@ async function preLe(ids, opt) {
   return n;
 }
 var _preLeRetry = null;
-function limpaCacheVelho(id) {   // sem espaço no localStorage: tira os resumos dos OUTROS painéis, dos mais velhos para os mais novos, até sobrar lugar
-  var ks = Object.keys(localStorage).filter(function (k) { return k.indexOf('gem_app_c2_') === 0 && k.indexOf('gem_app_c2_' + id + '|') !== 0; })
-    .map(function (k) { var c = lsGet(k, null); return { k: k, t: (c && c.t) || 0 }; }).sort(function (a, b) { return a.t - b.t; });
-  ks.slice(0, Math.max(1, Math.ceil(ks.length / 2))).forEach(function (x) { localStorage.removeItem(x.k); });
-}
 function heroDe(d) {   // o 1º número grande do resumo: hero; senão o 1º card
   if (!d || !d.blocos) return null;
   for (var i = 0; i < d.blocos.length; i++) {
@@ -366,8 +414,8 @@ var EXEC = window.APP_EXEC || [   // (o teste troca pelo dublê)
   { id: 'scorecard', bloco: 'hero', l: 'pontua', rot: 'Scorecard · pontuação', dels: [{ p: '^melhor', l: 'Melhor' }, { p: 'recuperar', l: 'A recuperar' }] }
 ];
 function cachesDe(p) {   // todos os resumos guardados do painel (com a vigência da chave em .vig), o padrão primeiro e depois o mais novo
-  var ks = Object.keys(localStorage).filter(function (k) { return k.indexOf('gem_app_c2_' + p.id + '|') === 0; });
-  return ks.map(function (k) { var c = lsGet(k, null); if (c) c.vig = k.slice(k.lastIndexOf('|') + 1); return c; }).filter(function (c) { return c && c.data && c.data.blocos && c.data.blocos.length; })
+  var ks = cKeys('gem_app_c2_' + p.id + '|');
+  return ks.map(function (k) { var c = cGet(k); if (c) c.vig = k.slice(k.lastIndexOf('|') + 1); return c; }).filter(function (c) { return c && c.data && c.data.blocos && c.data.blocos.length; })
     .sort(function (a, b) { return (b.data.padrao ? 1 : 0) - (a.data.padrao ? 1 : 0) || b.t - a.t; });
 }
 /* ── O INÍCIO TEM O MESMO FILTRO DE ANO E MÊS DO PAINEL (Renan, 07/11/2026: "Na página

@@ -53,13 +53,20 @@
   // de antes de set/26 entrar na Dispersão trazia o custo de setembro com o km só da
   // Seara. Dentro do deck, as chaves de cache dos painéis voltam vazias e cada painel lê
   // o dado do momento (o banco é lido uma vez só, pela memória da mãe).
-  var CACHE_PAINEL = /^(bi_cache_|bipneus_cache|pm_cache_|fca_cache)/;
+  // E NÃO GRAVA O SEU CACHE (07/11/2026, o app do celular): o localStorage é um só por origem
+  // (5 MB no telefone), e os painéis abertos no iframe do app o enchiam com os próprios caches
+  // (a DRE inteira, o Scorecard, o balanço); o setItem vira no-op para as mesmas chaves.
+  var CACHE_PAINEL = /^(bi_cache_|bipneus_cache|pm_cache_|fca_cache|sc_|re_|bm_banco_|cc_frota_)/;
   if (MEM) {
     try {
-      var giOrig = Storage.prototype.getItem;
+      var giOrig = Storage.prototype.getItem, siOrig = Storage.prototype.setItem;
       Storage.prototype.getItem = function (k) {
         if (this === window.localStorage && CACHE_PAINEL.test(String(k))) return null;
         return giOrig.call(this, k);
+      };
+      Storage.prototype.setItem = function (k, v) {
+        if (this === window.localStorage && CACHE_PAINEL.test(String(k))) return;
+        return siOrig.call(this, k, v);
       };
     } catch (e) { /* sem Storage: nada a fazer */ }
   }
