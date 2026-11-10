@@ -68,15 +68,6 @@ const ABAS = [
   { chave: 'documentos', reportId: '99029b42-f690-451b-95b1-9fad2c9b670d',
     menu: ['FROTA', '1.1 - DOCUMENTOS'], mapear: true, opcional: true,
     sondaDrill: ['VENCIDOS', 'VENCENDO 30 DIAS', 'DOC. PENDENTE', 'CONFORMES'] },
-  // Os dois drills que a sonda achou (19/10/2026): VENCIDOS e CONFORMES não têm.
-  // Alimentam a visão Documentos do Gestão à Vista. "Detalhes Vencimento" herda
-  // o filtro do card (Prazo Vencimento = Vencendo 30 Dias).
-  { chave: 'documentos-vencimento', reportId: '99029b42-f690-451b-95b1-9fad2c9b670d',
-    menu: ['FROTA', '1.1 - DOCUMENTOS'], opcional: true,
-    drill: { card: 'VENCENDO 30 DIAS', item: 'Detalhes Vencimento' } },
-  { chave: 'documentos-pendentes', reportId: '99029b42-f690-451b-95b1-9fad2c9b670d',
-    menu: ['FROTA', '1.1 - DOCUMENTOS'], opcional: true,
-    drill: { card: 'DOC. PENDENTE', item: 'Detalhes Documentos Pendentes' } },
   // STRESS TEST FROTA → tabela detalhada por placa (a de mais colunas da página).
   // Regra de período: até o dia 10, Mês = mês anterior e Quinzena = Segunda.
   // (Do dia 11 em diante: regra a confirmar com o Renan — por ora fica o padrão da página.)
@@ -174,6 +165,21 @@ const ABAS = [
       return [{ campo: 'Ano', valor: String(h.getFullYear()) },
               { campo: 'Mês', valor: MES_FULL[h.getMonth()] }];
     } },
+  // DOCUMENTOS NO FIM DA FILA (10/11/2026): o Ginfo recalcula os painéis às
+  // 04:00 BRT ("Horários de atualização 04:00"), a mesma hora em que o pg_cron
+  // dispara o robô, e a página 1.1 ainda não tinha desenhado os cards quando
+  // ele chegava, 1 min depois do login — "VENCENDO 30 DIAS" não encontrado
+  // em todo run das 04:00 desde antes de 21/10, e em 10/11 às 10:03 BRT o
+  // mesmo drill trouxe 308 linhas. No fim da fila ele chega ~20 min depois.
+  // Os dois drills que a sonda achou (19/10/2026): VENCIDOS e CONFORMES não têm.
+  // Alimentam a visão Documentos do Gestão à Vista. "Detalhes Vencimento" herda
+  // o filtro do card (Prazo Vencimento = Vencendo 30 Dias).
+  { chave: 'documentos-vencimento', reportId: '99029b42-f690-451b-95b1-9fad2c9b670d',
+    menu: ['FROTA', '1.1 - DOCUMENTOS'], opcional: true,
+    drill: { card: 'VENCENDO 30 DIAS', item: 'Detalhes Vencimento' } },
+  { chave: 'documentos-pendentes', reportId: '99029b42-f690-451b-95b1-9fad2c9b670d',
+    menu: ['FROTA', '1.1 - DOCUMENTOS'], opcional: true,
+    drill: { card: 'DOC. PENDENTE', item: 'Detalhes Documentos Pendentes' } },
 ];
 
 const ART = 'ginfo-artifacts';
