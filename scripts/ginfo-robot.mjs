@@ -388,7 +388,17 @@ async function aplicarSlicer(page, campo, valor) {
     item = await buscarItem();
     for (let t = 0; t < 2 && !item; t++) { await page.waitForTimeout(1500); item = await buscarItem(); }
     if (!item) {                       // dropdown errado: fecha e tenta o próximo
-      if (c + 1 < cands.length) log(`slicer "${campo}": o candidato ${c + 1} não tem "${valor}" — tentando o próximo`);
+      // diagnóstico (11/2026, Blitz/Checklist sem "novembro"): o que ESTE candidato
+      // listou, antes de fechar — sem isso o log só dizia "não tem", não o que tinha
+      const vistos = [];
+      for (const fr of page.frames()) {
+        try {
+          const its = fr.locator('.slicerItemContainer, [role="option"]').filter({ visible: true });
+          const n = Math.min(await its.count(), 25);
+          for (let i = 0; i < n; i++) vistos.push((await its.nth(i).innerText().catch(() => '')).trim().replace(/\s+/g, ' '));
+        } catch (e) {}
+      }
+      log(`slicer "${campo}": o candidato ${c + 1} não tem "${valor}"${c + 1 < cands.length ? ' — tentando o próximo' : ''} · itens vistos: ${JSON.stringify(vistos.filter(Boolean))}`);
       await page.keyboard.press('Escape');
       await page.waitForTimeout(800);
     }
@@ -459,7 +469,21 @@ async function drillThrough(page, cardTexto, itemMenu) {
     }
     if (!lbl) await page.waitForTimeout(5000);
   }
-  if (!lbl) throw new Error(`card "${cardTexto}" não encontrado p/ drill-through`);
+  if (!lbl) {
+    // diagnóstico (11/2026, "VENCENDO 30 DIAS" sumiu): os rótulos curtos em caixa
+    // alta que a página do Power BI está mostrando — é por aqui que se vê se o
+    // card foi renomeado ou se a página nem desenhou
+    const rot = new Set();
+    for (const fr of pbiFrames()) {
+      try {
+        const ts = fr.locator('text=/^[A-ZÀ-Ü0-9][A-ZÀ-Ü0-9 .%\\/-]{2,40}$/').filter({ visible: true });
+        const n = Math.min(await ts.count(), 60);
+        for (let i = 0; i < n; i++) { const t = (await ts.nth(i).innerText().catch(() => '')).trim(); if (t && t === t.toUpperCase()) rot.add(t); }
+      } catch (e) {}
+    }
+    log(`card "${cardTexto}" não encontrado · ${pbiFrames().length} frame(s) do Power BI · rótulos visíveis: ${JSON.stringify([...rot].slice(0, 60))}`);
+    throw new Error(`card "${cardTexto}" não encontrado p/ drill-through`);
+  }
   const buscarItem = () => emFrames(page, async fr => {
     const i = fr.locator(`[role="menuitem"]:has-text("${itemMenu}"), button:has-text("${itemMenu}"), [title*="${itemMenu}"]`).filter({ visible: true }).first();
     return (await i.count()) ? i : null;
