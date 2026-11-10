@@ -406,10 +406,10 @@ async function candidatosSlicer(page, campo) {
    (marcado com data-gem-popup), (2) a lista é rolada até o fim procurando o
    valor, e a caixa de pesquisa do popup, quando existe, é usada antes,
    (3) "aplicado" só depois de o slicer mostrar o valor escolhido.       */
-async function popupSlicer(page) {
+async function popupSlicer(page, perto) {   // perto = {x,y} do dropdown clicado (o popup certo é o mais próximo dele)
   for (const fr of page.frames()) {
     try {
-      const info = await fr.evaluate(() => {
+      const info = await fr.evaluate((perto) => {
         const vis = el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
         document.querySelectorAll('[data-gem-popup]').forEach(e => e.removeAttribute('data-gem-popup'));
         // prioridade: o popup do slicer → o ancestral rolável de "Selecionar tudo"
@@ -419,7 +419,14 @@ async function popupSlicer(page) {
         // sobe no máximo 6 níveis e só aceita caixa baixa (≤ 520 px): subir até o
         // relatório inteiro faria o item ser procurado na página toda de novo
         const rol = e => { let p = e.parentElement; for (let i = 0; p && i < 6; i++, p = p.parentElement) { if (p.scrollHeight > p.clientHeight + 4 && p.getBoundingClientRect().height <= 520) return p; } return null; };
-        let box = [...document.querySelectorAll('.slicer-dropdown-popup')].filter(html)[0] || null;
+        // O PBI mantém UM popup por slicer; só vale o que tem itens desenhados,
+        // e entre vários o mais perto do dropdown que acabou de ser clicado
+        // (o 1º da página podia ser um vazio ou o de outro filtro — Stress Test
+        // de Frota, 10/11/2026: "itens: []" em todos os candidatos)
+        const comItens = e => e.querySelector('.slicerItemContainer, .slicerText, [role="option"]') || /Selecionar tudo|Select all/i.test(e.textContent || '');
+        const dist = e => { if (!perto) return 0; const r = e.getBoundingClientRect(); return Math.hypot(r.x - perto.x, r.y - perto.y); };
+        let box = [...document.querySelectorAll('.slicer-dropdown-popup')].filter(e => html(e) && comItens(e) && getComputedStyle(e).opacity !== '0')
+          .sort((a, b) => dist(a) - dist(b))[0] || null;
         if (!box) {
           const sel = [...document.querySelectorAll('span, div, label')].find(e => html(e) && /^(Selecionar tudo|Select all)$/i.test((e.textContent || '').trim()));
           if (sel) box = rol(sel) || (sel.parentElement && sel.parentElement.parentElement) || sel.parentElement;
@@ -437,7 +444,7 @@ async function popupSlicer(page) {
           .slice(0, 40).map(e => (e.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 30));
         const r = box.getBoundingClientRect();
         return { cls: String(box.className).slice(0, 60), rola: !!rolavel, cx: r.x + r.width / 2, cy: r.y + Math.min(r.height / 2, 120), itens };
-      });
+      }, perto || null);
       if (info) return { fr, info };
     } catch (e) {}
   }
@@ -468,14 +475,16 @@ async function aplicarSlicer(page, campo, valor) {
   };
   let item = null, visto = [];
   for (let c = 0; c < cands.length && !item; c++) {
-    try { await cands[c].click({ timeout: 10000 }); } catch (e) { continue; }
+    let bb = null;
+    try { bb = await cands[c].boundingBox(); await cands[c].click({ timeout: 10000 }); } catch (e) { continue; }
+    const perto = bb ? { x: bb.x, y: bb.y + bb.height } : null;
     await page.waitForTimeout(2500);   // lista do dropdown pode levar um instante a mais p/ renderizar
-    let pop = await popupSlicer(page);
-    for (let t = 0; t < 2 && !pop; t++) { await page.waitForTimeout(1500); pop = await popupSlicer(page); }
+    let pop = await popupSlicer(page, perto);
+    for (let t = 0; t < 4 && !(pop && pop.info.itens.length); t++) { await page.waitForTimeout(1200); pop = await popupSlicer(page, perto); }
     if (pop) {
       visto = pop.info.itens;
       item = await noPopup(pop.fr);
-      const guardaVistos = async () => { const p2 = await popupSlicer(page).catch(() => null); if (p2 && p2.info.itens.length) p2.info.itens.forEach(x => { if (!visto.includes(x)) visto.push(x); }); };
+      const guardaVistos = async () => { const p2 = await popupSlicer(page, perto).catch(() => null); if (p2 && p2.info.itens.length) p2.info.itens.forEach(x => { if (!visto.includes(x)) visto.push(x); }); };
       // caixa de pesquisa do popup, quando o relatório a tem
       if (!item) {
         try {
@@ -498,7 +507,7 @@ async function aplicarSlicer(page, campo, valor) {
         if (fim && r >= 3) break;
       }
       if (!item) {
-        const itens = (await popupSlicer(page).catch(() => null) || pop).info.itens;
+        const itens = (await popupSlicer(page, perto).catch(() => null) || pop).info.itens;
         log(`slicer "${campo}": o candidato ${c + 1} abriu uma lista sem "${valor}" (${pop.info.cls}; itens: ${JSON.stringify(itens.slice(0, 20))})${c + 1 < cands.length ? ' — tentando o próximo' : ''}`);
       }
     } else {
