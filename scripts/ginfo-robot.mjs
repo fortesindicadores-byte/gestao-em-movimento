@@ -397,10 +397,13 @@ async function popupSlicer(page) {
       const info = await fr.evaluate(() => {
         const vis = el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
         document.querySelectorAll('[data-gem-popup]').forEach(e => e.removeAttribute('data-gem-popup'));
-        const cands = [...document.querySelectorAll('.slicer-dropdown-popup, .slicerBody, [role="listbox"]')].filter(vis);
+        // só elemento HTML (um gráfico SVG também tem role="listbox") e que tenha
+        // a lista de verdade dentro: "Selecionar tudo" ou itens do slicer
+        const temLista = e => /Selecionar tudo|Select all/i.test(e.textContent || '') || !!e.querySelector('.slicerItemContainer, [role="option"], .slicerText');
+        const cands = [...document.querySelectorAll('.slicer-dropdown-popup, .slicerBody, [role="listbox"]')].filter(e => e instanceof HTMLElement && vis(e) && temLista(e));
         let box = cands.find(e => e.scrollHeight > e.clientHeight + 4) || cands[0] || null;
         if (!box) {
-          const sel = [...document.querySelectorAll('span, div, label')].find(e => vis(e) && /^(Selecionar tudo|Select all)$/i.test((e.textContent || '').trim()));
+          const sel = [...document.querySelectorAll('span, div, label')].find(e => e instanceof HTMLElement && vis(e) && /^(Selecionar tudo|Select all)$/i.test((e.textContent || '').trim()));
           let p = sel; while (p && !(p.scrollHeight > p.clientHeight + 4)) p = p.parentElement;
           box = p || (sel ? sel.parentElement : null);
         }
