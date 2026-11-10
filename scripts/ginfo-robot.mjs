@@ -412,9 +412,16 @@ async function popupSlicer(page) {
         if (!box) box = [...document.querySelectorAll('.slicerBody')].filter(e => html(e) && e.querySelector('.slicerItemContainer, .slicerText'))[0] || null;
         if (!box) return null;
         box.setAttribute('data-gem-popup', '1');
+        // quem ROLA de verdade é o .slicerBody de dentro (lista virtualizada do
+        // PBI: só o que está na janela + 2 itens existem no DOM); marca ele
+        document.querySelectorAll('[data-gem-rola]').forEach(e => e.removeAttribute('data-gem-rola'));
+        const rolavel = box.scrollHeight > box.clientHeight + 4 ? box
+          : [...box.querySelectorAll('*')].find(e => e instanceof HTMLElement && e.scrollHeight > e.clientHeight + 4 && getComputedStyle(e).overflowY !== 'visible') || null;
+        if (rolavel) rolavel.setAttribute('data-gem-rola', '1');
         const itens = [...box.querySelectorAll('*')].filter(e => vis(e) && !e.children.length && (e.textContent || '').trim())
           .slice(0, 40).map(e => (e.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 30));
-        return { cls: String(box.className).slice(0, 60), rola: box.scrollHeight > box.clientHeight + 4, itens };
+        const r = box.getBoundingClientRect();
+        return { cls: String(box.className).slice(0, 60), rola: !!rolavel, cx: r.x + r.width / 2, cy: r.y + Math.min(r.height / 2, 120), itens };
       });
       if (info) return { fr, info };
     } catch (e) {}
@@ -459,12 +466,18 @@ async function aplicarSlicer(page, campo, valor) {
           if (await busca.count()) { await busca.fill(valor); await page.waitForTimeout(1500); item = await noPopup(pop.fr); }
         } catch (e) {}
       }
-      // lista virtualizada: rola até o fim procurando o item
-      for (let r = 0; r < 14 && !item && pop.info.rola; r++) {
-        const fim = await pop.fr.evaluate(() => { const b = document.querySelector('[data-gem-popup]'); if (!b) return true; const antes = b.scrollTop; b.scrollTop = antes + Math.max(60, b.clientHeight * 0.7); return b.scrollTop === antes; }).catch(() => true);
+      // lista virtualizada: rola até o fim procurando o item (o scrollTop do
+      // elemento rolável; se ele não anda, a roda do mouse sobre o popup)
+      for (let r = 0; r < 16 && !item; r++) {
+        const fim = await pop.fr.evaluate(() => {
+          const b = document.querySelector('[data-gem-rola]') || document.querySelector('[data-gem-popup]'); if (!b) return true;
+          const antes = b.scrollTop; b.scrollTop = antes + Math.max(60, b.clientHeight * 0.6); b.dispatchEvent(new Event('scroll', { bubbles: true }));
+          return b.scrollTop === antes;
+        }).catch(() => true);
+        if (fim) { try { await page.mouse.move(pop.info.cx, pop.info.cy); await page.mouse.wheel(0, 120); } catch (e) {} }
         await page.waitForTimeout(700);
         item = await noPopup(pop.fr);
-        if (fim) break;
+        if (fim && r >= 3) break;
       }
       if (!item) {
         const itens = (await popupSlicer(page).catch(() => null) || pop).info.itens;
