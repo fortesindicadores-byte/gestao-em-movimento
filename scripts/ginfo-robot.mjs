@@ -499,7 +499,22 @@ async function aplicarSlicer(page, campo, valor) {
   }
   await item.click();
   await page.waitForTimeout(1500);
-  await page.keyboard.press('Escape');   // fecha o dropdown
+  // FECHAR O DROPDOWN DE VERDADE (11/2026): com o popup ainda aberto a seleção
+  // fica no slicer (o restatement já diz "novembro") mas não entra no contexto
+  // do relatório — o drill-through saiu com o ano inteiro e o rodapé do export
+  // só com "Ano é 2026". Escape nem sempre chega ao iframe: fecha também
+  // clicando no cabeçalho do próprio slicer e espera o popup sumir.
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(800);
+  const popupAberto = () => emFrames(page, async fr => { const p = fr.locator('.slicer-dropdown-popup').filter({ visible: true }); return (await p.count()) ? true : null; });
+  for (let t = 0; t < 4 && await popupAberto(); t++) {
+    try {
+      const cab = await emFrames(page, async fr => { const h = fr.locator(`.slicer-container:has(.slicer-header-text:text-is("${campo}")) .slicer-header-text`).first(); return (await h.count()) ? h : null; });
+      if (cab) await cab.click({ timeout: 3000 }); else await page.mouse.click(5, 5);
+    } catch (e) {}
+    await page.waitForTimeout(1200);
+  }
+  if (await popupAberto()) log(`slicer "${campo}": o popup continua aberto depois de fechar`);
   await page.waitForTimeout(4000);       // dá tempo dos visuais recarregarem
   // conferência: algum slicer do campo tem de MOSTRAR o valor (senão foi um
   // clique em outro lugar). Em todos os frames, porque as abas anteriores do
