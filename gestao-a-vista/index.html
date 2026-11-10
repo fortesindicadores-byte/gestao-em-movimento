@@ -614,7 +614,7 @@ const VIEWS=[
   // do mês seguinte. O mês fechado fica na Carta de Custos.
   {id:'contrato',g:'i', ic:ICO.contrato, t:'Contrato', s:()=>'Ranking de placas do mês em formação'+(CTR_VIGCOB?' · entra na fatura de '+vigLbl(CTR_VIGCOB):''), r:(el,cod)=>renderContrato(el,cod)},
   // só aparece depois que o robô coletar a primeira vez (a tela nasceria vazia)
-  {id:'blitz',  g:'i', ic:ICO.blitz,  t:'Blitz de Segurança', s:()=>'Placas por dias para vencer · mês corrente'+fx('blitz'), r:(el,cod)=>renderBlitz(el,cod), temDado:()=>(DATA.blitz||[]).length>0},
+  {id:'blitz',  g:'i', ic:ICO.blitz,  t:'Blitz de Segurança', s:()=>'Placas por dias para vencer · '+blzMes()+fx('blitz'), r:(el,cod)=>renderBlitz(el,cod), temDado:()=>(DATA.blitz||[]).length>0},
   // Documentos do Ginfo (1.1 - DOCUMENTOS): os que vencem em até 30 dias e os pendentes
   {id:'docs',   g:'i', ic:ICO.docs,   t:'Documentos', s:()=>'Vencendo em até 30 dias e pendentes de vínculo'+fx('docs'), r:(el,cod)=>renderDocs(el,cod), temDado:()=>(DATA.docs||[]).length+(DATA.docsPend||[]).length>0},
   {id:'fca',    g:'i', ic:ICO.fca,    t:'FCA', s:()=>'Aderência ao prazo, à conclusão e total'+(FCAR?' · '+FCAR.length+' ação(ões)':''), r:(el,cod)=>renderFCAv(el,cod)},
@@ -1166,6 +1166,10 @@ function renderDocs(el,cod){
 }
 // o status da placa é o prazo: vencida = NOK. Sem data não dá para dizer.
 const blzNok=r=>r.dias==null?null:r.dias<0;
+// mês que o leitor escolheu para a blitz (o corrente, ou o último com dado)
+function blzMes(){const m=DATA.fonte&&DATA.fonte.blitz&&DATA.fonte.blitz.mes; if(!m) return 'mês corrente';
+  const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']; const h=new Date(), ymH=h.getFullYear()*100+h.getMonth()+1;
+  return (m===ymH?'mês corrente · ':'')+MES[m%100-1]+'/'+String(Math.floor(m/100)).slice(2)+(m===ymH?'':' (o mês corrente ainda não tem blitz)');}
 function renderBlitz(el,cod){
   const rs=byCod(DATA.blitz,cod);
   if(!rs.length){el.innerHTML='<div class="loading">Sem blitz coletada para o recorte.</div>';return;}

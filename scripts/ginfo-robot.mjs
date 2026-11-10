@@ -134,6 +134,7 @@ const ABAS = [
   { chave: 'checklist-031120', reportId: '76e82774-d5d4-4cda-bb13-65a1a64387ef',
     menu: ['FROTA', '1.3 - ADERÊNCIA FROTA - 031120'],
     drill: { card: 'SAÍDAS COM OS CRÍTICA', item: 'Detalhes Saídas Com OS Crítica' },
+    semMes: 'vazio',             // mês fora da lista do slicer = zero saídas com OS crítica
     slicers: () => {
       const h = new Date();
       const ref = ateTerceiroDiaUtil(h) ? new Date(h.getFullYear(), h.getMonth() - 1, 1) : h;
@@ -156,14 +157,28 @@ const ABAS = [
   // limite" · "gere a blitz daqui"): botão direito no card ADERÊNCIA OK →
   // Drill-through → "Detalhes Aderência". A tabela da página principal
   // (Placa + as cinco contagens) não tem vencimento nenhum.
+  // O MÊS NÃO CHEGA MAIS AO DRILL (10/11/2026): o Ginfo refez o painel
+  // ("DASHBOARD BLITZ DE SEGURANÇA") e o "Detalhes Aderência" passou a herdar
+  // só o Ano — com Mês = novembro aplicado e conferido no slicer, o export
+  // vinha com o ano inteiro e o rodapé "Ano é 2026 | ds_empresa é CONLOG".
+  // Então o robô aplica só o Ano, exporta o ano e guarda as linhas do mês
+  // corrente e do anterior pela coluna Período (serial do xlsx, 1º dia do
+  // mês); quem escolhe o mês é o leitor do Gestão à Vista (o corrente, ou o
+  // anterior enquanto o corrente não tem blitz).
   { chave: 'blitz-seguranca', menu: ['SEGURANÇA', 'BLITZ DE SEGURANÇA'],
     drill: { card: 'ADERÊNCIA OK', item: 'Detalhes Aderência' },
-    slicersAntes: true,          // Ano e Mês ficam na página principal
+    slicersAntes: true,          // o Ano fica na página principal
     opcional: true,
-    slicers: () => {
-      const h = new Date();
-      return [{ campo: 'Ano', valor: String(h.getFullYear()) },
-              { campo: 'Mês', valor: MES_FULL[h.getMonth()] }];
+    slicers: () => [{ campo: 'Ano', valor: String(new Date().getFullYear()) }],
+    filtra: linhas => {
+      const h = new Date(), ym = d => d.getFullYear() * 100 + d.getMonth() + 1;
+      const quer = new Set([ym(h), ym(new Date(h.getFullYear(), h.getMonth() - 1, 1))]);
+      const mesDe = v => { if (v == null || v === '') return null; if (typeof v === 'number') { const d = new Date(Date.UTC(1899, 11, 30) + v * 864e5); return d.getUTCFullYear() * 100 + d.getUTCMonth() + 1; }
+        const m = String(v).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/) || String(v).match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (!m) return null; return m[3] && m[3].length === 4 ? +m[3] * 100 + +m[2] : +m[1] * 100 + +m[2]; };
+      const porMes = {}; linhas.forEach(l => { const k = mesDe(l['Período']); porMes[k] = (porMes[k] || 0) + 1; });
+      log('blitz · linhas por Período (AAAAMM):', JSON.stringify(porMes), '· guardando', [...quer].join(' e '));
+      return linhas.filter(l => quer.has(mesDe(l['Período'])));
     } },
   // DOCUMENTOS NO FIM DA FILA (10/11/2026): o Ginfo recalcula os painéis às
   // 04:00 BRT ("Horários de atualização 04:00"), a mesma hora em que o pg_cron
@@ -439,6 +454,7 @@ async function slicerMostra(page, campo) {   // o que os slicers do campo estão
   }
   return out.length ? out : null;   // null = relatório sem esse desenho de slicer (sem conferência)
 }
+let ULT_ITENS = [];   // itens que o último slicer listou (diagnóstico e a regra do mês ausente)
 async function aplicarSlicer(page, campo, valor) {
   // o slicer também pode demorar a aparecer com o portal lento (Blitz, 05/10:
   // "slicer Ano não encontrado" e, na tentativa seguinte, aplicado) — espera
@@ -459,6 +475,7 @@ async function aplicarSlicer(page, campo, valor) {
     if (pop) {
       visto = pop.info.itens;
       item = await noPopup(pop.fr);
+      const guardaVistos = async () => { const p2 = await popupSlicer(page).catch(() => null); if (p2 && p2.info.itens.length) p2.info.itens.forEach(x => { if (!visto.includes(x)) visto.push(x); }); };
       // caixa de pesquisa do popup, quando o relatório a tem
       if (!item) {
         try {
@@ -477,6 +494,7 @@ async function aplicarSlicer(page, campo, valor) {
         if (fim) { try { await page.mouse.move(pop.info.cx, pop.info.cy); await page.mouse.wheel(0, 120); } catch (e) {} }
         await page.waitForTimeout(700);
         item = await noPopup(pop.fr);
+        await guardaVistos();
         if (fim && r >= 3) break;
       }
       if (!item) {
@@ -492,6 +510,7 @@ async function aplicarSlicer(page, campo, valor) {
       await page.waitForTimeout(800);
     }
   }
+  ULT_ITENS = visto.slice();
   if (!item) {
     log(`item "${valor}" do slicer "${campo}" não encontrado em ${cands.length} candidato(s) — itens vistos: ${JSON.stringify(visto.slice(0, 20))}`);
     await page.keyboard.press('Escape');
@@ -668,6 +687,16 @@ async function exportarVisual(page, aba) {
       }
       const ok = await aplicarSlicer(page, s.campo, s.valor);
       await shot(page, '11-' + aba.chave + '-' + s.campo.toLowerCase().replace(/[^a-z0-9]+/gi, '-'));
+      // MÊS QUE NÃO ESTÁ NA LISTA = MÊS SEM LINHA (10/11/2026): o slicer Mês da
+      // página de detalhe do Checklist só lista os meses que têm saída com OS
+      // crítica; em novembro, sem nenhuma, "novembro" não existe e o robô
+      // abortava todo dia (e o Farol ficava com outubro). Com `semMes:'vazio'`,
+      // se a lista abriu e tem outros meses (prova de que o dropdown desenhou)
+      // mas não o pedido, o mês vale ZERO linhas e o snapshot é gravado vazio.
+      if (!ok && aba.semMes === 'vazio' && /^m[eê]s$/i.test(s.campo) && ULT_ITENS.some(x => MES_FULL.includes(String(x).trim().toLowerCase()))) {
+        log(`${aba.chave}: "${s.valor}" não está na lista do Mês (${JSON.stringify(ULT_ITENS.filter(x => MES_FULL.includes(String(x).trim().toLowerCase())))}) — o mês não tem linhas: snapshot vazio`);
+        const e = new Error('mês sem linhas'); e.vazio = true; throw e;
+      }
       // slicer não aplicado = a tela ficou no filtro errado (ou sem filtro nenhum);
       // aborta em vez de exportar/gravar um snapshot incompleto por cima do bom.
       if (!ok) throw new Error(`slicer "${s.campo}"="${s.valor}" não aplicado em ${aba.chave} — abortando p/ não gravar dado incompleto`);
@@ -994,9 +1023,12 @@ async function main() {
       for (let tent = 1; tent <= TENT; tent++) {
         try {
           if (/\/login/i.test(page.url())) { log('sessão caiu — refazendo o login'); await login(page); }
-          const arq = await exportarVisual(page, aba);
-          const linhas = await xlsxParaLinhas(arq);
+          let arq;
+          try { arq = await exportarVisual(page, aba); }
+          catch (e) { if (!e.vazio) throw e; if (DRY) resumo(aba.chave, []); await gravarSupabase(aba.chave, []); break; }
+          let linhas = await xlsxParaLinhas(arq);
           log('colunas de', aba.chave + ':', JSON.stringify(Object.keys(linhas[0] || {})));
+          if (typeof aba.filtra === 'function') { const n = linhas.length; linhas = aba.filtra(linhas); log(`${aba.chave}: ${n} → ${linhas.length} linha(s) depois do filtro da aba`); }
           if (DRY) resumo(aba.chave, linhas);
           await gravarSupabase(aba.chave, linhas);
           // o dado fica SÓ no banco: apaga o arquivo baixado (sem service key,

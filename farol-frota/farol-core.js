@@ -238,7 +238,18 @@ async function farolLoad(opts){
      (Realizado Dentro Prazo + No Prazo) ÷ total, a mesma régua da tela. */
   if(G['blitz-seguranca']){
     const B={};
-    G['blitz-seguranca'].data.forEach(o=>{
+    /* O MÊS É ESCOLHIDO AQUI (10/11/2026): o painel novo do Ginfo não passa o
+       Mês ao drill, então o robô exporta o ano e guarda as linhas do mês
+       corrente e do anterior (coluna Período = 1º dia do mês, serial do xlsx).
+       Vale o mês corrente; enquanto ele não tem blitz nenhuma (virada do mês),
+       o último mês com linhas. O mês usado fica em DATA.fonte.blitz.mes. */
+    const ymDe=o=>{const v=o['Período'],d=parseFlex(v);if(!d)return null;
+      return typeof v==='number'?d.getUTCFullYear()*100+d.getUTCMonth()+1:d.getFullYear()*100+d.getMonth()+1;};
+    const hoje0=new Date(), ymHoje=hoje0.getFullYear()*100+hoje0.getMonth()+1;
+    const meses=[...new Set(G['blitz-seguranca'].data.map(ymDe).filter(Boolean))].sort((a,b)=>b-a);
+    const ymUso=meses.includes(ymHoje)?ymHoje:(meses[0]||null);
+    const linhasBlitz=ymUso?G['blitz-seguranca'].data.filter(o=>ymDe(o)===ymUso):G['blitz-seguranca'].data;
+    linhasBlitz.forEach(o=>{
       const placa=String(o['Placa']||'').trim(); if(!placa) return;
       const fil=String(o['Filial']||'').trim(), tipo=String(o['Tipo']||'').trim();
       const k=_n(placa);
@@ -263,7 +274,7 @@ async function farolLoad(opts){
       ad:a.tot?(a.dentro+a.prazo)/a.tot*100:null,
       dias:a.lim?Math.round((a.lim-hoje)/864e5):null}));
     const gb=G['blitz-seguranca'];
-    DATA.fonte.blitz={src:'ginfo',att:gb.updated_at?new Date(gb.updated_at):null};
+    DATA.fonte.blitz={src:'ginfo',att:gb.updated_at?new Date(gb.updated_at):null,mes:ymUso,meses};
   }
   // ── DOCUMENTOS (Ginfo → FROTA → 1.1 - DOCUMENTOS, 19/10/2026) ──
   /* Dois drills da página: "Detalhes Vencimento" (card VENCENDO 30 DIAS; o
@@ -340,7 +351,11 @@ async function loadChecklist(){
   DATA.chk=null;
   let sb;try{sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);}catch(e){return;}
   const {data:row}=await sb.from('ginfo_snapshot').select('data,updated_at').eq('chave','checklist-031120').maybeSingle();
-  if(!row||!Array.isArray(row.data)||!row.data.length)return;
+  if(!row||!Array.isArray(row.data))return;
+  // SNAPSHOT VAZIO É COLETA, NÃO FALTA DE COLETA (10/11/2026): o robô grava []
+  // quando o mês não está na lista do Mês do Ginfo (= nenhuma saída com OS
+  // crítica no mês). Zero linha vale como 0 saídas (100%), não "aguardando".
+  if(!row.data.length){DATA.chk=[];DATA.chkAtt=row.updated_at?new Date(row.updated_at):null;return;}
   // acha a chave do JSON pelo nome normalizado (exato → depois "contém")
   const kDe=(o,...names)=>{const ks=Object.keys(o),N=ks.map(_n);for(const nm of names){const i=N.indexOf(_n(nm));if(i>=0)return ks[i];}for(const nm of names){const t=_n(nm);const i=N.findIndex(k=>k.includes(t));if(i>=0)return ks[i];}return null;};
   // datas do xlsx: serial do Excel (número) ou string "M/D/YYYY h:mm:ss AM" (export PBI)
