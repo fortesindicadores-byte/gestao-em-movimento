@@ -25,10 +25,23 @@ on:
         required: false
         default: false
         type: boolean
+      publicar:
+        description: "conferência: publica os prints CIFRADOS no branch tmp-ginfo-prints (o download do artifact não passa pelo proxy da sessão)"
+        required: false
+        default: false
+        type: boolean
+      so_apagar:
+        description: "só apaga o branch temporário tmp-ginfo-prints"
+        required: false
+        default: false
+        type: boolean
   # todo dia às 7:00 BRT (10:00 UTC) — baixa as 7 abas e atualiza o Supabase.
   # (só roda a partir da branch main — agendamento do GitHub é sempre na default)
   schedule:
     - cron: '0 10 * * *'
+
+permissions:
+  contents: write   # só para o branch temporário dos prints cifrados (publicar / so_apagar)
 
 concurrency:
   # UMA CONTA SÓ NO GINFO: elite-robot, ginfo-robot e conf-detalhe entram no
@@ -54,7 +67,11 @@ jobs:
           npm init -y >/dev/null 2>&1
           npm i --no-audit --no-fund playwright xlsx
           npx playwright install --with-deps chromium
+      - name: Apagar o branch temporário dos prints
+        if: ${{ github.event.inputs.so_apagar == 'true' }}
+        run: git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete tmp-ginfo-prints || echo "branch já não existia"
       - name: Rodar robô
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
         run: node scripts/ginfo-robot.mjs
         env:
           # dispatch manual usa o modo escolhido; o cron diário roda em 'run'
@@ -85,3 +102,26 @@ jobs:
           path: ginfo-artifacts/
           if-no-files-found: ignore
           retention-days: 7
+      # Os prints têm placas e nomes, e o repositório é público: vão CIFRADOS
+      # (AES-256 + a chave em RSA-OAEP com scripts/analise-dump.pub.pem, o
+      # desenho do Analise Dump e do App Check) num branch órfão temporário.
+      # Apagar com so_apagar=true depois de ler.
+      - name: Cifrar e publicar os prints no branch temporário
+        if: ${{ always() && github.event.inputs.publicar == 'true' && github.event.inputs.so_apagar != 'true' }}
+        run: |
+          set -e
+          rm -rf /tmp/pub && mkdir -p /tmp/pub
+          cd "$GITHUB_WORKSPACE/ginfo-artifacts"
+          tar -cf /tmp/prints.tar --ignore-failed-read *.png
+          openssl rand -out /tmp/k.bin 32
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in /tmp/prints.tar -out /tmp/prints.tar.enc -pass file:/tmp/k.bin
+          openssl pkeyutl -encrypt -pubin -inkey "$GITHUB_WORKSPACE/scripts/analise-dump.pub.pem" \
+            -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in /tmp/k.bin -out /tmp/pub/chave.enc
+          rm -f /tmp/k.bin /tmp/prints.tar
+          cd /tmp/pub
+          split -b 90m -d -a 2 /tmp/prints.tar.enc prints.enc.
+          ls -la
+          git init -q -b tmp-ginfo-prints
+          git config user.email "actions@github.com" && git config user.name "github-actions"
+          git add . && git commit -qm "prints do Ginfo cifrados (temporário, apagar depois de ler)"
+          git push -f -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" tmp-ginfo-prints
