@@ -397,16 +397,19 @@ async function popupSlicer(page) {
       const info = await fr.evaluate(() => {
         const vis = el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
         document.querySelectorAll('[data-gem-popup]').forEach(e => e.removeAttribute('data-gem-popup'));
-        // só elemento HTML (um gráfico SVG também tem role="listbox") e que tenha
-        // a lista de verdade dentro: "Selecionar tudo" ou itens do slicer
-        const temLista = e => /Selecionar tudo|Select all/i.test(e.textContent || '') || !!e.querySelector('.slicerItemContainer, [role="option"], .slicerText');
-        const cands = [...document.querySelectorAll('.slicer-dropdown-popup, .slicerBody, [role="listbox"]')].filter(e => e instanceof HTMLElement && vis(e) && temLista(e));
-        let box = cands.find(e => e.scrollHeight > e.clientHeight + 4) || cands[0] || null;
+        // prioridade: o popup do slicer → o ancestral rolável de "Selecionar tudo"
+        // → .slicerBody com itens. Nunca um listbox genérico: a legenda do
+        // gráfico da Blitz tem role="listbox" e itens role="option" (Aderência OK…)
+        const html = e => e instanceof HTMLElement && vis(e);
+        // sobe no máximo 6 níveis e só aceita caixa baixa (≤ 520 px): subir até o
+        // relatório inteiro faria o item ser procurado na página toda de novo
+        const rol = e => { let p = e.parentElement; for (let i = 0; p && i < 6; i++, p = p.parentElement) { if (p.scrollHeight > p.clientHeight + 4 && p.getBoundingClientRect().height <= 520) return p; } return null; };
+        let box = [...document.querySelectorAll('.slicer-dropdown-popup')].filter(html)[0] || null;
         if (!box) {
-          const sel = [...document.querySelectorAll('span, div, label')].find(e => e instanceof HTMLElement && vis(e) && /^(Selecionar tudo|Select all)$/i.test((e.textContent || '').trim()));
-          let p = sel; while (p && !(p.scrollHeight > p.clientHeight + 4)) p = p.parentElement;
-          box = p || (sel ? sel.parentElement : null);
+          const sel = [...document.querySelectorAll('span, div, label')].find(e => html(e) && /^(Selecionar tudo|Select all)$/i.test((e.textContent || '').trim()));
+          if (sel) box = rol(sel) || (sel.parentElement && sel.parentElement.parentElement) || sel.parentElement;
         }
+        if (!box) box = [...document.querySelectorAll('.slicerBody')].filter(e => html(e) && e.querySelector('.slicerItemContainer, .slicerText'))[0] || null;
         if (!box) return null;
         box.setAttribute('data-gem-popup', '1');
         const itens = [...box.querySelectorAll('*')].filter(e => vis(e) && !e.children.length && (e.textContent || '').trim())
