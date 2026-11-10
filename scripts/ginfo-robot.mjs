@@ -360,6 +360,11 @@ async function candidatosSlicer(page, campo) {
   const out = [];
   for (const fr of page.frames()) {
     try {
+      // 1º o dropdown do PRÓPRIO slicer, pelo cabeçalho dele (.slicer-header-text):
+      // ":below(:text(campo))" pegava o vizinho (na Blitz, o "Ano" abria o Função)
+      const dono = fr.locator(`.slicer-container:has(.slicer-header-text:text-is("${campo}")) .slicer-dropdown-menu`);
+      const d = Math.min(await dono.count(), 2);
+      for (let i = 0; i < d; i++) out.push(dono.nth(i));
       const perto = fr.locator(`.slicer-dropdown-menu:below(:text("${campo}"))`);
       const n = Math.min(await perto.count(), 4);
       for (let i = 0; i < n; i++) out.push(perto.nth(i));
@@ -370,6 +375,51 @@ async function candidatosSlicer(page, campo) {
   }
   return out;
 }
+/* O POPUP DO SLICER É UMA LISTA VIRTUALIZADA (bug real, 11/2026): o dropdown
+   Mês da Blitz abria mostrando janeiro…agosto e "novembro" só existia no DOM
+   depois de rolar — o robô concluía "não tem" e abortava todo dia desde 01/11
+   (o Checklist idem a partir do 3º dia útil). E a busca do item era global
+   (span:text-is), então o "2026" do Ano casava com um rótulo de outro visual,
+   o clique cross-filtrava o relatório e o log dizia "aplicado" com o slicer
+   ainda em "Todos". Agora: (1) o item é procurado SÓ dentro do popup aberto
+   (marcado com data-gem-popup), (2) a lista é rolada até o fim procurando o
+   valor, e a caixa de pesquisa do popup, quando existe, é usada antes,
+   (3) "aplicado" só depois de o slicer mostrar o valor escolhido.       */
+async function popupSlicer(page) {
+  for (const fr of page.frames()) {
+    try {
+      const info = await fr.evaluate(() => {
+        const vis = el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
+        document.querySelectorAll('[data-gem-popup]').forEach(e => e.removeAttribute('data-gem-popup'));
+        const cands = [...document.querySelectorAll('.slicer-dropdown-popup, .slicerBody, [role="listbox"]')].filter(vis);
+        let box = cands.find(e => e.scrollHeight > e.clientHeight + 4) || cands[0] || null;
+        if (!box) {
+          const sel = [...document.querySelectorAll('span, div, label')].find(e => vis(e) && /^(Selecionar tudo|Select all)$/i.test((e.textContent || '').trim()));
+          let p = sel; while (p && !(p.scrollHeight > p.clientHeight + 4)) p = p.parentElement;
+          box = p || (sel ? sel.parentElement : null);
+        }
+        if (!box) return null;
+        box.setAttribute('data-gem-popup', '1');
+        const itens = [...box.querySelectorAll('*')].filter(e => vis(e) && !e.children.length && (e.textContent || '').trim())
+          .slice(0, 40).map(e => (e.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 30));
+        return { cls: String(box.className).slice(0, 60), rola: box.scrollHeight > box.clientHeight + 4, itens };
+      });
+      if (info) return { fr, info };
+    } catch (e) {}
+  }
+  return null;
+}
+async function slicerMostra(page, campo) {   // o que os slicers do campo estão mostrando (restatement), em todos os frames
+  const out = [];
+  for (const fr of page.frames()) {
+    try {
+      const r = fr.locator(`.slicer-container:has(.slicer-header-text:text-is("${campo}")) .slicer-restatement`);
+      const n = Math.min(await r.count(), 4);
+      for (let i = 0; i < n; i++) out.push((await r.nth(i).innerText().catch(() => '')).trim());
+    } catch (e) {}
+  }
+  return out.length ? out : null;   // null = relatório sem esse desenho de slicer (sem conferência)
+}
 async function aplicarSlicer(page, campo, valor) {
   // o slicer também pode demorar a aparecer com o portal lento (Blitz, 05/10:
   // "slicer Ano não encontrado" e, na tentativa seguinte, aplicado) — espera
@@ -377,58 +427,48 @@ async function aplicarSlicer(page, campo, valor) {
   let cands = await candidatosSlicer(page, campo);
   for (let t = 0; t < 12 && !cands.length; t++) { await page.waitForTimeout(5000); cands = await candidatosSlicer(page, campo); }
   if (!cands.length) { log(`slicer "${campo}" não encontrado`); return false; }
-  const buscarItem = () => emFrames(page, async fr => {
-    const i = fr.locator(`.slicerItemContainer:has-text("${valor}"), [role="option"]:has-text("${valor}"), .slicerText:text-is("${valor}"), span:text-is("${valor}")`).first();
+  const noPopup = async (fr) => {
+    const i = fr.locator(`[data-gem-popup] .slicerItemContainer:has-text("${valor}"), [data-gem-popup] [role="option"]:has-text("${valor}"), [data-gem-popup] :text-is("${valor}")`).filter({ visible: true }).first();
     return (await i.count()) ? i : null;
-  });
-  let item = null;
+  };
+  let item = null, visto = [];
   for (let c = 0; c < cands.length && !item; c++) {
     try { await cands[c].click({ timeout: 10000 }); } catch (e) { continue; }
     await page.waitForTimeout(2500);   // lista do dropdown pode levar um instante a mais p/ renderizar
-    item = await buscarItem();
-    for (let t = 0; t < 2 && !item; t++) { await page.waitForTimeout(1500); item = await buscarItem(); }
-    if (!item) {                       // dropdown errado: fecha e tenta o próximo
-      // diagnóstico (11/2026, Blitz/Checklist sem "novembro"): o que ESTE candidato
-      // listou, antes de fechar — sem isso o log só dizia "não tem", não o que tinha
-      const vistos = [], dom = [];
-      for (const fr of page.frames()) {
+    let pop = await popupSlicer(page);
+    for (let t = 0; t < 2 && !pop; t++) { await page.waitForTimeout(1500); pop = await popupSlicer(page); }
+    if (pop) {
+      visto = pop.info.itens;
+      item = await noPopup(pop.fr);
+      // caixa de pesquisa do popup, quando o relatório a tem
+      if (!item) {
         try {
-          const its = fr.locator('.slicerItemContainer, [role="option"]').filter({ visible: true });
-          const n = Math.min(await its.count(), 25);
-          for (let i = 0; i < n; i++) vistos.push((await its.nth(i).innerText().catch(() => '')).trim().replace(/\s+/g, ' '));
-          // o que o DOM do Power BI mostra de "slicer"/lista (tag, role, classe, texto) —
-          // se o PBI trocou o visual do slicer, é aqui que a classe nova aparece
-          const resumo = await fr.evaluate(() => {
-            const vis = el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
-            const out = [];
-            for (const el of document.querySelectorAll('[class*="slicer" i], [class*="dropdown" i], [role="listbox"], [role="option"], [role="checkbox"], [role="combobox"]')) {
-              if (!vis(el)) continue;
-              const t = (el.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 40);
-              out.push(`${el.tagName.toLowerCase()}${el.getAttribute('role') ? '[' + el.getAttribute('role') + ']' : ''}.${String(el.className).trim().split(/\s+/).slice(0, 3).join('.')}${t ? '="' + t + '"' : ''}`);
-              if (out.length >= 40) break;
-            }
-            return out;
-          }).catch(() => []);
-          dom.push(...resumo);
+          const busca = pop.fr.locator('[data-gem-popup] input, .slicer-dropdown-popup input.searchInput, input.searchInput').filter({ visible: true }).first();
+          if (await busca.count()) { await busca.fill(valor); await page.waitForTimeout(1500); item = await noPopup(pop.fr); }
         } catch (e) {}
       }
+      // lista virtualizada: rola até o fim procurando o item
+      for (let r = 0; r < 14 && !item && pop.info.rola; r++) {
+        const fim = await pop.fr.evaluate(() => { const b = document.querySelector('[data-gem-popup]'); if (!b) return true; const antes = b.scrollTop; b.scrollTop = antes + Math.max(60, b.clientHeight * 0.7); return b.scrollTop === antes; }).catch(() => true);
+        await page.waitForTimeout(700);
+        item = await noPopup(pop.fr);
+        if (fim) break;
+      }
+      if (!item) {
+        const itens = (await popupSlicer(page).catch(() => null) || pop).info.itens;
+        log(`slicer "${campo}": o candidato ${c + 1} abriu uma lista sem "${valor}" (${pop.info.cls}; itens: ${JSON.stringify(itens.slice(0, 20))})${c + 1 < cands.length ? ' — tentando o próximo' : ''}`);
+      }
+    } else {
+      log(`slicer "${campo}": o candidato ${c + 1} não abriu lista nenhuma${c + 1 < cands.length ? ' — tentando o próximo' : ''}`);
+    }
+    if (!item) {
       if (DRY) await shot(page, `12-slicer-${campo.toLowerCase().replace(/[^a-z0-9]+/gi, '-')}-cand${c + 1}`);
-      log(`slicer "${campo}": o candidato ${c + 1} não tem "${valor}"${c + 1 < cands.length ? ' — tentando o próximo' : ''} · itens vistos: ${JSON.stringify(vistos.filter(Boolean))} · DOM: ${JSON.stringify(dom.slice(0, 40))}`);
       await page.keyboard.press('Escape');
       await page.waitForTimeout(800);
     }
   }
   if (!item) {
-    // diagnóstico: quais itens o dropdown realmente tem (fica no log do Actions)
-    const textos = [];
-    for (const fr of page.frames()) {
-      try {
-        const its = fr.locator('.slicerItemContainer, [role="option"]').filter({ visible: true });
-        const n = Math.min(await its.count(), 20);
-        for (let i = 0; i < n; i++) textos.push((await its.nth(i).innerText().catch(() => '')).trim().replace(/\s+/g, ' '));
-      } catch (e) {}
-    }
-    log(`item "${valor}" do slicer "${campo}" não encontrado em ${cands.length} candidato(s) — itens disponíveis:`, JSON.stringify(textos.filter(Boolean)));
+    log(`item "${valor}" do slicer "${campo}" não encontrado em ${cands.length} candidato(s) — itens vistos: ${JSON.stringify(visto.slice(0, 20))}`);
     await page.keyboard.press('Escape');
     return false;
   }
@@ -436,7 +476,17 @@ async function aplicarSlicer(page, campo, valor) {
   await page.waitForTimeout(1500);
   await page.keyboard.press('Escape');   // fecha o dropdown
   await page.waitForTimeout(4000);       // dá tempo dos visuais recarregarem
-  log(`slicer "${campo}" = "${valor}" aplicado`);
+  // conferência: algum slicer do campo tem de MOSTRAR o valor (senão foi um
+  // clique em outro lugar). Em todos os frames, porque as abas anteriores do
+  // portal ficam vivas no DOM com os slicers delas.
+  const bate = m => m !== null && m.some(t => t.toLowerCase().includes(valor.toLowerCase()));
+  let mostra = await slicerMostra(page, campo);
+  for (let t = 0; t < 3 && mostra !== null && !bate(mostra); t++) { await page.waitForTimeout(2000); mostra = await slicerMostra(page, campo); }
+  if (mostra !== null && !bate(mostra)) {
+    log(`slicer "${campo}": cliquei em "${valor}" mas o slicer mostra ${JSON.stringify(mostra)} — NÃO aplicado`);
+    return false;
+  }
+  log(`slicer "${campo}" = "${valor}" aplicado${mostra !== null ? ` (mostra ${JSON.stringify(mostra)})` : ''}`);
   return true;
 }
 
