@@ -390,15 +390,30 @@ async function aplicarSlicer(page, campo, valor) {
     if (!item) {                       // dropdown errado: fecha e tenta o próximo
       // diagnóstico (11/2026, Blitz/Checklist sem "novembro"): o que ESTE candidato
       // listou, antes de fechar — sem isso o log só dizia "não tem", não o que tinha
-      const vistos = [];
+      const vistos = [], dom = [];
       for (const fr of page.frames()) {
         try {
           const its = fr.locator('.slicerItemContainer, [role="option"]').filter({ visible: true });
           const n = Math.min(await its.count(), 25);
           for (let i = 0; i < n; i++) vistos.push((await its.nth(i).innerText().catch(() => '')).trim().replace(/\s+/g, ' '));
+          // o que o DOM do Power BI mostra de "slicer"/lista (tag, role, classe, texto) —
+          // se o PBI trocou o visual do slicer, é aqui que a classe nova aparece
+          const resumo = await fr.evaluate(() => {
+            const vis = el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
+            const out = [];
+            for (const el of document.querySelectorAll('[class*="slicer" i], [class*="dropdown" i], [role="listbox"], [role="option"], [role="checkbox"], [role="combobox"]')) {
+              if (!vis(el)) continue;
+              const t = (el.innerText || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+              out.push(`${el.tagName.toLowerCase()}${el.getAttribute('role') ? '[' + el.getAttribute('role') + ']' : ''}.${String(el.className).trim().split(/\s+/).slice(0, 3).join('.')}${t ? '="' + t + '"' : ''}`);
+              if (out.length >= 40) break;
+            }
+            return out;
+          }).catch(() => []);
+          dom.push(...resumo);
         } catch (e) {}
       }
-      log(`slicer "${campo}": o candidato ${c + 1} não tem "${valor}"${c + 1 < cands.length ? ' — tentando o próximo' : ''} · itens vistos: ${JSON.stringify(vistos.filter(Boolean))}`);
+      if (DRY) await shot(page, `12-slicer-${campo.toLowerCase().replace(/[^a-z0-9]+/gi, '-')}-cand${c + 1}`);
+      log(`slicer "${campo}": o candidato ${c + 1} não tem "${valor}"${c + 1 < cands.length ? ' — tentando o próximo' : ''} · itens vistos: ${JSON.stringify(vistos.filter(Boolean))} · DOM: ${JSON.stringify(dom.slice(0, 40))}`);
       await page.keyboard.press('Escape');
       await page.waitForTimeout(800);
     }
