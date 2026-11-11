@@ -668,7 +668,19 @@ async function exportarVisual(page, aba) {
   // TIMED_OUT desde 20/08) — a navegação é SEMPRE pelo menu.
   const INICIO = 'https://bi.ginfo.app.br/bi/inicio';
   log('abrindo aba', aba.chave, '(menu:', (aba.menu || []).join(' → ') + ')');
-  if (!/\/bi\/inicio/.test(page.url())) {
+  /* A ABA DO PORTAL FICA PRESA NA PÁGINA DE DRILL (bug real, 11/11/2026): o
+     portal mantém cada relatório numa aba viva, e clicar o MESMO item do menu
+     de novo só foca a aba que já existe. A aba `ativos` abre o 1.1 DOCUMENTOS
+     e o deixa em "Detalhes Veículos"; horas depois `documentos-vencimento`
+     clicava "1.1 - DOCUMENTOS", caía nessa mesma aba parada no drill (rótulos
+     visíveis: TOTAL VEÍCULOS, IDADE MÉDIA e a tabela de placas) e "VENCENDO 30
+     DIAS" não estava lá. Só passava nas rodadas em que a sessão tinha caído
+     antes, porque o login refazia as abas. Com algum iframe do Power BI já
+     aberto, recarrega o portal: o SPA nasce sem aba nenhuma, e de quebra os
+     9 iframes acumulados da rodada vão embora. */
+  const pbiAbertos = page.frames().filter(f => /app\.powerbi\.com\/reportEmbed/.test(f.url())).length;
+  if (!/\/bi\/inicio/.test(page.url()) || pbiAbertos) {
+    if (pbiAbertos) log(`recarregando o portal para fechar ${pbiAbertos} aba(s) de relatório aberta(s)`);
     await page.goto(INICIO, { waitUntil: 'domcontentloaded', timeout: 90000 });
     await page.waitForTimeout(8000);
   }
