@@ -36,7 +36,7 @@ jobs:
         with: { node-version: '22' }
       - name: Apagar o branch temporário
         if: ${{ github.event.inputs.so_apagar == 'true' }}
-        run: git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete tmp-book-dump || echo "branch já não existia"
+        run: git init -q _apaga && git -C _apaga push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete tmp-book-dump || echo "branch já não existia"
       - name: Instalar Playwright e leitores de anexo
         if: ${{ github.event.inputs.so_apagar != 'true' }}
         run: npm i -D playwright@1.47.2 xlsx@0.18.5 pdf-parse@1.1.1 mammoth@1.8.0 && npx playwright install --with-deps chromium

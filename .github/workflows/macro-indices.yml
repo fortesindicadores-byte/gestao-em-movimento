@@ -25,7 +25,7 @@ jobs:
         with: { node-version: '22' }
       - name: Apagar o branch temporário
         if: ${{ github.event.inputs.so_apagar == 'true' }}
-        run: git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete tmp-macro || echo "branch já não existia"
+        run: git init -q _apaga && git -C _apaga push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete tmp-macro || echo "branch já não existia"
       - name: Ler o SGS
         if: ${{ github.event.inputs.so_apagar != 'true' }}
         env:

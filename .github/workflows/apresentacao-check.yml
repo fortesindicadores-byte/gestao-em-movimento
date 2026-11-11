@@ -38,7 +38,7 @@ jobs:
     steps:
       - name: Apagar o branch temporário
         if: ${{ github.event.inputs.so_apagar == 'true' }}
-        run: git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete tmp-apres-pdf || echo "branch já não existia"
+        run: git init -q _apaga && git -C _apaga push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete tmp-apres-pdf || echo "branch já não existia"
       - uses: actions/checkout@v4
         if: ${{ github.event.inputs.so_apagar != 'true' }}
       - uses: actions/setup-node@v4
