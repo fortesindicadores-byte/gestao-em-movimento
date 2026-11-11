@@ -575,7 +575,36 @@ async function clicarMenu(page, secao, item) {
     }
     try { await page.getByText(secao, { exact: true }).first().click({ timeout: 8000 }); await page.waitForTimeout(1200); } catch (e) { log('seção', secao, 'não clicável (talvez já aberta)'); }
   }
-  await itemLoc().click({ timeout: 15000 });
+  try {
+    await itemLoc().click({ timeout: 15000 });
+  } catch (e) {
+    // DIAGNÓSTICO (11/11/2026): depois do reload do portal, "1.1 - DOCUMENTOS"
+    // deu Timeout no clique em todas as tentativas, enquanto 1.3, STRESS TEST e
+    // SEGURANÇA abriram normalmente pelo mesmo caminho. Antes de chutar, o log
+    // diz o que o texto do item casou (quantos, visíveis, onde) e como está a
+    // seção; depois tenta de novo com a seção aberta/fechada.
+    const todos = page.getByText(item, { exact: false });
+    const n = await todos.count().catch(() => 0);
+    const det = [];
+    for (let i = 0; i < Math.min(n, 6); i++) {
+      const el = todos.nth(i);
+      const box = await el.boundingBox().catch(() => null);
+      det.push({ vis: await el.isVisible().catch(() => false), tag: await el.evaluate(x => x.tagName + (x.className && typeof x.className === 'string' ? '.' + x.className.split(' ')[0] : '')).catch(() => '?'),
+                 box: box ? [Math.round(box.x), Math.round(box.y), Math.round(box.width), Math.round(box.height)] : null,
+                 txt: (await el.innerText().catch(() => '')).trim().slice(0, 60) });
+    }
+    const secVis = await page.getByText(secao, { exact: true }).first().isVisible().catch(() => false);
+    log(`menu "${item}": clique falhou (${e.message.split('\n')[0]}) · ${n} elemento(s) com o texto: ${JSON.stringify(det)} · seção "${secao}" visível: ${secVis}`);
+    await shot(page, '09-menu-falhou-' + item.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+    // 2ª tentativa: abre/fecha a seção (ela pode ter sido recolhida pelo 1º
+    // clique, se já estava aberta depois do reload) e clica o item de novo
+    try { await page.getByText(secao, { exact: true }).first().click({ timeout: 8000 }); await page.waitForTimeout(1500); } catch (e2) {}
+    if (!(await itemLoc().isVisible().catch(() => false))) {
+      try { await page.getByText(secao, { exact: true }).first().click({ timeout: 8000 }); await page.waitForTimeout(1500); } catch (e2) {}
+    }
+    await itemLoc().click({ timeout: 15000 });
+    log(`menu "${item}": abriu na 2ª tentativa`);
+  }
   await page.waitForTimeout(15000);           // embed do Power BI carrega
 }
 // drill-through: botão direito no card → (Drill through/Detalhamento) → página de detalhe
