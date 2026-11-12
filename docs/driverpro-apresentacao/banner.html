@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>DriverPro · Banner da unidade</title>
+<style>
+/* Banner de lona 80 × 120 cm (retrato). Tudo em cm: imprime em escala 1:1.
+   Identidade do DriverPro (base.css): Montserrat, --ink #0F1A20, --acc #F22C05, --verde #1E9E52. */
+:root{ --ink:#0F1A20; --ink2:#4A5563; --ink3:#8A94A2; --acc:#F22C05; --verde:#1E9E52; --ambar:#E39B00; --pale:#F3F4F6; --line:#E3E6EA; }
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:#fff;}
+body{font-family:'Montserrat',Arial,sans-serif;color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.banner{width:80cm;height:120cm;position:relative;overflow:hidden;background:#fff;padding:4.2cm 4.6cm 3.4cm;display:flex;flex-direction:column;}
+.banner>*{flex:0 0 auto;}
+
+/* topo */
+.topo{display:flex;align-items:center;justify-content:space-between;}
+.logo{display:flex;align-items:center;gap:1.13cm;}
+.logo .ic{width:5.02cm;height:5.02cm;border-radius:1.29cm;background:var(--acc);display:flex;align-items:center;justify-content:center;}
+.logo .ic svg{width:3.49cm;height:3.49cm;}
+.logo .nm{font-size:4.54cm;font-weight:500;letter-spacing:-0.1cm;line-height:1;}
+.logo .nm b{font-weight:800;}
+.unidade{text-align:right;font-weight:700;font-size:1.26cm;color:var(--ink2);line-height:1.35;}
+.unidade b{display:block;color:var(--acc);font-size:0.96cm;letter-spacing:0.28cm;text-transform:uppercase;margin-bottom:0.25cm;}
+
+/* manchete */
+.manchete{margin-top:2.91cm;}
+.manchete h1{font-size:5.82cm;font-weight:800;line-height:1.02;letter-spacing:-0.14cm;}
+.manchete h1 span{color:var(--acc);}
+.manchete p{margin-top:1.13cm;font-size:1.9cm;font-weight:500;color:var(--ink2);line-height:1.3;}
+
+/* pilares */
+.sec{margin-top:2.59cm;}
+.kicker{font-size:1.01cm;font-weight:700;letter-spacing:0.34cm;text-transform:uppercase;color:var(--acc);margin-bottom:1.06cm;}
+.pilares{display:grid;grid-template-columns:repeat(3,1fr);gap:1.29cm;}
+.pil{background:var(--pale);border-radius:1.29cm;padding:1.62cm 1.62cm 1.7cm;display:flex;flex-direction:column;}
+.pil .ic{width:2.91cm;height:2.91cm;border-radius:0.81cm;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:1.22cm;}
+.pil .ic svg{width:1.95cm;height:1.95cm;fill:none;stroke:var(--acc);stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;}
+.pil .pts{font-size:3.72cm;font-weight:800;line-height:1;letter-spacing:-0.1cm;}
+.pil .pts small{font-size:1.22cm;font-weight:700;color:var(--ink3);letter-spacing:0;margin-left:0.25cm;}
+.pil b{display:block;font-size:1.54cm;font-weight:800;line-height:1.15;margin:0.73cm 0 0.57cm;}
+.pil p{font-size:1.09cm;line-height:1.4;color:var(--ink2);font-weight:500;}
+
+/* dinheiro (bloco escuro) */
+.dinheiro{margin-top:2.59cm;background:var(--ink);color:#F4F5F7;border-radius:1.62cm;padding:2.27cm 2.43cm;display:grid;grid-template-columns:1.25fr 1fr;gap:2.43cm;}
+.dinheiro .kicker{color:#FF7A5C;}
+.grande{font-size:5.19cm;font-weight:800;line-height:1;letter-spacing:-0.14cm;}
+.grande small{font-size:1.62cm;font-weight:600;letter-spacing:0;color:#B9C0CA;margin-left:0.41cm;}
+.dinheiro p{font-size:1.34cm;line-height:1.4;color:#D5DBE3;margin-top:0.96cm;font-weight:500;}
+.dinheiro p b{color:#fff;font-weight:800;}
+.podio{display:flex;flex-direction:column;justify-content:center;gap:0.81cm;border-left:0.1cm solid rgba(255,255,255,.14);padding-left:2.43cm;}
+.podio .t{font-size:1.01cm;font-weight:700;letter-spacing:0.34cm;text-transform:uppercase;color:#FF7A5C;margin-bottom:0.33cm;}
+.podio .l{display:flex;align-items:baseline;justify-content:space-between;font-size:1.7cm;font-weight:600;color:#D5DBE3;}
+.podio .l b{font-size:2.35cm;font-weight:800;color:#fff;letter-spacing:-0.07cm;}
+.podio .l:first-of-type b{color:#FFC94D;}
+.regras{display:flex;gap:1.29cm;margin-top:1.29cm;}
+.regra{flex:1;border:0.1cm solid var(--line);border-radius:1.13cm;padding:1.29cm 1.62cm;display:flex;align-items:center;gap:1.29cm;}
+.regra .n{font-size:2.76cm;font-weight:800;line-height:1;color:var(--acc);letter-spacing:-0.08cm;white-space:nowrap;}
+.regra .n small{font-size:1.22cm;font-weight:700;color:var(--ink3);letter-spacing:0;}
+.regra span{font-size:1.17cm;line-height:1.35;color:var(--ink2);font-weight:500;}
+.regra span b{color:var(--ink);font-weight:800;}
+
+/* app */
+.app{margin-top:auto;display:grid;grid-template-columns:1fr 12.14cm;gap:2.43cm;align-items:center;}
+.passos{display:flex;flex-direction:column;gap:0.96cm;}
+.passo{display:flex;align-items:flex-start;gap:1.13cm;}
+.passo .n{width:2.43cm;height:2.43cm;border-radius:50%;background:var(--acc);color:#fff;font-size:1.37cm;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.passo div{font-size:1.26cm;line-height:1.35;color:var(--ink2);font-weight:500;padding-top:0.36cm;}
+.passo div b{display:block;color:var(--ink);font-weight:800;font-size:1.46cm;margin-bottom:0.12cm;}
+.url{font-weight:800;color:var(--acc);}
+.qr{text-align:center;}
+.qr .cx{background:#fff;border:0.14cm solid var(--ink);border-radius:1.29cm;padding:1.13cm;display:inline-block;}
+.qr .cx svg{width:9.31cm;height:9.31cm;display:block;}
+.qr p{font-size:1.06cm;font-weight:700;margin-top:0.81cm;line-height:1.3;}
+.qr p span{display:block;font-weight:500;color:var(--ink2);font-size:0.94cm;margin-top:0.16cm;}
+
+/* rodapé */
+.rodape{margin-top:2.11cm;padding-top:1.29cm;border-top:0.1cm solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:1.01cm;font-weight:600;color:var(--ink3);}
+.rodape b{color:var(--ink);font-weight:800;}
+.faixas{display:flex;gap:1.29cm;}
+.faixas span{display:flex;align-items:center;gap:0.41cm;}
+.faixas i{width:0.89cm;height:0.89cm;border-radius:50%;display:inline-block;}
+</style>
+</head>
+<body>
+<div class="banner">
+
+  <div class="topo">
+    <div class="logo">
+      <div class="ic"><svg viewBox="0 0 48 48" fill="none"><path d="M12 30a12 12 0 1 1 24 0" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><path d="M24 30l7-8" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><circle cx="24" cy="30" r="2.4" fill="#fff"/></svg></div>
+      <div class="nm">Driver<b>Pro</b></div>
+    </div>
+    <div class="unidade"><b>Programa de condução econômica</b>Empurrada Piraí</div>
+  </div>
+
+  <div class="manchete">
+    <h1>Dirigir bem<br>agora vale <span>dinheiro.</span></h1>
+    <p>A telemetria do caminhão mede a sua condução todo dia e vira uma nota no app. Nota alta, carteira cheia: até R$ 200 por período, mais prêmio para o pódio.</p>
+  </div>
+
+  <div class="sec">
+    <div class="kicker">O que conta na nota</div>
+    <div class="pilares">
+      <div class="pil">
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 16a8 8 0 1 1 16 0"/><path d="M12 16l4-5"/></svg></div>
+        <div class="pts">50<small>pontos</small></div>
+        <b>Uso da faixa verde</b>
+        <p>Rodar entre 1.000 e 1.400 RPM. Troque a marcha antes de passar do fim da faixa verde.</p>
+      </div>
+      <div class="pil">
+        <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg></div>
+        <div class="pts">30<small>pontos</small></div>
+        <b>Motor ligado sem rodar</b>
+        <p>Parou mais de um minuto? Desliga. Motor ligado parado queima diesel e não anda um metro.</p>
+      </div>
+      <div class="pil">
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></div>
+        <div class="pts">20<small>pontos</small></div>
+        <b>Acelerações bruscas</b>
+        <p>Sair suave. Pisar fundo na arrancada gasta mais e chega no mesmo lugar, na mesma hora.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="dinheiro">
+    <div>
+      <div class="kicker">Como funciona o dinheiro</div>
+      <div class="grande">R$ 5<small>por ponto</small></div>
+      <p>Da nota <b>60</b> em diante, cada ponto vale <b>R$ 5</b>. Nota <b>100</b> = <b>R$ 200</b> no período. Abaixo de 60, a carteira zera. O valor entra na folha como <b>prêmio</b>, com o descritivo no contracheque.</p>
+    </div>
+    <div class="podio">
+      <div class="t">Pódio do período</div>
+      <div class="l"><span>1º lugar</span><b>+ R$ 300</b></div>
+      <div class="l"><span>2º lugar</span><b>+ R$ 150</b></div>
+      <div class="l"><span>3º lugar</span><b>+ R$ 100</b></div>
+    </div>
+  </div>
+
+  <div class="regras">
+    <div class="regra"><div class="n">1.000<small> km</small></div><span><b>Para concorrer</b>, é preciso rodar pelo menos 1.000 km no período, com o seu login no caminhão.</span></div>
+    <div class="regra"><div class="n">21 a 20</div><span><b>Cada período</b> vai do dia 21 ao dia 20. O primeiro: <b>21/11 a 20/12/2026</b>, pago na folha de janeiro.</span></div>
+  </div>
+
+  <div class="app">
+    <div class="passos">
+      <div class="kicker" style="margin-bottom:.2cm">Entre no app hoje</div>
+      <div class="passo"><div class="n">1</div><div><b>Abra <span class="url">driverpro.onespot.com.br</span></b>no celular da empresa, ou leia o QR code ao lado. O uso no celular da empresa é obrigatório.</div></div>
+      <div class="passo"><div class="n">2</div><div><b>Digite o seu CPF e toque em "Criar senha"</b>Escolha 4 números. Não precisa de e-mail nem de cadastro.</div></div>
+      <div class="passo"><div class="n">3</div><div><b>Toque em "Instalar o app no celular"</b>Ele vai para a tela inicial e mostra a sua nota e a sua carteira todo dia.</div></div>
+    </div>
+    <div class="qr">
+      <div class="cx"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 33 33" shape-rendering="crispEdges"><path stroke="#0F1A20" d="M0 0.5h7m1 0h2m1 0h1m1 0h2m2 0h2m2 0h2m1 0h1m1 0h7M0 1.5h1m5 0h1m3 0h1m1 0h1m1 0h3m2 0h1m4 0h1m1 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h2m2 0h3m1 0h1m1 0h1m2 0h1m1 0h2m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m2 0h2m1 0h1m1 0h1m1 0h2m1 0h1m1 0h1m1 0h2m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h2m1 0h1m3 0h6m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m2 0h1m1 0h3m1 0h4m1 0h3m1 0h1m1 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h1m1 0h3m5 0h1m1 0h1m1 0h3M5 8.5h2m8 0h1m2 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1M0 9.5h1m1 0h2m3 0h1m6 0h2m1 0h2m2 0h1m1 0h1m1 0h1m1 0h3m1 0h1M0 10.5h2m1 0h6m1 0h1m1 0h4m1 0h3m2 0h1m1 0h2m1 0h1m3 0h1M0 11.5h1m1 0h1m1 0h2m4 0h2m1 0h1m2 0h2m1 0h1m1 0h1m2 0h1m1 0h2m1 0h2M1 12.5h2m1 0h1m1 0h4m2 0h2m3 0h3m1 0h1m1 0h1m2 0h2m1 0h1m2 0h1M1 13.5h1m3 0h1m1 0h4m1 0h1m1 0h6m1 0h1m1 0h1m2 0h1m3 0h1m1 0h1M2 14.5h1m3 0h3m2 0h1m2 0h3m3 0h1m1 0h1m1 0h2m3 0h1m1 0h1M0 15.5h2m1 0h1m1 0h1m1 0h3m1 0h3m1 0h1m2 0h1m4 0h5m1 0h2m1 0h1M1 16.5h1m1 0h2m1 0h2m6 0h2m3 0h2m4 0h1m1 0h2M0 17.5h1m2 0h1m3 0h1m1 0h3m11 0h5m4 0h1M2 18.5h1m1 0h1m1 0h4m1 0h4m2 0h1m1 0h2m1 0h2m3 0h1m1 0h2m1 0h1M0 19.5h1m1 0h1m1 0h2m1 0h1m1 0h1m2 0h4m1 0h3m3 0h2m1 0h5m1 0h1M1 20.5h1m1 0h2m1 0h2m12 0h1m1 0h1m2 0h1m2 0h2m1 0h2M0 21.5h1m1 0h1m2 0h1m1 0h1m5 0h7m2 0h2m3 0h2m1 0h1M0 22.5h1m1 0h6m4 0h1m1 0h2m4 0h3m1 0h1M0 23.5h1m1 0h2m1 0h1m1 0h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h2m2 0h2m3 0h5M0 24.5h2m1 0h2m1 0h1m1 0h3m1 0h1m2 0h1m1 0h2m3 0h8M8 25.5h7m1 0h3m4 0h2m3 0h2m2 0h1M0 26.5h7m2 0h1m1 0h1m1 0h4m1 0h1m1 0h2m1 0h2m1 0h1m1 0h2m1 0h1M0 27.5h1m5 0h1m1 0h2m1 0h1m1 0h1m4 0h1m4 0h2m3 0h4M0 28.5h1m1 0h3m1 0h1m2 0h2m1 0h1m2 0h1m1 0h2m2 0h1m2 0h5m2 0h2M0 29.5h1m1 0h3m1 0h1m2 0h4m2 0h1m1 0h2m3 0h2m1 0h1m1 0h3m2 0h1M0 30.5h1m1 0h3m1 0h1m2 0h1m2 0h1m2 0h3m3 0h1m1 0h2m3 0h1m2 0h2M0 31.5h1m5 0h1m2 0h1m1 0h2m2 0h1m1 0h1m4 0h2m1 0h1m3 0h2M0 32.5h7m2 0h2m2 0h1m1 0h3m1 0h1m1 0h1m1 0h3m5 0h1"/></svg>
+</div>
+      <p>Aponte a câmera<span>driverpro.onespot.com.br</span></p>
+    </div>
+  </div>
+
+  <div class="rodape">
+    <div class="faixas">
+      <span><i style="background:var(--verde)"></i>85 ou mais: <b>&nbsp;elite</b></span>
+      <span><i style="background:var(--ambar)"></i>75 a 84,9: <b>&nbsp;bom</b></span>
+      <span><i style="background:var(--acc)"></i>abaixo de 75: <b>&nbsp;atenção</b></span>
+    </div>
+    <div>Esqueceu a senha? <b>Fale com o seu gestor de frota.</b></div>
+  </div>
+
+</div>
+</body>
+</html>
