@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610281400">
+<meta name="build" content="202611121500">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1411,7 +1411,15 @@ async function desviosDoGerot(){
   if(!window.GerotBase) throw new Error('gerot-base.js não carregou');
   const recs=await GerotBase.load();
   if(!recs.length) throw new Error('sem indicadores no elite_snapshot');
+  // A vigência é o ÚLTIMO MÊS FECHADO: o último mês em que os indicadores-chave
+  // (os do Frota de Elite, que o robô coleta do Ginfo do dia 01 ao 15) têm dado.
+  // Os adicionais do Gerot (Amplitude e % Calibragem do Prolog, OS Vencida e
+  // Blitz do Termômetro) são a foto de HOJE e já vêm carimbados no mês corrente:
+  // olhar o maior vig de TODOS os registros gerava a RPM de nov/26 no dia 12/11,
+  // só com esses 13 adicionais, em vez do fechamento de outubro (Renan, 12/11/2026).
+  const fechados=[...new Set(recs.filter(r=>!r.soGerot&&r.field!=='comb').map(r=>r.vig))].sort();
   const alvo=(new URLSearchParams(location.search).get('vig')||'').trim()
+          || fechados.pop()
           || [...new Set(recs.map(r=>r.vig))].sort().pop();
   const doMes=recs.filter(r=>r.vig===alvo);
   // unidade do Ginfo ('CDD RIO DE JANEIRO') → {abrev:'CGR', projeto:'ROTA'}
@@ -2224,6 +2232,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202610281400"></script>
+<script src="../assets/build-check.js?v=202611121500"></script>
 </body>
 </html>
