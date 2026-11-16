@@ -6,12 +6,17 @@
 <style>
 /* Banner de lona 80 × 120 cm (retrato). Tudo em cm: imprime em escala 1:1.
    Identidade do DriverPro (base.css): Montserrat, --ink #0F1A20, --acc #F22C05, --verde #1E9E52. */
-:root{ --ink:#0F1A20; --ink2:#4A5563; --ink3:#8A94A2; --acc:#F22C05; --verde:#1E9E52; --ambar:#E39B00; --pale:#F3F4F6; --line:#E3E6EA; }
+:root{ --ink:#FFFFFF; --ink2:#D9DEE5; --ink3:#AEB6C2; --acc:#F22C05; --acc2:#FF7A5C; --verde:#2BBF66; --ambar:#F2B233; --pale:rgba(255,255,255,.10); --line:rgba(255,255,255,.22); --fundo:#0F1A20; }
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{background:#fff;}
+html,body{background:var(--fundo);}
 body{font-family:'Montserrat',Arial,sans-serif;color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-.banner{width:80cm;height:120cm;position:relative;overflow:hidden;background:#fff;padding:4.2cm 4.6cm 3.4cm;display:flex;flex-direction:column;}
-.banner>*{flex:0 0 auto;}
+.banner{width:80cm;height:120cm;position:relative;overflow:hidden;background:var(--fundo);padding:4.2cm 4.6cm 3.4cm;display:flex;flex-direction:column;}
+/* a foto dos caminhões (Renan, 16/11/2026) ocupa o banner inteiro, com o escurecedor por cima
+   ("pode usar ela meio escura"): o texto é branco e o caminhão fica como clima, não como leitura */
+.foto{position:absolute;inset:0;z-index:0;background:url('img/fundo-banner.jpg') center 38% / cover no-repeat;}
+.foto::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,26,32,.70) 0%,rgba(15,26,32,.62) 30%,rgba(15,26,32,.74) 55%,rgba(15,26,32,.86) 100%);}
+.banner>*{flex:0 0 auto;position:relative;z-index:1;}
+.banner>.foto{flex:none;position:absolute;z-index:0;}
 
 /* topo */
 .topo{display:flex;align-items:center;justify-content:space-between;}
@@ -21,41 +26,42 @@ body{font-family:'Montserrat',Arial,sans-serif;color:var(--ink);-webkit-print-co
 .logo .nm{font-size:4.54cm;font-weight:500;letter-spacing:-0.1cm;line-height:1;}
 .logo .nm b{font-weight:800;}
 .unidade{text-align:right;font-weight:700;font-size:1.26cm;color:var(--ink2);line-height:1.35;}
-.unidade b{display:block;color:var(--acc);font-size:0.96cm;letter-spacing:0.28cm;text-transform:uppercase;margin-bottom:0.25cm;}
+.unidade b{display:block;color:var(--acc2);font-size:0.96cm;letter-spacing:0.28cm;text-transform:uppercase;margin-bottom:0.25cm;}
 
 /* manchete */
 .manchete{margin-top:2.91cm;}
 .manchete h1{font-size:5.82cm;font-weight:800;line-height:1.02;letter-spacing:-0.14cm;}
-.manchete h1 span{color:var(--acc);}
+.manchete h1 span{color:var(--acc2);}
 .manchete p{margin-top:1.13cm;font-size:1.9cm;font-weight:500;color:var(--ink2);line-height:1.3;}
 
 /* pilares */
 .sec{margin-top:2.59cm;}
-.kicker{font-size:1.01cm;font-weight:700;letter-spacing:0.34cm;text-transform:uppercase;color:var(--acc);margin-bottom:1.06cm;}
+.kicker{font-size:1.01cm;font-weight:700;letter-spacing:0.34cm;text-transform:uppercase;color:var(--acc2);margin-bottom:1.06cm;}
 .pilares{display:grid;grid-template-columns:repeat(3,1fr);gap:1.29cm;}
-.pil{background:var(--pale);border-radius:1.29cm;padding:1.62cm 1.62cm 1.7cm;display:flex;flex-direction:column;}
-.pil .ic{width:2.91cm;height:2.91cm;border-radius:0.81cm;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:1.22cm;}
-.pil .ic svg{width:1.95cm;height:1.95cm;fill:none;stroke:var(--acc);stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;}
+.pil{background:var(--pale);border:0.1cm solid var(--line);border-radius:1.29cm;padding:1.62cm 1.62cm 1.7cm;display:flex;flex-direction:column;}
+.pil .ic{width:2.91cm;height:2.91cm;border-radius:0.81cm;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;margin-bottom:1.22cm;}
+.pil .ic svg{width:1.95cm;height:1.95cm;fill:none;stroke:var(--acc2);stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;}
 .pil .pts{font-size:3.72cm;font-weight:800;line-height:1;letter-spacing:-0.1cm;}
 .pil .pts small{font-size:1.22cm;font-weight:700;color:var(--ink3);letter-spacing:0;margin-left:0.25cm;}
 .pil b{display:block;font-size:1.54cm;font-weight:800;line-height:1.15;margin:0.73cm 0 0.57cm;}
 .pil p{font-size:1.09cm;line-height:1.4;color:var(--ink2);font-weight:500;}
 
 /* dinheiro (bloco escuro) */
-.dinheiro{margin-top:2.59cm;background:var(--ink);color:#F4F5F7;border-radius:1.62cm;padding:2.27cm 2.43cm;display:grid;grid-template-columns:1.25fr 1fr;gap:2.43cm;}
-.dinheiro .kicker{color:#FF7A5C;}
+.dinheiro{margin-top:2.59cm;background:rgba(0,0,0,.42);border:0.1cm solid var(--line);color:#F4F5F7;border-radius:1.62cm;padding:2.27cm 2.43cm;display:grid;grid-template-columns:1.25fr 1fr;gap:2.43cm;}
+.kicker{color:var(--acc2);}
+.dinheiro .kicker{color:var(--acc2);}
 .grande{font-size:5.19cm;font-weight:800;line-height:1;letter-spacing:-0.14cm;}
 .grande small{font-size:1.62cm;font-weight:600;letter-spacing:0;color:#B9C0CA;margin-left:0.41cm;}
 .dinheiro p{font-size:1.34cm;line-height:1.4;color:#D5DBE3;margin-top:0.96cm;font-weight:500;}
 .dinheiro p b{color:#fff;font-weight:800;}
 .podio{display:flex;flex-direction:column;justify-content:center;gap:0.81cm;border-left:0.1cm solid rgba(255,255,255,.14);padding-left:2.43cm;}
-.podio .t{font-size:1.01cm;font-weight:700;letter-spacing:0.34cm;text-transform:uppercase;color:#FF7A5C;margin-bottom:0.33cm;}
+.podio .t{font-size:1.01cm;font-weight:700;letter-spacing:0.34cm;text-transform:uppercase;color:var(--acc2);margin-bottom:0.33cm;}
 .podio .l{display:flex;align-items:baseline;justify-content:space-between;font-size:1.7cm;font-weight:600;color:#D5DBE3;}
 .podio .l b{font-size:2.35cm;font-weight:800;color:#fff;letter-spacing:-0.07cm;}
-.podio .l:first-of-type b{color:#FFC94D;}
+.podio .l:nth-of-type(2) b{color:#FFC94D;} /* o 1º div do .podio é o título .t */
 .regras{display:flex;gap:1.29cm;margin-top:1.29cm;}
-.regra{flex:1;border:0.1cm solid var(--line);border-radius:1.13cm;padding:1.29cm 1.62cm;display:flex;align-items:center;gap:1.29cm;}
-.regra .n{font-size:2.76cm;font-weight:800;line-height:1;color:var(--acc);letter-spacing:-0.08cm;white-space:nowrap;}
+.regra{flex:1;background:var(--pale);border:0.1cm solid var(--line);border-radius:1.13cm;padding:1.29cm 1.62cm;display:flex;align-items:center;gap:1.29cm;}
+.regra .n{font-size:2.76cm;font-weight:800;line-height:1;color:var(--acc2);letter-spacing:-0.08cm;white-space:nowrap;}
 .regra .n small{font-size:1.22cm;font-weight:700;color:var(--ink3);letter-spacing:0;}
 .regra span{font-size:1.17cm;line-height:1.35;color:var(--ink2);font-weight:500;}
 .regra span b{color:var(--ink);font-weight:800;}
@@ -67,9 +73,9 @@ body{font-family:'Montserrat',Arial,sans-serif;color:var(--ink);-webkit-print-co
 .passo .n{width:2.43cm;height:2.43cm;border-radius:50%;background:var(--acc);color:#fff;font-size:1.37cm;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
 .passo div{font-size:1.26cm;line-height:1.35;color:var(--ink2);font-weight:500;padding-top:0.36cm;}
 .passo div b{display:block;color:var(--ink);font-weight:800;font-size:1.46cm;margin-bottom:0.12cm;}
-.url{font-weight:800;color:var(--acc);}
+.url{font-weight:800;color:var(--acc2);}
 .qr{text-align:center;}
-.qr .cx{background:#fff;border:0.14cm solid var(--ink);border-radius:1.29cm;padding:1.13cm;display:inline-block;}
+.qr .cx{background:#fff;border:0.14cm solid #fff;border-radius:1.29cm;padding:1.13cm;display:inline-block;}
 .qr .cx svg{width:9.31cm;height:9.31cm;display:block;}
 .qr p{font-size:1.06cm;font-weight:700;margin-top:0.81cm;line-height:1.3;}
 .qr p span{display:block;font-weight:500;color:var(--ink2);font-size:0.94cm;margin-top:0.16cm;}
@@ -84,6 +90,7 @@ body{font-family:'Montserrat',Arial,sans-serif;color:var(--ink);-webkit-print-co
 </head>
 <body>
 <div class="banner">
+  <div class="foto"></div>
 
   <div class="topo">
     <div class="logo">
@@ -137,7 +144,7 @@ body{font-family:'Montserrat',Arial,sans-serif;color:var(--ink);-webkit-print-co
   </div>
 
   <div class="regras">
-    <div class="regra"><div class="n">1.000<small> km</small></div><span><b>Para concorrer</b>, é preciso rodar pelo menos 1.000 km no período, com o seu login no caminhão.</span></div>
+    <div class="regra"><div class="n">1.000<small> km</small></div><span><b>Para concorrer</b>, é preciso rodar pelo menos 1.000 km no período, com o seu login no Geotab (a telemetria do caminhão).</span></div>
     <div class="regra"><div class="n">21 a 20</div><span><b>Cada período</b> vai do dia 21 ao dia 20. O primeiro: <b>21/11 a 20/12/2026</b>, pago na folha de janeiro.</span></div>
   </div>
 
