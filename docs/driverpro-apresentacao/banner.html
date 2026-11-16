@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <title>DriverPro · Banner da unidade</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap');
 /* Banner de lona 80 × 120 cm (retrato). Tudo em cm: imprime em escala 1:1.
    Identidade do DriverPro (base.css): Montserrat, --ink #0F1A20, --acc #F22C05, --verde #1E9E52. */
 :root{ --ink:#FFFFFF; --ink2:#D9DEE5; --ink3:#AEB6C2; --acc:#F22C05; --acc2:#FF7A5C; --verde:#2BBF66; --ambar:#F2B233; --pale:rgba(255,255,255,.10); --line:rgba(255,255,255,.22); --fundo:#0F1A20; }
@@ -55,14 +56,15 @@ body.vetor .ilus{display:block;}
 .pil p{font-size:1.09cm;line-height:1.4;color:var(--ink2);font-weight:500;}
 
 /* dinheiro (bloco escuro) */
-.dinheiro{margin-top:2.59cm;background:rgba(0,0,0,.42);border:0.1cm solid var(--line);color:#F4F5F7;border-radius:1.62cm;padding:2.27cm 2.43cm;display:grid;grid-template-columns:1.25fr 1fr;gap:2.43cm;}
+.dinheiro{margin-top:2.59cm;background:rgba(0,0,0,.42);border:0.1cm solid var(--line);color:#F4F5F7;border-radius:1.29cm;padding:1.9cm 1.62cm;display:grid;grid-template-columns:1fr 21.02cm;gap:0;}
+.dinheiro>div:first-child{padding-right:2.2cm;} /* a coluna do pódio começa na borda do 3º card: 22,74 − 1,62 − 0,1 */
 .kicker{color:var(--acc2);}
 .dinheiro .kicker{color:var(--acc2);}
 .grande{font-size:5.19cm;font-weight:800;line-height:1;letter-spacing:-0.14cm;}
 .grande small{font-size:1.62cm;font-weight:600;letter-spacing:0;color:#B9C0CA;margin-left:0.41cm;}
 .dinheiro p{font-size:1.34cm;line-height:1.4;color:#D5DBE3;margin-top:0.96cm;font-weight:500;}
 .dinheiro p b{color:#fff;font-weight:800;}
-.podio{display:flex;flex-direction:column;justify-content:center;gap:0.81cm;border-left:0.1cm solid rgba(255,255,255,.14);padding-left:2.43cm;}
+.podio{display:flex;flex-direction:column;justify-content:center;gap:0.81cm;border-left:0.1cm solid rgba(255,255,255,.14);padding-left:1.72cm;}
 .podio .t{font-size:1.01cm;font-weight:700;letter-spacing:0.34cm;text-transform:uppercase;color:var(--acc2);margin-bottom:0.33cm;}
 .podio .l{display:flex;align-items:baseline;justify-content:space-between;font-size:1.7cm;font-weight:600;color:#D5DBE3;}
 .podio .l b{font-size:2.35cm;font-weight:800;color:#fff;letter-spacing:-0.07cm;}
@@ -78,7 +80,7 @@ body.vetor .ilus{display:block;}
 .app{margin-top:auto;display:grid;grid-template-columns:1fr 12.14cm;gap:2.43cm;align-items:center;}
 .passos{display:flex;flex-direction:column;gap:0.96cm;}
 .passo{display:flex;align-items:flex-start;gap:1.13cm;}
-.passo .n{width:2.43cm;height:2.43cm;border-radius:50%;background:var(--acc);color:#fff;font-size:1.37cm;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.passo .n{width:2.43cm;height:2.43cm;border-radius:50%;background:var(--acc);color:#fff;font-size:1.37cm;font-weight:800;line-height:1;padding-bottom:0.3cm;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
 .passo div{font-size:1.26cm;line-height:1.35;color:var(--ink2);font-weight:500;padding-top:0.36cm;}
 .passo div b{display:block;color:var(--ink);font-weight:800;font-size:1.46cm;margin-bottom:0.12cm;}
 .url{font-weight:800;color:var(--acc2);}
