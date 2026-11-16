@@ -19,9 +19,21 @@ ol,ul{margin:4px 0 8px 18px;padding:0;} li{margin:2px 0;}
 </style></head><body>
 
 <h1>DriverPro — migração para o Git e o banco da Conlog</h1>
-<div class="sub">Roteiro para a TI Conlog · 08/10/2026 · origem: repositório <code>fortesindicadores-byte/gestao-em-movimento</code> (branch <code>main</code>). Acompanha o pacote <code>DriverPro-migracao.zip</code>.</div>
+<div class="sub">Roteiro para a TI Conlog · <b>versão 2, 16/11/2026</b> (a 1ª foi de 08/10/2026) · origem: repositório <code>fortesindicadores-byte/gestao-em-movimento</code> (branch <code>main</code>, commit <code>0b8228a</code>). Acompanha o pacote <code>DriverPro-migracao-2026-11-16.zip</code>, com o app na versão que está em produção (<code>sw.js</code>: <code>driverpro-v34</code>). O pacote de 08/10 trazia a v24 e ficou para trás: toda conferência vale sobre este.</div>
 
 <p>Hoje o DriverPro roda fora da infraestrutura da Conlog: o código fica no GitHub (conta Fortes Indicadores), o banco é PostgreSQL no Supabase (projeto <code>lozwipoeacpvplgkrxkq</code>) e o site no GitHub Pages, com o domínio <code>driverpro.onespot.com.br</code>. Este documento diz o que cada peça é, de onde vêm os dados e como levar tudo para o Git e o banco da Conlog.</p>
+
+<h2>0. O que mudou desde o pacote de 08/10 (v24 → v34)</h2>
+<ul>
+<li><b>Fechamento automático do período no dia 21</b> (<code>ce_app_fechamento</code>, <code>ce_app_fechar()</code>, <code>ce_app_fechar_auto()</code>, <code>ce_app_apuracao()</code>; seções 17 e 18 do <code>2-app-motorista.sql</code>): o resultado de 21 a 20 é congelado e não muda mais; app e painel mostram o congelado. Lista para a folha = <code>select</code> comentado no fim da seção 17.</li>
+<li><b>Início do programa</b> em <code>ce_app_regras.inicio</code> (<code>2026-12-01</code> = 21/11 a 20/12/2026): antes disso o app mostra "período de teste", sem valor a pagar.</li>
+<li><b>Zerar senha pelo admin do app</b> (<code>ce_app_zerar_pin</code>, auditoria em <code>ce_app_senha_zerada</code>); o motorista cria outra pelo CPF.</li>
+<li><b>Instrutores e time de frota fora do programa</b> (<code>ce_motoristas.fora_programa</code>, <code>ce_app_no_programa()</code>): o robô continua medindo, mas a pessoa não entra, não ranqueia e não recebe. Os CPFs ficam só no banco.</li>
+<li><b>Ranking só com iniciais</b> (<code>ce_app_abrevia</code>), <b>nota na tela inicial</b> colorida pela faixa (85 / 75) e o título do ranking pelo grupo e mês.</li>
+<li>Régua do giro: <b>só a faixa verde (1.000–1.400 rpm) pontua</b> e a amarela em descida sai da conta; as três faixas com 1 · 2/3 · 1/3 foram testadas e descartadas.</li>
+<li>Faixas da nota: &lt; 75 vermelho · 75 a 84,9 amarelo · ≥ 85 verde. Uso do app no celular da empresa é obrigatório.</li>
+<li>Documentos novos no pacote: descritivo do programa, "Como a nota é calculada" (PDF e Word) e os banners para as unidades.</li>
+</ul>
 
 <h2>1. Como os dados chegam ao app</h2>
 <p><b>Geotab → robô de coleta → banco de dados → app do motorista e painel do gestor.</b> Nada é digitado.</p>
@@ -53,7 +65,8 @@ ol,ul{margin:4px 0 8px 18px;padding:0;} li{margin:2px 0;}
 <li>Carteira R$ 200, R$ 5 por ponto acima da nota 60 (<code>ce_app_carteira</code>, <code>ce_app_regras.piso_nota</code>). Todos que rodam 1.000 km recebem. Pódio R$ 300/150/100. Desempate por km.</li>
 <li>Piloto só na unidade <code>EMP PIRAI</code> (<code>ce_app_regras.unidades</code>).</li>
 <li><b>Período de apuração do dia 21 ao dia 20.</b> A competência é o 1º dia do mês em que o período termina: <code>2026-12-01</code> = 21/11 a 20/12/2026 (1º período do piloto, pago na folha de janeiro/2027). No robô: <code>compDe()</code>/<code>periodoDe()</code>; no banco: <code>ce_app_comp()</code>.</li>
-<li>Pagamento: o sistema gera a lista (nome, CPF, valor); o RH lança na folha, na rubrica de prêmio, com o descritivo do programa no contracheque.</li>
+<li>Pagamento: o sistema gera a lista (nome, CPF, valor) a partir de <code>ce_app_fechamento</code>, congelada no dia 21; o RH lança na folha, na rubrica de prêmio, com o descritivo do programa no contracheque.</li>
+<li>Quem está em <code>ce_motoristas.fora_programa</code> (instrutores, time de frota) não entra no app, no ranking nem na carteira.</li>
 </ul>
 
 <h2>2. Conteúdo do pacote</h2>
@@ -61,13 +74,15 @@ ol,ul{margin:4px 0 8px 18px;padding:0;} li{margin:2px 0;}
 <tr><th>Pasta / arquivo</th><th>O que é</th></tr>
 <tr><td><code>app/</code></td><td>App do motorista (<code>index.html</code>, <code>sw.js</code>, <code>manifest.json</code>, <code>img/</code>). Login por CPF + senha de 4 números.</td></tr>
 <tr><td><code>banco/1-conducao-economica.sql</code></td><td>Tabelas de telemetria: <code>ce_motoristas</code>, <code>ce_diario</code>, <code>ce_scores_mensais</code> + RLS.</td></tr>
-<tr><td><code>banco/2-app-motorista.sql</code></td><td>Regras (<code>ce_app_regras</code>, <code>ce_app_unidade_cfg</code>), senha e sessão (<code>ce_app_acesso</code>, <code>ce_app_sessao</code>), admins (<code>ce_app_admins</code>), log (<code>ce_app_log</code>) e todas as funções RPC do app. Reexecutável.</td></tr>
+<tr><td><code>banco/2-app-motorista.sql</code></td><td>Regras (<code>ce_app_regras</code>, <code>ce_app_unidade_cfg</code>), senha e sessão (<code>ce_app_acesso</code>, <code>ce_app_sessao</code>), admins (<code>ce_app_admins</code>), log (<code>ce_app_log</code>), fechamento (<code>ce_app_fechamento</code>, <code>ce_app_fechamento_log</code>), senha zerada (<code>ce_app_senha_zerada</code>) e todas as funções RPC do app. Reexecutável. A seção 18 agenda dois jobs no <code>pg_cron</code> (ver o passo 6).</td></tr>
 <tr><td><code>robo/conducao-robot.mjs</code></td><td>Robô de coleta (modo diário <code>CE_MODE=ano</code>).</td></tr>
 <tr><td><code>robo/driverpro-check.mjs</code></td><td>Conferência do banco do app (login, dados, ranking só com iniciais).</td></tr>
 <tr><td><code>robo/conducao-faixas-teste.mjs</code></td><td>Teste da régua das faixas, sem rede: <code>node robo/conducao-faixas-teste.mjs</code>.</td></tr>
+<tr><td><code>robo/avisa-falha.sh</code></td><td>Aviso por e-mail quando o robô falha (Resend; variáveis <code>RESEND_API_KEY</code>, <code>MAIL_TO</code>).</td></tr>
 <tr><td><code>workflows/*.yml</code></td><td>Agendamentos do GitHub Actions: robô, conferência e cópia do app para o site.</td></tr>
-<tr><td><code>painel/conducao-economica.html</code></td><td>Painel do gestor (depende de <code>assets/*.js</code> e do login do portal).</td></tr>
-<tr><td><code>apresentacoes/*.pdf</code></td><td>Apresentações executiva e para os motoristas.</td></tr>
+<tr><td><code>painel/conducao-economica.html</code> + <code>painel/assets/</code></td><td>Painel do gestor e os scripts compartilhados que ele carrega (depende do login do portal).</td></tr>
+<tr><td><code>apresentacoes/*.pdf</code>, <code>*.docx</code></td><td>Apresentações executiva e para os motoristas, descritivo do programa, "Como a nota é calculada" (PDF e Word), banners.</td></tr>
+<tr><td><code>VERSAO.txt</code></td><td>Commit de origem, data e a versão do cache do app (<code>driverpro-v34</code>).</td></tr>
 </table>
 
 <h2>3. Passo a passo</h2>
@@ -81,7 +96,7 @@ ol,ul{margin:4px 0 8px 18px;padding:0;} li{margin:2px 0;}
   <li><code>painel/conducao-economica.html</code>: URL e chave do banco;</li>
   <li><code>app/sw.js</code>: subir o nome do <code>CACHE</code> a cada publicação (é o que faz o celular trocar de versão).</li></ul></li>
 <li><b>Segredos do robô</b> (variáveis de ambiente): <code>GEM_SUPABASE_SERVICE_KEY</code> (chave service_role do banco novo) · <code>GEOTAB_USER</code> · <code>GEOTAB_PASS</code> · <code>GEOTAB_DB</code> (<code>ambev</code>) · <code>GEOTAB_SERVER</code> (<code>my.geotab.com</code>) · <code>VFLEETS_TOKEN</code> (opcional, sem uso hoje). <b>As credenciais não estão no pacote</b>: o Renan passa por canal seguro.</li>
-<li><b>Agendamento:</b> robô 1× por dia, de manhã, <code>CE_MODE=ano</code>. Leva poucos minutos por dia; depois de um buraco ele se recompõe sozinho.</li>
+<li><b>Agendamento:</b> robô 1× por dia, de manhã, <code>CE_MODE=ano</code> (hoje 07:20 de Brasília pelo GitHub Actions). Leva poucos minutos por dia; depois de um buraco ele se recompõe sozinho. <b>No dia 21</b> há mais dois agendamentos, hoje no <code>pg_cron</code> do Supabase (seção 18 do SQL): <code>driverpro-coleta-21</code> dispara o robô às 02:00 e 09:00 de Brasília (chama o GitHub Actions por <code>pg_net</code> com um token guardado em <code>portal_segredo</code>; na Conlog, basta agendar o robô nesses horários no orquestrador de vocês e ignorar a função <code>ce_app_dispara_coleta</code>) e <code>driverpro-congela</code> roda <code>select public.ce_app_fechar_auto()</code> de hora em hora de 21 a 28 (congela o período assim que a coleta do dia 20 entrou; às 23h do dia 21 congela de qualquer jeito). Sem <code>pg_cron</code>, rodar esse <code>select</code> por um agendador externo.</li>
 <li><b>Site do app:</b> publicar <code>app/</code> como site estático com HTTPS e apontar o DNS de <code>driverpro.&lt;domínio&gt;</code> (hoje <code>driverpro.onespot.com.br</code>, DNS no Registro.br). É PWA: precisa de HTTPS e de servir <code>index.html</code> e <code>sw.js</code> com <code>Cache-Control: no-cache</code>.</li>
 <li><b>Conferência:</b> <code>node robo/driverpro-check.mjs</code> contra o banco novo e login de teste no app (CPF de teste <code>00000000191</code>, motorista sintético <code>teste:driverpro</code>).</li>
 <li><b>Virada:</b> parar o robô antigo, rodar o novo, trocar o DNS. Se o domínio continuar o mesmo, os motoristas não reinstalam nada (só criam senha de novo se a tabela <code>ce_app_acesso</code> não for migrada).</li>
@@ -94,6 +109,7 @@ ol,ul{margin:4px 0 8px 18px;padding:0;} li{margin:2px 0;}
   -t public.ce_motoristas -t public.ce_diario -t public.ce_scores_mensais \
   -t public.ce_app_regras -t public.ce_app_unidade_cfg -t public.ce_app_admins \
   -t public.ce_app_acesso -t public.ce_app_sessao -t public.ce_app_log \
+  -t public.ce_app_fechamento -t public.ce_app_fechamento_log -t public.ce_app_senha_zerada \
   &gt; driverpro-dados.sql
 
 psql "&lt;conexão do banco novo&gt;" -f driverpro-dados.sql</code></pre>
@@ -114,6 +130,8 @@ psql "&lt;conexão do banco novo&gt;" -f driverpro-dados.sql</code></pre>
 <li><b>Painel do gestor:</b> usa o login do portal Gestão em Movimento e scripts compartilhados (<code>assets/</code>). Pode ficar no portal lendo o banco novo (trocar URL e chave) ou ser refeito no BI da Conlog. Também lê <code>ginfo_snapshot</code> (base de ativos) para modelo e projeto da placa; sem essa tabela ele funciona, só sem essas duas colunas.</li>
 <li><b>Funções duplicadas:</b> ao rodar só um trecho de <code>2-app-motorista.sql</code>, nunca levar a seção 7 sem o <code>drop</code> da versão antiga de <code>ce_app_dados(uuid)</code>. Duas versões da função fazem a API recusar a chamada do motorista (HTTP 300).</li>
 <li><b>Segurança:</b> app e painel usam só a chave pública; as tabelas têm RLS e o app só vê o que as funções <code>ce_app_*</code> devolvem para o CPF logado. A chave de serviço fica só no robô.</li>
-<li>O descritivo completo do programa (regras, LGPD, origem dos dados) segue em PDF à parte.</li>
+<li><b>Versão do app:</b> a que vale é a de <code>app/sw.js</code> (<code>CACHE</code>). Produção hoje é <code>driverpro-v34</code>; cada publicação sobe esse nome, e o app instalado troca sozinho na abertura seguinte.</li>
+<li><b>Código vivo:</b> o app continua evoluindo no repositório de origem (<code>app-motorista-4/</code>) até a virada. Antes de concluir a migração, conferir o commit de <code>VERSAO.txt</code> contra o <code>main</code>; se mudou, pegar os arquivos de lá.</li>
+<li>O descritivo completo do programa (regras, LGPD, origem dos dados) e o cálculo da nota seguem em PDF no pacote.</li>
 </ul>
 </body></html>
