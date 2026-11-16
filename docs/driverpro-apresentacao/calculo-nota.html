@@ -131,11 +131,11 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
   </table>
 
   <h3>Passo 4 · Do dia para o período</h3>
-  <p>A nota do período não é a média simples das notas dos dias. Cada medida do período é a média dos dias <b>ponderada pelo km rodado em cada dia</b>: um dia de 280 km pesa quase três vezes um dia de 100 km. Dia sem km registrado entra com peso 1.</p>
+  <p>A nota do período não é a média simples das notas dos dias. Cada medida do período é a média dos dias <b>na proporção do km rodado em cada dia</b>: um dia de 280 km conta quase três vezes mais que um dia de 100 km. Dia sem km registrado conta como 1 km. O dia é só a unidade de medição; o que decide quanto cada dia conta é o km rodado nele. "Peso" é só o dos pilares, 50 · 30 · 20.</p>
   <div class="formula">Medida do período = Σ (medida do dia × km do dia) ÷ Σ km dos dias</div>
   <p><b>Exemplo da ponderação.</b> Três dias medidos no período (o 1º é o dia do exemplo acima):</p>
   <table>
-    <tr><th>Dia</th><th class="r">Km (peso)</th><th class="r">G · giro na verde</th><th class="r">P · parado ligado</th><th class="r">A · acel. por 100 km</th><th class="r">Nota do dia</th></tr>
+    <tr><th>Dia</th><th class="r">Km rodado</th><th class="r">G · giro na verde</th><th class="r">P · parado ligado</th><th class="r">A · acel. por 100 km</th><th class="r">Nota do dia</th></tr>
     <tr><td>Dia 1</td><td class="r">280</td><td class="r">68,2%</td><td class="r">11,1%</td><td class="r">0,71</td><td class="r">66,0</td></tr>
     <tr><td>Dia 2</td><td class="r">350</td><td class="r">80,0%</td><td class="r">5,0%</td><td class="r">0,00</td><td class="r">84,0</td></tr>
     <tr><td>Dia 3</td><td class="r">100</td><td class="r">55,0%</td><td class="r">20,0%</td><td class="r">2,00</td><td class="r">40,2</td></tr>
@@ -154,7 +154,7 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
     <tr><td>Acelerações bruscas</td><td>0,55 por 100 km<br><span style="font-weight:500;color:var(--ink3)">(4 acelerações em 730 km = 1 a cada 182 km)</span></td><td>100 − (0,55 ÷ 3) × 100 = 81,8</td><td class="r">20</td><td class="r">16,4</td></tr>
     <tr class="tot"><td>Nota do período</td><td></td><td></td><td class="r">100</td><td class="r">71,1</td></tr>
   </table>
-  <p>Se a nota fosse a média simples dos dias, daria (66,0 + 84,0 + 40,2) ÷ 3 = 63,4. Ponderada pelo km dá 71,1: o dia 3, o pior, rodou só 100 km e pesa pouco; o dia 2, o melhor, rodou 350 km e pesa mais.</p>
+  <p>Se a nota fosse a média simples dos dias, daria (66,0 + 84,0 + 40,2) ÷ 3 = 63,4. Na proporção do km dá 71,1: o dia 3, o pior, rodou só 100 km e conta pouco; o dia 2, o melhor, rodou 350 km e conta mais.</p>
   <p><b>Pilar sem medição.</b> Se um pilar não puder ser medido no período (o caminhão não envia o giro, por exemplo), ele sai do numerador e do denominador: a soma dos produtos é dividida pela soma dos pesos dos pilares medidos. Sem o giro, divide-se por 50, não por 100 (quem fez 18,7 + 16,4 = 35,1 pontos em 50 fica com nota 70,2). O motorista não é prejudicado por equipamento que não mede.</p>
 
   <h3>Passo 6 · Da nota ao dinheiro</h3>
@@ -176,7 +176,7 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
     <tr><td>Acelerações bruscas</td><td class="r">20</td><td>Fica com os 20 se não acelera bruscamente; 3 a cada 100 km zeram o pilar</td><td>Cada aceleração brusca por 100 km = −6,7 pontos = −R$ 33,33</td></tr>
   </table>
   <p>Na prática: o giro pesa mais, mas é o mais barato por unidade (10% a mais na verde = 5 pontos = R$ 25,00). O motor parado é o mais caro por minuto (10% do turno parado ligado = −12 pontos = −R$ 60,00). As acelerações são raras e por isso cada uma pesa: num período de 3.000 km, cada brusca custa cerca de 0,2 ponto (R$ 1,10), e trinta zeram o pilar.</p>
-  <div class="box dark"><p><b>Resumo em uma linha.</b> Nota = 50% giro na verde + 30% motor parado ligado + 20% acelerações, dia a dia, ponderada pelo km do período. Dinheiro = R$ 5,00 por ponto acima de 60, até R$ 200,00, mais R$ 300 / 150 / 100 para o pódio, só para quem rodou 1.000 km com login. Congela no dia 21.</p></div>
+  <div class="box dark"><p><b>Resumo em uma linha.</b> Nota = 50% giro na verde + 30% motor parado ligado + 20% acelerações, dia a dia, cada dia na proporção do km rodado. Dinheiro = R$ 5,00 por ponto acima de 60, até R$ 200,00, mais R$ 300 / 150 / 100 para o pódio, só para quem rodou 1.000 km com login. Congela no dia 21.</p></div>
 </section>
 
 <!-- PARTE 2 -->
@@ -224,16 +224,16 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
   <p>Fechou o dia com <b>66 pontos</b>: perdeu 16 no giro, 13 no motor parado e 5 nas arrancadas.</p>
 
   <h3>5. A nota do período: os dias em que rodou mais valem mais</h3>
-  <p>O período vai do <b>dia 21 ao dia 20 do mês seguinte</b>. A nota do período não é a média simples dos dias: <b>cada dia pesa pelo km que rodou</b>. Um dia de 350 km pesa três vezes e meia mais que um dia de 100 km. É assim porque a nota mede como o motorista dirige, e quem dirige muito é avaliado pelo muito que dirigiu, não por um dia curto.</p>
+  <p>O período vai do <b>dia 21 ao dia 20 do mês seguinte</b>. A nota do período não é a média simples dos dias: <b>cada dia conta na proporção do km que rodou</b>. Um dia de 350 km conta três vezes e meia mais que um dia de 100 km. É assim porque a nota mede como o motorista dirige, e quem dirige muito é avaliado pelo muito que dirigiu, não por um dia curto.</p>
   <table style="font-size:10.5pt">
-    <tr><th>Dia</th><th class="r">Km rodados (o peso)</th><th class="r">Nota do dia</th></tr>
+    <tr><th>Dia</th><th class="r">Km rodados</th><th class="r">Nota do dia</th></tr>
     <tr><td>Dia 1</td><td class="r">280</td><td class="r">66</td></tr>
     <tr><td>Dia 2 (o melhor)</td><td class="r">350</td><td class="r">84</td></tr>
     <tr><td>Dia 3 (o pior, mas curto)</td><td class="r">100</td><td class="r">40</td></tr>
     <tr class="tot"><td>Nota do período</td><td class="r">730</td><td class="r">71</td></tr>
   </table>
-  <p>A média simples daria 63. Ponderada pelo km dá <b>71</b>, porque o dia ruim foi curto e o dia bom foi longo. Um dia ruim de poucos km não estraga o período.</p>
-  <p style="font-size:10pt;color:var(--ink3)">(Na conta exata, o DriverPro pondera pelo km cada uma das três partes separadamente e só depois soma. O resultado é praticamente o mesmo, e é assim que está na Parte 1.)</p>
+  <p>A média simples daria 63. Na proporção do km dá <b>71</b>, porque o dia ruim foi curto e o dia bom foi longo. Um dia ruim de poucos km não estraga o período.</p>
+  <p style="font-size:10pt;color:var(--ink3)">(Na conta exata, o DriverPro aplica a proporção do km a cada uma das três partes separadamente e só depois soma. O resultado é praticamente o mesmo, e é assim que está na Parte 1.)</p>
 
   <h3>6. Como a nota vira dinheiro</h3>
   <ul>
@@ -256,13 +256,13 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
   <h3>8. Perguntas comuns</h3>
   <p><b>"Desci a serra no freio motor e o giro subiu. Perdi ponto?"</b> Não. Na descida de 2% ou mais, o tempo na faixa amarela sai da conta. Nem desconta, nem soma.</p>
   <p><b>"Meu caminhão não envia o giro. Perco os 50 pontos?"</b> Não. Se uma parte não pode ser medida, a nota é feita com as outras e levada de volta à escala de 100. Ninguém perde por aparelho que não mede.</p>
-  <p><b>"Tive um dia muito ruim. Estraguei o período?"</b> Depende do km daquele dia. Dia ruim curto pesa pouco; dia ruim longo pesa mais, mas dias bons longos compensam.</p>
+  <p><b>"Tive um dia muito ruim. Estraguei o período?"</b> Depende do km daquele dia. Dia ruim curto conta pouco; dia ruim longo conta mais, mas dias bons longos compensam.</p>
   <p><b>"Rodei 900 km. Recebo uma parte?"</b> Não nesse período: a carteira abre com 1.000 km com login. Também não há desconto, e o período seguinte começa do zero.</p>
   <p><b>"Esqueci o login no caminhão."</b> Aquela viagem não é de ninguém: não conta km nem nota, para o bem ou para o mal. O login diário é a primeira regra.</p>
   <p><b>"Nota 60 vale zero mesmo?"</b> Vale zero, mas é o começo da rampa: 61 vale R$ 5,00, 70 vale R$ 50,00, 80 vale R$ 100,00, 90 vale R$ 150,00 e 100 vale R$ 200,00.</p>
 
   <div class="box dark">
-    <p><b>Em resumo:</b> 100 pontos em três partes, 50 pelo giro na faixa verde, 30 por não deixar o motor ligado parado, 20 por não arrancar forte. A nota do período pondera os dias pelo km rodado. Os primeiros 60 pontos não pagam; do 61 ao 100, R$ 5,00 cada, até R$ 200,00. Os três melhores ganham R$ 300 / 150 / 100 a mais. Só recebe quem rodou 1.000 km com login. No dia 21 o resultado congela e vem na folha.</p>
+    <p><b>Em resumo:</b> 100 pontos em três partes, 50 pelo giro na faixa verde, 30 por não deixar o motor ligado parado, 20 por não arrancar forte. A nota do período conta cada dia na proporção do km rodado. Os primeiros 60 pontos não pagam; do 61 ao 100, R$ 5,00 cada, até R$ 200,00. Os três melhores ganham R$ 300 / 150 / 100 a mais. Só recebe quem rodou 1.000 km com login. No dia 21 o resultado congela e vem na folha.</p>
   </div>
 </section>
 
