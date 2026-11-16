@@ -114,33 +114,33 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
   <h4>P · Motor ligado sem rodar (% do tempo de motor ligado que ficou parado)</h4>
   <div class="formula">P = segundos parado com o motor ligado ÷ (segundos dirigindo + segundos parado com o motor ligado) × 100
     <small>Os dois tempos vêm do registro de cada viagem do Geotab. Parado com o motor desligado não entra em nenhum dos dois.</small></div>
-  <h4>A · Acelerações bruscas (eventos a cada 100 km)</h4>
-  <div class="formula">A = número de acelerações bruscas no dia ÷ km rodado no dia × 100
-    <small>Aceleração brusca é o evento da regra padrão do Geotab (arrancada forte). Freada brusca é registrada, mas não entra na nota: mede condução segura, não econômica.</small></div>
+  <h4>A · Acelerações bruscas (quanto do limite foi usado)</h4>
+  <div class="formula">Limite do dia = km rodado no dia × 3 ÷ 100 <small style="display:inline;margin:0 0 0 8px">(3 arrancadas a cada 100 km: 280 km dão limite 8,4; 1.000 km, 30)</small><br>A = arrancadas bruscas do dia ÷ limite do dia × 100 <small style="display:inline;margin:0 0 0 8px">(% do limite usado)</small>
+    <small>Aceleração brusca é o evento da regra padrão do Geotab (arrancada forte). O limite cresce com o km: quem roda mais pode ter mais arrancadas antes de perder os mesmos pontos. Freada brusca é registrada, mas não entra na nota: mede condução segura, não econômica.</small></div>
 
   <h3>Passo 3 · A nota do dia</h3>
   <p>Cada medida vira uma nota de 0 a 100. O giro já é um percentual e vira nota direto. As outras duas partem de 100 e perdem na proporção até um limite que zera o pilar.</p>
-  <div class="formula">Nota do giro = G<br>Nota do parado ligado = 100 − (P ÷ 25) × 100, travada entre 0 e 100<br>Nota das acelerações = 100 − (A ÷ 3) × 100, travada entre 0 e 100<br><span class="acc">Nota do dia = (nota do giro × 50 + nota do parado ligado × 30 + nota das acelerações × 20) ÷ 100</span></div>
+  <div class="formula">Nota do giro = G<br>Nota do parado ligado = 100 − (P ÷ 25) × 100, travada entre 0 e 100<br>Nota das acelerações = 100 − A, travada entre 0 e 100 (usou 24% do limite: fica com 76; usou o limite todo: zera)<br><span class="acc">Nota do dia = (nota do giro × 50 + nota do parado ligado × 30 + nota das acelerações × 20) ÷ 100</span></div>
   <p><b>Exemplo de um dia.</b> O que o caminhão registrou: motor ligado por 540 min, sendo 480 min rodando (giro acima de 900 rpm) e 60 min parado ligado; 300 min na faixa verde e 40 min na amarela em descida; 280 km rodados; 2 acelerações bruscas.</p>
   <table>
     <tr><th>Pilar</th><th>Medida do dia</th><th>Conta da medida</th><th>Nota do pilar</th><th class="r">Peso</th><th class="r">Pontos</th></tr>
     <tr><td>Giro do motor</td><td>300 min na verde em 480 min rodando, 40 min de amarela em descida</td><td>300 ÷ (480 − 40) × 100 = 68,2%</td><td>68,2</td><td class="r">50</td><td class="r">68,2 × 50 ÷ 100 = 34,1</td></tr>
     <tr><td>Motor ligado sem rodar</td><td>60 min parado ligado em 540 min de motor ligado</td><td>60 ÷ 540 × 100 = 11,1%</td><td>100 − (11,1 ÷ 25) × 100 = 55,6</td><td class="r">30</td><td class="r">55,6 × 30 ÷ 100 = 16,7</td></tr>
-    <tr><td>Acelerações bruscas</td><td>2 acelerações em 280 km</td><td>2 ÷ 280 × 100 = 0,71 por 100 km</td><td>100 − (0,71 ÷ 3) × 100 = 76,2</td><td class="r">20</td><td class="r">76,2 × 20 ÷ 100 = 15,2</td></tr>
+    <tr><td>Acelerações bruscas</td><td>2 arrancadas em 280 km (limite do dia: 280 × 3 ÷ 100 = 8,4)</td><td>2 ÷ 8,4 × 100 = 23,8% do limite</td><td>100 − 23,8 = 76,2</td><td class="r">20</td><td class="r">76,2 × 20 ÷ 100 = 15,2</td></tr>
     <tr class="tot"><td>Nota do dia</td><td></td><td></td><td></td><td class="r">100</td><td class="r">34,1 + 16,7 + 15,2 = 66,0</td></tr>
   </table>
 
   <h3>Passo 4 · Do dia para o período</h3>
   <p>A nota do período não é a média simples das notas dos dias. Cada medida do período é a média dos dias <b>na proporção do km rodado em cada dia</b>: um dia de 280 km conta quase três vezes mais que um dia de 100 km. Dia sem km registrado conta como 1 km. O dia é só a unidade de medição; o que decide quanto cada dia conta é o km rodado nele. "Peso" é só o dos pilares, 50 · 30 · 20.</p>
-  <div class="formula">Medida do período = Σ (medida do dia × km do dia) ÷ Σ km dos dias</div>
+  <div class="formula">Medida do período = Σ (medida do dia × km do dia) ÷ Σ km dos dias<br><small>Nas arrancadas isso dá o mesmo que a conta direta: arrancadas do período ÷ limite do período (Σ km × 3 ÷ 100). É assim que a tabela mostra.</small></div>
   <p><b>Exemplo da ponderação.</b> Três dias medidos no período (o 1º é o dia do exemplo acima):</p>
   <table>
-    <tr><th>Dia</th><th class="r">Km rodado</th><th class="r">G · giro na verde</th><th class="r">P · parado ligado</th><th class="r">A · acel. por 100 km</th><th class="r">Nota do dia</th></tr>
-    <tr><td>Dia 1</td><td class="r">280</td><td class="r">68,2%</td><td class="r">11,1%</td><td class="r">0,71</td><td class="r">66,0</td></tr>
-    <tr><td>Dia 2</td><td class="r">350</td><td class="r">80,0%</td><td class="r">5,0%</td><td class="r">0,00</td><td class="r">84,0</td></tr>
-    <tr><td>Dia 3</td><td class="r">100</td><td class="r">55,0%</td><td class="r">20,0%</td><td class="r">2,00</td><td class="r">40,2</td></tr>
-    <tr><td><b>Soma dos km</b></td><td class="r"><b>730</b></td><td></td><td></td><td></td><td></td></tr>
-    <tr class="tot"><td>Ponderado pelo km</td><td></td><td class="r">(68,2×280 + 80,0×350 + 55,0×100) ÷ 730<br>= 72,1%</td><td class="r">(11,1×280 + 5,0×350 + 20,0×100) ÷ 730<br>= 9,4%</td><td class="r">(0,71×280 + 0×350 + 2,0×100) ÷ 730<br>= 0,55 <span style="font-weight:500;color:var(--ink3)">(4 acel. em 730 km)</span></td><td class="r">71,1<br><span style="font-weight:500;color:var(--ink3)">(passo 5)</span></td></tr>
+    <tr><th>Dia</th><th class="r">Km rodado</th><th class="r">G · giro na verde</th><th class="r">P · parado ligado</th><th class="r">A · arrancadas</th><th class="r">Nota do dia</th></tr>
+    <tr><td>Dia 1</td><td class="r">280</td><td class="r">68,2%</td><td class="r">11,1%</td><td class="r">2 (limite 8,4)</td><td class="r">66,0</td></tr>
+    <tr><td>Dia 2</td><td class="r">350</td><td class="r">80,0%</td><td class="r">5,0%</td><td class="r">0 (limite 10,5)</td><td class="r">84,0</td></tr>
+    <tr><td>Dia 3</td><td class="r">100</td><td class="r">55,0%</td><td class="r">20,0%</td><td class="r">2 (limite 3,0)</td><td class="r">40,2</td></tr>
+    <tr><td><b>Soma</b></td><td class="r"><b>730 km</b></td><td></td><td></td><td class="r"><b>4 arrancadas · limite 21,9</b></td><td></td></tr>
+    <tr class="tot"><td>Ponderado pelo km</td><td></td><td class="r">(68,2×280 + 80,0×350 + 55,0×100) ÷ 730<br>= 72,1%</td><td class="r">(11,1×280 + 5,0×350 + 20,0×100) ÷ 730<br>= 9,4%</td><td class="r">4 ÷ 21,9 × 100<br>= 18,3% do limite</td><td class="r">71,1<br><span style="font-weight:500;color:var(--ink3)">(passo 5)</span></td></tr>
   </table>
 </section>
 
@@ -151,11 +151,11 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
     <tr><th>Pilar</th><th>Medida do período</th><th>Nota do pilar</th><th class="r">Peso</th><th class="r">Pontos</th></tr>
     <tr><td>Giro do motor</td><td>72,1%</td><td>72,1</td><td class="r">50</td><td class="r">36,1</td></tr>
     <tr><td>Motor ligado sem rodar</td><td>9,4%</td><td>100 − (9,4 ÷ 25) × 100 = 62,4</td><td class="r">30</td><td class="r">18,7</td></tr>
-    <tr><td>Acelerações bruscas</td><td>0,55 por 100 km<br><span style="font-weight:500;color:var(--ink3)">(4 acelerações em 730 km = 1 a cada 182 km)</span></td><td>100 − (0,55 ÷ 3) × 100 = 81,8</td><td class="r">20</td><td class="r">16,4</td></tr>
+    <tr><td>Acelerações bruscas</td><td>4 arrancadas em 730 km<br><span style="font-weight:500;color:var(--ink3)">(limite 21,9: usou 18,3%)</span></td><td>100 − 18,3 = 81,7</td><td class="r">20</td><td class="r">16,3</td></tr>
     <tr class="tot"><td>Nota do período</td><td></td><td></td><td class="r">100</td><td class="r">71,1</td></tr>
   </table>
   <p>Se a nota fosse a média simples dos dias, daria (66,0 + 84,0 + 40,2) ÷ 3 = 63,4. Na proporção do km dá 71,1: o dia 3, o pior, rodou só 100 km e conta pouco; o dia 2, o melhor, rodou 350 km e conta mais.</p>
-  <p><b>Pilar sem medição.</b> Se um pilar não puder ser medido no período (o caminhão não envia o giro, por exemplo), ele sai do numerador e do denominador: a soma dos produtos é dividida pela soma dos pesos dos pilares medidos. Sem o giro, divide-se por 50, não por 100 (quem fez 18,7 + 16,4 = 35,1 pontos em 50 fica com nota 70,2). O motorista não é prejudicado por equipamento que não mede.</p>
+  <p><b>Pilar sem medição.</b> Se um pilar não puder ser medido no período (o caminhão não envia o giro, por exemplo), ele sai do numerador e do denominador: a soma dos produtos é dividida pela soma dos pesos dos pilares medidos. Sem o giro, divide-se por 50, não por 100 (quem fez 18,7 + 16,3 = 35,0 pontos em 50 fica com nota 70,0). O motorista não é prejudicado por equipamento que não mede.</p>
 
   <h3>Passo 6 · Da nota ao dinheiro</h3>
   <ol>
@@ -173,9 +173,9 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
     <tr><th>Pilar</th><th class="r">Pontos em jogo</th><th>Como fica com os pontos</th><th>O que cada unidade custa</th></tr>
     <tr><td>Giro do motor</td><td class="r">50</td><td>Na proporção do tempo rodando na verde: 100% na verde = 50 pontos; 70% = 35</td><td>Cada 1% do tempo fora da verde = −0,5 ponto = −R$ 2,50</td></tr>
     <tr><td>Motor ligado sem rodar</td><td class="r">30</td><td>Fica com os 30 se não deixa o motor ligado parado; 25% do tempo parado ligado zera o pilar</td><td>Cada 1% do tempo parado ligado = −1,2 ponto = −R$ 6,00</td></tr>
-    <tr><td>Acelerações bruscas</td><td class="r">20</td><td>Fica com os 20 se não acelera bruscamente; 3 a cada 100 km zeram o pilar</td><td>Cada aceleração brusca por 100 km = −6,7 pontos = −R$ 33,33</td></tr>
+    <tr><td>Acelerações bruscas</td><td class="r">20</td><td>Tem um limite de 3 arrancadas a cada 100 km rodados (1.000 km = 30; 3.000 km = 90). Fica com os 20 se não dá nenhuma; usar o limite todo zera o pilar</td><td>Cada arrancada = 20 ÷ limite pontos. Em 1.000 km: −0,67 ponto = −R$ 3,33. Em 3.000 km: −0,22 ponto = −R$ 1,11</td></tr>
   </table>
-  <p>Na prática: o giro pesa mais, mas é o mais barato por unidade (10% a mais na verde = 5 pontos = R$ 25,00). O motor parado é o mais caro por minuto (10% do turno parado ligado = −12 pontos = −R$ 60,00). As acelerações são raras e por isso cada uma pesa: num período de 3.000 km, cada brusca custa cerca de 0,2 ponto (R$ 1,10), e trinta zeram o pilar.</p>
+  <p>Na prática: o giro pesa mais, mas é o mais barato por unidade (10% a mais na verde = 5 pontos = R$ 25,00). O motor parado é o mais caro por minuto (10% do turno parado ligado = −12 pontos = −R$ 60,00). Nas arrancadas o limite acompanha o km: num período de 3.000 km são 90 arrancadas de limite, cada uma custa 0,22 ponto (R$ 1,11), e as 90 zeram o pilar.</p>
   <div class="box dark"><p><b>Resumo em uma linha.</b> Nota = 50% giro na verde + 30% motor parado ligado + 20% acelerações, dia a dia, cada dia na proporção do km rodado. Dinheiro = R$ 5,00 por ponto acima de 60, até R$ 200,00, mais R$ 300 / 150 / 100 para o pódio, só para quem rodou 1.000 km com login. Congela no dia 21.</p></div>
 </section>
 
@@ -209,8 +209,8 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
   <p>Nenhum tempo parado ligado: <b>30 pontos</b>. A partir daí perde na proporção, e <b>25% do tempo parado ligado zera a parte</b>: quem parou ligado 10% do tempo perdeu 12 dos 30 pontos. É a parte que mais pesa por minuto, porque 25% é pouco tempo.</p>
 
   <h3>3. Arrancadas fortes (20 pontos)</h3>
-  <p>O rastreador registra cada arrancada brusca (a regra padrão do Geotab). O DriverPro conta quantas o motorista deu <b>a cada 100 km rodados</b>.</p>
-  <p>Nenhuma: <b>20 pontos</b>. <b>Três a cada 100 km zeram a parte</b>; uma a cada 100 km tira quase 7 pontos. É a parte menor, mas cada arrancada pesa, porque quem dirige bem quase não faz isso.</p>
+  <p>O rastreador registra cada arrancada brusca (a regra padrão do Geotab). O DriverPro dá a cada motorista um <b>limite de arrancadas que cresce com o km rodado: 3 a cada 100 km</b>. Quem rodou 280 km tem limite de 8; quem rodou 1.000 km, de 30; quem rodou 3.000 km, de 90.</p>
+  <p>Nenhuma arrancada: <b>20 pontos</b>. Cada arrancada gasta um pedaço igual do limite, e <b>quem gasta o limite todo zera a parte</b>. Exemplo: 2 arrancadas em 280 km são 2 de 8,4, ou 24% do limite; o motorista perde 24% dos 20 pontos (5) e fica com 15.</p>
 
   <h3>4. A nota do dia</h3>
   <p>No fim do dia, o DriverPro vê o que sobrou de cada parte e soma. Um dia de exemplo:</p>
@@ -218,7 +218,7 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
     <tr><th>Parte</th><th>O que o caminhão mediu no dia</th><th class="r">Tinha</th><th class="r">Sobrou</th></tr>
     <tr><td>Giro do motor</td><td>68% do tempo andando na faixa verde (o tempo de descida com freio motor já saiu da conta)</td><td class="r">50</td><td class="r">34</td></tr>
     <tr><td>Motor ligado parado</td><td>1 hora parado com o motor ligado, em 9 horas de motor ligado (11%)</td><td class="r">30</td><td class="r">17</td></tr>
-    <tr><td>Arrancadas fortes</td><td>2 arrancadas em 280 km (0,7 a cada 100 km)</td><td class="r">20</td><td class="r">15</td></tr>
+    <tr><td>Arrancadas fortes</td><td>2 arrancadas em 280 km (limite do dia 8,4: usou 24%)</td><td class="r">20</td><td class="r">15</td></tr>
     <tr class="tot"><td>Nota do dia</td><td></td><td class="r">100</td><td class="r">66</td></tr>
   </table>
   <p>Fechou o dia com <b>66 pontos</b>: perdeu 16 no giro, 13 no motor parado e 5 nas arrancadas.</p>
@@ -250,7 +250,7 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
   <div class="cx">
     <div class="c"><div class="n acc">1</div><div class="l">Marcha certa, giro na verde</div><p>Cada 10% a mais do tempo na faixa verde são 5 pontos: R$ 25,00 no período.</p></div>
     <div class="c"><div class="n acc">2</div><div class="l">Parou, desligou</div><p>Cada 10% do turno com o motor ligado parado custa 12 pontos: R$ 60,00. É o que mais pesa por minuto.</p></div>
-    <div class="c"><div class="n acc">3</div><div class="l">Arrancada suave</div><p>Num período de 3.000 km, cada arrancada forte custa cerca de R$ 1,10; trinta zeram a parte.</p></div>
+    <div class="c"><div class="n acc">3</div><div class="l">Arrancada suave</div><p>Em 3.000 km o limite é 90 arrancadas. Cada uma custa R$ 1,11; as 90 zeram a parte.</p></div>
   </div>
 
   <h3>8. Perguntas comuns</h3>
@@ -309,15 +309,16 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
     <tr><td class="r">162</td><td>162 ÷ 540</td><td class="r">30,0%</td><td>100 − (30 ÷ 25) × 100 = −20 → travada em 0</td><td class="r">0,0</td><td class="r">0,0</td></tr>
   </table>
 
-  <h3>4. Arrancadas fortes: de zero até zerar o pilar (20 pontos em jogo, 280 km no dia)</h3>
+  <h3>4. Arrancadas fortes: de zero até zerar o pilar (20 pontos em jogo, 280 km no dia, limite = 280 × 3 ÷ 100 = 8,4 arrancadas)</h3>
   <table>
-    <tr><th class="r">Arrancadas</th><th>Conta da medida</th><th class="r">A (por 100 km)</th><th>Conta da nota</th><th class="r">Nota do pilar</th><th class="r">Pontos (× 20 ÷ 100)</th></tr>
-    <tr><td class="r">0</td><td>0 ÷ 280 × 100</td><td class="r">0,00</td><td>100 − (0 ÷ 3) × 100</td><td class="r">100,0</td><td class="r">20,0</td></tr>
-    <tr><td class="r">1</td><td>1 ÷ 280 × 100</td><td class="r">0,36</td><td>100 − (0,36 ÷ 3) × 100</td><td class="r">88,1</td><td class="r">17,6</td></tr>
-    <tr><td class="r">2</td><td>2 ÷ 280 × 100</td><td class="r">0,71</td><td>100 − (0,71 ÷ 3) × 100</td><td class="r">76,2</td><td class="r">15,2</td></tr>
-    <tr><td class="r">5</td><td>5 ÷ 280 × 100</td><td class="r">1,79</td><td>100 − (1,79 ÷ 3) × 100</td><td class="r">40,5</td><td class="r">8,1</td></tr>
-    <tr><td class="r">9</td><td>9 ÷ 280 × 100</td><td class="r">3,21</td><td>100 − (3,21 ÷ 3) × 100 = −7 → travada em 0</td><td class="r">0,0</td><td class="r">0,0</td></tr>
+    <tr><th class="r">Arrancadas</th><th>Conta do limite usado</th><th class="r">A (% do limite)</th><th>Conta da nota</th><th class="r">Nota do pilar</th><th class="r">Pontos (× 20 ÷ 100)</th></tr>
+    <tr><td class="r">0</td><td>0 ÷ 8,4 × 100</td><td class="r">0,0%</td><td>100 − 0</td><td class="r">100,0</td><td class="r">20,0</td></tr>
+    <tr><td class="r">1</td><td>1 ÷ 8,4 × 100</td><td class="r">11,9%</td><td>100 − 11,9</td><td class="r">88,1</td><td class="r">17,6</td></tr>
+    <tr><td class="r">2</td><td>2 ÷ 8,4 × 100</td><td class="r">23,8%</td><td>100 − 23,8</td><td class="r">76,2</td><td class="r">15,2</td></tr>
+    <tr><td class="r">5</td><td>5 ÷ 8,4 × 100</td><td class="r">59,5%</td><td>100 − 59,5</td><td class="r">40,5</td><td class="r">8,1</td></tr>
+    <tr><td class="r">9</td><td>9 ÷ 8,4 × 100</td><td class="r">107,1%</td><td>100 − 107,1 = −7 → travada em 0</td><td class="r">0,0</td><td class="r">0,0</td></tr>
   </table>
+  <p style="font-size:9.5pt;color:var(--ink3)">Noutro dia, com 1.000 km, o limite seria 30: as mesmas 2 arrancadas usariam 6,7% e custariam 1,3 ponto, não 4,8.</p>
 </section>
 
 <section>
@@ -331,18 +332,18 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
 
   <h3>6. Do dia para o período: o motorista 2 em três dias (cada dia conta na proporção do km)</h3>
   <table>
-    <tr><th>Dia</th><th class="r">Km rodado</th><th class="r">G</th><th class="r">P</th><th class="r">A</th><th class="r">Nota do dia</th></tr>
-    <tr><td>Dia 1</td><td class="r">280</td><td class="r">68,2%</td><td class="r">11,1%</td><td class="r">0,71</td><td class="r">66,0</td></tr>
-    <tr><td>Dia 2</td><td class="r">350</td><td class="r">80,0%</td><td class="r">5,0%</td><td class="r">0,00</td><td class="r">84,0</td></tr>
-    <tr><td>Dia 3</td><td class="r">100</td><td class="r">55,0%</td><td class="r">20,0%</td><td class="r">2,00</td><td class="r">40,2</td></tr>
-    <tr><td><b>Total de km</b></td><td class="r"><b>730</b></td><td></td><td></td><td></td><td></td></tr>
-    <tr class="tot"><td>Medida do período</td><td></td><td class="r">(68,2×280 + 80,0×350 + 55,0×100) ÷ 730 = 72,1%</td><td class="r">(11,1×280 + 5,0×350 + 20,0×100) ÷ 730 = 9,4%</td><td class="r">(0,71×280 + 0×350 + 2,0×100) ÷ 730 = 0,55</td><td class="r">71,1</td></tr>
+    <tr><th>Dia</th><th class="r">Km rodado</th><th class="r">G</th><th class="r">P</th><th class="r">Arrancadas (limite do dia)</th><th class="r">Nota do dia</th></tr>
+    <tr><td>Dia 1</td><td class="r">280</td><td class="r">68,2%</td><td class="r">11,1%</td><td class="r">2 (8,4)</td><td class="r">66,0</td></tr>
+    <tr><td>Dia 2</td><td class="r">350</td><td class="r">80,0%</td><td class="r">5,0%</td><td class="r">0 (10,5)</td><td class="r">84,0</td></tr>
+    <tr><td>Dia 3</td><td class="r">100</td><td class="r">55,0%</td><td class="r">20,0%</td><td class="r">2 (3,0)</td><td class="r">40,2</td></tr>
+    <tr><td><b>Total</b></td><td class="r"><b>730 km</b></td><td></td><td></td><td class="r"><b>4 (limite 21,9)</b></td><td></td></tr>
+    <tr class="tot"><td>Medida do período</td><td></td><td class="r">(68,2×280 + 80,0×350 + 55,0×100) ÷ 730 = 72,1%</td><td class="r">(11,1×280 + 5,0×350 + 20,0×100) ÷ 730 = 9,4%</td><td class="r">4 ÷ 21,9 × 100 = 18,3% do limite</td><td class="r">71,1</td></tr>
   </table>
   <table>
     <tr><th>Pilar</th><th class="r">Medida do período</th><th>Conta da nota</th><th class="r">Nota</th><th class="r">Peso</th><th class="r">Pontos</th></tr>
     <tr><td>Giro do motor</td><td class="r">72,1%</td><td>= G</td><td class="r">72,1</td><td class="r">50</td><td class="r">36,1</td></tr>
     <tr><td>Motor ligado parado</td><td class="r">9,4%</td><td>100 − (9,4 ÷ 25) × 100</td><td class="r">62,4</td><td class="r">30</td><td class="r">18,7</td></tr>
-    <tr><td>Arrancadas fortes</td><td class="r">0,55 por 100 km</td><td>100 − (0,55 ÷ 3) × 100</td><td class="r">81,8</td><td class="r">20</td><td class="r">16,4</td></tr>
+    <tr><td>Arrancadas fortes</td><td class="r">18,3% do limite</td><td>100 − 18,3</td><td class="r">81,7</td><td class="r">20</td><td class="r">16,3</td></tr>
     <tr class="tot"><td>Nota do período</td><td></td><td>média simples dos dias daria 63,4</td><td></td><td class="r">100</td><td class="r">71,1</td></tr>
   </table>
 
@@ -351,8 +352,8 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
     <tr><th>Pilar</th><th class="r">Nota</th><th class="r">Peso</th><th class="r">Pontos</th><th>Entra?</th></tr>
     <tr><td>Giro do motor</td><td class="r">sem medição</td><td class="r">50</td><td class="r">—</td><td>Não: sai do numerador e do divisor</td></tr>
     <tr><td>Motor ligado parado</td><td class="r">62,4</td><td class="r">30</td><td class="r">18,7</td><td>Sim</td></tr>
-    <tr><td>Arrancadas fortes</td><td class="r">81,8</td><td class="r">20</td><td class="r">16,4</td><td>Sim</td></tr>
-    <tr class="tot"><td>Nota do período</td><td></td><td class="r">30 + 20 = 50</td><td class="r">35,1</td><td>35,1 ÷ 50 × 100 = 70,2</td></tr>
+    <tr><td>Arrancadas fortes</td><td class="r">81,7</td><td class="r">20</td><td class="r">16,3</td><td>Sim</td></tr>
+    <tr class="tot"><td>Nota do período</td><td></td><td class="r">30 + 20 = 50</td><td class="r">35,0</td><td>35,0 ÷ 50 × 100 = 70,0</td></tr>
   </table>
 </section>
 
@@ -397,8 +398,9 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
     <tr><th>O que aconteceu no período</th><th>Pilar</th><th>Conta</th><th class="r">Pontos a menos</th><th class="r">R$ a menos</th></tr>
     <tr><td>10% do tempo andando fora da faixa verde</td><td>Giro</td><td>10 × 0,5</td><td class="r">5,0</td><td class="r">R$ 25,00</td></tr>
     <tr><td>10% do tempo de motor ligado parado</td><td>Parado ligado</td><td>10 ÷ 25 × 30</td><td class="r">12,0</td><td class="r">R$ 60,00</td></tr>
-    <tr><td>1 arrancada forte a cada 100 km</td><td>Arrancadas</td><td>1 ÷ 3 × 20</td><td class="r">6,7</td><td class="r">R$ 33,33</td></tr>
-    <tr><td>1 arrancada forte num período de 3.000 km</td><td>Arrancadas</td><td>(1 ÷ 3.000 × 100) ÷ 3 × 20</td><td class="r">0,2</td><td class="r">R$ 1,11</td></tr>
+    <tr><td>1 arrancada forte num período de 1.000 km (limite 30)</td><td>Arrancadas</td><td>1 ÷ 30 × 20</td><td class="r">0,7</td><td class="r">R$ 3,33</td></tr>
+    <tr><td>1 arrancada forte num período de 3.000 km (limite 90)</td><td>Arrancadas</td><td>1 ÷ 90 × 20</td><td class="r">0,2</td><td class="r">R$ 1,11</td></tr>
+    <tr><td>10 arrancadas fortes num período de 1.000 km (limite 30)</td><td>Arrancadas</td><td>10 ÷ 30 × 20</td><td class="r">6,7</td><td class="r">R$ 33,33</td></tr>
     <tr><td>1 hora parado ligado num período de 200 h de motor ligado</td><td>Parado ligado</td><td>(1 ÷ 200 × 100) ÷ 25 × 30</td><td class="r">0,6</td><td class="r">R$ 3,00</td></tr>
   </table>
 
