@@ -14,7 +14,15 @@ body{font-family:'Montserrat',Arial,sans-serif;color:var(--ink);-webkit-print-co
 /* a foto dos caminhões (Renan, 16/11/2026) ocupa o banner inteiro, com o escurecedor por cima
    ("pode usar ela meio escura"): o texto é branco e o caminhão fica como clima, não como leitura */
 .foto{position:absolute;inset:0;z-index:0;background:url('img/fundo-banner.jpg') center 38% / cover no-repeat;}
-.foto::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,26,32,.80) 0%,rgba(15,26,32,.74) 30%,rgba(15,26,32,.84) 55%,rgba(15,26,32,.91) 100%);}
+.foto::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,26,32,.88) 0%,rgba(15,26,32,.82) 30%,rgba(15,26,32,.90) 55%,rgba(15,26,32,.95) 100%);}
+/* fundo ILUSTRADO (Renan, 16/11/2026: "Tente criar um fundo nessa lógica, com caminhão e sombra e adicione o logo Conlog"):
+   a mesma cena da foto desenhada em vetor (frente do caminhão entre dois baús, reflexo embaixo,
+   marca CONLOG no teto e nos baús), em branco translúcido sobre o grafite. body.vetor liga. */
+.ilus{display:none;position:absolute;inset:0;z-index:0;}
+.ilus svg{width:100%;height:100%;display:block;}
+body.vetor .foto{display:none;}
+body.vetor .ilus{display:block;}
+.banner>.ilus{flex:none;position:absolute;z-index:0;}
 .banner>*{flex:0 0 auto;position:relative;z-index:1;}
 .banner>.foto{flex:none;position:absolute;z-index:0;}
 
@@ -91,6 +99,78 @@ body{font-family:'Montserrat',Arial,sans-serif;color:var(--ink);-webkit-print-co
 <body>
 <div class="banner">
   <div class="foto"></div>
+  <div class="ilus"><svg viewBox="0 0 1000 1500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="glow" cx="50%" cy="46%" r="55%"><stop offset="0" stop-color="#3A5A78" stop-opacity=".55"/><stop offset=".6" stop-color="#16232E" stop-opacity=".2"/><stop offset="1" stop-color="#0F1A20" stop-opacity="0"/></radialGradient>
+      <radialGradient id="farol" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFF3C4"/><stop offset=".45" stop-color="#FFC94D" stop-opacity=".9"/><stop offset="1" stop-color="#FFC94D" stop-opacity="0"/></radialGradient>
+      <linearGradient id="ref" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".55" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <mask id="mref"><rect x="0" y="1000" width="1000" height="500" fill="url(#ref)"/></mask>
+      <linearGradient id="chao" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1B2A36"/><stop offset="1" stop-color="#0A1217"/></linearGradient>
+      <symbol id="conlog" viewBox="0 0 520 100">
+        <text x="0" y="82" font-family="Montserrat,Arial,sans-serif" font-weight="800" font-size="96" fill="currentColor" letter-spacing="-4">C</text>
+        <g transform="translate(118,50)"><circle r="40" fill="none" stroke="currentColor" stroke-width="13"/><path d="M-30 14c14-30 46-38 70-24" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round"/><path d="M-6 30c10-14 26-22 42-22" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/></g>
+        <text x="176" y="82" font-family="Montserrat,Arial,sans-serif" font-weight="800" font-size="96" fill="currentColor" letter-spacing="-4">NLOG</text>
+      </symbol>
+      <g id="cena">
+        <!-- baú da esquerda -->
+        <g>
+          <polygon points="-40,560 250,590 250,1000 -40,1000" fill="#1A3F9E" opacity=".55"/>
+          <polygon points="-40,560 250,590 250,606 -40,578" fill="#fff" opacity=".14"/>
+          <polygon points="-40,930 250,944 250,960 -40,948" fill="#fff" opacity=".10"/>
+          <g color="#fff" opacity=".82" transform="translate(14,662) skewY(5.5)"><use href="#conlog" width="220" height="42"/></g>
+          <rect x="120" y="1000" width="110" height="70" rx="14" fill="#0A1217"/><circle cx="175" cy="1000" r="46" fill="#0A1217" stroke="#fff" stroke-opacity=".2" stroke-width="4"/><circle cx="175" cy="1000" r="18" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="4"/>
+          <circle cx="40" cy="1000" r="46" fill="#0A1217" stroke="#fff" stroke-opacity=".2" stroke-width="4"/>
+        </g>
+        <!-- baú da direita -->
+        <g transform="translate(1000,0) scale(-1,1)">
+          <polygon points="-40,560 250,590 250,1000 -40,1000" fill="#1A3F9E" opacity=".55"/>
+          <polygon points="-40,560 250,590 250,606 -40,578" fill="#fff" opacity=".14"/>
+          <polygon points="-40,930 250,944 250,960 -40,948" fill="#fff" opacity=".10"/>
+          <rect x="120" y="1000" width="110" height="70" rx="14" fill="#0A1217"/><circle cx="175" cy="1000" r="46" fill="#0A1217" stroke="#fff" stroke-opacity=".2" stroke-width="4"/><circle cx="175" cy="1000" r="18" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="4"/>
+          <circle cx="40" cy="1000" r="46" fill="#0A1217" stroke="#fff" stroke-opacity=".2" stroke-width="4"/>
+        </g>
+        <g color="#fff" opacity=".82" transform="translate(766,680) skewY(-5.5)"><use href="#conlog" width="220" height="42"/></g>
+        <!-- sombra no chão -->
+        <ellipse cx="500" cy="1000" rx="330" ry="26" fill="#000" opacity=".5"/>
+        <!-- cabine -->
+        <g>
+          <rect x="300" y="970" width="90" height="60" rx="12" fill="#0A1217"/><rect x="610" y="970" width="90" height="60" rx="12" fill="#0A1217"/>
+          <path d="M255 470 q0-40 40-40 h410 q40 0 40 40 v510 q0 20-20 20 h-450 q-20 0-20-20z" fill="#E9EDF1" opacity=".16"/>
+          <path d="M255 470 q0-40 40-40 h410 q40 0 40 40 v30 h-490z" fill="#fff" opacity=".22"/>
+          <g color="#fff" opacity=".9" transform="translate(432,448)"><use href="#conlog" width="136" height="26"/></g>
+          <!-- para-brisa -->
+          <path d="M282 512 h436 q10 0 10 10 v120 q0 10-10 10 h-436 q-10 0-10-10 v-120 q0-10 10-10z" fill="#9FB4C8" opacity=".22"/>
+          <path d="M282 512 h436 q10 0 10 10 v40 h-456 v-40 q0-10 10-10z" fill="#fff" opacity=".10"/>
+          <path d="M330 650 l60-60 M520 650 l60-60" stroke="#fff" stroke-opacity=".3" stroke-width="5" stroke-linecap="round"/>
+          <!-- retrovisores -->
+          <rect x="214" y="520" width="32" height="90" rx="8" fill="#0F1A20" stroke="#fff" stroke-opacity=".4" stroke-width="3"/><path d="M246 540 h12 M246 590 h12" stroke="#fff" stroke-opacity=".4" stroke-width="4"/>
+          <rect x="754" y="520" width="32" height="90" rx="8" fill="#0F1A20" stroke="#fff" stroke-opacity=".4" stroke-width="3"/><path d="M742 540 h12 M742 590 h12" stroke="#fff" stroke-opacity=".4" stroke-width="4"/>
+          <!-- faixa CONSTELLATION -->
+          <rect x="300" y="668" width="400" height="24" rx="6" fill="#0F1A20" opacity=".6"/>
+          <text x="500" y="686" text-anchor="middle" font-family="Montserrat,Arial,sans-serif" font-weight="600" font-size="15" letter-spacing="4" fill="#fff" fill-opacity=".55">CONSTELLATION</text>
+          <!-- grade -->
+          <g fill="#fff" opacity=".2">
+            <rect x="330" y="708" width="340" height="34" rx="8"/><rect x="330" y="754" width="340" height="34" rx="8"/><rect x="330" y="800" width="340" height="34" rx="8"/><rect x="330" y="846" width="340" height="34" rx="8"/>
+          </g>
+          <circle cx="500" cy="770" r="52" fill="#0F1A20"/><circle cx="500" cy="770" r="46" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="7"/>
+          <path d="M470 752 l12 36 l18-36 l18 36 l12-36" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="7" stroke-linejoin="round"/>
+          <!-- faróis -->
+          <g><circle cx="300" cy="740" r="30" fill="url(#farol)"/><circle cx="300" cy="740" r="15" fill="#FFF3C4"/><circle cx="300" cy="815" r="30" fill="url(#farol)"/><circle cx="300" cy="815" r="15" fill="#FFF3C4"/></g>
+          <g><circle cx="700" cy="740" r="30" fill="url(#farol)"/><circle cx="700" cy="740" r="15" fill="#FFF3C4"/><circle cx="700" cy="815" r="30" fill="url(#farol)"/><circle cx="700" cy="815" r="15" fill="#FFF3C4"/></g>
+          <!-- para-choque -->
+          <rect x="262" y="896" width="476" height="92" rx="20" fill="#E9EDF1" opacity=".14"/>
+          <rect x="440" y="924" width="120" height="38" rx="6" fill="#0F1A20" opacity=".7" stroke="#fff" stroke-opacity=".3" stroke-width="2"/>
+        </g>
+      </g>
+    </defs>
+    <rect width="1000" height="1500" fill="#0F1A20"/>
+    <rect width="1000" height="1500" fill="url(#glow)"/>
+    <g transform="translate(0,260)">
+      <rect x="0" y="1000" width="1000" height="500" fill="url(#chao)"/>
+      <g opacity=".42"><use href="#cena"/></g>
+      <g mask="url(#mref)" opacity=".5"><g transform="translate(0,2000) scale(1,-1)"><use href="#cena"/></g></g>
+    </g>
+  </svg></div>
 
   <div class="topo">
     <div class="logo">
