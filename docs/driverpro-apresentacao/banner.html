@@ -14,7 +14,7 @@ body{font-family:'Montserrat',Arial,sans-serif;color:var(--ink);-webkit-print-co
 /* a foto dos caminhões (Renan, 16/11/2026) ocupa o banner inteiro, com o escurecedor por cima
    ("pode usar ela meio escura"): o texto é branco e o caminhão fica como clima, não como leitura */
 .foto{position:absolute;inset:0;z-index:0;background:url('img/fundo-banner.jpg') center 38% / cover no-repeat;}
-.foto::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,26,32,.88) 0%,rgba(15,26,32,.82) 30%,rgba(15,26,32,.90) 55%,rgba(15,26,32,.95) 100%);}
+.foto::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,26,32,.93) 0%,rgba(15,26,32,.89) 30%,rgba(15,26,32,.94) 55%,rgba(15,26,32,.97) 100%);}
 /* fundo ILUSTRADO (Renan, 16/11/2026: "Tente criar um fundo nessa lógica, com caminhão e sombra e adicione o logo Conlog"):
    a mesma cena da foto desenhada em vetor (frente do caminhão entre dois baús, reflexo embaixo,
    marca CONLOG no teto e nos baús), em branco translúcido sobre o grafite. body.vetor liga. */
@@ -107,9 +107,25 @@ body.vetor .ilus{display:block;}
       <mask id="mref"><rect x="0" y="1000" width="1000" height="500" fill="url(#ref)"/></mask>
       <linearGradient id="chao" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1B2A36"/><stop offset="1" stop-color="#0A1217"/></linearGradient>
       <symbol id="conlog" viewBox="0 0 520 100">
-        <text x="0" y="82" font-family="Montserrat,Arial,sans-serif" font-weight="800" font-size="96" fill="currentColor" letter-spacing="-4">C</text>
-        <g transform="translate(118,50)"><circle r="40" fill="none" stroke="currentColor" stroke-width="13"/><path d="M-30 14c14-30 46-38 70-24" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round"/><path d="M-6 30c10-14 26-22 42-22" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/></g>
-        <text x="176" y="82" font-family="Montserrat,Arial,sans-serif" font-weight="800" font-size="96" fill="currentColor" letter-spacing="-4">NLOG</text>
+        <!-- o O da Conlog: pneu (anel) cortado por três faixas em diagonal, o rastro saindo pela esquerda embaixo -->
+        <mask id="mpneu" maskUnits="userSpaceOnUse" x="-70" y="-70" width="140" height="140">
+          <rect x="-70" y="-70" width="140" height="140" fill="#fff"/>
+          <g fill="none" stroke="#000" stroke-width="4.5" stroke-linecap="round">
+            <path d="M-50 36 Q-15 -40 36 -39"/>
+            <path d="M-39 47 Q-4 -29 47 -28"/>
+            <path d="M-28 58 Q7 -18 58 -17"/>
+          </g>
+        </mask>
+        <text x="0" y="82" font-family="Montserrat,Arial,sans-serif" font-weight="800" font-size="94" fill="currentColor" letter-spacing="1">C</text>
+        <g transform="translate(122,50)" mask="url(#mpneu)">
+          <circle r="39" fill="none" stroke="currentColor" stroke-width="15"/>
+          <g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round">
+            <path d="M-56 30 Q-21 -46 30 -45"/>
+            <path d="M-45 41 Q-10 -35 41 -34"/>
+            <path d="M-34 52 Q1 -24 52 -23"/>
+          </g>
+        </g>
+        <text x="178" y="82" font-family="Montserrat,Arial,sans-serif" font-weight="800" font-size="94" fill="currentColor" letter-spacing="1">NLOG</text>
       </symbol>
       <g id="cena">
         <!-- baú da esquerda -->
