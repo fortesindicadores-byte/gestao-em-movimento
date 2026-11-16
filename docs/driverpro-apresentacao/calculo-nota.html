@@ -70,7 +70,7 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
   <div class="logo"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5h9l4 5h3v4H3z"/><circle cx="7.5" cy="17" r="1.8" fill="#fff"/><circle cx="17.5" cy="17" r="1.8" fill="#fff"/></svg></div><div class="nm">Driver<b>Pro</b></div></div>
   <div class="kicker">Programa de condução econômica · Empurrada Piraí</div>
   <h1>Como a nota é calculada</h1>
-  <div class="sub">Parte 1: a conta inteira, no detalhe, do que o caminhão registra até o valor na folha.<br>Parte 2: a mesma conta, explicada de forma simples e direta.</div>
+  <div class="sub">Parte 1: a conta inteira, no detalhe, do que o caminhão registra até o valor na folha.<br>Parte 2: a mesma conta, explicada de forma simples e direta.<br>Parte 3: tudo só em exemplos, uma tabela por regra.</div>
   <div class="data">Novembro de 2026 · regras em vigor desde 08/10/2026 · 1º período de 21/11 a 20/12/2026</div>
 </section>
 
@@ -264,6 +264,151 @@ tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
   <div class="box dark">
     <p><b>Em resumo:</b> 100 pontos em três partes, 50 pelo giro na faixa verde, 30 por não deixar o motor ligado parado, 20 por não arrancar forte. A nota do período conta cada dia na proporção do km rodado. Os primeiros 60 pontos não pagam; do 61 ao 100, R$ 5,00 cada, até R$ 200,00. Os três melhores ganham R$ 300 / 150 / 100 a mais. Só recebe quem rodou 1.000 km com login. No dia 21 o resultado congela e vem na folha.</p>
   </div>
+</section>
+
+<!-- PARTE 3 -->
+<section class="pg capa">
+  <div class="logo"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5h9l4 5h3v4H3z"/><circle cx="7.5" cy="17" r="1.8" fill="#fff"/><circle cx="17.5" cy="17" r="1.8" fill="#fff"/></svg></div><div class="nm">Driver<b>Pro</b></div></div>
+  <div class="kicker">Parte 3 · Tudo em exemplos</div>
+  <h1>Uma tabela por regra</h1>
+  <div class="sub">Sem explicação. Cada regra aparece só pelo exemplo, com os números montados até o resultado.</div>
+  <div class="data">Novembro de 2026</div>
+</section>
+
+<section class="pg">
+  <div class="kicker">Parte 3 · Tudo em exemplos</div>
+  <h2>Uma tabela por regra</h2>
+
+  <h3>1. As faixas de giro num dia (480 min com o caminhão andando)</h3>
+  <table>
+    <tr><th>Faixa</th><th>Giro</th><th class="r">Minutos</th><th>Como entra</th><th class="r">Entra na verde (a favor)</th><th class="r">Entra no total (divisor)</th></tr>
+    <tr><td>Abaixo da verde</td><td>900 a 1.000 rpm</td><td class="r">20</td><td>Conta contra</td><td class="r">0</td><td class="r">20</td></tr>
+    <tr><td>Verde</td><td>1.000 a 1.400 rpm</td><td class="r">300</td><td>Conta a favor</td><td class="r">300</td><td class="r">300</td></tr>
+    <tr><td>Branca</td><td>1.400 a 1.800 rpm</td><td class="r">90</td><td>Conta contra</td><td class="r">0</td><td class="r">90</td></tr>
+    <tr><td>Amarela no plano</td><td>1.800 a 2.300 rpm</td><td class="r">20</td><td>Conta contra</td><td class="r">0</td><td class="r">20</td></tr>
+    <tr><td>Amarela em descida de 2% ou mais</td><td>1.800 a 2.300 rpm</td><td class="r">40</td><td>Fora da conta</td><td class="r">0</td><td class="r">0</td></tr>
+    <tr><td>Vermelha (mesmo em descida)</td><td>acima de 2.300 rpm</td><td class="r">10</td><td>Conta contra</td><td class="r">0</td><td class="r">10</td></tr>
+    <tr class="tot"><td>Giro do dia (G)</td><td></td><td class="r">480</td><td></td><td class="r">300</td><td class="r">440 → G = 300 ÷ 440 = 68,2%</td></tr>
+  </table>
+
+  <h3>2. Giro do motor: três motoristas no mesmo dia (50 pontos em jogo)</h3>
+  <table>
+    <tr><th>Motorista</th><th class="r">Min na verde</th><th class="r">Min andando</th><th class="r">Amarela em descida</th><th>Conta</th><th class="r">Nota do pilar</th><th class="r">Pontos (× 50 ÷ 100)</th></tr>
+    <tr><td>Motorista 1</td><td class="r">400</td><td class="r">480</td><td class="r">0</td><td>400 ÷ 480</td><td class="r">83,3</td><td class="r">41,7</td></tr>
+    <tr><td>Motorista 2</td><td class="r">300</td><td class="r">480</td><td class="r">40</td><td>300 ÷ (480 − 40)</td><td class="r">68,2</td><td class="r">34,1</td></tr>
+    <tr><td>Motorista 3</td><td class="r">200</td><td class="r">480</td><td class="r">80</td><td>200 ÷ (480 − 80)</td><td class="r">50,0</td><td class="r">25,0</td></tr>
+  </table>
+
+  <h3>3. Motor ligado parado: de zero até zerar o pilar (30 pontos em jogo, 540 min de motor ligado)</h3>
+  <table>
+    <tr><th class="r">Min parado ligado</th><th>Conta da medida</th><th class="r">P</th><th>Conta da nota</th><th class="r">Nota do pilar</th><th class="r">Pontos (× 30 ÷ 100)</th></tr>
+    <tr><td class="r">0</td><td>0 ÷ 540</td><td class="r">0,0%</td><td>100 − (0 ÷ 25) × 100</td><td class="r">100,0</td><td class="r">30,0</td></tr>
+    <tr><td class="r">27</td><td>27 ÷ 540</td><td class="r">5,0%</td><td>100 − (5 ÷ 25) × 100</td><td class="r">80,0</td><td class="r">24,0</td></tr>
+    <tr><td class="r">60</td><td>60 ÷ 540</td><td class="r">11,1%</td><td>100 − (11,1 ÷ 25) × 100</td><td class="r">55,6</td><td class="r">16,7</td></tr>
+    <tr><td class="r">135</td><td>135 ÷ 540</td><td class="r">25,0%</td><td>100 − (25 ÷ 25) × 100</td><td class="r">0,0</td><td class="r">0,0</td></tr>
+    <tr><td class="r">162</td><td>162 ÷ 540</td><td class="r">30,0%</td><td>100 − (30 ÷ 25) × 100 = −20 → travada em 0</td><td class="r">0,0</td><td class="r">0,0</td></tr>
+  </table>
+
+  <h3>4. Arrancadas fortes: de zero até zerar o pilar (20 pontos em jogo, 280 km no dia)</h3>
+  <table>
+    <tr><th class="r">Arrancadas</th><th>Conta da medida</th><th class="r">A (por 100 km)</th><th>Conta da nota</th><th class="r">Nota do pilar</th><th class="r">Pontos (× 20 ÷ 100)</th></tr>
+    <tr><td class="r">0</td><td>0 ÷ 280 × 100</td><td class="r">0,00</td><td>100 − (0 ÷ 3) × 100</td><td class="r">100,0</td><td class="r">20,0</td></tr>
+    <tr><td class="r">1</td><td>1 ÷ 280 × 100</td><td class="r">0,36</td><td>100 − (0,36 ÷ 3) × 100</td><td class="r">88,1</td><td class="r">17,6</td></tr>
+    <tr><td class="r">2</td><td>2 ÷ 280 × 100</td><td class="r">0,71</td><td>100 − (0,71 ÷ 3) × 100</td><td class="r">76,2</td><td class="r">15,2</td></tr>
+    <tr><td class="r">5</td><td>5 ÷ 280 × 100</td><td class="r">1,79</td><td>100 − (1,79 ÷ 3) × 100</td><td class="r">40,5</td><td class="r">8,1</td></tr>
+    <tr><td class="r">9</td><td>9 ÷ 280 × 100</td><td class="r">3,21</td><td>100 − (3,21 ÷ 3) × 100 = −7 → travada em 0</td><td class="r">0,0</td><td class="r">0,0</td></tr>
+  </table>
+</section>
+
+<section>
+  <h3>5. A nota do dia: os três motoristas (pesos 50 · 30 · 20)</h3>
+  <table>
+    <tr><th>Motorista</th><th class="r">Giro (nota → pontos)</th><th class="r">Parado ligado (nota → pontos)</th><th class="r">Arrancadas (nota → pontos)</th><th>Soma</th><th class="r">Nota do dia</th></tr>
+    <tr><td>Motorista 1</td><td class="r">83,3 → 41,7</td><td class="r">80,0 → 24,0</td><td class="r">100,0 → 20,0</td><td>41,7 + 24,0 + 20,0</td><td class="r">85,7</td></tr>
+    <tr><td>Motorista 2</td><td class="r">68,2 → 34,1</td><td class="r">55,6 → 16,7</td><td class="r">76,2 → 15,2</td><td>34,1 + 16,7 + 15,2</td><td class="r">66,0</td></tr>
+    <tr><td>Motorista 3</td><td class="r">50,0 → 25,0</td><td class="r">0,0 → 0,0</td><td class="r">40,5 → 8,1</td><td>25,0 + 0,0 + 8,1</td><td class="r">33,1</td></tr>
+  </table>
+
+  <h3>6. Do dia para o período: o motorista 2 em três dias (cada dia conta na proporção do km)</h3>
+  <table>
+    <tr><th>Dia</th><th class="r">Km rodado</th><th class="r">G</th><th class="r">P</th><th class="r">A</th><th class="r">Nota do dia</th></tr>
+    <tr><td>Dia 1</td><td class="r">280</td><td class="r">68,2%</td><td class="r">11,1%</td><td class="r">0,71</td><td class="r">66,0</td></tr>
+    <tr><td>Dia 2</td><td class="r">350</td><td class="r">80,0%</td><td class="r">5,0%</td><td class="r">0,00</td><td class="r">84,0</td></tr>
+    <tr><td>Dia 3</td><td class="r">100</td><td class="r">55,0%</td><td class="r">20,0%</td><td class="r">2,00</td><td class="r">40,2</td></tr>
+    <tr><td><b>Total de km</b></td><td class="r"><b>730</b></td><td></td><td></td><td></td><td></td></tr>
+    <tr class="tot"><td>Medida do período</td><td></td><td class="r">(68,2×280 + 80,0×350 + 55,0×100) ÷ 730 = 72,1%</td><td class="r">(11,1×280 + 5,0×350 + 20,0×100) ÷ 730 = 9,4%</td><td class="r">(0,71×280 + 0×350 + 2,0×100) ÷ 730 = 0,55</td><td class="r">71,1</td></tr>
+  </table>
+  <table>
+    <tr><th>Pilar</th><th class="r">Medida do período</th><th>Conta da nota</th><th class="r">Nota</th><th class="r">Peso</th><th class="r">Pontos</th></tr>
+    <tr><td>Giro do motor</td><td class="r">72,1%</td><td>= G</td><td class="r">72,1</td><td class="r">50</td><td class="r">36,1</td></tr>
+    <tr><td>Motor ligado parado</td><td class="r">9,4%</td><td>100 − (9,4 ÷ 25) × 100</td><td class="r">62,4</td><td class="r">30</td><td class="r">18,7</td></tr>
+    <tr><td>Arrancadas fortes</td><td class="r">0,55 por 100 km</td><td>100 − (0,55 ÷ 3) × 100</td><td class="r">81,8</td><td class="r">20</td><td class="r">16,4</td></tr>
+    <tr class="tot"><td>Nota do período</td><td></td><td>média simples dos dias daria 63,4</td><td></td><td class="r">100</td><td class="r">71,1</td></tr>
+  </table>
+
+  <h3>7. Pilar sem medição: o mesmo período num caminhão que não envia o giro</h3>
+  <table>
+    <tr><th>Pilar</th><th class="r">Nota</th><th class="r">Peso</th><th class="r">Pontos</th><th>Entra?</th></tr>
+    <tr><td>Giro do motor</td><td class="r">sem medição</td><td class="r">50</td><td class="r">—</td><td>Não: sai do numerador e do divisor</td></tr>
+    <tr><td>Motor ligado parado</td><td class="r">62,4</td><td class="r">30</td><td class="r">18,7</td><td>Sim</td></tr>
+    <tr><td>Arrancadas fortes</td><td class="r">81,8</td><td class="r">20</td><td class="r">16,4</td><td>Sim</td></tr>
+    <tr class="tot"><td>Nota do período</td><td></td><td class="r">30 + 20 = 50</td><td class="r">35,1</td><td>35,1 ÷ 50 × 100 = 70,2</td></tr>
+  </table>
+</section>
+
+<section>
+  <h3>8. Da nota à carteira (R$ 5,00 por ponto acima de 60, até R$ 200,00)</h3>
+  <table>
+    <tr><th class="r">Nota do período</th><th>Conta</th><th class="r">Carteira</th></tr>
+    <tr><td class="r">55,0</td><td>(55 − 60) × 5 = −25 → travada em 0</td><td class="r">R$ 0,00</td></tr>
+    <tr><td class="r">60,0</td><td>(60 − 60) × 5</td><td class="r">R$ 0,00</td></tr>
+    <tr><td class="r">65,0</td><td>(65 − 60) × 5</td><td class="r">R$ 25,00</td></tr>
+    <tr><td class="r">71,1</td><td>(71,1 − 60) × 5</td><td class="r">R$ 55,50</td></tr>
+    <tr><td class="r">80,0</td><td>(80 − 60) × 5</td><td class="r">R$ 100,00</td></tr>
+    <tr><td class="r">90,0</td><td>(90 − 60) × 5</td><td class="r">R$ 150,00</td></tr>
+    <tr><td class="r">100,0</td><td>(100 − 60) × 5</td><td class="r">R$ 200,00</td></tr>
+  </table>
+
+  <h3>9. Quem recebe (km mínimo de 1.000 km com login, fora da lista de instrutores)</h3>
+  <table>
+    <tr><th>Caso</th><th class="r">Km com login</th><th class="r">Nota</th><th>Recebe?</th><th class="r">Carteira</th></tr>
+    <tr><td>Rodou o mês inteiro</td><td class="r">1.250</td><td class="r">80,0</td><td>Sim</td><td class="r">R$ 100,00</td></tr>
+    <tr><td>Exatamente o mínimo</td><td class="r">1.000</td><td class="r">80,0</td><td>Sim</td><td class="r">R$ 100,00</td></tr>
+    <tr><td>Férias no meio do período</td><td class="r">900</td><td class="r">80,0</td><td>Não neste período, sem desconto</td><td class="r">R$ 0,00</td></tr>
+    <tr><td>Rodou 1.400 km, mas 500 sem login</td><td class="r">900</td><td class="r">80,0</td><td>Não: viagem sem login não conta</td><td class="r">R$ 0,00</td></tr>
+    <tr><td>Instrutor / time de frota</td><td class="r">2.000</td><td class="r">95,0</td><td>Não: fora do programa</td><td class="r">R$ 0,00</td></tr>
+  </table>
+
+  <h3>10. Ranking, pódio e total: a Empurrada num período (exemplo com seis motoristas)</h3>
+  <table>
+    <tr><th>Motorista</th><th class="r">Nota</th><th class="r">Km com login</th><th>No ranking?</th><th class="r">Posição</th><th class="r">Carteira</th><th class="r">Pódio</th><th class="r">Total</th></tr>
+    <tr><td>A</td><td class="r">92,0</td><td class="r">1.800</td><td>Sim</td><td class="r">1º</td><td class="r">R$ 160,00</td><td class="r">R$ 300,00</td><td class="r">R$ 460,00</td></tr>
+    <tr><td>B</td><td class="r">88,5</td><td class="r">2.100</td><td>Sim</td><td class="r">2º (empate com C, mais km)</td><td class="r">R$ 142,50</td><td class="r">R$ 150,00</td><td class="r">R$ 292,50</td></tr>
+    <tr><td>C</td><td class="r">88,5</td><td class="r">1.600</td><td>Sim</td><td class="r">3º</td><td class="r">R$ 142,50</td><td class="r">R$ 100,00</td><td class="r">R$ 242,50</td></tr>
+    <tr><td>D</td><td class="r">95,0</td><td class="r">800</td><td>Não: menos de 1.000 km</td><td class="r">—</td><td class="r">R$ 0,00</td><td class="r">R$ 0,00</td><td class="r">R$ 0,00</td></tr>
+    <tr><td>E</td><td class="r">71,1</td><td class="r">1.300</td><td>Sim</td><td class="r">4º</td><td class="r">R$ 55,50</td><td class="r">R$ 0,00</td><td class="r">R$ 55,50</td></tr>
+    <tr><td>F</td><td class="r">58,0</td><td class="r">1.500</td><td>Sim</td><td class="r">5º</td><td class="r">R$ 0,00</td><td class="r">R$ 0,00</td><td class="r">R$ 0,00</td></tr>
+    <tr class="tot"><td>Total do período</td><td></td><td></td><td></td><td></td><td class="r">R$ 500,50</td><td class="r">R$ 550,00</td><td class="r">R$ 1.050,50</td></tr>
+  </table>
+  <p style="font-size:9.5pt;color:var(--ink3)">D tem a maior nota, mas não rodou o mínimo: não entra no ranking e não ocupa o 1º lugar. F entrou no ranking, mas com nota abaixo de 60 a carteira é zero.</p>
+
+  <h3>11. Quanto custa cada deslize (nota acima de 60, R$ 5,00 por ponto)</h3>
+  <table>
+    <tr><th>O que aconteceu no período</th><th>Pilar</th><th>Conta</th><th class="r">Pontos a menos</th><th class="r">R$ a menos</th></tr>
+    <tr><td>10% do tempo andando fora da faixa verde</td><td>Giro</td><td>10 × 0,5</td><td class="r">5,0</td><td class="r">R$ 25,00</td></tr>
+    <tr><td>10% do tempo de motor ligado parado</td><td>Parado ligado</td><td>10 ÷ 25 × 30</td><td class="r">12,0</td><td class="r">R$ 60,00</td></tr>
+    <tr><td>1 arrancada forte a cada 100 km</td><td>Arrancadas</td><td>1 ÷ 3 × 20</td><td class="r">6,7</td><td class="r">R$ 33,33</td></tr>
+    <tr><td>1 arrancada forte num período de 3.000 km</td><td>Arrancadas</td><td>(1 ÷ 3.000 × 100) ÷ 3 × 20</td><td class="r">0,2</td><td class="r">R$ 1,11</td></tr>
+    <tr><td>1 hora parado ligado num período de 200 h de motor ligado</td><td>Parado ligado</td><td>(1 ÷ 200 × 100) ÷ 25 × 30</td><td class="r">0,6</td><td class="r">R$ 3,00</td></tr>
+  </table>
+
+  <h3>12. Calendário dos três primeiros períodos</h3>
+  <table>
+    <tr><th>Período</th><th>Mede de</th><th>até</th><th>Congela em</th><th>Pago na folha de</th></tr>
+    <tr><td>1º</td><td>21/11/2026</td><td>20/12/2026</td><td>21/12/2026</td><td>janeiro/2027</td></tr>
+    <tr><td>2º</td><td>21/12/2026</td><td>20/01/2027</td><td>21/01/2027</td><td>fevereiro/2027</td></tr>
+    <tr><td>3º</td><td>21/01/2027</td><td>20/02/2027</td><td>21/02/2027</td><td>março/2027</td></tr>
+  </table>
 </section>
 
 </body>
