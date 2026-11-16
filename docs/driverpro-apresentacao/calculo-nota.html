@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>DriverPro · Como a nota é calculada</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+:root{ --ink:#0F1A20; --ink2:#4A5563; --ink3:#8A94A2; --acc:#F22C05; --verde:#1E9E52; --pale:#F3F4F6; --line:#E3E6EA; --dark:#0F1A20; }
+*{margin:0;padding:0;box-sizing:border-box;}
+@page{size:A4;margin:14mm 18mm 18mm;}
+html,body{background:#fff;}
+body{font-family:'Montserrat',Arial,sans-serif;color:var(--ink);font-size:10.5pt;line-height:1.48;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.pg{break-before:page;}
+.pg:first-child{break-before:auto;}
+.pg.capa{width:100%;height:258mm;padding:18mm 18mm 26mm;position:relative;border-radius:16px;overflow:hidden;}
+tr{break-inside:avoid;}
+h2,h3,h4{break-after:avoid;}
+.formula,.box,.cx{break-inside:avoid;}
+table{break-inside:avoid;}
+.pg.capa{background:var(--dark);color:#F4F5F7;display:flex;flex-direction:column;justify-content:flex-end;}
+.logo{display:inline-flex;align-items:center;gap:10px;margin-bottom:26mm;}
+.logo .ic{width:38px;height:38px;border-radius:10px;background:var(--acc);display:flex;align-items:center;justify-content:center;}
+.logo .ic svg{width:26px;height:26px;}
+.logo .nm{font-size:22px;font-weight:800;letter-spacing:-.4px;}
+.logo .nm b{color:var(--acc);}
+.kicker{font-size:9.5pt;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--acc);margin-bottom:6px;}
+.capa h1{font-size:34pt;font-weight:800;line-height:1.1;letter-spacing:-.8px;margin-bottom:10px;}
+.capa .sub{font-size:13pt;color:#B9C0CA;max-width:140mm;line-height:1.5;}
+.capa .data{position:absolute;left:18mm;bottom:14mm;font-size:9.5pt;color:#6B7683;letter-spacing:.4px;}
+h2{font-size:20pt;font-weight:800;line-height:1.15;letter-spacing:-.4px;margin:0 0 4mm;}
+h3{font-size:13pt;font-weight:800;margin:7mm 0 2.5mm;}
+h4{font-size:11.5pt;font-weight:700;margin:5mm 0 1.5mm;}
+p{color:var(--ink2);margin-bottom:3mm;}
+ul,ol{margin:0 0 3.5mm 6mm;color:var(--ink2);}
+li{margin-bottom:1.6mm;}
+li b,p b{color:var(--ink);}
+.formula{background:var(--pale);border-radius:10px;padding:3.5mm 5mm;margin:2.5mm 0 3.5mm;font-weight:700;color:var(--ink);font-size:10.5pt;}
+.formula small{display:block;font-weight:500;color:var(--ink2);font-size:10pt;margin-top:1.5mm;}
+.box{background:var(--pale);border-radius:12px;padding:4.5mm 5.5mm;margin:3mm 0 4mm;}
+.box.dark{background:var(--dark);color:#F4F5F7;}
+.box.dark p,.box.dark li{color:#D9DEE5;} .box.dark b{color:#fff;}
+.box p:last-child{margin-bottom:0;}
+table{width:100%;border-collapse:collapse;font-size:9.2pt;margin:2mm 0 4mm;}
+th{text-align:left;font-size:8.3pt;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3);font-weight:700;padding:2.2mm 2.5mm;border-bottom:2px solid var(--line);background:#EEF0F3;}
+td{padding:2.4mm 2.5mm;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink);}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;} th.r{white-space:nowrap;}
+tr.tot td{font-weight:800;border-top:2px solid var(--ink);border-bottom:0;}
+.foot{position:absolute;left:20mm;right:20mm;bottom:10mm;display:flex;justify-content:space-between;font-size:8.5pt;color:var(--ink3);letter-spacing:.4px;border-top:1px solid var(--line);padding-top:2.5mm;}
+.sep{height:1px;background:var(--line);margin:6mm 0;}
+.cx{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4mm;margin:3mm 0 4mm;}
+.cx .c{background:var(--pale);border-radius:12px;padding:4mm;}
+.cx .c .n{font-size:22pt;font-weight:800;letter-spacing:-.6px;line-height:1;margin-bottom:1.5mm;}
+.cx .c .l{font-size:8.5pt;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);}
+.cx .c p{font-size:9.5pt;margin:1.5mm 0 0;}
+.acc{color:var(--acc);} .verde{color:var(--verde);}
+.kid{font-size:11.5pt;line-height:1.55;}
+.kid p,.kid li{font-size:11.5pt;}
+.kid h3{font-size:14.5pt;}
+.fig{display:flex;gap:3mm;margin:2mm 0 4mm;flex-wrap:wrap;}
+.fig .f{width:7mm;height:7mm;border-radius:2mm;background:var(--acc);}
+.fig .f.off{background:#D9DEE5;}
+.fig .f.y{background:#F2B705;}
+.fig .f.g{background:var(--verde);}
+</style>
+</head>
+<body>
+
+<!-- CAPA -->
+<section class="pg capa">
+  <div class="logo"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5h9l4 5h3v4H3z"/><circle cx="7.5" cy="17" r="1.8" fill="#fff"/><circle cx="17.5" cy="17" r="1.8" fill="#fff"/></svg></div><div class="nm">Driver<b>Pro</b></div></div>
+  <div class="kicker">Programa de condução econômica · Empurrada Piraí</div>
+  <h1>Como a nota é calculada</h1>
+  <div class="sub">Parte 1: a conta inteira, no detalhe, do que o caminhão registra até o valor na folha.<br>Parte 2: a mesma conta explicada como para uma criança.</div>
+  <div class="data">Novembro de 2026 · regras em vigor desde 08/10/2026 · 1º período de 21/11 a 20/12/2026</div>
+</section>
+
+<!-- PARTE 1 -->
+<section class="pg">
+  <div class="kicker">Parte 1 · A conta no detalhe</div>
+  <h2>O caminho do dado até o dinheiro</h2>
+  <p>A nota do DriverPro vai de 0 a 100 e é refeita a cada período de apuração, que vai do dia 21 ao dia 20 do mês seguinte. Ela nasce do que o caminhão registra, passa por três medidas diárias, vira nota de cada dia, é juntada no período ponderada pelo km rodado e, por fim, vira dinheiro. São seis passos, sempre na mesma ordem:</p>
+  <ol>
+    <li><b>O que entra</b>: quais viagens contam e de onde vêm os números.</li>
+    <li><b>As três medidas de cada dia</b>: giro do motor, motor ligado sem rodar e acelerações bruscas.</li>
+    <li><b>A nota do dia</b>: cada medida vira uma nota de 0 a 100 e as três são combinadas com pesos 50 · 30 · 20.</li>
+    <li><b>Do dia para o período</b>: a média dos dias ponderada pelo km rodado em cada dia.</li>
+    <li><b>A nota do período</b>: a mesma combinação 50 · 30 · 20 sobre as medidas do período.</li>
+    <li><b>Da nota ao dinheiro</b>: carteira de R$ 5 por ponto acima de 60, pódio e congelamento no dia 21.</li>
+  </ol>
+
+  <h3>Passo 1 · O que entra</h3>
+  <ul>
+    <li><b>Só viagens com motorista identificado</b> no Geotab (login no painel do caminhão). Viagem sem login não é de ninguém e fica fora de toda a conta; o km dela não conta nem para o mínimo de 1.000 km.</li>
+    <li><b>O dia</b> vai da meia-noite à meia-noite de Brasília. <b>O período</b> vai do dia 21 ao dia 20; o 1º é de 21/11 a 20/12/2026, pago na folha de janeiro.</li>
+    <li><b>De onde vem cada número</b>: o giro do motor (RPM) sai das leituras do motor registradas pelo rastreador, uma a cada poucos segundos; o tempo dirigindo e o tempo parado com motor ligado saem do registro de cada viagem; as acelerações bruscas saem da regra padrão de aceleração do Geotab; a rampa da estrada (para separar a amarela em descida) sai do GPS do caminhão cruzado com o mapa de relevo Copernicus, medida numa base de 200 m.</li>
+  </ul>
+
+  <h3>Passo 2 · As três medidas de cada dia</h3>
+  <p>Por motorista e por dia, o robô calcula três números. Todos saem de tempos em segundos, contagens e km, nunca de percentuais prontos.</p>
+  <h4>G · Giro do motor (% do tempo rodando na faixa verde)</h4>
+  <div class="formula">G = segundos na faixa verde ÷ (segundos rodando − segundos na amarela em descida) × 100
+    <small>Rodando = toda leitura com o giro acima de 900 rpm (a marcha lenta fica fora, porque ela é o pilar seguinte). Cada leitura de giro vale até a leitura seguinte, com teto de 2 minutos: um buraco de sinal maior que isso não conta tempo. Dia com menos de 60 segundos considerados não gera G.</small></div>
+  <table>
+    <tr><th>Faixa</th><th>Giro do motor</th><th>Como entra em G</th></tr>
+    <tr><td>Abaixo da verde</td><td>de 900 a 1.000 rpm</td><td>Conta contra (entra no denominador, não no numerador)</td></tr>
+    <tr><td>Verde</td><td>de 1.000 a 1.400 rpm</td><td><b>Conta a favor</b> (numerador e denominador)</td></tr>
+    <tr><td>Branca</td><td>de 1.400 a 1.800 rpm</td><td>Conta contra</td></tr>
+    <tr><td>Amarela</td><td>de 1.800 a 2.300 rpm</td><td>Conta contra. Exceção: em descida de 2% ou mais, o segundo é descartado (sai dos dois lados da divisão)</td></tr>
+    <tr><td>Vermelha</td><td>acima de 2.300 rpm</td><td>Conta contra, mesmo em descida</td></tr>
+  </table>
+</section>
+
+<section>
+  <h4>P · Motor ligado sem rodar (% do tempo de motor ligado que ficou parado)</h4>
+  <div class="formula">P = segundos parado com o motor ligado ÷ (segundos dirigindo + segundos parado com o motor ligado) × 100
+    <small>Os dois tempos vêm do registro de cada viagem do Geotab. Parado com o motor desligado não entra em nenhum dos dois.</small></div>
+  <h4>A · Acelerações bruscas (eventos a cada 100 km)</h4>
+  <div class="formula">A = número de acelerações bruscas no dia ÷ km rodado no dia × 100
+    <small>Aceleração brusca é o evento da regra padrão do Geotab (arrancada forte). Freada brusca é registrada, mas não entra na nota: mede condução segura, não econômica.</small></div>
+
+  <h3>Passo 3 · A nota do dia</h3>
+  <p>Cada medida vira uma nota de 0 a 100. O giro já é um percentual e vira nota direto. As outras duas partem de 100 e perdem na proporção até um limite que zera o pilar.</p>
+  <div class="formula">Nota do giro = G<br>Nota do parado ligado = 100 − (P ÷ 25) × 100, travada entre 0 e 100<br>Nota das acelerações = 100 − (A ÷ 3) × 100, travada entre 0 e 100<br><span class="acc">Nota do dia = (nota do giro × 50 + nota do parado ligado × 30 + nota das acelerações × 20) ÷ 100</span></div>
+  <p><b>Exemplo de um dia.</b> O que o caminhão registrou: motor ligado por 540 min, sendo 480 min rodando (giro acima de 900 rpm) e 60 min parado ligado; 300 min na faixa verde e 40 min na amarela em descida; 280 km rodados; 2 acelerações bruscas.</p>
+  <table>
+    <tr><th>Pilar</th><th>Medida do dia</th><th>Conta da medida</th><th>Nota do pilar</th><th class="r">Peso</th><th class="r">Pontos</th></tr>
+    <tr><td>Giro do motor</td><td>300 min na verde em 480 min rodando, 40 min de amarela em descida</td><td>300 ÷ (480 − 40) × 100 = 68,2%</td><td>68,2</td><td class="r">50</td><td class="r">68,2 × 50 ÷ 100 = 34,1</td></tr>
+    <tr><td>Motor ligado sem rodar</td><td>60 min parado ligado em 540 min de motor ligado</td><td>60 ÷ 540 × 100 = 11,1%</td><td>100 − (11,1 ÷ 25) × 100 = 55,6</td><td class="r">30</td><td class="r">55,6 × 30 ÷ 100 = 16,7</td></tr>
+    <tr><td>Acelerações bruscas</td><td>2 acelerações em 280 km</td><td>2 ÷ 280 × 100 = 0,71 por 100 km</td><td>100 − (0,71 ÷ 3) × 100 = 76,2</td><td class="r">20</td><td class="r">76,2 × 20 ÷ 100 = 15,2</td></tr>
+    <tr class="tot"><td>Nota do dia</td><td></td><td></td><td></td><td class="r">100</td><td class="r">34,1 + 16,7 + 15,2 = 66,0</td></tr>
+  </table>
+
+  <h3>Passo 4 · Do dia para o período</h3>
+  <p>A nota do período não é a média simples das notas dos dias. Cada medida do período é a média dos dias <b>ponderada pelo km rodado em cada dia</b>: um dia de 280 km pesa quase três vezes um dia de 100 km. Dia sem km registrado entra com peso 1.</p>
+  <div class="formula">Medida do período = Σ (medida do dia × km do dia) ÷ Σ km dos dias</div>
+  <p><b>Exemplo da ponderação.</b> Três dias medidos no período (o 1º é o dia do exemplo acima):</p>
+  <table>
+    <tr><th>Dia</th><th class="r">Km (peso)</th><th class="r">G · giro na verde</th><th class="r">P · parado ligado</th><th class="r">A · acel. por 100 km</th><th class="r">Nota do dia</th></tr>
+    <tr><td>Dia 1</td><td class="r">280</td><td class="r">68,2%</td><td class="r">11,1%</td><td class="r">0,71</td><td class="r">66,0</td></tr>
+    <tr><td>Dia 2</td><td class="r">350</td><td class="r">80,0%</td><td class="r">5,0%</td><td class="r">0,00</td><td class="r">84,0</td></tr>
+    <tr><td>Dia 3</td><td class="r">100</td><td class="r">55,0%</td><td class="r">20,0%</td><td class="r">2,00</td><td class="r">40,2</td></tr>
+    <tr><td><b>Soma dos km</b></td><td class="r"><b>730</b></td><td></td><td></td><td></td><td></td></tr>
+    <tr class="tot"><td>Ponderado pelo km</td><td></td><td class="r">(68,2×280 + 80,0×350 + 55,0×100) ÷ 730<br>= 72,1%</td><td class="r">(11,1×280 + 5,0×350 + 20,0×100) ÷ 730<br>= 9,4%</td><td class="r">(0,71×280 + 0×350 + 2,0×100) ÷ 730<br>= 0,55</td><td class="r">71,1<br><span style="font-weight:500;color:var(--ink3)">(passo 5)</span></td></tr>
+  </table>
+</section>
+
+<section>
+  <h3>Passo 5 · A nota do período</h3>
+  <p>As medidas ponderadas viram as notas dos pilares pela mesma régua do dia, e as três são combinadas com os mesmos pesos.</p>
+  <table>
+    <tr><th>Pilar</th><th>Medida do período</th><th>Nota do pilar</th><th class="r">Peso</th><th class="r">Pontos</th></tr>
+    <tr><td>Giro do motor</td><td>72,1%</td><td>72,1</td><td class="r">50</td><td class="r">36,1</td></tr>
+    <tr><td>Motor ligado sem rodar</td><td>9,4%</td><td>100 − (9,4 ÷ 25) × 100 = 62,4</td><td class="r">30</td><td class="r">18,7</td></tr>
+    <tr><td>Acelerações bruscas</td><td>0,55 por 100 km</td><td>100 − (0,55 ÷ 3) × 100 = 81,8</td><td class="r">20</td><td class="r">16,4</td></tr>
+    <tr class="tot"><td>Nota do período</td><td></td><td></td><td class="r">100</td><td class="r">71,1</td></tr>
+  </table>
+  <p>Se a nota fosse a média simples dos dias, daria (66,0 + 84,0 + 40,2) ÷ 3 = 63,4. Ponderada pelo km dá 71,1: o dia 3, o pior, rodou só 100 km e pesa pouco; o dia 2, o melhor, rodou 350 km e pesa mais.</p>
+  <p><b>Pilar sem medição.</b> Se um pilar não puder ser medido no período (o caminhão não envia o giro, por exemplo), ele sai do numerador e do denominador: a soma dos produtos é dividida pela soma dos pesos dos pilares medidos. Sem o giro, divide-se por 50, não por 100 (quem fez 18,7 + 16,4 = 35,1 pontos em 50 fica com nota 70,2). O motorista não é prejudicado por equipamento que não mede.</p>
+
+  <h3>Passo 6 · Da nota ao dinheiro</h3>
+  <ol>
+    <li><b>Elegibilidade.</b> Recebe quem rodou, no período e com login, o km mínimo da unidade (Empurrada Piraí: 1.000 km) e não está na lista de instrutores e time de frota. Quem não atinge o km não recebe naquele período e não sofre desconto.</li>
+    <li><b>Carteira.</b> Vale R$ 200,00 no máximo e paga da nota 60 até a 100: cada ponto acima de 60 vale R$ 5,00.
+      <div class="formula">Carteira = (nota − 60) × R$ 200,00 ÷ (100 − 60) = (nota − 60) × R$ 5,00, travada entre R$ 0,00 e R$ 200,00, arredondada ao centavo</div>
+      No exemplo: (71,1 − 60) × 5 = <b>R$ 55,50</b>. Nota 60 ou menos recebe zero; nota 100 recebe R$ 200,00.</li>
+    <li><b>Ranking e pódio.</b> O ranking ordena só os elegíveis, pela nota do período; em empate, pelo maior km. Os três primeiros ganham, além da carteira, <b>R$ 300,00 · R$ 150,00 · R$ 100,00</b>.</li>
+    <li><b>Total do período</b> = carteira + pódio. É <b>congelado no dia 21</b> pelo próprio sistema e não muda mais; vai para a folha como rubrica de prêmio, com o descritivo do programa no contracheque.</li>
+  </ol>
+
+  <h3>Como cada ponto se compõe</h3>
+  <p>A nota tem 100 pontos: 50 em jogo no giro, 30 no motor parado ligado e 20 nas acelerações. O motorista começa com os 100 e perde conforme dirige fora do padrão em cada pilar. A tabela diz quanto cada unidade de medida custa em pontos e em dinheiro (R$ 5,00 por ponto, acima de 60).</p>
+  <table>
+    <tr><th>Pilar</th><th class="r">Pontos em jogo</th><th>Como fica com os pontos</th><th>O que cada unidade custa</th></tr>
+    <tr><td>Giro do motor</td><td class="r">50</td><td>Na proporção do tempo rodando na verde: 100% na verde = 50 pontos; 70% = 35</td><td>Cada 1% do tempo fora da verde = −0,5 ponto = −R$ 2,50</td></tr>
+    <tr><td>Motor ligado sem rodar</td><td class="r">30</td><td>Fica com os 30 se não deixa o motor ligado parado; 25% do tempo parado ligado zera o pilar</td><td>Cada 1% do tempo parado ligado = −1,2 ponto = −R$ 6,00</td></tr>
+    <tr><td>Acelerações bruscas</td><td class="r">20</td><td>Fica com os 20 se não acelera bruscamente; 3 a cada 100 km zeram o pilar</td><td>Cada aceleração brusca por 100 km = −6,7 pontos = −R$ 33,33</td></tr>
+  </table>
+  <p>Na prática: o giro pesa mais, mas é o mais barato por unidade (10% a mais na verde = 5 pontos = R$ 25,00). O motor parado é o mais caro por minuto (10% do turno parado ligado = −12 pontos = −R$ 60,00). As acelerações são raras e por isso cada uma pesa: num período de 3.000 km, cada brusca custa cerca de 0,2 ponto (R$ 1,10), e trinta zeram o pilar.</p>
+  <div class="box dark"><p><b>Resumo em uma linha.</b> Nota = 50% giro na verde + 30% motor parado ligado + 20% acelerações, dia a dia, ponderada pelo km do período. Dinheiro = R$ 5,00 por ponto acima de 60, até R$ 200,00, mais R$ 300 / 150 / 100 para o pódio, só para quem rodou 1.000 km com login. Congela no dia 21.</p></div>
+</section>
+
+<!-- PARTE 2 -->
+<section class="pg capa">
+  <div class="logo"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5h9l4 5h3v4H3z"/><circle cx="7.5" cy="17" r="1.8" fill="#fff"/><circle cx="17.5" cy="17" r="1.8" fill="#fff"/></svg></div><div class="nm">Driver<b>Pro</b></div></div>
+  <div class="kicker">Parte 2 · Para uma criança entender</div>
+  <h1>A mesma conta, sem conta</h1>
+  <div class="sub">Imagine que todo dia você sai de casa com 100 figurinhas. Dirigir bem é voltar com as figurinhas. Dirigir mal é ir perdendo figurinha pelo caminho.</div>
+  <div class="data">Novembro de 2026</div>
+</section>
+
+<section class="pg kid">
+  <div class="kicker">Parte 2 · Para uma criança entender</div>
+  <h2>As 100 figurinhas</h2>
+  <p>Todo dia, o motorista começa com <b>100 figurinhas</b>. Elas estão divididas em três montinhos, e cada montinho tem a ver com uma coisa que ele faz dirigindo:</p>
+  <div class="cx">
+    <div class="c"><div class="n acc">50</div><div class="l">Montinho do motor cantando certo</div><p>É o maior montinho. Tem a ver com deixar o motor "cantando" na nota certa.</p></div>
+    <div class="c"><div class="n acc">30</div><div class="l">Montinho da torneira aberta</div><p>Tem a ver com não deixar o motor ligado quando o caminhão está parado.</p></div>
+    <div class="c"><div class="n acc">20</div><div class="l">Montinho do pé pesado</div><p>Tem a ver com não arrancar com força, como se fosse uma corrida.</p></div>
+  </div>
+  <div class="fig">
+    <div class="f"></div><div class="f"></div><div class="f"></div><div class="f"></div><div class="f"></div><div class="f"></div><div class="f"></div><div class="f"></div><div class="f"></div><div class="f"></div>
+    <div class="f y"></div><div class="f y"></div><div class="f y"></div><div class="f y"></div><div class="f y"></div><div class="f y"></div>
+    <div class="f g"></div><div class="f g"></div><div class="f g"></div><div class="f g"></div>
+  </div>
+  <p style="font-size:10.5pt;color:var(--ink3)">Cada quadradinho vale 5 figurinhas: 10 vermelhos são as 50 do motor, 6 amarelos são as 30 da torneira, 4 verdes são as 20 do pé pesado.</p>
+
+  <h3>1. O motor cantando certo (50 figurinhas)</h3>
+  <p>Sabe quando você anda de bicicleta e escolhe a marcha? Se a marcha está certa, você pedala tranquilo e a bicicleta anda bem. Se está errada, você pedala muito rápido e cansa, ou pedala pesado e não sai do lugar. O motor do caminhão é igual: ele tem uma "velocidade de girar" que é a certa. No DriverPro essa velocidade certa chama <b>faixa verde</b>.</p>
+  <p>O caminhão conta, segundo por segundo, quanto tempo o motor ficou girando na faixa verde enquanto andava. Se ficou na verde o tempo todo, o motorista fica com as 50 figurinhas. Se ficou na verde só metade do tempo, fica com 25. <b>Cada pedacinho do tempo fora da verde tira um pedacinho das figurinhas.</b></p>
+  <p>Tem uma exceção justa: quando o caminhão desce uma ladeira, o motorista segura ele com o motor (é o freio motor, o jeito certo de descer). Nessa hora o motor gira mais alto, fora da verde, mas isso é certo. Então o DriverPro <b>apaga esse tempo da conta</b>, como se ele não tivesse existido: não tira figurinha e também não dá figurinha.</p>
+
+  <h3>2. A torneira aberta (30 figurinhas)</h3>
+  <p>Deixar o motor ligado com o caminhão parado é como deixar a torneira aberta sem usar a água: o diesel vai embora e o caminhão não anda nada. O caminhão mede quanto tempo ficou parado com o motor ligado, comparado com todo o tempo em que o motor ficou ligado.</p>
+  <p>Se o motorista nunca deixa a torneira aberta, fica com as 30 figurinhas. Se ele deixa o motor ligado parado durante um quarto do tempo (de cada 4 minutos, 1 parado), ele perde as 30 inteiras. No meio do caminho, perde na proporção: parou ligado 10% do tempo, perdeu 12 figurinhas.</p>
+
+  <h3>3. O pé pesado (20 figurinhas)</h3>
+  <p>Arrancar com o pé no fundo é como sair correndo numa brincadeira de pega-pega: gasta muita energia de uma vez. O caminhão avisa toda vez que o motorista arranca forte. O DriverPro conta quantas arrancadas fortes ele deu a cada 100 km.</p>
+  <p>Nenhuma arrancada forte: fica com as 20 figurinhas. Três arrancadas fortes a cada 100 km: perde as 20. Uma arrancada a cada 100 km tira uns 7 figurinhas. É o montinho menor, mas cada arrancada pesa bastante, porque quem dirige bem quase nunca faz isso.</p>
+</section>
+
+<section class="kid">
+  <h3>4. Juntando os três montinhos: a nota do dia</h3>
+  <p>No fim do dia, o DriverPro olha quantas figurinhas sobraram em cada montinho e soma. Esse total é a <b>nota do dia</b>. Vamos ver o dia de um motorista de exemplo:</p>
+  <table style="font-size:11pt">
+    <tr><th>Montinho</th><th>O que aconteceu no dia</th><th class="r">Tinha</th><th class="r">Sobrou</th></tr>
+    <tr><td>Motor cantando certo</td><td>Ficou na faixa verde em 68 de cada 100 segundos andando (a descida de ladeira já foi apagada)</td><td class="r">50</td><td class="r">34</td></tr>
+    <tr><td>Torneira aberta</td><td>Ficou parado com o motor ligado 1 hora, de 9 horas de motor ligado (11% do tempo)</td><td class="r">30</td><td class="r">17</td></tr>
+    <tr><td>Pé pesado</td><td>Deu 2 arrancadas fortes em 280 km (menos de 1 a cada 100 km)</td><td class="r">20</td><td class="r">15</td></tr>
+    <tr class="tot"><td>Nota do dia</td><td></td><td class="r">100</td><td class="r">66</td></tr>
+  </table>
+  <p>Ele voltou para casa com <b>66 figurinhas</b> das 100. Perdeu 16 no motor, 13 na torneira e 5 no pé pesado.</p>
+
+  <h3>5. Juntando os dias: a nota do período</h3>
+  <p>O DriverPro não olha um dia só. Ele olha <b>do dia 21 de um mês até o dia 20 do mês seguinte</b> (é o "período"). E aqui tem um detalhe importante: <b>os dias em que o motorista andou mais valem mais</b>.</p>
+  <p>Pense num campeonato de futebol em que um jogo durou 90 minutos e outro só 10 minutos, porque choveu. Não seria justo o jogo de 10 minutos valer igual ao de 90. No DriverPro, o "tempo de jogo" é o km rodado: um dia de 350 km pesa três vezes e meia mais que um dia de 100 km.</p>
+  <table style="font-size:11pt">
+    <tr><th>Dia</th><th class="r">Km rodados (o peso)</th><th class="r">Figurinhas no fim do dia</th></tr>
+    <tr><td>Dia 1</td><td class="r">280</td><td class="r">66</td></tr>
+    <tr><td>Dia 2 (o melhor dia)</td><td class="r">350</td><td class="r">84</td></tr>
+    <tr><td>Dia 3 (o pior dia, mas curto)</td><td class="r">100</td><td class="r">40</td></tr>
+    <tr class="tot"><td>Nota do período</td><td class="r">730</td><td class="r">71</td></tr>
+  </table>
+  <p>Se fosse só somar e dividir por três, daria 63. Mas o dia ruim foi curtinho e o dia bom foi longo, então a nota do período ficou <b>71</b>. Quem roda muito é avaliado pelo que fez rodando, e um dia ruim de poucos km não estraga o mês.</p>
+  <p style="font-size:10.5pt;color:var(--ink3)">(Na conta de verdade, o DriverPro pondera pelo km cada um dos três montinhos separadamente e só depois soma. Dá quase o mesmo resultado de ponderar a nota de cada dia, e é assim que está escrito na Parte 1.)</p>
+
+  <h3>6. Trocando figurinhas por dinheiro</h3>
+  <p>Agora a parte boa. No fim do período, as figurinhas viram dinheiro no <b>cofrinho</b>. Mas tem três regras:</p>
+  <ul>
+    <li><b>Só joga quem andou.</b> Para abrir o cofrinho, o motorista precisa ter rodado pelo menos <b>1.000 km</b> no período com o login dele no caminhão. Quem ficou de férias ou rodou pouco não ganha nesse período, mas também não perde nada.</li>
+    <li><b>As 60 primeiras figurinhas são "só por jogar".</b> Elas não valem dinheiro: são o mínimo de quem simplesmente dirige o caminhão. O dinheiro começa na <b>figurinha número 61</b>.</li>
+    <li><b>Da 61 em diante, cada figurinha vale R$ 5,00.</b> Quem chega com as 100 ganha 40 figurinhas valendo R$ 5,00 = <b>R$ 200,00</b>, que é o máximo do cofrinho. Nosso motorista do exemplo chegou com 71: são 11 figurinhas acima de 60, ou seja, <b>R$ 55,00</b> (R$ 55,50 na conta exata, com as casas decimais).</li>
+  </ul>
+  <div class="box">
+    <p><b>E tem prêmio para os três melhores.</b> Entre todos os motoristas da Empurrada de Piraí que andaram os 1.000 km, quem tiver mais figurinhas no fim do período sobe no pódio e ganha um extra: <b>R$ 300,00</b> para o 1º, <b>R$ 150,00</b> para o 2º e <b>R$ 100,00</b> para o 3º, além do cofrinho. Se dois empatarem em figurinhas, fica na frente quem rodou mais km.</p>
+  </div>
+  <p><b>No dia 21, o jogo fecha.</b> O DriverPro congela o resultado do período e ele não muda mais. O dinheiro vem na folha de pagamento, como prêmio. E no dia 21 começa um período novo, com as 100 figurinhas de volta para todo mundo.</p>
+</section>
+
+<section class="kid">
+  <h3>7. As três coisas que mudam o cofrinho</h3>
+  <p>Se fosse para lembrar só três coisas:</p>
+  <div class="cx">
+    <div class="c"><div class="n acc">1</div><div class="l">Troque a marcha na hora certa</div><p>Deixe o motor cantando na faixa verde. Cada 10% a mais do tempo na verde são 5 figurinhas, ou seja, R$ 25,00.</p></div>
+    <div class="c"><div class="n acc">2</div><div class="l">Parou? Desligue</div><p>Motor ligado parado é a torneira aberta. Cada 10% do turno parado ligado custa 12 figurinhas, R$ 60,00. É o que mais pesa por minuto.</p></div>
+    <div class="c"><div class="n acc">3</div><div class="l">Arranque de leve</div><p>Arrancada forte é rara, por isso cada uma pesa. Num período de 3.000 km, cada arrancada forte custa mais ou menos R$ 1,10; trinta zeram o montinho.</p></div>
+  </div>
+
+  <h3>8. Perguntas que sempre aparecem</h3>
+  <p><b>"Desci a serra segurando no motor e o giro subiu. Perdi figurinha?"</b> Não. O DriverPro sabe onde tem ladeira (pelo GPS e pelo mapa do relevo) e apaga da conta o tempo em que o motor girou na faixa amarela descendo. Nem tira, nem dá.</p>
+  <p><b>"Meu caminhão não manda o giro do motor. Vou ficar sem as 50 figurinhas?"</b> Não. Se um montinho não pode ser medido, a conta é feita só com os outros montinhos e esticada de volta para 100. Ninguém perde por causa de um aparelho que não mede.</p>
+  <p><b>"Tive um dia muito ruim. Estraguei o mês?"</b> Depende de quanto você andou nesse dia. Dia ruim de poucos km pesa pouco. Dia ruim de muitos km pesa muito, mas também pode ser compensado por dias bons de muitos km.</p>
+  <p><b>"Rodei 900 km. Ganho um pouco?"</b> Não nesse período: a porta do cofrinho abre com 1.000 km com login. Mas não tem desconto nenhum, e no período seguinte você começa do zero como todo mundo.</p>
+  <p><b>"Esqueci de fazer o login no caminhão."</b> Aí aquela viagem não é de ninguém: não conta km, não conta figurinha, nem para o bem nem para o mal. Por isso o login todo dia é a primeira regra do jogo.</p>
+  <p><b>"A nota 60 não vale nada mesmo?"</b> Vale zero no cofrinho, mas é o começo da rampa: a 61 já vale R$ 5,00, a 70 vale R$ 50,00, a 80 vale R$ 100,00, a 90 vale R$ 150,00 e a 100 vale R$ 200,00.</p>
+
+  <div class="box dark">
+    <p><b>Resumindo para uma criança:</b> você começa o dia com 100 figurinhas em três montinhos. Motor cantando certo guarda as 50 maiores, não deixar a torneira aberta guarda 30, arrancar de leve guarda 20. No fim do período, os dias em que você andou mais valem mais. As 60 primeiras figurinhas são só por jogar; da 61 em diante, cada uma vale R$ 5,00 no cofrinho, até R$ 200,00. Os três com mais figurinhas ganham um prêmio extra. No dia 21 o jogo fecha, o dinheiro vem na folha e começa tudo de novo.</p>
+  </div>
+</section>
+
+</body>
+</html>
