@@ -22,7 +22,7 @@
 //   ANTHROPIC_API_KEY   obrigatório
 //   ASSISTENTE_DONOS    opcional, e-mails separados por vírgula (padrão: o dono do portal)
 //   ASSISTENTE_MODELO   opcional (padrão claude-opus-5-5)
-//   ASSISTENTE_TEMPO_S  opcional (padrão 240): segundos de consulta por pergunta. Passou disso, o
+//   ASSISTENTE_TEMPO_S  opcional (padrão 300): segundos de consulta por pergunta. Passou disso, o
 //                       modelo fecha a resposta com o que tem (a função tem teto de tempo de
 //                       parede; sem isso a resposta morria no meio, sem texto nenhum)
 // SUPABASE_URL e as chaves do projeto o Supabase já põe (as novas, SUPABASE_PUBLISHABLE_KEYS
@@ -45,7 +45,7 @@ const DONOS = (Deno.env.get("ASSISTENTE_DONOS") ?? "fortesindicadores@gmail.com"
   .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
 const MODELO = Deno.env.get("ASSISTENTE_MODELO") ?? "claude-opus-5-5";
 const MAX_CONSULTAS = 25;
-const TEMPO_S = Number(Deno.env.get("ASSISTENTE_TEMPO_S") ?? 240);
+const TEMPO_S = Number(Deno.env.get("ASSISTENTE_TEMPO_S") ?? 300);
 const TIPOS_IMG = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_IMG = 8;            // imagens por pedido (as mais recentes)
 const MAX_IMG_B64 = 7_000_000; // ~5 MB por imagem
@@ -71,7 +71,7 @@ Como responder
 - Se vier imagem (print de tela, tabela, mensagem de WhatsApp), leia o que está nela e use como parte da pergunta.
 
 Tempo e limite
-- Cada pergunta tem cerca de 4 minutos e até 25 consultas. Planeje antes: descubra as colunas em uma ou duas consultas e traga o que precisa em poucas consultas agregadas (CTE, group by, filter), em vez de muitas pequenas.
+- Cada pergunta tem cerca de 5 minutos e até 25 consultas. Planeje antes: descubra as colunas em uma ou duas consultas e traga o que precisa em poucas consultas agregadas (CTE, group by, filter), em vez de muitas pequenas.
 - As consultas que você já rodou nesta conversa vêm listadas no fim, sem os resultados. Reaproveite o SQL delas; não redescubra tabelas e colunas que já conhece.
 - Se o tempo ou o limite de consultas acabar, responda com o que já tem e diga em uma linha o que faltou consultar. Nunca termine sem resposta.
 
