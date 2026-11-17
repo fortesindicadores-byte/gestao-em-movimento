@@ -1,12 +1,14 @@
-// KM · Seara — no mês EM ABERTO o remunerado emprestado do mês anterior é
-// proporcional aos dias com km (Renan, 17/11/2026, vendo nov/26 em −78%).
+// KM · Seara — o mês EM ABERTO fica fora do painel (Renan, 17/11/2026, vendo
+// nov/26 em −78%: "Ainda essa merda?" → "acho que tire novembro").
 //
-// Abre o /seara-km/ com o gviz e o banco dublados, em quatro cenários:
+// Abre o /seara-km/ com o gviz e o banco dublados, em cinco cenários:
 //  1. sem consumo automático → o mês sem a aba Remunerado usa o mês anterior INTEIRO (como era);
-//  2. consumo automático com corte em 10/10 e cobertura por placa → remunerado ×
-//     dias da placa ÷ 31 (placa fora da cobertura: dia do corte ÷ 31); setembro não muda;
-//  3. o mesmo, mas a aba Remunerado JÁ tem outubro → vale a aba, sem proporção;
-//  4. segunda carga (cache) mantém o aviso com a data do corte.
+//  2. consumo automático com corte em 10/10 e a aba sem outubro → outubro não entra
+//     (nem nas linhas, nem no filtro de vigência) e o painel abre em setembro;
+//  3. o mesmo, mas a aba Remunerado JÁ tem outubro → outubro entra com a aba;
+//  4. segunda carga (cache) continua sem outubro;
+//  5. o corte do ERP passou para novembro → outubro (fechado) entra com o mês
+//     anterior inteiro e novembro fica fora.
 // Uso: RAIZ=<repo> node scripts/seara-km-mes-aberto-teste.mjs
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
@@ -32,14 +34,15 @@ const BREM = ['09/2026', '10/2026'].flatMap(v => [brem(v, 'SAA1A11', 2.0), brem(
 const COLS_COMB = ['Pode começa','Empresa','Projeto','Unidade','Placa','Mês Inicio OS','Ano Inicio OS','Modelo','Tipo Combustivel','Tipo Veiculo','KM Rodado','QTD Total de Litros','Valor Médio Litro','TOTAS R$'];
 const comb = (placa, mes, km) => [null, 'SEARA', 'ROTA', 'ANHANGUERA', placa, mes, 2026, 'VW/11.180 DRC 4X2', 'DIESEL S10', 'CAMINHAO BAU', km, km / 4, null, km * 2];
 const COMB = [comb('SAA1A11', 'set', 3000), comb('SAB1A12', 'set', 2000), comb('SAA1A11', 'out', 1000), comb('SAB1A12', 'out', 700)];
+const COMB_NOV = [...COMB, comb('SAA1A11', 'nov', 300)];
 const REMU_SET = [['09/2026', 'SAA1A11', 2800], ['09/2026', 'SAB1A12', 1900]];
 const REMU_OUT = [...REMU_SET, ['10/2026', 'SAA1A11', 900], ['10/2026', 'SAB1A12', 800]];
-const AUTO = [{ linhas: 4, erro: null, carregado_em: '2026-10-12T09:00:00Z',
-  resumo: { dados_ate: '2026-10-10', cobertura: { mes: '2026-10', dias_mes: 31, placas: { SAA1A11: 12 } } } }];
+const AUTO = [{ linhas: 4, erro: null, carregado_em: '2026-10-12T09:00:00Z', resumo: { dados_ate: '2026-10-10' } }];
+const AUTO_NOV = [{ linhas: 5, erro: null, carregado_em: '2026-11-05T09:00:00Z', resumo: { dados_ate: '2026-11-03' } }];
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium' });
 const ctx = await browser.newContext({ viewport: { width: 1600, height: 900 }, serviceWorkers: 'block' });
-async function abre({ remu, auto, limpa = true }) {
+async function abre({ remu, auto, limpa = true, combs = COMB }) {
   const page = await ctx.newPage();
   const errs = []; page.on('pageerror', e => errs.push(e.message));
   await page.addInitScript(({ COMB, BREM, COLS_COMB, COLS_BREM, remu, auto, limpa }) => {
@@ -69,7 +72,7 @@ async function abre({ remu, auto, limpa = true }) {
       return ap.call(this, n);
     };
     window.prompt = () => 'Teste';
-  }, { COMB, BREM, COLS_COMB, COLS_BREM, remu, auto, limpa });
+  }, { COMB: combs, BREM, COLS_COMB, COLS_BREM, remu, auto, limpa });
   await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await page.route('**/cdn.jsdelivr.net/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: 'window.Chart=window.Chart||function(){return{destroy(){},update(){},data:{datasets:[]}}};Chart.register=()=>{};Chart.defaults={font:{},plugins:{legend:{},tooltip:{}}};window.ChartDataLabels={};' }));
   await page.goto(BASE + '/seara-km/index.html', { waitUntil: 'domcontentloaded' });
@@ -77,33 +80,43 @@ async function abre({ remu, auto, limpa = true }) {
   return { page, errs };
 }
 const le = page => page.evaluate(() => ({
-  m: Object.fromEntries(ALL.map(r => [r.placa + '|' + r.vig, { rem: r.rem, imp: r.imp, fb: !!r.remFb, prop: !!r.remProp }])),
+  m: Object.fromEntries(ALL.map(r => [r.placa + '|' + r.vig, { rem: r.rem, imp: r.imp, fb: !!r.remFb }])),
+  vigs: [...new Set(ALL.map(r => r.vig))].sort(),
+  opts: [...document.querySelectorAll('#ms-vig .ms-opt:not(.all-opt) input')].map(i => i.value || i.dataset.v || ''),
+  txtOpts: document.getElementById('ms-vig').textContent,
   aviso: document.getElementById('k-rem-m').textContent, vig: [...document.getElementById('ms-vig')._sel] }));
 
 console.log('\n══ 1 · sem consumo automático: mês anterior inteiro');
 { const { page, errs } = await abre({ remu: REMU_SET, auto: [] }); const r = await le(page);
   af('out/26 usa o remunerado de set/26 inteiro', near(r.m['SAA1A11|10/2026'].rem, 2800) && near(r.m['SAB1A12|10/2026'].rem, 1900), JSON.stringify(r.m['SAA1A11|10/2026']));
-  af('aviso do mês anterior, sem "proporcional"', /usando o mês anterior/.test(r.aviso) && !/proporcional/.test(r.aviso), r.aviso);
+  af('aviso do mês anterior', /out\/26 sem a aba Remunerado/.test(r.aviso), r.aviso);
   af('sem erro de página', errs.length === 0, errs[0] || ''); await page.close(); }
 
-console.log('\n══ 2 · consumo automático, corte em 10/10, cobertura por placa');
+console.log('\n══ 2 · consumo automático, corte em 10/10, aba sem outubro: outubro fora');
 { const { page, errs } = await abre({ remu: REMU_SET, auto: AUTO }); const r = await le(page);
-  af('SAA1A11: 2.800 × 12 ÷ 31 (dias da placa)', near(r.m['SAA1A11|10/2026'].rem, 2800 * 12 / 31), r.m['SAA1A11|10/2026'].rem);
-  af('SAB1A12 (fora da cobertura): 1.900 × 10 ÷ 31 (dia do corte)', near(r.m['SAB1A12|10/2026'].rem, 1900 * 10 / 31), r.m['SAB1A12|10/2026'].rem);
-  af('impacto = (real − remunerado proporcional) × R$/km', near(r.m['SAA1A11|10/2026'].imp, (1000 - 2800 * 12 / 31) * 2), r.m['SAA1A11|10/2026'].imp);
-  af('setembro (com a aba) não muda', near(r.m['SAA1A11|09/2026'].rem, 2800) && !r.m['SAA1A11|09/2026'].prop && !r.m['SAA1A11|09/2026'].fb, JSON.stringify(r.m['SAA1A11|09/2026']));
-  af('aviso diz proporcional e a data do corte', /out\/26 em aberto: mês anterior proporcional aos dias com km \(ERP até 10\/10\)/.test(r.aviso), r.aviso);
+  af('nenhuma linha de out/26', !r.vigs.includes('10/2026') && r.vigs.includes('09/2026'), r.vigs.join(' '));
+  af('o filtro de vigência não lista outubro', !/out\/?\s*(20)?26|10\/2026/i.test(r.txtOpts), r.txtOpts.replace(/\s+/g, ' ').slice(0, 80));
+  af('o painel abre em set/26', r.vig.length === 1 && r.vig[0] === '09/2026', r.vig.join(' '));
+  af('setembro (com a aba) não muda', near(r.m['SAA1A11|09/2026'].rem, 2800) && !r.m['SAA1A11|09/2026'].fb, JSON.stringify(r.m['SAA1A11|09/2026']));
+  af('sem aviso de mês emprestado', /total do período filtrado/.test(r.aviso), r.aviso);
   af('sem erro de página', errs.length === 0, errs[0] || '');
   console.log('\n══ 4 · segunda carga, do cache');
   await page.close();
   const b = await abre({ remu: REMU_SET, auto: AUTO, limpa: false }); const r2 = await le(b.page);
-  af('cache mantém o remunerado proporcional e o aviso com a data', near(r2.m['SAA1A11|10/2026'].rem, 2800 * 12 / 31) && /ERP até 10\/10/.test(r2.aviso), r2.aviso);
+  af('cache continua sem outubro', !r2.vigs.includes('10/2026') && r2.vig[0] === '09/2026', r2.vigs.join(' '));
   await b.page.close(); }
 
-console.log('\n══ 3 · a aba Remunerado já tem outubro: vale a aba');
+console.log('\n══ 3 · a aba Remunerado já tem outubro: outubro entra com a aba');
 { const { page, errs } = await abre({ remu: REMU_OUT, auto: AUTO }); const r = await le(page);
-  af('out/26 = o que está na aba, sem proporção', near(r.m['SAA1A11|10/2026'].rem, 900) && !r.m['SAA1A11|10/2026'].prop && !r.m['SAA1A11|10/2026'].fb, JSON.stringify(r.m['SAA1A11|10/2026']));
-  af('sem aviso', /total do período filtrado/.test(r.aviso), r.aviso);
+  af('out/26 = o que está na aba', r.m['SAA1A11|10/2026'] && near(r.m['SAA1A11|10/2026'].rem, 900) && !r.m['SAA1A11|10/2026'].fb, JSON.stringify(r.m['SAA1A11|10/2026']));
+  af('o painel abre em out/26', r.vig[0] === '10/2026', r.vig.join(' '));
+  af('sem erro de página', errs.length === 0, errs[0] || ''); await page.close(); }
+
+console.log('\n══ 5 · o corte passou para novembro: outubro entra, novembro fica fora');
+{ const { page, errs } = await abre({ remu: REMU_SET, auto: AUTO_NOV, combs: COMB_NOV }); const r = await le(page);
+  af('out/26 (fechado) entra com o mês anterior inteiro', r.m['SAA1A11|10/2026'] && near(r.m['SAA1A11|10/2026'].rem, 2800) && r.m['SAA1A11|10/2026'].fb, JSON.stringify(r.m['SAA1A11|10/2026']));
+  af('nov/26 (em aberto) fica fora', !r.vigs.includes('11/2026'), r.vigs.join(' '));
+  af('o painel abre em out/26, com o aviso do mês anterior', r.vig[0] === '10/2026' && /out\/26 sem a aba Remunerado/.test(r.aviso), r.vig.join(' ') + ' · ' + r.aviso);
   af('sem erro de página', errs.length === 0, errs[0] || ''); await page.close(); }
 
 await browser.close(); srv.close();
