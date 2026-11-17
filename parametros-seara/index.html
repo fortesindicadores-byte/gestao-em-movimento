@@ -650,7 +650,8 @@ async function salvaNova(){
 }
 // ── o estado das abas automáticas (o automático é o padrão; não há chave) ──
 const NOME_BASE={consumo_km_litro:'Km/L · Ambev',consumo_rs_litro:'R$/L · Ambev',consumo_rem_modelo:'Base Remunerado Modelo · Ambev',
-  seara_combustivel:'Combustível · Seara',seara_remunerado:'Base Remunerado · Seara',seara_comb_vig:'Combustível por vigência · Seara'};
+  seara_combustivel:'Combustível · Seara',seara_remunerado:'Base Remunerado · Seara',seara_comb_vig:'Combustível por vigência · Seara',
+  dre_frota:'DRE · Frota (ERP)',dre_receita:'DRE · Receita Líquida (ERP)',dre_ebitda:'DRE · EBITDA (ERP)'};
 const dtHora=s=>{ const d=new Date(s); return isNaN(d)?'—':d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
 // "Dados até" = o último dia COMPLETO do ERP, onde o robô corta (resumo.dados_ate)
 const ate=c=>{ const m=String((c.resumo||{}).dados_ate||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1]}`:'—'; };

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610302140">
+<meta name="build" content="202611171600">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Visão Financeira · DRE Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -449,6 +449,10 @@ table.dre tr.rec-row td.conta{font-weight:800;}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
       Atualizar dados
     </button>
+    <a class="s-item" href="dre/" id="lnk-dre-import" style="text-decoration:none;display:none" title="Subir o export do DRE Gerencial do ERP (Bússola Gerencial): o mês importado passa a valer no lugar da aba do Sheets (só administradores)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Importar DRE
+    </a>
 
     <div class="s-volta">
       <a class="s-item" href="../" style="text-decoration:none" title="Voltar ao Hub">
@@ -926,7 +930,11 @@ const SB_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SB_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
 let _sbVF=null;
 const sbVF=()=>{ if(!_sbVF&&window.supabase)_sbVF=window.supabase.createClient(SB_URL,SB_KEY); return _sbVF; };
-const TAB_BANCO={ [TAB_FROTA]:'sh_dre_frota', [EBITDA_TAB]:'sh_dre_ebitda', [TAB_RECEITA]:'sh_dre_receita' };
+// o SLUG da base; a tabela é decidida na hora: ca_dre_* (as abas montadas a
+// partir do export do DRE Gerencial do ERP, registradas em consumo_auto_base
+// pelo dre_gerencial_monta(); Renan, 17/11/2026: "Vamos usar eles em outubro,
+// não sheets") ou a sh_dre_* de sempre, que é a aba do Sheets
+const TAB_BANCO={ [TAB_FROTA]:'dre_frota', [EBITDA_TAB]:'dre_ebitda', [TAB_RECEITA]:'dre_receita' };
 // rótulo da aba → coluna da tabela, NA ORDEM das colunas da aba (as três abas
 // do DRE têm o mesmo cabeçalho)
 const MAPA_DRE=[
@@ -947,10 +955,12 @@ function _vigGviz(v){
   const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m?`Date(${+m[1]},${+m[2]-1},${+m[3]})`:null;
 }
-let FONTE_TAB={};                                   // aba → 'banco' | 'planilha'
+let FONTE_TAB={};                                   // aba → 'banco · ERP' | 'banco' | 'planilha'
 async function fetchTabBanco(tab){
-  const tabela=TAB_BANCO[tab]; if(!tabela) throw new Error('aba sem tabela no banco');
+  const slug=TAB_BANCO[tab]; if(!slug) throw new Error('aba sem tabela no banco');
   const sb=sbVF(); if(!sb) throw new Error('supabase-js não carregou');
+  // a mesma pergunta que o shim faz: ca_<slug> quando o registro está sem erro e com linhas
+  const tabela=(window.GvizCache&&GvizCache.tabelaConsumo)?await GvizCache.tabelaConsumo(slug):'sh_'+slug;
   const linhas=[];
   for(let de=0;;de+=1000){                          // o PostgREST corta em 1000
     const {data,error}=await sb.from(tabela).select('*').order('linha',{ascending:true}).range(de,de+999);
@@ -965,12 +975,13 @@ async function fetchTabBanco(tab){
   return {
     header: MAPA_DRE.map(p=>p[0]),
     rows: linhas.map(l=>MAPA_DRE.map(([rot,col])=>col==='vigencia_orig'?_vigGviz(l.vigencia_orig):(l[col]!=null?l[col]:null))),
+    fonte: /^ca_/.test(tabela)?'banco · ERP':'banco',
   };
 }
 async function fetchTab(tab){
   try{
     const r=await fetchTabBanco(tab);
-    FONTE_TAB[tab]='banco';
+    FONTE_TAB[tab]=r.fonte||'banco';
     return r;
   }catch(e){
     console.warn(`DRE · ${tab}: banco indisponível (${e.message}) — caindo para a planilha`);
@@ -1557,7 +1568,7 @@ function atualizar(){
   // o selo diz DE ONDE o dado veio: com a queda para a planilha acontecendo em
   // silêncio, "banco" e "planilha" pareceriam a mesma tela
   const fontes=[...new Set(Object.values(FONTE_TAB))];
-  const selo=fontes.length?` · ${fontes.length>1?'banco + planilha':fontes[0]}`:'';
+  const selo=fontes.length?` · ${fontes.length>1?fontes.join(' + '):fontes[0]}`:'';
   set('titSub', `${vigLbl} · atualizado ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${selo}`);
 }
 
@@ -2216,6 +2227,17 @@ async function init(){
 document.addEventListener('DOMContentLoaded',init);
 let _rt;
 window.addEventListener('resize',()=>{ clearTimeout(_rt); _rt=setTimeout(()=>{ if(lastF) renderCharts(lastF); },400); });
+/* "Importar DRE" só para admin: lê o perfil que o hub deixa em cache
+   (gem_perfil_<uid>), sem ida ao banco — o mesmo desenho dos atalhos de
+   importação do Painel KM; a página de importação confere de novo antes de gravar. */
+(function(){
+  try{
+    const s=JSON.parse(localStorage.getItem('sb-lozwipoeacpvplgkrxkq-auth-token')||'null');
+    const uid=s&&s.user&&s.user.id; if(!uid) return;
+    const p=JSON.parse(localStorage.getItem('gem_perfil_'+uid)||'null');
+    if(p&&p.is_admin){ const a=document.getElementById('lnk-dre-import'); if(a) a.style.display=''; }
+  }catch(e){}
+})();
 </script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
@@ -2243,6 +2265,6 @@ function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>VfApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202610302140"></script>
+<script src="../assets/build-check.js?v=202611171600"></script>
 </body>
 </html>

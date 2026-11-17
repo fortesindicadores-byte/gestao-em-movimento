@@ -56,13 +56,13 @@ const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromi
 let falhas = 0;
 const ok = (t, v, e = '') => { console.log(`   ${v ? '✓' : '✗'} ${t}${e ? '  (' + e + ')' : ''}`); if (!v) falhas++; };
 
-async function abre(ctx, { banco, limpar = true }) {
+async function abre(ctx, { banco, limpar = true, erp = false }) {
   const page = await ctx.newPage();
   const errs = []; page.on('pageerror', e => errs.push(e.message));
   const logs = []; page.on('console', m => logs.push(m.type() + ': ' + m.text().slice(0, 140)));
-  await page.addInitScript(({ LINHAS, TAB, banco, gvizPorAba, limpar }) => {
+  await page.addInitScript(({ LINHAS, TAB, banco, gvizPorAba, limpar, erp }) => {
     sessionStorage.setItem('gem_hub', '1');
-    if (limpar) try { localStorage.removeItem('bi_cache_vf_v8'); } catch (e) {}
+    if (limpar) try { localStorage.removeItem('bi_cache_vf_v9'); } catch (e) {}
     window.Chart = class { constructor() {} destroy() {} update() {} resize() {} };
     window.Chart.register = () => {};
     window.ChartDataLabels = {};
@@ -74,7 +74,8 @@ async function abre(ctx, { banco, limpar = true }) {
           async range(a) {
             if (banco === 'erro') return { data: null, error: { message: 'relation does not exist' } };
             if (banco === 'vazio') return { data: [], error: null };
-            const aba = Object.keys(TAB).find(k => TAB[k] === tabela);
+            // a Visão Financeira pede sh_dre_* ou ca_dre_* (o export do ERP): o dublê serve as duas
+            const aba = Object.keys(TAB).find(k => TAB[k].replace(/^sh_/, '') === String(tabela).replace(/^(sh|ca)_/, ''));
             const rows = LINHAS[aba] || [];
             return { data: a > 0 ? [] : rows, error: null };
           },
@@ -85,6 +86,12 @@ async function abre(ctx, { banco, limpar = true }) {
     const orig = window.fetch;
     window.fetch = async (u, o) => {
       const s = String(u);
+      // o registro do consumo automático que o GvizCache.tabelaConsumo consulta: com `erp`, as
+      // três abas do DRE apontam para ca_dre_* (as montadas pelo dre_gerencial_monta)
+      if (s.includes('consumo_auto_base')) {
+        const slug = decodeURIComponent((s.match(/slug=eq\.([^&]+)/) || [])[1] || '');
+        return new Response(JSON.stringify(erp && /^dre_/.test(slug) ? [{ tabela: 'ca_' + slug, linhas: 10, erro: null }] : []), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
       if (s.includes('docs.google.com')) {
         const aba = decodeURIComponent((s.match(/sheet=([^&]+)/) || [])[1] || '');
         return new Response(`/*O_o*/\ngoogle.visualization.Query.setResponse(${JSON.stringify(gvizPorAba[aba])});`, { status: 200 });
@@ -93,7 +100,7 @@ async function abre(ctx, { banco, limpar = true }) {
     };
   }, {
     LINHAS: Object.fromEntries(Object.keys(TAB).map(a => [a, doBanco(a)])),
-    TAB, banco, limpar, gvizPorAba: Object.fromEntries(Object.keys(TAB).map(a => [a, doGviz(a)])),
+    TAB, banco, limpar, erp, gvizPorAba: Object.fromEntries(Object.keys(TAB).map(a => [a, doGviz(a)])),
   });
   /* Chart.js DUBLADO que grava o config: é por ele que se prova o desenho de
      barra no padrão do Painel KM (Renan, 20/09/2026), sem CDN. O plugin de
@@ -117,7 +124,7 @@ async function abre(ctx, { banco, limpar = true }) {
     ebitda: (document.getElementById('h-ebitda') || {}).textContent,
     fonte: typeof FONTE_TAB !== 'undefined' ? JSON.stringify(FONTE_TAB) : '?',
     linhas: typeof allRows !== 'undefined' ? allRows.length : -1,
-    temCache: !!localStorage.getItem('bi_cache_vf_v8'),
+    temCache: !!localStorage.getItem('bi_cache_vf_v9'),
     // a vigência do EBITDA depois do caminho inteiro (inclusive o cache)
     ebVigs: (typeof ebitdaRows !== 'undefined' && typeof ebVig === 'function')
       ? ebitdaRows.map(r2 => { const d = ebVig(r2); return d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` : 'NULA'; }) : [],
@@ -202,6 +209,19 @@ for (const [rot, modo] of [['banco com ERRO', 'erro'], ['tabela VAZIA (anon sem 
   ok('caiu para a planilha nas três abas', /planilha/.test(r.fonte) && !/banco/.test(r.fonte), r.fonte);
   ok('o selo diz planilha', / · planilha$/.test(r.sub), r.sub);
   ok('o número é o MESMO da leitura do banco', r.ebitda === '512.35k', r.ebitda);
+  await page.close(); await ctx.close();
+}
+
+// ── 4) outubro vindo do ERP: o registro aponta para ca_dre_* e o selo diz de onde veio ──
+{
+  const ctx = await browser.newContext({ viewport: { width: 1600, height: 900 } });
+  const { page, r, errs } = await abre(ctx, { banco: 'ok', erp: true });
+  console.log('\n══ DRE do ERP (ca_dre_* registradas no consumo_auto_base)');
+  console.log('   sub:', r.sub, '\n   fonte:', r.fonte, '· EBITDA:', r.ebitda);
+  ok('sem erro de página', errs.length === 0, errs[0] || '');
+  ok('as três abas vieram da ca_dre_* (banco · ERP)', r.fonte === '{"Frota":"banco · ERP","Receita Líquida":"banco · ERP","EBITDA":"banco · ERP"}', r.fonte);
+  ok('o selo diz "banco · ERP"', / · banco · ERP$/.test(r.sub), r.sub);
+  ok('o número é o mesmo', r.ebitda === '512.35k', r.ebitda);
   await page.close(); await ctx.close();
 }
 

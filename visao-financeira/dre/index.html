@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="build" content="202611171600">
+<title>DRE Gerencial · Importar · BI Frota</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="../../assets/gviz-cache.js?v=202610281200"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --fundo:#202022; --app:rgba(30,40,60,.34); --side:rgba(30,30,30,.50);
+  --card-brd:rgba(255,255,255,.07); --luz-card:inset 0 1px 0 rgba(255,255,255,.08);
+  --txt:#EEF2FA; --txt2:#C9D0DD; --txt3:#A9B1C0;
+  --linha:rgba(255,255,255,.06); --hover:rgba(255,255,255,.06); --cabec:#2B2B30;
+  --laranja:#F97316; --verde:#3BB33B; --vermelho:#FF5252; --ambar:#F4A100;
+}
+body.claro{
+  --fundo:#E1E2E5; --app:rgba(255,255,255,.34); --side:rgba(255,255,255,.50);
+  --card-brd:rgba(15,23,42,.10); --luz-card:inset 0 1px 0 rgba(255,255,255,1);
+  --txt:#161D2B; --txt2:#4A5568; --txt3:#737D91;
+  --linha:rgba(15,23,42,.10); --hover:rgba(15,23,42,.05); --cabec:#DCDFE6;
+  --verde:#00B300; --vermelho:#FF0000; --ambar:#E9A400;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--fundo);color:var(--txt);font-family:'Montserrat',sans-serif;font-size:13px;min-height:100vh;}
+.app{max-width:1180px;margin:0 auto;padding:26px 24px 60px;}
+.topo{display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap;}
+.voltar{display:inline-flex;align-items:center;gap:6px;background:var(--side);border:1px solid var(--card-brd);
+  border-radius:8px;padding:7px 12px;font-size:10.5px;font-weight:800;color:var(--txt2);text-decoration:none;
+  text-transform:uppercase;letter-spacing:.6px;}
+.voltar:hover{background:var(--hover);color:var(--txt);}
+.pe-volta{display:flex;gap:8px;margin-top:18px;}
+h1{font-size:20px;font-weight:800;}
+.sub{font-size:11.5px;color:var(--txt3);margin:2px 0 22px;line-height:1.6;}
+.card{background:var(--side);border:1px solid var(--card-brd);border-radius:13px;box-shadow:var(--luz-card);
+  padding:18px 20px;margin-bottom:14px;}
+.ctit{font-size:13px;font-weight:800;margin-bottom:3px;}
+.csub{font-size:11px;color:var(--txt3);margin-bottom:14px;line-height:1.6;}
+.drop{border:1.6px dashed var(--card-brd);border-radius:13px;background:var(--side);padding:30px 22px;
+  text-align:center;cursor:pointer;transition:border-color .18s,background .18s;}
+.drop:hover,.drop.sobre{border-color:var(--laranja);background:var(--hover);}
+.drop b{display:block;font-size:14px;font-weight:800;margin-bottom:5px;}
+.drop span{font-size:11.5px;color:var(--txt3);line-height:1.75;}
+.drop code{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--laranja);}
+.res{margin-top:14px;display:flex;flex-direction:column;gap:9px;}
+.item{border:1px solid var(--card-brd);border-left-width:3px;border-radius:9px;padding:11px 14px;background:var(--side);}
+.item.ok{border-left-color:var(--verde);}
+.item.erro{border-left-color:var(--vermelho);}
+.item.aviso{border-left-color:var(--ambar);}
+.item b{font-size:12px;font-weight:800;display:block;margin-bottom:3px;}
+.item span{font-size:11px;color:var(--txt2);line-height:1.6;}
+.item span b{display:inline;font-size:inherit;margin:0;}
+.item .mot{color:var(--vermelho);font-weight:700;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--cabec);color:var(--txt);font-size:10px;font-weight:800;padding:9px 11px;
+  text-transform:uppercase;letter-spacing:.5px;text-align:left;white-space:nowrap;position:sticky;top:0;}
+thead th.num{text-align:right;}
+td{padding:9px 11px;border-bottom:1px solid var(--linha);color:var(--txt);white-space:nowrap;}
+td.num{text-align:right;}
+tbody tr:hover{background:var(--hover);}
+.vazio{padding:26px;text-align:center;color:var(--txt3);font-size:11.5px;}
+.bt{background:rgba(249,115,22,.14);border:1px solid rgba(249,115,22,.3);border-radius:8px;padding:8px 15px;
+  font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:800;color:var(--laranja);cursor:pointer;
+  text-transform:uppercase;letter-spacing:.6px;}
+.bt:hover{background:rgba(249,115,22,.28);}
+.aviso-topo{border:1px solid rgba(244,161,0,.35);background:rgba(244,161,0,.1);border-radius:10px;
+  padding:11px 14px;font-size:11.5px;color:var(--txt2);line-height:1.65;margin-bottom:14px;}
+td.cr{color:var(--vermelho);font-weight:700;} td.cg{color:var(--verde);font-weight:700;}
+.tag{display:inline-block;font-size:9.5px;font-weight:800;border-radius:6px;padding:2px 7px;text-transform:uppercase;letter-spacing:.4px;}
+.tag.erp{background:rgba(59,179,59,.14);color:var(--verde);} .tag.aba{background:rgba(244,161,0,.16);color:var(--ambar);} .tag.off{background:rgba(255,82,82,.14);color:var(--vermelho);}
+.mut{color:var(--txt3);}
+@media(max-width:700px){ .app{padding:18px 14px 40px;} table{font-size:11px;} td,thead th{padding:7px 8px;} }
+</style>
+</head>
+<body>
+<script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../?volta="+encodeURIComponent(location.pathname+location.search));}catch(e){}</script>
+
+<div class="app">
+  <div class="topo">
+    <h1>DRE Gerencial do ERP</h1>
+  </div>
+  <p class="sub">Sobe o export <b>DRE Gerencial Sintético</b> da Bússola Gerencial (DRE → DRE Gerencial → Comparativo Orçado + Remunerado → baixar).
+    O mês que entra aqui passa a valer <b>no lugar da aba do Sheets</b> em todos os painéis que leem o DRE (Frota, Receita Líquida e EBITDA);
+    os meses que não estão no banco continuam vindo da aba. Subir o mesmo mês de novo <b>substitui</b> o mês.</p>
+
+  <div id="gate"></div>
+
+  <div id="miolo" style="display:none">
+    <div class="card">
+      <div class="ctit">Subir o export</div>
+      <div class="csub">Arquivo <b>.xlsx</b> com a aba <b>Sintético</b> (Ano · Mês · Código DRE Gerencial · Nível da Estrutura · Nome da Estrutura · Conta do Plano de Projetos ·
+        Unidade · Realizado · Orçado · Remunerado · Forecast). Entra inteiro, todas as estruturas; o banco monta as três abas a partir dele
+        (Frota = nível 4 das 14 contas de frota · Receita Líquida = estrutura 31 · EBITDA = estrutura 350, o EBITDA Ajustado).</div>
+      <div class="drop" id="drop">
+        <b>Arraste o arquivo aqui</b>
+        <span>ou clique para escolher<br><code>dre_gerencial_sintetico_AAAA-MM-DD.xlsx</code></span>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.xlsm,.xls" style="display:none">
+      <div class="res" id="res"></div>
+    </div>
+
+    <div class="card" style="padding-bottom:10px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div class="ctit">Meses no banco</div>
+          <div class="csub" id="subMeses">Lendo…</div>
+        </div>
+        <button class="bt" onclick="carrega()">Atualizar</button>
+      </div>
+      <div id="tabMeses"></div>
+    </div>
+
+    <div class="card" style="padding-bottom:10px">
+      <div class="ctit">ERP × aba do Sheets, nos meses do banco</div>
+      <div class="csub">O que os painéis passam a mostrar (ERP) contra o que a aba do Sheets tem no mesmo mês. Diferença no realizado é lançamento
+        posterior à colagem da aba; no orçado e no remunerado os dois deveriam bater.</div>
+      <div id="tabConf"></div>
+    </div>
+
+    <div class="card" style="padding-bottom:10px">
+      <div class="ctit">As três abas servidas aos painéis</div>
+      <div class="csub">O registro que o portal consulta para decidir de onde cada aba sai. "ERP + aba" = os meses do banco vêm do export e o resto da aba do Sheets.</div>
+      <div id="tabBases"></div>
+    </div>
+  </div>
+  <footer class="pe-volta">
+    <a href="../" class="voltar">← Voltar à Visão Financeira</a>
+    <a href="../../" class="voltar">⌂ Voltar ao Hub</a>
+  </footer>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   IMPORTAÇÃO DO DRE GERENCIAL DO ERP (Renan, 17/11/2026: "vamos subir no
+   banco os dados da planilha que enviei. Vamos usar eles em outubro, não sheets")
+   O export entra INTEIRO em dre_gerencial; o banco (dre_gerencial_monta)
+   escreve as três abas em ca_dre_* e registra em consumo_auto_base, que é o
+   que o shim e a Visão Financeira consultam. Mesmo cuidado das outras
+   importações: coluna que falta é erro visível, o cartão só fica verde com o
+   banco confirmando, e as tabelas releem o banco depois.
+   ══════════════════════════════════════════════════════════════ */
+const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
+const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+let sb=null, EMAIL='', ADMIN=false;
+const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const FROTA_COD=['170','171','173','174','176','177','178','180','181','183','185','186','398','572'];
+const ABAS=[['dre_frota','Frota'],['dre_receita','Receita Líquida'],['dre_ebitda','EBITDA']];
+
+const $=i=>document.getElementById(i);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const n0=v=>v==null||!isFinite(v)?'—':Math.round(v).toLocaleString('pt-BR');
+const brl=v=>v==null||!isFinite(v)?'—':(v<0?'-':'')+'R$ '+Math.abs(Math.round(v)).toLocaleString('pt-BR');
+const dt=s=>{ const d=new Date(s); return isNaN(d)?'—':d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
+const vigRot=(a,m)=>MESES[m-1]+'/'+String(a).slice(2);
+const norm=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+
+function cartao(classe, titulo, texto, motivo){
+  const d=document.createElement('div'); d.className='item '+classe;
+  d.innerHTML=`<b>${esc(titulo)}</b><span>${texto}${motivo?`<br><span class="mot">${esc(motivo)}</span>`:''}</span>`;
+  $('res').appendChild(d);
+}
+
+/* ── leitura do export: colunas pelo RÓTULO, nunca pela posição ── */
+const COLS={
+  ano:['ano'], mes:['mes'], cod_empresa:['codigo empresa'], cod_dre:['codigo dre gerencial'], nivel:['nivel da estrutura'],
+  estrutura:['nome da estrutura'], handle_projeto:['handle projeto'], projeto:['conta do plano de projetos'], segmento:['segmento'],
+  overhead:['overhead'], grupo:['grupo'], cod_operacao:['codigo da operacao'], operacao:['operacao'], cod_unidade:['codigo da unidade'],
+  unidade:['unidade'], realizado:['realizado'], orcado:['orcado'], remunerado:['remunerado'], forecast:['forecast'],
+};
+const OBRIG=['ano','mes','cod_dre','estrutura','projeto','realizado','orcado','remunerado'];
+const num=v=>{ if(v==null||v==='') return 0; if(typeof v==='number') return isFinite(v)?v:0;
+  const s=String(v).trim().replace(/\s|R\$/g,''); const n=s.includes(',')?Number(s.replace(/\./g,'').replace(',','.')):Number(s); return isFinite(n)?n:0; };
+const mesNum=v=>{ if(v==null||v==='') return null; if(typeof v==='number') return v>=1&&v<=12?v:null;
+  const s=norm(v); const n=parseInt(s,10); if(n>=1&&n<=12) return n; const i=MESES.indexOf(s.slice(0,3)); return i>=0?i+1:null; };
+
+function leExport(XLSX, wb){
+  // a aba Sintético, ou a primeira que tiver o cabeçalho do DRE
+  let ws=null, hdrRow=-1, hdr=null, aoa=null;
+  for(const nome of [wb.SheetNames.find(n=>norm(n)==='sintetico'), ...wb.SheetNames].filter(Boolean)){
+    const a=XLSX.utils.sheet_to_json(wb.Sheets[nome],{header:1,raw:true,defval:null});
+    const i=a.findIndex(r=>Array.isArray(r)&&r.some(c=>norm(c)==='codigo dre gerencial'));
+    if(i>=0){ ws=nome; hdrRow=i; hdr=a[i]; aoa=a; break; }
+  }
+  if(!ws) throw new Error('não achei a aba Sintético (o cabeçalho com "Código DRE Gerencial") em nenhuma aba do arquivo');
+  const idx={}; const hn=hdr.map(norm);
+  for(const [k,nomes] of Object.entries(COLS)){ const i=hn.findIndex(h=>nomes.includes(h)); if(i>=0) idx[k]=i; }
+  const falta=OBRIG.filter(k=>idx[k]==null);
+  if(falta.length) throw new Error('faltam colunas no export: '+falta.map(k=>COLS[k][0]).join(', '));
+  const g=(r,k)=>idx[k]==null?null:r[idx[k]];
+  const linhas=[]; const meses=new Set(); let puladas=0;
+  for(const r of aoa.slice(hdrRow+1)){
+    if(!Array.isArray(r)) continue;
+    const cod=g(r,'cod_dre'), est=g(r,'estrutura'), ano=num(g(r,'ano')), mes=mesNum(g(r,'mes'));
+    if(cod==null||cod===''||est==null||est==='') { if(r.some(c=>c!=null&&c!=='')) puladas++; continue; }
+    if(!(ano>=2000&&ano<=2100)||!mes) throw new Error(`linha com Ano/Mês que não entendi: ${JSON.stringify([g(r,'ano'),g(r,'mes')])}`);
+    const ov=g(r,'overhead');
+    linhas.push({
+      ano, mes, cod_empresa:s(g(r,'cod_empresa')), cod_dre:String(cod).trim(), nivel:idx.nivel==null?null:(parseInt(g(r,'nivel'),10)||null),
+      estrutura:String(est).trim(), handle_projeto:s(g(r,'handle_projeto')), projeto:String(g(r,'projeto')||'').trim(), segmento:s(g(r,'segmento')),
+      overhead: ov==null||ov===''?null:(typeof ov==='boolean'?ov:/^(sim|s|true|1|yes)$/.test(norm(ov))),
+      grupo:s(g(r,'grupo')), cod_operacao:s(g(r,'cod_operacao')), operacao:s(g(r,'operacao')), cod_unidade:s(g(r,'cod_unidade')), unidade:s(g(r,'unidade')),
+      realizado:num(g(r,'realizado')), orcado:num(g(r,'orcado')), remunerado:num(g(r,'remunerado')), forecast:num(g(r,'forecast')),
+    });
+    meses.add(ano*100+mes);
+  }
+  return { aba:ws, linhas, meses:[...meses].sort().map(k=>({ano:Math.floor(k/100), mes:k%100})), puladas };
+  function s(v){ return v==null||v===''?null:String(v).trim(); }
+}
+
+// os totais que os painéis vão ver, pela MESMA régua do dre_gerencial_monta()
+function totais(linhas){
+  const t={ frota:{real:0,orc:0,rem:0}, receita:{real:0,orc:0,rem:0}, ebitda:{real:0,orc:0,rem:0} };
+  for(const l of linhas){
+    let k=null; if(l.cod_dre==='31') k='receita'; else if(l.cod_dre==='350') k='ebitda'; else if(l.nivel===4&&FROTA_COD.includes(l.cod_dre)) k='frota';
+    if(!k) continue; t[k].real+=l.realizado; t[k].orc+=l.orcado; t[k].rem+=l.remunerado;
+  }
+  return t;
+}
+
+/* ── o RAMO QUE GRAVA: apaga os meses do arquivo, grava, e manda o banco montar as abas ── */
+async function grava(r, nomeArq){
+  for(const m of r.meses){
+    const { error } = await sb.from('dre_gerencial').delete().eq('ano',m.ano).eq('mes',m.mes);
+    if(error) throw new Error('ao limpar '+vigRot(m.ano,m.mes)+': '+error.message);
+  }
+  let n=0; const passo=500;
+  for(let i=0;i<r.linhas.length;i+=passo){
+    const { data, error } = await sb.from('dre_gerencial').insert(r.linhas.slice(i,i+passo).map(l=>({ ...l, arquivo:nomeArq, updated_by:EMAIL }))).select('id');
+    if(error) throw new Error(error.message);
+    n+=(data||[]).length;
+  }
+  const { data:monta, error:em } = await sb.rpc('dre_gerencial_monta');
+  if(em){ const e=new Error(em.message+' (rodar o SQL scripts/dre-gerencial.sql)'); e.parcial={ n }; throw e; }   // as linhas JÁ entraram
+  return { n, monta };
+}
+
+async function recebeArquivos(lista){
+  if(!lista||!lista.length) return;
+  $('res').innerHTML='';
+  if(typeof XLSX==='undefined'){ cartao('erro','Leitor de planilha ainda carregando','Tente de novo em um instante.'); return; }
+  if(!ADMIN){ cartao('erro','Sem permissão para gravar','Seu acesso não é de administrador: o banco recusaria a escrita.'); return; }
+  const f=lista[0];
+  try{
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
+    const r=leExport(XLSX, wb);
+    if(!r.linhas.length){ cartao('erro', f.name, 'A aba Sintético não tem nenhuma linha com estrutura e código, então <b>nada foi gravado</b>.'); return; }
+    const g=await grava(r, f.name);
+    const t=totais(r.linhas);
+    const notas=[]; if(g.n!==r.linhas.length) notas.push(`o banco confirmou ${g.n} de ${r.linhas.length} linhas`);
+    if(r.puladas) notas.push(`${r.puladas} linha(s) sem estrutura ou código ficaram de fora`);
+    const abas=g.monta?ABAS.map(([s,nome])=>`${nome} ${((g.monta[s]||{}).erp||0).toLocaleString('pt-BR')}`).join(' · '):'';
+    cartao(notas.length?'aviso':'ok', f.name,
+      `<b>${g.n.toLocaleString('pt-BR')}</b> linha(s) gravadas · mês <b>${esc(r.meses.map(m=>vigRot(m.ano,m.mes)).join(', '))}</b> (aba ${esc(r.aba)})`
+      +`<br>Receita Líquida real ${brl(t.receita.real)} · EBITDA real ${brl(t.ebitda.real)} · Frota real ${brl(t.frota.real)}`
+      +(abas?`<br>Abas montadas para os painéis (linhas do ERP): ${esc(abas)}`:''),
+      notas.length?notas.join(' · '):'');
+    await carrega();
+  }catch(e){
+    if(e&&e.parcial){   // gravou, mas o banco não montou as abas: os painéis seguem na aba do Sheets até rodar o SQL
+      cartao('aviso', f.name, `<b>${e.parcial.n.toLocaleString('pt-BR')}</b> linha(s) gravadas em dre_gerencial, mas <b>as abas não foram montadas</b>: os painéis continuam lendo a aba do Sheets.`, e.message||String(e));
+      await carrega(); return;
+    }
+    cartao('erro', f.name, 'Falhou e <b>nada foi gravado</b> deste arquivo.', e.message||String(e));
+  }
+}
+
+/* ── leitura do banco ── */
+async function todas(tab, cols, filtro){
+  const out=[]; const passo=1000;
+  for(let i=0;;i+=passo){
+    let q=sb.from(tab).select(cols).range(i,i+passo-1); if(filtro) q=filtro(q);
+    const { data, error } = await q;
+    if(error) throw new Error(tab+': '+error.message);
+    out.push(...(data||[])); if(!data||data.length<passo) break;
+  }
+  return out;
+}
+async function carrega(){
+  $('tabMeses').innerHTML='<div class="vazio">Lendo…</div>'; $('tabConf').innerHTML=''; $('tabBases').innerHTML='';
+  let linhas, bases;
+  try{
+    [linhas, bases]=await Promise.all([
+      todas('dre_gerencial','ano,mes,cod_dre,nivel,realizado,orcado,remunerado,arquivo,updated_at'),
+      sb.from('consumo_auto_base').select('slug,tabela,linhas,carregado_em,erro,resumo').in('slug',ABAS.map(a=>a[0])).then(r=>{ if(r.error) throw new Error(r.error.message); return r.data||[]; }),
+    ]);
+  }catch(e){
+    $('tabMeses').innerHTML=`<div class="vazio">Não consegui ler: ${esc(e.message||e)}<br>(rodar o SQL <code>scripts/dre-gerencial.sql</code>)</div>`; $('subMeses').textContent=''; return;
+  }
+  // meses
+  const porMes=new Map();
+  for(const l of linhas){ const k=l.ano*100+l.mes; if(!porMes.has(k)) porMes.set(k,{ano:l.ano,mes:l.mes,linhas:[],quando:'',arquivo:''});
+    const m=porMes.get(k); m.linhas.push(l); if(l.updated_at>m.quando){ m.quando=l.updated_at; m.arquivo=l.arquivo||''; } }
+  const meses=[...porMes.values()].sort((a,b)=>b.ano*100+b.mes-(a.ano*100+a.mes));
+  $('subMeses').textContent=meses.length?`${meses.length} mês(es) · ${linhas.length.toLocaleString('pt-BR')} linhas`:'';
+  if(!meses.length){ $('tabMeses').innerHTML='<div class="vazio">Nada no banco ainda: suba o export acima.</div>'; }
+  else{
+    $('tabMeses').innerHTML='<div style="overflow:auto;max-height:40vh"><table><thead><tr><th>Mês</th><th class="num">Linhas</th>'
+      +'<th class="num">Receita Líquida</th><th class="num">EBITDA</th><th class="num">Frota</th><th>Carregado em</th><th>Arquivo</th></tr></thead><tbody>'
+      +meses.map(m=>{ const t=totais(m.linhas); return `<tr><td><b>${vigRot(m.ano,m.mes)}</b></td><td class="num">${n0(m.linhas.length)}</td>`
+        +`<td class="num">${brl(t.receita.real)}</td><td class="num">${brl(t.ebitda.real)}</td><td class="num">${brl(t.frota.real)}</td>`
+        +`<td>${dt(m.quando)}</td><td class="mut">${esc(m.arquivo)}</td></tr>`; }).join('')+'</tbody></table></div>';
+  }
+  // bases
+  const porSlug=Object.fromEntries(bases.map(b=>[b.slug,b]));
+  $('tabBases').innerHTML='<table><thead><tr><th>Aba</th><th>Fonte hoje</th><th class="num">Linhas</th><th>Meses do ERP</th><th>Montada em</th></tr></thead><tbody>'
+    +ABAS.map(([s,nome])=>{ const b=porSlug[s]; const ok=b&&!b.erro&&b.linhas>0; const me=(b&&b.resumo&&b.resumo.meses_erp)||[];
+      return `<tr><td><b>${nome}</b></td><td>${!b?'<span class="tag aba">aba do Sheets</span> <span class="mut">(ainda não montada)</span>':ok?'<span class="tag erp">ERP + aba</span>':`<span class="tag off">aba do Sheets</span> <span class="mut">${esc(b.erro||'sem linhas')}</span>`}</td>`
+        +`<td class="num">${b?n0(b.linhas):'—'}</td><td>${me.length?esc(me.map(v=>{ const [mm,aa]=v.split('/'); return vigRot(aa,+mm); }).join(', ')):'—'}</td><td>${b?dt(b.carregado_em):'—'}</td></tr>`; }).join('')
+    +'</tbody></table>';
+  // conferência ERP × aba, nos meses do banco (lê as ca_ e as sh_ só desses meses)
+  if(!meses.length){ $('tabConf').innerHTML='<div class="vazio">Sem mês no banco.</div>'; return; }
+  const vigs=meses.map(m=>String(m.mes).padStart(2,'0')+'/'+m.ano);
+  const lin=[];
+  for(const [s,nome] of ABAS){
+    for(const pre of ['ca_','sh_']){
+      let rows=[];
+      try{ rows=await todas(pre+s,'vigencia,orcado,remunerado,realizado',q=>q.in('vigencia',vigs)); }
+      catch(e){ rows=null; }
+      for(const v of vigs){
+        const rs=rows?rows.filter(r=>r.vigencia===v):null;
+        lin.push({ aba:nome, v, pre, n:rs?rs.length:null, real:rs?rs.reduce((a,r)=>a+(+r.realizado||0),0):null,
+          orc:rs?rs.reduce((a,r)=>a+(+r.orcado||0),0):null, rem:rs?rs.reduce((a,r)=>a+(+r.remunerado||0),0):null });
+      }
+    }
+  }
+  const cel=(a,b)=>{ if(a==null||b==null) return '<td class="num mut">—</td>'; const d=a-b; return `<td class="num ${Math.abs(d)>=1?(d>0?'cg':'cr'):''}">${brl(a)}<br><span class="mut" style="font-size:10px">aba ${brl(b)}</span></td>`; };
+  $('tabConf').innerHTML='<div style="overflow:auto;max-height:52vh"><table><thead><tr><th>Mês</th><th>Aba</th><th class="num">Linhas ERP / aba</th>'
+    +'<th class="num">Realizado</th><th class="num">Orçado</th><th class="num">Remunerado</th></tr></thead><tbody>'
+    +vigs.map(v=>ABAS.map(([s,nome])=>{ const e=lin.find(l=>l.aba===nome&&l.v===v&&l.pre==='ca_'), a=lin.find(l=>l.aba===nome&&l.v===v&&l.pre==='sh_');
+      const [mm,aa]=v.split('/');
+      return `<tr><td><b>${vigRot(aa,+mm)}</b></td><td>${nome}</td><td class="num">${e.n==null?'—':n0(e.n)} / ${a.n==null?'—':n0(a.n)}</td>${cel(e.real,a.real)}${cel(e.orc,a.orc)}${cel(e.rem,a.rem)}</tr>`; }).join('')).join('')
+    +'</tbody></table></div>';
+}
+
+/* ── entrada ── */
+(async function(){
+  try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }
+  catch(e){ $('gate').innerHTML='<div class="card">Não consegui iniciar a conexão com o portal.</div>'; return; }
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ $('gate').innerHTML='<div class="card">Entre pelo portal para usar esta tela. <a href="../../" style="color:var(--laranja)">Ir para o hub</a></div>'; return; }
+  EMAIL=session.user.email||'';
+  try{ const { data } = await sb.from('fca_profiles').select('is_admin').eq('user_id',session.user.id).maybeSingle(); ADMIN=!!(data&&data.is_admin); }
+  catch(e){ ADMIN=false; }
+  $('gate').innerHTML = ADMIN ? '' :
+    '<div class="aviso-topo">Você consegue <b>ver</b> o que está carregado, mas a gravação é só para administradores: é o banco que decide, não a tela.</div>';
+  $('miolo').style.display='';
+  const drop=$('drop'), inp=$('fileInput');
+  drop.addEventListener('click',()=>inp.click());
+  inp.addEventListener('change',e=>{ recebeArquivos([...e.target.files]); inp.value=''; });
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('sobre');}));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('sobre');}));
+  drop.addEventListener('drop',e=>recebeArquivos([...e.dataTransfer.files]));
+  ['dragover','drop'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
+  try{ document.body.classList.toggle('claro',(localStorage.getItem('bi_theme')||'dark')==='light'); }catch(e){}
+  carrega();
+})();
+</script>
+<script src="../../assets/mobile.js"></script>
+<script src="../../assets/modo-tv.js?v=202610152330"></script>
+<script src="../../assets/build-check.js?v=202611171600"></script>
+</body>
+</html>
