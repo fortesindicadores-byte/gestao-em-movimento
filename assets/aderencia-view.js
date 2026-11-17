@@ -73,40 +73,47 @@
     };
   }
 
-  // ── meses do eixo: do 1º ao último com dado, sem buraco no meio ──
-  function meses(linhas) {
-    const m = new Map();
-    linhas.forEach(o => { if (o.ord) m.set(o.ord, o.vig); });
-    if (!m.size) return [];
-    const ords = [...m.keys()].sort((a, b) => a - b);
-    const MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-    const saida = [];
-    for (let o = ords[0]; o <= ords[ords.length - 1]; o = (o % 100 === 11) ? (Math.floor(o/100)+1)*100 : o + 1) {
-      saida.push({ ord: o, lbl: m.get(o) || (MES[o % 100] + '/' + String(Math.floor(o/100)).slice(2)) });
-    }
-    return saida;
+  // ── eixo X = o ANO em foco, jan. a dez. (regra do Km/L, Renan, 17/11/2026:
+  // "esse gráfico não está utilizando a regra de eixo x do nosso padrão…
+  // utilize a mesma regra desse painel"). O ano é o da vigência mais recente
+  // marcada no filtro; sem filtro, o do mês mais recente com dado. Os 12 meses
+  // aparecem sempre; mês sem ação fica vazio.
+  const MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  function ordDe(v) {   // 'out/26' -> 202609 (mês de 0 a 11, como o ord das linhas)
+    const m = String(v || '').trim().toLowerCase().match(/^([a-zç]{3})\/(\d{2})$/);
+    if (!m) return 0;
+    const i = MES.indexOf(m[1]);
+    return i < 0 ? 0 : (2000 + +m[2]) * 100 + i;
+  }
+  function eixoAno(linhas, sel) {
+    const comDado = new Set(linhas.map(o => o.ord).filter(Boolean));
+    if (!comDado.size) return null;
+    const ordSel = (sel || []).map(ordDe).filter(Boolean);
+    const ano = ordSel.length ? Math.max(...ordSel.map(o => Math.floor(o / 100)))
+                              : Math.max(...[...comDado].map(o => Math.floor(o / 100)));
+    const meses = MES.map((m, i) => ({ ord: ano * 100 + i, lbl: m + '.', dado: comDado.has(ano * 100 + i) }));
+    const foco = meses.map(m => ordSel.length ? ordSel.includes(m.ord) : m.dado);
+    return { meses, foco };
   }
 
   // META da aderência = a faixa "Adequado" (≥ 85%). Vira a linha tracejada
   // do gráfico, como a meta do Painel KM.
   const META = 85;
 
-  // rótulo em cima da barra — padrão do Painel KM (eixo Y some, o número fica
-  // na barra; 700 14px, 8px no celular; só nos meses em foco)
+  // rótulo em cima da barra — regra do Km/L: só nos meses em foco, 700 11px
   const barLabels = {
     id: 'aderencia-bar-labels',
     afterDatasetsDraw(c) {
       const ds = c.data.datasets[0], m = c.getDatasetMeta(0), ctx = c.ctx;
       const mob = window.innerWidth < 768;
       ctx.save();
-      ctx.font = `700 ${mob ? 8 : 14}px Montserrat`;
+      ctx.font = `700 ${mob ? 8 : 11}px Montserrat`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      ctx.fillStyle = claroAgora() ? '#333333' : '#F1F5F9';
+      ctx.fillStyle = claroAgora() ? '#000000' : '#F1F5F9';
       m.data.forEach((b, i) => {
         const v = ds.data[i];
-        if (v == null) return;
-        if (ds._on && !ds._on[i]) return;   // mês fora do filtro: barra apagada, sem rótulo
-        ctx.fillText(Math.round(v) + '%', b.x, b.y - 4);
+        if (v == null || !ds._on[i]) return;
+        ctx.fillText(Math.round(v) + '%', b.x, b.y - 8);
       });
       ctx.restore();
     },
@@ -114,73 +121,72 @@
 
   const _charts = {};   // canvasId -> instância, para destruir antes de redesenhar
 
-  // Desenho do gráfico de barra PADRÃO (o do Painel KM, escolhido pelo Renan
-  // em 09/09/2026, aplicado aqui em 05/10/2026): barra translúcida (.65) com
-  // contorno sólido e cantos de 3px, cor pela faixa, linha de META tracejada,
-  // eixo Y escondido a partir do zero, sem grade, rótulo em cima da barra.
-  // `foco` = quais meses estão selecionados no filtro de vigência: o escolhido
-  // fica mais forte (.85) e o resto vira contexto (.2).
+  // Desenho = o do Km/L Mensal (Renan, 17/11/2026: "Regra, padrão, layout"):
+  // 12 meses do ano em foco, barra translúcida com contorno de 1px e cantos de
+  // 3px, cor pela faixa, mês em foco forte (.85) e os outros de contexto (.2),
+  // rótulo só no foco, META tracejada com ponto maior no foco, eixo Y visível
+  // com grade e eixo que se ajusta aos dados.
   function grafico(canvasId, labels, data, foco) {
     const cv = document.getElementById(canvasId);
     if (!cv || typeof Chart === 'undefined') return;
     const claro = claroAgora();
     const mob = window.innerWidth < 768;
-    const temFoco = !!(foco && foco.some(f => !f) && foco.some(f => f));
-    const aceso = i => !temFoco || foco[i];
+    const on = data.map((_, i) => !!foco[i]);
+    const temFoco = on.some(Boolean);
     const bg = data.map((v, i) => v == null ? 'transparent'
-      : bandRgba(v, temFoco ? (aceso(i) ? .85 : .2) : .65));
+      : bandRgba(v, temFoco ? (on[i] ? .85 : .2) : .65));
     const bc = data.map(v => v == null ? 'transparent' : band(v));
-    const metaC = claro ? '#1a1a1a' : '#F1F5F9';
-    const metaD = data.map(v => v == null ? null : META);
-    // fonte do eixo X discreta (Renan, 09/10/2026: "Eixo X pode ser menor a
-    // fonte"); os dois gráficos dividem a linha, então em tela menor ela desce
-    // mais um pouco para o mês não girar
-    const larg = cv.parentElement ? cv.parentElement.clientWidth : 800;
-    const tick = { color: claro ? '#444444' : '#94A3B8', maxRotation: 0, autoSkip: false,
-      font: { family: 'Montserrat', size: mob ? 8 : (larg >= 700 ? 11 : larg >= 520 ? 10 : 9) } };
+    const metaC = claro ? '#000000' : '#F1F5F9';
+    // a meta acompanha os meses com dado (do 1º ao último do ano), como a linha
+    // do remunerado no Km/L
+    const idx = data.map((v, i) => v == null ? -1 : i).filter(i => i >= 0);
+    const ini = idx.length ? idx[0] : 0, fim = idx.length ? idx[idx.length - 1] : -1;
+    const metaD = data.map((_, i) => i >= ini && i <= fim ? META : null);
+    const grid = { color: claro ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.06)' };
+    const tick = { color: claro ? '#444' : '#94A3B8', font: { family: 'Montserrat', size: mob ? 8 : 11 } };
+    const tickY = { color: claro ? '#444' : '#94A3B8', font: { family: 'Montserrat', size: mob ? 7 : 9 },
+      callback: v => Math.round(v) + '%' };
     const tooltip = { backgroundColor: '#141B26', titleColor: '#F97316', bodyColor: '#F1F5F9',
       borderColor: '#1E2D40', borderWidth: 1,
       titleFont: { family: 'Montserrat' }, bodyFont: { family: 'Montserrat' },
-      callbacks: { label: c => (c.datasetIndex ? 'Meta ' : '') + Math.round(c.raw) + '%' } };
-    // eixo que SE AJUSTA AOS DADOS (Renan, 05/10/2026: "proporcionalize. Não
-    // exagere" e "o eixo y precisa se ajustar aos dados lógicamente"): a
-    // mesma régua do Km/L no PADROES.md — abre para baixo pelo valor E pela
-    // amplitude do que está no gráfico (meta incluída, para a linha aparecer):
+      callbacks: { label: c => (c.datasetIndex ? 'Meta ' : 'Aderência ') + Math.round(c.raw) + '%' } };
+    // eixo que SE AJUSTA AOS DADOS (Renan, 05/10/2026): a régua do Km/L —
     // piso = min(menor − 45% da amplitude, 82% do menor), teto = max(maior +
-    // 18% da amplitude, 104% do maior), em passos de 5, nunca abaixo de zero
-    // e nunca cortando a barra.
+    // 18% da amplitude, 104% do maior), meta incluída, em passos de 5, nunca
+    // abaixo de zero e nunca cortando a barra.
     const vals = data.filter(v => v != null);
     const lo = Math.min(vals.length ? Math.min(...vals) : META, META);
     const hi = Math.max(vals.length ? Math.max(...vals) : META, META);
     const rng = Math.max(hi - lo, 5);
     let yMin = Math.max(0, Math.floor(Math.min(lo - rng * .45, lo * .82) / 5) * 5);
     if (yMin >= lo) yMin = Math.max(0, lo - 5);
-    const yMax = Math.ceil(Math.max(hi + rng * .18, hi * 1.04) / 5) * 5;
+    // percentual: o teto para em 100% (o rótulo da barra cabe no padding de cima)
+    const yMax = Math.min(Math.max(100, hi), Math.ceil(Math.max(hi + rng * .18, hi * 1.04) / 5) * 5);
     if (_charts[canvasId]) _charts[canvasId].destroy();
     _charts[canvasId] = new Chart(cv, {
       type: 'line',
       data: { labels, datasets: [
         { type: 'bar', label: 'Aderência', data, backgroundColor: bg, borderColor: bc,
-          borderWidth: 1, borderRadius: 3, order: 2, barPercentage: .9, categoryPercentage: .92,
-          _on: data.map((_, i) => aceso(i)) },
-        { type: 'line', label: 'Meta ' + META + '%', data: metaD, borderColor: metaC, borderWidth: 2,
-          tension: 0, fill: false, borderDash: [5, 3], order: 1,
-          pointRadius: data.map(v => v == null ? 0 : 3), pointBackgroundColor: metaC,
-          pointBorderColor: metaC, pointBorderWidth: 0, pointHoverRadius: 8 },
+          borderWidth: 1, borderRadius: 3, order: 2, _on: on },
+        { type: 'line', label: 'Meta ' + META + '%', data: metaD, borderColor: metaC, borderWidth: 3,
+          tension: .3, fill: false, borderDash: [5, 3], spanGaps: true, order: 1,
+          pointRadius: metaD.map((v, i) => v == null ? 0 : (on[i] ? 6 : 3)),
+          pointBackgroundColor: metaD.map(v => v == null ? 'transparent' : metaC),
+          pointBorderWidth: metaD.map((v, i) => v == null ? 0 : (on[i] ? 2 : 0)) },
       ] },
       plugins: [barLabels],
       options: {
         responsive: true, maintainAspectRatio: false,
         animation: false,
-        layout: { padding: { top: 30 } },
+        layout: { padding: { top: 28 } },
         plugins: {
           legend: { display: false },
           datalabels: { display: false },
           tooltip,
         },
         scales: {
-          x: { grid: { display: false }, ticks: tick },
-          y: { display: false, min: yMin, max: yMax },
+          x: { grid, ticks: tick },
+          y: { beginAtZero: false, min: yMin, max: yMax, grid, ticks: tickY },
         },
       },
     });
@@ -278,12 +284,13 @@
     // manda), para os outros meses continuarem no gráfico — apagados.
     const serie = (opts && opts.linhasMes) || linhas;
     const sel   = (opts && opts.vigsSel) || [];
-    const ms = meses(serie);
+    const ex = eixoAno(serie, sel);
+    const ms = ex ? ex.meses : [];
     const labels = ms.map(m => m.lbl);
-    const foco = ms.map(m => !sel.length || sel.includes(m.lbl));
+    const foco = ex ? ex.foco : [];
     const porMes = m => metrics(serie.filter(o => o.ord === m.ord));
-    grafico('adv-ch-prazo', labels, ms.map(m => porMes(m).pPrazo), foco);
-    grafico('adv-ch-concl', labels, ms.map(m => porMes(m).pConcl), foco);
+    grafico('adv-ch-prazo', labels, ms.map(m => m.dado ? porMes(m).pPrazo : null), foco);
+    grafico('adv-ch-concl', labels, ms.map(m => m.dado ? porMes(m).pConcl : null), foco);
 
     // tabela por dimensão, da pior aderência para a melhor
     const tt = q('tbl-titulo'); if (tt) tt.textContent = 'Aderência por ' + rot;
