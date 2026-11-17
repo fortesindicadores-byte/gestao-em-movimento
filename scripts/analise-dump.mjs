@@ -22,6 +22,11 @@ if (!KEY) { console.error('GEM_SUPABASE_SERVICE_KEY ausente'); process.exit(1); 
 const H = { apikey: KEY, Authorization: 'Bearer ' + KEY };
 const OUT = process.env.DUMP_DIR || '/tmp/analise-dump';
 fs.mkdirSync(OUT, { recursive: true });
+// DUMP_SO=dre (input `so` do workflow): só as três abas do DRE (Frota, Receita,
+// EBITDA), para conferir um export do ERP sem carregar o Freightech inteiro.
+const SO = (process.env.DUMP_SO || '').trim().toLowerCase();
+const SO_DRE = SO === 'dre';
+console.log('recorte:', SO || 'tudo');
 
 async function rest(q) {
   for (let t = 1; ; t++) {
@@ -51,7 +56,8 @@ async function emParalelo(itens, n, fn) {
 }
 
 // ── 1) Freightech ──
-const layout = await tudo('ft_layout', 'canal,tabela,vigencia');
+const layout = SO_DRE ? [] : await tudo('ft_layout', 'canal,tabela,vigencia');
+if (!SO_DRE)
 grava('ft-layout', layout.map(({ canal, tabela, vigencia, tabela_nome, ano, mes, quinzena, colunas, linhas, carregado_em }) =>
   ({ canal, tabela, vigencia, tabela_nome, ano, mes, quinzena, colunas, linhas, carregado_em })));
 const canais = [...new Set(layout.map(x => x.canal))];
@@ -67,7 +73,9 @@ for (const canal of canais) {
 }
 
 // ── 2) abas do Sheets no banco ──
-for (const slug of ['dre_frota', 'dre_receita', 'dre_ebitda', 'dispersao_km', 'consumo_km_litro', 'consumo_rs_litro', 'consumo_rem_modelo']) {
+const SLUGS = SO_DRE ? ['dre_frota', 'dre_receita', 'dre_ebitda']
+  : ['dre_frota', 'dre_receita', 'dre_ebitda', 'dispersao_km', 'consumo_km_litro', 'consumo_rs_litro', 'consumo_rem_modelo'];
+for (const slug of SLUGS) {
   try {
     const [b] = await rest(`sh_base?select=slug,colunas,linhas,carregado_em,erro&slug=eq.${slug}`);
     const rows = await tudo(`sh_${slug}`, 'linha.asc');
@@ -76,6 +84,7 @@ for (const slug of ['dre_frota', 'dre_receita', 'dre_ebitda', 'dispersao_km', 'c
 }
 
 // ── 3) tabelas do portal ──
+if (SO_DRE) { console.log('só o DRE: Freightech e tabelas do portal ficaram fora'); process.exit(0); }
 for (const [t, o] of [['dispersao_km', 'vigencia'], ['balanco_massa', 'vigencia'], ['dispersao_placa_viagem', 'vigencia']]) {
   try { grava(`tb-${t}`, await tudo(t, o)); } catch (e) { console.log(`${t}: falhou (${e.message})`); }
 }
