@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611171600">
+<meta name="build" content="202611171700">
 <title>DRE Gerencial · Importar · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="../../assets/gviz-cache.js?v=202610281200"></script>
@@ -229,16 +229,29 @@ async function grava(r, nomeArq){
   let n=0; const passo=500;
   for(let i=0;i<r.linhas.length;i+=passo){
     const { data, error } = await sb.from('dre_gerencial').insert(r.linhas.slice(i,i+passo).map(l=>({ ...l, arquivo:nomeArq, updated_by:EMAIL }))).select('id');
-    if(error) throw new Error(error.message);
+    if(error){ const e=new Error(error.message+(n?` (o mês ficou com ${n.toLocaleString('pt-BR')} de ${r.linhas.length.toLocaleString('pt-BR')} linhas: suba o arquivo de novo)`:'')); throw e; }
     n+=(data||[]).length;
+    andamento(`Gravando… ${n.toLocaleString('pt-BR')} de ${r.linhas.length.toLocaleString('pt-BR')} linhas. Não feche nem recarregue a página.`);
   }
+  andamento('Montando as três abas no banco…');
   const { data:monta, error:em } = await sb.rpc('dre_gerencial_monta');
   if(em){ const e=new Error(em.message+' (rodar o SQL scripts/dre-gerencial.sql)'); e.parcial={ n }; throw e; }   // as linhas JÁ entraram
   return { n, monta };
 }
 
+// enquanto grava: um cartão de andamento, o Atualizar travado e o aviso do navegador se tentarem sair
+// (recarregar no meio deixa o mês pela metade no banco: foi o "1.500 linhas" de 17/11/2026)
+let GRAVANDO=false;
+function andamento(txt){
+  let d=$('andamento');
+  if(!txt){ if(d) d.remove(); return; }
+  if(!d){ d=document.createElement('div'); d.id='andamento'; d.className='item aviso'; $('res').appendChild(d); }
+  d.innerHTML=`<b>Em andamento</b><span>${esc(txt)}</span>`;
+}
+window.addEventListener('beforeunload',e=>{ if(GRAVANDO){ e.preventDefault(); e.returnValue=''; } });
 async function recebeArquivos(lista){
   if(!lista||!lista.length) return;
+  if(GRAVANDO) return;                      // um arquivo por vez
   $('res').innerHTML='';
   if(typeof XLSX==='undefined'){ cartao('erro','Leitor de planilha ainda carregando','Tente de novo em um instante.'); return; }
   if(!ADMIN){ cartao('erro','Sem permissão para gravar','Seu acesso não é de administrador: o banco recusaria a escrita.'); return; }
@@ -247,7 +260,9 @@ async function recebeArquivos(lista){
     const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
     const r=leExport(XLSX, wb);
     if(!r.linhas.length){ cartao('erro', f.name, 'A aba Sintético não tem nenhuma linha com estrutura e código, então <b>nada foi gravado</b>.'); return; }
+    GRAVANDO=true; andamento(`Lido: ${r.linhas.length.toLocaleString('pt-BR')} linhas de ${r.meses.map(m=>vigRot(m.ano,m.mes)).join(', ')}. Gravando…`);
     const g=await grava(r, f.name);
+    GRAVANDO=false; andamento(null);
     const t=totais(r.linhas);
     const notas=[]; if(g.n!==r.linhas.length) notas.push(`o banco confirmou ${g.n} de ${r.linhas.length} linhas`);
     if(r.puladas) notas.push(`${r.puladas} linha(s) sem estrutura ou código ficaram de fora`);
@@ -259,11 +274,13 @@ async function recebeArquivos(lista){
       notas.length?notas.join(' · '):'');
     await carrega();
   }catch(e){
+    GRAVANDO=false; andamento(null);
     if(e&&e.parcial){   // gravou, mas o banco não montou as abas: os painéis seguem na aba do Sheets até rodar o SQL
       cartao('aviso', f.name, `<b>${e.parcial.n.toLocaleString('pt-BR')}</b> linha(s) gravadas em dre_gerencial, mas <b>as abas não foram montadas</b>: os painéis continuam lendo a aba do Sheets.`, e.message||String(e));
       await carrega(); return;
     }
-    cartao('erro', f.name, 'Falhou e <b>nada foi gravado</b> deste arquivo.', e.message||String(e));
+    cartao('erro', f.name, /ficou com/.test(e.message||'')?'A gravação parou no meio.':'Falhou e <b>nada foi gravado</b> deste arquivo.', e.message||String(e));
+    await carrega();
   }
 }
 
@@ -279,6 +296,7 @@ async function todas(tab, cols, filtro){
   return out;
 }
 async function carrega(){
+  if(GRAVANDO) return;                      // no meio da gravação a leitura mostraria o mês pela metade
   $('tabMeses').innerHTML='<div class="vazio">Lendo…</div>'; $('tabConf').innerHTML=''; $('tabBases').innerHTML='';
   let linhas, bases;
   try{
@@ -360,6 +378,6 @@ async function carrega(){
 </script>
 <script src="../../assets/mobile.js"></script>
 <script src="../../assets/modo-tv.js?v=202610152330"></script>
-<script src="../../assets/build-check.js?v=202611171600"></script>
+<script src="../../assets/build-check.js?v=202611171700"></script>
 </body>
 </html>
