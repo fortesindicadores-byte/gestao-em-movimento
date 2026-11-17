@@ -12,6 +12,8 @@
 //        {"t":"sql","sql":"…","motivo":"…"}  consulta que vai rodar
 //        {"t":"res","linhas":N,"truncado":bool} | {"t":"res","erro":"…"}
 //        {"t":"web","q":"…"}            pesquisa na web
+//        {"t":"ver","v":2,"img":N}       versão da função e quantas imagens da pergunta ela leu
+//        {"t":"titulo","d":"…"}          título curto da conversa (só quando a tela pede)
 //        {"t":"fim","consultas":N,"web":N,"custo":0.12,"seg":31}
 //        {"t":"erro","msg":"…"}
 //   4. grava a pergunta em assistente_log (tokens, custo, consultas).
@@ -20,6 +22,9 @@
 //   ANTHROPIC_API_KEY   obrigatório
 //   ASSISTENTE_DONOS    opcional, e-mails separados por vírgula (padrão: o dono do portal)
 //   ASSISTENTE_MODELO   opcional (padrão claude-opus-5-5)
+//   ASSISTENTE_TEMPO_S  opcional (padrão 240): segundos de consulta por pergunta. Passou disso, o
+//                       modelo fecha a resposta com o que tem (a função tem teto de tempo de
+//                       parede; sem isso a resposta morria no meio, sem texto nenhum)
 // SUPABASE_URL e as chaves do projeto o Supabase já põe (as novas, SUPABASE_PUBLISHABLE_KEYS
 // e SUPABASE_SECRET_KEYS, ou as antigas, SUPABASE_ANON_KEY e SUPABASE_SERVICE_ROLE_KEY).
 // ═══════════════════════════════════════════════════════════════════════════
@@ -40,6 +45,10 @@ const DONOS = (Deno.env.get("ASSISTENTE_DONOS") ?? "fortesindicadores@gmail.com"
   .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
 const MODELO = Deno.env.get("ASSISTENTE_MODELO") ?? "claude-opus-5-5";
 const MAX_CONSULTAS = 25;
+const TEMPO_S = Number(Deno.env.get("ASSISTENTE_TEMPO_S") ?? 240);
+const TIPOS_IMG = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_IMG = 8;            // imagens por pedido (as mais recentes)
+const MAX_IMG_B64 = 7_000_000; // ~5 MB por imagem
 const MAX_RESULTADO = 60000; // caracteres do resultado de uma consulta que voltam ao modelo
 // US$ por milhão de tokens do modelo padrão: entrada, gravação de cache, leitura de cache, saída
 const PRECO = { in: 4, cacheW: 5, cacheR: 0.2, out: 20, busca: 0.01 }; // busca na web: US$ 10 por mil
@@ -59,6 +68,12 @@ Como responder
 - Quando cruzar duas fontes, diga quais foram. Diferença entre o previsto do Freightech e o remunerado da DRE fica "a confirmar" (imposto, regime tributário ou composição do planejamento); nunca a chame de erro.
 - Dado externo (inflação, diesel da ANP, juros, câmbio, clima, notícia): pesquise na web, cite a fonte e o período, e deixe claro o que é do portal e o que é de fora. O foco é o dado do portal; o externo serve de contexto e comparação.
 - Não exponha SQL na resposta, a menos que ele peça.
+- Se vier imagem (print de tela, tabela, mensagem de WhatsApp), leia o que está nela e use como parte da pergunta.
+
+Tempo e limite
+- Cada pergunta tem cerca de 4 minutos e até 25 consultas. Planeje antes: descubra as colunas em uma ou duas consultas e traga o que precisa em poucas consultas agregadas (CTE, group by, filter), em vez de muitas pequenas.
+- As consultas que você já rodou nesta conversa vêm listadas no fim, sem os resultados. Reaproveite o SQL delas; não redescubra tabelas e colunas que já conhece.
+- Se o tempo ou o limite de consultas acabar, responda com o que já tem e diga em uma linha o que faltou consultar. Nunca termine sem resposta.
 
 Como consultar o banco
 - Ferramenta consultar_banco: só SELECT/WITH, uma consulta por vez, até 2.000 linhas. Agregue no SQL (sum, avg, group by) em vez de trazer linhas cruas.
@@ -132,18 +147,49 @@ async function registra(linha: Record<string, unknown>) {
   } catch (_) { /* o registro não pode derrubar a resposta */ }
 }
 
+// deno-lint-ignore no-explicit-any
+type Conteudo = string | any[];
+type Msg = { role: "user" | "assistant"; content: Conteudo; texto: string; imgs: number };
+
+// o histórico que a tela manda: texto e, nas mensagens do usuário, imagens em base64
+// ({tipo, b64}); nas respostas, as consultas que foram feitas ({motivo, sql}, sem resultado)
 function historicoDe(corpo: { mensagens?: unknown }) {
   const lista = Array.isArray(corpo.mensagens) ? corpo.mensagens : [];
-  const msgs: { role: "user" | "assistant"; content: string }[] = [];
+  const msgs: Msg[] = [];
+  const consultas: string[] = [];
   for (const m of lista.slice(-20)) {
-    const role = m && (m as { role?: string }).role;
-    const content = m && (m as { content?: unknown }).content;
-    if ((role === "user" || role === "assistant") && typeof content === "string" && content.trim()) {
-      msgs.push({ role, content: content.slice(0, 20000) });
+    // deno-lint-ignore no-explicit-any
+    const o = (m ?? {}) as any;
+    const role = o.role;
+    if ((role !== "user" && role !== "assistant") || typeof o.content !== "string") continue;
+    const texto = o.content.slice(0, 20000);
+    // deno-lint-ignore no-explicit-any
+    const imagens = role === "user" && Array.isArray(o.imagens) ? o.imagens.filter((i: any) =>
+      i && TIPOS_IMG.includes(i.tipo) && typeof i.b64 === "string" && i.b64.length > 100 && i.b64.length <= MAX_IMG_B64).slice(0, 4) : [];
+    if (role === "assistant" && Array.isArray(o.consultas)) {
+      for (const c of o.consultas.slice(-12)) {
+        if (c && typeof c.sql === "string" && c.sql.trim()) consultas.push(`- ${String(c.motivo ?? "").slice(0, 120)}: ${c.sql.replace(/\s+/g, " ").slice(0, 1500)}`);
+      }
     }
+    if (!texto.trim() && !imagens.length) continue;
+    msgs.push({
+      role, texto, imgs: imagens.length,
+      content: imagens.length
+        // deno-lint-ignore no-explicit-any
+        ? [...imagens.map((i: any) => ({ type: "image", source: { type: "base64", media_type: i.tipo, data: i.b64 } })),
+           { type: "text", text: texto.trim() ? texto : "Veja a imagem." }]
+        : texto,
+    });
   }
   while (msgs.length && msgs[0].role !== "user") msgs.shift();
-  return msgs;
+  // só as imagens mais recentes vão ao modelo; as mais antigas viram uma nota no texto
+  let sobra = MAX_IMG;
+  for (let i = msgs.length - 1; i >= 0; i--) {
+    const m = msgs[i]; if (!m.imgs) continue;
+    if (sobra >= m.imgs) { sobra -= m.imgs; continue; }
+    m.content = m.texto + `\n\n[${m.imgs} imagem(ns) enviada(s) aqui não foram reenviadas]`; m.imgs = 0; sobra = 0;
+  }
+  return { msgs, consultas: consultas.slice(-15).join("\n").slice(0, 12000) };
 }
 
 Deno.serve(async (req: Request) => {
@@ -154,37 +200,64 @@ Deno.serve(async (req: Request) => {
   if (!email) return new Response(JSON.stringify({ erro: "login inválido ou vencido" }), { status: 401, headers: { ...CORS, "Content-Type": "application/json" } });
   if (!DONOS.includes(email)) return new Response(JSON.stringify({ erro: "assistente restrito ao dono do portal" }), { status: 403, headers: { ...CORS, "Content-Type": "application/json" } });
 
-  let corpo: { mensagens?: unknown; contexto?: unknown } = {};
+  let corpo: { mensagens?: unknown; contexto?: unknown; titulo?: unknown } = {};
   try { corpo = await req.json(); } catch (_) { /* corpo vazio */ }
-  const historico = historicoDe(corpo);
+  const { msgs: historico, consultas: jaRodou } = historicoDe(corpo);
   if (!historico.length || historico[historico.length - 1].role !== "user") {
     return new Response(JSON.stringify({ erro: "sem pergunta" }), { status: 400, headers: { ...CORS, "Content-Type": "application/json" } });
   }
   if (!Deno.env.get("ANTHROPIC_API_KEY")) {
     return new Response(JSON.stringify({ erro: "falta o segredo ANTHROPIC_API_KEY na função" }), { status: 500, headers: { ...CORS, "Content-Type": "application/json" } });
   }
-  const pergunta = historico[historico.length - 1].content;
+  const pergunta = historico[historico.length - 1].texto;
+  const imgsPergunta = historico[historico.length - 1].imgs;
   const contexto = typeof corpo.contexto === "string" ? corpo.contexto.slice(0, 2000) : "";
   const hoje = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
   // a data e o que está na tela vão como mensagem de sistema no fim, para não mexer no prefixo em cache
   // deno-lint-ignore no-explicit-any
-  const messages: any[] = [...historico];
-  messages.push({ role: "system", content: `Hoje é ${hoje}.${contexto ? " Na tela do painel: " + contexto : ""}` });
+  const messages: any[] = historico.map(({ role, content }) => ({ role, content }));
+  messages.push({ role: "system", content: `Hoje é ${hoje}.${contexto ? " Na tela do painel: " + contexto : ""}${jaRodou ? "\n\nConsultas que você já rodou nesta conversa (sem os resultados):\n" + jaRodou : ""}` });
 
   const cliente = new Anthropic();
   const t0 = Date.now();
   const uso = { in: 0, cacheW: 0, cacheR: 0, out: 0, web: 0 };
   let consultas = 0;
   const enc = new TextEncoder();
+  let cancelado = false;   // a tela fechou a conexão (botão Parar)
+  // deno-lint-ignore no-explicit-any
+  let atual: any = null;   // a chamada ao modelo em andamento, para abortar no Parar
 
   const corpoResposta = new ReadableStream({
     async start(ctrl) {
       const envia = (o: unknown) => { try { ctrl.enqueue(enc.encode(JSON.stringify(o) + "\n")); } catch (_) { /* conexão fechada */ } };
       const vivo = setInterval(() => envia({ t: "ping" }), 15000);
       let erro: string | null = null;
+      let fechar = false;    // acabou o tempo ou o limite de consultas: a próxima volta só responde
+      const semTempo = () => (Date.now() - t0) / 1000 > TEMPO_S;
+      envia({ t: "ver", v: 2, img: imgsPergunta });
+      // título curto da conversa, em paralelo com a resposta (a tela pede na 1ª pergunta)
+      if (corpo.titulo === true) {
+        const abre = historico[0];
+        cliente.messages.create({
+          model: MODELO,
+          max_tokens: 1024,
+          output_config: { effort: "low" },
+          system: "Dê um título de 3 a 6 palavras, em português do Brasil, para a conversa que começa com a mensagem do usuário. Diga o assunto (indicador, unidade, período), não repita a pergunta. Responda só com o título, sem aspas e sem ponto final.",
+          messages: [{ role: "user", content: typeof abre.content === "string" ? abre.content.slice(0, 3000) : abre.content }],
+          // deno-lint-ignore no-explicit-any
+        } as any).then((m: any) => {
+          const u = m.usage ?? {};
+          uso.in += u.input_tokens ?? 0; uso.out += u.output_tokens ?? 0;
+          // deno-lint-ignore no-explicit-any
+          const tit = (m.content as any[]).filter((b) => b.type === "text").map((b) => b.text).join(" ")
+            .replace(/["“”«»\n]/g, " ").replace(/\s+/g, " ").trim().replace(/[.!]+$/, "").slice(0, 60);
+          if (tit) envia({ t: "titulo", d: tit });
+        }).catch(() => { /* sem título: a tela fica com o dela */ });
+      }
       try {
-        for (let volta = 0; volta < MAX_CONSULTAS + 2; volta++) {
+        for (let volta = 0; volta < MAX_CONSULTAS + 3; volta++) {
+          if (cancelado) break;
           const stream = cliente.beta.messages.stream({
             model: MODELO,
             max_tokens: 32000,
@@ -192,12 +265,14 @@ Deno.serve(async (req: Request) => {
             output_config: { effort: "high" },
             system: SISTEMA,
             tools: FERRAMENTAS,
+            ...(fechar ? { tool_choice: { type: "none" } } : {}),
             messages,
             cache_control: { type: "ephemeral" },
             betas: ["server-side-fallback-2026-07-01"],
             fallbacks: "default",
             // deno-lint-ignore no-explicit-any
           } as any);
+          atual = stream;
           stream.on("text", (d: string) => envia({ t: "txt", d }));
           // deno-lint-ignore no-explicit-any
           const msg: any = await stream.finalMessage();
@@ -228,7 +303,13 @@ Deno.serve(async (req: Request) => {
               continue;
             }
             if (consultas >= MAX_CONSULTAS) {
-              resultados.push({ type: "tool_result", tool_use_id: c.id, is_error: true, content: `limite de ${MAX_CONSULTAS} consultas nesta pergunta: responda com o que já tem` });
+              fechar = true;
+              resultados.push({ type: "tool_result", tool_use_id: c.id, is_error: true, content: `limite de ${MAX_CONSULTAS} consultas nesta pergunta: responda agora com o que já tem e diga o que faltou` });
+              continue;
+            }
+            if (semTempo() || cancelado) {
+              fechar = true;
+              resultados.push({ type: "tool_result", tool_use_id: c.id, is_error: true, content: "tempo de consulta desta pergunta esgotado: responda agora com o que já tem e diga em uma linha o que faltou consultar" });
               continue;
             }
             consultas++;
@@ -246,21 +327,28 @@ Deno.serve(async (req: Request) => {
             }
           }
           messages.push({ role: "user", content: resultados });
+          if (semTempo()) fechar = true;
         }
       } catch (e) {
-        erro = String((e as Error).message ?? e).slice(0, 1000);
-        envia({ t: "erro", msg: erro });
+        erro = cancelado ? "interrompido pelo usuário" : String((e as Error).message ?? e).slice(0, 1000);
+        if (!cancelado) envia({ t: "erro", msg: erro });
       } finally {
         clearInterval(vivo);
         const custo = (uso.in * PRECO.in + uso.cacheW * PRECO.cacheW + uso.cacheR * PRECO.cacheR + uso.out * PRECO.out) / 1e6 + uso.web * PRECO.busca;
         const seg = Math.round((Date.now() - t0) / 1000);
-        if (!erro) envia({ t: "fim", consultas, web: uso.web, custo: Math.round(custo * 1000) / 1000, seg });
+        if (cancelado && !erro) erro = "interrompido pelo usuário";
+        if (!erro) envia({ t: "fim", consultas, web: uso.web, custo: Math.round(custo * 1000) / 1000, seg, limite: fechar });
         await registra({
           email, pergunta: pergunta.slice(0, 4000), consultas, modelo: MODELO,
           tok_in: uso.in, tok_out: uso.out, tok_cache: uso.cacheR, custo_usd: Math.round(custo * 10000) / 10000, segundos: seg, erro,
         });
-        ctrl.close();
+        try { ctrl.close(); } catch (_) { /* a tela já fechou */ }
       }
+    },
+    // a tela cancelou (botão Parar ou aba fechada): para a chamada ao modelo e não roda mais consulta
+    cancel() {
+      cancelado = true;
+      try { if (atual) atual.abort(); } catch (_) { /* já terminou */ }
     },
   });
 
