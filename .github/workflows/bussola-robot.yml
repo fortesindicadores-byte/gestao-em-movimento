@@ -1,0 +1,53 @@
+name: Bussola Robot (DRE Gerencial -> Supabase)
+
+# A Bússola Gerencial (FP&A da Conlog, bussolagerencial.vercel.app) é de onde
+# sai o DRE Gerencial Sintético (Realizado · Orçado · Remunerado · Forecast).
+#
+#  sonda — alcança o app? como é a tela de login? com BUSSOLA_USER/BUSSOLA_PASS
+#          o login de e-mail + senha passa? o que o menu oferece? que API a
+#          página chama? Não grava nada; nenhum valor ou token vai ao log.
+#
+# Os prints sobem como artefato por 1 dia só (as telas têm valores do DRE; o
+# repositório é público). "Entrar com Microsoft" não serve para robô (MFA):
+# o usuário do robô é de e-mail + senha da própria Bússola.
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "sonda"
+        required: true
+        default: "sonda"
+        type: choice
+        options: [sonda]
+
+concurrency:
+  group: bussola
+  cancel-in-progress: false
+
+jobs:
+  robo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Playwright + Chromium
+        run: |
+          npm init -y >/dev/null 2>&1 || true
+          npm install --no-audit --no-fund playwright@1.47.2 >/dev/null 2>&1
+          npx playwright install --with-deps chromium >/dev/null 2>&1
+      - name: Rodar
+        env:
+          BUSSOLA_MODE: ${{ github.event.inputs.modo || 'sonda' }}
+          BUSSOLA_USER: ${{ secrets.BUSSOLA_USER }}
+          BUSSOLA_PASS: ${{ secrets.BUSSOLA_PASS }}
+        run: node scripts/bussola-robot.mjs
+      - name: Prints
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bussola-shots
+          path: bussola-shots/
+          retention-days: 1
+          if-no-files-found: ignore
