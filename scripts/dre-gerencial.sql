@@ -159,7 +159,7 @@ begin
       with o as (select ctid as c, row_number() over (order by vigencia_orig, nivel_3, conta_gerencial, unidade) as n from public.ca_%1$I)
       update public.ca_%1$I t set linha = -o.n from o where t.ctid = o.c
     $q$, s);
-    execute format('update public.ca_%I set linha = -linha', s);
+    execute format('update public.ca_%I set linha = -linha where linha < 0', s);   -- o Supabase exige WHERE (safeupdate)
     select colunas into cols from public.sh_base where slug = s;
     insert into public.consumo_auto_base (slug, tabela, colunas, linhas, carregado_em, erro, resumo)
     values (s, 'ca_' || s, cols, n_aba + n_erp, now(), null,
