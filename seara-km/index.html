@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610291700">
+<meta name="build" content="202611171900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Seara · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -376,7 +376,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 }
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../?volta="+encodeURIComponent(location.pathname+location.search));}catch(e){}</script>
-<script src="../assets/gviz-cache.js?v=202610281200"></script>
+<script src="../assets/gviz-cache.js?v=202611171900"></script>
 </head>
 <body>
 <div class="app">
@@ -632,15 +632,17 @@ function _vigDeData(v){
   return isNaN(d) ? '' : String(d.getMonth() + 1).padStart(2,'0') + '/' + d.getFullYear();
 }
 
+let REM_ATE = null;   // corte do ERP (AAAA-MM-DD) usado para proporcionalizar o remunerado do mês em aberto
 async function fetchData() {
   // Combustível (realizado): E=4 placa, F=5 mês(texto), G=6 ano, H=7 modelo, J=9 tipo veíc., K=10 km rodado
   // aba Remunerado (remunerado): A=vigência, B=placa, D=km remunerado
   // Base Remunerado: A=0 vigência, D=3 placa, O=14 ReaisPorKm
-  const [comb, remLinhas, brem, prevMod] = await Promise.all([
+  const [comb, remLinhas, brem, prevMod, autoInfo] = await Promise.all([
     gvizRows(GID_COMB),
     gvizAba(ABA_REM, 'select A, B, D'),
     gvizRows(GID_REM),
-    SearaBenchModelo.modelos()
+    SearaBenchModelo.modelos(),
+    (window.GvizCache && GvizCache.consumoInfo) ? GvizCache.consumoInfo('seara_combustivel').catch(() => null) : null
   ]);
 
   // R$/km de CADA PLACA, da Base Remunerado (col O — ReaisPorKm). É o custo
@@ -712,6 +714,25 @@ async function fetchData() {
     for (const x of h) { if (x.ord < alvo) melhor = x; }
     return melhor ? melhor.km : 0;
   }
+  // MÊS EM ABERTO: O REMUNERADO EMPRESTADO É PROPORCIONAL AOS DIAS COM KM (Renan,
+  // 17/11/2026, vendo nov/26 em −78%: "Ainda essa merda?"). O km rodado vem do ERP
+  // em D-1 e, no mês aberto, vai só até o último abastecimento de cada placa; o
+  // remunerado emprestado era o mês anterior INTEIRO. Agora, no mês do corte do
+  // consumo automático (dados_ate) sem a aba Remunerado, cada placa leva o
+  // remunerado do mês anterior × dias que o km dela cobre ÷ dias do mês (o robô
+  // grava os dias por placa em resumo.cobertura; sem isso, vale o dia do corte).
+  // Mês que já tem a aba, ou que não é o do corte, não muda.
+  const _cob = (autoInfo && autoInfo.auto && autoInfo.resumo && autoInfo.resumo.cobertura) || null;
+  const _ate = (autoInfo && autoInfo.auto && /^\d{4}-\d{2}-\d{2}/.test(autoInfo.dados_ate || '')) ? autoInfo.dados_ate.slice(0, 10) : null;
+  const _vigAberta = _ate ? _ate.slice(5, 7) + '/' + _ate.slice(0, 4) : null;
+  const _diasMes = _ate ? new Date(+_ate.slice(0, 4), +_ate.slice(5, 7), 0).getDate() : 0;
+  function fracDe(placa, vig) {
+    if (!_vigAberta || vig !== _vigAberta || mesesRem.has(vig)) return 1;
+    const dp = (_cob && _cob.mes === _ate.slice(0, 7) && _cob.placas) ? +_cob.placas[placa] : NaN;
+    const dias = dp > 0 ? dp : +_ate.slice(8, 10);
+    return Math.max(0, Math.min(1, dias / _diasMes));
+  }
+  REM_ATE = _ate;
   let _semRsKm = 0;
 
   // realizado por placa/mês (Combustível) — só linhas com km rodado > 0 — cruza com o remunerado
@@ -722,7 +743,8 @@ async function fetchData() {
     const yr = +r[6], real = +r[10] || 0;
     if (!placa || mi < 0 || !yr || real <= 0) return;
     const vig = String(mi + 1).padStart(2,'0') + '/' + yr;
-    const rem = remDe(placa, vig);
+    const frac = fracDe(placa, vig);
+    const rem = remDe(placa, vig) * frac;
     const rsKm = rsKmDe(placa, vig, r[7]);
     if (!rsKmMap[placa + '|' + vig] && rem > 0) _semRsKm++;
     ALL.push({
@@ -733,7 +755,8 @@ async function fetchData() {
       rem,
       real:  real,
       imp:   (real - rem) * rsKm,
-      remFb: !mesesRem.has(vig) && rem > 0          // remunerado veio do mês anterior
+      remFb: !mesesRem.has(vig) && rem > 0,         // remunerado veio do mês anterior
+      remProp: frac < 1 && rem > 0                  // … e proporcional aos dias com km (mês em aberto)
     });
   });
   if (_porModelo.length) console.info('[KM Seara] R$/km remunerado pela média do modelo:', _porModelo);
@@ -742,7 +765,7 @@ async function fetchData() {
   const _nomeMod = SearaBenchModelo.unifica(ALL.map(r => r.proj));
   ALL.forEach(r => { r.proj = _nomeMod(r.proj); });
   if (_semRsKm) console.warn(`Impacto: ${_semRsKm} placa(s)/vigência(s) sem linha na Base Remunerado — usada a tabela anterior da própria placa.`);
-  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(),rows:ALL})); }catch(e){}
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(),rows:ALL,remAte:REM_ATE})); }catch(e){}
   const savedVig = getSel('ms-vig'), vigAutoAntes = _vigAuto;   // o populateFilters zera o _vigAuto
   populateFilters();
   if (savedVig.length > 0) {
@@ -1310,7 +1333,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_kmseara_v5';  // v5: um nome por modelo · v4: placa fora da Base Remunerado usa o R$/km médio do modelo (v3: remunerado de mês não colado cai no mês anterior)
+const CACHE_KEY='bi_cache_kmseara_v6';  // v6: remunerado do mês em aberto proporcional aos dias com km · v5: um nome por modelo · v4: placa fora da Base Remunerado usa o R$/km médio do modelo (v3: remunerado de mês não colado cai no mês anterior)
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
@@ -1332,7 +1355,7 @@ function initData(){
   try{
     const c=JSON.parse(localStorage.getItem(CACHE_KEY));
     if(c&&c.rows&&c.rows.length){
-      ALL=c.rows;
+      ALL=c.rows; REM_ATE=c.remAte||null;
       populateFilters();
       render();
       const d=new Date(c.t);
@@ -1376,9 +1399,13 @@ render=function(){
   set('k-placas-m', [...new Set(F.map(r=>r.proj).filter(Boolean))].length+' modelo(s)');
   // remunerado emprestado do mês anterior (a aba Remunerado ainda não tem a vigência)
   const fbVigs=[...new Set(F.filter(r=>r.remFb).map(r=>r.vig))].sort(sortVig);
-  set('k-rem-m', fbVigs.length
-    ? '⚠ '+fbVigs.map(vigLabelShort).join(', ')+' sem a aba Remunerado — usando o mês anterior'
-    : 'total do período filtrado');
+  const propVigs=[...new Set(F.filter(r=>r.remProp).map(r=>r.vig))];
+  const cheias=fbVigs.filter(v=>!propVigs.includes(v)), parc=fbVigs.filter(v=>propVigs.includes(v));
+  const ateTxt=REM_ATE?REM_ATE.slice(8,10)+'/'+REM_ATE.slice(5,7):'';
+  const avisos=[];
+  if(cheias.length) avisos.push(cheias.map(vigLabelShort).join(', ')+' sem a aba Remunerado: usando o mês anterior');
+  if(parc.length) avisos.push(parc.map(vigLabelShort).join(', ')+' em aberto: mês anterior proporcional aos dias com km'+(ateTxt?' (ERP até '+ateTxt+')':''));
+  set('k-rem-m', avisos.length ? '⚠ '+avisos.join(' · ') : 'total do período filtrado');
   set('k-tipos', tipos.length||'—');
   set('k-vigs', vigs.length||'—');
   set('k-vigs-m', vigs.length?vigLabelShort(vigs[0])+(vigs.length>1?' → '+vigLabelShort(vigs[vigs.length-1]):''):'—');
@@ -1455,6 +1482,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202610291700"></script>
+<script src="../assets/build-check.js?v=202611171900"></script>
 </body>
 </html>

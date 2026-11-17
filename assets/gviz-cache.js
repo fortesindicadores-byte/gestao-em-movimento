@@ -275,6 +275,20 @@
     return tabP[slug];
   }
   window.GvizCache.tabelaConsumo = tabelaConsumo;
+  // Estado de uma base do consumo automático: { auto, dados_ate, carregado_em, resumo }.
+  // O KM · Seara usa para proporcionalizar o remunerado do mês em aberto (17/11/2026).
+  var infoP = {};
+  function consumoInfo(slug) {
+    var fora = { auto: false, dados_ate: null, carregado_em: null, resumo: null };
+    if (window.__consumoAuto === false) return Promise.resolve(fora);
+    if (!infoP[slug]) infoP[slug] = rest('consumo_auto_base?select=linhas,erro,carregado_em,resumo&slug=eq.' + encodeURIComponent(slug))
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (cs) { var c = cs && cs[0]; if (!c || c.erro || !(c.linhas > 0)) return fora;
+        return { auto: true, dados_ate: (c.resumo && c.resumo.dados_ate) || null, carregado_em: c.carregado_em || null, resumo: c.resumo || null }; })
+      .catch(function () { return fora; });
+    return infoP[slug];
+  }
+  window.GvizCache.consumoInfo = consumoInfo;
   function pagina(b, de, ate) {
     return rest((b.tabela || ('sh_' + b.slug)) + '?select=*&order=linha.asc', { Range: de + '-' + ate })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });

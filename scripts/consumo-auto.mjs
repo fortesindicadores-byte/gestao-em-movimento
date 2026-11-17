@@ -634,6 +634,25 @@ const nova = {};
   });
   nova.consumo_rem_modelo = soColunas(linhas, L);
 }
+// COBERTURA DO MÊS EM ABERTO, POR PLACA (Renan, 17/11/2026, vendo nov/26 em −78% no
+// KM · Seara: "Ainda essa merda?"). O km do mês aberto vai só até o último abastecimento
+// de cada placa, e o painel comparava isso com o remunerado do mês anterior INTEIRO.
+// Aqui sai, por placa da Anhanguera, quantos dias o km do mês do corte cobre: do
+// abastecimento de diesel anterior ao mês (o ponto de partida do hodômetro) até o
+// último do mês. Sem abastecimento anterior, vale o dia do mês do último. O painel usa
+// isso para proporcionalizar o remunerado emprestado. Vai no resumo do seara_combustivel.
+const coberturaSeara = (() => {
+  if (!DADOS_ATE) return null;
+  const ym = DADOS_ATE.slice(0, 7); const [y, m] = ym.split('-').map(Number);
+  const dia = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 864e5;
+  const pl = new Map();
+  diesel.forEach(r => { if (!ANG(r)) return; const d = String(r.data).slice(0, 10); const k = placaKey(r.placa); if (!k || d.length < 10) return;
+    const o = pl.get(k) || { antes: null, ate: null }; if (d.slice(0, 7) < ym) { if (!o.antes || d > o.antes) o.antes = d; } else if (d.slice(0, 7) === ym) { if (!o.ate || d > o.ate) o.ate = d; } pl.set(k, o); });
+  const placas = {};
+  pl.forEach((o, k) => { if (!o.ate || !searaReal.has(ym + '|' + k)) return; const n = o.antes ? dia(o.ate) - dia(o.antes) : +o.ate.slice(8, 10); placas[k] = Math.max(1, Math.round(n)); });
+  return { mes: ym, dias_mes: new Date(y, m, 0).getDate(), placas };
+})();
+if (coberturaSeara) { const v = Object.values(coberturaSeara.placas); log(`Seara · cobertura de ${coberturaSeara.mes}: ${v.length} placa(s), mediana ${v.length ? v.slice().sort((a, b) => a - b)[v.length >> 1] : 0} de ${coberturaSeara.dias_mes} dias`); }
 // 5d) Seara · Combustível (realizado da Anhanguera no ERP; a agregação está antes do 5)
 {
   const L = colsDe('seara_combustivel'); const linhas = [];
@@ -782,7 +801,7 @@ for (const s of ALVOS) {
     }
     await api(`${t}?linha=gt.${linhas.length}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
     await api('consumo_auto_base?on_conflict=slug', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify([{ slug: s, tabela: t, colunas: shBase[s].colunas, linhas: linhas.length, carregado_em: new Date().toISOString(), erro: null, resumo: { ...(resumo[s] || {}), dados_ate: DADOS_ATE } }]) });
+      body: JSON.stringify([{ slug: s, tabela: t, colunas: shBase[s].colunas, linhas: linhas.length, carregado_em: new Date().toISOString(), erro: null, resumo: { ...(resumo[s] || {}), dados_ate: DADOS_ATE, ...(s === 'seara_combustivel' && coberturaSeara ? { cobertura: coberturaSeara } : {}) } }]) });
     log(`ok  ${t.padEnd(26)} ${linhas.length} linha(s)`);
   } catch (e) {
     falhas++; console.error(`::error::${t}: ${e.message}`);
