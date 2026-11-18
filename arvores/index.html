@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611182030">
+<meta name="build" content="202611182130">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,8 +12,8 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script>window.__gvizDispBanco=false;/* a árvore de km junta o mês do banco por conta própria (como o Painel KM) */</script>
-<script src="../assets/gviz-cache.js?v=202611182030"></script>
-<script src="../assets/dispersao-km.js?v=202611182030"></script>
+<script src="../assets/gviz-cache.js?v=202611182130"></script>
+<script src="../assets/dispersao-km.js?v=202611182130"></script>
 <style>
 /* ============================================================
    ÁRVORES — ROIC e Km (Renan, 18/11/2026: "Vamos pensar em árvore do rooc
@@ -370,11 +370,18 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* árvore: nós posicionados por coluna (profundidade) e linha (folhas), linhas em SVG,
    e o desenho inteiro escalado para caber na área (nunca barra de rolagem) */
-.arv-area{flex:1 1 0;min-height:0;position:relative;overflow:hidden;}
+.arv-area{flex:1 1 0;min-height:0;position:relative;overflow:hidden;cursor:grab;touch-action:none;user-select:none;}
+.arv-area.arrasta{cursor:grabbing;}
+.arv-zoom{position:absolute;top:6px;right:6px;z-index:5;display:flex;align-items:center;gap:4px;padding:3px;border-radius:999px;
+  background:var(--pop);border:1px solid var(--card-brd);box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:default;}
+.arv-zoom button{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;color:var(--txt);background:transparent;border:0;
+  min-width:26px;height:26px;padding:0 9px;border-radius:999px;cursor:pointer;}
+.arv-zoom button:hover{background:var(--hover);}
+.arv-zp{font-size:10.5px;font-weight:700;color:var(--txt3);min-width:38px;text-align:center;}
 .tw{position:absolute;top:0;left:0;transform-origin:0 0;}
 .tsvg{position:absolute;top:0;left:0;overflow:visible;pointer-events:none;}
 .tsvg path{fill:none;stroke:var(--txt4);stroke-width:1.4;opacity:.7;}
-.tn{position:absolute;width:236px;transform:translateY(-50%);border-radius:11px;overflow:hidden;
+.tn{position:absolute;width:250px;transform:translateY(-50%);border-radius:11px;overflow:hidden;
   background:var(--brilho), var(--side);border:1px solid var(--card-brd);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--luz-card), 0 6px 16px rgba(0,0,0,.28);}
 body.claro .tn{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
@@ -661,28 +668,67 @@ function roicDe(vigs,filtro){
   return R;
 }
 
-/* ── desenho genérico de árvore: nó = {t, v, s, cls, rows:[[rótulo, valor, classe]], kids, raiz, est} ── */
+/* ── desenho genérico de árvore: nó = {t, v, s, cls, rows:[[rótulo, valor, classe]], kids, raiz, est} ──
+   Cada folha ocupa a própria altura (não a do maior nó), o espaço entre as colunas cresce para
+   ocupar a largura da área, e dentro dela dá para dar zoom (roda do mouse, botões, pinça) e
+   arrastar; duplo clique ou "Ajustar" volta ao desenho inteiro na tela. */
 function arvore(area,raiz){
-  const W=236, GX=58, SLOT=0;
-  let folha=0; const nos=[];
-  (function lay(n,d){ n.d=d; nos.push(n); if(n.kids&&n.kids.length){ n.kids.forEach(k=>lay(k,d+1)); } else n.f=folha++; })(raiz,0);
-  area.innerHTML='<div class="tw"><svg class="tsvg"></svg></div>'; const tw=area.querySelector('.tw'), svg=tw.querySelector('svg');
+  const W=250, GX0=58, GY=16;
+  let folha=0; const nos=[], folhas=[];
+  (function lay(n,d){ n.d=d; nos.push(n); if(n.kids&&n.kids.length){ n.kids.forEach(k=>lay(k,d+1)); } else { n.f=folha++; folhas.push(n); } })(raiz,0);
+  area.innerHTML='<div class="tw"><svg class="tsvg"></svg></div>'
+    +'<div class="arv-zoom"><button type="button" data-z="-" title="Diminuir">−</button><span class="arv-zp">100%</span><button type="button" data-z="+" title="Aumentar">+</button><button type="button" data-z="0" title="Ver a árvore inteira">Ajustar</button></div>';
+  const tw=area.querySelector('.tw'), svg=tw.querySelector('svg'), zp=area.querySelector('.arv-zp');
   nos.forEach(n=>{ const el=document.createElement('div'); el.className='tn'+(n.raiz?' raiz':'')+(n.est?' est':'');
     el.innerHTML=`<div class="tn-t">${esc(n.t)}</div><div class="tn-v ${n.cls||''}">${esc(n.v==null?'—':n.v)}</div>`+(n.s?`<div class="tn-s">${esc(n.s)}</div>`:'')
       +(n.rows&&n.rows.length?`<table>${n.rows.map(r=>`<tr><td>${esc(r[0])}</td><td class="n ${r[2]||''}">${esc(r[1])}</td></tr>`).join('')}</table>`:'');
-    if(n.dica) el.title=n.dica; tw.appendChild(el); n.el=el; });
-  // altura de cada folha = a do maior nó; o pai fica no meio dos filhos
-  const H=Math.max(...nos.map(n=>n.el.offsetHeight))+14;
-  (function pos(n){ if(n.kids&&n.kids.length){ n.kids.forEach(pos); n.y=(n.kids[0].y+n.kids[n.kids.length-1].y)/2; } else n.y=n.f*H+H/2; })(raiz);
+    if(n.dica) el.title=n.dica; tw.appendChild(el); n.el=el; n.h=el.offsetHeight; });
+  // altura: cada folha com a própria altura; o pai no meio dos filhos, sem invadir o vizinho
+  let yy=0; folhas.forEach(f=>{ f.y=yy+f.h/2; yy+=f.h+GY; });
+  (function pos(n){ if(n.kids&&n.kids.length){ n.kids.forEach(pos); n.y=(n.kids[0].y+n.kids[n.kids.length-1].y)/2; } })(raiz);
+  const totH=Math.max(...nos.map(n=>n.y+n.h/2))+4;
+  nos.forEach(n=>{ n.el.style.top=n.y+'px'; });
   const prof=Math.max(...nos.map(n=>n.d));
-  nos.forEach(n=>{ n.x=n.d*(W+GX); n.el.style.left=n.x+'px'; n.el.style.top=n.y+'px'; });
-  const totW=(prof+1)*W+prof*GX, totH=folha*H;
-  tw.style.width=totW+'px'; tw.style.height=totH+'px'; svg.setAttribute('width',totW); svg.setAttribute('height',totH);
-  let p=''; nos.forEach(n=>(n.kids||[]).forEach(k=>{ const x1=n.x+W, x2=k.x, xm=(x1+x2)/2; p+=`M${x1},${n.y} C${xm},${n.y} ${xm},${k.y} ${x2},${k.y} `; }));
-  svg.innerHTML=`<path d="${p}"/>`;
+  let totW=0, fitS=1;
+  const T={x:0,y:0,s:1};
+  const aplica=()=>{ tw.style.transform=`translate(${T.x}px,${T.y}px) scale(${T.s})`; zp.textContent=Math.round(T.s/fitS*100)+'%'; };
+  const desenha=gx=>{ nos.forEach(n=>{ n.x=n.d*(W+gx); n.el.style.left=n.x+'px'; });
+    totW=(prof+1)*W+prof*gx; tw.style.width=totW+'px'; tw.style.height=totH+'px'; svg.setAttribute('width',totW); svg.setAttribute('height',totH);
+    let p=''; nos.forEach(n=>(n.kids||[]).forEach(k=>{ const x1=n.x+W, x2=k.x, xm=(x1+x2)/2; p+=`M${x1},${n.y} C${xm},${n.y} ${xm},${k.y} ${x2},${k.y} `; }));
+    svg.innerHTML=`<path d="${p}"/>`; };
   const ajusta=()=>{ const aw=area.clientWidth, ah=area.clientHeight; if(!aw||!ah) return;
-    const s=Math.min(1.25,aw/totW,ah/totH); tw.style.transform=`translate(${Math.max(0,(aw-totW*s)/2)}px,${Math.max(0,(ah-totH*s)/2)}px) scale(${s})`; };
+    const minW=(prof+1)*W+prof*GX0;
+    const s=Math.min(1.35,(ah-8)/totH,aw/minW);
+    // a sobra de largura vira espaço entre as colunas (até 3× o normal)
+    const gx=prof?Math.max(GX0,Math.min(GX0*3.2,(aw/s-(prof+1)*W)/prof)):GX0;
+    desenha(gx); fitS=s;
+    T.s=s; T.x=Math.max(0,(aw-totW*s)/2); T.y=Math.max(0,(ah-totH*s)/2); aplica(); };
+  const zoom=(f,cx,cy)=>{ const ns=Math.max(fitS*.6,Math.min(fitS*5,T.s*f)); if(ns===T.s) return;
+    if(cx==null){ cx=area.clientWidth/2; cy=area.clientHeight/2; }
+    T.x=cx-(cx-T.x)*ns/T.s; T.y=cy-(cy-T.y)*ns/T.s; T.s=ns; aplica(); };
+  area.querySelector('.arv-zoom').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
+    if(b.dataset.z==='0') ajusta(); else zoom(b.dataset.z==='+'?1.25:1/1.25); });
+  area.addEventListener('wheel',e=>{ e.preventDefault(); const r=area.getBoundingClientRect();
+    zoom(Math.exp(-e.deltaY*(e.ctrlKey?.01:.0018)),e.clientX-r.left,e.clientY-r.top); },{passive:false});
+  area.addEventListener('dblclick',e=>{ if(!e.target.closest('.arv-zoom')) ajusta(); });
+  // arrastar (mouse) e pinça (dois dedos)
+  const pts=new Map(); let ini=null;
+  area.addEventListener('pointerdown',e=>{ if(e.target.closest('.arv-zoom')) return; area.setPointerCapture(e.pointerId);
+    pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); area.classList.add('arrasta'); ini=null; });
+  area.addEventListener('pointermove',e=>{ if(!pts.has(e.pointerId)) return; const ant=pts.get(e.pointerId);
+    if(pts.size===1){ T.x+=e.clientX-ant.x; T.y+=e.clientY-ant.y; pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); aplica(); return; }
+    pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); const [a,b]=[...pts.values()], d=Math.hypot(a.x-b.x,a.y-b.y);
+    const r=area.getBoundingClientRect(), cx=(a.x+b.x)/2-r.left, cy=(a.y+b.y)/2-r.top;
+    if(ini) zoom(d/ini,cx,cy); ini=d; });
+  const solta=e=>{ pts.delete(e.pointerId); ini=null; if(!pts.size) area.classList.remove('arrasta'); };
+  area.addEventListener('pointerup',solta); area.addEventListener('pointercancel',solta);
   ajusta(); area._ajusta=ajusta;
+  // a área muda de tamanho depois do desenho (a nota de baixo é escrita depois, a lateral recolhe):
+  // sem isso o último nó ficava cortado embaixo
+  if(area._ro) area._ro.disconnect();
+  if(window.ResizeObserver){ let lw=area.clientWidth, lh=area.clientHeight;
+    area._ro=new ResizeObserver(()=>{ if(area.clientWidth===lw&&area.clientHeight===lh) return; lw=area.clientWidth; lh=area.clientHeight; ajusta(); });
+    area._ro.observe(area); }
 }
 let _ra; window.addEventListener('resize',()=>{ clearTimeout(_ra); _ra=setTimeout(()=>document.querySelectorAll('.arv-area').forEach(a=>a._ajusta&&a._ajusta()),150); });
 
@@ -909,6 +955,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611182030"></script>
+<script src="../assets/build-check.js?v=202611182130"></script>
 </body>
 </html>

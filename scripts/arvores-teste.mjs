@@ -117,6 +117,18 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   af('subtítulo da árvore de km', /Dispersão de km e Freightech/.test(await txt('titSub')), await txt('titSub'));
   af('1ª viagem 20 mil km', km['Km da 1ª viagem'] === '20 mil km', km['Km da 1ª viagem']);
   af('Km sem rolagem', await vaza() <= 1, await vaza());
+  // a nota de baixo cresce depois do desenho: a árvore tem de se reajustar e nada fica cortado
+  await pg.evaluate(() => { document.getElementById('nota-km').innerHTML += '<br>linha a mais<br>outra linha<br>mais uma'; });
+  await pg.waitForTimeout(300);
+  const cabeKm = await pg.evaluate(() => { const a = document.getElementById('arv-km').getBoundingClientRect(); return [...document.querySelectorAll('#arv-km .tn')].every(n => { const r = n.getBoundingClientRect(); return r.top >= a.top - 1 && r.bottom <= a.bottom + 1 && r.left >= a.left - 1 && r.right <= a.right + 1; }); });
+  af('árvore de km cabe depois de a nota crescer', cabeKm);
+  // zoom: + aumenta, Ajustar volta ao desenho inteiro
+  const larg = () => pg.evaluate(() => document.querySelector('#arv-km .tn').getBoundingClientRect().width);
+  const w0 = await larg();
+  await pg.click('#arv-km .arv-zoom button[data-z="+"]');
+  af('zoom + aumenta', (await larg()) > w0 * 1.2 && /125%/.test(await pg.textContent('#arv-km .arv-zp')), await pg.textContent('#arv-km .arv-zp'));
+  await pg.click('#arv-km .arv-zoom button[data-z="0"]');
+  af('Ajustar volta a 100%', /^100%$/.test(await pg.textContent('#arv-km .arv-zp')) && Math.abs((await larg()) - w0) < 1);
   if (SHOT) await pg.screenshot({ path: path.join(SHOT, `km-${w}-${tema}.png`) });
   af('sem erro na página', !errs.length, errs.join(' | '));
   await ctx.close();
