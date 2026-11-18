@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611190130">
+<meta name="build" content="202611190400">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -536,7 +536,7 @@ body.claro .tn{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
 
       <!-- ══ 3 · ÁRVORE DE KM ══ -->
       <section class="vw vw-arv" id="vw-km">
-        <div class="arv-modo" id="modo-km"><button class="dimb" type="button" data-km="gap">Gaps por projeto e unidade</button><button class="dimb" type="button" data-km="comp">Composição do km</button></div>
+        <div class="arv-modo" id="modo-km"><button class="dimb" type="button" data-km="gap">Gaps por unidade</button><button class="dimb" type="button" data-km="comp">Composição do km</button></div>
         <div class="arv-area" id="arv-km"></div>
         <div class="gaps" id="gaps-km"></div>
         <div class="nota" id="nota-km"></div>
@@ -808,25 +808,57 @@ function arvore(area,raiz,clica){
       +(n.g?gapHtml(n.g):'')
       +(n.rows&&n.rows.length?`<table>${n.rows.map(r=>`<tr><td>${esc(r[0])}</td><td class="n ${r[2]||''}">${esc(r[1])}</td></tr>`).join('')}</table>`:'');
     if(clica&&n.ab) el.title='Clique para abrir por unidade, projeto e mês'; if(n.dica) el.title=n.dica; tw.appendChild(el); n.el=el; n.h=el.offsetHeight; });
-  // altura: cada folha com a própria altura; o pai no meio dos filhos, sem invadir o vizinho
-  let yy=0; folhas.forEach(f=>{ f.y=yy+f.h/2; yy+=f.h+GY; });
-  (function pos(n){ if(n.kids&&n.kids.length){ n.kids.forEach(pos); n.y=(n.kids[0].y+n.kids[n.kids.length-1].y)/2; } })(raiz);
-  const totH=Math.max(...nos.map(n=>n.y+n.h/2))+4;
-  nos.forEach(n=>{ n.el.style.top=n.y+'px'; });
+  // altura: cada folha com a própria altura; o pai no meio dos filhos, sem invadir o vizinho.
+  // Um nó com "grade" tem só folhas como filhos e elas podem quebrar em k colunas (a árvore
+  // de gaps tem 10+ unidades: numa coluna só ficava alta, estreita e minúscula na tela)
+  const gr=nos.find(n=>n.grade&&n.kids&&n.kids.length>3&&n.kids.every(k=>!k.kids||!k.kids.length));
+  const RAIL=14;
+  let totH=0, K=1;
+  // árvore "arrumada": cada subárvore desce só o necessário para não bater na de cima NAS MESMAS
+  // colunas (a receita, rasa, fica ao lado dos pacotes da frota, que são fundos), em vez de uma linha por folha
+  const posi=k=>{ K=gr?Math.max(1,Math.min(k,gr.kids.length)):1; nos.forEach(n=>{ n.c=0; });
+    const sh=(n,o)=>{ n.y+=o; if(n._rail!=null) n._rail+=o; (n.kids||[]).forEach(x=>sh(x,o)); };
+    const arr=n=>{ const col=n.d+(n.c||0);
+      if(!(n.kids&&n.kids.length)){ n.y=n.h/2; return {[col]:[0,n.h]}; }
+      const C={};
+      if(n===gr&&K>1){ const per=Math.ceil(n.kids.length/K);
+        for(let c=0;c<K;c++){ let y=RAIL; n.kids.slice(c*per,(c+1)*per).forEach(f=>{ f.c=c; f.y=y+f.h/2; y+=f.h+GY; }); C[n.d+1+c]=[0,y-GY]; }
+        n._rail=4; const ys=n.kids.map(x=>x.y); n.y=(Math.min(...ys)+Math.max(...ys))/2; }
+      else { n._rail=null; n.kids.forEach((x,i)=>{ const ct=arr(x);
+          if(i){ let off=-1e9; Object.keys(ct).forEach(d=>{ if(C[d]) off=Math.max(off,C[d][1]+GY-ct[d][0]); }); if(off===-1e9) off=0;
+            sh(x,off); Object.keys(ct).forEach(d=>{ ct[d]=[ct[d][0]+off,ct[d][1]+off]; }); }
+          Object.keys(ct).forEach(d=>{ C[d]=C[d]?[Math.min(C[d][0],ct[d][0]),Math.max(C[d][1],ct[d][1])]:ct[d]; }); });
+        n.y=(n.kids[0].y+n.kids[n.kids.length-1].y)/2; }
+      C[col]=[n.y-n.h/2,n.y+n.h/2]; return C; };
+    arr(raiz);
+    const mn=Math.min(...nos.map(n=>n.y-n.h/2)); sh(raiz,-mn);
+    totH=Math.max(...nos.map(n=>n.y+n.h/2))+4; nos.forEach(n=>{ n.el.style.top=n.y+'px'; }); };
+  posi(1);
   const prof=Math.max(...nos.map(n=>n.d));
   let totW=0, fitS=1;
   const T={x:0,y:0,s:1};
   const aplica=()=>{ tw.style.transform=`translate(${T.x}px,${T.y}px) scale(${T.s})`; if(document.activeElement!==zp) zp.value=Math.round(T.s/fitS*100)+'%'; };
-  const desenha=gx=>{ nos.forEach(n=>{ n.x=n.d*(W+gx); n.el.style.left=n.x+'px'; });
-    totW=(prof+1)*W+prof*gx; tw.style.width=totW+'px'; tw.style.height=totH+'px'; svg.setAttribute('width',totW); svg.setAttribute('height',totH);
-    let p=''; nos.forEach(n=>(n.kids||[]).forEach(k=>{ const x1=n.x+W, x2=k.x, xm=(x1+x2)/2; p+=`M${x1},${n.y} C${xm},${n.y} ${xm},${k.y} ${x2},${k.y} `; }));
+  const desenha=gx=>{ const pc=prof+K-1; nos.forEach(n=>{ n.x=(n.d+(n.c||0))*(W+gx); n.el.style.left=n.x+'px'; });
+    totW=(pc+1)*W+pc*gx; tw.style.width=totW+'px'; tw.style.height=totH+'px'; svg.setAttribute('width',totW); svg.setAttribute('height',totH);
+    let p=''; nos.forEach(n=>{ if(!(n.kids&&n.kids.length)) return;
+      if(n===gr&&K>1){ // organograma: trilho em cima, uma espinha por coluna e um traço até cada folha
+        const ry=n._rail, sx=c=>(n.d+1+c)*(W+gx)-gx/2, x1=n.x+W;
+        p+=`M${x1},${n.y} L${sx(0)},${n.y} M${sx(0)},${Math.min(ry,n.y)} L${sx(0)},${Math.max(n.y,ry)} M${sx(0)},${ry} L${sx(K-1)},${ry} `;
+        for(let c=0;c<K;c++){ const ks=n.kids.filter(k=>k.c===c); if(!ks.length) continue; const ly=ks[ks.length-1].y;
+          p+=`M${sx(c)},${ry} L${sx(c)},${ly} `; ks.forEach(k=>{ p+=`M${sx(c)},${k.y} L${k.x},${k.y} `; }); }
+        return; }
+      n.kids.forEach(k=>{ const x1=n.x+W, x2=k.x, xm=(x1+x2)/2; p+=`M${x1},${n.y} C${xm},${n.y} ${xm},${k.y} ${x2},${k.y} `; }); });
     svg.innerHTML=`<path d="${p}"/>`; };
   const TOP=area._top||0;
   const ajusta=()=>{ const aw=area.clientWidth, ah=area.clientHeight-TOP; if(!aw||!ah) return;
-    const minW=(prof+1)*W+prof*GX0;
+    // quantas colunas na grade: a que deixa a árvore maior na tela (empate fica com menos colunas)
+    let best=1, bs=0; const kmax=gr?Math.min(5,gr.kids.length):1;
+    for(let k=1;k<=kmax;k++){ posi(k); const pc=prof+K-1, s=Math.min(1.35,(ah-8)/totH,aw/((pc+1)*W+pc*GX0)); if(s>bs*1.04){ bs=s; best=k; } }
+    posi(best);
+    const pc=prof+K-1, minW=(pc+1)*W+pc*GX0;
     const s=Math.min(1.35,(ah-8)/totH,aw/minW);
     // a sobra de largura vira espaço entre as colunas (até 3× o normal)
-    const gx=prof?Math.max(GX0,Math.min(GX0*3.2,(aw/s-(prof+1)*W)/prof)):GX0;
+    const gx=pc?Math.max(GX0,Math.min(GX0*3.2,(aw/s-(pc+1)*W)/pc)):GX0;
     desenha(gx); fitS=s;
     T.s=s; T.x=Math.max(0,(aw-totW*s)/2); T.y=TOP+Math.max(0,(ah-totH*s)/2); aplica(); };
   const zoom=(f,cx,cy,livre)=>{ const ns=livre?T.s*f:Math.max(fitS*.1,Math.min(fitS*5,T.s*f)); if(ns===T.s) return;
@@ -869,11 +901,36 @@ let _ra; window.addEventListener('resize',()=>{ clearTimeout(_ra); _ra=setTimeou
 
 /* ══ RESUMO GERENCIAL + ÁRVORE DO ROIC ══ */
 const corV=(v,bom)=>v==null||!isFinite(v)||Math.abs(v)<1e-9?'':((v>0)===bom?'cg':'cr');
+/* pacote da frota aberto em volume e preço: km (Dispersão de km) × R$/km. Só as linhas com km
+   (o Armazém não tem); nos meses da aba, o custo de Insumos vai para a Empurrada, como no R$/km do Painel KM.
+   Volume = (km rem − km rodado) × R$/km ref; R$/km = (R$/km ref − R$/km real) × km rodado: os dois somam o ▲ do custo */
+function kmPac(vigs,filtro,pac){
+  if(!KM) return null; const rf=CMP==='orc'?'orc':'rem';
+  const L=KM.filter(r=>vigs.includes(r.vig)&&filtro(r.op,r.uni)); if(!L.length) return null;
+  const temIns=new Set(KM.filter(r=>r.op==='INS').map(r=>r.vig+'|'+r.uni)), ch=new Set();
+  const K={rem:0,real:0,viag:0,frota:0,cReal:0,cRef:0};
+  L.forEach(r=>{ K.rem+=r.rem; K.real+=r.real; K.viag+=r.vPrim+r.vRec+r.vNot; K.frota+=r.frota; ch.add(r.vig+'|'+r.op+'|'+r.uni); });
+  const soma=k=>{ const x=FR[k]&&FR[k][pac]; if(x){ K.cReal+=x.real; K.cRef+=x[rf]; } };
+  ch.forEach(k=>{ soma(k); const [v,op,u]=k.split('|'); if(op==='EMP'&&!temIns.has(v+'|'+u)) soma(v+'|INS|'+u); });
+  return K.rem>0&&K.real>0?K:null; }
+function kidsPac(vigs,filtro,pac,R){
+  const K=kmPac(vigs,filtro,pac); if(!K) return {};
+  const n=R.n, rkR=K.cRef/K.rem, rk=K.cReal/K.real, pp=v=>R.cap?v*(1-IR)*12/R.cap:null, RL=CMP_ROT();
+  const iVol=-(K.real-K.rem)*rkR/n, iPre=-(rk-rkR)*K.real/n, fR=v=>v==null||!isFinite(v)?'—':'R$ '+br(v,2);
+  const V=x=>fmtR(x).replace('R$ ',''), vg=(a,b)=>K.viag?V(a/K.viag)+' · '+V(b/K.viag):'—', at=(a,b)=>K.frota?V(a/K.frota)+' · '+V(b/K.frota):'—';
+  const fora=R.fr[pac].real-K.cReal;
+  return {rowsP:Math.abs(fora)>Math.max(1,Math.abs(R.fr[pac].real)*0.002)?[['Fora da abertura em km',fmtR(fora/n)]]:[],
+    kids:[
+      {t:'Km rodado',v:fmtKmG(K.real),s:`volume · ▲ km × R$/km ${RL.toLowerCase()}`,g:{ref:K.rem,real:K.real,bom:false,fmt:fmtKmG,rot:'Km rem.',cols:['ref','d','p'],imp:iVol,pp:pp(iVol)},
+        rows:[['Viagens no mês',fmtN(K.viag/n)],['Km/viagem rem. · real',r1(dv(K.rem,K.viag))+' · '+r1(dv(K.real,K.viag))],['Km/ativo rem. · real',fmtN(dv(K.rem,K.frota))+' · '+fmtN(dv(K.real,K.frota))]]},
+      {t:'R$/km',v:fR(rk),s:'custo ÷ km rodado',g:{ref:rkR,real:rk,bom:false,fmt:fR,rot:RL,imp:iPre,pp:pp(iPre)},
+        rows:[[`R$/viagem ${RL.toLowerCase()} · real`,vg(K.cRef,K.cReal)],[`R$/ativo ${RL.toLowerCase()} · real`,at(K.cRef,K.cReal)],['Ativos (média)',fmtN(K.frota/n)]]}]}; }
 async function renderROIC(){
   const vigs=vigsSel(); if(!vigs.length) return;
   const per=vigs.length>1?`${vigRot(vigs[0])} a ${vigRot(vigs[vigs.length-1])}`:vigRot(vigs[0]);
   set('titSub',`${per} · carregando o capital do FT…`);
   try{ await Promise.all(vigs.map(capMes)); }catch(e){ set('titSub',`${per} · não consegui ler o FT: ${(e&&e.message)||e}`); return; }
+  try{ await carregaKm(); }catch(e){ console.warn('Dispersão de km indisponível: os pacotes da frota não abrem em km', e); }
   const R=roicDe(vigs,(op,uni)=>passa(op,uni));
   const est=R.mesesEst.length;
   set('titSub',`${per} · DRE do ERP e Freightech · ${est?(est===vigs.length?'depreciação estimada pelo FT':'depreciação estimada pelo FT em '+R.mesesEst.map(vigTxt).join(', ')):'depreciação do DRE do ERP'}`);
@@ -913,9 +970,8 @@ async function renderROIC(){
         {ab:'rec',t:'Receita líquida',v:fmtR(R.rec/n),s:n>1?'média do mês':'no mês',g:g('rec'),rows:[[outro[0],fmtR(outro[1]/n)]]},
         {t:'NOPAT',v:fmtR(R.nopat/n),s:'EBIT × (1 − 34%)',g:gNop,rows:[['IR e CS (34%)',fmtR(R.ebit*IR/n)],['Anualizado',fmtR(R.nopatAno)]],kids:[
           {ab:'ebd',t:'EBITDA ajustado',v:fmtR(R.ebd/n),s:'receita − custos',g:g('ebd'),rows:[['Margem',fmtP(R.rec?R.ebd/R.rec:null)+' · '+RL+' '+fmtP(R.recRef?R.ebdRef/R.recRef:null)]],kids:[
-            {ab:'C',t:'Combustíveis',v:fmtR(R.fr.C.real/n),s:'diesel e Arla',g:g('C')},
-            {ab:'M',t:'Manutenções',v:fmtR(R.fr.M.real/n),g:g('M')},
-            {ab:'P',t:'Pneus',v:fmtR(R.fr.P.real/n),g:g('P')},
+            ...['C','M','P'].map(p=>{ const kp=kidsPac(vigs,(op,uni)=>passa(op,uni),p,R);
+              return {ab:p,t:PAC_NOME[p],v:fmtR(R.fr[p].real/n),s:p==='C'?'diesel e Arla':undefined,g:g(p),rows:kp.rowsP,kids:kp.kids}; }),
             {ab:'O',t:'Demais contas da frota',v:fmtR(R.fr.O.real/n),s:'seguros, IPVA, ICMS e outras',g:g('O')},
             {ab:'dem',t:'Demais custos',v:fmtR(R.dem/n),s:'tudo o que não é frota (pessoal, adm…)',g:g('dem')}]},
           {ab:'dep',t:'Depreciação',v:fmtR(-R.dep/n),est:est===vigs.length,s:est?(est===vigs.length?'pelo FT: compra × perda do mês':'DRE do ERP + FT nos meses sem o DRE'):R.depSem?'DRE do ERP, sem referência':'DRE do ERP (estrutura 351)',g:gDep,rows:[['Pelo FT',fmtR(R.depFT/n)]]}]}]},
@@ -935,7 +991,7 @@ async function renderROIC(){
     +gl.map(x=>`<span class="gp" data-ab="${x.id}">${esc(GR[x.id].t)} <b>${esc(fmtSig(fmtR,x.o.imp))}/mês</b> · ROIC ${esc(fmtPP(x.o.pp))}</span>`).join('')
     +gu.map(x=>`<span class="gp" data-ab="ebd" data-op="${x.l.op}" data-uni="${x.l.uni}">${esc(x.l.uni)} · ${esc(OPS[x.l.op])}: EBITDA <b>${esc(fmtSig(fmtR,x.o.imp))}/mês</b></span>`).join('')
     :`<span class="rot">Sem gap contra o ${CMP_NOME()} no recorte</span>`;
-  $('nota-roic').innerHTML=`<b>ROIC</b> contra o IPCA de 12 meses (${esc(ip.rot)}); o impacto da raiz é o NOPAT que passa (ou falta) da inflação sobre o capital, por mês. <b>Demais nós</b> contra o ${CMP_NOME()} do DRE: ▲ = real − ${CMP_NOME()}, impacto em R$ por mês antes do IR (vermelho = contra nós) e em pp de ROIC (× 66% × 12 ÷ capital). <b>Clique num nó</b> para abrir por unidade, projeto e mês. <b>Capital</b>: valor de compra do FT × residual pela idade (100% → ${br(RES5*100,0)}% aos 5 anos → ${br(RES8*100,0)}% aos 8). <b>Depreciação</b>: a do DRE do ERP nos meses importados; nos outros, estimada pela mesma curva. <b>IR/CS</b>: 34% teóricos.`;
+  $('nota-roic').innerHTML=`<b>ROIC</b> contra o IPCA de 12 meses (${esc(ip.rot)}); o impacto da raiz é o NOPAT que passa (ou falta) da inflação sobre o capital, por mês. <b>Demais nós</b> contra o ${CMP_NOME()} do DRE: ▲ = real − ${CMP_NOME()}, impacto em R$ por mês antes do IR (vermelho = contra nós) e em pp de ROIC (× 66% × 12 ÷ capital). <b>Clique num nó</b> para abrir por unidade, projeto e mês. <b>Capital</b>: valor de compra do FT × residual pela idade (100% → ${br(RES5*100,0)}% aos 5 anos → ${br(RES8*100,0)}% aos 8). <b>Depreciação</b>: a do DRE do ERP nos meses importados; nos outros, estimada pela mesma curva. <b>IR/CS</b>: 34% teóricos. <b>Combustíveis, Manutenções e Pneus</b> abrem em km rodado (Dispersão de km) e R$/km: volume = ▲ km × R$/km de referência e R$/km = ▲ R$/km × km rodado, que somam o ▲ do pacote nas operações com km (o Armazém não tem km); R$/viagem e R$ por ativo no nó do R$/km.`;
   if(AB_KIND==='roic'&&AB_N&&$('ab-ov').classList.contains('on')) abreRoic(AB_N);
 }
 let ROIC_CTX=null;
@@ -1113,16 +1169,18 @@ async function renderKm(){
   const S=agKm(F,rev), n=S.n, disp=S.real-S.rem, outros=S.rem-S.kmPrim-S.kmRec-S.kmNot;
   let raiz;
   if(KM_MODO==='gap'){
-    // onde estão os gaps: projeto e, dentro dele, as unidades do pior para o melhor impacto
-    const ops=OP_ORD.filter(op=>F.some(r=>r.op===op)).map(op=>{ const Fo=F.filter(r=>r.op===op); return {op,Fo,S:agKm(Fo,rev)}; }).sort((a,b)=>a.S.imp-b.S.imp);
-    const um=ops.length===1;
-    raiz=Object.assign(noKm('Dispersão de km',S,null,rowsKm(S,true)),{raiz:true,s:'km rodado − km remunerado',
-      kids:ops.map(o=>{ const us=UNIS.filter(u=>o.Fo.some(r=>r.uni===u)).map(u=>{ const Fu=o.Fo.filter(r=>r.uni===u); return {u,S:agKm(Fu,rev)}; }).sort((a,b)=>a.S.imp-b.S.imp);
-        const lim=um||us.length<=4?us.length:3, top=us.slice(0,lim), rest=us.slice(lim);
-        const kids=top.map(x=>noKm(x.u+' · '+OPS[o.op],x.S,r=>r.op===o.op&&r.uni===x.u,rowsKm(x.S,false)));
-        if(rest.length){ const ru=new Set(rest.map(x=>x.u)), Fr=o.Fo.filter(r=>ru.has(r.uni)), Sr=agKm(Fr,rev);
-          kids.push(Object.assign(noKm(`Demais ${rest.length} unidades · ${OPS[o.op]}`,Sr,r=>r.op===o.op&&ru.has(r.uni),[]),{s:rest.map(x=>x.u).join(', ')})); }
-        return Object.assign(noKm(OPS[o.op],o.S,r=>r.op===o.op,rowsKm(o.S,true)),{kids}); })});
+    // onde estão os gaps: as unidades do pior para o melhor impacto, com os projetos dentro do nó
+    // (o projeto já tem filtro no topo); com uma unidade só no filtro, abre os projetos dela
+    const us=UNIS.filter(u=>F.some(r=>r.uni===u)).map(u=>{ const Fu=F.filter(r=>r.uni===u); return {u,Fu,S:agKm(Fu,rev)}; }).sort((a,b)=>a.S.imp-b.S.imp);
+    const opsDe=Fx=>OP_ORD.filter(op=>Fx.some(r=>r.op===op)).map(op=>{ const Fo=Fx.filter(r=>r.op===op); return {op,S:agKm(Fo,rev)}; }).sort((a,b)=>a.S.imp-b.S.imp);
+    const umOp=opsDe(F).length===1;
+    let kids;
+    if(us.length===1){ const u=us[0].u;
+      kids=opsDe(us[0].Fu).map(o=>noKm(u+' · '+OPS[o.op],o.S,r=>r.uni===u&&r.op===o.op,rowsKm(o.S,true)));
+    } else kids=us.map(x=>{ const os=opsDe(x.Fu), nome=umOp?x.u+' · '+OPS[os[0].op]:x.u;
+      const rows=umOp?rowsKm(x.S,false):os.map(o=>{ const d=o.S.real-o.S.rem; return [OPS[o.op],`${fmtSig(fmtKmG,d)} · ${fmtSig(fmtR,o.S.imp/o.S.n)}`,corV(d,false)]; });
+      return noKm(nome,x.S,r=>r.uni===x.u,rows); });
+    raiz=Object.assign(noKm('Dispersão de km',S,null,rowsKm(S,true)),{raiz:true,grade:true,s:'km rodado − km remunerado',kids});
   } else {
     const kids2=[
       {ab:'teto',t:'Teto da 1ª viagem (T2)',v:fmtKm(S.tetoT2),s:`${MAPAS_MES} mapas × ativos × km por mapa`,g:{rot:'Teto',ref:S.tetoT2,real:S.kmPrimT2,bom:true,pot:true,fmt:fmtKmG,cols:['real','d','p'],imp:S.impNao/n,potRot:'Variável não recebido:'},
@@ -1279,6 +1337,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611190130"></script>
+<script src="../assets/build-check.js?v=202611190400"></script>
 </body>
 </html>

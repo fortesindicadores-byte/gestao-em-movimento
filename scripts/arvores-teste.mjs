@@ -105,7 +105,12 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   await pg.evaluate(() => setVw('roic')); await pg.waitForTimeout(800);
   const nos = await pg.evaluate(() => [...document.querySelectorAll('#arv-roic .tn')].map(n => n.querySelector('.tn-t').textContent + '=' + n.querySelector('.tn-v').textContent));
   if (um) console.log(JSON.stringify(nos));
-  af('árvore ROIC com 15 nós', nos.length === 15, nos.length);
+  af('árvore ROIC com 21 nós (pacotes abertos em km e R$/km)', nos.length === 21, nos.length);
+  const pk = await pg.evaluate(() => ['Combustíveis', 'Manutenções', 'Pneus'].map(t => { const e = [...document.querySelectorAll('#arv-roic .tn')].find(x => x._no && x._no.t === t); const n = e && e._no;
+    return n ? { t, imp: n.g.imp, kids: (n.kids || []).map(k => k.t), soma: (n.kids || []).reduce((a, k) => a + (k.g.imp || 0), 0), fora: (n.rows || []).some(r => /Fora/.test(r[0])) } : null; }));
+  if (um) console.log(JSON.stringify(pk));
+  af('pacotes abrem em Km rodado e R$/km', pk.every(x => x && x.kids.join('|') === 'Km rodado|R$/km'), JSON.stringify(pk));
+  af('volume + R$/km = ▲ do pacote', pk.every(x => x && (x.fora || Math.abs(x.soma - x.imp) < 0.01)), JSON.stringify(pk));
   const noR = t0 => pg.evaluate(t1 => { const n = [...document.querySelectorAll('#arv-roic .tn')].find(x => x.querySelector('.tn-t').textContent.replace(/ · estimada$/, '') === t1);
     return n ? { cls: n.className, g: [...n.querySelectorAll('.tn-g b')].map(b => b.textContent), i: (n.querySelector('.tn-i') || {}).textContent || '' } : null; }, t0);
   let nr = await noR('Receita líquida'); if (um) console.log(JSON.stringify(nr));
@@ -144,7 +149,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   // modo gaps (padrão): projeto e unidade, com o impacto ao R$/km remunerado (42 mil ÷ 20.700 km)
   const kg = await pg.evaluate(() => Object.fromEntries([...document.querySelectorAll('#arv-km .tn')].map(n => [n.querySelector('.tn-t').textContent, { v: n.querySelector('.tn-v').textContent, cls: n.className, g: [...n.querySelectorAll('.tn-g b')].map(b => b.textContent), i: (n.querySelector('.tn-i') || {}).textContent || '' }])));
   if (um) console.log(JSON.stringify(kg));
-  af('gaps: raiz, projeto e unidade', kg['Dispersão de km'] && kg['Rota'] && kg['CGR · Rota'] && kg['CGR · Rota'].v === '+1.300 km', JSON.stringify(Object.keys(kg)));
+  af('gaps: raiz e unidade, sem o nível de projeto', kg['Dispersão de km'] && !kg['Rota'] && kg['CGR · Rota'] && kg['CGR · Rota'].v === '+1.300 km', JSON.stringify(Object.keys(kg)));
   af('gaps: rem · real · ▲% e impacto', kg['CGR · Rota'] && kg['CGR · Rota'].g.join('|') === '20.700 km|22.000 km|+6,3%' && /-R\$ 2.638\/mês/.test(kg['CGR · Rota'].i) && /gap\b/.test(kg['CGR · Rota'].cls), JSON.stringify(kg['CGR · Rota']));
   const gk = await pg.evaluate(() => [...document.querySelectorAll('#gaps-km .gp')].map(x => x.textContent));
   af('maiores gaps do km', /CGR · Rota \+1.300 km \(\+6,3%\) · -R\$ 2.638\/mês/.test(gk[0] || ''), JSON.stringify(gk));
