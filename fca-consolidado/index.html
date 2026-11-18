@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611180200">
+<meta name="build" content="202611190500">
 <title>FCA · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1486,7 +1486,8 @@ const _KM_STS=['Não iniciada','Em andamento','Concluída','Cancelada'];
    o desenho do FCA Automático, em assets/fca-caixa.js (o mesmo do FCA da unidade). Os ids continuam km-*;
    Responsável virou lista (gestor de frota primeiro, depois os cadastrados na unidade e os admins). */
 let PERFIS=[];
-async function lePerfis(){ try{ const {data}=await sb.from('fca_profiles').select('nome,unidade,is_admin'); PERFIS=FcaCaixa.perfisDe(data||[]); }catch(e){ PERFIS=[]; } }
+// a RLS do fca_profiles só deixa a unidade ler o próprio cadastro: a função fca_perfis_resp devolve os da unidade + admins
+async function lePerfis(){ if(!sb) return; try{ let r=await sb.rpc('fca_perfis_resp'); if(r.error||!Array.isArray(r.data)) r=await sb.from('fca_profiles').select('nome,unidade,is_admin'); PERFIS=FcaCaixa.perfisDe(r.data||[]); }catch(e){ PERFIS=[]; } }
 function ensureKModal(){
   if(document.getElementById('kmodal-ov'))return;
   FcaCaixa.monta({editaFato:true});
@@ -1671,6 +1672,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202611180200"></script>
+<script src="../assets/build-check.js?v=202611190500"></script>
 </body>
 </html>

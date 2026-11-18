@@ -146,16 +146,18 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   // árvore de km (out/26): teto 25 mil · 50 mapas não rodados (5 mil km) · revisão +500 km · dispersão +1.300 (+6,3%)
   await pg.evaluate(() => { const w = document.getElementById('ms-vig'); w._sel = new Set(['2026-10']); w._render(''); const o = document.getElementById('ms-op'); o._sel = new Set(['ROTA']); o._render(''); setVw('km'); });
   await pg.waitForFunction(() => document.querySelectorAll('#arv-km .tn').length > 3, null, { timeout: 10000 }).catch(() => {});
-  // modo gaps (padrão): projeto e unidade, com o impacto ao R$/km remunerado (42 mil ÷ 20.700 km)
+  af('árvore de km abre na composição', await pg.evaluate(() => document.querySelector('#modo-km .on')?.dataset.km === 'comp' && [...document.querySelectorAll('#arv-km .tn-t')].some(t => /1ª viagem/i.test(t.textContent))));
+  await pg.click('#modo-km [data-km="gap"]'); await pg.waitForTimeout(200);
+  // modo gaps: projeto e unidade, com o impacto ao R$/km remunerado (42 mil ÷ 20.700 km)
   const kg = await pg.evaluate(() => Object.fromEntries([...document.querySelectorAll('#arv-km .tn')].map(n => [n.querySelector('.tn-t').textContent, { v: n.querySelector('.tn-v').textContent, cls: n.className, g: [...n.querySelectorAll('.tn-g b')].map(b => b.textContent), i: (n.querySelector('.tn-i') || {}).textContent || '' }])));
   if (um) console.log(JSON.stringify(kg));
   af('gaps: raiz e unidade, sem o nível de projeto', kg['Dispersão de km'] && !kg['Rota'] && kg['CGR · Rota'] && kg['CGR · Rota'].v === '+1.300 km', JSON.stringify(Object.keys(kg)));
-  af('gaps: rem · real · ▲% e impacto', kg['CGR · Rota'] && kg['CGR · Rota'].g.join('|') === '20.700 km|22.000 km|+6,3%' && /-R\$ 2.638\/mês/.test(kg['CGR · Rota'].i) && /gap\b/.test(kg['CGR · Rota'].cls), JSON.stringify(kg['CGR · Rota']));
+  af('gaps: rem · real · ▲% e impacto', kg['CGR · Rota'] && kg['CGR · Rota'].g.join('|') === '20.700|22.000|+6,3%' && /-R\$ 2.405\/mês/.test(kg['CGR · Rota'].i) && /gap\b/.test(kg['CGR · Rota'].cls), JSON.stringify(kg['CGR · Rota']));
   const gk = await pg.evaluate(() => [...document.querySelectorAll('#gaps-km .gp')].map(x => x.textContent));
-  af('maiores gaps do km', /CGR · Rota \+1.300 km \(\+6,3%\) · -R\$ 2.638\/mês/.test(gk[0] || ''), JSON.stringify(gk));
+  af('maiores gaps do km', /CGR · Rota \+1.300 km \(\+6,3%\) · -R\$ 2.405\/mês/.test(gk[0] || ''), JSON.stringify(gk));
   await pg.click('#gaps-km .gp'); await pg.waitForTimeout(150);
   const AG = await pg.evaluate(() => ({ t: document.getElementById('ab-t').textContent, th: [...document.querySelectorAll('#ab-tab thead th')].map(x => x.textContent), tr: [...document.querySelectorAll('#ab-tab tbody tr')].map(r => [...r.cells].map(x => x.textContent)) }));
-  af('chip abre a dispersão da unidade com o impacto', AG.t === 'Dispersão de km · CGR · Rota' && AG.th.includes('Impacto R$/mês') && AG.tr[0].includes('-R$ 2.638') && AG.tr[0].includes('2,03'), JSON.stringify(AG));
+  af('chip abre a dispersão da unidade com o impacto', AG.t === 'Dispersão de km · CGR · Rota' && AG.th.includes('Impacto R$/mês') && AG.tr[0].includes('-R$ 2.405') && AG.tr[0].includes('1,85'), JSON.stringify(AG));
   await pg.keyboard.press('Escape');
   if (SHOT) await pg.screenshot({ path: path.join(SHOT, `kmgap-${w}-${tema}.png`) });
   await pg.click('#modo-km [data-km="comp"]');

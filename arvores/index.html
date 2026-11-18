@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611190400">
+<meta name="build" content="202611190500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -536,7 +536,7 @@ body.claro .tn{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
 
       <!-- ══ 3 · ÁRVORE DE KM ══ -->
       <section class="vw vw-arv" id="vw-km">
-        <div class="arv-modo" id="modo-km"><button class="dimb" type="button" data-km="gap">Gaps por unidade</button><button class="dimb" type="button" data-km="comp">Composição do km</button></div>
+        <div class="arv-modo" id="modo-km"><button class="dimb" type="button" data-km="comp">Composição do km</button><button class="dimb" type="button" data-km="gap">Gaps por unidade</button></div>
         <div class="arv-area" id="arv-km"></div>
         <div class="gaps" id="gaps-km"></div>
         <div class="nota" id="nota-km"></div>
@@ -568,6 +568,7 @@ const br=(n,d=0)=>(+n||0).toLocaleString('pt-BR',{minimumFractionDigits:d,maximu
 const nu=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
 function fmtR(v){ if(v==null||!isFinite(v)) return '—'; const a=Math.abs(v), s=v<0?'-':'';
   if(a>=1e6) return s+'R$ '+br(a/1e6,2)+' mi'; if(a>=1e4) return s+'R$ '+br(a/1e3,0)+' mil'; return s+'R$ '+br(a,0); }
+const fmtKmC=v=>{ if(v==null||!isFinite(v)) return '—'; const a=Math.abs(v), s=v<0?'-':''; return a>=1e6?s+br(a/1e6,2)+' mi':a>=1e5?s+br(a/1e3,0)+' mil':s+br(a,0); };
 const fmtKmG=v=>{ if(v==null||!isFinite(v)) return '—'; const a=Math.abs(v), s=v<0?'-':''; return a>=1e6?s+br(a/1e6,2)+' mi km':a>=1e5?s+br(a/1e3,0)+' mil km':s+br(a,0)+' km'; };
 const fmtP=(v,d=1)=>v==null||!isFinite(v)?'—':br(v*100,d)+'%';
 const fmtPs=(v,d=1)=>v==null||!isFinite(v)?'—':(v>0?'+':'')+br(v*100,d)+'%';
@@ -779,7 +780,7 @@ const fmtPP=v=>v==null||!isFinite(v)?'—':(v>0?'+':'')+br(v*100,1)+' pp';
 function fmtSig(f,v){ if(v==null||!isFinite(v)) return '—'; const t=f(v); return v>0&&!/^[+-]/.test(t)?'+'+t:t; }
 function gapHtml(g){
   const f=g.fmt||fmtR, d=gapD(g), p=gapP(g), l=gapLado(g), c=l<0?(g.pot?'ca':'cr'):l>0?'cg':'';
-  const cel={ref:[g.rot||CMP_ROT(),g.ref==null?'—':f(g.ref),''],real:['Real',g.real==null?'—':f(g.real),''],
+  const cel={ref:[g.rot||CMP_ROT(),g.ref==null?'—':f(g.ref),''],real:[g.rotReal||'Real',g.real==null?'—':f(g.real),''],
     d:['▲',g.pct?fmtPP(d):fmtSig(f,d),c],p:['▲%',g.pct?'—':fmtPs(p),c]};
   if(g.ref==null) return `<div class="tn-i">Sem ${esc(g.rot?g.rot.replace(/\.$/,''):CMP_NOME())} para comparar</div>`;
   const cols=(g.cols||(g.pct?['ref','d']:['ref','d','p'])).map(k=>cel[k]);
@@ -797,7 +798,7 @@ function gapHtml(g){
    ocupar a largura da área, e dentro dela dá para dar zoom (roda do mouse, botões, pinça) e
    arrastar; duplo clique ou "Ajustar" volta ao desenho inteiro na tela. */
 function arvore(area,raiz,clica){
-  const W=256, GX0=58, GY=14;
+  const W=256, GX0=58, GY0=14; let GY=GY0;
   let folha=0; const nos=[], folhas=[];
   (function lay(n,d){ n.d=d; nos.push(n); if(n.kids&&n.kids.length){ n.kids.forEach(k=>lay(k,d+1)); } else { n.f=folha++; folhas.push(n); } })(raiz,0);
   area.innerHTML='<div class="tw"><svg class="tsvg"></svg></div>'
@@ -854,9 +855,12 @@ function arvore(area,raiz,clica){
     // quantas colunas na grade: a que deixa a árvore maior na tela (empate fica com menos colunas)
     let best=1, bs=0; const kmax=gr?Math.min(5,gr.kids.length):1;
     for(let k=1;k<=kmax;k++){ posi(k); const pc=prof+K-1, s=Math.min(1.35,(ah-8)/totH,aw/((pc+1)*W+pc*GX0)); if(s>bs*1.04){ bs=s; best=k; } }
-    posi(best);
+    GY=GY0; posi(best);
     const pc=prof+K-1, minW=(pc+1)*W+pc*GX0;
-    const s=Math.min(1.35,(ah-8)/totH,aw/minW);
+    let s=Math.min(1.35,(ah-8)/totH,aw/minW);
+    // quando quem limita é a largura, a sobra de altura vira espaço entre os nós (senão fica uma faixa vazia embaixo)
+    if(s<1.35&&totH*s<ah-8-24){ const alvo=(ah-8)/s; let lo=GY0, hi=GY0*6;
+      for(let i=0;i<14;i++){ GY=(lo+hi)/2; posi(best); if(totH>alvo) hi=GY; else lo=GY; } GY=lo; posi(best); s=Math.min(1.35,(ah-8)/totH,aw/minW); }
     // a sobra de largura vira espaço entre as colunas (até 3× o normal)
     const gx=pc?Math.max(GX0,Math.min(GX0*3.2,(aw/s-(pc+1)*W)/pc)):GX0;
     desenha(gx); fitS=s;
@@ -921,7 +925,7 @@ function kidsPac(vigs,filtro,pac,R){
   const fora=R.fr[pac].real-K.cReal;
   return {rowsP:Math.abs(fora)>Math.max(1,Math.abs(R.fr[pac].real)*0.002)?[['Fora da abertura em km',fmtR(fora/n)]]:[],
     kids:[
-      {t:'Km rodado',v:fmtKmG(K.real),s:`volume · ▲ km × R$/km ${RL.toLowerCase()}`,g:{ref:K.rem,real:K.real,bom:false,fmt:fmtKmG,rot:'Km rem.',cols:['ref','d','p'],imp:iVol,pp:pp(iVol)},
+      {t:'Km rodado',v:fmtKmG(K.real),s:`volume · ▲ km × R$/km ${RL.toLowerCase()}`,g:{ref:K.rem,real:K.real,bom:false,fmt:fmtKmC,rot:'Km rem.',cols:['ref','d','p'],imp:iVol,pp:pp(iVol)},
         rows:[['Viagens no mês',fmtN(K.viag/n)],['Km/viagem rem. · real',r1(dv(K.rem,K.viag))+' · '+r1(dv(K.real,K.viag))],['Km/ativo rem. · real',fmtN(dv(K.rem,K.frota))+' · '+fmtN(dv(K.real,K.frota))]]},
       {t:'R$/km',v:fR(rk),s:'custo ÷ km rodado',g:{ref:rkR,real:rk,bom:false,fmt:fR,rot:RL,imp:iPre,pp:pp(iPre)},
         rows:[[`R$/viagem ${RL.toLowerCase()} · real`,vg(K.cRef,K.cReal)],[`R$/ativo ${RL.toLowerCase()} · real`,at(K.cRef,K.cReal)],['Ativos (média)',fmtN(K.frota/n)]]}]}; }
@@ -1141,16 +1145,19 @@ const AB={
   revi:{t:'Revisão do km por mapa (T2)',t2:true,cols:[['Mapas da 2ªQ',S=>S.mapRev||null,kmF],['Km por mapa 1ªQ',S=>dv(S.km1,S.mapRev),r1],['Km por mapa 2ªQ',S=>dv(S.km2,S.mapRev),r1],['Δ por mapa',S=>S.mapRev?(S.km2-S.km1)/S.mapRev:null,r1,v=>corV(v,true)],['Δ km',S=>S.mapRev?S.revKm:null,kmF,v=>corV(v,true)]]}
 };
 let KM_CTX=null, AB_Q='up', AB_N=null, AB_KIND='km', AB_F=null, AB_FT='';
-let KM_MODO=(()=>{ try{ return localStorage.getItem('arvores_km')==='comp'?'comp':'gap'; }catch(e){ return 'gap'; } })();
+// a árvore de km abre na composição (1ª viagem, recarga, noturna, teto, revisão); os gaps por unidade são a 2ª opção
+let KM_MODO=(()=>{ try{ return localStorage.getItem('arvores_km2')==='gap'?'gap':'comp'; }catch(e){ return 'comp'; } })();
 /* R$/km remunerado de cada linha da Dispersão: Combustíveis + Manutenções + Pneus remunerados da aba Frota ÷ km remunerado
    (o mesmo R$/km do Painel KM); o impacto da linha é o ▲ km a esse R$/km, contra nós quando rodou mais que o remunerado */
 function impactoKm(rows){
   const kmG={}, temIns=new Set(); rows.forEach(r=>{ const k=r.vig+'|'+r.op+'|'+r.uni; kmG[k]=(kmG[k]||0)+r.rem; if(r.op==='INS') temIns.add(r.vig+'|'+r.uni); });
   const cr=k=>{ const o=FR[k]; return o?['C','M','P'].reduce((a,p)=>a+(o[p]?o[p].rem:0),0):0; };
-  rows.forEach(r=>{ const k=r.vig+'|'+r.op+'|'+r.uni; let c=cr(k); if(r.op==='EMP'&&!temIns.has(r.vig+'|'+r.uni)) c+=cr(r.vig+'|INS|'+r.uni);
-    r.rskm=kmG[k]>0&&c>0?c/kmG[k]:0; r.imp=-(r.real-r.rem)*r.rskm; }); }
+  // a aba Frota do DRE lança o custo da Van dentro de "ROTA - X": sem custo próprio, Rota e Van dividem o mesmo R$/km
+  rows.forEach(r=>{ const k=r.vig+'|'+r.op+'|'+r.uni; let c=cr(k), km=kmG[k]; if(r.op==='EMP'&&!temIns.has(r.vig+'|'+r.uni)) c+=cr(r.vig+'|INS|'+r.uni);
+    if((r.op==='ROTA'||r.op==='VAN')&&!cr(r.vig+'|VAN|'+r.uni)){ const kr=r.vig+'|ROTA|'+r.uni, kv=r.vig+'|VAN|'+r.uni; c=cr(kr); km=(kmG[kr]||0)+(kmG[kv]||0); }
+    r.rskm=km>0&&c>0?c/km:0; r.imp=-(r.real-r.rem)*r.rskm; }); }
 function noKm(t,S,f,rows){ const d=S.real-S.rem;
-  return {ab:'disp',fl:f,t,v:fmtSig(fmtKm,d),cls:corV(d,false),g:{ref:S.rem,real:S.real,bom:false,fmt:fmtKmG,rot:'Rem.',cols:['ref','real','p'],imp:S.imp/S.n},rows}; }
+  return {ab:'disp',fl:f,t,v:fmtSig(fmtKm,d),cls:corV(d,false),g:{ref:S.rem,real:S.real,bom:false,fmt:fmtKmC,rot:'Km rem.',rotReal:'Km real',cols:['ref','real','p'],imp:S.imp/S.n},rows}; }
 const rowsKm=(S,viag)=>[['Km por ativo · rem. · real',fmtN(dv(S.rem,S.frota))+' · '+fmtN(dv(S.real,S.frota))],...(viag?[['Km por viagem · rem. · real',r1(dv(S.rem,S.viag))+' · '+r1(dv(S.real,S.viag))],['R$/km rem.',r2(dv(S.custoRem,S.rem))]]:[])];
 async function renderKm(){
   const vigs=vigsSel(); if(!vigs.length) return;
@@ -1183,11 +1190,11 @@ async function renderKm(){
     raiz=Object.assign(noKm('Dispersão de km',S,null,rowsKm(S,true)),{raiz:true,grade:true,s:'km rodado − km remunerado',kids});
   } else {
     const kids2=[
-      {ab:'teto',t:'Teto da 1ª viagem (T2)',v:fmtKm(S.tetoT2),s:`${MAPAS_MES} mapas × ativos × km por mapa`,g:{rot:'Teto',ref:S.tetoT2,real:S.kmPrimT2,bom:true,pot:true,fmt:fmtKmG,cols:['real','d','p'],imp:S.impNao/n,potRot:'Variável não recebido:'},
+      {ab:'teto',t:'Teto da 1ª viagem (T2)',v:fmtKm(S.tetoT2),s:`${MAPAS_MES} mapas × ativos × km por mapa`,g:{rot:'Teto',ref:S.tetoT2,real:S.kmPrimT2,bom:true,pot:true,fmt:fmtKmC,cols:['real','d','p'],imp:S.impNao/n,potRot:'Variável não recebido:'},
         rows:[['Ativos (média)',fmtN(S.frotaT2/n)],['Mapas possíveis',fmtN(S.possT2)]]},
       {ab:'nao',t:'Mapas que não rodaram (T2)',v:fmtKm(-S.kmNaoT2),cls:S.kmNaoT2>0?'cr':'',s:'possíveis − rodados, ao km por mapa',rows:[['Mapas',fmtN(S.naoT2)],['% dos possíveis',fmtP(S.possT2?S.naoT2/S.possT2:null)],['Por ativo no mês',r1(dv(S.naoT2,S.frotaT2))]]},
       {ab:'revi',t:'Revisão do km por mapa (T2)',v:S.mapRev?(S.revKm>=0?'+':'')+fmtKm(S.revKm):'—',cls:corV(S.revKm,true),s:'2ªQ − 1ªQ, sobre os mapas da 2ª quinzena',
-        g:S.mapRev?{rot:'1ªQ',ref:S.km1,real:S.km2,bom:true,fmt:fmtKmG,cols:['ref','real','p'],imp:S.impRev/n}:null,
+        g:S.mapRev?{rot:'1ªQ',ref:S.km1,real:S.km2,bom:true,fmt:fmtKmC,cols:['ref','real','p'],imp:S.impRev/n}:null,
         rows:[['Km por mapa 1ªQ · 2ªQ',S.mapRev?br(S.km1/S.mapRev,1)+' · '+br(S.km2/S.mapRev,1):'—']]}];
     const remKids=[
       {ab:'prim',t:'Km da 1ª viagem',v:fmtKm(S.kmPrim),s:'mapas × km por mapa do FT',rows:[['Mapas rodados',fmtN(S.vPrim)],['Km por mapa',S.vPrim?br(S.kmPrim/S.vPrim,1):'—'],['Mapas por ativo no mês',r1(dv(S.vPrim,S.frota))]],kids:kids2},
@@ -1256,7 +1263,7 @@ $('modo-roic').addEventListener('click',e=>{ const b=e.target.closest('[data-cmp
 function marcaCmp(){ document.querySelectorAll('#modo-roic [data-cmp]').forEach(b=>b.classList.toggle('on',b.dataset.cmp===CMP)); }
 $('ipca-in').addEventListener('change',e=>{ const v=String(e.target.value).trim(); try{ if(v) localStorage.setItem('arvores_ipca',v); else localStorage.removeItem('arvores_ipca'); }catch(x){} renderROIC(); });
 $('ipca-in').addEventListener('keydown',e=>{ if(e.key==='Enter') e.target.blur(); });
-$('modo-km').addEventListener('click',e=>{ const b=e.target.closest('[data-km]'); if(!b) return; KM_MODO=b.dataset.km; try{ localStorage.setItem('arvores_km',KM_MODO); }catch(x){} renderKm(); });
+$('modo-km').addEventListener('click',e=>{ const b=e.target.closest('[data-km]'); if(!b) return; KM_MODO=b.dataset.km; try{ localStorage.setItem('arvores_km2',KM_MODO); }catch(x){} renderKm(); });
 $('gaps-roic').addEventListener('click',e=>{ const c=e.target.closest('[data-ab]'); if(!c) return; abreRoic(c.dataset.ab); });
 $('gaps-km').addEventListener('click',e=>{ const c=e.target.closest('[data-uni]'); if(!c) return; const u=c.dataset.uni, op=c.dataset.op; abreKm('disp',r=>r.uni===u&&r.op===op,u+' · '+OPS[op]); });
 $('arv-roic')._top=36; $('arv-km')._top=36; marcaCmp();
@@ -1337,6 +1344,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611190400"></script>
+<script src="../assets/build-check.js?v=202611190500"></script>
 </body>
 </html>
