@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611181300">
+<meta name="build" content="202611181500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -283,9 +283,9 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 .gr4 .gcard{min-height:0;min-width:0;}
 /* hero MAIOR nesses painéis: o número principal é o que se lê primeiro, e é
    dele que sai a altura a menos do gráfico (Renan, 16/08/2026) */
-#vw-resumo .fin-hero,#vw-balanco .fin-hero{padding:4px 0 6px;}
-#vw-resumo .hlbl,#vw-balanco .hlbl{font-size:10.5px;letter-spacing:1px;}
-#vw-resumo .hval,#vw-balanco .hval{font-size:clamp(34px,5vh,56px);margin:7px 0 6px;}
+#vw-resumo .fin-hero,#vw-balanco .fin-hero,#vw-revisao .fin-hero{padding:4px 0 6px;}
+#vw-resumo .hlbl,#vw-balanco .hlbl,#vw-revisao .hlbl{font-size:10.5px;letter-spacing:1px;}
+#vw-resumo .hval,#vw-balanco .hval,#vw-revisao .hval{font-size:clamp(34px,5vh,56px);margin:7px 0 6px;}
 /* o km remunerado embaixo do realizado, menor (Renan, 20/09/2026: "texto, dois
    pontos e do lado o valor") */
 .hrem{font-size:15px;font-weight:700;color:var(--txt2);margin:0 0 10px;}
@@ -301,10 +301,19 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
    chegou a valer na tela (cards ficavam no mínimo, 155px). Com flex-basis 0 os dois
    blocos dividem a sobra pela proporção, e a linha da grade em minmax(0,1fr) deixa o
    gráfico encolher junto. Medido em 1850x935: cards 224 · gráficos 460. */
-#vw-resumo .kpis.k4,#vw-balanco .kpis.k4{flex:0 0 auto;height:clamp(112px,16.5vh,170px);min-height:0;max-height:none;}   /* Renan, 14/10/2026: "Alto demais o card. Reduza" — altura fixa do padrão, gráfico com o resto */
-@media(max-width:860px){#vw-resumo .kpis.k4,#vw-balanco .kpis.k4{height:auto;}}
+#vw-resumo .kpis.k4,#vw-balanco .kpis.k4,#vw-revisao .kpis.k4{flex:0 0 auto;height:clamp(112px,16.5vh,170px);min-height:0;max-height:none;}   /* Renan, 14/10/2026: "Alto demais o card. Reduza" — altura fixa do padrão, gráfico com o resto */
+@media(max-width:860px){#vw-resumo .kpis.k4,#vw-balanco .kpis.k4,#vw-revisao .kpis.k4{height:auto;}}
 #vw-resumo .gr2,#vw-balanco .gr2{flex:2 1 0;max-height:none;grid-template-rows:minmax(0,1fr);}
 #vw-eficiencia .gr2{max-height:40vh;}
+/* Revisão de km: hero + cards de altura fixa, a tabela fica com o resto */
+#vw-revisao .rv-tsec{flex:1 1 0;min-height:0;margin-top:10px;}
+#tbl-rv{table-layout:fixed;}
+#tbl-rv th,#tbl-rv td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#tbl-rv th{font-size:8.5px;padding:8px 6px;white-space:normal;line-height:1.3;vertical-align:bottom;}
+#tbl-rv th:nth-child(1),#tbl-rv td:nth-child(1){width:8%;}
+#tbl-rv th:nth-child(2),#tbl-rv td:nth-child(2){width:12%;}
+#tbl-rv td{padding:8px 6px;font-size:11px;}
+#tbl-rv tfoot tr.total td{font-weight:800;color:var(--txt);background:var(--cabec);border-top:1px solid var(--card-brd);position:sticky;bottom:0;}
 
 /* tabela da dispersão: 9 colunas cabem sem rolagem lateral */
 #tbl-km{table-layout:fixed;}
@@ -312,7 +321,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 #tbl-km th,#tbl-km td{overflow:hidden;text-overflow:ellipsis;}
 #tbl-km th{font-size:8.5px;padding:8px 6px;}
 #tbl-km td{padding:8px 6px;font-size:11px;}
-#tbl-km .sep-imp,#tbl-placas .sep-imp{border-left:1px solid var(--card-brd);}
+#tbl-km .sep-imp,#tbl-placas .sep-imp,#tbl-rv .sep-imp{border-left:1px solid var(--card-brd);}
 #tbl-km tfoot tr.total td{font-weight:800;color:var(--txt);background:var(--cabec);
   border-top:1px solid var(--card-brd);position:sticky;bottom:0;}
 .km-tbl-toggle{display:none;}
@@ -397,6 +406,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
     <button class="s-item" data-vw="dispersao"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg> Dispersão</button>
     <button class="s-item" data-vw="placas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 12h2M11 12h2M16 12h2"/></svg> Placas</button>
     <button class="s-item" data-vw="balanco"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7h14"/><path d="M3 15l2.5-8 2.5 8a2.5 2.5 0 0 1-5 0z"/><path d="M16 15l2.5-8 2.5 8a2.5 2.5 0 0 1-5 0z"/></svg> Balanço de Massa</button>
+    <button class="s-item" data-vw="revisao"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg> Revisão de km</button>
 
     <div class="s-sec">Atalhos</div>
     <button class="s-item" id="btApres" onclick="gerarApresentacao()" title="Apresentação em PDF da dispersão de km: resumo, mês a mês, operações, placas e balanço de massa">
@@ -522,6 +532,38 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
             <div class="gsub">Km devolvido ao remunerado · por vigência</div>
             <div class="gcv"><canvas id="chart-bm-km"></canvas></div>
           </div>
+        </div>
+      </section>
+
+      <!-- ══ REVISÃO DE KM (Renan, 18/11/2026): o km por mapa que rodamos × o que o FT paga
+           depois da revisão do mês. Pelo Book do Operador, a alteração de km é pedida uma vez por
+           mês, até o 18º dia útil, junto com o dimensionamento da 2ª quinzena. Só T2. ══ -->
+      <section class="vw" id="vw-revisao">
+        <div class="fin-hero">
+          <div>
+            <div class="hlbl" id="rv-lbl">Km rodado acima do pago · por mapa</div>
+            <div class="hval" id="rv-val">—</div>
+            <div class="hrem">Valor ao R$/km remunerado: <b id="rv-rs">—</b></div>
+          </div>
+        </div>
+        <div class="kpis k4">
+          <div class="kpi"><div class="kl">Revisão do mês</div><div class="kv" id="rv-rev">—</div><div class="km" id="rv-rev-m">—</div></div>
+          <div class="kpi"><div class="kl">Km por mapa · rodado × pago</div><div class="kv" id="rv-gap">—</div><div class="km" id="rv-gap-m">—</div></div>
+          <div class="kpi"><div class="kl">Acima de 5% · pedir revisão</div><div class="kv" id="rv-acima">—</div><div class="km" id="rv-acima-m">—</div></div>
+          <div class="kpi"><div class="kl">Abaixo de −5% · FT paga a mais</div><div class="kv" id="rv-abaixo">—</div><div class="km" id="rv-abaixo-m">—</div></div>
+        </div>
+        <div class="card tsec rv-tsec">
+          <div class="twrap"><table class="dre" id="tbl-rv">
+            <thead><tr>
+              <th>Unidade</th><th>Projeto</th><th class="num">Mapas</th>
+              <th class="num sep-imp">Km/mapa antes</th><th class="num">Revisão</th><th class="num">Km/mapa pago</th>
+              <th class="num sep-imp">Km/mapa rodado</th><th class="num">Δ km/mapa</th><th class="num">Δ %</th>
+              <th class="num sep-imp">Km acima do pago</th><th class="num">Impacto (R$)</th>
+            </tr></thead>
+            <tbody id="tbl-rv-body"><tr><td class="loading" colspan="11">Carregando…</td></tr></tbody>
+            <tfoot id="tbl-rv-foot"></tfoot>
+          </table></div>
+          <div class="tsub tpe" id="rv-nota">Km/mapa pago = km da 1ª viagem pago pelo FT ÷ mapas. Km/mapa rodado = (km rodado − km pago de recarga e noturna) ÷ mapas. Revisão = km/mapa pago do mês − o do mês anterior. Pelo Book do Operador, a alteração de km é pedida uma vez por mês, até o 18º dia útil, e vale com o dimensionamento da 2ª quinzena.</div>
         </div>
       </section>
 
@@ -687,6 +729,10 @@ function parseRow(row) {
     rem:     parseFloat(v(31)) || 0,
     real:    parseFloat(v(32)) || 0,
     viagens: parseFloat(v(22)) || 0,
+    // revisão de km: km pago da 1ª viagem (viagens × km por mapa do FT) e o km pago de recarga e noturna
+    kmPrim:  (parseFloat(v(22)) || 0) * (parseFloat(v(23)) || 0),
+    kmRec:   parseFloat(v(27)) || 0,
+    kmNot:   parseFloat(v(30)) || 0,
     imp:     0                                  // preenchido depois, com o R$/km dos pacotes
   };
 }
@@ -1023,7 +1069,8 @@ async function fetchData() {
     dispVigs.add(vig);
     ALL.push({ vig, ano: vig.split('/')[1], und: l.unidade, proj: DISP_PROJ[l.projeto] || _nkBM(l.projeto),
       rem: +l.km_rem || 0, real: +l.km_rodado || 0, viagens: +l.viagens_prim || 0,
-      kmFrota: +l.frota_ativa ? (+l.km_rodado || 0) / +l.frota_ativa : 0, imp: 0, fonteKm: l.fonte });
+      kmFrota: +l.frota_ativa ? (+l.km_rodado || 0) / +l.frota_ativa : 0, imp: 0, fonteKm: l.fonte,
+      kmPrim: +l.km_rem_prim || 0, kmRec: +l.km_rem_rec || 0, kmNot: +l.km_rem_not || 0 });
   });
   if (dispVigs.size) console.info('Dispersão de km do banco (set/26+):', [...dispVigs].join(', '));
   if (dispSem.length) console.warn('Dispersão de km do banco sem km rodado (nem na planilha, nem na aba Km/L) — fora do painel:', dispSem);
@@ -1394,6 +1441,7 @@ function render() {
     const foot = document.getElementById('tbl-foot');
     if(foot) foot.innerHTML = '';
     renderPlacas();
+    renderRevisao([]);
     renderCharts([]);
     return;
   }
@@ -1452,7 +1500,85 @@ function render() {
 
   renderTable(F, YTDrows);
   renderPlacas();
+  renderRevisao(F);
   renderCharts(F);
+}
+
+/* ══ REVISÃO DE KM ══
+   Por unidade × projeto do T2 (Rota, Van, AS, UDC), no mês mais recente do recorte:
+   km/mapa pago = km pago da 1ª viagem ÷ mapas; km/mapa rodado = (km rodado − km pago de
+   recarga e noturna) ÷ mapas; revisão = pago do mês − pago do mês anterior. */
+const RV_T1 = new Set(['EMPURRADA', 'INSUMOS']);
+const RV_PROJ = { 'ROTA':'Rota', 'ROTA (VAN)':'Van', 'AUTO SERVIÇO':'Auto Serviço', 'UDC':'UDC' };
+const rvProj = p => RV_PROJ[p] || (p ? p.charAt(0) + p.slice(1).toLowerCase() : '—');
+function rvVigAnt(vig) { const [m, a] = vig.split('/').map(Number); return m === 1 ? '12/' + (a - 1) : String(m - 1).padStart(2, '0') + '/' + a; }
+function rvAgrupa(rows) {
+  const g = {};
+  rows.forEach(r => { if (RV_T1.has(r.proj) || !(r.viagens > 0) || !(r.kmPrim > 0)) return;
+    const k = r.und + '|' + r.proj;
+    const e = g[k] = g[k] || { und: r.und, proj: r.proj, mapas: 0, pago: 0, rod: 0, rsNum: 0 };
+    e.mapas += r.viagens; e.pago += r.kmPrim; e.rod += Math.max(0, r.real - (r.kmRec || 0) - (r.kmNot || 0));
+    e.rsNum += (r.rsKm || 0) * r.viagens; });
+  Object.values(g).forEach(e => { e.kmPago = e.pago / e.mapas; e.kmRod = e.rod / e.mapas; e.rsKm = e.rsNum / e.mapas; });
+  return g;
+}
+function renderRevisao(F) {
+  const body = document.getElementById('tbl-rv-body'), foot = document.getElementById('tbl-rv-foot');
+  if (!body) return;
+  const vigs = [...new Set((F || []).filter(r => !RV_T1.has(r.proj) && r.kmPrim > 0).map(r => r.vig))].sort(sortVig);
+  const vig = vigs[vigs.length - 1];
+  const vazio = msg => { ['rv-val','rv-rs','rv-rev','rv-rev-m','rv-gap','rv-gap-m','rv-acima','rv-acima-m','rv-abaixo','rv-abaixo-m'].forEach(id => set(id, '—'));
+    body.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--txt2);padding:24px 8px;">${msg}</td></tr>`; if (foot) foot.innerHTML = ''; };
+  if (!vig) return vazio('Sem mês com km pago do T2 no recorte');
+  const unds = getSel('ms-und'), projs = getSel('ms-proj');
+  const noRecorte = r => (!unds.length || unds.includes(r.und)) && (!projs.length || projs.includes(r.proj));
+  const atual = rvAgrupa(F.filter(r => r.vig === vig));
+  const vAnt = rvVigAnt(vig);
+  const ant = rvAgrupa(ALL.filter(r => r.vig === vAnt && noRecorte(r)));
+  const [mm, aa] = vig.split('/'); const rot = (MESES[+mm - 1] || mm) + '/' + aa.slice(2);
+  const [ma, aaa] = vAnt.split('/'); const rotAnt = (MESES[+ma - 1] || ma) + '/' + aaa.slice(2);
+  set('rv-lbl', 'Km rodado acima do pago · ' + rot);
+  const linhas = Object.values(atual).map(e => {
+    const a = ant[e.und + '|' + e.proj];
+    const antes = a ? a.kmPago : null, rev = antes != null ? e.kmPago - antes : null;
+    const gap = e.kmRod - e.kmPago, gapPct = e.kmPago ? gap / e.kmPago * 100 : 0;
+    const kmAcima = Math.max(0, gap) * e.mapas;
+    return { ...e, antes, rev, gap, gapPct, kmAcima, imp: kmAcima * (e.rsKm || 0) };
+  }).sort((x, y) => y.kmAcima - x.kmAcima || y.gapPct - x.gapPct);
+  if (!linhas.length) return vazio('Sem projeto do T2 com mapas em ' + rot);
+  const n1 = v => v == null ? '—' : v.toFixed(1).replace('.', ',');
+  const sg = v => v == null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1).replace('.', ',');
+  const corGap = p => p > 5 ? 'cr' : p < -5 ? 'cg' : '';
+  const corRev = v => v == null || Math.abs(v) < 0.05 ? '' : v > 0 ? 'cg' : 'cr';
+  body.innerHTML = linhas.map(e => `<tr>
+    <td>${e.und}</td><td>${rvProj(e.proj)}</td><td class="num">${Math.round(e.mapas).toLocaleString('pt-BR')}</td>
+    <td class="num sep-imp">${n1(e.antes)}</td><td class="num ${corRev(e.rev)}">${sg(e.rev)}</td><td class="num">${n1(e.kmPago)}</td>
+    <td class="num sep-imp">${n1(e.kmRod)}</td><td class="num ${corGap(e.gapPct)}">${sg(e.gap)}</td><td class="num ${corGap(e.gapPct)}">${sg(e.gapPct)}%</td>
+    <td class="num sep-imp">${e.kmAcima ? fmt(e.kmAcima) : '—'}</td><td class="num">${e.imp ? fmt(e.imp) : '—'}</td></tr>`).join('');
+  const T = linhas.reduce((t, e) => { t.mapas += e.mapas; t.pago += e.pago; t.rod += e.rod; t.kmAcima += e.kmAcima; t.imp += e.imp;
+    if (e.antes != null) { t.antPago += e.antes * e.mapas; t.antMap += e.mapas; t.atuPago += e.pago; } return t; },
+    { mapas: 0, pago: 0, rod: 0, kmAcima: 0, imp: 0, antPago: 0, antMap: 0, atuPago: 0 });
+  const tPago = T.pago / T.mapas, tRod = T.rod / T.mapas, tGap = tRod - tPago, tGapPct = tGap / tPago * 100;
+  const tAntes = T.antMap ? T.antPago / T.antMap : null, tRev = T.antMap ? T.atuPago / T.antMap - tAntes : null;
+  if (foot) foot.innerHTML = `<tr class="total"><td>Total</td><td></td><td class="num">${Math.round(T.mapas).toLocaleString('pt-BR')}</td>
+    <td class="num sep-imp">${n1(tAntes)}</td><td class="num ${corRev(tRev)}">${sg(tRev)}</td><td class="num">${n1(tPago)}</td>
+    <td class="num sep-imp">${n1(tRod)}</td><td class="num ${corGap(tGapPct)}">${sg(tGap)}</td><td class="num ${corGap(tGapPct)}">${sg(tGapPct)}%</td>
+    <td class="num sep-imp">${T.kmAcima ? fmt(T.kmAcima) : '—'}</td><td class="num">${T.imp ? fmt(T.imp) : '—'}</td></tr>`;
+  set('rv-val', T.kmAcima ? '+' + fmt(T.kmAcima) + ' km' : '0 km');
+  set('rv-rs', T.imp ? 'R$ ' + fmt(T.imp) : '—');
+  // revisão do mês: km por mapa que entrou ou saiu, nos projetos que existem nos dois meses
+  const kmRev = linhas.reduce((s, e) => s + (e.rev != null ? e.rev * e.mapas : 0), 0);
+  const nSub = linhas.filter(e => e.rev != null && e.rev >= 0.05).length, nDes = linhas.filter(e => e.rev != null && e.rev <= -0.05).length;
+  set('rv-rev', tRev == null ? '—' : sg(tRev) + ' km/mapa');
+  set('rv-rev-m', tRev == null ? 'sem o mês anterior (' + rotAnt + ')' : `${rotAnt} → ${rot} · ${kmRev >= 0 ? '+' : '−'}${fmt(Math.abs(kmRev))} km no mês · subiu em ${nSub}, desceu em ${nDes}`);
+  const el = document.getElementById('rv-rev'); if (el) el.className = 'kv ' + corRev(tRev);
+  set('rv-gap', sg(tGapPct) + '%');
+  set('rv-gap-m', `${n1(tRod)} rodado × ${n1(tPago)} pago`);
+  const eg = document.getElementById('rv-gap'); if (eg) eg.className = 'kv ' + corGap(tGapPct);
+  const acima = linhas.filter(e => e.gapPct > 5), abaixo = linhas.filter(e => e.gapPct < -5);
+  const nomes = l => l.length ? l.slice(0, 4).map(e => e.und + ' ' + rvProj(e.proj)).join(' · ') + (l.length > 4 ? ` e mais ${l.length - 4}` : '') : 'nenhum';
+  set('rv-acima', String(acima.length)); set('rv-acima-m', nomes(acima));
+  set('rv-abaixo', String(abaixo.length)); set('rv-abaixo-m', nomes(abaixo));
 }
 
 function renderTable(F, YTD) {
@@ -1881,7 +2007,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_km_v18';  // v18: de out/26 em diante o banco (2artd + CT-e) vence a aba · v17: planilha de viagens também em ago/26 (T2) · v16: placa T1 pela Km/L fora das placas de T2 · v15: placas de set/26+ pela planilha de viagens, T1 fora · v14: placas de set/26+ pela aba Abertura · v13: set/26 do banco ligado (com o balanço dele) · v12: balanço sem resposta do banco não cai na aba · v11: set/26 do banco desligado até validar · v10: set/26 em diante do banco (Dispersão de km importada) · v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
+const CACHE_KEY='bi_cache_km_v19';  // v19: linhas com o km da 1ª viagem, recarga e noturna (Revisão de km) · v18: de out/26 em diante o banco (2artd + CT-e) vence a aba · v17: planilha de viagens também em ago/26 (T2) · v16: placa T1 pela Km/L fora das placas de T2 · v15: placas de set/26+ pela planilha de viagens, T1 fora · v14: placas de set/26+ pela aba Abertura · v13: set/26 do banco ligado (com o balanço dele) · v12: balanço sem resposta do banco não cai na aba · v11: set/26 do banco desligado até validar · v10: set/26 em diante do banco (Dispersão de km importada) · v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
@@ -1951,7 +2077,7 @@ render=function(){
 };
 
 /* ── navegação entre as visões ────────────────────────────────────────────── */
-const TIT={resumo:'Resumo Gerencial',eficiencia:'Eficiência e Projetos',dispersao:'Dispersão de KM',placas:'Placas',balanco:'Balanço de Massa'};
+const TIT={resumo:'Resumo Gerencial',eficiencia:'Eficiência e Projetos',dispersao:'Dispersão de KM',placas:'Placas',balanco:'Balanço de Massa',revisao:'Revisão de km'};
 let VW='resumo';
 function setVw(v){
   VW=v;
@@ -2037,6 +2163,6 @@ function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>KmApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202611181300"></script>
+<script src="../assets/build-check.js?v=202611181500"></script>
 </body>
 </html>
