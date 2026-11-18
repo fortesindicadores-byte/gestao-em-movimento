@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611181300">
+<meta name="build" content="202611181900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Remuneração · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1356,7 +1356,7 @@ function eqDe(d,ix,r,per){
   const o={tab:d.t,canal:d.c,tipo:d.tipo,op,uni:UNI_FT[uFT]||r.unidade||'',uniFT:r.unidade||'',
     placa:String(r.placa||g('Placa','placa')||'').toUpperCase().replace(/[^A-Z0-9]/g,''),chassi:String(g('chassi')||'').trim(),
     modelo,marca,ano:anoDe(g('Ano Cavalo','anoCavalo','ano','anoEmpilhadeira','Ano')),idade:n('Ano Veículo','anoVeiculo'),
-    ativo:at!=null?simFT(at):ap!=null?!simFT(ap):null,
+    ativo:at!=null?simFT(at):ap!=null?simFT(ap):null,   // ativoParado=true é a empilhadeira que opera (o FT só paga o lucro variável com ativoParado === true)
     kml:n('Consumo KM/L','consumoKMPorLitro','combustivelConsumoNeg'),
     comb:t2?n('Consumo R$/KM','consumoReaisPorKm'):null,
     manut:d.tipo==='Cavalo'?n('reaiskm','manutencaoReaisKm'):t2?n('Manutenção R$/KM','manutencaoReaisPorKm','manutencaoReaisKm'):null,
@@ -2006,6 +2006,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611181300"></script>
+<script src="../assets/build-check.js?v=202611181900"></script>
 </body>
 </html>
