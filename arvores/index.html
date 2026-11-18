@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611182330">
+<meta name="build" content="202611190130">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -383,7 +383,7 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tw{position:absolute;top:0;left:0;transform-origin:0 0;}
 .tsvg{position:absolute;top:0;left:0;overflow:visible;pointer-events:none;}
 .tsvg path{fill:none;stroke:var(--txt4);stroke-width:1.4;opacity:.7;}
-.tn{position:absolute;width:250px;transform:translateY(-50%);border-radius:11px;overflow:hidden;
+.tn{position:absolute;width:256px;transform:translateY(-50%);border-radius:11px;overflow:hidden;
   background:var(--brilho), var(--side);border:1px solid var(--card-brd);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--luz-card), 0 6px 16px rgba(0,0,0,.28);}
 body.claro .tn{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
@@ -399,6 +399,25 @@ body.claro .tn{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
 .tn.ab{cursor:pointer;transition:border-color .15s;} .tn.ab:hover{border-color:color-mix(in srgb,var(--laranja) 70%,transparent);}
 .tn.ab .tn-t::before{content:'';float:right;width:7px;height:7px;margin:2px 0 0 6px;border-right:2px solid var(--txt3);border-top:2px solid var(--txt3);transform:rotate(45deg);}
 .tn.ab:hover .tn-t::before{border-color:var(--laranja);}
+.tn-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--linha);}
+.tn-g>div{padding:5px 9px 6px;min-width:0;} .tn-g>div+div{border-left:1px solid var(--linha);}
+.tn-g span{display:block;font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--txt3);}
+.tn-g b{display:block;font-size:11.5px;font-weight:800;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.tn-i{font-size:10px;font-weight:600;padding:5px 12px;border-top:1px solid var(--linha);color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tn-i b{font-weight:800;color:var(--txt);}
+.tn-g b.cr,.tn-i b.cr{color:var(--vermelho);} .tn-g b.cg,.tn-i b.cg{color:var(--verde);} .tn-g b.ca,.tn-i b.ca,.ca{color:var(--ambar)!important;}
+.tn.gap{border-color:color-mix(in srgb,var(--vermelho) 62%,transparent);box-shadow:var(--luz-card), 0 0 0 1px color-mix(in srgb,var(--vermelho) 30%,transparent), 0 6px 16px rgba(0,0,0,.28);}
+.tn.gap-ok{border-color:color-mix(in srgb,var(--verde) 45%,transparent);}
+.tn.gap-pot{border-color:color-mix(in srgb,var(--ambar) 55%,transparent);}
+.vw-arv{position:relative;}
+.ipca-in{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:var(--txt);width:52px;height:24px;text-align:center;background:var(--side);border:1px solid var(--card-brd);border-radius:7px;outline:none;}
+.ipca-in:focus{border-color:var(--laranja);}
+.arv-modo{position:absolute;top:0;left:0;z-index:6;display:flex;align-items:center;gap:6px;}
+.arv-modo .rot{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--txt3);margin-right:2px;}
+.gaps{flex:0 0 auto;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:10.5px;color:var(--txt2);}
+.gaps .rot{font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--txt2);}
+.gaps .gp{padding:3px 9px;border-radius:999px;border:1px solid var(--card-brd);background:var(--side);white-space:nowrap;cursor:pointer;}
+.gaps .gp:hover{border-color:var(--laranja);} .gaps .gp b{color:var(--vermelho);font-weight:800;}
 /* abertura de um nó (caixa sobre a tela, a tabela rola por dentro) */
 .ab-ov{position:fixed;inset:0;z-index:900;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);}
 .ab-ov.on{display:flex;}
@@ -485,6 +504,7 @@ body.claro .tn{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
               <div>Antes do IR/CS<b id="h-pre">—</b></div>
               <div>Margem NOPAT<b id="h-mar">—</b></div>
               <div>Giro do capital<b id="h-giro">—</b></div>
+              <div>Acima do IPCA 12m<b id="h-ipca">—</b></div>
             </div>
           </div>
           <div class="heb">
@@ -507,14 +527,18 @@ body.claro .tn{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
       </section>
 
       <!-- ══ 2 · ÁRVORE DO ROIC ══ -->
-      <section class="vw" id="vw-roic">
+      <section class="vw vw-arv" id="vw-roic">
+        <div class="arv-modo" id="modo-roic"><span class="rot">Comparar com</span><button class="dimb" type="button" data-cmp="rem">Remunerado</button><button class="dimb" type="button" data-cmp="orc">Orçado</button><span class="rot" style="margin-left:12px">ROIC contra IPCA 12m</span><input id="ipca-in" class="ipca-in" type="text" inputmode="decimal" autocomplete="off" aria-label="IPCA de 12 meses em %"><span class="rot">%</span></div>
         <div class="arv-area" id="arv-roic"></div>
+        <div class="gaps" id="gaps-roic"></div>
         <div class="nota" id="nota-roic"></div>
       </section>
 
       <!-- ══ 3 · ÁRVORE DE KM ══ -->
-      <section class="vw" id="vw-km">
+      <section class="vw vw-arv" id="vw-km">
+        <div class="arv-modo" id="modo-km"><button class="dimb" type="button" data-km="gap">Gaps por projeto e unidade</button><button class="dimb" type="button" data-km="comp">Composição do km</button></div>
         <div class="arv-area" id="arv-km"></div>
+        <div class="gaps" id="gaps-km"></div>
         <div class="nota" id="nota-km"></div>
       </section>
     </div>
@@ -544,6 +568,7 @@ const br=(n,d=0)=>(+n||0).toLocaleString('pt-BR',{minimumFractionDigits:d,maximu
 const nu=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
 function fmtR(v){ if(v==null||!isFinite(v)) return '—'; const a=Math.abs(v), s=v<0?'-':'';
   if(a>=1e6) return s+'R$ '+br(a/1e6,2)+' mi'; if(a>=1e4) return s+'R$ '+br(a/1e3,0)+' mil'; return s+'R$ '+br(a,0); }
+const fmtKmG=v=>{ if(v==null||!isFinite(v)) return '—'; const a=Math.abs(v), s=v<0?'-':''; return a>=1e6?s+br(a/1e6,2)+' mi km':a>=1e5?s+br(a/1e3,0)+' mil km':s+br(a,0)+' km'; };
 const fmtP=(v,d=1)=>v==null||!isFinite(v)?'—':br(v*100,d)+'%';
 const fmtPs=(v,d=1)=>v==null||!isFinite(v)?'—':(v>0?'+':'')+br(v*100,d)+'%';
 const fmtN=(v,d=0)=>v==null||!isFinite(v)?'—':br(v,d);
@@ -600,28 +625,42 @@ async function todas(q){ const out=[]; for(let off=0;off<300000;off+=1000){ cons
 const tabDre=async slug=>(window.GvizCache&&GvizCache.tabelaConsumo)?await GvizCache.tabelaConsumo(slug):'sh_'+slug;
 
 /* DRE: receita líquida e EBITDA ajustado por vigência × operação × unidade */
-let DRE={}, DEP={}, DEP_MESES=new Set();   // DRE['AAAA-MM|op|uni'] = {rec,recOrc,ebd,ebdOrc}
+let DRE={}, DEP={}, DEP_MESES=new Set(), FR={};   // DRE['AAAA-MM|op|uni'] = {rec,recOrc,recRem,ebd,ebdOrc,ebdRem}
 function vigDeLinha(r){
   const o=String(r.vigencia_orig||''); if(/^\d{4}-\d{2}/.test(o)) return o.slice(0,7);
   const m=String(r.vigencia||'').match(/^(\d{1,2})\/(\d{4})$/); if(m) return m[2]+'-'+m[1].padStart(2,'0');
   const s=String(r.vigencia||''); return /^\d{4}-\d{2}/.test(s)?s.slice(0,7):'';
 }
+/* pacotes da frota (o mesmo de-para da Visão Financeira e do FCA) */
+const PAC_FR={'COMBUSTIVEIS VEICULOS E EQUIPAMENTOS':'C','COMBUSTIVEIS':'C','FLUIDOS (ARLA)':'C','ARLA':'C',
+  'MANUTENCAO DE VEICULOS E EQUIPAMENTOS':'M','MANUTENCAO DE VEICULOS E EQUIP.':'M','MATERIAIS E FERRAMENTAS DE OFICINA':'M','LAVACAO DE VEICULOS':'M',
+  'MANUTENCAO DE CARROCERIAS':'M','PERSONALIZACAO/PADRONIZACAO DE VEICULOS':'M','PERSONALIZACAO/PADRONIZACAO':'M','PERSONALIZACAO E PADRONIZACAO DE VEICULOS':'M','CONTRATOS DE MANUTENCAO FABRICANTE':'M',
+  'CONSERTOS E RECAPAGENS DE PNEUS':'P','PNEUS E CAMARAS':'P','RECAPAGENS E OUTROS SERVICOS':'P','PNEUS NOVOS':'P'};
+const PAC_NOME={C:'Combustíveis',M:'Manutenções',P:'Pneus',O:'Demais contas da frota'};
 async function carregaDRE(){
-  DRE={}; DEP={}; DEP_MESES=new Set();
+  DRE={}; DEP={}; DEP_MESES=new Set(); FR={};
   const ini='2025-01-01';
   for(const [slug,campo] of [['dre_receita','rec'],['dre_ebitda','ebd']]){
     const t=await tabDre(slug);
     // vigencia é TEXTO 'MM/AAAA'; a data fica em vigencia_orig ('AAAA-MM-DD')
-    const rows=await todas(sb.from(t).select('vigencia,vigencia_orig,nivel_3,realizado,orcado').gte('vigencia_orig',ini).order('vigencia_orig').order('linha'));
+    const rows=await todas(sb.from(t).select('vigencia,vigencia_orig,nivel_3,realizado,orcado,remunerado').gte('vigencia_orig',ini).order('vigencia_orig').order('linha'));
     rows.forEach(r=>{ const ou=opUni(r.nivel_3); if(!ou) return; const v=vigDeLinha(r); if(!v) return;
-      const k=v+'|'+ou.op+'|'+ou.uni, o=DRE[k]=DRE[k]||{rec:0,recOrc:0,ebd:0,ebdOrc:0};
-      o[campo]+=+r.realizado||0; o[campo+'Orc']+=+r.orcado||0; });
+      const k=v+'|'+ou.op+'|'+ou.uni, o=DRE[k]=DRE[k]||{rec:0,recOrc:0,recRem:0,ebd:0,ebdOrc:0,ebdRem:0};
+      o[campo]+=+r.realizado||0; o[campo+'Orc']+=+r.orcado||0; o[campo+'Rem']+=+r.remunerado||0; });
   }
+  // custo da frota por pacote (aba Frota do DRE; a despesa vem negativa, aqui fica positiva)
+  try{
+    const t=await tabDre('dre_frota');
+    const rows=await todas(sb.from(t).select('vigencia,vigencia_orig,nivel_3,conta_gerencial,realizado,orcado,remunerado').gte('vigencia_orig',ini).order('vigencia_orig').order('linha'));
+    rows.forEach(r=>{ const ou=opUni(r.nivel_3); if(!ou) return; const v=vigDeLinha(r); if(!v) return;
+      const k=v+'|'+ou.op+'|'+ou.uni, pac=PAC_FR[nu(r.conta_gerencial)]||'O', o=FR[k]=FR[k]||{};
+      const p=o[pac]=o[pac]||{real:0,rem:0,orc:0}; p.real-=+r.realizado||0; p.rem-=+r.remunerado||0; p.orc-=+r.orcado||0; });
+  }catch(e){ console.warn('aba Frota do DRE indisponível: sem os pacotes da frota', e); }
   // depreciação contábil: o DRE do ERP (dre_gerencial, estrutura 351) nos meses importados
   try{
-    const rows=await todas(sb.from('dre_gerencial').select('ano,mes,cod_dre,projeto,realizado').in('cod_dre',['351']));
+    const rows=await todas(sb.from('dre_gerencial').select('ano,mes,cod_dre,projeto,realizado,orcado,remunerado').in('cod_dre',['351']));
     rows.forEach(r=>{ const ou=opUni(r.projeto); const v=r.ano+'-'+String(r.mes).padStart(2,'0'); DEP_MESES.add(v); if(!ou) return;
-      const k=v+'|'+ou.op+'|'+ou.uni; DEP[k]=(DEP[k]||0)+(+r.realizado||0); });
+      const k=v+'|'+ou.op+'|'+ou.uni, d=DEP[k]=DEP[k]||{real:0,rem:0,orc:0}; d.real+=+r.realizado||0; d.rem+=+r.remunerado||0; d.orc+=+r.orcado||0; });
   }catch(e){ console.warn('dre_gerencial indisponível: depreciação estimada pelo FT em todos os meses', e); }
 }
 
@@ -676,39 +715,97 @@ function capMes(vig){
   return CAP_P[vig];
 }
 
-/* ── a conta do ROIC para um recorte (meses × unidade × operação) ── */
+/* ── a conta do ROIC para um recorte (meses × unidade × operação), com a referência
+   (remunerado ou orçado do DRE) ao lado do realizado em cada linha ── */
+let CMP=(()=>{ try{ return localStorage.getItem('arvores_cmp')==='orc'?'orc':'rem'; }catch(e){ return 'rem'; } })();
+const CMP_ROT=()=>CMP==='orc'?'Orç.':'Rem.', CMP_NOME=()=>CMP==='orc'?'orçado':'remunerado';
 function roicDe(vigs,filtro){
-  const n=vigs.length, R={rec:0,recOrc:0,ebd:0,ebdOrc:0,dep:0,depEst:0,mesesEst:[],cap:0,bru:0,par:0,qtd:0,qtdAt:0,depFT:0,tipos:{}};
+  const n=vigs.length, ref=CMP==='orc'?'Orc':'Rem', rf=CMP==='orc'?'orc':'rem';
+  const R={rec:0,recRef:0,recOrc:0,recRem:0,ebd:0,ebdRef:0,ebdOrc:0,ebdRem:0,dep:0,depRef:0,depSem:false,depEst:0,mesesEst:[],cap:0,bru:0,par:0,qtd:0,qtdAt:0,depFT:0,tipos:{},fr:{}};
+  ['C','M','P','O'].forEach(k=>R.fr[k]={real:0,ref:0});
   vigs.forEach(v=>{
-    Object.entries(DRE).forEach(([k,o])=>{ const [vv,op,uni]=k.split('|'); if(vv!==v||!filtro(op,uni)) return; R.rec+=o.rec; R.recOrc+=o.recOrc; R.ebd+=o.ebd; R.ebdOrc+=o.ebdOrc; });
+    Object.entries(DRE).forEach(([k,o])=>{ const [vv,op,uni]=k.split('|'); if(vv!==v||!filtro(op,uni)) return;
+      R.rec+=o.rec; R.recRef+=o['rec'+ref]; R.recOrc+=o.recOrc; R.recRem+=o.recRem; R.ebd+=o.ebd; R.ebdRef+=o['ebd'+ref]; R.ebdOrc+=o.ebdOrc; R.ebdRem+=o.ebdRem; });
+    Object.entries(FR).forEach(([k,o])=>{ const [vv,op,uni]=k.split('|'); if(vv!==v||!filtro(op,uni)) return;
+      Object.entries(o).forEach(([p,x])=>{ R.fr[p].real+=x.real; R.fr[p].ref+=x[rf]; }); });
     const cap=(CAP[v]||[]).filter(e=>filtro(e.op,e.uni));
     let depFT=0; cap.forEach(e=>{ R.cap+=e.liq/n; R.bru+=e.compra/n; R.qtd+=1/n; depFT+=e.dep;
       if(e.ativo) R.qtdAt+=1/n; else R.par+=e.liq/n;
       const t=R.tipos[e.tipo]=R.tipos[e.tipo]||{liq:0,qtd:0}; t.liq+=e.liq/n; t.qtd+=1/n; });
     R.depFT+=depFT;
-    if(DEP_MESES.has(v)){ Object.entries(DEP).forEach(([k,d])=>{ const [vv,op,uni]=k.split('|'); if(vv===v&&filtro(op,uni)) R.dep+=d; }); }
-    else { R.dep-=depFT; R.depEst+=depFT; R.mesesEst.push(v); }
+    if(DEP_MESES.has(v)){ let dr=0, dx=0; Object.entries(DEP).forEach(([k,d])=>{ const [vv,op,uni]=k.split('|'); if(vv===v&&filtro(op,uni)){ dr+=d.real; dx+=d[rf]; } });
+      R.dep+=dr; if(dx) R.depRef+=dx; else { R.depRef+=dr; if(dr) R.depSem=true; } }
+    else { R.dep-=depFT; R.depRef-=depFT; R.depEst+=depFT; R.mesesEst.push(v); }
   });
+  const F=R.fr; R.frReal=F.C.real+F.M.real+F.P.real+F.O.real; R.frRef=F.C.ref+F.M.ref+F.P.ref+F.O.ref;
+  R.custo=R.rec-R.ebd; R.custoRef=R.recRef-R.ebdRef;                     // custos até o EBITDA
+  R.dem=R.custo-R.frReal; R.demRef=R.custoRef-R.frRef;                    // o que não é frota
   R.n=n; R.ebit=R.ebd+R.dep; R.nopat=R.ebit*(1-IR);
   R.nopatAno=R.nopat*12/n; R.recAno=R.rec*12/n; R.ebitAno=R.ebit*12/n;
   R.roic=R.cap?R.nopatAno/R.cap:null; R.roicPre=R.cap?R.ebitAno/R.cap:null;
   R.margem=R.rec?R.nopat/R.rec:null; R.giro=R.cap?R.recAno/R.cap:null;
+  R.ebitRef=R.ebdRef+R.depRef; R.nopatRef=R.ebitRef*(1-IR); R.nopatAnoRef=R.nopatRef*12/n; R.recAnoRef=R.recRef*12/n;
+  R.roicRef=R.cap&&R.recRef?R.nopatAnoRef/R.cap:null; R.margemRef=R.recRef?R.nopatRef/R.recRef:null; R.giroRef=R.cap&&R.recRef?R.recAnoRef/R.cap:null;
+  // ROIC sem o capital parado (o potencial de tirar do capital o que não opera)
+  R.roicSemPar=R.cap>R.par?R.nopatAno/(R.cap-R.par):null;
   return R;
 }
+/* o gap de cada linha do ROIC: {real, ref, bom (mais é melhor), imp: R$ por mês a favor (+) ou contra (−)} */
+const GR={
+  rec:{t:'Receita líquida',g:R=>({real:R.rec/R.n,ref:R.recRef/R.n,bom:true})},
+  ebd:{t:'EBITDA ajustado',g:R=>({real:R.ebd/R.n,ref:R.ebdRef/R.n,bom:true})},
+  custo:{t:'Custos até o EBITDA',g:R=>({real:R.custo/R.n,ref:R.custoRef/R.n,bom:false})},
+  C:{t:'Combustíveis',g:R=>({real:R.fr.C.real/R.n,ref:R.fr.C.ref/R.n,bom:false})},
+  M:{t:'Manutenções',g:R=>({real:R.fr.M.real/R.n,ref:R.fr.M.ref/R.n,bom:false})},
+  P:{t:'Pneus',g:R=>({real:R.fr.P.real/R.n,ref:R.fr.P.ref/R.n,bom:false})},
+  O:{t:'Demais contas da frota',g:R=>({real:R.fr.O.real/R.n,ref:R.fr.O.ref/R.n,bom:false})},
+  dem:{t:'Demais custos',g:R=>({real:R.dem/R.n,ref:R.demRef/R.n,bom:false})},
+  dep:{t:'Depreciação',g:R=>({real:-R.dep/R.n,ref:-R.depRef/R.n,bom:false})},
+  ebit:{t:'EBIT',g:R=>({real:R.ebit/R.n,ref:R.ebitRef/R.n,bom:true})},
+  roic:{t:'ROIC anualizado',pct:true,g:R=>({real:R.roic,ref:R.roicRef,bom:true,imp:(R.ebit-R.ebitRef)/R.n})}
+};
+function gapDe(id,R){ const d=GR[id], o=d.g(R); if(o.imp===undefined&&o.real!=null&&o.ref!=null) o.imp=(o.real-o.ref)*(o.bom?1:-1);
+  o.pp=d.pct?(o.real!=null&&o.ref!=null?o.real-o.ref:null):(o.imp!=null&&R.cap?o.imp*(1-IR)*12/R.cap:null); o.pct=!!d.pct; return o; }
+
+/* ── o gap no nó: referência (Rem./Orç./Teto/1ªQ), real, ▲, ▲% e o impacto em R$ por mês ──
+   g = {ref, real, bom, fmt, rot, imp (R$/mês, + a favor), pp (ROIC), pct (valor em %), cols, pot (potencial, não é perda)} */
+const GAP_MIN=0.01;                       // abaixo de 1% de ▲ o nó não acende
+function gapD(g){ return g.real!=null&&g.ref!=null&&isFinite(g.real)&&isFinite(g.ref)?g.real-g.ref:null; }
+function gapP(g){ const d=gapD(g); return d==null||!g.ref?null:d/Math.abs(g.ref); }
+function gapLado(g){ const d=gapD(g); if(d==null||Math.abs(d)<1e-9) return 0; return (d>0)===g.bom?1:-1; }
+function gapCls(g){ const l=gapLado(g), p=gapP(g), rel=g.pct?Math.abs(gapD(g)||0)>=0.005:p==null?Math.abs(gapD(g)||0)>0:Math.abs(p)>=GAP_MIN;
+  if(!rel||!l) return ''; if(g.pot) return 'gap-pot'; return l<0?'gap':'gap-ok'; }
+const fmtPP=v=>v==null||!isFinite(v)?'—':(v>0?'+':'')+br(v*100,1)+' pp';
+function fmtSig(f,v){ if(v==null||!isFinite(v)) return '—'; const t=f(v); return v>0&&!/^[+-]/.test(t)?'+'+t:t; }
+function gapHtml(g){
+  const f=g.fmt||fmtR, d=gapD(g), p=gapP(g), l=gapLado(g), c=l<0?(g.pot?'ca':'cr'):l>0?'cg':'';
+  const cel={ref:[g.rot||CMP_ROT(),g.ref==null?'—':f(g.ref),''],real:['Real',g.real==null?'—':f(g.real),''],
+    d:['▲',g.pct?fmtPP(d):fmtSig(f,d),c],p:['▲%',g.pct?'—':fmtPs(p),c]};
+  if(g.ref==null) return `<div class="tn-i">Sem ${esc(g.rot?g.rot.replace(/\.$/,''):CMP_NOME())} para comparar</div>`;
+  const cols=(g.cols||(g.pct?['ref','d']:['ref','d','p'])).map(k=>cel[k]);
+  let h=`<div class="tn-g" style="grid-template-columns:repeat(${cols.length},minmax(0,1fr))">${cols.map(x=>`<div><span>${x[0]}</span><b class="${x[2]}">${esc(x[1])}</b></div>`).join('')}</div>`;
+  const temI=g.imp!=null&&isFinite(g.imp), temP=g.pp!=null&&!g.pct&&isFinite(g.pp);
+  if(temI||temP){
+    const sg=temI?g.imp:g.pot?-g.pp:g.pp, ci=Math.abs(sg)<1e-9?'':g.pot?'ca':sg<0?'cr':'cg';
+    const pts=[]; if(temI) pts.push(`<b class="${ci}">${esc(fmtSig(fmtR,g.imp))}/mês</b>`);
+    if(temP) pts.push(`ROIC <b class="${ci}">${esc(fmtPP(g.pp))}</b>`);
+    h+=`<div class="tn-i">${g.pot?(g.potRot||'Se sair do capital:'):'Impacto'} ${pts.join(' · ')}</div>`; }
+  return h; }
 
 /* ── desenho genérico de árvore: nó = {t, v, s, cls, rows:[[rótulo, valor, classe]], kids, raiz, est} ──
    Cada folha ocupa a própria altura (não a do maior nó), o espaço entre as colunas cresce para
    ocupar a largura da área, e dentro dela dá para dar zoom (roda do mouse, botões, pinça) e
    arrastar; duplo clique ou "Ajustar" volta ao desenho inteiro na tela. */
 function arvore(area,raiz,clica){
-  const W=250, GX0=58, GY=16;
+  const W=256, GX0=58, GY=14;
   let folha=0; const nos=[], folhas=[];
   (function lay(n,d){ n.d=d; nos.push(n); if(n.kids&&n.kids.length){ n.kids.forEach(k=>lay(k,d+1)); } else { n.f=folha++; folhas.push(n); } })(raiz,0);
   area.innerHTML='<div class="tw"><svg class="tsvg"></svg></div>'
     +'<div class="arv-zoom"><button type="button" data-z="-" title="Diminuir">−</button><input class="arv-zp" type="text" inputmode="numeric" value="100%" title="Digite o zoom em % e aperte Enter" aria-label="Zoom em %" autocomplete="off"><button type="button" data-z="+" title="Aumentar">+</button><button type="button" data-z="0" title="Ver a árvore inteira">Ajustar</button></div>';
   const tw=area.querySelector('.tw'), svg=tw.querySelector('svg'), zp=area.querySelector('.arv-zp');
-  nos.forEach(n=>{ const el=document.createElement('div'); el.className='tn'+(n.raiz?' raiz':'')+(n.est?' est':'')+(clica&&n.ab?' ab':''); el._no=n;
+  nos.forEach(n=>{ const el=document.createElement('div'); el.className='tn'+(n.raiz?' raiz':'')+(n.est?' est':'')+(clica&&n.ab?' ab':'')+(n.g?' '+gapCls(n.g):''); el._no=n;
     el.innerHTML=`<div class="tn-t">${esc(n.t)}</div><div class="tn-v ${n.cls||''}">${esc(n.v==null?'—':n.v)}</div>`+(n.s?`<div class="tn-s">${esc(n.s)}</div>`:'')
+      +(n.g?gapHtml(n.g):'')
       +(n.rows&&n.rows.length?`<table>${n.rows.map(r=>`<tr><td>${esc(r[0])}</td><td class="n ${r[2]||''}">${esc(r[1])}</td></tr>`).join('')}</table>`:'');
     if(clica&&n.ab) el.title='Clique para abrir por unidade, projeto e mês'; if(n.dica) el.title=n.dica; tw.appendChild(el); n.el=el; n.h=el.offsetHeight; });
   // altura: cada folha com a própria altura; o pai no meio dos filhos, sem invadir o vizinho
@@ -724,13 +821,14 @@ function arvore(area,raiz,clica){
     totW=(prof+1)*W+prof*gx; tw.style.width=totW+'px'; tw.style.height=totH+'px'; svg.setAttribute('width',totW); svg.setAttribute('height',totH);
     let p=''; nos.forEach(n=>(n.kids||[]).forEach(k=>{ const x1=n.x+W, x2=k.x, xm=(x1+x2)/2; p+=`M${x1},${n.y} C${xm},${n.y} ${xm},${k.y} ${x2},${k.y} `; }));
     svg.innerHTML=`<path d="${p}"/>`; };
-  const ajusta=()=>{ const aw=area.clientWidth, ah=area.clientHeight; if(!aw||!ah) return;
+  const TOP=area._top||0;
+  const ajusta=()=>{ const aw=area.clientWidth, ah=area.clientHeight-TOP; if(!aw||!ah) return;
     const minW=(prof+1)*W+prof*GX0;
     const s=Math.min(1.35,(ah-8)/totH,aw/minW);
     // a sobra de largura vira espaço entre as colunas (até 3× o normal)
     const gx=prof?Math.max(GX0,Math.min(GX0*3.2,(aw/s-(prof+1)*W)/prof)):GX0;
     desenha(gx); fitS=s;
-    T.s=s; T.x=Math.max(0,(aw-totW*s)/2); T.y=Math.max(0,(ah-totH*s)/2); aplica(); };
+    T.s=s; T.x=Math.max(0,(aw-totW*s)/2); T.y=TOP+Math.max(0,(ah-totH*s)/2); aplica(); };
   const zoom=(f,cx,cy,livre)=>{ const ns=livre?T.s*f:Math.max(fitS*.1,Math.min(fitS*5,T.s*f)); if(ns===T.s) return;
     if(cx==null){ cx=area.clientWidth/2; cy=area.clientHeight/2; }
     T.x=cx-(cx-T.x)*ns/T.s; T.y=cy-(cy-T.y)*ns/T.s; T.s=ns; aplica(); };
@@ -801,25 +899,89 @@ async function renderROIC(){
   $('t-res').innerHTML=linhas.length?`<table class="dre" id="tbl-res"><thead><tr><th>Unidade</th><th>Projeto</th><th>Receita líquida R$</th><th>EBITDA R$</th><th>Margem EBITDA</th><th title="Depreciação">Deprec. R$</th><th>EBIT R$</th><th>NOPAT anual R$</th><th>Capital líquido R$</th><th>% parado</th><th>Margem NOPAT</th><th>Giro</th><th>ROIC</th></tr></thead><tbody>`
     +linhas.map(l=>lin(l.uni,OPS[l.op],l.r)).join('')+`</tbody><tfoot>${lin('Total','',R,'total')}</tfoot></table>`:'<div class="vazio">Sem DRE nem capital no recorte.</div>';
   set('sub-res',`Receita, EBITDA, depreciação e EBIT por mês${sufM}; NOPAT anualizado (× 12 ÷ ${n} ${n>1?'meses':'mês'}); capital = valor líquido do FT ${n>1?'médio dos meses':'do mês'}. ROIC = NOPAT anual ÷ capital = margem NOPAT × giro.`);
-  // árvore
-  const tiposRows=TIPOS.filter(t=>R.tipos[t]).map(t=>[`${t} (${fmtN(R.tipos[t].qtd)})`,fmtR(R.tipos[t].liq)]);
-  const raiz={raiz:true,t:'ROIC anualizado',v:fmtP(R.roic),cls:corV(R.roic,true),s:'NOPAT anual ÷ capital líquido',rows:[['Antes do IR/CS',fmtP(R.roicPre)],['Margem × Giro',fmtP(R.margem)+' × '+(R.giro==null?'—':br(R.giro,2))]],
+  // árvore: a raiz contra a inflação (IPCA de 12 meses); receita, custos e depreciação contra o remunerado ou o orçado
+  const ip=await ipcaDe(vigs[vigs.length-1]);
+  const hi=$('h-ipca'); if(hi){ const d=ip.v!=null&&R.roic!=null?R.roic-ip.v:null; hi.textContent=fmtPP(d); hi.className=d==null?'':d>=0?'cg':'cr'; hi.title=ip.rot; }
+  const RL=CMP_ROT(), outro=CMP==='orc'?['Remunerado',R.recRem]:['Orçado',R.recOrc], g=id=>gapDe(id,R);
+  const gDep=g('dep'); if(est===vigs.length||R.depSem){ gDep.ref=null; gDep.imp=null; gDep.pp=null; }
+  const gNop={real:R.nopat/n,ref:R.nopatRef/n,bom:true,imp:(R.nopat-R.nopatRef)/n}; gNop.pp=R.cap?gNop.imp*12/R.cap:null;
+  const raiz={raiz:true,ab:'roic',t:'ROIC anualizado',v:fmtP(R.roic),cls:corV(R.roic,true),s:'NOPAT anual ÷ capital líquido',
+    g:{ref:ip.v,real:R.roic,bom:true,pct:true,rot:'IPCA 12m',fmt:fmtP,imp:ip.v!=null&&R.cap?(R.nopatAno-ip.v*R.cap)/12:null},
+    rows:[['Antes do IR/CS',fmtP(R.roicPre)],[`Com o ${CMP_NOME()}`,fmtP(R.roicRef)],['Margem × Giro',fmtP(R.margem)+' × '+(R.giro==null?'—':br(R.giro,2))]],
     kids:[
-      {t:'Margem NOPAT',v:fmtP(R.margem),s:'NOPAT ÷ receita líquida',kids:[
-        {t:'Receita líquida',v:fmtR(R.rec/n),s:n>1?'média do mês':'no mês',rows:[['Orçado',fmtR(R.recOrc/n)],['Δ vs orçado',fmtPs(R.recOrc?R.rec/R.recOrc-1:null),corV(R.recOrc?R.rec-R.recOrc:null,true)]]},
-        {t:'NOPAT',v:fmtR(R.nopat/n),s:'EBIT × (1 − 34%)',rows:[['Anualizado',fmtR(R.nopatAno)]],kids:[
-          {t:'EBITDA ajustado',v:fmtR(R.ebd/n),rows:[['Margem',fmtP(R.rec?R.ebd/R.rec:null)],['Orçado',fmtR(R.ebdOrc/n)],['Δ vs orçado',fmtPs(R.ebdOrc?R.ebd/R.ebdOrc-1:null),corV(R.ebdOrc?R.ebd-R.ebdOrc:null,true)]]},
-          {t:'Depreciação',v:fmtR(-R.dep/n),est:est===vigs.length,s:est?(est===vigs.length?'pelo FT: compra × perda do mês':'DRE do ERP + FT nos meses sem o DRE'):'DRE do ERP (estrutura 351)',rows:[['Pelo FT',fmtR(R.depFT/n)],['% da receita',fmtP(R.rec?-R.dep/R.rec:null)]]},
-          {t:'IR e CS',v:fmtR(R.ebit*IR/n),s:'34% teóricos (o DRE não tem a linha)',rows:[['EBIT',fmtR(R.ebit/n),corV(R.ebit,true)]]}]}]},
-      {t:'Giro do capital',v:R.giro==null?'—':br(R.giro,2)+'×',s:'receita anual ÷ capital',kids:[
-        {t:'Receita anual',v:fmtR(R.recAno),s:'receita do mês × 12'},
-        {t:'Capital líquido',v:fmtR(R.cap),s:'valor de compra × residual pela idade',rows:[['Valor de compra',fmtR(R.bru)],['Já depreciado',fmtP(R.bru?1-R.cap/R.bru:null)]],kids:[
+      {t:'Margem NOPAT',v:fmtP(R.margem),s:'NOPAT ÷ receita líquida',g:{ref:R.margemRef,real:R.margem,bom:true,pct:true,fmt:fmtP},kids:[
+        {ab:'rec',t:'Receita líquida',v:fmtR(R.rec/n),s:n>1?'média do mês':'no mês',g:g('rec'),rows:[[outro[0],fmtR(outro[1]/n)]]},
+        {t:'NOPAT',v:fmtR(R.nopat/n),s:'EBIT × (1 − 34%)',g:gNop,rows:[['IR e CS (34%)',fmtR(R.ebit*IR/n)],['Anualizado',fmtR(R.nopatAno)]],kids:[
+          {ab:'ebd',t:'EBITDA ajustado',v:fmtR(R.ebd/n),s:'receita − custos',g:g('ebd'),rows:[['Margem',fmtP(R.rec?R.ebd/R.rec:null)+' · '+RL+' '+fmtP(R.recRef?R.ebdRef/R.recRef:null)]],kids:[
+            {ab:'C',t:'Combustíveis',v:fmtR(R.fr.C.real/n),s:'diesel e Arla',g:g('C')},
+            {ab:'M',t:'Manutenções',v:fmtR(R.fr.M.real/n),g:g('M')},
+            {ab:'P',t:'Pneus',v:fmtR(R.fr.P.real/n),g:g('P')},
+            {ab:'O',t:'Demais contas da frota',v:fmtR(R.fr.O.real/n),s:'seguros, IPVA, ICMS e outras',g:g('O')},
+            {ab:'dem',t:'Demais custos',v:fmtR(R.dem/n),s:'tudo o que não é frota (pessoal, adm…)',g:g('dem')}]},
+          {ab:'dep',t:'Depreciação',v:fmtR(-R.dep/n),est:est===vigs.length,s:est?(est===vigs.length?'pelo FT: compra × perda do mês':'DRE do ERP + FT nos meses sem o DRE'):R.depSem?'DRE do ERP, sem referência':'DRE do ERP (estrutura 351)',g:gDep,rows:[['Pelo FT',fmtR(R.depFT/n)]]}]}]},
+      {t:'Giro do capital',v:R.giro==null?'—':br(R.giro,2)+'×',s:'receita anual ÷ capital',g:{ref:R.giroRef,real:R.giro,bom:true,fmt:x=>br(x,2)+'×'},rows:[['Receita anual',fmtR(R.recAno)]],kids:[
+        {t:'Capital líquido',v:fmtR(R.cap),s:'valor de compra × residual pela idade',rows:[['Valor de compra',fmtR(R.bru)],['Já depreciado',fmtP(R.bru?1-R.cap/R.bru:null)],
+          ...TIPOS.filter(t=>R.tipos[t]).map(t=>[`${t} (${fmtN(R.tipos[t].qtd)})`,fmtR(R.tipos[t].liq)])],kids:[
           {t:'Em operação',v:fmtR(R.cap-R.par),rows:[['Equipamentos',fmtN(R.qtdAt)],['Capital por equipamento',fmtR(R.qtdAt?(R.cap-R.par)/R.qtdAt:null)]]},
-          {t:'Parado ou inativo no FT',v:fmtR(R.par),cls:R.par>0?'cr':'',rows:[['Equipamentos',fmtN(R.qtd-R.qtdAt)],['% do capital',fmtP(R.cap?R.par/R.cap:null)]]},
-          {t:'Por tipo',v:fmtN(R.qtd)+' equipamentos',rows:tiposRows}]}]}]};
-  if(VW==='roic') arvore($('arv-roic'),raiz); else _arvRoicPend=raiz;
-  $('nota-roic').innerHTML=`<b>Capital</b>: valor de compra do FT (Caminhão, Van, AS, Cavalo, Carreta, Empilhadeira) × residual pela idade desde a entrada: 100% → ${br(RES5*100,0)}% aos 5 anos → ${br(RES8*100,0)}% aos 8 anos (os residuais de carroceria do FT), depois ${br(RES8*100,0)}%. <b>Depreciação</b>: a do DRE do ERP nos meses importados; nos outros, a perda do mês nessa mesma curva. <b>IR/CS</b>: 34% teóricos.`;
+          {t:'Parado ou inativo no FT',v:fmtR(R.par),s:'capital que não gira',g:{ref:0,real:R.par,bom:false,pot:true,rot:'Ideal',fmt:fmtR,cols:['ref','d'],imp:null,pp:R.roicSemPar!=null&&R.roic!=null?R.roicSemPar-R.roic:null},
+            rows:[['Equipamentos',fmtN(R.qtd-R.qtdAt)],['% do capital',fmtP(R.cap?R.par/R.cap:null)]]}]}]}]};
+  ROIC_CTX={vigs,per,R};
+  const clica=no=>abreRoic(no.ab);
+  if(VW==='roic') arvore($('arv-roic'),raiz,clica); else _arvRoicPend=raiz;
+  // maiores gaps: as linhas do DRE que estão contra e as unidades × projeto com o EBITDA mais abaixo da referência
+  const gl=['rec','C','M','P','O','dem','dep'].map(id=>({id,o:id==='dep'?gDep:g(id)})).filter(x=>x.o.imp!=null&&x.o.imp<-0.5).sort((a,b)=>a.o.imp-b.o.imp).slice(0,4);
+  const gu=linhas.map(l=>({l,o:gapDe('ebd',l.r)})).filter(x=>x.o.imp<-0.5).sort((a,b)=>a.o.imp-b.o.imp).slice(0,3);
+  $('gaps-roic').innerHTML=(gl.length||gu.length)?`<span class="rot">Maiores gaps vs ${CMP_NOME()}</span>`
+    +gl.map(x=>`<span class="gp" data-ab="${x.id}">${esc(GR[x.id].t)} <b>${esc(fmtSig(fmtR,x.o.imp))}/mês</b> · ROIC ${esc(fmtPP(x.o.pp))}</span>`).join('')
+    +gu.map(x=>`<span class="gp" data-ab="ebd" data-op="${x.l.op}" data-uni="${x.l.uni}">${esc(x.l.uni)} · ${esc(OPS[x.l.op])}: EBITDA <b>${esc(fmtSig(fmtR,x.o.imp))}/mês</b></span>`).join('')
+    :`<span class="rot">Sem gap contra o ${CMP_NOME()} no recorte</span>`;
+  $('nota-roic').innerHTML=`<b>ROIC</b> contra o IPCA de 12 meses (${esc(ip.rot)}); o impacto da raiz é o NOPAT que passa (ou falta) da inflação sobre o capital, por mês. <b>Demais nós</b> contra o ${CMP_NOME()} do DRE: ▲ = real − ${CMP_NOME()}, impacto em R$ por mês antes do IR (vermelho = contra nós) e em pp de ROIC (× 66% × 12 ÷ capital). <b>Clique num nó</b> para abrir por unidade, projeto e mês. <b>Capital</b>: valor de compra do FT × residual pela idade (100% → ${br(RES5*100,0)}% aos 5 anos → ${br(RES8*100,0)}% aos 8). <b>Depreciação</b>: a do DRE do ERP nos meses importados; nos outros, estimada pela mesma curva. <b>IR/CS</b>: 34% teóricos.`;
+  if(AB_KIND==='roic'&&AB_N&&$('ab-ov').classList.contains('on')) abreRoic(AB_N);
 }
+let ROIC_CTX=null;
+/* IPCA acumulado em 12 meses (SGS 13522 do Banco Central); digitado na tela vale por cima */
+let IPCA_P=null;
+function carregaIPCA(){ if(IPCA_P) return IPCA_P;
+  IPCA_P=(async()=>{ const o={}; const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),6000);
+    try{ const d=await fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/48?formato=json',{signal:ctl.signal}).then(r=>r.json());
+      (d||[]).forEach(x=>{ const m=String(x.data||'').split('/'); const v=parseFloat(String(x.valor).replace(',','.')); if(m.length===3&&isFinite(v)) o[m[2]+'-'+m[1]]=v/100; });
+    }catch(e){ console.warn('IPCA do Banco Central indisponível:',e); } finally{ clearTimeout(t); }
+    return o; })();
+  return IPCA_P; }
+const ipcaMan=()=>{ try{ const x=parseFloat(String(localStorage.getItem('arvores_ipca')||'').replace(',','.')); return isFinite(x)?x/100:null; }catch(e){ return null; } };
+async function ipcaDe(vig){ const man=ipcaMan(), inp=$('ipca-in');
+  const o=await carregaIPCA(); const k=Object.keys(o).filter(x=>x<=vig).sort().pop();
+  const auto=k?{v:o[k],rot:'Banco Central, 12 meses até '+vigTxt(k)}:{v:null,rot:'IPCA indisponível: digite o valor'};
+  const r=man!=null?{v:man,rot:'digitado na tela'}:auto;
+  if(inp&&document.activeElement!==inp){ inp.value=r.v==null?'':br(r.v*100,2); inp.placeholder=auto.v==null?'—':br(auto.v*100,2); inp.title=r.rot+(man!=null?' · apague para voltar ao Banco Central':''); }
+  return r; }
+/* abertura de um nó do ROIC por unidade e projeto, unidade, projeto ou mês */
+function abreRoic(id){ if(!id||!ROIC_CTX) return; AB_KIND='roic'; AB_N=id; if(AB_Q==='placa') AB_Q='up';
+  const {vigs,per}=ROIC_CTX, ov=$('ab-ov'), RL=CMP_ROT(), roic=id==='roic';
+  const ttl=roic?'ROIC anualizado':GR[id].t;
+  $('ab-t').textContent=ttl; $('ab-s').textContent=per+(roic?' · contra o IPCA e o '+CMP_NOME():' · contra o '+CMP_NOME()+' do DRE')+' · impacto em R$ por mês';
+  $('ab-q').innerHTML=QUEBRAS.filter(q=>q[0]!=='placa').map(q=>`<button class="dimb${AB_Q===q[0]?' on':''}" data-q="${q[0]}">${q[1]}</button>`).join('');
+  const grupos=[];
+  if(AB_Q==='mes') vigs.forEach(v=>grupos.push({lab:[vigRot(v)],k:v,R:roicDe([v],(o,u)=>passa(o,u))}));
+  else if(AB_Q==='uni') UNIS.forEach(u=>grupos.push({lab:[u],R:roicDe(vigs,(o,uu)=>uu===u&&passa(o,uu))}));
+  else if(AB_Q==='proj') OP_ORD.forEach(op=>grupos.push({lab:[OPS[op]],R:roicDe(vigs,(o,u)=>o===op&&passa(o,u))}));
+  else OP_ORD.forEach(op=>UNIS.forEach(u=>{ if(passa(op,u)) grupos.push({lab:[u,OPS[op]],R:roicDe(vigs,(o,uu)=>o===op&&uu===u)}); }));
+  const G=grupos.filter(x=>x.R.rec||x.R.cap||x.R.ebd||x.R.frReal);
+  const hl=AB_Q==='up'?['Unidade','Projeto']:[AB_Q==='uni'?'Unidade':AB_Q==='proj'?'Projeto':'Mês'];
+  let cols;
+  if(roic) cols=[['Receita/mês',R=>R.rec/R.n,fmtR],['EBIT/mês',R=>R.ebit/R.n,fmtR,v=>corV(v,true)],['Capital',R=>R.cap,fmtR],['ROIC',R=>R.roic,fmtP,v=>corV(v,true)],
+    [`ROIC com o ${CMP_NOME()}`,R=>R.roicRef,fmtP],['▲ pp',R=>R.roic!=null&&R.roicRef!=null?R.roic-R.roicRef:null,fmtPP,v=>corV(v,true)],['% parado',R=>R.cap?R.par/R.cap:null,fmtP]];
+  else cols=[[RL,R=>gapDe(id,R).ref,fmtR],['Real',R=>gapDe(id,R).real,fmtR],['▲',R=>gapD(gapDe(id,R)),v=>fmtSig(fmtR,v),(v,R)=>{ const o=gapDe(id,R); return gapLado(o)<0?'cr':gapLado(o)>0?'cg':''; }],
+    ['▲%',R=>gapP(gapDe(id,R)),fmtPs,(v,R)=>{ const o=gapDe(id,R); return gapLado(o)<0?'cr':gapLado(o)>0?'cg':''; }],
+    ['Impacto R$/mês',R=>gapDe(id,R).imp,v=>fmtSig(fmtR,v),v=>corV(v,true)],['ROIC pp',R=>gapDe(id,R).pp,fmtPP,v=>corV(v,true)]];
+  if(AB_Q!=='mes') G.sort(roic?(a,b)=>(a.R.roic??1e9)-(b.R.roic??1e9):(a,b)=>(gapDe(id,a.R).imp??0)-(gapDe(id,b.R).imp??0));
+  const cel=(R,c)=>{ const v=c[1](R); return `<td class="num ${c[3]?c[3](v,R):''}">${esc(c[2](v))}</td>`; };
+  const T=roicDe(vigs,(o,u)=>passa(o,u));
+  $('ab-tab').innerHTML=`<thead><tr>${hl.map(h=>`<th>${h}</th>`).join('')}${cols.map(c=>`<th class="num">${esc(c[0])}</th>`).join('')}</tr></thead>`
+    +`<tbody>${G.map(x=>`<tr>${x.lab.map(t=>`<td class="conta">${esc(t)}</td>`).join('')}${cols.map(c=>cel(x.R,c)).join('')}</tr>`).join('')||`<tr><td class="conta" colspan="12">Sem dados no recorte.</td></tr>`}</tbody>`
+    +`<tfoot><tr class="total"><td class="conta">Total</td>${hl.length>1?'<td></td>':''}${cols.map(c=>cel(T,c)).join('')}</tr></tfoot>`;
+  $('ab-pe').innerHTML=roic?'ROIC de cada linha sobre o próprio capital; do pior para o melhor.':`Do maior gap contra nós para o maior a favor. Impacto antes do IR; ROIC pp sobre o capital da própria linha.`;
+  ov.classList.add('on'); }
 let _arvRoicPend=null;
 
 /* ══ ÁRVORE DE KM ══ */
@@ -896,10 +1058,12 @@ function carregaRev(ano){
 function agKm(F,rev){
   const S={rem:0,real:0,kmPrim:0,vPrim:0,kmRec:0,vRec:0,kmNot:0,vNot:0,frota:0,possT2:0,vPrimT2:0,kmPrimT2:0,naoT2:0,kmNaoT2:0,tetoT2:0,revKm:0,km1:0,km2:0,mapRev:0,frotaT2:0,n:0,plMes:0,plKm:0};
   const vs=new Set();
+  S.imp=0; S.custoRem=0; S.impNao=0; S.impRev=0; S.semR=0;
   F.forEach(r=>{ vs.add(r.vig); ['rem','real','kmPrim','vPrim','kmRec','vRec','kmNot','vNot','frota'].forEach(k=>S[k]+=r[k]);
+    const rk=r.rskm||0; S.imp+=r.imp||0; S.custoRem+=r.rem*rk; if(!rk&&Math.abs(r.real-r.rem)>0) S.semR++;
     if(T2(r.op)){ const kmMapa=r.vPrim?r.kmPrim/r.vPrim:0, poss=r.frota*MAPAS_MES, nao=Math.max(0,poss-r.vPrim);
-      S.frotaT2+=r.frota; S.possT2+=poss; S.vPrimT2+=r.vPrim; S.kmPrimT2+=r.kmPrim; S.naoT2+=nao; S.kmNaoT2+=nao*kmMapa; S.tetoT2+=poss*kmMapa;
-      const q=rev&&rev[r.vig+'|'+r.uni+'|'+r.proj]; if(q&&q[1]&&q[2]){ const m2=r.vPrim/2; S.revKm+=(q[2]-q[1])*m2; S.km1+=q[1]*m2; S.km2+=q[2]*m2; S.mapRev+=m2; } } });
+      S.frotaT2+=r.frota; S.possT2+=poss; S.vPrimT2+=r.vPrim; S.kmPrimT2+=r.kmPrim; S.naoT2+=nao; S.kmNaoT2+=nao*kmMapa; S.tetoT2+=poss*kmMapa; S.impNao-=nao*kmMapa*rk;
+      const q=rev&&rev[r.vig+'|'+r.uni+'|'+r.proj]; if(q&&q[1]&&q[2]){ const m2=r.vPrim/2; S.revKm+=(q[2]-q[1])*m2; S.km1+=q[1]*m2; S.km2+=q[2]*m2; S.mapRev+=m2; S.impRev+=(q[2]-q[1])*m2*rk; } } });
   S.n=vs.size||1; S.viag=S.vPrim+S.vRec+S.vNot;
   // placas que rodaram no mês (aba Km/L), no mesmo recorte
   if(KMPL){ const ch=new Set(F.map(r=>r.vig+'|'+r.op+'|'+r.uni)); KMPL.P.forEach(p=>{ if(ch.has(p.vig+'|'+p.op+'|'+p.uni)){ S.plMes++; S.plKm+=p.real; } }); }
@@ -909,7 +1073,8 @@ const dv=(a,b)=>b?a/b:null;
 const kmF=v=>fmtN(v), r1=v=>v==null||!isFinite(v)?'—':br(v,1), r2=v=>v==null||!isFinite(v)?'—':br(v,2);
 /* colunas da abertura de cada nó: [rótulo, conta sobre a soma S, formato, cor] */
 const AB={
-  disp:{t:'Dispersão de km',cols:[['Km rodado',S=>S.real,kmF],['Km remunerado',S=>S.rem,kmF],['Dispersão km',S=>S.real-S.rem,kmF,v=>corV(v,false)],['% sobre o rem.',S=>dv(S.real-S.rem,S.rem),fmtPs,v=>corV(v,false)],['Dispersão por ativo',S=>dv(S.real-S.rem,S.frota),kmF,v=>corV(v,false)]],placa:true},
+  disp:{t:'Dispersão de km',ord:S=>S.imp,cols:[['Km remunerado',S=>S.rem,kmF],['Km rodado',S=>S.real,kmF],['▲ km',S=>S.real-S.rem,v=>fmtSig(kmF,v),v=>corV(v,false)],['▲%',S=>dv(S.real-S.rem,S.rem),fmtPs,v=>corV(v,false)],
+    ['▲ por ativo',S=>dv(S.real-S.rem,S.frota),v=>fmtSig(kmF,v),v=>corV(v,false)],['R$/km rem.',S=>dv(S.custoRem,S.rem),r2],['Impacto R$/mês',S=>S.imp/S.n,v=>fmtSig(fmtR,v),v=>corV(v,true)]],placa:true},
   real:{t:'Km rodado',cols:[['Km rodado',S=>S.real,kmF],['Ativos (média)',S=>S.frota/S.n,r1],['Km por ativo no mês',S=>dv(S.real,S.frota),kmF],['Viagens',S=>S.viag,kmF],['Km rodado por viagem',S=>dv(S.real,S.viag),r1],['Placas que rodaram',S=>S.plMes/S.n,r1],['Km por placa no mês',S=>dv(S.plKm,S.plMes),kmF]],placa:true},
   rem:{t:'Km remunerado',cols:[['Km remunerado',S=>S.rem,kmF],['Ativos (média)',S=>S.frota/S.n,r1],['Km rem. por ativo no mês',S=>dv(S.rem,S.frota),kmF],['Viagens',S=>S.viag,kmF],['Viagens por ativo no mês',S=>dv(S.viag,S.frota),r1],['Km rem. por viagem',S=>dv(S.rem,S.viag),r1]],placa:true},
   prim:{t:'Km da 1ª viagem',cols:[['Mapas rodados',S=>S.vPrim,kmF],['Km por mapa',S=>dv(S.kmPrim,S.vPrim),r1],['Km da 1ª viagem',S=>S.kmPrim,kmF],['Mapas por ativo no mês',S=>dv(S.vPrim,S.frota),r1],['% do km rem.',S=>dv(S.kmPrim,S.rem),fmtP]]},
@@ -919,45 +1084,83 @@ const AB={
   nao:{t:'Mapas que não rodaram (T2)',t2:true,cols:[['Mapas possíveis',S=>S.possT2,kmF],['Mapas rodados',S=>S.vPrimT2,kmF],['Não rodados',S=>S.naoT2,kmF,v=>v>0?'cr':''],['% dos possíveis',S=>dv(S.naoT2,S.possT2),fmtP,v=>v>0?'cr':''],['Não rodados por ativo',S=>dv(S.naoT2,S.frotaT2),r1],['Km que não rodou',S=>-S.kmNaoT2,kmF,v=>v<0?'cr':'']]},
   revi:{t:'Revisão do km por mapa (T2)',t2:true,cols:[['Mapas da 2ªQ',S=>S.mapRev||null,kmF],['Km por mapa 1ªQ',S=>dv(S.km1,S.mapRev),r1],['Km por mapa 2ªQ',S=>dv(S.km2,S.mapRev),r1],['Δ por mapa',S=>S.mapRev?(S.km2-S.km1)/S.mapRev:null,r1,v=>corV(v,true)],['Δ km',S=>S.mapRev?S.revKm:null,kmF,v=>corV(v,true)]]}
 };
-let KM_CTX=null, AB_Q='up', AB_N=null;
+let KM_CTX=null, AB_Q='up', AB_N=null, AB_KIND='km', AB_F=null, AB_FT='';
+let KM_MODO=(()=>{ try{ return localStorage.getItem('arvores_km')==='comp'?'comp':'gap'; }catch(e){ return 'gap'; } })();
+/* R$/km remunerado de cada linha da Dispersão: Combustíveis + Manutenções + Pneus remunerados da aba Frota ÷ km remunerado
+   (o mesmo R$/km do Painel KM); o impacto da linha é o ▲ km a esse R$/km, contra nós quando rodou mais que o remunerado */
+function impactoKm(rows){
+  const kmG={}, temIns=new Set(); rows.forEach(r=>{ const k=r.vig+'|'+r.op+'|'+r.uni; kmG[k]=(kmG[k]||0)+r.rem; if(r.op==='INS') temIns.add(r.vig+'|'+r.uni); });
+  const cr=k=>{ const o=FR[k]; return o?['C','M','P'].reduce((a,p)=>a+(o[p]?o[p].rem:0),0):0; };
+  rows.forEach(r=>{ const k=r.vig+'|'+r.op+'|'+r.uni; let c=cr(k); if(r.op==='EMP'&&!temIns.has(r.vig+'|'+r.uni)) c+=cr(r.vig+'|INS|'+r.uni);
+    r.rskm=kmG[k]>0&&c>0?c/kmG[k]:0; r.imp=-(r.real-r.rem)*r.rskm; }); }
+function noKm(t,S,f,rows){ const d=S.real-S.rem;
+  return {ab:'disp',fl:f,t,v:fmtSig(fmtKm,d),cls:corV(d,false),g:{ref:S.rem,real:S.real,bom:false,fmt:fmtKmG,rot:'Rem.',cols:['ref','real','p'],imp:S.imp/S.n},rows}; }
+const rowsKm=(S,viag)=>[['Km por ativo · rem. · real',fmtN(dv(S.rem,S.frota))+' · '+fmtN(dv(S.real,S.frota))],...(viag?[['Km por viagem · rem. · real',r1(dv(S.rem,S.viag))+' · '+r1(dv(S.real,S.viag))],['R$/km rem.',r2(dv(S.custoRem,S.rem))]]:[])];
 async function renderKm(){
   const vigs=vigsSel(); if(!vigs.length) return;
   const per=vigs.length>1?`${vigRot(vigs[0])} a ${vigRot(vigs[vigs.length-1])}`:vigRot(vigs[0]);
   set('titSub',`${per} · Dispersão de km e Freightech`);
+  document.querySelectorAll('#modo-km [data-km]').forEach(b=>b.classList.toggle('on',b.dataset.km===KM_MODO));
   const area=$('arv-km'); if(!KM) area.innerHTML='<div class="vazio">Carregando a Dispersão de km…</div>';
   let rows, rev={};
   try{ rows=await carregaKm(); }catch(e){ area.innerHTML=`<div class="vazio">Não consegui ler a Dispersão de km: ${esc((e&&e.message)||e)}</div>`; return; }
   try{ const anos=[...new Set(vigs.map(v=>+v.slice(0,4)))]; (await Promise.all(anos.map(carregaRev))).forEach(o=>Object.assign(rev,o)); }catch(e){ console.warn('Revisão do km por mapa indisponível:',e); }
   if(VW!=='km') return;
+  if(!rows._imp){ impactoKm(rows); rows._imp=true; }
   const F=rows.filter(r=>vigs.includes(r.vig)&&passa(r.op,r.uni));
   KM_CTX={F,rev,per,vigs};
-  if(!F.length){ area.innerHTML=`<div class="vazio">Sem Dispersão de km em ${esc(per)} no recorte.</div>`; $('nota-km').textContent=''; return; }
+  if(!F.length){ area.innerHTML=`<div class="vazio">Sem Dispersão de km em ${esc(per)} no recorte.</div>`; $('nota-km').textContent=''; $('gaps-km').innerHTML=''; return; }
   const S=agKm(F,rev), n=S.n, disp=S.real-S.rem, outros=S.rem-S.kmPrim-S.kmRec-S.kmNot;
-  const kids2=[
-    {ab:'teto',t:'Teto da 1ª viagem (T2)',v:fmtKm(S.tetoT2),s:`${MAPAS_MES} mapas × ativos × km por mapa`,rows:[['Ativos (média)',fmtN(S.frotaT2/n)],['Mapas possíveis',fmtN(S.possT2)],['Km da 1ª ÷ teto',fmtP(dv(S.kmPrimT2,S.tetoT2))]]},
-    {ab:'nao',t:'Mapas que não rodaram (T2)',v:fmtKm(-S.kmNaoT2),cls:S.kmNaoT2>0?'cr':'',s:'possíveis − rodados, ao km por mapa',rows:[['Mapas',fmtN(S.naoT2)],['% dos possíveis',fmtP(S.possT2?S.naoT2/S.possT2:null)],['Por ativo no mês',r1(dv(S.naoT2,S.frotaT2))]]},
-    {ab:'revi',t:'Revisão do km por mapa (T2)',v:S.mapRev?(S.revKm>=0?'+':'')+fmtKm(S.revKm):'—',cls:corV(S.revKm,true),s:'2ªQ − 1ªQ, sobre os mapas da 2ª quinzena',rows:[['Km por mapa 1ªQ',S.mapRev?br(S.km1/S.mapRev,1):'—'],['Km por mapa 2ªQ',S.mapRev?br(S.km2/S.mapRev,1):'—'],['Δ por mapa',S.mapRev?(S.km2>=S.km1?'+':'')+br((S.km2-S.km1)/S.mapRev,1):'—',corV(S.km2-S.km1,true)]]}];
-  const remKids=[
-    {ab:'prim',t:'Km da 1ª viagem',v:fmtKm(S.kmPrim),s:'mapas × km por mapa do FT',rows:[['Mapas rodados',fmtN(S.vPrim)],['Km por mapa',S.vPrim?br(S.kmPrim/S.vPrim,1):'—'],['Mapas por ativo no mês',r1(dv(S.vPrim,S.frota))]],kids:kids2},
-    {ab:'rec',t:'Km de recarga',v:fmtKm(S.kmRec),rows:[['Recargas',fmtN(S.vRec)],['Km por recarga',S.vRec?br(S.kmRec/S.vRec,1):'—'],['Recargas por mapa',r2(dv(S.vRec,S.vPrim))]]},
-    {ab:'not',t:'Km de noturna',v:fmtKm(S.kmNot),rows:[['Noturnas',fmtN(S.vNot)],['Km por noturna',S.vNot?br(S.kmNot/S.vNot,1):'—'],['Noturnas por mapa',r2(dv(S.vNot,S.vPrim))]]}];
-  if(Math.abs(outros)>Math.max(1,S.rem*0.002)) remKids.push({t:'Outros no remunerado',v:fmtKm(outros),s:'o que a aba soma além de 1ª, recarga e noturna'});
-  const raiz={ab:'disp',raiz:true,t:'Dispersão de km',v:(disp>0?'+':'')+fmtKm(disp),cls:corV(disp,false),s:'km rodado − km remunerado',rows:[['% sobre o remunerado',fmtPs(S.rem?disp/S.rem:null),corV(disp,false)],['Por ativo no mês',fmtN(dv(disp,S.frota)),corV(disp,false)]],
-    kids:[
-      {ab:'real',t:'Km rodado',v:fmtKm(S.real),s:'ERP (Km/L) e a Dispersão',rows:[['Por ativo no mês',fmtN(dv(S.real,S.frota))],['Por viagem',r1(dv(S.real,S.viag))],['Placas que rodaram',S.plMes?r1(S.plMes/n):'—'],['Km por placa no mês',fmtN(dv(S.plKm,S.plMes))]]},
-      {ab:'rem',t:'Km remunerado',v:fmtKm(S.rem),s:'o que o FT paga',rows:[['Ativos (média)',fmtN(S.frota/n)],['Por ativo no mês',fmtN(dv(S.rem,S.frota))],['Viagens por ativo no mês',r1(dv(S.viag,S.frota))],['Km por viagem',r1(dv(S.rem,S.viag))]],kids:remKids}]};
-  arvore(area,raiz,no=>abreKm(no.ab));
+  let raiz;
+  if(KM_MODO==='gap'){
+    // onde estão os gaps: projeto e, dentro dele, as unidades do pior para o melhor impacto
+    const ops=OP_ORD.filter(op=>F.some(r=>r.op===op)).map(op=>{ const Fo=F.filter(r=>r.op===op); return {op,Fo,S:agKm(Fo,rev)}; }).sort((a,b)=>a.S.imp-b.S.imp);
+    const um=ops.length===1;
+    raiz=Object.assign(noKm('Dispersão de km',S,null,rowsKm(S,true)),{raiz:true,s:'km rodado − km remunerado',
+      kids:ops.map(o=>{ const us=UNIS.filter(u=>o.Fo.some(r=>r.uni===u)).map(u=>{ const Fu=o.Fo.filter(r=>r.uni===u); return {u,S:agKm(Fu,rev)}; }).sort((a,b)=>a.S.imp-b.S.imp);
+        const lim=um||us.length<=4?us.length:3, top=us.slice(0,lim), rest=us.slice(lim);
+        const kids=top.map(x=>noKm(x.u+' · '+OPS[o.op],x.S,r=>r.op===o.op&&r.uni===x.u,rowsKm(x.S,false)));
+        if(rest.length){ const ru=new Set(rest.map(x=>x.u)), Fr=o.Fo.filter(r=>ru.has(r.uni)), Sr=agKm(Fr,rev);
+          kids.push(Object.assign(noKm(`Demais ${rest.length} unidades · ${OPS[o.op]}`,Sr,r=>r.op===o.op&&ru.has(r.uni),[]),{s:rest.map(x=>x.u).join(', ')})); }
+        return Object.assign(noKm(OPS[o.op],o.S,r=>r.op===o.op,rowsKm(o.S,true)),{kids}); })});
+  } else {
+    const kids2=[
+      {ab:'teto',t:'Teto da 1ª viagem (T2)',v:fmtKm(S.tetoT2),s:`${MAPAS_MES} mapas × ativos × km por mapa`,g:{rot:'Teto',ref:S.tetoT2,real:S.kmPrimT2,bom:true,pot:true,fmt:fmtKmG,cols:['real','d','p'],imp:S.impNao/n,potRot:'Variável não recebido:'},
+        rows:[['Ativos (média)',fmtN(S.frotaT2/n)],['Mapas possíveis',fmtN(S.possT2)]]},
+      {ab:'nao',t:'Mapas que não rodaram (T2)',v:fmtKm(-S.kmNaoT2),cls:S.kmNaoT2>0?'cr':'',s:'possíveis − rodados, ao km por mapa',rows:[['Mapas',fmtN(S.naoT2)],['% dos possíveis',fmtP(S.possT2?S.naoT2/S.possT2:null)],['Por ativo no mês',r1(dv(S.naoT2,S.frotaT2))]]},
+      {ab:'revi',t:'Revisão do km por mapa (T2)',v:S.mapRev?(S.revKm>=0?'+':'')+fmtKm(S.revKm):'—',cls:corV(S.revKm,true),s:'2ªQ − 1ªQ, sobre os mapas da 2ª quinzena',
+        g:S.mapRev?{rot:'1ªQ',ref:S.km1,real:S.km2,bom:true,fmt:fmtKmG,cols:['ref','real','p'],imp:S.impRev/n}:null,
+        rows:[['Km por mapa 1ªQ · 2ªQ',S.mapRev?br(S.km1/S.mapRev,1)+' · '+br(S.km2/S.mapRev,1):'—']]}];
+    const remKids=[
+      {ab:'prim',t:'Km da 1ª viagem',v:fmtKm(S.kmPrim),s:'mapas × km por mapa do FT',rows:[['Mapas rodados',fmtN(S.vPrim)],['Km por mapa',S.vPrim?br(S.kmPrim/S.vPrim,1):'—'],['Mapas por ativo no mês',r1(dv(S.vPrim,S.frota))]],kids:kids2},
+      {ab:'rec',t:'Km de recarga',v:fmtKm(S.kmRec),rows:[['Recargas',fmtN(S.vRec)],['Km por recarga',S.vRec?br(S.kmRec/S.vRec,1):'—'],['Recargas por mapa',r2(dv(S.vRec,S.vPrim))]]},
+      {ab:'not',t:'Km de noturna',v:fmtKm(S.kmNot),rows:[['Noturnas',fmtN(S.vNot)],['Km por noturna',S.vNot?br(S.kmNot/S.vNot,1):'—'],['Noturnas por mapa',r2(dv(S.vNot,S.vPrim))]]}];
+    if(Math.abs(outros)>Math.max(1,S.rem*0.002)) remKids.push({t:'Outros no remunerado',v:fmtKm(outros),s:'o que a aba soma além de 1ª, recarga e noturna'});
+    raiz=Object.assign(noKm('Dispersão de km',S,null,[['Por ativo no mês',fmtSig(fmtN,dv(disp,S.frota)),corV(disp,false)],['R$/km rem.',r2(dv(S.custoRem,S.rem))]]),{raiz:true,s:'km rodado − km remunerado',
+      kids:[
+        {ab:'real',t:'Km rodado',v:fmtKm(S.real),s:'ERP (Km/L) e a Dispersão',rows:[['Por ativo no mês',fmtN(dv(S.real,S.frota))],['Por viagem',r1(dv(S.real,S.viag))],['Placas que rodaram',S.plMes?r1(S.plMes/n):'—'],['Km por placa no mês',fmtN(dv(S.plKm,S.plMes))]]},
+        {ab:'rem',t:'Km remunerado',v:fmtKm(S.rem),s:'o que o FT paga',rows:[['Ativos (média)',fmtN(S.frota/n)],['Por ativo no mês',fmtN(dv(S.rem,S.frota))],['Viagens por ativo no mês',r1(dv(S.viag,S.frota))],['Km por viagem',r1(dv(S.rem,S.viag))]],kids:remKids}]});
+  }
+  arvore(area,raiz,no=>abreKm(no.ab,no.fl,no.fl?no.t:''));
+  // maiores gaps: unidade × projeto com o maior impacto contra
+  const ch={}; F.forEach(r=>{ (ch[r.uni+'|'+r.op]=ch[r.uni+'|'+r.op]||[]).push(r); });
+  const gs=Object.entries(ch).map(([k,rs])=>({k,S:agKm(rs,rev)})).filter(x=>x.S.imp<-0.5).sort((a,b)=>a.S.imp-b.S.imp).slice(0,5);
+  $('gaps-km').innerHTML=gs.length?`<span class="rot">Maiores gaps</span>`+gs.map(x=>{ const [u,op]=x.k.split('|'), d=x.S.real-x.S.rem;
+    return `<span class="gp" data-uni="${u}" data-op="${op}">${esc(u)} · ${esc(OPS[op])} ${esc(fmtSig(fmtKm,d))} (${esc(fmtPs(dv(d,x.S.rem)))}) · <b>${esc(fmtSig(fmtR,x.S.imp/x.S.n))}/mês</b></span>`; }).join('')
+    :`<span class="rot">Nenhuma unidade rodou acima do remunerado no recorte</span>`;
   const banco=[...new Set(F.filter(r=>r.fonte==='banco').map(r=>vigTxt(r.vig)))];
-  $('nota-km').innerHTML=`${esc(per)} · a mesma Dispersão de km do Painel KM${banco.length?` (${banco.join(', ')} do banco: 2artd e CT-e)`:''}, sem o balanço de massa. <b>Clique num nó</b> para abrir por unidade, projeto, mês e placa. <b>Teto e mapas</b> só no T2 (Rota, Van, AS): ${MAPAS_MES} mapas por ativo no mês. <b>Revisão</b>: km por mapa do FT na 2ª quinzena menos o da 1ª, vezes metade dos mapas do mês. No T1 cada CT-e é uma viagem; nos meses da aba, Insumos fica dentro da Empurrada.`;
-  if(AB_N&&$('ab-ov').classList.contains('on')) abreKm(AB_N);
+  $('nota-km').innerHTML=`${esc(per)} · a mesma Dispersão de km do Painel KM${banco.length?` (${banco.join(', ')} do banco: 2artd e CT-e)`:''}, sem o balanço de massa. <b>Impacto</b> = ▲ km × R$/km remunerado (Combustíveis + Manutenções + Pneus remunerados da aba Frota ÷ km remunerado), por mês; vermelho = rodou mais que o remunerado.${S.semR?` ${S.semR} linha(s) sem R$/km no DRE ficam sem impacto.`:''} <b>Clique num nó</b> para abrir por unidade, projeto, mês e placa.`
+    +(KM_MODO==='comp'?` <b>Teto e mapas</b> só no T2 (Rota, Van, AS): ${MAPAS_MES} mapas por ativo no mês; o variável não recebido é potencial, não perda (sem mapa não há o custo do km). <b>Revisão</b>: km por mapa do FT na 2ª quinzena contra a 1ª, sobre metade dos mapas do mês.`:'')
+    +` No T1 cada CT-e é uma viagem; nos meses da aba, Insumos fica dentro da Empurrada.`;
+  if(AB_KIND==='km'&&AB_N&&$('ab-ov').classList.contains('on')) abreKm(AB_N,AB_F,AB_FT);
 }
 
 /* ── abertura de um nó: tabela por unidade, projeto, mês ou placa ── */
 const QUEBRAS=[['up','Unidade e projeto'],['uni','Unidade'],['proj','Projeto'],['mes','Mês'],['placa','Placa']];
-function abreKm(id){ const def=AB[id]; if(!def||!KM_CTX) return; AB_N=id;
+function abreKm(id,f,ft){ const def=AB[id]; if(!def||!KM_CTX) return; AB_N=id; AB_KIND='km'; AB_F=f||null; AB_FT=ft||'';
   const ov=$('ab-ov'); if(!def.placa&&AB_Q==='placa') AB_Q='up';
-  const {F,rev,per}=KM_CTX, base=def.t2?F.filter(r=>T2(r.op)):F;
-  $('ab-t').textContent=def.t; $('ab-s').textContent=per+(def.t2?' · só o T2 (Rota, Van, AS)':'')+' · '+F.length+' linha(s) da Dispersão';
+  const {per,rev}=KM_CTX, F0=AB_F?KM_CTX.F.filter(AB_F):KM_CTX.F, F=F0, base=def.t2?F.filter(r=>T2(r.op)):F;
+  $('ab-t').textContent=def.t+(AB_FT?' · '+AB_FT:''); $('ab-s').textContent=per+(def.t2?' · só o T2 (Rota, Van, AS)':'')+' · '+F.length+' linha(s) da Dispersão';
   $('ab-q').innerHTML=QUEBRAS.filter(q=>q[0]!=='placa'||def.placa).map(q=>`<button class="dimb${AB_Q===q[0]?' on':''}" data-q="${q[0]}">${q[1]}</button>`).join('');
   let head, body, foot, pe='';
   if(AB_Q==='placa'){ const r=abPlaca(base); head=r.head; body=r.body; foot=''; pe=r.pe; }
@@ -968,7 +1171,7 @@ function abreKm(id){ const def=AB[id]; if(!def||!KM_CTX) return; AB_N=id;
     const hl=AB_Q==='up'?['Unidade','Projeto']:[AB_Q==='uni'?'Unidade':AB_Q==='proj'?'Projeto':'Mês'];
     const cel=(S,c)=>{ const v=c[1](S); return `<td class="num ${c[3]?c[3](v):''}">${esc(c[2](v))}</td>`; };
     const lin=Object.entries(G).map(([k,rs])=>({k,S:agKm(rs,rev)}));
-    const ord=AB_Q==='mes'?(a,b)=>a.k<b.k?-1:1:(a,b)=>Math.abs(def.cols[0][1](b.S)||0)-Math.abs(def.cols[0][1](a.S)||0);
+    const ord=AB_Q==='mes'?(a,b)=>a.k<b.k?-1:1:def.ord?(a,b)=>def.ord(a.S)-def.ord(b.S):(a,b)=>Math.abs(def.cols[0][1](b.S)||0)-Math.abs(def.cols[0][1](a.S)||0);
     lin.sort(ord);
     head=`<tr>${hl.map(h=>`<th>${h}</th>`).join('')}${def.cols.map(c=>`<th class="num">${esc(c[0])}</th>`).join('')}</tr>`;
     body=lin.map(l=>`<tr>${lab(l.k).map((t,i)=>`<td class="conta">${esc(i===1&&AB_Q==='up'?OPS[t]:t)}</td>`).join('')}${def.cols.map(c=>cel(l.S,c)).join('')}</tr>`).join('');
@@ -989,7 +1192,16 @@ function abPlaca(F){
   return {head,body,pe:`${L.length} placa(s). Km rodado da aba Km/L do consumo; km remunerado por placa só nos meses em que a lista de placas da Dispersão está no banco (a dispersão compara os mesmos meses).`};
 }
 function fechaAb(){ $('ab-ov').classList.remove('on'); AB_N=null; }
-$('ab-q').addEventListener('click',e=>{ const q=e.target.closest('[data-q]'); if(!q) return; AB_Q=q.dataset.q; abreKm(AB_N); });
+$('ab-q').addEventListener('click',e=>{ const q=e.target.closest('[data-q]'); if(!q) return; AB_Q=q.dataset.q; if(AB_KIND==='roic') abreRoic(AB_N); else abreKm(AB_N,AB_F,AB_FT); });
+/* seletores do topo das árvores e os chips de maiores gaps */
+$('modo-roic').addEventListener('click',e=>{ const b=e.target.closest('[data-cmp]'); if(!b) return; CMP=b.dataset.cmp; try{ localStorage.setItem('arvores_cmp',CMP); }catch(x){} marcaCmp(); renderROIC(); });
+function marcaCmp(){ document.querySelectorAll('#modo-roic [data-cmp]').forEach(b=>b.classList.toggle('on',b.dataset.cmp===CMP)); }
+$('ipca-in').addEventListener('change',e=>{ const v=String(e.target.value).trim(); try{ if(v) localStorage.setItem('arvores_ipca',v); else localStorage.removeItem('arvores_ipca'); }catch(x){} renderROIC(); });
+$('ipca-in').addEventListener('keydown',e=>{ if(e.key==='Enter') e.target.blur(); });
+$('modo-km').addEventListener('click',e=>{ const b=e.target.closest('[data-km]'); if(!b) return; KM_MODO=b.dataset.km; try{ localStorage.setItem('arvores_km',KM_MODO); }catch(x){} renderKm(); });
+$('gaps-roic').addEventListener('click',e=>{ const c=e.target.closest('[data-ab]'); if(!c) return; abreRoic(c.dataset.ab); });
+$('gaps-km').addEventListener('click',e=>{ const c=e.target.closest('[data-uni]'); if(!c) return; const u=c.dataset.uni, op=c.dataset.op; abreKm('disp',r=>r.uni===u&&r.op===op,u+' · '+OPS[op]); });
+$('arv-roic')._top=36; $('arv-km')._top=36; marcaCmp();
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('ab-ov').classList.contains('on')) fechaAb(); });
 
 /* ── início ── */
@@ -1025,7 +1237,7 @@ function setVw(v){ VW=v;
   document.querySelectorAll('.vw').forEach(x=>x.classList.toggle('on',x.id==='vw-'+v)); set('tit',TIT[v]||'');
   if(!VIGS.length) return;
   if(v==='km') renderKm();
-  else { if(v==='roic'&&_arvRoicPend){ arvore($('arv-roic'),_arvRoicPend); _arvRoicPend=null; } renderROIC(); } }
+  else { if(v==='roic'&&_arvRoicPend){ arvore($('arv-roic'),_arvRoicPend,no=>abreRoic(no.ab)); _arvRoicPend=null; } renderROIC(); } }
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
 
 /* ── lateral recolhida + dicas ── */
@@ -1067,6 +1279,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611182330"></script>
+<script src="../assets/build-check.js?v=202611190130"></script>
 </body>
 </html>
