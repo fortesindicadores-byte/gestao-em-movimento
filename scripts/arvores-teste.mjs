@@ -39,7 +39,14 @@ for (const q of [1, 2]) {
 // ── aba Dispersão de km: CGR Rota out/26 ──
 const L = (m, pc) => { const c = Array.from({ length: 33 }, () => null); c[0] = { v: `Date(2026,${m - 1},1)` }; c[14] = { v: pc };
   c[21] = { v: 10 }; c[22] = { v: 200 }; c[23] = { v: 100 }; c[25] = { v: 10 }; c[27] = { v: 300 }; c[28] = { v: 5 }; c[30] = { v: 400 }; c[31] = { v: 20700 }; c[32] = { v: 22000 }; return { c }; };
-const ABA = { status: 'ok', table: { cols: Array.from({ length: 33 }, (_, i) => ({ id: 'c' + i, label: '' })), rows: [L(10, 'ROTA - CGR'), L(9, 'ROTA - CGR')] } };
+// Van de CGR em out/26: 2 ativos · 40 mapas × 50 km = 2.000 km rem · 2.600 rodados (+600)
+const V = (m, pc) => { const c = Array.from({ length: 33 }, () => null); c[0] = { v: `Date(2026,${m - 1},1)` }; c[14] = { v: pc };
+  c[21] = { v: 2 }; c[22] = { v: 40 }; c[23] = { v: 50 }; c[31] = { v: 2000 }; c[32] = { v: 2600 }; return { c }; };
+const ABA = { status: 'ok', table: { cols: Array.from({ length: 33 }, (_, i) => ({ id: 'c' + i, label: '' })), rows: [L(10, 'ROTA - CGR'), L(9, 'ROTA - CGR'), V(10, 'ROTA (VAN) - CGR')] } };
+// km rodado por placa (aba Km/L do consumo): a abertura por placa
+const KML = [{ vigencia: '10/2026', projeto: 'ROTA - CGR', placa: 'AAA1111', km_rodado_horas_trabalhadas: 12000 },
+  { vigencia: '10/2026', projeto: 'ROTA - CGR', placa: 'BBB2B22', km_rodado_horas_trabalhadas: 10000 },
+  { vigencia: '10/2026', projeto: 'VAN - CGR', placa: 'VAN0A01', km_rodado_horas_trabalhadas: 2600 }];
 
 const filtra = (rows, q) => rows.filter(r => [...q.entries()].every(([k, v]) => {
   if (['select', 'order', 'offset', 'limit'].includes(k) || !(k in (rows[0] || {})) && !['ano'].includes(k)) return true;
@@ -61,7 +68,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     if (p.endsWith('/auth/v1/user')) return json({ id: 'u1', email: 'x@conlogsa.com.br' });
     if (p.includes('/rest/v1/fca_profiles')) return json({ is_admin: true });
     const t = p.split('/rest/v1/')[1]; if (+(u.searchParams.get('offset') || 0) > 0) return json([]);
-    const T = { sh_dre_receita: REC, sh_dre_ebitda: EBD, dre_gerencial: DG, ft_layout: LAY, ft_linha: LIN };
+    const T = { sh_dre_receita: REC, sh_dre_ebitda: EBD, dre_gerencial: DG, ft_layout: LAY, ft_linha: LIN, sh_consumo_km_litro: KML };
     return json(T[t] ? filtra(T[t], u.searchParams) : []);
   });
   await pg.addInitScript(t0 => { sessionStorage.setItem('gem_hub', '1'); localStorage.setItem('bi_theme', t0);
@@ -106,7 +113,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   af('ROIC set+out 100,5%', await txt('h-roic') === '100,5%', await txt('h-roic'));
   af('nó depreciação marcado', await pg.evaluate(() => [...document.querySelectorAll('#arv-roic .tn-s')].some(s => /DRE do ERP \+ FT/.test(s.textContent))));
   // árvore de km (out/26): teto 25 mil · 50 mapas não rodados (5 mil km) · revisão +500 km · dispersão +1.300 (+6,3%)
-  await pg.evaluate(() => { const w = document.getElementById('ms-vig'); w._sel = new Set(['2026-10']); w._render(''); setVw('km'); });
+  await pg.evaluate(() => { const w = document.getElementById('ms-vig'); w._sel = new Set(['2026-10']); w._render(''); const o = document.getElementById('ms-op'); o._sel = new Set(['ROTA']); o._render(''); setVw('km'); });
   await pg.waitForFunction(() => document.querySelectorAll('#arv-km .tn').length > 3, null, { timeout: 10000 }).catch(() => {});
   const km = await pg.evaluate(() => Object.fromEntries([...document.querySelectorAll('#arv-km .tn')].map(n => [n.querySelector('.tn-t').textContent, n.querySelector('.tn-v').textContent])));
   if (um) console.log(JSON.stringify(km));
@@ -133,6 +140,39 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   await pg.click('#arv-km .arv-zoom button[data-z="0"]');
   af('Ajustar volta a 100%', /^100%$/.test(await pg.inputValue('#arv-km .arv-zp')) && Math.abs((await larg()) - w0) < 1);
   if (SHOT) await pg.screenshot({ path: path.join(SHOT, `km-${w}-${tema}.png`) });
+  // indicadores nos nós
+  const rot = await pg.evaluate(() => [...document.querySelectorAll('#arv-km .tn td')].map(t => t.textContent).join('|'));
+  af('km por viagem e placas no nó', /Por viagem\|102,3/.test(rot) && /Placas que rodaram\|2,0/.test(rot) && /Km por placa no mês\|11.000/.test(rot), rot);
+  // abertura: clique no nó Km rodado
+  await pg.click('#arv-km .arv-zoom button[data-z="0"]');
+  const clicaNo = t => pg.evaluate(t0 => { const n = [...document.querySelectorAll('#arv-km .tn.ab')].find(x => x.querySelector('.tn-t').textContent === t0); const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + 12 }; }, t);
+  let c = await clicaNo('Km rodado'); await pg.mouse.click(c.x, c.y); await pg.waitForTimeout(150);
+  const ab = () => pg.evaluate(() => ({ on: document.getElementById('ab-ov').classList.contains('on'), t: document.getElementById('ab-t').textContent,
+    q: [...document.querySelectorAll('#ab-q .dimb')].map(b => b.textContent + (b.classList.contains('on') ? '*' : '')),
+    th: [...document.querySelectorAll('#ab-tab thead th')].map(x => x.textContent), tr: [...document.querySelectorAll('#ab-tab tbody tr')].map(r => [...r.cells].map(x => x.textContent)),
+    hs: (() => { const w = document.querySelector('.ab-box .twrap'); return w.scrollWidth - w.clientWidth; })() }));
+  let A = await ab(); if (um) console.log(JSON.stringify(A));
+  af('clique abre a abertura do nó', A.on && A.t === 'Km rodado', JSON.stringify(A));
+  af('abertura por unidade e projeto em duas colunas', A.th[0] === 'Unidade' && A.th[1] === 'Projeto' && A.tr[0][0] === 'CGR' && A.tr[0][1] === 'Rota', JSON.stringify(A.tr));
+  af('abertura com km por ativo e por viagem', A.th.includes('Km por ativo no mês') && A.tr[0].includes('2.200') && A.tr[0].includes('102,3'), JSON.stringify(A.tr));
+  af('abertura sem barra lateral', A.hs <= 1, A.hs);
+  if (SHOT) await pg.screenshot({ path: path.join(SHOT, `abertura-${w}-${tema}.png`) });
+  await pg.click('#ab-q [data-q="placa"]'); A = await ab();
+  af('abertura por placa (Km/L)', A.tr.length === 2 && A.tr[0][0] === 'AAA1111' && A.tr[0][4] === '12.000', JSON.stringify(A.tr));
+  await pg.keyboard.press('Escape'); A = await ab(); af('Esc fecha a abertura', !A.on);
+  // arrastar não abre
+  c = await clicaNo('Km remunerado'); await pg.mouse.move(c.x, c.y); await pg.mouse.down(); await pg.mouse.move(c.x + 60, c.y + 30, { steps: 4 }); await pg.mouse.up();
+  A = await ab(); af('arrastar não abre a abertura', !A.on);
+  c = await clicaNo('Mapas que não rodaram (T2)'); await pg.mouse.click(c.x, c.y); A = await ab();
+  af('abertura dos mapas não rodados (T2)', A.on && A.th.includes('Não rodados') && A.tr[0].includes('50'), JSON.stringify(A));
+  await pg.click('.ab-x');
+  // filtro Projeto: só a Van
+  const opc = await pg.evaluate(() => [...document.querySelectorAll('#ms-op .ms-opt:not(.all-opt)')].map(o => o.textContent.replace('only', '').trim()));
+  af('filtro Projeto com a Van separada', /Projeto/.test(await pg.evaluate(() => document.querySelector('#ms-op .ms-btn').textContent)) && opc.join(',') === 'Rota,Van,Auto Serviço,Empurrada,Insumos,Armazém', opc.join(','));
+  await pg.evaluate(() => { const o = document.getElementById('ms-op'); o._sel = new Set(['VAN']); o._render(''); render(); });
+  await pg.waitForTimeout(400);
+  const kv = await pg.evaluate(() => Object.fromEntries([...document.querySelectorAll('#arv-km .tn')].map(n => [n.querySelector('.tn-t').textContent, n.querySelector('.tn-v').textContent])));
+  af('Van: dispersão +600 km', kv['Dispersão de km'] === '+600 km', JSON.stringify(kv));
   af('sem erro na página', !errs.length, errs.join(' | '));
   await ctx.close();
 }
