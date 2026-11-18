@@ -145,7 +145,7 @@
     const grid = { color: claro ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.06)' };
     const tick = { color: claro ? '#444' : '#94A3B8', font: { family: 'Montserrat', size: mob ? 8 : 11 } };
     const tickY = { color: claro ? '#444' : '#94A3B8', font: { family: 'Montserrat', size: mob ? 7 : 9 },
-      callback: v => Math.round(v) + '%' };
+      callback: v => v > 100 ? '' : Math.round(v) + '%' };
     const tooltip = { backgroundColor: '#141B26', titleColor: '#F97316', bodyColor: '#F1F5F9',
       borderColor: '#1E2D40', borderWidth: 1,
       titleFont: { family: 'Montserrat' }, bodyFont: { family: 'Montserrat' },
@@ -160,8 +160,10 @@
     const rng = Math.max(hi - lo, 5);
     let yMin = Math.max(0, Math.floor(Math.min(lo - rng * .45, lo * .82) / 5) * 5);
     if (yMin >= lo) yMin = Math.max(0, lo - 5);
-    // percentual: o teto para em 100% (o rótulo da barra cabe no padding de cima)
-    const yMax = Math.min(Math.max(100, hi), Math.ceil(Math.max(hi + rng * .18, hi * 1.04) / 5) * 5);
+    // teto pela régua do Km/L, SEM travar em 100% (Renan, 18/11/2026: "esse 100% como
+    // o valor máximo de y? Esse é o padrão?"): travado, o rótulo da barra de 100% batia
+    // no topo. Acima de 100% a grade fica, mas o número do eixo some (aderência não passa de 100).
+    const yMax = Math.ceil(Math.max(hi + rng * .18, hi * 1.04) / 5) * 5;
     if (_charts[canvasId]) _charts[canvasId].destroy();
     _charts[canvasId] = new Chart(cv, {
       type: 'line',
