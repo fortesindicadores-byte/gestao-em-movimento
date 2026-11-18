@@ -155,10 +155,10 @@ const FILTRA_UNI = () => { const w = document.getElementById('ms-uni'); w._sel.c
 const MODO_MODELO = () => setRemMode('modelo');
 
 const PAINEIS = [
-  { pasta: 'combustivel/eficiencia-kml', nome: 'Eficiência Km/L', banco: true, totId: 'kml' },
+  { pasta: 'combustivel/eficiencia-kml', nome: 'Eficiência Km/L', banco: true, totId: 'kml', views: ['resumo', 'detalhado', 'veiculo', 'mix', 'diverg'] },
   { pasta: 'consumo-kml-analise', nome: 'Análise do Impacto', banco: false, totId: 'uni' },
 ];
-const VIEWS = ['resumo', 'detalhado', 'veiculo', 'diverg'];
+const VIEWS0 = ['resumo', 'detalhado', 'veiculo', 'diverg'];
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
 console.log(CHART_JS ? 'Chart.js REAL (' + CHART_JS + ')' : 'Chart.js dublado (vazio)');
 
@@ -220,7 +220,7 @@ for (const P of PAINEIS) {
       const tag = `${vp.width}×${vp.height} ${tema === 'light' ? 'claro' : 'escuro'}`;
       const claro = await page.evaluate(() => document.body.classList.contains('claro'));
       af(`[${tag}] tema aplicado (body.claro = ${tema === 'light'})`, claro === (tema === 'light'));
-      for (const v of VIEWS) {
+      for (const v of (P.views || VIEWS0)) {
         await page.evaluate(v => setVw(v), v); await page.waitForTimeout(250);
         const m = await page.evaluate(v => {
           const vw = document.getElementById('vw-' + v), de = document.documentElement;
@@ -275,6 +275,33 @@ for (const P of PAINEIS) {
             return r; });
           af('Consumo por Veículo alterna Placa ⇄ Modelo (uma linha por modelo, km soma igual, Unidade/Projeto somem, volta para placa)',
             pm.n === pm.modelos && pm.n < pm.nPlaca && Math.abs(pm.kmMod - pm.kmPlaca) < 2 && pm.uniOculta && /PLACAS/.test(pm.th) && pm.placas <= pm.nPlaca && pm.horiz <= 1 && /▼|▲/.test(pm.seta) && pm.volta === pm.nPlaca && pm.uniVolta !== 'none', JSON.stringify(pm));
+        }
+        if (P.views && P.views.includes('mix')) {
+          // Mix da Frota: (1) média simples + eficiência = o Impacto do Resumo; (2) a conta num caso conhecido
+          const mx = await page.evaluate(() => {
+            setVw('mix');
+            const num = x => +String(x).replace(/[^\d,-]/g, '').replace(',', '.');
+            const brl = t => { const s = String(t).trim(); const m = s.match(/([+-]?)([\d.,]+)\s*(k|mi)?/); if (!m) return null; let v = +m[2].replace(/\./g, '').replace(',', '.'); if (m[3] === 'k') v *= 1e3; if (m[3] === 'mi') v *= 1e6; return (m[1] === '-' ? -1 : 1) * v; };
+            const tot = document.querySelector('#body-mix tr.total').cells;
+            const T = mixSoma(MIX.grupos), imp = impactoSomaUni(filterRows(allRows, lastF));
+            // caso conhecido: 2 VUC (rem 4,0) e 2 truck (rem 3,0), Rem FT 3,5; os VUC rodam 1.000 km, os trucks 4.000
+            const mk = (placa, tipo, remM, km) => { const r = []; r[CL.vig] = 'Date(2026,7,1)'; r[CL.proj] = 'ROTA - XXX'; r[CL.placa] = placa; r[CL.tipoVei] = tipo; r[CL.modelo] = tipo;
+              r[CL.rem] = 3.5; r[CL.remM] = remM; r[CL.kmRod] = km; r[CL.litros] = km / 3.2; r[CL.rsLReal] = 6; r[CL.ativo] = 'VERDADEIRO'; return r; };
+            const C = mixDe([mk('AAA1A11', 'VUC', 4, 1000), mk('AAA1A12', 'VUC', 4, 1000), mk('AAA1A13', 'TRUCK', 3, 4000), mk('AAA1A14', 'TRUCK', 3, 4000)]);
+            const S = mixSoma(C.grupos);
+            return { mixTela: brl(tot[6].textContent), efTela: brl(tot[7].textContent), totTela: brl(tot[8].textContent), T, imp,
+              nLin: document.querySelectorAll('#body-mix tr[data-k]').length, caso: S,
+              hero: document.getElementById('mx-h').textContent, n2: document.querySelectorAll('#body-mix2 tr').length };
+          });
+          af('Mix: média simples + eficiência = Impacto do Resumo (impactoSomaUni)', mx.imp != null && Math.abs(mx.T.mix + mx.T.ef - mx.imp) < 0.5 && Math.abs(mx.T.tot - mx.imp) < 0.5, JSON.stringify({ mix: mx.T.mix, ef: mx.T.ef, imp: mx.imp }));
+          af('Mix: tabela por unidade-projeto com Total e hero preenchido', mx.nLin > 3 && mx.hero !== '—' && mx.n2 > 1, `${mx.nLin} linhas · hero ${mx.hero}`);
+          const esp = (10000 / 3.5 - (2000 / 4 + 8000 / 3)) * 6;
+          af('Mix: caso conhecido (VUC 4,0 × 2.000 km, truck 3,0 × 8.000 km, Rem FT 3,5) = −309,5 L e −R$ 1.857', Math.abs(mx.caso.mix - esp) < 0.01 && Math.abs(mx.caso.rkm - 10000 / (500 + 8000 / 3)) < 1e-6 && Math.abs(mx.caso.rft - 3.5) < 1e-9, JSON.stringify({ mix: mx.caso.mix, esp, rkm: mx.caso.rkm }));
+          const sel = await page.evaluate(() => { const tr = document.querySelector('#body-mix tr[data-k]'); tr.click(); const k = tr.dataset.k;
+            const pl = MIX.placas.filter(o => o.uni + '|' + o.proj === k); const nTipo = new Set(pl.map(o => o.tipo)).size;
+            const r = { k, sel: tr.classList.contains('sel'), n: document.querySelectorAll('#body-mix2 tr:not(.total)').length, nTipo, chip: document.getElementById('mx-sel').textContent };
+            setMixDim('modelo'); r.th = document.getElementById('th-mix2').textContent; tr.click(); r.limpa = !document.querySelector('#body-mix tr.sel'); setMixDim('tipo'); return r; });
+          af('Mix: clicar na linha filtra a tabela de tipo (e desfaz no 2º clique); Tipo ⇄ Modelo', sel.sel && sel.n === sel.nTipo && sel.chip.includes('✕') && sel.th === 'MODELO' && sel.limpa, JSON.stringify(sel));
         }
         if (P.totId === 'kml') {
           const dim = await page.evaluate(() => { setDim('proj'); const th = document.getElementById('th-dim').textContent; const n = document.querySelectorAll('#body-kml tr').length;

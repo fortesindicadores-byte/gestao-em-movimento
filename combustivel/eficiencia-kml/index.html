@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611181300">
+<meta name="build" content="202611190300">
 <title>Km/L · Eficiência de Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -302,6 +302,18 @@ table.dre tr.total td.imp-cell{font-size:12px;}
 #vw-resumo .gr2{flex:2 1 0;max-height:none;grid-template-rows:minmax(0,1fr);}
 
 /* tabelas: preenchem a visão e rolam DENTRO do card */
+/* Mix da Frota */
+.mx-grid{flex:1 1 0;min-height:200px;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:12px;}
+.mx-grid .tsec{padding:10px 12px 10px;}
+#tbl-mix td,#tbl-mix2 td{white-space:nowrap;}
+#tbl-mix th,#tbl-mix2 th{white-space:normal;line-height:1.25;}
+#tbl-mix tbody tr:not(.total){cursor:pointer;}
+#tbl-mix tbody tr.sel td{background:var(--hover);}
+#vw-mix .kpis.k4{height:clamp(104px,15vh,160px);min-height:0;}
+#vw-mix .kpis.k4 .kpi .kv{font-size:clamp(20px,min(3.2vh,1.6vw),30px);}
+.tsub.tpe{margin:0;flex:0 0 auto;line-height:1.5;}
+@media(max-width:1500px){#tbl-mix td,#tbl-mix th,#tbl-mix2 td,#tbl-mix2 th{padding-left:6px;padding-right:6px;}#tbl-mix,#tbl-mix2{font-size:10.5px;}}
+@media(max-width:860px){.mx-grid{display:block;}.mx-grid .tsec{margin-bottom:12px;}#vw-mix .kpis.k4{height:auto;}}
 .tnota{font-size:10px;color:var(--txt3);margin:-2px 0 8px;line-height:1.45;}
 .export-btn{display:flex;align-items:center;gap:6px;background:rgba(59,179,59,.12);border:1px solid rgba(59,179,59,.40);
   border-radius:20px;color:var(--verde);font-family:inherit;font-size:10.5px;font-weight:700;padding:5px 12px;cursor:pointer;white-space:nowrap;}
@@ -421,6 +433,7 @@ table.dre tr.total td.imp-cell{font-size:12px;}
     <button class="s-item on" data-vw="resumo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Resumo Gerencial</button>
     <button class="s-item" data-vw="detalhado"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg> Km/L Detalhado</button>
     <button class="s-item" data-vw="veiculo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> Consumo por Veículo</button>
+    <button class="s-item" data-vw="mix"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h7M14 6h7M3 18h11M18 18h3"/><circle cx="12" cy="6" r="2"/><circle cx="16" cy="18" r="2"/><path d="M3 12h3M10 12h11"/><circle cx="8" cy="12" r="2"/></svg> Mix da Frota</button>
     <button class="s-item" data-vw="diverg"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/><path d="M11 8v3l2 1"/></svg> Diagnóstico</button>
 
     <div class="s-sec">Atalhos</div>
@@ -574,7 +587,60 @@ table.dre tr.total td.imp-cell{font-size:12px;}
         </div>
       </section>
 
-      <!-- ══ 4 · DIAGNÓSTICO ══ -->
+      <!-- ══ 4 · MIX DA FROTA (efeito da média simples do FT) ══ -->
+      <section class="vw" id="vw-mix">
+        <div class="fin-hero">
+          <div>
+            <div class="hlbl">Efeito da média simples do remunerado</div>
+            <div class="hval" id="mx-h">—</div>
+            <div class="hrem">Litros: <b id="mx-hl">—</b></div>
+            <div class="hdel">
+              <div class="hero-delta">Rem FT · média simples<b id="mx-rft">—</b></div>
+              <div class="hero-delta">Rem pelo km rodado<b id="mx-rkm">—</b></div>
+              <div class="hero-delta">Δ<b id="mx-rd">—</b></div>
+              <div class="hsep"></div>
+              <div class="hero-delta">Real<b id="mx-real">—</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="kpis k4">
+          <div class="kpi"><div class="kl">Impacto total vs Rem FT</div><div class="kv" id="mx-k-tot">—</div><div class="km">o mesmo Impacto do Resumo</div></div>
+          <div class="kpi"><div class="kl">Efeito da média simples</div><div class="kv" id="mx-k-mix">—</div><div class="km" id="mx-k-mix-m">—</div></div>
+          <div class="kpi"><div class="kl">Efeito eficiência</div><div class="kv" id="mx-k-ef">—</div><div class="km" id="mx-k-ef-m">real contra o rem pelo km rodado</div></div>
+          <div class="kpi"><div class="kl">Onde a média simples mais pesa</div><div class="kv kvn" id="mx-k-pior">—</div><div class="km" id="mx-k-pior-m">—</div></div>
+        </div>
+        <div class="mx-grid">
+          <div class="card tsec">
+            <div class="twrap"><table class="dre" id="tbl-mix" data-no-sort>
+              <thead><tr>
+                <th>UNIDADE</th><th>PROJETO</th><th class="num">PLACAS</th>
+                <th class="num">REM FT</th><th class="num">REM KM</th><th class="num">REAL</th>
+                <th class="num sep-l">MÉDIA SIMPLES</th><th class="num">EFICIÊNCIA</th><th class="num">IMPACTO</th>
+              </tr></thead>
+              <tbody id="body-mix"></tbody>
+            </table></div>
+          </div>
+          <div class="card tsec">
+            <div class="thead-row">
+              <div class="dims">
+                <span id="mx-sel"></span>
+                <button class="dimb on" data-mixdim="tipo" onclick="setMixDim('tipo')">Tipo veíc.</button>
+                <button class="dimb" data-mixdim="modelo" onclick="setMixDim('modelo')">Modelo</button>
+              </div>
+            </div>
+            <div class="twrap"><table class="dre" id="tbl-mix2" data-no-sort>
+              <thead><tr>
+                <th id="th-mix2">TIPO</th><th class="num">% PLACAS</th><th class="num">% KM</th>
+                <th class="num">KM/L REM</th><th class="num">REAL</th><th class="num sep-l">MÉDIA SIMPLES</th>
+              </tr></thead>
+              <tbody id="body-mix2"></tbody>
+            </table></div>
+          </div>
+        </div>
+        <div class="tsub tpe" id="mx-nota">O FT paga o Km/L remunerado de cada projeto pela média simples das placas ativas: cada placa conta igual, rode muito ou pouco. Se a unidade roda mais com os caminhões de Km/L menor (truck no lugar do VUC), os litros que o FT paga (km ÷ média simples) ficam abaixo do que esses caminhões precisam. <b>Média simples</b> = litros pagos − litros pelo km rodado, em R$ ao R$/L remunerado (negativo = contra nós). <b>Eficiência</b> = litros pelo km rodado − litros abastecidos. As duas somam o Impacto do Resumo. O Km/L de cada placa é a média do modelo (Base Remunerado Modelo), ajustada para que a média simples das placas ativas do projeto no mês feche com o Rem FT.</div>
+      </section>
+
+      <!-- ══ 5 · DIAGNÓSTICO ══ -->
       <section class="vw" id="vw-diverg">
         <div class="card tsec">
           <div class="thead-row">
@@ -1647,6 +1713,129 @@ function setRemMode(m){
   }
 }
 
+// ── MIX DA FROTA · efeito da média simples do FT (Renan, 18/11/2026: "uma visão
+// que explique o impacto do km/L remunerado, sendo média burra. Se eu tenho VUCs e
+// Tocos ativos, e rodo mais com trucks, estou rodando mais com caminhão que faz
+// média menor"). O FT paga o Km/L de cada projeto × mês pela MÉDIA SIMPLES das
+// placas ativas (o Km/L Rem Médio da aba). Os litros pagos são km ÷ essa média,
+// e os litros que a frota que rodou precisa são Σ km da placa ÷ Km/L da placa.
+//   média simples = (litros pagos − litros pelo km rodado) × R$/L rem
+//   eficiência    = (litros pelo km rodado − litros abastecidos) × R$/L rem
+// As duas somam o Impacto do Resumo (o preço é o da UNIDADE, ponderado pelo km,
+// como no impactoSomaUni). O Km/L da placa é a média do modelo (Rem Modelo, que é
+// do canal todo), ajustada por um fator para que a média simples das placas ATIVAS
+// do grupo feche com o Rem FT: assim o efeito mede só o peso (placa × km), não a
+// diferença de nível entre o modelo no canal e a unidade.
+let mixDim='tipo', mixSel=null, MIX=null;
+const ehAtivo=v=>/^(verdadeiro|true|sim|1)$/i.test(String(v==null?'':v).trim());
+function mixDe(rows){
+  // preço por unidade (o mesmo do aggRows: R$/L rem ponderado pelo km rodado)
+  const pU={};
+  rows.forEach(r=>{ const u=getUni(r)||'—', km=+(r[CL.kmRod]||0), rsL=+(r[CL.rsLReal]||0);
+    const pRem=remPriceFor(r), p=(pRem!=null&&pRem>0)?pRem:rsL;
+    if(km>0&&p>0){ const o=pU[u]=pU[u]||{s:0,k:0}; o.s+=p*km; o.k+=km; } });
+  const preco=u=>{ const o=pU[u]; return o&&o.k>0?o.s/o.k:null; };
+  // grupos projeto - unidade × mês
+  const G={};
+  rows.forEach(r=>{ const d=_pvK(r[CL.vig]); const k=(r[CL.proj]||'—')+'|'+(d?_ymK(d):String(r[CL.vig]));
+    (G[k]=G[k]||[]).push(r); });
+  const grupos=[], placas=[];
+  let semModelo=0;
+  Object.values(G).forEach(gr=>{
+    const r0=gr[0], uni=getUni(r0)||'—', proj=getProj(r0)||'—', pr=preco(uni);
+    let km=0,lit=0,sRem=0,nRem=0;
+    const P={};
+    gr.forEach((r,i)=>{
+      const k=+(r[CL.kmRod]||0), l=+(r[CL.litros]||0), rem=+(r[CL.rem]||0), rm=+(r[CL.remM]||0);
+      km+=k; lit+=l; if(rem>0){sRem+=rem;nRem++;}
+      const pk=canonPlaca(r[CL.placa])||('#'+i);
+      const o=P[pk]=P[pk]||{placa:r[CL.placa]?String(r[CL.placa]).trim():'—',tipo:abbrTipo(r[CL.tipoVei]),modelo:modeloKey(r),km:0,lit:0,rmK:0,rmS:0,rmN:0,ativo:false};
+      o.km+=k; o.lit+=l; if(ehAtivo(r[CL.ativo]))o.ativo=true;
+      if(rm>0){ o.rmS+=rm; o.rmN++; if(k>0)o.rmK+=k/rm; }
+    });
+    const burra=nRem>0?sRem/nRem:null;
+    const lst=Object.values(P);
+    lst.forEach(o=>{ o.rm=o.rmK>0&&o.km>0?o.km/o.rmK:(o.rmN?o.rmS/o.rmN:null); });
+    const base=lst.filter(o=>o.ativo&&o.rm>0), base2=base.length?base:lst.filter(o=>o.rm>0);
+    const mRef=base2.length?base2.reduce((s,o)=>s+o.rm,0)/base2.length:null;
+    const fat=(burra>0&&mRef>0)?burra/mRef:null;
+    let pago=null, justo=null;
+    if(burra>0&&km>0){
+      pago=km/burra; justo=0;
+      lst.forEach(o=>{ const rj=(fat&&o.rm>0)?o.rm*fat:(fat?mRef*fat:burra); if(!(o.rm>0)&&o.km>0)semModelo++;
+        o.rj=rj; o.pago=o.km/burra; o.justo=o.km>0?o.km/rj:0; justo+=o.justo; o.pr=pr; o.uni=uni; o.proj=proj; o.base=base2.includes(o);
+        placas.push(o); });
+    }
+    grupos.push({uni,proj,km,lit,burra,pago,justo,pr,n:lst.length});
+  });
+  return {grupos,placas,semModelo};
+}
+function mixSoma(arr){
+  let km=0,lit=0,pago=0,justo=0,kmV=0,litV=0,mix=0,ef=0,tem=false;
+  arr.forEach(g=>{ km+=g.km; lit+=g.lit;
+    if(g.pago!=null&&g.pr>0){ tem=true; kmV+=g.km; litV+=g.lit; pago+=g.pago; justo+=g.justo;
+      mix+=(g.pago-g.justo)*g.pr; ef+=(g.justo-g.lit)*g.pr; }
+    else if(g.pr>0&&g.lit>0){ tem=true; ef-=g.lit*g.pr; } });   // litros sem remunerado: o Resumo também os conta no impacto
+  return {km,lit,rft:pago>0?kmV/pago:null,rkm:justo>0?kmV/justo:null,real:litV>0?kmV/litV:null,
+    litMix:tem?pago-justo:null,mix:tem?mix:null,ef:tem?ef:null,tot:tem?mix+ef:null};
+}
+function corR(v){ return v==null?'':(v<0?'color:var(--red)':'color:var(--green)'); }
+const fmtL=v=>v==null?'—':(v>=0?'+':'')+Math.round(v).toLocaleString('pt-BR')+' L';
+function renderMix(active){
+  MIX=mixDe(active);
+  const T=mixSoma(MIX.grupos);
+  const eH=document.getElementById('mx-h'); if(eH){ eH.textContent=T.mix!=null?fmtBrlD(T.mix):'—'; colI(eH,T.mix<0); }
+  set('mx-hl',fmtL(T.litMix)); set('mx-rft',kml(T.rft)); set('mx-rkm',kml(T.rkm)); set('mx-real',kml(T.real));
+  const dR=(T.rft!=null&&T.rkm!=null)?T.rkm-T.rft:null; const eD=document.getElementById('mx-rd');
+  if(eD){ eD.textContent=dR!=null?kmlD(dR):'—'; colI(eD,dR<0); }
+  const pk=(id,v)=>{ const e=document.getElementById(id); if(e){ e.textContent=v!=null?fmtBrlD(v):'—'; colI(e,v<0); } };
+  pk('mx-k-tot',T.tot); pk('mx-k-mix',T.mix); pk('mx-k-ef',T.ef);
+  set('mx-k-mix-m', T.tot&&T.mix!=null&&Math.abs(T.tot)>0 ? `${fmtL(T.litMix)} · ${Math.round(Math.abs(T.mix)/(Math.abs(T.mix)+Math.abs(T.ef||0))*100)}% do efeito total` : fmtL(T.litMix));
+  set('mx-k-ef-m', `real ${kml(T.real)} contra ${kml(T.rkm)} pelo km rodado`);
+  // por unidade - projeto
+  const L={};
+  MIX.grupos.forEach(g=>{ const k=g.uni+'|'+g.proj; (L[k]=L[k]||{uni:g.uni,proj:g.proj,gs:[],pl:new Set()}).gs.push(g); });
+  MIX.placas.forEach(o=>{ const x=L[o.uni+'|'+o.proj]; if(x)x.pl.add(o.placa); });
+  const lin=Object.values(L).map(x=>({...x,...mixSoma(x.gs),np:x.pl.size})).filter(x=>x.km>0);
+  lin.sort((a,b)=>(a.mix==null?1e15:a.mix)-(b.mix==null?1e15:b.mix));
+  if(mixSel&&!lin.some(x=>x.uni+'|'+x.proj===mixSel)) mixSel=null;
+  const pior=lin.find(x=>x.mix!=null&&x.mix<0);
+  const eP=document.getElementById('mx-k-pior');
+  if(eP){ if(pior){ eP.innerHTML=`<span class="kn" title="${pior.uni} · ${pior.proj}">${pior.uni} · ${pior.proj}</span><span class="kdel cr">${fmtBrlD(pior.mix)}</span>`;
+      set('mx-k-pior-m',`rem FT ${kml(pior.rft)} · pelo km rodado ${kml(pior.rkm)}`); }
+    else { eP.textContent='—'; set('mx-k-pior-m','a média simples não pesa contra no recorte'); } }
+  const td=(v,f)=>`<td class="num imp-cell" style="${corR(v)}">${v!=null?f(v):'—'}</td>`;
+  let h='';
+  lin.forEach(x=>{ const k=x.uni+'|'+x.proj, dd=(x.rft!=null&&x.rkm!=null)?x.rkm-x.rft:null;
+    h+=`<tr data-k="${k}"${mixSel===k?' class="sel"':''}><td class="conta">${x.uni}</td><td>${x.proj}</td><td class="num">${x.np}</td><td class="num">${kml(x.rft)}</td><td class="num${dd!=null&&dd<-0.005?' cr':''}">${kml(x.rkm)}</td><td class="num">${kml(x.real)}</td>${td(x.mix,fmtBrlD).replace('class="num','class="num sep-l')}${td(x.ef,fmtBrlD)}${td(x.tot,fmtBrlD)}</tr>`; });
+  const npT=new Set(MIX.placas.map(o=>o.placa)).size;
+  h+=`<tr class="total"><td class="conta">Total</td><td></td><td class="num">${npT}</td><td class="num">${kml(T.rft)}</td><td class="num">${kml(T.rkm)}</td><td class="num">${kml(T.real)}</td>${td(T.mix,fmtBrlD).replace('class="num','class="num sep-l')}${td(T.ef,fmtBrlD)}${td(T.tot,fmtBrlD)}</tr>`;
+  document.getElementById('body-mix').innerHTML=lin.length?h:'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--txt3)">Sem dados</td></tr>';
+  renderMix2();
+}
+function renderMix2(){
+  if(!MIX)return;
+  const pl=MIX.placas.filter(o=>!mixSel||o.uni+'|'+o.proj===mixSel);
+  const chave=mixDim==='modelo'?(o=>o.modelo||'—'):(o=>o.tipo||'—');
+  const M={}; let nB=0,kmT=0;
+  pl.forEach(o=>{ const k=chave(o), x=M[k]=M[k]||{k,nb:0,km:0,justo:0,kmL:0,lit:0,mix:0};
+    if(o.base){x.nb++;nB++;} x.km+=o.km; kmT+=o.km; x.justo+=o.justo; if(o.lit>0&&o.km>0){x.kmL+=o.km;x.lit+=o.lit;}
+    x.mix+=(o.pago-o.justo)*(o.pr||0); });
+  const lst=Object.values(M).filter(x=>x.km>0||x.nb>0).sort((a,b)=>a.mix-b.mix);
+  set('th-mix2',mixDim==='modelo'?'MODELO':'TIPO');
+  const sel=document.getElementById('mx-sel');
+  if(sel) sel.innerHTML=mixSel?`<button class="dimb on" onclick="mixFiltra(null)" title="Mostrar todas as unidades">${mixSel.replace('|',' · ')} ✕</button><span class="dims-sep"></span>`:'';
+  let h='', mT=0;
+  lst.forEach(x=>{ mT+=x.mix; const pP=nB?x.nb/nB*100:null, pK=kmT?x.km/kmT*100:null;
+    const nm=mixDim==='modelo'?resumoModelo(x.k):x.k;
+    h+=`<tr><td class="conta" title="${x.k}">${nm}</td><td class="num">${pP!=null?Math.round(pP)+'%':'—'}</td><td class="num">${pK!=null?Math.round(pK)+'%':'—'}</td><td class="num">${kml(x.justo>0?x.km/x.justo:null)}</td><td class="num">${kml(x.lit>0?x.kmL/x.lit:null)}</td><td class="num imp-cell sep-l" style="${corR(x.mix)}">${fmtBrlD(x.mix)}</td></tr>`; });
+  h+=`<tr class="total"><td class="conta">Total</td><td class="num">100%</td><td class="num">100%</td><td></td><td></td><td class="num imp-cell sep-l" style="${corR(mT)}">${fmtBrlD(mT)}</td></tr>`;
+  document.getElementById('body-mix2').innerHTML=lst.length?h:'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--txt3)">Sem dados</td></tr>';
+}
+function setMixDim(d){ mixDim=d; document.querySelectorAll('.dimb[data-mixdim]').forEach(b=>b.classList.toggle('on',b.dataset.mixdim===d)); renderMix2(); }
+function mixFiltra(k){ mixSel=k; document.querySelectorAll('#body-mix tr[data-k]').forEach(tr=>tr.classList.toggle('sel',tr.dataset.k===k)); renderMix2(); }
+document.getElementById('body-mix').addEventListener('click',e=>{ const tr=e.target.closest('tr[data-k]'); if(!tr)return; mixFiltra(mixSel===tr.dataset.k?null:tr.dataset.k); });
+
 // ── ATUALIZAR ──
 function atualizar(){
   refreshCascade();
@@ -1660,6 +1849,7 @@ function atualizar(){
   renderCharts(f2);
   renderTable(active,ytd);
   renderVeiTable(active,ytd);
+  renderMix(active);
   renderDiverg(f2);
 
   let vigLbl;
@@ -1756,7 +1946,7 @@ let _rt;window.addEventListener('resize',()=>{clearTimeout(_rt);_rt=setTimeout((
 let _recorte='', _carga='';
 function setStatus(v){ _carga=v; const e=document.getElementById('titSub'); if(e) e.textContent=_recorte?_recorte+' · '+v:v; }
 
-const TIT={resumo:'Resumo Gerencial',detalhado:'Km/L Detalhado',veiculo:'Consumo por Veículo',diverg:'Diagnóstico'};
+const TIT={resumo:'Resumo Gerencial',detalhado:'Km/L Detalhado',veiculo:'Consumo por Veículo',mix:'Mix da Frota',diverg:'Diagnóstico'};
 let VW='resumo';
 function setVw(v){
   VW=v;
@@ -1818,6 +2008,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202611181300"></script>
+<script src="../../assets/build-check.js?v=202611190300"></script>
 </body>
 </html>
