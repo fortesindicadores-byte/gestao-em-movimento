@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611190500">
+<meta name="build" content="202611191000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -530,16 +530,12 @@ body.claro .tn{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
       <section class="vw vw-arv" id="vw-roic">
         <div class="arv-modo" id="modo-roic"><span class="rot">Comparar com</span><button class="dimb" type="button" data-cmp="rem">Remunerado</button><button class="dimb" type="button" data-cmp="orc">Orçado</button><span class="rot" style="margin-left:12px">ROIC contra IPCA 12m</span><input id="ipca-in" class="ipca-in" type="text" inputmode="decimal" autocomplete="off" aria-label="IPCA de 12 meses em %"><span class="rot">%</span></div>
         <div class="arv-area" id="arv-roic"></div>
-        <div class="gaps" id="gaps-roic"></div>
-        <div class="nota" id="nota-roic"></div>
       </section>
 
       <!-- ══ 3 · ÁRVORE DE KM ══ -->
       <section class="vw vw-arv" id="vw-km">
         <div class="arv-modo" id="modo-km"><button class="dimb" type="button" data-km="comp">Composição do km</button><button class="dimb" type="button" data-km="gap">Gaps por unidade</button></div>
         <div class="arv-area" id="arv-km"></div>
-        <div class="gaps" id="gaps-km"></div>
-        <div class="nota" id="nota-km"></div>
       </section>
     </div>
   </main>
@@ -988,14 +984,6 @@ async function renderROIC(){
   ROIC_CTX={vigs,per,R};
   const clica=no=>abreRoic(no.ab);
   if(VW==='roic') arvore($('arv-roic'),raiz,clica); else _arvRoicPend=raiz;
-  // maiores gaps: as linhas do DRE que estão contra e as unidades × projeto com o EBITDA mais abaixo da referência
-  const gl=['rec','C','M','P','O','dem','dep'].map(id=>({id,o:id==='dep'?gDep:g(id)})).filter(x=>x.o.imp!=null&&x.o.imp<-0.5).sort((a,b)=>a.o.imp-b.o.imp).slice(0,4);
-  const gu=linhas.map(l=>({l,o:gapDe('ebd',l.r)})).filter(x=>x.o.imp<-0.5).sort((a,b)=>a.o.imp-b.o.imp).slice(0,3);
-  $('gaps-roic').innerHTML=(gl.length||gu.length)?`<span class="rot">Maiores gaps vs ${CMP_NOME()}</span>`
-    +gl.map(x=>`<span class="gp" data-ab="${x.id}">${esc(GR[x.id].t)} <b>${esc(fmtSig(fmtR,x.o.imp))}/mês</b> · ROIC ${esc(fmtPP(x.o.pp))}</span>`).join('')
-    +gu.map(x=>`<span class="gp" data-ab="ebd" data-op="${x.l.op}" data-uni="${x.l.uni}">${esc(x.l.uni)} · ${esc(OPS[x.l.op])}: EBITDA <b>${esc(fmtSig(fmtR,x.o.imp))}/mês</b></span>`).join('')
-    :`<span class="rot">Sem gap contra o ${CMP_NOME()} no recorte</span>`;
-  $('nota-roic').innerHTML=`<b>ROIC</b> contra o IPCA de 12 meses (${esc(ip.rot)}); o impacto da raiz é o NOPAT que passa (ou falta) da inflação sobre o capital, por mês. <b>Demais nós</b> contra o ${CMP_NOME()} do DRE: ▲ = real − ${CMP_NOME()}, impacto em R$ por mês antes do IR (vermelho = contra nós) e em pp de ROIC (× 66% × 12 ÷ capital). <b>Clique num nó</b> para abrir por unidade, projeto e mês. <b>Capital</b>: valor de compra do FT × residual pela idade (100% → ${br(RES5*100,0)}% aos 5 anos → ${br(RES8*100,0)}% aos 8). <b>Depreciação</b>: a do DRE do ERP nos meses importados; nos outros, estimada pela mesma curva. <b>IR/CS</b>: 34% teóricos. <b>Combustíveis, Manutenções e Pneus</b> abrem em km rodado (Dispersão de km) e R$/km: volume = ▲ km × R$/km de referência e R$/km = ▲ R$/km × km rodado, que somam o ▲ do pacote nas operações com km (o Armazém não tem km); R$/viagem e R$ por ativo no nó do R$/km.`;
   if(AB_KIND==='roic'&&AB_N&&$('ab-ov').classList.contains('on')) abreRoic(AB_N);
 }
 let ROIC_CTX=null;
@@ -1172,7 +1160,7 @@ async function renderKm(){
   if(!rows._imp){ impactoKm(rows); rows._imp=true; }
   const F=rows.filter(r=>vigs.includes(r.vig)&&passa(r.op,r.uni));
   KM_CTX={F,rev,per,vigs};
-  if(!F.length){ area.innerHTML=`<div class="vazio">Sem Dispersão de km em ${esc(per)} no recorte.</div>`; $('nota-km').textContent=''; $('gaps-km').innerHTML=''; return; }
+  if(!F.length){ area.innerHTML=`<div class="vazio">Sem Dispersão de km em ${esc(per)} no recorte.</div>`; return; }
   const S=agKm(F,rev), n=S.n, disp=S.real-S.rem, outros=S.rem-S.kmPrim-S.kmRec-S.kmNot;
   let raiz;
   if(KM_MODO==='gap'){
@@ -1207,16 +1195,6 @@ async function renderKm(){
         {ab:'rem',t:'Km remunerado',v:fmtKm(S.rem),s:'o que o FT paga',rows:[['Ativos (média)',fmtN(S.frota/n)],['Por ativo no mês',fmtN(dv(S.rem,S.frota))],['Viagens por ativo no mês',r1(dv(S.viag,S.frota))],['Km por viagem',r1(dv(S.rem,S.viag))]],kids:remKids}]});
   }
   arvore(area,raiz,no=>abreKm(no.ab,no.fl,no.fl?no.t:''));
-  // maiores gaps: unidade × projeto com o maior impacto contra
-  const ch={}; F.forEach(r=>{ (ch[r.uni+'|'+r.op]=ch[r.uni+'|'+r.op]||[]).push(r); });
-  const gs=Object.entries(ch).map(([k,rs])=>({k,S:agKm(rs,rev)})).filter(x=>x.S.imp<-0.5).sort((a,b)=>a.S.imp-b.S.imp).slice(0,5);
-  $('gaps-km').innerHTML=gs.length?`<span class="rot">Maiores gaps</span>`+gs.map(x=>{ const [u,op]=x.k.split('|'), d=x.S.real-x.S.rem;
-    return `<span class="gp" data-uni="${u}" data-op="${op}">${esc(u)} · ${esc(OPS[op])} ${esc(fmtSig(fmtKm,d))} (${esc(fmtPs(dv(d,x.S.rem)))}) · <b>${esc(fmtSig(fmtR,x.S.imp/x.S.n))}/mês</b></span>`; }).join('')
-    :`<span class="rot">Nenhuma unidade rodou acima do remunerado no recorte</span>`;
-  const banco=[...new Set(F.filter(r=>r.fonte==='banco').map(r=>vigTxt(r.vig)))];
-  $('nota-km').innerHTML=`${esc(per)} · a mesma Dispersão de km do Painel KM${banco.length?` (${banco.join(', ')} do banco: 2artd e CT-e)`:''}, sem o balanço de massa. <b>Impacto</b> = ▲ km × R$/km remunerado (Combustíveis + Manutenções + Pneus remunerados da aba Frota ÷ km remunerado), por mês; vermelho = rodou mais que o remunerado.${S.semR?` ${S.semR} linha(s) sem R$/km no DRE ficam sem impacto.`:''} <b>Clique num nó</b> para abrir por unidade, projeto, mês e placa.`
-    +(KM_MODO==='comp'?` <b>Teto e mapas</b> só no T2 (Rota, Van, AS): ${MAPAS_MES} mapas por ativo no mês; o variável não recebido é potencial, não perda (sem mapa não há o custo do km). <b>Revisão</b>: km por mapa do FT na 2ª quinzena contra a 1ª, sobre metade dos mapas do mês.`:'')
-    +` No T1 cada CT-e é uma viagem; nos meses da aba, Insumos fica dentro da Empurrada.`;
   if(AB_KIND==='km'&&AB_N&&$('ab-ov').classList.contains('on')) abreKm(AB_N,AB_F,AB_FT);
 }
 
@@ -1264,8 +1242,6 @@ function marcaCmp(){ document.querySelectorAll('#modo-roic [data-cmp]').forEach(
 $('ipca-in').addEventListener('change',e=>{ const v=String(e.target.value).trim(); try{ if(v) localStorage.setItem('arvores_ipca',v); else localStorage.removeItem('arvores_ipca'); }catch(x){} renderROIC(); });
 $('ipca-in').addEventListener('keydown',e=>{ if(e.key==='Enter') e.target.blur(); });
 $('modo-km').addEventListener('click',e=>{ const b=e.target.closest('[data-km]'); if(!b) return; KM_MODO=b.dataset.km; try{ localStorage.setItem('arvores_km2',KM_MODO); }catch(x){} renderKm(); });
-$('gaps-roic').addEventListener('click',e=>{ const c=e.target.closest('[data-ab]'); if(!c) return; abreRoic(c.dataset.ab); });
-$('gaps-km').addEventListener('click',e=>{ const c=e.target.closest('[data-uni]'); if(!c) return; const u=c.dataset.uni, op=c.dataset.op; abreKm('disp',r=>r.uni===u&&r.op===op,u+' · '+OPS[op]); });
 $('arv-roic')._top=36; $('arv-km')._top=36; marcaCmp();
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('ab-ov').classList.contains('on')) fechaAb(); });
 
@@ -1344,6 +1320,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611190500"></script>
+<script src="../assets/build-check.js?v=202611191000"></script>
 </body>
 </html>

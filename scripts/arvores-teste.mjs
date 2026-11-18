@@ -120,8 +120,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   nr = await noR('Depreciação'); af('depreciação sem referência no DRE', nr && !nr.g.length && /Sem remunerado para comparar/.test(nr.i), JSON.stringify(nr));
   nr = await noR('ROIC anualizado'); af('raiz contra o IPCA 12m', nr && nr.g[0] === '4,5%' && nr.g[1] === '+88,9 pp', JSON.stringify(nr));
   af('hero: acima do IPCA', await txt('h-ipca') === '+88,9 pp', await txt('h-ipca'));
-  const gp = await pg.evaluate(() => [...document.querySelectorAll('#gaps-roic .gp')].map(x => x.textContent));
-  af('maiores gaps do ROIC', /Receita líquida -R\$ 100 mil\/mês/.test(gp[0] || '') && gp.some(x => /^Combustíveis -R\$ 3.000/.test(x)) && gp.some(x => /CGR · Rota: EBITDA -R\$ 50 mil/.test(x)), JSON.stringify(gp));
+  af('sem a faixa de maiores gaps e nota embaixo da árvore', await pg.evaluate(() => !document.querySelector('#vw-roic .gaps, #vw-roic .nota, #vw-km .gaps, #vw-km .nota')));
   // abertura de um nó do ROIC
   const cR = await pg.evaluate(() => { const n = [...document.querySelectorAll('#arv-roic .tn.ab')].find(x => x.querySelector('.tn-t').textContent === 'Receita líquida'); const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + 10 }; });
   await pg.mouse.click(cR.x, cR.y); await pg.waitForTimeout(150);
@@ -153,11 +152,6 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   if (um) console.log(JSON.stringify(kg));
   af('gaps: raiz e unidade, sem o nível de projeto', kg['Dispersão de km'] && !kg['Rota'] && kg['CGR · Rota'] && kg['CGR · Rota'].v === '+1.300 km', JSON.stringify(Object.keys(kg)));
   af('gaps: rem · real · ▲% e impacto', kg['CGR · Rota'] && kg['CGR · Rota'].g.join('|') === '20.700|22.000|+6,3%' && /-R\$ 2.405\/mês/.test(kg['CGR · Rota'].i) && /gap\b/.test(kg['CGR · Rota'].cls), JSON.stringify(kg['CGR · Rota']));
-  const gk = await pg.evaluate(() => [...document.querySelectorAll('#gaps-km .gp')].map(x => x.textContent));
-  af('maiores gaps do km', /CGR · Rota \+1.300 km \(\+6,3%\) · -R\$ 2.405\/mês/.test(gk[0] || ''), JSON.stringify(gk));
-  await pg.click('#gaps-km .gp'); await pg.waitForTimeout(150);
-  const AG = await pg.evaluate(() => ({ t: document.getElementById('ab-t').textContent, th: [...document.querySelectorAll('#ab-tab thead th')].map(x => x.textContent), tr: [...document.querySelectorAll('#ab-tab tbody tr')].map(r => [...r.cells].map(x => x.textContent)) }));
-  af('chip abre a dispersão da unidade com o impacto', AG.t === 'Dispersão de km · CGR · Rota' && AG.th.includes('Impacto R$/mês') && AG.tr[0].includes('-R$ 2.405') && AG.tr[0].includes('1,85'), JSON.stringify(AG));
   await pg.keyboard.press('Escape');
   if (SHOT) await pg.screenshot({ path: path.join(SHOT, `kmgap-${w}-${tema}.png`) });
   await pg.click('#modo-km [data-km="comp"]');
@@ -171,11 +165,6 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   af('subtítulo da árvore de km', /Dispersão de km e Freightech/.test(await txt('titSub')), await txt('titSub'));
   af('1ª viagem 20 mil km', km['Km da 1ª viagem'] === '20 mil km', km['Km da 1ª viagem']);
   af('Km sem rolagem', await vaza() <= 1, await vaza());
-  // a nota de baixo cresce depois do desenho: a árvore tem de se reajustar e nada fica cortado
-  await pg.evaluate(() => { document.getElementById('nota-km').innerHTML += '<br>linha a mais<br>outra linha<br>mais uma'; });
-  await pg.waitForTimeout(300);
-  const cabeKm = await pg.evaluate(() => { const a = document.getElementById('arv-km').getBoundingClientRect(); return [...document.querySelectorAll('#arv-km .tn')].every(n => { const r = n.getBoundingClientRect(); return r.top >= a.top - 1 && r.bottom <= a.bottom + 1 && r.left >= a.left - 1 && r.right <= a.right + 1; }); });
-  af('árvore de km cabe depois de a nota crescer', cabeKm);
   // zoom: + aumenta, Ajustar volta ao desenho inteiro
   const larg = () => pg.evaluate(() => document.querySelector('#arv-km .tn').getBoundingClientRect().width);
   const w0 = await larg();
