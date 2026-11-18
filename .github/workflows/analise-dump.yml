@@ -14,7 +14,7 @@ on:
         required: false
         default: 'false'
       so:
-        description: 'dre = só as abas do DRE; km = Dispersão, placas, viagens, balanço de massa, DRE Frota, Km/L e FT de ago/26 em diante; vazio = tudo'
+        description: 'dre = só as abas do DRE; km = Dispersão, placas, viagens, balanço de massa, DRE Frota, Km/L e FT de ago/26 em diante; comb = tabelas de combustível do FT desde 2025, DRE Frota e balanço de massa; vazio = tudo'
         required: false
         default: ''
 

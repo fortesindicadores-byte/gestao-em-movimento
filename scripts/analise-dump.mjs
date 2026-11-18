@@ -29,6 +29,11 @@ const SO_DRE = SO === 'dre';
 // DUMP_SO=km: só o que explica o km remunerado mês a mês (Dispersão de km da aba e
 // do banco, placas e viagens, balanço de massa, DRE Frota, Km/L e o FT de ago/26 em diante)
 const SO_KM = SO === 'km';
+// DUMP_SO=comb: as tabelas de combustível do FT desde 2025 (preço pago, ANP e preço
+// com crédito de imposto), o DRE Frota do banco e o balanço de massa, para medir o
+// crédito de imposto que o FT desconta no diesel
+const SO_COMB = SO === 'comb';
+const FT_COMB = ['CombustivelEmpurrada', 'CombustivelInsumos', 'CombustivelRota', 'CombustivelListaAS', 'Combustivel', 'CombustivelAS'];
 console.log('recorte:', SO || 'tudo');
 
 async function rest(q) {
@@ -59,7 +64,8 @@ async function emParalelo(itens, n, fn) {
 }
 
 // ── 1) Freightech ──
-const layout = SO_DRE ? [] : await tudo('ft_layout', 'canal,tabela,vigencia', SO_KM ? '&ano=eq.2026&mes=gte.8' : '');
+const layout = SO_DRE ? [] : await tudo('ft_layout', 'canal,tabela,vigencia', SO_KM ? '&ano=eq.2026&mes=gte.8'
+  : SO_COMB ? `&ano=gte.2025&tabela=in.(${FT_COMB.join(',')})` : '');
 if (!SO_DRE)
 grava('ft-layout', layout.map(({ canal, tabela, vigencia, tabela_nome, ano, mes, quinzena, colunas, linhas, carregado_em }) =>
   ({ canal, tabela, vigencia, tabela_nome, ano, mes, quinzena, colunas, linhas, carregado_em })));
@@ -78,6 +84,7 @@ for (const canal of canais) {
 // ── 2) abas do Sheets no banco ──
 const SLUGS = SO_DRE ? ['dre_frota', 'dre_receita', 'dre_ebitda']
   : SO_KM ? ['dre_frota', 'dispersao_km', 'consumo_km_litro']
+  : SO_COMB ? ['dre_frota']
   : ['dre_frota', 'dre_receita', 'dre_ebitda', 'dispersao_km', 'consumo_km_litro', 'consumo_rs_litro', 'consumo_rem_modelo'];
 for (const slug of SLUGS) {
   try {
@@ -89,6 +96,12 @@ for (const slug of SLUGS) {
 
 // ── 3) tabelas do portal ──
 if (SO_DRE) { console.log('só o DRE: Freightech e tabelas do portal ficaram fora'); process.exit(0); }
+if (SO_COMB) {
+  for (const [t, o] of [['balanco_massa', 'vigencia,unidade,projeto,conta'], ['ca_dre_frota', 'vigencia,linha']]) {
+    try { grava(`tb-${t}`, await tudo(t, o)); } catch (e) { console.log(`${t}: falhou (${e.message})`); }
+  }
+  console.log('recorte comb: o resto ficou fora'); process.exit(0);
+}
 if (SO_KM) {
   for (const [t, o] of [['dispersao_km', 'vigencia'], ['dispersao_placa', 'vigencia'], ['dispersao_placa_viagem', 'vigencia'], ['balanco_massa', 'vigencia'],
     ['consumo_auto_base', 'slug'], ['ca_dre_frota', 'linha'], ['ca_consumo_km_litro', 'linha']]) {
