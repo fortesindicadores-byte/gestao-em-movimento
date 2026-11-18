@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610302130">
+<meta name="build" content="202611181300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -376,9 +376,9 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 </style>
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../?volta="+encodeURIComponent(location.pathname+location.search));}catch(e){}</script>
 <script>window.__gvizDispBanco=false;/* este painel junta set/26+ da dispersao_km por conta própria (fetchDispBanco/indexaDispTudo): sem isto o shim poria o mês na aba e ele entraria duas vezes ou sem o detalhe por placa */</script>
-<script src="../assets/gviz-cache.js?v=202610281200"></script>
+<script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/balanco-massa.js?v=202610131400"></script>
-<script src="../assets/dispersao-km.js?v=202610152330"></script>
+<script src="../assets/dispersao-km.js?v=202611181300"></script>
 </head>
 <body>
 <div class="app">
@@ -1010,9 +1010,13 @@ async function fetchData() {
     .map(parseRow)
     .filter(r => r.vig && (r.rem > 0 || r.real > 0));
 
-  // set/26 em diante, do banco: só os meses que a aba NÃO tem (nada de jan a ago muda)
-  const vigAba = new Set(ALL.map(r => r.vig)), dispVigs = new Set(), dispSem = [];
+  // set/26 em diante, do banco: só os meses que a aba NÃO tem (nada de jan a ago muda);
+  // de out/26 em diante o mês importado (2artd + CT-e) vence a aba (Renan, 18/11/2026)
   const vigBR = v => { const [a, m] = String(v).split('-'); return m + '/' + a; };
+  const _DK = window.DispersaoKm;
+  const vigBanco = new Set(_DK && _DK.mesesBanco ? [..._DK.mesesBanco(dispBanco.linhasBD || dispBanco.linhas)].map(vigBR) : []);
+  if (vigBanco.size) { ALL = ALL.filter(r => !vigBanco.has(r.vig)); console.info('Dispersão de km: banco no lugar da aba em', [...vigBanco].join(', ')); }
+  const vigAba = new Set(ALL.map(r => r.vig)), dispVigs = new Set(), dispSem = [];
   (dispBanco.linhas || []).forEach(l => {
     const vig = vigBR(l.vigencia); if (vigAba.has(vig)) return;
     if (l.km_rodado == null) { dispSem.push(l.unidade + ' ' + l.projeto + ' ' + vig); return; }
@@ -1877,7 +1881,7 @@ function renderCharts(F) {
     mkVertBar(projByPct, 'pct',   v => Math.round(Math.abs(v)) + '%'));
 }
 
-const CACHE_KEY='bi_cache_km_v17';  // v17: planilha de viagens também em ago/26 (T2) · v16: placa T1 pela Km/L fora das placas de T2 · v15: placas de set/26+ pela planilha de viagens, T1 fora · v14: placas de set/26+ pela aba Abertura · v13: set/26 do banco ligado (com o balanço dele) · v12: balanço sem resposta do banco não cai na aba · v11: set/26 do banco desligado até validar · v10: set/26 em diante do banco (Dispersão de km importada) · v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
+const CACHE_KEY='bi_cache_km_v18';  // v18: de out/26 em diante o banco (2artd + CT-e) vence a aba · v17: planilha de viagens também em ago/26 (T2) · v16: placa T1 pela Km/L fora das placas de T2 · v15: placas de set/26+ pela planilha de viagens, T1 fora · v14: placas de set/26+ pela aba Abertura · v13: set/26 do banco ligado (com o balanço dele) · v12: balanço sem resposta do banco não cai na aba · v11: set/26 do banco desligado até validar · v10: set/26 em diante do banco (Dispersão de km importada) · v9: balanço só de mês com realizado · v8: balanço rateado pela diferença do mês · v7: balanço de massa rateado no ano · v6: balanço de massa pela coluna Valor 85% · v5: placas
 const CACHE_TTL=60*60*1000; // 1 hora
 
 async function atualizar() {
@@ -2033,6 +2037,6 @@ function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>KmApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202610302130"></script>
+<script src="../assets/build-check.js?v=202611181300"></script>
 </body>
 </html>

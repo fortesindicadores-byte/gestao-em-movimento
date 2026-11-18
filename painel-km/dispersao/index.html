@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202610291700">
+<meta name="build" content="202611181300">
 <title>Dispersão de km · Importar · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="../../assets/gviz-cache.js?v=202610281200"></script>
+<script src="../../assets/gviz-cache.js?v=202611181300"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<script src="../../assets/dispersao-km.js?v=202610152330"></script>
+<script src="../../assets/dispersao-km.js?v=202611181300"></script>
+<script src="../../assets/remun-mapas.js?v=202611181300"></script>
 <style>
 :root{
   --fundo:#202022; --app:rgba(30,40,60,.34); --side:rgba(30,30,30,.50);
@@ -92,7 +93,9 @@ tr.tot td{background:var(--cabec);font-weight:800;position:sticky;bottom:0;}
   </div>
   <p class="sub">Sobe a planilha <b>Dispersão de KM - Consolidado</b> para o banco, <b>de set/26 em diante</b> (jan a ago continuam vindo
     da aba Dispersão de km). O km remunerado vem da planilha. O km rodado também, quando o mês já tem; quando não tem, é
-    <b>completado pela aba Km/L</b>, placa a placa, com o projeto da sua planilha (Van pela Km/L, UDC = Van).</p>
+    <b>completado pela aba Km/L</b>, placa a placa, com o projeto da sua planilha (Van pela Km/L, UDC = Van).
+    <b>De out/26 em diante</b>, o mês sai do <b>2artd</b> (Rota, AS e Van) e das <b>bases de CT-e</b> da Empurrada e Insumos,
+    com o km por viagem do Freightech, e vale no lugar da aba.</p>
 
   <div id="gate"></div>
 
@@ -103,12 +106,17 @@ tr.tot td{background:var(--cabec);font-weight:800;position:sticky;bottom:0;}
         e a lista de placas da <b>02-ABERT. PLACA</b> e da parte T1 da <b>02-Dinamica. Placa</b>) e a <b>planilha de viagens</b> (uma linha por viagem:
         Tipo · Vigência · Entrega · Carga Atual · Frota · Projeto · Placa), que dá o <b>km remunerado por placa</b> de Rota, AS e Van.
         As placas são comparadas sempre em <b>Mercosul</b>; na tela aparecem como estão na planilha. Subir de novo <b>substitui</b> os meses que vêm no arquivo.</div>
+      <div class="csub" style="margin-top:-6px"><b>De out/26 em diante</b> (Renan, 18/11/2026): o <b>2artd</b> do mês (aba <code>2artd</code>, um mapa por linha)
+        e as planilhas de validação da <b>Empurrada</b> e dos <b>Insumos</b> (aba <code>Base_CT-es_T1</code> / <code>Variável_de_Fretes</code>, um CT-e por linha).
+        O 2artd só dá as viagens: o km de cada uma é o do <b>Freightech da quinzena</b> (Parâmetros Operação, Recarga Van), lido do banco.
+        Pode arrastar os cinco arquivos juntos.</div>
       <div class="drop" id="drop">
-        <b>Arraste o arquivo aqui</b>
+        <b>Arraste os arquivos aqui</b>
         <span>ou clique para escolher<br>
-          <code>Dispersão de KM - Consolidado · xlsm / xlsx</code> ou <code>planilha de viagens · xlsx</code></span>
+          <code>2artd_REM_MM_AAAA.xlsx</code> · <code>EMPURRADA_PIR.xlsm</code> · <code>INSUMOS_PIR.xlsx</code> ·
+          <code>Dispersão de KM - Consolidado</code> · <code>planilha de viagens</code></span>
       </div>
-      <input type="file" id="fileInput" accept=".xlsx,.xlsm,.xls" style="display:none">
+      <input type="file" id="fileInput" accept=".xlsx,.xlsm,.xls" multiple style="display:none">
       <div class="res" id="res"></div>
     </div>
 
@@ -122,6 +130,12 @@ tr.tot td{background:var(--cabec);font-weight:800;position:sticky;bottom:0;}
       </div>
       <div class="ferr"><label for="selVig">Vigência</label><select class="sel" id="selVig"></select></div>
       <div id="tab"></div>
+    </div>
+
+    <div class="card" style="padding-bottom:10px">
+      <div class="ctit">Viagens e valor pago × Freightech (2artd e CT-e)</div>
+      <div class="csub" id="subConf">Por unidade e projeto: viagens de cada tipo, mapas virados, km remunerado e o valor pago no 2artd contra o valor por viagem do FT (Resumo - SRTrans).</div>
+      <div id="tabConf"></div>
     </div>
 
     <div class="card" style="padding-bottom:10px">
@@ -154,7 +168,7 @@ tr.tot td{background:var(--cabec);font-weight:800;position:sticky;bottom:0;}
 const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
 let sb=null, EMAIL='', ADMIN=false;
-let LINHAS=[], PLACAS=[], KML=[], KMLINFO=null, KM=null, VIAG=[], VIAG_ERR=null, ABA=null;
+let LINHAS=[], PLACAS=[], KML=[], KMLINFO=null, KM=null, VIAG=[], VIAG_ERR=null, ABA=null, CONF=[], CONF_ERR=null;
 const D=window.DispersaoKm;
 
 const $=i=>document.getElementById(i);
@@ -221,9 +235,96 @@ async function recebeArquivos(lista){
   $('res').innerHTML='';
   if(typeof XLSX==='undefined'){ cartao('erro','Leitor de planilha ainda carregando','Tente de novo em um instante.'); return; }
   if(!ADMIN){ cartao('erro','Sem permissão para gravar','Seu acesso não é de administrador: o banco recusaria a escrita.'); return; }
-  const f=lista[0];
+  for(const f of lista) await recebeUm(f);
+}
+
+/* ── 2artd e base de CT-e (out/26 em diante): o km de cada viagem é o do FT ── */
+const RM=window.RemunMapas;
+const FT_CACHE={};
+async function carregaFT(vig){
+  if(FT_CACHE[vig]) return FT_CACHE[vig];
+  const [a,m]=vig.split('-'); const sufs=[1,2].map(q=>'_'+q+'_'+(+m)+'_'+a);
+  const rows=[];
+  for(const [canal,tab] of RM.FT_TABELAS){
+    for(const suf of sufs){
+      const vg=canal+suf;
+      const { data:lay, error:el } = await sb.from('ft_layout').select('colunas').eq('canal',canal).eq('tabela',tab).eq('vigencia',vg).maybeSingle();
+      if(el) throw new Error('ft_layout: '+el.message);
+      if(!lay) continue;
+      const ls=await todasQ(()=>sb.from('ft_linha').select('unidade,placa,dados').eq('canal',canal).eq('tabela',tab).eq('vigencia',vg).order('linha'));
+      ls.forEach(l=>{ const o={}; lay.colunas.forEach((c,i)=>{ o[c]=l.dados[i]; }); rows.push({ canal, tabela:tab, vigencia:vg, unidade:l.unidade, placa:l.placa, o }); });
+    }
+  }
+  const ix=RM.ftIndice(rows); ix.linhas=rows.length;
+  ix.faltam=RM.FT_TABELAS.filter(([c,t])=>!rows.some(r=>r.canal===c&&r.tabela===t)).map(([c,t])=>c+' '+t);
+  return (FT_CACHE[vig]=ix);
+}
+async function todasQ(fq){
+  const out=[]; const passo=1000;
+  for(let i=0;;i+=passo){ const { data, error } = await fq().range(i,i+passo-1);
+    if(error) throw new Error(error.message); out.push(...(data||[])); if(!data||data.length<passo) break; }
+  return out;
+}
+// apaga só as chaves (mês × unidade × projeto) do arquivo e grava
+async function gravaRemun(r, arquivo){
+  const chaves=[...new Set(r.linhas.map(l=>l.vigencia+'|'+l.unidade+'|'+l.projeto))].map(k=>k.split('|'));
+  const confC=[...new Set(r.conf.map(c=>c.vigencia+'|'+c.unidade+'|'+c.projeto))].map(k=>k.split('|'));
+  for(const [v,u,p] of chaves){
+    for(const t of ['dispersao_km','dispersao_placa','dispersao_placa_viagem']){
+      const { error } = await sb.from(t).delete().eq('vigencia',v).eq('unidade',u).eq('projeto',p);
+      if(error) throw new Error('ao limpar '+t+': '+error.message);
+    }
+  }
+  let remunOk=true, remunErr='';
+  for(const [v,u,p] of confC){
+    const { error } = await sb.from('remun_viagem').delete().eq('vigencia',v).eq('unidade',u).eq('projeto',p);
+    if(error){ remunOk=false; remunErr=error.message; break; }
+  }
+  const ins=async(t,ls,sel)=>{ let n=0; for(let i=0;i<ls.length;i+=500){ const { data, error } = await sb.from(t).insert(ls.slice(i,i+500)).select(sel); if(error) throw new Error(t+': '+error.message); n+=(data||[]).length; } return n; };
+  const nk=await ins('dispersao_km', r.linhas.map(l=>({ ...l, updated_by:EMAIL })), 'vigencia');
+  const np=await ins('dispersao_placa', r.placas, 'placa');
+  const nv=await ins('dispersao_placa_viagem', r.viagens.map(l=>({ ...l, updated_by:EMAIL })), 'placa');
+  let nc=0; if(remunOk){ try{ nc=await ins('remun_viagem', r.conf.map(c=>({ ...c, arquivo, updated_by:EMAIL })), 'tipo'); }catch(e){ remunOk=false; remunErr=e.message; } }
+  return { nk, np, nv, nc, remunOk, remunErr, vigs:[...new Set(chaves.map(c=>c[0]))] };
+}
+function resumoT(r){
+  const s=k=>r.linhas.reduce((a,l)=>a+(+l[k]||0),0);
+  return `<b>${r.linhas.length}</b> linha(s) (unidade × projeto) · ${n0(s('viagens_prim'))} viagens de 1ª · ${n0(s('viagens_rec'))} recargas · ${n0(s('viagens_not'))} noturnas`
+    +` · <b>${n0(s('km_rem'))} km remunerados</b> · ${n0(s('viagens_mapa_aberto'))} mapas virados`;
+}
+async function recebeUm(f){
   try{
     const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
+    const art=RM.le2artd(XLSX, wb);
+    if(art){
+      if(!art.vig||art.vig<RM.INICIO){ cartao('erro', f.name, `2artd de <b>${esc(art.vig?vigRot(art.vig):'mês desconhecido')}</b>: a importação vale de <b>${vigRot(RM.INICIO)}</b> em diante, então <b>nada foi gravado</b>.`); return; }
+      const ft=await carregaFT(art.vig);
+      if(!ft.linhas){ cartao('erro', f.name, `Sem o Freightech de <b>${vigRot(art.vig)}</b> no banco (tabelas Parâmetros Operação, Resumo - SRTrans…): <b>nada foi gravado</b>.`, 'Rode o Freightech Robot para o mês e suba de novo.'); return; }
+      const r=RM.calculaT2(art, ft, f.name);
+      const g=await gravaRemun(r, f.name);
+      const fora=Object.entries(art.fora).map(([k,n])=>`${k} ${n.toLocaleString('pt-BR')}`).join(' · ');
+      const sv=r.conf.reduce((a,c)=>a+c.sem_valor,0), pd=r.conf.reduce((a,c)=>a+c.pago_diferente,0), dv=r.conf.reduce((a,c)=>a+c.dif_valor,0);
+      const notas=[...r.avisos];
+      if(ft.faltam.length) notas.push('tabelas do FT que não estão no banco: '+ft.faltam.join(', '));
+      if(!g.remunOk) notas.push('o detalhe por viagem não gravou (rodar scripts/remun-viagem.sql): '+g.remunErr);
+      if(g.nk!==r.linhas.length) notas.push(`o banco confirmou ${g.nk} de ${r.linhas.length} linhas`);
+      cartao(notas.length?'aviso':'ok', f.name, `2artd · <b>${vigRot(art.vig)}</b> · ${art.mapas.length.toLocaleString('pt-BR')} mapas da frota própria · `+resumoT(r)
+        +`<br>${g.np} placas gravadas`+(fora?` · fora da conta: ${esc(fora)}`:'')
+        +(pd||sv?`<br>Pago diferente do FT: <b>${pd}</b> mapa(s), ${brl(dv)} · sem valor: <b>${sv}</b> mapa(s)`:''), notas.join(' · '));
+      await carrega(); $('selVig').value=art.vig; desenha(); return;
+    }
+    const ct=RM.leCtes(XLSX, wb);
+    if(ct){
+      const r=RM.calculaT1(ct, f.name);
+      if(!r.linhas.length){ cartao('erro', f.name, `Base de CT-e sem CT-e de <b>${vigRot(RM.INICIO)}</b> em diante: <b>nada foi gravado</b>.`); return; }
+      const g=await gravaRemun(r, f.name);
+      const notas=[]; const ig=Object.entries(ct.ignorados).map(([k,n])=>`${k} ${n}`).join(' · ');
+      if(ig) notas.push('CT-es fora: '+ig);
+      if(!ct.frota) notas.push('sem a aba FT_CAVALO: frota ativa 0');
+      if(!g.remunOk) notas.push('o detalhe por viagem não gravou (rodar scripts/remun-viagem.sql): '+g.remunErr);
+      cartao(notas.length?'aviso':'ok', f.name, `Base de CT-e (${esc(ct.aba)}) · ${ct.ctes.length.toLocaleString('pt-BR')} CT-es · `+resumoT(r)+`<br>${g.np} placas gravadas`, notas.join(' · '));
+      await carrega(); $('selVig').value=r.linhas[0].vigencia; desenha(); return;
+    }
     const rv=D.leViagens(XLSX, wb, f.name);
     if(rv){   // planilha de viagens
       rv.arquivo=f.name;
@@ -274,14 +375,16 @@ async function carrega(){
     if(!ABA) ABA=leAbaDisp().catch(e=>{ console.warn('aba Dispersão de km indisponível:', e); return []; });
     const viagP=todas('dispersao_placa_viagem','vigencia,unidade,projeto,placa,placa_origem,viagens_prim,viagens_rec,viagens_not,updated_at','vigencia')
       .catch(e=>{ VIAG_ERR=e.message||String(e); return []; });
-    const [lin, pls, kml, base, viag] = await Promise.all([
+    CONF_ERR=null;
+    const confP=todas('remun_viagem','*','vigencia').catch(e=>{ CONF_ERR=e.message||String(e); return []; });
+    const [lin, pls, kml, base, viag, conf] = await Promise.all([
       todas('dispersao_km','*','vigencia'),
       todas('dispersao_placa','vigencia,unidade,projeto,placa,placa_origem,km_rem','vigencia'),
       todas(KMLTAB,'vigencia,projeto,placa,km_rodado_horas_trabalhadas','linha'),
       sb.from('sh_base').select('carregado_em,erro').eq('slug','consumo_km_litro').maybeSingle().then(r=>r.data).catch(()=>null),
-      viagP
+      viagP, confP
     ]);
-    LINHAS=lin; PLACAS=pls; KMLINFO=base; VIAG=viag;
+    LINHAS=lin; PLACAS=pls; KMLINFO=base; VIAG=viag; CONF=conf;
     KML=kml.map(r=>{ const m=String(r.vigencia||'').match(/^(\d{2})\/(\d{4})$/);
       return { vigencia:m?m[2]+'-'+m[1]:'', projeto:r.projeto, placa:r.placa, km:+r.km_rodado_horas_trabalhadas||0 }; })
       .filter(r=>r.vigencia>=D.INICIO);
@@ -289,7 +392,7 @@ async function carrega(){
   }catch(e){
     $('tab').innerHTML=`<div class="vazio">Não consegui ler: ${esc(e.message||e)}</div>`; $('subRes').textContent=''; return;
   }
-  const vigs=[...new Set([...LINHAS.map(l=>l.vigencia), ...VIAG.map(l=>l.vigencia)])].sort().reverse();
+  const vigs=[...new Set([...LINHAS.map(l=>l.vigencia), ...VIAG.map(l=>l.vigencia), ...CONF.map(l=>l.vigencia)])].sort().reverse();
   const atual=$('selVig').value;
   $('selVig').innerHTML=vigs.map(v=>`<option value="${v}">${vigRot(v)}</option>`).join('');
   if(vigs.includes(atual)) $('selVig').value=atual;
@@ -326,6 +429,33 @@ function desenha(){
     +'</tbody></table></div>';
   desenhaPlacas(v);
   desenhaViagens(v);
+  desenhaConf(v);
+}
+
+// viagens e valor pago × FT, do detalhe da importação do 2artd / CT-e
+function desenhaConf(v){
+  if(CONF_ERR){ $('tabConf').innerHTML=`<div class="vazio">Não consegui ler o detalhe por viagem: ${esc(CONF_ERR)}<br>(rodar o SQL <code>scripts/remun-viagem.sql</code>)</div>`; return; }
+  const cs=CONF.filter(c=>c.vigencia===v);
+  if(!cs.length){ $('tabConf').innerHTML='<div class="vazio">Mês sem 2artd nem base de CT-e importados.</div>'; return; }
+  const g=new Map();
+  cs.forEach(c=>{ const k=c.unidade+'|'+c.projeto; const a=g.get(k)||{ unidade:c.unidade, projeto:c.projeto, prim:0, mkt:0, rec:0, not:0, vir:0, km:0, pago:0, ft:0, temFt:false, dif:0, ndif:0, sv:0 };
+    a[c.tipo]+=c.viagens; a.vir+=c.virados; a.km+=+c.km_rem||0; a.pago+=+c.valor_pago||0; if(c.valor_ft!=null){ a.ft+=+c.valor_ft; a.temFt=true; }
+    a.dif+=+c.dif_valor||0; a.ndif+=c.pago_diferente; a.sv+=c.sem_valor; g.set(k,a); });
+  const ls=[...g.values()].sort((a,b)=>a.unidade.localeCompare(b.unidade)||a.projeto.localeCompare(b.projeto));
+  const T={ prim:0, mkt:0, rec:0, not:0, vir:0, km:0, pago:0, ft:0, dif:0, ndif:0, sv:0 };
+  const corpo=ls.map(a=>{ Object.keys(T).forEach(k=>T[k]+=a[k]||0);
+    return `<tr><td>${esc(a.unidade)}</td><td>${esc(a.projeto)}</td><td class="num">${n0(a.prim)}</td><td class="num">${n0(a.mkt)}</td><td class="num">${n0(a.rec)}</td><td class="num">${n0(a.not)}</td>`
+      +`<td class="num">${n0(a.vir)}</td><td class="num">${n0(a.km)}</td><td class="num">${brl(a.pago)}</td><td class="num">${a.temFt?brl(a.ft):'—'}</td>`
+      +`<td class="num ${a.ndif?(a.dif<0?'cr':'cg'):''}">${a.ndif?n0(a.ndif)+' · '+brl(a.dif):'—'}</td><td class="num ${a.sv?'cr':''}">${a.sv?n0(a.sv):'—'}</td></tr>`; }).join('');
+  const quando=cs.reduce((m,c)=>c.updated_at>m?c.updated_at:m,'');
+  $('subConf').innerHTML=`${vigRot(v)} · importado em ${dt(quando)}. Na frota própria, todo mapa conta: Roteriz e Extra = 1ª; MKT e Recolha são pagos como 1ª; recarga e noturna com o km delas no FT. `
+    +`Virado = entrega num dia depois da saída, fora as noturnas. Pago × FT: o valor do mapa no 2artd contra o valor por viagem do Resumo - SRTrans da quinzena (Empurrada: sem valor do FT por CT-e aqui).`;
+  $('tabConf').innerHTML='<div style="overflow:auto;max-height:56vh"><table><thead><tr><th>Unidade</th><th>Projeto</th><th class="num">1ª viagem</th><th class="num">MKT/Recolha</th>'
+    +'<th class="num">Recarga</th><th class="num">Noturna</th><th class="num">Virados</th><th class="num">Km remunerado</th><th class="num">Valor pago</th><th class="num">Valor FT</th>'
+    +'<th class="num">Pago diferente do FT</th><th class="num">Sem valor</th></tr></thead><tbody>'+corpo
+    +`<tr class="tot"><td>Total</td><td></td><td class="num">${n0(T.prim)}</td><td class="num">${n0(T.mkt)}</td><td class="num">${n0(T.rec)}</td><td class="num">${n0(T.not)}</td>`
+    +`<td class="num">${n0(T.vir)}</td><td class="num">${n0(T.km)}</td><td class="num">${brl(T.pago)}</td><td class="num">${brl(T.ft)}</td>`
+    +`<td class="num">${T.ndif?n0(T.ndif)+' · '+brl(T.dif):'—'}</td><td class="num">${T.sv?n0(T.sv):'—'}</td></tr></tbody></table></div>`;
 }
 
 // os totais da aba Dispersão de km (mês sem 01-BD no banco, ago/26): a MESMA consulta do Painel KM
@@ -416,6 +546,6 @@ function desenhaPlacas(v){
 </script>
 <script src="../../assets/mobile.js"></script>
 <script src="../../assets/modo-tv.js?v=202610152330"></script>
-<script src="../../assets/build-check.js?v=202610291700"></script>
+<script src="../../assets/build-check.js?v=202611181300"></script>
 </body>
 </html>

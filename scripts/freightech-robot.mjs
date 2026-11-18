@@ -300,8 +300,10 @@ function aprendeDownload() {
 // 1ª rodada (Renan, 24/10/2026). Texto = nome exato da tabela; regex = todas
 // as tabelas do canal cujo nome casa ("tudo que tiver pneus escrito", "tudo que tiver manutenção")
 const RODADA1 = {
-  ROTA: ['Caminhão', 'Van', 'Resumo - SRTrans', 'Resumo - SRTrans Van', 'Resumo Rota', 'Resumo Van', 'Combustível', /pneu/i, /manuten/i],
-  AS: ['Caminhão', 'Combustível', /pneu/i, /manuten/i],
+  // Parâmetros Operação, Recarga e Recarga Van/AS (Renan, 18/11/2026): km por viagem de cada tipo de
+  // mapa (1ª, recarga, noturna) e o valor por mapa, que a importação do 2artd usa para o km remunerado
+  ROTA: ['Caminhão', 'Van', 'Resumo - SRTrans', 'Resumo - SRTrans Van', 'Resumo Rota', 'Resumo Van', 'Combustível', 'Parâmetros Operação', 'Recarga', 'Recarga Van', /pneu/i, /manuten/i],
+  AS: ['Caminhão', 'Combustível', 'Parâmetros Operação', 'Recarga', 'Resumo - SRTrans', 'Resumo AS', /pneu/i, /manuten/i],
   ARMAZEM: ['Equipamento Armazém', 'Faturamento'],
   EMPURRADA: ['Cavalo', 'Carreta', 'Trechos', 'Faturamento', 'Combustível', /pneu/i, /manuten/i],
   INSUMOS: ['Cavalo', 'Carreta', 'Trechos', 'Faturamento'],

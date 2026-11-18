@@ -332,6 +332,12 @@
   // A PLANILHA DE VIAGENS VALE DE AGO/26 EM DIANTE (Renan, 15/10/2026: "Libera agosto todo T2 também"):
   // agosto não tem 01-BD no banco, então o km por viagem sai do total da aba Dispersão de km (totaisT2)
   const VIAG_INICIO = '2026-08';
+  /* DE OUT/26 EM DIANTE O BANCO VENCE A ABA (Renan, 18/11/2026): o mês importado do 2artd e das bases de
+     CT-e (/painel-km/dispersao/) vale no lugar da aba Dispersão de km. Antes disso, o banco só completa os
+     meses que a aba não tem. Os leitores (Painel KM, Árvore, gviz-cache, FCA Automático) tiram da aba os
+     meses que mesesBanco() devolve. */
+  const BANCO_VENCE = '2026-10';
+  function mesesBanco(linhas) { return new Set((linhas || []).map(l => l.vigencia).filter(v => v && v >= BANCO_VENCE)); }
   const UNI_COD = ['BLC', 'CBA', 'CGR', 'FLP', 'GNA', 'GRL', 'MCC', 'NFR', 'PLT', 'RON', 'PIR', 'ANG'];
   const CARGA = { EXTRA: 'prim', ROTERIZ: 'prim', RECARGA: 'rec', NOTURNA: 'not' };
   function vigViagem(c, data) {
@@ -463,5 +469,5 @@
     return out;
   }
   raiz.DispersaoKm = { merc, unidadeDe, projetoDe, projetoKml, lePlanilha, kmRodado, monta, vigCel, placasAbertura,
-    leViagens, remPlacas, realPlacas, totaisT2, PROJ, AS_PELA_PLANILHA, AS_COMO_ROTA, INICIO, VIAG_INICIO };
+    leViagens, remPlacas, realPlacas, totaisT2, PROJ, AS_PELA_PLANILHA, AS_COMO_ROTA, INICIO, VIAG_INICIO, BANCO_VENCE, mesesBanco };
 })(typeof window !== 'undefined' ? window : globalThis);

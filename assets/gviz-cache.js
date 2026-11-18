@@ -425,6 +425,16 @@
         finais = bd.map(function (l) { return Object.assign({}, l, { km_rodado: l.km_real != null ? +l.km_real : null }); });
       }
       var ini = (D && D.INICIO) || '2026-09';
+      // de out/26 em diante o mês importado (2artd + CT-e) vence a aba (Renan, 18/11/2026): as linhas da aba
+      // desses meses saem e entram as do banco
+      var mb = D && D.mesesBanco ? D.mesesBanco(bd) : null;
+      if (mb && mb.size) {
+        var vigDe = function (row) { var c = row && row.c && row.c[0], v = c && c.v; var m = String(v == null ? '' : v).match(/Date\((\d{4}),\s*(\d{1,2})/);
+          if (m) return m[1] + '-' + ('0' + (+m[2] + 1)).slice(-2); m = String(v == null ? '' : v).match(/^(\d{4})-(\d{2})/); return m ? m[1] + '-' + m[2] : ''; };
+        obj.table.rows = obj.table.rows.filter(function (row) { return !mb.has(vigDe(row)); });
+        mb.forEach(function (v) { delete mesesAba[v]; });
+        info.banco = Array.from(mb);
+      }
       finais.forEach(function (l) {
         var vig = String(l.vigencia || ''); if (!/^\d{4}-\d{2}$/.test(vig) || vig < ini || mesesAba[vig]) return;
         if (l.km_rodado == null) { info.sem.push(l.unidade + ' ' + l.projeto + ' ' + vig); return; }

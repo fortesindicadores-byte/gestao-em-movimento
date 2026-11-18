@@ -245,7 +245,11 @@ const CTA_ALIAS_BM = { 'COMBUSTIVEIS VEICULOS E EQUIPAMENTOS': 'COMBUSTIVEIS', '
 const ctaBM = c => { const n = NK(c).replace(/\s+/g, ' ').trim(); return CTA_ALIAS_BM[n] || n; };
 const vigBM = v => v.slice(5) + '/' + v.slice(0, 4);   // 'AAAA-MM' → 'MM/AAAA' (formato do motor do balanço)
 function indexaDispTudo(L, dreAcc, DK, BM) {
-  const acc = indexaDisp(L.disp), vigsAba = new Set(Object.keys(acc).map(k => k.split('|').pop()));
+  const acc = indexaDisp(L.disp);
+  // de out/26 em diante o mês importado (2artd + CT-e) vence a aba (Renan, 18/11/2026)
+  const mb = DK && DK.mesesBanco && L.dispBanco ? DK.mesesBanco(L.dispBanco.linhas) : new Set();
+  if (mb.size) Object.keys(acc).forEach(k => { if (mb.has(k.split('|').pop())) delete acc[k]; });
+  const vigsAba = new Set(Object.keys(acc).map(k => k.split('|').pop()));
   const info = { banco: [], semKm: [], bm: null, bmAvisos: [], kmPlaca: null, placasViagem: [] };
   // 1) set/26 em diante, do banco: só os meses que a aba não tem
   const db = L.dispBanco;
