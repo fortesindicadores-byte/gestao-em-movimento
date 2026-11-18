@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611181600">
+<meta name="build" content="202611181700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -306,7 +306,15 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 #vw-resumo .gr2,#vw-balanco .gr2{flex:2 1 0;max-height:none;grid-template-rows:minmax(0,1fr);}
 #vw-eficiencia .gr2{max-height:40vh;}
 /* Revisão de km: hero + cards de altura fixa, a tabela fica com o resto */
-#vw-revisao .rv-tsec{flex:1 1 0;min-height:0;}
+#vw-revisao .rv-tsec,#vw-revano .rv-tsec{flex:1 1 0;min-height:0;}
+#tbl-ra{table-layout:fixed;}
+#tbl-ra th,#tbl-ra td{padding:7px 2px;font-size:10px;text-align:center;white-space:nowrap;overflow:hidden;}
+#tbl-ra th{font-size:8.5px;}
+#tbl-ra th.ra-u,#tbl-ra td.ra-u{width:44px;text-align:left;padding-left:8px;}
+#tbl-ra th.ra-p,#tbl-ra td.ra-p{width:84px;text-align:left;}
+#tbl-ra th.ra-m{border-left:1px solid var(--card-brd);}
+#tbl-ra td.ra-q1{border-left:1px solid var(--card-brd);}
+#tbl-ra td.ra-sem{color:var(--txt4);}
 #tbl-rv{table-layout:fixed;}
 #tbl-rv th,#tbl-rv td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #tbl-rv th{font-size:8.5px;padding:8px 6px;white-space:normal;line-height:1.3;vertical-align:bottom;}
@@ -388,6 +396,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/balanco-massa.js?v=202610131400"></script>
 <script src="../assets/dispersao-km.js?v=202611181300"></script>
+<script src="../assets/remun-mapas.js?v=202611181700"></script>
 </head>
 <body>
 <div class="app">
@@ -407,6 +416,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
     <button class="s-item" data-vw="placas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 12h2M11 12h2M16 12h2"/></svg> Placas</button>
     <button class="s-item" data-vw="balanco"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7h14"/><path d="M3 15l2.5-8 2.5 8a2.5 2.5 0 0 1-5 0z"/><path d="M16 15l2.5-8 2.5 8a2.5 2.5 0 0 1-5 0z"/></svg> Balanço de Massa</button>
     <button class="s-item" data-vw="revisao"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg> Revisão de km</button>
+    <button class="s-item" data-vw="revano"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg> Revisão no Ano</button>
 
     <div class="s-sec">Atalhos</div>
     <button class="s-item" id="btApres" onclick="gerarApresentacao()" title="Apresentação em PDF da dispersão de km: resumo, mês a mês, operações, placas e balanço de massa">
@@ -543,14 +553,26 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
           <div class="twrap"><table class="dre" id="tbl-rv">
             <thead><tr>
               <th>Unidade</th><th>Projeto</th>
-              <th class="num sep-imp">Km/mapa rodado</th><th class="num">Km/mapa antes da revisão</th>
-              <th class="num">Subiu na revisão</th><th class="num">Km/mapa depois da revisão</th>
-              <th class="num sep-imp">Rodado − depois</th>
+              <th class="num sep-imp">Km Rodado</th><th class="num">Km 1ªQ</th><th class="num">Km 2ªQ</th>
+              <th class="num sep-imp">▲ Revisão</th><th class="num">▲ Rodado</th>
             </tr></thead>
             <tbody id="tbl-rv-body"><tr><td class="loading" colspan="7">Carregando…</td></tr></tbody>
             <tfoot id="tbl-rv-foot"></tfoot>
           </table></div>
           <div class="tsub tpe" id="rv-nota">Km por mapa. Rodado = km rodado sem recarga e noturna ÷ mapas. Antes e depois = km da 1ª viagem que o FT paga, no mês anterior e no mês.</div>
+        </div>
+      </section>
+
+      <!-- ══ REVISÃO NO ANO (Renan, 18/11/2026: "mais uma visão com ano todo, tabelão com todas as quinzenas,
+           e apenas % que sobe e desce entre quinzenas. tipo uma matriz"). Km por viagem de 1ª que o FT paga
+           (ParametrosGeraisRota / ParametrosGeraisAS ÷ 25), % contra a quinzena anterior. ══ -->
+      <section class="vw" id="vw-revano">
+        <div class="card tsec rv-tsec">
+          <div class="twrap"><table class="dre" id="tbl-ra" data-no-sort>
+            <thead id="tbl-ra-head"></thead>
+            <tbody id="tbl-ra-body"><tr><td class="loading">Carregando…</td></tr></tbody>
+          </table></div>
+          <div class="tsub tpe" id="ra-nota">% que o km por viagem de 1ª pago pelo FT subiu ou desceu contra a quinzena anterior. Em branco = não mudou.</div>
         </div>
       </section>
 
@@ -1491,55 +1513,221 @@ function render() {
   renderCharts(F);
 }
 
-/* ══ REVISÃO DE KM ══
-   Por unidade × projeto do T2 (Rota, Van, AS, UDC), no mês mais recente do recorte:
-   km/mapa pago = km pago da 1ª viagem ÷ mapas; km/mapa rodado = (km rodado − km pago de
-   recarga e noturna) ÷ mapas; revisão = pago do mês − pago do mês anterior. */
-const RV_T1 = new Set(['EMPURRADA', 'INSUMOS']);
-const RV_PROJ = { 'ROTA':'Rota', 'ROTA (VAN)':'Van', 'AUTO SERVIÇO':'Auto Serviço', 'UDC':'UDC' };
-const rvProj = p => RV_PROJ[p] || (p ? p.charAt(0) + p.slice(1).toLowerCase() : '—');
-function rvVigAnt(vig) { const [m, a] = vig.split('/').map(Number); return m === 1 ? '12/' + (a - 1) : String(m - 1).padStart(2, '0') + '/' + a; }
-function rvAgrupa(rows) {
-  const g = {};
-  rows.forEach(r => { if (RV_T1.has(r.proj) || !(r.viagens > 0) || !(r.kmPrim > 0)) return;
-    const k = r.und + '|' + r.proj;
-    const e = g[k] = g[k] || { und: r.und, proj: r.proj, mapas: 0, pago: 0, rod: 0, rsNum: 0 };
-    e.mapas += r.viagens; e.pago += r.kmPrim; e.rod += Math.max(0, r.real - (r.kmRec || 0) - (r.kmNot || 0));
-    e.rsNum += (r.rsKm || 0) * r.viagens; });
-  Object.values(g).forEach(e => { e.kmPago = e.pago / e.mapas; e.kmRod = e.rod / e.mapas; e.rsKm = e.rsNum / e.mapas; });
-  return g;
+/* REVISÃO DE KM (Renan, 18/11/2026: "Quero comparar o km que rodei, e o quanto que a revisão subiu…
+   o que rodei na primeira quinzena de outubro por exemplo, deve subir na segunda").
+   Por unidade × projeto do T2 (Rota, Van, AS), por mapa de 1ª viagem:
+     Km Rodado = km rodado na 1ª quinzena (ERP, diesel, hodômetro entre abastecimentos espalhado
+                 pelos dias entre um e outro) − km pago de recarga e noturna na 1ª quinzena, ÷ mapas da 1ª quinzena
+     Km 1ªQ / Km 2ªQ = km por viagem que o FT paga em cada quinzena (remun_viagem, da importação do 2artd)
+     ▲ Revisão = Km 2ªQ − Km 1ªQ · ▲ Rodado = Km Rodado − Km 1ªQ
+   A placa vai para o projeto em que fez mais mapas no mês (dispersao_placa_viagem); fora dela, o da OS.
+   Só meses importados (2artd); as tabelas são de admin. */
+const RV_T2 = { 'Rota':'ROTA', 'Van':'ROTA (VAN)', 'Auto Serviço':'AUTO SERVIÇO' };
+const RV_PROJ = { 'ROTA':'Rota', 'ROTA (VAN)':'Van', 'AUTO SERVIÇO':'Auto Serviço' };
+const rvProj = p => RV_PROJ[p] || p;
+const RV_MERC = 'ABCDEFGHIJ';
+const rvPlaca = s => { const p = String(s == null ? '' : s).toUpperCase().replace(/[^A-Z0-9]/g, ''); return /^[A-Z]{3}[0-9]{4}$/.test(p) ? p.slice(0, 4) + RV_MERC[+p[4]] + p.slice(5) : p; };
+const rvNK = s => String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
+// projeto da OS → [und, proj] (UDC conta como Rota; Pelotas AS conta como Rota; GOI = GNA)
+function rvProjOS(po) {
+  const m = rvNK(po).replace(/\s*\(INATIVO\)\s*$/, '').match(/^(.+?)\s*-\s*([A-Z]{3})$/); if (!m) return null;
+  const und = m[2] === 'GOI' ? 'GNA' : m[2];
+  const pre = m[1];
+  let proj = /VAN/.test(pre) ? 'ROTA (VAN)' : /^AUTO SERVICO/.test(pre) ? 'AUTO SERVIÇO' : /^(ROTA|UDC)/.test(pre) ? 'ROTA' : null;
+  if (!proj) return null;
+  if (und === 'PLT' && proj === 'AUTO SERVIÇO') proj = 'ROTA';
+  return [und, proj];
 }
+const RV = { viag: null, erro: null, mes: {}, carregando: {} };
+const rvVW = () => { try { return VW; } catch (e) { return ''; } };   // VW nasce mais abaixo no script
+async function rvLe(tab, sel, filtro) {
+  const h = { apikey: SUPA_KEY, Authorization: 'Bearer ' + supaAuth() }; const out = []; const passo = 1000;
+  for (let i = 0; ; i += passo) {
+    const r = await fetch(`${SUPA_URL}/rest/v1/${tab}?select=${sel}${filtro || ''}&limit=${passo}&offset=${i}`, { headers: h });
+    if (!r.ok) throw new Error(tab + ' HTTP ' + r.status);
+    const rows = await r.json(); out.push(...rows); if (rows.length < passo) break;
+  }
+  return out;
+}
+// km rodado por placa e dia de um mês (AAAA-MM): cada abastecimento de diesel leva o km desde o anterior
+// da placa e esse km é espalhado pelos dias entre os dois abastecimentos
+async function rvKmDia(ym) {
+  const [a, m] = ym.split('-').map(Number);
+  const ini = new Date(a, m - 2, 1), fim = new Date(a, m, 0);
+  const d = x => x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+  const rows = await rvLe('erp_abastecimentos', 'data,placa,projeto_os,hodometro,km_rodado,tipo_combustivel',
+    `&data=gte.${d(ini)}&data=lte.${d(fim)}&order=data.asc`);
+  const diesel = rows.filter(r => !r.tipo_combustivel || (/DIESEL/.test(rvNK(r.tipo_combustivel)) && !/ARLA/.test(rvNK(r.tipo_combustivel))));
+  const porPlaca = {};
+  diesel.forEach(r => { const k = rvPlaca(r.placa); if (k) (porPlaca[k] = porPlaca[k] || []).push(r); });
+  const dia = {};   // placa → { 'AAAA-MM-DD': km }
+  const projOS = {}; // placa → { 'und|proj': km } no mês
+  Object.entries(porPlaca).forEach(([pl, rs]) => {
+    rs.sort((x, y) => String(x.data).localeCompare(String(y.data)) || (+x.hodometro || 0) - (+y.hodometro || 0));
+    let hAnt = null, dAnt = null;
+    rs.forEach(r => {
+      const h = +r.hodometro, kr = +r.km_rodado, dt = String(r.data).slice(0, 10);
+      let km = null;
+      if (h > 0 && hAnt != null) { const dd = h - hAnt; if (dd >= 0 && dd <= 3000) km = dd; }
+      if (km == null) km = (kr >= 0 && kr <= 3000) ? kr : 0;
+      if (dt.slice(0, 7) === ym && km > 0) {
+        // dias entre o abastecimento anterior (exclusive) e este (inclusive)
+        const t1 = new Date(dt + 'T12:00:00'), t0 = dAnt ? new Date(dAnt + 'T12:00:00') : null;
+        let n = t0 ? Math.round((t1 - t0) / 864e5) : 1; if (!(n >= 1) || n > 31) n = 1;
+        const g = dia[pl] = dia[pl] || {};
+        for (let j = 0; j < n; j++) { const x = new Date(t1); x.setDate(x.getDate() - j); const k = d(x); g[k] = (g[k] || 0) + km / n; }
+        const po = rvProjOS(r.projeto_os); if (po) { const kk = po.join('|'); (projOS[pl] = projOS[pl] || {})[kk] = (projOS[pl][kk] || 0) + km; }
+      }
+      if (h > 0) hAnt = h; dAnt = dt;
+    });
+  });
+  return { dia, projOS };
+}
+async function rvCarregaMes(ym) {
+  if (RV.mes[ym] || RV.carregando[ym]) return;
+  RV.carregando[ym] = true;
+  try { RV.mes[ym] = await rvKmDia(ym); }
+  catch (e) { RV.mes[ym] = { erro: e.message || String(e) }; console.warn('Revisão de km: abastecimentos', e); }
+  RV.carregando[ym] = false; renderRevisao(_rvF);
+}
+async function rvCarregaViag() {
+  if (RV.viag || RV.carregando.viag) return;
+  RV.carregando.viag = true;
+  try {
+    const [rv, pv] = await Promise.all([
+      rvLe('remun_viagem', 'vigencia,quinzena,unidade,projeto,tipo,viagens,km_rem,km_viagem'),
+      rvLe('dispersao_placa_viagem', 'vigencia,unidade,projeto,placa,viagens_prim,viagens_rec,viagens_not').catch(() => [])]);
+    if (!rv.length) throw new Error('sem a importação do 2artd no banco (remun_viagem vazia ou sem acesso)');
+    RV.viag = rv; RV.placaViag = pv;
+  } catch (e) { RV.erro = e.message || String(e); console.warn('Revisão de km:', e); }
+  RV.carregando.viag = false; renderRevisao(_rvF);
+}
+let _rvF = [];
 function renderRevisao(F) {
+  _rvF = F || [];
   const body = document.getElementById('tbl-rv-body'), foot = document.getElementById('tbl-rv-foot');
   if (!body) return;
-  const vigs = [...new Set((F || []).filter(r => !RV_T1.has(r.proj) && r.kmPrim > 0).map(r => r.vig))].sort(sortVig);
-  const vig = vigs[vigs.length - 1];
-  const vazio = msg => { body.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--txt2);padding:24px 8px;">${msg}</td></tr>`; if (foot) foot.innerHTML = ''; };
-  if (!vig) return vazio('Sem mês com km pago do T2 no recorte');
+  const msg = t => { body.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--txt2);padding:24px 8px;">${t}</td></tr>`; if (foot) foot.innerHTML = ''; };
+  if (rvVW() !== 'revisao' && !RV.viag) return msg('Carregando…');
+  if (RV.erro) return msg('Revisão de km indisponível: ' + RV.erro);
+  if (!RV.viag) { rvCarregaViag(); return msg('Carregando as viagens do 2artd…'); }
+  // mês: o mais recente do recorte que tem a importação do 2artd
+  const temImp = new Set(RV.viag.map(r => r.vigencia));
+  const vigsF = [...new Set(_rvF.map(r => r.vig))].map(v => { const [m, a] = String(v).split('/'); return a + '-' + m; }).filter(v => temImp.has(v)).sort();
+  const ym = vigsF[vigsF.length - 1];
+  if (!ym) return msg('Sem mês importado (2artd) no recorte. A revisão aparece nos meses importados em Importar Dispersão.');
+  const E = RV.mes[ym];
+  if (!E) { rvCarregaMes(ym); return msg('Carregando os abastecimentos do mês…'); }
+  if (E.erro) return msg('Abastecimentos indisponíveis: ' + E.erro);
   const unds = getSel('ms-und'), projs = getSel('ms-proj');
-  const noRecorte = r => (!unds.length || unds.includes(r.und)) && (!projs.length || projs.includes(r.proj));
-  const atual = rvAgrupa(F.filter(r => r.vig === vig));
-  const ant = rvAgrupa(ALL.filter(r => r.vig === rvVigAnt(vig) && noRecorte(r)));
-  const linhas = Object.values(atual).map(e => {
-    const a = ant[e.und + '|' + e.proj];
-    const antes = a ? a.kmPago : null;
-    return { ...e, antes, sub: antes != null ? e.kmPago - antes : null, dif: e.kmRod - e.kmPago };
-  }).sort((x, y) => y.dif - x.dif);
-  if (!linhas.length) return vazio('Sem projeto do T2 com mapas no mês');
+  const passa = (u, p) => (!unds.length || unds.includes(u)) && (!projs.length || projs.includes(p));
+  // FT e mapas por unidade × projeto
+  const G = {};
+  RV.viag.filter(r => r.vigencia === ym && RV_T2[r.projeto]).forEach(r => {
+    const proj = RV_T2[r.projeto], k = r.unidade + '|' + proj;
+    const e = G[k] = G[k] || { und: r.unidade, proj, mapas1: 0, kmExtra1: 0, km1: null, km2: null, kmRod: 0 };
+    const q = +r.quinzena;
+    if (r.tipo === 'prim') { if (q === 1) e.km1 = +r.km_viagem || e.km1; else e.km2 = +r.km_viagem || e.km2; }
+    if (q === 1 && (r.tipo === 'prim' || r.tipo === 'mkt')) e.mapas1 += +r.viagens || 0;
+    if (q === 1 && (r.tipo === 'rec' || r.tipo === 'not')) e.kmExtra1 += +r.km_rem || 0;
+  });
+  // placa → projeto: onde fez mais mapas no mês; fora da lista, o da OS
+  const dono = {};
+  (RV.placaViag || []).filter(r => r.vigencia === ym && RV_T2[r.projeto]).forEach(r => {
+    const pl = rvPlaca(r.placa), k = r.unidade + '|' + RV_T2[r.projeto], v = (+r.viagens_prim || 0) + (+r.viagens_rec || 0) + (+r.viagens_not || 0);
+    if (!dono[pl] || v > dono[pl].v) dono[pl] = { k, v };
+  });
+  const q1 = dt => dt.slice(0, 7) === ym && +dt.slice(8, 10) <= 15;
+  Object.entries(E.dia).forEach(([pl, dias]) => {
+    let k = dono[pl] && dono[pl].k;
+    if (!k) { const po = E.projOS[pl]; if (po) k = Object.entries(po).sort((a, b) => b[1] - a[1])[0][0]; }
+    if (!k || !G[k]) return;
+    G[k].kmRod += Object.entries(dias).reduce((s, [dt, km]) => s + (q1(dt) ? km : 0), 0);
+  });
+  const linhas = Object.values(G).filter(e => passa(e.und, e.proj) && e.mapas1 > 0 && e.km1 != null).map(e => {
+    const rod = Math.max(0, e.kmRod - e.kmExtra1) / e.mapas1;
+    return { ...e, rod, rev: e.km2 != null ? e.km2 - e.km1 : null, dRod: rod - e.km1 };
+  }).sort((x, y) => y.dRod - x.dRod);
+  if (!linhas.length) return msg('Sem projeto do T2 com mapas na 1ª quinzena');
   const n1 = v => v == null ? '—' : v.toFixed(1).replace('.', ',');
   const sg = v => v == null ? '—' : (v > 0.05 ? '+' : v < -0.05 ? '−' : '') + Math.abs(v).toFixed(1).replace('.', ',');
-  // rodado − depois > 0 = rodamos mais do que o FT passou a pagar
-  const cD = v => v == null || Math.abs(v) < 0.05 ? '' : v > 0 ? 'cr' : 'cg';
-  const cS = v => v == null || Math.abs(v) < 0.05 ? '' : v > 0 ? 'cg' : 'cr';
-  const linha = (u, p, rod, antes, sub, dep, dif, tr = '') => `<tr${tr}><td>${u}</td><td>${p}</td>
-    <td class="num sep-imp"><b>${n1(rod)}</b></td><td class="num">${n1(antes)}</td>
-    <td class="num ${cS(sub)}"><b>${sg(sub)}</b></td><td class="num">${n1(dep)}</td>
-    <td class="num sep-imp ${cD(dif)}">${sg(dif)}</td></tr>`;
-  body.innerHTML = linhas.map(e => linha(e.und, rvProj(e.proj), e.kmRod, e.antes, e.sub, e.kmPago, e.dif)).join('');
-  const T = linhas.reduce((t, e) => { t.m += e.mapas; t.rod += e.kmRod * e.mapas; t.dep += e.kmPago * e.mapas;
-    if (e.antes != null) { t.mA += e.mapas; t.ant += e.antes * e.mapas; t.depA += e.kmPago * e.mapas; } return t; }, { m: 0, rod: 0, dep: 0, mA: 0, ant: 0, depA: 0 });
-  const tRod = T.rod / T.m, tDep = T.dep / T.m, tAnt = T.mA ? T.ant / T.mA : null, tSub = T.mA ? (T.depA - T.ant) / T.mA : null;
-  if (foot) foot.innerHTML = linha('Total', '', tRod, tAnt, tSub, tDep, tRod - tDep, ' class="total"');
+  const cor = v => v == null || Math.abs(v) < 0.05 ? '' : v > 0 ? 'cg' : 'cr';
+  const linha = (u, p, rod, k1, k2, rev, dr, tr = '') => `<tr${tr}><td>${u}</td><td>${p}</td>
+    <td class="num sep-imp"><b>${n1(rod)}</b></td><td class="num">${n1(k1)}</td><td class="num">${n1(k2)}</td>
+    <td class="num sep-imp ${cor(rev)}"><b>${sg(rev)}</b></td><td class="num ${dr > 0.05 ? 'cr' : ''}"><b>${sg(dr)}</b></td></tr>`;
+  body.innerHTML = linhas.map(e => linha(e.und, rvProj(e.proj), e.rod, e.km1, e.km2, e.rev, e.dRod)).join('');
+  const T = linhas.reduce((t, e) => { t.m += e.mapas1; t.rod += e.rod * e.mapas1; t.k1 += e.km1 * e.mapas1; if (e.km2 != null) { t.k2 += e.km2 * e.mapas1; t.m2 += e.mapas1; t.k1b += e.km1 * e.mapas1; } return t; },
+    { m: 0, rod: 0, k1: 0, k2: 0, m2: 0, k1b: 0 });
+  const tRod = T.rod / T.m, tK1 = T.k1 / T.m, tK2 = T.m2 ? T.k2 / T.m2 : null;
+  if (foot) foot.innerHTML = linha('Total', '', tRod, tK1, tK2, T.m2 ? (T.k2 - T.k1b) / T.m2 : null, tRod - tK1, ' class="total"');
+  const [a, mm] = ym.split('-'); const nota = document.getElementById('rv-nota');
+  if (nota) nota.textContent = `${(MESES[+mm - 1] || mm)}/${a.slice(2)} · por mapa de 1ª viagem. Km Rodado = rodado na 1ª quinzena (ERP, diesel) sem recarga e noturna. Km 1ªQ e 2ªQ = km por viagem que o FT pagou em cada quinzena.`;
+}
+
+/* matriz do ano: km por viagem de 1ª do FT por quinzena, % contra a quinzena anterior */
+const RA = { ano: {}, carregando: {} };
+async function raCarrega(ano) {
+  if (RA.ano[ano] || RA.carregando[ano]) return;
+  RA.carregando[ano] = true;
+  try {
+    const RM = window.RemunMapas; const out = {};   // 'und|proj' → { 'AAAA-MM|q': km }
+    for (const [canal, tab] of [['ROTA', 'ParametrosGeraisRota'], ['AS', 'ParametrosGeraisAS']]) {
+      const lay = await rvLe('ft_layout', 'vigencia,colunas', `&canal=eq.${canal}&tabela=eq.${tab}&ano=in.(${ano - 1},${ano})`);
+      const cols = {}; lay.forEach(l => { cols[l.vigencia] = l.colunas; });
+      const ls = await rvLe('ft_linha', 'vigencia,unidade,dados', `&canal=eq.${canal}&tabela=eq.${tab}&ano=in.(${ano - 1},${ano})&order=vigencia,linha`);
+      ls.forEach(l => {
+        const vq = RM.vigFT(l.vigencia), c = cols[l.vigencia]; if (!vq || !c) return;
+        const o = {}; c.forEach((n, i) => { o[n] = l.dados[i]; });
+        const u = RM.uniFT(l.unidade || o['Unidade - Nome']); if (!u) return;
+        const n = v => { const x = typeof v === 'number' ? v : Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; };
+        const put = (proj, km) => { if (km > 0) { const k = u + '|' + proj; (out[k] = out[k] || {})[vq.vig + '|' + vq.q] = km; } };
+        if (tab === 'ParametrosGeraisRota') { put('ROTA', n(o['KM Mensal Primeira Viagem']) / 25); put('ROTA (VAN)', n(o.kmMensalRemuneradoVan) / 25); }
+        else put(u === 'PLT' ? 'ROTA' : 'AUTO SERVIÇO', u === 'PLT' ? 0 : n(o.kmMensalPrimeiraViagem) / 25);
+      });
+    }
+    if (!Object.keys(out).length) throw new Error('sem os parâmetros do FT no banco (Freightech Robot) ou sem acesso');
+    RA.ano[ano] = out;
+  } catch (e) { RA.ano[ano] = { erro: e.message || String(e) }; console.warn('Revisão no ano:', e); }
+  RA.carregando[ano] = false; renderRevAno(_raF);
+}
+let _raF = [];
+function renderRevAno(F) {
+  _raF = F || [];
+  const head = document.getElementById('tbl-ra-head'), body = document.getElementById('tbl-ra-body');
+  if (!body) return;
+  const msg = t => { head.innerHTML = ''; body.innerHTML = `<tr><td style="text-align:center;color:var(--txt2);padding:24px 8px;">${t}</td></tr>`; };
+  if (rvVW() !== 'revano' && !Object.keys(RA.ano).length) return msg('Carregando…');
+  const anos = [...new Set(_raF.map(r => +String(r.vig).split('/')[1]).filter(Boolean))].sort();
+  const ano = anos[anos.length - 1] || new Date().getFullYear();
+  const D = RA.ano[ano];
+  if (!D) { raCarrega(ano); return msg('Carregando os parâmetros do FT…'); }
+  if (D.erro) return msg('Revisão no ano indisponível: ' + D.erro);
+  const unds = getSel('ms-und'), projs = getSel('ms-proj');
+  const Q = []; for (let m = 1; m <= 12; m++) for (const q of [1, 2]) Q.push({ ym: ano + '-' + String(m).padStart(2, '0'), q, m });
+  const ultimo = Q.reduce((u, x, i) => Object.values(D).some(v => v[x.ym + '|' + x.q] != null) ? i : u, -1);
+  const QQ = Q.slice(0, ultimo + 1);
+  if (!QQ.length) return msg('Sem quinzena do FT em ' + ano);
+  const meses = [...new Set(QQ.map(x => x.m))];
+  head.innerHTML = `<tr><th class="ra-u" rowspan="2">Unid.</th><th class="ra-p" rowspan="2">Projeto</th>${meses.map(m => `<th class="ra-m" colspan="${QQ.filter(x => x.m === m).length}">${MESES[m - 1]}</th>`).join('')}</tr>
+    <tr>${QQ.map(x => `<th${x.q === 1 ? ' class="ra-m"' : ''}>${x.q}ª</th>`).join('')}</tr>`;
+  const ORD = { 'ROTA': 0, 'ROTA (VAN)': 1, 'AUTO SERVIÇO': 2 };
+  const ks = Object.keys(D).filter(k => { const [u, p] = k.split('|'); return (!unds.length || unds.includes(u)) && (!projs.length || projs.includes(p)); })
+    .sort((a, b) => { const [ua, pa] = a.split('|'), [ub, pb] = b.split('|'); return ua.localeCompare(ub) || ORD[pa] - ORD[pb]; });
+  if (!ks.length) return msg('Sem unidade do T2 no recorte');
+  const anterior = (x) => { const i = Q.indexOf(x); if (i > 0) return Q[i - 1]; return { ym: (ano - 1) + '-12', q: 2 }; };
+  body.innerHTML = ks.map(k => { const [u, p] = k.split('|'), v = D[k];
+    return `<tr><td class="ra-u">${u}</td><td class="ra-p">${rvProj(p)}</td>${QQ.map(x => {
+      const a = anterior(x), km = v[x.ym + '|' + x.q], ka = v[a.ym + '|' + a.q];
+      const cl = x.q === 1 ? ' ra-q1' : '';
+      if (km == null) return `<td class="ra-sem${cl}">·</td>`;
+      if (ka == null || !ka) return `<td class="${cl}" title="${km.toFixed(1).replace('.', ',')} km por viagem"></td>`;
+      const pct = (km / ka - 1) * 100;
+      const tip = `${ka.toFixed(1).replace('.', ',')} → ${km.toFixed(1).replace('.', ',')} km por viagem`;
+      if (Math.abs(pct) < 0.05) return `<td class="${cl}" title="${tip}"></td>`;
+      return `<td class="${pct > 0 ? 'cg' : 'cr'}${cl}" title="${tip}"><b>${pct > 0 ? '+' : '−'}${Math.abs(pct).toFixed(1).replace('.', ',')}%</b></td>`;
+    }).join('')}</tr>`; }).join('');
+  const nota = document.getElementById('ra-nota');
+  if (nota) nota.textContent = `${ano} · % que o km por viagem de 1ª pago pelo FT subiu ou desceu contra a quinzena anterior. Em branco = não mudou · ponto = sem o parâmetro no FT. Passe o mouse para ver os km.`;
 }
 
 function renderTable(F, YTD) {
@@ -2038,7 +2226,7 @@ render=function(){
 };
 
 /* ── navegação entre as visões ────────────────────────────────────────────── */
-const TIT={resumo:'Resumo Gerencial',eficiencia:'Eficiência e Projetos',dispersao:'Dispersão de KM',placas:'Placas',balanco:'Balanço de Massa',revisao:'Revisão de km'};
+const TIT={resumo:'Resumo Gerencial',eficiencia:'Eficiência e Projetos',dispersao:'Dispersão de KM',placas:'Placas',balanco:'Balanço de Massa',revisao:'Revisão de km',revano:'Revisão no Ano'};
 let VW='resumo';
 function setVw(v){
   VW=v;
@@ -2046,6 +2234,8 @@ function setVw(v){
   document.querySelectorAll('.vw').forEach(x=>x.classList.toggle('on', x.id==='vw-'+v));
   set('tit', TIT[v]||'');
   if(ALL.length) setTimeout(()=>renderCharts(getFiltered()),30);   // canvas escondido nasce com 0px
+  if(v==='revisao') renderRevisao(ALL.length?getFiltered():[]);
+  if(v==='revano') renderRevAno(ALL.length?getFiltered():[]);
 }
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
 
@@ -2124,6 +2314,6 @@ function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>KmApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202611181600"></script>
+<script src="../assets/build-check.js?v=202611181700"></script>
 </body>
 </html>

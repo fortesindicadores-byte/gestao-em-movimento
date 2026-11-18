@@ -70,4 +70,13 @@ Object.entries(R.v).sort((a, b) => (a[0].slice(3) + a[0].slice(0, 2)).localeComp
   console.log(`${k}  real ${br(t.real)} · rem orig ${br(t.rem0)} · recomp +${br(t.recomp)} km · R$ ${br(t.bm)} · Δ% ${((t.real - t.rem0 - t.recomp) / (t.rem0 + t.recomp) * 100).toFixed(1)}% · impacto ${br(t.imp)}`));
 console.log('\n── chaves com balanço ──');
 Object.entries(R.g).filter(([, t]) => t.recomp || t.bm).sort().forEach(([k, t]) => console.log(`${k.padEnd(32)} rem orig ${br(t.rem0).padStart(9)} · recomp +${br(t.recomp).padStart(7)} · R$ ${br(t.bm).padStart(9)} · real ${br(t.real).padStart(9)}`));
+
+// ── Revisão de km e Revisão no Ano (Renan, 18/11/2026): as duas tabelas como a tela mostra ──
+for (const [vw, tb] of [['revisao', 'tbl-rv'], ['revano', 'tbl-ra']]) {
+  await pg.evaluate(v => setVw(v), vw);
+  await pg.waitForFunction(id => { const b = document.querySelector('#' + id + ' tbody'); return b && !/Carregando/.test(b.textContent); }, tb, { timeout: 120000 }).catch(() => {});
+  const T = await pg.evaluate(id => [...document.querySelectorAll('#' + id + ' tr')].map(tr => [...tr.cells].map(c => c.textContent.trim()).join(' | ')), tb);
+  console.log(`\n── ${vw} ──`); T.forEach(l => console.log(l));
+  console.log(await pg.evaluate(() => (document.querySelector('.vw.on .tsub') || {}).textContent || ''));
+}
 await nav.close(); srv.close();
