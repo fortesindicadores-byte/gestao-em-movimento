@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611181530">
+<meta name="build" content="202611181600">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -306,12 +306,12 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 #vw-resumo .gr2,#vw-balanco .gr2{flex:2 1 0;max-height:none;grid-template-rows:minmax(0,1fr);}
 #vw-eficiencia .gr2{max-height:40vh;}
 /* Revisão de km: hero + cards de altura fixa, a tabela fica com o resto */
-#vw-revisao .rv-tsec{flex:1 1 0;min-height:0;margin-top:10px;}
+#vw-revisao .rv-tsec{flex:1 1 0;min-height:0;}
 #tbl-rv{table-layout:fixed;}
 #tbl-rv th,#tbl-rv td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #tbl-rv th{font-size:8.5px;padding:8px 6px;white-space:normal;line-height:1.3;vertical-align:bottom;}
-#tbl-rv th:nth-child(1),#tbl-rv td:nth-child(1){width:8%;}
-#tbl-rv th:nth-child(2),#tbl-rv td:nth-child(2){width:12%;}
+#tbl-rv th:nth-child(1),#tbl-rv td:nth-child(1){width:10%;}
+#tbl-rv th:nth-child(2),#tbl-rv td:nth-child(2){width:16%;}
 #tbl-rv td{padding:8px 6px;font-size:11px;}
 #tbl-rv tfoot tr.total td{font-weight:800;color:var(--txt);background:var(--cabec);border-top:1px solid var(--card-brd);position:sticky;bottom:0;}
 
@@ -539,24 +539,18 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
            depois da revisão do mês. Pelo Book do Operador, a alteração de km é pedida uma vez por
            mês, até o 18º dia útil, junto com o dimensionamento da 2ª quinzena. Só T2. ══ -->
       <section class="vw" id="vw-revisao">
-        <div class="kpis k4">
-          <div class="kpi"><div class="kl">Km por mapa rodado</div><div class="kv" id="rv-rod">—</div><div class="km" id="rv-rod-m">—</div></div>
-          <div class="kpi"><div class="kl">Precisava subir</div><div class="kv" id="rv-prec">—</div><div class="km" id="rv-prec-m">—</div></div>
-          <div class="kpi"><div class="kl">Subiu na revisão</div><div class="kv" id="rv-sub">—</div><div class="km" id="rv-sub-m">—</div></div>
-          <div class="kpi"><div class="kl">Faltou subir</div><div class="kv" id="rv-falt">—</div><div class="km" id="rv-falt-m">—</div></div>
-        </div>
         <div class="card tsec rv-tsec">
           <div class="twrap"><table class="dre" id="tbl-rv">
             <thead><tr>
-              <th>Unidade</th><th>Projeto</th><th class="num">Mapas</th>
-              <th class="num sep-imp">Km/mapa rodado</th><th class="num">Km/mapa antes</th><th class="num">Km/mapa depois</th>
-              <th class="num sep-imp">Precisava subir</th><th class="num">Subiu</th><th class="num">Faltou subir</th>
-              <th class="num sep-imp">Km no mês</th><th class="num">R$ no mês</th>
+              <th>Unidade</th><th>Projeto</th>
+              <th class="num sep-imp">Km/mapa rodado</th><th class="num">Km/mapa antes da revisão</th>
+              <th class="num">Subiu na revisão</th><th class="num">Km/mapa depois da revisão</th>
+              <th class="num sep-imp">Rodado − depois</th>
             </tr></thead>
-            <tbody id="tbl-rv-body"><tr><td class="loading" colspan="11">Carregando…</td></tr></tbody>
+            <tbody id="tbl-rv-body"><tr><td class="loading" colspan="7">Carregando…</td></tr></tbody>
             <tfoot id="tbl-rv-foot"></tfoot>
           </table></div>
-          <div class="tsub tpe" id="rv-nota">Km por mapa. Precisava subir = rodado − antes da revisão. Subiu = depois − antes. Faltou subir = rodado − depois. Km e R$ no mês = o que faltou × mapas × R$/km.</div>
+          <div class="tsub tpe" id="rv-nota">Km por mapa. Rodado = km rodado sem recarga e noturna ÷ mapas. Antes e depois = km da 1ª viagem que o FT paga, no mês anterior e no mês.</div>
         </div>
       </section>
 
@@ -1518,53 +1512,34 @@ function rvAgrupa(rows) {
 function renderRevisao(F) {
   const body = document.getElementById('tbl-rv-body'), foot = document.getElementById('tbl-rv-foot');
   if (!body) return;
-  const IDS = ['rv-rod','rv-rod-m','rv-prec','rv-prec-m','rv-sub','rv-sub-m','rv-falt','rv-falt-m'];
   const vigs = [...new Set((F || []).filter(r => !RV_T1.has(r.proj) && r.kmPrim > 0).map(r => r.vig))].sort(sortVig);
   const vig = vigs[vigs.length - 1];
-  const vazio = msg => { IDS.forEach(id => set(id, '—'));
-    body.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--txt2);padding:24px 8px;">${msg}</td></tr>`; if (foot) foot.innerHTML = ''; };
+  const vazio = msg => { body.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--txt2);padding:24px 8px;">${msg}</td></tr>`; if (foot) foot.innerHTML = ''; };
   if (!vig) return vazio('Sem mês com km pago do T2 no recorte');
   const unds = getSel('ms-und'), projs = getSel('ms-proj');
   const noRecorte = r => (!unds.length || unds.includes(r.und)) && (!projs.length || projs.includes(r.proj));
   const atual = rvAgrupa(F.filter(r => r.vig === vig));
-  const vAnt = rvVigAnt(vig);
-  const ant = rvAgrupa(ALL.filter(r => r.vig === vAnt && noRecorte(r)));
-  const [mm, aa] = vig.split('/'); const rot = (MESES[+mm - 1] || mm) + '/' + aa.slice(2);
-  const [ma, aaa] = vAnt.split('/'); const rotAnt = (MESES[+ma - 1] || ma) + '/' + aaa.slice(2);
-  // por mapa: rodado (o que de fato rodamos), antes (pago no mês anterior) e depois (pago depois da revisão)
+  const ant = rvAgrupa(ALL.filter(r => r.vig === rvVigAnt(vig) && noRecorte(r)));
   const linhas = Object.values(atual).map(e => {
     const a = ant[e.und + '|' + e.proj];
-    const antes = a ? a.kmPago : null, depois = e.kmPago, rod = e.kmRod;
-    const prec = antes != null ? rod - antes : null, sub = antes != null ? depois - antes : null, falt = rod - depois;
-    const kmMes = falt * e.mapas;
-    return { ...e, antes, depois, rod, prec, sub, falt, kmMes, rs: kmMes * (e.rsKm || 0) };
-  }).sort((x, y) => y.kmMes - x.kmMes);
-  if (!linhas.length) return vazio('Sem projeto do T2 com mapas em ' + rot);
+    const antes = a ? a.kmPago : null;
+    return { ...e, antes, sub: antes != null ? e.kmPago - antes : null, dif: e.kmRod - e.kmPago };
+  }).sort((x, y) => y.dif - x.dif);
+  if (!linhas.length) return vazio('Sem projeto do T2 com mapas no mês');
   const n1 = v => v == null ? '—' : v.toFixed(1).replace('.', ',');
   const sg = v => v == null ? '—' : (v > 0.05 ? '+' : v < -0.05 ? '−' : '') + Math.abs(v).toFixed(1).replace('.', ',');
-  const sgI = v => (v > 0.5 ? '+' : v < -0.5 ? '−' : '') + fmt(Math.abs(v));
-  // faltou subir > 0 = rodamos mais do que o FT passou a pagar (ruim); < 0 = o FT paga mais do que rodamos
-  const cF = v => v == null || Math.abs(v) < 0.05 ? '' : v > 0 ? 'cr' : 'cg';
-  body.innerHTML = linhas.map(e => `<tr>
-    <td>${e.und}</td><td>${rvProj(e.proj)}</td><td class="num">${Math.round(e.mapas).toLocaleString('pt-BR')}</td>
-    <td class="num sep-imp"><b>${n1(e.rod)}</b></td><td class="num">${n1(e.antes)}</td><td class="num">${n1(e.depois)}</td>
-    <td class="num sep-imp">${sg(e.prec)}</td><td class="num"><b>${sg(e.sub)}</b></td><td class="num ${cF(e.falt)}"><b>${sg(e.falt)}</b></td>
-    <td class="num sep-imp ${cF(e.falt)}">${sgI(e.kmMes)}</td><td class="num ${cF(e.falt)}">${sgI(e.rs)}</td></tr>`).join('');
-  const T = linhas.reduce((t, e) => { t.mapas += e.mapas; t.rod += e.rod * e.mapas; t.dep += e.depois * e.mapas; t.km += e.kmMes; t.rs += e.rs;
-    if (e.antes != null) { t.mA += e.mapas; t.ant += e.antes * e.mapas; t.rodA += e.rod * e.mapas; t.depA += e.depois * e.mapas; } return t; },
-    { mapas: 0, rod: 0, dep: 0, km: 0, rs: 0, mA: 0, ant: 0, rodA: 0, depA: 0 });
-  const tRod = T.rod / T.mapas, tDep = T.dep / T.mapas, tAnt = T.mA ? T.ant / T.mA : null;
-  const tPrec = T.mA ? (T.rodA - T.ant) / T.mA : null, tSub = T.mA ? (T.depA - T.ant) / T.mA : null, tFalt = tRod - tDep;
-  if (foot) foot.innerHTML = `<tr class="total"><td>Total</td><td></td><td class="num">${Math.round(T.mapas).toLocaleString('pt-BR')}</td>
-    <td class="num sep-imp">${n1(tRod)}</td><td class="num">${n1(tAnt)}</td><td class="num">${n1(tDep)}</td>
-    <td class="num sep-imp">${sg(tPrec)}</td><td class="num">${sg(tSub)}</td><td class="num ${cF(tFalt)}">${sg(tFalt)}</td>
-    <td class="num sep-imp ${cF(tFalt)}">${sgI(T.km)}</td><td class="num ${cF(tFalt)}">${sgI(T.rs)}</td></tr>`;
-  const cor = (id, c) => { const el = document.getElementById(id); if (el) el.className = 'kv ' + c; };
-  set('rv-rod', n1(tRod) + ' km'); set('rv-rod-m', `${rot} · pago depois da revisão: ${n1(tDep)} km`);
-  set('rv-prec', tPrec == null ? '—' : sg(tPrec) + ' km'); set('rv-prec-m', tAnt == null ? 'sem ' + rotAnt : `rodado ${n1(tRod)} × pago em ${rotAnt} ${n1(tAnt)}`);
-  set('rv-sub', tSub == null ? '—' : sg(tSub) + ' km'); set('rv-sub-m', tAnt == null ? 'sem ' + rotAnt : `${rotAnt} ${n1(tAnt)} → ${rot} ${n1(tDep)}`);
-  set('rv-falt', sg(tFalt) + ' km'); cor('rv-falt', cF(tFalt));
-  set('rv-falt-m', `${sgI(T.km)} km no mês · ${T.rs < -0.5 ? '−' : ''}R$ ${fmt(Math.abs(T.rs))}`);
+  // rodado − depois > 0 = rodamos mais do que o FT passou a pagar
+  const cD = v => v == null || Math.abs(v) < 0.05 ? '' : v > 0 ? 'cr' : 'cg';
+  const cS = v => v == null || Math.abs(v) < 0.05 ? '' : v > 0 ? 'cg' : 'cr';
+  const linha = (u, p, rod, antes, sub, dep, dif, tr = '') => `<tr${tr}><td>${u}</td><td>${p}</td>
+    <td class="num sep-imp"><b>${n1(rod)}</b></td><td class="num">${n1(antes)}</td>
+    <td class="num ${cS(sub)}"><b>${sg(sub)}</b></td><td class="num">${n1(dep)}</td>
+    <td class="num sep-imp ${cD(dif)}">${sg(dif)}</td></tr>`;
+  body.innerHTML = linhas.map(e => linha(e.und, rvProj(e.proj), e.kmRod, e.antes, e.sub, e.kmPago, e.dif)).join('');
+  const T = linhas.reduce((t, e) => { t.m += e.mapas; t.rod += e.kmRod * e.mapas; t.dep += e.kmPago * e.mapas;
+    if (e.antes != null) { t.mA += e.mapas; t.ant += e.antes * e.mapas; t.depA += e.kmPago * e.mapas; } return t; }, { m: 0, rod: 0, dep: 0, mA: 0, ant: 0, depA: 0 });
+  const tRod = T.rod / T.m, tDep = T.dep / T.m, tAnt = T.mA ? T.ant / T.mA : null, tSub = T.mA ? (T.depA - T.ant) / T.mA : null;
+  if (foot) foot.innerHTML = linha('Total', '', tRod, tAnt, tSub, tDep, tRod - tDep, ' class="total"');
 }
 
 function renderTable(F, YTD) {
@@ -2149,6 +2124,6 @@ function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>KmApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202611181530"></script>
+<script src="../assets/build-check.js?v=202611181600"></script>
 </body>
 </html>
