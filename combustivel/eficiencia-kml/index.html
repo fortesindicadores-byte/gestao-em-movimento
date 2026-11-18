@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611190300">
+<meta name="build" content="202611191200">
 <title>Km/L · Eficiência de Combustível</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -313,6 +313,13 @@ table.dre tr.total td.imp-cell{font-size:12px;}
 #vw-mix .kpis.k4 .kpi .kv{font-size:clamp(20px,min(3.2vh,1.6vw),30px);}
 .tsub.tpe{margin:0;flex:0 0 auto;line-height:1.5;}
 @media(max-width:1500px){#tbl-mix td,#tbl-mix th,#tbl-mix2 td,#tbl-mix2 th{padding-left:6px;padding-right:6px;}#tbl-mix,#tbl-mix2{font-size:10.5px;}}
+#vw-ativ .kpis.k4{height:clamp(104px,15vh,160px);min-height:0;}
+#vw-ativ .kpis.k4 .kpi .kv{font-size:clamp(20px,min(3.2vh,1.6vw),30px);}
+.at-card{flex:1 1 0;min-height:200px;padding:10px 12px 10px;}
+#tbl-ativ td{white-space:nowrap;}
+#tbl-ativ th{white-space:normal;line-height:1.25;}
+@media(max-width:1500px){#tbl-ativ td,#tbl-ativ th{padding-left:6px;padding-right:6px;}#tbl-ativ{font-size:10.5px;}}
+@media(max-width:860px){#vw-ativ .kpis.k4{height:auto;}}
 @media(max-width:860px){.mx-grid{display:block;}.mx-grid .tsec{margin-bottom:12px;}#vw-mix .kpis.k4{height:auto;}}
 .tnota{font-size:10px;color:var(--txt3);margin:-2px 0 8px;line-height:1.45;}
 .export-btn{display:flex;align-items:center;gap:6px;background:rgba(59,179,59,.12);border:1px solid rgba(59,179,59,.40);
@@ -434,6 +441,7 @@ table.dre tr.total td.imp-cell{font-size:12px;}
     <button class="s-item" data-vw="detalhado"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg> Km/L Detalhado</button>
     <button class="s-item" data-vw="veiculo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> Consumo por Veículo</button>
     <button class="s-item" data-vw="mix"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h7M14 6h7M3 18h11M18 18h3"/><circle cx="12" cy="6" r="2"/><circle cx="16" cy="18" r="2"/><path d="M3 12h3M10 12h11"/><circle cx="8" cy="12" r="2"/></svg> Mix da Frota</button>
+    <button class="s-item" data-vw="ativ"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="5"/><circle cx="16" cy="12" r="3"/></svg> Ativação por Modelo</button>
     <button class="s-item" data-vw="diverg"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/><path d="M11 8v3l2 1"/></svg> Diagnóstico</button>
 
     <div class="s-sec">Atalhos</div>
@@ -638,6 +646,47 @@ table.dre tr.total td.imp-cell{font-size:12px;}
           </div>
         </div>
         <div class="tsub tpe" id="mx-nota">O FT paga o Km/L remunerado de cada projeto pela média simples das placas ativas: cada placa conta igual, rode muito ou pouco. Se a unidade roda mais com os caminhões de Km/L menor (truck no lugar do VUC), os litros que o FT paga (km ÷ média simples) ficam abaixo do que esses caminhões precisam. <b>Média simples</b> = litros pagos − litros pelo km rodado, em R$ ao R$/L remunerado (negativo = contra nós). <b>Eficiência</b> = litros pelo km rodado − litros abastecidos. As duas somam o Impacto do Resumo. O Km/L de cada placa é a média do modelo (Base Remunerado Modelo), ajustada para que a média simples das placas ativas do projeto no mês feche com o Rem FT.</div>
+      </section>
+
+      <!-- ══ 4b · ATIVAÇÃO POR MODELO (quanto ativar mais ou menos placas de cada modelo pesa no gap) ══ -->
+      <section class="vw" id="vw-ativ">
+        <div class="fin-hero">
+          <div>
+            <div class="hlbl">Se as ativas fossem as placas que rodaram</div>
+            <div class="hval" id="at-h">—</div>
+            <div class="hrem">Km rodado por placas inativas no FT: <b id="at-hk">—</b></div>
+            <div class="hdel">
+              <div class="hero-delta">Rem FT · média das ativas<b id="at-rft">—</b></div>
+              <div class="hero-delta">Rem com as que rodaram<b id="at-rrod">—</b></div>
+              <div class="hero-delta">Δ<b id="at-rd">—</b></div>
+              <div class="hsep"></div>
+              <div class="hero-delta">Real<b id="at-real">—</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="kpis k4">
+          <div class="kpi"><div class="kl">Impacto total vs Rem FT</div><div class="kv" id="at-k-tot">—</div><div class="km">o mesmo Impacto do Resumo</div></div>
+          <div class="kpi"><div class="kl">Mesmo nº de ativas, as que mais rodaram</div><div class="kv" id="at-k-top">—</div><div class="km" id="at-k-top-m">—</div></div>
+          <div class="kpi"><div class="kl">Modelo que mais pesa no gap</div><div class="kv kvn" id="at-k-pior">—</div><div class="km" id="at-k-pior-m">—</div></div>
+          <div class="kpi"><div class="kl">Melhor modelo para ativar</div><div class="kv kvn" id="at-k-mais">—</div><div class="km" id="at-k-mais-m">—</div></div>
+        </div>
+        <div class="card tsec at-card">
+          <div class="thead-row">
+            <div class="dims">
+              <button class="dimb on" data-ativdim="modelo" onclick="setAtivDim('modelo')">Modelo</button>
+              <button class="dimb" data-ativdim="tipo" onclick="setAtivDim('tipo')">Tipo veíc.</button>
+            </div>
+          </div>
+          <div class="twrap"><table class="dre" id="tbl-ativ" data-no-sort>
+            <thead><tr>
+              <th id="th-ativ">MODELO</th><th class="num">PLACAS</th><th class="num">ATIVAS</th><th class="num">% DAS ATIVAS</th>
+              <th class="num">% KM</th><th class="num">% LITROS</th><th class="num sep-l">KM/L REM</th><th class="num">KM/L REAL</th>
+              <th class="num sep-l">LITROS ACIMA DO PAGO</th><th class="num">IMPACTO</th><th class="num sep-l">ATIVAR +1</th><th class="num">DESATIVAR 1</th>
+            </tr></thead>
+            <tbody id="body-ativ"></tbody>
+          </table></div>
+        </div>
+        <div class="tsub tpe" id="at-nota">O FT paga os litros de cada projeto pelo km rodado ÷ média simples do Km/L das placas ativas, e cada ativa pesa igual na média. Modelo com % das ativas acima do % do km puxa a média para cima e o FT paga menos litros do que a frota que rodou precisa; o contrário paga mais. <b>Litros acima do pago</b> = litros abastecidos − km ÷ Rem FT. <b>Impacto</b> = os mesmos litros em R$ ao R$/L remunerado (negativo = contra nós; soma o Impacto do Resumo). <b>Ativar +1</b> = quanto o FT pagaria a mais (ou a menos) se uma placa inativa desse modelo estivesse ativa, em cada unidade e mês em que havia uma; <b>Desativar 1</b> = tirar uma ativa. Só combustível: ativar muda também o fixo pago pela placa, que não entra aqui.</div>
       </section>
 
       <!-- ══ 5 · DIAGNÓSTICO ══ -->
@@ -1766,7 +1815,8 @@ function mixDe(rows){
         o.rj=rj; o.pago=o.km/burra; o.justo=o.km>0?o.km/rj:0; justo+=o.justo; o.pr=pr; o.uni=uni; o.proj=proj; o.base=base2.includes(o);
         placas.push(o); });
     }
-    grupos.push({uni,proj,km,lit,burra,pago,justo,pr,n:lst.length});
+    const gO={uni,proj,km,lit,burra,pago,justo,pr,n:lst.length,vig:gr[0][CL.vig]};
+    grupos.push(gO); if(pago!=null) lst.forEach(o=>{o.grp=gO;});
   });
   return {grupos,placas,semModelo};
 }
@@ -1836,6 +1886,77 @@ function setMixDim(d){ mixDim=d; document.querySelectorAll('.dimb[data-mixdim]')
 function mixFiltra(k){ mixSel=k; document.querySelectorAll('#body-mix tr[data-k]').forEach(tr=>tr.classList.toggle('sel',tr.dataset.k===k)); renderMix2(); }
 document.getElementById('body-mix').addEventListener('click',e=>{ const tr=e.target.closest('tr[data-k]'); if(!tr)return; mixFiltra(mixSel===tr.dataset.k?null:tr.dataset.k); });
 
+// ── ATIVAÇÃO POR MODELO (Renan, 18/11/2026: "o quanto ativar mais ou menos placas
+// de cada modelo impacta no meu gap entre o remunerado e o realizado… se eu ativar
+// muito VUC, que tem um consumo bom, e rodar muito com um truck"). Lê o MIX (mixDe):
+// cada placa tem o Km/L da placa (rj, o modelo ajustado à média do projeto) e o grupo
+// projeto × mês com a média simples paga (burra). Os cenários trocam só QUEM entra na
+// média simples: litros pagos = km do grupo ÷ média nova; Δ = (pagos novos − pagos) × R$/L.
+let ativDim='modelo', ATIV=null;
+function ativMedia(g,lst){ const v=lst.filter(o=>o.rj>0); return v.length?v.reduce((s,o)=>s+o.rj,0)/v.length:null; }
+function ativDelta(g,b){ return (g&&g.burra>0&&b>0&&g.km>0&&g.pr>0)?g.km*(1/b-1/g.burra)*g.pr:0; }
+function ativDe(placas,chave){
+  const G=new Map(); placas.forEach(o=>{ if(!o.grp)return; if(!G.has(o.grp))G.set(o.grp,[]); G.get(o.grp).push(o); });
+  let rod=0,top=0,kmT=0,kmIn=0,pagoT=0,pagoRod=0,kmV=0;
+  const M={}, novo=k=>M[k]=M[k]||{k,pl:new Set(),at:new Set(),nb:0,km:0,kmL:0,lit:0,justo:0,pago:0,imp:0,mais:0,nMais:0,menos:0,nMenos:0};
+  G.forEach((lst,g)=>{
+    const base=lst.filter(o=>o.base), nb=base.length;
+    const rodou=lst.filter(o=>o.km>0), bR=ativMedia(g,rodou);
+    const bT=nb?ativMedia(g,[...rodou].sort((a,b)=>b.km-a.km).slice(0,nb)):null;
+    rod+=ativDelta(g,bR); top+=ativDelta(g,bT);
+    kmV+=g.km; pagoT+=g.km/g.burra; pagoRod+=bR>0?g.km/bR:g.km/g.burra;
+    lst.forEach(o=>{ kmT+=o.km; if(!o.ativo)kmIn+=o.km;
+      const x=novo(chave(o)); x.pl.add(o.placa); if(o.ativo)x.at.add(o.placa); if(o.base)x.nb++;
+      x.km+=o.km; x.justo+=o.justo; x.pago+=o.pago; if(o.lit>0&&o.km>0){x.kmL+=o.km;x.lit+=o.lit;}
+      x.imp+=(o.pago-o.lit)*(o.pr||0); });
+    // ativar +1 / desativar 1 de cada modelo do grupo
+    const K={}; lst.forEach(o=>{ const k=chave(o); (K[k]=K[k]||{in:[],at:[]})[o.base?'at':'in'].push(o); });
+    Object.entries(K).forEach(([k,c])=>{ const x=novo(k);
+      const kin=ativMedia(g,c.in), kat=ativMedia(g,c.at);
+      if(kin>0&&nb>0){ x.mais+=ativDelta(g,(nb*g.burra+kin)/(nb+1)); x.nMais++; }
+      if(kat>0&&nb>1){ x.menos+=ativDelta(g,(nb*g.burra-kat)/(nb-1)); x.nMenos++; } });
+  });
+  const nbT=Object.values(M).reduce((s,x)=>s+x.nb,0), litT=Object.values(M).reduce((s,x)=>s+x.lit,0);
+  return {M:Object.values(M).filter(x=>x.km>0||x.nb>0),rod,top,kmT,kmIn,nbT,litT,
+    rft:pagoT>0?kmV/pagoT:null, rrod:pagoRod>0?kmV/pagoRod:null};
+}
+function renderAtiv(){
+  if(!MIX)return;
+  const chave=ativDim==='tipo'?(o=>o.tipo||'—'):(o=>o.modelo||'—');
+  const A=ATIV=ativDe(MIX.placas,chave), T=mixSoma(MIX.grupos);
+  const pk=(id,v)=>{ const e=document.getElementById(id); if(e){ e.textContent=v!=null?fmtBrlD(v):'—'; colI(e,v<0); } };
+  pk('at-h',MIX.placas.length?A.rod:null); pk('at-k-tot',T.tot); pk('at-k-top',MIX.placas.length?A.top:null);
+  set('at-hk', A.kmT>0?Math.round(A.kmIn/A.kmT*100)+'% · '+Math.round(A.kmIn).toLocaleString('pt-BR')+' km':'—');
+  set('at-rft',kml(A.rft)); set('at-rrod',kml(A.rrod)); set('at-real',kml(T.real));
+  const dR=(A.rft!=null&&A.rrod!=null)?A.rrod-A.rft:null, eD=document.getElementById('at-rd');
+  if(eD){ eD.textContent=dR!=null?kmlD(dR):'—'; eD.style.color=dR==null?'':(dR<0?'var(--green)':'var(--red)'); }
+  set('at-k-top-m','troca as ativas pelas placas que mais rodaram');
+  const nome=x=>ativDim==='modelo'?resumoModelo(x.k):x.k;
+  const lst=[...A.M].sort((a,b)=>a.imp-b.imp);
+  const pior=lst.find(x=>x.imp<0), mais=[...A.M].filter(x=>x.nMais).sort((a,b)=>b.mais-a.mais)[0];
+  const kn=(id,x,v)=>{ const e=document.getElementById(id); if(!e)return; if(!x){e.textContent='—';return;}
+    e.innerHTML=`<span class="kn" title="${x.k}">${nome(x)}</span><span class="kdel ${v<0?'cr':'cg'}">${fmtBrlD(v)}</span>`; };
+  kn('at-k-pior',pior,pior&&pior.imp);
+  set('at-k-pior-m',pior?`${A.nbT?Math.round(pior.nb/A.nbT*100):0}% das ativas · ${A.kmT?Math.round(pior.km/A.kmT*100):0}% do km`:'nenhum modelo contra no recorte');
+  if(mais&&mais.mais>0){ kn('at-k-mais',mais,mais.mais); set('at-k-mais-m','uma inativa a mais, em cada unidade e mês'); }
+  else { kn('at-k-mais',null); set('at-k-mais-m','nenhuma inativa que aumente o pago'); }
+  set('th-ativ',ativDim==='tipo'?'TIPO':'MODELO');
+  const td=(v,cls='')=>`<td class="num imp-cell${cls}" style="${corR(v)}">${v!=null?fmtBrlD(v):'—'}</td>`;
+  const pct=(a,b)=>b>0?Math.round(a/b*100)+'%':'—';
+  let h='', tI=0, tLa=0, tPl=new Set(), tAt=new Set();
+  lst.forEach(x=>{ tI+=x.imp; const la=x.lit-x.pago; tLa+=la; x.pl.forEach(p=>tPl.add(p)); x.at.forEach(p=>tAt.add(p));
+    const acima=la>0.5;
+    h+=`<tr><td class="conta" title="${x.k}">${nome(x)}</td><td class="num">${x.pl.size}</td><td class="num">${x.at.size}</td><td class="num">${pct(x.nb,A.nbT)}</td>`
+      +`<td class="num" title="${Math.round(x.km).toLocaleString('pt-BR')} km">${pct(x.km,A.kmT)}</td><td class="num" title="${Math.round(x.lit).toLocaleString('pt-BR')} L">${pct(x.lit,A.litT)}</td>`
+      +`<td class="num sep-l">${kml(x.justo>0?x.km/x.justo:null)}</td><td class="num">${kml(x.lit>0?x.kmL/x.lit:null)}</td>`
+      +`<td class="num sep-l${acima?' cr':''}">${fmtL(la)}</td>${td(x.imp)}`
+      +`${td(x.nMais?x.mais:null,' sep-l')}${td(x.nMenos?x.menos:null)}</tr>`; });
+  h+=`<tr class="total"><td class="conta">Total</td><td class="num">${tPl.size}</td><td class="num">${tAt.size}</td><td class="num">100%</td><td class="num">100%</td><td class="num">100%</td>`
+    +`<td class="num sep-l">${kml(T.rkm)}</td><td class="num">${kml(T.real)}</td><td class="num sep-l${tLa>0.5?' cr':''}">${fmtL(tLa)}</td>${td(tI)}<td class="num sep-l"></td><td class="num"></td></tr>`;
+  document.getElementById('body-ativ').innerHTML=lst.length?h:'<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--txt3)">Sem dados</td></tr>';
+}
+function setAtivDim(d){ ativDim=d; document.querySelectorAll('.dimb[data-ativdim]').forEach(b=>b.classList.toggle('on',b.dataset.ativdim===d)); renderAtiv(); }
+
 // ── ATUALIZAR ──
 function atualizar(){
   refreshCascade();
@@ -1850,6 +1971,7 @@ function atualizar(){
   renderTable(active,ytd);
   renderVeiTable(active,ytd);
   renderMix(active);
+  renderAtiv();
   renderDiverg(f2);
 
   let vigLbl;
@@ -1946,7 +2068,7 @@ let _rt;window.addEventListener('resize',()=>{clearTimeout(_rt);_rt=setTimeout((
 let _recorte='', _carga='';
 function setStatus(v){ _carga=v; const e=document.getElementById('titSub'); if(e) e.textContent=_recorte?_recorte+' · '+v:v; }
 
-const TIT={resumo:'Resumo Gerencial',detalhado:'Km/L Detalhado',veiculo:'Consumo por Veículo',mix:'Mix da Frota',diverg:'Diagnóstico'};
+const TIT={resumo:'Resumo Gerencial',detalhado:'Km/L Detalhado',veiculo:'Consumo por Veículo',mix:'Mix da Frota',ativ:'Ativação por Modelo',diverg:'Diagnóstico'};
 let VW='resumo';
 function setVw(v){
   VW=v;
@@ -2008,6 +2130,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202611190300"></script>
+<script src="../../assets/build-check.js?v=202611191200"></script>
 </body>
 </html>

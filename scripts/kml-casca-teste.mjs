@@ -155,7 +155,7 @@ const FILTRA_UNI = () => { const w = document.getElementById('ms-uni'); w._sel.c
 const MODO_MODELO = () => setRemMode('modelo');
 
 const PAINEIS = [
-  { pasta: 'combustivel/eficiencia-kml', nome: 'Eficiência Km/L', banco: true, totId: 'kml', views: ['resumo', 'detalhado', 'veiculo', 'mix', 'diverg'] },
+  { pasta: 'combustivel/eficiencia-kml', nome: 'Eficiência Km/L', banco: true, totId: 'kml', views: ['resumo', 'detalhado', 'veiculo', 'mix', 'ativ', 'diverg'] },
   { pasta: 'consumo-kml-analise', nome: 'Análise do Impacto', banco: false, totId: 'uni' },
 ];
 const VIEWS0 = ['resumo', 'detalhado', 'veiculo', 'diverg'];
@@ -302,6 +302,28 @@ for (const P of PAINEIS) {
             const r = { k, sel: tr.classList.contains('sel'), n: document.querySelectorAll('#body-mix2 tr:not(.total)').length, nTipo, chip: document.getElementById('mx-sel').textContent };
             setMixDim('modelo'); r.th = document.getElementById('th-mix2').textContent; tr.click(); r.limpa = !document.querySelector('#body-mix tr.sel'); setMixDim('tipo'); return r; });
           af('Mix: clicar na linha filtra a tabela de tipo (e desfaz no 2º clique); Tipo ⇄ Modelo', sel.sel && sel.n === sel.nTipo && sel.chip.includes('✕') && sel.th === 'MODELO' && sel.limpa, JSON.stringify(sel));
+        }
+        if (P.views && P.views.includes('ativ')) {
+          // Ativação por Modelo: (1) o impacto por modelo soma o Impacto do Resumo; (2) cenários num caso conhecido
+          const at = await page.evaluate(() => {
+            setVw('ativ');
+            const T = mixSoma(MIX.grupos), soma = ATIV.M.reduce((s, x) => s + x.imp, 0);
+            const mk = (placa, tipo, remM, km, ativo) => { const r = []; r[CL.vig] = 'Date(2026,7,1)'; r[CL.proj] = 'ROTA - XXX'; r[CL.placa] = placa; r[CL.tipoVei] = tipo; r[CL.modelo] = tipo;
+              r[CL.rem] = 11 / 3; r[CL.remM] = remM; r[CL.kmRod] = km; r[CL.litros] = km / 3.2; r[CL.rsLReal] = 6; r[CL.ativo] = ativo ? 'VERDADEIRO' : 'FALSO'; return r; };
+            // 2 VUC ativos (4,0 · 1.000 km), 1 truck ativo e 1 inativo (3,0 · 4.000 km): Rem FT = 11/3
+            const C = mixDe([mk('AAA1A11', 'VUC', 4, 1000, 1), mk('AAA1A12', 'VUC', 4, 1000, 1), mk('AAA1A13', 'TRUCK', 3, 4000, 1), mk('AAA1A14', 'TRUCK', 3, 4000, 0)]);
+            const A = ativDe(C.placas, o => o.modelo), by = k => A.M.find(x => x.k === k);
+            return { soma, tot: T.tot, nLin: document.querySelectorAll('#body-ativ tr:not(.total)').length, hero: document.getElementById('at-h').textContent,
+              rod: A.rod, top: A.top, tMais: by('TRUCK').mais, vMais: by('VUC').nMais, vMenos: by('VUC').menos, tMenos: by('TRUCK').menos,
+              kmIn: A.kmIn / A.kmT, nb: by('VUC').nb + '/' + A.nbT, horiz: (() => { const w = document.querySelector('#tbl-ativ').closest('.twrap'); return w.scrollWidth - w.clientWidth; })() };
+          });
+          const e1 = 10000 * (1 / 3.5 - 3 / 11) * 6, e2 = 10000 * (1 / 4 - 3 / 11) * 6, e3 = 10000 * (3 / 10 - 3 / 11) * 6;
+          af('Ativação: impacto por modelo soma o Impacto total (sem rolagem lateral)', Math.abs(at.soma - at.tot) < 0.5 && at.nLin > 1 && at.hero !== '—' && at.horiz <= 1, JSON.stringify({ soma: at.soma, tot: at.tot, n: at.nLin, horiz: at.horiz }));
+          af('Ativação: caso conhecido (ativas = as que rodaram +R$ 779; ativar +1 truck +R$ 779; desativar 1 VUC +R$ 779; desativar 1 truck −R$ 1.364; top 3 por km +R$ 1.636)',
+            Math.abs(at.rod - e1) < 0.01 && Math.abs(at.tMais - e1) < 0.01 && at.vMais === 0 && Math.abs(at.vMenos - e1) < 0.01 && Math.abs(at.tMenos - e2) < 0.01 && Math.abs(at.top - e3) < 0.01 && Math.abs(at.kmIn - 0.4) < 1e-9 && at.nb === '2/3',
+            JSON.stringify(at));
+          const dimA = await page.evaluate(() => { setAtivDim('tipo'); const th = document.getElementById('th-ativ').textContent; setAtivDim('modelo'); return th; });
+          af('Ativação alterna Modelo ⇄ Tipo veíc.', dimA === 'TIPO', dimA);
         }
         if (P.totId === 'kml') {
           const dim = await page.evaluate(() => { setDim('proj'); const th = document.getElementById('th-dim').textContent; const n = document.querySelectorAll('#body-kml tr').length;
