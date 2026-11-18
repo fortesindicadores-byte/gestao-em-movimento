@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611181500">
+<meta name="build" content="202611181530">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Painel KM · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -539,31 +539,24 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
            depois da revisão do mês. Pelo Book do Operador, a alteração de km é pedida uma vez por
            mês, até o 18º dia útil, junto com o dimensionamento da 2ª quinzena. Só T2. ══ -->
       <section class="vw" id="vw-revisao">
-        <div class="fin-hero">
-          <div>
-            <div class="hlbl" id="rv-lbl">Km rodado acima do pago · por mapa</div>
-            <div class="hval" id="rv-val">—</div>
-            <div class="hrem">Valor ao R$/km remunerado: <b id="rv-rs">—</b></div>
-          </div>
-        </div>
         <div class="kpis k4">
-          <div class="kpi"><div class="kl">Revisão do mês</div><div class="kv" id="rv-rev">—</div><div class="km" id="rv-rev-m">—</div></div>
-          <div class="kpi"><div class="kl">Km por mapa · rodado × pago</div><div class="kv" id="rv-gap">—</div><div class="km" id="rv-gap-m">—</div></div>
-          <div class="kpi"><div class="kl">Acima de 5% · pedir revisão</div><div class="kv" id="rv-acima">—</div><div class="km" id="rv-acima-m">—</div></div>
-          <div class="kpi"><div class="kl">Abaixo de −5% · FT paga a mais</div><div class="kv" id="rv-abaixo">—</div><div class="km" id="rv-abaixo-m">—</div></div>
+          <div class="kpi"><div class="kl">Km por mapa rodado</div><div class="kv" id="rv-rod">—</div><div class="km" id="rv-rod-m">—</div></div>
+          <div class="kpi"><div class="kl">Precisava subir</div><div class="kv" id="rv-prec">—</div><div class="km" id="rv-prec-m">—</div></div>
+          <div class="kpi"><div class="kl">Subiu na revisão</div><div class="kv" id="rv-sub">—</div><div class="km" id="rv-sub-m">—</div></div>
+          <div class="kpi"><div class="kl">Faltou subir</div><div class="kv" id="rv-falt">—</div><div class="km" id="rv-falt-m">—</div></div>
         </div>
         <div class="card tsec rv-tsec">
           <div class="twrap"><table class="dre" id="tbl-rv">
             <thead><tr>
               <th>Unidade</th><th>Projeto</th><th class="num">Mapas</th>
-              <th class="num sep-imp">Km/mapa antes</th><th class="num">Revisão</th><th class="num">Km/mapa pago</th>
-              <th class="num sep-imp">Km/mapa rodado</th><th class="num">Δ km/mapa</th><th class="num">Δ %</th>
-              <th class="num sep-imp">Km acima do pago</th><th class="num">Impacto (R$)</th>
+              <th class="num sep-imp">Km/mapa rodado</th><th class="num">Km/mapa antes</th><th class="num">Km/mapa depois</th>
+              <th class="num sep-imp">Precisava subir</th><th class="num">Subiu</th><th class="num">Faltou subir</th>
+              <th class="num sep-imp">Km no mês</th><th class="num">R$ no mês</th>
             </tr></thead>
             <tbody id="tbl-rv-body"><tr><td class="loading" colspan="11">Carregando…</td></tr></tbody>
             <tfoot id="tbl-rv-foot"></tfoot>
           </table></div>
-          <div class="tsub tpe" id="rv-nota">Km/mapa pago = km da 1ª viagem pago pelo FT ÷ mapas. Km/mapa rodado = (km rodado − km pago de recarga e noturna) ÷ mapas. Revisão = km/mapa pago do mês − o do mês anterior. Pelo Book do Operador, a alteração de km é pedida uma vez por mês, até o 18º dia útil, e vale com o dimensionamento da 2ª quinzena.</div>
+          <div class="tsub tpe" id="rv-nota">Km por mapa. Precisava subir = rodado − antes da revisão. Subiu = depois − antes. Faltou subir = rodado − depois. Km e R$ no mês = o que faltou × mapas × R$/km.</div>
         </div>
       </section>
 
@@ -1525,9 +1518,10 @@ function rvAgrupa(rows) {
 function renderRevisao(F) {
   const body = document.getElementById('tbl-rv-body'), foot = document.getElementById('tbl-rv-foot');
   if (!body) return;
+  const IDS = ['rv-rod','rv-rod-m','rv-prec','rv-prec-m','rv-sub','rv-sub-m','rv-falt','rv-falt-m'];
   const vigs = [...new Set((F || []).filter(r => !RV_T1.has(r.proj) && r.kmPrim > 0).map(r => r.vig))].sort(sortVig);
   const vig = vigs[vigs.length - 1];
-  const vazio = msg => { ['rv-val','rv-rs','rv-rev','rv-rev-m','rv-gap','rv-gap-m','rv-acima','rv-acima-m','rv-abaixo','rv-abaixo-m'].forEach(id => set(id, '—'));
+  const vazio = msg => { IDS.forEach(id => set(id, '—'));
     body.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--txt2);padding:24px 8px;">${msg}</td></tr>`; if (foot) foot.innerHTML = ''; };
   if (!vig) return vazio('Sem mês com km pago do T2 no recorte');
   const unds = getSel('ms-und'), projs = getSel('ms-proj');
@@ -1537,48 +1531,40 @@ function renderRevisao(F) {
   const ant = rvAgrupa(ALL.filter(r => r.vig === vAnt && noRecorte(r)));
   const [mm, aa] = vig.split('/'); const rot = (MESES[+mm - 1] || mm) + '/' + aa.slice(2);
   const [ma, aaa] = vAnt.split('/'); const rotAnt = (MESES[+ma - 1] || ma) + '/' + aaa.slice(2);
-  set('rv-lbl', 'Km rodado acima do pago · ' + rot);
+  // por mapa: rodado (o que de fato rodamos), antes (pago no mês anterior) e depois (pago depois da revisão)
   const linhas = Object.values(atual).map(e => {
     const a = ant[e.und + '|' + e.proj];
-    const antes = a ? a.kmPago : null, rev = antes != null ? e.kmPago - antes : null;
-    const gap = e.kmRod - e.kmPago, gapPct = e.kmPago ? gap / e.kmPago * 100 : 0;
-    const kmAcima = Math.max(0, gap) * e.mapas;
-    return { ...e, antes, rev, gap, gapPct, kmAcima, imp: kmAcima * (e.rsKm || 0) };
-  }).sort((x, y) => y.kmAcima - x.kmAcima || y.gapPct - x.gapPct);
+    const antes = a ? a.kmPago : null, depois = e.kmPago, rod = e.kmRod;
+    const prec = antes != null ? rod - antes : null, sub = antes != null ? depois - antes : null, falt = rod - depois;
+    const kmMes = falt * e.mapas;
+    return { ...e, antes, depois, rod, prec, sub, falt, kmMes, rs: kmMes * (e.rsKm || 0) };
+  }).sort((x, y) => y.kmMes - x.kmMes);
   if (!linhas.length) return vazio('Sem projeto do T2 com mapas em ' + rot);
   const n1 = v => v == null ? '—' : v.toFixed(1).replace('.', ',');
-  const sg = v => v == null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1).replace('.', ',');
-  const corGap = p => p > 5 ? 'cr' : p < -5 ? 'cg' : '';
-  const corRev = v => v == null || Math.abs(v) < 0.05 ? '' : v > 0 ? 'cg' : 'cr';
+  const sg = v => v == null ? '—' : (v > 0.05 ? '+' : v < -0.05 ? '−' : '') + Math.abs(v).toFixed(1).replace('.', ',');
+  const sgI = v => (v > 0.5 ? '+' : v < -0.5 ? '−' : '') + fmt(Math.abs(v));
+  // faltou subir > 0 = rodamos mais do que o FT passou a pagar (ruim); < 0 = o FT paga mais do que rodamos
+  const cF = v => v == null || Math.abs(v) < 0.05 ? '' : v > 0 ? 'cr' : 'cg';
   body.innerHTML = linhas.map(e => `<tr>
     <td>${e.und}</td><td>${rvProj(e.proj)}</td><td class="num">${Math.round(e.mapas).toLocaleString('pt-BR')}</td>
-    <td class="num sep-imp">${n1(e.antes)}</td><td class="num ${corRev(e.rev)}">${sg(e.rev)}</td><td class="num">${n1(e.kmPago)}</td>
-    <td class="num sep-imp">${n1(e.kmRod)}</td><td class="num ${corGap(e.gapPct)}">${sg(e.gap)}</td><td class="num ${corGap(e.gapPct)}">${sg(e.gapPct)}%</td>
-    <td class="num sep-imp">${e.kmAcima ? fmt(e.kmAcima) : '—'}</td><td class="num">${e.imp ? fmt(e.imp) : '—'}</td></tr>`).join('');
-  const T = linhas.reduce((t, e) => { t.mapas += e.mapas; t.pago += e.pago; t.rod += e.rod; t.kmAcima += e.kmAcima; t.imp += e.imp;
-    if (e.antes != null) { t.antPago += e.antes * e.mapas; t.antMap += e.mapas; t.atuPago += e.pago; } return t; },
-    { mapas: 0, pago: 0, rod: 0, kmAcima: 0, imp: 0, antPago: 0, antMap: 0, atuPago: 0 });
-  const tPago = T.pago / T.mapas, tRod = T.rod / T.mapas, tGap = tRod - tPago, tGapPct = tGap / tPago * 100;
-  const tAntes = T.antMap ? T.antPago / T.antMap : null, tRev = T.antMap ? T.atuPago / T.antMap - tAntes : null;
+    <td class="num sep-imp"><b>${n1(e.rod)}</b></td><td class="num">${n1(e.antes)}</td><td class="num">${n1(e.depois)}</td>
+    <td class="num sep-imp">${sg(e.prec)}</td><td class="num"><b>${sg(e.sub)}</b></td><td class="num ${cF(e.falt)}"><b>${sg(e.falt)}</b></td>
+    <td class="num sep-imp ${cF(e.falt)}">${sgI(e.kmMes)}</td><td class="num ${cF(e.falt)}">${sgI(e.rs)}</td></tr>`).join('');
+  const T = linhas.reduce((t, e) => { t.mapas += e.mapas; t.rod += e.rod * e.mapas; t.dep += e.depois * e.mapas; t.km += e.kmMes; t.rs += e.rs;
+    if (e.antes != null) { t.mA += e.mapas; t.ant += e.antes * e.mapas; t.rodA += e.rod * e.mapas; t.depA += e.depois * e.mapas; } return t; },
+    { mapas: 0, rod: 0, dep: 0, km: 0, rs: 0, mA: 0, ant: 0, rodA: 0, depA: 0 });
+  const tRod = T.rod / T.mapas, tDep = T.dep / T.mapas, tAnt = T.mA ? T.ant / T.mA : null;
+  const tPrec = T.mA ? (T.rodA - T.ant) / T.mA : null, tSub = T.mA ? (T.depA - T.ant) / T.mA : null, tFalt = tRod - tDep;
   if (foot) foot.innerHTML = `<tr class="total"><td>Total</td><td></td><td class="num">${Math.round(T.mapas).toLocaleString('pt-BR')}</td>
-    <td class="num sep-imp">${n1(tAntes)}</td><td class="num ${corRev(tRev)}">${sg(tRev)}</td><td class="num">${n1(tPago)}</td>
-    <td class="num sep-imp">${n1(tRod)}</td><td class="num ${corGap(tGapPct)}">${sg(tGap)}</td><td class="num ${corGap(tGapPct)}">${sg(tGapPct)}%</td>
-    <td class="num sep-imp">${T.kmAcima ? fmt(T.kmAcima) : '—'}</td><td class="num">${T.imp ? fmt(T.imp) : '—'}</td></tr>`;
-  set('rv-val', T.kmAcima ? '+' + fmt(T.kmAcima) + ' km' : '0 km');
-  set('rv-rs', T.imp ? 'R$ ' + fmt(T.imp) : '—');
-  // revisão do mês: km por mapa que entrou ou saiu, nos projetos que existem nos dois meses
-  const kmRev = linhas.reduce((s, e) => s + (e.rev != null ? e.rev * e.mapas : 0), 0);
-  const nSub = linhas.filter(e => e.rev != null && e.rev >= 0.05).length, nDes = linhas.filter(e => e.rev != null && e.rev <= -0.05).length;
-  set('rv-rev', tRev == null ? '—' : sg(tRev) + ' km/mapa');
-  set('rv-rev-m', tRev == null ? 'sem o mês anterior (' + rotAnt + ')' : `${rotAnt} → ${rot} · ${kmRev >= 0 ? '+' : '−'}${fmt(Math.abs(kmRev))} km no mês · subiu em ${nSub}, desceu em ${nDes}`);
-  const el = document.getElementById('rv-rev'); if (el) el.className = 'kv ' + corRev(tRev);
-  set('rv-gap', sg(tGapPct) + '%');
-  set('rv-gap-m', `${n1(tRod)} rodado × ${n1(tPago)} pago`);
-  const eg = document.getElementById('rv-gap'); if (eg) eg.className = 'kv ' + corGap(tGapPct);
-  const acima = linhas.filter(e => e.gapPct > 5), abaixo = linhas.filter(e => e.gapPct < -5);
-  const nomes = l => l.length ? l.slice(0, 4).map(e => e.und + ' ' + rvProj(e.proj)).join(' · ') + (l.length > 4 ? ` e mais ${l.length - 4}` : '') : 'nenhum';
-  set('rv-acima', String(acima.length)); set('rv-acima-m', nomes(acima));
-  set('rv-abaixo', String(abaixo.length)); set('rv-abaixo-m', nomes(abaixo));
+    <td class="num sep-imp">${n1(tRod)}</td><td class="num">${n1(tAnt)}</td><td class="num">${n1(tDep)}</td>
+    <td class="num sep-imp">${sg(tPrec)}</td><td class="num">${sg(tSub)}</td><td class="num ${cF(tFalt)}">${sg(tFalt)}</td>
+    <td class="num sep-imp ${cF(tFalt)}">${sgI(T.km)}</td><td class="num ${cF(tFalt)}">${sgI(T.rs)}</td></tr>`;
+  const cor = (id, c) => { const el = document.getElementById(id); if (el) el.className = 'kv ' + c; };
+  set('rv-rod', n1(tRod) + ' km'); set('rv-rod-m', `${rot} · pago depois da revisão: ${n1(tDep)} km`);
+  set('rv-prec', tPrec == null ? '—' : sg(tPrec) + ' km'); set('rv-prec-m', tAnt == null ? 'sem ' + rotAnt : `rodado ${n1(tRod)} × pago em ${rotAnt} ${n1(tAnt)}`);
+  set('rv-sub', tSub == null ? '—' : sg(tSub) + ' km'); set('rv-sub-m', tAnt == null ? 'sem ' + rotAnt : `${rotAnt} ${n1(tAnt)} → ${rot} ${n1(tDep)}`);
+  set('rv-falt', sg(tFalt) + ' km'); cor('rv-falt', cF(tFalt));
+  set('rv-falt-m', `${sgI(T.km)} km no mês · ${T.rs < -0.5 ? '−' : ''}R$ ${fmt(Math.abs(T.rs))}`);
 }
 
 function renderTable(F, YTD) {
@@ -2163,6 +2149,6 @@ function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>KmApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202611181500"></script>
+<script src="../assets/build-check.js?v=202611181530"></script>
 </body>
 </html>
