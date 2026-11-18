@@ -126,9 +126,12 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   const larg = () => pg.evaluate(() => document.querySelector('#arv-km .tn').getBoundingClientRect().width);
   const w0 = await larg();
   await pg.click('#arv-km .arv-zoom button[data-z="+"]');
-  af('zoom + aumenta', (await larg()) > w0 * 1.2 && /125%/.test(await pg.textContent('#arv-km .arv-zp')), await pg.textContent('#arv-km .arv-zp'));
+  af('zoom + aumenta', (await larg()) > w0 * 1.2 && /125%/.test(await pg.inputValue('#arv-km .arv-zp')), await pg.inputValue('#arv-km .arv-zp'));
   await pg.click('#arv-km .arv-zoom button[data-z="0"]');
-  af('Ajustar volta a 100%', /^100%$/.test(await pg.textContent('#arv-km .arv-zp')) && Math.abs((await larg()) - w0) < 1);
+  await pg.fill('#arv-km .arv-zp', '200'); await pg.press('#arv-km .arv-zp', 'Enter');
+  af('zoom digitado 200%', (await pg.inputValue('#arv-km .arv-zp')) === '200%' && Math.abs((await larg()) - w0 * 2) < 2, await pg.inputValue('#arv-km .arv-zp'));
+  await pg.click('#arv-km .arv-zoom button[data-z="0"]');
+  af('Ajustar volta a 100%', /^100%$/.test(await pg.inputValue('#arv-km .arv-zp')) && Math.abs((await larg()) - w0) < 1);
   if (SHOT) await pg.screenshot({ path: path.join(SHOT, `km-${w}-${tema}.png`) });
   af('sem erro na página', !errs.length, errs.join(' | '));
   await ctx.close();

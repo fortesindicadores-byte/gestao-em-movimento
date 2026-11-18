@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611182130">
+<meta name="build" content="202611182200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,8 +12,8 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script>window.__gvizDispBanco=false;/* a árvore de km junta o mês do banco por conta própria (como o Painel KM) */</script>
-<script src="../assets/gviz-cache.js?v=202611182130"></script>
-<script src="../assets/dispersao-km.js?v=202611182130"></script>
+<script src="../assets/gviz-cache.js?v=202611182200"></script>
+<script src="../assets/dispersao-km.js?v=202611182200"></script>
 <style>
 /* ============================================================
    ÁRVORES — ROIC e Km (Renan, 18/11/2026: "Vamos pensar em árvore do rooc
@@ -377,7 +377,9 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .arv-zoom button{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;color:var(--txt);background:transparent;border:0;
   min-width:26px;height:26px;padding:0 9px;border-radius:999px;cursor:pointer;}
 .arv-zoom button:hover{background:var(--hover);}
-.arv-zp{font-size:10.5px;font-weight:700;color:var(--txt3);min-width:38px;text-align:center;}
+.arv-zp{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:var(--txt);width:52px;height:24px;text-align:center;
+  background:transparent;border:1px solid transparent;border-radius:999px;outline:none;padding:0 4px;}
+.arv-zp:hover{border-color:var(--card-brd);} .arv-zp:focus{border-color:var(--laranja);background:var(--hover);}
 .tw{position:absolute;top:0;left:0;transform-origin:0 0;}
 .tsvg{position:absolute;top:0;left:0;overflow:visible;pointer-events:none;}
 .tsvg path{fill:none;stroke:var(--txt4);stroke-width:1.4;opacity:.7;}
@@ -677,7 +679,7 @@ function arvore(area,raiz){
   let folha=0; const nos=[], folhas=[];
   (function lay(n,d){ n.d=d; nos.push(n); if(n.kids&&n.kids.length){ n.kids.forEach(k=>lay(k,d+1)); } else { n.f=folha++; folhas.push(n); } })(raiz,0);
   area.innerHTML='<div class="tw"><svg class="tsvg"></svg></div>'
-    +'<div class="arv-zoom"><button type="button" data-z="-" title="Diminuir">−</button><span class="arv-zp">100%</span><button type="button" data-z="+" title="Aumentar">+</button><button type="button" data-z="0" title="Ver a árvore inteira">Ajustar</button></div>';
+    +'<div class="arv-zoom"><button type="button" data-z="-" title="Diminuir">−</button><input class="arv-zp" type="text" inputmode="numeric" value="100%" title="Digite o zoom em % e aperte Enter" aria-label="Zoom em %" autocomplete="off"><button type="button" data-z="+" title="Aumentar">+</button><button type="button" data-z="0" title="Ver a árvore inteira">Ajustar</button></div>';
   const tw=area.querySelector('.tw'), svg=tw.querySelector('svg'), zp=area.querySelector('.arv-zp');
   nos.forEach(n=>{ const el=document.createElement('div'); el.className='tn'+(n.raiz?' raiz':'')+(n.est?' est':'');
     el.innerHTML=`<div class="tn-t">${esc(n.t)}</div><div class="tn-v ${n.cls||''}">${esc(n.v==null?'—':n.v)}</div>`+(n.s?`<div class="tn-s">${esc(n.s)}</div>`:'')
@@ -691,7 +693,7 @@ function arvore(area,raiz){
   const prof=Math.max(...nos.map(n=>n.d));
   let totW=0, fitS=1;
   const T={x:0,y:0,s:1};
-  const aplica=()=>{ tw.style.transform=`translate(${T.x}px,${T.y}px) scale(${T.s})`; zp.textContent=Math.round(T.s/fitS*100)+'%'; };
+  const aplica=()=>{ tw.style.transform=`translate(${T.x}px,${T.y}px) scale(${T.s})`; if(document.activeElement!==zp) zp.value=Math.round(T.s/fitS*100)+'%'; };
   const desenha=gx=>{ nos.forEach(n=>{ n.x=n.d*(W+gx); n.el.style.left=n.x+'px'; });
     totW=(prof+1)*W+prof*gx; tw.style.width=totW+'px'; tw.style.height=totH+'px'; svg.setAttribute('width',totW); svg.setAttribute('height',totH);
     let p=''; nos.forEach(n=>(n.kids||[]).forEach(k=>{ const x1=n.x+W, x2=k.x, xm=(x1+x2)/2; p+=`M${x1},${n.y} C${xm},${n.y} ${xm},${k.y} ${x2},${k.y} `; }));
@@ -703,9 +705,15 @@ function arvore(area,raiz){
     const gx=prof?Math.max(GX0,Math.min(GX0*3.2,(aw/s-(prof+1)*W)/prof)):GX0;
     desenha(gx); fitS=s;
     T.s=s; T.x=Math.max(0,(aw-totW*s)/2); T.y=Math.max(0,(ah-totH*s)/2); aplica(); };
-  const zoom=(f,cx,cy)=>{ const ns=Math.max(fitS*.6,Math.min(fitS*5,T.s*f)); if(ns===T.s) return;
+  const zoom=(f,cx,cy,livre)=>{ const ns=livre?T.s*f:Math.max(fitS*.1,Math.min(fitS*5,T.s*f)); if(ns===T.s) return;
     if(cx==null){ cx=area.clientWidth/2; cy=area.clientHeight/2; }
     T.x=cx-(cx-T.x)*ns/T.s; T.y=cy-(cy-T.y)*ns/T.s; T.s=ns; aplica(); };
+  // zoom digitado: número em % (10 a 500), Enter aplica, Esc desiste
+  const digita=()=>{ const n=parseFloat(String(zp.value).replace(',','.').replace(/[^\d.]/g,''));
+    if(isFinite(n)&&n>0){ const alvo=Math.max(10,Math.min(500,n))/100*fitS; zoom(alvo/T.s,null,null,true); } zp.blur(); aplica(); };
+  zp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'){ e.preventDefault(); digita(); } else if(e.key==='Escape'){ zp.blur(); aplica(); } });
+  zp.addEventListener('focus',()=>{ zp.value=String(Math.round(T.s/fitS*100)); zp.select(); });
+  zp.addEventListener('blur',()=>aplica());
   area.querySelector('.arv-zoom').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
     if(b.dataset.z==='0') ajusta(); else zoom(b.dataset.z==='+'?1.25:1/1.25); });
   area.addEventListener('wheel',e=>{ e.preventDefault(); const r=area.getBoundingClientRect();
@@ -955,6 +963,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611182130"></script>
+<script src="../assets/build-check.js?v=202611182200"></script>
 </body>
 </html>
