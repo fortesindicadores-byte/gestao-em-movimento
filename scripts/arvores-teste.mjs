@@ -11,7 +11,7 @@ const srv = createServer((q, r) => { const f = path.join(RAIZ, decodeURIComponen
 await new Promise(ok => srv.listen(0, '127.0.0.1', ok)); const BASE = 'http://127.0.0.1:' + srv.address().port;
 
 // ── DRE: out/26 e set/26 (Terceiros fica fora do recorte) ──
-const dre = (vig, nv3, real, orc) => ({ vigencia: vig, nivel_3: nv3, realizado: real, orcado: orc, linha: 1 });
+const dre = (vig, nv3, real, orc) => ({ vigencia: vig.slice(5, 7) + '/' + vig.slice(0, 4), vigencia_orig: vig, nivel_3: nv3, realizado: real, orcado: orc, linha: 1 });
 const REC = [dre('2026-10-01', 'ROTA - CGR', 3000000, 2900000), dre('2026-10-01', 'APOIO - CBA', 1000000, 1000000), dre('2026-10-01', 'AUTO SERVIÇO - GOI', 400000, 400000),
   dre('2026-10-01', 'TERCEIROS - BLC', 500000, 500000), dre('2026-09-01', 'ROTA - CGR', 2800000, 2800000)];
 const EBD = [dre('2026-10-01', 'ROTA - CGR', 800000, 700000), dre('2026-10-01', 'APOIO - CBA', 200000, 200000), dre('2026-10-01', 'AUTO SERVIÇO - GOI', 70000, 70000),

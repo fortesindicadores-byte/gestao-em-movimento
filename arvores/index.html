@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611181900">
+<meta name="build" content="202611182030">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,8 +12,8 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script>window.__gvizDispBanco=false;/* a árvore de km junta o mês do banco por conta própria (como o Painel KM) */</script>
-<script src="../assets/gviz-cache.js?v=202611181900"></script>
-<script src="../assets/dispersao-km.js?v=202611181900"></script>
+<script src="../assets/gviz-cache.js?v=202611182030"></script>
+<script src="../assets/dispersao-km.js?v=202611182030"></script>
 <style>
 /* ============================================================
    ÁRVORES — ROIC e Km (Renan, 18/11/2026: "Vamos pensar em árvore do rooc
@@ -566,13 +566,19 @@ const tabDre=async slug=>(window.GvizCache&&GvizCache.tabelaConsumo)?await GvizC
 
 /* DRE: receita líquida e EBITDA ajustado por vigência × operação × unidade */
 let DRE={}, DEP={}, DEP_MESES=new Set();   // DRE['AAAA-MM|op|uni'] = {rec,recOrc,ebd,ebdOrc}
+function vigDeLinha(r){
+  const o=String(r.vigencia_orig||''); if(/^\d{4}-\d{2}/.test(o)) return o.slice(0,7);
+  const m=String(r.vigencia||'').match(/^(\d{1,2})\/(\d{4})$/); if(m) return m[2]+'-'+m[1].padStart(2,'0');
+  const s=String(r.vigencia||''); return /^\d{4}-\d{2}/.test(s)?s.slice(0,7):'';
+}
 async function carregaDRE(){
   DRE={}; DEP={}; DEP_MESES=new Set();
   const ini='2025-01-01';
   for(const [slug,campo] of [['dre_receita','rec'],['dre_ebitda','ebd']]){
     const t=await tabDre(slug);
-    const rows=await todas(sb.from(t).select('vigencia,nivel_3,realizado,orcado').gte('vigencia',ini).order('vigencia').order('linha'));
-    rows.forEach(r=>{ const ou=opUni(r.nivel_3); if(!ou||!r.vigencia) return; const v=String(r.vigencia).slice(0,7);
+    // vigencia é TEXTO 'MM/AAAA'; a data fica em vigencia_orig ('AAAA-MM-DD')
+    const rows=await todas(sb.from(t).select('vigencia,vigencia_orig,nivel_3,realizado,orcado').gte('vigencia_orig',ini).order('vigencia_orig').order('linha'));
+    rows.forEach(r=>{ const ou=opUni(r.nivel_3); if(!ou) return; const v=vigDeLinha(r); if(!v) return;
       const k=v+'|'+ou.op+'|'+ou.uni, o=DRE[k]=DRE[k]||{rec:0,recOrc:0,ebd:0,ebdOrc:0};
       o[campo]+=+r.realizado||0; o[campo+'Orc']+=+r.orcado||0; });
   }
@@ -903,6 +909,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611181900"></script>
+<script src="../assets/build-check.js?v=202611182030"></script>
 </body>
 </html>
