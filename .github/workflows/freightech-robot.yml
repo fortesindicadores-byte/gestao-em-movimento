@@ -92,7 +92,7 @@ jobs:
           echo "evento=${{ github.event_name }} · modo=$FT_MODE · desde=$FT_DESDE · ultimas=${FT_ULTIMAS:-todas} · refazer=${FT_REFAZER:-0}"
           node scripts/freightech-robot.mjs
       - name: Remuneração por mês (ft_rem_mes, painel /remuneracao/)
-        if: github.event_name == 'schedule' || github.event.inputs.modo == 'carga'
+        if: always() && (github.event_name == 'schedule' || github.event.inputs.modo == 'carga')
         continue-on-error: true
         env:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}

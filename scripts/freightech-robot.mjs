@@ -718,7 +718,8 @@ async function exportaApi(canal, vigs, tabs, unidades, rotulo, formulas = false)
   }
   if (!/DISPONIVEL/i.test(st.status || '') || !st.arquivo) {
     const h = (st.historico || []).slice(-1)[0] || {};
-    return { erro: `${st.status} · ${h.mensagemUsuario || ''} ${h.mensagemInterna ? '(' + String(h.mensagemInterna).replace(/Placa:\s*\S+/g, 'Placa: …') + ')' : ''}` };
+    // status ERRO = o próprio FT não gerou o arquivo (dado quebrado do lado deles)
+    return { recusa: /ERRO/i.test(st.status || ''), erro: `${st.status} · ${h.mensagemUsuario || ''} ${h.mensagemInterna ? '(' + String(h.mensagemInterna).replace(/Placa:\s*\S+/g, 'Placa: …') + ')' : ''}` };
   }
   const d = await ftApiOk(`https://apim.ambevdevs.com.br/freightech-integracao-externa-prod/v1/storage/${st.arquivo.idStorage}`, { bin: true });
   if (d.st !== 200 || !d.b64) return { erro: `download HTTP ${d.st}` };
@@ -823,7 +824,7 @@ async function carga() {
     vigs.sort((a, b) => { const f = v => { const m = v.match(/_(\d)_(\d{1,2})_(\d{4})$/); return +m[3] * 100 + +m[2] * 2 + +m[1]; }; return f(a) - f(b); });
     if (Number(process.env.FT_ULTIMAS) > 0) vigs = vigs.slice(-Number(process.env.FT_ULTIMAS));
     log(`── ${canal}: ${lista.length} tabela(s) (${lista.map(t => t.comFormatacao).join(' | ')}) · ${vigs.length} vigência(s) ${vigs[0] || ''} → ${vigs.slice(-1)[0] || ''}`);
-    let lin = 0, err = 0;
+    let lin = 0, err = 0, rec = 0;
     for (let i = 0; i < vigs.length; i += 8) {
       const bloco = vigs.slice(i, i + 8);
       const faltam = lista.filter(t => REFAZER || bloco.some(v => !feitas.has(`${canal}|${t.semFormatacao}|${v}`)));
@@ -843,7 +844,12 @@ async function carga() {
         log(`   ${bloco[0]}…: ${r.erro} · tentando tabela a tabela`);
         for (const t of grupo) {
           const r1 = await exportaApi(canal, bloco, [t], unidades, `${canal}-${i}-${t.semFormatacao}`);
-          if (r1.f) partes.push(r1); else { log(`   ${t.comFormatacao} ${bloco[0]}…: ${r1.erro}`); err++; }
+          if (r1.f) partes.push(r1);
+          // tabela que o FT recusa (status ERRO do lado deles, 17/11/2026: a Manutenção
+          // Implemento da Empurrada) não derruba a rodada: as outras já foram gravadas
+          // e o passo da Remuneração precisa rodar. Fica o aviso amarelo no job.
+          else if (r1.recusa) { log(`   ${t.comFormatacao} ${bloco[0]}…: recusada pelo FT · ${String(r1.erro).split('\n')[0].slice(0, 160)}`); console.error(`::warning::FT recusou ${canal} · ${t.comFormatacao} (${bloco[0]}…): erro do lado do Freightech`); rec++; }
+          else { log(`   ${t.comFormatacao} ${bloco[0]}…: ${r1.erro}`); err++; }
         }
       }
       }
@@ -852,7 +858,7 @@ async function carga() {
         catch (e) { log(`   falha ao gravar: ${e.message}`); err++; }
       }
     }
-    resumo.push(`${canal}: ${lin} linhas${err ? ` · ${err} falha(s)` : ''}`);
+    resumo.push(`${canal}: ${lin} linhas${err ? ` · ${err} falha(s)` : ''}${rec ? ` · ${rec} recusada(s) pelo FT` : ''}`);
   }
   log('── CARGA: resumo'); resumo.forEach(r => log('   ' + r));
   if (resumo.some(r => /falha/.test(r))) process.exitCode = 1;
