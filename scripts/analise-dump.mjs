@@ -44,6 +44,13 @@ const SO_MANUT = SO === 'manut';
 const FT_MIX = ['Caminhao', 'Van', 'CaminhaoAS', 'Resumo', 'ResumoVan', 'ResumoAS', 'ParametrosGeraisRota', 'CombustivelRota', 'CombustivelListaAS'];
 const FT_COMB = ['CombustivelEmpurrada', 'CombustivelInsumos', 'CombustivelRota', 'CombustivelListaAS', 'Combustivel', 'CombustivelAS'];
 console.log('recorte:', SO || 'tudo');
+// DUMP_SO=ginfo: só as exportações do Ginfo (ginfo_snapshot inteiro: CIFV, stress test,
+// preventivas, OS…), para montar tabelas por unidade com os dados do Gestão à Vista
+if (SO === 'ginfo') {
+  const g = await tudo('ginfo_snapshot', 'chave');
+  grava('ginfo', g.map(r => ({ chave: r.chave, updated_at: r.updated_at, data: r.data })));
+  process.exit(0);
+}
 
 async function rest(q) {
   for (let t = 1; ; t++) {
