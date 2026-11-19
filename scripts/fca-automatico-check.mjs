@@ -127,4 +127,31 @@ console.log(`   fora do automático: ${P.fora.join(', ') || '—'}`);
 Object.entries(P.por).sort().forEach(([u, x]) => {
   console.log(`   ${u.padEnd(10)} preenche ${x.upd || 0} · cria ${x.ins || 0}${x.pulados.length ? ' · PULADOS: ' + x.pulados.join(' | ') : ''}${x.semAcao.length ? ' · sem ação: ' + x.semAcao.join(' | ') : ''}`); });
 P.amostra.forEach(a => console.log(`\n   ◆ ${a.id} · dono ${a.resp}\n     causa: ${String(a.causa || '').split('\n').join(' / ').slice(0, 220)}\n     ação: ${String(a.acao || '').slice(0, 200)}`));
+// AÇÕES JÁ EDITADAS (status, prazo ou acompanhamento) cuja linha da Dispersão de km mudou: a geração não as
+// reescreve, então sai um UPDATE por linha que troca SÓ a linha da Dispersão (o resto que a unidade escreveu fica)
+const E = await pg.evaluate(() => {
+  const FA = FcaAuto, linhaD = t => { const m = String(t || '').match(/^[^\n]*Dispersão de km: [^\n]*/m); return m ? m[0] : null; };
+  const porFid = {}; (LIDO.fca || []).forEach(r => { if (String(r.origem || '').toLowerCase() !== 'custos' || !r.auto_chave) return; (porFid[FA.fidDe(r)] = porFid[FA.fidDe(r)] || []).push(r); });
+  const out = [];
+  FATOS.filter(FA.oficialElegivel).forEach(f => {
+    const rows = (porFid[f.id] || []).filter(FA.tocada); if (!rows.length) return;
+    const ls = FA.linhasDoFato(diag(f)).filter(l => l.a);
+    rows.forEach(r => { const l = ls.find(x => x.k === r.auto_chave); if (!l) return;
+      const novo = FA.textoCausa(l) || '', ant = linhaD(r.causa), nv = linhaD(novo); if (!ant || !nv || ant === nv) return;
+      const obsN = (novo.match(/Obs\.: o km remunerado [^\n]*/) || [''])[0];
+      out.push({ id: r.id, uni: f.uni, vig: f.vigLbl, ant, nv, obsN, temObs: /Obs\.: o km remunerado/.test(r.causa || '') }); });
+  });
+  return out;
+});
+const q = t => "'" + String(t).replace(/'/g, "''") + "'";
+console.log(`\n══ AÇÕES EDITADAS COM A DISPERSÃO DE KM DESATUALIZADA: ${E.length}`);
+E.forEach(e => console.log(`   ${e.uni} ${e.vig}\n     antes: ${e.ant}\n     agora: ${e.nv}`));
+if (E.length) {
+  console.log('\n-- SQL ----------------------------------------------------------------');
+  E.forEach(e => {
+    const obs = e.obsN && !e.temObs ? ` || ${q('\n\nObs.: ')} || ${q(e.obsN.replace(/^Obs\.: /, ''))}` : '';
+    console.log(`update public.fca set causa = replace(causa, ${q(e.ant)}, ${q(e.nv)})${obs} where id = ${q(e.id)} and position(${q(e.ant)} in causa) > 0; -- ${e.uni} ${e.vig}`);
+  });
+  console.log('-- fim do SQL ---------------------------------------------------------');
+}
 await nav.close(); srv.close();
