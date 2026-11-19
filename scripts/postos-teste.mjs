@@ -130,6 +130,13 @@ const num = s => +String(s).replace(/[^\d,-]/g, '').replace(',', '.');
     return o.scales.y.display === false && o.scales.x.grid.display === false && o.plugins.datalabels.anchor === 'end' && /,\.65\)/.test(d.backgroundColor) && d.borderWidth === 1 && d.borderRadius === 3; }));
   t('texto explicativo embaixo da tabela', await pg.evaluate(() => { const c = document.getElementById('tab-pe'); return c.previousElementSibling.classList.contains('twrap') && /menor para o maior/.test(c.textContent); }));
   // gráfico dia a dia + toggle
+  t('abre por mês', /por mês/.test(await txt(pg, '#g-tit')) && await pg.evaluate(() => charts.dia.data.labels.length >= 1));
+  await pg.click('#dims-grao .dimb[data-g="tri"]'); await pg.waitForTimeout(200);
+  t('toggle Tri: rótulo Q1 a Q4', /por trimestre/.test(await txt(pg, '#g-tit')) && await pg.evaluate(() => charts.dia.data.labels.every(l => /^Q[1-4]\/26$/.test(l))), await pg.evaluate(() => charts.dia.data.labels.join(',')));
+  await pg.click('#dims-grao .dimb[data-g="ano"]'); await pg.waitForTimeout(200);
+  t('toggle Ano', await pg.evaluate(() => charts.dia.data.labels.join() === '2026'));
+  await pg.click('#dims-grao .dimb[data-g="dia"]'); await pg.waitForTimeout(200);
+  t('escolha guardada', await pg.evaluate(() => localStorage.getItem('postos_grao') === 'dia'));
   const n0 = await pg.evaluate(() => charts.dia ? charts.dia.data.labels.length : -1);
   t('gráfico com os 20 dias', n0 === 20, String(n0));
   await pg.click('#dims-dia .dimb[data-m="litros"]'); await pg.waitForTimeout(200);
@@ -143,6 +150,10 @@ const num = s => +String(s).replace(/[^\d,-]/g, '').replace(',', '.');
   t('combustível Todos inclui o Arla', await pg.evaluate(() => ROWS.filter(r => passa(r)).some(r => r.prod === 'ARLA 32')));
   t('nome do painel: Integração Abastecimentos', (await pg.title()) === 'Integração Abastecimentos · Gestão em Movimento' && /Integração Abastecimentos/.test(await txt(pg, '.s-top b')));
   if (SHOT) await pg.screenshot({ path: join(SHOT, 'postos-1366.png') });
+  await pg.evaluate(() => { const w = document.getElementById('ms-vig'); w._sel = new Set(); w._auto = false; render(); });
+  await pg.click('#dims-grao .dimb[data-g="mes"]'); await pg.click('#dims-dia .dimb[data-m="valor"]'); await pg.waitForTimeout(300);
+  t('sem vigência, Mês mostra set e out', await pg.evaluate(() => charts.dia.data.labels.join() === 'set/26,out/26'), await pg.evaluate(() => charts.dia.data.labels.join()));
+  if (SHOT) await pg.screenshot({ path: join(SHOT, 'postos-mes-1366.png') });
   await b.close();
 }
 for (const [w, h] of [[1366, 768], [1600, 900], [1920, 1080]]) for (const tema of ['dark', 'light']) {

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610311700">
+<meta name="build" content="202611191500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Integração Abastecimentos · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -224,6 +224,7 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
 .rt .l{color:var(--txt3);font-weight:600;}
 .rt.abs{position:absolute;top:10px;right:12px;z-index:3;}
 .dims{display:flex;gap:4px;flex-wrap:wrap;}
+.dims-par{display:flex;gap:14px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end;}
 .dimb{background:transparent;border:1px solid var(--card-brd);border-radius:7px;padding:4px 10px;cursor:pointer;
   font-family:inherit;font-size:10.5px;font-weight:700;color:var(--txt2);}
 .dimb:hover{background:var(--hover);color:var(--txt);}
@@ -466,11 +467,19 @@ body.emb-on .cols{padding-top:0;}
           <div class="gr-p">
             <div class="card gcard">
               <div class="ghd">
-                <div><div class="gtit" id="g-tit">Valor abastecido por dia</div><div class="gsub" id="g-sub">—</div></div>
-                <div class="dims" id="dims-dia">
-                  <button class="dimb on" data-m="valor">Valor</button>
-                  <button class="dimb" data-m="litros">Litros</button>
-                  <button class="dimb" data-m="rl">R$/L</button>
+                <div><div class="gtit" id="g-tit">Valor abastecido por mês</div><div class="gsub" id="g-sub">—</div></div>
+                <div class="dims-par">
+                  <div class="dims" id="dims-grao">
+                    <button class="dimb" data-g="dia">Dia</button>
+                    <button class="dimb on" data-g="mes">Mês</button>
+                    <button class="dimb" data-g="tri">Tri</button>
+                    <button class="dimb" data-g="ano">Ano</button>
+                  </div>
+                  <div class="dims" id="dims-dia">
+                    <button class="dimb on" data-m="valor">Valor</button>
+                    <button class="dimb" data-m="litros">Litros</button>
+                    <button class="dimb" data-m="rl">R$/L</button>
+                  </div>
                 </div>
               </div>
               <div class="gleg"><span style="color:#F97316"><i class="sq"></i><b id="g-leg" style="color:var(--txt3);font-weight:700">VALOR ABASTECIDO (R$)</b></span></div>
@@ -509,6 +518,8 @@ body.emb-on .cols{padding-top:0;}
 const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
 let sb=null, ROWS=[], MODO='valor';
+// Agrupamento do gráfico (Renan, 19/11/2026: "deve ter como mudar para mês, tri e ano").
+let GRAO='mes'; try{ const g=localStorage.getItem('postos_grao'); if(['dia','mes','tri','ano'].includes(g)) GRAO=g; }catch(e){}
 const charts={};
 const $=i=>document.getElementById(i);
 const set=(i,v)=>{ const e=$(i); if(e) e.textContent=v; };
@@ -678,15 +689,19 @@ function chartBase(){
       borderColor:L?'#d7dce4':'#33343A',borderWidth:1,titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'},footerFont:{family:'Montserrat'},footerColor:L?'#4A5568':'#C9D0DD'},
     dl:L?'#000000':'#F1F5F9' };
 }
-const MODOS={valor:{tit:'Valor abastecido por dia',f:d=>d.v,fmt:(v,c)=>c?curto(v):'R$ '+br(v,2)},
-  litros:{tit:'Litros abastecidos por dia',f:d=>d.l,fmt:(v,c)=>c?curto(v):br(v,0)+' L'},
-  rl:{tit:'Preço R$/L por dia',f:d=>d.l>0?d.v/d.l:null,fmt:(v,c)=>c?br(v,2):'R$ '+br(v,4)}};
+const MODOS={valor:{tit:'Valor abastecido',f:d=>d.v,fmt:(v,c)=>c?curto(v):'R$ '+br(v,2)},
+  litros:{tit:'Litros abastecidos',f:d=>d.l,fmt:(v,c)=>c?curto(v):br(v,0)+' L'},
+  rl:{tit:'Preço R$/L',f:d=>d.l>0?d.v/d.l:null,fmt:(v,c)=>c?br(v,2):'R$ '+br(v,4)}};
+const GRAOS={dia:{por:'por dia',k:d=>d,rot:d=>diaRot(d),tit:d=>d.split('-').reverse().join('/'),un:['dia','dias']},
+  mes:{por:'por mês',k:d=>d.slice(0,7),rot:k=>vigRot(k),tit:k=>vigRot(k),un:['mês','meses']},
+  tri:{por:'por trimestre',k:d=>d.slice(0,4)+'-Q'+(Math.floor((+d.slice(5,7)-1)/3)+1),rot:k=>k.slice(5)+'/'+k.slice(2,4),tit:k=>k.slice(5)+'/'+k.slice(0,4),un:['trimestre','trimestres']},
+  ano:{por:'por ano',k:d=>d.slice(0,4),rot:k=>k,tit:k=>k,un:['ano','anos']}};
 // Gráfico no desenho do Painel KM (Renan, 28/10/2026: "esse gráfico está totalmente
 // fora do nosso padrão"): barra translúcida .65 com contorno de 1 px e cantos de 3 px,
 // rótulo de dados em cima de cada barra, eixo de valor escondido, sem grade, legenda no card.
 const LEG={valor:'VALOR ABASTECIDO (R$)',litros:'LITROS ABASTECIDOS',rl:'PREÇO R$/L'};
 function grafico(dias){
-  const M=MODOS[MODO], B=chartBase(), lab=dias.map(d=>diaRot(d.d)), data=dias.map(M.f);
+  const M=MODOS[MODO], G=GRAOS[GRAO], B=chartBase(), lab=dias.map(d=>G.rot(d.d)), data=dias.map(M.f);
   const vals=data.filter(v=>v!=null&&isFinite(v)); const mx=Math.max(...vals,0);
   const n=lab.length, larg=($('ch-dia').parentElement.clientWidth||1000)/Math.max(n,1);
   set('g-leg',LEG[MODO]);
@@ -694,14 +709,14 @@ function grafico(dias){
   if(MODO==='rl'&&vals.length){ const lo=Math.min(...vals), amp=(mx-lo)||mx*.05||1;
     y={display:false,beginAtZero:false,min:Math.max(0,lo-amp*1.2),max:mx+amp*.25}; }
   if(charts.dia) charts.dia.destroy();
-  charts.dia=new Chart($('ch-dia'),{type:'bar',data:{labels:lab,datasets:[{data,backgroundColor:'rgba(249,115,22,.65)',borderColor:'#F97316',borderWidth:1,borderRadius:3,barPercentage:.9,categoryPercentage:.92}]},
+  charts.dia=new Chart($('ch-dia'),{type:'bar',data:{labels:lab,datasets:[{data,backgroundColor:'rgba(249,115,22,.65)',borderColor:'#F97316',borderWidth:1,borderRadius:3,barPercentage:.9,categoryPercentage:.92,maxBarThickness:110}]},
     options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:30}},
       plugins:{legend:{display:false},
-        tooltip:{...B.tooltip,callbacks:{title:it=>dias[it[0].dataIndex].d.split('-').reverse().join('/'),label:c=>' '+M.fmt(c.raw,false),
+        tooltip:{...B.tooltip,callbacks:{title:it=>G.tit(dias[it[0].dataIndex].d),label:c=>' '+M.fmt(c.raw,false),
           footer:it=>{ const d=dias[it[0].dataIndex]; return [`Valor: R$ ${br(d.v,2)}`,`Litros: ${br(d.l,0)} L`,`R$/L: R$ ${br(d.l>0?d.v/d.l:null,4)}`,`${d.n} abastecimento${d.n===1?'':'s'}`]; }}},
-        datalabels:{display:c=>c.dataset.data[c.dataIndex]!=null,anchor:'end',align:'top',offset:2,color:B.dl,clip:false,
+        datalabels:{display:c=>c.dataset.data[c.dataIndex]!=null&&larg>=14,anchor:'end',align:'top',offset:2,color:B.dl,clip:false,
           font:{family:'Montserrat',size:larg>=56?13:larg>=42?11:larg>=32?10:9,weight:'700'},formatter:v=>M.fmt(v,true)}},
-      scales:{x:{grid:{display:false},border:{display:false},ticks:{...B.tick,maxRotation:0,autoSkip:false}},y}},
+      scales:{x:{grid:{display:false},border:{display:false},ticks:{...B.tick,maxRotation:0,autoSkip:larg<26,autoSkipPadding:10}},y}},
     plugins:typeof ChartDataLabels!=='undefined'?[ChartDataLabels]:[]});
 }
 
@@ -725,11 +740,13 @@ function render(){
   const pr=[...kp.values()].filter(a=>a.l>0).map(a=>a.v/a.l);
   $('k-rl-m').innerHTML=RL==null?'—':mom+(pr.length>1?`de R$ ${br(Math.min(...pr),2)} a R$ ${br(Math.max(...pr),2)} entre os postos`:'média ponderada pelos litros');
   // dia a dia
-  const md=new Map(); R.forEach(r=>{ const a=md.get(r.data)||{d:r.data,v:0,l:0,n:0}; a.v+=r.valor; a.l+=r.litros; a.n++; md.set(r.data,a); });
+  const G=GRAOS[GRAO];
+  const md=new Map(); R.forEach(r=>{ const k=G.k(r.data); const a=md.get(k)||{d:k,v:0,l:0,n:0}; a.v+=r.valor; a.l+=r.litros; a.n++; md.set(k,a); });
   const dias=[...md.values()].sort((a,b)=>a.d.localeCompare(b.d));
-  set('g-tit',MODOS[MODO].tit);
+  set('g-tit',MODOS[MODO].tit+' '+G.por);
   const prods=getSel('ms-comb');
-  set('g-sub',dias.length?`${dias.length} dia${dias.length===1?'':'s'} com abastecimento · ${diaRot(dias[0].d)} a ${diaRot(dias[dias.length-1].d)} · ${prods.length?(prods.length<=2?prods.join(', '):prods.length+' combustíveis'):'todos os combustíveis'}`:'sem abastecimento no recorte');
+  const dIni=R.length?R.reduce((m,r)=>r.data<m?r.data:m,R[0].data):'', dFim=R.length?R.reduce((m,r)=>r.data>m?r.data:m,R[0].data):'';
+  set('g-sub',dias.length?`${dias.length} ${G.un[dias.length===1?0:1]} com abastecimento · ${diaRot(dIni)} a ${diaRot(dFim)} · ${prods.length?(prods.length<=2?prods.join(', '):prods.length+' combustíveis'):'todos os combustíveis'}`:'sem abastecimento no recorte');
   grafico(dias);
   // tabela por posto, do menor para o maior R$/L
   const lin=[...kp.entries()].map(([k,a])=>({k,nome:nomePosto(k),v:a.v,l:a.l,rl:a.l>0?a.v/a.l:null,n:a.n}))
@@ -748,6 +765,9 @@ function render(){
 }
 document.querySelectorAll('#dims-dia .dimb').forEach(b=>b.addEventListener('click',()=>{
   MODO=b.dataset.m; document.querySelectorAll('#dims-dia .dimb').forEach(x=>x.classList.toggle('on',x===b)); render(); }));
+document.querySelectorAll('#dims-grao .dimb').forEach(b=>{ b.classList.toggle('on',b.dataset.g===GRAO); b.addEventListener('click',()=>{
+  GRAO=b.dataset.g; try{ localStorage.setItem('postos_grao',GRAO); }catch(e){}
+  document.querySelectorAll('#dims-grao .dimb').forEach(x=>x.classList.toggle('on',x===b)); render(); }); });
 
 async function recarregar(){
   set('titSub','Carregando…');
@@ -836,6 +856,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202610311700"></script>
+<script src="../../assets/build-check.js?v=202611191500"></script>
 </body>
 </html>
