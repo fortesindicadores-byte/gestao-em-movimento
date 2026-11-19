@@ -32,14 +32,14 @@ const iniMes = vig => { const [a, m] = vig.split('-').map(Number); return new Da
 const pct = (a, b) => b ? (a / b * 100).toFixed(1) + '%' : '—';
 
 // ── 1. aba Pneus do Ginfo no banco ──
-const [base] = await get('sh_base?slug=eq.elite_pneus&select=slug,tabela,colunas,linhas,carregado_em,mudou_em,erro');
-console.log('sh_base elite_pneus:', base && { tabela: base.tabela, linhas: base.linhas, carregado_em: base.carregado_em, erro: base.erro });
+const [base] = await get('sh_base?slug=eq.elite_pneus&select=*');
+console.log('sh_base elite_pneus:', base && { aba: base.aba, linhas: base.linhas, carregado_em: base.carregado_em, erro: base.erro });
 const cols = (base && base.colunas) || [];
 console.log('colunas:', cols.map(c => `${c.label}→${c.col}`).join(' | '));
 const colDe = re => (cols.find(c => re.test(NK(c.label))) || {}).col;
 const C = { fil: colDe(/^FILIAL/), ev: colDe(/^EVENTO/), pl: colDe(/^PLACA/), pj: colDe(/^PROJETO/), per: colDe(/^PERIODO/), ult: colDe(/ULTIMA/), st: colDe(/^STATUS/) };
 console.log('mapa:', JSON.stringify(C));
-const tab = (base && base.tabela) || 'sh_elite_pneus';
+const tab = 'sh_elite_pneus';
 let gin = [];
 for (let off = 0; ; off += 1000) {
   const pg = await get(`${tab}?select=*&order=linha&offset=${off}&limit=1000`);
