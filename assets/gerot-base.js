@@ -340,7 +340,7 @@
         const seen=new Set(t2.map(x=>x.unit));
         return t2.concat(t1.filter(x=>!seen.has(x.unit)));
       }
-      case 'pneus':   return pneusSheetOk() ? pctDe(PNEUS[vig]||{}) : pctDe(contagemPneus(src['pneus']?.[vig]||[]));
+      case 'pneus':   return pctDe(pneusCont(vig, src['pneus']?.[vig]));
       case 'stVeic':  return pctDe(contagem10(src['stress-test-frota']?.[vig]||[], {fil:['Filial Freightech','Filial'], projCol:['Projeto'], desc:['Desconto']}));
       case 'stEmp':   return pctDe(contagem10(src['stress-test-empilhadeira']?.[vig]||[], ST_EMP_OPTS, vig));
       case 'civf':    return pctDe(contagem10(src['civf']?.[vig]||[], {fil:['Filial Freightech'], projCol:['Projeto'], desc:['Desconto Total']}));
@@ -449,7 +449,7 @@
         const g={};
         vigs.forEach(vig=>{
           const cont = f==='pneus'
-            ? (pneusSheetOk() ? (PNEUS[vig]||{}) : contagemPneus(E.mes['pneus']?.[vig]||[]))
+            ? pneusCont(vig, E.mes['pneus']?.[vig])
             : contagem10(E.mes[{stVeic:'stress-test-frota',stEmp:'stress-test-empilhadeira',civf:'civf'}[f]]?.[vig]||[],
                 f==='stVeic'?{fil:['Filial Freightech','Filial'],projCol:['Projeto'],desc:['Desconto']}:
                 f==='stEmp' ?ST_EMP_OPTS:
@@ -523,6 +523,11 @@
   }
   let PNEUS=null;                          // {vig:{unit:{ok,n}}}
   const pneusSheetOk = () => PNEUS && Object.keys(PNEUS).length>0;
+  // mês que a aba Pneus ainda não tem (a prévia do mês corrente, ou o mês fechado
+  // antes de a aba ser colada) sai das contagens do Prolog que o robô grava no
+  // elite_snapshot, em vez de ficar "—" (Renan, 19/11/2026). Medido antes: o
+  // Prolog reproduz o Realizado/Não Realizado da aba em 95% das placa-mês.
+  const pneusCont = (vig, apiRows) => (pneusSheetOk() && PNEUS[vig]) ? PNEUS[vig] : contagemPneus(apiRows||[]);
   async function loadPneusSheet(){
     PNEUS={};
     let rows; try{ rows=await fetchTabFrom(ELITE_WB,PNEUS_TAB); }catch(e){ console.error('Gerot base — falha aba Pneus (usando fallback da API)', e); return; }
@@ -794,7 +799,7 @@
     INDICADORES.forEach(ind=>{
       if(ind.field==='comb') return;
       const src={disp:'disponibilidade',prev:'preventivas',pneus:'pneus',checkT:'checklist-t2',checkWH:'checklist-wh',conf:'conformidade',stVeic:'stress-test-frota',stEmp:'stress-test-empilhadeira',civf:'civf',sla:'sla-manutencao'}[ind.field];
-      const vigsSrc = ind.field==='pneus' && pneusSheetOk() ? Object.keys(PNEUS).sort() : vigsDe(src);
+      const vigsSrc = ind.field==='pneus' && pneusSheetOk() ? [...new Set([...Object.keys(PNEUS),...vigsDe(src)])].sort() : vigsDe(src);
       vigsSrc.forEach(vig=>{
         valores(ind.field,'mes',vig).forEach(v=>{
           records.push(recChave(ind.field,ind.label,v.unit,vig,v.real));
