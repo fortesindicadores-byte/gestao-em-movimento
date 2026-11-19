@@ -793,15 +793,9 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
   const b = Arv ? Arv.calc({ custoRem: comb.rem, custoReal: comb.real, kmRem: dp ? dp.rem : 0, kmReal: dp ? dp.real : 0,
     rsLRem: cb && cb.rsLRem, rsLReal: cb && cb.rsLReal, kmLRem: cb && cb.kmLRem, kmLReal: cb && cb.kmLReal,
     impPrecoBase: cb ? cb.preco : null, impEficBase: cb ? cb.efic : null, litBase: cb ? cb.lit : 0, kmBase: cb ? cb.km : 0, totBase: cb ? cb.tot : 0 }) : null;
-  // KM RODADO PELOS DOIS OUTROS PARÂMETROS, NÃO PELO R$/km (Renan, 14/10/2026: "Porque no R$/km se está
-  // falando de km? … R$/km é aberto em Km/L e R$/L. Eu expliquei o que deveria ser explicado. Km, R$/L e
-  // Km/L, não R$/km"): o km a mais vira litros pelo Km/L remunerado e R$ pelo R$/L remunerado. Sem os dois
-  // remunerados no mês, fica o valor da Árvore (custo remunerado da DRE por km). A diferença DRE × bases
-  // é refeita para a ponte continuar fechando no Δ custo.
-  if (b && fin(b.vol) && cb && cb.kmLRem > 0 && cb.rsLRem > 0) {
-    b.volDre = b.vol; b.litVol = (b.kmReal - b.kmRem) / cb.kmLRem; b.vol = b.litVol * cb.rsLRem; b.volBases = true;
-    if (fin(b.preco) && fin(b.efic)) { b.dif = b.dCusto - b.vol - b.preco - b.efic; if (fin(b.difReal)) b.difRem = b.dif - b.difReal; }
-  }
+  // IMPACTO DA DISPERSÃO = O DA ÁRVORE (Renan, 19/11/2026: "Pode alinhar o impacto do FCA com o da
+  // Árvore"): Δ km × custo remunerado da DRE por km, o mesmo número da caixa Impacto Volume. Antes
+  // (14/10) o km a mais virava litros pelo Km/L rem × R$/L rem e a unidade via dois valores diferentes.
   D.blocos.ponte = b; D.blocos.comb = cb; D.blocos.disp = dp;
   if (!cb) D.avisos.push(seara ? 'Sem linhas na aba Combustível da Seara para este mês: eficiência e preço não foram abertos.' : 'Sem linhas na aba Km/L para este projeto e mês: eficiência e preço não foram abertos.');
   if (!dp) D.avisos.push(seara ? 'Sem km remunerado na aba Remunerado da Seara para este mês: o volume não foi calculado.' : 'Sem km da Dispersão de km para este projeto e mês: o volume não foi calculado.');
@@ -818,7 +812,7 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
     if (bmObs && Math.abs(b.vol) >= D.minimo) D.obs.push(bmObs);
     if (b.vol >= D.minimo) {
       // TEXTO DIRETO (Renan, 14/10/2026: "Km Rodado chame de Dispersão de km… pode ser mais direto")
-      const como = b.volBases ? ` · ${rs(b.vol)}` : ` · ${rs(b.vol)} (pelo custo rem. da DRE)`;
+      const como = ` · ${rs(b.vol)}`;
       causa('Km / rota', `Dispersão de km: +${br(dkm, 0)} km (${sinalPct(dpct, 1)})${como}`, b.vol);
       const vg = []; if (dp.vgRec) vg.push(br(dp.vgRec, 0) + ' recs'); if (dp.vgNot) vg.push(br(dp.vgNot, 0) + ' noturnas'); if (dp.vgMap) vg.push(br(dp.vgMap, 0) + ' com mapa aberto');
       // DISPERSÃO POR PLACA (Renan, 15/10/2026): as placas que mais rodaram acima do km remunerado no mês,
