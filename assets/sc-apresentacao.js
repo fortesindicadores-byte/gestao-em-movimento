@@ -29,7 +29,8 @@
     // O mês corrente abre com poucos indicadores e a pontuação dele não diz nada ainda.
     const apurados = d => { const v = cardVals(new Set([vigKeyN(d)]), d.getFullYear(), d.getMonth(), unis0); return Object.keys(SCORE_PESOS).filter(k => v[k] != null).length; };
     let cands = (selVig.length ? VIGS.filter(d => selVig.includes(vigLbl(d))) : VIGS.slice()).sort((a, b) => vigKeyN(a) - vigKeyN(b));
-    if (!selVig.length) { const fech = cands.filter(d => apurados(d) >= 12); cands = fech.length ? [fech[fech.length - 1]] : cands.slice(-1); }
+    const hj = new Date(), kCorr = hj.getFullYear() * 100 + hj.getMonth();   // o mês corrente é prévia, nunca fechado
+    if (!selVig.length) { const fech = cands.filter(d => vigKeyN(d) < kCorr && apurados(d) >= 12); cands = fech.length ? [fech[fech.length - 1]] : cands.slice(-1); }
     const selD = cands[cands.length - 1] || VIGS[VIGS.length - 1];
     const perKeys = new Set(cands.map(vigKeyN));
     const yr = selD.getFullYear(), mi = selD.getMonth();

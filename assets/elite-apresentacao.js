@@ -418,7 +418,9 @@ tr.sep td{border-top:2px solid ${INK3}}
     let mes = linhas(recs);
     // mês FECHADO = o último com pelo menos 8 dos 11 indicadores (o combustível
     // do mês corrente chega antes do Ginfo, e sozinho não fecha o mês)
-    const fechado = v => F.filter(f => mes.some(r => r.vig === v && r[f] != null)).length >= 8;
+    // o mês corrente nunca é fechado: o robô grava a prévia dele todo dia
+    const hj = new Date(), mesCorr = hj.getFullYear() + '-' + String(hj.getMonth() + 1).padStart(2, '0');
+    const fechado = v => v < mesCorr && F.filter(f => mes.some(r => r.vig === v && r[f] != null)).length >= 8;
     const todas = [...new Set(mes.map(r => r.vig))].filter(v => /^\d{4}-\d{2}$/.test(v)).sort();
     const VU = ate || todas.filter(fechado).pop();
     if (!VU) throw new Error('nenhum mês fechado no Frota de Elite');

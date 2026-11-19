@@ -985,14 +985,15 @@ async function gravarSupabase(indicador, vigencia, escopo, linhas) {
 // Uma coleta leva ~3 min; refazer o que já foi gravado estoura o tempo do job.
 // ELITE_REFAZER=1 ignora este cache e coleta tudo de novo.
 const JA = new Set();
+const JA_EM = new Map();   // chave → updated_at (para saber se o mês gravado era prévia)
 async function carregarJaGravados() {
   if (!SB_KEY || process.env.ELITE_REFAZER === '1') return;
   try {
-    const res = await fetch(`${SB_URL}/rest/v1/elite_snapshot?select=indicador,vigencia,escopo`, {
+    const res = await fetch(`${SB_URL}/rest/v1/elite_snapshot?select=indicador,vigencia,escopo,updated_at`, {
       headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY },
     });
     if (!res.ok) { log('não consegui listar o que já está gravado:', res.status); return; }
-    (await res.json()).forEach(r => JA.add(`${r.indicador}|${r.vigencia}|${r.escopo}`));
+    (await res.json()).forEach(r => { const k = `${r.indicador}|${r.vigencia}|${r.escopo}`; JA.add(k); JA_EM.set(k, r.updated_at); });
     log(`já gravados no Supabase: ${JA.size} registro(s) — serão pulados`);
   } catch (e) { log('não consegui listar o que já está gravado:', e.message); }
 }
@@ -1088,7 +1089,9 @@ async function coletarPneusApi(vigencia) {
 async function coletar(page, ind, vigencia, escopo) {
   const ref = refDe(vigencia);
   const ini = escopo === 'ano' ? new Date(ref.getFullYear(), ind.mesInicial || 0, 1) : ref;
-  const fim = fimDoMes(ref);
+  // mês corrente (prévia): a data final é hoje, não o fim do mês
+  const hojeD = new Date(); hojeD.setHours(0, 0, 0, 0);
+  const fim = fimDoMes(ref) > hojeD ? hojeD : fimDoMes(ref);
   const tag = `${ind.chave}-${vigencia.replace('/', '-')}-${escopo}`;
 
   // indicador que vem de API não abre navegador nenhum
@@ -1454,15 +1457,25 @@ async function main() {
 
   const hoje = new Date();
   const mesAnterior = vigDe(new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1));
+  const mesAtual = vigDe(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
   let vigencias = [], escopos = [];
+  // PRÉVIA DO MÊS CORRENTE (Renan, 19/11/2026: "Aqui não deveria já ter prévia
+  // dos outros em novembro?" → "Deveria coletar"). Todo dia a rotina grava
+  // também o mês corrente (de 01 até hoje), sobrescrevendo a prévia do dia
+  // anterior. No dia 01 a 15 do mês seguinte a coleta do mês fechado passa
+  // por cima da prévia: mês gravado antes do dia 01 seguinte é recoletado
+  // (updated_at < início do mês corrente). Falha da prévia não fecha o job em
+  // vermelho (no começo do mês o Ginfo quase não tem dado). ELITE_PREVIA=0 desliga.
+  const PREVIA = MODE === 'mes' && process.env.ELITE_PREVIA !== '0';
 
   if (MODE === 'mes') {
-    // rotina: roda do dia 01 ao 15 gravando o mês anterior fechado + o acumulado do ano
-    if (hoje.getDate() > 15 && !FORCAR) {
-      log(`hoje é dia ${hoje.getDate()} — fora da janela 01–15; nada a fazer.`);
-      return;
-    }
-    vigencias = [mesAnterior];
+    // rotina: do dia 01 ao 15 grava o mês anterior fechado + o acumulado do
+    // ano; todo dia, a prévia do mês corrente
+    if (hoje.getDate() <= 15 || FORCAR) vigencias = [mesAnterior];
+    else log(`hoje é dia ${hoje.getDate()}: fora da janela 01–15 do mês fechado; só a prévia de ${mesAtual}.`);
+    if (PREVIA) vigencias.push(mesAtual);
+    if (!vigencias.length) { log('nada a fazer.'); return; }
     escopos = (process.env.ELITE_ESCOPOS || 'mes,ano').split(',').map(s => s.trim()).filter(Boolean);
   } else if (MODE === 'backfill') {
     vigencias = vigenciasEntre(process.env.ELITE_DE || VIG_INICIAL, process.env.ELITE_ATE || mesAnterior);
@@ -1489,8 +1502,9 @@ async function main() {
 
     log(`plano: ${inds.length} indicador(es) × ${vigencias.length} vigência(s) × ${escopos.length} escopo(s)`);
     await carregarJaGravados();
-    let erros = 0;
+    let erros = 0, errosPrevia = 0;
     for (const vig of vigencias) {
+      const ehPrevia = PREVIA && vig === mesAtual;
       for (const esc of escopos) {
         for (const ind of inds) {
           if (ind.soAno && esc !== 'ano') continue;           // só existe no acumulado
@@ -1505,9 +1519,13 @@ async function main() {
           // e sobrescrito em toda rodada até lá, mesmo já estando gravado
           const vigAnt = `${dois(hoje.getMonth() === 0 ? 12 : hoje.getMonth())}/${hoje.getMonth() === 0 ? hoje.getFullYear() - 1 : hoje.getFullYear()}`;
           const recoleta = ind.ateDia15 && hoje.getDate() <= 15 && vig === vigAnt;
-          if (JA.has(`${ind.chave}|${vig}|${esc}`)) {
-            if (!recoleta) { log(`— ${ind.chave} ${vig} (${esc}): já gravado, pulando`); continue; }
-            log(`— ${ind.chave} ${vig} (${esc}): já gravado, mas fecha no dia 15 — recoletando`);
+          const kJa = `${ind.chave}|${vig}|${esc}`;
+          // o mês anterior gravado ANTES do dia 01 deste mês foi prévia: recoleta
+          const eraPrevia = vig === mesAnterior && JA_EM.has(kJa) && new Date(JA_EM.get(kJa)) < inicioMes;
+          if (JA.has(kJa) && !ehPrevia) {
+            if (eraPrevia) log(`— ${ind.chave} ${vig} (${esc}): gravado como prévia — recoletando o fechamento`);
+            else if (!recoleta) { log(`— ${ind.chave} ${vig} (${esc}): já gravado, pulando`); continue; }
+            else log(`— ${ind.chave} ${vig} (${esc}): já gravado, mas fecha no dia 15 — recoletando`);
           }
           for (let tent = 1; tent <= 3; tent++) {
             try {
@@ -1519,12 +1537,13 @@ async function main() {
               await shot(page, `99-erro-${ind.chave}-${vig.replace('/', '-')}-${esc}-t${tent}`);
               if (tent === 1) await diagnostico(page, `${ind.chave} ${vig}/${esc}`);
               else await garantirPortal(page);
-              if (tent === 3) erros++;
+              if (tent === 3) { if (ehPrevia) errosPrevia++; else erros++; }
             }
           }
         }
       }
     }
+    if (errosPrevia) log(`aviso: ${errosPrevia} coleta(s) da prévia de ${mesAtual} sem dado (não fecha o job em vermelho)`);
     if (erros) { console.error(`${erros} coleta(s) com erro`); process.exit(1); }
   } finally {
     await browser.close();

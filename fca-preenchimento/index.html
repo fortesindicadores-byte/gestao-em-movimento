@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611190400">
+<meta name="build" content="202611190600">
 <title>FCA</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1417,7 +1417,11 @@ async function desviosDoGerot(){
   // Blitz do Termômetro) são a foto de HOJE e já vêm carimbados no mês corrente:
   // olhar o maior vig de TODOS os registros gerava a RPM de nov/26 no dia 12/11,
   // só com esses 13 adicionais, em vez do fechamento de outubro (Renan, 12/11/2026).
-  const fechados=[...new Set(recs.filter(r=>!r.soGerot&&r.field!=='comb').map(r=>r.vig))].sort();
+  // e o mês corrente fica fora: o robô do Frota de Elite grava a PRÉVIA dele
+  // todo dia (19/11/2026), então ele também tem indicador-chave.
+  const _h=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}));
+  const mesCorr=_h.getFullYear()+'-'+String(_h.getMonth()+1).padStart(2,'0');
+  const fechados=[...new Set(recs.filter(r=>!r.soGerot&&r.field!=='comb'&&r.vig<mesCorr).map(r=>r.vig))].sort();
   const alvo=(new URLSearchParams(location.search).get('vig')||'').trim()
           || fechados.pop()
           || [...new Set(recs.map(r=>r.vig))].sort().pop();
@@ -2233,6 +2237,6 @@ initApp();
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202611190400"></script>
+<script src="../assets/build-check.js?v=202611190600"></script>
 </body>
 </html>
