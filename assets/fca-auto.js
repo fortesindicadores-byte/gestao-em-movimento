@@ -810,11 +810,16 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
   // Volume
   if (b && fin(b.vol) && dp && dp.rem > 0) {
     const dkm = dp.real - dp.rem, dpct = (dp.real / dp.rem - 1) * 100;
+    // O BALANÇO DE MASSA É OBSERVAÇÃO, NÃO PARTE DA CAUSA (Renan, 19/11/2026: "isso deve estar apenas
+    // como uma observação no FCA, senão confunde completamente" → "Em todos"): o R$ dele já está no
+    // remunerado da DRE; o km dele só entra no km remunerado para os dois lados baterem.
+    const bmObs = dp.bmKm ? `o km remunerado já inclui ${br(dp.bmKm, 0)} km do balanço de massa (viagens cobradas depois, sem CT-e)`
+      : (EMPURRADA(f.uni) ? 'o km remunerado está sem o balanço de massa do mês' : '');
+    if (bmObs && Math.abs(b.vol) >= D.minimo) D.obs.push(bmObs);
     if (b.vol >= D.minimo) {
       // TEXTO DIRETO (Renan, 14/10/2026: "Km Rodado chame de Dispersão de km… pode ser mais direto")
-      const extra = dp.bmKm ? ` · km rem. com balanço de massa (+${br(dp.bmKm, 0)} km)` : (EMPURRADA(f.uni) ? ' · km rem. sem balanço de massa' : '');
       const como = b.volBases ? ` · ${rs(b.vol)}` : ` · ${rs(b.vol)} (pelo custo rem. da DRE)`;
-      causa('Km / rota', `Dispersão de km: +${br(dkm, 0)} km (${sinalPct(dpct, 1)})${como}${extra}`, b.vol);
+      causa('Km / rota', `Dispersão de km: +${br(dkm, 0)} km (${sinalPct(dpct, 1)})${como}`, b.vol);
       const vg = []; if (dp.vgRec) vg.push(br(dp.vgRec, 0) + ' recs'); if (dp.vgNot) vg.push(br(dp.vgNot, 0) + ' noturnas'); if (dp.vgMap) vg.push(br(dp.vgMap, 0) + ' com mapa aberto');
       // DISPERSÃO POR PLACA (Renan, 15/10/2026): as placas que mais rodaram acima do km remunerado no mês,
       // (indexaPlacas: aba Abertura até ago/26, planilha de viagens de set/26 em diante, T1 fora); do projeto, senão da unidade
