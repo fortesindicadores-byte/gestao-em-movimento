@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gestão em Movimento">
-<meta name="build" content="202611080010">
+<meta name="build" content="202611191600">
 <title>Gestão em Movimento</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
@@ -349,6 +349,33 @@ body.claro #tela-web iframe{background:#E1E2E5;}
 #forno{position:fixed;left:-6000px;top:0;width:1366px;height:900px;overflow:hidden;visibility:hidden;pointer-events:none;}
 #forno iframe{width:1366px;height:900px;border:0;}
 
+/* ── acessos (Perfil → Gerenciar acessos) ── */
+.ac-chips{margin:-4px 0 12px;}
+.ac-li{cursor:pointer;} .ac-li .tx span+span{color:var(--txt3);}
+.ac-st{flex:0 0 auto;font-size:10px;font-weight:600;padding:4px 9px;border-radius:999px;background:var(--linha);border:1px solid var(--brd);color:var(--txt2);}
+.ac-st.pos{color:var(--verde);border-color:transparent;background:rgba(59,179,59,.13);}
+.ac-st.neg{color:var(--vermelho);border-color:transparent;background:rgba(255,82,82,.13);}
+.ac-st.amb{color:var(--ambar);border-color:transparent;background:rgba(244,161,0,.14);}
+.ac-vazio{padding:30px 6px;text-align:center;color:var(--txt3);font-size:12px;}
+.ac-fatos{margin-top:12px;padding:6px 14px;}
+.ac-f{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--plano-brd);font-size:12px;}
+.ac-f:last-child{border-bottom:0;} .ac-f span{color:var(--txt3);} .ac-f b{font-weight:500;text-align:right;}
+.ac-seg{display:flex;gap:4px;padding:4px;background:var(--linha);border:1px solid var(--brd);border-radius:11px;margin-bottom:16px;}
+.ac-seg button{flex:1;border:0;background:transparent;border-radius:8px;padding:11px 6px;font-size:13px;font-weight:600;color:var(--txt2);cursor:pointer;}
+.ac-seg button.on{background:var(--acc);color:#fff;} .ac-seg button:disabled{opacity:.5;}
+.ac-in{margin:0;}
+.ac-senha{margin-top:14px;text-align:center;}
+.ac-senha span{display:block;font-size:10.5px;color:var(--txt3);}
+.ac-senha code{display:block;font-size:24px;font-weight:600;letter-spacing:1.5px;margin:6px 0 4px;user-select:all;color:var(--txt);}
+.ac-senha i{display:block;font-style:normal;font-size:10.5px;color:var(--txt3);margin-top:10px;}
+.ac-bts{display:flex;gap:8px;margin-bottom:6px;} .ac-bts .btn{flex:1;padding:13px 8px;font-size:13px;}
+.ac-bts .btn[style*="none"]{display:none;}
+.ac-nota{font-size:10.5px;color:var(--txt3);margin:4px 0 14px;line-height:1.5;}
+.ac-nota:empty{display:none;}
+.ac-unis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:10px;}
+.ac-unis button{border:1px solid var(--brd);background:var(--linha);color:var(--txt2);border-radius:9px;padding:11px 4px;font-size:12px;font-weight:600;cursor:pointer;}
+.ac-unis button.on{background:var(--acc2);border-color:var(--acc);color:var(--acc);}
+.ac-unis button:disabled{opacity:.55;}
 .toast{position:fixed;left:50%;bottom:calc(var(--safe-bot) + 96px);transform:translateX(-50%);background:var(--card);color:var(--txt);border:1px solid var(--brd);
   border-radius:999px;padding:9px 16px;font-size:12px;font-weight:500;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:80;opacity:0;transition:opacity .25s;pointer-events:none;max-width:88vw;text-align:center;}
 .toast.on{opacity:1;}
@@ -428,6 +455,10 @@ body.claro #tela-web iframe{background:#E1E2E5;}
       <div class="opt" id="optInstalar" onclick="instalar()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span><div class="tx"><b>Instalar no celular</b><span>Ícone na tela de início, abre em tela cheia</span></div></div>
       <div class="opt" onclick="atualizarTudo()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg></span><div class="tx"><b>Atualizar os dados</b><span id="pfCache">Relê os painéis na próxima abertura</span></div></div>
       <div class="opt" onclick="abrePortal('')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg></span><div class="tx"><b>Portal completo</b><span>Abre o Gestão em Movimento no navegador</span></div></div>
+      <div id="pfAdm" style="display:none">
+      <div class="sec">Administração</div>
+      <div class="opt" onclick="abreAcessos()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 11l2 2 3.5-3.5"/></svg></span><div class="tx"><b>Gerenciar acessos</b><span>Liberar, bloquear, senha provisória e unidades</span></div></div>
+      </div>
       <div class="sec">Conta</div>
       <div class="opt" onclick="sair()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span><div class="tx"><b>Sair</b><span id="pfEmail">—</span></div></div>
       <div class="rodape">Gestão em Movimento · Fortes Indicadores<br><span data-build></span></div>
@@ -464,12 +495,59 @@ body.claro #tela-web iframe{background:#E1E2E5;}
     </div>
     <iframe id="wbFrame" title="Painel"></iframe>
   </div>
+  <!-- ══════════ ACESSOS ══════════ -->
+  <div class="sobre" id="tela-acessos">
+    <div class="pbar">
+      <button class="ib" onclick="history.back()" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="tt"><b>Gerenciar acessos</b><span id="acSub">—</span></div>
+      <button class="ib" onclick="acuRecarrega()" aria-label="Atualizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg></button>
+    </div>
+    <div class="pcorpo">
+      <input class="busca" id="acBuscaIn" type="search" name="gem-ac-busca" placeholder="Buscar nome, e-mail ou unidade" autocomplete="off" data-lpignore="true" data-1p-ignore oninput="acBusca(this.value)">
+      <div class="chips ac-chips" id="acChips"></div>
+      <div id="acLista"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ UMA PESSOA ══════════ -->
+  <div class="sobre" id="tela-usuario">
+    <div class="pbar">
+      <button class="ib" onclick="history.back()" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="tt"><b id="acuTit">—</b><span id="acuSub">—</span></div>
+    </div>
+    <div class="pcorpo">
+      <div class="card ac-fatos" id="acuFatos"></div>
+      <div id="acuStBox"><div class="sec">Situação</div><div class="ac-seg" id="acuSt"></div></div>
+      <div id="acuSenhaBox">
+        <div class="sec">Senha</div>
+        <div class="card">
+          <input class="busca ac-in" id="acuSenha" type="text" name="gem-ac-senha" placeholder="Em branco = o portal gera uma" autocomplete="off" data-lpignore="true" data-1p-ignore>
+          <button class="btn" id="acuSenhaBt" onclick="acuGeraSenha()">Gerar senha provisória</button>
+          <div class="ac-senha" id="acuSenhaV" style="display:none">
+            <span>Senha provisória</span><code id="acuSenhaCod"></code>
+            <div class="ac-bts"><button class="btn ghost" onclick="acuCopia()">Copiar e-mail e senha</button><button class="btn ghost" id="acuWpp" onclick="acuWhats()">Mandar no WhatsApp</button></div>
+            <i>Aparece só agora. No primeiro acesso a pessoa cria a senha dela.</i>
+          </div>
+        </div>
+      </div>
+      <div class="ac-bts">
+        <button class="btn ghost" id="acuLib" onclick="acuLiberar()">Liberar cadastro</button>
+        <button class="btn ghost" id="acuEnc" onclick="acuEncerrar()">Encerrar sessões</button>
+      </div>
+      <div class="ac-nota" id="acuMstNota">Senha, liberar cadastro e encerrar sessões só o Master faz.</div>
+      <div class="sec" id="acuUniTit">Unidades do FCA</div>
+      <div class="ac-unis" id="acuUnis"></div>
+      <button class="btn" id="acuUniSalvar" style="display:none" onclick="acuSalvaUnis()">Salvar unidades</button>
+      <div class="ac-nota" id="acuNota"></div>
+    </div>
+  </div>
 </div>
 
 <div id="forno"></div>
 <div class="toast" id="toast"></div>
 
-<script src="catalogo.js?v=202611060110"></script>
-<script src="app.js?v=202611060110"></script>
+<script src="catalogo.js?v=202611191600"></script>
+<script src="app.js?v=202611191600"></script>
+<script src="acessos.js?v=202611191600"></script>
 </body>
 </html>

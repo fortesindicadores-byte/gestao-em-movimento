@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611181900">
+<meta name="build" content="202611191600">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -582,6 +582,18 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11p
 .uc-msg.err{color:var(--vermelho);} .uc-msg.ok{color:var(--verde);}
 @media(max-width:760px){
   .uc-body{grid-template-columns:1fr;} .uc-cx .frow{grid-template-columns:1fr;} .uc-list{grid-template-columns:repeat(2,minmax(0,1fr));}
+  /* no celular a caixa ocupa a tela e o miolo rola inteiro: com as colunas em grade e overflow:hidden,
+     a linha encolhia até caber e cortava Situação, Perfil, Senha e as unidades (Renan, 19/11/2026) */
+  #mdl-usr{padding:0;align-items:stretch;}
+  .uc-cx{width:100%;max-height:none;height:100%;height:100dvh;border-radius:0;}
+  .uc-head{padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 12px;}
+  .uc-body{display:block;padding:12px 14px;}
+  .uc-col{overflow:visible;} .uc-col+.uc-col{margin-top:12px;}
+  .uc-ch{border-radius:10px 10px 0 0;} .uc-ch2{border-radius:0;}
+  .uc-cx .seg{align-self:stretch;flex-wrap:wrap;} .uc-cx .seg button{flex:1 1 auto;padding:8px 10px;}
+  .uc-foot{flex-wrap:wrap;padding:10px 14px calc(env(safe-area-inset-bottom,0px) + 12px);}
+  .uc-msg{flex:1 1 100%;order:-1;}
+  .uc-foot .ubtn.lg{padding:9px 12px;}
   .acc-tbl .acc-hide{display:none;}
 }
 .bt-run:disabled{opacity:.45;cursor:default;filter:none;}
@@ -2173,6 +2185,6 @@ init();
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/modo-tv.js?v=202610111500"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202611181900"></script>
+<script src="assets/build-check.js?v=202611191600"></script>
 </body>
 </html>
