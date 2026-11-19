@@ -8,11 +8,15 @@ on:
       branch:
         description: "branch_id do Prolog (24 = BLC)"
         default: "24"
+      meses:
+        description: "compara a janela do ano com a consulta mês a mês (branch aceita vários, separados por vírgula)"
+        type: boolean
+        default: false
 
 jobs:
   conferir:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,4 +26,5 @@ jobs:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           PROLOG_TOKEN: ${{ secrets.PROLOG_TOKEN }}
           PN_BRANCH: ${{ github.event.inputs.branch }}
+          PN_MESES: ${{ github.event.inputs.meses == 'true' && '1' || '' }}
         run: node scripts/pneus-snapshot-check.mjs

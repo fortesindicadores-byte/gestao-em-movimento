@@ -39,6 +39,47 @@ for (const b of Object.keys(porB).sort()) {
   console.log(`${b} ${NOMES[b] || ''}: ${d.length} medidas · mais nova ${dia(max)} · ${ult} · mês corrente ${insp.size} inspeções em ${veicNov.size} veículos`);
 }
 
+// PN_MESES=1: para cada unidade de PN_BRANCH (separadas por vírgula), compara a
+// janela do ano inteiro (a do loader) com a consulta mês a mês: inspeções
+// distintas, repetidas entre páginas e por mês. Mostra se a paginação longa
+// perde inspeções.
+const pede = async (b, ini, fim) => {
+  let page = 0; const ids = new Map(); let itens = 0; const pags = [];
+  while (true) {
+    const qs = new URLSearchParams({ branchOfficesId: b, startDate: ini.toISOString().split('.')[0] + 'Z', endDate: fim.toISOString().split('.')[0] + 'Z', includeMeasures: false, pageSize: 100, pageNumber: page }).toString();
+    const res = await fetch(`${BASE_URL}/tire-inspections/vehicles?${qs}`, { headers: { 'x-prolog-api-token': TOKEN } });
+    if (res.status === 429) { await sleep(61000); continue; }
+    if (res.status >= 300) { pags.push(`HTTP ${res.status} na pág ${page}`); break; }
+    const j = await res.json(); const c = j.content || [];
+    c.forEach(i => { itens++; ids.set(i.id, i.submittedAt); });
+    pags.push(c.length);
+    if (!c.length || j.lastPage) { pags.push(`fim lastPage=${j.lastPage} totalElements=${j.totalElements ?? '?'}`); break; }
+    page++; await sleep(6500);
+  }
+  return { ids, itens, pags };
+};
+const mesDe = t => { const d = new Date(new Date(t).getTime() - 3 * 36e5); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0'); };
+if (TOKEN && process.env.PN_MESES === '1') {
+  const hoje = new Date();
+  for (const b of BRANCH.split(',').map(s => s.trim()).filter(Boolean)) {
+    console.log(`\n=== ${b} ${NOMES[b] || ''}: ano inteiro × mês a mês ===`);
+    const ano = await pede(b, new Date(Date.UTC(hoje.getUTCFullYear(), 0, 1)), hoje);
+    const porA = {}; ano.ids.forEach(t => { const m = mesDe(t); porA[m] = (porA[m] || 0) + 1; });
+    console.log(`ano: ${ano.itens} itens · ${ano.ids.size} distintas · repetidas ${ano.itens - ano.ids.size} · páginas ${ano.pags.join(',')}`);
+    const linha = [];
+    for (let m = 0; m <= hoje.getUTCMonth(); m++) {
+      const ini = new Date(Date.UTC(hoje.getUTCFullYear(), m, 1, 3));
+      const fim = m === hoje.getUTCMonth() ? hoje : new Date(Date.UTC(hoje.getUTCFullYear(), m + 1, 1, 2, 59, 59));
+      const r = await pede(b, ini, fim);
+      const k = hoje.getUTCFullYear() + '-' + String(m + 1).padStart(2, '0');
+      const so = [...r.ids.keys()].filter(id => !ano.ids.has(id)).length;
+      linha.push(`${k.slice(5)}: mês ${r.ids.size} · ano ${porA[k] || 0} · só no mês ${so}${r.itens !== r.ids.size ? ' · rep ' + (r.itens - r.ids.size) : ''}`);
+    }
+    linha.forEach(l => console.log('  ' + l));
+  }
+  process.exit(0);
+}
+
 if (TOKEN) {
   console.log(`\n=== Prolog agora, unidade ${BRANCH} ${NOMES[BRANCH] || ''}, mês corrente ===`);
   const hoje = new Date();
