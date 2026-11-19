@@ -1088,7 +1088,8 @@ async function diagnostico(page, tag) {
 }
 
 // ── PNEUS VIA API (Supabase do painel de Pneus / Prolog) ────────────────────
-// Regra do painel (pneus/painel.html, gráfico "Aderência às Aferições"):
+// Régua do Ginfo (19/11/2026): aderência do mês = % da frota aferida DENTRO do mês.
+// (Antes era a regra do painel de Pneus, abaixo, que ficou só como histórico:)
 //   aderência do mês = % da frota cuja ÚLTIMA aferição até o fim do mês está
 //   dentro de 30 dias.
 // Como o snapshot traz o histórico de inspeções, dá para calcular qualquer
@@ -1123,17 +1124,18 @@ async function coletarPneusApi(vigencia) {
     const veic = (rows.find(r => r.endpoint === 'vehicles') || {}).data || [];
     const insp = (rows.find(r => r.endpoint === 'inspections') || {}).data || [];
     if (!veic.length) continue;
-    const ultima = {};
+    // RÉGUA DO GINFO (medida em 19/11/2026, Pneus Ginfo Prolog Check): a placa
+    // conta como aferida quando teve inspeção DENTRO do mês. Bate com a aba
+    // Pneus do Ginfo em 95% das placa-mês (98–100% em 12 das 14 filiais em ago
+    // e set/26). Antes: última inspeção nos 30 dias antes do fim do mês.
+    const iniMs = ref.getTime();
+    const aferido = new Set();
     for (const i of insp) {
       const t = new Date(i.dataInspecao).getTime();
-      if (!isFinite(t) || t > fim) continue;
-      if (ultima[i.veiculoId] === undefined || t > ultima[i.veiculoId]) ultima[i.veiculoId] = t;
+      if (isFinite(t) && t >= iniMs && t <= fim) aferido.add(i.veiculoId);
     }
     let ok = 0;
-    for (const v of veic) {
-      const u = ultima[v.id];
-      if (u !== undefined && Math.floor((fim - u) / 86400000) <= 30) ok++;
-    }
+    for (const v of veic) if (aferido.has(v.id)) ok++;
     linhas.push({
       Filial: BRANCH2FILIAL[bid],
       'Aderência Aferição': +(ok / veic.length * 100).toFixed(1),
