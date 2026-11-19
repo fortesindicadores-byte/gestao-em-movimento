@@ -465,8 +465,18 @@ async function loadDispBanco(){
 
 // ── PNEUS (Supabase Conlog) — foto atual, carga sob demanda ──
 const PULL_POINT=3; // mm — ponto ideal de retirada p/ recape (igual ao painel /pneus/)
+// PNEUS SEMPRE RELIDOS NA PÁGINA (bug real, 19/11/2026, Márcio de BLC: "já fiz as
+// aferições e o Gestão à Vista não mostra"): o Gestão à Vista e os faróis guardam o
+// DATA inteiro no IndexedDB (SwrCache) e o devolvem na abertura, com DATA.pneus junto.
+// O `if(DATA.pneus) return` antigo via o pneu do cache e nunca relia o banco — e a
+// página regravava o cache velho, então o navegador ficava preso na foto do Prolog
+// do dia em que o cache nasceu. Agora o cache só pinta; a 1ª chamada da página relê.
+let _pneusLidos=null;
 async function loadPneus(){
-  if(DATA.pneus)return DATA.pneus;
+  if(_pneusLidos)return _pneusLidos;
+  return (_pneusLidos=_loadPneus().catch(e=>{_pneusLidos=null;throw e;}));
+}
+async function _loadPneus(){
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const bids=Object.keys(PNEUS_BRANCH);
   const merged={vehicles:[],tires:[],inspections:[]};let ult=0;
@@ -476,6 +486,8 @@ async function loadPneus(){
     const res=await Promise.all(batch.map(async bid=>{for(let a=0;a<5;a++){const o=await fetchB(bid);if(o!==null)return o;await sleep(700);}return [];}));
     res.flat().forEach(r=>{const ct=PNEUS_BRANCH[r.branch_id];if(!ct||!merged[r.endpoint])return;if(r.updated_at)ult=Math.max(ult,new Date(r.updated_at).getTime());(Array.isArray(r.data)?r.data:[]).forEach(rec=>{rec._cod=ct;rec._tier='';merged[r.endpoint].push(rec);}); });
   }
+  // banco mudo (nenhuma linha de nenhuma filial): fica o que já estava na tela (o cache)
+  if(!merged.tires.length&&!merged.inspections.length&&DATA.pneus) return DATA.pneus;
   // reconstrói como no painel /pneus/: 1 linha por tireId (média das leituras),
   // junta o cadastro (status/nomePosicao), fica só com pneus EM USO e deduplica por veículo+posição.
   const statusAmigavel=x=>{const k=String(x||'').toUpperCase().trim();return ({INSTALLED:'Em uso',RODANDO:'Em uso',STOCK:'Estoque',ESTOQUE:'Estoque',SCRAP:'Sucata',SUCATA:'Sucata'})[k]||(k||'Sem status');};
