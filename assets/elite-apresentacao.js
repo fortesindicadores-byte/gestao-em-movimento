@@ -296,7 +296,7 @@ tr.sep td{border-top:2px solid ${INK3}}
       ${conc(`Em ${m3(PRI)}, ${fP.r} ${pl(fP.r, 'indicador estava', 'indicadores estavam')} abaixo de 85 (${lista(F.filter(f => vPri[f] < 85).map(f => LAB[f])) || 'nenhum'}); no acumulado ${fA.r === 1 ? 'sobra' : 'sobram'} ${fA.r} (${lista(F.filter(f => vAc[f] < 85).map(f => LAB[f])) || 'nenhum'}). Em ${mN(VU)}, ${fU.v} indicadores estão no verde e ${fU.r} no vermelho (${lista(F.filter(f => indU[f] < 85).map(f => LAB[f])) || 'nenhum'}).`)}`);
 
     // ═══ pódio e ranking ═══
-    function podio(rs, titulo, sub) {
+    function podio(rs, titulo, sub, premio) {
       const t3 = rk(rs).slice(0, 3), ord = [1, 0, 2];
       const slot = i => {
         const r = t3[i]; if (!r) return '<div></div>';
@@ -308,7 +308,7 @@ tr.sep td{border-top:2px solid ${INK3}}
             <div style="font-size:${i === 0 ? 24 : 20}px;font-weight:800;color:#fff">${esc(GESTOR[r.unit] || UN[r.unit])}</div>
             <div style="font-size:11px;color:#9AA3AE;letter-spacing:.5px;text-transform:uppercase">${UN[r.unit]}</div>
             <div style="font-size:${i === 0 ? 22 : 18}px;font-weight:800;color:${i === 0 ? OURO : '#E6E8EB'};margin-top:2px">${f1(r.pont)} pts</div>
-            <div style="font-size:${i === 0 ? 14 : 12}px;font-weight:500;color:${i === 0 ? OURO : '#B9C0CA'}">R$ ${PREMIO[i].toLocaleString('pt-BR')}</div>
+            ${premio ? `<div style="font-size:${i === 0 ? 14 : 12}px;font-weight:500;color:${i === 0 ? OURO : '#B9C0CA'}">R$ ${PREMIO[i].toLocaleString('pt-BR')}</div>` : ''}
           </div></div>`;
       };
       slide(`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:-20px"><div><div class="kicker">${sub}</div><h1 style="font-size:40px">${titulo}</h1></div>${logoEl(92)}</div>
@@ -339,7 +339,7 @@ tr.sep td{border-top:2px solid ${INK3}}
     // ═══ Parte 3 · premiação do acumulado ═══
     if (acum.length) {
       capaSec(3, `Acumulado de ${mN(V[0])} a ${mN(VU)}`, 'O pódio do acumulado e o ranking do ano.');
-      podio(acum, 'Pódio Frota de Elite', `Acumulado ${m3(V[0])}–${m3(VU)} · ${V.length} períodos`);
+      podio(acum, 'Pódio Frota de Elite', `Acumulado ${m3(V[0])}–${m3(VU)} · ${V.length} períodos`, true);
       slide(ranking(acum, acumA, `Ranking acumulado ${m3(V[0])}–${m3(VU)}`, 'Frota de Elite · acumulado do ano', `vs ${MES3[mI(VA)]}`), { top: true });
     }
 

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611181300">
+<meta name="build" content="202611190500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Frota de Elite · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1175,6 +1175,14 @@ function renderPesos() {
 }
 
 /* ── Pódio ── */
+function anoDe(v) { const p = String(v).split('/'); return p[0].length === 4 ? p[0] : p[1]; }
+function anoTodoFiltrado() {
+  const todas = [...new Set(RAW.map(r => r.vig))];
+  const sel = selVig.length ? selVig : todas;
+  const anos = [...new Set(sel.map(anoDe))];
+  if (anos.length !== 1) return false;
+  return todas.filter(v => anoDe(v) === anos[0]).every(v => sel.includes(v));
+}
 function renderPodio(data) {
   const rows = getRankingData(data);
   const wrap = document.getElementById('podio-wrap');
@@ -1186,6 +1194,9 @@ function renderPodio(data) {
   const classes = ['primeiro','segundo','terceiro'];
   // premiação por lugar (Renan, 22/10/2026)
   const PREMIO = {primeiro:3000, segundo:1600, terceiro:1000};
+  // o prêmio é do ANO: só aparece com o ano inteiro filtrado (todos os meses
+  // do ano que já têm resultado; Renan, 19/11/2026)
+  const comPremio = anoTodoFiltrado();
 
   // ordem visual: 2º | 1º | 3º
   const order = top3.length >= 3 ? [top3[1],top3[0],top3[2]] : top3.length===2 ? [top3[1],top3[0]] : [top3[0]];
@@ -1209,7 +1220,7 @@ function renderPodio(data) {
         <div class="pedestal-name">${nome}</div>
         <div class="pedestal-unit">${unit}</div>
         <div class="pedestal-score">${sc} pts</div>
-        <div class="pedestal-premio">R$ ${PREMIO[cl].toLocaleString('pt-BR')}</div>
+        ${comPremio ? `<div class="pedestal-premio">R$ ${PREMIO[cl].toLocaleString('pt-BR')}</div>` : ''}
       </div>
       <div class="podio-floor"></div>
     </div>`;
@@ -1626,7 +1637,7 @@ document.addEventListener('DOMContentLoaded',()=>{ initAccessLog(); cortinaInit(
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../assets/elite-apresentacao.js?v=202610302000"></script>
+<script src="../assets/elite-apresentacao.js?v=202611190500"></script>
 <script>
 // Call de Resultados (Renan, 30/10/2026): indicadores gerais → premiações do
 // mês e do acumulado → recados do mês vigente pelo Gestão à Vista. A conta é
@@ -1659,6 +1670,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611181300"></script>
+<script src="../assets/build-check.js?v=202611190500"></script>
 </body>
 </html>
