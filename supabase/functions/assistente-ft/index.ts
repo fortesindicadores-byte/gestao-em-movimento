@@ -12,7 +12,7 @@
 //        {"t":"sql","sql":"…","motivo":"…"}  consulta que vai rodar
 //        {"t":"res","linhas":N,"truncado":bool} | {"t":"res","erro":"…"}
 //        {"t":"web","q":"…"}            pesquisa na web
-//        {"t":"ver","v":2,"img":N}       versão da função e quantas imagens da pergunta ela leu
+//        {"t":"ver","v":3,"img":N,"arq":N}  versão da função e quantas imagens e arquivos da pergunta ela leu
 //        {"t":"titulo","d":"…"}          título curto da conversa (só quando a tela pede)
 //        {"t":"fim","consultas":N,"web":N,"custo":0.12,"seg":31}
 //        {"t":"erro","msg":"…"}
@@ -49,6 +49,9 @@ const TEMPO_S = Number(Deno.env.get("ASSISTENTE_TEMPO_S") ?? 300);
 const TIPOS_IMG = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_IMG = 8;            // imagens por pedido (as mais recentes)
 const MAX_IMG_B64 = 7_000_000; // ~5 MB por imagem
+const MAX_ARQ = 4;             // arquivos por pedido (os mais recentes)
+const MAX_PDF_B64 = 17_000_000; // ~12 MB por PDF
+const MAX_TXT = 200_000;       // caracteres de uma planilha ou texto (a tela já corta nisso)
 const MAX_RESULTADO = 60000; // caracteres do resultado de uma consulta que voltam ao modelo
 // US$ por milhão de tokens do modelo padrão: entrada, gravação de cache, leitura de cache, saída
 const PRECO = { in: 4, cacheW: 5, cacheR: 0.2, out: 20, busca: 0.01 }; // busca na web: US$ 10 por mil
@@ -69,6 +72,7 @@ Como responder
 - Dado externo (inflação, diesel da ANP, juros, câmbio, clima, notícia): pesquise na web, cite a fonte e o período, e deixe claro o que é do portal e o que é de fora. O foco é o dado do portal; o externo serve de contexto e comparação.
 - Não exponha SQL na resposta, a menos que ele peça.
 - Se vier imagem (print de tela, tabela, mensagem de WhatsApp), leia o que está nela e use como parte da pergunta.
+- Se vier arquivo (PDF, ou planilha convertida em CSV com uma seção "=== Aba: nome ===" por aba), leia o arquivo inteiro antes de responder, cite a aba ou a página de onde tirou cada número e, se precisar, cruze com o banco.
 
 Tempo e limite
 - Cada pergunta tem cerca de 5 minutos e até 25 consultas. Planeje antes: descubra as colunas em uma ou duas consultas e traga o que precisa em poucas consultas agregadas (CTE, group by, filter), em vez de muitas pequenas.
@@ -149,10 +153,11 @@ async function registra(linha: Record<string, unknown>) {
 
 // deno-lint-ignore no-explicit-any
 type Conteudo = string | any[];
-type Msg = { role: "user" | "assistant"; content: Conteudo; texto: string; imgs: number };
+type Msg = { role: "user" | "assistant"; content: Conteudo; texto: string; imgs: number; arqs: number; blocos: any[]; nomes: string[] };
 
 // o histórico que a tela manda: texto e, nas mensagens do usuário, imagens em base64
-// ({tipo, b64}); nas respostas, as consultas que foram feitas ({motivo, sql}, sem resultado)
+// ({tipo, b64}) e arquivos ({tipo: application/pdf, b64, nome} ou {tipo: text/plain, texto, nome});
+// nas respostas, as consultas que foram feitas ({motivo, sql}, sem resultado)
 function historicoDe(corpo: { mensagens?: unknown }) {
   const lista = Array.isArray(corpo.mensagens) ? corpo.mensagens : [];
   const msgs: Msg[] = [];
@@ -171,23 +176,46 @@ function historicoDe(corpo: { mensagens?: unknown }) {
         if (c && typeof c.sql === "string" && c.sql.trim()) consultas.push(`- ${String(c.motivo ?? "").slice(0, 120)}: ${c.sql.replace(/\s+/g, " ").slice(0, 1500)}`);
       }
     }
-    if (!texto.trim() && !imagens.length) continue;
+    // deno-lint-ignore no-explicit-any
+    const arquivos = role === "user" && Array.isArray(o.arquivos) ? o.arquivos.filter((a: any) => a && (
+      (a.tipo === "application/pdf" && typeof a.b64 === "string" && a.b64.length > 100 && a.b64.length <= MAX_PDF_B64) ||
+      (a.tipo === "text/plain" && typeof a.texto === "string" && a.texto.trim()))).slice(0, 4) : [];
+    if (!texto.trim() && !imagens.length && !arquivos.length) continue;
+    // deno-lint-ignore no-explicit-any
+    const blocos: any[] = arquivos.map((a: any) => ({
+      type: "document",
+      title: String(a.nome ?? "arquivo").slice(0, 200),
+      source: a.tipo === "application/pdf"
+        ? { type: "base64", media_type: "application/pdf", data: a.b64 }
+        : { type: "text", media_type: "text/plain", data: a.texto.slice(0, MAX_TXT) },
+    }));
     msgs.push({
-      role, texto, imgs: imagens.length,
-      content: imagens.length
+      role, texto, imgs: imagens.length, arqs: arquivos.length, blocos,
+      // deno-lint-ignore no-explicit-any
+      nomes: arquivos.map((a: any) => String(a.nome ?? "arquivo")),
+      content: (imagens.length || blocos.length)
         // deno-lint-ignore no-explicit-any
-        ? [...imagens.map((i: any) => ({ type: "image", source: { type: "base64", media_type: i.tipo, data: i.b64 } })),
-           { type: "text", text: texto.trim() ? texto : "Veja a imagem." }]
+        ? [...blocos, ...imagens.map((i: any) => ({ type: "image", source: { type: "base64", media_type: i.tipo, data: i.b64 } })),
+           { type: "text", text: texto.trim() ? texto : (blocos.length ? "Veja o arquivo." : "Veja a imagem.") }]
         : texto,
     });
   }
   while (msgs.length && msgs[0].role !== "user") msgs.shift();
-  // só as imagens mais recentes vão ao modelo; as mais antigas viram uma nota no texto
-  let sobra = MAX_IMG;
+  // só as imagens e os arquivos mais recentes vão ao modelo; os mais antigos viram uma nota no texto
+  let sobra = MAX_IMG, sobraArq = MAX_ARQ;
   for (let i = msgs.length - 1; i >= 0; i--) {
-    const m = msgs[i]; if (!m.imgs) continue;
-    if (sobra >= m.imgs) { sobra -= m.imgs; continue; }
-    m.content = m.texto + `\n\n[${m.imgs} imagem(ns) enviada(s) aqui não foram reenviadas]`; m.imgs = 0; sobra = 0;
+    const m = msgs[i]; if (!m.imgs && !m.arqs) continue;
+    const ficaImg = sobra >= m.imgs, ficaArq = sobraArq >= m.arqs;
+    if (ficaImg) sobra -= m.imgs; else sobra = 0;
+    if (ficaArq) sobraArq -= m.arqs; else sobraArq = 0;
+    if (ficaImg && ficaArq) continue;
+    const notas: string[] = [];
+    // deno-lint-ignore no-explicit-any
+    const partes: any[] = Array.isArray(m.content) ? m.content.filter((b: any) => (b.type === "image" ? ficaImg : b.type === "document" ? ficaArq : false)) : [];
+    if (!ficaImg && m.imgs) { notas.push(`${m.imgs} imagem(ns) enviada(s) aqui não foram reenviadas`); m.imgs = 0; }
+    if (!ficaArq && m.arqs) { notas.push(`arquivo(s) enviado(s) aqui e não reenviados: ${m.nomes.join(", ")}`); m.arqs = 0; }
+    const txt = m.texto + notas.map((n) => `\n\n[${n}]`).join("");
+    m.content = partes.length ? [...partes, { type: "text", text: txt }] : txt;
   }
   return { msgs, consultas: consultas.slice(-15).join("\n").slice(0, 12000) };
 }
@@ -211,6 +239,7 @@ Deno.serve(async (req: Request) => {
   }
   const pergunta = historico[historico.length - 1].texto;
   const imgsPergunta = historico[historico.length - 1].imgs;
+  const arqsPergunta = historico[historico.length - 1].arqs;
   const contexto = typeof corpo.contexto === "string" ? corpo.contexto.slice(0, 2000) : "";
   const hoje = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
@@ -235,7 +264,7 @@ Deno.serve(async (req: Request) => {
       let erro: string | null = null;
       let fechar = false;    // acabou o tempo ou o limite de consultas: a próxima volta só responde
       const semTempo = () => (Date.now() - t0) / 1000 > TEMPO_S;
-      envia({ t: "ver", v: 2, img: imgsPergunta });
+      envia({ t: "ver", v: 3, img: imgsPergunta, arq: arqsPergunta });
       // título curto da conversa, em paralelo com a resposta (a tela pede na 1ª pergunta)
       if (corpo.titulo === true) {
         const abre = historico[0];
@@ -244,7 +273,11 @@ Deno.serve(async (req: Request) => {
           max_tokens: 1024,
           output_config: { effort: "low" },
           system: "Dê um título de 3 a 6 palavras, em português do Brasil, para a conversa que começa com a mensagem do usuário. Diga o assunto (indicador, unidade, período), não repita a pergunta. Responda só com o título, sem aspas e sem ponto final.",
-          messages: [{ role: "user", content: typeof abre.content === "string" ? abre.content.slice(0, 3000) : abre.content }],
+          messages: [{ role: "user", content: abre.arqs
+            // com arquivo, o título sai do texto e do nome do arquivo (mandar o PDF inteiro só para o título custaria caro)
+            ? (abre.texto.slice(0, 3000) || "Veja o arquivo.") + `\n\n[arquivo: ${abre.nomes.join(", ")}]`
+            // deno-lint-ignore no-explicit-any
+            : typeof abre.content === "string" ? abre.content.slice(0, 3000) : (abre.content as any[]).filter((b: any) => b.type !== "document") }],
           // deno-lint-ignore no-explicit-any
         } as any).then((m: any) => {
           const u = m.usage ?? {};

@@ -61,7 +61,7 @@ const texto = t => ({ stop: 'end_turn', blocos: [{ type: 'text', text: t }] });
     { role: 'user', content: 'E este print?', imagens: [{ tipo: 'image/png', b64: PNG }, { tipo: 'application/pdf', b64: PNG }] }] }));
   const principal = pedidosIA.filter(p => p.b.stream), tit = pedidosIA.filter(p => !p.b.stream);
   const ult = principal[0].b.messages.filter(m => m.role === 'user').at(-1);
-  chk(ev[0].t === 'ver' && ev[0].v === 2 && ev[0].img === 1, 'evento "ver" diz que leu 1 imagem (o PDF é recusado) — ' + JSON.stringify(ev[0]));
+  chk(ev[0].t === 'ver' && ev[0].v >= 2 && ev[0].img === 1, 'evento "ver" diz que leu 1 imagem (o PDF é recusado) — ' + JSON.stringify(ev[0]));
   chk(Array.isArray(ult.content) && ult.content[0].type === 'image' && ult.content[0].source.type === 'base64' && ult.content[0].source.media_type === 'image/png' && ult.content[0].source.data === PNG && ult.content.at(-1).text === 'E este print?', 'a imagem vai ao modelo como bloco image/base64, antes do texto');
   chk(ult.content.filter(b => b.type === 'image').length === 1, 'só tipos de imagem aceitos entram');
   const sis = principal[0].b.messages.find(m => m.role === 'system');
@@ -84,6 +84,32 @@ const texto = t => ({ stop: 'end_turn', blocos: [{ type: 'text', text: t }] });
   const ev = await eventos(await pede({ mensagens: [{ role: 'user', content: '', imagens: [{ tipo: 'image/jpeg', b64: PNG }] }] }));
   const u = pedidosIA[0].b.messages[0];
   chk(ev[0].img === 1 && u.content.at(-1).text === 'Veja a imagem.', 'pergunta só com imagem é aceita'); }
+
+// arquivos: PDF em base64 e planilha em texto viram blocos document antes do texto
+{ pedidosIA.length = 0; roteiro = [texto('li')];
+  const PDF = 'JVBERi0xLjQK' + 'A'.repeat(400);
+  const ev = await eventos(await pede({ titulo: true, mensagens: [{ role: 'user', content: 'Compare com o banco', arquivos: [
+    { tipo: 'application/pdf', b64: PDF, nome: 'fatura.pdf' },
+    { tipo: 'text/plain', texto: '=== Aba: Plan1 ===\nunidade,valor\nGRL,10', nome: 'base.xlsx' },
+    { tipo: 'application/zip', b64: PDF, nome: 'x.zip' }] }] }));
+  const principal = pedidosIA.filter(p => p.b.stream), tit = pedidosIA.filter(p => !p.b.stream);
+  const u = principal[0].b.messages[0].content;
+  chk(ev[0].v === 3 && ev[0].arq === 2, 'evento "ver" v3 diz que leu 2 arquivos (o zip é recusado) — ' + JSON.stringify(ev[0]));
+  chk(u[0].type === 'document' && u[0].source.type === 'base64' && u[0].source.media_type === 'application/pdf' && u[0].title === 'fatura.pdf', 'PDF vai como document base64 com o nome');
+  chk(u[1].type === 'document' && u[1].source.type === 'text' && /GRL,10/.test(u[1].source.data) && u[1].title === 'base.xlsx', 'planilha vai como document de texto');
+  chk(u.at(-1).type === 'text' && u.at(-1).text === 'Compare com o banco', 'o texto da pergunta vem depois dos arquivos');
+  chk(tit.length === 1 && typeof tit[0].b.messages[0].content === 'string' && !tit[0].b.messages[0].content.includes(PDF) && /fatura\.pdf/.test(tit[0].b.messages[0].content), 'o título não leva o PDF, só o nome');
+  chk(!JSON.stringify(logs.at(-1)).includes(PDF), 'o registro não guarda o arquivo'); }
+// arquivo antigo além do teto vira nota no texto
+{ pedidosIA.length = 0; roteiro = [texto('ok')];
+  const A = n => ({ tipo: 'text/plain', texto: 'conteudo ' + n, nome: 'a' + n + '.csv' });
+  await eventos(await pede({ mensagens: [
+    { role: 'user', content: 'primeiro', arquivos: [A(1), A(2), A(3)] }, { role: 'assistant', content: 'ok' },
+    { role: 'user', content: 'segundo', arquivos: [A(4), A(5)] }] }));
+  const ms = pedidosIA[0].b.messages.filter(m => m.role === 'user');
+  const docs = m => Array.isArray(m.content) ? m.content.filter(b => b.type === 'document').length : 0;
+  const txt = m => typeof m.content === 'string' ? m.content : m.content.at(-1).text;
+  chk(docs(ms[1]) === 2 && docs(ms[0]) === 0 && /não reenviados: a1\.csv, a2\.csv, a3\.csv/.test(txt(ms[0])), 'só os 4 arquivos mais recentes vão; os antigos viram nota — ' + txt(ms[0])); }
 
 // ── 2) tempo esgotado: fecha a resposta em vez de morrer ──
 { process.env.ASSISTENTE_TEMPO_S = '0';

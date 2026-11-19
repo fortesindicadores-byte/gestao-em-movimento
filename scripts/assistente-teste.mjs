@@ -5,6 +5,7 @@
 import { chromium } from 'playwright';
 import http from 'node:http'; import { readFileSync, existsSync } from 'node:fs'; import path from 'node:path';
 const RAIZ = path.resolve(new URL('..', import.meta.url).pathname);
+const XLSXJS = process.env.XLSXJS || '';
 const SBJS = process.env.SBJS || '', SHOT = process.env.SHOT_DIR || '';
 let ok = 0, falha = 0; const t = (c, m) => { if (c) { ok++; console.log('ok ', m); } else { falha++; console.log('FALHA', m); } };
 const srv = http.createServer((q, s) => { const f = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0]).replace(/\/$/, '/index.html'));
@@ -17,12 +18,13 @@ async function abre(email, w, h, tema) {
   const erros = []; pg.on('pageerror', e => erros.push(String(e)));
   const pedidos = [];
   await pg.route(/fonts\.g/, r => r.fulfill({ status: 200, body: '', contentType: 'text/css' }));
+  await pg.route(/cdnjs\.cloudflare\.com\/ajax\/libs\/xlsx/, r => r.fulfill({ status: 200, body: XLSXJS ? readFileSync(XLSXJS, 'utf8') : '', contentType: 'application/javascript' }));
   await pg.route(/supabase-js@2/, r => r.fulfill({ status: 200, body: SBJS ? readFileSync(SBJS, 'utf8') : '', contentType: 'application/javascript' }));
   await pg.route(/supabase\.co/, async r => { const u = new URL(r.request().url());
     if (u.pathname.endsWith('/functions/v1/rapid-processor')) {
       pedidos.push({ h: r.request().headers(), b: JSON.parse(r.request().postData() || '{}') });
       const corpo = pedidos.at(-1).b, ult = corpo.mensagens.at(-1), per = String(ult.content || '');
-      let ev = [{ t: 'ver', v: 2, img: (ult.imagens || []).length },
+      let ev = [{ t: 'ver', v: 3, img: (ult.imagens || []).length, arq: (ult.arquivos || []).length },
         { t: 'sql', sql: 'select 1', motivo: 'custo por km em 2026' }, { t: 'res', linhas: 9, truncado: false },
         { t: 'web', q: 'IPCA acumulado 2026' }, { t: 'txt', d: 'O custo subiu **4,1%**, abaixo do IPCA.\n\n| Mês | R$/km |\n|---|---|\n| jan/26 | 2,10 |\n| set/26 | 2,19 |\n' },
         { t: 'fim', consultas: 1, web: 1, custo: 0.31, seg: 22 }];
@@ -113,6 +115,36 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   if (SHOT) await pg.screenshot({ path: `${SHOT}/assistente-imagem.png` });
   t(!erros.length, 'sem erro de página ' + erros.join(' | '));
   await ctx.close(); }
+// arquivo: PDF e Excel pelo botão de anexar (Renan, 19/11/2026: "Não consigo também subir nenhum arquivo")
+if (XLSXJS) { const { pg, ctx, erros, pedidos } = await abre('fortesindicadores@gmail.com', 1366, 768, 'dark');
+  const X = (await import('xlsx')).default || (await import('xlsx'));
+  const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet([['Unidade', 'Desconto'], ['GRL', 1234.5], ['PIR', 0]]), 'CIFV');
+  X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet([['a'], [1]]), 'Outra');
+  const xbuf = X.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  const pbuf = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n');
+  await pg.locator('.ia-box input[type=file]').setInputFiles([
+    { name: 'descontos.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: xbuf },
+    { name: 'fatura.pdf', mimeType: 'application/pdf', buffer: pbuf }]);
+  await pg.waitForTimeout(800);
+  const chips = await pg.locator('.ia-anx-a').allTextContents();
+  t(chips.length === 2 && /descontos\.xlsx.*Excel · 2 abas/.test(chips[0]) && /fatura\.pdf.*PDF/.test(chips[1]), 'Excel e PDF viram anexo com nome e tipo — ' + chips.join(' | '));
+  await pg.fill('#ia-txt', 'Confira com o banco'); await pg.click('#ia-env'); await pg.waitForTimeout(700);
+  const arq = pedidos.at(-1).b.mensagens.at(-1).arquivos || [];
+  t(arq.length === 2 && arq[0].tipo === 'text/plain' && /=== Aba: CIFV ===/.test(arq[0].texto) && /GRL,1234\.5/.test(arq[0].texto) && /=== Aba: Outra ===/.test(arq[0].texto), 'a planilha vai como texto, uma seção por aba');
+  t(arq[1].tipo === 'application/pdf' && Buffer.from(arq[1].b64, 'base64').toString().startsWith('%PDF') && arq[1].nome === 'fatura.pdf', 'o PDF vai inteiro em base64 com o nome');
+  t((await pg.locator('.ia-m.eu .ia-arqs span').count()) === 2 && (await pg.locator('.ia-anx-a').count()) === 0, 'a pergunta mostra os arquivos e a caixa fica limpa');
+  t(!/ainda não lê arquivos/.test(await pg.locator('.ia-m.ele').last().textContent()), 'função nova: sem o aviso de arquivo não lido');
+  await pg.fill('#ia-txt', 'e agora?'); await pg.click('#ia-env'); await pg.waitForTimeout(700);
+  t((pedidos.at(-1).b.mensagens.find(m => m.arquivos) || {}).arquivos?.length === 2, 'na pergunta seguinte os arquivos vão de novo (mesma sessão)');
+  await pg.locator('.ia-box input[type=file]').setInputFiles([{ name: 'x.zip', mimeType: 'application/zip', buffer: Buffer.from('PK') }]);
+  await pg.waitForTimeout(300);
+  t((await pg.locator('.ia-anx-a').count()) === 0, 'tipo que não lê não vira anexo');
+  await pg.locator('.ia-box input[type=file]').setInputFiles([{ name: 'b.csv', mimeType: 'text/csv', buffer: Buffer.from('a;b\n1;2') }]);
+  await pg.waitForTimeout(300); await pg.fill('#ia-txt', 'função antiga csv'); await pg.click('#ia-env'); await pg.waitForTimeout(700);
+  t(/ainda não lê arquivos/.test(await pg.locator('.ia-m.ele').last().textContent()), 'função antiga: avisa que o arquivo não foi lido');
+  if (SHOT) await pg.screenshot({ path: `${SHOT}/assistente-arquivo.png` });
+  t(!erros.length, 'sem erro de página (arquivo) ' + erros.join(' | '));
+  await ctx.close(); } else console.log('(sem XLSXJS: pulei o teste de arquivo)');
 // título de partida (antes do da função): tira o cabeçalho do WhatsApp
 { const { pg, ctx } = await abre('fortesindicadores@gmail.com', 1366, 768, 'dark');
   await pg.evaluate(() => { ['gem_assistente_conv', 'gem_assistente_atual'].forEach(x => localStorage.removeItem(x)); }); await pg.reload(); await pg.waitForTimeout(700);

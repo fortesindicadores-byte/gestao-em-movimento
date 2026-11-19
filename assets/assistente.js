@@ -78,6 +78,7 @@
 
   const SVG_LAPIS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
   const SVG_PARA = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>';
+  const SVG_DOC = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
   const SVG_CLIPE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.6"/><path d="m21 15-4.5-4.5L6 21"/></svg>';
   // o que é da conversa e não da página (imagem anexada, renomear, parar) leva o estilo junto
   const CSS = `
@@ -88,6 +89,13 @@
 .ia-anx-i button{position:absolute;top:2px;right:2px;width:18px;height:18px;border:0;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;cursor:pointer;display:grid;place-items:center;padding:0;}
 .ia-anx-i button svg{width:10px;height:10px;}
 .ia-imgs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;justify-content:flex-end;}
+.ia-anx-a{display:flex;align-items:center;gap:6px;height:64px;max-width:230px;padding:0 26px 0 10px;border-radius:9px;position:relative;border:1px solid var(--card-brd,rgba(255,255,255,.12));background:var(--hover,rgba(255,255,255,.06));font-size:11.5px;line-height:1.3;color:var(--txt,#fff);box-sizing:border-box;}
+.ia-anx-a b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px;}
+.ia-anx-a span{color:var(--txt3,#A9B1C0);font-size:10.5px;}
+.ia-anx-a button{position:absolute;top:4px;right:4px;width:18px;height:18px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;cursor:pointer;display:grid;place-items:center;padding:0;}
+.ia-anx-a button svg{width:10px;height:10px;}
+.ia-arqs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;justify-content:flex-end;}
+.ia-arqs span{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:7px;border:1px solid var(--card-brd,rgba(255,255,255,.12));font-size:11.5px;}
 .ia-imgs img{max-width:220px;max-height:160px;border-radius:9px;display:block;border:1px solid var(--card-brd,rgba(255,255,255,.12));}
 .ia-clip{flex:0 0 auto;width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:var(--txt3,#A9B1C0);cursor:pointer;display:grid;place-items:center;align-self:flex-end;margin-bottom:3px;}
 .ia-clip:hover{background:var(--hover,rgba(255,255,255,.06));color:var(--txt,#fff);}
@@ -133,6 +141,43 @@
     });
   }
 
+  // arquivo (PDF, Excel, CSV, texto): o PDF vai inteiro em base64; planilha e texto viram texto
+  // no navegador (planilha = uma seção CSV por aba), com teto para a pergunta não ficar enorme
+  const MAX_TXT = 200000, MAX_PDF = 12 * 1048576;
+  const EXT_PLAN = /\.(xlsx|xlsm|xlsb|xls|ods)$/i, EXT_TXT = /\.(csv|tsv|txt|md|json|xml|sql|log)$/i;
+  let _xlsx = null;
+  function carregaXlsx() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    if (_xlsx) return _xlsx;
+    _xlsx = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      sc.onload = () => window.XLSX ? res(window.XLSX) : rej(new Error('leitor de Excel não carregou')); sc.onerror = () => { _xlsx = null; rej(new Error('leitor de Excel não carregou')); }; document.head.appendChild(sc); });
+    return _xlsx;
+  }
+  const b64De = buf => { const u = new Uint8Array(buf); let s = ''; for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return btoa(s); };
+  const tamanho = n => n >= 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+  async function leArquivo(f) {
+    const nome = f.name || 'arquivo';
+    if (/pdf/i.test(f.type || '') || /\.pdf$/i.test(nome)) {
+      if (f.size > MAX_PDF) throw new Error('PDF acima de 12 MB');
+      return { tipo: 'application/pdf', b64: b64De(await f.arrayBuffer()), nome, rot: 'PDF · ' + tamanho(f.size) };
+    }
+    let texto, rot;
+    if (EXT_PLAN.test(nome) || /spreadsheet|ms-excel/i.test(f.type || '')) {
+      const X = await carregaXlsx();
+      const wb = X.read(new Uint8Array(await f.arrayBuffer()), { type: 'array', cellDates: true });
+      texto = wb.SheetNames.map(n => `=== Aba: ${n} ===\n` + X.utils.sheet_to_csv(wb.Sheets[n], { blankrows: false, dateNF: 'dd/mm/yyyy' })).join('\n\n');
+      rot = 'Excel · ' + wb.SheetNames.length + (wb.SheetNames.length === 1 ? ' aba' : ' abas');
+    } else if (EXT_TXT.test(nome) || /^text\//.test(f.type || '') || /json/.test(f.type || '')) {
+      texto = await f.text(); rot = (nome.split('.').pop() || 'texto').toUpperCase() + ' · ' + tamanho(f.size);
+    } else if (/\.docx?$/i.test(nome)) {
+      throw new Error('Word ainda não: salve como PDF e anexe');
+    } else throw new Error('tipo de arquivo que o assistente não lê');
+    let cortado = false;
+    if (texto.length > MAX_TXT) { texto = texto.slice(0, MAX_TXT); cortado = true; }
+    if (cortado) { texto += `\n\n[arquivo cortado em ${MAX_TXT.toLocaleString('pt-BR')} caracteres]`; rot += ' · cortado'; }
+    return { tipo: 'text/plain', texto, nome, rot };
+  }
+
   function monta(cfg) {
     estilos();
     const $ = id => document.getElementById(id);
@@ -141,7 +186,7 @@
     const MULTI = !!cfg.lista;          // várias conversas guardadas, com a lista na lateral
     let MSG = [], OCUP = false, CONV = [], ATUAL = null;
     let ANX = [];                       // imagens esperando a próxima pergunta
-    const CHEIA = {};                   // id → {tipo, b64}: a imagem inteira, só nesta sessão do navegador
+    const CHEIA = {};                   // id → {tipo, b64} (imagem, PDF) ou {tipo, texto} (planilha, texto): o anexo inteiro, só nesta sessão do navegador
     let CTRL = null, PAROU = false;     // o pedido em andamento e se foi o usuário que parou
     const novoId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -157,7 +202,7 @@
     } else {
       try { const g = JSON.parse(localStorage.getItem(cfg.chave) || '[]'); if (Array.isArray(g)) MSG = g.slice(-40); } catch (e) { /* sem armazenamento */ }
     }
-    function tituloDe(msgs) { const u = msgs.find(m => m.role === 'user'); return (u && tituloLocal(u.content)) || (u && u.imgs ? 'Imagem' : 'Conversa'); }
+    function tituloDe(msgs) { const u = msgs.find(m => m.role === 'user'); return (u && tituloLocal(u.content)) || (u && u.arqs && u.arqs.length ? u.arqs[0].nome : u && u.imgs ? 'Imagem' : 'Conversa'); }
     // grava a lista; se não couber (miniaturas de imagem pesam), solta as conversas mais antigas
     const persiste = () => {
       for (let n = 0; n < 6; n++) {
@@ -228,7 +273,8 @@
         el.querySelectorAll('[data-ex]').forEach(b => b.addEventListener('click', () => { $(ids.txt).value = b.dataset.ex; envia(); }));
         return;
       }
-      const imgsDe = m => m.imgs && m.imgs.length ? `<div class="ia-imgs">${m.imgs.map(i => `<img src="${esc(i.mini)}" alt="imagem enviada">`).join('')}</div>` : '';
+      const imgsDe = m => (m.imgs && m.imgs.length ? `<div class="ia-imgs">${m.imgs.map(i => `<img src="${esc(i.mini)}" alt="imagem enviada">`).join('')}</div>` : '') +
+        (m.arqs && m.arqs.length ? `<div class="ia-arqs">${m.arqs.map(a => `<span title="${esc(a.rot || '')}">${SVG_DOC}${esc(a.nome)}</span>`).join('')}</div>` : '');
       const corpo = (m, i) => `${m.content ? md(m.content) : pensando(m)}${m.estado && m.content ? pensando(m) : ''}${consultas(m.q)}${m.pe ? `<div class="ia-pe">${esc(m.pe)}</div>` : ''}`;
       if (!CHAT) {
         el.innerHTML = MSG.map(m => m.role === 'user' ? `<div class="ia-m eu">${imgsDe(m)}${esc(m.content)}</div>` : `<div class="ia-m ele">${corpo(m)}</div>`).join('');
@@ -251,15 +297,21 @@
     function pintaAnx() {
       const t = $(ids.txt); if (!t) return;
       if (!anxEl) { anxEl = document.createElement('div'); anxEl.className = 'ia-anx'; const ref = t.closest('.ia-in') || t.parentNode; ref.parentNode.insertBefore(anxEl, ref); }
-      anxEl.innerHTML = ANX.map(a => `<div class="ia-anx-i"><img src="${esc(a.mini)}" alt="imagem a enviar"><button data-anx="${a.id}" title="Tirar a imagem">${SVG_X}</button></div>`).join('');
+      anxEl.innerHTML = ANX.map(a => a.mini
+        ? `<div class="ia-anx-i"><img src="${esc(a.mini)}" alt="imagem a enviar"><button data-anx="${a.id}" title="Tirar a imagem">${SVG_X}</button></div>`
+        : `<div class="ia-anx-a">${SVG_DOC}<div><b title="${esc(a.nome)}">${esc(a.nome)}</b><span>${esc(a.rot)}</span></div><button data-anx="${a.id}" title="Tirar o arquivo">${SVG_X}</button></div>`).join('');
       anxEl.querySelectorAll('[data-anx]').forEach(b => b.addEventListener('click', () => { ANX = ANX.filter(a => a.id !== b.dataset.anx); pintaAnx(); }));
     }
     async function anexa(files) {
-      const imgs = [...(files || [])].filter(f => f && /^image\//.test(f.type || ''));
-      for (const f of imgs) {
-        if (ANX.length >= 4) { alert('Até 4 imagens por pergunta.'); break; }
-        try { const r = await reduz(f); ANX.push(Object.assign({ id: novoId() }, r)); pintaAnx(); }
-        catch (e) { alert('Não consegui ler essa imagem.'); }
+      for (const f of [...(files || [])].filter(Boolean)) {
+        if (ANX.length >= 4) { alert('Até 4 anexos por pergunta.'); break; }
+        if (/^image\//.test(f.type || '')) {
+          try { const r = await reduz(f); ANX.push(Object.assign({ id: novoId() }, r)); pintaAnx(); }
+          catch (e) { alert('Não consegui ler essa imagem.'); }
+          continue;
+        }
+        try { const r = await leArquivo(f); ANX.push(Object.assign({ id: novoId() }, r)); pintaAnx(); }
+        catch (e) { alert(`Não consegui ler ${f.name || 'o arquivo'}: ${(e && e.message) || e}.`); }
       }
       const t = $(ids.txt); if (t) t.focus();
     }
@@ -280,8 +332,11 @@
       const t = $(ids.txt); const txt = (t.value || '').trim(); if (!txt && !ANX.length) return;
       OCUP = true; PAROU = false; CTRL = new AbortController(); botao(true); t.value = ''; t.style.height = '';
       const anexos = ANX; ANX = []; pintaAnx();
-      const um = { role: 'user', content: txt || (anexos.length > 1 ? 'Veja as imagens.' : 'Veja a imagem.') };
-      if (anexos.length) { um.imgs = anexos.map(a => ({ id: a.id, mini: a.mini })); anexos.forEach(a => { CHEIA[a.id] = { tipo: a.tipo, b64: a.b64 }; }); }
+      const aImg = anexos.filter(a => a.mini), aArq = anexos.filter(a => !a.mini);
+      const um = { role: 'user', content: txt || (aArq.length ? (aArq.length > 1 ? 'Veja os arquivos.' : 'Veja o arquivo.') : aImg.length > 1 ? 'Veja as imagens.' : 'Veja a imagem.') };
+      if (aImg.length) um.imgs = aImg.map(a => ({ id: a.id, mini: a.mini }));
+      if (aArq.length) um.arqs = aArq.map(a => ({ id: a.id, nome: a.nome, rot: a.rot }));
+      anexos.forEach(a => { CHEIA[a.id] = a.mini ? { tipo: a.tipo, b64: a.b64 } : (a.b64 ? { tipo: a.tipo, b64: a.b64, nome: a.nome } : { tipo: a.tipo, texto: a.texto, nome: a.nome }); });
       MSG.push(um); const r = { role: 'assistant', content: '', q: [], estado: 'Pensando…' }; MSG.push(r);
       if (MULTI) { guarda(); lista(); }
       pinta();
@@ -294,6 +349,12 @@
           const vivas = m.imgs.map(i => CHEIA[i.id]).filter(Boolean);
           if (vivas.length) o.imagens = vivas;
           if (vivas.length < m.imgs.length) o.content += `\n\n[${m.imgs.length - vivas.length} imagem(ns) enviada(s) aqui antes não está(ão) mais disponível(is)]`;
+        }
+        if (m.role === 'user' && m.arqs && m.arqs.length) {
+          const vivos = m.arqs.map(a => CHEIA[a.id]).filter(Boolean);
+          if (vivos.length) o.arquivos = vivos;
+          const foram = m.arqs.filter(a => !CHEIA[a.id]).map(a => a.nome);
+          if (foram.length) o.content += `\n\n[arquivo(s) enviado(s) aqui antes e que não estão mais disponíveis: ${foram.join(', ')}]`;
         }
         // as consultas já feitas vão junto (sem resultado), para a função não redescobrir o banco
         if (m.role === 'assistant' && m.q && m.q.length) { const qs = m.q.filter(c => c.sql && !c.erro).slice(-12).map(c => ({ motivo: c.motivo, sql: c.sql })); if (qs.length) o.consultas = qs; }
@@ -345,7 +406,8 @@
         // a conexão fechou sem o evento de fim: a função morreu no meio (tempo limite do Supabase)
         r.content += (r.content ? '\n\n' : '') + 'A resposta foi interrompida antes de terminar: a função passou do tempo limite. Peça de novo com um recorte menor (um mês, uma unidade, uma tabela por vez).';
       }
-      if (!PAROU && !falhou && anexos.length && !(ver && ver.img > 0)) r.content += '\n\n(A função publicada no Supabase ainda não lê imagens: esta resposta não viu o anexo. Atualize a função para a versão nova.)';
+      if (!PAROU && !falhou && aImg.length && !(ver && ver.img > 0)) r.content += '\n\n(A função publicada no Supabase ainda não lê imagens: esta resposta não viu o anexo. Atualize a função para a versão nova.)';
+      if (!PAROU && !falhou && aArq.length && !(ver && ver.arq > 0)) r.content += '\n\n(A função publicada no Supabase ainda não lê arquivos: esta resposta não viu o anexo. Atualize a função para a versão nova.)';
       if (!r.content) r.content = '(sem resposta)';
       OCUP = false; CTRL = null; botao(false); guarda(); lista(); pinta();
     }
@@ -374,9 +436,9 @@
       // botão de anexar, na caixa do chat
       const box = t.closest('.ia-box');
       if (box && !box.querySelector('.ia-clip')) {
-        fileEl = document.createElement('input'); fileEl.type = 'file'; fileEl.accept = 'image/*'; fileEl.multiple = true; fileEl.style.display = 'none';
+        fileEl = document.createElement('input'); fileEl.type = 'file'; fileEl.accept = 'image/*,.pdf,.xlsx,.xlsm,.xls,.ods,.csv,.tsv,.txt,.md,.json'; fileEl.multiple = true; fileEl.style.display = 'none';
         fileEl.addEventListener('change', () => { anexa(fileEl.files); fileEl.value = ''; });
-        const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'ia-clip'; bt.title = 'Anexar imagem (ou cole com Ctrl+V)'; bt.innerHTML = SVG_CLIPE;
+        const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'ia-clip'; bt.title = 'Anexar imagem, PDF ou Excel (ou cole o print com Ctrl+V)'; bt.innerHTML = SVG_CLIPE;
         bt.addEventListener('click', () => fileEl.click());
         box.insertBefore(bt, t); box.appendChild(fileEl);
       }
