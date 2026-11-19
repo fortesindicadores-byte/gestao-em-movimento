@@ -1207,7 +1207,12 @@ async function coletar(page, ind, vigencia, escopo) {
   let ok = false, mesesEsperados = null;
   if (p.tipo === 'dropdown') {
     // Conformidade lista o mês por extenso; as demais telas usam "Jul-26"
-    const fmtMes = p.mesFormato === 'nome' ? (d => MES_FULL[d.getMonth()]) : mesDropdown;
+    // O MÊS CORRENTE NÃO É "Nov-26" (19/11/2026, prévia): nessas telas a lista
+    // vai até o mês passado, depois "Mês Atual" e o mês seguinte ("Out-26",
+    // "Mês Atual", "Dez-26"). Na virada o "Nov-26" passa a existir sozinho.
+    const _h = new Date();
+    const ehAtual = d => d.getFullYear() === _h.getFullYear() && d.getMonth() === _h.getMonth();
+    const fmtMes = p.mesFormato === 'nome' ? (d => MES_FULL[d.getMonth()]) : (d => ehAtual(d) ? 'Mês Atual' : mesDropdown(d));
     const mes0 = escopo === 'ano' ? (ind.mesInicial || 0) : ref.getMonth();
     const meses = Array.from({ length: ref.getMonth() + 1 - mes0 }, (_, i) => fmtMes(new Date(ref.getFullYear(), mes0 + i, 1)));
     // p.semAno: o valor do Mês já traz o ano ("Jul-26") e, em algumas telas, o
