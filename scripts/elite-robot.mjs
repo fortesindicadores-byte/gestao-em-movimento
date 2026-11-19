@@ -471,6 +471,26 @@ async function itensDoSlicer(page) {
   }
   return txt.filter(Boolean);
 }
+// A LISTA DO DROPDOWN É VIRTUALIZADA (19/11/2026, a prévia de nov/26): o
+// Power BI só põe no DOM os itens da janela, então "Nov-26" não existe até a
+// lista rolar (o log mostrava só Jan-26 a Jun-26). Rola o corpo do popup
+// aberto (.slicerBody / listbox com barra) e diz se algo andou.
+async function rolarPopupSlicer(page) {
+  let andou = false;
+  for (const fr of page.frames()) {
+    try {
+      const r = await fr.evaluate(() => {
+        const cand = [...document.querySelectorAll('.slicer-dropdown-popup .slicerBody, .slicerBody, [role="listbox"]')]
+          .filter(e => e.getClientRects().length && e.scrollHeight > e.clientHeight + 4);
+        let mov = false;
+        cand.forEach(e => { const a = e.scrollTop; e.scrollTop = a + Math.max(60, e.clientHeight * 0.8); if (e.scrollTop !== a) mov = true; });
+        return mov;
+      });
+      if (r) andou = true;
+    } catch (e) {}
+  }
+  return andou;
+}
 // valores = 1 ou vários. No Power BI o 1º clique SUBSTITUI a seleção e os
 // seguintes precisam de Ctrl para somar (é o mesmo ctrl+clique que o Renan faz).
 async function aplicarSlicer(page, campo, valores) {
@@ -498,7 +518,13 @@ async function aplicarSlicer(page, campo, valores) {
   for (const c of cands) {
     try { await c.dd.click({ timeout: 8000 }); } catch (e) { continue; }
     await page.waitForTimeout(2500);
-    const itens = await itensDoSlicer(page);
+    let itens = await itensDoSlicer(page);
+    // lista virtualizada: rola até o valor aparecer (ou a lista acabar)
+    for (let r = 0; r < 12 && itens.length && !itens.some(t => String(t).includes(alvo)); r++) {
+      if (!(await rolarPopupSlicer(page))) break;
+      await page.waitForTimeout(500);
+      itens = await itensDoSlicer(page);
+    }
     if (itens.length && itens.some(t => String(t).includes(alvo))) { hit = c; break; }
     if (itens.length && !comItens) comItens = c;
     await page.keyboard.press('Escape');
@@ -516,6 +542,12 @@ async function aplicarSlicer(page, campo, valores) {
     });
     let item = await buscar();
     for (let t = 0; t < 7 && !item; t++) { await page.waitForTimeout(2000); item = await buscar(); }
+    // ainda fora da janela desenhada: rola a lista e procura de novo
+    for (let r = 0; r < 12 && !item; r++) {
+      if (!(await rolarPopupSlicer(page))) break;
+      await page.waitForTimeout(600);
+      item = await buscar();
+    }
     if (!item) {
       log(`item "${v}" do slicer "${campo}" não encontrado — disponíveis:`, JSON.stringify(await itensDoSlicer(page)));
       await page.keyboard.press('Escape');
