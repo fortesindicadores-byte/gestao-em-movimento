@@ -133,5 +133,30 @@ for(const [w,h] of [[1366,768],[1600,900],[1920,1080]]){
   const docs=await pg.evaluate(()=>{const ths=[...document.querySelectorAll('#body-ranking thead th')].map(h=>h.textContent);const i=ths.indexOf('Docs vencidos');return [i,...[...document.querySelectorAll('#body-ranking tbody tr')].slice(0,3).map(tr=>tr.children[i].textContent)];});
   t(docs[0]>0,'Ranking tem Docs vencidos: '+docs.join(' / '));
   await pg.context().close(); }
+// CIFV: toda placa com desconto na tabela (o total do título bate com a soma) e
+// o cabeçalho continua no topo quando a lista rola (Renan, 19/11/2026)
+{ const pg=await abre('gestao-a-vista/?u=admin',true,1600,900); await injeta(pg);
+  await pg.evaluate(()=>{ DATA.cifv.forEach((r,i)=>{ if(i%2){r.ad=0;r.dm=300+i;r.dl=i%3?200:0;r.dt=r.dm+r.dl;r.st=i%4===1?'Rejeitado':'Não Realizado';} }); });
+  await larg(pg,'cifv');
+  const k=await pg.evaluate(()=>{const o={};document.querySelectorAll('#hero-cifv .hero-delta').forEach(d=>{const s=d.querySelector('span');if(s)o[s.textContent]=d.querySelector('b').textContent;});
+    const q=DATA.cifv; return {o,nao:q.filter(r=>r.st==='Não Realizado').length,rej:q.filter(r=>r.st==='Rejeitado').length,dm:brl(q.reduce((a,r)=>a+(r.dm||0),0)),dl:brl(q.reduce((a,r)=>a+(r.dl||0),0)),dt:brl(q.reduce((a,r)=>a+(r.dt||0),0))};});
+  t(k.o['Não realizadas']==String(k.nao)&&k.o['Rejeitadas']==String(k.rej)&&k.o['Desconto Manutenção']===k.dm&&k.o['Desconto Lavagem']===k.dl&&k.o['Desconto Total']===k.dt,
+    'CIFV: contadores '+JSON.stringify(k.o));
+  if(S) await pg.screenshot({path:`${S}/cifv.png`});
+  const r=await pg.evaluate(async()=>{
+    const el=document.getElementById('body-cifv');
+    const esp=DATA.cifv.filter(r=>r.dt>0||r.ad===0); const soma=esp.reduce((a,r)=>a+r.dt,0);
+    const linhas=[...el.querySelectorAll('tbody tr')];
+    const tab=linhas.reduce((a,tr)=>a+(+tr.lastElementChild.textContent.replace(/[^\d,]/g,'').replace(',','.')||0),0);
+    let sc=el; while(sc&&!(sc.scrollHeight>sc.clientHeight+5&&/(auto|scroll)/.test(getComputedStyle(sc).overflowY))) sc=sc.parentElement;
+    const th=el.querySelector('thead th'); const t0=th.getBoundingClientRect().top;
+    sc&&(sc.scrollTop=sc.scrollHeight); await new Promise(r=>setTimeout(r,150));
+    const t1=th.getBoundingClientRect().top, topo=sc?sc.getBoundingClientRect().top:0;
+    return {n:linhas.length,esp:esp.length,soma:Math.round(soma),tab:Math.round(tab),rolou:!!sc,t0,t1,topo};
+  });
+  t(r.n===r.esp&&r.n>60,`CIFV: ${r.n} linhas na tabela de ${r.esp} com desconto`);
+  t(r.tab===r.soma,`CIFV: soma da tabela ${r.tab} = total ${r.soma}`);
+  t(r.rolou&&r.t1>=r.topo-1&&r.t1<=r.topo+40,`CIFV: cabeçalho preso ao rolar (topo ${Math.round(r.topo)}, th ${Math.round(r.t0)} → ${Math.round(r.t1)})`);
+  await pg.context().close(); }
 await b.close(); srv.close();
 console.log(`\n${ok} ok · ${fail} falha(s)`); process.exit(fail?1:0);

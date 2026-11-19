@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611191800">
+<meta name="build" content="202611191900">
 <title>Gestão à Vista</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -349,6 +349,12 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 .vw .cmp4 td,.vw .cmp4 thead th{padding:4px 2px;font-size:8.5px;}
 .vw .cmp4 td.num{white-space:normal;line-height:1.15;}
 .vw td.ctr,.vw th.ctr{text-align:center;}
+/* CABEÇALHO PRESO NA ROLAGEM (Renan, 19/11/2026: "quando desço a barra de
+   rolagem, perco os títulos"): o farol-core embrulha cada tabela num div com
+   overflow-x:auto, e o thead sticky ficava preso a esse div, que não rola na
+   vertical. No computador a tabela nunca rola de lado (o ajusteTabelas aperta),
+   então o div deixa de ser caixa de rolagem e o cabeçalho prende no .sec-body. */
+@media(min-width:861px){ .vw div[style*="overflow-x:auto"]{overflow:visible!important;} }
 .vw tbody tr:hover{background:var(--hover);}
 .vw tr.tot-row td{font-weight:800;color:var(--txt);border-top:1px solid var(--card-brd);background:var(--cabec);}
 .vw td.cr,.cr{color:var(--vermelho)!important;font-weight:700;}
@@ -550,7 +556,7 @@ body.prehub .s-volta .s-item{display:flex;}
 
 <!-- a conta da Carta de Custos (visão Custos = Carta do mês corrente, 13/10/2026) -->
 <script src="../assets/carta-calc.js?v=202610131800"></script>
-<script src="../farol-frota/farol-core.js?v=202611191800"></script>
+<script src="../farol-frota/farol-core.js?v=202611191900"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════════
    Gestão à Vista — o Farol no layout padrão do portal (Renan, 21/08/2026).
@@ -1634,6 +1640,6 @@ function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>GavApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202611191800"></script>
+<script src="../assets/build-check.js?v=202611191900"></script>
 </body>
 </html>

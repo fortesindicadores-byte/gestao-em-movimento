@@ -788,7 +788,7 @@ function renderStressV(el,cod){
   let h=heroAder(p,100)+projDeltas('Aderência por projeto',projs.map(pj=>[pj,stressVPct(rs.filter(r=>r.proj===pj))]));
   h+=`<div class="blk-t">Descontos Stress Test ${totDesc>0?`<span class="cr">· ${brl(totDesc)}</span>`:''}</div>`+
       wrapT('<table>'+th(cod?'Placa':'Unidade · Placa','Projeto','Saída','Saída na Filial','Viagens','Desconto R$')+'<tbody>'+
-        rs.slice().sort((a,b)=>b.desc-a.desc||String(a.placa).localeCompare(b.placa)).slice(0,60).map(r=>
+        rs.slice().sort((a,b)=>b.desc-a.desc||String(a.placa).localeCompare(b.placa)).map(r=>
           `<tr><td><b>${cod?escF(r.placa):escF(r.fil)+' · '+escF(r.placa)}</b></td><td>${escF(r.proj)}</td>
            <td class="${r.saida==='COM SAIDA'?'cg':'cr'}">${escF(r.saida==='COM SAIDA'?'Com saída':'Sem saída')}</td>
            <td>${escF(r.saidaF||'—')}</td><td class="num">${r.viagens==null?'—':r.viagens}</td>
@@ -808,7 +808,7 @@ function renderStressE(el,cod){
   const tot=sumA(all.map(r=>r.dt));
   h+=`<div class="blk-t">Descontos por Equipamento ${tot>0?`<span class="cr">· ${brl(tot)}</span>`:''}</div>`+
     wrapT('<table>'+th(cod?'Placa Ginfo':'Filial · Placa','Empresa','Desconto 1Q','Desconto 2Q','Desc. Total')+'<tbody>'+
-    desc.slice(0,60).map(r=>`<tr><td><b>${cod?escF(r.placa):escF(r.fil)+' · '+escF(r.placa)}</b></td><td>${escF(r.empresa)}</td>
+    desc.map(r=>`<tr><td><b>${cod?escF(r.placa):escF(r.fil)+' · '+escF(r.placa)}</b></td><td>${escF(r.empresa)}</td>
       <td class="num ${r.d1>0?'cr':'mut'}">${r.d1>0?brlFull(r.d1):'—'}</td>
       <td class="num ${r.d2>0?'cr':'mut'}">${r.d2>0?brlFull(r.d2):'—'}</td>
       <td class="num ${r.dt>0?'cr':'mut'}">${r.dt>0?brlFull(r.dt):'—'}</td></tr>`).join('')+'</tbody></table>');
@@ -829,10 +829,20 @@ function renderCIFV(el,cod){
   const projs=[...new Set(rs.map(r=>r.proj))].filter(Boolean).sort();
   const nc=rs.filter(r=>r.dt>0||r.ad===0).sort((a,b)=>b.dt-a.dt);
   const tot=sumA(rs.map(r=>r.dt));
-  let h=heroAder(p,100)+projDeltas('Aderência por projeto',projs.map(pj=>{const q=rs.filter(r=>r.proj===pj);return [pj,avgA(q.map(r=>r.ad))*100];}));
+  // ao lado da aderência por projeto: Não realizadas · Rejeitadas · os três
+  // descontos (Renan, 19/11/2026)
+  const nNao=rs.filter(r=>_n(r.st)==='NAO REALIZADO').length, nRej=rs.filter(r=>_n(r.st).startsWith('REJEITAD')).length;
+  const dM=sumA(rs.map(r=>r.dm)), dL=sumA(rs.map(r=>r.dl));
+  const cnt=(lb,v,txt)=>`<div class="hero-delta"><span>${lb}</span><b class="${v>0?'cr':'mut'}">${txt}</b></div>`;
+  const extra=cnt('Não realizadas',nNao,String(nNao))+cnt('Rejeitadas',nRej,String(nRej))+
+    cnt('Desconto Manutenção',dM,dM>0?brl(dM):'—')+cnt('Desconto Lavagem',dL,dL>0?brl(dL):'—')+cnt('Desconto Total',tot,tot>0?brl(tot):'—');
+  let pd=projDeltas('Aderência por projeto',projs.map(pj=>{const q=rs.filter(r=>r.proj===pj);return [pj,avgA(q.map(r=>r.ad))*100];}));
+  pd=pd?pd.replace(/<\/div>$/,`<div class="hero-delta" style="margin-left:18px"></div>${extra}</div>`)
+       :`<div class="hero-deltas" style="margin:2px 0 16px;flex-wrap:wrap">${extra}</div>`;
+  let h=heroAder(p,100)+pd;
   h+=`<div class="blk-t">Descontos ${tot>0?`<span class="cr">· ${brl(tot)}</span>`:''}</div>`+
       wrapT('<table>'+th(cod?'Veículo':'Filial · Veículo','Projeto','Status','Manutenção R$','Lavagem R$','Total R$')+'<tbody>'+
-        (nc.length?nc:rs.slice(0,20)).slice(0,60).map(r=>
+        (nc.length?nc:rs.slice(0,20)).map(r=>
         `<tr><td><b>${cod?escF(r.placa):escF(r.fil)+' · '+escF(r.placa)}</b></td><td>${escF(r.proj)}</td>
          <td class="${r.ad===1?'cg':'cr'}">${escF(r.st||'—')}</td>
          <td class="num ${r.dm>0?'cr':'mut'}">${r.dm>0?brlFull(r.dm):'—'}</td>
@@ -854,7 +864,7 @@ function renderPrev(el,cod){
   let h=heroAder(p,100)+projDeltas('Aderência por projeto',projs.map(pj=>{const q=rs.filter(r=>r.proj===pj);return [pj,avgA(q.map(r=>r.ad))*100];}));
   h+=`<div class="blk-t">Bottom | Placas</div>`+
       wrapT('<table>'+th(cod?'Placa':'Unidade · Placa','Projeto','Marca','Modelo','OS','Status','Dias','Km')+'<tbody>'+
-        worst.slice(0,60).map(r=>{
+        worst.map(r=>{
           const sc=_n(r.st)==='VENCIDA'?'cr':_n(r.st).startsWith('EM ATEN')?'cy':'cg';
           return `<tr><td><b>${cod?escF(r.placa):escF(r.fil)+' · '+escF(r.placa)}</b></td><td>${escF(r.proj)}</td><td>${escF(r.marca)}</td><td>${escF(r.modelo)}</td>
           <td>${escF(r.os||'—')}</td><td class="${sc}">${escF(r.st||'—')}</td>
@@ -874,7 +884,7 @@ function renderAlinh(el,cod){
   const worst=rs.slice().sort((a,b)=>(a.dias??999)-(b.dias??999));
   h+=`<div class="blk-t">Bottom | Placas</div>`+
     wrapT('<table>'+th(cod?'Placa':'Filial · Placa','Próx. Evento','Status','Dias')+'<tbody>'+
-    worst.slice(0,60).map(r=>`<tr><td><b>${cod?escF(r.placa):escF(r.fil)+' · '+escF(r.placa)}</b></td>
+    worst.map(r=>`<tr><td><b>${cod?escF(r.placa):escF(r.fil)+' · '+escF(r.placa)}</b></td>
       <td>${fmtD(r.ev)}</td><td class="${_n(r.st)==='VENCIDO'?'cr':'cg'}">${escF(r.st||'—')}</td>
       <td class="num ${clsDias(r.dias)}">${r.dias==null?'—':Math.round(r.dias)}</td></tr>`).join('')+'</tbody></table>');
   el.innerHTML=h;
@@ -900,7 +910,7 @@ function renderOS(el,cod){
   }
   h+=`<div class="blk-t">OSs em aberto</div>`+
     wrapT('<table>'+th('Nº OS','Tipo','Placa',cod?'Origem':'Filial','Segmento','Fornecedor','Mecânico','Observação','Dias em Aberto')+'<tbody>'+
-    worst.slice(0,80).map(r=>`<tr><td><b>${escF(r.os)}</b></td><td>${escF(r.tipo)}</td><td>${escF(r.placa||'—')}</td>
+    worst.map(r=>`<tr><td><b>${escF(r.os)}</b></td><td>${escF(r.tipo)}</td><td>${escF(r.placa||'—')}</td>
       <td>${escF(cod?r.ori:r.fil)}</td><td>${escF(r.seg||'—')}</td><td>${escF(r.forn||'—')}</td><td>${escF(r.mec||'—')}</td>
       <td style="white-space:normal;max-width:260px">${escF((r.obs||'—').slice(0,90))}</td>
       <td class="num ${dCls(r.dias)}">${r.dias==null?'—':(Math.round(r.dias*10)/10).toLocaleString('pt-BR')}</td></tr>`).join('')+'</tbody></table>');
@@ -926,7 +936,7 @@ function renderChk(el,cod){
   const ord=rs.slice().sort((a,b)=>(b.dt?b.dt.getTime():0)-(a.dt?a.dt.getTime():0));
   h+=`<div class="blk-t">Saídas com OS crítica</div>`+
     wrapT('<table>'+th('Data','Motorista',cod?'Placa':'Filial · Placa','Tipo Veículo','Projeto','Tipo Checklist','Status','Problema')+'<tbody>'+
-    ord.slice(0,80).map(r=>`<tr><td>${fmtD(r.dt)}</td><td>${escF(r.mot||'—')}</td><td><b>${cod?escF(r.placa):escF(r.fil)+' · '+escF(r.placa)}</b></td>
+    ord.map(r=>`<tr><td>${fmtD(r.dt)}</td><td>${escF(r.mot||'—')}</td><td><b>${cod?escF(r.placa):escF(r.fil)+' · '+escF(r.placa)}</b></td>
       <td>${escF(r.tv||'—')}</td><td>${escF(r.proj||'—')}</td><td>${escF(r.tipo||'—')}</td><td>${escF(r.st||'—')}</td>
       <td style="white-space:normal;max-width:280px">${escF(r.prob||'—')}</td></tr>`).join('')+'</tbody></table>');
   el.innerHTML=h;
@@ -1076,7 +1086,7 @@ function renderDisp(el,cod,soPlacas){
     const dCls=d=>d==null?'mut':d>7?'cr':d>3?'cy':'cg';
     h+=`<div class="blk-t" style="margin-top:14px">Placas indisponíveis <span class="cr">· ${indL.length}</span></div>`+
       wrapT('<table>'+th(cod?'Placa':'Unidade · Placa','Projeto','Grupo','Problema','Status','Parada em','Previsão','Dias parado')+'<tbody>'+
-      indL.slice(0,80).map(r=>`<tr><td><b>${cod?escF(r.placa):(escF(r.cod)+' · '+escF(r.placa))}</b></td>
+      indL.map(r=>`<tr><td><b>${cod?escF(r.placa):(escF(r.cod)+' · '+escF(r.placa))}</b></td>
         <td>${escF(r.proj||'—')}</td><td>${escF(r.grupo||'—')}</td>
         <td style="white-space:normal;max-width:280px">${escF((r.desc||'—').slice(0,110))}</td>
         <td>${escF(r.st||'—')}</td><td>${escF(r.dPar||'—')}</td><td>${escF(r.prev||'—')}</td>
@@ -1125,7 +1135,7 @@ async function renderPneusAfer(el,cod){
   const veic=P.veic.filter(v=>cod?v.cod===cod:true);
   const afer=veic.length?veic.filter(v=>(P.ult-v.dt.getTime())<=30*864e5).length/veic.length*100:null;
   const byPl={};tires.forEach(t=>{if(!t.placa)return;const c=byPl[t.placa];if(!c||new Date(t.dt)>new Date(c.dt))byPl[t.placa]={placa:t.placa,cod:t.cod,tier:t.tier,dt:t.dt};});
-  const placas=Object.values(byPl).map(p=>({...p,dias:Math.round((P.ult-new Date(p.dt).getTime())/864e5)})).sort((a,b)=>b.dias-a.dias).slice(0,50);
+  const placas=Object.values(byPl).map(p=>({...p,dias:Math.round((P.ult-new Date(p.dt).getTime())/864e5)})).sort((a,b)=>b.dias-a.dias);
   let h=`<div class="custos-hero">${_pnCard('Aferições (30d)',pct1(afer),clsPctMeta(afer,95,85),veic.length+' veículos')}</div>`;
   h+=wrapT('<table>'+_pnTh([cod?'Placa':'Unidade · Placa',['Última aferição'],['Dias'],['Situação']])+'<tbody>'+
     placas.map(p=>`<tr><td><b>${cod?escF(p.placa):escF(p.cod)+(p.tier?' '+escF(p.tier):'')+' · '+escF(p.placa)}</b></td>
@@ -1151,7 +1161,7 @@ async function renderPneusMM(el,cod){
     <span class="pill" style="background:${COR_ST.Regular};color:#111">${cnt.Regular} Regular · 3–6mm</span>
     <span class="pill" style="background:${COR_ST.Bom}">${cnt.Bom} Bom · &gt;6mm</span></div>`;
   const lista=tires.filter(t=>t.menor!=null&&t.st&&t.st!=='Bom')
-    .sort((a,b)=>{const pa=a.prev==null?1e9:a.prev,pb=b.prev==null?1e9:b.prev;return pa-pb||a.menor-b.menor;}).slice(0,80);
+    .sort((a,b)=>{const pa=a.prev==null?1e9:a.prev,pb=b.prev==null?1e9:b.prev;return pa-pb||a.menor-b.menor;});
   const ampC=v=>v==null?'':v>5?'cr':v>3?'cy':'cg';
   const prevTxt=t=>t.prev==null?'—':t.prev<=0?'Imediata':(t.prevEst?'≈ ':'')+_pnData(Date.now()+t.prev*864e5);
   const prevCor=d=>d==null?'':d<=30?'#FF6666':d<=60?'#F97316':d<=90?'#EAB308':'#3BB33B';
@@ -1180,7 +1190,7 @@ async function renderPneusCal(el,cod){
     <span class="pill" style="background:#3BB33B">≥ 98%</span>
     <span class="pill" style="background:#EAB308;color:#111">85% a 98%</span>
     <span class="pill" style="background:#FF6666">&lt; 85%</span></div>`;
-  const lista=comP.slice().sort((a,b)=>Math.abs(b.desv)-Math.abs(a.desv)).slice(0,80);
+  const lista=comP.slice().sort((a,b)=>Math.abs(b.desv)-Math.abs(a.desv));
   h+=wrapT('<table>'+_pnTh(['#','Nº de Fogo',cod?'Placa':'Unidade · Placa',['Posição'],['Marca'],['Vida'],['Pressão Ideal'],['Pressão Atual'],['Desvio'],['Status']])+'<tbody>'+
     lista.map((t,i)=>{const st=t.desv>10?'Alta Pressão':t.desv<-10?'Baixa Pressão':'OK';
       // pneu a pneu: dentro de ±10% verde, fora vermelho (Renan, 22/08/2026)
