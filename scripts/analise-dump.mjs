@@ -37,6 +37,10 @@ const SO_COMB = SO === 'comb';
 // modelo por placa e quinzena), o Resumo, o Km/L automático, a Dispersão e o DRE Frota,
 // para medir quanto a escolha das placas ativas mexeu no Km/L remunerado
 const SO_MIX = SO === 'mix';
+// DUMP_SO=manut: os lançamentos de manutenção por placa (aba Manutenção), o cadastro
+// das vans no FT (Van e ResumoVan, todas as quinzenas), o Km/L e os Ativos do Ginfo,
+// para montar o R$/km de manutenção das vans pela idade do veículo
+const SO_MANUT = SO === 'manut';
 const FT_MIX = ['Caminhao', 'Van', 'CaminhaoAS', 'Resumo', 'ResumoVan', 'ResumoAS', 'ParametrosGeraisRota', 'CombustivelRota', 'CombustivelListaAS'];
 const FT_COMB = ['CombustivelEmpurrada', 'CombustivelInsumos', 'CombustivelRota', 'CombustivelListaAS', 'Combustivel', 'CombustivelAS'];
 console.log('recorte:', SO || 'tudo');
@@ -69,7 +73,8 @@ async function emParalelo(itens, n, fn) {
 }
 
 // ── 1) Freightech ──
-const layout = SO_DRE ? [] : await tudo('ft_layout', 'canal,tabela,vigencia', SO_KM ? '&ano=eq.2026&mes=gte.8'
+const layout = SO_DRE ? [] : SO_MANUT ? await tudo('ft_layout', 'canal,tabela,vigencia', '&canal=eq.ROTA&tabela=in.(Van,ResumoVan)')
+  : false ? [] : await tudo('ft_layout', 'canal,tabela,vigencia', SO_KM ? '&ano=eq.2026&mes=gte.8'
   : SO_COMB ? `&ano=gte.2025&tabela=in.(${FT_COMB.join(',')})`
   : SO_MIX ? `&ano=eq.2026&canal=in.(ROTA,AS)&tabela=in.(${FT_MIX.join(',')})` : '');
 if (!SO_DRE)
@@ -88,7 +93,8 @@ for (const canal of canais) {
 }
 
 // ── 2) abas do Sheets no banco ──
-const SLUGS = SO_DRE ? ['dre_frota', 'dre_receita', 'dre_ebitda']
+const SLUGS = SO_MANUT ? ['manutencao', 'consumo_km_litro']
+  : SO_DRE ? ['dre_frota', 'dre_receita', 'dre_ebitda']
   : SO_KM ? ['dre_frota', 'dispersao_km', 'consumo_km_litro']
   : SO_COMB ? ['dre_frota']
   : SO_MIX ? ['dre_frota', 'dispersao_km', 'consumo_km_litro']
@@ -103,6 +109,10 @@ for (const slug of SLUGS) {
 
 // ── 3) tabelas do portal ──
 if (SO_DRE) { console.log('só o DRE: Freightech e tabelas do portal ficaram fora'); process.exit(0); }
+if (SO_MANUT) {
+  try { grava('tb-ginfo-ativos', await tudo('ginfo_snapshot', 'chave', '&chave=eq.ativos')); } catch (e) { console.log(`ativos: falhou (${e.message})`); }
+  console.log('recorte manut: o resto ficou fora'); process.exit(0);
+}
 if (SO_MIX) {
   for (const [t, o] of [['dispersao_km', 'vigencia,unidade,projeto'], ['balanco_massa', 'vigencia,unidade,projeto,conta'], ['ca_dre_frota', 'vigencia,linha'],
     ['ca_consumo_km_litro', 'vigencia,linha'], ['consumo_auto_base', 'slug']]) {
