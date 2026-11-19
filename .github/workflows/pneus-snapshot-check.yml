@@ -1,0 +1,25 @@
+name: Pneus Snapshot Check
+
+# O que a tabela snapshot tem de cada unidade e o que o Prolog responde
+# agora no mês corrente para a unidade pedida. Só leitura.
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "branch_id do Prolog (24 = BLC)"
+        default: "24"
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          PROLOG_TOKEN: ${{ secrets.PROLOG_TOKEN }}
+          PN_BRANCH: ${{ github.event.inputs.branch }}
+        run: node scripts/pneus-snapshot-check.mjs
