@@ -142,7 +142,16 @@ for (const c of CLUSTERS) {
 // trata o modo dos pneus (todos da casca → resumo, sem vigência)
 for (const p of out) if (p.href.startsWith('pneus/painel.html')) { p.modo = 'resumo'; p.vig = ''; }
 
-const ORDEM = ['Visão Geral', 'Financeiro', 'Operacional', 'Combustível', 'Pneus', 'Processos', 'Resultados', 'Planejamento Estratégico', 'Administração'];
+// a ordem dos grupos é a do hub (CLUSTERS); Combustível e Pneus entram logo depois
+// do cluster onde está o card deles (Operacional), como no PC
+const ORDEM = [];
+for (const c of CLUSTERS) {
+  ORDEM.push(c.nome);
+  for (const k of c.cards) {
+    if (k.h === 'combustivel/') ORDEM.push('Combustível');
+    if (k.h === 'pneus/') ORDEM.push('Pneus');
+  }
+}
 out.sort((a, b) => ORDEM.indexOf(a.cluster) - ORDEM.indexOf(b.cluster));
 
 const js = '// GERADO por scripts/app-catalogo.mjs a partir do CLUSTERS do hub — não editar à mão.\n' +

@@ -262,7 +262,13 @@ function renderPaineis(q) {
   var ordem = ORDEM.filter(function (c) { return todos[c]; });
   Object.keys(todos).forEach(function (c) { if (ordem.indexOf(c) < 0) ordem.push(c); });
   $('grupos').innerHTML = '<span class="chip' + (!GRUPO ? ' on' : '') + '" onclick="escolheGrupo(\'\')">Todos</span>' + ordem.map(function (c) { return '<span class="chip' + (GRUPO === c ? ' on' : '') + '" onclick="escolheGrupo(\'' + esc(c) + '\')">' + esc(c) + '</span>'; }).join('');
-  ordem.forEach(function (c) { if (!grupos[c]) return; h += '<div class="sec" style="margin-top:14px">' + esc(c) + '<span class="cnt">' + grupos[c].length + '</span></div>' + grupos[c].map(function (p) { return liHtml(p); }).join(''); });
+  /* Gerenciar acessos no topo do grupo Administração, como no hub (só admin) */
+  var acOk = typeof EH_ADMIN !== 'undefined' && EH_ADMIN && typeof abreAcessos === 'function' && todos['Administração'] &&
+    (!GRUPO || q || GRUPO === 'Administração') && (!q || normB('gerenciar acessos usuarios senha administracao').indexOf(q) >= 0);
+  if (acOk && !grupos['Administração']) grupos['Administração'] = [];
+  var acLi = '<div class="li" id="liGerAcessos" onclick="abreAcessos()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><div class="tx"><b>Gerenciar acessos</b><span>Aprovar, bloquear, senha provisória e unidades</span></div>' +
+    '<span class="seta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></span></div>';
+  ordem.forEach(function (c) { if (!grupos[c]) return; var ac = acOk && c === 'Administração'; h += '<div class="sec" style="margin-top:14px">' + esc(c) + '<span class="cnt">' + (grupos[c].length + (ac ? 1 : 0)) + '</span></div>' + (ac ? acLi : '') + grupos[c].map(function (p) { return liHtml(p); }).join(''); });
   $('lista').innerHTML = h || '<div class="vazio">Nenhum painel com esse nome.</div>';
 }
 function renderFav() {
