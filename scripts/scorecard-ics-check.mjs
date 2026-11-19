@@ -32,6 +32,7 @@ ctx.supabase = {
         select(s) { st.sel = s; return api; },
         eq(c, v) { st.qs.push(`${c}=eq.${encodeURIComponent(v)}`); return api; },
         in(c, arr) { st.qs.push(`${c}=in.(${arr.map(x => '"' + x + '"').join(',')})`); return api; },
+        maybeSingle() { return { then: (res, rej) => run().then(o => ({ data: o.data ? (o.data[0] || null) : null, error: o.error })).then(res, rej) }; },
         then(res, rej) { return run().then(res, rej); },
       };
       return api;
@@ -104,5 +105,7 @@ linhas.filter(l => l.vig === ult).sort((a, b) => (b.pont ?? -1) - (a.pont ?? -1)
   const faltam = IC_ORDEM.filter(k => l.f[k] == null);
   console.log(' ', l.unidade.padEnd(20), l.pont == null ? '—' : l.pont.toFixed(1).padStart(6),
               '· disp', l.f.disp == null ? '—' : l.f.disp.toFixed(2) + '%',
+              '· pneus', l.f.pneus == null ? '—' : l.f.pneus.toFixed(1) + '%',
+              '· stVeic', l.f.stVeic == null ? '—' : l.f.stVeic.toFixed(1) + '%',
               faltam.length ? '· sem: ' + faltam.join(',') : '');
 });

@@ -159,6 +159,24 @@
       ((E[esc][r.indicador]=E[esc][r.indicador]||{})[vig]=Array.isArray(r.data)?r.data:[]); };
     (mes.data||[]).forEach(r=>put('mes',r));
     (ano.data||[]).forEach(r=>put('ano',r));
+    // STRESS TEST DE VEÍCULOS NA PRÉVIA (Renan, 19/11/2026: "Na prévia, pode
+    // avaliar o stress test atual"). O robô do Elite filtra a 2ª quinzena, que é
+    // a que vale no fechamento, e no mês corrente ela vem vazia. O robô do Farol
+    // coleta todo dia a tela padrão do Ginfo (mês atual, 1ª quinzena já avaliada:
+    // Saída, Viagens, Desconto por placa). Se o Elite não tem linhas do mês dessa
+    // foto, a foto entra no lugar; quando o mês fechar, o Elite grava o dele.
+    try{
+      const g=await sb.from('ginfo_snapshot').select('data').eq('chave','stress-test-frota').maybeSingle();
+      const rows=(g.data&&g.data.data)||[];
+      const per=rows[0]&&rows[0]['Período'];
+      const d=typeof per==='number'?new Date(Math.round((per-25569)*864e5)):new Date(per);
+      if(rows.length&&!isNaN(d)){
+        const vig=d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0');
+        const m=(E.mes['stress-test-frota']=E.mes['stress-test-frota']||{});
+        const reais=(m[vig]||[]).filter(r=>r&&(r['Placa Freightech']||r['Filial Freightech']));
+        if(reais.length<10) m[vig]=rows;
+      }
+    }catch(e){ console.warn('Gerot base — prévia do Stress Test (ginfo_snapshot) falhou', e); }
     return E;
   }
   const vigsDe = ind => E&&E.mes[ind] ? Object.keys(E.mes[ind]) : [];
