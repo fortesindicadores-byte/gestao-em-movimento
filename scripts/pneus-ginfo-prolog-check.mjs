@@ -85,6 +85,46 @@ for (const b of bids) {
 }
 console.log('\nProlog: branches', bids.length, '· placas com inspeção', Object.keys(INS).length, '· veículos ativos', Object.values(VEI).reduce((a, s) => a + s.size, 0));
 
+// ── 2b. diagnóstico por branch: quando cada foto foi gravada, de quando a quando
+// vão as inspeções e quantas há por mês; e a filial do Ginfo de cada branch ──
+console.log('\n── Prolog por branch (filial do Ginfo pela maioria das placas) ──');
+const filPorPl = {}; G.forEach(r => { filPorPl[r.pl] = r.fil; });
+const INSB = {}; // branch → [t] (uma por inspeção)
+for (const b of bids) {
+  let j = null;
+  for (let a = 0; a < 5 && !j; a++) { try { j = await get(`snapshot?branch_id=eq.${b}&endpoint=eq.inspections&select=data`); } catch (e) { await new Promise(r => setTimeout(r, 1500)); } }
+  const vis = new Set(); INSB[b] = [];
+  ((j && j[0] && j[0].data) || []).forEach(i => { if (vis.has(i.inspecaoId)) return; vis.add(i.inspecaoId); const t = new Date(i.dataInspecao).getTime(); if (isFinite(t)) INSB[b].push({ t, pl: merc(i.placa) }); });
+}
+for (const b of bids) {
+  const up = meta.filter(m => m.branch_id === b).map(m => m.endpoint + ' ' + String(m.updated_at).slice(0, 16)).join(' · ');
+  const xs = INSB[b] || [];
+  const ts = xs.map(x => x.t);
+  const porMes = conta(xs, x => { const d = new Date(x.t - 3 * 36e5); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0'); });
+  const fils = conta([...(VEI[b] || [])].filter(p => filPorPl[p]), p => filPorPl[p]);
+  const filTop = Object.entries(fils).sort((a, c) => c[1] - a[1]).slice(0, 2).map(([f, n]) => f + ' ' + n).join(', ');
+  console.log(`  branch ${b} · ${filTop || 'sem placa no Ginfo'} · veículos ${(VEI[b] || new Set()).size} · inspeções ${xs.length}` +
+    (ts.length ? ` · de ${new Date(Math.min(...ts)).toISOString().slice(0, 10)} a ${new Date(Math.max(...ts)).toISOString().slice(0, 10)}` : '') +
+    `\n     gravado: ${up}\n     por mês: ${Object.keys(porMes).sort().map(k => k.slice(5) + ':' + porMes[k]).join(' ')}`);
+}
+// filiais do Ginfo: placas do Ginfo achadas em qual branch do Prolog
+console.log('\n── filial do Ginfo → branch do Prolog das placas (último mês) ──');
+const ultVig = Object.keys(conta(G, r => r.vig)).sort().slice(-1)[0];
+for (const fil of Object.keys(conta(G, r => r.fil)).sort()) {
+  const pls = [...new Set(G.filter(r => r.fil === fil && r.vig === ultVig).map(r => r.pl))];
+  if (!pls.length) continue;
+  const br = conta(pls, p => PLB[p] != null ? 'b' + PLB[p] : (INS[p] ? 'só inspeção' : 'fora do Prolog'));
+  const nunca = pls.filter(p => !INS[p]).length;
+  console.log(`  ${fil.padEnd(22)} placas ${pls.length} · ${JSON.stringify(br)} · sem inspeção nenhuma em 2026: ${nunca}`);
+}
+// quantas inspeções a placa tem por mês nas filiais que divergem
+for (const fil of ['CUIABA', 'CDD GUARULHOS']) {
+  const pls = [...new Set(G.filter(r => r.fil === fil).map(r => r.pl))];
+  const m = conta(pls.flatMap(p => (INS[p] || []).map(x => x)), x => { const d = new Date(x.t - 3 * 36e5); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0'); });
+  console.log(`  ${fil}: medidas no Prolog por mês (todas as placas da filial) ${Object.keys(m).sort().map(k => k.slice(5) + ':' + m[k]).join(' ')}`);
+  console.log(`  ${fil}: formato das placas do Ginfo ${JSON.stringify(conta(pls, p => /^[A-Z]{3}\d[A-Z]\d{2}$/.test(p) ? 'mercosul' : /^[A-Z]{3}\d{4}$/.test(p) ? 'antiga' : 'outro:' + p.replace(/[A-Z]/g, 'L').replace(/\d/g, 'N')))}`);
+}
+
 // ── 3. comparação placa a placa ──
 // réguas candidatas: A = inspeção no mês calendário; B = última inspeção até o fim
 // do mês com ≤ 30 dias; C = inspeção nos 30 dias antes do fim do mês ou do dia do
