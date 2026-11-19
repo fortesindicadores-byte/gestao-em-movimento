@@ -495,13 +495,16 @@ async function rolarPopupSlicer(page) {
         if (!box) return null;
         const rol = box.scrollHeight > box.clientHeight + 4 ? box
           : [...box.querySelectorAll('*')].find(e => e instanceof HTMLElement && e.scrollHeight > e.clientHeight + 4 && getComputedStyle(e).overflowY !== 'visible') || null;
-        let mov = false;
-        if (rol) { const a = rol.scrollTop; rol.scrollTop = a + Math.max(60, rol.clientHeight * 0.6); rol.dispatchEvent(new Event('scroll', { bubbles: true })); mov = rol.scrollTop !== a; }
+        let mov = false, dbg = '';
+        if (rol) { const a = rol.scrollTop; rol.scrollTop = a + Math.max(60, rol.clientHeight * 0.6); rol.dispatchEvent(new Event('scroll', { bubbles: true })); mov = rol.scrollTop !== a;
+          dbg = `${String(rol.className).slice(0, 40)} top ${a}→${rol.scrollTop} h ${rol.clientHeight}/${rol.scrollHeight}`; }
         const r = box.getBoundingClientRect();
-        return { mov, cx: r.x + r.width / 2, cy: r.y + Math.min(r.height / 2, 120) };
+        const ult = [...box.querySelectorAll('.slicerText, .slicerItemContainer')].map(e => (e.textContent || '').trim()).filter(Boolean).slice(-4);
+        return { mov, dbg: `${String(box.className).slice(0, 40)} · ${dbg || 'sem rolável'} · últimos ${JSON.stringify(ult)}`, cx: r.x + r.width / 2, cy: r.y + Math.min(r.height / 2, 120) };
       });
     } catch (e) { info = null; }
     if (!info) continue;
+    if (process.env.ELITE_DEBUG_ROLA === '1') log('rolagem:', info.dbg);
     if (info.mov) { andou = true; continue; }
     // roda do mouse: coordenadas do frame + as do popup dentro dele
     try {

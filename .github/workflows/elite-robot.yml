@@ -83,6 +83,7 @@ jobs:
           ELITE_ESCOPOS:            ${{ github.event.inputs.escopos }}
           ELITE_FORCAR:             ${{ github.event.inputs.forcar == 'true' && '1' || '' }}
           ELITE_REFAZER:            ${{ github.event.inputs.refazer == 'true' && '1' || '' }}
+          ELITE_DEBUG_ROLA:         '1'
           GINFO_USER:               ${{ secrets.GINFO_USER }}
           GINFO_PASS:               ${{ secrets.GINFO_PASS }}
           GINFO_URL:                ${{ secrets.GINFO_URL }}
