@@ -1,0 +1,19 @@
+name: Pneus Ginfo Prolog Check
+
+# Aderência de aferição do Ginfo (aba Pneus) × inspeções do Prolog, placa a
+# placa e mês a mês, e o Stress Test/Pneus que o robô do Elite gravou. Só leitura.
+on:
+  workflow_dispatch:
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Conferir
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+        run: node scripts/pneus-ginfo-prolog-check.mjs
