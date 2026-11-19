@@ -2053,6 +2053,10 @@ Pedido dele: *"Você já sabe que somos remunerados pelo Freightech. Esse sistem
 **Relatórios da quinzena (anotar cada um: o que é, chave, premissas × resultado, quem puxa quem):**
 - _(aguardando o 1º relatório)_
 
+## R$/km de manutenção das vans por ano de vida (Renan, 19/11/2026, pedido do Sandro: *"considerar a idade do veículo… ano 1, 2, 3, 4 e 5"*)
+
+A planilha "Análise R$/km Vans" chamava de Ano 1 o custo de 2022, Ano 2 o de 2023 e assim por diante, com vans de várias idades em cada ano. Refeito pela idade: **idade = meses desde a `dataEntrada` da van na tabela `Van` do Freightech** (Ano 1 = 1º ao 12º mês; RTD5A46 com a data das outras Daily do lote, porque o FT a reinicia em nov/24; o campo `anoVeiculo` do FT fica 1 em 2022 e 2023 inteiros e não serve). **Custo por placa só existe a partir de 2026** (`sh_manutencao` começa em 2026); de 2022 a 2025 o custo do mês da planilha é dividido pelo km do mês e cada km vai para o ano de vida da van que rodou; em 2026 vale o custo da própria placa. O pago é o `manutencaoReaisKm` mensal do FT (por unidade, igual em toda idade; o da tabela `Van` por placa vem zerado). Recorte novo do Analise Dump: **`so=manut`** (`sh_manutencao`, `sh_consumo_km_litro`, `Van`/`ResumoVan` do FT, Ativos). PDF de 4 slides e scripts só no scratchpad (valores reais), mandado pelo chat. Para fechar a curva placa a placa e abrir por marca, falta o custo de manutenção por placa de 2022 a 2025 do ERP.
+
 ## Automação do Combustível — contextualização em andamento (13/08/2026)
 
 O Renan quer automatizar o combustível **em partes**, ele contextualizando aba a aba (mesmo método do robô Ginfo). ~~Nada implementado — aguardar ele mandar fazer.~~ **FEITO EM 27/10/2026 — ver "CONSUMO AUTOMÁTICO" abaixo.**
