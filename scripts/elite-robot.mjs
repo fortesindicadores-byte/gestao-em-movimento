@@ -476,17 +476,41 @@ async function itensDoSlicer(page) {
 // lista rolar (o log mostrava só Jan-26 a Jun-26). Rola o corpo do popup
 // aberto (.slicerBody / listbox com barra) e diz se algo andou.
 async function rolarPopupSlicer(page) {
+  // o mesmo desenho do robô do Farol (ginfo-robot.mjs, 10/11/2026): acha o
+  // popup aberto (.slicer-dropdown-popup visível com itens, ou o ancestral
+  // rolável de "Selecionar tudo"), rola o elemento que tem a barra e, se o
+  // scrollTop não anda, gira a roda do mouse sobre o popup
   let andou = false;
   for (const fr of page.frames()) {
+    let info = null;
     try {
-      const r = await fr.evaluate(() => {
-        const cand = [...document.querySelectorAll('.slicer-dropdown-popup .slicerBody, .slicerBody, [role="listbox"]')]
-          .filter(e => e.getClientRects().length && e.scrollHeight > e.clientHeight + 4);
+      info = await fr.evaluate(() => {
+        const vis = el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
+        const comItens = e => e.querySelector('.slicerItemContainer, .slicerText, [role="option"]') || /Selecionar tudo|Select all/i.test(e.textContent || '');
+        let box = [...document.querySelectorAll('.slicer-dropdown-popup')].filter(e => vis(e) && comItens(e) && getComputedStyle(e).opacity !== '0')[0] || null;
+        if (!box) {
+          const sel = [...document.querySelectorAll('span, div, label')].find(e => vis(e) && /^(Selecionar tudo|Select all)$/i.test((e.textContent || '').trim()));
+          if (sel) { let p = sel.parentElement; for (let i = 0; p && i < 6; i++, p = p.parentElement) { if (p.scrollHeight > p.clientHeight + 4 && p.getBoundingClientRect().height <= 520) { box = p; break; } } }
+        }
+        if (!box) return null;
+        const rol = box.scrollHeight > box.clientHeight + 4 ? box
+          : [...box.querySelectorAll('*')].find(e => e instanceof HTMLElement && e.scrollHeight > e.clientHeight + 4 && getComputedStyle(e).overflowY !== 'visible') || null;
         let mov = false;
-        cand.forEach(e => { const a = e.scrollTop; e.scrollTop = a + Math.max(60, e.clientHeight * 0.8); if (e.scrollTop !== a) mov = true; });
-        return mov;
+        if (rol) { const a = rol.scrollTop; rol.scrollTop = a + Math.max(60, rol.clientHeight * 0.6); rol.dispatchEvent(new Event('scroll', { bubbles: true })); mov = rol.scrollTop !== a; }
+        const r = box.getBoundingClientRect();
+        return { mov, cx: r.x + r.width / 2, cy: r.y + Math.min(r.height / 2, 120) };
       });
-      if (r) andou = true;
+    } catch (e) { info = null; }
+    if (!info) continue;
+    if (info.mov) { andou = true; continue; }
+    // roda do mouse: coordenadas do frame + as do popup dentro dele
+    try {
+      let ox = 0, oy = 0;
+      const fe = fr === page.mainFrame() ? null : await fr.frameElement().catch(() => null);
+      if (fe) { const b = await fe.boundingBox(); if (b) { ox = b.x; oy = b.y; } }
+      await page.mouse.move(ox + info.cx, oy + info.cy);
+      await page.mouse.wheel(0, 160);
+      andou = true;
     } catch (e) {}
   }
   return andou;
