@@ -83,7 +83,7 @@ const R = await pg.evaluate(({ VIG, UNI }) => {
     amostraOS: (LIDO.ginfo['os-em-aberto'] || []).slice(0, 3).map(r => [r['Data'], typeof r['Data']]), amostraPrev: (LIDO.ginfo['preventivas'] || []).slice(0, 2),
     ginfo: Object.fromEntries(Object.entries(CTX.ginfo).map(([u, g]) => [u, `prev venc ${g.prevVencidas.length} · OS ab ${g.osAbertas.length} · alin venc ${g.alinVencidos.length}`])),
     dispInfo: CTX.dispInfo || null,
-    dispVig: Object.entries(CTX.disp || {}).filter(([k]) => k.endsWith('|' + vig)).map(([k, a]) => `${k.padEnd(28)} rem ${Math.round(a.rem).toLocaleString('pt-BR')}${a.rem0 != null ? ' (bruto ' + Math.round(a.rem0).toLocaleString('pt-BR') + ' + balanço ' + Math.round(a.bmKm).toLocaleString('pt-BR') + ' km · R$ ' + Math.round(a.bmValor).toLocaleString('pt-BR') + ')' : ''} · real ${Math.round(a.real).toLocaleString('pt-BR')} · ${a.rem ? ((a.real / a.rem - 1) * 100).toFixed(1) + '%' : '—'}${a.fonte ? ' · ' + a.fonte : ''}`).sort(),
+    dispVig: Object.entries(CTX.disp || {}).filter(([k]) => k.endsWith('|' + vig) || (UNI && k.startsWith(UNI + '|') && k.slice(-7).slice(0,4) === vig.slice(0,4))).map(([k, a]) => `${k.padEnd(28)} rem ${Math.round(a.rem).toLocaleString('pt-BR')}${a.rem0 != null ? ' (bruto ' + Math.round(a.rem0).toLocaleString('pt-BR') + ' + balanço ' + Math.round(a.bmKm).toLocaleString('pt-BR') + ' km · R$ ' + Math.round(a.bmValor).toLocaleString('pt-BR') + ')' : ''} · real ${Math.round(a.real).toLocaleString('pt-BR')} · ${a.rem ? ((a.real / a.rem - 1) * 100).toFixed(1) + '%' : '—'}${a.fonte ? ' · ' + a.fonte : ''}`).sort(),
     prologU: Object.fromEntries(Object.entries(CTX.prolog).map(([u, p]) => [u, `inst ${p.inst} · pressão fora ${p.presNOK} · ≤3mm ${p.ate3} · 3–4mm ${p.janela} · amp>5 ${p.amp}`]))
   };
 }, { VIG, UNI });
@@ -126,5 +126,5 @@ console.log(`   preencheria ${P.upd} linha(s) vazia(s) · criaria ${P.ins} linha
 console.log(`   fora do automático: ${P.fora.join(', ') || '—'}`);
 Object.entries(P.por).sort().forEach(([u, x]) => {
   console.log(`   ${u.padEnd(10)} preenche ${x.upd || 0} · cria ${x.ins || 0}${x.pulados.length ? ' · PULADOS: ' + x.pulados.join(' | ') : ''}${x.semAcao.length ? ' · sem ação: ' + x.semAcao.join(' | ') : ''}`); });
-P.amostra.forEach(a => console.log(`\n   ◆ ${a.id} · dono ${a.resp}\n     causa: ${String(a.causa || '').split('\n').join(' / ').slice(0, 220)}\n     ação: ${a.acao.slice(0, 200)}`));
+P.amostra.forEach(a => console.log(`\n   ◆ ${a.id} · dono ${a.resp}\n     causa: ${String(a.causa || '').split('\n').join(' / ').slice(0, 220)}\n     ação: ${String(a.acao || '').slice(0, 200)}`));
 await nav.close(); srv.close();
