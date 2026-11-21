@@ -1,0 +1,31 @@
+name: Arvores ROIC Check
+
+# Só leitura. Abre o painel Árvores com os dados reais e imprime o ROIC por mês,
+# operação e unidade, pela mesma conta da página.
+on:
+  workflow_dispatch:
+    inputs:
+      ano:
+        description: 'ano (AAAA)'
+        required: false
+        default: '2026'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Rodar
+        run: node scripts/arvores-roic-check.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          ROIC_ANO: ${{ github.event.inputs.ano }}
