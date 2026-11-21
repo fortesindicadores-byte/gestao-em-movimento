@@ -123,6 +123,14 @@ for (const [w, h, tema] of [[1366, 768, 'dark'], [1920, 1080, 'light']]) {
   await pg.click('#arv-custo .arv-zoom [data-z="0"]'); await pg.waitForTimeout(150);
   await clica('p:C'); await pg.waitForTimeout(300); const f1 = await vista(); await clica('p:C'); await pg.waitForTimeout(300);
   af('sem zoom (Ajustar), abrir volta a caber inteira', Math.abs(f1.s - fit0.s) > 1e-6 || f1.s <= fit0.s + 1e-6, JSON.stringify({ fit0, f1 }));
+  // Abrir tudo e Recolher, no canto do zoom
+  await pg.click('#arv-custo .arv-zoom [data-x="tudo"]'); await espera(); await pg.waitForTimeout(500); N = await nos();
+  af('Abrir tudo abre todos os nós', N['c:COMB|rk|kml|plab'] && N['c:MANV|rk|ind|resp|sla'] && Object.keys(N).length > 60, Object.keys(N).length);
+  af('Abrir tudo cabe a árvore inteira na tela', await pg.evaluate(() => { const a = document.getElementById('arv-custo').getBoundingClientRect(); return [...document.querySelectorAll('#arv-custo .tn')].every(n => { const r = n.getBoundingClientRect(); return r.top >= a.top - 1 && r.bottom <= a.bottom + 1; }); }));
+  await pg.click('#arv-custo .arv-zoom [data-x="nada"]'); await pg.waitForTimeout(500); N = await nos();
+  af('Recolher volta ao custo total com os pacotes', Object.keys(N).length === 5 && N['p:C'], JSON.stringify(Object.keys(N)));
+  await clica('p:C'); await pg.waitForTimeout(300);
+  af('o que está aberto não fica guardado no navegador', await pg.evaluate(() => localStorage.getItem('arvores_ct_abertos') === null));
   // combustível aberto até o fim
   await abre(['p:C', 'c:COMB', 'c:COMB|rk', 'c:COMB|rk|rsl', 'c:COMB|rk|kml', 'c:COMB|km']); await espera(); await pg.waitForTimeout(400); N = await nos();
   if (um) console.log(JSON.stringify(Object.fromEntries(Object.entries(N).filter(([k]) => /^c:COMB/.test(k)).map(([k, x]) => [k, [x.v, x.g.join(' '), x.i]]))));

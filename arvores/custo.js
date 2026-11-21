@@ -25,8 +25,11 @@
 /* ── estado ── */
 let CT_CMP=(()=>{ try{ const v=localStorage.getItem('arvores_ct_cmp'); return v==='orc'||v==='ft'?v:'rem'; }catch(e){ return 'rem'; } })();
 let CT_ROIC=(()=>{ try{ return localStorage.getItem('arvores_ct_roic')==='1'; }catch(e){ return false; } })();
-const CT_AB=(()=>{ try{ const a=JSON.parse(localStorage.getItem('arvores_ct_abertos')||'null'); return new Set(Array.isArray(a)?a:['tot']); }catch(e){ return new Set(['tot']); } })();
-const ctGuardaAb=()=>{ try{ localStorage.setItem('arvores_ct_abertos',JSON.stringify([...CT_AB])); }catch(e){} };
+// o que está aberto vale só enquanto a página está aberta: entrar de novo começa do custo total com os pacotes
+// (Renan, 21/11/2026: "Deve sempre voltar do início, ou ter um expandir e recolher tudo")
+const CT_AB=new Set(['tot']); let CT_TUDO=false;
+try{ localStorage.removeItem('arvores_ct_abertos'); }catch(e){}
+const ctGuardaAb=()=>{};
 const CT={cons:null,rsl:null,ft:null,ger:null,carta:null,anom:null,ce:null,bm:null,api:{}};
 const CT_P={}, CT_ERR={};
 let CT_BM={}, CT_BM_INI=null, CT_CTX=null, _ctRedes=null;
@@ -232,7 +235,7 @@ function ctGapCusto(ref,real,n,R){ if(ref==null) return {ref:null,real:real/n,bo
 function ctNo(o,kidsFn){
   o.ab=o.ab||(kidsFn||o.abv?'x':null); o.kl=((o.kl||'')+' ctx').trim();
   const tab=o.abv?`<span class="tn-tab" title="Abrir por unidade, projeto e mês">⊞</span>`:'';
-  if(kidsFn){ const on=CT_AB.has(o.id); o.temKids=true; o.tag=`<span class="tn-x">${on?'−':'+'}</span>`+tab; if(on){ o.kids=kidsFn().filter(Boolean); if(!o.kids.length) delete o.kids; } }
+  if(kidsFn){ if(CT_TUDO) CT_AB.add(o.id); const on=CT_AB.has(o.id); o.temKids=true; o.tag=`<span class="tn-x">${on?'−':'+'}</span>`+tab; if(on){ o.kids=kidsFn().filter(Boolean); if(!o.kids.length) delete o.kids; } }
   else o.tag=tab;
   return o; }
 
@@ -492,7 +495,10 @@ async function renderCusto(){
   arvore(area,top,(no,alvo)=>{
     if(alvo&&alvo.closest&&alvo.closest('.tn-tab')&&no.abv){ ctAbre(no); return; }
     if(no.temKids){ if(CT_AB.has(no.id)) [...CT_AB].forEach(k=>{ if(k===no.id||k.startsWith(no.id+'|')) CT_AB.delete(k); }); else CT_AB.add(no.id); ctGuardaAb(); renderCusto(); return; }
-    if(no.abv) ctAbre(no); },{manter:true});
+    if(no.abv) ctAbre(no); },{manter:true,extra:[['tudo','Abrir tudo','Abrir todos os nós da árvore'],['nada','Recolher','Voltar ao custo total com os pacotes']],
+    acao:async k=>{ area._mexeu=false;
+      if(k==='tudo'){ CT_TUDO=true; try{ await renderCusto(); } finally{ CT_TUDO=false; } }
+      else { CT_AB.clear(); CT_AB.add('tot'); renderCusto(); } }});
   if(AB_KIND==='custo'&&AB_N&&$('ab-ov').classList.contains('on')&&CT_AB_NO) ctAbre(CT_AB_NO);
 }
 

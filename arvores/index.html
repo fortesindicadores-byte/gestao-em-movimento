@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611211600">
+<meta name="build" content="202611211700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -377,6 +377,7 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .arv-zoom button{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;color:var(--txt);background:transparent;border:0;
   min-width:26px;height:26px;padding:0 9px;border-radius:999px;cursor:pointer;}
 .arv-zoom button:hover{background:var(--hover);}
+.arv-zsep{width:1px;height:14px;background:var(--card-brd);margin:0 2px;}
 .arv-zp{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:var(--txt);width:52px;height:24px;text-align:center;
   background:transparent;border:1px solid transparent;border-radius:999px;outline:none;padding:0 4px;}
 .arv-zp:hover{border-color:var(--card-brd);} .arv-zp:focus{border-color:var(--laranja);background:var(--hover);}
@@ -830,7 +831,8 @@ function arvore(area,raiz,clica,opt){
   let folha=0; const nos=[], folhas=[];
   (function lay(n,d){ n.d=d; nos.push(n); if(n.kids&&n.kids.length){ n.kids.forEach(k=>lay(k,d+1)); } else { n.f=folha++; folhas.push(n); } })(raiz,0);
   area.innerHTML='<div class="tw"><svg class="tsvg"></svg></div>'
-    +'<div class="arv-zoom"><button type="button" data-z="-" title="Diminuir">−</button><input class="arv-zp" type="text" inputmode="numeric" value="100%" title="Digite o zoom em % e aperte Enter" aria-label="Zoom em %" autocomplete="off"><button type="button" data-z="+" title="Aumentar">+</button><button type="button" data-z="0" title="Ver a árvore inteira">Ajustar</button></div>';
+    +'<div class="arv-zoom"><button type="button" data-z="-" title="Diminuir">−</button><input class="arv-zp" type="text" inputmode="numeric" value="100%" title="Digite o zoom em % e aperte Enter" aria-label="Zoom em %" autocomplete="off"><button type="button" data-z="+" title="Aumentar">+</button><button type="button" data-z="0" title="Ver a árvore inteira">Ajustar</button>'
+    +(opt&&opt.extra?opt.extra.map(([k,r,d])=>`<span class="arv-zsep"></span><button type="button" data-x="${k}" title="${esc(d||r)}">${esc(r)}</button>`).join(''):'')+'</div>';
   const tw=area.querySelector('.tw'), svg=tw.querySelector('svg'), zp=area.querySelector('.arv-zp');
   nos.forEach(n=>{ const el=document.createElement('div'); el.className='tn'+(n.raiz?' raiz':'')+(n.est?' est':'')+(clica&&n.ab?' ab':'')+(n.g?' '+gapCls(n.g):'')+(n.kl?' '+n.kl:''); el._no=n;
     el.innerHTML=`<div class="tn-t">${esc(n.t)}${n.tag||''}</div><div class="tn-v ${n.cls||''}">${esc(n.v==null?'—':n.v)}</div>`+(n.s?`<div class="tn-s">${esc(n.s)}</div>`:'')
@@ -903,6 +905,7 @@ function arvore(area,raiz,clica,opt){
   zp.addEventListener('focus',()=>{ zp.value=String(Math.round(T.s/fitS*100)); zp.select(); });
   zp.addEventListener('blur',()=>aplica());
   area.querySelector('.arv-zoom').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
+    if(b.dataset.x){ if(opt&&opt.acao) opt.acao(b.dataset.x); return; }
     if(b.dataset.z==='0') ajusta(); else zoom(b.dataset.z==='+'?1.25:1/1.25); });
   area.addEventListener('wheel',e=>{ e.preventDefault(); const r=area.getBoundingClientRect();
     zoom(Math.exp(-e.deltaY*(e.ctrlKey?.01:.0018)),e.clientX-r.left,e.clientY-r.top); },{passive:false,signal:_ac.signal});
@@ -1345,12 +1348,12 @@ aplicaTema(localStorage.getItem('bi_theme')||'dark');
 initApp();
 </script>
 
-<script src="../assets/arvore-impacto.js?v=202611211600"></script>
-<script src="../assets/balanco-massa.js?v=202611211600"></script>
-<script src="../assets/carta-calc.js?v=202611211600"></script>
-<script src="../assets/estatistica.js?v=202611211600"></script>
-<script src="../assets/gerot-base.js?v=202611211600"></script>
-<script src="custo.js?v=202611211600"></script>
+<script src="../assets/arvore-impacto.js?v=202611211700"></script>
+<script src="../assets/balanco-massa.js?v=202611211700"></script>
+<script src="../assets/carta-calc.js?v=202611211700"></script>
+<script src="../assets/estatistica.js?v=202611211700"></script>
+<script src="../assets/gerot-base.js?v=202611211700"></script>
+<script src="custo.js?v=202611211700"></script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
@@ -1367,6 +1370,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611211600"></script>
+<script src="../assets/build-check.js?v=202611211700"></script>
 </body>
 </html>
