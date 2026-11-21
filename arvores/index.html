@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611211200">
+<meta name="build" content="202611211500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -820,7 +820,10 @@ function gapHtml(g){
    Cada folha ocupa a própria altura (não a do maior nó), o espaço entre as colunas cresce para
    ocupar a largura da área, e dentro dela dá para dar zoom (roda do mouse, botões, pinça) e
    arrastar; duplo clique ou "Ajustar" volta ao desenho inteiro na tela. */
-function arvore(area,raiz,clica){
+function arvore(area,raiz,clica,opt){
+  // com {manter:true}, quem já deu zoom ou arrastou continua onde estava: o nó clicado (ou a raiz) fica no mesmo
+  // ponto da tela e na mesma escala, em vez de a árvore voltar a caber inteira a cada abrir/recolher
+  const _ant=opt&&opt.manter&&area._mexeu&&area._ondeEsta?area._ondeEsta(area._anc):null;
   // cada desenho troca os ouvintes da área: somados, um clique contava várias vezes (abre e recolhe se anulavam) e a roda multiplicava o zoom
   if(area._off) area._off(); const _ac=new AbortController(); area._off=()=>_ac.abort(); const OP={signal:_ac.signal};
   const W=256, GX0=58, GY0=14; let GY=GY0;
@@ -889,10 +892,10 @@ function arvore(area,raiz,clica){
     // a sobra de largura vira espaço entre as colunas (até 3× o normal)
     const gx=pc?Math.max(GX0,Math.min(GX0*3.2,(aw/s-(pc+1)*W)/pc)):GX0;
     desenha(gx); fitS=s;
-    T.s=s; T.x=Math.max(0,(aw-totW*s)/2); T.y=TOP+Math.max(0,(ah-totH*s)/2); aplica(); };
+    T.s=s; T.x=Math.max(0,(aw-totW*s)/2); T.y=TOP+Math.max(0,(ah-totH*s)/2); area._mexeu=false; aplica(); };
   const zoom=(f,cx,cy,livre)=>{ const ns=livre?T.s*f:Math.max(fitS*.1,Math.min(fitS*5,T.s*f)); if(ns===T.s) return;
     if(cx==null){ cx=area.clientWidth/2; cy=area.clientHeight/2; }
-    T.x=cx-(cx-T.x)*ns/T.s; T.y=cy-(cy-T.y)*ns/T.s; T.s=ns; aplica(); };
+    T.x=cx-(cx-T.x)*ns/T.s; T.y=cy-(cy-T.y)*ns/T.s; T.s=ns; area._mexeu=true; aplica(); };
   // zoom digitado: número em % (10 a 500), Enter aplica, Esc desiste
   const digita=()=>{ const n=parseFloat(String(zp.value).replace(',','.').replace(/[^\d.]/g,''));
     if(isFinite(n)&&n>0){ const alvo=Math.max(10,Math.min(500,n))/100*fitS; zoom(alvo/T.s,null,null,true); } zp.blur(); aplica(); };
@@ -910,15 +913,18 @@ function arvore(area,raiz,clica){
     const no=e.target.closest('.tn'); toque=pts.size?null:{x:e.clientX,y:e.clientY,no:no&&no._no&&no._no.ab?no._no:null,alvo:e.target};
     area.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); area.classList.add('arrasta'); ini=null; },OP);
   area.addEventListener('pointermove',e=>{ if(!pts.has(e.pointerId)) return; const ant=pts.get(e.pointerId);
-    if(pts.size===1){ T.x+=e.clientX-ant.x; T.y+=e.clientY-ant.y; pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); aplica(); return; }
+    if(pts.size===1){ T.x+=e.clientX-ant.x; T.y+=e.clientY-ant.y; if(!toque||Math.hypot(e.clientX-toque.x,e.clientY-toque.y)>=5) area._mexeu=true; pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); aplica(); return; }
     pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); const [a,b]=[...pts.values()], d=Math.hypot(a.x-b.x,a.y-b.y);
     const r=area.getBoundingClientRect(), cx=(a.x+b.x)/2-r.left, cy=(a.y+b.y)/2-r.top;
     if(ini) zoom(d/ini,cx,cy); ini=d; },OP);
   const solta=e=>{ const t=toque; toque=null; pts.delete(e.pointerId); ini=null; if(!pts.size) area.classList.remove('arrasta');
     // clique (sem arrastar) num nó abre a abertura dele
-    if(e.type==='pointerup'&&t&&t.no&&clica&&Math.hypot(e.clientX-t.x,e.clientY-t.y)<5) clica(t.no,t.alvo); };
+    if(e.type==='pointerup'&&t&&t.no&&clica&&Math.hypot(e.clientX-t.x,e.clientY-t.y)<5){ area._anc=chaveNo(t.no); clica(t.no,t.alvo); } };
   area.addEventListener('pointerup',solta,OP); area.addEventListener('pointercancel',solta,OP);
   ajusta(); area._ajusta=ajusta;
+  // onde cada nó está na tela agora (para o próximo desenho manter a vista)
+  area._ondeEsta=k=>{ const n=(k!=null&&nos.find(x=>chaveNo(x)===k))||raiz; return {k:chaveNo(n),s:T.s,x:T.x+n.x*T.s,y:T.y+n.y*T.s}; };
+  if(_ant){ const n=nos.find(x=>chaveNo(x)===_ant.k)||raiz; T.s=_ant.s; T.x=_ant.x-n.x*T.s; T.y=_ant.y-n.y*T.s; area._mexeu=true; aplica(); }
   // a área muda de tamanho depois do desenho (a nota de baixo é escrita depois, a lateral recolhe):
   // sem isso o último nó ficava cortado embaixo
   if(area._ro) area._ro.disconnect();
@@ -926,6 +932,7 @@ function arvore(area,raiz,clica){
     area._ro=new ResizeObserver(()=>{ if(area.clientWidth===lw&&area.clientHeight===lh) return; lw=area.clientWidth; lh=area.clientHeight; ajusta(); });
     area._ro.observe(area); }
 }
+function chaveNo(n){ return n.id!=null?'i:'+n.id:n.ab!=null?'a:'+n.ab+'|'+n.t:'t:'+n.t; }
 let _ra; window.addEventListener('resize',()=>{ clearTimeout(_ra); _ra=setTimeout(()=>document.querySelectorAll('.arv-area').forEach(a=>a._ajusta&&a._ajusta()),150); });
 
 /* ══ RESUMO GERENCIAL + ÁRVORE DO ROIC ══ */
@@ -1334,12 +1341,12 @@ aplicaTema(localStorage.getItem('bi_theme')||'dark');
 initApp();
 </script>
 
-<script src="../assets/arvore-impacto.js?v=202611211200"></script>
-<script src="../assets/balanco-massa.js?v=202611211200"></script>
-<script src="../assets/carta-calc.js?v=202611211200"></script>
-<script src="../assets/estatistica.js?v=202611211200"></script>
-<script src="../assets/gerot-base.js?v=202611211200"></script>
-<script src="custo.js?v=202611211200"></script>
+<script src="../assets/arvore-impacto.js?v=202611211500"></script>
+<script src="../assets/balanco-massa.js?v=202611211500"></script>
+<script src="../assets/carta-calc.js?v=202611211500"></script>
+<script src="../assets/estatistica.js?v=202611211500"></script>
+<script src="../assets/gerot-base.js?v=202611211500"></script>
+<script src="custo.js?v=202611211500"></script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
@@ -1356,6 +1363,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611211200"></script>
+<script src="../assets/build-check.js?v=202611211500"></script>
 </body>
 </html>

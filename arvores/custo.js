@@ -492,7 +492,7 @@ async function renderCusto(){
   arvore(area,top,(no,alvo)=>{
     if(alvo&&alvo.closest&&alvo.closest('.tn-tab')&&no.abv){ ctAbre(no); return; }
     if(no.temKids){ if(CT_AB.has(no.id)) [...CT_AB].forEach(k=>{ if(k===no.id||k.startsWith(no.id+'|')) CT_AB.delete(k); }); else CT_AB.add(no.id); ctGuardaAb(); renderCusto(); return; }
-    if(no.abv) ctAbre(no); });
+    if(no.abv) ctAbre(no); },{manter:true});
   if(AB_KIND==='custo'&&AB_N&&$('ab-ov').classList.contains('on')&&CT_AB_NO) ctAbre(CT_AB_NO);
 }
 

@@ -111,6 +111,18 @@ for (const [w, h, tema] of [[1366, 768, 'dark'], [1920, 1080, 'light']]) {
   af('clique no pacote abre as contas', N['c:COMB'] && N['c:COMB'].v === 'R$ 33 mil', JSON.stringify(Object.keys(N)));
   af('conta diesel: rem R$ 30.000 · ▲ +R$ 3.000 · FT R$ 23.184', N['c:COMB'] && N['c:COMB'].g.join('|') === 'R$ 30 mil|+R$ 3.000|+10,0%' && /Pago FT \(reconstr\.\)\|R\$ 23 mil\|Real com o Arla − FT\|\+R\$ 9.816/.test(N['c:COMB'].rows), JSON.stringify(N['c:COMB']));
   await clica('p:C'); await pg.waitForTimeout(300); N = await nos(); af('clique de novo recolhe', !N['c:COMB'], JSON.stringify(Object.keys(N)));
+  // com zoom, abrir e recolher mantém a escala e o nó clicado no mesmo lugar
+  const vista = () => pg.evaluate(() => { const tw = document.querySelector('#arv-custo .tw'), m = /scale\(([\d.]+)\)/.exec(tw.style.transform);
+    const n = [...document.querySelectorAll('#arv-custo .tn')].find(x => x._no.id === 'p:C').getBoundingClientRect(); return { s: +m[1], x: Math.round(n.left), y: Math.round(n.top + n.height / 2) }; });
+  const fit0 = await vista();
+  await pg.click('#arv-custo .arv-zoom [data-z="+"]'); await pg.click('#arv-custo .arv-zoom [data-z="+"]'); await pg.waitForTimeout(150);
+  const z0 = await vista(); await clica('p:C'); await pg.waitForTimeout(300); const z1 = await vista();
+  af('com zoom, abrir o + mantém a escala e o nó no lugar', Math.abs(z1.s - z0.s) < 1e-6 && Math.abs(z1.x - z0.x) <= 1 && Math.abs(z1.y - z0.y) <= 1 && z0.s > fit0.s * 1.5, JSON.stringify({ fit0, z0, z1 }));
+  await clica('p:C'); await pg.waitForTimeout(300); const z2 = await vista();
+  af('com zoom, recolher também mantém', Math.abs(z2.s - z0.s) < 1e-6 && Math.abs(z2.x - z0.x) <= 1 && Math.abs(z2.y - z0.y) <= 1, JSON.stringify({ z0, z2 }));
+  await pg.click('#arv-custo .arv-zoom [data-z="0"]'); await pg.waitForTimeout(150);
+  await clica('p:C'); await pg.waitForTimeout(300); const f1 = await vista(); await clica('p:C'); await pg.waitForTimeout(300);
+  af('sem zoom (Ajustar), abrir volta a caber inteira', Math.abs(f1.s - fit0.s) > 1e-6 || f1.s <= fit0.s + 1e-6, JSON.stringify({ fit0, f1 }));
   // combustível aberto até o fim
   await abre(['p:C', 'c:COMB', 'c:COMB|rk', 'c:COMB|rk|rsl', 'c:COMB|rk|kml', 'c:COMB|km']); await espera(); await pg.waitForTimeout(400); N = await nos();
   if (um) console.log(JSON.stringify(Object.fromEntries(Object.entries(N).filter(([k]) => /^c:COMB/.test(k)).map(([k, x]) => [k, [x.v, x.g.join(' '), x.i]]))));
