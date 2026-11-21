@@ -56,6 +56,7 @@ const out = await pg.evaluate(async (ANO) => {
   const L = [], mi = v => (v / 1e6).toFixed(2), p = v => v == null || !isFinite(v) ? '—' : (v * 100).toFixed(1) + '%';
   const vigs = VIGS.filter(v => v.startsWith(ANO)).sort();
   L.push('vigências com receita: ' + VIGS.slice().sort().join(' '));
+  { const o = await carregaIPCA(), k = Object.keys(o).sort(); L.push('IPCA do Banco Central: ' + (k.length ? k.length + ' meses, último ' + k[k.length - 1] + ' = ' + p(o[k[k.length - 1]]) : 'INDISPONÍVEL')); }
   for (const v of vigs) { try { await capMes(v); } catch (e) { L.push(v + ' capMes ERRO ' + (e.message || e)); } }
   const linha = (rot, vv, f) => { const R = roicDe(vv, f); return `${rot.padEnd(26)} ROIC ${p(R.roic).padStart(8)} · pré-IR ${p(R.roicPre).padStart(8)} · EBIT/mês ${mi(R.ebit / R.n)} mi · cap ${mi(R.cap)} mi (${R.qtd.toFixed(0)} eq) · rec/mês ${mi(R.rec / R.n)} mi · dep ${R.mesesEst.length ? 'FT' : 'DRE'}`; };
   L.push('', '== por mês (tudo) ==');

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611211500">
+<meta name="build" content="202611211600">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1027,8 +1027,12 @@ let ROIC_CTX=null;
 let IPCA_P=null;
 function carregaIPCA(){ if(IPCA_P) return IPCA_P;
   IPCA_P=(async()=>{ const o={}; const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),6000);
-    try{ const d=await fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/48?formato=json',{signal:ctl.signal}).then(r=>r.json());
-      (d||[]).forEach(x=>{ const m=String(x.data||'').split('/'); const v=parseFloat(String(x.valor).replace(',','.')); if(m.length===3&&isFinite(v)) o[m[2]+'-'+m[1]]=v/100; });
+    try{ // o SGS recusa "ultimos/48" (400: o teto é 20); pede por intervalo de datas e, se recusar, os últimos 20
+      const base='https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados', hoje=new Date();
+      const le=async u=>{ const r=await fetch(u,{signal:ctl.signal}); if(!r.ok) throw new Error('HTTP '+r.status); const j=await r.json(); if(!Array.isArray(j)) throw new Error('resposta sem lista'); return j; };
+      let d; try{ d=await le(`${base}?formato=json&dataInicial=01/01/2024&dataFinal=${String(hoje.getDate()).padStart(2,'0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`); }
+      catch(e){ d=await le(`${base}/ultimos/20?formato=json`); }
+      d.forEach(x=>{ const m=String(x.data||'').split('/'); const v=parseFloat(String(x.valor).replace(',','.')); if(m.length===3&&isFinite(v)) o[m[2]+'-'+m[1]]=v/100; });
     }catch(e){ console.warn('IPCA do Banco Central indisponível:',e); } finally{ clearTimeout(t); }
     return o; })();
   return IPCA_P; }
@@ -1341,12 +1345,12 @@ aplicaTema(localStorage.getItem('bi_theme')||'dark');
 initApp();
 </script>
 
-<script src="../assets/arvore-impacto.js?v=202611211500"></script>
-<script src="../assets/balanco-massa.js?v=202611211500"></script>
-<script src="../assets/carta-calc.js?v=202611211500"></script>
-<script src="../assets/estatistica.js?v=202611211500"></script>
-<script src="../assets/gerot-base.js?v=202611211500"></script>
-<script src="custo.js?v=202611211500"></script>
+<script src="../assets/arvore-impacto.js?v=202611211600"></script>
+<script src="../assets/balanco-massa.js?v=202611211600"></script>
+<script src="../assets/carta-calc.js?v=202611211600"></script>
+<script src="../assets/estatistica.js?v=202611211600"></script>
+<script src="../assets/gerot-base.js?v=202611211600"></script>
+<script src="custo.js?v=202611211600"></script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
@@ -1363,6 +1367,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611211500"></script>
+<script src="../assets/build-check.js?v=202611211600"></script>
 </body>
 </html>
