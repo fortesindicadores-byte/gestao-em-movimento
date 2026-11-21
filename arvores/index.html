@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611191000">
+<meta name="build" content="202611211200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -410,6 +410,19 @@ body.claro .tn{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
 .tn.gap-ok{border-color:color-mix(in srgb,var(--verde) 45%,transparent);}
 .tn.gap-pot{border-color:color-mix(in srgb,var(--ambar) 55%,transparent);}
 .vw-arv{position:relative;}
+/* Árvore do Custo: abre e recolhe no clique; ⊞ abre a tabela; indicador é sinal (tracejado) */
+.tn.ctx .tn-t::before{display:none;}
+.tn-x{float:right;width:16px;height:16px;margin:-2px -4px 0 6px;border-radius:5px;border:1px solid var(--card-brd);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--laranja);letter-spacing:0;}
+.tn-tab{float:right;margin:-2px 2px 0 6px;font-size:12px;line-height:16px;color:var(--txt3);letter-spacing:0;cursor:pointer;}
+.tn-tab:hover{color:var(--laranja);}
+.tn.sinal{border-style:dashed;}
+.tn.falta{border-style:dashed;border-color:color-mix(in srgb,var(--ambar) 65%,transparent);} .tn.falta .tn-v{font-size:13px;color:var(--ambar);}
+.tn.fam .tn-v:empty,.tn.lente .tn-v:empty{display:none;} .tn.fam .tn-t,.tn.lente .tn-t{padding-bottom:6px;}
+.tn.lente{border-color:color-mix(in srgb,var(--azul) 50%,transparent);}
+.tn.tot{border-color:color-mix(in srgb,var(--laranja) 55%,transparent);}
+.ct-bc{display:inline-flex;align-items:center;gap:7px;margin-left:12px;font-size:10.5px;color:var(--txt3);}
+.ct-bc .bci{font-weight:700;color:var(--txt2);}
+@media(max-width:1500px){ #modo-custo>.rot{display:none;} .ct-bc{margin-left:6px;} } .ct-bc .bci.on{color:var(--txt);} .ct-bc .sep{color:var(--txt4);} .ct-bc .dimb{margin-left:4px;}
 .ipca-in{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:var(--txt);width:52px;height:24px;text-align:center;background:var(--side);border:1px solid var(--card-brd);border-radius:7px;outline:none;}
 .ipca-in:focus{border-color:var(--laranja);}
 .arv-modo{position:absolute;top:0;left:0;z-index:6;display:flex;align-items:center;gap:6px;}
@@ -455,6 +468,7 @@ body.claro .tn{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
     <div class="s-sec">Visões</div>
     <button class="s-item on" data-vw="resumo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Resumo Gerencial</button>
     <button class="s-item" data-vw="roic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg> Árvore do ROIC</button>
+    <button class="s-item" data-vw="custo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="15" y="15" width="6" height="6" rx="1"/><path d="M9 6h3v12h3M12 6h3"/></svg> Árvore do Custo</button>
     <button class="s-item" data-vw="km"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Árvore de Km</button>
     <div class="s-sec">Atalhos</div>
     <div id="pdf-slot"></div>
@@ -532,7 +546,13 @@ body.claro .tn{box-shadow:var(--luz-card), 0 6px 16px rgba(15,23,42,.10);}
         <div class="arv-area" id="arv-roic"></div>
       </section>
 
-      <!-- ══ 3 · ÁRVORE DE KM ══ -->
+      <!-- ══ 3 · ÁRVORE DO CUSTO (arvores/custo.js) ══ -->
+      <section class="vw vw-arv" id="vw-custo">
+        <div class="arv-modo" id="modo-custo"><span class="rot">Comparar com</span><button class="dimb" type="button" data-ccmp="rem">Remunerado</button><button class="dimb" type="button" data-ccmp="orc">Orçado</button><button class="dimb" type="button" data-ccmp="ft">Freightech</button><span class="ct-bc" id="ct-bc"></span></div>
+        <div class="arv-area" id="arv-custo"></div>
+      </section>
+
+      <!-- ══ 4 · ÁRVORE DE KM ══ -->
       <section class="vw vw-arv" id="vw-km">
         <div class="arv-modo" id="modo-km"><button class="dimb" type="button" data-km="comp">Composição do km</button><button class="dimb" type="button" data-km="gap">Gaps por unidade</button></div>
         <div class="arv-area" id="arv-km"></div>
@@ -622,7 +642,7 @@ async function todas(q){ const out=[]; for(let off=0;off<300000;off+=1000){ cons
 const tabDre=async slug=>(window.GvizCache&&GvizCache.tabelaConsumo)?await GvizCache.tabelaConsumo(slug):'sh_'+slug;
 
 /* DRE: receita líquida e EBITDA ajustado por vigência × operação × unidade */
-let DRE={}, DEP={}, DEP_MESES=new Set(), FR={};   // DRE['AAAA-MM|op|uni'] = {rec,recOrc,recRem,ebd,ebdOrc,ebdRem}
+let DRE={}, DEP={}, DEP_MESES=new Set(), FR={}, FRC={}, FRN={};   // FRC['AAAA-MM|op|uni'][conta] · FRN['AAAA-MM|nível 3'][conta] (Árvore do Custo)   // DRE['AAAA-MM|op|uni'] = {rec,recOrc,recRem,ebd,ebdOrc,ebdRem}
 function vigDeLinha(r){
   const o=String(r.vigencia_orig||''); if(/^\d{4}-\d{2}/.test(o)) return o.slice(0,7);
   const m=String(r.vigencia||'').match(/^(\d{1,2})\/(\d{4})$/); if(m) return m[2]+'-'+m[1].padStart(2,'0');
@@ -635,7 +655,7 @@ const PAC_FR={'COMBUSTIVEIS VEICULOS E EQUIPAMENTOS':'C','COMBUSTIVEIS':'C','FLU
   'CONSERTOS E RECAPAGENS DE PNEUS':'P','PNEUS E CAMARAS':'P','RECAPAGENS E OUTROS SERVICOS':'P','PNEUS NOVOS':'P'};
 const PAC_NOME={C:'Combustíveis',M:'Manutenções',P:'Pneus',O:'Demais contas da frota'};
 async function carregaDRE(){
-  DRE={}; DEP={}; DEP_MESES=new Set(); FR={};
+  DRE={}; DEP={}; DEP_MESES=new Set(); FR={}; FRC={}; FRN={};
   const ini='2025-01-01';
   for(const [slug,campo] of [['dre_receita','rec'],['dre_ebitda','ebd']]){
     const t=await tabDre(slug);
@@ -651,7 +671,11 @@ async function carregaDRE(){
     const rows=await todas(sb.from(t).select('vigencia,vigencia_orig,nivel_3,conta_gerencial,realizado,orcado,remunerado').gte('vigencia_orig',ini).order('vigencia_orig').order('linha'));
     rows.forEach(r=>{ const ou=opUni(r.nivel_3); if(!ou) return; const v=vigDeLinha(r); if(!v) return;
       const k=v+'|'+ou.op+'|'+ou.uni, pac=PAC_FR[nu(r.conta_gerencial)]||'O', o=FR[k]=FR[k]||{};
-      const p=o[pac]=o[pac]||{real:0,rem:0,orc:0}; p.real-=+r.realizado||0; p.rem-=+r.remunerado||0; p.orc-=+r.orcado||0; });
+      const p=o[pac]=o[pac]||{real:0,rem:0,orc:0}; p.real-=+r.realizado||0; p.rem-=+r.remunerado||0; p.orc-=+r.orcado||0;
+      // por conta (Árvore do Custo): a mesma linha, no id da conta e no nível 3 cru (o balanço de massa casa por ele)
+      if(window.ctId){ const ci=ctId(r.conta_gerencial); if(!CT_NOMES[ci]) CT_NOMES[ci]=String(r.conta_gerencial||'').trim();
+        const c=(FRC[k]=FRC[k]||{})[ci]=(FRC[k][ci]||{real:0,rem:0,orc:0}); c.real-=+r.realizado||0; c.rem-=+r.remunerado||0; c.orc-=+r.orcado||0;
+        const kn=v+'|'+nu(r.nivel_3).replace(/\s*\(INATIVO\)\s*$/,''), cn=nu(r.conta_gerencial), x=(FRN[kn]=FRN[kn]||{})[cn]=(FRN[kn][cn]||{rem:0}); x.rem-=+r.remunerado||0; } });
   }catch(e){ console.warn('aba Frota do DRE indisponível: sem os pacotes da frota', e); }
   // depreciação contábil: o DRE do ERP (dre_gerencial, estrutura 351) nos meses importados
   try{
@@ -703,7 +727,10 @@ function capMes(vig){
         // (o FT só paga o lucro variável com ativoParado === true) · Carreta: sem campo, conta como operando
         const at=g('Ativo','ativo'), ap=g('ativoParado');
         const ativo=at!=null?simFT(at):ap!=null?simFT(ap):true;
-        out.push({op,uni,tipo:d.tipo,ativo,compra,meses,liq:compra*residual(meses),dep:compra*depMes(meses)});
+        // manutenção que o FT paga na placa (Árvore do Custo): R$/km, vida e carência
+        const mv=g('Manutenção R$/KM','manutencaoReaisKm','Manutencao R$/KM','reaiskm');
+        out.push({op,uni,tipo:d.tipo,ativo,compra,meses,liq:compra*residual(meses),dep:compra*depMes(meses),
+          man:mv==null?null:numFT(mv),vida:numFT(g('manutencaoVidaMeses','Manutenção Vida Meses')),free:numFT(g('freeMaintenance','Free Maintenance'))});
       });
     }));
     CAP[vig]=out; return out;
@@ -794,14 +821,16 @@ function gapHtml(g){
    ocupar a largura da área, e dentro dela dá para dar zoom (roda do mouse, botões, pinça) e
    arrastar; duplo clique ou "Ajustar" volta ao desenho inteiro na tela. */
 function arvore(area,raiz,clica){
+  // cada desenho troca os ouvintes da área: somados, um clique contava várias vezes (abre e recolhe se anulavam) e a roda multiplicava o zoom
+  if(area._off) area._off(); const _ac=new AbortController(); area._off=()=>_ac.abort(); const OP={signal:_ac.signal};
   const W=256, GX0=58, GY0=14; let GY=GY0;
   let folha=0; const nos=[], folhas=[];
   (function lay(n,d){ n.d=d; nos.push(n); if(n.kids&&n.kids.length){ n.kids.forEach(k=>lay(k,d+1)); } else { n.f=folha++; folhas.push(n); } })(raiz,0);
   area.innerHTML='<div class="tw"><svg class="tsvg"></svg></div>'
     +'<div class="arv-zoom"><button type="button" data-z="-" title="Diminuir">−</button><input class="arv-zp" type="text" inputmode="numeric" value="100%" title="Digite o zoom em % e aperte Enter" aria-label="Zoom em %" autocomplete="off"><button type="button" data-z="+" title="Aumentar">+</button><button type="button" data-z="0" title="Ver a árvore inteira">Ajustar</button></div>';
   const tw=area.querySelector('.tw'), svg=tw.querySelector('svg'), zp=area.querySelector('.arv-zp');
-  nos.forEach(n=>{ const el=document.createElement('div'); el.className='tn'+(n.raiz?' raiz':'')+(n.est?' est':'')+(clica&&n.ab?' ab':'')+(n.g?' '+gapCls(n.g):''); el._no=n;
-    el.innerHTML=`<div class="tn-t">${esc(n.t)}</div><div class="tn-v ${n.cls||''}">${esc(n.v==null?'—':n.v)}</div>`+(n.s?`<div class="tn-s">${esc(n.s)}</div>`:'')
+  nos.forEach(n=>{ const el=document.createElement('div'); el.className='tn'+(n.raiz?' raiz':'')+(n.est?' est':'')+(clica&&n.ab?' ab':'')+(n.g?' '+gapCls(n.g):'')+(n.kl?' '+n.kl:''); el._no=n;
+    el.innerHTML=`<div class="tn-t">${esc(n.t)}${n.tag||''}</div><div class="tn-v ${n.cls||''}">${esc(n.v==null?'—':n.v)}</div>`+(n.s?`<div class="tn-s">${esc(n.s)}</div>`:'')
       +(n.g?gapHtml(n.g):'')
       +(n.rows&&n.rows.length?`<table>${n.rows.map(r=>`<tr><td>${esc(r[0])}</td><td class="n ${r[2]||''}">${esc(r[1])}</td></tr>`).join('')}</table>`:'');
     if(clica&&n.ab) el.title='Clique para abrir por unidade, projeto e mês'; if(n.dica) el.title=n.dica; tw.appendChild(el); n.el=el; n.h=el.offsetHeight; });
@@ -873,22 +902,22 @@ function arvore(area,raiz,clica){
   area.querySelector('.arv-zoom').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
     if(b.dataset.z==='0') ajusta(); else zoom(b.dataset.z==='+'?1.25:1/1.25); });
   area.addEventListener('wheel',e=>{ e.preventDefault(); const r=area.getBoundingClientRect();
-    zoom(Math.exp(-e.deltaY*(e.ctrlKey?.01:.0018)),e.clientX-r.left,e.clientY-r.top); },{passive:false});
-  area.addEventListener('dblclick',e=>{ if(!e.target.closest('.arv-zoom')) ajusta(); });
+    zoom(Math.exp(-e.deltaY*(e.ctrlKey?.01:.0018)),e.clientX-r.left,e.clientY-r.top); },{passive:false,signal:_ac.signal});
+  area.addEventListener('dblclick',e=>{ if(!e.target.closest('.arv-zoom')) ajusta(); },OP);
   // arrastar (mouse) e pinça (dois dedos)
   const pts=new Map(); let ini=null, toque=null;
   area.addEventListener('pointerdown',e=>{ if(e.target.closest('.arv-zoom')) return;
-    const no=e.target.closest('.tn'); toque=pts.size?null:{x:e.clientX,y:e.clientY,no:no&&no._no&&no._no.ab?no._no:null};
-    area.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); area.classList.add('arrasta'); ini=null; });
+    const no=e.target.closest('.tn'); toque=pts.size?null:{x:e.clientX,y:e.clientY,no:no&&no._no&&no._no.ab?no._no:null,alvo:e.target};
+    area.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); area.classList.add('arrasta'); ini=null; },OP);
   area.addEventListener('pointermove',e=>{ if(!pts.has(e.pointerId)) return; const ant=pts.get(e.pointerId);
     if(pts.size===1){ T.x+=e.clientX-ant.x; T.y+=e.clientY-ant.y; pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); aplica(); return; }
     pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); const [a,b]=[...pts.values()], d=Math.hypot(a.x-b.x,a.y-b.y);
     const r=area.getBoundingClientRect(), cx=(a.x+b.x)/2-r.left, cy=(a.y+b.y)/2-r.top;
-    if(ini) zoom(d/ini,cx,cy); ini=d; });
+    if(ini) zoom(d/ini,cx,cy); ini=d; },OP);
   const solta=e=>{ const t=toque; toque=null; pts.delete(e.pointerId); ini=null; if(!pts.size) area.classList.remove('arrasta');
     // clique (sem arrastar) num nó abre a abertura dele
-    if(e.type==='pointerup'&&t&&t.no&&clica&&Math.hypot(e.clientX-t.x,e.clientY-t.y)<5) clica(t.no); };
-  area.addEventListener('pointerup',solta); area.addEventListener('pointercancel',solta);
+    if(e.type==='pointerup'&&t&&t.no&&clica&&Math.hypot(e.clientX-t.x,e.clientY-t.y)<5) clica(t.no,t.alvo); };
+  area.addEventListener('pointerup',solta,OP); area.addEventListener('pointercancel',solta,OP);
   ajusta(); area._ajusta=ajusta;
   // a área muda de tamanho depois do desenho (a nota de baixo é escrita depois, a lateral recolhe):
   // sem isso o último nó ficava cortado embaixo
@@ -1235,7 +1264,7 @@ function abPlaca(F){
   return {head,body,pe:`${L.length} placa(s). Km rodado da aba Km/L do consumo; km remunerado por placa só nos meses em que a lista de placas da Dispersão está no banco (a dispersão compara os mesmos meses).`};
 }
 function fechaAb(){ $('ab-ov').classList.remove('on'); AB_N=null; }
-$('ab-q').addEventListener('click',e=>{ const q=e.target.closest('[data-q]'); if(!q) return; AB_Q=q.dataset.q; if(AB_KIND==='roic') abreRoic(AB_N); else abreKm(AB_N,AB_F,AB_FT); });
+$('ab-q').addEventListener('click',e=>{ const q=e.target.closest('[data-q]'); if(!q) return; AB_Q=q.dataset.q; if(AB_KIND==='roic') abreRoic(AB_N); else if(AB_KIND==='custo') ctAbre(CT_AB_NO); else abreKm(AB_N,AB_F,AB_FT); });
 /* seletores do topo das árvores e os chips de maiores gaps */
 $('modo-roic').addEventListener('click',e=>{ const b=e.target.closest('[data-cmp]'); if(!b) return; CMP=b.dataset.cmp; try{ localStorage.setItem('arvores_cmp',CMP); }catch(x){} marcaCmp(); renderROIC(); });
 function marcaCmp(){ document.querySelectorAll('#modo-roic [data-cmp]').forEach(b=>b.classList.toggle('on',b.dataset.cmp===CMP)); }
@@ -1246,7 +1275,7 @@ $('arv-roic')._top=36; $('arv-km')._top=36; marcaCmp();
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('ab-ov').classList.contains('on')) fechaAb(); });
 
 /* ── início ── */
-function render(){ if(VW==='km') renderKm(); else renderROIC(); }
+function render(){ if(VW==='km') renderKm(); else if(VW==='custo') renderCusto(); else renderROIC(); }
 function gate(titulo,msg){ document.getElementById('cols').innerHTML=`<div class="gate"><h2>${esc(titulo)}</h2><p>${msg}</p></div>`; set('titSub','—'); }
 async function initApp(){
   try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }catch(e){ gate('Erro','Falha ao iniciar o Supabase.'); return; }
@@ -1267,17 +1296,18 @@ async function initApp(){
   buildMs('ms-op',OP_ORD,render,v=>OPS[v]);
   render();
 }
-function recarregar(){ Object.keys(CAP_P).forEach(k=>delete CAP_P[k]); Object.keys(CAP).forEach(k=>delete CAP[k]); KM=null; KM_P=null; REV={}; KMPL=null;
+function recarregar(){ if(window.ctLimpa) ctLimpa(); Object.keys(CAP_P).forEach(k=>delete CAP_P[k]); Object.keys(CAP).forEach(k=>delete CAP[k]); KM=null; KM_P=null; REV={}; KMPL=null;
   set('titSub','Carregando…'); carregaDRE().then(render).catch(e=>set('titSub','Erro ao recarregar: '+((e&&e.message)||e))); }
 
 /* ── navegação ── */
-const TIT={resumo:'Resumo Gerencial',roic:'Árvore do ROIC',km:'Árvore de Km'};
+const TIT={resumo:'Resumo Gerencial',roic:'Árvore do ROIC',custo:'Árvore do Custo',km:'Árvore de Km'};
 let VW='resumo';
 function setVw(v){ VW=v;
   document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.classList.toggle('on',b.dataset.vw===v));
   document.querySelectorAll('.vw').forEach(x=>x.classList.toggle('on',x.id==='vw-'+v)); set('tit',TIT[v]||'');
   if(!VIGS.length) return;
   if(v==='km') renderKm();
+  else if(v==='custo') renderCusto();
   else { if(v==='roic'&&_arvRoicPend){ arvore($('arv-roic'),_arvRoicPend,no=>abreRoic(no.ab)); _arvRoicPend=null; } renderROIC(); } }
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
 
@@ -1304,6 +1334,12 @@ aplicaTema(localStorage.getItem('bi_theme')||'dark');
 initApp();
 </script>
 
+<script src="../assets/arvore-impacto.js?v=202611211200"></script>
+<script src="../assets/balanco-massa.js?v=202611211200"></script>
+<script src="../assets/carta-calc.js?v=202611211200"></script>
+<script src="../assets/estatistica.js?v=202611211200"></script>
+<script src="../assets/gerot-base.js?v=202611211200"></script>
+<script src="custo.js?v=202611211200"></script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
@@ -1320,6 +1356,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611191000"></script>
+<script src="../assets/build-check.js?v=202611211200"></script>
 </body>
 </html>
