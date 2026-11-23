@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611231400">
+<meta name="build" content="202611231600">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1080,7 +1080,9 @@ let _arvRoicPend=null;
 
 /* ══ ÁRVORE DE KM ══ */
 const SHEET_ID='1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM', SHEET_TAB='Dispersão de km';
-let KM=null, KM_P=null, REV={}, KMPL=null;     // KM = [{vig, uni, op, proj, frota, vPrim, kmPrim, vRec, kmRec, vNot, kmNot, rem, real}]
+let KM=null, KM_P=null, REV={}, KMPL=null, MAPR=null;   // MAPR['vig|uni|op|tipo'] = {n, np, prev, ft}: mapas, com previsto, km previsto e km do FT nos mesmos mapas
+/* linhas do nó: o km que o Roadshow previu por mapa contra o que o FT paga nos mesmos mapas */
+const rowsPrev=(S,t,um)=>{ const x=S.pv&&S.pv[t]; if(!x||!x.np) return []; return [['Roadshow previu · por '+um,br(x.prev/x.np,1)+' km'],['FT paga · nos mesmos mapas',br(x.ft/x.np,1)+' km',corV(x.ft-x.prev,true)],['Mapas com o previsto',fmtN(x.np)+' de '+fmtN(x.n)]]; };     // KM = [{vig, uni, op, proj, frota, vPrim, kmPrim, vRec, kmRec, vNot, kmNot, rem, real}]
 const PROJ_FT={'ROTA':'ROTA','ROTA (VAN)':'ROTA (VAN)','VAN':'ROTA (VAN)','AUTO SERVICO':'AUTO SERVIÇO','UDC':'ROTA'};
 function kmOp(p){ p=nu(p); return /INSUMO/.test(p)?'INS':/^(ROTA|UDC)$/.test(p)?'ROTA':/^(ROTA \(VAN\)|VAN)$/.test(p)?'VAN':p==='AUTO SERVICO'?'AS':/^EMPURRADA/.test(p)?'EMP':/^INSUMOS/.test(p)?'INS':null; }
 const T2=op=>op==='ROTA'||op==='VAN'||op==='AS';
@@ -1186,6 +1188,12 @@ async function carregaKm(){
       sea.pl.forEach(p=>{ if(ok.has(p.vig)) KMPL.P.push({vig:p.vig,placa:p.placa,orig:p.orig,uni:'ANG',op:'SEA',real:p.km}); });
       Object.entries(sea.remPl).forEach(([k,v])=>{ const i=k.indexOf('|'), vg=k.slice(i+1); if(!ok.has(vg)) return; KMPL.PR[vg+'|'+k.slice(0,i)+'|SEA|ANG']=v; KMPL.PRU.add(vg+'|SEA|ANG'); });
     }catch(e){ console.warn('Seara indisponível (a Anhanguera fica fora do km):',e); }
+    // cada mapa do 2artd (remun_mapa_resumo): o km que o Roadshow previu contra o que o FT paga, por tipo de viagem
+    try{ const rs=await todas(sb.from('remun_mapa_resumo').select('*')); const M={};
+      rs.forEach(r=>{ const op=kmOp(r.projeto); if(!op) return; const u=r.unidade==='GOI'?'GNA':r.unidade, t=r.tipo==='mkt'?'prim':r.tipo, k=r.vigencia+'|'+u+'|'+op+'|'+t;
+        const o=M[k]=M[k]||{n:0,np:0,prev:0,ft:0}; o.n+=+r.mapas||0; o.np+=+r.com_previsto||0; o.prev+=+r.km_previsto||0; o.ft+=+r.km_ft_previsto||0; });
+      MAPR=Object.keys(M).length?M:null;
+    }catch(e){ console.warn('remun_mapa_resumo indisponível (sem o previsto do Roadshow por mapa):',e); MAPR=null; }
     KM=out; return out;
   })();
   KM_P.catch(()=>{ KM_P=null; });
@@ -1221,6 +1229,7 @@ function agKm(F,rev){
       S.frotaT2+=r.frota; S.possT2+=poss; S.vPrimT2+=r.vPrim; S.kmPrimT2+=r.kmPrim; S.naoT2+=nao; S.kmNaoT2+=nao*kmMapa; S.tetoT2+=poss*kmMapa; S.impNao-=nao*kmMapa*rk;
       const q=rev&&rev[r.vig+'|'+r.uni+'|'+r.proj]; if(q&&q[1]&&q[2]){ const m2=r.vPrim/2; S.revKm+=(q[2]-q[1])*m2; S.km1+=q[1]*m2; S.km2+=q[2]*m2; S.mapRev+=m2; S.impRev+=(q[2]-q[1])*m2*rk; } } });
   S.n=vs.size||1; S.viag=S.vPrim+S.vRec+S.vNot+S.vSea;
+  if(MAPR){ S.pv={}; new Set(F.map(r=>r.vig+'|'+r.uni+'|'+r.op)).forEach(k=>['prim','rec','not'].forEach(t=>{ const m=MAPR[k+'|'+t]; if(!m) return; const o=S.pv[t]=S.pv[t]||{n:0,np:0,prev:0,ft:0}; o.n+=m.n; o.np+=m.np; o.prev+=m.prev; o.ft+=m.ft; })); }
   // placas que rodaram no mês (aba Km/L), no mesmo recorte
   if(KMPL){ const ch=new Set(F.map(r=>r.vig+'|'+r.op+'|'+r.uni)); KMPL.P.forEach(p=>{ if(ch.has(p.vig+'|'+p.op+'|'+p.uni)){ S.plMes++; S.plKm+=p.real; } }); }
   return S;
@@ -1293,9 +1302,9 @@ async function renderKm(){
         g:S.mapRev?{rot:'1ªQ',ref:S.km1,real:S.km2,bom:true,fmt:fmtKmC,cols:['ref','real','p'],imp:S.impRev/n}:null,
         rows:[['Km por mapa 1ªQ · 2ªQ',S.mapRev?br(S.km1/S.mapRev,1)+' · '+br(S.km2/S.mapRev,1):'—']]}];
     const remKids=[
-      {ab:'prim',t:'Km da 1ª viagem',v:fmtKm(S.kmPrim),s:'mapas × km por mapa do FT',rows:[['Mapas rodados',fmtN(S.vPrim)],['Km por mapa',S.vPrim?br(S.kmPrim/S.vPrim,1):'—'],['Mapas por ativo no mês',r1(dv(S.vPrim,S.frota))]],kids:kids2},
-      {ab:'rec',t:'Km de recarga',v:fmtKm(S.kmRec),rows:[['Recargas',fmtN(S.vRec)],['Km por recarga',S.vRec?br(S.kmRec/S.vRec,1):'—'],['Recargas por mapa',r2(dv(S.vRec,S.vPrim))]]},
-      {ab:'not',t:'Km de noturna',v:fmtKm(S.kmNot),rows:[['Noturnas',fmtN(S.vNot)],['Km por noturna',S.vNot?br(S.kmNot/S.vNot,1):'—'],['Noturnas por mapa',r2(dv(S.vNot,S.vPrim))]]}];
+      {ab:'prim',t:'Km da 1ª viagem',v:fmtKm(S.kmPrim),s:'mapas × km por mapa do FT',rows:[['Mapas rodados',fmtN(S.vPrim)],['Km por mapa',S.vPrim?br(S.kmPrim/S.vPrim,1):'—'],['Mapas por ativo no mês',r1(dv(S.vPrim,S.frota))],...rowsPrev(S,'prim','mapa')],kids:kids2},
+      {ab:'rec',t:'Km de recarga',v:fmtKm(S.kmRec),rows:[['Recargas',fmtN(S.vRec)],['Km por recarga',S.vRec?br(S.kmRec/S.vRec,1):'—'],['Recargas por mapa',r2(dv(S.vRec,S.vPrim))],...rowsPrev(S,'rec','recarga')]},
+      {ab:'not',t:'Km de noturna',v:fmtKm(S.kmNot),rows:[['Noturnas',fmtN(S.vNot)],['Km por noturna',S.vNot?br(S.kmNot/S.vNot,1):'—'],['Noturnas por mapa',r2(dv(S.vNot,S.vPrim))],...rowsPrev(S,'not','noturna')]}];
     if(S.kmSea>0) remKids.push({t:'Seara · km dos CT-es',v:fmtKm(S.kmSea),s:'aba Remunerado da Seara (por placa e mês)',rows:[['CT-es',fmtN(S.vSea)],['Km por CT-e',S.vSea?br(S.kmSea/S.vSea,1):'—']]});
     if(Math.abs(outros)>Math.max(1,S.rem*0.002)) remKids.push({t:'Outros no remunerado',v:fmtKm(outros),s:'o que a aba soma além de 1ª, recarga e noturna'});
     raiz=Object.assign(noKm('Dispersão de km',S,null,[['Por ativo no mês',fmtSig(fmtN,dv(disp,S.frota)),corV(disp,false)],['R$/km rem.',r2(dv(S.custoRem,S.rem))]]),{raiz:true,s:'km rodado − km remunerado',
@@ -1414,12 +1423,12 @@ aplicaTema(localStorage.getItem('bi_theme')||'dark');
 initApp();
 </script>
 
-<script src="../assets/arvore-impacto.js?v=202611231400"></script>
-<script src="../assets/balanco-massa.js?v=202611231400"></script>
-<script src="../assets/carta-calc.js?v=202611231400"></script>
-<script src="../assets/estatistica.js?v=202611231400"></script>
-<script src="../assets/gerot-base.js?v=202611231400"></script>
-<script src="custo.js?v=202611231400"></script>
+<script src="../assets/arvore-impacto.js?v=202611231600"></script>
+<script src="../assets/balanco-massa.js?v=202611231600"></script>
+<script src="../assets/carta-calc.js?v=202611231600"></script>
+<script src="../assets/estatistica.js?v=202611231600"></script>
+<script src="../assets/gerot-base.js?v=202611231600"></script>
+<script src="custo.js?v=202611231600"></script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
@@ -1436,6 +1445,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611231400"></script>
+<script src="../assets/build-check.js?v=202611231600"></script>
 </body>
 </html>

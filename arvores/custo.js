@@ -251,15 +251,15 @@ function ctNo(o,kidsFn){
 function ctKmKids(px,vigs,filtro,K){
   const F=KM.filter(r=>vigs.includes(r.vig)&&filtro(r.op,r.uni)); if(!F.length) return [];
   const rev=CT_CTX&&CT_CTX.rev||{}, S=agKm(F,rev), n=S.n;
-  const prim=ctNo({id:px+'|prim',t:'1ª viagem',v:fmtKm(S.kmPrim),s:'mapas × km por mapa do FT',rows:[['Mapas rodados',fmtN(S.vPrim)],['Km por mapa',S.vPrim?br(S.kmPrim/S.vPrim,1):'—'],['Mapas por ativo no mês',r1(dv(S.vPrim,S.frota))]]},()=>[
+  const prim=ctNo({id:px+'|prim',t:'1ª viagem',v:fmtKm(S.kmPrim),s:'mapas × km por mapa do FT',rows:[['Mapas rodados',fmtN(S.vPrim)],['Km por mapa',S.vPrim?br(S.kmPrim/S.vPrim,1):'—'],['Mapas por ativo no mês',r1(dv(S.vPrim,S.frota))],...rowsPrev(S,'prim','mapa')]},()=>[
     {id:px+'|teto',t:'Teto da 1ª viagem (T2)',v:fmtKm(S.tetoT2),s:`${MAPAS_MES} mapas × ativos × km por mapa`,g:{rot:'Teto',ref:S.tetoT2,real:S.kmPrimT2,bom:true,pot:true,fmt:fmtKmC,cols:['real','d','p'],imp:S.impNao/n,potRot:'Variável não recebido:'},rows:[['Ativos (média)',fmtN(S.frotaT2/n)],['Mapas possíveis',fmtN(S.possT2)]]},
     {id:px+'|nao',t:'Mapas que não rodaram (T2)',v:fmtKm(-S.kmNaoT2),cls:S.kmNaoT2>0?'cr':'',s:'possíveis − rodados, ao km por mapa',rows:[['Mapas',fmtN(S.naoT2)],['% dos possíveis',fmtP(S.possT2?S.naoT2/S.possT2:null)],['Por ativo no mês',r1(dv(S.naoT2,S.frotaT2))]]},
     {id:px+'|revi',t:'Revisão do km por mapa (T2)',v:S.mapRev?(S.revKm>=0?'+':'')+fmtKm(S.revKm):'—',cls:corV(S.revKm,true),s:'2ªQ − 1ªQ, sobre os mapas da 2ª quinzena',
       g:S.mapRev?{rot:'1ªQ',ref:S.km1,real:S.km2,bom:true,fmt:fmtKmC,cols:['ref','real','p'],imp:S.impRev/n}:null,rows:[['Km por mapa 1ªQ · 2ªQ',S.mapRev?br(S.km1/S.mapRev,1)+' · '+br(S.km2/S.mapRev,1):'—']]},
-    {id:px+'|ptipo',t:'Rodado da 1ª viagem',v:'falta dado',kl:'falta',s:'o hodômetro só aparece no abastecimento: sem o km rodado por tipo de viagem'}]);
+    {id:px+'|ptipo',t:'Rodado da 1ª viagem',v:'falta dado',kl:'falta',s:S.pv&&S.pv.prim&&S.pv.prim.np?'o hodômetro do mapa vem sem preenchimento: fica o km previsto pelo Roadshow, acima':'o hodômetro só aparece no abastecimento: sem o km rodado por tipo de viagem'}]);
   const remK=[prim,
-    {id:px+'|rec',t:'Recarga',v:fmtKm(S.kmRec),rows:[['Recargas',fmtN(S.vRec)],['Km por recarga',S.vRec?br(S.kmRec/S.vRec,1):'—'],['Recargas por mapa',r2(dv(S.vRec,S.vPrim))]]},
-    {id:px+'|not',t:'Noturna',v:fmtKm(S.kmNot),rows:[['Noturnas',fmtN(S.vNot)],['Km por noturna',S.vNot?br(S.kmNot/S.vNot,1):'—'],['Noturnas por mapa',r2(dv(S.vNot,S.vPrim))]]}];
+    {id:px+'|rec',t:'Recarga',v:fmtKm(S.kmRec),rows:[['Recargas',fmtN(S.vRec)],['Km por recarga',S.vRec?br(S.kmRec/S.vRec,1):'—'],['Recargas por mapa',r2(dv(S.vRec,S.vPrim))],...rowsPrev(S,'rec','recarga')]},
+    {id:px+'|not',t:'Noturna',v:fmtKm(S.kmNot),rows:[['Noturnas',fmtN(S.vNot)],['Km por noturna',S.vNot?br(S.kmNot/S.vNot,1):'—'],['Noturnas por mapa',r2(dv(S.vNot,S.vPrim))],...rowsPrev(S,'not','noturna')]}];
   if(K&&K.bm) remK.push({id:px+'|bm',t:'Balanço de massa',v:fmtKm(K.bm),s:'viagem sem CT-e, cobrada depois (Empurradas)',rows:[['Valor no remunerado',fmtR(K.bmV/n)],['R$/km do balanço',r2(dv(K.bmV,K.bm))],['Regra',`conta a conta desde ${CT_BM_INI||'—'}, rateado no ano`]]});
   if(S.kmSea>0) remK.push({id:px+'|sea',t:'Seara · km dos CT-es',v:fmtKm(S.kmSea),s:'aba Remunerado da Seara (por placa e mês)',rows:[['CT-es',fmtN(S.vSea)],['Km por CT-e',S.vSea?br(S.kmSea/S.vSea,1):'—']]});
   const outros=S.rem-S.kmPrim-S.kmRec-S.kmNot-S.kmSea; if(Math.abs(outros)>Math.max(1,S.rem*0.002)) remK.push({id:px+'|out',t:'Outros no remunerado',v:fmtKm(outros),s:'o que a Dispersão soma além de 1ª, recarga e noturna'});

@@ -62,8 +62,8 @@ const ft_linha = FT.flatMap(t => t.linhas.map((d, i) => ({ canal: t.canal, tabel
 /* ── 2artd sintético ── */
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'remun-'));
 const ser = (d, h = 8) => Math.round((Date.UTC(2026, 9, d) - Date.UTC(1899, 11, 30)) / 86400000) + h / 24;
-const H2 = ['Vigência', 'Entrega ', 'Carga Atual', 'Frota ', 'VBZ', 'Projeto', 'Nome - Unidade', 'Placa', 'Mapa', 'HrSai', 'HrEntr', 'CustoVariavel', 'PercImposto', 'ValorFaturado'];
-const M = (vig, ent, carga, frota, proj, placa, valor, d, dEnt = d) => [vig, ent, carga, frota, 5, proj, 'X', placa, Math.floor(Math.random() * 1e6), ser(d, 7), ser(dEnt, 17), valor, 13.15, valor / (1 - 0.1315)];
+const H2 = ['Vigência', 'Entrega ', 'Carga Atual', 'Frota ', 'VBZ', 'Projeto', 'Nome - Unidade', 'Placa', 'Mapa', 'HrSai', 'HrEntr', 'CustoVariavel', 'PercImposto', 'ValorFaturado', 'KmSai', 'KmEntr', 'KmPrevistoRoad', 'KmLaco', 'KmDeslocamento', 'CPFMotorista'];
+const M = (vig, ent, carga, frota, proj, placa, valor, d, dEnt = d) => [vig, ent, carga, frota, 5, proj, 'X', placa, Math.floor(Math.random() * 1e6), ser(d, 7), ser(dEnt, 17), valor, 13.15, valor / (1 - 0.1315), 1, 1, carga === 'Recarga' ? 15 : 90, carga === 'Recarga' ? 10 : 70, carga === 'Recarga' ? 5 : 20, '00000000000'];
 const ART = [H2,
   ...Array(3).fill(0).map(() => M('ROTA_1_10_2026', 'Rota', 'Roteriz', 'Padrao', 'ROTA - NFR', 'NFR1A11', 250, 5)),
   M('ROTA_1_10_2026', 'Rota', 'Roteriz', 'Padrao', 'ROTA - NFR', 'NFR2A11', 250, 6, 7),        // virado
@@ -104,7 +104,7 @@ const ARQ_CTE = path.join(TMP, 'EMPURRADA_PIR.xlsx');
 const SHIM_SB = (perfil, semRemun) => `(function(){
 const PERFIL=${JSON.stringify(perfil)};
 const DB={dispersao_km:[{vigencia:'2026-10',unidade:'CBA',projeto:'Rota',km_rem:999,viagens_prim:9,frota_ativa:1,arquivo:'outra'}],dispersao_placa:[],dispersao_placa_viagem:[],
-  ${semRemun ? '' : 'remun_viagem:[],'}sh_consumo_km_litro:[{vigencia:'10/2026',projeto:'ROTA - NFR',placa:'NFR1A11',km_rodado_horas_trabalhadas:1000}],
+  ${semRemun ? '' : 'remun_viagem:[],remun_mapa:[],'}sh_consumo_km_litro:[{vigencia:'10/2026',projeto:'ROTA - NFR',placa:'NFR1A11',km_rodado_horas_trabalhadas:1000}],
   sh_base:[{slug:'consumo_km_litro',carregado_em:'2026-11-18T09:00:00Z',erro:null}],
   ft_layout:${JSON.stringify(ft_layout)}, ft_linha:${JSON.stringify(ft_linha)}};
 window.__db=DB;
@@ -150,7 +150,7 @@ async function sobe(pg, arqs) {
   await pg.waitForTimeout(700);
   return pg.evaluate(() => ({
     cartoes: [...document.querySelectorAll('#res .item')].map(d => ({ classe: d.className.replace('item', '').trim(), texto: d.textContent.replace(/\s+/g, ' ').trim() })),
-    db: JSON.parse(JSON.stringify({ km: window.__db.dispersao_km, pl: window.__db.dispersao_placa, pv: window.__db.dispersao_placa_viagem, rv: window.__db.remun_viagem || null })),
+    db: JSON.parse(JSON.stringify({ km: window.__db.dispersao_km, pl: window.__db.dispersao_placa, pv: window.__db.dispersao_placa_viagem, rv: window.__db.remun_viagem || null, rm: window.__db.remun_mapa || null })),
     conf: [...document.querySelectorAll('#tabConf tbody tr')].map(tr => [...tr.children].map(td => td.textContent.trim())),
   }));
 }
@@ -182,7 +182,13 @@ console.log('1) admin · 2artd + base de CT-e juntos');
   const rvVan = (r.db.rv || []).find(c => c.unidade === 'NFR' && c.projeto === 'Van');
   af('detalhe: Van paga 88 contra 80 do FT → 2 mapas, +R$ 16', rvVan && rvVan.pago_diferente === 2 && rvVan.dif_valor === 16, JSON.stringify(rvVan));
   af('tabela de conferência na tela', r.conf.some(t => t[0] === 'NFR' && t[1] === 'Rota') && r.conf.some(t => t[0] === 'Total'), JSON.stringify(r.conf.slice(0, 2)));
+  // cada mapa gravado (remun_mapa)
+  const rm = r.db.rm || [], rec = rm.find(m => m.tipo === 'rec');
+  af('mapas um a um: 14 da frota própria (Spot e Espec. fora), sem CPF', rm.length === 14 && !rm.some(m => Object.keys(m).some(k => /cpf|motorista/i.test(k))) && /14 mapas gravados um a um/.test(r.cartoes[0].texto), rm.length + ' · ' + r.cartoes[0].texto.slice(0, 200));
+  af('mapa de recarga: previsto 15 km, FT paga 40, saída 06/10 07:00', rec && rec.km_previsto === 15 && rec.km_ft === 40 && rec.hr_sai === '2026-10-06T07:00:00' && rec.hr_entr === '2026-10-06T17:00:00' && rec.placa === 'NFR2A11' && rec.quinzena === 1, JSON.stringify(rec));
+  af('mapa da Van vai no projeto Van com o km do FT (80)', rm.filter(m => m.projeto === 'Van').length === 2 && rm.find(m => m.projeto === 'Van').km_ft === 80);
   const r2 = await sobe(pg, [ARQ_ART]);
+  af('subir de novo não duplica os mapas', (r2.db.rm || []).length === 14, (r2.db.rm || []).length);
   af('subir de novo substitui, sem duplicar', r2.db.km.filter(l => l.vigencia === '2026-10' && l.unidade === 'NFR' && l.projeto === 'Rota').length === 1
     && r2.db.pl.filter(p => p.placa === 'NFR1A11').length === 1);
   af('sem erro na página', errs.length === 0, errs.join(' | '));
@@ -202,7 +208,7 @@ console.log('3) sem a tabela remun_viagem no banco');
 {
   const { ctx, pg } = await abre({ is_admin: true }, true);
   const r = await sobe(pg, [ARQ_ART]);
-  af('grava a dispersão e avisa para rodar o SQL', r.cartoes[0].classe === 'aviso' && /remun-viagem\.sql/.test(r.cartoes[0].texto) && !!L(r.db, 'NFR', 'Rota'), r.cartoes[0].texto);
+  af('grava a dispersão e avisa para rodar o SQL', r.cartoes[0].classe === 'aviso' && /remun-viagem\.sql/.test(r.cartoes[0].texto) && /remun-mapa\.sql/.test(r.cartoes[0].texto) && !!L(r.db, 'NFR', 'Rota'), r.cartoes[0].texto);
   await ctx.close();
 }
 

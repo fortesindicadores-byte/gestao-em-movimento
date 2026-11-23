@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611181300">
+<meta name="build" content="202611231500">
 <title>Dispersão de km · Importar · BI Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="../../assets/gviz-cache.js?v=202611181300"></script>
+<script src="../../assets/gviz-cache.js?v=202611231500"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<script src="../../assets/dispersao-km.js?v=202611181300"></script>
-<script src="../../assets/remun-mapas.js?v=202611181300"></script>
+<script src="../../assets/dispersao-km.js?v=202611231500"></script>
+<script src="../../assets/remun-mapas.js?v=202611231500"></script>
 <style>
 :root{
   --fundo:#202022; --app:rgba(30,40,60,.34); --side:rgba(30,30,30,.50);
@@ -285,7 +285,16 @@ async function gravaRemun(r, arquivo){
   const np=await ins('dispersao_placa', r.placas, 'placa');
   const nv=await ins('dispersao_placa_viagem', r.viagens.map(l=>({ ...l, updated_by:EMAIL })), 'placa');
   let nc=0; if(remunOk){ try{ nc=await ins('remun_viagem', r.conf.map(c=>({ ...c, arquivo, updated_by:EMAIL })), 'tipo'); }catch(e){ remunOk=false; remunErr=e.message; } }
-  return { nk, np, nv, nc, remunOk, remunErr, vigs:[...new Set(chaves.map(c=>c[0]))] };
+  // cada mapa do 2artd (remun_mapa): sem a tabela no banco, o resto da importação vale igual e o cartão avisa
+  let nm=0, mapaOk=true, mapaErr='';
+  if(r.mapas&&r.mapas.length){
+    try{
+      for(const [v,u,p] of [...new Set(r.mapas.map(m=>m.vigencia+'|'+m.unidade+'|'+m.projeto))].map(k=>k.split('|'))){
+        const { error } = await sb.from('remun_mapa').delete().eq('vigencia',v).eq('unidade',u).eq('projeto',p); if(error) throw new Error(error.message); }
+      nm=await ins('remun_mapa', r.mapas.map(m=>({ ...m, updated_by:EMAIL })), 'id');
+    }catch(e){ mapaOk=false; mapaErr=e.message||String(e); }
+  }
+  return { nk, np, nv, nc, nm, mapaOk, mapaErr, temMapas:!!(r.mapas&&r.mapas.length), remunOk, remunErr, vigs:[...new Set(chaves.map(c=>c[0]))] };
 }
 function resumoT(r){
   const s=k=>r.linhas.reduce((a,l)=>a+(+l[k]||0),0);
@@ -308,8 +317,10 @@ async function recebeUm(f){
       if(ft.faltam.length) notas.push('tabelas do FT que não estão no banco: '+ft.faltam.join(', '));
       if(!g.remunOk) notas.push('o detalhe por viagem não gravou (rodar scripts/remun-viagem.sql): '+g.remunErr);
       if(g.nk!==r.linhas.length) notas.push(`o banco confirmou ${g.nk} de ${r.linhas.length} linhas`);
+      if(g.temMapas&&!g.mapaOk) notas.push('os mapas um a um não gravaram (rodar scripts/remun-mapa.sql): '+g.mapaErr);
+      else if(g.temMapas&&g.nm!==r.mapas.length) notas.push(`o banco confirmou ${g.nm} de ${r.mapas.length} mapas`);
       cartao(notas.length?'aviso':'ok', f.name, `2artd · <b>${vigRot(art.vig)}</b> · ${art.mapas.length.toLocaleString('pt-BR')} mapas da frota própria · `+resumoT(r)
-        +`<br>${g.np} placas gravadas`+(fora?` · fora da conta: ${esc(fora)}`:'')
+        +`<br>${g.np} placas gravadas`+(g.mapaOk&&g.nm?` · ${g.nm.toLocaleString('pt-BR')} mapas gravados um a um`:'')+(fora?` · fora da conta: ${esc(fora)}`:'')
         +(pd||sv?`<br>Pago diferente do FT: <b>${pd}</b> mapa(s), ${brl(dv)} · sem valor: <b>${sv}</b> mapa(s)`:''), notas.join(' · '));
       await carrega(); $('selVig').value=art.vig; desenha(); return;
     }
@@ -546,6 +557,6 @@ function desenhaPlacas(v){
 </script>
 <script src="../../assets/mobile.js"></script>
 <script src="../../assets/modo-tv.js?v=202610152330"></script>
-<script src="../../assets/build-check.js?v=202611181300"></script>
+<script src="../../assets/build-check.js?v=202611231500"></script>
 </body>
 </html>

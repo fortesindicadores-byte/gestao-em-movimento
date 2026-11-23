@@ -73,7 +73,8 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
     if (p.endsWith('/auth/v1/user')) return json({ id: 'u1', email: 'x@conlogsa.com.br' });
     if (p.includes('/rest/v1/fca_profiles')) return json({ is_admin: true });
     const t = p.split('/rest/v1/')[1]; if (+(u.searchParams.get('offset') || 0) > 0) return json([]);
-    const T = { sh_dre_receita: REC, sh_dre_ebitda: EBD, sh_dre_frota: FRT, dre_gerencial: DG, ft_layout: LAY, ft_linha: LIN, sh_consumo_km_litro: KML };
+    const T = { sh_dre_receita: REC, sh_dre_ebitda: EBD, sh_dre_frota: FRT, dre_gerencial: DG, ft_layout: LAY, ft_linha: LIN, sh_consumo_km_litro: KML,
+      remun_mapa_resumo: [{ vigencia: '2026-10', unidade: 'CGR', projeto: 'Rota', tipo: 'rec', mapas: 10, com_previsto: 8, km_previsto: 120, km_ft_previsto: 240, km_ft: 300 }] };
     return json(T[t] ? filtra(T[t], u.searchParams) : []);
   });
   await pg.addInitScript(t0 => { sessionStorage.setItem('gem_hub', '1'); localStorage.setItem('bi_theme', t0);
@@ -157,6 +158,8 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   await pg.click('#modo-km [data-km="comp"]');
   await pg.waitForFunction(() => [...document.querySelectorAll('#arv-km .tn-t')].some(x => x.textContent === 'Km da 1ª viagem'), null, { timeout: 5000 }).catch(() => {});
   const km = await pg.evaluate(() => Object.fromEntries([...document.querySelectorAll('#arv-km .tn')].map(n => [n.querySelector('.tn-t').textContent, n.querySelector('.tn-v').textContent])));
+  const recRows = await pg.evaluate(() => { const n = [...document.querySelectorAll('#arv-km .tn')].find(x => x.querySelector('.tn-t').textContent === 'Km de recarga'); return n ? [...n.querySelectorAll('td')].map(t => t.textContent).join('|') : ''; });
+  af('recarga: o Roadshow previu 15 km e o FT paga 30 nos mesmos 8 de 10 mapas', /Roadshow previu · por recarga\|15,0 km\|FT paga · nos mesmos mapas\|30,0 km\|Mapas com o previsto\|8 de 10/.test(recRows), recRows);
   if (um) console.log(JSON.stringify(km));
   af('dispersão +1.300 km', km['Dispersão de km'] === '+1.300 km', km['Dispersão de km']);
   af('teto 25 mil km', km['Teto da 1ª viagem (T2)'] === '25 mil km', km['Teto da 1ª viagem (T2)']);

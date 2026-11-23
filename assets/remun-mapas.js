@@ -114,6 +114,17 @@
     if (m) return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - Date.UTC(1899, 11, 30)) / 864e5);
     return null;
   };
+  // data e hora de um campo do 2artd (serial do Excel, Date ou texto dd/mm/aaaa hh:mm) → 'AAAA-MM-DDTHH:MM:SS' (hora local, sem fuso)
+  const dataHora = v => {
+    if (v == null || v === '') return null; const p2 = n => String(n).padStart(2, '0');
+    if (typeof v === 'number') { if (!(v > 20000 && v < 80000)) return null; const ms = Math.round(v * 86400) * 1000, d = new Date(Date.UTC(1899, 11, 30) + ms);
+      return d.getUTCFullYear() + '-' + p2(d.getUTCMonth() + 1) + '-' + p2(d.getUTCDate()) + 'T' + p2(d.getUTCHours()) + ':' + p2(d.getUTCMinutes()) + ':' + p2(d.getUTCSeconds()); }
+    if (v instanceof Date) return isNaN(v) ? null : v.getFullYear() + '-' + p2(v.getMonth() + 1) + '-' + p2(v.getDate()) + 'T' + p2(v.getHours()) + ':' + p2(v.getMinutes()) + ':' + p2(v.getSeconds());
+    const s = String(v).trim(); let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m) return (+m[3] < 100 ? 2000 + +m[3] : +m[3]) + '-' + p2(m[2]) + '-' + p2(m[1]) + 'T' + p2(m[4] || 0) + ':' + p2(m[5] || 0) + ':' + p2(m[6] || 0);
+    m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    return m ? m[1] + '-' + m[2] + '-' + m[3] + 'T' + (m[4] || '00') + ':' + (m[5] || '00') + ':' + (m[6] || '00') : null;
+  };
   const dataDeSerial = n => { const d = new Date(Date.UTC(1899, 11, 30) + n * 864e5); return { a: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate() }; };
 
   /* 2artd → mapas da frota própria + o que ficou fora */
@@ -125,6 +136,7 @@
     if (need.some(c => !(c in L.ix))) return null;
     const g = c => L.ix[c];
     const mapas = [], fora = {}; let vig = null;
+    const opc = (r, c) => { if (!(c in L.ix)) return null; const v = r[L.ix[c]]; if (v == null || v === '') return null; const n = num(v); return isFinite(n) ? n : null; };
     L.rows.forEach(r => {
       const vq = vigFT(r[g('Vigência')]); if (!vq) return; vig = vig || vq.vig;
       const frota = NK(r[g('Frota')]), carga = NK(r[g('Carga Atual')]);
@@ -136,7 +148,10 @@
         entrega: NK(r[g('Entrega')]) === 'AS' ? 'AS' : 'ROTA', frota, carga, tipo,
         placa: merc(r[g('Placa')]), placa_origem: String(r[g('Placa')] || '').trim(), mapa: r[g('Mapa')],
         virado: tipo !== 'not' && sai != null && ent != null && ent > sai,
-        valor: num(r[g('CustoVariavel')]), faturado: num(r[g('ValorFaturado')]) });
+        valor: num(r[g('CustoVariavel')]), faturado: num(r[g('ValorFaturado')]),
+        // o mapa em si (remun_mapa): horários, hodômetros digitados e o km que o Roadshow previu
+        hrSai: dataHora(r[g('HrSai')]), hrEntr: dataHora(r[g('HrEntr')]), kmSai: opc(r, 'KmSai'), kmEntr: opc(r, 'KmEntr'),
+        kmPrev: opc(r, 'KmPrevistoRoad'), kmLaco: opc(r, 'KmLaco'), kmDesl: opc(r, 'KmDeslocamento') });
     });
     return { vig, mapas, fora };
   }
@@ -180,7 +195,7 @@
 
   /* ── a conta: T2 ── */
   function calculaT2(art, ft, arquivo) {
-    const acc = new Map(), placas = new Map(), viag = new Map(), avisos = [], conf = new Map(), semFT = new Map();
+    const acc = new Map(), placas = new Map(), viag = new Map(), avisos = [], conf = new Map(), semFT = new Map(), mapas = [];
     art.mapas.filter(x => x.vig >= INICIO).forEach(x => {
       let op = ft.vans.has(x.placa) ? 'VAN' : x.entrega;
       if (op === 'AS' && AS_COMO_ROTA.includes(x.unidade)) op = 'ROTA';
@@ -216,6 +231,11 @@
       c.km_rem += kk; c.valor_pago += x.valor;
       if (val && val[x.tipo] != null) { c.valor_ft += val[x.tipo]; if (Math.abs(x.valor - val[x.tipo]) > 0.02) { c.pago_diferente++; c.dif_valor += x.valor - val[x.tipo]; } }
       conf.set(kc, c);
+      // cada mapa (remun_mapa): é o que deixa medir depois o rodado por tipo de viagem
+      mapas.push({ vigencia: x.vig, quinzena: x.q, unidade: x.unidade, projeto, tipo: x.tipo, carga: x.carga, frota: x.frota, placa: x.placa || null, placa_origem: x.placa_origem || null,
+        mapa: x.mapa != null && x.mapa !== '' ? String(x.mapa) : null, hr_sai: x.hrSai || null, hr_entr: x.hrEntr || null, km_sai: x.kmSai != null ? x.kmSai : null, km_entr: x.kmEntr != null ? x.kmEntr : null,
+        km_previsto: x.kmPrev != null ? r2(x.kmPrev) : null, km_laco: x.kmLaco != null ? r2(x.kmLaco) : null, km_desloc: x.kmDesl != null ? r2(x.kmDesl) : null,
+        km_ft: km != null ? r2(km) : null, valor_pago: r2(x.valor), valor_ft: val && val[x.tipo] != null ? r2(val[x.tipo]) : null, virado: !!x.virado, arquivo });
     });
     // frota ativa: a do FT na 2ª quinzena (a 1ª, se só ela existir)
     const linhasKm = [...acc.values()].map(a => {
@@ -227,7 +247,7 @@
       return o;
     });
     semFT.forEach((n, k) => avisos.push(`${n} mapa(s) de ${k.split('|').slice(0, 2).join(' ')} na ${k.split('|')[2]}ª quinzena sem o parâmetro de km no FT (contaram 0 km)`));
-    return { linhas: linhasKm, placas: [...placas.values()].map(p => ({ ...p, km_rem: r2(p.km_rem) })), viagens: [...viag.values()],
+    return { linhas: linhasKm, placas: [...placas.values()].map(p => ({ ...p, km_rem: r2(p.km_rem) })), viagens: [...viag.values()], mapas,
       conf: [...conf.values()].map(c => ({ ...c, km_rem: r2(c.km_rem), valor_pago: r2(c.valor_pago), valor_ft: r2(c.valor_ft), dif_valor: r2(c.dif_valor),
         km_viagem: c.km_viagem != null ? r2(c.km_viagem) : null, valor_viagem_ft: c.valor_viagem_ft != null ? r2(c.valor_viagem_ft) : null })),
       avisos };
