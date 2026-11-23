@@ -60,6 +60,22 @@ const GEROT = `window.GerotBase={FIL2COD:{'CDD RIO DE JANEIRO':'CGR','CDD GOIANI
   {field:'disp',unit:'CDD RIO DE JANEIRO',vig:'10/2026',real:96,meta:95},{field:'mttr',unit:'CDD RIO DE JANEIRO',vig:'10/2026',real:36000,meta:28800},
   {field:'pneus',unit:'CDD RIO DE JANEIRO',vig:'10/2026',real:97,meta:100}]};`;
 
+// ── Seara (Anhanguera): DRE em "DISTRIBUIÇÃO URBANA - ANG" e as abas da Seara pelo gviz ──
+const SEA_REC = [dre('2026-10-01', 'DISTRIBUIÇÃO URBANA - ANG', 500000, 500000)], SEA_EBD = [dre('2026-10-01', 'DISTRIBUIÇÃO URBANA - ANG', 100000, 100000)];
+const SEA_FRT = [fr('DISTRIBUIÇÃO URBANA - ANG', 'Combustíveis Veículos e Equipamentos', -12000, -11000, -10000), fr('DISTRIBUIÇÃO URBANA - ANG', 'Manutenção de Veículos e Equipamentos', -3000, -2500, -2500),
+  fr('DISTRIBUIÇÃO URBANA - ANG', 'Pneus Novos', -800, -1000, -1000)];
+const gv = (cols, rows) => ({ status: 'ok', table: { cols: cols.map((l, i) => ({ id: 'c' + i, label: l })), rows: rows.map(r => ({ c: r.map(v => v == null ? null : { v }) })) } });
+const BREM_COLS = ['Vigencia', 'CnpjUnidade', 'NomeUnidade', 'Placa', 'Chassi', 'ModeloVeiculo', 'CapacidadeCarga', 'TipoEquipamento', 'EmpresaLocadora', 'Aluguel', 'Ravex', 'Manobrista', 'Custo Fixo', 'TotalReaisPorKm', 'ReaisPorKm', 'KmPorLitro',
+  'TipoCombustivel', 'PrecoDiesel', 'PrecoArla', 'ReaisPorKmDiesel', 'ReaisPorKmArla', 'ReaisPorKmManuteção', 'TipoPneu', 'QuantidadePneus', 'Preco', 'QuantidadeRecapagens', 'PrecoRecapagem', 'VidaUtilPneu', 'VidaUtilRecapagem',
+  'ReaisPorKmPneu', 'ReaisPorKmRecapagem', 'ReaisPorKmLubrificante', 'QuantidadeLavagens', 'PrecoLavagem', 'KmLavagem', 'ReaisPorKmLavagem'];
+const brem = placa => { const r = BREM_COLS.map(() => null); r[0] = 'Date(2026,9,1)'; r[3] = placa; r[5] = 'VW 11.180'; r[15] = 4; r[17] = 7; r[19] = 1.75; r[20] = 0.05; r[21] = 0.40; r[29] = 0.10; r[30] = 0.05; r[31] = 0.02; r[35] = 0.03; return r; };
+const comb = (placa, km, lit, tot) => [null, 'CONLOG', 'SEARA', 'ANHANGUERA', placa, 'outubro', 2026, 'VW 11.180', 'DIESEL S10', 'TOCO', km, lit, tot / lit, tot];
+const seaGviz = u => { const q = new URL(u).searchParams, tq = q.get('tq') || '';
+  if (/sum\(C\)/.test(tq)) return gv(['Vigência', 'sum CT-e'], [['10/2026', 50]]);
+  if (q.get('sheet') === 'Remunerado') return gv(['Vigência', 'Placa', 'KM'], [['10/2026', 'SEA1A11', 3000], ['10/2026', 'SEA2B22', 2000]]);
+  if (q.get('gid') === '1982300845') return gv(['Pode começa', 'Empresa', 'Projeto', 'Unidade', 'Placa', 'Mês Inicio OS', 'Ano Inicio OS', 'Modelo', 'Tipo Combustivel', 'Tipo Veiculo', 'KM Rodado / Horas trabalhadas', 'QTD Total de Litros', 'Valor Médio Litro', 'TOTAS R$'],
+    [comb('SEA1A11', 3300, 900, 6300), comb('SEA2B22', 2200, 500, 3400)]);
+  return gv(BREM_COLS, [brem('SEA1A11'), brem('SEA2B22')]); };
 const filtraBase = (rows, q) => rows.filter(r => [...q.entries()].every(([k, v]) => {
   if (['select', 'order', 'offset', 'limit'].includes(k) || !(k in (rows[0] || {})) && !['ano'].includes(k)) return true;
   const val = String(r[k] ?? ''); const [op, ...rest] = v.split('.'); const arg = rest.join('.');
@@ -69,7 +85,7 @@ const filtra = (rows, q) => filtraBase(rows, q);
 
 const nav = await chromium.launch({ executablePath: process.env.PW_CHROME || '/opt/pw-browsers/chromium' });
 let ok = 0, fa = 0; const af = (n, c, d = '') => { if (c) ok++; else { fa++; console.log('FALHA', n, d); } };
-for (const [w, h, tema] of [[1366, 768, 'dark'], [1920, 1080, 'light']]) {
+for (const [w, h, tema, sea] of [[1366, 768, 'dark'], [1920, 1080, 'light'], [1600, 900, 'dark', true]]) {
   const ctx = await nav.newContext({ viewport: { width: w, height: h }, serviceWorkers: 'block' }); const pg = await ctx.newPage();
   const errs = []; pg.on('pageerror', e => errs.push(e.message + ' @ ' + String(e.stack).split('\n').slice(1, 3).join(' ')));
   await pg.route(/fonts\.g/, r => r.fulfill({ status: 200, body: '', contentType: 'text/css' }));
@@ -78,13 +94,14 @@ for (const [w, h, tema] of [[1366, 768, 'dark'], [1920, 1080, 'light']]) {
   await pg.route(/assets\/(gviz-cache|build-check)\.js/, r => r.fulfill({ status: 200, body: '', contentType: 'application/javascript' }));
   await pg.route(/assets\/gerot-base\.js/, r => r.fulfill({ status: 200, body: GEROT, contentType: 'application/javascript' }));
   await pg.route(/api\.bcb\.gov\.br/, r => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify([{ data: '01/10/2026', valor: '4,50' }]) }));
-  await pg.route(/docs\.google\.com/, r => r.fulfill({ status: 200, contentType: 'application/javascript', body: `google.visualization.Query.setResponse(${JSON.stringify(ABA)})` }));
+  await pg.route(/docs\.google\.com/, r => { const u = r.request().url(), eSea = /1Rlwc0MZiupQI38gSN8VyBq/.test(u);
+    r.fulfill({ status: 200, contentType: 'application/javascript', body: `google.visualization.Query.setResponse(${JSON.stringify(eSea ? (sea ? seaGviz(u) : gv([], [])) : ABA)})` }); });
   await pg.route(/supabase\.co/, async r => {
     const u = new URL(r.request().url()), p = u.pathname, json = (b, s = 200) => r.fulfill({ status: s, contentType: 'application/json', body: JSON.stringify(b) });
     if (p.endsWith('/auth/v1/user')) return json({ id: 'u1', email: 'x@conlogsa.com.br' });
     if (p.includes('/rest/v1/fca_profiles')) return json({ is_admin: true });
     const t = p.split('/rest/v1/')[1]; if (+(u.searchParams.get('offset') || 0) > 0) return json([]);
-    const T = { sh_dre_receita: REC, sh_dre_ebitda: EBD, sh_dre_frota: FRT, dre_gerencial: DG, ft_layout: LAY, ft_linha: LIN, sh_consumo_km_litro: KML,
+    const T = { sh_dre_receita: sea ? REC.concat(SEA_REC) : REC, sh_dre_ebitda: sea ? EBD.concat(SEA_EBD) : EBD, sh_dre_frota: sea ? FRT.concat(SEA_FRT) : FRT, dre_gerencial: DG, ft_layout: LAY, ft_linha: LIN, sh_consumo_km_litro: KML,
       sh_consumo_rs_litro: RSL, ft_rem_mes: FTM, carta_custos: CARTA, comb_anomalia: ANOM };
     return json(T[t] ? filtra(T[t], u.searchParams) : []);
   });
@@ -100,6 +117,37 @@ for (const [w, h, tema] of [[1366, 768, 'dark'], [1920, 1080, 'light']]) {
   const nos = () => pg.evaluate(() => Object.fromEntries([...document.querySelectorAll('#arv-custo .tn')].map(n => [n._no.id || n._no.t, { t: n._no.t, v: n.querySelector('.tn-v').textContent, cls: n.className,
     g: [...n.querySelectorAll('.tn-g b')].map(b => b.textContent), i: (n.querySelector('.tn-i') || {}).textContent || '', rows: [...n.querySelectorAll('td')].map(t => t.textContent).join('|'), s: (n.querySelector('.tn-s') || {}).textContent || '' }])));
   let N = await nos(); if (um) console.log(JSON.stringify(Object.keys(N)));
+  if (sea) {
+    // Anhanguera: entra no custo e no km, fica fora do ROIC
+    af('Seara: o custo total soma a Anhanguera (46,1 + 15,8 = R$ 62 mil)', N.tot && N.tot.v === 'R$ 62 mil' && /Pago FT e Seara/.test(N.tot.rows), JSON.stringify(N.tot));
+    af('Seara: ROIC não muda com a Seara (sem capital no FT)', await pg.evaluate(() => { const a = roicDe(['2026-10'], () => true), b = roicDe(['2026-10'], op => op !== 'SEA'); return a.rec === b.rec && a.cap === b.cap && a.rec === 4400000; }));
+    await pg.evaluate(() => { const w = document.getElementById('ms-op'); w._sel.clear(); w._sel.add('SEA'); w._render(''); render(); }); await espera(); await pg.waitForTimeout(400);
+    await abre(['p:C', 'c:COMB', 'c:COMB|rk', 'c:COMB|rk|rsl', 'c:COMB|rk|kml', 'c:COMB|km', 'c:COMB|km|rem', 'p:M', 'c:MANV', 'c:MANV|rk', 'p:P']); await espera(); await pg.waitForTimeout(500); N = await nos();
+    if (process.env.VER) console.log(JSON.stringify(Object.fromEntries(Object.entries(N).map(([k, x]) => [k, [x.v, x.g.join(' '), x.i, x.rows]])), null, 1));
+    af('Seara só: custo R$ 16 mil, rem R$ 14 mil, pago pela tabela R$ 12.000', N.tot && N.tot.v === 'R$ 16 mil' && /Pago Seara \(tabela\)\|R\$ 12 mil/.test(N.tot.rows), JSON.stringify(N.tot));
+    af('Seara: diesel R$ 12 mil contra R$ 10 mil e pago R$ 9.000', N['c:COMB'] && N['c:COMB'].v === 'R$ 12 mil' && /Pago Seara \(tabela\)\|R\$ 9\.000/.test(N['c:COMB'].rows), JSON.stringify(N['c:COMB']));
+    af('Seara: km 5.500 rodados contra 5.000 remunerados', N['c:COMB|km'] && /5\.500/.test(N['c:COMB|km'].v) && N['c:COMB|km'].g[0] === '5.000', JSON.stringify(N['c:COMB|km']));
+    af('Seara: o km remunerado abre nos CT-es (50 CT-es, 100 km cada)', N['c:COMB|km|sea'] && /CT-es\|50\|Km por CT-e\|100,0/.test(N['c:COMB|km|sea'].rows), JSON.stringify(N['c:COMB|km|sea']));
+    const sk = await pg.evaluate(() => { const g = i => [...document.querySelectorAll('#arv-custo .tn')].find(x => x._no.id === i)._no.g.imp; return g('c:COMB|km') + g('c:COMB|rk'); });
+    af('Seara: volume + taxa = ▲ do diesel (−2.000)', Math.abs(sk + 2000) < 0.01, sk);
+    const B = await pg.evaluate(() => ctCombAgg(['2026-10'], (op, u) => op === 'SEA'));
+    af('Seara: Km/L 3,93 contra 4,00 e R$/L 6,93 contra 7,00', B && Math.abs(B.kmLReal - 5500 / 1400) < 1e-6 && Math.abs(B.kmLRem - 4) < 1e-6 && Math.abs(B.rsLRem - 7) < 1e-6 && Math.abs(B.rsLReal - 9700 / 1400) < 1e-6, JSON.stringify(B));
+    af('Seara: preço −100 e eficiência +173 (25 L a R$ 6,93)', B && Math.abs(B.preco + 100) < 0.01 && Math.abs(B.efic - 25 * 9700 / 1400) < 0.01, JSON.stringify(B));
+    af('Seara: manutenção com o R$/km da tabela (0,420)', N['c:MANV|rk|ftp'] && /tabela da Seara/.test(N['c:MANV|rk|ftp'].t) && N['c:MANV|rk|ftp'].v === 'R$ 0,420', JSON.stringify(N['c:MANV|rk|ftp']));
+    af('Seara: pneus com o pago da tabela (R$ 750)', N['p:P'] && /Pago Seara \(tabela\)\|R\$ 750/.test(N['p:P'].rows), JSON.stringify(N['p:P']));
+    // até o ROIC a Seara sai
+    await pg.evaluate(() => { const w = document.getElementById('ms-op'); w._sel.clear(); w._render(''); render(); }); await espera();
+    await pg.click('#ct-roic'); await pg.waitForTimeout(500); N = await nos();
+    af('Seara: até o ROIC o custo volta a R$ 46 mil e o subtítulo avisa', N.tot && N.tot.v === 'R$ 46 mil' && /Seara fora do caminho até o ROIC/.test(await pg.evaluate(() => document.getElementById('titSub').textContent)), JSON.stringify(N.tot));
+    await pg.click('#ct-roic'); await pg.waitForTimeout(300);
+    // árvore de km: a Seara entra com os CT-es
+    await pg.evaluate(() => setVw('km')); await pg.waitForFunction(() => document.querySelectorAll('#arv-km .tn').length > 3, null, { timeout: 15000 }).catch(() => {});
+    const km = await pg.evaluate(() => Object.fromEntries([...document.querySelectorAll('#arv-km .tn')].map(n => [n._no.t, n.querySelector('.tn-v').textContent])));
+    af('Seara na Árvore de Km: 5.000 km dos CT-es e a dispersão soma a Anhanguera', km['Seara · km dos CT-es'] === '5.000 km' && /2\.400|\+2\.400/.test(km['Dispersão de km']), JSON.stringify(km));
+    af('Seara: sem erro na página', !errs.length, errs.join(' | '));
+    if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'custo-seara.png') });
+    await ctx.close(); continue;
+  }
   af('abre no custo total com os 4 pacotes', N.tot && N['p:C'] && N['p:M'] && N['p:P'] && N['p:O'] && Object.keys(N).length === 5, JSON.stringify(Object.keys(N)));
   af('custo total R$ 46 mil contra o remunerado R$ 44 mil (▲ +2.600)', N.tot && N.tot.v === 'R$ 46 mil' && N.tot.g[0] === 'R$ 44 mil' && N.tot.g[1] === '+R$ 2.600' && /gap\b/.test(N.tot.cls), JSON.stringify(N.tot));
   const ftTot = await pg.evaluate(() => ctFT(['2026-10'], () => true, ['comb', 'manut', 'carroc', 'pneu', 'lavagem_var', 'lavagem', 'seguro', 'ipva'])); if (um) console.log('FT', ftTot);

@@ -73,6 +73,19 @@ const out = await pg.evaluate(async (ANO) => {
   L.push('', '== chaves do DRE sem capital no ano (op|uni : EBIT/mês) ==');
   const k = {}; Object.keys(DRE).forEach(x => { const [v, op, uni] = x.split('|'); if (v.startsWith(ANO)) k[op + '|' + uni] = 1; });
   Object.keys(k).sort().forEach(x => { const [o, u] = x.split('|'); const R = roicDe(vigs, (op, uni) => op === o && uni === u); if (!R.cap) L.push('  ' + x + ' : ' + mi(R.ebit / R.n)); });
+  // Seara (Anhanguera): o que entra na Árvore do Custo e na Árvore de Km
+  L.push('', '== Seara · Anhanguera por mês ==');
+  try { await carregaKm(); const S = SEARA, fs = (op, u) => op === 'SEA';
+    if (!S) L.push('  SEARA não carregou');
+    else vigs.forEach(v => { const m = S.mes[v], C = ctCusto([v], fs, null), k = KM.find(r => r.vig === v && r.op === 'SEA');
+      const ft = ctFT([v], fs, ['comb', 'manut', 'pneu', 'lavagem_var']), B = ctCombAgg([v], fs);
+      const semTab = S.pl.filter(x => x.vig === v && !(x.kmL > 0)).length, nPl = S.pl.filter(x => x.vig === v).length;
+      L.push(`${v}  km rem ${m ? Math.round(m.rem) : '—'} · real ${m ? Math.round(m.real) : '—'} · CT-e ${m ? Math.round(m.cte) : '—'} · placas rem ${m ? m.placas.size : 0} · ${k ? 'ENTRA' : 'fora (sem rem ou sem real)'}`
+        + ` | custo real ${Math.round(C.real)} rem ${Math.round(C.rem)} orç ${Math.round(C.orc)} · pago tabela ${ft == null ? '—' : Math.round(ft)}`
+        + ` | Km/L ${B && B.kmLReal ? B.kmLReal.toFixed(2) : '—'} × ${B && B.kmLRem ? B.kmLRem.toFixed(2) : '—'} · R$/L ${B && B.rsLReal ? B.rsLReal.toFixed(2) : '—'} × ${B && B.rsLRem ? B.rsLRem.toFixed(2) : '—'} · placas ${nPl} (${semTab} sem tabela)`); });
+    const cs = {}; Object.entries(FRC).forEach(([k, o]) => { if (!/\|SEA\|ANG$/.test(k) || !k.startsWith(ANO)) return; Object.entries(o).forEach(([c, x]) => { const d = cs[c] = cs[c] || { real: 0, rem: 0 }; d.real += x.real; d.rem += x.rem; }); });
+    L.push('  contas no ano (real · rem): ' + Object.entries(cs).sort((a, b) => b[1].real - a[1].real).map(([c, x]) => `${ctDef(c).nome} ${Math.round(x.real)} · ${Math.round(x.rem)}`).join(' | '));
+  } catch (e) { L.push('  Seara ERRO ' + (e.message || e)); }
   L.push('', 'filtros salvos no navegador: n/a (check limpo)');
   return L.join('\n');
 }, process.env.ROIC_ANO || '2026');

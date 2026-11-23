@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611211700">
+<meta name="build" content="202611231400">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -596,9 +596,11 @@ const vigTxt=v=>{ const [a,m]=v.split('-'); return MES[+m-1]+'/'+a.slice(2); };
 const vigRot=v=>vigTxt(v).toUpperCase();
 
 /* projeto: Rota (com UDC), Van, Auto Serviço, Empurrada, Insumos, Armazém */
-const OPS={ROTA:'Rota',VAN:'Van',AS:'Auto Serviço',EMP:'Empurrada',INS:'Insumos',ARM:'Armazém'};
-const OP_ORD=['ROTA','VAN','AS','EMP','INS','ARM'];
-const UNIS=['BLC','CBA','CGR','FLP','GNA','GRL','MCC','NFR','PIR','PLT','RON'];
+const OPS={ROTA:'Rota',VAN:'Van',AS:'Auto Serviço',EMP:'Empurrada',INS:'Insumos',ARM:'Armazém',SEA:'Seara'};
+const OP_ORD=['ROTA','VAN','AS','EMP','INS','ARM','SEA'];
+const UNIS=['ANG','BLC','CBA','CGR','FLP','GNA','GRL','MCC','NFR','PIR','PLT','RON'];
+// a Seara (Anhanguera) entra no custo e no km; o ROIC fica sem ela, porque o Freightech não tem o capital da frota dela
+const OP_ROIC=OP_ORD.filter(o=>o!=='SEA'), UNIS_ROIC=UNIS.filter(u=>u!=='ANG');
 const IR=0.34;                       // IR + CS teóricos (o DRE do ERP não tem a linha)
 const MAPAS_MES=25;                  // mapas por caminhão ativo no mês (km por mapa = km mensal ÷ 25)
 
@@ -606,8 +608,8 @@ const MAPAS_MES=25;                  // mapas por caminhão ativo no mês (km po
 function opUni(s){
   s=nu(s).replace(/\s*\(INATIVO\)\s*$/,''); const i=s.lastIndexOf(' - '); if(i<0) return null;
   const p=s.slice(0,i).trim(); let u=s.slice(i+3).trim(); if(u==='GOI') u='GNA';
-  const op=/^(ROTA|UDC)$/.test(p)?'ROTA':/^(ROTA \(VAN\)|VAN)$/.test(p)?'VAN':p==='AUTO SERVICO'?'AS':/^EMPURRADA/.test(p)?'EMP':p==='INSUMOS'?'INS':p==='APOIO'?'ARM':null;
-  return op&&UNIS.includes(u)?{op,uni:u}:null;
+  const op=/^(ROTA|UDC)$/.test(p)?'ROTA':/^(ROTA \(VAN\)|VAN)$/.test(p)?'VAN':p==='AUTO SERVICO'?'AS':/^EMPURRADA/.test(p)?'EMP':p==='INSUMOS'?'INS':p==='APOIO'?'ARM':p==='DISTRIBUICAO URBANA'&&u==='ANG'?'SEA':null;
+  return op&&UNIS.includes(u)&&(op==='SEA')===(u==='ANG')?{op,uni:u}:null;
 }
 
 /* ── filtros ── */
@@ -744,7 +746,8 @@ function capMes(vig){
    (remunerado ou orçado do DRE) ao lado do realizado em cada linha ── */
 let CMP=(()=>{ try{ return localStorage.getItem('arvores_cmp')==='orc'?'orc':'rem'; }catch(e){ return 'rem'; } })();
 const CMP_ROT=()=>CMP==='orc'?'Orç.':'Rem.', CMP_NOME=()=>CMP==='orc'?'orçado':'remunerado';
-function roicDe(vigs,filtro){
+function roicDe(vigs,filtro0){
+  const filtro=(op,uni)=>op!=='SEA'&&filtro0(op,uni);      // a Seara não tem capital no FT: fora do ROIC
   const n=vigs.length, ref=CMP==='orc'?'Orc':'Rem', rf=CMP==='orc'?'orc':'rem';
   const R={rec:0,recRef:0,recOrc:0,recRem:0,ebd:0,ebdRef:0,ebdOrc:0,ebdRem:0,dep:0,depRef:0,depSem:false,depEst:0,mesesEst:[],cap:0,bru:0,par:0,qtd:0,qtdAt:0,depFT:0,tipos:{},fr:{}};
   ['C','M','P','O'].forEach(k=>R.fr[k]={real:0,ref:0});
@@ -986,7 +989,7 @@ async function renderROIC(){
   set('k-par',fmtR(R.par)); set('k-par-m',`${fmtP(R.cap?R.par/R.cap:null)} do capital · ${fmtN(np)} ${np===1?'parado':'parados'}`);
   // tabela por operação × unidade
   const linhas=[];
-  OP_ORD.forEach(op=>UNIS.forEach(uni=>{ if(!passa(op,uni)) return; const r=roicDe(vigs,(o,u)=>o===op&&u===uni); if(!r.rec&&!r.cap&&!r.ebd) return; linhas.push({op,uni,r}); }));
+  OP_ROIC.forEach(op=>UNIS_ROIC.forEach(uni=>{ if(!passa(op,uni)) return; const r=roicDe(vigs,(o,u)=>o===op&&u===uni); if(!r.rec&&!r.cap&&!r.ebd) return; linhas.push({op,uni,r}); }));
   linhas.sort((a,b)=>(b.r.roic??-1e9)-(a.r.roic??-1e9));
   const td=(v,c)=>`<td class="num ${c||''}">${v}</td>`;
   const V=v=>fmtR(v).replace('R$ ','');
@@ -1054,9 +1057,9 @@ function abreRoic(id){ if(!id||!ROIC_CTX) return; AB_KIND='roic'; AB_N=id; if(AB
   $('ab-q').innerHTML=QUEBRAS.filter(q=>q[0]!=='placa').map(q=>`<button class="dimb${AB_Q===q[0]?' on':''}" data-q="${q[0]}">${q[1]}</button>`).join('');
   const grupos=[];
   if(AB_Q==='mes') vigs.forEach(v=>grupos.push({lab:[vigRot(v)],k:v,R:roicDe([v],(o,u)=>passa(o,u))}));
-  else if(AB_Q==='uni') UNIS.forEach(u=>grupos.push({lab:[u],R:roicDe(vigs,(o,uu)=>uu===u&&passa(o,uu))}));
-  else if(AB_Q==='proj') OP_ORD.forEach(op=>grupos.push({lab:[OPS[op]],R:roicDe(vigs,(o,u)=>o===op&&passa(o,u))}));
-  else OP_ORD.forEach(op=>UNIS.forEach(u=>{ if(passa(op,u)) grupos.push({lab:[u,OPS[op]],R:roicDe(vigs,(o,uu)=>o===op&&uu===u)}); }));
+  else if(AB_Q==='uni') UNIS_ROIC.forEach(u=>grupos.push({lab:[u],R:roicDe(vigs,(o,uu)=>uu===u&&passa(o,uu))}));
+  else if(AB_Q==='proj') OP_ROIC.forEach(op=>grupos.push({lab:[OPS[op]],R:roicDe(vigs,(o,u)=>o===op&&passa(o,u))}));
+  else OP_ROIC.forEach(op=>UNIS_ROIC.forEach(u=>{ if(passa(op,u)) grupos.push({lab:[u,OPS[op]],R:roicDe(vigs,(o,uu)=>o===op&&uu===u)}); }));
   const G=grupos.filter(x=>x.R.rec||x.R.cap||x.R.ebd||x.R.frReal);
   const hl=AB_Q==='up'?['Unidade','Projeto']:[AB_Q==='uni'?'Unidade':AB_Q==='proj'?'Projeto':'Mês'];
   let cols;
@@ -1086,6 +1089,63 @@ function kmlOU(s){ s=nu(s).replace(/\s*\(INATIVO\)\s*$/,''); const i=s.lastIndex
   const p=s.slice(0,i).trim(); let u=s.slice(i+3).trim(); if(u==='GOI') u='GNA'; const op=kmOp(p); return op&&UNIS.includes(u)?{op,uni:u,proj:PROJ_FT[p]||p}:null; }
 function vigCel(c){ if(!c) return ''; const v=c.v; let m=String(v==null?'':v).match(/Date\((\d{4}),(\d{1,2})/); if(m) return m[1]+'-'+String(+m[2]+1).padStart(2,'0');
   m=String(c.f||v||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); if(m) return m[3]+'-'+m[2].padStart(2,'0'); m=String(c.f||v||'').match(/^(\d{2})\/(\d{4})$/); return m?m[2]+'-'+m[1]:''; }
+/* ══ SEARA (Anhanguera · Distribuição Urbana) ══
+   Não está no Freightech nem na Dispersão de km. O km remunerado é o da aba Remunerado (por placa e mês),
+   o km rodado, os litros e o R$ saem da aba Combustível (ERP) e o que a Seara paga por km vem da Base
+   Remunerado (R$/km de diesel, Arla, manutenção, pneu, recapagem, lubrificante e lavagem; Km/L e preço do
+   diesel por placa). São as mesmas leituras do Painel KM · Seara e da Árvore da Seara (o shim serve do banco).
+   Mês sem a aba Remunerado não entra. */
+const SEARA_ID='1Rlwc0MZiupQI38gSN8VyBq_zMADgX9R_ZbfygNP-OXE';
+let SEARA=null, SEARA_P=null;
+async function gvizT(id,o){
+  const p=['tqx=out:json']; if(o.sheet) p.push('sheet='+encodeURIComponent(o.sheet)); if(o.gid!=null) p.push('gid='+o.gid); if(o.tq) p.push('tq='+encodeURIComponent(o.tq)); if(o.headers) p.push('headers='+o.headers);
+  const txt=await (await fetch(`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?${p.join('&')}`)).text();
+  const m=txt.match(/setResponse\(([\s\S]*)\)\s*;?\s*$/)||txt.match(/^[\s\S]*?\(([\s\S]*)\);?\s*$/); if(!m) throw new Error('resposta gviz inesperada');
+  const j=JSON.parse(m[1]); if(j.status&&j.status!=='ok') throw new Error('gviz: '+((j.errors&&j.errors[0]&&j.errors[0].message)||j.status));
+  return {cols:(j.table.cols||[]).map(c=>String((c&&(c.label||c.id))||'')),rows:(j.table.rows||[]).map(r=>(r.c||[]).map(c=>c?c.v:null))}; }
+const vigQq=v=>{ const s=String(v==null?'':v).trim(); let m=s.match(/Date\((\d{4}),(\d{1,2})/); if(m) return m[1]+'-'+String(+m[2]+1).padStart(2,'0');
+  m=s.match(/^(\d{1,2})\/(\d{4})$/); if(m) return m[2]+'-'+m[1].padStart(2,'0'); m=s.match(/^(\d{4})-(\d{2})/); if(m) return m[1]+'-'+m[2];
+  m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); return m?m[3]+'-'+m[2].padStart(2,'0'):''; };
+const vigAntes=v=>{ const [a,m]=v.split('-').map(Number); return m===1?(a-1)+'-12':a+'-'+String(m-1).padStart(2,'0'); };
+function carregaSeara(){
+  if(SEARA_P) return SEARA_P;
+  SEARA_P=(async()=>{
+    const D=window.DispersaoKm, merc=D&&D.merc?D.merc:(x=>String(x||'').toUpperCase().replace(/[^A-Z0-9]/g,'')), N=x=>{ const v=typeof x==='number'?x:parseFloat(String(x==null?'':x).replace(',','.')); return isFinite(v)?v:0; };
+    const [rem,comb,cte,brem]=await Promise.all([
+      gvizT(SEARA_ID,{sheet:'Remunerado',tq:'select A, B, D',headers:'1'}),
+      gvizT(SEARA_ID,{gid:'1982300845',headers:'1'}),
+      gvizT(SEARA_ID,{sheet:'Remunerado',tq:'select A, sum(C) group by A'}).catch(e=>{ console.warn('Seara: CT-e por mês indisponível',e); return null; }),
+      gvizT(SEARA_ID,{gid:'0',headers:'1'}).catch(e=>{ console.warn('Seara: Base Remunerado indisponível (sem Km/L, preço e R$/km da tabela)',e); return null; })]);
+    const mes={}, M=v=>mes[v]=mes[v]||{rem:0,real:0,cte:0,lit:0,tot:0,placas:new Set()};
+    const remPl={}; rem.rows.forEach(r=>{ const v=vigQq(r[0]), p=merc(r[1]), km=N(r[2]); if(!v||!p||!(km>0)) return; remPl[p+'|'+v]=(remPl[p+'|'+v]||0)+km; const o=M(v); o.rem+=km; o.placas.add(p); });
+    if(cte) cte.rows.forEach(r=>{ const v=vigQq(r[0]); if(v&&mes[v]) mes[v].cte+=N(r[1]); });
+    // Base Remunerado: colunas pelo NOME (reserva: a posição do layout largo)
+    const bench={};
+    if(brem){ const bc=brem.cols.map(c=>nu(c).replace(/\s/g,'')), bi=(a,d)=>{ const i=bc.indexOf(a); return i>=0?i:d; };
+      const iV=bi('VIGENCIA',0), iP=bi('PLACA',3), iK=bi('KMPORLITRO',15), iPr=bi('PRECODIESEL',17), iD=bi('REAISPORKMDIESEL',19), iA=bi('REAISPORKMARLA',20), iM=bi('REAISPORKMMANUTECAO',21),
+        iPn=bi('REAISPORKMPNEU',29), iRc=bi('REAISPORKMRECAPAGEM',30), iLb=bi('REAISPORKMLUBRIFICANTE',31), iLv=bi('REAISPORKMLAVAGEM',35);
+      brem.rows.forEach(r=>{ const v=vigQq(r[iV]), p=merc(r[iP]); if(!v||!p) return;
+        // lubrificante entra com a manutenção (no FT da Ambev ele também não é componente à parte)
+        bench[p+'|'+v]={kmL:N(r[iK]),pRem:N(r[iPr]),comb:N(r[iD])+N(r[iA]),manut:N(r[iM])+N(r[iLb]),pneu:N(r[iPn])+N(r[iRc]),lavagem_var:N(r[iLv])}; }); }
+    // placa sem a tabela no mês usa a do mês anterior da própria placa
+    const benchDe=(p,v)=>bench[p+'|'+v]||bench[p+'|'+vigAntes(v)]||null;
+    // aba Combustível (E placa · F mês · G ano · H modelo · K km · L litros · N R$): colunas pelo nome, reserva pela posição
+    const cc=comb.cols.map(c=>nu(c)), ci=(a,d)=>{ const i=cc.findIndex(c=>c.startsWith(a)); return i>=0?i:d; };
+    const jP=ci('PLACA',4), jM=ci('MES INICIO',5), jA=ci('ANO INICIO',6), jMo=ci('MODELO',7), jK=ci('KM RODADO',10), jL=ci('QTD TOTAL',11), jT=ci('TOTAS',13);
+    const pl=[]; comb.rows.forEach(r=>{ const p=merc(r[jP]), mi=MES.indexOf(String(r[jM]||'').toLowerCase().slice(0,3)), a=+r[jA], km=N(r[jK]); if(!p||mi<0||!a||!(km>0)) return;
+      const v=a+'-'+String(mi+1).padStart(2,'0'), b=benchDe(p,v);
+      pl.push({vig:v,placa:p,orig:String(r[jP]||'').toUpperCase(),modelo:String(r[jMo]||'').trim(),km,lit:N(r[jL]),tot:N(r[jT]),kmRem:remPl[p+'|'+v]||0,kmL:b?b.kmL:0,pRem:b?b.pRem:0});
+      const o=M(v); o.real+=km; o.lit+=N(r[jL]); o.tot+=N(r[jT]); });
+    // o que a Seara paga: R$/km da tabela de cada placa × km remunerado dela (o "FT" da Seara)
+    const ft={}; Object.entries(remPl).forEach(([k,km])=>{ const i=k.indexOf('|'), p=k.slice(0,i), v=k.slice(i+1), b=benchDe(p,v); if(!b) return;
+      const x=ft[v+'|SEA|ANG']=ft[v+'|SEA|ANG']||{km:0,comb:0,manut:0,pneu:0,lavagem_var:0}; x.km+=km; ['comb','manut','pneu','lavagem_var'].forEach(c=>{ x[c]+=b[c]*km; }); });
+    const km=[]; Object.entries(mes).forEach(([v,o])=>{ if(!(o.rem>0&&o.real>0)) return;
+      km.push({vig:v,uni:'ANG',op:'SEA',proj:'DISTRIBUIÇÃO URBANA',frota:o.placas.size,vPrim:0,kmPrim:0,vRec:0,kmRec:0,vNot:0,kmNot:0,vSea:o.cte,kmSea:o.rem,rem:o.rem,real:o.real,fonte:'seara'}); });
+    SEARA={mes,pl,remPl,ft,km}; return SEARA;
+  })();
+  SEARA_P.catch(()=>{ SEARA_P=null; });
+  return SEARA_P;
+}
 async function carregaKm(){
   if(KM_P) return KM_P;
   KM_P=(async()=>{
@@ -1121,6 +1181,11 @@ async function carregaKm(){
             vRec:+l.viagens_rec||0,kmRec:+l.km_rem_rec||0,vNot:+l.viagens_not||0,kmNot:+l.km_rem_not||0,rem:+l.km_rem||0,real:+l.km_rodado||0,fonte:'banco'}); });
       }
     }catch(e){ console.warn('Dispersão de km do banco indisponível (fica a aba):',e); }
+    // Seara (Anhanguera): km remunerado da aba Remunerado × km rodado do ERP, e as placas para a abertura
+    try{ const sea=await carregaSeara(); sea.km.forEach(r=>out.push(r)); const ok=new Set(sea.km.map(r=>r.vig));
+      sea.pl.forEach(p=>{ if(ok.has(p.vig)) KMPL.P.push({vig:p.vig,placa:p.placa,orig:p.orig,uni:'ANG',op:'SEA',real:p.km}); });
+      Object.entries(sea.remPl).forEach(([k,v])=>{ const i=k.indexOf('|'), vg=k.slice(i+1); if(!ok.has(vg)) return; KMPL.PR[vg+'|'+k.slice(0,i)+'|SEA|ANG']=v; KMPL.PRU.add(vg+'|SEA|ANG'); });
+    }catch(e){ console.warn('Seara indisponível (a Anhanguera fica fora do km):',e); }
     KM=out; return out;
   })();
   KM_P.catch(()=>{ KM_P=null; });
@@ -1147,15 +1212,15 @@ function carregaRev(ano){
 }
 /* soma de um recorte da Dispersão (linhas vig × unidade × projeto) */
 function agKm(F,rev){
-  const S={rem:0,real:0,kmPrim:0,vPrim:0,kmRec:0,vRec:0,kmNot:0,vNot:0,frota:0,possT2:0,vPrimT2:0,kmPrimT2:0,naoT2:0,kmNaoT2:0,tetoT2:0,revKm:0,km1:0,km2:0,mapRev:0,frotaT2:0,n:0,plMes:0,plKm:0};
+  const S={rem:0,real:0,kmPrim:0,vPrim:0,kmRec:0,vRec:0,kmNot:0,vNot:0,kmSea:0,vSea:0,frota:0,possT2:0,vPrimT2:0,kmPrimT2:0,naoT2:0,kmNaoT2:0,tetoT2:0,revKm:0,km1:0,km2:0,mapRev:0,frotaT2:0,n:0,plMes:0,plKm:0};
   const vs=new Set();
   S.imp=0; S.custoRem=0; S.impNao=0; S.impRev=0; S.semR=0;
-  F.forEach(r=>{ vs.add(r.vig); ['rem','real','kmPrim','vPrim','kmRec','vRec','kmNot','vNot','frota'].forEach(k=>S[k]+=r[k]);
+  F.forEach(r=>{ vs.add(r.vig); ['rem','real','kmPrim','vPrim','kmRec','vRec','kmNot','vNot','frota'].forEach(k=>S[k]+=r[k]); S.kmSea+=r.kmSea||0; S.vSea+=r.vSea||0;
     const rk=r.rskm||0; S.imp+=r.imp||0; S.custoRem+=r.rem*rk; if(!rk&&Math.abs(r.real-r.rem)>0) S.semR++;
     if(T2(r.op)){ const kmMapa=r.vPrim?r.kmPrim/r.vPrim:0, poss=r.frota*MAPAS_MES, nao=Math.max(0,poss-r.vPrim);
       S.frotaT2+=r.frota; S.possT2+=poss; S.vPrimT2+=r.vPrim; S.kmPrimT2+=r.kmPrim; S.naoT2+=nao; S.kmNaoT2+=nao*kmMapa; S.tetoT2+=poss*kmMapa; S.impNao-=nao*kmMapa*rk;
       const q=rev&&rev[r.vig+'|'+r.uni+'|'+r.proj]; if(q&&q[1]&&q[2]){ const m2=r.vPrim/2; S.revKm+=(q[2]-q[1])*m2; S.km1+=q[1]*m2; S.km2+=q[2]*m2; S.mapRev+=m2; S.impRev+=(q[2]-q[1])*m2*rk; } } });
-  S.n=vs.size||1; S.viag=S.vPrim+S.vRec+S.vNot;
+  S.n=vs.size||1; S.viag=S.vPrim+S.vRec+S.vNot+S.vSea;
   // placas que rodaram no mês (aba Km/L), no mesmo recorte
   if(KMPL){ const ch=new Set(F.map(r=>r.vig+'|'+r.op+'|'+r.uni)); KMPL.P.forEach(p=>{ if(ch.has(p.vig+'|'+p.op+'|'+p.uni)){ S.plMes++; S.plKm+=p.real; } }); }
   return S;
@@ -1204,7 +1269,7 @@ async function renderKm(){
   const F=rows.filter(r=>vigs.includes(r.vig)&&passa(r.op,r.uni));
   KM_CTX={F,rev,per,vigs};
   if(!F.length){ area.innerHTML=`<div class="vazio">Sem Dispersão de km em ${esc(per)} no recorte.</div>`; return; }
-  const S=agKm(F,rev), n=S.n, disp=S.real-S.rem, outros=S.rem-S.kmPrim-S.kmRec-S.kmNot;
+  const S=agKm(F,rev), n=S.n, disp=S.real-S.rem, outros=S.rem-S.kmPrim-S.kmRec-S.kmNot-S.kmSea;
   let raiz;
   if(KM_MODO==='gap'){
     // onde estão os gaps: as unidades do pior para o melhor impacto, com os projetos dentro do nó
@@ -1231,6 +1296,7 @@ async function renderKm(){
       {ab:'prim',t:'Km da 1ª viagem',v:fmtKm(S.kmPrim),s:'mapas × km por mapa do FT',rows:[['Mapas rodados',fmtN(S.vPrim)],['Km por mapa',S.vPrim?br(S.kmPrim/S.vPrim,1):'—'],['Mapas por ativo no mês',r1(dv(S.vPrim,S.frota))]],kids:kids2},
       {ab:'rec',t:'Km de recarga',v:fmtKm(S.kmRec),rows:[['Recargas',fmtN(S.vRec)],['Km por recarga',S.vRec?br(S.kmRec/S.vRec,1):'—'],['Recargas por mapa',r2(dv(S.vRec,S.vPrim))]]},
       {ab:'not',t:'Km de noturna',v:fmtKm(S.kmNot),rows:[['Noturnas',fmtN(S.vNot)],['Km por noturna',S.vNot?br(S.kmNot/S.vNot,1):'—'],['Noturnas por mapa',r2(dv(S.vNot,S.vPrim))]]}];
+    if(S.kmSea>0) remKids.push({t:'Seara · km dos CT-es',v:fmtKm(S.kmSea),s:'aba Remunerado da Seara (por placa e mês)',rows:[['CT-es',fmtN(S.vSea)],['Km por CT-e',S.vSea?br(S.kmSea/S.vSea,1):'—']]});
     if(Math.abs(outros)>Math.max(1,S.rem*0.002)) remKids.push({t:'Outros no remunerado',v:fmtKm(outros),s:'o que a aba soma além de 1ª, recarga e noturna'});
     raiz=Object.assign(noKm('Dispersão de km',S,null,[['Por ativo no mês',fmtSig(fmtN,dv(disp,S.frota)),corV(disp,false)],['R$/km rem.',r2(dv(S.custoRem,S.rem))]]),{raiz:true,s:'km rodado − km remunerado',
       kids:[
@@ -1348,12 +1414,12 @@ aplicaTema(localStorage.getItem('bi_theme')||'dark');
 initApp();
 </script>
 
-<script src="../assets/arvore-impacto.js?v=202611211700"></script>
-<script src="../assets/balanco-massa.js?v=202611211700"></script>
-<script src="../assets/carta-calc.js?v=202611211700"></script>
-<script src="../assets/estatistica.js?v=202611211700"></script>
-<script src="../assets/gerot-base.js?v=202611211700"></script>
-<script src="custo.js?v=202611211700"></script>
+<script src="../assets/arvore-impacto.js?v=202611231400"></script>
+<script src="../assets/balanco-massa.js?v=202611231400"></script>
+<script src="../assets/carta-calc.js?v=202611231400"></script>
+<script src="../assets/estatistica.js?v=202611231400"></script>
+<script src="../assets/gerot-base.js?v=202611231400"></script>
+<script src="custo.js?v=202611231400"></script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
@@ -1370,6 +1436,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611211700"></script>
+<script src="../assets/build-check.js?v=202611231400"></script>
 </body>
 </html>

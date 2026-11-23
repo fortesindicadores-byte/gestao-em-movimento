@@ -205,7 +205,7 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   await pg.click('.ab-x');
   // filtro Projeto: só a Van
   const opc = await pg.evaluate(() => [...document.querySelectorAll('#ms-op .ms-opt:not(.all-opt)')].map(o => o.textContent.replace('only', '').trim()));
-  af('filtro Projeto com a Van separada', /Projeto/.test(await pg.evaluate(() => document.querySelector('#ms-op .ms-btn').textContent)) && opc.join(',') === 'Rota,Van,Auto Serviço,Empurrada,Insumos,Armazém', opc.join(','));
+  af('filtro Projeto com a Van separada', /Projeto/.test(await pg.evaluate(() => document.querySelector('#ms-op .ms-btn').textContent)) && opc.join(',') === 'Rota,Van,Auto Serviço,Empurrada,Insumos,Armazém,Seara', opc.join(','));
   await pg.evaluate(() => { const o = document.getElementById('ms-op'); o._sel = new Set(['VAN']); o._render(''); render(); });
   await pg.waitForTimeout(400);
   const kv = await pg.evaluate(() => Object.fromEntries([...document.querySelectorAll('#arv-km .tn')].map(n => [n.querySelector('.tn-t').textContent, n.querySelector('.tn-v').textContent])));
