@@ -103,10 +103,12 @@ const out = await pg.evaluate(async (ANO) => {
         L.push(`   ${c}: ${nz.length} de ${rows.length} com número > 0` + (nz.length ? ` (soma ${mi(nz.reduce((x, y) => x + y, 0))} mi, mediana ${Math.round(nz.sort((x, y) => x - y)[Math.floor(nz.length / 2)])})` : '') + (cat ? ' | ' + cat : '')); });
     }
     const ultv = vigs[vigs.length - 1], c = CAP[ultv] || [], t = {};
-    c.forEach(e => { const o = t[e.tipo] = t[e.tipo] || { n: 0, compra: 0, liq: 0 }; o.n++; o.compra += e.compra; o.liq += e.liq; });
-    L.push('capital que a página conta em ' + ultv + ': ' + Object.entries(t).map(([k, o]) => `${k} ${o.n} eq · compra ${mi(o.compra)} mi · líquido ${mi(o.liq)} mi`).join(' | '));
-    L.push('', '== ' + ultv + ' · Van e Armazém por unidade ==');
-    UNIS.forEach(u => ['VAN', 'ARM'].forEach(o => { const R = roicDe([ultv], (op, uni) => op === o && uni === u); if (!R.rec && !R.cap) return; L.push(linha(u + ' ' + o, [ultv], (op, uni) => op === o && uni === u)); }));
+    c.forEach(e => { const o = t[e.tipo] = t[e.tipo] || { n: 0, liq: 0, nl: 0, cl: 0 }; if (e.proprio === false) { o.nl++; o.cl += e.compra; } else { o.n++; o.liq += e.liq; } });
+    L.push('capital em ' + ultv + ' (próprio · locado fora): ' + Object.entries(t).map(([k, o]) => `${k} próprio ${o.n} eq líquido ${mi(o.liq)} mi · locado ${o.nl} eq (compra ${mi(o.cl)} mi)`).join(' | '));
+    const lu = {}; c.forEach(e => { const k = e.uni + ' ' + e.op; const o = lu[k] = lu[k] || { p: 0, l: 0, quem: {} }; if (e.proprio === false) { o.l++; o.quem[e.loc] = (o.quem[e.loc] || 0) + 1; } else o.p++; });
+    L.push('próprio × locado por unidade e operação: ' + Object.keys(lu).sort().map(k => `${k} ${lu[k].p}p/${lu[k].l}l${lu[k].l ? ' (' + Object.entries(lu[k].quem).map(([q, n]) => q + ' ' + n).join(', ') + ')' : ''}`).join(' | '));
+    L.push('', '== ' + ultv + ' · Rota (com a Van) e Armazém por unidade ==');
+    UNIS.forEach(u => ['ROTA', 'ARM'].forEach(o => { const R = roicDe([ultv], (op, uni) => op === o && uni === u); if (!R.rec && !R.cap) return; L.push(linha(u + ' ' + o, [ultv], (op, uni) => op === o && uni === u)); }));
   } catch (e) { L.push('  próprio × locado ERRO ' + (e.message || e)); }
   L.push('', 'filtros salvos no navegador: n/a (check limpo)');
   return L.join('\n');

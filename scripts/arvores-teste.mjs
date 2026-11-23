@@ -24,12 +24,16 @@ const DG = [{ ano: 2026, mes: 10, cod_dre: '351', projeto: 'Rota - CGR', realiza
   { ano: 2026, mes: 10, cod_dre: '351', projeto: 'Auto Serviço - GOI', realizado: -10000 }];
 // ── FT: capital (serial do Excel: 45566 = 01/10/2024 · 42370 = 01/01/2016 · 45931 = 01/10/2025 · 45945 = 15/10/2026 (aprox.)) ──
 const serial = d => Math.round((Date.UTC(...d) - Date.UTC(1899, 11, 30)) / 864e5);
-const CAM = ['Unidade - Nome', 'Placa', 'Ativo', 'Data de Entrada', 'Valor de Compra Cavalo', 'Valor de Compra Carroceria'];
+const CAM = ['Unidade - Nome', 'Placa', 'Ativo', 'Data de Entrada', 'Valor de Compra Cavalo', 'Valor de Compra Carroceria', 'Empresa locadora'];
 const LAY = [], LIN = [];
 for (const m of [9, 10]) {
   LAY.push({ canal: 'ROTA', tabela: 'Caminhao', vigencia: `ROTA_2_${m}_2026`, colunas: CAM });
   LIN.push({ canal: 'ROTA', tabela: 'Caminhao', vigencia: `ROTA_2_${m}_2026`, unidade: 'CDD RIO DE JANEIRO', dados: ['CDD RIO DE JANEIRO', 'AAA1A11', true, serial([2024, 9, 1]), 4000000, 1000000] });
   LIN.push({ canal: 'ROTA', tabela: 'Caminhao', vigencia: `ROTA_2_${m}_2026`, unidade: 'CDD RIO DE JANEIRO', dados: ['CDD RIO DE JANEIRO', 'BBB2B22', false, serial([2016, 0, 1]), 3000000, 0] });
+  // locados: um caminhão e uma van da Vamos. Não são capital nosso (o aluguel já está no custo do DRE)
+  LIN.push({ canal: 'ROTA', tabela: 'Caminhao', vigencia: `ROTA_2_${m}_2026`, unidade: 'CDD RIO DE JANEIRO', dados: ['CDD RIO DE JANEIRO', 'LLL9L99', true, serial([2025, 0, 1]), 900000, 0, 'EmpresaLocadora: Vamos'] });
+  LAY.push({ canal: 'ROTA', tabela: 'Van', vigencia: `ROTA_2_${m}_2026`, colunas: ['Unidade - Nome', 'placa', 'ativo', 'dataEntrada', 'valorCompraCavalo', 'Empresa locadora'] });
+  LIN.push({ canal: 'ROTA', tabela: 'Van', vigencia: `ROTA_2_${m}_2026`, unidade: 'CDD RIO DE JANEIRO', dados: ['CDD RIO DE JANEIRO', 'VVV1V11', true, serial([2025, 0, 1]), 120000, 'EmpresaLocadora: Vamos'] });
 }
 LAY.push({ canal: 'ARMAZEM', tabela: 'EmpilhadeiraApoio', vigencia: 'ARMAZEM_1_10_2026', colunas: ['Unidade - Nome', 'chassi', 'ativoParado', 'mesanoEntrada', 'valorCompraNf', 'implementoValorImplemento'] });
 LIN.push({ canal: 'ARMAZEM', tabela: 'EmpilhadeiraApoio', vigencia: 'ARMAZEM_1_10_2026', unidade: 'CUIABA', dados: ['CUIABA', 'X1', true, serial([2025, 9, 1]), 1000000, 0] });
@@ -94,6 +98,9 @@ for (const [w, h] of [[1366, 768], [1920, 1080]]) for (const tema of ['dark', 'l
   af('ROIC 93,4%', await txt('h-roic') === '93,4%', await txt('h-roic'));
   af('capital parado 750 mil (o caminhão inativo de 2016, 25%)', await txt('k-par') === 'R$ 750 mil', await txt('k-par'));
   af('empilhadeira ativoParado=true opera', /4 · 3 operando/.test(await txt('h-qtd')), await txt('h-qtd'));
+  { const lc = await pg.evaluate(() => ({ q: ROIC_CTX.R.locQtd, b: ROIC_CTX.R.locBru, van: roicDe(ROIC_CTX.vigs, op => op === 'VAN').cap, proj: OP_ROIC.includes('VAN') }));
+    af('locados fora do capital (caminhão e van da Vamos: 2 equipamentos, R$ 1,02 mi de compra)', lc.q === 2 && Math.abs(lc.b - 1020000) < 1, JSON.stringify(lc));
+    af('Van não tem linha de ROIC (conta com a Rota)', lc.van === 0 && lc.proj === false, JSON.stringify(lc)); }
   const linhas = await pg.evaluate(() => [...document.querySelectorAll('#tbl-res tbody tr')].map(tr => [...tr.cells].map(c => c.textContent.trim())));
   if (um) console.log(JSON.stringify(linhas));
   af('3 linhas (Terceiros fora)', linhas.length === 3, linhas.length);

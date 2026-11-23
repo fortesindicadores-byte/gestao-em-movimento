@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611231600">
+<meta name="build" content="202611231900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Árvores · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -600,7 +600,7 @@ const OPS={ROTA:'Rota',VAN:'Van',AS:'Auto Serviço',EMP:'Empurrada',INS:'Insumos
 const OP_ORD=['ROTA','VAN','AS','EMP','INS','ARM','SEA'];
 const UNIS=['ANG','BLC','CBA','CGR','FLP','GNA','GRL','MCC','NFR','PIR','PLT','RON'];
 // a Seara (Anhanguera) entra no custo e no km; o ROIC fica sem ela, porque o Freightech não tem o capital da frota dela
-const OP_ROIC=OP_ORD.filter(o=>o!=='SEA'), UNIS_ROIC=UNIS.filter(u=>u!=='ANG');
+const OP_ROIC=OP_ORD.filter(o=>o!=='SEA'&&o!=='VAN'), UNIS_ROIC=UNIS.filter(u=>u!=='ANG');   // no ROIC a Van conta com a Rota
 const IR=0.34;                       // IR + CS teóricos (o DRE do ERP não tem a linha)
 const MAPAS_MES=25;                  // mapas por caminhão ativo no mês (km por mapa = km mensal ÷ 25)
 
@@ -732,7 +732,11 @@ function capMes(vig){
         const ativo=at!=null?simFT(at):ap!=null?simFT(ap):true;
         // manutenção que o FT paga na placa (Árvore do Custo): R$/km, vida e carência
         const mv=g('Manutenção R$/KM','manutencaoReaisKm','Manutencao R$/KM','reaiskm');
-        out.push({op,uni,tipo:d.tipo,ativo,compra,meses,liq:compra*residual(meses),dep:compra*depMes(meses),
+        // locado (Vamos, Athivalog, TB Green…) não é capital nosso: o aluguel já está no custo do DRE.
+        // Sem o campo no FT, conta como próprio.
+        const loc=String(g('Empresa locadora','empresaLocadora')||'').replace(/^[^:]*:\s*/,'').trim();
+        const proprio=!loc||/^CONLOG/.test(nu(loc));
+        out.push({op,uni,tipo:d.tipo,ativo,compra,meses,loc,proprio,liq:compra*residual(meses),dep:compra*depMes(meses),
           man:mv==null?null:numFT(mv),vida:numFT(g('manutencaoVidaMeses','Manutenção Vida Meses')),free:numFT(g('freeMaintenance','Free Maintenance'))});
       });
     }));
@@ -747,9 +751,11 @@ function capMes(vig){
 let CMP=(()=>{ try{ return localStorage.getItem('arvores_cmp')==='orc'?'orc':'rem'; }catch(e){ return 'rem'; } })();
 const CMP_ROT=()=>CMP==='orc'?'Orç.':'Rem.', CMP_NOME=()=>CMP==='orc'?'orçado':'remunerado';
 function roicDe(vigs,filtro0){
-  const filtro=(op,uni)=>op!=='SEA'&&filtro0(op,uni);      // a Seara não tem capital no FT: fora do ROIC
+  // a Seara não tem capital no FT: fora do ROIC. A Van é toda locada e a receita dela está na Rota do DRE:
+  // no ROIC ela conta com a Rota (Renan, 23/11/2026: "Van é locada, não tem ROIC")
+  const filtro=(op,uni)=>op!=='SEA'&&filtro0(op==='VAN'?'ROTA':op,uni);
   const n=vigs.length, ref=CMP==='orc'?'Orc':'Rem', rf=CMP==='orc'?'orc':'rem';
-  const R={rec:0,recRef:0,recOrc:0,recRem:0,ebd:0,ebdRef:0,ebdOrc:0,ebdRem:0,dep:0,depRef:0,depSem:false,depEst:0,mesesEst:[],cap:0,bru:0,par:0,qtd:0,qtdAt:0,depFT:0,tipos:{},fr:{}};
+  const R={rec:0,recRef:0,recOrc:0,recRem:0,ebd:0,ebdRef:0,ebdOrc:0,ebdRem:0,dep:0,depRef:0,depSem:false,depEst:0,mesesEst:[],cap:0,bru:0,par:0,qtd:0,qtdAt:0,depFT:0,locQtd:0,locBru:0,tipos:{},fr:{}};
   ['C','M','P','O'].forEach(k=>R.fr[k]={real:0,ref:0});
   vigs.forEach(v=>{
     Object.entries(DRE).forEach(([k,o])=>{ const [vv,op,uni]=k.split('|'); if(vv!==v||!filtro(op,uni)) return;
@@ -757,7 +763,8 @@ function roicDe(vigs,filtro0){
     Object.entries(FR).forEach(([k,o])=>{ const [vv,op,uni]=k.split('|'); if(vv!==v||!filtro(op,uni)) return;
       Object.entries(o).forEach(([p,x])=>{ R.fr[p].real+=x.real; R.fr[p].ref+=x[rf]; }); });
     const cap=(CAP[v]||[]).filter(e=>filtro(e.op,e.uni));
-    let depFT=0; cap.forEach(e=>{ R.cap+=e.liq/n; R.bru+=e.compra/n; R.qtd+=1/n; depFT+=e.dep;
+    let depFT=0; cap.forEach(e=>{ if(e.proprio===false){ R.locQtd+=1/n; R.locBru+=e.compra/n; return; }   // locado: fora do capital
+      R.cap+=e.liq/n; R.bru+=e.compra/n; R.qtd+=1/n; depFT+=e.dep;
       if(e.ativo) R.qtdAt+=1/n; else R.par+=e.liq/n;
       const t=R.tipos[e.tipo]=R.tipos[e.tipo]||{liq:0,qtd:0}; t.liq+=e.liq/n; t.qtd+=1/n; });
     R.depFT+=depFT;
@@ -997,7 +1004,7 @@ async function renderROIC(){
     +td(V(r.nopatAno))+td(V(r.cap))+td(fmtP(r.cap?r.par/r.cap:null))+td(fmtP(r.margem))+td(r.giro==null?'—':br(r.giro,2)+'×')+td(fmtP(r.roic),corV(r.roic,true))+'</tr>';
   $('t-res').innerHTML=linhas.length?`<table class="dre" id="tbl-res"><thead><tr><th>Unidade</th><th>Projeto</th><th>Receita líquida R$</th><th>EBITDA R$</th><th>Margem EBITDA</th><th title="Depreciação">Deprec. R$</th><th>EBIT R$</th><th>NOPAT anual R$</th><th>Capital líquido R$</th><th>% parado</th><th>Margem NOPAT</th><th>Giro</th><th>ROIC</th></tr></thead><tbody>`
     +linhas.map(l=>lin(l.uni,OPS[l.op],l.r)).join('')+`</tbody><tfoot>${lin('Total','',R,'total')}</tfoot></table>`:'<div class="vazio">Sem DRE nem capital no recorte.</div>';
-  set('sub-res',`Receita, EBITDA, depreciação e EBIT por mês${sufM}; NOPAT anualizado (× 12 ÷ ${n} ${n>1?'meses':'mês'}); capital = valor líquido do FT ${n>1?'médio dos meses':'do mês'}. ROIC = NOPAT anual ÷ capital = margem NOPAT × giro.`);
+  set('sub-res',`Receita, EBITDA, depreciação e EBIT por mês${sufM}; NOPAT anualizado (× 12 ÷ ${n} ${n>1?'meses':'mês'}); capital = valor líquido do FT ${n>1?'médio dos meses':'do mês'}, só equipamento próprio${R.locQtd?` (${fmtN(R.locQtd)} locados ficam fora; a Van, toda locada, conta com a Rota)`:''}. ROIC = NOPAT anual ÷ capital = margem NOPAT × giro.`);
   // árvore: a raiz contra a inflação (IPCA de 12 meses); receita, custos e depreciação contra o remunerado ou o orçado
   const ip=await ipcaDe(vigs[vigs.length-1]);
   const hi=$('h-ipca'); if(hi){ const d=ip.v!=null&&R.roic!=null?R.roic-ip.v:null; hi.textContent=fmtPP(d); hi.className=d==null?'':d>=0?'cg':'cr'; hi.title=ip.rot; }
@@ -1019,7 +1026,8 @@ async function renderROIC(){
           {ab:'dep',t:'Depreciação',v:fmtR(-R.dep/n),est:est===vigs.length,s:est?(est===vigs.length?'pelo FT: compra × perda do mês':'DRE do ERP + FT nos meses sem o DRE'):R.depSem?'DRE do ERP, sem referência':'DRE do ERP (estrutura 351)',g:gDep,rows:[['Pelo FT',fmtR(R.depFT/n)]]}]}]},
       {t:'Giro do capital',v:R.giro==null?'—':br(R.giro,2)+'×',s:'receita anual ÷ capital',g:{ref:R.giroRef,real:R.giro,bom:true,fmt:x=>br(x,2)+'×'},rows:[['Receita anual',fmtR(R.recAno)]],kids:[
         {t:'Capital líquido',v:fmtR(R.cap),s:'valor de compra × residual pela idade',rows:[['Valor de compra',fmtR(R.bru)],['Já depreciado',fmtP(R.bru?1-R.cap/R.bru:null)],
-          ...TIPOS.filter(t=>R.tipos[t]).map(t=>[`${t} (${fmtN(R.tipos[t].qtd)})`,fmtR(R.tipos[t].liq)])],kids:[
+          ...TIPOS.filter(t=>R.tipos[t]).map(t=>[`${t} (${fmtN(R.tipos[t].qtd)})`,fmtR(R.tipos[t].liq)]),
+          ...(R.locQtd?[[`Locados, fora do capital (${fmtN(R.locQtd)})`,fmtR(R.locBru)]]:[])],kids:[
           {t:'Em operação',v:fmtR(R.cap-R.par),rows:[['Equipamentos',fmtN(R.qtdAt)],['Capital por equipamento',fmtR(R.qtdAt?(R.cap-R.par)/R.qtdAt:null)]]},
           {t:'Parado ou inativo no FT',v:fmtR(R.par),s:'capital que não gira',g:{ref:0,real:R.par,bom:false,pot:true,rot:'Ideal',fmt:fmtR,cols:['ref','d'],imp:null,pp:R.roicSemPar!=null&&R.roic!=null?R.roicSemPar-R.roic:null},
             rows:[['Equipamentos',fmtN(R.qtd-R.qtdAt)],['% do capital',fmtP(R.cap?R.par/R.cap:null)]]}]}]}]};
@@ -1445,6 +1453,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611231600"></script>
+<script src="../assets/build-check.js?v=202611231900"></script>
 </body>
 </html>
