@@ -86,6 +86,28 @@ const out = await pg.evaluate(async (ANO) => {
     const cs = {}; Object.entries(FRC).forEach(([k, o]) => { if (!/\|SEA\|ANG$/.test(k) || !k.startsWith(ANO)) return; Object.entries(o).forEach(([c, x]) => { const d = cs[c] = cs[c] || { real: 0, rem: 0 }; d.real += x.real; d.rem += x.rem; }); });
     L.push('  contas no ano (real · rem): ' + Object.entries(cs).sort((a, b) => b[1].real - a[1].real).map(([c, x]) => `${ctDef(c).nome} ${Math.round(x.real)} · ${Math.round(x.rem)}`).join(' | '));
   } catch (e) { L.push('  Seara ERRO ' + (e.message || e)); }
+  // Van é locada? Campos de aluguel, locadora, finame e compra em cada cadastro do FT, no último mês
+  // (Renan, 23/11/2026: "Van é locada, não tem ROIC acredito. Valide"). Só contagens, sem placa.
+  L.push('', '== próprio × locado no FT · ' + vigs[vigs.length - 1] + ' (campos de aluguel, locadora, finame, compra) ==');
+  try { const [aa, mm] = vigs[vigs.length - 1].split('-').map(Number);
+    for (const d of EQ) {
+      const vs = d.c === 'ARMAZEM' ? [`ARMAZEM_1_${mm}_${aa}`] : [`${d.c}_2_${mm}_${aa}`, `${d.c}_1_${mm}_${aa}`];
+      const { data: lays } = await sb.from('ft_layout').select('vigencia,colunas').eq('canal', d.c).eq('tabela', d.t).in('vigencia', vs);
+      const lay = vs.map(v => (lays || []).find(l => l.vigencia === v)).find(Boolean); if (!lay) { L.push(`${d.c} ${d.t}: sem layout`); continue; }
+      const rows = await todas(sb.from('ft_linha').select('unidade,dados').eq('canal', d.c).eq('tabela', d.t).eq('vigencia', lay.vigencia).order('linha'));
+      L.push(`${d.c} ${d.t} (${lay.vigencia}): ${rows.length} linhas`);
+      lay.colunas.forEach((c, i) => { if (!/alug|locad|leas|finame|compra|propri|amortiz|deprecia|modelo$|^modelo|remunera/i.test(c)) return;
+        const vals = rows.map(r => r.dados[i]); const nums = vals.map(numFT); const nz = nums.filter(x => x > 0);
+        const txt = {}; vals.forEach(v => { if (v == null || v === '') { txt['(vazio)'] = (txt['(vazio)'] || 0) + 1; return; } if (typeof v === 'number' || (typeof v === 'string' && /^[\d.,-]+$/.test(v.trim()))) return; const k = String(v).slice(0, 40); txt[k] = (txt[k] || 0) + 1; });
+        const cat = Object.entries(txt).sort((x, y) => y[1] - x[1]).slice(0, 6).map(([k, n]) => `${k}=${n}`).join(' · ');
+        L.push(`   ${c}: ${nz.length} de ${rows.length} com número > 0` + (nz.length ? ` (soma ${mi(nz.reduce((x, y) => x + y, 0))} mi, mediana ${Math.round(nz.sort((x, y) => x - y)[Math.floor(nz.length / 2)])})` : '') + (cat ? ' | ' + cat : '')); });
+    }
+    const ultv = vigs[vigs.length - 1], c = CAP[ultv] || [], t = {};
+    c.forEach(e => { const o = t[e.tipo] = t[e.tipo] || { n: 0, compra: 0, liq: 0 }; o.n++; o.compra += e.compra; o.liq += e.liq; });
+    L.push('capital que a página conta em ' + ultv + ': ' + Object.entries(t).map(([k, o]) => `${k} ${o.n} eq · compra ${mi(o.compra)} mi · líquido ${mi(o.liq)} mi`).join(' | '));
+    L.push('', '== ' + ultv + ' · Van e Armazém por unidade ==');
+    UNIS.forEach(u => ['VAN', 'ARM'].forEach(o => { const R = roicDe([ultv], (op, uni) => op === o && uni === u); if (!R.rec && !R.cap) return; L.push(linha(u + ' ' + o, [ultv], (op, uni) => op === o && uni === u)); }));
+  } catch (e) { L.push('  próprio × locado ERRO ' + (e.message || e)); }
   L.push('', 'filtros salvos no navegador: n/a (check limpo)');
   return L.join('\n');
 }, process.env.ROIC_ANO || '2026');
