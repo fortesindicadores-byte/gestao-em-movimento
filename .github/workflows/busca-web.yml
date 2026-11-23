@@ -1,0 +1,71 @@
+name: Busca Web
+
+# Traz para a sessão o que o sandbox não alcança: imagens de um site (modo
+# pagina, publicadas como estão no branch tmp-busca) ou arquivos de um link de
+# compartilhamento (modo arquivo, publicados CIFRADOS com a chave pública
+# scripts/analise-dump.pub.pem). Apagar o branch depois (so_apagar=true).
+
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "pagina (lista e baixa imagens do site) ou arquivo (baixa o arquivo do link e cifra)"
+        default: "pagina"
+      url:
+        description: "Uma ou mais URLs, separadas por espaço"
+        default: ""
+      filtro:
+        description: "modo pagina: regex das imagens a baixar"
+        default: "logo|conlog|brand|marca"
+      so_apagar:
+        description: "true = só apaga o branch tmp-busca"
+        default: "false"
+
+permissions:
+  contents: write
+
+jobs:
+  busca:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Apagar o branch temporário
+        if: ${{ github.event.inputs.so_apagar == 'true' }}
+        run: git init -q _apaga && git -C _apaga push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" --delete tmp-busca || echo "branch já não existia"
+      - uses: actions/checkout@v4
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+      - uses: actions/setup-node@v4
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+        with:
+          node-version: '20'
+      - name: Buscar
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+        run: node scripts/busca-web.mjs
+        env:
+          BUSCA_MODO: ${{ github.event.inputs.modo }}
+          BUSCA_URL: ${{ github.event.inputs.url }}
+          BUSCA_FILTRO: ${{ github.event.inputs.filtro }}
+          BUSCA_DIR: /tmp/busca
+      - name: Publicar
+        if: ${{ github.event.inputs.so_apagar != 'true' }}
+        run: |
+          set -e
+          mkdir -p /tmp/pub
+          if [ "${{ github.event.inputs.modo }}" = "arquivo" ]; then
+            openssl rand -out /tmp/k.bin 32
+            for f in /tmp/busca/*; do
+              openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in "$f" -out "/tmp/pub/$(basename "$f").enc" -pass file:/tmp/k.bin
+            done
+            openssl pkeyutl -encrypt -pubin -inkey "$GITHUB_WORKSPACE/scripts/analise-dump.pub.pem" \
+              -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in /tmp/k.bin -out /tmp/pub/chave.enc
+            rm -f /tmp/k.bin
+          else
+            cp /tmp/busca/* /tmp/pub/ 2>/dev/null || true
+          fi
+          ls -la /tmp/pub
+          [ -n "$(ls -A /tmp/pub)" ] || { echo "nada para publicar"; exit 0; }
+          cd /tmp/pub
+          git init -q -b tmp-busca
+          git config user.email "actions@github.com" && git config user.name "github-actions"
+          git add . && git commit -qm "Busca Web: arquivos temporários (apagar depois de ler)"
+          git push -f -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" tmp-busca
