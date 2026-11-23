@@ -86,11 +86,13 @@ if ((r.avisos || []).length > 12) console.log(`  … e mais ${r.avisos.length - 
 const vigs = [...new Set(M.map(m => m.vigencia))];
 const rv = await todas(`remun_viagem?select=vigencia,quinzena,unidade,projeto,tipo,viagens&vigencia=in.(${vigs.join(',')})`);
 const kv = x => [x.vigencia, x.quinzena, x.unidade, x.projeto, x.tipo].join('|');
-const banco = new Map(rv.map(x => [kv(x), +x.viagens || 0]));
+// só os projetos do 2artd (Rota, Auto Serviço, Van): a Empurrada e Insumos da remun_viagem vêm dos CT-es
+const projs = new Set(M.map(m => m.projeto));
+const banco = new Map(rv.filter(x => projs.has(x.projeto)).map(x => [kv(x), +x.viagens || 0]));
 const meu = new Map(); M.forEach(m => meu.set(kv(m), (meu.get(kv(m)) || 0) + 1));
 let iguais = 0; const dif = [];
 new Set([...banco.keys(), ...meu.keys()]).forEach(key => { const a = banco.get(key) || 0, b = meu.get(key) || 0; if (a === b) iguais++; else dif.push(`${key}: banco ${a} × arquivo ${b}`); });
-console.log(`conferência com a remun_viagem: ${rv.length} linhas no banco · ${iguais} recortes iguais · ${dif.length} diferentes`);
+console.log(`conferência com a remun_viagem: ${banco.size} linhas no banco (${[...projs].join(', ')}) · ${iguais} recortes iguais · ${dif.length} diferentes`);
 dif.slice(0, 40).forEach(d => console.log('  ' + d));
 if (rv.length && dif.length > Math.max(3, 0.1 * (iguais + dif.length))) { console.error('::error::o arquivo não é o que foi importado (recortes demais diferentes); nada gravado'); process.exit(1); }
 
