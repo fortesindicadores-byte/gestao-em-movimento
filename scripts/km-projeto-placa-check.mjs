@@ -65,7 +65,7 @@ Object.keys(P).sort().forEach(k => { const g = P[k]; console.log(pad(k, 50), pad
 // 3. km rodado do mês (aba Km/L do consumo automático; cai na sh_ se a ca_ não existir)
 let kml = [];
 for (const t of ['ca_consumo_km_litro', 'sh_consumo_km_litro']) {
-  try { kml = await tudo(`${t}?select=projeto,placa,km_rodado_horas_trabalhadas&vigencia=eq.${MES}-01`); if (kml.length) { console.log(`\nkm rodado: ${t}, ${kml.length} linhas no mês (todas as unidades)`); break; } } catch (e) { console.log('  ' + t + ': ' + e.message); }
+  try { kml = await tudo(`${t}?select=projeto,placa,km_rodado_horas_trabalhadas&vigencia_orig=eq.${MES}-01`); if (kml.length) { console.log(`\nkm rodado: ${t}, ${kml.length} linhas no mês (todas as unidades)`); break; } } catch (e) { console.log('  ' + t + ': ' + e.message); }
 }
 const daUni = kml.filter(r => new RegExp('-\\s*' + UNI + '\\s*$').test(norm(r.projeto)));
 const projAba = r => { const p = norm(r.projeto).replace(/\s*-\s*[A-Z]+\s*$/, ''); return /VAN/.test(p) ? 'Van' : /AUTO/.test(p) ? 'Auto Serviço' : /ROTA/.test(p) ? 'Rota' : p; };
