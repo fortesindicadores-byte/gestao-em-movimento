@@ -148,7 +148,7 @@ const ok = (t, v, extra='') => { console.log(`  ${v?'✓':'✗'} ${t}${extra?'  
 }
 
 // ── os três que estavam quebrados ─────────────────────────────────────────
-for (const p of ['arvore-frota/index.html', 'rs-por-km/index.html', 'visao-financeira-arvore/index.html']) {
+for (const p of ['rs-por-km/index.html', 'visao-financeira-arvore/index.html']) {
   // a Visão Financeira carrega a Seara SÓ quando a visão é aberta (lazy)
   const r = await abre(p, async () => {
     // o bloco da Seara é LAZY e já pode ter sido chamado (e guardado a promise);

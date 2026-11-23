@@ -30,7 +30,6 @@ const OPC = {
   'visao-financeira/':       { modo: 'resumo', rdz: 'atualizar' },
   'painel-km/':              { modo: 'resumo', rdz: 'atualizar' },
   'rs-por-km/':              { modo: 'resumo', rdz: 'atualizar' },
-  'arvore-frota/':           { modo: 'resumo', rdz: 'atualizar' },
   'carta-custos/':           { modo: 'resumo', rdz: 'atualizar' },
   'eficiencia-ativacao/':    { modo: 'resumo', rdz: 'atualizar' },
   'termometro/':             { modo: 'resumo', rdz: 'atualizar' },

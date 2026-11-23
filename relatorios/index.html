@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202610282200">
+<meta name="build" content="202611231000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Relatórios · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -539,8 +539,6 @@ const REL=[
     f:[S('dispersao_km'),S('dispersao_abertura'),S('balanco_massa'),T('balanco_massa','Balanço de massa · por conta',{ordem:'unidade,projeto,vigencia,conta'}),S('dre_frota')]},
   {cl:'fin',t:'R$/KM',h:'rs-por-km/',d:'DRE Frota, dispersão de km e o km remunerado da Seara.',
     f:[S('dre_frota'),S('dispersao_km'),S('seara_rem_vig')]},
-  {cl:'fin',t:'Árvore de Custo da Frota',h:'arvore-frota/',d:'DRE (Frota e Receita), dispersão de km e as bases da Seara (CTEs, remunerado, combustível).',
-    f:[S('dre_frota'),S('dre_receita'),S('dispersao_km'),S('seara_rem_cte_vig'),S('seara_rem_vig'),S('seara_comb_vig')]},
   {cl:'fin',t:'Carta de Custos',h:'carta-custos/',d:'Lançamentos com RC/OC/NF, contrato por placa e vigência, abastecimentos do ERP, contratos e notas da VW.',
     f:[T('carta_custos','Lançamentos',{ordem:'id'}),CUSTO_PLACA,T('erp_abastecimentos','Abastecimentos do ERP',{ordem:'ordem_servico'}),
        T('contratos_placa','Contratos por placa',{ordem:'placa'}),T('vw_contrato_km','Notas da VW · por chassi e faixa',{ordem:'contrato,vigencia,chassi'})]},
@@ -1098,6 +1096,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202610282200"></script>
+<script src="../assets/build-check.js?v=202611231000"></script>
 </body>
 </html>

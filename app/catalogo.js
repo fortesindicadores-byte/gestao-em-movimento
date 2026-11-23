@@ -1,5 +1,5 @@
 // GERADO por scripts/app-catalogo.mjs a partir do CLUSTERS do hub — não editar à mão.
-// 62 painéis em 9 grupos. Regerar quando o hub mudar.
+// 61 painéis em 9 grupos. Regerar quando o hub mudar.
 window.GEM_CATALOGO = {
  "ordem": [
   "Administração",
@@ -322,23 +322,9 @@ window.GEM_CATALOGO = {
    "ico": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"23\"/><path d=\"M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6\"/></svg>"
   },
   {
-   "id": "arvore-frota",
-   "nome": "Árvore de Custo da Frota",
-   "desc": "Custo por pacote e conta — R$/km e AV. Base do ROIC.",
-   "href": "arvore-frota/",
-   "cluster": "Financeiro",
-   "adm": false,
-   "dono": false,
-   "modo": "resumo",
-   "rdz": "atualizar",
-   "vig": "ms-vig",
-   "gav": false,
-   "ico": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"6\" y1=\"3\" x2=\"6\" y2=\"15\"/><circle cx=\"18\" cy=\"6\" r=\"3\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><path d=\"M18 9a9 9 0 0 1-9 9\"/></svg>"
-  },
-  {
    "id": "arvores",
-   "nome": "Árvores · ROIC e Km",
-   "desc": "ROIC da frota (margem × giro, capital pelo valor de compra do FT) e a árvore do km remunerado contra o rodado.",
+   "nome": "Árvores · ROIC, Custo e Km",
+   "desc": "ROIC da frota (margem × giro), o custo aberto de pacote a conta, R$/km e km, e o km remunerado contra o rodado.",
    "href": "arvores/",
    "cluster": "Financeiro",
    "adm": true,
