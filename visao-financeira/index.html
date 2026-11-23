@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611232100">
+<meta name="build" content="202611232130">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Visão Financeira · DRE Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1642,15 +1642,17 @@ function rmCalc(f, dim){
   const cBy={}; comps.forEach(c=>{ cBy[c.id]=c; });
   const sS=new Set(sel), sY=new Set(ytd), A={}, cel=k=>A[k]=A[k]||{mM:0,mD:0,yM:0,yD:0};
   const chave=(c,op,uni)=>dim==='comp'?c.nome:dim==='uni'?uni:dim==='proj'?R.OPN[op]:uni+'|'+R.OPN[op];
-  // remunerado do DRE (aba Frota; a despesa vem negativa) e as chaves que o DRE tem
+  // remunerado do DRE (aba Frota; a despesa vem negativa) e as chaves que o DRE tem.
+  // O Armazém fica fora: o Freightech paga a empilhadeira sem abrir por conta (medido em 23/11/2026: Rem Meta 0 em todo mês)
   const temDre=new Set();
   allRows.forEach(r=>{ if(r[C.cta]==='Receita Líquida') return; const d=parseVig(r[C.vig]); if(!d) return; const vk=vigKey(d), inS=sS.has(vk), inY=sY.has(vk); if(!inS&&!inY) return;
-    const ou=R.opUni(r[C.nv3]); if(!ou) return; if((+r[C.rem]||0)||(+r[C.real]||0)) temDre.add(vk+'|'+ou.op+'|'+ou.uni);
+    const ou=R.opUni(r[C.nv3]); if(!ou||ou.op==='ARM') return; if((+r[C.rem]||0)||(+r[C.real]||0)) temDre.add(vk+'|'+ou.op+'|'+ou.uni);
     if(!passa(ou.op,ou.uni)) return; const c=cBy[R.compDe(r[C.cta])]; if(!c) return;
     const x=cel(chave(c,ou.op,ou.uni)), v=-(+r[C.rem]||0); if(inS) x.mD+=v; if(inY) x.yD+=v; });
   // Rem Meta: a Van que o DRE não lança à parte (o custo dela está dentro de ROTA - X) entra na Rota
   let vanNaRota=false;
   Object.entries(RM.meta).forEach(([k,o])=>{ const p=k.split('|'), vk=p[0], uni=p[2]; let op=p[1]; const inS=sS.has(vk), inY=sY.has(vk); if(!inS&&!inY) return;
+    if(op==='ARM') return;
     if(op==='VAN'&&!temDre.has(k)){ op='ROTA'; vanNaRota=true; }
     if(!passa(op,uni)) return;
     comps.forEach(c=>{ const v=o[c.id]; if(v==null) return; const x=cel(chave(c,op,uni)); if(inS) x.mM+=v; if(inY) x.yM+=v; }); });
@@ -1684,7 +1686,7 @@ function renderRemMeta(){
   if(Q.fora.length) av.push('Fora por falta de Freightech ou de km remunerado: '+Q.fora.map(lb).join(', ')+'.');
   if(RM.erros&&RM.erros.bm) av.push('Balanço de massa sem leitura ('+RM.erros.bm+'): as Empurradas ficam sem o km recomposto.');
   if(Q.vanNaRota) av.push('A Van que o DRE lança dentro da Rota entra na Rota.');
-  pe.textContent=`Mês: ${per(sel)} · YTD: ${per(ytd)}. Rem Meta = R$/km de cada componente no Freightech × km remunerado (mapas do 2art e CT-e nos meses importados, aba Dispersão de km nos outros; Empurradas com o km do balanço de massa), mais seguro, IPVA e lavação fixa do mês no Freightech. É reconstruído, não é a fatura. ▲ = Rem DRE − Rem Meta; a diferença fica a confirmar com o planejamento (composição do remunerado, imposto). Fora da comparação: Seara, Terceiros, Corporativo e as contas sem componente no Freightech (materiais de oficina, personalização, ICMS).`+(av.length?' '+av.join(' '):'');
+  pe.textContent=`Mês: ${per(sel)} · YTD: ${per(ytd)}. Rem Meta = R$/km de cada componente no Freightech × km remunerado (mapas do 2art e CT-e nos meses importados, aba Dispersão de km nos outros; Empurradas com o km do balanço de massa), mais seguro, IPVA e lavação fixa do mês no Freightech. É reconstruído, não é a fatura. ▲ = Rem DRE − Rem Meta; a diferença fica a confirmar com o planejamento (composição do remunerado, imposto). Fora da comparação: Armazém (o Freightech não abre a empilhadeira por conta), Seara, Terceiros, Corporativo e as contas sem componente no Freightech (materiais de oficina, personalização, ICMS).`+(av.length?' '+av.join(' '):'');
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -2381,6 +2383,6 @@ function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>VfApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202611232100"></script>
+<script src="../assets/build-check.js?v=202611232130"></script>
 </body>
 </html>

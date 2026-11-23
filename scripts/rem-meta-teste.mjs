@@ -65,7 +65,7 @@ const FROTA = [
   dre('2026-10', 'ROTA - CGR', 'Seguro de Veículos e Equipamentos', -1000), dre('2026-10', 'ROTA - CGR', 'Lavação de Veículos', -500),
   dre('2026-10', 'ROTA - CGR', 'Materiais e Ferramentas de Oficina', -700),
   dre('2026-10', 'EMPURRADA - PIR', 'Combustíveis Veiculos e Equipamentos', -400000), dre('2026-10', 'INSUMOS - PIR', 'Combustíveis Veiculos e Equipamentos', -20000),
-  dre('2026-10', 'TERCEIROS - BLC', 'Combustíveis Veiculos e Equipamentos', -5000),
+  dre('2026-10', 'TERCEIROS - BLC', 'Combustíveis Veiculos e Equipamentos', -5000), dre('2026-10', 'APOIO - CBA', 'Pneus Novos', -3000),
   dre('2026-09', 'ROTA - CGR', 'Combustíveis Veiculos e Equipamentos', -28000),
   dre('2026-11', 'ROTA - CGR', 'Combustíveis Veiculos e Equipamentos', -9000),   // mês sem Freightech e sem km
 ].map((l, i) => ({ ...l, linha: i }));
@@ -129,25 +129,25 @@ console.log('══ 2 · Visão Financeira · Rem Meta × Rem DRE (admin, out/26
   let t = await tabela(page);
   ok('título da visão e cabeçalho com mês e YTD', t.tit === 'Rem Meta × Rem DRE' && t.th.join('|') === 'COMPONENTE|REM META|REM DRE|▲|▲ %|REM META YTD|REM DRE YTD|▲ YTD|▲ YTD %', t.th.join('|'));
   const linha = n => t.tr.find(r => r[0] === n) || [];
-  const [m1] = await F(page, 442600), [d1, dd1] = await F(page, 451000), [, g1] = await F(page, 8400), [y1] = await F(page, 442600 + 25200 + 438000 / 315000 * 290000), [yd1] = await F(page, 479000);
+  const [m1] = await F(page, 435600), [d1, dd1] = await F(page, 451000), [, g1] = await F(page, 15400), [y1] = await F(page, 435600 + 25200 + 438000 / 315000 * 290000), [yd1] = await F(page, 479000);
   const comb = linha('Combustível e Arla');
-  ok('Combustível e Arla: Rem Meta = Rota + Van + Empurrada + Insumos + Armazém; Rem DRE = diesel + Arla', comb[1] === m1 && comb[2] === d1 && comb[3] === g1 && comb[4] === '+2%', comb.join(' · '));
+  ok('Combustível e Arla: Rem Meta = Rota + Van + Empurrada + Insumos (Armazém fora); Rem DRE = diesel + Arla', comb[1] === m1 && comb[2] === d1 && comb[3] === g1 && comb[4] === '+4%', comb.join(' · '));
   ok('YTD soma set/26 (Insumos dentro da Empurrada) e out/26', comb[5] === y1 && comb[6] === yd1, comb.slice(5).join(' · '));
   const man = linha('Manutenção de veículos e contrato'), [mm] = await F(page, 8000), [md] = await F(page, 10000);
   ok('Manutenção: 0,40 × 20.000 contra o remunerado do DRE', man[1] === mm && man[2] === md && man[4] === '+25%', man.join(' · '));
   ok('componente sem conta no DRE aparece (carroceria, IPVA) e conta sem componente fica fora', !!linha('Manutenção de carrocerias')[1] && !!linha('IPVA e licenciamento')[1] && !t.tr.some(r => /Materiais/.test(r[0])));
-  const tot = t.tr[t.tr.length - 1], somaM = 442600 + 8000 + 1000 + 450 + 2000 + 900 + 300, somaD = 451000 + 10000 + 500 + 2000 + 1000;
+  const tot = t.tr[t.tr.length - 1], somaM = 435600 + 8000 + 1000 + 450 + 2000 + 900 + 300, somaD = 451000 + 10000 + 500 + 2000 + 1000;
   const [tm] = await F(page, somaM), [td] = await F(page, somaD);
   ok('linha Total = soma dos componentes; Terceiros fora', tot[0] === 'Total' && tot[1] === tm && tot[2] === td, tot.join(' · '));
   const iC = t.tr.findIndex(r => r[0] === 'Combustível e Arla'), iS = t.tr.findIndex(r => r[0] === 'Seguro');
   const iM = t.tr.findIndex(r => r[0] === 'Manutenção de carrocerias');
   ok('DRE acima da meta em verde, abaixo em vermelho', /cg/.test(t.cls[iC][3]) && /cg-t/.test(t.cls[iC][4]) && /cr/.test(t.cls[iM][3]) && /cr-t/.test(t.cls[iM][4]), t.cls[iC][3] + ' · ' + t.cls[iM][3]);
   ok('seguro: DRE 1.000 contra meta 900 (verde); lavação 500 contra 450', /cg/.test(t.cls[iS][3]) && linha('Lavação')[4] === '+11%', linha('Seguro').join(' · '));
-  ok('a nota fica embaixo, diz o mês, o YTD, que é reconstruído e avisa do balanço e da Van', /Mês: out\/26 · YTD: set\/26, out\/26\./.test(t.pe) && /não é a fatura/.test(t.pe) && /Balanço de massa sem leitura/.test(t.pe) && /Van que o DRE lança dentro da Rota/.test(t.pe), t.pe.slice(0, 60));
+  ok('a nota fica embaixo, diz o mês, o YTD, que é reconstruído e avisa do balanço e da Van', /Mês: out\/26 · YTD: set\/26, out\/26\./.test(t.pe) && /não é a fatura/.test(t.pe) && /Balanço de massa sem leitura/.test(t.pe) && /Armazém/.test(t.pe) && /Van que o DRE lança dentro da Rota/.test(t.pe), t.pe.slice(0, 60));
   // dimensões
   await page.evaluate(() => setRmDim('uni')); t = await tabela(page);
   const [cgr] = await F(page, 29200 + 8000 + 1000 + 450 + 2000 + 900 + 300), [pir] = await F(page, 392000 + 14400);
-  ok('por Unidade: CGR e PIR (o Armazém de Cuiabá só tem meta)', t.th[0] === 'UNIDADE' && (t.tr.find(r => r[0] === 'CGR') || [])[1] === cgr && (t.tr.find(r => r[0] === 'PIR') || [])[1] === pir, t.tr.map(r => r[0] + ' ' + r[1]).join(' · '));
+  ok('por Unidade: CGR e PIR; o Armazém de Cuiabá fica fora', t.th[0] === 'UNIDADE' && !t.tr.some(r => r[0] === 'CBA') && (t.tr.find(r => r[0] === 'CGR') || [])[1] === cgr && (t.tr.find(r => r[0] === 'PIR') || [])[1] === pir, t.tr.map(r => r[0] + ' ' + r[1]).join(' · '));
   await page.evaluate(() => setRmDim('proj')); t = await tabela(page);
   ok('por Projeto: a Van sem linha no DRE entra na Rota; Insumos separado no mês do banco', t.tr.some(r => r[0] === 'ROTA') && !t.tr.some(r => r[0] === 'ROTA (VAN)') && t.tr.some(r => r[0] === 'INSUMOS') && t.tr.some(r => r[0] === 'EMPURRADA'), t.tr.map(r => r[0]).join(' · '));
   await page.evaluate(() => setRmDim('uniproj')); t = await tabela(page);
