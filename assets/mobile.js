@@ -218,7 +218,14 @@
     });
   }
   function schedule(){clearTimeout(t0);t0=setTimeout(scan,250);}
+  /* ── 4) siglas de unidade iguais às do FP&A (ANG → ANH, GNA → GOI), só na tela: assets/siglas.js ── */
+  var _eu=d.currentScript&&d.currentScript.src;
+  function carregaSiglas(){
+    if(window.__siglas||!_eu) return;
+    var s=d.createElement('script'); s.src=_eu.replace(/mobile\.js.*$/,'siglas.js?v=202611232300'); (d.head||d.documentElement).appendChild(s);
+  }
   function start(){
+    carregaSiglas();
     lockZoom();
     setupChartMobile();
     new MutationObserver(schedule).observe(d.documentElement,{childList:true,subtree:true});
