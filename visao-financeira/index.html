@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611232130">
+<meta name="build" content="202611232230">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Visão Financeira · DRE Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -286,6 +286,34 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 .ytg-tbls{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;}
 .cen-cab{flex:0 0 auto;font-size:14px;font-weight:800;color:var(--txt);display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .cen-cab small{display:block;font-size:10.5px;font-weight:500;color:var(--txt3);margin-top:2px;}
+/* ── Ponte do Custo · Conta × Unidade · Aderência Mês a Mês (Renan, 23/11/2026, vendo o painel do FP&A) ── */
+.pt-top{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;flex:0 0 auto;}
+.pt-grid{flex:1 1 auto;min-height:220px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;}
+.pt-nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:8px 0 4px;flex:0 0 auto;}
+.pt-nums div{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.pt-nums span{font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap;}
+.pt-nums b{font-size:clamp(15px,1.5vw,22px);font-weight:800;color:var(--txt);white-space:nowrap;}
+.vw > .tsub.tpe{margin:0;}
+table.mz td,table.mz th{padding:7px 8px;}
+table.mz thead th.num{text-align:right;}
+table.mz td.conta{padding-left:24px;font-weight:500;color:var(--txt2);}
+table.mz tr.mz-pac td{background:var(--cabec);font-weight:800;color:var(--txt);}
+table.mz tr.mz-pac td.conta{padding-left:10px;font-weight:800;color:var(--txt);}
+table.mz tr.total td.conta{padding-left:10px;}
+table.mz td.mz0{color:var(--txt4);}
+table.mz td.mzc{color:var(--txt);font-weight:600;}
+table.ad td,table.ad th{padding:6px 8px;}
+table.ad thead th.num{text-align:right;}
+table.ad thead th.foco{color:var(--laranja);}
+table.ad td.conta{font-weight:700;}
+table.ad td.ad-mr{color:var(--vermelho)!important;font-weight:700;}
+table.ad td.ad-r{color:var(--ambar)!important;font-weight:700;}
+table.ad td.ad-b{color:var(--verde)!important;font-weight:700;}
+table.ad td.ad-o{color:var(--azul)!important;font-weight:800;}
+table.ad td.ad-0{color:var(--txt4);}
+.ad-leg{display:inline-flex;align-items:center;gap:5px;margin-right:12px;white-space:nowrap;}
+.ad-leg i{width:8px;height:8px;border-radius:50%;display:inline-block;}
+@media(min-width:861px){ .ad-cheia .twrap table{height:100%;} }
 table.dre td.muted{color:var(--txt4);}
 table.dre tr.pac-row{cursor:pointer;}
 table.dre tr.pac-row td.conta::before{content:'+';display:inline-block;width:11px;color:var(--laranja);font-weight:800;}
@@ -375,7 +403,8 @@ table.dre tr.rec-row td.conta{font-weight:800;}
   .heb{margin-left:0;text-align:left;}
   .heb .hdel{justify-content:flex-start;}
   .kpis{grid-template-columns:repeat(2,1fr);}
-  .gr2,.wf-grid{display:block;height:auto;}
+  .gr2,.wf-grid,.pt-grid{display:block;height:auto;}
+  .pt-grid .gcard{height:360px;}
   .wf-grid .gcard{height:280px;margin-bottom:12px;}
   .gcard{height:300px;margin-bottom:12px;}
   .tsec{display:block;padding:12px 12px 10px;}
@@ -422,6 +451,18 @@ table.dre tr.rec-row td.conta{font-weight:800;}
     <button class="s-item" data-vw="av">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 5 5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg>
       AH e AV
+    </button>
+    <button class="s-item" data-vw="ponte" title="Do remunerado (ou orçado) ao realizado, pacote a pacote: acumulado e mês">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V8M9 8v5M14 13v-3M20 20V10"/><path d="M2 20h20"/></svg>
+      Ponte do Custo
+    </button>
+    <button class="s-item" data-vw="matriz" title="Desvio de cada conta em cada unidade, numa tela só">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+      Conta × Unidade
+    </button>
+    <button class="s-item" data-vw="adere" title="Aderência ao remunerado de cada unidade, mês a mês">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/><path d="M8 15l2.5 2.5L16 13"/></svg>
+      Aderência Mês a Mês
     </button>
     <button class="s-item" data-vw="remmeta" id="it-remmeta" style="display:none" title="O que deveríamos ter recebido pelos mapas × Freightech contra o remunerado do DRE (só administradores)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M4 12h16M4 17h7"/><path d="M17 15l3 2-3 2"/></svg>
@@ -601,6 +642,78 @@ table.dre tr.rec-row td.conta{font-weight:800;}
               <th class="num sep-l">Δ YTD</th><th class="num">Δ YTD %</th>
             </tr></thead><tbody id="body-pacote"></tbody></table>
           </div>
+        </div>
+      </section>
+
+      <!-- ══ Ponte do Custo: referência → realizado, acumulado e mês ══ -->
+      <section class="vw" id="vw-ponte">
+        <div class="pt-top">
+          <button class="rt" onclick="togglePtRef()" title="Referência da ponte"><span class="l">vs</span> <span id="ref-pt-v">REM</span></button>
+          <div class="dims">
+            <button class="dimb dim-pt on" data-dim="pacote" onclick="setPtDim('pacote')">Pacote</button>
+            <button class="dimb dim-pt" data-dim="conta" onclick="setPtDim('conta')">Conta</button>
+            <button class="dimb dim-pt" data-dim="uni" onclick="setPtDim('uni')">Unidade</button>
+            <button class="dimb dim-pt" data-dim="proj" onclick="setPtDim('proj')">Projeto</button>
+          </div>
+        </div>
+        <div class="pt-grid">
+          <div class="card gcard">
+            <div class="gtit">Acumulado</div><div class="gsub" id="pt-sub-ac">—</div>
+            <div class="pt-nums" id="pt-nums-ac"></div>
+            <div class="gcv"><canvas id="ch-pt-ac"></canvas></div>
+          </div>
+          <div class="card gcard">
+            <div class="gtit">Mês</div><div class="gsub" id="pt-sub-mes">—</div>
+            <div class="pt-nums" id="pt-nums-mes"></div>
+            <div class="gcv"><canvas id="ch-pt-mes"></canvas></div>
+          </div>
+        </div>
+        <div class="tsub tpe" id="pe-pt"></div>
+      </section>
+
+      <!-- ══ Conta × Unidade: o desvio de cada conta em cada unidade ══ -->
+      <section class="vw" id="vw-matriz">
+        <div class="card tsec">
+          <div class="thead-row">
+            <div style="display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap">
+              <button class="rt" onclick="toggleMzRef()" title="Referência da comparação"><span class="l">vs</span> <span id="ref-mz-v">REM</span></button>
+              <div class="dims">
+                <button class="dimb dim-mzm on" data-dim="brl" onclick="setMzModo('brl')">Δ BRL</button>
+                <button class="dimb dim-mzm" data-dim="pct" onclick="setMzModo('pct')">Δ %</button>
+              </div>
+              <div class="dims">
+                <button class="dimb dim-mzc on" data-dim="uni" onclick="setMzCol('uni')">Unidade</button>
+                <button class="dimb dim-mzc" data-dim="proj" onclick="setMzCol('proj')">Projeto</button>
+              </div>
+            </div>
+          </div>
+          <div class="twrap">
+            <table class="dre mz" id="tbl-mz" data-no-sort><thead id="head-mz"></thead><tbody id="body-mz"></tbody></table>
+          </div>
+          <div class="tsub tpe" id="pe-mz"></div>
+        </div>
+      </section>
+
+      <!-- ══ Aderência Mês a Mês: unidade × mês, com faixas ══ -->
+      <section class="vw" id="vw-adere">
+        <div class="card tsec ad-cheia">
+          <div class="thead-row">
+            <div style="display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap">
+              <button class="rt" onclick="toggleAdRef()" title="Referência da aderência"><span class="l">vs</span> <span id="ref-ad-v">REM</span></button>
+              <div class="dims">
+                <button class="dimb dim-adi on" data-dim="custo" onclick="setAdInd('custo')">Custo de frota</button>
+                <button class="dimb dim-adi" data-dim="ebitda" onclick="setAdInd('ebitda')">EBITDA</button>
+              </div>
+              <div class="dims">
+                <button class="dimb dim-adl on" data-dim="uni" onclick="setAdLin('uni')">Unidade</button>
+                <button class="dimb dim-adl" data-dim="proj" onclick="setAdLin('proj')">Projeto</button>
+              </div>
+            </div>
+          </div>
+          <div class="twrap">
+            <table class="dre ad" id="tbl-ad" data-no-sort><thead id="head-ad"></thead><tbody id="body-ad"></tbody></table>
+          </div>
+          <div class="tsub tpe" id="pe-ad"></div>
         </div>
       </section>
 
@@ -1591,6 +1704,9 @@ function atualizar(){
   renderYTG();
   renderFCT();
   if(VW==='remmeta') renderRemMeta();
+  if(VW==='ponte') renderPonte();
+  if(VW==='matriz') renderMatriz();
+  if(VW==='adere') renderAdere();
   const now=new Date();
   // o selo diz DE ONDE o dado veio: com a queda para a planilha acontecendo em
   // silêncio, "banco" e "planilha" pareceriam a mesma tela
@@ -1599,6 +1715,201 @@ function atualizar(){
   set('titSub', `${vigLbl} · atualizado ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${selo}`);
 }
 
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PONTE DO CUSTO · CONTA × UNIDADE · ADERÊNCIA MÊS A MÊS (Renan, 23/11/2026,
+   vendo o painel do FP&A: cascata do orçado ao real, matriz conta × unidade
+   com calor e matriz unidade × mês com faixas; "Quero na visão financeira").
+   Tudo sai das mesmas linhas da aba Frota (e da aba EBITDA) que o resto do
+   painel lê; custo aparece positivo, como no gráfico do Resumo.
+   ════════════════════════════════════════════════════════════════════════════ */
+let ptDim='pacote', ptRef='rem', mzRef='rem', mzModo='brl', mzCol='uni', adRef='rem', adInd='custo', adLin='uni';
+const chPt={};
+const refNome=r=>r==='orc'?'Orçado':'Remunerado', refAbr=r=>r==='orc'?'ORÇ':'REM';
+const PAC_ORD_MZ=['Combustíveis','Manutenções','Pneus','Seguros e licenças','ICMS','Outros'];
+const pacNome=r=>{ const p=getPac(r); return p==='-'?'Outros':p; };
+const ctaNome=r=>CONTAS_ALIAS[r[C.cta]]||r[C.cta]||'Outros';
+const lbVig=vk=>{ const d=vigs.find(x=>vigKey(x)===vk); return d?vigLabel(d):vk; };
+// número compacto das matrizes: 842 · 12,3k · 468k · 1,25 mi
+const fmtC=v=>{ const a=Math.abs(+v||0), s=+v<0?'-':''; const dec=(x,n)=>x.toFixed(n).replace('.',',');
+  if(a<1e3) return s+Math.round(a); if(a<1e5) return s+dec(a/1e3,1)+'k'; if(a<1e6) return s+Math.round(a/1e3)+'k'; return s+dec(a/1e6,2)+' mi'; };
+const pct1=v=>v==null||!isFinite(v)?'–':v.toFixed(1).replace('.',',')+'%';
+/* o mês em foco: o último marcado no filtro; sem filtro, o último com realizado (dentro do ano do filtro) */
+function focoVig(f){
+  if(f.vig&&f.vig.length) return f.vig.slice().sort().pop();
+  let best='';
+  allRows.forEach(r=>{ if(!(Math.abs(+r[C.real])>0)||r[C.cta]==='Receita Líquida') return; const d=parseVig(r[C.vig]); if(!d) return;
+    if(f.ano&&f.ano.length&&!f.ano.includes(String(d.getFullYear()))) return; const k=vigKey(d); if(k>best) best=k; });
+  return best;
+}
+const mesesAte=vk=>{ const y=vk.slice(0,4), m=+vk.slice(5,7), o=[]; for(let i=1;i<=m;i++) o.push(y+'-'+String(i).padStart(2,'0')); return o; };
+
+/* ── Ponte do Custo ── */
+function ptDados(f, vks, RK, dim){
+  const chave=dim==='conta'?ctaNome:dim==='uni'?r=>getUniLabel(r[C.nv3]):dim==='proj'?r=>getNv3Prefix(r[C.nv3]):pacNome;
+  const m={}; let ref=0, real=0;
+  filterMes(allRows,{...f,ano:[],vig:vks}).forEach(r=>{ if(r[C.cta]==='Receita Líquida') return;
+    const a=-(+r[C[RK]]||0), b=-(+r[C.real]||0); if(!a&&!b) return; const k=chave(r)||'Outros';
+    const x=m[k]=m[k]||{ref:0,real:0}; x.ref+=a; x.real+=b; ref+=a; real+=b; });
+  let st=Object.keys(m).map(k=>({nome:k,d:m[k].real-m[k].ref})).filter(s=>Math.abs(s.d)>=0.5);
+  if(dim==='pacote') st.sort((a,b)=>PAC_ORD_MZ.indexOf(a.nome)-PAC_ORD_MZ.indexOf(b.nome));
+  else st.sort((a,b)=>b.d-a.d);
+  if(st.length>10){                                   // muitas barras: as 9 de maior desvio e o resto junto
+    const ord=st.slice().sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)), fica=new Set(ord.slice(0,9).map(s=>s.nome));
+    const resto=st.filter(s=>!fica.has(s.nome)), n=resto.length;
+    st=st.filter(s=>fica.has(s.nome)); st.push({nome:'Demais ('+n+')',d:resto.reduce((a,s)=>a+s.d,0)});
+  }
+  return {ref,real,st};
+}
+const ptQuebra=t=>{ const out=[]; let l=''; String(t).split(/\s+/).forEach(w=>{ if(l&&(l+' '+w).length>13){ out.push(l); l=w; } else l=l?l+' '+w:w; }); if(l) out.push(l); return out.slice(0,3); };
+const ptDesenho={afterDatasetsDraw(chart){
+  const P=chart.$pt; if(!P) return; const meta=chart.getDatasetMeta(0), ctx=chart.ctx, y=chart.scales.y, claro=document.body.classList.contains('claro');
+  ctx.save();
+  // o fio que liga o topo de uma barra ao começo da seguinte
+  ctx.strokeStyle=claro?'rgba(22,29,43,.35)':'rgba(238,242,250,.35)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  for(let i=0;i<meta.data.length-1;i++){ const a=meta.data[i], b=meta.data[i+1]; if(!a||!b) continue; const py=y.getPixelForValue(P.nivel[i]);
+    ctx.beginPath(); ctx.moveTo(a.x+a.width/2,py); ctx.lineTo(b.x-b.width/2,py); ctx.stroke(); }
+  ctx.setLineDash([]); ctx.textAlign='center'; ctx.textBaseline='bottom';
+  const pq=chart.width<430;
+  meta.data.forEach((bar,i)=>{ if(!bar) return; const t=P.rot[i];
+    ctx.font=(t.tot?'800 ':'700 ')+(pq?10:t.tot?13:12)+'px Montserrat,sans-serif';
+    ctx.fillStyle=t.cor||(claro?'#161D2B':'#EEF2FA');
+    ctx.fillText(t.txt, bar.x, y.getPixelForValue(t.hi)-5); });
+  ctx.restore();
+}};
+function drawPonte(id, D, RK){
+  const cv=$(id); if(!cv) return; if(chPt[id]){ chPt[id].destroy(); chPt[id]=null; }
+  if(!D.ref&&!D.real) return;
+  const claro=document.body.classList.contains('claro'), neutro=claro?'#161D2B':'#EEF2FA', verde='#3BB33B', vermelho='#FF6666', lar='#F97316';
+  const labels=[ptQuebra(refNome(RK))], bars=[[0,D.ref]], cores=[neutro], rot=[{txt:fmt(D.ref),hi:D.ref,tot:1}], nivel=[D.ref], niveis=[D.ref,D.real];
+  let run=D.ref;
+  D.st.forEach(s=>{ const a=run, b=run+s.d; bars.push([Math.min(a,b),Math.max(a,b)]); const c=s.d>0?vermelho:verde; cores.push(c);
+    rot.push({txt:(s.d>0?'+':'−')+fmt(Math.abs(s.d)),hi:Math.max(a,b),cor:c}); labels.push(ptQuebra(s.nome)); run=b; nivel.push(run); niveis.push(run); });
+  labels.push(['Realizado']); bars.push([0,D.real]); cores.push(lar); rot.push({txt:fmt(D.real),hi:D.real,tot:1}); nivel.push(D.real);
+  const mn=Math.min(...niveis), mx=Math.max(...niveis), span=Math.max(mx-mn, mx*0.02);
+  const tickC=claro?'#4A5568':'#B2BCD2';
+  chPt[id]=new Chart(cv,{type:'bar',
+    data:{labels,datasets:[{data:bars,backgroundColor:cores.map(c=>c+'A6'),borderColor:cores,borderWidth:1,borderRadius:3,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:24}},
+      plugins:{legend:{display:false},datalabels:{display:false},
+        tooltip:{callbacks:{title:it=>String(it[0].label).replace(/,/g,' '),label:c=>{ const v=c.raw; return 'R$ '+fmt(Math.abs(v[1]-v[0])); }},
+          backgroundColor:claro?'#FFFFFF':'#1B1B1E',titleColor:'#F97316',bodyColor:claro?'#161D2B':'#EEF2FA',
+          borderColor:claro?'#d7dce4':'#33343A',borderWidth:1,titleFont:{family:'Montserrat'},bodyFont:{family:'Montserrat'}}},
+      scales:{x:{grid:{display:false},border:{display:false},ticks:{color:tickC,autoSkip:false,maxRotation:0,font:{family:'Montserrat',size:10,weight:'600'}}},
+        y:{display:false,min:Math.max(0,mn-span*1.6),max:mx+span*0.25}}},
+    plugins:[ptDesenho]});
+  chPt[id].$pt={rot,nivel}; chPt[id].update();
+}
+function ptNums(id, D, RK){
+  const d=D.real-D.ref, p=D.ref?d/Math.abs(D.ref)*100:null, c=Math.abs(d)<0.5?'':d>0?'cr':'cg';
+  $(id).innerHTML=`<div><span>${refNome(RK)}</span><b>${fmt(D.ref)}</b></div><div><span>Realizado</span><b>${fmt(D.real)}</b></div>`+
+    `<div><span>Δ Real × ${refAbr(RK)==='ORÇ'?'Orç.':'Rem.'}</span><b class="${c}">${fmtD(d)}</b></div><div><span>Δ %</span><b class="${c}">${pct(p)}</b></div>`;
+}
+function renderPonte(){
+  const f=lastF; if(!f||VW!=='ponte') return;
+  const foco=focoVig(f); if(!foco) return;
+  const mesV=f.vig&&f.vig.length?f.vig.slice().sort():[foco], acV=mesesAte(foco);
+  const A=ptDados(f,acV,ptRef,ptDim), M=ptDados(f,mesV,ptRef,ptDim);
+  set('pt-sub-ac', acV.length>1?lbVig(acV[0])+' a '+lbVig(foco):lbVig(foco));
+  set('pt-sub-mes', mesV.length===1?lbVig(mesV[0]):mesV.length<=3?mesV.map(lbVig).join(', '):mesV.length+' meses, de '+lbVig(mesV[0])+' a '+lbVig(mesV[mesV.length-1]));
+  ptNums('pt-nums-ac',A,ptRef); ptNums('pt-nums-mes',M,ptRef);
+  drawPonte('ch-pt-ac',A,ptRef); drawPonte('ch-pt-mes',M,ptRef);
+  const o={pacote:'pacote',conta:'conta',uni:'unidade',proj:'projeto'}[ptDim];
+  set('pe-pt', `Do ${refNome(ptRef).toLowerCase()} ao realizado do custo de frota: cada barra do meio é o realizado menos o ${refNome(ptRef).toLowerCase()} de um${o==='pacote'||o==='projeto'?'':'a'} ${o}. Vermelha quando gastou mais, verde quando gastou menos.`);
+}
+function setPtDim(d){ ptDim=d; document.querySelectorAll('.dim-pt').forEach(b=>b.classList.toggle('on',b.dataset.dim===d)); renderPonte(); }
+function togglePtRef(){ ptRef=ptRef==='rem'?'orc':'rem'; set('ref-pt-v',refAbr(ptRef)); renderPonte(); }
+
+/* ── Conta × Unidade ── */
+function mzDados(f, RK, col){
+  const isAc=!f.vig||!f.vig.length, rows=isAc?ateUltimoReal(filterMes(allRows,f)):filterMes(allRows,f);
+  const colDe=col==='proj'?r=>getNv3Prefix(r[C.nv3]):r=>getUniLabel(r[C.nv3]);
+  const M={}, cols=new Set();
+  rows.forEach(r=>{ if(r[C.cta]==='Receita Líquida') return; const c=colDe(r); if(!c) return;
+    const a=-(+r[C[RK]]||0), b=-(+r[C.real]||0); if(!a&&!b) return; cols.add(c);
+    const pc=(M[pacNome(r)]=M[pacNome(r)]||{}), ct=(pc[ctaNome(r)]=pc[ctaNome(r)]||{}), y=(ct[c]=ct[c]||{ref:0,real:0}); y.ref+=a; y.real+=b; });
+  return {M,cols:[...cols].sort((a,b)=>a.localeCompare(b,'pt-BR'))};
+}
+function renderMatriz(){
+  const f=lastF, body=$('body-mz'); if(!f||VW!=='matriz'||!body) return;
+  const Q=mzDados(f,mzRef,mzCol), cols=Q.cols, M=Q.M, pct_=mzModo==='pct';
+  const soma=arr=>arr.reduce((a,x)=>{ if(x){ a.ref+=x.ref; a.real+=x.real; } return a; },{ref:0,real:0});
+  const val=x=>pct_?(x.ref?(x.real-x.ref)/Math.abs(x.ref)*100:null):x.real-x.ref;
+  const txt=x=>{ const v=val(x); if(v==null) return '–'; if(pct_) return Math.abs(v)<0.5?'–':(v>0?'+':'')+Math.round(v)+'%'; return Math.abs(v)<0.5?'–':fmtC(v); };
+  $('head-mz').innerHTML='<tr><th>CONTA</th>'+cols.map(c=>`<th class="num">${c}</th>`).join('')+'<th class="num sep-l">TOTAL</th></tr>';
+  const pacs=PAC_ORD_MZ.filter(p=>M[p]).concat(Object.keys(M).filter(p=>!PAC_ORD_MZ.includes(p)));
+  if(!pacs.length||!cols.length){ body.innerHTML=`<tr><td colspan="${cols.length+2}" style="text-align:center;color:var(--txt3);padding:28px 12px">Nada no recorte.</td></tr>`; set('pe-mz',''); return; }
+  // o calor é relativo à maior célula de conta do recorte (em %, satura em 50%)
+  let mx=0; pacs.forEach(p=>Object.values(M[p]).forEach(ct=>Object.values(ct).forEach(x=>{ const v=val(x); if(v!=null) mx=Math.max(mx,Math.abs(v)); })));
+  if(pct_) mx=Math.min(mx,50);
+  const calor=x=>{ if(!x) return '<td class="num mz0">–</td>'; const v=val(x), t=txt(x); if(t==='–') return '<td class="num mz0">–</td>';
+    const a=(0.07+0.38*Math.min(1,Math.abs(v)/(mx||1))).toFixed(2);
+    return `<td class="num mzc" style="background:rgba(${v>0?'255,102,102':'59,179,59'},${a})">${t}</td>`; };
+  const tot=(x,sep)=>{ const v=val(x), t=txt(x); return `<td class="num${sep?' sep-l':''} ${t==='–'?'mz0':v>0?'cr':'cg'}">${t}</td>`; };
+  const ordem=x=>x.real-x.ref;
+  let h=''; const G=cols.map(()=>({ref:0,real:0}));
+  pacs.forEach(p=>{
+    const ctas=Object.keys(M[p]), porCol=cols.map(c=>soma(ctas.map(k=>M[p][k][c])));
+    porCol.forEach((x,i)=>{ G[i].ref+=x.ref; G[i].real+=x.real; });
+    h+=`<tr class="mz-pac"><td class="conta">${p}</td>${porCol.map(x=>tot(x)).join('')}${tot(soma(porCol),1)}</tr>`;
+    ctas.map(k=>({k,t:soma(cols.map(c=>M[p][k][c]))})).filter(o=>Math.abs(o.t.ref)>=0.5||Math.abs(o.t.real)>=0.5)
+      .sort((a,b)=>ordem(b.t)-ordem(a.t))
+      .forEach(o=>{ h+=`<tr><td class="conta">${o.k}</td>${cols.map(c=>calor(M[p][o.k][c])).join('')}${tot(o.t,1)}</tr>`; });
+  });
+  h+=`<tr class="total"><td class="conta">Total</td>${G.map(x=>tot(x)).join('')}${tot(soma(G),1)}</tr>`;
+  body.innerHTML=h;
+  const isAc=!f.vig||!f.vig.length, per=isAc?'até o último mês com realizado':f.vig.length<=3?f.vig.slice().sort().map(lbVig).join(', '):f.vig.length+' meses';
+  set('pe-mz', `Δ = realizado − ${refNome(mzRef).toLowerCase()} de cada conta em cada ${mzCol==='proj'?'projeto':'unidade'} (${per})${pct_?', em % do '+refNome(mzRef).toLowerCase():', em R$'}. Vermelho quando gastou mais, verde quando gastou menos; quanto mais forte o fundo, maior o desvio.`);
+}
+function toggleMzRef(){ mzRef=mzRef==='rem'?'orc':'rem'; set('ref-mz-v',refAbr(mzRef)); renderMatriz(); }
+function setMzModo(m){ mzModo=m; document.querySelectorAll('.dim-mzm').forEach(b=>b.classList.toggle('on',b.dataset.dim===m)); renderMatriz(); }
+function setMzCol(c){ mzCol=c; document.querySelectorAll('.dim-mzc').forEach(b=>b.classList.toggle('on',b.dataset.dim===c)); renderMatriz(); }
+
+/* ── Aderência Mês a Mês: as faixas são as do painel do FP&A ── */
+const AD_FAIXAS=[['ad-mr','Muito ruim','até 69,9%','var(--vermelho)'],['ad-r','Ruim','70% a 99,9%','var(--ambar)'],['ad-b','Bom','100% a 120%','var(--verde)'],['ad-o','Ótimo','acima de 120%','var(--azul)']];
+const adCls=v=>v==null?'ad-0':v<70?'ad-mr':v<100?'ad-r':v<=120?'ad-b':'ad-o';
+function adDados(f, RK, ind, lin, anos){
+  const linDe=lin==='proj'?getNv3Prefix:getUniLabel, A={}, T={};
+  const soma=(o,k,vk,a,b)=>{ const x=(o[k]=o[k]||{}), y=(x[vk]=x[vk]||{ref:0,real:0}); y.ref+=a; y.real+=b; };
+  if(ind==='ebitda'){
+    if(EB&&EB.real>=0) ebitdaRows.forEach(r=>{ const d=ebVig(r); if(!d||!anos.includes(d.getFullYear())) return;
+      if(EB.cta>=0&&!_normEb(r[EB.cta]).includes('ebitda')) return;
+      const n3=EB.nv3>=0?r[EB.nv3]:''; if(f.uni.length&&!f.uni.includes(getUniLabel(n3))) return; if(f.nv3.length&&!f.nv3.includes(getNv3Prefix(n3))) return;
+      const k=linDe(n3); if(!k) return; const a=+(r[EB[RK]]||0), b=+(r[EB.real]||0); soma(A,k,vigKey(d),a,b); soma(T,'t',vigKey(d),a,b); });
+  } else allRows.forEach(r=>{ if(r[C.cta]==='Receita Líquida'||!applyFilters(r,f)) return; const d=parseVig(r[C.vig]); if(!d||!anos.includes(d.getFullYear())) return;
+      const k=linDe(r[C.nv3]); if(!k) return; const a=-(+r[C[RK]]||0), b=-(+r[C.real]||0); soma(A,k,vigKey(d),a,b); soma(T,'t',vigKey(d),a,b); });
+  return {A,T:T.t||{}};
+}
+function renderAdere(){
+  const f=lastF, body=$('body-ad'); if(!f||VW!=='adere'||!body) return;
+  const foco=focoVig(f), ano=foco?+foco.slice(0,4):new Date().getFullYear(), Q=adDados(f,adRef,adInd,adLin,[ano-1,ano]);
+  // aderência: custo = referência ÷ realizado (gastar menos passa de 100%); EBITDA = realizado ÷ referência
+  const ader=x=>{ if(!x) return null; if(adInd==='ebitda') return x.ref>0?x.real/x.ref*100:null; return x.real>0&&x.ref>0?x.ref/x.real*100:null; };
+  const vk=(y,m)=>y+'-'+String(m).padStart(2,'0');
+  // meses fechados de cada ano = os que têm realizado no recorte
+  const fech=y=>{ const o=[]; for(let m=1;m<=12;m++){ const x=Q.T[vk(y,m)]; if(x&&Math.abs(x.real)>0.5) o.push(m); } return o; };
+  const fA=fech(ano), fP=fech(ano-1);
+  const acum=(o,y,ms)=>ms.reduce((a,m)=>{ const x=o[vk(y,m)]; if(x){ a.ref+=x.ref; a.real+=x.real; } return a; },{ref:0,real:0});
+  const marc=new Set((f.vig||[]).filter(v=>v.startsWith(ano+'-')).map(v=>+v.slice(5,7)));
+  $('head-ad').innerHTML=`<tr><th>${adLin==='proj'?'PROJETO':'UNIDADE'}</th>`+
+    `<th class="num"><span class="grp">Acumulado</span>${ano-1}</th><th class="num"><span class="grp">&nbsp;</span>${ano}</th>`+
+    MESES.map((m,i)=>`<th class="num${i===0?' sep-l':''}${marc.has(i+1)?' foco':''}"><span class="grp">${i===0?'Mês a mês · '+ano:'&nbsp;'}</span>${m.toUpperCase()}</th>`).join('')+'</tr>';
+  const cel=(x,sep)=>{ const v=ader(x); return `<td class="num${sep?' sep-l':''} ${adCls(v)}">${pct1(v)}</td>`; };
+  const linha=(nome,o,cls)=>`<tr${cls?' class="'+cls+'"':''}><td class="conta">${nome}</td>${cel(acum(o,ano-1,fP))}${cel(acum(o,ano,fA))}`+
+    MESES.map((m,i)=>fA.includes(i+1)?cel(o[vk(ano,i+1)],i===0):`<td class="num ad-0${i===0?' sep-l':''}"></td>`).join('')+'</tr>';
+  const ks=Object.keys(Q.A).filter(k=>{ const a=acum(Q.A[k],ano,fA), p=acum(Q.A[k],ano-1,fP); return Math.abs(a.ref)+Math.abs(a.real)+Math.abs(p.ref)+Math.abs(p.real)>=0.5; })
+    .sort((a,b)=>{ const va=ader(acum(Q.A[a],ano,fA)), vb=ader(acum(Q.A[b],ano,fA)); return (va==null?1e9:va)-(vb==null?1e9:vb)||a.localeCompare(b,'pt-BR'); });
+  if(!ks.length){ body.innerHTML=`<tr><td colspan="15" style="text-align:center;color:var(--txt3);padding:28px 12px">Nada no recorte.</td></tr>`; $('pe-ad').textContent=''; return; }
+  body.innerHTML=ks.map(k=>linha(k,Q.A[k])).join('')+linha('Total',Q.T,'total');
+  body.closest('.tsec').classList.toggle('ad-cheia', ks.length>=8);   // poucas linhas não esticam até o rodapé
+  const rn=refNome(adRef).toLowerCase();
+  $('pe-ad').innerHTML=AD_FAIXAS.map(x=>`<span class="ad-leg"><i style="background:${x[3]}"></i><b style="color:var(--txt2)">${x[1]}</b> ${x[2]}</span>`).join('')+'<br>'+
+    (adInd==='ebitda'?`Aderência = EBITDA realizado ÷ EBITDA ${rn}.`:`Aderência = custo de frota ${rn} ÷ realizado: 100% é gastar o ${rn}; acima de 100%, gastou menos.`)+
+    ` Acumulado de cada ano até o último mês com realizado. Da menor aderência no ano para a maior.`+(adInd==='ebitda'&&(f.pac.length||f.cta.length)?' Os filtros de Pacote e Conta não valem no EBITDA.':'');
+}
+function toggleAdRef(){ adRef=adRef==='rem'?'orc':'rem'; set('ref-ad-v',refAbr(adRef)); renderAdere(); }
+function setAdInd(i){ adInd=i; document.querySelectorAll('.dim-adi').forEach(b=>b.classList.toggle('on',b.dataset.dim===i)); renderAdere(); }
+function setAdLin(l){ adLin=l; document.querySelectorAll('.dim-adl').forEach(b=>b.classList.toggle('on',b.dataset.dim===l)); renderAdere(); }
 
 /* ════════════════════════════════════════════════════════════════════════════
    REM META × REM DRE (Renan, 18/11/2026: "uma visão de gaps da composição do
@@ -2248,7 +2559,8 @@ function renderFCT(){
 loadDraft(); loadCens(); renderCenBar();
 
 /* ── navegação entre as visões ── */
-const TIT={resumo:'Resumo Gerencial',nominal:'Análise Nominal',av:'Análise Horizontal e Vertical',remmeta:'Rem Meta × Rem DRE',
+const TIT={resumo:'Resumo Gerencial',nominal:'Análise Nominal',av:'Análise Horizontal e Vertical',
+  ponte:'Ponte do Custo',matriz:'Conta × Unidade',adere:'Aderência Mês a Mês',remmeta:'Rem Meta × Rem DRE',
   ytg:'YTG + TGT · Bridge',cen1:'YTG + TGT · Cenário 1',cen2:'YTG + TGT · Cenário 2',
   fct1:'Forecast · Cenário 1 — Receita Fixa',fct2:'Forecast · Cenário 2 — Receita Tendência'};
 function setVw(v){
@@ -2260,6 +2572,9 @@ function setVw(v){
   if(v==='ytg'||v==='cen1'||v==='cen2') setTimeout(renderYTG,30);       // canvas/tabela precisam estar visíveis
   if(v==='fct1'||v==='fct2') setTimeout(renderFCT,30);
   if(v==='remmeta') renderRemMeta();
+  if(v==='ponte') setTimeout(renderPonte,30);
+  if(v==='matriz') renderMatriz();
+  if(v==='adere') renderAdere();
 }
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
 
@@ -2299,7 +2614,7 @@ function aplicaTema(t){
   document.body.classList.toggle('claro', t==='light');
   localStorage.setItem('vfa_tema', t);
   const b=$('btTema'); if(b) b.innerHTML = t==='light'?_LUA:_SOL;
-  if(lastF){ renderCharts(lastF); renderYTG(); }
+  if(lastF){ renderCharts(lastF); renderYTG(); renderPonte(); }
 }
 function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark':'light'); }
 aplicaTema(localStorage.getItem('vfa_tema')||'dark');
@@ -2343,7 +2658,7 @@ async function init(){
 }
 document.addEventListener('DOMContentLoaded',init);
 let _rt;
-window.addEventListener('resize',()=>{ clearTimeout(_rt); _rt=setTimeout(()=>{ if(lastF) renderCharts(lastF); },400); });
+window.addEventListener('resize',()=>{ clearTimeout(_rt); _rt=setTimeout(()=>{ if(lastF){ renderCharts(lastF); renderPonte(); } },400); });
 /* "Importar DRE" só para admin: lê o perfil que o hub deixa em cache
    (gem_perfil_<uid>), sem ida ao banco — o mesmo desenho dos atalhos de
    importação do Painel KM; a página de importação confere de novo antes de gravar. */
@@ -2383,6 +2698,6 @@ function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>VfApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202611232130"></script>
+<script src="../assets/build-check.js?v=202611232230"></script>
 </body>
 </html>
