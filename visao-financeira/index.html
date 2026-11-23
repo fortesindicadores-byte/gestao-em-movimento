@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611181300">
+<meta name="build" content="202611232100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Visão Financeira · DRE Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -248,6 +248,7 @@ body.claro .ms-panel{box-shadow:0 18px 44px rgba(15,23,42,.20), 0 3px 10px rgba(
 .thead-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:2px;}
 .ttit{font-size:14px;font-weight:800;}
 .tsub{font-size:10px;color:var(--txt3);margin-bottom:8px;}
+.tsub.tpe{margin:8px 0 0;flex:0 0 auto;line-height:1.5;}
 .twrap{flex:1;min-height:0;overflow:auto;border:1px solid var(--card-brd);border-radius:10px;background:var(--side);}
 /* O ESPELHO ATRÁS DA TABELA FICA SEMPRE (Renan, 06/10/2026: "algumas ficaram estranhas sem o
    espelho no fundo, pois como as bordas são arredondadas, fica comendo as bordas. Pode manter
@@ -391,7 +392,10 @@ table.dre tr.rec-row td.conta{font-weight:800;}
   .fct-kpis .kpi .kv{font-size:clamp(15px,min(2.211vh,1.094vw),21px);}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
+<script src="../assets/balanco-massa.js?v=202611232100"></script>
+<script src="../assets/rem-meta.js?v=202611232100"></script>
 </head>
 <body>
 
@@ -418,6 +422,10 @@ table.dre tr.rec-row td.conta{font-weight:800;}
     <button class="s-item" data-vw="av">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 5 5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg>
       AH e AV
+    </button>
+    <button class="s-item" data-vw="remmeta" id="it-remmeta" style="display:none" title="O que deveríamos ter recebido pelos mapas × Freightech contra o remunerado do DRE (só administradores)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M4 12h16M4 17h7"/><path d="M17 15l3 2-3 2"/></svg>
+      Rem Meta × Rem DRE
     </button>
     <button class="s-item" data-vw="ytg">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg>
@@ -593,6 +601,24 @@ table.dre tr.rec-row td.conta{font-weight:800;}
               <th class="num sep-l">Δ YTD</th><th class="num">Δ YTD %</th>
             </tr></thead><tbody id="body-pacote"></tbody></table>
           </div>
+        </div>
+      </section>
+
+      <!-- ══ Rem Meta × Rem DRE (só admin): mapas × Freightech contra o remunerado do DRE ══ -->
+      <section class="vw" id="vw-remmeta">
+        <div class="card tsec">
+          <div class="thead-row">
+            <div class="dims">
+              <button class="dimb dim-rm on" data-dim="comp" onclick="setRmDim('comp')">Componente</button>
+              <button class="dimb dim-rm" data-dim="uni" onclick="setRmDim('uni')">Unidade</button>
+              <button class="dimb dim-rm" data-dim="proj" onclick="setRmDim('proj')">Projeto</button>
+              <button class="dimb dim-rm" data-dim="uniproj" onclick="setRmDim('uniproj')">Unidade - Projeto</button>
+            </div>
+          </div>
+          <div class="twrap">
+            <table class="dre" id="tbl-rm"><thead id="head-rm"></thead><tbody id="body-rm"></tbody></table>
+          </div>
+          <div class="tsub tpe" id="pe-rm"></div>
         </div>
       </section>
 
@@ -1564,6 +1590,7 @@ function atualizar(){
   renderAnalise(accRows,'body-av',avRef==='orc',avDim);
   renderYTG();
   renderFCT();
+  if(VW==='remmeta') renderRemMeta();
   const now=new Date();
   // o selo diz DE ONDE o dado veio: com a queda para a planilha acontecendo em
   // silêncio, "banco" e "planilha" pareceriam a mesma tela
@@ -1572,6 +1599,93 @@ function atualizar(){
   set('titSub', `${vigLbl} · atualizado ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${selo}`);
 }
 
+
+/* ════════════════════════════════════════════════════════════════════════════
+   REM META × REM DRE (Renan, 18/11/2026: "uma visão de gaps da composição do
+   remunerado: Rem Meta (o que deveríamos ter recebido pelos mapas × FT) × Rem
+   DRE, ▲ e ▲%, mês e YTD, no padrão de tabela"; feito em 23/11). Só admin (o
+   Freightech é de admin). A conta mora em assets/rem-meta.js e é a mesma do
+   "Pago FT" da Árvore do Custo; aqui entra só o remunerado da aba Frota.
+   ════════════════════════════════════════════════════════════════════════════ */
+let RM=null, RM_P=null, RM_ERR='', rmDim='comp', RM_ADMIN=false;
+function rmRemCta(){
+  const o={}, R=RemMeta;
+  allRows.forEach(r=>{ if(r[C.cta]==='Receita Líquida') return; const d=parseVig(r[C.vig]); if(!d) return;
+    const n3=R.nu(r[C.nv3]).replace(/\s*\(INATIVO\)\s*$/,''); if(!/^EMPURRADA - /.test(n3)) return;
+    const k=R.BR(vigKey(d))+'|'+n3, c=R.ctaNK(r[C.cta]); (o[k]=o[k]||{})[c]=(o[k][c]||0)-(+r[C.rem]||0); });
+  return o;
+}
+function rmCarrega(){
+  if(RM_P) return RM_P; RM_ERR='';
+  RM_P=(async()=>{
+    const sb=sbVF(); if(!sb) throw new Error('supabase-js não carregou');
+    if(!window.RemMeta) throw new Error('assets/rem-meta.js não carregou');
+    RM=await RemMeta.carrega(sb,{remCta:rmRemCta()});
+  })().catch(e=>{ console.warn('Rem Meta indisponível:',e); RM=null; RM_ERR=(e&&e.message)||String(e); })
+     .then(()=>{ if(VW==='remmeta') renderRemMeta(); });
+  return RM_P;
+}
+function setRmDim(dim){
+  rmDim=dim; document.querySelectorAll('.dim-rm').forEach(b=>b.classList.toggle('on',b.dataset.dim===dim)); renderRemMeta();
+}
+/* a conta de um recorte: f = filtros do topo, dim = comp · uni · proj · uniproj */
+function rmCalc(f, dim){
+  const R=RemMeta, ult=lastRealVigKey();
+  // meses que dá para comparar: com Freightech, com km remunerado e até o último mês com DRE
+  const ok=v=>RM.vigsKm.has(v)&&RM.vigsFT.has(v)&&(!ult||v<=ult);
+  const todosV=[...new Set(vigs.map(vigKey))].filter(v=>!f.ano.length||f.ano.includes(v.slice(0,4)));
+  const pedidos=f.vig&&f.vig.length?f.vig.slice().sort():todosV, sel=pedidos.filter(ok), ytd=getYtdVigs(f).filter(ok);
+  const fora=f.vig&&f.vig.length?pedidos.filter(v=>!ok(v)):[];
+  const uF=new Set(f.uni.map(R.uniDe)), pF=new Set(f.nv3.map(R.opDe).filter(Boolean));
+  const passa=(op,uni)=>(!f.uni.length||uF.has(uni))&&(!f.nv3.length||pF.has(op));
+  const comps=R.COMP.filter(c=>(!f.pac.length||f.pac.includes(c.pac))&&(!f.cta.length||f.cta.some(x=>R.compDe(x)===c.id)));
+  const cBy={}; comps.forEach(c=>{ cBy[c.id]=c; });
+  const sS=new Set(sel), sY=new Set(ytd), A={}, cel=k=>A[k]=A[k]||{mM:0,mD:0,yM:0,yD:0};
+  const chave=(c,op,uni)=>dim==='comp'?c.nome:dim==='uni'?uni:dim==='proj'?R.OPN[op]:uni+'|'+R.OPN[op];
+  // remunerado do DRE (aba Frota; a despesa vem negativa) e as chaves que o DRE tem
+  const temDre=new Set();
+  allRows.forEach(r=>{ if(r[C.cta]==='Receita Líquida') return; const d=parseVig(r[C.vig]); if(!d) return; const vk=vigKey(d), inS=sS.has(vk), inY=sY.has(vk); if(!inS&&!inY) return;
+    const ou=R.opUni(r[C.nv3]); if(!ou) return; if((+r[C.rem]||0)||(+r[C.real]||0)) temDre.add(vk+'|'+ou.op+'|'+ou.uni);
+    if(!passa(ou.op,ou.uni)) return; const c=cBy[R.compDe(r[C.cta])]; if(!c) return;
+    const x=cel(chave(c,ou.op,ou.uni)), v=-(+r[C.rem]||0); if(inS) x.mD+=v; if(inY) x.yD+=v; });
+  // Rem Meta: a Van que o DRE não lança à parte (o custo dela está dentro de ROTA - X) entra na Rota
+  let vanNaRota=false;
+  Object.entries(RM.meta).forEach(([k,o])=>{ const p=k.split('|'), vk=p[0], uni=p[2]; let op=p[1]; const inS=sS.has(vk), inY=sY.has(vk); if(!inS&&!inY) return;
+    if(op==='VAN'&&!temDre.has(k)){ op='ROTA'; vanNaRota=true; }
+    if(!passa(op,uni)) return;
+    comps.forEach(c=>{ const v=o[c.id]; if(v==null) return; const x=cel(chave(c,op,uni)); if(inS) x.mM+=v; if(inY) x.yM+=v; }); });
+  let ks=Object.keys(A).filter(k=>{ const x=A[k]; return Math.abs(x.mM)+Math.abs(x.mD)+Math.abs(x.yM)+Math.abs(x.yD)>=0.5; });
+  if(dim==='comp'){ const ord=R.COMP.map(c=>c.nome); ks.sort((a,b)=>ord.indexOf(a)-ord.indexOf(b)); }
+  else ks.sort((a,b)=>(A[a].mD-A[a].mM)-(A[b].mD-A[b].mM)||a.localeCompare(b));
+  const T={mM:0,mD:0,yM:0,yD:0};
+  const rows=ks.map(k=>{ const x=A[k]; T.mM+=x.mM; T.mD+=x.mD; T.yM+=x.yM; T.yD+=x.yD; return Object.assign({k},x); });
+  return {rows,T,sel,ytd,fora,vanNaRota};
+}
+function renderRemMeta(){
+  const body=$('body-rm'), head=$('head-rm'), pe=$('pe-rm'); if(!body) return;
+  const rot={comp:['COMPONENTE'],uni:['UNIDADE'],proj:['PROJETO'],uniproj:['UNIDADE','PROJETO']}[rmDim];
+  head.innerHTML='<tr>'+rot.map(t=>`<th>${t}</th>`).join('')+'<th class="num">REM META</th><th class="num">REM DRE</th><th class="num">▲</th><th class="num">▲ %</th>'+
+    '<th class="num sep-l">REM META YTD</th><th class="num">REM DRE YTD</th><th class="num">▲ YTD</th><th class="num">▲ YTD %</th></tr>';
+  const nc=rot.length+8, msg=t=>{ body.innerHTML=`<tr><td colspan="${nc}" style="text-align:center;color:var(--txt3);padding:28px 12px;white-space:normal">${t}</td></tr>`; pe.textContent=''; };
+  if(!RM){ if(RM_ERR) return msg('Não deu para montar o Rem Meta: '+RM_ERR); rmCarrega(); return msg('Carregando o Freightech e o km remunerado…'); }
+  const Q=rmCalc(lastF||getF(), rmDim), sel=Q.sel, ytd=Q.ytd;
+  if(!Q.rows.length) return msg(sel.length||ytd.length?'Nada no recorte.':'Os meses do filtro ainda não têm o Freightech e o km remunerado para comparar.');
+  const cor=(v,b)=>Math.abs(v)<0.5?'':(v<0?'cr':'cg')+(b?'-t':'');
+  const nums=x=>{ const d=x.mD-x.mM, p=x.mM?d/Math.abs(x.mM)*100:null, dy=x.yD-x.yM, py=x.yM?dy/Math.abs(x.yM)*100:null;
+    return `<td class="num">${fmt(x.mM)}</td><td class="num">${fmt(x.mD)}</td><td class="num ${cor(d)}">${fmtD(d)}</td><td class="num ${cor(d,1)}">${pctInt(p)}</td>`+
+      `<td class="num sep-l">${fmt(x.yM)}</td><td class="num">${fmt(x.yD)}</td><td class="num ${cor(dy)}">${fmtD(dy)}</td><td class="num ${cor(dy,1)}">${pctInt(py)}</td>`; };
+  body.innerHTML=Q.rows.map(x=>{
+    const nome=rmDim==='uniproj'?x.k.split('|').map(t=>`<td class="conta">${t}</td>`).join(''):`<td class="conta">${x.k}</td>`;
+    return `<tr>${nome}${nums(x)}</tr>`; }).join('')+
+    `<tr class="total"><td class="conta"${rot.length>1?' colspan="'+rot.length+'"':''}>Total</td>${nums(Q.T)}</tr>`;
+  const lb=v=>{ const d=vigs.find(x=>vigKey(x)===v); return d?vigLabel(d):v; };
+  const per=a=>!a.length?'sem mês':a.length===1?lb(a[0]):a.length<=3?a.map(lb).join(', '):lb(a[0])+' a '+lb(a[a.length-1]);
+  const av=[];
+  if(Q.fora.length) av.push('Fora por falta de Freightech ou de km remunerado: '+Q.fora.map(lb).join(', ')+'.');
+  if(RM.erros&&RM.erros.bm) av.push('Balanço de massa sem leitura ('+RM.erros.bm+'): as Empurradas ficam sem o km recomposto.');
+  if(Q.vanNaRota) av.push('A Van que o DRE lança dentro da Rota entra na Rota.');
+  pe.textContent=`Mês: ${per(sel)} · YTD: ${per(ytd)}. Rem Meta = R$/km de cada componente no Freightech × km remunerado (mapas do 2art e CT-e nos meses importados, aba Dispersão de km nos outros; Empurradas com o km do balanço de massa), mais seguro, IPVA e lavação fixa do mês no Freightech. É reconstruído, não é a fatura. ▲ = Rem DRE − Rem Meta; a diferença fica a confirmar com o planejamento (composição do remunerado, imposto). Fora da comparação: Seara, Terceiros, Corporativo e as contas sem componente no Freightech (materiais de oficina, personalização, ICMS).`+(av.length?' '+av.join(' '):'');
+}
 
 /* ════════════════════════════════════════════════════════════════════════════
    YTG + TGT — portado do /ytg/ linha a linha. Mesmo núcleo: alvo que zera o
@@ -2132,7 +2246,7 @@ function renderFCT(){
 loadDraft(); loadCens(); renderCenBar();
 
 /* ── navegação entre as visões ── */
-const TIT={resumo:'Resumo Gerencial',nominal:'Análise Nominal',av:'Análise Horizontal e Vertical',
+const TIT={resumo:'Resumo Gerencial',nominal:'Análise Nominal',av:'Análise Horizontal e Vertical',remmeta:'Rem Meta × Rem DRE',
   ytg:'YTG + TGT · Bridge',cen1:'YTG + TGT · Cenário 1',cen2:'YTG + TGT · Cenário 2',
   fct1:'Forecast · Cenário 1 — Receita Fixa',fct2:'Forecast · Cenário 2 — Receita Tendência'};
 function setVw(v){
@@ -2143,6 +2257,7 @@ function setVw(v){
   if(v==='resumo' && lastF) setTimeout(()=>renderCharts(lastF),30);
   if(v==='ytg'||v==='cen1'||v==='cen2') setTimeout(renderYTG,30);       // canvas/tabela precisam estar visíveis
   if(v==='fct1'||v==='fct2') setTimeout(renderFCT,30);
+  if(v==='remmeta') renderRemMeta();
 }
 document.querySelectorAll('.s-item[data-vw]').forEach(b=>b.addEventListener('click',()=>setVw(b.dataset.vw)));
 
@@ -2235,7 +2350,8 @@ window.addEventListener('resize',()=>{ clearTimeout(_rt); _rt=setTimeout(()=>{ i
     const s=JSON.parse(localStorage.getItem('sb-lozwipoeacpvplgkrxkq-auth-token')||'null');
     const uid=s&&s.user&&s.user.id; if(!uid) return;
     const p=JSON.parse(localStorage.getItem('gem_perfil_'+uid)||'null');
-    if(p&&p.is_admin){ const a=document.getElementById('lnk-dre-import'); if(a) a.style.display=''; }
+    if(p&&p.is_admin){ const a=document.getElementById('lnk-dre-import'); if(a) a.style.display='';
+      RM_ADMIN=true; const b=document.getElementById('it-remmeta'); if(b) b.style.display=''; }
   }catch(e){}
 })();
 </script>
@@ -2252,7 +2368,7 @@ initPdfExport({
   btnContainer:'#pdf-slot', btnClass:'s-item', btnAoFim:true,
   title:'Visão Financeira', subtitle:()=>document.getElementById('titSub').textContent,
   fileBase:'visao-financeira', main:()=>document.querySelector('.vw.on'),
-  views:()=>Object.keys(TIT).map(k=>({label:TIT[k], ativar:()=>setVw(k)})),
+  views:()=>Object.keys(TIT).filter(k=>k!=='remmeta'||RM_ADMIN).map(k=>({label:TIT[k], ativar:()=>setVw(k)})),
   viewAtual:()=>VW, irPara:setVw,
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
@@ -2265,6 +2381,6 @@ function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>VfApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202611181300"></script>
+<script src="../assets/build-check.js?v=202611232100"></script>
 </body>
 </html>

@@ -1,0 +1,31 @@
+name: Rem Meta Check
+
+# Só leitura. Abre a Visão Financeira com os dados reais e imprime o Rem Meta × Rem DRE
+# por mês, componente, projeto e unidade, pela mesma conta da página.
+on:
+  workflow_dispatch:
+    inputs:
+      ano:
+        description: 'ano (AAAA)'
+        required: false
+        default: '2026'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Rodar
+        run: node scripts/rem-meta-check.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          REM_ANO: ${{ github.event.inputs.ano }}

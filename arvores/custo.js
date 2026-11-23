@@ -189,11 +189,9 @@ let CT_PAGO='FT';      // rótulo do pago no desenho em curso: FT, Seara (só a 
 function ctFT(vigs,filtro,campos){
   const sea=ctSea(), mapa=CT.ft||sea?Object.assign({},CT.ft||{},sea?sea.ft:{}):null;
   if(!mapa||!campos||!campos.length) return null; let s=0, tem=false;
-  Object.entries(mapa).forEach(([k,x])=>{ const [v,op,u]=k.split('|'); if(!vigs.includes(v)||!filtro(op,u)) return;
-    const cv=campos.filter(f=>CT_FT_VAR.includes(f)).reduce((a,f)=>a+(x[f]||0),0), cf=campos.filter(f=>!CT_FT_VAR.includes(f)).reduce((a,f)=>a+(x[f]||0),0);
-    if(!cv&&!cf) return; tem=true;
-    const kmR=cv?ctKmChave(v,op,u):0;
-    s+=(cv&&x.km>0&&kmR>0?cv/x.km*kmR:cv)+cf; });
+  // a conta mora em assets/rem-meta.js (RemMeta.pago), a mesma do Rem Meta × Rem DRE da Visão Financeira
+  Object.keys(mapa).forEach(k=>{ const [v,op,u]=k.split('|'); if(!vigs.includes(v)||!filtro(op,u)) return;
+    const p=RemMeta.pago(mapa,k,campos,ctKmChave); if(p==null) return; tem=true; s+=p; });
   return tem?s:null; }
 /* a referência da comparação: remunerado, orçado ou o FT */
 function ctRef(C,ft){ return CT_CMP==='ft'?ft:C.ref; }
