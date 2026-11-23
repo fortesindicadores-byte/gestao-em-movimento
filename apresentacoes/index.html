@@ -722,7 +722,7 @@ function farol(cod){
         if(!w.__gavPronto||!w.GavApresentacao) throw new Error('o Gestão à Vista não carregou');
         const r=await w.GavApresentacao.montar({}); fim({lista:r.lista||[]});
       }catch(e){ fim({erro:(e&&e.message)||String(e)}); } };
-    ifr.src='../gestao-a-vista/?u='+encodeURIComponent(cod); document.body.appendChild(ifr);
+    ifr.src='../gestao-a-vista/index.html?u='+encodeURIComponent(cod); document.body.appendChild(ifr);
   });
 }
 

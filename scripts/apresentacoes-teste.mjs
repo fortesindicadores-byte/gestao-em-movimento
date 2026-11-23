@@ -30,7 +30,7 @@ const GAVPG = `<!doctype html><meta charset=utf-8><body><script>
 <\/script>`;
 const MIME = { '.html': 'text/html', '.js': 'application/javascript', '.jpg': 'image/jpeg', '.css': 'text/css' };
 const srv = http.createServer((req, res) => { const u = decodeURIComponent(req.url.split('?')[0]);
-  if (/^\/gestao-a-vista\/?$/.test(u)) { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(GAVPG); }
+  if (/^\/gestao-a-vista\/(index\.html)?$/.test(u)) { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(GAVPG); }
   let f = path.join(RAIZ, u); if (u.endsWith('/')) f = path.join(f, 'index.html');
   fs.readFile(f, (e, b) => { if (e) { res.writeHead(404); return res.end(); } res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' }); res.end(b); }); });
 await new Promise(r => srv.listen(8794, r));
