@@ -1,0 +1,49 @@
+name: Remun Mapa Carga
+
+# Grava na remun_mapa os mapas de um 2artd que já tinha sido importado antes de
+# a tabela existir. Os mapas chegam cifrados (placa e valor por mapa não podem
+# ficar legíveis num repositório público) num arquivo do branch de trabalho.
+#   chave  = imprime a chave pública para cifrar
+#   ensaio = decifra, calcula com o FT do banco e confere com a remun_viagem
+#   gravar = idem e grava só a remun_mapa
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: 'chave · ensaio · gravar'
+        required: false
+        default: 'chave'
+      ref:
+        description: 'branch que tem o arquivo cifrado'
+        required: false
+        default: 'claude/epic-edison-ae21sz'
+      arquivo:
+        description: 'caminho do arquivo cifrado nesse branch'
+        required: false
+        default: 'tmp-carga/remun-mapa.enc'
+
+concurrency: remun-mapa-carga
+
+jobs:
+  carga:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Buscar o arquivo cifrado
+        if: ${{ inputs.modo != 'chave' }}
+        env:
+          REF: ${{ inputs.ref }}
+          ARQ: ${{ inputs.arquivo }}
+        run: |
+          set -e
+          git fetch -q --depth=1 origin "$REF"
+          git show "FETCH_HEAD:$ARQ" > /tmp/remun-mapa.enc
+          ls -la /tmp/remun-mapa.enc
+      - name: Carga
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          MODO: ${{ inputs.modo }}
+        run: node scripts/remun-mapa-carga.mjs
