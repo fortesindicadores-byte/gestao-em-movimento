@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611232330">
+<meta name="build" content="202611240030">
 <title>Gestão à Vista</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1614,6 +1614,7 @@ function renderPreHub(){
   }
   VW='resumo'; montaNav(); marcaUnidade();
   await boot();
+  window.__gavPronto=true;      // o painel Apresentações espera por isto para pedir os slides do farol
 })();
 </script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
@@ -1634,12 +1635,12 @@ initPdfExport({
 });
 </script>
 <script src="../assets/apresentacao-base.js?v=202611232330"></script>
-<script src="../assets/gav-apresentacao.js?v=202611232330"></script>
+<script src="../assets/gav-apresentacao.js?v=202611240030"></script>
 <script>
 function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>GavApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202611232330"></script>
+<script src="../assets/build-check.js?v=202611240030"></script>
 </body>
 </html>

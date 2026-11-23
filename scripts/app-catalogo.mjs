@@ -38,6 +38,7 @@ const OPC = {
   'catalogo/':               { modo: 'web' },
   'catalogo-pecas/':         { modo: 'web' },
   'relatorios/':             { modo: 'web' },
+  'apresentacoes/':          { modo: 'web' },
   'gerot/':                  { modo: 'resumo', rdz: 'atualizar' },
   'fca-preenchimento/':      { modo: 'web' },
   'disponibilidade-preenchimento/': { modo: 'web' },

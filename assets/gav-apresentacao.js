@@ -309,7 +309,7 @@
       if (P.length) B.slide(`${B.head('Prioridades', `O que ${nm(cod)} ataca até o próximo farol`)}
         ${B.concBlocos(P.slice(0, 6), 'Próximos passos', P.length > 4 ? 3 : 2)}`);
     }
-    return { doc: B.doc(), slides: B.n(), nome: `Gestao_a_Vista_${uni ? uni.replace(/\s+/g, '_') + '_' : ''}${MES.replace('/', '')}.pdf` };
+    return { lista: B.lista(), doc: B.doc(), slides: B.n(), nome: `Gestao_a_Vista_${uni ? uni.replace(/\s+/g, '_') + '_' : ''}${MES.replace('/', '')}.pdf` };
   }
 
   async function gerar(o) {

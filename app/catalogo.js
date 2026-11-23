@@ -1,5 +1,5 @@
 // GERADO por scripts/app-catalogo.mjs a partir do CLUSTERS do hub — não editar à mão.
-// 61 painéis em 9 grupos. Regerar quando o hub mudar.
+// 62 painéis em 9 grupos. Regerar quando o hub mudar.
 window.GEM_CATALOGO = {
  "ordem": [
   "Administração",
@@ -810,6 +810,20 @@ window.GEM_CATALOGO = {
    "vig": "ms-vig",
    "gav": false,
    "ico": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"12\" cy=\"12\" r=\"3.5\"/><path d=\"M12 3v5.5M12 15.5V21M3 12h5.5M15.5 12H21\"/></svg>"
+  },
+  {
+   "id": "apresentacoes",
+   "nome": "Apresentações",
+   "desc": "Monte a apresentação da sua unidade: escolha os blocos, a ordem e apresente ou gere o PDF.",
+   "href": "apresentacoes/",
+   "cluster": "Processos",
+   "adm": false,
+   "dono": false,
+   "modo": "web",
+   "rdz": "",
+   "vig": "ms-vig",
+   "gav": false,
+   "ico": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"4\" rx=\"2\"/><path d=\"M12 17v4M8 21h8\"/><path d=\"M7 13l3-3 2 2 4-4\"/></svg>"
   },
   {
    "id": "programa-reconhecimento",
