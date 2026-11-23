@@ -29,7 +29,7 @@
     const m3 = v => F.MES3[+v.slice(5) - 1] + '/' + v.slice(2, 4);
     const base = { ano: [], vig: [], uni: f0.uni, nv3: f0.nv3, pac: f0.pac, cta: f0.cta };
     const recorte = [f0.uni.length ? f0.uni.join(', ') : '', f0.nv3.length ? f0.nv3.join(', ') : '', f0.pac.length ? f0.pac.join(', ') : ''].filter(Boolean).join(' · ');
-    const B = ApresBase.deck({ acc: ACC, rodape: `Visão Financeira · Fechamento ${Mes}/${ANO}${recorte ? ' · ' + recorte : ''}`, titulo: `Visão Financeira · ${Mes}/${ANO}`, img: o.img });
+    const B = ApresBase.deck({ acc: ACC, rodape: `Visão Financeira · Fechamento ${Mes}/${ANO}${recorte ? ' · ' + recorte : ''}`, titulo: `Visão Financeira · ${Mes}/${ANO}`, img: o.img, fundos: o.fundos });
 
     const isRec = r => (r[C.cta] || '') === 'Receita Líquida';
     const linhas = vs => allRows.filter(r => { const d = parseVig(r[C.vig]); return d && vs.includes(vigKey(d)) && applyFilters(r, base); });
@@ -129,6 +129,7 @@
 
   async function gerar(o) {
     o = o || {};
+    if (!o.fundos && ApresBase.fundos) o.fundos = await ApresBase.fundos();   // capa, sumário e encerramento com a foto em tiras
     const aviso = o.aviso || (() => {});
     aviso('Montando os slides…');
     const r = await montar(o);

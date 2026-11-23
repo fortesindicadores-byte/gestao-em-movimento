@@ -27,7 +27,7 @@
     const Mes = F.MESN[MI][0].toUpperCase() + F.MESN[MI].slice(1);
     const m3 = v => F.MES3[+v.split('/')[0] - 1] + '/' + v.split('/')[1].slice(2);
     const recorte = [unds.join(', '), projs.join(', ')].filter(Boolean).join(' · ');
-    const B = ApresBase.deck({ acc: ACC, rodape: `Painel KM · Dispersão de km · ${Mes}/${aa}${recorte ? ' · ' + recorte : ''}${BM_MODO === 'Sem BM' ? ' · Sem BM' : ''}`, titulo: `Painel KM · ${Mes}/${aa}`, img: o.img });
+    const B = ApresBase.deck({ acc: ACC, rodape: `Painel KM · Dispersão de km · ${Mes}/${aa}${recorte ? ' · ' + recorte : ''}${BM_MODO === 'Sem BM' ? ' · Sem BM' : ''}`, titulo: `Painel KM · ${Mes}/${aa}`, img: o.img, fundos: o.fundos });
 
     const soma = rs => { const a = { rem: 0, real: 0, imp: 0, via: 0, recomp: 0, bm: 0 }; rs.forEach(r => { a.rem += r.rem; a.real += r.real; a.imp += r.imp; a.via += r.viagens || 0; a.recomp += r.recomp || 0; a.bm += r.bmValor || 0; }); a.d = a.real - a.rem; a.p = a.rem ? a.d / a.rem * 100 : null; return a; };
     const de = vs => base.filter(r => vs.includes(r.vig));
@@ -106,6 +106,7 @@
 
   async function gerar(o) {
     o = o || {};
+    if (!o.fundos && ApresBase.fundos) o.fundos = await ApresBase.fundos();   // capa, sumário e encerramento com a foto em tiras
     const aviso = o.aviso || (() => {});
     aviso('Montando os slides…');
     const r = await montar(o);

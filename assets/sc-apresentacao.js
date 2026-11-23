@@ -37,7 +37,7 @@
     const unis = unis0;
     const periodo = cands.length <= 1 ? vigLbl(selD) : `${vigLbl(cands[0])} a ${vigLbl(selD)}`;
     const Mes = F.MESN[mi][0].toUpperCase() + F.MESN[mi].slice(1);
-    const B = ApresBase.deck({ acc: ACC, rodape: `Scorecard · ${periodo}${selUni.length ? ' · ' + selUni.length + ' unidade(s)' : ''}`, titulo: `Scorecard · ${periodo}`, img: o.img });
+    const B = ApresBase.deck({ acc: ACC, rodape: `Scorecard · ${periodo}${selUni.length ? ' · ' + selUni.length + ' unidade(s)' : ''}`, titulo: `Scorecard · ${periodo}`, img: o.img, fundos: o.fundos });
 
     const CV = cardVals(perKeys, yr, mi, unis);
     const rk = unis.map(u => { const notes = unitScores(u, perKeys, yr, mi); return { u, notes, score: scoreFromNotes(notes) }; }).filter(x => x.score != null).sort((a, b) => b.score - a.score);
@@ -115,6 +115,7 @@
 
   async function gerar(o) {
     o = o || {};
+    if (!o.fundos && ApresBase.fundos) o.fundos = await ApresBase.fundos();   // capa, sumário e encerramento com a foto em tiras
     const aviso = o.aviso || (() => {});
     aviso('Montando os slides…');
     const r = await montar(o);

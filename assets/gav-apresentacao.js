@@ -81,7 +81,7 @@
     const uni = cods.length === 1 ? cods[0] : null;
     const MES = F.mesAno(H);
     const titulo = uni ? `Gestão à Vista · ${nm(uni)}` : 'Gestão à Vista';
-    const B = ApresBase.deck({ acc: ACC, rodape: `${titulo} · ${MES} · foto de ${F.quando(H)}`, titulo: `${titulo} · ${MES}`, img: o.img });
+    const B = ApresBase.deck({ acc: ACC, rodape: `${titulo} · ${MES} · foto de ${F.quando(H)}`, titulo: `${titulo} · ${MES}`, img: o.img, fundos: o.fundos });
     const S = cods.map(c => Object.assign({ cod: c }, stats(c)));
     const RK = S.slice().sort((a, b) => (b.score == null ? -1 : b.score) - (a.score == null ? -1 : a.score));
     // a rede inteira, para a unidade se comparar (mesmas bases, sem o filtro)
@@ -314,6 +314,7 @@
 
   async function gerar(o) {
     o = o || {};
+    if (!o.fundos && ApresBase.fundos) o.fundos = await ApresBase.fundos();   // capa, sumário e encerramento com a foto em tiras
     const aviso = o.aviso || (() => {});
     aviso('Montando os slides…');
     const r = await montar(o);
