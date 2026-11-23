@@ -13,6 +13,14 @@ on:
         description: '1 = simula a tabela balanco_massa sem resposta (vazia)'
         required: false
         default: ''
+      uni:
+        description: 'Unidade (sigla) para abrir o R$/km e o impacto chave a chave'
+        required: false
+        default: ''
+      vig:
+        description: 'Vigência MM/AAAA da unidade'
+        required: false
+        default: ''
 
 jobs:
   check:
@@ -34,3 +42,5 @@ jobs:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           SET: ${{ github.event.inputs.set }}
           SEM_BM: ${{ github.event.inputs.sem_bm }}
+          UNI: ${{ github.event.inputs.uni }}
+          VIG: ${{ github.event.inputs.vig }}

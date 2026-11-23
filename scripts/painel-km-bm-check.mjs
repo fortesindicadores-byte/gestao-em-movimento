@@ -71,6 +71,29 @@ Object.entries(R.v).sort((a, b) => (a[0].slice(3) + a[0].slice(0, 2)).localeComp
 console.log('\n── chaves com balanço ──');
 Object.entries(R.g).filter(([, t]) => t.recomp || t.bm).sort().forEach(([k, t]) => console.log(`${k.padEnd(32)} rem orig ${br(t.rem0).padStart(9)} · recomp +${br(t.recomp).padStart(7)} · R$ ${br(t.bm).padStart(9)} · real ${br(t.real).padStart(9)}`));
 
+// ── R$/km e impacto de UMA unidade num mês, chave a chave (Renan, 23/11/2026: "o impacto tá certo? R$/km total está certo?") ──
+const UNI = (process.env.UNI || '').trim().toUpperCase(), VIGU = (process.env.VIG || '').trim();
+if (UNI && VIGU) {
+  const X = await pg.evaluate(async ({ UNI, VIGU }) => {
+    const linhas = ALL.filter(r => r.vig === VIGU && String(r.und).toUpperCase() === UNI)
+      .map(r => ({ proj: r.proj, rem: r.rem, rem0: r.rem0 != null ? r.rem0 : r.rem, real: r.real, rsKm: r.rsKm, imp: r.imp, fonte: r.fonteKm || 'aba' }));
+    const c = await fetchCustoRem(); const tot = {}, cta = {};
+    Object.keys(c.cta).filter(k => k.startsWith(VIGU + '|') && k.split('|')[1] === UNI).forEach(k => { tot[k] = c.tot[k] || 0; cta[k] = c.cta[k]; });
+    return { linhas, tot, cta };
+  }, { UNI, VIGU });
+  console.log(`\n── ${UNI} · ${VIGU}: linhas do painel ──`);
+  let sR = 0, sK = 0, sI = 0, sR0 = 0;
+  X.linhas.forEach(l => { sR += l.rem; sR0 += l.rem0; sK += l.real; sI += l.imp;
+    console.log(`${String(l.proj).padEnd(16)} rem ${br(l.rem).padStart(8)} (orig ${br(l.rem0).padStart(8)}) · real ${br(l.real).padStart(8)} · Δ ${br(l.real - l.rem).padStart(7)} · R$/km ${l.rsKm.toFixed(3)} · impacto ${br(l.imp).padStart(8)} · km: ${l.fonte}`); });
+  console.log(`TOTAL            rem ${br(sR).padStart(8)} (orig ${br(sR0).padStart(8)}) · real ${br(sK).padStart(8)} · Δ ${br(sK - sR).padStart(7)} · impacto ${br(sI).padStart(8)} · R$/km efetivo ${(sI / (sK - sR)).toFixed(3)}`);
+  console.log(`\n── ${UNI} · ${VIGU}: remunerado da aba Frota do DRE, por projeto e conta (R$) ──`);
+  let g3 = 0, gT = 0;
+  Object.keys(X.cta).sort().forEach(k => { const t = Object.values(X.cta[k]).reduce((a, b) => a + b, 0); g3 += X.tot[k]; gT += t;
+    console.log(`${k.padEnd(34)} 3 pacotes ${br(X.tot[k]).padStart(9)} · todas as contas ${br(t).padStart(9)}`);
+    Object.entries(X.cta[k]).sort((a, b) => b[1] - a[1]).forEach(([c, v]) => console.log(`    ${c.padEnd(44)} ${br(v).padStart(9)}`)); });
+  console.log(`TOTAL da unidade: 3 pacotes ${br(g3)} · todas as contas ${br(gT)} · 3 pacotes ÷ km rem orig = ${(g3 / sR0).toFixed(3)} · ÷ km rem = ${(g3 / sR).toFixed(3)}`);
+}
+
 // ── Revisão de km e Revisão no Ano (Renan, 18/11/2026): as duas tabelas como a tela mostra ──
 for (const [vw, tb] of [['revisao', 'tbl-rv'], ['revano', 'tbl-ra']]) {
   await pg.evaluate(v => setVw(v), vw);
