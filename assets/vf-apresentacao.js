@@ -122,7 +122,7 @@
     ];
     if (pacPior[0] && pacPior[0].m.real - pacPior[0].m.rem > 0) fecha.push({ t: 'Pacote a atacar', v: pacPior[0].k, s: `${F.brl(pacPior[0].m.real - pacPior[0].m.rem)} acima do remunerado no mês.` });
     if (piorU.length) fecha.push({ t: 'Unidades a atacar', v: F.lista(piorU.map(x => x.k)), s: piorU.map(x => `${F.esc(x.k)} ${F.brl(x.m.real - x.m.rem)}`).join(' · ') + '.' });
-    B.slide(`${B.head('Conclusão', `Fechamento de ${F.MESN[MI]}`)}${B.concBlocos(fecha, 'Próximos passos', 2)}`);
+    B.slide(`${B.head('Conclusão', `Fechamento de ${F.MESN[MI]}`)}${B.passos(fecha)}`);
 
     return { doc: B.doc(), slides: B.n(), nome: `Visao_Financeira_Fechamento_${Mes}${ANO}.pdf` };
   }

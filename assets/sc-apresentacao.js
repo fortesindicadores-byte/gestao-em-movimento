@@ -108,7 +108,7 @@
     if (crit.length) fecha.push({ t: 'Indicadores a atacar', v: F.lista(crit.slice(0, 3).map(k => LBL[k])), s: crit.map(k => `${LBL[k]} ${Math.round(CV[k])}`).join(' · ') + '.' });
     const baixo = rk.filter(x => x.score < 80);
     if (baixo.length) fecha.push({ t: 'Unidades abaixo de 80', v: F.lista(baixo.map(x => nm(x.u))), s: baixo.map(x => `${nm(x.u)} ${Math.round(x.score)}`).join(' · ') + '.' });
-    B.slide(`${B.head('Conclusão', `Scorecard · ${periodo}`)}${B.concBlocos(fecha, 'Próximos passos', fecha.length > 2 ? 3 : 2)}`);
+    B.slide(`${B.head('Conclusão', `Scorecard · ${periodo}`)}${B.passos(fecha)}`);
 
     return { lista: B.lista(), doc: B.doc(), slides: B.n(), nome: `Scorecard_${cands.length <= 1 ? Mes + yr : vigLbl(cands[0]).replace('/', '') + '_' + vigLbl(selD).replace('/', '')}.pdf` };
   }
