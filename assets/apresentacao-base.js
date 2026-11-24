@@ -123,7 +123,7 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
   }
   // a foto escurecida da esquerda para a direita: o texto fica sobre o escuro, a foto aparece do meio em diante
   function veu(x, forte) {
-    const g = x.createLinearGradient(0, 0, 1280, 0); g.addColorStop(0, 'rgba(13,14,17,.97)'); g.addColorStop(.4, 'rgba(13,14,17,.93)'); g.addColorStop(.7, `rgba(13,14,17,${forte ? .72 : .5})`); g.addColorStop(1, `rgba(13,14,17,${forte ? .5 : .2})`);
+    const g = x.createLinearGradient(0, 0, 1280, 0); g.addColorStop(0, 'rgba(13,14,17,1)'); g.addColorStop(.17, 'rgba(13,14,17,1)'); g.addColorStop(.42, 'rgba(13,14,17,.92)'); g.addColorStop(.66, `rgba(13,14,17,${forte ? .7 : .46})`); g.addColorStop(1, `rgba(13,14,17,${forte ? .46 : .14})`);
     x.fillStyle = g; x.fillRect(0, 0, 1280, 720);
     const v = x.createLinearGradient(0, 470, 0, 720); v.addColorStop(0, 'rgba(13,14,17,0)'); v.addColorStop(1, 'rgba(13,14,17,.78)'); x.fillStyle = v; x.fillRect(0, 470, 1280, 250);
   }
@@ -140,15 +140,17 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
       const marca = (x, dir) => { if (!logo) return; const h = 30, w = logo.width * h / logo.height; x.drawImage(logo, dir - w, 636, w, h); };   // encostada à direita, na linha do selo
       const K = 2, tela = () => { const c = document.createElement('canvas'); c.width = 1280 * K; c.height = 720 * K; const x = c.getContext('2d'); x.scale(K, K); x.fillStyle = '#0D0E11'; x.fillRect(0, 0, 1280, 720); return [c, x]; };
       const sai = c => c.toDataURL('image/jpeg', .9), T = { x: 0, y: 0, w: 1280, h: 720 };
+      // foto deitada (a do cavalo de Piraí): entra 200 px à direita, para a cabine ficar fora do texto (o véu é opaco nesse trecho); foto em pé cobre a página
+      const deitada = img.width / img.height > 1.4, poe = x => { if (deitada) { const w = img.width * 720 / img.height; x.drawImage(img, 200, 0, w, 720); } else cobre(x, img, T, .5, .42); };
       // capa: a foto inteira, o texto à esquerda sobre o véu
-      let [c1, x] = tela(); cobre(x, img, T, .5, .42); veu(x); selo(x, 84, 636); marca(x, 1196);
+      let [c1, x] = tela(); poe(x); veu(x); selo(x, 84, 636); marca(x, 1196);
       // sumário: grafite, a foto num painel só, de cantos arredondados, à direita
       let [c2, x2] = tela();
-      x2.save(); x2.beginPath(); rr(x2, 884, 48, 348, 624, 26); x2.clip(); cobre(x2, img, { x: 884, y: 48, w: 348, h: 624 }, .5, .42);
+      x2.save(); x2.beginPath(); rr(x2, 884, 48, 348, 624, 26); x2.clip(); cobre(x2, img, { x: 884, y: 48, w: 348, h: 624 }, deitada ? .25 : .5, .42);
       const g2 = x2.createLinearGradient(0, 380, 0, 672); g2.addColorStop(0, 'rgba(13,14,17,0)'); g2.addColorStop(1, 'rgba(13,14,17,.7)'); x2.fillStyle = g2; x2.fillRect(884, 380, 348, 292); x2.restore();
       selo(x2, 84, 636); marca(x2, 836);
       // encerramento: a mesma foto, mais escura
-      let [c3, x3] = tela(); cobre(x3, img, T, .5, .42); veu(x3, true); selo(x3, 84, 636); marca(x3, 1196);
+      let [c3, x3] = tela(); poe(x3); veu(x3, true); selo(x3, 84, 636); marca(x3, 1196);
       return { capa: sai(c1), sum: sai(c2), fim: sai(c3) };
     })().catch(e => { console.warn('Arte da apresentação indisponível:', e); delete _fundos[src]; return null; });
   }
