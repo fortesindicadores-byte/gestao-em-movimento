@@ -110,7 +110,7 @@
     if (baixo.length) fecha.push({ t: 'Unidades abaixo de 80', v: F.lista(baixo.map(x => nm(x.u))), s: baixo.map(x => `${nm(x.u)} ${Math.round(x.score)}`).join(' · ') + '.' });
     B.slide(`${B.head('Conclusão', `Scorecard · ${periodo}`)}${B.concBlocos(fecha, 'Próximos passos', fecha.length > 2 ? 3 : 2)}`);
 
-    return { doc: B.doc(), slides: B.n(), nome: `Scorecard_${cands.length <= 1 ? Mes + yr : vigLbl(cands[0]).replace('/', '') + '_' + vigLbl(selD).replace('/', '')}.pdf` };
+    return { lista: B.lista(), doc: B.doc(), slides: B.n(), nome: `Scorecard_${cands.length <= 1 ? Mes + yr : vigLbl(cands[0]).replace('/', '') + '_' + vigLbl(selD).replace('/', '')}.pdf` };
   }
 
   async function gerar(o) {

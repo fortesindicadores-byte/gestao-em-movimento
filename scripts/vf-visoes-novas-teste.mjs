@@ -76,8 +76,6 @@ const semRolagem = page => page.evaluate(() => { const v = document.querySelecto
 console.log('1 · números');
 {
   const { ctx, page, errs } = await abre(1366, 768, 'dark');
-  const foco = await page.evaluate(() => focoVig(lastF));
-  ok('o mês em foco é o último com realizado', foco === '2026-10', foco);
   // esperado de out/26
   const esp = { ref: 0, real: 0 }; const porPac = {};
   for (const [n3, , fat] of UNIS) for (const [cta, base] of Object.entries(CONTAS)) {
@@ -85,26 +83,38 @@ console.log('1 · números');
     const p = /Combust|Arla/.test(cta) ? 'Combustíveis' : /Manut/.test(cta) ? 'Manutenções' : /Pneus/.test(cta) ? 'Pneus' : 'Seguros e licenças';
     porPac[p] = (porPac[p] || 0) + base * f - base; }
   await page.evaluate(() => setVw('ponte')); await page.waitForTimeout(300);
-  const P = await page.evaluate(() => { const f = lastF, foco = focoVig(f); const M = ptDados(f, [foco], 'rem', 'pacote'), A = ptDados(f, mesesAte(foco), 'rem', 'pacote');
-    return { M, A, tit: document.getElementById('tit').textContent, subM: document.getElementById('pt-sub-mes').textContent, subA: document.getElementById('pt-sub-ac').textContent,
-      nums: [...document.querySelectorAll('#pt-nums-mes b')].map(b => b.textContent), cls: [...document.querySelectorAll('#pt-nums-mes b')].map(b => b.className),
-      pe: document.getElementById('pe-pt').textContent, barras: (window.Chart.getChart && Chart.getChart('ch-pt-mes')) ? Chart.getChart('ch-pt-mes').data.datasets[0].data : (window.__charts || []).slice(-1)[0].data.datasets[0].data }; });
+  const rowsDe = `(f => { const ac = !f.vig || !f.vig.length; return ac ? ateUltimoReal(filterMes(allRows, f)) : filterMes(allRows, f); })(lastF)`;
+  const lePonte = () => page.evaluate(rd => { const M = ptDados(eval(rd), ptRef, ptDim);
+    return { M, tit: document.getElementById('tit').textContent, sub: document.getElementById('pt-sub').textContent,
+      nums: [...document.querySelectorAll('#pt-nums b')].map(b => b.textContent), cls: [...document.querySelectorAll('#pt-nums b')].map(b => b.className),
+      cards: document.querySelectorAll('#vw-ponte .gcard').length, canvas: document.querySelectorAll('#vw-ponte canvas').length,
+      pe: document.getElementById('pe-pt').textContent, barras: (window.Chart.getChart && Chart.getChart('ch-pt')) ? Chart.getChart('ch-pt').data.datasets[0].data : (window.__charts || []).slice(-1)[0].data.datasets[0].data }; }, rowsDe);
+  const P = await lePonte();
+  ok('Ponte: uma cascata só', P.cards === 1 && P.canvas === 1, P.cards + ' · ' + P.canvas);
   ok('Ponte: título da visão', P.tit === 'Ponte do Custo', P.tit);
-  ok('Ponte do mês: remunerado e realizado de out/26', perto(P.M.ref, esp.ref) && perto(P.M.real, esp.real), `${Math.round(P.M.ref)} · ${Math.round(P.M.real)}`);
+  ok('Ponte com out/26 no filtro: remunerado e realizado do mês', perto(P.M.ref, esp.ref) && perto(P.M.real, esp.real), `${Math.round(P.M.ref)} · ${Math.round(P.M.real)}`);
   ok('Ponte: os passos somam o realizado − remunerado', perto(P.M.st.reduce((a, s) => a + s.d, 0), esp.real - esp.ref));
   ok('Ponte: um passo por pacote, na ordem do painel', P.M.st.map(s => s.nome).join('|') === 'Combustíveis|Manutenções|Pneus|Seguros e licenças', P.M.st.map(s => s.nome).join('|'));
   ok('Ponte: o passo de Pneus é o esperado', perto(P.M.st.find(s => s.nome === 'Pneus').d, porPac.Pneus), String(Math.round(porPac.Pneus)));
   ok('Ponte: barras = referência + passos + realizado, a última termina no realizado', P.barras.length === 6 && perto(P.barras[5][1], esp.real) && P.barras[0][0] === 0);
   ok('Ponte: cada passo começa onde o anterior terminou', (() => { let run = esp.ref; for (let i = 0; i < P.M.st.length; i++) { const d = P.M.st[i].d, b = P.barras[i + 1]; if (!perto(Math.min(run, run + d), b[0]) || !perto(Math.max(run, run + d), b[1])) return false; run += d; } return perto(run, esp.real); })());
-  ok('Ponte: acumulado = jan a out', P.subA === 'jan/26 a out/26' && P.subM === 'out/26', P.subA + ' · ' + P.subM);
-  ok('Ponte: acumulado maior que o mês e fecha', P.A.ref > P.M.ref * 9 && perto(P.A.st.reduce((a, s) => a + s.d, 0), P.A.real - P.A.ref));
+  ok('Ponte: o período é o do filtro de Vigência (out/26)', P.sub === 'out/26', P.sub);
+  // acumulado = marcar os meses no filtro
+  await page.evaluate(() => { const x = document.getElementById('ms-vig')._sel; x.clear(); ['01','02','03','04','05','06','07','08','09','10'].forEach(m => x.add('2026-' + m)); atualizar(); }); await page.waitForTimeout(250);
+  const PA = await lePonte();
+  ok('Ponte com jan a out no filtro: acumulado, e fecha', PA.sub === '10 meses, de jan/26 a out/26' && PA.M.ref > P.M.ref * 9 && perto(PA.M.st.reduce((a, s) => a + s.d, 0), PA.M.real - PA.M.ref) && perto(PA.barras[PA.barras.length - 1][1], PA.M.real), PA.sub);
+  // nada marcado = tudo até o último mês com realizado
+  await page.evaluate(() => { document.getElementById('ms-vig')._sel.clear(); atualizar(); }); await page.waitForTimeout(250);
+  const PT = await lePonte();
+  ok('Ponte sem vigência marcada: até o último mês com realizado (22 meses)', /^22 meses, de jan\/25 a out\/26$/.test(PT.sub) && PT.M.ref > PA.M.ref * 2, PT.sub);
+  await page.evaluate(() => { const x = document.getElementById('ms-vig')._sel; x.clear(); x.add('2026-10'); atualizar(); }); await page.waitForTimeout(250);
   ok('Ponte: quatro números, Δ em vermelho (gastou mais)', P.nums.length === 4 && /cr/.test(P.cls[2]) && /cr/.test(P.cls[3]), P.nums.join(' · '));
   ok('Ponte: texto explicativo embaixo', /Vermelha quando gastou mais/.test(P.pe));
   await page.evaluate(() => setPtDim('conta')); await page.waitForTimeout(150);
-  const Pc = await page.evaluate(() => ptDados(lastF, [focoVig(lastF)], 'rem', 'conta').st.map(s => s.nome));
+  const Pc = (await lePonte()).M.st.map(s => s.nome);
   ok('Ponte por conta: nomes curtos, do maior aumento para a maior redução', Pc.join('|') === 'Pneus Novos|Combustíveis|Manutenção de Veículos e Equip.|Seguros|Arla', Pc.join('|'));
   await page.evaluate(() => { setPtDim('pacote'); togglePtRef(); }); await page.waitForTimeout(150);
-  const Po = await page.evaluate(() => ({ r: ptDados(lastF, [focoVig(lastF)], 'orc', 'pacote').ref, lb: document.querySelector('#pt-nums-mes span').textContent, bt: document.getElementById('ref-pt-v').textContent }));
+  const Po = await page.evaluate(rd => ({ r: ptDados(eval(rd), 'orc', 'pacote').ref, lb: document.querySelector('#pt-nums span').textContent, bt: document.getElementById('ref-pt-v').textContent }), rowsDe);
   ok('Ponte vs orçado: a referência vira o orçado', perto(Po.r, esp.ref * 1.05) && /Orçado/i.test(Po.lb) && Po.bt === 'ORÇ', Po.lb);
   await page.evaluate(() => togglePtRef());
 
@@ -138,28 +148,9 @@ console.log('1 · números');
   ok('Matriz por projeto', hp === 'CONTA|AUTO SERVIÇO|EMPURRADA|ROTA|TOTAL', hp);
   await page.evaluate(() => setMzCol('uni'));
 
-  // Aderência
-  await page.evaluate(() => setVw('adere')); await page.waitForTimeout(150);
-  const Ad = await page.evaluate(() => { const t = document.getElementById('tbl-ad');
-    return { head: [...t.querySelectorAll('thead th')].map(x => x.lastChild.textContent), foco: [...t.querySelectorAll('thead th.foco')].map(x => x.lastChild.textContent),
-      linhas: [...t.querySelectorAll('tbody tr')].map(tr => ({ c: [...tr.children].map(td => td.textContent), k: [...tr.children].map(td => td.className) })), pe: document.getElementById('pe-ad').textContent }; });
-  ok('Aderência: cabeçalho = unidade, os dois anos e os 12 meses', Ad.head.join('|') === 'UNIDADE|2025|2026|JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ', Ad.head.join('|'));
-  ok('Aderência: o mês do filtro fica marcado', Ad.foco.join() === 'OUT', Ad.foco.join());
-  const al = nome => Ad.linhas.find(l => l.c[0] === nome);
-  ok('Aderência: GRL em jan = 1 ÷ 1,10 = 90,9% (Ruim)', al('GRL').c[3] === '90,9%' && /ad-r/.test(al('GRL').k[3]), al('GRL').c.join('|'));
-  // CGR: Rota 1,5 e AS 0,8 → custo real = 2,3 × base para 2 de remunerado → 87,0%
-  ok('Aderência: CGR junta os dois projetos (2 ÷ 2,3 = 87,0%)', al('CGR').c[3] === '87,0%', al('CGR').c[3]);
-  ok('Aderência: PIR em jan = 111,1% (Bom) e cai em out pelo pneu', al('PIR').c[3] === '111,1%' && /ad-b/.test(al('PIR').k[3]) && parseFloat(al('PIR').c[12].replace(',', '.')) < 100, al('PIR').c[12]);
-  ok('Aderência: nov e dez em branco (sem realizado)', Ad.linhas.every(l => l.c[13] === '' && l.c[14] === ''));
-  ok('Aderência: da menor para a maior no ano, Total no fim', Ad.linhas.map(l => l.c[0]).join('|') === 'CGR|GRL|PIR|Total', Ad.linhas.map(l => l.c[0]).join('|'));
-  ok('Aderência: legenda das quatro faixas embaixo', /Muito ruim/.test(Ad.pe) && /Ótimo/.test(Ad.pe) && /gastou menos/.test(Ad.pe));
-  await page.evaluate(() => setAdInd('ebitda')); await page.waitForTimeout(100);
-  const Ae = await page.evaluate(() => [...document.querySelectorAll('#tbl-ad tbody tr')].map(tr => [...tr.children].map(td => td.textContent)));
-  // EBITDA real = 50.000 × (2 − fator): GRL 0,9 → 90,0%; PIR 1,1 → 110,0%
-  ok('Aderência do EBITDA: GRL 90,0% e PIR 110,0% em jan', Ae.find(l => l[0] === 'GRL')[3] === '90,0%' && Ae.find(l => l[0] === 'PIR')[3] === '110,0%', Ae.map(l => l[0] + ' ' + l[3]).join(' · '));
-  await page.evaluate(() => { setAdInd('custo'); setAdLin('proj'); }); await page.waitForTimeout(100);
-  const Ap = await page.evaluate(() => [...document.querySelectorAll('#tbl-ad tbody tr')].map(tr => tr.children[0].textContent).join('|'));
-  ok('Aderência por projeto', Ap === 'ROTA|EMPURRADA|AUTO SERVIÇO|Total', Ap);
+  const semAd = await page.evaluate(() => !document.querySelector('[data-vw="adere"]') && !document.getElementById('vw-adere'));
+  ok('Aderência Mês a Mês saiu do menu e da página', semAd);
+
   ok('sem erro de JavaScript', errs.length === 0, errs.join(' | '));
   await ctx.close();
 }
@@ -168,12 +159,12 @@ console.log('1 · números');
 console.log('2 · telas');
 for (const [w, h] of [[1366, 768], [1600, 900], [1920, 1080]]) for (const tema of ['dark', 'light']) {
   const { ctx, page, errs } = await abre(w, h, tema);
-  for (const v of ['ponte', 'matriz', 'adere']) {
+  for (const v of ['ponte', 'matriz']) {
     await page.evaluate(v => setVw(v), v); await page.waitForTimeout(350);
     const r = await semRolagem(page);
     ok(`${v} ${w}×${h} ${tema}: sem rolagem de página nem barra lateral`, r.pagina && r.visao && r.lateral, JSON.stringify(r));
-    if (v === 'ponte' && CHART_JS) { const g = await page.evaluate(() => { const c = document.getElementById('ch-pt-ac'), d = document.getElementById('ch-pt-mes'); return [c.clientWidth, c.clientHeight, d.clientWidth, d.clientHeight]; });
-      ok(`ponte ${w}×${h}: os dois gráficos têm tamanho`, g.every(x => x > 150), g.join('×')); }
+    if (v === 'ponte' && CHART_JS) { const g = await page.evaluate(() => { const c = document.getElementById('ch-pt'); return [c.clientWidth, c.clientHeight]; });
+      ok(`ponte ${w}×${h}: o gráfico ocupa a largura`, g.every(x => x > 150), g.join('×')); }
     if (SHOT) await page.screenshot({ path: path.join(SHOT, `${v}-${w}-${tema}.png`) });
   }
   ok(`${w}×${h} ${tema}: sem erro de JavaScript`, errs.length === 0, errs.join(' | '));

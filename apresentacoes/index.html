@@ -2,14 +2,14 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611240030">
+<meta name="build" content="202611240230">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
-<script src="../assets/apresentacao-base.js?v=202611232330"></script>
+<script src="../assets/apresentacao-base.js?v=202611240230"></script>
 <style>
 :root{
   /* fundo UNIFORME (mesma regra do hub): o degradê diagonal clareava para o
@@ -394,12 +394,6 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cx .dic{font-size:10px;color:var(--txt3);margin-top:5px;}
 .cx-pe{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
 .cx-pe .esq{margin-right:auto;}
-.un-opt{display:flex;align-items:center;gap:9px;min-height:31px;padding:7px 9px;border-radius:7px;cursor:pointer;font-size:12px;color:var(--txt2);white-space:nowrap;}
-.un-opt:hover{background:var(--hover);color:var(--txt);}
-.un-opt.on{color:var(--txt);font-weight:700;}
-.un-opt.on::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--laranja);}
-.un-opt:not(.on)::before{content:'';width:6px;height:6px;}
-.ms-list.un{max-height:320px;overflow:auto;}
 @media(max-width:860px){
   .ap{display:block;}
   .seq{margin-bottom:12px;max-height:none;}
@@ -432,6 +426,10 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 12v6M9 15l3 3 3-3"/></svg>
       <span class="lbp">Gerar PDF</span>
     </button>
+    <button class="s-item" id="btPpt" onclick="gerarPpt()" title="Baixar a apresentação em PowerPoint">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      <span class="lbp">Gerar PPT</span>
+    </button>
     <button class="s-item" onclick="restaurar()" title="Voltar à sequência padrão, com todos os blocos ligados">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
       Restaurar o padrão
@@ -461,14 +459,14 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
         <div class="tit-sub" id="titSub">Carregando…</div>
       </div>
       <div class="filtros" id="filtros" style="display:none">
-        <div class="ms-wrap" id="un-uni"><button class="ms-btn" onclick="abreUn('un-uni')">
+        <div class="ms-wrap" id="un-uni"><button class="ms-btn" onclick="abreUn2('un-uni')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
           <span class="un-r">Unidade</span></button>
-          <div class="ms-panel"><div class="ms-list un"></div></div></div>
-        <div class="ms-wrap" id="un-mes"><button class="ms-btn" onclick="abreUn('un-mes')">
+          <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input type="text" placeholder="Buscar…" autocomplete="off" data-lpignore="true" data-1p-ignore></div><div class="ms-list"></div></div></div>
+        <div class="ms-wrap" id="un-mes"><button class="ms-btn" onclick="abreUn2('un-mes')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
           <span class="un-r">Mês</span></button>
-          <div class="ms-panel"><div class="ms-list un"></div></div></div>
+          <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input type="text" placeholder="Buscar…" autocomplete="off" data-lpignore="true" data-1p-ignore></div><div class="ms-list"></div></div></div>
       </div>
       <button class="tool ico" id="btTema" onclick="trocaTema()" title="Claro / escuro"></button>
     </div>
@@ -492,6 +490,7 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
               <span class="esp"></span>
               <button class="bt" onclick="apresentar()"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg> Apresentar</button>
               <button class="bt pri" id="btPdf2" onclick="gerarPdf()">Gerar PDF</button>
+              <button class="bt pri" id="btPpt2" onclick="gerarPpt()">Gerar PPT</button>
             </div>
             <div class="tela" id="tela"><div class="tela-q" id="telaQ"><iframe id="prev" title="Prévia do slide"></iframe></div><div class="tela-msg" id="telaMsg">Montando os slides…</div></div>
             <div class="palco-pe">
@@ -532,6 +531,7 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
 const ADMIN_EMAIL='fortesindicadores@gmail.com';
+const NOMEB={'BLC':'CDD Camboriú','CBA':'Cuiabá','CGR':'CDD Rio de Janeiro','FLP':'CDD Florianópolis','GRL':'CDD Guarulhos','MCC':'Macacu','NFR':'CDD Nova Friburgo','PIR':'Piraí','PLT':'CDD Pelotas','RON':'CDD Rondonópolis','GNA':'Goiânia','ANG':'Anhanguera'};
 const NOME={'BLC':'CDD Camboriú','CBA T1':'Cuiabá Empurrada','CBA T1 WH':'Cuiabá Armazém','CBA T2':'CDD Cuiabá','CGR':'CDD Rio de Janeiro','FLP':'CDD Florianópolis','GRL':'CDD Guarulhos','MCC T1':'Macacu Empurrada','MCC T2':'CDI Macacu','NFR':'CDD Nova Friburgo','PIR':'Piraí Empurrada','PLT':'CDD Pelotas','RON':'CDD Rondonópolis','GNA':'Goiânia','ANG':'Anhanguera'};
 const $=i=>document.getElementById(i);
 const set=(i,v)=>{ const e=$(i); if(e) e.textContent=v; };
@@ -541,25 +541,33 @@ const F=ApresBase.f, pad2=n=>String(n).padStart(2,'0');
 const slug=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const Cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
 
-let sb=null, ADMIN=false, MINHAS=[], COD='', VIG='', BANCO_OK=null;
+let sb=null, ADMIN=false, MINHAS=[], SIGS=[], COD='', CODS=[], VIG='', BANCO_OK=null;      // COD = a SIGLA da unidade (CBA, MCC…); CODS = os códigos com tier que o acesso cobre
+const BASE=c=>CartaCalc.UNIT_BASE(c);
+let KMP=null, ARV=null, SCP=null;      // blocos que vêm dos painéis (Painel KM, Árvore de Combustível, Scorecard)
+const FONTE={};
 let FR=null, LIN=[], MESES=[], FCA=[], FCA_ERR='', DRE_ERR='', GAV=null, FUNDOS=null;
 let MOD=null, SL={}, DECK=[], POS=0, SEQ=[];
-const GAVC={};
+const GAVC={}; let BANCO_ERR='';
 
 /* ── catálogo: os blocos conhecidos, na ordem padrão ── */
 const CAT=[
-  {id:'resultado', t:'Resultado do mês',           s:'Fechamento · DRE'},
-  {id:'ponte',     t:'Ponte do custo',             s:'Fechamento · DRE'},
-  {id:'aderencia', t:'Aderência ao remunerado',    s:'Fechamento · DRE'},
-  {id:'desvios',   t:'Maiores desvios e FCA',      s:'Fechamento · DRE e FCA'},
-  {id:'fca',       t:'FCA do mês',                 s:'Fechamento · FCA'},
-  {id:'gav:visao-geral',                t:'Farol de hoje',               s:'Gestão à Vista · hoje'},
-  {id:'gav:placas',                     t:'Placas com pendência',        s:'Gestão à Vista · hoje'},
-  {id:'gav:frota-parada-e-manutencao',  t:'Frota parada e manutenção',   s:'Gestão à Vista · hoje'},
-  {id:'gav:descontos',                  t:'Descontos',                   s:'Gestão à Vista · hoje'},
-  {id:'gav:documentos',                 t:'Documentos',                  s:'Gestão à Vista · hoje'},
-  {id:'gav:custos-do-mes',              t:'Custos do mês corrente',      s:'Carta de Custos · hoje'},
-  {id:'gav:prioridades',                t:'Prioridades',                 s:'Gestão à Vista · hoje'},
+  {id:'resultado',        t:'Resultado do mês',            s:'Fechamento · DRE'},
+  {id:'ponte',            t:'Ponte do custo',              s:'Fechamento · DRE'},
+  {id:'pac:combustiveis', t:'Combustíveis por projeto',    s:'Fechamento · DRE'},
+  {id:'arv',              t:'Árvore de Combustível',       s:'Árvore de Combustível', fonte:'ARV'},
+  {id:'km',               t:'Dispersão de km',             s:'Painel KM', fonte:'KMP'},
+  {id:'pac:manutencao',   t:'Manutenção por projeto',      s:'Fechamento · DRE'},
+  {id:'pac:pneus',        t:'Pneus por projeto',           s:'Fechamento · DRE'},
+  {id:'desvios',          t:'Maiores desvios e FCA',       s:'Fechamento · DRE e FCA'},
+  {id:'fca',              t:'FCA do mês',                  s:'Fechamento · FCA'},
+  {id:'sc',               t:'Scorecard',                   s:'Scorecard', fonte:'SCP'},
+  {id:'gav:visao-geral',                t:'Farol de hoje',               s:'Gestão à Vista · hoje', fonte:'GAV'},
+  {id:'gav:placas',                     t:'Placas com pendência',        s:'Gestão à Vista · hoje', fonte:'GAV'},
+  {id:'gav:frota-parada-e-manutencao',  t:'Frota parada e manutenção',   s:'Gestão à Vista · hoje', fonte:'GAV'},
+  {id:'gav:descontos',                  t:'Descontos',                   s:'Gestão à Vista · hoje', fonte:'GAV'},
+  {id:'gav:documentos',                 t:'Documentos',                  s:'Gestão à Vista · hoje', fonte:'GAV'},
+  {id:'gav:custos-do-mes',              t:'Custos do mês corrente',      s:'Carta de Custos · hoje', fonte:'GAV'},
+  {id:'gav:prioridades',                t:'Prioridades',                 s:'Gestão à Vista · hoje', fonte:'GAV'},
 ];
 const catDe=id=>CAT.find(c=>c.id===id);
 const modPadrao=()=>({titulo:'Reunião Mensal',ordem:CAT.map(c=>c.id),off:[],textos:[]});
@@ -569,8 +577,8 @@ function normMod(m){ const p=modPadrao(); m=m&&typeof m==='object'?m:{};
 
 /* ── modelo: banco (apres_modelo) e, sem ele, este navegador ── */
 async function leModelo(cod){
-  try{ const {data,error}=await sb.from('apres_modelo').select('modelo').eq('unidade',cod).maybeSingle(); if(error) throw error; BANCO_OK=true; if(data&&data.modelo) return normMod(data.modelo); }
-  catch(e){ BANCO_OK=false; }
+  try{ const {data,error}=await sb.from('apres_modelo').select('modelo').eq('unidade',CODS[0]||cod).maybeSingle(); if(error) throw error; BANCO_OK=true; if(data&&data.modelo) return normMod(data.modelo); }
+  catch(e){ BANCO_OK=false; BANCO_ERR=(e&&(e.code||e.message))||''; }
   try{ const l=JSON.parse(localStorage.getItem('apres_modelo_'+cod)||'null'); if(l) return normMod(l); }catch(e){}
   return modPadrao();
 }
@@ -580,7 +588,7 @@ function salva(){
   clearTimeout(_tSalva); set('salvo','');
   _tSalva=setTimeout(async()=>{
     if(BANCO_OK===false){ set('salvo','guardado neste navegador'); return; }
-    try{ const {error}=await sb.from('apres_modelo').upsert({unidade:COD,modelo:MOD},{onConflict:'unidade'}); if(error) throw error; set('salvo','salvo ✓'); }
+    try{ const {error}=await sb.from('apres_modelo').upsert({unidade:CODS[0]||COD,modelo:MOD},{onConflict:'unidade'}); if(error) throw error; set('salvo','salvo ✓'); }
     catch(e){ set('salvo','guardado neste navegador'); }
   },700);
 }
@@ -588,7 +596,7 @@ function salva(){
 /* ── fechamento: as linhas da unidade na aba Frota do DRE (Combustíveis, Manutenção e Pneus; custo positivo) ── */
 function linhasDe(cod){
   const m=FR.m, C=CartaCalc, out=[];
-  FR.rows.forEach(r=>{ const nv3=m.nv3>=0?String(r[m.nv3]||''):''; if(!C.unitMatchNv3(cod,nv3)) return;
+  FR.rows.forEach(r=>{ const nv3=m.nv3>=0?String(r[m.nv3]||''):''; if(!CODS.some(c=>C.unitMatchNv3(c,nv3))) return;
     let y=m.ano>=0?parseInt(r[m.ano]):null, mo=m.mes>=0?C._mesNum(r[m.mes]):null;
     if((!y||!mo)&&m.vig>=0){ const d=C.parseVigD(r[m.vig]); if(d){ y=d.getFullYear(); mo=d.getMonth()+1; } }
     if(!y||!mo) return;
@@ -602,25 +610,24 @@ const soma=(rs,f)=>rs.reduce((a,r)=>{ if(!f||f(r)){ a.orc+=r.orc; a.rem+=r.rem; 
 const grupo=(rs,k)=>{ const o={}; rs.forEach(r=>{ const x=o[k(r)]=o[k(r)]||{orc:0,rem:0,real:0}; x.orc+=r.orc; x.rem+=r.rem; x.real+=r.real; }); return o; };
 const mesLb=vk=>F.MES3[+vk.slice(5,7)-1]+'/'+vk.slice(2,4);
 const curto=v=>{ const a=Math.abs(v); return a>=1e6?(a/1e6).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+' mi':a>=1e4?Math.round(a/1e3).toLocaleString('pt-BR')+' mil':Math.round(a).toLocaleString('pt-BR'); };
-const ader=x=>x&&x.real>0&&x.rem>0?x.rem/x.real*100:null;
-const faixa=v=>v==null?'m':v<70?'r':v<100?'y':v<=120?'g':'b';
-const celAd=v=>v==null?{v:'',style:''}:faixa(v)==='b'?{v:F.pct0(v),style:'background:rgba(46,144,232,.17);text-align:center;font-weight:700'}:F.cel(F.pct0(v),faixa(v));
 const dCor=d=>Math.abs(d)<0.5?F.INK3:d>0?F.VERM:F.VERDE;
 const dTxt=d=>`<b style="color:${dCor(d)}">${d>0?'+':d<0?'−':''}${F.brl(Math.abs(d)).replace('−','')}</b>`;
 const pTxt=(d,ref)=>ref?`<b style="color:${dCor(d)}">${F.sgnPct(d/Math.abs(ref)*100)}</b>`:'—';
 
-/* cascata em SVG: referência → passos → realizado */
+/* cascata em SVG: referência → passos → realizado (uma só, na largura do slide) */
 function cascata(D,o){
-  o=o||{}; const w=o.w||548, h=o.h||440, pd={l:6,r:6,t:26,b:46}, n=D.st.length+2, bw=(w-pd.l-pd.r)/n, H=h-pd.t-pd.b;
+  o=o||{}; const w=o.w||1136, h=o.h||376, pd={l:8,r:8,t:28,b:52}, n=D.st.length+2, bw=(w-pd.l-pd.r)/n, ww=Math.min(bw*.62,104), H=h-pd.t-pd.b;
   const niv=[D.ref]; let run=D.ref; D.st.forEach(s=>{ run+=s.d; niv.push(run); }); niv.push(D.real);
   const mn=Math.min(...niv), mx=Math.max(...niv), span=Math.max(mx-mn,mx*0.02), lo=Math.max(0,mn-span*1.5), hi=mx+span*0.2, Y=v=>pd.t+H*(1-(Math.max(v,lo)-lo)/((hi-lo)||1));
-  const quebra=t=>{ const out=[]; let l=''; String(t).split(/\s+/).forEach(x=>{ if(l&&(l+' '+x).length>13){ out.push(l); l=x; } else l=l?l+' '+x:x; }); if(l) out.push(l); return out.slice(0,3); };
-  let s=`<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" font-family="Montserrat,Arial" font-size="10.5">`;
-  const barra=(i,a,b,cor,txt,forte,nome)=>{ const x=pd.l+bw*i+bw*.16, ww=bw*.68, y1=Y(Math.max(a,b)), y2=Y(Math.min(a,b));
+  const fs=bw<84?10.5:12, cab=Math.max(8,Math.floor((bw-8)/(fs*.6)));          // letras que cabem na casa de cada barra
+  const quebra=t=>{ const out=[]; let l=''; String(t).split(/\s+/).forEach(x=>{ if(l&&(l+' '+x).length>cab){ out.push(l); l=x; } else l=l?l+' '+x:x; }); if(l) out.push(l); return out.slice(0,3).map(x=>x.length>cab?x.slice(0,cab-1)+'…':x); };
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" font-family="Montserrat,Arial" font-size="${fs}">`;
+  const cx=i=>pd.l+bw*i+bw/2;
+  const barra=(i,a,b,cor,txt,forte,nome)=>{ const x=cx(i)-ww/2, y1=Y(Math.max(a,b)), y2=Y(Math.min(a,b));
     s+=`<rect x="${x.toFixed(1)}" y="${y1.toFixed(1)}" width="${ww.toFixed(1)}" height="${Math.max(1.5,y2-y1).toFixed(1)}" rx="3" fill="${cor}" fill-opacity=".86"/>`;
-    s+=`<text x="${(x+ww/2).toFixed(1)}" y="${(y1-6).toFixed(1)}" text-anchor="middle" fill="${forte?F.INK:cor}" font-weight="${forte?800:700}" font-size="${forte?12:11}">${txt}</text>`;
-    quebra(nome).forEach((l,j)=>{ s+=`<text x="${(x+ww/2).toFixed(1)}" y="${h-pd.b+16+j*12}" text-anchor="middle" fill="${F.INK2}" font-weight="600">${F.esc(l)}</text>`; }); };
-  const liga=(i,v)=>{ const x1=pd.l+bw*i+bw*.84, x2=pd.l+bw*(i+1)+bw*.16; s+=`<line x1="${x1.toFixed(1)}" x2="${x2.toFixed(1)}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="${F.INK3}" stroke-dasharray="3 3"/>`; };
+    s+=`<text x="${cx(i).toFixed(1)}" y="${(y1-7).toFixed(1)}" text-anchor="middle" fill="${forte?F.INK:cor}" font-weight="${forte?800:700}" font-size="${forte?14:12.5}">${txt}</text>`;
+    quebra(nome).forEach((l,j)=>{ s+=`<text x="${cx(i).toFixed(1)}" y="${h-pd.b+18+j*(fs+2)}" text-anchor="middle" fill="${F.INK2}" font-weight="600">${F.esc(l)}</text>`; }); };
+  const liga=(i,v)=>{ s+=`<line x1="${(cx(i)+ww/2).toFixed(1)}" x2="${(cx(i+1)-ww/2).toFixed(1)}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="${F.INK3}" stroke-dasharray="3 3"/>`; };
   barra(0,lo,D.ref,'#5B6573',curto(D.ref),1,'Remunerado'); liga(0,D.ref); run=D.ref;
   D.st.forEach((x,i)=>{ barra(i+1,run,run+x.d,x.d>0?F.VERM:F.VERDE,(x.d>0?'+':'−')+curto(x.d),0,x.nome); run+=x.d; liga(i+1,run); });
   barra(n-1,lo,D.real,'#F97316',curto(D.real),1,'Realizado');
@@ -628,12 +635,12 @@ function cascata(D,o){
 }
 function ponteDe(rs){ const g=grupo(rs,r=>r.conta), t=soma(rs);
   let st=Object.keys(g).map(k=>({nome:k.replace('Manutenção de Veículos e Equip.','Manut. Veículos').replace('Contratos de Manutenção Fabricante','Contrato Fabricante').replace('Materiais e Ferramentas de Oficina','Materiais Oficina').replace('Recapagens e Outros Serviços','Recapagens').replace('Personalização/Padronização','Personalização').replace('Manutenção de Carrocerias','Carrocerias').replace('Lavação de Veículos','Lavação'),d:g[k].real-g[k].rem})).filter(x=>Math.abs(x.d)>=0.5).sort((a,b)=>b.d-a.d);
-  if(st.length>8){ const ord=st.slice().sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)), fica=new Set(ord.slice(0,7).map(x=>x.nome)), resto=st.filter(x=>!fica.has(x.nome)); st=st.filter(x=>fica.has(x.nome)); st.push({nome:'Demais',d:resto.reduce((a,x)=>a+x.d,0)}); }
+  if(st.length>9){ const ord=st.slice().sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)), fica=new Set(ord.slice(0,8).map(x=>x.nome)), resto=st.filter(x=>!fica.has(x.nome)); st=st.filter(x=>fica.has(x.nome)); st.push({nome:'Demais',d:resto.reduce((a,x)=>a+x.d,0)}); }
   return {ref:t.rem,real:t.real,st}; }
 
 /* ── os slides do fechamento e os recados (o farol vem do Gestão à Vista) ── */
 function slidesFechamento(){
-  const y=+VIG.slice(0,4), mo=+VIG.slice(5,7), Mes=Cap(F.MESN[mo-1]), nome=NOME[COD]||COD;
+  const y=+VIG.slice(0,4), mo=+VIG.slice(5,7), Mes=Cap(F.MESN[mo-1]), nome=NOMEB[COD]||COD;
   const B=ApresBase.deck({acc:'#F97316',rodape:`${nome} · Fechamento de ${F.MESN[mo-1]}/${y}`});
   const doMes=LIN.filter(r=>r.vk===VIG), ytd=LIN.filter(r=>r.y===y&&r.mo<=mo), M=soma(doMes), Y=soma(ytd);
   const lbl=mesLb(VIG);
@@ -641,33 +648,46 @@ function slidesFechamento(){
     // 1 · resultado
     const dM=M.real-M.rem, dY=Y.real-Y.rem, pm=grupo(doMes,r=>r.pac), py=grupo(ytd,r=>r.pac), pacs=CartaCalc.PACOTES.filter(p=>pm[p]||py[p]);
     const pior=pacs.map(p=>({p,d:(pm[p]||{real:0,rem:0}).real-(pm[p]||{real:0,rem:0}).rem})).sort((a,b)=>b.d-a.d);
+    // abertura por projeto (Renan, 23/11/2026: "Aberturas projetos devem estar na apresentação")
+    const PJ=[...new Set(doMes.concat(ytd).map(r=>r.proj))].sort(), gm=grupo(doMes,r=>r.proj), gy=grupo(ytd,r=>r.proj), gmp=grupo(doMes,r=>r.proj+'|'+r.pac);
+    const z={rem:0,real:0}, dPP=(p,k)=>{ const x=gmp[p+'|'+k]; return x?dTxt(x.real-x.rem):'—'; };
+    const pjP=PJ.map(p=>({p,d:(gm[p]||z).real-(gm[p]||z).rem})).sort((a,b)=>b.d-a.d)[0];
     B.bloco('resultado');
     B.slide(`${B.head('Resultado do mês',`${Mes}: custo de frota de ${F.brl(M.real)}, ${dM>0?F.brl(dM)+' acima do':dM<0?F.brl(-dM)+' abaixo do':'igual ao'} remunerado`,'Combustíveis, Manutenção e Pneus da unidade no DRE, contra o remunerado.')}
       ${B.cards([{k:'Remunerado',n:F.brl(M.rem)},{k:'Realizado',n:F.brl(M.real)},
         {k:'Realizado − remunerado',n:(dM>0?'+':'')+F.brl(dM),cor:dCor(dM),p:M.rem?F.sgnPct(dM/M.rem*100)+' sobre o remunerado.':''},
-        {k:'Aderência ao remunerado',n:F.pct1(ader(M)),cor:{r:F.VERM,y:'#A87D00',g:F.VERDE,b:'#1B6FC4',m:F.INK}[faixa(ader(M))],p:'Remunerado ÷ realizado: acima de 100%, gastou menos.'}],4)}
+        {k:`No ano · jan a ${F.MES3[mo-1]}`,n:(dY>0?'+':'')+F.brl(dY),cor:dCor(dY),p:Y.rem?F.sgnPct(dY/Y.rem*100)+' sobre o remunerado do ano.':''}],4)}
       ${B.tabela({classe:'',style:'margin-top:14px',cols:[{t:'Pacote'},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'Δ',n:1},{t:'Δ %',n:1},{t:`Δ no ano (jan a ${F.MES3[mo-1]})`,n:1},{t:'Δ % no ano',n:1}],
         rows:pacs.map(p=>{ const a=pm[p]||{rem:0,real:0}, b=py[p]||{rem:0,real:0}; return [`<b>${p}</b>`,F.brl(a.rem),F.brl(a.real),dTxt(a.real-a.rem),pTxt(a.real-a.rem,a.rem),dTxt(b.real-b.rem),pTxt(b.real-b.rem,b.rem)]; })
           .concat([{cls:'sep',c:['Total',F.brl(M.rem),F.brl(M.real),dTxt(dM),pTxt(dM,M.rem),dTxt(dY),pTxt(dY,Y.rem)]}])})}
       ${B.concBlocos([{t:'Onde mais pesou',v:pior[0]&&pior[0].d>0?pior[0].p:'Nenhum pacote acima',s:pior[0]&&pior[0].d>0?`${F.brl(pior[0].d)} acima do remunerado no mês.`:'Todos os pacotes dentro do remunerado.'},
         {t:'Onde economizou',v:pior.length&&pior[pior.length-1].d<0?pior[pior.length-1].p:'Nenhum pacote abaixo',s:pior.length&&pior[pior.length-1].d<0?`${F.brl(-pior[pior.length-1].d)} abaixo do remunerado no mês.`:''},
-        {t:'No ano',v:(dY>0?'+':'')+F.brl(dY),s:`Realizado menos remunerado de janeiro a ${F.MESN[mo-1]}${Y.rem?' ('+F.sgnPct(dY/Y.rem*100)+')':''}.`}],'Leitura',3)}`,{top:true});
+        {t:'Projeto que mais pesou',v:pjP&&pjP.d>0?pjP.p:'Nenhum projeto acima',s:pjP&&pjP.d>0?`${F.brl(pjP.d)} acima do remunerado no mês.`:'Todos os projetos dentro do remunerado.'}],'Leitura',3)}`,{top:true});
+    B.slide(`${B.head('Resultado por projeto',`${PJ.length} ${F.pl(PJ.length,'projeto')}: ${pjP&&pjP.d>0?`${pjP.p} é o que mais passa do remunerado (${F.brl(pjP.d)})`:'todos dentro do remunerado no mês'}`,'Custo de frota de cada projeto da unidade no mês, com o desvio de cada pacote e o acumulado do ano.')}
+      ${B.tabela({classe:'',style:'margin-top:12px',cols:[{t:'Projeto'},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'Δ',n:1},{t:'Δ %',n:1},{t:'Δ Combustíveis',n:1},{t:'Δ Manutenção',n:1},{t:'Δ Pneus',n:1},{t:`Δ no ano (jan a ${F.MES3[mo-1]})`,n:1},{t:'Δ % no ano',n:1}],
+        rows:PJ.map(p=>{ const a=gm[p]||z, b=gy[p]||z; return [`<b>${F.esc(p)}</b>`,F.brl(a.rem),F.brl(a.real),dTxt(a.real-a.rem),pTxt(a.real-a.rem,a.rem),dPP(p,'Combustíveis'),dPP(p,'Manutenção'),dPP(p,'Pneus'),dTxt(b.real-b.rem),pTxt(b.real-b.rem,b.rem)]; })
+          .concat([{cls:'sep',c:['Total',F.brl(M.rem),F.brl(M.real),dTxt(dM),pTxt(dM,M.rem),...['Combustíveis','Manutenção','Pneus'].map(k=>{ const x=pm[k]; return x?dTxt(x.real-x.rem):'—'; }),dTxt(dY),pTxt(dY,Y.rem)]}])})}`,{top:true});
     // 2 · ponte
     B.bloco('ponte');
-    B.slide(`${B.head('Ponte do custo',`Do remunerado ao realizado, conta a conta`,'Cada barra do meio é o realizado menos o remunerado de uma conta: vermelha quando gastou mais, verde quando gastou menos.')}
-      <div class="duas" style="grid-template-columns:1fr 1fr;gap:28px;margin-top:8px">
-        <div><div class="lbl" style="margin-bottom:2px">Acumulado · jan a ${lbl}</div>${cascata(ponteDe(ytd))}</div>
-        <div><div class="lbl" style="margin-bottom:2px">Mês · ${lbl}</div>${cascata(ponteDe(doMes))}</div></div>`,{top:true});
-    // 3 · aderência mês a mês
-    const projs=[...new Set(LIN.filter(r=>r.y===y||r.y===y-1).map(r=>r.proj))].sort(), fech=a=>{ const o=[]; for(let i=1;i<=12;i++){ if(LIN.some(r=>r.y===a&&r.mo===i&&Math.abs(r.real)>0.5)) o.push(i); } return o; };
-    const fA=fech(y).filter(i=>i<=mo), fP=fech(y-1);
-    const linhaAd=(nm,f,cls)=>{ const rs=LIN.filter(f); const ac=a=>ader(soma(rs,r=>r.y===a&&(a===y?fA:fP).includes(r.mo)));
-      return {cls,c:[`<b>${nm}</b>`,celAd(fP.length?ac(y-1):null),celAd(ac(y))].concat(F.MES3.map((_,i)=>fA.includes(i+1)?celAd(ader(soma(rs,r=>r.y===y&&r.mo===i+1))):{v:'',style:''}))}; };
-    B.bloco('aderencia');
-    B.slide(`${B.head('Aderência ao remunerado',`${nome}: aderência de ${F.pct1(ader(Y))} no ano`,'Remunerado ÷ realizado do custo de frota. 100% é gastar o remunerado; acima, gastou menos.')}
-      ${B.tabela({classe:'',style:'margin-top:10px',cols:[{t:'Projeto'},{t:String(y-1),c:1},{t:String(y),c:1}].concat(F.MES3.map(m=>({t:m,c:1}))),
-        rows:projs.map(p=>linhaAd(p,r=>r.proj===p)).concat([linhaAd('Total',()=>true,'sep')])})}
-      <p class="note" style="margin-top:14px"><b style="color:${F.VERM}">Muito ruim</b> até 69,9% · <b style="color:#A87D00">Ruim</b> 70% a 99,9% · <b style="color:${F.VERDE}">Bom</b> 100% a 120% · <b style="color:#1B6FC4">Ótimo</b> acima de 120%. Os anos são o acumulado até o último mês com realizado.</p>`,{top:true});
+    { const PD=ponteDe(doMes), sobe=PD.st.filter(x=>x.d>0).sort((a,b)=>b.d-a.d)[0], desce=PD.st.filter(x=>x.d<0).sort((a,b)=>a.d-b.d)[0];
+    B.slide(`${B.head('Ponte do custo',`${Mes}: do remunerado ao realizado, conta a conta`,'Cada barra do meio é o realizado menos o remunerado de uma conta: vermelha quando gastou mais, verde quando gastou menos.')}
+      <div style="margin-top:6px">${cascata(PD)}</div>
+      ${B.concBlocos([{t:'Maior aumento',v:sobe?sobe.nome:'Nenhuma conta acima',s:sobe?`${F.brl(sobe.d)} acima do remunerado.`:''},{t:'Maior redução',v:desce?desce.nome:'Nenhuma conta abaixo',s:desce?`${F.brl(-desce.d)} abaixo do remunerado.`:''},
+        {t:`No ano · jan a ${F.MES3[mo-1]}`,v:(dY>0?'+':'')+F.brl(dY),s:`Realizado menos remunerado${Y.rem?' ('+F.sgnPct(dY/Y.rem*100)+')':''}.`}],'Leitura',3)}`,{top:true}); }
+    // 3 · um slide por pacote, aberto por projeto e por conta
+    [['Combustíveis','pac:combustiveis'],['Manutenção','pac:manutencao'],['Pneus','pac:pneus']].forEach(([pac,id])=>{
+      const rm=doMes.filter(r=>r.pac===pac), ry=ytd.filter(r=>r.pac===pac), T=soma(rm), TY=soma(ry); if(!rm.length||!(T.rem||T.real)) return;
+      const a=grupo(rm,r=>r.proj), b=grupo(ry,r=>r.proj), pj=[...new Set(rm.concat(ry).map(r=>r.proj))].sort();
+      const gc=grupo(rm,r=>r.proj+'|'+r.conta), ct=Object.keys(gc).map(k=>({proj:k.split('|')[0],conta:k.split('|')[1],x:gc[k],d:gc[k].real-gc[k].rem})).filter(o=>Math.abs(o.d)>0.5).sort((x,y)=>Math.abs(y.d)-Math.abs(x.d)).slice(0,pj.length>4?5:7);
+      const dT=T.real-T.rem;
+      B.bloco(id);
+      B.slide(`${B.head(pac,`${pac}: ${F.brl(T.real)} em ${F.MESN[mo-1]}, ${dT>0?F.brl(dT)+' acima do':dT<0?F.brl(-dT)+' abaixo do':'igual ao'} remunerado`,'Por projeto no mês e no ano, e as contas do pacote que mais desviaram no mês.')}
+        ${B.tabela({classe:'compacta',style:'margin-top:10px',cols:[{t:'Projeto'},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'Δ',n:1},{t:'Δ %',n:1},{t:`Δ no ano (jan a ${F.MES3[mo-1]})`,n:1},{t:'Δ % no ano',n:1}],
+          rows:pj.map(p=>{ const x=a[p]||z, y2=b[p]||z; return [`<b>${F.esc(p)}</b>`,F.brl(x.rem),F.brl(x.real),dTxt(x.real-x.rem),pTxt(x.real-x.rem,x.rem),dTxt(y2.real-y2.rem),pTxt(y2.real-y2.rem,y2.rem)]; })
+            .concat([{cls:'sep',c:['Total',F.brl(T.rem),F.brl(T.real),dTxt(dT),pTxt(dT,T.rem),dTxt(TY.real-TY.rem),pTxt(TY.real-TY.rem,TY.rem)]}])})}
+        ${ct.length?`<div class="lbl" style="margin:16px 0 4px">Contas que mais desviaram no mês</div>${B.tabela({classe:'compacta',cols:[{t:'Projeto'},{t:'Conta',w:1},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'Δ',n:1},{t:'Δ %',n:1}],
+          rows:ct.map(o=>[`<b>${F.esc(o.proj)}</b>`,F.esc(o.conta),F.brl(o.x.rem),F.brl(o.x.real),dTxt(o.d),pTxt(o.d,o.x.rem)])})}`:''}`,{top:true});
+    });
     // 4 · maiores desvios e a causa no FCA
     const g=grupo(doMes,r=>r.proj+'|'+r.conta), dv=Object.keys(g).map(k=>({proj:k.split('|')[0],conta:k.split('|')[1],x:g[k],d:g[k].real-g[k].rem})).filter(o=>o.d>0.5).sort((a,b)=>b.d-a.d).slice(0,6);
     const PACF={'Combustíveis':'combustiveis','Manutenção':'manutencoes','Pneus':'pneus'};
@@ -700,6 +720,11 @@ function slidesFechamento(){
         ${i===arr.length-1&&ord.length>27?`<p class="note">Mostradas 27 de ${ord.length} ações; as outras estão no FCA.</p>`:''}`,{top:true});
     });
   }
+  // Árvore de Combustível: a foto da árvore do próprio painel, a unidade inteira e uma por projeto
+  if(ARV&&ARV.fotos&&ARV.fotos.length){ B.bloco('arv');
+    ARV.fotos.forEach(f=>{ const k=Math.min(1136/f.w,462/f.h), w=Math.round(f.w*k), h=Math.round(f.h*k);
+      B.slide(`${B.head('Árvore de Combustível',`${Cap(F.MESN[mo-1])}: ${F.esc(f.rot)}`,'Custo, km rodado, R$/km, R$/L e Km/L contra o remunerado, com o impacto de volume, preço e eficiência. É a árvore do painel, no recorte da unidade.')}
+        <div style="margin-top:10px;display:flex;justify-content:center"><img src="${f.img}" width="${w}" height="${h}" style="display:block;border-radius:10px"></div>`,{top:true}); }); }
   // recados do gestor
   MOD.textos.forEach(t=>{ const ls=String(t.texto||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,8);
     B.bloco(t.id);
@@ -726,41 +751,123 @@ function farol(cod){
   });
 }
 
+async function farolTodos(){ const rs=await Promise.all(CODS.map(c=>farol(c))), lista=[]; let erro=''; rs.forEach(r=>{ if(r.lista) lista.push(...r.lista); else erro=r.erro||erro; }); return lista.length?{lista}:{erro:erro||'sem slides'}; }
+
+/* ── os outros painéis, abertos por dentro (iframe da mesma origem, fora da tela): os números são os deles ──
+   Renan, 23/11/2026: "Faltou foco em custos, dispersão de km, árvore, scorecard… Temos diversas coisas legais". */
+function abrePainel(url,pronto,teto){
+  teto=teto||120000;
+  return new Promise((ok,no)=>{
+    const ifr=document.createElement('iframe'); ifr.setAttribute('aria-hidden','true');
+    ifr.style.cssText='position:fixed;left:-10000px;top:0;width:1600px;height:900px;border:0';
+    let fim=false; const fecha=()=>{ try{ ifr.remove(); }catch(e){} };
+    const tm=setTimeout(()=>{ if(fim) return; fim=true; fecha(); no(new Error('o painel não respondeu em '+Math.round(teto/1000)+' s')); },teto);
+    ifr.onload=async()=>{ try{ const w=ifr.contentWindow; let est=0;
+        while(!fim&&est<4){ let v=false; try{ v=!!w.eval(pronto); }catch(e){}
+          const sub=((w.document.getElementById('titSub')||{}).textContent)||''; est=v&&!/carregando|lendo/i.test(sub)?est+1:0; await sleep(300); }
+        if(fim) return; fim=true; clearTimeout(tm); ok({w,d:w.document,fecha});
+      }catch(e){ if(!fim){ fim=true; clearTimeout(tm); fecha(); no(e); } } };
+    ifr.src=url; document.body.appendChild(ifr);
+  });
+}
+const selIn=(w,id,vals)=>{ const el=w.document.getElementById(id); if(!el) return false; if(!el._sel) el._sel=new w.Set(); el._sel.clear(); (vals||[]).forEach(v=>el._sel.add(v)); return true; };
+const itensDe=(w,id)=>{ const el=w.document.getElementById(id); if(!el) return []; if(el._items&&el._items.length) return [...el._items]; return [...new Set([...el.querySelectorAll('input[data-v]')].map(i=>i.dataset.v))]; };
+const projCabe=p=>CODS.some(c=>{ const t=CartaCalc.UNIT_TIER(c); return !t||CartaCalc.tierOfPrefix(COD,String(p).toUpperCase())===t; });
+const kick=(html,nome)=>html.replace(/<div class="kicker">([^<]*)<\/div>/,(m,x)=>x.indexOf(nome)===0?m:`<div class="kicker">${nome} · ${x}</div>`);
+async function fotoDe(w,el){
+  if(!w.html2canvas) await new Promise((ok,no)=>{ const sc=w.document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'; sc.onload=ok; sc.onerror=()=>no(new Error('o html2canvas não carregou')); w.document.head.appendChild(sc); });
+  const prep=w.H2CPrep||null, nodes=prep?prep.preparar(el,true):null; el.setAttribute('data-ap-alvo','1');
+  try{ const c=await w.html2canvas(el,{scale:2,backgroundColor:'#FFFFFF',useCORS:true,logging:false,onclone:doc=>{ try{ if(prep&&prep.onclone) prep.onclone(doc); }catch(e){}
+        try{ const x=doc.querySelector('[data-ap-alvo]'); if(x){ x.style.background='transparent'; x.style.boxShadow='none'; x.style.borderColor='transparent'; } }catch(e){} }});
+    return {img:c.toDataURL('image/jpeg',.93),w:c.width,h:c.height}; }
+  finally{ el.removeAttribute('data-ap-alvo'); if(prep&&prep.limpar) prep.limpar(nodes); }
+}
+/* Painel KM: a dispersão de km da unidade, pelos slides que o próprio painel monta */
+async function fontePainelKm(){
+  const P=await abrePainel('../painel-km/index.html',"typeof ALL!=='undefined'&&ALL.length>0&&!!window.KmApresentacao");
+  try{ const w=P.w, unds=[...new Set(w.eval('ALL.map(r=>r.und)'))].filter(u=>BASE(String(u))===COD||String(u).split(' ')[0]===COD);
+    if(!unds.length) throw new Error('a unidade não tem dispersão de km no Painel KM');
+    const projs=[...new Set(w.eval('ALL.filter(r=>'+JSON.stringify(unds)+'.includes(r.und)).map(r=>r.proj)'))], cabem=projs.filter(projCabe);
+    const vk=VIG.slice(5,7)+'/'+VIG.slice(0,4), tem=w.eval('ALL.some(r=>r.vig==='+JSON.stringify(vk)+'&&r.real>0&&'+JSON.stringify(unds)+'.includes(r.und))');
+    selIn(w,'ms-ano',[]); selIn(w,'ms-und',unds); selIn(w,'ms-proj',cabem.length<projs.length?cabem:[]); selIn(w,'ms-vig',tem?[vk]:[]);
+    const r=await w.KmApresentacao.montar({}); return {lista:(r.lista||[]).map(x=>({k:x.k,html:kick(x.html,'Dispersão de km')}))};
+  } finally{ P.fecha(); }
+}
+/* Scorecard: os indicadores da unidade */
+async function fonteScorecard(){
+  const P=await abrePainel('../scorecard/index.html',"typeof ICS!=='undefined'&&ICS.length>0&&!!window.ScApresentacao",150000);
+  try{ const w=P.w, U2=w.eval('UNI2CONLOG'), unis=[...w.eval('UNI_LIST')].filter(n=>CODS.includes(U2[n]));
+    if(!unis.length) throw new Error('a unidade não está no Scorecard');
+    const lb=mesLb(VIG).toLowerCase(), vg=[...w.eval('VIGS.map(vigLbl)')].find(x=>String(x).toLowerCase()===lb);
+    selIn(w,'ms-uni',unis); selIn(w,'ms-vig',vg?[vg]:[]);
+    const r=await w.ScApresentacao.montar({});
+    return {lista:(r.lista||[]).filter(x=>!(unis.length===1&&/^ranking$/i.test(x.k||''))).map(x=>({k:x.k,html:kick(x.html,'Scorecard')}))};
+  } finally{ P.fecha(); }
+}
+/* Árvore de Combustível: a foto da árvore, na unidade e em cada projeto dela */
+async function fonteArvore(){
+  const P=await abrePainel('../combustivel/arvore-combustivel/index.html',"typeof onFilterChange==='function'&&!!document.getElementById('treeWrap')&&document.getElementById('treeWrap').textContent.trim().length>40");
+  try{ const w=P.w, d=P.d, vk=VIG.slice(5,7)+'/'+VIG.slice(0,4); d.body.classList.add('claro');
+    if(!itensDe(w,'ms-uni').includes(COD)) throw new Error('a unidade não está na Árvore de Combustível');
+    selIn(w,'ms-ano',[]); selIn(w,'ms-vig',itensDe(w,'ms-vig').includes(vk)?[vk]:[]); selIn(w,'ms-uni',[COD]); selIn(w,'ms-nv3',[]);
+    w.onFilterChange(); await sleep(900);
+    const fotos=[], tira=async rot=>{ const f=await fotoDe(w,d.getElementById('treeWrap')); if(f) fotos.push(Object.assign({rot},f)); };
+    const projs=itensDe(w,'ms-nv3').filter(projCabe);
+    if(projs.length<=1) await tira(projs[0]||'unidade inteira');
+    else{ await tira('todos os projetos'); for(const pj of projs.slice(0,5)){ selIn(w,'ms-nv3',[pj]); w.onFilterChange(); await sleep(700); await tira(pj); } }
+    return {fotos};
+  } finally{ P.fecha(); }
+}
+const CACHE={};
+function fonte(nome,chave,fn){ const k=nome+'|'+chave; if(!CACHE[k]) CACHE[k]=fn().catch(e=>{ console.warn(nome,e); return {erro:(e&&e.message)||String(e)}; }); return CACHE[k]; }
+/* uma fonte por vez (o banco não aguenta os quatro painéis abrindo juntos); a tela se refaz a cada uma que chega */
+async function carregaFontes(){
+  const cod=COD, vig=VIG, ainda=()=>cod===COD&&vig===VIG; window.__apresPronto=false;
+  GAV=KMP=ARV=SCP=null;
+  const passos=[['GAV',cod,farolTodos]].concat(vig?[['ARV',cod+'|'+vig,fonteArvore],['KMP',cod+'|'+vig,fontePainelKm],['SCP',cod+'|'+vig,fonteScorecard]]:[]);
+  for(const [n,ch,fn] of passos){ const r=await fonte(n,ch,fn); if(!ainda()) return; if(n==='GAV') GAV=r; else if(n==='ARV') ARV=r; else if(n==='KMP') KMP=r; else SCP=r; monta(); }
+  if(!vig){ ARV=KMP=SCP={erro:'sem mês com realizado'}; monta(); }
+  window.__apresPronto=true;
+}
+const FV={GAV:()=>GAV,ARV:()=>ARV,KMP:()=>KMP,SCP:()=>SCP}, FN={GAV:'o Gestão à Vista',ARV:'a Árvore de Combustível',KMP:'o Painel KM',SCP:'o Scorecard'};
+
 /* ── a sequência (itens) e o deck (páginas) ── */
 function monta(){
   if(!COD) return;
   SL=VIG&&FR?slidesFechamento():{};
   const extra=[];                                   // assunto do farol que não está no catálogo entra no fim
+  if(KMP&&KMP.lista&&KMP.lista.length) SL.km=KMP.lista.map(x=>x.html);
+  if(SCP&&SCP.lista&&SCP.lista.length) SL.sc=SCP.lista.map(x=>x.html);
   if(GAV&&GAV.lista) GAV.lista.forEach(s=>{ const id='gav:'+slug(s.k||'farol'); (SL[id]=SL[id]||[]).push(s.html); if(!catDe(id)&&!extra.some(e=>e.id===id)) extra.push({id,t:s.k||'Farol',s:'Gestão à Vista · hoje'}); });
   const conhec=CAT.concat(extra).map(c=>c.id).concat(MOD.textos.map(t=>t.id));
   const ordem=MOD.ordem.filter(id=>conhec.includes(id)); conhec.forEach(id=>{ if(!ordem.includes(id)) ordem.push(id); });
   MOD.ordem=ordem;
   const info=id=>{ const t=MOD.textos.find(x=>x.id===id); if(t) return {t:t.titulo||'Recado do gestor',s:'Recado do gestor',txt:1}; return catDe(id)||extra.find(e=>e.id===id)||{t:id,s:''}; };
-  const meio=ordem.map(id=>{ const i=info(id), sl=SL[id]||[], off=MOD.off.includes(id), esperando=/^gav:/.test(id)&&!GAV;
-    return {id,t:i.t,s:i.s,txt:!!i.txt,sl,off,vazio:!sl.length,esperando}; });
+  const meio=ordem.map(id=>{ const i=info(id), sl=SL[id]||[], off=MOD.off.includes(id), fo=i.fonte||(/^gav:/.test(id)?'GAV':''), esperando=!!fo&&!FV[fo]();
+    return {id,t:i.t,s:i.s,txt:!!i.txt,sl,off,vazio:!sl.length,esperando,fo}; });
   const y=VIG?VIG.slice(0,4):'', per=VIG?`${Cap(F.MESN[+VIG.slice(5,7)-1])}  |  ${y}`:'';
   const arteOuLiso=(k,dados,liso)=>FUNDOS?`<section class="slide arte">${ApresBase.arte[k](FUNDOS,dados)}</section>`:`<section class="slide dark">${liso}</section>`;
   const cont=[]; meio.forEach(it=>{ it.pg=null; if(!it.off&&it.sl.length){ it.pg=cont.length; it.sl.forEach(h=>cont.push({item:it.id,html:h})); } });
   const temSum=meio.filter(it=>it.pg!=null).length>1, desl=temSum?3:2;
   meio.forEach(it=>{ if(it.pg!=null) it.pg+=desl; });
-  DECK=[{item:'capa',html:arteOuLiso('capa',{titulo:MOD.titulo,sub:NOME[COD]||COD,periodo:per},`<div><div class="kicker">${esc(NOME[COD]||COD)}</div><h1>${esc(MOD.titulo)}</h1><p style="margin-top:18px">${esc(per)}</p></div>`)}];
-  if(temSum) DECK.push({item:'sumario',html:arteOuLiso('sumario',{periodo:`${NOME[COD]||COD}  |  ${per}`,itens:meio.filter(it=>it.pg!=null).map(it=>({n:it.pg,t:it.t}))},'<div><h1>Sumário</h1></div>')});
+  DECK=[{item:'capa',html:arteOuLiso('capa',{titulo:MOD.titulo,sub:NOMEB[COD]||COD,periodo:per},`<div><div class="kicker">${esc(NOMEB[COD]||COD)}</div><h1>${esc(MOD.titulo)}</h1><p style="margin-top:18px">${esc(per)}</p></div>`)}];
+  if(temSum) DECK.push({item:'sumario',html:arteOuLiso('sumario',{periodo:`${NOMEB[COD]||COD}  |  ${per}`,itens:meio.filter(it=>it.pg!=null).map(it=>({n:it.pg,t:it.t}))},'<div><h1>Sumário</h1></div>')});
   DECK=DECK.concat(cont);
   DECK.push({item:'fim',html:arteOuLiso('fim',{texto:'Obrigado!'},'<div><h1>Obrigado!</h1></div>')});
   SEQ=[{id:'capa',t:'Capa',s:'Fixo no começo',fixo:1,pg:1}].concat(temSum?[{id:'sumario',t:'Sumário',s:'Fixo depois da capa',fixo:1,pg:2}]:[],meio,[{id:'fim',t:'Encerramento',s:'Fixo no fim',fixo:1,pg:DECK.length}]);
   const atual=DECK[POS]&&DECK[POS].item, i=_foco?DECK.findIndex(d=>d.item===_foco):-1; _foco=null;
   POS=i>=0?i:Math.min(POS,DECK.length-1); if(i<0&&atual){ const j=DECK.findIndex(d=>d.item===atual); if(j>=0&&DECK[POS].item!==atual) POS=j; }
   desenhaSeq(); desenhaPrev(); avisos();
-  set('titSub',`${NOME[COD]||COD}${VIG?' · fechamento de '+mesLb(VIG):''} · ${DECK.length} slides`);
+  set('titSub',`${NOMEB[COD]||COD}${VIG?' · fechamento de '+mesLb(VIG):''} · ${DECK.length} slides`);
 }
 let _foco=null;
-const docAtual=()=>ApresBase.docDe({acc:'#F97316',titulo:`${MOD.titulo} · ${NOME[COD]||COD}`,paginas:DECK.map(d=>d.html)});
+const docAtual=()=>ApresBase.docDe({acc:'#F97316',titulo:`${MOD.titulo} · ${NOMEB[COD]||COD}`,paginas:DECK.map(d=>d.html)});
 const OLHO='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const OLHO_X='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19C5 19 1 12 1 12a20.3 20.3 0 0 1 5.1-5.9M9.9 5.2A10.4 10.4 0 0 1 12 5c7 0 11 7 11 7a20.6 20.6 0 0 1-2.2 3.2M1 1l22 22"/></svg>';
 const LAPIS='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
 function desenhaSeq(){
   const at=DECK[POS]&&DECK[POS].item;
-  $('seq').innerHTML=SEQ.map(it=>{ const sub=it.fixo?it.s:it.off?'Fora da apresentação':it.esperando?'Lendo o Gestão à Vista…':it.vazio?'Sem dados para este mês':`${it.s} · ${it.sl.length} ${it.sl.length===1?'slide':'slides'}`;
+  $('seq').innerHTML=SEQ.map(it=>{ const sub=it.fixo?it.s:it.off?'Fora da apresentação':it.esperando?`Lendo ${FN[it.fo]||'o painel'}…`:it.vazio?'Sem dados para este mês':`${it.s} · ${it.sl.length} ${it.sl.length===1?'slide':'slides'}`;
     return `<div class="sq${it.fixo?' fixo':''}${it.off?' off':''}${!it.fixo&&it.vazio?' vazio':''}${it.id===at?' on':''}" data-id="${esc(it.id)}"${it.fixo?'':' draggable="true"'}>
       <span class="sq-p">⋮⋮</span><span class="sq-n">${it.pg!=null?it.pg:'–'}</span>
       <span class="sq-t"><b>${esc(it.t)}</b><i>${esc(sub)}</i></span>
@@ -796,7 +903,10 @@ function avisos(){
   else if(FR&&!MESES.length) a.push('A unidade ainda não tem mês com realizado no DRE: os blocos do fechamento ficam vazios.');
   if(FCA_ERR) a.push('Não deu para ler o FCA: '+FCA_ERR+'.');
   if(GAV&&GAV.erro) a.push('Farol de hoje fora da apresentação: '+GAV.erro+'.');
-  if(BANCO_OK===false) a.push('A sequência fica guardada só neste navegador até a tabela apres_modelo existir no banco.');
+  if(KMP&&KMP.erro) a.push('Dispersão de km fora da apresentação: '+KMP.erro+'.');
+  if(ARV&&ARV.erro) a.push('Árvore de Combustível fora da apresentação: '+ARV.erro+'.');
+  if(SCP&&SCP.erro) a.push('Scorecard fora da apresentação: '+SCP.erro+'.');
+  if(BANCO_OK===false) a.push('A sequência ficou guardada só neste navegador: o banco não respondeu à leitura do modelo'+(BANCO_ERR?' ('+BANCO_ERR+')':'')+'.');
   const e=$('avisos'); e.style.display=a.length?'':'none'; e.textContent=a.join(' ');
 }
 
@@ -825,13 +935,15 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ── PDF ── */
-async function gerarPdf(){
-  if(!DECK.length) return; const b=$('btPdf'), b2=$('btPdf2'); if(b.dataset.gerando) return; b.dataset.gerando='1'; b2.disabled=true;
-  const lab=b.querySelector('.lbp'), orig=lab.textContent, av=t=>{ lab.textContent=t.length>34?t.slice(0,32)+'…':t; b2.textContent=t.replace('Montando o PDF · ','').replace('…',''); };
-  try{ const nome=`Apresentacao_${(NOME[COD]||COD).replace(/\s+/g,'_')}_${VIG||'sem-mes'}.pdf`; const n=await ApresBase.pdf(docAtual(),nome,av); av(`PDF pronto · ${n} slides`); }
-  catch(e){ console.error(e); alert('Não consegui gerar o PDF: '+((e&&e.message)||e)); }
-  finally{ setTimeout(()=>{ lab.textContent=orig; b2.textContent='Gerar PDF'; b2.disabled=false; delete b.dataset.gerando; },2500); }
+async function gerar(fmt){
+  if(!DECK.length) return; const ppt=fmt==='ppt', b=$(ppt?'btPpt':'btPdf'), b2=$(ppt?'btPpt2':'btPdf2'), rot=ppt?'Gerar PPT':'Gerar PDF'; if(document.body.dataset.gerando) return; document.body.dataset.gerando='1'; b2.disabled=true;
+  const lab=b.querySelector('.lbp'), av=t=>{ lab.textContent=t.length>34?t.slice(0,32)+'…':t; b2.textContent=t.replace(/^Montando o \S+ · /,'').replace('…',''); };
+  try{ const nome=`Apresentacao_${(NOMEB[COD]||COD).replace(/\s+/g,'_')}_${VIG||'sem-mes'}.${ppt?'pptx':'pdf'}`;
+    const n=ppt?await ApresBase.pptx(docAtual(),nome,av,`${MOD.titulo} · ${NOMEB[COD]||COD}`):await ApresBase.pdf(docAtual(),nome,av); av(`${ppt?'PPT':'PDF'} pronto · ${n} slides`); }
+  catch(e){ console.error(e); alert('Não consegui gerar o '+(ppt?'PowerPoint':'PDF')+': '+((e&&e.message)||e)); }
+  finally{ setTimeout(()=>{ lab.textContent=rot; b2.textContent=rot; b2.disabled=false; delete document.body.dataset.gerando; },2500); }
 }
+const gerarPdf=()=>gerar('pdf'), gerarPpt=()=>gerar('ppt');
 
 /* ── recado do gestor ── */
 let _rec=null;
@@ -851,33 +963,39 @@ $('inTit').addEventListener('input',()=>{ MOD.titulo=$('inTit').value.slice(0,40
 function fechaUn(){ document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open')); document.querySelectorAll('.ms-wrap.ativo').forEach(p=>p.classList.remove('ativo')); }
 function abreUn(id){ const w=$(id), p=w.querySelector('.ms-panel'), ab=p.classList.contains('open'); fechaUn(); if(!ab){ p.classList.add('open'); w.classList.add('ativo'); } }
 document.addEventListener('click',e=>{ if(!e.target.closest('.ms-wrap')) fechaUn(); });
+function abreUn2(id){ abreUn(id); const w=$(id), i=w.querySelector('.ms-search input'); if(i&&w.querySelector('.ms-panel').classList.contains('open')){ i.value=''; w._pinta(''); setTimeout(()=>i.focus(),20); } }
 function montaUn(id,ops,val,rot,fn){ const w=$(id); w.querySelector('.un-r').textContent=rot;
-  w.querySelector('.ms-list').innerHTML=ops.map(o=>`<div class="un-opt${o.v===val?' on':''}" data-v="${esc(o.v)}">${esc(o.t)}</div>`).join('');
-  w.querySelector('.ms-list').onclick=e=>{ const el=e.target.closest('.un-opt'); if(!el) return; fechaUn(); fn(el.dataset.v); }; }
+  const semAc=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  w._pinta=q=>{ const f=semAc(q||''), l=ops.filter(o=>semAc(o.t).includes(f));
+    w.querySelector('.ms-list').innerHTML=l.map(o=>`<label class="ms-opt"><input type="checkbox" data-v="${esc(o.v)}"${o.v===val?' checked':''}> ${esc(o.t)}</label>`).join('')||'<div class="ms-opt" style="cursor:default;color:var(--txt3)">Nada encontrado</div>'; };
+  w._pinta('');
+  const inp=w.querySelector('.ms-search input'); if(inp) inp.oninput=()=>w._pinta(inp.value);
+  w.querySelector('.ms-list').onchange=e=>{ const el=e.target.closest('input[data-v]'); if(!el) return; fechaUn(); fn(el.dataset.v); }; }
 function filtros(){
-  $('un-uni').style.display=MINHAS.length>1?'':'none';
-  montaUn('un-uni',MINHAS.map(c=>({v:c,t:`${c} · ${NOME[c]||c}`})),COD,COD,v=>{ if(v===COD) return; COD=v; try{ localStorage.setItem('apres_uni',v); }catch(e){} VIG=''; POS=0; carregar(); });
-  montaUn('un-mes',MESES.map(v=>({v,t:mesLb(v).toUpperCase()})),VIG,VIG?mesLb(VIG).toUpperCase():'Mês',v=>{ if(v===VIG) return; VIG=v; carregaMes(); });
+  $('un-uni').style.display=SIGS.length>1?'':'none';
+  montaUn('un-uni',SIGS.map(c=>({v:c,t:c})),COD,COD,v=>{ if(v===COD){ filtros(); return; } COD=v; CODS=MINHAS.filter(c=>BASE(c)===COD); try{ localStorage.setItem('apres_uni',v); }catch(e){} VIG=''; POS=0; carregar(); });
+  montaUn('un-mes',MESES.map(v=>({v,t:mesLb(v).toUpperCase()})),VIG,VIG?mesLb(VIG).toUpperCase():'Vigência',v=>{ if(v===VIG){ filtros(); return; } VIG=v; carregaMes(); });
   $('un-mes').style.display=MESES.length?'':'none';
 }
 
 /* ── leitura ── */
 async function leFca(){
   FCA=[]; FCA_ERR=''; if(!VIG) return;
-  try{ const out=[]; for(let off=0;off<20000;off+=1000){ const {data,error}=await sb.from('fca').select('id,origem,projeto,fato,causa,acao,responsavel,prazo,status').eq('unidade',COD).eq('vigencia',mesLb(VIG)).order('id',{ascending:true}).range(off,off+999); if(error) throw error; out.push(...(data||[])); if(!data||data.length<1000) break; } FCA=out; }
+  try{ const out=[]; for(let off=0;off<20000;off+=1000){ const {data,error}=await sb.from('fca').select('id,origem,projeto,fato,causa,acao,responsavel,prazo,status').in('unidade',CODS).eq('vigencia',mesLb(VIG)).order('id',{ascending:true}).range(off,off+999); if(error) throw error; out.push(...(data||[])); if(!data||data.length<1000) break; } FCA=out; }
   catch(e){ FCA_ERR=(e&&e.message)||String(e); }
 }
-async function carregaMes(){ filtros(); set('titSub','Carregando…'); await leFca(); monta(); }
+async function carregaMes(){ window.__apresPronto=false; filtros(); set('titSub','Carregando…'); KMP=ARV=SCP=null; await leFca(); monta(); carregaFontes(); }
 async function carregar(forca){
+  window.__apresPronto=false;
   set('titSub','Carregando…'); $('telaMsg').style.display=''; $('telaMsg').textContent='Montando os slides…'; DRE_ERR='';
-  if(forca){ try{ localStorage.removeItem('cc_frota_v1'); }catch(e){} FR=null; delete GAVC[COD]; }
+  if(forca){ try{ localStorage.removeItem('cc_frota_v1'); }catch(e){} FR=null; CODS.forEach(c=>delete GAVC[c]); Object.keys(CACHE).forEach(k=>delete CACHE[k]); }
   try{ if(!FR){ const d=await CartaCalc.frota(); FR={rows:d.rows,m:CartaCalc.mapTab(d.header)}; } LIN=linhasDe(COD); }
   catch(e){ console.warn(e); DRE_ERR=(e&&e.message)||String(e); LIN=[]; }
   MESES=[...new Set(LIN.filter(r=>Math.abs(r.real)>0.5).map(r=>r.vk))].sort().reverse();
   if(!VIG||!MESES.includes(VIG)) VIG=MESES[0]||'';
   MOD=await leModelo(COD); $('inTit').value=MOD.titulo;
-  GAV=null; filtros(); await leFca(); monta();
-  const cod=COD; farol(cod).then(r=>{ if(cod!==COD) return; GAV=r; monta(); });
+  GAV=KMP=ARV=SCP=null; filtros(); await leFca(); monta();
+  carregaFontes();
 }
 
 function gate(t,s){ $('gate').innerHTML=`<div class="gate"><h2>${t}</h2><p>${s||''}</p></div>`; $('vw-montar').style.display='none'; set('titSub','—'); }
@@ -890,10 +1008,11 @@ async function initApp(){
   ADMIN=!!(prof&&prof.is_admin)||String(session.user.email||'').toLowerCase()===ADMIN_EMAIL;
   MINHAS=ADMIN?Object.keys(NOME):String((prof&&prof.unidade)||'').toUpperCase().split(',').map(s=>s.trim()).filter(c=>NOME[c]);
   const eu=((prof&&prof.nome)||'').trim()||(session.user.user_metadata&&session.user.user_metadata.name)||String(session.user.email||'').split('@')[0];
-  set('quem',eu); set('av',String(eu||'?').trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').toUpperCase()); set('quemUni',ADMIN?'Todas as unidades':MINHAS.join(', ')||'—');
+  set('quem',eu); set('av',String(eu||'?').trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').toUpperCase()); set('quemUni',ADMIN?'Todas as unidades':[...new Set(MINHAS.map(BASE))].join(', ')||'—');
+  SIGS=[...new Set(MINHAS.map(BASE))].sort();
   if(!MINHAS.length){ gate('Sem unidade no perfil','Peça o acesso no Gerenciar Acessos do hub.'); return; }
   let u=''; try{ u=localStorage.getItem('apres_uni')||''; }catch(e){}
-  COD=MINHAS.includes(u)?u:MINHAS[0];
+  COD=SIGS.includes(BASE(u))?BASE(u):SIGS[0]; CODS=MINHAS.filter(c=>BASE(c)===COD);
   $('filtros').style.display=''; $('vw-montar').style.display='';
   ApresBase.fundos().then(f=>{ FUNDOS=f; if(MOD) monta(); });
   await carregar();
@@ -926,6 +1045,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611240030"></script>
+<script src="../assets/build-check.js?v=202611240230"></script>
 </body>
 </html>

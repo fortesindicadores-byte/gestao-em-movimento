@@ -49,7 +49,7 @@
     VERDE, AMAR, VERM, INK, INK2, INK3, PALE
   };
 
-  const css = acc => `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap');
+  const css = acc => `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:#fff}
 body{font-family:'Montserrat',Arial,sans-serif;color:${INK};font-size:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -89,9 +89,12 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
 .concb .v{font-size:19px;font-weight:800;color:${acc};line-height:1.15;margin:2px 0}
 .concb .s{font-size:11.5px;line-height:1.42;color:${INK2}}
 .duas{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}
-.slide.arte{padding:0;background-color:#050506;background-size:cover;background-position:center;color:#fff;display:block}
-.arte .ser{font-family:'Libre Baskerville',Georgia,'Times New Roman',serif;font-weight:700;letter-spacing:-.2px}
-.arte .per{font-size:17px;font-weight:500;color:#fff;letter-spacing:.2px}
+.slide.arte{padding:0;background-color:#0D0E11;background-size:cover;background-position:center;color:#fff;display:block}
+.arte .ak{font-size:13px;font-weight:700;letter-spacing:3.2px;text-transform:uppercase;color:${acc}}
+.arte .at{font-weight:800;line-height:1.04;letter-spacing:-1.4px;margin-top:14px;color:#fff}
+.arte .ab{width:76px;height:5px;border-radius:3px;background:${acc};margin:26px 0 22px}
+.arte .as{font-size:22px;font-weight:700;color:#fff;margin-bottom:6px}
+.arte .per{font-size:16px;font-weight:500;color:#C9CED6;letter-spacing:.2px}
 .arte .si{display:flex;align-items:baseline;gap:22px;padding:8px 0 7px;border-bottom:1px solid rgba(255,255,255,.17);font-size:14.5px;color:#fff;white-space:nowrap;overflow:hidden}
 .arte .si b{font-size:18px;font-weight:800;color:${acc};min-width:28px;font-variant-numeric:tabular-nums}
 .arte .si span{overflow:hidden;text-overflow:ellipsis}`;
@@ -110,73 +113,64 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
     const e = Math.max(R.w / img.width, R.h / img.height), w = img.width * e, h = img.height * e;
     x.drawImage(img, R.x - (w - R.w) * (fx == null ? .5 : fx), R.y - (h - R.h) * (fy == null ? .5 : fy), w, h);
   }
-  function tiras(x, img, R, T, foco) {
-    x.save(); x.beginPath(); T.forEach(t => t.s.forEach(g => rr(x, t.x, g[0], t.w, g[1] - g[0], 46))); x.clip(); cobre(x, img, R, foco && foco[0], foco && foco[1]); x.restore();
-    x.save(); x.strokeStyle = LAR; x.lineWidth = 1.6; x.globalAlpha = .92;
-    T.forEach(t => t.s.forEach(g => { x.beginPath(); rr(x, t.x, g[0], t.w, g[1] - g[0], 46); x.stroke(); })); x.restore();
+  // o selo do portal (o quadrado laranja com a linha de tendência do hub) + "Gestão em Movimento"
+  function selo(x, X, Y) {
+    x.save(); x.fillStyle = LAR; x.beginPath(); rr(x, X, Y, 30, 30, 8); x.fill();
+    x.strokeStyle = '#fff'; x.lineWidth = 2.6; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(X + 7, Y + 21); x.lineTo(X + 13, Y + 14); x.lineTo(X + 18, Y + 18); x.lineTo(X + 24, Y + 9); x.stroke();
+    x.fillStyle = '#fff'; x.font = '700 15px Montserrat,Arial,sans-serif'; x.textBaseline = 'middle'; x.fillText('Gestão em Movimento', X + 42, Y + 16); x.restore();
   }
-  function barra(x) { const g = x.createLinearGradient(0, 0, 1280, 0); g.addColorStop(0, LAR); g.addColorStop(.5, LAR); g.addColorStop(.86, '#FDBA4D'); g.addColorStop(1, '#FDE08A'); x.fillStyle = g; x.fillRect(0, 709, 1280, 11); }
-  // a marca, traçada (o O é o pneu cortado por três faixas); h = altura das letras
-  function marca(x, X, Y, h, lema) {
-    const c = document.createElement('canvas'), e = h / 70, k = 2; c.width = Math.ceil(540 * e * k); c.height = Math.ceil(110 * e * k);
-    const y = c.getContext('2d'); y.scale(e * k, e * k); y.fillStyle = y.strokeStyle = '#fff'; y.font = 'italic 800 94px Montserrat,Arial,sans-serif'; y.textBaseline = 'alphabetic';
-    y.fillText('C', 4, 86);
-    y.save(); y.translate(128, 53); y.transform(1, 0, -.2, 1, 0, 0); y.lineWidth = 16; y.beginPath(); y.arc(0, 0, 37, 0, Math.PI * 2); y.stroke();
-    y.beginPath(); y.arc(0, 0, 47, 0, Math.PI * 2); y.clip(); y.globalCompositeOperation = 'destination-out'; y.lineWidth = 5; y.lineCap = 'round';
-    [[-50, 36, -15, -40, 36, -39], [-39, 47, -4, -29, 47, -28], [-28, 58, 7, -18, 58, -17]].forEach(p => { y.beginPath(); y.moveTo(p[0], p[1]); y.quadraticCurveTo(p[2], p[3], p[4], p[5]); y.stroke(); });
-    y.restore();
-    y.fillText('NLOG', 172, 86);
-    const larg = 172 + y.measureText('NLOG').width;
-    x.drawImage(c, X, Y, c.width / k, c.height / k);
-    if (lema) {                                    // TEM VALOR · pra você, pra nós!
-      const fs = h * .36, by = Y + 86 * e + fs * 1.35, dx = X + larg * e;
-      x.save(); x.textBaseline = 'alphabetic'; x.textAlign = 'right';
-      x.font = `600 ${fs * .34}px Montserrat,Arial,sans-serif`; x.fillStyle = '#fff'; const w3 = Math.max(x.measureText('PRA VOCÊ,').width, x.measureText('PRA NÓS!').width);
-      x.textAlign = 'left'; x.fillText('PRA VOCÊ,', dx - w3, by - fs * .38); x.fillText('PRA NÓS!', dx - w3, by);
-      x.textAlign = 'right'; x.font = `800 ${fs}px Montserrat,Arial,sans-serif`; x.fillStyle = LAR; const w2 = x.measureText('VALOR').width; x.fillText('VALOR', dx - w3 - fs * .16, by);
-      x.font = `400 ${fs}px Montserrat,Arial,sans-serif`; x.fillStyle = '#fff'; x.fillText('TEM', dx - w3 - fs * .16 - w2, by);
-      x.restore();
-    }
+  // a foto escurecida da esquerda para a direita: o texto fica sobre o escuro, a foto aparece do meio em diante
+  function veu(x, forte) {
+    const g = x.createLinearGradient(0, 0, 1280, 0); g.addColorStop(0, 'rgba(13,14,17,.97)'); g.addColorStop(.4, 'rgba(13,14,17,.93)'); g.addColorStop(.7, `rgba(13,14,17,${forte ? .72 : .5})`); g.addColorStop(1, `rgba(13,14,17,${forte ? .5 : .2})`);
+    x.fillStyle = g; x.fillRect(0, 0, 1280, 720);
+    const v = x.createLinearGradient(0, 470, 0, 720); v.addColorStop(0, 'rgba(13,14,17,0)'); v.addColorStop(1, 'rgba(13,14,17,.78)'); x.fillStyle = v; x.fillRect(0, 470, 1280, 250);
   }
   const _fundos = {};
+  /* Capa, sumário e encerramento do portal (Renan, 23/11/2026: "use como inspiração mas não copie exatamente o FP&A";
+     "Não é o conlog da empresa" sobre a marca desenhada): foto de página inteira com o véu grafite, texto em
+     Montserrat à esquerda, o selo do Gestão em Movimento embaixo. Sem logo da Conlog até o arquivo oficial chegar. */
   async function fundos(src) {
     src = src || FOTO; if (!src) return null; if (_fundos[src]) return _fundos[src];
     return _fundos[src] = (async () => {
       const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error('a foto da capa não carregou')); i.src = src; });
-      try { await Promise.all([document.fonts.load('800 60px Montserrat'), document.fonts.load('400 60px Montserrat'), document.fonts.load('600 60px Montserrat')]); } catch (e) {}
-      const K = 2, tela = () => { const c = document.createElement('canvas'); c.width = 1280 * K; c.height = 720 * K; const x = c.getContext('2d'); x.scale(K, K); x.fillStyle = '#050506'; x.fillRect(0, 0, 1280, 720); return [c, x]; };
-      const sai = c => c.toDataURL('image/jpeg', .9), TD = [[-60, 780]];
-      // capa: cinco tiras na metade direita
-      let [c1, x] = tela();
-      tiras(x, img, { x: 640, y: 0, w: 640, h: 720 }, [{ x: 640, w: 104, s: TD }, { x: 766, w: 104, s: [[-60, 300], [322, 780]] }, { x: 892, w: 104, s: [[-60, 560], [582, 780]] }, { x: 1018, w: 104, s: [[-60, 330], [352, 780]] }, { x: 1144, w: 190, s: TD }], [.5, .42]);
-      marca(x, 104, 96, 74, true); barra(x);
-      // sumário: três tiras na borda direita, a marca pequena em cima
+      try { await Promise.all([document.fonts.load('800 60px Montserrat'), document.fonts.load('700 15px Montserrat')]); } catch (e) {}
+      const K = 2, tela = () => { const c = document.createElement('canvas'); c.width = 1280 * K; c.height = 720 * K; const x = c.getContext('2d'); x.scale(K, K); x.fillStyle = '#0D0E11'; x.fillRect(0, 0, 1280, 720); return [c, x]; };
+      const sai = c => c.toDataURL('image/jpeg', .9), T = { x: 0, y: 0, w: 1280, h: 720 };
+      // capa: a foto inteira, o texto à esquerda sobre o véu
+      let [c1, x] = tela(); cobre(x, img, T, .5, .42); veu(x); selo(x, 84, 636);
+      // sumário: grafite, a foto num painel só, de cantos arredondados, à direita
       let [c2, x2] = tela();
-      tiras(x2, img, { x: 836, y: 0, w: 444, h: 720 }, [{ x: 900, w: 100, s: [[-60, 540], [562, 780]] }, { x: 1020, w: 100, s: [[-60, 280], [302, 780]] }, { x: 1140, w: 190, s: TD }], [.5, .42]);
-      marca(x2, 72, 50, 31, true); barra(x2);
-      // encerramento: a foto inteira, escura, cortada por faixas em diagonal
-      let [c3, x3] = tela();
-      cobre(x3, img, { x: 0, y: 0, w: 1280, h: 720 }, .5, .42); x3.fillStyle = 'rgba(5,5,6,.74)'; x3.fillRect(0, 0, 1280, 720);
-      x3.fillStyle = '#050506'; [[300, 40], [640, 26], [930, 34], [1150, 22]].forEach(p => { x3.beginPath(); x3.moveTo(p[0] + 150, -10); x3.lineTo(p[0] + 150 + p[1], -10); x3.lineTo(p[0] - 150 + p[1], 730); x3.lineTo(p[0] - 150, 730); x3.closePath(); x3.fill(); });
-      const gd = x3.createLinearGradient(0, 0, 700, 0); gd.addColorStop(0, 'rgba(5,5,6,.92)'); gd.addColorStop(1, 'rgba(5,5,6,0)'); x3.fillStyle = gd; x3.fillRect(0, 0, 700, 720);
-      marca(x3, 1040, 636, 30, false); barra(x3);
+      x2.save(); x2.beginPath(); rr(x2, 884, 48, 348, 624, 26); x2.clip(); cobre(x2, img, { x: 884, y: 48, w: 348, h: 624 }, .5, .42);
+      const g2 = x2.createLinearGradient(0, 380, 0, 672); g2.addColorStop(0, 'rgba(13,14,17,0)'); g2.addColorStop(1, 'rgba(13,14,17,.7)'); x2.fillStyle = g2; x2.fillRect(884, 380, 348, 292); x2.restore();
+      selo(x2, 84, 636);
+      // encerramento: a mesma foto, mais escura
+      let [c3, x3] = tela(); cobre(x3, img, T, .5, .42); veu(x3, true); selo(x3, 84, 636);
       return { capa: sai(c1), sum: sai(c2), fim: sai(c3) };
     })().catch(e => { console.warn('Arte da apresentação indisponível:', e); delete _fundos[src]; return null; });
   }
   const arte = {
-    capa: (F, { titulo, sub, periodo }) => `<div style="position:absolute;inset:0;background:url('${F.capa}') center/cover"></div>
-      <div style="position:absolute;left:40px;width:560px;top:${sub ? 352 : 372}px;text-align:center"><div class="ser" style="font-size:${String(titulo || '').length > 26 ? 32 : 40}px;line-height:1.15">${f.esc(titulo || '')}</div>${sub ? `<div style="margin-top:12px;font-size:13px;font-weight:600;letter-spacing:2.4px;text-transform:uppercase;color:#C9CED6">${f.esc(sub)}</div>` : ''}</div>
-      <div style="position:absolute;left:320px;top:474px;width:1px;height:96px;background:#fff"></div>
-      <div class="per" style="position:absolute;left:40px;width:560px;top:596px;text-align:center">${f.esc(periodo || '')}</div>`,
-    sumario: (F, { periodo, itens }) => { const nc = itens.length > 20 ? 3 : 2, por = Math.ceil(itens.length / nc), lw = nc === 3 ? 240 : 330, gap = nc === 3 ? 26 : 44;
+    capa: (F, { titulo, sub, periodo }) => { const n = String(titulo || '').length;
+      return `<div style="position:absolute;inset:0;background:url('${F.capa}') center/cover"></div>
+      <div style="position:absolute;left:84px;top:0;bottom:60px;width:640px;display:flex;flex-direction:column;justify-content:center">
+        <div class="ak">Gestão em Movimento</div>
+        <div class="at" style="font-size:${n > 34 ? 42 : n > 22 ? 52 : 64}px">${f.esc(titulo || '')}</div>
+        <div class="ab"></div>
+        ${sub ? `<div class="as">${f.esc(sub)}</div>` : ''}
+        <div class="per">${f.esc(periodo || '')}</div>
+      </div>`; },
+    sumario: (F, { periodo, itens }) => { const nc = itens.length > 20 ? 3 : 2, por = Math.ceil(itens.length / nc), lw = nc === 3 ? 228 : 350, gap = nc === 3 ? 22 : 40;
       const col = i => itens.slice(i * por, (i + 1) * por).map(it => `<div class="si"><b>${String(it.n).padStart(2, '0')}</b><span>${f.esc(it.t)}</span></div>`).join('');
       return `<div style="position:absolute;inset:0;background:url('${F.sum}') center/cover"></div>
-      <div class="ser" style="position:absolute;left:72px;top:150px;font-size:44px">Sumário</div>
-      <div style="position:absolute;left:72px;top:216px;width:64px;height:4px;background:${LAR}"></div>
-      <div style="position:absolute;left:72px;top:236px;font-size:15px;color:#C9CED6">${f.esc(periodo || '')}</div>
-      <div style="position:absolute;left:72px;top:${por > 10 ? 276 : 292}px;display:flex;gap:${gap}px;${nc === 3 || por > 10 ? 'font-size:13px' : ''}">${Array.from({ length: nc }, (_, i) => `<div style="width:${lw}px">${col(i)}</div>`).join('')}</div>`; },
+      <div class="ak" style="position:absolute;left:84px;top:74px">Nesta apresentação</div>
+      <div class="at" style="position:absolute;left:84px;top:98px;font-size:46px">Sumário</div>
+      <div class="per" style="position:absolute;left:84px;top:164px;margin:0">${f.esc(periodo || '')}</div>
+      <div style="position:absolute;left:84px;top:${por > 10 ? 206 : 222}px;display:flex;gap:${gap}px;${nc === 3 || por > 10 ? 'font-size:13px' : ''}">${Array.from({ length: nc }, (_, i) => `<div style="width:${lw}px">${col(i)}</div>`).join('')}</div>`; },
     fim: (F, { texto, sub }) => `<div style="position:absolute;inset:0;background:url('${F.fim}') center/cover"></div>
-      <div style="position:absolute;left:0;right:0;top:${sub ? 248 : 272}px;text-align:center;font-size:124px;font-weight:800;letter-spacing:-3px;line-height:1">${f.esc(texto || 'Obrigado!')}</div>${sub ? `<div style="position:absolute;left:0;right:0;top:404px;text-align:center;font-size:18px;color:#C9CED6">${f.esc(sub)}</div>` : ''}`,
+      <div style="position:absolute;left:84px;top:0;bottom:60px;width:760px;display:flex;flex-direction:column;justify-content:center">
+        <div class="at" style="font-size:96px;letter-spacing:-2.5px">${f.esc(texto || 'Obrigado!')}</div>
+        <div class="ab"></div>
+        ${sub ? `<div class="per" style="font-size:18px">${f.esc(sub)}</div>` : ''}
+      </div>`
   };
 
   // ── construtor de slides ──
@@ -259,9 +253,9 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
 
   // ── PDF: cada slide fotografado (html2canvas) numa página 1280×720 (jsPDF) ──
   const carrega = (src, pronto) => pronto() ? Promise.resolve() : new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('não carregou ' + src)); document.head.appendChild(s); });
-  async function pdf(doc, nome, aviso) {
+  // fotografa cada slide do deck (iframe fora da tela) e entrega a imagem a quem monta o arquivo
+  async function fotos(doc, aviso, oque, cada) {
     await carrega('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', () => typeof window.html2canvas !== 'undefined');
-    await carrega('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js', () => !!window.jspdf);
     const ifr = document.createElement('iframe');
     ifr.setAttribute('aria-hidden', 'true');
     ifr.style.cssText = 'position:fixed;left:-20000px;top:0;width:1280px;height:720px;border:0';
@@ -275,16 +269,29 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
       const bgs = [...d.querySelectorAll('.slide')].map(s => (getComputedStyle(s).backgroundImage.match(/url\("?([^")]+)"?\)/) || [])[1]).filter(Boolean);
       await Promise.all(bgs.map(u => new Promise(r => { const im = new Image(); im.onload = im.onerror = r; im.src = u; })));
       const sl = [...d.querySelectorAll('.slide')];
-      const pdfDoc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'px', format: [1280, 720], hotfixes: ['px_scaling'], compress: true });
       for (let i = 0; i < sl.length; i++) {
-        if (aviso) aviso(`Montando o PDF · slide ${i + 1} de ${sl.length}…`);
+        if (aviso) aviso(`Montando o ${oque} · slide ${i + 1} de ${sl.length}…`);
         const c = await window.html2canvas(sl[i], { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false, windowWidth: 1280, windowHeight: 720 });
-        if (i) pdfDoc.addPage([1280, 720], 'landscape');
-        pdfDoc.addImage(c.toDataURL('image/jpeg', .92), 'JPEG', 0, 0, 1280, 720);
+        await cada(c.toDataURL('image/jpeg', .92), i);
       }
-      pdfDoc.save(nome);
       return sl.length;
     } finally { ifr.remove(); }
+  }
+  async function pdf(doc, nome, aviso) {
+    await carrega('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js', () => !!window.jspdf);
+    const pdfDoc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'px', format: [1280, 720], hotfixes: ['px_scaling'], compress: true });
+    const n = await fotos(doc, aviso, 'PDF', (img, i) => { if (i) pdfDoc.addPage([1280, 720], 'landscape'); pdfDoc.addImage(img, 'JPEG', 0, 0, 1280, 720); });
+    pdfDoc.save(nome);
+    return n;
+  }
+  // PowerPoint: uma página por slide, do tamanho do slide (16:9, 13,333 × 7,5 pol), com a mesma imagem do PDF
+  async function pptx(doc, nome, aviso, titulo) {
+    await carrega('https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js', () => typeof window.PptxGenJS !== 'undefined');
+    const P = new window.PptxGenJS(); P.defineLayout({ name: 'GEM169', width: 13.333, height: 7.5 }); P.layout = 'GEM169';
+    P.author = 'Gestão em Movimento'; P.title = titulo || 'Apresentação';
+    const n = await fotos(doc, aviso, 'PowerPoint', img => { P.addSlide().addImage({ data: img, x: 0, y: 0, w: 13.333, h: 7.5 }); });
+    await P.writeFile({ fileName: nome });
+    return n;
   }
 
   // botão da lateral: mostra o andamento no rótulo e volta ao normal no fim
@@ -302,5 +309,5 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
   // ícone do botão (slides) e o HTML do item da lateral
   const ICONE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M12 17v4M8 21h8"/><path d="M7 13l3-3 2 2 4-4"/></svg>';
 
-  window.ApresBase = { deck, pdf, botao, f, ICONE, carrega, fundos, arte, docDe, css, FOTO };
+  window.ApresBase = { deck, pdf, pptx, botao, f, ICONE, carrega, fundos, arte, docDe, css, FOTO };
 })();

@@ -101,7 +101,7 @@
     if (piores.length) fecha.push({ t: 'Operações a atacar', v: F.lista(piores.map(x => `${F.esc(x.und)} ${F.esc(x.proj)}`)), s: piores.map(x => `${F.esc(x.und)} ${F.esc(x.proj)}: ${F.sgnPct(x.a.p)}, ${F.brl(x.a.imp)}`).join(' · ') + '.' });
     B.slide(`${B.head('Conclusão', `Dispersão de km em ${F.MESN[MI]}`)}${B.concBlocos(fecha, 'Próximos passos', fecha.length > 2 ? 3 : 2)}`);
 
-    return { doc: B.doc(), slides: B.n(), nome: `Painel_KM_Dispersao_${Mes}${aa}.pdf` };
+    return { lista: B.lista(), doc: B.doc(), slides: B.n(), nome: `Painel_KM_Dispersao_${Mes}${aa}.pdf` };
   }
 
   async function gerar(o) {
