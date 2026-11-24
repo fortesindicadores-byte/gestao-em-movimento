@@ -2,14 +2,14 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611241930">
+<meta name="build" content="202611242100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
-<script src="../assets/apresentacao-base.js?v=202611241930"></script>
+<script src="../assets/apresentacao-base.js?v=202611242100"></script>
 <style>
 :root{
   /* fundo UNIFORME (mesma regra do hub): o degradê diagonal clareava para o
@@ -654,17 +654,19 @@ function slidesFechamento(){
     const pjP=PJ.map(p=>({p,d:(gm[p]||z).real-(gm[p]||z).rem})).sort((a,b)=>b.d-a.d)[0];
     B.bloco('resultado');
     B.slide(`${B.head('Resultado do mês',`${Mes}: custo de frota de ${F.brl(M.real)}, ${dM>0?F.brl(dM)+' acima do':dM<0?F.brl(-dM)+' abaixo do':'igual ao'} remunerado`,'Combustíveis, Manutenção e Pneus da unidade no DRE, contra o remunerado.')}
-      ${B.cards([{k:'Remunerado',n:F.brl(M.rem)},{k:'Realizado',n:F.brl(M.real),acc:1},
-        {k:'Realizado − remunerado',n:(dM>0?'+':'')+F.brl(dM),cor:dCor(dM),p:M.rem?F.sgnPct(dM/M.rem*100)+' sobre o remunerado.':''},
-        {k:`No ano · jan a ${F.MES3[mo-1]}`,n:(dY>0?'+':'')+F.brl(dY),cor:dCor(dY),p:Y.rem?F.sgnPct(dY/Y.rem*100)+' sobre o remunerado do ano.':''}],4)}
-      ${B.tabela({classe:'',style:'margin-top:14px',cols:[{t:'Pacote'},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'Δ',n:1},{t:'Δ %',n:1},{t:`Δ no ano (jan a ${F.MES3[mo-1]})`,n:1},{t:'Δ % no ano',n:1}],
-        rows:pacs.map(p=>{ const a=pm[p]||{rem:0,real:0}, b=py[p]||{rem:0,real:0}; return [`<b>${p}</b>`,F.brl(a.rem),F.brl(a.real),dTxt(a.real-a.rem),pTxt(a.real-a.rem,a.rem),dTxt(b.real-b.rem),pTxt(b.real-b.rem,b.rem)]; })
-          .concat([{cls:'sep',c:['Total',F.brl(M.rem),F.brl(M.real),dTxt(dM),pTxt(dM,M.rem),dTxt(dY),pTxt(dY,Y.rem)]}])})}
+      <div class="gx encher" style="grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr)">
+        ${B.meiaLua({a:M.real,b:M.rem,ta:F.brl(M.real),tb:F.brl(M.rem),la:'Realizado',lb:'Remunerado',corA:dM>0.5?F.VERM:dM<-0.5?F.VERDE:F.INK,
+          centro:M.rem?F.sgnPct(dM/Math.abs(M.rem)*100):'—',centroSub:dM>0.5?'acima do remunerado':dM<-0.5?'abaixo do remunerado':'igual ao remunerado'})}
+        ${B.tiles(pacs.map(p=>{ const a=pm[p]||{rem:0,real:0}, b=py[p]||{rem:0,real:0}, d=a.real-a.rem, dy=b.real-b.rem;
+            return {ic:{'Combustíveis':'fuel','Manutenção':'wrench','Pneus':'tire'}[p]||'box',k:p,n:F.brl(a.real),s:`ano: ${dy>0?'+':dy<0?'−':''}${F.brl(Math.abs(dy))}`,chip:a.rem?{t:(d>0?'▲ ':d<0?'▼ ':'')+F.sgnPct(d/Math.abs(a.rem)*100),tom:d>0.5?'r':d<-0.5?'g':'n'}:null}; })
+          .concat([{ic:'cal',k:`No ano · jan a ${F.MES3[mo-1]}`,n:(dY>0?'+':dY<0?'−':'')+F.brl(Math.abs(dY)),cor:dCor(dY),s:'realizado − remunerado',chip:Y.rem?{t:F.sgnPct(dY/Math.abs(Y.rem)*100),tom:dY>0.5?'r':dY<-0.5?'g':'n'}:null}]),2)}
+      </div>
       ${B.concBlocos([{t:'Onde mais pesou',v:pior[0]&&pior[0].d>0?pior[0].p:'Nenhum pacote acima',s:pior[0]&&pior[0].d>0?`${F.brl(pior[0].d)} acima do remunerado no mês.`:'Todos os pacotes dentro do remunerado.'},
         {t:'Onde economizou',v:pior.length&&pior[pior.length-1].d<0?pior[pior.length-1].p:'Nenhum pacote abaixo',s:pior.length&&pior[pior.length-1].d<0?`${F.brl(-pior[pior.length-1].d)} abaixo do remunerado no mês.`:''},
         {t:'Projeto que mais pesou',v:pjP&&pjP.d>0?pjP.p:'Nenhum projeto acima',s:pjP&&pjP.d>0?`${F.brl(pjP.d)} acima do remunerado no mês.`:'Todos os projetos dentro do remunerado.'}],'Leitura',3)}`,{top:true});
     B.slide(`${B.head('Resultado por projeto',`${PJ.length} ${F.pl(PJ.length,'projeto')}: ${pjP&&pjP.d>0?`${pjP.p} é o que mais passa do remunerado (${F.brl(pjP.d)})`:'todos dentro do remunerado no mês'}`,'Custo de frota de cada projeto da unidade no mês, com o desvio de cada pacote e o acumulado do ano.')}
-      ${PJ.length>1&&PJ.length<=5?B.cards(PJ.map(p=>{ const a=gm[p]||z, d=a.real-a.rem; return {k:F.esc(p),n:(d>0?'+':d<0?'−':'')+F.brl(Math.abs(d)).replace('−',''),cor:dCor(d),p:`${F.brl(a.real)} realizado${a.rem?' · '+F.sgnPct(d/Math.abs(a.rem)*100)+' sobre o remunerado':''}.`}; }),PJ.length):''}
+      ${B.capsulas(PJ.map(p=>{ const a=gm[p]||z, d=a.real-a.rem; return {rot:p,a:a.real,b:a.rem,ta:F.brl(a.real).replace('R$ ',''),tb:F.brl(a.rem).replace('R$ ',''),corA:d>0.5?F.INK:F.INK,
+        chip:a.rem?{t:(d>0?'▲ ':d<0?'▼ ':'')+F.sgnPct(d/Math.abs(a.rem)*100),tom:d>0.5?'r':d<-0.5?'g':'n'}:null}; }),{la:'Realizado',lb:'Remunerado'})}
       ${B.tabela({classe:'',style:'margin-top:12px',cols:[{t:'Projeto'},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'Δ',n:1},{t:'Δ %',n:1},{t:'Δ Combustíveis',n:1},{t:'Δ Manutenção',n:1},{t:'Δ Pneus',n:1},{t:`Δ no ano (jan a ${F.MES3[mo-1]})`,n:1},{t:'Δ % no ano',n:1}],
         rows:PJ.map(p=>{ const a=gm[p]||z, b=gy[p]||z; return [`<b>${F.esc(p)}</b>`,F.brl(a.rem),F.brl(a.real),dTxt(a.real-a.rem),pTxt(a.real-a.rem,a.rem),dPP(p,'Combustíveis'),dPP(p,'Manutenção'),dPP(p,'Pneus'),dTxt(b.real-b.rem),pTxt(b.real-b.rem,b.rem)]; })
           .concat([{cls:'sep',c:['Total',F.brl(M.rem),F.brl(M.real),dTxt(dM),pTxt(dM,M.rem),...['Combustíveis','Manutenção','Pneus'].map(k=>{ const x=pm[k]; return x?dTxt(x.real-x.rem):'—'; }),dTxt(dY),pTxt(dY,Y.rem)]}])})}`,{top:true});
@@ -1048,6 +1050,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611241930"></script>
+<script src="../assets/build-check.js?v=202611242100"></script>
 </body>
 </html>

@@ -87,7 +87,7 @@ p{font-size:14.5px;line-height:1.55;color:${INK2}}
 .foot span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80%}
 .slide.dark .foot{color:#6B7683;left:90px}
 .note{font-size:calc(11px*var(--k));color:${INK2};line-height:1.4}
-.tb,.card,.gf,.passo{background:#fff;border:1px solid #DCE1E7;border-top:5px solid ${CINK};border-radius:6px;box-shadow:0 12px 28px -10px rgba(22,33,43,.18)}
+.tb,.card,.gf,.passo,.tile,.ml,.cap,.gs,.tl .pc{background:#fff;border:1px solid #DCE1E7;border-top:5px solid ${CINK};border-radius:6px;box-shadow:0 12px 28px -10px rgba(22,33,43,.18)}
 .tb{padding:calc(4px*var(--k)) calc(16px*var(--k)) calc(8px*var(--k));min-width:0}
 table{--t:1;width:100%;border-collapse:collapse;font-size:calc(13px*var(--k)*var(--t));table-layout:auto}
 table.compacta{--t:.94} table.densa{--t:.86}
@@ -125,6 +125,57 @@ tr.sep td{background:#EEF0F3;font-weight:800;border-top:1.5px solid #CDD3DB;bord
 .corpo>.gf{flex:1 1 0;min-height:190px;position:relative}
 .corpo>.gf>svg{position:absolute;left:18px;top:14px;width:calc(100% - 36px);height:calc(100% - 28px);max-width:none}
 .duas{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:calc(18px*var(--k));align-items:start}
+.encher{flex:1 1 0!important;min-height:0}
+.gx{display:grid;gap:calc(14px*var(--k))}
+.ic{width:calc(42px*var(--k));height:calc(42px*var(--k));border-radius:10px;background:${CINK};display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.ic svg{width:52%;height:52%}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:calc(11px*var(--k));font-weight:800;border-radius:999px;padding:calc(3px*var(--k)) calc(10px*var(--k));white-space:nowrap}
+.chip.r{background:#FBE9E7;color:#B42318}.chip.g{background:#E3F4EC;color:#14693F}.chip.cz{background:#EEF0F3;color:#4A5563}
+.tile{padding:calc(14px*var(--k)*min(var(--v),1.3)) calc(18px*var(--k));display:flex;flex-direction:column;justify-content:space-between;gap:calc(8px*var(--k))}
+.tile .a{display:flex;align-items:center;gap:calc(12px*var(--k))}
+.tile .a span{font-size:calc(12.5px*var(--k));font-weight:700}
+.tile .n{font-size:calc(30px*var(--k));font-weight:800;letter-spacing:-.9px;line-height:1;white-space:nowrap}
+.tile .b{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid #EEF0F3;padding-top:calc(8px*var(--k))}
+.tile .b em{font-style:normal;font-size:calc(10.5px*var(--k));color:#6B7480}
+.ml{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(16px*var(--k))}
+.ml .arco{position:relative;width:100%;max-width:440px}
+.ml .arco svg{display:block;width:100%;height:auto}
+.ml .ct{position:absolute;left:0;right:0;bottom:6%;text-align:center}
+.ml .ct b{display:block;font-size:calc(46px*var(--k));font-weight:900;letter-spacing:-2px;line-height:1}
+.ml .ct span{display:block;font-size:calc(11.5px*var(--k));font-weight:600;color:#6B7480;margin-top:6px}
+.ml .lg{display:flex;gap:calc(34px*var(--k));margin-top:calc(16px*var(--k));border-top:1px solid #EEF0F3;padding-top:calc(14px*var(--k))}
+.ml .lg>div{display:flex;gap:9px;align-items:flex-start}
+.ml .lg i{width:11px;height:11px;border-radius:50%;margin-top:6px;flex:0 0 auto}
+.ml .lg b{display:block;font-size:calc(20px*var(--k));font-weight:800;letter-spacing:-.4px;white-space:nowrap}
+.ml .lg span{display:block;font-size:calc(9.5px*var(--k));font-weight:700;color:#8A94A2;letter-spacing:1.2px;text-transform:uppercase;margin-top:2px}
+.cap{display:flex;flex-direction:column;padding:calc(14px*var(--k)) calc(22px*var(--k)) calc(12px*var(--k))}
+.cap .lgd{display:flex;gap:20px;justify-content:flex-end;font-size:calc(11px*var(--k));font-weight:600;color:#4A5563}
+.cap .lgd i{display:inline-block;width:11px;height:11px;border-radius:4px;margin-right:6px;vertical-align:-1px}
+.cap .bars{flex:1 1 0;min-height:170px;display:flex;align-items:flex-end;border-bottom:1px solid #E3E7EB;padding-top:26px}
+.cap .par{flex:1;height:100%;display:flex;justify-content:center;align-items:flex-end;gap:calc(10px*var(--k))}
+.cap .pil{width:calc(46px*var(--k));border-radius:999px;position:relative;min-height:10px}
+.cap .pil b{position:absolute;left:50%;transform:translateX(-50%);top:-21px;font-size:calc(11.5px*var(--k));font-weight:800;white-space:nowrap}
+.cap .nm{display:flex;padding-top:calc(8px*var(--k))}
+.cap .nm>div{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;min-width:0}
+.cap .nm>div>b{font-size:calc(12.5px*var(--k));font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.gs{padding:calc(12px*var(--k)) calc(18px*var(--k));display:flex;flex-direction:column}
+.gs .lgd{display:flex;gap:20px;justify-content:flex-end;font-size:calc(11px*var(--k));font-weight:600;color:#4A5563;margin-bottom:4px}
+.gs .lgd i{display:inline-block;width:18px;height:3px;border-radius:2px;margin-right:7px;vertical-align:middle}
+.gs .cv{flex:1 1 0;min-height:212px;position:relative}
+.gs .cv svg{position:absolute;inset:0;width:100%;height:100%}
+.tl{display:grid;grid-template-rows:1fr auto 1fr;column-gap:calc(8px*var(--k));flex:1 1 0!important;min-height:0;position:relative}
+.tl .lin{grid-row:2;grid-column:1/-1;height:4px;background:#E3E7EB;border-radius:2px;align-self:center}
+.tl .bo{grid-row:2;justify-self:center;align-self:center;width:calc(48px*var(--k));height:calc(48px*var(--k));border-radius:50%;background:#fff;border:3px solid ${CINK};display:flex;align-items:center;justify-content:center;font-size:calc(15px*var(--k));font-weight:800;color:${CINK};z-index:1}
+.tl .bo.f{background:${acc};border-color:${acc};color:#fff}
+.tl .pc{padding:calc(12px*var(--k)*min(var(--v),1.3)) calc(15px*var(--k));min-width:0}
+.tl .pc.up{grid-row:1;align-self:end;margin-bottom:calc(22px*var(--k))}
+.tl .pc.dn{grid-row:3;align-self:start;margin-top:calc(22px*var(--k))}
+.tl .hs{justify-self:center;width:3px;height:calc(22px*var(--k));background:#CDD3DB}
+.tl .hs.up{grid-row:1;align-self:end}
+.tl .hs.dn{grid-row:3;align-self:start}
+.tl .pc .pt{font-size:calc(10px*var(--k));font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#8A94A2}
+.tl .pc .pv{font-size:calc(15px*var(--k));font-weight:800;color:${CINK};letter-spacing:-.2px;margin:calc(2px*var(--k)) 0 calc(4px*var(--k));line-height:1.2}
+.tl .pc .ps{font-size:calc(11.5px*var(--k));color:#6B7480;line-height:1.42}
 .slide.arte{padding:0;background-color:#121A21;background-size:cover;background-position:center;color:#fff;display:block}
 .arte .ak{font-size:12px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:${acc}}
 .arte .at{font-weight:900;line-height:.98;letter-spacing:-2px;color:#fff;text-transform:uppercase}
@@ -142,7 +193,7 @@ tr.sep td{background:#EEF0F3;font-weight:800;border-top:1.5px solid #CDD3DB;bord
   // o ajuste: por slide, o maior --k (letra, de 1,5 a 0,7) em que o miolo cabe na altura e nenhuma tabela ou cartão passa da largura;
   // depois o maior --v (respiro das linhas, de 2,2 a 1) que ainda cabe
   const AJUSTE = `<script>(function(){function aj(){var S=document.querySelectorAll('.slide');for(var i=0;i<S.length;i++){var s=S[i],c=s.querySelector('.corpo');if(!c)continue;var d=s.style.display;s.style.display='';if(!c.clientHeight){s.style.display=d;continue;}
-var cabe=function(){if(c.scrollHeight>c.clientHeight+1)return false;var f=c.children;for(var j=0;j<f.length;j++){if(f[j].offsetTop+f[j].offsetHeight>c.offsetTop+c.clientHeight+1)return false;}var t=c.querySelectorAll('.tb,.duas>div,.card .n');for(var j=0;j<t.length;j++){if(t[j].scrollWidth>t[j].clientWidth+1)return false;}return true;};
+var cabe=function(){if(c.scrollHeight>c.clientHeight+1)return false;var f=c.children;for(var j=0;j<f.length;j++){if(f[j].offsetTop+f[j].offsetHeight>c.offsetTop+c.clientHeight+1)return false;}var t=c.querySelectorAll('.tb,.duas>div,.card .n,.tile .n,.ml .lg b');for(var j=0;j<t.length;j++){if(t[j].scrollWidth>t[j].clientWidth+1)return false;}var a=c.querySelectorAll('.encher,.tile,.ml,.tl .pc,.passo,.card');for(var j=0;j<a.length;j++){if(a[j].scrollHeight>a[j].clientHeight+1)return false;}return true;};
 s.style.setProperty('--v','1');for(var k=150;k>=70;k-=5){s.style.setProperty('--k',(k/100).toFixed(2));if(cabe())break;}
 for(var v=22;v>=10;v--){s.style.setProperty('--v',(v/10).toFixed(1));if(cabe())break;}s.style.display=d;}}
 window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(aj);window.addEventListener('load',aj);})();<\/script>`;
@@ -209,8 +260,8 @@ window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.r
         <div class="ab"></div>
         <div class="per">Gerado em ${hoje}</div>
       </div>`; },
-    sumario: (F, { periodo, itens }) => { const n = itens.length, nc = n > 14 ? 2 : 1, por = Math.ceil(n / nc), rh = Math.min(68, Math.floor(520 / Math.max(por, 1)));
-      const fs = rh >= 56 ? 24 : rh >= 42 ? 19 : rh >= 32 ? 15 : 13, lw = nc === 2 ? 300 : 630;
+    sumario: (F, { periodo, itens }) => { const n = itens.length, nc = n > 20 ? 2 : 1, por = Math.ceil(n / nc), rh = Math.min(68, Math.floor(520 / Math.max(por, 1)));
+      const fs = rh >= 56 ? 24 : rh >= 42 ? 19 : rh >= 32 ? 16 : rh >= 27 ? 14 : 12, lw = nc === 2 ? 300 : 630;
       const col = i => itens.slice(i * por, (i + 1) * por).map((it, j) => `<div class="si" style="height:${rh}px;font-size:${fs}px"><b style="font-size:${Math.round(fs * 1.15)}px;width:${Math.round(fs * 2)}px">${String(i * por + j + 1).padStart(2, '0')}</b><span>${f.esc(it.t)}</span><em>pág. ${it.n}</em></div>`).join('');
       return `<div style="position:absolute;inset:0;background:url('${F.sum}') center/cover"></div>
       <div style="position:absolute;left:90px;top:0;bottom:0;width:320px;display:flex;flex-direction:column;justify-content:center">
@@ -231,6 +282,30 @@ window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.r
         ${sub ? `<div class="per" style="font-size:16px;margin-top:16px">${f.esc(sub)}</div>` : ''}
       </div>`
   };
+
+  // ícones das peças de infográfico (traço, 24×24)
+  const ICO = {
+    fuel: '<line x1="3" x2="15" y1="22" y2="22"/><line x1="4" x2="14" y1="9" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/>',
+    wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+    tire: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3.5"/><line x1="12" y1="2" x2="12" y2="8.5"/><line x1="12" y1="15.5" x2="12" y2="22"/><line x1="2" y1="12" x2="8.5" y2="12"/><line x1="15.5" y1="12" x2="22" y2="12"/>',
+    truck: '<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
+    box: '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+    cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    up: '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+    down: '<polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/>',
+    target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>'
+  };
+  const tomC = t => t === 'r' || t === 'g' ? t : 'cz';
+  const svgI = (k, cor, w) => `<svg viewBox="0 0 24 24" fill="none" stroke="${cor || '#fff'}" stroke-width="${w || 2}" stroke-linecap="round" stroke-linejoin="round">${ICO[k] || ICO.box}</svg>`;
+  // curva suave (Catmull-Rom) pelos pontos
+  const suave = pts => { if (pts.length < 2) return ''; let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+    for (let i = 0; i < pts.length - 1; i++) { const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+      d += ` C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)} ${(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)} ${(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`; }
+    return d; };
 
   // ── construtor de slides ──
   function deck(o) {
@@ -253,7 +328,11 @@ window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.r
         html: `<section class="slide${so && so.top ? ' top' : ''}${so && so.dark ? ' dark' : ''}${so && so.capa ? ' capa' : ''}${so && so.arte ? ' arte' : ''}${sec ? ' sec' : ''}"${ar ? '' : ` data-sk="${f.esc(_k)}"`}${so && so.style ? ` style="${so.style}"` : ''}>${moldura}${miolo(inner)}${so && so.arte ? '' : foot()}</section>` }); _k = ''; _sec = false; },
       head: (k, h, sub) => { _k = limpa(k); return `<div class="hd"><div class="kicker">${k}</div><h2>${h}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div>§C§`; },
       // lista numerada (prioridades, próximos passos): a 1ª em destaque
-      passos: itens => `<div class="passos" style="grid-template-columns:repeat(${itens.length <= 4 ? itens.length : 3},minmax(0,1fr))">${itens.map((p, i) => `<div class="passo"><div class="pn">${String(i + 1).padStart(2, '0')}</div><div class="pb"><div class="pt">${p.t}</div><div class="pv">${p.v || ''}</div><div class="ps">${p.s || ''}</div></div></div>`).join('')}</div>`,
+      passos: itens => { const n = itens.length;
+        if (n >= 3 && n <= 6) { const C = 2 * n + 2;   // uma coluna de folga em cada ponta: todo cartão tem a mesma largura e fica centrado no número
+          return `<div class="tl" style="grid-template-columns:repeat(${C},minmax(0,1fr))"><div class="lin"></div>${itens.map((p, i) => { const c0 = 2 * i + 1, c1 = 2 * i + 5;
+            return `<div class="bo${i ? '' : ' f'}" style="grid-column:${2 * i + 2}/span 2">${i + 1}</div><div class="hs ${i % 2 ? 'dn' : 'up'}" style="grid-column:${2 * i + 2}/span 2"></div><div class="pc ${i % 2 ? 'dn' : 'up'}" style="grid-column:${c0}/${c1}"><div class="pt">${p.t}</div><div class="pv">${p.v || ''}</div><div class="ps">${p.s || ''}</div></div>`; }).join('')}</div>`; }
+        return `<div class="passos" style="grid-template-columns:repeat(${n <= 4 ? n : 3},minmax(0,1fr))">${itens.map((p, i) => `<div class="passo"><div class="pn">${String(i + 1).padStart(2, '0')}</div><div class="pb"><div class="pt">${p.t}</div><div class="pv">${p.v || ''}</div><div class="ps">${p.s || ''}</div></div></div>`).join('')}</div>`; },
       conc: (txt, rot) => `<div class="conc"><div class="lbl">${rot || 'Leitura'}</div><p>${txt}</p></div>`,
       concBlocos: (itens, rot, cols) => `<div class="concb"><div class="lbl">${rot}</div><div class="cb" style="grid-template-columns:repeat(${cols || itens.length},minmax(0,1fr))">${itens.map(b => `<div><div class="t">${b.t}</div>${b.v ? `<div class="v">${b.v}</div>` : ''}<div class="s">${b.s || ''}</div></div>`).join('')}</div></div>`,
       cards: (itens, cols) => `<div class="cards" style="grid-template-columns:repeat(${cols || itens.length},minmax(0,1fr))">${itens.map(c => `<div class="card${c.acc ? ' esc' : ''}"><div class="k">${c.k}</div><div class="n"${c.cor ? ` style="color:${c.cor}"` : ''}>${c.n}</div>${c.p ? `<p>${c.p}</p>` : ''}</div>`).join('')}</div>`,
@@ -273,6 +352,55 @@ window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.r
       capaSec: (num, h1, texto) => { _k = limpa(h1); _sec = true;
         if (o.fundos) return B.slide(arte.secao(o.fundos, { num: '§SN§', titulo: h1, texto }), { arte: true, sec: true });
         B.slide(`<div><div class="kicker">Parte §SN§</div><h1 style="max-width:900px">${h1}</h1>${texto ? `<p style="margin-top:18px;font-size:16px;max-width:820px">${texto}</p>` : ''}</div>`, { dark: true, sec: true }); },
+      // ── peças de infográfico ──
+      ic: (k, cor) => svgI(k, cor),
+      // r = vermelho · g = verde · o resto = cinza
+      chip: (txt, tom) => `<span class="chip ${tomC(tom)}">${txt}</span>`,
+      // grade de cartões com ícone: {ic, k, n, s, chip:{t, tom}}
+      tiles: (itens, cols, cls) => `<div class="gx${cls ? ' ' + cls : ''}" style="grid-template-columns:repeat(${cols || itens.length},minmax(0,1fr));grid-auto-rows:1fr">${itens.map(t => `<div class="tile"><div class="a"><div class="ic"${t.icCor ? ` style="background:${t.icCor}"` : ''}>${svgI(t.ic)}</div><span>${t.k}</span></div><div class="n"${t.cor ? ` style="color:${t.cor}"` : ''}>${t.n}</div>${t.s || t.chip ? `<div class="b"><em>${t.s || ''}</em>${t.chip ? `<span class="chip ${tomC(t.chip.tom)}">${t.chip.t}</span>` : ''}</div>` : ''}</div>`).join('')}</div>`,
+      // meia-lua: o arco de fora é o realizado, o de dentro o remunerado (proporcionais ao maior); o número no centro
+      meiaLua: ({ a, b, ta, tb, la, lb, centro, centroSub, corA, corB }) => {
+        const mx = Math.max(Math.abs(a || 0), Math.abs(b || 0), 1) * 1.12, ca = corA || VERM, cb = corB || CINK;
+        const arco = (r, fr, cor, esp) => { fr = Math.max(0, Math.min(1, fr)); const an = Math.PI * (1 - fr), x = 230 + r * Math.cos(an), y = 230 - r * Math.sin(an);
+          return `<path d="M ${230 - r} 230 A ${r} ${r} 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}" fill="none" stroke="${cor}" stroke-width="${esp}" stroke-linecap="round"/>`; };
+        return `<div class="ml"><div class="arco"><svg viewBox="0 0 460 250">${arco(200, 1, '#E3E7EB', 30)}${arco(200, Math.abs(a || 0) / mx, ca, 30)}${arco(158, 1, '#E3E7EB', 20)}${arco(158, Math.abs(b || 0) / mx, cb, 20)}</svg>
+          <div class="ct"><b style="color:${ca}">${centro || ''}</b><span>${centroSub || ''}</span></div></div>
+          <div class="lg"><div><i style="background:${ca}"></i><div><b>${ta}</b><span>${la}</span></div></div><div><i style="background:${cb}"></i><div><b>${tb}</b><span>${lb}</span></div></div></div></div>`;
+      },
+      // cápsulas: duas barras por categoria (a = realizado, b = remunerado), com o chip embaixo
+      capsulas: (itens, oo) => { oo = oo || {}; const mx = Math.max(...itens.map(i => Math.max(Math.abs(i.a || 0), Math.abs(i.b || 0))), 1);
+        const h = v => Math.max(4, Math.round(Math.abs(v || 0) / mx * 100));
+        return `<div class="cap encher"><div class="lgd"><span><i style="background:${CINK}"></i>${oo.la || 'Realizado'}</span><span><i style="background:#CDD3DB"></i>${oo.lb || 'Remunerado'}</span></div>
+          <div class="bars">${itens.map(i => `<div class="par"><div class="pil" style="height:${h(i.a)}%;background:${i.corA || CINK}"><b>${i.ta}</b></div><div class="pil" style="height:${h(i.b)}%;background:#CDD3DB"><b style="color:#6B7480">${i.tb}</b></div></div>`).join('')}</div>
+          <div class="nm">${itens.map(i => `<div><b title="${f.esc(i.rot)}">${f.esc(i.rot)}</b>${i.chip ? `<span class="chip ${tomC(i.chip.tom)}">${i.chip.t}</span>` : ''}</div>`).join('')}</div></div>`; },
+      // picos: um pico por categoria, vermelho acima da meta (ou quando ruim(v)), com a meta tracejada
+      picos: (cats, vals, oo) => { oo = oo || {}; const W = 1100, H = 236, top = 40, base = H - 26, nums = vals.filter(ok);
+        const lo = Math.min(0, ...nums), mx = Math.max(...nums, oo.meta || 0) * 1.08 || 1, Y = v => base - (base - top) * ((v - lo) / ((mx - lo) || 1)), bw = W / Math.max(cats.length, 1);
+        const ruim = oo.ruim || (v => oo.meta != null && v > oo.meta);
+        let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" font-family="Montserrat,Arial"><defs><linearGradient id="pkR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${VERM}"/><stop offset="1" stop-color="${VERM}" stop-opacity=".45"/></linearGradient><linearGradient id="pkN" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${CINK}"/><stop offset="1" stop-color="${CINK}" stop-opacity=".45"/></linearGradient></defs>`;
+        s += `<line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="#DCE1E7" stroke-width="2"/>`;
+        cats.forEach((c, i) => { const v = vals[i], cx = bw * i + bw / 2, hw = Math.min(bw * .46, 90);
+          if (ok(v)) { const y = Y(v), r = ruim(v), y0 = Y(Math.max(lo, 0));
+            s += v >= 0 ? `<path d="M${cx - hw} ${y0} C${cx - hw * .36} ${y0} ${cx - hw * .16} ${y} ${cx} ${y} C${cx + hw * .16} ${y} ${cx + hw * .36} ${y0} ${cx + hw} ${y0}Z" fill="url(#${r ? 'pkR' : 'pkN'})"/>`
+              : `<path d="M${cx - hw} ${y0} C${cx - hw * .36} ${y0} ${cx - hw * .16} ${y} ${cx} ${y} C${cx + hw * .16} ${y} ${cx + hw * .36} ${y0} ${cx + hw} ${y0}Z" fill="${VERDE}" fill-opacity=".7"/>`;
+            s += `<text x="${cx}" y="${v >= 0 ? y - 10 : y + 20}" text-anchor="middle" font-size="16" font-weight="800" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round" fill="${r ? VERM : CINK}">${oo.fmt ? oo.fmt(v) : f.f1(v)}</text>`; }
+          s += `<text x="${cx}" y="${H - 6}" text-anchor="middle" font-size="13" font-weight="700" fill="#4A5563">${f.esc(c)}</text>`; });
+        if (oo.meta != null) s += `<line x1="0" x2="${W}" y1="${Y(oo.meta)}" y2="${Y(oo.meta)}" stroke="${acc}" stroke-width="2.2" stroke-dasharray="8 6"/><text x="4" y="${Y(oo.meta) - 8}" text-anchor="start" font-size="12" font-weight="700" paint-order="stroke" stroke="#fff" stroke-width="5" stroke-linejoin="round" fill="${acc}">${oo.metaTxt || 'Meta'}</text>`;
+        return `<div class="gs encher"><div class="cv">${s}</svg></div></div>`; },
+      // curva: séries suaves por categoria; a 1ª em laranja com área, as outras tracejadas
+      curva: (cats, series, oo) => { oo = oo || {}; const W = 1100, H = 226, pl = 58, pr = 20, pt = 24, pb = 26;
+        const nums = series.flatMap(x => x.vals).filter(ok); if (!nums.length) return '';
+        let lo = Math.min(...nums), hi = Math.max(...nums); const amp = (hi - lo) || Math.abs(hi) || 1; lo -= amp * .25; hi += amp * .18; if (oo.zero && lo > 0) lo = 0;
+        const X = i => pl + (W - pl - pr) * (cats.length > 1 ? i / (cats.length - 1) : .5), Y = v => pt + (H - pt - pb) * (1 - (v - lo) / ((hi - lo) || 1));
+        let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" font-family="Montserrat,Arial"><defs><linearGradient id="cvA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${acc}" stop-opacity=".28"/><stop offset="1" stop-color="${acc}" stop-opacity="0"/></linearGradient></defs>`;
+        for (let g = 0; g <= 4; g++) { const v = lo + (hi - lo) * g / 4, y = Y(v); s += `<line x1="${pl}" x2="${W - pr}" y1="${y}" y2="${y}" stroke="#EEF0F3"/><text x="${pl - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#8A94A2">${oo.fmtEixo ? oo.fmtEixo(v) : f.f0(v)}</text>`; }
+        series.slice().reverse().forEach((se, ri) => { const si = series.length - 1 - ri, pts = se.vals.map((v, i) => ok(v) ? [X(i), Y(v)] : null).filter(Boolean); if (!pts.length) return;
+          const d = suave(pts), cor = se.cor || (si === 0 ? acc : CINK);
+          if (si === 0) s += `<path d="${d} L${pts[pts.length - 1][0]} ${H - pb} L${pts[0][0]} ${H - pb}Z" fill="url(#cvA)"/>`;
+          s += `<path d="${d}" fill="none" stroke="${cor}" stroke-width="${si === 0 ? 4 : 2.6}"${si === 0 ? '' : ' stroke-dasharray="7 5"'}/>`;
+          if (si === 0) se.vals.forEach((v, i) => { if (!ok(v)) return; s += `<circle cx="${X(i)}" cy="${Y(v)}" r="5" fill="${cor}" stroke="#fff" stroke-width="2"/><text x="${X(i)}" y="${Y(v) - 11}" text-anchor="middle" font-size="12" font-weight="800" fill="${CINK}">${oo.fmt ? oo.fmt(v) : f.f0(v)}</text>`; }); });
+        cats.forEach((c, i) => { s += `<text x="${X(i)}" y="${H - 6}" text-anchor="middle" font-size="12" font-weight="600" fill="#6B7480">${f.esc(c)}</text>`; });
+        return `<div class="gs encher"><div class="lgd">${series.map((se, i) => `<span><i style="background:${se.cor || (i === 0 ? acc : CINK)}"></i>${f.esc(se.nome)}</span>`).join('')}</div><div class="cv">${s}</svg></div></div>`; },
       // barras horizontais simples (rótulo · barra · valor), cor por item
       barrasH: (itens, oo) => {
         oo = oo || {}; const w = oo.w || 560, lh = oo.lh || 26, lw = oo.lw || 150, mx = oo.max || Math.max(...itens.map(i => Math.abs(i.v || 0)), 1), bw = w - lw - 70;
@@ -380,5 +508,5 @@ window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.r
   // ícone do botão (slides) e o HTML do item da lateral
   const ICONE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M12 17v4M8 21h8"/><path d="M7 13l3-3 2 2 4-4"/></svg>';
 
-  window.ApresBase = { deck, pdf, pptx, botao, f, ICONE, carrega, fundos, arte, docDe, css, FOTO };
+  window.ApresBase = { ICO, deck, pdf, pptx, botao, f, ICONE, carrega, fundos, arte, docDe, css, FOTO };
 })();

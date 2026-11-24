@@ -67,8 +67,8 @@
 
     // ═══ mês a mês ═══
     const MM = ytd.map(v => ({ v, r: rec([v]), c: cus([v]), e: ebi([v]) }));
-    B.slide(`${B.head('Mês a mês', `Custos contra o remunerado de ${F.MESN[0]} a ${F.MESN[MI]}`, 'Desvio dos custos de frota contra o remunerado em cada mês (acima = custou mais que o remunerado).')}
-      ${B.colunas(MM.map(x => F.MES3[+x.v.slice(5) - 1]), MM.map(x => x.c.real - x.c.rem), { h: 220, lo: Math.min(0, ...MM.map(x => x.c.real - x.c.rem)) * 1.15, fmt: v => F.brl(v).replace('R$ ', ''), cor: v => v > 0 ? F.VERM : F.VERDE })}
+    B.slide(`${B.head('Mês a mês', `Custos contra o remunerado de ${F.MESN[0]} a ${F.MESN[MI]}`, 'Custo de frota realizado contra o remunerado em cada mês, com a receita, o EBITDA e a margem na tabela.')}
+      ${B.curva(MM.map(x => F.MES3[+x.v.slice(5) - 1]), [{ nome: 'Custo realizado', vals: MM.map(x => x.c.real) }, { nome: 'Custo remunerado', vals: MM.map(x => x.c.rem) }], { fmt: v => F.brl(v).replace('R$ ', ''), fmtEixo: v => F.brl(v).replace('R$ ', '') })}
       ${B.tabela({ cols: [{ t: 'Mês' }, { t: 'Receita', n: 1 }, { t: 'Custo rem.', n: 1 }, { t: 'Custo real', n: 1 }, { t: 'Δ vs rem.', n: 1 }, { t: 'Δ %', n: 1 }, { t: 'Custo / receita', n: 1 }, { t: 'EBITDA', n: 1 }, { t: 'Margem', n: 1 }],
         rows: MM.map(x => [`<b>${m3(x.v)}</b>`, F.brlInt(x.r.real), F.brlInt(x.c.rem), F.brlInt(x.c.real), dC(x.c.real - x.c.rem), dCp(pct(x.c.real, x.c.rem)), F.pct1(av(x.c.real, x.r.real)), x.e ? F.brlInt(x.e.real) : '—', x.e ? F.pct1(av(x.e.real, x.r.real)) : '—'])
           .concat([{ cls: 'sep', c: ['Acumulado', F.brlInt(RY.real), F.brlInt(CY.rem), F.brlInt(CY.real), dC(dCRy), dCp(pct(CY.real, CY.rem)), F.pct1(av(CY.real, RY.real)), EY ? F.brlInt(EY.real) : '—', EY ? F.pct1(av(EY.real, RY.real)) : '—'] }]) })}`, { top: true });

@@ -57,7 +57,7 @@
     // ═══ mês a mês ═══
     const MS = ytd.map(v => ({ v, a: soma(de([v])) }));
     B.slide(`${B.head('Mês a mês', `Dispersão de ${F.MESN[+ytd[0].split('/')[0] - 1]} a ${F.MESN[MI]}`, `Dispersão de cada mês contra a meta de ${META}% (vermelho acima da meta).`)}
-      ${B.colunas(MS.map(x => m3(x.v)), MS.map(x => x.a.p), { h: 220, lo: Math.min(0, ...MS.map(x => x.a.p || 0)) * 1.2, meta: META, metaTxt: `Meta ${META}%`, fmt: v => F.sgnPct(v), cor: v => v > META ? F.VERM : F.VERDE })}
+      ${B.picos(MS.map(x => m3(x.v)), MS.map(x => x.a.p), { meta: META, metaTxt: `Meta ${META}%`, fmt: v => F.sgnPct(v) })}
       ${B.tabela({ cols: [{ t: 'Mês' }, { t: 'Km remunerado', n: 1 }, { t: 'Km rodado', n: 1 }, { t: 'Δ km', n: 1 }, { t: 'Dispersão', n: 1 }, { t: 'Impacto', n: 1 }, { t: 'Viagens', n: 1 }, { t: 'Km/viagem', n: 1 }].concat(temBM ? [{ t: 'Balanço de massa', n: 1 }] : []),
         rows: MS.map(x => [`<b>${m3(x.v)}</b>`, F.f0(x.a.rem), F.f0(x.a.real), sg(x.a.d), { v: F.sgnPct(x.a.p), style: corP(x.a.p) }, { v: F.brlInt(x.a.imp), style: corI(x.a.imp) }, F.f0(x.a.via), x.a.via ? F.f0(x.a.real / x.a.via) : '—'].concat(temBM ? [x.a.recomp ? '+' + F.f0(x.a.recomp) + ' km' : '—'] : []))
           .concat([{ cls: 'sep', c: ['Acumulado', F.f0(Y.rem), F.f0(Y.real), sg(Y.d), { v: F.sgnPct(Y.p), style: corP(Y.p) }, { v: F.brlInt(Y.imp), style: corI(Y.imp) }, F.f0(Y.via), Y.via ? F.f0(Y.real / Y.via) : '—'].concat(temBM ? [Y.recomp ? '+' + F.f0(Y.recomp) + ' km' : '—'] : []) }]) })}`, { top: true });
