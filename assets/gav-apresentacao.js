@@ -81,7 +81,8 @@
     const uni = cods.length === 1 ? cods[0] : null;
     const MES = F.mesAno(H);
     const titulo = uni ? `Gestão à Vista · ${nm(uni)}` : 'Gestão à Vista';
-    const B = ApresBase.deck({ acc: ACC, rodape: `${titulo} · ${MES} · foto de ${F.quando(H)}`, titulo: `${titulo} · ${MES}`, img: o.img, fundos: o.fundos });
+    const B = ApresBase.deck({ acc: ACC, rodape: `${titulo} · ${MES} · foto de ${F.quando(H)}`, titulo: `${titulo} · ${MES}`, img: o.img, fundos: o.fundos, selo: `Hoje · ${H.toLocaleDateString('pt-BR')}` });
+    const mesTx = F.MESN[H.getMonth()];
     const S = cods.map(c => Object.assign({ cod: c }, stats(c)));
     const RK = S.slice().sort((a, b) => (b.score == null ? -1 : b.score) - (a.score == null ? -1 : a.score));
     // a rede inteira, para a unidade se comparar (mesmas bases, sem o filtro)
@@ -200,7 +201,7 @@
         const pacs = [...new Set(DATA.custos.map(r => r.pac).filter(Boolean))];
         const pacB = pacs.map(p => { const a = DATA.custos.filter(r => r.pac === p && cods.includes(r.cod)); const x = { rem: F.sum(a.map(r => r.rem)), rea: F.sum(a.map(r => r.rea)) }; return { t: p, v: F.brl(Math.abs(x.rea)), s: `${F.pct0(cons(x))} do remunerado do mês (${F.brl(Math.abs(x.rem))}).` }; });
         const acima = lc.filter(x => cons(x) != null && cons(x) > corr + 0.5);
-        B.slide(`${B.head('Custos do mês', `${F.brl(Math.abs(T.rea))} lançados em ${vigTx || 'o mês corrente'}: ${F.pct0(cons(T))} do remunerado, com ${F.pct0(corr)} do mês corrido`, 'Carta de Custos do mês corrente (Combustíveis, Manutenção e Pneus): lançamentos com NF, prévia do contrato e combustível do ERP. O mês ainda está em lançamento; o remunerado é a tendência do mês inteiro.')}
+        B.slide(`${B.head('Custos do mês', `Custos de ${mesTx} até hoje: ${F.brl(Math.abs(T.rea))} lançados, ${F.pct0(cons(T))} do remunerado`, `Carta de Custos do mês em andamento (Combustíveis, Manutenção e Pneus). O mês está ${F.pct0(corr)} corrido; o remunerado é a tendência do mês inteiro.`)}
           ${B.tabela({ cols: [{ t: 'Unidade' }, { t: 'Orçado', n: 1 }, { t: 'Remunerado', n: 1 }, { t: 'Lançado até agora', n: 1 }, { t: '% do remunerado', n: 1 }],
             rows: lc.map(x => [`<b>${nm(x.s.cod)}</b>`, F.brlInt(Math.abs(x.orc)), F.brlInt(Math.abs(x.rem)), F.brlInt(Math.abs(x.rea)), { v: F.pct0(cons(x)), style: cd(cons(x)) }])
               .concat([{ cls: 'sep', c: ['Total', F.brlInt(Math.abs(T.orc)), F.brlInt(Math.abs(T.rem)), F.brlInt(Math.abs(T.rea)), { v: F.pct0(cons(T)), style: cd(cons(T)) }] }]) })}
@@ -218,7 +219,7 @@
       if (DATA.pneus) { const sa = F.sum(S.map(s => s.n.afTot - s.n.afOk)); if (sa) P.push({ t: 'Pneus', v: `${sa} sem aferição`, s: `Aferir as placas que passaram de 30 dias; ${F.f0(F.sum(S.map(s => s.n.crit)))} pneus em Bloquear/Recapar.` }); }
       if (temDocs && (dv || d7 || dp_)) P.push({ t: 'Documentos', v: `${d7} vencem em 7 dias`, s: `${dv} vencidos e ${dp_} sem vínculo à placa.` });
       if (P.length) B.slide(`${B.head('Prioridades', 'O que atacar até o próximo farol')}
-        ${B.concBlocos(P.slice(0, 6), 'Próximos passos', P.length > 4 ? 3 : 2)}`);
+        ${B.passos(P.slice(0, 6))}`);
     } else {
       // ═══════════ apresentação da UNIDADE ═══════════
       const s = S[0], cod = uni;
@@ -246,7 +247,7 @@
         const soPneu = a => PL_COLS.filter(c => a.cel[c.k] && a.cel[c.k].ok === false).every(c => c.k === 'mm' || c.k === 'ca');
         const PLp = PL.filter(soPneu); PL.splice(0, PL.length, ...PL.filter(a => !soPneu(a)));
         const resumoPneu = PLp.length ? `<p class="note" style="font-size:11.5px;color:${F.INK2}"><b>${PLp.length} ${F.pl(PLp.length, 'placa', 'placas')} só com pneu fora</b> (calibragem ou milimetragem, foto do Prolog): ${PLp.slice(0, 40).map(a => F.esc(a.placa)).join(', ')}${PLp.length > 40 ? ` e mais ${PLp.length - 40}` : ''}.</p>` : '';
-        const pgs = B.paginas(PL, 15).slice(0, 3);
+        const pgs = B.paginas(PL, 18).slice(0, 3);
         pgs.forEach((pg, ix) => B.slide(`${B.head('Placas', ix ? `Placas com pendência (${ix + 1}/${pgs.length})` : `${PL.length + PLp.length} ${F.pl(PL.length + PLp.length, 'placa', 'placas')} com pendência`, ix ? '' : 'Da mais vencida para a menos. Entre parênteses, os dias de atraso (ou parada).')}
           ${B.tabela({ cols: [{ t: 'Placa' }, { t: 'Projeto' }, { t: 'Pendências', n: 1 }, { t: 'O que está fora', w: 1 }],
             rows: pg.map(a => [`<b>${F.esc(a.placa)}</b>`, F.esc(a.proj || '—'), a.nok, pend(a).join(' · ')]) })}
@@ -289,11 +290,14 @@
         const cons = x => Math.abs(x.rem) > 0 ? Math.abs(x.rea) / Math.abs(x.rem) * 100 : null;
         const corr = H.getDate() / new Date(H.getFullYear(), H.getMonth() + 1, 0).getDate() * 100;
         const cd = v => v == null ? '' : `color:${v > corr + 0.5 ? F.VERM : F.INK};font-weight:700`;
-        B.slide(`${B.head('Custos do mês', `${F.brl(Math.abs(T.rea))} lançados: ${F.pct0(cons(T))} do remunerado, com ${F.pct0(corr)} do mês corrido`, `Carta de Custos do mês corrente${DATA.custosVigTxt ? ` (${DATA.custosVigTxt})` : ''}, por projeto, ainda em lançamento. A soma dos projetos pode não bater com a unidade: o remunerado usa a proporção de cada recorte.`)}
+        const acimaU = cons(T) != null && cons(T) > corr + 0.5;
+        B.slide(`${B.head('Custos do mês', `Custos de ${mesTx} até hoje: ${F.brl(Math.abs(T.rea))} lançados, ${F.pct0(cons(T))} do remunerado`, `Carta de Custos do mês em andamento, por projeto. O mês está ${F.pct0(corr)} corrido.`)}
+          ${B.cards([{ k: 'Remunerado do mês', n: F.brl(Math.abs(T.rem)), p: 'Tendência do mês inteiro.' }, { k: 'Lançado até hoje', n: F.brl(Math.abs(T.rea)), p: 'NF, prévia do contrato e combustível do ERP.', acc: 1 },
+            { k: '% do remunerado', n: F.pct0(cons(T)), cor: acimaU ? F.VERM : F.VERDE, p: acimaU ? 'Acima do ritmo do mês.' : 'Dentro do ritmo do mês.' }, { k: 'Mês corrido', n: F.pct0(corr), p: `Dia ${H.getDate()} de ${new Date(H.getFullYear(), H.getMonth() + 1, 0).getDate()}.` }], 4)}
           ${B.tabela({ cols: [{ t: 'Projeto' }, { t: 'Orçado', n: 1 }, { t: 'Remunerado', n: 1 }, { t: 'Lançado até agora', n: 1 }, { t: '% do remunerado', n: 1 }],
             rows: Object.entries(g).sort().map(([p, x]) => [`<b>${F.esc(p)}</b>`, F.brlInt(Math.abs(x.orc)), F.brlInt(Math.abs(x.rem)), F.brlInt(Math.abs(x.rea)), { v: F.pct0(cons(x)), style: cd(cons(x)) }])
               .concat([{ cls: 'sep', c: ['Unidade', F.brlInt(Math.abs(T.orc)), F.brlInt(Math.abs(T.rem)), F.brlInt(Math.abs(T.rea)), { v: F.pct0(cons(T)), style: cd(cons(T)) }] }]) })}
-          <p class="note">Em vermelho, o que já consumiu mais do remunerado do que o mês corrido.</p>`, { top: true });
+          <p class="note">Em vermelho, o que já consumiu mais do remunerado do que o mês corrido. A soma dos projetos pode não bater com a unidade: o remunerado usa a proporção de cada recorte.</p>`, { top: true });
       }
 
       // prioridades da unidade
@@ -307,7 +311,7 @@
       if (s.n.afTot - s.n.afOk) P.push({ t: 'Pneus', v: `${s.n.afTot - s.n.afOk} sem aferição`, s: `${s.n.crit} pneus em Bloquear/Recapar e ${s.n.fora} fora de pressão.` });
       if (s.n.doc7.length || s.n.pend.length) P.push({ t: 'Documentos', v: `${s.n.doc7.length} vencem em 7 dias`, s: `${s.n.pend.length} sem vínculo à placa.` });
       if (P.length) B.slide(`${B.head('Prioridades', `O que ${nm(cod)} ataca até o próximo farol`)}
-        ${B.concBlocos(P.slice(0, 6), 'Próximos passos', P.length > 4 ? 3 : 2)}`);
+        ${B.passos(P.slice(0, 6))}`);
     }
     return { lista: B.lista(), doc: B.doc(), slides: B.n(), nome: `Gestao_a_Vista_${uni ? uni.replace(/\s+/g, '_') + '_' : ''}${MES.replace('/', '')}.pdf` };
   }

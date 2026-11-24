@@ -49,46 +49,77 @@
     VERDE, AMAR, VERM, INK, INK2, INK3, PALE
   };
 
+  /* VISÃO EXECUTIVA (Renan, 24/11/2026: "apagado, feio… olhe nossos painéis, meu nível de exigência").
+     Fundo cinza claro, cartões brancos com sombra, tabela dentro de cartão (cabeçalho sem fundo, total
+     em faixa), a leitura numa faixa escura e a barra laranja no pé. Todo tamanho do miolo é multiplicado
+     por --k, que o ajuste do fim do documento escolhe por slide: o maior que cabe (o slide não fica
+     vazio nem estoura). */
   const css = acc => `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:#fff}
 body{font-family:'Montserrat',Arial,sans-serif;color:${INK};font-size:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.slide{width:1280px;height:720px;position:relative;overflow:hidden;background:#fff;padding:56px 72px 60px;display:flex;flex-direction:column;justify-content:center}
+.slide{--k:1;--v:1;width:1280px;height:720px;position:relative;overflow:hidden;background:#ECEEF1;padding:44px 64px 62px;display:flex;flex-direction:column;justify-content:flex-start}
 .slide>*{flex:0 0 auto}
-.slide.top{justify-content:flex-start}
-.slide.dark{background:radial-gradient(70% 90% at 85% 10%,${acc}29,transparent 60%),#0F1216;color:#F4F5F7}
+.slide:not(.arte)::after{content:'';position:absolute;left:0;right:0;bottom:0;height:8px;background:linear-gradient(90deg,#F97316 0%,#F97316 50%,#FDBA4D 86%,#FDE08A 100%)}
+.slide.dark{background:radial-gradient(70% 90% at 85% 10%,${acc}29,transparent 60%),#0F1216;color:#F4F5F7;justify-content:center}
 .slide.capa{background-size:cover;background-position:center right}
-.kicker{font-size:11px;font-weight:700;letter-spacing:2.2px;text-transform:uppercase;color:${acc};margin-bottom:10px}
+.kicker{font-size:10.5px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;color:${INK3};margin-bottom:9px;display:flex;align-items:center;gap:10px}
+.kicker::before{content:'';width:9px;height:9px;border-radius:3px;background:${acc};flex:0 0 auto}
+.slide.dark .kicker{color:#A9B4C0}
 h1{font-size:42px;font-weight:800;line-height:1.1;letter-spacing:-.8px}
 .slide.dark h1{color:#fff}
-h2{font-size:27px;font-weight:800;line-height:1.15;letter-spacing:-.5px;margin-bottom:6px}
+h2{font-size:28px;font-weight:800;line-height:1.15;letter-spacing:-.6px;margin-bottom:5px;color:${INK}}
 p{font-size:14.5px;line-height:1.55;color:${INK2}}
 .slide.dark p{color:#B9C0CA}
-.sub{font-size:14px;color:${INK2};margin:0 0 6px}
-.foot{position:absolute;left:72px;right:72px;bottom:26px;display:flex;justify-content:space-between;font-size:10.5px;color:${INK3};letter-spacing:.4px}
+.sub{font-size:13.5px;color:${INK2};margin:0;max-width:1010px}
+.selo{position:absolute;top:42px;right:64px;display:flex;align-items:center;gap:8px;background:${INK};color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.5px;padding:7px 13px;border-radius:999px;white-space:nowrap}
+.selo i{width:7px;height:7px;border-radius:50%;background:${acc}}
+.hd{padding-right:230px}
+.corpo{flex:1 1 0;min-height:0;display:flex;flex-direction:column;gap:calc(13px*var(--k)*var(--v));margin-top:16px}
+.corpo>*{flex:0 0 auto;margin-top:0!important}
+.foot{position:absolute;left:64px;right:64px;bottom:24px;display:flex;justify-content:space-between;font-size:10.5px;color:${INK3};letter-spacing:.4px}
 .slide.dark .foot{color:#6B7683}
-.note{font-size:11px;color:${INK3};line-height:1.4;margin-top:8px}
-table{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:auto}
-table th{text-align:left;padding:7px 9px;white-space:nowrap;background:#E4E7EC;color:${INK};font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
-table th:first-child{border-radius:8px 0 0 8px} table th:last-child{border-radius:0 8px 8px 0}
-table td{padding:6px 9px;white-space:nowrap;border-bottom:1px solid #D9DDE3;color:${INK};font-weight:500}
-table.compacta{font-size:11.5px} table.compacta th{padding:6px 7px} table.compacta td{padding:5px 7px}
-table.densa{font-size:10.5px} table.densa th{padding:5px 6px;font-size:9px;letter-spacing:.3px} table.densa td{padding:4px 6px}
-td.n,th.n{text-align:right;font-variant-numeric:tabular-nums} td.w,th.w{white-space:normal}
+.note{font-size:calc(11px*var(--k));color:${INK2};line-height:1.4}
+.tb{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(15,26,32,.07);padding:calc(5px*var(--k)) calc(16px*var(--k)) calc(8px*var(--k));min-width:0}
+table{--t:1;width:100%;border-collapse:collapse;font-size:calc(13px*var(--k)*var(--t));table-layout:auto}
+table.compacta{--t:.94} table.densa{--t:.86}
+table th{text-align:left;padding:calc(10px*var(--k)*var(--t)*var(--v)) calc(9px*var(--k)*var(--t)) calc(8px*var(--k)*var(--t)*var(--v));white-space:nowrap;color:${INK3};font-size:calc(9.5px*var(--k)*var(--t));font-weight:700;letter-spacing:.9px;text-transform:uppercase;border-bottom:1.5px solid #CDD3DB}
+table td{padding:calc(7px*var(--k)*var(--t)*var(--v)) calc(9px*var(--k)*var(--t));white-space:nowrap;border-bottom:1px solid #EBEEF1;color:${INK};font-weight:500}
+table td:first-child{font-weight:700}
+table tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right} td.w,th.w{white-space:normal}
 td.c,th.c{text-align:center}
-tr.sep td{border-top:2px solid ${INK3};font-weight:700}
-.cards{display:grid;gap:12px;margin-top:10px} .card{background:${PALE};border-radius:14px;padding:16px 18px;min-width:0}
-.card .k{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:${INK3};margin-bottom:6px}
-.card .n{font-size:30px;font-weight:800;letter-spacing:-.8px;line-height:1.05;color:${INK};white-space:nowrap} .card .n.acc{color:${acc}} .card .n small{font-size:13px;font-weight:700;letter-spacing:0}
-.card p{font-size:12px;line-height:1.45;color:${INK2};margin-top:7px}
-.conc,.concb{margin-top:12px;background:${PALE};border-radius:12px;padding:12px 18px 13px}
-.lbl{font-size:10.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:${acc}}
-.conc .lbl{margin-bottom:3px} .conc p{font-size:12.5px;line-height:1.48;color:${INK}}
-.concb .lbl{margin-bottom:6px} .concb .cb{display:grid;gap:8px 18px}
-.concb .t{font-size:11.5px;font-weight:800;color:${INK};text-transform:uppercase;letter-spacing:.4px}
-.concb .v{font-size:19px;font-weight:800;color:${acc};line-height:1.15;margin:2px 0}
-.concb .s{font-size:11.5px;line-height:1.42;color:${INK2}}
-.duas{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}
+tr.sep td{background:#EEF0F3;font-weight:800;border-bottom:0}
+tr.sep td:first-child{border-radius:9px 0 0 9px} tr.sep td:last-child{border-radius:0 9px 9px 0}
+.cards{display:grid;gap:calc(12px*var(--k))}
+.card{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(15,26,32,.07);padding:calc(15px*var(--k)*min(var(--v),1.3)) calc(18px*var(--k));min-width:0}
+.card .k{font-size:calc(10px*var(--k));font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:${INK3};margin-bottom:calc(6px*var(--k))}
+.card .n{font-size:calc(30px*var(--k));font-weight:800;letter-spacing:-.9px;line-height:1.05;color:${INK};white-space:nowrap} .card .n small{font-size:.45em;font-weight:700;letter-spacing:0}
+.card p{font-size:calc(11.5px*var(--k));line-height:1.45;color:${INK2};margin-top:calc(6px*var(--k))}
+.card.esc{background:${INK};box-shadow:0 10px 26px rgba(15,26,32,.22)} .card.esc .k{color:#93A0AE} .card.esc .n{color:#fff} .card.esc p{color:#B9C2CC}
+.conc,.concb{background:${INK};border-radius:16px;padding:calc(14px*var(--k)*min(var(--v),1.4)) calc(20px*var(--k)) calc(15px*var(--k)*min(var(--v),1.4));box-shadow:0 10px 26px rgba(15,26,32,.18)}
+.lbl{font-size:calc(10px*var(--k));font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${INK2}}
+.conc .lbl,.concb .lbl{color:#93A0AE}
+.conc .lbl{margin-bottom:calc(4px*var(--k))} .conc p{font-size:calc(12.5px*var(--k));line-height:1.5;color:#EEF1F5}
+.concb .lbl{margin-bottom:calc(8px*var(--k))} .concb .cb{display:grid;gap:calc(10px*var(--k)) calc(22px*var(--k))}
+.concb .t{font-size:calc(10px*var(--k));font-weight:700;color:#93A0AE;text-transform:uppercase;letter-spacing:.8px}
+.concb .v{font-size:calc(19px*var(--k));font-weight:800;color:#fff;line-height:1.15;margin:calc(3px*var(--k)) 0;letter-spacing:-.3px}
+.concb .s{font-size:calc(11.5px*var(--k));line-height:1.42;color:#B9C2CC}
+.passos{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(15,26,32,.07);padding:calc(8px*var(--k)) calc(12px*var(--k))}
+.passo{display:flex;align-items:center;gap:calc(18px*var(--k));padding:calc(11px*var(--k)*var(--v)) calc(14px*var(--k));border-top:1px solid #EBEEF1}
+.passo:first-child{border-top:0;background:${INK};border-radius:12px} .passo:first-child+.passo{border-top:0}
+.passo .pn{font-size:calc(26px*var(--k));font-weight:800;letter-spacing:-1px;color:#C5CCD5;width:calc(40px*var(--k));flex:0 0 auto}
+.passo:first-child .pn{color:${acc}}
+.passo .pb{flex:1;min-width:0}
+.passo .pt{font-size:calc(10px*var(--k));font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:${INK3}}
+.passo .pv{font-size:calc(16px*var(--k));font-weight:800;color:${INK};letter-spacing:-.2px;margin:calc(1px*var(--k)) 0 calc(2px*var(--k))}
+.passo .ps{font-size:calc(11.5px*var(--k));color:${INK2};line-height:1.4}
+.passo:first-child .pt{color:#93A0AE} .passo:first-child .pv{color:#fff} .passo:first-child .ps{color:#B9C2CC}
+.gf{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(15,26,32,.07);padding:14px 18px;min-width:0}
+.gf svg{display:block;max-width:100%;height:auto;margin:0 auto}
+.corpo>.gf{flex:1 1 0;min-height:190px;position:relative}
+.corpo>.gf>svg{position:absolute;left:18px;top:14px;width:calc(100% - 36px);height:calc(100% - 28px);max-width:none}
+.duas{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:calc(18px*var(--k));align-items:start}
 .slide.arte{padding:0;background-color:#0D0E11;background-size:cover;background-position:center;color:#fff;display:block}
 .arte .ak{font-size:13px;font-weight:700;letter-spacing:3.2px;text-transform:uppercase;color:${acc}}
 .arte .at{font-weight:800;line-height:1.04;letter-spacing:-1.4px;margin-top:14px;color:#fff}
@@ -100,7 +131,14 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
 .arte .si span{overflow:hidden;text-overflow:ellipsis}`;
 
   // ── documento: as páginas na ordem, com o número pela posição ──
-  const docDe = ({ acc, titulo, paginas }) => `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${f.esc(titulo || 'Apresentação')}</title><style>${css(acc || '#F97316')}</style></head><body>${paginas.map((h, i) => h.replace(/§PG§/g, String(i + 1))).join('\n')}</body></html>`;
+  // o ajuste: por slide, o maior --k (letra, de 1,5 a 0,7) em que o miolo cabe na altura e nenhuma tabela passa da largura;
+  // depois o maior --v (respiro das linhas, de 2,2 a 1) que ainda cabe
+  const AJUSTE = `<script>(function(){function aj(){var S=document.querySelectorAll('.slide');for(var i=0;i<S.length;i++){var s=S[i],c=s.querySelector('.corpo');if(!c)continue;var d=s.style.display;s.style.display='';if(!c.clientHeight){s.style.display=d;continue;}
+var cabe=function(){if(c.scrollHeight>c.clientHeight+1)return false;var f=c.children;for(var j=0;j<f.length;j++){if(f[j].offsetTop+f[j].offsetHeight>c.offsetTop+c.clientHeight+1)return false;}var t=c.querySelectorAll('.tb,.duas>div');for(var j=0;j<t.length;j++){if(t[j].scrollWidth>t[j].clientWidth+1)return false;}return true;};
+s.style.setProperty('--v','1');for(var k=150;k>=70;k-=5){s.style.setProperty('--k',(k/100).toFixed(2));if(cabe())break;}
+for(var v=22;v>=10;v--){s.style.setProperty('--v',(v/10).toFixed(1));if(cabe())break;}s.style.display=d;}}
+window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(aj);window.addEventListener('load',aj);})();<\/script>`;
+  const docDe = ({ acc, titulo, paginas }) => `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${f.esc(titulo || 'Apresentação')}</title><style>${css(acc || '#F97316')}</style></head><body>${paginas.map((h, i) => h.replace(/§PG§/g, String(i + 1))).join('\n')}${AJUSTE}</body></html>`;
 
   /* ── ARTE: capa, sumário e encerramento (Renan, 23/11/2026, vendo as apresentações do FP&A:
      "gostei da capa e do sumário"). A foto entra em TIRAS com cantos arredondados e filete laranja,
@@ -189,20 +227,25 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
     let _k = '', _sec = false, _bloco = null;
     const foot = () => `<div class="foot"><span>${o.rodape || ''}</span><span>§PG§</span></div>`;
     const limpa = t => String(t == null ? '' : t).replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    // o que vem depois do cabeçalho é o miolo do slide (ocupa a altura que sobra)
+    // (os tamanhos de letra escritos à mão no miolo também acompanham o --k)
+    const miolo = h => { const i = h.indexOf('§C§'); return i < 0 ? h : h.slice(0, i) + '<div class="corpo">' + h.slice(i + 3).replace(/font-size:\s*(\d+(?:\.\d+)?)px/g, 'font-size:calc($1px*var(--k))') + '</div>'; };
     const B = {
       acc,
       // os slides seguintes pertencem a este bloco (o painel Apresentações liga, desliga e reordena por bloco)
       bloco: (id, titulo) => { _bloco = { id, titulo }; },
       slide: (inner, so) => { S.push({ k: _k, sec: _sec, bloco: _bloco, tipo: (so && so.tipo) || 'cont',
-        html: `<section class="slide${so && so.top ? ' top' : ''}${so && so.dark ? ' dark' : ''}${so && so.capa ? ' capa' : ''}${so && so.arte ? ' arte' : ''}"${so && so.style ? ` style="${so.style}"` : ''}>${inner}${so && so.arte ? '' : foot()}</section>` }); _k = ''; _sec = false; },
-      head: (k, h, sub) => { _k = limpa(k); return `<div class="kicker">${k}</div><h2>${h}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}`; },
+        html: `<section class="slide${so && so.top ? ' top' : ''}${so && so.dark ? ' dark' : ''}${so && so.capa ? ' capa' : ''}${so && so.arte ? ' arte' : ''}"${so && so.style ? ` style="${so.style}"` : ''}>${miolo(inner)}${o.selo && !(so && (so.arte || so.dark)) ? `<div class="selo"><i></i>${o.selo}</div>` : ''}${so && so.arte ? '' : foot()}</section>` }); _k = ''; _sec = false; },
+      head: (k, h, sub) => { _k = limpa(k); return `<div class="hd"><div class="kicker">${k}</div><h2>${h}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div>§C§`; },
+      // lista numerada (prioridades, próximos passos): a 1ª em destaque
+      passos: itens => `<div class="passos">${itens.map((p, i) => `<div class="passo"><div class="pn">${String(i + 1).padStart(2, '0')}</div><div class="pb"><div class="pt">${p.t}</div><div class="pv">${p.v || ''}</div><div class="ps">${p.s || ''}</div></div></div>`).join('')}</div>`,
       conc: (txt, rot) => `<div class="conc"><div class="lbl">${rot || 'Leitura'}</div><p>${txt}</p></div>`,
       concBlocos: (itens, rot, cols) => `<div class="concb"><div class="lbl">${rot}</div><div class="cb" style="grid-template-columns:repeat(${cols || itens.length},minmax(0,1fr))">${itens.map(b => `<div><div class="t">${b.t}</div>${b.v ? `<div class="v">${b.v}</div>` : ''}<div class="s">${b.s || ''}</div></div>`).join('')}</div></div>`,
-      cards: (itens, cols) => `<div class="cards" style="grid-template-columns:repeat(${cols || itens.length},minmax(0,1fr))">${itens.map(c => `<div class="card"><div class="k">${c.k}</div><div class="n${c.acc ? ' acc' : ''}"${c.cor ? ` style="color:${c.cor}"` : ''}>${c.n}</div>${c.p ? `<p>${c.p}</p>` : ''}</div>`).join('')}</div>`,
+      cards: (itens, cols) => `<div class="cards" style="grid-template-columns:repeat(${cols || itens.length},minmax(0,1fr))">${itens.map(c => `<div class="card${c.acc ? ' esc' : ''}"><div class="k">${c.k}</div><div class="n"${c.cor ? ` style="color:${c.cor}"` : ''}>${c.n}</div>${c.p ? `<p>${c.p}</p>` : ''}</div>`).join('')}</div>`,
       tabela: ({ cols, rows, classe, style }) => {
         const th = cols.map(c => `<th class="${c.n ? 'n' : ''}${c.c ? ' c' : ''}${c.w ? ' w' : ''}"${c.style ? ` style="${c.style}"` : ''}>${c.t}</th>`).join('');
         const tr = r => `<tr${r.cls ? ` class="${r.cls}"` : ''}>${(r.c || r).map((v, i) => { const c = cols[i] || {}; const x = v !== null && typeof v === 'object' && !Array.isArray(v) ? v : { v }; return `<td class="${c.n ? 'n' : ''}${c.c ? ' c' : ''}${c.w ? ' w' : ''}"${x.style ? ` style="${x.style}"` : ''}>${x.v == null ? '—' : x.v}</td>`; }).join('')}</tr>`;
-        return `<table class="${classe || 'compacta'}" style="${style || ''}"><tr>${th}</tr>${rows.map(tr).join('')}</table>`;
+        return `<div class="tb"><table class="${classe || 'compacta'}" style="${style || ''}"><tr>${th}</tr>${rows.map(tr).join('')}</table></div>`;
       },
       // capa: com a arte pronta (ApresBase.fundos), o desenho da foto em tiras; sem ela, a foto escurecida de antes
       capa: ({ kicker, h1, texto, titulo, periodo }) => {
@@ -235,7 +278,7 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
           const y0 = Y(lo > 0 ? lo : 0);
           if (ok(v)) s += `<rect x="${x}" y="${Math.min(Y(v), y0)}" width="${bw * .64}" height="${Math.max(1, Math.abs(y0 - Y(v)))}" rx="3" fill="${(oo.cor && oo.cor(v, i)) || acc}" fill-opacity=".85"/><text x="${x + bw * .32}" y="${v < 0 ? Y(v) + 14 : Y(v) - 6}" text-anchor="middle" font-weight="800" fill="${INK}">${oo.fmt ? oo.fmt(v) : f.f1(v)}</text>`;
           s += `<text x="${x + bw * .32}" y="${h - 10}" text-anchor="middle" fill="${INK2}" font-weight="600">${f.esc(c)}</text>`; });
-        return s + '</svg>';
+        return '<div class="gf">' + s + '</svg></div>';
       },
       // divide uma lista longa em páginas de n linhas
       paginas: (arr, n) => { const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out.length ? out : [[]]; },
@@ -272,6 +315,7 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
       await new Promise(r => { ifr.onload = r; ifr.srcdoc = doc; });
       const d = ifr.contentDocument;
       try { await d.fonts.ready; } catch (_) {}
+      try { if (ifr.contentWindow.__ajusta) ifr.contentWindow.__ajusta(); } catch (_) {}
       await Promise.all([...d.images].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; })));
       // imagens de fundo (capa) também precisam estar carregadas antes da foto
       const bgs = [...d.querySelectorAll('.slide')].map(s => (getComputedStyle(s).backgroundImage.match(/url\("?([^")]+)"?\)/) || [])[1]).filter(Boolean);

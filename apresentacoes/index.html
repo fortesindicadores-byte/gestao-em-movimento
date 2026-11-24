@@ -2,14 +2,14 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611241130">
+<meta name="build" content="202611241430">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
-<script src="../assets/apresentacao-base.js?v=202611241130"></script>
+<script src="../assets/apresentacao-base.js?v=202611241430"></script>
 <style>
 :root{
   /* fundo UNIFORME (mesma regra do hub): o degradê diagonal clareava para o
@@ -641,7 +641,7 @@ function ponteDe(rs){ const g=grupo(rs,r=>r.conta), t=soma(rs);
 /* ── os slides do fechamento e os recados (o farol vem do Gestão à Vista) ── */
 function slidesFechamento(){
   const y=+VIG.slice(0,4), mo=+VIG.slice(5,7), Mes=Cap(F.MESN[mo-1]), nome=NOMEB[COD]||COD;
-  const B=ApresBase.deck({acc:'#F97316',rodape:`${nome} · Fechamento de ${F.MESN[mo-1]}/${y}`});
+  const B=ApresBase.deck({acc:'#F97316',rodape:`${nome} · Fechamento de ${F.MESN[mo-1]}/${y}`,selo:`Fechamento · ${F.MES3[mo-1]}/${String(y).slice(2)}`});
   const doMes=LIN.filter(r=>r.vk===VIG), ytd=LIN.filter(r=>r.y===y&&r.mo<=mo), M=soma(doMes), Y=soma(ytd);
   const lbl=mesLb(VIG);
   if(doMes.length&&(M.rem||M.real)){
@@ -654,7 +654,7 @@ function slidesFechamento(){
     const pjP=PJ.map(p=>({p,d:(gm[p]||z).real-(gm[p]||z).rem})).sort((a,b)=>b.d-a.d)[0];
     B.bloco('resultado');
     B.slide(`${B.head('Resultado do mês',`${Mes}: custo de frota de ${F.brl(M.real)}, ${dM>0?F.brl(dM)+' acima do':dM<0?F.brl(-dM)+' abaixo do':'igual ao'} remunerado`,'Combustíveis, Manutenção e Pneus da unidade no DRE, contra o remunerado.')}
-      ${B.cards([{k:'Remunerado',n:F.brl(M.rem)},{k:'Realizado',n:F.brl(M.real)},
+      ${B.cards([{k:'Remunerado',n:F.brl(M.rem)},{k:'Realizado',n:F.brl(M.real),acc:1},
         {k:'Realizado − remunerado',n:(dM>0?'+':'')+F.brl(dM),cor:dCor(dM),p:M.rem?F.sgnPct(dM/M.rem*100)+' sobre o remunerado.':''},
         {k:`No ano · jan a ${F.MES3[mo-1]}`,n:(dY>0?'+':'')+F.brl(dY),cor:dCor(dY),p:Y.rem?F.sgnPct(dY/Y.rem*100)+' sobre o remunerado do ano.':''}],4)}
       ${B.tabela({classe:'',style:'margin-top:14px',cols:[{t:'Pacote'},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'Δ',n:1},{t:'Δ %',n:1},{t:`Δ no ano (jan a ${F.MES3[mo-1]})`,n:1},{t:'Δ % no ano',n:1}],
@@ -671,7 +671,7 @@ function slidesFechamento(){
     B.bloco('ponte');
     { const PD=ponteDe(doMes), sobe=PD.st.filter(x=>x.d>0).sort((a,b)=>b.d-a.d)[0], desce=PD.st.filter(x=>x.d<0).sort((a,b)=>a.d-b.d)[0];
     B.slide(`${B.head('Ponte do custo',`${Mes}: do remunerado ao realizado, conta a conta`,'Cada barra do meio é o realizado menos o remunerado de uma conta: vermelha quando gastou mais, verde quando gastou menos.')}
-      <div style="margin-top:6px">${cascata(PD)}</div>
+      <div class="gf">${cascata(PD)}</div>
       ${B.concBlocos([{t:'Maior aumento',v:sobe?sobe.nome:'Nenhuma conta acima',s:sobe?`${F.brl(sobe.d)} acima do remunerado.`:''},{t:'Maior redução',v:desce?desce.nome:'Nenhuma conta abaixo',s:desce?`${F.brl(-desce.d)} abaixo do remunerado.`:''},
         {t:`No ano · jan a ${F.MES3[mo-1]}`,v:(dY>0?'+':'')+F.brl(dY),s:`Realizado menos remunerado${Y.rem?' ('+F.sgnPct(dY/Y.rem*100)+')':''}.`}],'Leitura',3)}`,{top:true}); }
     // 3 · um slide por pacote, aberto por projeto e por conta
@@ -1047,6 +1047,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611241130"></script>
+<script src="../assets/build-check.js?v=202611241430"></script>
 </body>
 </html>
