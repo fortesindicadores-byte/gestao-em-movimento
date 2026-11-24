@@ -12,7 +12,7 @@ Versão aprovada em 24/11/2026.
 | --- | --- | --- |
 | Apache ECharts | `echarts@5.5.1` (jsDelivr) | Licença Apache 2.0, uso comercial livre, sem logo |
 | Plugin liquid-fill | `echarts-liquidfill@3.1.0` (jsDelivr) | Só nas páginas que usam o "tanque" |
-| Fonte | Inter 400 / 500 / 600 (Google Fonts) | Fallback: `system-ui, -apple-system, "Segoe UI", sans-serif` |
+| Fonte | Poppins 400 / 500 / 600 (Google Fonts) | Fallback: `system-ui, -apple-system, "Segoe UI", sans-serif` |
 | Ícones | Tabler Icons (outline) | Conferir a licença antes de usar em produto vendido |
 | Tema visual | `assets/gem-theme.css` | Variáveis CSS, claro e escuro |
 | Tema dos gráficos | `assets/gem-echarts.js` | Registra `gem-dark` e `gem-light` e expõe o objeto `GEM` |
@@ -21,7 +21,7 @@ Ordem de carregamento em toda página:
 
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/gem-theme.css">
 
 <!-- no fim do body -->

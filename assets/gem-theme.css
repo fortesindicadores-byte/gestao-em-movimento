@@ -40,7 +40,7 @@ body {
   margin: 0;
   background: var(--gem-bg);
   color: var(--gem-ink);
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: Poppins, system-ui, -apple-system, "Segoe UI", sans-serif;
   font-variant-numeric: tabular-nums;
 }
 

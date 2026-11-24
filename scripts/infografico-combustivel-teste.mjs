@@ -85,7 +85,7 @@ async function abre(browser, url, { vp = { width: 1600, height: 900 }, tema = 'd
         setTimeout(() => { if (fn && window[fn]) window[fn](resp(n.src)); }, 5); return n; }
       return ap.call(this, n); };
   }, { KML_DB, RSL, tema });
-  await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+  if (!process.env.FONTES_REAIS) await page.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));   // FONTES_REAIS=1 deixa a fonte do Google carregar (confere a largura de verdade)
   await page.route('**/cdn.jsdelivr.net/**', r => { const u = r.request().url(); const js = b => r.fulfill({ status: 200, contentType: 'application/javascript', body: b });
     if (/echarts-liquidfill/.test(u)) return js(fs.readFileSync(LIQUID, 'utf8'));
     if (/echarts@/.test(u)) return js(fs.readFileSync(ECHARTS, 'utf8'));
@@ -137,7 +137,7 @@ af('tabela com as unidades do painel e a linha Total', R.tab === OF.linhasTab &&
 af('cinco gráficos do ECharts no resumo (tanque, velocímetro, pictograma, composição, caminhões)', R.cv === 5, R.cv);
 af('pictograma com N de 0 a 10 e a escala escrita', /^\d+$/.test(R.kn) && +R.kn <= 10 && /em cada 10 caminhões abaixo do Km\/L remunerado/.test(R.kpl) && /cada caminhão = 10% da frota/.test(R.kpl), `${R.kn} · ${R.kpl}`);
 af('todo card tem rodapé com fonte e data', R.fontes.length === R.cards && R.fontes.every(f => /^Fonte: .*\d{2}\/\d{2}\/\d{4}$/.test(f)), `${R.fontes.length}/${R.cards} · ${R.fontes[0]}`);
-af('tema oficial: Inter, fundo #0F172A, data-theme', /Inter/.test(R.fonteCss) && R.bg === 'rgb(15, 23, 42)' && R.tema === 'dark', `${R.fonteCss.slice(0, 20)} · ${R.bg} · ${R.tema}`);
+af('tema oficial: Poppins, fundo #0F172A, data-theme', /Poppins/.test(R.fonteCss) && R.bg === 'rgb(15, 23, 42)' && R.tema === 'dark', `${R.fonteCss.slice(0, 20)} · ${R.bg} · ${R.tema}`);
 af('subtítulo com o mês e a data', /Resumo de out\/2026/.test(R.sub) && /atualizado em \d{2}\/\d{2}\/\d{4}/.test(R.sub) && /dados até 31\/10\/2026/.test(R.sub), R.sub);
 af('sem erro de página', nv.errs.length === 0, nv.errs.join(' | '));
 

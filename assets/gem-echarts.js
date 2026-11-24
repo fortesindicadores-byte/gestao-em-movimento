@@ -13,7 +13,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  var FONTE = 'Inter, system-ui, -apple-system, "Segoe UI", sans-serif';
+  var FONTE = 'Poppins, system-ui, -apple-system, "Segoe UI", sans-serif';
   var PAL = {
     dark: { bg: '#0F172A', card: '#1E293B', ink: '#FFFFFF', muted: '#94A3B8', line: '#334155', off: '#334155',
       primary: '#F97316', secondary: '#FDBA74', accent: '#FB923C', target: '#94A3B8',
