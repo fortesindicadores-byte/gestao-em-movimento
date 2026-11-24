@@ -116,6 +116,8 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
     x.drawImage(img, R.x - (w - R.w) * (fx == null ? .5 : fx), R.y - (h - R.h) * (fy == null ? .5 : fy), w, h);
   }
   // o selo do portal (o quadrado laranja com a linha de tendência do hub) + "Gestão em Movimento"
+  // barra laranja do rodapé (capa, sumário e encerramento)
+  function barra(x) { const g = x.createLinearGradient(0, 0, 1280, 0); g.addColorStop(0, LAR); g.addColorStop(.5, LAR); g.addColorStop(.86, '#FDBA4D'); g.addColorStop(1, '#FDE08A'); x.fillStyle = g; x.fillRect(0, 709, 1280, 11); }
   function selo(x, X, Y) {
     x.save(); x.fillStyle = LAR; x.beginPath(); rr(x, X, Y, 30, 30, 8); x.fill();
     x.strokeStyle = '#fff'; x.lineWidth = 2.6; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(X + 7, Y + 21); x.lineTo(X + 13, Y + 14); x.lineTo(X + 18, Y + 18); x.lineTo(X + 24, Y + 9); x.stroke();
@@ -143,14 +145,14 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
       // foto deitada (a do cavalo de Piraí): entra 200 px à direita, para a cabine ficar fora do texto (o véu é opaco nesse trecho); foto em pé cobre a página
       const deitada = img.width / img.height > 1.4, poe = x => { if (deitada) { const w = img.width * 720 / img.height; x.drawImage(img, 200, 0, w, 720); } else cobre(x, img, T, .5, .42); };
       // capa: a foto inteira, o texto à esquerda sobre o véu
-      let [c1, x] = tela(); poe(x); veu(x); selo(x, 84, 636); marca(x, 1196);
+      let [c1, x] = tela(); poe(x); veu(x); selo(x, 84, 636); marca(x, 1196); barra(x);
       // sumário: grafite, a foto num painel só, de cantos arredondados, à direita
       let [c2, x2] = tela();
       x2.save(); x2.beginPath(); rr(x2, 884, 48, 348, 624, 26); x2.clip(); cobre(x2, img, { x: 884, y: 48, w: 348, h: 624 }, deitada ? .25 : .5, .42);
       const g2 = x2.createLinearGradient(0, 380, 0, 672); g2.addColorStop(0, 'rgba(13,14,17,0)'); g2.addColorStop(1, 'rgba(13,14,17,.7)'); x2.fillStyle = g2; x2.fillRect(884, 380, 348, 292); x2.restore();
-      selo(x2, 84, 636); marca(x2, 836);
+      selo(x2, 84, 636); marca(x2, 836); barra(x2);
       // encerramento: a mesma foto, mais escura
-      let [c3, x3] = tela(); poe(x3); veu(x3, true); selo(x3, 84, 636); marca(x3, 1196);
+      let [c3, x3] = tela(); poe(x3); veu(x3, true); selo(x3, 84, 636); marca(x3, 1196); barra(x3);
       return { capa: sai(c1), sum: sai(c2), fim: sai(c3) };
     })().catch(e => { console.warn('Arte da apresentação indisponível:', e); delete _fundos[src]; return null; });
   }
