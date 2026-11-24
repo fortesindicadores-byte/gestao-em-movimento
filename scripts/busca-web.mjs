@@ -2,8 +2,10 @@
 // liberada, link de compartilhamento do OneDrive). Dois modos:
 //   pagina  → lê a página, lista as imagens (img, link, meta, srcset, CSS url(),
 //             SVG inline) e baixa as que casam com o filtro. Conteúdo público.
-//   arquivo → baixa o arquivo de cada link (OneDrive: tenta a API de shares e o
-//             download=1). O workflow cifra antes de publicar.
+//   arquivo → baixa o arquivo de cada link de compartilhamento (OneDrive pessoal:
+//             API de shares; SharePoint/OneDrive da empresa: download=1 com
+//             cookies). Imagem ou zip (o zip é aberto aqui). O workflow cifra
+//             antes de publicar e parte em pedaços o que passa de 90 MB.
 // Saída em BUSCA_DIR. O log mostra host, status e tamanho; nunca o link inteiro.
 import fs from 'node:fs'; import path from 'node:path';
 const MODO = process.env.BUSCA_MODO || 'pagina', URLS = (process.env.BUSCA_URL || '').split(/[\s,]+/).filter(Boolean);
@@ -40,20 +42,30 @@ if (MODO === 'pagina') {
   }
   console.log(`\n${n} arquivo(s) baixado(s) em ${DIR}`);
 } else {
+  // curl com pote de cookies: o link anônimo do SharePoint grava um cookie no 1º salto e só entrega o arquivo com ele
+  const { execFileSync } = await import('node:child_process');
+  const baixa = (u, dest) => { const jar = path.join(DIR, '.jar'); try { fs.rmSync(dest, { force: true }); const o = execFileSync('curl', ['-sS', '-L', '--max-time', '1500', '--retry', '2', '-A', UA['user-agent'], '-c', jar, '-b', jar, '-D', dest + '.h', '-o', dest, '-w', '%{http_code}\t%{content_type}\t%{url_effective}', u], { encoding: 'utf8' }).split('\t');
+      let cd = ''; try { cd = (fs.readFileSync(dest + '.h', 'utf8').match(/content-disposition:[^\n]*filename\*?=(?:UTF-8'')?"?([^";\r\n]+)/i) || [])[1] || ''; } catch (e) {}
+      return { st: +o[0], ct: o[1], fin: o[2], nome: cd }; } finally { fs.rmSync(dest + '.h', { force: true }); fs.rmSync(jar, { force: true }); } };
+  const tipo = f => { const fd = fs.openSync(f, 'r'), b = Buffer.alloc(16); fs.readSync(fd, b, 0, 16, 0); fs.closeSync(fd); const h = b.toString('hex');
+    return h.startsWith('89504e47') ? '.png' : h.startsWith('ffd8ff') ? '.jpg' : h.startsWith('504b0304') ? '.zip' : b.subarray(0, 4).toString() === 'RIFF' ? '.webp' : b.subarray(4, 8).toString() === 'ftyp' ? '.heic' : /^(49492a00|4d4d002a)/.test(h) ? '.tif' : ''; };
   let ok = 0;
   for (let i = 0; i < URLS.length; i++) { const u = URLS[i], tent = [];
     const b64 = 'u!' + Buffer.from(u).toString('base64').replace(/=+$/, '').replace(/\//g, '_').replace(/\+/g, '-');
-    tent.push(['API de shares', `https://api.onedrive.com/v1.0/shares/${b64}/root/content`]);
-    let fin = ''; try { const r = await pega(u, { ms: 30000 }); fin = r.url; } catch (e) {}
-    if (fin) tent.push(['link final + download=1', fin + (fin.includes('?') ? '&' : '?') + 'download=1']);
+    if (/1drv\.ms|onedrive\.live\.com/i.test(u)) tent.push(['API de shares', `https://api.onedrive.com/v1.0/shares/${b64}/root/content`]);
     tent.push(['link + download=1', u + (u.includes('?') ? '&' : '?') + 'download=1'], ['link direto', u]);
-    let feito = false;
-    for (const [nome, t] of tent) { try { const r = await pega(t, { ms: 600000 }), b = Buffer.from(await r.arrayBuffer());
-        console.log(`arquivo ${i + 1} · ${nome} · ${host(r.url)} · HTTP ${r.status} · ${(b.length / 1e6).toFixed(1)} MB · ${r.headers.get('content-type')}`);
-        if (r.ok && ehImg(b) && b.length > 20000) { const cd = r.headers.get('content-disposition') || '', nm = (cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)/i) || [])[1];
-          const f = String(i + 1).padStart(2, '0') + '_' + (nm ? decodeURIComponent(nm).replace(/[^\w.\-]+/g, '_') : 'arquivo' + (b.subarray(0, 4).toString('hex') === '89504e47' ? '.png' : '.jpg'));
-          fs.writeFileSync(path.join(DIR, f), b); console.log(`  guardado ${f}`); feito = true; ok++; break; } } catch (e) { console.log(`arquivo ${i + 1} · ${nome} · falhou (${e.message})`); } }
-    if (!feito) console.log(`::warning::arquivo ${i + 1}: nenhum caminho devolveu uma imagem`);
+    let feito = false; const tmp = path.join(DIR, '.baixando');
+    for (const [nome, t] of tent) { try { const r = baixa(t, tmp), tam = fs.existsSync(tmp) ? fs.statSync(tmp).size : 0, ext = tam > 20000 ? tipo(tmp) : '';
+        console.log(`arquivo ${i + 1} · ${nome} · ${host(r.fin)} · HTTP ${r.st} · ${(tam / 1e6).toFixed(1)} MB · ${r.ct}${ext ? ' · ' + ext : ''}`);
+        if (r.st === 200 && ext) { let nm = ''; try { nm = decodeURIComponent(r.nome); } catch (e) { nm = r.nome; }
+          const f = String(i + 1).padStart(2, '0') + '_' + (nm ? nm.replace(/[^\w.\-]+/g, '_') : 'arquivo' + ext), dest = path.join(DIR, f); fs.renameSync(tmp, dest);
+          if (ext === '.zip') { const sub = path.join(DIR, String(i + 1).padStart(2, '0')); fs.mkdirSync(sub, { recursive: true });
+            execFileSync('unzip', ['-q', '-j', '-o', dest, '-d', sub]); fs.rmSync(dest);
+            for (const x of fs.readdirSync(sub)) { const lim = x.replace(/[^\w.\-]+/g, '_'), d2 = path.join(DIR, String(i + 1).padStart(2, '0') + '_' + lim); fs.renameSync(path.join(sub, x), d2); console.log(`  do zip: ${lim} · ${(fs.statSync(d2).size / 1e6).toFixed(1)} MB · ${tipo(d2) || 'outro tipo'}`); }
+            fs.rmdirSync(sub); } else console.log(`  guardado ${f}`);
+          feito = true; ok++; break; } } catch (e) { console.log(`arquivo ${i + 1} · ${nome} · falhou (${String(e.message).split('\n')[0].replace(/https?:\S+/g, '<link>')})`); } }
+    fs.rmSync(tmp, { force: true });
+    if (!feito) console.log(`::warning::arquivo ${i + 1}: nenhum caminho devolveu imagem nem zip (o link precisa ser "qualquer pessoa com o link")`);
   }
-  console.log(`\n${ok} de ${URLS.length} arquivo(s) baixado(s)`); if (!ok) process.exit(1);
+  console.log(`\n${ok} de ${URLS.length} link(s) baixado(s)`); if (!ok) process.exit(1);
 }

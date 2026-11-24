@@ -27,7 +27,7 @@ permissions:
 jobs:
   busca:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Apagar o branch temporário
         if: ${{ github.event.inputs.so_apagar == 'true' }}
@@ -38,12 +38,15 @@ jobs:
         if: ${{ github.event.inputs.so_apagar != 'true' }}
         with:
           node-version: '20'
+      # No modo arquivo o link não aparece no log: sai do evento e é mascarado
       - name: Buscar
         if: ${{ github.event.inputs.so_apagar != 'true' }}
-        run: node scripts/busca-web.mjs
+        run: |
+          URLS="$(jq -r '.inputs.url // ""' "$GITHUB_EVENT_PATH")"
+          if [ "$BUSCA_MODO" = "arquivo" ]; then for u in $URLS; do echo "::add-mask::$u"; done; fi
+          BUSCA_URL="$URLS" node scripts/busca-web.mjs
         env:
           BUSCA_MODO: ${{ github.event.inputs.modo }}
-          BUSCA_URL: ${{ github.event.inputs.url }}
           BUSCA_FILTRO: ${{ github.event.inputs.filtro }}
           BUSCA_DIR: /tmp/busca
       - name: Publicar
@@ -54,7 +57,10 @@ jobs:
           if [ "${{ github.event.inputs.modo }}" = "arquivo" ]; then
             openssl rand -out /tmp/k.bin 32
             for f in /tmp/busca/*; do
-              openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in "$f" -out "/tmp/pub/$(basename "$f").enc" -pass file:/tmp/k.bin
+              o="/tmp/pub/$(basename "$f").enc"
+              openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in "$f" -out "$o" -pass file:/tmp/k.bin
+              # o GitHub recusa arquivo acima de 100 MB: parte em pedaços de 90 MB (juntar com cat)
+              if [ "$(stat -c %s "$o")" -gt 94000000 ]; then split -b 90m -d "$o" "$o.parte" && rm "$o"; fi
             done
             openssl pkeyutl -encrypt -pubin -inkey "$GITHUB_WORKSPACE/scripts/analise-dump.pub.pem" \
               -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in /tmp/k.bin -out /tmp/pub/chave.enc
