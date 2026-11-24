@@ -131,8 +131,8 @@ console.log('1 · admin, GRL, com os painéis');
   const f = await slideTxt(pg, 'fca');
   ok('FCA do mês: 3 fatos, 3 ações; só o mês', f.includes('3 fatos e 3 ações') && f.includes('Programar as vencidas') && !f.includes('Combustíveis'), f.slice(0, 160));
   const C0 = await pg.evaluate(() => { const x = document.createElement('div'); x.innerHTML = DECK[0].html + DECK[1].html + DECK[DECK.length - 1].html; return { t: x.textContent.replace(/\s+/g, ' '), serifa: /class="ser"/.test(x.innerHTML), ak: x.querySelectorAll('.ak').length }; });
-  ok('capa: título, unidade e mês; sumário com os blocos; encerramento', /Reunião Mensal/.test(C0.t) && /CDD Guarulhos/.test(C0.t) && /Outubro/.test(C0.t) && /Sumário/.test(C0.t) && /03\s*Resultado do mês/.test(C0.t) && /Dispersão de km/.test(C0.t) && /Obrigado!/.test(C0.t), C0.t.slice(0, 200));
-  ok('arte própria: Montserrat com o selo do portal, sem serifa', !C0.serifa && C0.ak >= 2);
+  ok('capa: título, unidade e mês; sumário com os blocos; encerramento', /Reunião Mensal/.test(C0.t) && /CDD Guarulhos/.test(C0.t) && /Outubro/.test(C0.t) && /Sumário/.test(C0.t) && /01\s*Resultado do mês\s*pág\. 3/.test(C0.t) && /Dispersão de km/.test(C0.t) && /Obrigado!/.test(C0.t), C0.t.slice(0, 200));
+  ok('arte própria: Montserrat, sem serifa', !C0.serifa && C0.ak >= 1);
   ok('número da página no rodapé = posição no deck', await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; const s = [...d.querySelectorAll('.slide')]; return s.every((x, i) => { const f = x.querySelector('.foot span:last-child'); return !f || f.textContent.trim() === String(i + 1); }); }));
   ok('botões Gerar PDF e Gerar PPT no topo e nos atalhos', await pg.evaluate(() => !!document.getElementById('btPdf') && !!document.getElementById('btPpt') && !!document.getElementById('btPdf2') && document.getElementById('btPpt2').textContent.trim() === 'Gerar PPT' && typeof ApresBase.pptx === 'function'));
   // tirar um bloco
@@ -152,7 +152,7 @@ console.log('1 · admin, GRL, com os painéis');
   ok('o título da capa acompanha o campo', await pg.evaluate(() => /Fechamento de Outubro/.test(DECK[0].html)));
   // navegar e apresentar
   await pg.click('.sq[data-id="desvios"]'); await pg.waitForTimeout(100);
-  const vis = await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; return [...d.querySelectorAll('.slide')].filter(s => s.style.display !== 'none').map(s => s.textContent.replace(/\s+/g, ' ').slice(0, 30)); });
+  const vis = await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; return [...d.querySelectorAll('.slide')].filter(s => s.style.display !== 'none').map(s => (s.dataset.sk || '') + ' · ' + (s.querySelector('h2') || s).textContent.replace(/\s+/g, ' ').slice(0, 40)); });
   ok('clicar no bloco mostra o slide dele na prévia (um só à vista)', vis.length === 1 && /Maiores desvios/.test(vis[0]), vis.join(' | '));
   await pg.evaluate(() => apresentar()); await pg.waitForTimeout(400); await pg.keyboard.press('ArrowRight'); await pg.keyboard.press('ArrowRight'); await pg.keyboard.press('ArrowLeft'); await pg.waitForTimeout(100);
   const sh = await pg.evaluate(() => ({ on: document.getElementById('show').classList.contains('on'), c: document.getElementById('showC').textContent, um: [...document.getElementById('showF').contentDocument.querySelectorAll('.slide')].filter(s => s.style.display !== 'none').length }));

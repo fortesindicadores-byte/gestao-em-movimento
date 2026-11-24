@@ -49,86 +49,94 @@
     VERDE, AMAR, VERM, INK, INK2, INK3, PALE
   };
 
-  /* VISÃO EXECUTIVA (Renan, 24/11/2026: "apagado, feio… olhe nossos painéis, meu nível de exigência").
-     Fundo cinza claro, cartões brancos com sombra, tabela dentro de cartão (cabeçalho sem fundo, total
-     em faixa), a leitura numa faixa escura e a barra laranja no pé. Todo tamanho do miolo é multiplicado
+  /* VISÃO INFOGRÁFICO (Renan, 24/11/2026: "vou manter apenas a visão infográfico", com dois decks de
+     referência de infográfico executivo → escolheu o acabamento B: "Vamos construir assim e vamos melhorando").
+     Página clara com a faixa grafite em cima (Conlog · Gestão em Movimento | o selo do deck), o número e o
+     nome da seção na lateral esquerda (em pé), o título que diz a conclusão e os cartões brancos com contorno
+     e o topo grafite (os escuros com o topo laranja). Barra laranja no pé. Todo tamanho do miolo é multiplicado
      por --k, que o ajuste do fim do documento escolhe por slide: o maior que cabe (o slide não fica
      vazio nem estoura). */
-  const css = acc => `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+  const CINK = '#16212B';
+  const css = acc => `@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:#fff}
-body{font-family:'Montserrat',Arial,sans-serif;color:${INK};font-size:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.slide{--k:1;--v:1;width:1280px;height:720px;position:relative;overflow:hidden;background:#ECEEF1;padding:44px 64px 62px;display:flex;flex-direction:column;justify-content:flex-start}
+body{font-family:'Montserrat',Arial,sans-serif;color:${CINK};font-size:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.slide{--k:1;--v:1;width:1280px;height:720px;position:relative;overflow:hidden;background:#F5F6F8;padding:62px 64px 46px 110px;display:flex;flex-direction:column;justify-content:flex-start}
 .slide>*{flex:0 0 auto}
-.slide:not(.arte)::after{content:'';position:absolute;left:0;right:0;bottom:0;height:8px;background:linear-gradient(90deg,#F97316 0%,#F97316 50%,#FDBA4D 86%,#FDE08A 100%)}
-.slide.dark{background:radial-gradient(70% 90% at 85% 10%,${acc}29,transparent 60%),#0F1216;color:#F4F5F7;justify-content:center}
-.slide.capa{background-size:cover;background-position:center right}
-.kicker{font-size:10.5px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;color:${INK3};margin-bottom:9px;display:flex;align-items:center;gap:10px}
-.kicker::before{content:'';width:9px;height:9px;border-radius:3px;background:${acc};flex:0 0 auto}
-.slide.dark .kicker{color:#A9B4C0}
+.slide::after{content:'';position:absolute;left:0;right:0;bottom:0;height:8px;background:linear-gradient(90deg,#F97316 0%,#F97316 55%,#FDBA4D 88%,#FDE08A 100%);z-index:5}
+.slide.dark{background:#121A21;color:#F4F5F7;justify-content:center;padding:62px 90px 46px}
+.topo{position:absolute;left:0;right:0;top:0;height:34px;background:${CINK};color:#C9D1D9;display:flex;align-items:center;justify-content:space-between;gap:30px;padding:0 64px 0 110px;font-size:9.5px;font-weight:600;letter-spacing:2px;text-transform:uppercase;white-space:nowrap}
+.topo b{color:#fff;font-weight:800}
+.topo span:last-child{overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
+.topo i{width:7px;height:7px;border-radius:50%;background:${acc};flex:0 0 auto}
+.lat{position:absolute;left:0;top:34px;bottom:8px;width:78px;display:flex;flex-direction:column;align-items:center;padding-top:30px}
+.lat .num{font-size:15px;font-weight:800;color:${CINK};position:relative;padding-left:12px}
+.lat .num::before{content:'';position:absolute;left:0;top:-2px;width:4px;height:24px;background:${acc};border-radius:2px}
+.lat .rot{writing-mode:vertical-rl;transform:rotate(180deg);font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#9AA4AF;margin-top:22px;white-space:nowrap;max-height:560px;overflow:hidden;text-overflow:ellipsis}
+.kicker{display:none}
+.slide.dark .kicker{display:block;font-size:12px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:${acc};margin-bottom:14px}
 h1{font-size:42px;font-weight:800;line-height:1.1;letter-spacing:-.8px}
 .slide.dark h1{color:#fff}
-h2{font-size:28px;font-weight:800;line-height:1.15;letter-spacing:-.6px;margin-bottom:5px;color:${INK}}
+h2{font-size:27px;font-weight:800;line-height:1.15;letter-spacing:-.6px;margin-bottom:5px;color:${CINK}}
 p{font-size:14.5px;line-height:1.55;color:${INK2}}
 .slide.dark p{color:#B9C0CA}
-.sub{font-size:13.5px;color:${INK2};margin:0;max-width:1010px}
-.selo{position:absolute;top:42px;right:64px;display:flex;align-items:center;gap:8px;background:${INK};color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.5px;padding:7px 13px;border-radius:999px;white-space:nowrap}
-.selo i{width:7px;height:7px;border-radius:50%;background:${acc}}
-.hd{padding-right:230px}
-.corpo{flex:1 1 0;min-height:0;display:flex;flex-direction:column;gap:calc(13px*var(--k)*var(--v));margin-top:16px}
+.sub{font-size:13px;color:#6B7480;margin:0;max-width:1040px}
+.corpo{flex:1 1 0;min-height:0;display:flex;flex-direction:column;gap:calc(14px*var(--k)*var(--v));margin-top:18px}
 .corpo>*{flex:0 0 auto;margin-top:0!important}
-.foot{position:absolute;left:64px;right:64px;bottom:24px;display:flex;justify-content:space-between;font-size:10.5px;color:${INK3};letter-spacing:.4px}
-.slide.dark .foot{color:#6B7683}
+.foot{position:absolute;left:110px;right:64px;bottom:20px;display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:#9AA4AF;letter-spacing:.6px}
+.foot span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80%}
+.slide.dark .foot{color:#6B7683;left:90px}
 .note{font-size:calc(11px*var(--k));color:${INK2};line-height:1.4}
-.tb{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(15,26,32,.07);padding:calc(5px*var(--k)) calc(16px*var(--k)) calc(8px*var(--k));min-width:0}
+.tb,.card,.gf,.passo{background:#fff;border:1px solid #DCE1E7;border-top:5px solid ${CINK};border-radius:6px;box-shadow:0 12px 28px -10px rgba(22,33,43,.18)}
+.tb{padding:calc(4px*var(--k)) calc(16px*var(--k)) calc(8px*var(--k));min-width:0}
 table{--t:1;width:100%;border-collapse:collapse;font-size:calc(13px*var(--k)*var(--t));table-layout:auto}
 table.compacta{--t:.94} table.densa{--t:.86}
-table th{text-align:left;padding:calc(10px*var(--k)*var(--t)*var(--v)) calc(9px*var(--k)*var(--t)) calc(8px*var(--k)*var(--t)*var(--v));white-space:nowrap;color:${INK3};font-size:calc(9.5px*var(--k)*var(--t));font-weight:700;letter-spacing:.9px;text-transform:uppercase;border-bottom:1.5px solid #CDD3DB}
-table td{padding:calc(7px*var(--k)*var(--t)*var(--v)) calc(9px*var(--k)*var(--t));white-space:nowrap;border-bottom:1px solid #EBEEF1;color:${INK};font-weight:500}
+table th{text-align:left;padding:calc(10px*var(--k)*var(--t)*var(--v)) calc(9px*var(--k)*var(--t)) calc(8px*var(--k)*var(--t)*var(--v));white-space:nowrap;color:#8A94A2;font-size:calc(9.5px*var(--k)*var(--t));font-weight:700;letter-spacing:.9px;text-transform:uppercase;border-bottom:1.5px solid #CDD3DB}
+table td{padding:calc(7px*var(--k)*var(--t)*var(--v)) calc(9px*var(--k)*var(--t));white-space:nowrap;border-bottom:1px solid #EBEEF1;color:${CINK};font-weight:500}
 table td:first-child{font-weight:700}
 table tr:last-child td{border-bottom:0}
 td.n,th.n{text-align:right} td.w,th.w{white-space:normal}
 td.c,th.c{text-align:center}
-tr.sep td{background:#EEF0F3;font-weight:800;border-bottom:0}
-tr.sep td:first-child{border-radius:9px 0 0 9px} tr.sep td:last-child{border-radius:0 9px 9px 0}
-.cards{display:grid;gap:calc(12px*var(--k))}
-.card{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(15,26,32,.07);padding:calc(15px*var(--k)*min(var(--v),1.3)) calc(18px*var(--k));min-width:0}
-.card .k{font-size:calc(10px*var(--k));font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:${INK3};margin-bottom:calc(6px*var(--k))}
-.card .n{font-size:calc(30px*var(--k));font-weight:800;letter-spacing:-.9px;line-height:1.05;color:${INK};white-space:nowrap} .card .n small{font-size:.45em;font-weight:700;letter-spacing:0}
-.card p{font-size:calc(11.5px*var(--k));line-height:1.45;color:${INK2};margin-top:calc(6px*var(--k))}
-.card.esc{background:${INK};box-shadow:0 10px 26px rgba(15,26,32,.22)} .card.esc .k{color:#93A0AE} .card.esc .n{color:#fff} .card.esc p{color:#B9C2CC}
-.conc,.concb{background:${INK};border-radius:16px;padding:calc(14px*var(--k)*min(var(--v),1.4)) calc(20px*var(--k)) calc(15px*var(--k)*min(var(--v),1.4));box-shadow:0 10px 26px rgba(15,26,32,.18)}
-.lbl{font-size:calc(10px*var(--k));font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${INK2}}
-.conc .lbl,.concb .lbl{color:#93A0AE}
+tr.sep td{background:#EEF0F3;font-weight:800;border-top:1.5px solid #CDD3DB;border-bottom:0}
+.cards{display:grid;gap:calc(14px*var(--k))}
+.card{padding:calc(14px*var(--k)*min(var(--v),1.3)) calc(18px*var(--k));min-width:0}
+.card .k{font-size:calc(10px*var(--k));font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#8A94A2;margin-bottom:calc(6px*var(--k))}
+.card .n{font-size:calc(30px*var(--k));font-weight:800;letter-spacing:-.9px;line-height:1.05;color:${CINK};white-space:nowrap} .card .n small{font-size:.45em;font-weight:700;letter-spacing:0}
+.card p{font-size:calc(11.5px*var(--k));line-height:1.45;color:#6B7480;margin-top:calc(6px*var(--k))}
+.card.esc,.conc,.concb{background:linear-gradient(155deg,#223140 0%,${CINK} 60%);border:1px solid #2F3F4E;border-top:5px solid ${acc};border-radius:6px;box-shadow:0 16px 34px -12px rgba(22,33,43,.45)}
+.card.esc .k{color:#93A0AE} .card.esc .n{color:#fff} .card.esc p{color:#B9C2CC}
+.conc,.concb{padding:calc(13px*var(--k)*min(var(--v),1.4)) calc(20px*var(--k)) calc(14px*var(--k)*min(var(--v),1.4))}
+.lbl{font-size:calc(10px*var(--k));font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#8A94A2}
+.conc .lbl,.concb .lbl{color:${acc}}
 .conc .lbl{margin-bottom:calc(4px*var(--k))} .conc p{font-size:calc(12.5px*var(--k));line-height:1.5;color:#EEF1F5}
 .concb .lbl{margin-bottom:calc(8px*var(--k))} .concb .cb{display:grid;gap:calc(10px*var(--k)) calc(22px*var(--k))}
 .concb .t{font-size:calc(10px*var(--k));font-weight:700;color:#93A0AE;text-transform:uppercase;letter-spacing:.8px}
 .concb .v{font-size:calc(19px*var(--k));font-weight:800;color:#fff;line-height:1.15;margin:calc(3px*var(--k)) 0;letter-spacing:-.3px}
 .concb .s{font-size:calc(11.5px*var(--k));line-height:1.42;color:#B9C2CC}
-.passos{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(15,26,32,.07);padding:calc(8px*var(--k)) calc(12px*var(--k))}
-.passo{display:flex;align-items:center;gap:calc(18px*var(--k));padding:calc(11px*var(--k)*var(--v)) calc(14px*var(--k));border-top:1px solid #EBEEF1}
-.passo:first-child{border-top:0;background:${INK};border-radius:12px} .passo:first-child+.passo{border-top:0}
-.passo .pn{font-size:calc(26px*var(--k));font-weight:800;letter-spacing:-1px;color:#C5CCD5;width:calc(40px*var(--k));flex:0 0 auto}
-.passo:first-child .pn{color:${acc}}
-.passo .pb{flex:1;min-width:0}
-.passo .pt{font-size:calc(10px*var(--k));font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:${INK3}}
-.passo .pv{font-size:calc(16px*var(--k));font-weight:800;color:${INK};letter-spacing:-.2px;margin:calc(1px*var(--k)) 0 calc(2px*var(--k))}
-.passo .ps{font-size:calc(11.5px*var(--k));color:${INK2};line-height:1.4}
-.passo:first-child .pt{color:#93A0AE} .passo:first-child .pv{color:#fff} .passo:first-child .ps{color:#B9C2CC}
-.gf{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(15,26,32,.07);padding:14px 18px;min-width:0}
+.passos{display:grid;gap:calc(14px*var(--k))}
+.passo{padding:calc(14px*var(--k)*min(var(--v),1.4)) calc(16px*var(--k));min-width:0;display:flex;flex-direction:column}
+.passo .pn{width:calc(36px*var(--k));height:calc(36px*var(--k));border-radius:50%;background:${CINK};color:#fff;font-size:calc(13px*var(--k));font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:calc(10px*var(--k))}
+.passo:first-child .pn{background:${acc}}
+.passo .pt{font-size:calc(10px*var(--k));font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#8A94A2}
+.passo .pv{font-size:calc(16px*var(--k));font-weight:800;color:${CINK};letter-spacing:-.2px;margin:calc(2px*var(--k)) 0 calc(4px*var(--k));line-height:1.2}
+.passo .ps{font-size:calc(11.5px*var(--k));color:#6B7480;line-height:1.42}
+.gf{padding:14px 18px;min-width:0}
 .gf svg{display:block;max-width:100%;height:auto;margin:0 auto}
 .corpo>.gf{flex:1 1 0;min-height:190px;position:relative}
 .corpo>.gf>svg{position:absolute;left:18px;top:14px;width:calc(100% - 36px);height:calc(100% - 28px);max-width:none}
 .duas{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:calc(18px*var(--k));align-items:start}
-.slide.arte{padding:0;background-color:#0D0E11;background-size:cover;background-position:center;color:#fff;display:block}
-.arte .ak{font-size:13px;font-weight:700;letter-spacing:3.2px;text-transform:uppercase;color:${acc}}
-.arte .at{font-weight:800;line-height:1.04;letter-spacing:-1.4px;margin-top:14px;color:#fff}
-.arte .ab{width:76px;height:5px;border-radius:3px;background:${acc};margin:26px 0 22px}
-.arte .as{font-size:22px;font-weight:700;color:#fff;margin-bottom:6px}
-.arte .per{font-size:16px;font-weight:500;color:#C9CED6;letter-spacing:.2px}
-.arte .si{display:flex;align-items:baseline;gap:22px;padding:8px 0 7px;border-bottom:1px solid rgba(255,255,255,.17);font-size:14.5px;color:#fff;white-space:nowrap;overflow:hidden}
-.arte .si b{font-size:18px;font-weight:800;color:${acc};min-width:28px;font-variant-numeric:tabular-nums}
-.arte .si span{overflow:hidden;text-overflow:ellipsis}`;
+.slide.arte{padding:0;background-color:#121A21;background-size:cover;background-position:center;color:#fff;display:block}
+.arte .ak{font-size:12px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:${acc}}
+.arte .at{font-weight:900;line-height:.98;letter-spacing:-2px;color:#fff;text-transform:uppercase}
+.arte .at2{font-weight:300;line-height:1.02;letter-spacing:-1.4px;color:#C9D1D9;margin-top:4px}
+.arte .ab{width:64px;height:5px;border-radius:2px;background:${acc};margin:24px 0 20px}
+.arte .as{font-size:17px;font-weight:600;color:#fff;margin-top:22px}
+.arte .per{font-size:12.5px;font-weight:500;color:#AEB8C2;letter-spacing:.2px}
+.arte .si{display:flex;align-items:center;gap:26px;border-bottom:1px solid #2A3845;color:#fff;white-space:nowrap;overflow:hidden}
+.arte .si b{font-weight:300;color:${acc};flex:0 0 auto}
+.arte .si span{font-weight:700;overflow:hidden;text-overflow:ellipsis;flex:1;letter-spacing:-.2px}
+.arte .si em{font-style:normal;font-size:12px;font-weight:600;color:#7D8A97;flex:0 0 auto}
+.arte .sn{font-weight:300;color:${acc};line-height:1}`;
 
   // ── documento: as páginas na ordem, com o número pela posição ──
   // o ajuste: por slide, o maior --k (letra, de 1,5 a 0,7) em que o miolo cabe na altura e nenhuma tabela ou cartão passa da largura;
@@ -138,84 +146,89 @@ var cabe=function(){if(c.scrollHeight>c.clientHeight+1)return false;var f=c.chil
 s.style.setProperty('--v','1');for(var k=150;k>=70;k-=5){s.style.setProperty('--k',(k/100).toFixed(2));if(cabe())break;}
 for(var v=22;v>=10;v--){s.style.setProperty('--v',(v/10).toFixed(1));if(cabe())break;}s.style.display=d;}}
 window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(aj);window.addEventListener('load',aj);})();<\/script>`;
-  const docDe = ({ acc, titulo, paginas }) => `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${f.esc(titulo || 'Apresentação')}</title><style>${css(acc || '#F97316')}</style></head><body>${paginas.map((h, i) => h.replace(/§PG§/g, String(i + 1))).join('\n')}${AJUSTE}</body></html>`;
+  // o número da lateral: com divisórias de seção, o número da seção; sem elas, a ordem do assunto (a mesma do sumário)
+  const numera = paginas => { const temSec = paginas.some(h => /class="slide[^"]*\bsec\b/.test(h)); let n = 0, ult = null;
+    return paginas.map(h => { if (/class="slide[^"]*\bsec\b/.test(h)) n++; else if (!temSec && h.indexOf('§SN§') >= 0) { const k = (h.match(/data-sk="([^"]*)"/) || [])[1] || ''; if (k !== ult) { n++; ult = k; } }
+      return h.replace(/§SN§/g, String(Math.max(n, 1)).padStart(2, '0')); }); };
+  const docDe = ({ acc, titulo, paginas }) => `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${f.esc(titulo || 'Apresentação')}</title><style>${css(acc || '#F97316')}</style></head><body>${numera(paginas).map((h, i) => h.replace(/§PG§/g, String(i + 1))).join('\n')}${AJUSTE}</body></html>`;
 
-  /* ── ARTE: capa, sumário e encerramento (Renan, 23/11/2026, vendo as apresentações do FP&A:
-     "gostei da capa e do sumário"). A foto entra em TIRAS com cantos arredondados e filete laranja,
-     sobre preto, com a barra laranja no rodapé. Tudo o que é desenho (foto, tiras, marca, barra) é
-     pintado num canvas e vira o fundo do slide: o html2canvas só precisa pôr o texto por cima. ── */
+  /* ── ARTE: capa, sumário, divisória e encerramento (visão Infográfico, 24/11/2026, no desenho das
+     referências que o Renan mandou): grafite, a foto num quadro à direita com um bloco grafite por cima,
+     o logo oficial da Conlog no alto à esquerda e a barra laranja no pé. Tudo o que é desenho (foto, blocos,
+     marca, barra) é pintado num canvas e vira o fundo do slide: o html2canvas só põe o texto por cima. ── */
   const FOTO = (() => { try { return new URL('img/capa-frota.jpg', document.currentScript.src).href; } catch (e) { return ''; } })();
   // o logo oficial da Conlog (do site da empresa), em branco para fundo escuro
   const LOGO = (() => { try { return new URL('img/logo-conlog-branco.png', document.currentScript.src).href; } catch (e) { return ''; } })();
-  const LAR = '#F97316';
-  function rr(x, X, Y, W, H, r) { r = Math.min(r, W / 2, H / 2); x.moveTo(X + r, Y); x.arcTo(X + W, Y, X + W, Y + H, r); x.arcTo(X + W, Y + H, X, Y + H, r); x.arcTo(X, Y + H, X, Y, r); x.arcTo(X, Y, X + W, Y, r); x.closePath(); }
+  const LAR = '#F97316', FUNDO_ESC = '#121A21', BLOCO = '#243341';
   function cobre(x, img, R, fx, fy) {              // a foto cobrindo a região R, com o foco em (fx, fy)
+    x.save(); x.beginPath(); x.rect(R.x, R.y, R.w, R.h); x.clip();
     const e = Math.max(R.w / img.width, R.h / img.height), w = img.width * e, h = img.height * e;
-    x.drawImage(img, R.x - (w - R.w) * (fx == null ? .5 : fx), R.y - (h - R.h) * (fy == null ? .5 : fy), w, h);
+    x.drawImage(img, R.x - (w - R.w) * (fx == null ? .5 : fx), R.y - (h - R.h) * (fy == null ? .5 : fy), w, h); x.restore();
   }
-  // o selo do portal (o quadrado laranja com a linha de tendência do hub) + "Gestão em Movimento"
-  // barra laranja do rodapé (capa, sumário e encerramento)
-  function barra(x) { const g = x.createLinearGradient(0, 0, 1280, 0); g.addColorStop(0, LAR); g.addColorStop(.5, LAR); g.addColorStop(.86, '#FDBA4D'); g.addColorStop(1, '#FDE08A'); x.fillStyle = g; x.fillRect(0, 709, 1280, 11); }
-  function selo(x, X, Y) {
-    x.save(); x.fillStyle = LAR; x.beginPath(); rr(x, X, Y, 30, 30, 8); x.fill();
-    x.strokeStyle = '#fff'; x.lineWidth = 2.6; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(X + 7, Y + 21); x.lineTo(X + 13, Y + 14); x.lineTo(X + 18, Y + 18); x.lineTo(X + 24, Y + 9); x.stroke();
-    x.fillStyle = '#fff'; x.font = '700 15px Montserrat,Arial,sans-serif'; x.textBaseline = 'middle'; x.fillText('Gestão em Movimento', X + 42, Y + 16); x.restore();
-  }
-  // a foto escurecida da esquerda para a direita: o texto fica sobre o escuro, a foto aparece do meio em diante
-  function veu(x, forte) {
-    const g = x.createLinearGradient(0, 0, 1280, 0); g.addColorStop(0, 'rgba(13,14,17,1)'); g.addColorStop(.17, 'rgba(13,14,17,1)'); g.addColorStop(.42, 'rgba(13,14,17,.92)'); g.addColorStop(.66, `rgba(13,14,17,${forte ? .7 : .46})`); g.addColorStop(1, `rgba(13,14,17,${forte ? .46 : .14})`);
-    x.fillStyle = g; x.fillRect(0, 0, 1280, 720);
-    const v = x.createLinearGradient(0, 470, 0, 720); v.addColorStop(0, 'rgba(13,14,17,0)'); v.addColorStop(1, 'rgba(13,14,17,.78)'); x.fillStyle = v; x.fillRect(0, 470, 1280, 250);
-  }
+  // barra laranja do rodapé
+  function barra(x) { const g = x.createLinearGradient(0, 0, 1280, 0); g.addColorStop(0, LAR); g.addColorStop(.55, LAR); g.addColorStop(.88, '#FDBA4D'); g.addColorStop(1, '#FDE08A'); x.fillStyle = g; x.fillRect(0, 712, 1280, 8); }
+  // três filetes (o "menu" das referências)
+  function filetes(x, X, Y, cor) { x.fillStyle = cor || '#5C6B79'; for (let i = 0; i < 3; i++) x.fillRect(X, Y + i * 8, 42, 2); }
   const _fundos = {};
-  /* Capa, sumário e encerramento do portal (Renan, 23/11/2026: "use como inspiração mas não copie exatamente o FP&A";
-     "Não é o conlog da empresa" sobre a marca desenhada): foto de página inteira com o véu grafite, texto em
-     Montserrat à esquerda, o selo do Gestão em Movimento embaixo. O logo da Conlog é o arquivo oficial do site (assets/img/logo-conlog-branco.png), embaixo à direita. */
   async function fundos(src) {
     src = src || FOTO; if (!src) return null; if (_fundos[src]) return _fundos[src];
     return _fundos[src] = (async () => {
       const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error('a foto da capa não carregou')); i.src = src; });
-      try { await Promise.all([document.fonts.load('800 60px Montserrat'), document.fonts.load('700 15px Montserrat')]); } catch (e) {}
+      try { await Promise.all([document.fonts.load('900 60px Montserrat'), document.fonts.load('300 60px Montserrat'), document.fonts.load('700 15px Montserrat')]); } catch (e) {}
       const logo = LOGO ? await new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = LOGO; }) : null;
-      const marca = (x, dir) => { if (!logo) return; const h = 30, w = logo.width * h / logo.height; x.drawImage(logo, dir - w, 636, w, h); };   // encostada à direita, na linha do selo
-      const K = 2, tela = () => { const c = document.createElement('canvas'); c.width = 1280 * K; c.height = 720 * K; const x = c.getContext('2d'); x.scale(K, K); x.fillStyle = '#0D0E11'; x.fillRect(0, 0, 1280, 720); return [c, x]; };
+      const marca = (x, X, Y, h) => { if (!logo) return; const w = logo.width * h / logo.height; x.drawImage(logo, X, Y, w, h); };
+      const K = 2, tela = () => { const c = document.createElement('canvas'); c.width = 1280 * K; c.height = 720 * K; const x = c.getContext('2d'); x.scale(K, K); x.fillStyle = FUNDO_ESC; x.fillRect(0, 0, 1280, 720); return [c, x]; };
       const sai = c => c.toDataURL('image/jpeg', .9), T = { x: 0, y: 0, w: 1280, h: 720 };
-      // foto deitada (a do cavalo de Piraí): entra 200 px à direita, para a cabine ficar fora do texto (o véu é opaco nesse trecho); foto em pé cobre a página
-      const deitada = img.width / img.height > 1.4, poe = x => { if (deitada) { const w = img.width * 720 / img.height; x.drawImage(img, 200, 0, w, 720); } else cobre(x, img, T, .5, .42); };
-      // capa: a foto inteira, o texto à esquerda sobre o véu
-      let [c1, x] = tela(); poe(x); veu(x); selo(x, 84, 636); marca(x, 1196); barra(x);
-      // sumário: grafite, a foto num painel só, de cantos arredondados, à direita
-      let [c2, x2] = tela();
-      x2.save(); x2.beginPath(); rr(x2, 884, 48, 348, 624, 26); x2.clip(); cobre(x2, img, { x: 884, y: 48, w: 348, h: 624 }, deitada ? .25 : .5, .42);
-      const g2 = x2.createLinearGradient(0, 380, 0, 672); g2.addColorStop(0, 'rgba(13,14,17,0)'); g2.addColorStop(1, 'rgba(13,14,17,.7)'); x2.fillStyle = g2; x2.fillRect(884, 380, 348, 292); x2.restore();
-      selo(x2, 84, 636); marca(x2, 836); barra(x2);
-      // encerramento: a mesma foto, mais escura
-      let [c3, x3] = tela(); poe(x3); veu(x3, true); selo(x3, 84, 636); marca(x3, 1196); barra(x3);
-      return { capa: sai(c1), sum: sai(c2), fim: sai(c3) };
+      // capa: a foto num quadro à direita, escurecida no lado do texto, e o bloco grafite por cima
+      let [c1, x] = tela();
+      const Q = { x: 600, y: 64, w: 600, h: 460 }; cobre(x, img, Q, .5, .58);
+      const gq = x.createLinearGradient(Q.x, 0, Q.x + Q.w, 0); gq.addColorStop(0, 'rgba(18,26,33,.55)'); gq.addColorStop(.55, 'rgba(18,26,33,0)'); x.fillStyle = gq; x.fillRect(Q.x, Q.y, Q.w, Q.h);
+      x.fillStyle = 'rgba(36,51,65,.92)'; x.fillRect(440, 170, 290, 440);
+      marca(x, 84, 54, 30); filetes(x, 1158, 650); barra(x);
+      // sumário: bloco grafite à esquerda, a lista à direita
+      let [c2, x2] = tela(); x2.fillStyle = BLOCO; x2.fillRect(0, 0, 470, 720); marca(x2, 90, 54, 26); barra(x2);
+      // divisória e encerramento: a foto inteira, escura à esquerda, com o bloco grafite atrás do texto
+      const escura = (comLogo, bloco) => { const [c, xx] = tela(); cobre(xx, img, T, .5, .6);
+        const g = xx.createLinearGradient(0, 0, 1280, 0); g.addColorStop(0, 'rgba(18,26,33,.94)'); g.addColorStop(.5, 'rgba(18,26,33,.82)'); g.addColorStop(1, 'rgba(18,26,33,.55)'); xx.fillStyle = g; xx.fillRect(0, 0, 1280, 720);
+        xx.fillStyle = 'rgba(36,51,65,.85)'; xx.fillRect(bloco.x, bloco.y, bloco.w, bloco.h);
+        if (comLogo) marca(xx, 84, 54, 30); filetes(xx, 1158, 60, '#8A97A4'); barra(xx); return sai(c); };
+      return { capa: sai(c1), sum: sai(c2), div: escura(false, { x: 84, y: 232, w: 660, h: 260 }), fim: escura(true, { x: 84, y: 250, w: 560, h: 220 }) };
     })().catch(e => { console.warn('Arte da apresentação indisponível:', e); delete _fundos[src]; return null; });
   }
+  const tam = (t, faixas) => { const n = String(t || '').length; for (const [lim, px] of faixas) if (n <= lim) return px; return faixas[faixas.length - 1][1]; };
   const arte = {
-    capa: (F, { titulo, sub, periodo }) => { const n = String(titulo || '').length;
+    // capa: o título em caixa alta, pesado; a 2ª linha (período) fina; o subtítulo e a data embaixo
+    capa: (F, { titulo, sub, periodo }) => { const t = String(titulo || ''), p = String(periodo || '').replace(/\s*\|\s*/g, ' · ');
+      const hoje = new Date().toLocaleDateString('pt-BR');
       return `<div style="position:absolute;inset:0;background:url('${F.capa}') center/cover"></div>
-      <div style="position:absolute;left:84px;top:0;bottom:60px;width:640px;display:flex;flex-direction:column;justify-content:center">
-        <div class="ak">Gestão em Movimento</div>
-        <div class="at" style="font-size:${n > 34 ? 42 : n > 22 ? 52 : 64}px">${f.esc(titulo || '')}</div>
-        <div class="ab"></div>
+      <div style="position:absolute;left:84px;top:0;bottom:70px;width:1040px;display:flex;flex-direction:column;justify-content:center;padding-top:40px">
+        <div class="ak" style="margin-bottom:18px">Gestão em Movimento</div>
+        <div class="at" style="font-size:${tam(t, [[10, 86], [14, 74], [20, 60], [28, 48], [999, 40]])}px">${f.esc(t)}</div>
+        ${p ? `<div class="at2" style="font-size:${tam(p, [[14, 72], [20, 56], [28, 44], [40, 34], [999, 28]])}px">${f.esc(p)}</div>` : ''}
         ${sub ? `<div class="as">${f.esc(sub)}</div>` : ''}
-        <div class="per">${f.esc(periodo || '')}</div>
-      </div>`; },
-    sumario: (F, { periodo, itens }) => { const nc = itens.length > 20 ? 3 : 2, por = Math.ceil(itens.length / nc), lw = nc === 3 ? 228 : 350, gap = nc === 3 ? 22 : 40;
-      const col = i => itens.slice(i * por, (i + 1) * por).map(it => `<div class="si"><b>${String(it.n).padStart(2, '0')}</b><span>${f.esc(it.t)}</span></div>`).join('');
-      return `<div style="position:absolute;inset:0;background:url('${F.sum}') center/cover"></div>
-      <div class="ak" style="position:absolute;left:84px;top:74px">Nesta apresentação</div>
-      <div class="at" style="position:absolute;left:84px;top:98px;font-size:46px">Sumário</div>
-      <div class="per" style="position:absolute;left:84px;top:164px;margin:0">${f.esc(periodo || '')}</div>
-      <div style="position:absolute;left:84px;top:${por > 10 ? 206 : 222}px;display:flex;gap:${gap}px;${nc === 3 || por > 10 ? 'font-size:13px' : ''}">${Array.from({ length: nc }, (_, i) => `<div style="width:${lw}px">${col(i)}</div>`).join('')}</div>`; },
-    fim: (F, { texto, sub }) => `<div style="position:absolute;inset:0;background:url('${F.fim}') center/cover"></div>
-      <div style="position:absolute;left:84px;top:0;bottom:60px;width:760px;display:flex;flex-direction:column;justify-content:center">
-        <div class="at" style="font-size:96px;letter-spacing:-2.5px">${f.esc(texto || 'Obrigado!')}</div>
         <div class="ab"></div>
-        ${sub ? `<div class="per" style="font-size:18px">${f.esc(sub)}</div>` : ''}
+        <div class="per">Gerado em ${hoje}</div>
+      </div>`; },
+    sumario: (F, { periodo, itens }) => { const n = itens.length, nc = n > 14 ? 2 : 1, por = Math.ceil(n / nc), rh = Math.min(68, Math.floor(520 / Math.max(por, 1)));
+      const fs = rh >= 56 ? 24 : rh >= 42 ? 19 : rh >= 32 ? 15 : 13, lw = nc === 2 ? 300 : 630;
+      const col = i => itens.slice(i * por, (i + 1) * por).map((it, j) => `<div class="si" style="height:${rh}px;font-size:${fs}px"><b style="font-size:${Math.round(fs * 1.15)}px;width:${Math.round(fs * 2)}px">${String(i * por + j + 1).padStart(2, '0')}</b><span>${f.esc(it.t)}</span><em>pág. ${it.n}</em></div>`).join('');
+      return `<div style="position:absolute;inset:0;background:url('${F.sum}') center/cover"></div>
+      <div style="position:absolute;left:90px;top:0;bottom:0;width:320px;display:flex;flex-direction:column;justify-content:center">
+        <div class="at" style="font-size:44px;letter-spacing:-1px">Sumário</div><div class="ab" style="margin:20px 0 22px"></div>
+        <div class="per" style="font-size:13px;line-height:1.6">${f.esc(String(periodo || '').replace(/\s*\|\s*/g, ' · '))}</div></div>
+      <div style="position:absolute;left:560px;right:90px;top:0;bottom:60px;display:flex;align-items:center;gap:30px">${Array.from({ length: nc }, (_, i) => `<div style="width:${lw}px">${col(i)}</div>`).join('')}</div>`; },
+    // divisória de seção: o número fino em laranja e o título sobre o bloco grafite
+    secao: (F, { num, titulo, texto }) => `<div style="position:absolute;inset:0;background:url('${F.div}') center/cover"></div>
+      <div style="position:absolute;left:128px;top:232px;width:590px;height:260px;display:flex;flex-direction:column;justify-content:center">
+        <div class="sn" style="font-size:54px">${num}</div>
+        <div style="font-size:${tam(f.esc(titulo), [[18, 50], [28, 40], [999, 32]])}px;font-weight:900;letter-spacing:-1.2px;color:#fff;line-height:1.05;margin-top:10px">${titulo}</div>
+        ${texto ? `<div style="font-size:15px;color:#C9D1D9;margin-top:14px;line-height:1.5">${texto}</div>` : ''}
+      </div>`,
+    fim: (F, { texto, sub }) => `<div style="position:absolute;inset:0;background:url('${F.fim}') center/cover"></div>
+      <div style="position:absolute;left:128px;top:250px;width:500px;height:220px;display:flex;flex-direction:column;justify-content:center">
+        <div style="font-size:66px;font-weight:900;letter-spacing:-2px;color:#fff;line-height:1">${f.esc(texto || 'Obrigado!')}</div>
+        <div class="ab" style="margin:22px 0 0"></div>
+        ${sub ? `<div class="per" style="font-size:16px;margin-top:16px">${f.esc(sub)}</div>` : ''}
       </div>`
   };
 
@@ -234,11 +247,13 @@ window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.r
       acc,
       // os slides seguintes pertencem a este bloco (o painel Apresentações liga, desliga e reordena por bloco)
       bloco: (id, titulo) => { _bloco = { id, titulo }; },
-      slide: (inner, so) => { S.push({ k: _k, sec: _sec, bloco: _bloco, tipo: (so && so.tipo) || 'cont',
-        html: `<section class="slide${so && so.top ? ' top' : ''}${so && so.dark ? ' dark' : ''}${so && so.capa ? ' capa' : ''}${so && so.arte ? ' arte' : ''}"${so && so.style ? ` style="${so.style}"` : ''}>${miolo(inner)}${o.selo && !(so && (so.arte || so.dark)) ? `<div class="selo"><i></i>${o.selo}</div>` : ''}${so && so.arte ? '' : foot()}</section>` }); _k = ''; _sec = false; },
+      slide: (inner, so) => { const ar = so && (so.arte || so.dark), sec = so && so.sec;
+        const moldura = ar ? '' : `<div class="topo"><span><b>Conlog</b> · Gestão em Movimento</span><span>${o.selo ? `<i></i>${o.selo}` : f.esc(o.titulo || '')}</span></div><div class="lat"><div class="num">§SN§</div><div class="rot">${f.esc(_k)}</div></div>`;
+        S.push({ k: _k, sec: _sec, bloco: _bloco, tipo: (so && so.tipo) || 'cont',
+        html: `<section class="slide${so && so.top ? ' top' : ''}${so && so.dark ? ' dark' : ''}${so && so.capa ? ' capa' : ''}${so && so.arte ? ' arte' : ''}${sec ? ' sec' : ''}"${ar ? '' : ` data-sk="${f.esc(_k)}"`}${so && so.style ? ` style="${so.style}"` : ''}>${moldura}${miolo(inner)}${so && so.arte ? '' : foot()}</section>` }); _k = ''; _sec = false; },
       head: (k, h, sub) => { _k = limpa(k); return `<div class="hd"><div class="kicker">${k}</div><h2>${h}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div>§C§`; },
       // lista numerada (prioridades, próximos passos): a 1ª em destaque
-      passos: itens => `<div class="passos">${itens.map((p, i) => `<div class="passo"><div class="pn">${String(i + 1).padStart(2, '0')}</div><div class="pb"><div class="pt">${p.t}</div><div class="pv">${p.v || ''}</div><div class="ps">${p.s || ''}</div></div></div>`).join('')}</div>`,
+      passos: itens => `<div class="passos" style="grid-template-columns:repeat(${itens.length <= 4 ? itens.length : 3},minmax(0,1fr))">${itens.map((p, i) => `<div class="passo"><div class="pn">${String(i + 1).padStart(2, '0')}</div><div class="pb"><div class="pt">${p.t}</div><div class="pv">${p.v || ''}</div><div class="ps">${p.s || ''}</div></div></div>`).join('')}</div>`,
       conc: (txt, rot) => `<div class="conc"><div class="lbl">${rot || 'Leitura'}</div><p>${txt}</p></div>`,
       concBlocos: (itens, rot, cols) => `<div class="concb"><div class="lbl">${rot}</div><div class="cb" style="grid-template-columns:repeat(${cols || itens.length},minmax(0,1fr))">${itens.map(b => `<div><div class="t">${b.t}</div>${b.v ? `<div class="v">${b.v}</div>` : ''}<div class="s">${b.s || ''}</div></div>`).join('')}</div></div>`,
       cards: (itens, cols) => `<div class="cards" style="grid-template-columns:repeat(${cols || itens.length},minmax(0,1fr))">${itens.map(c => `<div class="card${c.acc ? ' esc' : ''}"><div class="k">${c.k}</div><div class="n"${c.cor ? ` style="color:${c.cor}"` : ''}>${c.n}</div>${c.p ? `<p>${c.p}</p>` : ''}</div>`).join('')}</div>`,
@@ -254,14 +269,17 @@ window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.r
         B.slide(`<div style="max-width:720px"><div class="kicker">${kicker || ''}</div><h1 style="font-size:50px">${h1}</h1>${texto ? `<p style="margin-top:22px;font-size:17px;max-width:620px">${texto}</p>` : ''}</div>`,
           { dark: true, capa: !!o.img, tipo: 'capa', style: o.img ? `background:linear-gradient(90deg,#0F1216 0%,rgba(15,18,22,.94) 42%,rgba(15,18,22,.55) 75%,rgba(15,18,22,.35) 100%),url('${o.img}') center right/cover` : '' });
       },
-      capaSec: (num, h1, texto) => { _k = limpa(h1); _sec = true; B.slide(`<div><div class="kicker">Parte ${num}</div><h1 style="max-width:900px">${h1}</h1>${texto ? `<p style="margin-top:18px;font-size:16px;max-width:820px">${texto}</p>` : ''}</div>`, { dark: true }); },
+      // divisória de seção: a foto escura com o número e o título (sem a arte, o fundo grafite)
+      capaSec: (num, h1, texto) => { _k = limpa(h1); _sec = true;
+        if (o.fundos) return B.slide(arte.secao(o.fundos, { num: '§SN§', titulo: h1, texto }), { arte: true, sec: true });
+        B.slide(`<div><div class="kicker">Parte §SN§</div><h1 style="max-width:900px">${h1}</h1>${texto ? `<p style="margin-top:18px;font-size:16px;max-width:820px">${texto}</p>` : ''}</div>`, { dark: true, sec: true }); },
       // barras horizontais simples (rótulo · barra · valor), cor por item
       barrasH: (itens, oo) => {
         oo = oo || {}; const w = oo.w || 560, lh = oo.lh || 26, lw = oo.lw || 150, mx = oo.max || Math.max(...itens.map(i => Math.abs(i.v || 0)), 1), bw = w - lw - 70;
         let s = `<svg viewBox="0 0 ${w} ${itens.length * lh + 6}" width="${w}" height="${itens.length * lh + 6}" font-family="Montserrat,Arial" font-size="11.5">`;
         itens.forEach((it, i) => { const y = 3 + i * lh, ww = Math.max(1.5, bw * Math.abs(it.v || 0) / mx);
           s += `<text x="${lw - 10}" y="${y + lh / 2 + 4}" text-anchor="end" fill="${INK}" font-weight="600">${f.esc(it.rot)}</text>`;
-          s += `<rect x="${lw}" y="${y + 5}" width="${ww}" height="${lh - 10}" rx="3" fill="${it.cor || acc}" fill-opacity=".85"/>`;
+          s += `<rect x="${lw}" y="${y + 5}" width="${bw}" height="${lh - 10}" rx="${(lh - 10) / 2}" fill="#EEF0F3"/><rect x="${lw}" y="${y + 5}" width="${ww}" height="${lh - 10}" rx="${Math.min((lh - 10) / 2, ww / 2)}" fill="${it.cor || CINK}"/>`;
           s += `<text x="${lw + ww + 6}" y="${y + lh / 2 + 4}" fill="${INK}" font-weight="700">${it.txt != null ? it.txt : f.f0(it.v)}</text>`; });
         return s + '</svg>';
       },
@@ -276,7 +294,8 @@ window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.r
         cats.forEach((c, i) => { const v = vals[i], x = pad.l + bw * i + bw * .18;
           // a barra sai do zero (ou do piso, quando ele é positivo): negativo desce
           const y0 = Y(lo > 0 ? lo : 0);
-          if (ok(v)) s += `<rect x="${x}" y="${Math.min(Y(v), y0)}" width="${bw * .64}" height="${Math.max(1, Math.abs(y0 - Y(v)))}" rx="3" fill="${(oo.cor && oo.cor(v, i)) || acc}" fill-opacity=".85"/><text x="${x + bw * .32}" y="${v < 0 ? Y(v) + 14 : Y(v) - 6}" text-anchor="middle" font-weight="800" fill="${INK}">${oo.fmt ? oo.fmt(v) : f.f1(v)}</text>`;
+          const hh = Math.max(1, Math.abs(y0 - Y(v)));
+          if (ok(v)) s += `<rect x="${x}" y="${Math.min(Y(v), y0)}" width="${bw * .64}" height="${hh}" rx="${Math.min(bw * .32, 14, hh / 2)}" fill="${(oo.cor && oo.cor(v, i)) || CINK}"/><text x="${x + bw * .32}" y="${v < 0 ? Y(v) + 14 : Y(v) - 6}" text-anchor="middle" font-weight="800" fill="${INK}">${oo.fmt ? oo.fmt(v) : f.f1(v)}</text>`;
           s += `<text x="${x + bw * .32}" y="${h - 10}" text-anchor="middle" fill="${INK2}" font-weight="600">${f.esc(c)}</text>`; });
         return '<div class="gf">' + s + '</svg></div>';
       },

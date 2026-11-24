@@ -2,14 +2,14 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611241430">
+<meta name="build" content="202611241930">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
-<script src="../assets/apresentacao-base.js?v=202611241430"></script>
+<script src="../assets/apresentacao-base.js?v=202611241930"></script>
 <style>
 :root{
   /* fundo UNIFORME (mesma regra do hub): o degradê diagonal clareava para o
@@ -847,7 +847,7 @@ function monta(){
   const info=id=>{ const t=MOD.textos.find(x=>x.id===id); if(t) return {t:t.titulo||'Recado do gestor',s:'Recado do gestor',txt:1}; return catDe(id)||extra.find(e=>e.id===id)||{t:id,s:''}; };
   const meio=ordem.map(id=>{ const i=info(id), sl=SL[id]||[], off=MOD.off.includes(id), fo=i.fonte||(/^gav:/.test(id)?'GAV':''), esperando=!!fo&&!FV[fo]();
     return {id,t:i.t,s:i.s,txt:!!i.txt,sl,off,vazio:!sl.length,esperando,fo}; });
-  const y=VIG?VIG.slice(0,4):'', per=VIG?`${Cap(F.MESN[+VIG.slice(5,7)-1])}  |  ${y}`:'';
+  const y=VIG?VIG.slice(0,4):'', per=VIG?`${Cap(F.MESN[+VIG.slice(5,7)-1])} ${y}`:'';
   const arteOuLiso=(k,dados,liso)=>FUNDOS?`<section class="slide arte">${ApresBase.arte[k](FUNDOS,dados)}</section>`:`<section class="slide dark">${liso}</section>`;
   const cont=[]; meio.forEach(it=>{ it.pg=null; if(!it.off&&it.sl.length){ it.pg=cont.length; it.sl.forEach(h=>cont.push({item:it.id,html:h})); } });
   const temSum=meio.filter(it=>it.pg!=null).length>1, desl=temSum?3:2;
@@ -1048,6 +1048,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611241430"></script>
+<script src="../assets/build-check.js?v=202611241930"></script>
 </body>
 </html>
