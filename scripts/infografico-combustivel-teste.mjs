@@ -2,8 +2,9 @@
 // Combustível · Infográfico (/infografico/combustivel/) — conferência no Chromium.
 // A página nova tem de mostrar os MESMOS números dos painéis oficiais com as
 // mesmas fontes dubladas: Km/L realizado do Eficiência Km/L e R$/L do Preço R$/L.
-// Também: seis gráficos do ECharts desenhados, sem rolagem em 1366/1600/1920
-// nos dois temas, filtro de unidade e de vigência, e nenhum erro de página.
+// Padrão visual: docs/DESIGN-ECHARTS.md (tema oficial assets/gem-theme.css).
+// Também: os gráficos do ECharts desenhados, rodapé de fonte em todo card,
+// filtros, troca de tema e nada vazando para o lado em 1366/1600/1920 e no celular.
 // Uso: RAIZ=<repo> ECHARTS=<echarts.min.js> LIQUID=<echarts-liquidfill.min.js>
 //      [CHART_JS=<chart.umd.js>] [SHOT_DIR=<pasta>] node infografico-combustivel-teste.mjs
 // ============================================================================
@@ -98,54 +99,69 @@ async function abre(browser, url, { vp = { width: 1600, height: 900 }, tema = 'd
 const txt = (page, id) => page.evaluate(i => { const e = document.getElementById(i); return e ? e.textContent.trim() : null; }, id);
 
 const browser = await chromium.launch();
+const num = t => { const m = String(t || '').replace(/\./g, '').replace('−', '-').match(/-?\d+(,\d+)?/); return m ? +m[0].replace(',', '.') : null; };
 console.log('\n1 · números iguais aos dos painéis oficiais (mesmas fontes)');
 const of = await abre(browser, '/combustivel/eficiencia-kml/index.html');
-const ofReal = await txt(of.page, 'h-real'), ofRem = await txt(of.page, 'h-rem'), ofSub = await txt(of.page, 'titSub');
+const OF = await of.page.evaluate(() => { const act = filterRows(allRows, getF()), ytd = filterRows(allRows, { ...getF(), vig: getYtdVigs(getF()) }), a = aggRows(act);
+  const t = id => document.getElementById(id).textContent.trim();
+  return { real: t('h-real'), rem: t('h-rem'), imp: impactoSomaUni(act), impY: impactoSomaUni(ytd), km: a.sumKm, lit: a.sumLitros, mel: document.querySelector('#k-mel .kn').textContent.trim(), pio: document.querySelector('#k-pio .kn').textContent.trim(),
+    proj: aggByKey(act, r => getProj(r)).map(({ k, agg }) => [k, Math.round(calcImpacto(agg) || 0)]).sort((x, y) => y[1] - x[1]), linhasTab: document.querySelectorAll('#body-kml tr').length }; });
 await of.page.close();
 const pr = await abre(browser, '/combustivel/preco-litro/index.html');
-const prReal = await txt(pr.page, 'h-real'), prRem = await txt(pr.page, 'h-rem');
+const PR = await pr.page.evaluate(() => { const a = aggRows(filterRows(allRows, getF())); const t = id => document.getElementById(id).textContent.trim();
+  return { real: t('h-real'), rem: t('h-rem'), gasto: a.sumTotalRS, imp: calcImpacto(a) }; });
 await pr.page.close();
 const nv = await abre(browser, '/infografico/combustivel/index.html');
-const R = await nv.page.evaluate(() => ({ real: document.getElementById('h-real').textContent.trim(), nota: document.getElementById('h-nota').textContent, preco: document.getElementById('p-real').textContent.trim(),
-  pd: document.getElementById('p-delta').textContent, sub: document.getElementById('sub').textContent, cv: document.querySelectorAll('.ec canvas').length, kn: document.getElementById('k-n').textContent,
-  leg: document.getElementById('leg').children.length, frot: document.getElementById('f-rot').textContent, fonte: document.getElementById('fonte').textContent, vig: ST.vig }));
+const R = await nv.page.evaluate(() => { const t = id => { const e = document.getElementById(id); return e ? e.textContent.trim() : null; };
+  return { real: t('h-real'), rem: t('h-rem'), preco: t('p-real'), precoRem: t('p-rem'), sub: t('sub'), cv: document.querySelectorAll('.gem-card canvas').length, kn: t('k-n'), kpl: t('k-pl'),
+    imp: __R.impKml, impY: __R.impKmlY, km: __R.kml.km, lit: __R.kml.lit, gasto: __R.preco.gasto, impP: __R.preco.imp, mel: document.querySelector('#k-mel .nm').textContent.trim(), pio: document.querySelector('#k-pio .nm').textContent.trim(),
+    proj: __R.projKml.map(x => [x.k, Math.round(x.v)]), tab: document.querySelectorAll('#tab tbody tr').length, tot: document.querySelector('#tab tr.total').textContent,
+    fontes: [...document.querySelectorAll('[data-fonte]')].map(e => e.textContent), cards: document.querySelectorAll('.gem-card').length, vig: ST.vig, tema: document.documentElement.getAttribute('data-theme'),
+    fonteCss: getComputedStyle(document.body).fontFamily, bg: getComputedStyle(document.body).backgroundColor, himp: t('h-imp'), kgasto: t('k-gasto') }; });
+const perto = (a, b) => a != null && b != null && Math.abs(a - b) < 0.01;
 af('abre no último mês com realizado', R.vig === '2026-10', R.vig);
-af('Km/L realizado igual ao Eficiência Km/L', R.real === ofReal, `${R.real} × ${ofReal} · ${ofSub}`);
-af('Km/L remunerado igual (na nota do tanque)', R.nota.includes('(' + ofRem + ' km/L)'), `${R.nota} × ${ofRem}`);
-af('R$/L pago igual ao Preço R$/L', R.preco === 'R$ ' + prReal, `${R.preco} × ${prReal}`);
-af('R$/L remunerado igual', R.pd.includes('R$ ' + prRem), `${R.pd} × ${prRem}`);
-af('seis gráficos do ECharts desenhados', R.cv >= 6, R.cv);
-af('pictograma com N de 0 a 10', /^\d+$/.test(R.kn) && +R.kn <= 10, R.kn);
-af('composição com legenda', R.leg >= 2 && R.leg <= 4, R.leg);
-af('barras por filial com a escala escrita', /cada caminhão = \d+ placa/.test(R.frot), R.frot);
-af('subtítulo com o mês e o corte do dado', /Resumo de out\/2026/.test(R.sub) && /dados até 31\/10\/2026/.test(R.sub), R.sub);
-af('fonte diz banco automático', /banco · automático/.test(R.fonte), R.fonte);
+af('Km/L realizado e remunerado iguais aos do Eficiência Km/L', R.real === OF.real && R.rem === OF.rem, `${R.real} · ${R.rem} × ${OF.real} · ${OF.rem}`);
+af('impacto do Km/L do mês e do ano iguais', perto(R.imp, OF.imp) && perto(R.impY, OF.impY), `${Math.round(R.imp)} · ${Math.round(R.impY)} × ${Math.round(OF.imp)} · ${Math.round(OF.impY)} · tela ${R.himp}`);
+af('km rodado e litros iguais', perto(R.km, OF.km) && perto(R.lit, OF.lit), `${R.km} · ${R.lit}`);
+af('melhor e pior unidade iguais', R.mel === OF.mel && R.pio === OF.pio, `${R.mel} · ${R.pio} × ${OF.mel} · ${OF.pio}`);
+af('impacto por projeto igual', JSON.stringify(R.proj) === JSON.stringify(OF.proj.filter(x => x[1] !== 0)), JSON.stringify(R.proj));
+af('R$/L pago e remunerado iguais aos do Preço R$/L', R.preco === 'R$ ' + PR.real && R.precoRem === 'R$ ' + PR.rem, `${R.preco} · ${R.precoRem} × ${PR.real} · ${PR.rem}`);
+af('gasto e impacto do preço iguais', perto(R.gasto, PR.gasto) && perto(R.impP, PR.imp), `${R.kgasto} · ${Math.round(R.impP)} × ${Math.round(PR.gasto)} · ${Math.round(PR.imp)}`);
+af('tabela com as unidades do painel e a linha Total', R.tab === OF.linhasTab && /^Total/.test(R.tot), `${R.tab} × ${OF.linhasTab}`);
+af('sete gráficos do ECharts desenhados', R.cv >= 7, R.cv);
+af('pictograma com N de 0 a 10 e a escala escrita', /^\d+$/.test(R.kn) && +R.kn <= 10 && /cada caminhão = 10% da frota/.test(R.kpl), `${R.kn} · ${R.kpl}`);
+af('todo card tem rodapé com fonte e data', R.fontes.length === R.cards && R.fontes.every(f => /^Fonte: .*\d{2}\/\d{2}\/\d{4}$/.test(f)), `${R.fontes.length}/${R.cards} · ${R.fontes[0]}`);
+af('tema oficial: Inter, fundo #0F172A, data-theme', /Inter/.test(R.fonteCss) && R.bg === 'rgb(15, 23, 42)' && R.tema === 'dark', `${R.fonteCss.slice(0, 20)} · ${R.bg} · ${R.tema}`);
+af('subtítulo com o mês e a data', /Resumo de out\/2026/.test(R.sub) && /atualizado em \d{2}\/\d{2}\/\d{4}/.test(R.sub) && /dados até 31\/10\/2026/.test(R.sub), R.sub);
 af('sem erro de página', nv.errs.length === 0, nv.errs.join(' | '));
 
-console.log('\n2 · filtros');
-await nv.page.click('#f-uni .pb'); await nv.page.click('#f-uni .po[data-v="PIR"]'); await nv.page.waitForTimeout(400);
-const U = await nv.page.evaluate(() => ({ sub: document.getElementById('sub').textContent, frot: document.getElementById('f-rot').textContent, real: document.getElementById('h-real').textContent.trim(), pil: document.querySelector('#f-uni .pl').textContent }));
-af('unidade filtrada muda o número e o subtítulo', U.real !== R.real && /· PIR/.test(U.sub) && U.pil === 'PIR', `${U.real} · ${U.sub}`);
-af('com uma filial as barras são por modelo', /por modelo/.test(U.frot), U.frot);
-await nv.page.click('#f-vig .pb'); await nv.page.click('#f-vig .po[data-v="2026-03"]'); await nv.page.waitForTimeout(400);
-const V = await nv.page.evaluate(() => ({ sub: document.getElementById('sub').textContent, mom: document.getElementById('h-mom').textContent }));
-af('vigência trocada e comparação com o mês anterior', /mar\/2026/.test(V.sub) && /vs fev\/2026/.test(V.mom), `${V.sub} · ${V.mom}`);
+console.log('\n2 · filtros e tema');
+await nv.page.click('#f-uni .gem-chip'); await nv.page.click('#f-uni .opt[data-v="PIR"]'); await nv.page.waitForTimeout(500);
+const U = await nv.page.evaluate(() => ({ sub: document.getElementById('sub').textContent, real: document.getElementById('h-real').textContent.trim(), rot: document.querySelector('#f-uni .rot').textContent, mel: document.getElementById('k-mel-l').textContent, tab: document.getElementById('t-tab').textContent }));
+af('filial filtrada muda o número e o subtítulo', U.real !== R.real && /· PIR/.test(U.sub) && U.rot === 'PIR', `${U.real} · ${U.sub}`);
+af('com uma filial, melhor/pior por modelo e tabela por projeto', /modelo/.test(U.mel) && /por projeto/.test(U.tab), `${U.mel} · ${U.tab}`);
+await nv.page.click('#f-vig .gem-chip'); await nv.page.click('#f-vig .opt[data-v="2026-03"]'); await nv.page.waitForTimeout(500);
+const V = await nv.page.evaluate(() => ({ sub: document.getElementById('sub').textContent, ytd: document.getElementById('h-ytd').textContent }));
+af('vigência trocada e acumulado de jan ao mês', /mar\/2026/.test(V.sub) && /jan a mar/.test(V.ytd), `${V.sub} · ${V.ytd}`);
+await nv.page.click('#btTema'); await nv.page.waitForTimeout(500);
+const T = await nv.page.evaluate(() => ({ tema: document.documentElement.getAttribute('data-theme'), bg: getComputedStyle(document.body).backgroundColor, cv: document.querySelectorAll('.gem-card canvas').length, salvo: localStorage.getItem('bi_theme') }));
+af('botão troca para o claro e os gráficos se redesenham', T.tema === 'light' && T.bg === 'rgb(241, 245, 249)' && T.cv >= 7 && T.salvo === 'light', JSON.stringify(T));
 af('sem erro depois dos filtros', nv.errs.length === 0, nv.errs.join(' | '));
 await nv.page.close();
 
-console.log('\n3 · cabe na tela, nos dois temas');
+console.log('\n3 · nada vaza para o lado, nos dois temas');
 for (const vp of [{ width: 1366, height: 768 }, { width: 1600, height: 900 }, { width: 1920, height: 1080 }]) for (const tema of ['dark', 'light']) {
   const t = await abre(browser, '/infografico/combustivel/index.html', { vp, tema });
-  const m = await t.page.evaluate(() => { const d = document.documentElement; const fora = [...document.querySelectorAll('.c')].filter(c => c.scrollHeight > c.clientHeight + 2 || c.scrollWidth > c.clientWidth + 2).map(c => c.id);
-    const g = document.querySelector('.grade').getBoundingClientRect(), pe = document.querySelector('.pe-volta').getBoundingClientRect();
-    return { rola: d.scrollHeight > innerHeight + 1 || d.scrollWidth > innerWidth + 1, fora, pe: pe.bottom <= innerHeight + 1 && g.bottom <= pe.top + 1, claro: document.body.classList.contains('claro'), cv: document.querySelectorAll('.ec canvas').length }; });
-  af(`${vp.width}×${vp.height} ${tema}: sem rolagem, nada vazando dos cartões`, !m.rola && !m.fora.length && m.pe && m.cv >= 6 && m.claro === (tema === 'light') && !t.errs.length, JSON.stringify(m) + t.errs.join('|'));
-  if (SHOT) await t.page.screenshot({ path: path.join(SHOT, `inf-${vp.width}-${tema}.png`) });
+  const m = await t.page.evaluate(() => { const d = document.documentElement; const fora = [...document.querySelectorAll('.gem-card')].filter(c => c.scrollWidth > c.clientWidth + 2).length;
+    const corta = [...document.querySelectorAll('.gem-value,.cena-valor,.gem-title')].filter(e => e.scrollWidth > e.clientWidth + 1 && getComputedStyle(e).textOverflow !== 'ellipsis').length;
+    return { lado: d.scrollWidth > innerWidth + 1, fora, corta, tema: d.getAttribute('data-theme'), cv: document.querySelectorAll('.gem-card canvas').length, alt: d.scrollHeight }; });
+  af(`${vp.width}×${vp.height} ${tema}: sem rolagem lateral, nada vazando dos cards`, !m.lado && !m.fora && !m.corta && m.cv >= 7 && m.tema === tema && !t.errs.length, JSON.stringify(m) + t.errs.join('|'));
+  if (SHOT) await t.page.screenshot({ path: path.join(SHOT, `inf-${vp.width}-${tema}.png`), fullPage: true });
   await t.page.close();
 }
 const mb = await abre(browser, '/infografico/combustivel/index.html', { vp: { width: 390, height: 844 } });
-const mm = await mb.page.evaluate(() => ({ larg: document.documentElement.scrollWidth <= innerWidth + 1, cv: document.querySelectorAll('.ec canvas').length }));
-af('celular: sem rolagem lateral e os gráficos desenhados', mm.larg && mm.cv >= 6 && !mb.errs.length, JSON.stringify(mm) + mb.errs.join('|'));
+const mm = await mb.page.evaluate(() => ({ larg: document.documentElement.scrollWidth <= innerWidth + 1, cv: document.querySelectorAll('.gem-card canvas').length }));
+af('celular: sem rolagem lateral e os gráficos desenhados', mm.larg && mm.cv >= 7 && !mb.errs.length, JSON.stringify(mm) + mb.errs.join('|'));
 if (SHOT) await mb.page.screenshot({ path: path.join(SHOT, 'inf-390.png'), fullPage: true });
 await mb.page.close();
 

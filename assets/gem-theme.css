@@ -1,0 +1,75 @@
+/* Gestão em Movimento — tema visual (laranja, claro e escuro)
+   Uso: <html data-theme="dark"> ou <html data-theme="light"> */
+
+:root,
+[data-theme="dark"] {
+  --gem-bg: #0F172A;
+  --gem-card: #1E293B;
+  --gem-line: #334155;
+  --gem-ink: #FFFFFF;
+  --gem-muted: #94A3B8;
+  --gem-foot: #64748B;
+  --gem-accent: #FB923C;      /* texto em laranja */
+  --gem-primary: #F97316;     /* barras, série principal */
+  --gem-secondary: #FDBA74;   /* segunda série */
+  --gem-chip-bg: #F97316;
+  --gem-chip-ink: #0F172A;
+  --gem-pos: #34D399;
+  --gem-neg: #F87171;
+  --gem-warn: #FBBF24;
+}
+
+[data-theme="light"] {
+  --gem-bg: #F1F5F9;
+  --gem-card: #FFFFFF;
+  --gem-line: #E2E8F0;
+  --gem-ink: #0F172A;
+  --gem-muted: #64748B;
+  --gem-foot: #64748B;
+  --gem-accent: #C2410C;
+  --gem-primary: #EA580C;
+  --gem-secondary: #9A3412;
+  --gem-chip-bg: #C2410C;
+  --gem-chip-ink: #FFFFFF;
+  --gem-pos: #047857;
+  --gem-neg: #DC2626;
+  --gem-warn: #B45309;
+}
+
+body {
+  margin: 0;
+  background: var(--gem-bg);
+  color: var(--gem-ink);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Grade e card */
+.gem-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; padding: 24px; }
+.gem-card { background: var(--gem-card); border: 1px solid var(--gem-line); border-radius: 14px; padding: 16px; }
+.gem-label { font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: var(--gem-muted); margin: 0 0 6px; }
+.gem-title { font-size: 15px; line-height: 22px; font-weight: 600; margin: 0 0 8px; }
+.gem-value { font-size: 32px; line-height: 40px; font-weight: 600; margin: 0; }
+.gem-unit { font-size: 16px; color: var(--gem-accent); font-weight: 500; }
+.gem-text { font-size: 13px; color: var(--gem-muted); margin: 6px 0 0; }
+.gem-foot { font-size: 11px; color: var(--gem-foot); margin: 8px 0 0; }
+.gem-accent { color: var(--gem-accent); font-weight: 600; }
+.gem-pos { color: var(--gem-pos); font-weight: 600; }
+.gem-neg { color: var(--gem-neg); font-weight: 600; }
+
+/* Controles */
+.gem-chip { font: inherit; font-size: 12px; font-weight: 500; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--gem-muted); background: transparent; color: var(--gem-ink); cursor: pointer; }
+.gem-chip[aria-pressed="true"] { background: var(--gem-chip-bg); border-color: var(--gem-chip-bg); color: var(--gem-chip-ink); }
+.gem-chip:focus-visible { outline: 2px solid var(--gem-accent); outline-offset: 2px; }
+
+/* Container de gráfico: sempre com altura definida */
+.gem-chart { width: 100%; height: 260px; }
+
+/* Tabela simples */
+.gem-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.gem-table th { text-align: left; font-size: 11px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: var(--gem-muted); padding: 8px 10px; border-bottom: 1px solid var(--gem-line); }
+.gem-table td { padding: 9px 10px; border-bottom: 1px solid var(--gem-line); }
+.gem-table tr:last-child td { border-bottom: 0; }
+.gem-table .num { text-align: right; }
+.gem-table .pos { color: var(--gem-pos); }
+.gem-table .neg { color: var(--gem-neg); }
