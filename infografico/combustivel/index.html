@@ -3,40 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611250030">
+<meta name="build" content="202611250900">
 <title>Combustível · Gestão em Movimento</title>
 <script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('bi_theme')==='light'?'light':'dark');}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../../assets/gem-theme.css?v=202611250030">
+<link rel="stylesheet" href="../../assets/gem-theme.css?v=202611250900">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* ============================================================
    COMBUSTÍVEL no padrão visual com ECharts (docs/DESIGN-ECHARTS.md).
-   Cópia do Gestão em Movimento nessa linha (Renan, 24/11/2026).
-   SÓ O QUE OS PAINÉIS DE HOJE MOSTRAM: o Resumo do Eficiência Km/L
-   (Km/L realizado × remunerado, Δ, impacto, acumulado do ano, km, litros,
-   melhor e pior unidade, Km/L mensal, impacto por projeto, tabela por
-   unidade) e o do Preço R$/L (R$/L pago × remunerado, impacto, gasto,
-   R$/L mensal, impacto por projeto). Leitura e contas copiadas dos dois.
-   O assets/gem-theme.css é o tema oficial, sem alteração; aqui fica só o
-   que é desta tela (cabeçalho, colunas, cena, menu dos filtros).
+   Renan, 24/11/2026, com a tela de referência do guia: "Nessa linha estava
+   indo no caminho". UMA TELA, na composição da referência:
+     cena      tanque (Km/L realizado ÷ remunerado) + o Km/L da frota
+     4 + 8     velocímetro (preço remunerado ÷ pago) · pictograma "N em cada
+               10" (placas abaixo do Km/L remunerado) + composição do gasto
+     12        caminhões por filial: onde o Km/L (ou o preço) custou mais
+   Só números dos painéis de hoje (Eficiência Km/L e Preço R$/L); as contas
+   são cópia das deles. O mensal e a tabela ficam na visão "Mensal e detalhe".
+   O assets/gem-theme.css é o tema oficial, sem alteração.
    ============================================================ */
 *{box-sizing:border-box}
 body{font-size:14px;line-height:20px;-webkit-font-smoothing:antialiased}
-.pg-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:24px 24px 0}
-.pg-title{font-size:22px;line-height:30px;font-weight:600;margin:0}
-.pg-sub{font-size:13px;line-height:20px;color:var(--gem-muted);margin:0}
+.pg-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:20px 24px 0}
+.pg-title{font-size:20px;line-height:28px;font-weight:600;margin:0}
+.pg-sub{font-size:13px;line-height:18px;color:var(--gem-muted);margin:0}
 .pg-acoes{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.pg-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 24px 24px}
+.pg-vw{display:flex;gap:6px;margin-right:8px}
+.pg-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 24px 16px}
 .pg-nav .gem-chip,.pg-acoes .gem-chip{display:inline-flex;align-items:center;gap:6px;text-decoration:none;white-space:nowrap}
 .c12{grid-column:span 12}.c8{grid-column:span 8}.c4{grid-column:span 4}
+.gem-grid{padding-top:16px;padding-bottom:16px}
 .gem-card{min-width:0;display:flex;flex-direction:column}
-.gem-card .gem-foot{margin-top:auto;padding-top:10px;line-height:14px}
+.gem-card .gem-foot{margin-top:auto;padding-top:8px;line-height:14px}
 .gem-text b{color:var(--gem-ink);font-weight:600}
 .gem-value{white-space:nowrap}
+.gem-label{margin-bottom:4px}
 .neutro{color:var(--gem-muted)}
-.var{font-size:13px;line-height:20px;margin:6px 0 0;white-space:nowrap}
+.var{font-size:13px;line-height:20px;margin:4px 0 0}
+body.vw-resumo .so-det{display:none}
+body.vw-detalhe .so-res{display:none}
 /* menu dos filtros */
 .sel{position:relative}
 .menu{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:40;min-width:190px;max-height:60vh;overflow:auto;padding:6px;background:var(--gem-card);border:1px solid var(--gem-line);border-radius:8px}
@@ -44,38 +50,51 @@ body{font-size:14px;line-height:20px;-webkit-font-smoothing:antialiased}
 .opt{display:block;width:100%;text-align:left;border:0;border-radius:6px;background:none;color:var(--gem-ink);font:inherit;font-size:13px;padding:7px 10px;cursor:pointer;white-space:nowrap}
 .opt:hover{background:var(--gem-line)}
 .opt[aria-pressed="true"]{background:var(--gem-chip-bg);color:var(--gem-chip-ink);font-weight:500}
-.ico{width:40px;height:40px;border-radius:10px;border:1px solid var(--gem-line);color:var(--gem-accent);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
 /* cena de abertura */
-.cena{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-top:4px}
-.cena .tq{width:150px;height:150px;flex:0 0 auto}
-.cena-n{flex:0 0 auto;min-width:230px}
+.cena{display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.cena .tq{width:clamp(108px,15vh,156px);height:clamp(108px,15vh,156px);flex:0 0 auto}
+.cena-n{flex:0 0 auto;min-width:240px}
 .cena-valor{font-size:42px;line-height:48px;font-weight:500;margin:0;white-space:nowrap}
-.cena-valor .gem-unit{margin-left:6px}
-.cena-refs{flex:1 1 560px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 0}
-.ref{padding:0 20px;border-left:1px solid var(--gem-line);min-width:0}
+.cena-valor .gem-unit{margin-left:8px;font-size:18px}
+.cena-refs{flex:1 1 420px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.ref{padding:0 24px;border-left:1px solid var(--gem-line);min-width:0}
 .ref .gem-value{font-size:26px;line-height:34px}
-.ref .gem-value small{font-size:14px;margin-left:8px}
 .ref .gem-text{margin-top:2px}
-.kpi-top{display:flex;align-items:center;gap:12px;margin-top:4px}
-.g-vel{height:176px}
-.g-pic{height:46px;margin-top:10px}
-.pic-n{display:flex;align-items:baseline;gap:10px;margin-top:4px}
-.pic-n .gem-text{margin:0}
+/* velocímetro, pictograma, composição */
+.g-vel{height:clamp(118px,18vh,168px)}
+.ctr{text-align:center}
+.g-pic{height:clamp(36px,5vh,46px);margin-top:4px}
+.g-comp{height:50px;margin-top:2px}
+.mt{margin-top:clamp(8px,1.6vh,16px)}
+/* caminhões por filial */
+.rk-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.rk-top .gem-label{margin:0}
+.rk-chips{margin-left:auto;display:flex;gap:6px}
+.rk-chips .gem-chip{padding:4px 10px}
+.g-rank{width:100%;height:var(--rk-h,220px);position:relative;overflow:hidden}
+/* detalhe */
 .tab-rol{overflow-x:auto}
 .gem-table th.num{text-align:right}
 .gem-table td,.gem-table th{white-space:nowrap}
 .gem-table tr.total td{font-weight:600}
-@media(max-width:1560px){ .cena-refs{flex-basis:100%} .ref:first-child{border-left:0;padding-left:0} }
-@media(max-width:1000px){ .cena-refs{grid-template-columns:repeat(2,minmax(0,1fr))} .ref:nth-child(odd){border-left:0;padding-left:0} }
-@media(max-width:1100px){ .c8{grid-column:span 12} .c4{grid-column:span 6} }
-@media(max-width:760px){ .gem-grid{padding:16px} .pg-head{padding:16px 16px 0} .pg-nav{padding:0 16px 16px} .c4{grid-column:span 12}
-  .pg-acoes{margin-left:0;width:100%} .cena-refs{grid-template-columns:1fr} .ref{border-left:0;padding-left:0} .cena-valor{font-size:36px;line-height:42px} }
+/* uma tela: no computador o resumo ocupa a altura da janela e os caminhões ficam com o que sobra */
+@media(min-width:1101px) and (min-height:720px){
+  body.vw-resumo .pg{min-height:100vh;display:flex;flex-direction:column}
+  body.vw-resumo .gem-grid{flex:1 1 auto;grid-template-rows:auto auto minmax(0,1fr)}
+  body.vw-resumo .g-rank{flex:1 1 0;height:auto;min-height:var(--rk-min,110px)}
+}
+@media(min-width:1101px) and (min-height:720px) and (max-height:820px){
+  .pg-head{padding-top:14px} .gem-grid{padding-top:12px;padding-bottom:12px;gap:12px} .pg-nav{padding-bottom:12px} .gem-card{padding:12px 16px}
+}
+@media(max-width:1100px){ .c8{grid-column:span 12} .c4{grid-column:span 12} .cena-refs{flex-basis:100%} .ref:first-child{border-left:0;padding-left:0} }
+@media(max-width:760px){ .gem-grid{padding:16px} .pg-head{padding:16px 16px 0} .pg-nav{padding:0 16px 16px}
+  .pg-acoes{margin-left:0;width:100%} .cena-refs{grid-template-columns:1fr;gap:12px} .ref{border-left:0;padding-left:0} .cena-valor{font-size:36px;line-height:42px} .cena{gap:16px} .g-comp{height:76px} }
 </style>
 
 <script>try{if(!sessionStorage.getItem("gem_hub"))location.replace("../../?volta="+encodeURIComponent(location.pathname+location.search));}catch(e){}</script>
 <script src="../../assets/gviz-cache.js?v=202611181300"></script>
 </head>
-<body>
+<body class="vw-resumo">
 <div class="pg">
 
   <header class="pg-head">
@@ -84,6 +103,7 @@ body{font-size:14px;line-height:20px;-webkit-font-smoothing:antialiased}
       <p class="pg-sub" id="sub">Carregando…</p>
     </div>
     <div class="pg-acoes">
+      <div class="pg-vw"><button type="button" class="gem-chip" data-vw="resumo" aria-pressed="true">Resumo</button><button type="button" class="gem-chip" data-vw="detalhe" aria-pressed="false">Mensal e detalhe</button></div>
       <div class="sel" id="f-vig"><button type="button" class="gem-chip"><span class="rot">Vigência</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6"/></svg></button><div class="menu"></div></div>
       <div class="sel" id="f-uni"><button type="button" class="gem-chip"><span class="rot">Todas as filiais</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6"/></svg></button><div class="menu"></div></div>
       <button type="button" class="gem-chip" id="btTema" title="Tema claro ou escuro" aria-label="Tema claro ou escuro"></button>
@@ -91,13 +111,12 @@ body{font-size:14px;line-height:20px;-webkit-font-smoothing:antialiased}
   </header>
 
   <main class="gem-grid">
-    <!-- 2 · cena de abertura: tanque + número -->
-    <section class="gem-card c12">
-      <p class="gem-title">Eficiência do combustível (km/L)</p>
+    <!-- RESUMO · cena de abertura: tanque + o Km/L da frota -->
+    <section class="gem-card c12 so-res">
       <div class="cena">
         <div class="tq" id="g-tanque"></div>
         <div class="cena-n">
-          <p class="gem-label">Km/L realizado</p>
+          <p class="gem-label">Consumo médio da frota</p>
           <p class="cena-valor"><span id="h-real">—</span><span class="gem-unit">km/L</span></p>
           <p class="var" id="h-delta">&nbsp;</p>
           <p class="gem-text" id="h-nota">&nbsp;</p>
@@ -105,72 +124,61 @@ body{font-size:14px;line-height:20px;-webkit-font-smoothing:antialiased}
         <div class="cena-refs">
           <div class="ref"><p class="gem-label">Impacto no mês</p><p class="gem-value" id="h-imp">—</p><p class="gem-text">contra o Km/L remunerado</p></div>
           <div class="ref"><p class="gem-label">Acumulado do ano</p><p class="gem-value" id="h-impy">—</p><p class="gem-text" id="h-ytd">&nbsp;</p></div>
-          <div class="ref"><p class="gem-label" id="k-mel-l">Melhor unidade</p><p class="gem-value" id="k-mel">—</p><p class="gem-text" id="k-mel-m">&nbsp;</p></div>
-          <div class="ref"><p class="gem-label" id="k-pio-l">Pior unidade</p><p class="gem-value" id="k-pio">—</p><p class="gem-text" id="k-pio-m">&nbsp;</p></div>
         </div>
       </div>
       <p class="gem-foot" data-fonte></p>
     </section>
 
-    <!-- 3 · faixa de KPIs: número em destaque, velocímetro, pictograma -->
-    <section class="gem-card c4">
-      <p class="gem-title">Gasto com combustível (R$)</p>
-      <div class="kpi-top">
-        <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 11h1a2 2 0 0 1 2 2v3a1.5 1.5 0 0 0 3 0v-7l-3 -3"/><path d="M4 20v-14a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v14"/><path d="M3 20l12 0"/><path d="M18 7v1a1 1 0 0 0 1 1h1"/><path d="M4 11l10 0"/></svg></span>
-        <div><p class="gem-label">Abastecido no mês</p><p class="gem-value" id="k-gasto">—</p></div>
-      </div>
-      <div class="kpi-linhas">
-        <p class="gem-text" id="k-lit">&nbsp;</p>
-        <p class="gem-text" id="k-km">&nbsp;</p>
-        <p class="var" id="k-impp">&nbsp;</p>
-      </div>
-      <p class="gem-foot" data-fonte></p>
-    </section>
-
-    <section class="gem-card c4">
-      <p class="gem-title">Preço do diesel (R$/L)</p>
+    <!-- RESUMO · velocímetro do preço -->
+    <section class="gem-card c4 so-res">
+      <p class="gem-label">Preço do diesel coberto pelo remunerado</p>
       <div class="g-vel" id="g-vel"></div>
-      <div class="kpi-linhas">
-        <p class="gem-text" id="p-linha">&nbsp;</p>
-        <p class="var" id="p-delta">&nbsp;</p>
-      </div>
+      <p class="gem-text ctr" id="p-linha">&nbsp;</p>
       <p class="gem-foot" data-fonte></p>
     </section>
 
-    <section class="gem-card c4">
-      <p class="gem-title">Placas abaixo do Km/L remunerado</p>
-      <div class="pic-n"><p class="gem-value gem-accent" id="k-n">—</p><p class="gem-text" id="k-t">&nbsp;</p></div>
+    <!-- RESUMO · pictograma + composição -->
+    <section class="gem-card c8 so-res">
+      <p class="gem-label">Abaixo do Km/L remunerado</p>
       <div class="g-pic" id="g-pic"></div>
-      <div class="kpi-linhas"><p class="gem-text" id="k-pl">&nbsp;</p></div>
+      <p class="gem-text" id="k-pl">&nbsp;</p>
+      <p class="gem-label mt" id="c-tit">Composição do gasto com combustível</p>
+      <div class="g-comp" id="g-comp"></div>
       <p class="gem-foot" data-fonte></p>
     </section>
 
-    <!-- 4 · operação: Km/L -->
-    <section class="gem-card c8">
+    <!-- RESUMO · caminhões por filial -->
+    <section class="gem-card c12 so-res">
+      <div class="rk-top">
+        <p class="gem-label" id="rk-tit">Onde o Km/L custou mais</p>
+        <div class="rk-chips"><button type="button" class="gem-chip" data-rk="kml" aria-pressed="true">Km/L</button><button type="button" class="gem-chip" data-rk="preco" aria-pressed="false">Preço</button></div>
+      </div>
+      <div class="g-rank" id="g-rank"></div>
+      <p class="gem-foot" data-fonte></p>
+    </section>
+
+    <!-- MENSAL E DETALHE -->
+    <section class="gem-card c8 so-det">
       <p class="gem-title" id="t-kml">Km/L mensal (km/L)</p>
       <div class="gem-chart" id="g-kml"></div>
       <p class="gem-foot" data-fonte></p>
     </section>
-    <section class="gem-card c4">
+    <section class="gem-card c4 so-det">
       <p class="gem-title">Impacto do Km/L por projeto (R$)</p>
       <div class="gem-chart" id="g-ikml"></div>
       <p class="gem-foot" data-fonte></p>
     </section>
-
-    <!-- 4 · operação: preço -->
-    <section class="gem-card c8">
+    <section class="gem-card c8 so-det">
       <p class="gem-title" id="t-rsl">R$/L mensal (R$/L)</p>
       <div class="gem-chart" id="g-rsl"></div>
       <p class="gem-foot" data-fonte></p>
     </section>
-    <section class="gem-card c4">
+    <section class="gem-card c4 so-det">
       <p class="gem-title">Impacto do preço por projeto (R$)</p>
       <div class="gem-chart" id="g-irsl"></div>
       <p class="gem-foot" data-fonte></p>
     </section>
-
-    <!-- 5 · detalhe -->
-    <section class="gem-card c12">
+    <section class="gem-card c12 so-det">
       <p class="gem-title" id="t-tab">Detalhe por unidade</p>
       <div class="tab-rol"><table class="gem-table" id="tab" data-no-sort data-mt-wrap></table></div>
       <p class="gem-foot" data-fonte></p>
@@ -185,7 +193,7 @@ body{font-size:14px;line-height:20px;-webkit-font-smoothing:antialiased}
 
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts-liquidfill@3.1.0/dist/echarts-liquidfill.min.js"></script>
-<script src="../../assets/gem-echarts.js?v=202611250030"></script>
+<script src="../../assets/gem-echarts.js?v=202611250900"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    DADOS — uma função só busca no banco e devolve um objeto simples
@@ -308,14 +316,6 @@ function aggPreco(rows){
   rows.forEach(r=>{ lit+=r.lit; if(r.valor>0)tot+=r.valor; if(r.pP!=null&&r.pP>0){remL+=r.pP*r.lit;litRem+=r.lit;if(r.valor>0)totRem+=r.valor;} });
   return { rem:litRem>0?remL/litRem:null, real:lit>0?tot/lit:null, gasto:tot, lit, imp:litRem?totRem-remL:null };
 }
-function resumoModelo(s){
-  let t=String(s||'').toUpperCase().replace(/\s*\|\s*/g,' ').replace(/\s+/g,' ').trim();
-  t=t.replace(/^(M\.\s?BENZ|MERCEDES[\s-]?BENZ|MERCEDES|MBB|MB)\b[\s/]*/,'MB ').replace(/^(VOLKSWAGEN|VW)\b[\s/]*/,'VW ').replace(/^([A-Z]+)\//,'$1 ');
-  const tk=t.split(' ').filter(Boolean); if(tk.length<=1)return t;
-  const cfg=/^(\d+X\d+|DRC|CRM|CNL|CE|CD|CS|LS|TB|BAU|BAÚ|CHASSI|CABINE|AUT|AUTOM[AÁ]TICO|MANUAL)$/, out=[tk[0]];
-  for(const w of tk.slice(1)){ if(cfg.test(w)||out.length>=3)break; out.push(w); }
-  return out.length>1?out.join(' '):t;
-}
 const SIG={ANG:'ANH',GNA:'GOI'}, sig=u=>SIG[u]||u;
 
 /* tudo que a tela mostra, calculado de D para o recorte (vigência, filial) */
@@ -324,11 +324,6 @@ function resumo(D,st){
   const act=base.filter(r=>r.vig===st.vig), ytd=base.filter(r=>r.vig.startsWith(ano)&&r.vig<=st.vig);
   const a=aggKml(act), ay=aggKml(ytd), p=aggPreco(act);
   const R={ vig:st.vig, uni:st.uni, kml:a, impKml:impKmlUni(act), kmlY:ay, impKmlY:impKmlUni(ytd), preco:p };
-  // melhor e pior: por unidade; com uma unidade só no recorte, por modelo
-  const porUni=new Set(act.map(r=>r.uni).filter(Boolean)).size>1;
-  const lst=Object.entries(grupo(act,r=>porUni?r.uni:r.modelo)).map(([k,l])=>{const x=aggKml(l);return (x.rem>0&&x.real>0)?{k,real:x.real,rem:x.rem,d:(x.real/x.rem-1)*100}:null;}).filter(Boolean).sort((x,y)=>y.d-x.d);
-  R.dim=porUni?'unidade':'modelo'; R.melhor=lst[0]||null; R.pior=lst.length>1?lst[lst.length-1]:null;
-  R.nome=k=>porUni?sig(k):resumoModelo(k);
   // placas abaixo do remunerado: a regra do Consumo por Veículo (Δ = Km/L real − Rem médio da linha)
   const pl=act.filter(r=>(r.km>0||r.real>0)&&r.rem>0); R.placas=pl.length; R.abaixo=pl.filter(r=>r.real-r.rem<0).length;
   // mensal: os meses do ano com dado
@@ -342,6 +337,9 @@ function resumo(D,st){
   R.tabDim=st.uni?'projeto':'unidade';
   R.tab=Object.entries(grupo(act,r=>st.uni?r.proj:r.uni)).map(([k,l])=>{const x=aggKml(l),y=aggPreco(l);return {k:st.uni?k:sig(k),rem:x.rem,real:x.real,imp:impKml(x),pRem:y.rem,pReal:y.real,pImp:y.imp};})
     .filter(x=>x.rem!=null||x.real!=null).sort((x,y)=>(x.imp||0)-(y.imp||0));
+  // composição do gasto (TOTAS R$) por projeto: os 3 maiores + Outros (até 4 partes, como no guia)
+  const gs=Object.entries(gp).map(([k,l])=>({k,v:l.reduce((s,r)=>s+(r.valor>0?r.valor:0),0)})).filter(x=>x.v>0).sort((x,y)=>y.v-x.v);
+  R.gasto=gs.length>4?gs.slice(0,3).concat([{k:'Outros',v:gs.slice(3).reduce((s,x)=>s+x.v,0)}]):gs;
   return R;
 }
 
@@ -349,7 +347,7 @@ function resumo(D,st){
 const el=id=>document.getElementById(id), set=(id,t)=>{const e=el(id);if(e)e.textContent=t;}, html=(id,h)=>{const e=el(id);if(e)e.innerHTML=h;};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
 const tit=s=>String(s||'').toLowerCase().replace(/(^|[\s(])([a-zà-ú])/g,(m,a,b)=>a+b.toUpperCase());
-let D=null, R=null, VIGS=[], UNIS=[], ST={vig:'',uni:''}, _vigAuto='';
+let D=null, R=null, VIGS=[], UNIS=[], ST={vig:'',uni:''}, _vigAuto='', VW='resumo', RK='kml';
 
 function seletor(id,opts,atual,rot,pick){
   const w=el(id); w.querySelector('.rot').textContent=rot;
@@ -373,59 +371,97 @@ function preparaFiltros(){
 }
 const kml2=v=>GEM.num(v,2), brl0=v=>GEM.brl(v,0);
 const semSeta=s=>s.replace(/^[▲▼=] /,'');
+const aviso=(t,txt)=>({title:{text:txt,left:'center',top:'middle',textStyle:{color:t.muted,fontFamily:GEM.font,fontSize:13,fontWeight:400}}});
+// passo "redondo" (1 · 2 · 2,5 · 5 × 10ⁿ) que cabe o maior valor em N caminhões
+function passo(mx,N){ if(!(mx>0))return 1; const x=mx/N, p=Math.pow(10,Math.floor(Math.log10(x))), m=x/p; return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p; }
+// fileira de caminhões do pictorialBar: N casas de largura w com vão; pos(x) = onde cortar para mostrar x caminhões
+function fileira(N,w,vao){ const g=w*vao, L=N*w+(N-1)*g;
+  return { L, base:{type:'pictorialBar',symbol:GEM.truck,symbolRepeat:N,symbolSize:[w,w*28/48],symbolMargin:g/2,symbolPosition:'start',symbolBoundingData:N,symbolKeepAspect:true,animation:false},
+    pos:x=>{ if(!(x>0))return 0; x=Math.min(N,x); const c=Math.floor(x+1e-9), f=x-c; return (f>.02?c*(w+g)+f*w:c*(w+g)-g/2)/L*N; } }; }
 
 function pinta(){
   if(!D||!ST.vig)return;
   R=resumo(D,ST); window.__R=R;
-  const a=R.kml, ay=R.kmlY, p=R.preco, mes=vigTxt(R.vig);
+  const a=R.kml, ay=R.kmlY, p=R.preco, mes=vigTxt(R.vig), dimRk=R.tabDim==='unidade'?'filial':'projeto';
 
-  /* cena: tanque = Km/L realizado ÷ remunerado */
+  /* ── cena: tanque = Km/L realizado ÷ remunerado ── */
   set('h-real',kml2(a.real));
   const at=(a.real>0&&a.rem>0)?a.real/a.rem:null, d=at==null?null:a.real-a.rem;
   if(at==null){ html('h-delta','<span class="neutro">sem Km/L remunerado neste recorte</span>'); set('h-nota',''); }
-  else { html('h-delta',GEM.variacao(d,x=>kml2(x)+' km/L').html+' <span class="neutro">('+semSeta(GEM.variacao((at-1)*100).txt)+') vs remunerado</span>');
-    html('h-nota',`remunerado <b id="h-rem">${kml2(a.rem)}</b> <b>km/L</b> · tanque = ${GEM.pct(at*100,0)} do remunerado`); }
+  else { html('h-delta',GEM.variacao(d,x=>kml2(x)+' km/L').html+` <span class="neutro">vs remunerado (<span id="h-rem">${kml2(a.rem)}</span> km/L)</span>`);
+    set('h-nota',`tanque = ${GEM.pct(at*100,0)} do Km/L remunerado atingido`); }
   GEM.chart('g-tanque',t=>{ const f=at==null?0:Math.max(.03,Math.min(1,at));
-    return {series:[{type:'liquidFill',data:[f,Math.max(0,f-.05)],radius:'85%',shape:'roundRect',color:[t.primary,t.accent],animationDuration:600,animationDurationUpdate:400,
+    return {series:[{type:'liquidFill',data:[f,Math.max(0,f-.05)],radius:'92%',shape:'roundRect',color:[GEM.theme()==='light'?'#9A3412':'#C2410C',t.primary],animationDuration:600,animationDurationUpdate:400,
       backgroundStyle:{color:t.bg,borderColor:t.line,borderWidth:2},outline:{show:false},emphasis:{disabled:true},silent:true,
-      label:{formatter:()=>at==null?'—':GEM.pct(at*100,0),fontSize:24,fontWeight:600,fontFamily:GEM.font,color:t.ink,insideColor:'#FFFFFF'}}]}; });
+      label:{formatter:()=>at==null?'—':GEM.pct(at*100,0),fontSize:26,fontWeight:500,fontFamily:GEM.font,color:t.ink,insideColor:'#FFFFFF'}}]}; });
   html('h-imp',R.impKml==null?'—':GEM.variacao(R.impKml,brl0).html);
   html('h-impy',R.impKmlY==null?'—':GEM.variacao(R.impKmlY,brl0).html);
-  html('h-ytd',(ay.real>0&&ay.rem>0)?`${GEM.variacao(ay.real-ay.rem,x=>kml2(x)+' km/L').html} (${semSeta(GEM.variacao((ay.real/ay.rem-1)*100).txt)}) · jan a ${MESES[+R.vig.slice(5)-1]}`:'sem remunerado no ano');
-  set('k-mel-l',`Melhor ${R.dim}`); set('k-pio-l',`Pior ${R.dim}`);
-  const mp=(id,v)=>{ if(!v){ set(id,'—'); set(id+'-m','sem remunerado no recorte'); return; }
-    html(id,`<span class="nm" title="${esc(v.k)}">${esc(R.nome(v.k))}</span><small>${GEM.variacao(v.d).html}</small>`);
-    set(id+'-m',`${kml2(v.real)} realizado · ${kml2(v.rem)} remunerado`); };
-  mp('k-mel',R.melhor); mp('k-pio',R.pior);
+  html('h-ytd',(ay.real>0&&ay.rem>0)?`${kml2(ay.real)} km/L vs ${kml2(ay.rem)} remunerado · jan a ${MESES[+R.vig.slice(5)-1]}`:'sem remunerado no ano');
 
-  /* número em destaque: gasto com combustível */
-  set('k-gasto',p.gasto>0?brl0(p.gasto):'—');
-  html('k-lit',`<b>${GEM.num(a.lit)}</b> litros consumidos`); html('k-km',`<b>${GEM.num(a.km)}</b> km rodados`);
-  html('k-impp',p.imp==null?'<span class="neutro">sem preço remunerado neste recorte</span>':GEM.variacao(p.imp,brl0,false).html+' <span class="neutro">contra o preço remunerado</span>');
-
-  /* velocímetro: quanto do preço pago o remunerado cobre */
-  const cob=(p.real>0&&p.rem>0)?p.rem/p.real*100:null;
-  GEM.chart('g-vel',t=>({series:[{type:'gauge',startAngle:200,endAngle:-20,min:0,max:100,center:['50%','68%'],radius:'128%',animationDuration:500,
+  /* ── velocímetro: quanto do preço pago o remunerado cobre ── */
+  const cob=(p.real>0&&p.rem>0)?Math.min(100,p.rem/p.real*100):null;
+  GEM.chart('g-vel',t=>({series:[{type:'gauge',startAngle:200,endAngle:-20,min:0,max:100,center:['50%','66%'],radius:'118%',animationDuration:500,silent:true,
     progress:{show:true,width:14,itemStyle:{color:t.primary}},axisLine:{lineStyle:{width:14,color:[[1,t.line]]}},
-    axisTick:{show:false},splitLine:{show:false},axisLabel:{show:false},pointer:{show:false},anchor:{show:false},silent:true,
-    title:{show:true,offsetCenter:[0,'30%'],fontSize:12,color:t.muted,fontFamily:GEM.font},
-    detail:{offsetCenter:[0,'-6%'],fontSize:30,fontWeight:600,color:t.ink,fontFamily:GEM.font,formatter:()=>p.real>0?GEM.brl(p.real,2):'—'},
-    data:[{value:cob==null?0:Math.min(100,cob),name:cob==null?'sem remunerado':`remunerado cobre ${GEM.pct(cob,0)}`}]}]}));
-  if(cob==null){ html('p-linha',p.real>0?`<b id="p-real">${GEM.brl(p.real,2)}</b> pago por litro`:''); html('p-delta','<span class="neutro">sem preço remunerado neste recorte</span>'); }
-  else { html('p-linha',`<b id="p-real">${GEM.brl(p.real,2)}</b> pago · <b id="p-rem">${GEM.brl(p.rem,2)}</b> remunerado`);
-    html('p-delta',GEM.variacao((p.real/p.rem-1)*100,x=>GEM.pct(x),false).html+' <span class="neutro">vs remunerado · impacto '+semSeta(GEM.variacao(p.imp,brl0,false).txt)+'</span>'); }
+    axisTick:{show:false},splitLine:{show:false},axisLabel:{show:false},pointer:{show:false},anchor:{show:false},title:{show:false},
+    detail:{offsetCenter:[0,'-2%'],fontSize:28,fontWeight:500,color:t.ink,fontFamily:GEM.font,formatter:()=>cob==null?'—':GEM.pct(cob,cob>=99.95?0:1)},
+    data:[{value:cob==null?0:cob}]}]}));
+  if(!(p.real>0)) html('p-linha','<span class="neutro">sem abastecimento neste recorte</span>');
+  else if(cob==null) html('p-linha',`pago <b id="p-real">${GEM.brl(p.real,2)}</b> por litro · <span class="neutro">sem preço remunerado</span>`);
+  else html('p-linha',`pago <b id="p-real">${GEM.brl(p.real,2)}</b> · remunerado <b id="p-rem">${GEM.brl(p.rem,2)}</b> · `+GEM.variacao(p.real-p.rem,x=>GEM.brl(x,2),false).html+' por litro');
 
-  /* pictograma: N em cada 10 placas */
+  /* ── pictograma: N em cada 10 caminhões abaixo do Km/L remunerado ── */
   const n10=R.placas?Math.round(R.abaixo/R.placas*10):0;
-  set('k-n',R.placas?String(n10):'—'); set('k-t',R.placas?'em cada 10 caminhões':'sem placas com remunerado');
-  html('k-pl',R.placas?`<b>${GEM.num(R.abaixo)}</b> de <b>${GEM.num(R.placas)}</b> placas com Km/L abaixo do remunerado · cada caminhão = 10% da frota`:'');
-  GEM.chart('g-pic',(t,e)=>{ const N=10, vao=.2, W=e.clientWidth-8; let w=Math.min(34,W/(N+(N-1)*vao)), h=w*28/48; const L=N*w+(N-1)*w*vao;
-    const corte=k=>k<=0?0:(k*w*(1+vao)-w*vao*.5)/L*N;   // corta no meio do vão depois do k-ésimo caminhão
-    const s={type:'pictorialBar',symbol:GEM.truck,symbolRepeat:N,symbolSize:[w,h],symbolMargin:w*vao/2,symbolPosition:'start',symbolBoundingData:N,symbolKeepAspect:true,animation:false,silent:true};
-    return {grid:{left:4,right:Math.max(4,e.clientWidth-4-L),top:6,bottom:6},xAxis:{type:'value',max:N,show:false},yAxis:{type:'category',data:['a'],show:false},
-      series:[{...s,itemStyle:{color:t.off},data:[N],z:1},{...s,symbolClip:true,itemStyle:{color:t.primary},data:[corte(n10)],z:2,barGap:'-100%'}]}; });
+  html('k-pl',R.placas?`<span class="gem-accent"><span id="k-n">${n10}</span> em cada 10</span> caminhões abaixo do Km/L remunerado · ${GEM.num(R.abaixo)} de ${GEM.num(R.placas)} placas · cada caminhão = 10% da frota`:'<span class="neutro">sem placas com Km/L remunerado neste recorte</span>');
+  GEM.chart('g-pic',(t,e)=>{ const N=10, vao=.55, W=e.clientWidth-8, F=fileira(N,Math.min(40,W/(N+(N-1)*vao)),vao);
+    return {grid:{left:4,width:F.L,top:4,bottom:4},xAxis:{type:'value',max:N,show:false},yAxis:{type:'category',data:['a'],show:false},
+      series:[{...F.base,silent:true,itemStyle:{color:t.off},data:[N],z:1},{...F.base,silent:true,symbolClip:true,itemStyle:{color:t.primary},data:[F.pos(n10)],z:2,barGap:'-100%'}]}; });
 
-  /* mensal: barras do realizado e o remunerado como linha tracejada com o valor no rótulo */
+  /* ── composição do gasto com combustível por projeto (até 4 partes) ── */
+  const gT=R.gasto.reduce((s,x)=>s+x.v,0);
+  set('c-tit',`Composição do gasto com combustível${gT>0?' · '+brl0(gT)+' em '+mes:''}`);
+  GEM.chart('g-comp',t=>{ if(!(gT>0))return aviso(t,'Sem gasto neste recorte');
+    const P=R.gasto.map(x=>[tit(x.k),x.v/gT*100]);
+    return {grid:{left:0,right:0,top:2,height:18},xAxis:{type:'value',max:100,show:false},yAxis:{type:'category',data:['c'],show:false},
+      tooltip:{trigger:'item',formatter:q=>`${q.seriesName}: ${brl0(R.gasto[q.seriesIndex].v)} (${GEM.pct(q.value,0)})`},
+      legend:{top:28,left:0,itemWidth:10,itemHeight:10,itemGap:16,selectedMode:false,textStyle:{color:t.muted,fontFamily:GEM.font,fontSize:12},
+        formatter:n=>{const x=P.find(i=>i[0]===n);return n+' '+GEM.pct(x[1],0);}},
+      series:P.map((x,k)=>({name:x[0],type:'bar',stack:'total',barWidth:18,data:[x[1]],
+        itemStyle:{color:t.series[k],borderRadius:P.length===1?5:(k===0?[5,0,0,5]:(k===P.length-1?[0,5,5,0]:0))}}))}; });
+
+  /* ── caminhões por filial: onde o Km/L (ou o preço) custou mais que o remunerado ── */
+  const perdas=R.tab.map(x=>({k:x.k,v:RK==='kml'?(x.imp==null?null:-x.imp):x.pImp})).filter(x=>x.v!=null).sort((x,y)=>y.v-x.v);
+  window.__rank=perdas;
+  const flex=matchMedia('(min-width:1101px) and (min-height:720px)').matches, largo=innerWidth>=900;
+  const colsMin=innerWidth>=1200&&perdas.length>8?3:(largo&&perdas.length>4?2:1);
+  el('g-rank').style.setProperty('--rk-min',Math.max(72,Math.ceil(perdas.length/colsMin)*18)+'px');
+  el('g-rank').style.setProperty('--rk-h',Math.max(60,Math.ceil(perdas.length/(largo&&perdas.length>4?2:1))*30)+'px');
+  let escala=0;
+  GEM.chart('g-rank',(t,e)=>{ if(!perdas.length)return aviso(t,'Sem remunerado para comparar neste recorte');
+    const W=e.clientWidth, H=e.clientHeight, n=perdas.length, vao=.22, vaoCol=36, labW=128;
+    const nomeW=Math.max(48,Math.max(...perdas.map(x=>String(x.k).length))*8.4+20);
+    // quantas colunas: a que deixa o caminhão maior
+    let melhor=null;
+    for(let c=1;c<=3;c++){ if(c>1&&(W<900||n<=4))break; const linhas=Math.ceil(n/c), alt=H/linhas, N=c===1?(W<700?8:16):(c===2?12:10), larg=(W-(c-1)*vaoCol)/c;
+      const w=Math.min(alt*.7*48/28,(larg-nomeW-labW)/(N+(N-1)*vao),32); if(!melhor||w>melhor.w+.5)melhor={c,linhas,alt,N,larg,w}; }
+    const {c,linhas,alt,N,larg,w}=melhor, F=fileira(N,Math.max(8,w),vao), un=passo(Math.max(0,...perdas.map(x=>x.v)),N); escala=un;
+    const grid=[],xAxis=[],yAxis=[],series=[];
+    for(let i=0;i<c;i++){ const it=perdas.slice(i*linhas,(i+1)*linhas); if(!it.length)break;
+      grid.push({left:i*(larg+vaoCol)+nomeW,width:F.L,top:0,height:alt*it.length});
+      xAxis.push({gridIndex:i,type:'value',max:N,show:false});
+      yAxis.push({gridIndex:i,type:'category',inverse:true,data:it.map(x=>x.k),axisLine:{show:false},axisTick:{show:false},axisLabel:{color:t.ink,fontFamily:GEM.font,fontSize:13,margin:12}});
+      series.push({...F.base,xAxisIndex:i,yAxisIndex:i,silent:true,itemStyle:{color:t.off},z:1,data:it.map(()=>N),
+        label:{show:true,position:'right',distance:10,fontFamily:GEM.font,fontSize:12,color:t.ink,
+          formatter:q=>{const v=it[q.dataIndex].v; return v>0?brl0(v):(Math.round(v)===0?'{m|no remunerado}':'{p|▼ '+brl0(-v)+' a favor}');},
+          rich:{p:{color:t.pos,fontFamily:GEM.font,fontSize:12,fontWeight:500},m:{color:t.muted,fontFamily:GEM.font,fontSize:12}}}});
+      series.push({...F.base,xAxisIndex:i,yAxisIndex:i,symbolClip:true,itemStyle:{color:t.primary},z:2,barGap:'-100%',data:it.map(x=>F.pos(x.v/un)),
+        tooltip:{formatter:q=>`${it[q.dataIndex].k}: ${brl0(it[q.dataIndex].v)} acima do remunerado`}});
+    }
+    return {tooltip:{trigger:'item'},grid,xAxis,yAxis,series}; });
+  const algum=perdas.some(x=>x.v>0);
+  set('rk-tit',`Onde ${RK==='kml'?'o Km/L':'o preço'} custou mais, por ${dimRk}`+(perdas.length&&algum?` · cada caminhão = ${brl0(escala||passo(Math.max(0,...perdas.map(x=>x.v)),10))} acima do remunerado`:''));
+  document.querySelectorAll('[data-rk]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.rk===RK)));
+
+  /* ── MENSAL E DETALHE: barras do realizado e o remunerado como linha tracejada com o valor no rótulo ── */
   const mensal=(id,serie,ref,fmt,nome)=>GEM.chart(id,t=>{ const M=R.meses, v=M.map(x=>x[serie]), rf=M.map(x=>x[ref]), todos=v.concat(rf).filter(x=>x!=null&&x>0);
     if(!todos.length)return null; const mn=Math.min(...todos), mx=Math.max(...todos), am=Math.max(mx-mn,mx*.02), ult=rf.map((x,i)=>x!=null?i:-1).filter(i=>i>=0).pop();
     return {grid:{left:8,right:108,top:28,bottom:8,containLabel:true},
@@ -440,9 +476,8 @@ function pinta(){
   set('t-kml',`Km/L mensal · ${R.vig.slice(0,4)} (km/L)`); set('t-rsl',`R$/L mensal · ${R.vig.slice(0,4)} (R$/L)`);
   mensal('g-kml','kml','kmlRem',x=>GEM.num(x,2)+' km/L','Realizado');
   mensal('g-rsl','rsl','rslRem',x=>GEM.brl(x,2),'Pago');
-
-  /* impacto por projeto: verde e vermelho só para o desvio, sempre com seta e sinal */
-  const porProj=(id,itens,bomSeSobe)=>GEM.chart(id,t=>{ if(!itens.length)return {title:{text:'Sem impacto neste recorte',left:'center',top:'middle',textStyle:{color:t.muted,fontFamily:GEM.font,fontSize:13,fontWeight:400}}};
+  // impacto por projeto: verde e vermelho só para o desvio, sempre com seta e sinal
+  const porProj=(id,itens,bomSeSobe)=>GEM.chart(id,t=>{ if(!itens.length)return aviso(t,'Sem impacto neste recorte');
     const bom=x=>(x>0)===bomSeSobe, mil=x=>GEM.num(x/1000,Math.abs(x)<10000?1:0)+' mil';
     return {grid:{left:8,right:8,top:30,bottom:8,containLabel:true},
       tooltip:{trigger:'axis',axisPointer:{type:'shadow'},valueFormatter:x=>GEM.variacao(x,brl0,bomSeSobe).txt},
@@ -451,8 +486,7 @@ function pinta(){
       series:[{type:'bar',barMaxWidth:54,data:itens.map(x=>({value:Math.round(x.v),itemStyle:{color:bom(x.v)?t.pos:t.neg,borderRadius:x.v>=0?[6,6,0,0]:[0,0,6,6]},label:{position:x.v>=0?'top':'bottom'}})),
         label:{show:true,color:t.ink,fontFamily:GEM.font,fontSize:11,fontWeight:500,formatter:q=>GEM.variacao(q.value,mil,bomSeSobe).txt}}]}; });
   porProj('g-ikml',R.projKml,true); porProj('g-irsl',R.projRsl,false);
-
-  /* tabela simples (seção 10 do guia): texto e números; a única cor é a variação contra o remunerado */
+  // tabela simples (seção 10 do guia): texto e números; a única cor é a variação contra o remunerado
   set('t-tab',`Indicadores por ${R.tabDim} · ${mes}`);
   const va=(v,f,bom)=>{ if(v==null||!isFinite(v))return '<td class="num">—</td>'; const x=GEM.variacao(v,f,bom); return `<td class="num ${x.pn}">${x.curto}</td>`; };
   const lin=(x,c)=>`<tr${c?' class="'+c+'"':''}><td>${esc(x.k)}</td><td class="num">${kml2(x.rem)}</td><td class="num">${kml2(x.real)}</td>`
@@ -467,10 +501,19 @@ function pinta(){
   /* cabeçalho e rodapé de todo card: fonte e data de atualização */
   const dAte=D.dadosAte?(m=>m?new Date(+m[1],+m[2]-1,+m[3]):null)(String(D.dadosAte).match(/^(\d{4})-(\d{2})-(\d{2})/)):null, atu=D.cargaEm?new Date(D.cargaEm):D.lidoEm;
   set('sub',`Resumo de ${mes}${R.uni?' · '+sig(R.uni):''} · atualizado em ${atu.toLocaleDateString('pt-BR')}`+(dAte?` · dados até ${dAte.toLocaleDateString('pt-BR')}`:''));
-  const ft=`Fonte: ERP e Freightech (${D.fonte}) · ${atu.toLocaleDateString('pt-BR')}`;
+  const ft=`Fonte: ERP e Freightech (${D.fonte}) · atualizado em ${atu.toLocaleDateString('pt-BR')}`;
   document.querySelectorAll('[data-fonte]').forEach(e=>e.textContent=ft);
+  el('f-uni').querySelector('.gem-chip').setAttribute('aria-pressed','true');
   window.__infPronto=true;
 }
+
+/* visões: Resumo (uma tela) · Mensal e detalhe */
+function setVw(v){ VW=v==='detalhe'?'detalhe':'resumo'; document.body.classList.toggle('vw-resumo',VW==='resumo'); document.body.classList.toggle('vw-detalhe',VW==='detalhe');
+  document.querySelectorAll('[data-vw]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.vw===VW)));
+  scrollTo(0,0); requestAnimationFrame(()=>{ if(D)pinta(); }); }
+document.querySelectorAll('[data-vw]').forEach(b=>b.onclick=()=>setVw(b.dataset.vw));
+document.querySelectorAll('[data-rk]').forEach(b=>b.onclick=()=>{RK=b.dataset.rk;pinta();});
+let _rz=null; addEventListener('resize',()=>{clearTimeout(_rz);_rz=setTimeout(()=>{if(D)pinta();},200);});
 
 async function recarregar(){
   try{ D=await carregarDados(); preparaFiltros(); pinta(); }
@@ -487,6 +530,6 @@ recarregar(); setInterval(recarregar,30*60*1000);
 </script>
 <script src="../../assets/mobile.js?v=202608220020"></script>
 <script src="../../assets/modo-tv.js?v=202610111500"></script>
-<script src="../../assets/build-check.js?v=202611250030"></script>
+<script src="../../assets/build-check.js?v=202611250900"></script>
 </body>
 </html>
