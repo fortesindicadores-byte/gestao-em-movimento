@@ -2,14 +2,14 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611240330">
+<meta name="build" content="202611240400">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
-<script src="../assets/apresentacao-base.js?v=202611240330"></script>
+<script src="../assets/apresentacao-base.js?v=202611240400"></script>
 <style>
 :root{
   /* fundo UNIFORME (mesma regra do hub): o degradê diagonal clareava para o
@@ -806,13 +806,14 @@ async function fonteScorecard(){
 }
 /* Árvore de Combustível: a foto da árvore, na unidade e em cada projeto dela */
 async function fonteArvore(){
-  const P=await abrePainel('../combustivel/arvore-combustivel/index.html',"typeof onFilterChange==='function'&&!!document.getElementById('treeWrap')&&document.getElementById('treeWrap').textContent.trim().length>40");
+  const seara=COD==='ANG';                 // a Anhanguera tem a árvore dela (Seara), sem filtro de unidade nem de projeto
+  const P=await abrePainel(seara?'../combustivel/seara/arvore/index.html':'../combustivel/arvore-combustivel/index.html',"typeof onFilterChange==='function'&&!!document.getElementById('treeWrap')&&document.getElementById('treeWrap').textContent.trim().length>40");
   try{ const w=P.w, d=P.d, vk=VIG.slice(5,7)+'/'+VIG.slice(0,4); d.body.classList.add('claro');
-    if(!itensDe(w,'ms-uni').includes(COD)) throw new Error('a unidade não está na Árvore de Combustível');
-    selIn(w,'ms-ano',[]); selIn(w,'ms-vig',itensDe(w,'ms-vig').includes(vk)?[vk]:[]); selIn(w,'ms-uni',[COD]); selIn(w,'ms-nv3',[]);
+    if(!seara&&!itensDe(w,'ms-uni').includes(COD)) throw new Error('a unidade não está na Árvore de Combustível');
+    selIn(w,'ms-ano',[]); selIn(w,'ms-vig',itensDe(w,'ms-vig').includes(vk)?[vk]:[]); if(!seara){ selIn(w,'ms-uni',[COD]); selIn(w,'ms-nv3',[]); }
     w.onFilterChange(); await sleep(900);
     const fotos=[], tira=async rot=>{ const f=await fotoDe(w,d.getElementById('treeWrap')); if(f) fotos.push(Object.assign({rot},f)); };
-    const projs=itensDe(w,'ms-nv3').filter(projCabe);
+    const projs=seara?[]:itensDe(w,'ms-nv3').filter(projCabe);
     if(projs.length<=1) await tira(projs[0]||'unidade inteira');
     else{ await tira('todos os projetos'); for(const pj of projs.slice(0,5)){ selIn(w,'ms-nv3',[pj]); w.onFilterChange(); await sleep(700); await tira(pj); } }
     return {fotos};
@@ -1012,6 +1013,7 @@ async function initApp(){
   SIGS=[...new Set(MINHAS.map(BASE))].sort();
   if(!MINHAS.length){ gate('Sem unidade no perfil','Peça o acesso no Gerenciar Acessos do hub.'); return; }
   let u=''; try{ u=localStorage.getItem('apres_uni')||''; }catch(e){}
+  const pu=(new URLSearchParams(location.search).get('u')||'').toUpperCase().trim(); if(pu&&SIGS.includes(BASE(pu))) u=pu;      // ?u=CGR abre direto na unidade
   COD=SIGS.includes(BASE(u))?BASE(u):SIGS[0]; CODS=MINHAS.filter(c=>BASE(c)===COD);
   $('filtros').style.display=''; $('vw-montar').style.display='';
   ApresBase.fundos().then(f=>{ FUNDOS=f; if(MOD) monta(); });
@@ -1045,6 +1047,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611240330"></script>
+<script src="../assets/build-check.js?v=202611240400"></script>
 </body>
 </html>
