@@ -20,7 +20,7 @@ const ehImg = b => b.length > 8 && (b.subarray(0, 4).toString('hex') === '89504e
 if (MODO === 'pagina') {
   let n = 0; const vistos = new Set();
   for (const pg of URLS) {
-    let r, html = ''; try { r = await pega(pg); html = await r.text(); } catch (e) { console.log(`${pg}: FALHOU (${e.message})`); continue; }
+    let r, html = ''; try { r = await pega(pg); html = await r.text(); } catch (e) { console.log(`${pg}: FALHOU (${e.message}${e.cause ? ' · ' + (e.cause.code || e.cause.message) : ''})`); continue; }
     console.log(`\n${pg}: HTTP ${r.status} · ${html.length} caracteres · final ${r.url}`);
     const base = r.url, cand = new Set(), add = u => { try { const a = new URL(u.replace(/&amp;/g, '&'), base).href; if (/^https?:/.test(a)) cand.add(a); } catch (e) {} };
     for (const m of html.matchAll(/(?:src|href|content|data-src|data-lazy-src|poster)\s*=\s*["']([^"']+)["']/gi)) add(m[1]);
