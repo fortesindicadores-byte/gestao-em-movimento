@@ -107,6 +107,8 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
      sobre preto, com a barra laranja no rodapé. Tudo o que é desenho (foto, tiras, marca, barra) é
      pintado num canvas e vira o fundo do slide: o html2canvas só precisa pôr o texto por cima. ── */
   const FOTO = (() => { try { return new URL('img/capa-frota.jpg', document.currentScript.src).href; } catch (e) { return ''; } })();
+  // o logo oficial da Conlog (do site da empresa), em branco para fundo escuro
+  const LOGO = (() => { try { return new URL('img/logo-conlog-branco.png', document.currentScript.src).href; } catch (e) { return ''; } })();
   const LAR = '#F97316';
   function rr(x, X, Y, W, H, r) { r = Math.min(r, W / 2, H / 2); x.moveTo(X + r, Y); x.arcTo(X + W, Y, X + W, Y + H, r); x.arcTo(X + W, Y + H, X, Y + H, r); x.arcTo(X, Y + H, X, Y, r); x.arcTo(X, Y, X + W, Y, r); x.closePath(); }
   function cobre(x, img, R, fx, fy) {              // a foto cobrindo a região R, com o foco em (fx, fy)
@@ -128,23 +130,25 @@ tr.sep td{border-top:2px solid ${INK3};font-weight:700}
   const _fundos = {};
   /* Capa, sumário e encerramento do portal (Renan, 23/11/2026: "use como inspiração mas não copie exatamente o FP&A";
      "Não é o conlog da empresa" sobre a marca desenhada): foto de página inteira com o véu grafite, texto em
-     Montserrat à esquerda, o selo do Gestão em Movimento embaixo. Sem logo da Conlog até o arquivo oficial chegar. */
+     Montserrat à esquerda, o selo do Gestão em Movimento embaixo. O logo da Conlog é o arquivo oficial do site (assets/img/logo-conlog-branco.png), embaixo à direita. */
   async function fundos(src) {
     src = src || FOTO; if (!src) return null; if (_fundos[src]) return _fundos[src];
     return _fundos[src] = (async () => {
       const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error('a foto da capa não carregou')); i.src = src; });
       try { await Promise.all([document.fonts.load('800 60px Montserrat'), document.fonts.load('700 15px Montserrat')]); } catch (e) {}
+      const logo = LOGO ? await new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = LOGO; }) : null;
+      const marca = (x, dir) => { if (!logo) return; const h = 30, w = logo.width * h / logo.height; x.drawImage(logo, dir - w, 636, w, h); };   // encostada à direita, na linha do selo
       const K = 2, tela = () => { const c = document.createElement('canvas'); c.width = 1280 * K; c.height = 720 * K; const x = c.getContext('2d'); x.scale(K, K); x.fillStyle = '#0D0E11'; x.fillRect(0, 0, 1280, 720); return [c, x]; };
       const sai = c => c.toDataURL('image/jpeg', .9), T = { x: 0, y: 0, w: 1280, h: 720 };
       // capa: a foto inteira, o texto à esquerda sobre o véu
-      let [c1, x] = tela(); cobre(x, img, T, .5, .42); veu(x); selo(x, 84, 636);
+      let [c1, x] = tela(); cobre(x, img, T, .5, .42); veu(x); selo(x, 84, 636); marca(x, 1196);
       // sumário: grafite, a foto num painel só, de cantos arredondados, à direita
       let [c2, x2] = tela();
       x2.save(); x2.beginPath(); rr(x2, 884, 48, 348, 624, 26); x2.clip(); cobre(x2, img, { x: 884, y: 48, w: 348, h: 624 }, .5, .42);
       const g2 = x2.createLinearGradient(0, 380, 0, 672); g2.addColorStop(0, 'rgba(13,14,17,0)'); g2.addColorStop(1, 'rgba(13,14,17,.7)'); x2.fillStyle = g2; x2.fillRect(884, 380, 348, 292); x2.restore();
-      selo(x2, 84, 636);
+      selo(x2, 84, 636); marca(x2, 836);
       // encerramento: a mesma foto, mais escura
-      let [c3, x3] = tela(); cobre(x3, img, T, .5, .42); veu(x3, true); selo(x3, 84, 636);
+      let [c3, x3] = tela(); cobre(x3, img, T, .5, .42); veu(x3, true); selo(x3, 84, 636); marca(x3, 1196);
       return { capa: sai(c1), sum: sai(c2), fim: sai(c3) };
     })().catch(e => { console.warn('Arte da apresentação indisponível:', e); delete _fundos[src]; return null; });
   }
