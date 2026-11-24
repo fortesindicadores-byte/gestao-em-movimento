@@ -131,10 +131,10 @@ tr.sep td:first-child{border-radius:9px 0 0 9px} tr.sep td:last-child{border-rad
 .arte .si span{overflow:hidden;text-overflow:ellipsis}`;
 
   // ── documento: as páginas na ordem, com o número pela posição ──
-  // o ajuste: por slide, o maior --k (letra, de 1,5 a 0,7) em que o miolo cabe na altura e nenhuma tabela passa da largura;
+  // o ajuste: por slide, o maior --k (letra, de 1,5 a 0,7) em que o miolo cabe na altura e nenhuma tabela ou cartão passa da largura;
   // depois o maior --v (respiro das linhas, de 2,2 a 1) que ainda cabe
   const AJUSTE = `<script>(function(){function aj(){var S=document.querySelectorAll('.slide');for(var i=0;i<S.length;i++){var s=S[i],c=s.querySelector('.corpo');if(!c)continue;var d=s.style.display;s.style.display='';if(!c.clientHeight){s.style.display=d;continue;}
-var cabe=function(){if(c.scrollHeight>c.clientHeight+1)return false;var f=c.children;for(var j=0;j<f.length;j++){if(f[j].offsetTop+f[j].offsetHeight>c.offsetTop+c.clientHeight+1)return false;}var t=c.querySelectorAll('.tb,.duas>div');for(var j=0;j<t.length;j++){if(t[j].scrollWidth>t[j].clientWidth+1)return false;}return true;};
+var cabe=function(){if(c.scrollHeight>c.clientHeight+1)return false;var f=c.children;for(var j=0;j<f.length;j++){if(f[j].offsetTop+f[j].offsetHeight>c.offsetTop+c.clientHeight+1)return false;}var t=c.querySelectorAll('.tb,.duas>div,.card .n');for(var j=0;j<t.length;j++){if(t[j].scrollWidth>t[j].clientWidth+1)return false;}return true;};
 s.style.setProperty('--v','1');for(var k=150;k>=70;k-=5){s.style.setProperty('--k',(k/100).toFixed(2));if(cabe())break;}
 for(var v=22;v>=10;v--){s.style.setProperty('--v',(v/10).toFixed(1));if(cabe())break;}s.style.display=d;}}
 window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(aj);window.addEventListener('load',aj);})();<\/script>`;
