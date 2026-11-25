@@ -132,7 +132,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   const T = await titulos(pg);
   ok('árvore do custo, depois cada pacote que desviou (maior primeiro) com o FCA dele',
     T.indexOf('Árvore do custo') > 0 && T.indexOf('Árvore · Pneus') === T.indexOf('Árvore do custo') + 1 && T[T.indexOf('Árvore · Pneus') + 1] === 'FCA · Pneus' && T[T.indexOf('FCA · Pneus') + 1] === 'Árvore · Manutenções' && T[T.indexOf('Árvore · Manutenções') + 1] === 'FCA · Manutenções', T.join(' | '));
-  ok('pacote que não desviou não abre (Combustíveis, Seguros)', !T.some(t => /Árvore · (Combust|Seguros)/.test(t)));
+  ok('todo pacote que desviou abre a árvore (Combustíveis e Seguros também); Seguros, sem fato no FCA, sem o slide do FCA', T.includes('Árvore · Combustíveis') && T.includes('Árvore · Seguros e licenças') && !T.includes('FCA · Seguros e licenças') && !T.some(t => /Árvore · ICMS/.test(t)), T.join(' | '));
   ok('divisórias numeradas por capítulo', await pg.evaluate(() => { const x = document.createElement('div'); x.innerHTML = DECK.filter(d => d.item.startsWith('div:')).map(d => d.html).join(''); return x.textContent.replace(/\s+/g, ' '); }).then(t => /01.*Resultado.*02.*Por quê.*03.*Indicadores.*04.*Reconhecimento/.test(t)));
   const sum = await txt(pg, 'sumario');
   ok('sumário com os slides (sem as divisórias) e a página de cada um', /O que prometemos/.test(sum) && /Árvore · Pneus/.test(sum) && /FCA · Manutenções/.test(sum) && !/Resultado/.test(sum.replace('Resultado', '').replace(/Resultado/g, '')) , sum.slice(0, 220));
@@ -152,7 +152,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   ok('Scorecard: pontuação geral em cima, os 20 indicadores em cards', /Pontuação geral/.test(sc) && /89,0/.test(sc) && /Custos Frota/.test(sc) && /FCA Conclusão/.test(sc), sc.slice(0, 200));
   ok('Scorecard: um slide só com evolução mensal e destaques, com a posição da unidade', /Evolução mensal/.test(sc) && /Destaques/.test(sc) && /3º de/.test(sc) && /CDD GUARULHOS/.test(sc) && !sc2, sc.slice(-200));
   const te = await txt(pg, 'term');
-  ok('Termômetro: pontuação com MoM, Posição Geo e Conlog, Bottom KPIs', /Pontuação total/.test(te) && /Posição Geo/.test(te) && /Posição Conlog/.test(te) && /Bottom KPIs/.test(te) && /Ordens de serviço vencidas/i.test(te), te.slice(0, 260));
+  ok('Termômetro: pontuação geral com MoM, Posição Geo e Conlog, todos os indicadores do pior ao melhor', /Pontuação geral/.test(te) && /Posição Geo/.test(te) && /Posição Conlog/.test(te) && /Indicadores/.test(te) && /Ordens de serviço vencidas/i.test(te), te.slice(0, 260));
   const el = await txt(pg, 'elite');
   ok('Frota de Elite: pontuação, indicadores, ano e ranking com a unidade', /Pontuação/.test(el) && /Ranking das unidades/.test(el) && /PIRAI EMPURRADA/.test(el) && /Disponib\./.test(el), el.slice(0, 220));
   const fm = await pg.evaluate(() => { const i = DECK.findIndex(d => /<h2>FCA · Manutenções<\/h2>/.test(d.html)); const x = document.createElement('div'); x.innerHTML = DECK[i].html; return { t: x.textContent.replace(/\s+/g, ' '), rs: [...x.querySelectorAll('td[rowspan]')].map(t => t.getAttribute('rowspan')), linhas: x.querySelectorAll('table.fg-rel tr[data-id]').length }; });
