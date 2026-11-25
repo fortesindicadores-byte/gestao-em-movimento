@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611260630">
+<meta name="build" content="202611260700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611260630"></script>
+<script src="../assets/apres-slides.js?v=202611260700"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -699,7 +699,7 @@ function colTERM(a){
   const max={}; EFFROWS.forEach(r=>indNames(r.tier).forEach(n=>{ const p=indPointsForRow(r,n); if(p!=null) max[r.tier+'|'+n]=Math.max(max[r.tier+'|'+n]||0,p); }));
   const out=tiers.map(t=>{ const r=meus.find(x=>x.tier===t&&x._month===a.mes); if(!r) return null;
     const ant=meus.find(x=>x.tier===t&&x._month===mAnt), pares=EFFROWS.filter(x=>x.tier===t&&x._month===a.mes).sort((x,y)=>(+y.raw[COL.total]||0)-(+x.raw[COL.total]||0));
-    const kp=indNames(t).map(n=>{ const p=indPointsForRow(r,n); if(p==null) return null; const mx=(max[t+'|'+n]||0)>=20?20:10; return {n:n,p:p,mx:mx,v:indValueForRow(r,n)}; }).filter(Boolean);
+    const kp=indNames(t).map(n=>{ const p=indPointsForRow(r,n); if(p==null) return null; const mx=(max[t+'|'+n]||0)>=20?20:10; return {n:n,p:p,mx:mx,v:(x=>typeof fmtIndVal==='function'?String(fmtIndVal(x)).replace(/^(\d+)\.(\d+)h$/,'$1,$2 h'):x)(indValueForRow(r,n))}; }).filter(Boolean);
     const mes=[]; for(let m=1;m<=12;m++){ const mm=String(m).padStart(2,'0'), x=meus.find(y=>y.tier===t&&y._month===mm); mes.push(x?+x.raw[COL.total]||0:null); }
     return {tier:t,uni:nm(r),geo:String(r.raw[COL.geo]||''),total:+r.raw[COL.total]||0,ant:ant?+ant.raw[COL.total]||0:null,rank:r.raw[COL.rank],posC:pares.indexOf(r)+1,nC:pares.length,kp:kp,mes:mes}; }).filter(Boolean);
   /* posição Conlog da unidade inteira: média dos tiers de cada unidade no mês */
@@ -1107,10 +1107,13 @@ function sTERM(inst){
   /* indicadores da unidade: o mesmo indicador em dois tiers vira um só (pontos somados) */
   /* o mesmo indicador em dois tiers: a média dos pontos, como o Ranking do Termômetro */
   const nk=x=>String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(de|da|do|dos|das)\b/g,' ').replace(/[^a-z0-9% ]/g,' ').split(/\s+/).filter(Boolean).map(w=>w.length>3?w.replace(/s$/,''):w).join(' ');
-  const by={}; T.forEach(t=>t.kp.forEach(k=>{ const n=nk(k.n), x=by[n]||(by[n]={n:k.n,ps:[],mx:0}); x.ps.push(k.p); x.mx=Math.max(x.mx,k.mx); }));
+  const by={}; T.forEach(t=>t.kp.forEach(k=>{ const n=nk(k.n), x=by[n]||(by[n]={n:k.n,ps:[],vs:[],mx:0}); x.ps.push(k.p); if(k.v!=null&&k.v!==''&&!x.vs.includes(String(k.v))) x.vs.push(String(k.v)); x.mx=Math.max(x.mx,k.mx); }));
   const kp=Object.values(by).map(x=>Object.assign(x,{p:Math.round(med(x.ps))})).sort((a,b)=>a.p/a.mx-b.p/b.mx||a.p-b.p);
   const cp=k=>k.p>=k.mx*.75?'#00B300':k.p>=k.mx*.25?'#E9A400':'#FF0000';
-  const dq=`<div class="card pn-dq"><div class="gtit">Indicadores</div><div class="ls">${kp.map((k,i)=>`<div class="l"><span class="p">${i+1}º</span><span class="u">${esc(Cap(String(k.n).toLowerCase()))}</span><span class="s" style="color:${cp(k)};min-width:2.4em;text-align:right">${nf(k.p)}</span></div>`).join('')}</div></div>`;
+  /* nome curto do indicador (Renan, 26/11/2026: "Conformidade", "Checklist", "OS Vencida"…) */
+  const CURTO=[[/preventiva/i,'Preventiva'],[/conformidade/i,'Conformidade'],[/blitz/i,'Blitz'],[/checklist/i,'Checklist'],[/ordens? de servi/i,'OS Vencida'],[/stress/i,'Stress Test'],[/indisp/i,'Indisponibilidade'],[/mttr/i,'MTTR'],[/mtbf/i,'MTBF'],[/milimetr/i,'Milimetragem'],[/disponibilidade contratada/i,'Disponibilidade']];
+  const curto=n=>{ const c=CURTO.find(x=>x[0].test(n)); return c?c[1]:Cap(String(n).toLowerCase()); };
+  const dq=`<div class="card pn-dq"><div class="gtit">Indicadores</div><div class="l hd"><span class="p"></span><span class="u">Indicador</span><span class="vv" style="min-width:5.2em;text-align:right">Ating.</span><span class="s" style="min-width:2.4em;text-align:right">Pts</span></div><div class="ls">${kp.map((k,i)=>`<div class="l"><span class="p">${i+1}º</span><span class="u">${esc(curto(k.n))}</span><span class="vv" style="min-width:5.2em;text-align:right">${esc(k.vs.join(' · ')||'—')}</span><span class="s" style="color:${cp(k)};min-width:2.4em;text-align:right">${nf(k.p)}</span></div>`).join('')}</div></div>`;
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'})}${dq}</div>`;
   return [sl({titulo:'Termômetro',corpo:`<div class="pn">${hero}${gr}</div>`},inst,'Termômetro')];
 }
@@ -1462,6 +1465,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611260630"></script>
+<script src="../assets/build-check.js?v=202611260700"></script>
 </body>
 </html>

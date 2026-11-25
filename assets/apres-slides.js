@@ -77,14 +77,14 @@
     '.div .sub{font-size:15px;color:#BFC5CF;margin:16px auto 0;max-width:480px;line-height:1.5}',
     /* conteúdo */
     '.cont{background:radial-gradient(80% 60% at 90% 0%,rgba(255,255,255,.35) 0%,transparent 60%),linear-gradient(rgba(255,255,255,.20),rgba(255,255,255,.20)),#E1E2E5}',
-    '.cab{position:absolute;left:0;right:0;top:0;height:64px;padding:0 20px;display:flex;align-items:center;gap:12px;background:#1E2833;background-clip:padding-box;border-bottom:3px solid #F97316;box-sizing:border-box;z-index:2}',   /* cabeçalho grafite com filete laranja (Renan, 26/11/2026) */
+    '.cab{position:absolute;left:0;right:0;top:0;height:64px;padding:0 28px;display:flex;align-items:center;gap:12px;background:#1E2833;background-clip:padding-box;border-bottom:3px solid #F97316;box-sizing:border-box;z-index:2}',   /* cabeçalho grafite com filete laranja (Renan, 26/11/2026) */
     '.cab h2{font-size:22px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;color:#fff}',
     '.cab .un{font-size:14px;font-weight:600;color:#A9B1C0;padding-left:12px;border-left:1px solid rgba(255,255,255,.28);line-height:18px;white-space:nowrap}',
     '.cab .per{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#C9D0DD;white-space:nowrap}',
     '.cont::after{height:10px;background:#F97316}',   /* no slide de conteúdo a linha de baixo é laranja chapada, 10 px (Renan, 26/11/2026) */
     '.cab .per svg{width:14px;height:14px}',
-    '.miolo{position:absolute;left:20px;right:20px;top:84px;bottom:20px}',
-    '.pe{position:absolute;left:20px;right:20px;bottom:16px;display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:var(--txt3)}',
+    '.miolo{position:absolute;left:28px;right:28px;top:84px;bottom:20px}',
+    '.pe{position:absolute;left:28px;right:28px;bottom:16px;display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:var(--txt3)}',
     '.card{background:linear-gradient(180deg,rgba(255,255,255,.6) 0%,rgba(255,255,255,0) 46%),rgba(255,255,255,.74);border:1px solid var(--brd);border-radius:5px;box-shadow:inset 0 1px 0 #fff,0 2px 12px rgba(0,0,0,.08);min-width:0;min-height:0}',
     '.rot{font-size:calc(10px*var(--k));font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--txt2)}',
     '.cr{color:#FF0000!important}.cg{color:#00B300!important}.nt{color:var(--txt3)!important}',
@@ -227,7 +227,7 @@
     '.pn-dq .gtit{font-size:calc(13.5px*var(--k));font-weight:800}.pn-dq .gsub{font-size:calc(10.5px*var(--k));color:var(--txt3);font-weight:600;margin:2px 0 6px}',
     '.pn-dq .ls{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;padding-bottom:6px}',
     '.pn-dq .l{display:flex;align-items:center;gap:9px;line-height:1.15;flex:1 1 0;min-height:calc(19px*var(--k));max-height:calc(36px*var(--k));border-bottom:1px solid var(--linha);padding:0 6px;font-size:calc(11.5px*var(--k))}',
-    '.pn-dq .l:last-child{border-bottom:0}.pn-dq .l .p{font-size:.85em;font-weight:800;color:#8E96A6;width:22px;flex:0 0 22px}',
+    '.pn-dq .l:last-child{border-bottom:0}.pn-dq .l.hd{flex:0 0 auto;min-height:0;margin-top:8px;padding:0 6px 4px;font-size:calc(9.5px*var(--k));font-weight:700;color:#8E96A6;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--linha)}.pn-dq .l.hd .u,.pn-dq .l.hd .s,.pn-dq .l.hd .vv{font-weight:700;color:#8E96A6}.pn-dq .l .p{font-size:.85em;font-weight:800;color:#8E96A6;width:22px;flex:0 0 22px}',
     '.pn-dq .l .u{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pn-dq .l .s{font-weight:800}.pn-dq .l .u small{color:#8E96A6;font-weight:600;font-size:.88em}.pn-dq .l .vv{color:var(--txt3);font-weight:600;white-space:nowrap}',
     '.tc-row{display:grid;gap:10px}.tc{padding:10px 16px;border:1px solid var(--card-brd);border-radius:5px;background:rgba(255,255,255,.55)}.tc .kl{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px}.tc .kv{font-size:24px;font-weight:800;line-height:1.1;margin-top:3px}.tc .km{display:flex;gap:16px;margin-top:5px;font-size:10px;color:var(--txt3);font-weight:600}.tc .km b{color:var(--txt);font-weight:800}',
     '.pn-dq .l.eu{background:rgba(249,115,22,.10);border-radius:6px}',

@@ -69,6 +69,7 @@ let EFFROWS=[]; ['CDD GUARULHOS','CDD CAMBORIU','CDD PELOTAS'].forEach((u,j)=>{ 
   pts.forEach(p=>raw.push(p===0?27:0.97,p)); EFFROWS.push({tier:'Transportes T2',raw,_month:String(m).padStart(2,'0')}); } });
 function indPointsForRow(r,n){ const i=N.indexOf(n); return i<0?null:r.raw[9+i*2]; }
 function indValueForRow(r,n){ const i=N.indexOf(n); return i<0?null:r.raw[8+i*2]; }
+function fmtIndVal(v){ if(typeof v==='number'){ if(v>0&&v<=1.0001) return Math.round(v*100)+'%'; return String(v); } return v==null?'':String(v); }
 <\/script>`;
 const ELITEPG = `<!doctype html><meta charset=utf-8><body><div id="titSub">ok</div><script>
 let VISIVEL=true, EH_ADMIN=true;
@@ -169,7 +170,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   ok('Scorecard: pontuação geral em cima, os 20 indicadores na lista ao lado', /Pontuação geral/.test(sc) && /89,0/.test(sc) && /Custos Frota/.test(sc) && /FCA Conclusão/.test(sc), sc.slice(0, 200));
   ok('Scorecard: um slide só com evolução mensal e indicadores, com a posição da unidade', /Evolução mensal/.test(sc) && /Indicadores/.test(sc) && !/Destaques/.test(sc) && /3º de/.test(sc) && !sc2, sc.slice(-200));
   const te = await txt(pg, 'term');
-  ok('Termômetro: pontuação geral com MoM, Posição Geo e Conlog, todos os indicadores do pior ao melhor', /Pontuação geral/.test(te) && /Posição Geo/.test(te) && /Posição Conlog/.test(te) && /Indicadores/.test(te) && /Ordens de serviço vencidas/i.test(te), te.slice(0, 260));
+  ok('Termômetro: pontuação geral com MoM, Posição Geo e Conlog, todos os indicadores do pior ao melhor', /Pontuação geral/.test(te) && /Posição Geo/.test(te) && /Posição Conlog/.test(te) && /Indicadores/.test(te) && /OS Vencida/.test(te) && /MTTR/.test(te) && /Ating\./.test(te) && /97%/.test(te), te.slice(0, 260));
   const el = await txt(pg, 'elite');
   ok('Frota de Elite: pontuação com a posição, ano e os indicadores ao lado (sem o ranking)', /Pontuação/.test(el) && /3º de 3/.test(el) && !/Ranking das unidades/.test(el) && /Indicadores/.test(el) && /Disponib\./.test(el), el.slice(0, 220));
   const fm = await pg.evaluate(() => { const i = DECK.findIndex(d => /<h2>FCA · Rota · Manutenções<\/h2>/.test(d.html)); const x = document.createElement('div'); x.innerHTML = DECK[i].html; return { t: x.textContent.replace(/\s+/g, ' '), rs: [...x.querySelectorAll('td[rowspan]')].map(t => t.getAttribute('rowspan')), linhas: x.querySelectorAll('table.fg-rel tr[data-id]').length }; });
