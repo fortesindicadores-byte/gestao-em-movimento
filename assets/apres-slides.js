@@ -231,6 +231,11 @@
     '.pn-dq .l .u{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pn-dq .l .s{font-weight:800}.pn-dq .l .u small{color:#8E96A6;font-weight:600;font-size:.88em}.pn-dq .l .vv{color:var(--txt3);font-weight:600;white-space:nowrap}',
     '.tc-row{display:grid;gap:10px}.tc{padding:10px 16px;border:1px solid var(--card-brd);border-radius:5px;background:rgba(255,255,255,.55)}.tc .kl{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px}.tc .kv{font-size:24px;font-weight:800;line-height:1.1;margin-top:3px}.tc .km{display:flex;gap:16px;margin-top:5px;font-size:10px;color:var(--txt3);font-weight:600}.tc .km b{color:var(--txt);font-weight:800}',
     '.pn-dq .l.eu{background:rgba(249,115,22,.10);border-radius:6px}',
+    /* indicadores em colunas, no card de baixo do arranjo do Financeiro (Renan, 26/11/2026) */
+    '.ind-c{padding:calc(12px*var(--k)) 18px calc(10px*var(--k));display:flex;flex-direction:column;min-height:0}.ind-c .gtit{font-size:calc(13.5px*var(--k));font-weight:800;margin-bottom:6px}',
+    '.ind-g{flex:1;min-height:0;display:grid;grid-auto-flow:column;column-gap:28px}',
+    '.ind-g .l{display:flex;align-items:center;gap:8px;min-width:0;border-bottom:1px solid var(--linha);font-size:calc(11px*var(--k))}',
+    '.ind-g .l .p{color:#8E96A6;font-weight:600;font-size:.82em;min-width:1.9em}.ind-g .l .u{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ind-g .l .u small{color:#8E96A6;font-weight:600;font-size:.86em}.ind-g .l .vv{color:var(--txt3);font-weight:600;white-space:nowrap}.ind-g .l .s{font-weight:800;white-space:nowrap;text-align:right}',
     '.el-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}',
     '.el-kpi{display:flex;align-items:center;gap:10px;padding:8px 14px;min-width:0;border:1px solid var(--card-brd);border-radius:5px;background:rgba(255,255,255,.55)}',
     '.el-kpi .f{width:14px;height:14px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 0 3px rgba(15,23,42,.05)}',
@@ -439,6 +444,7 @@
   var CSS_VAR = [
     
     /* cópia sem card em TODOS os slides (Renan, 26/11/2026: "Faça uma cópia nesse estilo pra todos slides. Mas espaçamento lateral e em cima e baixo melhor e distribuído melhor") */
+    'body.branco .cont{background:#FFFFFF}body.branco.escuro .cont{background:#1B1C20}',   /* ?estilo=branco = a cópia limpa com o fundo dos slides branco (Renan, 26/11/2026) */
     'body.est-limpo .cont .card{background:transparent!important;border-color:transparent!important;box-shadow:none!important}',
     'body.est-limpo .cont .miolo{left:40px;right:40px;top:92px;bottom:28px}body.est-limpo .cont .cab{padding:0 40px}',
     'body.est-limpo .cont .g2,body.est-limpo .cont .arv,body.est-limpo .cont .pn-gr,body.est-limpo .cont .kgrid{column-gap:44px;row-gap:28px}body.est-limpo .cont .pn{gap:24px}body.est-limpo .cont .kpis,body.est-limpo .cont .tc-row,body.est-limpo .cont .el-cards{gap:28px}',
@@ -554,7 +560,7 @@
         op.xAxis = eixoX(g.labels); op.yAxis = { show: false, min: b.min, max: b.max };
         op.series = [{ type: 'bar', barWidth: '58%', z: 2, data: g.real.map(function (v, i) { if (v == null) return null; var r = g.rem ? g.rem[i] : null, c = r == null ? '#9AA3B2' : ((ruimSobe ? v > r : v < r) ? VERM : VERDE), f = emF(i);
             return { value: v, itemStyle: { color: degr(c, f ? .95 : .35, f ? .45 : .08), borderRadius: [fs(7), fs(7), 0, 0] }, label: { show: f, position: 'top', formatter: fmt(v), fontSize: fs(12.5), fontWeight: 700, color: C_LBL } }; }) }];
-        var lin = function (d, c, nome) { return { type: 'line', name: nome, data: d, smooth: false, z: 3, connectNulls: true, symbol: 'circle', symbolSize: function (v, p) { return foco.indexOf(p.dataIndex) >= 0 ? fs(11) : fs(6); }, lineStyle: { color: c, width: 2.5, type: [6, 4] }, itemStyle: { color: c, borderColor: c, borderWidth: 0 } }; };   /* linha reta e ponto cheio na cor da linha (Renan, 26/11/2026) */
+        var lin = function (d, c, nome) { return { type: 'line', name: nome, data: d, smooth: .35, z: 3, connectNulls: true, symbol: 'circle', symbolSize: function (v, p) { return foco.indexOf(p.dataIndex) >= 0 ? fs(11) : fs(6); }, lineStyle: { color: c, width: 2.5, type: [6, 4] }, itemStyle: { color: c, borderColor: c, borderWidth: 0 } }; };   /* linha suavizada e ponto cheio na cor da linha (Renan, 26/11/2026) */
         if (g.rem) op.series.push(lin(g.rem, C_INK, 'Rem')); if (g.orc) op.series.push(lin(g.orc, '#1B6FC4', 'Orçado'));
       } else if (g.tipo === 'bridge') {
         var acc = 0, base = [], val = [], cores = [];
@@ -567,13 +573,14 @@
       } else if (g.tipo === 'meta' || g.tipo === 'faixa') {
         var corDe = function (v) { if (v == null) return null; if (g.tipo === 'meta') return v > g.meta ? VERM : VERDE; for (var q = 0; q < g.faixas.length; q++) if (v >= g.faixas[q][0]) return g.faixas[q][1]; return VERM; };
         var b2; if (g.tipo === 'meta') { var vv = g.v.filter(function (x) { return x != null; }), lo2 = Math.min(0, Math.min.apply(null, vv.concat([0]))), hi2 = Math.max(g.meta, Math.max.apply(null, vv.concat([0]))), r2 = (hi2 - lo2) || 1;
-          b2 = { min: lo2 < 0 ? lo2 - r2 * .14 : 0, max: hi2 + r2 * .22 }; } else b2 = bounds(g.v, .6, .22);
+          b2 = { min: lo2 < 0 ? lo2 - r2 * .14 : 0, max: hi2 + r2 * .22 }; } else if (g.zero) b2 = { min: 0, max: Math.max.apply(null, g.v.filter(function (x) { return x != null; }).concat([1])) * 1.2 }; else b2 = bounds(g.v, .6, .22);
         op.xAxis = eixoX(g.labels); op.yAxis = { show: false, min: b2.min, max: b2.max };
-        var ser = { type: 'bar', barWidth: '60%', data: g.v.map(function (v, i) { if (v == null) return null; var c = corDe(v), f = emF(i);
+        if (g.cores) Object.assign(op.xAxis.axisLabel, { fontSize: fs(g.labels.length > 12 ? 9.5 : 11), lineHeight: fs(g.labels.length > 12 ? 11 : 13), width: Math.max(28, W * .9 / g.labels.length - 4), overflow: 'break' }); if (g.cores) op.grid.bottom = fs(g.labels.length > 12 ? 34 : 38);   /* indicadores: nome curto e quebrando em duas linhas */
+        var ser = { type: 'bar', barWidth: '60%', data: g.v.map(function (v, i) { if (v == null) return null; var c = g.cores ? g.cores[i] : corDe(v), f = emF(i);
           return { value: v, itemStyle: { color: degr(c, f ? .95 : .3, f ? .5 : .08), borderRadius: [fs(8), fs(8), 0, 0], shadowColor: f && foco.length ? hexA(c, .35) : 'transparent', shadowBlur: f && foco.length ? 12 : 0 },
-            label: { show: f, position: 'top', formatter: fmt(v), fontSize: fs(foco.length ? 12.5 : 11), fontWeight: 800, color: C_LBL } }; }) };
+            label: { show: f, position: 'top', formatter: g.txt ? g.txt[i] : fmt(v), fontSize: fs(foco.length ? 12.5 : 11), fontWeight: 800, color: g.cores ? c : C_LBL } }; }) };
         if (g.tipo === 'meta') ser.markLine = { silent: true, symbol: 'none', lineStyle: { color: C_INK, type: [6, 4], width: 2 }, label: { formatter: 'meta ' + fmt(g.meta), position: 'insideEndTop', fontSize: fs(11), fontWeight: 600, color: C_INK }, data: [{ yAxis: g.meta }] };
-        else { var lim = g.faixas.filter(function (f) { return f[0] > -1e8; }); ser.markLine = { silent: true, symbol: 'none', data: lim.map(function (f) { return { yAxis: f[0], lineStyle: { color: hexA(f[1], .55), type: [3, 4], width: 1.2 }, label: { formatter: String(f[0]), position: 'insideStartTop', fontSize: fs(10), fontWeight: 700, color: f[1] } }; }) }; }
+        else if (g.faixas && g.faixas.length) { var lim = g.faixas.filter(function (f) { return f[0] > -1e8; }); ser.markLine = { silent: true, symbol: 'none', data: lim.map(function (f) { return { yAxis: f[0], lineStyle: { color: C_INK, type: [3, 4], width: .8 }, label: { formatter: String(f[0]), position: 'insideStartTop', fontSize: fs(10), fontWeight: 700, color: f[1] } }; }) }; }
         op.series = [ser];
       } else if (g.tipo === 'barrasH' || g.tipo === 'prog') {
         var n = g.v.length, cs = g.v.map(function (v, i) { return g.cores ? g.cores[i] : (i === g.foco ? '#F97316' : '#9AA3B2'); });

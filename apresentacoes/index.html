@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611261700">
+<meta name="build" content="202611261840">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611261700"></script>
+<script src="../assets/apres-slides.js?v=202611261840"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -1070,7 +1070,13 @@ function sComp(inst){
 }
 /* slides de indicadores no arranjo do Financeiro: card do resultado à esquerda, gráfico no meio, indicadores à direita (Renan, 26/11/2026) */
 const heroInd=(rot,val,cor,cells,leit)=>`<div class="card hero"><div class="rot">${rot}</div><div class="v" style="color:${cor}">${val}</div><div class="gr">${cells.map((c,i)=>`<div${i===cells.length-1&&cells.length%2?' class="gr2"':''}><span class="rot">${c[0]}</span><b>${c[1]}</b>${c[2]?`<small>${c[2]}</small>`:''}</div>`).join('')}</div>${leit?`<div class="leit">${leit}</div>`:''}</div>`;
-const corpoInd=(hero,graf,dq)=>`<div class="g2" style="grid-template-columns:330px minmax(0,1.6fr) minmax(0,1fr)">${hero}${graf}${dq}</div>`;
+const corpoInd=(hero,graf,dq)=>`<div class="g2" style="grid-template-columns:370px 1fr;grid-template-rows:1fr 1fr">${hero.replace('class="card hero"','class="card hero" style="grid-row:1/3"')}${graf}${dq}</div>`;
+/* gráfico de baixo: os indicadores em barras, na ordem do farol (vermelho, laranja, amarelo, verde; dentro da cor do menor para o maior), nome curto no rótulo (Renan, 26/11/2026) */
+const ORD_COR={'#FF0000':0,'#F97316':1,'#E9A400':2,'#00B300':3};
+const NOME_CURTO=[[/^FCA Ader/i,'FCA'],[/^Consumo Km\/L/i,'Km/L'],[/^Conformidade/i,'Conformid.'],[/^SLA/i,'SLA'],[/^Atingimento KM/i,'Ating. KM'],[/^DPO/i,'DPO/VPO'],[/^Custos Frota/i,'Custos'],[/^Press/i,'Pressão'],[/^Disponib/i,'Disponib.'],[/^Indisponib/i,'Indisp.'],[/^Checklist T1/i,'Check T1/T2'],[/^Check T1/i,'Check T1/T2'],[/^Checklist Apoio/i,'Check Apoio'],[/^Checklist/i,'Checklist'],[/^Preventiva/i,'Prevent.'],[/^Stress Test Cam/i,'Stress Cam.'],[/^Stress Test Emp/i,'Stress Emp.'],[/^Stress Ve/i,'Stress Veíc.'],[/^Stress Test/i,'Stress'],[/^Milimetr/i,'Milimetr.'],[/^Conformidade/i,'Conformid.'],[/^OS Vencida/i,'OS Venc.'],[/^SLA Man/i,'SLA'],[/^Combust/i,'Combust.']];
+const NOME_MINI=[[/^Custos/i,'Custos'],[/^Disponib/i,'Disp.'],[/^DPO/i,'DPO'],[/^Prevent/i,'Prev.'],[/^Consumo Km\/L|^Km\/L/i,'Km/L'],[/^Ating/i,'Ating. KM'],[/^Press/i,'Pressão'],[/^Aferi/i,'Aferiç.'],[/^Check(list)? T1/i,'T1/T2'],[/^Check(list)? Apoio/i,'Apoio'],[/^Conformid/i,'Conf.'],[/^Stress( Test)? Cam/i,'ST Cam.'],[/^Stress( Test)? Emp/i,'ST Emp.'],[/^SLA/i,'SLA'],[/^FCA/i,'FCA'],[/^CIVF/i,'CIVF']];
+const nomeCurto=(n,mini)=>{ const c=(mini?NOME_MINI.find(x=>x[0].test(n)):null)||NOME_CURTO.find(x=>x[0].test(n)); return c?c[1]:n; };
+const indCard=(itens,sub)=>AS.grafico('Indicadores',sub||'',{tipo:'faixa',zero:1,faixas:[],labels:itens.map(x=>nomeCurto(x.n,itens.length>12)),v:itens.map(x=>x.v),cores:itens.map(x=>x.cor),txt:itens.map(x=>x.t)});
 /* Scorecard: o Resumo Gerencial do painel (hero sem card, faixas, os 20 cards em 10×2, evolução mensal e destaques) */
 const SC_FG=c=>({g:'#00B300',y:'#E9A400',o:'#F97316',r:'#FF0000'})[c]||'#8E96A6';
 const bandSC=v=>v==null?'':v>=90?'g':v>=80?'y':v>=70?'o':'r', bandCost=v=>v==null?'':v>=100?'g':v>=98?'y':v>=95?'o':'r';
@@ -1093,7 +1099,7 @@ function sSC(inst){
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${evo}${dq}</div>`;
   /* cópia ECharts: o hero em cards, como no Frota de Elite e no Termômetro (Renan, 26/11/2026) */
   const topo=ESTILO==='echarts'?heroCards('Pontuação geral',S.pont==null?'—':nf(S.pont,1),corEsc(SC_FG(bandSC(S.pont))),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição',pos?pos+'º <small>de '+S.rk.length+'</small>':'—','entre as unidades'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo da meta']]):hero;
-  if(ESTILO!=='echarts'){ const pior=ks[0]; return [sl({titulo:'Scorecard',sec:'sc',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',S.pont==null?'—':nf(S.pont,1),SC_FG(bandSC(S.pont)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição',pos?pos+'º de '+S.rk.length:'—','entre as unidades'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo da meta']],pior?`<b>Pior indicador: ${esc(pior.lbl)}</b> (${Math.round(pior.val)}%).`:''),evo,dq)},inst,'Scorecard')]; }
+  if(ESTILO!=='echarts'){ const pior=ks.slice().sort((a,b)=>(ORD_COR[SC_FG(clsOf(a))]-ORD_COR[SC_FG(clsOf(b))])||a.val-b.val)[0]; return [sl({titulo:'Scorecard',sec:'sc',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',S.pont==null?'—':nf(S.pont,1),SC_FG(bandSC(S.pont)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição',pos?pos+'º de '+S.rk.length:'—','entre as unidades'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo da meta']],pior?`<b>Pior indicador: ${esc(pior.lbl)}</b> (${Math.round(pior.val)}%).`:''),evo,indCard(ks.map(c=>({n:c.lbl,t:Math.round(c.val)+'%',cor:SC_FG(clsOf(c)),o:ORD_COR[SC_FG(clsOf(c))],v:c.val})).sort((a,b)=>a.o-b.o||a.v-b.v),'do pior para o melhor · % do indicador'))},inst,'Scorecard')]; }
   return [sl({titulo:'Scorecard',sec:'sc',corpo:`<div class="pn">${topo}${gr}</div>`},inst,'Scorecard')];
 }
 /* Termômetro: pontuação com MoM, posição Geo e Conlog, o ano e os Bottom KPIs */
@@ -1120,7 +1126,7 @@ function sTERM(inst){
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'})}${dq}</div>`;
   const topo=ESTILO==='echarts'?heroCards('Pontuação geral',nf(g,1)+'<small>pts</small>',corEsc(SC_FG(bandSC(g))),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º <small>de '+cl.n+'</small>':'—','entre as unidades']]):hero;
   if(ESTILO!=='echarts'){ const pior=kp[0], graf=AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'});
-    return [sl({titulo:'Termômetro',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',nf(g,1)+'<small style="font-size:.4em;color:var(--txt3);margin-left:4px">pts</small>',SC_FG(bandSC(g)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º de '+cl.n:'—','entre as unidades']],pior?`<b>Pior indicador: ${esc(curto(pior.n))}</b> (${nf(pior.p)} de ${nf(pior.mx)} pts).`:''),graf,dq)},inst,'Termômetro')]; }
+    return [sl({titulo:'Termômetro',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',nf(g,1)+'<small style="font-size:.4em;color:var(--txt3);margin-left:4px">pts</small>',SC_FG(bandSC(g)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º de '+cl.n:'—','entre as unidades']],pior?`<b>Pior indicador: ${esc(curto(pior.n))}</b> (${nf(pior.p)} de ${nf(pior.mx)} pts).`:''),graf,indCard(kp.map(k=>({n:curto(k.n),t:nf(k.p)+' de '+nf(k.mx),cor:cp(k),v:k.mx?k.p/k.mx*100:0})),'do pior para o melhor · pontos do indicador'))},inst,'Termômetro')]; }
   return [sl({titulo:'Termômetro',corpo:`<div class="pn">${topo}${gr}</div>`},inst,'Termômetro')];
 }
 /* cópia ECharts: o hero em cards (o principal no grafite do cabeçalho); itens = [[rótulo, valor html, nota]] */
@@ -1139,7 +1145,7 @@ function sELITE(inst){
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','Frota de Elite · pontuação total do mês',{tipo:'faixa',labels:MESC,v:x.mes.map((y,i)=>i<=mi?y:null),faixas:[[95,'#00B300'],[85,'#E9A400'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'})}${dq}</div>`;
   const crit=x.ind.filter(i=>i.v!=null&&i.v<85).length, topo=ESTILO==='echarts'?heroCards('Pontuação total',x.pont==null?'—':nf(x.pont,2),corEsc(dot(x.pont)),[['Posição',pos?pos+'º <small>de '+x.rk.length+'</small>':'—','no ranking do mês'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo de 85'],['Indicadores',nf(ks.length),'medidos no mês']]):hero;
   if(ESTILO!=='echarts'){ const pior=ks[0], graf=AS.grafico('Pontuação no ano','Frota de Elite · pontuação total do mês',{tipo:'faixa',labels:MESC,v:x.mes.map((y,i)=>i<=mi?y:null),faixas:[[95,'#00B300'],[85,'#E9A400'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'});
-    return [sl({titulo:'Frota de Elite',kmax:1,corpo:corpoInd(heroInd('Pontuação total',x.pont==null?'—':nf(x.pont,2),dot(x.pont),[['Posição',pos?pos+'º de '+x.rk.length:'—','no ranking do mês'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo de 85'],['Indicadores',nf(ks.length),'medidos no mês']],pior?`<b>Pior indicador: ${esc(pior.l)}</b> (${nf(pior.v,1)}).`:''),graf,dq)},inst,'Frota de Elite')]; }
+    return [sl({titulo:'Frota de Elite',kmax:1,corpo:corpoInd(heroInd('Pontuação total',x.pont==null?'—':nf(x.pont,2),dot(x.pont),[['Posição',pos?pos+'º de '+x.rk.length:'—','no ranking do mês'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo de 85'],['Indicadores',nf(ks.length),'medidos no mês']],pior?`<b>Pior indicador: ${esc(pior.l)}</b> (${nf(pior.v,1)}).`:''),graf,indCard(ks.map(i=>({n:i.l,t:nf(i.v,1),cor:dot(i.v),v:i.v})),'do pior para o melhor · resultado do indicador'))},inst,'Frota de Elite')]; }
   return [sl({titulo:'Frota de Elite',corpo:`<div class="pn">${topo}${gr}</div>`},inst,'Frota de Elite')];
 }
 /* Gestão à Vista: a foto de hoje da unidade (os mesmos números e cortes do Ranking do painel) e as observações */
@@ -1177,16 +1183,16 @@ function sGAV(inst){
     .gav-t{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,${Math.max(4,Math.ceil(it.length/2))}fr);gap:8px}
     .gav-h{padding:calc(12px*var(--k)) 16px;display:flex;flex-direction:column;justify-content:center;min-width:0}
     .gav-h .kl,.gav-c .kl{font-size:calc(8.5px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .gav-h .hv{font-size:calc(38px*var(--k));font-weight:800;line-height:1.05;margin-top:6px;color:var(--txt);display:flex;align-items:center;gap:10px;white-space:nowrap}
-    .gav-h .hp{margin-top:calc(14px*var(--k));padding-top:calc(10px*var(--k));border-top:1px solid var(--linha)}.gav-h .hp b{display:block;font-size:calc(17px*var(--k));font-weight:800;margin-top:4px;color:var(--txt)}
+    .gav-h .hv{font-size:calc(30px*var(--k));font-weight:800;line-height:1.05;margin-top:6px;color:var(--txt);display:flex;align-items:center;gap:10px;white-space:nowrap}
+    .gav-h .hp{margin-top:calc(14px*var(--k));padding-top:calc(10px*var(--k));border-top:1px solid var(--linha)}.gav-h .hp b{display:block;font-size:calc(15px*var(--k));font-weight:800;margin-top:4px;color:var(--txt)}
     .gav-w i.far{flex:0 0 auto;width:.42em;height:.42em;border-radius:50%;display:inline-block}
     .gav-g{display:grid;grid-template-columns:repeat(${Math.max(4,Math.ceil(it.length/2))},minmax(0,1fr));gap:8px}
     .gav-c{padding:calc(9px*var(--k)) 12px;display:flex;flex-direction:column;justify-content:center;min-width:0}
-    .gav-c .kv{font-size:calc(19px*var(--k));font-weight:800;margin-top:3px;line-height:1.1;color:var(--txt);display:flex;align-items:center;gap:7px;white-space:nowrap}
+    .gav-c .kv{font-size:calc(16px*var(--k));font-weight:700;margin-top:3px;line-height:1.1;color:var(--txt);display:flex;align-items:center;gap:7px;white-space:nowrap}
     .gav-c .km{font-size:calc(9px*var(--k));color:var(--txt3);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .gav-w .com{flex:1;min-height:0}</style>
     <div class="gav-w"><div class="gav-t">${hero}${cards}</div>${AS.obs({chave:ch,texto:MOD.obs[ch]||'',baixo:1,dica:'o que a unidade fala sobre o farol de hoje'})}</div>`;
-  return [sl({titulo:'Gestão à Vista',per:'Hoje · '+dt,corpo},inst,'Gestão à Vista')];
+  return [sl({titulo:'Gestão à Vista',per:'Hoje · '+dt,corpo,kmax:1},inst,'Gestão à Vista')];   /* letra menor (Renan, 26/11/2026: "Fontes menores. Fica muito agressivo") */
 }
 function sRecado(t){ const ls=String(t.texto||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,8);
   return {html:AS.conteudo({titulo:t.titulo||'Recado do gestor',uni:UNI(),per:PER(),corpo:`<div class="card" style="height:100%;padding:28px 34px;display:flex;flex-direction:column;justify-content:center;gap:14px">${ls.map(l=>`<div style="display:flex;gap:14px;align-items:baseline"><span style="flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:#F97316;transform:translateY(-3px)"></span><p style="font-size:calc(17px*var(--k));line-height:1.5">${esc(l)}</p></div>`).join('')||'<p>Escreva o recado.</p>'}</div>`}),sum:t.titulo||'Recado do gestor'}; }
@@ -1223,8 +1229,8 @@ function monta(){
   set('titSub',`${UNI()}${VIG?' · fechamento de '+mesLb(VIG):''} · ${DECK.length} slides`);
 }
 let _foco=null;
-const ESTILO=(()=>{ try{ const e=new URLSearchParams(location.search).get('estilo'); return e==='limpo'||e==='echarts'?e:''; }catch(e){ return ''; } })();
-const docAtual=final=>AS.doc({estilo:ESTILO,base:new URL('../assets/',location.href).href,titulo:`${MOD.titulo} · ${UNI()}`,slides:DECK.map(d=>d.html),final,escuro:!document.body.classList.contains('claro'),css:(document.getElementById('fca-tabela-css')||{}).textContent||''});
+const ESTILO=(()=>{ try{ const e=new URLSearchParams(location.search).get('estilo'); return e==='limpo'||e==='echarts'||e==='branco'?e:''; }catch(e){ return ''; } })();
+const docAtual=final=>AS.doc({estilo:ESTILO==='branco'?'limpo branco':ESTILO,base:new URL('../assets/',location.href).href,titulo:`${MOD.titulo} · ${UNI()}`,slides:DECK.map(d=>d.html),final,escuro:!document.body.classList.contains('claro'),css:(document.getElementById('fca-tabela-css')||{}).textContent||''});
 const OLHO='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const OLHO_X='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19C5 19 1 12 1 12a20.3 20.3 0 0 1 5.1-5.9M9.9 5.2A10.4 10.4 0 0 1 12 5c7 0 11 7 11 7a20.6 20.6 0 0 1-2.2 3.2M1 1l22 22"/></svg>';
 const LAPIS='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
@@ -1482,6 +1488,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611261700"></script>
+<script src="../assets/build-check.js?v=202611261840"></script>
 </body>
 </html>
