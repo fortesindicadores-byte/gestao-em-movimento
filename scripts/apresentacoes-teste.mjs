@@ -236,6 +236,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
     const html = await pg.evaluate(() => docAtual(false)); const p2 = await ctx.newPage(); await p2.setViewportSize({ width: 1280, height: 720 });
     await p2.route('**/cdn.jsdelivr.net/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: /echarts/.test(r.request().url()) ? ECHARTS : CHARTJS }));
     await p2.setContent(html, { waitUntil: 'load' }); await p2.waitForFunction(() => window.__deckPronto, null, { timeout: 20000 }); await p2.waitForTimeout(400);
+    if (process.env.KDUMP) console.log('KDUMP', JSON.stringify(await p2.evaluate(() => [...document.querySelectorAll('.slide.cont')].map(s => (s.querySelector('h2')||{}).textContent + '=' + getComputedStyle(s).getPropertyValue('--k').trim()))));
     const sls = await p2.$$('.slide'); for (let i = 0; i < sls.length; i++) await sls[i].screenshot({ path: path.join(SHOT, `g${String(i + 1).padStart(2, '0')}.png`) }); }
   ok('sem erro de JavaScript', !errs.length, errs.join(' | '));
   await ctx.close();

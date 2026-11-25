@@ -76,7 +76,7 @@
     '.div .num{font-size:66px;font-weight:300;color:#F97316;line-height:1;margin-bottom:24px}',
     '.div .sub{font-size:15px;color:#BFC5CF;margin:16px auto 0;max-width:480px;line-height:1.5}',
     /* conteúdo */
-    '.cont{background:#F7F8FA}',   /* fundo quase branco em todos os slides de conteúdo (Renan, 26/11/2026: "O fundo, menos cinza… quase branco") */
+    '.cont{background:radial-gradient(80% 60% at 90% 0%,rgba(255,255,255,.35) 0%,transparent 60%),linear-gradient(rgba(255,255,255,.20),rgba(255,255,255,.20)),#E1E2E5}',   /* fundo cinza de antes (Renan, 26/11/2026: "volte o cinza inicial de fundo") */
     '.cab{position:absolute;left:0;right:0;top:0;height:64px;padding:0 20px;display:flex;align-items:center;gap:12px;background:#1E2833;background-clip:padding-box;border-bottom:3px solid #F97316;box-sizing:border-box;z-index:2}',   /* cabeçalho grafite com filete laranja (Renan, 26/11/2026) */
     '.cab h2{font-size:22px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;color:#fff}',
     '.cab .un{font-size:14px;font-weight:600;color:#A9B1C0;padding-left:12px;border-left:1px solid rgba(255,255,255,.28);line-height:18px;white-space:nowrap}',
@@ -307,7 +307,7 @@
   /* ── slide de conteúdo: moldura ── */
   var FUNIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16l-6 8v6l-4 2v-8z"/></svg>';
   function conteudo(o) {
-    return '<section class="slide cont" data-sec="' + esc(o.sec || '') + '"' + (o.id ? ' data-id="' + esc(o.id) + '"' : '') + '>' +
+    return '<section class="slide cont" data-sec="' + esc(o.sec || '') + '"' + (o.kmax ? ' data-kmax="' + o.kmax + '"' : '') + (o.id ? ' data-id="' + esc(o.id) + '"' : '') + '>' +
       '<div class="cab"><h2>' + esc(o.titulo) + '</h2>' + (o.uni ? '<span class="un">' + esc(o.uni) + '</span>' : '') +
       '<div class="per">' + (o.extra || '') + FUNIL + esc(o.per || '') + '</div></div>' +
       '<div class="miolo">' + o.corpo + '</div></section>';
@@ -614,7 +614,7 @@
       if (!duro) s.querySelectorAll('.hero .gr b,.tn-g b,.tn-v,.tn-r,.kpi .kv,.kpi .km').forEach(function (e) { if (e.scrollWidth > e.clientWidth + 1) ok = false;
         var p = e.parentElement.getBoundingClientRect(), r = e.getBoundingClientRect(); if (r.right > p.right + 1) ok = false; });
       return ok; }
-    function ajusta(s) { if (!s.querySelector('.miolo')) return; var d0 = s.style.display; s.style.display = ''; var lo = .72, hi = s.querySelector('.fcap') ? 1 : 1.25;   /* FCA nunca cresce além do tamanho de tabela (Renan, 26/11/2026: "fonte exagerada nos FCAs") */
+    function ajusta(s) { if (!s.querySelector('.miolo')) return; var d0 = s.style.display; s.style.display = ''; var lo = .72, hi = s.querySelector('.fcap') ? 1 : (+s.getAttribute('data-kmax') || 1.25);   /* data-kmax: slide que não cresce a letra (Financeiro e Dispersão, Renan, 26/11/2026: "Você aumentou fontes?") */   /* FCA nunca cresce além do tamanho de tabela (Renan, 26/11/2026: "fonte exagerada nos FCAs") */
       var av = s.querySelector('.arv'); if (av && av.querySelector('.com')) { av.classList.remove('sem-obs'); s.style.setProperty('--v', 1); s.style.setProperty('--k', .9); if (!cabe(s)) av.classList.add('sem-obs'); }
       s.style.setProperty('--v', 1); s.style.setProperty('--k', hi); if (!cabe(s)) { s.style.setProperty('--k', lo); var duro = !cabe(s);   /* nem no menor cabe todo texto: vale só não estourar o slide */
         for (var i = 0; i < 12; i++) { var m = (lo + hi) / 2; s.style.setProperty('--k', m); if (cabe(s, duro)) lo = m; else hi = m; } s.style.setProperty('--k', lo); }

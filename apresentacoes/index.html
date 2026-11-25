@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611261405">
+<meta name="build" content="202611261425">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611261405"></script>
+<script src="../assets/apres-slides.js?v=202611261425"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -870,7 +870,7 @@ function sFin(inst){
   const corpo=`<div class="g2 fin-fpa" style="grid-template-columns:370px 1fr;grid-template-rows:1fr 1fr">${hero}
     ${AS.grafico('Bridge do custo','do Rem ao Real',{tipo:'bridge',passos})}
     ${AS.grafico('Custo no ano','nominal',{tipo:'ano',labels:lab,real,rem,orc,foco:ac?Array.from({length:+VIG.slice(5,7)},(_,i)=>i):[+VIG.slice(5,7)-1]},AS.LEG_ANO)}</div>`;
-  return [sl({titulo:'Financeiro · Custo da frota',corpo},inst,'Financeiro')];
+  return [sl({titulo:'Financeiro · Custo da frota',corpo,kmax:1},inst,'Financeiro')];
 }
 /* Financeiro 2: AH e AV por pacote (a análise da Visão Financeira) */
 function sAHAV(inst){
@@ -913,7 +913,7 @@ function sKM(inst){
   const corpo=`<div class="g2" style="grid-template-columns:370px 1fr 1fr;grid-template-rows:1fr 1.25fr">${hero.replace('grid-row:1/3','grid-row:1/3;grid-column:1')}
     <div style="grid-column:2/4;min-height:0;display:flex">${AS.grafico('Dispersão no ano','km rodado contra o Rem · %',{tipo:'meta',labels:MESC,v,meta:K.meta,foco:ac?Array.from({length:+VIG.slice(5,7)},(_,i)=>i):[+VIG.slice(5,7)-1],fmt:'pct'}).replace('class="card gc"','class="card gc" style="flex:1"')}</div>
     ${baixo}</div>`;
-  return [sl({titulo:'Dispersão de km',corpo},inst,'Dispersão de km')];
+  return [sl({titulo:'Dispersão de km',corpo,kmax:1},inst,'Dispersão de km')];
 }
 /* abre só os pacotes da frota que têm FCA (Seguros e ICMS são corporativos e não geram FCA).
    desviou = passou do remunerado fora da tolerância do FCA (até 2% e até R$ 5.000 é tolerância) */
@@ -1469,6 +1469,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611261405"></script>
+<script src="../assets/build-check.js?v=202611261425"></script>
 </body>
 </html>
