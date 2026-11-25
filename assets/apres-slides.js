@@ -481,8 +481,9 @@
     var C_TICK = ESC ? '#C9D0DD' : '#4A5568', C_LBL = ESC ? '#EEF2FA' : '#333333', C_INK = ESC ? '#EEF2FA' : '#161D2B', C_FRACO = ESC ? '#A3ABBA' : '#737D91', C_LIG = ESC ? 'rgba(255,255,255,.26)' : 'rgba(15,23,42,.22)';
     var ECH = document.body.classList.contains('est-echarts') && window.echarts;
     function desenha(cv) {
-      /* barras (ano, bridge, meta, faixa) no desenho do Chart.js em TODAS as versões (Renan, 26/11/2026: "volte esses gráficos de antes… padrão pra todos"); o ECharts fica só nos outros tipos da versão echarts */
-      if (ECH && !/"tipo":"(ano|bridge|meta|faixa)"/.test(cv.getAttribute('data-g') || '')) return desenhaE(cv);
+      /* barras verticais (ano, bridge, meta, faixa) no desenho do ECharts em TODAS as versões (Renan, 26/11/2026: "Na verdade mantenha esse estilo de gráfico, apenas ajuste as linhas"); o resto no ECharts só na versão echarts */
+      var dg = cv.getAttribute('data-g') || '';
+      if (window.echarts && (ECH || /"tipo":"(ano|bridge|meta|faixa)"/.test(dg))) return desenhaE(cv);
       var g = JSON.parse(cv.getAttribute('data-g')), ctx = cv.getContext('2d'), fmt = fmtDe(g.fmt), k = parseFloat(getComputedStyle(cv).getPropertyValue('--k')) || 1;
       var fx = { size: Math.round(13 * k), family: 'Montserrat' }, fl = '700 ' + Math.round(13 * k) + 'px Montserrat';
       var base = { responsive: true, maintainAspectRatio: false, animation: false, devicePixelRatio: 2, plugins: { legend: { display: false }, tooltip: { enabled: false } } };
@@ -553,7 +554,7 @@
         op.xAxis = eixoX(g.labels); op.yAxis = { show: false, min: b.min, max: b.max };
         op.series = [{ type: 'bar', barWidth: '58%', z: 2, data: g.real.map(function (v, i) { if (v == null) return null; var r = g.rem ? g.rem[i] : null, c = r == null ? '#9AA3B2' : ((ruimSobe ? v > r : v < r) ? VERM : VERDE), f = emF(i);
             return { value: v, itemStyle: { color: degr(c, f ? .95 : .35, f ? .45 : .08), borderRadius: [fs(7), fs(7), 0, 0] }, label: { show: f, position: 'top', formatter: fmt(v), fontSize: fs(12.5), fontWeight: 700, color: C_LBL } }; }) }];
-        var lin = function (d, c, nome) { return { type: 'line', name: nome, data: d, smooth: .35, z: 3, connectNulls: true, symbol: 'circle', symbolSize: function (v, p) { return foco.indexOf(p.dataIndex) >= 0 ? fs(11) : fs(6); }, lineStyle: { color: c, width: 2.5, type: [6, 4] }, itemStyle: { color: '#fff', borderColor: c, borderWidth: 2.5 } }; };
+        var lin = function (d, c, nome) { return { type: 'line', name: nome, data: d, smooth: false, z: 3, connectNulls: true, symbol: 'circle', symbolSize: function (v, p) { return foco.indexOf(p.dataIndex) >= 0 ? fs(11) : fs(6); }, lineStyle: { color: c, width: 2.5, type: [6, 4] }, itemStyle: { color: c, borderColor: c, borderWidth: 0 } }; };   /* linha reta e ponto cheio na cor da linha (Renan, 26/11/2026) */
         if (g.rem) op.series.push(lin(g.rem, C_INK, 'Rem')); if (g.orc) op.series.push(lin(g.orc, '#1B6FC4', 'Orçado'));
       } else if (g.tipo === 'bridge') {
         var acc = 0, base = [], val = [], cores = [];

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611261530">
+<meta name="build" content="202611261640">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611261530"></script>
+<script src="../assets/apres-slides.js?v=202611261640"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -1068,6 +1068,9 @@ function sComp(inst){
   const pg=paginas(gruposFca(rs),8);
   return pg.map((p,i)=>sl({titulo:tit+(pg.length>1?` (${i+1} de ${pg.length})`:''),corpo:tabFca([].concat(...p.map(g=>g.rs)))},inst,i?null:tit));
 }
+/* slides de indicadores no arranjo do Financeiro: card do resultado à esquerda, gráfico no meio, indicadores à direita (Renan, 26/11/2026) */
+const heroInd=(rot,val,cor,cells,leit)=>`<div class="card hero"><div class="rot">${rot}</div><div class="v" style="color:${cor}">${val}</div><div class="gr">${cells.map((c,i)=>`<div${i===cells.length-1&&cells.length%2?' class="gr2"':''}><span class="rot">${c[0]}</span><b>${c[1]}</b>${c[2]?`<small>${c[2]}</small>`:''}</div>`).join('')}</div>${leit?`<div class="leit">${leit}</div>`:''}</div>`;
+const corpoInd=(hero,graf,dq)=>`<div class="g2" style="grid-template-columns:330px minmax(0,1.6fr) minmax(0,1fr)">${hero}${graf}${dq}</div>`;
 /* Scorecard: o Resumo Gerencial do painel (hero sem card, faixas, os 20 cards em 10×2, evolução mensal e destaques) */
 const SC_FG=c=>({g:'#00B300',y:'#E9A400',o:'#F97316',r:'#FF0000'})[c]||'#8E96A6';
 const bandSC=v=>v==null?'':v>=90?'g':v>=80?'y':v>=70?'o':'r', bandCost=v=>v==null?'':v>=100?'g':v>=98?'y':v>=95?'o':'r';
@@ -1090,6 +1093,7 @@ function sSC(inst){
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${evo}${dq}</div>`;
   /* cópia ECharts: o hero em cards, como no Frota de Elite e no Termômetro (Renan, 26/11/2026) */
   const topo=ESTILO==='echarts'?heroCards('Pontuação geral',S.pont==null?'—':nf(S.pont,1),corEsc(SC_FG(bandSC(S.pont))),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição',pos?pos+'º <small>de '+S.rk.length+'</small>':'—','entre as unidades'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo da meta']]):hero;
+  if(ESTILO!=='echarts'){ const pior=ks[0]; return [sl({titulo:'Scorecard',sec:'sc',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',S.pont==null?'—':nf(S.pont,1),SC_FG(bandSC(S.pont)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição',pos?pos+'º de '+S.rk.length:'—','entre as unidades'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo da meta']],pior?`<b>Pior indicador: ${esc(pior.lbl)}</b> (${Math.round(pior.val)}%).`:''),evo,dq)},inst,'Scorecard')]; }
   return [sl({titulo:'Scorecard',sec:'sc',corpo:`<div class="pn">${topo}${gr}</div>`},inst,'Scorecard')];
 }
 /* Termômetro: pontuação com MoM, posição Geo e Conlog, o ano e os Bottom KPIs */
@@ -1115,6 +1119,8 @@ function sTERM(inst){
   const dq=`<div class="card pn-dq"><div class="gtit">Indicadores</div><div class="l hd"><span class="p"></span><span class="u">Indicador</span><span class="vv" style="min-width:5.2em;text-align:right">Ating.</span><span class="s" style="min-width:2.4em;text-align:right">Pts</span></div><div class="ls">${kp.map((k,i)=>`<div class="l"><span class="p">${i+1}º</span><span class="u">${esc(curto(k.n))}</span><span class="vv" style="min-width:5.2em;text-align:right">${esc(k.vs.join(' · ')||'—')}</span><span class="s" style="color:${cp(k)};min-width:2.4em;text-align:right">${nf(k.p)}</span></div>`).join('')}</div></div>`;
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'})}${dq}</div>`;
   const topo=ESTILO==='echarts'?heroCards('Pontuação geral',nf(g,1)+'<small>pts</small>',corEsc(SC_FG(bandSC(g))),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º <small>de '+cl.n+'</small>':'—','entre as unidades']]):hero;
+  if(ESTILO!=='echarts'){ const pior=kp[0], graf=AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'});
+    return [sl({titulo:'Termômetro',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',nf(g,1)+'<small style="font-size:.4em;color:var(--txt3);margin-left:4px">pts</small>',SC_FG(bandSC(g)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º de '+cl.n:'—','entre as unidades']],pior?`<b>Pior indicador: ${esc(curto(pior.n))}</b> (${nf(pior.p)} de ${nf(pior.mx)} pts).`:''),graf,dq)},inst,'Termômetro')]; }
   return [sl({titulo:'Termômetro',corpo:`<div class="pn">${topo}${gr}</div>`},inst,'Termômetro')];
 }
 /* cópia ECharts: o hero em cards (o principal no grafite do cabeçalho); itens = [[rótulo, valor html, nota]] */
@@ -1132,6 +1138,8 @@ function sELITE(inst){
   const dq=`<div class="card pn-dq"><div class="gtit">Indicadores</div><div class="ls">${ks.map((i,j)=>`<div class="l"><span class="p">${j+1}º</span><span class="u">${esc(i.l)}${i.p!=null?' <small>peso '+i.p+'</small>':''}</span><span class="s" style="color:${dot(i.v)};min-width:3em;text-align:right">${nf(i.v,1)}</span></div>`).join('')}</div></div>`;
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','Frota de Elite · pontuação total do mês',{tipo:'faixa',labels:MESC,v:x.mes.map((y,i)=>i<=mi?y:null),faixas:[[95,'#00B300'],[85,'#E9A400'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'})}${dq}</div>`;
   const crit=x.ind.filter(i=>i.v!=null&&i.v<85).length, topo=ESTILO==='echarts'?heroCards('Pontuação total',x.pont==null?'—':nf(x.pont,2),corEsc(dot(x.pont)),[['Posição',pos?pos+'º <small>de '+x.rk.length+'</small>':'—','no ranking do mês'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo de 85'],['Indicadores',nf(ks.length),'medidos no mês']]):hero;
+  if(ESTILO!=='echarts'){ const pior=ks[0], graf=AS.grafico('Pontuação no ano','Frota de Elite · pontuação total do mês',{tipo:'faixa',labels:MESC,v:x.mes.map((y,i)=>i<=mi?y:null),faixas:[[95,'#00B300'],[85,'#E9A400'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'});
+    return [sl({titulo:'Frota de Elite',kmax:1,corpo:corpoInd(heroInd('Pontuação total',x.pont==null?'—':nf(x.pont,2),dot(x.pont),[['Posição',pos?pos+'º de '+x.rk.length:'—','no ranking do mês'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo de 85'],['Indicadores',nf(ks.length),'medidos no mês']],pior?`<b>Pior indicador: ${esc(pior.l)}</b> (${nf(pior.v,1)}).`:''),graf,dq)},inst,'Frota de Elite')]; }
   return [sl({titulo:'Frota de Elite',corpo:`<div class="pn">${topo}${gr}</div>`},inst,'Frota de Elite')];
 }
 /* Gestão à Vista: a foto de hoje da unidade (os mesmos números e cortes do Ranking do painel) e as observações */
@@ -1469,6 +1477,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611261530"></script>
+<script src="../assets/build-check.js?v=202611261640"></script>
 </body>
 </html>
