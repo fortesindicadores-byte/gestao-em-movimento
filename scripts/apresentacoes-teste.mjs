@@ -219,6 +219,9 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   ok('repetir o bloco: a cópia entra logo depois, com o filtro copiado', E.seq.some(x => x.split('|')[1] === 'fin~2') && ids.indexOf('fin') + 1 === E.seq.findIndex(x => x.split('|')[1] === 'fin~2'), E.seq.slice(3, 9).join(' '));
   await pg.evaluate(() => { POS = DECK.findIndex(d => d.item === 'fin~2'); mostra(); abreUn('flt'); [...document.querySelectorAll('#fltList input')].find(x => x.dataset.v === '*').click(); }); await pg.waitForTimeout(300);
   ok('cada cópia guarda o próprio filtro', await pg.evaluate(() => JSON.stringify(MOD.f['fin']) === '{"proj":["ROTA (VAN)"]}' && (!MOD.f['fin~2'] || !MOD.f['fin~2'].proj.length)), await pg.evaluate(() => JSON.stringify(MOD.f)));
+  await pg.evaluate(() => { POS = DECK.findIndex(d => d.item === 'fin~2'); mostra(); abreUn('fltPer'); [...document.querySelectorAll('#fltPerList input')].find(x => x.dataset.v === 'acum').click(); }); await pg.waitForTimeout(300);
+  const fa = await txt(pg, 'fin~2');
+  ok('Período Acumulado no slide: o cabeçalho diz "Acumulado jan a" e a cópia guarda o período', /Acumulado jan a/.test(fa) && await pg.evaluate(() => MOD.f['fin~2'].per === 'acum' && (!MOD.f['fin'] || MOD.f['fin'].per !== 'acum')), fa.slice(0, 200));
   // apresentar
   await pg.evaluate(() => apresentar()); await pg.waitForTimeout(500);
   ok('Apresentar: sem as marcas de edição (+, caixa de observação vazia)', await pg.evaluate(() => { const d = document.getElementById('showF').contentDocument; return d.body.classList.contains('final') && [...d.querySelectorAll('.mais,.fg-add')].every(m => getComputedStyle(m).display === 'none'); }));
