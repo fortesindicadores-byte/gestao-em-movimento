@@ -24,10 +24,10 @@
 
   /* ── formatos ── */
   var nf = function (v, c) { return (+v).toLocaleString('pt-BR', { minimumFractionDigits: c || 0, maximumFractionDigits: c || 0 }); };
-  var num = function (a) { return a >= 1e9 ? nf(a / 1e9, 2) + ' bi' : a >= 1e6 ? nf(a / 1e6, 2) + ' mi' : a >= 1e5 ? nf(a / 1e3) + 'k' : a >= 1e3 ? nf(a / 1e3, 1) + 'k' : nf(a); };
+  var num = function (a) { return a >= 1e9 ? nf(a / 1e9, 2) + ' bi' : a >= 1e6 ? nf(a / 1e6, 2) + ' mi' : a >= 1e5 ? nf(a / 1e3) + ' mil' : a >= 1e3 ? nf(a / 1e3, 1) + ' mil' : nf(a); };
   var f = {
     nf: nf, num: num,
-    /* padrão de número do portal, sem "R$" (Renan, 26/11/2026): 842 · 12,3k · 468k · 1,25 mi · 1,25 bi */
+    /* número sem "R$" (Renan, 26/11/2026): 842 · 12,3 mil · 468 mil · 1,25 mi · 1,25 bi */
     brl: function (v) { return v == null || !isFinite(v) ? '—' : (v < 0 ? '−' : '') + num(Math.abs(v)); },
     brlc: function (v) { return v == null || !isFinite(v) ? '—' : (v < 0 ? '−' : '') + num(Math.abs(v)); },
     curto: function (v) { return v == null || !isFinite(v) ? '—' : (v < 0 ? '−' : '') + num(Math.abs(v)); },
@@ -469,7 +469,7 @@
   /* roda DENTRO do deck */
   function RUN() {
     var nf = function (v, c) { return (+v).toLocaleString('pt-BR', { minimumFractionDigits: c || 0, maximumFractionDigits: c || 0 }); };
-    var mi = function (v) { var a = Math.abs(v); return a >= 1e9 ? nf(a / 1e9, 2) + ' bi' : a >= 1e6 ? nf(a / 1e6, 2) + ' mi' : a >= 1e5 ? nf(a / 1e3) + 'k' : a >= 1e3 ? nf(a / 1e3, 1) + 'k' : nf(a); };
+    var mi = function (v) { var a = Math.abs(v); return a >= 1e9 ? nf(a / 1e9, 2) + ' bi' : a >= 1e6 ? nf(a / 1e6, 2) + ' mi' : a >= 1e5 ? nf(a / 1e3) + ' mil' : a >= 1e3 ? nf(a / 1e3, 1) + ' mil' : nf(a); };
     var fmtDe = function (t) { return t === 'brl' ? function (v) { return mi(v); } : t === 'pct' ? function (v) { return nf(v, 1) + '%'; } : t === 'pct0' ? function (v) { return nf(v) + '%'; } : t === 'n1' ? function (v) { return nf(v, 1); } : t === 'n2' ? function (v) { return nf(v, 2); } : t === 'int' ? function (v) { return nf(v); } : mi; };
     function bounds(vals, folgaB, folgaC) { vals = vals.filter(function (v) { return v != null && isFinite(v); }); if (!vals.length) return {};
       var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), r = (mx - mn) || Math.abs(mx) || 1;
@@ -478,15 +478,15 @@
     var C_TICK = ESC ? '#C9D0DD' : '#4A5568', C_LBL = ESC ? '#EEF2FA' : '#333333', C_INK = ESC ? '#EEF2FA' : '#161D2B', C_FRACO = ESC ? '#A3ABBA' : '#737D91', C_LIG = ESC ? 'rgba(255,255,255,.26)' : 'rgba(15,23,42,.22)';
     var ECH = document.body.classList.contains('est-echarts') && window.echarts;
     function desenha(cv) {
-      /* barras verticais (ano, bridge, meta, faixa) saem no desenho do ECharts em TODAS as versões (Renan, 26/11/2026: "São esses. Todos que tiverem esse estilo, altere"); o resto só na versão echarts */
-      if (ECH || (window.echarts && /"tipo":"(ano|bridge|meta|faixa)"/.test(cv.getAttribute('data-g') || ''))) return desenhaE(cv);
+      /* barras (ano, bridge, meta, faixa) no desenho do Chart.js em TODAS as versões (Renan, 26/11/2026: "volte esses gráficos de antes… padrão pra todos"); o ECharts fica só nos outros tipos da versão echarts */
+      if (ECH && !/"tipo":"(ano|bridge|meta|faixa)"/.test(cv.getAttribute('data-g') || '')) return desenhaE(cv);
       var g = JSON.parse(cv.getAttribute('data-g')), ctx = cv.getContext('2d'), fmt = fmtDe(g.fmt), k = parseFloat(getComputedStyle(cv).getPropertyValue('--k')) || 1;
       var fx = { size: Math.round(13 * k), family: 'Montserrat' }, fl = '700 ' + Math.round(13 * k) + 'px Montserrat';
       var base = { responsive: true, maintainAspectRatio: false, animation: false, devicePixelRatio: 2, plugins: { legend: { display: false }, tooltip: { enabled: false } } };
       if (g.tipo === 'ano') {          /* barras do realizado pela cor contra a referência, foco cheio, linhas tracejadas, rótulo no foco */
         var foco = g.foco || [], ruimSobe = g.ruimSeSobe !== false;
         var cor = g.real.map(function (v, i) { var r = g.rem ? g.rem[i] : null; return v == null ? null : (r == null ? '#9AA3B2' : ((ruimSobe ? v > r : v < r) ? VERM : VERDE)); });
-        var ds = [{ type: 'bar', data: g.real, backgroundColor: cor.map(function (c, i) { return c ? c + (foco.length ? (foco.indexOf(i) >= 0 ? 'D9' : '33') : 'A6') : 'transparent'; }), borderColor: cor.map(function (c) { return c || 'transparent'; }), borderWidth: 1, borderRadius: 0, order: 3 }];
+        var ds = [{ type: 'bar', data: g.real, backgroundColor: cor.map(function (c, i) { return c ? c + (foco.length ? (foco.indexOf(i) >= 0 ? 'D9' : '29') : 'A6') : 'transparent'; }), borderColor: cor.map(function (c) { return c || 'transparent'; }), borderWidth: 1, borderRadius: 0, order: 3 }];
         var linha = function (d, c, o) { return { type: 'line', data: d, borderColor: c, borderWidth: 2.5, tension: .3, fill: false, borderDash: [5, 3], order: o, spanGaps: true,
           pointRadius: d.map(function (v, i) { return v == null ? 0 : foco.indexOf(i) >= 0 ? 6 : 3; }), pointBackgroundColor: c, pointBorderColor: c }; };
         if (g.rem) ds.push(linha(g.rem, C_INK, 1));
@@ -499,21 +499,19 @@
       } else if (g.tipo === 'bridge') {   /* do remunerado ao realizado: cinza escuro nas pontas, vermelho e verde nos passos */
         var acc = 0, dat = [], cores = [], txt = [];
         g.passos.forEach(function (p) { if (p.t) { dat.push([0, p.v]); cores.push('#6B7280'); txt.push(fmt(p.v)); acc = p.v; }
-          else { dat.push([acc, acc + p.v]); cores.push(p.v > 0 ? VERM : VERDE); txt.push((p.v > 0 ? '▲ ' : '▼ ') + fmt(Math.abs(p.v))); acc += p.v; } });
+          else { dat.push([acc, acc + p.v]); cores.push(p.v > 0 ? VERM : VERDE); txt.push(fmt(Math.abs(p.v))); acc += p.v; } });
         var bb = bounds([].concat.apply([], dat).filter(function (v, i) { return i % 2 === 1 || v !== 0; }), 1.4, .12);
         fx = { size: Math.round(11 * k), family: 'Montserrat' }; fl = '700 ' + Math.round(11.5 * k) + 'px Montserrat';
         new Chart(ctx, { type: 'bar', data: { labels: g.passos.map(function (p) { return p.n; }), datasets: [{ data: dat, backgroundColor: cores.map(function (c) { return c === '#6B7280' ? c : c + 'D9'; }), borderColor: cores, borderWidth: 1, borderRadius: 0, barPercentage: .62, categoryPercentage: .9 }] },
           options: Object.assign({}, base, { layout: { padding: { top: 26 * k } }, scales: { x: { grid: { display: false }, border: { display: false }, ticks: { font: fx, color: C_TICK, maxRotation: 0, autoSkip: false } }, y: { display: false, min: bb.min, max: bb.max } } }),
           plugins: [{ afterDatasetsDraw: function (c) { var m = c.getDatasetMeta(0), x = c.ctx; x.save(); x.font = fl; x.textAlign = 'center'; x.textBaseline = 'bottom';
-            m.data.forEach(function (b, i) { x.fillStyle = cores[i] === '#6B7280' ? C_LBL : cores[i] === VERM ? (ESC ? '#FF5252' : '#E00000') : (ESC ? '#3BB33B' : '#009A00'); x.fillText(txt[i], b.x, Math.min(b.y, b.base) - 5); });
-            x.strokeStyle = '#A3ABBA'; x.setLineDash([3, 3]);
-            for (var i = 0; i < m.data.length - 1; i++) { var a = m.data[i], n = m.data[i + 1], yy = c.scales.y.getPixelForValue(dat[i][1]); x.beginPath(); x.moveTo(a.x + a.width / 2, yy); x.lineTo(n.x - n.width / 2, yy); x.stroke(); }
+            m.data.forEach(function (b, i) { x.fillStyle = C_LBL; x.fillText(txt[i], b.x, Math.min(b.y, b.base) - 5); });   /* rótulo preto, sem ▲/▼ e sem tracejado entre as barras (Renan, 26/11/2026) */
             x.restore(); } }] });
       } else if (g.tipo === 'meta' || g.tipo === 'faixa') {   /* barras por mês: cor pela meta (acima = ruim) ou pela faixa (pontuação) */
         var foco2 = g.foco || [];
         var corDe = function (v) { if (v == null) return null; if (g.tipo === 'meta') return v > g.meta ? VERM : VERDE; for (var q = 0; q < g.faixas.length; q++) if (v >= g.faixas[q][0]) return g.faixas[q][1]; return VERM; };
         var cs2 = g.v.map(corDe);
-        var ds2 = [{ type: 'bar', data: g.v, backgroundColor: cs2.map(function (c, i) { return c ? c + (foco2.length ? (foco2.indexOf(i) >= 0 ? 'D9' : '33') : 'A6') : 'transparent'; }), borderColor: cs2.map(function (c) { return c || 'transparent'; }), borderWidth: 1, borderRadius: 0, order: 2 }];
+        var ds2 = [{ type: 'bar', data: g.v, backgroundColor: cs2.map(function (c, i) { return c ? c + (foco2.length ? (foco2.indexOf(i) >= 0 ? 'D9' : '29') : 'A6') : 'transparent'; }), borderColor: cs2.map(function (c) { return c || 'transparent'; }), borderWidth: 1, borderRadius: 0, order: 2 }];
         if (g.tipo === 'meta') ds2.push({ type: 'line', data: g.v.map(function () { return g.meta; }), borderColor: C_INK, borderWidth: 2, borderDash: [5, 3], pointRadius: 0, fill: false, order: 1 });
         var b2; if (g.tipo === 'meta') { var vv = g.v.filter(function (x) { return x != null; }), lo2 = Math.min(0, Math.min.apply(null, vv.concat([0]))), hi2 = Math.max(g.meta, Math.max.apply(null, vv.concat([0]))), r2 = (hi2 - lo2) || 1;
           b2 = { min: lo2 < 0 ? lo2 - r2 * .14 : 0, max: hi2 + r2 * .2 }; } else b2 = bounds(g.v, .6, .2);

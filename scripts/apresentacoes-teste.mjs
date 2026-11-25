@@ -158,7 +158,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   const rem = 100000 + 5000 + 40000 + 6000 + 20000 + 9000, R = rem * 1.5;   // Rota + Van (×0,5)
   const realRota = 100000 * 1.02 + 5000 * 1.02 + 40000 * 1.2 + 6000 * 1.02 + 20000 * 1.5 + 9000 * 1.02, real = realRota + rem * .5;
   const f = await txt(pg, 'fin');
-  ok('Financeiro: realizado, remunerado e ▲ do custo da frota', f.includes('Real' + Math.round(real / 1e3).toLocaleString('pt-BR') + 'k') && f.includes('Rem' + (R / 1e3).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + 'k') && !/R\$ |Realizado|Remunerado/.test(f), f.slice(0, 260));
+  ok('Financeiro: realizado, remunerado e ▲ do custo da frota', f.includes('Realizado' + Math.round(real / 1e3).toLocaleString('pt-BR') + ' mil') && f.includes('Remunerado' + (R / 1e3).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' mil') && !/R\$ /.test(f), f.slice(0, 260));
   ok('Financeiro: Bridge e Custo no ano', /Bridge do custo/.test(f) && /Custo no ano/.test(f));
   const g = await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; return [...d.querySelectorAll('canvas[data-g]')].map(c => !!((d.defaultView.Chart && d.defaultView.Chart.getChart(c)) || (c.parentNode.querySelector('.ech') && d.defaultView.echarts && d.defaultView.echarts.getInstanceByDom(c.parentNode.querySelector('.ech'))))); });
   ok('os gráficos desenham no deck (Chart.js e ECharts)', !CHARTJS || (g.length >= 6 && g.every(Boolean)), JSON.stringify(g));
@@ -216,7 +216,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   ok('o filtro do slide aparece nos blocos que abrem por projeto', await pg.evaluate(() => document.getElementById('flt').style.display !== 'none'));
   await pg.evaluate(() => { abreUn('flt'); const i = [...document.querySelectorAll('#fltList input')].find(x => x.dataset.v === 'ROTA (VAN)'); i.click(); }); await pg.waitForTimeout(300);
   const fv = await txt(pg, 'fin');
-  ok('filtrar Van: o slide mostra só a Van, e o período diz o filtro', fv.includes((rem * .5 / 1e3).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'k') && /Rota \(van\)/.test(fv), fv.slice(0, 200));
+  ok('filtrar Van: o slide mostra só a Van, e o período diz o filtro', fv.includes((rem * .5 / 1e3).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' mil') && /Rota \(van\)/.test(fv), fv.slice(0, 200));
   await pg.click('.sq[data-id="fin"] .sq-b[data-ac="dup"]'); await pg.waitForTimeout(300);
   E = await estado(pg);
   ok('repetir o bloco: a cópia entra logo depois, com o filtro copiado', E.seq.some(x => x.split('|')[1] === 'fin~2') && ids.indexOf('fin') + 1 === E.seq.findIndex(x => x.split('|')[1] === 'fin~2'), E.seq.slice(3, 9).join(' '));
