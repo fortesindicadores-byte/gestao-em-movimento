@@ -127,7 +127,7 @@
     '.tb .t span{font-size:calc(10.5px*var(--k));color:var(--txt3);font-weight:600;margin-left:8px}',
     'table.dre{width:100%;border-collapse:collapse;font-size:calc(11.5px*var(--k))}',
     'table.dre th{background:#1E2833;font-size:calc(9.5px*var(--k));font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#fff;text-align:left;padding:calc(7px*var(--k)) 12px;white-space:nowrap}',
-    'table.dre th.n,table.dre td.n{text-align:right}','table.dre th+th,table.rel thead th+th{border-left:1px solid rgba(255,255,255,.14)}',
+    'table.dre th.n,table.dre td.n{text-align:right}',
     'table.dre td{padding:calc(7px*var(--k)*var(--v)) 12px;border-top:1px solid var(--linha);vertical-align:top;line-height:1.4}',
     'table.dre td.n{white-space:nowrap;font-variant-numeric:tabular-nums}',
     'table.dre tr.tot td{background:#E9EBEF;font-weight:800}',
@@ -197,7 +197,7 @@
     'table.rel td.prazo{white-space:nowrap}.rel .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}',
     '.rel .chip{display:inline-block;padding:3px 7px;border-radius:5px;font-weight:700;font-size:calc(9.5px*var(--k));white-space:normal;line-height:1.25}',
     'body table.rel.fg-rel tbody.fg tr+tr td.ln{border-top:1px dashed rgba(15,23,42,.34)!important}',
-    'body table.rel.fg-rel tbody.fg{border-top:2px solid rgba(15,23,42,.16)}',
+    'body table.rel.fg-rel tbody.fg{border-top:1px solid rgba(15,23,42,.16)}',
     /* tamanhos da Tabela do FCA presos ao texto da célula (que segue o --k), para nada ficar maior ou menor que o resto */
     'body table.rel.fg-rel td.fato .fa-pac{font-size:1.06em}','body table.rel.fg-rel td.fato small{font-size:.92em}',
     'body table.rel.fg-rel .fa-ano{font-size:.92em}','body table.rel.fg-rel .fa-ano .kl{font-size:.85em}','body table.rel.fg-rel .fa-of{font-size:.92em}',
@@ -265,7 +265,7 @@
     'body.escuro .com .caixa{border-color:rgba(255,255,255,.18)}',
     'body.escuro .st.and{background:rgba(90,169,240,.16);color:#7DBBF5}body.escuro .st.ok{background:rgba(59,179,59,.16);color:#3BB33B}body.escuro .st.ven{background:rgba(255,82,82,.16);color:#FF5252}',
     'body.escuro table.fca .tri-r,body.escuro table.fca td.prz.venc{color:#FF5252}body.escuro table.fca .tri-g{color:#3BB33B}body.escuro table.fca tr.dt td.ln{border-top-color:rgba(255,255,255,.16)}',
-    'body.escuro table.rel.fg-rel tbody.fg tr+tr td.ln{border-top:1px dashed rgba(255,255,255,.26)!important}body.escuro table.rel.fg-rel tbody.fg{border-top:2px solid rgba(255,255,255,.12)}',
+    'body.escuro table.rel.fg-rel tbody.fg tr+tr td.ln{border-top:1px dashed rgba(255,255,255,.26)!important}body.escuro table.rel.fg-rel tbody.fg{border-top:1px solid rgba(255,255,255,.12)}',
     'body.escuro .pn-kpi,body.escuro .tc,body.escuro .el-kpi{background:rgba(255,255,255,.04)}body.escuro .pn-dq .l .p,body.escuro .pn-dq .l .u small{color:#A3ABBA}',
     'body.escuro .el-kpi .f{box-shadow:0 0 0 3px rgba(255,255,255,.06)}'
   ].join('\n');
