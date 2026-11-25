@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611260600">
+<meta name="build" content="202611260630">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611260600"></script>
+<script src="../assets/apres-slides.js?v=202611260630"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -553,7 +553,8 @@ const set=(i,v)=>{ const e=$(i); if(e) e.textContent=v; };
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const AS=ApresSlides, FS=AS.f, nf=FS.nf, pad2=n=>String(n).padStart(2,'0');
-const Cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
+const SIGLAS=/\b(mttr|mtbf|civf|sla|dpo|vpo|rpm|fca|ebitda|yoy|ytd|mom)\b/gi;
+const Cap=s=>s?(s[0].toUpperCase()+s.slice(1)).replace(SIGLAS,m=>m.toUpperCase()):s;
 const MES3=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const MESC=['jan.','fev.','mar.','abr.','mai.','jun.','jul.','ago.','set.','out.','nov.','dez.'];
 const mesLb=vk=>MES3[+vk.slice(5,7)-1]+'/'+vk.slice(2,4);                // out/26 (o rótulo do FCA)
@@ -1461,6 +1462,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611260600"></script>
+<script src="../assets/build-check.js?v=202611260630"></script>
 </body>
 </html>
