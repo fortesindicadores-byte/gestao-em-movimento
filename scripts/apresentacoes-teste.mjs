@@ -83,9 +83,14 @@ const getNv3Suffix=v=>String(v).split('-').pop().trim(), getNv3Prefix=v=>{ const
 function calcular(f){ return {kmRem:100000,kmReal:108000,viagem1:820,recs:40,noturnas:12,mapas:5,bmKm:0}; }
 window.ArvImpacto={calc:d=>({rkRem:1.05,rkReal:0.99,vol:8400,rsKm:-6300,pRem:6.10,pReal:6.25,eRem:3.30,eReal:3.12,preco:4100,efic:5200,dif:-15600})};
 <\/script>`;
+const FAROLJS = `const UNIDADES={GRL:'Guarulhos',PIR:'Piraí',BLC:'Camboriú'}, OS_META=10, DATA={prev:[{cod:'GRL',ad:0},{cod:'GRL',ad:1}],stressV:[],stressE:[],cifv:[],alinh:[],os:[{cod:'GRL',dias:14}],disp:[{cod:'GRL',ativos:40,indisp:2}],chk:[]};
+async function farolLoad(){} function ateTerceiroDiaUtil(){return false} function _n(s){return String(s||'').toUpperCase()}
+function byCod(a,c){return (a||[]).filter(r=>r.cod===c)} function avgA(a){a=a.filter(v=>v!=null);return a.length?a.reduce((x,y)=>x+y,0)/a.length:null}
+function unitStats(c){ return c==='GRL'?{sv:100,se:null,cf:96,pv:50,al:85,os:88,ck:100,dp:95,af:97,mm:91,ca:80}:{sv:100,se:100,cf:100,pv:100,al:100,os:100,ck:100,dp:99,af:99,mm:95,ca:95}; }`;
 const MIME = { '.html': 'text/html', '.js': 'application/javascript', '.jpg': 'image/jpeg', '.png': 'image/png', '.css': 'text/css' };
 const DUB = [[/^\/visao-financeira\/(index\.html)?$/, VFPG], [/^\/painel-km\/(index\.html)?$/, KMPG], [/^\/scorecard\/(index\.html)?$/, SCPG], [/^\/termometro\/(index\.html)?$/, TERMPG], [/^\/programa-reconhecimento\/(index\.html)?$/, ELITEPG], [/^\/combustivel\/arvore-combustivel\/(index\.html)?$/, ARVPG]];
 const srv = http.createServer((req, res) => { const u = decodeURIComponent(req.url.split('?')[0]);
+  if (/^\/farol-frota\/farol-core\.js$/.test(u)) { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(FAROLJS); }
   const d = DUB.find(x => x[0].test(u)); if (d) { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(d[1]); }
   let f = path.join(RAIZ, u); if (u.endsWith('/')) f = path.join(f, 'index.html');
   fs.readFile(f, (e, b) => { if (e) { res.writeHead(404); return res.end(); } res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' }); res.end(b); }); });
@@ -135,7 +140,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   let E = await estado(pg);
   ok('abre no último mês com realizado', E.vig === '2026-10' && /fechamento de out\/26/.test(E.sub), E.sub);
   const ids = E.seq.map(x => x.split('|')[1]);
-  ok('sequência do roteiro', ids.join() === 'capa,sumario,div:res,prometido,sc,fin,ahav,div:pq,km,arv,div:ind,term,rpm,div:rec,elite,comp,fim', ids.join());
+  ok('sequência do roteiro', ids.join() === 'capa,sumario,div:res,prometido,sc,fin,ahav,div:pq,km,arv,div:ind,term,rpm,div:rec,elite,gav,fim', ids.join());
   const T = await titulos(pg);
   ok('um bloco por projeto: a árvore do projeto e, em seguida, cada pacote que desviou nele (maior primeiro) com o FCA dele',
     T.indexOf('Árvore · Rota') > 0 && T[T.indexOf('Árvore · Rota') + 1] === 'Árvore · Rota · Pneus' && T[T.indexOf('Árvore · Rota · Pneus') + 1] === 'FCA · Rota · Pneus' && T[T.indexOf('FCA · Rota · Pneus') + 1] === 'Árvore · Rota · Manutenções' && T[T.indexOf('Árvore · Rota · Manutenções') + 1] === 'FCA · Rota · Manutenções' && T.includes('Árvore · Rota (van)'), T.join(' | '));
@@ -169,10 +174,14 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   ok('FCA de Manutenções: fato mesclado com desvio, contas e YTD; causa mesclada sobre as duas ações', fm.linhas === 2 && fm.rs.join() === '2,2,2' && !/Projeto/.test(fm.t) && /YTD/.test(fm.t) && /Man\. Veículos e Equip\./.test(fm.t) && /1\.1\.\s*Causa raiz/.test(fm.t), JSON.stringify(fm).slice(0, 260));
   const pr = await txt(pg, 'prometido');
   ok('O que prometemos: as ações do FCA de set/26 (2, 1 concluída)', /O que prometemos em set\/26/.test(pr) && /Feedback|Vistoriar/.test(pr) && /50,0%/.test(pr), pr.slice(0, 200));
-  const co = await txt(pg, 'comp');
-  ok('Compromissos do mês: as ações abertas com dono e prazo', /Compromissos do mês/.test(co) && /Cotar embreagem/.test(co) && !/Programar as vencidas/.test(co), co.slice(0, 200));
+  const gv = await txt(pg, 'gav');
+  ok('Gestão à Vista no lugar de Compromissos: média de hoje, posição, indicadores com as contagens e observações', /Gestão à Vista/.test(gv) && /Posição na rede/.test(gv) && /3º de 3/.test(gv) && /Preventivas/.test(gv) && /1 vencida de 2/.test(gv) && /Observações/.test(gv) && !T.includes('Compromissos do mês'), gv.slice(0, 260));
   const rp = await txt(pg, 'rpm');
   ok('FCAs RPM: o indicador com meta, real e ação', /Preventivas/.test(rp) && /Meta: 100%/.test(rp) && /Programar as vencidas/.test(rp), rp.slice(0, 200));
+  if (process.env.DBGK) console.log(await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; return [...d.querySelectorAll('.slide')].map((s, i) => { s.style.display = ''; const h = s.querySelector('h2'); const k = s.style.getPropertyValue('--k') + '/' + s.style.getPropertyValue('--v');
+    const bad = []; s.querySelectorAll('.card,.tn,.cols,table').forEach(e => { if (e.scrollWidth > e.clientWidth + 2 || (e.scrollHeight > e.clientHeight + 2 && !e.matches('table'))) bad.push(e.className); });
+    s.querySelectorAll('table td').forEach(td => { const r = td.getBoundingClientRect(); for (let c = td.firstElementChild; c; c = c.nextElementSibling) { const q = c.getBoundingClientRect(); if (q.width && (q.right > r.right + 1 || q.left < r.left - 1)) bad.push('td>' + c.className + ':' + c.tagName); } });
+    s.style.display = 'none'; return (i + 1) + ' ' + (h ? h.textContent : '') + ' k=' + k + ' ' + bad.slice(0, 3).join(' | '); }).join('\n'); }));
   const RUINS = await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument, ruins = [];
     d.querySelectorAll('.slide').forEach((s, i) => { s.style.display = ''; const m = s.querySelector('.miolo'); if (m && (m.scrollHeight > m.clientHeight + 2 || m.scrollWidth > m.clientWidth + 2)) ruins.push(i + 1); }); mostra(); return ruins; }); ok('nenhum slide de conteúdo passa do slide nem corta texto', !RUINS.length, RUINS.join(','));
   // FCA no slide: abrir, mudar o status, criar ação
@@ -218,6 +227,16 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
     await p2.setContent(html, { waitUntil: 'load' }); await p2.waitForFunction(() => window.__deckPronto, null, { timeout: 20000 }); await p2.waitForTimeout(400);
     const sls = await p2.$$('.slide'); for (let i = 0; i < sls.length; i++) await sls[i].screenshot({ path: path.join(SHOT, `g${String(i + 1).padStart(2, '0')}.png`) }); }
   ok('sem erro de JavaScript', !errs.length, errs.join(' | '));
+  await ctx.close();
+}
+console.log('1b · Cuiabá em CBA T1 e CBA T2');
+{
+  const { ctx, pg } = await abre({ perfil: { nome: 'Ana', unidade: 'CBA T1,CBA T1 WH,CBA T2', is_admin: false }, u: 'CBA T2' });
+  await pg.waitForTimeout(400);
+  const E = await pg.evaluate(() => ({ sigs: SIGS.join(','), sel: SEL, cod: COD, cods: CODS.join(','), uni: UNI() }));
+  ok('Cuiabá vira duas opções: CBA T1 (Empurrada e Apoio) e CBA T2', E.sigs === 'CBA T1,CBA T2' && E.sel === 'CBA T2' && E.cod === 'CBA' && E.cods === 'CBA T2' && E.uni === 'Cuiabá T2', JSON.stringify(E));
+  await pg.evaluate(() => { escolhe('CBA T1'); }); const E2 = await pg.evaluate(() => ({ cods: CODS.join(','), uni: UNI() }));
+  ok('CBA T1 junta CBA T1 e CBA T1 WH', E2.cods === 'CBA T1,CBA T1 WH' && E2.uni === 'Cuiabá T1', JSON.stringify(E2));
   await ctx.close();
 }
 console.log('2 · gestor de uma unidade, sem a tabela no banco');

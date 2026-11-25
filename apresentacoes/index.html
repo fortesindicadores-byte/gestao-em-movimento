@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611252300">
+<meta name="build" content="202611260010">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611252300"></script>
+<script src="../assets/apres-slides.js?v=202611260010"></script>
 <script src="../assets/fca-auto.js?v=202611190400"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -560,11 +560,14 @@ const cor=c=>({g:'#00B300',y:'#E9A400',o:'#F97316',r:'#FF0000'})[c]||'#161D2B';
 const bandG=(v,good)=>{ good=good||90; return v==null?'':v>=good?'g':v>=good-10?'y':v>=good-20?'o':'r'; };
 const FAIXA_ELITE=[[95,'#00B300'],[85,'#E9A400'],[-1e9,'#FF0000']], FAIXA_SC=[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']];
 
-let sb=null, ADMIN=false, MINHAS=[], SIGS=[], COD='', CODS=[], VIG='', BANCO_OK=null, PERFIS=[];
+let sb=null, ADMIN=false, MINHAS=[], SIGS=[], COD='', SEL='', CODS=[], VIG='', BANCO_OK=null, PERFIS=[];
+/* Cuiabá em duas apresentações (Renan, 25/11/2026): CBA T1 (Empurrada e Apoio) e CBA T2 (CDD); o resto pela sigla */
+const opcDe=c=>String(c).startsWith('CBA ')?(c==='CBA T2'?'CBA T2':'CBA T1'):BASE(c);
+const escolhe=v=>{ SEL=v; COD=BASE(v); CODS=MINHAS.filter(c=>opcDe(c)===SEL); };
 const BASE=c=>CartaCalc.UNIT_BASE(c);
 let FR=null, LIN=[], MESES=[], PROJS=[], FCA=[], FCA_ANT=[], FCA_ERR='', DRE_ERR='';
 let MOD=null, DECK=[], POS=0, SEQ=[];
-const D={VF:null,KM:null,SC:null,TERM:null,ELITE:null,ARV:null,CARTA:null};               // o que cada painel devolveu (ou {erro})
+const D={VF:null,KM:null,SC:null,TERM:null,ELITE:null,ARV:null,CARTA:null,GAV:null};               // o que cada painel devolveu (ou {erro})
 let BANCO_ERR='';
 
 /* ── o roteiro (Renan, 25/11/2026): resultado → por quê → indicadores → reconhecimento ── */
@@ -583,13 +586,15 @@ const CAT=[
   {id:'rpm',      t:'FCAs RPM',                         s:'FCA', filtro:1},
   {id:'div:rec',  t:'Capítulo · Reconhecimento',        s:'Divisória', div:1},
   {id:'elite',    t:'Frota de Elite',                   s:'Frota de Elite', fonte:'ELITE'},
-  {id:'comp',     t:'Compromissos do mês',              s:'FCA do mês', filtro:1},
+  {id:'gav',      t:'Gestão à Vista',                   s:'Gestão à Vista', fonte:'GAV'},
 ];
 const baseId=inst=>String(inst).split('~')[0];
 const catDe=id=>CAT.find(c=>c.id===baseId(id));
 const modPadrao=()=>({titulo:'Reunião Mensal',ordem:CAT.map(c=>c.id),off:[],textos:[],f:{},obs:{}});
 function normMod(m){ const p=modPadrao(); m=m&&typeof m==='object'?m:{};
   const ok=id=>typeof id==='string';
+  /* Compromissos do mês virou Gestão à Vista (Renan, 25/11/2026: era redundante com o FCA de cada pacote) */
+  if(Array.isArray(m.ordem)) m.ordem=m.ordem.map(x=>typeof x==='string'&&baseId(x)==='comp'?'gav':x).filter((x,i,a)=>baseId(x)!=='gav'||a.findIndex(y=>baseId(y)==='gav')===i);
   return {titulo:String(m.titulo||p.titulo).slice(0,40), ordem:Array.isArray(m.ordem)?m.ordem.filter(ok):p.ordem,
     off:Array.isArray(m.off)?m.off.filter(ok):[], f:m.f&&typeof m.f==='object'?m.f:{}, obs:m.obs&&typeof m.obs==='object'?m.obs:{},
     textos:Array.isArray(m.textos)?m.textos.filter(t=>t&&t.id).map(t=>({id:String(t.id),titulo:String(t.titulo||'').slice(0,70),texto:String(t.texto||'').slice(0,900)})):[]}; }
@@ -598,12 +603,12 @@ function normMod(m){ const p=modPadrao(); m=m&&typeof m==='object'?m:{};
 async function leModelo(cod){
   try{ const {data,error}=await sb.from('apres_modelo').select('modelo').eq('unidade',CODS[0]||cod).maybeSingle(); if(error) throw error; BANCO_OK=true; if(data&&data.modelo) return normMod(data.modelo.v2?data.modelo:null); }
   catch(e){ BANCO_OK=false; BANCO_ERR=(e&&(e.code||e.message))||''; }
-  try{ const l=JSON.parse(localStorage.getItem('apres_modelo2_'+cod)||'null'); if(l) return normMod(l); }catch(e){}
+  try{ const l=JSON.parse(localStorage.getItem('apres_modelo2_'+SEL)||'null'); if(l) return normMod(l); }catch(e){}
   return modPadrao();
 }
 let _tSalva=null;
 function salva(){
-  try{ localStorage.setItem('apres_modelo2_'+COD,JSON.stringify(MOD)); }catch(e){}
+  try{ localStorage.setItem('apres_modelo2_'+SEL,JSON.stringify(MOD)); }catch(e){}
   clearTimeout(_tSalva); set('salvo','');
   _tSalva=setTimeout(async()=>{
     if(BANCO_OK===false){ set('salvo','guardado neste navegador'); return; }
@@ -771,6 +776,30 @@ async function fonteARV(){
 async function fonteCARTA(){
   const r=await CartaCalc.lerLancamentos(sb,CODS,[VIG]); if(r.erro) throw new Error(r.erro.message||String(r.erro)); return {rows:r.data||[]};
 }
+/* Gestão à Vista: a foto de hoje do farol (farol-core.js), os mesmos números do Ranking, num iframe só com o motor */
+function fonteGAV(){
+  const base=new URL('../',location.href).href, cods=CODS.slice();
+  return new Promise((ok,no)=>{
+    const ifr=document.createElement('iframe'); ifr.setAttribute('aria-hidden','true'); ifr.style.cssText='position:fixed;left:-10000px;top:0;width:800px;height:600px;border:0;visibility:hidden';
+    const fim=(e,v)=>{ clearTimeout(tm); try{ ifr.remove(); }catch(_){} e?no(e):ok(v); };
+    const tm=setTimeout(()=>fim(new Error('o Gestão à Vista não respondeu em 3 minutos')),180000);
+    ifr.onload=async()=>{ try{ const w=ifr.contentWindow;
+      for(let i=0;i<200&&typeof w.farolLoad!=='function';i++) await sleep(100);
+      if(typeof w.farolLoad!=='function') throw new Error('o motor do Gestão à Vista não carregou');
+      const r=await w.eval(`(async()=>{ await farolLoad(); if(typeof loadPneus==='function'){ try{ await loadPneus(); }catch(e){} }
+        const H=new Date(), ref=ateTerceiroDiaUtil(H)?new Date(H.getFullYear(),H.getMonth()-1,1):H, P=DATA.pneus;
+        const um=cod=>{ const s=unitStats(cod), prev=byCod(DATA.prev,cod), sv=byCod(DATA.stressV,cod), se=byCod(DATA.stressE,cod).filter(r=>r.contratada), cf=byCod(DATA.cifv,cod), al=byCod(DATA.alinh,cod), os=byCod(DATA.os,cod), dp=(DATA.disp||[]).filter(r=>r.cod===cod);
+          const chk=DATA.chk?byCod(DATA.chk,cod).filter(r=>_n(r.tipo).includes('SAIDA')&&r.dt&&r.dt.getMonth()===ref.getMonth()&&r.dt.getFullYear()===ref.getFullYear()).length:null;
+          return {cod,s,score:avgA([s.sv,s.se,s.cf,s.pv,s.al,s.os,s.dp,s.af,s.mm,s.ca]),n:{prevVenc:prev.filter(r=>r.ad===0).length,prevTot:prev.length,svDesc:sv.filter(r=>r.desc>0).length,svTot:sv.length,
+            seDesc:se.filter(r=>r.d1>0||r.d2>0).length,seTot:se.length,cfDesc:cf.filter(r=>(r.dt||0)!==0).length,cfTot:cf.length,alVenc:al.filter(r=>_n(r.st)==='VENCIDO').length,alTot:al.length,
+            osAtr:os.filter(r=>(r.dias||0)>OS_META).length,osTot:os.length,chk,indisp:dp.reduce((a,r)=>a+(+r.indisp||0),0),ativos:dp.reduce((a,r)=>a+(+r.ativos||0),0)}}; };
+        return {hoje:H.toISOString(),osMeta:OS_META,todas:Object.keys(UNIDADES).map(um)}; })()`);
+      fim(null,JSON.parse(JSON.stringify(r)));
+    }catch(e){ fim(e); } };
+    ifr.srcdoc=`<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script><script src="${base}assets/gviz-cache.js"><\/script><script src="${base}assets/carta-calc.js"><\/script><script src="${base}farol-frota/farol-core.js"><\/script></head><body></body></html>`;
+    document.body.appendChild(ifr);
+  });
+}
 async function fonteELITE(){
   const units=[...new Set(CODS.map(c=>ELITE_U[c]).filter(Boolean))]; if(!units.length) throw new Error('a unidade não está no Frota de Elite');
   const P=await abrePainel('../programa-reconhecimento/index.html',"typeof RAW!=='undefined'&&(RAW.length>0||(typeof VISIVEL!=='undefined'&&!VISIVEL&&!EH_ADMIN))");
@@ -778,16 +807,16 @@ async function fonteELITE(){
 }
 /* uma fonte por vez (o banco não aguenta os painéis abrindo juntos); a tela se refaz a cada uma que chega */
 async function carregaFontes(){
-  const cod=COD, vig=VIG, ainda=()=>cod===COD&&vig===VIG; window.__apresPronto=false;
+  const cod=SEL, vig=VIG, ainda=()=>cod===SEL&&vig===VIG; window.__apresPronto=false;
   Object.keys(D).forEach(k=>D[k]=null);
   if(!vig){ Object.keys(D).forEach(k=>D[k]={erro:'sem mês com realizado'}); monta(); window.__apresPronto=true; return; }
   const ch=cod+'|'+vig;
-  for(const [n,fn] of [['VF',fonteVF],['KM',fonteKM],['ARV',fonteARV],['CARTA',fonteCARTA],['SC',fonteSC],['TERM',fonteTERM],['ELITE',fonteELITE]]){ const r=await fonte(n,ch,fn); if(!ainda()) return; D[n]=r; monta(); }
+  for(const [n,fn] of [['VF',fonteVF],['KM',fonteKM],['ARV',fonteARV],['CARTA',fonteCARTA],['SC',fonteSC],['TERM',fonteTERM],['ELITE',fonteELITE],['GAV',fonteGAV]]){ const r=await fonte(n,ch,fn); if(!ainda()) return; D[n]=r; monta(); }
   window.__apresPronto=true;
 }
 
 /* ══ os slides ══ */
-const UNI=()=>NOMEB[COD]||COD, PER=()=>perTxt(VIG);
+const UNI=()=>(NOMEB[COD]||COD)+(SEL!==COD?' '+SEL.slice(COD.length+1):''), PER=()=>perTxt(VIG);
 const somaR=(rs,f)=>rs.reduce((a,r)=>{ if(!f||f(r)){ a.orc+=r.orc; a.rem+=r.rem; a.real+=r.real; } return a; },{orc:0,rem:0,real:0});
 const CUSTO=r=>r.c!=='Receita Líquida';
 const neg=x=>({orc:-x.orc,rem:-x.rem,real:-x.real});
@@ -872,7 +901,7 @@ const PJ=p=>String(p||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').
 const pjRot=p=>Cap(String(p||'').toLowerCase());
 function sArv(inst){
   const e=semDado('VF'); if(e) return [sl({titulo:'Árvore do custo',corpo:e},inst)];
-  const y=+VIG.slice(0,4), vA=(y-1)+VIG.slice(4), RT=D.VF.rows.filter(r=>CUSTO(r)&&passaP(inst,r.p)&&r.pac!=='Seguros e licenças'&&!/IPVA/i.test(r.c));   // Seguros e IPVA fora da árvore (Renan, 25/11/2026)
+  const y=+VIG.slice(0,4), vA=(y-1)+VIG.slice(4), RT=D.VF.rows.filter(r=>CUSTO(r)&&passaP(inst,r.p)&&r.pac!=='Seguros e licenças'&&r.pac!=='ICMS'&&!/IPVA|ICMS/i.test(r.c));   // Seguros, IPVA e ICMS fora da árvore (Renan, 25/11/2026)
   const de=(R,f,vk)=>neg(somaR(R,r=>r.vk===vk&&f(r)));
   const chave=k=>inst+'|'+VIG+'|'+k, out=[];
   // um bloco por projeto (Renan, 25/11/2026): a árvore do projeto (projeto → pacotes) e, em seguida, cada pacote que desviou nele
@@ -1061,9 +1090,48 @@ function sELITE(inst){
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','Frota de Elite · pontuação total do mês',{tipo:'faixa',labels:MESC,v:x.mes.map((y,i)=>i<=mi?y:null),faixas:[[95,'#3BB33B'],[85,'#FACC15'],[-1e9,'#FF6666']],foco:[mi],fmt:'n1'})}${dq}</div>`;
   return [sl({titulo:'Frota de Elite',corpo:`<div class="pn">${hero}${gr}</div>`},inst,'Frota de Elite')];
 }
+/* Gestão à Vista: a foto de hoje da unidade (os mesmos números e cortes do Ranking do painel) e as observações */
+function sGAV(inst){
+  const e=semDado('GAV'); if(e) return [sl({titulo:'Gestão à Vista',corpo:e},inst)];
+  const G=D.GAV, med=a=>{ a=a.filter(v=>v!=null); return a.length?a.reduce((x,y)=>x+y,0)/a.length:null; };
+  const meus=G.todas.filter(u=>CODS.includes(u.cod)); if(!meus.length) return [sl({titulo:'Gestão à Vista',corpo:AS.vazio('A unidade não está no Gestão à Vista.')},inst,'Gestão à Vista')];
+  const st=k=>med(meus.map(u=>u.s[k])), sm=k=>meus.reduce((a,u)=>a+(u.n[k]||0),0);
+  /* posição na rede: a média das aderências de cada unidade (siglas juntas) */
+  const porB={}; G.todas.forEach(u=>{ const b=BASE(u.cod); if(u.score!=null) (porB[b]=porB[b]||[]).push(u.score); });
+  const rk=Object.keys(porB).map(b=>({b,v:med(porB[b])})).sort((x,y)=>y.v-x.v), pos=rk.findIndex(x=>x.b===COD)+1, sc=med(meus.map(u=>u.score));
+  const C={g:'#3BB33B',y:'#EAB308',r:'#FF6666',m:'#8E96A6'};
+  const pm=(v,a=100,b=95)=>v==null?'m':v>=a?'g':v>=b?'y':'r';
+  const pf=v=>v==null?'—':nf(v,1)+'%';
+  const it=[
+    ['Disponibilidade',st('dp'),v=>v==null?'m':v>=97?'g':v>=93?'y':'r',sm('ativos')?nf(sm('indisp'))+(sm('indisp')===1?' parada':' paradas')+' de '+nf(sm('ativos'))+' ativos':''],
+    ['Preventivas',st('pv'),v=>pm(v),sm('prevTot')?nf(sm('prevVenc'))+(sm('prevVenc')===1?' vencida':' vencidas')+' de '+nf(sm('prevTot')):''],
+    ['OS no prazo',st('os'),v=>v==null?'m':v>=90?'g':v>=70?'y':'r',sm('osTot')?nf(sm('osAtr'))+' de '+nf(sm('osTot'))+' acima de '+G.osMeta+' dias':'nenhuma OS aberta'],
+    ['Saída com OS crítica',st('ck'),v=>v==null?'m':v>=100?'g':'r',meus.some(u=>u.n.chk!=null)?(sm('chk')?nf(sm('chk'))+(sm('chk')===1?' saída':' saídas')+' no mês':'nenhuma no mês'):''],
+    ['Stress test veículos',st('sv'),v=>pm(v),sm('svTot')?nf(sm('svDesc'))+' com desconto de '+nf(sm('svTot')):''],
+    ['Stress test empilhad.',st('se'),v=>pm(v),sm('seTot')?nf(sm('seDesc'))+' com desconto de '+nf(sm('seTot')):''],
+    ['CIVF',st('cf'),v=>pm(v),sm('cfTot')?nf(sm('cfDesc'))+' com desconto de '+nf(sm('cfTot')):''],
+    ['Alinhamento',st('al'),v=>v==null?'m':v>=80?'g':'r',sm('alTot')?nf(sm('alVenc'))+(sm('alVenc')===1?' vencido':' vencidos')+' de '+nf(sm('alTot')):''],
+    ['Aferições',st('af'),v=>pm(v,95,85),'pneus · Prolog'],
+    ['Milimetragem',st('mm'),v=>pm(v,90,75),'pneus · Prolog'],
+    ['Calibragem',st('ca'),v=>pm(v,90,75),'pneus · Prolog']].filter(x=>x[1]!=null);
+  const hj=new Date(G.hoje), dt=pad2(hj.getDate())+'/'+pad2(hj.getMonth()+1)+'/'+hj.getFullYear();
+  const hero=`<div class="pn-hero"><div class="hlbl">Média das aderências · hoje</div><div class="hval" style="color:${C[sc==null?'m':sc>=90?'g':sc>=80?'y':'r']}">${pf(sc)}</div>
+    <div class="hdel"><div>Posição na rede<b>${pos?pos+'º de '+rk.length:'—'}</b></div><div>Fora da meta<b>${it.filter(x=>x[2](x[1])==='r').length}</b></div><div>Foto de<b>${dt}</b></div></div></div>`;
+  const cards=`<div class="gav-g">${it.map(x=>{ const c=x[2](x[1]); return `<div class="card gav-c"><div class="kl"><i style="background:${C[c]}"></i>${esc(x[0])}</div><div class="kv" style="color:${C[c]}">${pf(x[1])}</div><div class="km">${esc(x[3]||'')}</div></div>`; }).join('')}</div>`;
+  const ch=inst+'|'+VIG+'|gav';
+  const corpo=`<style>.gav-w{display:grid;grid-template-columns:1fr 340px;gap:14px;height:100%}.gav-e{display:flex;flex-direction:column;gap:10px;min-height:0}
+    .gav-g{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:1fr;gap:10px}
+    .gav-c{padding:calc(10px*var(--k)) 14px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+    .gav-c .kl{font-size:calc(9.5px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .gav-c .kl i{flex:0 0 9px;width:9px;height:9px;border-radius:50%}
+    .gav-c .kv{font-size:calc(24px*var(--k));font-weight:800;margin-top:3px;line-height:1.1}
+    .gav-c .km{font-size:calc(10px*var(--k));color:var(--txt3);font-weight:600;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}</style>
+    <div class="gav-w"><div class="gav-e">${hero}${cards}</div>${AS.obs({chave:ch,texto:MOD.obs[ch]||'',dica:'o que a unidade fala sobre o farol de hoje'})}</div>`;
+  return [sl({titulo:'Gestão à Vista',per:'Hoje · '+dt,corpo},inst,'Gestão à Vista')];
+}
 function sRecado(t){ const ls=String(t.texto||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,8);
   return {html:AS.conteudo({titulo:t.titulo||'Recado do gestor',uni:UNI(),per:PER(),corpo:`<div class="card" style="height:100%;padding:28px 34px;display:flex;flex-direction:column;justify-content:center;gap:14px">${ls.map(l=>`<div style="display:flex;gap:14px;align-items:baseline"><span style="flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:#F97316;transform:translateY(-3px)"></span><p style="font-size:calc(17px*var(--k));line-height:1.5">${esc(l)}</p></div>`).join('')||'<p>Escreva o recado.</p>'}</div>`}),sum:t.titulo||'Recado do gestor'}; }
-const FAZ={prometido:sPrometido,sc:sSC,fin:sFin,ahav:sAHAV,km:sKM,arv:sArv,term:sTERM,rpm:i=>sFca(i,'RPM'),elite:sELITE,comp:sComp};
+const FAZ={prometido:sPrometido,sc:sSC,fin:sFin,ahav:sAHAV,km:sKM,arv:sArv,term:sTERM,rpm:i=>sFca(i,'RPM'),elite:sELITE,comp:sComp,gav:sGAV};
 
 /* ── a sequência (itens) e o deck (páginas) ── */
 /* a tabela do FCA mora em assets/fca-tabela.js; se o navegador não carregou, carrega e monta de novo */
@@ -1252,7 +1320,7 @@ function novoRecado(){ _rec=null; abreRecado(''); }
 function fechaCx(){ $('cxF').classList.remove('on'); }
 function salvaRecado(){ const titulo=$('cxT').value.trim(), texto=$('cxX').value.trim(); if(!titulo&&!texto){ fechaCx(); return; }
   if(_rec){ _rec.titulo=titulo; _rec.texto=texto; _foco=_rec.id; }
-  else{ const id='txt:'+Date.now().toString(36); MOD.textos.push({id,titulo,texto}); const i=MOD.ordem.findIndex(x=>baseId(x)==='comp'); MOD.ordem.splice(i>=0?i:MOD.ordem.length,0,id); _foco=id; }
+  else{ const id='txt:'+Date.now().toString(36); MOD.textos.push({id,titulo,texto}); const i=MOD.ordem.findIndex(x=>baseId(x)==='gav'); MOD.ordem.splice(i>=0?i:MOD.ordem.length,0,id); _foco=id; }
   fechaCx(); salva(); monta(); }
 function apagaRecado(){ if(!_rec) return; if(!confirm('Excluir este recado?')) return; MOD.textos=MOD.textos.filter(t=>t.id!==_rec.id); MOD.ordem=MOD.ordem.filter(x=>x!==_rec.id); MOD.off=MOD.off.filter(x=>x!==_rec.id); fechaCx(); salva(); monta(); }
 $('cxF').addEventListener('mousedown',e=>{ if(e.target===$('cxF')) fechaCx(); });
@@ -1273,7 +1341,7 @@ function montaUn(id,ops,val,rot,fn){ const w=$(id); w.querySelector('.un-r').tex
   w.querySelector('.ms-list').onchange=e=>{ const el=e.target.closest('input[data-v]'); if(!el) return; fechaUn(); fn(el.dataset.v); }; }
 function filtros(){
   $('un-uni').style.display=SIGS.length>1?'':'none';
-  montaUn('un-uni',SIGS.map(c=>({v:c,t:c})),COD,COD,v=>{ if(v===COD){ filtros(); return; } COD=v; CODS=MINHAS.filter(c=>BASE(c)===COD); try{ localStorage.setItem('apres_uni',v); }catch(e){} VIG=''; POS=0; carregar(); });
+  montaUn('un-uni',SIGS.map(c=>({v:c,t:c})),SEL,SEL,v=>{ if(v===SEL){ filtros(); return; } escolhe(v); try{ localStorage.setItem('apres_uni',v); }catch(e){} VIG=''; POS=0; carregar(); });
   montaUn('un-mes',MESES.map(v=>({v,t:mesLb(v).toUpperCase()})),VIG,VIG?mesLb(VIG).toUpperCase():'Vigência',v=>{ if(v===VIG){ filtros(); return; } VIG=v; carregaMes(); });
   $('un-mes').style.display=MESES.length?'':'none';
 }
@@ -1312,11 +1380,11 @@ async function initApp(){
   MINHAS=ADMIN?Object.keys(NOME):String((prof&&prof.unidade)||'').toUpperCase().split(',').map(s=>s.trim()).filter(c=>NOME[c]);
   const eu=((prof&&prof.nome)||'').trim()||(session.user.user_metadata&&session.user.user_metadata.name)||String(session.user.email||'').split('@')[0];
   set('quem',eu); set('av',String(eu||'?').trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').toUpperCase()); set('quemUni',ADMIN?'Todas as unidades':[...new Set(MINHAS.map(BASE))].join(', ')||'—');
-  SIGS=[...new Set(MINHAS.map(BASE))].sort();
+  SIGS=[...new Set(MINHAS.map(opcDe))].sort();
   if(!MINHAS.length){ gate('Sem unidade no perfil','Peça o acesso no Gerenciar Acessos do hub.'); return; }
   let u=''; try{ u=localStorage.getItem('apres_uni')||''; }catch(e){}
-  const pu=(new URLSearchParams(location.search).get('u')||'').toUpperCase().trim(); if(pu&&SIGS.includes(BASE(pu))) u=pu;
-  COD=SIGS.includes(BASE(u))?BASE(u):SIGS[0]; CODS=MINHAS.filter(c=>BASE(c)===COD);
+  const pu=(new URLSearchParams(location.search).get('u')||'').toUpperCase().trim(); if(pu&&(SIGS.includes(pu)||SIGS.includes(opcDe(pu))||SIGS.includes(BASE(pu)))) u=pu;
+  escolhe(SIGS.includes(u)?u:SIGS.includes(opcDe(u))&&u.startsWith('CBA ')?opcDe(u):SIGS.includes(BASE(u))?BASE(u):SIGS.find(x=>BASE(x)===BASE(u))||SIGS[0]);
   $('filtros').style.display=''; $('vw-montar').style.display='';
   lePerfis();
   await carregar();
@@ -1349,6 +1417,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611252300"></script>
+<script src="../assets/build-check.js?v=202611260010"></script>
 </body>
 </html>

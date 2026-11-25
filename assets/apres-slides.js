@@ -56,8 +56,8 @@
     '.marca .tv .w{font-size:40px;font-weight:500;letter-spacing:-.5px;line-height:1;transform:scaleX(.78);transform-origin:right center;display:inline-block;margin-left:-60px}',
     '.marca .tv .w i{font-style:normal;color:#F97316}',
     '.marca .tv .s{font-size:13px;font-weight:700;line-height:1.02;letter-spacing:.2px}',
-    '.marca.p{left:64px;top:54px;width:232px}.marca.p img{width:232px}',
-    '.marca.p .tv{right:-13px;top:50px;gap:3px}.marca.p .tv .w{font-size:20px;margin-left:-30px}.marca.p .tv .s{font-size:6.5px}',
+    '.marca.p{left:64px;top:auto;bottom:30px;width:124px}.marca.p img{width:124px}',
+    '.marca.p .tv{right:-7px;top:27px;gap:2px}.marca.p .tv .w{font-size:10.5px;margin-left:-16px}.marca.p .tv .s{font-size:3.6px}',
     '.arte .bloco{position:absolute;left:0;width:638px;top:276px;text-align:center}',
     '.arte h1{font-family:"Libre Baskerville",serif;font-weight:700;font-size:42px;line-height:1.18;padding:0 60px}',
     '.arte .vline{width:1px;height:124px;background:#fff;opacity:.85;margin:34px auto 0}',
@@ -65,10 +65,10 @@
     '.tiras{position:absolute;right:0;top:0;bottom:8px;width:642px;overflow:hidden}',
     '.tiras.e{width:382px}',
     '.tira{position:absolute;background-repeat:no-repeat;background-size:auto 712px;border:2px solid var(--laranja);border-radius:58px}',
-    '.sum h1{position:absolute;left:64px;top:148px;font-size:50px;padding:0;text-align:left}',
-    '.sum .tr{position:absolute;left:64px;top:222px;width:76px;height:4px;background:var(--laranja)}',
-    '.sum .mes{position:absolute;left:64px;top:244px;font-size:17px;color:#BFC5CF}.sum .mes b{font-weight:500;margin:0 3px}',
-    '.sum .lista{position:absolute;left:64px;top:292px;display:grid;grid-template-columns:365px 365px;column-gap:51px}',
+    '.sum h1{position:absolute;left:64px;top:52px;font-size:50px;padding:0;text-align:left}',
+    '.sum .tr{position:absolute;left:64px;top:126px;width:76px;height:4px;background:var(--laranja)}',
+    '.sum .mes{position:absolute;left:64px;top:146px;font-size:17px;color:#BFC5CF}.sum .mes b{font-weight:500;margin:0 3px}',
+    '.sum .lista{position:absolute;left:64px;top:192px;display:grid;grid-template-columns:365px 365px;column-gap:51px}',
     '.sum .it{display:flex;align-items:center;gap:22px;height:var(--h,38px);border-bottom:1px solid rgba(255,255,255,.20);font-size:15.5px;font-weight:500}',
     '.sum .it b{color:#F97316;font-weight:800;font-size:18px;width:28px;flex:0 0 28px}',
     '.sum.denso .it{font-size:14px}.sum.denso .it b{font-size:16px}',
@@ -187,16 +187,17 @@
     'table.rel{width:100%;border-collapse:collapse;font-size:calc(11.5px*var(--k));table-layout:fixed}',
     'table.rel thead th{background:var(--cabec)!important;color:var(--txt2)!important;padding:calc(9px*var(--k)) 10px!important;border-bottom:1px solid var(--card-brd)!important;text-align:left;font-size:calc(9.5px*var(--k));font-weight:700;text-transform:uppercase;letter-spacing:.3px!important;white-space:nowrap}',
     'table.rel tbody td{padding:calc(8px*var(--k)*var(--v)) 10px!important;color:var(--txt2)!important;border-bottom:1px solid var(--linha)!important;vertical-align:top;line-height:1.45}',
-    'table.rel.fg-rel tbody.fg td.ln{padding-top:calc(7px*var(--k)*var(--v))!important;padding-bottom:calc(7px*var(--k)*var(--v))!important}',
+    'body table.rel.fg-rel tbody.fg td.ln{padding-top:calc(7px*var(--k)*var(--v))!important;padding-bottom:calc(7px*var(--k)*var(--v))!important}',
     'table.rel td.txt{white-space:normal;overflow-wrap:anywhere}table.rel td.txt b{color:var(--txt)}',
     'table.rel td.center{text-align:left;white-space:normal}',
     'table.rel th.c-proj{width:9.5%}table.rel th.c-vig{width:6%}table.rel th.c-fato{width:17%}table.rel th.c-txt{width:20%}table.rel th.c-resp{width:8.5%}table.rel th.c-prazo{width:8.5%}table.rel th.c-st{width:10%}',
     'table.rel td.prazo{white-space:nowrap}.rel .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}',
     '.rel .chip{display:inline-block;padding:3px 7px;border-radius:5px;font-weight:700;font-size:calc(9.5px*var(--k));white-space:normal;line-height:1.25}',
-    'table.rel.fg-rel tbody.fg tr+tr td.ln{border-top-color:rgba(15,23,42,.30)!important}',
+    'body table.rel.fg-rel tbody.fg tr+tr td.ln{border-top:1px dashed rgba(15,23,42,.34)!important}',
+    'body table.rel.fg-rel tbody.fg{border-top:2px solid rgba(15,23,42,.16)}',
     /* tamanhos da Tabela do FCA presos ao texto da célula (que segue o --k), para nada ficar maior ou menor que o resto */
-    'body table.rel.fg-rel td.fato .fa-pac{font-size:1.08em}','body table.rel.fg-rel td.fato small{font-size:.88em}',
-    'body table.rel.fg-rel .fa-ano{font-size:.88em}','body table.rel.fg-rel .fa-ano .kl{font-size:.82em}','body table.rel.fg-rel .fa-of{font-size:.88em}',
+    'body table.rel.fg-rel td.fato .fa-pac{font-size:1.06em}','body table.rel.fg-rel td.fato small{font-size:.92em}',
+    'body table.rel.fg-rel .fa-ano{font-size:.92em}','body table.rel.fg-rel .fa-ano .kl{font-size:.85em}','body table.rel.fg-rel .fa-of{font-size:.92em}',
     'body .rel .chip{font-size:.84em}','body table.rel.fg-rel .fg-add{font-size:1.3em}',
     'body.final .fg-add{display:none!important}',
     'body:not(.final) table.rel tr[data-id]{cursor:pointer}',
@@ -266,7 +267,7 @@
     var li = function (x) { return '<div class="it"><b>' + String(x.pg).padStart(2, '0') + '</b><span>' + esc(x.t) + '</span></div>'; };
     return '<section class="slide arte sum' + (it.length > 18 ? ' denso' : '') + '" data-sec="sumario"><div class="esq" style="width:898px">' + marca(true) +
       '<h1>Sumário</h1><div class="tr"></div><div class="mes">' + perTxt(o.vig).replace('<b>|</b>', ' <b>|</b> ') + '</div>' +
-      '<div class="lista" style="--h:' + Math.min(38, Math.floor(410 / Math.max(1, metade))) + 'px"><div>' + a.map(li).join('') + '</div><div>' + b.map(li).join('') + '</div></div></div>' + tiras(true) + '</section>';
+      '<div class="lista" style="--h:' + Math.min(38, Math.floor(440 / Math.max(1, metade))) + 'px"><div>' + a.map(li).join('') + '</div><div>' + b.map(li).join('') + '</div></div></div>' + tiras(true) + '</section>';
   }
   function divisoria(o) {
     return '<section class="slide arte div" data-sec="div"><div class="esq">' + marca() + '<div class="bloco"><div class="num">' + String(o.n).padStart(2, '0') + '</div><h1>' + esc(o.titulo) + '</h1>' +
@@ -389,6 +390,7 @@
   function solto(o) { return '<div class="solto"><div class="rot">' + esc(o.rot) + '</div><div class="v"' + (o.cor ? ' style="color:' + o.cor + '"' : '') + '>' + o.v + '</div>' + (o.u ? '<div class="u">' + o.u + '</div>' : '') +
     (o.ds && o.ds.length ? '<div class="ds">' + o.ds.map(function (d) { return '<div><span class="rot">' + esc(d.rot) + '</span><b>' + d.v + (d.m ? '<small>' + d.m + '</small>' : '') + '</b></div>'; }).join('') + '</div>' : '') + '</div>'; }
   /* a Tabela do FCA desenhada pelo FcaTabela (o mesmo HTML do painel FCA) */
+  /* a tabela ocupa o slide: a letra sobe até caber e o respiro das linhas divide a sobra */
   function fcaPainel(html, n) { return '<div class="card fcap' + (n >= 6 ? ' tb fill" style="height:100%"' : '"') + '>' + html + '</div>'; }
   function vazio(t) { return '<div class="vazio-sl">' + esc(t) + '</div>'; }
   function kmini(o) { return '<div class="card kmini"><div class="rot">' + esc(o.rot) + '</div><div class="kv"' + (o.cor ? ' style="color:' + o.cor + '"' : '') + '>' + o.v + '</div>' + (o.m ? '<div class="km">' + o.m + '</div>' : '') + '</div>'; }
@@ -480,11 +482,11 @@
       if (!duro) s.querySelectorAll('.hero .gr b,.tn-g b,.tn-v,.tn-r,.kpi .kv,.kpi .km').forEach(function (e) { if (e.scrollWidth > e.clientWidth + 1) ok = false;
         var p = e.parentElement.getBoundingClientRect(), r = e.getBoundingClientRect(); if (r.right > p.right + 1) ok = false; });
       return ok; }
-    function ajusta(s) { if (!s.querySelector('.miolo')) return; var d0 = s.style.display; s.style.display = ''; var lo = .72, hi = 1.25;
+    function ajusta(s) { if (!s.querySelector('.miolo')) return; var d0 = s.style.display; s.style.display = ''; var lo = .72, hi = s.querySelector('.fcap') ? 1.45 : 1.25;   /* a tabela do FCA pode crescer mais: letra pequena num slide vazio fica solta */
       var av = s.querySelector('.arv'); if (av && av.querySelector('.com')) { av.classList.remove('sem-obs'); s.style.setProperty('--v', 1); s.style.setProperty('--k', .9); if (!cabe(s)) av.classList.add('sem-obs'); }
       s.style.setProperty('--v', 1); s.style.setProperty('--k', hi); if (!cabe(s)) { s.style.setProperty('--k', lo); var duro = !cabe(s);   /* nem no menor cabe todo texto: vale só não estourar o slide */
         for (var i = 0; i < 12; i++) { var m = (lo + hi) / 2; s.style.setProperty('--k', m); if (cabe(s, duro)) lo = m; else hi = m; } s.style.setProperty('--k', lo); }
-      var tb = s.querySelector('.tb.fill'); if (tb) { var vlo = 1, vhi = 3; for (var j = 0; j < 10; j++) { var v = (vlo + vhi) / 2; s.style.setProperty('--v', v); if (cabe(s)) vlo = v; else vhi = v; } s.style.setProperty('--v', vlo); }
+      var tb = s.querySelector('.tb.fill'); if (tb) { var vlo = 1, vhi = tb.classList.contains('fcap') ? 2.6 : 3; for (var j = 0; j < 10; j++) { var v = (vlo + vhi) / 2; s.style.setProperty('--v', v); if (cabe(s)) vlo = v; else vhi = v; } s.style.setProperty('--v', vlo); }
       /* listas (destaques, ranking, indicadores): as linhas dividem a altura do card e a letra cresce junto, até 17 px */
       s.querySelectorAll('.pn-dq .ls').forEach(function (ls) { var ls2 = ls.querySelectorAll('.l'); if (!ls2.length) return;
         ls2.forEach(function (l) { l.style.height = '0px'; l.style.minHeight = '0'; l.style.maxHeight = 'none'; l.style.flex = '0 0 auto'; });
