@@ -435,6 +435,7 @@
     'body.est-limpo .cont[data-sec="sc"]{background:#F4F5F7}',
     'body.est-limpo .cont[data-sec="sc"] .card{background:transparent!important;border-color:transparent!important;box-shadow:none!important}',
     'body.est-limpo.escuro .cont[data-sec="sc"]{background:#23252A}',
+    'body.est-limpo .cont[data-sec="sc"] .card{padding-left:0!important;padding-right:0!important}body.est-limpo .cont[data-sec="sc"] .pn-dq .l{padding-left:0;padding-right:0}',   /* sem card, o conteúdo começa na mesma linha do hero (Renan, 26/11/2026) */
     '.ech{position:absolute;inset:0}.cv{position:relative}',
     '.eg-hero{display:flex;flex-direction:column;padding:10px 16px 14px;min-height:0}.eg-hero .cv{flex:1 1 0;min-height:0}',
     '.eg-st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}',
