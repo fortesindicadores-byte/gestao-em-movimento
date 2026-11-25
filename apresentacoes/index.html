@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611261640">
+<meta name="build" content="202611261700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611261640"></script>
+<script src="../assets/apres-slides.js?v=202611261700"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -1167,20 +1167,25 @@ function sGAV(inst){
     ['Milimetragem',st('mm'),v=>pm(v,90,75),'pneus · Prolog'],
     ['Calibragem',st('ca'),v=>pm(v,90,75),'pneus · Prolog']].filter(x=>x[1]!=null);
   const hj=new Date(G.hoje), dt=pad2(hj.getDate())+'/'+pad2(hj.getMonth()+1)+'/'+hj.getFullYear();
-  const hero=`<div class="pn-hero"><div class="hlbl">Média das aderências · hoje</div><div class="hval" style="color:${C[sc==null?'m':sc>=90?'g':sc>=80?'y':'r']}">${pf(sc)}</div>
-    <div class="hdel"><div>Posição na rede<b>${pos?pos+'º de '+rk.length:'—'}</b></div><div>Fora da meta<b>${it.filter(x=>x[2](x[1])==='r').length}</b></div><div>Foto de<b>${dt}</b></div></div></div>`;
-  const cards=`<div class="gav-g">${it.map(x=>{ const c=x[2](x[1]); return `<div class="card gav-c"><div class="kl"><i style="background:${C[c]}"></i>${esc(x[0])}</div><div class="kv" style="color:${C[c]}">${pf(x[1])}</div><div class="km">${esc(x[3]||'')}</div></div>`; }).join('')}</div>`;
+  /* um card à esquerda com a altura das duas linhas: média em cima, só a posição embaixo; números em preto com o farol redondo ao lado (Renan, 26/11/2026) */
+  const far=c=>`<i class="far" style="background:${C[c]}"></i>`;
+  const hero=`<div class="card gav-h"><div class="kl">Média das aderências · hoje</div><div class="hv">${pf(sc)}${far(sc==null?'m':sc>=90?'g':sc>=80?'y':'r')}</div><div class="hp"><div class="kl">Posição na rede</div><b>${pos?pos+'º de '+rk.length:'—'}</b></div></div>`;
+  const cards=`<div class="gav-g">${it.map(x=>{ const c=x[2](x[1]); return `<div class="card gav-c"><div class="kl">${esc(x[0])}</div><div class="kv">${pf(x[1])}${far(c)}</div><div class="km">${esc(x[3]||'')}</div></div>`; }).join('')}</div>`;
   const ch=inst+'|'+VIG+'|gav';
   /* cards lado a lado (em duas linhas cheias) e as observações embaixo (Renan, 26/11/2026) */
   const corpo=`<style>.gav-w{display:flex;flex-direction:column;gap:10px;height:100%}
+    .gav-t{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,${Math.max(4,Math.ceil(it.length/2))}fr);gap:8px}
+    .gav-h{padding:calc(12px*var(--k)) 16px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+    .gav-h .kl,.gav-c .kl{font-size:calc(8.5px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .gav-h .hv{font-size:calc(38px*var(--k));font-weight:800;line-height:1.05;margin-top:6px;color:var(--txt);display:flex;align-items:center;gap:10px;white-space:nowrap}
+    .gav-h .hp{margin-top:calc(14px*var(--k));padding-top:calc(10px*var(--k));border-top:1px solid var(--linha)}.gav-h .hp b{display:block;font-size:calc(17px*var(--k));font-weight:800;margin-top:4px;color:var(--txt)}
+    .gav-w i.far{flex:0 0 auto;width:.42em;height:.42em;border-radius:50%;display:inline-block}
     .gav-g{display:grid;grid-template-columns:repeat(${Math.max(4,Math.ceil(it.length/2))},minmax(0,1fr));gap:8px}
     .gav-c{padding:calc(9px*var(--k)) 12px;display:flex;flex-direction:column;justify-content:center;min-width:0}
-    .gav-c .kl{font-size:calc(8.5px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .gav-c .kl i{flex:0 0 8px;width:8px;height:8px;border-radius:50%}
-    .gav-c .kv{font-size:calc(19px*var(--k));font-weight:800;margin-top:3px;line-height:1.1}
+    .gav-c .kv{font-size:calc(19px*var(--k));font-weight:800;margin-top:3px;line-height:1.1;color:var(--txt);display:flex;align-items:center;gap:7px;white-space:nowrap}
     .gav-c .km{font-size:calc(9px*var(--k));color:var(--txt3);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .gav-w .com{flex:1;min-height:0}</style>
-    <div class="gav-w">${hero}${cards}${AS.obs({chave:ch,texto:MOD.obs[ch]||'',baixo:1,dica:'o que a unidade fala sobre o farol de hoje'})}</div>`;
+    <div class="gav-w"><div class="gav-t">${hero}${cards}</div>${AS.obs({chave:ch,texto:MOD.obs[ch]||'',baixo:1,dica:'o que a unidade fala sobre o farol de hoje'})}</div>`;
   return [sl({titulo:'Gestão à Vista',per:'Hoje · '+dt,corpo},inst,'Gestão à Vista')];
 }
 function sRecado(t){ const ls=String(t.texto||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,8);
@@ -1477,6 +1482,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611261640"></script>
+<script src="../assets/build-check.js?v=202611261700"></script>
 </body>
 </html>
