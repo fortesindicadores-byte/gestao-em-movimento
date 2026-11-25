@@ -81,7 +81,7 @@
     '.cab h2{font-size:22px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;color:#fff}',
     '.cab .un{font-size:14px;font-weight:600;color:#A9B1C0;padding-left:12px;border-left:1px solid rgba(255,255,255,.28);line-height:18px;white-space:nowrap}',
     '.cab .per{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#C9D0DD;white-space:nowrap}',
-    '.cont::after{height:10px;background:#F97316}',   /* no slide de conteúdo a linha de baixo é laranja chapada, 10 px (Renan, 26/11/2026) */
+    '.cont::after{display:none}',   /* slide de conteúdo sem a barra laranja de baixo, em todas as versões (Renan, 26/11/2026) */
     '.cab .per svg{width:14px;height:14px}',
     '.miolo{position:absolute;left:28px;right:28px;top:84px;bottom:20px}',
     '.pe{position:absolute;left:28px;right:28px;bottom:16px;display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:var(--txt3)}',
