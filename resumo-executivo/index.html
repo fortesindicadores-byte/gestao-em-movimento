@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611192000">
+<meta name="build" content="202611260300">
 <title>Resumo Executivo</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -444,7 +444,7 @@ function compDPO(rows){const hdr=rows[0]||[];let li=-1;for(let i=hdr.length-1;i>
 // Demarco: ESCALA INVERTIDA — Nível 1 = top (melhor); evolução = nível diminuiu vs semestre anterior
 function compDemarco(rows){const hdr=rows[0]||[];let li=-1;for(let i=hdr.length-1;i>=1;i--){if(rows.slice(1).some(r=>/Nível/i.test(String(r[i]||'')))){li=i;break;}}const out={top:[],bad:[],improved:[],worsened:[],sem:''};if(li<0)return out;out.sem=String(hdr[li]||'');const pj=li-1;rows.slice(1).forEach(r=>{const code=String(r[0]||'').trim();const m=String(r[li]||'').match(/Nível\s*(\d+)/i);if(!code||!m)return;const lv=+m[1];const pm=pj>=1?String(r[pj]||'').match(/Nível\s*(\d+)/i):null;const prev=pm?+pm[1]:null;if(lv===1)out.top.push(code);if(lv>=4)out.bad.push({code,lv});if(prev!=null&&lv<prev)out.improved.push({code,prev,lv});if(prev!=null&&lv>prev)out.worsened.push({code,prev,lv});});return out;}
 // conta DRE → pacote
-const PAC={'Combustíveis Veiculos e Equipamentos':'Combustível','Combustíveis':'Combustível','Fluídos (Arla)':'Combustível','Arla':'Combustível','Estorno de ICMS não Aproveitado':'Combustível','ICMS Crédito Presumido':'Combustível','Manutenção de Veículos e Equipamentos':'Manutenção','Materiais e Ferramentas de Oficina':'Manutenção','Lavação de Veículos':'Manutenção','Manutenção de Carrocerias':'Manutenção','Personalização/Padronização de Veículos':'Manutenção','Personalização e Padronização de Veículos':'Manutenção','Contratos de Manutenção Fabricante':'Manutenção','Consertos e Recapagens de Pneus':'Pneus','Pneus e Camaras':'Pneus','Recapagens e Outros Serviços':'Pneus','Pneus Novos':'Pneus','IPVA e Licenciamento de Veículos':'Seguros e licenças','Seguro de Veículos e Equipamentos':'Seguros e licenças'};
+const PAC={'Combustíveis Veiculos e Equipamentos':'Combustível','Combustíveis':'Combustível','Fluídos (Arla)':'Combustível','Arla':'Combustível','Estorno de ICMS não Aproveitado':'ICMS','ICMS Crédito Presumido':'ICMS','Manutenção de Veículos e Equipamentos':'Manutenção','Materiais e Ferramentas de Oficina':'Manutenção','Lavação de Veículos':'Manutenção','Manutenção de Carrocerias':'Manutenção','Personalização/Padronização de Veículos':'Manutenção','Personalização e Padronização de Veículos':'Manutenção','Contratos de Manutenção Fabricante':'Manutenção','Consertos e Recapagens de Pneus':'Pneus','Pneus e Camaras':'Pneus','Recapagens e Outros Serviços':'Pneus','Pneus Novos':'Pneus','IPVA e Licenciamento de Veículos':'Seguros e licenças','Seguro de Veículos e Equipamentos':'Seguros e licenças'};
 function compFCA(rows){const today=new Date();today.setHours(0,0,0,0);const recs=[];rows.forEach(r=>{const d=parseD(r[1]);if(!d)return;const st=String(r[8]||'');const prazo=parseD(r[7]);const concl=/conclu/i.test(st)?'C':/andamento/i.test(st)?'A':'N';const venc=concl==='C'?false:(prazo&&prazo<today);recs.push({k:vigKeyN(d),concl,venc});});return recs;}
 
 function carregar(){
@@ -479,7 +479,9 @@ function applyData(d){
   const todas=VIGS.map(d=>vigLbl(d));
   const comDados=todas.filter(v=>ICS.some(o=>vigLbl(o.vigD)===v&&o.pont!=null));
   const vigItems=(comDados.length?comDados:todas).slice().reverse();
-  const ultimo=vigItems[0]||'';
+  /* abre no último mês FECHADO: com pontuação e com realizado na DRE (a prévia do mês corrente fica na lista, mas não abre nela) */
+  const temReal=v=>(XP.dre||[]).some(o=>vigLbl(VIGS.find(d=>vigKeyN(d)===o.vk)||new Date(0))===v&&o.real);
+  const ultimo=vigItems.find(temReal)||vigItems[0]||'';
   const vw=document.getElementById('ms-vig');
   // Muda o Set NO LUGAR: os listeners do _buildMs guardam o Set da 1ª montagem,
   // e trocar por um novo deixava o filtro sem responder depois da releitura.
@@ -499,7 +501,22 @@ function avg(a){const f=a.filter(v=>v!=null);return f.length?f.reduce((x,y)=>x+y
 function sumAtt(rows,pk){let rem=0,real=0,h=false;(rows||[]).forEach(o=>{if(pk.has(o.vk)){rem+=o.rem;real+=o.real;h=true;}});return h&&rem?(real/rem-1)*100:null;} // desvio % real vs rem
 function rlDev(pk){let lit=0,tot=0,remxl=0,litrem=0;(XP.kmlEf||[]).forEach(o=>{if(pk.has(o.vk)){lit+=o.lit;if(o.tot>0)tot+=o.tot;if(o.rp>0){remxl+=o.rp*o.lit;litrem+=o.lit;}}});if(!lit||!litrem)return null;return ((tot/lit)/(remxl/litrem)-1)*100;}
 function kmlAtt(pk){let km=0,lit=0,rs=0,cnt=0;(XP.kmlEf||[]).forEach(o=>{if(pk.has(o.vk)){km+=o.km;lit+=o.lit;if(o.remKmL>0){rs+=o.remKmL;cnt++;}}});if(!lit||!cnt)return null;return (km/lit)/(rs/cnt)*100;}
-function rkmDev(pk){let cr=0,cR=0,kr=0,kR=0;(XP.dre||[]).forEach(o=>{if(pk.has(o.vk)){cr+=o.rem;cR+=o.real;}});(XP.km||[]).forEach(o=>{if(pk.has(o.vk)){kr+=o.rem;kR+=o.real;}});if(!kR||!kr||!cr)return null;return ((cR/kR)/(cr/kr)-1)*100;}
+/* Dispersão de km com o balanço de massa: a conta do próprio Painel KM, lida dele num iframe escondido.
+   A aba Dispersão de km tem só o km remunerado bruto; sem o balanço as Empurradas aparecem rodando 20% a mais. */
+let KMBM=null;
+function leKmBM(){
+  const ifr=document.createElement('iframe'); ifr.setAttribute('aria-hidden','true');
+  ifr.style.cssText='position:fixed;left:-10000px;top:0;width:1600px;height:900px;border:0';
+  let n=0,est=0; const fim=()=>{ try{ifr.remove();}catch(e){} };
+  ifr.onload=()=>{ const t=setInterval(()=>{ n++; let w=ifr.contentWindow,v=false,sub='';
+      try{ v=!!w.eval("typeof ALL!=='undefined'&&ALL.length>0"); sub=((w.document.getElementById('titSub')||{}).textContent)||''; }catch(e){}
+      est=v&&!/carregando|lendo|atualizando/i.test(sub)?est+1:0;
+      if(est>=3){ clearInterval(t); try{ const m={}; w.eval("ALL.map(r=>[String(r.vig),+r.rem||0,+r.real||0])").forEach(r=>{ const mm=String(r[0]).match(/^(\d{2})\/(\d{4})$/); if(!mm) return; const k=+mm[2]*100+(+mm[1]-1); const x=m[k]||(m[k]={rem:0,real:0}); x.rem+=r[1]; x.real+=r[2]; }); KMBM=m; }catch(e){ console.warn('Painel KM:',e); } fim(); if(KMBM) atualizar(); }
+      else if(n>300){ clearInterval(t); fim(); } },500); };
+  ifr.src='../painel-km/index.html'; document.body.appendChild(ifr);
+}
+function kmDev(pk){ if(!KMBM) return null; let rem=0,real=0,h=false; pk.forEach(k=>{ const x=KMBM[k]; if(x){ rem+=x.rem; real+=x.real; h=true; } }); return h&&rem?(real/rem-1)*100:null; }
+function rkmDev(pk){let cr=0,cR=0,kr=0,kR=0;(XP.dre||[]).forEach(o=>{if(pk.has(o.vk)){cr+=o.rem;cR+=o.real;}});if(KMBM)pk.forEach(k=>{const x=KMBM[k];if(x){kr+=x.rem;kR+=x.real;}});else (XP.km||[]).forEach(o=>{if(pk.has(o.vk)){kr+=o.rem;kR+=o.real;}});if(!kR||!kr||!cr)return null;return ((cR/kR)/(cr/kr)-1)*100;}
 
 function atualizar(){
   if(!ICS.length)return;
@@ -520,11 +537,11 @@ function atualizar(){
   const weak=comp.filter(c=>c.v!=null&&c.v<85).sort((a,b)=>a.v-b.v).slice(0,2);
   weak.forEach(w=>{if(w.l==='Consumo Km/L')return;const i=IC.findIndex(x=>x.l===w.l);const arr=unis.map(u=>({u,v:cap(avg(rows.filter(o=>o.unidade===u).map(o=>o.ic[i])))})).filter(x=>x.v!=null).sort((a,b)=>a.v-b.v).slice(0,3);if(arr.length)neg.push(`<b>${w.l} — piores:</b> `+arr.map(x=>`${x.u.replace('CDD ','').replace('CDI ','')} ${r0(x.v)}%`).join(', '));});
   // ── financeiro / dispersão (desvio real vs remunerado) ──
-  const cD=sumAtt(XP.dre,pk),kD=sumAtt(XP.km,pk),rk=rkmDev(pk),rl=rlDev(pk);
-  if(cD!=null){(cD<=0?pos:neg).push(`<b>Custos da frota:</b> ${cD<=0?Math.abs(cD).toFixed(1)+'% abaixo':cD.toFixed(1)+'% acima'} do remunerado`);}
-  if(kD!=null){(kD<=5?pos:neg).push(`<b>Dispersão de km:</b> ${kD.toFixed(1)}%`+(kD>5?' (acima da meta de 5%)':''));}
-  if(rk!=null&&rk>2)neg.push(`<b>R$/km:</b> ${rk.toFixed(1)}% acima do remunerado`);
-  if(rl!=null){(rl<=0?pos:neg).push(`<b>Combustível (R$/L):</b> ${rl<=0?Math.abs(rl).toFixed(1)+'% abaixo':rl.toFixed(1)+'% acima'} do remunerado`);}
+  const kBM=kmDev(pk), cD=sumAtt(XP.dre,pk),kD=kBM!=null?kBM:sumAtt(XP.km,pk),rk=rkmDev(pk),rl=rlDev(pk), kTxt=kBM!=null?'':' sem o balanço de massa';
+  if(cD!=null){(cD<=0?pos:neg).push(`<b>Custos da frota:</b> ${cD<=0?Math.abs(cD).toFixed(1).replace('.',',')+'% abaixo':cD.toFixed(1).replace('.',',')+'% acima'} do remunerado`);}
+  if(kD!=null){(kD<=5?pos:neg).push(`<b>Dispersão de km${kTxt}:</b> ${kD.toFixed(1).replace('.',',')}%`+(kD>5?' (acima da meta de 5%)':''));}
+  if(rk!=null&&rk>2)neg.push(`<b>R$/km:</b> ${rk.toFixed(1).replace('.',',')}% acima do remunerado`);
+  if(rl!=null){(rl<=0?pos:neg).push(`<b>Combustível (R$/L):</b> ${rl<=0?Math.abs(rl).toFixed(1).replace('.',',')+'% abaixo':rl.toFixed(1).replace('.',',')+'% acima'} do remunerado`);}
   // ── DPO ──
   const dpoN4=XP.dpo?XP.dpo.ok.filter(x=>x.lv>=4):[];
   if(XP.dpo){const n3=XP.dpo.ok.filter(x=>x.lv===3);if(n3.length)pos.push(`<b>DPO/VPO sustentável (Nível 3):</b> ${n3.map(x=>x.code).join(', ')}`);if(XP.dpo.bad.length)neg.push(`<b>DPO/VPO não sustentável:</b> ${XP.dpo.bad.map(x=>x.code+' (N'+x.lv+')').join(', ')} — ${XP.dpo.sem}`);}
@@ -532,7 +549,7 @@ function atualizar(){
   if(XP.dmc){if(XP.dmc.top.length)pos.push(`<b>Demarco Nível 1 (top):</b> ${XP.dmc.top.join(', ')}`);if(XP.dmc.improved.length)pos.push(`<b>Demarco — evolução:</b> ${XP.dmc.improved.map(x=>x.code+' (N'+x.prev+'→N'+x.lv+')').join(', ')}`);if(XP.dmc.bad.length)neg.push(`<b>Demarco — pior nível:</b> ${XP.dmc.bad.map(x=>x.code+' (N'+x.lv+')').join(', ')}`);if(XP.dmc.worsened.length)at.push(`<b>Demarco — piora:</b> ${XP.dmc.worsened.map(x=>x.code+' (N'+x.prev+'→N'+x.lv+')').join(', ')}`);}
   // ── pacotes de custo (desvio real vs remunerado) ──
   const pacAgg={};(XP.dre||[]).forEach(o=>{if(!pk.has(o.vk))return;const p=PAC[o.cta]||'Outros';(pacAgg[p]=pacAgg[p]||{rem:0,real:0});pacAgg[p].rem+=o.rem;pacAgg[p].real+=o.real;});
-  ['Manutenção','Combustível','Pneus'].forEach(p=>{const v=pacAgg[p];if(!v||!v.rem)return;const dev=(v.real/v.rem-1)*100;if(dev>3)neg.push(`<b>Custo ${p}:</b> ${dev.toFixed(1)}% acima do remunerado`);else if(dev<-3)pos.push(`<b>Custo ${p}:</b> ${Math.abs(dev).toFixed(1)}% abaixo do remunerado`);});
+  ['Manutenção','Combustível','Pneus'].forEach(p=>{const v=pacAgg[p];if(!v||!v.rem)return;const dev=(v.real/v.rem-1)*100;if(dev>3)neg.push(`<b>Custo ${p}:</b> ${dev.toFixed(1).replace('.',',')}% acima do remunerado`);else if(dev<-3)pos.push(`<b>Custo ${p}:</b> ${Math.abs(dev).toFixed(1).replace('.',',')}% abaixo do remunerado`);});
   // ── FCA (acumulado no ano até a vigência) ──
   if(XP.fca){const sel=XP.fca.filter(r=>Math.floor(r.k/100)===yr&&(r.k%100)<=mi);if(sel.length){const tt=sel.length,consol=sel.reduce((s,r)=>s+(r.concl==='C'?100:r.concl==='A'?50:0),0)/tt,prazo=sel.filter(r=>!r.venc).length/tt*100;if(consol>=85)pos.push(`<b>FCA:</b> consolidação de ${r0(consol)}% das ações`);else neg.push(`<b>FCA:</b> consolidação de só ${r0(consol)}% (${tt} ações)`);if(prazo<70)at.push(`<b>FCA:</b> ${r0(100-prazo)}% das ações vencidas — repactuar prazos`);}}
   // ── unidades saudáveis / críticas ──
@@ -560,8 +577,8 @@ function atualizar(){
   if(!at.length&&weak.length)at.push(`Acompanhar de perto: ${weak.map(w=>w.l).join(' e ')} abaixo do esperado.`);
   // ── PRÓXIMOS PASSOS (ações sugeridas a partir dos negativos) ──
   if(weak.some(w=>/Disponib|Prevent/.test(w.l)))next.push(`<b>Manutenção:</b> plano de ação nas unidades com baixa disponibilidade/preventivas`);
-  if(kD!=null&&kD>5)next.push(`<b>Dispersão de km:</b> investigar o desvio entre km remunerado e realizado (${kD.toFixed(1)}% acima) — apurar causas`);
-  if(rl!=null&&rl>0)next.push(`<b>Combustível:</b> avaliar modelo de remuneração / consumo (R$/L ${rl.toFixed(1)}% acima)`);
+  if(kD!=null&&kD>5)next.push(`<b>Dispersão de km:</b> investigar o desvio entre km remunerado e realizado (${kD.toFixed(1).replace('.',',')}% acima) e apurar as causas`);
+  if(rl!=null&&rl>0)next.push(`<b>Combustível:</b> avaliar modelo de remuneração / consumo (R$/L ${rl.toFixed(1).replace('.',',')}% acima)`);
   if(XP.fca){const sel=XP.fca.filter(r=>Math.floor(r.k/100)===yr&&(r.k%100)<=mi);if(sel.length){const concl=sel.filter(r=>r.concl==='C').length/sel.length*100;if(concl<70)next.push(`<b>FCA:</b> acelerar conclusão das ações (${r0(concl)}% concluídas)`);}}
   if(XP.dpo&&XP.dpo.bad.length)next.push(`<b>Auditoria:</b> recuperar pilar DPO/VPO em ${XP.dpo.bad.map(x=>x.code).join(', ')}`);
   if(crit.length)next.push(`<b>Acompanhamento:</b> reunião focada nas unidades críticas (${crit.map(x=>x.u.replace('CDD ','').replace('CDI ','')).join(', ')})`);
@@ -661,6 +678,7 @@ function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark
 aplicaTema(localStorage.getItem('bi_theme')||'dark');
 
 carregar();
+leKmBM();
 </script>
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
@@ -678,6 +696,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611192000"></script>
+<script src="../assets/build-check.js?v=202611260300"></script>
 </body>
 </html>
