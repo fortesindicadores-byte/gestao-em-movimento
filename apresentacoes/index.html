@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611252030">
+<meta name="build" content="202611252100">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,9 +10,9 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611252030"></script>
+<script src="../assets/apres-slides.js?v=202611252100"></script>
 <script src="../assets/fca-auto.js?v=202611190400"></script>
-<script src="../assets/fca-tabela.js?v=202610201330"></script>
+<script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
 <style>
 :root{
@@ -339,12 +339,12 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .kpi .kv{font-size:clamp(18px,min(2.632vh,1.303vw),25px);}
 }
 /* ── Apresentações: só o que é próprio desta tela ── */
-.ap{flex:1;min-height:0;display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);gap:12px;}
+.ap{flex:1;min-height:0;display:grid;grid-template-columns:minmax(230px,280px) minmax(0,1fr);gap:12px;}
 .seq{display:flex;flex-direction:column;min-height:0;padding:14px 12px 12px;}
-.seq h3{font-size:13px;font-weight:800;margin:0 4px;}
+.seq h3{font-size:12px;font-weight:800;margin:0 4px;}
 .seq .sx{font-size:10px;color:var(--txt3);margin:3px 4px 10px;line-height:1.45;}
-.seq-l{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:0 2px 2px;}
-.sq{display:flex;align-items:center;gap:9px;padding:8px 9px;border:1px solid var(--card-brd);border-radius:10px;background:var(--app);cursor:pointer;user-select:none;}
+.seq-l{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:4px;padding:0 2px 2px;}
+.sq{display:flex;align-items:center;gap:7px;padding:5px 7px;border:1px solid var(--card-brd);border-radius:10px;background:var(--app);cursor:pointer;user-select:none;}
 .sq:hover{background:var(--hover);}
 .sq.on{border-color:var(--laranja);background:color-mix(in srgb,var(--laranja) 13%,transparent);}
 .sq.off .sq-t,.sq.off .sq-n{opacity:.42;}
@@ -353,12 +353,12 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sq.alvo{box-shadow:0 -2px 0 var(--laranja);}
 .sq-p{flex:0 0 12px;color:var(--txt4);cursor:grab;font-size:13px;line-height:1;letter-spacing:-2px;}
 .sq.fixo .sq-p{visibility:hidden;}
-.sq-n{flex:0 0 24px;height:24px;border-radius:50%;border:1px solid var(--card-brd);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--txt2);}
+.sq-n{flex:0 0 20px;height:20px;border-radius:50%;border:1px solid var(--card-brd);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--txt2);}
 .sq.on .sq-n{background:var(--laranja);border-color:transparent;color:#2A1405;}
 .sq-t{flex:1;min-width:0;}
-.sq-t b{display:block;font-size:11.5px;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sq-t i{display:block;font-style:normal;font-size:9.5px;color:var(--txt3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sq-b{flex:0 0 auto;background:transparent;border:0;color:var(--txt3);cursor:pointer;padding:4px;border-radius:6px;display:flex;}
+.sq-t b{display:block;font-size:10.5px;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sq-t i{display:block;font-style:normal;font-size:8.5px;color:var(--txt3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sq-b{flex:0 0 auto;background:transparent;border:0;color:var(--txt3);cursor:pointer;padding:2px;border-radius:6px;display:flex;}
 .sq-b:hover{background:var(--hover);color:var(--txt);}
 .seq-pe{flex:0 0 auto;display:flex;gap:8px;align-items:center;margin-top:10px;padding:0 2px;}
 .bt{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--card-brd);background:transparent;color:var(--txt);border-radius:8px;padding:7px 12px;
@@ -776,7 +776,7 @@ function sFin(inst){
   const M=neg(somaR(R,r=>r.vk===VIG)), A=neg(somaR(R,r=>r.vk===(y-1)+VIG.slice(4))), d=M.real-M.rem, dp=pct(M.real,M.rem);
   const porPac={}; R.filter(r=>r.vk===VIG).forEach(r=>{ const x=porPac[r.pac]=porPac[r.pac]||{rem:0,real:0}; x.rem-=r.rem; x.real-=r.real; });
   const grandes=['Combustíveis','Manutenções','Pneus'], passos=[{n:'Remunerado',v:M.rem,t:1}]; let demais=0;
-  PAC_ORD.forEach(p=>{ const x=porPac[p]; if(!x) return; const dv=x.real-x.rem; if(grandes.includes(p)) passos.push({n:p,v:dv}); else demais+=dv; });
+  PAC_ORD.forEach(p=>{ const x=porPac[p]; if(!x) return; const dv=x.real-x.rem; if(Math.abs(dv)>.5) passos.push({n:p,v:dv}); });
   if(Math.abs(demais)>.5) passos.push({n:'Demais',v:demais}); passos.push({n:'Realizado',v:M.real,t:1});
   const lab=MESC, real=[], rem=[], orc=[];
   for(let m=1;m<=12;m++){ const vk=y+'-'+pad2(m), rs=R.filter(r=>r.vk===vk), s=neg(somaR(rs)), tr=rs.some(r=>r.tr);
@@ -807,7 +807,7 @@ function sAHAV(inst){
   lin.push(linha('Custo da frota',C.rem,C.real,true,'tot'));
   if(EB.rem||EB.real) lin.push(linha('EBITDA',EB.rem,EB.real,false,'tot'));
   const ch=inst+'|'+VIG+'|ahav';
-  const corpo=`<div class="g2" style="grid-template-rows:auto 1fr">`+AS.tabela({cols:[{t:'Linha'},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'▲ R$',n:1},{t:'▲ %',n:1},{t:'AV rem.',n:1},{t:'AV real',n:1},{t:'▲ pp',n:1},{t:'Impacto R$',n:1}],linhas:lin})+AS.obs({chave:ch,texto:MOD.obs[ch]||'',baixo:1,dica:'▲ contra o remunerado · AV = % da receita líquida · Impacto = ▲ pp × receita realizada'})+'</div>';
+  const corpo=`<div class="g2" style="grid-template-rows:auto 1fr">`+AS.tabela({cols:[{t:'Linha'},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'▲ R$',n:1},{t:'▲ %',n:1},{t:'AV rem.',n:1},{t:'AV real',n:1},{t:'▲ pp',n:1},{t:'Impacto R$',n:1}],linhas:lin}).replace('card tb','card tb compacta')+AS.obs({chave:ch,texto:MOD.obs[ch]||'',baixo:1,dica:'▲ contra o remunerado · AV = % da receita líquida · Impacto = ▲ pp × receita realizada'})+'</div>';
   return [sl({titulo:'Financeiro · AH e AV',corpo},inst,'AH e AV')];
 }
 /* Dispersão de km: o Resumo Gerencial do Painel KM com as 10 placas que mais rodaram acima */
@@ -860,7 +860,7 @@ function sArv(inst){
 const pacFca=f=>{ const s=String(f||'').split('\n')[0].trim(); return /combust/i.test(s)?'Combustíveis':/manuten/i.test(s)?'Manutenções':/pneu|recap/i.test(s)?'Pneus':s; };
 function gruposFca(rows){
   const g={}; rows.forEach(r=>{ const k=(r.projeto||'')+'|'+String(r.fato||'').split('\n')[0]; (g[k]=g[k]||[]).push(r); });
-  return Object.values(g).map(rs=>{ const r=rs[0], d=FcaTabela.desvioCurto(r.fato_desvio||''), pj=String(r.projeto||''), ab=pj.split('-')[0].trim();
+  return Object.values(g).map(rs=>{ const r=rs[0], d=(window.FcaTabela?FcaTabela.desvioCurto(r.fato_desvio||''):{tot:'',contas:[],ytd:'',resto:String(r.fato_desvio||'').split('\n').filter(Boolean)}), pj=String(r.projeto||''), ab=pj.split('-')[0].trim();
     return {fato:String(r.fato||'').split('\n')[0],proj:ab?Cap(ab.toLowerCase())+(pj.includes('-')?' · '+pj.split('-').slice(1).join('-').trim():''):'',tot:d.tot||(d.resto||[]).join(' · '),contas:d.contas,ytd:d.ytd,
       rs,linhas:rs.map(x=>({id:x.id,causa:x.causa,acao:x.acao,resp:x.responsavel,prazo:x.prazo,status:x.status})),peso:(String(d.tot).match(/[\d.]+/)||['0'])[0].replace(/\./g,'')*(/▼/.test(d.tot)?-1:1)}; })
     .sort((a,b)=>b.peso-a.peso);
@@ -889,6 +889,7 @@ const chipSt=st=>{ st=String(st||'').trim(); if(!st) return '<span style="color:
 const prazoSt=r=>{ if(/conclu|cancel/i.test(r.status||'')) return 'No prazo'; if(!r.prazo) return 'Sem prazo'; return String(r.prazo).slice(0,10)<new Date().toISOString().slice(0,10)?'Vencida':'No prazo'; };
 const triFca=h=>String(h==null?'':h).replace(/▲/g,'<span style="color:var(--red)">▲</span>').replace(/▼/g,'<span style="color:var(--green)">▼</span>');
 function tabFca(rs,add){
+  if(!window.FcaTabela) return AS.fca(gruposFca(rs),{edit:add!==false});
   const h=FcaTabela.html(rs.map(r=>({id:r.id,proj:projRot(r.projeto),vig:r.vigencia,fato:r.fato,desvio:r.fato_desvio,causa:r.causa,acao:r.acao,resp:r.responsavel,prazo:r.prazo,status:r.status||'Não iniciada'})),
     {add:add!==false,tri:triFca,chip:chipSt,prazoState:prazoSt,diasVenc:()=>0,defaultStatus:'Não iniciada'});
   return AS.fcaPainel(h.replace(/^<div class="rel-section"><div class="rel-wrap">/,'').replace(/<\/div><\/div>$/,''),rs.length);
@@ -926,7 +927,7 @@ function sSC(inst){
   const e=semDado('SC'); if(e) return [sl({titulo:'Scorecard',corpo:e},inst)];
   const S=D.SC, mi=+VIG.slice(5,7)-1, mom=S.pont!=null&&S.ant!=null?S.pont-S.ant:null, pos=S.rk.findIndex(x=>x.eu)+1;
   const clsOf=c=>c.rr?bandCost(c.val):bandG(c.val,c.good), crit=S.cards.filter(c=>clsOf(c)==='r').length;
-  const hero=`<div class="pn-hero"><div class="hlbl">Pontuação geral · ${esc(S.unis.join(' · '))}</div><div class="hval" style="color:${SC_FG(bandSC(S.pont))}">${S.pont==null?'—':nf(S.pont,1)}</div>
+  const hero=`<div class="pn-hero"><div class="hlbl">Pontuação geral</div><div class="hval" style="color:${SC_FG(bandSC(S.pont))}">${S.pont==null?'—':nf(S.pont,1)}</div>
     <div class="hdel"><div>MoM<b>${mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false)}</b></div><div>Posição<b>${pos?pos+'º de '+S.rk.length:'—'}</b></div><div>Indicadores críticos<b>${crit}</b></div></div></div>`;
 
   const cards=`<div class="pn-k10">${S.cards.map(c=>`<div class="pn-kpi"><div class="kl">${esc(c.lbl)}</div><div class="kv" style="color:${SC_FG(clsOf(c))}">${c.val==null?'—':Math.round(c.val)+'%'}</div><div class="km">${c.peso!=null?'peso '+c.peso:''}${c.rr?' · R/Rem':''}</div></div>`).join('')}</div>`;
@@ -942,7 +943,7 @@ function sTERM(inst){
   const e=semDado('TERM'); if(e) return [sl({titulo:'Termômetro',corpo:e},inst)];
   const T=D.TERM.tiers, mi=+VIG.slice(5,7)-1, med=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
   const g=med(T.map(t=>t.total)), ga=T.every(t=>t.ant!=null)?med(T.map(t=>t.ant)):null, mom=g!=null&&ga!=null?g-ga:null;
-  const hero=`<div class="pn-hero"><div class="hlbl">Pontuação geral${T.length>1?' · média dos '+T.length+' tiers':' · '+esc(T[0].tier)}</div><div class="hval" style="color:${SC_FG(bandSC(g))}">${nf(g,1)}<small>pts</small></div>
+  const hero=`<div class="pn-hero"><div class="hlbl">Pontuação geral</div><div class="hval" style="color:${SC_FG(bandSC(g))}">${nf(g,1)}<small>pts</small></div>
     <div class="hdel"><div>MoM<b>${mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false)}</b></div>${T.length===1?`<div>Posição Geo<b>${T[0].rank?esc(T[0].rank)+'º':'—'}${T[0].geo?' · '+esc(T[0].geo):''}</b></div><div>Posição Conlog<b>${T[0].posC}º de ${T[0].nC}</b></div>`:''}</div></div>`;
   const tiers=T.length>1?`<div class="tc-row" style="grid-template-columns:repeat(${T.length},minmax(0,1fr))">${T.map(t=>{ const mm=t.ant!=null?t.total-t.ant:null;
     return `<div class="tc"><div class="kl">${esc(t.tier)}</div><div class="kv" style="color:${SC_FG(bandSC(t.total))}">${nf(t.total,1)}</div><div class="km"><span>MoM <b>${mm==null?'—':FS.seta(mm,nf(Math.abs(mm),1),false)}</b></span><span>Geo <b>${t.rank?esc(t.rank)+'º':'—'}</b>${t.geo?' · '+esc(t.geo):''}</span><span>Conlog <b>${t.posC}º de ${t.nC}</b></span></div></div>`; }).join('')}</div>`:'';
@@ -962,7 +963,7 @@ function sELITE(inst){
   const meia=k=>{ const i=by[k]; return i?`<div class="meia"><span class="f" style="background:${dot(i.v)}"></span><div class="b"><div class="kl">${esc(i.l)}</div><div class="kv">${nf(i.v,1)}</div></div></div>`:''; };
   const cards=`<div class="el-cards">${x.ind.filter(i=>i.k!=='checkWH').map(i=>i.k==='checkT'&&by.checkWH?`<div class="el-kpi dupla">${meia('checkT')}${meia('checkWH')}</div>`
     :`<div class="el-kpi"><span class="f" style="background:${dot(i.v)}"></span><div class="b"><div class="kl">${esc(i.l)}</div><div class="kv">${nf(i.v,1)}</div></div></div>`).join('')}</div>`;
-  const hero=`<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px"><div class="pn-hero"><div class="hlbl">Pontuação total média · ${esc(UNI())}</div><div class="hval">${x.pont==null?'—':nf(x.pont,2)}</div><div class="hsub">${esc(mesLb(VIG))}${pos?' · '+pos+'º lugar de '+x.rk.length+' unidades':''}</div></div>
+  const hero=`<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px"><div class="pn-hero"><div class="hlbl">Pontuação total</div><div class="hval">${x.pont==null?'—':nf(x.pont,2)}</div><div class="hsub">${esc(mesLb(VIG))}${pos?' · '+pos+'º lugar de '+x.rk.length+' unidades':''}</div></div>
     <div class="el-leg"><span><i style="background:#3BB33B"></i>≥ 95 — Meta batida</span><span><i style="background:#F4A100"></i>85 a 94,9 — Atenção</span><span><i style="background:#FF6666"></i>&lt; 85 — Crítico</span></div></div>`;
   const dq=`<div class="card pn-dq"><div class="gtit">Ranking das unidades</div><div class="gsub">Pontuação total · ${esc(mesLb(VIG))}</div><div class="ls">${x.rk.map((r,i)=>`<div class="l${r.eu?' eu':''}"><span class="p">${i+1}º</span><span class="u">${esc(r.u)}</span><span class="s">${r.p==null?'—':nf(r.p,2)}</span></div>`).join('')}</div></div>`;
   const gr=`<div class="pn-gr" style="grid-template-columns:2.1fr 1fr">${AS.grafico('Pontuação no ano','Frota de Elite · pontuação total do mês',{tipo:'faixa',labels:MESC,v:x.mes.map((y,i)=>i<=mi?y:null),faixas:[[95,'#3BB33B'],[85,'#FACC15'],[-1e9,'#FF6666']],foco:[mi],fmt:'n1'})}${dq}</div>`;
@@ -973,8 +974,11 @@ function sRecado(t){ const ls=String(t.texto||'').split('\n').map(x=>x.trim()).f
 const FAZ={prometido:sPrometido,sc:sSC,fin:sFin,ahav:sAHAV,km:sKM,arv:sArv,term:sTERM,rpm:i=>sFca(i,'RPM'),elite:sELITE,comp:sComp};
 
 /* ── a sequência (itens) e o deck (páginas) ── */
+/* a tabela do FCA mora em assets/fca-tabela.js; se o navegador não carregou, carrega e monta de novo */
+let _ftCarregando=false, _ftTentou=false;
 function monta(){
   if(!COD||!MOD) return;
+  if(!window.FcaTabela&&!_ftTentou){ if(!_ftCarregando){ _ftCarregando=true; const sc=document.createElement('script'); sc.src='../assets/fca-tabela.js?v='+Date.now(); sc.onload=sc.onerror=()=>{ _ftCarregando=false; _ftTentou=true; monta(); }; document.head.appendChild(sc); } return; }
   const conhec=CAT.map(c=>c.id).concat(MOD.textos.map(t=>t.id));
   const ordem=MOD.ordem.filter(id=>conhec.includes(baseId(id))); CAT.forEach(c=>{ if(!ordem.some(x=>baseId(x)===c.id)) ordem.push(c.id); }); MOD.textos.forEach(t=>{ if(!ordem.includes(t.id)) ordem.push(t.id); });
   MOD.ordem=ordem;
@@ -1047,7 +1051,7 @@ function mostra(){
   set('cont',`${POS+1} de ${DECK.length}`); barraFiltro();
 }
 function vai(d){ const n=Math.max(0,Math.min(DECK.length-1,POS+d)); if(n===POS) return; POS=n; mostra(); desenhaSeq(); const el=document.querySelector('.sq.on'); if(el&&el.scrollIntoView) el.scrollIntoView({block:'nearest'}); }
-function ajusta(){ const t=$('tela'), q=$('telaQ'); const w=Math.max(120,Math.min(t.clientWidth,t.clientHeight*16/9)); q.style.width=w+'px'; q.style.height=(w*9/16)+'px'; $('prev').style.transform=`scale(${w/1280})`; }
+function ajusta(){ const t=$('tela'), q=$('telaQ'); const w=Math.floor(Math.max(120,Math.min(t.clientWidth,t.clientHeight*16/9))); q.style.width=w+'px'; const ww=q.offsetWidth||w; q.style.height=Math.floor(ww*9/16)+'px'; $('prev').style.transform=`scale(${ww/1280})`; }
 if(window.ResizeObserver) new ResizeObserver(ajusta).observe($('tela')); window.addEventListener('resize',ajusta);
 
 /* ── filtro do slide: Projeto (multi, no padrão do portal), só nos blocos que abrem por projeto ── */
@@ -1253,6 +1257,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611252030"></script>
+<script src="../assets/build-check.js?v=202611252100"></script>
 </body>
 </html>

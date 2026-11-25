@@ -43,7 +43,7 @@
   var CSS = [
     ':root{--txt:#161D2B;--txt2:#4A5568;--txt3:#737D91;--linha:rgba(15,23,42,.10);--brd:rgba(15,23,42,.10);--laranja:#F97316;--k:1;--v:1;--card:rgba(255,255,255,.74);--card-brd:rgba(15,23,42,.10);--cabec:#DCDFE6;--hover:transparent;--red:#FF0000;--green:#00B300;--vermelho:#FF0000;--verde:#00B300;--orange:#F97316}',
     '*{box-sizing:border-box;margin:0;padding:0}',
-    'html,body{background:#fff}',
+    'html,body{background:#fff}body:not(.final){overflow:hidden}',
     'body{font-family:Montserrat,sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased}',
     '.slide{width:1280px;height:720px;position:relative;overflow:hidden;page-break-after:always}',
     '.slide::after{content:"";position:absolute;left:0;right:0;bottom:0;height:8px;background:linear-gradient(90deg,#F26B0F,#F97316 55%,#FFC46B);z-index:3}',
@@ -192,23 +192,23 @@
     'body:not(.final) table.rel tr[data-id]{cursor:pointer}',
     /* Resumo Gerencial dos painéis (Scorecard e Frota de Elite), no desenho deles, tema claro */
     '.pn{display:flex;flex-direction:column;gap:10px;height:100%}',
-    '.pn-hero .hlbl{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.9px}',
-    '.pn-hero .hval{font-size:34px;font-weight:800;line-height:1.05;margin:3px 0 8px}.pn-hero .hval small{font-size:15px;font-weight:700;color:var(--txt3);margin-left:4px}',
-    '.pn-hero .hsub{font-size:10.5px;color:var(--txt3);font-weight:600}',
+    '.pn-hero .hlbl{font-size:calc(10px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.9px}',
+    '.pn-hero .hval{font-size:calc(34px*var(--k));font-weight:800;line-height:1.05;margin:calc(3px*var(--k)) 0 calc(8px*var(--k))}.pn-hero .hval small{font-size:calc(15px*var(--k));font-weight:700;color:var(--txt3);margin-left:4px}',
+    '.pn-hero .hsub{font-size:calc(10.5px*var(--k));color:var(--txt3);font-weight:600}',
     '.pn-hero .hdel{display:flex;gap:20px;flex-wrap:wrap}',
-    '.pn-hero .hdel div{font-size:8px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px}',
-    '.pn-hero .hdel b{display:block;font-size:11.5px;font-weight:800;color:var(--txt);margin-top:2px;letter-spacing:0;text-transform:none}',
+    '.pn-hero .hdel div{font-size:calc(8px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px}',
+    '.pn-hero .hdel b{display:block;font-size:calc(11.5px*var(--k));font-weight:800;color:var(--txt);margin-top:2px;letter-spacing:0;text-transform:none}',
     '.pn-faixas{display:flex;gap:12px;flex-wrap:wrap;align-items:center}',
     '.pn-faixas div{display:flex;align-items:center;gap:6px;font-size:calc(9px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}',
     '.pn-faixas b{color:var(--txt2);font-weight:800}.pn-faixas i{width:9px;height:9px;border-radius:2px;display:inline-block}',
     '.pn-k10{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:7px}',
     '.pn-kpi{padding:8px 9px 7px;border:1px solid var(--card-brd);border-radius:11px;background:rgba(255,255,255,.55);display:flex;flex-direction:column;justify-content:center;min-width:0}',
-    '.pn-kpi .kl{font-size:8.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.2px;line-height:1.25;min-height:21px}',
-    '.pn-kpi .kv{font-size:19px;font-weight:800;margin-top:3px;line-height:1.1}',
-    '.pn-kpi .km{font-size:8px;color:var(--txt3);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.pn-kpi .kl{font-size:calc(8.5px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.2px;line-height:1.25;min-height:calc(21px*var(--k))}',
+    '.pn-kpi .kv{font-size:calc(19px*var(--k));font-weight:800;margin-top:3px;line-height:1.1}',
+    '.pn-kpi .km{font-size:calc(8px*var(--k));color:var(--txt3);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
     '.pn-gr{flex:1 1 0;min-height:0;display:grid;gap:12px}',
     '.pn-dq{display:flex;flex-direction:column;padding:12px 16px 16px;min-height:0}',
-    '.pn-dq .gtit{font-size:13.5px;font-weight:800}.pn-dq .gsub{font-size:10.5px;color:var(--txt3);font-weight:600;margin:2px 0 6px}',
+    '.pn-dq .gtit{font-size:calc(13.5px*var(--k));font-weight:800}.pn-dq .gsub{font-size:calc(10.5px*var(--k));color:var(--txt3);font-weight:600;margin:2px 0 6px}',
     '.pn-dq .ls{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;padding-bottom:6px}',
     '.pn-dq .l{display:flex;align-items:center;gap:9px;line-height:1.15;flex:1 1 0;min-height:calc(19px*var(--k));max-height:calc(36px*var(--k));border-bottom:1px solid var(--linha);padding:0 6px;font-size:calc(11.5px*var(--k))}',
     '.pn-dq .l:last-child{border-bottom:0}.pn-dq .l .p{font-size:.85em;font-weight:800;color:#8E96A6;width:22px;flex:0 0 22px}',
@@ -219,12 +219,13 @@
     '.el-kpi{display:flex;align-items:center;gap:10px;padding:8px 14px;min-width:0;border:1px solid var(--card-brd);border-radius:11px;background:rgba(255,255,255,.55)}',
     '.el-kpi .f{width:14px;height:14px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 0 3px rgba(15,23,42,.05)}',
     '.el-kpi .b{display:flex;flex-direction:column;gap:4px;min-width:0}',
-    '.el-kpi .kl{font-size:9px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-    '.el-kpi .kv{font-size:19px;font-weight:800;line-height:1}',
+    '.el-kpi .kl{font-size:calc(9px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.el-kpi .kv{font-size:calc(19px*var(--k));font-weight:800;line-height:1}',
     '.el-kpi.dupla{gap:10px;padding-left:12px;padding-right:12px}.el-kpi .meia{display:flex;align-items:center;gap:7px;flex:1 1 0;min-width:0}',
     '.el-kpi .meia+.meia{border-left:1px solid var(--linha);padding-left:10px}.el-kpi .meia .f{width:12px;height:12px}.el-kpi.dupla .kl{letter-spacing:.3px}',
     '.el-leg{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.el-leg span{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:700;color:var(--txt2)}.el-leg i{width:10px;height:10px;border-radius:50%;display:inline-block}',
     'table.dre tr.eu td{background:rgba(249,115,22,.10);font-weight:800}',
+    '.tb.compacta table.dre{font-size:10.5px}.tb.compacta table.dre th{font-size:9px;padding:6px 10px}.tb.compacta table.dre td{padding:5px 10px}',
     '.kgrid{display:grid;gap:10px;height:100%}',
     '.solto{padding:0 2px}','.solto .v{font-size:calc(54px*var(--k));font-weight:800;line-height:1;letter-spacing:-1px;margin-top:6px;white-space:nowrap}','.solto .u{font-size:calc(11px*var(--k));font-weight:600;color:var(--txt3);margin-top:4px}',
     '.solto .ds{display:flex;gap:calc(34px*var(--k));margin-top:calc(12px*var(--k))}','.solto .ds>div{white-space:nowrap}','.solto .ds .rot{font-size:calc(9px*var(--k))}','.solto .ds b{display:block;font-size:calc(15px*var(--k));font-weight:800;margin-top:2px}','.solto .ds small{font-size:calc(10px*var(--k));font-weight:600;color:var(--txt3);margin-left:5px}',
@@ -432,7 +433,7 @@
         new Chart(ctx, { type: 'bar', data: { labels: g.labels, datasets: ds2 }, options: Object.assign({}, base, { layout: { padding: { top: 26 * k } },
           scales: { x: { grid: { display: false }, border: { display: false }, ticks: { font: fx, color: '#4A5568' } }, y: { display: false, min: b2.min, max: b2.max } } }),
           plugins: [{ afterDatasetsDraw: function (c) { var m = c.getDatasetMeta(0), x = c.ctx; x.save(); x.textAlign = 'center'; x.textBaseline = 'bottom';
-            g.v.forEach(function (v, i) { var p = m.data[i]; if (!p || v == null) return; var em = !foco2.length || foco2.indexOf(i) >= 0;
+            g.v.forEach(function (v, i) { var p = m.data[i]; if (!p || v == null) return; var em = !foco2.length || foco2.indexOf(i) >= 0; if (!em) return;
               x.font = (em ? '700 ' : '600 ') + Math.round((em ? 13 : 11) * k) + 'px Montserrat'; x.fillStyle = em ? '#333333' : '#737D91'; x.fillText(fmt(v), p.x, Math.min(p.y, p.base) - 5); });
             if (g.tipo === 'meta') { var yy = c.scales.y.getPixelForValue(g.meta); x.font = '600 ' + Math.round(11 * k) + 'px Montserrat'; x.fillStyle = '#161D2B'; x.textAlign = 'right'; x.fillText('meta ' + fmt(g.meta), c.chartArea.right, yy - 4); }
             x.restore(); } }] });
@@ -463,7 +464,13 @@
     function ajusta(s) { if (!s.querySelector('.miolo')) return; var d0 = s.style.display; s.style.display = ''; var lo = .72, hi = 1.25;
       s.style.setProperty('--v', 1); s.style.setProperty('--k', hi); if (!cabe(s)) { s.style.setProperty('--k', lo); var duro = !cabe(s);   /* nem no menor cabe todo texto: vale só não estourar o slide */
         for (var i = 0; i < 12; i++) { var m = (lo + hi) / 2; s.style.setProperty('--k', m); if (cabe(s, duro)) lo = m; else hi = m; } s.style.setProperty('--k', lo); }
-      var tb = s.querySelector('.tb.fill'); if (tb) { var vlo = 1, vhi = 3; for (var j = 0; j < 10; j++) { var v = (vlo + vhi) / 2; s.style.setProperty('--v', v); if (cabe(s)) vlo = v; else vhi = v; } s.style.setProperty('--v', vlo); } s.style.display = d0; }
+      var tb = s.querySelector('.tb.fill'); if (tb) { var vlo = 1, vhi = 3; for (var j = 0; j < 10; j++) { var v = (vlo + vhi) / 2; s.style.setProperty('--v', v); if (cabe(s)) vlo = v; else vhi = v; } s.style.setProperty('--v', vlo); }
+      /* listas (destaques, ranking, indicadores): as linhas dividem a altura do card e a letra cresce junto, até 17 px */
+      s.querySelectorAll('.pn-dq .ls').forEach(function (ls) { var ls2 = ls.querySelectorAll('.l'); if (!ls2.length) return;
+        ls2.forEach(function (l) { l.style.height = '0px'; l.style.minHeight = '0'; l.style.maxHeight = 'none'; l.style.flex = '0 0 auto'; });
+        var k = parseFloat(getComputedStyle(s).getPropertyValue('--k')) || 1, h = (ls.clientHeight - 6) / ls2.length, fs = Math.max(9, Math.min(12.5 * k, h * .5));
+        ls2.forEach(function (l) { l.style.height = h + 'px'; l.style.fontSize = fs + 'px'; }); });
+      s.style.display = d0; }
     function tudo() { document.querySelectorAll('.slide').forEach(function (s) { ajusta(s); s.querySelectorAll('.area').forEach(liga); s.querySelectorAll('canvas[data-g]').forEach(function (cv) { var c = window.Chart && Chart.getChart(cv); if (c) c.destroy(); }); });
       if (window.Chart) document.querySelectorAll('canvas[data-g]').forEach(desenha); window.__deckPronto = true; }
     window.__ajustaDeck = tudo; window.__ajusta = tudo;
