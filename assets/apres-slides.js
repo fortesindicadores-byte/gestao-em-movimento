@@ -76,7 +76,7 @@
     '.div .num{font-size:66px;font-weight:300;color:#F97316;line-height:1;margin-bottom:24px}',
     '.div .sub{font-size:15px;color:#BFC5CF;margin:16px auto 0;max-width:480px;line-height:1.5}',
     /* conteúdo */
-    '.cont{background:radial-gradient(80% 60% at 90% 0%,rgba(255,255,255,.35) 0%,transparent 60%),linear-gradient(rgba(255,255,255,.20),rgba(255,255,255,.20)),#E1E2E5}',
+    '.cont{background:#F7F8FA}',   /* fundo quase branco em todos os slides de conteúdo (Renan, 26/11/2026: "O fundo, menos cinza… quase branco") */
     '.cab{position:absolute;left:0;right:0;top:0;height:64px;padding:0 28px;display:flex;align-items:center;gap:12px;background:#1E2833;background-clip:padding-box;border-bottom:3px solid #F97316;box-sizing:border-box;z-index:2}',   /* cabeçalho grafite com filete laranja (Renan, 26/11/2026) */
     '.cab h2{font-size:22px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;color:#fff}',
     '.cab .un{font-size:14px;font-weight:600;color:#A9B1C0;padding-left:12px;border-left:1px solid rgba(255,255,255,.28);line-height:18px;white-space:nowrap}',
@@ -437,7 +437,7 @@
   var ESCURO_COR = { '#00B300': '#3BB33B', '#FF0000': '#FF5252', '#E9A400': '#F4A100', '#161D2B': '#EEF2FA', '#E00000': '#FF5252', '#009A00': '#3BB33B', '#D00000': '#FF5252', '#008A00': '#3BB33B' };
   /* variantes de teste (Renan, 26/11/2026): ?estilo=limpo = Scorecard sem card e fundo mais claro; ?estilo=echarts = gráficos em ECharts, infográfico */
   var CSS_VAR = [
-    'body.est-limpo .cont[data-sec="sc"]{background:#F4F5F7}',
+    
     'body.est-limpo .cont[data-sec="sc"] .card{background:transparent!important;border-color:transparent!important;box-shadow:none!important}',
     'body.est-limpo.escuro .cont[data-sec="sc"]{background:#23252A}',
     /* cópia ECharts: o hero vira uma fileira de cards, o principal no grafite do cabeçalho (Renan, 26/11/2026) */
@@ -463,7 +463,7 @@
     return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><base href="' + esc(o.base) + '"><title>' + esc(o.titulo || 'Apresentação') + '</title>' +
       '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">' +
       '<style>' + CSS + (o.css || '') + CSS_ESCURO + CSS_VAR + '</style></head><body class="' + (o.final ? 'final' : '') + (o.escuro ? ' escuro' : '') + (o.estilo ? ' est-' + esc(o.estilo) : '') + '">' + paginas +
-      '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>' + (o.estilo === 'echarts' ? '<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"><\/script>' : '') + '<script>window.__obsFmt=' + obsFmt.toString() + ';(' + RUN.toString() + ')();<\/script></body></html>';
+      '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>' + '<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"><\/script>' + '<script>window.__obsFmt=' + obsFmt.toString() + ';(' + RUN.toString() + ')();<\/script></body></html>';
   }
 
   /* roda DENTRO do deck */
@@ -478,7 +478,8 @@
     var C_TICK = ESC ? '#C9D0DD' : '#4A5568', C_LBL = ESC ? '#EEF2FA' : '#333333', C_INK = ESC ? '#EEF2FA' : '#161D2B', C_FRACO = ESC ? '#A3ABBA' : '#737D91', C_LIG = ESC ? 'rgba(255,255,255,.26)' : 'rgba(15,23,42,.22)';
     var ECH = document.body.classList.contains('est-echarts') && window.echarts;
     function desenha(cv) {
-      if (ECH) return desenhaE(cv);
+      /* barras verticais (ano, bridge, meta, faixa) saem no desenho do ECharts em TODAS as versões (Renan, 26/11/2026: "São esses. Todos que tiverem esse estilo, altere"); o resto só na versão echarts */
+      if (ECH || (window.echarts && /"tipo":"(ano|bridge|meta|faixa)"/.test(cv.getAttribute('data-g') || ''))) return desenhaE(cv);
       var g = JSON.parse(cv.getAttribute('data-g')), ctx = cv.getContext('2d'), fmt = fmtDe(g.fmt), k = parseFloat(getComputedStyle(cv).getPropertyValue('--k')) || 1;
       var fx = { size: Math.round(13 * k), family: 'Montserrat' }, fl = '700 ' + Math.round(13 * k) + 'px Montserrat';
       var base = { responsive: true, maintainAspectRatio: false, animation: false, devicePixelRatio: 2, plugins: { legend: { display: false }, tooltip: { enabled: false } } };
@@ -560,7 +561,7 @@
         op.xAxis = eixoX(g.passos.map(function (p) { return p.n; })); op.xAxis.axisLabel.fontSize = fs(11); op.yAxis = { show: false, min: bb.min, max: bb.max };
         op.series = [{ type: 'bar', stack: 'w', silent: true, itemStyle: { color: 'transparent' }, data: base.map(function (v, i) { return g.passos[i].t ? 0 : v; }) },
           { type: 'bar', stack: 'w', barWidth: '56%', data: val.map(function (v, i) { var p = g.passos[i]; return { value: p.t ? p.v : v, itemStyle: { color: p.t ? degr('#4B5563', .95, .6) : degr(cores[i], .95, .55), borderRadius: fs(5) },
-            label: { show: true, position: 'top', fontSize: fs(11.5), fontWeight: 700, color: p.t ? C_LBL : cores[i], formatter: p.t ? fmt(p.v) : (p.v > 0 ? '▲ ' : '▼ ') + fmt(Math.abs(p.v)) } }; }) }];
+            label: { show: true, position: 'top', fontSize: fs(11.5), fontWeight: 700, color: C_LBL, formatter: p.t ? fmt(p.v) : fmt(Math.abs(p.v)) } }; }) }];
       } else if (g.tipo === 'meta' || g.tipo === 'faixa') {
         var corDe = function (v) { if (v == null) return null; if (g.tipo === 'meta') return v > g.meta ? VERM : VERDE; for (var q = 0; q < g.faixas.length; q++) if (v >= g.faixas[q][0]) return g.faixas[q][1]; return VERM; };
         var b2; if (g.tipo === 'meta') { var vv = g.v.filter(function (x) { return x != null; }), lo2 = Math.min(0, Math.min.apply(null, vv.concat([0]))), hi2 = Math.max(g.meta, Math.max.apply(null, vv.concat([0]))), r2 = (hi2 - lo2) || 1;
@@ -568,7 +569,7 @@
         op.xAxis = eixoX(g.labels); op.yAxis = { show: false, min: b2.min, max: b2.max };
         var ser = { type: 'bar', barWidth: '60%', data: g.v.map(function (v, i) { if (v == null) return null; var c = corDe(v), f = emF(i);
           return { value: v, itemStyle: { color: degr(c, f ? .95 : .3, f ? .5 : .08), borderRadius: [fs(8), fs(8), 0, 0], shadowColor: f && foco.length ? hexA(c, .35) : 'transparent', shadowBlur: f && foco.length ? 12 : 0 },
-            label: { show: f, position: 'top', formatter: fmt(v), fontSize: fs(foco.length ? 14 : 12), fontWeight: 800, color: C_LBL } }; }) };
+            label: { show: f, position: 'top', formatter: fmt(v), fontSize: fs(foco.length ? 12.5 : 11), fontWeight: 800, color: C_LBL } }; }) };
         if (g.tipo === 'meta') ser.markLine = { silent: true, symbol: 'none', lineStyle: { color: C_INK, type: [6, 4], width: 2 }, label: { formatter: 'meta ' + fmt(g.meta), position: 'insideEndTop', fontSize: fs(11), fontWeight: 600, color: C_INK }, data: [{ yAxis: g.meta }] };
         else { var lim = g.faixas.filter(function (f) { return f[0] > -1e8; }); ser.markLine = { silent: true, symbol: 'none', data: lim.map(function (f) { return { yAxis: f[0], lineStyle: { color: hexA(f[1], .55), type: [3, 4], width: 1.2 }, label: { formatter: String(f[0]), position: 'insideStartTop', fontSize: fs(10), fontWeight: 700, color: f[1] } }; }) }; }
         op.series = [ser];
@@ -625,7 +626,7 @@
         ls2.forEach(function (l) { l.style.height = h + 'px'; l.style.fontSize = fs + 'px'; }); });
       s.style.display = d0; }
     function tudo() { document.querySelectorAll('.slide').forEach(function (s) { ajusta(s); s.querySelectorAll('.area').forEach(liga); s.querySelectorAll('canvas[data-g]').forEach(function (cv) { var c = window.Chart && Chart.getChart(cv); if (c) c.destroy(); }); });
-      if (window.Chart || ECH) document.querySelectorAll('canvas[data-g]').forEach(desenha); window.__deckPronto = true; }
+      if (window.Chart || window.echarts) document.querySelectorAll('canvas[data-g]').forEach(desenha); window.__deckPronto = true; }
     /* observações: editando é texto puro; fora do foco, as linhas com - e 1. viram tópicos */
     document.addEventListener('focusin', function (e) { var c = e.target.closest && e.target.closest('.caixa[data-obs]'); if (!c || c.classList.contains('ed')) return; c.classList.add('ed'); c.textContent = c.getAttribute('data-raw') || ''; });
     document.addEventListener('focusout', function (e) { var c = e.target.closest && e.target.closest('.caixa[data-obs]'); if (!c) return; var t = c.innerText.replace(/\n+$/, ''); c.setAttribute('data-raw', t); c.classList.remove('ed'); c.innerHTML = window.__obsFmt ? window.__obsFmt(t) : t; });
