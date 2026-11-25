@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611252120">
+<meta name="build" content="202611252140">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611252120"></script>
+<script src="../assets/apres-slides.js?v=202611252140"></script>
 <script src="../assets/fca-auto.js?v=202611190400"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -368,7 +368,7 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .bt.pri:hover{filter:brightness(1.06);}
 .bt[disabled]{opacity:.5;cursor:default;}
 .palco{display:flex;flex-direction:column;min-height:0;min-width:0;padding:14px 16px 12px;}
-.palco-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:0 0 auto;margin-bottom:10px;}
+.palco-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:0 0 auto;margin-bottom:8px;}
 .palco-top label{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;}
 .palco-top #inTit{flex:1 1 180px;min-width:110px;max-width:300px;background:var(--app);border:1px solid var(--card-brd);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12px;font-weight:600;padding:7px 10px;outline:none;}
 .palco-top #inTit:focus{border-color:var(--laranja);}
@@ -376,11 +376,11 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .palco-top .flt .ms-btn{max-width:230px;}.palco-top .flt .un-r{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .palco-top .flt .ms-panel{min-width:210px;}
 .sq.dv{opacity:.85}.sq.dv .sq-n{background:transparent;border:1px dashed var(--card-brd)}
-.tela{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-.tela-q{position:relative;border-radius:10px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35);background:#fff;}
+.tela{flex:1;min-height:0;position:relative;display:flex;align-items:flex-start;justify-content:center;overflow:hidden;}
+.tela-q{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--card-brd);background:#fff;}
 .tela-q iframe{position:absolute;left:0;top:0;width:1280px;height:720px;border:0;transform-origin:0 0;}
 .tela-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--txt3);font-size:12px;line-height:1.6;padding:20px;}
-.palco-pe{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;font-size:11px;color:var(--txt3);font-weight:600;}
+.palco-pe{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:12px;margin-top:6px;font-size:11px;color:var(--txt3);font-weight:600;}
 .palco-pe .nav{background:transparent;border:1px solid var(--card-brd);color:var(--txt);border-radius:50%;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .palco-pe .nav:hover{background:var(--hover);}
 .av-linha{flex:0 0 auto;font-size:10.5px;color:var(--ambar);margin-top:8px;line-height:1.5;}
@@ -779,9 +779,9 @@ function sFin(inst){
   const R=D.VF.rows.filter(r=>CUSTO(r)&&passaP(inst,r.p)), y=+VIG.slice(0,4);
   const M=neg(somaR(R,r=>r.vk===VIG)), A=neg(somaR(R,r=>r.vk===(y-1)+VIG.slice(4))), d=M.real-M.rem, dp=pct(M.real,M.rem);
   const porPac={}; R.filter(r=>r.vk===VIG).forEach(r=>{ const x=porPac[r.pac]=porPac[r.pac]||{rem:0,real:0}; x.rem-=r.rem; x.real-=r.real; });
-  const grandes=['Combustíveis','Manutenções','Pneus'], passos=[{n:'Remunerado',v:M.rem,t:1}]; let demais=0;
-  PAC_ORD.forEach(p=>{ const x=porPac[p]; if(!x) return; const dv=x.real-x.rem; if(Math.abs(dv)>.5) passos.push({n:p,v:dv}); });
-  if(Math.abs(demais)>.5) passos.push({n:'Demais',v:demais}); passos.push({n:'Realizado',v:M.real,t:1});
+  const grandes=['Combustíveis','Manutenções','Pneus'], passos=[{n:'Rem',v:M.rem,t:1}]; let demais=0;
+  PAC_ORD.forEach(p=>{ const x=porPac[p]; if(!x) return; const dv=x.real-x.rem; if(Math.abs(dv)>.5) passos.push({n:p==='Seguros e licenças'?'Seguros':p,v:dv}); });
+  if(Math.abs(demais)>.5) passos.push({n:'Demais',v:demais}); passos.push({n:'Real',v:M.real,t:1});
   const lab=MESC, real=[], rem=[], orc=[];
   for(let m=1;m<=12;m++){ const vk=y+'-'+pad2(m), rs=R.filter(r=>r.vk===vk), s=neg(somaR(rs)), tr=rs.some(r=>r.tr);
     real.push(tr&&vk<=VIG?s.real:null); rem.push(tr&&vk<=VIG?s.rem:null); orc.push(rs.length?s.orc:null); }
@@ -858,7 +858,7 @@ function sArv(inst){
     let km=null; if(D.KM&&!D.KM.erro){ const vk=VIG.slice(5,7)+'/'+VIG.slice(0,4), ks=D.KM.rows.filter(r=>r.vig===vk&&PJ(r.proj)===PJ(P.p)); const s2=ks.reduce((a,r)=>{ a.rem+=r.rem; a.real+=r.real; return a; },{rem:0,real:0}); if(s2.rem>0&&s2.real>0) km=s2; }
     const temFato=p=>FCA.some(r=>/custo/i.test(r.origem||'')&&pacFca(r.fato)===p&&PJ(String(r.projeto||'').split('-')[0])===PJ(P.p));
     pacs.filter(x=>vermelho(x.m)||temFato(x.p)).sort((a,b)=>(b.m.real-b.m.rem)-(a.m.real-a.m.rem)).forEach(x=>{
-      const cts=[...new Set(R.filter(r=>r.pac===x.p).map(r=>r.c))].map(c=>({c,m:de(R,r=>r.pac===x.p&&r.c===c,VIG),a:de(R,r=>r.pac===x.p&&r.c===c,vA)})).filter(o=>Math.abs(o.m.rem)>.5||Math.abs(o.m.real)>.5).sort((a,b)=>(b.m.real-b.m.rem)-(a.m.real-a.m.rem)).slice(0,6);
+      const cts=[...new Set(R.filter(r=>r.pac===x.p).map(r=>r.c))].map(c=>({c,m:de(R,r=>r.pac===x.p&&r.c===c,VIG),a:de(R,r=>r.pac===x.p&&r.c===c,vA)})).filter(o=>Math.abs(o.m.rem)>.5||Math.abs(o.m.real)>.5).sort((a,b)=>(b.m.real-b.m.rem)-(a.m.real-a.m.rem));
       const r0=[{id:'r',t:x.p,real:x.m.real,rem:x.m.rem,ant:x.a.real}], r1=cts.map((o,i)=>({id:'c'+i,pai:'r',t:contaC(o.c),real:o.m.real,rem:o.m.rem,ant:o.a.real})), niv=[r0,r1];
       const top=cts[0]; if(km&&top&&top.m.real>top.m.rem&&['Combustíveis','Manutenções','Pneus'].includes(x.p)){ const rR=top.m.real/km.real, rM=top.m.rem/km.rem;
         niv.push([{id:'k',pai:'c0',t:'Km rodado',real:km.real,rem:km.rem,imp:(km.real-km.rem)*rM,larga:1,fmt:v=>nf(v)+' km'},{id:'q',pai:'c0',t:'R$/km',real:rR,rem:rM,imp:(rR-rM)*km.real,larga:1,fmt:v=>'R$ '+nf(v,3),fmtD:v=>nf(Math.abs(v),3)}]); }
@@ -945,13 +945,11 @@ function sSC(inst){
 
   const cards=`<div class="pn-k10">${S.cards.map(c=>`<div class="pn-kpi"><div class="kl">${esc(c.lbl)}</div><div class="kv" style="color:${SC_FG(clsOf(c))}">${c.val==null?'—':Math.round(c.val)+'%'}</div><div class="km">${c.peso!=null?'peso '+c.peso:''}${c.rr?' · R/Rem':''}</div></div>`).join('')}</div>`;
   const v=Array(12).fill(null); S.mes.forEach(x=>{ if(x.m<=mi) v[x.m]=x.v; });
-  const dq=`<div class="card pn-dq"><div class="gtit">Destaques</div><div class="gsub">Score ponderado por unidade · melhor → pior</div><div class="ls">${S.rk.map((x,i)=>`<div class="l${x.eu?' eu':''}"><span class="p">${i+1}º</span><span class="u">${esc(x.u)}</span><span class="s" style="color:${SC_FG(bandSC(x.s))}">${Math.round(x.s)}</span></div>`).join('')}</div></div>`;
+  const dq=`<div class="card pn-dq"><div class="gtit">Destaques</div><div class="ls">${S.rk.map((x,i)=>`<div class="l${x.eu?' eu':''}"><span class="p">${i+1}º</span><span class="u">${esc(x.u)}</span><span class="s" style="color:${SC_FG(bandSC(x.s))}">${Math.round(x.s)}</span></div>`).join('')}</div></div>`;
   const gr=`<div class="pn-gr" style="grid-template-columns:2.1fr 1fr">${AS.grafico('Evolução mensal','Pontuação geral · '+mesLb(VIG),{tipo:'faixa',labels:MESC,v,faixas:[[90,'#3BB33B'],[80,'#EAB308'],[70,'#F97316'],[-1e9,'#FF6666']],foco:[mi],fmt:'n1'})}${dq}</div>`;
   return [sl({titulo:'Scorecard',corpo:`<div class="pn">${hero}${cards}${gr}</div>`},inst,'Scorecard')];
 }
 /* Termômetro: pontuação com MoM, posição Geo e Conlog, o ano e os Bottom KPIs */
-const termVal=v=>{ if(v==null||v==='') return '—'; const m=String(v).match(/^Date\(\d+,\d+,\d+,(\d+),(\d+)/); if(m) return pad2(+m[1])+':'+pad2(+m[2]);
-  if(typeof v==='number') return Math.abs(v)<=1.5?nf(v*100,1)+'%':nf(v,1); return esc(v); };
 function sTERM(inst){
   const e=semDado('TERM'); if(e) return [sl({titulo:'Termômetro',corpo:e},inst)];
   const T=D.TERM.tiers, mi=+VIG.slice(5,7)-1, med=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
@@ -963,10 +961,11 @@ function sTERM(inst){
     <div class="hdel"><div>MoM<b>${mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false)}</b></div><div>Posição Geo<b>${geo?geo+'º':'—'}${nomeGeo?' · '+esc(nomeGeo):''}</b></div><div>Posição Conlog<b>${cl.pos?cl.pos+'º de '+cl.n:'—'}</b></div></div></div>`;
   const v=Array(12).fill(null).map((_,m)=>{ const xs=m>mi?[]:T.map(t=>t.mes[m]).filter(x=>x!=null); return xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:null; });
   /* indicadores da unidade: o mesmo indicador em dois tiers vira um só (pontos somados) */
-  const by={}; T.forEach(t=>t.kp.forEach(k=>{ const n=String(k.n).toLowerCase().replace(/\s+/g,' ').trim(), x=by[n]||(by[n]={n:k.n,p:0,mx:0,vs:[]}); x.p+=k.p; x.mx+=k.mx; if(k.v!=null&&k.v!=='') x.vs.push(k.v); }));
-  const kp=Object.values(by).map(x=>{ const ns=x.vs.filter(v=>typeof v==='number'); return Object.assign(x,{v:ns.length===x.vs.length&&ns.length?med(ns):x.vs[0]}); }).sort((a,b)=>a.p/a.mx-b.p/b.mx||a.p-b.p);
-  const cp=k=>k.p>=k.mx?'#3BB33B':k.p>0?'#EAB308':'#FF6666';
-  const dq=`<div class="card pn-dq"><div class="gtit">Indicadores</div><div class="gsub">Pontos de cada indicador · do pior para o melhor · ${esc(mesLb(VIG))}</div><div class="ls">${kp.map((k,i)=>`<div class="l"><span class="p">${i+1}º</span><span class="u">${esc(Cap(String(k.n).toLowerCase()))}</span><span class="vv">${termVal(k.v)}</span><span class="s" style="color:${cp(k)};min-width:4.6em;text-align:right">${nf(k.p)} de ${k.mx}</span></div>`).join('')}</div></div>`;
+  /* o mesmo indicador em dois tiers: a média dos pontos, como o Ranking do Termômetro */
+  const by={}; T.forEach(t=>t.kp.forEach(k=>{ const n=String(k.n).toLowerCase().replace(/\s+/g,' ').trim(), x=by[n]||(by[n]={n:k.n,ps:[],mx:0}); x.ps.push(k.p); x.mx=Math.max(x.mx,k.mx); }));
+  const kp=Object.values(by).map(x=>Object.assign(x,{p:Math.round(med(x.ps))})).sort((a,b)=>a.p/a.mx-b.p/b.mx||a.p-b.p);
+  const cp=k=>k.p>=k.mx*.75?'#3BB33B':k.p>=k.mx*.25?'#EAB308':'#FF6666';
+  const dq=`<div class="card pn-dq"><div class="gtit">Indicadores</div><div class="ls">${kp.map((k,i)=>`<div class="l"><span class="p">${i+1}º</span><span class="u">${esc(Cap(String(k.n).toLowerCase()))}</span><span class="s" style="color:${cp(k)};min-width:2.4em;text-align:right">${nf(k.p)}</span></div>`).join('')}</div></div>`;
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#3BB33B'],[80,'#EAB308'],[70,'#F97316'],[-1e9,'#FF6666']],foco:[mi],fmt:'n1'})}${dq}</div>`;
   return [sl({titulo:'Termômetro',corpo:`<div class="pn">${hero}${gr}</div>`},inst,'Termômetro')];
 }
@@ -1273,6 +1272,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611252120"></script>
+<script src="../assets/build-check.js?v=202611252140"></script>
 </body>
 </html>

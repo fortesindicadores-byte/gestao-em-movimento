@@ -136,6 +136,8 @@
     '.area{position:relative;min-width:0}',
     '.cols{position:absolute;inset:0;display:flex;justify-content:space-evenly;gap:calc(48px*var(--k))}',
     '.col{display:flex;flex-direction:column;justify-content:space-around;gap:10px;min-width:0}',
+    '.col.m{display:grid;grid-auto-flow:column;align-content:space-around;column-gap:calc(26px*var(--k));row-gap:8px}',
+    '.arv.so{grid-template-columns:1fr}','.col.m .tn{background:#fff}','.arv.sem-obs{grid-template-columns:1fr}','.arv.sem-obs>.com{display:none}',
     '.tn{width:calc(232px*var(--k));background:rgba(255,255,255,.82);border:1px solid var(--brd);border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.07);overflow:hidden;position:relative;z-index:1}',
     '.tn.l{width:calc(276px*var(--k))}','.tn.l .tn-g{grid-template-columns:minmax(0,1fr) minmax(0,.92fr) minmax(0,1.3fr)}',
     '.tn-t{font-size:calc(9.5px*var(--k));font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--txt2);padding:calc(8px*var(--k)) 12px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
@@ -202,10 +204,10 @@
     '.pn-faixas div{display:flex;align-items:center;gap:6px;font-size:calc(9px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}',
     '.pn-faixas b{color:var(--txt2);font-weight:800}.pn-faixas i{width:9px;height:9px;border-radius:2px;display:inline-block}',
     '.pn-k10{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:7px}',
-    '.pn-kpi{padding:8px 9px 7px;border:1px solid var(--card-brd);border-radius:11px;background:rgba(255,255,255,.55);display:flex;flex-direction:column;justify-content:center;min-width:0}',
-    '.pn-kpi .kl{font-size:calc(8.5px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.2px;line-height:1.25;min-height:calc(21px*var(--k))}',
-    '.pn-kpi .kv{font-size:calc(19px*var(--k));font-weight:800;margin-top:3px;line-height:1.1}',
-    '.pn-kpi .km{font-size:calc(8px*var(--k));color:var(--txt3);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+    '.pn-kpi{padding:6px 8px 5px;border:1px solid var(--card-brd);border-radius:11px;background:rgba(255,255,255,.55);display:flex;flex-direction:column;justify-content:center;min-width:0}',
+    '.pn-kpi .kl{font-size:calc(7.5px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.2px;line-height:1.2;min-height:calc(18px*var(--k))}',
+    '.pn-kpi .kv{font-size:calc(15.5px*var(--k));font-weight:800;margin-top:2px;line-height:1.1}',
+    '.pn-kpi .km{font-size:calc(7.5px*var(--k));color:var(--txt3);font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
     '.pn-gr{flex:1 1 0;min-height:0;display:grid;gap:12px}',
     '.pn-dq{display:flex;flex-direction:column;padding:12px 16px 16px;min-height:0}',
     '.pn-dq .gtit{font-size:calc(13.5px*var(--k));font-weight:800}.pn-dq .gsub{font-size:calc(10.5px*var(--k));color:var(--txt3);font-weight:600;margin:2px 0 6px}',
@@ -303,10 +305,16 @@
       '<div class="tn-g"><div><span>▲</span>' + f.seta(dv, fd(dv)) + '</div><div><span>▲ %</span>' + (p == null ? '<b class="nt">—</b>' : f.seta(dv, f.pct(Math.abs(p)))) + '</div><div><span>' + ult[0] + '</span>' + ult[1] + '</div></div></div>';
   }
   /* árvore em colunas: niveis = [[nós da coluna 1], [coluna 2], …]; cada nó leva pai */
+  /* árvore em colunas: um nível com mais de 7 nós vira sub-colunas (tudo aparece, nada é cortado);
+     a observação sai do slide quando a árvore precisa da largura (obs null) ou quando não couber (ajusta) */
   function arvore(niveis, obs) {
-    var cols = niveis.map(function (c) { return '<div class="col">' + c.map(no).join('') + '</div>'; }).join('');
-    return '<div class="arv"><div class="area"><svg class="lig"></svg><div class="cols">' + cols + '</div></div>' +
-      obsCard(obs) + '</div>';
+    var cols = niveis.map(function (c) {
+      if (c.length <= 7) return '<div class="col">' + c.map(no).join('') + '</div>';
+      var nc = Math.ceil(c.length / 7), nr = Math.ceil(c.length / nc);
+      return '<div class="col m" style="grid-template-rows:repeat(' + nr + ',auto);grid-template-columns:repeat(' + nc + ',auto)">' + c.map(no).join('') + '</div>';
+    }).join('');
+    return '<div class="arv' + (obs ? '' : ' so') + '"><div class="area"><svg class="lig"></svg><div class="cols">' + cols + '</div></div>' +
+      (obs ? obsCard(obs) : '') + '</div>';
   }
   /* caixa de observações (à direita da árvore; embaixo da tabela com baixo:true) */
   function obsCard(o) {
@@ -415,8 +423,9 @@
         g.passos.forEach(function (p) { if (p.t) { dat.push([0, p.v]); cores.push('#6B7280'); txt.push(fmt(p.v)); acc = p.v; }
           else { dat.push([acc, acc + p.v]); cores.push(p.v > 0 ? VERM : VERDE); txt.push((p.v > 0 ? '▲ ' : '▼ ') + fmt(Math.abs(p.v))); acc += p.v; } });
         var bb = bounds([].concat.apply([], dat).filter(function (v, i) { return i % 2 === 1 || v !== 0; }), 1.4, .12);
+        fx = { size: Math.round(11 * k), family: 'Montserrat' }; fl = '700 ' + Math.round(11.5 * k) + 'px Montserrat';
         new Chart(ctx, { type: 'bar', data: { labels: g.passos.map(function (p) { return p.n; }), datasets: [{ data: dat, backgroundColor: cores.map(function (c) { return c === '#6B7280' ? c : c + 'D9'; }), borderColor: cores, borderWidth: 1, borderRadius: 0, barPercentage: .62, categoryPercentage: .9 }] },
-          options: Object.assign({}, base, { layout: { padding: { top: 26 * k } }, scales: { x: { grid: { display: false }, border: { display: false }, ticks: { font: fx, color: '#4A5568' } }, y: { display: false, min: bb.min, max: bb.max } } }),
+          options: Object.assign({}, base, { layout: { padding: { top: 26 * k } }, scales: { x: { grid: { display: false }, border: { display: false }, ticks: { font: fx, color: '#4A5568', maxRotation: 0, autoSkip: false } }, y: { display: false, min: bb.min, max: bb.max } } }),
           plugins: [{ afterDatasetsDraw: function (c) { var m = c.getDatasetMeta(0), x = c.ctx; x.save(); x.font = fl; x.textAlign = 'center'; x.textBaseline = 'bottom';
             m.data.forEach(function (b, i) { x.fillStyle = cores[i] === '#6B7280' ? '#333333' : cores[i] === VERM ? '#E00000' : '#009A00'; x.fillText(txt[i], b.x, Math.min(b.y, b.base) - 5); });
             x.strokeStyle = '#A3ABBA'; x.setLineDash([3, 3]);
@@ -462,6 +471,7 @@
         var p = e.parentElement.getBoundingClientRect(), r = e.getBoundingClientRect(); if (r.right > p.right + 1) ok = false; });
       return ok; }
     function ajusta(s) { if (!s.querySelector('.miolo')) return; var d0 = s.style.display; s.style.display = ''; var lo = .72, hi = 1.25;
+      var av = s.querySelector('.arv'); if (av && av.querySelector('.com')) { av.classList.remove('sem-obs'); s.style.setProperty('--v', 1); s.style.setProperty('--k', .9); if (!cabe(s)) av.classList.add('sem-obs'); }
       s.style.setProperty('--v', 1); s.style.setProperty('--k', hi); if (!cabe(s)) { s.style.setProperty('--k', lo); var duro = !cabe(s);   /* nem no menor cabe todo texto: vale só não estourar o slide */
         for (var i = 0; i < 12; i++) { var m = (lo + hi) / 2; s.style.setProperty('--k', m); if (cabe(s, duro)) lo = m; else hi = m; } s.style.setProperty('--k', lo); }
       var tb = s.querySelector('.tb.fill'); if (tb) { var vlo = 1, vhi = 3; for (var j = 0; j < 10; j++) { var v = (vlo + vhi) / 2; s.style.setProperty('--v', v); if (cabe(s)) vlo = v; else vhi = v; } s.style.setProperty('--v', vlo); }
