@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611261240">
+<meta name="build" content="202611261310">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611261240"></script>
+<script src="../assets/apres-slides.js?v=202611261310"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -1164,8 +1164,8 @@ function sGAV(inst){
   const cards=`<div class="gav-g">${it.map(x=>{ const c=x[2](x[1]); return `<div class="card gav-c"><div class="kl"><i style="background:${C[c]}"></i>${esc(x[0])}</div><div class="kv" style="color:${C[c]}">${pf(x[1])}</div><div class="km">${esc(x[3]||'')}</div></div>`; }).join('')}</div>`;
   const ch=inst+'|'+VIG+'|gav';
   /* cards lado a lado (em duas linhas cheias) e as observações embaixo (Renan, 26/11/2026) */
-  const corpo=`<style>.gav-w{display:flex;flex-direction:column;gap:10px;height:100%}
-    .gav-g{display:grid;grid-template-columns:repeat(${Math.max(4,Math.ceil(it.length/2))},minmax(0,1fr));gap:8px}
+  const corpo=`<style>.gav-w{display:flex;flex-direction:column;gap:14px;height:100%}
+    .gav-g{display:grid;grid-template-columns:repeat(${Math.max(4,Math.ceil(it.length/2))},minmax(0,1fr));gap:14px}
     .gav-c{padding:calc(9px*var(--k)) 12px;display:flex;flex-direction:column;justify-content:center;min-width:0}
     .gav-c .kl{font-size:calc(8.5px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .gav-c .kl i{flex:0 0 8px;width:8px;height:8px;border-radius:50%}
@@ -1469,6 +1469,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611261240"></script>
+<script src="../assets/build-check.js?v=202611261310"></script>
 </body>
 </html>
