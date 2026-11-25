@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611261310">
+<meta name="build" content="202611261405">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611261310"></script>
+<script src="../assets/apres-slides.js?v=202611261405"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -576,7 +576,7 @@ const D={VF:null,KM:null,SC:null,TERM:null,ELITE:null,ARV:null,CARTA:null,GAV:nu
 let BANCO_ERR='';
 
 /* ── o roteiro (Renan, 25/11/2026): resultado → por quê → indicadores → reconhecimento ── */
-const CAP={'div:res':['Resultado','O que entregamos no mês'],'div:pq':['Por quê','Onde o custo e o km se afastaram do remunerado'],'div:ind':['Indicadores','Os indicadores da operação e o FCA da RPM'],'div:rec':['Reconhecimento','Frota de Elite e os compromissos do mês']};
+const CAP={'div:res':['Resultado','O que entregamos no mês'],'div:pq':['Por quê','Onde o custo e o km se afastaram do Rem'],'div:ind':['Indicadores','Os indicadores da operação e o FCA da RPM'],'div:rec':['Reconhecimento','Frota de Elite e os compromissos do mês']};
 const CAT=[
   {id:'div:res',  t:'Capítulo · Resultado',            s:'Divisória', div:1},
   {id:'prometido',t:'O que prometemos no mês passado',  s:'FCA do mês anterior'},
@@ -860,16 +860,16 @@ function sFin(inst){
   for(let m=1;m<=12;m++){ const vk=y+'-'+pad2(m), rs=R.filter(r=>r.vk===vk), s=neg(somaR(rs)), tr=rs.some(r=>r.tr);
     real.push(tr&&vk<=VIG?s.real:null); rem.push(tr&&vk<=VIG?s.rem:null); orc.push(rs.length?s.orc:null); }
   const pior=Object.keys(porPac).map(p=>({p,d:porPac[p].real-porPac[p].rem})).sort((a,b)=>b.d-a.d)[0];
-  const leit=d>0&&pior&&pior.d>0?`<b>Custo ${FS.pct(Math.abs(dp))} acima do remunerado.</b> ${esc(pior.p)} responde por ${nf(Math.min(100,pior.d/d*100))}% do desvio.`:d<=0?`<b>Custo ${FS.pct(Math.abs(dp||0))} abaixo do remunerado.</b>`:'';
-  const hero=`<div class="card hero" style="grid-row:1/3"><div class="rot">Realizado${ac?' · acumulado '+acumLb(VIG):''}</div><div class="v">${FS.brlc(M.real)}</div><div class="sub">Combustíveis, Manutenções, Pneus e demais contas da frota</div>
-    <div class="hrem"><span class="rot">Remunerado</span><b>${FS.brlc(M.rem)}</b><small>pelo DRE</small></div><div class="gr">
-    <div><span class="rot">▲ Rem</span>${kv(d,FS.brlc(Math.abs(d)))}<small>${d>0?'gastou a mais':'gastou a menos'}</small></div><div><span class="rot">▲ Rem %</span>${dp==null?'<b class="nt">—</b>':kv(d,FS.pct(Math.abs(dp)))}<small>sobre o remunerado</small></div>
-    <div><span class="rot">▲ Rem YTD</span>${kv(dyv,FS.brlc(Math.abs(dyv)))}<small>${acumLb(VIG)}</small></div><div><span class="rot">▲ Rem YTD %</span>${dyp==null?'<b class="nt">—</b>':kv(dyv,FS.pct(Math.abs(dyp)))}<small>sobre o remunerado do ano</small></div>
+  const leit=d>0&&pior&&pior.d>0?`<b>Custo ${FS.pct(Math.abs(dp))} acima do Rem.</b> ${esc(pior.p)} responde por ${nf(Math.min(100,pior.d/d*100))}% do desvio.`:d<=0?`<b>Custo ${FS.pct(Math.abs(dp||0))} abaixo do Rem.</b>`:'';
+  const hero=`<div class="card hero" style="grid-row:1/3"><div class="rot">Real${ac?' · acumulado '+acumLb(VIG):''}</div><div class="v">${FS.brlc(M.real)}</div><div class="sub">Combustíveis, Manutenções, Pneus e demais contas da frota</div>
+    <div class="hrem"><span class="rot">Rem</span><b>${FS.brlc(M.rem)}</b><small>pelo DRE</small></div><div class="gr">
+    <div><span class="rot">▲ Rem</span>${kv(d,FS.brlc(Math.abs(d)))}<small>${d>0?'gastou a mais':'gastou a menos'}</small></div><div><span class="rot">▲ Rem %</span>${dp==null?'<b class="nt">—</b>':kv(d,FS.pct(Math.abs(dp)))}<small>sobre o Rem</small></div>
+    <div><span class="rot">▲ Rem YTD</span>${kv(dyv,FS.brlc(Math.abs(dyv)))}<small>${acumLb(VIG)}</small></div><div><span class="rot">▲ Rem YTD %</span>${dyp==null?'<b class="nt">—</b>':kv(dyv,FS.pct(Math.abs(dyp)))}<small>sobre o Rem do ano</small></div>
     <div class="gr2"><span class="rot">YoY</span>${A.real?kv(M.real-A.real,FS.pct(Math.abs(pct(M.real,A.real)))):'<b class="nt">—</b>'}<small>vs ${ac?acumLb(vA):mesLb(vA)}</small></div></div>
     ${leit?`<div class="leit">${leit}</div>`:''}</div>`;
   const corpo=`<div class="g2 fin-fpa" style="grid-template-columns:370px 1fr;grid-template-rows:1fr 1fr">${hero}
-    ${AS.grafico('Bridge do custo','do remunerado ao realizado · R$',{tipo:'bridge',passos})}
-    ${AS.grafico('Custo no ano','nominal · R$',{tipo:'ano',labels:lab,real,rem,orc,foco:ac?Array.from({length:+VIG.slice(5,7)},(_,i)=>i):[+VIG.slice(5,7)-1]},AS.LEG_ANO)}</div>`;
+    ${AS.grafico('Bridge do custo','do Rem ao Real',{tipo:'bridge',passos})}
+    ${AS.grafico('Custo no ano','nominal',{tipo:'ano',labels:lab,real,rem,orc,foco:ac?Array.from({length:+VIG.slice(5,7)},(_,i)=>i):[+VIG.slice(5,7)-1]},AS.LEG_ANO)}</div>`;
   return [sl({titulo:'Financeiro · Custo da frota',corpo},inst,'Financeiro')];
 }
 /* Financeiro 2: AH e AV por pacote (a análise da Visão Financeira) */
@@ -880,14 +880,14 @@ function sAHAV(inst){
   const av=(v,rl)=>rl?v/rl*100:null, lin=[];
   const linha=(nome,rem,real,custo,cls)=>{ const d=real-rem, ruim=custo!==false;
     const ar=av(rem,RL.rem), ae=av(real,RL.real), pp=ar!=null&&ae!=null?ae-ar:null, imp=pp!=null?pp/100*RL.real:null;
-    return {cls,c:[esc(nome),FS.brl(rem),FS.brl(real),FS.seta(d,FS.brl(Math.abs(d)).replace('R$ ',''),ruim),rem?FS.seta(d,FS.pct(Math.abs(d/Math.abs(rem)*100)),ruim):'—',
-      ar==null?'—':FS.pct(ar),ae==null?'—':FS.pct(ae),pp==null?'—':FS.seta(pp,nf(Math.abs(pp),2)+' pp',ruim),imp==null?'—':FS.seta(imp,FS.brlc(Math.abs(imp)).replace('R$ ',''),ruim)]}; };
+    return {cls,c:[esc(nome),FS.brl(rem),FS.brl(real),FS.seta(d,FS.brl(Math.abs(d)),ruim),rem?FS.seta(d,FS.pct(Math.abs(d/Math.abs(rem)*100)),ruim):'—',
+      ar==null?'—':FS.pct(ar),ae==null?'—':FS.pct(ae),pp==null?'—':FS.seta(pp,nf(Math.abs(pp),2)+' pp',ruim),imp==null?'—':FS.seta(imp,FS.brlc(Math.abs(imp)),ruim)]}; };
   lin.push(linha('Receita Líquida',RL.rem,RL.real,false,'tot'));
   PAC_ORD.forEach(p=>{ const x=neg(somaR(R,r=>CUSTO(r)&&r.pac===p)); if(Math.abs(x.rem)<.5&&Math.abs(x.real)<.5) return; lin.push(linha(p,x.rem,x.real)); });
   lin.push(linha('Custo da frota',C.rem,C.real,true,'tot'));
   if(EB.rem||EB.real) lin.push(linha('EBITDA',EB.rem,EB.real,false,'tot esc'));
   const ch=inst+'|'+VIG+(acumDe(inst)?'|acum':'')+'|ahav';
-  const corpo=`<div class="g2" style="grid-template-rows:1fr 1fr;height:100%">`+AS.tabela({cols:[{t:'Linha'},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'▲ R$',n:1},{t:'▲ %',n:1},{t:'AV rem.',n:1},{t:'AV real',n:1},{t:'▲ pp',n:1},{t:'Impacto R$',n:1}],linhas:lin}).replace('card tb','card tb alto')+AS.obs({chave:ch,texto:MOD.obs[ch]||'',baixo:1,dica:'▲ contra o remunerado · AV = % da receita líquida · Impacto = ▲ pp × receita realizada'})+'</div>';
+  const corpo=`<div class="g2" style="grid-template-rows:1fr 1fr;height:100%">`+AS.tabela({cols:[{t:'Linha'},{t:'Rem',n:1},{t:'Real',n:1},{t:'▲',n:1},{t:'▲ %',n:1},{t:'AV rem.',n:1},{t:'AV real',n:1},{t:'▲ pp',n:1},{t:'Impacto',n:1}],linhas:lin}).replace('card tb','card tb alto')+AS.obs({chave:ch,texto:MOD.obs[ch]||'',baixo:1,dica:'▲ contra o Rem · AV = % da receita líquida · Impacto = ▲ pp × receita Real'})+'</div>';
   return [sl({titulo:'Financeiro · AH e AV',corpo},inst,'AH e AV')];
 }
 /* Dispersão de km: o Resumo Gerencial do Painel KM com as 10 placas que mais rodaram acima */
@@ -898,20 +898,20 @@ function sKM(inst){
   const ac=acumDe(inst), M=s(R.filter(r=>noPer(inst,vkKm(r.vig)))), Y=s(R.filter(r=>+r.vig.slice(0,2)<=+VIG.slice(5,7))), d=M.real-M.rem, dp=pct(M.real,M.rem), dy=pct(Y.real,Y.rem);
   const v=[]; for(let m=1;m<=12;m++){ const x=s(R.filter(r=>r.vig===pad2(m)+'/'+VIG.slice(0,4))); v.push(x.real>0&&x.rem>0&&m<=+VIG.slice(5,7)?(x.real/x.rem-1)*100:null); }
   const hero=`<div class="card hero" style="grid-row:1/3"><div class="rot">Km rodado</div><div class="v">${nf(M.real)}</div><div class="sub">km ${ac?'de '+acumLb(VIG):'no mês'} · ${nf(M.via)} viagens</div><div class="gr">
-    <div><span class="rot">Km remunerado</span><b>${nf(M.rem)}</b><small>com o balanço de massa</small></div><div><span class="rot">▲ Km</span>${kv(d,nf(Math.abs(d)))}<small>${d>0?'rodou a mais':'rodou a menos'}</small></div>
+    <div><span class="rot">Km Rem</span><b>${nf(M.rem)}</b><small>com o balanço de massa</small></div><div><span class="rot">▲ Km</span>${kv(d,nf(Math.abs(d)))}<small>${d>0?'rodou a mais':'rodou a menos'}</small></div>
     <div><span class="rot">Dispersão</span>${dp==null?'<b class="nt">—</b>':kv(dp,FS.pct(Math.abs(dp)))}<small>meta ${K.meta}%</small></div><div><span class="rot">Impacto</span>${kv(M.imp,FS.brlc(Math.abs(M.imp)))}<small>km × R$/km rem.</small></div></div>
-    ${M.bmKm>0?`<div class="leit" style="margin-bottom:6px"><b>Balanço de massa recomposto: +${nf(M.bmKm)} km</b>${M.bmR?' · '+FS.brlc(M.bmR):''} no km remunerado ${ac?'do período':'do mês'}.</div>`:''}${ac?'':`<div class="leit"><b>No ano: dispersão de ${dy==null?'—':FS.pct(dy)}</b> e impacto de ${FS.brlc(Y.imp)}.</div>`}</div>`;
+    ${M.bmKm>0?`<div class="leit" style="margin-bottom:6px"><b>Balanço de massa recomposto: +${nf(M.bmKm)} km</b>${M.bmR?' · '+FS.brlc(M.bmR):''} no km Rem ${ac?'do período':'do mês'}.</div>`:''}${ac?'':`<div class="leit"><b>No ano: dispersão de ${dy==null?'—':FS.pct(dy)}</b> e impacto de ${FS.brlc(Y.imp)}.</div>`}</div>`;
   const pl=K.pl.filter(p=>passaP(inst,p.proj)&&p.delta>0&&p.rem>0).map(p=>Object.assign({pc:p.delta/p.rem*100},p));
   const topP=pl.slice().sort((a,b)=>b.pc-a.pc).slice(0,10), topI=pl.slice().sort((a,b)=>b.imp-a.imp).slice(0,10);
-  const barras=(t,sub,ls,camp,fmt)=>ls.length?AS.grafico(t,sub+(ac?' · '+mesLb(VIG):''),{tipo:'barrasH',labels:ls.map(p=>p.placa),v:ls.map(p=>p[camp]),cores:ls.map(()=>'#FF0000'),fmt}):`<div class="card gc">${AS.vazio('Nenhuma placa acima do remunerado no mês')}</div>`;
+  const barras=(t,sub,ls,camp,fmt)=>ls.length?AS.grafico(t,sub+(ac?' · '+mesLb(VIG):''),{tipo:'barrasH',labels:ls.map(p=>p.placa),v:ls.map(p=>p[camp]),cores:ls.map(()=>'#FF0000'),fmt}):`<div class="card gc">${AS.vazio('Nenhuma placa acima do Rem no mês')}</div>`;
   /* T1 (Empurrada, Insumos): o remunerado é por CT-e, não por placa; as placas vêm da aba Km/L: as que mais rodaram e as de Km/L abaixo do remunerado */
-  let baixo=barras('Bottom 10 placas · ▲ %','km rodado acima do remunerado',topP,'pc','pct')+barras('Bottom 10 placas · Impacto','R$ do km a mais',topI,'imp','brl');
+  let baixo=barras('Bottom 10 placas · ▲ %','km rodado acima do Rem',topP,'pc','pct')+barras('Bottom 10 placas · Impacto','valor do km a mais',topI,'imp','brl');
   const PU=D.ARV&&!D.ARV.erro?(D.ARV.placas||[]).filter(p=>passaP(inst,p.proj)):[];
   if(!pl.length&&PU.length){ const tk=PU.slice().sort((a,b)=>b.km-a.km).slice(0,10), te=PU.filter(p=>p.esp>0&&p.lit>p.esp).map(p=>Object.assign({},p,{placa:p.p,r:(p.lit-p.esp)*(p.pr||0)})).sort((a,b)=>b.r-a.r).slice(0,10);
-    baixo=AS.grafico('Placas que mais rodaram','km no mês · o remunerado da Empurrada é por CT-e, não por placa',{tipo:'barrasH',labels:tk.map(p=>p.p),v:tk.map(p=>p.km),cores:tk.map(()=>'#6B7280'),fmt:'int'})
-      +(te.length?AS.grafico('Placas abaixo do Km/L rem.','R$ dos litros a mais que o Km/L remunerado previa',{tipo:'barrasH',labels:te.map(p=>p.placa),v:te.map(p=>p.r),cores:te.map(()=>'#FF0000'),fmt:'brl'}):`<div class="card gc">${AS.vazio('Nenhuma placa abaixo do Km/L remunerado no mês')}</div>`); }
+    baixo=AS.grafico('Placas que mais rodaram','km no mês · o Rem da Empurrada é por CT-e, não por placa',{tipo:'barrasH',labels:tk.map(p=>p.p),v:tk.map(p=>p.km),cores:tk.map(()=>'#6B7280'),fmt:'int'})
+      +(te.length?AS.grafico('Placas abaixo do Km/L rem.','valor dos litros a mais que o Km/L Rem previa',{tipo:'barrasH',labels:te.map(p=>p.placa),v:te.map(p=>p.r),cores:te.map(()=>'#FF0000'),fmt:'brl'}):`<div class="card gc">${AS.vazio('Nenhuma placa abaixo do Km/L Rem no mês')}</div>`); }
   const corpo=`<div class="g2" style="grid-template-columns:370px 1fr 1fr;grid-template-rows:1fr 1.25fr">${hero.replace('grid-row:1/3','grid-row:1/3;grid-column:1')}
-    <div style="grid-column:2/4;min-height:0;display:flex">${AS.grafico('Dispersão no ano','km rodado contra o remunerado · %',{tipo:'meta',labels:MESC,v,meta:K.meta,foco:ac?Array.from({length:+VIG.slice(5,7)},(_,i)=>i):[+VIG.slice(5,7)-1],fmt:'pct'}).replace('class="card gc"','class="card gc" style="flex:1"')}</div>
+    <div style="grid-column:2/4;min-height:0;display:flex">${AS.grafico('Dispersão no ano','km rodado contra o Rem · %',{tipo:'meta',labels:MESC,v,meta:K.meta,foco:ac?Array.from({length:+VIG.slice(5,7)},(_,i)=>i):[+VIG.slice(5,7)-1],fmt:'pct'}).replace('class="card gc"','class="card gc" style="flex:1"')}</div>
     ${baixo}</div>`;
   return [sl({titulo:'Dispersão de km',corpo},inst,'Dispersão de km')];
 }
@@ -953,7 +953,7 @@ function sArv(inst){
 /* a abertura do pacote até os indicadores (o desenho da Árvore do Custo do painel Árvores):
    Combustíveis = a Árvore de Combustível do projeto (Km rodado × R$/km → R$/L, Km/L e o que sobra);
    Manutenções e Pneus = Km rodado × R$/km da conta que mais pesou → Carta de Custos e os indicadores do Scorecard */
-const fR=(v,c)=>'R$ '+nf(v,c), fRd=c=>v=>nf(Math.abs(v),c);
+const fR=(v,c)=>nf(v,c), fRd=c=>v=>nf(Math.abs(v),c);
 /* as placas do projeto que mais rodaram acima do remunerado no mês (Painel KM) */
 function kmPlacas(proj){ if(!D.KM||D.KM.erro) return []; const vk=VIG.slice(5,7)+'/'+VIG.slice(0,4);
   return (D.KM.pl||[]).filter(r=>PJ(r.proj)===PJ(proj)&&r.delta>0).sort((a,b)=>b.imp-a.imp).slice(0,5).map(r=>[r.placa+' · +'+nf(r.delta)+' km',FS.brlc(r.imp),'#FF0000']); }
@@ -1164,8 +1164,8 @@ function sGAV(inst){
   const cards=`<div class="gav-g">${it.map(x=>{ const c=x[2](x[1]); return `<div class="card gav-c"><div class="kl"><i style="background:${C[c]}"></i>${esc(x[0])}</div><div class="kv" style="color:${C[c]}">${pf(x[1])}</div><div class="km">${esc(x[3]||'')}</div></div>`; }).join('')}</div>`;
   const ch=inst+'|'+VIG+'|gav';
   /* cards lado a lado (em duas linhas cheias) e as observações embaixo (Renan, 26/11/2026) */
-  const corpo=`<style>.gav-w{display:flex;flex-direction:column;gap:14px;height:100%}
-    .gav-g{display:grid;grid-template-columns:repeat(${Math.max(4,Math.ceil(it.length/2))},minmax(0,1fr));gap:14px}
+  const corpo=`<style>.gav-w{display:flex;flex-direction:column;gap:10px;height:100%}
+    .gav-g{display:grid;grid-template-columns:repeat(${Math.max(4,Math.ceil(it.length/2))},minmax(0,1fr));gap:8px}
     .gav-c{padding:calc(9px*var(--k)) 12px;display:flex;flex-direction:column;justify-content:center;min-width:0}
     .gav-c .kl{font-size:calc(8.5px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .gav-c .kl i{flex:0 0 8px;width:8px;height:8px;border-radius:50%}
@@ -1469,6 +1469,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611261310"></script>
+<script src="../assets/build-check.js?v=202611261405"></script>
 </body>
 </html>
