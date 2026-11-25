@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611260010">
+<meta name="build" content="202611260110">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,8 +10,8 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611260010"></script>
-<script src="../assets/fca-auto.js?v=202611190400"></script>
+<script src="../assets/apres-slides.js?v=202611260110"></script>
+<script src="../assets/fca-auto.js?v=202611260110"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
 <style>
@@ -668,7 +668,7 @@ function colVF(a){
 /* Painel KM: as linhas da unidade no ano (com o balanço de massa) e as placas do mês */
 function colKM(a){
   const da=r=>a.cod==='*'||String(r.und).split(' ')[0]===a.cod;
-  const rows=ALL.filter(r=>da(r)&&String(r.vig).slice(-4)===String(a.ano)).map(r=>({vig:r.vig,proj:r.proj,und:r.und,rem:+r.rem||0,real:+r.real||0,imp:+r.imp||0,rsKm:+r.rsKm||0,viagens:+r.viagens||0}));
+  const rows=ALL.filter(r=>da(r)&&String(r.vig).slice(-4)===String(a.ano)).map(r=>({vig:r.vig,proj:r.proj,und:r.und,rem:+r.rem||0,real:+r.real||0,imp:+r.imp||0,rsKm:+r.rsKm||0,viagens:+r.viagens||0,bmKm:+r.recomp||0,bmR:+r.bmValor||0}));
   const pl=(typeof PLACAS!=='undefined'?PLACAS:[]).filter(r=>da({und:r.undOrig||r.und})&&r.vig===a.vk).map(r=>({placa:r.placa,proj:r.proj,rem:+r.rem||0,real:+r.real||0,delta:+r.delta||0,imp:+r.imp||0}));
   return {rows,pl};
 }
@@ -721,7 +721,12 @@ function colARV(a){
     const preco=P2.filter(o=>o.lr>0&&o.t>o.rx).map(o=>({p:o.p,rl:o.t/o.lr,rem:o.rx/o.lr,r:o.t-o.rx})).sort((x,y)=>y.r-x.r).slice(0,5);
     out[k]={kmRem:d.kmRem,kmReal:d.kmReal,v1:d.viagem1,rec:d.recs,not:d.noturnas,map:d.mapas,bmKm:d.bmKm,
       rkRem:b.rkRem,rkReal:b.rkReal,vol:b.vol,rsKm:b.rsKm,pRem:b.pRem,pReal:b.pReal,eRem:b.eRem,eReal:b.eReal,preco:b.preco,efic:b.efic,dif:b.dif,plE:efic,plP:preco}; });
-  return {proj:out};
+  /* todas as placas da unidade no mês (aba Km/L), com o projeto: a Dispersão de km usa quando o Painel KM não tem a placa (T1) */
+  const pu={}, ok=new Set(); a.projs.forEach(pj=>{ (pref[N(pj)]||new Set()).forEach(p=>ok.add(p)); });
+  if(KM&&Array.isArray(S_KM)) try{ S_KM.forEach(r=>{ const dt=kParseVig(r[KM.vig]); if(!dt||vigBR(dt)!==a.vig) return; const n3=String(r[KM.proj]||''); if(getNv3Suffix(n3)!==a.uni||!ok.has(getNv3Prefix(n3))) return;
+    const k=String(r[16]||'').trim(); if(!k) return; const o=pu[k]||(pu[k]={p:k,proj:getNv3Prefix(n3),km:0,lit:0,esp:0,pr:0});
+    const km=+r[KM.kmRod]||0, lit=+r[KM.litros]||0, rm=+r[KM.remMed]||0, pr=remPriceFor(r,dt); o.km+=km; o.lit+=lit; if(rm>0) o.esp+=km/rm; if(pr>0) o.pr=pr; }); }catch(e){}
+  return {proj:out,placas:Object.values(pu)};
 }
 /* Frota de Elite: pontuação e indicadores da unidade, o ranking do mês e o mês a mês */
 function colELITE(a){
@@ -876,19 +881,25 @@ function sAHAV(inst){
 function sKM(inst){
   const e=semDado('KM'); if(e) return [sl({titulo:'Dispersão de km',corpo:e},inst)];
   const K=D.KM, vk=VIG.slice(5,7)+'/'+VIG.slice(0,4), R=K.rows.filter(r=>passaP(inst,r.proj));
-  const s=(rs)=>rs.reduce((a,r)=>{ a.rem+=r.rem; a.real+=r.real; a.imp+=r.imp; a.via+=r.viagens; return a; },{rem:0,real:0,imp:0,via:0});
+  const s=(rs)=>rs.reduce((a,r)=>{ a.rem+=r.rem; a.real+=r.real; a.imp+=r.imp; a.via+=r.viagens; a.bmKm+=r.bmKm||0; a.bmR+=r.bmR||0; return a; },{rem:0,real:0,imp:0,via:0,bmKm:0,bmR:0});
   const M=s(R.filter(r=>r.vig===vk)), Y=s(R.filter(r=>+r.vig.slice(0,2)<=+VIG.slice(5,7))), d=M.real-M.rem, dp=pct(M.real,M.rem), dy=pct(Y.real,Y.rem);
   const v=[]; for(let m=1;m<=12;m++){ const x=s(R.filter(r=>r.vig===pad2(m)+'/'+VIG.slice(0,4))); v.push(x.real>0&&x.rem>0&&m<=+VIG.slice(5,7)?(x.real/x.rem-1)*100:null); }
   const hero=`<div class="card hero" style="grid-row:1/3"><div class="rot">Km rodado</div><div class="v">${nf(M.real)}</div><div class="sub">km no mês · ${nf(M.via)} viagens</div><div class="gr">
     <div><span class="rot">Km remunerado</span><b>${nf(M.rem)}</b><small>com o balanço de massa</small></div><div><span class="rot">▲ Km</span>${kv(d,nf(Math.abs(d)))}<small>${d>0?'rodou a mais':'rodou a menos'}</small></div>
     <div><span class="rot">Dispersão</span>${dp==null?'<b class="nt">—</b>':kv(dp,FS.pct(Math.abs(dp)))}<small>meta ${K.meta}%</small></div><div><span class="rot">Impacto</span>${kv(M.imp,FS.brlc(Math.abs(M.imp)))}<small>km × R$/km rem.</small></div></div>
-    <div class="leit"><b>No ano: dispersão de ${dy==null?'—':FS.pct(dy)}</b> e impacto de ${FS.brlc(Y.imp)}.</div></div>`;
+    ${M.bmKm>0?`<div class="leit" style="margin-bottom:6px"><b>Balanço de massa recomposto: +${nf(M.bmKm)} km</b>${M.bmR?' · '+FS.brlc(M.bmR):''} no km remunerado do mês.</div>`:''}<div class="leit"><b>No ano: dispersão de ${dy==null?'—':FS.pct(dy)}</b> e impacto de ${FS.brlc(Y.imp)}.</div></div>`;
   const pl=K.pl.filter(p=>passaP(inst,p.proj)&&p.delta>0&&p.rem>0).map(p=>Object.assign({pc:p.delta/p.rem*100},p));
   const topP=pl.slice().sort((a,b)=>b.pc-a.pc).slice(0,10), topI=pl.slice().sort((a,b)=>b.imp-a.imp).slice(0,10);
   const barras=(t,sub,ls,camp,fmt)=>ls.length?AS.grafico(t,sub,{tipo:'barrasH',labels:ls.map(p=>p.placa),v:ls.map(p=>p[camp]),cores:ls.map(()=>'#FF0000'),fmt}):`<div class="card gc">${AS.vazio('Nenhuma placa acima do remunerado no mês')}</div>`;
+  /* T1 (Empurrada, Insumos): o remunerado é por CT-e, não por placa; as placas vêm da aba Km/L: as que mais rodaram e as de Km/L abaixo do remunerado */
+  let baixo=barras('Bottom 10 placas · ▲ %','km rodado acima do remunerado',topP,'pc','pct')+barras('Bottom 10 placas · Impacto','R$ do km a mais',topI,'imp','brl');
+  const PU=D.ARV&&!D.ARV.erro?(D.ARV.placas||[]).filter(p=>passaP(inst,p.proj)):[];
+  if(!pl.length&&PU.length){ const tk=PU.slice().sort((a,b)=>b.km-a.km).slice(0,10), te=PU.filter(p=>p.esp>0&&p.lit>p.esp).map(p=>Object.assign({},p,{placa:p.p,r:(p.lit-p.esp)*(p.pr||0)})).sort((a,b)=>b.r-a.r).slice(0,10);
+    baixo=AS.grafico('Placas que mais rodaram','km no mês · o remunerado da Empurrada é por CT-e, não por placa',{tipo:'barrasH',labels:tk.map(p=>p.p),v:tk.map(p=>p.km),cores:tk.map(()=>'#6B7280'),fmt:'int'})
+      +(te.length?AS.grafico('Placas abaixo do Km/L rem.','R$ dos litros a mais que o Km/L remunerado previa',{tipo:'barrasH',labels:te.map(p=>p.placa),v:te.map(p=>p.r),cores:te.map(()=>'#FF0000'),fmt:'brl'}):`<div class="card gc">${AS.vazio('Nenhuma placa abaixo do Km/L remunerado no mês')}</div>`); }
   const corpo=`<div class="g2" style="grid-template-columns:370px 1fr 1fr;grid-template-rows:1fr 1.25fr">${hero.replace('grid-row:1/3','grid-row:1/3;grid-column:1')}
     <div style="grid-column:2/4;min-height:0;display:flex">${AS.grafico('Dispersão no ano','km rodado contra o remunerado · %',{tipo:'meta',labels:MESC,v,meta:K.meta,foco:[+VIG.slice(5,7)-1],fmt:'pct'}).replace('class="card gc"','class="card gc" style="flex:1"')}</div>
-    ${barras('Bottom 10 placas · ▲ %','km rodado acima do remunerado',topP,'pc','pct')}${barras('Bottom 10 placas · Impacto','R$ do km a mais',topI,'imp','brl')}</div>`;
+    ${baixo}</div>`;
   return [sl({titulo:'Dispersão de km',corpo},inst,'Dispersão de km')];
 }
 /* abre só os pacotes da frota que têm FCA (Seguros e ICMS são corporativos e não geram FCA).
@@ -1000,7 +1011,9 @@ const chipSt=st=>{ st=String(st||'').trim(); if(!st) return '<span style="color:
   return `<span class="chip" style="background:rgba(148,163,184,.25);color:var(--txt)">${esc(st)}</span>`; };
 const prazoSt=r=>{ if(/conclu|cancel/i.test(r.status||'')) return 'No prazo'; if(!r.prazo) return 'Sem prazo'; return String(r.prazo).slice(0,10)<new Date().toISOString().slice(0,10)?'Vencida':'No prazo'; };
 const triFca=h=>String(h==null?'':h).replace(/▲/g,'<span style="color:var(--red)">▲</span>').replace(/▼/g,'<span style="color:var(--green)">▼</span>');
-function tabFca(rs,add){
+/* causa no slide: sem os motoristas do DriverPro e só as 3 primeiras placas (Renan, 26/11/2026: "deixe apenas Bottom 3") */
+function limpaCausa(t){ if(!t) return t; const out=[]; let n=0; String(t).split('\n').forEach(l=>{ if(/^\s*-\s+/.test(l)){ if(/\d\s*pts,/.test(l)) return; if(++n>3) return; } else n=0; out.push(l); }); return out.join('\n'); }
+function tabFca(rs,add){ rs=rs.map(r=>r&&r.causa?Object.assign({},r,{causa:limpaCausa(r.causa)}):r);
   if(!window.FcaTabela) return AS.fca(gruposFca(rs),{edit:add!==false});
   const h=FcaTabela.html(rs.map(r=>({id:r.id,proj:projRot(r.projeto),vig:r.vigencia,fato:r.fato,desvio:r.fato_desvio,causa:r.causa,acao:r.acao,resp:r.responsavel,prazo:r.prazo,status:r.status||'Não iniciada'})),
     {add:add!==false,tri:triFca,chip:chipSt,prazoState:prazoSt,diasVenc:()=>0,defaultStatus:'Não iniciada'});
@@ -1119,14 +1132,16 @@ function sGAV(inst){
     <div class="hdel"><div>Posição na rede<b>${pos?pos+'º de '+rk.length:'—'}</b></div><div>Fora da meta<b>${it.filter(x=>x[2](x[1])==='r').length}</b></div><div>Foto de<b>${dt}</b></div></div></div>`;
   const cards=`<div class="gav-g">${it.map(x=>{ const c=x[2](x[1]); return `<div class="card gav-c"><div class="kl"><i style="background:${C[c]}"></i>${esc(x[0])}</div><div class="kv" style="color:${C[c]}">${pf(x[1])}</div><div class="km">${esc(x[3]||'')}</div></div>`; }).join('')}</div>`;
   const ch=inst+'|'+VIG+'|gav';
-  const corpo=`<style>.gav-w{display:grid;grid-template-columns:1fr 340px;gap:14px;height:100%}.gav-e{display:flex;flex-direction:column;gap:10px;min-height:0}
-    .gav-g{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:1fr;gap:10px}
-    .gav-c{padding:calc(10px*var(--k)) 14px;display:flex;flex-direction:column;justify-content:center;min-width:0}
-    .gav-c .kl{font-size:calc(9.5px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .gav-c .kl i{flex:0 0 9px;width:9px;height:9px;border-radius:50%}
-    .gav-c .kv{font-size:calc(24px*var(--k));font-weight:800;margin-top:3px;line-height:1.1}
-    .gav-c .km{font-size:calc(10px*var(--k));color:var(--txt3);font-weight:600;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}</style>
-    <div class="gav-w"><div class="gav-e">${hero}${cards}</div>${AS.obs({chave:ch,texto:MOD.obs[ch]||'',dica:'o que a unidade fala sobre o farol de hoje'})}</div>`;
+  /* cards lado a lado (em duas linhas cheias) e as observações embaixo (Renan, 26/11/2026) */
+  const corpo=`<style>.gav-w{display:flex;flex-direction:column;gap:10px;height:100%}
+    .gav-g{display:grid;grid-template-columns:repeat(${Math.max(4,Math.ceil(it.length/2))},minmax(0,1fr));gap:8px}
+    .gav-c{padding:calc(9px*var(--k)) 12px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+    .gav-c .kl{font-size:calc(8.5px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .gav-c .kl i{flex:0 0 8px;width:8px;height:8px;border-radius:50%}
+    .gav-c .kv{font-size:calc(19px*var(--k));font-weight:800;margin-top:3px;line-height:1.1}
+    .gav-c .km{font-size:calc(9px*var(--k));color:var(--txt3);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .gav-w .com{flex:1;min-height:0}</style>
+    <div class="gav-w">${hero}${cards}${AS.obs({chave:ch,texto:MOD.obs[ch]||'',baixo:1,dica:'o que a unidade fala sobre o farol de hoje'})}</div>`;
   return [sl({titulo:'Gestão à Vista',per:'Hoje · '+dt,corpo},inst,'Gestão à Vista')];
 }
 function sRecado(t){ const ls=String(t.texto||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,8);
@@ -1417,6 +1432,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611260010"></script>
+<script src="../assets/build-check.js?v=202611260110"></script>
 </body>
 </html>

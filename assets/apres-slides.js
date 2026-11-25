@@ -184,13 +184,13 @@
     'table.fca td.semacao{color:var(--txt3);font-style:italic}',
     /* a Tabela do FCA do painel (FcaTabela + as regras do table.rel do FCA · Admin, tema claro) */
     '.fcap{padding:0;overflow:hidden;background:var(--card);border:1px solid var(--card-brd);border-radius:10px;box-shadow:none}',
-    'table.rel{width:100%;border-collapse:collapse;font-size:calc(11.5px*var(--k));table-layout:fixed}',
+    'table.rel{width:100%;border-collapse:collapse;font-size:calc(10.5px*var(--k));table-layout:fixed}',
     'table.rel thead th{background:var(--cabec)!important;color:var(--txt2)!important;padding:calc(9px*var(--k)) 10px!important;border-bottom:1px solid var(--card-brd)!important;text-align:left;font-size:calc(9.5px*var(--k));font-weight:700;text-transform:uppercase;letter-spacing:.3px!important;white-space:nowrap}',
     'table.rel tbody td{padding:calc(8px*var(--k)*var(--v)) 10px!important;color:var(--txt2)!important;border-bottom:1px solid var(--linha)!important;vertical-align:top;line-height:1.45}',
     'body table.rel.fg-rel tbody.fg td.ln{padding-top:calc(7px*var(--k)*var(--v))!important;padding-bottom:calc(7px*var(--k)*var(--v))!important}',
     'table.rel td.txt{white-space:normal;overflow-wrap:anywhere}table.rel td.txt b{color:var(--txt)}',
-    'table.rel td.center{text-align:left;white-space:normal}',
-    'table.rel th.c-proj{width:9.5%}table.rel th.c-vig{width:6%}table.rel th.c-fato{width:17%}table.rel th.c-txt{width:20%}table.rel th.c-resp{width:8.5%}table.rel th.c-prazo{width:8.5%}table.rel th.c-st{width:10%}',
+    'table.rel td.center{text-align:left;white-space:normal;overflow-wrap:anywhere}',
+    'table.rel th.c-proj{width:10.5%}table.rel th.c-vig{width:6%}table.rel th.c-fato{width:17%}table.rel th.c-txt{width:20%}table.rel th.c-resp{width:8.5%}table.rel th.c-prazo{width:8.5%}table.rel th.c-st{width:10%}',
     'table.rel td.prazo{white-space:nowrap}.rel .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}',
     '.rel .chip{display:inline-block;padding:3px 7px;border-radius:5px;font-weight:700;font-size:calc(9.5px*var(--k));white-space:normal;line-height:1.25}',
     'body table.rel.fg-rel tbody.fg tr+tr td.ln{border-top:1px dashed rgba(15,23,42,.34)!important}',
@@ -482,7 +482,7 @@
       if (!duro) s.querySelectorAll('.hero .gr b,.tn-g b,.tn-v,.tn-r,.kpi .kv,.kpi .km').forEach(function (e) { if (e.scrollWidth > e.clientWidth + 1) ok = false;
         var p = e.parentElement.getBoundingClientRect(), r = e.getBoundingClientRect(); if (r.right > p.right + 1) ok = false; });
       return ok; }
-    function ajusta(s) { if (!s.querySelector('.miolo')) return; var d0 = s.style.display; s.style.display = ''; var lo = .72, hi = s.querySelector('.fcap') ? 1.45 : 1.25;   /* a tabela do FCA pode crescer mais: letra pequena num slide vazio fica solta */
+    function ajusta(s) { if (!s.querySelector('.miolo')) return; var d0 = s.style.display; s.style.display = ''; var lo = .72, hi = s.querySelector('.fcap') ? 1 : 1.25;   /* FCA nunca cresce além do tamanho de tabela (Renan, 26/11/2026: "fonte exagerada nos FCAs") */
       var av = s.querySelector('.arv'); if (av && av.querySelector('.com')) { av.classList.remove('sem-obs'); s.style.setProperty('--v', 1); s.style.setProperty('--k', .9); if (!cabe(s)) av.classList.add('sem-obs'); }
       s.style.setProperty('--v', 1); s.style.setProperty('--k', hi); if (!cabe(s)) { s.style.setProperty('--k', lo); var duro = !cabe(s);   /* nem no menor cabe todo texto: vale só não estourar o slide */
         for (var i = 0; i < 12; i++) { var m = (lo + hi) / 2; s.style.setProperty('--k', m); if (cabe(s, duro)) lo = m; else hi = m; } s.style.setProperty('--k', lo); }

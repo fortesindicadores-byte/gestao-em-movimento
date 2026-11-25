@@ -730,6 +730,8 @@ function diagnostico(f, ctx) {
   D.acoes.forEach(a => { let ci = D.causas.findIndex((c, i) => !usadas.has(i) && c.tema === a.tema); if (ci >= 0) usadas.add(ci); else ci = D.causas.findIndex(c => c.tema === a.tema);
     a.ci = ci; a.num = ci >= 0 ? `${ci + 1}.${(nPorCausa[ci] = (nPorCausa[ci] || 0) + 1)}` : null;
     if (ci >= 0) a.ofens.forEach(o => { if (!D.causas[ci].ofens.includes(o)) D.causas[ci].ofens.push(o); }); });
+  // SÓ O BOTTOM 3 EMBAIXO DA CAUSA (Renan, 26/11/2026: "Muita informação nessas causas… deixe apenas Bottom 3")
+  D.causas.forEach(c => { c.ofens = c.ofens.slice(0, 3); });
   // CAUSA COM UMA AÇÃO SÓ MOSTRA "1." (Renan, 16/10/2026: "Quando só tem uma ação a causa é apenas 1., não 1.1."):
   // a.rot é só o rótulo da tela; o número gravado (a.num, "k.n.") não muda
   D.acoes.forEach(a => { a.rot = a.ci >= 0 && nPorCausa[a.ci] === 1 ? String(a.ci + 1) : a.num; });
@@ -905,7 +907,9 @@ function diagComb(f, ctx, D, causa, acao, k, base) {
   }
   // condução (telemetria) — quando a unidade tem
   const mot = (ctx.fatoMot[f.uni + '|' + f.vig] || []).filter(m => fin(m.v.nota) && (m.v.km || 0) >= 500);
-  if (mot.length) {
+  // DRIVERPRO AINDA NÃO ENTRA NO FCA (Renan, 26/11/2026: "Ainda não use DriverPro"): sem sinal, sem ação, sem motoristas na causa
+  const USA_DRIVERPRO = false;
+  if (USA_DRIVERPRO && mot.length) {
     const baixos = mot.filter(m => m.v.nota < 75);
     const kmT = mot.reduce((s, m) => s + (m.v.km || 0), 0), kmB = baixos.reduce((s, m) => s + (m.v.km || 0), 0);
     D.blocos.mot = mot;
