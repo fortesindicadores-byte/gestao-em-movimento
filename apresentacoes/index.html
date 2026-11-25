@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611260830">
+<meta name="build" content="202611260900">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611260830"></script>
+<script src="../assets/apres-slides.js?v=202611260900"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -1080,7 +1080,10 @@ function sSC(inst){
 
   /* os 20 indicadores ao lado do gráfico, do pior para o melhor (o desenho do Termômetro) */
   const rz=c=>c.val==null?9e9:c.val/(c.rr?100:(c.good||90));
-  const ks=S.cards.filter(c=>c.val!=null).slice().sort((a,b)=>a.val-b.val||rz(a)-rz(b));   /* do menor % para o maior, a ordem que se lê na coluna (Renan, 26/11/2026) */
+  /* no slide: sem Saúde dos Pneus e os dois FCAs num só, FCA Aderência = média de Prazo e Conclusão (Renan, 26/11/2026); a pontuação segue a do painel */
+  const fP=S.cards.find(c=>c.lbl==='FCA Prazo'), fC=S.cards.find(c=>c.lbl==='FCA Conclusão'), fv=[fP,fC].filter(c=>c&&c.val!=null).map(c=>c.val);
+  const cs=S.cards.filter(c=>c.lbl!=='Saúde dos Pneus'&&c!==fP&&c!==fC).concat(fv.length?[{lbl:'FCA Aderência',val:fv.reduce((a,b)=>a+b,0)/fv.length,good:(fP||fC).good,rr:false}]:[]);
+  const ks=cs.filter(c=>c.val!=null).slice().sort((a,b)=>a.val-b.val||rz(a)-rz(b));   /* do menor % para o maior, a ordem que se lê na coluna (Renan, 26/11/2026) */
   const v=Array(12).fill(null); S.mes.forEach(x=>{ if(x.m<=mi) v[x.m]=x.v; });
   const dq=`<div class="card pn-dq"><div class="gtit">Indicadores</div><div class="ls">${ks.map((c,i)=>`<div class="l"><span class="p">${i+1}º</span><span class="u">${esc(c.lbl)}${c.rr?' <small>R/Rem</small>':''}</span><span class="s" style="color:${SC_FG(clsOf(c))};min-width:2.6em;text-align:right">${Math.round(c.val)}%</span></div>`).join('')}</div></div>`;
   const FX=[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']], evo=AS.grafico('Evolução mensal','Pontuação geral · '+mesLb(VIG),{tipo:'faixa',labels:MESC,v,faixas:FX,foco:[mi],fmt:'n1'});
@@ -1470,6 +1473,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611260830"></script>
+<script src="../assets/build-check.js?v=202611260900"></script>
 </body>
 </html>

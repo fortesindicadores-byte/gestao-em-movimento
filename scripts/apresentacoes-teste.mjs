@@ -167,7 +167,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   const km = await txt(pg, 'km');
   ok('Dispersão: km rodado, dispersão de 8,0% e as 10 placas', km.includes('128.500') && km.includes('8,0%') === false ? true : /7,1%/.test(km) && /Bottom 10 placas/.test(km) && /ABC1000/.test(km) && !/ABC1010/.test(km), km.slice(0, 240));
   const sc = await txt(pg, 'sc'), sc2 = await txt(pg, 'sc', 1);
-  ok('Scorecard: pontuação geral em cima, os 20 indicadores na lista ao lado', /Pontuação geral/.test(sc) && /89,0/.test(sc) && /Custos Frota/.test(sc) && /FCA Conclusão/.test(sc), sc.slice(0, 200));
+  ok('Scorecard: pontuação geral em cima, os 20 indicadores na lista ao lado', /Pontuação geral/.test(sc) && /89,0/.test(sc) && /Custos Frota/.test(sc) && /FCA Aderência/.test(sc) && !/Saúde dos Pneus/.test(sc), sc.slice(0, 200));
   ok('Scorecard: um slide só com evolução mensal e indicadores, com a posição da unidade', /Evolução mensal/.test(sc) && /Indicadores/.test(sc) && !/Destaques/.test(sc) && /3º de/.test(sc) && !sc2, sc.slice(-200));
   const te = await txt(pg, 'term');
   ok('Termômetro: pontuação geral com MoM, Posição Geo e Conlog, todos os indicadores do pior ao melhor', /Pontuação geral/.test(te) && /Posição Geo/.test(te) && /Posição Conlog/.test(te) && /Indicadores/.test(te) && /OS Vencida/.test(te) && /MTTR/.test(te) && /Ating\./.test(te) && /97%/.test(te), te.slice(0, 260));
