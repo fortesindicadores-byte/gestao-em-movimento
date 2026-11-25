@@ -435,7 +435,15 @@
     'body.est-limpo .cont[data-sec="sc"]{background:#F4F5F7}',
     'body.est-limpo .cont[data-sec="sc"] .card{background:transparent!important;border-color:transparent!important;box-shadow:none!important}',
     'body.est-limpo.escuro .cont[data-sec="sc"]{background:#23252A}',
-    'body.est-limpo .cont[data-sec="sc"] .card{padding-left:0!important;padding-right:0!important}body.est-limpo .cont[data-sec="sc"] .pn-dq .l{padding-left:0;padding-right:0}',   /* sem card, o conteúdo começa na mesma linha do hero (Renan, 26/11/2026) */
+    /* cópia ECharts: o hero vira uma fileira de cards, o principal no grafite do cabeçalho (Renan, 26/11/2026) */
+    '.eh-row{display:grid;gap:12px;flex:0 0 calc(132px*var(--k));min-height:0}',
+    '.eh-row .card{display:flex;flex-direction:column;justify-content:center;padding:calc(12px*var(--k)) 20px}',
+    '.eh-row .eh-l{font-size:calc(10px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px}',
+    '.eh-row .eh-v{font-size:calc(30px*var(--k));font-weight:800;line-height:1.1;margin-top:calc(6px*var(--k));white-space:nowrap;color:var(--txt)}.eh-row .eh-v small{font-size:.5em;font-weight:700;color:var(--txt3);margin-left:4px}',
+    '.eh-row .eh-m{font-size:calc(10.5px*var(--k));font-weight:600;color:var(--txt3);margin-top:calc(4px*var(--k))}',
+    '.eh-row .card.eh-main{background:#1E2833!important;border-color:#1E2833!important;box-shadow:0 2px 12px rgba(0,0,0,.12)!important}',
+    '.eh-row .card.eh-main .eh-l,.eh-row .card.eh-main .eh-m,.eh-row .card.eh-main .eh-v small{color:#C9D0DD}.eh-row .card.eh-main .eh-v{font-size:calc(44px*var(--k))}',
+    'body.est-limpo .cont[data-sec="sc"] .card{padding-left:0!important;padding-right:0!important}body.est-limpo .cont[data-sec="sc"] .pn-dq .l{padding-left:0;padding-right:0;border-bottom:0}',   /* sem card, o conteúdo começa na mesma linha do hero (Renan, 26/11/2026) */
     '.ech{position:absolute;inset:0}.cv{position:relative}',
     '.eg-hero{display:flex;flex-direction:column;padding:10px 16px 14px;min-height:0}.eg-hero .cv{flex:1 1 0;min-height:0}',
     '.eg-st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}',
