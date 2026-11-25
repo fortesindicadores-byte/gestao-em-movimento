@@ -449,20 +449,9 @@
     '.eh-row .card.eh-main{background:#1E2833!important;border-color:#1E2833!important;box-shadow:0 2px 12px rgba(0,0,0,.12)!important}',
     '.eh-row .card.eh-main .eh-l,.eh-row .card.eh-main .eh-m,.eh-row .card.eh-main .eh-v small{color:#C9D0DD}.eh-row .card.eh-main .eh-v{font-size:calc(44px*var(--k))}',
     'body.est-limpo .cont[data-sec="sc"] .card{padding-left:0!important;padding-right:0!important}body.est-limpo .cont[data-sec="sc"] .pn-dq .l{padding-left:0;padding-right:0;border-bottom:0}',   /* sem card, o conteúdo começa na mesma linha do hero (Renan, 26/11/2026) */
-    /* Financeiro no desenho do FP&A: fileira de cards com filete colorido (Renan, 26/11/2026) */
-    '.fk-wrap{display:flex;flex-direction:column;gap:14px;height:100%;min-height:0}',
-    '.fk-row{display:grid;grid-template-columns:1.2fr 1.15fr 1.25fr .9fr 1.25fr .95fr .9fr;gap:12px;flex:0 0 auto}',
-    '.card.fk{border-left:4px solid #9AA3B2;border-radius:4px;padding:calc(14px*var(--k)) 16px calc(12px*var(--k));min-width:0}',
-    '.card.fk-r{border-left-color:#FF0000}',
-    '.card.fk-g{border-left-color:#00B300}',
-    '.card.fk-main{border-left-color:#F97316}',
-    '.fk-l{font-size:calc(10px*var(--k));font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-    '.fk-v{font-size:calc(22px*var(--k));font-weight:800;line-height:1.1;margin-top:calc(8px*var(--k));white-space:nowrap;color:var(--txt)}.fk-v b{font-weight:800}',
-    '.fk-main .fk-v{font-size:calc(28px*var(--k))}',
-    '.fk-s{font-size:calc(10px*var(--k));font-weight:600;color:var(--txt3);margin-top:calc(4px*var(--k));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-    '.fk-leit{flex:0 0 auto;font-size:calc(12px*var(--k));line-height:1.5;color:var(--txt2)}.fk-leit b{color:var(--txt);font-weight:700}',
-    'body.escuro .card.fk-r{border-left-color:#FF5252}',
-    'body.escuro .card.fk-g{border-left-color:#3BB33B}',
+    /* Financeiro: cards no estilo do FP&A, sem fundo e com menos espaço entre eles (Renan, 26/11/2026) */
+    '.g2.fin-fpa{gap:8px}',
+    '.g2.fin-fpa>.card{background:transparent!important;box-shadow:none!important}',
     '.ech{position:absolute;inset:0}.cv{position:relative}',
     '.eg-hero{display:flex;flex-direction:column;padding:10px 16px 14px;min-height:0}.eg-hero .cv{flex:1 1 0;min-height:0}',
     '.eg-st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}',
@@ -625,7 +614,7 @@
       var cols = s.querySelector('.cols'); if (cols && cols.scrollWidth > cols.clientWidth + 1) ok = false;
       /* nada pode passar da própria célula: pílula de status, número, texto sem quebra */
       s.querySelectorAll('table td').forEach(function (td) { var r = td.getBoundingClientRect(); for (var c = td.firstElementChild; c; c = c.nextElementSibling) { var q = c.getBoundingClientRect(); if (q.width && (q.right > r.right + 1 || q.left < r.left - 1)) { ok = false; break; } } });
-      if (!duro) s.querySelectorAll('.hero .gr b,.fk-v,.tn-g b,.tn-v,.tn-r,.kpi .kv,.kpi .km').forEach(function (e) { if (e.scrollWidth > e.clientWidth + 1) ok = false;
+      if (!duro) s.querySelectorAll('.hero .gr b,.tn-g b,.tn-v,.tn-r,.kpi .kv,.kpi .km').forEach(function (e) { if (e.scrollWidth > e.clientWidth + 1) ok = false;
         var p = e.parentElement.getBoundingClientRect(), r = e.getBoundingClientRect(); if (r.right > p.right + 1) ok = false; });
       return ok; }
     function ajusta(s) { if (!s.querySelector('.miolo')) return; var d0 = s.style.display; s.style.display = ''; var lo = .72, hi = s.querySelector('.fcap') ? 1 : 1.25;   /* FCA nunca cresce além do tamanho de tabela (Renan, 26/11/2026: "fonte exagerada nos FCAs") */
