@@ -8,6 +8,8 @@ import path from 'node:path';
 const RAIZ = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const SHOT = process.env.SHOT_DIR || '';
 const CHARTJS = process.env.CHART_JS ? fs.readFileSync(process.env.CHART_JS, 'utf8') : '';
+const ECHARTS = process.env.ECHARTS ? fs.readFileSync(process.env.ECHARTS, 'utf8') : '';   // ESTILO=limpo|echarts abre a cópia de teste do deck
+const ESTILO = process.env.ESTILO || '';
 const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
 /* DRE: GRL com Rota e Van; em out/26 a Rota estoura Manutenção (×1,2) e Pneus (×1,5) */
@@ -117,11 +119,11 @@ async function abre({ w = 1366, h = 768, tema = 'dark', perfil = { nome: 'Renan'
       if (s.includes('docs.google.com')) return new Response(`/*O_o*/\ngoogle.visualization.Query.setResponse(${JSON.stringify(GVIZ)});`, { status: 200 });
       return orig(u, o); };
   }, { perfil, FCA, GVIZ, tabela, modelo, tema });
-  await pg.route('**/cdn.jsdelivr.net/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: /chart\.js/.test(r.request().url()) ? CHARTJS : '/*stub*/' }));
+  await pg.route('**/cdn.jsdelivr.net/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: /chart\.js/.test(r.request().url()) ? CHARTJS : /echarts/.test(r.request().url()) ? ECHARTS : '/*stub*/' }));
   await pg.route('**/fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await pg.route('**/assets/gviz-cache.js*', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: '/*sem o shim no teste*/' }));
   await pg.route('**/assets/build-check.js*', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
-  await pg.goto('http://localhost:8794/apresentacoes/index.html' + (u ? '?u=' + u : ''), { waitUntil: 'domcontentloaded' });
+  await pg.goto('http://localhost:8794/apresentacoes/index.html' + (u ? '?u=' + u : '') + (ESTILO ? (u ? '&' : '?') + 'estilo=' + ESTILO : ''), { waitUntil: 'domcontentloaded' });
   await pg.waitForFunction(() => typeof DECK !== 'undefined' && (DECK.length > 0 || document.querySelector('.gate')), { timeout: 20000 });
   return { ctx, pg, errs };
 }
@@ -231,7 +233,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
     for (let i = 0; i < n; i++) { await pg.evaluate(i => { POS = i; mostra(); }, i); await pg.waitForTimeout(120); await pg.locator('#telaQ').screenshot({ path: path.join(SHOT, `s${String(i + 1).padStart(2, '0')}.png`) }); }
     await pg.screenshot({ path: path.join(SHOT, 'painel.png') });
     const html = await pg.evaluate(() => docAtual(false)); const p2 = await ctx.newPage(); await p2.setViewportSize({ width: 1280, height: 720 });
-    await p2.route('**/cdn.jsdelivr.net/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: CHARTJS }));
+    await p2.route('**/cdn.jsdelivr.net/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: /echarts/.test(r.request().url()) ? ECHARTS : CHARTJS }));
     await p2.setContent(html, { waitUntil: 'load' }); await p2.waitForFunction(() => window.__deckPronto, null, { timeout: 20000 }); await p2.waitForTimeout(400);
     const sls = await p2.$$('.slide'); for (let i = 0; i < sls.length; i++) await sls[i].screenshot({ path: path.join(SHOT, `g${String(i + 1).padStart(2, '0')}.png`) }); }
   ok('sem erro de JavaScript', !errs.length, errs.join(' | '));

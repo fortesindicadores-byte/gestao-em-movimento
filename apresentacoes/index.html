@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611260530">
+<meta name="build" content="202611260600">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611260530"></script>
+<script src="../assets/apres-slides.js?v=202611260600"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -850,6 +850,7 @@ function sFin(inst){
   const e=semDado('VF'); if(e) return [sl({titulo:'Financeiro · Custo da frota',corpo:e},inst)];
   const R=D.VF.rows.filter(r=>CUSTO(r)&&passaP(inst,r.p)), y=+VIG.slice(0,4);
   const vA=(y-1)+VIG.slice(4), ac=acumDe(inst), M=neg(somaR(R,r=>noPer(inst,r.vk))), A=neg(somaR(R,r=>noPer(inst,r.vk,vA))), d=M.real-M.rem, dp=pct(M.real,M.rem);
+  const Y=neg(somaR(R,r=>r.vk.slice(0,4)===VIG.slice(0,4)&&r.vk<=VIG)), dyv=Y.real-Y.rem, dyp=pct(Y.real,Y.rem);
   const porPac={}; R.filter(r=>noPer(inst,r.vk)).forEach(r=>{ const x=porPac[r.pac]=porPac[r.pac]||{rem:0,real:0}; x.rem-=r.rem; x.real-=r.real; });
   const grandes=['Combustíveis','Manutenções','Pneus'], passos=[{n:'Rem',v:M.rem,t:1}]; let demais=0;
   PAC_ORD.forEach(p=>{ const x=porPac[p]; if(!x) return; const dv=x.real-x.rem; if(Math.abs(dv)>.5) passos.push({n:p==='Seguros e licenças'?'Seguros':p,v:dv}); });
@@ -859,9 +860,11 @@ function sFin(inst){
     real.push(tr&&vk<=VIG?s.real:null); rem.push(tr&&vk<=VIG?s.rem:null); orc.push(rs.length?s.orc:null); }
   const pior=Object.keys(porPac).map(p=>({p,d:porPac[p].real-porPac[p].rem})).sort((a,b)=>b.d-a.d)[0];
   const leit=d>0&&pior&&pior.d>0?`<b>Custo ${FS.pct(Math.abs(dp))} acima do remunerado.</b> ${esc(pior.p)} responde por ${nf(Math.min(100,pior.d/d*100))}% do desvio.`:d<=0?`<b>Custo ${FS.pct(Math.abs(dp||0))} abaixo do remunerado.</b>`:'';
-  const hero=`<div class="card hero" style="grid-row:1/3"><div class="rot">Realizado${ac?' · acumulado '+acumLb(VIG):''}</div><div class="v">${FS.brlc(M.real)}</div><div class="sub">Combustíveis, Manutenções, Pneus e demais contas da frota</div><div class="gr">
-    <div><span class="rot">Remunerado</span><b>${FS.brlc(M.rem)}</b><small>pelo DRE</small></div><div><span class="rot">▲ Rem</span>${kv(d,FS.brlc(Math.abs(d)).replace('R$ ','R$ '))}<small>${d>0?'gastou a mais':'gastou a menos'}</small></div>
-    <div><span class="rot">▲ Rem %</span>${dp==null?'<b class="nt">—</b>':kv(d,FS.pct(Math.abs(dp)))}<small>sobre o remunerado</small></div><div><span class="rot">YoY</span>${A.real?kv(M.real-A.real,FS.pct(Math.abs(pct(M.real,A.real)))):'<b class="nt">—</b>'}<small>vs ${ac?acumLb(vA):mesLb(vA)}</small></div></div>
+  const hero=`<div class="card hero" style="grid-row:1/3"><div class="rot">Realizado${ac?' · acumulado '+acumLb(VIG):''}</div><div class="v">${FS.brlc(M.real)}</div><div class="sub">Combustíveis, Manutenções, Pneus e demais contas da frota</div>
+    <div class="hrem"><span class="rot">Remunerado</span><b>${FS.brlc(M.rem)}</b><small>pelo DRE</small></div><div class="gr">
+    <div><span class="rot">▲ Rem</span>${kv(d,FS.brlc(Math.abs(d)))}<small>${d>0?'gastou a mais':'gastou a menos'}</small></div><div><span class="rot">▲ Rem %</span>${dp==null?'<b class="nt">—</b>':kv(d,FS.pct(Math.abs(dp)))}<small>sobre o remunerado</small></div>
+    <div><span class="rot">▲ Rem YTD</span>${kv(dyv,FS.brlc(Math.abs(dyv)))}<small>${acumLb(VIG)}</small></div><div><span class="rot">▲ Rem YTD %</span>${dyp==null?'<b class="nt">—</b>':kv(dyv,FS.pct(Math.abs(dyp)))}<small>sobre o remunerado do ano</small></div>
+    <div class="gr2"><span class="rot">YoY</span>${A.real?kv(M.real-A.real,FS.pct(Math.abs(pct(M.real,A.real)))):'<b class="nt">—</b>'}<small>vs ${ac?acumLb(vA):mesLb(vA)}</small></div></div>
     ${leit?`<div class="leit">${leit}</div>`:''}</div>`;
   const corpo=`<div class="g2" style="grid-template-columns:370px 1fr;grid-template-rows:1fr 1fr">${hero}
     ${AS.grafico('Bridge do custo','do remunerado ao realizado · R$',{tipo:'bridge',passos})}
@@ -1079,8 +1082,15 @@ function sSC(inst){
   const ks=S.cards.filter(c=>c.val!=null).slice().sort((a,b)=>rz(a)-rz(b));
   const v=Array(12).fill(null); S.mes.forEach(x=>{ if(x.m<=mi) v[x.m]=x.v; });
   const dq=`<div class="card pn-dq"><div class="gtit">Indicadores</div><div class="ls">${ks.map((c,i)=>`<div class="l"><span class="p">${i+1}º</span><span class="u">${esc(c.lbl)}${c.rr?' <small>R/Rem</small>':''}</span><span class="s" style="color:${SC_FG(clsOf(c))};min-width:2.6em;text-align:right">${Math.round(c.val)}%</span></div>`).join('')}</div></div>`;
-  const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Evolução mensal','Pontuação geral · '+mesLb(VIG),{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'})}${dq}</div>`;
-  return [sl({titulo:'Scorecard',corpo:`<div class="pn">${hero}${gr}</div>`},inst,'Scorecard')];
+  const FX=[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']], evo=AS.grafico('Evolução mensal','Pontuação geral · '+mesLb(VIG),{tipo:'faixa',labels:MESC,v,faixas:FX,foco:[mi],fmt:'n1'});
+  if(ESTILO==='echarts'){   /* cópia em ECharts (Renan, 26/11/2026): a pontuação num medidor, o ano em barras e os indicadores em barras de progresso */
+    const st=`<div class="eg-st"><div><span>MoM</span><b>${mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false)}</b></div><div><span>Posição</span><b>${pos?pos+'º de '+S.rk.length:'—'}</b></div><div><span>Críticos</span><b style="color:${crit?'#FF0000':'#00B300'}">${crit}</b></div></div>`;
+    const gauge=AS.grafico('Pontuação geral',mesLb(VIG),{tipo:'gauge',v:S.pont,cor:SC_FG(bandSC(S.pont)),fmt:'n1',nome:'pontos',marcas:[[90,'#00B300'],[80,'#E9A400']]}).replace('class="card gc"','class="card gc eg-hero"').replace(/<\/div>$/,st+'</div>');
+    const prog=AS.grafico('Indicadores','atingimento · do pior para o melhor',{tipo:'prog',labels:ks.map(c=>c.lbl+(c.rr?' · R/Rem':'')),v:ks.map(c=>c.val),cores:ks.map(c=>SC_FG(clsOf(c))),fmt:'pct0'});
+    return [sl({titulo:'Scorecard',sec:'sc',corpo:`<div class="pn-gr" style="height:100%;grid-template-columns:300px 1.45fr 1fr">${gauge}${evo}${prog}</div>`},inst,'Scorecard')];
+  }
+  const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${evo}${dq}</div>`;
+  return [sl({titulo:'Scorecard',sec:'sc',corpo:`<div class="pn">${hero}${gr}</div>`},inst,'Scorecard')];
 }
 /* Termômetro: pontuação com MoM, posição Geo e Conlog, o ano e os Bottom KPIs */
 function sTERM(inst){
@@ -1192,7 +1202,8 @@ function monta(){
   set('titSub',`${UNI()}${VIG?' · fechamento de '+mesLb(VIG):''} · ${DECK.length} slides`);
 }
 let _foco=null;
-const docAtual=final=>AS.doc({base:new URL('../assets/',location.href).href,titulo:`${MOD.titulo} · ${UNI()}`,slides:DECK.map(d=>d.html),final,escuro:!document.body.classList.contains('claro'),css:(document.getElementById('fca-tabela-css')||{}).textContent||''});
+const ESTILO=(()=>{ try{ const e=new URLSearchParams(location.search).get('estilo'); return e==='limpo'||e==='echarts'?e:''; }catch(e){ return ''; } })();
+const docAtual=final=>AS.doc({estilo:ESTILO,base:new URL('../assets/',location.href).href,titulo:`${MOD.titulo} · ${UNI()}`,slides:DECK.map(d=>d.html),final,escuro:!document.body.classList.contains('claro'),css:(document.getElementById('fca-tabela-css')||{}).textContent||''});
 const OLHO='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const OLHO_X='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19C5 19 1 12 1 12a20.3 20.3 0 0 1 5.1-5.9M9.9 5.2A10.4 10.4 0 0 1 12 5c7 0 11 7 11 7a20.6 20.6 0 0 1-2.2 3.2M1 1l22 22"/></svg>';
 const LAPIS='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
@@ -1450,6 +1461,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611260530"></script>
+<script src="../assets/build-check.js?v=202611260600"></script>
 </body>
 </html>
