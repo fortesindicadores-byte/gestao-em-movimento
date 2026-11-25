@@ -162,6 +162,8 @@
     '.com .caixa{flex:1;margin-top:12px;border:1.5px dashed rgba(15,23,42,.18);border-radius:9px;padding:12px 14px;font-size:14px;line-height:1.6;color:var(--txt);white-space:pre-wrap;overflow:hidden;outline:none}',
     '.com .caixa:empty::before{content:attr(data-ph);color:var(--txt3);font-style:italic}',
     'body.final .com .caixa:empty::before{content:""}',
+    '.com .caixa .ob-l{display:flex;gap:8px;white-space:normal}.com .caixa .ob-m{flex:0 0 auto;min-width:.9em;color:var(--laranja);font-weight:800}.com .caixa .ob-m.n{min-width:1.4em}.com .caixa .ob-t{flex:1;min-width:0}.com .caixa .ob-p{white-space:normal}.com .caixa .ob-v{height:.7em}',
+    '.com .caixa.ed{white-space:pre-wrap}',
     'body.final .com .caixa{border-color:transparent}',
     /* FCA */
     'table.fca td.fato{border-right:1px solid var(--linha);width:24%}',
@@ -250,6 +252,23 @@
     /* recado */
     '.recado{padding:34px 40px;font-size:calc(20px*var(--k));line-height:1.6;white-space:pre-wrap}'
   ].join('\n');
+  var CSS_ESCURO = [
+    'body.escuro{--txt:#EEF2FA;--txt2:#C9D0DD;--txt3:#A9B1C0;--linha:rgba(255,255,255,.08);--brd:rgba(255,255,255,.09);--card:rgba(40,42,48,.78);--card-brd:rgba(255,255,255,.09);--cabec:#2B2D33;--red:#FF5252;--green:#3BB33B;--vermelho:#FF5252;--verde:#3BB33B}',
+    'html:has(body.escuro),body.escuro{background:#141518}',
+    'body.escuro .cont{background:radial-gradient(80% 60% at 90% 0%,rgba(255,244,232,.04) 0%,transparent 60%),#1B1C20}',
+    'body.escuro .cab{background:#0F1318}',
+    'body.escuro .card{background:linear-gradient(180deg,rgba(255,255,255,.035) 0%,rgba(255,255,255,0) 46%),rgba(40,42,48,.82);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 12px rgba(0,0,0,.30)}',
+    'body.escuro .cr{color:#FF5252!important}body.escuro .cg{color:#3BB33B!important}',
+    'body.escuro table.dre th{background:var(--cabec)}body.escuro table.dre tr.tot td{background:#2A2C32}',
+    'body.escuro .tn{background:rgba(44,46,52,.95);box-shadow:0 2px 10px rgba(0,0,0,.3)}body.escuro .col.m .tn{background:#2C2E34}',
+    'body.escuro .tn.gap{border-color:rgba(255,82,82,.6);box-shadow:0 0 0 1px rgba(255,82,82,.2),0 4px 14px rgba(0,0,0,.3)}body.escuro .tn.ok{border-color:rgba(59,179,59,.5)}',
+    'body.escuro .com .caixa{border-color:rgba(255,255,255,.18)}',
+    'body.escuro .st.and{background:rgba(90,169,240,.16);color:#7DBBF5}body.escuro .st.ok{background:rgba(59,179,59,.16);color:#3BB33B}body.escuro .st.ven{background:rgba(255,82,82,.16);color:#FF5252}',
+    'body.escuro table.fca .tri-r,body.escuro table.fca td.prz.venc{color:#FF5252}body.escuro table.fca .tri-g{color:#3BB33B}body.escuro table.fca tr.dt td.ln{border-top-color:rgba(255,255,255,.16)}',
+    'body.escuro table.rel.fg-rel tbody.fg tr+tr td.ln{border-top:1px dashed rgba(255,255,255,.26)!important}body.escuro table.rel.fg-rel tbody.fg{border-top:2px solid rgba(255,255,255,.12)}',
+    'body.escuro .pn-kpi,body.escuro .tc,body.escuro .el-kpi{background:rgba(255,255,255,.04)}body.escuro .pn-dq .l .p,body.escuro .pn-dq .l .u small{color:#A3ABBA}',
+    'body.escuro .el-kpi .f{box-shadow:0 0 0 3px rgba(255,255,255,.06)}'
+  ].join('\n');
 
   /* ── capa, sumário, divisória, encerramento ── */
   /* tiras: colunas com recortes de pontas arredondadas, a mesma foto correndo por todas (o desenho do Bússola) */
@@ -329,9 +348,19 @@
       (obs ? obsCard(obs) : '') + '</div>';
   }
   /* caixa de observações (à direita da árvore; embaixo da tabela com baixo:true) */
+  /* o texto da observação com tópicos: linha que começa com "-" (ou •, *) vira tópico; "1." (ou "1)") vira item numerado (Renan, 26/11/2026) */
+  function obsFmt(t) {
+    var e = function (x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    if (!String(t || '').trim()) return '';
+    return String(t || '').replace(/\r/g, '').split('\n').map(function (l) {
+      var m = l.match(/^\s*[-•*–]\s+(.*)$/); if (m) return '<div class="ob-l"><span class="ob-m">•</span><span class="ob-t">' + e(m[1]) + '</span></div>';
+      m = l.match(/^\s*(\d{1,2})[.)]\s+(.*)$/); if (m) return '<div class="ob-l"><span class="ob-m n">' + m[1] + '.</span><span class="ob-t">' + e(m[2]) + '</span></div>';
+      return l.trim() ? '<div class="ob-p">' + e(l) + '</div>' : '<div class="ob-v"></div>';
+    }).join('');
+  }
   function obsCard(o) {
     return '<div class="card com' + (o.baixo ? ' baixo' : '') + '"><h3>Observações</h3><div class="dica">' + esc(o.dica || 'o que a unidade explica sobre o desvio') + '</div>' +
-      '<div class="caixa" contenteditable="true" data-obs="' + esc(o.chave) + '" data-ph="Escreva aqui a leitura da unidade. Fica salvo com a apresentação.">' + esc(o.texto || '') + '</div></div>';
+      '<div class="caixa" contenteditable="true" data-obs="' + esc(o.chave) + '" data-raw="' + esc(o.texto || '') + '" data-ph="Escreva aqui a leitura da unidade. Fica salvo com a apresentação. Comece a linha com - para tópico ou 1. para numerar.">' + obsFmt(o.texto) + '</div></div>';
   }
 
   /* FCA no desenho da Tabela do FCA: fato mesclado (desvio, contas, YTD), causa mesclada sobre as ações dela,
@@ -397,12 +426,15 @@
   function kmini(o) { return '<div class="card kmini"><div class="rot">' + esc(o.rot) + '</div><div class="kv"' + (o.cor ? ' style="color:' + o.cor + '"' : '') + '>' + o.v + '</div>' + (o.m ? '<div class="km">' + o.m + '</div>' : '') + '</div>'; }
 
   /* ── o deck: HTML inteiro, com o desenho dos gráficos, a árvore e o ajuste ao slide ── */
+  /* tema escuro: as cores de resultado viram as do tema escuro do portal (verde #3BB33B, vermelho #FF5252, âmbar #F4A100) e o texto escuro vira claro */
+  var ESCURO_COR = { '#00B300': '#3BB33B', '#FF0000': '#FF5252', '#E9A400': '#F4A100', '#161D2B': '#EEF2FA', '#E00000': '#FF5252', '#009A00': '#3BB33B', '#D00000': '#FF5252', '#008A00': '#3BB33B' };
   function doc(o) {
     var paginas = o.slides.map(function (h, i) { return h.replace(/§PG§/g, String(i + 1)); }).join('\n').replace(/url\(img\//g, 'url(' + o.base + 'img/');
+    if (o.escuro) paginas = paginas.replace(/#(00B300|FF0000|E9A400|161D2B|E00000|009A00|D00000|008A00)\b/gi, function (m) { return ESCURO_COR[m.toUpperCase()] || m; });
     return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><base href="' + esc(o.base) + '"><title>' + esc(o.titulo || 'Apresentação') + '</title>' +
       '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">' +
-      '<style>' + CSS + (o.css || '') + '</style></head><body' + (o.final ? ' class="final"' : '') + '>' + paginas +
-      '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script><script>(' + RUN.toString() + ')();<\/script></body></html>';
+      '<style>' + CSS + (o.css || '') + CSS_ESCURO + '</style></head><body class="' + (o.final ? 'final' : '') + (o.escuro ? ' escuro' : '') + '">' + paginas +
+      '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script><script>window.__obsFmt=' + obsFmt.toString() + ';(' + RUN.toString() + ')();<\/script></body></html>';
   }
 
   /* roda DENTRO do deck */
@@ -413,7 +445,8 @@
     function bounds(vals, folgaB, folgaC) { vals = vals.filter(function (v) { return v != null && isFinite(v); }); if (!vals.length) return {};
       var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), r = (mx - mn) || Math.abs(mx) || 1;
       var lo = mn - r * folgaB, hi = mx + r * folgaC; if (mn >= 0 && lo < 0) lo = 0; return { min: lo, max: hi }; }
-    var VERM = '#FF0000', VERDE = '#00B300';
+    var ESC = document.body.classList.contains('escuro'), VERM = ESC ? '#FF5252' : '#FF0000', VERDE = ESC ? '#3BB33B' : '#00B300';
+    var C_TICK = ESC ? '#C9D0DD' : '#4A5568', C_LBL = ESC ? '#EEF2FA' : '#333333', C_INK = ESC ? '#EEF2FA' : '#161D2B', C_FRACO = ESC ? '#A3ABBA' : '#737D91', C_LIG = ESC ? 'rgba(255,255,255,.26)' : 'rgba(15,23,42,.22)';
     function desenha(cv) {
       var g = JSON.parse(cv.getAttribute('data-g')), ctx = cv.getContext('2d'), fmt = fmtDe(g.fmt), k = parseFloat(getComputedStyle(cv).getPropertyValue('--k')) || 1;
       var fx = { size: Math.round(13 * k), family: 'Montserrat' }, fl = '700 ' + Math.round(13 * k) + 'px Montserrat';
@@ -424,12 +457,12 @@
         var ds = [{ type: 'bar', data: g.real, backgroundColor: cor.map(function (c, i) { return c ? c + (foco.length ? (foco.indexOf(i) >= 0 ? 'D9' : '33') : 'A6') : 'transparent'; }), borderColor: cor.map(function (c) { return c || 'transparent'; }), borderWidth: 1, borderRadius: 0, order: 3 }];
         var linha = function (d, c, o) { return { type: 'line', data: d, borderColor: c, borderWidth: 2.5, tension: .3, fill: false, borderDash: [5, 3], order: o, spanGaps: true,
           pointRadius: d.map(function (v, i) { return v == null ? 0 : foco.indexOf(i) >= 0 ? 6 : 3; }), pointBackgroundColor: c, pointBorderColor: c }; };
-        if (g.rem) ds.push(linha(g.rem, '#161D2B', 1));
+        if (g.rem) ds.push(linha(g.rem, C_INK, 1));
         if (g.orc) ds.push(linha(g.orc, '#1B6FC4', 2));
         var b = bounds([].concat(g.real, g.rem || [], g.orc || []), g.zero ? 9 : .5, .18); if (g.zero) b.min = 0;
         new Chart(ctx, { type: 'bar', data: { labels: g.labels, datasets: ds }, options: Object.assign({}, base, { layout: { padding: { top: 26 * k } },
-          scales: { x: { grid: { display: false }, border: { display: false }, ticks: { font: fx, color: '#4A5568' } }, y: { display: false, min: b.min, max: b.max } } }),
-          plugins: [{ afterDatasetsDraw: function (c) { var m = c.getDatasetMeta(0), x = c.ctx; x.save(); x.font = fl; x.fillStyle = '#333333'; x.textAlign = 'center'; x.textBaseline = 'bottom';
+          scales: { x: { grid: { display: false }, border: { display: false }, ticks: { font: fx, color: C_TICK } }, y: { display: false, min: b.min, max: b.max } } }),
+          plugins: [{ afterDatasetsDraw: function (c) { var m = c.getDatasetMeta(0), x = c.ctx; x.save(); x.font = fl; x.fillStyle = C_LBL; x.textAlign = 'center'; x.textBaseline = 'bottom';
             (foco.length ? foco : g.real.map(function (v, i) { return i; })).forEach(function (i) { var p = m.data[i]; if (p && g.real[i] != null) x.fillText(fmt(g.real[i]), p.x, p.y - 6); }); x.restore(); } }] });
       } else if (g.tipo === 'bridge') {   /* do remunerado ao realizado: cinza escuro nas pontas, vermelho e verde nos passos */
         var acc = 0, dat = [], cores = [], txt = [];
@@ -438,9 +471,9 @@
         var bb = bounds([].concat.apply([], dat).filter(function (v, i) { return i % 2 === 1 || v !== 0; }), 1.4, .12);
         fx = { size: Math.round(11 * k), family: 'Montserrat' }; fl = '700 ' + Math.round(11.5 * k) + 'px Montserrat';
         new Chart(ctx, { type: 'bar', data: { labels: g.passos.map(function (p) { return p.n; }), datasets: [{ data: dat, backgroundColor: cores.map(function (c) { return c === '#6B7280' ? c : c + 'D9'; }), borderColor: cores, borderWidth: 1, borderRadius: 0, barPercentage: .62, categoryPercentage: .9 }] },
-          options: Object.assign({}, base, { layout: { padding: { top: 26 * k } }, scales: { x: { grid: { display: false }, border: { display: false }, ticks: { font: fx, color: '#4A5568', maxRotation: 0, autoSkip: false } }, y: { display: false, min: bb.min, max: bb.max } } }),
+          options: Object.assign({}, base, { layout: { padding: { top: 26 * k } }, scales: { x: { grid: { display: false }, border: { display: false }, ticks: { font: fx, color: C_TICK, maxRotation: 0, autoSkip: false } }, y: { display: false, min: bb.min, max: bb.max } } }),
           plugins: [{ afterDatasetsDraw: function (c) { var m = c.getDatasetMeta(0), x = c.ctx; x.save(); x.font = fl; x.textAlign = 'center'; x.textBaseline = 'bottom';
-            m.data.forEach(function (b, i) { x.fillStyle = cores[i] === '#6B7280' ? '#333333' : cores[i] === VERM ? '#E00000' : '#009A00'; x.fillText(txt[i], b.x, Math.min(b.y, b.base) - 5); });
+            m.data.forEach(function (b, i) { x.fillStyle = cores[i] === '#6B7280' ? C_LBL : cores[i] === VERM ? (ESC ? '#FF5252' : '#E00000') : (ESC ? '#3BB33B' : '#009A00'); x.fillText(txt[i], b.x, Math.min(b.y, b.base) - 5); });
             x.strokeStyle = '#A3ABBA'; x.setLineDash([3, 3]);
             for (var i = 0; i < m.data.length - 1; i++) { var a = m.data[i], n = m.data[i + 1], yy = c.scales.y.getPixelForValue(dat[i][1]); x.beginPath(); x.moveTo(a.x + a.width / 2, yy); x.lineTo(n.x - n.width / 2, yy); x.stroke(); }
             x.restore(); } }] });
@@ -449,21 +482,21 @@
         var corDe = function (v) { if (v == null) return null; if (g.tipo === 'meta') return v > g.meta ? VERM : VERDE; for (var q = 0; q < g.faixas.length; q++) if (v >= g.faixas[q][0]) return g.faixas[q][1]; return VERM; };
         var cs2 = g.v.map(corDe);
         var ds2 = [{ type: 'bar', data: g.v, backgroundColor: cs2.map(function (c, i) { return c ? c + (foco2.length ? (foco2.indexOf(i) >= 0 ? 'D9' : '33') : 'A6') : 'transparent'; }), borderColor: cs2.map(function (c) { return c || 'transparent'; }), borderWidth: 1, borderRadius: 0, order: 2 }];
-        if (g.tipo === 'meta') ds2.push({ type: 'line', data: g.v.map(function () { return g.meta; }), borderColor: '#161D2B', borderWidth: 2, borderDash: [5, 3], pointRadius: 0, fill: false, order: 1 });
+        if (g.tipo === 'meta') ds2.push({ type: 'line', data: g.v.map(function () { return g.meta; }), borderColor: C_INK, borderWidth: 2, borderDash: [5, 3], pointRadius: 0, fill: false, order: 1 });
         var b2; if (g.tipo === 'meta') { var vv = g.v.filter(function (x) { return x != null; }), lo2 = Math.min(0, Math.min.apply(null, vv.concat([0]))), hi2 = Math.max(g.meta, Math.max.apply(null, vv.concat([0]))), r2 = (hi2 - lo2) || 1;
           b2 = { min: lo2 < 0 ? lo2 - r2 * .14 : 0, max: hi2 + r2 * .2 }; } else b2 = bounds(g.v, .6, .2);
         new Chart(ctx, { type: 'bar', data: { labels: g.labels, datasets: ds2 }, options: Object.assign({}, base, { layout: { padding: { top: 26 * k } },
-          scales: { x: { grid: { display: false }, border: { display: false }, ticks: { font: fx, color: '#4A5568' } }, y: { display: false, min: b2.min, max: b2.max } } }),
+          scales: { x: { grid: { display: false }, border: { display: false }, ticks: { font: fx, color: C_TICK } }, y: { display: false, min: b2.min, max: b2.max } } }),
           plugins: [{ afterDatasetsDraw: function (c) { var m = c.getDatasetMeta(0), x = c.ctx; x.save(); x.textAlign = 'center'; x.textBaseline = 'bottom';
             g.v.forEach(function (v, i) { var p = m.data[i]; if (!p || v == null) return; var em = !foco2.length || foco2.indexOf(i) >= 0; if (!em) return;
-              x.font = (em ? '700 ' : '600 ') + Math.round((em ? 13 : 11) * k) + 'px Montserrat'; x.fillStyle = em ? '#333333' : '#737D91'; x.fillText(fmt(v), p.x, Math.min(p.y, p.base) - 5); });
-            if (g.tipo === 'meta') { var yy = c.scales.y.getPixelForValue(g.meta); x.font = '600 ' + Math.round(11 * k) + 'px Montserrat'; x.fillStyle = '#161D2B'; x.textAlign = 'right'; x.fillText('meta ' + fmt(g.meta), c.chartArea.right, yy - 4); }
+              x.font = (em ? '700 ' : '600 ') + Math.round((em ? 13 : 11) * k) + 'px Montserrat'; x.fillStyle = em ? C_LBL : C_FRACO; x.fillText(fmt(v), p.x, Math.min(p.y, p.base) - 5); });
+            if (g.tipo === 'meta') { var yy = c.scales.y.getPixelForValue(g.meta); x.font = '600 ' + Math.round(11 * k) + 'px Montserrat'; x.fillStyle = C_INK; x.textAlign = 'right'; x.fillText('meta ' + fmt(g.meta), c.chartArea.right, yy - 4); }
             x.restore(); } }] });
       } else if (g.tipo === 'barrasH') {   /* ranking horizontal: a barra destacada é a unidade */
         var cs = g.v.map(function (v, i) { return g.cores ? g.cores[i] : (i === g.foco ? '#F97316' : '#9AA3B2'); });
         new Chart(ctx, { type: 'bar', data: { labels: g.labels, datasets: [{ data: g.v, backgroundColor: cs.map(function (c) { return c + 'D9'; }), borderColor: cs, borderWidth: 1, borderRadius: 0, barPercentage: .8 }] },
-          options: Object.assign({}, base, { indexAxis: 'y', layout: { padding: { right: 60 * k } }, scales: { y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: Math.round(11.5 * k), family: 'Montserrat' }, color: '#161D2B' } }, x: { display: false, min: g.min != null ? g.min : 0, max: g.max } } }),
-          plugins: [{ afterDatasetsDraw: function (c) { var m = c.getDatasetMeta(0), x = c.ctx; x.save(); x.font = '700 ' + Math.round(11.5 * k) + 'px Montserrat'; x.fillStyle = '#333333'; x.textBaseline = 'middle';
+          options: Object.assign({}, base, { indexAxis: 'y', layout: { padding: { right: 60 * k } }, scales: { y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: Math.round(11.5 * k), family: 'Montserrat' }, color: C_INK } }, x: { display: false, min: g.min != null ? g.min : 0, max: g.max } } }),
+          plugins: [{ afterDatasetsDraw: function (c) { var m = c.getDatasetMeta(0), x = c.ctx; x.save(); x.font = '700 ' + Math.round(11.5 * k) + 'px Montserrat'; x.fillStyle = C_LBL; x.textBaseline = 'middle';
             m.data.forEach(function (b, i) { x.fillText(fmt(g.v[i]), b.x + 6, b.y); }); x.restore(); } }] });
       }
     }
@@ -471,7 +504,7 @@
     function liga(area) { var sl = area.closest('.slide'), d0 = sl ? sl.style.display : ''; if (sl) sl.style.display = ''; var sv = area.querySelector('svg.lig'), r0 = area.getBoundingClientRect(), h = '';
       area.querySelectorAll('[data-pai]').forEach(function (n) { var p = area.querySelector('[data-no="' + n.getAttribute('data-pai') + '"]'); if (!p) return;
         var a = p.getBoundingClientRect(), b = n.getBoundingClientRect(), x1 = a.right - r0.left, y1 = a.top + a.height / 2 - r0.top, x2 = b.left - r0.left, y2 = b.top + b.height / 2 - r0.top, mx = (x1 + x2) / 2;
-        h += '<path d="M' + x1 + ',' + y1 + ' C' + mx + ',' + y1 + ' ' + mx + ',' + y2 + ' ' + x2 + ',' + y2 + '" fill="none" stroke="rgba(15,23,42,.22)" stroke-width="1.5"/>'; });
+        h += '<path d="M' + x1 + ',' + y1 + ' C' + mx + ',' + y1 + ' ' + mx + ',' + y2 + ' ' + x2 + ',' + y2 + '" fill="none" stroke="' + C_LIG + '" stroke-width="1.5"/>'; });
       sv.innerHTML = h; if (sl) sl.style.display = d0; }
     /* --k: o maior em que o miolo cabe (0,72 a 1,25); --v: respiro das linhas da tabela até ocupar a altura */
     function cabe(s, duro) { var m = s.querySelector('.miolo'); if (!m) return true;
@@ -496,6 +529,9 @@
       s.style.display = d0; }
     function tudo() { document.querySelectorAll('.slide').forEach(function (s) { ajusta(s); s.querySelectorAll('.area').forEach(liga); s.querySelectorAll('canvas[data-g]').forEach(function (cv) { var c = window.Chart && Chart.getChart(cv); if (c) c.destroy(); }); });
       if (window.Chart) document.querySelectorAll('canvas[data-g]').forEach(desenha); window.__deckPronto = true; }
+    /* observações: editando é texto puro; fora do foco, as linhas com - e 1. viram tópicos */
+    document.addEventListener('focusin', function (e) { var c = e.target.closest && e.target.closest('.caixa[data-obs]'); if (!c || c.classList.contains('ed')) return; c.classList.add('ed'); c.textContent = c.getAttribute('data-raw') || ''; });
+    document.addEventListener('focusout', function (e) { var c = e.target.closest && e.target.closest('.caixa[data-obs]'); if (!c) return; var t = c.innerText.replace(/\n+$/, ''); c.setAttribute('data-raw', t); c.classList.remove('ed'); c.innerHTML = window.__obsFmt ? window.__obsFmt(t) : t; });
     window.__ajustaDeck = tudo; window.__ajusta = tudo;
     (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () { tudo(); });
   }

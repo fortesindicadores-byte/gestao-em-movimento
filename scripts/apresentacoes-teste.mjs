@@ -135,7 +135,7 @@ const brl = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
 
 console.log('1 · GRL, out/26, o roteiro inteiro');
 {
-  const { ctx, pg, errs } = await abre();
+  const { ctx, pg, errs } = await abre({ tema: process.env.SHOT_TEMA || 'dark' });
   await pronto(pg); await pg.waitForTimeout(400);
   let E = await estado(pg);
   ok('abre no último mês com realizado', E.vig === '2026-10' && /fechamento de out\/26/.test(E.sub), E.sub);
@@ -203,6 +203,11 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   await pg.waitForTimeout(900);
   const u1 = await pg.evaluate(() => window.__ups.slice(-1)[0]);
   ok('as observações da árvore ficam gravadas no modelo', u1 && Object.values(u1.modelo.obs).includes('Compra de 12 pneus antecipada'), JSON.stringify(u1 && u1.modelo.obs));
+  { const o = await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument, c = d.querySelectorAll('.slide')[POS].querySelector('[data-obs]');
+      c.focus(); c.dispatchEvent(new d.defaultView.FocusEvent('focusin', { bubbles: true })); c.textContent = 'Leitura da unidade\n- pneu antecipado\n- recape atrasado\n1. trocar fornecedor\n2. rever aferição';
+      c.dispatchEvent(new d.defaultView.Event('input', { bubbles: true })); c.dispatchEvent(new d.defaultView.FocusEvent('focusout', { bubbles: true }));
+      return { n: c.querySelectorAll('.ob-l').length, num: [...c.querySelectorAll('.ob-m.n')].map(x => x.textContent).join(','), bol: c.querySelectorAll('.ob-m:not(.n)').length, raw: c.getAttribute('data-raw') }; });
+    ok('observações: linha com "-" vira tópico e "1." vira item numerado', o.n === 4 && o.bol === 2 && o.num === '1.,2.' && /^Leitura/.test(o.raw), JSON.stringify(o)); }
   // filtro por slide e bloco repetido
   await pg.evaluate(() => { POS = DECK.findIndex(d => d.item === 'fin'); mostra(); }); await pg.waitForTimeout(150);
   ok('o filtro do slide aparece nos blocos que abrem por projeto', await pg.evaluate(() => document.getElementById('flt').style.display !== 'none'));

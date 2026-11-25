@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611260130">
+<meta name="build" content="202611260300">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611260130"></script>
+<script src="../assets/apres-slides.js?v=202611260300"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -1052,7 +1052,7 @@ function sComp(inst){
   return pg.map((p,i)=>sl({titulo:tit+(pg.length>1?` (${i+1} de ${pg.length})`:''),corpo:tabFca([].concat(...p.map(g=>g.rs)))},inst,i?null:tit));
 }
 /* Scorecard: o Resumo Gerencial do painel (hero sem card, faixas, os 20 cards em 10×2, evolução mensal e destaques) */
-const SC_FG=c=>({g:'#3BB33B',y:'#EAB308',o:'#F97316',r:'#FF6666'})[c]||'#8E96A6';
+const SC_FG=c=>({g:'#00B300',y:'#E9A400',o:'#F97316',r:'#FF0000'})[c]||'#8E96A6';
 const bandSC=v=>v==null?'':v>=90?'g':v>=80?'y':v>=70?'o':'r', bandCost=v=>v==null?'':v>=100?'g':v>=98?'y':v>=95?'o':'r';
 function sSC(inst){
   const e=semDado('SC'); if(e) return [sl({titulo:'Scorecard',corpo:e},inst)];
@@ -1066,7 +1066,7 @@ function sSC(inst){
   const ks=S.cards.filter(c=>c.val!=null).slice().sort((a,b)=>rz(a)-rz(b));
   const v=Array(12).fill(null); S.mes.forEach(x=>{ if(x.m<=mi) v[x.m]=x.v; });
   const dq=`<div class="card pn-dq"><div class="gtit">Indicadores</div><div class="ls">${ks.map((c,i)=>`<div class="l"><span class="p">${i+1}º</span><span class="u">${esc(c.lbl)}${c.rr?' <small>R/Rem</small>':''}</span><span class="s" style="color:${SC_FG(clsOf(c))};min-width:2.6em;text-align:right">${Math.round(c.val)}%</span></div>`).join('')}</div></div>`;
-  const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Evolução mensal','Pontuação geral · '+mesLb(VIG),{tipo:'faixa',labels:MESC,v,faixas:[[90,'#3BB33B'],[80,'#EAB308'],[70,'#F97316'],[-1e9,'#FF6666']],foco:[mi],fmt:'n1'})}${dq}</div>`;
+  const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Evolução mensal','Pontuação geral · '+mesLb(VIG),{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'})}${dq}</div>`;
   return [sl({titulo:'Scorecard',corpo:`<div class="pn">${hero}${gr}</div>`},inst,'Scorecard')];
 }
 /* Termômetro: pontuação com MoM, posição Geo e Conlog, o ano e os Bottom KPIs */
@@ -1085,22 +1085,22 @@ function sTERM(inst){
   const nk=x=>String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(de|da|do|dos|das)\b/g,' ').replace(/[^a-z0-9% ]/g,' ').split(/\s+/).filter(Boolean).map(w=>w.length>3?w.replace(/s$/,''):w).join(' ');
   const by={}; T.forEach(t=>t.kp.forEach(k=>{ const n=nk(k.n), x=by[n]||(by[n]={n:k.n,ps:[],mx:0}); x.ps.push(k.p); x.mx=Math.max(x.mx,k.mx); }));
   const kp=Object.values(by).map(x=>Object.assign(x,{p:Math.round(med(x.ps))})).sort((a,b)=>a.p/a.mx-b.p/b.mx||a.p-b.p);
-  const cp=k=>k.p>=k.mx*.75?'#3BB33B':k.p>=k.mx*.25?'#EAB308':'#FF6666';
+  const cp=k=>k.p>=k.mx*.75?'#00B300':k.p>=k.mx*.25?'#E9A400':'#FF0000';
   const dq=`<div class="card pn-dq"><div class="gtit">Indicadores</div><div class="ls">${kp.map((k,i)=>`<div class="l"><span class="p">${i+1}º</span><span class="u">${esc(Cap(String(k.n).toLowerCase()))}</span><span class="s" style="color:${cp(k)};min-width:2.4em;text-align:right">${nf(k.p)}</span></div>`).join('')}</div></div>`;
-  const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#3BB33B'],[80,'#EAB308'],[70,'#F97316'],[-1e9,'#FF6666']],foco:[mi],fmt:'n1'})}${dq}</div>`;
+  const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'})}${dq}</div>`;
   return [sl({titulo:'Termômetro',corpo:`<div class="pn">${hero}${gr}</div>`},inst,'Termômetro')];
 }
 /* Frota de Elite: Resumo Gerencial com o ranking ao lado do gráfico do ano */
 function sELITE(inst){
   const x=D.ELITE; if(x&&x.cortina) return [sl({titulo:'Frota de Elite',corpo:AS.vazio('O resultado do Frota de Elite está em período de apuração.')},inst,'Frota de Elite')];
   const e=semDado('ELITE'); if(e) return [sl({titulo:'Frota de Elite',corpo:e},inst)];
-  const mi=+VIG.slice(5,7)-1, pos=x.rk.findIndex(r=>r.eu)+1, dot=v=>v==null?'#64748B':v>=95?'#3BB33B':v>=85?'#FACC15':'#FF6666';
+  const mi=+VIG.slice(5,7)-1, pos=x.rk.findIndex(r=>r.eu)+1, dot=v=>v==null?'#64748B':v>=95?'#00B300':v>=85?'#E9A400':'#FF0000';
   const hero=`<div class="pn-hero"><div class="hlbl">Pontuação total</div><div class="hval" style="color:${dot(x.pont)}">${x.pont==null?'—':nf(x.pont,2)}</div>
     <div class="hdel"><div>Posição<b>${pos?pos+'º de '+x.rk.length:'—'}</b></div><div>Indicadores críticos<b>${x.ind.filter(i=>i.v!=null&&i.v<85).length}</b></div></div></div>`;
   /* os indicadores ao lado do gráfico, do pior para o melhor (o desenho do Termômetro) */
   const ks=x.ind.filter(i=>i.v!=null).slice().sort((a,b)=>a.v-b.v);
   const dq=`<div class="card pn-dq"><div class="gtit">Indicadores</div><div class="ls">${ks.map((i,j)=>`<div class="l"><span class="p">${j+1}º</span><span class="u">${esc(i.l)}${i.p!=null?' <small>peso '+i.p+'</small>':''}</span><span class="s" style="color:${dot(i.v)};min-width:3em;text-align:right">${nf(i.v,1)}</span></div>`).join('')}</div></div>`;
-  const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','Frota de Elite · pontuação total do mês',{tipo:'faixa',labels:MESC,v:x.mes.map((y,i)=>i<=mi?y:null),faixas:[[95,'#3BB33B'],[85,'#FACC15'],[-1e9,'#FF6666']],foco:[mi],fmt:'n1'})}${dq}</div>`;
+  const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','Frota de Elite · pontuação total do mês',{tipo:'faixa',labels:MESC,v:x.mes.map((y,i)=>i<=mi?y:null),faixas:[[95,'#00B300'],[85,'#E9A400'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'})}${dq}</div>`;
   return [sl({titulo:'Frota de Elite',corpo:`<div class="pn">${hero}${gr}</div>`},inst,'Frota de Elite')];
 }
 /* Gestão à Vista: a foto de hoje da unidade (os mesmos números e cortes do Ranking do painel) e as observações */
@@ -1112,7 +1112,7 @@ function sGAV(inst){
   /* posição na rede: a média das aderências de cada unidade (siglas juntas) */
   const porB={}; G.todas.forEach(u=>{ const b=BASE(u.cod); if(u.score!=null) (porB[b]=porB[b]||[]).push(u.score); });
   const rk=Object.keys(porB).map(b=>({b,v:med(porB[b])})).sort((x,y)=>y.v-x.v), pos=rk.findIndex(x=>x.b===COD)+1, sc=med(meus.map(u=>u.score));
-  const C={g:'#3BB33B',y:'#EAB308',r:'#FF6666',m:'#8E96A6'};
+  const C={g:'#00B300',y:'#E9A400',r:'#FF0000',m:'#8E96A6'};
   const pm=(v,a=100,b=95)=>v==null?'m':v>=a?'g':v>=b?'y':'r';
   const pf=v=>v==null?'—':nf(v,1)+'%';
   const it=[
@@ -1179,7 +1179,7 @@ function monta(){
   set('titSub',`${UNI()}${VIG?' · fechamento de '+mesLb(VIG):''} · ${DECK.length} slides`);
 }
 let _foco=null;
-const docAtual=final=>AS.doc({base:new URL('../assets/',location.href).href,titulo:`${MOD.titulo} · ${UNI()}`,slides:DECK.map(d=>d.html),final,css:(document.getElementById('fca-tabela-css')||{}).textContent||''});
+const docAtual=final=>AS.doc({base:new URL('../assets/',location.href).href,titulo:`${MOD.titulo} · ${UNI()}`,slides:DECK.map(d=>d.html),final,escuro:!document.body.classList.contains('claro'),css:(document.getElementById('fca-tabela-css')||{}).textContent||''});
 const OLHO='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const OLHO_X='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19C5 19 1 12 1 12a20.3 20.3 0 0 1 5.1-5.9M9.9 5.2A10.4 10.4 0 0 1 12 5c7 0 11 7 11 7a20.6 20.6 0 0 1-2.2 3.2M1 1l22 22"/></svg>';
 const LAPIS='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
@@ -1419,12 +1419,12 @@ function trocaMini(){ escondeDica(); const l=document.querySelector('.side').cla
   try{ localStorage.setItem('apres_mini',l?'1':'0'); }catch(e){} const b=$('btMini'); if(b) b.title=l?'Expandir menu':'Recolher menu'; setTimeout(ajusta,260); }
 try{ if(localStorage.getItem('apres_mini')==='1'){ document.querySelector('.side').classList.add('mini'); $('btMini').title='Expandir menu'; } }catch(e){}
 
-/* ── tema (mesma chave do hub; os slides são sempre claros) ── */
+/* ── tema (mesma chave do hub): os slides acompanham o tema da tela, claro ou escuro (Renan, 26/11/2026) ── */
 const _SOL=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2M12 20.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1.5 12h2M20.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>`;
 const _LUA=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
 function aplicaTema(t){ document.body.classList.toggle('claro',t==='light'); try{ localStorage.setItem('bi_theme',t); }catch(e){}
   const b=$('btTema'); if(b) b.innerHTML=t==='light'?_LUA:_SOL; }
-function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark':'light'); }
+function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark':'light'); if(typeof DECK!=='undefined'&&DECK&&DECK.length) desenhaPrev(); }
 try{ aplicaTema(localStorage.getItem('bi_theme')||'dark'); }catch(e){ aplicaTema('dark'); }
 
 initApp();
@@ -1432,6 +1432,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611260130"></script>
+<script src="../assets/build-check.js?v=202611260300"></script>
 </body>
 </html>
