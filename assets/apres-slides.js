@@ -77,12 +77,13 @@
     '.div .sub{font-size:15px;color:#BFC5CF;margin:16px auto 0;max-width:480px;line-height:1.5}',
     /* conteúdo */
     '.cont{background:radial-gradient(80% 60% at 90% 0%,rgba(255,255,255,.35) 0%,transparent 60%),linear-gradient(rgba(255,255,255,.20),rgba(255,255,255,.20)),#E1E2E5}',
-    '.cab{position:absolute;left:40px;right:40px;top:26px;height:46px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #D9DCE2}',
-    '.cab h2{font-size:22px;font-weight:800;letter-spacing:-.2px;white-space:nowrap}',
-    '.cab .un{font-size:14px;font-weight:600;color:var(--txt3);padding-left:12px;border-left:1px solid #C9CDD5;line-height:18px;white-space:nowrap}',
-    '.cab .per{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--txt3);white-space:nowrap}',
+    '.cab{position:absolute;left:0;right:0;top:0;height:64px;padding:0 40px;display:flex;align-items:center;gap:12px;background:#1E2833;border-bottom:3px solid #F97316;z-index:2}',   /* cabeçalho grafite com filete laranja (Renan, 26/11/2026) */
+    '.cab h2{font-size:22px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;color:#fff}',
+    '.cab .un{font-size:14px;font-weight:600;color:#A9B1C0;padding-left:12px;border-left:1px solid rgba(255,255,255,.28);line-height:18px;white-space:nowrap}',
+    '.cab .per{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#C9D0DD;white-space:nowrap}',
+    '.cont::after{height:4px;background:#F97316}',   /* no slide de conteúdo a linha de baixo é laranja chapada e mais fina */
     '.cab .per svg{width:14px;height:14px}',
-    '.miolo{position:absolute;left:40px;right:40px;top:88px;bottom:24px}',
+    '.miolo{position:absolute;left:40px;right:40px;top:84px;bottom:20px}',
     '.pe{position:absolute;left:40px;right:40px;bottom:16px;display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:var(--txt3)}',
     '.card{background:linear-gradient(180deg,rgba(255,255,255,.6) 0%,rgba(255,255,255,0) 46%),rgba(255,255,255,.74);border:1px solid var(--brd);border-radius:11px;box-shadow:inset 0 1px 0 #fff,0 2px 12px rgba(0,0,0,.08);min-width:0;min-height:0}',
     '.rot{font-size:calc(10px*var(--k));font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--txt2)}',
