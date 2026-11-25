@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611260930">
+<meta name="build" content="202611261000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611260930"></script>
+<script src="../assets/apres-slides.js?v=202611261000"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -885,9 +885,9 @@ function sAHAV(inst){
   lin.push(linha('Receita Líquida',RL.rem,RL.real,false,'tot'));
   PAC_ORD.forEach(p=>{ const x=neg(somaR(R,r=>CUSTO(r)&&r.pac===p)); if(Math.abs(x.rem)<.5&&Math.abs(x.real)<.5) return; lin.push(linha(p,x.rem,x.real)); });
   lin.push(linha('Custo da frota',C.rem,C.real,true,'tot'));
-  if(EB.rem||EB.real) lin.push(linha('EBITDA',EB.rem,EB.real,false,'tot'));
+  if(EB.rem||EB.real) lin.push(linha('EBITDA',EB.rem,EB.real,false,'tot esc'));
   const ch=inst+'|'+VIG+(acumDe(inst)?'|acum':'')+'|ahav';
-  const corpo=`<div class="g2" style="grid-template-rows:auto 1fr">`+AS.tabela({cols:[{t:'Linha'},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'▲ R$',n:1},{t:'▲ %',n:1},{t:'AV rem.',n:1},{t:'AV real',n:1},{t:'▲ pp',n:1},{t:'Impacto R$',n:1}],linhas:lin}).replace('card tb','card tb compacta')+AS.obs({chave:ch,texto:MOD.obs[ch]||'',baixo:1,dica:'▲ contra o remunerado · AV = % da receita líquida · Impacto = ▲ pp × receita realizada'})+'</div>';
+  const corpo=`<div class="g2" style="grid-template-rows:1fr 1fr;height:100%">`+AS.tabela({cols:[{t:'Linha'},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'▲ R$',n:1},{t:'▲ %',n:1},{t:'AV rem.',n:1},{t:'AV real',n:1},{t:'▲ pp',n:1},{t:'Impacto R$',n:1}],linhas:lin}).replace('card tb','card tb alto')+AS.obs({chave:ch,texto:MOD.obs[ch]||'',baixo:1,dica:'▲ contra o remunerado · AV = % da receita líquida · Impacto = ▲ pp × receita realizada'})+'</div>';
   return [sl({titulo:'Financeiro · AH e AV',corpo},inst,'AH e AV')];
 }
 /* Dispersão de km: o Resumo Gerencial do Painel KM com as 10 placas que mais rodaram acima */
@@ -1469,6 +1469,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611260930"></script>
+<script src="../assets/build-check.js?v=202611261000"></script>
 </body>
 </html>

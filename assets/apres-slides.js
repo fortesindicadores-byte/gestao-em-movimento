@@ -241,6 +241,11 @@
     '.el-kpi .meia+.meia{border-left:1px solid var(--linha);padding-left:10px}.el-kpi .meia .f{width:12px;height:12px}.el-kpi.dupla .kl{letter-spacing:.3px}',
     '.el-leg{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.el-leg span{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:700;color:var(--txt2)}.el-leg i{width:10px;height:10px;border-radius:50%;display:inline-block}',
     'table.dre tr.eu td{background:rgba(249,115,22,.10);font-weight:800}',
+    /* AH e AV: a tabela com a mesma altura das observações; EBITDA no grafite do cabeçalho (Renan, 26/11/2026) */
+    '.tb.alto{height:100%}.tb.alto table.dre{height:100%}.tb.alto table.dre thead tr{height:0}',
+    'table.dre tr.esc td{background:#1E2833!important;color:#fff!important}table.dre tr.esc td .cg,table.dre tr.esc td [style*="00B300"]{color:#3BD13B!important}table.dre tr.esc td .cr,table.dre tr.esc td [style*="FF0000"]{color:#FF6B6B!important}',
+    /* sem nenhum canto arredondado nos blocos do slide (Renan, 26/11/2026) */
+    '.cont .card,.cont .tn,.cont .com .caixa,.cont .fcap,.cont .pn-kpi,.cont .tc,.cont .el-kpi,.cont .eg-st div,.cont table,.cont .tb{border-radius:0!important}',
     '.tb.compacta table.dre{font-size:10.5px}.tb.compacta table.dre th{font-size:9px;padding:6px 10px}.tb.compacta table.dre td{padding:5px 10px}',
     '.kgrid{display:grid;gap:10px;height:100%}',
     '.solto{padding:0 2px}','.solto .v{font-size:calc(54px*var(--k));font-weight:800;line-height:1;letter-spacing:-1px;margin-top:6px;white-space:nowrap}','.solto .u{font-size:calc(11px*var(--k));font-weight:600;color:var(--txt3);margin-top:4px}',
