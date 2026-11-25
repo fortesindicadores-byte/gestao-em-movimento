@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611261130">
+<meta name="build" content="202611261200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611261130"></script>
+<script src="../assets/apres-slides.js?v=202611261200"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -861,15 +861,22 @@ function sFin(inst){
     real.push(tr&&vk<=VIG?s.real:null); rem.push(tr&&vk<=VIG?s.rem:null); orc.push(rs.length?s.orc:null); }
   const pior=Object.keys(porPac).map(p=>({p,d:porPac[p].real-porPac[p].rem})).sort((a,b)=>b.d-a.d)[0];
   const leit=d>0&&pior&&pior.d>0?`<b>Custo ${FS.pct(Math.abs(dp))} acima do remunerado.</b> ${esc(pior.p)} responde por ${nf(Math.min(100,pior.d/d*100))}% do desvio.`:d<=0?`<b>Custo ${FS.pct(Math.abs(dp||0))} abaixo do remunerado.</b>`:'';
-  const hero=`<div class="card hero" style="grid-row:1/3"><div class="rot">Realizado${ac?' · acumulado '+acumLb(VIG):''}</div><div class="v">${FS.brlc(M.real)}</div><div class="sub">Combustíveis, Manutenções, Pneus e demais contas da frota</div>
-    <div class="hrem"><span class="rot">Remunerado</span><b>${FS.brlc(M.rem)}</b><small>pelo DRE</small></div><div class="gr">
-    <div><span class="rot">▲ Rem</span>${kv(d,FS.brlc(Math.abs(d)))}<small>${d>0?'gastou a mais':'gastou a menos'}</small></div><div><span class="rot">▲ Rem %</span>${dp==null?'<b class="nt">—</b>':kv(d,FS.pct(Math.abs(dp)))}<small>sobre o remunerado</small></div>
-    <div><span class="rot">▲ Rem YTD</span>${kv(dyv,FS.brlc(Math.abs(dyv)))}<small>${acumLb(VIG)}</small></div><div><span class="rot">▲ Rem YTD %</span>${dyp==null?'<b class="nt">—</b>':kv(dyv,FS.pct(Math.abs(dyp)))}<small>sobre o remunerado do ano</small></div>
-    <div class="gr2"><span class="rot">YoY</span>${A.real?kv(M.real-A.real,FS.pct(Math.abs(pct(M.real,A.real)))):'<b class="nt">—</b>'}<small>vs ${ac?acumLb(vA):mesLb(vA)}</small></div></div>
-    ${leit?`<div class="leit">${leit}</div>`:''}</div>`;
-  const corpo=`<div class="g2" style="grid-template-columns:370px 1fr;grid-template-rows:1fr 1fr">${hero}
+  /* cards no desenho do FP&A: fileira no topo, filete colorido à esquerda e o valor na cor do resultado (Renan, 26/11/2026) */
+  const tom=v=>v==null||!isFinite(v)||Math.abs(v)<1e-9?'n':v>0?'r':'g';
+  const fk=(rot,val,sub,t,main)=>`<div class="card fk fk-${t||'n'}${main?' fk-main':''}"><div class="fk-l">${rot}</div><div class="fk-v">${val}</div>${sub?`<div class="fk-s">${sub}</div>`:''}</div>`;
+  const yoy=A.real?M.real-A.real:null;
+  const cards=`<div class="fk-row">
+    ${fk('Realizado'+(ac?' · '+acumLb(VIG):''),FS.brlc(M.real),'custo da frota','n',1)}
+    ${fk('Remunerado',FS.brlc(M.rem),'pelo DRE','n')}
+    ${fk('▲ Rem',kv(d,FS.brlc(Math.abs(d))),d>0?'gastou a mais':'gastou a menos',tom(d))}
+    ${fk('▲ Rem %',dp==null?'<b class="nt">—</b>':kv(d,FS.pct(Math.abs(dp))),'sobre o remunerado',tom(d))}
+    ${fk('▲ Rem YTD',kv(dyv,FS.brlc(Math.abs(dyv))),acumLb(VIG),tom(dyv))}
+    ${fk('▲ Rem YTD %',dyp==null?'<b class="nt">—</b>':kv(dyv,FS.pct(Math.abs(dyp))),'sobre o rem. do ano',tom(dyv))}
+    ${fk('YoY',yoy==null?'<b class="nt">—</b>':kv(yoy,FS.pct(Math.abs(pct(M.real,A.real)))),'vs '+(ac?acumLb(vA):mesLb(vA)),tom(yoy))}</div>`;
+  const corpo=`<div class="fk-wrap">${cards}<div class="g2" style="grid-template-columns:1fr 1fr;flex:1 1 auto;height:auto;min-height:0">
     ${AS.grafico('Bridge do custo','do remunerado ao realizado · R$',{tipo:'bridge',passos})}
-    ${AS.grafico('Custo no ano','nominal · R$',{tipo:'ano',labels:lab,real,rem,orc,foco:ac?Array.from({length:+VIG.slice(5,7)},(_,i)=>i):[+VIG.slice(5,7)-1]},AS.LEG_ANO)}</div>`;
+    ${AS.grafico('Custo no ano','nominal · R$',{tipo:'ano',labels:lab,real,rem,orc,foco:ac?Array.from({length:+VIG.slice(5,7)},(_,i)=>i):[+VIG.slice(5,7)-1]},AS.LEG_ANO)}</div>
+    ${leit?`<div class="fk-leit">${leit}</div>`:''}</div>`;
   return [sl({titulo:'Financeiro · Custo da frota',corpo},inst,'Financeiro')];
 }
 /* Financeiro 2: AH e AV por pacote (a análise da Visão Financeira) */
@@ -1469,6 +1476,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611261130"></script>
+<script src="../assets/build-check.js?v=202611261200"></script>
 </body>
 </html>
