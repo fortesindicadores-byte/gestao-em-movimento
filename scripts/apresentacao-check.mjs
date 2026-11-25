@@ -59,10 +59,11 @@ await pg.addInitScript(() => {
 for (const alvo of PAINEL.split(',').map(s => s.trim()).filter(Boolean)) {
   const t0 = Date.now();
   await pg.goto(BASE + '/' + alvo, { waitUntil: 'domcontentloaded' });
-  await pg.waitForSelector(BOTAO, { state: 'attached', timeout: 120000 });
+  if (!process.env.APRES_EXPR) await pg.waitForSelector(BOTAO, { state: 'attached', timeout: 120000 });
   await pg.waitForFunction(PRONTO, null, { timeout: 300000, polling: 1000 });
   await pg.waitForTimeout(3000);
   console.log(`${alvo}: painel pronto em ${((Date.now() - t0) / 1000).toFixed(0)} s`);
+  if (process.env.APRES_EXPR) { const r = await pg.evaluate('(async()=>{ ' + process.env.APRES_EXPR + ' })()'); console.log(typeof r === 'string' ? r : JSON.stringify(r, null, 1)); continue; }
   const t1 = Date.now();
   const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 600000 }), pg.evaluate(b => document.querySelector(b).click(), BOTAO)]);
   const arq = path.join(DIR, dl.suggestedFilename());

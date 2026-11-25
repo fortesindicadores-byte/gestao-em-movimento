@@ -19,6 +19,10 @@ on:
         description: 'seletor do botão'
         required: false
         default: '#btApres'
+      expr:
+        description: 'corpo de função JS (com return) avaliado no painel pronto; com ele não clica no botão'
+        required: false
+        default: ''
       publicar:
         description: 'true = publica os PDFs cifrados em tmp-apres-pdf'
         required: false
@@ -58,6 +62,7 @@ jobs:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           APRES_PAINEL: ${{ github.event.inputs.painel }}
           APRES_PRONTO: ${{ github.event.inputs.pronto }}
+          APRES_EXPR: ${{ github.event.inputs.expr }}
           APRES_BOTAO: ${{ github.event.inputs.botao }}
           APRES_DIR: /tmp/apres
       - name: Cifrar e publicar
