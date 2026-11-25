@@ -435,11 +435,14 @@
   /* ── o deck: HTML inteiro, com o desenho dos gráficos, a árvore e o ajuste ao slide ── */
   /* tema escuro: as cores de resultado viram as do tema escuro do portal (verde #3BB33B, vermelho #FF5252, âmbar #F4A100) e o texto escuro vira claro */
   var ESCURO_COR = { '#00B300': '#3BB33B', '#FF0000': '#FF5252', '#E9A400': '#F4A100', '#161D2B': '#EEF2FA', '#E00000': '#FF5252', '#009A00': '#3BB33B', '#D00000': '#FF5252', '#008A00': '#3BB33B' };
-  /* variantes de teste (Renan, 26/11/2026): ?estilo=limpo = Scorecard sem card e fundo mais claro; ?estilo=echarts = gráficos em ECharts, infográfico */
+  /* variantes de teste (Renan, 26/11/2026): ?estilo=limpo = todos os slides sem card, com mais folga nas bordas e entre os blocos; ?estilo=echarts = gráficos em ECharts, infográfico */
   var CSS_VAR = [
     
-    'body.est-limpo .cont[data-sec="sc"] .card{background:transparent!important;border-color:transparent!important;box-shadow:none!important}',
-    'body.est-limpo.escuro .cont[data-sec="sc"]{background:#23252A}',
+    /* cópia sem card em TODOS os slides (Renan, 26/11/2026: "Faça uma cópia nesse estilo pra todos slides. Mas espaçamento lateral e em cima e baixo melhor e distribuído melhor") */
+    'body.est-limpo .cont .card{background:transparent!important;border-color:transparent!important;box-shadow:none!important}',
+    'body.est-limpo .cont .miolo{left:40px;right:40px;top:92px;bottom:28px}body.est-limpo .cont .cab{padding:0 40px}',
+    'body.est-limpo .cont .g2,body.est-limpo .cont .arv,body.est-limpo .cont .pn-gr,body.est-limpo .cont .kgrid{column-gap:44px;row-gap:28px}body.est-limpo .cont .pn{gap:24px}body.est-limpo .cont .kpis,body.est-limpo .cont .tc-row,body.est-limpo .cont .el-cards{gap:28px}',
+    'body.est-limpo .cont .tb .t{padding-left:0;padding-right:0}body.est-limpo .cont .gc{padding-top:0;padding-bottom:0}',
     /* cópia ECharts: o hero vira uma fileira de cards, o principal no grafite do cabeçalho (Renan, 26/11/2026) */
     '.eh-row{display:grid;gap:12px;flex:0 0 calc(132px*var(--k));min-height:0}',
     '.eh-row .card{display:flex;flex-direction:column;justify-content:center;padding:calc(12px*var(--k)) 20px}',
@@ -448,7 +451,7 @@
     '.eh-row .eh-m{font-size:calc(10.5px*var(--k));font-weight:600;color:var(--txt3);margin-top:calc(4px*var(--k))}',
     '.eh-row .card.eh-main{background:#1E2833!important;border-color:#1E2833!important;box-shadow:0 2px 12px rgba(0,0,0,.12)!important}',
     '.eh-row .card.eh-main .eh-l,.eh-row .card.eh-main .eh-m,.eh-row .card.eh-main .eh-v small{color:#C9D0DD}.eh-row .card.eh-main .eh-v{font-size:calc(44px*var(--k))}',
-    'body.est-limpo .cont[data-sec="sc"] .card{padding-left:0!important;padding-right:0!important}body.est-limpo .cont[data-sec="sc"] .pn-dq .l{padding-left:0;padding-right:0;border-bottom:0}',   /* sem card, o conteúdo começa na mesma linha do hero (Renan, 26/11/2026) */
+    'body.est-limpo .cont .card{padding-left:0!important;padding-right:0!important}body.est-limpo .cont .pn-dq .l{padding-left:0;padding-right:0;border-bottom:0}',   /* sem card, o conteúdo começa na mesma linha do hero (Renan, 26/11/2026) */
     '.ech{position:absolute;inset:0}.cv{position:relative}',
     '.eg-hero{display:flex;flex-direction:column;padding:10px 16px 14px;min-height:0}.eg-hero .cv{flex:1 1 0;min-height:0}',
     '.eg-st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}',
