@@ -130,12 +130,12 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   const ids = E.seq.map(x => x.split('|')[1]);
   ok('sequência do roteiro', ids.join() === 'capa,sumario,div:res,prometido,sc,fin,ahav,div:pq,km,arv,div:ind,term,rpm,div:rec,elite,comp,fim', ids.join());
   const T = await titulos(pg);
-  ok('árvore do custo, depois cada pacote que desviou (maior primeiro) com o FCA dele',
-    T.indexOf('Árvore do custo') > 0 && T.indexOf('Árvore · Pneus') === T.indexOf('Árvore do custo') + 1 && T[T.indexOf('Árvore · Pneus') + 1] === 'FCA · Pneus' && T[T.indexOf('FCA · Pneus') + 1] === 'Árvore · Manutenções' && T[T.indexOf('Árvore · Manutenções') + 1] === 'FCA · Manutenções', T.join(' | '));
-  ok('todo pacote que desviou abre a árvore (Combustíveis e Seguros também); Seguros, sem fato no FCA, sem o slide do FCA', T.includes('Árvore · Combustíveis') && T.includes('Árvore · Seguros e licenças') && !T.includes('FCA · Seguros e licenças') && !T.some(t => /Árvore · ICMS/.test(t)), T.join(' | '));
+  ok('um bloco por projeto: a árvore do projeto e, em seguida, cada pacote que desviou nele (maior primeiro) com o FCA dele',
+    T.indexOf('Árvore · Rota') > 0 && T[T.indexOf('Árvore · Rota') + 1] === 'Árvore · Rota · Pneus' && T[T.indexOf('Árvore · Rota · Pneus') + 1] === 'FCA · Rota · Pneus' && T[T.indexOf('FCA · Rota · Pneus') + 1] === 'Árvore · Rota · Manutenções' && T[T.indexOf('Árvore · Rota · Manutenções') + 1] === 'FCA · Rota · Manutenções' && T.includes('Árvore · Rota (van)'), T.join(' | '));
+  ok('todo pacote que desviou abre a árvore (Combustíveis e Seguros também); Seguros, sem fato no FCA, sem o slide do FCA', T.includes('Árvore · Rota · Combustíveis') && T.includes('Árvore · Rota · Seguros e licenças') && !T.some(t => /FCA · .*Seguros/.test(t)) && !T.some(t => /ICMS/.test(t)), T.join(' | '));
   ok('divisórias numeradas por capítulo', await pg.evaluate(() => { const x = document.createElement('div'); x.innerHTML = DECK.filter(d => d.item.startsWith('div:')).map(d => d.html).join(''); return x.textContent.replace(/\s+/g, ' '); }).then(t => /01.*Resultado.*02.*Por quê.*03.*Indicadores.*04.*Reconhecimento/.test(t)));
   const sum = await txt(pg, 'sumario');
-  ok('sumário com os slides (sem as divisórias) e a página de cada um', /O que prometemos/.test(sum) && /Árvore · Pneus/.test(sum) && /FCA · Manutenções/.test(sum) && !/Resultado/.test(sum.replace('Resultado', '').replace(/Resultado/g, '')) , sum.slice(0, 220));
+  ok('sumário com os slides (sem as divisórias) e a página de cada um', /O que prometemos/.test(sum) && /Árvore · Rota · Pneus/.test(sum) && /FCA · Rota · Manutenções/.test(sum) && !/Resultado/.test(sum.replace('Resultado', '').replace(/Resultado/g, '')) , sum.slice(0, 220));
   // Financeiro
   const rem = 100000 + 5000 + 40000 + 6000 + 20000 + 9000, R = rem * 1.5;   // Rota + Van (×0,5)
   const realRota = 100000 * 1.02 + 5000 * 1.02 + 40000 * 1.2 + 6000 * 1.02 + 20000 * 1.5 + 9000 * 1.02, real = realRota + rem * .5;
@@ -155,7 +155,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   ok('Termômetro: pontuação geral com MoM, Posição Geo e Conlog, todos os indicadores do pior ao melhor', /Pontuação geral/.test(te) && /Posição Geo/.test(te) && /Posição Conlog/.test(te) && /Indicadores/.test(te) && /Ordens de serviço vencidas/i.test(te), te.slice(0, 260));
   const el = await txt(pg, 'elite');
   ok('Frota de Elite: pontuação, indicadores, ano e ranking com a unidade', /Pontuação/.test(el) && /Ranking das unidades/.test(el) && /PIRAI EMPURRADA/.test(el) && /Disponib\./.test(el), el.slice(0, 220));
-  const fm = await pg.evaluate(() => { const i = DECK.findIndex(d => /<h2>FCA · Manutenções<\/h2>/.test(d.html)); const x = document.createElement('div'); x.innerHTML = DECK[i].html; return { t: x.textContent.replace(/\s+/g, ' '), rs: [...x.querySelectorAll('td[rowspan]')].map(t => t.getAttribute('rowspan')), linhas: x.querySelectorAll('table.fg-rel tr[data-id]').length }; });
+  const fm = await pg.evaluate(() => { const i = DECK.findIndex(d => /<h2>FCA · Rota · Manutenções<\/h2>/.test(d.html)); const x = document.createElement('div'); x.innerHTML = DECK[i].html; return { t: x.textContent.replace(/\s+/g, ' '), rs: [...x.querySelectorAll('td[rowspan]')].map(t => t.getAttribute('rowspan')), linhas: x.querySelectorAll('table.fg-rel tr[data-id]').length }; });
   ok('FCA de Manutenções: fato mesclado com desvio, contas e YTD; causa mesclada sobre as duas ações', fm.linhas === 2 && fm.rs.join() === '2,2,2,2' && /YTD/.test(fm.t) && /Man\. Veículos e Equip\./.test(fm.t) && /1\.1\.\s*Causa raiz/.test(fm.t), JSON.stringify(fm).slice(0, 260));
   const pr = await txt(pg, 'prometido');
   ok('O que prometemos: as ações do FCA de set/26 (2, 1 concluída)', /O que prometemos em set\/26/.test(pr) && /Feedback|Vistoriar/.test(pr) && /50,0%/.test(pr), pr.slice(0, 200));
@@ -166,7 +166,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   const RUINS = await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument, ruins = [];
     d.querySelectorAll('.slide').forEach((s, i) => { s.style.display = ''; const m = s.querySelector('.miolo'); if (m && (m.scrollHeight > m.clientHeight + 2 || m.scrollWidth > m.clientWidth + 2)) ruins.push(i + 1); }); mostra(); return ruins; }); ok('nenhum slide de conteúdo passa do slide nem corta texto', !RUINS.length, RUINS.join(','));
   // FCA no slide: abrir, mudar o status, criar ação
-  await pg.click('.sq[data-id="arv"]'); await pg.evaluate(() => { POS = DECK.findIndex(d => /<h2>FCA · Manutenções<\/h2>/.test(d.html)); mostra(); }); await pg.waitForTimeout(200);
+  await pg.click('.sq[data-id="arv"]'); await pg.evaluate(() => { POS = DECK.findIndex(d => /<h2>FCA · Rota · Manutenções<\/h2>/.test(d.html)); mostra(); }); await pg.waitForTimeout(200);
   await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; d.querySelector('table.fg-rel tr[data-id="2"] td.ln').click(); });
   await pg.waitForTimeout(200);
   ok('clicar na ação abre a caixa do FCA com o texto da linha', await pg.evaluate(() => document.getElementById('kmodal-ov').style.display === 'flex' && /Cotar embreagem/.test(document.getElementById('km-acao').value)));
@@ -179,7 +179,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   await pg.evaluate(() => fechaFca()); await pg.waitForTimeout(300);
   ok('a nova ação aparece no slide', await pg.evaluate(() => DECK.some(d => /data-id="900"/.test(d.html))));
   // observações na árvore
-  await pg.evaluate(() => { POS = DECK.findIndex(d => /<h2>Árvore · Pneus<\/h2>/.test(d.html)); mostra(); }); await pg.waitForTimeout(150);
+  await pg.evaluate(() => { POS = DECK.findIndex(d => /<h2>Árvore · Rota · Pneus<\/h2>/.test(d.html)); mostra(); }); await pg.waitForTimeout(150);
   await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument, c = d.querySelectorAll('.slide')[POS].querySelector('[data-obs]'); c.textContent = 'Compra de 12 pneus antecipada'; c.dispatchEvent(new d.defaultView.Event('input', { bubbles: true })); });
   await pg.waitForTimeout(900);
   const u1 = await pg.evaluate(() => window.__ups.slice(-1)[0]);
