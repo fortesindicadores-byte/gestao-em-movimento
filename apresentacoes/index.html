@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611251330">
+<meta name="build" content="202611252000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611251800"></script>
+<script src="../assets/apres-slides.js?v=202611252000"></script>
 <script src="../assets/fca-auto.js?v=202611190400"></script>
 <script src="../assets/fca-tabela.js?v=202610201330"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -674,8 +674,8 @@ function colSC(a){
   const pk=new Set([vigKeyN(sel)]), yr=sel.getFullYear(), mi=sel.getMonth();
   const pont=(ks,us)=>{ const v=ICS.filter(o=>ks.has(vigKeyN(o.vigD))&&us.indexOf(o.unidade)>=0).map(o=>o.pont).filter(v=>v!=null); return v.length?v.reduce((x,y)=>x+y,0)/v.length:null; };
   const CV=cardVals(pk,yr,mi,unis);
-  const L=[['Custos Frota','custos'],['Disponibilidade','disp'],['DPO/VPO Sustentável','dpo'],['Preventivas','prev',95],['Consumo Km/L','kml'],['Saúde dos Pneus','saude'],['Pressão dos Pneus','pressao'],['Aferições','afer'],['Checklist T1/T2','chkT'],['Checklist Apoio','chkApoio'],['Conformidade Frota','conf'],['Stress Test Cam.','stCam'],['Stress Test Emp.','stEmp'],['SLA Atendimento','sla'],['CIVF','civf'],['Atingimento KM','kmAt'],['R$/km','rkm'],['R$/L','rl'],['FCA Prazo','fcaP'],['FCA Conclusão','fcaC']];
-  const cards=L.map(x=>({lbl:x[0],peso:SCORE_PESOS[x[1]],val:CV[x[1]],good:x[2]||90}));
+  const L=[['Custos Frota','custos',0,1],['Disponibilidade','disp'],['DPO/VPO Sustentável','dpo'],['Preventivas','prev',95],['Consumo Km/L','kml',0,1],['Saúde dos Pneus','saude'],['Pressão dos Pneus','pressao'],['Aferições','afer'],['Checklist T1/T2','chkT'],['Checklist Apoio','chkApoio'],['Conformidade Frota','conf'],['Stress Test Cam.','stCam'],['Stress Test Emp.','stEmp'],['SLA Atendimento','sla'],['CIVF','civf'],['Atingimento KM','kmAt',0,1],['R$/km','rkm',0,1],['R$/L','rl',0,1],['FCA Prazo','fcaP'],['FCA Conclusão','fcaC']];
+  const cards=L.map(x=>({lbl:x[0],peso:SCORE_PESOS[x[1]],val:CV[x[1]],good:x[2]||90,rr:!!x[3]}));
   const rk=UNI_LIST.map(u=>({u:u,s:scoreFromNotes(unitScores(u,pk,yr,mi)),eu:unis.indexOf(u)>=0})).filter(x=>x.s!=null).sort((x,y)=>y.s-x.s);
   const mes=VIGS.filter(d=>d.getFullYear()===yr).map(d=>({m:d.getMonth(),v:pont(new Set([vigKeyN(d)]),unis)}));
   const ant=VIGS.filter(d=>vigKeyN(d)<vigKeyN(sel)).pop();
@@ -806,7 +806,8 @@ function sAHAV(inst){
   PAC_ORD.forEach(p=>{ const x=neg(somaR(R,r=>CUSTO(r)&&r.pac===p)); if(Math.abs(x.rem)<.5&&Math.abs(x.real)<.5) return; lin.push(linha(p,x.rem,x.real)); });
   lin.push(linha('Custo da frota',C.rem,C.real,true,'tot'));
   if(EB.rem||EB.real) lin.push(linha('EBITDA',EB.rem,EB.real,false,'tot'));
-  const corpo=AS.tabela({titulo:'Análise horizontal e vertical',sub:'contra o remunerado · AV = % da receita líquida',cols:[{t:'Linha'},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'▲ R$',n:1},{t:'▲ %',n:1},{t:'AV rem.',n:1},{t:'AV real',n:1},{t:'▲ pp',n:1},{t:'Impacto R$',n:1}],linhas:lin}).replace('card tb','card tb fill');
+  const ch=inst+'|'+VIG+'|ahav';
+  const corpo=`<div class="g2" style="grid-template-rows:1fr auto">`+AS.tabela({cols:[{t:'Linha'},{t:'Remunerado',n:1},{t:'Realizado',n:1},{t:'▲ R$',n:1},{t:'▲ %',n:1},{t:'AV rem.',n:1},{t:'AV real',n:1},{t:'▲ pp',n:1},{t:'Impacto R$',n:1}],linhas:lin}).replace('card tb','card tb fill')+AS.obs({chave:ch,texto:MOD.obs[ch]||'',baixo:1,dica:'▲ contra o remunerado · AV = % da receita líquida · Impacto = ▲ pp × receita realizada'})+'</div>';
   return [sl({titulo:'Financeiro · AH e AV',corpo},inst,'AH e AV')];
 }
 /* Dispersão de km: o Resumo Gerencial do Painel KM com as 10 placas que mais rodaram acima */
@@ -820,11 +821,12 @@ function sKM(inst){
     <div><span class="rot">Km remunerado</span><b>${nf(M.rem)}</b><small>com o balanço de massa</small></div><div><span class="rot">▲ Km</span>${kv(d,nf(Math.abs(d)))}<small>${d>0?'rodou a mais':'rodou a menos'}</small></div>
     <div><span class="rot">Dispersão</span>${dp==null?'<b class="nt">—</b>':kv(dp,FS.pct(Math.abs(dp)))}<small>meta ${K.meta}%</small></div><div><span class="rot">Impacto</span>${kv(M.imp,FS.brlc(Math.abs(M.imp)))}<small>km × R$/km rem.</small></div></div>
     <div class="leit"><b>No ano: dispersão de ${dy==null?'—':FS.pct(dy)}</b> e impacto de ${FS.brlc(Y.imp)}.</div></div>`;
-  const pl=K.pl.filter(p=>passaP(inst,p.proj)&&p.delta>0).sort((a,b)=>b.imp-a.imp||b.delta-a.delta).slice(0,10);
-  const tab=AS.tabela({titulo:'Bottom 10 placas',sub:'as que mais rodaram acima do remunerado',cols:[{t:'Placa'},{t:'Projeto'},{t:'Km rem.',n:1},{t:'Km real',n:1},{t:'▲ km',n:1},{t:'▲ %',n:1},{t:'Impacto',n:1}],
-    linhas:pl.map(p=>({c:[esc(p.placa),esc(Cap(String(p.proj).toLowerCase())),nf(p.rem),nf(p.real),FS.seta(p.delta,nf(Math.abs(p.delta))),p.rem?FS.seta(p.delta,FS.pct(Math.abs(p.delta/p.rem*100))):'—',FS.seta(p.imp,FS.brlc(Math.abs(p.imp)).replace('R$ ',''))]})),vazio:'Nenhuma placa acima do remunerado no mês'}).replace('card tb','card tb fill');
-  const corpo=`<div class="g2" style="grid-template-columns:370px 1fr;grid-template-rows:1fr 1.15fr">${hero}
-    ${AS.grafico('Dispersão no ano','km rodado contra o remunerado · %',{tipo:'meta',labels:MESC,v,meta:K.meta,foco:[+VIG.slice(5,7)-1],fmt:'pct'})}${tab}</div>`;
+  const pl=K.pl.filter(p=>passaP(inst,p.proj)&&p.delta>0&&p.rem>0).map(p=>Object.assign({pc:p.delta/p.rem*100},p));
+  const topP=pl.slice().sort((a,b)=>b.pc-a.pc).slice(0,10), topI=pl.slice().sort((a,b)=>b.imp-a.imp).slice(0,10);
+  const barras=(t,sub,ls,camp,fmt)=>ls.length?AS.grafico(t,sub,{tipo:'barrasH',labels:ls.map(p=>p.placa),v:ls.map(p=>p[camp]),cores:ls.map(()=>'#FF0000'),fmt}):`<div class="card gc">${AS.vazio('Nenhuma placa acima do remunerado no mês')}</div>`;
+  const corpo=`<div class="g2" style="grid-template-columns:370px 1fr 1fr;grid-template-rows:1fr 1.25fr">${hero.replace('grid-row:1/3','grid-row:1/3;grid-column:1')}
+    <div style="grid-column:2/4;min-height:0;display:flex">${AS.grafico('Dispersão no ano','km rodado contra o remunerado · %',{tipo:'meta',labels:MESC,v,meta:K.meta,foco:[+VIG.slice(5,7)-1],fmt:'pct'}).replace('class="card gc"','class="card gc" style="flex:1"')}</div>
+    ${barras('Bottom 10 placas · ▲ %','km rodado acima do remunerado',topP,'pc','pct')}${barras('Bottom 10 placas · Impacto','R$ do km a mais',topI,'imp','brl')}</div>`;
   return [sl({titulo:'Dispersão de km',corpo},inst,'Dispersão de km')];
 }
 /* abre só os pacotes da frota que têm FCA (Seguros e ICMS são corporativos e não geram FCA).
@@ -841,7 +843,8 @@ function sArv(inst){
   const chave=k=>inst+'|'+VIG+'|'+k, out=[sl({titulo:'Árvore do custo',corpo:AS.arvore([n0,n1],{chave:chave('custo'),texto:MOD.obs[chave('custo')]||''})},inst,'Árvore do custo')];
   // km e R$/km do mês (Painel KM) para abrir a conta que mais pesou
   let km=null; if(D.KM&&!D.KM.erro){ const vk=VIG.slice(5,7)+'/'+VIG.slice(0,4), ks=D.KM.rows.filter(r=>r.vig===vk&&passaP(inst,r.proj)); const s=ks.reduce((a,r)=>{ a.rem+=r.rem; a.real+=r.real; return a; },{rem:0,real:0}); if(s.rem>0&&s.real>0) km=s; }
-  pacs.filter(x=>['Combustíveis','Manutenções','Pneus'].includes(x.p)&&desviou(x.m)).sort((a,b)=>(b.m.real-b.m.rem)-(a.m.real-a.m.rem)).forEach(x=>{
+  const temFato=p=>FCA.some(r=>/custo/i.test(r.origem||'')&&pacFca(r.fato)===p&&passaP(inst,String(r.projeto||'').split('-')[0].trim()));
+  pacs.filter(x=>['Combustíveis','Manutenções','Pneus'].includes(x.p)&&(desviou(x.m)||temFato(x.p))).sort((a,b)=>(b.m.real-b.m.rem)-(a.m.real-a.m.rem)).forEach(x=>{
     const cts=[...new Set(R.filter(r=>r.pac===x.p).map(r=>r.c))].map(c=>({c,m:de(r=>r.pac===x.p&&r.c===c,VIG),a:de(r=>r.pac===x.p&&r.c===c,vA)})).filter(o=>Math.abs(o.m.rem)>.5||Math.abs(o.m.real)>.5).sort((a,b)=>(b.m.real-b.m.rem)-(a.m.real-a.m.rem)).slice(0,6);
     const r0=[{id:'r',t:x.p,real:x.m.real,rem:x.m.rem,ant:x.a.real}], r1=cts.map((o,i)=>({id:'c'+i,pai:'r',t:contaC(o.c),real:o.m.real,rem:o.m.rem,ant:o.a.real})), niv=[r0,r1];
     const top=cts[0]; if(km&&top&&top.m.real>top.m.rem&&x.p!=='ICMS'){ const rR=top.m.real/km.real, rM=top.m.rem/km.rem;
@@ -857,18 +860,36 @@ function gruposFca(rows){
   const g={}; rows.forEach(r=>{ const k=(r.projeto||'')+'|'+String(r.fato||'').split('\n')[0]; (g[k]=g[k]||[]).push(r); });
   return Object.values(g).map(rs=>{ const r=rs[0], d=FcaTabela.desvioCurto(r.fato_desvio||''), pj=String(r.projeto||''), ab=pj.split('-')[0].trim();
     return {fato:String(r.fato||'').split('\n')[0],proj:ab?Cap(ab.toLowerCase())+(pj.includes('-')?' · '+pj.split('-').slice(1).join('-').trim():''):'',tot:d.tot||(d.resto||[]).join(' · '),contas:d.contas,ytd:d.ytd,
-      linhas:rs.map(x=>({id:x.id,causa:x.causa,acao:x.acao,resp:x.responsavel,prazo:x.prazo,status:x.status})),peso:(String(d.tot).match(/[\d.]+/)||['0'])[0].replace(/\./g,'')*(/▼/.test(d.tot)?-1:1)}; })
+      rs,linhas:rs.map(x=>({id:x.id,causa:x.causa,acao:x.acao,resp:x.responsavel,prazo:x.prazo,status:x.status})),peso:(String(d.tot).match(/[\d.]+/)||['0'])[0].replace(/\./g,'')*(/▼/.test(d.tot)?-1:1)}; })
     .sort((a,b)=>b.peso-a.peso);
 }
 /* paginar: grupos inteiros, até ~9 linhas por slide (um grupo maior vai sozinho) */
-function paginas(gr,max){ const out=[]; let cur=[],n=0; gr.forEach(g=>{ const k=Math.max(1,g.linhas.length); if(cur.length&&n+k>max){ out.push(cur); cur=[]; n=0; } cur.push(g); n+=k; }); if(cur.length) out.push(cur); return out; }
+/* peso do fato na página: cada ação conta 1; as placas e OS da causa e as contas do fato pesam junto, para a tabela não estourar o slide */
+const pesoFca=g=>{ const cz=new Set(); let w=0; g.rs.forEach(r=>{ w+=1+(String(r.acao||'').length>110?.4:0); const c=String(r.causa||'').trim(); if(c&&!cz.has(c)){ cz.add(c); w+=.45*(c.match(/\n\s*-\s+/g)||[]).length+(c.length>160?.5:0); } });
+  return Math.max(w,1+.35*(String(g.rs[0].fato_desvio||'').split('\n').length)); };
+function paginas(gr,max){ const out=[]; let cur=[],n=0; gr.forEach(g=>{ const k=g.rs?pesoFca(g):Math.max(1,g.linhas.length); if(cur.length&&n+k>max){ out.push(cur); cur=[]; n=0; } cur.push(g); n+=k; }); if(cur.length) out.push(cur); return out; }
 function sFca(inst,origem,pac){
   const rows=FCA.filter(r=>new RegExp(origem,'i').test(r.origem||'')&&(!pac||pacFca(r.fato)===pac)&&passaP(inst,String(r.projeto||'').split('-')[0].trim()));
   const tit=origem==='RPM'?'FCAs RPM':'FCA · '+pac;
   if(FCA_ERR) return [sl({titulo:tit,corpo:AS.vazio('Não deu para ler o FCA: '+FCA_ERR)},inst)];
   if(!rows.length) return [sl({titulo:tit,corpo:AS.vazio(origem==='RPM'?'Nenhum indicador da RPM abaixo da meta no FCA de '+mesLb(VIG)+'.':'O FCA de '+mesLb(VIG)+' não tem fato de '+pac+'. Gere o FCA de Custos no painel FCA.')},inst,tit)];
-  const pg=paginas(gruposFca(rows),origem==='RPM'?10:9);
-  return pg.map((p,i)=>sl({titulo:tit+(pg.length>1?` (${i+1} de ${pg.length})`:''),corpo:AS.fca(p,{edit:true})},inst,i?null:tit));
+  const pg=paginas(gruposFca(rows),origem==='RPM'?9:8);
+  return pg.map((p,i)=>sl({titulo:tit+(pg.length>1?` (${i+1} de ${pg.length})`:''),corpo:tabFca([].concat(...p.map(g=>g.rs)))},inst,i?null:tit));
+}
+/* a Tabela do FCA no desenho do painel FCA (FcaTabela, o mesmo HTML e a mesma pílula de status) */
+const projRot=s=>{ const t=String(s||'').replace(/\s*\(INATIVO\)\s*/gi,' ').trim(), i=t.indexOf('-'); return (i>=0?t.slice(0,i).trim():t)||'—'; };
+const chipSt=st=>{ st=String(st||'').trim(); if(!st) return '<span style="color:var(--txt3)">—</span>';
+  if(/conclu/i.test(st)) return `<span class="chip" style="background:rgba(59,179,59,.85);color:#06210a">${esc(st)}</span>`;
+  if(/andamento/i.test(st)) return `<span class="chip" style="background:rgba(244,161,0,.9);color:#241900">${esc(st)}</span>`;
+  if(/cancel/i.test(st)) return `<span class="chip" style="background:rgba(120,120,120,.5);color:#fff">${esc(st)}</span>`;
+  if(/n[ãa]o inici/i.test(st)) return `<span class="chip" style="background:rgba(227,52,52,.85);color:#2a0606">${esc(st)}</span>`;
+  return `<span class="chip" style="background:rgba(148,163,184,.25);color:var(--txt)">${esc(st)}</span>`; };
+const prazoSt=r=>{ if(/conclu|cancel/i.test(r.status||'')) return 'No prazo'; if(!r.prazo) return 'Sem prazo'; return String(r.prazo).slice(0,10)<new Date().toISOString().slice(0,10)?'Vencida':'No prazo'; };
+const triFca=h=>String(h==null?'':h).replace(/▲/g,'<span style="color:var(--red)">▲</span>').replace(/▼/g,'<span style="color:var(--green)">▼</span>');
+function tabFca(rs,add){
+  const h=FcaTabela.html(rs.map(r=>({id:r.id,proj:projRot(r.projeto),vig:r.vigencia,fato:r.fato,desvio:r.fato_desvio,causa:r.causa,acao:r.acao,resp:r.responsavel,prazo:r.prazo,status:r.status||'Não iniciada'})),
+    {add:add!==false,tri:triFca,chip:chipSt,prazoState:prazoSt,diasVenc:()=>0,defaultStatus:'Não iniciada'});
+  return AS.fcaPainel(h.replace(/^<div class="rel-section"><div class="rel-wrap">/,'').replace(/<\/div><\/div>$/,''),rs.length);
 }
 /* O que prometemos no mês passado: as ações do FCA anterior */
 function sPrometido(inst){
@@ -885,64 +906,63 @@ function sPrometido(inst){
     AS.kpi({rot:'Em andamento',v:nf(andm)}),AS.kpi({rot:'Vencidas',v:`<span style="color:${venc?'#FF0000':'#161D2B'}">${nf(venc)}</span>`,m:'prazo passado e aberta'}),
     AS.kpi({rot:'Aderência',v:`<span style="color:${cor(bandG(ader,85))}">${FS.pct(ader)}</span>`,m:'no prazo e concluídas'})].join('')}</div>`;
   const dt=p=>{ const m=String(p||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1]}`:'—'; };
-  const tab=AS.tabela({titulo:'Ações ainda abertas',sub:abertas.length?'da mais antiga para a mais nova':'',cols:[{t:'Fato'},{t:'Ação'},{t:'Resp.'},{t:'Prazo'},{t:'Status'}],
-    linhas:abertas.map(r=>({c:[esc(String(r.fato||'').split('\n')[0]),esc(String(r.acao||'').replace(/^\s*\d+(\.\d+)*\.\s*/,'').split('\n')[0]),esc(r.responsavel||'—'),`<span style="${r.prazo&&String(r.prazo).slice(0,10)<hoje?'color:#D00000;font-weight:700':''}">${dt(r.prazo)}</span>`,AS.ST(r.status)]})),vazio:'Todas as ações do mês passado estão fechadas.'}).replace('card tb',abertas.length>5?'card tb fill':'card tb');
+  const tab=abertas.length?tabFca(abertas,false):`<div class="card" style="padding:18px 20px;font-weight:600;color:var(--txt3)">Todas as ações do mês passado estão fechadas.</div>`;
   return [sl({titulo:tit,per:perTxt(ant),corpo:`<div class="g2" style="grid-template-rows:auto ${abertas.length>5?'1fr':'auto'};align-content:start">${cards}${tab}</div>`},inst,'O que prometemos')];
 }
 /* Compromissos do mês: as ações abertas do FCA do mês, com dono e prazo */
 function sComp(inst){
-  const tit='Compromissos do mês', hoje=new Date().toISOString().slice(0,10);
-  const rs=FCA.filter(r=>!!String(r.acao||'').replace(/^\s*\d+(\.\d+)*\.\s*/,'').trim()&&!/conclu|cancel/i.test(r.status||'')&&passaP(inst,String(r.projeto||'').split('-')[0].trim()))
-    .sort((a,b)=>String(a.prazo||'9999').localeCompare(String(b.prazo||'9999')));
+  const tit='Compromissos do mês';
+  const rs=FCA.filter(r=>!!String(r.acao||'').replace(/^\s*\d+(\.\d+)*\.\s*/,'').trim()&&!/conclu|cancel/i.test(r.status||'')&&passaP(inst,String(r.projeto||'').split('-')[0].trim()));
   if(!rs.length) return [sl({titulo:tit,corpo:AS.vazio('Nenhuma ação aberta no FCA de '+mesLb(VIG)+'.')},inst,tit)];
-  const dt=p=>{ const m=String(p||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1]}`:'sem prazo'; };
-  const pg=[]; for(let i=0;i<rs.length;i+=12) pg.push(rs.slice(i,i+12));
-  return pg.map((p,i)=>sl({titulo:tit+(pg.length>1?` (${i+1} de ${pg.length})`:''),corpo:AS.tabela({cols:[{t:'Fato'},{t:'Ação'},{t:'Resp.'},{t:'Prazo'},{t:'Status'}],
-    linhas:p.map(r=>({c:[`<b>${esc(String(r.fato||'').split('\n')[0])}</b>`,esc(String(r.acao||'').replace(/^\s*\d+(\.\d+)*\.\s*/,'').split('\n')[0]),esc(r.responsavel||'—'),`<span style="${!r.prazo||String(r.prazo).slice(0,10)<hoje?'color:#D00000;font-weight:700':''}">${dt(r.prazo)}</span>`,AS.ST(r.status)]}))}).replace('card tb','card tb fill')},inst,i?null:tit));
+  const pg=paginas(gruposFca(rs),8);
+  return pg.map((p,i)=>sl({titulo:tit+(pg.length>1?` (${i+1} de ${pg.length})`:''),corpo:tabFca([].concat(...p.map(g=>g.rs)))},inst,i?null:tit));
 }
-/* Scorecard: só cards; a pontuação geral sozinha em cima */
+/* Scorecard: o Resumo Gerencial do painel (hero sem card, faixas, os 20 cards em 10×2, evolução mensal e destaques) */
+const SC_FG=c=>({g:'#3BB33B',y:'#EAB308',o:'#F97316',r:'#FF6666'})[c]||'#8E96A6';
+const bandSC=v=>v==null?'':v>=90?'g':v>=80?'y':v>=70?'o':'r', bandCost=v=>v==null?'':v>=100?'g':v>=98?'y':v>=95?'o':'r';
 function sSC(inst){
   const e=semDado('SC'); if(e) return [sl({titulo:'Scorecard',corpo:e},inst)];
   const S=D.SC, mi=+VIG.slice(5,7)-1, mom=S.pont!=null&&S.ant!=null?S.pont-S.ant:null, pos=S.rk.findIndex(x=>x.eu)+1;
-  const topo=`<div class="kpis" style="grid-template-columns:1.4fr 1fr 1fr 1fr">${AS.kpi({top:1,rot:'Pontuação geral',v:`<span style="color:${cor(bandG(S.pont))}">${S.pont==null?'—':nf(S.pont,1)}</span>`,m:esc(S.unis.join(' · '))})}
-    ${AS.kpi({rot:'MoM',v:mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),m:'contra '+mesLb(vkAnt(VIG,1))})}
-    ${AS.kpi({rot:'Posição',v:pos?pos+'º':'—',m:'de '+S.rk.length+' unidades'})}
-    ${AS.kpi({rot:'Indicadores críticos',v:`<span style="color:#FF0000">${S.cards.filter(c=>c.val!=null&&c.val<70).length}</span>`,m:'abaixo de 70'})}</div>`;
-  const grade=`<div class="kgrid" style="grid-template-columns:repeat(5,minmax(0,1fr))">${S.cards.map(c=>AS.kmini({rot:c.lbl,v:c.val==null?'—':nf(c.val,1),cor:c.val==null?'#A3ABBA':cor(bandG(c.val,c.good)),m:'peso '+nf(c.peso)})).join('')}</div>`;
-  const s1=sl({titulo:'Scorecard',corpo:`<div class="g2" style="grid-template-rows:auto 1fr">${topo}${grade}</div>`},inst,'Scorecard');
-  const v=Array(12).fill(null); S.mes.forEach(x=>{ v[x.m]=x.v; });
-  const rank=AS.tabela({titulo:'Destaques',sub:'pontuação das unidades em '+mesLb(VIG),cols:[{t:'#'},{t:'Unidade'},{t:'Pontuação',n:1}],
-    linhas:S.rk.map((x,i)=>({cls:x.eu?'eu':'',c:[(i+1)+'º',esc(x.u),`<span style="color:${cor(bandG(x.s))}">${nf(x.s,1)}</span>`]}))}).replace('card tb','card tb fill');
-  const s2=sl({titulo:'Scorecard · ano e destaques',corpo:`<div class="g2" style="grid-template-columns:1.5fr 1fr">${AS.grafico('Pontuação no ano','média do mês',{tipo:'faixa',labels:MESC,v,faixas:FAIXA_SC,foco:[mi],fmt:'n1'})}${rank}</div>`},inst,null);
-  return [s1,s2];
+  const clsOf=c=>c.rr?bandCost(c.val):bandG(c.val,c.good), crit=S.cards.filter(c=>clsOf(c)==='r').length;
+  const hero=`<div class="pn-hero"><div class="hlbl">Pontuação geral · ${esc(S.unis.join(' · '))}</div><div class="hval" style="color:${SC_FG(bandSC(S.pont))}">${S.pont==null?'—':nf(S.pont,1)}</div>
+    <div class="hdel"><div>MoM<b>${mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false)}</b></div><div>Posição<b>${pos?pos+'º de '+S.rk.length:'—'}</b></div><div>Indicadores críticos<b>${crit}</b></div></div></div>`;
+  const fx=`<div class="pn-faixas"><div><b>Faixas:</b></div><div><i style="background:#3BB33B"></i>≥ 90%</div><div><i style="background:#EAB308"></i>80–90%</div><div><i style="background:#F97316"></i>70–80%</div><div><i style="background:#FF6666"></i>&lt; 70%</div>
+    <div style="margin-left:14px"><b>Real / Remunerado:</b></div><div><i style="background:#3BB33B"></i>≥ 100%</div><div><i style="background:#EAB308"></i>98–100%</div><div><i style="background:#F97316"></i>95–98%</div><div><i style="background:#FF6666"></i>&lt; 95%</div></div>`;
+  const cards=`<div class="pn-k10">${S.cards.map(c=>`<div class="pn-kpi"><div class="kl">${esc(c.lbl)}</div><div class="kv" style="color:${SC_FG(clsOf(c))}">${c.val==null?'—':Math.round(c.val)+'%'}</div><div class="km">${c.peso!=null?'peso '+c.peso:''}${c.rr?' · R/Rem':''}</div></div>`).join('')}</div>`;
+  const v=Array(12).fill(null); S.mes.forEach(x=>{ if(x.m<=mi) v[x.m]=x.v; });
+  const dq=`<div class="card pn-dq"><div class="gtit">Destaques</div><div class="gsub">Score ponderado por unidade · melhor → pior</div><div class="ls">${S.rk.map((x,i)=>`<div class="l${x.eu?' eu':''}"><span class="p">${i+1}º</span><span class="u">${esc(x.u)}</span><span class="s" style="color:${SC_FG(bandSC(x.s))}">${Math.round(x.s)}</span></div>`).join('')}</div></div>`;
+  const gr=`<div class="pn-gr" style="grid-template-columns:2.1fr 1fr">${AS.grafico('Evolução mensal','Pontuação geral · '+mesLb(VIG),{tipo:'faixa',labels:MESC,v,faixas:[[90,'#3BB33B'],[80,'#EAB308'],[70,'#F97316'],[-1e9,'#FF6666']],foco:[mi],fmt:'n1'})}${dq}</div>`;
+  return [sl({titulo:'Scorecard',corpo:`<div class="pn">${hero}${fx}${cards}${gr}</div>`},inst,'Scorecard')];
 }
 /* Termômetro: pontuação com MoM, posição Geo e Conlog, o ano e os Bottom KPIs */
 function sTERM(inst){
   const e=semDado('TERM'); if(e) return [sl({titulo:'Termômetro',corpo:e},inst)];
   const T=D.TERM.tiers, mi=+VIG.slice(5,7)-1;
-  const cards=T.map(t=>{ const mom=t.ant!=null?t.total-t.ant:null; return [
-    AS.kpi({top:1,rot:'Pontuação total'+(T.length>1?' · '+t.tier:''),v:`<span style="color:${cor(bandG(t.total))}">${nf(t.total,1)}</span>`,m:mom==null?'sem o mês anterior':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false)+' MoM'}),
-    AS.kpi({rot:'Posição Geo',v:t.rank?esc(t.rank)+'º':'—',m:esc(t.geo)}),
-    AS.kpi({rot:'Posição Conlog',v:t.posC+'º',m:'de '+t.nC+' unidades · '+esc(t.tier)})].join(''); }).join('');
-  const v=Array(12).fill(null).map((_,m)=>{ const xs=T.map(t=>t.mes[m]).filter(x=>x!=null); return xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:null; });
+  const hero=`<div style="display:flex;gap:64px;flex-wrap:wrap">${T.map(t=>{ const mom=t.ant!=null?t.total-t.ant:null;
+    return `<div class="pn-hero"><div class="hlbl">Pontuação total${T.length>1?' · '+esc(t.tier):''}</div><div class="hval" style="color:${SC_FG(bandSC(t.total))}">${nf(t.total,1)}</div>
+      <div class="hdel"><div>MoM<b>${mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false)}</b></div><div>Posição Geo<b>${t.rank?esc(t.rank)+'º':'—'}${t.geo?' · '+esc(t.geo):''}</b></div><div>Posição Conlog<b>${t.posC}º de ${t.nC}${T.length>1?'':' · '+esc(t.tier)}</b></div></div></div>`; }).join('')}</div>`;
+  const v=Array(12).fill(null).map((_,m)=>{ const xs=m>mi?[]:T.map(t=>t.mes[m]).filter(x=>x!=null); return xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:null; });
   const kp=[]; T.forEach(t=>t.kp.forEach(k=>kp.push(Object.assign({tier:t.tier},k)))); kp.sort((a,b)=>a.p/a.mx-b.p/b.mx);
-  const bottom=AS.tabela({titulo:'Bottom KPIs',sub:'os indicadores que mais perderam pontos',cols:[{t:'Indicador'}].concat(T.length>1?[{t:'Tier'}]:[]).concat([{t:'Resultado',n:1},{t:'Pontos',n:1}]),
-    linhas:kp.filter(k=>k.p<k.mx).slice(0,7).map(k=>({c:[esc(Cap(String(k.n).toLowerCase()))].concat(T.length>1?[esc(k.tier)]:[]).concat([esc(k.v==null?'—':(typeof k.v==='number'?nf(k.v,k.v<1.5&&k.v>0?3:1):k.v)),`<span style="color:${k.p===0?'#FF0000':'#E9A400'}">${nf(k.p)} de ${k.mx}</span>`])})),vazio:'Todos os indicadores com a pontuação cheia.'}).replace('card tb','card tb fill');
-  const corpo=`<div class="g2" style="grid-template-rows:auto 1fr"><div class="kpis" style="grid-template-columns:repeat(${Math.min(6,3*T.length)},minmax(0,1fr))">${cards}</div>
-    <div class="g2" style="grid-template-columns:1.4fr 1fr">${AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:FAIXA_SC,foco:[mi],fmt:'n1'})}${bottom}</div></div>`;
-  return [sl({titulo:'Termômetro',corpo},inst,'Termômetro')];
+  const ruins=kp.filter(k=>k.p<k.mx).slice(0,8);
+  const vf=k=>k.v==null?'—':(typeof k.v==='number'?nf(k.v,k.v<1.5&&k.v>0?3:1):esc(k.v));
+  const dq=`<div class="card pn-dq"><div class="gtit">Bottom KPIs</div><div class="gsub">Os indicadores que mais perderam pontos · ${esc(mesLb(VIG))}</div><div class="ls">${ruins.length?ruins.map(k=>`<div class="l"><span class="u">${esc(Cap(String(k.n).toLowerCase()))}${T.length>1?' <span style="color:#8E96A6;font-weight:600">· '+esc(k.tier)+'</span>':''}</span><span style="color:var(--txt3);font-weight:600">${vf(k)}</span><span class="s" style="color:${k.p===0?'#FF6666':'#EAB308'};min-width:56px;text-align:right">${nf(k.p)} de ${k.mx}</span></div>`).join(''):'<div class="l"><span class="u">Todos os indicadores com a pontuação cheia.</span></div>'}</div></div>`;
+  const gr=`<div class="pn-gr" style="grid-template-columns:2.1fr 1fr">${AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#3BB33B'],[80,'#EAB308'],[70,'#F97316'],[-1e9,'#FF6666']],foco:[mi],fmt:'n1'})}${dq}</div>`;
+  return [sl({titulo:'Termômetro',corpo:`<div class="pn">${hero}${gr}</div>`},inst,'Termômetro')];
 }
 /* Frota de Elite: Resumo Gerencial com o ranking ao lado do gráfico do ano */
 function sELITE(inst){
   const x=D.ELITE; if(x&&x.cortina) return [sl({titulo:'Frota de Elite',corpo:AS.vazio('O resultado do Frota de Elite está em período de apuração.')},inst,'Frota de Elite')];
   const e=semDado('ELITE'); if(e) return [sl({titulo:'Frota de Elite',corpo:e},inst)];
-  const mi=+VIG.slice(5,7)-1, pos=x.rk.findIndex(r=>r.eu)+1, fx=v=>v==null?'#A3ABBA':v>=95?'#00B300':v>=85?'#E9A400':'#FF0000';
-  const ind=`<div class="kgrid" style="grid-template-columns:repeat(3,minmax(0,1fr))">${x.ind.map(i=>AS.kmini({rot:i.l,v:nf(i.v,1),cor:fx(i.v),m:'peso '+i.p})).join('')}</div>`;
-  const top=`<div class="kpis" style="grid-template-columns:1.3fr 1fr">${AS.kpi({top:1,rot:'Pontuação',v:`<span style="color:${fx(x.pont)}">${nf(x.pont,1)}</span>`,m:esc(x.nomes.filter(Boolean).join(' · '))})}${AS.kpi({rot:'Posição no ranking',v:pos?pos+'º':'—',m:'de '+x.rk.length+' unidades'})}</div>`;
-  const rank=AS.tabela({titulo:'Ranking das unidades',sub:mesLb(VIG),cols:[{t:'#'},{t:'Unidade'},{t:'Pontos',n:1}],linhas:x.rk.map((r,i)=>({cls:r.eu?'eu':'',c:[(i+1)+'º',esc(r.u),`<span style="color:${fx(r.p)}">${r.p==null?'—':nf(r.p,1)}</span>`]}))}).replace('card tb','card tb fill');
-  const corpo=`<div class="g2" style="grid-template-columns:1fr 1.2fr 280px"><div class="g2" style="grid-template-rows:auto 1fr">${top}${ind}</div>
-    ${AS.grafico('Pontuação no ano','Frota de Elite',{tipo:'faixa',labels:MESC,v:x.mes,faixas:FAIXA_ELITE,foco:[mi],fmt:'n1'})}${rank}</div>`;
-  return [sl({titulo:'Frota de Elite',corpo},inst,'Frota de Elite')];
+  const mi=+VIG.slice(5,7)-1, pos=x.rk.findIndex(r=>r.eu)+1, dot=v=>v==null?'#64748B':v>=95?'#3BB33B':v>=85?'#FACC15':'#FF6666';
+  const by={}; x.ind.forEach(i=>by[i.k]=i);
+  const meia=k=>{ const i=by[k]; return i?`<div class="meia"><span class="f" style="background:${dot(i.v)}"></span><div class="b"><div class="kl">${esc(i.l)}</div><div class="kv">${nf(i.v,1)}</div></div></div>`:''; };
+  const cards=`<div class="el-cards">${x.ind.filter(i=>i.k!=='checkWH').map(i=>i.k==='checkT'&&by.checkWH?`<div class="el-kpi dupla">${meia('checkT')}${meia('checkWH')}</div>`
+    :`<div class="el-kpi"><span class="f" style="background:${dot(i.v)}"></span><div class="b"><div class="kl">${esc(i.l)}</div><div class="kv">${nf(i.v,1)}</div></div></div>`).join('')}</div>`;
+  const hero=`<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px"><div class="pn-hero"><div class="hlbl">Pontuação total média · ${esc(UNI())}</div><div class="hval">${x.pont==null?'—':nf(x.pont,2)}</div><div class="hsub">${esc(mesLb(VIG))}${pos?' · '+pos+'º lugar de '+x.rk.length+' unidades':''}</div></div>
+    <div class="el-leg"><span><i style="background:#3BB33B"></i>≥ 95 — Meta batida</span><span><i style="background:#F4A100"></i>85 a 94,9 — Atenção</span><span><i style="background:#FF6666"></i>&lt; 85 — Crítico</span></div></div>`;
+  const dq=`<div class="card pn-dq"><div class="gtit">Ranking das unidades</div><div class="gsub">Pontuação total · ${esc(mesLb(VIG))}</div><div class="ls">${x.rk.map((r,i)=>`<div class="l${r.eu?' eu':''}"><span class="p">${i+1}º</span><span class="u">${esc(r.u)}</span><span class="s">${r.p==null?'—':nf(r.p,2)}</span></div>`).join('')}</div></div>`;
+  const gr=`<div class="pn-gr" style="grid-template-columns:2.1fr 1fr">${AS.grafico('Pontuação no ano','Frota de Elite · pontuação total do mês',{tipo:'faixa',labels:MESC,v:x.mes.map((y,i)=>i<=mi?y:null),faixas:[[95,'#3BB33B'],[85,'#FACC15'],[-1e9,'#FF6666']],foco:[mi],fmt:'n1'})}${dq}</div>`;
+  return [sl({titulo:'Frota de Elite',corpo:`<div class="pn">${hero}${cards}${gr}</div>`},inst,'Frota de Elite')];
 }
 function sRecado(t){ const ls=String(t.texto||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,8);
   return {html:AS.conteudo({titulo:t.titulo||'Recado do gestor',uni:UNI(),per:PER(),corpo:`<div class="card" style="height:100%;padding:28px 34px;display:flex;flex-direction:column;justify-content:center;gap:14px">${ls.map(l=>`<div style="display:flex;gap:14px;align-items:baseline"><span style="flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:#F97316;transform:translateY(-3px)"></span><p style="font-size:calc(17px*var(--k));line-height:1.5">${esc(l)}</p></div>`).join('')||'<p>Escreva o recado.</p>'}</div>`}),sum:t.titulo||'Recado do gestor'}; }
@@ -976,7 +996,7 @@ function monta(){
   set('titSub',`${UNI()}${VIG?' · fechamento de '+mesLb(VIG):''} · ${DECK.length} slides`);
 }
 let _foco=null;
-const docAtual=final=>AS.doc({base:new URL('../assets/',location.href).href,titulo:`${MOD.titulo} · ${UNI()}`,slides:DECK.map(d=>d.html),final});
+const docAtual=final=>AS.doc({base:new URL('../assets/',location.href).href,titulo:`${MOD.titulo} · ${UNI()}`,slides:DECK.map(d=>d.html),final,css:(document.getElementById('fca-tabela-css')||{}).textContent||''});
 const OLHO='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const OLHO_X='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19C5 19 1 12 1 12a20.3 20.3 0 0 1 5.1-5.9M9.9 5.2A10.4 10.4 0 0 1 12 5c7 0 11 7 11 7a20.6 20.6 0 0 1-2.2 3.2M1 1l22 22"/></svg>';
 const LAPIS='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
@@ -1015,8 +1035,8 @@ function desenhaPrev(){
 function ligaPrev(){
   const d=$('prev').contentDocument; if(!d) return;
   d.addEventListener('input',e=>{ const c=e.target.closest&&e.target.closest('[data-obs]'); if(!c) return; MOD.obs[c.dataset.obs]=c.innerText.trim(); salva(); });
-  d.addEventListener('click',e=>{ const m=e.target.closest('.mais[data-add]'); if(m){ e.stopPropagation(); novaLinha(m.dataset.id,m.dataset.add); return; }
-    const tr=e.target.closest('tr[data-fca]'); if(tr) abreFca(tr.dataset.fca); });
+  d.addEventListener('click',e=>{ const m=e.target.closest('.mais[data-add],.fg-add[data-add]'); if(m){ e.stopPropagation(); novaLinha(m.dataset.id,m.dataset.add); return; }
+    const tr=e.target.closest('tr[data-fca],table.fg-rel tr[data-id]'); if(tr&&(tr.dataset.fca||tr.dataset.id)) abreFca(tr.dataset.fca||tr.dataset.id); });
 }
 function mostra(){
   const d=$('prev').contentDocument; if(d) d.querySelectorAll('.slide').forEach((s,i)=>{ s.style.display=i===POS?'':'none'; });
@@ -1052,7 +1072,7 @@ function avisos(){
 
 /* ── FCA dentro da apresentação: a mesma caixa do painel FCA, gravando na mesma tabela ── */
 let _fcaId=null;
-const fcaRow=id=>FCA.find(r=>String(r.id)===String(id));
+const fcaRow=id=>FCA.find(r=>String(r.id)===String(id))||FCA_ANT.find(r=>String(r.id)===String(id));
 const irmasDe=r=>FCA.filter(x=>x.unidade===r.unidade&&x.vigencia===r.vigencia&&x.origem===r.origem&&(x.projeto||'')===(r.projeto||'')&&String(x.fato||'').split('\n')[0]===String(r.fato||'').split('\n')[0]);
 function abreFca(id){
   const r=fcaRow(id); if(!r) return; _fcaId=r.id;
@@ -1229,6 +1249,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611251330"></script>
+<script src="../assets/build-check.js?v=202611252000"></script>
 </body>
 </html>
