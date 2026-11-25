@@ -82,7 +82,7 @@
     '.cab .un{font-size:14px;font-weight:600;color:var(--txt3);padding-left:12px;border-left:1px solid #C9CDD5;line-height:18px;white-space:nowrap}',
     '.cab .per{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--txt3);white-space:nowrap}',
     '.cab .per svg{width:14px;height:14px}',
-    '.miolo{position:absolute;left:40px;right:40px;top:88px;bottom:44px}',
+    '.miolo{position:absolute;left:40px;right:40px;top:88px;bottom:24px}',
     '.pe{position:absolute;left:40px;right:40px;bottom:16px;display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:var(--txt3)}',
     '.card{background:linear-gradient(180deg,rgba(255,255,255,.6) 0%,rgba(255,255,255,0) 46%),rgba(255,255,255,.74);border:1px solid var(--brd);border-radius:11px;box-shadow:inset 0 1px 0 #fff,0 2px 12px rgba(0,0,0,.08);min-width:0;min-height:0}',
     '.rot{font-size:calc(10px*var(--k));font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--txt2)}',
@@ -150,6 +150,10 @@
     '.tn-g b{display:block;font-size:calc(11px*var(--k));font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}',
     '.tn.gap{border-color:rgba(255,0,0,.55);box-shadow:0 0 0 1px rgba(255,0,0,.18),0 4px 14px rgba(0,0,0,.08)}',
     '.tn.ok{border-color:rgba(0,179,0,.45)}',
+    '.tn.info{width:calc(250px*var(--k))}','.tn.info .tn-r{white-space:normal;line-height:1.3}',
+    '.tn-ls{border-top:1px solid var(--linha);padding:calc(4px*var(--k)) 12px calc(6px*var(--k))}',
+    '.tn-ls>div{display:flex;justify-content:space-between;gap:8px;font-size:calc(10.5px*var(--k));line-height:1.55;white-space:nowrap}',
+    '.tn-ls span{color:var(--txt2);font-weight:600;overflow:hidden;text-overflow:ellipsis;min-width:0}.tn-ls b{font-weight:800;flex:0 0 auto}',
     'svg.lig{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:0}',
     '.com{padding:16px 18px;display:flex;flex-direction:column}',
     '.com h3{font-size:14px;font-weight:800}','.com.baixo{min-height:200px;padding:14px 18px}','.com.baixo .caixa{margin-top:8px}',
@@ -190,6 +194,10 @@
     'table.rel td.prazo{white-space:nowrap}.rel .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}',
     '.rel .chip{display:inline-block;padding:3px 7px;border-radius:5px;font-weight:700;font-size:calc(9.5px*var(--k));white-space:normal;line-height:1.25}',
     'table.rel.fg-rel tbody.fg tr+tr td.ln{border-top-color:rgba(15,23,42,.30)!important}',
+    /* tamanhos da Tabela do FCA presos ao texto da célula (que segue o --k), para nada ficar maior ou menor que o resto */
+    'body table.rel.fg-rel td.fato .fa-pac{font-size:1.08em}','body table.rel.fg-rel td.fato small{font-size:.88em}',
+    'body table.rel.fg-rel .fa-ano{font-size:.88em}','body table.rel.fg-rel .fa-ano .kl{font-size:.82em}','body table.rel.fg-rel .fa-of{font-size:.88em}',
+    'body .rel .chip{font-size:.84em}','body table.rel.fg-rel .fg-add{font-size:1.3em}',
     'body.final .fg-add{display:none!important}',
     'body:not(.final) table.rel tr[data-id]{cursor:pointer}',
     /* Resumo Gerencial dos painéis (Scorecard e Frota de Elite), no desenho deles, tema claro */
@@ -274,8 +282,7 @@
     return '<section class="slide cont" data-sec="' + esc(o.sec || '') + '"' + (o.id ? ' data-id="' + esc(o.id) + '"' : '') + '>' +
       '<div class="cab"><h2>' + esc(o.titulo) + '</h2>' + (o.uni ? '<span class="un">' + esc(o.uni) + '</span>' : '') +
       '<div class="per">' + (o.extra || '') + FUNIL + esc(o.per || '') + '</div></div>' +
-      '<div class="miolo">' + o.corpo + '</div>' +
-      '<div class="pe"><span>Conlog · Gestão em Movimento</span><span>§PG§</span></div></section>';
+      '<div class="miolo">' + o.corpo + '</div></section>';
   }
 
   /* ── peças ── */
@@ -295,14 +302,17 @@
   }
   /* nó da árvore: realizado grande, remunerado menor, e ▲ · ▲ % · YoY (ou Impacto) */
   function no(n) {
-    var dv = n.real - n.rem, p = n.rem ? dv / Math.abs(n.rem) * 100 : null, ruim = dv > 0;
+    if (n.info) return '<div class="tn info' + (n.cls ? ' ' + n.cls : '') + '" data-no="' + esc(n.id) + '"' + (n.pai ? ' data-pai="' + esc(n.pai) + '"' : '') + '>' +
+      '<div class="tn-t">' + esc(n.t) + '</div>' + (n.v != null ? '<div class="tn-v">' + n.v + '</div>' : '') + (n.sub ? '<div class="tn-r">' + esc(n.sub) + '</div>' : '') +
+      (n.linhas && n.linhas.length ? '<div class="tn-ls">' + n.linhas.map(function (l) { return '<div><span>' + esc(l[0]) + '</span><b' + (l[2] ? ' style="color:' + l[2] + '"' : '') + '>' + l[1] + '</b></div>'; }).join('') + '</div>' : '') + '</div>';
+    var dv = n.real - n.rem, p = n.rem ? dv / Math.abs(n.rem) * 100 : null, ruim = n.inv ? dv < 0 : dv > 0;
     var cls = p == null ? '' : Math.abs(p) >= 1 ? (ruim ? 'gap' : 'ok') : '';
     var fv = n.fmt || f.brl, fd = n.fmtD || function (v) { return nf(Math.abs(v)); };
     var ult = n.imp !== undefined ? ['Impacto', n.imp == null ? '<b class="nt">—</b>' : f.seta(n.imp, f.brlc(Math.abs(n.imp)))]
       : ['YoY', n.ant ? f.seta(n.real / n.ant - 1, f.pct(Math.abs((n.real / n.ant - 1) * 100))) : '<b class="nt">—</b>'];
     return '<div class="tn ' + cls + (n.larga ? ' l' : '') + '" data-no="' + esc(n.id) + '"' + (n.pai ? ' data-pai="' + esc(n.pai) + '"' : '') + '>' +
       '<div class="tn-t">' + esc(n.t) + '</div><div class="tn-v">' + fv(n.real) + '</div><div class="tn-r">Remunerado <b>' + fv(n.rem) + '</b></div>' +
-      '<div class="tn-g"><div><span>▲</span>' + f.seta(dv, fd(dv)) + '</div><div><span>▲ %</span>' + (p == null ? '<b class="nt">—</b>' : f.seta(dv, f.pct(Math.abs(p)))) + '</div><div><span>' + ult[0] + '</span>' + ult[1] + '</div></div></div>';
+      '<div class="tn-g"><div><span>▲</span>' + f.seta(dv, fd(dv), !n.inv) + '</div><div><span>▲ %</span>' + (p == null ? '<b class="nt">—</b>' : f.seta(dv, f.pct(Math.abs(p)), !n.inv)) + '</div><div><span>' + ult[0] + '</span>' + ult[1] + '</div></div></div>';
   }
   /* árvore em colunas: niveis = [[nós da coluna 1], [coluna 2], …]; cada nó leva pai */
   /* árvore em colunas: um nível com mais de 7 nós vira sub-colunas (tudo aparece, nada é cortado);
@@ -478,7 +488,7 @@
       /* listas (destaques, ranking, indicadores): as linhas dividem a altura do card e a letra cresce junto, até 17 px */
       s.querySelectorAll('.pn-dq .ls').forEach(function (ls) { var ls2 = ls.querySelectorAll('.l'); if (!ls2.length) return;
         ls2.forEach(function (l) { l.style.height = '0px'; l.style.minHeight = '0'; l.style.maxHeight = 'none'; l.style.flex = '0 0 auto'; });
-        var k = parseFloat(getComputedStyle(s).getPropertyValue('--k')) || 1, h = (ls.clientHeight - 6) / ls2.length, fs = Math.max(9, Math.min(12.5 * k, h * .5));
+        var k = parseFloat(getComputedStyle(s).getPropertyValue('--k')) || 1, h = (ls.clientHeight - 6) / ls2.length, fs = Math.max(8.5, Math.min(10.5 * k, h * .5 - 2));
         ls2.forEach(function (l) { l.style.height = h + 'px'; l.style.fontSize = fs + 'px'; }); });
       s.style.display = d0; }
     function tudo() { document.querySelectorAll('.slide').forEach(function (s) { ajusta(s); s.querySelectorAll('.area').forEach(liga); s.querySelectorAll('canvas[data-g]').forEach(function (cv) { var c = window.Chart && Chart.getChart(cv); if (c) c.destroy(); }); });

@@ -77,8 +77,14 @@ let RAW=[]; for(let m=1;m<=10;m++) [['CDD GUARULHOS',90],['CDD CUIABA',94],['PIR
 function getFieldAvg(rows,key){ const f=key==='pontuacao'?'pont':key; const v=rows.map(r=>r[f]).filter(x=>x!=null); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; }
 function getRankingData(d){ const by={}; d.forEach(r=>(by[r.unit]=by[r.unit]||[]).push(r)); return Object.keys(by).map(u=>({unit:u,pont:getFieldAvg(by[u],'pontuacao')})).sort((a,b)=>b.pont-a.pont); }
 <\/script>`;
+const ARVPG = `<!doctype html><meta charset=utf-8><body><div id="titSub">ok</div><script>
+let FR={n3:0}, DP={}, KM={}, S_KM=[], S_FR=[['ROTA - GRL'],['ROTA (VAN) - GRL'],['ROTA - PLT']];
+const getNv3Suffix=v=>String(v).split('-').pop().trim(), getNv3Prefix=v=>{ const p=String(v).split('-')[0].trim(); return /^ROTA \\(VAN\\)$/i.test(p)?'VAN':p; };
+function calcular(f){ return {kmRem:100000,kmReal:108000,viagem1:820,recs:40,noturnas:12,mapas:5,bmKm:0}; }
+window.ArvImpacto={calc:d=>({rkRem:1.05,rkReal:0.99,vol:8400,rsKm:-6300,pRem:6.10,pReal:6.25,eRem:3.30,eReal:3.12,preco:4100,efic:5200,dif:-15600})};
+<\/script>`;
 const MIME = { '.html': 'text/html', '.js': 'application/javascript', '.jpg': 'image/jpeg', '.png': 'image/png', '.css': 'text/css' };
-const DUB = [[/^\/visao-financeira\/(index\.html)?$/, VFPG], [/^\/painel-km\/(index\.html)?$/, KMPG], [/^\/scorecard\/(index\.html)?$/, SCPG], [/^\/termometro\/(index\.html)?$/, TERMPG], [/^\/programa-reconhecimento\/(index\.html)?$/, ELITEPG]];
+const DUB = [[/^\/visao-financeira\/(index\.html)?$/, VFPG], [/^\/painel-km\/(index\.html)?$/, KMPG], [/^\/scorecard\/(index\.html)?$/, SCPG], [/^\/termometro\/(index\.html)?$/, TERMPG], [/^\/programa-reconhecimento\/(index\.html)?$/, ELITEPG], [/^\/combustivel\/arvore-combustivel\/(index\.html)?$/, ARVPG]];
 const srv = http.createServer((req, res) => { const u = decodeURIComponent(req.url.split('?')[0]);
   const d = DUB.find(x => x[0].test(u)); if (d) { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(d[1]); }
   let f = path.join(RAIZ, u); if (u.endsWith('/')) f = path.join(f, 'index.html');
@@ -117,6 +123,7 @@ async function abre({ w = 1366, h = 768, tema = 'dark', perfil = { nome: 'Renan'
 const estado = pg => pg.evaluate(() => ({ seq: SEQ.map(i => `${i.pg == null ? '–' : i.pg}|${i.id}|${i.off ? 'off' : ''}`), n: DECK.length, itens: DECK.map(d => d.item),
   sub: document.getElementById('titSub').textContent, av: document.getElementById('avisos').textContent, cod: COD, cods: CODS.join(','), vig: VIG }));
 const txt = (pg, item, i = 0) => pg.evaluate(([item, i]) => { const d = document.createElement('div'); const s = DECK.filter(x => x.item === item)[i]; if (!s) return ''; d.innerHTML = s.html; return d.textContent.replace(/\s+/g, ' '); }, [item, i]);
+const txtT = (pg, t) => pg.evaluate(t => { for (const s of DECK) { const d = document.createElement('div'); d.innerHTML = s.html; const h = d.querySelector('h2,h1'); if (h && h.textContent.replace(/\s+/g, ' ').trim() === t) return d.textContent.replace(/\s+/g, ' '); } return ''; }, t);
 const titulos = pg => pg.evaluate(() => DECK.map(d => { const x = document.createElement('div'); x.innerHTML = d.html; const h = x.querySelector('h2,h1'); return h ? h.textContent.replace(/\s+/g, ' ').trim() : d.item; }));
 const pronto = pg => pg.waitForFunction(() => window.__apresPronto === true, { timeout: 60000 });
 const brl = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
@@ -132,7 +139,10 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   const T = await titulos(pg);
   ok('um bloco por projeto: a árvore do projeto e, em seguida, cada pacote que desviou nele (maior primeiro) com o FCA dele',
     T.indexOf('Árvore · Rota') > 0 && T[T.indexOf('Árvore · Rota') + 1] === 'Árvore · Rota · Pneus' && T[T.indexOf('Árvore · Rota · Pneus') + 1] === 'FCA · Rota · Pneus' && T[T.indexOf('FCA · Rota · Pneus') + 1] === 'Árvore · Rota · Manutenções' && T[T.indexOf('Árvore · Rota · Manutenções') + 1] === 'FCA · Rota · Manutenções' && T.includes('Árvore · Rota (van)'), T.join(' | '));
-  ok('todo pacote que desviou abre a árvore (Combustíveis e Seguros também); Seguros, sem fato no FCA, sem o slide do FCA', T.includes('Árvore · Rota · Combustíveis') && T.includes('Árvore · Rota · Seguros e licenças') && !T.some(t => /FCA · .*Seguros/.test(t)) && !T.some(t => /ICMS/.test(t)), T.join(' | '));
+  { const a = await txtT(pg, 'Árvore · Rota · Combustíveis');
+    ok('Combustíveis abre até os indicadores: Km rodado, R$/km, R$/L, Km/L, viagens e a diferença', ['Km rodado', 'R$/km', 'R$/L · preço', 'Km/L · eficiência', 'Viagens no mês', 'Diferença DRE'].every(x => a.includes(x)), a.slice(0, 300)); }
+  { const a = await txtT(pg, 'Árvore · Rota'); ok('a árvore do projeto não tem Observações', !/Observações/.test(a), a.slice(0, 120)); }
+  ok('todo pacote que desviou abre a árvore (Combustíveis também); Seguros e IPVA fora da árvore', T.includes('Árvore · Rota · Combustíveis') && !T.some(t => /Seguros/.test(t)) && !T.some(t => /FCA · .*Seguros/.test(t)) && !T.some(t => /ICMS/.test(t)), T.join(' | '));
   ok('divisórias numeradas por capítulo', await pg.evaluate(() => { const x = document.createElement('div'); x.innerHTML = DECK.filter(d => d.item.startsWith('div:')).map(d => d.html).join(''); return x.textContent.replace(/\s+/g, ' '); }).then(t => /01.*Resultado.*02.*Por quê.*03.*Indicadores.*04.*Reconhecimento/.test(t)));
   const sum = await txt(pg, 'sumario');
   ok('sumário com os slides (sem as divisórias) e a página de cada um', /O que prometemos/.test(sum) && /Árvore · Rota · Pneus/.test(sum) && /FCA · Rota · Manutenções/.test(sum) && !/Resultado/.test(sum.replace('Resultado', '').replace(/Resultado/g, '')) , sum.slice(0, 220));
@@ -149,14 +159,14 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   const km = await txt(pg, 'km');
   ok('Dispersão: km rodado, dispersão de 8,0% e as 10 placas', km.includes('128.500') && km.includes('8,0%') === false ? true : /7,1%/.test(km) && /Bottom 10 placas/.test(km) && /ABC1000/.test(km) && !/ABC1010/.test(km), km.slice(0, 240));
   const sc = await txt(pg, 'sc'), sc2 = await txt(pg, 'sc', 1);
-  ok('Scorecard: pontuação geral em cima, os 20 indicadores em cards', /Pontuação geral/.test(sc) && /89,0/.test(sc) && /Custos Frota/.test(sc) && /FCA Conclusão/.test(sc), sc.slice(0, 200));
-  ok('Scorecard: um slide só com evolução mensal e destaques, com a posição da unidade', /Evolução mensal/.test(sc) && /Destaques/.test(sc) && /3º de/.test(sc) && /CDD GUARULHOS/.test(sc) && !sc2, sc.slice(-200));
+  ok('Scorecard: pontuação geral em cima, os 20 indicadores na lista ao lado', /Pontuação geral/.test(sc) && /89,0/.test(sc) && /Custos Frota/.test(sc) && /FCA Conclusão/.test(sc), sc.slice(0, 200));
+  ok('Scorecard: um slide só com evolução mensal e indicadores, com a posição da unidade', /Evolução mensal/.test(sc) && /Indicadores/.test(sc) && !/Destaques/.test(sc) && /3º de/.test(sc) && !sc2, sc.slice(-200));
   const te = await txt(pg, 'term');
   ok('Termômetro: pontuação geral com MoM, Posição Geo e Conlog, todos os indicadores do pior ao melhor', /Pontuação geral/.test(te) && /Posição Geo/.test(te) && /Posição Conlog/.test(te) && /Indicadores/.test(te) && /Ordens de serviço vencidas/i.test(te), te.slice(0, 260));
   const el = await txt(pg, 'elite');
-  ok('Frota de Elite: pontuação, indicadores, ano e ranking com a unidade', /Pontuação/.test(el) && /Ranking das unidades/.test(el) && /PIRAI EMPURRADA/.test(el) && /Disponib\./.test(el), el.slice(0, 220));
+  ok('Frota de Elite: pontuação com a posição, ano e os indicadores ao lado (sem o ranking)', /Pontuação/.test(el) && /3º de 3/.test(el) && !/Ranking das unidades/.test(el) && /Indicadores/.test(el) && /Disponib\./.test(el), el.slice(0, 220));
   const fm = await pg.evaluate(() => { const i = DECK.findIndex(d => /<h2>FCA · Rota · Manutenções<\/h2>/.test(d.html)); const x = document.createElement('div'); x.innerHTML = DECK[i].html; return { t: x.textContent.replace(/\s+/g, ' '), rs: [...x.querySelectorAll('td[rowspan]')].map(t => t.getAttribute('rowspan')), linhas: x.querySelectorAll('table.fg-rel tr[data-id]').length }; });
-  ok('FCA de Manutenções: fato mesclado com desvio, contas e YTD; causa mesclada sobre as duas ações', fm.linhas === 2 && fm.rs.join() === '2,2,2,2' && /YTD/.test(fm.t) && /Man\. Veículos e Equip\./.test(fm.t) && /1\.1\.\s*Causa raiz/.test(fm.t), JSON.stringify(fm).slice(0, 260));
+  ok('FCA de Manutenções: fato mesclado com desvio, contas e YTD; causa mesclada sobre as duas ações', fm.linhas === 2 && fm.rs.join() === '2,2,2' && !/Projeto/.test(fm.t) && /YTD/.test(fm.t) && /Man\. Veículos e Equip\./.test(fm.t) && /1\.1\.\s*Causa raiz/.test(fm.t), JSON.stringify(fm).slice(0, 260));
   const pr = await txt(pg, 'prometido');
   ok('O que prometemos: as ações do FCA de set/26 (2, 1 concluída)', /O que prometemos em set\/26/.test(pr) && /Feedback|Vistoriar/.test(pr) && /50,0%/.test(pr), pr.slice(0, 200));
   const co = await txt(pg, 'comp');
