@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611261840">
+<meta name="build" content="202611262030">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611261840"></script>
+<script src="../assets/apres-slides.js?v=202611262030"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -1072,11 +1072,10 @@ function sComp(inst){
 const heroInd=(rot,val,cor,cells,leit)=>`<div class="card hero"><div class="rot">${rot}</div><div class="v" style="color:${cor}">${val}</div><div class="gr">${cells.map((c,i)=>`<div${i===cells.length-1&&cells.length%2?' class="gr2"':''}><span class="rot">${c[0]}</span><b>${c[1]}</b>${c[2]?`<small>${c[2]}</small>`:''}</div>`).join('')}</div>${leit?`<div class="leit">${leit}</div>`:''}</div>`;
 const corpoInd=(hero,graf,dq)=>`<div class="g2" style="grid-template-columns:370px 1fr;grid-template-rows:1fr 1fr">${hero.replace('class="card hero"','class="card hero" style="grid-row:1/3"')}${graf}${dq}</div>`;
 /* gráfico de baixo: os indicadores em barras, na ordem do farol (vermelho, laranja, amarelo, verde; dentro da cor do menor para o maior), nome curto no rótulo (Renan, 26/11/2026) */
-const ORD_COR={'#FF0000':0,'#F97316':1,'#E9A400':2,'#00B300':3};
 const NOME_CURTO=[[/^FCA Ader/i,'FCA'],[/^Consumo Km\/L/i,'Km/L'],[/^Conformidade/i,'Conformid.'],[/^SLA/i,'SLA'],[/^Atingimento KM/i,'Ating. KM'],[/^DPO/i,'DPO/VPO'],[/^Custos Frota/i,'Custos'],[/^Press/i,'Pressão'],[/^Disponib/i,'Disponib.'],[/^Indisponib/i,'Indisp.'],[/^Checklist T1/i,'Check T1/T2'],[/^Check T1/i,'Check T1/T2'],[/^Checklist Apoio/i,'Check Apoio'],[/^Checklist/i,'Checklist'],[/^Preventiva/i,'Prevent.'],[/^Stress Test Cam/i,'Stress Cam.'],[/^Stress Test Emp/i,'Stress Emp.'],[/^Stress Ve/i,'Stress Veíc.'],[/^Stress Test/i,'Stress'],[/^Milimetr/i,'Milimetr.'],[/^Conformidade/i,'Conformid.'],[/^OS Vencida/i,'OS Venc.'],[/^SLA Man/i,'SLA'],[/^Combust/i,'Combust.']];
 const NOME_MINI=[[/^Custos/i,'Custos'],[/^Disponib/i,'Disp.'],[/^DPO/i,'DPO'],[/^Prevent/i,'Prev.'],[/^Consumo Km\/L|^Km\/L/i,'Km/L'],[/^Ating/i,'Ating. KM'],[/^Press/i,'Pressão'],[/^Aferi/i,'Aferiç.'],[/^Check(list)? T1/i,'T1/T2'],[/^Check(list)? Apoio/i,'Apoio'],[/^Conformid/i,'Conf.'],[/^Stress( Test)? Cam/i,'ST Cam.'],[/^Stress( Test)? Emp/i,'ST Emp.'],[/^SLA/i,'SLA'],[/^FCA/i,'FCA'],[/^CIVF/i,'CIVF']];
 const nomeCurto=(n,mini)=>{ const c=(mini?NOME_MINI.find(x=>x[0].test(n)):null)||NOME_CURTO.find(x=>x[0].test(n)); return c?c[1]:n; };
-const indCard=(itens,sub)=>AS.grafico('Indicadores',sub||'',{tipo:'faixa',zero:1,faixas:[],labels:itens.map(x=>nomeCurto(x.n,itens.length>12)),v:itens.map(x=>x.v),cores:itens.map(x=>x.cor),txt:itens.map(x=>x.t)});
+const indCard=(itens,sub)=>(itens=itens.slice().sort((a,b)=>a.v-b.v),AS.grafico('Indicadores',sub||'',{tipo:'faixa',zero:1,faixas:[],labels:itens.map(x=>nomeCurto(x.n,itens.length>12)),v:itens.map(x=>x.v),cores:itens.map(x=>x.cor),txt:itens.map(x=>x.t)}));
 /* Scorecard: o Resumo Gerencial do painel (hero sem card, faixas, os 20 cards em 10×2, evolução mensal e destaques) */
 const SC_FG=c=>({g:'#00B300',y:'#E9A400',o:'#F97316',r:'#FF0000'})[c]||'#8E96A6';
 const bandSC=v=>v==null?'':v>=90?'g':v>=80?'y':v>=70?'o':'r', bandCost=v=>v==null?'':v>=100?'g':v>=98?'y':v>=95?'o':'r';
@@ -1099,7 +1098,7 @@ function sSC(inst){
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${evo}${dq}</div>`;
   /* cópia ECharts: o hero em cards, como no Frota de Elite e no Termômetro (Renan, 26/11/2026) */
   const topo=ESTILO==='echarts'?heroCards('Pontuação geral',S.pont==null?'—':nf(S.pont,1),corEsc(SC_FG(bandSC(S.pont))),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição',pos?pos+'º <small>de '+S.rk.length+'</small>':'—','entre as unidades'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo da meta']]):hero;
-  if(ESTILO!=='echarts'){ const pior=ks.slice().sort((a,b)=>(ORD_COR[SC_FG(clsOf(a))]-ORD_COR[SC_FG(clsOf(b))])||a.val-b.val)[0]; return [sl({titulo:'Scorecard',sec:'sc',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',S.pont==null?'—':nf(S.pont,1),SC_FG(bandSC(S.pont)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição',pos?pos+'º de '+S.rk.length:'—','entre as unidades'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo da meta']],pior?`<b>Pior indicador: ${esc(pior.lbl)}</b> (${Math.round(pior.val)}%).`:''),evo,indCard(ks.map(c=>({n:c.lbl,t:Math.round(c.val)+'%',cor:SC_FG(clsOf(c)),o:ORD_COR[SC_FG(clsOf(c))],v:c.val})).sort((a,b)=>a.o-b.o||a.v-b.v),'do pior para o melhor · % do indicador'))},inst,'Scorecard')]; }
+  if(ESTILO!=='echarts'){ const pior=ks.slice().sort((a,b)=>a.val-b.val)[0]; return [sl({titulo:'Scorecard',sec:'sc',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',S.pont==null?'—':nf(S.pont,1),SC_FG(bandSC(S.pont)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição',pos?pos+'º de '+S.rk.length:'—','entre as unidades'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo da meta']],pior?`<b>Pior indicador: ${esc(pior.lbl)}</b> (${Math.round(pior.val)}%).`:''),evo,indCard(ks.map(c=>({n:c.lbl,t:Math.round(c.val)+'%',cor:SC_FG(clsOf(c)),v:c.val})),'do pior para o melhor · % do indicador'))},inst,'Scorecard')]; }
   return [sl({titulo:'Scorecard',sec:'sc',corpo:`<div class="pn">${topo}${gr}</div>`},inst,'Scorecard')];
 }
 /* Termômetro: pontuação com MoM, posição Geo e Conlog, o ano e os Bottom KPIs */
@@ -1488,6 +1487,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202610111500"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611261840"></script>
+<script src="../assets/build-check.js?v=202611262030"></script>
 </body>
 </html>
