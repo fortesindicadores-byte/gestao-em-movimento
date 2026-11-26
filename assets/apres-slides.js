@@ -453,6 +453,7 @@
     'body.est-limpo .cont .tb .t{padding-left:0;padding-right:0}body.est-limpo .cont .gc{padding-top:0;padding-bottom:0}',
     /* sem card: o hero começa na linha do título do gráfico e uma linha vertical o separa dos gráficos, no meio do vão (Renan, 26/11/2026) */
     'body.est-limpo .cont .hero{padding-top:0}',
+    'body.est-limpo .cont .lsup{border-top:1px solid var(--linha);padding-top:14px;box-sizing:border-box}',   /* linha acima dos cards (Renan, 26/11/2026, O que prometemos) */
     /* linhas entre os blocos vizinhos, no meio do vão (separa(), Renan, 26/11/2026: "Em todos que tiverem separações entre gráficos, cards etc") */
     '.sep-l{position:absolute;background:var(--linha);pointer-events:none;z-index:1}',
     /* cópia ECharts: o hero vira uma fileira de cards, o principal no grafite do cabeçalho (Renan, 26/11/2026) */
