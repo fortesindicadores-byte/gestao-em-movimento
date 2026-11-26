@@ -452,7 +452,9 @@
     'body.est-limpo .cont .g2,body.est-limpo .cont .arv,body.est-limpo .cont .pn-gr,body.est-limpo .cont .kgrid{column-gap:44px;row-gap:28px}body.est-limpo .cont .pn{gap:24px}body.est-limpo .cont .kpis,body.est-limpo .cont .tc-row,body.est-limpo .cont .el-cards{gap:28px}',
     'body.est-limpo .cont .tb .t{padding-left:0;padding-right:0}body.est-limpo .cont .gc{padding-top:0;padding-bottom:0}',
     /* sem card: o hero começa na linha do título do gráfico e uma linha vertical o separa dos gráficos, no meio do vão (Renan, 26/11/2026) */
-    'body.est-limpo .cont .hero{padding-top:0}body.est-limpo .cont .g2>.card.hero{border-right:1px solid var(--linha)!important;padding-right:22px!important;margin-right:-22px}',
+    'body.est-limpo .cont .hero{padding-top:0}',
+    /* linhas entre os blocos vizinhos, no meio do vão (separa(), Renan, 26/11/2026: "Em todos que tiverem separações entre gráficos, cards etc") */
+    '.sep-l{position:absolute;background:var(--linha);pointer-events:none;z-index:1}',
     /* cópia ECharts: o hero vira uma fileira de cards, o principal no grafite do cabeçalho (Renan, 26/11/2026) */
     '.eh-row{display:grid;gap:12px;flex:0 0 calc(132px*var(--k));min-height:0}',
     '.eh-row .card{display:flex;flex-direction:column;justify-content:center;padding:calc(12px*var(--k)) 20px}',
@@ -643,7 +645,24 @@
         ls2.forEach(function (l) { l.style.height = '0px'; l.style.minHeight = '0'; l.style.maxHeight = 'none'; l.style.flex = '0 0 auto'; });
         var k = parseFloat(getComputedStyle(s).getPropertyValue('--k')) || 1, h = (ls.clientHeight - 6) / ls2.length, fs = Math.max(8.5, Math.min(10.5 * k, h * .5 - 2));
         ls2.forEach(function (l) { l.style.height = h + 'px'; l.style.fontSize = fs + 'px'; }); });
-      s.style.display = d0; }
+      separa(s); s.style.display = d0; }
+    /* versão limpa (sem card): uma linha fina no meio de todo vão entre dois blocos vizinhos (card, gráfico, tabela, caixa); árvore, lista e FCA ficam com o desenho deles */
+    function separa(s) { [].forEach.call(s.querySelectorAll('.sep-l'), function (x) { x.remove(); });
+      if (!document.body.classList.contains('est-limpo')) return; var m = s.querySelector('.miolo'); if (!m) return;
+      var mr = m.getBoundingClientRect(), sc = (mr.width / m.offsetWidth) || 1, feito = {};
+      var linha = function (x, y, w, h) { var k = [x, y, w, h].map(Math.round).join(','); if (feito[k]) return; feito[k] = 1; var d = document.createElement('div'); d.className = 'sep-l';
+        d.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h + 'px'; m.appendChild(d); };
+      var R = function (e) { var r = e.getBoundingClientRect(); return { l: (r.left - mr.left) / sc, t: (r.top - mr.top) / sc, r: (r.right - mr.left) / sc, b: (r.bottom - mr.top) / sc }; };
+      (function anda(el) { if (el.matches('.arv,table,.tb,.pn-dq,.fcap,.fca,.gr')) return;
+        var bs = [].filter.call(el.children, function (c) { return c.offsetWidth > 20 && c.offsetHeight > 20 && (c.matches('.card') || c.querySelector('.card')); }), rs = bs.map(R);
+        for (var i = 0; i < bs.length; i++) for (var j = 0; j < bs.length; j++) { if (i === j) continue; var a = rs[i], b = rs[j];
+          var entre = function (f) { return rs.some(function (c, k) { return k !== i && k !== j && f(c); }); };
+          var ov = Math.min(a.b, b.b) - Math.max(a.t, b.t), oh = Math.min(a.r, b.r) - Math.max(a.l, b.l);
+          if (ov > 10 && b.l - a.r >= 6 && !entre(function (c) { return c.l >= a.r - 1 && c.r <= b.l + 1 && Math.min(c.b, a.b) - Math.max(c.t, a.t) > 10; }))
+            linha((a.r + b.l) / 2, Math.min(a.t, b.t), 1, Math.max(a.b, b.b) - Math.min(a.t, b.t));
+          if (oh > 10 && b.t - a.b >= 6 && !entre(function (c) { return c.t >= a.b - 1 && c.b <= b.t + 1 && Math.min(c.r, a.r) - Math.max(c.l, a.l) > 10; }))
+            linha(Math.min(a.l, b.l), (a.b + b.t) / 2, Math.max(a.r, b.r) - Math.min(a.l, b.l), 1); }
+        bs.forEach(anda); })(m); }
     function tudo() { document.querySelectorAll('.slide').forEach(function (s) { ajusta(s); s.querySelectorAll('.area').forEach(liga); s.querySelectorAll('canvas[data-g]').forEach(function (cv) { var c = window.Chart && Chart.getChart(cv); if (c) c.destroy(); }); });
       if (window.Chart || window.echarts) document.querySelectorAll('canvas[data-g]').forEach(desenha); window.__deckPronto = true; }
     /* observações: editando é texto puro; fora do foco, as linhas com - e 1. viram tópicos */
