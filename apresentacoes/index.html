@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611262110">
+<meta name="build" content="202611262130">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611262110"></script>
+<script src="../assets/apres-slides.js?v=202611262130"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -689,7 +689,8 @@ function colSC(a){
   const rk=UNI_LIST.map(u=>({u:u,s:scoreFromNotes(unitScores(u,pk,yr,mi)),eu:unis.indexOf(u)>=0})).filter(x=>x.s!=null).sort((x,y)=>y.s-x.s);
   const mes=VIGS.filter(d=>d.getFullYear()===yr).map(d=>({m:d.getMonth(),v:pont(new Set([vigKeyN(d)]),unis)}));
   const ant=VIGS.filter(d=>vigKeyN(d)<vigKeyN(sel)).pop();
-  return {unis,pont:pont(pk,unis),ant:ant?pont(new Set([vigKeyN(ant)]),unis):null,cards,rk,mes};
+  const ytd=pont(new Set(VIGS.filter(d=>d.getFullYear()===yr&&vigKeyN(d)<=vigKeyN(sel)).map(vigKeyN)),unis);   /* YTD: jan até o mês, a mesma conta do painel com as vigências do ano marcadas */
+  return {unis,pont:pont(pk,unis),ant:ant?pont(new Set([vigKeyN(ant)]),unis):null,ytd,cards,rk,mes};
 }
 /* Termômetro: a linha do mês (Q2, ou Q1) de cada tier da unidade, o mês anterior, as posições e os indicadores */
 function colTERM(a){
@@ -743,7 +744,12 @@ function colELITE(a){
   const f=['disp','prev','comb','pneus','checkT','checkWH','conf','stVeic','stEmp','sla','civf'];
   const ind=f.map(k=>({k:k,l:IND_LABELS[k]||k,p:FIELD_WEIGHTS[k],v:getFieldAvg(meus,k)})).filter(x=>x.v!=null);
   const mes=[]; for(let m=1;m<=12;m++){ const vg=a.ano+'/'+String(m).padStart(2,'0')+'/01', rs=RAW.filter(r=>r.vig===vg&&a.units.indexOf(r.unit)>=0); mes.push(rs.length?getFieldAvg(rs,'pontuacao'):null); }
-  return {pont:getFieldAvg(meus,'pontuacao'),ind:ind,rk:rk,mes:mes,nomes:a.units.map(u=>NOMES[u]||'')};
+  /* YTD: o acumulado jan até o mês pelo GerotBase.acumFor, a mesma conta do painel com as vigências do ano marcadas */
+  let ytd=null; try{ if(window.GerotBase&&GerotBase.acumFor){ const mm=+a.vig.slice(5,7), vs=[]; for(let m=1;m<=mm;m++) vs.push(a.ano+'-'+String(m).padStart(2,'0'));
+    const f={}; GerotBase.acumFor(vs).forEach(r=>{ if(a.units.indexOf(r.unit)<0) return; (f[r.unit]=f[r.unit]||{})[r.field]=r.atg; });
+    const ps=Object.values(f).map(x=>calcScore_(x)).filter(v=>v!=null); if(ps.length) ytd=ps.reduce((x,y)=>x+y,0)/ps.length; } }catch(e){}
+  if(ytd==null){ const xs=mes.filter((v,i)=>v!=null&&i<+a.vig.slice(5,7)); if(xs.length) ytd=xs.reduce((x,y)=>x+y,0)/xs.length; }
+  return {pont:getFieldAvg(meus,'pontuacao'),ytd:ytd,ind:ind,rk:rk,mes:mes,nomes:a.units.map(u=>NOMES[u]||'')};
 }
 
 const CACHE={};
@@ -1098,8 +1104,8 @@ function sSC(inst){
   const FX=[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']], evo=AS.grafico('Evolução mensal','Pontuação geral · '+mesLb(VIG),{tipo:'faixa',labels:MESC,v,faixas:FX,foco:[mi],fmt:'n1'});
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${evo}${dq}</div>`;
   /* cópia ECharts: o hero em cards, como no Frota de Elite e no Termômetro (Renan, 26/11/2026) */
-  const topo=ESTILO==='echarts'?heroCards('Pontuação geral',S.pont==null?'—':nf(S.pont,1),corEsc(SC_FG(bandSC(S.pont))),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição',pos?pos+'º <small>de '+S.rk.length+'</small>':'—','entre as unidades'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo da meta']]):hero;
-  if(ESTILO!=='echarts'){ const pior=ks.slice().sort((a,b)=>(ORD_COR[SC_FG(clsOf(a))]-ORD_COR[SC_FG(clsOf(b))])||a.val-b.val)[0]; return [sl({titulo:'Scorecard',sec:'sc',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',S.pont==null?'—':nf(S.pont,1),SC_FG(bandSC(S.pont)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição',pos?pos+'º de '+S.rk.length:'—','entre as unidades'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo da meta']],pior?`<b>Pior indicador: ${esc(pior.lbl)}</b> (${Math.round(pior.val)}%).`:''),evo,indCard(ks.map(c=>({n:c.lbl,t:Math.round(c.val)+'%',cor:SC_FG(clsOf(c)),v:c.val})),'do pior para o melhor · % do indicador'))},inst,'Scorecard')]; }
+  const topo=ESTILO==='echarts'?heroCards('Pontuação geral',S.pont==null?'—':nf(S.pont,1),corEsc(SC_FG(bandSC(S.pont))),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['YTD',S.ytd==null?'—':`<span style="color:${SC_FG(bandSC(S.ytd))}">${nf(S.ytd,1)}</span>`,'jan → '+MESC[mi].replace('.','')],['Posição',pos?pos+'º <small>de '+S.rk.length+'</small>':'—','entre as unidades'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo da meta']]):hero;
+  if(ESTILO!=='echarts'){ const pior=ks.slice().sort((a,b)=>(ORD_COR[SC_FG(clsOf(a))]-ORD_COR[SC_FG(clsOf(b))])||a.val-b.val)[0]; return [sl({titulo:'Scorecard',sec:'sc',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',S.pont==null?'—':nf(S.pont,1),SC_FG(bandSC(S.pont)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['YTD',S.ytd==null?'—':`<span style="color:${SC_FG(bandSC(S.ytd))}">${nf(S.ytd,1)}</span>`,'jan → '+MESC[mi].replace('.','')],['Posição',pos?pos+'º de '+S.rk.length:'—','entre as unidades'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo da meta']],pior?`<b>Pior indicador: ${esc(pior.lbl)}</b> (${Math.round(pior.val)}%).`:''),evo,indCard(ks.map(c=>({n:c.lbl,t:Math.round(c.val)+'%',cor:SC_FG(clsOf(c)),v:c.val})),'do pior para o melhor · % do indicador'))},inst,'Scorecard')]; }
   return [sl({titulo:'Scorecard',sec:'sc',corpo:`<div class="pn">${topo}${gr}</div>`},inst,'Scorecard')];
 }
 /* Termômetro: pontuação com MoM, posição Geo e Conlog, o ano e os Bottom KPIs */
@@ -1113,6 +1119,7 @@ function sTERM(inst){
   const hero=`<div class="pn-hero"><div class="hlbl">Pontuação geral</div><div class="hval" style="color:${SC_FG(bandSC(g))}">${nf(g,1)}<small>pts</small></div>
     <div class="hdel"><div>MoM<b>${mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false)}</b></div><div>Posição Geo<b>${geo?geo+'º':'—'}${nomeGeo?' · '+esc(nomeGeo):''}</b></div><div>Posição Conlog<b>${cl.pos?cl.pos+'º de '+cl.n:'—'}</b></div></div></div>`;
   const v=Array(12).fill(null).map((_,m)=>{ const xs=m>mi?[]:T.map(t=>t.mes[m]).filter(x=>x!=null); return xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:null; });
+  const ytd=med(v.filter(x=>x!=null));   /* YTD: média dos meses fechados do ano até o mês */
   /* indicadores da unidade: o mesmo indicador em dois tiers vira um só (pontos somados) */
   /* o mesmo indicador em dois tiers: a média dos pontos, como o Ranking do Termômetro */
   const nk=x=>String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(de|da|do|dos|das)\b/g,' ').replace(/[^a-z0-9% ]/g,' ').split(/\s+/).filter(Boolean).map(w=>w.length>3?w.replace(/s$/,''):w).join(' ');
@@ -1124,9 +1131,9 @@ function sTERM(inst){
   const curto=n=>{ const c=CURTO.find(x=>x[0].test(n)); return c?c[1]:Cap(String(n).toLowerCase()); };
   const dq=`<div class="card pn-dq"><div class="gtit">Indicadores</div><div class="l hd"><span class="p"></span><span class="u">Indicador</span><span class="vv" style="min-width:5.2em;text-align:right">Ating.</span><span class="s" style="min-width:2.4em;text-align:right">Pts</span></div><div class="ls">${kp.map((k,i)=>`<div class="l"><span class="p">${i+1}º</span><span class="u">${esc(curto(k.n))}</span><span class="vv" style="min-width:5.2em;text-align:right">${esc(k.vs.join(' · ')||'—')}</span><span class="s" style="color:${cp(k)};min-width:2.4em;text-align:right">${nf(k.p)}</span></div>`).join('')}</div></div>`;
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'})}${dq}</div>`;
-  const topo=ESTILO==='echarts'?heroCards('Pontuação geral',nf(g,1)+'<small>pts</small>',corEsc(SC_FG(bandSC(g))),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º <small>de '+cl.n+'</small>':'—','entre as unidades']]):hero;
+  const topo=ESTILO==='echarts'?heroCards('Pontuação geral',nf(g,1)+'<small>pts</small>',corEsc(SC_FG(bandSC(g))),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['YTD',ytd==null?'—':`<span style="color:${SC_FG(bandSC(ytd))}">${nf(ytd,1)}</span>`,'média jan → '+MESC[mi].replace('.','')],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º <small>de '+cl.n+'</small>':'—','entre as unidades']]):hero;
   if(ESTILO!=='echarts'){ const pior=kp[0], graf=AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'});
-    return [sl({titulo:'Termômetro',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',nf(g,1)+'<small style="font-size:.4em;color:var(--txt3);margin-left:4px">pts</small>',SC_FG(bandSC(g)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º de '+cl.n:'—','entre as unidades']],pior?`<b>Pior indicador: ${esc(curto(pior.n))}</b> (${nf(pior.p)} de ${nf(pior.mx)} pts).`:''),graf,indCard(kp.map(k=>({n:curto(k.n),t:nf(k.p)+' de '+nf(k.mx),cor:cp(k),v:k.mx?k.p/k.mx*100:0})),'do pior para o melhor · pontos do indicador'))},inst,'Termômetro')]; }
+    return [sl({titulo:'Termômetro',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',nf(g,1)+'<small style="font-size:.4em;color:var(--txt3);margin-left:4px">pts</small>',SC_FG(bandSC(g)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['YTD',ytd==null?'—':`<span style="color:${SC_FG(bandSC(ytd))}">${nf(ytd,1)}</span>`,'média jan → '+MESC[mi].replace('.','')],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º de '+cl.n:'—','entre as unidades']],pior?`<b>Pior indicador: ${esc(curto(pior.n))}</b> (${nf(pior.p)} de ${nf(pior.mx)} pts).`:''),graf,indCard(kp.map(k=>({n:curto(k.n),t:nf(k.p)+' de '+nf(k.mx),cor:cp(k),v:k.mx?k.p/k.mx*100:0})),'do pior para o melhor · pontos do indicador'))},inst,'Termômetro')]; }
   return [sl({titulo:'Termômetro',corpo:`<div class="pn">${topo}${gr}</div>`},inst,'Termômetro')];
 }
 /* cópia ECharts: o hero em cards (o principal no grafite do cabeçalho); itens = [[rótulo, valor html, nota]] */
@@ -1143,9 +1150,9 @@ function sELITE(inst){
   const ks=x.ind.filter(i=>i.v!=null).slice().sort((a,b)=>a.v-b.v);
   const dq=`<div class="card pn-dq"><div class="gtit">Indicadores</div><div class="ls">${ks.map((i,j)=>`<div class="l"><span class="p">${j+1}º</span><span class="u">${esc(i.l)}${i.p!=null?' <small>peso '+i.p+'</small>':''}</span><span class="s" style="color:${dot(i.v)};min-width:3em;text-align:right">${nf(i.v,1)}</span></div>`).join('')}</div></div>`;
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','Frota de Elite · pontuação total do mês',{tipo:'faixa',labels:MESC,v:x.mes.map((y,i)=>i<=mi?y:null),faixas:[[95,'#00B300'],[85,'#E9A400'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'})}${dq}</div>`;
-  const crit=x.ind.filter(i=>i.v!=null&&i.v<85).length, topo=ESTILO==='echarts'?heroCards('Pontuação total',x.pont==null?'—':nf(x.pont,2),corEsc(dot(x.pont)),[['Posição',pos?pos+'º <small>de '+x.rk.length+'</small>':'—','no ranking do mês'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo de 85'],['Indicadores',nf(ks.length),'medidos no mês']]):hero;
+  const crit=x.ind.filter(i=>i.v!=null&&i.v<85).length, topo=ESTILO==='echarts'?heroCards('Pontuação total',x.pont==null?'—':nf(x.pont,2),corEsc(dot(x.pont)),[['Posição',pos?pos+'º <small>de '+x.rk.length+'</small>':'—','no ranking do mês'],['YTD',x.ytd==null?'—':`<span style="color:${dot(x.ytd)}">${nf(x.ytd,2)}</span>`,'acumulado jan → '+MESC[mi].replace('.','')],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo de 85'],['Indicadores',nf(ks.length),'medidos no mês']]):hero;
   if(ESTILO!=='echarts'){ const pior=ks[0], graf=AS.grafico('Pontuação no ano','Frota de Elite · pontuação total do mês',{tipo:'faixa',labels:MESC,v:x.mes.map((y,i)=>i<=mi?y:null),faixas:[[95,'#00B300'],[85,'#E9A400'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'});
-    return [sl({titulo:'Frota de Elite',kmax:1,corpo:corpoInd(heroInd('Pontuação total',x.pont==null?'—':nf(x.pont,2),dot(x.pont),[['Posição',pos?pos+'º de '+x.rk.length:'—','no ranking do mês'],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo de 85'],['Indicadores',nf(ks.length),'medidos no mês']],pior?`<b>Pior indicador: ${esc(pior.l)}</b> (${nf(pior.v,1)}).`:''),graf,indCard(ks.map(i=>({n:i.l,t:nf(i.v,1),cor:dot(i.v),v:i.v})),'do pior para o melhor · resultado do indicador'))},inst,'Frota de Elite')]; }
+    return [sl({titulo:'Frota de Elite',kmax:1,corpo:corpoInd(heroInd('Pontuação total',x.pont==null?'—':nf(x.pont,2),dot(x.pont),[['Posição',pos?pos+'º de '+x.rk.length:'—','no ranking do mês'],['YTD',x.ytd==null?'—':`<span style="color:${dot(x.ytd)}">${nf(x.ytd,2)}</span>`,'acumulado jan → '+MESC[mi].replace('.','')],['Indicadores críticos',`<span style="color:${crit?'#FF0000':'#00B300'}">${crit}</span>`,'abaixo de 85'],['Indicadores',nf(ks.length),'medidos no mês']],pior?`<b>Pior indicador: ${esc(pior.l)}</b> (${nf(pior.v,1)}).`:''),graf,indCard(ks.map(i=>({n:i.l,t:nf(i.v,1),cor:dot(i.v),v:i.v})),'do pior para o melhor · resultado do indicador'))},inst,'Frota de Elite')]; }
   return [sl({titulo:'Frota de Elite',corpo:`<div class="pn">${topo}${gr}</div>`},inst,'Frota de Elite')];
 }
 /* Gestão à Vista: a foto de hoje da unidade (os mesmos números e cortes do Ranking do painel) e as observações */
@@ -1488,6 +1495,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611262110"></script>
+<script src="../assets/build-check.js?v=202611262130"></script>
 </body>
 </html>
