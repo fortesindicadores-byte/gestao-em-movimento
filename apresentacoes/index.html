@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611270050">
+<meta name="build" content="202611270130">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611270050"></script>
+<script src="../assets/apres-slides.js?v=202611270130"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -1238,7 +1238,7 @@ function monta(){
   set('titSub',`${UNI()}${VIG?' · fechamento de '+mesLb(VIG):''} · ${DECK.length} slides`);
 }
 let _foco=null;
-const ESTILO=(()=>{ try{ const e=new URLSearchParams(location.search).get('estilo'); return e==='limpo'||e==='echarts'||e==='branco'?e:''; }catch(e){ return ''; } })();
+const ESTILO=(()=>{ try{ const e=new URLSearchParams(location.search).get('estilo'); return e==='limpo'||e==='echarts'?e:e==='original'?'':'branco'; }catch(e){ return 'branco'; } })();   /* visão final = branco (Renan, 26/11/2026); a de cards fica em ?estilo=original */
 const docAtual=final=>AS.doc({estilo:ESTILO==='branco'?'limpo branco':ESTILO,base:new URL('../assets/',location.href).href,titulo:`${MOD.titulo} · ${UNI()}`,slides:DECK.map(d=>d.html),final,escuro:!document.body.classList.contains('claro'),css:(document.getElementById('fca-tabela-css')||{}).textContent||''});
 const OLHO='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const OLHO_X='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19C5 19 1 12 1 12a20.3 20.3 0 0 1 5.1-5.9M9.9 5.2A10.4 10.4 0 0 1 12 5c7 0 11 7 11 7a20.6 20.6 0 0 1-2.2 3.2M1 1l22 22"/></svg>';
@@ -1497,6 +1497,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611270050"></script>
+<script src="../assets/build-check.js?v=202611270130"></script>
 </body>
 </html>
