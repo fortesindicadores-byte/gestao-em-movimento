@@ -650,7 +650,9 @@
     function separa(s) { [].forEach.call(s.querySelectorAll('.sep-l'), function (x) { x.remove(); });
       if (!document.body.classList.contains('est-limpo')) return; var m = s.querySelector('.miolo'); if (!m) return;
       var mr = m.getBoundingClientRect(), sc = (mr.width / m.offsetWidth) || 1, feito = {};
-      var linha = function (x, y, w, h) { var k = [x, y, w, h].map(Math.round).join(','); if (feito[k]) return; feito[k] = 1; var d = document.createElement('div'); d.className = 'sep-l';
+      var HL = [];
+      [].forEach.call(s.querySelectorAll('.hero .gr>div'), function (c) { c.style.paddingBottom = ''; });
+      var linha = function (x, y, w, h) { var k = [x, y, w, h].map(Math.round).join(','); if (feito[k]) return; feito[k] = 1; if (h === 1) HL.push({ x: x, y: y }); var d = document.createElement('div'); d.className = 'sep-l';
         d.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h + 'px'; m.appendChild(d); };
       var R = function (e) { var r = e.getBoundingClientRect(); return { l: (r.left - mr.left) / sc, t: (r.top - mr.top) / sc, r: (r.right - mr.left) / sc, b: (r.bottom - mr.top) / sc }; };
       (function anda(el) { if (el.matches('.arv,table,.tb,.pn-dq,.fcap,.fca,.gr')) return;
@@ -662,7 +664,15 @@
             linha((a.r + b.l) / 2, Math.min(a.t, b.t), 1, Math.max(a.b, b.b) - Math.min(a.t, b.t));
           if (oh > 10 && b.t - a.b >= 6 && !entre(function (c) { return c.t >= a.b - 1 && c.b <= b.t + 1 && Math.min(c.r, a.r) - Math.max(c.l, a.l) > 10; }))
             linha(Math.min(a.l, b.l), (a.b + b.t) / 2, Math.max(a.r, b.r) - Math.min(a.l, b.l), 1); }
-        bs.forEach(anda); })(m); }
+        bs.forEach(anda); })(m);
+      /* a última linha da grade do hero cai na mesma altura da linha entre os gráficos ao lado; a sobra é repartida entre as linhas da grade (Renan, 26/11/2026: "não deixe isso desalinhado") */
+      [].forEach.call(s.querySelectorAll('.hero'), function (h) { var g = h.querySelector('.gr'); if (!g) return; var hr = R(h), gr = R(g);
+        var alvo = HL.filter(function (l) { return l.x >= hr.r - 2 && l.y > gr.t && l.y < hr.b; }).sort(function (a, b) { return a.y - b.y; })[0]; if (!alvo) return;
+        var dif = alvo.y + 1 - gr.b, cs = [].slice.call(g.children); if (dif <= 1) return;
+        var linhas = Math.max(1, Math.ceil(cs.filter(function (c) { return !c.classList.contains('gr2'); }).length / 2) + cs.filter(function (c) { return c.classList.contains('gr2'); }).length), add = dif / linhas;
+        cs.forEach(function (c) { c.style.paddingBottom = (parseFloat(getComputedStyle(c).paddingBottom) + add) + 'px'; });
+        var dif2 = alvo.y + 1 - R(g).b; if (Math.abs(dif2) > .5) cs.forEach(function (c) { c.style.paddingBottom = (parseFloat(c.style.paddingBottom) + dif2 / linhas) + 'px'; });
+        if (h.scrollHeight > h.clientHeight + 1) cs.forEach(function (c) { c.style.paddingBottom = ''; }); }); }
     function tudo() { document.querySelectorAll('.slide').forEach(function (s) { ajusta(s); s.querySelectorAll('.area').forEach(liga); s.querySelectorAll('canvas[data-g]').forEach(function (cv) { var c = window.Chart && Chart.getChart(cv); if (c) c.destroy(); }); });
       if (window.Chart || window.echarts) document.querySelectorAll('canvas[data-g]').forEach(desenha); window.__deckPronto = true; }
     /* observações: editando é texto puro; fora do foco, as linhas com - e 1. viram tópicos */
