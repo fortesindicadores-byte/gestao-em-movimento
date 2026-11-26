@@ -73,16 +73,6 @@
     '.sum .it b{color:#F97316;font-weight:800;font-size:18px;width:28px;flex:0 0 28px}',
     '.sum.denso .it{font-size:14px}.sum.denso .it b{font-size:16px}',
     '.div .bloco{top:292px}',
-    /* capa, divisória e encerramento com a foto do Scania de Piraí na tela inteira, SEM véu; sumário com a foto num painel à direita (Renan, 26/11/2026: "volte a minha imagem" → o desenho de 24/11, "mas sem o véu") */
-    '.arte.foto{background:#0F1A20 url(img/capa-frota.jpg) center/cover no-repeat}',
-    '.foto .tx{position:absolute;left:64px;top:60px;max-width:640px;text-shadow:0 2px 16px rgba(0,0,0,.7),0 1px 3px rgba(0,0,0,.65)}',
-    '.foto .kick{font-size:14px;font-weight:800;letter-spacing:2.4px;text-transform:uppercase;color:#F97316}',
-    '.foto .tx h1{font-family:Montserrat,sans-serif;font-weight:800;font-size:54px;line-height:1.08;margin-top:12px;padding:0;text-align:left;letter-spacing:-.5px}',
-    '.foto .barra{width:84px;height:5px;background:#F97316;margin-top:20px;border-radius:2px}',
-    '.foto .tx .per{font-size:20px;font-weight:600;margin-top:16px}.foto .tx .per b{margin:0 10px}',
-    '.foto .tx .sub{font-size:16px;font-weight:600;margin-top:12px;max-width:520px;line-height:1.45}',
-    '.foto .marca.p{left:auto;right:76px;bottom:34px;filter:drop-shadow(0 1px 6px rgba(0,0,0,.6))}',
-    '.sum .painel{position:absolute;right:32px;top:32px;bottom:44px;width:330px;border-radius:14px;background:url(img/capa-frota.jpg) 30% center/cover no-repeat}',
     '.div .num{font-size:66px;font-weight:300;color:#F97316;line-height:1;margin-bottom:24px}',
     '.div .sub{font-size:15px;color:#BFC5CF;margin:16px auto 0;max-width:480px;line-height:1.5}',
     /* conteúdo */
@@ -303,22 +293,22 @@
   var marca = function (p) { return '<div class="marca' + (p ? ' p' : '') + '"><img src="img/logo-conlog-branco.png" alt=""><div class="tv"><span class="w">TEM<i>VALOR</i></span><span class="s">PRA VOCÊ,<br>PRA NÓS!</span></div></div>'; };
   var perTxt = function (vk) { return MES[+vk.slice(5, 7) - 1] + '<b>|</b>' + vk.slice(0, 4); };
   var bloco = function (t, vk) { return '<div class="bloco"><h1>' + esc(t) + '</h1><div class="vline"></div><div class="per">' + perTxt(vk) + '</div></div>'; };
-  var fotoTx = function (kick, t, rest) { return '<div class="tx">' + (kick ? '<div class="kick">' + kick + '</div>' : '') + '<h1>' + esc(t) + '</h1><div class="barra"></div>' + rest + '</div>' + marca(true); };
   function capa(o) {
-    return '<section class="slide arte foto capa" data-sec="capa">' + fotoTx('Gestão em Movimento', o.titulo, '<div class="per">' + perTxt(o.vig) + '</div>') + '</section>';
+    return '<section class="slide arte capa" data-sec="capa"><div class="esq">' + marca() + bloco(o.titulo, o.vig) + '</div>' + tiras(false) + '</section>';
   }
   function sumario(o) {
     var it = o.itens || [], metade = Math.ceil(it.length / 2), a = it.slice(0, metade), b = it.slice(metade);
     var li = function (x) { return '<div class="it"><b>' + String(x.pg).padStart(2, '0') + '</b><span>' + esc(x.t) + '</span></div>'; };
     return '<section class="slide arte sum' + (it.length > 18 ? ' denso' : '') + '" data-sec="sumario"><div class="esq" style="width:898px">' + marca(true) +
       '<h1>Sumário</h1><div class="tr"></div><div class="mes">' + perTxt(o.vig).replace('<b>|</b>', ' <b>|</b> ') + '</div>' +
-      '<div class="lista" style="--h:' + Math.min(38, Math.floor(440 / Math.max(1, metade))) + 'px"><div>' + a.map(li).join('') + '</div><div>' + b.map(li).join('') + '</div></div></div><div class="painel"></div></section>';
+      '<div class="lista" style="--h:' + Math.min(38, Math.floor(440 / Math.max(1, metade))) + 'px"><div>' + a.map(li).join('') + '</div><div>' + b.map(li).join('') + '</div></div></div>' + tiras(true) + '</section>';
   }
   function divisoria(o) {
-    return '<section class="slide arte foto div" data-sec="div">' + fotoTx('Parte ' + String(o.n).padStart(2, '0'), o.titulo, o.sub ? '<div class="sub">' + esc(o.sub) + '</div>' : '') + '</section>';
+    return '<section class="slide arte div" data-sec="div"><div class="esq">' + marca() + '<div class="bloco"><div class="num">' + String(o.n).padStart(2, '0') + '</div><h1>' + esc(o.titulo) + '</h1>' +
+      (o.sub ? '<div class="sub">' + esc(o.sub) + '</div>' : '') + '</div></div>' + tiras(false) + '</section>';
   }
   function fim(o) {
-    return '<section class="slide arte foto fim" data-sec="fim">' + fotoTx('Gestão em Movimento', 'Obrigado!', '<div class="per">' + perTxt(o.vig) + '</div>') + '</section>';
+    return '<section class="slide arte fim" data-sec="fim"><div class="esq">' + marca() + bloco('Obrigado!', o.vig) + '</div>' + tiras(false) + '</section>';
   }
 
   /* ── slide de conteúdo: moldura ── */
