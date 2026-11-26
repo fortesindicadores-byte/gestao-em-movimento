@@ -233,7 +233,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
     const n = await pg.evaluate(() => DECK.length);
     for (let i = 0; i < n; i++) { await pg.evaluate(i => { POS = i; mostra(); }, i); await pg.waitForTimeout(120); await pg.locator('#telaQ').screenshot({ path: path.join(SHOT, `s${String(i + 1).padStart(2, '0')}.png`) }); }
     await pg.screenshot({ path: path.join(SHOT, 'painel.png') });
-    const html = await pg.evaluate(() => docAtual(false)); const p2 = await ctx.newPage(); await p2.setViewportSize({ width: 1280, height: 720 });
+    const html = await pg.evaluate(c => { if (c) document.body.classList.add('claro'); return docAtual(false); }, !!process.env.CLARO); const p2 = await ctx.newPage(); await p2.setViewportSize({ width: 1280, height: 720 });
     await p2.route('**/cdn.jsdelivr.net/**', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: /echarts/.test(r.request().url()) ? ECHARTS : CHARTJS }));
     await p2.setContent(html, { waitUntil: 'load' }); await p2.waitForFunction(() => window.__deckPronto, null, { timeout: 20000 }); await p2.waitForTimeout(400);
     if (process.env.KDUMP) console.log('KDUMP', JSON.stringify(await p2.evaluate(() => [...document.querySelectorAll('.slide.cont')].map(s => (s.querySelector('h2')||{}).textContent + '=' + getComputedStyle(s).getPropertyValue('--k').trim()))));
