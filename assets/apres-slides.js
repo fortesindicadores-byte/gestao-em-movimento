@@ -454,9 +454,8 @@
     /* sem card: o hero começa na linha do título do gráfico e uma linha vertical o separa dos gráficos, no meio do vão (Renan, 26/11/2026) */
     'body.est-limpo .cont .hero{padding-top:0}',
     /* linhas entre os blocos vizinhos, no meio do vão (separa(), Renan, 26/11/2026: "Em todos que tiverem separações entre gráficos, cards etc") */
-    '.sep-l{position:absolute;pointer-events:none;z-index:1;--sep:#000}body.escuro .sep-l{--sep:rgba(255,255,255,.6)}.sep-l.v{border-left:1px dotted var(--sep)}.sep-l.h{border-top:1px dotted var(--sep)}',
-    'body.est-limpo .hero .gr{border-top:1px dotted #000}body.est-limpo .hero .gr>div{border-bottom:1px dotted #000}body.est-limpo .hero .gr>div:nth-child(odd){border-right:1px dotted #000}',
-    'body.est-limpo.escuro .hero .gr,body.est-limpo.escuro .hero .gr>div{border-color:rgba(255,255,255,.6)}',
+    '.sep-l{position:absolute;background:var(--linha);pointer-events:none;z-index:1}',
+    'body.est-limpo .hero .gr{border-top-width:.75px}body.est-limpo .hero .gr>div{border-bottom-width:.75px}body.est-limpo .hero .gr>div:nth-child(odd){border-right-width:.75px}',
     /* cópia ECharts: o hero vira uma fileira de cards, o principal no grafite do cabeçalho (Renan, 26/11/2026) */
     '.eh-row{display:grid;gap:12px;flex:0 0 calc(132px*var(--k));min-height:0}',
     '.eh-row .card{display:flex;flex-direction:column;justify-content:center;padding:calc(12px*var(--k)) 20px}',
@@ -654,8 +653,8 @@
       var mr = m.getBoundingClientRect(), sc = (mr.width / m.offsetWidth) || 1, feito = {};
       var HL = [];
       [].forEach.call(s.querySelectorAll('.hero .gr>div'), function (c) { c.style.paddingBottom = ''; });
-      var linha = function (x, y, w, h) { var k = [x, y, w, h].map(Math.round).join(','); if (feito[k]) return; feito[k] = 1; if (h === 1) HL.push({ x: x, y: y }); var d = document.createElement('div'); d.className = 'sep-l ' + (h === 1 ? 'h' : 'v');
-        d.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + (h === 1 ? w : 0) + 'px;height:' + (h === 1 ? 0 : h) + 'px'; m.appendChild(d); };
+      var linha = function (x, y, w, h) { var k = [x, y, w, h].map(Math.round).join(','); if (feito[k]) return; feito[k] = 1; if (h === 1) HL.push({ x: x, y: y }); var d = document.createElement('div'); d.className = 'sep-l';
+        d.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + (w === 1 ? .75 : w) + 'px;height:' + (h === 1 ? .75 : h) + 'px'; m.appendChild(d); };
       var R = function (e) { var r = e.getBoundingClientRect(); return { l: (r.left - mr.left) / sc, t: (r.top - mr.top) / sc, r: (r.right - mr.left) / sc, b: (r.bottom - mr.top) / sc }; };
       (function anda(el) { if (el.matches('.arv,table,.tb,.pn-dq,.fcap,.fca,.gr')) return;
         var bs = [].filter.call(el.children, function (c) { return c.offsetWidth > 20 && c.offsetHeight > 20 && (c.matches('.card') || c.querySelector('.card')); }), rs = bs.map(R);

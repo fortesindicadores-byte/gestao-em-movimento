@@ -102,7 +102,7 @@ const br = await chromium.launch({ executablePath: process.env.PW_CHROME || '/op
 let falhas = 0, oks = 0; const ok = (t, v, e = '') => { console.log(`   ${v ? '✓' : '✗'} ${t}${e ? '  (' + e + ')' : ''}`); v ? oks++ : falhas++; };
 
 async function abre({ w = 1366, h = 768, tema = 'dark', perfil = { nome: 'Renan', unidade: '', is_admin: true }, tabela = true, modelo = null, u = 'GRL' } = {}) {
-  const ctx = await br.newContext({ viewport: { width: w, height: h }, serviceWorkers: 'block', acceptDownloads: true });
+  const ctx = await br.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: +process.env.DSF || 1, serviceWorkers: 'block', acceptDownloads: true });
   const pg = await ctx.newPage(); const errs = []; pg.on('pageerror', e => errs.push(e.message));
   await pg.addInitScript(({ perfil, FCA, GVIZ, tabela, modelo, tema }) => {
     if (window.top !== window) return;
