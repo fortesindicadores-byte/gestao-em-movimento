@@ -52,6 +52,13 @@ if (SO === 'ginfo') {
   process.exit(0);
 }
 
+// DUMP_SO=erp: os abastecimentos do ERP inteiros (todas as colunas, encerradas ou não) desde
+// 2025, para a memória de cálculo do crédito de PIS/COFINS do diesel × reforma tributária
+if (SO === 'erp') {
+  grava('tb-erp_abastecimentos', await tudo('erp_abastecimentos', 'data,ordem_servico', '&data=gte.2025-01-01', '*'));
+  process.exit(0);
+}
+
 async function rest(q) {
   for (let t = 1; ; t++) {
     const r = await fetch(`${SB_URL}/rest/v1/${q}`, { headers: H });

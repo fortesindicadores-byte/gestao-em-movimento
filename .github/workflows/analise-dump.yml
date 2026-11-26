@@ -14,7 +14,7 @@ on:
         required: false
         default: 'false'
       so:
-        description: 'dre = só as abas do DRE; km = Dispersão, placas, viagens, balanço de massa, DRE Frota, Km/L e FT de ago/26 em diante; comb = tabelas de combustível do FT desde 2025, DRE Frota e balanço de massa; mix = caminhão/van da Rota e AS em 2026, Km/L automático, Dispersão e DRE Frota; manut = lançamentos de manutenção por placa, vans no FT, Km/L e Ativos; ginfo = só as exportações do Ginfo (ginfo_snapshot); vazio = tudo'
+        description: 'dre = só as abas do DRE; km = Dispersão, placas, viagens, balanço de massa, DRE Frota, Km/L e FT de ago/26 em diante; comb = tabelas de combustível do FT desde 2025, DRE Frota e balanço de massa; mix = caminhão/van da Rota e AS em 2026, Km/L automático, Dispersão e DRE Frota; manut = lançamentos de manutenção por placa, vans no FT, Km/L e Ativos; ginfo = só as exportações do Ginfo (ginfo_snapshot); erp = os abastecimentos do ERP desde 2025; vazio = tudo'
         required: false
         default: ''
 
