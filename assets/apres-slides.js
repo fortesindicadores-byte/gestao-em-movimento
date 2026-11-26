@@ -582,6 +582,12 @@
         if (g.tipo === 'meta') ser.markLine = { silent: true, symbol: 'none', lineStyle: { color: C_INK, type: [6, 4], width: 2 }, label: { formatter: 'meta ' + fmt(g.meta), position: 'insideEndTop', fontSize: fs(11), fontWeight: 600, color: C_INK }, data: [{ yAxis: g.meta }] };
         else if (g.faixas && g.faixas.length) { var lim = g.faixas.filter(function (f) { return f[0] > -1e8; }); ser.markLine = { silent: true, symbol: 'none', data: lim.map(function (f) { return { yAxis: f[0], lineStyle: { color: C_INK, type: [3, 4], width: .8 }, label: { formatter: String(f[0]), position: 'insideStartTop', fontSize: fs(10), fontWeight: 700, color: f[1] } }; }) }; }
         op.series = [ser];
+        /* resultado do indicador dentro da barra (Termômetro: em cima a pontuação; Renan, 26/11/2026). Barra baixa demais: o resultado sobe para cima da pontuação */
+        if (g.dentro) { var ph = H - op.grid.top - op.grid.bottom, alto = function (v) { return v != null && (v - (b2.min || 0)) / ((b2.max - (b2.min || 0)) || 1) * ph >= fs(28); };
+          ser.data.forEach(function (d, i) { if (!d || !g.dentro[i] || alto(g.v[i])) return; d.label.formatter = '{r|' + g.dentro[i] + '}\n' + (g.txt ? g.txt[i] : fmt(g.v[i]));
+            d.label.rich = { r: { fontFamily: 'Montserrat', fontSize: fs(10.5), fontWeight: 600, color: C_TICK, lineHeight: fs(15) } }; });
+          op.series.push({ type: 'bar', barWidth: '60%', barGap: '-100%', silent: true, z: 3, data: g.v.map(function (v, i) { return v == null ? null : { value: v, itemStyle: { color: 'transparent' },
+            label: { show: !!g.dentro[i] && alto(v), position: 'insideTop', distance: fs(8), formatter: g.dentro[i] || '', fontFamily: 'Montserrat', fontSize: fs(11), fontWeight: 700, color: '#FFFFFF' } }; }) }); }
       } else if (g.tipo === 'barrasH' || g.tipo === 'prog') {
         var n = g.v.length, cs = g.v.map(function (v, i) { return g.cores ? g.cores[i] : (i === g.foco ? '#F97316' : '#9AA3B2'); });
         var mx = g.tipo === 'prog' ? 100 : (g.max != null ? g.max : Math.max.apply(null, g.v.map(function (v) { return Math.abs(v) || 0; })) * 1.0 || 1);

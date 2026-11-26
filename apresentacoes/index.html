@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611262130">
+<meta name="build" content="202611262150">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611262130"></script>
+<script src="../assets/apres-slides.js?v=202611262150"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -1082,7 +1082,7 @@ const NOME_CURTO=[[/^FCA Ader/i,'FCA'],[/^Consumo Km\/L/i,'Km/L'],[/^Conformidad
 const NOME_MINI=[[/^Custos/i,'Custos'],[/^Disponib/i,'Disp.'],[/^DPO/i,'DPO'],[/^Prevent/i,'Prev.'],[/^Consumo Km\/L|^Km\/L/i,'Km/L'],[/^Ating/i,'Ating. KM'],[/^Press/i,'Pressão'],[/^Aferi/i,'Aferiç.'],[/^Check(list)? T1/i,'T1/T2'],[/^Check(list)? Apoio/i,'Apoio'],[/^Conformid/i,'Conf.'],[/^Stress( Test)? Cam/i,'ST Cam.'],[/^Stress( Test)? Emp/i,'ST Emp.'],[/^SLA/i,'SLA'],[/^FCA/i,'FCA'],[/^CIVF/i,'CIVF']];
 const nomeCurto=(n,mini)=>{ const c=(mini?NOME_MINI.find(x=>x[0].test(n)):null)||NOME_CURTO.find(x=>x[0].test(n)); return c?c[1]:n; };
 const ORD_COR={'#FF0000':0,'#F97316':1,'#E9A400':2,'#00B300':3};
-const indCard=(itens,sub)=>(itens=itens.slice().sort((a,b)=>((ORD_COR[a.cor]??9)-(ORD_COR[b.cor]??9))||a.v-b.v),AS.grafico('Indicadores',sub||'',{tipo:'faixa',zero:1,faixas:[],labels:itens.map(x=>nomeCurto(x.n,itens.length>12)),v:itens.map(x=>x.v),cores:itens.map(x=>x.cor),txt:itens.map(x=>x.t)}));
+const indCard=(itens,sub)=>(itens=itens.slice().sort((a,b)=>((ORD_COR[a.cor]??9)-(ORD_COR[b.cor]??9))||a.v-b.v),AS.grafico('Indicadores',sub||'',{tipo:'faixa',zero:1,faixas:[],labels:itens.map(x=>nomeCurto(x.n,itens.length>12)),v:itens.map(x=>x.v),cores:itens.map(x=>x.cor),txt:itens.map(x=>x.t),dentro:itens.some(x=>x.d)?itens.map(x=>x.d||''):undefined}));
 /* Scorecard: o Resumo Gerencial do painel (hero sem card, faixas, os 20 cards em 10×2, evolução mensal e destaques) */
 const SC_FG=c=>({g:'#00B300',y:'#E9A400',o:'#F97316',r:'#FF0000'})[c]||'#8E96A6';
 const bandSC=v=>v==null?'':v>=90?'g':v>=80?'y':v>=70?'o':'r', bandCost=v=>v==null?'':v>=100?'g':v>=98?'y':v>=95?'o':'r';
@@ -1133,7 +1133,7 @@ function sTERM(inst){
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'})}${dq}</div>`;
   const topo=ESTILO==='echarts'?heroCards('Pontuação geral',nf(g,1)+'<small>pts</small>',corEsc(SC_FG(bandSC(g))),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['YTD',ytd==null?'—':`<span style="color:${SC_FG(bandSC(ytd))}">${nf(ytd,1)}</span>`,'média jan → '+MESC[mi].replace('.','')],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º <small>de '+cl.n+'</small>':'—','entre as unidades']]):hero;
   if(ESTILO!=='echarts'){ const pior=kp[0], graf=AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'});
-    return [sl({titulo:'Termômetro',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',nf(g,1)+'<small style="font-size:.4em;color:var(--txt3);margin-left:4px">pts</small>',SC_FG(bandSC(g)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['YTD',ytd==null?'—':`<span style="color:${SC_FG(bandSC(ytd))}">${nf(ytd,1)}</span>`,'média jan → '+MESC[mi].replace('.','')],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º de '+cl.n:'—','entre as unidades']],pior?`<b>Pior indicador: ${esc(curto(pior.n))}</b> (${nf(pior.p)} de ${nf(pior.mx)} pts).`:''),graf,indCard(kp.map(k=>({n:curto(k.n),t:nf(k.p)+' de '+nf(k.mx),cor:cp(k),v:k.mx?k.p/k.mx*100:0})),'do pior para o melhor · pontos do indicador'))},inst,'Termômetro')]; }
+    return [sl({titulo:'Termômetro',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',nf(g,1)+'<small style="font-size:.4em;color:var(--txt3);margin-left:4px">pts</small>',SC_FG(bandSC(g)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['YTD',ytd==null?'—':`<span style="color:${SC_FG(bandSC(ytd))}">${nf(ytd,1)}</span>`,'média jan → '+MESC[mi].replace('.','')],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º de '+cl.n:'—','entre as unidades']],pior?`<b>Pior indicador: ${esc(curto(pior.n))}</b> (${nf(pior.p)} de ${nf(pior.mx)} pts).`:''),graf,indCard(kp.map(k=>({n:curto(k.n),t:nf(k.p)+' pts',d:k.vs.join(' · '),cor:cp(k),v:k.mx?k.p/k.mx*100:0})),'do pior para o melhor · pontos e, na barra, o resultado do indicador'))},inst,'Termômetro')]; }
   return [sl({titulo:'Termômetro',corpo:`<div class="pn">${topo}${gr}</div>`},inst,'Termômetro')];
 }
 /* cópia ECharts: o hero em cards (o principal no grafite do cabeçalho); itens = [[rótulo, valor html, nota]] */
@@ -1495,6 +1495,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611262130"></script>
+<script src="../assets/build-check.js?v=202611262150"></script>
 </body>
 </html>
