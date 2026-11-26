@@ -454,8 +454,9 @@
     /* sem card: o hero começa na linha do título do gráfico e uma linha vertical o separa dos gráficos, no meio do vão (Renan, 26/11/2026) */
     'body.est-limpo .cont .hero{padding-top:0}',
     /* linhas entre os blocos vizinhos, no meio do vão (separa(), Renan, 26/11/2026: "Em todos que tiverem separações entre gráficos, cards etc") */
-    '.sep-l{position:absolute;background:var(--linha);pointer-events:none;z-index:1}',
-    'body.est-limpo .hero .gr{border-top-width:.75px}body.est-limpo .hero .gr>div{border-bottom-width:.75px}body.est-limpo .hero .gr>div:nth-child(odd){border-right-width:.75px}',
+    'body.est-limpo{--sepc:rgba(15,23,42,.2)}body.est-limpo.escuro{--sepc:rgba(255,255,255,.16)}',
+    '.sep-l{position:absolute;background:var(--sepc,var(--linha));pointer-events:none;z-index:1}',
+    'body.est-limpo .hero .gr{border-top-width:.75px;border-color:var(--sepc)}body.est-limpo .hero .gr>div{border-bottom-width:.75px;border-color:var(--sepc)}body.est-limpo .hero .gr>div:nth-child(odd){border-right-width:.75px}',
     /* cópia ECharts: o hero vira uma fileira de cards, o principal no grafite do cabeçalho (Renan, 26/11/2026) */
     '.eh-row{display:grid;gap:12px;flex:0 0 calc(132px*var(--k));min-height:0}',
     '.eh-row .card{display:flex;flex-direction:column;justify-content:center;padding:calc(12px*var(--k)) 20px}',
