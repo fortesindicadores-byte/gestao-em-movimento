@@ -32,6 +32,16 @@
   const pode = !!(d.fullscreenEnabled || d.webkitFullscreenEnabled);
   if (!pode) return;
 
+  // ponteiro de apresentação (círculo translúcido em tela cheia): arquivo à parte
+  try {
+    const src = (d.currentScript && d.currentScript.src) || '';
+    if (src && !window.__ponteiroGEM) {
+      const sc = d.createElement('script');
+      sc.src = src.replace(/modo-tv\.js(\?.*)?$/, 'ponteiro.js?v=202611261200');
+      (d.head || de).appendChild(sc);
+    }
+  } catch (e) {}
+
   const ativo = () => !!(d.fullscreenElement || d.webkitFullscreenElement);
   function entra() {
     const f = de.requestFullscreen || de.webkitRequestFullscreen;
