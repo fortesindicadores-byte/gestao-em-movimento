@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611262210">
+<meta name="build" content="202611262240">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611262210"></script>
+<script src="../assets/apres-slides.js?v=202611262240"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -1124,9 +1124,10 @@ function sTERM(inst){
   /* indicadores da unidade: o mesmo indicador em dois tiers vira um só (pontos somados) */
   /* o mesmo indicador em dois tiers: a média dos pontos, como o Ranking do Termômetro */
   const nk=x=>String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(de|da|do|dos|das)\b/g,' ').replace(/[^a-z0-9% ]/g,' ').split(/\s+/).filter(Boolean).map(w=>w.length>3?w.replace(/s$/,''):w).join(' ');
-  const by={}; T.forEach(t=>t.kp.forEach(k=>{ const n=nk(k.n), x=by[n]||(by[n]={n:k.n,ps:[],vs:[],mx:0}); x.ps.push(k.p); if(k.v!=null&&k.v!==''&&!x.vs.includes(String(k.v))) x.vs.push(String(k.v)); x.mx=Math.max(x.mx,k.mx); }));
-  const kp=Object.values(by).map(x=>Object.assign(x,{p:Math.round(med(x.ps))})).sort((a,b)=>a.p/a.mx-b.p/b.mx||a.p-b.p);
-  const cp=k=>k.p>=k.mx*.75?'#00B300':k.p>=k.mx*.25?'#E9A400':'#FF0000';
+  const by={}; T.forEach(t=>t.kp.forEach(k=>{ const n=nk(k.n), x=by[n]||(by[n]={n:k.n,ps:[],rs:[],vs:[],mx:0}); x.ps.push(k.p); if(k.mx) x.rs.push(k.p/k.mx); if(k.v!=null&&k.v!==''&&!x.vs.includes(String(k.v))) x.vs.push(String(k.v)); x.mx=Math.max(x.mx,k.mx); }));
+  /* cada tier tem o seu peso (10 ou 20): o quanto do máximo a unidade tirou é a média das razões de cada tier, não pontos ÷ o maior peso (Renan, 26/11/2026: "100% 10pts e amarelo?") */
+  const kp=Object.values(by).map(x=>Object.assign(x,{p:Math.round(med(x.ps)),r:x.rs.length?med(x.rs):0})).sort((a,b)=>a.r-b.r||a.p-b.p);
+  const cp=k=>k.r>=.75?'#00B300':k.r>=.25?'#E9A400':'#FF0000';
   /* nome curto do indicador (Renan, 26/11/2026: "Conformidade", "Checklist", "OS Vencida"…) */
   const CURTO=[[/preventiva/i,'Preventiva'],[/conformidade/i,'Conformidade'],[/blitz/i,'Blitz'],[/checklist/i,'Checklist'],[/ordens? de servi/i,'OS Vencida'],[/stress/i,'Stress Test'],[/indisp/i,'Indisponibilidade'],[/mttr/i,'MTTR'],[/mtbf/i,'MTBF'],[/milimetr/i,'Milimetragem'],[/disponibilidade contratada/i,'Disponibilidade']];
   const curto=n=>{ const c=CURTO.find(x=>x[0].test(n)); return c?c[1]:Cap(String(n).toLowerCase()); };
@@ -1134,7 +1135,7 @@ function sTERM(inst){
   const gr=`<div class="pn-gr" style="grid-template-columns:1.7fr 1fr">${AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'})}${dq}</div>`;
   const topo=ESTILO==='echarts'?heroCards('Pontuação geral',nf(g,1)+'<small>pts</small>',corEsc(SC_FG(bandSC(g))),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['YTD',ytd==null?'—':`<span style="color:${SC_FG(bandSC(ytd))}">${nf(ytd,1)}</span>`,'média jan → '+MESC[mi].replace('.','')],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º <small>de '+cl.n+'</small>':'—','entre as unidades']]):hero;
   if(ESTILO!=='echarts'){ const pior=kp[0], graf=AS.grafico('Pontuação no ano','mês fechado (2ª quinzena)',{tipo:'faixa',labels:MESC,v,faixas:[[90,'#00B300'],[80,'#E9A400'],[70,'#F97316'],[-1e9,'#FF0000']],foco:[mi],fmt:'n1'});
-    return [sl({titulo:'Termômetro',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',nf(g,1)+'<small style="font-size:.4em;color:var(--txt3);margin-left:4px">pts</small>',SC_FG(bandSC(g)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['YTD',ytd==null?'—':`<span style="color:${SC_FG(bandSC(ytd))}">${nf(ytd,1)}</span>`,'média jan → '+MESC[mi].replace('.','')],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º de '+cl.n:'—','entre as unidades']],pior?`<b>Pior indicador: ${esc(curto(pior.n))}</b> (${nf(pior.p)} de ${nf(pior.mx)} pts).`:''),graf,indCard(kp.map(k=>({n:curto(k.n),t:nf(k.p)+' pts',d:k.vs.join(' · '),cor:cp(k),v:k.mx?k.p/k.mx*100:0})),'do pior para o melhor · pontos e, na barra, o resultado do indicador'))},inst,'Termômetro')]; }
+    return [sl({titulo:'Termômetro',kmax:1,corpo:corpoInd(heroInd('Pontuação geral',nf(g,1)+'<small style="font-size:.4em;color:var(--txt3);margin-left:4px">pts</small>',SC_FG(bandSC(g)),[['MoM',mom==null?'—':FS.seta(mom,nf(Math.abs(mom),1)+' pts',false),'contra o mês anterior'],['YTD',ytd==null?'—':`<span style="color:${SC_FG(bandSC(ytd))}">${nf(ytd,1)}</span>`,'média jan → '+MESC[mi].replace('.','')],['Posição Geo',geo?geo+'º':'—',nomeGeo?esc(nomeGeo):''],['Posição Conlog',cl.pos?cl.pos+'º de '+cl.n:'—','entre as unidades']],pior?`<b>Pior indicador: ${esc(curto(pior.n))}</b> (${nf(pior.p)} de ${nf(pior.mx)} pts).`:''),graf,indCard(kp.map(k=>({n:curto(k.n),t:nf(k.p)+' pts',d:k.vs.join(' · '),cor:cp(k),v:k.r*100})),'do pior para o melhor · pontos e, na barra, o resultado do indicador'))},inst,'Termômetro')]; }
   return [sl({titulo:'Termômetro',corpo:`<div class="pn">${topo}${gr}</div>`},inst,'Termômetro')];
 }
 /* cópia ECharts: o hero em cards (o principal no grafite do cabeçalho); itens = [[rótulo, valor html, nota]] */
@@ -1496,6 +1497,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611262210"></script>
+<script src="../assets/build-check.js?v=202611262240"></script>
 </body>
 </html>

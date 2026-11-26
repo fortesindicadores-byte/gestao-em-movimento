@@ -90,7 +90,9 @@
     '.cr{color:#FF0000!important}.cg{color:#00B300!important}.nt{color:var(--txt3)!important}',
     '.g2{display:grid;gap:14px;height:100%}',
     /* hero do Financeiro */
-    '.hero{padding:calc(22px*var(--k)) 24px calc(18px*var(--k));display:flex;flex-direction:column}',
+    '.hero{padding:calc(12px*var(--k)) 24px calc(18px*var(--k));display:flex;flex-direction:column}',
+    /* rótulo do hero no tamanho, peso e cor do título do gráfico ao lado, e na mesma altura (Renan, 26/11/2026) */
+    '.hero>.rot{font-size:calc(13.5px*var(--k));font-weight:800;color:var(--txt);text-transform:none;letter-spacing:0}',
     '.hero .v{font-size:calc(44px*var(--k));font-weight:800;line-height:1;margin-top:10px;letter-spacing:-1px;white-space:nowrap}',
     '.hero .sub{font-size:calc(11px*var(--k));color:var(--txt3);margin-top:6px;font-weight:600}',
     '.hero .gr{display:grid;grid-template-columns:1fr 1fr;margin-top:calc(22px*var(--k));border-top:1px solid var(--linha)}',
@@ -449,6 +451,8 @@
     'body.est-limpo .cont .miolo{left:40px;right:40px;top:92px;bottom:28px}body.est-limpo .cont .cab{padding:0 40px}',
     'body.est-limpo .cont .g2,body.est-limpo .cont .arv,body.est-limpo .cont .pn-gr,body.est-limpo .cont .kgrid{column-gap:44px;row-gap:28px}body.est-limpo .cont .pn{gap:24px}body.est-limpo .cont .kpis,body.est-limpo .cont .tc-row,body.est-limpo .cont .el-cards{gap:28px}',
     'body.est-limpo .cont .tb .t{padding-left:0;padding-right:0}body.est-limpo .cont .gc{padding-top:0;padding-bottom:0}',
+    /* sem card: o hero começa na linha do título do gráfico e uma linha vertical o separa dos gráficos, no meio do vão (Renan, 26/11/2026) */
+    'body.est-limpo .cont .hero{padding-top:0}body.est-limpo .cont .g2>.card.hero{border-right:1px solid var(--linha)!important;padding-right:22px!important;margin-right:-22px}',
     /* cópia ECharts: o hero vira uma fileira de cards, o principal no grafite do cabeçalho (Renan, 26/11/2026) */
     '.eh-row{display:grid;gap:12px;flex:0 0 calc(132px*var(--k));min-height:0}',
     '.eh-row .card{display:flex;flex-direction:column;justify-content:center;padding:calc(12px*var(--k)) 20px}',
@@ -585,9 +589,9 @@
         /* resultado do indicador dentro da barra (Termômetro: em cima a pontuação; Renan, 26/11/2026). Barra baixa demais: o resultado sobe para cima da pontuação */
         if (g.dentro) { var ph = H - op.grid.top - op.grid.bottom, alto = function (v) { return v != null && (v - (b2.min || 0)) / ((b2.max - (b2.min || 0)) || 1) * ph >= fs(28); };
           ser.data.forEach(function (d, i) { if (!d || !g.dentro[i] || alto(g.v[i])) return; d.label.formatter = '{r|' + g.dentro[i] + '}\n' + (g.txt ? g.txt[i] : fmt(g.v[i]));
-            d.label.rich = { r: { fontFamily: 'Montserrat', fontSize: fs(10.5), fontWeight: 600, color: C_TICK, lineHeight: fs(15) } }; });
+            d.label.rich = { r: { fontFamily: 'Montserrat', fontSize: fs(9.5), fontWeight: 500, color: C_INK, lineHeight: fs(14) } }; });
           op.series.push({ type: 'bar', barWidth: '60%', barGap: '-100%', silent: true, z: 3, data: g.v.map(function (v, i) { return v == null ? null : { value: v, itemStyle: { color: 'transparent' },
-            label: { show: !!g.dentro[i] && alto(v), position: 'insideTop', distance: fs(8), formatter: g.dentro[i] || '', fontFamily: 'Montserrat', fontSize: fs(11), fontWeight: 700, color: '#FFFFFF' } }; }) }); }
+            label: { show: !!g.dentro[i] && alto(v), position: 'insideTop', distance: fs(8), formatter: g.dentro[i] || '', fontFamily: 'Montserrat', fontSize: fs(9.5), fontWeight: 500, color: C_INK } }; }) }); }
       } else if (g.tipo === 'barrasH' || g.tipo === 'prog') {
         var n = g.v.length, cs = g.v.map(function (v, i) { return g.cores ? g.cores[i] : (i === g.foco ? '#F97316' : '#9AA3B2'); });
         var mx = g.tipo === 'prog' ? 100 : (g.max != null ? g.max : Math.max.apply(null, g.v.map(function (v) { return Math.abs(v) || 0; })) * 1.0 || 1);
