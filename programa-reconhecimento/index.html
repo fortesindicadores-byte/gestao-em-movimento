@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611192000">
+<meta name="build" content="202611262000">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Frota de Elite · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1639,7 +1639,7 @@ document.addEventListener('DOMContentLoaded',()=>{ initAccessLog(); cortinaInit(
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="../assets/excel-export.js"></script>
 <script src="../assets/pdf-export.js"></script>
-<script src="../assets/elite-apresentacao.js?v=202611190600"></script>
+<script src="../assets/elite-apresentacao.js?v=202611262000"></script>
 <script>
 // Call de Resultados (Renan, 30/10/2026): indicadores gerais → premiações do
 // mês e do acumulado → recados do mês vigente pelo Gestão à Vista. A conta é
@@ -1652,7 +1652,9 @@ async function gerarApresentacao(){
   try{
     const abs=p=>new URL(p,location.href).href;
     const r=await EliteApresentacao.gerar({aviso,av:abs('avatares/'),
-      avatares:Object.fromEntries(Object.entries(AVATARES).map(([k,v])=>[k,abs(v)])),nomes:NOMES});
+      avatares:Object.fromEntries(Object.entries(AVATARES).map(([k,v])=>[k,abs(v)])),nomes:NOMES,
+      // os meses filtrados viram um pódio cada (AAAA-MM); o ano vem depois, como sempre
+      podios:selVig.map(v=>{const m=String(v).match(/(\d{4})\D(\d{2})/)||String(v).match(/(\d{2})\D(\d{4})/);return m?(m[1].length===4?m[1]+'-'+m[2]:m[2]+'-'+m[1]):null;}).filter(Boolean)});
     aviso(r.gav?'PDF gerado':'PDF gerado, sem os recados do Gestão à Vista');
   }catch(e){
     console.error('apresentação',e);
@@ -1672,6 +1674,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611192000"></script>
+<script src="../assets/build-check.js?v=202611262000"></script>
 </body>
 </html>

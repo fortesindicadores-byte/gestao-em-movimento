@@ -323,8 +323,12 @@ tr.sep td{border-top:2px solid ${INK3}}
     }
 
     // ═══ Parte 2 · premiações do mês ═══
-    capaSec(2, `Premiações de ${mN(VU)}`, `O pódio do mês, o ranking das ${RU.length} unidades e quem subiu ou caiu contra ${mN(VA)}.`);
-    podio(rows(VU), 'Pódio Frota de Elite', `${Mes}/${ANO}`);
+    // um pódio por mês filtrado no painel (Renan, 26/11/2026); sem filtro, só o mês fechado
+    const PM = [...new Set((opts.podios || []).filter(v => V.includes(v)))].sort();
+    if (!PM.length) PM.push(VU);
+    const MesCap = v => MESN[mI(v)][0].toUpperCase() + MESN[mI(v)].slice(1);
+    capaSec(2, `Premiações de ${lista(PM.map(mN))}`, `${PM.length > 1 ? 'O pódio de cada mês' : 'O pódio do mês'}, o ranking das ${RU.length} unidades em ${mN(VU)} e quem subiu ou caiu contra ${mN(VA)}.`);
+    PM.forEach(v => podio(rows(v), 'Pódio Frota de Elite', `${MesCap(v)}/${v.slice(0, 4)}`));
     slide(ranking(rows(VU), RA, `Ranking de ${mN(VU)}`, `Frota de Elite · ${m3(VU)}`, `vs ${MES3[mI(VA)]}`), { top: true });
     const mov = RU.map(r => ({ u: r.unit, d: r.pont - ((RA.find(x => x.unit === r.unit) || {}).pont), p0: PA[r.unit], p1: PU[r.unit] })).filter(m => isFinite(m.d)).sort((a, b) => b.d - a.d);
     const sobe = mov.filter(m => m.p1 < m.p0).sort((a, b) => (b.p0 - b.p1) - (a.p0 - a.p1)), cai = mov.filter(m => m.p1 > m.p0).sort((a, b) => (b.p1 - b.p0) - (a.p1 - a.p0));
