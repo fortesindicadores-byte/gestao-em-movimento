@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611270130">
+<meta name="build" content="202611270200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Gestão em Movimento</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611242100"></script>
-<script src="../assets/apres-slides.js?v=202611270130"></script>
+<script src="../assets/apres-slides.js?v=202611270200"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -1272,8 +1272,17 @@ $('seq').addEventListener('dragend',()=>{ _arr=null; document.querySelectorAll('
 function move(id,antesDe){ if(id===antesDe) return; const o=MOD.ordem.filter(x=>x!==id), i=antesDe==='fim'?o.length:o.indexOf(antesDe); if(i<0) return; o.splice(i,0,id); MOD.ordem=o; salva(); _foco=id; monta(); }
 
 /* ── prévia: o deck inteiro num iframe, um slide à vista; observações e FCA se editam ali mesmo ── */
+/* sem pisca (Renan, 26/11/2026: "Essa porra fica piscando"): a prévia nova monta escondida por trás da atual e só troca quando o deck terminou de desenhar; deck igual não recarrega */
+let _pv=0;
 function desenhaPrev(){
-  const f=$('prev'); f.onload=()=>{ mostra(); $('telaMsg').style.display='none'; ligaPrev(); }; f.srcdoc=docAtual(false); ajusta();
+  const html=docAtual(false), cur=$('prev'), q=$('telaQ');
+  if(cur._html===html){ mostra(); return; }
+  const tok=++_pv; q.querySelectorAll('iframe.novo').forEach(x=>x.remove());
+  if(!cur._html){ cur._html=html; cur.onload=()=>{ mostra(); $('telaMsg').style.display='none'; ligaPrev(); }; cur.srcdoc=html; ajusta(); return; }
+  const n=document.createElement('iframe'); n.className='novo'; n.title='Prévia do slide'; n.style.visibility='hidden'; n.style.transform=cur.style.transform; q.appendChild(n);
+  const troca=()=>{ if(tok!==_pv){ n.remove(); return; } const v=$('prev'); if(v&&v!==n) v.remove(); n.id='prev'; n.classList.remove('novo'); n._html=html; mostra(); n.style.visibility=''; $('telaMsg').style.display='none'; ligaPrev(); };
+  n.onload=()=>{ let k=0; const w=n.contentWindow; (function pronto(){ if(tok!==_pv){ n.remove(); return; } if(!(w&&w.__deckPronto)&&k++<60){ setTimeout(pronto,50); return; } troca(); })(); };
+  n.srcdoc=html;
 }
 function ligaPrev(){
   const d=$('prev').contentDocument; if(!d) return;
@@ -1497,6 +1506,6 @@ initApp();
 <script src="../assets/mobile.js?v=202608220020"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611270130"></script>
+<script src="../assets/build-check.js?v=202611270200"></script>
 </body>
 </html>
