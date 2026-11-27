@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611271300">
+<meta name="build" content="202611271330">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Visão Financeira · DRE Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -105,9 +105,9 @@ body{font-family:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;font-s
 .side.mini{width:64px;flex:0 0 64px;padding:16px 8px 12px;}
 .side.mini .s-top{justify-content:center;padding-bottom:12px;}
 .side.mini .s-top b,.side.mini .s-top>svg{display:none;}
-/* símbolo do Fleet Hub girando (teste do Renan, 27/11/2026) */
-.fh-gira{width:22px;height:22px;flex:0 0 22px;animation:fhGira 6s linear infinite}
-@keyframes fhGira{to{transform:rotate(360deg)}}
+/* símbolo do Fleet Hub ao lado do nome do painel: dá uma volta de tempo em tempo (Renan, 27/11/2026) */
+.fh-gira{width:20px;height:20px;flex:0 0 20px;animation:fhGira 9s cubic-bezier(.65,0,.35,1) infinite;animation-delay:1.2s}
+@keyframes fhGira{0%{transform:rotate(0)}12%{transform:rotate(360deg)}100%{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.fh-gira{animation:none}}
 .side.mini .s-top>.fh-gira{display:none}
 .side.mini .s-sec,.side.mini .s-item .n,.side.mini .s-user div{display:none;}
@@ -2597,14 +2597,14 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/apresentacao-base.js?v=202611271300"></script>
-<script src="../assets/vf-apresentacao.js?v=202611271300"></script>
+<script src="../assets/apresentacao-base.js?v=202611271330"></script>
+<script src="../assets/vf-apresentacao.js?v=202611271330"></script>
 <script>
 function gerarApresentacao(){
   if(!allRows.length){ alert('Os dados ainda estão carregando.'); return; }
   ApresBase.botao(document.getElementById('btApres'),aviso=>VfApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202611271300"></script>
+<script src="../assets/build-check.js?v=202611271330"></script>
 </body>
 </html>
