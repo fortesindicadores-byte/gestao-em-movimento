@@ -173,6 +173,37 @@ console.log('  com Última Leitura do Ginfo no mês:', dv.filter(dentro).length)
 const dv2 = G.filter(r => !ok(r) && regras.A_mes(INS[r.pl] || [], r.vig));
 console.log('Ginfo não realizado, Prolog com inspeção no mês:', dv2.length, '· por evento', JSON.stringify(conta(dv2, r => r.ev)));
 
+// ── 3b. matriz filial × mês: aba Pneus (Ginfo, colada à mão) × Prolog (régua do Ginfo, inspeção no mês)
+// × o que o robô do Elite gravou (pneus, Prolog). É o que o Frota de Elite usa: a aba no mês que ela tem,
+// o elite_snapshot nos outros (Renan, 27/11/2026: "NFR falou que melhorou o resultado dos pneus") ──
+console.log('\nsh_base elite_pneus impressão/mudou:', base && JSON.stringify({ hash: base.hash, mudou_em: base.mudou_em, carregado_em: base.carregado_em }));
+const ep = await get('elite_snapshot?select=vigencia,escopo,updated_at,data&indicador=eq.pneus&escopo=eq.mes');
+const EP = {}; ep.forEach(r => { const [m, a] = String(r.vigencia).split('/'); const v = a + '-' + m; (Array.isArray(r.data) ? r.data : []).forEach(x => { EP[v + '|' + NK(x.Filial)] = { ok: +x['Aferidos em 30 dias'] || 0, n: +x.Frota || 0, em: String(r.updated_at).slice(0, 10) }; }); });
+const vigsAll = [...new Set([...vigs, ...ep.map(r => { const [m, a] = String(r.vigencia).split('/'); return a + '-' + m; })])].filter(v => v >= '2026-01').sort();
+const fils = [...new Set([...Object.keys(conta(G, r => r.fil)), ...Object.keys(EP).map(k => k.split('|')[1])])].sort();
+console.log('\n── matriz: Ginfo (aba) / Prolog no mês (placas da aba) / robô Elite (Prolog, frota do branch) ──');
+console.log('filial'.padEnd(22) + vigsAll.map(v => v.slice(2).padStart(20)).join(''));
+for (const fil of fils) {
+  let l = fil.padEnd(22);
+  for (const vig of vigsAll) {
+    const q = G.filter(r => r.vig === vig && r.fil === fil);
+    const g = q.length ? (q.filter(ok).length / q.length * 100).toFixed(0) : '-';
+    const pa = q.length ? (q.filter(r => regras.A_mes(INS[r.pl] || [], vig)).length / q.length * 100).toFixed(0) : '-';
+    const e = EP[vig + '|' + fil]; const ee = e && e.n ? (e.ok / e.n * 100).toFixed(0) : '-';
+    l += `${g}/${pa}/${ee}`.padStart(20);
+  }
+  console.log(l);
+}
+// NFR em detalhe, por evento
+for (const fil of fils.filter(f => /FRIBURGO/.test(f))) {
+  console.log(`\n── ${fil} por mês e evento (Ginfo ok/n · Prolog no mês) ──`);
+  for (const vig of vigsAll) for (const ev of ['CALIBRAGEM', 'MILIMETRAGEM']) {
+    const q = G.filter(r => r.vig === vig && r.fil === fil && r.ev.startsWith(ev.slice(0, 5)));
+    if (!q.length) continue;
+    console.log(`  ${vig} ${ev.padEnd(13)} Ginfo ${q.filter(ok).length}/${q.length} · Prolog ${q.filter(r => regras.A_mes((INS[r.pl] || []).filter(x => medOk(r.ev, x)), vig)).length}/${q.length}`);
+  }
+}
+
 // ── 4. elite_snapshot: stress test e pneus do mês ──
 console.log('\n── elite_snapshot ──');
 const es = await get('elite_snapshot?select=indicador,vigencia,escopo,updated_at,data&indicador=in.(stress-test-frota,pneus,stress-test-empilhadeira)&vigencia=in.(09/2026,10/2026,11/2026)');
