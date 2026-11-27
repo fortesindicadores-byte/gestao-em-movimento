@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611181300">
+<meta name="build" content="202611271500">
 <title>CO² — Emissões da Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -444,7 +444,7 @@ body.claro .seal-txt .st-1{color:#0E8C5A;}
 
     <div class="s-user">
       <span class="av">GM</span>
-      <div><b>Gestão em Movimento</b><i>Emissões da Frota</i></div>
+      <div><b>Fleet Hub</b><i>Emissões da Frota</i></div>
     </div>
   </aside>
 
@@ -1215,7 +1215,7 @@ function aplicaTema(t){
 function trocaTema(){ aplicaTema(document.body.classList.contains('claro')?'dark':'light'); }
 aplicaTema(localStorage.getItem('bi_theme')||'dark');
 </script>
-<script src="../../assets/mobile.js?v=202608220020"></script>
+<script src="../../assets/mobile.js?v=202611271500"></script>
 <script src="../../assets/modo-tv.js?v=202611261200"></script>
 <script src="../../assets/ctrlk.js"></script>
 <script src="../../assets/sortable-table.js?v=202609042200"></script>
@@ -1231,6 +1231,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../../assets/build-check.js?v=202611181300"></script>
+<script src="../../assets/build-check.js?v=202611271500"></script>
 </body>
 </html>

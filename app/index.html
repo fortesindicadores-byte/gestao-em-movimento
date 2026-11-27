@@ -7,9 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Gestão em Movimento">
-<meta name="build" content="202611231000">
-<title>Gestão em Movimento</title>
+<meta name="apple-mobile-web-app-title" content="Fleet Hub">
+<meta name="build" content="202611271500">
+<title>Fleet Hub</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="img/icone-192.png">
 <link rel="icon" href="img/icone-192.png">
@@ -20,7 +20,7 @@
 /* ============================================================
    GESTÃO EM MOVIMENTO — APP DO CELULAR (Renan, 02/11/2026: "transforme todo o
    painel em um app… visão limpa, só visões principais… exatamente mesmo estilo
-   DriverPro, só que cores do Gestão em Movimento").
+   DriverPro, só que cores do Fleet Hub").
    A casca é a do DriverPro (app-motorista-4): grafite, Inter, rótulo pequeno +
    número grande em fonte fina, cards com cantos de 10px, lista com ícone
    quadrado, barra de baixo flutuante com a aba ativa preenchida. O laranja do
@@ -400,7 +400,7 @@ body.claro #tela-web iframe{background:#E1E2E5;}
 <!-- passo a passo de instalação, quando o navegador não oferece o botão -->
 <div class="inst" id="inst" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="inst-box">
-    <b>Instalar o Gestão em Movimento</b>
+    <b>Instalar o Fleet Hub</b>
     <div id="instTxt"></div>
     <button class="btn" onclick="document.getElementById('inst').classList.remove('on')">Entendi</button>
   </div>
@@ -454,14 +454,14 @@ body.claro #tela-web iframe{background:#E1E2E5;}
       <div class="sec">App</div>
       <div class="opt" id="optInstalar" onclick="instalar()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span><div class="tx"><b>Instalar no celular</b><span>Ícone na tela de início, abre em tela cheia</span></div></div>
       <div class="opt" onclick="atualizarTudo()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg></span><div class="tx"><b>Atualizar os dados</b><span id="pfCache">Relê os painéis na próxima abertura</span></div></div>
-      <div class="opt" onclick="abrePortal('')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg></span><div class="tx"><b>Portal completo</b><span>Abre o Gestão em Movimento no navegador</span></div></div>
+      <div class="opt" onclick="abrePortal('')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></svg></span><div class="tx"><b>Portal completo</b><span>Abre o Fleet Hub no navegador</span></div></div>
       <div id="pfAdm" style="display:none">
       <div class="sec">Administração</div>
       <div class="opt" onclick="abreAcessos()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 11l2 2 3.5-3.5"/></svg></span><div class="tx"><b>Gerenciar acessos</b><span>Liberar, bloquear, senha provisória e unidades</span></div></div>
       </div>
       <div class="sec">Conta</div>
       <div class="opt" onclick="sair()"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span><div class="tx"><b>Sair</b><span id="pfEmail">—</span></div></div>
-      <div class="rodape">Gestão em Movimento · Fortes Indicadores<br><span data-build></span></div>
+      <div class="rodape">Fleet Hub · Fortes Indicadores<br><span data-build></span></div>
     </section>
   </div>
 

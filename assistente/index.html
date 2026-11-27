@@ -2,16 +2,16 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611191930">
+<meta name="build" content="202611271500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Assistente · Gestão em Movimento</title>
+<title>Assistente · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/assistente.js?v=202611191930"></script>
 <style>
 /* ============================================================
    ASSISTENTE — o banco inteiro do portal e a web numa conversa (Renan,
-   28/10/2026: "Quero para tudo do Gestão em Movimento. Banco, tudo" e
+   28/10/2026: "Quero para tudo do Fleet Hub. Banco, tudo" e
    "Pode criar um painel Assistente dentro da visão Administração").
    Só o dono do portal. Quem responde é a Edge Function (supabase/functions/
    assistente-ft): Claude + consultas só de leitura (scripts/assistente-ft.sql)
@@ -637,7 +637,7 @@ async function initApp(){
     sessao:async()=>(await sb.auth.getSession()).data.session,
     chave:'gem_assistente', titulo:'Assistente do portal', chat:true, lista:'ia-lista',
     saudacao:'Olá, '+primeiroNome(nome)+'. Como posso ajudar?',
-    texto:'Pergunte sobre qualquer painel ou base do Gestão em Movimento. Para comparar com dado de fora, como inflação, diesel da ANP e juros, eu pesquiso na web.',
+    texto:'Pergunte sobre qualquer painel ou base do Fleet Hub. Para comparar com dado de fora, como inflação, diesel da ANP e juros, eu pesquiso na web.',
     exemplos:['Como o custo de combustível por km evoluiu em 2026 contra o IPCA e o diesel da ANP?',
       'Quais unidades mais estouraram o remunerado na DRE em set/26 e em quais pacotes?',
       'Que indicadores do Frota de Elite mais pioraram de ago/26 para set/26?',
@@ -671,9 +671,9 @@ try{ aplicaTema(localStorage.getItem('bi_theme')||'dark'); }catch(e){ aplicaTema
 
 initApp();
 </script>
-<script src="../assets/mobile.js?v=202608220020"></script>
+<script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611191930"></script>
+<script src="../assets/build-check.js?v=202611271500"></script>
 </body>
 </html>

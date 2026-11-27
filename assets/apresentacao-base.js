@@ -51,7 +51,7 @@
 
   /* VISÃO INFOGRÁFICO (Renan, 24/11/2026: "vou manter apenas a visão infográfico", com dois decks de
      referência de infográfico executivo → escolheu o acabamento B: "Vamos construir assim e vamos melhorando").
-     Página clara com a faixa grafite em cima (Conlog · Gestão em Movimento | o selo do deck), o número e o
+     Página clara com a faixa grafite em cima (Conlog · Fleet Hub | o selo do deck), o número e o
      nome da seção na lateral esquerda (em pé), o título que diz a conclusão e os cartões brancos com contorno
      e o topo grafite (os escuros com o topo laranja). Barra laranja no pé. Todo tamanho do miolo é multiplicado
      por --k, que o ajuste do fim do documento escolhe por slide: o maior que cabe (o slide não fica
@@ -253,7 +253,7 @@ window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.r
       const hoje = new Date().toLocaleDateString('pt-BR');
       return `<div style="position:absolute;inset:0;background:url('${F.capa}') center/cover"></div>
       <div style="position:absolute;left:84px;top:0;bottom:70px;width:1040px;display:flex;flex-direction:column;justify-content:center;padding-top:40px">
-        <div class="ak" style="margin-bottom:18px">Gestão em Movimento</div>
+        <div class="ak" style="margin-bottom:18px">Fleet Hub</div>
         <div class="at" style="font-size:${tam(t, [[10, 86], [14, 74], [20, 60], [28, 48], [999, 40]])}px">${f.esc(t)}</div>
         ${p ? `<div class="at2" style="font-size:${tam(p, [[14, 72], [20, 56], [28, 44], [40, 34], [999, 28]])}px">${f.esc(p)}</div>` : ''}
         ${sub ? `<div class="as">${f.esc(sub)}</div>` : ''}
@@ -323,7 +323,7 @@ window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.r
       // os slides seguintes pertencem a este bloco (o painel Apresentações liga, desliga e reordena por bloco)
       bloco: (id, titulo) => { _bloco = { id, titulo }; },
       slide: (inner, so) => { const ar = so && (so.arte || so.dark), sec = so && so.sec;
-        const moldura = ar ? '' : `<div class="topo"><span><b>Conlog</b> · Gestão em Movimento</span><span>${o.selo ? `<i></i>${o.selo}` : f.esc(o.titulo || '')}</span></div><div class="lat"><div class="num">§SN§</div><div class="rot">${f.esc(_k)}</div></div>`;
+        const moldura = ar ? '' : `<div class="topo"><span><b>Conlog</b> · Fleet Hub</span><span>${o.selo ? `<i></i>${o.selo}` : f.esc(o.titulo || '')}</span></div><div class="lat"><div class="num">§SN§</div><div class="rot">${f.esc(_k)}</div></div>`;
         S.push({ k: _k, sec: _sec, bloco: _bloco, tipo: (so && so.tipo) || 'cont',
         html: `<section class="slide${so && so.top ? ' top' : ''}${so && so.dark ? ' dark' : ''}${so && so.capa ? ' capa' : ''}${so && so.arte ? ' arte' : ''}${sec ? ' sec' : ''}"${ar ? '' : ` data-sk="${f.esc(_k)}"`}${so && so.style ? ` style="${so.style}"` : ''}>${moldura}${miolo(inner)}${so && so.arte ? '' : foot()}</section>` }); _k = ''; _sec = false; },
       head: (k, h, sub) => { _k = limpa(k); return `<div class="hd"><div class="kicker">${k}</div><h2>${h}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}</div>§C§`; },
@@ -487,7 +487,7 @@ window.__ajusta=aj;aj();if(document.fonts&&document.fonts.ready)document.fonts.r
   async function pptx(doc, nome, aviso, titulo) {
     await carrega('https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js', () => typeof window.PptxGenJS !== 'undefined');
     const P = new window.PptxGenJS(); P.defineLayout({ name: 'GEM169', width: 13.333, height: 7.5 }); P.layout = 'GEM169';
-    P.author = 'Gestão em Movimento'; P.title = titulo || 'Apresentação';
+    P.author = 'Fleet Hub'; P.title = titulo || 'Apresentação';
     const n = await fotos(doc, aviso, 'PowerPoint', img => { P.addSlide().addImage({ data: img, x: 0, y: 0, w: 13.333, h: 7.5 }); });
     await P.writeFile({ fileName: nome });
     return n;

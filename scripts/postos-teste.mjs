@@ -148,7 +148,7 @@ const num = s => +String(s).replace(/[^\d,-]/g, '').replace(',', '.');
   t('filtro Posto', (await pg.locator('#tb-postos tbody tr').count()) === 1 && /7,10/.test(await txt(pg, '#k-rl')), await txt(pg, '#k-rl'));
   await pg.evaluate(() => { document.getElementById('ms-posto')._sel = new Set(); document.getElementById('ms-comb')._sel = new Set(); document.getElementById('ms-comb')._auto = false; render(); });
   t('combustível Todos inclui o Arla', await pg.evaluate(() => ROWS.filter(r => passa(r)).some(r => r.prod === 'ARLA 32')));
-  t('nome do painel: Integração Abastecimentos', (await pg.title()) === 'Integração Abastecimentos · Gestão em Movimento' && /Integração Abastecimentos/.test(await txt(pg, '.s-top b')));
+  t('nome do painel: Integração Abastecimentos', (await pg.title()) === 'Integração Abastecimentos · Fleet Hub' && /Integração Abastecimentos/.test(await txt(pg, '.s-top b')));
   if (SHOT) await pg.screenshot({ path: join(SHOT, 'postos-1366.png') });
   await pg.evaluate(() => { const w = document.getElementById('ms-vig'); w._sel = new Set(); w._auto = false; render(); });
   await pg.click('#dims-grao .dimb[data-g="mes"]'); await pg.click('#dims-dia .dimb[data-m="valor"]'); await pg.waitForTimeout(300);

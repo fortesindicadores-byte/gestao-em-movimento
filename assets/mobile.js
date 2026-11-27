@@ -224,8 +224,25 @@
     if(window.__siglas||!_eu) return;
     var s=d.createElement('script'); s.src=_eu.replace(/mobile\.js.*$/,'siglas.js?v=202611232300'); (d.head||d.documentElement).appendChild(s);
   }
+  /* ── 5) marca Fleet Hub (Renan, 27/11/2026: "o símbolo do lado do nome do painel, girando de tempo em tempo… em todos"):
+        o ícone da esquerda do .s-top (o nome do painel na lateral) vira o hexágono laranja, que dá uma volta a cada 9 s;
+        e a aba do navegador ganha o símbolo como ícone ── */
+  function marcaFleet(){
+    if(!_eu) return; var base=_eu.replace(/mobile\.js.*$/,'img/fleethub/'), sim=base+'fleet-hub-simbolo.svg';
+    if(!d.querySelector('link[rel~="icon"]')){ var l=d.createElement('link'); l.rel='icon'; l.type='image/svg+xml'; l.href=sim; (d.head||d.documentElement).appendChild(l); }
+    var st=d.createElement('style');
+    st.textContent='.fh-gira{width:20px;height:20px;flex:0 0 20px;animation:fhGira 9s cubic-bezier(.65,0,.35,1) 1.2s infinite}'+
+      '@keyframes fhGira{0%{transform:rotate(0)}12%{transform:rotate(360deg)}100%{transform:rotate(360deg)}}'+
+      '@media (prefers-reduced-motion:reduce){.fh-gira{animation:none}}.mini .s-top>.fh-gira{display:none}';
+    (d.head||d.documentElement).appendChild(st);
+    [].forEach.call(d.querySelectorAll('.s-top'),function(t){
+      var s=t.firstElementChild; if(!s||s.tagName.toLowerCase()!=='svg') return;
+      var i=d.createElement('img'); i.className='fh-gira'; i.src=sim; i.alt=''; t.replaceChild(i,s);
+    });
+  }
   function start(){
     carregaSiglas();
+    try{ marcaFleet(); }catch(e){}
     lockZoom();
     setupChartMobile();
     new MutationObserver(schedule).observe(d.documentElement,{childList:true,subtree:true});

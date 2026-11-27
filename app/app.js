@@ -1,5 +1,5 @@
 /* ============================================================
-   GESTÃO EM MOVIMENTO — APP DO CELULAR (02/11/2026)
+   FLEET HUB — APP DO CELULAR (02/11/2026)
    Login = o mesmo do portal (Supabase, mesma sessão guardada no navegador).
    Cada painel abre POR DENTRO (iframe escondido no #forno, largura de desktop)
    e o app lê os números que o painel desenhou — hero, cards, gráficos (pelo

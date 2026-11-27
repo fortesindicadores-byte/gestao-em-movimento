@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611242100">
+<meta name="build" content="202611271500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Painel KM · Gestão em Movimento</title>
+<title>Painel KM · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
@@ -449,7 +449,7 @@ table.dre td.cg-t,.cg-t{color:var(--verde)!important;font-weight:700;}
 
     <div class="s-user">
       <span class="av">GM</span>
-      <div><b>Gestão em Movimento</b><i>KM da Frota</i></div>
+      <div><b>Fleet Hub</b><i>KM da Frota</i></div>
     </div>
   </aside>
 
@@ -2290,7 +2290,7 @@ document.addEventListener('DOMContentLoaded', () => { initAccessLog(); initData(
   } catch (e) {}
 })();
 </script>
-<script src="../assets/mobile.js?v=202608220020"></script>
+<script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
@@ -2306,7 +2306,7 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/apresentacao-base.js?v=202611242100"></script>
+<script src="../assets/apresentacao-base.js?v=202611271500"></script>
 <script src="../assets/km-apresentacao.js?v=202611242100"></script>
 <script>
 function gerarApresentacao(){
@@ -2314,6 +2314,6 @@ function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>KmApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202611242100"></script>
+<script src="../assets/build-check.js?v=202611271500"></script>
 </body>
 </html>

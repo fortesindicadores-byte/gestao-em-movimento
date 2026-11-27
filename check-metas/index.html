@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611181300">
+<meta name="build" content="202611271500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Check de Metas · Gestão em Movimento</title>
+<title>Check de Metas · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -881,7 +881,7 @@ function desenhaCapa(s,W,H){
   const x=110*k;
   ctx.textBaseline='alphabetic';
   ctx.fillStyle=LARANJA; ctx.font=`800 ${Math.round(17*k)}px Montserrat, sans-serif`;
-  txtEsp(ctx,'GESTÃO EM MOVIMENTO',x,H*.40,4.5*k);
+  txtEsp(ctx,'FLEET HUB',x,H*.40,4.5*k);
   ctx.fillStyle='#FFFFFF'; ctx.font=`800 ${Math.round(104*k)}px Montserrat, sans-serif`;
   ctx.fillText(s.tit,x,H*.40+118*k);
   ctx.fillStyle=LARANJA; ctx.fillRect(x,H*.40+160*k,150*k,7*k);
@@ -1833,7 +1833,7 @@ async function montaPPT(slides){
   const pptx=new PptxGenJS();
   pptx.defineLayout({name:'GEM169',width:LAY_W,height:LAY_H});
   pptx.layout='GEM169';
-  pptx.author='Gestão em Movimento'; pptx.title='Check de Metas '+vigExt(VIG);
+  pptx.author='Fleet Hub'; pptx.title='Check de Metas '+vigExt(VIG);
   for(const s of slides){
     const pgs=await paginasDo(s);
     for(const png of pgs){
@@ -2038,11 +2038,11 @@ async function initApp(){
 }
 initApp();
 </script>
-<script src="../assets/mobile.js?v=202608220020"></script>
+<script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
 <script src="slides.js?v=202610192320"></script>
-<script src="../assets/build-check.js?v=202611181300"></script>
+<script src="../assets/build-check.js?v=202611271500"></script>
 </body>
 </html>

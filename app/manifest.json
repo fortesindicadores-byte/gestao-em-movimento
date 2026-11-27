@@ -1,6 +1,6 @@
 {
-  "name": "Gestão em Movimento",
-  "short_name": "Gestão",
+  "name": "Fleet Hub",
+  "short_name": "Fleet Hub",
   "description": "Os painéis da frota no celular",
   "start_url": "./",
   "scope": "./",

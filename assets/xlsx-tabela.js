@@ -211,7 +211,7 @@
       + `<Relationship Id="rId2" Type="${NSR}/extended-properties" Target="docProps/app.xml"/>`
       + '</Relationships>');
     arquivo('docProps/app.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-      + '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Gestão em Movimento</Application></Properties>');
+      + '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Fleet Hub</Application></Properties>');
     arquivo('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
       + `<workbook xmlns="${NS}" xmlns:r="${NSR}"><bookViews><workbookView activeTab="0"/></bookViews><sheets>`
       + nomes.map((n, i) => `<sheet name="${esc(n)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')

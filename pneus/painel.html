@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611181300">
+<meta name="build" content="202611271500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Gestão de Pneus · Gestão em Movimento</title>
+<title>Gestão de Pneus · Fleet Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -654,7 +654,7 @@ tr.detail-row td{padding:10px 16px 14px;}
 
     <div class="s-user">
       <span class="av">GM</span>
-      <div><b>Gestão em Movimento</b><i>Gestão de Pneus</i></div>
+      <div><b>Fleet Hub</b><i>Gestão de Pneus</i></div>
     </div>
   </aside>
 
@@ -1913,7 +1913,7 @@ TIT[PAGE_VW[PAGINA]] = 'Resumo Gerencial';
   const b = document.querySelector('.s-item[data-vw="' + PAGE_VW[PAGINA] + '"]');
   if (b) { const tn = [...b.childNodes].reverse().find(n => n.nodeType === 3 && n.textContent.trim()); if (tn) tn.textContent = ' Resumo Gerencial'; }
   const marca = document.querySelector('.s-top b'); if (marca) marca.textContent = PAGE_NOME[PAGINA];
-  document.title = PAGE_NOME[PAGINA] + ' · Gestão em Movimento';
+  document.title = PAGE_NOME[PAGINA] + ' · Fleet Hub';
 })();
 let VW = PAGE_VW[PAGINA];
 
@@ -5111,7 +5111,7 @@ function trocaMini(){
 }
 try{ if(localStorage.getItem('pneus_mini')==='1'){ document.querySelector('.side').classList.add('mini'); document.getElementById('btMini').title='Expandir menu'; } }catch(e){}
 </script>
-<script src="../assets/mobile.js?v=202608220020"></script>
+<script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js"></script>
@@ -5127,6 +5127,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611181300"></script>
+<script src="../assets/build-check.js?v=202611271500"></script>
 </body>
 </html>

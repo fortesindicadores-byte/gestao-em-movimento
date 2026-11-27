@@ -1,5 +1,5 @@
 // Gera os ícones do app do celular (app/img/icone-192.png e icone-512.png) sem
-// biblioteca nenhuma: o quadrado laranja do Gestão em Movimento com a linha de
+// biblioteca nenhuma: o quadrado laranja do Fleet Hub com a linha de
 // tendência do hub (a mesma do logo) em branco. "any maskable": o fundo ocupa o
 // quadrado inteiro e o desenho fica na zona segura do centro.
 //   node scripts/app-icone.mjs

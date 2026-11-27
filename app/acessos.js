@@ -153,7 +153,7 @@ function acuPintaSenha(r) {
   $('acuWpp').style.display = tel.length >= 10 ? '' : 'none';
 }
 function acuMsgTxt(r) {
-  return 'Gestão em Movimento\nE-mail: ' + r.email + '\nSenha provisória: ' + AC.senha + '\n' + PORTAL + '\nNo primeiro acesso você cria a sua senha.';
+  return 'Fleet Hub\nE-mail: ' + r.email + '\nSenha provisória: ' + AC.senha + '\n' + PORTAL + '\nNo primeiro acesso você cria a sua senha.';
 }
 function acuCopia() {
   var r = acR(); if (!r) return;

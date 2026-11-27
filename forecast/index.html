@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611181300">
+<meta name="build" content="202611271500">
 <title>Forecast Editável — Frota</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -292,7 +292,7 @@ body.light-mode table.dre tbody tr{border-bottom:1px solid rgba(0,0,0,.06);}
   <div id="pdf-report-head">
     <div class="rh-top">
       <div>
-        <div class="rh-title">Gestão em Movimento · Forecast Editável</div>
+        <div class="rh-title">Fleet Hub · Forecast Editável</div>
         <div class="rh-sub">Forecast interativo — Frota</div>
       </div>
       <div class="rh-meta" id="rh-meta"></div>
@@ -1262,7 +1262,7 @@ async function exportarPDF(mode){
     _fmtFiltro('Unidade',f.uni),_fmtFiltro('Projeto',f.nv3)
   ].join(' &nbsp;·&nbsp; ');
   const now=new Date();
-  document.getElementById('rh-meta').innerHTML=`Gerado em ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}<br>Gestão em Movimento · BI Frota`;
+  document.getElementById('rh-meta').innerHTML=`Gerado em ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}<br>Fleet Hub · BI Frota`;
   const temaOriginal=document.body.classList.contains('light-mode')?'light':'dark';
   const temaAlvo=claro?'light':'dark';
   if(temaOriginal!==temaAlvo) applyTheme(temaAlvo);
@@ -1330,9 +1330,9 @@ function applyTheme(t){ document.body.classList.toggle('light-mode',t==='light')
 (function(){ const t=localStorage.getItem('bi_theme')||'dark'; applyTheme(t); document.getElementById('themeBtn').addEventListener('click',()=>applyTheme(document.body.classList.contains('light-mode')?'dark':'light')); })();
 </script>
 <script src="../assets/filters-toggle.js"></script>
-<script src="../assets/mobile.js?v=202608220020"></script>
+<script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/ctrlk.js"></script>
 <script src="../assets/sortable-table.js?v=202609042200"></script>
-<script src="../assets/build-check.js?v=202611181300"></script>
+<script src="../assets/build-check.js?v=202611271500"></script>
 </body>
 </html>

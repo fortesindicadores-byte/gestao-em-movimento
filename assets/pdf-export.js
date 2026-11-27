@@ -294,7 +294,7 @@ body.exporting .pdf-wrap,body.exporting .dica{display:none!important;}
         capa.innerHTML='<div class="cp-tit"></div><div class="cp-regua"></div><div class="cp-sub"></div>'+
           '<div class="cp-fil">'+filtrosResumo()+'</div>'+
           '<div class="cp-meta">Gerado em '+now.toLocaleDateString('pt-BR')+' '+
-          now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'<br>Gestão em Movimento · BI Frota</div>';
+          now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'<br>Fleet Hub · BI Frota</div>';
         capa.querySelector('.cp-tit').textContent=resolveTitle();
         capa.querySelector('.cp-sub').textContent=resolveSub();
         document.body.appendChild(capa); temporarios.push(capa);
@@ -348,7 +348,7 @@ body.exporting .pdf-wrap,body.exporting .dica{display:none!important;}
   }
   function carimbaMeta(){
     const now=new Date(), rm=document.getElementById('rh-meta');
-    if(rm) rm.innerHTML='Gerado em '+now.toLocaleDateString('pt-BR')+' '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'<br>Gestão em Movimento · BI Frota';
+    if(rm) rm.innerHTML='Gerado em '+now.toLocaleDateString('pt-BR')+' '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'<br>Fleet Hub · BI Frota';
   }
   window.exportarPDF = exportar;   // permite chamada externa
 })();

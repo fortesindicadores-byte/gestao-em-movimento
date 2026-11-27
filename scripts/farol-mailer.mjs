@@ -2,7 +2,7 @@
 // Rodado pelo GitHub Actions (.github/workflows/farol-mailer.yml).
 // Hoje: modo TESTE (envia um e-mail de exemplo p/ validar remetente/entrega).
 // Depois: o conteúdo real do farol (foto de segunda 14h) entra no lugar de buildTestHtml().
-// Env: RESEND_API_KEY (secret) · FAROL_FROM (secret, ex.: "Gestão em Movimento <noreply@seudominio.com>")
+// Env: RESEND_API_KEY (secret) · FAROL_FROM (secret, ex.: "Fleet Hub <noreply@seudominio.com>")
 //      FAROL_TO (destinatário do teste)
 
 const KEY  = (process.env.RESEND_API_KEY || '').trim();
@@ -35,7 +35,7 @@ function buildTestHtml() {
 <div style="background:#0C1017;padding:28px 12px;font-family:Arial,Helvetica,sans-serif;">
   <div style="max-width:640px;margin:0 auto;">
     <div style="padding:0 4px 14px;">
-      <div style="font-size:11px;letter-spacing:2px;color:#64748B;font-weight:bold;">GESTÃO EM MOVIMENTO · BI FROTA</div>
+      <div style="font-size:11px;letter-spacing:2px;color:#64748B;font-weight:bold;">FLEET HUB · BI FROTA</div>
       <div style="font-size:24px;color:#F97316;font-weight:bold;margin-top:4px;">🚦 Farol Frota</div>
       <div style="font-size:12px;color:#94A3B8;margin-top:4px;">Retrato semanal — ${hoje} · <b style="color:#EAB308;">E-MAIL DE TESTE</b></div>
     </div>
@@ -69,7 +69,7 @@ function buildTestHtml() {
       </div>
     </div>
     <div style="padding:14px 4px;font-size:10px;color:#64748B;line-height:1.6;">
-      E-mail automático do portal Gestão em Movimento — foto de segunda-feira às 14h. Não responda a este e-mail.
+      E-mail automático do portal Fleet Hub — foto de segunda-feira às 14h. Não responda a este e-mail.
     </div>
   </div>
 </div>`;

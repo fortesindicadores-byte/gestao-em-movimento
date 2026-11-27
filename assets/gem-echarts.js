@@ -1,5 +1,5 @@
 /* ============================================================
-   Gestão em Movimento · tema dos gráficos (docs/DESIGN-ECHARTS.md).
+   Fleet Hub · tema dos gráficos (docs/DESIGN-ECHARTS.md).
    Registra os temas gem-dark e gem-light no ECharts e expõe o GEM:
      GEM.chart(id, fn)   cria/atualiza um gráfico; fn(t, el) devolve a opção
                          do ECharts a partir da paleta do tema atual. O gráfico
