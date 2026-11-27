@@ -91,7 +91,7 @@
     '.capaB.sumB .ft{display:none}',
     '.capaB.fimB .ft{left:0;border-left:0;background-position:50% 60%}.capaB.fimB .vu{position:absolute;inset:0;background:rgba(8,12,16,.92)}',
     '.capaB.fimB .ob{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:88px;font-weight:900;letter-spacing:-2.5px;color:#fff}',
-    '.capaB.fimB .lc,.capaB.fimB .fh{z-index:1}.capaB.fimB .lc{left:auto;top:auto;right:84px;bottom:66px}',
+    '.capaB.fimB::before{content:"";position:absolute;left:0;right:0;top:0;height:8px;background:#F97316;z-index:3}.capaB.fimB .lc,.capaB.fimB .fh{z-index:1}.capaB.fimB .lc{left:auto;top:auto;right:84px;bottom:66px}',
     '.capaB.sumB .h{position:absolute;left:84px;top:118px;font-size:40px;font-weight:900;letter-spacing:-1.5px;line-height:1}',
     '.capaB.sumB .m{position:absolute;left:84px;top:172px;font-size:17px;font-weight:300;color:#C9D1D9}',
     '.capaB.sumB .b{position:absolute;left:84px;top:200px;margin:0}',
