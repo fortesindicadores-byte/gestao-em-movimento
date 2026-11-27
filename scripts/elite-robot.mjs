@@ -1104,6 +1104,48 @@ const BRANCH2FILIAL = {
   26: 'CDD PELOTAS', 37: 'CDD RIO DE JANEIRO', 2277: 'CDD RONDONOPOLIS',
   1677: 'CDI MACACU', 1676: 'MACACU EMPURRADA', 38: 'PIRAI EMPURRADA',
 };
+// LISTA DE PLACAS DO GINFO (Renan, 27/11/2026: "pode corrigir o robô dos pneus"). A frota do
+// branch no Prolog é maior que a lista do Ginfo (veículos fora da operação, de outra filial),
+// e o robô ficava abaixo do Ginfo (Pelotas 93 × 100, Macacu CDI 78–91 × 100). Agora o
+// denominador são as placas da aba Pneus do Ginfo (sh_elite_pneus) do mês, ou do último mês
+// colado antes dele, que o Prolog conhece; a filial sai da própria lista. Sem a lista, vale a
+// frota do branch, como antes.
+const NKP = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+const mercP = p => { const s = NKP(p).replace(/[^A-Z0-9]/g, ''); return /^[A-Z]{3}\d{4}$/.test(s) ? s.slice(0, 4) + 'ABCDEFGHIJ'[+s[4]] + s.slice(5) : s; };
+const MESP = { JANEIRO:1,FEVEREIRO:2,MARCO:3,ABRIL:4,MAIO:5,JUNHO:6,JULHO:7,AGOSTO:8,SETEMBRO:9,OUTUBRO:10,NOVEMBRO:11,DEZEMBRO:12 };
+const vigP = v => { if (v == null || v === '') return null; const t = String(v); let m = t.match(/^(\d{4})-(\d{2})/); if (m) return m[1] + '-' + m[2];
+  m = NKP(t).match(/([A-Z]+)\s+DE\s+(\d{4})/); if (m && MESP[m[1]]) return m[2] + '-' + String(MESP[m[1]]).padStart(2, '0');
+  m = t.match(/(\d{2})\/(\d{4})/); if (m) return m[2] + '-' + m[1]; return null; };
+let _listaGinfo;
+async function listaGinfoPneus() {
+  if (_listaGinfo !== undefined) return _listaGinfo;
+  _listaGinfo = null;
+  if (!SB_KEY) return null;
+  try {
+    const H = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+    const bs = await (await fetch(`${SB_URL}/rest/v1/sh_base?slug=eq.elite_pneus&select=colunas,erro`, { headers: H })).json();
+    const cols = (bs[0] && bs[0].colunas) || [];
+    const col = re => (cols.find(c => re.test(NKP(c.label))) || {}).col;
+    const C = { fil: col(/^FILIAL/), pl: col(/^PLACA/), per: col(/^PERIODO/) };
+    if (!C.fil || !C.pl) { log('Pneus: aba do Ginfo sem colunas Filial/Placa; usando a frota do Prolog'); return null; }
+    const L = {};
+    for (let off = 0; ; off += 1000) {
+      const r = await fetch(`${SB_URL}/rest/v1/sh_elite_pneus?select=${C.fil},${C.pl},${C.per || 'vigencia'},vigencia&order=linha&offset=${off}&limit=1000`, { headers: H });
+      if (!r.ok) throw new Error('sh_elite_pneus http ' + r.status);
+      const pg = await r.json();
+      for (const x of pg) {
+        const fil = NKP(x[C.fil]), pl = mercP(x[C.pl]), v = vigP(C.per && x[C.per]) || vigP(x.vigencia);
+        if (!fil || fil === 'FILIAL' || !pl || !v) continue;
+        ((L[v] = L[v] || {})[fil] = L[v][fil] || new Set()).add(pl);
+      }
+      if (pg.length < 1000) break;
+    }
+    _listaGinfo = Object.keys(L).length ? L : null;
+    log('Pneus: lista do Ginfo com', Object.keys(L).length, 'meses (' + Object.keys(L).sort().join(', ') + ')');
+  } catch (e) { log('Pneus: não li a lista do Ginfo (' + e.message + '); usando a frota do Prolog'); }
+  return _listaGinfo;
+}
+
 async function coletarPneusApi(vigencia) {
   const ref = refDe(vigencia);
   const fim = new Date(ref.getFullYear(), ref.getMonth() + 1, 0, 23, 59, 59).getTime();
@@ -1119,6 +1161,10 @@ async function coletarPneusApi(vigencia) {
     return [];
   };
   const linhas = [];
+  const lista = await listaGinfoPneus();
+  const vigK = ref.getFullYear() + '-' + String(ref.getMonth() + 1).padStart(2, '0');
+  const mesLista = lista && Object.keys(lista).filter(v => v <= vigK).sort().pop();
+  const conhecidas = new Set(), aferidasPl = new Set();   // placas que o Prolog conhece / aferidas no mês
   for (const bid of Object.keys(BRANCH2FILIAL)) {
     const rows = await pega(bid);
     const veic = (rows.find(r => r.endpoint === 'vehicles') || {}).data || [];
@@ -1132,8 +1178,11 @@ async function coletarPneusApi(vigencia) {
     const aferido = new Set();
     for (const i of insp) {
       const t = new Date(i.dataInspecao).getTime();
-      if (isFinite(t) && t >= iniMs && t <= fim) aferido.add(i.veiculoId);
+      if (i.placa) conhecidas.add(mercP(i.placa));
+      if (isFinite(t) && t >= iniMs && t <= fim) { aferido.add(i.veiculoId); if (i.placa) aferidasPl.add(mercP(i.placa)); }
     }
+    for (const v of veic) { if (v.placa) { conhecidas.add(mercP(v.placa)); if (aferido.has(v.id)) aferidasPl.add(mercP(v.placa)); } }
+    if (mesLista) continue;   // com a lista do Ginfo, a conta é feita depois, por filial do Ginfo
     let ok = 0;
     for (const v of veic) if (aferido.has(v.id)) ok++;
     linhas.push({
@@ -1142,6 +1191,16 @@ async function coletarPneusApi(vigencia) {
       'Frota': veic.length,
       'Aferidos em 30 dias': ok,
     });
+  }
+  if (mesLista) {
+    for (const [fil, pls] of Object.entries(lista[mesLista])) {
+      const P = [...pls].filter(p => conhecidas.has(p));
+      if (!P.length) continue;   // filial sem placa no Prolog (Goiânia): fica sem valor, não vira 0
+      const ok = P.filter(p => aferidasPl.has(p)).length;
+      linhas.push({ Filial: fil, 'Aderência Aferição': +(ok / P.length * 100).toFixed(1), 'Frota': P.length, 'Aferidos em 30 dias': ok,
+        'Lista Ginfo': mesLista, 'Placas fora do Prolog': pls.size - P.length });
+    }
+    log(`Pneus ${vigK}: frota = placas da lista do Ginfo de ${mesLista} que o Prolog conhece`);
   }
   return linhas;
 }
