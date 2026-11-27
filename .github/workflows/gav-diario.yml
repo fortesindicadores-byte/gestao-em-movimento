@@ -1,0 +1,31 @@
+name: GAV Diario
+# A foto do dia dos indicadores do Gestão à Vista por unidade (gav_diario), para a
+# RPS de Frota. Roda sozinha no fim do Ginfo Robot; aqui é o disparo manual.
+on:
+  workflow_dispatch:
+    inputs:
+      seco:
+        description: "Só imprimir, sem gravar"
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  foto:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Instalar Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Foto do dia
+        run: node scripts/gav-diario.mjs
+        env:
+          GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
+          GAV_SECO: ${{ github.event.inputs.seco == 'true' && '1' || '' }}
