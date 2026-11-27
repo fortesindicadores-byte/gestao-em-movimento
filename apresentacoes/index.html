@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611272205">
+<meta name="build" content="202611272230">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611271500"></script>
-<script src="../assets/apres-slides.js?v=202611272205"></script>
+<script src="../assets/apres-slides.js?v=202611272230"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -1221,6 +1221,7 @@ const FAZ={prometido:sPrometido,sc:sSC,fin:sFin,ahav:sAHAV,km:sKM,arv:sArv,term:
 let _ftCarregando=false, _ftTentou=false;
 function monta(){
   if(!COD||!MOD) return;
+  const atual0=DECK[POS]&&DECK[POS].item;   /* o slide à vista ANTES de refazer o deck: quando um painel termina de ler e o deck cresce, a prévia fica no mesmo slide (Renan, 27/11/2026: clicava no Encerramento e caía no 18) */
   if(!window.FcaTabela&&!_ftTentou){ if(!_ftCarregando){ _ftCarregando=true; const sc=document.createElement('script'); sc.src='../assets/fca-tabela.js?v='+Date.now(); sc.onload=sc.onerror=()=>{ _ftCarregando=false; _ftTentou=true; monta(); }; document.head.appendChild(sc); } return; }
   const conhec=CAT.map(c=>c.id).concat(MOD.textos.map(t=>t.id));
   const ordem=MOD.ordem.filter(id=>conhec.includes(baseId(id))); CAT.forEach(c=>{ if(!ordem.some(x=>baseId(x)===c.id)) ordem.push(c.id); }); MOD.textos.forEach(t=>{ if(!ordem.includes(t.id)) ordem.push(t.id); });
@@ -1241,7 +1242,7 @@ function monta(){
   DECK=[{item:'capa',html:AS.capa({titulo:MOD.titulo,uni:UNI()+' · '+COD,vig:VIG||''})},{item:'sumario',html:AS.sumario({itens:sumIt,vig:VIG||''})}].concat(cont);
   DECK.push({item:'fim',html:AS.fim({uni:UNI()+' · '+COD,vig:VIG||''})});
   SEQ=[{id:'capa',t:'Capa',s:'Fixo no começo',fixo:1,pg:1},{id:'sumario',t:'Sumário',s:'Fixo depois da capa',fixo:1,pg:2}].concat(meio,[{id:'fim',t:'Encerramento',s:'Fixo no fim',fixo:1,pg:DECK.length}]);
-  const atual=DECK[POS]&&DECK[POS].item, i=_foco?DECK.findIndex(d=>d.item===_foco):-1; _foco=null;
+  const atual=atual0, i=_foco?DECK.findIndex(d=>d.item===_foco):-1; _foco=null;
   POS=i>=0?i:Math.min(POS,DECK.length-1); if(i<0&&atual){ const j=DECK.findIndex(d=>d.item===atual); if(j>=0&&DECK[POS].item!==atual) POS=j; }
   desenhaSeq(); desenhaPrev(); avisos();
   set('titSub',`${UNI()}${VIG?' · fechamento de '+mesLb(VIG):''} · ${DECK.length} slides`);
@@ -1515,6 +1516,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611272205"></script>
+<script src="../assets/build-check.js?v=202611272230"></script>
 </body>
 </html>
