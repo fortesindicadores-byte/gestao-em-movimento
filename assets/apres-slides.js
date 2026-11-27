@@ -194,8 +194,8 @@
     '.com .caixa{flex:1;margin-top:12px;border:1.5px dashed rgba(15,23,42,.18);border-radius:4px;padding:12px 14px;font-size:14px;line-height:1.6;color:var(--txt);white-space:pre-wrap;overflow:hidden;outline:none}',
     '.com .caixa:empty::before{content:attr(data-ph);color:var(--txt3);font-style:italic}',
     'body.final .com .caixa:empty::before{content:""}',
-    '.com .caixa .ob-l{display:flex;gap:8px;white-space:normal}.com .caixa .ob-m{flex:0 0 auto;min-width:.9em;color:var(--laranja);font-weight:800}.com .caixa .ob-m.n{min-width:1.4em}.com .caixa .ob-t{flex:1;min-width:0}.com .caixa .ob-p{white-space:normal}.com .caixa .ob-v{height:.7em}',
-    '.com .caixa.ed{white-space:pre-wrap}',
+    '.com .caixa .ob-l{position:relative;padding-left:1.25em}.com .caixa .ob-l.n{padding-left:1.9em}.com .caixa .ob-m{position:absolute;left:0;top:0;color:var(--laranja);font-weight:800;white-space:nowrap}.com .caixa .ob-m:not(.n)::before{content:"•"}.com .caixa .ob-raw{font-size:0;white-space:pre}.com .caixa .ob-t{white-space:pre-wrap}.com .caixa .ob-p{white-space:pre-wrap}.com .caixa .ob-v{min-height:.7em}',
+    
     'body.final .com .caixa{border-color:transparent}',
     /* FCA */
     'table.fca td.fato{border-right:1px solid var(--linha);width:24%}',
@@ -301,7 +301,7 @@
     'body.escuro .cab{background:linear-gradient(180deg,#F97316 calc(100% - 3px),#fff calc(100% - 3px))}body.escuro .cab .fhs{filter:brightness(0)}body.escuro .cab h2,body.escuro .cab .un,body.escuro .cab .per{color:#111}body.escuro .cab .un{border-left-color:#2A2A2A}',   /* no escuro o cabeçalho é o laranja do logo com o filete branco, com título, unidade e símbolo em preto e o separador cinza quase preto (Renan, 27/11/2026) */
     'body.escuro .card{background:linear-gradient(180deg,rgba(255,255,255,.035) 0%,rgba(255,255,255,0) 46%),rgba(40,42,48,.82);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 12px rgba(0,0,0,.30)}',
     'body.escuro .cr{color:#FF5252!important}body.escuro .cg{color:#3BB33B!important}',
-    'body.escuro table.dre th{background:#0F1318}body.escuro table.rel thead th{background:#0F1318!important}body.escuro table.dre tr.tot td{background:#2A2C32}',
+    'body.escuro table.dre th{background:#F97316;color:#111}body.escuro table.rel thead th{background:#F97316!important;color:#111!important}body.escuro table.dre tr.tot td{background:#2A2C32}',
     'body.escuro .tn{background:rgba(44,46,52,.95);box-shadow:0 2px 10px rgba(0,0,0,.3)}body.escuro .col.m .tn{background:#2C2E34}',
     'body.escuro .tn.gap{border-color:rgba(255,82,82,.6);box-shadow:0 0 0 1px rgba(255,82,82,.2),0 4px 14px rgba(0,0,0,.3)}body.escuro .tn.ok{border-color:rgba(59,179,59,.5)}',
     'body.escuro .com .caixa{border-color:rgba(255,255,255,.18)}',
@@ -404,10 +404,11 @@
   function obsFmt(t) {
     var e = function (x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
     if (!String(t || '').trim()) return '';
+    /* o marcador do tópico fica no texto (escondido no tópico, à mostra no número), então o innerText da caixa devolve o que foi digitado e a formatação vale também enquanto se digita (Renan, 27/11/2026) */
     return String(t || '').replace(/\r/g, '').split('\n').map(function (l) {
-      var m = l.match(/^\s*[-•*–]\s+(.*)$/); if (m) return '<div class="ob-l"><span class="ob-m">•</span><span class="ob-t">' + e(m[1]) + '</span></div>';
-      m = l.match(/^\s*(\d{1,2})[.)]\s+(.*)$/); if (m) return '<div class="ob-l"><span class="ob-m n">' + m[1] + '.</span><span class="ob-t">' + e(m[2]) + '</span></div>';
-      return l.trim() ? '<div class="ob-p">' + e(l) + '</div>' : '<div class="ob-v"></div>';
+      var m = l.match(/^(\s*[-•*–](?:\s+|(?=[A-Za-zÀ-ÿ])))(.*)$/); if (m) return '<div class="ob-l"><span class="ob-m"><span class="ob-raw">' + e(m[1]) + '</span></span><span class="ob-t">' + e(m[2]) + '</span></div>';
+      m = l.match(/^(\s*\d{1,2}[.)])(\s*)(.*)$/); if (m && (m[2] || /^[A-Za-zÀ-ÿ]/.test(m[3]))) return '<div class="ob-l n"><span class="ob-m n">' + e(m[1].trim()) + '<span class="ob-raw">' + e(m[1].match(/^\s*/)[0] + m[2]) + '</span></span><span class="ob-t">' + e(m[3]) + '</span></div>';
+      return l.replace(/\uE000/g, '').trim() ? '<div class="ob-p">' + e(l) + '</div>' : '<div class="ob-v">' + e(l) + '<br></div>';
     }).join('');
   }
   function obsCard(o) {
@@ -715,8 +716,30 @@
     function tudo() { document.querySelectorAll('.slide').forEach(function (s) { ajusta(s); s.querySelectorAll('.area').forEach(liga); s.querySelectorAll('canvas[data-g]').forEach(function (cv) { var c = window.Chart && Chart.getChart(cv); if (c) c.destroy(); }); });
       if (window.Chart || window.echarts) document.querySelectorAll('canvas[data-g]').forEach(desenha); window.__deckPronto = true; }
     /* observações: editando é texto puro; fora do foco, as linhas com - e 1. viram tópicos */
-    document.addEventListener('focusin', function (e) { var c = e.target.closest && e.target.closest('.caixa[data-obs]'); if (!c || c.classList.contains('ed')) return; c.classList.add('ed'); c.textContent = c.getAttribute('data-raw') || ''; });
-    document.addEventListener('focusout', function (e) { var c = e.target.closest && e.target.closest('.caixa[data-obs]'); if (!c) return; var t = c.innerText.replace(/\n+$/, ''); c.setAttribute('data-raw', t); c.classList.remove('ed'); c.innerHTML = window.__obsFmt ? window.__obsFmt(t) : t; });
+    /* observações: formata a cada tecla, guardando o cursor por um marcador (\uE000) que entra no texto, passa pelo obsFmt e sai (Renan, 27/11/2026: "vira depois que sai, mas não na hora") */
+    /* lê o texto da caixa linha a linha (o innerText quebra a linha entre o marcador e o texto do tópico, que são itens de um flex) */
+    function obsLe(c) { var L = [], cur = null, nl = function () { cur = { t: '' }; L.push(cur); };
+      var rec = function (n) { for (var k = n.firstChild; k; k = k.nextSibling) { if (k.nodeType === 3) { if (!cur) nl(); cur.t += k.data; } else if (k.nodeName === 'BR') { if (!cur) nl(); if (k.nextSibling) nl(); } else if (k.nodeType === 1) rec(k); } };
+      var bloco = false;
+      for (var k = c.firstChild; k; k = k.nextSibling) {
+        if (k.nodeType === 1 && /^(DIV|P)$/.test(k.nodeName)) { nl(); rec(k); bloco = true; }
+        else if (k.nodeName === 'BR') { if (!cur) nl(); if (k.nextSibling) nl(); bloco = false; }
+        else { if (!cur || bloco) nl(); if (k.nodeType === 3) cur.t += k.data; else rec(k); bloco = false; } }
+      return L.map(function (x) { return x.t.replace(/ /g, ' '); }).join('\n').replace(/\n+$/, ''); }
+    function obsRedesenha(c, sel) { var t = obsLe(c); c.innerHTML = window.__obsFmt(t); c.setAttribute('data-raw', t.replace(/\uE000/g, ''));
+      var w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT), n, i;
+      while ((n = w.nextNode())) { i = n.data.indexOf('\uE000'); if (i >= 0) { n.data = n.data.slice(0, i) + n.data.slice(i + 1); var nr = document.createRange(); nr.setStart(n, i); nr.collapse(true); sel.removeAllRanges(); sel.addRange(nr); break; } } }
+    function obsCursor(c) { var sel = window.getSelection(); if (!sel.rangeCount) return null; var r = sel.getRangeAt(0); if (!c.contains(r.startContainer)) return null; return { sel: sel, r: r }; }
+    document.addEventListener('input', function (e) { var c = e.target.closest && e.target.closest('.caixa[data-obs]'); if (!c || e.isComposing || !window.__obsFmt) return;
+      var k = obsCursor(c); if (!k) { c.setAttribute("data-raw", obsLe(c)); return; } k.r.collapse(true); k.r.insertNode(document.createTextNode('\uE000')); obsRedesenha(c, k.sel); }, true);
+    /* Enter cria a linha nova pelo próprio texto (o Enter do navegador dentro do tópico não quebra a linha); Backspace no começo do tópico tira o marcador inteiro */
+    document.addEventListener('keydown', function (e) { var c = e.target.closest && e.target.closest('.caixa[data-obs]'); if (!c || e.isComposing || !window.__obsFmt) return;
+      var k = obsCursor(c); if (!k) return;
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); k.r.deleteContents(); k.r.collapse(true); k.r.insertNode(document.createTextNode('\n\uE000')); obsRedesenha(c, k.sel); c.dispatchEvent(new Event('input', { bubbles: true })); return; }
+      if (e.key === 'Backspace' && k.r.collapsed) { var t = k.r.startContainer.nodeType === 3 ? k.r.startContainer.parentNode : k.r.startContainer, ot = t.closest && t.closest('.ob-t');
+        if (!ot) return; var pre = document.createRange(); pre.selectNodeContents(ot); pre.setEnd(k.r.startContainer, k.r.startOffset); if (pre.toString().length) return;
+        e.preventDefault(); var m = ot.parentNode.querySelector('.ob-m'); if (m) m.remove(); k.r.insertNode(document.createTextNode('\uE000')); obsRedesenha(c, k.sel); c.dispatchEvent(new Event('input', { bubbles: true })); } });
+    document.addEventListener('focusout', function (e) { var c = e.target.closest && e.target.closest('.caixa[data-obs]'); if (!c || !window.__obsFmt) return; var t = obsLe(c).replace(/\uE000/g, ''); c.setAttribute('data-raw', t); c.innerHTML = window.__obsFmt(t); });
     window.__ajustaDeck = tudo; window.__ajusta = tudo;
     (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () { tudo(); });
   }

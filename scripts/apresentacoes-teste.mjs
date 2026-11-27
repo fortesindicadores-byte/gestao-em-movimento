@@ -209,7 +209,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   { const o = await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument, c = d.querySelectorAll('.slide')[POS].querySelector('[data-obs]');
       c.focus(); c.dispatchEvent(new d.defaultView.FocusEvent('focusin', { bubbles: true })); c.textContent = 'Leitura da unidade\n- pneu antecipado\n- recape atrasado\n1. trocar fornecedor\n2. rever aferição';
       c.dispatchEvent(new d.defaultView.Event('input', { bubbles: true })); c.dispatchEvent(new d.defaultView.FocusEvent('focusout', { bubbles: true }));
-      return { n: c.querySelectorAll('.ob-l').length, num: [...c.querySelectorAll('.ob-m.n')].map(x => x.textContent).join(','), bol: c.querySelectorAll('.ob-m:not(.n)').length, raw: c.getAttribute('data-raw') }; });
+      return { n: c.querySelectorAll('.ob-l').length, num: [...c.querySelectorAll('.ob-m.n')].map(x => x.textContent.trim()).join(','), bol: c.querySelectorAll('.ob-m:not(.n)').length, raw: c.getAttribute('data-raw') }; });
     ok('observações: linha com "-" vira tópico e "1." vira item numerado', o.n === 4 && o.bol === 2 && o.num === '1.,2.' && /^Leitura/.test(o.raw), JSON.stringify(o)); }
   // filtro por slide e bloco repetido
   await pg.evaluate(() => { POS = DECK.findIndex(d => d.item === 'fin'); mostra(); }); await pg.waitForTimeout(150);
