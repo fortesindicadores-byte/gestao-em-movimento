@@ -37,6 +37,23 @@ for (const b of Object.keys(porB).sort()) {
   });
   const ult = Object.keys(porMes).sort().slice(-3).map(m => `${m}:${porMes[m]}`).join(' ');
   console.log(`${b} ${NOMES[b] || ''}: ${d.length} medidas · mais nova ${dia(max)} · ${ult} · mês corrente ${insp.size} inspeções em ${veicNov.size} veículos`);
+  // CALIBRAGEM (27/11/2026): a régua do Gestão à Vista = pneu com |desvio| ≤ 10% da pressão ideal,
+  // o desvio sendo a MÉDIA de todas as leituras do ano. Leitura sem pressão medida (só sulco) grava
+  // pressão 0 = desvio −100% e puxa a média. Três contas lado a lado.
+  const porPn = {}; const zeroMes = {};
+  d.forEach(i => { if (i.tireId == null) return; (porPn[i.tireId] = porPn[i.tireId] || []).push(i);
+    if (!(+i.pressaoMedida > 0)) { const m = String(i.dataInspecao || '').slice(0, 7); zeroMes[m] = (zeroMes[m] || 0) + 1; } });
+  let nA = 0, okA = 0, nB = 0, okB = 0, nC = 0, okC = 0;
+  Object.values(porPn).forEach(arr => {
+    const com = arr.filter(i => +i.pressaoIdeal > 0);
+    if (com.length) { nA++; const m = com.reduce((s, i) => s + (+i.desvioPressao || 0), 0) / com.length; if (Math.abs(m) <= 10) okA++; }
+    const cp = com.filter(i => +i.pressaoMedida > 0);
+    if (cp.length) { nB++; const m = cp.reduce((s, i) => s + (+i.desvioPressao || 0), 0) / cp.length; if (Math.abs(m) <= 10) okB++;
+      nC++; const u = cp.reduce((a, x) => String(x.dataInspecao) > String(a.dataInspecao) ? x : a); if (Math.abs(+u.desvioPressao) <= 10) okC++; }
+  });
+  const pc = (a, n) => n ? (a / n * 100).toFixed(1) + '%' : '—';
+  const zm = Object.keys(zeroMes).sort().slice(-4).map(m => `${m}:${zeroMes[m]}`).join(' ');
+  console.log(`   calibragem · média de todas ${pc(okA, nA)} (${nA} pneus) · sem leitura zero ${pc(okB, nB)} · última leitura com pressão ${pc(okC, nC)} · leituras sem pressão ${zm || '0'}`);
 }
 
 // PN_MESES=1: para cada unidade de PN_BRANCH (separadas por vírgula), compara a
