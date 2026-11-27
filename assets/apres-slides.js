@@ -46,7 +46,7 @@
     'html,body{background:#fff}body:not(.final){overflow:hidden}',
     'body{font-family:Montserrat,sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased}',
     '.slide{width:1280px;height:720px;position:relative;overflow:hidden;page-break-after:always}',
-    '.slide::after{content:"";position:absolute;left:0;right:0;bottom:0;height:8px;background:linear-gradient(90deg,#F26B0F,#F97316 55%,#FFC46B);z-index:3}',
+    '.slide::after{content:"";position:absolute;left:0;right:0;bottom:0;height:8px;background:#F97316;z-index:3}',
     /* arte: capa, sumário, divisória, encerramento (cópia do Apresentações do Bússola: metade preta com a marca e o título centrados, foto em tiras à direita) */
     '.arte{background:#000;color:#fff}',
     '.arte .esq{position:absolute;left:0;top:0;bottom:8px;width:638px}',
