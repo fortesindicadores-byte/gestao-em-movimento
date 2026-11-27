@@ -73,6 +73,16 @@
     '.sum .it b{color:#F97316;font-weight:800;font-size:18px;width:28px;flex:0 0 28px}',
     '.sum.denso .it{font-size:14px}.sum.denso .it b{font-size:16px}',
     '.div .bloco{top:292px}',
+    /* capa validada em 24/11 (Renan, 27/11/2026: "metade o caminhão, metade um azul"): a foto do Scania num quadro à direita e o bloco grafite-azul por cima (img/capa-b.jpg, a arte do ApresBase.fundos), com o logo Fleet Hub no lugar do "Gestão em Movimento" */
+    '.capaB{background:#121A21}.capaB::after{display:none}',
+    '.capaB .fd{position:absolute;inset:0;background:url(img/capa-b.jpg) center/cover}',
+    '.capaB .cb{position:absolute;left:84px;top:0;bottom:70px;width:1040px;display:flex;flex-direction:column;justify-content:center;padding-top:40px;color:#fff}',
+    '.capaB .fh{height:96px;width:auto;align-self:flex-start;margin:0 0 26px -6px}',
+    '.capaB .t{font-weight:900;line-height:.98;letter-spacing:-2px;text-transform:uppercase}',
+    '.capaB .p{font-weight:300;line-height:1.02;letter-spacing:-1.4px;color:#C9D1D9;margin-top:4px}',
+    '.capaB .s{font-size:17px;font-weight:600;margin-top:22px}',
+    '.capaB .b{width:64px;height:5px;border-radius:2px;background:#F97316;margin:24px 0 20px}',
+    '.capaB .g{font-size:12.5px;font-weight:500;color:#AEB8C2;letter-spacing:.2px}',
     '.div .num{font-size:66px;font-weight:300;color:#F97316;line-height:1;margin-bottom:24px}',
     '.div .sub{font-size:15px;color:#BFC5CF;margin:16px auto 0;max-width:480px;line-height:1.5}',
     /* conteúdo */
@@ -294,7 +304,12 @@
   var perTxt = function (vk) { return MES[+vk.slice(5, 7) - 1] + '<b>|</b>' + vk.slice(0, 4); };
   var bloco = function (t, vk) { return '<div class="bloco"><h1>' + esc(t) + '</h1><div class="vline"></div><div class="per">' + perTxt(vk) + '</div></div>'; };
   function capa(o) {
-    return '<section class="slide arte capa" data-sec="capa"><div class="esq">' + marca() + bloco(o.titulo, o.vig) + '</div>' + tiras(false) + '</section>';
+    var t = String(o.titulo || ''), n = t.length, ft = n <= 10 ? 86 : n <= 14 ? 74 : n <= 20 ? 60 : n <= 28 ? 48 : 40;
+    var p = o.vig ? MES[+o.vig.slice(5, 7) - 1] + ' · ' + o.vig.slice(0, 4) : '', fp = p.length <= 14 ? 72 : p.length <= 20 ? 56 : 44;
+    return '<section class="slide arte capaB" data-sec="capa"><div class="fd"></div><div class="cb">' +
+      '<img class="fh" src="img/fleethub/fleet-hub-branco.svg" alt="Fleet Hub">' +
+      '<div class="t" style="font-size:' + ft + 'px">' + esc(t) + '</div>' + (p ? '<div class="p" style="font-size:' + fp + 'px">' + p + '</div>' : '') +
+      (o.uni ? '<div class="s">' + esc(o.uni) + '</div>' : '') + '<div class="b"></div><div class="g">Gerado em ' + new Date().toLocaleDateString('pt-BR') + '</div></div></section>';
   }
   function sumario(o) {
     var it = o.itens || [], metade = Math.ceil(it.length / 2), a = it.slice(0, metade), b = it.slice(metade);
@@ -477,7 +492,7 @@
     var paginas = o.slides.map(function (h, i) { return h.replace(/§PG§/g, String(i + 1)); }).join('\n').replace(/url\(img\//g, 'url(' + o.base + 'img/');
     if (o.escuro) paginas = paginas.replace(/#(00B300|FF0000|E9A400|161D2B|E00000|009A00|D00000|008A00)\b/gi, function (m) { return ESCURO_COR[m.toUpperCase()] || m; });
     return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><base href="' + esc(o.base) + '"><title>' + esc(o.titulo || 'Apresentação') + '</title>' +
-      '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">' +
+      '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">' +
       '<style>' + CSS + (o.css || '') + CSS_ESCURO + CSS_VAR + '</style></head><body class="' + (o.final ? 'final' : '') + (o.escuro ? ' escuro' : '') + (o.estilo ? ' est-' + esc(o.estilo) : '') + '">' + paginas +
       '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>' + '<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"><\/script>' + '<script>window.__obsFmt=' + obsFmt.toString() + ';(' + RUN.toString() + ')();<\/script></body></html>';
   }

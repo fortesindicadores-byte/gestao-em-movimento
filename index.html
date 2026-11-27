@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611240030">
+<meta name="build" content="202611271300">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -146,6 +146,10 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
 .hside .s-top{display:flex;align-items:center;gap:10px;padding:2px 6px 12px;min-width:0;}
 .hside .s-top h1{font-size:13.5px;font-weight:700;color:var(--txt);line-height:1.2;letter-spacing:0;}
 .hside .s-top p{font-size:9.5px;color:var(--txt4);font-weight:600;margin-top:2px;}
+/* logo Fleet Hub (Renan, 27/11/2026): branco no escuro, preto no claro */
+.lg-fh{display:block;line-height:0}.lg-fh img{display:block;height:62px;width:auto}.lg-fh .clr{display:none}
+body.claro .lg-fh .esc{display:none}body.claro .lg-fh .clr{display:block}
+.lg-auth{display:flex;justify-content:center}.lg-auth img{height:118px}
 .mk-mini{width:28px;height:28px;flex:0 0 28px;border-radius:9px;display:flex;align-items:center;justify-content:center;
   background:var(--brilho), color-mix(in srgb,var(--laranja) 16%,transparent);
   border:1px solid color-mix(in srgb,var(--laranja) 30%,transparent);box-shadow:var(--luz-card);}
@@ -223,7 +227,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
   #hub-screen{flex-direction:column;}
   .hside{width:auto;flex:0 0 auto;flex-direction:row;align-items:center;gap:6px;overflow-x:auto;
     padding:10px 12px;border-right:0;border-bottom:1px solid var(--linha);}
-  .hside .s-top{padding:0 6px 0 0;} .hside .s-top div{display:none;}
+  .hside .s-top{padding:0 6px 0 0;} .hside .s-top div{display:none;} .hside .lg-fh img{height:34px;}
   .s-sec{display:none;}
   #hnav{display:flex;gap:6px;}                 /* senão os clusters empilham dentro da fileira */
   .s-item{width:auto;flex:0 0 auto;white-space:nowrap;}
@@ -607,9 +611,7 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11p
 <div class="auth-screen" id="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">
-      <div class="auth-logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-      <h1>GESTÃO EM MOVIMENTO</h1>
-      <p>Business Intelligence · Frota</p>
+      <span class="lg-fh lg-auth"><img class="esc" src="assets/img/fleethub/fleet-hub-mono-branco.svg" alt="Fleet Hub"><img class="clr" src="assets/img/fleethub/fleet-hub-mono-preto.svg" alt="Fleet Hub"></span>
     </div>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Entrar</button>
@@ -646,9 +648,7 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11p
 <div class="pending-screen" id="pending-screen">
   <div class="auth-card pending-card">
     <div class="auth-logo">
-      <div class="auth-logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-      <h1>GESTÃO EM MOVIMENTO</h1>
-      <p>Business Intelligence · Frota</p>
+      <span class="lg-fh lg-auth"><img class="esc" src="assets/img/fleethub/fleet-hub-mono-branco.svg" alt="Fleet Hub"><img class="clr" src="assets/img/fleethub/fleet-hub-mono-preto.svg" alt="Fleet Hub"></span>
     </div>
     <div class="pending-spinner-wrap"><div class="spinner"></div></div>
     <h3>Cadastro recebido!</h3>
@@ -661,8 +661,7 @@ table.acc-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:11p
 <div class="app" id="hub-screen" style="display:none">
   <aside class="hside">
     <div class="s-top">
-      <span class="mk-mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
-      <div><h1>Gestão em Movimento</h1><p>Business Intelligence · Frota</p></div>
+      <span class="lg-fh" title="Fleet Hub · Gestão em Movimento"><img class="esc" src="assets/img/fleethub/fleet-hub-branco.svg" alt="Fleet Hub"><img class="clr" src="assets/img/fleethub/fleet-hub-preto.svg" alt="Fleet Hub"></span>
     </div>
     <div class="s-sec">Clusters</div>
     <div id="hnav"></div>
@@ -2185,6 +2184,6 @@ init();
 <script src="assets/mobile.js?v=202608220020"></script>
 <script src="assets/modo-tv.js?v=202611261200"></script>
 <script src="assets/ctrlk.js"></script>
-<script src="assets/build-check.js?v=202611240030"></script>
+<script src="assets/build-check.js?v=202611271300"></script>
 </body>
 </html>

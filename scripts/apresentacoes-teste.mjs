@@ -90,7 +90,7 @@ const FAROLJS = `const UNIDADES={GRL:'Guarulhos',PIR:'Piraí',BLC:'Camboriú'}, 
 async function farolLoad(){} function ateTerceiroDiaUtil(){return false} function _n(s){return String(s||'').toUpperCase()}
 function byCod(a,c){return (a||[]).filter(r=>r.cod===c)} function avgA(a){a=a.filter(v=>v!=null);return a.length?a.reduce((x,y)=>x+y,0)/a.length:null}
 function unitStats(c){ return c==='GRL'?{sv:100,se:null,cf:96,pv:50,al:85,os:88,ck:100,dp:95,af:97,mm:91,ca:80}:{sv:100,se:100,cf:100,pv:100,al:100,os:100,ck:100,dp:99,af:99,mm:95,ca:95}; }`;
-const MIME = { '.html': 'text/html', '.js': 'application/javascript', '.jpg': 'image/jpeg', '.png': 'image/png', '.css': 'text/css' };
+const MIME = { '.html': 'text/html', '.js': 'application/javascript', '.jpg': 'image/jpeg', '.png': 'image/png', '.css': 'text/css', '.svg': 'image/svg+xml' };
 const DUB = [[/^\/visao-financeira\/(index\.html)?$/, VFPG], [/^\/painel-km\/(index\.html)?$/, KMPG], [/^\/scorecard\/(index\.html)?$/, SCPG], [/^\/termometro\/(index\.html)?$/, TERMPG], [/^\/programa-reconhecimento\/(index\.html)?$/, ELITEPG], [/^\/combustivel\/arvore-combustivel\/(index\.html)?$/, ARVPG]];
 const srv = http.createServer((req, res) => { const u = decodeURIComponent(req.url.split('?')[0]);
   if (/^\/farol-frota\/farol-core\.js$/.test(u)) { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(FAROLJS); }
