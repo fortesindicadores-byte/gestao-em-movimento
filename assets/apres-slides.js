@@ -90,6 +90,7 @@
     /* conteúdo */
     '.cont{background:radial-gradient(80% 60% at 90% 0%,rgba(255,255,255,.35) 0%,transparent 60%),linear-gradient(rgba(255,255,255,.20),rgba(255,255,255,.20)),#E1E2E5}',   /* fundo cinza de antes (Renan, 26/11/2026: "volte o cinza inicial de fundo") */
     '.cab{position:absolute;left:0;right:0;top:0;height:64px;padding:0 20px;display:flex;align-items:center;gap:12px;background:#15181D;box-shadow:inset 0 -3px 0 #F97316;box-sizing:border-box;z-index:2}',   /* cabeçalho grafite com filete laranja (Renan, 26/11/2026); grafite neutro mais escuro e o filete por sombra interna, sem a linha branca entre o fundo e o filete (27/11/2026) */
+    '.cab .fhs{width:30px;height:30px;flex:0 0 30px;animation:fhGira 9s cubic-bezier(.65,0,.35,1) 1.2s infinite}@keyframes fhGira{0%{transform:rotate(0)}12%{transform:rotate(360deg)}100%{transform:rotate(360deg)}}body.final .cab .fhs{animation:none}',   /* símbolo Fleet Hub girando à esquerda do título; parado no PDF e no PPT (Renan, 27/11/2026) */
     '.cab h2{font-size:22px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;color:#fff}',
     '.cab .un{font-size:14px;font-weight:600;color:#A9B1C0;padding-left:12px;border-left:1px solid rgba(255,255,255,.28);line-height:18px;white-space:nowrap}',
     '.cab .per{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#C9D0DD;white-space:nowrap}',
@@ -106,6 +107,7 @@
     /* rótulo do hero no tamanho, peso e cor do título do gráfico ao lado, e na mesma altura (Renan, 26/11/2026) */
     '.hero>.rot{font-size:calc(13.5px*var(--k));font-weight:800;color:var(--txt);text-transform:none;letter-spacing:0}',
     '.hero .v{font-size:calc(44px*var(--k));font-weight:800;line-height:1;margin-top:10px;letter-spacing:-1px;white-space:nowrap}',
+    '.fl{display:inline-block;width:.36em;height:.36em;border-radius:50%;margin-left:.32em;vertical-align:.08em}',   /* farol: número escuro com a bolinha da condição ao lado (Renan, 27/11/2026) */
     '.hero .sub{font-size:calc(11px*var(--k));color:var(--txt3);margin-top:6px;font-weight:600}',
     '.hero .gr{display:grid;grid-template-columns:1fr 1fr;margin-top:calc(22px*var(--k));border-top:1px solid var(--linha)}',
     '.hero .gr>div{padding:calc(14px*var(--k)) 0 calc(12px*var(--k));border-bottom:1px solid var(--linha);min-width:0}',
@@ -333,7 +335,7 @@
   var FUNIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16l-6 8v6l-4 2v-8z"/></svg>';
   function conteudo(o) {
     return '<section class="slide cont" data-sec="' + esc(o.sec || '') + '"' + (o.kmax ? ' data-kmax="' + o.kmax + '"' : '') + (o.id ? ' data-id="' + esc(o.id) + '"' : '') + '>' +
-      '<div class="cab"><h2>' + esc(o.titulo) + '</h2>' + (o.uni ? '<span class="un">' + esc(o.uni) + '</span>' : '') +
+      '<div class="cab"><img class="fhs" src="img/fleethub/fleet-hub-simbolo.svg" alt=""><h2>' + esc(o.titulo) + '</h2>' + (o.uni ? '<span class="un">' + esc(o.uni) + '</span>' : '') +
       '<div class="per">' + (o.extra || '') + FUNIL + esc(o.per || '') + '</div></div>' +
       '<div class="miolo">' + o.corpo + '</div></section>';
   }
@@ -473,7 +475,7 @@
     'body.est-limpo .cont .hero{padding-top:0}',
     'body.est-limpo .cont .lsup{border-top:1px solid var(--linha);padding-top:14px;box-sizing:border-box}',   /* linha acima dos cards (Renan, 26/11/2026, O que prometemos) */
     /* linhas entre os blocos vizinhos, no meio do vão (separa(), Renan, 26/11/2026: "Em todos que tiverem separações entre gráficos, cards etc") */
-    '.sep-l{position:absolute;background:var(--linha);pointer-events:none;z-index:1}',
+    '.sep-l{position:absolute;background:#000;pointer-events:none;z-index:1}',
     /* cópia ECharts: o hero vira uma fileira de cards, o principal no grafite do cabeçalho (Renan, 26/11/2026) */
     '.eh-row{display:grid;gap:12px;flex:0 0 calc(132px*var(--k));min-height:0}',
     '.eh-row .card{display:flex;flex-direction:column;justify-content:center;padding:calc(12px*var(--k)) 20px}',
@@ -533,11 +535,11 @@
             (foco.length ? foco : g.real.map(function (v, i) { return i; })).forEach(function (i) { var p = m.data[i]; if (p && g.real[i] != null) x.fillText(fmt(g.real[i]), p.x, p.y - 6); }); x.restore(); } }] });
       } else if (g.tipo === 'bridge') {   /* do remunerado ao realizado: cinza escuro nas pontas, vermelho e verde nos passos */
         var acc = 0, dat = [], cores = [], txt = [];
-        g.passos.forEach(function (p) { if (p.t) { dat.push([0, p.v]); cores.push('#6B7280'); txt.push(fmt(p.v)); acc = p.v; }
+        g.passos.forEach(function (p) { if (p.t) { dat.push([0, p.v]); cores.push('#1F2328'); txt.push(fmt(p.v)); acc = p.v; }
           else { dat.push([acc, acc + p.v]); cores.push(p.v > 0 ? VERM : VERDE); txt.push(fmt(Math.abs(p.v))); acc += p.v; } });
         var bb = bounds([].concat.apply([], dat).filter(function (v, i) { return i % 2 === 1 || v !== 0; }), 1.4, .12);
         fx = { size: Math.round(11 * k), family: 'Montserrat' }; fl = '700 ' + Math.round(11.5 * k) + 'px Montserrat';
-        new Chart(ctx, { type: 'bar', data: { labels: g.passos.map(function (p) { return p.n; }), datasets: [{ data: dat, backgroundColor: cores.map(function (c) { return c === '#6B7280' ? c : c + 'D9'; }), borderColor: cores, borderWidth: 1, borderRadius: 0, barPercentage: .62, categoryPercentage: .9 }] },
+        new Chart(ctx, { type: 'bar', data: { labels: g.passos.map(function (p) { return p.n; }), datasets: [{ data: dat, backgroundColor: cores.map(function (c) { return c === '#1F2328' ? c : c + 'D9'; }), borderColor: cores, borderWidth: 1, borderRadius: 0, barPercentage: .62, categoryPercentage: .9 }] },
           options: Object.assign({}, base, { layout: { padding: { top: 26 * k } }, scales: { x: { grid: { display: false }, border: { display: false }, ticks: { font: fx, color: C_TICK, maxRotation: 0, autoSkip: false } }, y: { display: false, min: bb.min, max: bb.max } } }),
           plugins: [{ afterDatasetsDraw: function (c) { var m = c.getDatasetMeta(0), x = c.ctx; x.save(); x.font = fl; x.textAlign = 'center'; x.textBaseline = 'bottom';
             m.data.forEach(function (b, i) { x.fillStyle = C_LBL; x.fillText(txt[i], b.x, Math.min(b.y, b.base) - 5); });   /* rótulo preto, sem ▲/▼ e sem tracejado entre as barras (Renan, 26/11/2026) */
@@ -567,8 +569,8 @@
     }
     /* ── ECharts: o mesmo dado, desenho de infográfico (cantos arredondados, degradê, trilho, faixas) ── */
     function hexA(c, a) { c = String(c || '#9AA3B2'); if (c[0] !== '#') return c; var n = parseInt(c.slice(1, 7), 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')'; }
-    function degr(c, a1, a2) { return new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: hexA(c, a1) }, { offset: 1, color: hexA(c, a2) }]); }
-    function degrH(c) { return new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: hexA(c, .55) }, { offset: 1, color: hexA(c, 1) }]); }
+    function degr(c, a1) { return hexA(c, a1); }   /* cor chapada, sem o degradê do claro para o escuro (Renan, 27/11/2026) */
+    function degrH(c) { return hexA(c, 1); }
     function desenhaE(cv) {
       var g = JSON.parse(cv.getAttribute('data-g')), fmt = fmtDe(g.fmt), k = parseFloat(getComputedStyle(cv).getPropertyValue('--k')) || 1, box = cv.parentNode;
       var sl = cv.closest('.slide'), d0 = sl ? sl.style.display : ''; if (sl) sl.style.display = '';
@@ -589,11 +591,11 @@
         if (g.rem) op.series.push(lin(g.rem, C_INK, 'Rem')); if (g.orc) op.series.push(lin(g.orc, '#1B6FC4', 'Orçado'));
       } else if (g.tipo === 'bridge') {
         var acc = 0, base = [], val = [], cores = [];
-        g.passos.forEach(function (p) { if (p.t) { base.push(0); val.push(p.v); cores.push('#4B5563'); acc = p.v; } else { var lo = p.v > 0 ? acc : acc + p.v; base.push(lo); val.push(Math.abs(p.v)); cores.push(p.v > 0 ? VERM : VERDE); acc += p.v; } });
+        g.passos.forEach(function (p) { if (p.t) { base.push(0); val.push(p.v); cores.push('#1F2328'); acc = p.v; } else { var lo = p.v > 0 ? acc : acc + p.v; base.push(lo); val.push(Math.abs(p.v)); cores.push(p.v > 0 ? VERM : VERDE); acc += p.v; } });
         var mins = base.filter(function (v, i) { return !g.passos[i].t; }).concat(val.filter(function (v, i) { return g.passos[i].t; })), bb = bounds(base.map(function (b0, i) { return g.passos[i].t ? b0 + val[i] : b0; }).concat(base.map(function (b0, i) { return b0 + val[i]; })), 1.4, .14);
         op.xAxis = eixoX(g.passos.map(function (p) { return p.n; })); op.xAxis.axisLabel.fontSize = fs(11); op.yAxis = { show: false, min: bb.min, max: bb.max };
         op.series = [{ type: 'bar', stack: 'w', silent: true, itemStyle: { color: 'transparent' }, data: base.map(function (v, i) { return g.passos[i].t ? 0 : v; }) },
-          { type: 'bar', stack: 'w', barWidth: '56%', data: val.map(function (v, i) { var p = g.passos[i]; return { value: p.t ? p.v : v, itemStyle: { color: p.t ? degr('#4B5563', .95, .6) : degr(cores[i], .95, .55), borderRadius: fs(5) },
+          { type: 'bar', stack: 'w', barWidth: '56%', data: val.map(function (v, i) { var p = g.passos[i]; return { value: p.t ? p.v : v, itemStyle: { color: p.t ? degr(ESC ? '#C9D0DD' : '#1F2328', .95) : degr(cores[i], .95, .55), borderRadius: fs(5) },
             label: { show: true, position: 'top', fontSize: fs(11.5), fontWeight: 700, color: C_LBL, formatter: p.t ? fmt(p.v) : fmt(Math.abs(p.v)) } }; }) }];
       } else if (g.tipo === 'meta' || g.tipo === 'faixa') {
         var corDe = function (v) { if (v == null) return null; if (g.tipo === 'meta') return v > g.meta ? VERM : VERDE; for (var q = 0; q < g.faixas.length; q++) if (v >= g.faixas[q][0]) return g.faixas[q][1]; return VERM; };
