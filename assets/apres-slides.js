@@ -75,12 +75,12 @@
     '.div .bloco{top:292px}',
     /* capa (Renan, 27/11/2026): a foto do Scania divide a tela, metade ela e metade o fundo azul-grafite, sem o quadrado por cima; o logo Fleet Hub embaixo à esquerda */
     '.capaB{background:#121A21}',
-    '.capaB .ft{position:absolute;left:640px;right:0;top:0;bottom:0;border-left:1.5px solid #F97316;background:url(img/capa-frota.jpg) 38% 60%/cover no-repeat}',
+    '.capaB .ft{position:absolute;left:640px;right:0;top:0;bottom:0;border-left:1px solid #F97316;background:url(img/capa-frota.jpg) 38% 60%/cover no-repeat}',
     '.capaB .lc{position:absolute;left:84px;top:54px;height:30px;width:auto}',
     '.capaB .cb{position:absolute;left:84px;top:110px;bottom:160px;width:500px;display:flex;flex-direction:column;justify-content:center;color:#fff}',
     '.capaB .fh{position:absolute;left:80px;bottom:50px;height:66px;width:auto}',
     '.capaB .t{font-weight:900;line-height:1;letter-spacing:-2px}',
-    '.capaB .f{font-size:40px;font-weight:700;line-height:1.05;letter-spacing:-.8px;margin-top:6px}',
+    '.capaB .f{font-size:32px;font-weight:700;line-height:1.05;letter-spacing:-.6px;margin-top:6px}',
     '.capaB .p{font-weight:300;line-height:1.02;letter-spacing:-1px;color:#C9D1D9;margin-top:22px}',
     '.capaB .s{font-size:17px;font-weight:600;margin-top:22px}',
     '.capaB .b{width:64px;height:5px;border-radius:2px;background:#F97316;margin:24px 0 20px}',
@@ -307,7 +307,7 @@
   var bloco = function (t, vk) { return '<div class="bloco"><h1>' + esc(t) + '</h1><div class="vline"></div><div class="per">' + perTxt(vk) + '</div></div>'; };
   function capa(o) {
     var t = String(o.titulo || ''), maior = Math.max.apply(null, t.split(/\s+/).map(function (w) { return w.length; }).concat([1]));
-    var ft = Math.min(62, Math.floor(480 / (maior * .66)));
+    var ft = Math.min(52, Math.floor(480 / (maior * .66)));
     var p = o.vig ? MES[+o.vig.slice(5, 7) - 1] + ' · ' + o.vig.slice(0, 4) : '', fp = Math.min(40, Math.floor(490 / (Math.max(p.length, 1) * .56)));
     return '<section class="slide arte capaB" data-sec="capa"><div class="ft"></div><img class="lc" src="img/logo-conlog-branco.png" alt="CONLOG"><div class="cb">' +
       '<div class="t" style="font-size:' + ft + 'px">' + esc(t) + '</div><div class="f">Frota</div>' + (p ? '<div class="p" style="font-size:' + fp + 'px">' + p + '</div>' : '') +
