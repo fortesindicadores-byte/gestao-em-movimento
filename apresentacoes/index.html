@@ -1053,10 +1053,10 @@ function tabFca(rs,add){ rs=rs.map(r=>r&&r.causa?Object.assign({},r,{causa:limpa
 }
 /* O que prometemos no mês passado: as ações do FCA anterior */
 function sPrometido(inst){
-  const ant=vkAnt(VIG,1), tit='O que prometemos em '+mesLb(ant), hoje=new Date().toISOString().slice(0,10);
+  const ant=vkAnt(VIG,1), tit='Follow '+['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][+ant.slice(5,7)-1], hoje=new Date().toISOString().slice(0,10);
   const temAcao=r=>!!String(r.acao||'').replace(/^\s*\d+(\.\d+)*\.\s*/,'').trim();
   const com=FCA_ANT.filter(r=>temAcao(r)&&passaP(inst,String(r.projeto||'').split('-')[0].trim()));
-  if(!com.length) return [sl({titulo:tit,corpo:AS.vazio('O FCA de '+mesLb(ant)+' não tem ação.')},inst,'O que prometemos')];
+  if(!com.length) return [sl({titulo:tit,corpo:AS.vazio('O FCA de '+mesLb(ant)+' não tem ação.')},inst,tit)];
   const fech=r=>/conclu|cancel/i.test(r.status||''), conc=com.filter(r=>/conclu/i.test(r.status||'')).length, andm=com.filter(r=>/andamento/i.test(r.status||'')).length;
   const venc=com.filter(r=>!fech(r)&&r.prazo&&String(r.prazo).slice(0,10)<hoje).length, noPrazo=com.filter(r=>!(r.prazo&&String(r.prazo).slice(0,10)<hoje&&!fech(r))).length;
   const ader=((noPrazo/com.length*100)+(conc/com.length*100))/2;
@@ -1066,11 +1066,11 @@ function sPrometido(inst){
     AS.kpi({rot:'Em andamento',v:nf(andm)}),AS.kpi({rot:'Vencidas',v:`<span style="color:${venc?'#FF0000':'#161D2B'}">${nf(venc)}</span>`,m:'prazo passado e aberta'}),
     AS.kpi({rot:'Aderência',v:`<span style="color:${cor(bandG(ader,85))}">${FS.pct(ader)}</span>`,m:'no prazo e concluídas'})].join('')}</div>`;
   const dt=p=>{ const m=String(p||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1]}`:'—'; };
-  if(!abertas.length) return [sl({titulo:tit,per:perTxt(ant),corpo:`<div class="g2 lsup" style="grid-template-rows:auto auto;align-content:start">${cards}<div class="card" style="padding:18px 20px;font-weight:600;color:var(--txt3)">Todas as ações do mês passado estão fechadas.</div></div>`},inst,'O que prometemos')];
+  if(!abertas.length) return [sl({titulo:tit,per:perTxt(ant),corpo:`<div class="g2 lsup" style="grid-template-rows:auto auto;align-content:start">${cards}<div class="card" style="padding:18px 20px;font-weight:600;color:var(--txt3)">Todas as ações do mês passado estão fechadas.</div></div>`},inst,tit)];
   /* as ações abertas todas, em quantos slides precisar: o 1º leva os cards e menos linhas */
   const gs=gruposFca(abertas), pg=[]; let cur=[],n=0,max=4.5; gs.forEach(g=>{ const k=pesoFca(g); if(cur.length&&n+k>max){ pg.push(cur); cur=[]; n=0; max=8; } cur.push(g); n+=k; }); if(cur.length) pg.push(cur);
   return pg.map((p,i)=>{ const rs=[].concat(...p.map(g=>g.rs)), t=tit+(pg.length>1?` (${i+1} de ${pg.length})`:'');
-    return sl({titulo:t,per:perTxt(ant),corpo:i?tabFca(rs,false):`<div class="g2 lsup" style="grid-template-rows:auto ${rs.length>3?'1fr':'auto'};align-content:start">${cards}${tabFca(rs,false)}</div>`},inst,i?null:'O que prometemos'); });
+    return sl({titulo:t,per:perTxt(ant),corpo:i?tabFca(rs,false):`<div class="g2 lsup" style="grid-template-rows:auto ${rs.length>3?'1fr':'auto'};align-content:start">${cards}${tabFca(rs,false)}</div>`},inst,i?null:tit); });
 }
 /* Compromissos do mês: as ações abertas do FCA do mês, com dono e prazo */
 function sComp(inst){
