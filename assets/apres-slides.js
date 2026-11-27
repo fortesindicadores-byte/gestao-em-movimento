@@ -88,7 +88,10 @@
     /* sumário, divisória e encerramento no mesmo desenho da capa (Renan, 27/11/2026: "agora aplique ao sumário e outras capas") */
     '.capaB .n{font-size:56px;font-weight:300;color:#F97316;line-height:1;margin-bottom:18px}',
     '.capaB .sb{font-size:15px;color:#C9D1D9;margin-top:16px;line-height:1.5;max-width:470px}',
-    '.capaB.sumB .ft{left:900px}',
+    '.capaB.sumB .ft{display:none}',
+    '.capaB.fimB .ft{left:0;border-left:0;background-position:50% 60%}.capaB.fimB .vu{position:absolute;inset:0;background:rgba(8,12,16,.86)}',
+    '.capaB.fimB .ob{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:900;letter-spacing:-2px;color:#fff}',
+    '.capaB.fimB .lc,.capaB.fimB .fh{z-index:1}',
     '.capaB.sumB .h{position:absolute;left:84px;top:118px;font-size:40px;font-weight:900;letter-spacing:-1.5px;line-height:1}',
     '.capaB.sumB .m{position:absolute;left:84px;top:172px;font-size:17px;font-weight:300;color:#C9D1D9}',
     '.capaB.sumB .b{position:absolute;left:84px;top:200px;margin:0}',
@@ -341,11 +344,10 @@
     return '<section class="slide arte capaB" data-sec="div"><div class="ft"></div>' + LC + '<div class="cb"><div class="n">' + String(o.n).padStart(2, '0') + '</div>' +
       '<div class="t" style="font-size:' + tituloFt(o.titulo) + 'px">' + esc(o.titulo) + '</div>' + (o.sub ? '<div class="sb">' + esc(o.sub) + '</div>' : '') + '</div>' + FH + '</section>';
   }
-  function fim(o) {
-    var p = mesAno(o.vig);
-    return '<section class="slide arte capaB" data-sec="fim"><div class="ft"></div>' + LC + '<div class="cb"><div class="t" style="font-size:45px">Obrigado!</div>' +
-      (p ? '<div class="p" style="font-size:34px">' + p + '</div>' : '') + '<div class="b"></div></div>' + FH + '</section>';
+  function fim(o) {   /* encerramento: a foto inteira bem escurecida, o Obrigado e os logos (Renan, 27/11/2026) */
+    return '<section class="slide arte capaB fimB" data-sec="fim"><div class="ft"></div><div class="vu"></div>' + LC + '<div class="ob">Obrigado!</div>' + FH + '</section>';
   }
+
 
   /* ── slide de conteúdo: moldura ── */
   var FUNIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16l-6 8v6l-4 2v-8z"/></svg>';
