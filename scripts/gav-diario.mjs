@@ -133,7 +133,12 @@ const FOTO = async () => {
   return out;
 };
 const foto = await pg.evaluate(FOTO);
-const dia = new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10);
+// A foto é o RESULTADO DO DIA (Renan, 27/11/2026: "o dia a dia é resultado do dia mesmo, então
+// hoje não teria"): a rodada das 04:00 grava o dia ANTERIOR (o estado ao fim dele); rodada à mão
+// depois do meio-dia grava o dia de hoje, que a RPS só mostra quando ele acabar. GAV_DIA força.
+const brt = new Date(Date.now() - 3 * 3600e3);
+const dia = /^\d{4}-\d{2}-\d{2}$/.test(process.env.GAV_DIA || '') ? process.env.GAV_DIA
+  : brt.getUTCHours() < 12 ? new Date(brt.getTime() - 864e5).toISOString().slice(0, 10) : brt.toISOString().slice(0, 10);
 const linhas = Object.entries(foto).map(([unidade, dados]) => ({ dia, unidade, dados, updated_at: new Date().toISOString() }));
 for (const l of linhas) {
   const i = l.dados.ind, cont = Object.keys(i).map(k => `${k} ${i[k].v == null ? '—' : i[k].v}${i[k].n ? '(' + i[k].n + ')' : ''}`).join(' · ');

@@ -23,6 +23,26 @@ const ind = (base, d) => ({
 });
 const GD = [];
 dias.forEach(d => { [['MCC T1', 98, 95], ['MCC T2', 96, 91], ['CGR', 80, 70]].forEach(([u, b, s]) => GD.push({ dia: d, unidade: u, dados: { score: s + (d === '2026-11-24' ? -4 : 0), ind: ind(b, d) } })); });
+/* hoje: a foto do dia que ainda não acabou não aparece */
+const HOJE = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
+['MCC T1', 'MCC T2'].forEach(u => GD.push({ dia: HOJE, unidade: u, dados: { score: 10, ind: ind(10, HOJE) } }));
+/* consumo: abastecimentos de diesel do ERP e o Km/L remunerado do projeto (consumo automático, dados até 24/11) */
+const ERP = [
+  { ordem_servico: 1, data: '2026-11-20', placa: 'MCC1A11', projeto_os: 'EMPURRADA - MCC', hodometro: 10000, km_rodado: null, litros: 300, tipo_combustivel: 'DIESEL S10' },
+  { ordem_servico: 2, data: '2026-11-22', placa: 'MCC1A11', projeto_os: 'EMPURRADA - MCC', hodometro: 10400, km_rodado: 400, litros: 200, tipo_combustivel: 'DIESEL S10' },
+  { ordem_servico: 3, data: '2026-11-23', placa: 'MCC1A11', projeto_os: 'EMPURRADA - MCC', hodometro: 10800, km_rodado: 400, litros: 250, tipo_combustivel: 'DIESEL S10' },
+  { ordem_servico: 4, data: '2026-11-25', placa: 'MCC1A11', projeto_os: 'EMPURRADA - MCC', hodometro: 11200, km_rodado: 400, litros: 160, tipo_combustivel: 'DIESEL S10' },
+  { ordem_servico: 5, data: '2026-11-21', placa: 'MCC2B22', projeto_os: 'ROTA - MCC', hodometro: 5000, km_rodado: null, litros: 90, tipo_combustivel: 'DIESEL S10' },
+  { ordem_servico: 6, data: '2026-11-22', placa: 'MCC2B22', projeto_os: 'ROTA - MCC', hodometro: 5300, km_rodado: 300, litros: 100, tipo_combustivel: 'DIESEL S10' },
+  { ordem_servico: 7, data: '2026-11-22', placa: 'MCC2B22', projeto_os: 'ROTA - MCC', hodometro: 5300, km_rodado: 0, litros: 20, tipo_combustivel: 'ARLA 32' },
+  { ordem_servico: 8, data: '2026-11-22', placa: 'CGR3C33', projeto_os: 'ROTA - CGR', hodometro: 900, km_rodado: 300, litros: 50, tipo_combustivel: 'DIESEL S10' },
+];
+const KML = [
+  { vigencia_orig: '2026-11-01', projeto: 'EMPURRADA - MCC', placa: 'MCC1A11', km_l_rem_medio: 2, linha: 1 },
+  { vigencia_orig: '2026-11-01', projeto: 'ROTA - MCC', placa: 'MCC2B22', km_l_rem_medio: 3, linha: 2 },
+  { vigencia_orig: '2026-11-01', projeto: 'ROTA - CGR', placa: 'CGR3C33', km_l_rem_medio: 3, linha: 3 },
+];
+const CAB = [{ slug: 'consumo_km_litro', tabela: 'ca_consumo_km_litro', linhas: 3, erro: null, resumo: { dados_ate: '2026-11-24' } }];
 const PA = [
   { id: 'a1', unidade: 'MCC T2', vigencia: 'nov/26', origem: 'RPS', fato: 'Calibragem', projeto: null, fato_desvio: '18/11/2026 · 70% (meta 90%) · RPS de 15/11/2026', causa: null, acao: 'Calibrar a frota da Rota', responsavel: 'ERICK SILVA', prazo: '2026-11-20', status: 'Concluída', acompanhamento: null, created_at: '2026-11-16T12:00:00Z' },
   { id: 'a2', unidade: 'MCC T1', vigencia: 'nov/26', origem: 'RPS', fato: 'OS no prazo', projeto: null, fato_desvio: '17/11/2026 · 88% (meta 90%) · RPS de 15/11/2026', causa: null, acao: 'Fechar as OS abertas há mais de 8 dias', responsavel: 'ERICK SILVA', prazo: '2026-11-21', status: 'Em andamento', acompanhamento: null, created_at: '2026-11-16T12:00:00Z' },
@@ -37,7 +57,7 @@ const SHIM = `(${function (T0) {
     auth: { getSession: async () => ({ data: { session: { user: { id: 'u1', email: 'admin@conlogsa.com.br', user_metadata: { name: 'Renan' } } } } }) },
     rpc: async () => ({ data: [{ nome: 'ERICK SILVA', unidade: 'MCC T1,MCC T2', is_admin: false }, { nome: 'Renan Fortes', unidade: '', is_admin: true }], error: null }),
     from: (tab) => { const T = window.__T; let rows = (T[tab] || []).slice(), sel = '';
-      const q = { select(s) { sel = s || ''; return q; }, order() { return q; },
+      const q = { select(s) { sel = s || ''; return q; }, order() { return q; }, or() { return q; },
         eq(c, v) { if (tab === 'fca_profiles') rows = [{ nome: 'Renan', unidade: '', is_admin: true }]; else rows = rows.filter(r => r[c] === v); return q; },
         in(c, vs) { rows = rows.filter(r => vs.includes(r[c])); return q; }, gte(c, v) { rows = rows.filter(r => String(r[c]) >= v); return q; },
         maybeSingle: async () => ({ data: rows[0] || null, error: null }),
@@ -47,7 +67,7 @@ const SHIM = `(${function (T0) {
         update: (p) => ({ eq: async (c, v) => { window.__upd.push({ tab, p, id: v }); (T[tab] || []).filter(r => r[c] === v).forEach(r => Object.assign(r, p)); return { error: null }; } }),
         delete: () => ({ eq: async (c, v) => { window.__del.push({ tab, id: v }); T[tab] = (T[tab] || []).filter(r => r[c] !== v); return { error: null }; } }) };
       return q; } }) };
-}})(${JSON.stringify({ gav_diario: GD, plano_acao: PA })});`;
+}})(${JSON.stringify({ gav_diario: GD, plano_acao: PA, erp_abastecimentos: ERP, ca_consumo_km_litro: KML, consumo_auto_base: CAB })});`;
 
 const MIME = { '.html': 'text/html', '.js': 'application/javascript', '.jpg': 'image/jpeg', '.png': 'image/png', '.css': 'text/css', '.svg': 'image/svg+xml' };
 const srv = http.createServer((req, res) => { const u = decodeURIComponent(req.url.split('?')[0]); let f = path.join(RAIZ, u); if (u.endsWith('/')) f = path.join(f, 'index.html');
@@ -91,13 +111,16 @@ console.log('1 · MCC (T1 + T2), semana de 22/11/2026');
   t(/1º de 2/.test(r), 'posição entre as unidades (MCC 1º, CGR 2º)', r.match(/Posição.{0,30}/));
 
   // Gerot
-  const mx = await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; const tb = d.querySelector('table.rps-mx'); if (!tb) return null;
+  const mx = await pg.evaluate((HOJE) => { const d = document.getElementById('prev').contentDocument; const tb = d.querySelector('table.rps-mx'); if (!tb) return null;
     const dias = [...tb.querySelectorAll('tr.h2 th.dia:not(.sem)')].map(th => th.textContent.trim());
     const linha = n => [...tb.querySelectorAll('tbody tr')].find(tr => (tr.querySelector('td.ind') || {}).textContent === n);
     const dp = linha('Disponibilidade'), qg = linha('Quebras Grandes'), scr = tb.querySelector('tr.score');
     const cel = (tr, dd) => { const c = tr && tr.querySelector(`td[data-d="${dd}"]`); return c ? { t: c.textContent, c: c.className } : null; };
     return { dias, sem: [...tb.querySelectorAll('tr.h1 th.sw')].map(x => x.textContent.trim()), dp24: cel(dp, '2026-11-24'), dp23: cel(dp, '2026-11-23'), qg18: (qg && qg.querySelector('td[data-w="2026-11-15"]') || {}).textContent, qg24: cel(qg, '2026-11-24'),
-      sc24: cel(scr, '2026-11-24'), real: dp && dp.querySelectorAll('td')[2].textContent, temSep: !!tb.querySelector('tr.sep') }; });
+      sc24: cel(scr, '2026-11-24'), real: dp && dp.querySelectorAll('td')[2].textContent, temSep: !!tb.querySelector('tr.sep'),
+      hoje: !!tb.querySelector(`td[data-d="${HOJE}"]`), nSem: tb.querySelectorAll('tr.h2 th.dia.sem').length,
+      pvDl: (() => { const l = linha('Preventivas'); return l ? [l.querySelectorAll('td')[3].className, l.querySelectorAll('td')[4].className] : null; })(),
+      cons: (() => { const l = linha('Consumo Km/L'); if (!l) return null; const td = l.querySelectorAll('td'); return { meta: td[1].textContent, real: td[2].textContent, dl: td[3].textContent, c22: cel(l, '2026-11-22'), c23: cel(l, '2026-11-23'), c25: cel(l, '2026-11-25'), sem: (l.querySelector('td.sem[data-w="2026-11-22"]') || {}).textContent }; })() }; }, HOJE);
   t(mx && mx.dias.length === 7, 'a semana da RPS abre em 7 dias', mx && mx.dias);
   t(mx && mx.sem.some(s => /^S47/.test(s)), 'as semanas anteriores do mês vêm fechadas (S47)', mx && mx.sem);
   t(mx && mx.dp24 && mx.dp24.t === '91%' && /cr/.test(mx.dp24.c), 'Disponibilidade em 24/11: 91% (média T1 e T2) em vermelho', mx && mx.dp24);
@@ -106,6 +129,21 @@ console.log('1 · MCC (T1 + T2), semana de 22/11/2026');
   t(mx && mx.qg24 && mx.qg24.t === '0', 'Quebras Grandes: 0 nos outros dias', mx && mx.qg24);
   t(mx && mx.sc24 && mx.sc24.t === '89,0', 'linha Score por dia', mx && mx.sc24);
   t(mx && mx.temSep, 'Custos separado no fim');
+  t(mx && !mx.hoje, 'o dia de hoje não aparece (o dia entra quando acaba)', mx && mx.hoje);
+  t(mx && mx.nSem === 4, 'Sem. nas três semanas fechadas e no fim da semana aberta', mx && mx.nSem);
+  t(mx && mx.pvDl && mx.pvDl[0] === 'n cg' && mx.pvDl[1] === 'n cg', '▲ zero (Preventivas 100% de 100%) em verde', mx && mx.pvDl);
+  t(mx && mx.cons && mx.cons.c22 && mx.cons.c22.t === '2,33' && /cg/.test(mx.cons.c22.c), 'Consumo 22/11: 700 km ÷ 300 L = 2,33, no remunerado (verde)', mx && mx.cons);
+  t(mx && mx.cons && mx.cons.c23 && mx.cons.c23.t === '1,60' && /cr/.test(mx.cons.c23.c), 'Consumo 23/11: 1,60 contra 2,00 (vermelho)', mx && mx.cons);
+  t(mx && mx.cons && !mx.cons.c25, 'Consumo depois do último dia completo do ERP fica vazio', mx && mx.cons);
+  t(mx && mx.cons && mx.cons.real === '2,00' && mx.cons.meta === '2,20' && mx.cons.dl === '-0,20' && mx.cons.sem === '2,00', 'Consumo da semana: 1.100 km ÷ 550 L = 2,00 contra 2,20 de remunerado (régua de litros), Arla e CGR fora', mx && mx.cons);
+
+  // detalhe do consumo
+  await vaiItem(pg, 'gerot');
+  await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; d.querySelector('td[data-k="cons"][data-d="2026-11-23"]').click(); });
+  await pg.waitForTimeout(300);
+  const dc = await pg.evaluate(() => ({ kp: document.getElementById('drK').innerText.replace(/\s+/g, ' '), bot: document.getElementById('drB').innerText.replace(/\s+/g, ' ') }));
+  t(/Meta 2,00/i.test(dc.kp) && /MCC1A11/.test(dc.bot) && /1,60/.test(dc.bot), 'detalhe do consumo: meta do dia e as placas que abasteceram', dc);
+  await pg.evaluate(() => fechaDr());
 
   // detalhe + gerar ação
   await vaiItem(pg, 'gerot');

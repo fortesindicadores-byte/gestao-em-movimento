@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611272230">
+<meta name="build" content="202611272330">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>RPS de Frota · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -670,6 +670,7 @@ const IND=[
   {k:'blz', t:'Blitz de Segurança',       meta:100, cl:pm(99.95,90)},
   {k:'fca', t:'Aderência ao FCA',         meta:85,  cl:pm(85,70)},
   {k:'docs',t:'Documentos vencidos',      meta:0,   qtd:1, cl:v=>v>0?'r':'g'},
+  {k:'cons',t:'Consumo Km/L',             cons:1, custo:1, cl:()=>'', dica:'Km/L dos abastecimentos de diesel do ERP (km pelo hodômetro entre um abastecimento e o anterior da placa) contra o Km/L remunerado do projeto no mês'},
   {k:'qg',  t:'Quebras Grandes',          meta:0,   qtd:1, cl:v=>v>0?'r':'g', custo:1, dica:'Lançamentos da Carta de Custos acima de 10% do remunerado da conta no mês'},
 ];
 const SCORE_K=['sv','se','cf','pv','al','os','dp','af','mm','ca'];   // a Média do Ranking do Gestão à Vista
@@ -680,6 +681,7 @@ let GD=[], GDL=[], PA=[], GD_ERR='', PA_ERR='';
 const DIAS_COM=()=>[...new Set(GDL.filter(r=>CODS.includes(r.unidade)).map(r=>r.dia))].sort();
 /* valor do indicador num dia (as unidades do recorte juntas: média; quantidades: soma) */
 function valDia(k,dia){
+  if(k==='cons'){ const a=consAgg([dia]); return a?a.v:null; }
   const rs=GD.filter(r=>r.dia===dia&&CODS.includes(r.unidade)); if(!rs.length) return null;
   if(k==='score'){ const v=rs.map(r=>r.dados&&r.dados.score).filter(v=>v!=null); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; }
   if(k==='qg'){   // quebra conta no dia do LANÇAMENTO: a lista mais recente do mês
@@ -689,10 +691,70 @@ function valDia(k,dia){
   if(!v.length) return null; const it=indDe(k); return it&&it.qtd?v.reduce((a,b)=>a+b,0):v.reduce((a,b)=>a+b,0)/v.length;
 }
 function ultimaFoto(dia){ const mes=dia.slice(0,7); const ds=[...new Set(GD.filter(r=>r.dia.slice(0,7)===mes&&CODS.includes(r.unidade)).map(r=>r.dia))].sort(); const u=ds[ds.length-1]; return u?GD.filter(r=>r.dia===u&&CODS.includes(r.unidade)):[]; }
-function valSem(k,w){ const ds=[0,1,2,3,4,5,6].map(i=>somaD(w,i)); const v=ds.map(d=>valDia(k,d)).filter(v=>v!=null); if(!v.length) return null;
+function valSem(k,w){ if(k==='cons'){ const a=consAgg(semDias(w)); return a?a.v:null; }
+  const ds=[0,1,2,3,4,5,6].map(i=>somaD(w,i)); const v=ds.map(d=>valDia(k,d)).filter(v=>v!=null); if(!v.length) return null;
   const it=indDe(k); if(k==='qg') return v.reduce((a,b)=>a+b,0); if(it&&it.qtd) return v[v.length-1]; return v.reduce((a,b)=>a+b,0)/v.length; }
-const fmtV=(k,v)=>v==null?'—':(k==='score'?nf(v,1):(indDe(k)||{}).qtd?nf(v,0):Math.round(v)+'%');
-const clDe=(k,v)=>v==null?'':k==='score'?clScore(v):(indDe(k)||{cl:()=>''}).cl(v);
+const fmtV=(k,v)=>v==null?'—':(k==='cons'?nf(v,2):k==='score'?nf(v,1):(indDe(k)||{}).qtd?nf(v,0):Math.round(v)+'%');
+const clDe=(k,v,m)=>v==null?'':k==='cons'?(m?(v/m>=1?'g':v/m>=0.95?'y':'r'):''):k==='score'?clScore(v):(indDe(k)||{cl:()=>''}).cl(v);
+/* meta e cor num dia ou numa semana (o consumo tem a meta do próprio recorte: o Km/L remunerado dos projetos que abasteceram) */
+const metaDe=(k,dia,w)=>{ if(k!=='cons') return null; const a=consAgg(dia?[dia]:semDias(w)); return a?a.m:null; };
+const clDia=(k,dia)=>clDe(k,valDia(k,dia),metaDe(k,dia));
+const metaTxt=(k,dia,w)=>{ if(k==='score') return '90'; if(k==='cons'){ const m=metaDe(k,dia,w); return m==null?'—':nf(m,2); } return fmtMeta(indDe(k)); };
+
+/* ── CONSUMO Km/L DIA A DIA (Renan, 27/11/2026: "pode adicionar consumo, caso seja possível pegar dia a dia").
+   Abastecimentos de diesel do ERP (erp_abastecimentos, a mesma base dos painéis de Km/L): km = hodômetro
+   desta OS − hodômetro da OS de diesel anterior da mesma placa (0 a 3.000; fora disso, o km_rodado da OS),
+   como o consumo automático. Meta = Km/L remunerado pela régua de litros esperados: Σkm ÷ Σ(km ÷ Km/L Rem
+   Médio do projeto da placa no mês). Só até o último dia completo do ERP (o corte do consumo automático).
+   As APIs (Pró-Frotas/Gasola) ficam de fora: sem o SUMA, o diesel do tanque interno não está lá. ── */
+let CONS={}, CONS_ERR='', CONS_ATE='';
+const semDias=w=>[0,1,2,3,4,5,6].map(i=>somaD(w,i));
+const _nrm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+const _pk=p=>{ const x=String(p||'').toUpperCase().replace(/[^A-Z0-9]/g,''); return /^[A-Z]{3}\d{4}$/.test(x)?x.slice(0,4)+'ABCDEFGHIJ'[+x[4]]+x.slice(5):x; };
+const projKey=p=>_nrm(p).replace(/\s*\(INATIVO\)$/,'').replace(/^ROTA \(VAN\) - /,'VAN - ').replace(/^UDC - /,'ROTA - ');
+function codDoProj(p){ const m=projKey(p).match(/^(.+?) - ([A-Z]{3})$/); if(!m) return null;
+  const b=m[2]==='GOI'?'GNA':m[2], t=m[1];
+  if(b==='CBA') return /EMPURRADA|INSUMOS/.test(t)?'CBA T1':/APOIO|ARMAZ/.test(t)?'CBA T1 WH':'CBA T2';
+  if(b==='MCC') return /EMPURRADA|INSUMOS/.test(t)?'MCC T1':'MCC T2';
+  return b; }
+function consAgg(dias,cods){ let km=0,lit=0,prev=0; dias.forEach(d=>{ const m=CONS[d]; if(!m) return; (cods||CODS).forEach(c=>{ const o=m[c]; if(o){ km+=o.km; lit+=o.lit; prev+=o.prev; } }); });
+  return lit>0&&prev>0?{v:km/lit,m:km/prev,km,lit}:null; }
+async function leCons(){
+  CONS={}; CONS_ERR=''; CONS_ATE='';
+  const suf=[...new Set(CODS.map(BASE))].flatMap(b=>b==='GNA'?['GNA','GOI']:[b]);
+  const ini=dISO(new Date(Date.now()-150*864e5)), conta=dISO(new Date(Date.now()-125*864e5));
+  try{
+    let tab='sh_consumo_km_litro';
+    try{ const {data:c}=await sb.from('consumo_auto_base').select('tabela,linhas,erro,resumo').eq('slug','consumo_km_litro').maybeSingle();
+      if(c&&!c.erro&&c.linhas>0){ tab=c.tabela||'ca_consumo_km_litro'; CONS_ATE=(c.resumo&&c.resumo.dados_ate)||''; } }catch(e){}
+    const [ab,kml]=await Promise.all([
+      pagina(()=>sb.from('erp_abastecimentos').select('ordem_servico,data,placa,projeto_os,hodometro,km_rodado,litros,tipo_combustivel').gte('data',ini).or(suf.map(x=>`projeto_os.ilike.*- ${x}*`).join(',')).order('data').order('ordem_servico')),
+      pagina(()=>sb.from(tab).select('vigencia_orig,projeto,placa,km_l_rem_medio').gte('vigencia_orig',ini.slice(0,7)+'-01').or(suf.map(x=>`projeto.ilike.*- ${x}*`).join(',')).order('linha'))]);
+    const pl={}, pj={};
+    kml.forEach(r=>{ const ym=String(r.vigencia_orig||'').slice(0,7), rem=+r.km_l_rem_medio, k=_pk(r.placa);
+      if(k) pl[k+'|'+ym]={proj:r.projeto,rem:rem>0?rem:null};
+      if(rem>0){ const q=projKey(r.projeto)+'|'+ym; (pj[q]=pj[q]||[]).push(rem); } });
+    const remPj=q=>{ const a=pj[q]; return a&&a.length?a.reduce((s,x)=>s+x,0)/a.length:null; };
+    const ehD=r=>!r.tipo_combustivel||(/DIESEL/.test(_nrm(r.tipo_combustivel))&&!/ARLA/.test(_nrm(r.tipo_combustivel)));
+    const porP={}; ab.filter(ehD).forEach(r=>{ const k=_pk(r.placa); if(k) (porP[k]=porP[k]||[]).push(r); });
+    const ontem=dISO(new Date(Date.now()-864e5)), ate=CONS_ATE&&CONS_ATE<ontem?CONS_ATE:ontem; CONS_ATE=ate;
+    Object.entries(porP).forEach(([k,rs])=>{
+      rs.sort((a,b)=>String(a.data).localeCompare(String(b.data))||(+a.hodometro||0)-(+b.hodometro||0)||String(a.ordem_servico).localeCompare(String(b.ordem_servico)));
+      let hAnt=null;
+      rs.forEach(r=>{ const h=+r.hodometro, kr=+r.km_rodado, dia=String(r.data).slice(0,10); let km=null;
+        if(h>0&&hAnt!=null){ const d=h-hAnt; if(d>=0&&d<=3000) km=d; }
+        if(km==null) km=(kr>=0&&kr<=3000)?kr:0;
+        if(h>0) hAnt=h;
+        if(dia<conta||dia>ate) return;
+        const lit=+r.litros||0; if(!(lit>0)||!(km>0)) return;
+        const ym=dia.slice(0,7), p=pl[k+'|'+ym], proj=p?p.proj:r.projeto_os, cod=codDoProj(proj);
+        if(!cod||!CODS.includes(cod)) return;
+        const rem=(p&&p.rem)||remPj(projKey(proj)+'|'+ym); if(!rem) return;
+        const o=((CONS[dia]=CONS[dia]||{})[cod]=CONS[dia][cod]||{km:0,lit:0,prev:0,pl:{}});
+        o.km+=km; o.lit+=lit; o.prev+=km/rem;
+        const q=o.pl[r.placa]=o.pl[r.placa]||{km:0,lit:0,prev:0}; q.km+=km; q.lit+=lit; q.prev+=km/rem; });
+    });
+  }catch(e){ CONS_ERR=(e&&e.message)||String(e); } }
 
 const UNI=()=>(NOMEB[COD]||COD)+(SEL!==COD?' '+SEL.slice(COD.length+1):''), PER=()=>semLb(VIG);
 const filtroDe=()=>null, acumDe=()=>false, perFiltro=()=>PER();
@@ -713,8 +775,9 @@ const ORD_COR={'#FF0000':0,'#E9A400':2,'#00B300':3};
 function sResumo(inst){
   const e=semDados(); if(e) return vazioSl('Resumo Gerencial',inst,e);
   const sc=valSem('score',VIG), ant=valSem('score',somaD(VIG,-7)), d=sc!=null&&ant!=null?sc-ant:null;
-  const its=IND.filter(x=>!x.qtd).map(x=>({x,v:valSem(x.k,VIG)})).filter(o=>o.v!=null);
-  const crit=its.filter(o=>o.x.cl(o.v)==='r').length;
+  const its=IND.filter(x=>!x.qtd&&!x.cons).map(x=>({x,v:valSem(x.k,VIG)})).filter(o=>o.v!=null);
+  const csm=consAgg(semDias(VIG)), csC=csm?clDe('cons',csm.v,csm.m):'';
+  const crit=its.filter(o=>o.x.cl(o.v)==='r').length+(csC==='r'?1:0);
   /* posição entre as unidades que a pessoa enxerga (score médio da semana) */
   const porU={}; GDL.filter(r=>r.dia>=VIG&&r.dia<=somaD(VIG,6)&&r.score!=null).forEach(r=>{ const o=String(r.unidade).startsWith('CBA ')?(r.unidade==='CBA T2'?'CBA T2':'CBA T1'):BASE(r.unidade); (porU[o]=porU[o]||[]).push(+r.score); });
   const rk=Object.entries(porU).map(([u,a])=>({u,s:a.reduce((x,y)=>x+y,0)/a.length})).sort((a,b)=>b.s-a.s), pos=rk.findIndex(x=>x.u===SEL)+1;
@@ -729,7 +792,7 @@ function sResumo(inst){
   const ws=[]; for(let i=7;i>=0;i--) ws.push(somaD(VIG,-7*i));
   const FX=[[90,'#00B300'],[80,'#E9A400'],[-1e9,'#FF0000']];
   const evo=AS.grafico('Score por semana','Média do Ranking do Gestão à Vista · '+semLb(VIG),{tipo:'faixa',labels:ws.map(w=>'S'+semN(w)),v:ws.map(w=>valSem('score',w)),faixas:FX,foco:[ws.length-1],fmt:'n1'});
-  const itens=its.map(o=>({n:NCUR[o.x.t]||o.x.t,v:Math.round(o.v),cor:COR(o.x.cl(o.v)),t:Math.round(o.v)+'%'})).sort((a,b)=>((ORD_COR[a.cor]??9)-(ORD_COR[b.cor]??9))||a.v-b.v);
+  const itens=its.map(o=>({n:NCUR[o.x.t]||o.x.t,v:Math.round(o.v),cor:COR(o.x.cl(o.v)),t:Math.round(o.v)+'%'})).concat(csm?[{n:'Consumo',v:Math.round(csm.v/csm.m*100),cor:COR(csC),t:nf(csm.v,2)+' km/L'}]:[]).sort((a,b)=>((ORD_COR[a.cor]??9)-(ORD_COR[b.cor]??9))||a.v-b.v);
   const ind=AS.grafico('Indicadores','% da semana · do pior para o melhor',{tipo:'faixa',zero:1,faixas:[],labels:itens.map(x=>x.n),v:itens.map(x=>x.v),cores:itens.map(x=>x.cor),txt:itens.map(x=>x.t)});
   return [sl({titulo:'Resumo Gerencial',sec:'rps',kmax:1,corpo:corpoInd(hero,evo,ind)},inst,'Resumo Gerencial')];
 }
@@ -761,22 +824,26 @@ function sAcoes(inst){
 /* ── 3 · Gerot: a matriz dia a dia ── */
 let ABERTAS=new Set();
 function sGerot(inst){
-  const e=semDados(); if(e) return vazioSl('Gerot',inst,e);
+  const e=GD_ERR||Object.keys(CONS).length?(GD_ERR?semDados():''):semDados(); if(e) return vazioSl('Gerot',inst,e);
   const mes=dDe(VIG).getMonth()===dDe(somaD(VIG,6)).getMonth()?VIG.slice(0,7):somaD(VIG,6).slice(0,7);
   const w0=domDe(mes+'-01'); const ws=[]; for(let w=w0;w<=VIG;w=somaD(w,7)) ws.push(w);
   const abre=w=>w===VIG||ABERTAS.has(w);
-  const cols=[]; ws.forEach(w=>{ if(abre(w)) for(let i=0;i<7;i++){ const d=somaD(w,i); cols.push({d,w,fora:d.slice(0,7)!==mes}); } else cols.push({w}); });
-  const head1=`<tr class="h1"><th colspan="5"></th>${ws.map(w=>abre(w)?`<th colspan="7" class="sw ab" data-sem="${w}">S${semN(w)} ${w===VIG?'':'<small>fechar</small>'}</th>`:`<th class="sw" data-sem="${w}" title="Abrir a semana">S${semN(w)}<small>${ddmm(w)}</small></th>`).join('')}</tr>`;
+  /* semana aberta: os 7 dias e, no fim, o resultado da semana (Renan, 27/11/2026) */
+  const cols=[]; ws.forEach(w=>{ if(abre(w)){ for(let i=0;i<7;i++){ const d=somaD(w,i); cols.push({d,w,fora:d.slice(0,7)!==mes}); } cols.push({w,fim:1}); } else cols.push({w}); });
+  const head1=`<tr class="h1"><th colspan="5"></th>${ws.map(w=>abre(w)?`<th colspan="8" class="sw ab" data-sem="${w}">S${semN(w)} ${w===VIG?'':'<small>fechar</small>'}</th>`:`<th class="sw" data-sem="${w}" title="Abrir a semana">S${semN(w)}<small>${ddmm(w)}</small></th>`).join('')}</tr>`;
   const head2=`<tr class="h2"><th class="ind">Indicadores</th><th>Meta</th><th>Real</th><th>▲</th><th>▲ %</th>${cols.map(c=>c.d?`<th class="dia${c.fora?' fora':''}"><small>${DIAS_SEM[dDe(c.d).getDay()]}</small>${+c.d.slice(8,10)}</th>`:`<th class="dia sem">Sem.</th>`).join('')}</tr>`;
-  const cel=(k,c)=>{ const v=c.d?(c.fora?null:valDia(k,c.d)):valSem(k,c.w), cl=clDe(k,v);
+  const cel=(k,c)=>{ const v=c.d?(c.fora?null:valDia(k,c.d)):valSem(k,c.w), cl=clDe(k,v,c.d?metaDe(k,c.d):metaDe(k,null,c.w));
     return `<td class="v ${cl?'c'+cl:''}${c.d?'':' sem'}"${v!=null&&c.d?` data-k="${k}" data-d="${c.d}"`:''}${v!=null&&!c.d?` data-k="${k}" data-w="${c.w}"`:''}>${v==null?'':fmtV(k,v)}</td>`; };
-  const linha=x=>{ const r=valSem(x.k,VIG), dl=r==null?null:r-x.meta, dp=r==null||!x.meta?null:(r/x.meta-1)*100, ruim=x.qtd?dl>0:dl<0;
-    return `<tr><td class="ind"${x.dica?` title="${esc(x.dica)}"`:''}>${esc(x.t)}</td><td class="n">${x.qtd?x.meta:x.meta+'%'}</td><td class="n b ${r!=null?'c'+x.cl(r):''}">${fmtV(x.k,r)}</td>`+
-      `<td class="n ${dl==null||Math.abs(dl)<0.05?'':ruim?'cr':'cg'}">${dl==null?'—':(x.qtd?(dl>0?'+':'')+nf(dl,0):(dl>0?'+':'')+nf(dl,1)+' pp')}</td><td class="n ${dp==null||Math.abs(dp)<0.05?'':ruim?'cr':'cg'}">${dp==null?'—':(dp>0?'+':'')+nf(dp,0)+'%'}</td>${cols.map(c=>cel(x.k,c)).join('')}</tr>`; };
+  /* ▲ zero = bateu a meta = verde (Renan, 27/11/2026: "preventiva, CIVF, saída com OS crítica e conformidade, 0 pp é verde") */
+  const linha=x=>{ const r=valSem(x.k,VIG), mt=x.cons?metaDe(x.k,null,VIG):x.meta, dl=r==null||mt==null?null:r-mt, dp=r==null||!mt?null:(r/mt-1)*100, ruim=x.qtd?dl>0:dl<0, tol=x.cons?0.005:0.05;
+    const cDl=dl==null?'':Math.abs(dl)<tol||!ruim?'cg':'cr', cDp=dp==null?'':Math.abs(dp)<0.05||!ruim?'cg':'cr';
+    const tDl=dl==null?'—':x.cons?(dl>0?'+':'')+nf(dl,2):x.qtd?(dl>0?'+':'')+nf(dl,0):(dl>0?'+':'')+nf(dl,1)+' pp';
+    return `<tr><td class="ind"${x.dica?` title="${esc(x.dica)}"`:''}>${esc(x.t)}</td><td class="n">${x.cons?(mt==null?'—':nf(mt,2)):x.qtd?x.meta:x.meta+'%'}</td><td class="n b ${r!=null&&clDe(x.k,r,mt)?'c'+clDe(x.k,r,mt):''}">${fmtV(x.k,r)}</td>`+
+      `<td class="n ${cDl}">${tDl}</td><td class="n ${cDp}">${dp==null?'—':(dp>0?'+':'')+nf(dp,0)+'%'}</td>${cols.map(c=>cel(x.k,c)).join('')}</tr>`; };
   const corpo=IND.filter(x=>!x.custo).map(linha).join('')+`<tr class="sep"><td colspan="${5+cols.length}">Custos</td></tr>`+IND.filter(x=>x.custo).map(linha).join('');
   const rs=valSem('score',VIG);
   const score=`<tr class="score"><td class="ind">Score</td><td class="n">90</td><td class="n b">${fmtV('score',rs)}</td><td></td><td></td>${cols.map(c=>{ const v=c.d?(c.fora?null:valDia('score',c.d)):valSem('score',c.w); return `<td class="v${c.d?'':' sem'}"${v!=null&&c.d?` data-k="score" data-d="${c.d}"`:''}>${v==null?'':nf(v,1)}</td>`; }).join('')}</tr>`;
-  return [sl({titulo:'Gerot · '+FS.MES[+mes.slice(5,7)-1]+'/'+mes.slice(0,4),corpo:`<div class="card tb rps-mxw"><table class="rps-mx">${head1}${head2}<tbody>${corpo}${score}</tbody></table><div class="rps-leg"><span><i class="cg"></i>No alvo</span><span><i class="cy"></i>Atenção</span><span><i class="cr"></i>Fora</span><span>Clique no dia para abrir o detalhe e gerar a ação · as semanas fechadas mostram o resultado da semana</span></div></div>`},inst,'Gerot')];
+  return [sl({titulo:'Gerot · '+FS.MES[+mes.slice(5,7)-1]+'/'+mes.slice(0,4),corpo:`<div class="card tb rps-mxw"><table class="rps-mx">${head1}${head2}<tbody>${corpo}${score}</tbody></table><div class="rps-leg"><span><i class="cg"></i>No alvo</span><span><i class="cy"></i>Atenção</span><span><i class="cr"></i>Fora</span><span>Clique no dia para abrir o detalhe e gerar a ação · Sem. = resultado da semana · o dia entra quando acaba${CONS_ATE?' · consumo até '+ddmm(CONS_ATE):''}</span></div></div>`},inst,'Gerot')];
 }
 function sRecado(t){ const ls=String(t.texto||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,8);
   return {html:AS.conteudo({titulo:t.titulo||'Recado do gestor',uni:UNI(),per:PER(),corpo:`<div class="card" style="height:100%;padding:28px 34px;display:flex;flex-direction:column;justify-content:center;gap:14px">${ls.map(l=>`<div style="display:flex;gap:14px;align-items:baseline"><span style="flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:#F97316;transform:translateY(-3px)"></span><p style="font-size:calc(17px*var(--k));line-height:1.5">${esc(l)}</p></div>`).join('')||'<p>Escreva o recado.</p>'}</div>`}),sum:t.titulo||'Recado do gestor'}; }
@@ -825,17 +892,20 @@ function fotoDe(cod,dia){ return GD.find(r=>r.dia===dia&&r.unidade===cod); }
 function abreDrill(k,dia,w){
   if(!dia&&w){ const ds=[0,1,2,3,4,5,6].map(i=>somaD(w,i)).filter(d=>valDia(k,d)!=null); dia=ds[ds.length-1]; if(!dia) return; }
   const x=k==='score'?{k:'score',t:'Score',meta:90,cl:clScore}:indDe(k); if(!x) return;
-  const v=valDia(k,dia), cl=clDe(k,v);
+  const v=valDia(k,dia), cl=clDia(k,dia);
   _dr={k,dia,x};
   set('drT',x.t+' · '+DIAS_SEM[dDe(dia).getDay()]+' '+ddmmaa(dia)); set('drS',UNI()+(x.dica?' · '+x.dica:''));
   /* por unidade do recorte (MCC = T1 e T2) */
-  const us=CODS.filter(c=>fotoDe(c,dia));
-  const vu=c=>{ const f=fotoDe(c,dia); if(!f||!f.dados) return null; if(k==='score') return f.dados.score; if(k==='qg'){ const u=ultimaFoto(dia).find(r=>r.unidade===c), q=u&&u.dados.ind&&u.dados.ind.qg; return q?(q.b||[]).filter(b=>b.dia===dia).length:null; } const i=f.dados.ind&&f.dados.ind[k]; return i?i.v:null; };
-  $('drK').innerHTML=`<div><span>Real</span><b class="${cl?'c'+cl:''}">${fmtV(k,v)}</b></div><div><span>Meta</span><b>${k==='score'?'90':fmtMeta(x)}</b></div>`+
-    (us.length>1?us.map(c=>{ const a=vu(c); return `<div><span>${esc(c)}</span><b class="${clDe(k,a)?'c'+clDe(k,a):''}">${fmtV(k,a)}</b></div>`; }).join(''):'');
+  const us=k==='cons'?CODS.filter(c=>CONS[dia]&&CONS[dia][c]):CODS.filter(c=>fotoDe(c,dia));
+  const vu=c=>{ if(k==='cons'){ const a=consAgg([dia],[c]); return a?a.v:null; } const f=fotoDe(c,dia); if(!f||!f.dados) return null; if(k==='score') return f.dados.score; if(k==='qg'){ const u=ultimaFoto(dia).find(r=>r.unidade===c), q=u&&u.dados.ind&&u.dados.ind.qg; return q?(q.b||[]).filter(b=>b.dia===dia).length:null; } const i=f.dados.ind&&f.dados.ind[k]; return i?i.v:null; };
+  $('drK').innerHTML=`<div><span>Real</span><b class="${cl?'c'+cl:''}">${fmtV(k,v)}</b></div><div><span>Meta</span><b>${metaTxt(k,dia)}</b></div>`+
+    (us.length>1?us.map(c=>{ const a=vu(c), ag=k==='cons'?consAgg([dia],[c]):null, cc=clDe(k,a,ag?ag.m:null); return `<div><span>${esc(c)}</span><b class="${cc?'c'+cc:''}">${fmtV(k,a)}</b></div>`; }).join(''):'');
   /* bottom: a lista do próprio Gestão à Vista naquele dia (quebras: as do dia do lançamento) */
   let bot=[], tit='';
-  if(k==='score'){ tit='Indicadores do dia'; bot=IND.filter(i=>!i.qtd).map(i=>({Indicador:i.t,Real:fmtV(i.k,valDia(i.k,dia)),Meta:fmtMeta(i),_c:clDe(i.k,valDia(i.k,dia))})).filter(r=>r.Real!=='—').sort((a,b)=>({r:0,y:1,g:2}[a._c]??3)-({r:0,y:1,g:2}[b._c]??3)); }
+  if(k==='cons'){ tit='Placas que abasteceram no dia · do pior para o melhor contra o remunerado';
+    us.forEach(c=>Object.entries(CONS[dia][c].pl).forEach(([p,o])=>{ const r=o.km/o.lit, m=o.km/o.prev; const b={Placa:p,Km:Math.round(o.km),Litros:Math.round(o.lit),'Km/L':nf(r,2),'Km/L rem.':nf(m,2),_r:r/m,_c:clDe('cons',r,m)}; if(us.length>1) b.Unidade=c; bot.push(b); }));
+    bot.sort((a,b)=>a._r-b._r); }
+  else if(k==='score'){ tit='Indicadores do dia'; bot=IND.filter(i=>!i.qtd).map(i=>({Indicador:i.t,Real:fmtV(i.k,valDia(i.k,dia)),Meta:metaTxt(i.k,dia),_c:clDia(i.k,dia)})).filter(r=>r.Real!=='—').sort((a,b)=>({r:0,y:1,g:2}[a._c]??3)-({r:0,y:1,g:2}[b._c]??3)); }
   else if(k==='qg'){ tit='Lançamentos da Carta acima de 10% do remunerado da conta'; ultimaFoto(dia).forEach(r=>{ const q=r.dados.ind&&r.dados.ind.qg; (q&&q.b||[]).filter(b=>b.dia===dia).forEach(b=>{ const o=Object.assign({},b); delete o.dia; if(us.length>1) o.Unidade=r.unidade; bot.push(o); }); }); }
   else { tit='Bottom do dia'; us.forEach(c=>{ const i=fotoDe(c,dia).dados.ind[k]; (i&&i.b||[]).forEach(b=>{ const o=Object.assign({},b); if(us.length>1) o.Unidade=c; bot.push(o); }); });
     const n=us.reduce((s,c)=>{ const i=fotoDe(c,dia).dados.ind[k]; return s+(i?i.n||0:0); },0); if(n>bot.length) tit+=` · ${bot.length} de ${n}`; }
@@ -843,14 +913,14 @@ function abreDrill(k,dia,w){
   const num=v=>typeof v==='number'?(Math.abs(v)>=1000?FS.brl(v):nf(v,Number.isInteger(v)?0:1)):esc(v==null?'':v);
   $('drB').innerHTML=`<h5>${esc(tit)}</h5>`+(bot.length?`<div class="dr-tw"><table class="dr-t"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${bot.map(r=>`<tr${r._c?` class="c${r._c}"`:''}>${cols.map(c=>`<td>${num(r[c])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:`<div class="dr-vz">${k==='fca'?'A aderência ao FCA não tem lista por placa.':'Nada pendente neste dia.'}</div>`);
   /* gráfico: o mês dia a dia contra a meta */
-  const mes=dia.slice(0,7), ds=DIAS_COM().filter(d=>d.slice(0,7)===mes);
+  const mes=dia.slice(0,7), ds=(k==='cons'?Object.keys(CONS).sort():DIAS_COM()).filter(d=>d.slice(0,7)===mes);
   const cv=$('drC'); if(_drCh){ try{ _drCh.destroy(); }catch(e){} _drCh=null; }
   if(window.Chart&&ds.length){ const vs=ds.map(d=>valDia(k,d)), esc_=!document.body.classList.contains('claro'), tx=esc_?'#C9D0DD':'#4A5568';
     _drCh=new Chart(cv,{type:'line',data:{labels:ds.map(d=>+d.slice(8,10)),datasets:[
       {label:x.t,data:vs,borderColor:'#F97316',backgroundColor:'#F97316',borderWidth:2.5,tension:0,pointRadius:ds.map(d=>d===dia?6:3),pointBackgroundColor:ds.map(d=>d===dia?'#fff':'#F97316'),pointBorderColor:'#F97316',pointBorderWidth:2},
-      {label:'Meta',data:ds.map(()=>x.meta),borderColor:tx,borderDash:[5,4],borderWidth:1.5,pointRadius:0}]},
+      {label:'Meta',data:ds.map(d=>k==='cons'?metaDe(k,d):x.meta),borderColor:tx,borderDash:[5,4],borderWidth:1.5,pointRadius:0}]},
       options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtV(k,c.raw)}}},
-        scales:{x:{grid:{display:false},ticks:{color:tx,font:{family:'Montserrat',size:10}}},y:{grid:{color:esc_?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)'},ticks:{color:tx,font:{family:'Montserrat',size:10},callback:t=>x.qtd||k==='score'?t:t+'%'}}}}}); }
+        scales:{x:{grid:{display:false},ticks:{color:tx,font:{family:'Montserrat',size:10}}},y:{grid:{color:esc_?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)'},ticks:{color:tx,font:{family:'Montserrat',size:10},callback:t=>x.qtd||k==='score'||k==='cons'?t:t+'%'}}}}}); }
   $('drG').style.display=ds.length?'':'none';
   /* gerar ação */
   const uAc=us.length?us.slice().sort((a,b)=>{ const va=vu(a), vb=vu(b); return x.qtd?(vb||0)-(va||0):(va??1e9)-(vb??1e9); })[0]:CODS[0];
@@ -866,7 +936,7 @@ async function geraAcao(){
   if(!_dr) return; const acao=$('drA').value.trim(); if(!acao){ set('drM','Escreva a ação.'); $('drA').focus(); return; }
   const {k,dia,x}=_dr, v=valDia(k,dia);
   const nova={unidade:$('drU').value||CODS[0],vigencia:mesLb(dia.slice(0,7)),origem:'RPS',fato:x.t,projeto:null,
-    fato_desvio:`${ddmmaa(dia)} · ${fmtV(k,v)} (meta ${k==='score'?'90':fmtMeta(x)}) · RPS de ${ddmmaa(VIG)}`,
+    fato_desvio:`${ddmmaa(dia)} · ${fmtV(k,v)} (meta ${metaTxt(k,dia)}) · RPS de ${ddmmaa(VIG)}`,
     acao,responsavel:$('drD').value||null,prazo:$('drP').value||null,status:'Não iniciada'};
   set('drM','Gravando…');
   const {data,error}=await sb.from('plano_acao').insert(nova).select('*').single();
@@ -903,6 +973,8 @@ async function leGD(){ GD=[]; GDL=[]; GD_ERR='';
       pagina(()=>sb.from('gav_diario').select('dia,unidade,dados').in('unidade',CODS).gte('dia',ini).order('dia').order('unidade')),
       pagina(()=>sb.from('gav_diario').select('dia,unidade,score:dados->score').gte('dia',ini).order('dia').order('unidade'))]);
     GD.forEach(r=>{ r.dia=String(r.dia).slice(0,10); }); GDL.forEach(r=>{ r.dia=String(r.dia).slice(0,10); r.score=r.score==null?null:+r.score; });
+    /* o dia só aparece quando acaba (Renan, 27/11/2026: "o dia a dia é resultado do dia mesmo, então hoje não teria") */
+    const hj=dISO(new Date()); GD=GD.filter(r=>r.dia<hj); GDL=GDL.filter(r=>r.dia<hj);
   }catch(e){ GD_ERR=(e&&e.message)||String(e); } }
 async function lePA(){ PA=[]; PA_ERR='';
   try{ PA=await pagina(()=>sb.from('plano_acao').select('*').in('unidade',CODS).eq('origem','RPS').order('created_at').order('id')); }
@@ -1151,9 +1223,9 @@ async function lePerfis(){ try{ let r=await sb.rpc('fca_perfis_resp'); if(r.erro
 async function carregar(){
   window.__apresPronto=false;
   set('titSub','Carregando…'); $('telaMsg').style.display=''; $('telaMsg').textContent='Montando os slides…';
-  await Promise.all([leGD(),lePA()]);
+  await Promise.all([leGD(),lePA(),leCons()]);
   const ds=DIAS_COM(), hoje=dISO(new Date());
-  MESES=[...new Set(ds.map(domDe).concat([domDe(hoje)]))].sort().reverse();
+  MESES=[...new Set(ds.concat(Object.keys(CONS)).map(domDe).concat([domDe(hoje)]))].sort().reverse();
   if(!VIG||!MESES.includes(VIG)) VIG=ds.length?domDe(ds[ds.length-1]):domDe(hoje);
   MOD=await leModelo(); $('inTit').value=MOD.titulo;
   filtros(); monta(); window.__apresPronto=true;
@@ -1207,6 +1279,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611272230"></script>
+<script src="../assets/build-check.js?v=202611272330"></script>
 </body>
 </html>

@@ -4,6 +4,9 @@ name: GAV Diario
 on:
   workflow_dispatch:
     inputs:
+      dia:
+        description: "Dia da foto (AAAA-MM-DD); vazio = antes do meio-dia, ontem; depois, hoje"
+        default: ""
       seco:
         description: "Só imprimir, sem gravar"
         type: boolean
@@ -29,3 +32,4 @@ jobs:
         env:
           GEM_SUPABASE_SERVICE_KEY: ${{ secrets.GEM_SUPABASE_SERVICE_KEY }}
           GAV_SECO: ${{ github.event.inputs.seco == 'true' && '1' || '' }}
+          GAV_DIA: ${{ github.event.inputs.dia }}
