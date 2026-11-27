@@ -584,7 +584,7 @@ let BANCO_ERR='';
 const CAP={'div:res':['Resultado','O que entregamos no mês'],'div:pq':['Por quê','Onde o custo e o km se afastaram do Rem'],'div:ind':['Indicadores','Os indicadores da operação e o FCA da RPM'],'div:rec':['Reconhecimento','Frota de Elite e os compromissos do mês']};
 const CAT=[
   {id:'div:res',  t:'Capítulo · Resultado',            s:'Divisória', div:1},
-  {id:'prometido',t:'O que prometemos no mês passado',  s:'FCA do mês anterior'},
+  {id:'prometido',t:'Follow-up',  s:'FCA do mês anterior'},
   {id:'sc',       t:'Scorecard',                        s:'Scorecard', fonte:'SC'},
   {id:'fin',      t:'Financeiro · Custo da frota',      s:'Visão Financeira', fonte:'VF', filtro:1, per:1},
   {id:'ahav',     t:'Financeiro · AH e AV',             s:'Visão Financeira', fonte:'VF', filtro:1, per:1},
@@ -1051,9 +1051,11 @@ function tabFca(rs,add){ rs=rs.map(r=>r&&r.causa?Object.assign({},r,{causa:limpa
   if(new Set(rs.map(r=>PJ(String(r.projeto||'').split('-')[0]))).size<=1) t=t.replace('<th class="c-proj">Projeto</th>','').replace(/<td class="center id" rowspan="\d+">[^<]*<\/td>(?=<td class="center id vig")/g,'');
   return AS.fcaPainel(t,rs.length);
 }
+/* Follow-up · Set/26 no cabeçalho do slide e no menu (Renan, 27/11/2026) */
+const titFollow=()=>{ const a=vkAnt(VIG,1); return 'Follow-up · '+['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][+a.slice(5,7)-1]+'/'+a.slice(2,4); };
 /* O que prometemos no mês passado: as ações do FCA anterior */
 function sPrometido(inst){
-  const ant=vkAnt(VIG,1), tit='Follow '+['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][+ant.slice(5,7)-1], hoje=new Date().toISOString().slice(0,10);
+  const ant=vkAnt(VIG,1), tit=titFollow(), hoje=new Date().toISOString().slice(0,10);
   const temAcao=r=>!!String(r.acao||'').replace(/^\s*\d+(\.\d+)*\.\s*/,'').trim();
   const com=FCA_ANT.filter(r=>temAcao(r)&&passaP(inst,String(r.projeto||'').split('-')[0].trim()));
   if(!com.length) return [sl({titulo:tit,corpo:AS.vazio('O FCA de '+mesLb(ant)+' não tem ação.')},inst,tit)];
@@ -1231,7 +1233,7 @@ function monta(){
     if(off&&c&&c.div) cap--;
     const fo=c&&c.fonte, esperando=!!fo&&!D[fo];
     const n=(MOD.ordem.filter(x=>baseId(x)===baseId(id)).indexOf(id)+1), tot=MOD.ordem.filter(x=>baseId(x)===baseId(id)).length;
-    return {id,t:t?(t.titulo||'Recado do gestor'):c.t,s:t?'Recado do gestor':c.s+(tot>1?` · ${n}ª de ${tot}`:'')+(acumDe(id)?' · Acumulado':'')+(filtroDe(id)?' · '+filtroDe(id).map(p=>Cap(p.toLowerCase())).join(', '):''),
+    return {id,t:t?(t.titulo||'Recado do gestor'):baseId(id)==='prometido'&&VIG?titFollow():c.t,s:t?'Recado do gestor':c.s+(tot>1?` · ${n}ª de ${tot}`:'')+(acumDe(id)?' · Acumulado':'')+(filtroDe(id)?' · '+filtroDe(id).map(p=>Cap(p.toLowerCase())).join(', '):''),
       sl:sls,off,txt:!!t,div:!!(c&&c.div),filtro:!!(c&&c.filtro),dup:tot>1&&n>1,esperando}; });
   const cont=[]; meio.forEach(it=>{ it.pg=null; if(!it.off&&it.sl.length){ it.pg=cont.length; it.sl.forEach(s=>cont.push({item:it.id,html:s.html,sum:s.sum,div:s.div})); } });
   const desl=2; cont.forEach((c,i)=>c.n=i+desl+1); meio.forEach(it=>{ if(it.pg!=null) it.pg+=desl+1; });

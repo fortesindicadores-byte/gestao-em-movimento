@@ -153,7 +153,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   ok('todo pacote que desviou abre a árvore (Combustíveis também); Seguros e IPVA fora da árvore', T.includes('Árvore · Rota · Combustíveis') && !T.some(t => /Seguros/.test(t)) && !T.some(t => /FCA · .*Seguros/.test(t)) && !T.some(t => /ICMS/.test(t)), T.join(' | '));
   ok('divisórias numeradas por capítulo', await pg.evaluate(() => { const x = document.createElement('div'); x.innerHTML = DECK.filter(d => d.item.startsWith('div:')).map(d => d.html).join(''); return x.textContent.replace(/\s+/g, ' '); }).then(t => /01.*Resultado.*02.*Por quê.*03.*Indicadores.*04.*Reconhecimento/.test(t)));
   const sum = await txt(pg, 'sumario');
-  ok('sumário com os slides (sem as divisórias) e a página de cada um', /Follow setembro/.test(sum) && /Árvore · Rota · Pneus/.test(sum) && /FCA · Rota · Manutenções/.test(sum) && !/Resultado/.test(sum.replace('Resultado', '').replace(/Resultado/g, '')) , sum.slice(0, 220));
+  ok('sumário com os slides (sem as divisórias) e a página de cada um', /Follow-up · Set\/26/.test(sum) && /Árvore · Rota · Pneus/.test(sum) && /FCA · Rota · Manutenções/.test(sum) && !/Resultado/.test(sum.replace('Resultado', '').replace(/Resultado/g, '')) , sum.slice(0, 220));
   // Financeiro
   const rem = 100000 + 5000 + 40000 + 6000 + 20000 + 9000, R = rem * 1.5;   // Rota + Van (×0,5)
   const realRota = 100000 * 1.02 + 5000 * 1.02 + 40000 * 1.2 + 6000 * 1.02 + 20000 * 1.5 + 9000 * 1.02, real = realRota + rem * .5;
@@ -176,7 +176,7 @@ console.log('1 · GRL, out/26, o roteiro inteiro');
   const fm = await pg.evaluate(() => { const i = DECK.findIndex(d => /<h2>FCA · Rota · Manutenções<\/h2>/.test(d.html)); const x = document.createElement('div'); x.innerHTML = DECK[i].html; return { t: x.textContent.replace(/\s+/g, ' '), rs: [...x.querySelectorAll('td[rowspan]')].map(t => t.getAttribute('rowspan')), linhas: x.querySelectorAll('table.fg-rel tr[data-id]').length }; });
   ok('FCA de Manutenções: fato mesclado com desvio, contas e YTD; causa mesclada sobre as duas ações', fm.linhas === 2 && fm.rs.join() === '2,2,2' && !/Projeto/.test(fm.t) && /YTD/.test(fm.t) && /Man\. Veículos e Equip\./.test(fm.t) && /1\.1\.\s*Causa raiz/.test(fm.t), JSON.stringify(fm).slice(0, 260));
   const pr = await txt(pg, 'prometido');
-  ok('O que prometemos: as ações do FCA de set/26 (2, 1 concluída)', /Follow setembro/.test(pr) && /Feedback|Vistoriar/.test(pr) && /50,0%/.test(pr), pr.slice(0, 200));
+  ok('O que prometemos: as ações do FCA de set/26 (2, 1 concluída)', /Follow-up · Set\/26/.test(pr) && /Feedback|Vistoriar/.test(pr) && /50,0%/.test(pr), pr.slice(0, 200));
   const gv = await txt(pg, 'gav');
   ok('Gestão à Vista no lugar de Compromissos: média de hoje, posição, indicadores com as contagens e observações', /Gestão à Vista/.test(gv) && /Posição na rede/.test(gv) && /3º de 3/.test(gv) && /Preventivas/.test(gv) && /1 vencida de 2/.test(gv) && /Observações/.test(gv) && !T.includes('Compromissos do mês'), gv.slice(0, 260));
   const rp = await txt(pg, 'rpm');
