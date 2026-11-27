@@ -799,8 +799,8 @@ window.GEM_CATALOGO = {
   },
   {
    "id": "apresentacoes",
-   "nome": "Reuniões de Rotina",
-   "desc": "As reuniões do time da ponta: monte a reunião da unidade, escolha os blocos e a ordem, apresente ou gere o PDF.",
+   "nome": "RPM",
+   "desc": "Reunião de Performance Mensal da unidade: resultado, porquês, indicadores e reconhecimento, em slides.",
    "href": "apresentacoes/",
    "cluster": "Processos",
    "adm": false,
@@ -809,7 +809,7 @@ window.GEM_CATALOGO = {
    "rdz": "",
    "vig": "ms-vig",
    "gav": false,
-   "ico": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"4\" rx=\"2\"/><path d=\"M12 17v4M8 21h8\"/><path d=\"M7 13l3-3 2 2 4-4\"/></svg>"
+   "ico": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M16 2v4M8 2v4M3 10h18\"/></svg>"
   },
   {
    "id": "programa-reconhecimento",

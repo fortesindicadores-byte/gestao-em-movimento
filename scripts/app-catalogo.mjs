@@ -130,6 +130,10 @@ for (const c of CLUSTERS) {
       for (const [h, t, d] of seara) add('Combustível', t, d, h, icoSub('combustivel/seara/index.html', h.replace('combustivel/seara/', '')), flags);
       continue;
     }
+    if (k.h === 'reunioes/') {
+      add(cl, 'RPM', 'Reunião de Performance Mensal da unidade: resultado, porquês, indicadores e reconhecimento, em slides.', 'apresentacoes/', icoSub('reunioes/index.html', '../apresentacoes/'), flags);
+      continue;
+    }
     if (k.h === 'pneus/') {
       for (const [p, t, d] of PNEUS) add('Pneus', t, d, 'pneus/painel.html?page=' + p, icoSub('pneus/index.html', 'painel.html?page=' + p), flags);
       add('Pneus', 'Descarte de Pneus', '% de descarte sobre o acervo, motivos e ranking por unidade.', 'pneus/descarte.html', icoSub('pneus/index.html', 'descarte.html'), flags);
