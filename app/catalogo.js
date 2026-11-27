@@ -1,5 +1,5 @@
 // GERADO por scripts/app-catalogo.mjs a partir do CLUSTERS do hub — não editar à mão.
-// 62 painéis em 9 grupos. Regerar quando o hub mudar.
+// 61 painéis em 9 grupos. Regerar quando o hub mudar.
 window.GEM_CATALOGO = {
  "ordem": [
   "Administração",
@@ -726,20 +726,6 @@ window.GEM_CATALOGO = {
    "vig": "",
    "gav": false,
    "ico": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6\"/><path d=\"M10 11v6M14 11v6\"/><path d=\"M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2\"/></svg>"
-  },
-  {
-   "id": "gerot",
-   "nome": "Gerot",
-   "desc": "Planejamento mensal — KPIs, meta, real e atingimento.",
-   "href": "gerot/",
-   "cluster": "Processos",
-   "adm": false,
-   "dono": false,
-   "modo": "resumo",
-   "rdz": "atualizar",
-   "vig": "ms-vig",
-   "gav": false,
-   "ico": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/></svg>"
   },
   {
    "id": "fca-preenchimento",
