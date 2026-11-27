@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611271342">
+<meta name="build" content="202611271351">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611271500"></script>
-<script src="../assets/apres-slides.js?v=202611271342"></script>
+<script src="../assets/apres-slides.js?v=202611271351"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -352,18 +352,17 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .side .sq{flex:0 1 30px;min-height:17px;gap:8px;padding:0 6px;border:0;border-radius:7px;background:transparent;}
 .side .sq:hover{background:var(--hover);}
 .side .sq.on{background:var(--hover);}
-.side .sq.on .sq-t b{color:var(--laranja);}
 .side .sq-p{display:none;}
-.side .sq-n{flex:0 0 18px;height:auto;border:0;border-radius:0;justify-content:flex-start;font-size:10px;color:var(--txt3);background:transparent!important;}
-.side .sq.on .sq-n{color:var(--laranja);}
-.side .sq-t b{font-size:11.5px;font-weight:600;}
+.side .sq-n{flex:0 0 18px;height:auto;border:0;border-radius:0;justify-content:flex-start;font-size:11px;font-weight:600;color:var(--txt3);background:transparent!important;}
+.side .sq-t b{font-size:12.5px;font-weight:500;color:var(--txt2);}.side .sq:hover .sq-t b{color:var(--txt);}.side .sq.on .sq-t b{color:var(--txt);font-weight:600;}
 .side .sq-t i{display:none;}
 .side .sq-b{opacity:0;padding:1px;}.side .sq:hover .sq-b,.side .sq.off .sq-b[data-ac="olho"]{opacity:1;}
-.side .sq.fixo .sq-t b,.side .sq.dv .sq-t b{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--txt3);}
+/* fonte do menu padrão (Renan, 27/11/2026: "Não ficou nosso padrão… falando de fonte"): slides = .s-item, capítulos = .s-sec */
+.side .sq.dv .sq-t b{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.1px;color:var(--txt3);}.side .sq.dv{cursor:pointer;}
 .side .sq.dv{opacity:1;margin-top:4px;}
 .side .sq.dv .sq-n,.side .sq.fixo .sq-n{visibility:hidden;}
 .side .sq[draggable]{cursor:grab;}
-.side .sq-in{width:100%;background:var(--app);border:1px solid var(--laranja);border-radius:6px;color:var(--txt);font-family:inherit;font-size:11.5px;font-weight:600;padding:3px 7px;outline:none;text-transform:none;letter-spacing:0;}
+.side .sq-in{width:100%;background:var(--app);border:1px solid var(--laranja);border-radius:6px;color:var(--txt);font-family:inherit;font-size:12.5px;font-weight:500;padding:3px 7px;outline:none;text-transform:none;letter-spacing:0;}
 .palco-top .filtros{gap:2px;}
 .side .s-rec{flex:0 0 auto;margin-top:6px;}
 .side.mini .seq-l,.side.mini .s-salvo{display:none;}
@@ -1248,7 +1247,7 @@ function desenhaSeq(){
   $('seq').innerHTML=SEQ.map(it=>{ const n=it.sl?it.sl.length:0, sub=it.fixo?it.s:it.off?'Fora da apresentação':it.esperando?`${it.s} · lendo…`:`${it.s} · ${n} ${n===1?'slide':'slides'}`;
     return `<div class="sq${it.fixo?' fixo':''}${it.off?' off':''}${it.id===at?' on':''}${it.div?' dv':''}" data-id="${esc(it.id)}"${it.fixo?'':' draggable="true"'}>
       <span class="sq-p">⋮⋮</span><span class="sq-n">${it.pg!=null?it.pg:'–'}</span>
-      <span class="sq-t"><b>${esc(it.t)}</b><i>${esc(sub)}</i></span>
+      <span class="sq-t"><b>${esc(it.div?String(it.t).replace(/^Cap[íi]tulo\s*·\s*/i,''):it.t)}</b><i>${esc(sub)}</i></span>
       ${it.id==='capa'?`<button class="sq-b" data-ac="tit" title="Editar o título da capa (${esc(MOD.titulo)})">${LAPIS}</button>`:''}
       ${it.txt?`<button class="sq-b" data-ac="edita" title="Editar o recado">${LAPIS}</button>`:''}
       ${it.filtro&&!it.off?`<button class="sq-b" data-ac="dup" title="Repetir este bloco com outro filtro">${COPIA}</button>`:''}
@@ -1513,6 +1512,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611271342"></script>
+<script src="../assets/build-check.js?v=202611271351"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611271500">
+<meta name="build" content="202611271351">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Assistente · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -544,6 +544,12 @@ body.claro .mdl{box-shadow:0 24px 60px rgba(15,23,42,.22), 0 3px 10px rgba(15,23
 .dimb{background:transparent;border:1px solid var(--card-brd);border-radius:20px;padding:6px 12px;cursor:pointer;
   font:600 11px Montserrat,sans-serif;color:var(--txt2);}
 .dimb:hover{background:var(--hover);color:var(--txt);}
+/* modo embutido na gaveta do assistente flutuante (27/11/2026) */
+body.embed{overflow:hidden;background:transparent!important;}
+body.embed::after,body.embed .app::before{display:none!important;}
+body.embed .app{position:fixed!important;inset:0!important;border-radius:0!important;border:0!important;box-shadow:none!important;background:transparent!important;backdrop-filter:none!important;}
+body.embed .side,body.embed .top{display:none!important;}
+body.embed .ia-msgs{padding:14px 16px 8px;}
 </style>
 </head>
 <body>
@@ -615,6 +621,14 @@ const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
 const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
 // quem usa (a Edge Function confere de novo pelo login)
 const DONOS=['fortesindicadores@gmail.com'];
+/* os mesmos de assets/assistente-flutuante.js: SHA-256 do e-mail (o e-mail de quem mais usa não fica no repositório) */
+const DONOS_HASH=['028b8bbecfccb5b3a83c7b7977fac009a9c57b2b8b6d001c849c7954b88f0f6a'];
+const hashEmail=async t=>{ try{ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }catch(e){ return ''; } };
+/* embutido na gaveta do assistente flutuante (?embed=1): sem lateral nem moldura, e o contexto é o painel aberto atrás */
+const EMBED=new URLSearchParams(location.search).get('embed')==='1';
+if(EMBED) document.body.classList.add('embed');
+const ctxPainel=()=>{ try{ const pd=parent.document; if(pd===document) return ''; const t=x=>((pd.getElementById(x)||{}).textContent||'').replace(/\s+/g,' ').trim();
+  const vw=pd.querySelector('.s-item.on'); return `Painel aberto: ${pd.title}${t('tit')?' · '+t('tit'):''}${vw?' · visão '+vw.textContent.replace(/\s+/g,' ').trim():''}${t('titSub')?' · '+t('titSub'):''} (${parent.location.pathname})`; }catch(e){ return ''; } };
 // o editor do Supabase deu à função o endereço rapid-processor (o nome não muda o endereço)
 const IA_FN=SUPABASE_URL+'/functions/v1/rapid-processor';
 let sb=null, IA=null;
@@ -629,7 +643,8 @@ async function initApp(){
   if(!session){ gate('Login necessário','Entre pelo <b>hub</b> para acessar esta tela.'); return; }
   const nome=(session.user.user_metadata&&session.user.user_metadata.name)||session.user.email.split('@')[0];
   set('quem',nome); set('av',String(nome).trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase());
-  if(!DONOS.includes(String(session.user.email||'').toLowerCase())){ gate('Somente o dono do portal','O Assistente consulta o banco inteiro e está liberado só para o dono do portal.'); return; }
+  const _em=String(session.user.email||'').toLowerCase();
+  if(!DONOS.includes(_em)&&!DONOS_HASH.includes(await hashEmail(_em))){ gate('Somente o dono do portal','O Assistente consulta o banco inteiro e está liberado só para o dono do portal.'); return; }
   $('miolo').style.display='';
   set('titSub','Banco do portal (só leitura) e pesquisa na web');
   IA=Assistente.monta({
@@ -642,7 +657,7 @@ async function initApp(){
       'Quais unidades mais estouraram o remunerado na DRE em set/26 e em quais pacotes?',
       'Que indicadores do Frota de Elite mais pioraram de ago/26 para set/26?',
       'Quais FCAs de Custos estão vencidos e sem ação concluída?'],
-    contexto:()=>'Página Assistente do portal (sem painel aberto).',
+    contexto:()=>ctxPainel()||'Página Assistente do portal (sem painel aberto).',
   });
   IA.abre();
 }
@@ -674,6 +689,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611271500"></script>
+<script src="../assets/build-check.js?v=202611271351"></script>
 </body>
 </html>

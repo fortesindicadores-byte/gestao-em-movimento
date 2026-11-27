@@ -240,8 +240,14 @@
       var i=d.createElement('img'); i.className='fh-gira'; i.src=sim; i.alt=''; t.replaceChild(i,s);
     });
   }
+  /* ── 6) Assistente flutuante no canto direito (Renan, 27/11/2026): assets/assistente-flutuante.js decide quem vê ── */
+  function carregaAssistente(){
+    if(window.__assistenteFlut||!_eu) return; try{ if(window.top!==window) return; }catch(e){ return; }
+    var s=d.createElement('script'); s.src=_eu.replace(/mobile\.js.*$/,'assistente-flutuante.js?v=202611271800'); (d.head||d.documentElement).appendChild(s);
+  }
   function start(){
     carregaSiglas();
+    try{ carregaAssistente(); }catch(e){}
     try{ marcaFleet(); }catch(e){}
     lockZoom();
     setupChartMobile();
