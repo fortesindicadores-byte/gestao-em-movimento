@@ -298,7 +298,7 @@
     'body.escuro{--txt:#EEF2FA;--txt2:#C9D0DD;--txt3:#A9B1C0;--linha:rgba(255,255,255,.08);--brd:rgba(255,255,255,.09);--card:rgba(40,42,48,.78);--card-brd:rgba(255,255,255,.09);--cabec:#2B2D33;--red:#FF5252;--green:#3BB33B;--vermelho:#FF5252;--verde:#3BB33B}',
     'html:has(body.escuro),body.escuro{background:#141518}',
     'body.escuro .cont{background:radial-gradient(80% 60% at 90% 0%,rgba(255,244,232,.04) 0%,transparent 60%),#1B1C20}',
-    'body.escuro .cab{background:linear-gradient(180deg,#F97316 calc(100% - 3px),#fff calc(100% - 3px))}body.escuro .cab .fhs{filter:brightness(0) invert(1)}body.escuro .cab .un{color:rgba(255,255,255,.88);border-left-color:rgba(255,255,255,.5)}body.escuro .cab .per{color:#fff}',   /* no escuro o cabeçalho é o laranja do logo com o filete branco, e o símbolo vira branco (Renan, 27/11/2026) */
+    'body.escuro .cab{background:linear-gradient(180deg,#F97316 calc(100% - 3px),#fff calc(100% - 3px))}body.escuro .cab .fhs{filter:brightness(0)}body.escuro .cab h2,body.escuro .cab .un,body.escuro .cab .per{color:#111}body.escuro .cab .un{border-left-color:#2A2A2A}',   /* no escuro o cabeçalho é o laranja do logo com o filete branco, com título, unidade e símbolo em preto e o separador cinza quase preto (Renan, 27/11/2026) */
     'body.escuro .card{background:linear-gradient(180deg,rgba(255,255,255,.035) 0%,rgba(255,255,255,0) 46%),rgba(40,42,48,.82);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 12px rgba(0,0,0,.30)}',
     'body.escuro .cr{color:#FF5252!important}body.escuro .cg{color:#3BB33B!important}',
     'body.escuro table.dre th{background:#0F1318}body.escuro table.rel thead th{background:#0F1318!important}body.escuro table.dre tr.tot td{background:#2A2C32}',
