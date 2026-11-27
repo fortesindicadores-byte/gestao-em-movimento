@@ -24,8 +24,14 @@
       q.onerror = function () { rej(q.error); };
     });
   }
+  // Dentro de um painel aberto por outra página do portal (Apresentações,
+  // Check de Metas, app do celular: a mãe expõe window.__gvizMem), o cache
+  // não é lido nem gravado: a mãe lia o resultado antigo antes de o dado novo
+  // chegar (Scorecard sem out/26 na apresentação, 27/11/2026).
+  function naMae() { try { var p = window.parent; return !!(p && p !== window && p.__gvizMem); } catch (e) { return false; } }
   window.SwrCache = {
     get: function (k) {
+      if (naMae()) return Promise.resolve(null);
       return db().then(function (d) {
         return new Promise(function (res) {
           var r = d.transaction('kv').objectStore('kv').get(k);
@@ -35,6 +41,7 @@
       }).catch(function () { return null; });
     },
     put: function (k, v) {
+      if (naMae()) return Promise.resolve();
       return db().then(function (d) {
         var tx = d.transaction('kv', 'readwrite');
         tx.objectStore('kv').put({ t: Date.now(), v: v }, k);

@@ -2,15 +2,16 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611271425">
+<meta name="build" content="202611271800">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
+<script src="../assets/swr-cache.js?v=202611271500"></script>
 <script src="../assets/apresentacao-base.js?v=202611271500"></script>
-<script src="../assets/apres-slides.js?v=202611271425"></script>
+<script src="../assets/apres-slides.js?v=202611271800"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -401,6 +402,7 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .palco-top .esp{flex:1;}
 .palco-top .flt .ms-btn{max-width:230px;}.palco-top .flt .un-r{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .palco-top .flt .ms-panel{min-width:210px;}
+.palco-top .ms-panel{right:auto;left:0;}   /* abre para a direita: alinhado à direita do botão, o menu da Unidade caía atrás da lateral */
 .sq.dv{opacity:.85}.sq.dv .sq-n{background:transparent;border:1px dashed var(--card-brd)}
 .tela{flex:1;min-height:0;position:relative;display:flex;align-items:flex-start;justify-content:center;overflow:hidden;}
 .tela-q{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--card-brd);background:#fff;}
@@ -743,7 +745,7 @@ function colELITE(a){
   return {pont:getFieldAvg(meus,'pontuacao'),ytd:ytd,ind:ind,rk:rk,mes:mes,nomes:a.units.map(u=>NOMES[u]||'')};
 }
 
-const CACHE={};
+const CACHE={}, GUARD={}; let LENDO=false;
 function fonte(nome,chave,fn){ const k=nome+'|'+chave; if(!CACHE[k]) CACHE[k]=fn().catch(e=>{ console.warn(nome,e); return {erro:(e&&e.message)||String(e)}; }); return CACHE[k]; }
 const SEARA=()=>COD==='ANG';
 async function fonteVF(){
@@ -818,7 +820,18 @@ async function carregaFontes(){
   Object.keys(D).forEach(k=>D[k]=null);
   if(!vig){ Object.keys(D).forEach(k=>D[k]={erro:'sem mês com realizado'}); monta(); window.__apresPronto=true; return; }
   const ch=cod+'|'+vig;
-  for(const [n,fn] of [['VF',fonteVF],['KM',fonteKM],['ARV',fonteARV],['CARTA',fonteCARTA],['SC',fonteSC],['TERM',fonteTERM],['ELITE',fonteELITE],['GAV',fonteGAV]]){ const r=await fonte(n,ch,fn); if(!ainda()) return; D[n]=r; monta(); }
+  const FONTES=[['VF',fonteVF],['KM',fonteKM],['ARV',fonteARV],['CARTA',fonteCARTA],['SC',fonteSC],['TERM',fonteTERM],['ELITE',fonteELITE],['GAV',fonteGAV]];
+  /* abre na hora com o que os painéis entregaram da última vez (unidade × mês, neste navegador) e relê por trás (Renan, 27/11/2026: "Leitura vai ficar sempre lenta assim?") */
+  const chG=n=>'apres_fonte|'+n+'|'+ch;
+  Object.keys(GUARD).forEach(k=>delete GUARD[k]);
+  if(typeof SwrCache!=='undefined'&&!CACHE['VF|'+ch]){ const g=await Promise.all(FONTES.map(([n])=>SwrCache.get(chG(n)).catch(()=>null))); if(!ainda()) return;
+    let tem=false; g.forEach((x,i)=>{ if(x&&x.v){ D[FONTES[i][0]]=x.v; GUARD[FONTES[i][0]]=x.t; tem=true; } }); if(tem){ LENDO=true; monta(); } }
+  LENDO=true;
+  for(const [n,fn] of FONTES){ const r=await fonte(n,ch,fn); if(!ainda()) return;
+    if(r&&!r.erro){ D[n]=r; delete GUARD[n]; if(typeof SwrCache!=='undefined') SwrCache.put(chG(n),r); }
+    else if(!(D[n]&&GUARD[n])) D[n]=r;
+    monta(); }
+  LENDO=false; monta();
   window.__apresPronto=true;
 }
 
@@ -1280,13 +1293,15 @@ function move(id,antesDe){ if(id===antesDe) return; const o=MOD.ordem.filter(x=>
 /* ── prévia: o deck inteiro num iframe, um slide à vista; observações e FCA se editam ali mesmo ── */
 /* sem pisca (Renan, 26/11/2026: "Essa porra fica piscando"): a prévia nova monta escondida por trás da atual e só troca quando o deck terminou de desenhar; deck igual não recarrega */
 let _pv=0;
+/* os painéis abertos por dentro dividem as abas já lidas e NÃO usam o cache próprio (o gviz-cache.js e o swr-cache.js olham esta memória): sem isso o Scorecard entregava o cache do navegador, sem o mês novo */
+window.__gvizMem=window.__gvizMem||{};
 function desenhaPrev(){
   const html=docAtual(false), cur=$('prev'), q=$('telaQ');
   if(cur._html===html){ mostra(); return; }
   const tok=++_pv; q.querySelectorAll('iframe.novo').forEach(x=>x.remove());
   if(!cur._html){ cur._html=html; cur.onload=()=>{ mostra(); $('telaMsg').style.display='none'; ligaPrev(); }; cur.srcdoc=html; ajusta(); return; }
   const n=document.createElement('iframe'); n.className='novo'; n.title='Prévia do slide'; n.style.visibility='hidden'; n.style.transform=cur.style.transform; q.appendChild(n);
-  const troca=()=>{ if(tok!==_pv){ n.remove(); return; } const v=$('prev'); if(v&&v!==n) v.remove(); n.id='prev'; n.classList.remove('novo'); n._html=html; mostra(); n.style.visibility=''; $('telaMsg').style.display='none'; ligaPrev(); };
+  const troca=()=>{ if(tok!==_pv){ n.remove(); return; } const v=$('prev'); if(v&&v!==n) v.remove(); n.id='prev'; n.classList.remove('novo'); n._html=html; ajusta(); mostra(); n.style.visibility=''; $('telaMsg').style.display='none'; ligaPrev(); };
   n.onload=()=>{ let k=0; const w=n.contentWindow; (function pronto(){ if(tok!==_pv){ n.remove(); return; } if(!(w&&w.__deckPronto)&&k++<60){ setTimeout(pronto,50); return; } troca(); })(); };
   n.srcdoc=html;
 }
@@ -1301,7 +1316,7 @@ function mostra(){
   set('cont',`${POS+1} de ${DECK.length}`); barraFiltro();
 }
 function vai(d){ const n=Math.max(0,Math.min(DECK.length-1,POS+d)); if(n===POS) return; POS=n; mostra(); desenhaSeq(); const el=document.querySelector('.sq.on'); if(el&&el.scrollIntoView) el.scrollIntoView({block:'nearest'}); }
-function ajusta(){ const t=$('tela'), q=$('telaQ'); const w=Math.floor(Math.max(120,Math.min(t.clientWidth,t.clientHeight*16/9))); q.style.width=w+'px'; const ww=q.offsetWidth||w; q.style.height=Math.floor(ww*9/16)+'px'; $('prev').style.transform=`scale(${ww/1280})`; }
+function ajusta(){ const t=$('tela'), q=$('telaQ'); const w=Math.floor(Math.max(120,Math.min(t.clientWidth,t.clientHeight*16/9))); q.style.width=w+'px'; const ww=q.offsetWidth||w; q.style.height=Math.floor(ww*9/16)+'px'; q.querySelectorAll('iframe').forEach(f=>{ f.style.transform=`scale(${ww/1280})`; }); }
 if(window.ResizeObserver) new ResizeObserver(ajusta).observe($('tela')); window.addEventListener('resize',ajusta);
 
 /* ── filtro do slide: Projeto (multi, no padrão do portal), só nos blocos que abrem por projeto ── */
@@ -1329,6 +1344,8 @@ function avisos(){
   if(FCA_ERR) a.push('Não deu para ler o FCA: '+FCA_ERR+'.');
   const N={VF:'Visão Financeira',KM:'Painel KM',SC:'Scorecard',TERM:'Termômetro',ELITE:'Frota de Elite'};
   Object.keys(D).forEach(k=>{ if(D[k]&&D[k].erro) a.push(N[k]+': '+D[k].erro+'.'); });
+  const gk=Object.keys(GUARD); if(LENDO&&gk.length){ const h=Math.min(...gk.map(k=>GUARD[k])); a.push('Mostrando a leitura guardada de '+new Date(h).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'; atualizando os painéis por trás…'); }
+  else if(gk.length){ const N2={VF:'Visão Financeira',KM:'Painel KM',ARV:'Árvore',CARTA:'Carta de Custos',SC:'Scorecard',TERM:'Termômetro',ELITE:'Frota de Elite',GAV:'Gestão à Vista'}; a.push('Não deu para reler '+gk.map(k=>N2[k]||k).join(', ')+': os slides usam a leitura guardada de '+new Date(Math.min(...gk.map(k=>GUARD[k]))).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'.'); }
   if(BANCO_OK===false) a.push('A sequência ficou guardada só neste navegador: o banco não respondeu à leitura do modelo'+(BANCO_ERR?' ('+BANCO_ERR+')':'')+'.');
   const e=$('avisos'); e.style.display=a.length?'':'none'; e.textContent=a.join(' ');
 }
@@ -1453,7 +1470,7 @@ async function carregaMes(){ window.__apresPronto=false; filtros(); set('titSub'
 async function carregar(forca){
   window.__apresPronto=false;
   set('titSub','Carregando…'); $('telaMsg').style.display=''; $('telaMsg').textContent='Montando os slides…'; DRE_ERR='';
-  if(forca){ try{ localStorage.removeItem('cc_frota_v1'); }catch(e){} FR=null; Object.keys(CACHE).forEach(k=>delete CACHE[k]); }
+  if(forca){ window.__gvizMem={}; try{ localStorage.removeItem('cc_frota_v1'); }catch(e){} FR=null; Object.keys(CACHE).forEach(k=>delete CACHE[k]); }
   try{ if(!FR){ const d=await CartaCalc.frota(); FR={rows:d.rows,m:CartaCalc.mapTab(d.header)}; } LIN=linhasDe(); }
   catch(e){ console.warn(e); DRE_ERR=(e&&e.message)||String(e); LIN=[]; }
   MESES=[...new Set(LIN.filter(r=>Math.abs(r.real)>0.5).map(r=>r.vk))].sort().reverse();
@@ -1512,6 +1529,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611271425"></script>
+<script src="../assets/build-check.js?v=202611271800"></script>
 </body>
 </html>
