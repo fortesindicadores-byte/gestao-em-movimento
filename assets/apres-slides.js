@@ -307,7 +307,7 @@
   var bloco = function (t, vk) { return '<div class="bloco"><h1>' + esc(t) + '</h1><div class="vline"></div><div class="per">' + perTxt(vk) + '</div></div>'; };
   function capa(o) {
     var t = String(o.titulo || ''), maior = Math.max.apply(null, t.split(/\s+/).map(function (w) { return w.length; }).concat([1]));
-    var ft = Math.min(84, Math.floor(480 / (maior * .66)));
+    var ft = Math.min(62, Math.floor(480 / (maior * .66)));
     var p = o.vig ? MES[+o.vig.slice(5, 7) - 1] + ' · ' + o.vig.slice(0, 4) : '', fp = Math.min(40, Math.floor(490 / (Math.max(p.length, 1) * .56)));
     return '<section class="slide arte capaB" data-sec="capa"><div class="ft"></div><img class="lc" src="img/logo-conlog-branco.png" alt="CONLOG"><div class="cb">' +
       '<div class="t" style="font-size:' + ft + 'px">' + esc(t) + '</div><div class="f">Frota</div>' + (p ? '<div class="p" style="font-size:' + fp + 'px">' + p + '</div>' : '') +
