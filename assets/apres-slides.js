@@ -85,6 +85,17 @@
     '.capaB .s{font-size:15px;font-weight:600;margin-top:22px}',
     '.capaB .b{width:64px;height:5px;border-radius:2px;background:#F97316;margin:24px 0 20px}',
     '.capaB .g{font-size:12.5px;font-weight:500;color:#AEB8C2;letter-spacing:.2px}',
+    /* sumário, divisória e encerramento no mesmo desenho da capa (Renan, 27/11/2026: "agora aplique ao sumário e outras capas") */
+    '.capaB .n{font-size:56px;font-weight:300;color:#F97316;line-height:1;margin-bottom:18px}',
+    '.capaB .sb{font-size:15px;color:#C9D1D9;margin-top:16px;line-height:1.5;max-width:470px}',
+    '.capaB.sumB .ft{left:900px}',
+    '.capaB.sumB .h{position:absolute;left:84px;top:118px;font-size:40px;font-weight:900;letter-spacing:-1.5px;line-height:1}',
+    '.capaB.sumB .m{position:absolute;left:84px;top:172px;font-size:17px;font-weight:300;color:#C9D1D9}',
+    '.capaB.sumB .b{position:absolute;left:84px;top:200px;margin:0}',
+    '.capaB.sumB .lista{position:absolute;left:84px;top:232px;display:grid;grid-template-columns:350px 350px;column-gap:44px}',
+    '.capaB.sumB .it{display:flex;align-items:center;gap:20px;height:var(--h,36px);border-bottom:1px solid rgba(255,255,255,.16);font-size:15px;font-weight:500}',
+    '.capaB.sumB .it b{color:#F97316;font-weight:800;font-size:17px;width:28px;flex:0 0 28px}',
+    '.capaB.sumB.denso .it{font-size:13.5px}.capaB.sumB.denso .it b{font-size:15px}',
     '.div .num{font-size:66px;font-weight:300;color:#F97316;line-height:1;margin-bottom:24px}',
     '.div .sub{font-size:15px;color:#BFC5CF;margin:16px auto 0;max-width:480px;line-height:1.5}',
     /* conteúdo */
@@ -316,19 +327,24 @@
       (o.uni ? '<div class="s">' + esc(o.uni) + '</div>' : '') + '<div class="b"></div><div class="g">Gerado em ' + new Date().toLocaleDateString('pt-BR') + '</div></div>' +
       '<img class="fh" src="img/fleethub/fleet-hub-branco.svg" alt="Fleet Hub"></section>';
   }
+  var FH = '<img class="fh" src="img/fleethub/fleet-hub-branco.svg" alt="Fleet Hub">', LC = '<img class="lc" src="img/logo-conlog-branco.png" alt="CONLOG">';
+  var mesAno = function (vk) { return vk ? MES[+vk.slice(5, 7) - 1] + ' · ' + vk.slice(0, 4) : ''; };
   function sumario(o) {
     var it = o.itens || [], metade = Math.ceil(it.length / 2), a = it.slice(0, metade), b = it.slice(metade);
     var li = function (x) { return '<div class="it"><b>' + String(x.pg).padStart(2, '0') + '</b><span>' + esc(x.t) + '</span></div>'; };
-    return '<section class="slide arte sum' + (it.length > 18 ? ' denso' : '') + '" data-sec="sumario"><div class="esq" style="width:898px">' + marca(true) +
-      '<h1>Sumário</h1><div class="tr"></div><div class="mes">' + perTxt(o.vig).replace('<b>|</b>', ' <b>|</b> ') + '</div>' +
-      '<div class="lista" style="--h:' + Math.min(38, Math.floor(440 / Math.max(1, metade))) + 'px"><div>' + a.map(li).join('') + '</div><div>' + b.map(li).join('') + '</div></div></div>' + tiras(true) + '</section>';
+    return '<section class="slide arte capaB sumB' + (it.length > 18 ? ' denso' : '') + '" data-sec="sumario"><div class="ft"></div>' + LC +
+      '<div class="h">Sumário</div><div class="m">' + mesAno(o.vig) + '</div><div class="b"></div>' +
+      '<div class="lista" style="--h:' + Math.min(36, Math.floor(340 / Math.max(1, metade))) + 'px"><div>' + a.map(li).join('') + '</div><div>' + b.map(li).join('') + '</div></div>' + FH + '</section>';
   }
+  function tituloFt(t) { var maior = Math.max.apply(null, String(t).split(/\s+/).map(function (w) { return w.length; }).concat([1])); return Math.min(45, Math.floor(420 / (maior * .66))); }
   function divisoria(o) {
-    return '<section class="slide arte div" data-sec="div"><div class="esq">' + marca() + '<div class="bloco"><div class="num">' + String(o.n).padStart(2, '0') + '</div><h1>' + esc(o.titulo) + '</h1>' +
-      (o.sub ? '<div class="sub">' + esc(o.sub) + '</div>' : '') + '</div></div>' + tiras(false) + '</section>';
+    return '<section class="slide arte capaB" data-sec="div"><div class="ft"></div>' + LC + '<div class="cb"><div class="n">' + String(o.n).padStart(2, '0') + '</div>' +
+      '<div class="t" style="font-size:' + tituloFt(o.titulo) + 'px">' + esc(o.titulo) + '</div>' + (o.sub ? '<div class="sb">' + esc(o.sub) + '</div>' : '') + '</div>' + FH + '</section>';
   }
   function fim(o) {
-    return '<section class="slide arte fim" data-sec="fim"><div class="esq">' + marca() + bloco('Obrigado!', o.vig) + '</div>' + tiras(false) + '</section>';
+    var p = mesAno(o.vig);
+    return '<section class="slide arte capaB" data-sec="fim"><div class="ft"></div>' + LC + '<div class="cb"><div class="t" style="font-size:45px">Obrigado!</div>' +
+      (p ? '<div class="p" style="font-size:34px">' + p + '</div>' : '') + '<div class="b"></div></div>' + FH + '</section>';
   }
 
   /* ── slide de conteúdo: moldura ── */
