@@ -486,7 +486,7 @@
     /* cópia sem card em TODOS os slides (Renan, 26/11/2026: "Faça uma cópia nesse estilo pra todos slides. Mas espaçamento lateral e em cima e baixo melhor e distribuído melhor") */
     'body.branco .cont{background:#FFFFFF}body.branco.escuro .cont{background:#1B1C20}',   /* ?estilo=branco = a cópia limpa com o fundo dos slides branco (Renan, 26/11/2026) */
     'body.est-limpo .cont .card{background:transparent!important;border-color:transparent!important;box-shadow:none!important}',
-    'body.est-limpo .cont .miolo{left:40px;right:40px;top:92px;bottom:28px}body.est-limpo .cont .cab{padding:0 40px}',
+    'body.est-limpo .cont .miolo{left:40px;right:40px;top:92px;bottom:28px}body.est-limpo .cont .cab{padding:0 24px}',
     'body.est-limpo .cont .g2,body.est-limpo .cont .arv,body.est-limpo .cont .pn-gr,body.est-limpo .cont .kgrid{column-gap:44px;row-gap:28px}body.est-limpo .cont .pn{gap:24px}body.est-limpo .cont .kpis,body.est-limpo .cont .tc-row,body.est-limpo .cont .el-cards{gap:28px}',
     'body.est-limpo .cont .tb .t{padding-left:0;padding-right:0}body.est-limpo .cont .gc{padding-top:0;padding-bottom:0}',
     /* sem card: o hero começa na linha do título do gráfico e uma linha vertical o separa dos gráficos, no meio do vão (Renan, 26/11/2026) */
