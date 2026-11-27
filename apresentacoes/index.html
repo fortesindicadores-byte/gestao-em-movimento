@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611272320">
+<meta name="build" content="202611271320">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Apresentações · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
 <script src="../assets/gviz-cache.js?v=202611181300"></script>
 <script src="../assets/carta-calc.js"></script>
 <script src="../assets/apresentacao-base.js?v=202611271500"></script>
-<script src="../assets/apres-slides.js?v=202611272320"></script>
+<script src="../assets/apres-slides.js?v=202611271320"></script>
 <script src="../assets/fca-auto.js?v=202611260130"></script>
 <script src="../assets/fca-tabela.js?v=202611252050"></script>
 <script src="../assets/fca-caixa.js?v=202610170015"></script>
@@ -144,6 +144,7 @@ body{font-family:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;font-s
 /* ── quadro ── */
 .board{flex:1;min-width:0;display:flex;flex-direction:column;}
 .top{display:flex;align-items:center;gap:6px;padding:12px 24px 10px;flex-wrap:wrap;}
+.top[hidden]{display:none!important;}
 .tit-wrap{flex:1;min-width:0;}
 .top h1{font-size:21px;font-weight:600;letter-spacing:-.3px;}
 .tit-sub{font-size:11px;color:var(--txt3);font-weight:600;margin-top:2px;letter-spacing:.2px;}
@@ -362,6 +363,8 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .side .sq.dv{opacity:1;margin-top:4px;}
 .side .sq.dv .sq-n,.side .sq.fixo .sq-n{visibility:hidden;}
 .side .sq[draggable]{cursor:grab;}
+.side .sq-in{width:100%;background:var(--app);border:1px solid var(--laranja);border-radius:6px;color:var(--txt);font-family:inherit;font-size:11.5px;font-weight:600;padding:3px 7px;outline:none;text-transform:none;letter-spacing:0;}
+.palco-top .filtros{gap:2px;}
 .side .s-rec{flex:0 0 auto;margin-top:6px;}
 .side.mini .seq-l,.side.mini .s-salvo{display:none;}
 .seq{display:flex;flex-direction:column;min-height:0;padding:14px 12px 12px;}
@@ -463,12 +466,16 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   </aside>
 
   <main class="board">
-    <div class="top">
-      <div class="tit-wrap">
-        <h1 id="tit">Montar apresentação</h1>
-        <div class="tit-sub" id="titSub">Carregando…</div>
-      </div>
-      <div class="filtros" id="filtros" style="display:none">
+    <div class="top" hidden><h1 id="tit">Montar apresentação</h1><div class="tit-sub" id="titSub">Carregando…</div></div>
+
+    <div class="cols" id="cols">
+      <div id="gate"></div>
+      <section class="vw on" id="vw-montar" style="display:none">
+        <div class="ap">
+          <div class="card palco">
+            <div class="palco-top">
+              <input id="inTit" type="hidden" value="Reunião Mensal">
+              <div class="filtros" id="filtros" style="display:none">
         <div class="ms-wrap" id="un-uni"><button class="ms-btn" onclick="abreUn2('un-uni')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
           <span class="un-r">Unidade</span></button>
@@ -478,16 +485,6 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
           <span class="un-r">Mês</span></button>
           <div class="ms-panel"><div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input type="text" placeholder="Buscar…" autocomplete="off" data-lpignore="true" data-1p-ignore></div><div class="ms-list"></div></div></div>
       </div>
-      <button class="tool ico" id="btTema" onclick="trocaTema()" title="Claro / escuro"></button>
-    </div>
-
-    <div class="cols" id="cols">
-      <div id="gate"></div>
-      <section class="vw on" id="vw-montar" style="display:none">
-        <div class="ap">
-          <div class="card palco">
-            <div class="palco-top">
-              <label for="inTit">Título</label><input id="inTit" type="text" maxlength="40" value="Reunião Mensal" autocomplete="off" data-lpignore="true" data-1p-ignore>
               <div class="ms-wrap flt" id="flt" style="display:none"><button class="ms-btn" onclick="abreUn('flt')" title="Filtro só deste slide">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
                 <span class="un-r" id="fltRot">Todos os projetos</span><span class="ms-cnt" id="fltCnt"></span></button>
@@ -500,6 +497,7 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
               <button class="bt ico" onclick="restaurar()" title="Restaurar o padrão: a sequência padrão, com todos os blocos ligados"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button><button class="bt ico" onclick="carregar(true)" title="Atualizar dados"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button><button class="bt" onclick="apresentar()"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg> Apresentar</button>
               <button class="bt pri" id="btPdf2" onclick="gerarPdf()">Gerar PDF</button>
               <button class="bt pri" id="btPpt2" onclick="gerarPpt()">Gerar PPT</button>
+                    <button class="tool ico" id="btTema" onclick="trocaTema()" title="Claro / escuro"></button>
             </div>
             <div class="tela" id="tela"><div class="tela-q" id="telaQ"><iframe id="prev" title="Prévia do slide"></iframe></div><div class="tela-msg" id="telaMsg">Montando os slides…</div></div>
             <div class="palco-pe">
@@ -1251,19 +1249,28 @@ function desenhaSeq(){
     return `<div class="sq${it.fixo?' fixo':''}${it.off?' off':''}${it.id===at?' on':''}${it.div?' dv':''}" data-id="${esc(it.id)}"${it.fixo?'':' draggable="true"'}>
       <span class="sq-p">⋮⋮</span><span class="sq-n">${it.pg!=null?it.pg:'–'}</span>
       <span class="sq-t"><b>${esc(it.t)}</b><i>${esc(sub)}</i></span>
+      ${it.id==='capa'?`<button class="sq-b" data-ac="tit" title="Editar o título da capa (${esc(MOD.titulo)})">${LAPIS}</button>`:''}
       ${it.txt?`<button class="sq-b" data-ac="edita" title="Editar o recado">${LAPIS}</button>`:''}
       ${it.filtro&&!it.off?`<button class="sq-b" data-ac="dup" title="Repetir este bloco com outro filtro">${COPIA}</button>`:''}
       ${it.dup?`<button class="sq-b" data-ac="del" title="Excluir esta cópia">${LIXO}</button>`:''}
       ${it.fixo||it.dup?'':`<button class="sq-b" data-ac="olho" title="${it.off?'Pôr na apresentação':'Tirar da apresentação'}">${it.off?OLHO_X:OLHO}</button>`}</div>`; }).join('');
   set('nSl',DECK.length+' slides');
 }
-$('seq').addEventListener('click',e=>{ const el=e.target.closest('.sq'); if(!el) return; const id=el.dataset.id, b=e.target.closest('.sq-b');
+$('seq').addEventListener('click',e=>{ const el=e.target.closest('.sq'); if(!el||e.target.closest('.sq-in')) return; const id=el.dataset.id, b=e.target.closest('.sq-b');
+  if(b&&b.dataset.ac==='tit'){ editaTitulo(el); return; }
   if(b&&b.dataset.ac==='olho'){ MOD.off=MOD.off.includes(id)?MOD.off.filter(x=>x!==id):MOD.off.concat(id); salva(); monta(); return; }
   if(b&&b.dataset.ac==='edita'){ abreRecado(id); return; }
   if(b&&b.dataset.ac==='dup'){ const bs=baseId(id); let k=2; while(MOD.ordem.includes(bs+'~'+k)) k++; const novo=bs+'~'+k, i=MOD.ordem.indexOf(id);
     let j=i+1; while(j<MOD.ordem.length&&baseId(MOD.ordem[j])===bs) j++; MOD.ordem.splice(j,0,novo); MOD.f[novo]=JSON.parse(JSON.stringify(MOD.f[id]||{})); _foco=novo; salva(); monta(); return; }
   if(b&&b.dataset.ac==='del'){ MOD.ordem=MOD.ordem.filter(x=>x!==id); delete MOD.f[id]; salva(); monta(); return; }
   const i=DECK.findIndex(d=>d.item===id); if(i>=0){ POS=i; desenhaSeq(); mostra(); } });
+/* título da capa editado na própria linha da Capa (Renan, 27/11/2026: "Foco total deve ser a apresentação"): o campo Título saiu do topo */
+function editaTitulo(el){ const b=el.querySelector('.sq-t b'); if(!b) return; el.removeAttribute('draggable');
+  b.innerHTML=`<input class="sq-in" maxlength="40" value="${esc(MOD.titulo)}" autocomplete="off" data-lpignore="true" data-1p-ignore>`;
+  const i=b.querySelector('input'); i.focus(); i.select(); let feito=false;
+  const fim=ok=>{ if(feito) return; feito=true; if(ok){ const v=i.value.trim().slice(0,40)||'Reunião Mensal'; if(v!==MOD.titulo){ $('inTit').value=v; $('inTit').dispatchEvent(new Event('input')); } } desenhaSeq(); };
+  i.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); fim(true); } if(e.key==='Escape'){ e.preventDefault(); fim(false); } });
+  i.addEventListener('blur',()=>fim(true)); }
 let _arr=null;
 $('seq').addEventListener('dragstart',e=>{ const el=e.target.closest('.sq[draggable]'); if(!el) return; _arr=el.dataset.id; el.classList.add('arr'); try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',_arr); }catch(_){} });
 $('seq').addEventListener('dragover',e=>{ if(!_arr) return; const el=e.target.closest('.sq'); document.querySelectorAll('.sq.alvo').forEach(x=>x.classList.remove('alvo')); if(el&&el.dataset.id!==_arr&&el.dataset.id!=='capa'&&el.dataset.id!=='sumario'){ e.preventDefault(); el.classList.add('alvo'); } });
@@ -1506,6 +1513,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611272320"></script>
+<script src="../assets/build-check.js?v=202611271320"></script>
 </body>
 </html>
