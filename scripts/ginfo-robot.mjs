@@ -861,6 +861,18 @@ async function gravarSupabase(chave, linhas) {
   });
   if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
   log(`gravado no Supabase: ${chave} (${linhas.length} linhas)`);
+  // HISTÓRICO DIÁRIO (Renan, 27/11/2026: a RPS de Frota mostra os indicadores dia a dia):
+  // a foto do dia também vai para ginfo_hist (chave × dia em Brasília). Falha aqui só avisa.
+  try {
+    const dia = new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10);
+    const rh = await fetch(`${SB_URL}/rest/v1/ginfo_hist?on_conflict=chave,dia`, {
+      method: 'POST',
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify([{ chave, dia, data: linhas, linhas: linhas.length, updated_at: new Date().toISOString() }]),
+    });
+    if (rh.ok) log(`histórico: ${chave} · ${dia}`);
+    else console.log(`::warning::histórico do Ginfo não gravou (${chave}): ${rh.status} ${(await rh.text()).slice(0, 160)}`);
+  } catch (e) { console.log(`::warning::histórico do Ginfo: ${e.message}`); }
 }
 
 /* ── modo `mapa`: reconhecimento do portal ──────────────────────────────────
