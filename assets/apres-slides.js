@@ -88,7 +88,7 @@
     /* sumário, divisória e encerramento no mesmo desenho da capa (Renan, 27/11/2026: "agora aplique ao sumário e outras capas") */
     '.capaB .n{font-size:56px;font-weight:300;color:#F97316;line-height:1;margin-bottom:18px}',
     '.capaB .sb{font-size:15px;color:#C9D1D9;margin-top:16px;line-height:1.5;max-width:470px}',
-    '.capaB.sumB .ft{display:none}',
+    '.capaB.sumB .ft{left:880px;border-left:1px solid #F97316;background:linear-gradient(rgba(8,12,16,.86),rgba(8,12,16,.86)),url(img/capa-frota.jpg?v=2) 30% 60%/cover no-repeat}.capaB.sumB .lc{left:auto;right:100px;top:300px;height:34px;z-index:2}.capaB.sumB .fh{left:auto;right:121px;bottom:auto;top:380px;height:78px;z-index:2}',   /* sumário: faixa à direita com a foto escurecida e os dois logos (Renan, 27/11/2026, opção A) */
     '.capaB.fimB .ft{left:0;border-left:0;background-position:50% 60%}.capaB.fimB .vu{position:absolute;inset:0;background:rgba(8,12,16,.92)}',
     '.capaB.fimB .ob{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:88px;font-weight:900;letter-spacing:-2.5px;color:#fff}',
     '.capaB.fimB::before{content:"";position:absolute;left:0;right:0;top:0;height:8px;background:#F97316;z-index:3}.capaB.fimB .lc,.capaB.fimB .fh{z-index:1}.capaB.fimB .lc{left:auto;top:auto;right:84px;bottom:66px}',
