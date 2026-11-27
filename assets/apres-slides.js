@@ -75,7 +75,7 @@
     '.div .bloco{top:292px}',
     /* capa (Renan, 27/11/2026): a foto do Scania divide a tela, metade ela e metade o fundo azul-grafite, sem o quadrado por cima; o logo Fleet Hub embaixo à esquerda */
     '.capaB{background:#121A21}',
-    '.capaB .ft{position:absolute;left:640px;right:0;top:0;bottom:0;border-left:3px solid #F97316;background:url(img/capa-frota.jpg) 38% 60%/cover no-repeat}',
+    '.capaB .ft{position:absolute;left:640px;right:0;top:0;bottom:0;border-left:1.5px solid #F97316;background:url(img/capa-frota.jpg) 38% 60%/cover no-repeat}',
     '.capaB .lc{position:absolute;left:84px;top:54px;height:30px;width:auto}',
     '.capaB .cb{position:absolute;left:84px;top:110px;bottom:160px;width:500px;display:flex;flex-direction:column;justify-content:center;color:#fff}',
     '.capaB .fh{position:absolute;left:80px;bottom:50px;height:66px;width:auto}',
