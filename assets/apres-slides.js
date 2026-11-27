@@ -73,13 +73,14 @@
     '.sum .it b{color:#F97316;font-weight:800;font-size:18px;width:28px;flex:0 0 28px}',
     '.sum.denso .it{font-size:14px}.sum.denso .it b{font-size:16px}',
     '.div .bloco{top:292px}',
-    /* capa validada em 24/11 (Renan, 27/11/2026: "metade o caminhão, metade um azul"): a foto do Scania num quadro à direita e o bloco grafite-azul por cima (img/capa-b.jpg, a arte do ApresBase.fundos), com o logo Fleet Hub no lugar do "Gestão em Movimento" */
-    '.capaB{background:#121A21}.capaB::after{display:none}',
-    '.capaB .fd{position:absolute;inset:0;background:url(img/capa-b.jpg) center/cover}',
-    '.capaB .cb{position:absolute;left:84px;top:0;bottom:70px;width:1040px;display:flex;flex-direction:column;justify-content:center;padding-top:40px;color:#fff}',
-    '.capaB .fh{height:96px;width:auto;align-self:flex-start;margin:0 0 26px -6px}',
+    /* capa (Renan, 27/11/2026): a foto do Scania divide a tela, metade ela e metade o fundo azul-grafite, sem o quadrado por cima; o logo Fleet Hub embaixo à esquerda */
+    '.capaB{background:#121A21}',
+    '.capaB .ft{position:absolute;left:640px;right:0;top:0;bottom:0;background:url(img/capa-frota.jpg) 38% 60%/cover no-repeat}',
+    '.capaB .lc{position:absolute;left:84px;top:54px;height:30px;width:auto}',
+    '.capaB .cb{position:absolute;left:84px;top:110px;bottom:160px;width:500px;display:flex;flex-direction:column;justify-content:center;color:#fff}',
+    '.capaB .fh{position:absolute;left:80px;bottom:50px;height:66px;width:auto}',
     '.capaB .t{font-weight:900;line-height:.98;letter-spacing:-2px;text-transform:uppercase}',
-    '.capaB .p{font-weight:300;line-height:1.02;letter-spacing:-1.4px;color:#C9D1D9;margin-top:4px}',
+    '.capaB .p{font-weight:300;line-height:1.02;letter-spacing:-1.4px;color:#C9D1D9;margin-top:10px}',
     '.capaB .s{font-size:17px;font-weight:600;margin-top:22px}',
     '.capaB .b{width:64px;height:5px;border-radius:2px;background:#F97316;margin:24px 0 20px}',
     '.capaB .g{font-size:12.5px;font-weight:500;color:#AEB8C2;letter-spacing:.2px}',
@@ -304,12 +305,13 @@
   var perTxt = function (vk) { return MES[+vk.slice(5, 7) - 1] + '<b>|</b>' + vk.slice(0, 4); };
   var bloco = function (t, vk) { return '<div class="bloco"><h1>' + esc(t) + '</h1><div class="vline"></div><div class="per">' + perTxt(vk) + '</div></div>'; };
   function capa(o) {
-    var t = String(o.titulo || ''), n = t.length, ft = n <= 10 ? 86 : n <= 14 ? 74 : n <= 20 ? 60 : n <= 28 ? 48 : 40;
-    var p = o.vig ? MES[+o.vig.slice(5, 7) - 1] + ' · ' + o.vig.slice(0, 4) : '', fp = p.length <= 14 ? 72 : p.length <= 20 ? 56 : 44;
-    return '<section class="slide arte capaB" data-sec="capa"><div class="fd"></div><div class="cb">' +
-      '<img class="fh" src="img/fleethub/fleet-hub-branco.svg" alt="Fleet Hub">' +
+    var t = String(o.titulo || ''), maior = Math.max.apply(null, t.split(/\s+/).map(function (w) { return w.length; }).concat([1]));
+    var ft = Math.min(80, Math.floor(480 / (maior * .78)));
+    var p = o.vig ? MES[+o.vig.slice(5, 7) - 1] + ' · ' + o.vig.slice(0, 4) : '', fp = Math.min(60, Math.floor(490 / (Math.max(p.length, 1) * .56)));
+    return '<section class="slide arte capaB" data-sec="capa"><div class="ft"></div><img class="lc" src="img/logo-conlog-branco.png" alt="CONLOG"><div class="cb">' +
       '<div class="t" style="font-size:' + ft + 'px">' + esc(t) + '</div>' + (p ? '<div class="p" style="font-size:' + fp + 'px">' + p + '</div>' : '') +
-      (o.uni ? '<div class="s">' + esc(o.uni) + '</div>' : '') + '<div class="b"></div><div class="g">Gerado em ' + new Date().toLocaleDateString('pt-BR') + '</div></div></section>';
+      (o.uni ? '<div class="s">' + esc(o.uni) + '</div>' : '') + '<div class="b"></div><div class="g">Gerado em ' + new Date().toLocaleDateString('pt-BR') + '</div></div>' +
+      '<img class="fh" src="img/fleethub/fleet-hub-branco.svg" alt="Fleet Hub"></section>';
   }
   function sumario(o) {
     var it = o.itens || [], metade = Math.ceil(it.length / 2), a = it.slice(0, metade), b = it.slice(metade);
