@@ -39,6 +39,7 @@ const OPC = {
   'catalogo-pecas/':         { modo: 'web' },
   'relatorios/':             { modo: 'web' },
   'apresentacoes/':          { modo: 'web' },
+  'rps/':                    { modo: 'web' },
   'plano-acao/':             { modo: 'web' },
   'gerot/':                  { modo: 'resumo', rdz: 'atualizar' },
   'fca-preenchimento/':      { modo: 'web' },
@@ -133,6 +134,7 @@ for (const c of CLUSTERS) {
     }
     if (k.h === 'reunioes/') {
       add(cl, 'RPM', 'Reunião de Performance Mensal da unidade: resultado, porquês, indicadores e reconhecimento, em slides.', 'apresentacoes/', icoSub('reunioes/index.html', '../apresentacoes/'), flags);
+      add(cl, 'RPS de Frota', 'Reunião de Performance Semanal: os indicadores do Gestão à Vista dia a dia, o follow-up e as ações, em slides.', 'rps/', icoSub('reunioes/index.html', '../rps/'), flags);
       continue;
     }
     if (k.h === 'pneus/') {
