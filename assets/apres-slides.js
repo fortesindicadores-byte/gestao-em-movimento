@@ -475,7 +475,7 @@
     'body.est-limpo .cont .hero{padding-top:0}',
     'body.est-limpo .cont .lsup{border-top:1px solid var(--linha);padding-top:14px;box-sizing:border-box}',   /* linha acima dos cards (Renan, 26/11/2026, O que prometemos) */
     /* linhas entre os blocos vizinhos, no meio do vão (separa(), Renan, 26/11/2026: "Em todos que tiverem separações entre gráficos, cards etc") */
-    '.sep-l{position:absolute;background:#000;pointer-events:none;z-index:1}',
+    '.sep-l{position:absolute;background:var(--linha);pointer-events:none;z-index:1}',
     /* cópia ECharts: o hero vira uma fileira de cards, o principal no grafite do cabeçalho (Renan, 26/11/2026) */
     '.eh-row{display:grid;gap:12px;flex:0 0 calc(132px*var(--k));min-height:0}',
     '.eh-row .card{display:flex;flex-direction:column;justify-content:center;padding:calc(12px*var(--k)) 20px}',
