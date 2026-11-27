@@ -90,7 +90,7 @@
     const tri = o.tri || (h => h), chip = o.chip || (s => esc(s)), ps = o.prazoState || (() => ''), dv = o.diasVenc || (() => 0);
     const DEF = o.defaultStatus || 'Não iniciada';
     const grupos = [], porK = {};
-    itens.forEach((r, i) => { const k = [r.uni, r.proj, r.vig, primeira(r.fato)].join('|');
+    itens.forEach((r, i) => { const k = [r.uni, r.proj, r.vig, primeira(r.fato), o.org ? r.org : ''].join('|');
       if (!porK[k]) { porK[k] = { k, rows: [] }; grupos.push(porK[k]); } porK[k].rows.push({ r, i }); });
     const prazoBR = p => p ? String(p).slice(0, 10).split('-').reverse().join('/') : '—';
     const nCol = o.uni ? 9 : 8;
@@ -129,7 +129,7 @@
         h += `<tr data-id="${esc(r.id)}" title="Clique para abrir a ação"${feita ? ' class="feita"' : ''}>`;
         if (i === 0) h += (o.uni ? `<td class="center id" rowspan="${n}">${esc(f0.uni || '—')}</td>` : '') +
           `<td class="center id" rowspan="${n}">${esc(f0.proj || '—')}</td><td class="center id vig" rowspan="${n}">${esc(String(f0.vig || '').toUpperCase())}</td>` +
-          `<td class="txt fato id" rowspan="${n}">${fatoHTML(primeira(f0.fato), f0.desvio, tri)}</td>`;
+          `<td class="txt fato id" rowspan="${n}">${o.org && f0.org ? `<span class="fg-org">${esc(f0.org)}</span>` : ''}${fatoHTML(primeira(f0.fato), f0.desvio, tri)}</td>`;
         if (span[i]) h += `<td class="txt ln cz${i === ultCausa && o.add ? ' tem-add' : ''}"${span[i] > 1 ? ` rowspan="${span[i]}"` : ''}>${causaHTML(r.causa, tri)}${i === ultCausa ? add('causa', r.id, 'Mais uma causa para este fato') : ''}</td>`;
         const addA = fimDaCausa && temTxt(r) ? add('acao', r.id, 'Mais uma ação para esta causa') : '';
         h += `<td class="txt ln${addA ? ' tem-add' : ''}">${acaoHTML(r.acao, tri, !ck(r) || acoesNaCausa(i) <= 1)}${addA}</td>` +
@@ -197,6 +197,7 @@ table.rel.fg-rel .fa-of{list-style:none;margin:5px 0 0;padding:0;font-size:10px;
 table.rel.fg-rel .fa-of li{padding-left:10px;position:relative;white-space:normal;}
 table.rel.fg-rel .fa-of li::before{content:'';position:absolute;left:2px;top:.62em;width:4px;height:4px;border-radius:50%;background:var(--orange,#F97316);}
 table.rel.fg-rel .fa-obs{margin-top:6px;}
+table.rel.fg-rel .fg-org{display:block;margin-bottom:3px;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--laranja,var(--orange,#F97316));}
 table.rel.fg-rel .fg-vazio{color:var(--txt3,var(--text3));}
 table.rel.fg-rel td.tem-add{position:relative;padding-bottom:28px!important;}
 table.rel.fg-rel .fg-add{position:absolute;right:8px;bottom:4px;padding:0 2px;background:none!important;border:0!important;box-shadow:none!important;font-family:inherit;font-size:17px;font-weight:700;line-height:1;color:var(--orange,#F97316)!important;cursor:pointer;opacity:.6;transition:opacity .15s,transform .15s;}

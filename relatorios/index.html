@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611271500">
+<meta name="build" content="202611271950">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Relatórios · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -578,6 +578,8 @@ const REL=[
     f:[ELITE(null),S('consumo_km_litro'),S('elite_pneus')].concat(TERM4)},
   {cl:'proc',t:'FCA',h:'fca-preenchimento/',d:'Todos os FCAs (fato, desvio, causa, ação, prazo, status) e o histórico da planilha FCA Total.',
     f:[T('fca','FCA',{ordem:'id'}),S('fca_total')]},
+  {cl:'proc',t:'Plano de Ação',h:'plano-acao/',d:'As ações da RPS de Frota e do dia a dia (as do FCA estão no relatório do FCA).',
+    f:[T('plano_acao','Plano de Ação',{ordem:'id'})]},
   {cl:'proc',t:'Indisponibilidade',h:'disponibilidade-preenchimento/',d:'Eventos de parada, fotos diárias, resumo por dia, check-ins e a frota (Ginfo + manual).',
     f:[T('indisponibilidade','Eventos',{ordem:'id'}),T('indisp_snapshot','Indisponíveis · foto diária',{ordem:'id'}),
        T('disp_snapshot','Disponibilidade · foto diária',{ordem:'id'}),T('disp_resumo','Resumo por dia e unidade',{ordem:'data,unidade'}),
@@ -1096,6 +1098,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611271500"></script>
+<script src="../assets/build-check.js?v=202611271950"></script>
 </body>
 </html>

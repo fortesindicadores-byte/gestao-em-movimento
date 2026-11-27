@@ -1,0 +1,2332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="build" content="202611271950">
+<title>Plano de Ação · Fleet Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="../assets/aderencia-view.css?v=202610091430">
+<script src="../assets/aderencia-view.js?v=202611180200"></script>
+<script src="../assets/gerot-base.js?v=202611260050"></script>
+<style>
+:root{--bg:#0C1017;--card:#141B26;--border:#1E2D40;--orange:#F97316;--blue:#38BDF8;--text:#F1F5F9;--text2:#94A3B8;--text3:#475569;--green:#3BB33B;--red:#FF6666;--amber:#F4A100;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:radial-gradient(ellipse at 10% 25%,rgba(249,115,22,.06) 0%,transparent 50%),radial-gradient(ellipse at 90% 75%,rgba(56,189,248,.05) 0%,transparent 50%),var(--bg);color:var(--text);font-family:'Montserrat',-apple-system,sans-serif;font-size:13px;min-height:100vh;}
+.header{background:rgba(12,16,23,.75);border-bottom:1px solid rgba(255,255,255,.07);padding:10px 24px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 2px 12px rgba(0,0,0,.3);}
+.brand{flex:1;}.brand h1{font-size:18px;font-weight:800;color:var(--orange);line-height:1.1;}.brand p{font-size:10px;color:var(--text2);margin-top:2px;font-style:italic;}
+.brand-eyebrow{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:2px;}
+.hfilter{display:flex;flex-direction:column;gap:2px;}
+.hfilter label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;}
+.hfilter select{background:#0a0f18;color:var(--text);border:1px solid #2a3a50;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;max-width:220px;outline:none;}
+.hfilter select:hover{border-color:var(--orange);}
+.hfilter select option{background:#0f1824;color:#fff;}
+.ms-wrap{position:relative;}
+.ms-btn{display:flex;align-items:center;gap:8px;background:#0a0f18;color:var(--text);border:1px solid #2a3a50;border-radius:4px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;min-width:150px;}
+.ms-btn:hover{border-color:var(--orange);}
+.ms-lbl{flex:1;text-align:left;}
+.ms-cnt{background:var(--orange);color:#000;border-radius:10px;padding:1px 6px;font-size:9px;font-weight:800;display:none;}
+.ms-panel{display:none;flex-direction:column;position:absolute;top:calc(100% + 4px);right:0;z-index:500;background:#0f1824;border:1px solid #2a3a50;border-radius:4px;min-width:240px;max-height:320px;box-shadow:0 8px 24px rgba(0,0,0,.7);}
+.ms-panel.open{display:flex;}
+.ms-search{padding:7px 10px;border-bottom:1px solid #1e2d40;flex-shrink:0;}
+.ms-search input{width:100%;background:transparent;border:none;color:var(--text);font-family:'Montserrat',sans-serif;font-size:11px;outline:none;}
+.ms-list{overflow-y:auto;flex:1;}
+.ms-opt{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;}
+.ms-only{margin-left:auto;font-size:8px;color:var(--orange);padding:1px 6px;border-radius:3px;cursor:pointer;opacity:0;transition:opacity .12s;flex-shrink:0;}
+.ms-opt:hover .ms-only{opacity:1;}.ms-only:hover{background:rgba(249,115,22,.2);}
+.genres{max-width:560px;}
+.genres-h{font-size:16px;font-weight:800;color:var(--text);margin-bottom:14px;}
+.gentbl{width:100%;border-collapse:collapse;font-size:12px;}
+.gentbl th{text-align:left;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:6px 8px;border-bottom:1px solid var(--border);}
+.gentbl td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.05);color:var(--text);}
+.gentbl .num{text-align:right;}
+.ms-opt:hover{background:rgba(255,255,255,.05);color:var(--text);}
+.ms-opt.all-opt{border-bottom:1px solid #1e2d40;color:var(--text);font-weight:700;}
+.ms-opt input[type=checkbox]{accent-color:var(--orange);cursor:pointer;width:14px;height:14px;flex-shrink:0;}
+.uni-badge{font-size:12px;font-weight:800;color:#fff;background:rgba(249,115,22,.22);border:1px solid rgba(249,115,22,.4);border-radius:6px;padding:5px 12px;}
+.btn{background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.35);border-radius:6px;padding:7px 14px;cursor:pointer;color:var(--orange);font-family:'Montserrat',sans-serif;font-weight:800;font-size:12px;display:flex;align-items:center;gap:6px;}
+.btn.active{background:rgba(249,115,22,.4);}
+/* ── Tabela (relatório, como no Planner) ── */
+.rel-section{background:rgba(20,27,38,.55);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:8px 12px 12px;backdrop-filter:blur(16px);box-shadow:0 2px 12px rgba(0,0,0,.25);}
+.rel-wrap{overflow-x:auto;}
+table.rel{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+table.rel td.txt,table.rel td.txtsm{overflow-wrap:anywhere;}
+table.rel thead th{position:sticky;top:0;background:#141B26;color:var(--text);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left;padding:10px 8px;border-bottom:1px solid rgba(255,255,255,.12);white-space:nowrap;z-index:2;}
+table.rel tbody td{padding:11px 8px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top;color:var(--text);line-height:1.45;}
+table.rel tbody tr:hover{background:rgba(255,255,255,.03);}
+table.rel td.txt{white-space:normal;min-width:200px;}
+table.rel td.txtsm{white-space:normal;min-width:160px;color:var(--text2);}
+table.rel td.center{text-align:left;white-space:normal;}
+.rel .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+/* o cabeçalho quebra em duas linhas em vez de ser cortado */
+table.rel thead th{white-space:normal!important;}
+/* a pílula quebra em vez de vazar da célula (a coluna tem largura fixa) */
+.rel .chip{display:inline-block;padding:3px 9px;border-radius:5px;font-weight:700;font-size:11px;white-space:normal;}
+body.light-mode table.rel thead th{background:#F0F0F0;}
+body.light-mode table.rel tbody td{border-bottom-color:rgba(0,0,0,.08);}
+body.light-mode .rel-section{background:rgba(128,128,128,.14)!important;border:none!important;box-shadow:none!important;--text:#1a1a1a;--text2:#444444;--text3:#666666;}
+.btn:hover{background:rgba(249,115,22,.3);}
+.btn.theme{padding:7px 9px;}
+.main{padding:20px 24px 60px;}
+.intro{font-size:12px;color:var(--text2);margin-bottom:18px;line-height:1.5;}
+.intro b{color:var(--text);}
+.saved-msg{display:none;font-size:12px;font-weight:700;color:var(--green);margin-left:8px;}
+.loading{text-align:center;color:var(--text3);padding:50px;font-size:14px;}
+
+/* ── Bloco de fato ── */
+.fato-block{background:rgba(20,27,38,.55);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:0;margin-bottom:16px;backdrop-filter:blur(16px);box-shadow:0 2px 12px rgba(0,0,0,.25);overflow:hidden;}
+/* ── Kanban ── */
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start;}
+.kcol{background:rgba(20,27,38,.55);border:1px solid var(--border);border-radius:10px;min-height:120px;display:flex;flex-direction:column;overflow:hidden;}
+.kcol.kover{border-color:var(--orange);background:rgba(249,115,22,.06);}
+.kcol-head{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;}
+.kcol-head.nao{background:var(--red);color:#0C1017;}
+.kcol-head.and{background:#F4A100;color:#0C1017;}
+.kcol-head.con{background:var(--green);color:#fff;}
+.kcount{background:rgba(0,0,0,.22);border-radius:10px;padding:1px 9px;font-size:11px;font-weight:700;}
+.kcol-body{padding:10px;display:flex;flex-direction:column;gap:9px;}
+.kempty{color:var(--text3);text-align:center;padding:14px 0;font-size:12px;}
+.kcard{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 11px;cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.kcard:active{cursor:grabbing;} .kcard.dragging{opacity:.4;} .kcard.klock{cursor:default;opacity:.85;}
+.kcard-top{font-size:10px;color:var(--text2);margin-bottom:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.korg{font-size:8.5px;font-weight:800;padding:1px 6px;border-radius:4px;}
+.korg.rpm{background:rgba(56,189,248,.18);color:#38BDF8;} .korg.cst{background:rgba(249,115,22,.18);color:var(--orange);}
+.kcard-fato{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.25;}
+.kcard-ac{font-size:11.5px;color:var(--text2);margin-top:5px;line-height:1.3;}
+.kcard-meta{font-size:10px;color:var(--text2);margin-top:7px;} .kcard-meta .dim{color:var(--text3);}
+body.light-mode .kcol{background:#fff;border-color:rgba(0,0,0,.10);}
+body.light-mode .kcard{background:#F7F7F7;border-color:rgba(0,0,0,.10);}
+.kbadge{font-size:8.5px;font-weight:800;padding:1px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.3px;margin-left:6px;}
+.kbadge.venc{background:rgba(255,102,102,.18);color:var(--red);}
+.kbadge.ok{background:rgba(59,179,59,.18);color:var(--green);}
+.kbadge.sem{background:rgba(148,163,184,.15);color:var(--text2);}
+.kdays{font-size:8.5px;font-weight:800;margin-left:6px;letter-spacing:.3px;white-space:nowrap;}
+.kdays.venc{color:var(--red);}
+.kdays.ok{color:var(--text2);}
+@media(max-width:768px){.kanban{grid-template-columns:1fr;}}
+.fato-head{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);}
+.fato-unit{font-size:22px;font-weight:800;color:var(--text);line-height:1;margin-bottom:12px;}
+.fato-field{font-size:12px;color:var(--text2);margin-bottom:5px;line-height:1.35;}
+.fato-field b{color:var(--text2);font-weight:600;margin-right:4px;}
+.fato-nome{font-size:17px;font-weight:700;color:var(--text);line-height:1.25;margin-top:10px;}
+.fato-lbl{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin-top:10px;}
+.fato-desv{font-size:12.5px;font-weight:700;margin-top:5px;}
+.fato-desv .dn{color:var(--text2);font-weight:600;}
+.fato-desv .val{color:var(--red);}
+.fato-desv .val.am{color:var(--amber);}
+
+/* ── Tabela de ações ── */
+.acoes-wrap{padding:6px 10px 12px;}
+table.acoes{width:100%;border-collapse:collapse;font-size:12px;}
+table.acoes thead th{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;text-align:left;padding:8px 8px 6px;border-bottom:1px solid rgba(255,255,255,.08);white-space:nowrap;}
+table.acoes td{padding:8px 8px;vertical-align:top;}
+table.acoes tbody tr+tr td{border-top:1px solid rgba(255,255,255,.05);}
+.col-causa,.col-acao{width:28%;}
+.col-acomp{width:13%;}
+.col-resp{width:10%;}
+.col-prazo{width:9%;}
+.col-status{width:9%;}
+.col-x{width:26px;}
+.acoes input,.acoes textarea,.acoes select{background:#0a0f18;border:1px solid #2a3a50;border-radius:6px;color:var(--text);font-family:'Montserrat',sans-serif;font-size:12.5px;padding:7px 9px;outline:none;width:100%;min-height:38px;}
+.acoes input:focus,.acoes textarea:focus,.acoes select:focus{border-color:var(--orange);}
+.acoes textarea{resize:none;overflow:hidden;min-height:38px;line-height:1.4;display:block;}
+.acoes select option{background:#0f1824;color:#fff;}
+/* status colorido no próprio campo */
+select.st[data-v="Concluída"]{background:#3BB33B;color:#fff;border-color:#3BB33B;}
+select.st[data-v="Em andamento"]{background:#F4A100;color:#0C1017;border-color:#F4A100;font-weight:700;}
+select.st[data-v="Não iniciada"]{background:#FF6666;color:#0C1017;border-color:#FF6666;font-weight:700;}
+select.st[data-v="Cancelada"]{background:#333333;color:#fff;border-color:#333333;}
+.rm-btn{background:transparent;border:none;color:var(--text3);font-size:18px;line-height:1;cursor:pointer;padding:4px 6px;border-radius:5px;}
+.rm-btn:hover{color:var(--red);background:rgba(255,102,102,.12);}
+.add-row{padding:4px 8px 2px;display:flex;gap:8px;flex-wrap:wrap;}
+.add-acao{background:rgba(249,115,22,.12);border:1px dashed rgba(249,115,22,.45);border-radius:6px;color:var(--orange);font-family:'Montserrat',sans-serif;font-weight:700;font-size:11.5px;padding:6px 12px;cursor:pointer;}
+.add-acao:hover{background:rgba(249,115,22,.22);}
+.cell-label{display:none;}
+/* mini-hub de unidades */
+.uhub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;}
+.uhub-card{display:flex;flex-direction:column;gap:5px;background:rgba(20,27,38,.55);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:18px;text-decoration:none;color:var(--text);box-shadow:0 2px 12px rgba(0,0,0,.25);transition:border-color .15s,transform .1s;}
+.uhub-card:hover{border-color:var(--orange);transform:translateY(-2px);}
+.uhub-cod{font-size:20px;font-weight:800;color:var(--orange);}
+.uhub-name{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;}
+.uhub-go{font-size:11px;font-weight:700;color:var(--text2);margin-top:6px;}
+.uhub-card.admin{border-color:rgba(249,115,22,.45);background:rgba(249,115,22,.10);}
+body.light-mode .uhub-card{background:rgba(128,128,128,.14)!important;border:none!important;color:#1a1a1a;}
+body.light-mode .uhub-card.admin{background:rgba(249,115,22,.14)!important;}
+
+.empty{text-align:center;color:var(--text2);padding:40px;background:rgba(59,179,59,.08);border:1px solid rgba(59,179,59,.2);border-radius:10px;}
+
+/* modo claro (cinza translúcido) */
+/* fundo do claro vem do --fundo (vidro, igual ao Planner) — nada de chapado aqui */
+body.light-mode .main{--text:#1a1a1a;--text2:#444444;--text3:#666666;color:var(--text);}
+body.light-mode .fato-block{background:rgba(128,128,128,.14)!important;border:none!important;box-shadow:none!important;--text:#1a1a1a;--text2:#444444;--text3:#666666;}
+body.light-mode .fato-head{border-bottom-color:rgba(0,0,0,.10);}
+body.light-mode table.acoes thead th{border-bottom-color:rgba(0,0,0,.12);}
+body.light-mode table.acoes tbody tr+tr td{border-top-color:rgba(0,0,0,.07);}
+body.light-mode .acoes input,body.light-mode .acoes textarea,body.light-mode .acoes select{background:#fff;border-color:#ccc;color:#1a1a1a;}
+/* status mantém cores fortes mesmo no claro */
+body.light-mode select.st[data-v="Concluída"]{background:#3BB33B;color:#fff;}
+body.light-mode select.st[data-v="Em andamento"]{background:#F4A100;color:#0C1017;}
+body.light-mode select.st[data-v="Não iniciada"]{background:#FF6666;color:#0C1017;}
+body.light-mode select.st[data-v="Cancelada"]{background:#333333;color:#fff;}
+
+/* ── Mobile: vira card empilhado ── */
+@media(max-width:680px){
+  .main{padding:16px;}
+  .acoes-wrap{padding:6px 8px 10px;}
+  table.acoes,table.acoes thead,table.acoes tbody,table.acoes tr,table.acoes td{display:block;width:100%;}
+  table.acoes thead{display:none;}
+  table.acoes tbody tr{border:1px solid rgba(255,255,255,.10);border-radius:8px;padding:8px;margin-bottom:10px;position:relative;}
+  body.light-mode table.acoes tbody tr{border-color:rgba(0,0,0,.12);}
+  table.acoes tbody tr+tr td{border-top:none;}
+  table.acoes td{padding:5px 0;}
+  .col-causa,.col-acao,.col-resp,.col-prazo,.col-status,.col-x{width:auto;}
+  .cell-label{display:block;font-size:9.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+  .col-x{position:absolute;top:4px;right:4px;padding:0;}
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   LAYOUT DO PAINEL DE GESTÃO no FCA.
+   O motor (fatos, RPM, hub de unidades, preenchimento com causa e
+   ação) não muda; muda a casca. Duas lições do tombo anterior:
+   a classe de tema é a MESMA do FCA (body.light-mode) e as variáveis
+   antigas (--text, --border, --bg…) viram apelidos das novas.
+   ══════════════════════════════════════════════════════════════════ */
+:root{
+  /* ══ PALETA MEDIDA na imagem de referência (amostragem por pixel) ══
+     foto de fundo  topo-esq #283D67 · topo-centro #101F46 · direita
+                    #213352 · rodapé #0C1323  → o degradê abaixo repete
+                    esse tom, já que não temos a foto;
+     sidebar        #141C30   painel #0D1520   card #222531
+     card DONE      #161B27
+     azul   #1986B1 (borda) · #0C8BB9 (barra)
+     vermelho #DD5B60 (borda) · #E05852 (barra)
+     trilho #262934
+     textos  título #FFFFFF · card #EEF2FA · coluna #676F83 ·
+             id #4C505C · lateral #B2BCD2 · seção #505B75 ·
+             card apagado #9196A2                                    */
+  /* PROFUNDIDADE — três ingredientes:
+     1. o fundo tem RAMPA (cinza neutro na diagonal, do escuro embaixo
+        à esquerda ao claro em cima à direita): é o que se enxerga
+        através do vidro;
+     2. um foco de luz no alto à direita dá DIREÇÃO à iluminação;
+     3. cada camada é um DEGRAU mais clara que a de baixo
+        (fundo → painel → lateral → card), com fio de luz na borda
+        de cima e sombra embaixo — é o degrau que o olho lê como
+        "uma placa sobre a outra". */
+  --fundo:
+    radial-gradient(80% 60% at 90% 0%, rgba(255,244,232,.045) 0%, transparent 60%),
+    linear-gradient(45deg, #0E0E0F 0%, #161617 34%, #1D1D1F 58%, #242426 80%, #2B2B2E 100%);
+  --luz:      inset 0 1px 0 rgba(255,255,255,.09);
+  --luz-card: inset 0 1px 0 rgba(255,255,255,.08);
+  --app:      rgba(30,40,60,.34);
+  --side:     rgba(30,30,30,.50);
+  --linha:    rgba(255,255,255,.06);
+  --card:     rgba(44,44,46,.78);
+  --brilho:   linear-gradient(180deg, rgba(255,255,255,.022) 0%, rgba(255,255,255,0) 46%);
+  --card-brd: rgba(255,255,255,.07);
+  --txt:      #EEF2FA;
+  --txt2:     #C9D0DD;
+  --txt3:     #A9B1C0;
+  --txt4:     #7D8596;
+  --hover:    rgba(255,255,255,.06);
+  --azul:     #2E90E8;
+  --azul-b:   #2E90E8;
+  --verde:    #3BB33B;
+  --vermelho: #FF5252;
+  --verm-b:   #E05852;
+  --cinza:    #5B657C;
+  --trilho:   #262934;
+  --sombra:   0 2px 10px rgba(0,0,0,.30);
+  --cabec:    #2B2B30;   /* opaco de propósito: cabeçalho fixo com fundo translúcido deixa as linhas passarem por baixo */
+}
+body.light-mode{
+  --fundo:
+    radial-gradient(80% 60% at 90% 0%, rgba(255,255,255,.55) 0%, transparent 60%),
+    linear-gradient(45deg, #C6C7CB 0%, #D5D6DA 34%, #E1E2E5 58%, #EBECEF 80%, #F4F5F7 100%);
+  --luz:      inset 0 1px 0 rgba(255,255,255,.9);
+  --luz-card: inset 0 1px 0 rgba(255,255,255,1);
+  --app:      rgba(255,255,255,.20);
+  --side:     rgba(255,255,255,.50);
+  --linha:    rgba(15,23,42,.10);
+  --card:     rgba(255,255,255,.74);
+  --brilho:   linear-gradient(180deg, rgba(255,255,255,.6) 0%, rgba(255,255,255,0) 46%);
+  --card-brd: rgba(15,23,42,.10);
+  --txt:      #161D2B;
+  --txt2:     #4A5568;
+  --txt3:     #737D91;
+  --txt4:     #8B94A6;
+  --hover:    rgba(15,23,42,.05);
+  --azul:     #1B6FC4;
+  --azul-b:   #1B6FC4;
+  --verde:    #0E8C0E;
+  --vermelho: #E03131;
+  --verm-b:   #D2453F;
+  --cinza:    #939CAF;
+  --trilho:   rgba(15,23,42,.13);
+  --sombra:   0 2px 8px rgba(15,23,42,.10);
+  --text:  var(--txt);
+  --text2: var(--txt2);
+  --text3: var(--txt3);
+  --bg:     #E9EAEC;
+  --border: var(--card-brd);
+  --card2:  var(--card);
+  --orange: #C2410C;
+  --blue:   #1B6FC4;
+  --amber:  #B45309;
+  --red:    var(--vermelho);
+  --green:  var(--verde);
+  --cabec:    #DCDFE6;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+/* barra de rolagem no tom do painel — a padrão vem branca e salta aos olhos */
+@supports not selector(::-webkit-scrollbar){
+  *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--txt3) 42%,transparent) transparent;}
+}
+::-webkit-scrollbar{width:11px;height:11px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--txt3) 42%,transparent);
+  border:3px solid transparent;background-clip:content-box;border-radius:9px;}
+::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--txt3) 72%,transparent);
+  background-clip:content-box;}
+::-webkit-scrollbar-corner{background:transparent;}
+::-webkit-scrollbar-button{display:none;width:0;height:0;}
+/* ruído contra o BANDING do degradê: sem ele o gradiente cai em degraus
+   de 1 valor por canal e o olho lê como listras */
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");}
+.app{z-index:1;}
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'Montserrat',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:13px;color:var(--txt);
+  background:var(--fundo);
+  overflow:hidden;
+}
+
+/* ── painel do app, flutuando sobre a foto ── */
+.app{
+  position:absolute;inset:16px;display:flex;
+  border-radius:10px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 28px 70px rgba(0,0,0,.55), var(--luz);
+}
+.app::before{content:'';position:absolute;inset:0;background:var(--app);
+  z-index:0;}
+.side,.board{position:relative;z-index:1;}
+
+/* ── barra lateral ── */
+.side{
+  width:256px;flex:0 0 256px;display:flex;flex-direction:column;
+  background:var(--side);border-right:1px solid var(--linha);padding:16px 10px 12px;
+  backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);
+  box-shadow:var(--luz), 8px 0 28px rgba(0,0,0,.25);
+}
+.s-top{display:flex;align-items:center;gap:9px;padding:2px 8px 16px;}
+.s-mini{display:flex;align-items:center;justify-content:center;width:24px;height:24px;flex:0 0 24px;
+  background:transparent;border:0;border-radius:6px;color:var(--txt3);cursor:pointer;}
+.s-mini:hover{background:var(--hover);color:var(--txt);}
+/* ── menu recolhido: só os ícones ── */
+.side.mini{width:64px;flex:0 0 64px;padding:16px 8px 12px;}
+.side.mini .s-top{justify-content:center;padding-bottom:12px;}
+.side.mini .s-top b,.side.mini .s-top>svg{display:none;}
+.side.mini .s-sec,.side.mini .s-kbd,.side.mini .s-item .n,.side.mini .s-user div,
+.side.mini .s-item.pai{display:none;}
+/* recolhido, o rodapé continua com os atalhos (voltar ao hub, sair): são
+   só ícones, e sem eles não há como sair do painel com o menu fechado */
+.side.mini .s-user{flex-wrap:wrap;gap:6px;}
+.side.mini .s-sair{margin:0;}
+.side.mini .s-search{justify-content:center;padding:8px 0;margin-bottom:10px;background:var(--hover);}
+.side.mini .s-search input{display:none;}
+.side.mini .s-item{font-size:0;justify-content:center;padding:9px 0;gap:0;}
+.side.mini .s-item.filho{padding-left:0;}
+.side.mini .s-user{justify-content:center;padding:12px 0 2px;}
+.s-top b{flex:1;font-size:13.5px;font-weight:600;}
+.s-search{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;margin-bottom:14px;}
+.s-search:hover{background:var(--hover);}
+.s-search input{flex:1;min-width:0;background:transparent;border:0;outline:0;
+  font-family:inherit;font-size:12.5px;color:var(--txt);}
+.s-search input::placeholder{color:var(--txt2);}
+.s-kbd{font-size:10.5px;color:var(--txt3);white-space:nowrap;}
+.s-sec{display:flex;align-items:center;gap:6px;padding:16px 8px 8px;
+  font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:1.1px;}
+.s-sec b{flex:1;font-weight:600;}
+.s-sec svg{opacity:.7;}
+.s-item{display:flex;align-items:center;gap:9px;width:100%;padding:7px 8px;border:0;border-radius:7px;
+  background:transparent;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;
+  text-align:left;cursor:pointer;}
+.s-item:hover{background:var(--hover);color:var(--txt);}
+.s-item.on{background:var(--hover);color:var(--txt);font-weight:600;}
+.s-item.pai{color:var(--txt);font-weight:600;cursor:default;}
+.s-item.pai:hover{background:transparent;}
+.s-item.filho{padding-left:26px;}
+.s-item .n{margin-left:auto;font-size:11px;color:var(--txt3);font-weight:600;}
+.s-user{margin-top:auto;display:flex;align-items:center;gap:9px;padding:12px 8px 2px;border-top:1px solid var(--linha);}
+.s-volta{margin-top:auto;padding-top:8px;display:flex;flex-direction:column;gap:2px;}
+.s-volta+.s-user{margin-top:6px;}
+@media(max-width:860px){.s-volta{display:contents;}}
+.s-user div{flex:1;min-width:0;}
+.s-user b{display:block;font-size:12px;font-weight:600;line-height:1.2;}
+.s-sair{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;
+  color:var(--txt3);text-decoration:none;flex:0 0 26px;}
+.s-sair:hover{background:var(--hover);color:var(--txt);}
+.s-user i{display:block;font-size:9.5px;font-style:normal;color:var(--txt3);
+  text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
+
+/* ── área do quadro ── */
+.board{flex:1;min-width:0;display:flex;flex-direction:column;}
+.top{display:flex;align-items:center;gap:6px;padding:12px 24px 10px;}
+.top h1{flex:1;font-size:21px;font-weight:600;letter-spacing:-.3px;}
+.tool{display:flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:7px;
+  padding:6px 10px;color:var(--txt2);font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;}
+.tool:hover{background:var(--hover);color:var(--txt);}
+.tool.on{background:var(--hover);color:var(--txt);}
+.tool.ico{padding:7px 9px;}
+.menu-wrap{position:relative;}
+.menu{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:40;min-width:214px;
+  background:var(--brilho), var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--card-brd);border-radius:10px;padding:6px;
+  box-shadow:0 18px 40px rgba(0,0,0,.5);}
+body.light-mode .menu{box-shadow:0 18px 40px rgba(15,23,42,.16);}
+.menu.open{display:block;}
+.menu button,.menu label{display:flex;align-items:center;gap:9px;width:100%;padding:7px 9px;border:0;border-radius:7px;
+  background:transparent;color:var(--txt);font-family:inherit;font-size:12.5px;text-align:left;cursor:pointer;}
+.menu button:hover,.menu label:hover{background:var(--hover);}
+.menu .tit{padding:8px 9px 4px;font-size:10px;font-weight:600;color:var(--txt3);
+  text-transform:uppercase;letter-spacing:1px;}
+.menu input[type=checkbox]{accent-color:var(--azul);width:14px;height:14px;flex:0 0 14px;cursor:pointer;}
+.menu .rol{max-height:250px;overflow:auto;}
+.menu .mdata{display:flex;align-items:center;gap:8px;padding:6px 9px;font-size:12px;color:var(--txt2);}
+.menu .mdata input{flex:1;min-width:0;background:var(--hover);border:1px solid var(--card-brd);
+  border-radius:6px;color:var(--txt);font-family:inherit;font-size:12px;padding:5px 8px;outline:0;}
+body.light-mode .menu .mdata input{background:#fff;border-color:#d7dce4;}
+.menu .mall{font-weight:700;border-bottom:1px solid var(--linha);margin-bottom:4px;}
+.menu .mtx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.menu .so{font-size:9px;font-weight:700;color:#F97316;padding:1px 7px;border-radius:4px;
+  opacity:0;cursor:pointer;flex:0 0 auto;}
+.menu label:hover .so{opacity:1;}
+.menu .so:hover{background:rgba(249,115,22,.2);}
+
+/* ── colunas ── */
+.cols{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+  padding:0 24px 24px;overflow:auto;align-items:stretch;}
+.col{display:flex;flex-direction:column;min-height:100%;border-radius:10px;}
+/* o corpo estica até o fim da coluna: soltar em qualquer altura muda a etapa */
+.cbody{flex:1;}
+.col.over{background:rgba(46,155,214,.10);box-shadow:0 0 0 1px rgba(46,155,214,.35) inset;}
+.chead{display:flex;align-items:center;gap:8px;padding:2px 2px 12px;}
+.cname{font-size:10.5px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:1.3px;}
+.cnum{font-size:10.5px;font-weight:600;color:var(--txt3);}
+.ic{display:flex;align-items:center;justify-content:center;width:20px;height:20px;flex:0 0 20px;
+  background:transparent;border:0;border-radius:5px;color:var(--txt3);cursor:pointer;
+  font-family:inherit;font-size:14px;font-weight:500;line-height:1;padding:0;}
+.ic:hover{background:var(--hover);color:var(--txt);}
+.chead .ic:first-of-type{margin-left:auto;}
+.cbody{display:flex;flex-direction:column;gap:10px;flex:1;}
+.col.rec .cbody{display:none;}
+
+/* ── card: chip-rótulo no topo em degradê laranja → cor do painel
+      (padrão do hub); prazo em VERDE/VERMELHO, as cores das barras
+      do FCA Gerencial. Sem risco lateral. ── */
+.card{position:relative;overflow:hidden;background:var(--brilho), var(--card);
+  border:1px solid var(--card-brd);border-radius:4px;padding:0 0 12px;cursor:grab;
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+  box-shadow:0 8px 22px rgba(0,0,0,.36), var(--luz-card);}
+.card.venc{--pz:var(--vermelho);} .card.ok{--pz:var(--verde);}
+.card.sem,.card.bkl{--pz:var(--cinza);}
+.card:active{cursor:grabbing;} .card.arrasta{opacity:.35;}
+.card:hover{border-color:rgba(249,115,22,.55);}
+/* concluídas ficam normais — o verde da barra já diz que terminaram */
+/* assunto: texto puro, sem botão e sem bandeira — é o título do card */
+.cass{display:flex;padding:11px 13px 0;margin-bottom:5px;}
+.cass span{max-width:100%;font-size:13px;font-weight:800;letter-spacing:-.1px;color:#FFFFFF;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+body.light-mode .cass span{color:#000000;}
+.ctit{font-size:11.5px;font-weight:400;line-height:1.4;padding:0 13px;color:var(--txt2);
+  /* dois renques reservados: card de 1 linha fica do mesmo tamanho do de 2.
+     Passando de 2 linhas o card cresce — raro, e aí é melhor crescer que cortar */
+  min-height:calc(2 * 1.4em);}
+.cdata{font-size:10.5px;color:var(--txt3);white-space:nowrap;}
+.cdata .atraso{color:var(--vermelho);font-weight:700;}
+.cfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-top:12px;min-height:24px;padding:0 13px;}
+
+.avs{display:flex;align-items:center;margin-left:auto;}
+.av{width:24px;height:24px;border-radius:50%;margin-left:auto;display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:800;letter-spacing:.2px;color:#2A1405;background:#F97316;flex:0 0 24px;
+  box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.add-av{width:24px;height:24px;border-radius:50%;margin-left:auto;background:transparent;
+  border:1px dashed var(--trilho);color:var(--txt3);font-family:inherit;font-size:13px;line-height:1;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.add-av:hover{border-color:var(--verde);color:var(--verde);}
+.cvazia{padding:12px 2px;font-size:12px;color:var(--txt3);}
+
+/* ── visões Tabela / Relatório / Resumo ── */
+.cols.solto{display:block;}
+/* Tabela e Gantt rolam por dentro: sem isso o sticky do cabeçalho se
+   ancora no wrapper, que rola junto, e o cabeçalho some ao descer */
+.cols.rola{display:flex;flex-direction:column;overflow:hidden;}
+.cols.rola .tab-wrap,.cols.rola .grol{flex:1;min-height:0;overflow:auto;}
+.cols.rola .gantt{display:flex;flex-direction:column;min-height:0;}
+.tab-wrap{overflow:auto;border:1px solid var(--card-brd);border-radius:10px;background:var(--side);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+table.tab{width:100%;border-collapse:collapse;font-size:11px;}
+table.tab thead th{position:sticky;top:0;z-index:2;background:var(--cabec);text-align:left;
+  padding:11px 12px;font-size:10px;font-weight:700;color:var(--txt2);text-transform:uppercase;
+  letter-spacing:.8px;border-bottom:1px solid var(--card-brd);white-space:nowrap;}
+table.tab td{padding:11px 12px;border-bottom:1px solid var(--linha);color:var(--txt2);vertical-align:top;
+  white-space:nowrap;}
+table.tab td.forte{color:var(--txt);font-weight:600;}
+table.tab td.livre{white-space:normal;min-width:230px;line-height:1.45;}
+table.tab td.suave{color:var(--txt3);}
+table.tab td.num,table.tab th.num{text-align:right;white-space:nowrap;}
+table.tab tbody tr{cursor:pointer;}
+table.tab tbody tr:hover{background:var(--hover);}
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;
+  background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c);
+  border:1px solid color-mix(in srgb,var(--c) 45%,transparent);}
+/* no claro a cor fica no fundo e a letra vai para o preto */
+body.light-mode .tag{background:color-mix(in srgb,var(--c) 34%,transparent);color:#141922;
+  border-color:color-mix(in srgb,var(--c) 55%,transparent);}
+.atraso{color:var(--vermelho);font-weight:600;}
+
+.resumo{display:flex;flex-direction:column;gap:14px;}
+.heros{display:flex;flex-direction:column;gap:8px;}
+.hl{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:1.1px;}
+.hn{font-size:46px;font-weight:800;line-height:1.02;letter-spacing:-1.5px;margin-top:2px;}
+.hero-sub{display:flex;gap:32px;}
+.hero-sub b{font-size:19px;font-weight:800;margin-left:8px;letter-spacing:-.4px;}
+.hero-sub>div{display:flex;align-items:baseline;}
+.faixas{display:flex;flex-wrap:wrap;align-items:center;gap:6px 20px;font-size:10.5px;color:var(--txt2);}
+.faixas i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px;}
+.faixas .obs{color:var(--txt3);font-style:italic;}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
+.kpi{background:var(--card);border:1px solid var(--card-brd);border-radius:10px;padding:12px 14px 13px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.kpi .pt{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;}
+.kpi .kl{font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;}
+.kpi b{display:block;margin-top:6px;font-size:26px;font-weight:800;line-height:1;}
+.dois{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.bloco{background:var(--card);border:1px solid var(--card-brd);border-radius:10px;padding:14px 16px 12px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.bloco h3{font-size:11px;font-weight:700;color:var(--txt);text-transform:uppercase;letter-spacing:1.1px;}
+.bhead{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.bhead h3{flex:1;margin:0;}
+.toggle{display:flex;border:1px solid var(--card-brd);border-radius:7px;overflow:hidden;}
+.toggle button{background:transparent;border:0;color:var(--txt3);font-family:inherit;font-size:10px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.7px;padding:6px 14px;cursor:pointer;}
+.toggle button:hover{color:var(--txt);background:var(--hover);}
+.toggle button.on{background:var(--vermelho);color:#0F0B07;}
+.graf{display:flex;align-items:flex-end;gap:6px;height:190px;margin-top:14px;}
+.gcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;}
+.gv{font-size:9.5px;font-weight:800;color:var(--txt2);height:14px;}
+.gbar{width:100%;border-radius:4px 4px 0 0;min-height:2px;}
+.gl{margin-top:6px;font-size:9px;font-weight:600;color:var(--txt3);white-space:nowrap;}
+table.res-tab td,table.res-tab th{border-bottom:1px solid var(--linha);}
+table.res-tab tbody tr:hover{background:var(--hover);}
+.pctcell{display:inline-block;min-width:52px;text-align:center;padding:3px 10px;border-radius:6px;
+  font-weight:800;font-size:11px;color:#0F0B07;}
+@media(max-width:1180px){.kpis{grid-template-columns:repeat(3,1fr);}.dois{grid-template-columns:1fr;}}
+
+
+/* ── Gantt ── */
+.gantt{background:var(--card);border:1px solid var(--card-brd);border-radius:8px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow:hidden;}
+.grol{overflow:auto;}
+.grow{display:grid;grid-template-columns:340px 1fr;border-bottom:1px solid var(--linha);}
+.grow:last-child{border-bottom:0;}
+.grow:not(.ghead){cursor:pointer;}
+.grow:not(.ghead):hover{background:var(--hover);}
+.ghead{background:var(--cabec);position:sticky;top:0;z-index:2;}
+.ghead .glbl{font-size:10px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;}
+.glbl{padding:9px 14px;min-width:0;display:flex;flex-direction:column;gap:2px;justify-content:center;}
+.glbl b{font-size:11.5px;font-weight:800;color:var(--txt);line-height:1.3;}
+/* o texto da ação quebra em até duas linhas em vez de ser cortado */
+.glbl span{font-size:10.5px;font-weight:400;color:var(--txt2);line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+/* terceira linha do rótulo: projeto · vigência · responsável */
+.glbl .gsub{font-style:normal;font-size:9.5px;font-weight:600;color:var(--txt3);
+  letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gbar{position:relative;min-height:46px;border-left:1px solid var(--linha);}
+.gmeses{display:flex;align-items:center;min-height:32px;}
+.gmeses span{font-size:9.5px;font-weight:700;color:var(--txt3);text-align:center;
+  border-left:1px solid var(--linha);text-transform:uppercase;letter-spacing:.4px;}
+.gmeses span:first-child{border-left:0;}
+.gbar i{position:absolute;top:50%;transform:translateY(-50%);height:12px;border-radius:6px;min-width:6px;}
+.gbar i.gsem{background:transparent;border:1.5px dashed var(--cinza);}
+.gbar u{position:absolute;top:50%;transform:translateY(-50%);height:3px;text-decoration:none;
+  background:repeating-linear-gradient(90deg,var(--vermelho) 0 5px,transparent 5px 9px);}
+.gbar em{position:absolute;top:50%;transform:translateY(-50%);padding-left:7px;
+  font-style:normal;font-size:9px;font-weight:700;color:var(--txt3);white-space:nowrap;}
+.ghoje{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed var(--txt3);opacity:.7;pointer-events:none;}
+.gleg{display:flex;flex-wrap:wrap;gap:6px 18px;padding:11px 4px 0;font-size:10px;color:var(--txt2);}
+.gleg i{display:inline-block;width:15px;height:8px;border-radius:4px;margin-right:6px;vertical-align:-1px;}
+.gleg i.gtrac{background:transparent;border:1.5px dashed var(--cinza);}
+.gleg i.grastro{border-radius:0;height:3px;
+  background:repeating-linear-gradient(90deg,var(--vermelho) 0 5px,transparent 5px 9px);}
+.gleg .obs{color:var(--txt3);font-style:italic;}
+
+
+/* .main continua existindo dentro do quadro, então o CSS antigo do
+   preenchimento (fato-block, tabela de ações, hub de unidades) segue
+   valendo sem eu ter de reescrevê-lo */
+.board .main{flex:1;min-height:0;overflow:auto;padding:0 24px 24px;background:transparent;}
+/* Tabela e Gantt rolam por DENTRO: sem isso o sticky do cabeçalho se ancora
+   num wrapper que não rola, e o cabeçalho sobe junto com as linhas */
+.board .main.rola{display:flex;flex-direction:column;overflow:hidden;}
+/* Kanban: a faixa dos títulos fica FORA da área que rola; o quadro continua
+   com UMA barra de rolagem só. --sb é a largura dessa barra, medida no JS,
+   para as duas grades continuarem alinhadas. */
+.board .main.kan{display:flex;flex-direction:column;overflow:hidden;padding:0;}
+.board .main.kan #list{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+.kheads{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;flex:0 0 auto;
+  padding:0 calc(24px + var(--sb,0px)) 0 24px;}
+.board .main.kan .kanban{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 24px 24px;}
+.board .main.rola #list{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+.board .main.rola .tab-wrap,.board .main.rola .grol,
+.board .main.rola .rel-wrap{flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;}
+.board .main.rola .gantt,
+.board .main.rola .rel-section{display:flex;flex-direction:column;min-height:0;flex:1;}
+
+/* a Tabela (relatório) no visual novo — mesmas regras da tabela do Planner */
+.rel-section{background:var(--card)!important;border:1px solid var(--card-brd)!important;
+  border-radius:10px!important;padding:0!important;overflow:hidden;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:none!important;}
+table.rel thead th{background:var(--cabec)!important;color:var(--txt2)!important;
+  padding:11px 12px!important;letter-spacing:.8px;border-bottom:1px solid var(--card-brd)!important;}
+table.rel tbody td{padding:11px 12px!important;color:var(--txt2)!important;
+  border-bottom:1px solid var(--linha)!important;}
+table.rel tbody tr:hover{background:var(--hover)!important;}
+table.rel td.txt b{color:var(--txt);}
+/* o desvio embaixo da conta, menor e discreto */
+table.rel td.fato small{display:block;margin-top:3px;font-size:10.5px;font-weight:600;color:var(--txt3);}
+/* Causa e Ação com a MESMA largura, e as MAIORES da tabela (Renan, 18/08/2026:
+   o fato é curto na maioria das linhas e sobrava um vão gigante; as contas
+   dos fatos de Custos passam a quebrar linha dentro do Fato quando preciso) */
+table.rel th.c-txt{width:23%;}   /* Causa e Ação: iguais */
+table.rel th.c-fato{width:16%;}
+table.rel th.c-vig{width:5%;} table.rel th.c-proj{width:9%;}
+table.rel th.c-resp{width:8.5%;} table.rel th.c-prazo{width:8%;}
+table.rel th.c-st{width:9%;}
+/* o farol do prazo mora AO LADO DA DATA (a coluna Status Prazo saiu) */
+table.rel td.prazo{white-space:nowrap;}
+table.rel td.prazo .dot{margin-right:6px;vertical-align:middle;}
+/* títulos de duas palavras (Status Prazo) quebram em vez de serem cortados */
+table.rel thead th{white-space:normal;}
+/* as linhas do fato (Contas: …) quebram só quando não couber MESMO */
+table.rel td.fato small{overflow-wrap:normal;word-break:keep-all;hyphens:none;line-height:1.45;}
+body.light-mode .rel-section{background:var(--card)!important;}
+body.light-mode table.rel thead th{background:var(--cabec)!important;}
+.intro{font-size:11.5px;color:var(--txt3);line-height:1.5;margin-bottom:14px;}
+.fato-block{background:var(--card)!important;border:1px solid var(--card-brd)!important;
+  border-radius:6px!important;box-shadow:var(--sombra)!important;}
+.fato-head{border-bottom:1px solid var(--linha)!important;}
+.uhub-card{background:var(--brilho), var(--card)!important;border:1px solid var(--card-brd)!important;
+  border-radius:10px!important;box-shadow:var(--sombra)!important;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.uhub-card:hover{border-color:rgba(249,115,22,.55)!important;}
+.uhub-card.admin{border-color:rgba(249,115,22,.45)!important;background:rgba(249,115,22,.12)!important;}
+/* o claro antigo pintava esses blocos de cinza chapado — no visual novo eles
+   são o mesmo cartão translúcido das outras visões */
+body.light-mode .fato-block,body.light-mode .uhub-card{
+  background:var(--card)!important;border:1px solid var(--card-brd)!important;
+  box-shadow:var(--sombra)!important;color:var(--txt);}
+/* ── Tela de unidades: cards grandes, todos do mesmo tamanho, ocupando a tela ──
+   A grade divide a altura disponível (grid-auto-rows:1fr), então o card cresce
+   até onde a tela deixa em vez de ficar uma fileirinha no alto. O teto no card
+   é para quem tem UMA unidade só não abrir um cartaz de tela inteira. */
+.board .main.unidades{display:flex;flex-direction:column;overflow:hidden;}
+.board .main.unidades #list{flex:1;min-height:0;display:flex;}
+.board .main.unidades .uhub-grid{flex:1;min-height:0;gap:16px;
+  grid-template-columns:repeat(auto-fit,minmax(clamp(190px,15vw,290px),1fr));
+  grid-auto-rows:1fr;}
+.board .main.unidades .uhub-card{justify-content:center;max-height:300px;padding:22px 24px;}
+.board .main.unidades .uhub-cod{font-size:27px;}
+.board .main.unidades .uhub-name{font-size:12px;}
+.board .main.unidades .uhub-go{font-size:12px;margin-top:10px;}
+@media(max-width:860px){
+  .board .main.unidades{overflow:auto;}
+  .board .main.unidades #list{display:block;}
+  .board .main.unidades .uhub-grid{grid-auto-rows:auto;}
+  .board .main.unidades .uhub-card{min-height:120px;max-height:none;}
+}
+.uni-badge{font-size:10px;color:var(--txt2);background:var(--hover);border:1px solid var(--card-brd);
+  border-radius:5px;padding:3px 9px;white-space:nowrap;}
+
+/* filtros antigos (.ms-*) no desenho dos menus novos */
+.hfilter{position:relative;}
+/* filtro Responsável — digitável por enquanto (Renan, 19/08/2026: depois
+   vira seletor de usuários, como no Planner) */
+.f-resp{background:transparent;border:0;border-radius:7px;padding:6px 10px;color:var(--txt);
+  font-family:inherit;font-size:12.5px;font-weight:500;outline:none;width:118px;}
+.f-resp::placeholder{color:var(--txt2);}
+.f-resp:hover,.f-resp:focus{background:var(--hover);color:var(--txt);}
+
+/* só a legenda do filtro some (o botão já diz o nome) — as opções do
+   dropdown também são <label> e precisam continuar aparecendo */
+.hfilter>label{display:none;}
+.ms-btn{display:flex;align-items:center;gap:7px;background:transparent!important;border:0!important;
+  border-radius:7px;padding:6px 10px!important;color:var(--txt2)!important;font-family:inherit;
+  font-size:12.5px!important;font-weight:500!important;text-transform:none!important;
+  letter-spacing:0!important;min-width:0!important;cursor:pointer;}
+.ms-btn:hover{background:var(--hover);color:var(--txt)!important;}
+.ms-cnt{background:var(--vermelho)!important;color:#fff!important;}
+/* painel do filtro: translúcido como antes, mas com vidro mais forte — o
+   --card puro deixava a tabela aparecer por trás das opções. */
+.ms-panel{background:rgba(21,28,40,.86)!important;border:1px solid var(--card-brd)!important;
+  border-radius:10px!important;padding:6px!important;
+  backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);
+  box-shadow:0 18px 44px rgba(0,0,0,.5)!important;}
+body.light-mode .ms-panel{background:rgba(255,255,255,.9)!important;box-shadow:0 18px 40px rgba(15,23,42,.16)!important;}
+.ms-opt{border-radius:7px;color:var(--txt)!important;text-transform:none!important;
+  letter-spacing:0!important;font-size:12.5px!important;}
+.ms-opt:hover{background:var(--hover);}
+.ms-opt.all-opt{border-bottom:1px solid var(--linha)!important;font-weight:700;}
+
+/* Kanban do FCA: Fato é o título, e a linha de cima leva a VIGÊNCIA */
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch;}
+/* overflow:hidden (do CSS antigo) impede o cabeçalho de grudar: com ele a
+   coluna vira contexto de recorte e o sticky se ancora nela, que não rola */
+/* o overflow:hidden do CSS antigo cortava os cards agora que quem rola é a
+   grade inteira — a coluna não recorta nada */
+.kcol{background:transparent!important;border:0!important;display:flex;flex-direction:column;
+  min-height:100%;overflow:visible!important;}
+/* o título fica FORA da área que rola: quem rola é a lista de cards de cada
+   coluna. Assim ele nunca some nem é atravessado pelos cards, e não precisa de
+   faixa de fundo nenhuma. */
+.kcol-head,.kcol-head.nao,.kcol-head.and,.kcol-head.con{
+  background:transparent!important;color:var(--txt2)!important;font-size:10.5px!important;
+  letter-spacing:1.3px;padding:2px 2px 12px!important;justify-content:flex-start;gap:8px;}
+.kcount{background:transparent!important;color:var(--txt3)!important;padding:0!important;}
+.kcol-body{padding:0 0 36px!important;gap:10px!important;flex:1;}   /* 36 embaixo: o último card não fica colado */
+.kcard{background:var(--brilho), var(--card)!important;border:1px solid var(--card-brd)!important;border-radius:4px!important;
+  padding:0 0 12px!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+  box-shadow:0 8px 22px rgba(0,0,0,.36), var(--luz-card)!important;}
+/* sombra do card: a MESMA do Planner nos dois temas (sem versão amaciada no claro) */
+.kcard:hover{border-color:rgba(249,115,22,.55)!important;}
+.kcard-top{padding:11px 13px 0!important;margin:0!important;font-size:9.5px!important;color:var(--txt3)!important;}
+/* ordem do card, de cima para baixo: conta/indicador · Fato (o desvio) ·
+   Causa · Ação. Só Fato e Causa levam rótulo escrito; a conta é o título
+   e a ação é o texto corrido do fim. */
+.kcard-fato{padding:0 13px;margin-top:5px;font-size:14px!important;font-weight:800!important;
+  color:#FFFFFF!important;line-height:1.3;}
+body.light-mode .kcard-fato{color:#000000!important;}
+.kl{font-size:9.5px;font-weight:700;color:var(--txt4);text-transform:uppercase;letter-spacing:.6px;}
+.kcard-desvio{padding:0 13px;margin-top:5px;font-size:11px;font-weight:700;color:var(--txt2);line-height:1.35;}
+.kcard-causa{padding:0 13px;margin-top:4px;font-size:11px;font-weight:700;color:var(--txt2);
+  line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.kcard-ac{padding:0 13px;margin-top:7px!important;font-size:11.5px!important;font-weight:400!important;
+  color:var(--txt3)!important;line-height:1.4;min-height:calc(2 * 1.4em);}
+.kcard-desvio i,.kcard-causa i,.kcard-ac i{color:var(--txt4);font-weight:400;font-style:italic;}
+/* atalhos de "mais uma causa / mais uma ação" no próprio card — aparecem
+   ao passar o mouse para não poluir, e ficam sempre visíveis no toque */
+.kmais{display:flex;gap:6px;margin-left:auto;margin-right:6px;opacity:0;transition:opacity .12s;}
+.kcard:hover .kmais{opacity:1;}
+@media(hover:none){.kmais{opacity:1;}}
+.kadd{background:transparent;border:1px solid var(--card-brd);border-radius:6px;color:var(--txt3);
+  font-family:inherit;font-size:9.5px;font-weight:700;padding:2px 7px;cursor:pointer;white-space:nowrap;}
+.kadd:hover{border-color:rgba(249,115,22,.6);color:var(--orange);}
+/* rodapé do card: prazo à esquerda, iniciais do responsável à direita — igual ao Planner */
+.kcard-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:24px;
+  padding:0 13px;margin-top:12px!important;font-size:10.5px!important;color:var(--txt3)!important;}
+.kcard-meta .atraso{color:var(--vermelho);font-weight:700;}
+.kav{width:24px;height:24px;border-radius:50%;flex:0 0 24px;display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:800;letter-spacing:.2px;color:#2A1405;background:#F97316;
+  box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.korg{border-radius:4px;padding:1px 6px;font-weight:800;}
+
+/* ── telas pequenas: o quadro flutuante vira página comum ── */
+@media(max-width:860px){
+  html,body{overflow:auto;}
+  .app{position:static;inset:auto;min-height:100%;border-radius:0;flex-direction:column;box-shadow:none;}
+  .side{width:auto;flex:none;flex-direction:row;flex-wrap:wrap;gap:6px;align-items:center;
+    border-right:0;border-bottom:1px solid var(--linha);padding:10px;}
+  .s-sec,.s-user,.s-top{display:none;}
+  .s-item{width:auto;font-size:11px;}
+  .top{flex-wrap:wrap;padding:14px 14px 10px;}
+  .top h1{font-size:18px;}
+  .board .main{overflow:visible;padding:0 14px 24px;}
+  .kanban{grid-template-columns:1fr;}
+}
+
+
+/* números grandes acompanham a tela (Renan, 13/10/2026: "no notebook fica muito grande"):
+   no desktop cada número encolhe com a altura e a largura da janela,
+   até o tamanho de antes numa tela de 1920×950 */
+@media(min-width:861px){
+  .hn{font-size:clamp(32px,min(4.843vh,2.396vw),46px);}
+  .kpi b{font-size:clamp(18px,min(2.737vh,1.355vw),26px);}
+}
+</style>
+<script>window.__gvizDispBanco=false;/* este painel junta set/26+ da dispersao_km por conta própria (fetchDispBanco/indexaDispTudo): sem isto o shim poria o mês na aba e ele entraria duas vezes ou sem o detalhe por placa */</script>
+<script src="../assets/gviz-cache.js?v=202611181300"></script>
+<!-- O MOTOR DO FCA AUTOMÁTICO (Renan, 15/10/2026: "Quero que já seja direto o oficial quando for gerar FCA custos"):
+     a geração de Custos (?gen=all) grava causa, ação e dono em cada fato de set/26 em diante. Só a geração usa. -->
+<script src="../assets/estatistica.js"></script>
+<script src="../assets/correlacoes-dados.js?v=202610140300"></script>
+<script src="../assets/carta-calc.js"></script>
+<script src="../assets/arvore-impacto.js"></script>
+<script src="../assets/seara-bench-modelo.js"></script>
+<script src="../assets/dispersao-km.js?v=202611181300"></script>
+<script src="../assets/balanco-massa.js"></script>
+<script src="../assets/fca-auto.js?v=202611260050"></script>
+<script src="../assets/fca-tabela.js?v=202611271945"></script>
+<script src="../assets/fca-caixa.js?v=202610170015"></script>
+<style>
+/* ── Plano de Ação: nova ação e aviso ── */
+.plano-aviso{margin:0 0 10px;padding:8px 12px;border-radius:8px;font-size:11.5px;font-weight:600;color:var(--ambar,#F4A100);border:1px solid color-mix(in srgb,var(--ambar,#F4A100) 40%,transparent);background:color-mix(in srgb,var(--ambar,#F4A100) 9%,transparent);}
+.na-ov{position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;}
+.na-ov.on{display:flex;}
+.na{width:min(480px,94vw);background:#26262B;color:var(--txt);border:1px solid var(--card-brd);border-radius:12px;padding:16px 18px 14px;box-shadow:0 24px 60px rgba(0,0,0,.5);font-family:'Montserrat',sans-serif;}
+body.claro .na{background:#fff;box-shadow:0 18px 44px rgba(15,23,42,.22);}
+.na-hd{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;margin-bottom:4px;border-bottom:1px solid var(--linha);}
+.na-hd b{font-size:14px;font-weight:800;}
+.na-x{background:none;border:0;color:var(--txt3);font-size:14px;cursor:pointer;}
+.na label{display:block;font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--txt3);margin:12px 0 5px;}
+.na select,.na input{width:100%;box-sizing:border-box;background:var(--side);color:var(--txt);border:1px solid var(--card-brd);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:12.5px;outline:none;}
+.na select:focus,.na input:focus{border-color:var(--laranja,#F97316);}
+.na-seg{display:flex;gap:6px;}
+.na-seg button{flex:1;background:var(--side);color:var(--txt2);border:1px solid var(--card-brd);border-radius:8px;padding:7px 10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;}
+.na-seg button.on{background:var(--laranja,#F97316);border-color:var(--laranja,#F97316);color:#fff;}
+.na-rod{display:flex;align-items:center;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--linha);}
+.na-msg{flex:1;font-size:11px;color:var(--vermelho,#FF5252);}
+.na-cancel,.na-ok{border-radius:8px;padding:7px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;}
+.na-cancel{background:none;border:1px solid var(--card-brd);color:var(--txt2);}
+.na-ok{background:var(--laranja,#F97316);border:1px solid var(--laranja,#F97316);color:#fff;}
+.na-ok:disabled{opacity:.5;cursor:default;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="s-top">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="M2 13l10 5 10-5"/></svg>
+      <b id="marcaFCA">Plano de Ação</b>
+      <button class="s-mini" id="btMini" title="Recolher menu">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18v14H3z"/><path d="M9 5v14"/></svg>
+      </button>
+    </div>
+
+    <div class="s-sec"><b>Visões</b></div>
+    <button class="s-item" data-v="resumo" title="Resumo Gerencial">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+      Resumo Gerencial
+    </button>
+    <button class="s-item on" data-v="flat" title="Tabela">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 5h18v14H3zM3 10h18M9 10v9"/></svg>
+      Tabela
+    </button>
+    <button class="s-item" data-v="kanban" title="Kanban">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 4h5v16H4zM10 4h5v11h-5zM16 4h4v7h-4z"/></svg>
+      Kanban
+    </button>
+    <button class="s-item" data-v="gantt" title="Gantt">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M4 12h14M4 18h7"/></svg>
+      Gantt
+    </button>
+
+    <div class="s-sec" id="secAtalhos"><b>Atalhos</b></div>
+    <button class="s-item" id="btNova" title="Nova ação da RPS ou do dia a dia" onclick="abreNova()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Nova ação
+    </button>
+
+    <div class="s-volta">
+      <a class="s-item" href="../" style="text-decoration:none" title="Voltar ao Hub">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+        Voltar ao Hub
+      </a>
+    </div>
+
+    <div class="s-user">
+      <span class="uni-badge" id="uniBadge" style="display:none">—</span>
+      <a class="s-sair" id="backUnits" href="./" title="Trocar de unidade" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l-6 6 6 6M3 12h13"/></svg>
+      </a>
+    </div>
+  </aside>
+
+  <main class="board">
+    <div class="top">
+      <h1 id="tituloVista">Tabela</h1>
+      <div class="hfilter"><label>Vigência</label><div class="ms-wrap" id="ms-vig"><button class="ms-btn" onclick="toggleMs('ms-vig')"><span class="ms-lbl">Vigência</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Projeto</label><div class="ms-wrap" id="ms-proj"><button class="ms-btn" onclick="toggleMs('ms-proj')"><span class="ms-lbl">Projeto</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Origem</label><div class="ms-wrap" id="ms-org"><button class="ms-btn" onclick="toggleMs('ms-org')"><span class="ms-lbl">Origem</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Fato</label><div class="ms-wrap" id="ms-ind"><button class="ms-btn" onclick="toggleMs('ms-ind')"><span class="ms-lbl">Fato</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Indicador/Conta</label><div class="ms-wrap" id="ms-conta"><button class="ms-btn" onclick="toggleMs('ms-conta')"><span class="ms-lbl">Indicador/Conta</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Status</label><div class="ms-wrap" id="ms-st"><button class="ms-btn" onclick="toggleMs('ms-st')"><span class="ms-lbl">Status</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Status Prazo</label><div class="ms-wrap" id="ms-prazo"><button class="ms-btn" onclick="toggleMs('ms-prazo')"><span class="ms-lbl">Status Prazo</span><span class="ms-cnt"></span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="#F97316"/></svg></button><div class="ms-panel"><div class="ms-search"><input type="text" placeholder="Pesquisar…"></div><div class="ms-list"></div></div></div></div>
+      <div class="hfilter"><label>Responsável</label><input type="text" id="f-resp" class="f-resp" placeholder="Responsável" autocomplete="off" oninput="aplicar()"></div>
+      <button class="tool ico" id="themeBtn" title="Modo claro/escuro">☀</button>
+      <button class="tool" id="adminBtn" title="Modo admin">Admin</button>
+      <span class="saved-msg" id="savedMsg">Salvo ✓</span>
+      <span style="display:none">
+        <button id="viewBtn"></button><button id="flatBtn"></button><button id="ganttBtn"></button>
+      </span>
+    </div>
+    <div class="main">
+      <div class="intro">Para cada <b>fato</b> (indicador com desvio) preencha uma ou mais <b>ações</b> com <b>Causa</b>, <b>Ação</b>, <b>Responsável</b>, <b>Prazo</b> e <b>Status</b>. Os fatos vêm dos <b>ICs do Gerot</b> e dos <b>Custos da DRE</b> da unidade (Km/L e R$/L entram como causa do Custo Combustível, não como fato próprio). As ações são <b>salvas automaticamente</b> na nuvem — digitou, salvou — e podem continuar sendo editadas quando precisar.</div>
+      <div class="plano-aviso" id="planoAviso" style="display:none"></div>
+      <div id="list"><div class="loading">Carregando o plano da unidade…</div></div>
+    </div>
+  </main>
+</div>
+<div class="na-ov" id="naOv" onclick="if(event.target===this)fechaNova()">
+  <div class="na" role="dialog" aria-label="Nova ação">
+    <div class="na-hd"><b>Nova ação</b><button class="na-x" onclick="fechaNova()" title="Fechar">✕</button></div>
+    <label>Origem</label>
+    <div class="na-seg" id="naOrig"><button type="button" data-v="Dia a dia" class="on">Dia a dia</button><button type="button" data-v="RPS">RPS</button></div>
+    <label for="naProj">Projeto</label>
+    <select id="naProj"></select>
+    <label for="naFato">Assunto</label>
+    <input id="naFato" type="text" maxlength="160" placeholder="Ex.: Pátio sem sinalização de manobra" autocomplete="off">
+    <div class="na-rod"><span class="na-msg" id="naMsg"></span><button class="na-cancel" onclick="fechaNova()">Cancelar</button><button class="na-ok" id="naOk" onclick="criaNova()">Criar e abrir</button></div>
+  </div>
+</div>
+<script>
+// ── Supabase (mesmo projeto do hub/auth) ──
+const SUPABASE_URL='https://lozwipoeacpvplgkrxkq.supabase.co';
+const SUPABASE_KEY='sb_publishable_ggKEEebc5zjgQDVsF92Upw_6uoLmKe9';
+let sb=null, SESSION=null, PROFILE=null, REAL_ADMIN=false, ADMIN=false, PREVIEW=false;
+let _DBROWS={}; // chave do fato -> linhas salvas no banco
+function readCache(k){try{const s=localStorage.getItem(k);return s?JSON.parse(s):null;}catch(e){return null;}}
+function writeCache(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+// ── Unidade (vem do perfil; admin pode trocar via ?u=COD ou no seletor) ──
+// De-para por código → nome na DRE (cidade, col10) e nome(s) no Gerot/ICs (col unidade).
+// Fonte: scorecard (UNI2COD/UNI2CID). A Dispersão/Ativação usa o próprio código.
+// CBA e MCC são separadas por projeto/tier: cada recorte é uma unidade própria do FCA.
+// `base` = código antigo (sufixo do Nível 3 na DRE/Dispersão) · `tier` = recorte pelo projeto.
+const DEPARA={
+  'CGR':{dre:'CAMPO GRANDE',         ger:['CDD RIO DE JANEIRO']},
+  'BLC':{dre:'BALNEARIO CAMBORIU',   ger:['CDD CAMBORIU']},
+  'CBA T1':   {dre:'CUIABA', base:'CBA', tier:'T1',    ger:['CUIABA EMPURRADA']},
+  'CBA T1 WH':{dre:'CUIABA', base:'CBA', tier:'T1 WH', ger:['CUIABA']},
+  'CBA T2':   {dre:'CUIABA', base:'CBA', tier:'T2',    ger:['CDD CUIABA']},
+  'FLP':{dre:'FLORIANOPOLIS',        ger:['CDD FLORIANOPOLIS']},
+  'GRL':{dre:'GUARULHOS',            ger:['CDD GUARULHOS']},
+  'NFR':{dre:'NOVA FRIBURGO',        ger:['CDD NOVA FRIBURGO']},
+  'PLT':{dre:'PELOTAS',              ger:['CDD PELOTAS']},
+  'RON':{dre:'RONDONOPOLIS',         ger:['CDD RONDONOPOLIS']},
+  'MCC T1':{dre:'CACHOEIRAS DE MACACU', base:'MCC', tier:'T1', ger:['MACACU EMPURRADA']},
+  'MCC T2':{dre:'CACHOEIRAS DE MACACU', base:'MCC', tier:'T2', ger:['CDI MACACU']},
+  'PIR':{dre:'PIRAI',                ger:['PIRAI EMPURRADA']},
+  'ANG':{dre:'ANHANGUERA',           ger:[]},   // só Custos (sem dados no Gerot)
+  'GNA':{dre:'GOIANIA',              ger:['CDD GOIANIA']},   // Goiânia (23/09/2026): DRE "GOIÂNIA" · Ginfo "CDD GOIANIA"
+};
+let UNIDADE_COD='CGR', UNIDADE_DRE='CAMPO GRANDE', UNIDADE_GER=['CDD RIO DE JANEIRO'], UNIDADE_BASE='', UNIDADE_TIER='';
+function applyDepara(cod){const d=DEPARA[cod]; if(d){UNIDADE_DRE=d.dre; UNIDADE_GER=d.ger; UNIDADE_BASE=d.base||''; UNIDADE_TIER=d.tier||'';}}
+
+// Gerot (ICs + IVs): mesma planilha dos ICs, aba gid=0 — formato longo bloco|unidade|vig|kpi|un|meta|real|atg.
+// Cada bloco tem 1 IC e seus IVs; o kpi começa com "IC"/"IV". UNIDADE_GER (do de-para) casa com a coluna 'unidade' do Gerot.
+const SRC_GEROT = 'https://docs.google.com/spreadsheets/d/1xGl1Xrk2sPS9zWghEuecFMNBHwmeLiZ02U-QpO8cDPY/gviz/tq?gid=0';
+// Aba "De-Para" (mesma planilha do Gerot): col A = "PROJETO - ABREV" (ex.: "ROTA - CBA - T2"), col B = unidade do Gerot (ex.: "CDD CUIABA").
+const SRC_DEPARA = 'https://docs.google.com/spreadsheets/d/1xGl1Xrk2sPS9zWghEuecFMNBHwmeLiZ02U-QpO8cDPY/gviz/tq?sheet='+encodeURIComponent('De-Para')+'&headers=0';
+// Aba "Base RPM" (mesma planilha do Gerot): fonte DIRETA da RPM (o FCA Total consolida errado). Lida por NOME de coluna.
+const SRC_BASE_RPM = 'https://docs.google.com/spreadsheets/d/1xGl1Xrk2sPS9zWghEuecFMNBHwmeLiZ02U-QpO8cDPY/gviz/tq?sheet='+encodeURIComponent('Base RPM')+'&headers=1';
+// FCA Total (consolidação do script): Origem | Vigência | Unidade | Projeto | Fato | Causa | Ação | Prazo | Status
+const SRC_FCATOTAL = 'https://docs.google.com/spreadsheets/d/1oW3mss0pXVI6gaDU2z5cDAKvW40LWHCQXpanqSvb12o/gviz/tq?sheet='+encodeURIComponent('FCA Total')+'&headers=1';
+// Custos: aba "Frota" (mesma da Visão Financeira). A "Consolidado DRE" foi aposentada.
+// Frota (índices): [0]VIGÊNCIA [3]Unidade [4]NÍVEL 3 [5]CONTA GERENCIAL [8]ORÇADO [9]REMUNERADO [10]REALIZADO.
+// Puxa a aba inteira e filtra a unidade no cliente (uniMatch, sem acento) — a Frota usa "CUIABÁ/PIRAÍ/RONDONÓPOLIS" com acento.
+const srcDre = ()=>'https://docs.google.com/spreadsheets/d/1qcTy2ppLCGBKKqZCxCYWCTL9kTAuWfHBMyBfWJOyih8/gviz/tq?sheet='+encodeURIComponent('Frota');
+const SRC_KML = 'https://docs.google.com/spreadsheets/d/1ZZdvG_RK5cTBLdPl3TWCbNeqw-Y4fTYwWsQV4w-e__A/gviz/tq?sheet='+encodeURIComponent('Km/L');
+// Dispersão de km (Painel KM): col0 vig · col13/14 unidade · col14 antes do "-" projeto · col31 rem · col32 real · col36 impacto R$
+const SRC_DISP = 'https://docs.google.com/spreadsheets/d/1wCoRGsvOgmIvfLW4F9Sxr-5AX9Go-aFlRVjrQ_B2ilM/gviz/tq?sheet='+encodeURIComponent('Dispersão de km');
+const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+function parseD(v){if(v==null)return null;const m=String(v).match(/Date\((\d+),(\d+),(\d+)/);return m?new Date(+m[1],+m[2],+m[3]):null;}
+function vigKeyN(d){return d?d.getFullYear()*100+d.getMonth():0;}
+function vigLbl(d){return d?MESES[d.getMonth()]+'/'+String(d.getFullYear()).slice(2):'';}
+function brl(v){const a=Math.abs(v);let s;if(a>=1e6)s=(a/1e6).toFixed(1)+' mi';else if(a>=1e3)s=(a/1e3).toFixed(0)+'k';else s=Math.round(a).toLocaleString('pt-BR');return 'R$ '+s;}
+// Formato curto p/ causas: 20K · 7K · 1,5K · 1,2K (como na referência)
+function impFmt(v){const a=Math.abs(v);if(a>=1e6)return String(Math.round(a/1e6*10)/10).replace('.',',')+'M';if(a>=1e3){const k=a>=1e4?Math.round(a/1e3):Math.round(a/100)/10;return String(k).replace('.',',')+'K';}return String(Math.round(a));}
+// Vigência da Dispersão (col0): aceita "Date(...)" ou "MM/YYYY"
+function vigDisp(v){if(v==null)return null;const s=String(v);let m=s.match(/Date\((\d+),(\d+),(\d+)/);if(m)return new Date(+m[1],+m[2],+m[3]);m=s.match(/^(\d{1,2})\/(\d{4})$/);if(m)return new Date(+m[2],+m[1]-1,1);return null;}
+function gviz(url){return new Promise((res,rej)=>{const fn='_gv'+Math.floor(Math.random()*1e9);const s=document.createElement('script');const clr=()=>{try{delete window[fn];s.remove();}catch(e){}};window[fn]=r=>{clr();try{if(r.status!=='ok')throw 0;res((r.table.rows||[]).map(x=>(x.c||[]).map(c=>c?c.v:null)));}catch(e){rej(e);}};s.onerror=()=>{clr();rej(0);};s.src=url+(url.includes('?')?'&':'?')+'tqx=out:json;responseHandler:'+fn;document.head.appendChild(s);});}
+// Como gviz, mas devolve {cols:[rótulos], rows:[[valores]]} — preciso dos cabeçalhos p/ ler por NOME (Base RPM).
+function gvizT(url){return new Promise((res,rej)=>{const fn='_gt'+Math.floor(Math.random()*1e9);const s=document.createElement('script');const clr=()=>{try{delete window[fn];s.remove();}catch(e){}};window[fn]=r=>{clr();try{if(r.status!=='ok')throw 0;const cols=(r.table.cols||[]).map(c=>String((c&&(c.label||c.id))||'').trim());const rows=(r.table.rows||[]).map(x=>(x.c||[]).map(c=>c?c.v:null));res({cols,rows});}catch(e){rej(e);}};s.onerror=()=>{clr();rej(0);};s.src=url+(url.includes('?')?'&':'?')+'tqx=out:json;responseHandler:'+fn;document.head.appendChild(s);});}
+// Acha o índice da coluna pelo NOME do cabeçalho (sem acento/maiúsc./pontuação); tenta exato e depois "contém".
+const _normH=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+function _idxByName(cols,names){const norm=(cols||[]).map(_normH);for(const n of names){const t=_normH(n);const i=norm.indexOf(t);if(i>=0)return i;}for(const n of names){const t=_normH(n);if(t.length<=2)continue;const i=norm.findIndex(c=>c.includes(t));if(i>=0)return i;}return -1;}
+// Data robusta: "Date(y,m,d)", "MM/YYYY", "dd/mm/aaaa" e textual "abr./2026".
+function parseAnyDate(v){if(v==null)return null;const s=String(v).trim();let m=s.match(/Date\((\d+),(\d+),(\d+)/);if(m)return new Date(+m[1],+m[2],+m[3]);m=s.match(/^(\d{1,2})\/(\d{4})$/);if(m)return new Date(+m[2],+m[1]-1,1);m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);if(m){let y=+m[3];if(y<100)y+=2000;return new Date(y,+m[2]-1,+m[1]);}const mm=s.toLowerCase().match(/([a-zç]{3})[a-zç]*\.?\s*\/?\s*(?:de\s*)?(\d{2,4})/);if(mm){const i=MESES.indexOf(mm[1].slice(0,3));if(i>=0){let y=+mm[2];if(y<100)y+=2000;return new Date(y,i,1);}}return null;}
+
+function slug(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'').toLowerCase();}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── Fatos: { vig, fato, desvio(html), sev, causaAuto } — desvio já formatado ──
+const _normU=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+const _g2=v=>v==null||!isFinite(v)?'—':(+v).toLocaleString('pt-BR',{maximumFractionDigits:2});
+// Chave de projeto = parte antes do "-" (nível3 da DRE inclui "- UNIDADE"); unidade aceita código (CGR) ou nome (CAMPO GRANDE).
+const projKey=s=>_normU(String(s||'').split('-')[0]);
+const uniMatch=v=>{const n=_normU(String(v||'').replace(/\s*\(INATIVO\)\s*/i,''));return n===_normU(UNIDADE_DRE)||n===_normU(UNIDADE_COD)||(!!UNIDADE_BASE&&n===_normU(UNIDADE_BASE));};
+// Tier do projeto (prefixo do Nível 3): EMPURRADA→T1 · APOIO→T1 WH (só CBA) · demais→T2.
+// Unidades sem tier (UNIDADE_TIER vazio) aceitam qualquer projeto.
+function tierOfProj(proj){const p=projKey(proj);if(/EMPURRAD/.test(p))return 'T1';if(UNIDADE_BASE==='CBA'&&/APOIO/.test(p))return 'T1 WH';return 'T2';}
+const tierMatch=proj=>!UNIDADE_TIER||tierOfProj(proj)===UNIDADE_TIER;
+// Chave de fato robusta: casa importado (projeto "ROTA") com gerado (nivel3 "ROTA - BLC") e ignora linhas extras do fato
+const fatoKey=s=>_normU(String(s||'').split('\n')[0]);
+const fkey=(vig,origem,proj,fato)=>`${vig}||${origem||''}||${projKey(proj)}||${fatoKey(fato)}`;
+function vigNum(v){const m=String(v||'').match(/^([a-zç]{3})\/(\d{2})$/i);if(!m)return 0;const i=MESES.indexOf(m[1].toLowerCase());return (2000+ +m[2])*100+(i<0?0:i);}
+// Lê a aba "De-Para" do Gerot → { unidadeGerot(normalizada): {projeto, abrev} }. Fonte de verdade do sub-projeto.
+function parseDePara(rows){
+  const m={};
+  const add=(projetoAbrev,unidadeRPM)=>{
+    projetoAbrev=String(projetoAbrev||'').trim(); unidadeRPM=String(unidadeRPM||'').trim();
+    if(!projetoAbrev||!unidadeRPM)return;
+    if(/\(INATIVO\)/i.test(projetoAbrev))return;
+    const dash=projetoAbrev.indexOf('-'); if(dash<0)return;
+    const projeto=projetoAbrev.substring(0,dash).trim(), abrev=projetoAbrev.substring(dash+1).trim();
+    if(!projeto||!abrev)return;
+    const k=_normU(unidadeRPM), ex=m[k];
+    if(!ex || (projeto.toUpperCase()==='ROTA'&&ex.projeto.toUpperCase()!=='ROTA')) m[k]={projeto,abrev};
+  };
+  // são DOIS de-paras lado a lado na mesma aba: colunas A:B (0,1) e E:F (4,5)
+  (rows||[]).forEach(r=>{ add(r[0],r[1]); add(r[4],r[5]); });
+  return m;
+}
+// Mapa FIXO da RPM (informado): unidade do Gerot → { abrev=código, projeto }. Fonte da verdade (não depende da aba De-Para).
+// "Muitas Rotas têm Auto Serviço/Apoio dentro, mas p/ a RPM engloba tudo na Rota"; só o Apoio "CUIABA" fica separado.
+const RPM_UNIT_MAP={
+  'CUIABA':            {abrev:'CBA T1 WH', projeto:'APOIO'},
+  'CUIABA EMPURRADA':  {abrev:'CBA T1', projeto:'EMPURRADA'},
+  'CDD CUIABA':        {abrev:'CBA T2', projeto:'ROTA'},
+  'MACACU EMPURRADA':  {abrev:'MCC T1', projeto:'EMPURRADA'},
+  'CDI MACACU':        {abrev:'MCC T2', projeto:'ROTA'},
+  'CDD RIO DE JANEIRO':{abrev:'CGR', projeto:'ROTA'},
+  'CDD RONDONOPOLIS':  {abrev:'RON', projeto:'ROTA'},
+  'CDD GUARULHOS':     {abrev:'GRL', projeto:'ROTA'},
+  'CDD FLORIANOPOLIS': {abrev:'FLP', projeto:'ROTA'},
+  'CDD NOVA FRIBURGO': {abrev:'NFR', projeto:'ROTA'},   // você escreveu FLP — assumi NFR (parece engano); me avise se for proposital
+  'CDD PELOTAS':       {abrev:'PLT', projeto:'ROTA'},
+  'PIRAI EMPURRADA':   {abrev:'PIR', projeto:'EMPURRADA'},
+  'CDD CAMBORIU':      {abrev:'BLC', projeto:'ROTA'},
+  'CDD GOIANIA':       {abrev:'GNA', projeto:'AS'}      // Goiânia: no Ginfo os projetos são AS (caminhões) e ARMAZEM; sem Rota
+};
+const _RPM_MAP_N=(()=>{const m={};Object.keys(RPM_UNIT_MAP).forEach(k=>m[_normU(k)]=RPM_UNIT_MAP[k]);return m;})();
+// Lê a aba "Base RPM" (POR NOME de coluna) → payloads de RPM prontos p/ a base. Unidade/projeto vêm do RPM_UNIT_MAP.
+// A própria aba já traz Causa/Ação/Prazo/Status (fonte da RPM). Só IC/IV com desvio, com causa/ação, até abr/2026.
+function parseBaseRPM(t){
+  const uniMap=_RPM_MAP_N;
+  const cols=t.cols||[], rows=t.rows||[];
+  const ci={
+    uni: _idxByName(cols,['Unidade','Unidades','Operação','Operacao','CDD','Loja','Filial']),
+    vig: _idxByName(cols,['Vigência','Vigencia','Mês','Mes','Competência','Competencia','Período','Periodo','Data']),
+    kpi: _idxByName(cols,['KPI','Indicador','Indicadores','Métrica','Metrica','Nome do Indicador']),
+    meta:_idxByName(cols,['Meta','Objetivo','Orçado','Orcado']),
+    real:_idxByName(cols,['Real','Realizado','Resultado','Valor']),
+    atg: _idxByName(cols,['% de Ating.','% de Ating','% Ating.','% Ating','Atingimento','% Atingimento','Aderência','Aderencia','Ating.','Ating']),
+    un:  _idxByName(cols,['Un.','Unidade de Medida','Unid.','UM','Medida']),
+    causa:_idxByName(cols,['Causa','Causas']),
+    acao: _idxByName(cols,['Ação','Acao','Ações','Acoes','Plano de Ação','Plano de Acao']),
+    prazo:_idxByName(cols,['Prazo','Data Prazo','Prazo Final']),
+    st:   _idxByName(cols,['Status','Situação','Situacao'])
+  };
+  const miss=[]; if(ci.uni<0)miss.push('Unidade'); if(ci.vig<0)miss.push('Vigência'); if(ci.kpi<0)miss.push('KPI/Indicador'); if(ci.atg<0)miss.push('% de Ating.');
+  if(miss.length){throw new Error('Colunas não encontradas em "Base RPM": '+miss.join(', ')+'. Cabeçalhos lidos: '+cols.filter(Boolean).join(' | '));}
+  const mapSt=s=>{const x=String(s||'').toLowerCase();if(x.includes('conclu'))return 'Concluída';if(x.includes('andam'))return 'Em andamento';if(x.includes('cancel'))return 'Cancelada';return DEFAULT_STATUS;};
+  const isoD=v=>{const d=parseAnyDate(v);return d?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'):null;};
+  const txt=i=>{if(i<0)return null;const s=String(rTmp[i]==null?'':rTmp[i]).trim();return s||null;};
+  // Corte de transição: ATÉ mai/2026 (≤202604) o histórico já está preenchido NA ABA → importa causa/ação/prazo/status
+  // (e só traz o que está preenchido). De jun/2026 em diante vem VAZIO p/ as unidades preencherem no painel.
+  const FILL_UNTIL=202604;
+  let rTmp;
+  const out=[];
+  rows.forEach(r=>{
+    rTmp=r;
+    const dp=uniMap[_normU(r[ci.uni])]; if(!dp)return;                          // só unidades do mapa fixo da RPM
+    const kpi=String(r[ci.kpi]||'').trim(); if(!/^\s*I[CV]/i.test(kpi))return;  // só IC/IV
+    let atg=ci.atg>=0?r[ci.atg]:null;
+    if(atg!=null&&typeof atg!=='number')atg=parseFloat(String(atg).replace('%','').replace(/\./g,String(atg).includes(',')?'':'.').replace(',','.'));
+    if(atg!=null&&atg>1.5)atg=atg/100;                                          // veio 80 em vez de 0,80
+    if(atg==null||!isFinite(atg)||atg>=1)return;                               // só o que desviou (IC e IV, atg<1)
+    const d=parseAnyDate(r[ci.vig]); const vig=vigLbl(d)||String(r[ci.vig]||'').trim(); if(!vig)return;
+    const vk=d?vigKeyN(d):vigNum(vig);
+    const hist=vk<=FILL_UNTIL;                                                  // mês histórico (já preenchido na aba)
+    const causaV=txt(ci.causa), acaoV=txt(ci.acao);
+    if(hist && !causaV && !acaoV) return;                                       // histórico: só o que já está preenchido na aba
+    const un=ci.un>=0?String(r[ci.un]||'').trim():'';
+    const meta=ci.meta>=0&&r[ci.meta]!=null&&r[ci.meta]!==''?_g2(+r[ci.meta])+(un?' '+un:''):'—';
+    const real=ci.real>=0&&r[ci.real]!=null&&r[ci.real]!==''?_g2(+r[ci.real])+(un?' '+un:''):'—';
+    const at=(Math.round(atg*1000)/10).toLocaleString('pt-BR')+'%';
+    out.push({unidade:dp.abrev,vigencia:vig,origem:'RPM',fato:kpi,projeto:dp.projeto,
+      fato_desvio:`Meta: ${meta} | Real: ${real} | Ating: ${at}`,
+      causa:hist?causaV:null, acao:hist?acaoV:null,
+      prazo:hist?isoD(r[ci.prazo]):null,
+      status:(hist&&ci.st>=0)?mapSt(r[ci.st]):DEFAULT_STATUS, locked:false});
+  });
+  return out;
+}
+// Gerot: gera só o ÚLTIMO mês com dados (histórico vem do FCA Total). projeto vem do De-Para (ROTA/AS/EMPURRADA/INSUMOS/UDC).
+function pushGerot(rows,fatos,deParaMap){
+  deParaMap=deParaMap||{};
+  const gset=new Set((UNIDADE_GER||[]).map(_normU));
+  const data=(rows||[]).filter(r=>r[4]&&parseD(r[3])&&gset.has(_normU(r[2])));
+  if(!data.length)return;
+  let maxK=0;data.forEach(r=>{if(r[7]!=null||r[8]!=null){const k=vigKeyN(parseD(r[3]));if(k>maxK)maxK=k;}});
+  if(!maxK)return;
+  const vig=vigLbl(new Date(Math.floor(maxK/100),maxK%100,1));
+  data.filter(r=>vigKeyN(parseD(r[3]))===maxK).forEach(r=>{
+    const kpi=String(r[4]||'').trim();
+    if(!/^\s*I[CV]/i.test(kpi))return;                 // só IC/IV
+    const atg=r[8]!=null?+r[8]:null;
+    if(atg==null||atg>=1)return;                        // só com desvio (atg<1)
+    const _dp=deParaMap[_normU(r[2])];                  // projeto vem do De-Para (ROTA / AUTO SERVIÇO / EMPURRADA / INSUMOS / UDC)
+    const proj=_dp?_dp.projeto:String(r[2]||'').trim();
+    const un=String(r[5]||'').trim(), sev=atg<0.7?'crit':'aten';
+    const meta=r[6]!=null?_g2(+r[6])+(un?' '+un:''):'—';
+    const real=r[7]!=null?_g2(+r[7])+(un?' '+un:''):'—';
+    const at=Math.round(atg*100)+'%';
+    const desvio=`<span class="val ${sev==='aten'?'am':''}">Meta: ${meta} | Real: ${real} | Ating: ${at}</span>`;
+    fatos.push({vig,fato:kpi,proj,sev,desvio,causaAuto:'',origem:'RPM'});
+  });
+}
+// Mapeamento conta → pacote (mesmo PACOTES_MAP da Visão Financeira / FCAs Total)
+const PACOTES_MAP={
+  'Combustíveis Veiculos e Equipamentos':'Combustíveis','Combustíveis':'Combustíveis',
+  'Estorno de ICMS não Aproveitado':'ICMS','Fluídos (Arla)':'Combustíveis',
+  'Arla':'Combustíveis','ICMS Crédito Presumido':'ICMS',
+  'Manutenção de Veículos e Equipamentos':'Manutenções','Manutenção de Veículos e Equip.':'Manutenções',
+  'Materiais e Ferramentas de Oficina':'Manutenções','Lavação de Veículos':'Manutenções',
+  'Manutenção de Carrocerias':'Manutenções','Personalização/Padronização de Veículos':'Manutenções',
+  'Personalização/Padronização':'Manutenções','Personalização e Padronização de Veículos':'Manutenções',
+  'Contratos de Manutenção Fabricante':'Manutenções','Consertos e Recapagens de Pneus':'Pneus',
+  'Pneus e Camaras':'Pneus','Recapagens e Outros Serviços':'Pneus','Pneus Novos':'Pneus',
+  'IPVA e Licenciamento de Veículos':'Seguros e licenças','IPVA e Licenciamento':'Seguros e licenças',
+  'Seguro de Veículos e Equipamentos':'Seguros e licenças','Seguros':'Seguros e licenças',
+};
+const getPacote=c=>PACOTES_MAP[String(c||'').trim()]||'Outros';
+function pushDRE(dre,fatos){
+  const _nc=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+  // 'ESTORNO ICMS NAO APROVEITADO' (sem o "DE") NUNCA casava com a conta real
+  // 'Estorno de ICMS não Aproveitado' — por isso ela vinha na causa do pacote
+  // Combustíveis. As duas grafias ficam no set.
+  // SEGUROS E LICENÇAS FORA DO FCA (Renan, 15/10/2026: "deve sair de FCA. unidade não tem ação sobre, é
+  // corporativo"): as contas do pacote não geram fato.
+  const EXCL=new Set(['RECEITA LIQUIDA','ICMS CREDITO PRESUMIDO','IPVA E LICENCIAMENTO DE VEICULOS',
+                      'ESTORNO ICMS NAO APROVEITADO','ESTORNO DE ICMS NAO APROVEITADO',
+                      'IPVA E LICENCIAMENTO','SEGURO DE VEICULOS E EQUIPAMENTOS','SEGUROS']);
+  const drRows=(dre||[]).filter(r=>parseD(r[0])&&uniMatch(r[3])&&tierMatch(r[4])&&!EXCL.has(_nc(r[5])));
+  if(!drRows.length)return;
+  // Frota tem meses ORÇADOS futuros (rem/real=0); mês de análise = última vigência COM realizado ≠ 0.
+  let maxK=0;drRows.forEach(r=>{const real=r[10]!=null?+r[10]:0;if(real!==0){const k=vigKeyN(parseD(r[0]));if(k>maxK)maxK=k;}});
+  const vig=vigLbl(new Date(Math.floor(maxK/100),maxK%100,1));
+  const acc={};
+  drRows.filter(r=>vigKeyN(parseD(r[0]))===maxK).forEach(r=>{const conta=String(r[5]||'—').trim();const niv=String(r[4]||'').replace(/\s*\(INATIVO\)\s*/i,'').trim();const rem=r[9]!=null?+r[9]:0,real=r[10]!=null?+r[10]:0;const key=niv+'||'+conta;if(!acc[key])acc[key]={conta,niv,rem:0,real:0};acc[key].rem+=rem;acc[key].real+=real;});
+  // ── FATO = PACOTE (líquido) · CAUSA desdobra as contas ──
+  // Custos na DRE são negativos: gasto ACIMA do remunerado => (rem - real) > 0.
+  // O fato sobe quando o PACOTE líquido estoura vs remunerado — uma conta pode ter
+  // saving e o pacote ainda fechar negativo. A causa lista as contas do maior
+  // desvio (▲) ao maior saving (▼).
+  const porPac={};
+  Object.values(acc).forEach(o=>{const pac=getPacote(o.conta);const k=projKey(o.niv)+'||'+pac;
+    const g=porPac[k]=porPac[k]||{pac,niv:o.niv,rem:0,real:0,contas:[]};
+    g.rem+=o.rem;g.real+=o.real;g.contas.push(o);});
+  Object.values(porPac).map(g=>{const over=g.rem-g.real,base=Math.abs(g.rem);return {...g,over,dpct:base>0?over/base*100:0};})
+    .filter(g=>g.over>0&&g.rem!==0).sort((a,b)=>b.over-a.over)
+    .forEach(g=>{const sev=g.dpct>=5?'crit':'aten';
+      // Fato financeiro: o NOME DO PACOTE puro (Combustíveis, Manutenções…),
+      // sem o prefixo "Pacote" (Renan, 14/08/2026)
+      const brlFull='R$ '+Math.round(Math.abs(g.over)).toLocaleString('pt-BR');
+      const desvio=`<span class="dn">Desvio: </span><span class="val ${sev==='aten'?'am':''}">▲ ${brlFull} · ▲ -${Math.round(g.dpct)}%</span>`;
+      const fato={vig,fato:g.pac,proj:g.niv,desvio,sev,origem:'Custos'};
+      const causas=[];
+      // desdobramento por conta: ▲ estouros (maior→menor), depois ▼ savings (maior→menor)
+      const det=g.contas.map(o=>{const ov=o.rem-o.real,b=Math.abs(o.rem);return {conta:o.conta,ov,p:b>0?Math.round(Math.abs(ov)/b*100):null};}).filter(o=>Math.round(o.ov)!==0);
+      det.sort((a,b)=>{const pa=a.ov>0,pb=b.ov>0;if(pa&&pb)return b.ov-a.ov;if(pa)return -1;if(pb)return 1;return a.ov-b.ov;});
+      // AS CONTAS FICAM NO FATO, não na causa (Renan, 14/08/2026): o fato é o
+      // pacote e o desdobramento dele; a CAUSA nasce vazia, para a unidade
+      // escrever o porquê. Saíram também os drivers de Combustíveis
+      // (Dispersão de km, Km/L, bottom 3 placas) e o custo/placa ativa de
+      // Manutenções/Pneus — quem quer o driver abre o painel do indicador.
+      if(det.length){const ls=['Contas:'];
+        det.forEach(o=>{const s=o.ov>0?'▲':'▼';ls.push(`- ${o.conta}: ${s} ${impFmt(o.ov)}${o.p!=null?' | '+s+' '+o.p+'%':''}${o.ov<0?' (saving)':''}`);});
+        fato.desvio+='<br>'+ls.join('<br>');}
+      if(causas.length)fato.causaAuto=causas.join('\n');
+      fatos.push(fato);});
+}
+// Causas automáticas de Combustível por projeto — Km/L e R$/L NÃO são mais fatos próprios;
+// entram como CAUSA do Custo Combustível (conta da DRE). Retorna { projNormalizado: textoCausa }.
+function kmlCausasPorProj(kml){
+  const out={};
+  const f2=v=>(+v).toFixed(2).replace('.',',');
+  const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+  const rows=(kml||[]).filter(r=>parseD(r[0])&&uniMatch(r[15])&&tierMatch(r[14]));
+  if(!rows.length)return out;
+  let maxK=0;rows.forEach(r=>{const k=vigKeyN(parseD(r[0]));if(k>maxK)maxK=k;});
+  const acc={}; // por projeto (col14)
+  rows.filter(r=>vigKeyN(parseD(r[0]))===maxK).forEach(r=>{
+    const proj=String(r[14]||'—').trim();
+    const km=+r[22]||0,lit=+r[23]||0,remkl=+r[4]||0,totR=+r[25]||0,remrl=+r[8]||0;
+    if(!acc[proj])acc[proj]={km:0,lit:0,remklW:0,totR:0,remrlW:0,plates:[]};
+    const a=acc[proj];a.km+=km;a.lit+=lit;a.remklW+=remkl*km;a.totR+=totR;a.remrlW+=remrl*lit;
+    a.plates.push({placa:String(r[16]||'').trim(),remMod:+r[5]||0,remMed:remkl,real:+r[6]||0,km:km});
+  });
+  Object.entries(acc).forEach(([proj,a])=>{
+    const lines=[];
+    const rsLRem =a.lit>0?a.remrlW/a.lit:0;   // R$/L remunerado (ponderado por litros)
+    const rsLReal=a.lit>0?a.totR  /a.lit:0;   // R$/L realizado
+    const kmLReal=a.lit>0?a.km    /a.lit:0;   // Km/L realizado
+    const kmLRem =a.km >0?a.remklW/a.km :0;   // Km/L remunerado (ponderado por km)
+    // ── Eficiência Km/L: real < rem ──
+    // Impacto R$ (decomposição feita no FCA): preço fixo no Rem, varia só a eficiência
+    //   = R$/L_rem × (1/Km/L_real − 1/Km/L_rem) × KM_real
+    if(kmLRem>0&&kmLReal>0&&kmLReal<kmLRem){
+      const nom=kmLRem-kmLReal,pct=Math.round(Math.abs((kmLReal/kmLRem-1)*100));
+      const imp=rsLRem>0?(rsLRem/kmLReal-rsLRem/kmLRem)*a.km:0;
+      lines.push(`Eficiência Km/L: ▲ ${f2(nom)} | ▲ ${pct}%${imp>0?' | Impacto: '+impFmt(imp):''}`);
+      const worst=a.plates.filter(p=>p.placa&&p.real>0&&p.remMed>0&&p.km>0)
+        .map(p=>({...p,imp:rsLRem>0&&p.real<p.remMed?(rsLRem/p.real-rsLRem/p.remMed)*p.km:0}))
+        .filter(p=>p.imp>0).sort((x,y)=>y.imp-x.imp).slice(0,3);
+      if(worst.length){lines.push('Bottom 3 placas:');
+        worst.forEach(p=>{const pp=Math.round(Math.abs((p.real/p.remMed-1)*100));
+          lines.push(`- ${p.placa}: Modelo ${f2(p.remMod)} | Rem ${f2(p.remMed)} | Real ${f2(p.real)} | ▲ ${pp}% | Impacto: ${impFmt(p.imp)}`);});}
+    }
+    // ── Preço R$/L: real > rem ──
+    // Impacto R$ (decomposição feita no FCA): eficiência fixa no Real, varia só o preço
+    //   = (R$/L_real − R$/L_rem) / Km/L_real × KM_real = (R$/L_real − R$/L_rem) × Litros
+    if(rsLRem>0&&rsLReal>rsLRem){
+      const nom=rsLReal-rsLRem,pct=Math.round(Math.abs((rsLReal/rsLRem-1)*100));
+      const imp=kmLReal>0?(rsLReal-rsLRem)/kmLReal*a.km:0;
+      lines.push(`Preço R$/L: ▲ R$ ${f2(nom)} | ▲ ${pct}%${imp>0?' | Impacto: '+impFmt(imp):''}`);
+    }
+    if(lines.length)out[projKey(proj)]=lines.join('\n');
+  });
+  return out;
+}
+// Dispersão de km (Painel KM) por projeto — 1ª linha da causa de Combustível: Rem | Real | ▲% | Impacto.
+function dispCausasPorProj(disp){
+  const out={};
+  const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+  const rows=(disp||[]).filter(r=>{const u=String(r[14]||'').includes('-')?String(r[14]).split('-').slice(1).join('-').trim():String(r[13]||'').trim();return vigDisp(r[0])&&uniMatch(u)&&tierMatch(r[14]);});
+  if(!rows.length)return out;
+  let maxK=0;rows.forEach(r=>{const k=vigKeyN(vigDisp(r[0]));if(k>maxK)maxK=k;});
+  const acc={};
+  rows.filter(r=>vigKeyN(vigDisp(r[0]))===maxK).forEach(r=>{
+    const proj=String(r[14]||'—').split('-')[0].trim();
+    const rem=+r[31]||0,real=+r[32]||0,imp=+r[36]||0;
+    if(!acc[proj])acc[proj]={rem:0,real:0,imp:0};
+    acc[proj].rem+=rem;acc[proj].real+=real;acc[proj].imp+=imp;
+  });
+  Object.entries(acc).forEach(([proj,a])=>{
+    // só quando rodou MAIS que o remunerado (over-run = mais custo)
+    if(a.rem>0&&a.real>a.rem){const pct=Math.round((a.real/a.rem-1)*100);
+      out[projKey(proj)]=`Dispersão de km: Rem ${impFmt(a.rem)} | Real ${impFmt(a.real)} | ▲ ${pct}% | Impacto: ${impFmt(a.imp)}`;}
+  });
+  return out;
+}
+// Frota ativa (col21 da Ativação, mesma planilha de Dispersão) por projeto: mês (última vig) e por mês do ano (YTD).
+function frotaAtivaPorProj(disp){
+  const res={mes:{},porMes:{}};
+  const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+  const rows=(disp||[]).filter(r=>{const u=String(r[14]||'').includes('-')?String(r[14]).split('-').slice(1).join('-').trim():String(r[13]||'').trim();return vigDisp(r[0])&&uniMatch(u)&&tierMatch(r[14]);});
+  if(!rows.length)return res;
+  let maxK=0;rows.forEach(r=>{const k=vigKeyN(vigDisp(r[0]));if(k>maxK)maxK=k;});
+  const yr=Math.floor(maxK/100);
+  rows.forEach(r=>{const k=vigKeyN(vigDisp(r[0]));const pk=projKey(r[14]);const fa=+r[21]||0;
+    if(k===maxK)res.mes[pk]=(res.mes[pk]||0)+fa;
+    if(Math.floor(k/100)===yr&&k<=maxK){(res.porMes[pk]=res.porMes[pk]||{});res.porMes[pk][k]=(res.porMes[pk][k]||0)+fa;}});
+  return res;
+}
+// Indexa as linhas da base por chave de fato
+function indexDB(rows){_DBROWS={};(rows||[]).forEach(r=>{const k=fkey(r.vigencia,r.origem,r.projeto,r.fato);(_DBROWS[k]=_DBROWS[k]||[]).push(r);});}
+// Carrega as ações já salvas (Supabase) da unidade. Retorna o array (ou null em erro de rede). Só atualiza _DBROWS no sucesso.
+// Lê a tabela inteira em blocos de 1.000: o PostgREST corta cada leitura em 1.000 linhas
+// (bug real, 20/10/2026: a fca passou de 1.000 linhas e RON, a última no alfabeto, sumiu do FCA · Admin).
+async function fcaTudo(cli,sel,ajuste,tab){const out=[];for(let off=0;off<200000;off+=1000){let q=cli.from(tab||'fca').select(sel);if(ajuste)q=ajuste(q);const {data,error}=await q.order('id',{ascending:true}).range(off,off+999);if(error)return {data:null,error};out.push(...(data||[]));if(!data||data.length<1000)break;}return {data:out,error:null};}
+/* ── PLANO DE AÇÃO (Renan, 27/11/2026): as ações do FCA (tabela fca, editadas na mesma linha) + as da RPS de Frota
+   e do dia a dia (tabela plano_acao, os mesmos campos do FCA). A origem do FCA aparece "FCA · Custos" / "FCA · RPM";
+   na gravação volta a ser "Custos" / "RPM". ── */
+let PLANO_ERR='';
+const ORIG_PLANO=['RPS','Dia a dia'];
+function deBanco(tab,r){ return Object.assign({},r,{_tab:tab,origem:tab==='fca'?'FCA · '+(r.origem||'Custos'):r.origem}); }
+function tabDe(r){ return (r&&r._tab)||'fca'; }
+function paraBanco(tab,o){ const x=Object.assign({},o); delete x._tab; if(tab==='fca') x.origem=String(x.origem||'Custos').replace(/^FCA · /,''); else delete x.legado; return x; }
+function naoUsar(){ throw new Error('função do FCA fora do Plano de Ação'); }
+async function fetchDB(){
+  if(!sb||PREVIEW){_DBROWS={};return [];}
+  const {data,error}=await fcaTudo(sb,'*',q=>q.eq('unidade',UNIDADE_COD).order('created_at',{ascending:true}));
+  if(error){console.error('fca select',error);return null;}
+  const pa=await fcaTudo(sb,'*',q=>q.eq('unidade',UNIDADE_COD).order('created_at',{ascending:true}),'plano_acao');
+  PLANO_ERR=pa.error?String(pa.error.message||pa.error):'';
+  if(pa.error) console.warn('plano_acao',pa.error);
+  const rows=(data||[]).map(r=>deBanco('fca',r)).concat((pa.data||[]).map(r=>deBanco('plano_acao',r)));
+  indexDB(rows); return rows;
+}
+// Gera fatos a partir das PLANILHAS para a UNIDADE atual (DRE = Custos, Gerot = RPM, + drivers de causa).
+// `shared` = planilhas Gerot/Disp/Km/L já baixadas (reuso no loop de todas as unidades). DRE é sempre por unidade.
+const _gvizSafe=url=>gviz(url).catch(()=>null);
+async function gerarFatos(shared){
+  const fatos=[];
+  // RPM é sincronizada à parte (Base RPM, via "Desvios da RPM"); aqui só Custos (DRE).
+  // A causa passou a ser SÓ as contas do pacote (Renan, 14/08/2026), então a
+  // geração não baixa mais Dispersão de km nem Km/L — eram os drivers antigos.
+  const dre=shared?shared.dre:await _gvizSafe(srcDre()); if(dre){try{pushDRE(dre,fatos);}catch(e){}}
+  return fatos;
+}
+// Grava/atualiza na base os fatos da unidade atual. Retorna nº de novos.
+async function seedUnidade(u,shared){
+  const fatos=await gerarFatos(shared);
+  // additivo: só insere o que ainda não existe (a base é dona; nada é apagado — histórico do FCA Total preservado)
+  const rows=await fetchDB();
+  if(rows===null) throw new Error('falha ao ler a base');
+  const have=new Set(Object.keys(_DBROWS));
+  const novos=fatos.filter(f=>!have.has(keyOf(f)));
+  if(novos.length){
+    const payload=novos.map(f=>({unidade:u,vigencia:f.vig,origem:f.origem||'Custos',fato:f.fato,projeto:f.proj||null,fato_desvio:stripTags(f.desvio)||null,causa:f.causaAuto||null,status:DEFAULT_STATUS,locked:false}));
+    for(let i=0;i<payload.length;i+=200){const {error}=await sb.from(naoUsar()).insert(payload.slice(i,i+200));if(error)throw error;}
+  }
+  return novos.length;
+}
+// Km/L e Preço R$/L não são fatos próprios — entram como CAUSA do Custo Combustível. Oculta esses cards (ex.: vindos da importação).
+function isDriverCombust(fato){
+  const s=String(fato||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  if(/km\s*\/?\s*l/.test(s)) return true;                            // km/l, kml, km / l
+  if(/r\$\s*\/?\s*l/.test(s)) return true;                           // r$/l
+  if(/preco/.test(s) && /(litro|\/\s*l|r\$)/.test(s)) return true;   // preço por litro / preço r$/l
+  return false;
+}
+// Projeto "limpo": corta no '-' (ex.: "AUTO SERVIÇO - CGR" → "AUTO SERVIÇO"). RPM já vem limpo.
+function projLabel(s){const t=String(s==null?'':s).replace(/\s*\(INATIVO\)\s*/gi,' ').replace(/\s+/g,' ').trim();if(!t)return '—';const i=t.indexOf('-');return i>=0?(t.substring(0,i).trim()||'—'):t;}
+// Formata o desvio (o Fato) como "▲ R$ nominal · ▲ %". Para desvios de custo (têm R$);
+// RPM/atingimento (sem R$) fica como veio. Extrai os números do texto salvo.
+// Desvio com VÁRIAS LINHAS: a 1ª é o valor do pacote (fmtDesvio sabe formatar),
+// as demais são as contas — vão como estão. Sem isso a unidade não vê as contas
+// que o admin vê (fmtDesvio só extraía R$ e % e jogava o resto fora).
+function fmtDesvioML(txt){
+  const ls=String(txt||'').split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!ls.length) return '—';
+  const cab=fmtDesvio(ls[0]);
+  return cab+(ls.length>1?'<br>'+ls.slice(1).map(l=>esc(l)).join('<br>'):'');
+}
+function fmtDesvio(txt){
+  const s=String(txt||'').trim();
+  if(!s) return '—';
+  const mv=s.match(/R\$\s*([\d.\,]+)/);
+  if(!mv) return esc(s);                                  // sem R$ (ex.: RPM 'ating. 80%') -> como está
+  const mp=s.match(/(-?\d+(?:[.,]\d+)?)\s*%/);
+  const nominal=parseInt(mv[1].replace(/[.\,]/g,''),10);
+  const parts=[];
+  if(!isNaN(nominal)) parts.push('▲ R$ '+nominal.toLocaleString('pt-BR'));
+  if(mp){ const p=Math.abs(parseFloat(mp[1].replace(',','.'))); parts.push('▲ '+Math.round(p)+'%'); }
+  return parts.length?esc(parts.join('  ·  ')):esc(s);
+}
+// Fatos a partir da BASE (Supabase) — fonte do dia a dia, não depende mais da planilha
+function fatosDaBase(){
+  const fatos=[];
+  Object.keys(_DBROWS).forEach(k=>{const r=_DBROWS[k][0];
+    if(r._tab==='fca'&&isDriverCombust(r.fato))return;
+    const raw=r.fato||'(sem fato)';
+    // separa nome × desvio embutido (ex.: migrado "Combustíveis Desvio de R$ 7.294")
+    const m=raw.match(/^([\s\S]*?)\s+(desvio\b[\s\S]*)$/i);
+    const nome=m?m[1].trim():raw, emb=m?m[2].trim():'';
+    const desvSrc=r.fato_desvio||emb;
+    fatos.push({vig:r.vigencia||'',origem:r.origem||'Custos',proj:r.projeto||'',fato:raw,nome,sev:'aten',
+      desvio:desvSrc?`<span class="val am">${fmtDesvioML(desvSrc)}</span>`:'<span class="dn">—</span>'});});
+  fatos.sort((a,b)=>vigNum(b.vig)-vigNum(a.vig)||String(a.origem).localeCompare(String(b.origem))||String(a.fato).localeCompare(String(b.fato)));
+  return fatos;
+}
+async function carregar(){
+  const list=document.getElementById('list');
+  if(PREVIEW){ list.innerHTML='<div class="loading">Carregando…</div>'; render(await gerarFatos()); return; }
+  const CK='plano_cache_'+UNIDADE_COD;
+  const cached=readCache(CK);
+  if(cached&&cached.length){ indexDB(cached); render(fatosDaBase()); }   // pinta na hora
+  else list.innerHTML='<div class="loading">Carregando…</div>';
+  const rows=await fetchDB(); avisoPlano();                              // revalida
+  if(rows){ writeCache(CK,rows); render(fatosDaBase()); }
+  else if(cached){ indexDB(cached); render(fatosDaBase()); }             // rede falhou: mantém cache
+  else render(fatosDaBase());
+}
+// "Gerar todas as unidades" (só admin, chamado via ?gen=all): puxa da planilha e GRAVA na base os fatos novos
+// de cada unidade. Depois o painel não depende mais do sheet.
+async function gerarTodas(){
+  const list=document.getElementById('list');
+  document.querySelectorAll('.hfilter').forEach(e=>e.style.display='none');
+  ['uniBadge','uniSel','adminBtn','saveBtn','savedMsg','backUnits','viewBtn','flatBtn','secAtalhos','btNova'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  const intro=document.querySelector('.intro'); if(intro)intro.style.display='none';
+  list.innerHTML='<div class="loading">Baixando planilhas…</div>';
+  // RPM recriado por (unidade, vigência) dentro do seedUnidade — meses anteriores e Custos preservados
+  const shared={ger:await _gvizSafe(SRC_GEROT), dep:await _gvizSafe(SRC_DEPARA), dre:await _gvizSafe(srcDre())};   // sem Disp/Km-L: a causa é só as contas
+  const units=Object.keys(DEPARA).sort();
+  const log=[]; let tot=0;
+  for(const u of units){
+    UNIDADE_COD=u; applyDepara(u);
+    let novos=0,err='';
+    try{ novos=await seedUnidade(u,shared); tot+=novos; }
+    catch(e){ err=e.message||String(e); }
+    log.push(`<tr><td>${esc(u)}</td><td class="num">${novos}</td><td>${err?'<span style="color:var(--red)">'+esc(err)+'</span>':'<span style="color:var(--green)">ok</span>'}</td></tr>`);
+    list.innerHTML=`<div class="loading">Gerando… ${log.length}/${units.length} unidades</div>`;
+  }
+  // ── OFICIAL: causa, ação e dono do motor do FCA Automático, direto na fca (Renan, 15/10/2026: "Não quero enviar.
+  // Quero que já seja direto o oficial quando for gerar FCA custos"). Roda DEPOIS de os fatos do mês existirem,
+  // porque a 1ª ação de cada fato reusa a linha vazia criada acima. Falha aqui não desfaz os fatos: eles ficam
+  // vazios, como antes, e a próxima geração preenche (o plano é idempotente).
+  let ofi=null, ofiErr='';
+  try{ ofi=await oficialNaGeracao(t=>{list.innerHTML=`<div class="loading">Causas e ações automáticas… ${esc(t)}</div>`;}); }
+  catch(e){ ofiErr=e.message||String(e); console.error('oficial',e); }
+  try{Object.keys(localStorage).filter(k=>k.indexOf('plano_cache_')===0).forEach(k=>localStorage.removeItem(k));}catch(e){}  // força revalidação
+  const acoesUni=u=>ofi?ofi.P.upd.filter(x=>x.f.uni===u).length+ofi.P.ins.filter(r=>r.unidade===u).length:0;
+  const logO=log.map((h,i)=>h.replace('</td><td>',`</td><td class="num">${ofi?acoesUni(units[i]):'—'}</td><td>`));
+  const F=window.FcaAuto;
+  const sub=ofi?`${ofi.r.upd+ofi.r.ins} ação(ões) gravada(s) em ${ofi.fatosN} fato(s) de ${F.vigLbl(F.OFICIAL_INICIO)} em diante`
+      +(ofi.P.pulados.length?` · ${ofi.P.pulados.length} fato(s) já preenchido(s) à mão ficaram como estavam: ${esc(ofi.P.pulados.map(f=>f.uni+' '+f.proj+' '+f.pac+' '+f.vigLbl).join('; '))}`:'')
+      +(ofi.P.semAcao.length?` · ${ofi.P.semAcao.length} sem ação (tolerância ou sem evidência)`:'')
+      +(F.OFICIAL_FORA.size?` · fora: ${esc([...F.OFICIAL_FORA].map(k=>k.split('|')[0]+' '+F.vigLbl(k.split('|')[1])).join(', '))}`:'')
+    :`<span style="color:var(--vermelho)">Causas e ações automáticas NÃO gravadas: ${esc(ofiErr)}. Os fatos ficaram vazios; gerar de novo preenche.</span>`;
+  list.innerHTML=`<div class="genres"><h2 class="genres-h">Geração concluída — ${tot} fato(s) novo(s)${ofi?` · ${ofi.r.upd+ofi.r.ins} ação(ões) automática(s)`:''}</h2>
+    <div class="genres-sub">${sub}</div>
+    <table class="gentbl"><thead><tr><th>Unidade</th><th class="num">Novos</th><th class="num">Ações automáticas</th><th>Status</th></tr></thead><tbody>${logO.join('')}</tbody></table>
+    <a class="btn" style="display:inline-block;margin-top:14px;text-decoration:none" href="../fca-consolidado/">← Voltar ao Admin</a></div>`;
+}
+// Lê as bases com o motor do FCA Automático (assets/fca-auto.js), monta o plano oficial contra a fca já com os
+// fatos do mês e grava: 1ª ação de cada fato na linha vazia (update), as demais como linhas novas; fato escrito à
+// mão é pulado; reenviar não duplica. Devolve {P (plano), r (gravado), fatosN}.
+async function oficialNaGeracao(etapa){
+  const F=window.FcaAuto; if(!F) throw new Error('o motor do FCA Automático (assets/fca-auto.js) não carregou');
+  const L=await F.carregar(sb,{etapa});
+  if(!L.dre) throw new Error('o DRE (aba Frota) não respondeu ao motor');
+  if(!L.fcaAutoCol) throw new Error('a tabela fca não tem a coluna auto_chave (rodar scripts/fca-auto-oficial.sql no Supabase)');
+  etapa('Prolog de hoje (pneus)');
+  try{ L.prolog=await F.carregarProlog(sb); }catch(e){ console.warn('prolog',e); L.prolog={}; }
+  etapa('diagnóstico');
+  const CTX=F.contexto(L,{}), fatos=CTX.todos.filter(f=>f.estourou);
+  const P=F.planoOficial(fatos,L.fca||[],CTX);
+  const fatosN=new Set(P.ins.map(r=>r.unidade+'|'+r.vigencia+'|'+r.projeto+'|'+r.fato).concat(P.upd.map(x=>x.f.id))).size;
+  etapa(`gravando ${P.upd.length+P.ins.length} ação(ões)`);
+  const r=await F.aplicaOficial(sb,P,L.fca);
+  return {P,r,fatosN};
+}
+// Importação ÚNICA do FCA Total (histórico preenchido de Custos + RPM). Substitui a base (cutover). Só admin.
+async function importarFCATotal(){
+  const list=document.getElementById('list');
+  document.querySelectorAll('.hfilter').forEach(e=>e.style.display='none');
+  ['uniBadge','uniSel','adminBtn','saveBtn','savedMsg','backUnits','viewBtn','flatBtn','secAtalhos','btNova'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  const intro=document.querySelector('.intro'); if(intro)intro.style.display='none';
+  list.innerHTML='<div class="loading">Lendo FCA Total…</div>';
+  let rows; try{ rows=await gviz(SRC_FCATOTAL); }catch(e){ list.innerHTML='<div class="empty">Erro ao ler o FCA Total.</div>'; return; }
+  const isoD=d=>d?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'):null;
+  const mapSt=s=>{const t=String(s||'').toLowerCase();if(t.includes('conclu'))return 'Concluída';if(t.includes('andam'))return 'Em andamento';if(t.includes('cancel'))return 'Cancelada';return 'Não iniciada';};
+  const txt=v=>{const s=v==null?'':String(v).trim();return s||null;};
+  const payload=[];
+  (rows||[]).forEach(r=>{
+    const unidade=String(r[2]||'').trim().toUpperCase(); if(!unidade)return;
+    let fato=String(r[4]||'').trim(); if(!fato)return;
+    const origem=String(r[0]||'').trim().toUpperCase()==='RPM'?'RPM':'Custos';
+    let fdesv=null;
+    if(origem==='RPM'){const nl=fato.indexOf('\n');if(nl>=0){fdesv=fato.slice(nl).replace(/\s+/g,' ').trim();fato=fato.slice(0,nl).trim();}}
+    payload.push({unidade,vigencia:vigLbl(parseD(r[1]))||String(r[1]||'').trim(),origem,fato,projeto:txt(r[3]),fato_desvio:fdesv,causa:txt(r[5]),acao:txt(r[6]),responsavel:null,prazo:isoD(parseD(r[7])),status:mapSt(r[8]),acompanhamento:null,locked:false});
+  });
+  list.innerHTML='<div class="loading">Limpando base e importando '+payload.length+' linhas…</div>';
+  try{
+    await sb.from(naoUsar()).delete().not('id','is',null);                 // cutover: zera a base
+    for(let i=0;i<payload.length;i+=200){const {error}=await sb.from(naoUsar()).insert(payload.slice(i,i+200));if(error)throw error;}
+  }catch(e){console.error(e); list.innerHTML='<div class="empty">Erro ao importar: '+esc(e.message||e)+'</div>'; return; }
+  try{Object.keys(localStorage).filter(k=>k.indexOf('plano_cache_')===0).forEach(k=>localStorage.removeItem(k));}catch(e){}
+  list.innerHTML='<div class="genres"><h2 class="genres-h">FCA Total importado — '+payload.length+' linha(s)</h2><a class="btn" style="display:inline-block;margin-top:14px;text-decoration:none" href="../fca-consolidado/">← Voltar ao Admin</a></div>';
+}
+// Gera os desvios da RPM (IC e IV que desviaram) da aba "Base RPM" para o banco — ADITIVO, vazios p/ as unidades
+// preencherem no painel. Nada é apagado: histórico e o que já foi preenchido ficam intactos. Só admin (?sync=rpm).
+async function sincronizarRPM(){
+  const list=document.getElementById('list');
+  document.querySelectorAll('.hfilter').forEach(e=>e.style.display='none');
+  ['uniBadge','uniSel','adminBtn','saveBtn','savedMsg','backUnits','viewBtn','flatBtn','secAtalhos','btNova'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  const intro=document.querySelector('.intro'); if(intro)intro.style.display='none';
+  list.innerHTML='<div class="loading">Lendo os indicadores do Gerot…</div>';
+  let payload;
+  try{ payload=await desviosDoGerot(); }
+  catch(e){ list.innerHTML='<div class="empty">Erro ao ler os indicadores do Gerot:<br>'+esc(e.message||e)+'</div>'; return; }
+  if(!payload.length){ list.innerHTML='<div class="empty">Nenhum indicador do Gerot abaixo da meta na vigência mais recente.</div>'; return; }
+  list.innerHTML='<div class="loading">Gravando os desvios novos de RPM…</div>';
+  let novos=0;
+  try{
+    // aditivo: só insere o que ainda não existe (chave = vig+RPM+projeto+fato). Não apaga nem sobrescreve.
+    const {data:cur,error:eCur}=await fcaTudo(sb,'vigencia,projeto,fato',q=>q.eq('origem','RPM'));if(eCur)throw eCur;
+    const have=new Set((cur||[]).map(r=>fkey(r.vigencia,'RPM',r.projeto,r.fato)));
+    const ins=payload.filter(p=>!have.has(fkey(p.vigencia,'RPM',p.projeto,p.fato)));
+    novos=ins.length;
+    for(let i=0;i<ins.length;i+=200){const {error}=await sb.from(naoUsar()).insert(ins.slice(i,i+200));if(error)throw error;}
+  }catch(e){ list.innerHTML='<div class="empty">Erro ao gravar na base: '+esc(e.message||e)+'</div>'; return; }
+  try{Object.keys(localStorage).filter(k=>k.indexOf('plano_cache_')===0).forEach(k=>localStorage.removeItem(k));}catch(e){}
+  list.innerHTML='<div class="genres"><h2 class="genres-h">RPM gerada — '+novos+' desvio(s) novo(s) no banco</h2>'
+    +'<div class="genres-sub">'+payload.length+' indicador(es) abaixo da meta na vigência '+esc(payload[0].vigencia)+'.</div>'
+    +'<a class="btn" style="display:inline-block;margin-top:14px;text-decoration:none" href="../fca-consolidado/">← Voltar ao Admin</a></div>';
+}
+
+// ── DESVIOS DA RPM = OS INDICADORES DO GEROT ABAIXO DA META ──────────────────
+// Regra do Renan: QUALQUER indicador que não está atingindo a meta vira FCA.
+// A fonte é a MESMA do painel Gerot (assets/gerot-base.js → elite_snapshot do
+// robô), não mais a aba "Base RPM" do Sheets (que ficou sem apuração de julho
+// em diante e por isso não gerava nada). Gera a ÚLTIMA vigência com dados;
+// aditivo, então rodar todo mês vai acumulando.
+// Aceita ?vig=YYYY-MM para gerar uma vigência específica.
+async function desviosDoGerot(){
+  if(!window.GerotBase) throw new Error('gerot-base.js não carregou');
+  const recs=await GerotBase.load();
+  if(!recs.length) throw new Error('sem indicadores no elite_snapshot');
+  // A vigência é o ÚLTIMO MÊS FECHADO: o último mês em que os indicadores-chave
+  // (os do Frota de Elite, que o robô coleta do Ginfo do dia 01 ao 15) têm dado.
+  // Os adicionais do Gerot (Amplitude e % Calibragem do Prolog, OS Vencida e
+  // Blitz do Termômetro) são a foto de HOJE e já vêm carimbados no mês corrente:
+  // olhar o maior vig de TODOS os registros gerava a RPM de nov/26 no dia 12/11,
+  // só com esses 13 adicionais, em vez do fechamento de outubro (Renan, 12/11/2026).
+  // e o mês corrente fica fora: o robô do Frota de Elite grava a PRÉVIA dele
+  // todo dia (19/11/2026), então ele também tem indicador-chave.
+  const _h=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}));
+  const mesCorr=_h.getFullYear()+'-'+String(_h.getMonth()+1).padStart(2,'0');
+  const fechados=[...new Set(recs.filter(r=>!r.soGerot&&r.field!=='comb'&&r.vig<mesCorr).map(r=>r.vig))].sort();
+  const alvo=(new URLSearchParams(location.search).get('vig')||'').trim()
+          || fechados.pop()
+          || [...new Set(recs.map(r=>r.vig))].sort().pop();
+  const doMes=recs.filter(r=>r.vig===alvo);
+  // unidade do Ginfo ('CDD RIO DE JANEIRO') → {abrev:'CGR', projeto:'ROTA'}
+  const uniMap=_RPM_MAP_N;
+  const vigTxt=vigLbl(new Date(+alvo.slice(0,4), +alvo.slice(5,7)-1, 1));
+  const out=[];
+  doMes.forEach(r=>{
+    if(r.field==='comb') return;                                     // Combustível NÃO vira FCA de RPM
+                                                                     // (Renan, 14/08/2026): já é tratado
+                                                                     // no pacote Combustíveis dos Custos
+    const dp=uniMap[_normU(r.unit)]; if(!dp) return;                 // só unidades do mapa da RPM
+    const atg=r.atgMeta!=null?r.atgMeta:r.atg;                       // atingimento CONTRA A META
+    if(atg==null||!isFinite(atg)||atg>=100) return;                  // só o que não atingiu
+    if(r.meta==null||!isFinite(r.meta)) return;                      // sem meta não há o que cobrar
+    out.push({unidade:dp.abrev, vigencia:vigTxt, origem:'RPM', fato:r.label, projeto:dp.projeto,
+      fato_desvio:`Meta: ${fmtInd(r,r.meta)} | Real: ${fmtInd(r,r.real)} | Ating: ${Math.round(atg)}%`,
+      causa:null, acao:null, prazo:null, status:DEFAULT_STATUS, locked:false});
+  });
+  // maior desvio primeiro
+  out.sort((a,b)=>(+String(a.fato_desvio).match(/Ating: (-?\d+)/)[1])-(+String(b.fato_desvio).match(/Ating: (-?\d+)/)[1]));
+  return out;
+}
+// valor de um indicador no formato dele (%, contagem, hh:mm:ss, mm, km/L)
+function fmtInd(r,v){
+  if(v==null||!isFinite(v))return '—';
+  const f=r.fmt;
+  if(f==='count') return String(Math.round(v));
+  if(f==='mm')    return (Math.round(v*10)/10).toLocaleString('pt-BR')+' mm';
+  if(f==='kml')   return (Math.round(v*100)/100).toLocaleString('pt-BR')+' km/L';
+  if(f==='time'){const sc=Math.round(v),h=Math.floor(sc/3600),m=Math.floor(sc%3600/60);return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;}
+  return (Math.round(v*10)/10).toLocaleString('pt-BR')+'%';
+}
+
+const STATUS=['Não iniciada','Em andamento','Concluída','Cancelada'];
+const DEFAULT_STATUS='Não iniciada';
+const PRZ_OPTS=['Vencida','No prazo','Sem prazo'];
+// Status do prazo de uma ação pela data de vencimento (concluída/cancelada não vence).
+function prazoState(r){
+  const st=String(r.status||DEFAULT_STATUS);
+  if(/conclu|cancel/i.test(st)) return 'No prazo';
+  if(!r.prazo) return 'Sem prazo';
+  const d=new Date(String(r.prazo).slice(0,10)+'T00:00:00'); if(isNaN(d)) return 'Sem prazo';
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  return d<hoje ? 'Vencida' : 'No prazo';
+}
+
+// ── Ações vêm do Supabase (mapeadas por chave de fato) ──
+const keyOf=f=>fkey(f.vig,f.origem,f.proj,f.fato);
+// preserva as quebras: o desvio agora tem várias linhas (pacote + contas)
+const stripTags=h=>String(h||'').replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]*>/g,'').replace(/[ \t]+/g,' ').replace(/ *\n */g,'\n').trim();
+function loadAcoes(key,causaAuto){
+  if(PREVIEW){ try{const v=JSON.parse(localStorage.getItem('fca_prev_'+key));if(Array.isArray(v)&&v.length)return v;}catch(e){} return [{id:'',causa:causaAuto||'',acao:'',resp:'',prazo:'',status:DEFAULT_STATUS,obs:'',locked:false}]; }
+  const rows=_DBROWS[key];
+  if(rows&&rows.length)return rows.map(r=>({id:r.id,causa:r.causa||'',acao:r.acao||'',resp:r.responsavel||'',prazo:r.prazo||'',status:r.status||DEFAULT_STATUS,obs:r.acompanhamento||'',locked:!!r.locked,fdesv:r.fato_desvio||''}));
+  return [{id:'',causa:causaAuto||'',acao:'',resp:'',prazo:'',status:DEFAULT_STATUS,obs:'',locked:false}];
+}
+function blankAcao(){return {id:'',causa:'',acao:'',resp:'',prazo:'',status:DEFAULT_STATUS,obs:'',locked:false};}
+
+function rowHTML(a,canRemove){
+  const opts=STATUS.map(s=>`<option ${a.status===s?'selected':''}>${s}</option>`).join('');
+  const lk=false;                     // a unidade edita sempre (sem trava após salvar)
+  const d=lk?' disabled':'';
+  return `<tr data-id="${a.id||''}" data-locked=""${lk?' class="locked"':''}>
+    <td class="col-causa"><span class="cell-label">Causa</span><textarea rows="1" data-k="causa" placeholder="Por que aconteceu?"${d}>${esc(a.causa)}</textarea></td>
+    <td class="col-acao"><span class="cell-label">Ação</span><textarea rows="1" data-k="acao" placeholder="O que será feito?"${d}>${esc(a.acao)}</textarea></td>
+    <td class="col-resp"><span class="cell-label">Responsável</span><input type="text" data-k="resp" placeholder="Quem?" value="${esc(a.resp)}"${d}></td>
+    <td class="col-prazo"><span class="cell-label">Prazo</span><input type="date" data-k="prazo" value="${esc(a.prazo)}"${d}></td>
+    <td class="col-status"><span class="cell-label">Status</span><select class="st" data-k="status" data-v="${esc(a.status||DEFAULT_STATUS)}"${d}>${opts}</select></td>
+    <td class="col-acomp"><span class="cell-label">Acompanhamento</span><textarea rows="1" data-k="obs" placeholder="Atualizações de progresso…">${esc(a.obs||'')}</textarea></td>
+    <td class="col-x"><button class="rm-btn" title="Remover ação" ${canRemove&&!lk?'':'style="visibility:hidden"'}>&times;</button></td>
+  </tr>`;
+}
+
+let _FATOS=[];
+function render(fatos){ _FATOS=fatos||[]; popFiltros(); aplicar(); }
+// PROJETOS = os mesmos da Visão Financeira (Renan, 14/08/2026): tudo vem de lá.
+// A lista do FCA vinha do que estava gravado no banco e trazia uma cacetada de
+// variação (ADMINISTRATIVO, EMPURRADA BITREM…) que não existe no filtro da VF.
+const PROJ_CANON=['APOIO','AUTO SERVIÇO','DISTRIBUIÇÃO URBANA','EMPURRADA','INSUMOS','ROTA','TERCEIROS'];
+const _pn=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+const _PROJ_SET=new Set(PROJ_CANON.map(_pn));
+const projCanon=v=>_PROJ_SET.has(_pn(v));
+// mantém a ORDEM da Visão Financeira
+const projFiltra=arr=>PROJ_CANON.filter(c=>arr.some(v=>_pn(v)===_pn(c)));
+let PROJ_OPTS=[],IND_OPTS=[],VIG_OPTS=[],ORG_OPTS=[],CONTA_OPTS=[],_vigInit=false,_vigAuto='';
+// nome limpo do fato: 1ª linha, sem o "Desvio de R$ …" dos fatos antigos e
+// sem o prefixo "Pacote " (formato anterior) — o filtro lista indicador/conta,
+// nunca o valor do desvio.
+const nomeLimpo=t=>{
+  let x=String(t||'').split('\n')[0].trim();
+  // fato antigo grudado: "CombustíveisDesvio de R$ 10.947" (sem espaço antes do Desvio)
+  x=x.replace(/(\S)\s*desvio\s*(de\s+r\$|:|$)[\s\S]*$/i,'$1').replace(/\s+desvio\b[\s\S]*$/i,'').replace(/^pacote\s+/i,'').trim();
+  return x;
+};
+// Indicador/Conta: nos Custos vale o PACOTE (o próprio fato), não as contas
+// contábeis das linhas "- Conta:" do desvio; na RPM vale o nome do indicador.
+const contasDeF=f=>{const n=nomeLimpo(f.fato);return n?[n]:[];};
+function syncBadge(w){const c=w.querySelector('.ms-cnt'),n=w._sel?w._sel.size:0;if(c){c.textContent=n;c.style.display=n?'inline-block':'none';}}
+function _buildMs(w,getItems){
+  if(!w)return; if(!(w._sel instanceof Set))w._sel=new Set();
+  const list=w.querySelector('.ms-list'),srch=w.querySelector('.ms-search input');
+  w._render=(q='')=>{const sel=w._sel,f=(q||'').toLowerCase(),items=getItems(),shown=items.filter(v=>String(v).toLowerCase().includes(f)),all=sel.size===0;
+    list.innerHTML=(!q?`<label class="ms-opt all-opt"><input type="checkbox" class="ms-all" ${all?'checked':''}> Todos</label>`:'')+shown.map(v=>`<label class="ms-opt"><input type="checkbox" data-v="${esc(v)}" ${all||sel.has(v)?'checked':''}> ${esc(v)}<span class="ms-only" data-v="${esc(v)}">só</span></label>`).join('');syncBadge(w);};
+  list.addEventListener('change',e=>{const sel=w._sel,b=e.target;if(!b.matches('input[type=checkbox]'))return;if(b.classList.contains('ms-all')){sel.clear();}else if(sel.size===0){if(!b.checked)getItems().forEach(v=>{if(v!==b.dataset.v)sel.add(v);});}else{if(b.checked)sel.add(b.dataset.v);else sel.delete(b.dataset.v);const a=getItems();if(a.length&&a.every(v=>sel.has(v)))sel.clear();}w._render(srch.value);aplicar();});
+  list.addEventListener('click',e=>{const sel=w._sel,o=e.target.closest('.ms-only');if(!o)return;e.preventDefault();e.stopPropagation();sel.clear();sel.add(o.dataset.v);w._render(srch.value);aplicar();});
+  srch.addEventListener('input',()=>w._render(srch.value));srch.addEventListener('click',e=>e.stopPropagation());
+  w._render();
+}
+function toggleMs(id){
+  document.querySelectorAll('.ms-panel.open').forEach(p=>{if(p.closest('.ms-wrap').id!==id)p.classList.remove('open');});
+  const p=document.querySelector('#'+id+' .ms-panel'); if(!p) return;
+  p.classList.toggle('open');
+  // as opções em cascata (Fato, Indicador/Conta) seguem os outros filtros: refaz ao abrir
+  if(p.classList.contains('open')){ const w=document.getElementById(id), s=w&&w.querySelector('.ms-search input'); if(w&&w._render) w._render(s?s.value:''); }
+  // o painel dos ÚLTIMOS filtros (Causa, Ação) estourava a borda da janela e
+  // sumia: se não couber ancorado à esquerda, ancora à direita do botão.
+  if(p.classList.contains('open')){
+    p.style.left=''; p.style.right='';
+    const r=p.getBoundingClientRect();
+    if(r.right>window.innerWidth-8){ p.style.left='auto'; p.style.right='0'; }
+    const r2=p.getBoundingClientRect();
+    if(r2.left<8){ p.style.left='0'; p.style.right='auto'; }
+  }
+}
+function getMsValues(id){const w=document.getElementById(id);return w&&w._sel?[...w._sel]:[];}
+function respFiltro(){const e=document.getElementById('f-resp');return e?e.value.trim().toLowerCase():'';}
+// pesquisa por palavra-chave (assets/fca-busca.js): fato e ação juntos, todas as palavras.
+// r é linha do banco (responsavel, acompanhamento) ou ação do loadAcoes (resp, obs)
+function buscaAc(r,f){ if(!window.FcaBusca||!FcaBusca.ativa()) return true; f=f||{};
+  return FcaBusca.ok(UNIDADE_COD,f.proj,projLabel(f.proj),f.vig,f.origem,f.fato,f.nome,stripTags(f.desvio||''),
+    r.causa,r.acao,r.responsavel,r.resp,r.acompanhamento,r.obs,r.status||DEFAULT_STATUS,r.fato_desvio,r.fdesv); }
+function respOk(v,fr){return !fr||String(v||'').toLowerCase().includes(fr);}
+// INDICADOR E INDICADOR/CONTA EM CASCATA (Renan, 13/10/2026): as opções saem só
+// dos fatos que passam em Vigência, Origem e Projeto; o já marcado fica na lista.
+function _fatosCascata(){const fv=getMsValues('ms-vig'),fo=getMsValues('ms-org'),fp=getMsValues('ms-proj');
+  return _FATOS.filter(f=>(!fv.length||fv.includes(f.vig))&&(!fo.length||fo.includes(f.origem))&&(!fp.length||fp.includes(projLabel(f.proj))));}
+const _comMarcados=(id,arr)=>[...new Set(arr.concat(getMsValues(id)))].sort();
+function indItems(){return _comMarcados('ms-ind',_fatosCascata().map(f=>f.fato).filter(Boolean));}
+function contaItems(){return _comMarcados('ms-conta',_fatosCascata().flatMap(contasDeF).filter(Boolean));}
+function popFiltros(){
+  VIG_OPTS=[...new Set(_FATOS.map(f=>f.vig).filter(Boolean))].sort((a,b)=>vigNum(b)-vigNum(a));
+  ORG_OPTS=[...new Set(_FATOS.map(f=>f.origem).filter(Boolean))].sort();
+  PROJ_OPTS=projFiltra([...new Set(_FATOS.map(f=>projLabel(f.proj)))]);
+  IND_OPTS=[...new Set(_FATOS.map(f=>f.fato))].sort();
+  CONTA_OPTS=[...new Set(_FATOS.flatMap(contasDeF).filter(Boolean))].sort();
+  // 1ª carga: já abre na vigência mais recente (as outras ficam no filtro)
+  const wv=document.getElementById('ms-vig');
+  // no Plano de Ação abre com TODAS as vigências: ação aberta de mês passado continua sendo pendência
+  if(wv && wv._sel && !_vigInit && VIG_OPTS.length){ _vigInit=true; }  // muta o Set (não substitui) p/ o dropdown refletir
+  // a escolha AUTOMÁTICA acompanha o dado novo (Renan, 22/10/2026): a tela pinta o cache e relê;
+  // se o cache era de antes de set/26 entrar, o filtro ficava em ago/26. Escolha à mão não muda.
+  else if(wv && wv._sel && _vigAuto && VIG_OPTS.length && wv._sel.size===1 && wv._sel.has(_vigAuto) && VIG_OPTS[0]!==_vigAuto){ wv._sel.clear(); wv._sel.add(VIG_OPTS[0]); _vigAuto=VIG_OPTS[0]; }
+  ['ms-vig','ms-org','ms-proj','ms-ind','ms-conta','ms-st','ms-prazo'].forEach(id=>{const w=document.getElementById(id);if(w&&w._render)w._render('');});
+}
+// largura da barra de rolagem do quadro → alinha a faixa de títulos com as colunas
+function alinhaCabecalhos(){
+  const k=document.querySelector('.kanban'); if(!k) return;
+  document.documentElement.style.setProperty('--sb',(k.offsetWidth-k.clientWidth)+'px');
+}
+window.addEventListener('resize',alinhaCabecalhos);
+// A roda do mouse em QUALQUER ponto do quadro rola o kanban — inclusive sobre a
+// faixa de títulos e as bordas, onde o evento não nasce dentro da área rolável.
+// E o quadro aceita teclado (PgDn/setas/espaço): ganha foco ao entrar no Kanban.
+document.addEventListener('wheel',function(e){
+  const mn=document.querySelector('.board .main'); if(!mn||!mn.classList.contains('kan'))return;
+  if(e.target.closest('.kanban')||e.target.closest('.kmodal')||e.target.closest('.menu')||e.target.closest('.ms-panel')||e.target.closest('.side'))return;
+  const k=mn.querySelector('.kanban'); if(!k)return;
+  k.scrollTop+=e.deltaY;
+},{passive:true});
+document.addEventListener('click',function(e){
+  if(e.target.closest('input,textarea,select,button,a,[contenteditable]'))return;
+  const k=e.target.closest('.main.kan .kanban'); if(!k)return;
+  k.setAttribute('tabindex','-1'); k.style.outline='none'; k.focus({preventScroll:true});
+});
+function focaQuadro(){
+  const k=document.querySelector('.main.kan .kanban'); if(!k)return;
+  k.setAttribute('tabindex','-1'); k.style.outline='none';
+  const ae=document.activeElement;
+  if(!ae||ae===document.body) k.focus({preventScroll:true});
+}
+
+function aplicar(){
+  const list=document.getElementById('list');
+  // o texto de instrução era da tela de Fatos (que saiu do menu); no hub de
+  // unidades ele é reescrito e continua aparecendo, porque lá aplicar() não roda
+  const intro=document.querySelector('.intro'); if(intro) intro.style.display='none';
+  const mn=document.querySelector('.board .main');
+  if(mn){ mn.classList.toggle('rola', VIEW==='flat'||VIEW==='gantt');
+           mn.classList.toggle('kan', VIEW==='kanban'); }
+  setTimeout(function(){alinhaCabecalhos();focaQuadro();},0);
+  if(!_FATOS.length){list.innerHTML='<div class="empty">Nenhuma ação no plano desta unidade. Use <b>+ Nova ação</b> na lateral para lançar uma da RPS ou do dia a dia.</div>';return;}
+  const fv=getMsValues('ms-vig'), fo=getMsValues('ms-org'), fp=getMsValues('ms-proj'), fi=getMsValues('ms-ind'), fct=getMsValues('ms-conta'), fs=getMsValues('ms-st'), fpz=getMsValues('ms-prazo'), fr=respFiltro();
+  const acMatch=(r,f)=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr)&&buscaAc(r,f);
+  const vis=_FATOS.filter(f=>(!fv.length||fv.includes(f.vig))&&(!fo.length||fo.includes(f.origem))&&(!fp.length||fp.includes(projLabel(f.proj)))&&(!fi.length||fi.includes(f.fato))&&(!fct.length||contasDeF(f).some(c=>fct.includes(c)))
+    &&(!(fs.length||fpz.length||fr||(window.FcaBusca&&FcaBusca.ativa())) || loadAcoes(keyOf(f),f.causaAuto).some(r=>acMatch(r,f))));
+  if(!vis.length){list.innerHTML='<div class="empty">Nenhum fato para o filtro selecionado.</div>';return;}
+  if(VIEW==='resumo'){
+    // a série mensal ignora o filtro de VIGÊNCIA: os outros meses continuam
+    // no gráfico, apagados, como no Painel KM e na Visão Financeira
+    const visSemVig=_FATOS.filter(f=>(!fo.length||fo.includes(f.origem))&&(!fp.length||fp.includes(projLabel(f.proj)))&&(!fi.length||fi.includes(f.fato))&&(!fct.length||contasDeF(f).some(c=>fct.includes(c)))
+      &&(!(fs.length||fpz.length||fr||(window.FcaBusca&&FcaBusca.ativa())) || loadAcoes(keyOf(f),f.causaAuto).some(r=>acMatch(r,f))));
+    list.innerHTML=AderenciaView.html({dims:DIMS_ADER}); pintaResumoFCA(vis,visSemVig,fv); return; }
+  if(VIEW==='kanban'){ list.innerHTML=kanbanHTMLpre(vis); return; }
+  if(VIEW==='gantt'){ list.innerHTML=ganttHTMLpre(vis); return; }
+  if(VIEW==='flat'){ list.innerHTML=relatorioHTMLpre(vis); return; }
+  list.innerHTML=vis.map(f=>{
+    const key=keyOf(f);
+    const acoes=loadAcoes(key,f.causaAuto);
+    const rows=acoes.map((a,i)=>rowHTML(a,i>0)).join('');
+    return `<div class="fato-block ${f.sev}" data-key="${esc(key)}" data-vig="${esc(f.vig)}" data-origem="${esc(f.origem||'')}" data-proj="${esc(f.proj||'')}" data-fato="${esc(f.fato)}" data-desvio="${esc(stripTags(f.desvio))}">
+      <div class="fato-head">
+        <div class="fato-unit">${esc(UNIDADE_COD)}</div>
+        <div class="fato-field"><b>Projeto</b> <span>${esc(projLabel(f.proj))}</span></div>
+        <div class="fato-field"><b>Origem:</b> <span>${esc(f.origem||'—')}</span></div>
+        <div class="fato-field"><b>Vigência:</b> <span>${esc((f.vig||'').toUpperCase())}</span></div>
+        <div class="fato-nome">${esc(f.nome||f.fato)}</div>
+        <div class="fato-lbl">Fato:</div>
+        <div class="fato-desv">${f.desvio}</div>
+      </div>
+      <div class="acoes-wrap">
+        <table class="acoes">
+          <thead><tr><th class="col-causa">Causa</th><th class="col-acao">Ação</th><th class="col-resp">Responsável</th><th class="col-prazo">Prazo</th><th class="col-status">Status</th><th class="col-acomp">Acompanhamento</th><th class="col-x"></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div class="add-row"><button class="add-acao add-rep" type="button">+ adicionar ação</button><button class="add-acao add-new" type="button">+ adicionar causa</button></div>
+      </div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.fato-block').forEach(wireBlock);
+  autoResizeAll(list);
+}
+
+// ── Views: 'kanban' (padrão) · 'tabela' (fatos em blocos) · 'flat' (tabela/relatório) ──
+let VIEW='flat';   // abre SEMPRE na Tabela (Renan, 16/10/2026)
+// prazo no card do Kanban (padrão do Planner): data + status + dias p/ vencer ou vencida
+function diasVenc(iso){const h=new Date();h.setHours(0,0,0,0);const p=new Date(String(iso).slice(0,10)+'T00:00:00');return Math.round((p-h)/864e5);}
+function prazoBadgeK(r){
+  const st=prazoState(r);
+  const cls=st==='Vencida'?'venc':(st==='Sem prazo'?'sem':'ok');
+  const dt=r.prazo?String(r.prazo).slice(0,10).split('-').reverse().join('/'):'sem prazo';
+  let dias='';
+  const ativa=!/conclu|cancel/i.test(String(r.status||DEFAULT_STATUS));
+  if(r.prazo&&ativa){const d=diasVenc(r.prazo);dias=`<span class="kdays ${d<0?'venc':'ok'}">${d<0?'vencida há '+(-d)+'d':(d===0?'vence hoje':d+'d p/ vencer')}</span>`;}
+  return `${dt}<span class="kbadge ${cls}">${st}</span>${dias}`;
+}
+// rodapé do card no padrão do Planner: só data + dias (vermelho quando atrasada) — sem pílula
+function prazoTextoK(r){
+  const dt=r.prazo?String(r.prazo).slice(0,10).split('-').reverse().join('/'):'';
+  if(!dt) return 'sem prazo';
+  const ativa=!/conclu|cancel/i.test(String(r.status||DEFAULT_STATUS));
+  if(!ativa) return dt;
+  const d=diasVenc(r.prazo);
+  if(d<0)  return `<span class="atraso">${dt} · ${-d}d de atraso</span>`;
+  return dt+(d===0?' · vence hoje':' · '+d+'d');
+}
+function iniciaisK(n){
+  const p=String(n||'').trim().split(/\s+/).filter(Boolean);
+  if(!p.length) return '?';
+  return (p.length>1?p[0][0]+p[p.length-1][0]:p[0].slice(0,2)).toUpperCase();
+}
+// setas coloridas nos textos gerados: ▲ estouro (vermelho) · ▼ saving (verde)
+const tri=h=>String(h==null?'':h).replace(/▲/g,'<span style="color:var(--red)">▲</span>').replace(/▼/g,'<span style="color:var(--green)">▼</span>');
+
+function updateViewBtnsPre(){const b=document.getElementById('viewBtn');if(b)b.textContent=VIEW==='kanban'?'Fatos':'Kanban';const f=document.getElementById('flatBtn');if(f)f.classList.toggle('active',VIEW==='flat');const g=document.getElementById('ganttBtn');if(g)g.classList.toggle('active',VIEW==='gantt');}
+const TIT={kanban:'Kanban',flat:'Tabela',gantt:'Gantt',resumo:'Resumo Gerencial',tabela:'Fatos'};   // 'tabela' (Fatos) não está mais no menu
+function vaiPara(v){
+  VIEW=v; updateViewBtnsPre();
+  const t=document.getElementById('tituloVista'); if(t) t.textContent=TIT[v]||'';
+  document.querySelectorAll('.s-item[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  aplicar();
+}
+document.querySelectorAll('.s-item[data-v]').forEach(b=>b.addEventListener('click',()=>vaiPara(b.dataset.v)));
+(function(){
+  const bt=document.getElementById('btMini'); if(!bt) return;
+  const marca=()=>{const l=document.querySelector('.side').classList.contains('mini');
+    bt.title=l?'Expandir menu':'Recolher menu';};
+  bt.addEventListener('click',()=>{
+    const l=document.querySelector('.side').classList.toggle('mini');
+    localStorage.setItem('fca_mini', l?'1':'0'); marca();
+  });
+  if(localStorage.getItem('fca_mini')==='1') document.querySelector('.side').classList.add('mini');
+  marca();
+})();
+function showGantt(){VIEW=VIEW==='gantt'?'kanban':'gantt';updateViewBtnsPre();aplicar();}
+// Gantt: mesmas ações do Kanban (uma barra por ação salva no banco), criação → prazo
+// ── Gantt: barra de cada ação, da criação até o prazo ──
+// verde no prazo, vermelha vencida (com rastro do prazo até hoje), tracejada sem prazo.
+// Mesmo desenho do Planner — o texto da ação quebra em vez de ser cortado.
+function ganttHTMLpre(vis){
+  const fs=getMsValues('ms-st'), fpz=getMsValues('ms-prazo'), fr=respFiltro();
+  const acMatch=(r,f)=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr)&&buscaAc(r,f);
+  const itens=[]; vis.forEach(f=>{const key=keyOf(f);(_DBROWS[key]||[]).forEach(r=>{
+    if(acMatch(r,f)&&r.id) itens.push({r,f});});});
+  if(!itens.length) return '<div class="cvazia">Nenhuma ação com os filtros atuais</div>';
+  itens.sort((a,b)=>String(a.r.prazo||'9999').localeCompare(String(b.r.prazo||'9999')));
+  const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const dia=v=>{if(!v)return null;const d=new Date(String(v).slice(0,10)+'T00:00:00');return isNaN(d)?null:d;};
+  const h=new Date(); h.setHours(0,0,0,0);
+  let min=h,max=h;
+  // prazo digitado com o ano errado não estica a escala (mesma regra do
+  // fca-consolidado, bug real 22/08/2026): antes da criação não conta e o
+  // teto é hoje + 6 meses.
+  const teto=new Date(h); teto.setMonth(teto.getMonth()+6);
+  itens.forEach(({r})=>{const a=dia(r.created_at)||h,b=dia(r.prazo)||h;
+    if(a<min)min=a; if(a>max)max=a;
+    const bb=b<a?a:(b>teto?teto:b); if(bb>max)max=bb;});
+  const m0=new Date(min.getFullYear(),min.getMonth(),1);
+  const m1=new Date(max.getFullYear(),max.getMonth()+1,1);
+  const tot=m1-m0, pos=d=>Math.max(0,Math.min(100,(d-m0)/tot*100));
+  const meses=[];
+  for(let d=new Date(m0); d<m1; d.setMonth(d.getMonth()+1))
+    meses.push({lbl:MES[d.getMonth()]+'/'+String(d.getFullYear()).slice(2),
+                w:(new Date(d.getFullYear(),d.getMonth()+1,1)-d)/tot*100});
+  const hj=pos(h);
+  const linhas=itens.map(({r,f})=>{
+    const ini=dia(r.created_at)||h, fim=dia(r.prazo);
+    const st=prazoState(r);
+    const cor=st==='Vencida'?'var(--vermelho)':(st==='Sem prazo'?'var(--cinza)':'var(--verde)');
+    let barra;
+    if(!fim){
+      const a=pos(ini), b=Math.max(hj,a+.6);
+      barra=`<i class="gsem" style="left:${a}%;width:${b-a}%"></i>`;
+    }else{
+      const ff=fim<ini?ini:fim, a=pos(ini), b=Math.max(pos(ff),a+.6);
+      barra=`<i style="left:${a}%;width:${b-a}%;background:${cor}"></i>`;
+      if(st==='Vencida') barra+=`<u style="left:${b}%;width:${Math.max(hj-b,.3)}%"></u>`;
+      barra+=`<em style="left:${Math.max(b,st==='Vencida'?hj:b)}%">${String(r.prazo).slice(0,10).split('-').reverse().join('/').slice(0,5)}</em>`;
+    }
+    const sub=[projLabel(f.proj),f.vig,r.responsavel].filter(Boolean).join(' · ');
+    const dica=[_firstLine(f.nome||f.fato),r.acao,r.responsavel].filter(Boolean).join(' · ');
+    return `<div class="grow" data-id="${esc(r.id)}" title="${esc(dica)}">
+      <div class="glbl"><b>${esc(_firstLine(f.nome||f.fato))||'—'}</b><span>${esc(r.acao)||'(ação não preenchida)'}</span><em class="gsub">${esc(sub)}</em></div>
+      <div class="gbar"><span class="ghoje" style="left:${hj}%"></span>${barra}</div>
+    </div>`;
+  }).join('');
+  return `<div class="gantt"><div class="grol"><div class="gin" style="min-width:${Math.max(800,340+meses.length*84)}px">
+    <div class="grow ghead">
+      <div class="glbl">Ação</div>
+      <div class="gbar gmeses">${meses.map(m=>`<span style="width:${m.w}%">${m.lbl}</span>`).join('')}
+        <span class="ghoje" style="left:${hj}%"></span></div>
+    </div>
+    ${linhas}
+  </div></div>
+  <div class="gleg">
+    <span><i style="background:var(--verde)"></i>No prazo</span>
+    <span><i style="background:var(--vermelho)"></i>Vencida</span>
+    <span><i class="gtrac"></i>Sem prazo</span>
+    <span><i class="grastro"></i>Atraso, do prazo até hoje</span>
+  </div></div>`;
+}
+function toggleView(){VIEW=VIEW==='kanban'?'tabela':'kanban';updateViewBtnsPre();aplicar();}
+function showTabelaPre(){VIEW=VIEW==='flat'?'tabela':'flat';updateViewBtnsPre();aplicar();}
+function _firstLine(s){return String(s==null?'':s).split('\n')[0].trim();}
+// FCA automático = ação ainda não preenchida (gerado do Gerot/DRE e não tratado)
+const isAutoAcao=r=>!String((r&&r.acao)||'').trim();
+function kcardHTMLpre(x){const r=x.r,f=x.f;
+  // o card do FCA Automático (assets/fca-tabela.js, o mesmo do Admin)
+  return FcaTabela.card({id:r.id||'',origem:f.origem,uni:UNIDADE_COD,proj:projLabel(f.proj),vig:f.vig,fato:f.nome||f.fato,
+    desvio:r.fato_desvio||stripTags(f.desvio||'').trim(),causa:r.causa,acao:r.acao,resp:r.responsavel,prazoHTML:prazoTextoK(r),sozinha:FcaTabela.sozinha(_DBROWS[x.key]||[],r),
+    extra:`<span class="kmais"><button class="kadd" data-add="acao" data-id="${esc(r.id||'')}" title="Mais uma ação para ESTA causa">+ ação</button><button class="kadd" data-add="causa" data-id="${esc(r.id||'')}" title="Mais uma causa para ESTE fato">+ causa</button></span>`},{tri});}
+
+// ── Resumo: a MESMA visão do FCA Gerencial (assets/aderencia-view.js) ──
+// A unidade enxerga a aderência dela por Conta/Indicador — que é o "fato".
+const DIMS_ADER=[{k:'conta',rot:'Conta / Indicador'}];
+function linhasAderenciaFCA(vis){
+  const fs=getMsValues('ms-st'), fpz=getMsValues('ms-prazo'), fr=respFiltro();
+  const acMatch=(r,f)=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr)&&buscaAc(r,f);
+  const out=[];
+  vis.forEach(f=>{const key=keyOf(f);(_DBROWS[key]||[]).forEach(r=>{
+    if(!acMatch(r,f))return;
+    const st=String(r.status||DEFAULT_STATUS);
+    out.push({
+      vig:f.vig||r.vigencia||'', ord:vigNum(f.vig||r.vigencia||''),
+      concl:/conclu/i.test(st)?'Concluída':(/andamento/i.test(st)?'Andamento':'Não Iniciada'),
+      venc:prazoState(r)==='Vencida',
+      dims:{conta:_firstLine(f.nome||f.fato)||'—'},
+    });
+  });});
+  return out;
+}
+function pintaResumoFCA(vis,visSemVig,vigsSel){
+  AderenciaView.render(document.getElementById('list'),{
+    linhas:linhasAderenciaFCA(vis),
+    linhasMes:linhasAderenciaFCA(visSemVig||vis),
+    vigsSel:vigsSel||[],
+    dims:DIMS_ADER, dim:'conta',
+  });
+}
+function kanbanHTMLpre(vis){
+  const fs=getMsValues('ms-st'), fpz=getMsValues('ms-prazo'), fr=respFiltro();
+  const acMatch=(r,f)=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr)&&buscaAc(r,f);
+  const cards=[]; vis.forEach(f=>{const key=keyOf(f);(_DBROWS[key]||[]).forEach(r=>{if(acMatch(r,f))cards.push({r,f,key});});});
+  const COLS=[{k:'Não iniciada',cls:'nao'},{k:'Em andamento',cls:'and'},{k:'Concluída',cls:'con'}];
+  // Os títulos ficam numa faixa FORA da área que rola — o quadro continua com
+  // UMA barra de rolagem só, e o nome da etapa nunca sai da tela.
+  const porCol=COLS.map(c=>{const items=cards.filter(x=>(x.r.status||DEFAULT_STATUS)===c.k);
+    items.sort((a,b)=>((isAutoAcao(a.r)?0:1)-(isAutoAcao(b.r)?0:1))||String(a.r.prazo||'9999').localeCompare(String(b.r.prazo||'9999')));   // automáticos primeiro; depois por vencimento
+    return {c,items};});
+  return `<div class="kheads">${porCol.map(({c,items})=>
+      `<div class="kcol-head ${c.cls}">${c.k}<span class="kcount">${items.length}</span></div>`).join('')}</div>`+
+    `<div class="kanban">${porCol.map(({c,items})=>
+      `<div class="kcol" data-status="${esc(c.k)}">
+        <div class="kcol-body">${items.map(kcardHTMLpre).join('')||'<div class="kempty">—</div>'}</div>
+      </div>`).join('')}</div>`;
+}
+// ── Tabela (relatório, formato do Planner — somente leitura; edição nos Fatos/Kanban) ──
+function chipStatusRel(st){
+  st=String(st||'').trim();
+  if(!st)return '<span style="color:var(--text3)">—</span>';
+  if(/conclu/i.test(st))return `<span class="chip" style="background:rgba(59,179,59,.85);color:#06210a">${esc(st)}</span>`;
+  if(/andamento/i.test(st))return `<span class="chip" style="background:rgba(244,161,0,.9);color:#241900">${esc(st)}</span>`;
+  if(/cancel/i.test(st))return `<span class="chip" style="background:rgba(120,120,120,.5);color:#fff">${esc(st)}</span>`;
+  if(/n[ãa]o inici/i.test(st))return `<span class="chip" style="background:rgba(227,52,52,.85);color:#2a0606">${esc(st)}</span>`;
+  return `<span class="chip" style="background:rgba(148,163,184,.25);color:var(--text)">${esc(st)}</span>`;
+}
+function relatorioHTMLpre(vis){
+  const fs=getMsValues('ms-st'), fpz=getMsValues('ms-prazo'), fr=respFiltro();
+  const acMatch=(r,f)=>(!fs.length||fs.includes(r.status||DEFAULT_STATUS))&&(!fpz.length||fpz.includes(prazoState(r)))&&respOk(r.resp,fr)&&buscaAc(r,f);
+  const rows=[]; vis.forEach(f=>{const key=keyOf(f);loadAcoes(key,f.causaAuto).forEach(a=>{if(acMatch(a,f))rows.push({f,a});});});
+  if(!rows.length)return '<div class="empty">Nenhuma ação com os filtros selecionados.</div>';
+  // A situação manda primeiro: as vencidas encabeçam a tabela, da mais
+  // vencida para a menos (prazo mais antigo = mais dias de atraso). Depois
+  // as no prazo, pela data de vencimento. Sem prazo cai no fim ('9999'), e
+  // os automáticos (sem ação) só desempatam quando o prazo é o mesmo — no
+  // Kanban eles continuam vindo primeiro, ali a regra não mudou.
+  rows.sort((x,y)=>
+    ((prazoState(x.a)==='Vencida'?0:1)-(prazoState(y.a)==='Vencida'?0:1))
+    ||String(x.a.prazo||'9999').localeCompare(String(y.a.prazo||'9999'))
+    ||((isAutoAcao(x.a)?0:1)-(isAutoAcao(y.a)?0:1)));
+  // NO DESENHO DO FCA AUTOMÁTICO (Renan, 16/10/2026): um bloco por fato (Projeto · Vigência · Fato mesclados),
+  // uma linha por ação na ordem da causa e a causa mesclada sobre as ações dela — assets/fca-tabela.js, o mesmo do Admin.
+  return FcaTabela.html(rows.map(({f,a})=>({id:a.id||'',org:f.origem,proj:projLabel(f.proj),vig:f.vig,fato:f.nome||f.fato,desvio:a.fdesv||stripTags(f.desvio||'').trim(),
+    causa:a.causa,acao:a.acao,resp:a.resp,prazo:a.prazo,status:a.status||DEFAULT_STATUS})),
+    {uni:false,org:true,add:true,tri,chip:chipStatusRel,prazoState:x=>prazoState({status:x.status,prazo:x.prazo}),diasVenc,defaultStatus:DEFAULT_STATUS});
+}
+async function moveCardPre(id,status){
+  if(!id||PREVIEW||!sb)return;
+  let row=null; for(const k in _DBROWS){const f=_DBROWS[k].find(x=>x.id===id);if(f){row=f;break;}}
+  if(!row||(row.status||DEFAULT_STATUS)===status)return;
+  const old=row.status; row.status=status; aplicar();                 // otimista
+  const {error}=await sb.from(tabDe(row)).update({status}).eq('id',id);
+  if(error){row.status=old;aplicar();return;}
+  const all=[]; for(const k in _DBROWS) all.push(..._DBROWS[k]); writeCache('plano_cache_'+UNIDADE_COD,all);
+}
+// ── Editar card no próprio Kanban (clique abre modal) ──
+let _kmId=null,_kmKey=null;
+const _KM_STS=['Não iniciada','Em andamento','Concluída','Cancelada'];
+function _findDbRow(id){for(const k in _DBROWS){const r=(_DBROWS[k]||[]).find(x=>String(x.id)===String(id));if(r)return {r,key:k};}return null;}
+/* A CAIXA DA AÇÃO NO FORMATO NOVO (Renan, 16/10/2026): o desenho do FCA Automático, em assets/fca-caixa.js
+   (o mesmo do FCA · Admin). Os ids continuam km-*; Responsável virou lista: o gestor de frota da unidade primeiro,
+   depois os cadastrados (o perfil da unidade enxerga só o próprio cadastro; o admin, todos). */
+let PERFIS=[];
+// a RLS do fca_profiles só deixa a unidade ler o próprio cadastro: a função fca_perfis_resp devolve os da unidade + admins
+async function lePerfis(){ if(!sb) return; try{ let r=await sb.rpc('fca_perfis_resp'); if(r.error||!Array.isArray(r.data)) r=await sb.from('fca_profiles').select('nome,unidade,is_admin'); PERFIS=FcaCaixa.perfisDe(r.data||[]); }catch(e){ PERFIS=[]; } }
+function ensureKModal(){
+  if(document.getElementById('kmodal-ov'))return;
+  FcaCaixa.monta({editaFato:true});
+  const st=document.createElement('style'); st.textContent='.kcard{cursor:pointer;}.kcard.klock{cursor:default;}table.rel tbody tr{cursor:pointer;}'; document.head.appendChild(st);
+  // auto-save: cada campo, ao alterar/sair → salvo
+  ['km-fato-ed','km-desv-ed','km-causa','km-acao','km-resp','km-prazo','km-status','km-acomp'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',persistKModal);});
+}
+function openKModal(id){
+  const hit=_findDbRow(id);if(!hit)return;const r=hit.r;
+  // (sem trava: a unidade edita qualquer ação da sua unidade)
+  ensureKModal();_kmId=r.id;
+  const f=_FATOS.find(x=>keyOf(x)===hit.key)||{};
+  _kmKey=hit.key;
+  const nome=_firstLine(f.nome||f.fato||r.fato||'')||'—';
+  document.getElementById('km-fato').textContent=nome;
+  document.getElementById('km-ctx').textContent=[f.origem,typeof UNIDADE_COD!=='undefined'?UNIDADE_COD:'',projLabel(f.proj),f.vig].filter(Boolean).join(' · ');
+  // o fato por extenso (nome + desvio) — quem abre pelo Kanban/Tabela precisa
+  // ver de onde a ação nasceu sem ter de voltar na tela de Fatos
+  // O desvio tem VÁRIAS LINHAS: 1ª é o valor do pacote, as demais são as contas.
+  // fmtDesvio só sabe formatar a 1ª (extrai R$ e %) — o resto vai como está,
+  // senão a unidade não vê as contas que o admin vê.
+  const desvTxt=stripTags(f.desvio||'')||String(r.fato_desvio||'');
+  const dHtml=desvTxt?fmtDesvioML(desvTxt):'';
+  { const fe=document.getElementById('km-fato-ed'), de=document.getElementById('km-desv-ed'), ed=tabDe(r)!=='fca';
+    if(fe){ fe.value=nome==='—'?'':nome; fe.readOnly=!ed; fe.placeholder=ed?'Assunto':'Fato'; fe.title=ed?'':'O fato do FCA se muda no FCA'; }
+    if(de){ de.value=desvTxt; de.readOnly=!ed; de.placeholder=ed?'Detalhe (opcional)':''; de.style.display=(ed||desvTxt)?'':'none'; } }
+  document.getElementById('km-causa').value=r.causa||'';
+  document.getElementById('km-acao').value=r.acao||'';
+  document.getElementById('km-prazo').value=r.prazo?String(r.prazo).slice(0,10):'';
+  document.getElementById('km-acomp').value=r.acompanhamento||'';
+  FcaCaixa.abre({unidade:UNIDADE_COD,responsavel:r.responsavel,perfis:PERFIS,status:r.status||DEFAULT_STATUS,
+    irmas:FcaTabela.irmasDaCausa(_DBROWS[hit.key]||[],r).length,sozinha:FcaTabela.sozinha(_DBROWS[hit.key]||[],r)});
+}
+function closeKModal(){const m=document.getElementById('kmodal-ov');if(m)m.style.display='none';_kmId=null;_kmKey=null;}
+async function persistKModal(){
+  const hit=_findDbRow(_kmId);if(!hit)return;const r=hit.r;
+  const upd={causa:document.getElementById('km-causa').value||null,acao:FcaCaixa.acao()||null,
+    responsavel:document.getElementById('km-resp').value||null,prazo:document.getElementById('km-prazo').value||null,
+    status:document.getElementById('km-status').value,acompanhamento:document.getElementById('km-acomp').value||null};
+  // a causa é uma só para as ações dela: mudou numa linha que divide a causa → a pessoa escolhe entre levar o texto
+  // para todas as ações dela ou separar só esta numa causa nova, já com o próximo número
+  let irmas=[],separou=false;
+  if(FcaTabela.normCausa(upd.causa)!==FcaTabela.normCausa(r.causa)){
+    const d=FcaTabela.separaOuTodas(_DBROWS[hit.key]||[],r,upd.causa,upd.acao);
+    if(d.todas) irmas=d.irmas; else if(d.causa){upd.causa=d.causa;upd.acao=d.acao;separou=true;}
+  }
+  // ações do plano (RPS / dia a dia): o assunto e o detalhe valem para todas as ações do mesmo assunto
+  let doFato=null;
+  if(tabDe(r)!=='fca'){ const fv=(document.getElementById('km-fato-ed').value||'').trim(), dv=(document.getElementById('km-desv-ed').value||'').trim()||null;
+    if((fv&&fv!==r.fato)||dv!==(r.fato_desvio||null)) doFato={fato:fv||r.fato,fato_desvio:dv}; }
+  Object.assign(r,upd);irmas.forEach(x=>{x.causa=upd.causa;});aplicar();
+  if(PREVIEW||!sb)return;
+  if(doFato){ const grupo=(_DBROWS[hit.key]||[]).slice();
+    const {error:ef}=await sb.from('plano_acao').update(doFato).in('id',grupo.map(x=>x.id));
+    if(ef){console.error('update assunto',ef);alert('Erro ao gravar o assunto: '+ef.message);return;}
+    grupo.forEach(x=>Object.assign(x,doFato));
+    const todas=[];for(const k in _DBROWS)todas.push(..._DBROWS[k]); indexDB(todas); render(fatosDaBase());
+    _kmKey=fkey(r.vigencia,r.origem,r.projeto,r.fato); document.getElementById('km-fato').textContent=r.fato; }
+  const {error}=await sb.from(tabDe(r)).update(upd).eq('id',r.id);if(error){console.error('update modal',error);alert('Erro ao gravar: '+error.message);return;}
+  if(irmas.length){const e2=(await sb.from(tabDe(r)).update({causa:upd.causa}).in('id',irmas.map(x=>x.id))).error;if(e2){console.error('update causa irmãs',e2);alert('Erro ao levar a causa para as outras ações: '+e2.message);return;}}
+  if(separou&&_kmId===r.id) openKModal(r.id);   // a caixa mostra o número novo
+  const all=[];for(const k in _DBROWS)all.push(..._DBROWS[k]);writeCache('plano_cache_'+UNIDADE_COD,all);
+  flashSavedPre(); FcaCaixa.salvo();
+}
+// ── Adicionar / excluir direto do modal ──
+// Com isso o Kanban e a Tabela fazem tudo o que a tela de Fatos faz:
+// "+ ação" repete a causa (várias ações para a mesma causa) e
+// "+ causa" abre uma linha em branco no mesmo fato.
+async function _novaLinhaFCA(key,causa){
+  if(!key) return;
+  const f=_FATOS.find(x=>keyOf(x)===key);
+  const base=(_DBROWS[key]||[])[0]||{};
+  const nova={
+    unidade:UNIDADE_COD,
+    vigencia:(f&&f.vig)||base.vigencia||'',
+    origem:(f&&f.origem)||base.origem||'Custos',
+    fato:(f&&f.fato)||base.fato||'',
+    projeto:(f&&f.proj)||base.projeto||null,
+    fato_desvio:(f&&stripTags(f.desvio))||base.fato_desvio||null,
+    causa:causa||null, acao:null, responsavel:(window.FcaAuto&&FcaAuto.gestorDe(UNIDADE_COD))||null, prazo:null,
+    status:DEFAULT_STATUS, acompanhamento:null, locked:false,
+  };
+  // número automático: + ação → "2.3. ", + causa → "4. " e "4.1. " (a pessoa só escreve o texto)
+  if(window.FcaTabela&&FcaTabela.numeracao){
+    const nu=FcaTabela.numeracao(_DBROWS[key]||[],causa,causa?'acao':'causa');
+    if(nu.causa) nova.causa=nu.causa;
+    nova.acao=nu.acao||null;
+  }
+  if(PREVIEW||!sb){ alert('Sem conexão com a base — não dá para criar agora.'); return; }
+  const tb=tabDe(base); const {data:d0,error}=await sb.from(tb).insert(paraBanco(tb,nova)).select('*').single();
+  if(error){console.error('insert modal',error);alert('Erro ao criar: '+error.message);return;}
+  const data=deBanco(tb,d0); (_DBROWS[key]=_DBROWS[key]||[]).push(data);
+  const all=[];for(const k in _DBROWS)all.push(..._DBROWS[k]);writeCache('plano_cache_'+UNIDADE_COD,all);
+  flashSavedPre(); aplicar();
+  openKModal(data.id);
+  const ta=document.getElementById(causa?'km-acao':'km-causa'); if(ta){ ta.focus(); const n=ta.value.length; try{ta.setSelectionRange(n,n);}catch(e){} }
+}
+async function novaAcaoDoModal(){
+  const key=_kmKey, c=document.getElementById('km-causa'), causa=c?c.value:'';
+  await persistKModal();          // o que estava digitado na linha atual não pode se perder
+  _novaLinhaFCA(key,causa);
+}
+async function novaCausaDoModal(){
+  const key=_kmKey;
+  await persistKModal();
+  _novaLinhaFCA(key,'');
+}
+// mesmos dois atalhos direto no card do Kanban (sem passar pelo modal)
+function addDoCard(id,tipo){
+  const hit=_findDbRow(id); if(!hit) return;
+  _novaLinhaFCA(hit.key, tipo==='acao'?(hit.r.causa||''):'');
+}
+async function excluirDoModal(){
+  const hit=_findDbRow(_kmId); if(!hit) return;
+  const key=hit.key, id=hit.r.id;
+  if(!confirm('Excluir esta ação?')) return;
+  if(PREVIEW||!sb){ closeKModal(); return; }
+  const {error}=await sb.from(tabDe(hit.r)).delete().eq('id',id);
+  if(error){console.error('delete modal',error);alert('Erro ao excluir');return;}
+  _DBROWS[key]=(_DBROWS[key]||[]).filter(x=>String(x.id)!==String(id));
+  const all=[];for(const k in _DBROWS)all.push(..._DBROWS[k]);writeCache('plano_cache_'+UNIDADE_COD,all);
+  closeKModal(); flashSavedPre(); aplicar();
+}
+
+// Drag-and-drop do Kanban (montado 1x no #list, que persiste entre renders)
+(function(){const c=document.getElementById('list'); if(!c)return;
+  c.addEventListener('click',e=>{
+    const add=e.target.closest&&e.target.closest('.kadd');
+    if(add){e.stopPropagation();addDoCard(add.dataset.id,add.dataset.add);return;}
+    const gv=e.target.closest&&e.target.closest('.grow[data-id]');if(gv&&gv.dataset.id){openKModal(gv.dataset.id);return;}
+    const tr=e.target.closest&&e.target.closest('tr[data-id]');if(tr&&tr.dataset.id){openKModal(tr.dataset.id);return;}
+    const card=e.target.closest&&e.target.closest('.kcard');if(card&&VIEW==='kanban'){const id=card.dataset.id;if(id)openKModal(id);}
+  });
+  c.addEventListener('dragstart',e=>{const card=e.target.closest&&e.target.closest('.kcard');if(card&&card.getAttribute('draggable')==='true'){e.dataTransfer.setData('text/plain',card.dataset.id);e.dataTransfer.effectAllowed='move';card.classList.add('dragging');}});
+  c.addEventListener('dragend',e=>{const card=e.target.closest&&e.target.closest('.kcard');if(card)card.classList.remove('dragging');});
+  // coluna alvo pela POSIÇÃO HORIZONTAL do ponteiro: com muitos cards uma coluna
+  // passa da altura das outras e soltar lá embaixo caía fora de qualquer .kcol
+  const colEmX=x=>[...c.querySelectorAll('.kcol')].find(k=>{const r=k.getBoundingClientRect();return x>=r.left&&x<=r.right;})||null;
+  const marcaCol=k=>{c.querySelectorAll('.kcol.kover').forEach(o=>{if(o!==k)o.classList.remove('kover');});if(k)k.classList.add('kover');};
+  c.addEventListener('dragover',e=>{const col=colEmX(e.clientX);if(col){e.preventDefault();e.dataTransfer.dropEffect='move';marcaCol(col);}});
+  c.addEventListener('dragleave',e=>{if(!c.contains(e.relatedTarget))marcaCol(null);});
+  c.addEventListener('drop',e=>{const col=colEmX(e.clientX);if(!col)return;e.preventDefault();marcaCol(null);const id=e.dataTransfer.getData('text/plain');if(id&&col.dataset.status)moveCardPre(id,col.dataset.status);});
+})();
+function autoResize(ta){ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';}
+// Redimensiona todas as textareas em lote (2 reflows em vez de N)
+function autoResizeAll(c){const tas=[...c.querySelectorAll('textarea')];tas.forEach(ta=>ta.style.height='auto');const hs=tas.map(ta=>ta.scrollHeight);tas.forEach((ta,i)=>{ta.style.height=hs[i]+'px';});}
+
+// Reconcilia as ações do bloco com o Supabase: update (com id) · insert (novo) · delete (removido)
+async function saveBlock(block){
+  const trsAll=[...block.querySelectorAll('tbody tr')];
+  if(PREVIEW){ // sem nuvem: grava no localStorage
+    const g=(tr,k)=>{const el=tr.querySelector('[data-k="'+k+'"]');return el?el.value:'';};
+    const acoes=trsAll.map(tr=>({id:'',causa:g(tr,'causa'),acao:g(tr,'acao'),resp:g(tr,'resp'),prazo:g(tr,'prazo'),status:g(tr,'status'),obs:g(tr,'obs'),locked:tr.dataset.locked==='1'}));
+    localStorage.setItem('fca_prev_'+block.dataset.key,JSON.stringify(acoes));
+    return;
+  }
+  if(!sb)return;
+  const ident={unidade:UNIDADE_COD,vigencia:block.dataset.vig,origem:block.dataset.origem,fato:block.dataset.fato,projeto:block.dataset.proj||null,fato_desvio:block.dataset.desvio||null};
+  const trs=[...block.querySelectorAll('tbody tr')];
+  const seen=new Set();
+  for(const tr of trs){
+    const g=k=>{const el=tr.querySelector('[data-k="'+k+'"]');return el?el.value:'';};
+    const payload={causa:g('causa'),acao:g('acao'),responsavel:g('resp'),prazo:g('prazo')||null,status:g('status'),acompanhamento:g('obs'),locked:tr.dataset.locked==='1'};
+    const id=tr.dataset.id;
+    if(id){seen.add(id);const {error}=await sb.from(naoUsar()).update(payload).eq('id',id);if(error){console.error('update',error);throw error;}}
+    else{const {data,error}=await sb.from(naoUsar()).insert({...ident,...payload}).select('id').single();if(error){console.error('insert',error);throw error;}else if(data){tr.dataset.id=data.id;seen.add(data.id);}}
+  }
+  const dbRows=_DBROWS[block.dataset.key]||[];
+  for(const d of dbRows){if(!seen.has(d.id)){const {error}=await sb.from(naoUsar()).delete().eq('id',d.id);if(error)console.error('delete',error);}}
+}
+
+function flashSavedPre(){const m=document.getElementById('savedMsg');if(!m)return;m.textContent='Salvo ✓';m.style.color='';m.style.display='inline';clearTimeout(m._t);m._t=setTimeout(()=>m.style.display='none',1500);}
+// auto-save de uma linha (digitou/saiu do campo → salvo), mantendo _DBROWS em sincronia
+async function saveRowPre(tr,block){
+  if(!tr||!block) return;
+  if(PREVIEW){ saveBlock(block); flashSavedPre(); return; }   // preview: persiste bloco no localStorage
+  if(!sb) return;
+  const g=k=>{const el=tr.querySelector('[data-k="'+k+'"]');return el?el.value:'';};
+  const payload={causa:g('causa'),acao:g('acao'),responsavel:g('resp'),prazo:g('prazo')||null,status:g('status'),acompanhamento:g('obs'),locked:tr.dataset.locked==='1'};
+  const key=block.dataset.key, id=tr.dataset.id;
+  if(id){
+    const {error}=await sb.from(naoUsar()).update(payload).eq('id',id); if(error){console.error('update',error);return;}
+    const row=(_DBROWS[key]||[]).find(x=>String(x.id)===String(id)); if(row) Object.assign(row,payload);
+  }else{
+    if(!payload.causa&&!payload.acao&&!payload.responsavel&&!payload.acompanhamento&&!payload.prazo) return; // vazio -> não cria
+    const ident={unidade:UNIDADE_COD,vigencia:block.dataset.vig,origem:block.dataset.origem,fato:block.dataset.fato,projeto:block.dataset.proj||null,fato_desvio:block.dataset.desvio||null};
+    const {data,error}=await sb.from(naoUsar()).insert({...ident,...payload}).select('*').single(); if(error){console.error('insert',error);return;}
+    tr.dataset.id=data.id; (_DBROWS[key]=_DBROWS[key]||[]).push(data);
+  }
+  const all=[];for(const k in _DBROWS)all.push(..._DBROWS[k]);writeCache('plano_cache_'+UNIDADE_COD,all);
+  flashSavedPre();
+}
+async function delRowPre(tr,block){
+  if(!tr||!block) return;
+  const tbody=tr.parentNode, id=tr.dataset.id, key=block.dataset.key;
+  if(id&&sb&&!PREVIEW){
+    if(!confirm('Excluir esta ação?')) return;
+    const {error}=await sb.from(naoUsar()).delete().eq('id',id); if(error){console.error('delete',error);alert('Erro ao excluir');return;}
+    if(_DBROWS[key]) _DBROWS[key]=_DBROWS[key].filter(x=>String(x.id)!==String(id));
+    const all=[];for(const k in _DBROWS)all.push(..._DBROWS[k]);writeCache('plano_cache_'+UNIDADE_COD,all);
+  }
+  if(tbody&&tbody.children.length<=1){ // última linha: limpa em vez de remover
+    tr.querySelectorAll('[data-k]').forEach(el=>{if(el.tagName==='SELECT'){el.value=DEFAULT_STATUS;el.dataset.v=DEFAULT_STATUS;}else el.value='';});
+    tr.dataset.id='';
+  }else tr.remove();
+  if(PREVIEW) saveBlock(block);
+  flashSavedPre();
+}
+
+function wireBlock(block){
+  block.addEventListener('input',e=>{const el=e.target;if(el.tagName==='TEXTAREA')autoResize(el);if(el.classList.contains('st'))el.dataset.v=el.value;});
+  // auto-save: sai do campo de texto → salva; muda status/prazo → salva
+  block.addEventListener('focusout',e=>{const el=e.target;if(el.matches&&el.matches('textarea[data-k],input[type=text][data-k]')){const tr=el.closest('tr');if(tr)saveRowPre(tr,block);}});
+  block.addEventListener('change',e=>{const el=e.target;if(!el.matches)return;if(el.classList.contains('st'))el.dataset.v=el.value;if(el.matches('[data-k="status"],[data-k="prazo"]')){const tr=el.closest('tr');if(tr)saveRowPre(tr,block);}});
+  const appendRow=acao=>{const tbody=block.querySelector('tbody');const tmp=document.createElement('tbody');tmp.innerHTML=rowHTML(acao,true);const tr=tmp.firstElementChild;tbody.appendChild(tr);tr.querySelectorAll('textarea').forEach(autoResize);};
+  block.querySelector('.add-rep').addEventListener('click',()=>{const rows=block.querySelectorAll('tbody tr');const causa=rows.length?(rows[rows.length-1].querySelector('[data-k="causa"]').value||''):'';appendRow({...blankAcao(),causa});});
+  block.querySelector('.add-new').addEventListener('click',()=>appendRow(blankAcao()));
+  block.querySelector('tbody').addEventListener('click',e=>{const btn=e.target.closest('.rm-btn');if(!btn)return;const tr=btn.closest('tr');delRowPre(tr,block);});
+}
+// admin: botão só p/ admin; alterna "ver como unidade" (preview do lock)
+function applyAdminUI(){const b=document.getElementById('adminBtn');if(!b)return;{b.style.display='none';return;}b.style.display='';b.textContent=ADMIN?'Admin ✓':'Ver como unidade';b.style.background=ADMIN?'rgba(249,115,22,.4)':'';}
+document.getElementById('adminBtn').addEventListener('click',()=>{if(!REAL_ADMIN)return;ADMIN=!ADMIN;applyAdminUI();aplicar();});
+
+// tema
+function applyTheme(t){document.body.classList.toggle('light-mode',t==='light');localStorage.setItem('bi_theme',t);document.getElementById('themeBtn').textContent=t==='light'?'🌙':'☀';
+  // idem: o Resumo redesenha para as barras trocarem de paleta
+  if(typeof _FATOS!=='undefined' && _FATOS.length) aplicar();}
+document.getElementById('themeBtn').addEventListener('click',()=>applyTheme(document.body.classList.contains('light-mode')?'dark':'light'));
+applyTheme(localStorage.getItem('bi_theme')||'dark');
+
+_buildMs(document.getElementById('ms-vig'),()=>VIG_OPTS);
+document.querySelector('#ms-vig .ms-list').addEventListener('click',()=>{_vigAuto='';}); // mexeu no filtro = escolha à mão
+_buildMs(document.getElementById('ms-org'),()=>ORG_OPTS);
+_buildMs(document.getElementById('ms-proj'),()=>PROJ_OPTS);
+_buildMs(document.getElementById('ms-ind'),indItems);
+_buildMs(document.getElementById('ms-conta'),contaItems);
+_buildMs(document.getElementById('ms-st'),()=>STATUS);
+_buildMs(document.getElementById('ms-prazo'),()=>PRZ_OPTS);
+document.addEventListener('click',e=>{if(!e.target.closest('.ms-wrap'))document.querySelectorAll('.ms-panel.open').forEach(p=>p.classList.remove('open'));});
+
+// ── Início: exige login (hub), carrega perfil (unidade/admin) e os fatos ──
+//
+// AVISO EM VEZ DE UNIDADE INVENTADA (Renan, 10/09/2026: "FCA do Marcio de BLC
+// está aparecendo assim" — Kanban vazio e a marca dizendo "FCA · CGR ·
+// preview"). Sem sessão do hub, o painel caía sozinho na pré-visualização, que
+// carimba CGR e grava no localStorage: o gestor de BLC via a unidade ERRADA,
+// zerada, e qualquer coisa que digitasse ficava só no navegador dele. A tela
+// tem de dizer o que aconteceu; a pré-visualização continua existindo, mas só
+// quando pedida de propósito (?preview=1).
+function telaAviso(html){
+  document.querySelectorAll('.hfilter').forEach(e=>e.style.display='none');
+  document.querySelectorAll('.s-sec, .s-item[data-v]').forEach(e=>e.style.display='none');
+  ['uniBadge','uniSel','adminBtn','saveBtn','savedMsg','backUnits','viewBtn','flatBtn']
+    .forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  marcaUnidade('');
+  const t=document.getElementById('tituloVista'); if(t) t.textContent='Plano de Ação';
+  const intro=document.querySelector('.intro'); if(intro) intro.textContent='';
+  document.getElementById('list').innerHTML='<div class="empty">'+html+'</div>';
+}
+const LINK_HUB='<a href="../" style="color:var(--laranja);text-decoration:underline">entrar no portal</a>';
+
+function enterPreview(){
+  PREVIEW=true; REAL_ADMIN=true; ADMIN=true;
+  UNIDADE_COD='CGR'; applyDepara('CGR');
+  document.getElementById('uniBadge').textContent='CGR · preview'; marcaUnidade('CGR · preview');
+  const bp=document.querySelector('.brand p'); if(bp) bp.textContent='pré-visualização (sem nuvem)';
+  applyAdminUI(); carregar();
+}
+/* ── + Nova ação: RPS ou dia a dia, gravada em plano_acao, e abre na caixa da ação ── */
+let NA_ORIG='Dia a dia';
+document.getElementById('naOrig').addEventListener('click',e=>{ const b=e.target.closest('button[data-v]'); if(!b) return; NA_ORIG=b.dataset.v;
+  document.querySelectorAll('#naOrig button').forEach(x=>x.classList.toggle('on',x===b)); });
+function projsDaUnidade(){ const s=new Set(); for(const k in _DBROWS)(_DBROWS[k]||[]).forEach(r=>{ if(r.projeto) s.add(r.projeto); }); return [...s].sort((a,b)=>projLabel(a).localeCompare(projLabel(b))); }
+function abreNova(){
+  if(!UNIDADE_COD) return;
+  if(PLANO_ERR){ alert('As ações da RPS e do dia a dia ainda não podem ser lançadas: falta rodar o SQL do Plano de Ação no banco ('+PLANO_ERR+').'); return; }
+  const ps=projsDaUnidade(), vistos=new Set();
+  document.getElementById('naProj').innerHTML='<option value="">Geral (sem projeto)</option>'+ps.filter(p=>{const l=projLabel(p); if(vistos.has(l)) return false; vistos.add(l); return true;}).map(p=>`<option value="${esc(p)}">${esc(projLabel(p))}</option>`).join('');
+  document.getElementById('naFato').value=''; document.getElementById('naMsg').textContent=''; document.getElementById('naOk').disabled=false;
+  document.getElementById('naOv').classList.add('on'); setTimeout(()=>document.getElementById('naFato').focus(),30);
+}
+function fechaNova(){ document.getElementById('naOv').classList.remove('on'); }
+document.addEventListener('keydown',e=>{ const o=document.getElementById('naOv'); if(!o||!o.classList.contains('on')) return;
+  if(e.key==='Escape'){ e.preventDefault(); fechaNova(); } if(e.key==='Enter'&&e.target.id==='naFato'){ e.preventDefault(); criaNova(); } });
+async function criaNova(){
+  const fato=(document.getElementById('naFato').value||'').trim(), msg=document.getElementById('naMsg');
+  if(!fato){ msg.textContent='Escreva o assunto.'; document.getElementById('naFato').focus(); return; }
+  if(PREVIEW||!sb){ msg.textContent='Sem conexão com o banco.'; return; }
+  const nu=(window.FcaTabela&&FcaTabela.numeracao)?FcaTabela.numeracao([],'','causa'):{causa:'1. ',acao:'1.1. '};
+  const nova={unidade:UNIDADE_COD,vigencia:vigLbl(new Date()),origem:NA_ORIG,fato,projeto:document.getElementById('naProj').value||null,
+    fato_desvio:null,causa:nu.causa||null,acao:nu.acao||null,responsavel:(window.FcaAuto&&FcaAuto.gestorDe(UNIDADE_COD))||null,prazo:null,status:DEFAULT_STATUS,acompanhamento:null};
+  const bt=document.getElementById('naOk'); bt.disabled=true;
+  const {data,error}=await sb.from('plano_acao').insert(nova).select('*').single();
+  bt.disabled=false;
+  if(error){ console.error('insert plano',error); msg.textContent='Não gravou: '+(error.message||error); return; }
+  const r=deBanco('plano_acao',data), k=fkey(r.vigencia,r.origem,r.projeto,r.fato);
+  (_DBROWS[k]=_DBROWS[k]||[]).push(r);
+  const todas=[];for(const x in _DBROWS)todas.push(..._DBROWS[x]); writeCache('plano_cache_'+UNIDADE_COD,todas);
+  fechaNova(); render(fatosDaBase()); flashSavedPre(); openKModal(r.id);
+  const ta=document.getElementById('km-causa'); if(ta){ ta.focus(); const n=ta.value.length; try{ta.setSelectionRange(n,n);}catch(e){} }
+}
+function avisoPlano(){ const a=document.getElementById('planoAviso'); if(!a) return;
+  a.textContent=PLANO_ERR?'As ações da RPS e do dia a dia ainda não aparecem: falta rodar o SQL do Plano de Ação no banco. As do FCA aparecem normalmente.':'';
+  a.style.display=PLANO_ERR?'':'none'; }
+
+async function initApp(){
+  try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }
+  catch(e){ document.getElementById('list').innerHTML='<div class="empty">Erro ao iniciar (Supabase).</div>'; return; }
+  const params0=new URLSearchParams(location.search);
+  if(params0.get('preview')==='1'){ enterPreview(); return; }   // pré-visualização só quando pedida
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){                                            // sem login: dizer, não fingir uma unidade
+    telaAviso('Você não está logado no portal, então o Plano de Ação não sabe qual é a sua unidade.<br><br>'
+      +'Faça o login e volte: '+LINK_HUB+'.');
+    return;
+  }
+  SESSION=session;
+  const {data:prof,error:profErr}=await sb.from('fca_profiles').select('*').eq('user_id',session.user.id).maybeSingle();
+  if(profErr){                                             // falha de leitura: mostrar o motivo
+    telaAviso('Não consegui ler o seu perfil de acesso:<br><br>'+esc(profErr.message||profErr)
+      +'<br><br>Se isso continuar, avise o administrador.');
+    return;
+  }
+  if(!prof){                                               // logado, mas sem cadastro no FCA
+    telaAviso('Seu usuário está logado, mas ainda não tem unidade no portal.<br><br>'
+      +'Peça ao administrador para liberar a sua unidade no Gerenciar Acessos.');
+    return;
+  }
+  PROFILE=prof||{}; REAL_ADMIN=!!PROFILE.is_admin; ADMIN=REAL_ADMIN; lePerfis();
+  // unidades que o usuário pode acessar: admin = todas; gestor = a(s) sua(s)
+  // (fca_profiles.unidade aceita lista separada por vírgula, ex.: 'CBA T1,MCC T1')
+  const allowed = REAL_ADMIN ? Object.keys(DEPARA)
+    : String(PROFILE.unidade||'').toUpperCase().split(',').map(s=>s.trim()).filter(c=>c&&DEPARA[c]);
+  const params=new URLSearchParams(location.search);
+  const u=(params.get('u')||'').toUpperCase();
+  if(u && allowed.includes(u) && DEPARA[u]){
+    // ── modo PREENCHIMENTO de uma unidade ──
+    UNIDADE_COD=u; applyDepara(u);
+    document.getElementById('uniBadge').textContent=u; marcaUnidade(u);
+    document.getElementById('backUnits').style.display='';
+    applyAdminUI();
+    setupUniSel();
+    carregar();
+  } else {
+    // ── modo MINI-HUB (cards de unidade) ──
+    renderSubHub(allowed);
+  }
+}
+// Mini-hub: um card por unidade liberada + card Admin (consolidado) só p/ admin
+// marca do menu: "FCA · CGR" enquanto a unidade estiver aberta (o Admin já
+// se identifica assim). No hub de unidades volta a ser só "FCA".
+function marcaUnidade(txt){
+  const b=document.getElementById('marcaFCA');
+  if(b) b.textContent = txt ? ('Plano · '+txt) : 'Plano de Ação';
+  const t=document.querySelector('.s-top'); if(t) t.title = b?b.textContent:'';
+}
+function renderSubHub(allowed){
+  document.querySelectorAll('.hfilter').forEach(e=>e.style.display='none');
+  // sem unidade escolhida não há o que ver: as visões do menu ficam fora do ar
+  // (clicar numa delas apagaria o próprio hub de unidades)
+  document.querySelectorAll('.s-sec, .s-item[data-v]').forEach(e=>e.style.display='none');
+  // menu vazio ocupando espaço à toa: na tela de unidades ele abre recolhido.
+  // Só a classe — a preferência gravada continua valendo quando a unidade abrir.
+  marcaUnidade('');
+  const side=document.querySelector('.side'); if(side) side.classList.add('mini');
+  const bt=document.getElementById('btMini'); if(bt) bt.title='Expandir menu';
+  const t=document.getElementById('tituloVista'); if(t) t.textContent='Unidades';
+  ['uniBadge','uniSel','adminBtn','saveBtn','savedMsg','backUnits','viewBtn','flatBtn','secAtalhos','btNova'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  const intro=document.querySelector('.intro'); if(intro)intro.textContent='Selecione a unidade para abrir o Plano de Ação.';
+  const list=document.getElementById('list');
+  // a classe é o que faz a grade dividir a altura da tela (ver CSS .main.unidades)
+  const mainEl=document.querySelector('.board .main'); if(mainEl) mainEl.classList.add('unidades');
+  if(!REAL_ADMIN && !allowed.length){ list.innerHTML='<div class="empty">Seu usuário ainda não tem unidade liberada. Fale com o administrador.</div>'; return; }
+  const adminCard='';
+  const cards = allowed.map(c=>`<a class="uhub-card" href="?u=${encodeURIComponent(c)}"><div class="uhub-cod">${esc(c)}</div><div class="uhub-name">${DEPARA[c]?esc(DEPARA[c].dre+(DEPARA[c].tier?' · '+DEPARA[c].tier:'')):''}</div><div class="uhub-go">Abrir Plano →</div></a>`).join('');
+  list.innerHTML=`<div class="uhub-grid">${adminCard}${cards}</div>`;
+}
+// Seletor de unidade (só admin): troca a unidade exibida sem mexer na URL
+function setupUniSel(){
+  const sel=document.getElementById('uniSel'); if(!sel)return;
+  if(!REAL_ADMIN){sel.style.display='none';return;}
+  sel.innerHTML=Object.keys(DEPARA).sort().map(c=>`<option value="${c}" ${c===UNIDADE_COD?'selected':''}>${c}</option>`).join('');
+  sel.style.display='';
+  sel.onchange=()=>{UNIDADE_COD=sel.value;applyDepara(UNIDADE_COD);document.getElementById('uniBadge').textContent=UNIDADE_COD;marcaUnidade(UNIDADE_COD);document.getElementById('list').innerHTML='<div class="loading">Carregando…</div>';carregar();};
+}
+initApp();
+</script>
+<script src="../assets/mobile.js?v=202611271500"></script>
+<script src="../assets/modo-tv.js?v=202611261200"></script>
+<script src="../assets/fca-busca.js?v=202610281400"></script>
+<script>FcaBusca.init(function(){ if(typeof aplicar==='function'&&_FATOS) aplicar(); });</script>
+<script src="../assets/ctrlk.js"></script>
+<script src="../assets/excel-export.js"></script>
+<script src="../assets/sortable-table.js?v=202609042200"></script>
+<script src="../assets/build-check.js?v=202611271950"></script>
+</body>
+</html>
