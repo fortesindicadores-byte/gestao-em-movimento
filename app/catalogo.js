@@ -813,8 +813,8 @@ window.GEM_CATALOGO = {
   },
   {
    "id": "apresentacoes",
-   "nome": "Apresentações",
-   "desc": "Monte a apresentação da sua unidade: escolha os blocos, a ordem e apresente ou gere o PDF.",
+   "nome": "Reuniões de Rotina",
+   "desc": "As reuniões do time da ponta: monte a reunião da unidade, escolha os blocos e a ordem, apresente ou gere o PDF.",
    "href": "apresentacoes/",
    "cluster": "Processos",
    "adm": false,
