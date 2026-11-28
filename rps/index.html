@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611281200">
+<meta name="build" content="202611281330">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>RPS de Frota · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -444,6 +444,9 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .dr-t{width:100%;border-collapse:collapse;font-size:11.5px;}
 .dr-t th{position:sticky;top:0;background:var(--cabec);text-align:left;font-size:10px;font-weight:700;color:var(--txt2);padding:7px 10px;white-space:nowrap;}
 .dr-t td{padding:6px 10px;border-top:1px solid var(--linha);white-space:nowrap;}
+/* status do bottom: texto preto e só o farol redondo colorido (Renan, 28/11/2026) */
+.dr-t td.st{color:var(--txt);}.dr-t td.st i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:0;}
+.dr-t td.st i.cr{background:var(--vermelho);}.dr-t td.st i.cy{background:var(--ambar);}.dr-t td.st i.cg{background:var(--verde);}
 .dr-vz{font-size:12px;color:var(--txt3);padding:10px 2px;}
 .dr-ac{border-top:1px solid var(--card-brd);margin-top:14px;padding-top:4px;}
 .dr-ac textarea,#acA{min-height:70px;}
@@ -924,7 +927,7 @@ function abreDrill(k,dia,w){
     const n=us.reduce((s,c)=>{ const i=fotoDe(c,dia).dados.ind[k]; return s+(i?i.n||0:0); },0); if(n>bot.length) tit+=` · ${bot.length} de ${n}`; }
   const cols=bot.length?Object.keys(bot[0]).filter(c=>c[0]!=='_'):[];
   const num=v=>typeof v==='number'?(Math.abs(v)>=1000?FS.brl(v):nf(v,Number.isInteger(v)?0:1)):esc(v==null?'':v);
-  $('drB').innerHTML=`<h5>${esc(tit)}</h5>`+(bot.length?`<div class="dr-tw"><table class="dr-t"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${bot.map(r=>`<tr${r._c?` class="c${r._c}"`:''}>${cols.map(c=>`<td>${num(r[c])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:`<div class="dr-vz">${k==='fca'?'A aderência ao FCA não tem lista por placa.':'Nada pendente neste dia.'}</div>`);
+  $('drB').innerHTML=`<h5>${esc(tit)}</h5>`+(bot.length?`<div class="dr-tw"><table class="dr-t"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${bot.map(r=>`<tr${r._c?` class="c${r._c}"`:''}>${cols.map(c=>c==='Status'&&r._s?`<td class="st"><i class="${r._s}"></i>${esc(r[c])}</td>`:`<td>${num(r[c])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:`<div class="dr-vz">${k==='fca'?'A aderência ao FCA não tem lista por placa.':'Nada pendente neste dia.'}</div>`);
   /* gráfico: o mês dia a dia contra a meta */
   const mes=dia.slice(0,7), ds=(k==='cons'?Object.keys(CONS).sort():DIAS_COM()).filter(d=>d.slice(0,7)===mes);
   const cv=$('drC'); if(_drCh){ try{ _drCh.destroy(); }catch(e){} _drCh=null; }
@@ -1320,6 +1323,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611281200"></script>
+<script src="../assets/build-check.js?v=202611281330"></script>
 </body>
 </html>

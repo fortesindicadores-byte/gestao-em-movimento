@@ -15,7 +15,7 @@ const t = (c, m, x) => { if (c) { ok++; console.log('   ✓ ' + m); } else { fal
 /* a foto diária: MCC T1 e MCC T2 de 15/11 a 25/11/2026 (semana da RPS = 22/11 a 28/11), CGR à parte */
 const dias = []; for (let d = 15; d <= 25; d++) dias.push('2026-11-' + String(d).padStart(2, '0'));
 const ind = (base, d) => ({
-  dp: { v: d === '2026-11-24' ? base - 6 : base, n: 1, b: [{ Placa: 'ABC1D23', Projeto: 'ROTA', 'Dias parada': 3 }] },
+  dp: { v: d === '2026-11-24' ? base - 6 : base, n: 1, b: [{ Placa: 'ABC1D23', Projeto: 'ROTA', 'Dias da última': 3, Status: 'Vencida', _s: 'cr', _o: 3 }] },
   pv: { v: 100, n: 0, b: [] }, af: { v: 96, n: 0, b: [] }, mm: { v: 92, n: 0, b: [] }, ca: { v: 70, n: 2, b: [{ Placa: 'XYZ9A88', 'Desvio da pressão (%)': -18 }, { Placa: 'XYZ9A88', 'Desvio da pressão (%)': 14 }] },
   al: { v: 85, n: 0, b: [] }, sv: { v: 100, n: 0, b: [] }, se: { v: null, n: 0, b: [] }, cf: { v: 100, n: 0, b: [] }, os: { v: 88, n: 0, b: [] },
   ck: { v: 100, n: 0, b: [] }, conf: { v: 100, n: 0, b: [] }, blz: { v: 95, n: 0, b: [] }, fca: { v: 90, n: 0, b: [] }, docs: { v: 0, n: 0, b: [] },
@@ -155,6 +155,8 @@ console.log('1 · MCC (T1 + T2), semana de 22/11/2026');
   t(dr.on && /Disponibilidade · ter 24\/11\/2026/.test(dr.t), 'clicar no dia abre o detalhe do indicador', dr.t);
   t(/MCC T1/.test(dr.kp) && /MCC T2/.test(dr.kp), 'o detalhe abre por unidade (T1 e T2)', dr.kp);
   t(dr.linhas === 2, 'bottom do dia (as placas paradas das duas unidades)', dr.linhas);
+  const st = await pg.evaluate(() => { const td = document.querySelector('#drB td.st'); return td ? { t: td.textContent, i: td.querySelector('i').className, cor: getComputedStyle(td).color } : null; });
+  t(st && st.t === 'Vencida' && st.i === 'cr' && /Dias da última/.test(await pg.evaluate(() => document.querySelector('#drB thead').textContent)), 'bottom com Dias da última e Status com farol redondo', st);
   t(dr.uni === 'MCC T2' && dr.donos[0] === 'ERICK SILVA', 'a ação vai para a unidade pior, com o gestor de frota primeiro', dr);
   if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'rps-detalhe.png') });
   await pg.fill('#drA', 'Cobrar a oficina pelas placas paradas');

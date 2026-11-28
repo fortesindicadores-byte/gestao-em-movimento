@@ -73,21 +73,30 @@ const FOTO = async () => {
   const P = DATA.pneus || { tires: [], veic: [] };
   const placaDoVeic = {}; (P.tires || []).forEach(t => { if (t.veiculoId != null && t.placa) placaDoVeic[t.veiculoId] = t.placa; });
   const ref = P.ult || Date.now();
+  /* TODO bottom traz "Dias da última" e "Status" (Vencida · Atenção · No prazo), do pior para o melhor
+     (Renan, 28/11/2026: "Sempre nesses bottoms deve ter dias da última, e um status se está vencida, no prazo ou em atenção") */
+  const H0 = new Date(); H0.setHours(0, 0, 0, 0);
+  const dDe = d => d instanceof Date && !isNaN(d) ? Math.round((H0 - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5) : '';
+  const ST = { cr: 'Vencida', cy: 'Atenção', cg: 'No prazo' }, ORD = { cr: 0, cy: 1, cg: 2 };
+  const fx = (o, ult, cl) => Object.assign(o, { 'Dias da última': ult === '' || ult == null ? '—' : ult, Status: ST[cl] || '—', _s: cl });
+  const pz = d => d == null || d === '' ? null : d < 0 ? 'cr' : d <= 7 ? 'cy' : 'cg';   /* dias até o limite */
+  const piorPrimeiro = (a, f) => a.slice().sort((x, y) => (ORD[x._s] ?? 3) - (ORD[y._s] ?? 3) || (f ? (f(y) || 0) - (f(x) || 0) : 0));
   const BOT = {
-    sv: c => ord(rows('stressV', c).filter(r => r.desc > 0), r => r.desc).map(r => ({ Placa: r.placa, Projeto: nn(r.proj), Viagens: nn(r.viagens), Desconto: r.desc })),
-    se: c => rows('stressE', c).filter(r => r.contratada && (r.d1 > 0 || r.d2 > 0)).map(r => ({ Placa: r.placa, '1ª quinzena': r.d1, '2ª quinzena': r.d2 })),
-    cf: c => rows('cifv', c).filter(r => r.ad != null && r.ad < 1).map(r => ({ Placa: r.placa, Projeto: nn(r.proj), Status: nn(r.st) })),
-    pv: c => ord(rows('prev', c).filter(r => r.ad != null && r.ad < 1), r => -(r.dias ?? 0)).map(r => ({ Placa: r.placa, Projeto: nn(r.proj), Modelo: nn(r.modelo), Status: nn(r.st), 'Dias p/ próxima': nn(r.dias) })),
-    al: c => rows('alinh', c).filter(r => _n(r.st) === 'VENCIDO').map(r => ({ Placa: r.placa, Status: r.st, Dias: nn(r.dias) })),
-    os: c => ord(rows('os', c).filter(r => (r.dias ?? 0) > OS_META), r => r.dias).map(r => ({ OS: r.os, Placa: nn(r.placa), Tipo: nn(r.tipo), Criticidade: nn(r.crit), 'Dias em aberto': nn(r.dias) })),
-    ck: c => (DATA.chk || []).filter(r => r.cod === c && _n(r.tipo).includes('SAIDA')).map(r => ({ Data: dd(r.dt), Placa: nn(r.placa), Problema: nn(r.prob), OS: nn(r.os) })),
-    dp: c => ord((DATA.dispInd || []).filter(r => r.cod === c), r => r.dias).map(r => ({ Placa: r.placa, Projeto: nn(r.proj), Grupo: nn(r.grupo), Parada: nn(r.dPar), 'Dias parada': nn(r.dias), Previsão: nn(r.prev) })),
-    af: c => ord((P.veic || []).filter(v => v.cod === c && (ref - v.dt.getTime()) > 30 * 864e5), v => ref - v.dt.getTime()).map(v => ({ Placa: placaDoVeic[v.veiculoId] || '—', 'Última aferição': dd(v.dt), Dias: Math.round((ref - v.dt.getTime()) / 864e5) })),
-    mm: c => (P.tires || []).filter(t => t.cod === c && (t.st === 'Bloquear' || t.st === 'Recapar')).map(t => ({ Placa: t.placa, Posição: nn(t.nomePosicao), Situação: t.st, 'Sulco (mm)': nn(t.mm) })),
-    ca: c => ord((P.tires || []).filter(t => t.cod === c && t.pIdeal > 0 && t.desv != null && Math.abs(t.desv) > 10), t => Math.abs(t.desv)).map(t => ({ Placa: t.placa, Posição: nn(t.nomePosicao), 'Desvio da pressão (%)': Math.round(t.desv) })),
-    conf: c => (typeof CONFD !== 'undefined' && CONFD ? CONFD : []).filter(r => r.cod === c && /NUNCA|NAO REALIZADO|NÃO REALIZADO/i.test(_n(r.status))).map(r => ({ Placa: r.placa, Projeto: nn(r.proj), Status: r.status, Vencimento: dd(r.venc) })),
-    blz: c => ord((DATA.blitz || []).filter(r => r.cod === c && (r.nunca + r.nao + r.fora) > 0), r => -(r.dias ?? 0)).map(r => ({ Placa: r.placa, 'Última blitz': dd(r.ult), Limite: dd(r.lim), Dias: nn(r.dias) })),
-    docs: c => ord((DATA.docs || []).filter(r => r.cod === c && r.dias != null && r.dias <= 7), r => -(r.dias)).map(r => ({ Placa: r.placa, Documento: r.doc, Vence: dd(r.prox), Dias: r.dias })),
+    sv: c => piorPrimeiro(rows('stressV', c).filter(r => r.desc > 0).map(r => fx({ Placa: r.placa, Projeto: nn(r.proj), Viagens: nn(r.viagens), Desconto: r.desc, _o: r.desc }, dDe(r.ult), 'cr')), r => r._o),
+    se: c => rows('stressE', c).filter(r => r.contratada && (r.d1 > 0 || r.d2 > 0)).map(r => fx({ Placa: r.placa, '1ª quinzena': r.d1, '2ª quinzena': r.d2 }, '', 'cr')),
+    cf: c => piorPrimeiro(rows('cifv', c).filter(r => r.ad != null && r.ad < 1).map(r => fx({ Placa: r.placa, Projeto: nn(r.proj), 'Situação Ginfo': nn(r.st) }, dDe(r.dcivf), 'cr'))),
+    pv: c => piorPrimeiro(rows('prev', c).filter(r => r.ad != null && r.ad < 1 || (r.dias != null && r.dias <= 7)).map(r => fx({ Placa: r.placa, Projeto: nn(r.proj), Modelo: nn(r.modelo), 'Dias p/ próxima': nn(r.dias), _o: -(r.dias ?? 0) }, dDe(r.ult), r.ad != null && r.ad < 1 ? 'cr' : pz(r.dias))), r => r._o),
+    al: c => piorPrimeiro(rows('alinh', c).filter(r => _n(r.st) === 'VENCIDO' || (r.dias != null && r.dias <= 7)).map(r => fx({ Placa: r.placa, 'Próximo evento': dd(r.ev), Dias: nn(r.dias) }, '', _n(r.st) === 'VENCIDO' ? 'cr' : pz(r.dias)))),
+    os: c => piorPrimeiro(rows('os', c).filter(r => (r.dias ?? 0) > OS_META * 0.7).map(r => fx({ OS: r.os, Placa: nn(r.placa), Tipo: nn(r.tipo), Criticidade: nn(r.crit), _o: r.dias }, nn(r.dias), (r.dias ?? 0) > OS_META ? 'cr' : 'cy')), r => r._o),
+    ck: c => (DATA.chk || []).filter(r => r.cod === c && _n(r.tipo).includes('SAIDA')).map(r => fx({ Data: dd(r.dt), Placa: nn(r.placa), Problema: nn(r.prob), OS: nn(r.os) }, dDe(r.dt), 'cr')),
+    dp: c => { const pv = s => { const m = String(s || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null; };
+      return piorPrimeiro((DATA.dispInd || []).filter(r => r.cod === c).map(r => { const p = pv(r.prev); return fx({ Placa: r.placa, Projeto: nn(r.proj), Grupo: nn(r.grupo), Parada: nn(r.dPar), Previsão: nn(r.prev), _o: r.dias }, nn(r.dias), !p ? 'cy' : p < H0 ? 'cr' : 'cg'); }), r => r._o); },
+    af: c => piorPrimeiro((P.veic || []).filter(v => v.cod === c && (ref - v.dt.getTime()) > 20 * 864e5).map(v => { const d = Math.round((ref - v.dt.getTime()) / 864e5); return fx({ Placa: placaDoVeic[v.veiculoId] || '—', 'Última aferição': dd(v.dt), _o: d }, d, d > 30 ? 'cr' : 'cy'); }), r => r._o),
+    mm: c => piorPrimeiro((P.tires || []).filter(t => t.cod === c && (t.st === 'Bloquear' || t.st === 'Recapar')).map(t => fx({ Placa: t.placa, Posição: nn(t.nomePosicao), Situação: t.st, 'Sulco (mm)': nn(t.mm) }, t.dt ? dDe(new Date(t.dt)) : '', t.st === 'Bloquear' ? 'cr' : 'cy'))),
+    ca: c => piorPrimeiro((P.tires || []).filter(t => t.cod === c && t.pIdeal > 0 && t.desv != null && Math.abs(t.desv) > 10).map(t => fx({ Placa: t.placa, Posição: nn(t.nomePosicao), 'Desvio da pressão (%)': Math.round(t.desv), _o: Math.abs(t.desv) }, t.dt ? dDe(new Date(t.dt)) : '', Math.abs(t.desv) > 20 ? 'cr' : 'cy')), r => r._o),
+    conf: c => piorPrimeiro((typeof CONFD !== 'undefined' && CONFD ? CONFD : []).filter(r => r.cod === c && /NUNCA|NAO REALIZADO|NÃO REALIZADO/i.test(_n(r.status))).map(r => { const dv = r.venc instanceof Date ? -dDe(r.venc) : null; return fx({ Placa: r.placa, Projeto: nn(r.proj), Vencimento: dd(r.venc), _o: -(dv ?? 0) }, dDe(r.real), dv == null ? 'cr' : pz(dv)); }), r => r._o),
+    blz: c => piorPrimeiro((DATA.blitz || []).filter(r => r.cod === c && ((r.nunca + r.nao + r.fora) > 0 || (r.dias != null && r.dias <= 7))).map(r => fx({ Placa: r.placa, 'Última blitz': dd(r.ult), Limite: dd(r.lim), 'Dias p/ limite': nn(r.dias), _o: -(r.dias ?? 0) }, dDe(r.ult), pz(r.dias) || 'cr')), r => r._o),
+    docs: c => piorPrimeiro((DATA.docs || []).filter(r => r.cod === c && r.dias != null && r.dias <= 7).map(r => fx({ Placa: r.placa, Documento: r.doc, Vence: dd(r.prox), 'Dias p/ vencer': r.dias, _o: -(r.dias) }, dDe(r.ult), pz(r.dias))), r => r._o),
   };
   // QUEBRAS GRANDES: lançamento da Carta do mês acima de 10% do remunerado da conta na unidade
   let LANC = [], qErro = '';

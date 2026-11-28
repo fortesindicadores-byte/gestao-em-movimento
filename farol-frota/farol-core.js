@@ -191,8 +191,8 @@ async function farolLoad(opts){
 
   // Stress Test Veículos: Período | Empresa | Filial Freightech | Placa Freightech | Freightech | Projeto | Pallets | Última Saída | Saída | Saída na FIlial | Total Viagens | Justificativa | Status | Desconto
   if(T.stressV){const c=T.stressV.cols;
-    const i={per:idxDe(c,'Período','Periodo'),fil:idxDe(c,'Filial Freightech'),pla:idxDe(c,'Placa Freightech'),proj:idxDe(c,'Projeto'),sai:idxDe(c,'Saída','Saida'),saiF:idxDe(c,'Saída na FIlial','Saida na Filial'),via:idxDe(c,'Total Viagens'),jus:idxDe(c,'Justificativa'),des:idxDe(c,'Desconto')};
-    let rs=T.stressV.rows.map(r=>({per:parseFlex(r[i.per]),cod:refineCod(codDe(r[i.fil]),r[i.proj]),fil:String(r[i.fil]||'').trim(),placa:String(r[i.pla]||'').trim(),proj:String(r[i.proj]||'').trim(),saida:_n(r[i.sai]),saidaF:String(r[i.saiF]||'').trim(),viagens:num(r[i.via]),jus:String(r[i.jus]||'').trim(),desc:num(r[i.des])||0})).filter(r=>r.placa);
+    const i={per:idxDe(c,'Período','Periodo'),fil:idxDe(c,'Filial Freightech'),pla:idxDe(c,'Placa Freightech'),proj:idxDe(c,'Projeto'),sai:idxDe(c,'Saída','Saida'),saiF:idxDe(c,'Saída na FIlial','Saida na Filial'),via:idxDe(c,'Total Viagens'),jus:idxDe(c,'Justificativa'),des:idxDe(c,'Desconto'),ult:idxDe(c,'Última Saída','Ultima Saida')};
+    let rs=T.stressV.rows.map(r=>({per:parseFlex(r[i.per]),cod:refineCod(codDe(r[i.fil]),r[i.proj]),fil:String(r[i.fil]||'').trim(),placa:String(r[i.pla]||'').trim(),proj:String(r[i.proj]||'').trim(),saida:_n(r[i.sai]),saidaF:String(r[i.saiF]||'').trim(),viagens:num(r[i.via]),ult:i.ult>=0?parseFlex(r[i.ult]):null,jus:String(r[i.jus]||'').trim(),desc:num(r[i.des])||0})).filter(r=>r.placa);
     const mx=Math.max(...rs.map(r=>r.per?r.per.getTime():0));
     DATA.stressV=rs.filter(r=>!r.per||r.per.getTime()===mx);
   }
@@ -205,13 +205,13 @@ async function farolLoad(opts){
   }
   // CIFV: Aderência | Filial Freightech | Veículo | Projeto | Data CIVF | Status | ... | Desconto Manutenção | Desconto Lavagem | Desconto Total
   if(T.cifv){const c=T.cifv.cols;
-    const i={ad:idxDe(c,'Aderência','Aderencia'),fil:idxDe(c,'Filial Freightech'),vei:idxDe(c,'Veículo','Veiculo'),proj:idxDe(c,'Projeto'),st:idxDe(c,'Status'),dm:idxDe(c,'Desconto Manutenção','Desconto Manutencao'),dl:idxDe(c,'Desconto Lavagem'),dt:idxDe(c,'Desconto Total')};
-    DATA.cifv=T.cifv.rows.map(r=>({ad:num(r[i.ad]),cod:refineCod(codDe(r[i.fil]),r[i.proj]),fil:String(r[i.fil]||'').trim(),placa:String(r[i.vei]||'').trim(),proj:String(r[i.proj]||'').trim(),st:String(r[i.st]||'').trim(),dm:num(r[i.dm])||0,dl:num(r[i.dl])||0,dt:num(r[i.dt])||0})).filter(r=>r.placa);
+    const i={ad:idxDe(c,'Aderência','Aderencia'),fil:idxDe(c,'Filial Freightech'),vei:idxDe(c,'Veículo','Veiculo'),proj:idxDe(c,'Projeto'),st:idxDe(c,'Status'),dm:idxDe(c,'Desconto Manutenção','Desconto Manutencao'),dl:idxDe(c,'Desconto Lavagem'),dt:idxDe(c,'Desconto Total'),dc:idxDe(c,'Data CIVF')};
+    DATA.cifv=T.cifv.rows.map(r=>({ad:num(r[i.ad]),cod:refineCod(codDe(r[i.fil]),r[i.proj]),fil:String(r[i.fil]||'').trim(),placa:String(r[i.vei]||'').trim(),proj:String(r[i.proj]||'').trim(),st:String(r[i.st]||'').trim(),dm:num(r[i.dm])||0,dl:num(r[i.dl])||0,dt:num(r[i.dt])||0,dcivf:i.dc>=0?parseFlex(r[i.dc]):null})).filter(r=>r.placa);
   }
   // Preventivas: Aderência | Placa Mercosul | Projeto | Unidade | Placa | Marca | Modelo | ... | DIAS P/ Próxima | KM/HR P/ Próxima | Status | N° OS Aberta
   if(T.prev){const c=T.prev.cols;
-    const i={ad:idxDe(c,'Aderência','Aderencia'),uni:idxDe(c,'Unidade'),proj:idxDe(c,'Projeto'),pla:idxDe(c,'Placa'),mar:idxDe(c,'Marca'),mod:idxDe(c,'Modelo'),dias:idxDe(c,'DIAS P/ Próxima','DIAS P/ Proxima'),km:idxDe(c,'KM / HR P/ Próxima','KM/HR P/ Proxima'),st:idxDe(c,'Status'),os:idxDe(c,'N° OS Aberta','Nº OS Aberta','No OS Aberta')};
-    DATA.prev=T.prev.rows.map(r=>({ad:num(r[i.ad]),cod:refineCod(codDe(r[i.uni]),r[i.proj]),fil:String(r[i.uni]||'').trim(),proj:String(r[i.proj]||'').trim(),placa:String(r[i.pla]||'').trim(),marca:String(r[i.mar]||'').trim(),modelo:String(r[i.mod]||'').trim(),dias:num(r[i.dias]),km:num(r[i.km]),st:String(r[i.st]||'').trim(),os:String(r[i.os]||'').trim()})).filter(r=>r.placa);
+    const i={ad:idxDe(c,'Aderência','Aderencia'),uni:idxDe(c,'Unidade'),proj:idxDe(c,'Projeto'),pla:idxDe(c,'Placa'),mar:idxDe(c,'Marca'),mod:idxDe(c,'Modelo'),dias:idxDe(c,'DIAS P/ Próxima','DIAS P/ Proxima'),km:idxDe(c,'KM / HR P/ Próxima','KM/HR P/ Proxima'),st:idxDe(c,'Status'),os:idxDe(c,'N° OS Aberta','Nº OS Aberta','No OS Aberta'),ult:idxDe(c,'Última','Ultima')};
+    DATA.prev=T.prev.rows.map(r=>({ad:num(r[i.ad]),cod:refineCod(codDe(r[i.uni]),r[i.proj]),fil:String(r[i.uni]||'').trim(),proj:String(r[i.proj]||'').trim(),placa:String(r[i.pla]||'').trim(),marca:String(r[i.mar]||'').trim(),modelo:String(r[i.mod]||'').trim(),dias:num(r[i.dias]),km:num(r[i.km]),ult:i.ult>=0?parseFlex(r[i.ult]):null,st:String(r[i.st]||'').trim(),os:String(r[i.os]||'').trim()})).filter(r=>r.placa);
   }
   // Alinhamentos: Filial | Placa | Próx. Evento | Status | Dias | Documento
   if(T.alinh){const c=T.alinh.cols;
