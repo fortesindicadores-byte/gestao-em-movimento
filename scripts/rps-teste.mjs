@@ -174,6 +174,11 @@ console.log('1 · MCC (T1 + T2), semana de 22/11/2026');
   t(st && st.t === 'Vencida' && st.i === 'cr' && /Dias da última/.test(await pg.evaluate(() => document.querySelector('#drB thead').textContent)), 'bottom com Dias da última e Status com farol redondo', st);
   t(dr.uni === 'MCC T2' && dr.donos[0] === 'ERICK SILVA', 'a ação vai para a unidade pior, com o gestor de frota primeiro', dr);
   if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'rps-detalhe.png') });
+  const lj = await pg.evaluate(() => { const cx = document.querySelector('#drF .cx.dr'), lar = [...cx.querySelectorAll('*')].filter(e => e.childNodes.length && [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()) && /rgb\(249, 115, 22\)/.test(getComputedStyle(e).color)).map(e => e.textContent.trim()); return lar; });
+  t(!lj.length, 'nenhum texto laranja no detalhe', lj);
+  const scr = await pg.evaluate(() => { const tb = document.querySelector('#drB .dr-t tbody'), r = tb.querySelector('tr'); for (let i = 0; i < 40; i++) tb.appendChild(r.cloneNode(true)); ajustaDr(); const cx = document.querySelector('#drF .cx.dr'), tw = document.querySelector('#drB .dr-tw'); return { cx: cx.scrollHeight - cx.clientHeight, tw: tw.scrollHeight - tw.clientHeight, mais: (tb.querySelector('tr.mais') || {}).textContent || '', ov: getComputedStyle(cx).overflowY }; });
+  t(scr.cx <= 1 && scr.tw <= 1 && /\+ \d+ linhas/.test(scr.mais) && scr.ov === 'hidden', 'detalhe sem barra de rolagem: com 42 linhas mostra as que cabem e diz quantas ficaram de fora', scr);
+  if (SHOT) await pg.screenshot({ path: path.join(SHOT, 'rps-detalhe-cheio.png') });
   await pg.fill('#drA', 'Cobrar a oficina pelas placas paradas');
   await pg.fill('#drP', '2026-12-01');
   await pg.evaluate(() => geraAcao()); await pg.waitForTimeout(500);
@@ -214,6 +219,13 @@ console.log('1 · MCC (T1 + T2), semana de 22/11/2026');
   await pg.waitForFunction(() => { const f = document.getElementById('prev'); const d = f.contentDocument; return d && d.querySelectorAll('table.rps-mx tr.h2 th.dia:not(.sem)').length === 14; }, null, { timeout: 8000 }).catch(() => {});
   const n14 = await pg.evaluate(() => document.getElementById('prev').contentDocument.querySelectorAll('table.rps-mx tr.h2 th.dia:not(.sem)').length);
   t(n14 === 14, 'clicar na semana fechada abre os 7 dias dela', n14);
+  await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; d.querySelector('th.sw[data-sem="2026-11-22"]').click(); });
+  await pg.waitForFunction(() => { const d = document.getElementById('prev').contentDocument; return d && d.querySelectorAll('table.rps-mx tr.h2 th.dia:not(.sem)').length === 7; }, null, { timeout: 8000 }).catch(() => {});
+  const n7 = await pg.evaluate(() => document.getElementById('prev').contentDocument.querySelectorAll('table.rps-mx tr.h2 th.dia:not(.sem)').length);
+  t(n7 === 7, 'a semana vigente também fecha', n7);
+  await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; d.querySelector('th.sw[data-sem="2026-11-22"]').click(); });
+  await pg.waitForFunction(() => { const d = document.getElementById('prev').contentDocument; return d && d.querySelectorAll('table.rps-mx tr.h2 th.dia:not(.sem)').length === 14; }, null, { timeout: 8000 }).catch(() => {});
+  t(await pg.evaluate(() => document.getElementById('prev').contentDocument.querySelectorAll('table.rps-mx tr.h2 th.dia:not(.sem)').length) === 14, 'e abre de novo');
 
   // trocar de semana
   await pg.evaluate(() => { VIG = '2026-11-15'; ABERTAS = new Set(); filtros(); monta(); }); await pg.waitForTimeout(300);

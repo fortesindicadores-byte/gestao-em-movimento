@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611281630">
+<meta name="build" content="202611281700">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>RPS de Frota · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -429,7 +429,7 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cx input:focus,.cx textarea:focus{border-color:var(--laranja);}
 .cx .dic{font-size:10px;color:var(--txt3);margin-top:5px;}
 .cx-pe{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
-.cx.dr{width:min(1020px,96vw);max-height:92vh;overflow:auto;}
+.cx.dr{width:min(1020px,96vw);max-height:94vh;overflow:hidden;display:flex;flex-direction:column;}.cx.dr>*{flex:none}.cx.dr>#drB{flex:0 1 auto;min-height:0;display:flex;flex-direction:column}#drB .dr-h5{flex:none}#drB .dr-tw{flex:0 1 auto;min-height:0}@media(max-height:820px){.dr-g{height:140px!important}}
 .dr-top{display:flex;align-items:flex-start;gap:12px;}.dr-top>div{flex:1;min-width:0}.dr-top h4{margin:0 0 3px;}
 .dr-sub{font-size:11px;color:var(--txt3);}
 .dr-x{background:none;border:0;color:var(--txt2);font-size:22px;line-height:1;cursor:pointer;padding:0 4px;}
@@ -440,20 +440,21 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .dr-kp b.cg,.dr-t tr.cg td:last-child{color:var(--verde)}.dr-kp b.cy{color:var(--ambar)}.dr-kp b.cr,.dr-t tr.cr td:last-child{color:var(--vermelho)}.dr-t tr.cy td:last-child{color:var(--ambar)}
 .dr-g{height:190px;margin:4px 0 12px;position:relative;}
 .cx h5{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--txt2);margin:10px 0 6px;}
-.dr-tw{max-height:240px;overflow:auto;border:1px solid var(--card-brd);border-radius:8px;}
+.dr-tw{overflow:hidden;border:1px solid var(--card-brd);border-radius:8px;}
 .dr-t{width:100%;border-collapse:collapse;font-size:11.5px;}
 .dr-t th{position:sticky;top:0;background:var(--cabec);text-align:left;font-size:10px;font-weight:700;color:var(--txt2);padding:7px 10px;white-space:nowrap;}
 .dr-t td{padding:6px 10px;border-top:1px solid var(--linha);white-space:nowrap;}
 /* status do bottom: texto preto e só o farol redondo colorido (Renan, 28/11/2026) */
 .dr-t td.st{color:var(--txt);}.dr-t td.st i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:0;}
 .dr-t td.st i.cr{background:var(--vermelho);}.dr-t td.st i.cy{background:var(--ambar);}.dr-t td.st i.cg{background:var(--verde);}
+.dr-t tr.mais td{color:var(--txt3);font-weight:600;font-size:11px;}
 .dr-vz{font-size:12px;color:var(--txt3);padding:10px 2px;}
 .dr-ac{border-top:1px solid var(--card-brd);margin-top:14px;padding-top:4px;}
 .dr-ac textarea,#acA{min-height:70px;}
 .dr-l{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}.dr-l label{flex:1;min-width:150px;margin:8px 0 0;}
 .dr-l select,.cx select{width:100%;background:var(--app);border:1px solid var(--card-brd);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12.5px;padding:8px 10px;margin-top:5px;}
 .dr-l .bt{height:36px;}
-.dr-lk{background:transparent;border:0;color:var(--laranja);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;margin-left:12px;text-decoration:none;}
+.dr-lk{background:transparent;border:0;color:var(--txt);text-decoration:underline!important;text-underline-offset:3px;font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;margin-left:12px;text-decoration:none;}
 .dr-leg{display:flex;gap:16px;flex-wrap:wrap;font-size:10.5px;color:var(--txt3);font-weight:600;margin:-6px 0 10px;}
 .dr-leg i{display:inline-block;width:16px;height:0;border-top:2px dashed currentColor;vertical-align:3px;margin-right:6px;}
 .dr-leg i.med{border-top:2px solid #8E96A6;}.dr-leg i.mel{border-top:2px dotted #8E96A6;}
@@ -847,15 +848,15 @@ function sAcoes(inst){
 }
 
 /* ── 3 · Gerot: a matriz dia a dia ── */
-let ABERTAS=new Set();
+let ABERTAS=new Set(), VIG_FECHADA=false;
 function sGerot(inst){
   const e=GD_ERR||Object.keys(CONS).length?(GD_ERR?semDados():''):semDados(); if(e) return vazioSl('Gerot',inst,e);
   const mes=dDe(VIG).getMonth()===dDe(somaD(VIG,6)).getMonth()?VIG.slice(0,7):somaD(VIG,6).slice(0,7);
   const w0=domDe(mes+'-01'); const ws=[]; for(let w=w0;w<=VIG;w=somaD(w,7)) ws.push(w);
-  const abre=w=>w===VIG||ABERTAS.has(w);
+  const abre=w=>w===VIG?!VIG_FECHADA:ABERTAS.has(w);
   /* semana aberta: os 7 dias e, no fim, o resultado da semana (Renan, 27/11/2026) */
   const cols=[]; ws.forEach(w=>{ if(abre(w)){ for(let i=0;i<7;i++){ const d=somaD(w,i); cols.push({d,w,fora:d.slice(0,7)!==mes}); } cols.push({w,fim:1}); } else cols.push({w}); });
-  const head1=`<tr class="h1"><th colspan="5"></th>${ws.map(w=>abre(w)?`<th colspan="8" class="sw ab" data-sem="${w}">S${semN(w)} ${w===VIG?'':'<small>fechar</small>'}</th>`:`<th class="sw" data-sem="${w}" title="Abrir a semana">S${semN(w)}<small>${ddmm(w)}</small></th>`).join('')}</tr>`;
+  const head1=`<tr class="h1"><th colspan="5"></th>${ws.map(w=>abre(w)?`<th colspan="8" class="sw ab" data-sem="${w}">S${semN(w)} <small>fechar</small></th>`:`<th class="sw" data-sem="${w}" title="Abrir a semana">S${semN(w)}<small>${ddmm(w)}</small></th>`).join('')}</tr>`;
   const head2=`<tr class="h2"><th class="ind">Indicadores</th><th>Meta</th><th>Real</th><th>▲</th><th>▲ %</th>${cols.map(c=>c.d?`<th class="dia${c.fora?' fora':''}"><small>${DIAS_SEM[dDe(c.d).getDay()]}</small>${+c.d.slice(8,10)}</th>`:`<th class="dia sem">Sem.</th>`).join('')}</tr>`;
   const cel=(k,c)=>{ const v=c.d?(c.fora?null:valDia(k,c.d)):valSem(k,c.w), js=c.d&&v!=null?jusDe(k,c.d):[], cl=js.length?'j':clDe(k,v,c.d?metaDe(k,c.d):metaDe(k,null,c.w));
     return `<td class="v ${cl?'c'+cl:''}${c.d?'':' sem'}${!c.d&&c.w===VIG?' atual':''}"${js.length?` title="${esc('Justificado: '+js.map(j=>(CODS.length>1?j.unidade+' · ':'')+j.obs).join(' | '))}"`:''}${v!=null&&c.d?` data-k="${k}" data-d="${c.d}"`:''}${v!=null&&!c.d?` data-k="${k}" data-w="${c.w}"`:''}>${v==null?'':fmtV(k,v)}</td>`; };
@@ -917,7 +918,7 @@ table.rps-mx td.v:not(.sem).cg,table.rps-mx td.v:not(.sem).cy,table.rps-mx td.v:
 body.escuro table.rps-mx td.v:not(.sem).cg,body.escuro table.rps-mx td.v:not(.sem).cy,body.escuro table.rps-mx td.v:not(.sem).cr,body.escuro table.rps-mx td.v:not(.sem).cj{background:none}
 table.rps-mx td.sem.cg,table.rps-mx td.sem.cy,table.rps-mx td.sem.cr,body.escuro table.rps-mx td.sem.cg,body.escuro table.rps-mx td.sem.cy,body.escuro table.rps-mx td.sem.cr{color:var(--txt)!important}
 /* filete entre as linhas em toda a largura da tabela, inclusive nos dias e nas semanas */
-table.rps-mx tbody td{border-bottom:1px solid var(--linha)}table.rps-mx tbody tr.sep td{border-bottom:0}
+table.rps-mx tbody td{border-bottom:1px solid rgba(15,23,42,.14)}table.rps-mx tbody tr.sep td{border-bottom:0}body.escuro table.rps-mx tbody td{border-bottom-color:rgba(255,255,255,.14)}body.escuro table.rps-mx tbody tr.sep td{border-bottom:0}body.escuro table.rps-mx td.n.cg,body.escuro table.rps-mx td.n.cr,body.escuro table.rps-mx td.n.cy{background:none}
 `;
 
 /* ── detalhe do indicador num dia (clique na célula do Gerot) e "Gerar ação" → Plano de Ação (origem RPS) ── */
@@ -976,8 +977,20 @@ function abreDrill(k,dia,w){
   $('drU').innerHTML=CODS.map(c=>`<option value="${esc(c)}"${c===uAc?' selected':''}>${esc(c)}</option>`).join(''); $('drUw').style.display=CODS.length>1?'':'none';
   donos(uAc,''); $('drA').value=''; $('drP').value=''; set('drM','');
   pintaJus(); drModo('acao');
-  $('drF').classList.add('on'); setTimeout(()=>$('drA').focus(),40);
+  $('drF').classList.add('on'); ajustaDr(); setTimeout(()=>$('drA').focus(),40);
 }
+/* sem barra de rolagem no detalhe (Renan, 28/11/2026): a lista mostra as linhas que cabem e diz quantas ficaram de fora */
+function ajustaDr(){
+  const cx=document.querySelector('#drF .cx.dr'), tw=document.querySelector('#drB .dr-tw'); if(!cx||!tw) return;
+  const tb=tw.querySelector('tbody'), rs=[...tb.querySelectorAll('tr:not(.mais)')]; rs.forEach(r=>r.style.display=''); const m0=tb.querySelector('tr.mais'); if(m0) m0.remove();
+  const nc=(tw.querySelector('thead tr')||{children:[]}).children.length||1;
+  const cabe=()=>tw.scrollHeight<=tw.clientHeight+1&&cx.scrollHeight<=cx.clientHeight+1;
+  if(cabe()) return;
+  const mais=document.createElement('tr'); mais.className='mais'; mais.innerHTML=`<td colspan="${nc}"></td>`; tb.appendChild(mais);
+  let vis=rs.length; const pinta=()=>{ mais.firstChild.textContent=`+ ${rs.length-vis} ${rs.length-vis===1?'linha':'linhas'} · ver todas no Gestão à Vista`; };
+  while(vis>1){ vis--; rs[vis].style.display='none'; pinta(); if(cabe()) break; }
+}
+window.addEventListener('resize',()=>{ if($('drF')&&$('drF').classList.contains('on')) ajustaDr(); });
 /* JUSTIFICAR SEM AÇÃO (Renan, 28/11/2026: "nem sempre será gerada ação… isentar aquele indicador com uma observação").
    Grava em rps_justifica (unidade × indicador × dia); a célula fica cinza com a observação na dica
    e a justificativa aparece no slide Ações da semana. */
@@ -1062,7 +1075,7 @@ function abertasHtml(k,x,bot){
     .map(z=>Object.assign(z,casa(z.r))).filter(z=>z.ind||z.pl.length).sort((a,b)=>b.pl.length-a.pl.length);
   if(!its.length) return '';
   const cor=st=>ST_COR[st||'Não iniciada']||'#8E96A6';
-  return `<div class="dr-ab"><h5>Ações já abertas · ${its.length}</h5>${its.slice(0,8).map(({r,o,pl})=>`<div class="dr-ab-i"><span class="o">${esc(o)}</span><span class="a">${esc(r.fato||'')}${pl.length?' · <b>'+esc(pl.join(', '))+'</b>':''} — ${esc(String(r.acao||'').replace(/\s+/g,' ').slice(0,160))}</span><span class="m">${esc([CODS.length>1?r.unidade:'',r.responsavel||'',r.prazo?ddmm(String(r.prazo).slice(0,10)):''].filter(Boolean).join(' · '))}</span><span class="s"><i style="background:${cor(r.status)}"></i>${esc(r.status||'Não iniciada')}</span></div>`).join('')}${its.length>8?`<div class="dr-ab-i"><span class="m">+ ${its.length-8} no Plano de Ação e no FCA</span></div>`:''}</div>`; }
+  return `<div class="dr-ab"><h5>Ações já abertas · ${its.length}</h5>${its.slice(0,3).map(({r,o,pl})=>`<div class="dr-ab-i"><span class="o">${esc(o)}</span><span class="a">${esc(r.fato||'')}${pl.length?' · <b>'+esc(pl.join(', '))+'</b>':''} — ${esc(String(r.acao||'').replace(/\s+/g,' ').slice(0,160))}</span><span class="m">${esc([CODS.length>1?r.unidade:'',r.responsavel||'',r.prazo?ddmm(String(r.prazo).slice(0,10)):''].filter(Boolean).join(' · '))}</span><span class="s"><i style="background:${cor(r.status)}"></i>${esc(r.status||'Não iniciada')}</span></div>`).join('')}${its.length>3?`<div class="dr-ab-i"><span class="a" style="color:var(--txt3)">+ ${its.length-3} no Plano de Ação e no FCA</span></div>`:''}${its.length>8?`<div class="dr-ab-i"><span class="m">+ ${its.length-8} no Plano de Ação e no FCA</span></div>`:''}</div>`; }
 /* AÇÃO JÁ COM AS PLACAS: preenche o texto com as placas do bottom (as vencidas primeiro) */
 let _drBot=[];
 function preenchePlacas(){ const v=_drBot.filter(r=>r.Placa&&r.Placa!=='—'), venc=v.filter(r=>r._s==='cr'), us=(venc.length?venc:v).map(r=>r.Placa);
@@ -1217,7 +1230,7 @@ function desenhaPrev(){
 function ligaPrev(){
   const d=$('prev').contentDocument; if(!d) return;
   d.addEventListener('click',e=>{ const td=e.target.closest('td[data-k]'); if(td){ abreDrill(td.dataset.k,td.dataset.d||null,td.dataset.w||null); return; }
-    const th=e.target.closest('th.sw[data-sem]'); if(th){ const w=th.dataset.sem; if(w!==VIG){ if(ABERTAS.has(w)) ABERTAS.delete(w); else ABERTAS.add(w); _foco=DECK[POS]&&DECK[POS].item; monta(); } return; }
+    const th=e.target.closest('th.sw[data-sem]'); if(th){ const w=th.dataset.sem; if(w===VIG) VIG_FECHADA=!VIG_FECHADA; else if(ABERTAS.has(w)) ABERTAS.delete(w); else ABERTAS.add(w); _foco=DECK[POS]&&DECK[POS].item; monta(); return; }
     const tr=e.target.closest('tr[data-rps]'); if(tr) abreAc(tr.dataset.rps); });
 }
 function mostra(){
@@ -1360,7 +1373,7 @@ function montaUn(id,ops,val,rot,fn){ const w=$(id); w.querySelector('.un-r').tex
 function filtros(){
   $('un-uni').style.display=SIGS.length>1?'':'none';
   montaUn('un-uni',SIGS.map(c=>({v:c,t:c})),SEL,SEL,v=>{ if(v===SEL){ filtros(); return; } escolhe(v); try{ localStorage.setItem('rps_uni',v); }catch(e){} VIG=''; POS=0; carregar(); });
-  montaUn('un-mes',MESES.map(v=>({v,t:semLb(v)})),VIG,VIG?semLb(VIG):'Semana',v=>{ if(v===VIG){ filtros(); return; } VIG=v; ABERTAS=new Set(); filtros(); monta(); });
+  montaUn('un-mes',MESES.map(v=>({v,t:semLb(v)})),VIG,VIG?semLb(VIG):'Semana',v=>{ if(v===VIG){ filtros(); return; } VIG=v; ABERTAS=new Set(); VIG_FECHADA=false; filtros(); monta(); });
   $('un-mes').style.display=MESES.length?'':'none';
 }
 
@@ -1425,6 +1438,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611281630"></script>
+<script src="../assets/build-check.js?v=202611281700"></script>
 </body>
 </html>
