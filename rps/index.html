@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611281500">
+<meta name="build" content="202611281630">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>RPS de Frota · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -453,6 +453,16 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .dr-l{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}.dr-l label{flex:1;min-width:150px;margin:8px 0 0;}
 .dr-l select,.cx select{width:100%;background:var(--app);border:1px solid var(--card-brd);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12.5px;padding:8px 10px;margin-top:5px;}
 .dr-l .bt{height:36px;}
+.dr-lk{background:transparent;border:0;color:var(--laranja);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;margin-left:12px;text-decoration:none;}
+.dr-leg{display:flex;gap:16px;flex-wrap:wrap;font-size:10.5px;color:var(--txt3);font-weight:600;margin:-6px 0 10px;}
+.dr-leg i{display:inline-block;width:16px;height:0;border-top:2px dashed currentColor;vertical-align:3px;margin-right:6px;}
+.dr-leg i.med{border-top:2px solid #8E96A6;}.dr-leg i.mel{border-top:2px dotted #8E96A6;}
+.dr-q{padding:10px 12px;margin:0 0 10px;border-radius:8px;background:var(--hover);font-size:12.5px;line-height:1.45;color:var(--txt);}
+.dr-h5{display:flex;align-items:baseline;gap:10px;}.dr-h5 h5{margin-right:auto;}
+.dr-ab{margin:12px 0 2px;}.dr-ab-i{display:flex;gap:10px;align-items:baseline;padding:7px 2px;border-top:1px solid var(--linha);font-size:12px;line-height:1.4;}
+.dr-ab-i .o{flex:0 0 auto;font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;min-width:74px;}
+.dr-ab-i .a{flex:1;color:var(--txt);}.dr-ab-i .m{flex:0 0 auto;color:var(--txt3);white-space:nowrap;}
+.dr-ab-i .s{flex:0 0 auto;white-space:nowrap;color:var(--txt);}.dr-ab-i .s i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;}
 .dr-modo{display:inline-flex;gap:0;margin:0 0 8px;border:1px solid var(--card-brd);border-radius:8px;overflow:hidden;}
 .dr-modo button{background:transparent;border:0;padding:7px 14px;font-family:inherit;font-size:11.5px;font-weight:700;color:var(--txt2);cursor:pointer;}
 .dr-modo button.on{background:var(--laranja);color:#fff;}
@@ -563,8 +573,11 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   <div class="dr-top"><div><h4 id="drT">—</h4><div class="dr-sub" id="drS"></div></div><button class="dr-x" onclick="fechaDr()" title="Fechar (Esc)">×</button></div>
   <div class="dr-kp" id="drK"></div>
   <div class="dr-g" id="drG"><canvas id="drC"></canvas></div>
+  <div class="dr-leg" id="drLeg"></div>
+  <div id="drQ"></div>
   <div id="drB"></div>
-  <div class="dr-ac"><div class="dr-modo"><button data-m="acao" class="on" onclick="drModo('acao')">Gerar ação</button><button data-m="jus" onclick="drModo('jus')">Justificar sem ação</button></div>
+  <div id="drAb"></div>
+  <div class="dr-ac"><div class="dr-modo"><button data-m="acao" class="on" onclick="drModo('acao')">Gerar ação</button><button data-m="jus" onclick="drModo('jus')">Justificar sem ação</button></div><button class="dr-lk" id="drPl" onclick="preenchePlacas()">Preencher com as placas</button>
     <div id="drJx"></div>
     <textarea id="drA" maxlength="900" placeholder="O que vai ser feito"></textarea>
     <div class="dr-l"><label id="drUw">Unidade<select id="drU"></select></label><label id="drDw">Dono<select id="drD"></select></label><label id="drPw">Prazo<input type="date" id="drP"></label><button class="bt pri" id="drGo" onclick="drGo()">Gerar ação</button></div>
@@ -922,6 +935,7 @@ function abreDrill(k,dia,w){
   const vu=c=>{ if(k==='cons'){ const a=consAgg([dia],[c]); return a?a.v:null; } const f=fotoDe(c,dia); if(!f||!f.dados) return null; if(k==='score') return f.dados.score; if(k==='qg'){ const u=ultimaFoto(dia).find(r=>r.unidade===c), q=u&&u.dados.ind&&u.dados.ind.qg; return q?(q.b||[]).filter(b=>b.dia===dia).length:null; } const i=f.dados.ind&&f.dados.ind[k]; return i?i.v:null; };
   $('drK').innerHTML=`<div><span>Real</span><b class="${cl?'c'+cl:''}">${fmtV(k,v)}</b></div><div><span>Meta</span><b>${metaTxt(k,dia)}</b></div>`+
     (us.length>1?us.map(c=>{ const a=vu(c), ag=k==='cons'?consAgg([dia],[c]):null, cc=clDe(k,a,ag?ag.m:null); return `<div><span>${esc(c)}</span><b class="${cc?'c'+cc:''}">${fmtV(k,a)}</b></div>`; }).join(''):'');
+  const uAc=us.length?us.slice().sort((a,b)=>{ const va=vu(a), vb=vu(b); return x.qtd?(vb||0)-(va||0):(va??1e9)-(vb??1e9); })[0]:CODS[0];
   /* bottom: a lista do próprio Gestão à Vista naquele dia (quebras: as do dia do lançamento) */
   let bot=[], tit='';
   if(k==='cons'){ tit='Placas que abasteceram no dia · do pior para o melhor contra o remunerado';
@@ -930,10 +944,14 @@ function abreDrill(k,dia,w){
   else if(k==='score'){ tit='Indicadores do dia'; bot=IND.filter(i=>!i.qtd).map(i=>({Indicador:i.t,Real:fmtV(i.k,valDia(i.k,dia)),Meta:metaTxt(i.k,dia),_c:clDia(i.k,dia)})).filter(r=>r.Real!=='—').sort((a,b)=>({r:0,y:1,g:2}[a._c]??3)-({r:0,y:1,g:2}[b._c]??3)); }
   else if(k==='qg'){ tit='Lançamentos da Carta acima de 10% do remunerado da conta'; ultimaFoto(dia).forEach(r=>{ const q=r.dados.ind&&r.dados.ind.qg; (q&&q.b||[]).filter(b=>b.dia===dia).forEach(b=>{ const o=Object.assign({},b); delete o.dia; if(us.length>1) o.Unidade=r.unidade; bot.push(o); }); }); }
   else { tit='Bottom do dia'; us.forEach(c=>{ const i=fotoDe(c,dia).dados.ind[k]; (i&&i.b||[]).forEach(b=>{ const o=Object.assign({},b); if(us.length>1) o.Unidade=c; bot.push(o); }); });
-    const n=us.reduce((s,c)=>{ const i=fotoDe(c,dia).dados.ind[k]; return s+(i?i.n||0:0); },0); if(n>bot.length) tit+=` · ${bot.length} de ${n}`; }
+    const n=us.reduce((s,c)=>{ const i=fotoDe(c,dia).dados.ind[k]; return s+(i?i.n||0:0); },0); if(n>bot.length) tit+=` · ${bot.length} de ${n}`;
+    bot=bot.map(o=>reincide(o,k,dia,us)); }
+  _drBot=bot;
   const cols=bot.length?Object.keys(bot[0]).filter(c=>c[0]!=='_'):[];
   const num=v=>typeof v==='number'?(Math.abs(v)>=1000?FS.brl(v):nf(v,Number.isInteger(v)?0:1)):esc(v==null?'':v);
-  $('drB').innerHTML=`<h5>${esc(tit)}</h5>`+(bot.length?`<div class="dr-tw"><table class="dr-t"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${bot.map(r=>`<tr${r._c?` class="c${r._c}"`:''}>${cols.map(c=>c==='Status'&&r._s?`<td class="st"><i class="${r._s}"></i>${esc(r[c])}</td>`:`<td>${num(r[c])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:`<div class="dr-vz">${k==='fca'?'A aderência ao FCA não tem lista por placa.':'Nada pendente neste dia.'}</div>`);
+  const gv=GAV_VW[k], lk=gv?`<a class="dr-lk" target="_blank" rel="noopener" id="drGav" href="../gestao-a-vista/index.html?u=${encodeURIComponent(uAc)}&vw=${gv}">Ver todas no Gestão à Vista ↗</a>`:'';
+  $('drQ').innerHTML=quantoFalta(k,x,dia,us);
+  $('drB').innerHTML=`<div class="dr-h5"><h5>${esc(tit)}</h5>${lk}</div>`+(bot.length?`<div class="dr-tw"><table class="dr-t"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${bot.map(r=>`<tr${r._c?` class="c${r._c}"`:''}>${cols.map(c=>c==='Status'&&r._s?`<td class="st"><i class="${r._s}"></i>${esc(r[c])}</td>`:`<td>${num(r[c])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:`<div class="dr-vz">${k==='fca'?'A aderência ao FCA não tem lista por placa.':'Nada pendente neste dia.'}</div>`);
   /* gráfico: o mês dia a dia contra a meta */
   const mes=dia.slice(0,7), ds=(k==='cons'?Object.keys(CONS).sort():DIAS_COM()).filter(d=>d.slice(0,7)===mes);
   const cv=$('drC'); if(_drCh){ try{ _drCh.destroy(); }catch(e){} _drCh=null; }
@@ -942,9 +960,7 @@ function abreDrill(k,dia,w){
   if(window.Chart&&ds.length){ const vs=ds.map(d=>valDia(k,d)), mt=ds.map(d=>k==='cons'?metaDe(k,d):x.meta), esc_=!document.body.classList.contains('claro'), tx=esc_?'#C9D0DD':'#4A5568';
     const COR={cg:esc_?'#3BB33B':'#00B300',cy:esc_?'#F4A100':'#E9A400',cr:esc_?'#FF5252':'#FF0000'}, cor=d=>COR['c'+clDia(k,d)]||'#8E96A6';
     const al=(c,a)=>{ const h=c.replace('#',''); return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`; };
-    const nums=vs.concat(mt).filter(v=>v!=null&&isFinite(v)), mn=Math.min(...nums), mx=Math.max(...nums), amp=mx-mn;
-    let lo=Math.min(mn-amp*.45,mn*.82), hi=Math.max(mx+amp*.18,mx*1.04); if(mn>=0) lo=Math.max(0,lo); if(hi===lo) hi=lo+1;
-    const pas=(()=>{ const r=(hi-lo)/5, e=Math.pow(10,Math.floor(Math.log10(r))); return [1,2,2.5,5,10].map(m=>m*e).find(m=>m>=r); })(); lo=Math.floor(lo/pas)*pas; hi=Math.ceil(hi/pas)*pas;
+    const {lo,hi,pas}=eixoDr(vs.concat(mt));
     const rot={id:'rotDr',afterDatasetsDraw(ch){ const c=ch.ctx, me=ch.getDatasetMeta(0); c.save(); c.font='700 11px Montserrat'; c.textAlign='center'; c.textBaseline='bottom';
       me.data.forEach((b,i)=>{ const v=vs[i]; if(v==null||(ds.length>14&&ds[i]!==dia)) return; c.fillStyle=esc_?'#EEF2FA':'#161D2B'; c.fillText(fmtV(k,v),b.x,b.y-4); }); c.restore(); }};
     _drCh=new Chart(cv,{type:'bar',data:{labels:ds.map(d=>+d.slice(8,10)),datasets:[
@@ -953,8 +969,10 @@ function abreDrill(k,dia,w){
       options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtV(k,c.raw)}}},
         scales:{x:{grid:{display:false},ticks:{color:tx,font:{family:'Montserrat',size:10}}},y:{min:lo,max:hi,grid:{color:esc_?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)'},ticks:{stepSize:pas,color:tx,font:{family:'Montserrat',size:9},callback:t=>x.qtd||k==='score'||k==='cons'?nf(t,k==='cons'?1:0):t>100?'':nf(t,0)+'%'}}}},plugins:[rot]}); }
   $('drG').style.display=ds.length?'':'none';
+  $('drLeg').innerHTML=ds.length?'<span><i></i>Meta</span>':''; if(ds.length&&k!=='cons') poeRede(k,dia,mes,ds);
+  $('drAb').innerHTML=abertasHtml(k,x,bot);
+  $('drPl').style.display=bot.some(r=>r.Placa&&r.Placa!=='—')?'':'none';
   /* gerar ação */
-  const uAc=us.length?us.slice().sort((a,b)=>{ const va=vu(a), vb=vu(b); return x.qtd?(vb||0)-(va||0):(va??1e9)-(vb??1e9); })[0]:CODS[0];
   $('drU').innerHTML=CODS.map(c=>`<option value="${esc(c)}"${c===uAc?' selected':''}>${esc(c)}</option>`).join(''); $('drUw').style.display=CODS.length>1?'':'none';
   donos(uAc,''); $('drA').value=''; $('drP').value=''; set('drM','');
   pintaJus(); drModo('acao');
@@ -982,6 +1000,75 @@ async function justifica(){
 async function tiraJus(id){ if(!confirm('Remover a justificativa?')) return;
   const {error}=await sb.from('rps_justifica').delete().eq('id',id); if(error){ set('drM','Não deu para remover: '+error.message); return; }
   JU=JU.filter(j=>+j.id!==+id); pintaJus(); _foco=DECK[POS]&&DECK[POS].item; monta(); }
+/* eixo que se ajusta aos dados (a régua do FCA), passo 1 · 2 · 2,5 · 5 × 10ⁿ */
+function eixoDr(vals){ const nums=vals.filter(v=>v!=null&&isFinite(v)); if(!nums.length) return {lo:0,hi:1,pas:.2};
+  const mn=Math.min(...nums), mx=Math.max(...nums), amp=mx-mn;
+  let lo=Math.min(mn-amp*.45,mn*.82), hi=Math.max(mx+amp*.18,mx*1.04); if(mn>=0) lo=Math.max(0,lo); if(hi===lo) hi=lo+1;
+  const pas=(()=>{ const r=(hi-lo)/5, e=Math.pow(10,Math.floor(Math.log10(r))); return [1,2,2.5,5,10].map(m=>m*e).find(m=>m>=r); })();
+  return {lo:Math.floor(lo/pas)*pas,hi:Math.ceil(hi/pas)*pas,pas}; }
+/* REDE NO GRÁFICO: média das unidades e a melhor unidade de cada dia (todas as unidades, não só o recorte) */
+const REDE={};
+async function redeDe(k,mes){ const ck=k+'|'+mes; if(REDE[ck]) return REDE[ck];
+  const [a,m]=mes.split('-').map(Number), fim=dISO(new Date(a,m,1)), hj=dISO(new Date());
+  const {data,error}=await sb.from('gav_diario').select(k==='score'?'dia,unidade,v:dados->score':`dia,unidade,v:dados->ind->${k}->v`).gte('dia',mes+'-01').lt('dia',fim<hj?fim:hj).order('dia').range(0,999);
+  if(error) throw error;
+  const por={}; (data||[]).forEach(r=>{ const v=r.v==null?null:+r.v; if(v==null||!isFinite(v)) return; (por[String(r.dia).slice(0,10)]=por[String(r.dia).slice(0,10)]||[]).push(v); });
+  const qtd=(indDe(k)||{}).qtd, out={}; Object.entries(por).forEach(([d,vs])=>{ if(vs.length<2) return; out[d]={med:vs.reduce((s,x)=>s+x,0)/vs.length,mel:qtd?Math.min(...vs):Math.max(...vs),n:vs.length}; });
+  return REDE[ck]=out; }
+function poeRede(k,dia,mes,ds){ redeDe(k,mes).then(r=>{ if(!_drCh||!_dr||_dr.k!==k||_dr.dia!==dia) return;
+    if(!ds.some(d=>r[d])) return;
+    const med=ds.map(d=>r[d]?r[d].med:null), mel=ds.map(d=>r[d]?r[d].mel:null);
+    _drCh.data.datasets.push({type:'line',label:'Média das unidades',data:med,borderColor:'#8E96A6',borderWidth:1.5,pointRadius:0,tension:0,spanGaps:true,order:0},
+      {type:'line',label:'Melhor unidade',data:mel,borderColor:'#8E96A6',borderDash:[1.5,3],borderWidth:2,pointRadius:0,tension:0,spanGaps:true,order:0});
+    const e=eixoDr(_drCh.data.datasets.flatMap(x=>x.data)); Object.assign(_drCh.options.scales.y,{min:e.lo,max:e.hi}); _drCh.options.scales.y.ticks.stepSize=e.pas; _drCh.update('none');
+    $('drLeg').innerHTML='<span><i></i>Meta</span><span><i class="med"></i>Média das unidades</span><span><i class="mel"></i>Melhor unidade</span>';
+  }).catch(e=>console.warn('rede no gráfico',e)); }
+/* PLACA REINCIDENTE: em quantos dias das últimas 4 semanas a placa apareceu no bottom deste indicador */
+function reincide(o,k,dia,us){ if(!o.Placa||o.Placa==='—') return o; const u=o.Unidade||us[0], ini=somaD(dia,-27), p=_pk(o.Placa);
+  let n=0; GD.forEach(r=>{ if(r.unidade!==u||r.dia<ini||r.dia>dia) return; const i=r.dados&&r.dados.ind&&r.dados.ind[k]; if(i&&(i.b||[]).some(b=>b.Placa&&_pk(b.Placa)===p)) n++; });
+  const out={}; let pos=false; Object.keys(o).forEach(c=>{ if(c==='Dias da última'||c==='Status'){ if(!pos){ out['Últimas 4 sem.']=n===1?'1 dia':n+' dias'; pos=true; } } out[c]=o[c]; });
+  if(!pos) out['Últimas 4 sem.']=n===1?'1 dia':n+' dias'; return out; }
+/* QUANTO FALTA PARA A META: quantos itens resolver para bater a meta, o % novo e quanto soma no Score */
+const NF_TODOS=new Set(['dp','conf','mm','ca','sv','se','cf']), NF_VENC=new Set(['pv','al','af','os']);
+const ITEM={mm:['pneu','pneus'],ca:['pneu','pneus'],os:['OS','OS'],se:['empilhadeira','empilhadeiras'],dp:['placa parada','placas paradas']};
+function quantoFalta(k,x,dia,us){
+  if(x.qtd||!(NF_TODOS.has(k)||NF_VENC.has(k))) return '';
+  let T=0,F=0,N=0;
+  for(const c of us){ const f=fotoDe(c,dia), i=f&&f.dados&&f.dados.ind&&f.dados.ind[k]; if(!i||i.v==null) continue;
+    let q=i.nf; if(q==null&&(i.n||0)<=(i.b||[]).length) q=NF_TODOS.has(k)?(i.b||[]).length:(i.b||[]).filter(b=>b._s==='cr').length;
+    if(q==null) return ''; if(q>0&&i.v<100){ T+=q/(1-i.v/100); F+=q; }
+    if(!N&&f.dados.ind) N=SCORE_K.filter(q=>f.dados.ind[q]&&f.dados.ind[q].v!=null).length; }
+  if(!F||!T) return '';
+  const atual=(T-F)/T*100, meta=x.meta, [um,vr]=ITEM[k]||['placa','placas'];
+  const need=Math.max(0,Math.ceil(meta/100*T-(T-F)-1e-9));
+  const sc=v=>SCORE_K.includes(k)&&N?' · Score '+((v-atual)/N>=0?'+':'')+nf((v-atual)/N,1):'';
+  if(need===0) return '';
+  if(need>F){ const v=100; return `<div class="dr-q">Resolvendo os <b>${F} ${F===1?um:vr}</b> da lista, sobe para <b>${nf(v,0)}%</b>${sc(v)}.</div>`; }
+  const v=(T-F+need)/T*100;
+  return `<div class="dr-q">Resolvendo <b>${need} ${need===1?um:vr}</b> (de ${F}), sobe para <b>${nf(v,0)}%</b> e bate a meta de ${meta}%${sc(v)}.</div>`; }
+/* AÇÕES JÁ ABERTAS no Plano de Ação e no FCA para o indicador ou para as placas do bottom (para não gerar ação repetida) */
+let ABERTAS_PA=[], ABERTAS_FCA=[];
+const KW={dp:['DISPONIB','INDISPON'],pv:['PREVENT'],af:['AFERI'],mm:['MILIM','SULCO'],ca:['CALIBR','PRESSAO'],al:['ALINH'],sv:['STRESS'],se:['STRESS','EMPILHAD'],cf:['CIVF','CIFV'],os:['ORDEM DE SERV','OS NO PRAZO','OS VENC','SLA','MTTR'],ck:['CHECKLIST','OS CRITICA'],conf:['CONFORMID'],blz:['BLITZ'],fca:['FCA'],docs:['DOCUMENT','CRLV','ANTT'],qg:['QUEBRA','MANUTEN'],cons:['COMBUST','KM/L','CONSUMO','DIESEL']};
+const aberta=r=>!/conclu|cancel/i.test(r.status||'');
+async function leAbertas(){ ABERTAS_PA=[]; ABERTAS_FCA=[];
+  try{ ABERTAS_PA=(await pagina(()=>sb.from('plano_acao').select('*').in('unidade',CODS).order('id'))).filter(aberta); }catch(e){}
+  try{ ABERTAS_FCA=(await pagina(()=>sb.from('fca').select('id,unidade,vigencia,origem,fato,fato_desvio,causa,acao,responsavel,prazo,status').in('unidade',CODS).order('id'))).filter(r=>aberta(r)&&(r.acao||'').trim()); }catch(e){} }
+function abertasHtml(k,x,bot){
+  const kw=KW[k]||[_nrm(x.t)], pls=[...new Set(bot.map(r=>r.Placa).filter(p=>p&&p!=='—'))];
+  const al=t=>_nrm(t).replace(/[^A-Z0-9]/g,'');
+  const casa=r=>{ const tx=_nrm([r.fato,r.fato_desvio,r.causa,r.acao].join(' ')), ta=al(tx); const pl=pls.filter(p=>ta.includes(al(p))||ta.includes(_pk(p)));
+    return {pl, ind:kw.some(w=>tx.includes(w))}; };
+  const its=[...ABERTAS_PA.map(r=>({r,o:r.origem==='RPS'?'RPS':r.origem||'Plano'})),...ABERTAS_FCA.map(r=>({r,o:'FCA · '+(r.origem||'')}))]
+    .map(z=>Object.assign(z,casa(z.r))).filter(z=>z.ind||z.pl.length).sort((a,b)=>b.pl.length-a.pl.length);
+  if(!its.length) return '';
+  const cor=st=>ST_COR[st||'Não iniciada']||'#8E96A6';
+  return `<div class="dr-ab"><h5>Ações já abertas · ${its.length}</h5>${its.slice(0,8).map(({r,o,pl})=>`<div class="dr-ab-i"><span class="o">${esc(o)}</span><span class="a">${esc(r.fato||'')}${pl.length?' · <b>'+esc(pl.join(', '))+'</b>':''} — ${esc(String(r.acao||'').replace(/\s+/g,' ').slice(0,160))}</span><span class="m">${esc([CODS.length>1?r.unidade:'',r.responsavel||'',r.prazo?ddmm(String(r.prazo).slice(0,10)):''].filter(Boolean).join(' · '))}</span><span class="s"><i style="background:${cor(r.status)}"></i>${esc(r.status||'Não iniciada')}</span></div>`).join('')}${its.length>8?`<div class="dr-ab-i"><span class="m">+ ${its.length-8} no Plano de Ação e no FCA</span></div>`:''}</div>`; }
+/* AÇÃO JÁ COM AS PLACAS: preenche o texto com as placas do bottom (as vencidas primeiro) */
+let _drBot=[];
+function preenchePlacas(){ const v=_drBot.filter(r=>r.Placa&&r.Placa!=='—'), venc=v.filter(r=>r._s==='cr'), us=(venc.length?venc:v).map(r=>r.Placa);
+  const pl=[...new Set(us)]; if(!pl.length) return; const t=$('drA'); t.value=`${_dr?_dr.x.t+': ':''}tratar ${pl.join(', ')}. `+t.value.replace(/^.*?tratar [^.]*\.\s*/,''); t.focus(); t.setSelectionRange(t.value.length,t.value.length); }
+/* visão do Gestão à Vista de cada indicador (link "Ver todas") */
+const GAV_VW={dp:'disp',pv:'prev',af:'pneus-afer',mm:'pneus-mm',ca:'pneus-cal',al:'alinh',sv:'stressv',se:'stresse',cf:'cifv',os:'os',ck:'chk',conf:'conf',blz:'blitz',fca:'fca',docs:'docs',qg:'custos'};
 function donos(u,atual){ const ns=window.FcaCaixa&&FcaCaixa.nomesDe?FcaCaixa.nomesDe(u,PERFIS):[], l=ns.slice(); if(atual&&!l.includes(atual)) l.push(atual);
   $('drD').innerHTML=l.map(n=>`<option${n===atual?' selected':''}>${esc(n)}</option>`).join('')||'<option value="">—</option>'; }
 $('drU').addEventListener('change',()=>donos($('drU').value,$('drD').value));
@@ -995,7 +1082,7 @@ async function geraAcao(){
   set('drM','Gravando…');
   const {data,error}=await sb.from('plano_acao').insert(nova).select('*').single();
   if(error){ set('drM','Não deu para gravar no Plano de Ação: '+error.message); return; }
-  PA.push(data); fechaDr(); _foco='acoes'; monta();
+  PA.push(data); ABERTAS_PA.push(data); fechaDr(); _foco='acoes'; monta();
 }
 /* semana da ação = a RPS em que ela nasceu (o "RPS de dd/mm/aaaa" do fato_desvio) */
 const semAcao=r=>{ const m=String(r.fato_desvio||'').match(/RPS de (\d{2})\/(\d{2})\/(\d{4})/); return m?`${m[3]}-${m[2]}-${m[1]}`:domDe(String(r.created_at||dISO(new Date())).slice(0,10)); };
@@ -1282,7 +1369,7 @@ async function lePerfis(){ try{ let r=await sb.rpc('fca_perfis_resp'); if(r.erro
 async function carregar(){
   window.__apresPronto=false;
   set('titSub','Carregando…'); $('telaMsg').style.display=''; $('telaMsg').textContent='Montando os slides…';
-  await Promise.all([leGD(),lePA(),leCons(),leJU()]);
+  await Promise.all([leGD(),lePA(),leCons(),leJU(),leAbertas()]);
   const ds=DIAS_COM(), hoje=dISO(new Date());
   MESES=[...new Set(ds.concat(Object.keys(CONS)).map(domDe).concat([domDe(hoje)]))].sort().reverse();
   if(!VIG||!MESES.includes(VIG)) VIG=ds.length?domDe(ds[ds.length-1]):domDe(hoje);
@@ -1338,6 +1425,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611281500"></script>
+<script src="../assets/build-check.js?v=202611281630"></script>
 </body>
 </html>

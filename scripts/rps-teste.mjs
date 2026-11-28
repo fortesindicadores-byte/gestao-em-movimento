@@ -15,7 +15,7 @@ const t = (c, m, x) => { if (c) { ok++; console.log('   ✓ ' + m); } else { fal
 /* a foto diária: MCC T1 e MCC T2 de 15/11 a 25/11/2026 (semana da RPS = 22/11 a 28/11), CGR à parte */
 const dias = []; for (let d = 15; d <= 25; d++) dias.push('2026-11-' + String(d).padStart(2, '0'));
 const ind = (base, d) => ({
-  dp: { v: d === '2026-11-24' ? base - 6 : base, n: 1, b: [{ Placa: 'ABC1D23', Projeto: 'ROTA', 'Dias da última': 3, Status: 'Vencida', _s: 'cr', _o: 3 }] },
+  dp: { v: d === '2026-11-24' ? base - 6 : base, n: 1, nf: 1, b: [{ Placa: 'ABC1D23', Projeto: 'ROTA', 'Dias da última': 3, Status: 'Vencida', _s: 'cr', _o: 3 }] },
   pv: { v: 100, n: 0, b: [] }, af: { v: 96, n: 0, b: [] }, mm: { v: 92, n: 0, b: [] }, ca: { v: 70, n: 2, b: [{ Placa: 'XYZ9A88', 'Desvio da pressão (%)': -18 }, { Placa: 'XYZ9A88', 'Desvio da pressão (%)': 14 }] },
   al: { v: 85, n: 0, b: [] }, sv: { v: 100, n: 0, b: [] }, se: { v: null, n: 0, b: [] }, cf: { v: 100, n: 0, b: [] }, os: { v: 88, n: 0, b: [] },
   ck: { v: 100, n: 0, b: [] }, conf: { v: 100, n: 0, b: [] }, blz: { v: 95, n: 0, b: [] }, fca: { v: 90, n: 0, b: [] }, docs: { v: 0, n: 0, b: [] },
@@ -46,6 +46,7 @@ const CAB = [{ slug: 'consumo_km_litro', tabela: 'ca_consumo_km_litro', linhas: 
 const PA = [
   { id: 'a1', unidade: 'MCC T2', vigencia: 'nov/26', origem: 'RPS', fato: 'Calibragem', projeto: null, fato_desvio: '18/11/2026 · 70% (meta 90%) · RPS de 15/11/2026', causa: null, acao: 'Calibrar a frota da Rota', responsavel: 'ERICK SILVA', prazo: '2026-11-20', status: 'Concluída', acompanhamento: null, created_at: '2026-11-16T12:00:00Z' },
   { id: 'a2', unidade: 'MCC T1', vigencia: 'nov/26', origem: 'RPS', fato: 'OS no prazo', projeto: null, fato_desvio: '17/11/2026 · 88% (meta 90%) · RPS de 15/11/2026', causa: null, acao: 'Fechar as OS abertas há mais de 8 dias', responsavel: 'ERICK SILVA', prazo: '2026-11-21', status: 'Em andamento', acompanhamento: null, created_at: '2026-11-16T12:00:00Z' },
+  { id: 'a4', unidade: 'MCC T2', vigencia: 'nov/26', origem: 'Dia a dia', fato: 'Oficina', projeto: null, fato_desvio: '', causa: null, acao: 'Cobrar retorno da ABC1D23 da oficina', responsavel: 'ERICK SILVA', prazo: '2026-11-30', status: 'Em andamento', acompanhamento: null, created_at: '2026-11-20T12:00:00Z' },
   { id: 'a3', unidade: 'CGR', vigencia: 'nov/26', origem: 'RPS', fato: 'Preventivas', projeto: null, fato_desvio: '17/11/2026 · 80% · RPS de 15/11/2026', causa: null, acao: 'Outra unidade', responsavel: null, prazo: null, status: 'Não iniciada', acompanhamento: null, created_at: '2026-11-16T12:00:00Z' },
 ];
 
@@ -57,11 +58,11 @@ const SHIM = `(${function (T0) {
     auth: { getSession: async () => ({ data: { session: { user: { id: 'u1', email: 'admin@conlogsa.com.br', user_metadata: { name: 'Renan' } } } } }) },
     rpc: async () => ({ data: [{ nome: 'ERICK SILVA', unidade: 'MCC T1,MCC T2', is_admin: false }, { nome: 'Renan Fortes', unidade: '', is_admin: true }], error: null }),
     from: (tab) => { const T = window.__T; let rows = (T[tab] || []).slice(), sel = '';
-      const q = { select(s) { sel = s || ''; return q; }, order() { return q; }, or() { return q; },
+      const q = { select(s) { sel = s || ''; return q; }, order() { return q; }, or() { return q; }, lt(c, v) { rows = rows.filter(r => String(r[c]) < v); return q; },
         eq(c, v) { if (tab === 'fca_profiles') rows = [{ nome: 'Renan', unidade: '', is_admin: true }]; else rows = rows.filter(r => r[c] === v); return q; },
         in(c, vs) { rows = rows.filter(r => vs.includes(r[c])); return q; }, gte(c, v) { rows = rows.filter(r => String(r[c]) >= v); return q; },
         maybeSingle: async () => ({ data: rows[0] || null, error: null }),
-        range: async (a, b) => { let r = rows.slice(a, b + 1); if (/score:dados->score/.test(sel)) r = r.map(x => ({ dia: x.dia, unidade: x.unidade, score: x.dados.score })); return { data: JSON.parse(JSON.stringify(r)), error: null }; },
+        range: async (a, b) => { let r = rows.slice(a, b + 1); if (/score:dados->score/.test(sel)) r = r.map(x => ({ dia: x.dia, unidade: x.unidade, score: x.dados.score })); const mj = sel.match(/v:dados->ind->(\w+)->v/); if (mj) r = r.map(x => ({ dia: x.dia, unidade: x.unidade, v: x.dados.ind[mj[1]] ? x.dados.ind[mj[1]].v : null })); if (/v:dados->score/.test(sel)) r = r.map(x => ({ dia: x.dia, unidade: x.unidade, v: x.dados.score })); return { data: JSON.parse(JSON.stringify(r)), error: null }; },
         insert: (r0) => { const r = Object.assign({ id: 'n' + (window.__ins.length + 1), created_at: new Date().toISOString() }, r0); window.__ins.push({ tab, r: r0 }); (T[tab] = T[tab] || []).push(r);
           const q2 = { select: () => q2, single: async () => ({ data: Object.assign({}, r), error: null }) }; return q2; },
         upsert: (r0) => { const r = Object.assign({ id: 90 + window.__ins.length, updated_at: new Date().toISOString() }, r0); window.__ins.push({ tab, r: r0 }); (T[tab] = T[tab] || []).push(r);
@@ -159,6 +160,16 @@ console.log('1 · MCC (T1 + T2), semana de 22/11/2026');
   t(dr.on && /Disponibilidade · ter 24\/11\/2026/.test(dr.t), 'clicar no dia abre o detalhe do indicador', dr.t);
   t(/MCC T1/.test(dr.kp) && /MCC T2/.test(dr.kp), 'o detalhe abre por unidade (T1 e T2)', dr.kp);
   t(dr.linhas === 2, 'bottom do dia (as placas paradas das duas unidades)', dr.linhas);
+  await pg.waitForTimeout(400);
+  const ex = await pg.evaluate(() => ({ q: document.getElementById('drQ').innerText, ab: document.getElementById('drAb').innerText.replace(/\s+/g, ' '), gav: (document.getElementById('drGav') || {}).href || '', th: document.querySelector('#drB thead').textContent, re: (document.querySelector('#drB tbody td:nth-child(3)') || {}).textContent, ds: _drCh ? _drCh.data.datasets.map(d => d.label) : [], leg: document.getElementById('drLeg').innerText }));
+  t(/Resolvendo/.test(ex.q) && /sobe para/.test(ex.q) && /Score/.test(ex.q), 'quanto falta para a meta e quanto soma no Score', ex.q);
+  t(/Oficina/.test(ex.ab) && /ABC1D23/.test(ex.ab) && /Em andamento/.test(ex.ab), 'ações já abertas para as placas do bottom', ex.ab);
+  t(/gestao-a-vista\/index\.html\?u=MCC%20T2&vw=disp/.test(ex.gav), 'link para a visão do indicador no Gestão à Vista', ex.gav);
+  t(/Últimas 4 sem\./.test(ex.th) && /dias?/.test(ex.re), 'placa reincidente: dias no bottom nas últimas 4 semanas', [ex.th, ex.re]);
+  t(ex.ds.includes('Média das unidades') && ex.ds.includes('Melhor unidade') && /Média das unidades/.test(ex.leg), 'rede no gráfico: média e melhor unidade', ex.ds);
+  await pg.evaluate(() => preenchePlacas());
+  t(/ABC1D23/.test(await pg.inputValue('#drA')), 'preencher a ação com as placas do bottom');
+  await pg.fill('#drA', '');
   const st = await pg.evaluate(() => { const td = document.querySelector('#drB td.st'); return td ? { t: td.textContent, i: td.querySelector('i').className, cor: getComputedStyle(td).color } : null; });
   t(st && st.t === 'Vencida' && st.i === 'cr' && /Dias da última/.test(await pg.evaluate(() => document.querySelector('#drB thead').textContent)), 'bottom com Dias da última e Status com farol redondo', st);
   t(dr.uni === 'MCC T2' && dr.donos[0] === 'ERICK SILVA', 'a ação vai para a unidade pior, com o gestor de frota primeiro', dr);

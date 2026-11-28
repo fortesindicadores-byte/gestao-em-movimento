@@ -119,7 +119,12 @@ const FOTO = async () => {
       .filter(x => x.rm > 0 && Math.abs(+x.l.valor || 0) > 0.1 * x.rm)
       .map(x => ({ Data: x.l.data ? String(x.l.data).slice(0, 10).split('-').reverse().join('/') : '', dia: x.l.data ? String(x.l.data).slice(0, 10) : '', Conta: x.ct, Grupo: x.l.grupo || '', Placa: x.l.equipamento || '', Fornecedor: x.l.fornecedor || '', Valor: Math.round(+x.l.valor || 0), 'Rem. da conta': Math.round(x.rm), '% do rem.': Math.round(Math.abs(+x.l.valor || 0) / x.rm * 100) }));
     const ind = {};
-    const put = (k, v, cls, fn) => { let b = []; try { b = fn ? fn(c) : []; } catch (e) { b = []; } ind[k] = { v: v == null ? null : Math.round(v * 10) / 10, cls, n: b.length, b: b.slice(0, B) }; };
+    /* nf = quantos itens do bottom derrubam o % (para o "quanto falta para a meta" da RPS): em Disponibilidade, Conformidade,
+       pneus, Stress Test e CIVF todo item da lista conta; em Preventivas, Alinhamento, Aferições e OS só os vencidos (Atenção ainda está no prazo) */
+    const NF_TODOS = new Set(['dp', 'conf', 'mm', 'ca', 'sv', 'se', 'cf']), NF_VENC = new Set(['pv', 'al', 'af', 'os']);
+    const put = (k, v, cls, fn) => { let b = []; try { b = fn ? fn(c) : []; } catch (e) { b = []; }
+      const nf = NF_TODOS.has(k) ? b.length : NF_VENC.has(k) ? b.filter(r => r._s === 'cr').length : undefined;
+      ind[k] = { v: v == null ? null : Math.round(v * 10) / 10, cls, n: b.length, nf, b: b.slice(0, B) }; };
     put('dp', s.dp, dispCls(s.dp), BOT.dp);
     put('pv', s.pv, clsPctMeta(s.pv), BOT.pv);
     put('af', s.af, clsPctMeta(s.af, 95, 85), BOT.af);

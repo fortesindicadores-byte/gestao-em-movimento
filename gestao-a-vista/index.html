@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="build" content="202611281330">
+<meta name="build" content="202611281630">
 <title>Gestão à Vista</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1614,6 +1614,8 @@ function renderPreHub(){
   }
   VW='resumo'; montaNav(); marcaUnidade();
   await boot();
+  /* ?vw=<visão> abre direto numa visão (o "Ver todas no Gestão à Vista" do detalhe da RPS, 28/11/2026) */
+  { const qv=(new URLSearchParams(location.search).get('vw')||'').trim(); if(qv&&vDe(qv)&&vistas().some(x=>x.id===qv)) setVw(qv); }
   window.__gavPronto=true;      // o painel Apresentações espera por isto para pedir os slides do farol
 })();
 </script>
@@ -1641,6 +1643,6 @@ function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>GavApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202611281330"></script>
+<script src="../assets/build-check.js?v=202611281630"></script>
 </body>
 </html>
