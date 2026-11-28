@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611281330">
+<meta name="build" content="202611281500">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>RPS de Frota · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -899,6 +899,12 @@ body.escuro .rps-kp div{background:#2C2E34}
 body.escuro table.rps-mx td.cg{color:#3BB33B;background:rgba(59,179,59,.16)}body.escuro table.rps-mx td.cy{color:#F4A100;background:rgba(244,161,0,.16)}body.escuro table.rps-mx td.cr{color:#FF5252;background:rgba(255,82,82,.16)}
 body.escuro table.rps-mx tr.score td{background:#000}
 body.escuro table.rps-mx td.cj{color:#A3ABBA;background:rgba(142,150,166,.18)}
+/* dias: só a fonte colorida, sem fundo; semana (Sem.): só o fundo, fonte do texto (Renan, 28/11/2026: "pinta o fundo só na semana, e só a fonte nos dias") */
+table.rps-mx td.v:not(.sem).cg,table.rps-mx td.v:not(.sem).cy,table.rps-mx td.v:not(.sem).cr,table.rps-mx td.v:not(.sem).cj,
+body.escuro table.rps-mx td.v:not(.sem).cg,body.escuro table.rps-mx td.v:not(.sem).cy,body.escuro table.rps-mx td.v:not(.sem).cr,body.escuro table.rps-mx td.v:not(.sem).cj{background:none}
+table.rps-mx td.sem.cg,table.rps-mx td.sem.cy,table.rps-mx td.sem.cr,body.escuro table.rps-mx td.sem.cg,body.escuro table.rps-mx td.sem.cy,body.escuro table.rps-mx td.sem.cr{color:var(--txt)!important}
+/* filete entre as linhas em toda a largura da tabela, inclusive nos dias e nas semanas */
+table.rps-mx tbody td{border-bottom:1px solid var(--linha)}table.rps-mx tbody tr.sep td{border-bottom:0}
 `;
 
 /* ── detalhe do indicador num dia (clique na célula do Gerot) e "Gerar ação" → Plano de Ação (origem RPS) ── */
@@ -931,12 +937,21 @@ function abreDrill(k,dia,w){
   /* gráfico: o mês dia a dia contra a meta */
   const mes=dia.slice(0,7), ds=(k==='cons'?Object.keys(CONS).sort():DIAS_COM()).filter(d=>d.slice(0,7)===mes);
   const cv=$('drC'); if(_drCh){ try{ _drCh.destroy(); }catch(e){} _drCh=null; }
-  if(window.Chart&&ds.length){ const vs=ds.map(d=>valDia(k,d)), esc_=!document.body.classList.contains('claro'), tx=esc_?'#C9D0DD':'#4A5568';
-    _drCh=new Chart(cv,{type:'line',data:{labels:ds.map(d=>+d.slice(8,10)),datasets:[
-      {label:x.t,data:vs,borderColor:'#F97316',backgroundColor:'#F97316',borderWidth:2.5,tension:0,pointRadius:ds.map(d=>d===dia?6:3),pointBackgroundColor:ds.map(d=>d===dia?'#fff':'#F97316'),pointBorderColor:'#F97316',pointBorderWidth:2},
-      {label:'Meta',data:ds.map(d=>k==='cons'?metaDe(k,d):x.meta),borderColor:tx,borderDash:[5,4],borderWidth:1.5,pointRadius:0}]},
+  /* gráfico no padrão do portal (o Km/L mensal): barra translúcida com contorno de 1 px e cantos de 3 px, cor pela faixa,
+     dia em foco forte e os outros de contexto, rótulo em cima, meta tracejada e o eixo que se ajusta aos dados (Renan, 28/11/2026) */
+  if(window.Chart&&ds.length){ const vs=ds.map(d=>valDia(k,d)), mt=ds.map(d=>k==='cons'?metaDe(k,d):x.meta), esc_=!document.body.classList.contains('claro'), tx=esc_?'#C9D0DD':'#4A5568';
+    const COR={cg:esc_?'#3BB33B':'#00B300',cy:esc_?'#F4A100':'#E9A400',cr:esc_?'#FF5252':'#FF0000'}, cor=d=>COR['c'+clDia(k,d)]||'#8E96A6';
+    const al=(c,a)=>{ const h=c.replace('#',''); return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`; };
+    const nums=vs.concat(mt).filter(v=>v!=null&&isFinite(v)), mn=Math.min(...nums), mx=Math.max(...nums), amp=mx-mn;
+    let lo=Math.min(mn-amp*.45,mn*.82), hi=Math.max(mx+amp*.18,mx*1.04); if(mn>=0) lo=Math.max(0,lo); if(hi===lo) hi=lo+1;
+    const pas=(()=>{ const r=(hi-lo)/5, e=Math.pow(10,Math.floor(Math.log10(r))); return [1,2,2.5,5,10].map(m=>m*e).find(m=>m>=r); })(); lo=Math.floor(lo/pas)*pas; hi=Math.ceil(hi/pas)*pas;
+    const rot={id:'rotDr',afterDatasetsDraw(ch){ const c=ch.ctx, me=ch.getDatasetMeta(0); c.save(); c.font='700 11px Montserrat'; c.textAlign='center'; c.textBaseline='bottom';
+      me.data.forEach((b,i)=>{ const v=vs[i]; if(v==null||(ds.length>14&&ds[i]!==dia)) return; c.fillStyle=esc_?'#EEF2FA':'#161D2B'; c.fillText(fmtV(k,v),b.x,b.y-4); }); c.restore(); }};
+    _drCh=new Chart(cv,{type:'bar',data:{labels:ds.map(d=>+d.slice(8,10)),datasets:[
+      {type:'bar',label:x.t,data:vs,backgroundColor:ds.map(d=>al(cor(d),d===dia?.85:.25)),borderColor:ds.map(d=>cor(d)),borderWidth:1,borderRadius:3,borderSkipped:false,order:2},
+      {type:'line',label:'Meta',data:mt,borderColor:tx,borderDash:[5,4],borderWidth:1.5,pointRadius:0,tension:0,order:1}]},
       options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtV(k,c.raw)}}},
-        scales:{x:{grid:{display:false},ticks:{color:tx,font:{family:'Montserrat',size:10}}},y:{grid:{color:esc_?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)'},ticks:{color:tx,font:{family:'Montserrat',size:10},callback:t=>x.qtd||k==='score'||k==='cons'?t:t+'%'}}}}}); }
+        scales:{x:{grid:{display:false},ticks:{color:tx,font:{family:'Montserrat',size:10}}},y:{min:lo,max:hi,grid:{color:esc_?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)'},ticks:{stepSize:pas,color:tx,font:{family:'Montserrat',size:9},callback:t=>x.qtd||k==='score'||k==='cons'?nf(t,k==='cons'?1:0):t>100?'':nf(t,0)+'%'}}}},plugins:[rot]}); }
   $('drG').style.display=ds.length?'':'none';
   /* gerar ação */
   const uAc=us.length?us.slice().sort((a,b)=>{ const va=vu(a), vb=vu(b); return x.qtd?(vb||0)-(va||0):(va??1e9)-(vb??1e9); })[0]:CODS[0];
@@ -1323,6 +1338,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611281330"></script>
+<script src="../assets/build-check.js?v=202611281500"></script>
 </body>
 </html>

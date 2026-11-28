@@ -123,6 +123,10 @@ console.log('1 · MCC (T1 + T2), semana de 22/11/2026');
       hoje: !!tb.querySelector(`td[data-d="${HOJE}"]`), nSem: tb.querySelectorAll('tr.h2 th.dia.sem').length,
       pvDl: (() => { const l = linha('Preventivas'); return l ? [l.querySelectorAll('td')[3].className, l.querySelectorAll('td')[4].className] : null; })(),
       cons: (() => { const l = linha('Consumo Km/L'); if (!l) return null; const td = l.querySelectorAll('td'); return { meta: td[1].textContent, real: td[2].textContent, dl: td[3].textContent, c22: cel(l, '2026-11-22'), c23: cel(l, '2026-11-23'), c25: cel(l, '2026-11-25'), sem: (l.querySelector('td.sem[data-w="2026-11-22"]') || {}).textContent }; })() }; }, HOJE);
+  const cor = await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument, w = d.defaultView;
+    const dia = d.querySelector('table.rps-mx td.v.cg:not(.sem)'), sem = d.querySelector('table.rps-mx td.v.sem.cg'), td = d.querySelector('table.rps-mx tbody td.v:not(.sem)');
+    const cs = e => e ? { c: w.getComputedStyle(e).color, b: w.getComputedStyle(e).backgroundColor, l: w.getComputedStyle(e).borderBottomWidth } : null; return { dia: cs(dia), sem: cs(sem), td: cs(td) }; });
+  t(cor.dia && cor.dia.b === 'rgba(0, 0, 0, 0)' && cor.sem && cor.sem.b !== 'rgba(0, 0, 0, 0)' && cor.sem.c !== cor.dia.c && cor.td.l === '1px', 'dias só com a fonte colorida, Sem. só com o fundo, filete em toda linha', cor);
   t(mx && mx.dias.length === 7, 'a semana da RPS abre em 7 dias', mx && mx.dias);
   t(mx && mx.sem.some(s => /^S47/.test(s)), 'as semanas anteriores do mês vêm fechadas (S47)', mx && mx.sem);
   t(mx && mx.dp24 && mx.dp24.t === '91%' && /cr/.test(mx.dp24.c), 'Disponibilidade em 24/11: 91% (média T1 e T2) em vermelho', mx && mx.dp24);
