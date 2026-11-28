@@ -64,6 +64,8 @@ const SHIM = `(${function (T0) {
         range: async (a, b) => { let r = rows.slice(a, b + 1); if (/score:dados->score/.test(sel)) r = r.map(x => ({ dia: x.dia, unidade: x.unidade, score: x.dados.score })); return { data: JSON.parse(JSON.stringify(r)), error: null }; },
         insert: (r0) => { const r = Object.assign({ id: 'n' + (window.__ins.length + 1), created_at: new Date().toISOString() }, r0); window.__ins.push({ tab, r: r0 }); (T[tab] = T[tab] || []).push(r);
           const q2 = { select: () => q2, single: async () => ({ data: Object.assign({}, r), error: null }) }; return q2; },
+        upsert: (r0) => { const r = Object.assign({ id: 90 + window.__ins.length, updated_at: new Date().toISOString() }, r0); window.__ins.push({ tab, r: r0 }); (T[tab] = T[tab] || []).push(r);
+          const q2 = { select: () => q2, single: async () => ({ data: Object.assign({}, r), error: null }) }; return q2; },
         update: (p) => ({ eq: async (c, v) => { window.__upd.push({ tab, p, id: v }); (T[tab] || []).filter(r => r[c] === v).forEach(r => Object.assign(r, p)); return { error: null }; } }),
         delete: () => ({ eq: async (c, v) => { window.__del.push({ tab, id: v }); T[tab] = (T[tab] || []).filter(r => r[c] !== v); return { error: null }; } }) };
       return q; } }) };
@@ -173,6 +175,22 @@ console.log('1 · MCC (T1 + T2), semana de 22/11/2026');
   await pg.evaluate(() => abreAc('a2')); await pg.evaluate(() => { document.getElementById('acSt').value = 'Concluída'; }); await pg.evaluate(() => salvaAc()); await pg.waitForTimeout(300);
   const up = await pg.evaluate(() => window.__upd.slice(-1)[0]);
   t(up && up.tab === 'plano_acao' && up.id === 'a2' && up.p.status === 'Concluída', 'editar a ação no slide grava no plano_acao', up);
+
+  // justificar sem ação (Renan, 28/11/2026)
+  await vaiItem(pg, 'gerot');
+  await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; d.querySelector('td[data-k="dp"][data-d="2026-11-24"]').click(); });
+  await pg.waitForTimeout(300);
+  await pg.evaluate(() => drModo('jus'));
+  const jm = await pg.evaluate(() => ({ dono: getComputedStyle(document.getElementById('drDw')).display, bt: document.getElementById('drGo').textContent }));
+  t(jm.dono === 'none' && jm.bt === 'Justificar', 'Justificar sem ação esconde dono e prazo', jm);
+  await pg.fill('#drA', 'Placa em reforma programada');
+  await pg.evaluate(() => drGo()); await pg.waitForTimeout(800);
+  const ji = await pg.evaluate(() => window.__ins.slice(-1)[0]);
+  t(ji && ji.tab === 'rps_justifica' && ji.r.indicador === 'dp' && ji.r.dia === '2026-11-24' && ji.r.unidade === 'MCC T2' && /reforma/.test(ji.r.obs), 'justificativa grava em rps_justifica (unidade, indicador, dia, observação)', ji);
+  const jc = await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument, c = d.querySelector('td[data-k="dp"][data-d="2026-11-24"]'); return c ? { c: c.className, ti: c.title } : null; });
+  t(jc && /\bcj\b/.test(jc.c) && !/\bcr\b/.test(jc.c) && /reforma/.test(jc.ti), 'a célula justificada fica cinza, com a observação na dica', jc);
+  const aj = await slideTxt(pg, 'acoes');
+  t(/Justificado/.test(aj) && /reforma/.test(aj), 'a justificativa aparece no slide de Ações da semana', aj.slice(0, 300));
 
   // abrir a semana fechada
   await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; d.querySelector('th.sw[data-sem="2026-11-15"]').click(); });

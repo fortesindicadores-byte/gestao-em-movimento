@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611281030">
+<meta name="build" content="202611281200">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>RPS de Frota · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -450,6 +450,12 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .dr-l{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}.dr-l label{flex:1;min-width:150px;margin:8px 0 0;}
 .dr-l select,.cx select{width:100%;background:var(--app);border:1px solid var(--card-brd);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12.5px;padding:8px 10px;margin-top:5px;}
 .dr-l .bt{height:36px;}
+.dr-modo{display:inline-flex;gap:0;margin:0 0 8px;border:1px solid var(--card-brd);border-radius:8px;overflow:hidden;}
+.dr-modo button{background:transparent;border:0;padding:7px 14px;font-family:inherit;font-size:11.5px;font-weight:700;color:var(--txt2);cursor:pointer;}
+.dr-modo button.on{background:var(--laranja);color:#fff;}
+.dr-jx{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;margin:0 0 8px;border-radius:8px;background:rgba(142,150,166,.14);font-size:12px;line-height:1.4;}
+.dr-jx b{white-space:nowrap;}.dr-jx span{flex:1;}.dr-jx small{display:block;color:var(--txt3);font-size:10.5px;margin-top:2px;}
+.dr-jx button{background:transparent;border:0;color:var(--vermelho);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;}
 .dr-msg{font-size:11px;color:var(--vermelho);margin-top:6px;min-height:14px;}
 
 .cx-pe .esq{margin-right:auto;}
@@ -555,9 +561,10 @@ table.dre td.corte{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   <div class="dr-kp" id="drK"></div>
   <div class="dr-g" id="drG"><canvas id="drC"></canvas></div>
   <div id="drB"></div>
-  <div class="dr-ac"><h5>Gerar ação</h5>
+  <div class="dr-ac"><div class="dr-modo"><button data-m="acao" class="on" onclick="drModo('acao')">Gerar ação</button><button data-m="jus" onclick="drModo('jus')">Justificar sem ação</button></div>
+    <div id="drJx"></div>
     <textarea id="drA" maxlength="900" placeholder="O que vai ser feito"></textarea>
-    <div class="dr-l"><label id="drUw">Unidade<select id="drU"></select></label><label>Dono<select id="drD"></select></label><label>Prazo<input type="date" id="drP"></label><button class="bt pri" onclick="geraAcao()">Gerar ação</button></div>
+    <div class="dr-l"><label id="drUw">Unidade<select id="drU"></select></label><label id="drDw">Dono<select id="drD"></select></label><label id="drPw">Prazo<input type="date" id="drP"></label><button class="bt pri" id="drGo" onclick="drGo()">Gerar ação</button></div>
     <div class="dr-msg" id="drM"></div></div>
 </div></div>
 <div class="cx-fundo" id="acF"><div class="cx">
@@ -802,11 +809,13 @@ const diaAcao=r=>{ const m=String(r.fato_desvio||'').match(/^(\d{2})\/(\d{2})\/(
 const ST_COR={'Não iniciada':'#FF5252','Em andamento':'#E9A400','Concluída':'#00B300','Cancelada':'#8E96A6'};
 const chipSt=s=>{ s=s||'Não iniciada'; return `<span class="rps-st" style="background:${ST_COR[s]||'#8E96A6'}">${esc(s)}</span>`; };
 const prazoCel=r=>{ if(!r.prazo) return '—'; const v=!/conclu|cancel/i.test(r.status||'')&&String(r.prazo).slice(0,10)<dISO(new Date()); return `<span${v?' style="color:#FF0000;font-weight:800"':''}>${ddmmaa(String(r.prazo).slice(0,10))}</span>`; };
-function tabAcoes(rs,vazio){
-  if(!rs.length) return `<div class="card tb rps-tb"><div class="rps-vz">${esc(vazio)}</div></div>`;
+function tabAcoes(rs,vazio,js){
+  js=js||[];
+  if(!rs.length&&!js.length) return `<div class="card tb rps-tb"><div class="rps-vz">${esc(vazio)}</div></div>`;
   rs=rs.slice().sort((a,b)=>diaAcao(a).localeCompare(diaAcao(b))||String(a.created_at).localeCompare(String(b.created_at)));
   return `<div class="card tb rps-tb"><table class="dre rps-ac"><thead><tr><th>Data</th><th>Indicador</th><th>Ação</th><th>Dono</th><th>Prazo</th><th>Status</th></tr></thead><tbody>${rs.map(r=>
-    `<tr data-rps="${esc(r.id)}"><td class="nm">${ddmm(diaAcao(r))}</td><td class="nm">${esc(r.fato||'')}</td><td class="rps-txt">${esc(r.acao||'—').replace(/\n/g,'<br>')}</td><td>${esc(r.responsavel||'—')}</td><td>${prazoCel(r)}</td><td>${chipSt(r.status)}</td></tr>`).join('')}</tbody></table></div>`;
+    `<tr data-rps="${esc(r.id)}"><td class="nm">${ddmm(diaAcao(r))}</td><td class="nm">${esc(r.fato||'')}</td><td class="rps-txt">${esc(r.acao||'—').replace(/\n/g,'<br>')}</td><td>${esc(r.responsavel||'—')}</td><td>${prazoCel(r)}</td><td>${chipSt(r.status)}</td></tr>`).join('')}${js.slice().sort((a,b)=>a.dia.localeCompare(b.dia)).map(j=>
+    `<tr><td class="nm">${ddmm(j.dia)}</td><td class="nm">${esc((indDe(j.indicador)||{t:j.indicador}).t)}${CODS.length>1?' · '+esc(j.unidade):''}</td><td class="rps-txt">${esc(j.obs).replace(/\n/g,'<br>')}</td><td>${esc(j.autor||'—')}</td><td>—</td><td><span class="rps-st" style="background:#8E96A6">Justificado</span></td></tr>`).join('')}</tbody></table></div>`;
 }
 const acoesDaSem=w=>PA.filter(r=>semAcao(r)===w);
 function sFollow(inst){
@@ -817,8 +826,8 @@ function sFollow(inst){
 }
 function sAcoes(inst){
   if(PA_ERR) return vazioSl('Ações da semana',inst,'Não deu para ler o Plano de Ação: '+PA_ERR);
-  const rs=acoesDaSem(VIG);
-  return [sl({titulo:'Ações da semana',corpo:tabAcoes(rs,'Nenhuma ação gerada ainda. Clique num dia do Gerot para abrir o detalhe e gerar a ação.')},inst,'Ações da semana')];
+  const rs=acoesDaSem(VIG), fim=somaD(VIG,6), js=JU.filter(j=>j.dia>=VIG&&j.dia<=fim);
+  return [sl({titulo:'Ações da semana',corpo:tabAcoes(rs,'Nenhuma ação gerada ainda. Clique num dia do Gerot para abrir o detalhe e gerar a ação ou justificar.',js)},inst,'Ações da semana')];
 }
 
 /* ── 3 · Gerot: a matriz dia a dia ── */
@@ -832,8 +841,8 @@ function sGerot(inst){
   const cols=[]; ws.forEach(w=>{ if(abre(w)){ for(let i=0;i<7;i++){ const d=somaD(w,i); cols.push({d,w,fora:d.slice(0,7)!==mes}); } cols.push({w,fim:1}); } else cols.push({w}); });
   const head1=`<tr class="h1"><th colspan="5"></th>${ws.map(w=>abre(w)?`<th colspan="8" class="sw ab" data-sem="${w}">S${semN(w)} ${w===VIG?'':'<small>fechar</small>'}</th>`:`<th class="sw" data-sem="${w}" title="Abrir a semana">S${semN(w)}<small>${ddmm(w)}</small></th>`).join('')}</tr>`;
   const head2=`<tr class="h2"><th class="ind">Indicadores</th><th>Meta</th><th>Real</th><th>▲</th><th>▲ %</th>${cols.map(c=>c.d?`<th class="dia${c.fora?' fora':''}"><small>${DIAS_SEM[dDe(c.d).getDay()]}</small>${+c.d.slice(8,10)}</th>`:`<th class="dia sem">Sem.</th>`).join('')}</tr>`;
-  const cel=(k,c)=>{ const v=c.d?(c.fora?null:valDia(k,c.d)):valSem(k,c.w), cl=clDe(k,v,c.d?metaDe(k,c.d):metaDe(k,null,c.w));
-    return `<td class="v ${cl?'c'+cl:''}${c.d?'':' sem'}${!c.d&&c.w===VIG?' atual':''}"${v!=null&&c.d?` data-k="${k}" data-d="${c.d}"`:''}${v!=null&&!c.d?` data-k="${k}" data-w="${c.w}"`:''}>${v==null?'':fmtV(k,v)}</td>`; };
+  const cel=(k,c)=>{ const v=c.d?(c.fora?null:valDia(k,c.d)):valSem(k,c.w), js=c.d&&v!=null?jusDe(k,c.d):[], cl=js.length?'j':clDe(k,v,c.d?metaDe(k,c.d):metaDe(k,null,c.w));
+    return `<td class="v ${cl?'c'+cl:''}${c.d?'':' sem'}${!c.d&&c.w===VIG?' atual':''}"${js.length?` title="${esc('Justificado: '+js.map(j=>(CODS.length>1?j.unidade+' · ':'')+j.obs).join(' | '))}"`:''}${v!=null&&c.d?` data-k="${k}" data-d="${c.d}"`:''}${v!=null&&!c.d?` data-k="${k}" data-w="${c.w}"`:''}>${v==null?'':fmtV(k,v)}</td>`; };
   /* ▲ zero = bateu a meta = verde (Renan, 27/11/2026: "preventiva, CIVF, saída com OS crítica e conformidade, 0 pp é verde") */
   const linha=x=>{ const r=valSem(x.k,VIG), mt=x.cons?metaDe(x.k,null,VIG):x.meta, dl=r==null||mt==null?null:r-mt, dp=r==null||!mt?null:(r/mt-1)*100, ruim=x.qtd?dl>0:dl<0, tol=x.cons?0.005:0.05;
     const cDl=dl==null?'':Math.abs(dl)<tol||!ruim?'cg':'cr', cDp=dp==null?'':Math.abs(dp)<0.05||!ruim?'cg':'cr';
@@ -843,7 +852,7 @@ function sGerot(inst){
   const corpo=IND.filter(x=>!x.custo).map(linha).join('')+`<tr class="sep"><td colspan="${5+cols.length}">Custos</td></tr>`+IND.filter(x=>x.custo).map(linha).join('');
   const rs=valSem('score',VIG);
   const score=`<tr class="score"><td class="ind">Score</td><td class="n">90</td><td class="n b">${fmtV('score',rs)}</td><td></td><td></td>${cols.map(c=>{ const v=c.d?(c.fora?null:valDia('score',c.d)):valSem('score',c.w); return `<td class="v${c.d?'':' sem'}${!c.d&&c.w===VIG?' atual':''}"${v!=null&&c.d?` data-k="score" data-d="${c.d}"`:''}>${v==null?'':nf(v,1)}</td>`; }).join('')}</tr>`;
-  return [sl({titulo:'Gerot · '+FS.MES[+mes.slice(5,7)-1]+'/'+mes.slice(0,4),corpo:`<div class="card tb rps-mxw"><table class="rps-mx">${head1}${head2}<tbody>${corpo}${score}</tbody></table><div class="rps-leg"><span><i class="cg"></i>No alvo</span><span><i class="cy"></i>Atenção</span><span><i class="cr"></i>Fora</span><span>Clique no dia para abrir o detalhe e gerar a ação · Sem. = resultado da semana · o dia entra quando acaba${CONS_ATE?' · consumo até '+ddmm(CONS_ATE):''}</span></div></div>`},inst,'Gerot')];
+  return [sl({titulo:'Gerot · '+FS.MES[+mes.slice(5,7)-1]+'/'+mes.slice(0,4),corpo:`<div class="card tb rps-mxw"><table class="rps-mx">${head1}${head2}<tbody>${corpo}${score}</tbody></table><div class="rps-leg"><span><i class="cg"></i>No alvo</span><span><i class="cy"></i>Atenção</span><span><i class="cr"></i>Fora</span><span><i class="cj"></i>Justificado</span><span>Clique no dia para abrir o detalhe e gerar a ação · Sem. = resultado da semana · o dia entra quando acaba${CONS_ATE?' · consumo até '+ddmm(CONS_ATE):''}</span></div></div>`},inst,'Gerot')];
 }
 function sRecado(t){ const ls=String(t.texto||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,8);
   return {html:AS.conteudo({titulo:t.titulo||'Recado do gestor',uni:UNI(),per:PER(),corpo:`<div class="card" style="height:100%;padding:28px 34px;display:flex;flex-direction:column;justify-content:center;gap:14px">${ls.map(l=>`<div style="display:flex;gap:14px;align-items:baseline"><span style="flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:#F97316;transform:translateY(-3px)"></span><p style="font-size:calc(17px*var(--k));line-height:1.5">${esc(l)}</p></div>`).join('')||'<p>Escreva o recado.</p>'}</div>`}),sum:t.titulo||'Recado do gestor'}; }
@@ -877,14 +886,16 @@ table.rps-mx td.sem{background:rgba(30,40,51,.06);font-weight:500}
 table.rps-mx td.sem.atual,table.rps-mx tr.score td.v.atual{font-weight:800}table.rps-mx tr.score td.v{font-weight:500}
 table.rps-mx td.cg{color:#00A000;background:rgba(0,179,0,.10)}table.rps-mx td.cy{color:#B07C00;background:rgba(233,164,0,.14)}table.rps-mx td.cr{color:#E00000;background:rgba(255,0,0,.10)}
 table.rps-mx td.n.cg,table.rps-mx td.n.cr,table.rps-mx td.n.cy{background:none}
+table.rps-mx td.cj{color:#6B7280;background:rgba(142,150,166,.20);text-decoration:underline dotted;text-underline-offset:3px}
 table.rps-mx tr.sep td{text-align:left;font-size:calc(9px*var(--k));font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--txt3);padding-top:calc(8px*var(--k))}
 table.rps-mx tr.score td{background:#111;color:#fff;font-weight:800}table.rps-mx tr.score td.v[data-k]:hover{outline-color:#F97316}
 .rps-leg{display:flex;gap:16px;align-items:center;margin-top:auto;padding-top:8px;font-size:calc(9.5px*var(--k));color:var(--txt3);font-weight:600}
 .rps-leg i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px}
-.rps-leg i.cg{background:#00B300}.rps-leg i.cy{background:#E9A400}.rps-leg i.cr{background:#FF0000}
+.rps-leg i.cg{background:#00B300}.rps-leg i.cy{background:#E9A400}.rps-leg i.cr{background:#FF0000}.rps-leg i.cj{background:#A3ABBA}
 body.escuro .rps-kp div{background:#2C2E34}
 body.escuro table.rps-mx td.cg{color:#3BB33B;background:rgba(59,179,59,.16)}body.escuro table.rps-mx td.cy{color:#F4A100;background:rgba(244,161,0,.16)}body.escuro table.rps-mx td.cr{color:#FF5252;background:rgba(255,82,82,.16)}
 body.escuro table.rps-mx tr.score td{background:#000}
+body.escuro table.rps-mx td.cj{color:#A3ABBA;background:rgba(142,150,166,.18)}
 `;
 
 /* ── detalhe do indicador num dia (clique na célula do Gerot) e "Gerar ação" → Plano de Ação (origem RPS) ── */
@@ -928,8 +939,31 @@ function abreDrill(k,dia,w){
   const uAc=us.length?us.slice().sort((a,b)=>{ const va=vu(a), vb=vu(b); return x.qtd?(vb||0)-(va||0):(va??1e9)-(vb??1e9); })[0]:CODS[0];
   $('drU').innerHTML=CODS.map(c=>`<option value="${esc(c)}"${c===uAc?' selected':''}>${esc(c)}</option>`).join(''); $('drUw').style.display=CODS.length>1?'':'none';
   donos(uAc,''); $('drA').value=''; $('drP').value=''; set('drM','');
+  pintaJus(); drModo('acao');
   $('drF').classList.add('on'); setTimeout(()=>$('drA').focus(),40);
 }
+/* JUSTIFICAR SEM AÇÃO (Renan, 28/11/2026: "nem sempre será gerada ação… isentar aquele indicador com uma observação").
+   Grava em rps_justifica (unidade × indicador × dia); a célula fica cinza com a observação na dica
+   e a justificativa aparece no slide Ações da semana. */
+let _drModoV='acao';
+function drModo(m){ _drModoV=m; document.querySelectorAll('#drF .dr-modo button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  $('drDw').style.display=$('drPw').style.display=m==='acao'?'':'none';
+  $('drA').placeholder=m==='acao'?'O que vai ser feito':'Por que este indicador não precisa de ação neste dia';
+  $('drGo').textContent=m==='acao'?'Gerar ação':'Justificar'; set('drM',''); }
+function drGo(){ return _drModoV==='jus'?justifica():geraAcao(); }
+function pintaJus(){ const js=_dr?jusDe(_dr.k,_dr.dia):[];
+  $('drJx').innerHTML=js.map(j=>`<div class="dr-jx"><b>Justificado${CODS.length>1?' · '+esc(j.unidade):''}</b><span>${esc(j.obs).replace(/\n/g,'<br>')}<small>${esc(j.autor||'')}${j.updated_at?' · '+ddmmaa(String(j.updated_at).slice(0,10)):''}</small></span><button onclick="tiraJus(${+j.id})">Remover</button></div>`).join(''); }
+async function justifica(){
+  if(!_dr) return; const obs=$('drA').value.trim(); if(!obs){ set('drM','Escreva a observação.'); $('drA').focus(); return; }
+  const {k,dia}=_dr, uni=$('drU').value||CODS[0];
+  set('drM','Gravando…');
+  const {data,error}=await sb.from('rps_justifica').upsert({unidade:uni,indicador:k,dia,obs,autor:($('quem').textContent||'').trim()||null},{onConflict:'unidade,indicador,dia'}).select('*').single();
+  if(error){ set('drM',/rps_justifica|does not exist|schema cache/i.test(error.message)?'A tabela rps_justifica ainda não existe no banco: rodar o scripts/rps-justifica.sql.':'Não deu para gravar: '+error.message); return; }
+  data.dia=String(data.dia).slice(0,10); JU=JU.filter(j=>!(j.unidade===uni&&j.indicador===k&&j.dia===dia)); JU.push(data);
+  fechaDr(); _foco=DECK[POS]&&DECK[POS].item; monta(); }
+async function tiraJus(id){ if(!confirm('Remover a justificativa?')) return;
+  const {error}=await sb.from('rps_justifica').delete().eq('id',id); if(error){ set('drM','Não deu para remover: '+error.message); return; }
+  JU=JU.filter(j=>+j.id!==+id); pintaJus(); _foco=DECK[POS]&&DECK[POS].item; monta(); }
 function donos(u,atual){ const ns=window.FcaCaixa&&FcaCaixa.nomesDe?FcaCaixa.nomesDe(u,PERFIS):[], l=ns.slice(); if(atual&&!l.includes(atual)) l.push(atual);
   $('drD').innerHTML=l.map(n=>`<option${n===atual?' selected':''}>${esc(n)}</option>`).join('')||'<option value="">—</option>'; }
 $('drU').addEventListener('change',()=>donos($('drU').value,$('drD').value));
@@ -978,6 +1012,11 @@ async function leGD(){ GD=[]; GDL=[]; GD_ERR='';
     /* o dia só aparece quando acaba (Renan, 27/11/2026: "o dia a dia é resultado do dia mesmo, então hoje não teria") */
     const hj=dISO(new Date()); GD=GD.filter(r=>r.dia<hj); GDL=GDL.filter(r=>r.dia<hj);
   }catch(e){ GD_ERR=(e&&e.message)||String(e); } }
+let JU=[], JU_ERR='';
+const jusDe=(k,dia)=>JU.filter(j=>j.indicador===k&&j.dia===dia);
+async function leJU(){ JU=[]; JU_ERR='';
+  try{ JU=await pagina(()=>sb.from('rps_justifica').select('*').in('unidade',CODS).gte('dia',dISO(new Date(Date.now()-150*864e5))).order('dia').order('id')); JU.forEach(j=>{ j.dia=String(j.dia).slice(0,10); }); }
+  catch(e){ JU_ERR=(e&&e.message)||String(e); } }
 async function lePA(){ PA=[]; PA_ERR='';
   try{ PA=await pagina(()=>sb.from('plano_acao').select('*').in('unidade',CODS).eq('origem','RPS').order('created_at').order('id')); }
   catch(e){ PA_ERR=(e&&e.message)||String(e); } }
@@ -1225,7 +1264,7 @@ async function lePerfis(){ try{ let r=await sb.rpc('fca_perfis_resp'); if(r.erro
 async function carregar(){
   window.__apresPronto=false;
   set('titSub','Carregando…'); $('telaMsg').style.display=''; $('telaMsg').textContent='Montando os slides…';
-  await Promise.all([leGD(),lePA(),leCons()]);
+  await Promise.all([leGD(),lePA(),leCons(),leJU()]);
   const ds=DIAS_COM(), hoje=dISO(new Date());
   MESES=[...new Set(ds.concat(Object.keys(CONS)).map(domDe).concat([domDe(hoje)]))].sort().reverse();
   if(!VIG||!MESES.includes(VIG)) VIG=ds.length?domDe(ds[ds.length-1]):domDe(hoje);
@@ -1281,6 +1320,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611281030"></script>
+<script src="../assets/build-check.js?v=202611281200"></script>
 </body>
 </html>
