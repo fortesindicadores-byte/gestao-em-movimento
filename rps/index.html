@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611281700">
+<meta name="build" content="202611281800">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>RPS de Frota · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -864,7 +864,7 @@ function sGerot(inst){
   const linha=x=>{ const r=valSem(x.k,VIG), mt=x.cons?metaDe(x.k,null,VIG):x.meta, dl=r==null||mt==null?null:r-mt, dp=r==null||!mt?null:(r/mt-1)*100, ruim=x.qtd?dl>0:dl<0, tol=x.cons?0.005:0.05;
     const cDl=dl==null?'':Math.abs(dl)<tol||!ruim?'cg':'cr', cDp=dp==null?'':Math.abs(dp)<0.05||!ruim?'cg':'cr';
     const tDl=dl==null?'—':x.cons?(dl>0?'+':'')+nf(dl,2):x.qtd?(dl>0?'+':'')+nf(dl,0):(dl>0?'+':'')+nf(dl,1)+' pp';
-    return `<tr><td class="ind"${x.dica?` title="${esc(x.dica)}"`:''}>${esc(x.t)}</td><td class="n">${x.cons?(mt==null?'—':nf(mt,2)):x.qtd?x.meta:x.meta+'%'}</td><td class="n b ${r!=null&&clDe(x.k,r,mt)?'c'+clDe(x.k,r,mt):''}">${fmtV(x.k,r)}</td>`+
+    return `<tr><td class="ind"${x.dica?` title="${esc(x.dica)}"`:''}>${esc(x.t)}</td><td class="n">${x.cons?(mt==null?'—':nf(mt,2)):x.qtd?x.meta:x.meta+'%'}</td><td class="n b">${fmtV(x.k,r)}</td>`+
       `<td class="n b ${cDl}">${tDl}</td><td class="n b ${cDp}">${dp==null?'—':(dp>0?'+':'')+nf(dp,0)+'%'}</td>${cols.map(c=>cel(x.k,c)).join('')}</tr>`; };
   const corpo=IND.filter(x=>!x.custo).map(linha).join('')+`<tr class="sep"><td colspan="${5+cols.length}">Custos</td></tr>`+IND.filter(x=>x.custo).map(linha).join('');
   const rs=valSem('score',VIG);
@@ -918,7 +918,7 @@ table.rps-mx td.v:not(.sem).cg,table.rps-mx td.v:not(.sem).cy,table.rps-mx td.v:
 body.escuro table.rps-mx td.v:not(.sem).cg,body.escuro table.rps-mx td.v:not(.sem).cy,body.escuro table.rps-mx td.v:not(.sem).cr,body.escuro table.rps-mx td.v:not(.sem).cj{background:none}
 table.rps-mx td.sem.cg,table.rps-mx td.sem.cy,table.rps-mx td.sem.cr,body.escuro table.rps-mx td.sem.cg,body.escuro table.rps-mx td.sem.cy,body.escuro table.rps-mx td.sem.cr{color:var(--txt)!important}
 /* filete entre as linhas em toda a largura da tabela, inclusive nos dias e nas semanas */
-table.rps-mx tbody td{border-bottom:1px solid rgba(15,23,42,.14)}table.rps-mx tbody tr.sep td{border-bottom:0}body.escuro table.rps-mx tbody td{border-bottom-color:rgba(255,255,255,.14)}body.escuro table.rps-mx tbody tr.sep td{border-bottom:0}body.escuro table.rps-mx td.n.cg,body.escuro table.rps-mx td.n.cr,body.escuro table.rps-mx td.n.cy{background:none}
+table.rps-mx tbody td{border-bottom:var(--fio,1px) solid rgba(15,23,42,.16)}table.rps-mx tbody tr.sep td{border-bottom:0}body.escuro table.rps-mx tbody td{border-bottom-color:rgba(255,255,255,.14)}body.escuro table.rps-mx tbody tr.sep td{border-bottom:0}body.escuro table.rps-mx td.n.cg,body.escuro table.rps-mx td.n.cr,body.escuro table.rps-mx td.n.cy{background:none}
 `;
 
 /* ── detalhe do indicador num dia (clique na célula do Gerot) e "Gerar ação" → Plano de Ação (origem RPS) ── */
@@ -1221,7 +1221,7 @@ function desenhaPrev(){
   const html=docAtual(false), cur=$('prev'), q=$('telaQ');
   if(cur._html===html){ mostra(); return; }
   const tok=++_pv; q.querySelectorAll('iframe.novo').forEach(x=>x.remove());
-  if(!cur._html){ cur._html=html; cur.onload=()=>{ mostra(); $('telaMsg').style.display='none'; ligaPrev(); }; cur.srcdoc=html; ajusta(); return; }
+  if(!cur._html){ cur._html=html; cur.onload=()=>{ ajusta(); mostra(); $('telaMsg').style.display='none'; ligaPrev(); }; cur.srcdoc=html; ajusta(); return; }
   const n=document.createElement('iframe'); n.className='novo'; n.title='Prévia do slide'; n.style.visibility='hidden'; n.style.transform=cur.style.transform; q.appendChild(n);
   const troca=()=>{ if(tok!==_pv){ n.remove(); return; } const v=$('prev'); if(v&&v!==n) v.remove(); n.id='prev'; n.classList.remove('novo'); n._html=html; ajusta(); mostra(); n.style.visibility=''; $('telaMsg').style.display='none'; ligaPrev(); };
   n.onload=()=>{ let k=0; const w=n.contentWindow; (function pronto(){ if(tok!==_pv){ n.remove(); return; } if(!(w&&w.__deckPronto)&&k++<60){ setTimeout(pronto,50); return; } troca(); })(); };
@@ -1238,7 +1238,7 @@ function mostra(){
   set('cont',`${POS+1} de ${DECK.length}`); barraFiltro();
 }
 function vai(d){ const n=Math.max(0,Math.min(DECK.length-1,POS+d)); if(n===POS) return; POS=n; mostra(); desenhaSeq(); const el=document.querySelector('.sq.on'); if(el&&el.scrollIntoView) el.scrollIntoView({block:'nearest'}); }
-function ajusta(){ const t=$('tela'), q=$('telaQ'); const w=Math.floor(Math.max(120,Math.min(t.clientWidth,t.clientHeight*16/9))); q.style.width=w+'px'; const ww=q.offsetWidth||w; q.style.height=Math.floor(ww*9/16)+'px'; q.querySelectorAll('iframe').forEach(f=>{ f.style.transform=`scale(${ww/1280})`; }); }
+function ajusta(){ const t=$('tela'), q=$('telaQ'); const w=Math.floor(Math.max(120,Math.min(t.clientWidth,t.clientHeight*16/9))); q.style.width=w+'px'; const ww=q.offsetWidth||w; q.style.height=Math.floor(ww*9/16)+'px'; q.querySelectorAll('iframe').forEach(f=>{ f.style.transform=`scale(${ww/1280})`; fio(f,ww/1280); }); }
 if(window.ResizeObserver) new ResizeObserver(ajusta).observe($('tela')); window.addEventListener('resize',ajusta);
 
 /* ── filtro do slide: Projeto (multi, no padrão do portal), só nos blocos que abrem por projeto ── */
@@ -1309,11 +1309,13 @@ async function excluiFca(){ const r=fcaRow(_fcaId); if(!r) return; if(!confirm('
 let SHOW=false, SP=0;
 function apresentar(){
   if(!DECK.length) return; SHOW=true; SP=POS; const o=$('show'), f=$('showF');
-  f.onload=()=>mostraShow(); f.srcdoc=docAtual(true); o.classList.add('on'); escala();
+  f.onload=()=>{ escala(); mostraShow(); }; f.srcdoc=docAtual(true); o.classList.add('on'); escala();
   const fs=o.requestFullscreen||o.webkitRequestFullscreen; if(fs){ try{ const p=fs.call(o); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
 }
 function mostraShow(){ const d=$('showF').contentDocument; if(d) d.querySelectorAll('.slide').forEach((s,i)=>{ s.style.display=i===SP?'':'none'; }); set('showC',`${SP+1} / ${DECK.length}`); }
-function escala(){ $('showF').style.transform=`scale(${Math.min(innerWidth/1280,innerHeight/720)})`; }
+function escala(){ const e=Math.min(innerWidth/1280,innerHeight/720); $('showF').style.transform=`scale(${e})`; fio($('showF'),e); }
+/* o slide é encolhido por transform; o filete de 1 px vira fração de pixel e some em algumas linhas: compensa a escala (Renan, 28/11/2026) */
+function fio(f,e){ try{ const d=f.contentDocument; if(d&&d.documentElement) d.documentElement.style.setProperty('--fio',(Math.max(1,1/(e||1))).toFixed(2)+'px'); }catch(x){} }
 function sairShow(){ if(!SHOW) return; SHOW=false; $('show').classList.remove('on'); POS=SP; mostra(); desenhaSeq();
   if(document.fullscreenElement||document.webkitFullscreenElement){ try{ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }catch(e){} } }
 function passo(d){ SP=Math.max(0,Math.min(DECK.length-1,SP+d)); mostraShow(); }
@@ -1438,6 +1440,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611281700"></script>
+<script src="../assets/build-check.js?v=202611281800"></script>
 </body>
 </html>

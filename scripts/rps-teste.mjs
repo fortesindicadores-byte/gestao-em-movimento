@@ -226,6 +226,11 @@ console.log('1 · MCC (T1 + T2), semana de 22/11/2026');
   await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; d.querySelector('th.sw[data-sem="2026-11-22"]').click(); });
   await pg.waitForFunction(() => { const d = document.getElementById('prev').contentDocument; return d && d.querySelectorAll('table.rps-mx tr.h2 th.dia:not(.sem)').length === 14; }, null, { timeout: 8000 }).catch(() => {});
   t(await pg.evaluate(() => document.getElementById('prev').contentDocument.querySelectorAll('table.rps-mx tr.h2 th.dia:not(.sem)').length) === 14, 'e abre de novo');
+  const fx = await pg.evaluate(() => { const d = document.getElementById('prev').contentDocument; const fio = parseFloat(d.documentElement.style.getPropertyValue('--fio')) || 0;
+    const l = [...d.querySelectorAll('table.rps-mx tbody tr')].find(tr => (tr.querySelector('td.ind') || {}).textContent === 'Calibragem'); const real = l && l.querySelectorAll('td')[2];
+    return { fio, realCor: real ? /\bc[gyr]\b/.test(real.className) : null }; });
+  t(fx.fio > 1, 'o filete compensa a escala da prévia', fx);
+  t(fx.realCor === false, 'Real sem a fonte pintada', fx);
 
   // trocar de semana
   await pg.evaluate(() => { VIG = '2026-11-15'; ABERTAS = new Set(); filtros(); monta(); }); await pg.waitForTimeout(300);
