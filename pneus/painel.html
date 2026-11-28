@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611271500">
+<meta name="build" content="202611281030">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Gestão de Pneus · Fleet Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1710,7 +1710,13 @@ function reconstructTires(insps) {
     const recente = arr.reduce((a, b) => new Date(b.dataInspecao) > new Date(a.dataInspecao) ? b : a); // p/ campos não-numéricos
     const menor = avg(i => i.menorMM);
     const statusMM = menor < 2 ? 'Bloquear' : menor <= 3 ? 'Recapar' : menor <= 6 ? 'Regular' : 'Bom Estado';
-    const desvio = avg(i => i.desvioPressao);
+    // Calibragem só com pressão medida: leitura só de sulco grava pressão 0 (desvio −100%)
+    // e empilhadeira/paleteira não têm pressão (Renan, 28/11/2026).
+    const tipoV = (DATA.vehicles || []).find(v => v.id === (recente.veiculoId ?? c.veiculoId));
+    const semP = /EMPILHADEIRA|PALETEIRA/i.test((tipoV && tipoV.tipo) || '') || /^EMP\d/.test(String(recente.placa || c.placa || '').toUpperCase().replace(/[^A-Z0-9]/g, ''));
+    const arrP = semP ? [] : arr.filter(i => +i.pressaoMedida > 0 && +i.pressaoIdeal > 0);
+    const avgP = f => { const v = arrP.map(f).filter(x => typeof x === 'number' && !isNaN(x)); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0; };
+    const desvio = avgP(i => i.desvioPressao);
     return {
       ...c,
       id: +tid,
@@ -1724,8 +1730,8 @@ function reconstructTires(insps) {
       menorMM: menor,
       amplitude: avg(i => i.amplitude),
       statusMM,
-      pressaoIdeal: avg(i => i.pressaoIdeal),
-      pressaoAtual: avg(i => i.pressaoMedida),
+      pressaoIdeal: avgP(i => i.pressaoIdeal),
+      pressaoAtual: avgP(i => i.pressaoMedida),
       desvioPressao: desvio,
       pressaoNOK: Math.abs(desvio) > 10,
       _ultimaAfericao: recente.dataInspecao
@@ -5127,6 +5133,6 @@ initPdfExport({
   isLight:()=>document.body.classList.contains('claro'), setTheme:aplicaTema
 });
 </script>
-<script src="../assets/build-check.js?v=202611271500"></script>
+<script src="../assets/build-check.js?v=202611281030"></script>
 </body>
 </html>

@@ -131,7 +131,7 @@ console.log('1 · MCC (T1 + T2), semana de 22/11/2026');
   t(mx && mx.temSep, 'Custos separado no fim');
   t(mx && !mx.hoje, 'o dia de hoje não aparece (o dia entra quando acaba)', mx && mx.hoje);
   t(mx && mx.nSem === 4, 'Sem. nas três semanas fechadas e no fim da semana aberta', mx && mx.nSem);
-  t(mx && mx.pvDl && mx.pvDl[0] === 'n cg' && mx.pvDl[1] === 'n cg', '▲ zero (Preventivas 100% de 100%) em verde', mx && mx.pvDl);
+  t(mx && mx.pvDl && mx.pvDl.every(c => /\bcg\b/.test(c) && /\bb\b/.test(c)), '▲ zero (Preventivas 100% de 100%) em verde', mx && mx.pvDl);
   t(mx && mx.cons && mx.cons.c22 && mx.cons.c22.t === '2,33' && /cg/.test(mx.cons.c22.c), 'Consumo 22/11: 700 km ÷ 300 L = 2,33, no remunerado (verde)', mx && mx.cons);
   t(mx && mx.cons && mx.cons.c23 && mx.cons.c23.t === '1,60' && /cr/.test(mx.cons.c23.c), 'Consumo 23/11: 1,60 contra 2,00 (vermelho)', mx && mx.cons);
   t(mx && mx.cons && !mx.cons.c25, 'Consumo depois do último dia completo do ERP fica vazio', mx && mx.cons);

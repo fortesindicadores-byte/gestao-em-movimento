@@ -494,13 +494,20 @@ async function _loadPneus(){
   const cad={};merged.tires.forEach(t=>{if(t.id!=null)cad[t.id]=t;});
   const _avg=(arr,f)=>{const v=arr.map(f).filter(x=>typeof x==='number'&&!isNaN(x));return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;};
   const porPneu={};merged.inspections.forEach(i=>{if(i.tireId==null)return;(porPneu[i.tireId]=porPneu[i.tireId]||[]).push(i);});
+  // CALIBRAGEM SÓ COM PRESSÃO MEDIDA (Renan, 28/11/2026: "empilhadeira não tem pressão").
+  // A leitura só de sulco grava pressão 0, que o loader transforma em desvio de −100%,
+  // e a média do pneu despencava para 0% em FLP, BLC, RON… Agora o desvio sai só das
+  // leituras com pressão medida; empilhadeira e paleteira (maciço) ficam fora da calibragem.
+  const _tipoV={};merged.vehicles.forEach(v=>{if(v&&v.id!=null)_tipoV[v.id]=_normP(v.tipo);});
+  const _semPressao=(vid,placa)=>/EMPILHADEIRA|PALETEIRA/.test(_tipoV[vid]||'')||/^EMP\d/.test(_normP(placa).replace(/[^A-Z0-9]/g,''));
   let lista=Object.entries(porPneu).map(([tid,arr])=>{
     const c=cad[tid]||{},rec=arr.reduce((a,b)=>new Date(b.dataInspecao)>new Date(a.dataInspecao)?b:a);
+    const arrP=_semPressao(rec.veiculoId??c.veiculoId,rec.placa||c.placa)?[]:arr.filter(i=>+i.pressaoMedida>0&&+i.pressaoIdeal>0);
     const menor=_avg(arr,i=>i.menorMM),st=menor==null?null:menor<2?'Bloquear':menor<=3?'Recapar':menor<=6?'Regular':'Bom';
     return {id:+tid,cod:c._cod||rec._cod,tier:c._tier||rec._tier||'',status:c.status||null,placa:rec.placa||c.placa||'',veiculoId:rec.veiculoId??c.veiculoId,posicao:rec.posicao??c.posicao,nomePosicao:c.nomePosicao||rec.nomePosicao||null,serial:rec.serial||c.serial||'',
       marca:c.marca||'',vida:c.cicloVida??null,bandaMarca:c.bandaMarca||'',banda:c.banda||'',
       mm1:_avg(arr,i=>i.mm1),mm2:_avg(arr,i=>i.mm2),mm3:_avg(arr,i=>i.mm3),mm4:_avg(arr,i=>i.mm4),amp:_avg(arr,i=>i.amplitude),
-      menor,st,desv:_avg(arr,i=>i.desvioPressao),pIdeal:_avg(arr,i=>i.pressaoIdeal),pAtual:_avg(arr,i=>i.pressaoMedida),prev:null,dt:rec.dataInspecao};
+      menor,st,desv:_avg(arrP,i=>i.desvioPressao),pIdeal:_avg(arrP,i=>i.pressaoIdeal),pAtual:_avg(arrP,i=>i.pressaoMedida),prev:null,dt:rec.dataInspecao};
   });
   const inUse=lista.filter(t=>statusAmigavel(t.status)==='Em uso');
   if(inUse.length) lista=inUse;                 // guarda: se o cadastro não trouxe status, não zera o painel

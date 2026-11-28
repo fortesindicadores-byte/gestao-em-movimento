@@ -22,10 +22,11 @@ const vk = (y, m) => y * 100 + m;
 
 // ── pneus: PIR com inspeções em jun e jul/2026 ──
 const ins = [];
-const add = (dia, placa, tireId, mm, dsv) => ins.push({ unidade: 'PIR', placa, veiculoId: placa === 'PAL1' ? 99 : 1, dataInspecao: dia + 'T12:00:00Z', tireId, menorMM: mm, pressaoIdeal: 100, desvioPressao: dsv });
+const add = (dia, placa, tireId, mm, dsv) => ins.push({ unidade: 'PIR', placa, veiculoId: placa === 'PAL1' ? 99 : 1, dataInspecao: dia + 'T12:00:00Z', tireId, menorMM: mm, pressaoIdeal: 100, pressaoMedida: dsv === -100 ? 0 : 100 + dsv, desvioPressao: dsv });
 add('2026-06-05', 'AAA1', 't1', 8, 5);  add('2026-06-05', 'AAA1', 't2', 2, 30);   // jun: 1 bom de 2, 1 calibrado de 2
 add('2026-06-20', 'AAA1', 't2', 5, 0);                                              // última medida de t2 em jun: bom e calibrado
 add('2026-07-10', 'AAA1', 't1', 3, 20); add('2026-07-10', 'AAA1', 't2', 7, 0);      // jul: 1 bom de 2, 1 calibrado de 2
+add('2026-06-25', 'AAA1', 't1', 8, -100);                                           // só sulco (pressão 0): não conta na calibragem
 add('2026-06-05', 'PAL1', 'p1', 1, 50);                                             // paleteira: fora
 const mes = T.conlogMes({ vehicles: [{ id: 1, tipo: 'CAMINHAO' }, { id: 99, tipo: 'PALETEIRA ELETRICA' }], inspections: ins });
 const jun = mes.PIR[vk(2026, 5)], jul = mes.PIR[vk(2026, 6)];

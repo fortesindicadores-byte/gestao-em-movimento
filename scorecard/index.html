@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611271800">
+<meta name="build" content="202611281030">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Scorecard · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -762,7 +762,9 @@ function conlogMes(d){
     const dt=new Date(t),vk=dt.getFullYear()*100+dt.getMonth();
     const kp=i.unidade+'|'+i.placa;(porPlaca[kp]=porPlaca[kp]||new Set()).add(t);
     if(i.tireId==null)return;const k=i.unidade+'|'+vk+'|'+i.tireId;
-    if(!ult[k]||t>ult[k].t)ult[k]={t,u:i.unidade,vk,mm:+i.menorMM||0,pid:+i.pressaoIdeal||0,dsv:+i.desvioPressao||0};
+    if(!ult[k]||t>ult[k].t)ult[k]={...(ult[k]||{}),t,u:i.unidade,vk,mm:+i.menorMM||0};
+    // pressão: a última leitura COM pressão medida (a leitura só de sulco grava 0 = −100%)
+    if(+i.pressaoMedida>0&&+i.pressaoIdeal>0&&!/EMPILHADEIRA/i.test(tipoV[i.veiculoId]||'')&&(!ult[k].tp||t>ult[k].tp))Object.assign(ult[k],{tp:t,pid:+i.pressaoIdeal,dsv:+i.desvioPressao||0});
   });
   Object.values(ult).forEach(m=>{const o=ens(m.u,m.vk);
     if(m.mm>0){o.tTot++;if(m.mm>3)o.tBom++;}
@@ -1392,6 +1394,6 @@ function gerarApresentacao(){
   ApresBase.botao(document.getElementById('btApres'),aviso=>ScApresentacao.gerar({aviso,img:new URL('../assets/img/fundo-conlog.jpg',location.href).href}));
 }
 </script>
-<script src="../assets/build-check.js?v=202611271800"></script>
+<script src="../assets/build-check.js?v=202611281030"></script>
 </body>
 </html>

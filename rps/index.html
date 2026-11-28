@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="202611272330">
+<meta name="build" content="202611281030">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>RPS de Frota · Fleet Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
@@ -833,16 +833,16 @@ function sGerot(inst){
   const head1=`<tr class="h1"><th colspan="5"></th>${ws.map(w=>abre(w)?`<th colspan="8" class="sw ab" data-sem="${w}">S${semN(w)} ${w===VIG?'':'<small>fechar</small>'}</th>`:`<th class="sw" data-sem="${w}" title="Abrir a semana">S${semN(w)}<small>${ddmm(w)}</small></th>`).join('')}</tr>`;
   const head2=`<tr class="h2"><th class="ind">Indicadores</th><th>Meta</th><th>Real</th><th>▲</th><th>▲ %</th>${cols.map(c=>c.d?`<th class="dia${c.fora?' fora':''}"><small>${DIAS_SEM[dDe(c.d).getDay()]}</small>${+c.d.slice(8,10)}</th>`:`<th class="dia sem">Sem.</th>`).join('')}</tr>`;
   const cel=(k,c)=>{ const v=c.d?(c.fora?null:valDia(k,c.d)):valSem(k,c.w), cl=clDe(k,v,c.d?metaDe(k,c.d):metaDe(k,null,c.w));
-    return `<td class="v ${cl?'c'+cl:''}${c.d?'':' sem'}"${v!=null&&c.d?` data-k="${k}" data-d="${c.d}"`:''}${v!=null&&!c.d?` data-k="${k}" data-w="${c.w}"`:''}>${v==null?'':fmtV(k,v)}</td>`; };
+    return `<td class="v ${cl?'c'+cl:''}${c.d?'':' sem'}${!c.d&&c.w===VIG?' atual':''}"${v!=null&&c.d?` data-k="${k}" data-d="${c.d}"`:''}${v!=null&&!c.d?` data-k="${k}" data-w="${c.w}"`:''}>${v==null?'':fmtV(k,v)}</td>`; };
   /* ▲ zero = bateu a meta = verde (Renan, 27/11/2026: "preventiva, CIVF, saída com OS crítica e conformidade, 0 pp é verde") */
   const linha=x=>{ const r=valSem(x.k,VIG), mt=x.cons?metaDe(x.k,null,VIG):x.meta, dl=r==null||mt==null?null:r-mt, dp=r==null||!mt?null:(r/mt-1)*100, ruim=x.qtd?dl>0:dl<0, tol=x.cons?0.005:0.05;
     const cDl=dl==null?'':Math.abs(dl)<tol||!ruim?'cg':'cr', cDp=dp==null?'':Math.abs(dp)<0.05||!ruim?'cg':'cr';
     const tDl=dl==null?'—':x.cons?(dl>0?'+':'')+nf(dl,2):x.qtd?(dl>0?'+':'')+nf(dl,0):(dl>0?'+':'')+nf(dl,1)+' pp';
     return `<tr><td class="ind"${x.dica?` title="${esc(x.dica)}"`:''}>${esc(x.t)}</td><td class="n">${x.cons?(mt==null?'—':nf(mt,2)):x.qtd?x.meta:x.meta+'%'}</td><td class="n b ${r!=null&&clDe(x.k,r,mt)?'c'+clDe(x.k,r,mt):''}">${fmtV(x.k,r)}</td>`+
-      `<td class="n ${cDl}">${tDl}</td><td class="n ${cDp}">${dp==null?'—':(dp>0?'+':'')+nf(dp,0)+'%'}</td>${cols.map(c=>cel(x.k,c)).join('')}</tr>`; };
+      `<td class="n b ${cDl}">${tDl}</td><td class="n b ${cDp}">${dp==null?'—':(dp>0?'+':'')+nf(dp,0)+'%'}</td>${cols.map(c=>cel(x.k,c)).join('')}</tr>`; };
   const corpo=IND.filter(x=>!x.custo).map(linha).join('')+`<tr class="sep"><td colspan="${5+cols.length}">Custos</td></tr>`+IND.filter(x=>x.custo).map(linha).join('');
   const rs=valSem('score',VIG);
-  const score=`<tr class="score"><td class="ind">Score</td><td class="n">90</td><td class="n b">${fmtV('score',rs)}</td><td></td><td></td>${cols.map(c=>{ const v=c.d?(c.fora?null:valDia('score',c.d)):valSem('score',c.w); return `<td class="v${c.d?'':' sem'}"${v!=null&&c.d?` data-k="score" data-d="${c.d}"`:''}>${v==null?'':nf(v,1)}</td>`; }).join('')}</tr>`;
+  const score=`<tr class="score"><td class="ind">Score</td><td class="n">90</td><td class="n b">${fmtV('score',rs)}</td><td></td><td></td>${cols.map(c=>{ const v=c.d?(c.fora?null:valDia('score',c.d)):valSem('score',c.w); return `<td class="v${c.d?'':' sem'}${!c.d&&c.w===VIG?' atual':''}"${v!=null&&c.d?` data-k="score" data-d="${c.d}"`:''}>${v==null?'':nf(v,1)}</td>`; }).join('')}</tr>`;
   return [sl({titulo:'Gerot · '+FS.MES[+mes.slice(5,7)-1]+'/'+mes.slice(0,4),corpo:`<div class="card tb rps-mxw"><table class="rps-mx">${head1}${head2}<tbody>${corpo}${score}</tbody></table><div class="rps-leg"><span><i class="cg"></i>No alvo</span><span><i class="cy"></i>Atenção</span><span><i class="cr"></i>Fora</span><span>Clique no dia para abrir o detalhe e gerar a ação · Sem. = resultado da semana · o dia entra quando acaba${CONS_ATE?' · consumo até '+ddmm(CONS_ATE):''}</span></div></div>`},inst,'Gerot')];
 }
 function sRecado(t){ const ls=String(t.texto||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,8);
@@ -871,8 +871,10 @@ table.rps-mx th.dia.fora{opacity:.45}table.rps-mx th.dia.sem{background:#2C3846}
 table.rps-mx td.ind,table.rps-mx th.ind{text-align:left;font-weight:700}
 table.rps-mx td.n{text-align:right}table.rps-mx td.b{font-weight:800}
 table.rps-mx tbody tr{border-bottom:1px solid var(--linha)}
-table.rps-mx td.v{font-weight:700}table.rps-mx td.v[data-k]{cursor:pointer}table.rps-mx td.v[data-k]:hover{outline:2px solid #F97316;outline-offset:-2px}
-table.rps-mx td.sem{background:rgba(30,40,51,.06);font-weight:800}
+table.rps-mx td.v{font-weight:500}table.rps-mx td.v[data-k]{cursor:pointer}table.rps-mx td.v[data-k]:hover{outline:2px solid #F97316;outline-offset:-2px}
+table.rps-mx td.sem{background:rgba(30,40,51,.06);font-weight:500}
+/* negrito só em Real, ▲, ▲ % e no Sem. da semana da RPS; dias e semanas anteriores sem negrito (Renan, 28/11/2026) */
+table.rps-mx td.sem.atual,table.rps-mx tr.score td.v.atual{font-weight:800}table.rps-mx tr.score td.v{font-weight:500}
 table.rps-mx td.cg{color:#00A000;background:rgba(0,179,0,.10)}table.rps-mx td.cy{color:#B07C00;background:rgba(233,164,0,.14)}table.rps-mx td.cr{color:#E00000;background:rgba(255,0,0,.10)}
 table.rps-mx td.n.cg,table.rps-mx td.n.cr,table.rps-mx td.n.cy{background:none}
 table.rps-mx tr.sep td{text-align:left;font-size:calc(9px*var(--k));font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--txt3);padding-top:calc(8px*var(--k))}
@@ -1279,6 +1281,6 @@ initApp();
 <script src="../assets/mobile.js?v=202611271500"></script>
 <script src="../assets/modo-tv.js?v=202611261200"></script>
 <script src="../assets/ctrlk.js"></script>
-<script src="../assets/build-check.js?v=202611272330"></script>
+<script src="../assets/build-check.js?v=202611281030"></script>
 </body>
 </html>
